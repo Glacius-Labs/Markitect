@@ -8,8 +8,8 @@ and a throwaway Codex login `{"generation": 0, "secret": ...}` passed as --codex
 The fake agent bumps the generation on every call, as a token refresh would. Checks: exit
 0, the schedule order, both assessments, the comparison with matching fairness, a
 complete study.json, the login carried over from run to run, the throwaway login nowhere
-in the study folder and never written back, the login folder removed and no labelled
-container left. Needs Docker, and Git and Go for the Markitect arm (built from the
+in the study folder and the source never written, the login folder removed and no
+labelled container left. Needs Docker, and Git and Go for the Markitect arm (built from the
 checkout holding the playground unless the study file names another); makes no model
 call. Not picked up by unittest discovery.
 """
@@ -124,11 +124,14 @@ def main() -> int:
     after = login.stat()
     check(json.loads(login.read_text(encoding="utf-8")) == {"generation": 0, "secret": secret}
           and (after.st_mtime_ns, after.st_size) == (before.st_mtime_ns, before.st_size),
-          "the source login was never written (no --update-login)")
+          "the source login was never written")
     copies = (record.get("logins") or {}).get("copies") or {}
     check(bool(copies.get("folder")) and not Path(copies["folder"]).exists() and copies.get("removed") is True,
           f"the login folder is gone ({copies.get('folder')})")
     check(record.get("logins", {}).get("codex") == str(login.resolve()), "study.json names the login path only")
+    note = (record.get("logins") or {}).get("note") or ""
+    check(note.startswith("Codex refreshed its login during the study") and str(login.resolve()) in note
+          and "run `codex login`" in note, f"study.json tells to run `codex login` ({note})")
     check(not (Path.home() / ".markitect-playground" / "study.lock").exists(), "the study lock was released")
     names = [f"mpg-{run_id}" for run_id in expected] + [f"mpg-assess-{run_id}" for run_id in expected]
     listed = subprocess.run(["docker", "ps", "--all", "--filter", "label=markitect-playground=1", "--format",

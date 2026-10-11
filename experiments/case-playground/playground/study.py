@@ -1,7 +1,7 @@
 """A whole study with one command: preflight, every run, the assessments, the comparisons.
 
   python -m playground study STUDY.json [--out DIR] [--codex-auth PATH] [--claude-token PATH]
-      [--fake-reviewers] [--preflight] [--keep-containers] [--update-login]
+      [--fake-reviewers] [--preflight] [--keep-containers]
 
 The study file (schema 1) names the case, the stations, the arms, the number of pairs and
 the parameters both arms share; `expand` turns it into one schema-1 manifest per run. Pair
@@ -14,17 +14,18 @@ that). The runs follow in schedule order, one after the other; then every run wh
 container finished is assessed, and every pair with both assessments is compared
 (A = conventional, B = markitect; a fairness mismatch fails the step, it is never
 allowed). A failed or stopped run does not stop the study; the study stops when the host
-could not run a container or the image changed under it. There is no resume.
+could not run a container or the image changed under it, and lists the `assess` and
+`compare` commands that finish the runs it completed by hand. There is no resume.
 
 Logins: a private folder `~/.markitect-playground/logins/<id>-<random>/` holds the
 study's working copy (`current/`), copied once from the source, and one folder of 0600
 copies per run and assessment, mounted read-only. Login files are only copied and
 stat'ed on the host, never read, printed or hashed. After a container stopped, its Codex
-login is copied back out (`docker cp`) and becomes the working copy when the runner or a
-reviewer reported a changed login and the copy is a regular file of 1 B to 64 KiB. The
-source login is never written, except with `--update-login`: then the newest copy
-replaces it atomically, and only if the source is unchanged since the study copied it.
-The folder is removed when the study ends, also after an interrupt.
+login is streamed out (`docker cp CONTAINER:PATH -`); exactly one regular file of 1 B to
+64 KiB becomes the next step's copy, anything else is rejected unread. The agent controls
+that file, so nothing copied out of a container is ever written to the source login;
+when a step reported a refresh, the study says at the end to run `codex login`. SIGTERM
+and SIGHUP count as an interrupt, and the folder is removed when the study ends.
 """
 from __future__ import annotations
 
@@ -33,10 +34,13 @@ import json
 import os
 import platform
 import secrets
+import shlex
 import shutil
+import signal
 import stat
 import subprocess
 import sys
+import tarfile
 import tempfile
 import time
 import traceback
@@ -228,14 +232,6 @@ def login_needs(study: dict, runs: list[dict], *, fake_reviewers: bool, codex_gi
     return needs
 
 
-def _stat_key(path: Path) -> tuple | None:
-    try:
-        info = os.stat(path)
-    except OSError:
-        return None
-    return info.st_dev, info.st_ino, info.st_size, info.st_mtime_ns, info.st_mode
-
-
 def _copy_private(source: Path, target: Path) -> None:
     """Copy bytes only (never interpreted) into a new file readable by its owner only."""
     fd = os.open(target, os.O_WRONLY | os.O_CREAT | os.O_EXCL | getattr(os, "O_BINARY", 0), 0o600)
@@ -256,24 +252,26 @@ class Logins:
     def __init__(self, study_id: str, *, codex: Path | None, claude: Path | None, home: Path | None = None) -> None:
         base = _private_dir(Path(home or STATE_HOME) / "logins")
         self.root = Path(tempfile.mkdtemp(prefix=f"{study_id}-", dir=base))
-        os.chmod(self.root, 0o700)
-        self.current = _private_dir(self.root / "current")
-        self.codex_source = Path(codex).resolve() if codex else None
-        self.claude_source = Path(claude).resolve() if claude else None
-        self.codex = self.claude = None
-        self.source_key = None
-        self.promotions = 0
-        self.record: dict[str, Any] = {"folder": str(self.root), "codexSource": None, "claudeSource": None,
-                                       "promotions": 0, "sourceUpdate": None, "removed": False}
-        if self.codex_source is not None:
-            self.source_key = _stat_key(self.codex_source)
-            self.codex = self.current / "codex-auth.json"
-            _copy_private(self.codex_source, self.codex)
-            self.record["codexSource"] = str(self.codex_source)
-        if self.claude_source is not None:  # tokens do not refresh: copied, never copied back
-            self.claude = self.current / "claude-token"
-            _copy_private(self.claude_source, self.claude)
-            self.record["claudeSource"] = str(self.claude_source)
+        try:
+            os.chmod(self.root, 0o700)
+            self.current = _private_dir(self.root / "current")
+            self.codex_source = Path(codex).resolve() if codex else None
+            self.claude_source = Path(claude).resolve() if claude else None
+            self.codex = self.claude = None
+            self.promotions = 0
+            self.record: dict[str, Any] = {"folder": str(self.root), "codexSource": None, "claudeSource": None,
+                                           "promotions": 0, "removed": False}
+            if self.codex_source is not None:
+                self.codex = self.current / "codex-auth.json"
+                _copy_private(self.codex_source, self.codex)
+                self.record["codexSource"] = str(self.codex_source)
+            if self.claude_source is not None:  # tokens do not refresh: copied, never copied back
+                self.claude = self.current / "claude-token"
+                _copy_private(self.claude_source, self.claude)
+                self.record["claudeSource"] = str(self.claude_source)
+        except BaseException:  # no copy outlives a failed or interrupted setup
+            reviewers.remove_tree(self.root)
+            raise
 
     def step(self, name: str, *, codex: bool, claude: bool) -> tuple[Path, Path | None, Path | None]:
         """A folder with this step's own 0600 copies of the working copies."""
@@ -288,30 +286,52 @@ class Logins:
         return folder, auth, token
 
     def copy_out(self, container: str, source: str, folder: Path) -> str:
-        """`docker cp` a stopped container's Codex login next to the step's copies."""
+        """Stream a stopped container's Codex login out (`docker cp CONTAINER:PATH -`) and
+        keep it next to the step's copies only if the tar stream holds exactly one regular
+        file of 1 B to 64 KiB; anything else is rejected without reading further, so
+        nothing larger than the cap reaches the disk."""
+        target = folder / RETURNED
         try:
-            done = subprocess.run(["docker", "cp", f"{container}:{source}", str(folder / RETURNED)],
-                                  capture_output=True, text=True, encoding="utf-8", errors="replace",
-                                  timeout=PROBE_TIMEOUT)
-        except (OSError, subprocess.SubprocessError) as exc:
+            process = subprocess.Popen(["docker", "cp", f"{container}:{source}", "-"], stdin=subprocess.DEVNULL,
+                                       stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        except OSError as exc:
             return f"failed: {exc}"
-        if done.returncode != 0:
-            return f"failed: {(done.stderr or done.stdout).strip()[:300] or f'exit {done.returncode}'}"
-        return "copied"
+        verdict = "failed: no answer"
+        try:
+            try:
+                verdict = _take_one_file(process.stdout, target)
+            except (tarfile.TarError, EOFError, OSError) as exc:
+                verdict = f"rejected: not a readable tar stream ({type(exc).__name__})"
+            if verdict != "copied" and process.poll() is None:
+                process.kill()  # stop reading: the rest of the stream is never consumed
+            try:
+                _out, err = process.communicate(timeout=PROBE_TIMEOUT)
+            except subprocess.TimeoutExpired:
+                process.kill()
+                _out, err = process.communicate()
+            if process.returncode != 0 and not verdict.startswith("rejected"):
+                text = (err or b"").decode("utf-8", errors="replace").strip()[:300]
+                verdict = f"failed: {text or f'docker cp exited {process.returncode}'}"
+            elif process.returncode != 0 and verdict.startswith("rejected: not a readable"):
+                text = (err or b"").decode("utf-8", errors="replace").strip()[:300]
+                verdict = f"failed: {text}" if text else verdict
+        finally:
+            if verdict != "copied":
+                target.unlink(missing_ok=True)
+            if process.poll() is None:
+                process.kill()
+        return verdict
 
-    def promote(self, folder: Path, changed: bool | None) -> str:
-        """Make the copied-out login the working copy when the step reported a change."""
-        if changed is None:
-            return "not reported; kept the working copy"
-        if not changed:
-            return "unchanged"
+    def promote(self, folder: Path) -> str:
+        """Make a copied-out login the working copy, whatever the step reported (an agent
+        can fake a change, and a crashed step may never report a real one)."""
         returned = folder / RETURNED
         try:
             info = os.lstat(returned)
         except OSError:
-            return "changed, but not copied out; kept the working copy (it may be used up)"
+            return "nothing copied out; kept the working copy"
         if not stat.S_ISREG(info.st_mode) or not 0 < info.st_size <= LOGIN_MAX_BYTES:
-            return "changed, but the copy is not a regular file of 1 B to 64 KiB; kept the working copy"
+            return "not a regular file of 1 B to 64 KiB; kept the working copy"
         temporary = self.current / f".codex-auth.{secrets.token_hex(4)}"
         _copy_private(returned, temporary)
         os.replace(temporary, self.codex)
@@ -322,26 +342,34 @@ class Logins:
     def finish_step(self, folder: Path) -> None:
         reviewers.remove_tree(folder)
 
-    def update_source(self) -> str:
-        """--update-login: replace the source with the newest copy, atomically, and only
-        if the source is unchanged since the study copied it."""
-        if self.codex is None or self.promotions == 0:
-            return "not needed (the Codex login did not change)"
-        if _stat_key(self.codex_source) != self.source_key:
-            return (f"skipped: {self.codex_source} changed since the study copied it; "
-                    "run `codex login` before the next study")
-        temporary = self.codex_source.with_name(f".{self.codex_source.name}.mpg-{secrets.token_hex(4)}")
-        try:
-            _copy_private(self.codex, temporary)
-            os.replace(temporary, self.codex_source)
-        except OSError as exc:
-            temporary.unlink(missing_ok=True)
-            return f"failed: {exc}; run `codex login` before the next study"
-        return "updated"
-
     def close(self) -> None:
         reviewers.remove_tree(self.root)
         self.record["removed"] = not self.root.exists()
+
+
+def _take_one_file(stream, target: Path) -> str:
+    """Write the only member of an uncompressed tar stream to `target` when it is one
+    regular file of 1 B to 64 KiB; otherwise a "rejected: ..." reason, with nothing written."""
+    with tarfile.open(fileobj=stream, mode="r|") as tar:
+        member = tar.next()
+        if member is None:
+            return "rejected: the copy holds no file"
+        if not member.isreg():
+            kind = ("a directory" if member.isdir() else "a link" if member.issym() or member.islnk()
+                    else "a device or special file")
+            return f"rejected: the copy is {kind}, not a regular file"
+        if not 0 < member.size <= LOGIN_MAX_BYTES:
+            return f"rejected: {member.size} bytes, not 1 B to 64 KiB"
+        handle = tar.extractfile(member)
+        data = handle.read(LOGIN_MAX_BYTES + 1) if handle is not None else b""
+        if len(data) != member.size:
+            return "rejected: the copy is truncated"
+        if tar.next() is not None:
+            return "rejected: the copy holds more than one entry"
+    fd = os.open(target, os.O_WRONLY | os.O_CREAT | os.O_EXCL | getattr(os, "O_BINARY", 0), 0o600)
+    with os.fdopen(fd, "wb") as out:
+        out.write(data)
+    return "copied"
 
 
 def leftover_login_folders(home: Path | None = None) -> list[str]:
@@ -588,10 +616,10 @@ class Study:
             "startedAt": _now(), "endedAt": None, "stopReason": None,
             "studyFile": {"path": str(study_file.resolve()), "copy": "study-file.json"},
             "parameters": parameters,
-            "options": {"out": str(out), "fakeReviewers": self.fake, "keepContainers": bool(args.keep_containers),
-                        "updateLogin": bool(args.update_login)},
+            "options": {"out": str(out), "fakeReviewers": self.fake, "keepContainers": bool(args.keep_containers)},
             "logins": {"codex": str(codex_source) if codex_source else None,
-                       "claude": str(claude_source) if claude_source else None, "copies": None},
+                       "claude": str(claude_source) if claude_source else None, "copies": None,
+                       "refreshReported": False, "note": None},
             "versions": {"playground": evaluate.evaluation_identity(), "python": facts["python"],
                          "hostPlatform": facts["hostPlatform"], "docker": facts["docker"], "go": facts["go"],
                          "image": None, "markitect": None},
@@ -600,6 +628,7 @@ class Study:
                           "position": entry["position"], "manifest": f"manifests/{entry['id']}.json"}
                          for entry in runs],
             "steps": [],
+            "finishByHand": None,
         }
 
     # -- records
@@ -677,21 +706,56 @@ class Study:
         finally:
             try:
                 if self.logins is not None:
-                    if self.args.update_login:
-                        self.logins.record["sourceUpdate"] = self.logins.update_source()
-                    elif self.logins.promotions:
-                        self.logins.record["sourceUpdate"] = (
-                            f"not written: the Codex login was refreshed during the study and {self.logins.codex_source} "
-                            "may be used up; run `codex login` (or pass --update-login next time)")
                     self.logins.close()
             finally:
+                logins = self.record["logins"]
+                if logins["refreshReported"] and logins["codex"]:
+                    logins["note"] = (f"Codex refreshed its login during the study; your {logins['codex']} may be "
+                                      "used up: run `codex login` before the next run.")
+                    print(logins["note"], file=sys.stderr)
+                if self.stopped or self.record["status"] == "interrupted":
+                    self.finish_by_hand()
                 self.record["exitCode"] = code
                 self.record["endedAt"] = _now()
                 self.save()
-                note = (self.logins.record.get("sourceUpdate") if self.logins else None)
-                if note and not note.startswith(("updated", "not needed")):
-                    print(f"login: {note}", file=sys.stderr)
                 print(f"study: {self.out / 'study.md'} (exit {code})", flush=True)
+
+    def finish_by_hand(self) -> None:
+        """After a stop: the `assess` and `compare` commands that finish the completed runs."""
+        steps = self.record["steps"]
+        finished = [s["id"] for s in steps if s["step"] == "run" and s["status"] == "completed"]
+        assessed = {s["id"] for s in steps if s["step"] == "assess" and s["exitCode"] == 0}
+        compared = {s["pair"] for s in steps if s["step"] == "compare" and s["status"] == "written"}
+        names = self.study["reviewers"]
+        commands = []
+        for run_id in finished:
+            if run_id in assessed:
+                continue
+            command = ["python3", "-m", "playground", "assess", "--run", str(self.out / "runs" / run_id),
+                       "--reviewers", ",".join(names) or "none"]
+            if self.fake:
+                command.append("--fake-reviewers")
+            else:
+                if "codex" in names and self.args.codex_auth:
+                    command += ["--codex-auth", str(Path(self.args.codex_auth).expanduser().resolve())]
+                if "claude" in names and self.args.claude_token:
+                    command += ["--claude-token", str(Path(self.args.claude_token).expanduser().resolve())]
+            commands.append(shlex.join(command))
+        if len(self.study["arms"]) == 2:
+            for pair in range(1, self.study["pairs"] + 1):
+                ids = {entry["arm"]: entry["id"] for entry in self.runs if entry["pair"] == pair}
+                if pair in compared or not all(ids[arm] in finished for arm in ids):
+                    continue
+                commands.append(shlex.join(["python3", "-m", "playground", "compare",
+                                            str(self.out / "runs" / ids["conventional"]),
+                                            str(self.out / "runs" / ids["markitect"]),
+                                            "--out", str(self.out / "comparisons" / f"p{pair}.md")]))
+        if not commands:
+            return
+        self.record["finishByHand"] = {"cwd": str(host.ROOT), "commands": commands}
+        print(f"finish by hand, from {host.ROOT}:", file=sys.stderr)
+        for command in commands:
+            print(f"  {command}", file=sys.stderr)
 
     def build(self) -> bool:
         """The image and the Markitect binary, once for every run (preflight checks)."""
@@ -744,7 +808,7 @@ class Study:
                                    claude_given=bool(self.args.claude_token))
         folder, auth, token = self.logins.step(entry["id"], codex=codex, claude=claude)
         login = step["login"] = {"codex": auth is not None, "claude": token is not None, "copyOut": None,
-                                 "promotion": None}
+                                 "reported": None, "promotion": None}
         seen: dict[str, str | None] = {"image": None}
 
         def before_remove(container: str) -> None:
@@ -762,8 +826,9 @@ class Study:
                                              before_remove=before_remove)
         finally:
             if auth is not None:
-                changed = (_read_json(run_dir / "results" / "runner.json") or {}).get("codexLoginChanged")
-                login["promotion"] = self.logins.promote(folder, changed)
+                login["reported"] = (_read_json(run_dir / "results" / "runner.json") or {}).get("codexLoginChanged")
+                self.record["logins"]["refreshReported"] |= login["reported"] is True
+                login["promotion"] = self.logins.promote(folder)
             self.logins.finish_step(folder)
         status = record["status"]
         self._end(step, status, code, containerExitCode=record.get("containerExitCode"), imageId=seen["image"],
@@ -790,7 +855,7 @@ class Study:
         claude = "claude" in names and not self.fake
         folder, auth, token = self.logins.step(f"assess-{entry['id']}", codex=codex, claude=claude)
         login = step["login"] = {"codex": auth is not None, "claude": token is not None, "copyOut": None,
-                                 "promotion": None}
+                                 "reported": None, "promotion": None}
 
         def before_remove(container: str) -> None:
             if auth is not None:
@@ -807,8 +872,10 @@ class Study:
         finally:
             if auth is not None:
                 report = _read_json(run_dir / "assessment" / "report.json") or {}
-                totals = ((report.get("totals") or {}).get("reviewers") or {}).get("codex") or {}
-                login["promotion"] = self.logins.promote(folder, totals.get("loginRefreshed") if report else None)
+                login["reported"] = (((report.get("totals") or {}).get("reviewers") or {}).get("codex") or {}).get(
+                    "loginRefreshed")
+                self.record["logins"]["refreshReported"] |= login["reported"] is True
+                login["promotion"] = self.logins.promote(folder)
             self.logins.finish_step(folder)
         status = result["status"]
         self._end(step, status, code, error=result.get("error"))
@@ -890,9 +957,13 @@ def render(record: dict) -> str:
                f"{_fmt((versions.get('image') or {}).get('id'))}; binary sha256 "
                f"{_fmt((versions.get('markitect') or {}).get('sha256'))}.",
              f"- Logins (paths only): Codex {_fmt(record['logins']['codex'])}, Claude token "
-             f"{_fmt(record['logins']['claude'])}; source update: "
-             f"{_fmt((record['logins'].get('copies') or {}).get('sourceUpdate'))}.", "",
-             "## Preflight", ""]
+             f"{_fmt(record['logins']['claude'])}; never written by the study."
+             + (f" {record['logins']['note']}" if record["logins"].get("note") else ""), ""]
+    finish = record.get("finishByHand")
+    if finish:
+        lines += ["## Finish by hand", "", f"The study stopped. These commands, from `{finish['cwd']}`, assess and "
+                  "compare the runs it completed:", "", "```", *finish["commands"], "```", ""]
+    lines += ["## Preflight", ""]
     for check in record["preflight"]["checks"]:
         lines.append(f"- {check['status']}: {check['check']}: {check['message']}")
     lines += ["", "## Steps", "", "| Step | Run | Pair | Arm | Status | Exit | Seconds | Login | Output |",
@@ -955,9 +1026,8 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--fake-reviewers", action="store_true", help="fake reviewer CLIs, throwaway credentials")
     parser.add_argument("--preflight", action="store_true", help="only the cheap checks; build and run nothing")
     parser.add_argument("--keep-containers", action="store_true")
-    parser.add_argument("--update-login", action="store_true",
-                        help="write the newest Codex login back to the source, if the source is unchanged")
     args = parser.parse_args(sys.argv[1:] if argv is None else argv)
+    previous = _interrupt_on_signals()
     try:
         return run(args)
     except manifest_module.ManifestError as exc:
@@ -969,3 +1039,25 @@ def main(argv: list[str] | None = None) -> int:
     except KeyboardInterrupt:
         print("interrupted", file=sys.stderr)
         return EXIT_INTERRUPTED
+    finally:
+        for number, handler in previous.items():
+            signal.signal(number, handler)
+
+
+def _raise_interrupt(signum: int, _frame: Any) -> None:
+    raise KeyboardInterrupt(f"signal {signum}")
+
+
+def _interrupt_on_signals() -> dict:
+    """SIGTERM and, where it exists, SIGHUP (a closed terminal) raise KeyboardInterrupt, so
+    the containers, the login copies and the lock are cleaned up as after Ctrl+C. Returns
+    the previous handlers."""
+    previous = {}
+    for name in ("SIGTERM", "SIGHUP"):
+        if hasattr(signal, name):
+            number = getattr(signal, name)
+            try:
+                previous[number] = signal.signal(number, _raise_interrupt)
+            except (ValueError, OSError):  # not the main thread
+                pass
+    return previous

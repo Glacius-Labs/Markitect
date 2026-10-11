@@ -110,7 +110,7 @@ leftover processes killed; `host.json` complete and no labelled container left; 
 agent never opened `/out`; for `fake-claude` a throwaway token reached the agent and is
 nowhere in the run folder. `smoke_study.py` checks the study: schedule order, both
 assessments, a comparison with matching fairness fields, a complete `study.json`, the
-login carried from run to run, nowhere in the study folder and never written back, no
+login carried from run to run, nowhere in the study folder, the source never written, no
 login folder and no container left. Neither judges quality: the fake agent only writes
 `FAKE_S<n>.md`, so its public checks fail, as expected.
 
@@ -132,14 +132,12 @@ docker run --rm --network none --mount type=bind,source="$PWD",target=/src,reado
 
 ## Running real arms
 
-A study runs everything with one command: preflight, every run, the assessments and the
-comparisons.
+A study runs everything with one command: preflight, runs, assessments, comparisons.
 
 1. Copy `examples/study-readinglog2.json`, give it a new `id` and set `markitect.commit`
    to the product commit to test (built from this checkout unless `markitect.sourceRepo`
    names another Markitect checkout).
-2. `python3 -m playground study my-study.json --preflight` prints every problem at once,
-   each with its fix.
+2. `python3 -m playground study my-study.json --preflight` prints every problem at once.
 3. `python3 -m playground study my-study.json` runs it; start with `study.md` in the
    [study folder](#study-folder).
 
@@ -147,10 +145,10 @@ The arms of a pair run one after the other, the first arm alternating from pair 
 then every run whose container finished is assessed and each pair compared (A
 conventional, B markitect; a fairness mismatch fails the step). A failed or stopped run
 does not stop the study; it stops when the host could not run a container or the image
-changed under it. There is no resume yet: start a new study with a new `id`.
+changed under it, and then lists the `assess` and `compare` commands that finish its
+completed runs by hand. SIGTERM and SIGHUP stop it like Ctrl+C. There is no resume.
 
 `host run` is the tool for a single run; `assess` and `compare` take any run folder:
-
 ```
 python3 -m playground host run --manifest my-run.json
 python3 -m playground assess --run ~/markitect-playground-runs/<id> [--fake-reviewers]
@@ -271,12 +269,12 @@ run, the final assessment when at least one wave ran. The host kills the contain
   token only into the claude process environment, redacted if the agent prints it.
 - **Login copies in a study.** Each login is copied once into a private folder
   `~/.markitect-playground/logins/<id>-<random>/` (0700); every run and assessment gets
-  its own 0600 copy. When a run or a reviewer reports a refreshed Codex login, the study
-  copies it out of the stopped container and hands it to the next step (only a regular
-  file of 1 B to 64 KiB). Your source login is never written, except with
-  `--update-login`: then the newest copy replaces it atomically, only if the source is
-  unchanged since the study copied it; otherwise the study says to run `codex login`.
-  The folder is removed when the study ends, also after Ctrl+C.
+  its own 0600 copy. After a container stops, its Codex login is streamed out
+  (`docker cp CONTAINER:PATH -`); exactly one regular file of 1 B to 64 KiB becomes the
+  next step's copy, anything else is rejected unread. Your source login is never
+  written; when a step reported a refresh, the study ends with "Codex refreshed its
+  login during the study; your <source> may be used up: run `codex login` before the
+  next run." The folder is removed when the study ends, also after an interrupt.
 
 ## Parameters
 
@@ -333,7 +331,6 @@ any manifest and saved normalized in `manifests/`.
 | `--codex-auth PATH`, `--claude-token PATH` | `~/.codex/auth.json`, `~/.markitect-playground/claude-token` | Login sources, used only where needed ([Logins](#logins)). |
 | `--fake-reviewers`, `--keep-containers` | off | As for `assess`; keep every container. |
 | `--preflight` | off | Run the cheap checks only; build and write nothing. |
-| `--update-login` | off | Write the newest Codex login back to its source, if the source is unchanged. |
 
 ### `host run` and `host clean`
 
@@ -396,7 +393,7 @@ any manifest and saved normalized in `manifests/`.
 
 | Path | Content |
 |---|---|
-| `study.md`, `study.json` | **Start here.** Status, exit code and stop reason; resolved parameters; login paths, never contents; versions (playground commit and dirty flag, Python, host platform, Docker server, OS and architecture, Go, image ID, binary SHA-256); preflight results; per step its times, status, exit code and login handling. Rewritten after every step. |
+| `study.md`, `study.json` | **Start here.** Status, exit code and stop reason; resolved parameters; login paths, never contents; versions (playground commit and dirty flag, Python, host platform, Docker server, OS and architecture, Go, image ID, binary SHA-256); preflight results; per step its times, status, exit code and login handling; after a stop, the commands that finish by hand. Rewritten after every step. |
 | `study-file.json`, `manifests/`, `preflight/` | The study file as given; each run's normalized manifest; the printed checks, the image build log and the binary. |
 | `runs/<run id>/`, `comparisons/p<k>.md` | Each run folder (below) with its `assessment/`; pair k compared, A conventional, B markitect. |
 
@@ -544,11 +541,13 @@ not record (older runs), even when both lack it. This is stricter than `host run
 
 ## Caveats
 
-- **Login refresh.** Codex may refresh its token inside a container and so use up the
-  login it was copied from. A study hands the refreshed login to its next step
-  ([Logins](#logins)); separate `host run` and `assess` commands do not: run
-  `codex login` before each, or give each its own file with `--codex-auth`. The run
-  report says when Codex rewrote its login, the assessment when a reviewer did.
+- **Login refresh and trust.** Codex may refresh its token inside a container and so
+  use up the login it was copied from. A study hands the refreshed login to its next
+  step; separate `host run` and `assess` commands do not: run `codex login` before each,
+  or give each its own file with `--codex-auth`. Agents run with full permissions inside
+  their containers and hold the login anyway. A login one step hands on can be tampered
+  with; that shows up as an environment failure of the next step, never as a method
+  result, and nothing a container hands back is written to your source login.
 - **Never commit run outputs.** Keep them outside the repository. `host run` and `study`
   refuse a folder inside a Git checkout, and `runs/` is ignored as a safety net.
 - **One sandbox relaxation.** Every run and assessment container runs with

@@ -5,8 +5,11 @@ import copy
 import io
 import json
 import os
+import signal
 import subprocess
+import tarfile
 import tempfile
+import time
 import unittest
 from pathlib import Path
 from unittest import mock
@@ -63,22 +66,76 @@ def bumped(path: Path) -> str:
     return json.dumps({**login, "generation": login["generation"] + 1})
 
 
+def tar_stream(mode: str, content: bytes = b'{"generation": 1}') -> bytes:
+    """What `docker cp CONTAINER:PATH -` streams for a file, a link, a folder and so on."""
+    buffer = io.BytesIO()
+    with tarfile.open(fileobj=buffer, mode="w") as tar:
+        def add(name, data=None, kind=tarfile.REGTYPE, link=""):
+            info = tarfile.TarInfo(name)
+            info.type, info.mode, info.linkname = kind, 0o600, link
+            if kind == tarfile.REGTYPE:
+                info.size = len(data)
+                tar.addfile(info, io.BytesIO(data))
+            else:
+                tar.addfile(info)
+        if mode == "file":
+            add("auth.json", content)
+        elif mode == "symlink":
+            add("auth.json", kind=tarfile.SYMTYPE, link="/run/secrets/claude-token")
+        elif mode == "dir":
+            add("auth.json", kind=tarfile.DIRTYPE)
+            add("auth.json/inner", b"x")
+        elif mode == "two":
+            add("auth.json", content)
+            add("second", b"y")
+        elif mode == "huge":
+            add("auth.json", b"x" * (study.LOGIN_MAX_BYTES + 1))
+        elif mode == "device":
+            add("auth.json", kind=tarfile.CHRTYPE)
+        elif mode == "empty":
+            add("auth.json", b"")
+    return buffer.getvalue()
+
+
+class FakeProcess:
+    """A `docker cp ... -` process: its tar stream on stdout."""
+
+    def __init__(self, data: bytes, code: int = 0, err: bytes = b""):
+        self.stdout, self.code, self.err = io.BytesIO(data), code, err
+        self.size, self.returncode, self.killed = len(data), None, False
+
+    def poll(self):
+        return self.returncode
+
+    def kill(self):
+        self.killed = True
+        if self.returncode is None:
+            self.returncode = -9
+
+    def communicate(self, timeout=None):
+        if self.returncode is None:
+            self.returncode = self.code
+        return b"", self.err
+
+
 class FakeDocker:
     """Stands in for subprocess.run/Popen: Docker, plus git and go answering like a checkout.
 
-    A run container writes runner.json into its /out (codexLoginChanged), an assessment
-    container writes report.json; both "refresh" a mounted Codex login, which `docker cp`
-    then copies out."""
+    A run container writes runner.json into its /out (codexLoginChanged: `report`, by
+    default whether it refreshed; None writes none), an assessment container writes
+    report.json; both "refresh" a mounted Codex login, which `docker cp ... -` streams out
+    in the shape `cp` names."""
 
     def __init__(self, *, exits=None, wait_effects=None, start_fails=(), login_changed=True, reviewer_refresh=False,
                  server="29.4.1|linux|amd64", running="", names="", ran_image=None, cp="file", git=None,
-                 mismatch=False):
+                 mismatch=False, report="match"):
         self.calls, self.containers, self.seen_logins, self.order = [], {}, {}, []
         self.exits, self.wait_effects, self.start_fails = exits or {}, wait_effects or {}, set(start_fails)
         self.login_changed, self.reviewer_refresh, self.server = login_changed, reviewer_refresh, server
         self.running, self.names, self.ran_image, self.cp, self.git = running, names, ran_image, cp, git or {}
-        self.mismatch = mismatch
+        self.mismatch, self.report = mismatch, report
         self.logins = {}  # container -> refreshed login text
+        self.copies = []  # FakeProcess of every docker cp
 
     def run(self, cmd, **kwargs):
         self.calls.append(list(cmd))
@@ -124,7 +181,9 @@ class FakeDocker:
         elif sub == "wait":
             name = cmd[-1]
             effect = self.wait_effects.get(name)
-            if effect is not None:
+            if callable(effect):
+                effect()
+            elif effect is not None:
                 raise effect
             self.containers[name] = "stopped"
             out = f"{self.exits.get(name, 0)}\n"
@@ -132,17 +191,6 @@ class FakeDocker:
             self.containers[cmd[-1]] = "stopped"
         elif sub == "rm":
             self.containers.pop(cmd[-1], None)
-        elif sub == "cp":
-            name, _path = cmd[2].split(":", 1)
-            target = Path(cmd[3])
-            if name not in self.logins:
-                code, err = 1, "Could not find the file in container"
-            elif self.cp == "symlink":
-                target.symlink_to(target.parent / "codex-auth.json")
-            elif self.cp == "huge":
-                target.write_bytes(b"x" * (study.LOGIN_MAX_BYTES + 1))
-            else:
-                target.write_text(self.logins[name], encoding="utf-8")
         return subprocess.CompletedProcess(cmd, code, stdout=out, stderr=err)
 
     def behave(self, name: str, mounts: dict) -> None:
@@ -155,8 +203,10 @@ class FakeDocker:
             (mounts["/assess/out"] / "report.json").write_text(json.dumps(report), encoding="utf-8")
         else:
             login = mounts.get("/run/secrets/codex-auth.json")
-            (mounts["/out"] / "runner.json").write_text(
-                json.dumps({"codexLoginChanged": self.login_changed and login is not None}), encoding="utf-8")
+            changed = self.login_changed and login is not None if self.report == "match" else self.report
+            if changed is not None:
+                (mounts["/out"] / "runner.json").write_text(json.dumps({"codexLoginChanged": changed}),
+                                                            encoding="utf-8")
         if login is not None:
             self.seen_logins[name] = login.read_text(encoding="utf-8")
             refresh = self.reviewer_refresh if name.startswith("mpg-assess-") else self.login_changed
@@ -164,10 +214,28 @@ class FakeDocker:
 
     def popen(self, cmd, **kwargs):
         self.calls.append(list(cmd))
+        if cmd[:2] == ["docker", "cp"]:
+            name = cmd[2].split(":", 1)[0]
+            if name not in self.logins:
+                process = FakeProcess(b"", 1, b"Error response from daemon: Could not find the file")
+            else:
+                process = FakeProcess(tar_stream(self.cp, self.logins[name].encode("utf-8")))
+            self.copies.append(process)
+            return process
         return mock.Mock(wait=lambda timeout=None: 0, poll=lambda: 0, kill=lambda: None)
 
     def started(self) -> list[str]:
         return list(self.order)
+
+
+def send(signum: int):
+    """A wait effect: the study process receives `signum` while a container runs."""
+    def effect():
+        if os.name == "posix":
+            os.kill(os.getpid(), signum)
+            time.sleep(1)  # the handler raises KeyboardInterrupt here
+        signal.getsignal(signum)(signum, None)
+    return effect
 
 
 class StudyFileTests(unittest.TestCase):
@@ -286,58 +354,82 @@ class LoginTests(unittest.TestCase):
         self.assertIsNone(auth)
         self.assertIsNotNone(token)
 
-    def test_promotion_only_for_a_reported_change_and_a_small_regular_file(self):
+    def test_any_copied_out_login_that_passes_the_checks_is_promoted(self):
         logins = self.logins()
         folder, _auth, _token = logins.step("one", codex=True, claude=False)
+        self.assertIn("nothing copied out", logins.promote(folder))
         returned = folder / study.RETURNED
-        returned.write_text('{"generation": 1}', encoding="utf-8")
-        self.assertEqual(logins.promote(folder, False), "unchanged")
-        self.assertIn("not reported", logins.promote(folder, None))
-        self.assertEqual(logins.codex.read_text(encoding="utf-8"), '{"generation": 0}')
-        for content in (b"", b"x" * (study.LOGIN_MAX_BYTES + 1)):
+        for content in (b"", b"x" * (study.LOGIN_MAX_BYTES + 1)):  # copy_out never leaves these; checked again
             returned.write_bytes(content)
-            self.assertIn("not a regular file of 1 B to 64 KiB", logins.promote(folder, True))
+            self.assertIn("not a regular file of 1 B to 64 KiB", logins.promote(folder))
         if os.name == "posix":
             returned.unlink()
             returned.symlink_to(self.token)
-            self.assertIn("not a regular file", logins.promote(folder, True))
-            returned.unlink()
-        else:
-            returned.unlink()
-        self.assertIn("not copied out", logins.promote(folder, True))
+            self.assertIn("not a regular file", logins.promote(folder))
+        returned.unlink()
         self.assertEqual(logins.codex.read_text(encoding="utf-8"), '{"generation": 0}')
         returned.write_text('{"generation": 1}', encoding="utf-8")
-        self.assertEqual(logins.promote(folder, True), "promoted")
+        self.assertEqual(logins.promote(folder), "promoted")  # no report needed
         self.assertEqual(logins.codex.read_text(encoding="utf-8"), '{"generation": 1}')
         self.assertEqual(logins.promotions, 1)
         logins.finish_step(folder)
         self.assertFalse(folder.exists())
         _f, auth, _t = logins.step("two", codex=True, claude=False)  # the next step starts from the newest copy
         self.assertEqual(auth.read_text(encoding="utf-8"), '{"generation": 1}')
+        self.assertEqual(self.source.read_text(encoding="utf-8"), '{"generation": 0}')  # the source is never written
 
-    def test_the_source_is_written_only_on_request_and_only_if_unchanged(self):
+    def copy_out(self, logins, process):
+        folder, _auth, _token = logins.step("one", codex=True, claude=False)
+        with mock.patch.object(study.subprocess, "Popen", return_value=process) as popen:
+            verdict = logins.copy_out("mpg-pilot-p1-conv", study.AGENT_LOGIN, folder)
+        self.assertEqual(popen.call_args.args[0], ["docker", "cp", f"mpg-pilot-p1-conv:{study.AGENT_LOGIN}", "-"])
+        return verdict, folder / study.RETURNED
+
+    def test_copy_out_keeps_exactly_one_small_regular_file(self):
         logins = self.logins()
-        self.assertIn("not needed", logins.update_source())
-        folder, _a, _t = logins.step("one", codex=True, claude=False)
-        (folder / study.RETURNED).write_text('{"generation": 1}', encoding="utf-8")
-        logins.promote(folder, True)
-        self.assertEqual(self.source.read_text(encoding="utf-8"), '{"generation": 0}')  # nothing written yet
-        self.assertEqual(logins.update_source(), "updated")
-        self.assertEqual(self.source.read_text(encoding="utf-8"), '{"generation": 1}')
+        verdict, returned = self.copy_out(logins, FakeProcess(tar_stream("file", b'{"generation": 5}')))
+        self.assertEqual(verdict, "copied")
+        self.assertEqual(returned.read_bytes(), b'{"generation": 5}')
         if os.name == "posix":
-            self.assertEqual(self.source.stat().st_mode & 0o777, 0o600)
-        self.assertEqual(sorted(p.name for p in self.source.parent.iterdir()), ["auth.json"])  # no temp file left
+            self.assertEqual(returned.stat().st_mode & 0o777, 0o600)
 
-    def test_a_source_changed_since_the_copy_is_never_replaced(self):
+    def test_copy_out_rejects_everything_else_without_reading_on(self):
         logins = self.logins()
-        folder, _a, _t = logins.step("one", codex=True, claude=False)
-        (folder / study.RETURNED).write_text('{"generation": 1}', encoding="utf-8")
-        logins.promote(folder, True)
-        self.source.write_text('{"generation": 7, "fresh": "codex login"}', encoding="utf-8")
-        message = logins.update_source()
-        self.assertIn("changed since the study copied it", message)
-        self.assertIn("codex login", message)
-        self.assertEqual(self.source.read_text(encoding="utf-8"), '{"generation": 7, "fresh": "codex login"}')
+        for mode, reason in (("symlink", "a link"), ("dir", "a directory"), ("device", "a device"),
+                             ("two", "more than one entry"), ("huge", "65537 bytes"), ("empty", "0 bytes")):
+            with self.subTest(mode=mode):
+                process = FakeProcess(tar_stream(mode))
+                verdict, returned = self.copy_out(logins, process)
+                self.assertTrue(verdict.startswith("rejected:"), verdict)
+                self.assertIn(reason, verdict)
+                self.assertFalse(returned.exists())  # nothing reaches the disk
+                self.assertTrue(process.killed)
+                if mode == "huge":
+                    self.assertLess(process.stdout.tell(), study.LOGIN_MAX_BYTES)  # stopped at the header
+                logins.finish_step(returned.parent)
+        verdict, returned = self.copy_out(logins, FakeProcess(b"garbage" * 200))
+        self.assertTrue(verdict.startswith("rejected: not a readable tar stream"), verdict)
+        logins.finish_step(returned.parent)
+        verdict, returned = self.copy_out(logins, FakeProcess(b"", 1, b"Error: Could not find the file"))
+        self.assertEqual(verdict, "failed: Error: Could not find the file")
+        self.assertFalse(returned.exists())
+
+    def test_a_failed_or_interrupted_setup_leaves_no_login_folder(self):
+        real = study._copy_private
+        calls = []
+
+        def copy(source, target):
+            calls.append(target)
+            if len(calls) == 2:  # the Claude token, after the Codex login was copied
+                raise KeyboardInterrupt
+            real(source, target)
+        with mock.patch.object(study, "_copy_private", side_effect=copy):
+            with self.assertRaises(KeyboardInterrupt):
+                study.Logins("pilot", codex=self.source, claude=self.token, home=self.root / "state")
+        self.assertEqual(study.leftover_login_folders(self.root / "state"), [])
+        with self.assertRaises(OSError):
+            study.Logins("pilot", codex=self.root / "missing.json", claude=None, home=self.root / "state")
+        self.assertEqual(study.leftover_login_folders(self.root / "state"), [])
 
     def test_close_removes_every_copy(self):
         logins = self.logins()
@@ -440,6 +532,9 @@ class StudyRunTests(StudyRunBase):
             "mpg-assess-pilot-p1-conv", "mpg-assess-pilot-p1-mkt", "mpg-assess-pilot-p2-mkt",
             "mpg-assess-pilot-p2-conv"])
         self.assertEqual(sum(call[:2] == ["docker", "build"] for call in docker.calls), 1)  # built once
+        for call in (c for c in docker.calls if c[:2] == ["docker", "run"] and "--detach" in c):
+            self.assertIn(IMAGE, call)  # by ID: a tag rebuilt meanwhile cannot change what runs
+            self.assertNotIn("markitect-playground:codex-0.162.0-claude-2.1.296", call)
         record = self.record()
         self.assertEqual((record["status"], record["exitCode"]), ("completed", 0))
         self.assertEqual([s["step"] for s in record["steps"]], ["run"] * 4 + ["assess"] * 4 + ["compare"] * 2)
@@ -487,40 +582,42 @@ class StudyRunTests(StudyRunBase):
         self.assertEqual((self.source.stat().st_mtime_ns, self.source.stat().st_size),
                          (before.st_mtime_ns, before.st_size))
         record = self.record()
+        note = (f"Codex refreshed its login during the study; your {self.source} may be used up: run `codex login` "
+                "before the next run.")
+        self.assertEqual(record["logins"]["note"], note)
+        self.assertIn(note, stderr)
+        self.assertIn(note, (self.out / "study.md").read_text(encoding="utf-8"))
         copies = record["logins"]["copies"]
-        self.assertIn("not written", copies["sourceUpdate"])
-        self.assertIn("codex login", stderr)
         self.assertTrue(copies["removed"])
         self.assertFalse(Path(copies["folder"]).exists())
         self.assertEqual(record["logins"]["codex"], str(self.source))
+        self.assertNotIn("updateLogin", record["options"])
         self.assertNotIn(self.marker, self.everything(self.out) + stdout + stderr)  # never read, printed or hashed
         cp = [call for call in docker.calls if call[:2] == ["docker", "cp"]]
-        self.assertEqual([call[2] for call in cp], [f"mpg-pilot-p1-conv:{study.AGENT_LOGIN}",
-                                                    f"mpg-pilot-p1-mkt:{study.AGENT_LOGIN}"])
+        self.assertEqual([call[2:] for call in cp], [[f"mpg-pilot-p1-conv:{study.AGENT_LOGIN}", "-"],
+                                                     [f"mpg-pilot-p1-mkt:{study.AGENT_LOGIN}", "-"]])
         for call in cp:  # copied out before the container was removed
             self.assertLess(docker.calls.index(call), docker.calls.index(["docker", "rm", "-f", call[2].split(":")[0]]))
 
-    def test_update_login_writes_the_newest_copy_back_when_the_source_is_unchanged(self):
-        code, stdout, stderr = self.run_study(FakeDocker(), "--codex-auth", str(self.source), "--fake-reviewers",
-                                              "--update-login")
-        self.assertEqual(code, 0, stdout + stderr)
-        self.assertEqual(json.loads(self.source.read_text(encoding="utf-8")), {"generation": 2, "secret": self.marker})
-        self.assertEqual(self.record()["logins"]["copies"]["sourceUpdate"], "updated")
+    def test_promotion_does_not_depend_on_what_the_step_reported(self):
+        for report in (False, None):  # a step claiming no change, or one that crashed before it could say
+            with self.subTest(report=report):
+                self.out = self.root / "runs" / f"report-{report}"
+                docker = FakeDocker(report=report)
+                code, stdout, stderr = self.run_study(docker, "--codex-auth", str(self.source), "--fake-reviewers")
+                self.assertEqual(code, 0, stdout + stderr)
+                generations = [json.loads(docker.seen_logins[name])["generation"] for name in docker.started()
+                               if not name.startswith("mpg-assess-")]
+                self.assertEqual(generations, [0, 1])
+                record = self.record()
+                self.assertEqual([s["login"]["reported"] for s in self.steps("run")], [report, report])
+                self.assertIsNone(record["logins"]["note"])  # nothing reported a refresh
+                self.assertNotIn("codex login", stderr)
 
-    def test_update_login_leaves_a_source_that_changed_during_the_study(self):
-        docker = FakeDocker()
-        original = docker.behave
-
-        def relogin(name, mounts):  # the user ran `codex login` while the study ran
-            original(name, mounts)
-            if name == "mpg-pilot-p1-mkt":
-                self.source.write_text('{"generation": 50, "fresh": true}', encoding="utf-8")
-        docker.behave = relogin
-        code, stdout, stderr = self.run_study(docker, "--codex-auth", str(self.source), "--fake-reviewers",
-                                              "--update-login")
-        self.assertEqual(code, 0, stdout + stderr)
-        self.assertEqual(self.source.read_text(encoding="utf-8"), '{"generation": 50, "fresh": true}')
-        self.assertIn("run `codex login`", self.record()["logins"]["copies"]["sourceUpdate"])
+    def test_update_login_is_gone(self):
+        with self.assertRaises(SystemExit) as caught, capture()[0]:
+            entry.main(["study", str(self.write_study()), "--update-login"])
+        self.assertEqual(caught.exception.code, 2)
 
     def test_reviewer_logins_are_handed_over_too_and_tokens_only_copied(self):
         docker = FakeDocker(reviewer_refresh=True)
@@ -552,6 +649,54 @@ class StudyRunTests(StudyRunBase):
         self.assertEqual(self.steps("compare")[0]["status"], "written")
         self.assertEqual(self.record()["status"], "failed")
         self.assertIsNone(self.record()["stopReason"])
+
+    def test_a_stopped_study_lists_the_commands_that_finish_it_by_hand(self):
+        docker = FakeDocker(start_fails={"mpg-pilot-p2-mkt"})
+        code, stdout, stderr = self.run_study(docker, "--fake-reviewers", path=self.write_study(pairs=2))
+        self.assertEqual(code, 1, stdout + stderr)
+        self.assertEqual(docker.started(), ["mpg-pilot-p1-conv", "mpg-pilot-p1-mkt"])  # no automatic assessment
+        runs = self.out / "runs"
+        expected = [f"python3 -m playground assess --run {runs / 'pilot-p1-conv'} --reviewers codex,claude "
+                    "--fake-reviewers",
+                    f"python3 -m playground assess --run {runs / 'pilot-p1-mkt'} --reviewers codex,claude "
+                    "--fake-reviewers",
+                    f"python3 -m playground compare {runs / 'pilot-p1-conv'} {runs / 'pilot-p1-mkt'} --out "
+                    f"{self.out / 'comparisons' / 'p1.md'}"]
+        if os.name == "posix":
+            finish = self.record()["finishByHand"]
+            self.assertEqual(finish, {"cwd": str(host.ROOT), "commands": expected})
+        else:  # shlex quotes Windows paths
+            finish = self.record()["finishByHand"]
+            self.assertEqual(len(finish["commands"]), 3)
+        markdown = (self.out / "study.md").read_text(encoding="utf-8")
+        self.assertIn("## Finish by hand", markdown)
+        for command in finish["commands"]:
+            self.assertIn(command, markdown)
+            self.assertIn(command, stderr)
+        # a study that did not stop lists nothing
+        self.out = self.root / "runs" / "clean"
+        self.assertEqual(self.run_study(FakeDocker(), "--fake-reviewers")[0], 0)
+        self.assertIsNone(self.record()["finishByHand"])
+        self.assertNotIn("Finish by hand", (self.out / "study.md").read_text(encoding="utf-8"))
+
+    def test_sigterm_and_sighup_clean_up_like_ctrl_c(self):
+        signals = [signal.SIGTERM] + ([signal.SIGHUP] if hasattr(signal, "SIGHUP") else [])
+        before = {number: signal.getsignal(number) for number in signals}
+        for number in signals:
+            with self.subTest(signal=number):
+                self.out = self.root / "runs" / f"signal-{number}"
+                docker = FakeDocker(wait_effects={"mpg-pilot-p1-mkt": send(number)})
+                code, _stdout, _stderr = self.run_study(docker, "--codex-auth", str(self.source), "--fake-reviewers")
+                self.assertEqual(code, 130)
+                record = self.record()
+                self.assertEqual(record["status"], "interrupted")
+                self.assertEqual(self.steps("run")[1]["status"], "host-interrupted")
+                self.assertIn(["docker", "rm", "-f", "mpg-pilot-p1-mkt"], docker.calls)
+                self.assertEqual(docker.containers, {})
+                self.assertFalse(Path(record["logins"]["copies"]["folder"]).exists())
+                self.assertFalse((self.state / "study.lock").exists())
+                self.assertEqual(len(record["finishByHand"]["commands"]), 1)  # assess the finished first run
+        self.assertEqual({number: signal.getsignal(number) for number in signals}, before)  # handlers restored
 
     def test_the_study_stops_when_the_host_cannot_run_a_container(self):
         docker = FakeDocker(start_fails={"mpg-pilot-p1-conv"})
@@ -607,14 +752,15 @@ class StudyRunTests(StudyRunBase):
         self.assertIn("fairness.imageId", [key for key, _a, _b in step["mismatches"]])
         self.assertFalse((self.out / "comparisons").exists())
 
-    def test_a_copied_out_login_that_is_not_a_small_file_is_never_promoted(self):
-        for mode in ("huge", "symlink") if os.name == "posix" else ("huge",):
+    def test_a_copied_out_login_that_is_not_one_small_file_is_never_promoted(self):
+        for mode in ("huge", "symlink", "dir", "two", "device"):
             with self.subTest(mode=mode):
                 self.out = self.root / "runs" / mode
                 docker = FakeDocker(cp=mode)
                 code, stdout, stderr = self.run_study(docker, "--codex-auth", str(self.source), "--fake-reviewers")
                 self.assertEqual(code, 0, stdout + stderr)
-                self.assertTrue(all("not a regular file" in s["login"]["promotion"] for s in self.steps("run")))
+                self.assertTrue(all(s["login"]["copyOut"].startswith("rejected:") for s in self.steps("run")))
+                self.assertTrue(all("nothing copied out" in s["login"]["promotion"] for s in self.steps("run")))
                 generations = [json.loads(docker.seen_logins[name])["generation"] for name in docker.started()
                                if not name.startswith("mpg-assess-")]
                 self.assertEqual(generations, [0, 0])

@@ -329,6 +329,40 @@ class RunTests(HostTestBase):
         self.assertNotIn("docker rm", docker.commands())
         self.assertEqual(docker.container, "running")
 
+    def run_prebuilt(self, docker, before_remove):
+        manifest = host.manifest_module.load(self.manifest_path, playground=host.ROOT)
+        prebuilt = {"image": {"tag": host.image_tag(manifest), "id": "sha256:built-once"}}
+        with mock.patch.object(host.subprocess, "run", docker.run),                 mock.patch.object(host.subprocess, "Popen", docker.popen), quiet():
+            return host.run_manifest(manifest, self.out, auth=None, token=None, prebuilt=prebuilt,
+                                     before_remove=before_remove)
+
+    def test_a_prebuilt_image_runs_by_its_id_and_the_hook_runs_before_removal(self):
+        docker, seen = FakeDocker(), []
+        code, record = self.run_prebuilt(docker, lambda name: seen.append((name, docker.container)))
+        self.assertEqual((code, record["image"]["id"]), (1, "sha256:built-once"))
+        self.assertEqual(seen, [("mpg-fake-roombook-001", "stopped")])
+        run = next(c for c in docker.calls if c[:2] == ["docker", "run"])
+        self.assertIn("sha256:built-once", run)
+        self.assertFalse(any(arg.startswith("markitect-playground:") for arg in run))  # never the tag
+        self.assertFalse(any(c[:2] == ["docker", "build"] for c in docker.calls))
+        self.assertIsNone(docker.container)
+
+    def test_an_interrupt_in_the_pre_removal_hook_still_removes_the_container(self):
+        docker = FakeDocker()
+
+        def interrupted(name):
+            raise KeyboardInterrupt
+        code, record = self.run_prebuilt(docker, interrupted)
+        self.assertEqual((code, record["status"]), (130, "host-interrupted"))
+        self.assertIn(["docker", "rm", "-f", "mpg-fake-roombook-001"], docker.calls)
+        self.assertIsNone(docker.container)
+        self.assertEqual(self.host_record()["status"], "host-interrupted")  # host.json is still written
+        docker = FakeDocker()
+        self.out = self.base / "runs" / "failing-hook"
+        code, record = self.run_prebuilt(docker, lambda name: 1 / 0)  # an ordinary error only warns
+        self.assertEqual((code, record["status"]), (1, "completed"))
+        self.assertIsNone(docker.container)
+
     def test_setup_failure_can_be_retried_with_the_same_out(self):
         failing = FakeDocker(wait_effect=None)
         with mock.patch.object(host, "build_image", side_effect=host.HostError("docker build failed")):

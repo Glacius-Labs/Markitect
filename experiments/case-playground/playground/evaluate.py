@@ -1212,7 +1212,10 @@ def assess_container(run_dir: Path, *, names: list[str], codex_auth: Path | None
         result["error"] = str(exc)
         print(f"error: {exc}", file=sys.stderr)
     finally:
-        host._finish_container(name, result, out, keep, before_remove)
+        try:
+            host._finish_container(name, result, out, keep, before_remove)
+        except KeyboardInterrupt:  # e.g. during the login copy-out; the container is gone
+            result["status"], exit_code = "host-interrupted", 130
         if throwaway is not None:
             shutil.rmtree(throwaway, ignore_errors=True)
         result["endedAt"] = _utc()
