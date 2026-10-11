@@ -696,7 +696,7 @@ func fullAuditManager(ctx context.Context, host Host, invoker Invoker, root stri
 		Subjects                []string                    `json:"requiredSubjects"`
 		Strictness              StrictnessProfile           `json:"strictness"`
 		ResponseSchema          json.RawMessage             `json:"responseSchema"`
-	}{"projectrun-full-verify/v1", project.Snapshot.Digest(), project.Digest, project.Report.ModelDigest, modelContext, briefing, children, childAssessments, checkResults, integrationReviews, fileRefs, subjects, strictness, fullVerifyResponseSchema(subjects, strictness.Counterexamples)}
+	}{"projectrun-full-verify/v1", project.Snapshot.Digest(), project.Digest, project.Report.ModelDigest, modelContext, briefing, fullObligationsOutsideContext(children, modelContext), childAssessments, checkResults, integrationReviews, fileRefs, subjects, strictness, fullVerifyResponseSchema(subjects, strictness.Counterexamples)}
 	contextJSON, err := json.Marshal(contextPayload)
 	if err != nil {
 		return row, err
@@ -876,7 +876,14 @@ func fullManagerFiles(project *projectwork.Project, managerID string) ([]agentex
 	return files, nil
 }
 
+// fullIntegrationObligations lists what each direct child owes its parent.
+// Relations pass through projectmodel.VisibleRelations, so a child's private
+// Statements stay hidden from the parent.
 func fullIntegrationObligations(report projectmodel.Report, parentID string) []fullIntegrationObligation {
+	statementsByID := make(map[string]projectmodel.Statement, len(report.Statements))
+	for _, statement := range report.Statements {
+		statementsByID[statement.ID] = statement
+	}
 	var out []fullIntegrationObligation
 	for _, child := range report.Managers {
 		if child.Parent != parentID {
@@ -885,17 +892,21 @@ func fullIntegrationObligations(report projectmodel.Report, parentID string) []f
 		entry := fullIntegrationObligation{ChildManager: child.ID, Contracts: []projectmodel.Statement{}, Artifacts: []projectmodel.Artifact{}}
 		for _, statement := range report.Statements {
 			if statement.Owner == child.ID && statement.Public {
+				statement.Uses = projectmodel.VisibleRelations(statement.Uses, statementsByID)
+				statement.Requires = projectmodel.VisibleRelations(statement.Requires, statementsByID)
 				entry.Contracts = append(entry.Contracts, statement)
 			}
 		}
 		for _, artifact := range report.Artifacts {
 			if artifact.Owner == child.ID && artifact.Required {
+				artifact.Realizes = projectmodel.VisibleRelations(artifact.Realizes, statementsByID)
 				entry.Artifacts = append(entry.Artifacts, artifact)
 			}
 		}
 		entry.Checks = []projectmodel.Check{}
 		for _, check := range report.Checks {
 			if check.Owner == child.ID {
+				check.Uses = projectmodel.VisibleRelations(check.Uses, statementsByID)
 				entry.Checks = append(entry.Checks, check)
 			}
 		}
@@ -905,6 +916,38 @@ func fullIntegrationObligations(report projectmodel.Report, parentID string) []f
 		out = append(out, entry)
 	}
 	sort.Slice(out, func(i, j int) bool { return out[i].ChildManager < out[j].ChildManager })
+	return out
+}
+
+// fullObligationsOutsideContext drops the child contracts and Checks whose
+// definitions the parent's ManagerContext already carries (contracts,
+// foreignChecks), so the audit reads each definition from one source. Required
+// subjects still name them, from the full obligations.
+func fullObligationsOutsideContext(obligations []fullIntegrationObligation, mc projectmodel.ManagerContext) []fullIntegrationObligation {
+	defined := map[string]bool{}
+	for _, statement := range mc.Contracts {
+		defined[statement.ID] = true
+	}
+	for _, check := range mc.ForeignChecks {
+		defined[check.ID] = true
+	}
+	out := make([]fullIntegrationObligation, 0, len(obligations))
+	for _, obligation := range obligations {
+		contracts := []projectmodel.Statement{}
+		for _, statement := range obligation.Contracts {
+			if !defined[statement.ID] {
+				contracts = append(contracts, statement)
+			}
+		}
+		checks := []projectmodel.Check{}
+		for _, check := range obligation.Checks {
+			if !defined[check.ID] {
+				checks = append(checks, check)
+			}
+		}
+		obligation.Contracts, obligation.Checks = contracts, checks
+		out = append(out, obligation)
+	}
 	return out
 }
 
