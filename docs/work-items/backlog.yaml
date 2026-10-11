@@ -348,7 +348,8 @@ packages:
     title: MCP parity, read-only mode and smaller schemas
     stream: MCP
     wave: 2
-    status: ready
+    status: active
+    branch: dev/smaller-mcp-schemas
     owner: interface
     depends_on: [CLI-02]
     zone: interface
@@ -503,6 +504,7 @@ packages:
     inputs:
       - docs/work-items/surveys/tests-and-ci-20261010.md
       - docs/work-items/surveys/product-readiness-lessons-20261010.md
+    note: The race job takes about 16 minutes, about 13 of them projectrun; splitting the runtime end-to-end tests also shortens it.
     acceptance:
       - Runtime end-to-end tests live in their own package or tag, share a fixture template and run in parallel.
 
@@ -637,7 +639,8 @@ packages:
     title: Race detector in the Linux gate
     stream: CI
     wave: 2
-    status: active
+    status: done
+    pr: 199
     owner: qa
     depends_on: [CI-03]
     note: From IDEA-01, no workflow runs go test -race.
@@ -1048,3 +1051,14 @@ packages:
     status: parked
     owner: unassigned
     zone: model
+
+  - id: IDEA-05
+    title: Checks declare a timeout
+    stream: IDEA
+    wave: 4
+    status: parked
+    owner: unassigned
+    zone: model
+    note: Found in the ARCH-07 review (pull request 203); the Check kind has no timeout field, so a Check relies on its command's own limit.
+    acceptance:
+      - A Check can declare a timeout; runs and Full Verify enforce it and report an exceeded timeout as a failed Check.

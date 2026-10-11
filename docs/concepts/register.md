@@ -131,7 +131,8 @@ This register records Markitect's long-term vision, product-level decisions, cla
 - **Status:** Accepted, owner, 10 October 2026 ([owner response, point 3](sources/idea-review-20261010.md#owner-response-to-the-five-points)).
 - **Current source:**
   - This is enforced through whole-repository coverage, not inside the structural model compiler.
-  - With `coverageMode: full`, the `project init` default, an unclassified file fails `project check`, Plan and full Verify.
+  - With `coverageMode: full`, the `init` default, an unclassified file fails `check`, Plan and full Verify.
+  - The working-tree check judges only files the working tree has, so a deleted or renamed file stops failing at once; a file that is staged and then deleted from disk passes it, and a fixed-revision check catches it (for example of a commit built from the index with `git write-tree` and `git commit-tree`). Deleting an ignored file reports the unused ignore entry at once.
   - Ignore rules live in `.markitect/ignore.yaml`; the discussion's `.markitectignore` refers to the same concept.
   - A transitional class counts as accounted for but not conforming.
 - **Statement:**
