@@ -1,0 +1,128 @@
+apiVersion: project.markitect.example.org/v1alpha1
+kind: Artifact
+metadata:
+  name: legacy-code
+  namespace: legacy
+purpose: Maps the legacy Project/Domain line to its packages and executables.
+spec:
+  role: implementation
+  realizes:
+    - namespace: legacy
+      name: legacy-line
+    - namespace: legacy
+      name: legacy-removal
+  paths:
+    - src/cmd/markitect-adapter-azure-devops/
+    - src/cmd/markitect-adapter-dotnet/
+    - src/cmd/markitect-adapter-github/
+    - src/cmd/markitect-check-artifacts/
+    - src/cmd/markitect-check-modules/
+    - src/cmd/markitect-legacy/
+    - src/internal/host/artifactcli/
+    - src/internal/host/authoring/
+    - src/internal/host/azuredevopscli/
+    - src/internal/host/cli/
+    - src/internal/host/compat/
+    - src/internal/host/dotnetcli/
+    - src/internal/host/embedded/
+    - src/internal/host/githubcli/
+    - src/internal/host/inputs/
+    - src/internal/host/modulecli/
+    - src/internal/host/projectionengine/
+    - src/internal/modules/adoption/
+    - src/internal/host/adapter_command.go
+    - src/internal/host/adoption_prepare.go
+    - src/internal/host/adoption_prepare_test.go
+    - src/internal/host/adoption_workspace.go
+    - src/internal/host/app_context_test.go
+    - src/internal/host/app_fixture_test.go
+    - src/internal/host/app_impact_test.go
+    - src/internal/host/app_outputs_test.go
+    - src/internal/host/architecture.go
+    - src/internal/host/artifact_coverage.go
+    - src/internal/host/artifact_coverage_test.go
+    - src/internal/host/benchmark_test.go
+    - src/internal/host/composition.go
+    - src/internal/host/consistency.go
+    - src/internal/host/consistency_test.go
+    - src/internal/host/contentpackage.go
+    - src/internal/host/contentpackage_test.go
+    - src/internal/host/context.go
+    - src/internal/host/context_provenance_test.go
+    - src/internal/host/context_test.go
+    - src/internal/host/documentation_routers.go
+    - src/internal/host/documentation_routers_test.go
+    - src/internal/host/documentation_scenario_test.go
+    - src/internal/host/domain_inputs.go
+    - src/internal/host/domain_inputs_test.go
+    - src/internal/host/domain_provenance_test.go
+    - src/internal/host/format.go
+    - src/internal/host/format_write_test.go
+    - src/internal/host/impact.go
+    - src/internal/host/impact_analysis.go
+    - src/internal/host/impact_analysis_test.go
+    - src/internal/host/impact_policy_test.go
+    - src/internal/host/install.go
+    - src/internal/host/install_fixture_test.go
+    - src/internal/host/install_plan.go
+    - src/internal/host/install_safety_test.go
+    - src/internal/host/install_test.go
+    - src/internal/host/install_write.go
+    - src/internal/host/load.go
+    - src/internal/host/model.go
+    - src/internal/host/module_checks.go
+    - src/internal/host/module_checks_test.go
+    - src/internal/host/outputs.go
+    - src/internal/host/outputs_git_test.go
+    - src/internal/host/outputs_nested_test.go
+    - src/internal/host/outputs_package_write_test.go
+    - src/internal/host/outputs_provider.go
+    - src/internal/host/outputs_provider_test.go
+    - src/internal/host/outputs_test.go
+    - src/internal/host/outputs_write.go
+    - src/internal/host/parallel_wave_risk_test.go
+    - src/internal/host/policy_analysis.go
+    - src/internal/host/policy_analysis_boundary_test.go
+    - src/internal/host/policy_results_test.go
+    - src/internal/host/project.go
+    - src/internal/host/projection_analysis.go
+    - src/internal/host/projection_analysis_test.go
+    - src/internal/host/projection_boundary_test.go
+    - src/internal/host/projection_envelope.go
+    - src/internal/host/projection_example_test.go
+    - src/internal/host/projection_primitives_test.go
+    - src/internal/host/projection_registration.go
+    - src/internal/host/projection_registration_test.go
+    - src/internal/host/projections.go
+    - src/internal/host/projections_test.go
+    - src/internal/host/query.go
+    - src/internal/host/query_test.go
+    - src/internal/host/reconcile.go
+    - src/internal/host/reconcile_conflict_test.go
+    - src/internal/host/reconcile_stale_test.go
+    - src/internal/host/reconcile_write_test.go
+    - src/internal/host/review.go
+    - src/internal/host/review_decode.go
+    - src/internal/host/review_decode_test.go
+    - src/internal/host/review_fixture_test.go
+    - src/internal/host/review_test.go
+    - src/internal/host/review_validation.go
+    - src/internal/host/run_context.go
+    - src/internal/host/run_context_test.go
+    - src/internal/host/same_target_test.go
+    - src/internal/host/shared_helpers.go
+    - src/internal/host/snapshot_neutrality_test.go
+    - src/internal/host/testmain_test.go
+    - src/internal/host/verify.go
+    - src/internal/host/verify_test.go
+    - src/internal/host/writers_test.go
+    - src/internal/host/yaml_inputs_test.go
+  checks:
+    - namespace: ""
+      name: go-tests
+    - namespace: ""
+      name: go-vet
+    - namespace: tooling
+      name: architecture-gate
+  required: false
+  reason: The legacy line stays only until ARCH-09 removes it, so its files are not required.

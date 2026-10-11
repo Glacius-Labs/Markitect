@@ -1,0 +1,15 @@
+apiVersion: project.markitect.example.org/v1alpha1
+kind: Check
+metadata:
+  name: go-vet
+  namespace: ""
+purpose: Runs the Go vet analyzers over the module.
+spec:
+  command:
+    - go
+    - vet
+    - ./...
+  uses:
+    - namespace: product
+      name: product
+  limitation: Vet finds suspicious constructs; it does not establish behavior.

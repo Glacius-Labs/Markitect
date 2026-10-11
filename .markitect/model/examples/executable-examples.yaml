@@ -1,0 +1,29 @@
+apiVersion: project.markitect.example.org/v1alpha1
+kind: Artifact
+metadata:
+  name: executable-examples
+  namespace: examples
+purpose: Maps the examples, benchmark fixtures, their harnesses and the test kit.
+spec:
+  role: verification
+  realizes:
+    - namespace: examples
+      name: examples
+    - namespace: ""
+      name: project-local-policy
+    - namespace: ""
+      name: canonical-sources
+    - namespace: tooling
+      name: published-releases
+    - namespace: product
+      name: declared-inputs
+  paths:
+    - benchmark/
+    - examples/
+    - src/harness/
+    - src/internal/testkit/
+  checks:
+    - namespace: ""
+      name: go-tests
+  required: true
+  reason: The examples and fixtures show the documented workflows and must stay executable.

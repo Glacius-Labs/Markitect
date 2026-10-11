@@ -1,0 +1,23 @@
+apiVersion: project.markitect.example.org/v1alpha1
+kind: Check
+metadata:
+  name: module-checks
+  namespace: legacy
+purpose: Checks the hook and pipeline pins of the legacy module configuration.
+spec:
+  command:
+    - go
+    - run
+    - ./src/cmd/markitect-check-modules
+    - --repo
+    - .
+    - --hooks
+    - .markitect/modules/githooks.config
+    - --pipelines
+    - .markitect/modules/pipelines.config
+  uses:
+    - namespace: legacy
+      name: legacy-line
+    - namespace: ""
+      name: repository
+  limitation: It compares the hook and ci.yaml bytes with recorded digests and selected step scalars with literal argv; it runs neither.

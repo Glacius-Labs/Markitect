@@ -1,0 +1,23 @@
+apiVersion: project.markitect.example.org/v1alpha1
+kind: Check
+metadata:
+  name: go-tests
+  namespace: ""
+purpose: Runs every Go test in the module.
+spec:
+  command:
+    - go
+    - test
+    - ./...
+    - -count=1
+    - -timeout=20m
+  uses:
+    - namespace: product
+      name: product
+    - namespace: legacy
+      name: legacy-line
+    - namespace: tooling
+      name: tooling
+    - namespace: examples
+      name: examples
+  limitation: CI adds JSON reporting and a longer timeout on Windows; the tests cover finite cases and do not establish that the model is complete or correct.

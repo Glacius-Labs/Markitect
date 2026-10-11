@@ -1,0 +1,12 @@
+apiVersion: project.markitect.example.org/v1alpha1
+kind: Statement
+metadata:
+  name: legacy-line
+  namespace: legacy
+purpose: States what the legacy Manager owns.
+spec:
+  category: architecture
+  description: "The legacy line is the `markitect-legacy` executable, the host root package and the packages the code map marks legacy, with the dogfood model, views and module checks it still runs for this repository."
+  public: true
+  uses: []
+  requires: []

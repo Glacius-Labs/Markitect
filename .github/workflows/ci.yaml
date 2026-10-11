@@ -83,6 +83,25 @@ jobs:
       - name: Verify modules
         run: go mod verify
 
+      - name: Check the self-hosted project model
+        shell: bash
+        run: |
+          # The full report goes to a file; a failure prints only its findings.
+          report="$RUNNER_TEMP/project-check.json"
+          go run ./src/cmd/markitect check --repo . --revision ${{ github.sha }} > "$report" || { grep -A3 '"code":' "$report" | head -n 200; exit 1; }
+
+      - name: Check that the project model view is current
+        if: runner.os == 'Linux'
+        shell: python {0}
+        run: |
+          # The docs preview's digest is the SHA-256 of the view it would write.
+          import hashlib, json, subprocess, sys
+          sha = "${{ github.sha }}"
+          view = json.loads(subprocess.run(["go", "run", "./src/cmd/markitect", "docs", "--repo", ".", "--revision", sha], check=True, stdout=subprocess.PIPE).stdout)
+          committed = subprocess.run(["git", "show", sha + ":" + view["path"]], check=True, stdout=subprocess.PIPE).stdout
+          if "sha256:" + hashlib.sha256(committed).hexdigest() != view["digest"]:
+              sys.exit(view["path"] + " is stale; regenerate it with 'go run ./src/cmd/markitect docs --repo . --expect DIGEST --write' and commit it.")
+
       - name: Check Markitect-first dogfood project
         run: go run ./src/cmd/markitect-legacy check --repo . --revision ${{ github.sha }}
 

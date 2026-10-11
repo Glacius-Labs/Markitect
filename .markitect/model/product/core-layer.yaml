@@ -1,0 +1,37 @@
+apiVersion: project.markitect.example.org/v1alpha1
+kind: Artifact
+metadata:
+  name: core-layer
+  namespace: product
+purpose: Maps the deterministic core layer to its packages.
+spec:
+  role: implementation
+  realizes:
+    - namespace: product
+      name: product
+    - namespace: product
+      name: core-stays-generic
+    - namespace: product
+      name: explicit-relationships
+    - namespace: legacy
+      name: legacy-removal
+    - namespace: ""
+      name: canonical-sources
+    - namespace: ""
+      name: project-local-policy
+    - namespace: product
+      name: declared-inputs
+  paths:
+    - src/internal/core/
+    - src/internal/host/projectbriefing/
+    - src/internal/host/projectcoverage/
+    - src/internal/modules/projectmodel/
+  checks:
+    - namespace: ""
+      name: go-tests
+    - namespace: ""
+      name: go-vet
+    - namespace: tooling
+      name: architecture-gate
+  required: true
+  reason: The core compiles the model, reads snapshots and derives coverage, impact and briefings without providers or writes.

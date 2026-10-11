@@ -1,0 +1,35 @@
+apiVersion: project.markitect.example.org/v1alpha1
+kind: Manager
+metadata:
+  name: product
+  namespace: product
+purpose: "Owns the current product: its core, infrastructure, application and runtime packages and their executables."
+spec:
+  parent:
+    namespace: ""
+    name: markitect
+  owns:
+    - src/cmd/markitect/
+    - src/cmd/markitect-exchange-executor/
+    - src/cmd/markitect-release/
+    - src/internal/core/
+    - src/internal/infrastructure/
+    - src/internal/modules/projectmodel/
+    - src/internal/host/agentexec/
+    - src/internal/host/codexappserver/
+    - src/internal/host/exchangecli/
+    - src/internal/host/guardedwrite/
+    - src/internal/host/mcp/
+    - src/internal/host/projectadoption/
+    - src/internal/host/projectapp/
+    - src/internal/host/projectbriefing/
+    - src/internal/host/projectcli/
+    - src/internal/host/projectcoverage/
+    - src/internal/host/projectexplore/
+    - src/internal/host/projectonboarding/
+    - src/internal/host/projectrun/
+    - src/internal/host/projectsetup/
+    - src/internal/host/projectwork/
+    - src/internal/host/projectworkspace/
+    - src/internal/host/releasecli/
+  instructions: Read a package's owning document in the code map before you change the package, and update it when the package's behavior changes.

@@ -1,0 +1,12 @@
+apiVersion: project.markitect.example.org/v1alpha1
+kind: Statement
+metadata:
+  name: published-releases
+  namespace: tooling
+purpose: Repository rule carried over from the legacy repository-boundaries Rule.
+spec:
+  category: rule
+  description: A source change does not update a published release. Published releases, pins and original evidence stay immutable records.
+  public: true
+  uses: []
+  requires: []

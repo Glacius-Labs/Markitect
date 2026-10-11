@@ -1,0 +1,17 @@
+apiVersion: project.markitect.example.org/v1alpha1
+kind: Manager
+metadata:
+  name: tooling
+  namespace: tooling
+purpose: "Owns maintainer tooling: the import gate, release building and publication, notices, packaging and the bootstrap."
+spec:
+  parent:
+    namespace: ""
+    name: markitect
+  owns:
+    - integration/
+    - packaging/
+    - src/cmd/markitect-check-architecture/
+    - src/internal/tooling/
+    - tools/
+  instructions: Validate a release candidate and publish it only through the documented release process.

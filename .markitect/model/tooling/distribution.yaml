@@ -1,0 +1,23 @@
+apiVersion: project.markitect.example.org/v1alpha1
+kind: Artifact
+metadata:
+  name: distribution
+  namespace: tooling
+purpose: Maps the bootstrap and the versioned package manifests.
+spec:
+  role: configuration
+  realizes:
+    - namespace: tooling
+      name: tooling
+    - namespace: tooling
+      name: published-releases
+    - namespace: ""
+      name: project-local-policy
+  paths:
+    - integration/
+    - packaging/
+  checks:
+    - namespace: ""
+      name: go-tests
+  required: true
+  reason: Consumers build a pinned release through the bootstrap and install published versions through the package manifests.

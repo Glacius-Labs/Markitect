@@ -70,6 +70,7 @@ Two rules shape every change:
 Begin through the repository's model-first contributor guidance and classify a requested change as model intent, implementation or both. For an intent change, edit its canonical owner, review the generated readable document, and commit the accepted model before implementation. A passing check, digest or provider report is not human approval. From the repository root with Go 1.27.1 or later and Git 2.40 or later (Explore, Plan and Apply call `git check-attr --source`):
 
 ```powershell
+go run ./src/cmd/markitect check --repo .
 go test ./... -count=1 -timeout=60m
 go vet ./...
 go run ./tools/smoke -repo .
@@ -122,7 +123,7 @@ Edit validation declarations and regenerate schemas with `schema --repo . --writ
 
 ## Legacy Project/Domain checks and rendering
 
-These rules apply to the legacy line, which still runs this repository's own checks until ARCH-07. New projects use the model-first [Project workflow](docs/project-workflow.md).
+These rules apply to the legacy line, whose own checks still run in this repository's CI until ARCH-09. New projects use the model-first [Project workflow](docs/project-workflow.md).
 
 For a Project to produce complete `verify` evidence, declare every required command under `spec.checks`. Each check has a stable `name` and a `run` argument array. The first item must be a bare executable name resolvable through `PATH`; use an interpreter command such as `go run tools/check-docs.go` for a repository script. Markitect passes arguments directly and does not insert a shell. This avoids implicit shell expansion and keeps the executed command visible in the fixed Project snapshot.
 

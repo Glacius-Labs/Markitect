@@ -1,0 +1,54 @@
+acceptancePolicy: committed-model
+apiVersion: project.markitect.example.org/v1alpha1
+coverageMode: full
+documentPath: docs/markitect/project.md
+exclusions: []
+inventoryRoots: []
+modelFiles:
+    - .markitect/model/canonical-sources.yaml
+    - .markitect/model/documentation/docs-links.yaml
+    - .markitect/model/documentation/documentation-pages.yaml
+    - .markitect/model/documentation/legacy-views.yaml
+    - .markitect/model/documentation/manager.yaml
+    - .markitect/model/documentation/purpose.yaml
+    - .markitect/model/examples/executable-examples.yaml
+    - .markitect/model/examples/experiments.yaml
+    - .markitect/model/examples/manager.yaml
+    - .markitect/model/examples/purpose.yaml
+    - .markitect/model/go-tests.yaml
+    - .markitect/model/go-vet.yaml
+    - .markitect/model/legacy/artifact-accounting.yaml
+    - .markitect/model/legacy/legacy-code.yaml
+    - .markitect/model/legacy/legacy-dogfood.yaml
+    - .markitect/model/legacy/legacy-line.yaml
+    - .markitect/model/legacy/legacy-removal.yaml
+    - .markitect/model/legacy/legacy-skill-views.yaml
+    - .markitect/model/legacy/manager.yaml
+    - .markitect/model/legacy/module-checks.yaml
+    - .markitect/model/manager.yaml
+    - .markitect/model/product/application-layer.yaml
+    - .markitect/model/product/core-layer.yaml
+    - .markitect/model/product/core-stays-generic.yaml
+    - .markitect/model/product/declared-inputs.yaml
+    - .markitect/model/product/distinct-state.yaml
+    - .markitect/model/product/evidence-not-acceptance.yaml
+    - .markitect/model/product/explicit-relationships.yaml
+    - .markitect/model/product/infrastructure-layer.yaml
+    - .markitect/model/product/manager.yaml
+    - .markitect/model/product/purpose.yaml
+    - .markitect/model/product/runtime-layer.yaml
+    - .markitect/model/project-local-policy.yaml
+    - .markitect/model/repository-configuration.yaml
+    - .markitect/model/repository-gates.yaml
+    - .markitect/model/repository-guides.yaml
+    - .markitect/model/repository.yaml
+    - .markitect/model/script-tests.yaml
+    - .markitect/model/tooling/architecture-gate.yaml
+    - .markitect/model/tooling/distribution.yaml
+    - .markitect/model/tooling/maintainer-tooling.yaml
+    - .markitect/model/tooling/manager.yaml
+    - .markitect/model/tooling/published-releases.yaml
+    - .markitect/model/tooling/purpose.yaml
+name: markitect
+transitionalExclusions: []
+workflowMode: guided

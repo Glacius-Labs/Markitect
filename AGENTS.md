@@ -5,18 +5,18 @@ Markitect is model-first development with delegated realization. People maintain
 ## Every task
 
 1. Work on a branch from current `origin/main`. Its name starts with a prefix that says what it holds, such as `dev/`, `fix/` or `docs/` ([branch names](docs/implementation-plan.md#branch-names)).
-2. Resolve a fixed BASE commit and load this repository's engineering context:
+2. Check this repository's [project model](.markitect/project.yaml) and read the context of the Manager that owns your change:
 
    ```text
-   go run ./src/cmd/markitect-legacy check --repo . --revision BASE
-   go run ./src/cmd/markitect-legacy context --repo . --revision BASE --namespace development --kind Skill --name engineering-change
+   go run ./src/cmd/markitect check --repo .
+   go run ./src/cmd/markitect context --repo . '["project.markitect.example.org/v1alpha1","Manager","product","product"]'
    ```
 
-   The context contains the [engineering-change Skill](.markitect/areas/development/engineering-change.skill.yaml), the [Markitect-first Change workflow](src/internal/host/embedded/resources/workflow-markitect-first-change.yaml), the [repository rules](.markitect/areas/development/repository-boundaries.rule.yaml) and the [document owners](.markitect/areas/development/document-owners.text.yaml). [The workflow guide](docs/markitect-first.md) explains how to classify and complete a change. Implementation-only work needs no model change.
-3. If you change a file under `.markitect/`, regenerate its views with `go run ./src/cmd/markitect-legacy render --repo . --write`. Do not edit generated files.
+   The root Manager `markitect` delegates to `product`, `legacy`, `tooling`, `documentation` and `examples`; copy a Manager's ID from its Identity line in the [readable view](docs/markitect/project.md). In Windows PowerShell 5.1, write each `"` inside the ID as `\"`. The context holds the Manager's paths, instructions, the repository rules that apply to it, its Artifacts, and the checks it owns or that verify its work. `check` fails when a file lies outside every Artifact path. [The workflow guide](docs/project-workflow.md) explains how to work with the model. Implementation-only work needs no model change.
+3. If you change a file under `.markitect/model/`, preview the readable view with `go run ./src/cmd/markitect docs --repo .` and write it with `go run ./src/cmd/markitect docs --repo . --expect DIGEST --write`, using the preview's digest. Do not edit generated files. If `check` reports a path that no Artifact covers, for example a new package directory or top-level file, add it to the Artifact of the Manager that owns that area, or to `.markitect/ignore.yaml` with a reason, in the same pull request.
 4. Before you open a pull request, run the checks in [CONTRIBUTING](CONTRIBUTING.md#verify-a-change).
 
-These commands belong to the earlier Project/Domain line, which still runs this repository's own checks. ARCH-07 moves Markitect onto its own project model.
+The earlier Project/Domain line still runs its own checks in CI until ARCH-09 removes it.
 
 ## Where things are
 

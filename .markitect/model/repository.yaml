@@ -1,0 +1,12 @@
+apiVersion: project.markitect.example.org/v1alpha1
+kind: Statement
+metadata:
+  name: repository
+  namespace: ""
+purpose: States what the root Manager keeps.
+spec:
+  category: architecture
+  description: "The repository root keeps the guides, the Go module, the Git configuration and the gates in `.github/`, `.githooks/` and `scripts/`; every other area has its own Manager."
+  public: true
+  uses: []
+  requires: []

@@ -1,0 +1,12 @@
+apiVersion: project.markitect.example.org/v1alpha1
+kind: Statement
+metadata:
+  name: explicit-relationships
+  namespace: product
+purpose: Repository rule carried over from the legacy repository-boundaries Rule.
+spec:
+  category: rule
+  description: Relationships and input scope are explicit. Do not infer dependencies from prose, README links or paths. Fixed-snapshot results are deterministic, unknown impact stays conservative, and every generated output has one canonical owner.
+  public: true
+  uses: []
+  requires: []

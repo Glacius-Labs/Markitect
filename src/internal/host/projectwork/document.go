@@ -305,6 +305,17 @@ func writeCoverageAndFindings(out *strings.Builder, project *Project) {
 		for _, finding := range project.Coverage.Findings {
 			add(finding.Path, fmt.Sprintf("%s (%s): %s", inline(finding.Severity), inline(finding.Code), inline(finding.Message)))
 		}
+		// A present file under a transitional exclusion blocks conformance
+		// without a coverage finding; list it so the verdict has a reason.
+		for _, entry := range project.Coverage.Entries {
+			present := entry.Head.Present
+			if project.Provisional {
+				present = entry.Worktree.Present
+			}
+			if entry.Class == projectcoverage.ClassTransitional && present {
+				add(entry.Path, fmt.Sprintf("transitional: blocks conformance until the path is classified (%s)", inline(entry.Reason)))
+			}
+		}
 	}
 	if len(findings) == 0 {
 		out.WriteString("No path or definition has a finding.\n")

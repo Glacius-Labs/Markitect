@@ -1,0 +1,12 @@
+apiVersion: project.markitect.example.org/v1alpha1
+kind: Statement
+metadata:
+  name: legacy-removal
+  namespace: legacy
+purpose: Repository rule carried over from the legacy repository-boundaries Rule.
+spec:
+  category: rule
+  description: "Product packages do not import legacy packages: the host root package, `compat/v0_13`, the canonical projection alpha and their helpers. Change the legacy lines only to remove them. Compatibility is not a reason to keep a function, mode or fallback (DEC-014)."
+  public: true
+  uses: []
+  requires: []

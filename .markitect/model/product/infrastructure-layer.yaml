@@ -1,0 +1,35 @@
+apiVersion: project.markitect.example.org/v1alpha1
+kind: Artifact
+metadata:
+  name: infrastructure-layer
+  namespace: product
+purpose: Maps the infrastructure layer to its packages.
+spec:
+  role: implementation
+  realizes:
+    - namespace: product
+      name: product
+    - namespace: product
+      name: core-stays-generic
+    - namespace: product
+      name: explicit-relationships
+    - namespace: legacy
+      name: legacy-removal
+    - namespace: ""
+      name: canonical-sources
+    - namespace: ""
+      name: project-local-policy
+    - namespace: product
+      name: distinct-state
+  paths:
+    - src/internal/host/guardedwrite/
+    - src/internal/infrastructure/
+  checks:
+    - namespace: ""
+      name: go-tests
+    - namespace: ""
+      name: go-vet
+    - namespace: tooling
+      name: architecture-gate
+  required: true
+  reason: Fixed snapshots and guarded writes are the only Git and working-tree access of the product.

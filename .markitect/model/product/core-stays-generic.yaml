@@ -1,0 +1,12 @@
+apiVersion: project.markitect.example.org/v1alpha1
+kind: Statement
+metadata:
+  name: core-stays-generic
+  namespace: product
+purpose: Repository rule carried over from the legacy repository-boundaries Rule.
+spec:
+  category: architecture
+  description: "Core stays generic. It does not depend on Modules, Host, CLI, adopting repositories or model providers. A capability Module imports only Core and its own subtree. Host composes; CLI entrypoints delegate to Host. The import gate in `src/internal/tooling/architecture` enforces these directions; do not add exceptions to it."
+  public: true
+  uses: []
+  requires: []

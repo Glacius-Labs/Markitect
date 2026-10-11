@@ -1,0 +1,12 @@
+apiVersion: project.markitect.example.org/v1alpha1
+kind: Statement
+metadata:
+  name: distinct-state
+  namespace: product
+purpose: Repository rule carried over from the legacy repository-boundaries Rule.
+spec:
+  category: rule
+  description: Keep desired, observed, inferred, candidate and generated state distinct. Keep preview before write, digest-bound writes, stale-plan rejection, independent review and guarded Apply.
+  public: true
+  uses: []
+  requires: []

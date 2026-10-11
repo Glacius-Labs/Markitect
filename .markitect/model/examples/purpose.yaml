@@ -1,0 +1,12 @@
+apiVersion: project.markitect.example.org/v1alpha1
+kind: Statement
+metadata:
+  name: examples
+  namespace: examples
+purpose: States what the examples Manager owns.
+spec:
+  category: architecture
+  description: Examples and benchmark fixtures are executable inputs that the harnesses and CI test; the test kit gives every package's tests hermetic fixtures; experiments are bounded pilots kept with their evaluation.
+  public: true
+  uses: []
+  requires: []

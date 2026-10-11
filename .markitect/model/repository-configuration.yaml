@@ -1,0 +1,23 @@
+apiVersion: project.markitect.example.org/v1alpha1
+kind: Artifact
+metadata:
+  name: repository-configuration
+  namespace: ""
+purpose: Maps the Go module and the Git configuration.
+spec:
+  role: configuration
+  realizes:
+    - namespace: ""
+      name: repository
+  paths:
+    - .gitattributes
+    - .gitignore
+    - go.mod
+    - go.sum
+  checks:
+    - namespace: ""
+      name: go-tests
+    - namespace: ""
+      name: go-vet
+  required: true
+  reason: The Go module and the Git attributes define how every package builds and how files are stored.

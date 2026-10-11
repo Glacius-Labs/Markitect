@@ -1,0 +1,34 @@
+apiVersion: project.markitect.example.org/v1alpha1
+kind: Artifact
+metadata:
+  name: maintainer-tooling
+  namespace: tooling
+purpose: Maps the maintainer tools to their packages.
+spec:
+  role: implementation
+  realizes:
+    - namespace: tooling
+      name: tooling
+    - namespace: tooling
+      name: published-releases
+    - namespace: product
+      name: core-stays-generic
+    - namespace: legacy
+      name: legacy-removal
+    - namespace: ""
+      name: canonical-sources
+    - namespace: product
+      name: evidence-not-acceptance
+  paths:
+    - src/cmd/markitect-check-architecture/
+    - src/internal/tooling/
+    - tools/
+  checks:
+    - namespace: ""
+      name: go-tests
+    - namespace: ""
+      name: go-vet
+    - namespace: tooling
+      name: architecture-gate
+  required: true
+  reason: The import gate, release, publication, notices, provider runners and smoke driver keep the repository releasable.

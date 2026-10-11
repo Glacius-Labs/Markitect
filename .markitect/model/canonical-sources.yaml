@@ -1,0 +1,12 @@
+apiVersion: project.markitect.example.org/v1alpha1
+kind: Statement
+metadata:
+  name: canonical-sources
+  namespace: ""
+purpose: Repository rule carried over from the legacy repository-boundaries Rule.
+spec:
+  category: rule
+  description: Typed YAML is the canonical model; generated Markdown, Codex and Claude files are its views. Change the canonical source and regenerate the views; do not edit generated files.
+  public: true
+  uses: []
+  requires: []

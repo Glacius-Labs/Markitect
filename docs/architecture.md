@@ -126,12 +126,12 @@ Known problems:
 
 ## Legacy line
 
-The legacy line is the earlier Project/Domain product: the verbs such as `check`, `context`, `impact`, `render` and `verify` over `markitect.yaml`, the v0.13 kernel and consumers under `host/compat/v0_13`, the metadata adapters, content packages and Copy Me. Its main packages are the host root, `host/cli`, `host/authoring` and `host/compat/v0_13`; the [code map](development/code-map.md#legacy-and-compatibility) lists all of them. The published v0.14.1 release contains it. It is not developed further ([DEC-014](concepts/register.md#dec-014-compatibility-does-not-drive-decisions)). It still runs this repository's own checks until ARCH-07, and ARCH-09 removes it. Its earlier architecture is kept in a [history record](history/architecture-legacy-sections-20261010.md).
+The legacy line is the earlier Project/Domain product: the verbs such as `check`, `context`, `impact`, `render` and `verify` over `markitect.yaml`, the v0.13 kernel and consumers under `host/compat/v0_13`, the metadata adapters, content packages and Copy Me. Its main packages are the host root, `host/cli`, `host/authoring` and `host/compat/v0_13`; the [code map](development/code-map.md#legacy-and-compatibility) lists all of them. The published v0.14.1 release contains it. It is not developed further ([DEC-014](concepts/register.md#dec-014-compatibility-does-not-drive-decisions)). Its own checks still run in this repository's CI until ARCH-09 removes it. Its earlier architecture is kept in a [history record](history/architecture-legacy-sections-20261010.md).
 
 Known problems:
 
 - The `markitect` executable enters through the legacy dispatcher. `src/cmd/markitect/main.go` calls `host/cli`, which routes `project` to `projectcli` and also holds `package`, `bundle`, `install` and `licenses` (`cli_dispatch.go`) (CLI-02, ARCH-08).
-- This repository develops itself on the legacy line: `markitect.yaml` and `.markitect/areas`, the commands in `AGENTS.md`, the pre-commit hook and the many `markitect` calls in `ci.yaml`, none of them to `project` (ARCH-07).
+- This repository's model is `.markitect/project.yaml`, which `markitect check` gates in CI and the pre-commit hook. The legacy dogfood still runs beside it: `markitect.yaml`, `.markitect/areas`, `.markitect/modules`, the generated legacy views and the `markitect-legacy` steps in `ci.yaml` (ARCH-09).
 - `markitect-check-architecture` runs the gate through the host root (`host/architecture.go`), so the gate binary links the legacy package (ARCH-09).
 - Only `examples/project-world` uses the model-first format. The other example directories use `markitect.yaml` or the legacy package and Copy Me formats (ARCH-09).
 
