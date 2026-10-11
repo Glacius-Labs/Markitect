@@ -410,9 +410,10 @@ func route(base, candidate Report) routing {
 		out.Unknown = append(out.Unknown, "model digest changed without a definition change the report can name; the declared project needs review")
 	}
 
-	// Directly changed statements and reverse dependents need their own realizing artifacts
-	// and every check that exercises them.
+	// Directly changed statements and reverse dependents need their own realizing artifacts,
+	// every check that exercises them and the owners of every decision about them.
 	allChecks := append(append([]Check(nil), base.Checks...), candidate.Checks...)
+	allDecisions := append(append([]Decision(nil), base.Decisions...), candidate.Decisions...)
 	addCoverage := func(statementID string) {
 		from := element{"statement", statementID}
 		for _, artifact := range allArtifacts {
@@ -431,6 +432,13 @@ func route(base, candidate Report) routing {
 				exercising := element{"check", check.ID}
 				rec.add(exercising, cause{"exercises", from, "exercised by"})
 				ownedBy(check.Owner, exercising)
+			}
+		}
+		for _, decision := range allDecisions {
+			if decision.Subject == statementID {
+				deciding := element{"decision", decision.ID}
+				rec.add(deciding, cause{"decided on", from, "decided by"})
+				ownedBy(decision.Owner, deciding)
 			}
 		}
 	}
@@ -500,6 +508,14 @@ func route(base, candidate Report) routing {
 	}
 	for id := range fileStatements {
 		out.AffectedStatements = append(out.AffectedStatements, id)
+	}
+	// Every check that must run again routes its owner, however it was reached.
+	for _, id := range rec.ids("check") {
+		for _, check := range allChecks {
+			if check.ID == id {
+				ownedBy(check.Owner, element{"check", id})
+			}
+		}
 	}
 	for _, id := range rec.ids("manager") {
 		addAncestorsOf(id, managerByID)
