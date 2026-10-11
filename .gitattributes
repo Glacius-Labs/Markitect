@@ -1,7 +1,6 @@
 * text=auto eol=lf
 **/docs/markitect/** linguist-generated=true
 # The generated project model view keeps the trailing spaces its renderer writes.
-/docs/markitect/project.md whitespace=-blank-at-eol
 # Preserve supplied strategy proposals byte for byte, including their original whitespace.
 docs/strategy/sources/*.md -text whitespace=-blank-at-eof,-blank-at-eol
 docs/strategy/markitect-strategic-positioning-and-validation.md -text whitespace=-blank-at-eof
