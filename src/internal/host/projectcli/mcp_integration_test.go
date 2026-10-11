@@ -10,6 +10,7 @@ import (
 	"regexp"
 	"slices"
 	"sort"
+	"strconv"
 	"strings"
 	"testing"
 
@@ -544,6 +545,82 @@ func TestExplainAndTraceAreEqualThroughCLIAndMCP(t *testing.T) {
 		if result, err := server.Call(context.Background(), tool, mustRaw(t, args)); err != nil || !result.IsError ||
 			result.StructuredContent.(map[string]any)["diagnostic"].(map[string]any)["code"] != "invalid_arguments" {
 			t.Fatalf("MCP %s %v: %+v %v", tool, args, result, err)
+		}
+	}
+}
+
+// toolSizeCeilings pin the published tool list (MCP-01): each tool's
+// tools/list entry in compact JSON may grow at most about 10% past its size
+// when result schemas started sharing definitions. Raise a ceiling only for
+// a deliberate contract change.
+var toolSizeCeilings = map[string]int{
+	"adopt": 32000, "apply": 1500, "brief": 1500, "check": 3500, "config": 11000, "context": 5000, "deliver": 28500,
+	"docs": 1500, "doctor": 1500, "edit": 7000, "explore": 10000, "impact": 3000, "init": 1500, "model": 4500,
+	"onboard": 2000, "plan": 14000, "ready": 7500, "repair": 13500, "resume": 13500, "run": 13500, "schema": 1000,
+	"status": 1000, "verify": 1000,
+}
+
+func TestPublishedToolListStaysWithinItsSizeCeilings(t *testing.T) {
+	server, err := newMCPServer(env{root: t.TempDir(), ops: projectOperations()})
+	if err != nil {
+		t.Fatal(err)
+	}
+	total := 0
+	for _, tool := range server.Tools() {
+		encoded, err := json.Marshal(tool)
+		if err != nil {
+			t.Fatal(err)
+		}
+		total += len(encoded)
+		ceiling, ok := toolSizeCeilings[tool.Name]
+		if !ok {
+			t.Errorf("tool %s has no size ceiling", tool.Name)
+			continue
+		}
+		if len(encoded) > ceiling {
+			t.Errorf("tool %s is %d bytes in tools/list, over its ceiling of %d", tool.Name, len(encoded), ceiling)
+		}
+	}
+	if total > 172000 {
+		t.Errorf("tools/list is %d bytes, over its ceiling of 172000", total)
+	}
+}
+
+// Real results, successful and failed, validate against the output schema
+// each tool publishes.
+func TestRealResultsMatchTheirPublishedOutputSchemas(t *testing.T) {
+	repo := copyProjectWorld(t)
+	server, err := newMCPServer(env{root: repo, ops: projectOperations()})
+	if err != nil {
+		t.Fatal(err)
+	}
+	shop := `["project.markitect.example.org/v1alpha1","Manager","","shop"]`
+	calls := []struct {
+		tool string
+		args string
+	}{
+		{"schema", `{}`},
+		{"check", `{"revision":"HEAD"}`},
+		{"model", `{"revision":"HEAD"}`},
+		{"context", `{"manager":` + strconv.Quote(shop) + `,"revision":"HEAD"}`},
+		{"context", `{"manager":"orders","revision":"HEAD","trace":"no-such-node"}`},
+		{"impact", `{"since":"HEAD","revision":"HEAD"}`},
+		{"impact", `{"since":"HEAD","revision":"HEAD","explain":true}`},
+		{"docs", `{}`},
+		{"explore", `{}`},
+		{"brief", `{"action":"list"}`},
+		{"status", `{}`},
+		{"status", `{"run":"missing"}`},
+		{"plan", `{"goal":"Check the output schema"}`},
+		{"init", `{"name":"already initialized"}`},
+	}
+	for _, call := range calls {
+		result, err := server.Call(context.Background(), call.tool, json.RawMessage(call.args))
+		if err != nil {
+			t.Fatalf("%s %s: %v", call.tool, call.args, err)
+		}
+		if err := server.ValidateResult(call.tool, result); err != nil {
+			t.Errorf("%s %s result does not match its output schema: %v", call.tool, call.args, err)
 		}
 	}
 }

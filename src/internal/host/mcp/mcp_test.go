@@ -14,6 +14,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/Glacius-Labs/Markitect/src/internal/host/codexappserver"
 	"github.com/Glacius-Labs/Markitect/src/internal/host/projectrun"
 	"github.com/Glacius-Labs/Markitect/src/internal/host/projectsetup"
 )
@@ -494,4 +495,158 @@ func TestPublicErrorMapperAndRetainedStructuredValidation(t *testing.T) {
 	if !strings.Contains(result.Content[0].Text, `"code":"stale"`) {
 		t.Fatal("stale classification lost")
 	}
+}
+
+func TestOutputSchemasShareRepeatedTypesAndStayTyped(t *testing.T) {
+	type leaf struct {
+		Name     string `json:"name"`
+		Required bool   `json:"required"`
+	}
+	type once struct {
+		Count int `json:"count"`
+	}
+	type result struct {
+		First  leaf   `json:"first"`
+		Second *leaf  `json:"second,omitempty"`
+		Many   []leaf `json:"many"`
+		Single once   `json:"single"`
+	}
+	s := outputSchema(reflect.TypeFor[result]())
+	defs, _ := s["$defs"].(map[string]any)
+	if len(defs) != 1 {
+		t.Fatalf("want exactly the repeated type in $defs, got %v", defs)
+	}
+	encoded, _ := json.Marshal(s)
+	if strings.Count(string(encoded), `"$ref":"#/$defs/`) != 3 || !strings.Contains(string(encoded), `"count":{"type":"integer"}`) {
+		t.Fatalf("repeated type not referenced three times or single-use type not inline: %s", encoded)
+	}
+	walkSchema(s, func(m map[string]any) {
+		if closed, ok := m["additionalProperties"].(bool); ok && !closed {
+			t.Errorf("output schema keeps a closed object: %v", m)
+		}
+	})
+	// The result contract keeps which fields are always present.
+	if !reflect.DeepEqual(toStrings(s["required"]), []string{"first", "many", "single"}) {
+		t.Fatalf("result required list = %v", s["required"])
+	}
+	for _, def := range defs {
+		if !reflect.DeepEqual(toStrings(def.(map[string]any)["required"]), []string{"name", "required"}) {
+			t.Fatalf("shared definition lost its required list: %v", def)
+		}
+	}
+	value := result{First: leaf{Name: "a"}, Second: &leaf{Name: "b", Required: true}, Many: []leaf{{Name: "c"}}, Single: once{Count: 2}}
+	raw, _ := json.Marshal(value)
+	var decoded any
+	d := json.NewDecoder(bytes.NewReader(raw))
+	d.UseNumber()
+	if err := d.Decode(&decoded); err != nil {
+		t.Fatal(err)
+	}
+	if err := validate(decoded, s, ""); err != nil {
+		t.Fatalf("result does not validate against its referenced schema: %v", err)
+	}
+	if err := validate(map[string]any{"first": map[string]any{"name": 1}, "many": nil, "single": map[string]any{"count": json.Number("1")}}, s, ""); err == nil {
+		t.Fatal("a mistyped field inside a referenced type passed")
+	}
+	if input := schema(reflect.TypeFor[result]()); input["additionalProperties"] != false || len(toStrings(input["required"])) == 0 {
+		t.Fatalf("input schemas must stay closed and inline: %v", input)
+	}
+}
+
+func TestRecursiveOutputSchemasReferToThemselves(t *testing.T) {
+	type node struct {
+		Name     string `json:"name"`
+		Children []node `json:"children"`
+	}
+	s := outputSchema(reflect.TypeFor[node]())
+	raw, _ := json.Marshal(node{Name: "root", Children: []node{{Name: "leaf", Children: []node{}}}})
+	var decoded any
+	d := json.NewDecoder(bytes.NewReader(raw))
+	d.UseNumber()
+	if err := d.Decode(&decoded); err != nil {
+		t.Fatal(err)
+	}
+	if err := validate(decoded, s, ""); err != nil {
+		t.Fatalf("recursive result rejected: %v", err)
+	}
+	if err := validate(map[string]any{"name": "root", "children": []any{map[string]any{"name": 2, "children": nil}}}, s, ""); err == nil {
+		t.Fatal("a mistyped nested child passed: the recursion is untyped")
+	}
+}
+
+// Lifecycle results with every field filled, including every nested and
+// shared type, validate against their published output schemas.
+func TestLifecycleResultsValidateAgainstTheirOutputSchemas(t *testing.T) {
+	for _, typ := range []reflect.Type{reflect.TypeFor[projectrun.PlanRecord](), reflect.TypeFor[projectrun.RunReport](), reflect.TypeFor[projectrun.StatusReport](), reflect.TypeFor[projectrun.VerifyReport](), reflect.TypeFor[projectrun.FullVerifyReport](), reflect.TypeFor[projectrun.ApplyPreflight](), reflect.TypeFor[projectrun.ApplyReport](), reflect.TypeFor[projectrun.DeliverReport]()} {
+		for _, value := range []reflect.Value{reflect.New(typ).Elem(), sampleValue(typ, 0)} {
+			raw, err := json.Marshal(value.Interface())
+			if err != nil {
+				t.Fatalf("%s: %v", typ, err)
+			}
+			var decoded any
+			d := json.NewDecoder(bytes.NewReader(raw))
+			d.UseNumber()
+			if err := d.Decode(&decoded); err != nil {
+				t.Fatalf("%s: decode: %v", typ, err)
+			}
+			if err := validate(decoded, outputSchema(typ), ""); err != nil {
+				t.Fatalf("%s output schema: %v", typ, err)
+			}
+		}
+	}
+}
+
+// sampleValue fills every exported field of t, one element per slice and map,
+// down to a fixed depth, so a schema check reaches nested types.
+func sampleValue(t reflect.Type, depth int) reflect.Value {
+	v := reflect.New(t).Elem()
+	if depth > 6 {
+		return v
+	}
+	switch t {
+	case reflect.TypeFor[time.Time]():
+		return reflect.ValueOf(time.Date(2026, 10, 11, 0, 0, 0, 0, time.UTC))
+	case reflect.TypeFor[json.RawMessage]():
+		return reflect.ValueOf(json.RawMessage(`{"sample":true}`))
+	case reflect.TypeFor[projectrun.Duration]():
+		return reflect.ValueOf(projectrun.Duration(time.Second))
+	case reflect.TypeFor[codexappserver.WindowsSandboxBackend]():
+		return reflect.ValueOf(codexappserver.WindowsSandboxBackendMXC)
+	case reflect.TypeFor[projectrun.AppServerEnvironmentMode]():
+		return reflect.ValueOf(projectrun.AppServerEnvironmentModeInherit)
+	}
+	switch t.Kind() {
+	case reflect.Struct:
+		for i := 0; i < t.NumField(); i++ {
+			if t.Field(i).IsExported() {
+				v.Field(i).Set(sampleValue(t.Field(i).Type, depth+1))
+			}
+		}
+	case reflect.Pointer:
+		p := reflect.New(t.Elem())
+		p.Elem().Set(sampleValue(t.Elem(), depth+1))
+		return p
+	case reflect.Slice:
+		if t.Elem().Kind() == reflect.Uint8 {
+			return reflect.ValueOf([]byte("sample")).Convert(t)
+		}
+		s := reflect.MakeSlice(t, 1, 1)
+		s.Index(0).Set(sampleValue(t.Elem(), depth+1))
+		return s
+	case reflect.Map:
+		m := reflect.MakeMap(t)
+		m.SetMapIndex(sampleValue(t.Key(), depth+1), sampleValue(t.Elem(), depth+1))
+		return m
+	case reflect.String:
+		v.SetString("sample")
+	case reflect.Bool:
+		v.SetBool(true)
+	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
+		v.SetInt(1)
+	case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
+		v.SetUint(1)
+	case reflect.Float32, reflect.Float64:
+		v.SetFloat(1)
+	}
+	return v
 }
