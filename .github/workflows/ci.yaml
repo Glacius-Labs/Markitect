@@ -101,6 +101,12 @@ jobs:
       - name: Check Codex proposal adapter protocol
         run: python -B -m unittest discover -s src/internal/tooling/codexrunner
 
+      - name: Check Go formatting
+        shell: bash
+        run: |
+          unformatted="$(gofmt -l $(git ls-files '*.go'))"
+          if [ -n "$unformatted" ]; then echo "Run gofmt -w on these files:"; echo "$unformatted"; exit 1; fi
+
       - name: Compile fixed dogfood engineering context
         run: go run ./src/cmd/markitect-legacy context --repo . --revision ${{ github.sha }} --namespace development --kind Skill --name engineering-change
 
