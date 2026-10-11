@@ -1017,3 +1017,57 @@ func TestImpactRoutesTheOwnerOfAnArtifactCheck(t *testing.T) {
 		t.Fatalf("artifact check or its owner not routed: checks=%v managers=%v", impact.Checks, impact.Managers)
 	}
 }
+
+// A Manager's Context shows, marked as foreign, the Checks other Managers own
+// that its own Artifacts declare or that use its own Statements, without the
+// owner's private Statements; its own Checks stay in Checks.
+func TestContextShowsForeignChecksThatVerifyTheManagersWork(t *testing.T) {
+	model, files := fixture(t, true, true, true)
+	ref := func(kind, namespace, name string) map[string]any {
+		return map[string]any{"apiVersion": APIVersion, "kind": kind, "namespace": namespace, "name": name}
+	}
+	contract := ref(statementKind, "inventory", "release-reservation")
+	definitions := append(copyDefinitions(model.Definitions),
+		core.Definition{APIVersion: APIVersion, Kind: managerKind, Metadata: core.Metadata{Namespace: "qa", Name: "qa"}, Purpose: "Quality.", Spec: map[string]any{"parent": ref(managerKind, "", "root"), "owns": []any{"qa/"}}},
+		core.Definition{APIVersion: APIVersion, Kind: statementKind, Metadata: core.Metadata{Namespace: "qa", Name: "test-data"}, Purpose: "Private test data.", Spec: map[string]any{"category": "rule", "description": "Seeded stock."}},
+		core.Definition{APIVersion: APIVersion, Kind: checkKind, Metadata: core.Metadata{Namespace: "qa", Name: "smoke"}, Purpose: "Smoke test.", Spec: map[string]any{"command": []any{"go", "test", "./qa"}, "uses": []any{contract, ref(statementKind, "qa", "test-data")}, "limitation": "Smoke only."}},
+		core.Definition{APIVersion: APIVersion, Kind: checkKind, Metadata: core.Metadata{Namespace: "qa", Name: "unrelated"}, Purpose: "Unrelated test.", Spec: map[string]any{"command": []any{"go", "test", "./qa/other"}}},
+	)
+	for i := range definitions {
+		if definitions[i].Metadata.Name == "cancel-order-code" {
+			definitions[i].Spec["checks"] = append(append([]any(nil), definitions[i].Spec["checks"].([]any)...), ref(checkKind, "qa", "smoke"))
+		}
+	}
+	compiled, diagnostics := core.Compile(model.Schemas, definitions, "foreign-checks")
+	if len(diagnostics) != 0 {
+		t.Fatalf("compile: %+v", diagnostics)
+	}
+	r := Analyze(compiled, files)
+	if r.Status != "succeeded" {
+		t.Fatalf("fixture not clean: %s %+v", r.Status, r.Findings)
+	}
+	key := func(kind, namespace, name string) string {
+		return (core.DefinitionIdentity{APIVersion: APIVersion, Kind: kind, Namespace: namespace, Name: name}).Key()
+	}
+	smoke, contractID := key(checkKind, "qa", "smoke"), key(statementKind, "inventory", "release-reservation")
+	for namespace, ownChecks := range map[string][]string{"orders": {key(checkKind, "orders", "cancel-order-tests")}, "inventory": nil} {
+		ctx, err := Context(r, key(managerKind, namespace, namespace))
+		if err != nil {
+			t.Fatal(err)
+		}
+		var own []string
+		for _, c := range ctx.Checks {
+			own = append(own, c.ID)
+		}
+		if strings.Join(own, "|") != strings.Join(ownChecks, "|") {
+			t.Fatalf("%s own checks = %v, want %v", namespace, own, ownChecks)
+		}
+		// orders declares smoke through cancel-order-code; inventory's contract is used by smoke.
+		if len(ctx.ForeignChecks) != 1 || ctx.ForeignChecks[0].ID != smoke || ctx.ForeignChecks[0].Owner != key(managerKind, "qa", "qa") || ctx.ForeignChecks[0].Limitation != "Smoke only." {
+			t.Fatalf("%s foreign checks = %+v, want only qa's smoke", namespace, ctx.ForeignChecks)
+		}
+		if strings.Join(ctx.ForeignChecks[0].Uses, "|") != contractID {
+			t.Fatalf("%s sees smoke's uses %v; qa's private test data must stay hidden", namespace, ctx.ForeignChecks[0].Uses)
+		}
+	}
+}

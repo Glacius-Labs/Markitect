@@ -223,6 +223,9 @@ type ManagerContext struct {
 	Artifacts  []Artifact  `json:"artifacts"`
 	Checks     []Check     `json:"checks"`
 	Decisions  []Decision  `json:"decisions,omitempty"`
-	Children   []Manager   `json:"children"`
-	Findings   []Finding   `json:"findings"`
+	// ForeignChecks are Checks other Managers own that this Manager's own
+	// Artifacts declare or that use its own Statements; Checks are its own.
+	ForeignChecks []Check   `json:"foreignChecks,omitempty"`
+	Children      []Manager `json:"children"`
+	Findings      []Finding `json:"findings"`
 }

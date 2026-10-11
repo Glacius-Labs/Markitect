@@ -469,6 +469,25 @@ func TestExplainAndTraceAreEqualThroughCLIAndMCP(t *testing.T) {
 		if err := json.Unmarshal(mustCLI(t, append(args, "--repo", root)...), &value); err != nil {
 			t.Fatal(err)
 		}
+		// MCP keeps command arguments in Host storage and returns them empty.
+		var redact func(any)
+		redact = func(v any) {
+			switch x := v.(type) {
+			case map[string]any:
+				for k, value := range x {
+					if _, ok := value.([]any); ok && k == "command" {
+						x[k] = []any{}
+					} else {
+						redact(value)
+					}
+				}
+			case []any:
+				for _, item := range x {
+					redact(item)
+				}
+			}
+		}
+		redact(value)
 		data, _ := json.Marshal(value)
 		return string(data)
 	}

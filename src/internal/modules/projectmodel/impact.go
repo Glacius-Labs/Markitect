@@ -31,9 +31,26 @@ func Context(report Report, managerID string) (ManagerContext, error) {
 			out.Artifacts = append(out.Artifacts, a)
 		}
 	}
+	declared, ownStatements := map[string]bool{}, map[string]bool{}
+	for _, a := range out.Artifacts {
+		for _, id := range a.Checks {
+			declared[id] = true
+		}
+	}
+	for _, s := range out.Statements {
+		ownStatements[s.ID] = true
+	}
 	for _, c := range report.Checks {
-		if c.Owner == managerID {
+		verifies := declared[c.ID]
+		for _, id := range c.Uses {
+			verifies = verifies || ownStatements[id]
+		}
+		switch {
+		case c.Owner == managerID:
 			out.Checks = append(out.Checks, c)
+		case verifies:
+			c.Uses = visibleRelations(c.Uses, statementByID)
+			out.ForeignChecks = append(out.ForeignChecks, c)
 		}
 	}
 	for _, d := range report.Decisions {
@@ -87,6 +104,7 @@ func Context(report Report, managerID string) (ManagerContext, error) {
 	sort.Slice(out.Contracts, func(i, j int) bool { return out.Contracts[i].ID < out.Contracts[j].ID })
 	sort.Slice(out.Artifacts, func(i, j int) bool { return out.Artifacts[i].ID < out.Artifacts[j].ID })
 	sort.Slice(out.Checks, func(i, j int) bool { return out.Checks[i].ID < out.Checks[j].ID })
+	sort.Slice(out.ForeignChecks, func(i, j int) bool { return out.ForeignChecks[i].ID < out.ForeignChecks[j].ID })
 	sort.Slice(out.Decisions, func(i, j int) bool { return out.Decisions[i].ID < out.Decisions[j].ID })
 	sort.Slice(out.Children, func(i, j int) bool { return out.Children[i].ID < out.Children[j].ID })
 	out.Findings = sortedFindings(out.Findings)
