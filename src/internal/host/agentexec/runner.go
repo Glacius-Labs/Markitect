@@ -798,7 +798,7 @@ func preparePrivateLogDirectory(value string, roots []string) (string, error) {
 			return "", errors.New("private log directory must be outside audited input roots")
 		}
 		if err := verifyPrivateLogDirectory(canonical); err != nil {
-			return "", errors.New("existing private log directory is not owner-only; an older release or another account may have created or changed it, so inspect it and remove it before running again")
+			return "", fmt.Errorf("existing private log directory %s is not owner-only; an older release or another account may have created or changed it, so inspect it and remove it before running again", canonical)
 		}
 		if runtime.GOOS != "windows" {
 			if err := os.Chmod(canonical, 0700); err != nil {

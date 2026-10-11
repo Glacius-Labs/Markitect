@@ -81,8 +81,9 @@ func TestPrivateLogWindowsRejectsUnverifiedDirectoryACL(t *testing.T) {
 	if err == nil {
 		t.Skip("the test temp parent itself has the exact protected owner-only ACL")
 	}
-	if !strings.Contains(err.Error(), "is not owner-only") || !strings.Contains(err.Error(), "remove it") {
-		t.Fatalf("refusal does not tell the user what is wrong and what to do: %v", err)
+	if !strings.Contains(err.Error(), "is not owner-only") || !strings.Contains(err.Error(), "remove it") ||
+		!strings.Contains(err.Error(), filepath.Base(directory)) {
+		t.Fatalf("refusal does not name the directory, what is wrong and what to do: %v", err)
 	}
 	if err := verifyPrivateLogDirectory(directory); err == nil {
 		t.Fatal("rejected existing directory was unexpectedly changed into an accepted ACL")
