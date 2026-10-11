@@ -1,10 +1,12 @@
 // Package projectbriefing records deterministic briefings for accepted project
 // model changes. It compares compiled declarations only; it does not infer
 // meaning from prose. Accepted history is the first-parent line of the
-// checked-out HEAD: briefings count when recorded on it, resolutions when their
-// delivered result is in HEAD's tree, and dismissals on the branch that made
-// them. Other entries stay provisional. Event identity is the model change's
-// content, so a change keeps its identity when a topic is merged or squashed.
+// checked-out HEAD: briefings count when recorded on it, their events with
+// them, resolutions when their delivered result is in HEAD's tree, and
+// dismissals wherever their event counts. Other entries stay provisional. An
+// event's identity is its change's content and the previous event for the
+// same definition, so a change keeps its identity when a topic is merged or
+// squashed, and a change re-applied after a revert gets a new one.
 package projectbriefing
 
 import (
