@@ -448,6 +448,55 @@ func TestCompileReportsTargetlessReferenceWithoutPanicking(t *testing.T) {
 	}
 }
 
+// BUG-01: the preflight stops at the first value or property that breaks a
+// limit. It visits maps in sorted order, so the same input always gives the
+// same diagnostics, whether the local limit or the shared budget trips first.
+func TestCompilePreflightDiagnosticsDoNotDependOnMapOrder(t *testing.T) {
+	sharedValues := func(depth int) any {
+		value := any("leaf")
+		for i := 0; i < depth; i++ {
+			value = map[string]any{"left": value, "right": value}
+		}
+		return value
+	}
+	sharedProperties := func(depth int) map[string]Property {
+		properties := map[string]Property{"leaf": {Purpose: "Leaf.", Type: TypeString, MinCount: 0, MaxCount: 1}}
+		for i := 0; i < depth; i++ {
+			properties = map[string]Property{
+				"left":  {Purpose: "Left.", Type: TypeObject, MinCount: 0, MaxCount: 1, Properties: properties},
+				"right": {Purpose: "Right.", Type: TypeObject, MinCount: 0, MaxCount: 1, Properties: properties},
+			}
+		}
+		return properties
+	}
+	type unsupported struct{}
+	for name, compile := range map[string]func() []Diagnostic{
+		"definition values": func() []Diagnostic {
+			definitions := fixtureDefinitions()
+			definitions[1].Spec["bad"] = unsupported{}
+			definitions[1].Spec["big"] = sharedValues(20)
+			_, diagnostics := Compile(fixtureSchemas(), definitions, "rev")
+			return diagnostics
+		},
+		"schema properties": func() []Diagnostic {
+			schemas := fixtureSchemas()
+			kind := schemas[1].Kinds["UseCase"]
+			kind.Properties["bad"] = Property{Purpose: "Overlong type token.", Type: strings.Repeat("x", 33), MinCount: 0, MaxCount: 1}
+			kind.Properties["big"] = Property{Purpose: "Shared tree.", Type: TypeObject, MinCount: 0, MaxCount: 1, Properties: sharedProperties(20)}
+			schemas[1].Kinds["UseCase"] = kind
+			_, diagnostics := Compile(schemas, fixtureDefinitions(), "rev")
+			return diagnostics
+		},
+	} {
+		first := compile()
+		for i := 0; i < 64; i++ {
+			if again := compile(); !reflect.DeepEqual(again, first) {
+				t.Fatalf("%s: run %d gave %+v, first run %+v", name, i, again, first)
+			}
+		}
+	}
+}
+
 func hasDiagnostic(values []Diagnostic, code string) bool {
 	for _, value := range values {
 		if value.Code == code {
