@@ -168,12 +168,6 @@ func resolveRevisions(root string, in reflect.Value) error {
 			f.SetString(full)
 			continue
 		}
-		// A full ID that Git cannot resolve passes on, so the Host reports it
-		// exactly as before.
-		if lower := strings.ToLower(f.String()); fullCommitID.MatchString(lower) {
-			f.SetString(lower)
-			continue
-		}
 		return usagef("%s %q does not name a commit in this repository", name, f.String())
 	}
 	return nil

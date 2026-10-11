@@ -291,7 +291,10 @@ var modelVerb = define(verb{
 	args:     []arg{argRepo, argRevision},
 }, func(ctx context.Context, e env, in revisionInput) (modelResult, error) {
 	report, err := e.ops.Index(projectapp.Selection{Root: e.root, Revision: in.Revision})
-	return modelResult{Revision: in.Revision, Report: report}, err
+	if err != nil {
+		return modelResult{}, err
+	}
+	return modelResult{Revision: in.Revision, Report: report}, nil
 })
 
 // modelResult is the compiled model with the full commit it was read from;
@@ -332,7 +335,10 @@ var contextVerb = define(verb{
 			return contextResult{}, usagef("--direction and --depth require --trace")
 		}
 		managerContext, err := e.ops.Context(operation)
-		return contextResult{Revision: in.Revision, ManagerContext: managerContext}, err
+		if err != nil {
+			return contextResult{}, err
+		}
+		return contextResult{Revision: in.Revision, ManagerContext: managerContext}, nil
 	}
 	if !slices.Contains([]string{"", "out", "in", "both"}, in.Direction) {
 		return contextResult{}, usagef("--direction must be out, in or both")
@@ -361,8 +367,8 @@ type impactInput struct {
 // impactResult is the change impact and, with --explain, why each element is
 // in it and whether it must change or is context (DEC-023).
 type impactResult struct {
-	Since    string `json:"since"`
-	Revision string `json:"revision"`
+	Since    string `json:"since,omitempty"`
+	Revision string `json:"revision,omitempty"`
 	projectmodel.ChangeImpact
 	Explanation *projectmodel.ImpactExplanation `json:"explanation,omitempty"`
 }
@@ -384,7 +390,10 @@ var impactVerb = define(verb{
 			return impactResult{}, usagef("--manager requires --explain")
 		}
 		impact, err := e.ops.Impact(operation)
-		return impactResult{Since: in.Since, Revision: in.Revision, ChangeImpact: impact}, err
+		if err != nil {
+			return impactResult{}, err
+		}
+		return impactResult{Since: in.Since, Revision: in.Revision, ChangeImpact: impact}, nil
 	}
 	explained, err := e.ops.Explain(projectapp.ExplainOperation{ImpactOperation: operation, ManagerID: in.Manager})
 	if err != nil {

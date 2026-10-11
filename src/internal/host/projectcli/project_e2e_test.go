@@ -11,6 +11,7 @@ import (
 	"path/filepath"
 	"reflect"
 	"runtime"
+	"strconv"
 	"strings"
 	"testing"
 	"time"
@@ -748,5 +749,44 @@ func TestContextAcceptsAUniqueShortManagerName(t *testing.T) {
 	}
 	if code, _, errout := runCLI(t, "context", "orders", "--repo", repo); code != 2 || !strings.Contains(errout, `Manager name "orders" is ambiguous`) {
 		t.Fatalf("ambiguous name: exit=%d stderr=%s", code, errout)
+	}
+}
+
+// A read that fails prints no report: exit 2, nothing on stdout, and no MCP
+// data, even though the revision it was asked for is known.
+func TestFailedRevisionReadsPrintNoReport(t *testing.T) {
+	repo := t.TempDir()
+	runGit(t, repo, "init", "--initial-branch=feature-no-project")
+	if err := os.WriteFile(filepath.Join(repo, "README.md"), []byte("# Not a project\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	runGit(t, repo, "add", "README.md")
+	runGitWithEnv(t, repo, testCommitEnv, "commit", "-m", "no project")
+	manager := `["project.markitect.example.org/v1alpha1","Manager","","shop"]`
+	server, err := newMCPServer(env{root: repo, ops: projectOperations()})
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, tc := range []struct {
+		args []string
+		tool string
+		mcp  string
+	}{
+		{[]string{"model", "--revision", "HEAD"}, "model", `{"revision":"HEAD"}`},
+		{[]string{"context", manager, "--revision", "HEAD"}, "context", `{"manager":` + strconv.Quote(manager) + `,"revision":"HEAD"}`},
+		{[]string{"impact", "--since", "HEAD", "--revision", "HEAD"}, "impact", `{"since":"HEAD","revision":"HEAD"}`},
+	} {
+		code, out, errout := runCLI(t, append(tc.args, "--repo", repo)...)
+		if code != 2 || out != "" || errout == "" {
+			t.Errorf("%s on a commit without a project: exit=%d stdout=%q stderr=%q, want 2 and no report", tc.args[0], code, out, errout)
+		}
+		result, err := server.Call(context.Background(), tc.tool, []byte(tc.mcp))
+		if err != nil || !result.IsError || strings.Contains(result.Content[0].Text, `"data"`) {
+			t.Errorf("MCP %s on a commit without a project: %+v %v, want an error without data", tc.tool, result, err)
+		}
+	}
+	code, out, errout := runCLI(t, "model", "--repo", repo, "--revision", strings.Repeat("a", 40))
+	if code != 2 || out != "" || !strings.Contains(errout, "does not name a commit in this repository") {
+		t.Fatalf("unknown full ID: exit=%d stdout=%q stderr=%q", code, out, errout)
 	}
 }
