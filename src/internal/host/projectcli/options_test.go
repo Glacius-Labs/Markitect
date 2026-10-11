@@ -207,7 +207,9 @@ func TestEffectRulesRejectBeforeAnyOperation(t *testing.T) {
 		Acknowledgements: []projectexplore.StructureAcknowledgement{}, Completions: []projectexplore.ApplyReceipt{},
 	})
 	runDraft := writeDraft(t, repo, ".markitect/drafts/run.json", []byte(`{"run":{"iterationId":"i","phase":"propose","agentManagerId":"m"}}`))
-	revision := strings.Repeat("a", 40)
+	// Revisions are resolved before a verb runs, so these cases need a real commit.
+	runGitWithEnv(t, repo, testCommitEnv, "commit", "--allow-empty", "-m", "base")
+	revision := gitOutput(t, repo, "rev-parse", "HEAD")
 	profile := []string{"--provider", "codex", "--model", "gpt-6-luna", "--input-micros-per-million", "5", "--output-micros-per-million", "10", "--max-cost-micros", "1000"}
 	applyIDs := []string{"--plan", "p1", "--run", "r1", "--candidate", "c1"}
 	ready := []string{"--exploration", "e", "--scope", "s"}

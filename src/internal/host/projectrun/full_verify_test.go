@@ -9,7 +9,6 @@ import (
 	"os"
 	"path/filepath"
 	"reflect"
-	"sort"
 	"strings"
 	"testing"
 	"time"
@@ -573,8 +572,10 @@ func TestFullVerifyInvocationReceivesExplicitCrossManagerArtifactEvidence(t *tes
 	publicStatement := projectmodel.Statement{ID: "statement:public-contract", Owner: otherManagerID, Public: true, Description: "Public contract realized by the artifact.", Uses: []string{publicRelation.ID, privateRelation.ID}}
 	privateStatement := projectmodel.Statement{ID: "statement:private-detail", Owner: otherManagerID, Public: false, Description: "Private implementation detail."}
 	unrelatedStatement := projectmodel.Statement{ID: "statement:unrelated", Owner: otherManagerID, Public: true, Description: "Unrelated public contract."}
-	project.Report.Statements = append(project.Report.Statements, publicRelation, privateRelation, publicStatement, privateStatement, unrelatedStatement)
-	attachedCheck := projectmodel.Check{ID: "check:artifact-check", Owner: otherManagerID, Command: []string{"python", "-m", "unittest"}, Limitation: "Checks the same snapshot."}
+	// Only the attached foreign Check uses this Statement; the audit must not name it.
+	privateCheckInput := projectmodel.Statement{ID: "statement:private-check-input", Owner: otherManagerID, Public: false, Description: "Private input of the other Manager's check."}
+	project.Report.Statements = append(project.Report.Statements, publicRelation, privateRelation, publicStatement, privateStatement, unrelatedStatement, privateCheckInput)
+	attachedCheck := projectmodel.Check{ID: "check:artifact-check", Owner: otherManagerID, Command: []string{"python", "-m", "unittest"}, Limitation: "Checks the same snapshot.", Uses: []string{publicStatement.ID, privateCheckInput.ID}}
 	unrelatedCheck := projectmodel.Check{ID: "check:unrelated", Owner: otherManagerID, Command: []string{"go", "test", "./..."}}
 	project.Report.Checks = append(project.Report.Checks, attachedCheck, unrelatedCheck)
 	for index := range project.Report.Artifacts {
@@ -615,45 +616,112 @@ func TestFullVerifyInvocationReceivesExplicitCrossManagerArtifactEvidence(t *tes
 		t.Fatalf("Manager audit failed: %v", err)
 	}
 	var auditContext struct {
-		SupportingStatements []projectmodel.Statement `json:"supportingStatements"`
-		SupportingChecks     []projectmodel.Check     `json:"supportingChecks"`
-		CheckResults         []CheckResult            `json:"checkResults"`
-		RequiredSubjects     []string                 `json:"requiredSubjects"`
+		Manager          projectmodel.ManagerContext `json:"manager"`
+		CheckResults     []CheckResult               `json:"checkResults"`
+		RequiredSubjects []string                    `json:"requiredSubjects"`
 	}
 	if err := json.Unmarshal(invoker.requestContext, &auditContext); err != nil {
 		t.Fatalf("decode captured audit context: %v", err)
 	}
-	if len(auditContext.SupportingStatements) != 1 || auditContext.SupportingStatements[0].ID != publicStatement.ID {
-		t.Fatalf("invocation supporting statements = %+v", auditContext.SupportingStatements)
+	for _, hidden := range []string{privateCheckInput.ID, privateRelation.ID, unrelatedStatement.ID} {
+		if strings.Contains(string(invoker.requestContext), hidden) {
+			t.Fatalf("audit context names %s, which the Manager may not see or does not reference", hidden)
+		}
 	}
-	if !reflect.DeepEqual(auditContext.SupportingStatements[0].Uses, []string{publicRelation.ID}) {
-		t.Fatalf("invocation exposed non-public or unrelated contract references: %v", auditContext.SupportingStatements[0].Uses)
+	var auditFields map[string]json.RawMessage
+	if err := json.Unmarshal(invoker.requestContext, &auditFields); err != nil {
+		t.Fatal(err)
 	}
-	gotSupportingCheckIDs := make([]string, 0, len(auditContext.SupportingChecks))
-	for _, check := range auditContext.SupportingChecks {
-		gotSupportingCheckIDs = append(gotSupportingCheckIDs, check.ID)
+	for _, duplicate := range []string{"supportingStatements", "supportingChecks"} {
+		if _, ok := auditFields[duplicate]; ok {
+			t.Fatalf("%s duplicates the Manager context; the audit must have one source", duplicate)
+		}
 	}
-	checkIDs := map[string]bool{}
+	// Each Statement definition reaches the audit at most once, wherever it
+	// sits in the request; a realized foreign contract comes from
+	// manager.contracts with only public relations.
+	statementIDs := map[string]bool{}
+	for _, statement := range project.Report.Statements {
+		statementIDs[statement.ID] = true
+	}
+	definitions := map[string]int{}
+	var countDefinitions func(any)
+	countDefinitions = func(v any) {
+		switch x := v.(type) {
+		case map[string]any:
+			if id, ok := x["id"].(string); ok && statementIDs[id] {
+				if _, hasDescription := x["description"]; hasDescription {
+					definitions[id]++
+				}
+			}
+			for _, value := range x {
+				countDefinitions(value)
+			}
+		case []any:
+			for _, item := range x {
+				countDefinitions(item)
+			}
+		}
+	}
+	var whole any
+	if err := json.Unmarshal(invoker.requestContext, &whole); err != nil {
+		t.Fatal(err)
+	}
+	countDefinitions(whole)
+	for id, count := range definitions {
+		if count != 1 {
+			t.Fatalf("Statement %s is defined %d times in the audit context", id, count)
+		}
+	}
+	var realized *projectmodel.Statement
+	for i := range auditContext.Manager.Contracts {
+		if auditContext.Manager.Contracts[i].ID == publicStatement.ID {
+			realized = &auditContext.Manager.Contracts[i]
+		}
+	}
+	if realized == nil || !reflect.DeepEqual(realized.Uses, []string{publicRelation.ID}) {
+		t.Fatalf("realized foreign contract in manager.contracts = %+v", realized)
+	}
+	// Every Check an owned artifact declares reaches the audit exactly once:
+	// owned Checks under checks, other Managers' Checks under foreignChecks.
+	checkOwners := map[string]string{}
 	for _, check := range project.Report.Checks {
-		checkIDs[check.ID] = true
+		checkOwners[check.ID] = check.Owner
 	}
-	wantSupportingCheckIDs := []string{}
-	attachedCheckExpected := false
+	wantOwned, wantForeign := map[string]bool{}, map[string]bool{}
 	for _, artifact := range project.Report.Artifacts {
 		if artifact.Owner == managerID {
 			for _, checkID := range artifact.Checks {
-				if checkIDs[checkID] {
-					wantSupportingCheckIDs = append(wantSupportingCheckIDs, checkID)
-					if checkID == attachedCheck.ID {
-						attachedCheckExpected = true
-					}
+				if owner, ok := checkOwners[checkID]; ok && owner == managerID {
+					wantOwned[checkID] = true
+				} else if ok {
+					wantForeign[checkID] = true
 				}
 			}
 		}
 	}
-	sort.Strings(wantSupportingCheckIDs)
-	if !reflect.DeepEqual(gotSupportingCheckIDs, wantSupportingCheckIDs) || !attachedCheckExpected {
-		t.Fatalf("invocation supporting checks = %+v", auditContext.SupportingChecks)
+	seen := map[string]int{}
+	for _, check := range append(append([]projectmodel.Check(nil), auditContext.Manager.Checks...), auditContext.Manager.ForeignChecks...) {
+		seen[check.ID]++
+	}
+	for id := range wantOwned {
+		if seen[id] != 1 {
+			t.Fatalf("owned declared check %s appears %d times in the audit context", id, seen[id])
+		}
+	}
+	for id := range wantForeign {
+		if seen[id] != 1 {
+			t.Fatalf("foreign declared check %s appears %d times in the audit context", id, seen[id])
+		}
+	}
+	var attached *projectmodel.Check
+	for i := range auditContext.Manager.ForeignChecks {
+		if auditContext.Manager.ForeignChecks[i].ID == attachedCheck.ID {
+			attached = &auditContext.Manager.ForeignChecks[i]
+		}
+	}
+	if attached == nil || attached.Owner != otherManagerID || attached.Limitation != attachedCheck.Limitation || !reflect.DeepEqual(attached.Uses, []string{publicStatement.ID}) {
+		t.Fatalf("attached foreign check in the audit context = %+v", attached)
 	}
 	if !reflect.DeepEqual(auditContext.CheckResults, []CheckResult{failedResult}) {
 		t.Fatalf("invocation changed the attached check result: %+v", auditContext.CheckResults)

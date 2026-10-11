@@ -16,6 +16,7 @@ from unittest import mock
 
 from playground import __main__ as entry
 from playground import host, manifest, study
+from tests import evaluation_repo
 
 PLAYGROUND = Path(__file__).resolve().parents[1]
 STUDY = {
@@ -54,7 +55,8 @@ def assessment(run_id: str, method: str, *, refreshed: bool = False, image: str 
             "run": {"id": run_id, "case": "roombook", "method": method, "outerProvider": "fake",
                     "fairness": {"case": "roombook", "stationsPlanned": 2, "imageId": image,
                                  "hostPlatform": {"system": "Linux", "machine": "x86_64"}}},
-            "evaluation": {"files": {"config": {"sha256": "aa"}}},
+            "evaluation": {"source": "registered", "files": {"config": {"sha256": "aa"}}},
+            "rules": {"preRegistered": True, "exploratory": False, "reviewersIndependent": True},
             "reviewers": {"codex": {"model": "m", "effort": "high", "version": "fake-reviewer 1.0"}},
             "stations": [], "classification": {"class": "none", "reason": "run completed"},
             "totals": {"publicChecks": {"passed": 0, "total": 0}, "holdouts": None, "failedMcpCalls": 0,
@@ -122,15 +124,16 @@ class FakeDocker:
     """Stands in for subprocess.run/Popen: Docker, plus git and go answering like a checkout.
 
     A run container writes runner.json into its /out (codexLoginChanged: `report`, by
-    default whether it refreshed; None writes none), an assessment container writes
-    report.json; both "refresh" a mounted Codex login, which `docker cp ... -` streams out
-    in the shape `cp` names."""
+    default whether it refreshed; None writes none) and report.json (class from
+    `classes`, default none), an assessment container writes report.json; both "refresh"
+    a mounted Codex login, which `docker cp ... -` streams out in the shape `cp` names."""
 
     def __init__(self, *, exits=None, wait_effects=None, start_fails=(), login_changed=True, reviewer_refresh=False,
                  server="29.4.1|linux|amd64", running="", names="", ran_image=None, cp="file", git=None,
-                 mismatch=False, report="match"):
+                 mismatch=False, report="match", classes=None):
         self.calls, self.containers, self.seen_logins, self.order = [], {}, {}, []
         self.exits, self.wait_effects, self.start_fails = exits or {}, wait_effects or {}, set(start_fails)
+        self.classes = classes or {}
         self.login_changed, self.reviewer_refresh, self.server = login_changed, reviewer_refresh, server
         self.running, self.names, self.ran_image, self.cp, self.git = running, names, ran_image, cp, git or {}
         self.mismatch, self.report = mismatch, report
@@ -207,6 +210,8 @@ class FakeDocker:
             if changed is not None:
                 (mounts["/out"] / "runner.json").write_text(json.dumps({"codexLoginChanged": changed}),
                                                             encoding="utf-8")
+            report = {"classification": {"class": self.classes.get(name, "none"), "reason": "fake"}}
+            (mounts["/out"] / "report.json").write_text(json.dumps(report), encoding="utf-8")
         if login is not None:
             self.seen_logins[name] = login.read_text(encoding="utf-8")
             refresh = self.reviewer_refresh if name.startswith("mpg-assess-") else self.login_changed
@@ -474,8 +479,11 @@ class StudyRunBase(unittest.TestCase):
         self.token.write_text("CLAUDE-TOKEN-MARKER-77\n", encoding="utf-8")
         (self.root / "src").mkdir()
         self.out = self.root / "runs" / "study"
-        for name, value in (("STATE_HOME", self.state), ("CODEX_SOURCE", self.source), ("CLAUDE_SOURCE", self.token)):
-            patcher = mock.patch.object(study, name, value)
+        # The pre-registered evaluation files: registration and the assessments read them here.
+        self.repo = evaluation_repo.committed(self.root / "registered", case="roombook")
+        patchers = [mock.patch.object(study, name, value) for name, value in
+                    (("STATE_HOME", self.state), ("CODEX_SOURCE", self.source), ("CLAUDE_SOURCE", self.token))]
+        for patcher in patchers + [evaluation_repo.use(self.repo)]:
             patcher.start()
             self.addCleanup(patcher.stop)
 
@@ -563,6 +571,20 @@ class StudyRunTests(StudyRunBase):
         self.assertEqual(versions["markitect"]["sha256"], "f" * 64)
         self.assertEqual((versions["go"], versions["hostPlatform"]), ("go1.27.1", host.host_platform()))
         self.assertIn("dirty", versions["playground"])
+        pre = record["preRegistration"]
+        self.assertEqual((pre["status"], pre["evaluationTree"]),
+                         ("registered", evaluation_repo.git(self.repo, "rev-parse", "HEAD:evaluation")))
+        for step in self.steps("run"):  # one registration, recorded by every run
+            self.assertEqual(json.loads((self.out / step["folder"] / "host.json").read_text(encoding="utf-8"))
+                             ["preRegistration"], pre)
+        for call in (c for c in docker.calls if c[:2] == ["docker", "run"] and "mpg-assess-pilot-p1-conv" in c):
+            self.assertEqual(call[call.index("--evaluation-tree") + 1], pre["evaluationTree"])
+            self.assertNotIn("--exploratory", call)
+        staged = self.out / "runs" / "pilot-p1-conv" / "assessment" / "inputs" / "evaluation"
+        self.assertTrue((staged / "roombook" / "holdout.py").is_file())
+        self.assertFalse((staged / "roombook" / "reference").exists())
+        self.assertIn(f"Pre-registration: evaluation tree {pre['evaluationTree']}",
+                      (self.out / "study.md").read_text(encoding="utf-8"))
         self.assertEqual(record["preflight"]["status"], "passed")
         self.assertIn("image build", [c["check"] for c in record["preflight"]["checks"]])
         self.assertTrue(all(name not in docker.containers for name in docker.started()))  # every container removed
@@ -647,13 +669,33 @@ class StudyRunTests(StudyRunBase):
         self.assertEqual(len(docker.started()), 4)  # both runs and both assessments
         self.assertEqual([s["exitCode"] for s in self.steps("run")], [1, 0])
         self.assertEqual(self.steps("compare")[0]["status"], "written")
-        self.assertEqual(self.record()["status"], "failed")
+        self.assertEqual(self.record()["status"], "method-stopped")  # the method stopped, not the harness
         self.assertIsNone(self.record()["stopReason"])
+        self.assertIn("the method stopped early", (self.out / "study.md").read_text(encoding="utf-8"))
+
+    def test_the_study_gives_its_worst_step_code(self):
+        for classes, exits, expected in (({"mpg-pilot-p1-mkt": "product"}, {"mpg-pilot-p1-conv": 1}, 12),
+                                         ({"mpg-pilot-p1-mkt": "product", "mpg-pilot-p1-conv": "environment"}, {}, 11),
+                                         ({"mpg-pilot-p1-mkt": "product"}, {"mpg-assess-pilot-p1-conv": 2}, 10)):
+            with self.subTest(classes=classes, exits=exits):
+                self.out = self.root / "runs" / f"worst-{expected}"
+                code, stdout, stderr = self.run_study(FakeDocker(classes=classes, exits=exits), "--fake-reviewers")
+                self.assertEqual(code, expected, stdout + stderr)
+                self.assertEqual(self.record()["exitCode"], expected)
+                self.assertEqual(self.record()["status"], "failed")
+                self.assertEqual(len(self.steps("assess")), 2)  # a class or a failed step never stops the study
+
+    def test_an_error_of_the_study_itself_is_a_harness_failure(self):
+        with mock.patch.object(study.Study, "compare_pairs", side_effect=RuntimeError("bug")):
+            code, _stdout, stderr = self.run_study(FakeDocker(), "--fake-reviewers")
+        self.assertEqual(code, 10)
+        self.assertIn("RuntimeError: bug", (self.out / "study-error.txt").read_text(encoding="utf-8"))
+        self.assertEqual((self.record()["status"], self.record()["exitCode"]), ("error", 10))
 
     def test_a_stopped_study_lists_the_commands_that_finish_it_by_hand(self):
         docker = FakeDocker(start_fails={"mpg-pilot-p2-mkt"})
         code, stdout, stderr = self.run_study(docker, "--fake-reviewers", path=self.write_study(pairs=2))
-        self.assertEqual(code, 1, stdout + stderr)
+        self.assertEqual(code, 11, stdout + stderr)
         self.assertEqual(docker.started(), ["mpg-pilot-p1-conv", "mpg-pilot-p1-mkt"])  # no automatic assessment
         runs = self.out / "runs"
         expected = [f"python3 -m playground assess --run {runs / 'pilot-p1-conv'} --reviewers codex,claude "
@@ -701,7 +743,7 @@ class StudyRunTests(StudyRunBase):
     def test_the_study_stops_when_the_host_cannot_run_a_container(self):
         docker = FakeDocker(start_fails={"mpg-pilot-p1-conv"})
         code, stdout, stderr = self.run_study(docker, "--codex-auth", str(self.source), "--fake-reviewers")
-        self.assertEqual(code, 1, stdout + stderr)
+        self.assertEqual(code, 11, stdout + stderr)
         self.assertEqual(docker.started(), [])
         record = self.record()
         self.assertEqual(record["status"], "stopped")
@@ -740,17 +782,47 @@ class StudyRunTests(StudyRunBase):
     def test_the_study_stops_when_the_image_changed(self):
         docker = FakeDocker(ran_image="sha256:rebuilt")
         code, _stdout, _stderr = self.run_study(docker, "--fake-reviewers")
-        self.assertEqual(code, 1)
+        self.assertEqual(code, 11)
         self.assertEqual(docker.started(), ["mpg-pilot-p1-conv"])
         self.assertIn("not the preflight build", self.record()["stopReason"])
 
     def test_a_fairness_mismatch_fails_the_comparison(self):
         code, _stdout, _stderr = self.run_study(FakeDocker(mismatch=True), "--fake-reviewers")
-        self.assertEqual(code, 1)
+        self.assertEqual(code, 10)  # refused inside a study: the preflight should have caught it
         step = self.steps("compare")[0]
-        self.assertEqual(step["status"], "fairness-mismatch")
+        self.assertEqual((step["status"], step["exitCode"]), ("fairness-mismatch", 2))
         self.assertIn("fairness.imageId", [key for key, _a, _b in step["mismatches"]])
         self.assertFalse((self.out / "comparisons").exists())
+
+    def test_changed_evaluation_files_fail_the_preflight_without_an_override(self):
+        (self.repo / "evaluation" / "config.json").write_text(
+            (self.repo / "evaluation" / "config.json").read_text(encoding="utf-8") + " ", encoding="utf-8")
+        docker = FakeDocker()
+        code, stdout, stderr = self.run_study(docker, "--fake-reviewers")
+        self.assertEqual(code, 3, stdout + stderr)
+        self.assertIn("[FAIL] pre-registration: the evaluation files have uncommitted or untracked changes "
+                      "(evaluation/config.json)", stdout)
+        self.assertIn("a study has no exploratory override", stdout)
+        self.assertFalse(self.out.exists())
+        self.assertEqual(docker.started(), [])
+        with self.assertRaises(SystemExit), capture()[0]:
+            entry.main(["study", str(self.write_study()), "--exploratory"])
+
+    def test_a_reviewer_model_that_an_arm_uses_fails_the_preflight_and_only_warns_with_fake_reviewers(self):
+        path = self.write_study(agent={**STUDY["agent"], "model": "Claude-Opus-5-5"})
+        code, stdout, _stderr = self.run_study(FakeDocker(), "--preflight", path=path)
+        self.assertEqual(code, 3)
+        self.assertIn("[FAIL] reviewer models: reviewer claude uses model claude-opus-5-5, as does agent.model "
+                      "Claude-Opus-5-5", stdout)
+        code, stdout, _stderr = self.run_study(FakeDocker(), "--preflight", "--fake-reviewers", path=path)
+        self.assertEqual(code, 0, stdout)
+        self.assertIn("[warn] reviewer models:", stdout)
+        self.assertIn("compare refuses the pairs", stdout)
+        path = self.write_study(markitect={"sourceRepo": str(self.root / "src"), "commit": "669cecd2",
+                                           "innerModel": "gpt-6.1-sol", "innerEffort": "high"})
+        code, stdout, _stderr = self.run_study(FakeDocker(), "--preflight", path=path)
+        self.assertEqual(code, 3)
+        self.assertIn("as does markitect.innerModel gpt-6.1-sol", stdout)
 
     def test_a_copied_out_login_that_is_not_one_small_file_is_never_promoted(self):
         for mode in ("huge", "symlink", "dir", "two", "device"):
@@ -797,8 +869,9 @@ class PreflightTests(StudyRunBase):
         self.state.mkdir()
         (self.state / "study.lock").write_text(json.dumps({"study": "other", "pid": 1}), encoding="utf-8")
         (self.state / "logins" / "old-study-x").mkdir(parents=True)
+        (self.repo / "evaluation" / "x.md").write_text("uncommitted\n", encoding="utf-8")
         docker = FakeDocker(server="29.4.1|linux|arm64", running="mpg-other-run\n", names="mpg-pilot-p1-mkt\n",
-                            git={"rev-list --count": (0, "3", ""), "status --porcelain": (0, " M evaluation/x", "")})
+                            git={"rev-list --count": (0, "3", "")})
         path = self.write_study(agent={**STUDY["agent"], "kind": "codex"})
         with mock.patch.object(study, "MIN_PYTHON", (99, 0)), \
                 mock.patch.object(host, "resolve_markitect", side_effect=host.HostError("bad object")):
@@ -814,9 +887,9 @@ class PreflightTests(StudyRunBase):
                         "the codex reviewer", "the markitect arm (agent kind codex, Markitect's inner roles)",
                         "Claude Code token is empty:", "claude setup-token",
                         "is inside a Git checkout",
-                        "[warn] evaluation files", "[warn] login folders", "old-study-x"):
+                        "[FAIL] pre-registration", "evaluation/x.md", "[warn] login folders", "old-study-x"):
             self.assertIn(message, stdout)
-        self.assertIn("preflight failed: 9 problem(s)", stderr)
+        self.assertIn("preflight failed: 10 problem(s)", stderr)
         self.assertFalse(out.exists())
         self.assertFalse(any(call[:2] in (["docker", "build"], ["docker", "run"]) for call in docker.calls))
         self.assertTrue((self.state / "study.lock").exists())  # another study's lock is never touched

@@ -339,7 +339,7 @@ The canonical controller, completion audit, goal-led modeling and evidence refre
 
 ## Initialize a project
 
-Current source uses `markitect init`; see the [model-first commands](project-operations.md#cli-setup-and-current-roots). The Project/Domain initializer has been removed from current source. Versioned release histories retain the commands they actually shipped.
+Current source uses `markitect init`; see the [model-first commands](project-operations.md#cli-setup-and-current-roots). The Project/Domain initializer has been removed from current source. A project initialized before `init` ignored local state needs `/state/` added to its `.markitect/.gitignore` by hand. Versioned release histories retain the commands they actually shipped.
 
 ## Declare verification commands
 

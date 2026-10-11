@@ -5,6 +5,7 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
+	"strings"
 
 	"github.com/Glacius-Labs/Markitect/src/internal/host/projectbriefing"
 	"github.com/Glacius-Labs/Markitect/src/internal/host/projectcoverage"
@@ -134,16 +135,48 @@ func (o Operations) Context(operation ContextOperation) (projectmodel.ManagerCon
 			return projectmodel.ManagerContext{}, err
 		}
 	}
-	return projectmodel.Context(project.Report, operation.ManagerID)
+	managerID, err := resolveManagerName(project.Report, operation.ManagerID)
+	if err != nil {
+		return projectmodel.ManagerContext{}, err
+	}
+	return projectmodel.Context(project.Report, managerID)
+}
+
+// ManagerNameError is a short Manager name that names no Manager or more than
+// one in the selected project.
+type ManagerNameError struct{ Message string }
+
+func (e ManagerNameError) Error() string { return e.Message }
+
+// resolveManagerName accepts a Manager's full ID, or its short name when that
+// name is unique in the same loaded project.
+func resolveManagerName(report projectmodel.Report, manager string) (string, error) {
+	if strings.HasPrefix(manager, "[") {
+		return manager, nil
+	}
+	matches := []string{}
+	for _, candidate := range report.Managers {
+		if candidate.Name == manager {
+			matches = append(matches, candidate.ID)
+		}
+	}
+	switch len(matches) {
+	case 1:
+		return matches[0], nil
+	case 0:
+		return "", ManagerNameError{fmt.Sprintf("no Manager is named %q; `markitect model` lists each Manager's ID and name", manager)}
+	}
+	return "", ManagerNameError{fmt.Sprintf("Manager name %q is ambiguous; use one of the full IDs: %s", manager, strings.Join(matches, ", "))}
 }
 
 // DocumentResult is the readable model document with its destination and
 // digest, so a write can be bound to the reviewed preview.
 type DocumentResult struct {
-	Path    string `json:"path"`
-	Digest  string `json:"digest"`
-	Content string `json:"content"`
-	Written bool   `json:"written"`
+	Revision string `json:"revision,omitempty"`
+	Path     string `json:"path"`
+	Digest   string `json:"digest"`
+	Content  string `json:"content"`
+	Written  bool   `json:"written"`
 }
 
 func (o Operations) Document(operation DocumentOperation) (DocumentResult, error) {
@@ -155,7 +188,7 @@ func (o Operations) Document(operation DocumentOperation) (DocumentResult, error
 	if err != nil {
 		return DocumentResult{}, err
 	}
-	result := DocumentResult{Path: projectwork.DocumentPath(project.Config), Digest: contentDigest(content), Content: content}
+	result := DocumentResult{Revision: project.Revision, Path: projectwork.DocumentPath(project.Config), Digest: contentDigest(content), Content: content}
 	if !operation.Write {
 		return result, nil
 	}

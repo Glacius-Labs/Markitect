@@ -62,7 +62,7 @@ func ManagerGraph(c ManagerContext) KnowledgeGraph {
 	for _, a := range c.Artifacts {
 		g.artifact(a)
 	}
-	for _, check := range c.Checks {
+	for _, check := range append(append([]Check(nil), c.Checks...), c.ForeignChecks...) {
 		g.check(check)
 	}
 	for _, d := range c.Decisions {

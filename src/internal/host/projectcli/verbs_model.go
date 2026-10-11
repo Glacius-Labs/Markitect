@@ -19,7 +19,7 @@ import (
 // Arguments shared by several verbs.
 var (
 	argRepo     = arg{name: "repo", value: "PATH", cliOnly: true, help: "Project root; defaults to the current directory. MCP fixes it with `mcp --repo`."}
-	argRevision = arg{name: "revision", value: "R", help: "Fixed commit to read; without it the working tree is read and reported as provisional."}
+	argRevision = arg{name: "revision", value: "R", help: "Fixed commit to read: anything Git resolves to a commit, such as HEAD or a short ID; without it the working tree is read and reported as provisional."}
 	argWrite    = arg{name: "write", kind: kindBool, help: "Persist exactly the reviewed preview."}
 	argExpect   = arg{name: "expect", value: "DIGEST", help: "Digest the write is bound to; the write fails as stale if it changed."}
 	argExecute  = arg{name: "execute", kind: kindBool, help: "Start agents or configured checks."}
@@ -289,9 +289,20 @@ var modelVerb = define(verb{
 	summary:  "Read the compiled project model and ownership index.",
 	synopsis: "model [--revision R]",
 	args:     []arg{argRepo, argRevision},
-}, func(ctx context.Context, e env, in revisionInput) (projectmodel.Report, error) {
-	return e.ops.Index(projectapp.Selection{Root: e.root, Revision: in.Revision})
+}, func(ctx context.Context, e env, in revisionInput) (modelResult, error) {
+	report, err := e.ops.Index(projectapp.Selection{Root: e.root, Revision: in.Revision})
+	if err != nil {
+		return modelResult{}, err
+	}
+	return modelResult{Revision: in.Revision, Report: report}, nil
 })
+
+// modelResult is the compiled model with the full commit it was read from;
+// the revision is empty when the working tree was read.
+type modelResult struct {
+	Revision string `json:"revision,omitempty"`
+	projectmodel.Report
+}
 
 type contextInput struct {
 	Manager   string `json:"manager"`
@@ -304,6 +315,7 @@ type contextInput struct {
 // contextResult is a Manager's Context and, with --trace, a walk over its
 // knowledge graph, which is built from that Context alone (KG-02).
 type contextResult struct {
+	Revision string `json:"revision,omitempty"`
 	projectmodel.ManagerContext
 	Trace *projectmodel.TraceResult `json:"trace,omitempty"`
 }
@@ -312,7 +324,7 @@ var contextVerb = define(verb{
 	name: "context", group: "Model", effect: effectRead,
 	summary:  "Read one Manager's context under the accepted-history rules; --trace walks its knowledge graph.",
 	synopsis: "context MANAGER [--revision R] [--trace ID [--direction out|in|both] [--depth N]]",
-	args: []arg{{name: "manager", value: "MANAGER", operand: true, required: true, help: "Manager ID."}, argRepo, argRevision,
+	args: []arg{{name: "manager", value: "MANAGER", operand: true, required: true, help: "Manager ID, or its short name when that is unique in the project."}, argRepo, argRevision,
 		{name: "trace", value: "ID", help: "Walk the Manager's knowledge graph from this node and return each reached node with a shortest witness path."},
 		{name: "direction", value: "out|in|both", help: "With --trace: follow relations outward (default), inward or both ways."},
 		{name: "depth", kind: kindInt, value: "N", help: "With --trace: the most relations to follow, 1 to 32; default 6."}},
@@ -323,7 +335,10 @@ var contextVerb = define(verb{
 			return contextResult{}, usagef("--direction and --depth require --trace")
 		}
 		managerContext, err := e.ops.Context(operation)
-		return contextResult{ManagerContext: managerContext}, err
+		if err != nil {
+			return contextResult{}, err
+		}
+		return contextResult{Revision: in.Revision, ManagerContext: managerContext}, nil
 	}
 	if !slices.Contains([]string{"", "out", "in", "both"}, in.Direction) {
 		return contextResult{}, usagef("--direction must be out, in or both")
@@ -339,7 +354,7 @@ var contextVerb = define(verb{
 	if err != nil {
 		return contextResult{}, err
 	}
-	return contextResult{ManagerContext: traced.Context, Trace: &traced.Trace}, nil
+	return contextResult{Revision: in.Revision, ManagerContext: traced.Context, Trace: &traced.Trace}, nil
 })
 
 type impactInput struct {
@@ -352,6 +367,8 @@ type impactInput struct {
 // impactResult is the change impact and, with --explain, why each element is
 // in it and whether it must change or is context (DEC-023).
 type impactResult struct {
+	Since    string `json:"since,omitempty"`
+	Revision string `json:"revision,omitempty"`
 	projectmodel.ChangeImpact
 	Explanation *projectmodel.ImpactExplanation `json:"explanation,omitempty"`
 }
@@ -373,13 +390,16 @@ var impactVerb = define(verb{
 			return impactResult{}, usagef("--manager requires --explain")
 		}
 		impact, err := e.ops.Impact(operation)
-		return impactResult{ChangeImpact: impact}, err
+		if err != nil {
+			return impactResult{}, err
+		}
+		return impactResult{Since: in.Since, Revision: in.Revision, ChangeImpact: impact}, nil
 	}
 	explained, err := e.ops.Explain(projectapp.ExplainOperation{ImpactOperation: operation, ManagerID: in.Manager})
 	if err != nil {
 		return impactResult{}, err
 	}
-	return impactResult{ChangeImpact: explained.Impact, Explanation: &explained.Explanation}, nil
+	return impactResult{Since: in.Since, Revision: in.Revision, ChangeImpact: explained.Impact, Explanation: &explained.Explanation}, nil
 })
 
 type docsInput struct {

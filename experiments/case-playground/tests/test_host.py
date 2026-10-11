@@ -11,7 +11,9 @@ import unittest
 from pathlib import Path
 from unittest import mock
 
-from playground import host
+from playground import __main__ as entry
+from playground import host, outcome
+from tests import evaluation_repo
 
 def station_plan(case: str, sizes: tuple[int, ...]) -> str:
     ids = iter(f"X{i:02d}" for i in range(1, 100))
@@ -62,14 +64,17 @@ class FakeProc:
 
 
 class FakeDocker:
-    """Stands in for subprocess.run/Popen inside host; records every argv."""
+    """Stands in for subprocess.run/Popen inside host; records every argv. The container
+    exits `exit_code` and leaves a results/report.json of class `run_class` (None: none)."""
 
-    def __init__(self, wait_effect=None, run_fails=False, existing=False, wait_fails=False, inspect_error=None):
+    def __init__(self, wait_effect=None, run_fails=False, existing=False, wait_fails=False, inspect_error=None,
+                 exit_code=1, run_class="none"):
         self.calls = []
         self.inspect_error = inspect_error
         self.wait_effect = wait_effect
         self.run_fails = run_fails
         self.wait_fails = wait_fails
+        self.exit_code, self.run_class, self.results = exit_code, run_class, None
         self.container = "stopped" if existing else None  # None, "running" or "stopped"
 
     def run(self, cmd, **kwargs):
@@ -91,13 +96,19 @@ class FakeDocker:
                 code, err = 125, "conflict"
             else:
                 out, self.container = "cid", "running"
+                mounts = [next(csv.reader([cmd[i + 1]])) for i, arg in enumerate(cmd) if arg == "--mount"]
+                self.results = next((Path(fields[1].split("=", 1)[1]) for fields in mounts
+                                     if "target=/out" in fields), self.results)
         elif cmd[:2] == ["docker", "wait"]:
             if self.wait_effect:
                 raise self.wait_effect
             if self.wait_fails:
                 code, err = 1, "error during connect: pipe closed"
             else:
-                out, self.container = "1\n", "stopped"
+                out, self.container = f"{self.exit_code}\n", "stopped"
+                if self.run_class is not None:
+                    report = {"classification": {"class": self.run_class, "reason": "fake"}}
+                    (self.results / "report.json").write_text(json.dumps(report), encoding="utf-8")
         elif cmd[:2] == ["docker", "kill"]:
             self.container = "stopped" if self.container else None
         elif cmd[:2] == ["docker", "rm"]:
@@ -131,13 +142,15 @@ class HostTestBase(unittest.TestCase):
         (root / "playground" / "__pycache__" / "x.pyc").write_bytes(b"")
         (root / "tests" / "fake_agent.py").write_text("", encoding="utf-8")
         (root / "tests" / "fake_claude.py").write_text("", encoding="utf-8")
+        # The pre-registered evaluation files; registration reads them there (the fake root is no checkout).
+        self.repo = evaluation_repo.committed(self.base / "registered")
         self.manifest_path = self.base / "manifest.json"
         self.manifest_path.write_text(json.dumps(MANIFEST), encoding="utf-8")
         self.out = self.base / "runs" / "one, two"
-        patcher = mock.patch.object(host, "ROOT", root)
-        patcher.start()
-        self.addCleanup(patcher.stop)
         self.addCleanup(self.temp.cleanup)
+        for patcher in (mock.patch.object(host, "ROOT", root), evaluation_repo.use(self.repo)):
+            patcher.start()
+            self.addCleanup(patcher.stop)
 
     def write_manifest(self, name: str, **changes) -> Path:
         data = json.loads(json.dumps(MANIFEST))
@@ -207,10 +220,10 @@ class MountTests(unittest.TestCase):
 class RunTests(HostTestBase):
     def test_completed_run_stages_inputs_and_removes_container(self):
         docker = FakeDocker()
-        self.assertEqual(self.run_host(docker), 1)  # container exit code is passed through
+        self.assertEqual(self.run_host(docker), 1)  # stopped early, class none: the method's outcome
         record = self.host_record()
         self.assertEqual(record["status"], "completed")
-        self.assertEqual(record["containerExitCode"], 1)
+        self.assertEqual((record["containerExitCode"], record["exitCode"]), (1, 1))
         self.assertEqual(record["image"], {"tag": "markitect-playground:codex-0.162.0-claude-2.1.296",
                                            "id": "sha256:feed"})
         self.assertEqual(record["stations"], 4)
@@ -249,6 +262,56 @@ class RunTests(HostTestBase):
         self.assertNotIn("docker kill", commands)
         self.assertIsNone(docker.container)
 
+    def test_the_run_records_its_pre_registration(self):
+        self.assertEqual(self.run_host(FakeDocker()), 1)
+        record = self.host_record()
+        pre = record["preRegistration"]
+        self.assertEqual((pre["status"], pre["evaluationTree"], pre["commit"]),
+                         ("registered", evaluation_repo.git(self.repo, "rev-parse", "HEAD:evaluation"),
+                          evaluation_repo.git(self.repo, "rev-parse", "HEAD")))
+        self.assertEqual(record["rules"], {"exploratory": False})
+
+    def test_changed_evaluation_files_are_refused_before_the_build_unless_exploratory(self):
+        (self.repo / "evaluation" / "config.json").write_text("{}\n", encoding="utf-8")
+        (self.repo / "evaluation" / "notes.md").write_text("new\n", encoding="utf-8")
+        docker, err = FakeDocker(), io.StringIO()
+        argv = ["run", "--manifest", str(self.manifest_path), "--out", str(self.out)]
+        with mock.patch.object(host.subprocess, "run", docker.run), contextlib.redirect_stderr(err):
+            self.assertEqual(host.main(argv), 2)
+        self.assertIn("evaluation/config.json, evaluation/notes.md", err.getvalue())
+        self.assertIn("--exploratory", err.getvalue())
+        self.assertEqual(docker.calls, [])
+        self.assertFalse(self.out.exists())
+        self.assertEqual(self.run_host(FakeDocker(), "--exploratory"), 1)
+        record = self.host_record()
+        self.assertEqual(record["rules"], {"exploratory": True})
+        self.assertEqual((record["preRegistration"]["status"], record["preRegistration"]["evaluationTree"]),
+                         ("dirty", None))
+        self.assertIn("evaluation/notes.md", record["preRegistration"]["paths"])
+
+    def test_a_playground_outside_a_checkout_is_refused(self):
+        plain = self.base / "plain"
+        (plain / "evaluation").mkdir(parents=True)
+        docker = FakeDocker()
+        with evaluation_repo.use(plain):
+            self.assertEqual(self.run_host(docker), 2)
+        self.assertEqual(docker.calls, [])
+
+    def test_an_unexpected_error_is_recorded_with_the_code_the_process_exits_with(self):
+        argv = ["host", "run", "--manifest", str(self.manifest_path), "--out", str(self.out)]
+        docker = FakeDocker()
+        with mock.patch.object(host.subprocess, "run", docker.run), \
+                mock.patch.object(host.subprocess, "Popen", docker.popen), \
+                mock.patch.object(host, "stage_inputs", side_effect=RuntimeError("bug")), quiet():
+            self.assertEqual(entry.main(argv), outcome.HARNESS)
+        record = self.host_record()
+        self.assertEqual((record["status"], record["exitCode"], record["error"]), ("harness-error", 10, "RuntimeError: bug"))
+
+    def test_a_container_killed_under_its_memory_limit_is_the_environments(self):
+        self.assertEqual(self.run_host(FakeDocker(exit_code=137, run_class=None)), 11)
+        record = self.host_record()
+        self.assertEqual((record["containerExitCode"], record["exitCode"]), (137, 11))
+
     def test_a_non_linux_host_gets_a_warning_and_the_run_goes_on(self):
         for system, warned in (("Windows", True), ("Darwin", True), ("Linux", False)):
             with self.subTest(system=system):
@@ -259,7 +322,7 @@ class RunTests(HostTestBase):
                         mock.patch.object(host.subprocess, "Popen", docker.popen), \
                         mock.patch.object(host.platform, "system", return_value=system), \
                         contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(err):
-                    self.assertEqual(host.main(argv), 1)  # the container's exit code: the run went on
+                    self.assertEqual(host.main(argv), 1)  # the run went on
                 self.assertEqual("DEC-013" in err.getvalue(), warned, err.getvalue())
                 if warned:
                     self.assertIn(f"warning: this host runs {system}", err.getvalue())
@@ -272,10 +335,20 @@ class RunTests(HostTestBase):
         hand_back.assert_called_once_with("mpg-fake-roombook-001", "sha256:feed", self.out.resolve() / "results")
         self.assertEqual(self.host_record()["handBack"], "done")
 
+    def test_the_exit_code_maps_the_run_class_and_keeps_the_runner_code(self):
+        for exit_code, run_class, expected in ((0, "none", 0), (1, "none", 1), (0, "product", 12),
+                                               (1, "environment", 11), (2, "harness", 10), (0, None, 10),
+                                               (2, "none", 10)):
+            with self.subTest(exit_code=exit_code, run_class=run_class):
+                shutil.rmtree(self.out, ignore_errors=True)
+                self.assertEqual(self.run_host(FakeDocker(exit_code=exit_code, run_class=run_class)), expected)
+                record = self.host_record()
+                self.assertEqual((record["containerExitCode"], record["exitCode"]), (exit_code, expected))
+
     def test_timeout_kills_and_records(self):
         docker = FakeDocker(wait_effect=subprocess.TimeoutExpired(["docker", "wait"], 1200))
         self.assertEqual(self.run_host(docker), 124)
-        self.assertEqual(self.host_record()["status"], "host-timeout")
+        self.assertEqual((self.host_record()["status"], self.host_record()["exitCode"]), ("host-timeout", 124))
         self.assertIn("docker kill", docker.commands())
         self.assertLess(docker.commands().index("docker kill"), docker.commands().index("docker rm"))
         self.assertIsNone(docker.container)
@@ -289,7 +362,7 @@ class RunTests(HostTestBase):
 
     def test_existing_container_stops_before_build_and_is_left_alone(self):
         docker = FakeDocker(existing=True)
-        self.assertEqual(self.run_host(docker), 2)
+        self.assertEqual(self.run_host(docker), 11)
         record = self.host_record()
         self.assertEqual((record["status"], record["containerLaunched"]), ("setup-failed", False))
         self.assertIn("already exists", record["error"])
@@ -299,9 +372,9 @@ class RunTests(HostTestBase):
 
     def test_failed_docker_run_cleans_up_what_it_may_have_created(self):
         docker = FakeDocker(run_fails=True)
-        self.assertEqual(self.run_host(docker), 2)
+        self.assertEqual(self.run_host(docker), 11)
         record = self.host_record()
-        self.assertEqual(record["status"], "start-failed")
+        self.assertEqual((record["status"], record["exitCode"]), ("start-failed", 11))
         self.assertIn("conflict", record["error"])
         self.assertIn("docker rm", docker.commands())
 
@@ -322,7 +395,7 @@ class RunTests(HostTestBase):
 
     def test_failed_docker_wait_keeps_a_running_container(self):
         docker = FakeDocker(wait_fails=True)
-        self.assertEqual(self.run_host(docker), 2)
+        self.assertEqual(self.run_host(docker), 11)
         record = self.host_record()
         self.assertEqual(record["status"], "wait-failed")
         self.assertIn("pipe closed", record["error"])
@@ -366,7 +439,7 @@ class RunTests(HostTestBase):
     def test_setup_failure_can_be_retried_with_the_same_out(self):
         failing = FakeDocker(wait_effect=None)
         with mock.patch.object(host, "build_image", side_effect=host.HostError("docker build failed")):
-            self.assertEqual(self.run_host(failing), 2)
+            self.assertEqual(self.run_host(failing), 11)
         self.assertEqual(self.host_record()["status"], "setup-failed")
         self.assertEqual(self.run_host(FakeDocker()), 1)
         self.assertEqual(self.host_record()["status"], "completed")
@@ -387,7 +460,7 @@ class RunTests(HostTestBase):
                             encoding="utf-8")
         docker = FakeDocker()
         missing = self.base / "no-auth.json"
-        self.assertEqual(self.run_host(docker, "--codex-auth", str(missing), manifest=manifest), 2)
+        self.assertEqual(self.run_host(docker, "--codex-auth", str(missing), manifest=manifest), 11)
         self.assertEqual(docker.calls, [])
         auth = self.base / "fixture auth.json"
         auth.write_text("fixture", encoding="utf-8")
@@ -418,6 +491,19 @@ class RunTests(HostTestBase):
         self.assertIn("MPG_MARKITECT_SHA256=" + "f" * 64, run)
         self.assertIn("MPG_MARKITECT_COMMIT=" + built["commit"], run)
         self.assertFalse((self.out / "inputs" / "methods").exists())  # notes for people stay on the host
+
+    def test_a_markitect_binary_that_does_not_build_is_a_product_failure(self):
+        manifest = self.base / "mk.json"
+        manifest.write_text(json.dumps({**MANIFEST, "method": "markitect",
+                                        "markitect": {"sourceRepo": "/src", "commit": "669cecd2"}}),
+                            encoding="utf-8")
+        failure = host.HostError("the Markitect commit does not build: go build failed", outcome.PRODUCT)
+        with mock.patch.object(host.shutil, "which", return_value="go"), \
+                mock.patch.object(host, "resolve_markitect", side_effect=resolved), \
+                mock.patch.object(host, "build_markitect", side_effect=failure):
+            self.assertEqual(self.run_host(FakeDocker(), manifest=manifest), 12)
+        record = self.host_record()
+        self.assertEqual((record["status"], record["failureClass"], record["exitCode"]), ("setup-failed", "product", 12))
 
     def test_station_count_sets_the_safety_timeout(self):
         make_case(host.ROOT, "readinglog2", (1, 3, 6, 2, 2, 1))
@@ -474,7 +560,7 @@ class RunTests(HostTestBase):
                                        model="claude-opus-5-5")
         docker = FakeDocker()
         self.assertEqual(self.run_host(docker, manifest=manifest), 2)  # --claude-token missing
-        self.assertEqual(self.run_host(docker, "--claude-token", str(self.base / "none"), manifest=manifest), 2)
+        self.assertEqual(self.run_host(docker, "--claude-token", str(self.base / "none"), manifest=manifest), 11)
         self.assertEqual(docker.calls, [])
         token = self.base / "claude token"
         secret = "sk-ant-oat01-fixture-" + "x" * 20
@@ -503,7 +589,7 @@ class RunTests(HostTestBase):
         with mock.patch.object(host.shutil, "which", return_value="go"):
             code = self.run_host(docker, "--claude-token", str(token), "--codex-auth", str(self.base / "none"),
                                  manifest=manifest)
-        self.assertEqual((code, docker.calls), (2, []))
+        self.assertEqual((code, docker.calls), (11, []))  # the missing Codex login
         auth = self.base / "auth.json"
         auth.write_text("fixture", encoding="utf-8")
         built = {"commit": "669cecd2" + "0" * 32, "sha256": "f" * 64}
@@ -603,6 +689,32 @@ class CleanTests(unittest.TestCase):
         self.assertIn("label=markitect-playground=1", ps)
         self.assertNotIn("status=running", ps)
         self.assertEqual(rm, ["docker", "rm", "c1", "c2"])
+
+
+class BuildFailureTests(unittest.TestCase):
+    def build(self, error: str) -> host.HostError:
+        def capture(cmd, **kwargs):
+            if cmd[0] == "go":
+                raise host.HostError(f"go build ... failed (1): {error}")
+            if "archive" in cmd:
+                import tarfile
+                with tarfile.open(cmd[cmd.index("-o") + 1], "w"):
+                    pass
+            return "c" * 40
+        with tempfile.TemporaryDirectory() as temp, mock.patch.object(host.shutil, "which", return_value="go"), \
+                mock.patch.object(host, "_capture", side_effect=capture), \
+                self.assertRaises(host.HostError) as caught:
+            host.build_markitect({"sourceRepo": temp, "commit": "c" * 40}, Path(temp) / "bin" / "markitect")
+        return caught.exception
+
+    def test_a_failed_go_build_is_the_products_unless_the_network_failed(self):
+        failure = self.build("internal/x.go:3: undefined: y")
+        self.assertEqual(failure.code, outcome.PRODUCT)
+        self.assertIn("does not build", str(failure))
+        for text in ("go: downloading go1.27.1: dial tcp: lookup proxy.golang.org: no such host",
+                     "verifying module: Get https://sum.golang.org/lookup: i/o timeout"):
+            with self.subTest(text=text):
+                self.assertEqual(self.build(text).code, outcome.ENVIRONMENT)
 
 
 @unittest.skipUnless(shutil.which("go") and shutil.which("git"), "needs go and git")

@@ -14,7 +14,7 @@ A Markitect project keeps its control plane in `.markitect/` and its application
   workflows/model-first.md     shared workflow installed by onboarding
   state/                       explorations, decisions and briefings
   runs/                        plans, candidates, receipts and verification
-  .gitignore                   keeps cache/, runs/ and views/ out of Git
+  .gitignore                   keeps cache/, runs/, state/ and views/ out of Git
 .agents/skills/                optional Codex skills installed by onboarding
 .claude/skills/                optional Claude Code skills installed by onboarding
 AGENTS.md / CLAUDE.md          repository instructions with managed blocks
@@ -26,7 +26,7 @@ docs/markitect/project.md      generated readable view of the accepted model
 - Application paths are examples, not conventions. The model tree follows conceptual ownership, not the source directories.
 - Each ordinary file has one accountable Manager. Shared responsibility and dependencies are explicit in the model.
 - Markitect does not infer behavior, dependencies or ownership from paths, names or Markdown links.
-- `docs/markitect/project.md` is a view of the model, not a source of intent. Commit accepted model changes under the repository's policy before implementation.
+- `docs/markitect/project.md` is a view of the model, not a source of intent. Commit accepted model changes under the repository's policy before implementation. It shows the model, its declared exclusions, the coverage verdict and only the paths with findings, not the file inventory, so it changes only when the model or its findings change.
 - Markitect also uses `cache/`, `views/`, `drafts/` and `write.lock` under `.markitect/` while it works.
 
 ## Ownership and boundaries

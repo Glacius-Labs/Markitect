@@ -103,6 +103,7 @@ func runOrResume(ctx context.Context, host Host, invoker Invoker, root, id strin
 	}
 	report, stateErr := store.readLatestState(id)
 	var pendingRecoveries []pendingNativeRecovery
+	var recoveredReintegrations []string
 	pendingReviewRecovered := false
 	if stateErr != nil && !errors.Is(stateErr, ErrNotFound) {
 		return empty, stateErr
@@ -159,10 +160,17 @@ func runOrResume(ctx context.Context, host Host, invoker Invoker, root, id strin
 			}
 			for _, task := range report.Tasks {
 				if task.ReviewStatus == "invoking" || task.ReviewStatus == "uncertain" {
-					recoveryErr := recoverPendingNativeReview(ctx, host, invoker, root, store, dir, plan, runtime, project, &report, task.ManagerID)
+					reintegrate, recoveryErr := recoverPendingNativeReview(ctx, host, invoker, root, store, dir, plan, runtime, project, &report, task.ManagerID)
 					if recoveryErr == nil {
 						pendingReviewRecovered = true
+						if reintegrate {
+							recoveredReintegrations = append(recoveredReintegrations, task.ManagerID)
+						}
 						continue
+					}
+					var unrouted unroutedReviewError
+					if errors.As(recoveryErr, &unrouted) {
+						return blockRun(store, report, fmt.Errorf("recovered final review for %s failed and its findings have no rework route: %w", task.ManagerID, unrouted.cause))
 					}
 					if current := findTask(report.Tasks, task.ManagerID); current != nil {
 						current.State = "uncertain"
@@ -300,6 +308,22 @@ func runOrResume(ctx context.Context, host Host, invoker Invoker, root, id strin
 	}
 	refreshStarts()
 	spent = totalCost(report.Invocations)
+	// A recovered failed integration review is reworked in place, as the
+	// integration review loop does, before scheduling continues.
+	for _, managerID := range recoveredReintegrations {
+		task := findTask(report.Tasks, managerID)
+		if task == nil {
+			return failRun(store, report, fmt.Errorf("recovered Manager %s is absent from the run", managerID))
+		}
+		requests, reworkErr := reintegrateAfterRework(ctx, host, invoker, root, store, dir, plan, runtime, project, &report, task, &starts, &spent)
+		if reworkErr != nil {
+			return blockRun(store, report, reworkErr)
+		}
+		task.ReworkRequests = append(task.ReworkRequests, requests...)
+		if err := persistState(store, &report); err != nil {
+			return empty, err
+		}
+	}
 	// The scheduler chooses each next batch from durable task state. Work and
 	// bottom-up integrations therefore interleave as dependency trees complete.
 	for {

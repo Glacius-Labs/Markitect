@@ -62,13 +62,16 @@ The core turns explicit inputs into deterministic results. The same model and sn
 Known problems:
 
 - `projectbriefing` and `projectcoverage` run Git through `infrastructure/source` (`projectbriefing/store.go`, `projectcoverage/census.go`). `projectbriefing` also imports the application package `projectwork` and writes its own store under `.markitect/state/briefings/`. The code map defines core as free of Git processes and writes (ARCH-13).
+- The binding size limit of `core.Compile` is its preflight budget: 100,000 value nodes, with every input string byte charged six times (`MaxPreflightNodes` and `preflightStringCost` in `compile.go`). It rejects input with `model.input-limit` well before `MaxDefinitions` (10,000) or `MaxTotalInputBytes` (128 MiB) is reached. For example, 10,000 Definitions with two one-byte fields already exceed it.
+- `core.Compile` checks `MaxDefinitionBytes` and `MaxTotalInputBytes` on the input as written, before each reference gains its target `apiVersion` and `kind`. A Schema with a long target Kind name can therefore make the normalized model and its edges far larger than these limits. The host compiles only the fixed project Schema, whose names are short. Charge the expansion during validation once a second or untrusted Schema becomes possible.
+- `modules/projectmodel` assumes the project Schema is the only one. `Analyze` groups Definitions by Kind name without checking their `apiVersion`, so another Schema's `Statement` would be projected as a project Statement. A change to a Definition of another Schema widens impact only when nothing else changed. Production compiles only the project Schema; multi-schema support would have to fix both.
 
 ## Infrastructure layer
 
 Infrastructure reads Git and the working tree, and writes the working tree under guard.
 
 - `infrastructure/source` loads fixed snapshots from the working tree or a commit with hardened Git processes ([source snapshots](source-snapshots.md#adapter-and-use-case-ownership)).
-- `host/guardedwrite` applies selected changes only while repository, branch, HEAD and captured bytes are unchanged. Product packages may use only its guarded API: `CaptureFiles`, `Apply` and `ApplyChecked`.
+- `host/guardedwrite` applies selected changes only while repository, branch, HEAD and captured bytes are unchanged. Product packages may use only its guarded API: `CaptureFiles`, `Apply`, `ApplyChecked`, the read-only name check `NewStoredNames` for their private copies, and the types these use.
 
 <a id="host-write-identity"></a>
 Writes bind the inspected root and parent directories through opened handles; a path check alone does not authorize a write. A partial failure is reported as such, because a multi-file write is not a transaction. The [Host write identity contract](design/host-write-identity.md) defines the details. Guarded writes are not an operating-system sandbox.

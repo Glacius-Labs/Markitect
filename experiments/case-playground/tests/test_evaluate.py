@@ -16,7 +16,8 @@ from pathlib import Path
 from unittest import mock
 
 from playground import __main__ as entry
-from playground import codex_agent, evaluate, host, lifecycle
+from playground import codex_agent, evaluate, host, lifecycle, registration
+from tests import evaluation_repo
 
 PLAYGROUND = Path(__file__).resolve().parents[1]
 FAKE = [sys.executable, str(Path(__file__).resolve().parent / "fake_reviewer.py")]
@@ -192,7 +193,8 @@ class AssessRunTests(unittest.TestCase):
             cls.report = evaluate.assess_run(
                 cls.run_dir, cls.evaluation, cls.out, reviewer_names=["codex", "claude"],
                 codex_auth=cls.root / "auth.json", claude_token_file=cls.root / "token",
-                executables={"codex": FAKE, "claude": FAKE}, evaluation={"commit": "abc123", "dirty": False},
+                executables={"codex": FAKE, "claude": FAKE},
+                evaluation={"source": "registered", "tree": "e" * 40, "commit": "abc123", "dirty": False},
                 image="sha256:img", login_copy=cls.root / "login" / "codex-auth.json")
 
     @classmethod
@@ -208,7 +210,10 @@ class AssessRunTests(unittest.TestCase):
         self.assertEqual((report["kind"], report["run"]["id"], report["run"]["outerProvider"]),
                          ("assessment", "mark-readinglog-test", "codex"))
         self.assertEqual(report["run"]["fairness"]["imageId"], "sha256:img")
-        self.assertEqual(report["evaluation"]["commit"], "abc123")
+        self.assertEqual((report["evaluation"]["source"], report["evaluation"]["tree"], report["evaluation"]["commit"]),
+                         ("registered", "e" * 40, "abc123"))
+        self.assertEqual(report["rules"], {"preRegistered": True, "exploratory": False,
+                                           "reviewersIndependent": True, "reviewerClashes": []})
         truth = self.evaluation / "readinglog" / "ground-truth.json"
         self.assertEqual(report["evaluation"]["files"]["groundTruth"]["sha256"],
                          hashlib.sha256(truth.read_bytes()).hexdigest())
@@ -220,6 +225,9 @@ class AssessRunTests(unittest.TestCase):
             self.assertTrue((self.out / name).is_file(), name)
         markdown = (self.out / "report.md").read_text(encoding="utf-8")
         self.assertIn("not blind", markdown)
+        self.assertIn(f"Evaluation files: registered Git tree {'e' * 12} (commit abc123)", markdown)
+        self.assertIn("Rules: pre-registered yes; exploratory no; reviewer models differ from the arms' models yes.",
+                      markdown)
         self.assertIn("| S2 |", markdown)
         self.assertIn("shared finding", markdown)
 
@@ -464,6 +472,34 @@ class UnitTests(unittest.TestCase):
                     report = evaluate.assess_run(run, make_evaluation(root, case=False), run / "assessment")
         self.assertEqual((report["run"]["stratum"], report["run"]["roles"]), ("outer=claude, inner=codex", roles))
 
+    def test_rules_record_an_exploratory_run_and_a_reviewer_model_clash(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp).resolve()
+            os.chmod(root, 0o755)
+            empty = root / "empty.gitconfig"
+            empty.write_text("", encoding="utf-8")
+            with mock.patch.dict(os.environ, {"GIT_CONFIG_GLOBAL": str(empty), "GIT_CONFIG_NOSYSTEM": "1"}):
+                run = make_run(root, method="conventional", stations=1)
+                path = run / "results" / "report.json"
+                data = json.loads(path.read_text(encoding="utf-8"))
+                roles = [{"role": "reviewer", "manager": "owner", "model": "Claude-Opus-5-5[1m]"}]
+                path.write_text(json.dumps({**data, "roles": roles}), encoding="utf-8")
+                record = json.loads((run / "host.json").read_text(encoding="utf-8"))
+                (run / "host.json").write_text(json.dumps({**record, "rules": {"exploratory": True}}),
+                                               encoding="utf-8")
+                with quiet():
+                    report = evaluate.assess_run(run, make_evaluation(root, case=False), run / "assessment",
+                                                 reviewer_names=["claude"], executables={"claude": FAKE},
+                                                 evaluation={"source": "registered", "tree": "e" * 40})
+            markdown = (run / "assessment" / "report.md").read_text(encoding="utf-8")
+        self.assertEqual(report["rules"]["exploratory"], True)  # the run's, carried into the assessment
+        self.assertFalse(report["rules"]["preRegistered"])
+        self.assertFalse(report["rules"]["reviewersIndependent"])
+        self.assertEqual(report["rules"]["reviewerClashes"],
+                         [{"reviewer": "claude", "model": "claude-opus-5-5",
+                           "arm": "role reviewer owner Claude-Opus-5-5[1m]"}])
+        self.assertIn("compare refuses this assessment", markdown)
+
     def test_stage_inputs_never_copies_reference(self):
         with tempfile.TemporaryDirectory() as temp:
             root = Path(temp)
@@ -518,24 +554,41 @@ class HostAssessTests(unittest.TestCase):
         self.addCleanup(temp.cleanup)
         self.root = Path(temp.name).resolve() / "runs, one"
         self.run_dir = self.root / "conv-x"
-        manifest = {"id": "conv-x", "case": "readinglog", "method": "conventional",
-                    "agent": {"kind": "codex"}, "container": {"cpus": 2, "memory": "4g", "pidsLimit": 512}}
-        write(self.run_dir / "host.json", json.dumps({"manifest": manifest, "image": {"id": "sha256:img"}}))
+        # The playground's evaluation files, committed in their own repository.
+        self.repo = evaluation_repo.committed(Path(temp.name).resolve() / "playground", case="readinglog")
+        self.registration = registration.observe(self.repo, evaluation_repo.runner(self.repo))
+        self.manifest = {"id": "conv-x", "case": "readinglog", "method": "conventional",
+                         "agent": {"kind": "codex", "model": "gpt-6-luna"},
+                         "container": {"cpus": 2, "memory": "4g", "pidsLimit": 512}}
+        self.write_host()
         for number in (1, 2, 3):
             (self.run_dir / "results" / "stations" / f"S{number}").mkdir(parents=True)
         self.auth = self.root / "auth.json"
         write(self.auth, "LOGIN-CONTENT")
         self.token = self.root / "claude-token"
         write(self.token, TOKEN)
+        for patcher in (evaluation_repo.use(self.repo),
+                        mock.patch.object(evaluate, "EVALUATION", self.repo / "evaluation")):
+            patcher.start()
+            self.addCleanup(patcher.stop)
+
+    def write_host(self, **fields) -> None:
+        record = {"manifest": self.manifest, "image": {"id": "sha256:img"}, "preRegistration": self.registration,
+                  "rules": {"exploratory": False}, **fields}
+        write(self.run_dir / "host.json", json.dumps({key: value for key, value in record.items()
+                                                      if value is not ...}))
 
     def assess(self, docker: FakeDocker, *extra: str) -> int:
         argv = ["assess", "--run", str(self.run_dir), "--codex-auth", str(self.auth),
                 "--claude-token", str(self.token), *extra]
         with mock.patch.object(host.subprocess, "run", docker.run), \
-                mock.patch.object(host.subprocess, "Popen", docker.popen), \
-                mock.patch.object(evaluate, "evaluation_identity", lambda: {"commit": "c0ffee", "dirty": True}), \
-                quiet():
+                mock.patch.object(host.subprocess, "Popen", docker.popen), quiet():
             return entry.main(argv)
+
+    @staticmethod
+    def command(docker: FakeDocker) -> list[str]:
+        run = next(call for call in docker.calls if call[:2] == ["docker", "run"])
+        return run[run.index("sha256:img") + 1:]
 
     def test_launches_one_assessment_container(self):
         docker = FakeDocker(exit_code=0)
@@ -557,20 +610,31 @@ class HostAssessTests(unittest.TestCase):
             host._mount(self.token, evaluate.SECRET_CLAUDE, readonly=True)])
         command = run[run.index("sha256:img") + 1:]
         self.assertEqual(command[:6], ["python3", "-B", "-m", "playground", "assess", "--inside"])
+        tree, commit = self.registration["evaluationTree"], self.registration["commit"]
         for pair in (["--reviewers", "codex,claude"], ["--codex-auth", evaluate.SECRET_CODEX],
-                     ["--claude-token", evaluate.SECRET_CLAUDE], ["--evaluation-commit", "c0ffee"],
-                     ["--evaluation-dirty", "yes"]):
+                     ["--claude-token", evaluate.SECRET_CLAUDE], ["--evaluation-source", "registered"],
+                     ["--evaluation-tree", tree], ["--evaluation-commit", commit], ["--evaluation-dirty", "no"]):
             self.assertIn(pair, [command[i:i + 2] for i in range(len(command) - 1)])
+        self.assertNotIn("--exploratory", command)
         self.assertTrue((out / "inputs" / "playground" / "evaluate.py").is_file())
-        self.assertTrue((out / "inputs" / "evaluation" / "common" / "reviewer-prompt.md").is_file())
-        self.assertFalse((out / "inputs" / "evaluation" / "readinglog2").exists())
+        staged = out / "inputs" / "evaluation"
+        self.assertEqual(sorted(path.relative_to(staged).as_posix() for path in staged.rglob("*") if path.is_file()),
+                         ["common/reviewer-prompt.md", "common/reviewer-schema.json", "config.json",
+                          "readinglog/ground-truth.json", "readinglog/holdout.py"])  # never reference/ or validate.py
         record = json.loads((out / "host.json").read_text(encoding="utf-8"))
         self.assertEqual((record["status"], record["containerExitCode"]), ("completed", 0))
+        self.assertEqual(record["evaluation"], {"source": "registered", "tree": tree, "commit": commit, "dirty": False})
+        self.assertEqual(record["rules"], {"exploratory": False, "reviewerClashes": []})
         self.assertGreater(record["timeoutSeconds"], 3 * 2700)
         everything = json.dumps(docker.calls) + (out / "host.json").read_text(encoding="utf-8")
         self.assertNotIn(TOKEN, everything)
         self.assertNotIn("LOGIN-CONTENT", everything)
         self.assertIn(["docker", "rm", "-f", "mpg-assess-conv-x"], docker.calls)
+
+    def test_a_container_that_did_not_exit_0_is_a_harness_failure(self):
+        self.assertEqual(self.assess(FakeDocker(exit_code=2)), 10)
+        record = json.loads((self.run_dir / "assessment" / "host.json").read_text(encoding="utf-8"))
+        self.assertEqual((record["status"], record["containerExitCode"], record["exitCode"]), ("completed", 2, 10))
 
     def test_assessment_is_handed_back_after_the_container_ends(self):
         docker = FakeDocker()
@@ -595,8 +659,7 @@ class HostAssessTests(unittest.TestCase):
         argv = ["assess", "--run", str(self.run_dir), "--reviewers", "none", "--codex-auth", str(self.root / "no"),
                 "--claude-token", str(self.root / "no")]
         with mock.patch.object(host.subprocess, "run", docker.run), \
-                mock.patch.object(host.subprocess, "Popen", docker.popen), \
-                mock.patch.object(evaluate, "evaluation_identity", lambda: {"commit": None, "dirty": None}), quiet():
+                mock.patch.object(host.subprocess, "Popen", docker.popen), quiet():
             self.assertEqual(entry.main(argv), 0)
         run = next(call for call in docker.calls if call[:2] == ["docker", "run"])
         self.assertEqual(sum(arg == "--mount" for arg in run), 3)
@@ -605,7 +668,7 @@ class HostAssessTests(unittest.TestCase):
     def test_missing_token_is_refused_before_docker(self):
         docker = FakeDocker()
         self.token.unlink()
-        self.assertEqual(self.assess(docker), 2)
+        self.assertEqual(self.assess(docker), 11)  # a missing login is the environment's
         self.assertEqual(docker.calls, [])
 
     def test_fake_reviewers_get_throwaway_credentials_never_the_real_ones(self):
@@ -613,8 +676,7 @@ class HostAssessTests(unittest.TestCase):
         argv = ["assess", "--run", str(self.run_dir), "--fake-reviewers"]
         with mock.patch.object(host.subprocess, "run", docker.run), \
                 mock.patch.object(host.subprocess, "Popen", docker.popen), \
-                mock.patch.object(evaluate, "DEFAULT_CLAUDE_TOKEN", self.root / "no-login"), \
-                mock.patch.object(evaluate, "evaluation_identity", lambda: {"commit": None, "dirty": None}), quiet():
+                mock.patch.object(evaluate, "DEFAULT_CLAUDE_TOKEN", self.root / "no-login"), quiet():
             self.assertEqual(entry.main(argv), 0)  # no real login needed
             self.assertEqual(entry.main([*argv, "--force", "--claude-token", str(self.token)]), 2)
         run = next(call for call in docker.calls if call[:2] == ["docker", "run"])
@@ -631,6 +693,87 @@ class HostAssessTests(unittest.TestCase):
     def test_not_a_run_folder(self):
         with quiet():
             self.assertEqual(entry.main(["assess", "--run", str(self.root), "--reviewers", "none"]), 2)
+
+    def test_the_staged_files_are_the_registered_bytes_not_the_working_tree(self):
+        prompt = self.repo / "evaluation" / "common" / "reviewer-prompt.md"
+        registered = prompt.read_bytes()
+        prompt.write_bytes(b"changed after the run started\n")
+        config = self.repo / "evaluation" / "config.json"
+        changed = json.loads(config.read_text(encoding="utf-8"))
+        changed["reviewers"]["codex"]["model"] = "gpt-6-luna"  # would clash with the arm, if it were read
+        config.write_text(json.dumps(changed), encoding="utf-8")
+        self.assertEqual(self.assess(FakeDocker()), 0)
+        staged = self.run_dir / "assessment" / "inputs" / "evaluation"
+        self.assertEqual((staged / "common" / "reviewer-prompt.md").read_bytes(), registered)
+        self.assertEqual(json.loads((staged / "config.json").read_text(encoding="utf-8"))["reviewers"]["codex"]["model"],
+                         "gpt-6.1-sol")
+
+    def test_a_run_without_a_registration_is_refused_unless_exploratory(self):
+        for fields, fragment in (({"preRegistration": ...}, "records no pre-registration"),
+                                 ({"preRegistration": {"status": "dirty", "paths": ["evaluation/config.json"]}},
+                                  "evaluation/config.json"),
+                                 ({"preRegistration": {**self.registration, "evaluationTree": "0" * 40}},
+                                  "is not in this checkout")):
+            with self.subTest(fragment=fragment):
+                self.write_host(**fields)
+                docker, err = FakeDocker(), io.StringIO()
+                with mock.patch.object(host.subprocess, "run", docker.run), contextlib.redirect_stderr(err):
+                    self.assertEqual(entry.main(["assess", "--run", str(self.run_dir), "--reviewers", "none"]), 2)
+                self.assertIn(fragment, err.getvalue())
+                self.assertEqual(docker.calls, [])  # refused before Docker
+                self.assertFalse((self.run_dir / "assessment").exists())
+        prompt = self.repo / "evaluation" / "common" / "reviewer-prompt.md"
+        prompt.write_bytes(b"working tree\n")
+        docker = FakeDocker()
+        self.assertEqual(self.assess(docker, "--exploratory"), 0)
+        command = self.command(docker)
+        self.assertIn("--exploratory", command)
+        self.assertEqual(command[command.index("--evaluation-source") + 1], "working-tree")
+        self.assertEqual(command[command.index("--evaluation-dirty") + 1], "yes")
+        self.assertNotIn("--evaluation-tree", command)
+        staged = self.run_dir / "assessment" / "inputs" / "evaluation"
+        self.assertEqual((staged / "common" / "reviewer-prompt.md").read_bytes(), b"working tree\n")
+
+    def test_an_exploratory_run_stays_exploratory(self):
+        self.write_host(rules={"exploratory": True})
+        docker = FakeDocker()
+        self.assertEqual(self.assess(docker), 0)
+        command = self.command(docker)
+        self.assertIn("--exploratory", command)
+        self.assertEqual(command[command.index("--evaluation-source") + 1], "registered")
+
+    def test_a_reviewer_model_that_an_arm_uses_is_refused(self):
+        self.manifest["agent"]["model"] = "GPT-6.1-Sol"
+        self.manifest["markitect"] = {"innerModel": "gpt-6-luna"}
+        self.write_host()
+        docker, err = FakeDocker(), io.StringIO()
+        with mock.patch.object(host.subprocess, "run", docker.run), contextlib.redirect_stderr(err):
+            self.assertEqual(entry.main(["assess", "--run", str(self.run_dir), "--codex-auth", str(self.auth),
+                                         "--claude-token", str(self.token)]), 2)
+        self.assertIn("reviewer codex uses model gpt-6.1-sol, as does agent.model GPT-6.1-Sol", err.getvalue())
+        self.assertEqual(docker.calls, [])
+        self.assertEqual(self.assess(FakeDocker(), "--reviewers", "claude"), 0)  # a subset avoids the clash
+        self.assertEqual(self.assess(FakeDocker(), "--force", "--exploratory"), 0)
+        record = json.loads((self.run_dir / "assessment" / "host.json").read_text(encoding="utf-8"))
+        self.assertEqual(record["rules"]["reviewerClashes"][0]["reviewer"], "codex")
+        self.assertTrue(record["rules"]["exploratory"])
+        docker = FakeDocker()
+        with mock.patch.object(host.subprocess, "run", docker.run), \
+                mock.patch.object(host.subprocess, "Popen", docker.popen), quiet():  # only a warning when fake
+            self.assertEqual(entry.main(["assess", "--run", str(self.run_dir), "--force", "--fake-reviewers"]), 0)
+        self.assertNotIn("--exploratory", self.command(docker))
+
+    def test_a_container_killed_under_its_memory_limit_is_the_environments(self):
+        self.assertEqual(self.assess(FakeDocker(exit_code=137)), 11)
+        record = json.loads((self.run_dir / "assessment" / "host.json").read_text(encoding="utf-8"))
+        self.assertEqual((record["containerExitCode"], record["exitCode"]), (137, 11))
+
+    def test_an_unexpected_error_is_recorded_with_the_code_the_process_exits_with(self):
+        with mock.patch.object(host, "wait_container", side_effect=RuntimeError("bug")):
+            self.assertEqual(self.assess(FakeDocker()), 10)
+        record = json.loads((self.run_dir / "assessment" / "host.json").read_text(encoding="utf-8"))
+        self.assertEqual((record["status"], record["exitCode"], record["error"]),
+                         ("harness-error", 10, "RuntimeError: bug"))
 
 
 if __name__ == "__main__":

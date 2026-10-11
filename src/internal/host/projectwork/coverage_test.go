@@ -196,6 +196,152 @@ func TestCandidateCoverageDropsRenamedAndDeletedPaths(t *testing.T) {
 	}
 }
 
+// A working-tree check reads the working tree. Deleting or renaming a model
+// file there, staged or not, leaves the old path only in HEAD or the index, so
+// coverage must not report it unclassified before the change is committed. A
+// fixed revision that still holds the unlisted file keeps reporting it.
+func TestWorkingTreeCoverageFollowsModelFileMoves(t *testing.T) {
+	const notePath, renamedPath = ModelRoot + "/goal.yaml", ModelRoot + "/renamed.yaml"
+	manifest := func(mode string, modelFiles ...string) string {
+		text := "apiVersion: " + APIVersion + "\nname: Coverage fixture\ncoverageMode: " + mode + "\ndocumentPath: " + DefaultDocumentPath + "\nmodelFiles:\n  - " + initManagerPath + "\n"
+		for _, file := range modelFiles {
+			text += "  - " + file + "\n"
+		}
+		return text + "inventoryRoots: []\nexclusions: []\n"
+	}
+	moves := map[string]func(t *testing.T, root string) []string{
+		"delete": func(t *testing.T, root string) []string {
+			if err := os.Remove(filepath.Join(root, filepath.FromSlash(notePath))); err != nil {
+				t.Fatal(err)
+			}
+			return nil
+		},
+		"git rm": func(t *testing.T, root string) []string {
+			gitTest(t, root, "rm", "-q", notePath)
+			return nil
+		},
+		"rename": func(t *testing.T, root string) []string {
+			if err := os.Rename(filepath.Join(root, filepath.FromSlash(notePath)), filepath.Join(root, filepath.FromSlash(renamedPath))); err != nil {
+				t.Fatal(err)
+			}
+			return []string{renamedPath}
+		},
+		"git mv": func(t *testing.T, root string) []string {
+			gitTest(t, root, "mv", notePath, renamedPath)
+			return []string{renamedPath}
+		},
+	}
+	for _, mode := range []string{"full", "selected"} {
+		for name, move := range moves {
+			t.Run(mode+"/"+name, func(t *testing.T) {
+				root := testGitRoot(t)
+				if _, err := Init(root, "Coverage fixture", true); err != nil {
+					t.Fatal(err)
+				}
+				writeFile(t, root, ManifestPath, manifest(mode, notePath))
+				writeFile(t, root, projectcoverage.IgnorePath, "apiVersion: "+projectcoverage.IgnoreAPIVersion+"\nkind: RepositoryIgnore\nentries:\n  - path: README.md\n    reason: Fixture readme outside the model\n")
+				writeFile(t, root, notePath, statementDefinition("A standalone goal."))
+				gitTest(t, root, "add", ".")
+				gitTest(t, root, "commit", "-m", "model with a second file")
+				moved := move(t, root)
+				writeFile(t, root, ManifestPath, manifest(mode, moved...))
+				report, err := Coverage(root, "")
+				if err != nil {
+					t.Fatal(err)
+				}
+				if !report.Accounted || !report.Conforming || len(report.Findings) != 0 {
+					t.Fatalf("working tree after the move: accounted=%v conforming=%v findings=%+v", report.Accounted, report.Conforming, report.Findings)
+				}
+				if len(moved) != 0 {
+					return
+				}
+				gitTest(t, root, "commit", "-m", "unlist the model file only", "--", ManifestPath)
+				fixed, err := Coverage(root, strings.TrimSpace(gitTest(t, root, "rev-parse", "HEAD")))
+				if err != nil {
+					t.Fatal(err)
+				}
+				if fixed.Accounted || len(fixed.Findings) != 1 || fixed.Findings[0].Code != "coverage.unclassified" || fixed.Findings[0].Path != notePath {
+					t.Fatalf("fixed revision that still holds %s: accounted=%v findings=%+v", notePath, fixed.Accounted, fixed.Findings)
+				}
+			})
+		}
+	}
+}
+
+// An exact ignore entry is used only by a file the checked tree has. Deleting
+// its file in the working tree reports the entry unused before the commit; a
+// fixed revision that still holds the file keeps the entry used.
+func TestWorkingTreeCoverageReportsIgnoreEntryOfDeletedFile(t *testing.T) {
+	for _, mode := range []string{"full", "selected"} {
+		t.Run(mode, func(t *testing.T) {
+			root := testGitRoot(t)
+			if _, err := Init(root, "Coverage fixture", true); err != nil {
+				t.Fatal(err)
+			}
+			manifest, err := os.ReadFile(filepath.Join(root, filepath.FromSlash(ManifestPath)))
+			if err != nil {
+				t.Fatal(err)
+			}
+			writeFile(t, root, ManifestPath, strings.Replace(string(manifest), "coverageMode: full\n", "coverageMode: "+mode+"\n", 1))
+			writeFile(t, root, projectcoverage.IgnorePath, "apiVersion: "+projectcoverage.IgnoreAPIVersion+"\nkind: RepositoryIgnore\nentries:\n  - path: README.md\n    reason: Fixture readme outside the model\n")
+			gitTest(t, root, "add", ".")
+			gitTest(t, root, "commit", "-m", "ignore the readme")
+			head := strings.TrimSpace(gitTest(t, root, "rev-parse", "HEAD"))
+			if err := os.Remove(filepath.Join(root, "README.md")); err != nil {
+				t.Fatal(err)
+			}
+			report, err := Coverage(root, "")
+			if err != nil {
+				t.Fatal(err)
+			}
+			if report.Conforming || len(report.Findings) != 1 || report.Findings[0].Code != "coverage.ignore-unused" || report.Findings[0].Path != "README.md" {
+				t.Fatalf("working tree without the ignored file: conforming=%v findings=%+v", report.Conforming, report.Findings)
+			}
+			fixed, err := Coverage(root, head)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if !fixed.Conforming || len(fixed.Findings) != 0 {
+				t.Fatalf("fixed revision that still holds the ignored file: conforming=%v findings=%+v", fixed.Conforming, fixed.Findings)
+			}
+		})
+	}
+}
+
+// A transitional exclusion blocks conformance only while the checked tree
+// still has a file under it. Deleting its only file in the working tree lets
+// the working tree conform; the fixed revision that still holds it does not.
+func TestWorkingTreeCoverageConformsAfterDeletingTransitionalFile(t *testing.T) {
+	for _, mode := range []string{"full", "selected"} {
+		t.Run(mode, func(t *testing.T) {
+			root, _ := modelledCoverageFixture(t, []string{"src/legacy.txt"}, map[string]string{"src/a.txt": "a\n", "src/legacy.txt": "legacy\n"}, "src/a.txt")
+			manifest := coverageManifest("src/legacy.txt")
+			if mode == "selected" {
+				// Selected mode sees the required Artifact only through its inventory roots.
+				manifest = strings.Replace(strings.Replace(manifest, "coverageMode: full\n", "coverageMode: selected\n", 1), "inventoryRoots: []\n", "inventoryRoots:\n  - src\n", 1)
+			}
+			writeFile(t, root, ManifestPath, manifest)
+			gitTest(t, root, "commit", "-a", "--allow-empty", "-m", "coverage mode "+mode)
+			head := strings.TrimSpace(gitTest(t, root, "rev-parse", "HEAD"))
+			gitTest(t, root, "rm", "-q", "src/legacy.txt")
+			report, err := Coverage(root, "")
+			if err != nil {
+				t.Fatal(err)
+			}
+			if !report.Accounted || !report.Conforming || len(report.Findings) != 0 {
+				t.Fatalf("working tree without the transitional file: accounted=%v conforming=%v findings=%+v", report.Accounted, report.Conforming, report.Findings)
+			}
+			fixed, err := Coverage(root, head)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if !fixed.Accounted || fixed.Conforming {
+				t.Fatalf("fixed revision that still holds the transitional file: accounted=%v conforming=%v", fixed.Accounted, fixed.Conforming)
+			}
+		})
+	}
+}
+
 // Modelling a transitional file in place drops its exclusion and adds it to
 // an Artifact without rewriting it. The census never read its bytes, so they
 // are read on demand from the base source instead of reported unavailable.
@@ -240,6 +386,52 @@ func TestCandidateCoverageRefusesDeletesOfCensusOnlyFiles(t *testing.T) {
 	}
 	if _, err := ClassifyCandidate(base, compiled, "src/never.txt"); err != nil {
 		t.Errorf("deleting an absent path was refused: %v", err)
+	}
+}
+
+// The view lists no repository inventory, so committing a conforming file
+// leaves it byte for byte unchanged. A file with a finding appears in it and
+// leaves it again when the file is removed.
+func TestProjectDocumentChangesOnlyWithModelOrFindings(t *testing.T) {
+	root, head := modelledCoverageFixture(t, nil, map[string]string{"src/a.txt": "a\n"}, "src/")
+	render := func(revision string) string {
+		t.Helper()
+		project, err := Load(root, revision)
+		if err != nil {
+			t.Fatal(err)
+		}
+		document, err := Document(project, false)
+		if err != nil {
+			t.Fatal(err)
+		}
+		return document
+	}
+	base := render(head)
+	for _, want := range []string{"- Ignored: README.md — Fixture readme outside the model\n", "- Accounted: yes\n- Conforming: yes\n\nNo path or definition has a finding.\n"} {
+		if !strings.Contains(base, want) {
+			t.Fatalf("conforming view lacks %q:\n%s", want, base)
+		}
+	}
+	for _, absent := range []string{head, "src/a.txt"} {
+		if strings.Contains(base, absent) {
+			t.Fatalf("view names %q, which is neither model nor finding:\n%s", absent, base)
+		}
+	}
+	writeFile(t, root, "src/b.txt", "b\n")
+	gitTest(t, root, "add", ".")
+	gitTest(t, root, "commit", "-m", "add a modelled file")
+	if got := render(strings.TrimSpace(gitTest(t, root, "rev-parse", "HEAD"))); got != base {
+		t.Fatalf("committing a conforming file changed the view:\n%s\nwant\n%s", got, base)
+	}
+	writeFile(t, root, "notes/loose.md", "unmodelled\n")
+	if got := render(""); !strings.Contains(got, "- Conforming: no\n") || !strings.Contains(got, "- notes/loose.md\n  - error (coverage.unclassified): ") {
+		t.Fatalf("view does not list the unclassified file as a finding:\n%s", got)
+	}
+	if err := os.Remove(filepath.Join(root, "notes", "loose.md")); err != nil {
+		t.Fatal(err)
+	}
+	if got := render(""); got != base {
+		t.Fatalf("removing the file with a finding did not restore the view:\n%s\nwant\n%s", got, base)
 	}
 }
 

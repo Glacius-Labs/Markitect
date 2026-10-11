@@ -198,3 +198,42 @@ func TestExplainKeepsRewriteFromSpreadingTheChangeClass(t *testing.T) {
 		}
 	}
 }
+
+// BUG-01: the class does not depend on how definitions are split into model
+// files. A transitive consumer that shares the changed Statement's file is
+// itself change, but its realization stays context, as with separate files.
+func TestExplainClassIgnoresSharedModelFiles(t *testing.T) {
+	for _, shared := range []bool{false, true} {
+		definitions, model, files := sourcedFixture(t)
+		ref := func(namespace, name string) map[string]any {
+			return map[string]any{"apiVersion": APIVersion, "kind": statementKind, "namespace": namespace, "name": name}
+		}
+		workflowFile := ".markitect/model/orders/operator-workflow.yaml"
+		for _, d := range definitions {
+			if shared && d.Metadata.Name == "release-reservation" {
+				workflowFile = d.Source.Path
+			}
+		}
+		definitions = append(definitions,
+			core.Definition{APIVersion: APIVersion, Kind: statementKind, Metadata: core.Metadata{Namespace: "orders", Name: "operator-workflow"}, Purpose: "Operator flow.", Spec: map[string]any{"category": "workflow", "description": "Follow cancellation.", "uses": []any{ref("orders", "cancel-order")}},
+				Source: core.Source{Path: workflowFile}},
+			core.Definition{APIVersion: APIVersion, Kind: artifactKind, Metadata: core.Metadata{Namespace: "orders", Name: "workflow-doc"}, Purpose: "Documents the flow.", Spec: map[string]any{"role": "documentation", "realizes": []any{ref("orders", "operator-workflow")}, "paths": []any{"src/orders/workflow.md"}},
+				Source: core.Source{Path: ".markitect/model/orders/workflow-doc.yaml"}},
+		)
+		files = append(files, File{Path: "src/orders/workflow.md", Digest: "sha256:doc", Mode: "100644"})
+		analyze := func(description string) Report {
+			changed := copyDefinitions(definitions)
+			for i := range changed {
+				if changed[i].Metadata.Name == "release-reservation" {
+					changed[i].Spec["description"] = description
+				}
+			}
+			return analyzeDefinitions(t, model, changed, files)
+		}
+		for _, e := range Explain(analyze("Release reservation once."), analyze("Release reservation at most once.")).Elements {
+			if e.ID == "src/orders/workflow.md" && e.Class != "context" {
+				t.Fatalf("shared file %v: the transitive consumer's realization is %q (reason %q), want context", shared, e.Class, e.Reason)
+			}
+		}
+	}
+}

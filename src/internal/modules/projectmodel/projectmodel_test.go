@@ -892,3 +892,182 @@ func TestAnalyzeExplicitlyReportsUnknownInventory(t *testing.T) {
 		t.Fatalf("unknown inventory hidden: status=%s unknown=%v", r.Status, r.Unknown)
 	}
 }
+
+// BUG-01: an exact path, even of one character, is more specific than ".",
+// so the root keeps the file it names although a child also owns ".".
+func TestAnalyzeExactPathBeatsDotAtAnyLength(t *testing.T) {
+	for _, file := range []string{"x", "xy"} {
+		root := map[string]any{"apiVersion": APIVersion, "kind": managerKind, "namespace": "", "name": "root"}
+		model, diagnostics := core.Compile([]core.Schema{Schema()}, []core.Definition{
+			{APIVersion: APIVersion, Kind: managerKind, Metadata: core.Metadata{Name: "root"}, Purpose: "Root.", Spec: map[string]any{"owns": []any{".", file}}},
+			{APIVersion: APIVersion, Kind: managerKind, Metadata: core.Metadata{Namespace: "app", Name: "app"}, Purpose: "App.", Spec: map[string]any{"parent": root, "owns": []any{"."}}},
+		}, "dot-tie")
+		if len(diagnostics) != 0 {
+			t.Fatalf("compile: %+v", diagnostics)
+		}
+		r := Analyze(model, []File{{Path: file, Digest: "sha256:x", Mode: "100644"}})
+		if r.Status != "succeeded" || len(r.Files) != 1 || r.Files[0].Owner != rootManagerKey() {
+			t.Fatalf("%s: status=%s files=%+v, want it owned by the root's exact selector", file, r.Status, r.Files)
+		}
+	}
+}
+
+// BUG-01: the expected-artifact entry of an absent path lists every Artifact
+// whose exact path or prefix covers it, whatever order their names sort in.
+func TestAnalyzeExpectedEntryListsEveryCoveringArtifact(t *testing.T) {
+	model, files := fixture(t, true, true, true)
+	ref := map[string]any{"apiVersion": APIVersion, "kind": statementKind, "namespace": "orders", "name": "cancel-order"}
+	for _, names := range [][2]string{{"a-exact", "b-prefix"}, {"b-exact", "a-prefix"}} {
+		definitions := append(copyDefinitions(model.Definitions),
+			core.Definition{APIVersion: APIVersion, Kind: artifactKind, Metadata: core.Metadata{Namespace: "orders", Name: names[0]}, Purpose: "Exact.", Spec: map[string]any{"role": "documentation", "realizes": []any{ref}, "paths": []any{"src/orders/gen/x.go"}}},
+			core.Definition{APIVersion: APIVersion, Kind: artifactKind, Metadata: core.Metadata{Namespace: "orders", Name: names[1]}, Purpose: "Prefix.", Spec: map[string]any{"role": "implementation", "realizes": []any{ref}, "paths": []any{"src/orders/gen/"}}},
+		)
+		compiled, diagnostics := core.Compile(model.Schemas, definitions, "expected-entry")
+		if len(diagnostics) != 0 {
+			t.Fatalf("compile: %+v", diagnostics)
+		}
+		for _, f := range Analyze(compiled, files).Files {
+			if f.Path == "src/orders/gen/x.go" && len(f.Artifacts) != 2 {
+				t.Fatalf("%v: the absent path's entry lists %v, want both artifacts", names, f.Artifacts)
+			}
+		}
+	}
+}
+
+// BUG-01: moving a definition to another model file routes both files, their
+// owner and what each declares; Source is not in the model digest, so no
+// other rule names the move (DEC-021).
+func TestImpactRoutesBothModelFilesOfAMovedDefinition(t *testing.T) {
+	definitions, model, files := sourcedFixture(t)
+	base := analyzeDefinitions(t, model, definitions, files)
+	moved := copyDefinitions(definitions)
+	var from string
+	for i := range moved {
+		if moved[i].Metadata.Name == "cancel-order-code" {
+			from = moved[i].Source.Path
+			moved[i].Source.Path = ".markitect/model/orders/moved.yaml"
+		}
+	}
+	impact := Impact(base, analyzeDefinitions(t, model, moved, files))
+	if len(impact.Unknown) != 0 || len(impact.ChangedDefinitions) != 0 || !contains(impact.Files, from) || !contains(impact.Files, ".markitect/model/orders/moved.yaml") {
+		t.Fatalf("moved definition: changed=%v files=%v unknown=%v, want both model files", impact.ChangedDefinitions, impact.Files, impact.Unknown)
+	}
+}
+
+// BUG-01: when a Statement changes, the Manager whose own Decision is about it
+// is routed; that Statement is one of its Contracts.
+func TestImpactRoutesTheOwnerOfADecisionOnAChangedStatement(t *testing.T) {
+	model, files := fixture(t, true, true, true)
+	definitions := append(copyDefinitions(model.Definitions),
+		core.Definition{APIVersion: APIVersion, Kind: statementKind, Metadata: core.Metadata{Namespace: "inventory", Name: "stock-unit"}, Purpose: "Unit of stock.", Spec: map[string]any{"category": "concept", "description": "Pieces.", "public": true}},
+		decisionDefinition("orders", "count-pieces", "inventory", "stock-unit", "Orders count pieces."),
+	)
+	analyze := func(description string) Report {
+		changed := copyDefinitions(definitions)
+		for i := range changed {
+			if changed[i].Metadata.Name == "stock-unit" {
+				changed[i].Spec["description"] = description
+			}
+		}
+		compiled, diagnostics := core.Compile(model.Schemas, changed, "decision-subject")
+		if len(diagnostics) != 0 {
+			t.Fatalf("compile: %+v", diagnostics)
+		}
+		return Analyze(compiled, files)
+	}
+	impact := Impact(analyze("Pieces."), analyze("Packs of ten pieces."))
+	orders := (core.DefinitionIdentity{APIVersion: APIVersion, Kind: managerKind, Namespace: "orders", Name: "orders"}).Key()
+	if len(impact.Unknown) != 0 || !contains(impact.Managers, orders) {
+		t.Fatalf("the owner of a decision on the changed statement is not routed: managers=%v unknown=%v", impact.Managers, impact.Unknown)
+	}
+}
+
+// BUG-01: a Check that must run again because an Artifact declares it routes
+// its owner, like a Check that exercises the changed Statement.
+func TestImpactRoutesTheOwnerOfAnArtifactCheck(t *testing.T) {
+	model, files := fixture(t, true, true, true)
+	root := map[string]any{"apiVersion": APIVersion, "kind": managerKind, "namespace": "", "name": "root"}
+	smokeRef := map[string]any{"apiVersion": APIVersion, "kind": checkKind, "namespace": "qa", "name": "smoke"}
+	definitions := append(copyDefinitions(model.Definitions),
+		core.Definition{APIVersion: APIVersion, Kind: managerKind, Metadata: core.Metadata{Namespace: "qa", Name: "qa"}, Purpose: "Quality.", Spec: map[string]any{"parent": root, "owns": []any{"qa/"}}},
+		core.Definition{APIVersion: APIVersion, Kind: checkKind, Metadata: core.Metadata{Namespace: "qa", Name: "smoke"}, Purpose: "Smoke test.", Spec: map[string]any{"command": []any{"go", "test", "./qa"}}},
+	)
+	for i := range definitions {
+		if definitions[i].Metadata.Name == "cancel-order-code" {
+			definitions[i].Spec["checks"] = append(append([]any(nil), definitions[i].Spec["checks"].([]any)...), smokeRef)
+		}
+	}
+	analyze := func(description string) Report {
+		changed := copyDefinitions(definitions)
+		for i := range changed {
+			if changed[i].Metadata.Name == "cancel-order" {
+				changed[i].Spec["description"] = description
+			}
+		}
+		compiled, diagnostics := core.Compile(model.Schemas, changed, "artifact-check")
+		if len(diagnostics) != 0 {
+			t.Fatalf("compile: %+v", diagnostics)
+		}
+		return Analyze(compiled, files)
+	}
+	impact := Impact(analyze("Before."), analyze("After."))
+	smoke := (core.DefinitionIdentity{APIVersion: APIVersion, Kind: checkKind, Namespace: "qa", Name: "smoke"}).Key()
+	qa := (core.DefinitionIdentity{APIVersion: APIVersion, Kind: managerKind, Namespace: "qa", Name: "qa"}).Key()
+	if !contains(impact.Checks, smoke) || !contains(impact.Managers, qa) {
+		t.Fatalf("artifact check or its owner not routed: checks=%v managers=%v", impact.Checks, impact.Managers)
+	}
+}
+
+// A Manager's Context shows, marked as foreign, the Checks other Managers own
+// that its own Artifacts declare or that use its own Statements, without the
+// owner's private Statements; its own Checks stay in Checks.
+func TestContextShowsForeignChecksThatVerifyTheManagersWork(t *testing.T) {
+	model, files := fixture(t, true, true, true)
+	ref := func(kind, namespace, name string) map[string]any {
+		return map[string]any{"apiVersion": APIVersion, "kind": kind, "namespace": namespace, "name": name}
+	}
+	contract := ref(statementKind, "inventory", "release-reservation")
+	definitions := append(copyDefinitions(model.Definitions),
+		core.Definition{APIVersion: APIVersion, Kind: managerKind, Metadata: core.Metadata{Namespace: "qa", Name: "qa"}, Purpose: "Quality.", Spec: map[string]any{"parent": ref(managerKind, "", "root"), "owns": []any{"qa/"}}},
+		core.Definition{APIVersion: APIVersion, Kind: statementKind, Metadata: core.Metadata{Namespace: "qa", Name: "test-data"}, Purpose: "Private test data.", Spec: map[string]any{"category": "rule", "description": "Seeded stock."}},
+		core.Definition{APIVersion: APIVersion, Kind: checkKind, Metadata: core.Metadata{Namespace: "qa", Name: "smoke"}, Purpose: "Smoke test.", Spec: map[string]any{"command": []any{"go", "test", "./qa"}, "uses": []any{contract, ref(statementKind, "qa", "test-data")}, "limitation": "Smoke only."}},
+		core.Definition{APIVersion: APIVersion, Kind: checkKind, Metadata: core.Metadata{Namespace: "qa", Name: "unrelated"}, Purpose: "Unrelated test.", Spec: map[string]any{"command": []any{"go", "test", "./qa/other"}}},
+	)
+	for i := range definitions {
+		if definitions[i].Metadata.Name == "cancel-order-code" {
+			definitions[i].Spec["checks"] = append(append([]any(nil), definitions[i].Spec["checks"].([]any)...), ref(checkKind, "qa", "smoke"))
+		}
+	}
+	compiled, diagnostics := core.Compile(model.Schemas, definitions, "foreign-checks")
+	if len(diagnostics) != 0 {
+		t.Fatalf("compile: %+v", diagnostics)
+	}
+	r := Analyze(compiled, files)
+	if r.Status != "succeeded" {
+		t.Fatalf("fixture not clean: %s %+v", r.Status, r.Findings)
+	}
+	key := func(kind, namespace, name string) string {
+		return (core.DefinitionIdentity{APIVersion: APIVersion, Kind: kind, Namespace: namespace, Name: name}).Key()
+	}
+	smoke, contractID := key(checkKind, "qa", "smoke"), key(statementKind, "inventory", "release-reservation")
+	for namespace, ownChecks := range map[string][]string{"orders": {key(checkKind, "orders", "cancel-order-tests")}, "inventory": nil} {
+		ctx, err := Context(r, key(managerKind, namespace, namespace))
+		if err != nil {
+			t.Fatal(err)
+		}
+		var own []string
+		for _, c := range ctx.Checks {
+			own = append(own, c.ID)
+		}
+		if strings.Join(own, "|") != strings.Join(ownChecks, "|") {
+			t.Fatalf("%s own checks = %v, want %v", namespace, own, ownChecks)
+		}
+		// orders declares smoke through cancel-order-code; inventory's contract is used by smoke.
+		if len(ctx.ForeignChecks) != 1 || ctx.ForeignChecks[0].ID != smoke || ctx.ForeignChecks[0].Owner != key(managerKind, "qa", "qa") || ctx.ForeignChecks[0].Limitation != "Smoke only." {
+			t.Fatalf("%s foreign checks = %+v, want only qa's smoke", namespace, ctx.ForeignChecks)
+		}
+		if strings.Join(ctx.ForeignChecks[0].Uses, "|") != contractID {
+			t.Fatalf("%s sees smoke's uses %v; qa's private test data must stay hidden", namespace, ctx.ForeignChecks[0].Uses)
+		}
+	}
+}

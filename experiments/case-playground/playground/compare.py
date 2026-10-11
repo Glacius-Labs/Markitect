@@ -7,9 +7,13 @@ comparable: the run's fairness fields (case, stations, host platform, image, Cod
 version, model, effort, subagent limit, limits, container, as the run report lists
 them), the outer provider, the evaluation files (by SHA-256) and the reviewer models.
 A host platform that a run does not record is unknown and never matches, not even
-another unknown one. Mismatched runs are refused unless `--allow-mismatch` is given; the
-mismatches are then printed at the top. The comparison goes to `--out` (default: `compare-<A>-vs-<B>.md`
-next to RUN_A).
+another unknown one. Both assessments must also follow the rules: `rules.preRegistered`
+(judged with the run's pre-registered evaluation files, not exploratory) and
+`rules.reviewersIndependent` (no reviewer model is an arm's model) must be true; a
+missing rule counts as false. Mismatched runs are refused unless `--allow-mismatch` is
+given; the mismatches are then printed at the top, and such a comparison is for looking,
+not for study results. The comparison names the matched host platform and goes to
+`--out` (default: `compare-<A>-vs-<B>.md` next to RUN_A).
 """
 from __future__ import annotations
 
@@ -19,6 +23,7 @@ import sys
 from pathlib import Path
 from typing import Any
 
+from . import outcome
 from .reviewers import CATEGORIES, PROVIDERS
 
 
@@ -28,6 +33,10 @@ KNOWN_REQUIRED = ("fairness.hostPlatform",)
 UNKNOWN = "unknown (not recorded)"
 UNKNOWN_HINT = ("A run that does not record its host platform is never paired: runs from different host platforms "
                 "are never pooled (DEC-013).")
+# Rules both assessments must follow; missing counts as false.
+REQUIRED_TRUE = ("rules.preRegistered", "rules.reviewersIndependent")
+RULES_HINT = ("Both assessments must judge with the run's pre-registered evaluation files (not --exploratory) and "
+              "with reviewer models that differ from the arms' models.")
 
 
 class CompareError(RuntimeError):
@@ -53,6 +62,9 @@ def fairness_fields(report: dict) -> dict[str, Any]:
         fields[f"fairness.{key}"] = value
     for key in KNOWN_REQUIRED:
         fields.setdefault(key, None)
+    rules = report.get("rules") or {}
+    for key in REQUIRED_TRUE:
+        fields[key] = rules.get(key.split(".", 1)[1]) is True
     for key, value in sorted(((report.get("evaluation") or {}).get("files") or {}).items()):
         fields[f"evaluation.{key}"] = (value or {}).get("sha256")
     for name, cfg in sorted((report.get("reviewers") or {}).items()):
@@ -65,7 +77,26 @@ def mismatches(a: dict, b: dict) -> list[tuple[str, Any, Any]]:
     first, second = fairness_fields(a), fairness_fields(b)
     return [(key, first.get(key), second.get(key)) for key in sorted(set(first) | set(second))
             if first.get(key) != second.get(key)
-            or (key in KNOWN_REQUIRED and (first.get(key) is None or second.get(key) is None))]
+            or (key in KNOWN_REQUIRED and (first.get(key) is None or second.get(key) is None))
+            or (key in REQUIRED_TRUE and not (first.get(key) and second.get(key)))]
+
+
+def hints(problems: list[tuple[str, Any, Any]]) -> list[str]:
+    """Why a mismatch that is not a plain difference is one."""
+    found = []
+    if any(key in KNOWN_REQUIRED and None in (value_a, value_b) for key, value_a, value_b in problems):
+        found.append(UNKNOWN_HINT)
+    if any(key in REQUIRED_TRUE for key, _a, _b in problems):
+        found.append(RULES_HINT)
+    return found
+
+
+def host_platform(report: dict) -> str:
+    """The run's host platform as text, or UNKNOWN."""
+    value = ((report.get("run") or {}).get("fairness") or {}).get("hostPlatform")
+    if not isinstance(value, dict):
+        return UNKNOWN
+    return f"{_fmt(value.get('system'))} {_fmt(value.get('machine'))}"
 
 
 def _show(key: str, value: Any) -> str:
@@ -135,12 +166,16 @@ def render(a: dict, b: dict, problems: list[tuple[str, Any, Any]]) -> str:
         lines += ["**Fairness mismatch, compared anyway (--allow-mismatch).** These fields differ, so "
                   "differences below may come from them and not from the method:", ""]
         lines += [f"- `{key}`: {_show(key, value_a)} vs {_show(key, value_b)}" for key, value_a, value_b in problems]
-        if any(key in KNOWN_REQUIRED and None in (value_a, value_b) for key, value_a, value_b in problems):
-            lines += ["", UNKNOWN_HINT]
+        for hint in hints(problems):
+            lines += ["", hint]
         lines.append("")
     else:
         lines += ["Fairness fields match (case, stations, host platform, image, versions, model, effort, "
-                  "limits, container, outer provider, evaluation files, reviewer models).", ""]
+                  "limits, container, outer provider, evaluation files, reviewer models), and both assessments "
+                  "are pre-registered with independent reviewers.", ""]
+    platforms = host_platform(a), host_platform(b)
+    lines += [f"Host platform: {platforms[0]}." if platforms[0] == platforms[1] != UNKNOWN
+              else f"Host platform: {_cell(*platforms)}.", ""]
     lines += [f"Each cell shows A │ B. A = {label_a}, B = {label_b}. Outer provider "
               f"{_fmt(run_a.get('outerProvider'))} │ {_fmt(run_b.get('outerProvider'))}; case "
               f"{_fmt(run_a.get('case'))}; classification {a['classification']['class']} │ "
@@ -206,6 +241,7 @@ def _tokens(block: dict | None) -> str:
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(prog="python -m playground compare", description=__doc__,
+                                     epilog=outcome.help_text(),
                                      formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("run_a")
     parser.add_argument("run_b")
@@ -216,19 +252,22 @@ def main(argv: list[str] | None = None) -> int:
         a, b = load(Path(args.run_a)), load(Path(args.run_b))
     except CompareError as exc:
         print(f"error: {exc}", file=sys.stderr)
-        return 2
+        return outcome.INVALID
     problems = mismatches(a, b)
     if problems and not args.allow_mismatch:
         print("error: the runs are not comparable; these fairness fields differ "
               "(use --allow-mismatch to compare anyway):", file=sys.stderr)
         for key, value_a, value_b in problems:
             print(f"  {key}: {_show(key, value_a)} vs {_show(key, value_b)}", file=sys.stderr)
-        if any(key in KNOWN_REQUIRED and None in (value_a, value_b) for key, value_a, value_b in problems):
-            print(f"  {UNKNOWN_HINT}", file=sys.stderr)
-        return 2
+        for hint in hints(problems):
+            print(f"  {hint}", file=sys.stderr)
+        return outcome.INVALID
     out = Path(args.out) if args.out else (
         Path(args.run_a).resolve().parent / f"compare-{a['run'].get('id')}-vs-{b['run'].get('id')}.md")
     out.parent.mkdir(parents=True, exist_ok=True)
     out.write_text(render(a, b, problems), encoding="utf-8", newline="\n")
+    platforms = host_platform(a), host_platform(b)
+    print(f"host platform: {platforms[0]}" + (" (both runs)" if platforms[0] == platforms[1] != UNKNOWN
+                                              else f" vs {platforms[1]}"))
     print(f"comparison: {out}")
-    return 0
+    return outcome.OK

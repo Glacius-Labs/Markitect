@@ -52,7 +52,9 @@ var (
 	shopOrderLifecycle       = shopID("Artifact", shopOrders, "order-lifecycle")
 	shopReservationLifecycle = shopID("Artifact", shopReservations, "reservation-lifecycle")
 
-	shopCancellationTests = shopID("Check", "engineering", "cancellation-tests")
+	shopCancellationTests  = shopID("Check", "engineering", "cancellation-tests")
+	shopReadmeGuide        = shopID("Check", "engineering", "readme-guide")
+	shopRepositoryOverview = shopID("Statement", "", "repository-overview")
 )
 
 type knowledgeQuestion struct {
@@ -354,13 +356,20 @@ func askShopScopeVisibility(t *testing.T, shop shopFixture) {
 	assertSameSet(t, "orders contracts", statementIDs(orders.Contracts), shopReservation, shopReleaseReservation)
 	assertSameSet(t, "orders artifacts", artifactIDs(orders.Artifacts), shopOrderLifecycle)
 	assertSameSet(t, "orders checks", checkIDs(orders.Checks))
+	// Checks owned elsewhere that verify orders' work are shown, marked foreign:
+	// order-lifecycle declares engineering's cancellation-tests, which uses cancel-order.
+	assertSameSet(t, "orders foreign checks", checkIDs(orders.ForeignChecks), shopCancellationTests)
+	if foreign := orders.ForeignChecks[0]; foreign.Owner != shopEngineeringManager || len(foreign.Command) == 0 || foreign.Limitation == "" {
+		t.Fatalf("orders sees cancellation-tests without its owner, command or limitation: %+v", foreign)
+	}
 	// inventory's statements use no orders statement, so none is visible there.
 	assertSameSet(t, "inventory contracts", statementIDs(shopContext(t, report, shopInventoryManager).Contracts))
 	// Own checks select contracts too: change-delivery uses cancellation-transaction,
-	// and engineering's own Check exercises cancel-order and release-reservation.
+	// engineering's cancellation Check exercises cancel-order and release-reservation,
+	// and its readme-guide Check exercises the repository overview.
 	engineering := shopContext(t, report, shopEngineeringManager)
-	assertSameSet(t, "engineering checks", checkIDs(engineering.Checks), shopCancellationTests)
-	assertSameSet(t, "engineering contracts", statementIDs(engineering.Contracts), shopTransaction, shopCancelOrder, shopReleaseReservation)
+	assertSameSet(t, "engineering checks", checkIDs(engineering.Checks), shopCancellationTests, shopReadmeGuide)
+	assertSameSet(t, "engineering contracts", statementIDs(engineering.Contracts), shopTransaction, shopCancelOrder, shopReleaseReservation, shopRepositoryOverview)
 
 	// Candidate, not the shipped Shop: order becomes private and commerce gets
 	// instructions, because the Shop has neither a private statement nor a
@@ -405,7 +414,7 @@ func askShopScopeVisibility(t *testing.T, shop shopFixture) {
 			t.Fatalf("orders' graph shows inventory's own %s %s", n.Kind, n.ID)
 		}
 	}
-	assertFieldNames(t, projectmodel.ManagerContext{}, "Manager", "Statements", "Contracts", "Artifacts", "Checks", "Decisions", "Children", "Findings")
+	assertFieldNames(t, projectmodel.ManagerContext{}, "Manager", "Statements", "Contracts", "Artifacts", "Checks", "Decisions", "ForeignChecks", "Children", "Findings")
 }
 
 func askShopClaimConflicts(t *testing.T, _ shopFixture) {

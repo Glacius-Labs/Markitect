@@ -8,14 +8,20 @@ the parameters both arms share; `expand` turns it into one schema-1 manifest per
 p runs `firstArm` first when p is odd and the other arm first when p is even. Run ids are
 `<id>-p<p>-conv` and `<id>-p<p>-mkt`.
 
-Order: the preflight runs every cheap check and prints every problem at once (exit 3);
-then it builds the image and the Markitect binary once (`--preflight` stops before
-that). The runs follow in schedule order, one after the other; then every run whose
-container finished is assessed, and every pair with both assessments is compared
+Order: the preflight runs every cheap check and prints every problem at once (exit 3),
+among them the pre-registration of the evaluation files (registration.py; a study has no
+exploratory override, and every run records that one registration) and reviewer models
+that differ from the arms' models (with --fake-reviewers only a warning); then it builds
+the image and the Markitect binary once (`--preflight` stops before that). The runs
+follow in schedule order, one after the other; then every run whose container finished
+is assessed, and every pair with both assessments is compared
 (A = conventional, B = markitect; a fairness mismatch fails the step, it is never
 allowed). A failed or stopped run does not stop the study; the study stops when the host
 could not run a container or the image changed under it, and lists the `assess` and
-`compare` commands that finish the runs it completed by hand. There is no resume.
+`compare` commands that finish the runs it completed by hand. There is no resume. The
+exit code is the worst step code (outcome.study); --help prints the table. Status
+`method-stopped` means the worst step was a method outcome (1: agent time used up):
+the method stopped, not the harness.
 
 Logins: a private folder `~/.markitect-playground/logins/<id>-<random>/` holds the
 study's working copy (`current/`), copied once from the source, and one folder of 0600
@@ -48,7 +54,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
-from . import compare, evaluate, host, reviewers
+from . import compare, evaluate, host, outcome, registration, reviewers
 from . import manifest as manifest_module
 
 SCHEMA = 1
@@ -64,18 +70,6 @@ RETURNED = "returned-codex-auth.json"
 # Host statuses that mean the host could not run a container: the study stops.
 HOST_FAILURES = ("setup-failed", "start-failed", "wait-failed", "host-timeout", "host-interrupted")
 PROBE_TIMEOUT = 120
-
-# The one table of the study's exit codes (PLAY-05 extends it); --help prints it.
-EXIT_OK, EXIT_FAILED, EXIT_ERROR, EXIT_PREFLIGHT, EXIT_TIMEOUT, EXIT_INTERRUPTED = 0, 1, 2, 3, 124, 130
-EXIT_CODES = {
-    EXIT_OK: "every step was written and every run exited 0",
-    EXIT_FAILED: "a step failed, a run stopped early, or the study stopped (the host could not run a "
-                 "container, or the image changed)",
-    EXIT_ERROR: "invalid study file, or an error of the study itself (study-error.txt)",
-    EXIT_PREFLIGHT: "preflight failed; every problem is printed",
-    EXIT_TIMEOUT: "a container hit the host safety timeout; the study stopped",
-    EXIT_INTERRUPTED: "interrupted; the study stopped",
-}
 
 
 class StudyError(manifest_module.ManifestError):
@@ -406,12 +400,14 @@ def _existing_parent(path: Path) -> Path:
 
 
 def preflight(study: dict, runs: list[dict], out: Path, *, codex_source: Path, claude_source: Path,
-              needs: dict[str, list[str]], codex_flag: str, claude_flag: str) -> tuple[list[dict], dict]:
+              needs: dict[str, list[str]], codex_flag: str, claude_flag: str,
+              fake_reviewers: bool = False) -> tuple[list[dict], dict]:
     """Every cheap check: (checks, facts). A check is {"check", "status": ok|fail|warn|skip,
-    "message"}; every failing message names its fix."""
+    "message"}; every failing message names its fix. `facts["preRegistration"]` is the
+    record every run of the study keeps."""
     checks: list[dict] = []
     facts: dict[str, Any] = {"python": platform.python_version(), "hostPlatform": host.host_platform(),
-                             "docker": None, "go": None, "markitect": None}
+                             "docker": None, "go": None, "markitect": None, "preRegistration": None}
 
     def add(name: str, status: str, message: str) -> None:
         checks.append({"check": name, "status": status, "message": message})
@@ -521,18 +517,42 @@ def preflight(study: dict, runs: list[dict], out: Path, *, codex_source: Path, c
         else:
             add("free disk", "ok", f"{free / (1 << 30):.0f} GiB free at {parent}")
 
-    code, text, _err = _probe(["git", "-C", str(host.ROOT), "status", "--porcelain", "--untracked-files=all", "--",
-                               "evaluation"])
-    if code == 0 and text:
-        add("evaluation files", "warn", "evaluation files have uncommitted changes; they are pre-registered: commit "
-                                        "them before the runs they judge")
-    elif code == 0:
-        add("evaluation files", "ok", "evaluation files committed")
+    pre = facts["preRegistration"] = registration.observe(host.ROOT)
+    if pre["status"] == "registered":
+        add("pre-registration", "ok", f"evaluation files committed: tree {pre['evaluationTree'][:12]} at commit "
+                                      f"{pre['commit'][:12]}")
+    else:
+        add("pre-registration", "fail", f"{registration.refusal(pre)}; the evaluation files judge the runs and "
+                                        "are pre-registered: commit them first (a study has no exploratory override)")
+    _reviewer_check(study, runs, add, fake_reviewers)
     leftovers = leftover_login_folders()
     if leftovers:
         add("login folders", "warn", f"login folders of an earlier study are left in {Path(STATE_HOME) / 'logins'} "
                                      f"({', '.join(leftovers)}); delete them if no study is running")
     return checks, facts
+
+
+def _reviewer_check(study: dict, runs: list[dict], add, fake_reviewers: bool) -> None:
+    """Every reviewer's model differs from every arm's model (registration.clashes)."""
+    try:
+        config = evaluate.load_config(host.ROOT / "evaluation" / "config.json")
+    except evaluate.AssessError as exc:
+        add("reviewer models", "fail", f"{exc}; fix evaluation/config.json")
+        return
+    arms: dict[str, str] = {}
+    for entry in runs:
+        for key, source in registration.arm_models(entry["manifest"]).items():
+            arms.setdefault(key, source)
+    found = registration.clashes(config, study["reviewers"], arms)
+    if not found:
+        add("reviewer models", "ok", "every reviewer model differs from the arms' models")
+    elif fake_reviewers:
+        add("reviewer models", "warn", f"{registration.describe(found)}; only a warning with --fake-reviewers, "
+                                       "but compare refuses the pairs")
+    else:
+        add("reviewer models", "fail", f"{registration.describe(found)}; reviewer models must differ from the arms' "
+                                       "models: choose other reviewers in the study file, or other models in "
+                                       "evaluation/config.json (committed before the runs)")
 
 
 def _markitect_checks(product: dict, add, facts: dict) -> None:
@@ -606,7 +626,7 @@ class Study:
         self.logins: Logins | None = None
         self.prebuilt: dict | None = None
         self.stopped: str | None = None
-        self.stop_code = EXIT_FAILED
+        self.stop_code = outcome.OK
         self.clock: dict[int, float] = {}
         parameters = dict(study)
         if facts.get("markitect"):
@@ -623,6 +643,7 @@ class Study:
             "versions": {"playground": evaluate.evaluation_identity(), "python": facts["python"],
                          "hostPlatform": facts["hostPlatform"], "docker": facts["docker"], "go": facts["go"],
                          "image": None, "markitect": None},
+            "preRegistration": facts.get("preRegistration"),
             "preflight": {"status": "passed", "checks": checks},
             "schedule": [{"id": entry["id"], "pair": entry["pair"], "arm": entry["arm"],
                           "position": entry["position"], "manifest": f"manifests/{entry['id']}.json"}
@@ -650,7 +671,7 @@ class Study:
         step["seconds"] = round(time.monotonic() - self.clock.pop(id(step)), 1)
         self.save()
 
-    def _stop(self, reason: str, code: int = EXIT_FAILED) -> None:
+    def _stop(self, reason: str, code: int) -> None:
         if self.stopped is None:
             self.stopped, self.stop_code = reason, code
             self.record["stopReason"] = reason
@@ -663,7 +684,7 @@ class Study:
         if not _acquire_lock(lock, {"study": self.study["id"], "pid": os.getpid(), "out": str(self.out),
                                     "startedAt": _now()}):
             print(f"error: another study holds {lock}; run one study at a time", file=sys.stderr)
-            return EXIT_PREFLIGHT
+            return outcome.PREFLIGHT
         try:
             return self._execute()
         finally:
@@ -676,10 +697,10 @@ class Study:
                                                                newline="\n")
         shutil.copyfile(self.study_file, self.out / "study-file.json")
         self.save()
-        code = EXIT_ERROR
+        code = outcome.HARNESS
         try:
             if not self.build():
-                code = EXIT_PREFLIGHT
+                code = outcome.PREFLIGHT
                 self.record["status"] = "preflight-failed"
                 return code
             self.write_manifests()
@@ -690,18 +711,19 @@ class Study:
             assess_steps = {entry["id"]: self.assess_one(entry, step) for entry, step in zip(self.runs, run_steps)}
             self.compare_pairs(assess_steps)
             code = self.exit_code()
-            self.record["status"] = {EXIT_OK: "completed", EXIT_TIMEOUT: "timeout",
-                                     EXIT_INTERRUPTED: "interrupted"}.get(code, "stopped" if self.stopped else "failed")
+            statuses = {outcome.OK: "completed", outcome.METHOD: "method-stopped", outcome.TIMEOUT: "timeout",
+                        outcome.INTERRUPTED: "interrupted"}
+            self.record["status"] = statuses.get(code, "stopped" if self.stopped else "failed")
             return code
         except KeyboardInterrupt:
             self.record["status"], self.record["stopReason"] = "interrupted", "interrupted"
-            code = EXIT_INTERRUPTED
+            code = outcome.INTERRUPTED
             return code
         except Exception:
             (self.out / "study-error.txt").write_text(traceback.format_exc(), encoding="utf-8")
             print(traceback.format_exc(), file=sys.stderr)
             self.record["status"] = "error"
-            code = EXIT_ERROR
+            code = outcome.HARNESS
             return code
         finally:
             try:
@@ -823,7 +845,8 @@ class Study:
         try:
             code, record = host.run_manifest(entry["manifest"], run_dir, auth=auth, token=token,
                                              keep=self.args.keep_containers, prebuilt=self.prebuilt,
-                                             before_remove=before_remove)
+                                             before_remove=before_remove,
+                                             pre_registration=self.record["preRegistration"])
         finally:
             if auth is not None:
                 login["reported"] = (_read_json(run_dir / "results" / "runner.json") or {}).get("codexLoginChanged")
@@ -835,11 +858,10 @@ class Study:
                   error=record.get("error"))
         if status in HOST_FAILURES:
             self._stop(f"run {entry['id']}: host status {status}" + (f" ({record['error']})" if record.get("error")
-                                                                    else ""),
-                       {124: EXIT_TIMEOUT, 130: EXIT_INTERRUPTED}.get(code, EXIT_FAILED))
+                                                                    else ""), code)
         elif seen["image"] != self.prebuilt["image"]["id"]:
             self._stop(f"run {entry['id']} ran image {seen['image'] or 'unknown'}, not the preflight build "
-                       f"{self.prebuilt['image']['id']}; rebuild and start a new study")
+                       f"{self.prebuilt['image']['id']}; rebuild and start a new study", outcome.ENVIRONMENT)
         return step
 
     def assess_one(self, entry: dict, run_step: dict) -> dict:
@@ -866,8 +888,11 @@ class Study:
             code, result = evaluate.assess_container(run_dir, names=names, codex_auth=auth, claude_token=token,
                                                      fake=self.fake, keep=self.args.keep_containers,
                                                      before_remove=before_remove)
-        except (evaluate.AssessError, host.HostError, OSError) as exc:
-            self._end(step, "failed", EXIT_ERROR, error=str(exc))
+        except (evaluate.AssessError, host.HostError) as exc:
+            self._end(step, "failed", exc.code, error=str(exc))
+            return step
+        except OSError as exc:
+            self._end(step, "failed", outcome.HARNESS, error=str(exc))
             return step
         finally:
             if auth is not None:
@@ -880,8 +905,7 @@ class Study:
         status = result["status"]
         self._end(step, status, code, error=result.get("error"))
         if status in HOST_FAILURES:
-            self._stop(f"assessment of {entry['id']}: host status {status}",
-                       {124: EXIT_TIMEOUT, 130: EXIT_INTERRUPTED}.get(code, EXIT_FAILED))
+            self._stop(f"assessment of {entry['id']}: host status {status}", code)
         return step
 
     def compare_pairs(self, assess_steps: dict[str, dict]) -> None:
@@ -901,26 +925,24 @@ class Study:
                 a = compare.load(self.out / "runs" / ids["conventional"])
                 b = compare.load(self.out / "runs" / ids["markitect"])
             except compare.CompareError as exc:
-                self._end(step, "failed", EXIT_ERROR, error=str(exc))
+                self._end(step, "failed", outcome.INVALID, error=str(exc))
                 continue
             problems = compare.mismatches(a, b)
             if problems:
-                self._end(step, "fairness-mismatch", EXIT_ERROR,
+                self._end(step, "fairness-mismatch", outcome.INVALID,
                           error="the runs are not comparable; these fairness fields differ",
                           mismatches=[[key, compare._show(key, value_a), compare._show(key, value_b)]
                                       for key, value_a, value_b in problems])
                 continue
             (self.out / "comparisons").mkdir(exist_ok=True)
             (self.out / target).write_text(compare.render(a, b, []), encoding="utf-8", newline="\n")
-            self._end(step, "written", 0)
+            self._end(step, "written", outcome.OK)
 
     def exit_code(self) -> int:
-        if self.stopped:
-            return self.stop_code
-        for step in self.record["steps"]:
-            if step["exitCode"] != 0:
-                return EXIT_FAILED
-        return EXIT_OK
+        """The worst step code (outcome.study) and, after a stop, the stop's code. A step
+        that did not run has no code: its cause is counted where it happened."""
+        codes = [step["exitCode"] for step in self.record["steps"] if step["exitCode"] is not None]
+        return outcome.study(codes + ([self.stop_code] if self.stopped else []))
 
 
 # --- study.md --------------------------------------------------------------------------
@@ -938,9 +960,12 @@ def _fmt(value: Any) -> str:
 def render(record: dict) -> str:
     p, versions = record["parameters"], record["versions"]
     agent = p["agent"]
+    pre = record.get("preRegistration") or {}
     lines = [f"# Study {record['id']}", "",
              f"Status **{record['status']}**, exit code {_fmt(record['exitCode'])}"
-             + (f"; stopped: {record['stopReason']}" if record.get("stopReason") else "") + ".", "",
+             + (f"; stopped: {record['stopReason']}" if record.get("stopReason") else "")
+             + (" (the method stopped early: agent time used up; not a harness failure)"
+                if record["status"] == "method-stopped" else "") + ".", "",
              f"- Case {p['case']}, stations {p['stations']}, arms {', '.join(p['arms'])}, first arm {p['firstArm']}, "
              f"pairs {p['pairs']}.",
              f"- Agent {agent['kind']} (model {agent['model']}, effort {agent['effort']}, codex {agent['codexVersion']}, "
@@ -948,7 +973,9 @@ def render(record: dict) -> str:
              f"container {_fmt(p['container'])}.",
              f"- Reviewers {', '.join(p['reviewers']) or 'none'}" + (" (fake)" if record["options"]["fakeReviewers"]
                                                                     else "")
-             + "; models from evaluation/config.json.",
+             + "; models from the registered evaluation/config.json.",
+             f"- Pre-registration: evaluation tree {_fmt(pre.get('evaluationTree'))} at commit {_fmt(pre.get('commit'))}"
+             f" ({_fmt(pre.get('status'))}, {_fmt(pre.get('recordedAt'))}).",
              f"- Markitect: {_fmt(p.get('markitect'))}." if p.get("markitect") else "- Markitect: not in this study.",
              f"- Versions: playground {_fmt((versions.get('playground') or {}).get('commit'))}"
              + (" (uncommitted changes)" if (versions.get("playground") or {}).get("dirty") else "")
@@ -1000,24 +1027,24 @@ def run(args: argparse.Namespace) -> int:
                         claude_given=bool(args.claude_token))
     checks, facts = preflight(study, runs, out, codex_source=codex_source, claude_source=claude_source, needs=needs,
                               codex_flag=" (--codex-auth)" if args.codex_auth else "",
-                              claude_flag=" (--claude-token)" if args.claude_token else "")
+                              claude_flag=" (--claude-token)" if args.claude_token else "",
+                              fake_reviewers=bool(args.fake_reviewers))
     lines = print_checks(checks)
     failed = [check for check in checks if check["status"] == "fail"]
     if failed:
         print(f"preflight failed: {len(failed)} problem(s); fix them and run again", file=sys.stderr)
-        return EXIT_PREFLIGHT
+        return outcome.PREFLIGHT
     if args.preflight:
         print("preflight passed (--preflight: the image and the Markitect binary are built by the study itself)")
-        return EXIT_OK
+        return outcome.OK
     return Study(study, runs, args, out=out, study_file=study_file, checks=checks, facts=facts, lines=lines,
                  codex_source=codex_source.resolve() if needs["codex"] else None,
                  claude_source=claude_source.resolve() if needs["claude"] else None).execute()
 
 
 def main(argv: list[str] | None = None) -> int:
-    epilog = "exit codes:\n" + "\n".join(f"  {code:>3}  {text}" for code, text in EXIT_CODES.items())
-    parser = argparse.ArgumentParser(prog="python -m playground study", description=__doc__, epilog=epilog,
-                                     formatter_class=argparse.RawDescriptionHelpFormatter)
+    parser = argparse.ArgumentParser(prog="python -m playground study", description=__doc__,
+                                     epilog=outcome.help_text(), formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("study", help="study file (schema 1)")
     parser.add_argument("--out", help="study folder (default ~/markitect-playground-runs/<id>)")
     parser.add_argument("--codex-auth", help="Codex login (default ~/.codex/auth.json; the fake agent gets one "
@@ -1032,13 +1059,16 @@ def main(argv: list[str] | None = None) -> int:
         return run(args)
     except manifest_module.ManifestError as exc:
         print(f"error: invalid study file {args.study}: {exc}", file=sys.stderr)
-        return EXIT_ERROR
-    except (host.HostError, evaluate.AssessError, OSError) as exc:
+        return outcome.INVALID
+    except (host.HostError, evaluate.AssessError) as exc:
         print(f"error: {exc}", file=sys.stderr)
-        return EXIT_ERROR
+        return exc.code
+    except OSError as exc:
+        print(f"error: {exc}", file=sys.stderr)
+        return outcome.HARNESS
     except KeyboardInterrupt:
         print("interrupted", file=sys.stderr)
-        return EXIT_INTERRUPTED
+        return outcome.INTERRUPTED
     finally:
         for number, handler in previous.items():
             signal.signal(number, handler)

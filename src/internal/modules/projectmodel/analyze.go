@@ -191,6 +191,12 @@ func Analyze(model core.Model, inventory []File) Report {
 		fileByPath[clean] = FileEntry{Path: clean, Digest: f.Digest, Mode: f.Mode, Owner: owner, Class: class, Statements: []string{}, Artifacts: []string{}, Checks: []string{}, Exists: true}
 	}
 
+	type expectation struct {
+		artifact Artifact
+		selector string
+	}
+	var expectations []expectation
+	absent := map[string]bool{}
 	for _, a := range r.Artifacts {
 		if a.Required && len(a.Paths) == 0 {
 			addFinding(&r, "coverage.required-artifact-unmapped", a.ID, "Required Artifact has no expected path.", "incomplete")
@@ -209,32 +215,35 @@ func Analyze(model core.Model, inventory []File) Report {
 					addFinding(&r, "path.case-mismatch", a.ID, "Inventory path differs in case from an expected Artifact path: "+p, "error")
 				}
 			}
+			// Only inventory counts as a match; expected-artifact entries come later.
 			matched := false
-			for p, entry := range fileByPath {
-				if selectorMatches(selector, p) {
-					// An expected-artifact entry left by another absent path is not inventory.
-					matched = matched || entry.Exists
-					entry.Artifacts = appendUnique(entry.Artifacts, a.ID)
-					for _, sid := range a.Realizes {
-						entry.Statements = appendUnique(entry.Statements, sid)
-					}
-					for _, cid := range a.Checks {
-						entry.Checks = appendUnique(entry.Checks, cid)
-					}
-					fileByPath[p] = entry
-				}
+			for p := range fileByPath {
+				matched = matched || selectorMatches(selector, p)
 			}
 			if !matched {
 				if a.Required {
 					addFinding(&r, "coverage.required-artifact-missing", a.ID, "Expected Artifact path is absent from the supplied inventory: "+selector, "incomplete")
 				}
 				if !strings.HasSuffix(selector, "/") {
-					entry := fileByPath[selector]
-					owner := fileOwner(selector, r.Managers)
-					entry.Path, entry.Owner, entry.Class, entry.Exists = selector, owner, "expected-artifact", false
-					entry.Statements, entry.Artifacts, entry.Checks = appendUnique(entry.Statements, a.Realizes...), appendUnique(entry.Artifacts, a.ID), appendUnique(entry.Checks, a.Checks...)
-					fileByPath[selector] = entry
+					absent[selector] = true
 				}
+			}
+			expectations = append(expectations, expectation{a, selector})
+		}
+	}
+	// Every absent exact path gets an expected-artifact entry before any Artifact is
+	// mapped, so each entry lists every Artifact whose path or prefix covers it,
+	// whatever order the Artifacts sort in.
+	for selector := range absent {
+		fileByPath[selector] = FileEntry{Path: selector, Owner: fileOwner(selector, r.Managers), Class: "expected-artifact", Statements: []string{}, Artifacts: []string{}, Checks: []string{}, Exists: false}
+	}
+	for _, x := range expectations {
+		for p, entry := range fileByPath {
+			if selectorMatches(x.selector, p) {
+				entry.Artifacts = appendUnique(entry.Artifacts, x.artifact.ID)
+				entry.Statements = appendUnique(entry.Statements, x.artifact.Realizes...)
+				entry.Checks = appendUnique(entry.Checks, x.artifact.Checks...)
+				fileByPath[p] = entry
 			}
 		}
 	}
@@ -608,8 +617,13 @@ func fileOwner(file string, managers []Manager) string {
 				if m.Namespace != "" {
 					depth = strings.Count(m.Namespace, ".") + 1
 				}
-				if len(s) > bestLen || len(s) == bestLen && depth > bestDepth {
-					best, bestLen, bestDepth = m.ID, len(s), depth
+				// "." is the least specific selector, below any one-character path.
+				length := len(s)
+				if s == "." {
+					length = 0
+				}
+				if length > bestLen || length == bestLen && depth > bestDepth {
+					best, bestLen, bestDepth = m.ID, length, depth
 				}
 			}
 		}

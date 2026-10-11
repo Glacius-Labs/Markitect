@@ -26,6 +26,8 @@ Follow [Project workflow](project-workflow.md): inspect, record a typed explorat
 
 `impact --explain` adds, for every element of the change impact, the reason it is included, a shortest witness path of model relations from a change, and a class: `change` (must be updated or rechecked) or `context` (only to read). The class is a priority signal. The impact and every plan built from it stay as they are. With `--manager`, the explanation shows only what that Manager may see; the impact itself stays project scope.
 
+A Manager's `context` lists the Checks it owns under `checks`, and under `foreignChecks` the Checks other Managers own that its own Artifacts declare or that use its own Statements, with their owner, command and limitation. Neither list exposes another Manager's private Statements.
+
 `context MANAGER --trace ID` also walks that Manager's knowledge graph, which is built from its context alone, and returns each node it reaches with one shortest witness path. `--direction` and `--depth` bound the walk. A node the Manager cannot see is reported as not found, exactly like a node that does not exist.
 
 ## CLI, setup and current roots

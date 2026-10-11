@@ -1,5 +1,5 @@
 schema: markitect-roadmap-backlog/v1
-updated: '2026-10-10'
+updated: '2026-10-11'
 roadmap: docs/implementation-plan.md
 main_basis: 02c7e5297defd66e2635c2b590de5ebb0fd4b388
 
@@ -348,7 +348,7 @@ packages:
     title: MCP parity, read-only mode and smaller schemas
     stream: MCP
     wave: 2
-    status: blocked
+    status: ready
     owner: interface
     depends_on: [CLI-02]
     zone: interface
@@ -380,7 +380,7 @@ packages:
     title: Doctor checks the Git version
     stream: CLI
     wave: 2
-    status: blocked
+    status: ready
     owner: interface
     depends_on: [CLI-02]
     note: Explore, Plan and Apply call git check-attr --source, which needs Git 2.40 or newer; older Git fails with an unknown-option error.
@@ -465,11 +465,11 @@ packages:
     title: Hermetic test kit for git and process fixtures
     stream: TEST
     wave: 1
-    status: active
+    status: done
     owner: qa
     branch: dev/hermetic-test-kit
-    pr: 99
-    note: Slice 1 merged as pull request 99; slice 2 moves the free-zone packages' git helpers to the test kit.
+    pr: 157
+    note: Slice 1 merged as pull request 99, slice 2 as pull request 157.
     zone: free
     inputs:
       - docs/work-items/surveys/tests-and-ci-20261010.md
@@ -482,7 +482,7 @@ packages:
     title: CLI and MCP contract suite with a completeness check
     stream: TEST
     wave: 2
-    status: blocked
+    status: ready
     owner: interface
     depends_on: [CLI-02]
     zone: interface

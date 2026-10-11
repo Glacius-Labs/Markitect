@@ -283,10 +283,53 @@ jobs:
           if-no-files-found: warn
           retention-days: 14
 
+  race:
+    # The suite under the race detector, in parallel with the quality job
+    # (backlog CI-07). Linux only: -race needs cgo.
+    name: Race detector (ubuntu-24.04)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - name: Check out source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Set up Go
+        uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version-file: go.mod
+
+      - name: Test with the race detector
+        shell: bash
+        run: |
+          set +e
+          go test -race ./... -count=1 -timeout=25m -json | tee "$RUNNER_TEMP/go-test.json" | grep --line-buffered -E '"Action":"(pass|fail)","Package":"[^"]*","Elapsed"' | sed -u -E 's/.*"Action":"([a-z]+)","Package":"([^"]*)","Elapsed":([0-9.]+).*/\1 \3s \2/'
+          status=${PIPESTATUS[0]}
+          set -e
+          report=0
+          python -B scripts/go-test-report.py "$RUNNER_TEMP/go-test.json" --summary "$GITHUB_STEP_SUMMARY" --title "Go tests with -race (ubuntu-24.04)" > "$RUNNER_TEMP/go-test-report.txt" || report=$?
+          cat "$RUNNER_TEMP/go-test-report.txt"
+          if grep -q 'WARNING: DATA RACE' "$RUNNER_TEMP/go-test.json"; then echo "::error::The race detector reported a data race; see the failed tests above."; fi
+          if [ "$status" -ne 0 ]; then exit "$status"; fi
+          exit "$report"
+
+      - name: Upload Go test results
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: go-test-ubuntu-24.04-race-${{ github.sha }}-${{ github.run_attempt }}
+          path: |
+            ${{ runner.temp }}/go-test.json
+            ${{ runner.temp }}/go-test-report.txt
+          if-no-files-found: warn
+          retention-days: 14
+
   publish-source-artifact:
     name: Publish main source artifact
     needs:
       - quality
+      - race
     if: ${{ success() && github.ref == 'refs/heads/main' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch') }}
     runs-on: ubuntu-24.04
     timeout-minutes: 90

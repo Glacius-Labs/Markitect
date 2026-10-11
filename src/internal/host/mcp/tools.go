@@ -155,6 +155,10 @@ func Register[T, R any](s *Server, name, description string, mutation bool, call
 					diagnostic = *mapped
 				}
 			}
+			// A failure without a report carries no data, like the CLI's exit 2.
+			if reflect.ValueOf(&data).Elem().IsZero() {
+				return diagnosticOutcome[R](name, nil, &diagnostic), nil
+			}
 			return diagnosticOutcome(name, &data, &diagnostic), nil
 		}
 		return outcome(name, &data, "", reg.recovery), nil

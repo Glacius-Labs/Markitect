@@ -485,6 +485,8 @@ spec:
       owner: project-world-implementation
     - path: examples/project-world/tests/test_cancellation.py
       owner: project-world-implementation
+    - path: examples/project-world/tests/test_readme.py
+      owner: project-world-implementation
     - path: src/internal/host/cli/project_dispatch_test.go
       owner: project-world-implementation
     - path: src/internal/host/projectcli/options_test.go
@@ -642,6 +644,8 @@ spec:
     - path: examples/project-world/.markitect/model/commerce/sales/integration.yaml
       owner: project-world-implementation
     - path: examples/project-world/.markitect/model/engineering/artifacts.yaml
+      owner: project-world-implementation
+    - path: examples/project-world/.markitect/model/engineering/readme-check.yaml
       owner: project-world-implementation
     - path: examples/project-world/.markitect/model/project-artifacts.yaml
       owner: project-world-implementation

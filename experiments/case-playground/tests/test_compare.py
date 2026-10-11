@@ -22,10 +22,11 @@ def summary(findings: int, high: int, covered: int, total: int) -> dict:
 
 
 LINUX = {"system": "Linux", "machine": "x86_64"}
+FOLLOWED = {"preRegistered": True, "exploratory": False, "reviewersIndependent": True, "reviewerClashes": []}
 
 
 def report(run_id: str, method: str, *, stations: int = 2, image: str = "sha256:img", planned: int = 2,
-           host_os: dict | None = LINUX) -> dict:
+           host_os: dict | None = LINUX, rules: dict | None = FOLLOWED) -> dict:
     entries = []
     for number in range(1, stations + 1):
         entries.append({
@@ -48,7 +49,9 @@ def report(run_id: str, method: str, *, stations: int = 2, image: str = "sha256:
                              "model": "m", "effort": "high", "limits": {"stationSeconds": 60}, "container": {"cpus": 4},
                              "hostPlatform": host_os},
                 "totals": {"agentSeconds": 100.5, "tokens": {"input": 10, "cachedInput": 5, "output": 1}}},
-        "evaluation": {"files": {"groundTruth": {"sha256": "aa"}, "reviewerPrompt": {"sha256": "bb"}}},
+        "evaluation": {"source": "registered", "tree": "t" * 40,
+                       "files": {"groundTruth": {"sha256": "aa"}, "reviewerPrompt": {"sha256": "bb"}}},
+        **({} if rules is None else {"rules": dict(rules)}),
         "reviewers": {"codex": {"model": "gpt-6.1-sol", "effort": "high"},
                       "claude": {"model": "claude-opus-5-5", "effort": "high"}},
         "stations": entries, "classification": {"class": "none", "reason": "run completed"},
@@ -71,8 +74,8 @@ class CompareTests(unittest.TestCase):
         return run
 
     def main(self, *argv: str) -> tuple[int, str]:
-        err = io.StringIO()
-        with contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(err):
+        err, self.stdout = io.StringIO(), io.StringIO()
+        with contextlib.redirect_stdout(self.stdout), contextlib.redirect_stderr(err):
             code = entry.main(["compare", *argv])
         return code, err.getvalue()
 
@@ -92,6 +95,31 @@ class CompareTests(unittest.TestCase):
         self.assertIn("codex 1/0", text)
         self.assertIn("| missed_obligation | 4 │ 4 | 0 │ 0 |", text)
         self.assertIn("100.5 │ 100.5", text)
+        self.assertIn("both assessments are pre-registered with independent reviewers", text)
+        self.assertIn("Host platform: Linux x86_64.", text)  # the matched value, named
+        self.assertIn("host platform: Linux x86_64 (both runs)", self.stdout.getvalue())
+
+    def test_both_assessments_must_be_pre_registered_with_independent_reviewers(self):
+        a = self.save("a", report("a-1", "conventional"))
+        for name, rules, field in (
+                ("exploratory", {**FOLLOWED, "preRegistered": False, "exploratory": True}, "rules.preRegistered"),
+                ("clash", {**FOLLOWED, "reviewersIndependent": False}, "rules.reviewersIndependent"),
+                ("old", None, "rules.preRegistered")):  # an assessment from before the rules: missing is false
+            with self.subTest(name=name):
+                b = self.save(name, report(f"{name}-1", "markitect", rules=rules))
+                code, err = self.main(str(a), str(b))
+                self.assertEqual(code, 2)
+                self.assertIn(f"{field}: yes vs no", err)
+                self.assertIn("pre-registered evaluation files", err)
+                self.assertFalse(list(self.root.glob(f"compare-a-1-vs-{name}-1.md")))
+                out = self.root / f"{name}.md"
+                self.assertEqual(self.main(str(a), str(b), "--allow-mismatch", "--out", str(out))[0], 0)
+                text = out.read_text(encoding="utf-8")
+                self.assertIn(f"`{field}`: yes vs no", text)
+                self.assertIn("Host platform: Linux x86_64.", text)
+        both = [self.save(f"x{n}", report(f"x{n}-1", "conventional", rules={**FOLLOWED, "preRegistered": False}))
+                for n in (1, 2)]
+        self.assertEqual(self.main(str(both[0]), str(both[1]))[0], 2)  # equal is not enough: both must be true
 
     def test_mismatch_is_refused_unless_allowed(self):
         a = self.save("a", report("a-1", "conventional"))
