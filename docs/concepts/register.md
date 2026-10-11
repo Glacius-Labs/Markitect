@@ -317,9 +317,10 @@ This register records Markitect's long-term vision, product-level decisions, cla
 
 ### DEC-023 Impact marks change and context without dropping either
 
-- **Status:** Accepted, owner, 10 October 2026, choosing the recommended option of the KG-02 question ([source](sources/roadmap-planning-20261010.md#knowledge-graph-impact-routing)).
+- **Status:** Accepted, owner, 10 October 2026, choosing the recommended option of the KG-02 question ([source](sources/roadmap-planning-20261010.md#knowledge-graph-impact-routing)). The file-priority clarification below was delegated by the user on 11 October 2026 ([source and evidence](sources/dashboard-delegation-20261011.md#dec-023-delegated-clarification)); it is not a historical owner reply.
 - **Statement:**
   - Each impact element is classed by a fixed rule. "Change" covers changed definitions and files, their realizations and Checks, direct consumers of changed Statements, and requires targets. "Context" is the rest of the closure.
+  - For a changed file, explicitly mapped Statements and Statements realized by its explicitly mapped Artifacts, plus the direct consumers of those Statements, receive `change` priority. Their declared realizations and Checks follow the same rule; file contents do not imply undeclared relationships.
   - Impact sets and plans stay unchanged; the class is a priority signal, never permission to skip.
   - Dropping context-only Managers from plans or briefings waits for measured evidence from the playground (KG-03).
 - **Consequences:** the impact result gains fields, so its digest changes once; invalidation and plans do not change.
@@ -348,6 +349,7 @@ These are the target outcomes Markitect is built to deliver. Each has the status
 | ASM-003 | Bounded scope and compiled context let capable mid-tier models do most implementation and review work. Total cost can then fall even after coordination and review. | Hypothesis; untested |
 | ASM-004 | Abstraction and management structures proven in human organizations transfer to agents. Pairing an implementer with a reviewer at the lowest level mirrors how teams already work today. | Owner hypothesis ([point 4](sources/idea-review-20261010.md#owner-response-to-the-five-points)); not yet properly evaluated for agents |
 | ASM-005 | Reviewers that differ from the implementer in model, not only in context, find more defects, because reviewers on the same model share blind spots. | Review proposal, endorsed for evaluation ("Modelle variieren und kombinieren und evaluieren"); to be tested with [ENH-004](#enh-004-per-role-agent-configuration-and-model-mixing) |
+| ASM-006 | Forgetting (coverage), rather than misunderstanding, is the main problem. | Independent-assessment hypothesis (claim 17), not an owner comparison; untested ([source note](sources/dashboard-delegation-20261011.md#idea-01-assumption-source-check)) |
 
 ## Concepts
 
