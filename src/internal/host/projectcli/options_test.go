@@ -85,7 +85,7 @@ func TestParseVerbsOperandsAndClosedFlags(t *testing.T) {
 		fail string
 	}{
 		{"unknown flag", []string{"check", "--write"}, "flag provided but not defined: -write"},
-		{"flag of another verb", []string{"impact", "--manager", "sales/Manager/orders"}, "flag provided but not defined: -manager"},
+		{"flag of another verb", []string{"impact", "--goal", "ship"}, "flag provided but not defined: -goal"},
 		{"base is now since", []string{"impact", "--base", "abc", "--revision", "HEAD"}, "flag provided but not defined: -base"},
 		{"positional", []string{"check", "extra"}, `unexpected argument "extra"`},
 		{"missing revision", []string{"impact", "--since", "abc"}, "requires --revision"},

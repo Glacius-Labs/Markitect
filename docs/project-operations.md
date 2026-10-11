@@ -22,6 +22,12 @@ Follow [Project workflow](project-workflow.md): inspect, record a typed explorat
 
 `check` returns structural findings and coverage. An error result remains an error; it is not converted into a successful empty result. `check` with `coverage` reports nonconforming coverage as a failed operation while returning its report. Resolve those diagnostics before planning or readiness.
 
+## Why something is in the impact
+
+`impact --explain` adds, for every element of the change impact, the reason it is included, a shortest witness path of model relations from a change, and a class: `change` (must be updated or rechecked) or `context` (only to read). The class is a priority signal. The impact and every plan built from it stay as they are. With `--manager`, the explanation shows only what that Manager may see; the impact itself stays project scope.
+
+`context MANAGER --trace ID` also walks that Manager's knowledge graph, which is built from its context alone, and returns each node it reaches with one shortest witness path. `--direction` and `--depth` bound the walk. A node the Manager cannot see is reported as not found, exactly like a node that does not exist.
+
 ## CLI, setup and current roots
 
 The CLI exposes matching operations for shell use. Read the candidate's `markitect help` for exact flags; the MCP operation schemas are the preferred contract for outer agents. `--repo` is the project authority root. For an MCP server, pass an absolute path so its selected root is explicit.

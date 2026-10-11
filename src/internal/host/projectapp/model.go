@@ -63,6 +63,32 @@ type ImpactOperation struct {
 	Revision     string `json:"revision"`
 }
 
+// ExplainOperation explains an impact (DEC-023): for the whole project, or
+// with ManagerID only as that Manager sees it. The impact stays project scope.
+type ExplainOperation struct {
+	ImpactOperation
+	ManagerID string `json:"managerId,omitempty"`
+}
+
+// ExplainedImpact is an impact with the explanation of its elements.
+type ExplainedImpact struct {
+	Impact      projectmodel.ChangeImpact      `json:"impact"`
+	Explanation projectmodel.ImpactExplanation `json:"explanation"`
+}
+
+// TraceOperation walks one Manager's knowledge graph, which is built from its
+// Context alone.
+type TraceOperation struct {
+	ContextOperation
+	Request projectmodel.TraceRequest `json:"request"`
+}
+
+// TracedContext is a Manager's Context with a trace over its graph.
+type TracedContext struct {
+	Context projectmodel.ManagerContext `json:"context"`
+	Trace   projectmodel.TraceResult    `json:"trace"`
+}
+
 func (o Operations) Init(operation InitOperation) (projectwork.InitPlan, error) {
 	if err := requireRoot(operation.Root); err != nil {
 		return projectwork.InitPlan{}, err
@@ -175,18 +201,49 @@ func (o Operations) Edit(operation EditOperation) (projectwork.EditPlan, error) 
 }
 
 func (o Operations) Impact(operation ImpactOperation) (projectmodel.ChangeImpact, error) {
-	if err := requireRoot(operation.Root); err != nil {
+	base, candidate, err := loadImpactReports(operation)
+	if err != nil {
 		return projectmodel.ChangeImpact{}, err
+	}
+	return projectmodel.Impact(base, candidate), nil
+}
+
+func (o Operations) Explain(operation ExplainOperation) (ExplainedImpact, error) {
+	base, candidate, err := loadImpactReports(operation.ImpactOperation)
+	if err != nil {
+		return ExplainedImpact{}, err
+	}
+	out := ExplainedImpact{Impact: projectmodel.Impact(base, candidate)}
+	if operation.ManagerID == "" {
+		out.Explanation = projectmodel.Explain(base, candidate)
+		return out, nil
+	}
+	out.Explanation, err = projectmodel.ExplainForManager(base, candidate, operation.ManagerID)
+	return out, err
+}
+
+func loadImpactReports(operation ImpactOperation) (projectmodel.Report, projectmodel.Report, error) {
+	if err := requireRoot(operation.Root); err != nil {
+		return projectmodel.Report{}, projectmodel.Report{}, err
 	}
 	base, err := projectwork.Load(operation.Root, operation.BaseRevision)
 	if err != nil {
-		return projectmodel.ChangeImpact{}, fmt.Errorf("load base project: %w", err)
+		return projectmodel.Report{}, projectmodel.Report{}, fmt.Errorf("load base project: %w", err)
 	}
 	candidate, err := projectwork.Load(operation.Root, operation.Revision)
 	if err != nil {
-		return projectmodel.ChangeImpact{}, fmt.Errorf("load candidate project: %w", err)
+		return projectmodel.Report{}, projectmodel.Report{}, fmt.Errorf("load candidate project: %w", err)
 	}
-	return projectmodel.Impact(base.Report, candidate.Report), nil
+	return base.Report, candidate.Report, nil
+}
+
+func (o Operations) Trace(operation TraceOperation) (TracedContext, error) {
+	context, err := o.Context(operation.ContextOperation)
+	if err != nil {
+		return TracedContext{}, err
+	}
+	trace, err := projectmodel.ManagerGraph(context).Trace(operation.Request)
+	return TracedContext{Context: context, Trace: trace}, err
 }
 
 func (o Operations) Coverage(selection Selection) (projectcoverage.Report, error) {
