@@ -389,6 +389,52 @@ func TestCandidateCoverageRefusesDeletesOfCensusOnlyFiles(t *testing.T) {
 	}
 }
 
+// The view lists no repository inventory, so committing a conforming file
+// leaves it byte for byte unchanged. A file with a finding appears in it and
+// leaves it again when the file is removed.
+func TestProjectDocumentChangesOnlyWithModelOrFindings(t *testing.T) {
+	root, head := modelledCoverageFixture(t, nil, map[string]string{"src/a.txt": "a\n"}, "src/")
+	render := func(revision string) string {
+		t.Helper()
+		project, err := Load(root, revision)
+		if err != nil {
+			t.Fatal(err)
+		}
+		document, err := Document(project, false)
+		if err != nil {
+			t.Fatal(err)
+		}
+		return document
+	}
+	base := render(head)
+	for _, want := range []string{"- Ignored: README.md — Fixture readme outside the model\n", "- Accounted: yes\n- Conforming: yes\n\nNo path or definition has a finding.\n"} {
+		if !strings.Contains(base, want) {
+			t.Fatalf("conforming view lacks %q:\n%s", want, base)
+		}
+	}
+	for _, absent := range []string{head, "src/a.txt"} {
+		if strings.Contains(base, absent) {
+			t.Fatalf("view names %q, which is neither model nor finding:\n%s", absent, base)
+		}
+	}
+	writeFile(t, root, "src/b.txt", "b\n")
+	gitTest(t, root, "add", ".")
+	gitTest(t, root, "commit", "-m", "add a modelled file")
+	if got := render(strings.TrimSpace(gitTest(t, root, "rev-parse", "HEAD"))); got != base {
+		t.Fatalf("committing a conforming file changed the view:\n%s\nwant\n%s", got, base)
+	}
+	writeFile(t, root, "notes/loose.md", "unmodelled\n")
+	if got := render(""); !strings.Contains(got, "- Conforming: no\n") || !strings.Contains(got, "- notes/loose.md\n  - error (coverage.unclassified): ") {
+		t.Fatalf("view does not list the unclassified file as a finding:\n%s", got)
+	}
+	if err := os.Remove(filepath.Join(root, "notes", "loose.md")); err != nil {
+		t.Fatal(err)
+	}
+	if got := render(""); got != base {
+		t.Fatalf("removing the file with a finding did not restore the view:\n%s\nwant\n%s", got, base)
+	}
+}
+
 const coverageArtifactPath = ModelRoot + "/code.yaml"
 
 // modelledCoverageFixture commits a full-coverage project whose required
