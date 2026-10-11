@@ -40,6 +40,8 @@ Für die gemeinsame Umsetzung mit dem Implementer enthält der Proposal die [Beg
 
 Das [Bibliotheksbeispiel im Dateisystem](library-filesystem-example.md) bewahrt die gezeigte Ordnerstruktur und exemplarische YAML-Definitionen zur gemeinsamen Syntaxentscheidung. Die [offene Frage nach Strenge und Methodik](canonical-model-proposal.md#64-offene-frage-strenge-und-methodik) hält den Nutzerimpuls fest, dass ein methodischer Ansatz möglicherweise bereits genügt; diese Hypothese ist nicht entschieden oder evaluiert.
 
+Seit dem 12. Oktober 2026 ist die [einfache Variante als Alternative B](canonical-model-proposal.md#65-alternative-b-minimale-struktur-und-methodisches-review) mit [ausgeschriebenem Bibliotheks-YAML](library-methodical-alternative.md) festgehalten. Fachliche Bedeutung bleibt verbindliche Prosa; Beziehungen, Verantwortung und Realisierungs-/Prüfanschlüsse sind strukturiert. Der Facettenentwurf bleibt Alternative A; die Auswahl ist offen.
+
 Der [Entwurf der kanonischen Beschreibungssprache](canonical-model-draft.md) beschreibt Inhalte, Ausdrucksmittel, Hierarchie und Beziehungen, Realisierung ohne manuelle Aufzählung jeder Datei sowie Verify als mögliche Rückkopplung. Abschnitt 2 hält das vom Nutzer gewünschte Vorgehen fest. Status: Entwurf zur Diskussion; seine Einzelvorschläge sind noch nicht angenommen.
 
 Der [konkrete C#-Modellierungsentwurf](csharp-model-design.md) arbeitet `SoftwareSystem` und `Repository` am Bibliotheksbeispiel aus. Er enthält ihre Unterobjekte, Beziehungen, Invarianten, vorgeschlagene Dienstgrenzen und Patterns sowie die Ableitung eines Modellvertrags und einer Marketingbotschaft. Die zugehörigen C#-Dateien sind illustrative Dokumentationsartefakte, kein Produktcode. Auch diese Vorschläge sind noch nicht angenommen.

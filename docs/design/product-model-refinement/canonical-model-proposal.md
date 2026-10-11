@@ -219,6 +219,26 @@ Offen bleibt insbesondere, ob ein einzelner Strictness-Schalter überhaupt sinnv
 
 Vor dem Schemaumbau ist deshalb zu entscheiden: Welche Aussagen benötigt die systematische Koordination zwingend als Struktur, welche können zunächst verbindliche Prosa bleiben, und welche wiederkehrenden Fehler rechtfertigen zusätzliche formale Prüfungen? Der Umsetzungsplan in Abschnitt 8 ist entsprechend zu konkretisieren, sobald diese Entscheidung fällt.
 
+### 6.5 Alternative B: Minimale Struktur und methodisches Review
+
+Auf ausdrücklichen Nutzerwunsch vom 12. Oktober 2026 wird die einfache Variante als Alternative festgehalten. Alternative A ist der typisierte Facettenkandidat aus Abschnitt 6.2. Alternative B lässt die fachliche Bedeutung zunächst als verbindliche Prosa auf benannten Statements stehen und strukturiert Identität, grobe Kategorie, Verantwortung, Beziehungen, Realisierung und Prüfanschlüsse. Die Aufnahme dieser Alternative ist keine Entscheidung für einen der beiden Ansätze.
+
+Das [vollständige YAML-Gesprächsbeispiel](library-methodical-alternative.md) beschreibt den kleinen Bibliotheksausschnitt mit elf Aussagen: Systemzweck, Titel, Exemplar, Mitglied, Ausleihe, aktive Ausleihe, Berechtigung, Verfügbarkeit, Eindeutigkeitsinvariante, Ausleihen und Rückgabe. Ein Root-Manager genügt für den Ausschnitt. Das Manifest wählt jede Modelldatei ausdrücklich; der bisherige Loader verlangt eine Definition pro Datei. Konkrete Beiträge werden über Artefakte und Pfadbereiche zugeordnet. Die groben Kategorien und Feldformen orientieren sich am bisherigen Projectmodel-Vertrag; Fachfacetten sind für diese Alternative nicht erforderlich. Das zuvor diskutierte Bündeln mehrerer Definitionen in einer Datei wäre eine eigene Formatänderung und wird hier nicht vorausgesetzt.
+
+| Aspekt | Alternative A: typisierte Facetten | Alternative B: minimale Struktur |
+| --- | --- | --- |
+| Fachproperties, Bedingungen und Verhalten | Zusätzliche strukturierte Felder und Rollenvalidierung. | Präzise Prosa innerhalb unabhängig referenzierbarer Statements. |
+| Beziehungen | Semantisch spezialisierte Verträge nach konkretem Bedarf. | Zunächst `uses` für Kontext und `requires` für Verpflichtungen; Details erläutert die Prosa. |
+| Frühe Diagnosen | Können zusätzlich fachliche Rollen- und Feldfehler erkennen. | Prüfen Struktur, Identitäten, Referenzen, Zuständigkeiten und Zuordnung; Fachprüfung erfolgt methodisch. |
+| Koordination und Nachweise | Alle ergänzten Felder benötigen Behandlung in Kontext, Digest, Impact und Evidenz. | Vorhandene Struktur nutzen; Vollständigkeit der Beziehungen und Geeignetheit der Prüfungen ausdrücklich reviewen. |
+| Autorenaufwand | Mehr ausdrückliche Formalisierung und Pflege ihrer Verträge. | Weniger formale Syntax; höhere Abhängigkeit von präziser Prosa und zuverlässigem Review. |
+
+Für Alternative B müssen methodische Prüfaufträge die Vollständigkeit der relevanten Referenzen selbst untersuchen. Eine nur in Prosa erwähnte Abhängigkeit ist keine deklarierte Impact-Kante. Modellreview beurteilt Beschreibung, Entscheidungen und Beziehungen; unabhängiger Realisierungsreview beurteilt Umsetzung und konkrete Nachweise. Diese Arbeitsteilung ist ein vorgeschlagener methodischer Vertrag, kein Beweis ihrer zuverlässigen Einhaltung.
+
+Zusätzliche formale Semantik soll in dieser Alternative durch konkrete wiederkehrende Fehler begründet werden. Der vollständige Fachzustand und sämtliche Laufzeitbedingungen müssen dafür nicht schon im ersten Schritt vom Compiler ausgewertet werden. Unsicherheit in Zuordnung oder Änderungsfolgen bleibt sichtbar und konservativ behandelt.
+
+**Folge für den Umsetzungsplan:** In U0 zuerst Alternative A oder B anhand Bibliothek und CLI-Kontrast wählen. Bei B besteht U1 aus Beispiel und methodischem Vertrag; ein neuer Facettenschema-Vertrag ist dafür nicht vorausgesetzt. U2 bis U5 überprüfen die vorhandene Struktur und die nötigen Kontext-/Impact-/Coverage-Anschlüsse; Erweiterungen erfolgen nur bei nachgewiesener Lücke. Bei A gilt der Facetten-/Kind- und Versionierungsentwurf aus Abschnitt 8. Die Beispiele wurden hier nur dokumentiert, nicht kompiliert oder getestet.
+
 ## 7. Beispiel: Ausleihen vollständig genug beschreiben
 
 | Aussage | Strukturierter Beitrag |

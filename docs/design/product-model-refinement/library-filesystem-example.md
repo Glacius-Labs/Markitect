@@ -161,6 +161,8 @@ Weitere Artifact-Definitionen sollen Tests und Bedienungsdokumentation zuordnen.
 
 ## Gemeinsam festzulegende Syntax
 
+Als einfachere Gegenüberstellung ist die [methodische Alternative mit vollständigen YAML-Aussagen](library-methodical-alternative.md) dokumentiert. Sie verwendet die bisherigen Statement-Felder und verzichtet im Beispiel auf neue Fachfacetten. Beide Varianten dienen derselben offenen Syntaxentscheidung.
+
 Für die Besprechung mit dem Implementer:
 
 - Welche Definitionen brauchen eigene Identität, welche Inhalte bleiben innerhalb einer Definition?
