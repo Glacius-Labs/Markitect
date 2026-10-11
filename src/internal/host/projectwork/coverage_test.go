@@ -165,6 +165,47 @@ func TestCandidateCoverageKeepsTransitionalPathsNonconforming(t *testing.T) {
 	}
 }
 
+// A nonconforming verdict always shows its reason: a present transitional
+// path is listed as a finding, while a declared but absent one is not.
+func TestProjectDocumentListsTransitionalPathsThatBlockConformance(t *testing.T) {
+	root := testGitRoot(t)
+	if _, err := Init(root, "Coverage fixture", true); err != nil {
+		t.Fatal(err)
+	}
+	manifest, err := os.ReadFile(filepath.Join(root, filepath.FromSlash(ManifestPath)))
+	if err != nil {
+		t.Fatal(err)
+	}
+	updated := strings.Replace(string(manifest), "transitionalExclusions: []\n", "transitionalExclusions:\n  - path: legacy/\n    reason: Existing file awaits explicit modeling\n  - path: absent/\n    reason: Nothing here yet\n", 1)
+	if updated == string(manifest) {
+		t.Fatal("could not add transitional exclusions")
+	}
+	writeFile(t, root, ManifestPath, updated)
+	writeFile(t, root, "legacy/old.txt", "legacy bytes\n")
+	gitTest(t, root, "add", ".")
+	gitTest(t, root, "commit", "-m", "init with transitional exclusions")
+	head := strings.TrimSpace(gitTest(t, root, "rev-parse", "HEAD"))
+	for _, revision := range []string{"", head} {
+		project, err := Load(root, revision)
+		if err != nil {
+			t.Fatal(err)
+		}
+		got := documentText(project)
+		if !strings.Contains(got, "- Conforming: no\n") {
+			t.Fatalf("revision %q: want a nonconforming verdict:\n%s", revision, got)
+		}
+		if strings.Contains(got, "No path or definition has a finding.") {
+			t.Fatalf("revision %q: nonconforming verdict without a listed reason:\n%s", revision, got)
+		}
+		if !strings.Contains(got, "- legacy/old.txt\n  - transitional: blocks conformance until the path is classified (Existing file awaits explicit modeling)\n") {
+			t.Fatalf("revision %q: present transitional path is not listed:\n%s", revision, got)
+		}
+		if strings.Contains(got, "- absent/") && strings.Contains(got, "transitional: blocks conformance until the path is classified (Nothing here yet)") {
+			t.Fatalf("revision %q: absent transitional selector listed as blocking:\n%s", revision, got)
+		}
+	}
+}
+
 // A path the candidate deletes leaves the census. Renaming or deleting a
 // modelled file together with its Artifact path must not leave the old path
 // behind as unclassified.
