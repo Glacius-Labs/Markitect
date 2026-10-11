@@ -47,12 +47,14 @@ func Classify(request Request) (Report, error) {
 	pathStates := append([]PathState(nil), request.Universe.Paths...)
 	sort.Slice(pathStates, func(i, j int) bool { return pathStates[i].Path < pathStates[j].Path })
 	for _, state := range pathStates {
+		// Only a file the checked tree has gets a verdict. A working-tree
+		// deletion or rename leaves the old path in HEAD or the index; it is
+		// listed with those layers, which describe the commit and the staging
+		// area, but needs no class and keeps no transitional state open.
+		current := stableCurrentPresent(state, request.Universe.FixedRevision)
 		entry, matched := classifyPath(state, request, ignore)
 		if !matched {
-			// Only a current file needs a class. A working-tree deletion or
-			// rename leaves the old path in HEAD or the index; those layers
-			// describe the commit and the staging area, not the checked tree.
-			if stableCurrentPresent(state, request.Universe.FixedRevision) {
+			if current {
 				report.Accounted = false
 				report.Conforming = false
 				report.Findings = append(report.Findings, Finding{Code: "coverage.unclassified", Path: state.Path,
@@ -61,10 +63,10 @@ func Classify(request Request) (Report, error) {
 			entry = Entry{Path: state.Path, Artifacts: []string{}, Statements: []string{}, Head: state.Head, Index: state.Index,
 				Worktree: state.Worktree, OpaqueBoundary: state.OpaqueBoundary}
 		}
-		if entry.Class == ClassTransitional {
+		if entry.Class == ClassTransitional && current {
 			report.Conforming = false
 		}
-		if state.Path != IgnorePath && stableCurrentPresent(state, request.Universe.FixedRevision) && !state.OpaqueBoundary && entry.Class != ClassIgnored && !entry.Operational && entry.Class != ClassTransitional && stateDigest(state, request.Universe.FixedRevision) == "" {
+		if state.Path != IgnorePath && current && !state.OpaqueBoundary && entry.Class != ClassIgnored && !entry.Operational && entry.Class != ClassTransitional && stateDigest(state, request.Universe.FixedRevision) == "" {
 			report.Conforming = false
 			report.Findings = append(report.Findings, Finding{Code: "coverage.bytes-unavailable", Path: state.Path,
 				Message: "Current nonignored file bytes were not observed, so the coverage basis cannot bind them.", Severity: "error"})
@@ -90,8 +92,9 @@ func Classify(request Request) (Report, error) {
 	}
 	for _, rule := range ignore.Entries {
 		matched := false
+		// Like a class, a rule is used only by a file the checked tree has.
 		for _, state := range pathStates {
-			if selectorMatches(rule.Path, state.Path) {
+			if selectorMatches(rule.Path, state.Path) && stableCurrentPresent(state, request.Universe.FixedRevision) {
 				matched = true
 				break
 			}
@@ -99,7 +102,7 @@ func Classify(request Request) (Report, error) {
 		if !matched && !strings.HasSuffix(rule.Path, "/") {
 			report.Conforming = false
 			report.Findings = append(report.Findings, Finding{Code: "coverage.ignore-unused", Path: rule.Path,
-				Message: "Exact ignore entry matches no observed repository path.", Severity: "error"})
+				Message: "Exact ignore entry matches no current repository path.", Severity: "error"})
 		}
 	}
 	if !report.Accounted || len(report.Findings) != 0 || request.Model.Status != "succeeded" {
