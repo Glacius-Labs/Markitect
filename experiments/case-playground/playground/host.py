@@ -256,6 +256,18 @@ def read_inventory(image_id: str) -> str:
     return done.stdout
 
 
+INVENTORY_BEGIN = "----- built image inventory for {name} (copy the lines between the markers) -----"
+INVENTORY_END = "----- end of built image inventory -----"
+
+
+def show_inventory(text: str, committed: Path) -> None:
+    """Print a built inventory that has no committed match, exactly in the committed format,
+    so a build elsewhere (such as CI's smoke job) can deliver the file through its log."""
+    print(INVENTORY_BEGIN.format(name=f"container/inventory/{committed.name}"), file=sys.stderr)
+    print(text, end="" if text.endswith("\n") else "\n", file=sys.stderr)
+    print(INVENTORY_END, file=sys.stderr, flush=True)
+
+
 def build_image(manifest: dict, log_path: Path, inventory_path: Path) -> dict:
     """Build the image from the pinned Dockerfile, save its inventory as `inventory_path`
     and check it (image.check): exact npm versions, the Dockerfile's pins and, when one is
@@ -282,9 +294,11 @@ def build_image(manifest: dict, log_path: Path, inventory_path: Path) -> dict:
         expected = committed.read_text(encoding="utf-8") if committed.is_file() else None
         image.check(text, pinned, expected)
     except (OSError, UnicodeError, image.ImageError) as exc:
+        show_inventory(text, committed)
         raise HostError(f"image {image_id} failed its inventory check: {exc}; compare {inventory_path} with "
                         f"{committed} and {PINS_HELP}") from exc
     if expected is None:
+        show_inventory(text, committed)
         print(f"warning: no committed image inventory {committed} to compare the image with; review {inventory_path} "
               f"and commit it with the Dockerfile ({PINS_HELP}); a study refuses to run without it",
               file=sys.stderr, flush=True)

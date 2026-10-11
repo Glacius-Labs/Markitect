@@ -384,6 +384,11 @@ class RunTests(HostTestBase):
         self.assertIn("warning: no committed image inventory", err.getvalue())
         self.assertIn("codex-0.162.0-claude-2.1.296.txt", err.getvalue())
         self.assertEqual(self.host_record()["status"], "completed")
+        # The built inventory is printed between markers, exactly as it would be committed.
+        text = err.getvalue()
+        begin = host.INVENTORY_BEGIN.format(name="container/inventory/codex-0.162.0-claude-2.1.296.txt")
+        printed = text.split(begin + "\n", 1)[1].split(host.INVENTORY_END, 1)[0]
+        self.assertEqual(printed, (self.out / "image-inventory.txt").read_text(encoding="utf-8"))
 
     def test_an_unpinned_dockerfile_is_refused_before_docker(self):
         dockerfile = host.ROOT / "container" / "Dockerfile"
