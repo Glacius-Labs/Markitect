@@ -41,9 +41,10 @@ type Provenance struct {
 }
 
 // Event is one changed definition. Its ID and Digest come from the change's
-// content alone (see eventDigest), so the same change briefed at different
-// commits has one identity; provenance and affected references stay per
-// briefing.
+// content and the previous event for the same definition (see eventDigest):
+// the same change on the same history keeps one identity wherever it is
+// briefed, and a change re-applied after a revert gets a new one. Provenance
+// and affected references stay per briefing.
 type Event struct {
 	ID                string                  `json:"id"`
 	Digest            string                  `json:"digest"`
@@ -56,6 +57,9 @@ type Event struct {
 	Category          string                  `json:"category"`
 	Severity          string                  `json:"severity"`
 	Provenance        Provenance              `json:"provenance"`
+	// Predecessor is the ID of the previous event for the same definition on
+	// the first-parent line it was briefed on, empty for the first.
+	Predecessor string `json:"predecessor,omitempty"`
 }
 
 type Briefing struct {
@@ -104,12 +108,55 @@ func Generate(root, sinceRevision, revision string, provenance Provenance) (Bund
 	if err := requireAncestor(root, before.Revision, after.Revision); err != nil {
 		return Bundle{}, err
 	}
-	return Build(before, after, provenance)
+	state, _, err := readStore(root)
+	if err != nil {
+		return Bundle{}, err
+	}
+	predecessors, err := lastEvents(root, state, before.Revision)
+	if err != nil {
+		return Bundle{}, err
+	}
+	return build(before, after, provenance, predecessors)
+}
+
+// lastEvents returns, per definition key, the ID of the newest event that
+// state briefs for that definition on the first-parent line ending at
+// revision. Generate chains new events to it.
+func lastEvents(root string, state Store, revision string) (map[string]string, error) {
+	revisions, err := firstParentRevisions(root, revision)
+	if err != nil {
+		return nil, fmt.Errorf("enumerate briefed history before %s: %w", revision, err)
+	}
+	positions := make(map[string]int, len(revisions))
+	for i, item := range revisions {
+		positions[item] = i
+	}
+	last, at := map[string]string{}, map[string]int{}
+	for _, bundle := range state.Briefings {
+		i, onLine := positions[bundle.Revision]
+		if !onLine {
+			continue
+		}
+		for _, event := range bundle.Events {
+			key := event.DefinitionID.Key()
+			if prior, seen := at[key]; !seen || i > prior {
+				last[key], at[key] = event.ID, i
+			}
+		}
+	}
+	return last, nil
 }
 
 // Build compares already loaded, fixed project revisions. Both projects must
-// come from committed snapshots and carry distinct full Git object IDs.
+// come from committed snapshots and carry distinct full Git object IDs. Its
+// events start their definitions' histories; Generate continues the briefed
+// history instead.
 func Build(before, after *projectwork.Project, provenance Provenance) (Bundle, error) {
+	return build(before, after, provenance, nil)
+}
+
+// build is Build with each event chained to predecessors[key].
+func build(before, after *projectwork.Project, provenance Provenance, predecessors map[string]string) (Bundle, error) {
 	if before == nil || after == nil || before.Provisional || after.Provisional || !fullObjectID(before.Revision) || !fullObjectID(after.Revision) || before.Revision == after.Revision {
 		return Bundle{}, ErrUncommittedModel
 	}
@@ -161,8 +208,8 @@ func Build(before, after *projectwork.Project, provenance Provenance) (Bundle, e
 		}
 		managers := managersForDefinition(before.Report, after.Report, key)
 		artifacts := artifactsForDefinition(before.Report, after.Report, key)
-		digest := eventDigest(key, change, oldValue, newValue)
-		bundle.Events = append(bundle.Events, Event{ID: "model-change-" + digest[:24], Digest: digest, DefinitionID: identity, Change: change, Before: oldValue, After: newValue, AffectedManagers: managers, AffectedArtifacts: artifacts, Category: "information", Severity: "info", Provenance: provenance})
+		digest := eventDigest(predecessors[key], key, change, oldValue, newValue)
+		bundle.Events = append(bundle.Events, Event{ID: "model-change-" + digest[:24], Digest: digest, Predecessor: predecessors[key], DefinitionID: identity, Change: change, Before: oldValue, After: newValue, AffectedManagers: managers, AffectedArtifacts: artifacts, Category: "information", Severity: "info", Provenance: provenance})
 	}
 	eventIDs := make([]string, 0, len(bundle.Events))
 	managerSet := map[string]bool{}
@@ -202,14 +249,26 @@ func FullBundleDigest(bundle Bundle) string {
 	return hash(bundle)
 }
 
-// eventDigest identifies a model change by its content: the definition key,
-// the kind of change and the compiled definition before and after, source file
-// digest included, but not the revisions it was briefed at.
-func eventDigest(key, change string, before, after *core.Definition) string {
+// eventDigest identifies a model change by the previous event for the same
+// definition and the change's content: the definition key, the kind of change
+// and the compiled definition before and after, source file digest included.
+// The revisions it was briefed at are not part of it, so a merge commit or
+// squash that brings the same change onto a line with the same predecessor
+// keeps its identity.
+func eventDigest(predecessor, key, change string, before, after *core.Definition) string {
 	return hash(struct {
-		Key, Change   string
-		Before, After *core.Definition
-	}{key, change, before, after})
+		Predecessor, Key, Change string
+		Before, After            *core.Definition
+	}{predecessor, key, change, before, after})
+}
+
+func validEventID(id string) bool {
+	const prefix = "model-change-"
+	if !strings.HasPrefix(id, prefix) || len(id) != len(prefix)+24 {
+		return false
+	}
+	_, err := hex.DecodeString(id[len(prefix):])
+	return err == nil
 }
 
 func makeBriefing(manager string, p *projectwork.Project, ids []string, contracts []projectmodel.Statement, summary string) Briefing {

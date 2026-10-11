@@ -81,6 +81,13 @@ func validateStore(state Store) error {
 			}
 		}
 	}
+	for _, bundle := range state.Briefings {
+		for _, event := range bundle.Events {
+			if event.Predecessor != "" && eventsByID[event.Predecessor].DefinitionID.Key() != event.DefinitionID.Key() {
+				return fmt.Errorf("event %s continues unknown or unrelated event %s", event.ID, event.Predecessor)
+			}
+		}
+	}
 	dismissals := map[string]bool{}
 	for _, dismissal := range state.Dismissals {
 		key := dismissal.EventID + "\x00" + dismissal.ManagerID
@@ -199,7 +206,10 @@ func validateEvent(bundle Bundle, event Event) error {
 	default:
 		return fmt.Errorf("%w: unknown model change %q", ErrInvalidBundle, event.Change)
 	}
-	if eventDigest(event.DefinitionID.Key(), event.Change, event.Before, event.After) != event.Digest {
+	if event.Predecessor != "" && !validEventID(event.Predecessor) {
+		return fmt.Errorf("%w: invalid predecessor event ID", ErrInvalidBundle)
+	}
+	if eventDigest(event.Predecessor, event.DefinitionID.Key(), event.Change, event.Before, event.After) != event.Digest {
 		return fmt.Errorf("%w: event digest does not match its declared content", ErrInvalidBundle)
 	}
 	return nil
@@ -792,6 +802,9 @@ func validateAcceptedPrefix(state Store, projects []*projectwork.Project) error 
 	for _, bundle := range state.Briefings {
 		bundles[bundle.Revision] = bundle
 	}
+	// last tracks, per definition, the newest event on the line; each event
+	// must continue it.
+	last := map[string]string{}
 	for i := 1; i <= cursorIndex; i++ {
 		previous, current := projects[i-1], projects[i]
 		bundle, exists := bundles[current.Revision]
@@ -801,6 +814,13 @@ func validateAcceptedPrefix(state Store, projects []*projectwork.Project) error 
 			}
 			if bundle.SinceRevision != previous.Revision || bundle.SinceModelDigest != previous.Model.Digest || bundle.ModelDigest != current.Model.Digest {
 				return fmt.Errorf("briefing at %s contradicts the accepted model transition %s..%s: %w", current.Revision, previous.Revision, current.Revision, ErrAmbiguousHistory)
+			}
+			for _, event := range bundle.Events {
+				key := event.DefinitionID.Key()
+				if event.Predecessor != last[key] {
+					return fmt.Errorf("event %s at %s does not continue its definition's accepted events: %w", event.ID, current.Revision, ErrAmbiguousHistory)
+				}
+				last[key] = event.ID
 			}
 		} else if exists {
 			return fmt.Errorf("no-op model revision %s has a briefing bundle: %w", current.Revision, ErrAmbiguousHistory)

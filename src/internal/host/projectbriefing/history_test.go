@@ -856,6 +856,35 @@ func TestResolutionOfMergedTopicModelChangeCarriesToMain(t *testing.T) {
 	}
 }
 
+func TestReappliedModelChangeGetsItsOwnEventID(t *testing.T) {
+	root, _, changed := committedModelFixture(t)
+	if _, err := EnsureAcceptedHistory(root, changed); err != nil {
+		t.Fatal(err)
+	}
+	reverted := commitModelChangeTest(t, root, "before shipment", "while the order is confirmed", "revert the model change")
+	reapplied := commitModelChangeTest(t, root, "while the order is confirmed", "before shipment", "re-apply the model change")
+	if _, err := EnsureAcceptedHistory(root, reapplied); err != nil {
+		t.Fatal(err)
+	}
+	state, _, err := Read(root)
+	if err != nil || len(state.Briefings) != 3 {
+		t.Fatalf("change, revert and re-apply were not briefed: %#v err=%v", state.Briefings, err)
+	}
+	// The briefing overview requires every event to belong to one revision.
+	revisionOf := map[string]string{}
+	for _, bundle := range state.Briefings {
+		for _, event := range bundle.Events {
+			if prior, ok := revisionOf[event.ID]; ok && prior != bundle.Revision {
+				t.Fatalf("event %s is attached to %s and %s (revert at %s)", event.ID, prior, bundle.Revision, reverted)
+			}
+			revisionOf[event.ID] = bundle.Revision
+		}
+	}
+	if len(revisionOf) != 3 {
+		t.Fatalf("event IDs are not distinct: %v", revisionOf)
+	}
+}
+
 func TestUnreadableHeadTreeNeverResolvesDelivery(t *testing.T) {
 	root, _, changed := committedModelFixture(t)
 	if _, err := EnsureAcceptedHistory(root, changed); err != nil {
