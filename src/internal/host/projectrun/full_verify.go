@@ -659,7 +659,6 @@ func fullAuditManager(ctx context.Context, host Host, invoker Invoker, root stri
 	if err != nil {
 		return row, err
 	}
-	supportingStatements := fullAuditArtifactSupport(project.Report, managerID)
 	files, err := fullManagerFiles(project, managerID)
 	if err != nil {
 		return row, err
@@ -688,7 +687,6 @@ func fullAuditManager(ctx context.Context, host Host, invoker Invoker, root stri
 		ProjectDigest           string                      `json:"projectDigest"`
 		ModelDigest             string                      `json:"modelDigest"`
 		Manager                 projectmodel.ManagerContext `json:"manager"`
-		SupportingStatements    []projectmodel.Statement    `json:"supportingStatements"`
 		Briefing                BriefingContext             `json:"briefing"`
 		IntegrationObligations  []fullIntegrationObligation `json:"integrationObligations"`
 		ChildAssessments        []fullChildAssessment       `json:"childAssessments"`
@@ -698,7 +696,7 @@ func fullAuditManager(ctx context.Context, host Host, invoker Invoker, root stri
 		Subjects                []string                    `json:"requiredSubjects"`
 		Strictness              StrictnessProfile           `json:"strictness"`
 		ResponseSchema          json.RawMessage             `json:"responseSchema"`
-	}{"projectrun-full-verify/v1", project.Snapshot.Digest(), project.Digest, project.Report.ModelDigest, modelContext, supportingStatements, briefing, children, childAssessments, checkResults, integrationReviews, fileRefs, subjects, strictness, fullVerifyResponseSchema(subjects, strictness.Counterexamples)}
+	}{"projectrun-full-verify/v1", project.Snapshot.Digest(), project.Digest, project.Report.ModelDigest, modelContext, briefing, children, childAssessments, checkResults, integrationReviews, fileRefs, subjects, strictness, fullVerifyResponseSchema(subjects, strictness.Counterexamples)}
 	contextJSON, err := json.Marshal(contextPayload)
 	if err != nil {
 		return row, err
@@ -1017,52 +1015,6 @@ func relevantManagerChecks(report projectmodel.Report, managerID string, results
 	}
 	sort.Slice(out, func(i, j int) bool { return out[i].ID < out[j].ID })
 	return out
-}
-
-// fullAuditArtifactSupport exposes only the public foreign Statements that an
-// owned artifact realizes in the same snapshot. These are audit context, not
-// Manager obligations: callers keep them separate from ManagerContext and
-// required audit subjects. Private Statement definitions and unrelated
-// definitions are intentionally excluded. Checks that owned artifacts declare
-// reach the audit only through ManagerContext Checks and ForeignChecks, whose
-// uses are already limited to what the Manager may see.
-func fullAuditArtifactSupport(report projectmodel.Report, managerID string) []projectmodel.Statement {
-	statementsByID := make(map[string]projectmodel.Statement, len(report.Statements))
-	for _, statement := range report.Statements {
-		statementsByID[statement.ID] = statement
-	}
-
-	statementIDs := map[string]bool{}
-	for _, artifact := range report.Artifacts {
-		if artifact.Owner != managerID {
-			continue
-		}
-		for _, statementID := range artifact.Realizes {
-			if statement, ok := statementsByID[statementID]; ok && statement.Public && statement.Owner != managerID {
-				statementIDs[statementID] = true
-			}
-		}
-	}
-
-	statements := make([]projectmodel.Statement, 0, len(statementIDs))
-	for statementID := range statementIDs {
-		statement := statementsByID[statementID]
-		statement.Uses = visibleFullStatementRelations(statement.Uses, statementsByID)
-		statement.Requires = visibleFullStatementRelations(statement.Requires, statementsByID)
-		statements = append(statements, statement)
-	}
-	sort.Slice(statements, func(i, j int) bool { return statements[i].ID < statements[j].ID })
-	return statements
-}
-
-func visibleFullStatementRelations(ids []string, statements map[string]projectmodel.Statement) []string {
-	visible := make([]string, 0, len(ids))
-	for _, id := range ids {
-		if statement, ok := statements[id]; ok && statement.Public {
-			visible = append(visible, id)
-		}
-	}
-	return uniqueSorted(visible)
 }
 
 func boundedFullCheckOutput(value string) string {

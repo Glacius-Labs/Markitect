@@ -616,29 +616,71 @@ func TestFullVerifyInvocationReceivesExplicitCrossManagerArtifactEvidence(t *tes
 		t.Fatalf("Manager audit failed: %v", err)
 	}
 	var auditContext struct {
-		Manager              projectmodel.ManagerContext `json:"manager"`
-		SupportingStatements []projectmodel.Statement    `json:"supportingStatements"`
-		CheckResults         []CheckResult               `json:"checkResults"`
-		RequiredSubjects     []string                    `json:"requiredSubjects"`
+		Manager          projectmodel.ManagerContext `json:"manager"`
+		CheckResults     []CheckResult               `json:"checkResults"`
+		RequiredSubjects []string                    `json:"requiredSubjects"`
 	}
 	if err := json.Unmarshal(invoker.requestContext, &auditContext); err != nil {
 		t.Fatalf("decode captured audit context: %v", err)
 	}
-	if strings.Contains(string(invoker.requestContext), privateCheckInput.ID) {
-		t.Fatalf("audit context names another Manager's private Statement %s", privateCheckInput.ID)
+	for _, hidden := range []string{privateCheckInput.ID, privateRelation.ID, unrelatedStatement.ID} {
+		if strings.Contains(string(invoker.requestContext), hidden) {
+			t.Fatalf("audit context names %s, which the Manager may not see or does not reference", hidden)
+		}
 	}
 	var auditFields map[string]json.RawMessage
 	if err := json.Unmarshal(invoker.requestContext, &auditFields); err != nil {
 		t.Fatal(err)
 	}
-	if _, ok := auditFields["supportingChecks"]; ok {
-		t.Fatal("declared Checks must reach the audit only through the Manager context")
+	for _, duplicate := range []string{"supportingStatements", "supportingChecks"} {
+		if _, ok := auditFields[duplicate]; ok {
+			t.Fatalf("%s duplicates the Manager context; the audit must have one source", duplicate)
+		}
 	}
-	if len(auditContext.SupportingStatements) != 1 || auditContext.SupportingStatements[0].ID != publicStatement.ID {
-		t.Fatalf("invocation supporting statements = %+v", auditContext.SupportingStatements)
+	// Each Statement definition reaches the audit at most once, wherever it
+	// sits in the request; a realized foreign contract comes from
+	// manager.contracts with only public relations.
+	statementIDs := map[string]bool{}
+	for _, statement := range project.Report.Statements {
+		statementIDs[statement.ID] = true
 	}
-	if !reflect.DeepEqual(auditContext.SupportingStatements[0].Uses, []string{publicRelation.ID}) {
-		t.Fatalf("invocation exposed non-public or unrelated contract references: %v", auditContext.SupportingStatements[0].Uses)
+	definitions := map[string]int{}
+	var countDefinitions func(any)
+	countDefinitions = func(v any) {
+		switch x := v.(type) {
+		case map[string]any:
+			if id, ok := x["id"].(string); ok && statementIDs[id] {
+				if _, hasDescription := x["description"]; hasDescription {
+					definitions[id]++
+				}
+			}
+			for _, value := range x {
+				countDefinitions(value)
+			}
+		case []any:
+			for _, item := range x {
+				countDefinitions(item)
+			}
+		}
+	}
+	var whole any
+	if err := json.Unmarshal(invoker.requestContext, &whole); err != nil {
+		t.Fatal(err)
+	}
+	countDefinitions(whole)
+	for id, count := range definitions {
+		if count != 1 {
+			t.Fatalf("Statement %s is defined %d times in the audit context", id, count)
+		}
+	}
+	var realized *projectmodel.Statement
+	for i := range auditContext.Manager.Contracts {
+		if auditContext.Manager.Contracts[i].ID == publicStatement.ID {
+			realized = &auditContext.Manager.Contracts[i]
+		}
+	}
+	if realized == nil || !reflect.DeepEqual(realized.Uses, []string{publicRelation.ID}) {
+		t.Fatalf("realized foreign contract in manager.contracts = %+v", realized)
 	}
 	// Every Check an owned artifact declares reaches the audit exactly once:
 	// owned Checks under checks, other Managers' Checks under foreignChecks.
