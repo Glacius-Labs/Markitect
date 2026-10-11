@@ -17,7 +17,7 @@ AI-generated, read-only, 10 October 2026, against main `02c7e529`. Input for OPS
   - Worktree folder names often differ from branch names.
   - Worktrees sit under three roots: `~/.codex/worktrees`, `~/.claude/worktrees` and the main checkout.
 
-  The roadmap's `wp/<id>-<slug>` convention replaces this for new work.
+  The naming recommendation here is superseded by the current [roadmap's branch rules](../../implementation-plan.md#branch-names): use `dev/`, `fix/`, `docs/` or `exp/` and put the package ID in the PR title. This survey's inventory remains dated evidence.
 
 ## Where earlier work lives (after OPS-02, 10 October 2026)
 

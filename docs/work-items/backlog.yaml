@@ -1,7 +1,7 @@
 schema: markitect-roadmap-backlog/v1
 updated: '2026-10-11'
 roadmap: docs/implementation-plan.md
-main_basis: 02c7e5297defd66e2635c2b590de5ebb0fd4b388
+main_basis: 5f9b6085a17d0907c826f9817f4255a0d99a753c
 
 # Single owner of work-package status. The roadmap explains streams, waves,
 # zones and rules; this file records each package's current state.
@@ -167,7 +167,10 @@ packages:
     title: Harden the playground
     stream: PLAY
     wave: 1
-    status: active
+    status: review
+    branch: dev/playground-image-pins
+    pr: 219
+    note: Slices 1 and 2 merged as 212 and 213. PR219's pushed head has green checks but lacks the image inventory. The clean scientist worktree holds unpushed commit b64f4748369e3410a414e8a88bd574fd5d975d74 with that inventory, one commit ahead of the PR. Review it, submit it after the current-head checks finish, and validate the new head before closure; see docs/development/session-handoff.md.
     owner: scientist
     depends_on: [PLAY-01, PLAY-04]
     zone: free
@@ -348,8 +351,9 @@ packages:
     title: MCP parity, read-only mode and smaller schemas
     stream: MCP
     wave: 2
-    status: active
+    status: review
     branch: dev/smaller-mcp-schemas
+    pr: 218
     owner: interface
     depends_on: [CLI-02]
     zone: interface
@@ -427,7 +431,7 @@ packages:
     pr: 184
     owner: kg
     depends_on: [KG-01]
-    note: The model-zone part merged as pull requests 165 to 168 (DEC-021 to DEC-023). The CLI and MCP surface slice (impact --explain/--manager, context --trace) follows in the interface zone, lent by the integrator.
+    note: The model-zone part merged as pull requests 165 to 168 (DEC-021 to DEC-023); the CLI and MCP explain/trace surface merged as 184. Private-child Full Verify follow-ups are tracked under BUG-01, including open 223.
     zone: model
     inputs:
       - origin codex/knowledge-graph (projectknowledge core)
@@ -454,6 +458,7 @@ packages:
     status: blocked
     owner: kg
     depends_on: [KG-02]
+    needs_owner: Repository, independent author of the frozen must-change list, and reporting thresholds.
     note: From IDEA-01. The repository, the author of the frozen must-change list and the thresholds are owner choices.
     zone: free
     inputs:
@@ -504,7 +509,7 @@ packages:
     inputs:
       - docs/work-items/surveys/tests-and-ci-20261010.md
       - docs/work-items/surveys/product-readiness-lessons-20261010.md
-    note: The race job takes about 16 minutes, about 13 of them projectrun; splitting the runtime end-to-end tests also shortens it.
+    note: Dependencies are merged, but runtime writes wait for the BUG-01 review queue and explicit zone assignment. The race job takes about 16 minutes, about 13 of them projectrun; splitting the runtime end-to-end tests also shortens it.
     acceptance:
       - Runtime end-to-end tests live in their own package or tag, share a fixture template and run in parallel.
 
@@ -516,9 +521,10 @@ packages:
     owner: qa
     depends_on: [RUN-01]
     zone: runtime
+    note: RUN-01 is merged; blocked on the BUG-01 runtime queue and integrator zone assignment, not on the old executor PR.
     inputs:
       - docs/work-items/surveys/tests-and-ci-20261010.md
-      - pull request 92 (exchange executor and fault-injection tests)
+      - pull request 104 (exchange executor, superseding 92, and fault-injection tests)
       - docs/work-items/surveys/product-readiness-lessons-20261010.md
       - docs/validation/a01-native-smoke-20261010.md
     acceptance:
@@ -528,10 +534,11 @@ packages:
     title: Remove timing-dependent tests
     stream: TEST
     wave: 2
-    status: active
+    status: blocked
     owner: qa
     depends_on: [TEST-01]
     zone: runtime
+    note: Slices 158 (non-timing test limits) and 159 (flake-report capability) are merged; 151 cleared the adapter_test.go dependency. Timer injection or fakes remain incomplete. Runtime writes wait for BUG-01 reviews 205, 221 and 223 and integrator zone assignment.
     inputs:
       - docs/work-items/surveys/tests-and-ci-20261010.md
       - docs/work-items/surveys/product-readiness-lessons-20261010.md
@@ -594,10 +601,12 @@ packages:
     title: Container runtime test tier
     stream: CI
     wave: 2
-    status: active
+    status: blocked
     pr: 140
     owner: qa
     depends_on: [PLAY-01, CI-02]
+    needs_owner: Whether to add a real-provider manual smoke, its credential handling and cost cap; deferred until the PLAY-07 protocol and budget decision.
+    note: Provider-free nightly/manual container smoke merged as 140 and runs on main. The second acceptance line is not implemented or authorized by that merge; no real-provider run is claimed.
     zone: ci
     inputs:
       - docs/work-items/surveys/tests-and-ci-20261010.md
@@ -661,6 +670,9 @@ packages:
       Zones for fixes, set by the integrator on 10 October 2026: findings in core and projectmodel go
       to kg; the bughunter fixes findings in projectwork, projectbriefing and projectcoverage and,
       while no runtime session runs, in the runtime zone; interface-zone findings go to the integrator.
+      Claude is interrupted, not a live writer. Review queue: 205 (briefing reads), stacked 221
+      (preview callers), and 223 (private child assessments, kg). The integrator must assign their
+      shared runtime files before any QA or new runtime implementation starts. See the session handoff.
     zone: free
     inputs:
       - docs/work-items/surveys/code-architecture-20261010.md
@@ -789,6 +801,7 @@ packages:
     owner: cleaner
     depends_on: [RUN-01]
     zone: runtime
+    note: RUN-01 is merged; waits for the runtime queue and the roadmap's QA/runtime sequence. Do not remove helpers still used by pending PRs.
     inputs:
       - docs/work-items/surveys/code-architecture-20261010.md
     acceptance:
@@ -811,7 +824,10 @@ packages:
     title: Markitect develops itself with its own model
     stream: ARCH
     wave: 3
-    status: active
+    status: review
+    branch: docs/short-manager-name
+    pr: 222
+    note: Self-hosted model and view merged as 203, with stable-view support in 216. Entrypoint follow-up 222 remains open. Earlier-line gates remain deliberately until ARCH-09; do not claim legacy removal from this package.
     owner: cleaner
     depends_on: [CLI-02, AGENT-02]
     zone: ci
@@ -830,7 +846,7 @@ packages:
     owner: cleaner
     depends_on: [CLI-01]
     decision: DEC-014
-    note: Before the next release, publish markitect-legacy as a release asset or retarget release-benchmark.yaml and benchmark/run.ps1, which call legacy check, context and impact on published binaries.
+    note: CLI-02 is merged; read-only release impact analysis was interrupted by Claude's quota. Implementation waits for MCP-01 and integrator assignment of the interface zone. Before the next release, reconcile release-benchmark.yaml and benchmark/run.ps1, which call legacy check, context and impact on published binaries, with ARCH-09's removal direction.
     zone: interface
     inputs:
       - docs/work-items/surveys/code-architecture-20261010.md

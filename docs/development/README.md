@@ -5,6 +5,7 @@ Start engineering work through the root [AGENTS.md](../../AGENTS.md) and [Markit
 | Document | Owns |
 |---|---|
 | [Documentation maintenance](documentation.md) | Placement, navigation, canonical owners and evidence preservation |
+| [Session continuation](session-handoff.md) | Dated Claude-to-Codex handoff, unfinished candidates, role prompts and restart order; the backlog remains the status owner |
 | [Shared contracts](shared-contracts.md) | Version-bound seams and coordinator-owned changes; distinguish historical contracts from current project operations |
 | [Modules](modules.md) | Dependency rules between packages, static composition and the mechanical import gate |
 | [Code map](code-map.md) | Every Go package with its layer, purpose and owning document; generated and checked by a test |
