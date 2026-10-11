@@ -1,365 +1,309 @@
-# Proposal: Aufbau des kanonischen Modells
+# Proposal: Kanonisches Modell mit nominalen Regeln und methodischem Review
 
-Datum: 11. Oktober 2026. Status: Proposal und Vorbereitung der gewünschten gemeinsamen Umsetzung; einzelne Formatentscheidungen noch offen, keine Implementierung erfolgt.
+Erstellt am 11. Oktober 2026; vollständig konsolidiert am 12. Oktober 2026. Status: beauftragter Konzept- und Umsetzungsentwurf auf Basis des Bibliotheksgesprächs. Dateiname `mandate.yaml` gewählt; `kind: Rule` ist die bestätigte Entwurfsrichtung. Weitere Syntax- und Referenzdetails sind Vorschläge, keine implementierten Produktverträge.
 
 ## 1. Auftrag und Maßstab
 
-Die [Leitfrage](system-description-notes.md#leitfrage) lautet: **Wie beschreibt man ein Repository für ein Softwaresystem?** Die Beschreibung soll ausreichen, daraus ein passendes Repository aufzubauen, ohne jede Datei einzeln vorzugeben.
+Die [Leitfrage](system-description-notes.md#leitfrage) lautet: **Wie beschreibt man ein Repository für ein Softwaresystem?** Das kanonische Modell soll das geltende Projekt so beschreiben, dass ein Umsetzer daraus ein passendes Repository realisieren kann, ohne jede Datei vorzugeben oder wesentliche Entscheidungen unbemerkt zu erfinden.
 
-Der [abgeleitete Arbeitsstand](system-description-notes.md#abgeleiteter-arbeitsstand) liefert den Maßstab: Ein Umsetzer soll keine wesentlichen fachlichen oder projektrelevanten Entscheidungen unbemerkt selbst erfinden müssen. Er muss erkennen, was festgelegt ist, was er entscheiden darf und woran eine passende Realisierung erkannt wird. Vollständigkeit ist auf einen erklärten Umfang und Detaillierungsgrad bezogen; sie wird durch diesen Maßstab nicht automatisch bewiesen.
+Das Modell enthält Zweck, Umfang, Begriffe, Verhalten, Regeln, technische und organisatorische Festlegungen sowie Realisierungs- und Prüfpflichten. Vollständigkeit ist auf einen erklärten Umfang und Detaillierungsgrad bezogen. Nicht beschriebene Entscheidungen werden geklärt oder ausdrücklich delegiert; ein grüner Strukturcheck beweist keine vollständige Spezifikation.
 
-Dieser Proposal plant die Beschreibungssprache und ihre Verwendung. Der [separate Main-Abgleich](canonical-model-main-comparison.md) beschreibt dokumentierte Verträge, Code und gelesene Testquellen an einem festen Stand. Der ältere [Sprachentwurf](canonical-model-draft.md) und die [C#-Skizze](csharp-model-design.md) sind Vorarbeiten, keine übernommenen Formatverträge.
+Die drei Produktblöcke bleiben: kanonisches Modell, realisierendes Repository und abstrakter Apply-Mechanismus. Git-Historie und Work Items sind weiterhin außerhalb der geltenden Systembeschreibung. Ein beobachteter Implementierungsfehler verändert die kanonische Regel nicht automatisch.
+
+Die [aktuelle Bibliotheksdarstellung](library-model-example.md) konkretisiert diese Fassung. Der [Änderungsdurchlauf](library-change-walkthrough.md) zeigt Koordination und Review. Der [Main-Abgleich vom 11. Oktober](canonical-model-main-comparison.md) ist historische, SHA-gebundene Implementierungsevidenz; er wurde heute nicht erneuert.
 
 ## 2. Empfohlener Aufbau
 
-**Empfehlung:** Ein kleiner struktureller Kern, ein versioniertes Vokabular für die Beschreibung von Softwareprojekten und mehrere abgeleitete Sichten auf dieselben Definitionen.
+**Arbeitsrichtung:** kleiner struktureller Core, begrenztes nominales Projektvokabular, verbindliche Fachprosa, explizite Beziehungen und methodische Reviews. Zusätzliche Fachformalismen werden durch konkreten Bedarf begründet.
 
 | Bestandteil | Zuständigkeit |
 | --- | --- |
-| Struktureller Kern | Definitionen, Identitäten, Schemas, Werttypen, Kardinalitäten und typisierte Referenzen; deterministische Normalisierung und Diagnostik. |
-| Beschreibendes Projektvokabular | Bedeutung von Systemen, Fachbegriffen, Verhalten, Regeln, Architektur, Betrieb, Verantwortung und Realisierung; endliche semantische Strukturregeln für diese Begriffe. |
-| Projektdefinitionen | Das konkrete Wissen und die geltenden Festlegungen der Bibliothek oder eines anderen Projekts. |
-| Abgeleitete Sichten | Systemübersicht, Architektur, Verantwortungsstruktur, Artefakterwartungen, konkrete Dateizuordnung und Änderungsfolgen. |
-| Ausführung und Evidenz | Agentenbindung, Kandidaten, Prüfungen, Berichte und Apply; an feste Modell- und Repositorystände gebunden. |
-
-Das Vokabular soll wiederverwendbar sein, ohne jede mögliche Softwarearchitektur vorzuschreiben. Die sechs bisherigen Beschreibungsaspekte bleiben Fragen zur Abdeckung und verständliche Lesesichten. Sie werden nicht automatisch sechs Pflichttypen oder sechs Ordner.
-
-`SoftwareSystem`, `Repository` und `SoftwareProject` aus der C#-Skizze sind dabei zusammengesetzte Lesesichten. Sie müssen nicht jeweils ein großes kanonisches Wurzelobjekt werden, das sämtliche Inhalte nochmals enthält.
+| Struktureller Core | Definitionen, Identitäten, Schemas, Werttypen und typisierte Referenzen; deterministische Normalisierung und Diagnosen. |
+| Projektvokabular | Bedeutung der Definitionen und ihrer Beziehungen; insbesondere Regeln, Verantwortungen, Realisierung und Prüfanschlüsse. |
+| Kanonische Projektdefinitionen | Was gilt, welche Entscheidungen frei bleiben und welche Beiträge erwartet werden. |
+| Abgeleitete Sichten | Dokumentation, Managerkontext, Graph, Impact-Erklärung und konkreter Dateibestand. |
+| Ausführung und Evidenz | Agentenbindung, Kandidaten, unabhängige Bewertung, Checks und Apply an festen Ständen. |
 
 ### 2.1 Eine maßgebliche Quelle pro Aussage
 
-Eine Definition trägt ihre geltende Aussage genau einmal. Andere Definitionen referenzieren sie. Generierte Dokumentation, Managerkontext und Realisierungsindex übernehmen diese Bedeutung als Sichten; sie besitzen keine eigene konkurrierende Spezifikation.
+Eine geltende Aussage wird einmal definiert und andernorts referenziert. YAML trägt die maschinenrelevante Struktur und zunächst mehrzeilige Prosa. Lesbare Dokumentation wird daraus abgeleitet oder erfüllt einen anderen ausdrücklich beschriebenen Informationsauftrag. Dieselbe Spezifikation wird nicht unabhängig in YAML, Markdown und Agentenanweisungen kopiert.
 
-Lesbare Bedeutung und maschinenrelevante Struktur ergänzen sich. Begründungen, Annahmen und ausdrücklich freie Entscheidungen werden von Verpflichtungen unterscheidbar. Ein nicht beschriebener Punkt ist nicht automatisch freigegeben.
+Falls Markdown später kanonischer Inhalt wird, braucht es eindeutige Verantwortung, explizites Laden und Digest-Bindung. Externe Vorgaben und Beobachtungen behalten Quelle, Stand und Aktualitätsverantwortung; die gewählte Bindung an sie ist von ihrer externen Herkunft unterscheidbar.
 
 ## 3. Was beschrieben werden können muss
 
-Die folgende Tabelle definiert **inhaltliche Rollen**, zunächst keine endgültigen Kind-Namen.
+Die Perspektiven sind ein Fragenkatalog zur Abdeckung, keine Pflichtordner und kein universeller Klassenkatalog.
 
-| Rolle | Benötigte Inhalte und Beziehungen | Bibliotheksbeispiel |
+| Perspektive | Zu beschreibende Inhalte | Bibliothek |
 | --- | --- | --- |
-| System und Umfang | Zweck, Problem, Nutzen, Akteure, Grenzen, externe Beteiligte, Annahmen und Ausschlüsse. | Bücher zeitweilig nutzen; Ausleihe und Rückgabe; physische Beschaffung außerhalb. |
-| Ziel und Qualität | Angestrebtes Ergebnis, Priorität bei Bedarf, messbares Kriterium oder begründete Bewertung, geltender Umfang. | Verfügbarkeit nachvollziehen; eindeutige Vergabe trotz Konkurrenz. |
-| Fachbegriff / Datentyp | Bedeutung, Identität von Instanzen, Eigenschaften, Wertebereiche, Einheiten, zulässige Zustände. | Titel, Exemplar, Mitglied, Ausleihe; Frist und Rückgabezeitpunkt. |
-| Fachbeziehung | Rollen der Endpunkte, Richtung, Kardinalität und gegebenenfalls inverse Bindung. | Ein Exemplar gehört zu einem Titel; Ausleihe verbindet Mitglied und Exemplar. |
-| Fähigkeit und Verhaltensvertrag | Beteiligte, Eingaben, Auslöser, Voraussetzungen, Erfolg, Zustandswirkungen, Fehler und erhaltene Regeln. | Ausleihen, Rückgabe erfassen, Ablehnung ohne zusätzliche Ausleihe. |
-| Regel / Invariante | Aussage, Gegenstand, Geltungsbereich, Bedingungen, Begründung, ausdrückliche Ausnahmen und Nachweispflicht. | Höchstens eine aktive Ausleihe pro Exemplar. |
-| Architekturbaustein und Schnittstelle | Zweck, Inhalt, Teilbausteine, angebotene/benötigte Verträge, Grenzen und erlaubte Abhängigkeiten. | Bestand, Mitgliedschaft, Ausleihe; Ausleihe benötigt Berechtigungsinformation. |
-| Betrieb | Ausführbare Einheiten, Umgebung, Datenhaltung, Konfiguration, externe Ressourcen und Betriebsverfahren. | Persistenter Speicher, positive Ausleihdauer, Sicherung und Wiederherstellung. |
-| Verantwortung und Verfahren | Bereich, Mandat, Delegation, reservierte Entscheidungen, Reviews und Arbeitsabläufe. | Verantwortlicher Bereich für Ausleihregeln und deren Realisierung. |
-| Realisierungsverpflichtung | Beitrag zur Definition, Artefaktrolle, Erforderlichkeit, technische Vorgaben, Zuordnung und Schreibzuständigkeit. | Code implementiert Ausleihe; Tests prüfen Eindeutigkeit; Dokumentation erklärt Ablehnungen. |
-| Prüfverpflichtung | Zu prüfende Aussage, Verfahren, erwartete Evidenz und begrenzter Umfang. | Zwei konkurrierende Anfragen erzeugen genau eine aktive Ausleihe. |
+| Zweck und Kontext | Problem, Nutzen, Akteure, Grenzen, Annahmen, Ausschlüsse. | Bücher ausleihen und zurückgeben; Beschaffung außerhalb. |
+| Fachstruktur | Gegenstände, Eigenschaften, Beziehungen, Zustände und Kardinalitäten. | Titel, Exemplar, Mitglied, Ausleihe. |
+| Verhalten und Regeln | Voraussetzungen, Erfolg, Fehler, Zustandswirkungen, Invarianten, Konkurrenz und Wiederholung. | Ausleihen, Rückgabe, höchstens eine aktive Ausleihe. |
+| Architektur und Betrieb | Bausteine, Schnittstellen, Abhängigkeiten, Umgebungen, Ressourcen, Konfiguration und Betriebsverfahren. | Datenhaltung und atomare Vergabe; Technik ausdrücklich festlegen oder delegieren. |
+| Verantwortung und Arbeitsweise | Auftrag, zuständiger Bereich, Delegation, Befugnisse, Grenzen und Reviews. | Mandat für Ausleihregeln und deren Realisierung. |
+| Realisierung und Nachweise | Benötigte Beiträge, Pfadregeln, Checks, Prüfung und Aussagegrenzen. | Implementierung, Tests und Bedienungsdokumentation. |
 
-Eine Rolle braucht erst dann eine eigene adressierbare Definition, wenn sie unabhängig referenziert, geändert, betroffen oder geprüft werden soll. Zusammengehörige Details dürfen innerhalb einer Definition bleiben. Ein einfaches Projekt muss kein Zustandsmodell, mehrere Dienste oder eine umfangreiche Organisation erfinden.
-
-Externe Verträge, fremde Vorgaben und Betriebsbeobachtungen behalten ihre Quelle, ihren Stand und gegebenenfalls eine Aktualitätsverantwortung. Das Modell beschreibt die gewählte Bindung an diese Eingaben und die daraus geltenden Projektpflichten. Ein beobachteter Wert oder ein fremdes Dokument wird dadurch nicht automatisch zur kanonischen Projektabsicht; eine geänderte externe Grundlage kann eine erneute Bewertung auslösen.
-
-Kurzes Begriffsgerüst: Eine **Definition** ist eine benannte Modellbeschreibung. Eine **Fachinstanz** ist beispielsweise das konkrete ausgeliehene Buch in der Anwendung. Eine **Facette** ist ein typisierter Teil der Beschreibung einer Definition. Der **Realisierungsindex** ist die abgeleitete Zuordnung konkreter Artefakte an einem festen Stand.
+Quellcode/Toolchain, externe Abhängigkeiten, Daten/Migrationen, Tests/Analysen, Dokumentation, Build/Paketierung/CI, Infrastruktur/Konfiguration, Monitoring/Dashboards und Skills/Workflows sind auf Anwendbarkeit zu prüfen. Ihre Erwähnung macht sie nicht für jedes Projekt verpflichtend.
 
 ### 3.1 Fachtypen und Instanzen
 
-Die Definition `Exemplar` beschreibt eine Art fachlicher Gegenstände. Sie ist nicht selbst ein ausgeliehenes Buch. Das kanonische Projektmodell enthält gewöhnlich keine Liste aller aktuellen Bücher und Ausleihen; diese gehören zur Anwendung und gegebenenfalls zu beobachteten Betriebsdaten.
+Eine Modelldefinition `copy` beschreibt den Fachtyp Exemplar. Sie ist kein konkretes Buch. Laufende Ausleihen gehören zur Anwendung.
 
-Deshalb sind zwei Kardinalitäten verschieden: Eine Core-Eigenschaft kann genau einen Verweis auf die Modelldefinition `Titel` verlangen. Die Fachbeschreibung kann zusätzlich verlangen, dass jedes Exemplar in der Anwendung genau einen Titel besitzt. „Höchstens eine aktive Ausleihe“ ist wiederum eine gefilterte Regel über Fachinstanzen und Zustände. Der Compiler des Definitionsgraphen kann diese Laufzeitregel nicht allein durch Zählen seiner eigenen Kanten beweisen.
+Drei Angaben sind zu unterscheiden: Kardinalität einer Modellproperty, beschriebene Kardinalität einer Fachbeziehung und eine gefilterte Invariante über Laufzeitinstanzen. „Höchstens eine aktive Ausleihe“ wird nicht allein durch Zählen der Modellreferenzen bewiesen.
 
 ### 3.2 Entscheidungen und Freiräume
 
-Verbindliche Technologie, Schnittstellen oder Algorithmen dürfen beschrieben werden, wenn sie zur Projektdefinition gehören. Andere Umsetzungsentscheidungen bleiben ausdrücklich beim zuständigen Bereich. Beispielsweise kann atomare Vergabe verbindlich sein, während ihre Datenbanktechnik frei bleibt.
+Verbindliche Technik und Algorithmen dürfen Teil der Definition sein. Andere Entscheidungen bleiben ausdrücklich beim zuständigen Bereich. Atomare Vergabe kann beispielsweise Pflicht sein, während die Datenbanktechnik frei bleibt.
 
-Entscheidungen referenzieren den betroffenen Gegenstand und bewahren ihre Begründung. Eine aufgezeichnete Entscheidung ist keine automatische Bestätigung ihrer Autorisierung. Historie, Work Items und geplante Ideen bleiben vom geltenden Systemstand unterscheidbar; Git und Work Items gehören weiterhin nicht zum Gegenstand dieser Spezifikation.
+Eine dokumentierte Entscheidung referenziert ihren Gegenstand und bewahrt Begründung und Provenienz. Ein Commit oder Actor-Feld authentifiziert keine menschliche Freigabe. Offene Punkte sind nicht still delegiert.
 
-## 4. Beziehungen, Gliederung und Management
+## 4. Beziehungen, Gliederung und Verantwortung
 
-Jede maschinenrelevante Beziehung braucht eine definierte Bedeutung, Richtung, zulässige Endpunkte und Wirkung auf Kontext beziehungsweise Impact.
-
-| Beziehung | Bedeutung | Wirkung / Grenze |
+| Struktur | Bedeutung | Grenze |
 | --- | --- | --- |
-| enthält | Fachliche oder technische Zusammensetzung. | Im gewählten Baum eindeutiger Parent und keine Enthaltenseinszyklen. |
-| verwendet | Benötigt Kontext oder Information. | Relevanz für Bewertung; keine automatische Schreibzuständigkeit. |
-| benötigt / muss erhalten | Verbindliche Voraussetzung oder Verpflichtung. | Verpflichtung muss im zuständigen Realisierungs- und Prüfkontext erscheinen. |
-| bietet / verlangt | Schnittstellen- oder Verhaltensvertrag. | Vertrag und kompatible Bereitstellung sind ausdrücklich prüfbar. |
-| betrifft | Expliziter Geltungsbereich einer Regel. | Reichweite folgt der deklarierten Auswahl, nicht einer beliebigen Graphtransitivität. |
-| realisiert | Erwarteter Beitrag eines Artefakts zu einer Definition. | Beitrag als implementiert, geprüft, erklärt, konfiguriert oder bereitgestellt unterscheiden. |
-| prüft | Benanntes Verfahren untersucht eine Aussage. | Keine Zusage über ungeprüfte Aussagen. |
-| verantwortet / delegiert | Organisatorisches Mandat. | Hierarchie und Befugnis; nicht gleichbedeutend mit fachlicher Abhängigkeit. |
+| Namespace-/Dateibaum | Kohäsive Ablage und adressierbarer Bereich. | Die bekannte Loader-Konvention bindet Namespace und Verzeichnis; sie ist keine Laufzeitarchitektur. |
+| Verantwortungsbaum | Parent, Zuständigkeit und ausdrückliche Delegation. | Ein Graphpfad allein verleiht keine Befugnis. |
+| Fachlicher Beziehungsgraph | Kontextbedarf und Verpflichtungen zwischen Definitionen. | Querbeziehungen verändern keine Elternschaft. |
+| Ausführungsablauf | Abgeleitete Aufgaben, Reviews und Integration. | Eine fachliche Dependency ist nicht automatisch ein Ausführungsplan. |
 
-Namespaceraum, Bausteinbaum und Managerbaum sind verwandte, aber unterscheidbare Strukturen. Eine ausdrücklich gewählte Projektkonvention kann die Namespacegliederung auf Managerzuständigkeit abbilden. Der aktuelle Main verwendet eine solche strukturelle Zuordnung; Ordner- oder Modulzugehörigkeit allein begründet im vorgeschlagenen Vertrag keine Befugnis. Sobald ein Projekt davon abweichen soll, braucht es eine ausdrückliche Abbildung; diese Freiheit wird nicht als schon vorhandene Fähigkeit behauptet. Ein übergreifendes Mandat kann mehrere Bereiche betreffen, ohne deren Elternschaft zu ändern.
+Ein kleiner Bibliotheksausschnitt kann einen Root-Manager besitzen. Untergeordnete Verantwortungen entstehen, wenn begrenzte Aufträge und Bereiche sie rechtfertigen. Übergreifende Interessen brauchen ausdrückliche Mandate oder Beziehungen. Zyklen werden je Relation beurteilt; Parent-Zyklen sind anders zu behandeln als mögliche fachliche Querreferenzen.
 
-Eine Änderung an einem Bereich kann andere Bereiche betreffen, ohne dass sich ihre Elternschaft ändert. Übergreifende Regeln erhalten explizite Ziele. Zyklen werden pro Beziehungstyp beurteilt; ein allgemeines Verbot sämtlicher Graphzyklen wäre zu grob.
+### 4.1 Minimaler Beziehungsvertrag
 
-Die Identität muss für einen Stand eindeutig und referenzierbar sein. Ein bloßer Wechsel des Quellpfads soll keine fachliche Bedeutungsänderung bewirken. Ein Namespace- oder Namenswechsel kann hingegen die vollständige Identität ändern und braucht dann einen ausdrücklichen Umgang mit Referenzen und Evidenz. Ein universeller UUID-Zwang wird nicht vorgeschlagen.
+| Feld | Bedeutung | Kandidat für zulässige Ziel-Kinds |
+| --- | --- | --- |
+| `uses` | Benötigter Kontext. | `Statement`, `Rule` |
+| `requires` | Normative Verpflichtung, die ein Vertrag erfüllen oder erhalten muss. | Im ersten Bibliotheksentwurf `Rule` |
+| `Artifact.realizes` | Erwarteter Realisierungsbeitrag. | `Statement`, `Rule` |
+| `Artifact.checks` | Benanntes ausführbares Prüfverfahren. | `Check` |
+| `Check.uses` | Aussagen im Prüfgegenstand. | `Statement`, `Rule` |
+| `Manager.parent` | Direkt übergeordnete Verantwortung. | `Manager` |
+| `Decision.subject` | Gegenstand einer begründeten Entscheidung. | Kandidat: `Statement`, `Rule` |
+| `Decision.actor` | Aufgezeichnete Provenienz. | `Manager` |
+
+Bei `requires` erklärt die Fachprosa zunächst, ob eine Regel Voraussetzung oder erhaltene Invariante ist. `uses` sagt weder „gilt für“ noch etwas über die Zahl konkreter Bücher. Zusätzliche Kanten wie `appliesTo`, `contains` oder `provides` sind Erweiterungskandidaten, keine still vorausgesetzten Pflichtfelder.
+
+Die hier eingeschränkte `requires`-Zielmenge ist ein neuer Vorschlag für diesen Bibliotheksvertrag. Der bisherige Statement-Vertrag konnte auch andere Statement-Verpflichtungen ausdrücken. Bestehende Projekte dürfen deshalb nicht automatisch oder verlustbehaftet umgedeutet werden.
+
+### 4.2 Identität und Referenzsyntax
+
+Identität umfasst API-Version, Kind, Namespace und Name. Umbenennung oder Kind-Wechsel benötigt Referenz- und Evidenzbehandlung. Ein UUID-Zwang wird nicht vorgeschlagen.
+
+Der neue YAML-Kandidat nennt den Zielkind ausdrücklich:
+
+```yaml
+requires:
+  - kind: Rule
+    namespace: library
+    name: one-active-loan
+```
+
+Die API-Version des Ziels wird im Beispiel aus dem versionierten Referenzvertrag bestimmt: Alle Ziel-Kinds dieser Fassung gehören ausdrücklich zur gleichen `vNext`-Version. Das ist eine vorgeschlagene Versionierungsregel, keine freie Auflösung auf eine zufällig vorhandene Version. Cross-Version-Referenzen sind nicht implizit freigegeben. Jede Property hat eine endliche Zielmenge; „beliebiger Kind“ ist kein Ersatz für Typprüfung. Auch `uses`, Realisierung, Checks und Entscheidungsbezüge brauchen konsistente Auflösung.
+
+**Implementierungsentscheidung offen:** Der bisher geprüfte Core-Vertrag benennt pro Reference-Property genau einen Zielkind. Gemischte Zielmengen verlangen entweder eine eng begrenzte, explizite Referenzunion oder getrennte typisierte Properties. Der gemeinsame YAML-Kandidat bevorzugt die Kind-angereicherte Referenzform. Ob Core und Validator diese ohne neue Primitive tragen können, ist vor der Implementierung an aktuellem Main zu prüfen. Kein untypisiertes Referenzobjekt darf still die bisherigen Diagnosen und Graphkanten umgehen.
 
 ## 5. Realisierung ohne Aufzählung jeder Datei
 
-Das Modell beschreibt **was** realisiert werden muss und welche ausgewählten technischen Bedingungen gelten. Ablagekonventionen können exakte Pfade oder Verzeichnisbereiche verwenden. Es soll nicht für jede private Hilfsdatei eine neue fachliche Definition verlangen.
+Das Modell beschreibt benötigte Beiträge und ausgewählte technische Vorgaben. Artefakte ordnen diese Aussagen über exakte Pfade oder Verzeichnispräfixe zu. Der konkrete Dateibestand wird an einem festen Stand erfasst und daraus klassifiziert.
 
-Für den Aufbau eines Repositorys sind zusätzlich folgende Artefaktfamilien auf Anwendbarkeit zu prüfen. Keine davon ist allein wegen ihrer Nennung für jedes Projekt Pflicht:
+Modellquellen im Manifest explizit zu nennen ist etwas anderes als jede Anwendungsdatei einzeln zu spezifizieren. Private Hilfsdateien benötigen keine eigene Fachdefinition. Viele Aussagen können eine Datei betreffen; eine Aussage kann viele Dateien benötigen. Jede konkrete Schreibausgabe braucht trotzdem einen eindeutigen Owner.
 
-| Artefaktfamilie | Zu beschreibende Entscheidung oder Pflicht |
+| Urteil | Was es aussagt |
 | --- | --- |
-| Quellcode und Entwicklungsumgebung | Sprache, Toolchain, Plattform und technische Konventionen, soweit verbindlich. |
-| Externe Abhängigkeiten | Benötigte Fähigkeiten, Bibliotheken/Services, Versionierung und Verfahren zur Abhängigkeitsverwaltung. |
-| Datenstrukturen und Migrationen | Speicherung, Schemata, zulässige Datenänderungen und Erhaltungs-/Wiederherstellungsbedingungen. |
-| Tests und Analysewerkzeuge | Prüfgegenstände, Verfahren, Referenzfälle und Grenzen der Evidenz. |
-| Dokumentation und generierte Sichten | Informationspflichten, Leser, Inhalte und maßgebliche Quellen. |
-| Build, Paketierung und CI/CD | Wie aus Quellen ein verwendbares Ergebnis entsteht und welche Prüf-/Bereitstellungsverfahren gelten. |
-| Infrastruktur und Konfiguration | Umgebungen, Ressourcen, zulässige Parameter und Umgang mit projektrelevanten externen Inputs. |
-| Beobachtung und Dashboards | Relevante Messgrößen, Logs, Betriebszustände und deren Darstellung. |
-| Skills, Workflows und Richtlinien | Wiederholbare Arbeit, Befugnisse, Reviews und Eskalationsverfahren. |
+| Struktur gültig | Definierte Typen, Identitäten und Beziehungen passen zum gewählten Sprachvertrag. |
+| Coverage vollständig | Jede Datei im erklärten Umfang ist zugeordnet oder ausdrücklich ausgenommen. |
+| Realisierung konform | Die untersuchten Inhalte erfüllen die untersuchten Aussagen. |
+| Beschreibung ausreichend | Der erklärte Umfang ist fachlich hinreichend beschrieben und freie Entscheidungen sind klar. |
 
-Damit kann etwa die Wahl „Webanwendung“ präzisiert werden: Welche Schnittstelle, Laufzeitbedingungen und Bau-/Bereitstellungsform sind verbindlich, und welche technische Auswahl darf der zuständige Bereich treffen?
-
-| Kanonische Erklärung | Abgeleitete, standgebundene Beobachtung |
-| --- | --- |
-| Ausleihvertrag muss in der Anwendung realisiert werden. | Welche konkreten Quelldateien diesen Vertrag realisieren. |
-| Seine Invarianten brauchen geeignete Prüfungen. | Welche Tests oder Analyseartefakte diesen Prüfauftrag erfüllen und welche Ergebnisse vorliegen. |
-| Die Bedienung und Fehlerfälle müssen erklärt werden. | Welche Dokumentationsdateien diese Pflicht realisieren. |
-| Ein Bereich trägt Schreibverantwortung für die gewählten Artefakte. | Welcher Verantwortliche nach der Zuordnung für eine konkrete Datei zuständig ist. |
-
-Der daraus gebildete Realisierungsindex ist erneuerbar. Viele Definitionen dürfen dieselbe Datei betreffen; eine Definition darf viele Dateien benötigen. Eine konkrete Änderungsausgabe besitzt trotzdem eine eindeutige Schreib- und Integrationszuständigkeit.
-
-Ein vollständig erfasster Pfadbestand wird mit diesen Erwartungen abgeglichen. Jede Datei im erklärten Umfang ist zugeordnet, als Modelldatei/Werkzeugartefakt klassifiziert oder ausdrücklich ausgenommen. Eine Übergangsausnahme bleibt als nicht konform sichtbar. Zuordnung und Inhaltskonformität werden getrennt beurteilt.
-
-Die erste Ausprägung darf deklarierte Pfadbereiche verwenden. Eine spätere semantische Zuordnung durch Analysewerkzeuge kann ergänzen oder konservativ erweitern. Unsichere Zuordnung wird als unbekannt oder mehrdeutig gemeldet. Dateinamen, Ordner oder Prosalinks allein sind keine Implementierungsevidenz.
-
-„Ohne jede Datei zu nennen“ bedeutet somit: **Erwartungen und Regeln pflegen, konkrete Dateien im Index erfassen.** Es bedeutet nicht, die konkrete Dateiabdeckung aufzugeben.
+Keines dieser Urteile ersetzt die anderen. Eine deklarierte Zuordnung beweist nicht, dass der Dateiinhalt die Aussage erfüllt. Ignorieren und Übergangsausnahmen sind explizit und behalten ihre Begrenzung.
 
 ## 6. Autorenformat und Sprachform
 
 ### 6.1 Verständliche Quellen
 
-Maschinenrelevante Daten werden ausdrücklich strukturiert. Lesbare Beschreibungen können zunächst direkt als mehrzeilige YAML-Texte im Modell stehen; daraus entstehen Dokumentationssichten. Falls Markdown als kanonischer Inhalt angebunden wird, braucht es einen eindeutigen Eigentümer, feste Eingabe und Digest. Dieselbe geltende Aussage wird nicht zusätzlich manuell in beiden Formaten gepflegt.
-
-Ordner und Namespaces bündeln kohäsive Inhalte. Beispiel einer möglichen Gliederung, kein vorgeschriebenes Projektlayout:
+Eine Definition pro Datei übernimmt die Grenze des bisher geprüften Loaders. Der Verzeichnisbereich entspricht im Beispiel dem Namespace. Ein anderer Loadervertrag könnte später mehrere Definitionen pro Datei unterstützen; das gehört nicht zum ersten Konzeptschritt.
 
 ```text
-.markitect/model/
-  library/
-    overview.yaml
-    inventory/
-    membership/
-    circulation/
-      concepts.yaml
-      contracts.yaml
-      rules.yaml
-      realization.yaml
-  engineering/
-    responsibilities.yaml
-    checks.yaml
-    workflows.yaml
-  operations/
-    environment.yaml
-    configuration.yaml
+.markitect/
+  project.yaml
+  model/
+    mandate.yaml
+    library/
+      copy.yaml
+      loan.yaml
+      active-loan.yaml
+      eligible-member.yaml
+      available-copy.yaml
+      one-active-loan.yaml
+      borrow.yaml
+      return.yaml
+      library-implementation.yaml
+      library-verification.yaml
+      library-documentation.yaml
+      library-contract-check.yaml
 ```
 
-Die Gliederung folgt Aufgaben und Gegenständen. Sie muss nicht alle sechs Betrachtungsperspektiven in getrennte Teilbäume aufteilen.
+Der vollständige Baum und das Manifest stehen im [Bibliotheksbeispiel](library-model-example.md). Eine feinere fachliche Gliederung kann später Bestand, Mitgliedschaft und Ausleihe in eigene Namespacebereiche teilen.
 
-### 6.2 Empfohlene erste Sprachform: strukturierte Facetten
+### 6.2 Empfohlene erste Sprachform: benannte Aussagen und nominale Regeln
 
-Für die erste Konkretisierung empfehle ich **benannte Aussagen mit versionierten, typisierten Beschreibungsfacetten**. Eine Aussage über einen Fachbegriff erhält beispielsweise strukturierte Eigenschaften und Beziehungen; eine über einen Anwendungsfall erhält einen Verhaltensvertrag. Lesbare Bedeutung und strukturierte Festlegungen gehören zu derselben kanonischen Definition.
+Der kleinste neue Sprachkandidat trennt `Statement` und `Rule`. Ein Statement beschreibt einen Begriff, Verhalten, Architektur oder Arbeitsweise. Eine Rule beschreibt eine normative Bedingung oder Invariante. Fachlicher Inhalt bleibt zunächst verbindliche Prosa.
 
-Diese Wahl vermeidet, schon aus jeder Beschreibungskategorie einen neuen universellen Core-Kind zu machen. Sie lässt einfache Aussagen weiterhin einfach sein. Die Facetten sind verbindlich validierte Teile eines Vokabulars, keine beliebigen unkontrollierten Zusatzdaten.
+Für die übrigen Statement-Rollen bleiben die bisherigen Kategorien im Beispiel vorläufig erhalten. `Rule` benötigt keine zusätzliche Kategorie `rule`. Eigene Kinds `Concept`, `UseCase`, `System` oder `Mandate` sind noch nicht beschlossen. Ihre Notwendigkeit muss aus einem konkreten Zieltyp- oder Feldvertrag folgen.
 
-Erste Facettenverträge zur Ausarbeitung:
+Nominale Typisierung und Tiefe der Formalisierung sind unabhängig: Ein Rule-Kind kann gezielte Referenzprüfung ermöglichen, während der Regeltext methodisch beurteilt wird.
 
-| Facette | Strukturierte Inhalte |
-| --- | --- |
-| Systemkontext | Grenze, Akteure, Problem-/Zielbezüge, externe Gegenstände. |
-| Fachstruktur | Instanzidentität, Eigenschaften, Datentypen, Wertebereiche, Zustände und Fachbeziehungen. |
-| Verhalten | Ein-/Ausgaben, Vor-/Nachbedingungen, erhaltene Invarianten, Fehler, Zustandswirkungen, freie Entscheidungen. |
-| Regel | Gegenstände, Geltungsbereich, Kategorie, Nachweispflicht, gegebenenfalls begrenzter Bedingungsausdruck. |
-| Architektur | Teilbausteine, angebotene/benötigte Verträge und getrennte Abhängigkeitsarten. |
-| Betrieb / Verfahren | Umgebungen, Ressourcen, Konfiguration, Schritte, Zuständigkeit und Randbedingungen. |
-| Realisierung / Prüfung | Semantischer Beitrag, Erforderlichkeit, Vorgaben, Zuordnung, Nachweisverfahren und Grenzen. |
+#### 6.2.1 Feldkandidat für den ersten Vertrag
 
-Ein Vokabularvalidator muss etwa prüfen, dass ein Eigenschaftsziel einen Fachbegriff bezeichnet und ein Vorbedingungsverweis auf eine passende Regel zeigt. Der generische Core prüft den strukturellen Typ; der Vokabularvalidator prüft die darüber hinausgehende Rollenbedeutung.
+Diese Arbeitstabelle konkretisiert den Entwurf für P0; sie behauptet kein vorhandenes Schema. Alle Definitionen besitzen `apiVersion`, `kind`, `metadata.name`, `metadata.namespace` und einen lesbaren `purpose`. Der Namespace kann für die Wurzel leer sein. Header und Spec sind geschlossen; unbenannte Zusatzfelder werden nicht still akzeptiert.
 
-**Noch zu entscheiden:** Ob Facetten als strukturierte Eigenschaften des bestehenden `Statement`-Kinds oder als eigene nominale Kinds serialisiert werden. Als ersten Kandidaten empfehle ich die Erweiterung des Statement-Vertrags mit klar validierten Facetten. Eigenständige Kinds sind dort sinnvoll, wo eigene Identität, Referenzsignatur oder Lebensdauer erforderlich wird. Die Entscheidung wird an den konkreten Beispielen getroffen; keine aktuelle YAML-Version wird still umdefiniert.
-
-Die Wahl ist an konkreten Fällen zu prüfen:
-
-| Beispiel | Facetten-/Definitionskandidat | Anlass, einen eigenen Kind zu erwägen |
+| Kind | Spec-Felder des Kandidaten | Pflicht und Begrenzung |
 | --- | --- | --- |
-| Private Fristberechnung innerhalb von Ausleihen | Beschriebener Verhaltensdetail im Ausleihvertrag. | Erst bei unabhängigem Vertrag oder eigener Referenzsignatur; nicht allein wegen eines weiteren Satzes. |
-| Öffentlicher Ausleihvertrag | Eigene Statement-Definition mit Verhaltensfacette und eigener Identität. | Wenn Referenzen nominal ausschließlich Verhaltensverträge treffen müssen oder ein eigener geschlossener Feldvertrag nötig ist. |
-| Architekturbaustein Ausleihe | Eigene Statement-Definition mit Architekturfacette. | Wenn Kompositions-/Portverträge einen nominalen Komponenten-Kind sinnvoll erfordern. |
+| `Statement` | `category`, `description`, `public`, `uses`, `requires` | Kategorie zunächst concept/use-case/architecture/workflow; Beschreibung erforderlich. Uses/Requires sind optionale Referenzlisten. |
+| `Rule` | `description`, `public`, `uses` | Beschreibung erforderlich; keine Kategorie rule. Kontextbezüge optional; keine formale Bedingung vorausgesetzt. |
+| `Manager` | `parent`, `owns`, `instructions` | Höchstens ein Parent; optionale Pfadliste und lesbare Anweisungen. Roots/Ownerregeln werden getrennt validiert. |
+| `Artifact` | `role`, `realizes`, `paths`, `checks`, `required`, `reason` | Rolle implementation/documentation/verification/configuration; optionale Ziel-/Pfad-/Checklisten, Erforderlichkeit und Begründung. |
+| `Check` | `command`, `uses`, `limitation` | Nicht leere Liste literal argv; deklarierter Gegenstand und Evidenzgrenze. Ein Befehl ist keine Shell-Prosa. |
+| `Decision` | `subject`, `decision`, `reason`, `actor` | Genau ein Subject und Actor sowie lesbare Entscheidung und Begründung. Actor authentifiziert keine Befugnis. |
 
-Eigene Definitionsidentität und eigener Kind sind verschiedene Entscheidungen. Auch eine Statement-Definition mit Facette ist unabhängig referenzierbar; eine neue Identität allein erzwingt keinen neuen Kind.
-
-Der C#-Katalog dient dabei als Lesemodell. Eine zusätzliche Kopie sämtlicher kanonischer Inhalte als separat gepflegte Objektstruktur ist nicht vorgesehen.
+Für Statement/Rule ist `public` als Boolean vorgesehen; ohne ausdrückliches Public bleibt eine fremde Definition im Kandidaten privat. Referenzen werden gegen die Zielmengen aus Abschnitt 4 geprüft. Die Mengenfelder bestimmen Modellwerte; sie zählen keine Laufzeitinstanzen. Ausführliche Defaults, Kardinalitäten und Normalisierung werden im versionierten P0-Vertrag festgeschrieben. Weitere Felder brauchen einen erklärten Bedarf und ihre Behandlung in allen Sichten.
 
 ### 6.3 Begrenzte Formalisierung
 
-Die Beschreibungssprache braucht gut definierte Werte, Kombination, Namen und Abstraktion. Turing-Vollständigkeit ist kein Ziel. Für wiederkehrende Regeln kommen endliche Ausdrücke wie Pflichtwert, Wertebereich, Eindeutigkeit, Vergleich oder gefilterte Kardinalität in Betracht.
+Strukturierte Fachproperties, Vor-/Nachbedingungen und Zustandsmodelle bleiben mögliche Erweiterungen. Sie werden zuerst an wiederkehrenden Fehlern und Autorenaufwand begründet. Ein eigener Ausdrucksevaluator oder Turing-Vollständigkeit ist keine Voraussetzung.
 
-Ein Ausdruck wie „Anzahl aktiver Ausleihen je Exemplar höchstens eins“ braucht definierte Mengen-, Zustands- und Zeitsemantik. Seine syntaktische Prüfung kann eine formale Modellprüfung leisten. Ob die Anwendung ihn erhält, verlangt einen geeigneten Nachweis am realisierten Stand. Der Vorschlag behauptet keinen vorhandenen Ausdrucksevaluator.
+Eine spätere formale Regel braucht definierte Instanz-, Mengen-, Zeit- und Zustandssemantik. Der Compiler ihrer Definition beweist dadurch noch nicht, dass die Anwendung sie erhält. Die früheren [Facettenausschnitte](library-filesystem-example.md) und der [C#-Entwurf](csharp-model-design.md) bleiben datierte Vorarbeiten.
 
 ### 6.4 Offene Frage: Strenge und Methodik
 
-Neuer Nutzerimpuls im selben Produktgespräch am 11. Oktober 2026:
+Nutzerimpuls: „Eventuell reicht ein methodischer Ansatz bereits für das was Markitect erreichen will.“ Das ist eine Produktthese, kein gemessener Befund.
 
-> Ausserdem könnte man noch über die "strictness" des "compilers" und typsystems reden. Eventuell reicht ein methodischer Ansatz bereits für das was Markitect erreichen will.
+| Strukturell erzwingen | Methodisch beurteilen |
+| --- | --- |
+| Identitäten, geschlossene Felder, Werttypen und erlaubte Ziel-Kinds. | Verständlichkeit und fachliche Vollständigkeit der Beschreibung. |
+| Referenzauflösung, Parent-/Ownerregeln und Dateizuordnung. | Vollständigkeit und Bedeutung der deklarierten Beziehungen. |
+| Feste Stände, Änderungsvergleich und konservativer Umgang mit unbekanntem Umfang. | Erhalt der Regeln in Umsetzung, Dokumentation und Prüfungen. |
+| Deklarierte Check-Bindung und tatsächlich aufgezeichnete Ergebnisse. | Ob die Verfahren die neue Aussage geeignet untersuchen. |
 
-Status: offene Designfrage und Hypothese, keine angenommene Abschwächung des aktuellen Vertrags. Die bisherige Empfehlung typisierter Facetten bleibt ein Kandidat; der erforderliche Formalisierungsgrad soll gemeinsam am [Dateisystem-/Syntaxbeispiel](library-filesystem-example.md) bestimmt werden.
-
-**Ableitung zur Diskussion:** Der Nutzen könnte bereits aus einer kanonischen Quelle, eindeutigen Zuständigkeiten, expliziten Beziehungen, systematischer Änderungsanalyse und verbindlichen Reviews entstehen. Ein formal strengerer Fachvertrag könnte zusätzliche Fehler früh erkennen, verlangt aber mehr Modellierungs- und Pflegeaufwand. Ob die zusätzliche Strenge für den gewünschten Nutzerwert nötig ist, ist bislang unbelegt.
-
-Strenge sollte zunächst nach Prüfgegenstand unterschieden werden:
-
-| Prüfgegenstand | Möglicher methodischer Anteil | Möglicher deterministischer Anteil |
-| --- | --- | --- |
-| Identitäten, Typen und Referenzen | Verständliche Benennung und Gliederung. | Auflösbare Ziele, gültige Werte, eindeutige Definitionen. |
-| Fachliche Beschreibung | Fragenkatalog, gezielte Kontextgabe und unabhängiges Review. | Pflichtfelder, erlaubte Rollen, Kompositions- und Beziehungsregeln. |
-| Verhalten und Invarianten | Präzise Prosa, Gegenbeispiele und begründete Prüfauswahl. | Definierte Bedingungen oder Zustandsverträge, soweit sie tatsächlich helfen. |
-| Realisierung und Nachweise | Agenten untersuchen und beurteilen relevante Inhalte. | Explizite Pfadzuordnung, feste Stände, vorhandene Bindungen und ausführbare Checks. |
-
-Ein möglicher Vergleich für die spätere Designentscheidung ist derselbe Bibliotheksfall mit minimaler strukturierter Beschreibung und methodischen Prüfaufträgen gegenüber einer stärker formalisierten Fassung. Hier wird dieser Vergleich nur vorgeschlagen, nicht ausgeführt oder als Studie beauftragt. Kriterien wären: Verständlichkeit, Pflegeaufwand, früh erkannte Fehler, übersehene Verpflichtungen und nachvollziehbare Änderungsfolgen.
-
-Offen bleibt insbesondere, ob ein einzelner Strictness-Schalter überhaupt sinnvoll ist. Ein projektspezifisches Profil könnte bestimmte Prüfungen als Fehler, Warnung oder Reviewpflicht behandeln. Dabei muss erkennbar bleiben, was tatsächlich geprüft wurde und welche Garantien daraus folgen; unsichere Beziehungen dürfen nicht still als vollständiger enger Impact gelten. Profile, Schweregrade und Freigaberegeln sind hier nur Ideen, keine aktuelle Produktfähigkeit.
-
-Vor dem Schemaumbau ist deshalb zu entscheiden: Welche Aussagen benötigt die systematische Koordination zwingend als Struktur, welche können zunächst verbindliche Prosa bleiben, und welche wiederkehrenden Fehler rechtfertigen zusätzliche formale Prüfungen? Der Umsetzungsplan in Abschnitt 8 ist entsprechend zu konkretisieren, sobald diese Entscheidung fällt.
+Fehler, Warnung und Reviewpflicht sind unterscheidbare Reaktionen. Ein allgemeiner Strictness-Schalter oder konfigurierbare Profile sind noch nicht entschieden. Fehlerhafte Referenzen dürfen nicht als bekannte korrekte Zuordnung behandelt werden; unsichere Wirkung darf nicht still zu engem Impact werden. Jede Zusage bleibt an tatsächlich durchgeführte Prüfung und deren Grenzen gebunden.
 
 ### 6.5 Alternative B: Minimale Struktur und methodisches Review
 
-Auf ausdrücklichen Nutzerwunsch vom 12. Oktober 2026 wird die einfache Variante als Alternative festgehalten. Alternative A ist der typisierte Facettenkandidat aus Abschnitt 6.2. Alternative B lässt die fachliche Bedeutung zunächst als verbindliche Prosa auf benannten Statements stehen und strukturiert Identität, grobe Kategorie, Verantwortung, Beziehungen, Realisierung und Prüfanschlüsse. Die Aufnahme dieser Alternative ist keine Entscheidung für einen der beiden Ansätze.
+Die zuvor als Alternative B dokumentierte methodische Variante ist die Arbeitsbasis dieser konsolidierten Empfehlung. Sie wird mit der bevorzugten nominalen Rule-Richtung verbunden. Daraus folgt keine Annahme, dass umfangreiche Fachfacetten grundsätzlich unnötig sind; die weitergehende Formalisierung bleibt eine alternative Tiefe des gleichen Modells.
 
-Das [vollständige YAML-Gesprächsbeispiel](library-methodical-alternative.md) beschreibt den kleinen Bibliotheksausschnitt mit elf Aussagen: Systemzweck, Titel, Exemplar, Mitglied, Ausleihe, aktive Ausleihe, Berechtigung, Verfügbarkeit, Eindeutigkeitsinvariante, Ausleihen und Rückgabe. Ein Root-Manager genügt für den Ausschnitt. Das Manifest wählt jede Modelldatei ausdrücklich; der bisherige Loader verlangt eine Definition pro Datei. Konkrete Beiträge werden über Artefakte und Pfadbereiche zugeordnet. Die groben Kategorien und Feldformen orientieren sich am bisherigen Projectmodel-Vertrag; Fachfacetten sind für diese Alternative nicht erforderlich. Das zuvor diskutierte Bündeln mehrerer Definitionen in einer Datei wäre eine eigene Formatänderung und wird hier nicht vorausgesetzt.
-
-| Aspekt | Alternative A: typisierte Facetten | Alternative B: minimale Struktur |
-| --- | --- | --- |
-| Fachproperties, Bedingungen und Verhalten | Zusätzliche strukturierte Felder und Rollenvalidierung. | Präzise Prosa innerhalb unabhängig referenzierbarer Statements. |
-| Beziehungen | Semantisch spezialisierte Verträge nach konkretem Bedarf. | Zunächst `uses` für Kontext und `requires` für Verpflichtungen; Details erläutert die Prosa. |
-| Frühe Diagnosen | Können zusätzlich fachliche Rollen- und Feldfehler erkennen. | Prüfen Struktur, Identitäten, Referenzen, Zuständigkeiten und Zuordnung; Fachprüfung erfolgt methodisch. |
-| Koordination und Nachweise | Alle ergänzten Felder benötigen Behandlung in Kontext, Digest, Impact und Evidenz. | Vorhandene Struktur nutzen; Vollständigkeit der Beziehungen und Geeignetheit der Prüfungen ausdrücklich reviewen. |
-| Autorenaufwand | Mehr ausdrückliche Formalisierung und Pflege ihrer Verträge. | Weniger formale Syntax; höhere Abhängigkeit von präziser Prosa und zuverlässigem Review. |
-
-Für Alternative B müssen methodische Prüfaufträge die Vollständigkeit der relevanten Referenzen selbst untersuchen. Eine nur in Prosa erwähnte Abhängigkeit ist keine deklarierte Impact-Kante. Modellreview beurteilt Beschreibung, Entscheidungen und Beziehungen; unabhängiger Realisierungsreview beurteilt Umsetzung und konkrete Nachweise. Diese Arbeitsteilung ist ein vorgeschlagener methodischer Vertrag, kein Beweis ihrer zuverlässigen Einhaltung.
-
-Zusätzliche formale Semantik soll in dieser Alternative durch konkrete wiederkehrende Fehler begründet werden. Der vollständige Fachzustand und sämtliche Laufzeitbedingungen müssen dafür nicht schon im ersten Schritt vom Compiler ausgewertet werden. Unsicherheit in Zuordnung oder Änderungsfolgen bleibt sichtbar und konservativ behandelt.
-
-**Folge für den Umsetzungsplan:** In U0 zuerst Alternative A oder B anhand Bibliothek und CLI-Kontrast wählen. Bei B besteht U1 aus Beispiel und methodischem Vertrag; ein neuer Facettenschema-Vertrag ist dafür nicht vorausgesetzt. U2 bis U5 überprüfen die vorhandene Struktur und die nötigen Kontext-/Impact-/Coverage-Anschlüsse; Erweiterungen erfolgen nur bei nachgewiesener Lücke. Bei A gilt der Facetten-/Kind- und Versionierungsentwurf aus Abschnitt 8. Die Beispiele wurden hier nur dokumentiert, nicht kompiliert oder getestet.
+Das [bisherige v1alpha1-Beispiel](library-methodical-alternative.md) bleibt als datierte Vorstufe erhalten. Das [aktuelle vNext-Beispiel](library-model-example.md) zeigt erstmals alle Regeln und Referenzen konsistent in der neuen Entwurfsrichtung. `vNext` und seine Referenzform sind Platzhalter, keine unterstützte Version.
 
 ### 6.6 Gewählter Dateiname und bevorzugte Kind-Richtung
 
-Nutzerentscheidung vom 12. Oktober 2026: „Wir nehmen mandate.“ Für die beschriebenen Verantwortungsdateien wird deshalb `mandate.yaml` statt `manager.yaml` verwendet. Der Dateiname bezeichnet Auftrag, Verantwortung, Befugnisse und Grenzen eines Bereichs. Dies entscheidet noch nicht die Umbenennung des vorhandenen Modell-Kinds `Manager` oder die Runtime-Bezeichnung des ausführenden Agenten.
+Nutzerentscheidung: „Wir nehmen mandate.“ Die Verantwortungsdatei heißt `mandate.yaml`. Der bisherige Modell-Kind `Manager` bleibt im Beispiel erhalten; weder dessen Umbenennung noch die Benennung eines Runtime-Agenten ist dadurch entschieden.
 
-Weiterer Nutzerimpuls: „Was category angeht fände ich kind rule interessanter“. Als bevorzugte Richtung wird deshalb ein eigenständiger nominaler `Rule`-Kind statt `Statement` mit `category: rule` festgehalten. Die genauen Feld-, Referenz-, Versionierungs- und Migrationsverträge bleiben offen. Eigene Kinds für andere Rollen wie Concept oder UseCase sind dadurch noch nicht gewählt.
+Nutzerpräferenz: „Was category angeht fände ich kind rule interessanter“, anschließend Zustimmung zum Beispiel und Auftrag zur kompletten Konzeptaktualisierung. `kind: Rule` ist deshalb die bestätigte Entwurfsrichtung. Feld- und Referenzdetails bleiben zu konkretisieren. Der semantische Begriff Mandat beschreibt Auftrag, Zuständigkeit, Befugnisse und Grenzen, ohne selbst eine authentifizierte Autorisierung zu beweisen.
 
-Der fachliche Inhalt einer `Rule` kann weiterhin Prosa bleiben. Nominale Unterscheidung und formale Auswertung sind getrennte Entscheidungen: Ein Schema könnte Referenzen gezielt auf Regeln begrenzen, ohne die fachliche Regel selbst auszuführen. Vor der Umsetzung sind besonders die Kind-übergreifenden Beziehungen und ihre Wirkung auf Kontext, Digest, Impact und Realisierung zu definieren; die bisherigen Referenzproperties zielen auf genau einen Kind.
+## 7. Bibliotheksbeispiel und methodischer Ablauf
 
-Die vorhandenen Bibliotheks-YAML-Blöcke bleiben als bisherige Statement-Form erkennbar. Ein separater Ausschnitt zeigt die bevorzugte neue Rule-Syntax mit `vNext` als Platzhalter. Es wird keine neue Semantik unter dem bestehenden `v1alpha1`-Vertrag behauptet. Die neue Kind-Richtung kann sowohl mit der methodischen Alternative B als auch mit weitergehender Formalisierung kombiniert werden.
+Die elf Ausgangsaussagen sind Systemzweck, Titel, Exemplar, Mitglied, Ausleihe, aktive Ausleihe, berechtigtes Mitglied, verfügbares Exemplar, höchstens eine aktive Ausleihe, Ausleihen und Rückgabe. Die drei Bedingungen/Invarianten werden Rules; die übrigen Inhalte bleiben Statements.
 
-## 7. Beispiel: Ausleihen vollständig genug beschreiben
+Ein Root-Manager ist für den kleinen Ausschnitt ausreichend. Code, Prüfungen und Bedienungsdokumentation sind getrennte Realisierungsbeiträge. Der beschriebene Check ist ein klar markierter, nicht ausgeführter Platzhalter.
 
-| Aussage | Strukturierter Beitrag |
-| --- | --- |
-| Ein Exemplar ist ein identifizierbares physisches Buch eines Titels. | Fachbegriff, Instanzidentität, Titelbeziehung. |
-| Eine Ausleihe verbindet Mitglied, Exemplar, Beginn, Frist und optionalen Rückgabezeitpunkt. | Fachstruktur und Datentypen. |
-| Aktiv bedeutet: Rückgabezeitpunkt fehlt. | Benannter Zustandsbegriff mit definierter Bedingung. |
-| Ein Exemplar hat höchstens eine aktive Ausleihe. | Invariante über Fachinstanzen. |
-| Nur ein berechtigtes Mitglied darf ein verfügbares Exemplar ausleihen. | Akteur, Vorbedingungen, Berechtigungsvertrag. |
-| Erfolg erzeugt eine gespeicherte aktive Ausleihe; Ablehnung erzeugt keine zusätzliche. | Erfolgs-/Fehlervertrag und Zustandswirkung. |
-| Zwei gleichzeitige zulässige Anfragen ergeben einen Erfolg und eine Ablehnung. | Konkurrenzbedingung und Prüfverpflichtung. |
-| Die Vergabetechnik darf der zuständige Bereich wählen. | Umsetzungsspielraum unter den Invarianten. |
-| Code, Prüfung und Bedienungsdokumentation sind erforderlich. | Unterschiedliche Realisierungsbeiträge mit Zuständigkeit und Zuordnung. |
+Die Wiederholungsrückgabe ohne Änderung des ursprünglichen Rückgabezeitpunkts und Berechtigung über aktiven Mitgliedsstatus sind vorgeschlagene Fachentscheidungen. Fristberechnung und Behandlung unbekannter Kennungen bleiben offen. Das Beispiel ist kein Vollständigkeitsnachweis und keine fertige Anwendung.
 
-Die Beschreibung muss außerdem erklären, ob Ausleihdauer, Identitätsvergabe, Autorisierung, Wiederholung, Persistenzfehler und Wiederherstellung festgelegt oder außerhalb des gewählten Umfangs sind. Die bisherige C#-Factory beantwortet nicht alle diese Fragen. Sie ist kein Vollständigkeitsnachweis.
+### 7.1 Modellreview
 
-Das [Dateisystem-/Syntaxbeispiel](library-filesystem-example.md) hält die im Gespräch gezeigte Ablage und YAML-Ausschnitte fest. Es dient zur gemeinsamen Festlegung der konkreten Modellsyntax; `vNext` und Facettenfelder sind Platzhalter.
+Vor Realisierung geht der Review jede betroffene Aussage systematisch durch: Zweck und Akteure, Begriffe, Voraussetzungen, Erfolg, Ablehnung, Zustandswirkungen, Wiederholung/Konkurrenz, Entscheidungsspielräume und benötigte Realisierungs-/Prüf-/Dokumentationsbeiträge. Er vergleicht Prosa mit expliziten Beziehungen und meldet fehlende oder fragliche Kanten.
 
-Ein zweites Beispiel, etwa ein kleines zustandsloses CLI-Werkzeug, soll prüfen, ob die Sprache unnötig bibliotheksspezifische oder organisationsspezifische Voraussetzungen enthält. Diese Prüfung ist hier nur geplant.
+Offene fachliche Entscheidungen gehen an den zuständigen menschlichen oder ausdrücklich autorisierten Entscheider. Eine zusätzliche Abhängigkeit wird in das Modell aufgenommen, bevor ein neuer gebundener Impact als Umsetzungsgrundlage dient.
 
-## 8. Geplanter Weg zur belastbaren Spezifikation
+### 7.2 Realisierungsreview
 
-Die Schritte sind ein Vorschlag zur weiteren Ausarbeitung. Es werden dadurch keine Backlogeinträge aktiviert, Implementierungsaufträge verteilt oder Studien gestartet.
+Ein unabhängiger Review untersucht die betroffenen Kandidatendateien gegen die geltenden Aussagen. Er prüft insbesondere, ob alle Einstiegspunkte Regeln erhalten, Fehler keine unerlaubten Teilwirkungen erzeugen, Konkurrenz/Wiederholung geeignet behandelt und behauptete Prüffälle tatsächlich untersucht werden. Er nennt Befunde, nicht untersuchte Aussagen und Grenzen.
 
-| Schritt | Ergebnis | Abschlusskriterium |
-| --- | --- | --- |
-| 1. Beschreibungsauftrag fixieren | System-/Repositoryumfang und Fragenkatalog. | Nutzen, Grenzen und zugelassene Freiräume sind nachvollziehbar. |
-| 2. Bibliothek als gewöhnliche Spezifikation schreiben | Zusammenhängende Beschreibung ohne voreiliges Schema. | Wesentliche Entscheidungen sind festgelegt, delegiert oder ausdrücklich offen. |
-| 3. Facetten und Beziehungen spezifizieren | Versionierte Feld-, Rollen-, Geltungs- und Beziehungstabellen. | Jede Ergänzung beantwortet einen konkreten Beschreibungsbedarf. |
-| 4. Realisierung und Nachweise zuordnen | Artefakterwartungen, Coverage, Prüfpflichten und Eigentümer. | Anforderungen lassen sich bis zu benötigten Beiträgen verfolgen, ohne jede Datei vorzugeben. |
-| 5. Kontrastbeispiel und Gegenbeispiele verwenden | Ausdruckslücken und unnötige Voraussetzungen. | Die Sprache beschreibt unterschiedliche Systeme mit derselben Grundlage. |
-| 6. Mit dem festen Main-Vertrag zusammenführen | Kleine, koordinierbare Änderungsvorschläge für Vokabular, Sichten, Impact und Host. | Vorhandene Fähigkeiten werden genutzt; dokumentierte und tatsächliche Lücken sind unterschieden. |
-| 7. Nach gesondertem Auftrag evaluieren | Fest gebundene Referenzfälle oder Repo-Extraktion mit begrenzten Turns. | Sprache, Extraktionsfähigkeit, Prüfumfang und Nutzerwert werden getrennt bewertet. |
+Ein Pflichttext im Mandat beweist die Einhaltung des Reviews nicht. Ausführungsprotokoll und Prüfergebnis müssen nachvollziehbar sein. Automatische Befunde, menschliche Zustimmung und nachgewiesene Inhaltskonformität bleiben getrennt.
 
-Die neue Vokabularsemantik braucht vor einer späteren Implementierung einen koordinierten Modellvertrag. Die bestehende Main-Entscheidung zu einem aktiven Owner der Modellzone bleibt maßgeblich; dieser Proposal ist kein paralleler Schemaumbau.
+### 7.3 Änderungsfolgen und ihre Grenzen
 
-Für jede ergänzte Modellrelation muss ihre Wirkung auf Digest, Kontext, Impact, Coverage und Prüfevidenz festgelegt werden. Nicht in Lesesichten übernommene semantische Daten dürfen bei Änderungen nicht verschwinden. Unbekannter Impact bleibt konservativ; eine engere Auswahl wird begründet, nicht angenommen.
+Modelländerung → feste Basis/Kandidat → Strukturprüfung → Modellreview → aktualisiertes Modell/Impact → begrenzte Realisierung → unabhängiger Review/Checks → Integration/Verify → Guarded Apply.
+
+Der Impact muss hinzugefügte, geänderte und entfernte Definitionen/Beziehungen berücksichtigen. Der konservative Ausgangspunkt untersucht Erreichbarkeit in beiden Richtungen auf der Vereinigung der deklarierten Kanten aus alter und neuer Sicht. Das umfasst mindestens die in jedem Einzelstand betroffenen Erreichbarkeiten und kann zusätzliche Pfade über kombinierte alte/neue Kanten enthalten. Veränderte Owners, Pfade und Check-Bindungen bleiben sichtbar. Unbekannter Umfang führt zu Erweiterung oder ausdrücklichem Unknown, nicht zu unbegründetem Weglassen.
+
+Der bisher geprüfte Routingstand bildet eine konservative Hülle über `uses`/`requires` in beide Richtungen. Im eng verbundenen Bibliotheksmodell kann diese nahezu alle fachlichen Aussagen erreichen. Change/Context dient der Erklärung und Priorisierung; es verkürzt die relevante Menge nicht automatisch. Ein anderer engerer Algorithmus wäre eine eigene begründete Produktentscheidung.
+
+Breite Artefaktpfade wie `src/Library/` liefern einen Untersuchungsbereich. Sie wählen keine einzelnen Funktionen aus und garantieren keinen kleinen Blast Radius. Welche Dateien verändert werden müssen, ist innerhalb dieses Bereichs zu untersuchen.
+
+Der [Überfälligkeitsdurchlauf](library-change-walkthrough.md) zeigt, wie eine Prosaänderung zunächst eine fehlende Beziehung verbergen kann, wie Review sie ergänzt und welche Prüfungen danach erforderlich werden.
+
+## 8. Umsetzungsplan für den Implementer
 
 ### 8.1 Begründung der Designentscheidungen
 
-Diese Begründungen machen den Proposal für einen Implementer nachvollziehbar. Sie sind Designargumente und überprüfbare Erwartungen, kein gemessener Nachweis der erhofften Produktwirkung.
+| Entscheidung | Begründung und Abwägung |
+| --- | --- |
+| Kleine Struktur, fachliche Prosa | Explizite Zuordnung und Methodik zuerst nutzen; zusätzlichen Pflegeaufwand für Formalisierung an konkretem Nutzen prüfen. |
+| Nominaler Rule-Kind | Regeln als referenzierbaren Zieltyp unterscheiden; dies benötigt noch keinen allgemeinen Regelauswerter. |
+| Statement vorerst beibehalten | Weitere Rollen nicht ohne konkreten Bedarf zu neuen Kinds machen; ihre Kategorien bleiben zunächst lesbare Einordnung. |
+| Mandat von Agentenbindung unterscheiden | Ein stabiler Auftrag kann von unterschiedlichen Agenten umgesetzt werden; Datei, Modell-Kind und Runtime-Identität sind eigene Benennungsentscheidungen. |
+| Explizite Beziehungen und konservativer Impact | Koordination nachvollziehbar aus deklarierten Daten ableiten; Prosalinks allein liefern keine geprüften Kanten. |
+| Erneuerbarer Dateibestand | Pfadregeln pflegen und konkrete Dateien erfassen; eine zweite manuelle Zuordnungsliste vermeiden. |
+| Unabhängige Reviews und begrenzte Checks | Fachbedeutung und tatsächliche Realisierung prüfen; Struktur und Prüferfolg nicht als universelle Korrektheit ausgeben. |
 
-| Entscheidung | Warum sie zur Leitfrage passt | Alternative und bewusste Abwägung |
-| --- | --- | --- |
-| Kleiner struktureller Core, Softwarebedeutung im Projektvokabular | Dieselbe Typ-, Identitäts- und Referenzprüfung kann unterschiedliche Systeme tragen. Fachbegriffe sollen beschreibbar sein, ohne Bibliotheks- oder Architekturlogik in den generischen Compiler einzubauen. | Universeller Katalog vieler Core-Kinds würde Semantik und Compiler koppeln. Erst ein belegter struktureller Ausdrucksbedarf rechtfertigt eine Core-Erweiterung. |
-| Typisierte Facetten als erster Kandidat | Ein heutiges Statement kann verständliche Prosa und präzisere Daten zusammenhalten. Zusammengehörige Festlegungen haben damit eine kanonische Quelle und bleiben unabhängig referenzierbar. | Eigene nominale Kinds bieten stärkere Zieltypprüfung, erhöhen aber Vokabular- und Referenzaufwand. Facetten benötigen ihrerseits strikte Rollenvalidierung; beliebige Zusatzdaten würden den Nutzen verlieren. |
-| Inhaltliche Rollen vor endgültigen YAML-Typen | Die Sprache soll den Beschreibungsbedarf eines Systems erfüllen. Bibliothek und Kontrastbeispiel zeigen, welche Rollen eigenständig sein müssen und welche Details kohäsiv zusammengehören. | Direkt den C#-Klassenkatalog als YAML abzubilden würde illustrative Objektstrukturen ungeprüft zum Produktvertrag machen. |
-| Komposition, Abhängigkeiten und Verantwortung unterscheiden | Ein Baum ordnet Zugehörigkeit; Querbeziehungen beschreiben Zusammenarbeit und Auswirkungen. Ein Graphpfad allein sagt nicht, wer entscheiden oder schreiben darf. | Jede Beziehung als allgemeine Dependency zu behandeln verwischt Kontext, Pflicht und Befugnis. Die heutige Namespace-/Managerkonvention bleibt ein ausdrücklich gewählter Ausgangspunkt. |
-| Realisierungsverpflichtungen plus deklarierte Pfadbereiche | Das Modell kann beschreiben, welcher Beitrag notwendig ist, während der konkrete Dateibestand abgeleitet wird. Main kann Pfadpräfixe und Mehrfachzuordnung bereits verarbeiten. | Jede Datei manuell als eigene Fachdefinition zu pflegen erhöht Synchronisationsaufwand. Vollautomatische Sourcezuordnung wäre ein zusätzlicher, noch unbelegter Mechanismus. |
-| Neue Semantik durch alle Sichten führen | Ein typisiertes Feld hilft der Agentenkoordination nur, wenn Kontext, Änderungsfolgen und Prüfpflichten es ebenfalls berücksichtigen. Main besitzt dafür bereits Analyse-, Graph- und Explain-Strukturen. | Ein reines Schema-Upgrade könnte Daten kompilieren, die der Umsetzer nicht sieht oder deren Änderung keine geeignete Prüfung auslöst. |
-| Modellstruktur und realisierte Fachregel getrennt beurteilen | Die Definition einer Invariante kann syntaktisch konsistent sein, während der Anwendungscode sie verletzt. Auch ein vollständiger Dateiindex beweist keinen Verhaltensvertrag. | Eine pauschale „Verify passt, also vollständig“-Zusage würde den tatsächlichen Prüfumfang überschreiten. Jeder Nachweis muss seine Aussage und Grenze nennen. |
-
-Die wichtigste Annahme ist, dass zusätzliche Struktur relevante Entscheidungen sichtbar macht und ihren Erhalt gezielter prüfen lässt. Offen bleibt, ob dieser Nutzen den zusätzlichen Autoren- und Prüfaufwand übersteigt. Dieser Plan misst das nicht; spätere Evaluation muss beide Seiten erfassen.
+Die erhoffte geringere Aufsicht, zuverlässigere Agentenkoordination und niedrigere Kosten sind weiterhin Hypothesen. Dieser Dokumentationsauftrag misst sie nicht.
 
 ### 8.2 Umsetzungsvorbereitung für den Implementer
 
-Vom Nutzer gewünscht: gemeinsame Umsetzung mit dem Implementer im nächsten Arbeitsschritt. Diese Übergabe bereitet sie vor; offene Formatentscheidungen werden dadurch nicht stillschweigend angenommen.
+Lesereihenfolge: dieser Proposal → [aktuelles YAML-Beispiel](library-model-example.md) → [Änderungsdurchlauf](library-change-walkthrough.md) → [historischer Main-Abgleich](canonical-model-main-comparison.md) als Ausgangspunkt für einen neuen Vergleich.
 
-**Lesereihenfolge:** [Leitfrage und Arbeitsstand](system-description-notes.md), dieser Proposal, [fester Main-Abgleich](canonical-model-main-comparison.md). Der ältere C#-Entwurf dient als Beispiel und Gegenprobe, nicht als verbindliche Klassenliste.
+Der Dokumentationsbranch stammt aus einer älteren Main-Basis. Den Implementierungsbranch vom beim Start frisch abgerufenen `origin/main` anlegen; Pfad, Branch, vollständigen SHA und lokale Änderungen erfassen. Aktuelle Beitragshinweise und Modellzonen-Owner prüfen. Die hier dokumentierten Entwürfe gezielt übernehmen, nicht den alten ausgecheckten Produktcode als aktuellen Main verwenden.
 
-Der Dokumentationsbranch `docs/product-model-concepts` stammt aus einer älteren Main-Basis. Der Implementer soll einen Implementierungsbranch vom dann frisch abgerufenen `origin/main` anlegen und die vereinbarten Dokumentationsänderungen gezielt übernehmen. Vorher festen SHA, Pfad, Branch und lokale Änderungen erfassen sowie die aktuellen Beitragshinweise und den Modellzonen-Owner prüfen. Den alten Dokumentationsbranch nicht allein als aktuelle Produktbasis verwenden. Die folgenden Quellbereiche stammen aus dem Abgleich an `32afd1a57e715130d056e98e433721c6e7a10278`; ihre Zuständigkeit beim Start erneut bestätigen.
-
-| Reihenfolge / Paket | Konkretes Ergebnis | Voraussichtlich betroffene Bereiche | Abnahmebedingung |
+| Paket | Ergebnis | Voraussichtlicher Bereich | Abnahmekriterium |
 | --- | --- | --- | --- |
-| U0 — Ausgangspunkt und Beschreibungsbedarf | Main-Delta prüfen; Umfang, Bibliotheksausschnitt und CLI-Kontrast in gewöhnlicher Spezifikation beschreiben; benötigte Felder/Rollen einschließlich Kontext-/Impactwirkung bestimmen. | Proposal, zuständige Produkt-/Modellverträge; Koordination mit Modell-Owner. | Feldbedarf ist aus den Fällen begründet; Formatoptionen sind eingegrenzt, Freiräume und Prüfgrenzen ausdrücklich festgelegt. Keine zweite kanonische Quelle. |
-| U1 — Kleinster zusammenhängender Beschreibungsfall | Bibliotheksausschnitt mit Systemgrenze, Exemplar/Ausleihe, Ausleihvertrag, Eindeutigkeitsregel sowie Code-/Prüf-/Dokumentationspflichten als gültige Modellquellen. | Neues Beispiel und versionierter Schema-Vertrag in `src/internal/modules/projectmodel/projectmodel.go` oder dessen abgestimmtem Nachfolger. | Der Fall beschreibt eine wesentliche Fähigkeit samt Daten, Regel und Realisierung; ein gültiges bisheriges Minimalprojekt bleibt unter seiner bisherigen Version gültig. |
-| U2 — Strukturelle und semantische Validierung | Geschlossene Felder, Wert-/Kardinalitätsregeln, erlaubte Zielrollen und Kompositionsregeln mit deterministischen Diagnosen. | Projectmodel-Schema und Analyse/Validator; Core nur bei konkret belegter Ausdruckslücke. | Ungültige Rolle, fehlende Pflichtangabe, unzulässige Referenz und Kompositionszyklus werden am passenden Quellgegenstand gemeldet. Fachinstanzregel wird nicht als Compilerbeweis ausgegeben. |
-| U3 — Lesesichten und Sichtbarkeit | Strukturierte Inhalte im Report und benötigten Managerkontext; passende Graphbeziehungen und lesbare Ausgabe. | `types.go`, `analyze.go`, `Context` in `impact.go`, `graph.go`; bestehende Host-/Ausgabeanschlüsse nach Bedarf. | Jede bindende neue Angabe ist im zuständigen Umsetzungs-/Prüfkontext verfügbar; private Inhalte gelangen nicht in fremde Ansichten. Graph bleibt abgeleitet. |
-| U4 — Änderungsfolgen | Jedes neue Feld und jede Relation explizit für Digest, Delta, Kontext, Impact und Erklärung behandeln; alte und neue Endpunkte berücksichtigen. | `impact.go`, `explain.go`, Snapshot-/Hostbindungen soweit deren Vertrag betroffen ist. | Semantische Änderungen erreichen betroffene Realisierungen und Checks; Entfernung einer Relation verliert deren alte Wirkung nicht. Schreibänderung und unbekannter Umfang behalten die dokumentierte Behandlung. |
-| U5 — Realisierung und Verify-Anschluss | Vorhandene Artifact-/Check-/Coverage-Strukturen mit vereinbarten Beitragstypen verbinden; Prefix-Zuordnung und eindeutige Schreibzuständigkeit nutzen. | Projectmodel, `src/internal/host/projectcoverage`, `projectwork` und bei tatsächlich geänderter Bindung `projectrun`. | Mehrere Aussagen können dieselbe Datei betreffen; jede konkrete Ausgabe hat einen Owner. Unklassifizierte Dateien bleiben Befunde. Bericht trennt Struktur, Coverage, ausgeführte Checks und unbelegte Aussagen. |
-| U6 — Kontrast, Dokumentation und Integration | Kleines CLI-Gegenbeispiel, gezielte Negativfälle, aktuelle Nutzer-/Formatdokumentation und normale Integrationsprüfung. | Beispiele, zuständige Dokumente, erforderliche Tests und Beitragseinträge. | Sprache trägt beide Beispiele; Aufwand und fehlende Semantik sind sichtbar. Projektgates laufen am festen Implementierungskandidaten; Dokumentation behauptet nur belegte Fähigkeiten. |
+| P0 — Ausgangspunkt und Verträge | Main-Delta, Versionierung, Rule-Schema und zulässige Referenzziele gemeinsam fixieren. | Produkt-/Modellvertrag; Core-Ausdrucksbedarf prüfen. | Keine stille alpha-Umdeutung; gemischte Zielmengen sind explizit gelöst. |
+| P1 — Vollständiger kleiner Durchstich | Bibliotheksmodell mit Mandat, Statements, Rules, Artefakten und Check-Anschluss laden/validieren. | Schema, Loader und Beispiel; Core nur bei belegter Lücke. | Gültige Definitionen auflösbar; falscher Zielkind, unbekanntes Feld und falscher Namespace mit deterministischer Diagnose. |
+| P2 — Sichten und Bedeutungserhalt | Rules und alle neuen Kanten in Report, Kontext, Graph und Digest führen. | Projectmodel-Analyse/Typen und vorhandene Ausgabeanschlüsse. | Zuständige Rollen sehen benötigte Regeln; private Inhalte werden nicht über eine zweite Sichtbarkeitslogik geladen. |
+| P3 — Änderungsfolgen | Rule-/Statement-Änderung, entfernte Kanten und gemischte Beziehungen in Impact/Explain behandeln. | Projectmodel-Impact/Explain und feste Host-Bindungen. | Alt/Neu-Wirkung erhalten; unbekannter Umfang bleibt konservativ; kombinierte Änderungen verlieren keine Pflicht. |
+| P4 — Realisierung und Review | Rule-Zuordnung, Coverage, Check-Bindungen und dokumentierten Reviewablauf durch vorhandene Ausführung führen. | Artefakte, Projectcoverage/Projectwork und bei Vertragsänderung Projectrun. | Keine neue Regel verschwindet aus Realisierung/Prüfung; Reviewergebnisse nennen Befunde und Grenzen. |
+| P5 — Kontrast und Integration | Kleines CLI-Gegenbeispiel, aktuelle Nutzer-/Formatdokumentation und normale Kandidatengates. | Beispiele, Tests und zuständige Dokumente. | Kein Bibliotheks-, Datenbank- oder Mehrmanager-Zwang; Checks gelten für festen Kandidaten. |
 
-Die gemeinsame Entscheidung über Facetten versus nominale Kinds und Versionierung folgt aus den Beschreibungsfällen von U0 und fällt vor dem Schema-Vertrag in U1. U1 bis U5 bilden gemeinsam den ersten funktionsfähigen Durchstich. Ein nur erlaubtes Schemafeld ist kein fertiges Feature. U2 und U3 folgen dem festgelegten Feldvertrag; U4 benötigt deren gemeinsame Darstellung. U5 nutzt die bestehende Ausführungslinie und erweitert sie nur für konkret veränderte Verpflichtungen. Der Modellvertrag hat einen koordinierten Owner; andere Arbeiten können danach klar getrennte Dateien oder Beispiele übernehmen. Die Paketnamen hier sind Vorschläge und keine vergebenen Backlog-IDs.
+P1 bis P4 bilden gemeinsam einen vollständigen Durchstich. Ein nur zugelassener Rule-Kind ist kein fertiges Feature. Die Pakete sind Vorschläge, keine vergebenen Backlog-IDs und keine gestarteten Implementierungsaufträge.
+
+Der breitere Facetten-/Ausdrucksentwurf folgt nur bei konkret begründetem Bedarf. Government, Cockpit, Providerstudien, universelle Sourceanalyse und Releasepublikation sind nicht Teil dieses ersten Durchstichs.
 
 ### 8.3 Prüfplan für die spätere Implementierung
 
-Heute werden diese Prüfungen nur geplant. Bei der Umsetzung gelten die dann aktuellen Checks aus `CONTRIBUTING.md` zusätzlich zu den folgenden konkreten Risiken:
+Heute sind diese Prüfungen ausschließlich geplant. Bei Umsetzung gelten zusätzlich die dann aktuellen Projektgates.
 
-| Risiko | Gezielter Nachweis am Implementierungskandidaten |
+| Risiko | Gezielter Nachweis |
 | --- | --- |
-| Fachrolle ist strukturell gültig, aber semantisch falsch | Ein Vorbedingungsverweis auf einen unpassenden Gegenstand und ein ungültiger Fachbeziehungsendpunkt werden abgewiesen. |
-| Neue Bedeutung fehlt im Agentenkontext | Ein Manager bekommt den benötigten Verhaltensvertrag samt Regel; ein fremder privater Inhalt bleibt verborgen. |
-| Änderung wird im Impact übersehen | Regeländerung, geänderte Eigenschaft und entfernte Beziehung erreichen erwartete Owner, Artefakte und Checks in alter/neuer Betrachtung. Kombinierte Änderungen verkleinern den erforderlichen Umfang nicht. |
-| Erklärung und Impact widersprechen sich | Explain bindet den passenden Digest und erklärt die betroffenen Listen, ohne sie durch Change-/Context-Priorisierung zu verkürzen. |
-| Realisierungsindex wird zweite manuelle Wahrheit | Verzeichnispräfix und tatsächlicher Dateizugang erzeugen aktuelle Coverage; Mehrfachzuordnung bleibt möglich, widersprüchliche Schreibowner bleiben Befunde. |
-| Sprache wird unnötig schwer oder bibliotheksspezifisch | Das CLI-Gegenbeispiel kommt ohne Ausleihe, Datenbank, Zustandsautomat oder zusätzliche Managementebenen aus. |
-| Versionierung verändert alte Bedeutung still | Bisherige Modelle behalten ihren Versionsvertrag; neue Syntax/Regeln besitzen eine ausdrückliche Versionierungs- beziehungsweise Migrationsentscheidung. |
+| Nominaler Kind ist nur ein Label | Verweis auf Statement an einem Rule-only-Ziel wird abgewiesen; gültiger Rule-Verweis wird aufgelöst. |
+| Gemischte Referenz verliert Bedeutung | Statement/Rule in Kontext, Realisierung, Check und Entscheidung bleiben eindeutig, digest-relevant und im richtigen Scope. |
+| Neue Regel fehlt im Impact | Geänderte Rule und hinzugefügte/entfernte Kante erreichen erwartete Pflichten, Owners, Artefakte und Checks unter Alt/Neu-Betrachtung. |
+| Scope wird still verkleinert | Kombinierte Änderungen erhalten Pflichten; Unknown und Context werden nicht unbegründet aus Prüfung gestrichen. |
+| Pfadregeln sind irreführend | Neue Datei im Präfix wird klassifiziert; unzugeordnete Datei und widersprüchliche Owner bleiben Befunde. |
+| Prüfauswahl wird als Beweis ausgegeben | Auswahl eines Checks, seine tatsächliche Ausführung und Eignung für den neuen Fall bleiben unterscheidbar. |
+| Neue Version bricht alte Bedeutung | Explizite Versions-/Migrationsentscheidung; unveränderte alte Vertragsbedeutung, keine stillen nominalen Umdeutungen. |
 
-Zur Übergabe gehören feste Code-/Modell-SHAs, lokaler Zustand, tatsächlich ausgeführte Prüfungen samt Ergebnis, nicht ausgeführte Prüfungen und verbliebene offene Entscheidungen. Repo-Extraktionsstudien, allgemeine Ausdrucksevaluator-, Government- oder Cockpit-Arbeit gehören nicht zum ersten Durchstich. Die endgültige Implementierungsfreigabe bezieht sich auf den gemeinsam gewählten Umfang.
+Zur Übergabe gehören feste SHAs, lokale Änderungen, tatsächlich ausgeführte Ergebnisse, nicht ausgeführte Prüfungen und offene Entscheidungen. Eine spätere Repo-Extraktion mit begrenzten Turns wäre separat zu beauftragen und müsste Sprache, Extraktionsfähigkeit, Prüfumfang und Nutzerwert getrennt beurteilen.
 
 ## 9. Zusagen und offene Entscheidungen
 
-Der vorgeschlagene Vertrag soll ausdrücken können, was gilt, wozu etwas gehört, was eine Umsetzung realisieren muss, was frei bleibt und welche Evidenz verlangt wird. Strukturprüfung, vollständige Pfadzuordnung, fachliche Konformität und ausreichende Systembeschreibung bleiben unterschiedliche Urteile.
+Die strukturelle Zusage lautet: erkläre Definitionen und Beziehungen im gewählten Umfang eindeutig und leite nachvollziehbar Zuständigkeit, Kontext, Dateizuordnung und Prüfauswahl daraus ab. Sie garantiert weder vollständige Fachbeschreibung noch beliebige Anwendungskorrektheit oder fehlerfreie Agenten.
 
-Offen sind besonders:
-
-- Welche Facetten brauchen eigenständige Kinds, welche bleiben strukturierte Aussageinhalte?
-- Welcher Formalisierungsgrad hilft, ohne die Beschreibung unnötig schwer zu pflegen?
-- Wie werden bewusst delegierte Entscheidungen von unvollständiger Beschreibung unterschieden?
-- Wie weit darf eine Zuordnung automatisch ermittelt werden, und welche Unsicherheiten blockieren?
-- Wie werden mehrere fachliche Beiträge zu einer Datei mit eindeutiger Schreibzuständigkeit verbunden?
-- Wie werden Vokabularversionen und Identitätsänderungen ohne zweite kanonische Wahrheit weiterentwickelt?
+Offen bleiben besonders:
+- Exakte API-Version und Migrationsweg.
+- Referenzunion versus getrennte Properties sowie zulässige Zielmengen.
+- Beibehaltung oder spätere Ablösung der Kategorien für Nicht-Regel-Statements.
+- Regelbedingungen versus Invarianten: zunächst Prosa oder eigener nominaler/Feldvertrag?
+- Verbindliche Protokollierung der Reviewpflicht ohne Verwechslung mit Autorisierung.
+- Angemessene Zuordnungsgranularität und Breite des Impact.
+- Kriterien, die spätere Fachformalismen oder Strictness-Profile rechtfertigen.
+- Konkrete noch offene Fachentscheidungen des Bibliotheksbeispiels.
 
 ## 10. Herkunft und Status
 
-- Quelle: Produktgespräch `01a121f1-b948-7050-ae5d-9921b99db9c0`, Planungs- und Vergleichsauftrag sowie anschließender Wunsch nach Begründung und Umsetzungsplan für die gemeinsame Arbeit mit dem Implementer vom 11. Oktober 2026.
-- Dokumentationsworktree: `C:\Users\Consiliari\.codex\worktrees\product-model-concepts\Markitect`.
+- Produktgespräch: `01a121f1-b948-7050-ae5d-9921b99db9c0`; Konsolidierung ausdrücklich am 12. Oktober 2026 beauftragt.
+- Worktree: `C:\Users\Consiliari\.codex\worktrees\product-model-concepts\Markitect`.
 - Branch: `docs/product-model-concepts`.
-- Eingang der Gesprächsnotizen: `357a726347676ca8589a173b88aa8cb34d241c3d`; Worktree beim Beginn sauber.
+- Eingang dieser Aktualisierung: `07e03215c968302361f5acedc8e69bd573ac95be`; beim Beginn sauber.
 - Ursprüngliche Branchbasis: `ecc69b0ad99236a5ddd02b85bf9ba656a0000f15`.
-- Aktueller Main-Abgleich: separat an `32afd1a57e715130d056e98e433721c6e7a10278`; über Git-Objekte gelesen, nicht mit dem älteren Working Tree gleichgesetzt.
-- Lokale Arbeit: dieser Proposal, Vergleichsdokument und Navigations-/Statushinweise im Entwurfsordner. Keine Produktimplementierung, Tests, Studien oder Agentenausführung am Beispiel.
+- Letzter gesonderter Main-Abgleich: `32afd1a57e715130d056e98e433721c6e7a10278` vom 11. Oktober; heute nicht als aktuell neu verifiziert.
+- Lokale Änderungen dieses Auftrags: ausschließlich Konzept-, Beispiel-, Ablauf- und Navigationsdokumentation. Keine Produktimplementierung, Modellkompilierung, Tests, Studien oder Agentenausführung am Bibliotheksprojekt.
 
-Die lokale Commit-SHA des fertigen Dokumentationsstands wird bei der Übergabe berichtet. Der Proposal ersetzt keine akzeptierte Main-Entscheidung und keine kanonische Produktdokumentation.
+Die frühere Facettenempfehlung wird durch diesen zusammenhängenden Arbeitsentwurf abgelöst. Datierte Vorarbeiten bleiben mit Statushinweis erhalten. Kanonische Produktdokumente, Konzeptregister und Backlog werden durch diesen Entwurf nicht automatisch geändert.

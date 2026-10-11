@@ -1,5 +1,7 @@
 # Alternative B: Bibliothek mit strukturierten Beziehungen und fachlicher Prosa
 
+Fortschreibung vom 12. Oktober 2026: **datierte v1alpha1-Vorstufe**. Die aktuelle zusammenhängende Empfehlung steht im [konsolidierten Proposal](canonical-model-proposal.md), das vollständige nominale Rule-/Referenzbeispiel in [Bibliothek: aktueller Modellentwurf](library-model-example.md). Die folgenden alten Statement-/Category-Blöcke bleiben als Vorarbeit erhalten; sie sind nicht die aktuelle Syntaxempfehlung.
+
 Datum: 12. Oktober 2026. Status: auf Wunsch des Nutzers festgehaltene Alternative zum Facettenentwurf; kein gewählter Produktformatwechsel, keine Implementierung oder ausgeführte Prüfung.
 
 Grundlage: [Proposal](canonical-model-proposal.md#65-alternative-b-minimale-struktur-und-methodisches-review), Produktgespräch `01a121f1-b948-7050-ae5d-9921b99db9c0`. Worktree: `C:\Users\Consiliari\.codex\worktrees\product-model-concepts\Markitect`, Branch `docs/product-model-concepts`, Eingang `83ff0931d07c01e34c3e1d61bc84cfe5fbfd1ebe`, beim Beginn sauber. Die Feldform orientiert sich am dort gelesenen Projectmodel-Schema und vorhandenen Beispielen. Dies ist kein erneuter Abgleich mit aktuellem Main; der vorherige [Main-Abgleich](canonical-model-main-comparison.md) bleibt SHA-gebunden.

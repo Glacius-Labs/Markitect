@@ -1,5 +1,7 @@
 # Kanonisches Modell: Entwurf der Beschreibungssprache
 
+Fortschreibung vom 12. Oktober 2026: Diese Datei bleibt eine datierte Vorarbeit. Die aktuelle zusammenhängende Empfehlung zu `mandate.yaml`, nominalem `Rule`, verbindlicher Prosa, Referenzen und methodischen Reviews steht im [konsolidierten Proposal](canonical-model-proposal.md) und [aktuellen Bibliotheksbeispiel](library-model-example.md). Der folgende umfangreichere Ausdruckskatalog ist kein Mindestvertrag des neuen Ausgangspunkts.
+
 Stand: 10. Oktober 2026. Version: Entwurf 0.1. Status: zur gemeinsamen Diskussion.
 
 **Arbeitsdefinition:** Das kanonische Modell ist die maßgebliche, typisierte und verständliche Beschreibung eines Projekts: seiner Systeme, Begriffe, Fähigkeiten, Struktur, Regeln, Qualitätsanforderungen, Betriebsbedingungen und Arbeitsweise. Es beschreibt außerdem, welche Realisierungen daraus entstehen sollen, wie deren Übereinstimmung geprüft wird und welche Entscheidungen bei der Realisierung offenbleiben dürfen.

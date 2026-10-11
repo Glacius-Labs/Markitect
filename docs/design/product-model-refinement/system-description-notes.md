@@ -1,5 +1,7 @@
 # Arbeitsnotiz: Ein Softwaresystem beschreiben
 
+Navigation vom 12. Oktober 2026: Der [konsolidierte Konzeptentwurf](canonical-model-proposal.md), das [aktuelle Bibliotheks-YAML](library-model-example.md) und der [Änderungsdurchlauf](library-change-walkthrough.md) entwickeln diese Leitfrage weiter. Die ursprünglichen Nutzerformulierungen und Ableitungen dieser Notiz bleiben unverändert und behalten ihre damalige Einordnung.
+
 Datum: 10. Oktober 2026. Quelle: Produktgespräch `01a121f1-b948-7050-ae5d-9921b99db9c0`.
 
 Ergänzt am 11. Oktober 2026: ausdrücklicher Auftrag, zuerst die zentrale Frage und danach den daraus abgeleiteten Arbeitsstand festzuhalten.

@@ -1,5 +1,7 @@
 # Abgleich des Modell-Proposals mit Main
 
+Einordnung vom 12. Oktober 2026: Dieser historische Vergleich gilt dem Proposalstand vom 11. Oktober, erhalten im lokalen Git-Commit `a7bad4aaa3d320ea76ee837a5f1b843ce2ed2d14` unter `docs/design/product-model-refinement/canonical-model-proposal.md`, und dem unten fixierten Main-SHA. Der [heute konsolidierte Entwurf](canonical-model-proposal.md) mit nominalem `Rule` und Kind-angereicherten Referenzen ist neuer; er wurde hier nicht gegen aktuelles Main geprüft. Die folgenden Quellenbefunde und damaligen Empfehlungen werden nicht rückwirkend geändert. Vor Umsetzung ist ein neuer Abgleich erforderlich.
+
 Datum: 11. Oktober 2026. Gegenstand: [Proposal zum Aufbau des kanonischen Modells](canonical-model-proposal.md). Status: read-only Quellenvergleich; keine Produktänderung und kein Laufzeit-, Test- oder Studienergebnis.
 
 ## 1. Feste Vergleichsstände

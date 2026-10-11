@@ -1,49 +1,57 @@
-# Markitect: vereinbartes Grundmodell
+# Markitect: Grundmodell und aktueller Konzeptentwurf
 
-Dieses Dokument enthält ausschließlich die gemeinsam vereinbarten Grundlagen der Produktdiskussion. Weitere Inhalte werden erst aufgenommen, wenn wir uns darauf geeinigt haben.
+Aktualisiert am 12. Oktober 2026. Diese Map trennt vereinbarte Produktgrundlagen, bestätigte Entwurfsrichtung, offene Detailvorschläge und datierte Vorarbeiten. Sie ist kein Implementierungs- oder Testnachweis.
 
 ## Grundmodell
 
-Markitect besteht auf der grundlegenden Produktebene aus drei Hauptblöcken:
-
 | Hauptblock | Funktion |
 | --- | --- |
-| Kanonisches Modell | Beschreibt typisiert und explizit, wie das Projekt aussehen und funktionieren soll und welche Konzepte es gibt. Es ist die maßgebliche Grundlage für die Realisierung. |
-| Repository | Enthält die Dateien, die das kanonische Modell realisieren. |
-| Apply | Nutzt die Typisierung und Struktur des Modells, um AI-Agenten systematisch zu koordinieren und das Modell im Repository zu realisieren. |
+| Kanonisches Modell | Maßgebliche, explizite Beschreibung des geltenden Projekts, seiner Konzepte, Regeln und Realisierungsverpflichtungen. |
+| Repository | Dateien, welche die geltende Beschreibung realisieren. |
+| Apply | Abstrakter Mechanismus, der Typisierung und Struktur für systematisch koordinierte Agentenrealisierung nutzt. |
 
-Die Arbeitsidee ist, das kanonische Modell zu pflegen und seine Realisierung durch Apply durchführen zu lassen.
+Die Arbeitsidee bleibt, das Modell zu pflegen und seine Realisierung durchführen zu lassen. Die interne Zuordnung dieses abstrakten Apply-Begriffs zu konkreten CLI-Kommandos ist damit nicht festgelegt.
 
-`Apply` bezeichnet hier den abstrakten Realisierungsmechanismus. Seine interne Architektur und die Zuordnung zu bestehenden Komponenten oder CLI-Kommandos sind damit noch nicht festgelegt.
+Der gewählte Verantwortungsdateiname ist `mandate.yaml`. `kind: Rule` ist nach dem Bibliotheksgespräch die bestätigte nominale Entwurfsrichtung. Die Umbenennung des vorhandenen Kinds `Manager` und eigene Kinds für Concept oder UseCase sind nicht beschlossen.
 
-Am 12. Oktober 2026 wurde `mandate.yaml` als Name der Verantwortungsdatei gewählt. Damit ist noch keine Umbenennung des bestehenden Kinds `Manager` beschlossen. Die bevorzugte Richtung `kind: Rule` anstelle von `Statement` mit `category: rule` ist im [Proposal](canonical-model-proposal.md#66-gewählter-dateiname-und-bevorzugte-kind-richtung) festgehalten; ihre konkreten Format- und Referenzverträge bleiben offen.
+## Aktueller Arbeitsstand und Lesereihenfolge
+
+1. [Konsolidierter Konzept- und Umsetzungsentwurf](canonical-model-proposal.md): kleine Struktur, nominale Regeln, verbindliche Prosa, explizite Beziehungen und methodische Reviews.
+2. [Vollständiges aktuelles Bibliotheks-YAML](library-model-example.md): Mandat, acht Statements, drei Rules, Artefakte und Check-Platzhalter; Kind-angereicherte Referenzen als versionierter Zukunftskandidat.
+3. [Konkreter Änderungsdurchlauf](library-change-walkthrough.md): Überfälligkeitsregel, fehlende Abhängigkeit, Modellreview, konservative Wirkung und neue Prüfaufträge.
+4. [Fester Main-Abgleich vom 11. Oktober](canonical-model-main-comparison.md): Ausgangspunkt für einen beim Implementierungsstart zu erneuernden Vergleich.
+
+Der methodische Ausgangspunkt und der nominale Rule-Kind sind miteinander vereinbar. Wie tief Fachproperties und Bedingungen formalisiert werden, bleibt eine separate Frage. Umfangreiche Facetten sind eine mögliche spätere Erweiterung. Prosa bleibt verbindlich; ihre Bedeutung und die Vollständigkeit der Beziehungen werden nicht allein vom Strukturcompiler bewiesen.
+
+Offen sind insbesondere Zielmengen und Umsetzung gemischter Referenzen, Versions-/Migrationsvertrag, Behandlung der übrigen Statement-Kategorien sowie konkrete Fachdetails des Beispiels. `vNext` ist ein Platzhalter. Das neue Beispiel wurde nicht angelegt, kompiliert oder ausgeführt.
+
+## Übergabe an den Implementer
+
+Der Proposal enthält [Designbegründungen](canonical-model-proposal.md#81-begründung-der-designentscheidungen), [Umsetzungspakete](canonical-model-proposal.md#82-umsetzungsvorbereitung-für-den-implementer) und [geplante Nachweise](canonical-model-proposal.md#83-prüfplan-für-die-spätere-implementierung).
+
+Die Produktbasis dieses Worktrees ist älter als der letzte Main-Abgleich. Die Umsetzung startet auf einem neuen festen aktuellen Main-Stand und berücksichtigt dessen laufende Arbeit. Die Dokumentationsänderungen werden gezielt übernommen. Dieser Auftrag beginnt keine Implementierung, Studien, Veröffentlichung oder Backlogaktivierung.
+
+## Leitfrage und datierte Vorarbeiten
+
+Die [Arbeitsnotiz](system-description-notes.md) hält die [Leitfrage](system-description-notes.md#leitfrage), ursprüngliche Nutzerformulierungen und abgeleiteten Arbeitsstand fest: Wie beschreibt man ein Repository für ein Softwaresystem?
+
+| Vorarbeit | Heutige Einordnung |
+| --- | --- |
+| [Ausführlicher Sprachentwurf](canonical-model-draft.md) | Frühere Ausdrucks- und Vollständigkeitsüberlegungen; die aktuelle Empfehlung steht im konsolidierten Proposal. |
+| [C#-Modellierung](csharp-model-design.md) | Beschreibendes Metamodell und Gegenprobe; keine vorgeschriebene Kind-/Klassenliste oder Produktimplementierung. |
+| [Facetten-/Dateisystembeispiel](library-filesystem-example.md) | Datiertes umfangreicheres Syntaxbeispiel; optionale Formalisierung, keine aktuelle Mindeststruktur. |
+| [Methodische v1alpha1-Vorstufe](library-methodical-alternative.md) | Frühere Statement-/Category-Form; durch das aktuelle nominale YAML-Beispiel als Arbeitsdarstellung abgelöst. |
+
+Die illustrative C#-Quelle bleibt unverändert. Frühere Quellen werden nicht nachträglich als implementiert oder als akzeptierter aktueller Formatvertrag dargestellt.
 
 ## Herkunft
 
-Vereinbart im Markitect-Produktgespräch am 10. Oktober 2026, Chat `01a121f1-b948-7050-ae5d-9921b99db9c0`.
+Produktgespräch `01a121f1-b948-7050-ae5d-9921b99db9c0`, Grundlagen vom 10. Oktober, Konsolidierung ausdrücklich am 12. Oktober 2026 beauftragt.
 
 - Worktree: `C:\Users\Consiliari\.codex\worktrees\product-model-concepts\Markitect`.
 - Branch: `docs/product-model-concepts`.
-- Ausgangspunkt: `origin/main`, Commit `ecc69b0ad99236a5ddd02b85bf9ba656a0000f15`; Worktree beim Anlegen sauber.
+- Ursprüngliche Branchbasis: `ecc69b0ad99236a5ddd02b85bf9ba656a0000f15`.
+- Eingang der jetzigen Aktualisierung: `07e03215c968302361f5acedc8e69bd573ac95be`; beim Beginn sauber.
+- Letzter gesonderter Implementierungsvergleich: `32afd1a57e715130d056e98e433721c6e7a10278` vom 11. Oktober; heute nicht neu als aktueller Stand verifiziert.
 
-Dies ist eine vereinbarte Produktgrundlage aus dem Gespräch, kein Nachweis des implementierten Stands. Die bestehenden kanonischen Produktdokumente bleiben in [Vision](../../vision.md), [Konzeptregister](../../concepts/register.md) und [Architektur](../../architecture.md).
-
-## Zugehörige Arbeitsnotiz
-
-Auf ausdrücklichen Wunsch des Nutzers ist der Arbeitsansatz mit allgemeinen Beschreibungsfragen, einer Bibliotheksverwaltung als Beispiel und seinen Gedanken zu Programmiersprachen sowie Hierarchie und Graph in einer [separaten Notiz](system-description-notes.md) festgehalten. Deren Begriffskandidaten und offene Analogien sind keine zusätzlichen vereinbarten Grundlagen.
-
-Die Notiz hält zuerst die [zentrale Leitfrage](system-description-notes.md#leitfrage) fest: Wie beschreibt man ein Repository für ein Softwaresystem? Anschließend folgt der [abgeleitete Arbeitsstand](system-description-notes.md#abgeleiteter-arbeitsstand) mit Beschreibungsfragen, Artefaktbeiträgen, einem vorgeschlagenen Maßstab für ausreichende Beschreibung und dem weiteren Vorgehen.
-
-## Beauftragter Entwurf
-
-Der [Proposal zum Aufbau des kanonischen Modells](canonical-model-proposal.md) vom 11. Oktober 2026 plant die Beschreibungssprache anhand der Leitfrage und des festgehaltenen Arbeitsstands. Sein [Abgleich mit frisch abgerufenem Main](canonical-model-main-comparison.md) trennt dokumentierte Verträge, implementierten Code, gelesene Testquellen und offene Arbeit am festen Commit `32afd1a57e715130d056e98e433721c6e7a10278`. Beide Dokumente sind Vorschlag beziehungsweise Quellenvergleich; keine angenommenen Modelländerungen oder Implementierungsaufträge.
-
-Für die gemeinsame Umsetzung mit dem Implementer enthält der Proposal die [Begründung der Designentscheidungen](canonical-model-proposal.md#81-begründung-der-designentscheidungen), eine [geordnete Umsetzungsvorbereitung](canonical-model-proposal.md#82-umsetzungsvorbereitung-für-den-implementer) und einen [Prüfplan](canonical-model-proposal.md#83-prüfplan-für-die-spätere-implementierung). Offene Formatentscheidungen bleiben ausdrücklich sichtbar; die Produktbasis wird beim Implementierungsstart erneut aus Main bestimmt.
-
-Das [Bibliotheksbeispiel im Dateisystem](library-filesystem-example.md) bewahrt die gezeigte Ordnerstruktur und exemplarische YAML-Definitionen zur gemeinsamen Syntaxentscheidung. Die [offene Frage nach Strenge und Methodik](canonical-model-proposal.md#64-offene-frage-strenge-und-methodik) hält den Nutzerimpuls fest, dass ein methodischer Ansatz möglicherweise bereits genügt; diese Hypothese ist nicht entschieden oder evaluiert.
-
-Seit dem 12. Oktober 2026 ist die [einfache Variante als Alternative B](canonical-model-proposal.md#65-alternative-b-minimale-struktur-und-methodisches-review) mit [ausgeschriebenem Bibliotheks-YAML](library-methodical-alternative.md) festgehalten. Fachliche Bedeutung bleibt verbindliche Prosa; Beziehungen, Verantwortung und Realisierungs-/Prüfanschlüsse sind strukturiert. Der Facettenentwurf bleibt Alternative A; die Auswahl ist offen.
-
-Der [Entwurf der kanonischen Beschreibungssprache](canonical-model-draft.md) beschreibt Inhalte, Ausdrucksmittel, Hierarchie und Beziehungen, Realisierung ohne manuelle Aufzählung jeder Datei sowie Verify als mögliche Rückkopplung. Abschnitt 2 hält das vom Nutzer gewünschte Vorgehen fest. Status: Entwurf zur Diskussion; seine Einzelvorschläge sind noch nicht angenommen.
-
-Der [konkrete C#-Modellierungsentwurf](csharp-model-design.md) arbeitet `SoftwareSystem` und `Repository` am Bibliotheksbeispiel aus. Er enthält ihre Unterobjekte, Beziehungen, Invarianten, vorgeschlagene Dienstgrenzen und Patterns sowie die Ableitung eines Modellvertrags und einer Marketingbotschaft. Die zugehörigen C#-Dateien sind illustrative Dokumentationsartefakte, kein Produktcode. Auch diese Vorschläge sind noch nicht angenommen.
+Kanonische Produktdokumente bleiben [Vision](../../vision.md), [Konzeptregister](../../concepts/register.md) und [Architektur](../../architecture.md). Dieser Konzeptordner setzt ihre aktuellen Verträge und den koordinierten Modell-Owner nicht automatisch außer Kraft.

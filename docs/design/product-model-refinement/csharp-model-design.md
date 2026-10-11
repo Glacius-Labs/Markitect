@@ -1,5 +1,7 @@
 # SoftwareSystem und Repository: konkreter Modellierungsentwurf
 
+Fortschreibung vom 12. Oktober 2026: Die [konsolidierte Planung](canonical-model-proposal.md) und das [aktuelle YAML-Beispiel](library-model-example.md) beginnen mit nominalen Regeln und Fachprosa. Diese C#-Darstellung bleibt eine unveränderte illustrative Vorarbeit; ihre Klassen und Patterns sind keine vorgeschriebene Liste der neuen Modell-Kinds. Die unten zitierten Bestandsvergleiche behalten ihren historischen Stand.
+
 Stand: 10. Oktober 2026. Status: beauftragter Entwurf zur Diskussion, keine angenommene Produktentscheidung und kein implementierter Markitect-Vertrag.
 
 Die neuere Planung steht im [Proposal vom 11. Oktober](canonical-model-proposal.md); der [separate Main-Abgleich](canonical-model-main-comparison.md) verwendet einen frisch abgerufenen festen Stand. Die Bestandsvergleiche dieser C#-Vorarbeit bleiben an ihre unten dokumentierte ältere Basis gebunden.

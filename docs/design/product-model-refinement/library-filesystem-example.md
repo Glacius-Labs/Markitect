@@ -1,5 +1,7 @@
 # Bibliothek: Dateisystem und Modellsyntax als Gesprächsbeispiel
 
+Fortschreibung vom 12. Oktober 2026: **datierte Facettenvorarbeit**. Das [aktuelle Konzept](canonical-model-proposal.md) beginnt mit nominalen Regeln und verbindlicher Fachprosa. Das [aktuelle Bibliotheks-YAML](library-model-example.md) löst die folgenden Ausschnitte als Arbeitsdarstellung ab; die hier gezeigten umfangreicheren Facetten bleiben Erweiterungskandidaten.
+
 Datum: 11. Oktober 2026. Status: auf Wunsch des Nutzers festgehaltener Syntaxentwurf für die gemeinsame Arbeit mit dem Implementer. Kein vollständiges, kompilierbares Modell und keine angenommene Formatdefinition.
 
 Grundlage: [Modell-Proposal](canonical-model-proposal.md), Produktgespräch `01a121f1-b948-7050-ae5d-9921b99db9c0`. Ablage: Worktree `C:\Users\Consiliari\.codex\worktrees\product-model-concepts\Markitect`, Branch `docs/product-model-concepts`; Eingang dieser Ergänzung `8f5fa92aed4e8f13d1abbaa2f458a0542b18db93`, beim Beginn sauber. Das Beispiel wird nur in diesem Dokument gezeigt; die beschriebenen Projektdateien wurden nicht als ausführbare Fixtures angelegt.
