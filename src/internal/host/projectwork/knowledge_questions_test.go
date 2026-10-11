@@ -356,6 +356,12 @@ func askShopScopeVisibility(t *testing.T, shop shopFixture) {
 	assertSameSet(t, "orders contracts", statementIDs(orders.Contracts), shopReservation, shopReleaseReservation)
 	assertSameSet(t, "orders artifacts", artifactIDs(orders.Artifacts), shopOrderLifecycle)
 	assertSameSet(t, "orders checks", checkIDs(orders.Checks))
+	// Checks owned elsewhere that verify orders' work are shown, marked foreign:
+	// order-lifecycle declares engineering's cancellation-tests, which uses cancel-order.
+	assertSameSet(t, "orders foreign checks", checkIDs(orders.ForeignChecks), shopCancellationTests)
+	if foreign := orders.ForeignChecks[0]; foreign.Owner != shopEngineeringManager || len(foreign.Command) == 0 || foreign.Limitation == "" {
+		t.Fatalf("orders sees cancellation-tests without its owner, command or limitation: %+v", foreign)
+	}
 	// inventory's statements use no orders statement, so none is visible there.
 	assertSameSet(t, "inventory contracts", statementIDs(shopContext(t, report, shopInventoryManager).Contracts))
 	// Own checks select contracts too: change-delivery uses cancellation-transaction,
@@ -408,7 +414,7 @@ func askShopScopeVisibility(t *testing.T, shop shopFixture) {
 			t.Fatalf("orders' graph shows inventory's own %s %s", n.Kind, n.ID)
 		}
 	}
-	assertFieldNames(t, projectmodel.ManagerContext{}, "Manager", "Statements", "Contracts", "Artifacts", "Checks", "Decisions", "Children", "Findings")
+	assertFieldNames(t, projectmodel.ManagerContext{}, "Manager", "Statements", "Contracts", "Artifacts", "Checks", "Decisions", "ForeignChecks", "Children", "Findings")
 }
 
 func askShopClaimConflicts(t *testing.T, _ shopFixture) {

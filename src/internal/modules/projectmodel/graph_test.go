@@ -52,7 +52,7 @@ func TestManagerGraphHasOneEdgePerContextReference(t *testing.T) {
 					add(a.ID, "expects", p)
 				}
 			}
-			for _, c := range ctx.Checks {
+			for _, c := range append(append([]Check(nil), ctx.Checks...), ctx.ForeignChecks...) {
 				add(c.ID, "owned by", c.Owner)
 				for _, id := range c.Uses {
 					add(c.ID, "exercises", id)

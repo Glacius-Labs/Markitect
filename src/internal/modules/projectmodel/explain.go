@@ -98,7 +98,7 @@ func ExplainForManager(base, candidate Report, managerID string) (ImpactExplanat
 				visible[element{"file", p}] = true
 			}
 		}
-		for _, c := range ctx.Checks {
+		for _, c := range append(append([]Check(nil), ctx.Checks...), ctx.ForeignChecks...) {
 			visible[element{"check", c.ID}] = true
 		}
 		for _, d := range ctx.Decisions {
