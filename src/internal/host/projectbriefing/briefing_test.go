@@ -448,13 +448,13 @@ spec:
 	}
 	gitTest(t, root, "add", ".markitect/model/commerce/sales/orders/private-internal-guard.yaml")
 	gitCommitTest(t, root, "change private child Statement")
-	publicPath := filepath.Join(root, ".markitect", "model", "commerce", "sales", "integration.yaml")
+	publicPath := filepath.Join(root, ".markitect", "model", "commerce", "architecture.yaml")
 	publicBytes, err := os.ReadFile(publicPath)
 	if err != nil {
 		t.Fatal(err)
 	}
-	publicDescription := "The Shop package exposes one cross-slice cancellation operation that changes order state and releases the matching active inventory reservation atomically."
-	publicUpdated := "The Shop exposes one cross-slice cancellation operation that atomically changes order state and releases its active inventory reservation."
+	publicDescription := "Order cancellation and reservation release commit or roll back together in one SQLite transaction."
+	publicUpdated := "Order cancellation and reservation release share one SQLite transaction, which either commits both changes or rolls both back."
 	publicModel := strings.Replace(string(publicBytes), publicDescription, publicUpdated, 1)
 	if publicModel == string(publicBytes) {
 		t.Fatal("could not update the public ancestor contract")
@@ -509,7 +509,7 @@ spec:
 			t.Fatalf("ancestor received private child Statement event: %+v", event)
 		}
 	}
-	if len(rootEvents) != 1 || rootEvents[0].DefinitionID.Name != "cancellation-integration" {
+	if len(rootEvents) != 1 || rootEvents[0].DefinitionID.Name != "cancellation-transaction" {
 		t.Fatalf("ancestor should retain its public contract event: %+v", rootEvents)
 	}
 	publicContractID := ""
