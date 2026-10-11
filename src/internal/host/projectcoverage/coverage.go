@@ -148,34 +148,36 @@ func Overlay(base *Universe, delta []Delta, options Options) (*Universe, error) 
 			return nil, fmt.Errorf("candidate repeats or case-aliases paths %q and %q", old, change.Path)
 		}
 		seen[key] = change.Path
-		state, exists := states[change.Path]
-		if !exists {
-			state = PathState{Path: change.Path}
-		}
 		if change.Delete {
 			if change.Mode != "" || change.Digest != "" || len(change.Content) != 0 {
 				return nil, fmt.Errorf("deleted candidate path %q cannot carry content, mode, or digest", change.Path)
 			}
-			state.Worktree = FileState{}
+			// A deleted path leaves the candidate tree. Its base HEAD or index
+			// layer describes the base, so the path is no longer classified.
+			delete(states, change.Path)
 			if change.Path == IgnorePath {
 				ignoreBytes = nil
 			}
-		} else {
-			if change.Mode != "100644" && change.Mode != "100755" {
-				return nil, fmt.Errorf("candidate path %q has unsupported mode %q", change.Path, change.Mode)
-			}
-			digest := change.Digest
-			if change.Path == IgnorePath {
-				if digest != "" && digest != sha256Hex(change.Content) {
-					return nil, fmt.Errorf("candidate ignore digest does not match its bytes")
-				}
-				digest = sha256Hex(change.Content)
-				ignoreBytes = append([]byte(nil), change.Content...)
-			} else if digest == "" {
-				return nil, fmt.Errorf("candidate path %q requires a content digest", change.Path)
-			}
-			state.Worktree = FileState{Present: true, Mode: change.Mode, Digest: digest}
+			continue
 		}
+		state, exists := states[change.Path]
+		if !exists {
+			state = PathState{Path: change.Path}
+		}
+		if change.Mode != "100644" && change.Mode != "100755" {
+			return nil, fmt.Errorf("candidate path %q has unsupported mode %q", change.Path, change.Mode)
+		}
+		digest := change.Digest
+		if change.Path == IgnorePath {
+			if digest != "" && digest != sha256Hex(change.Content) {
+				return nil, fmt.Errorf("candidate ignore digest does not match its bytes")
+			}
+			digest = sha256Hex(change.Content)
+			ignoreBytes = append([]byte(nil), change.Content...)
+		} else if digest == "" {
+			return nil, fmt.Errorf("candidate path %q requires a content digest", change.Path)
+		}
+		state.Worktree = FileState{Present: true, Mode: change.Mode, Digest: digest}
 		states[change.Path] = state
 	}
 	if _, err := DecodeIgnore(ignoreBytes); err != nil {
@@ -191,6 +193,27 @@ func Overlay(base *Universe, delta []Delta, options Options) (*Universe, error) 
 		return nil, err
 	}
 	result.Digest = universeDigest(result, options)
+	return result, nil
+}
+
+// UnboundPaths lists current files in universe whose bytes were never read
+// although options and the universe's ignore policy no longer exclude them,
+// such as a transitional file that a candidate now models. A caller reads
+// them from the census source instead of letting them be reported unavailable.
+func UnboundPaths(universe *Universe, options Options) ([]string, error) {
+	ignore, err := DecodeIgnore(universe.IgnoreBytes)
+	if err != nil {
+		return nil, err
+	}
+	var result []string
+	for _, state := range universe.Paths {
+		if state.OpaqueBoundary || state.Path == IgnorePath || !stableCurrentPresent(state, universe.FixedRevision) || stateDigest(state, universe.FixedRevision) != "" ||
+			isIgnored(state.Path, ignore) || isTransitional(state.Path, options) || isOperational(state.Path, options) {
+			continue
+		}
+		result = append(result, state.Path)
+	}
+	sort.Strings(result)
 	return result, nil
 }
 

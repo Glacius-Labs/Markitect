@@ -111,14 +111,14 @@ func Verify(ctx context.Context, host Host, invoker Invoker, root, runID string)
 	if hasPriorAttempt && !recoverVerifier {
 		return out, failVerificationBudget(s, &run, fmt.Errorf("verification attempt already exists for candidate %s", candidate.ID))
 	}
-	compiled, err := projectForCandidate(host, root, base.Snapshot, candidate)
+	compiled, err := finalProjectForCandidate(host, root, base, candidate)
 	if err != nil {
 		return out, err
 	}
 	if compiled.Report.ModelDigest != plan.ModelDigest || hasErrorFinding(compiled.Report.Findings) {
 		return out, fmt.Errorf("integrated candidate has invalid project model")
 	}
-	if err := validateFinalCandidate(host, root, base.Snapshot, candidate, plan); err != nil {
+	if err := validateFinalCandidate(host, root, base, candidate, plan); err != nil {
 		return out, err
 	}
 	if err := requireFreshReviews(host, root, s, dir, base, candidate, plan, runtime, run); err != nil {

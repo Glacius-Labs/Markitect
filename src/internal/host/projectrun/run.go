@@ -585,7 +585,7 @@ func runOrResume(ctx context.Context, host Host, invoker Invoker, root, id strin
 					if runtime.Review == nil {
 						break
 					}
-					candidateProject, compileErr := projectForCandidate(host, root, project.Snapshot, candidate)
+					candidateProject, compileErr := finalProjectForCandidate(host, root, project, candidate)
 					if compileErr != nil {
 						return failRun(store, report, compileErr)
 					}
@@ -886,7 +886,7 @@ func runOrResume(ctx context.Context, host Host, invoker Invoker, root, id strin
 					}
 					continue
 				}
-				candidateProject, compileErr := projectForCandidate(host, root, project.Snapshot, resolved)
+				candidateProject, compileErr := finalProjectForCandidate(host, root, project, resolved)
 				if compileErr != nil {
 					return failRun(store, report, compileErr)
 				}
@@ -967,7 +967,7 @@ func runOrResume(ctx context.Context, host Host, invoker Invoker, root, id strin
 		return failRun(store, report, err)
 	}
 	if runtime.Review != nil {
-		finalProject, compileErr := projectForCandidate(host, root, project.Snapshot, finalCandidate)
+		finalProject, compileErr := finalProjectForCandidate(host, root, project, finalCandidate)
 		if compileErr != nil {
 			return failRun(store, report, compileErr)
 		}
@@ -1070,7 +1070,7 @@ func runOrResume(ctx context.Context, host Host, invoker Invoker, root, id strin
 				if err != nil {
 					return failRun(store, report, err)
 				}
-				finalProject, err = projectForCandidate(host, root, project.Snapshot, finalCandidate)
+				finalProject, err = finalProjectForCandidate(host, root, project, finalCandidate)
 				if err != nil {
 					return failRun(store, report, err)
 				}
@@ -1085,11 +1085,11 @@ func runOrResume(ctx context.Context, host Host, invoker Invoker, root, id strin
 	if err := validateReportClosure(report); err != nil {
 		return blockRun(store, report, err)
 	}
-	finalCandidate, err = completeCandidateDocument(host, root, store, dir, project.Snapshot, finalCandidate)
+	finalCandidate, err = completeCandidateDocument(host, root, store, dir, project, finalCandidate)
 	if err != nil {
 		return blockRun(store, report, err)
 	}
-	if err := validateFinalCandidate(host, root, project.Snapshot, finalCandidate, plan); err != nil {
+	if err := validateFinalCandidate(host, root, project, finalCandidate, plan); err != nil {
 		return blockRun(store, report, err)
 	}
 	if err := requireFreshReviews(host, root, store, dir, project, finalCandidate, plan, runtime, report); err != nil {
@@ -2086,6 +2086,24 @@ func projectForCandidate(host Host, root string, base *Snapshot, c candidateData
 	}
 	return host.FromSnapshot(root, snap)
 }
+
+// finalProjectForCandidate is projectForCandidate for closure gates and for
+// every review that Verify or Apply later checks, so all see one view: full
+// coverage is classified against the base census plus the candidate delta,
+// not only against the paths present in the candidate snapshot.
+func finalProjectForCandidate(host Host, root string, base *Project, c candidateData) (*Project, error) {
+	compiled, err := projectForCandidate(host, root, base.Snapshot, c)
+	if err != nil {
+		return nil, err
+	}
+	var deleted []string
+	for _, path := range sortedFileKeys(c.Files) {
+		if c.Files[path].Delete {
+			deleted = append(deleted, path)
+		}
+	}
+	return projectwork.ClassifyCandidate(base, compiled, deleted...)
+}
 func candidateSnapshotHash(base *Snapshot, c candidateData) string {
 	snap, err := snapshotWithCandidate(base, c)
 	if err != nil {
@@ -2519,8 +2537,8 @@ func findRootCandidate(tasks []ManagerTask) string {
 	}
 	return ""
 }
-func validateFinalCandidate(host Host, root string, base *Snapshot, c candidateData, plan PlanRecord) error {
-	compiled, err := projectForCandidate(host, root, base, c)
+func validateFinalCandidate(host Host, root string, base *Project, c candidateData, plan PlanRecord) error {
+	compiled, err := finalProjectForCandidate(host, root, base, c)
 	if err != nil {
 		return err
 	}
@@ -2533,7 +2551,7 @@ func validateFinalCandidate(host Host, root string, base *Snapshot, c candidateD
 	if err := requireFullCoverage(compiled); err != nil {
 		return err
 	}
-	if err := validateIgnoredCandidatePaths(base, c, compiled.Config); err != nil {
+	if err := validateIgnoredCandidatePaths(base.Snapshot, c, compiled.Config); err != nil {
 		return err
 	}
 	return validateCandidateDocument(compiled)

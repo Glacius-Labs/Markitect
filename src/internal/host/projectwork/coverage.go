@@ -1,7 +1,11 @@
 package projectwork
 
 import (
+	"bytes"
+	"crypto/sha256"
+	"encoding/hex"
 	"fmt"
+	"sort"
 	"strings"
 
 	"github.com/Glacius-Labs/Markitect/src/internal/core/snapshot"
@@ -67,6 +71,127 @@ func Coverage(root, revision string) (projectcoverage.Report, error) {
 	}
 	return projectcoverage.Classify(projectcoverage.Request{Universe: universe, Model: project.Report, Options: options,
 		LegacyRoots: config.InventoryRoots, LegacyExclusions: legacyExclusions(config.Exclusions)})
+}
+
+// ClassifyCandidate returns candidate, compiled from a snapshot derived from
+// base, with full coverage classified against base's repository census plus
+// the files the candidate adds, replaces or deletes. Ignored, transitional and
+// operational files keep their census state, so an unchanged candidate is
+// classified exactly like its base. Those files are in no snapshot that review,
+// checks or Apply see, so a candidate that names one in deleted is refused.
+// Files the candidate's policy no longer excludes, such as a transitional file
+// it now models, are read from the base source and compiled into the candidate.
+func ClassifyCandidate(base, candidate *Project, deleted ...string) (*Project, error) {
+	if candidate == nil || candidate.Config.CoverageMode != "full" {
+		return candidate, nil
+	}
+	if base == nil || base.census == nil || base.Snapshot == nil || candidate.Snapshot == nil {
+		return nil, fmt.Errorf("candidate coverage requires the repository census of its base")
+	}
+	if err := refuseCensusOnlyDeletes(base, deleted); err != nil {
+		return nil, err
+	}
+	options := coverageOptions(candidate.Config)
+	delta := candidateDelta(base.Snapshot, candidate.Snapshot)
+	overlaid, err := projectcoverage.Overlay(base.census, delta, options)
+	if err != nil {
+		return nil, fmt.Errorf("classify candidate against the repository census: %w", err)
+	}
+	unbound, err := projectcoverage.UnboundPaths(overlaid, options)
+	if err != nil {
+		return nil, err
+	}
+	if len(unbound) > 0 {
+		read, readErr := readCensusFiles(base, unbound)
+		if readErr != nil {
+			return nil, readErr
+		}
+		extended := &snapshot.Snapshot{ID: candidate.Snapshot.ID, Provisional: candidate.Snapshot.Provisional, Files: map[string][]byte{}, Modes: map[string]string{}}
+		for _, input := range []*snapshot.Snapshot{candidate.Snapshot, read} {
+			for file, data := range input.Files {
+				extended.Files[file], extended.Modes[file] = data, input.Modes[file]
+			}
+		}
+		if candidate, err = FromSnapshot(base.Root, extended); err != nil {
+			return nil, err
+		}
+		delta = candidateDelta(base.Snapshot, candidate.Snapshot)
+	}
+	coverage, err := projectcoverage.ValidateCandidate(base.census, delta, candidate.Report,
+		options, candidate.Config.InventoryRoots, legacyExclusions(candidate.Config.Exclusions))
+	if err != nil {
+		return nil, fmt.Errorf("classify candidate against the repository census: %w", err)
+	}
+	classified := *candidate
+	classified.Coverage = &coverage
+	classified.Digest, err = digestProject(&classified)
+	if err != nil {
+		return nil, err
+	}
+	return &classified, nil
+}
+
+// refuseCensusOnlyDeletes rejects deleting a current census file that base's
+// snapshot omits. Apply writes only snapshot changes, so accepting the delete
+// would close a candidate whose coverage Apply never produces.
+func refuseCensusOnlyDeletes(base *Project, deleted []string) error {
+	names := make(map[string]bool, len(deleted))
+	for _, file := range deleted {
+		names[file] = true
+	}
+	for _, state := range base.census.Paths {
+		present := state.Worktree.Present
+		if base.census.FixedRevision {
+			present = state.Head.Present
+		}
+		if _, inSnapshot := base.Snapshot.Files[state.Path]; names[state.Path] && present && !inSnapshot {
+			return fmt.Errorf("candidate deletes %s, an ignored, transitional or operational file outside the reviewed snapshot; Apply cannot delete it, so remove it outside the run", state.Path)
+		}
+	}
+	return nil
+}
+
+func candidateDelta(base, candidate *snapshot.Snapshot) []projectcoverage.Delta {
+	var delta []projectcoverage.Delta
+	for file, data := range candidate.Files {
+		mode := candidate.Modes[file]
+		if old, exists := base.Files[file]; exists && bytes.Equal(old, data) && base.Modes[file] == mode {
+			continue
+		}
+		digest := sha256.Sum256(data)
+		change := projectcoverage.Delta{Path: file, Mode: mode, Digest: hex.EncodeToString(digest[:])}
+		if file == projectcoverage.IgnorePath {
+			change.Content = append([]byte(nil), data...)
+		}
+		delta = append(delta, change)
+	}
+	for file := range base.Files {
+		if _, exists := candidate.Files[file]; !exists {
+			delta = append(delta, projectcoverage.Delta{Path: file, Delete: true})
+		}
+	}
+	sort.Slice(delta, func(i, j int) bool { return delta[i].Path < delta[j].Path })
+	return delta
+}
+
+// readCensusFiles reads files the census skipped from the same source it
+// observed: the fixed revision, or the working tree with an unchanged identity.
+func readCensusFiles(base *Project, paths []string) (*snapshot.Snapshot, error) {
+	if base.census.FixedRevision {
+		selected, err := source.LoadSelected(base.Root, base.census.Revision, paths)
+		if err != nil {
+			return nil, fmt.Errorf("read census files the candidate now models: %w", err)
+		}
+		return selected.Snapshot, nil
+	}
+	observed, err := source.ObserveSelectedWorking(base.Root, paths)
+	if err != nil {
+		return nil, fmt.Errorf("read census files the candidate now models: %w", err)
+	}
+	if observed.Identity.Digest != base.census.IdentityDigest || len(observed.MissingPaths) != 0 {
+		return nil, fmt.Errorf("repository changed since its census; reload the project")
+	}
+	return observed.Snapshot, nil
 }
 
 func ToolPaths(config Config) []projectcoverage.ToolPath {

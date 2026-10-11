@@ -49,6 +49,9 @@ type Project struct {
 	Model       core.Model              `json:"model"`
 	Report      projectmodel.Report     `json:"report"`
 	Snapshot    *snapshot.Snapshot      `json:"-"`
+	// census is the full repository census Load classified. It also holds
+	// ignored, transitional and operational paths that Snapshot omits.
+	census *projectcoverage.Universe
 }
 
 type FileChange struct {
