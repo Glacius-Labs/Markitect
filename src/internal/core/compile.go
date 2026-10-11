@@ -300,7 +300,9 @@ func safeSchema(schema Schema, budget *preflightBudget) bool {
 	if !budget.charge(preflightStringCost(schema.APIVersion) + preflightStringCost(schema.Purpose) + preflightStringCost(schema.Source.Path) + preflightStringCost(schema.Source.Digest)) {
 		return false
 	}
-	for name, kind := range schema.Kinds {
+	// Sorted order makes the first failure, and so the diagnostic, independent of map order.
+	for _, name := range sortedKindNames(schema.Kinds) {
+		kind := schema.Kinds[name]
 		if len(name) > MaxSchemaBytes || len(kind.Purpose) > MaxSchemaBytes || !budget.charge(preflightStringCost(name)+preflightStringCost(kind.Purpose)) || !safePropertyContracts(kind.Properties, 0, budget) {
 			return false
 		}
@@ -312,7 +314,8 @@ func safePropertyContracts(properties map[string]Property, depth int, budget *pr
 	if depth > MaxObjectDepth || len(properties) > MaxPropertiesPerObject {
 		return false
 	}
-	for name, property := range properties {
+	for _, name := range sortedPropertyNames(properties) {
+		property := properties[name]
 		if len(name) > MaxSchemaBytes || len(property.Purpose) > MaxSchemaBytes || len(property.Type) > 32 || len(property.Values) > MaxValuesPerProperty {
 			return false
 		}
@@ -385,15 +388,13 @@ func safeValue(value reflect.Value, depth int, budget *preflightBudget) bool {
 		if !budget.charge(value.Len()*2 + 2) {
 			return false
 		}
-		iter := value.MapRange()
-		for iter.Next() {
-			if iter.Key().Kind() == reflect.String {
-				key := iter.Key().String()
-				if len(key) > MaxDefinitionBytes || !budget.charge(preflightStringCost(key)) {
-					return false
-				}
+		// Sorted keys make the first failure, and so the diagnostic, independent of map order.
+		object := value.Interface().(map[string]any)
+		for _, key := range sortedAnyMapKeys(object) {
+			if len(key) > MaxDefinitionBytes || !budget.charge(preflightStringCost(key)) {
+				return false
 			}
-			if !safeValue(iter.Value(), depth+1, budget) {
+			if !safeValue(value.MapIndex(reflect.ValueOf(key)), depth+1, budget) {
 				return false
 			}
 		}
