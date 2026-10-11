@@ -723,13 +723,9 @@ func TestResolutionAndDismissalOnUnmergedTopicStayProvisional(t *testing.T) {
 	if digest, err = Dismiss(root, event.ID, event.AffectedManagers[0], digest); err != nil {
 		t.Fatal(err)
 	}
-	project, err := projectwork.Load(root, topic)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if _, err := ResolveVerified(root, topic, project.Model.Digest, validResolutionEvidence(event.ID, project.Report.Managers), digest); err != nil {
-		t.Fatal(err)
-	}
+	resolveDeliveredTest(t, root, topic, event.ID, "run-topic", deliveredPathTest, "# Delivered on the topic.\n")
+	gitTest(t, root, "add", deliveredPathTest)
+	gitCommitTest(t, root, "commit the delivery")
 	gitTest(t, root, "checkout", mainBranch)
 	state, _, err = Read(root)
 	if err != nil {
@@ -743,8 +739,9 @@ func TestResolutionAndDismissalOnUnmergedTopicStayProvisional(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if status := EventResolutionStatus(state, event.ID); status.Status != "resolved" || status.Resolution.ModelRevision != topic || len(state.Dismissals) != 1 {
-		t.Fatalf("merged topic resolution or dismissal not accepted: status=%#v dismissals=%#v", status, state.Dismissals)
+	// The delivery's result reached main; the dismissal stays on its branch.
+	if status := EventResolutionStatus(state, event.ID); status.Status != "resolved" || status.Resolution.ModelRevision != topic || len(state.Dismissals) != 0 {
+		t.Fatalf("merged topic resolution not accepted or dismissal carried over: status=%#v dismissals=%#v", status, state.Dismissals)
 	}
 }
 
@@ -759,7 +756,7 @@ func TestVerifiedResolutionOnUnmergedTopicDoesNotBlockMain(t *testing.T) {
 	if _, err := EnsureAcceptedHistory(root, topic); err != nil {
 		t.Fatal(err)
 	}
-	state, digest, err := Read(root)
+	state, _, err := Read(root)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -768,14 +765,14 @@ func TestVerifiedResolutionOnUnmergedTopicDoesNotBlockMain(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if _, err := ResolveVerified(root, topic, project.Model.Digest, validResolutionEvidence(event.ID, project.Report.Managers), digest); err != nil {
-		t.Fatal(err)
-	}
+	resolveDeliveredTest(t, root, topic, event.ID, "run-topic", deliveredPathTest, "# Delivered on the topic.\n")
+	gitTest(t, root, "add", deliveredPathTest)
+	gitCommitTest(t, root, "commit the delivery")
 	gitTest(t, root, "checkout", mainBranch)
 	if _, err := EnsureAcceptedHistory(root, changed); err != nil {
 		t.Fatal(err)
 	}
-	_, digest, err = Read(root)
+	_, digest, err := Read(root)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -790,6 +787,180 @@ func TestVerifiedResolutionOnUnmergedTopicDoesNotBlockMain(t *testing.T) {
 	}
 }
 
+func TestDeliveryOnFreshTopicResolvesOnlyWhereItsResultIsCommitted(t *testing.T) {
+	for _, merge := range []string{"merge-commit", "squash"} {
+		t.Run(merge, func(t *testing.T) {
+			root, _, changed := committedModelFixture(t)
+			mainBranch := gitOutputTest(t, root, "rev-parse", "--abbrev-ref", "HEAD")
+			if _, err := EnsureAcceptedHistory(root, changed); err != nil {
+				t.Fatal(err)
+			}
+			gitTest(t, root, "checkout", "-b", "topic")
+			state, _, err := Read(root)
+			if err != nil {
+				t.Fatal(err)
+			}
+			event := state.Briefings[0].Events[0]
+			resolveDeliveredTest(t, root, changed, event.ID, "run-topic", deliveredPathTest, "# Delivered on the topic.\n")
+			gitTest(t, root, "add", deliveredPathTest)
+			gitCommitTest(t, root, "commit the delivery")
+			if status := resolutionStatusTest(t, root, event.ID); status.Status != "resolved" {
+				t.Fatalf("delivery is not resolved on its own topic: %#v", status)
+			}
+			gitTest(t, root, "checkout", mainBranch)
+			if status := resolutionStatusTest(t, root, event.ID); status.Status != "unresolved" {
+				t.Fatalf("delivery from a topic without commits of its own counted on %s: %#v", mainBranch, status)
+			}
+			mergeTopicTest(t, root, merge)
+			if status := resolutionStatusTest(t, root, event.ID); status.Status != "resolved" || status.Resolution.Evidence.RunID != "run-topic" {
+				t.Fatalf("delivery is not resolved on %s after a %s: %#v", mainBranch, merge, status)
+			}
+		})
+	}
+}
+
+func TestResolutionOfMergedTopicModelChangeCarriesToMain(t *testing.T) {
+	for _, merge := range []string{"merge-commit", "squash"} {
+		t.Run(merge, func(t *testing.T) {
+			root, _, changed := committedModelFixture(t)
+			mainBranch := gitOutputTest(t, root, "rev-parse", "--abbrev-ref", "HEAD")
+			if _, err := EnsureAcceptedHistory(root, changed); err != nil {
+				t.Fatal(err)
+			}
+			gitTest(t, root, "checkout", "-b", "topic")
+			topic := commitModelChangeTest(t, root, "before shipment", "prior to fulfillment", "topic model change")
+			receipt, err := EnsureAcceptedHistory(root, topic)
+			if err != nil || len(receipt.Bundles) != 1 {
+				t.Fatalf("precondition: topic model change was not briefed: receipt=%#v err=%v", receipt, err)
+			}
+			event := receipt.Bundles[0].Events[0]
+			resolveDeliveredTest(t, root, topic, event.ID, "run-topic", deliveredPathTest, "# Delivered for the topic model change.\n")
+			gitTest(t, root, "add", deliveredPathTest)
+			gitCommitTest(t, root, "commit the delivery")
+			gitTest(t, root, "checkout", mainBranch)
+			commitReadmeTest(t, root, "Main moves on.\n", "main moves on")
+			mergeTopicTest(t, root, merge)
+			merged := gitOutputTest(t, root, "rev-parse", "HEAD")
+			receipt, err = EnsureAcceptedHistory(root, merged)
+			if err != nil || len(receipt.Bundles) != 1 || receipt.Bundles[0].Revision != merged {
+				t.Fatalf("main did not brief the merged model change itself: receipt=%#v err=%v", receipt, err)
+			}
+			if ids := receipt.Bundles[0].Global.EventIDs; len(ids) != 1 || ids[0] != event.ID {
+				t.Fatalf("the same model change got another identity on %s: %v, topic %s", mainBranch, ids, event.ID)
+			}
+			if status := resolutionStatusTest(t, root, event.ID); status.Status != "resolved" || status.Resolution.Evidence.RunID != "run-topic" {
+				t.Fatalf("topic resolution does not carry to %s after a %s: %#v", mainBranch, merge, status)
+			}
+		})
+	}
+}
+
+func TestLatestAcceptedResolutionOnLineWins(t *testing.T) {
+	root, _, changed := committedModelFixture(t)
+	if _, err := EnsureAcceptedHistory(root, changed); err != nil {
+		t.Fatal(err)
+	}
+	state, _, err := Read(root)
+	if err != nil {
+		t.Fatal(err)
+	}
+	event := state.Briefings[0].Events[0]
+	later := commitReadmeTest(t, root, "Main moves on.\n", "main moves on")
+	if _, err := EnsureAcceptedHistory(root, later); err != nil {
+		t.Fatal(err)
+	}
+	// Record the later commit's delivery first, so recording order and line
+	// order disagree.
+	const otherPath = "src/shop/inventory/reservations.py"
+	resolveDeliveredTest(t, root, later, event.ID, "run-at-later-commit", deliveredPathTest, "# Delivery at the later commit.\n")
+	resolveDeliveredTest(t, root, changed, event.ID, "run-at-earlier-commit", otherPath, "# Delivery at the earlier commit.\n")
+	gitTest(t, root, "add", deliveredPathTest, otherPath)
+	gitCommitTest(t, root, "commit both deliveries")
+	if status := resolutionStatusTest(t, root, event.ID); status.Status != "resolved" || status.Resolution.Evidence.RunID != "run-at-later-commit" {
+		t.Fatalf("latest resolution on the line did not win: %#v", status)
+	}
+}
+
+func TestDismissalOnFreshTopicStaysOnThatBranch(t *testing.T) {
+	root, _, changed := committedModelFixture(t)
+	mainBranch := gitOutputTest(t, root, "rev-parse", "--abbrev-ref", "HEAD")
+	if _, err := EnsureAcceptedHistory(root, changed); err != nil {
+		t.Fatal(err)
+	}
+	gitTest(t, root, "checkout", "-b", "topic")
+	state, digest, err := Read(root)
+	if err != nil {
+		t.Fatal(err)
+	}
+	event := state.Briefings[0].Events[0]
+	if _, err := Dismiss(root, event.ID, event.AffectedManagers[0], digest); err != nil {
+		t.Fatal(err)
+	}
+	for _, check := range []struct {
+		branch string
+		want   int
+	}{{"topic", 1}, {mainBranch, 0}, {"topic", 1}} {
+		gitTest(t, root, "checkout", check.branch)
+		if state, _, err := Read(root); err != nil || len(state.Dismissals) != check.want {
+			t.Fatalf("dismissals on %s = %#v, want %d (err=%v)", check.branch, state.Dismissals, check.want, err)
+		}
+	}
+}
+
+// deliveredPathTest is an existing implementation file that test deliveries
+// rewrite.
+const deliveredPathTest = "src/shop/orders/order.py"
+
+// resolveDeliveredTest records a verified resolution at revision for a
+// delivery that wrote content to path, and leaves that content uncommitted in
+// the working tree, as Apply does.
+func resolveDeliveredTest(t *testing.T, root, revision, eventID, runID, path, content string) {
+	t.Helper()
+	project, err := projectwork.Load(root, revision)
+	if err != nil {
+		t.Fatal(err)
+	}
+	_, digest, err := Read(root)
+	if err != nil {
+		t.Fatal(err)
+	}
+	evidence := validResolutionEvidence(eventID, project.Report.Managers)
+	evidence.RunID = runID
+	delivered, err := NewDeliveredFile(root, path, "100644", []byte(content), false)
+	if err != nil {
+		t.Fatal(err)
+	}
+	evidence.Delivered = []DeliveredFile{delivered}
+	if _, err := ResolveVerified(root, revision, project.Model.Digest, evidence, digest); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(root, filepath.FromSlash(path)), []byte(content), 0644); err != nil {
+		t.Fatal(err)
+	}
+}
+
+func resolutionStatusTest(t *testing.T, root, eventID string) ResolutionStatus {
+	t.Helper()
+	state, _, err := Read(root)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return EventResolutionStatus(state, eventID)
+}
+
+func mergeTopicTest(t *testing.T, root, merge string) {
+	t.Helper()
+	switch merge {
+	case "merge-commit":
+		gitTest(t, root, "merge", "--no-ff", "-m", "merge topic", "topic")
+	case "squash":
+		gitTest(t, root, "merge", "--squash", "topic")
+		gitCommitTest(t, root, "squash topic")
+	default:
+		t.Fatalf("unknown merge %q", merge)
+	}
+}
+
 func validResolutionEvidence(eventID string, managers []projectmodel.Manager) VerifiedResolutionEvidence {
 	managerIDs := make([]string, 0, len(managers))
 	for _, manager := range managers {
@@ -801,5 +972,6 @@ func validResolutionEvidence(eventID string, managers []projectmodel.Manager) Ve
 		CandidateID: "candidate-verified", CandidateDigest: "candidate-digest",
 		VerificationDigest: "full-verify-digest", ApplyDigest: "apply-digest", FullVerifyPassed: true,
 		CoveredManagerIDs: managerIDs, EvidenceRefs: []string{"check:integration", "verify:all-managers"},
+		Delivered: []DeliveredFile{},
 	}
 }

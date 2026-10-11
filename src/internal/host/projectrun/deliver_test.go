@@ -66,14 +66,13 @@ func TestDeliverResumesIntegratedRunAndCompletesAcknowledgedScope(t *testing.T) 
 	if len(record.Completions) != 1 || record.Completions[0].RunID != plan.ID || record.Completions[0].BindingDigest == "" {
 		t.Fatalf("successful Apply did not complete the exact scope binding: %+v", record.Completions)
 	}
+	// The resolution counts once the applied result is committed.
 	briefingState, _, err := projectbriefing.Read(root)
 	if err != nil {
 		t.Fatal(err)
 	}
-	resolution := projectbriefing.EventResolutionStatus(briefingState, event.ID)
-	if resolution.Status != "resolved" || resolution.Resolution == nil || resolution.Resolution.Evidence.RunID != plan.ID ||
-		resolution.Resolution.Evidence.CandidateID != runCandidateID(got.Run) || !resolution.Resolution.Evidence.FullVerifyPassed {
-		t.Fatalf("accepted model event was not resolved from the successful full Verify + Apply: %+v", resolution)
+	if resolution := projectbriefing.EventResolutionStatus(briefingState, event.ID); resolution.Status != "unresolved" {
+		t.Fatalf("uncommitted delivery already resolved the event: %+v", resolution)
 	}
 	// Re-entering a completed delivery must recover from the immutable Apply
 	// receipt, not make another proposal, verification, or write.
@@ -88,6 +87,18 @@ func TestDeliverResumesIntegratedRunAndCompletesAcknowledgedScope(t *testing.T) 
 	}
 	if len(record.Completions) != 1 {
 		t.Fatalf("completion receipt duplicated: %+v", record.Completions)
+	}
+	gitE2E(t, root, append([]string{"add", "--"}, got.Apply.Written...)...)
+	gitE2E(t, root, "commit", "-m", "commit the delivery")
+	briefingState, _, err = projectbriefing.Read(root)
+	if err != nil {
+		t.Fatal(err)
+	}
+	resolution := projectbriefing.EventResolutionStatus(briefingState, event.ID)
+	if resolution.Status != "resolved" || resolution.Resolution == nil || resolution.Resolution.Evidence.RunID != plan.ID ||
+		resolution.Resolution.Evidence.CandidateID != runCandidateID(got.Run) || !resolution.Resolution.Evidence.FullVerifyPassed ||
+		len(resolution.Resolution.Evidence.Delivered) != len(got.Apply.Written) {
+		t.Fatalf("accepted model event was not resolved from the committed full Verify + Apply result: %+v", resolution)
 	}
 }
 

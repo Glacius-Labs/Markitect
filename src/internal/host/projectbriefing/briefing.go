@@ -1,8 +1,10 @@
 // Package projectbriefing records deterministic briefings for accepted project
 // model changes. It compares compiled declarations only; it does not infer
 // meaning from prose. Accepted history is the first-parent line of the
-// checked-out HEAD; briefings, dismissals and resolutions recorded off that
-// line stay provisional until the line contains their commit.
+// checked-out HEAD: briefings count when recorded on it, resolutions when their
+// delivered result is in HEAD's tree, and dismissals on the branch that made
+// them. Other entries stay provisional. Event identity is the model change's
+// content, so a change keeps its identity when a topic is merged or squashed.
 package projectbriefing
 
 import (
@@ -20,7 +22,7 @@ import (
 	"github.com/Glacius-Labs/Markitect/src/internal/modules/projectmodel"
 )
 
-const APIVersion = "markitect.example.org/project-model-briefing/v1alpha1"
+const APIVersion = "markitect.example.org/project-model-briefing/v1alpha2"
 
 var (
 	ErrUncommittedModel    = errors.New("briefings require explicit committed model revisions")
@@ -38,6 +40,10 @@ type Provenance struct {
 	Authority         string `json:"authority"`
 }
 
+// Event is one changed definition. Its ID and Digest come from the change's
+// content alone (see eventDigest), so the same change briefed at different
+// commits has one identity; provenance and affected references stay per
+// briefing.
 type Event struct {
 	ID                string                  `json:"id"`
 	Digest            string                  `json:"digest"`
@@ -155,11 +161,7 @@ func Build(before, after *projectwork.Project, provenance Provenance) (Bundle, e
 		}
 		managers := managersForDefinition(before.Report, after.Report, key)
 		artifacts := artifactsForDefinition(before.Report, after.Report, key)
-		payload := struct {
-			Since, Revision, Key, Change string
-			Before, After                *core.Definition
-		}{before.Revision, after.Revision, key, change, oldValue, newValue}
-		digest := hash(payload)
+		digest := eventDigest(key, change, oldValue, newValue)
 		bundle.Events = append(bundle.Events, Event{ID: "model-change-" + digest[:24], Digest: digest, DefinitionID: identity, Change: change, Before: oldValue, After: newValue, AffectedManagers: managers, AffectedArtifacts: artifacts, Category: "information", Severity: "info", Provenance: provenance})
 	}
 	eventIDs := make([]string, 0, len(bundle.Events))
@@ -198,6 +200,16 @@ func Build(before, after *projectwork.Project, provenance Provenance) (Bundle, e
 func FullBundleDigest(bundle Bundle) string {
 	bundle.Digest = ""
 	return hash(bundle)
+}
+
+// eventDigest identifies a model change by its content: the definition key,
+// the kind of change and the compiled definition before and after, source file
+// digest included, but not the revisions it was briefed at.
+func eventDigest(key, change string, before, after *core.Definition) string {
+	return hash(struct {
+		Key, Change   string
+		Before, After *core.Definition
+	}{key, change, before, after})
 }
 
 func makeBriefing(manager string, p *projectwork.Project, ids []string, contracts []projectmodel.Statement, summary string) Briefing {

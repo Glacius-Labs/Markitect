@@ -319,10 +319,24 @@ func recordDeliveryResolution(root string, plan PlanRecord, candidate candidateD
 	if err != nil {
 		return err
 	}
+	// The resolution counts only where the written result is committed.
+	delivered := make([]projectbriefing.DeliveredFile, 0, len(applied.Written))
+	for _, path := range applied.Written {
+		file, ok := candidate.Files[path]
+		if !ok {
+			return fmt.Errorf("applied path %s is not in the verified candidate", path)
+		}
+		item, err := projectbriefing.NewDeliveredFile(root, path, file.Mode, file.Content, file.Delete)
+		if err != nil {
+			return err
+		}
+		delivered = append(delivered, item)
+	}
 	_, err = projectbriefing.ResolveVerified(root, plan.BaseRevision, plan.ModelDigest, projectbriefing.VerifiedResolutionEvidence{
 		EventIDs: uniqueSorted(eventIDs), RunID: plan.ID, PlanDigest: plan.Digest, CandidateID: candidate.ID, CandidateDigest: candidate.Digest,
 		VerificationDigest: verification.Digest, ApplyDigest: applyDigest, FullVerifyPassed: true, CoveredManagerIDs: uniqueSorted(managers),
 		EvidenceRefs: uniqueSorted([]string{"run:" + plan.ID, "full-verify:" + full.Digest, "verify:" + verification.Digest, "apply:" + applyDigest}),
+		Delivered:    delivered,
 	}, stateDigest)
 	return err
 }
