@@ -59,7 +59,7 @@ func TestProjectionGreenfieldCandidatesConvergeAgainstIndependentEvidence(t *tes
 			if err != nil || !yamlEqual(first, repeat) {
 				t.Fatalf("non-deterministic seed plan: %v", err)
 			}
-		raw, err := os.ReadFile(filepath.Join("..", "..", "..", "experiments", "projection-first", "candidate-"+variant+".json"))
+			raw, err := os.ReadFile(filepath.Join("..", "..", "..", "experiments", "projection-first", "candidate-"+variant+".json"))
 			if err != nil {
 				t.Fatal(err)
 			}

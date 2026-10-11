@@ -17,15 +17,15 @@ import (
 // Empty PermissionProfile preserves the existing user's configured boundary.
 // The adapter must not translate absence into broader sandbox/approval flags.
 type Config struct {
-	Command           string        `json:"command"`
-	ProviderVersion   string        `json:"providerVersion"`
-	Model             string        `json:"model"`
-	ReasoningEffort   string        `json:"reasoningEffort"`
-	PermissionProfile string        `json:"permissionProfile,omitempty"`
+	Command               string                `json:"command"`
+	ProviderVersion       string                `json:"providerVersion"`
+	Model                 string                `json:"model"`
+	ReasoningEffort       string                `json:"reasoningEffort"`
+	PermissionProfile     string                `json:"permissionProfile,omitempty"`
 	WindowsSandboxBackend WindowsSandboxBackend `json:"windowsSandboxBackend,omitempty"`
-	Helpers           HelperPolicy  `json:"helpers"`
-	Timeout           time.Duration `json:"timeout"`
-	MaxEventBytes     int64         `json:"maxEventBytes"`
+	Helpers               HelperPolicy          `json:"helpers"`
+	Timeout               time.Duration         `json:"timeout"`
+	MaxEventBytes         int64                 `json:"maxEventBytes"`
 }
 
 // WindowsSandboxBackend selects a supported Windows-only native sandbox
