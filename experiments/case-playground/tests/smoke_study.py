@@ -125,6 +125,11 @@ def main() -> int:
     checks = {c.get("check"): c.get("status") for c in (record.get("preflight") or {}).get("checks") or []}
     check((record.get("preflight") or {}).get("status") == "passed" and checks.get("image build") == "ok"
           and checks.get("markitect binary") == "ok", "the preflight passed and built the image and binary once")
+    check(checks.get("image pins") == "ok" and checks.get("image inventory") == "ok"
+          and checks.get("judging code") == "ok"
+          and re.fullmatch(r"[0-9a-f]{64}", (versions.get("image") or {}).get("inventorySha256") or "") is not None
+          and (out / "preflight" / "image-inventory.txt").is_file(),
+          "the image matched the committed inventory and the judging code was committed")
     check(all(s.get("startedAt") and s.get("endedAt") and s.get("seconds") is not None for s in steps)
           and len(steps) == 2 * len(runs) + 1, "every step records its times, status and exit")
     parameters = record.get("parameters") or {}

@@ -11,8 +11,13 @@ p runs `firstArm` first when p is odd and the other arm first when p is even. Ru
 Order: the preflight runs every cheap check and prints every problem at once (exit 3),
 among them the pre-registration of the evaluation files (registration.py; a study has no
 exploratory override, and every run records that one registration) and reviewer models
-that differ from the arms' models (with --fake-reviewers only a warning); then it builds
-the image and the Markitect binary once (`--preflight` stops before that). The runs
+that differ from the arms' models (with --fake-reviewers only a warning), committed judging
+code (playground/ and the public checks; changed code would make every assessment
+exploratory), the image pins
+in container/Dockerfile and a committed image inventory for the study's CLI versions
+(image.py); then it builds the image and the Markitect binary once (`--preflight` stops
+before that). A failed image build, its inventory check included, is the environment's
+(exit 11); a Markitect binary that does not build fails the preflight (3). The runs
 follow in schedule order, one after the other; then every run whose container finished
 is assessed, and every pair with both assessments is compared
 (A = conventional, B = markitect; a fairness mismatch fails the step, it is never
@@ -54,7 +59,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
-from . import compare, evaluate, host, outcome, registration, reviewers
+from . import compare, evaluate, host, image, outcome, registration, reviewers
 from . import manifest as manifest_module
 
 SCHEMA = 1
@@ -517,6 +522,7 @@ def preflight(study: dict, runs: list[dict], out: Path, *, codex_source: Path, c
         else:
             add("free disk", "ok", f"{free / (1 << 30):.0f} GiB free at {parent}")
 
+    _image_checks(runs[0]["manifest"], add)
     pre = facts["preRegistration"] = registration.observe(host.ROOT)
     if pre["status"] == "registered":
         add("pre-registration", "ok", f"evaluation files committed: tree {pre['evaluationTree'][:12]} at commit "
@@ -524,12 +530,48 @@ def preflight(study: dict, runs: list[dict], out: Path, *, codex_source: Path, c
     else:
         add("pre-registration", "fail", f"{registration.refusal(pre)}; the evaluation files judge the runs and "
                                         "are pre-registered: commit them first (a study has no exploratory override)")
+    code = evaluate.judging_code(study["case"])
+    if code["dirty"] is False:
+        add("judging code", "ok", f"playground and public checks committed at {code['commit'][:12]}")
+    else:
+        state = (f"has local changes ({', '.join(code['changed'][:10])})" if code["dirty"]
+                 else f"has no known commit ({code.get('error')})")
+        add("judging code", "fail", f"the judging code (playground/, the public checks) {state}; every assessment "
+                                    "would be exploratory and compare refuses it: commit first (a study has no "
+                                    "exploratory override)")
     _reviewer_check(study, runs, add, fake_reviewers)
     leftovers = leftover_login_folders()
     if leftovers:
         add("login folders", "warn", f"login folders of an earlier study are left in {Path(STATE_HOME) / 'logins'} "
                                      f"({', '.join(leftovers)}); delete them if no study is running")
     return checks, facts
+
+
+def _image_checks(manifest: dict, add) -> None:
+    """The Dockerfile's pins, and a committed inventory for the study's CLI versions with
+    the same pins: the build compares the image with it (every run shares the versions)."""
+    try:
+        pinned = host.image_pins()
+    except host.HostError as exc:
+        add("image pins", "fail", str(exc))
+        pinned = None
+    else:
+        add("image pins", "ok", f"base {pinned['base']}, Debian snapshot {pinned['snapshot']}")
+    committed = host.committed_inventory(manifest)
+    if not committed.is_file():
+        add("image inventory", "fail", f"no committed image inventory {committed}; a study compares its image with "
+                                       f"it: build once, review image-inventory.txt and commit it ({host.PINS_HELP})")
+        return
+    if pinned is None:
+        add("image inventory", "skip", "needs the image pins")
+        return
+    try:
+        image.validate(committed.read_text(encoding="utf-8"), pinned)
+    except (OSError, UnicodeError, image.ImageError) as exc:
+        add("image inventory", "fail", f"{committed}: {exc}; regenerate it for the Dockerfile's pins "
+                                       f"({host.PINS_HELP})")
+    else:
+        add("image inventory", "ok", f"committed {committed.name}")
 
 
 def _reviewer_check(study: dict, runs: list[dict], add, fake_reviewers: bool) -> None:
@@ -699,9 +741,10 @@ class Study:
         self.save()
         code = outcome.HARNESS
         try:
-            if not self.build():
-                code = outcome.PREFLIGHT
-                self.record["status"] = "preflight-failed"
+            failed = self.build()
+            if failed is not None:
+                code = failed
+                self.record["status"] = "image-build-failed" if failed == outcome.ENVIRONMENT else "preflight-failed"
                 return code
             self.write_manifests()
             self.logins = Logins(self.study["id"], codex=self.codex_source, claude=self.claude_source)
@@ -779,22 +822,28 @@ class Study:
         for command in commands:
             print(f"  {command}", file=sys.stderr)
 
-    def build(self) -> bool:
-        """The image and the Markitect binary, once for every run (preflight checks)."""
+    def build(self) -> int | None:
+        """The image and the Markitect binary, once for every run (preflight checks).
+        Returns None, or the exit code of what failed: a failed image build (its
+        inventory check included) is the environment's, a binary that does not build a
+        failed preflight."""
         checks = self.record["preflight"]["checks"]
         manifest = self.runs[0]["manifest"]
         tag = host.image_tag(manifest)
+        inventory = self.out / "preflight" / "image-inventory.txt"
         try:
             print(f"building image {tag} ...", flush=True)
-            image_id = host.build_image(manifest, self.out / "preflight" / "image-build.log")
+            built_image = host.build_image(manifest, self.out / "preflight" / "image-build.log", inventory)
         except (host.HostError, OSError) as exc:
             checks.append({"check": "image build", "status": "fail", "message": f"{exc}; fix the build and run again"})
             self.record["preflight"]["status"] = "failed"
             print(f"  [FAIL] image build: {exc}", file=sys.stderr)
-            return False
-        checks.append({"check": "image build", "status": "ok", "message": f"{tag} {image_id}"})
-        self.prebuilt = {"image": {"tag": tag, "id": image_id}}
-        self.record["versions"]["image"] = {"tag": tag, "id": image_id}
+            return outcome.ENVIRONMENT
+        checks.append({"check": "image build", "status": "ok",
+                       "message": f"{tag} {built_image['id']}, inventory sha256 {built_image['inventorySha256']} "
+                                  "as committed"})
+        self.prebuilt = {"image": built_image, "inventory": inventory}
+        self.record["versions"]["image"] = built_image
         if "markitect" in self.study["arms"]:
             binary = self.out / "preflight" / "bin" / "markitect"
             try:
@@ -805,12 +854,12 @@ class Study:
                                "message": f"{exc}; check the commit and the Go toolchain"})
                 self.record["preflight"]["status"] = "failed"
                 print(f"  [FAIL] markitect binary: {exc}", file=sys.stderr)
-                return False
+                return outcome.PREFLIGHT
             checks.append({"check": "markitect binary", "status": "ok", "message": f"sha256 {built['sha256']}"})
             self.prebuilt.update(markitect=built, binary=binary)
             self.record["versions"]["markitect"] = built
         self.save()
-        return True
+        return None
 
     def write_manifests(self) -> None:
         folder = self.out / "manifests"
@@ -959,6 +1008,7 @@ def _fmt(value: Any) -> str:
 
 def render(record: dict) -> str:
     p, versions = record["parameters"], record["versions"]
+    built = versions.get("image") or {}
     agent = p["agent"]
     pre = record.get("preRegistration") or {}
     lines = [f"# Study {record['id']}", "",
@@ -981,7 +1031,8 @@ def render(record: dict) -> str:
              + (" (uncommitted changes)" if (versions.get("playground") or {}).get("dirty") else "")
              + f"; Python {versions.get('python')}; host {_fmt(versions.get('hostPlatform'))}; Docker "
                f"{_fmt(versions.get('docker'))}; Go {_fmt(versions.get('go'))}; image "
-               f"{_fmt((versions.get('image') or {}).get('id'))}; binary sha256 "
+               f"{_fmt(built.get('id'))} (base {_fmt(built.get('base'))}, Debian snapshot "
+               f"{_fmt(built.get('snapshot'))}); binary sha256 "
                f"{_fmt((versions.get('markitect') or {}).get('sha256'))}.",
              f"- Logins (paths only): Codex {_fmt(record['logins']['codex'])}, Claude token "
              f"{_fmt(record['logins']['claude'])}; never written by the study."

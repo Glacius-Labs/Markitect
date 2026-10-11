@@ -145,14 +145,86 @@ class ArchiveTests(unittest.TestCase):
             self.assertFalse((Path(temp) / "escape.txt").exists())
 
 
+class CodeStateTests(unittest.TestCase):
+    def setUp(self):
+        temp = tempfile.TemporaryDirectory()
+        self.addCleanup(temp.cleanup)
+        self.repo = committed(Path(temp.name).resolve() / "repo")
+        (self.repo / "playground").mkdir()
+        (self.repo / "playground" / "assess.py").write_text("x = 1\n", encoding="utf-8")
+        git(self.repo, "add", "-A")
+        git(self.repo, "commit", "-q", "-m", "code")
+        self.paths = ("playground", "cases/common/checks")
+
+    def state(self, root: Path | None = None) -> dict:
+        root = root or self.repo
+        return registration.code_state(root, self.paths, runner(root))
+
+    def test_committed_code_is_clean_with_its_commit(self):
+        record = self.state()
+        self.assertEqual((record["commit"], record["dirty"], record["changed"]),
+                         (git(self.repo, "rev-parse", "HEAD"), False, []))
+        self.assertEqual(record["paths"], list(self.paths))
+
+    def test_changed_or_untracked_code_is_dirty_and_other_paths_do_not_count(self):
+        (self.repo / "notes.md").write_text("elsewhere\n", encoding="utf-8")
+        self.assertIs(self.state()["dirty"], False)
+        (self.repo / "playground" / "assess.py").write_text("x = 2\n", encoding="utf-8")
+        (self.repo / "cases" / "common" / "checks").mkdir(parents=True)
+        (self.repo / "cases" / "common" / "checks" / "new.py").write_text("", encoding="utf-8")
+        record = self.state()
+        self.assertIs(record["dirty"], True)
+        self.assertEqual(sorted(record["changed"]), ["cases/common/checks/new.py", "playground/assess.py"])
+
+    def test_no_checkout_is_unknown(self):
+        with tempfile.TemporaryDirectory() as temp:
+            record = self.state(Path(temp))
+        self.assertEqual((record["commit"], record["dirty"]), (None, None))
+        self.assertTrue(record["error"])
+
+
 class ReviewerTests(unittest.TestCase):
     CONFIG = {"reviewers": {"codex": {"model": "gpt-6.1-sol"}, "claude": {"model": "claude-opus-5-5"}}}
 
-    def test_model_ids_compare_casefolded_without_a_trailing_bracket(self):
-        self.assertEqual(registration.model_key(" Claude-Opus-5-5[1m] "), "claude-opus-5-5")
-        self.assertEqual(registration.model_key("gpt-6.1-sol"), "gpt-6.1-sol")
+    def test_model_ids_compare_normalized(self):
+        for given, key in ((" Claude-Opus-5-5[1m] ", "claude-opus-5-5"),
+                           ("gpt-6.1-sol", "gpt-6.1-sol"),
+                           ("anthropic/claude-opus-5-5", "claude-opus-5-5"),
+                           ("openai/gpt-6.1-sol", "gpt-6.1-sol"),
+                           ("openrouter/anthropic/claude-opus-5-5", "claude-opus-5-5"),
+                           ("us.anthropic.claude-opus-5-5-20261001-v1:0", "claude-opus-5-5"),
+                           ("anthropic.claude-opus-5-5-v2:0", "claude-opus-5-5"),
+                           ("global.anthropic.claude-sonnet-4-5-20250929-v1:0", "claude-sonnet-4-5"),
+                           ("claude-opus-5-5-20261001", "claude-opus-5-5"),
+                           ("claude-opus-5-5@20261001", "claude-opus-5-5"),
+                           ("gpt-4o-2024-08-06", "gpt-4o"),
+                           ("Claude-Opus-5-5-20261001[1m]", "claude-opus-5-5"),
+                           ("gpt-6-luna-v2", "gpt-6-luna-v2")):  # only Bedrock's -vN:N is a version suffix
+            with self.subTest(model=given):
+                self.assertEqual(registration.model_key(given), key)
         self.assertIsNone(registration.model_key(""))
         self.assertIsNone(registration.model_key(None))
+
+    def test_aliases_are_not_full_model_ids(self):
+        for model in ("opus", "Sonnet", "haiku", "fable", "opusplan", "default", "best", "opus[1m]",
+                      "anthropic/opus", "claude-opus", "gpt", "codex-mini-latest", "claude-3-5-sonnet-latest",
+                      "claude-opus-20261001"):
+            with self.subTest(model=model):
+                reason = registration.alias_reason(model)
+                self.assertIsNotNone(reason)
+                self.assertIn("is a model alias, not a full model id", reason)
+        for model in ("claude-opus-5-5", "claude-opus-5-5[1m]", "gpt-6.1-sol", "gpt-6-luna", "o3", "o4-mini",
+                      "us.anthropic.claude-sonnet-4-5-20250929-v1:0", "fake-model-1", None, ""):
+            with self.subTest(model=model):
+                self.assertIsNone(registration.alias_reason(model))
+
+    def test_an_alias_or_a_dated_id_of_the_same_model_still_clashes(self):
+        arms = registration.arm_models({"agent": {"model": "anthropic/Claude-Opus-5-5-20261001"}},
+                                       [{"role": "verifier", "model": "us.anthropic.claude-opus-5-5-v1:0"}])
+        self.assertEqual(set(arms), {"claude-opus-5-5"})
+        found = registration.clashes(self.CONFIG, ["codex", "claude"], arms)
+        self.assertEqual([(c["reviewer"], c["arm"]) for c in found],
+                         [("claude", "agent.model anthropic/Claude-Opus-5-5-20261001")])
 
     def test_arm_models_include_the_inner_model_and_every_role(self):
         manifest = {"agent": {"model": "gpt-6-luna"}, "markitect": {"innerModel": "GPT-6-LUNA"}}

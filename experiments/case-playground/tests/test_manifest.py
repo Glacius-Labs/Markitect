@@ -66,6 +66,18 @@ class ManifestTests(unittest.TestCase):
         result = manifest.validate(variant(container={"cpus": 2.5, "memory": "4g"}))
         self.assertEqual(result["container"], {"cpus": 2.5, "memory": "4g", "pidsLimit": 2048})
 
+    def test_models_are_full_ids_never_aliases(self):
+        for model in ("opus", "sonnet", "haiku", "fable", "opusplan", "default", "best", "Opus", "gpt",
+                      "codex-mini-latest"):
+            with self.subTest(model=model):
+                self.assertRejected(variant(agent__model=model), f"agent.model: '{model}' is a model alias")
+                inner = {**MARKITECT, "innerModel": model}
+                self.assertRejected(variant(method="markitect", markitect=inner),
+                                    f"markitect.innerModel: '{model}' is a model alias")
+        for model in ("gpt-6-luna", "claude-opus-5-5", "anthropic/claude-opus-5-5", "o3"):
+            with self.subTest(model=model):
+                self.assertEqual(manifest.validate(variant(agent__model=model))["agent"]["model"], model)
+
     def test_ids_and_enums(self):
         self.assertRejected(variant(id="Conv_1"), "id")
         self.assertRejected(variant(id="-leading-dash"), "id")
