@@ -446,6 +446,28 @@ class UnitTests(unittest.TestCase):
         self.assertEqual((blocked["class"], blocked["reason"]), ("product", "method setup blocked: init failed"))
         self.assertEqual((outcome["class"], outcome["reason"]), ("none", "stopped: total time used up after S3"))
 
+    def test_a_killed_run_container_is_the_environments_only_when_docker_reports_oom(self):
+        with tempfile.TemporaryDirectory() as temp:
+            results = Path(temp)
+            oom = evaluate.classify_run({"status": "completed", "containerExitCode": 137, "oomKilled": True},
+                                        {}, None, results, [])
+            killed = evaluate.classify_run({"status": "completed", "containerExitCode": 137, "oomKilled": False},
+                                           {}, None, results, [])
+            unknown = evaluate.classify_run({"status": "completed", "containerExitCode": 137}, {}, None, results, [])
+        self.assertEqual(oom["class"], "environment")
+        self.assertIn("OOMKilled", oom["reason"])
+        self.assertEqual((killed["class"], unknown["class"]), ("harness", "harness"))
+        self.assertIn("does not report it OOMKilled", killed["reason"])
+
+    def test_reviewer_models_in_the_config_must_be_full_ids(self):
+        for model in ("opus", "Sonnet[1m]", "default", "claude-opus-latest", "gpt"):
+            with self.subTest(model=model), self.assertRaises(evaluate.AssessError) as caught:
+                evaluate.check_config({"reviewers": {"claude": {"model": model}}}, "config.json")
+            self.assertIn("is a model alias, not a full model id", str(caught.exception))
+            self.assertIn("reviewer claude", str(caught.exception))
+        config = {"reviewers": {"codex": {"model": "gpt-6.1-sol"}, "claude": {"model": "claude-opus-5-5"}}}
+        self.assertEqual(evaluate.check_config(config, "config.json"), config)
+
     def test_timeout_without_cause_is_an_agent_outcome(self):
         with tempfile.TemporaryDirectory() as temp:
             station = {"folder": Path(temp), "record": {}}
@@ -523,8 +545,8 @@ class UnitTests(unittest.TestCase):
 class FakeDocker:
     """Stands in for subprocess.run/Popen in host; records every argv."""
 
-    def __init__(self, exit_code: int = 0):
-        self.calls, self.exit_code, self.container = [], exit_code, None
+    def __init__(self, exit_code: int = 0, oom: bool = False):
+        self.calls, self.exit_code, self.container, self.oom = [], exit_code, None, oom
 
     def run(self, cmd, **kwargs):
         self.calls.append(list(cmd))
@@ -534,7 +556,8 @@ class FakeDocker:
         elif cmd[:3] == ["docker", "image", "inspect"]:
             out = "sha256:img"
         elif cmd[:3] == ["docker", "container", "inspect"]:
-            code, out = (1, "") if self.container is None else (0, "false")
+            answer = str(self.oom).lower() if "{{.State.OOMKilled}}" in cmd else "false"
+            code, out = (1, "") if self.container is None else (0, answer)
         elif cmd[:2] == ["docker", "run"]:
             out, self.container = "cid", "stopped"
         elif cmd[:2] == ["docker", "wait"]:
@@ -613,7 +636,8 @@ class HostAssessTests(unittest.TestCase):
         tree, commit = self.registration["evaluationTree"], self.registration["commit"]
         for pair in (["--reviewers", "codex,claude"], ["--codex-auth", evaluate.SECRET_CODEX],
                      ["--claude-token", evaluate.SECRET_CLAUDE], ["--evaluation-source", "registered"],
-                     ["--evaluation-tree", tree], ["--evaluation-commit", commit], ["--evaluation-dirty", "no"]):
+                     ["--evaluation-tree", tree], ["--evaluation-commit", commit], ["--evaluation-dirty", "no"],
+                     ["--code-commit", commit], ["--code-dirty", "no"]):
             self.assertIn(pair, [command[i:i + 2] for i in range(len(command) - 1)])
         self.assertNotIn("--exploratory", command)
         self.assertTrue((out / "inputs" / "playground" / "evaluate.py").is_file())
@@ -623,7 +647,9 @@ class HostAssessTests(unittest.TestCase):
                           "readinglog/ground-truth.json", "readinglog/holdout.py"])  # never reference/ or validate.py
         record = json.loads((out / "host.json").read_text(encoding="utf-8"))
         self.assertEqual((record["status"], record["containerExitCode"]), ("completed", 0))
-        self.assertEqual(record["evaluation"], {"source": "registered", "tree": tree, "commit": commit, "dirty": False})
+        self.assertEqual(record["evaluation"], {"source": "registered", "tree": tree, "commit": commit, "dirty": False,
+                                                "code": {"commit": commit, "dirty": False}})
+        self.assertEqual(record["judgingCode"]["paths"], ["playground", "cases/common/checks", "cases/readinglog/checks"])
         self.assertEqual(record["rules"], {"exploratory": False, "reviewerClashes": []})
         self.assertGreater(record["timeoutSeconds"], 3 * 2700)
         everything = json.dumps(docker.calls) + (out / "host.json").read_text(encoding="utf-8")
@@ -763,10 +789,56 @@ class HostAssessTests(unittest.TestCase):
             self.assertEqual(entry.main(["assess", "--run", str(self.run_dir), "--force", "--fake-reviewers"]), 0)
         self.assertNotIn("--exploratory", self.command(docker))
 
-    def test_a_container_killed_under_its_memory_limit_is_the_environments(self):
-        self.assertEqual(self.assess(FakeDocker(exit_code=137)), 11)
+    def test_a_killed_container_is_the_environments_only_when_docker_reports_oom(self):
+        self.assertEqual(self.assess(FakeDocker(exit_code=137, oom=True)), 11)
         record = json.loads((self.run_dir / "assessment" / "host.json").read_text(encoding="utf-8"))
-        self.assertEqual((record["containerExitCode"], record["exitCode"]), (137, 11))
+        self.assertEqual((record["containerExitCode"], record["oomKilled"], record["exitCode"]), (137, True, 11))
+        self.assertEqual(self.assess(FakeDocker(exit_code=137), "--force"), 10)
+        record = json.loads((self.run_dir / "assessment" / "host.json").read_text(encoding="utf-8"))
+        self.assertEqual((record["containerExitCode"], record["oomKilled"], record["exitCode"]), (137, False, 10))
+
+    def test_changed_judging_code_makes_the_assessment_exploratory(self):
+        for path in ("playground/evaluate.py", "cases/common/checks/acceptance.py", "cases/readinglog/checks/x.py"):
+            with self.subTest(path=path):
+                changed = self.repo / path
+                changed.parent.mkdir(parents=True, exist_ok=True)
+                changed.write_text("# changed\n", encoding="utf-8")
+                docker, err = FakeDocker(), io.StringIO()
+                with mock.patch.object(host.subprocess, "run", docker.run), \
+                        mock.patch.object(host.subprocess, "Popen", docker.popen), \
+                        contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(err):
+                    self.assertEqual(entry.main(["assess", "--run", str(self.run_dir), "--reviewers", "none",
+                                                 "--force"]), 0)
+                self.assertIn("warning: the judging code has local changes", err.getvalue())
+                self.assertIn(path, err.getvalue())
+                command = self.command(docker)
+                self.assertIn("--exploratory", command)
+                self.assertEqual(command[command.index("--code-dirty") + 1], "yes")
+                self.assertEqual(command[command.index("--evaluation-source") + 1], "registered")
+                record = json.loads((self.run_dir / "assessment" / "host.json").read_text(encoding="utf-8"))
+                self.assertTrue(record["rules"]["exploratory"])
+                self.assertEqual(record["evaluation"]["code"]["dirty"], True)
+                changed.unlink()
+        other = self.repo / "cases" / "roombook" / "checks" / "roombook.py"  # another case's checks do not judge it
+        other.parent.mkdir(parents=True)
+        other.write_text("# changed\n", encoding="utf-8")
+        docker = FakeDocker()
+        self.assertEqual(self.assess(docker, "--force", "--reviewers", "none"), 0)
+        self.assertNotIn("--exploratory", self.command(docker))
+
+    def test_a_registered_config_with_an_alias_is_refused(self):
+        config = self.repo / "evaluation" / "config.json"
+        data = json.loads(config.read_text(encoding="utf-8"))
+        data["reviewers"]["claude"]["model"] = "opus"
+        config.write_text(json.dumps(data), encoding="utf-8")
+        evaluation_repo.git(self.repo, "commit", "-q", "-am", "alias")
+        self.registration = registration.observe(self.repo, evaluation_repo.runner(self.repo))
+        self.write_host()
+        docker, err = FakeDocker(), io.StringIO()
+        with mock.patch.object(host.subprocess, "run", docker.run), contextlib.redirect_stderr(err):
+            self.assertEqual(entry.main(["assess", "--run", str(self.run_dir), "--reviewers", "none"]), 2)
+        self.assertIn("reviewer claude: 'opus' is a model alias", err.getvalue())
+        self.assertEqual(docker.calls, [])
 
     def test_an_unexpected_error_is_recorded_with_the_code_the_process_exits_with(self):
         with mock.patch.object(host, "wait_container", side_effect=RuntimeError("bug")):

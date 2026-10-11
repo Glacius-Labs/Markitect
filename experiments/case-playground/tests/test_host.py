@@ -12,8 +12,9 @@ from pathlib import Path
 from unittest import mock
 
 from playground import __main__ as entry
-from playground import host, outcome
+from playground import host, image, outcome
 from tests import evaluation_repo
+from tests.test_image import DOCKERFILE, sample_inventory
 
 def station_plan(case: str, sizes: tuple[int, ...]) -> str:
     ids = iter(f"X{i:02d}" for i in range(1, 100))
@@ -68,8 +69,9 @@ class FakeDocker:
     exits `exit_code` and leaves a results/report.json of class `run_class` (None: none)."""
 
     def __init__(self, wait_effect=None, run_fails=False, existing=False, wait_fails=False, inspect_error=None,
-                 exit_code=1, run_class="none"):
+                 exit_code=1, run_class="none", build_fails=False, inventory=None, oom=False):
         self.calls = []
+        self.build_fails, self.inventory, self.oom = build_fails, inventory, oom
         self.inspect_error = inspect_error
         self.wait_effect = wait_effect
         self.run_fails = run_fails
@@ -82,13 +84,19 @@ class FakeDocker:
         code, out, err = 0, "", ""
         if cmd[:2] == ["docker", "version"]:
             out = "29.4.1"
+        elif cmd[:2] == ["docker", "build"]:
+            code = 1 if self.build_fails else 0
         elif cmd[:3] == ["docker", "image", "inspect"]:
             out = "sha256:feed"
+        elif cmd[:2] == ["docker", "run"] and cmd[-1] == image.INVENTORY_IN_IMAGE:
+            out = self.inventory if self.inventory is not None else sample_inventory(host.image_pins())
         elif cmd[:3] == ["docker", "container", "inspect"]:
             if self.inspect_error:
                 code, err = 1, self.inspect_error
             elif self.container is None:
                 code, err = 1, f"Error: No such container: {cmd[-1]}"
+            elif "{{.State.OOMKilled}}" in cmd:
+                out = str(self.oom).lower()
             else:
                 out = str(self.container == "running").lower()
         elif cmd[:2] == ["docker", "run"]:
@@ -133,6 +141,7 @@ class HostTestBase(unittest.TestCase):
         for name in ("playground/__pycache__", "cases/common", "methods/conventional", "methods/markitect",
                      "tests", "container"):
             (root / name).mkdir(parents=True)
+        shutil.copyfile(DOCKERFILE, root / "container" / "Dockerfile")
         make_case(root, "roombook", (1, 3, 7, 1))
         make_case(root, "readinglog", (1, 3, 7, 1))
         (root / "cases" / "task-prompt.txt").write_text("prompt\n", encoding="utf-8")
@@ -224,14 +233,21 @@ class RunTests(HostTestBase):
         record = self.host_record()
         self.assertEqual(record["status"], "completed")
         self.assertEqual((record["containerExitCode"], record["exitCode"]), (1, 1))
+        pinned = host.image_pins()
+        inventory = (self.out / "image-inventory.txt").read_bytes()
+        self.assertEqual(inventory.decode("utf-8"), sample_inventory(pinned))
         self.assertEqual(record["image"], {"tag": "markitect-playground:codex-0.162.0-claude-2.1.296",
-                                           "id": "sha256:feed"})
+                                           "id": "sha256:feed", "base": pinned["base"],
+                                           "snapshot": pinned["snapshot"],
+                                           "dockerfileSha256": pinned["dockerfileSha256"],
+                                           "inventorySha256": image.sha256(inventory)})
+        self.assertIs(record["oomKilled"], False)
         self.assertEqual(record["stations"], 4)
         self.assertEqual(record["secrets"], {"codexAuth": False, "claudeToken": False})
         self.assertEqual(record["dockerVersion"], "29.4.1")
         self.assertEqual(record["hostPlatform"], {"system": platform.system(), "machine": platform.machine()})
         self.assertEqual(record["hostPlatform"], host.host_platform())
-        run = next(c for c in docker.calls if c[:2] == ["docker", "run"])
+        run = next(c for c in docker.calls if c[:3] == ["docker", "run", "--detach"])
         self.assertIn(f"MPG_HOST_SYSTEM={platform.system()}", run)
         self.assertIn(f"MPG_HOST_MACHINE={platform.machine()}", run)
         inputs = self.out / "inputs"
@@ -253,8 +269,15 @@ class RunTests(HostTestBase):
         build = next(c for c in docker.calls if c[:2] == ["docker", "build"])
         self.assertEqual(build[-3:], ["--build-arg", "CODEX_VERSION=0.162.0", str(host.ROOT / "container")])
         self.assertIn("CLAUDE_VERSION=2.1.296", build)
+        self.assertIn(f"SOURCE_DATE_EPOCH={pinned['sourceDateEpoch']}", build)
         self.assertIn("--provenance=false", build)  # keeps the image ID stable across rebuilds
-        run = next(c for c in docker.calls if c[:2] == ["docker", "run"])
+        read = next(c for c in docker.calls if c[-1] == image.INVENTORY_IN_IMAGE)
+        self.assertEqual(read[:8], ["docker", "run", "--rm", "--label", "markitect-playground=1", "--network", "none",
+                                    "--entrypoint"])
+        self.assertEqual(read[-3:-1], ["cat", "sha256:feed"])  # the image just built, by its ID
+        self.assertLess(docker.calls.index(build), docker.calls.index(read))
+        self.assertLess(docker.calls.index(read), docker.calls.index(run))
+        run = next(c for c in docker.calls if c[:3] == ["docker", "run", "--detach"])
         self.assertIn(host._mount(inputs.resolve(), "/in", readonly=True), run)
         commands = docker.commands()
         self.assertLess(commands.index("docker container"), commands.index("docker build"))  # name check first
@@ -307,10 +330,78 @@ class RunTests(HostTestBase):
         record = self.host_record()
         self.assertEqual((record["status"], record["exitCode"], record["error"]), ("harness-error", 10, "RuntimeError: bug"))
 
-    def test_a_container_killed_under_its_memory_limit_is_the_environments(self):
-        self.assertEqual(self.run_host(FakeDocker(exit_code=137, run_class=None)), 11)
+    def test_a_killed_container_is_the_environments_only_when_docker_reports_oom(self):
+        docker = FakeDocker(exit_code=137, run_class=None, oom=True)
+        self.assertEqual(self.run_host(docker), 11)
         record = self.host_record()
-        self.assertEqual((record["containerExitCode"], record["exitCode"]), (137, 11))
+        self.assertEqual((record["containerExitCode"], record["oomKilled"], record["exitCode"]), (137, True, 11))
+        oom = [c for c in docker.calls if "{{.State.OOMKilled}}" in c]
+        self.assertEqual([c[-1] for c in oom], ["mpg-fake-roombook-001"])
+        commands = [" ".join(c[:2]) for c in docker.calls]
+        self.assertLess(docker.calls.index(oom[0]), commands.index("docker rm"))  # asked before the removal
+        shutil.rmtree(self.out)
+        self.assertEqual(self.run_host(FakeDocker(exit_code=137, run_class="environment")), 10)
+        record = self.host_record()
+        self.assertEqual((record["containerExitCode"], record["oomKilled"], record["exitCode"]), (137, False, 10))
+
+    def test_a_failed_image_build_is_the_environments(self):
+        docker = FakeDocker(build_fails=True)
+        self.assertEqual(self.run_host(docker), 11)
+        record = self.host_record()
+        self.assertEqual((record["status"], record["exitCode"], record["containerLaunched"]),
+                         ("setup-failed", 11, False))
+        self.assertIn("docker build failed", record["error"])
+        self.assertNotIn("docker run", docker.commands())
+
+    def test_an_image_whose_inventory_differs_from_the_committed_one_fails_the_build(self):
+        committed = host.ROOT / "container" / "inventory" / "codex-0.162.0-claude-2.1.296.txt"
+        committed.parent.mkdir()
+        committed.write_text(sample_inventory(host.image_pins()), encoding="utf-8")
+        self.assertEqual(self.run_host(FakeDocker()), 1)  # the same inventory: the run goes on
+        built = sample_inventory(host.image_pins(), dpkg=("bash 5.2.15-2+b9 amd64",))
+        for inventory, fragment in ((built, "+ dpkg bash 5.2.15-2+b9 amd64"),
+                                    (sample_inventory(host.image_pins(), npm=("left-pad@^1.0.0",)),
+                                     "not an exact version: left-pad@^1.0.0"),
+                                    ("garbage", "not an image inventory")):
+            with self.subTest(fragment=fragment):
+                shutil.rmtree(self.out)
+                docker = FakeDocker(inventory=inventory)
+                self.assertEqual(self.run_host(docker), 11)
+                record = self.host_record()
+                self.assertEqual((record["status"], record["exitCode"]), ("setup-failed", 11))
+                self.assertIn("failed its inventory check", record["error"])
+                self.assertIn(fragment, record["error"])
+                self.assertEqual((self.out / "image-inventory.txt").read_text(encoding="utf-8"), inventory)  # to review
+                self.assertFalse(any("--detach" in call for call in docker.calls))
+
+    def test_without_a_committed_inventory_a_run_only_warns(self):
+        docker, err = FakeDocker(), io.StringIO()
+        argv = ["run", "--manifest", str(self.manifest_path), "--out", str(self.out)]
+        with mock.patch.object(host.subprocess, "run", docker.run), \
+                mock.patch.object(host.subprocess, "Popen", docker.popen), \
+                contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(err):
+            self.assertEqual(host.main(argv), 1)
+        self.assertIn("warning: no committed image inventory", err.getvalue())
+        self.assertIn("codex-0.162.0-claude-2.1.296.txt", err.getvalue())
+        self.assertEqual(self.host_record()["status"], "completed")
+        # The built inventory is printed between markers, exactly as it would be committed.
+        text = err.getvalue()
+        begin = host.INVENTORY_BEGIN.format(name="container/inventory/codex-0.162.0-claude-2.1.296.txt")
+        printed = text.split(begin + "\n", 1)[1].split(host.INVENTORY_END, 1)[0]
+        self.assertEqual(printed, (self.out / "image-inventory.txt").read_text(encoding="utf-8"))
+
+    def test_an_unpinned_dockerfile_is_refused_before_docker(self):
+        dockerfile = host.ROOT / "container" / "Dockerfile"
+        base = host.image_pins()["base"]
+        dockerfile.write_text(dockerfile.read_text(encoding="utf-8").replace(base, "node:22-bookworm-slim"),
+                              encoding="utf-8")
+        docker, err = FakeDocker(), io.StringIO()
+        argv = ["run", "--manifest", str(self.manifest_path), "--out", str(self.out)]
+        with mock.patch.object(host.subprocess, "run", docker.run), contextlib.redirect_stderr(err):
+            self.assertEqual(host.main(argv), 2)
+        self.assertIn("is not pinned by digest", err.getvalue())
+        self.assertEqual(docker.calls, [])
+        self.assertFalse(self.out.exists())
 
     def test_a_non_linux_host_gets_a_warning_and_the_run_goes_on(self):
         for system, warned in (("Windows", True), ("Darwin", True), ("Linux", False)):
@@ -384,7 +475,7 @@ class RunTests(HostTestBase):
 
         def interrupted(cmd, **kwargs):
             result = original(cmd, **kwargs)
-            if cmd[:2] == ["docker", "run"]:
+            if cmd[:3] == ["docker", "run", "--detach"]:
                 raise KeyboardInterrupt
             return result
 
@@ -404,7 +495,9 @@ class RunTests(HostTestBase):
 
     def run_prebuilt(self, docker, before_remove):
         manifest = host.manifest_module.load(self.manifest_path, playground=host.ROOT)
-        prebuilt = {"image": {"tag": host.image_tag(manifest), "id": "sha256:built-once"}}
+        inventory = self.base / "built-once-inventory.txt"
+        inventory.write_text("the study's inventory\n", encoding="utf-8")
+        prebuilt = {"image": {"tag": host.image_tag(manifest), "id": "sha256:built-once"}, "inventory": inventory}
         with mock.patch.object(host.subprocess, "run", docker.run),                 mock.patch.object(host.subprocess, "Popen", docker.popen), quiet():
             return host.run_manifest(manifest, self.out, auth=None, token=None, prebuilt=prebuilt,
                                      before_remove=before_remove)
@@ -414,11 +507,12 @@ class RunTests(HostTestBase):
         code, record = self.run_prebuilt(docker, lambda name: seen.append((name, docker.container)))
         self.assertEqual((code, record["image"]["id"]), (1, "sha256:built-once"))
         self.assertEqual(seen, [("mpg-fake-roombook-001", "stopped")])
-        run = next(c for c in docker.calls if c[:2] == ["docker", "run"])
+        run = next(c for c in docker.calls if c[:3] == ["docker", "run", "--detach"])
         self.assertIn("sha256:built-once", run)
         self.assertFalse(any(arg.startswith("markitect-playground:") for arg in run))  # never the tag
         self.assertFalse(any(c[:2] == ["docker", "build"] for c in docker.calls))
         self.assertIsNone(docker.container)
+        self.assertEqual((self.out / "image-inventory.txt").read_text(encoding="utf-8"), "the study's inventory\n")
 
     def test_an_interrupt_in_the_pre_removal_hook_still_removes_the_container(self):
         docker = FakeDocker()
@@ -465,7 +559,7 @@ class RunTests(HostTestBase):
         auth = self.base / "fixture auth.json"
         auth.write_text("fixture", encoding="utf-8")
         self.run_host(docker, "--codex-auth", str(auth), manifest=manifest)
-        run = next(c for c in docker.calls if c[:2] == ["docker", "run"])
+        run = next(c for c in docker.calls if c[:3] == ["docker", "run", "--detach"])
         self.assertIn(host._mount(auth.resolve(), "/run/secrets/codex-auth.json", readonly=True), run)
         self.assertFalse((self.out / "inputs" / "tests").exists())  # the fake agent is staged only for fake runs
 
@@ -487,7 +581,7 @@ class RunTests(HostTestBase):
         self.assertEqual(build.call_args.args[0], recorded)
         staged = json.loads((self.out / "inputs" / "manifest.json").read_text(encoding="utf-8"))
         self.assertEqual(staged["markitect"], recorded)
-        run = next(c for c in docker.calls if c[:2] == ["docker", "run"])
+        run = next(c for c in docker.calls if c[:3] == ["docker", "run", "--detach"])
         self.assertIn("MPG_MARKITECT_SHA256=" + "f" * 64, run)
         self.assertIn("MPG_MARKITECT_COMMIT=" + built["commit"], run)
         self.assertFalse((self.out / "inputs" / "methods").exists())  # notes for people stay on the host
@@ -567,7 +661,7 @@ class RunTests(HostTestBase):
         token.write_text(secret + "\n", encoding="utf-8")
         self.run_host(docker, "--claude-token", str(token), manifest=manifest)
         record = self.host_record()
-        run = next(c for c in docker.calls if c[:2] == ["docker", "run"])
+        run = next(c for c in docker.calls if c[:3] == ["docker", "run", "--detach"])
         self.assertIn(host._mount(token.resolve(), "/run/secrets/claude-token", readonly=True), run)
         self.assertFalse(any("codex-auth" in arg for arg in run))  # conventional: no Codex login needed
         self.assertEqual(record["secrets"], {"codexAuth": False, "claudeToken": True})
@@ -597,7 +691,7 @@ class RunTests(HostTestBase):
                 mock.patch.object(host, "resolve_markitect", side_effect=resolved), \
                 mock.patch.object(host, "build_markitect", return_value=built):
             self.run_host(docker, "--claude-token", str(token), "--codex-auth", str(auth), manifest=manifest)
-        run = next(c for c in docker.calls if c[:2] == ["docker", "run"])
+        run = next(c for c in docker.calls if c[:3] == ["docker", "run", "--detach"])
         self.assertIn(host._mount(auth.resolve(), "/run/secrets/codex-auth.json", readonly=True), run)
         self.assertIn(host._mount(token.resolve(), "/run/secrets/claude-token", readonly=True), run)
 
@@ -607,13 +701,13 @@ class RunTests(HostTestBase):
         self.run_host(docker, manifest=manifest)
         self.assertTrue((self.out / "inputs" / "tests" / "fake_claude.py").is_file())
         self.assertFalse((self.out / "inputs" / "tests" / "fake_agent.py").exists())
-        run = next(c for c in docker.calls if c[:2] == ["docker", "run"])
+        run = next(c for c in docker.calls if c[:3] == ["docker", "run", "--detach"])
         self.assertEqual(sum(arg == "--mount" for arg in run), 2)
         self.out = self.base / "runs" / "second"
         token = self.base / "dummy-token"
         token.write_text("fake-token", encoding="utf-8")
         self.run_host(docker, "--claude-token", str(token), manifest=manifest)
-        run = [c for c in docker.calls if c[:2] == ["docker", "run"]][-1]
+        run = [c for c in docker.calls if c[:3] == ["docker", "run", "--detach"]][-1]
         self.assertIn(host._mount(token.resolve(), "/run/secrets/claude-token", readonly=True), run)
 
     def test_markitect_without_go_fails_clearly(self):
@@ -707,14 +801,33 @@ class BuildFailureTests(unittest.TestCase):
             host.build_markitect({"sourceRepo": temp, "commit": "c" * 40}, Path(temp) / "bin" / "markitect")
         return caught.exception
 
-    def test_a_failed_go_build_is_the_products_unless_the_network_failed(self):
-        failure = self.build("internal/x.go:3: undefined: y")
-        self.assertEqual(failure.code, outcome.PRODUCT)
-        self.assertIn("does not build", str(failure))
-        for text in ("go: downloading go1.27.1: dial tcp: lookup proxy.golang.org: no such host",
-                     "verifying module: Get https://sum.golang.org/lookup: i/o timeout"):
+    def test_a_failed_go_build_is_the_products_only_for_a_compile_error_in_its_sources(self):
+        for text in ("internal/x.go:3: undefined: y",
+                     "# github.com/Glacius-Labs/Markitect/internal/x\nsrc/internal/x.go:3:5: undefined: y",
+                     "go: downloading go1.27.1 (linux/amd64)\n# example/x\n./src/x.go:9:2: declared and not used: z"):
             with self.subTest(text=text):
-                self.assertEqual(self.build(text).code, outcome.ENVIRONMENT)
+                failure = self.build(text)
+                self.assertEqual(failure.code, outcome.PRODUCT)
+                self.assertIn("does not build", str(failure))
+        for text in ("go: downloading go1.27.1: dial tcp: lookup proxy.golang.org: no such host",
+                     "verifying module: Get https://sum.golang.org/lookup: i/o timeout",
+                     "src/x.go:3:5: undefined: y\ngo build: write /tmp/go-build1/b001/exe/a.out: "
+                     "no space left on device",
+                     "open /root/.cache/go-build/00/x: permission denied",
+                     "go: download go1.27.1 for linux/amd64: toolchain not available",
+                     "go: go.mod requires go >= 1.27.1 (running go 1.25.0; GOTOOLCHAIN=local)",
+                     "/usr/local/go/src/runtime/x.go:3:5: internal compiler error",
+                     "github.com/other/dep@v1.2.3/x.go:3:5: undefined: y",
+                     "signal: killed",
+                     "link: running gcc failed",
+                     ""):
+            with self.subTest(text=text):
+                self.assertEqual(self.build(text).code, outcome.ENVIRONMENT)  # when unsure: the environment's
+
+    def test_go_failure_class_reads_only_the_output(self):
+        self.assertEqual(host.go_failure_class("x.go:1:1: syntax error"), outcome.PRODUCT)
+        self.assertEqual(host.go_failure_class("C:\\go\\src\\x.go:1:1: syntax error"), outcome.ENVIRONMENT)
+        self.assertEqual(host.go_failure_class("something else failed"), outcome.ENVIRONMENT)
 
 
 @unittest.skipUnless(shutil.which("go") and shutil.which("git"), "needs go and git")
