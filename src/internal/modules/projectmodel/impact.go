@@ -49,7 +49,7 @@ func Context(report Report, managerID string) (ManagerContext, error) {
 		case c.Owner == managerID:
 			out.Checks = append(out.Checks, c)
 		case verifies:
-			c.Uses = visibleRelations(c.Uses, statementByID)
+			c.Uses = VisibleRelations(c.Uses, statementByID)
 			out.ForeignChecks = append(out.ForeignChecks, c)
 		}
 	}
@@ -84,8 +84,8 @@ func Context(report Report, managerID string) (ManagerContext, error) {
 	}
 	for id := range needed {
 		if s, found := statementByID[id]; found && s.Owner != managerID && s.Public {
-			s.Uses = visibleRelations(s.Uses, statementByID)
-			s.Requires = visibleRelations(s.Requires, statementByID)
+			s.Uses = VisibleRelations(s.Uses, statementByID)
+			s.Requires = VisibleRelations(s.Requires, statementByID)
 			out.Contracts = append(out.Contracts, s)
 		}
 	}
@@ -111,7 +111,10 @@ func Context(report Report, managerID string) (ManagerContext, error) {
 	return out, nil
 }
 
-func visibleRelations(ids []string, statements map[string]Statement) []string {
+// VisibleRelations keeps the relation targets any other Manager may see: the
+// public Statements among ids, sorted and unique. Views that show one
+// Manager's definitions to another pass relations through it.
+func VisibleRelations(ids []string, statements map[string]Statement) []string {
 	visible := make([]string, 0, len(ids))
 	for _, id := range ids {
 		if target, ok := statements[id]; ok && target.Public {

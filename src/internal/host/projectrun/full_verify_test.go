@@ -578,10 +578,24 @@ func TestFullVerifyInvocationReceivesExplicitCrossManagerArtifactEvidence(t *tes
 	attachedCheck := projectmodel.Check{ID: "check:artifact-check", Owner: otherManagerID, Command: []string{"python", "-m", "unittest"}, Limitation: "Checks the same snapshot.", Uses: []string{publicStatement.ID, privateCheckInput.ID}}
 	unrelatedCheck := projectmodel.Check{ID: "check:unrelated", Owner: otherManagerID, Command: []string{"go", "test", "./..."}}
 	project.Report.Checks = append(project.Report.Checks, attachedCheck, unrelatedCheck)
+	// A child Manager owes the parent integration. Its private Statement must
+	// stay hidden; its contract, which the parent also uses, and its Check,
+	// which the parent's artifact declares, must each be defined once.
+	child := projectmodel.Manager{ID: "manager:child", Name: "child", Parent: managerID}
+	project.Report.Managers = append(project.Report.Managers, child)
+	childPrivate := projectmodel.Statement{ID: "statement:child-private", Owner: child.ID, Public: false, Description: "Private detail of the child."}
+	childContract := projectmodel.Statement{ID: "statement:child-contract", Owner: child.ID, Public: true, Description: "Public contract of the child.", Uses: []string{childPrivate.ID}}
+	parentFlow := projectmodel.Statement{ID: "statement:parent-flow", Owner: managerID, Public: false, Description: "Parent behaviour built on the child contract.", Uses: []string{childContract.ID}}
+	project.Report.Statements = append(project.Report.Statements, childPrivate, childContract, parentFlow)
+	childArtifact := projectmodel.Artifact{ID: "artifact:child-implementation", Owner: child.ID, Required: true, Realizes: []string{childContract.ID, childPrivate.ID}}
+	project.Report.Artifacts = append(project.Report.Artifacts, childArtifact)
+	declaredChildCheck := projectmodel.Check{ID: "check:child-declared", Owner: child.ID, Command: []string{"go", "test", "./child/..."}, Limitation: "Child suite.", Uses: []string{childContract.ID, childPrivate.ID}}
+	childOnlyCheck := projectmodel.Check{ID: "check:child-only", Owner: child.ID, Command: []string{"go", "test", "./child/internal/..."}, Limitation: "Child internals.", Uses: []string{childPrivate.ID}}
+	project.Report.Checks = append(project.Report.Checks, declaredChildCheck, childOnlyCheck)
 	for index := range project.Report.Artifacts {
 		if project.Report.Artifacts[index].Owner == managerID {
 			project.Report.Artifacts[index].Realizes = append(project.Report.Artifacts[index].Realizes, publicStatement.ID, privateStatement.ID)
-			project.Report.Artifacts[index].Checks = append(project.Report.Artifacts[index].Checks, attachedCheck.ID)
+			project.Report.Artifacts[index].Checks = append(project.Report.Artifacts[index].Checks, attachedCheck.ID, declaredChildCheck.ID)
 			break
 		}
 	}
@@ -589,7 +603,12 @@ func TestFullVerifyInvocationReceivesExplicitCrossManagerArtifactEvidence(t *tes
 	if err != nil {
 		t.Fatal(err)
 	}
-	wantSubjects := fullAuditSubjects(owned, nil)
+	wantSubjects := fullAuditSubjects(owned, fullIntegrationObligations(project.Report, managerID))
+	for _, subject := range []string{"integration:statement:" + childContract.ID, "integration:check:" + declaredChildCheck.ID, "integration:check:" + childOnlyCheck.ID} {
+		if !containsString(wantSubjects, subject) {
+			t.Fatalf("the child's obligations lack %s: %v", subject, wantSubjects)
+		}
+	}
 
 	service, err := projectworkspace.NewGitService(t.TempDir(), projectworkspace.Limits{MaxFiles: 128, MaxFileBytes: 1 << 20, MaxTotalBytes: 4 << 20})
 	if err != nil {
@@ -616,14 +635,15 @@ func TestFullVerifyInvocationReceivesExplicitCrossManagerArtifactEvidence(t *tes
 		t.Fatalf("Manager audit failed: %v", err)
 	}
 	var auditContext struct {
-		Manager          projectmodel.ManagerContext `json:"manager"`
-		CheckResults     []CheckResult               `json:"checkResults"`
-		RequiredSubjects []string                    `json:"requiredSubjects"`
+		Manager                projectmodel.ManagerContext `json:"manager"`
+		IntegrationObligations []fullIntegrationObligation `json:"integrationObligations"`
+		CheckResults           []CheckResult               `json:"checkResults"`
+		RequiredSubjects       []string                    `json:"requiredSubjects"`
 	}
 	if err := json.Unmarshal(invoker.requestContext, &auditContext); err != nil {
 		t.Fatalf("decode captured audit context: %v", err)
 	}
-	for _, hidden := range []string{privateCheckInput.ID, privateRelation.ID, unrelatedStatement.ID} {
+	for _, hidden := range []string{privateCheckInput.ID, privateRelation.ID, unrelatedStatement.ID, childPrivate.ID} {
 		if strings.Contains(string(invoker.requestContext), hidden) {
 			t.Fatalf("audit context names %s, which the Manager may not see or does not reference", hidden)
 		}
@@ -637,20 +657,26 @@ func TestFullVerifyInvocationReceivesExplicitCrossManagerArtifactEvidence(t *tes
 			t.Fatalf("%s duplicates the Manager context; the audit must have one source", duplicate)
 		}
 	}
-	// Each Statement definition reaches the audit at most once, wherever it
-	// sits in the request; a realized foreign contract comes from
-	// manager.contracts with only public relations.
-	statementIDs := map[string]bool{}
+	// Each Statement, Artifact and Check definition reaches the audit at most
+	// once, wherever it sits in the request; a realized foreign contract comes
+	// from manager.contracts with only public relations.
+	definitionIDs := map[string]bool{}
 	for _, statement := range project.Report.Statements {
-		statementIDs[statement.ID] = true
+		definitionIDs[statement.ID] = true
+	}
+	for _, artifact := range project.Report.Artifacts {
+		definitionIDs[artifact.ID] = true
+	}
+	for _, check := range project.Report.Checks {
+		definitionIDs[check.ID] = true
 	}
 	definitions := map[string]int{}
 	var countDefinitions func(any)
 	countDefinitions = func(v any) {
 		switch x := v.(type) {
 		case map[string]any:
-			if id, ok := x["id"].(string); ok && statementIDs[id] {
-				if _, hasDescription := x["description"]; hasDescription {
+			if id, ok := x["id"].(string); ok && definitionIDs[id] {
+				if _, hasOwner := x["owner"]; hasOwner {
 					definitions[id]++
 				}
 			}
@@ -670,8 +696,24 @@ func TestFullVerifyInvocationReceivesExplicitCrossManagerArtifactEvidence(t *tes
 	countDefinitions(whole)
 	for id, count := range definitions {
 		if count != 1 {
-			t.Fatalf("Statement %s is defined %d times in the audit context", id, count)
+			t.Fatalf("%s is defined %d times in the audit context", id, count)
 		}
+	}
+	for _, id := range []string{childContract.ID, childArtifact.ID, declaredChildCheck.ID, childOnlyCheck.ID} {
+		if definitions[id] != 1 {
+			t.Fatalf("the child's %s is defined %d times in the audit context, want once", id, definitions[id])
+		}
+	}
+	// The child's definitions outside the Manager context keep only public relations.
+	if len(auditContext.IntegrationObligations) != 1 || auditContext.IntegrationObligations[0].ChildManager != child.ID {
+		t.Fatalf("integration obligations = %+v", auditContext.IntegrationObligations)
+	}
+	obligation := auditContext.IntegrationObligations[0]
+	if len(obligation.Artifacts) != 1 || !reflect.DeepEqual(obligation.Artifacts[0].Realizes, []string{childContract.ID}) {
+		t.Fatalf("child artifact in the obligations = %+v", obligation.Artifacts)
+	}
+	if len(obligation.Checks) != 1 || obligation.Checks[0].ID != childOnlyCheck.ID || len(obligation.Checks[0].Uses) != 0 {
+		t.Fatalf("child checks in the obligations = %+v", obligation.Checks)
 	}
 	var realized *projectmodel.Statement
 	for i := range auditContext.Manager.Contracts {
