@@ -1,7 +1,7 @@
 schema: markitect-roadmap-backlog/v1
 updated: '2026-10-12'
 roadmap: docs/implementation-plan.md
-main_basis: b66942ec3c486f25fe55d4bcc888d2e71173bc08
+main_basis: fa02c3e197c59f16ec90ee885c0469fe8aeda41d
 
 # Single owner of work-package status. The roadmap explains streams, waves,
 # zones and rules; this file records each package's current state.
@@ -503,14 +503,14 @@ packages:
     title: Split and parallelize the runtime end-to-end tests
     stream: TEST
     wave: 2
-    status: blocked
+    status: ready
     owner: qa
     depends_on: [RUN-01, TEST-01]
     zone: runtime
     inputs:
       - docs/work-items/surveys/tests-and-ci-20261010.md
       - docs/work-items/surveys/product-readiness-lessons-20261010.md
-    note: Dependencies are merged, but runtime writes wait for the BUG-01 review queue and explicit zone assignment. The race job takes about 16 minutes, about 13 of them projectrun; splitting the runtime end-to-end tests also shortens it.
+    note: Dependencies and the BUG-01 integration queue are merged. On 12 October the integrator releases the runtime zone to QA for this next package; no chat is dispatched by this status update. The race job takes about 16 minutes, about 13 of them projectrun; splitting the runtime end-to-end tests also shortens it. Preserve and investigate the separately recorded Windows one-hour Git timeout before claiming Windows validation.
     acceptance:
       - Runtime end-to-end tests live in their own package or tag, share a fixture template and run in parallel.
 
@@ -522,7 +522,7 @@ packages:
     owner: qa
     depends_on: [RUN-01]
     zone: runtime
-    note: RUN-01 is merged; blocked on the BUG-01 runtime queue and integrator zone assignment, not on the old executor PR.
+    note: RUN-01 and the BUG-01 integration queue are merged. Runtime implementation waits behind the integrator's TEST-03 assignment; a later package requires its own zone handoff.
     inputs:
       - docs/work-items/surveys/tests-and-ci-20261010.md
       - pull request 104 (exchange executor, superseding 92, and fault-injection tests)
@@ -539,7 +539,7 @@ packages:
     owner: qa
     depends_on: [TEST-01]
     zone: runtime
-    note: Slices 158 (non-timing test limits) and 159 (flake-report capability) are merged; 151 cleared the adapter_test.go dependency. Timer injection or fakes remain incomplete. Runtime writes wait for BUG-01 reviews 205, 221 and 223 and integrator zone assignment.
+    note: Slices 158 (non-timing test limits) and 159 (flake-report capability) are merged; 151 cleared the adapter_test.go dependency. Timer injection or fakes remain incomplete. The BUG-01 integration queue is merged; runtime writes wait behind the integrator's TEST-03 assignment and require a later zone handoff.
     inputs:
       - docs/work-items/surveys/tests-and-ci-20261010.md
       - docs/work-items/surveys/product-readiness-lessons-20261010.md
@@ -665,17 +665,18 @@ packages:
     title: Continuous bug hunt with verified findings
     stream: BUG
     wave: 1
-    status: active
+    status: ready
     owner: bughunter
     note: >-
-      Zones for fixes, set by the integrator on 10 October 2026: findings in core and projectmodel go
-      to kg; the bughunter fixes findings in projectwork, projectbriefing and projectcoverage and,
-      while no runtime session runs, in the runtime zone; interface-zone findings go to the integrator.
-      Claude is interrupted, not a live writer. The integrator merged 205, 221 and 223 after
-      independent review and fixed-candidate checks. Additional Context/brief-list no-write and
-      historical-context ancestor-visibility repairs remain active in separate isolated worktrees.
-      Runtime/QA implementation still requires explicit zone assignment. See the integration record
-      docs/validation/integration-queue-20261011.md; the session handoff preserves its earlier snapshot.
+      The integrator merged 205, 221, 223, historical-context ancestor visibility in 225 and the
+      Context/brief-list no-write plus atomic dismissal repair in 229 after independent review and
+      fixed-candidate checks. No repair writer remains active. Continuous bug hunting is ready for
+      a future scoped session; core/projectmodel findings go to kg, interface findings to integrator,
+      and fixes in other areas require their assigned zone. Runtime is assigned next to QA TEST-03.
+      Historical unconfirmed recovery/census findings remain unconfirmed. The Windows diagnostic
+      run on source-equivalent f9ddd795 recorded a one-hour Git timeout and a workspace alias test
+      failure; preserve them for bounded investigation, without inferring final-Main Windows results.
+      See docs/validation/integration-queue-20261011.md; the handoff preserves its earlier snapshot.
     zone: free
     inputs:
       - docs/work-items/surveys/code-architecture-20261010.md

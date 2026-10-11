@@ -1,6 +1,6 @@
 # Roadmap
 
-Updated 12 October 2026 against main `b66942ec3c486f25fe55d4bcc888d2e71173bc08`. The [integration record](validation/integration-queue-20261011.md) continues the six-PR queue and its scoped follow-ups; the [Claude-to-Codex handoff](development/session-handoff.md) preserves the earlier interrupted-session snapshot.
+Updated 12 October 2026 against main `fa02c3e197c59f16ec90ee885c0469fe8aeda41d`. The [integration record](validation/integration-queue-20261011.md) closes the six-PR queue and its scoped follow-ups; the [Claude-to-Codex handoff](development/session-handoff.md) preserves the earlier interrupted-session snapshot.
 
 This page owns the current direction: how parallel work is organized, the streams and waves, the code zones, and the open owner decisions. The [backlog](work-items/backlog.yaml) is the single owner of each work package's status. The [concept register](concepts/register.md) records the decisions this roadmap relies on. Source changes do not change a published release.
 
@@ -13,18 +13,18 @@ This page owns the current direction: how parallel work is organized, the stream
 - The case playground, provider-free container smoke, shared source/bundle smoke driver, hermetic test kit and Linux race gate.
 - Markitect's own recursive Manager model and generated project view (ARCH-07, #203), stable view (#216) and verified short-name contributor entrypoint (#222).
 - Read-only accepted briefing history (#205), guided previews (#221), structured private child assessment filtering (#223), smaller typed MCP schemas (#218), and the reviewed pinned-image inventory (#219).
-- Historical-context projection of private briefing event details (#225), LF-stable Windows playground fixtures (#228), delegated DEC-023/hypothesis provenance (#226) and the prepared KG-04 protocol (#227). KG-04 measurement remains NOT RUN.
+- Historical-context projection of private briefing event details (#225), read-only Context/list callers with atomic accepted-history dismissal (#229), LF-stable Windows playground fixtures (#228), delegated DEC-023/hypothesis provenance (#226) and the prepared KG-04 protocol (#227). KG-04 measurement remains NOT RUN.
 
 **Remaining older product line:** The canonical projection alpha has been removed (ARCH-04). The Project/Domain line and its explicit legacy gates remain until ARCH-09; distribution separation is ARCH-08. Current contributor instructions, CI and hooks also check the self-hosted model. Do not reuse the old survey's code-size estimate as a current measurement.
 
 **CI:**
 - Linux quality and race jobs are the required PR gates. The ordinary suite runs once per quality job; fixed-revision dogfood does not repeat it.
 - Windows is nightly, manual and release validation; it does not block ordinary merges (DEC-013).
-- The original six PR heads passed required Linux Quality/Race and relevant provider-free smoke. Main CI is tracked separately for each merge; exact candidate results and local Windows failures are recorded in the integration record. They do not establish provider or method-study acceptance.
+- The original six PR heads and their scoped follow-ups passed required Linux Quality/Race and relevant provider-free smoke. Main CI is tracked separately for each merge; exact candidate results and local Windows failures are recorded in the integration record. They do not establish provider or method-study acceptance.
 - Freeze each PR head while its required Linux checks run. Recheck the current head and compile its merge onto current main before integration.
 
 **Open work outside main:**
-- the Context/brief-list no-write and atomic-dismissal caller repair (#229), composed with #225 and awaiting its final-head CI;
+- bounded investigation of the recorded Windows Git timeout and workspace alias failure, retaining their original source and diagnostic limits;
 - KG-04 measurement after its prepared Shop/Markitect protocol: independent expected lists remain unfrozen and execution needs separate authority;
 - historical Government and research candidates, preserved as references. They are not combined with current main or scheduled ahead of the backlog's gates.
 
@@ -42,18 +42,18 @@ This page owns the current direction: how parallel work is organized, the stream
 
 ### Sessions
 
-A session is a long-running chat for one role. The backlog's `owner` field names the role, and any fresh session can take a role over. The Codex integrator currently coordinates bounded subagents for the integration and delegated follow-ups; no separate role chat is dispatched by this roadmap. The interrupted Claude sessions' snapshot is in [Session continuation](development/session-handoff.md); the [branch survey](work-items/surveys/branches-and-worktrees-20261010.md) preserves the earlier archive inventory. A package's `active` state is not evidence that its old chat is still running.
+A session is a long-running chat for one role. The backlog's `owner` field names the role, and any fresh session can take a role over. The Codex integrator completed the queue with bounded subagents and owns its final status record; no separate role chat is dispatched by this roadmap. The interrupted Claude sessions' snapshot is in [Session continuation](development/session-handoff.md); the [branch survey](work-items/surveys/branches-and-worktrees-20261010.md) preserves the earlier archive inventory. A package's `active` state is not evidence that its old chat is still running.
 
 | Role | Streams | Starts |
 |---|---|---|
-| integrator | OPS, register decisions, review and merge order, IDEA-01, LEARN-01 | Complete caller integration and its status record, then assign future zones |
-| interface | CLI, MCP-01, TEST-02, AGENT-02, AGENT-03 | Integrator's caller-repair subagent holds the interface files; later packages wait for release |
+| integrator | OPS, register decisions, review and merge order, IDEA-01, LEARN-01 | Verify the final status contribution and Main; future packages follow backlog and zone handoffs |
+| interface | CLI, MCP-01, TEST-02, AGENT-02, AGENT-03 | MCP-01 and caller repairs are integrated; later Wave 2 packages require their own zone assignment |
 | scientist | PLAY | Inventory and Windows fixture repair are integrated; PLAY-06 remains a separate package |
 | kg | KG | KG-04 protocol is prepared; measurement waits for separate authority |
-| bughunter | BUG | Ancestor visibility is integrated; preserve unconfirmed historical findings and finish caller coordination |
-| qa | CI, TEST | Review existing results now; runtime writes wait for the assigned zone |
+| bughunter | BUG | Recorded repairs are integrated; future scoped review preserves historical and Windows evidence |
+| qa | CI, TEST | TEST-03 is ready and assigned the next Runtime slot; no role chat is dispatched |
 | cleaner | ARCH, AGENT-01 | ARCH-08 caller analysis is complete; implementation waits for interface ownership |
-| runtime | RUN, MCP-02, ARCH-06 | After the bughunter/QA runtime queue is released |
+| runtime | RUN, MCP-02, ARCH-06 | After QA's TEST-03 assignment and an explicit later zone handoff |
 | government | GOV | After Wave 2 and the explicit GOV-01 dependencies (DEC-019) |
 
 No more than six sessions change code at the same time. Each session uses subagents and workflows inside its own packages as it sees fit.
