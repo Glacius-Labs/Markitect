@@ -4,12 +4,12 @@ This page is the current operational reference for the model-first `markitect <v
 
 ## MCP server and tool groups
 
-Start the repository-local stdio server with `markitect mcp --repo ABSOLUTE_PROJECT_ROOT`. The server fixes Host authority to that root at startup. MCP schemas are typed and closed; write operations enforce the exact authorization, preview digest, compare-and-swap, or durable-identity rules declared by their schemas. Consult `tools/list` for the exact current schema.
+Start the repository-local stdio server with `markitect mcp --repo ABSOLUTE_PROJECT_ROOT`. The server fixes Host authority to that root at startup. MCP schemas are typed and closed; write operations enforce the exact authorization, preview digest, compare-and-swap, or durable-identity rules declared by their schemas. Consult `tools/list` for the exact current schema. Input schemas are written inline and closed. Result schemas (`outputSchema`) write each repeated type once under `$defs` and describe the types only, without required lists or closed objects, which keeps `tools/list` small. `markitect mcp --read-only` serves only reads and previews; it writes nothing and starts no agents or checks.
 
 The composed project server exposes these operation groups:
 
-- **Inspect:** `model`, `check`, `context`, `impact`, `status`.
-- **Work Item and model:** `explore`, `ready`, `edit`, `plan`, `deliver`.
+- **Inspect:** `schema`, `model`, `check`, `context`, `impact`, `status`.
+- **Work Item and model:** `explore`, `ready`, `brief`, `edit`, `plan`, `deliver`.
 - **Execution lifecycle:** `run`, `resume`, `repair`, `verify`, `apply`.
 - **Brownfield:** `adopt`.
 - **Setup and views:** `init`, `onboard`, `config`, `doctor`, `docs`.

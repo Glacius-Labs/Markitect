@@ -135,7 +135,7 @@ func Register[T, R any](s *Server, name, description string, mutation bool, call
 		reg.recovery = genericRecovery
 	}
 	input := restrict(schema(reflect.TypeFor[T]()), reg.omit, reg.enums)
-	b := binding{tool: Tool{Name: name, Description: description, InputSchema: input, OutputSchema: schema(reflect.TypeFor[Outcome[R]]()), Annotations: map[string]bool{"readOnlyHint": !mutation, "destructiveHint": mutation, "openWorldHint": false}}, mutation: mutation, recovery: reg.recovery}
+	b := binding{tool: Tool{Name: name, Description: description, InputSchema: input, OutputSchema: outputSchema(reflect.TypeFor[Outcome[R]]()), Annotations: map[string]bool{"readOnlyHint": !mutation, "destructiveHint": mutation, "openWorldHint": false}}, mutation: mutation, recovery: reg.recovery}
 	b.call = func(ctx context.Context, raw json.RawMessage) (CallResult, error) {
 		var r T
 		if err := decodeTyped(raw, input, &r); err != nil {

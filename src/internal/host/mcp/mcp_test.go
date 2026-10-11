@@ -495,3 +495,93 @@ func TestPublicErrorMapperAndRetainedStructuredValidation(t *testing.T) {
 		t.Fatal("stale classification lost")
 	}
 }
+
+func TestOutputSchemasShareRepeatedTypesAndStayTyped(t *testing.T) {
+	type leaf struct {
+		Name     string `json:"name"`
+		Required bool   `json:"required"`
+	}
+	type once struct {
+		Count int `json:"count"`
+	}
+	type result struct {
+		First  leaf   `json:"first"`
+		Second *leaf  `json:"second,omitempty"`
+		Many   []leaf `json:"many"`
+		Single once   `json:"single"`
+	}
+	s := outputSchema(reflect.TypeFor[result]())
+	defs, _ := s["$defs"].(map[string]any)
+	if len(defs) != 1 {
+		t.Fatalf("want exactly the repeated type in $defs, got %v", defs)
+	}
+	encoded, _ := json.Marshal(s)
+	if strings.Count(string(encoded), `"$ref":"#/$defs/`) != 3 || !strings.Contains(string(encoded), `"count":{"type":"integer"}`) {
+		t.Fatalf("repeated type not referenced three times or single-use type not inline: %s", encoded)
+	}
+	walkSchema(s, func(m map[string]any) {
+		if _, ok := m["required"].([]string); ok {
+			t.Errorf("output schema keeps a required list: %v", m)
+		}
+		if closed, ok := m["additionalProperties"].(bool); ok && !closed {
+			t.Errorf("output schema keeps a closed object: %v", m)
+		}
+	})
+	for _, def := range defs {
+		if _, ok := def.(map[string]any)["properties"].(map[string]any)["required"]; !ok {
+			t.Fatal("a field named required was dropped with the required lists")
+		}
+	}
+	value := result{First: leaf{Name: "a"}, Second: &leaf{Name: "b", Required: true}, Many: []leaf{{Name: "c"}}, Single: once{Count: 2}}
+	raw, _ := json.Marshal(value)
+	var decoded any
+	d := json.NewDecoder(bytes.NewReader(raw))
+	d.UseNumber()
+	if err := d.Decode(&decoded); err != nil {
+		t.Fatal(err)
+	}
+	if err := validate(decoded, s, ""); err != nil {
+		t.Fatalf("result does not validate against its referenced schema: %v", err)
+	}
+	if err := validate(map[string]any{"first": map[string]any{"name": 1}, "many": nil, "single": map[string]any{"count": json.Number("1")}}, s, ""); err == nil {
+		t.Fatal("a mistyped field inside a referenced type passed")
+	}
+	if input := schema(reflect.TypeFor[result]()); input["additionalProperties"] != false || len(toStrings(input["required"])) == 0 {
+		t.Fatalf("input schemas must stay closed and inline: %v", input)
+	}
+}
+
+func TestRecursiveOutputSchemasReferToThemselves(t *testing.T) {
+	type node struct {
+		Name     string `json:"name"`
+		Children []node `json:"children"`
+	}
+	s := outputSchema(reflect.TypeFor[node]())
+	raw, _ := json.Marshal(node{Name: "root", Children: []node{{Name: "leaf", Children: []node{}}}})
+	var decoded any
+	d := json.NewDecoder(bytes.NewReader(raw))
+	d.UseNumber()
+	if err := d.Decode(&decoded); err != nil {
+		t.Fatal(err)
+	}
+	if err := validate(decoded, s, ""); err != nil {
+		t.Fatalf("recursive result rejected: %v", err)
+	}
+	if err := validate(map[string]any{"name": "root", "children": []any{map[string]any{"name": 2, "children": nil}}}, s, ""); err == nil {
+		t.Fatal("a mistyped nested child passed: the recursion is untyped")
+	}
+}
+
+func TestLifecycleResultsValidateAgainstTheirOutputSchemas(t *testing.T) {
+	for _, v := range []any{projectrun.PlanRecord{}, projectrun.RunReport{}, projectrun.StatusReport{}, projectrun.VerifyReport{}, projectrun.FullVerifyReport{}, projectrun.ApplyPreflight{}, projectrun.ApplyReport{}, projectrun.DeliverReport{}} {
+		raw, _ := json.Marshal(Outcome[any]{Operation: "fixture", Data: &v})
+		var decoded any
+		d := json.NewDecoder(bytes.NewReader(raw))
+		d.UseNumber()
+		d.Decode(&decoded)
+		data := decoded.(map[string]any)["data"]
+		if err := validate(data, outputSchema(reflect.TypeOf(v)), ""); err != nil {
+			t.Fatalf("%T output schema: %v", v, err)
+		}
+	}
+}

@@ -826,6 +826,8 @@ spec:
       owner: project-world-implementation
     - path: src/internal/host/mcp/testmain_test.go
       owner: project-world-implementation
+    - path: src/internal/host/mcp/output_schema.go
+      owner: project-world-implementation
     - path: src/internal/host/projectworkspace/git_service.go
       owner: project-world-implementation
     - path: src/internal/host/projectworkspace/git_inventory.go
