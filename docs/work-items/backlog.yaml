@@ -1,7 +1,7 @@
 schema: markitect-roadmap-backlog/v1
-updated: '2026-10-11'
+updated: '2026-10-12'
 roadmap: docs/implementation-plan.md
-main_basis: 36215f84656ec321d5096bf23ad5df56d27a895b
+main_basis: b66942ec3c486f25fe55d4bcc888d2e71173bc08
 
 # Single owner of work-package status. The roadmap explains streams, waves,
 # zones and rules; this file records each package's current state.
@@ -170,7 +170,7 @@ packages:
     status: done
     branch: dev/playground-image-pins
     pr: 219
-    note: Slices 212, 213 and 219 are merged. The existing inventory commit b64f4748369e3410a414e8a88bd574fd5d975d74 was independently reviewed, normally pushed and passed fresh Linux Quality/Race and provider-free smoke. Additional Windows fixture failures are recorded separately in docs/validation/integration-queue-20261011.md; no provider or method study was run.
+    note: Slices 212, 213 and 219 are merged. Inventory commit b64f4748369e3410a414e8a88bd574fd5d975d74 passed independent review and fresh Linux Quality/Race/provider-free smoke. Two additional Windows LF-fixture failures were repaired separately in 228. Original failures and source-bound passing evidence are recorded in docs/validation/integration-queue-20261011.md; no provider or method study was run.
     owner: scientist
     depends_on: [PLAY-01, PLAY-04]
     zone: free
@@ -849,7 +849,7 @@ packages:
     owner: cleaner
     depends_on: [CLI-01]
     decision: DEC-014
-    note: CLI-02 is merged; read-only release impact analysis was interrupted by Claude's quota. Implementation waits for MCP-01 and integrator assignment of the interface zone. Before the next release, reconcile release-benchmark.yaml and benchmark/run.ps1, which call legacy check, context and impact on published binaries, with ARCH-09's removal direction.
+    note: CLI-02 and MCP-01 are merged; the bounded read-only release impact analysis is complete. Implementation waits for explicit interface-zone assignment after the Wave 2 interface queue. Before the next release, reconcile release-benchmark.yaml and benchmark/run.ps1, which call legacy check, context and impact on published binaries, with ARCH-09's removal direction.
     zone: interface
     inputs:
       - docs/work-items/surveys/code-architecture-20261010.md
