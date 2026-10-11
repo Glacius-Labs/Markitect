@@ -28,6 +28,8 @@ Follow [Project workflow](project-workflow.md): inspect, record a typed explorat
 
 A Manager's `context` lists the Checks it owns under `checks`, and under `foreignChecks` the Checks other Managers own that its own Artifacts declare or that use its own Statements, with their owner, command and limitation. Neither list exposes another Manager's private Statements.
 
+Full Verify passes each child's audit summary to its parent as free-form agent prose. It counts verdicts for private or unknown Statement IDs without naming them in the structured subject list, but does not redact summary text. A child summary may still reveal private facts or identifiers; this is a known visibility limitation, not a confidentiality boundary.
+
 `context MANAGER --trace ID` also walks that Manager's knowledge graph, which is built from its context alone, and returns each node it reaches with one shortest witness path. `--direction` and `--depth` bound the walk. A node the Manager cannot see is reported as not found, exactly like a node that does not exist.
 
 ## CLI, setup and current roots
