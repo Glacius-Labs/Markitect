@@ -19,6 +19,7 @@ import (
 
 	"github.com/Glacius-Labs/Markitect/src/internal/host/projectwork"
 	"github.com/Glacius-Labs/Markitect/src/internal/infrastructure/source"
+	"github.com/Glacius-Labs/Markitect/src/internal/modules/projectmodel"
 )
 
 const storePath = ".markitect/state/briefings/history.json"
@@ -1495,8 +1496,10 @@ func LoadForManagerFrom(root string, state Store, modelDigest, managerID string,
 		return nil, nil, "", ErrStaleModel
 	}
 	var chain []Bundle
+	var project *projectwork.Project
+	var err error
 	if len(requestedRevision) == 1 {
-		project, err := projectwork.Load(root, requestedRevision[0])
+		project, err = projectwork.Load(root, requestedRevision[0])
 		if err != nil {
 			return nil, nil, "", fmt.Errorf("load manager briefing basis: %w", err)
 		}
@@ -1556,7 +1559,32 @@ func LoadForManagerFrom(root string, state Store, modelDigest, managerID string,
 		if err != nil {
 			return nil, nil, "", err
 		}
+		project, err = projectwork.Load(root, chain[len(chain)-1].Revision)
+		if err != nil {
+			return nil, nil, "", fmt.Errorf("load manager briefing visibility: %w", err)
+		}
 	}
+	currentView, err := newManagerView(project, managerID)
+	if err != nil {
+		return nil, nil, "", fmt.Errorf("load manager briefing visibility: %w", err)
+	}
+	views := map[string]managerView{}
+	viewAt := func(revision string) (managerView, error) {
+		if view, ok := views[revision]; ok {
+			return view, nil
+		}
+		view, err := loadManagerView(root, revision, managerID)
+		if errors.Is(err, projectmodel.ErrManagerNotFound) {
+			view = emptyManagerView()
+			err = nil
+		}
+		if err != nil {
+			return managerView{}, err
+		}
+		views[revision] = view
+		return view, nil
+	}
+	views[project.Revision] = currentView
 	briefings := make([]Briefing, 0)
 	events := make([]Event, 0)
 	seenEvents := map[string]bool{}
@@ -1566,9 +1594,21 @@ func LoadForManagerFrom(root string, state Store, modelDigest, managerID string,
 				continue
 			}
 			briefings = append(briefings, briefing)
+			beforeView, err := viewAt(bundle.SinceRevision)
+			if err != nil {
+				return nil, nil, "", err
+			}
+			afterView, err := viewAt(bundle.Revision)
+			if err != nil {
+				return nil, nil, "", err
+			}
 			for _, event := range bundle.Events {
 				if contains(briefing.EventIDs, event.ID) && !seenEvents[event.ID] {
-					events = append(events, event)
+					projected, visible := projectEvent(event, beforeView, afterView)
+					if !visible {
+						continue
+					}
+					events = append(events, projected)
 					seenEvents[event.ID] = true
 				}
 			}

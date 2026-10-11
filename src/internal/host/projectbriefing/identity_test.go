@@ -150,7 +150,7 @@ func TestGlobalAndNamedDefinitionChangesRoundTrip(t *testing.T) {
 				if err != nil || written != loaded || len(stored.Briefings) != 1 || stored.Briefings[0].Digest != generated.Digest {
 					t.Fatalf("reload differs: state=%+v digest=%s err=%v", stored, loaded, err)
 				}
-				manager := generated.Managers[0].ManagerID
+				manager := managerExposingEventInHistory(t, before, after, event)
 				briefings, events, binding, err := LoadForManager(root, after.Model.Digest, manager, revision)
 				if err != nil || len(briefings) != 1 || len(events) != 1 || events[0].Digest != event.Digest || binding == "" {
 					t.Fatalf("manager reload: briefings=%d events=%+v binding=%s err=%v", len(briefings), events, binding, err)
@@ -190,11 +190,15 @@ func TestGlobalAndNamedAcceptedHistoryReloadAndResume(t *testing.T) {
 			if err != nil || resumed.Revision != next || len(resumed.Bundles) != 0 {
 				t.Fatalf("non-canonical resume: receipt=%+v err=%v", resumed, err)
 			}
+			before, err := projectwork.Load(root, base)
+			if err != nil {
+				t.Fatal(err)
+			}
 			after, err := projectwork.Load(root, next)
 			if err != nil {
 				t.Fatal(err)
 			}
-			manager := first.Bundles[0].Managers[0].ManagerID
+			manager := managerExposingEventInHistory(t, before, after, first.Bundles[0].Events[0])
 			_, events, _, err := LoadForManager(root, after.Model.Digest, manager, next)
 			if err != nil || len(events) != 1 || events[0].DefinitionID.Namespace != namespace {
 				t.Fatalf("resumed manager events=%+v err=%v", events, err)

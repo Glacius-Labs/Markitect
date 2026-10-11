@@ -99,7 +99,7 @@ func TestBriefCreateListDismissAndManagerContext(t *testing.T) {
 	if len(overview.Notifications) != 1 || overview.Notifications[0].ResolutionStatus != "unresolved" || overview.Notifications[0].Severity != "info" || overview.Notifications[0].CommitTime == "" || overview.StateDigest != written.StateDigest {
 		t.Fatalf("overview notification = %#v", overview)
 	}
-	manager := preview.Bundle.Events[0].AffectedManagers[0]
+	manager := managerWithEventContext(t, preview.Bundle, preview.Bundle.Events[0])
 	managerContext := decodeOutput[struct {
 		Events []managerEvent `json:"events"`
 	}](t, mustCLI(t, "brief", "list", "--repo", repo, "--manager", manager))
@@ -127,4 +127,17 @@ func TestBriefCreateListDismissAndManagerContext(t *testing.T) {
 	if contextAfterDismiss := mustCLI(t, "brief", "list", "--repo", repo, "--manager", manager); !strings.Contains(string(contextAfterDismiss), preview.Bundle.Events[0].ID) {
 		t.Fatalf("dismissal hid manager briefing: %s", contextAfterDismiss)
 	}
+}
+
+func managerWithEventContext(t *testing.T, bundle projectbriefing.Bundle, event projectbriefing.Event) string {
+	t.Helper()
+	for _, manager := range bundle.Managers {
+		for _, contract := range manager.Contracts {
+			if contract.ID == event.DefinitionID.Key() {
+				return manager.ManagerID
+			}
+		}
+	}
+	t.Fatalf("no manager briefing exposes event statement %s as a contract", event.DefinitionID.Key())
+	return ""
 }
