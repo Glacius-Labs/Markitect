@@ -462,7 +462,7 @@ spec:
 	if err := os.WriteFile(publicPath, []byte(publicModel), 0644); err != nil {
 		t.Fatal(err)
 	}
-	gitTest(t, root, "add", ".markitect/model/commerce/sales/integration.yaml")
+	gitTest(t, root, "add", ".markitect/model/commerce/architecture.yaml")
 	gitCommitTest(t, root, "change public ancestor contract")
 	revision := gitOutputTest(t, root, "rev-parse", "HEAD")
 	project, err := projectwork.Load(root, revision)
