@@ -4,6 +4,8 @@ Dated handoff, 11 October 2026. Main basis: `5f9b6085a17d0907c826f9817f4255a0d99
 
 The owner requested an investigation, updates and a continuation plan. This handoff does not dispatch new chats, merge the six existing implementation PRs, authorize a provider run or study, publish a release, or approve deletion of old worktrees. It preserves existing product decisions and their authority boundaries.
 
+The later delegated integration is recorded separately in [Integration queue — 11–12 October 2026](../validation/integration-queue-20261011.md). Its results and the current backlog supersede the open-queue status below; this handoff's original evidence remains dated.
+
 ## Evidence and source boundary
 
 The audit read 12 top-level Claude session logs and their relevant continuation records under the local directory `C:\Users\Consiliari\.claude\projects\C--Users-Consiliari-Glacius-Labs-Markitect`. Several owner sessions and analysis helpers stopped at the weekly quota around 02:59–03:07 UTC on 11 October. Their later filesystem modification times do not establish later engineering progress. Session messages are evidence of instructions and reported intent; commits, working copies and current hosted results establish implementation state.
