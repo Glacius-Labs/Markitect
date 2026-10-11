@@ -235,6 +235,31 @@ func managerExposingEvent(t *testing.T, project *projectwork.Project, event Even
 	return ""
 }
 
+func managerExposingEventInHistory(t *testing.T, before, after *projectwork.Project, event Event) string {
+	t.Helper()
+	for _, managerID := range event.AffectedManagers {
+		for _, project := range []*projectwork.Project{before, after} {
+			if project == nil {
+				continue
+			}
+			view, err := newManagerView(project, managerID)
+			if err != nil {
+				continue
+			}
+			for _, definition := range []*core.Definition{event.Before, event.After} {
+				if definition == nil || definition.Kind != "Statement" {
+					continue
+				}
+				if _, visible := view.statements[definition.Identity().Key()]; visible {
+					return managerID
+				}
+			}
+		}
+	}
+	t.Fatalf("no affected manager exposes an event side in its historical contexts: %s", event.ID)
+	return ""
+}
+
 // copyProjectWorldTest copies the project-world example into root.
 func copyProjectWorldTest(t *testing.T, root string) {
 	t.Helper()
