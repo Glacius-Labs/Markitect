@@ -135,72 +135,20 @@ func validateWritePath(name string) error {
 }
 
 // requireStoredName refuses an existing path component that Windows resolved
-// through another spelling: an 8.3 short name such as GIT~1 for .git, or a
-// case variant. Lexical checks see only the requested text, so a write through
-// such an alias would reach a path they never authorized. Only stored names
-// appear in a directory listing.
+// through another spelling. source.RequireStoredName is the one
+// implementation; source snapshots need it below this package.
 func requireStoredName(directory fs.FS, parent, part string) error {
-	if runtime.GOOS != "windows" {
-		return nil
-	}
-	entries, err := fs.ReadDir(directory, parent)
-	if err != nil {
-		return err
-	}
-	for _, entry := range entries {
-		if entry.Name() == part {
-			return nil
-		}
-	}
-	return fmt.Errorf("%q names an existing entry stored under another name", part)
+	return source.RequireStoredName(directory, parent, part)
 }
 
 // StoredNames applies the stored-name check to write paths below one
-// directory. Writers of private copies use it where they write, after
-// creating parent directories, because an alias can only be resolved on disk.
-// It remembers the directories it has proven, so writing a whole tree lists
-// each directory once; use one value per tree while nothing else renames its
-// entries.
-type StoredNames struct {
-	directory fs.FS
-	proven    map[string]bool
-}
+// directory, remembering the directories it has proven. It is
+// source.StoredNames, the one implementation.
+type StoredNames = source.StoredNames
 
 // NewStoredNames returns the check for paths below directory.
 func NewStoredNames(directory fs.FS) *StoredNames {
-	return &StoredNames{directory: directory, proven: map[string]bool{}}
-}
-
-// Require refuses the slash-separated name when one of its existing
-// components is stored under another spelling. It checks up to the first
-// component that does not exist yet and is a no-op outside Windows.
-func (s *StoredNames) Require(name string) error {
-	if runtime.GOOS != "windows" {
-		return nil
-	}
-	parts := strings.Split(name, "/")
-	for i, part := range parts {
-		prefix := strings.Join(parts[:i+1], "/")
-		if s.proven[prefix] {
-			continue
-		}
-		if _, err := fs.Lstat(s.directory, prefix); errors.Is(err, fs.ErrNotExist) {
-			return nil
-		} else if err != nil {
-			return err
-		}
-		parent := "."
-		if i > 0 {
-			parent = strings.Join(parts[:i], "/")
-		}
-		if err := requireStoredName(s.directory, parent, part); err != nil {
-			return fmt.Errorf("unsafe path %s: %w", name, err)
-		}
-		if i < len(parts)-1 {
-			s.proven[prefix] = true
-		}
-	}
-	return nil
+	return source.NewStoredNames(directory)
 }
 
 // Root pins all output mutations to the identity of the approved project

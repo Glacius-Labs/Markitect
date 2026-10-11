@@ -71,7 +71,7 @@ Known problems:
 Infrastructure reads Git and the working tree, and writes the working tree under guard.
 
 - `infrastructure/source` loads fixed snapshots from the working tree or a commit with hardened Git processes ([source snapshots](source-snapshots.md#adapter-and-use-case-ownership)).
-- `host/guardedwrite` applies selected changes only while repository, branch, HEAD and captured bytes are unchanged. Product packages may use only its guarded API: `CaptureFiles`, `Apply` and `ApplyChecked`.
+- `host/guardedwrite` applies selected changes only while repository, branch, HEAD and captured bytes are unchanged. Product packages may use only its guarded API: `CaptureFiles`, `Apply`, `ApplyChecked`, the read-only name check `NewStoredNames` for their private copies, and the types these use.
 
 <a id="host-write-identity"></a>
 Writes bind the inspected root and parent directories through opened handles; a path check alone does not authorize a write. A partial failure is reported as such, because a multi-file write is not a transaction. The [Host write identity contract](design/host-write-identity.md) defines the details. Guarded writes are not an operating-system sandbox.
