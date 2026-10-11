@@ -1,6 +1,6 @@
 # Roadmap
 
-Updated 10 October 2026, on main `02c7e529`, after pull requests #89 to #91.
+Updated 11 October 2026 against main `5f9b6085a17d0907c826f9817f4255a0d99a753c`. The [Claude-to-Codex handoff](development/session-handoff.md) records the interrupted sessions, remaining candidates and restart order at that snapshot.
 
 This page owns the current direction: how parallel work is organized, the streams and waves, the code zones, and the open owner decisions. The [backlog](work-items/backlog.yaml) is the single owner of each work package's status. The [concept register](concepts/register.md) records the decisions this roadmap relies on. Source changes do not change a published release.
 
@@ -9,19 +9,24 @@ This page owns the current direction: how parallel work is organized, the stream
 **On main:**
 - The model-first product: canonical model and compiler, coverage, impact, Manager execution with independent review, verification and guarded Apply.
 - The [concept record](concepts/README.md).
+- Exchangeable process execution and per-role configuration (RUN-01, #104), the top-level verb table (CLI-02, #161), and the reduced knowledge core and explain/trace surface (KG-02, #184).
+- The case playground, provider-free container smoke, shared source/bundle smoke driver, hermetic test kit and Linux race gate.
+- Markitect's own recursive Manager model and generated project view (ARCH-07, #203); its entrypoint follow-up remains in review.
 
-**Still dependent on older product lines:** About half of the production Go code serves the earlier Project/Domain line and the canonical projection alpha. Markitect's own CI, hooks and agent instructions still run on them.
+**Remaining older product line:** The canonical projection alpha has been removed (ARCH-04). The Project/Domain line and its explicit legacy gates remain until ARCH-09; distribution separation is ARCH-08. Current contributor instructions, CI and hooks also check the self-hosted model. Do not reuse the old survey's code-size estimate as a current measurement.
 
 **CI:**
-- Each job runs the Go suite twice.
-- The Windows job takes 50 to 70 minutes.
-- New pushes cancel runs on main.
+- Linux quality and race jobs are the required PR gates. The ordinary suite runs once per quality job; fixed-revision dogfood does not repeat it.
+- Windows is nightly, manual and release validation; it does not block ordinary merges (DEC-013).
+- Main `5f9b6085` has successful hosted CI and provider-free playground smoke. Their exact runs are linked in the handoff; they do not establish provider or method-study acceptance.
+- Freeze each PR head while its required Linux checks run. Recheck the current head and compile its merge onto current main before integration.
 
 **Open work outside main:**
-- the exchangeable executor (pull request #92);
-- the rebuilt case playground (`experiments/case-playground`, on main since PLAY-01);
-- the knowledge-graph branch (old layout);
-- a started Government v1 (docs plus uncommitted code).
+- MCP schema reduction (#218) and the final playground image/inventory slice (#219);
+- read-only briefing history (#205), its stacked preview caller (#221), and private child assessment redaction (#223);
+- the short Manager name entrypoint follow-up (#222);
+- unfinished follow-ups reported by the scientist and knowledge-graph sessions: the registered PR worktrees are clean, so inspect the handoff before assuming a local candidate exists;
+- historical Government and research candidates, preserved as references. They are not combined with current main or scheduled ahead of the backlog's gates.
 
 **Product Readiness program:** closed. P01 to P10 are complete. Its records were distilled into the [Product Readiness lessons survey](work-items/surveys/product-readiness-lessons-20261010.md) and the [A01 validation record](validation/a01-native-smoke-20261010.md); git history keeps the originals. Its open follow-ups now live in the backlog: RUN-04 replaces P11, AGENT-03 replaces R03-F01, and the KG packages replace KG01 to KG03.
 
@@ -37,19 +42,19 @@ This page owns the current direction: how parallel work is organized, the stream
 
 ### Sessions
 
-A session is a long-running chat for one role. The backlog's `owner` field names the role, and any fresh session can take a role over. The earlier sessions have ended. Their work is preserved and listed in the [branch survey](work-items/surveys/branches-and-worktrees-20261010.md).
+A session is a long-running chat for one role. The backlog's `owner` field names the role, and any fresh session can take a role over. The Claude sessions were interrupted by the weekly quota. Their current handoff is in [Session continuation](development/session-handoff.md); the [branch survey](work-items/surveys/branches-and-worktrees-20261010.md) preserves the earlier archive inventory. A package's `active` state is not evidence that its old chat is still running.
 
 | Role | Streams | Starts |
 |---|---|---|
-| integrator | OPS, register decisions, review and merge order, IDEA-01, LEARN-01 | running |
-| qa | CI, TEST | Wave 0 |
-| cleaner | ARCH, AGENT-01 | Wave 0 |
-| runtime | RUN, MCP-02, ARCH-06 | Wave 0 |
-| scientist | PLAY | Wave 0 |
-| interface | CLI, MCP-01, TEST-02, AGENT-02, AGENT-03 | Wave 0 (specification first) |
-| bughunter | BUG | Wave 1 |
-| kg | KG | Wave 1 |
-| government | GOV | after Wave 2 (DEC-019) |
+| integrator | OPS, register decisions, review and merge order, IDEA-01, LEARN-01 | First: resume the existing review queue and assign zones |
+| interface | CLI, MCP-01, TEST-02, AGENT-02, AGENT-03 | Resume #218; then interface packages one at a time |
+| scientist | PLAY | Produce and review #219's missing image inventory before PLAY-06 |
+| kg | KG | Finish #223's documentation follow-up; KG-04 waits for owner choices |
+| bughunter | BUG | Resume #205/#221 and the bounded unfinished finding queue |
+| qa | CI, TEST | Review existing results now; runtime writes wait for the assigned zone |
+| cleaner | ARCH, AGENT-01 | Review #222 and finish ARCH-08 analysis; implementation waits for interface ownership |
+| runtime | RUN, MCP-02, ARCH-06 | After the bughunter/QA runtime queue is released |
+| government | GOV | After Wave 2 and the explicit GOV-01 dependencies (DEC-019) |
 
 No more than six sessions change code at the same time. Each session uses subagents and workflows inside its own packages as it sees fit.
 
@@ -57,8 +62,10 @@ No more than six sessions change code at the same time. Each session uses subage
 
 Start every session with the same prompt; only the role changes:
 
+For this restart, also read the [role handoff and initial queue](development/session-handoff.md#role-starts). Reuse an existing candidate worktree only after verifying its branch, full SHA, local changes and ownership; use a fresh branch from current main for new packages. No new chat is dispatched by this document itself.
+
 ```text
-You are the <role> session for Markitect, working in this repository. Read AGENTS.md, docs/implementation-plan.md (the roadmap) and docs/work-items/backlog.yaml. Work on the packages whose owner is <role>, in wave and dependency order, starting with those marked ready. For each package, first read its inputs and the matching survey under docs/work-items/surveys/, so you do not repeat earlier analysis. Follow the roadmap's rules: a branch with a meaningful prefix from current origin/main, changes only inside the package's zone, one pull request per package with the package ID in the title, and no pushes to a pull-request head while its required Linux CI runs (fixes may be pushed while only the Windows job is still running). Do not edit the backlog, the roadmap or the concept register; report status, findings and needed owner decisions in the pull request. Use subagents and workflows inside your packages as you see fit. Ask the owner when a decision is genuinely theirs.
+You are the <role> session for Markitect. Read current AGENTS.md, docs/implementation-plan.md, docs/work-items/backlog.yaml and docs/development/session-handoff.md, including your role's initial queue. Fetch origin and identify the checkout path, branch, full SHA and local changes before writing. Resume an existing candidate only after confirming ownership; start new packages from current origin/main. Read the owning Manager's context and each package's inputs and survey. Work in dependency order inside the integrator-assigned zone, with one PR per package or slice and its ID in the title. Freeze a pushed head while required Linux CI runs; fixes may be pushed when only non-required Windows CI remains. The integrator alone updates the backlog, roadmap and concept register; other roles report evidence and decisions in their PRs. Use subagents for independent workstreams. Preserve uncommitted work, never stash or force-push a reviewed branch, and distinguish source checks, provider runs, method studies and human acceptance. Ask the owner only for decisions outside existing authority.
 ```
 
 The integrator merges pull requests in dependency order, updates the backlog and the register, and assigns zones.

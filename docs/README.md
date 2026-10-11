@@ -23,6 +23,7 @@ Use this map to find the product guide or the document that owns a decision or s
 | Technical behavior and product boundaries | [Architecture](architecture.md) and the task-specific current guides above |
 | Current source scope and future implementation | [Implementation roadmap](implementation-plan.md) |
 | Work-package states, dependencies, owners, and zones | [Backlog](work-items/backlog.yaml), routed through the [work-items map](work-items/README.md) |
+| Interrupted Claude sessions and the Codex restart queue | [Session continuation](development/session-handoff.md); refresh its dated PR and worktree snapshot before resuming |
 | Native A01 result, attempt accounting and acceptance limits | [A01 validation record](validation/a01-native-smoke-20261010.md) |
 | Known technical limits and lessons from Product Readiness | [Product Readiness lessons survey](work-items/surveys/product-readiness-lessons-20261010.md) |
 | Source/release evidence for a dated validation | The linked report in the [validation map](validation/README.md), read at its recorded scope and source |
