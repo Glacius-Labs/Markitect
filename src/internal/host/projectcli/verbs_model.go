@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"errors"
 	"slices"
-	"strings"
 
 	"github.com/Glacius-Labs/Markitect/src/internal/host/codexappserver"
 	"github.com/Glacius-Labs/Markitect/src/internal/host/projectapp"
@@ -290,9 +289,17 @@ var modelVerb = define(verb{
 	summary:  "Read the compiled project model and ownership index.",
 	synopsis: "model [--revision R]",
 	args:     []arg{argRepo, argRevision},
-}, func(ctx context.Context, e env, in revisionInput) (projectmodel.Report, error) {
-	return e.ops.Index(projectapp.Selection{Root: e.root, Revision: in.Revision})
+}, func(ctx context.Context, e env, in revisionInput) (modelResult, error) {
+	report, err := e.ops.Index(projectapp.Selection{Root: e.root, Revision: in.Revision})
+	return modelResult{Revision: in.Revision, Report: report}, err
 })
+
+// modelResult is the compiled model with the full commit it was read from;
+// the revision is empty when the working tree was read.
+type modelResult struct {
+	Revision string `json:"revision,omitempty"`
+	projectmodel.Report
+}
 
 type contextInput struct {
 	Manager   string `json:"manager"`
@@ -305,6 +312,7 @@ type contextInput struct {
 // contextResult is a Manager's Context and, with --trace, a walk over its
 // knowledge graph, which is built from that Context alone (KG-02).
 type contextResult struct {
+	Revision string `json:"revision,omitempty"`
 	projectmodel.ManagerContext
 	Trace *projectmodel.TraceResult `json:"trace,omitempty"`
 }
@@ -318,17 +326,13 @@ var contextVerb = define(verb{
 		{name: "direction", value: "out|in|both", help: "With --trace: follow relations outward (default), inward or both ways."},
 		{name: "depth", kind: kindInt, value: "N", help: "With --trace: the most relations to follow, 1 to 32; default 6."}},
 }, func(ctx context.Context, e env, in contextInput) (contextResult, error) {
-	managerID, err := resolveManager(e, in.Revision, in.Manager)
-	if err != nil {
-		return contextResult{}, err
-	}
-	operation := projectapp.ContextOperation{Selection: projectapp.Selection{Root: e.root, Revision: in.Revision}, ManagerID: managerID}
+	operation := projectapp.ContextOperation{Selection: projectapp.Selection{Root: e.root, Revision: in.Revision}, ManagerID: in.Manager}
 	if in.Trace == "" {
 		if in.Direction != "" || in.Depth != 0 {
 			return contextResult{}, usagef("--direction and --depth require --trace")
 		}
 		managerContext, err := e.ops.Context(operation)
-		return contextResult{ManagerContext: managerContext}, err
+		return contextResult{Revision: in.Revision, ManagerContext: managerContext}, err
 	}
 	if !slices.Contains([]string{"", "out", "in", "both"}, in.Direction) {
 		return contextResult{}, usagef("--direction must be out, in or both")
@@ -344,7 +348,7 @@ var contextVerb = define(verb{
 	if err != nil {
 		return contextResult{}, err
 	}
-	return contextResult{ManagerContext: traced.Context, Trace: &traced.Trace}, nil
+	return contextResult{Revision: in.Revision, ManagerContext: traced.Context, Trace: &traced.Trace}, nil
 })
 
 type impactInput struct {
@@ -357,6 +361,8 @@ type impactInput struct {
 // impactResult is the change impact and, with --explain, why each element is
 // in it and whether it must change or is context (DEC-023).
 type impactResult struct {
+	Since    string `json:"since"`
+	Revision string `json:"revision"`
 	projectmodel.ChangeImpact
 	Explanation *projectmodel.ImpactExplanation `json:"explanation,omitempty"`
 }
@@ -378,13 +384,13 @@ var impactVerb = define(verb{
 			return impactResult{}, usagef("--manager requires --explain")
 		}
 		impact, err := e.ops.Impact(operation)
-		return impactResult{ChangeImpact: impact}, err
+		return impactResult{Since: in.Since, Revision: in.Revision, ChangeImpact: impact}, err
 	}
 	explained, err := e.ops.Explain(projectapp.ExplainOperation{ImpactOperation: operation, ManagerID: in.Manager})
 	if err != nil {
 		return impactResult{}, err
 	}
-	return impactResult{ChangeImpact: explained.Impact, Explanation: &explained.Explanation}, nil
+	return impactResult{Since: in.Since, Revision: in.Revision, ChangeImpact: explained.Impact, Explanation: &explained.Explanation}, nil
 })
 
 type docsInput struct {
@@ -423,31 +429,6 @@ var editVerb = define(verb{
 }, func(ctx context.Context, e env, in editInput) (projectwork.EditPlan, error) {
 	return e.ops.Edit(projectapp.EditOperation{Selection: projectapp.Selection{Root: e.root, Revision: in.Revision}, Mutation: in.Input, Write: in.Write, ExpectedDigest: in.Expect})
 })
-
-// resolveManager accepts a Manager's full ID or its short name when that name
-// is unique in the selected project.
-func resolveManager(e env, revision, manager string) (string, error) {
-	if strings.HasPrefix(manager, "[") {
-		return manager, nil
-	}
-	report, err := e.ops.Index(projectapp.Selection{Root: e.root, Revision: revision})
-	if err != nil {
-		return "", err
-	}
-	matches := []string{}
-	for _, candidate := range report.Managers {
-		if candidate.Name == manager {
-			matches = append(matches, candidate.ID)
-		}
-	}
-	switch len(matches) {
-	case 1:
-		return matches[0], nil
-	case 0:
-		return "", usagef("no Manager is named %q; `markitect model` lists each Manager's ID and name", manager)
-	}
-	return "", usagef("Manager name %q is ambiguous; use one of the full IDs: %s", manager, strings.Join(matches, ", "))
-}
 
 // staleOnly drops the report of a stale write: the operation did not run.
 func staleOnly[T any](report T, err error) (T, error) {

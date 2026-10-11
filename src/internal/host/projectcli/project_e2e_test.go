@@ -667,7 +667,13 @@ func TestRevisionsAcceptAnythingGitResolvesToACommit(t *testing.T) {
 	repo := copyProjectWorld(t)
 	head := gitOutput(t, repo, "rev-parse", "HEAD")
 	short := gitOutput(t, repo, "rev-parse", "--short", "HEAD")
-	for _, revision := range []string{"HEAD", short, head} {
+	runGitWithEnv(t, repo, testCommitEnv, "tag", "-a", "fixture-release", "-m", "fixture release")
+	tag := gitOutput(t, repo, "rev-parse", "fixture-release")
+	if tag == head {
+		t.Fatal("fixture tag is not an annotated tag object")
+	}
+	// A tag's full ID is peeled to its commit in either case.
+	for _, revision := range []string{"HEAD", short, head, strings.ToUpper(head), tag, strings.ToUpper(tag)} {
 		code, out, errout := runCLI(t, "check", "--repo", repo, "--revision", revision)
 		var report struct {
 			Revision string `json:"revision"`
@@ -679,8 +685,22 @@ func TestRevisionsAcceptAnythingGitResolvesToACommit(t *testing.T) {
 	if code, out, errout := runCLI(t, "docs", "--repo", repo, "--revision", "HEAD"); code != 0 || !strings.Contains(out, `"revision": "`+head+`"`) {
 		t.Fatalf("docs --revision HEAD: exit=%d stderr=%s out=%.200s", code, errout, out)
 	}
-	if code, _, errout := runCLI(t, "impact", "--repo", repo, "--since", "HEAD", "--revision", short); code != 0 {
-		t.Fatalf("impact with HEAD and a short ID: exit=%d stderr=%s", code, errout)
+	// Every read with a revision names the full commit it read.
+	var impact struct {
+		Since    string `json:"since"`
+		Revision string `json:"revision"`
+	}
+	if code, out, errout := runCLI(t, "impact", "--repo", repo, "--since", "HEAD", "--revision", short); code != 0 || json.Unmarshal([]byte(out), &impact) != nil || impact.Since != head || impact.Revision != head {
+		t.Fatalf("impact with HEAD and a short ID: exit=%d since=%q revision=%q stderr=%s", code, impact.Since, impact.Revision, errout)
+	}
+	for _, args := range [][]string{{"model"}, {"context", "orders"}} {
+		var read struct {
+			Revision string `json:"revision"`
+		}
+		code, out, errout := runCLI(t, append(args, "--repo", repo, "--revision", "HEAD")...)
+		if code != 0 || json.Unmarshal([]byte(out), &read) != nil || read.Revision != head {
+			t.Fatalf("%s --revision HEAD: exit=%d revision=%q stderr=%s", args[0], code, read.Revision, errout)
+		}
 	}
 	code, out, errout := runCLI(t, "check", "--repo", repo, "--revision", "no-such-revision")
 	if code != 2 || out != "" || !strings.Contains(errout, `--revision "no-such-revision" does not name a commit in this repository`) {
