@@ -7,7 +7,8 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/Glacius-Labs/Markitect/src/internal/host"
+	"github.com/Glacius-Labs/Markitect/src/internal/host/modulechecks"
+	"go.yaml.in/yaml/v3"
 )
 
 // Run dispatches one read-only Host Module check invocation.
@@ -32,14 +33,14 @@ func Run(args []string, out, errout io.Writer) int {
 		fmt.Fprintln(errout, "at least one of --hooks or --pipelines is required")
 		return 2
 	}
-	report, err := host.CheckModules(host.ModuleChecksOptions{
+	report, err := modulechecks.Check(modulechecks.Options{
 		Root: *repo, Revision: *revision, HooksConfigPath: *hooks, PipelinesPath: *pipelines,
 	})
 	if err != nil {
 		fmt.Fprintln(errout, err)
 		return 2
 	}
-	data, err := host.YAML(report)
+	data, err := yaml.Marshal(report)
 	if err != nil {
 		fmt.Fprintln(errout, err)
 		return 2
@@ -53,7 +54,7 @@ func Run(args []string, out, errout io.Writer) int {
 		fmt.Fprintln(errout, "short write while printing module check report")
 		return 2
 	}
-	if report.Status != host.ModuleChecksPassed {
+	if report.Status != modulechecks.StatusPassed {
 		return 1
 	}
 	return 0

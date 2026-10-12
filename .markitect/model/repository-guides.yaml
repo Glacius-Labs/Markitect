@@ -12,6 +12,7 @@ spec:
     - namespace: ""
       name: project-local-policy
   paths:
+    - .markitect/README.md
     - CONTRIBUTING.md
     - LICENSE
     - README.md

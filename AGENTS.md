@@ -12,11 +12,9 @@ Markitect is model-first development with delegated realization. People maintain
    go run ./src/cmd/markitect context --repo . product
    ```
 
-   The root Manager `markitect` delegates to `product`, `legacy`, `tooling`, `documentation` and `examples`; pass the name of the Manager that owns your change. The context holds the Manager's paths, instructions, the repository rules that apply to it, its Artifacts, and the checks it owns or that verify its work. `check` fails when a file lies outside every Artifact path. [The workflow guide](docs/project-workflow.md) explains how to work with the model. Implementation-only work needs no model change.
+   Select the Manager that owns your change. The context holds its paths, instructions, applicable repository rules, Artifacts, and owned or verifying checks. `check` fails when a file lies outside every Artifact path. [The workflow guide](docs/project-workflow.md) explains how to work with the model. Implementation-only work needs no model change.
 3. If you change a file under `.markitect/model/`, preview the readable view with `go run ./src/cmd/markitect docs --repo .` and write it with `go run ./src/cmd/markitect docs --repo . --expect DIGEST --write`, using the preview's digest. Do not edit generated files. If `check` reports a path that no Artifact covers, for example a new package directory or top-level file, add it to the Artifact of the Manager that owns that area, or to `.markitect/ignore.yaml` with a reason, in the same pull request.
 4. Before you open a pull request, run the checks in [CONTRIBUTING](CONTRIBUTING.md#verify-a-change).
-
-The earlier Project/Domain line still runs its own checks in CI until ARCH-09 removes it.
 
 ## Where things are
 

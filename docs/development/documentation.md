@@ -23,9 +23,9 @@ Use the [Project World design map](../design/project-world/README.md), [Research
 
 When adding a document or directory, add a useful link to its local map and, when it creates a new route, to the parent map. Prefer links to the owner over copied status summaries. Keep the document's source, date, release, or experiment scope visible where it affects how readers should interpret the content. A dated report remains tied to its recorded inputs and conclusions; use the current owner document for later status.
 
-Markdown links help readers navigate but do not declare artifact or semantic dependencies. When a path changes, inspect its Markdown links and anchors, repository entrypoints, and any explicit project artifact or consistency declarations that name it. Generated views have canonical sources; update the source and regenerate the view as described in [CONTRIBUTING.md](../../CONTRIBUTING.md).
+Markdown links help readers navigate but do not declare artifact or semantic dependencies. When a path changes, inspect its Markdown links and anchors, repository entrypoints, and model Artifact paths that name it. Generated views have canonical sources; update the source and regenerate the view as described in [CONTRIBUTING.md](../../CONTRIBUTING.md).
 
-For the semantics of the optional Project documentation-router feature—including local-link and coverage behavior—see [Documentation routers](../documentation-routers.md). That feature guide describes product behavior; this page describes where maintainers find and update repository documentation.
+The old Project documentation-router feature is preserved in the immutable [v0.14.1 release](https://github.com/Glacius-Labs/Markitect/tree/v0.14.1). This guide describes where maintainers find and update current repository documentation.
 
 ## Check changed navigation
 
@@ -38,4 +38,4 @@ python -B scripts/check-docs.py docs/development/modules.md
 
 The default corpus is the maintained entry documents listed in [the checker](../../scripts/check-docs.py): root guidance, current workflow and architecture guides, and category maps. Explicit paths check additional revised pages. It checks local targets and heading/explicit HTML anchors, ignores external URLs and code examples, and does not evaluate prose or infer dependencies. Historical reports and generated views are outside the default source corpus; links into them still have their destinations checked. Review changed historical pages explicitly without rewriting their evidence to satisfy a current-status convention.
 
-The new navigation maps and checker scripts have explicit owners in [managed-artifact accounting](../../markitect-artifacts.yaml). Keep scope changes there reviewable. [CONTRIBUTING](../../CONTRIBUTING.md#verify-a-change) owns the remaining validation commands.
+Navigation maps and checker scripts are owned through the repository's full-coverage project model. Keep Artifact path changes in their owning Manager. [CONTRIBUTING](../../CONTRIBUTING.md#verify-a-change) owns the validation commands.

@@ -32,20 +32,19 @@ flowchart LR
 
 ## Layers
 
-Current source has four product layers and the legacy line:
+Current source has four product layers:
 
 - **Core** compiles the model and derives views from fixed inputs.
 - **Infrastructure** reads Git and writes the working tree under guard.
 - **Application** holds the use cases and their CLI and MCP surfaces.
 - **Runtime** runs the inner roles and records what they did.
-- **Legacy** is the earlier Project/Domain line.
 
 Executables under `src/cmd`, maintainer tooling, harnesses and fixtures have their own layers in the code map. The import gate checks each package against its layer ([mechanical dependency gate](development/modules.md#mechanical-dependency-gate)). Package IDs below refer to the [backlog](work-items/backlog.yaml), which owns their status.
 
 Known problems across layers:
 
-- The gate checks only that product layers do not import legacy packages and use only the guarded write API. It checks no direction between the four product layers. The core and runtime sections below show imports that break the intended direction (ARCH-12).
-- Directory names do not show the layer. Most product packages live in `src/internal/host` next to the legacy host root, among them the core packages `projectbriefing` and `projectcoverage` and the infrastructure package `guardedwrite` (ARCH-16).
+- The import gate enforces the declared package boundaries, but it does not yet enforce direction between the four product layers. The core and runtime sections below show imports that break the intended direction (ARCH-12).
+- Directory names do not show the layer. Product packages are grouped beneath `src/internal/host` despite their distinct architectural roles (ARCH-16).
 - Small helpers are copied: `sameStrings` exists in four packages, `equalStrings` in three and `containsString` in five, for example in `core/compile.go` and `projectrun/run.go` (ARCH-05).
 - Four packages keep their own record store, each with its own file layout and write path: `projectrun` (`store.go`), `projectexplore` (`store.go`), `projectbriefing` (`store.go`) and `projectadoption` (`session.go`, `manager_run_ledger.go`) (ARCH-14).
 
@@ -71,14 +70,14 @@ Known problems:
 Infrastructure reads Git and the working tree, and writes the working tree under guard.
 
 - `infrastructure/source` loads fixed snapshots from the working tree or a commit with hardened Git processes ([source snapshots](source-snapshots.md#adapter-and-use-case-ownership)).
-- `host/guardedwrite` applies selected changes only while repository, branch, HEAD and captured bytes are unchanged. Product packages may use only its guarded API: `CaptureFiles`, `Apply`, `ApplyChecked`, the read-only name check `NewStoredNames` for their private copies, and the types these use.
+- `host/guardedwrite` applies selected changes only while repository, branch, HEAD and captured bytes are unchanged. Product packages may use only its guarded API: `CaptureFiles`, `Apply`, `ApplyChecked`, `ApplyOrderedChecked`, the read-only name check `NewStoredNames` for their private copies, and the types `Capture`, `Change`, `File`, `Result` and `StoredNames`.
 
 <a id="host-write-identity"></a>
 Writes bind the inspected root and parent directories through opened handles; a path check alone does not authorize a write. A partial failure is reported as such, because a multi-file write is not a transaction. The [Host write identity contract](design/host-write-identity.md) defines the details. Guarded writes are not an operating-system sandbox.
 
 Known problems:
 
-- `guardedwrite` still exports low-level primitives such as `Root`, `OpenRoot`, `SafeDestination` and `EnsureBranch` (`root.go`). Only the legacy writers in the host root use them, for example `format.go`, `install_write.go` and `outputs_write.go`. An allowlist in the gate keeps product packages away from them (`tooling/architecture/layers.go`) (ARCH-09).
+- `guardedwrite` still exports low-level primitives alongside the guarded API. Keep product callers on the explicitly permitted guarded operations; the import gate rejects direct use of lower-level primitives.
 - Each selected source call identifies the Git repository at its start and again at its end (`identifyGit` and `confirmGitIdentity` in `source/selective.go`). One `projectwork.Load` makes several such calls (`projectwork/project.go`) (ARCH-11).
 
 ## Application layer
@@ -123,16 +122,9 @@ Known problems:
   - Declared checks see only the owning agent's environment allowlist (`explicitEnvironment` in `verify.go`).
 - The process end-to-end cases re-execute the test binary with isolated per-test child descriptors and run in parallel after the serial cases finish (TEST-03, #232). Twelve files carry `!runtime_unit`; the normal untagged Quality/Race suites include all scenarios. The dated [tests and CI survey](work-items/surveys/tests-and-ci-20261010.md) recorded `projectrun` at 1,467 s on Windows against 112 s on Linux before that change. Windows validation remains nightly or on demand and does not block ordinary merges ([DEC-013](concepts/register.md#dec-013-linux-first-for-tests-and-the-playground)); CI-05 still owns the future support decision.
 
-## Legacy line
+## Historical Project/Domain architecture
 
-The legacy line is the earlier Project/Domain product: the verbs such as `check`, `context`, `impact`, `render` and `verify` over `markitect.yaml`, the v0.13 kernel and consumers under `host/compat/v0_13`, the metadata adapters, content packages and Copy Me. Its main packages are the host root, `host/cli`, `host/authoring` and `host/compat/v0_13`; the [code map](development/code-map.md#legacy-and-compatibility) lists all of them. The published v0.14.1 release contains it. It is not developed further ([DEC-014](concepts/register.md#dec-014-compatibility-does-not-drive-decisions)). Its own checks still run in this repository's CI until ARCH-09 removes it. Its earlier architecture is kept in a [history record](history/architecture-legacy-sections-20261010.md).
-
-Known problems:
-
-- The `markitect` executable enters through the legacy dispatcher. `src/cmd/markitect/main.go` calls `host/cli`, which routes `project` to `projectcli` and also holds `package`, `bundle`, `install` and `licenses` (`cli_dispatch.go`) (CLI-02, ARCH-08).
-- This repository's model is `.markitect/project.yaml`, which `markitect check` gates in CI and the pre-commit hook. The legacy dogfood still runs beside it: `markitect.yaml`, `.markitect/areas`, `.markitect/modules`, the generated legacy views and the `markitect-legacy` steps in `ci.yaml` (ARCH-09).
-- `markitect-check-architecture` runs the gate through the host root (`host/architecture.go`), so the gate binary links the legacy package (ARCH-09).
-- Only `examples/project-world` uses the model-first format. The other example directories use `markitect.yaml` or the legacy package and Copy Me formats (ARCH-09).
+The earlier Project/Domain architecture shipped in v0.14.1 and is preserved in a [dated history record](history/architecture-legacy-sections-20261010.md) and the [immutable release source](https://github.com/Glacius-Labs/Markitect/tree/v0.14.1). It is not part of current source or its checks.
 
 ## Project artifact boundary
 

@@ -37,7 +37,7 @@ func snapshotModuleFiles(snapshot *snapshot.Snapshot) (map[string][]byte, error)
 		include := relative == "go.mod" || relative == "go.sum" || relative == "README.md" || relative == "LICENSE"
 		if sourceTreePath(relative) {
 			ext := strings.ToLower(path.Ext(relative))
-			include = ext == ".go" || embeddedNotices(relative) || relative == "internal/licenses/notices.md" || relative == "src/internal/licenses/notices.md" || embeddedAuthoringSource(relative)
+			include = ext == ".go" || embeddedNotices(relative) || relative == "internal/licenses/notices.md" || relative == "src/internal/licenses/notices.md"
 		}
 		if strings.HasPrefix(relative, "schema/") {
 			ext := strings.ToLower(path.Ext(relative))
@@ -73,7 +73,7 @@ func collectModuleSnapshot(files map[string][]byte) ([]sourceFile, error) {
 		ext := strings.ToLower(path.Ext(name))
 		include := name == "README.md" || name == "LICENSE"
 		if sourceTreePath(name) {
-			include = ext == ".go" || embeddedNotices(name) || name == "internal/licenses/notices.md" || name == "src/internal/licenses/notices.md" || embeddedAuthoringSource(name)
+			include = ext == ".go" || embeddedNotices(name) || name == "internal/licenses/notices.md" || name == "src/internal/licenses/notices.md"
 		}
 		if strings.HasPrefix(name, "schema/") {
 			include = ext == ".json" || ext == ".yaml" || ext == ".yml" || ext == ".md"
@@ -98,15 +98,6 @@ func collectModuleSnapshot(files map[string][]byte) ([]sourceFile, error) {
 		return nil, err
 	}
 	return selected, nil
-}
-
-func embeddedAuthoringSource(name string) bool {
-	name = strings.TrimPrefix(name, "src/")
-	if name == "internal/host/embedded/project.yaml" || name == "internal/authoring/project.yaml" {
-		return true
-	}
-	ext := strings.ToLower(path.Ext(name))
-	return (strings.HasPrefix(name, "internal/host/embedded/resources/") || strings.HasPrefix(name, "internal/authoring/resources/")) && (ext == ".yaml" || ext == ".yml")
 }
 
 func sourceTreePath(name string) bool {

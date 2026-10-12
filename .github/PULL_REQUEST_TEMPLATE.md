@@ -16,7 +16,7 @@
 
 ## Validation
 
-- [ ] `git show --stat` (or `git diff --name-only origin/main HEAD`) lists only the intended files.
+- [ ] The changed-file review uses `git show --stat` or `git diff --name-only origin/main HEAD` and lists only the intended files.
 - [ ] I ran the checks relevant to this change and list the results below.
 - [ ] I updated canonical sources and regenerated derived schemas or views when needed.
 - [ ] Examples remain executable when affected.
@@ -26,7 +26,7 @@
 Checks run:
 
 ```text
-<!-- e.g. go test ./..., go vet ./..., go run ./src/cmd/markitect-legacy schema --repo ., go run ./src/cmd/markitect-legacy check --repo examples/minimal -->
+<!-- e.g. go test ./..., go vet ./..., go run ./src/cmd/markitect check --repo ., go run ./src/cmd/markitect-check-modules --repo . --hooks .markitect/modules/githooks.config --pipelines .markitect/modules/pipelines.config -->
 ```
 
 ## Findings and owner decisions

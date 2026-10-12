@@ -1,10 +1,10 @@
 # Distribution and integration
 
-Markitect's distribution unit is a versioned, immutable GitHub Release. Source files and release assets are never retagged or overwritten. Check [GitHub Releases](https://github.com/Glacius-Labs/Markitect/releases) for available versions and verify the exact tag, source commit, and assets before use. [Usage](../docs/usage.md) describes structural commands and historical release contracts. For the model-first development source, use [Project workflow](../docs/project-workflow.md) and [Project operations](../docs/project-operations.md); the [roadmap](../docs/implementation-plan.md) records source status.
+Markitect's distribution unit is a versioned, immutable GitHub Release. Source files and release assets are never retagged or overwritten. Check [GitHub Releases](https://github.com/Glacius-Labs/Markitect/releases) for available versions and verify the exact tag, source commit, and assets before use. Current source product operations are described in [Project workflow](../docs/project-workflow.md) and [Project operations](../docs/project-operations.md); earlier Project/Domain contracts are preserved at the [v0.14.1 tag](https://github.com/Glacius-Labs/Markitect/tree/v0.14.1). The [roadmap](../docs/implementation-plan.md) records source status.
 
 ## Current source release tooling
 
-The current source keeps local distribution commands in `markitect-release`, separately from the product verbs and the temporary legacy dispatcher. `package` writes a source package to an absent directory; `bundle` binds an absent ZIP to a fixed source commit; `install` verifies the supplied ZIP digest and previews the complete five-file pin, with `--write` required to apply it. Neither command calls a provider or publishes a release. `version` and `licenses` also work without a project. The product binary retains its information verbs and uses the same independent build version.
+The current source keeps local distribution commands in `markitect-release`, separately from the product verbs. `package` writes a source package to an absent directory; `bundle` binds an absent ZIP to a fixed source commit; `install` verifies the supplied ZIP digest and previews the complete five-file pin, with `--write` required to apply it. Neither command calls a provider or publishes a release. `version` and `licenses` also work without a project. The product binary retains its information verbs and uses the same independent build version.
 
 ```powershell
 go run ./src/cmd/markitect-release package --repo . --output ABSENT_DIRECTORY
@@ -104,7 +104,7 @@ bootstrap tests.
 
 The installer writes the complete pin as five individual atomic file replacements; it is not a filesystem transaction. If a later write fails, inspect the returned `written` paths. Do not treat a partial set as resumable. For a fresh install, remove only the listed files known to have been created by that attempt before retrying. For an upgrade, restore the previous complete committed set or use a normal Git revert. Keep a baseline commit so the whole pin can be rolled back together. Do not move or recreate an immutable release tag.
 
-A pin installs the CLI distribution; it does not create project content or choose project policy. Project configuration must match the installed release. The current source model documents explicit checks, areas, imports, renderer targets, and bounded initialization in [Usage](../docs/usage.md) and the [Project schema](../schema/Project.yaml). Check the selected release's version and available commands before relying on source-only functionality. Existing content import scripts belong beside the content they transform. Markitect does not ship an implicit migration adapter.
+A pin installs the CLI distribution; it does not create project content or choose project policy. Project configuration must match the installed release. Check the selected release's version and available commands before relying on source-only functionality. Existing content import scripts belong beside the content they transform. Markitect does not ship an implicit migration adapter.
 
 Text files are validated against canonical LF content; Windows CRLF checkout readback is accepted. The nested source archive is copied and verified byte-for-byte. The installer does not rewrite ZIP contents.
 
@@ -158,6 +158,6 @@ After publication, each read-only attestation query allows four attempts with de
 
 The publisher fails closed if a release or draft already exists for the tag. If publication fails, inspect the release state and compare tag target, exact asset names, GitHub digests, and provenance against the workflow run. Do not retry blindly or overwrite an existing asset. An authorized owner must choose a reviewed recovery path. A published immutable release is never replaced.
 
-## Low-level source package
+## Historical content-package command
 
-`markitect package --repo .` writes the source archive to `.markitect/packages/<name>-<version>.zip` by default; `--output` selects another destination. The package contains only the source archive and flat lock. It does not create the release bundle, bootstrap, manifest, binaries, or provenance. It is a development artifact, not the supported versioned distribution.
+The old `markitect package` command produced a Project/Domain content archive and was removed from current source. Its contract remains in the [v0.14.1 guide](https://github.com/Glacius-Labs/Markitect/blob/v0.14.1/docs/content-packages.md). Current `markitect-release package` prepares a source distribution as described above; the commands produce different artifacts.

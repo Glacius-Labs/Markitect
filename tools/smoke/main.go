@@ -112,7 +112,7 @@ func (s *smoke) source() error {
 			return s.buildTools(filepath.Join(pkg, ".markitect", "tool", "source.zip"))
 		}},
 	}
-	return s.runChecks(append(checks, s.distributionChecks(pkg, filepath.Join(s.repo, "examples", "minimal"))...))
+	return s.runChecks(append(checks, s.distributionChecks(pkg)...))
 }
 
 // bundle checks the release bundle of revision as a consumer installs it. A
@@ -142,12 +142,12 @@ func (s *smoke) bundle(revision, expectSHA string) error {
 			return s.buildTools(filepath.Join(consumer, ".markitect", "tool", "source.zip"))
 		}},
 	}
-	return s.runChecks(append(checks, s.distributionChecks(consumer, consumer)...))
+	return s.runChecks(append(checks, s.distributionChecks(consumer)...))
 }
 
 // distributionChecks checks the tools built into s.bin and the bootstrap in
 // bootstrapDir: an unpacked package or a repository with an installed bundle.
-func (s *smoke) distributionChecks(bootstrapDir, minimalRepo string) []check {
+func (s *smoke) distributionChecks(bootstrapDir string) []check {
 	checks := []check{
 		{"bootstrap prints third-party notices", func() error { return s.notices(bootstrapDir) }},
 		{"version names the build platform", s.version},
@@ -155,13 +155,28 @@ func (s *smoke) distributionChecks(bootstrapDir, minimalRepo string) []check {
 		{"onboard previews, writes and is idempotent", s.onboard},
 		{"a policy edit has the expected fixed-revision impact", s.policyEditImpact},
 		{"a fixed revision passes full verification with a scripted auditor", s.verifyFixedRevision},
-		{"selective adoption replays with the packaged CLI", s.selectiveAdoption},
-		{"artifact accounting with the packaged checker", func() error {
-			_, err := s.run(s.repo, nil, s.tool("markitect-check-artifacts"), "--repo", s.repo, "--config", "markitect-artifacts.yaml")
-			return err
+		{"the project model accounts for the source tree", func() error {
+			out, err := s.run(s.repo, nil, s.tool("markitect"), "check", "--repo", s.repo)
+			if err != nil {
+				return err
+			}
+			var report struct {
+				Status   string
+				Coverage struct {
+					Accounted  bool
+					Conforming bool
+				}
+			}
+			if err := decode(out, &report); err != nil {
+				return err
+			}
+			if report.Status != "succeeded" || !report.Coverage.Accounted || !report.Coverage.Conforming {
+				return fmt.Errorf("project model check did not succeed with full artifact coverage: %s", tail(out))
+			}
+			return nil
 		}},
 	}
-	return append(checks, s.legacySteps(minimalRepo)...)
+	return checks
 }
 
 func (s *smoke) testBootstrap(dir string) error {
@@ -169,13 +184,12 @@ func (s *smoke) testBootstrap(dir string) error {
 	return err
 }
 
-// installBundle installs the bundle into a committed copy of the minimal
-// example, as an adopting repository does.
+// installBundle installs the bundle into a committed consumer repository.
 func (s *smoke) installBundle(consumer, bundle, sum string) error {
 	if _, err := s.gitRepo(filepath.Base(consumer), "feature/release-smoke"); err != nil {
 		return err
 	}
-	if err := os.CopyFS(consumer, os.DirFS(filepath.Join(s.repo, "examples", "minimal"))); err != nil {
+	if err := os.WriteFile(filepath.Join(consumer, "README.md"), []byte("# Release smoke consumer\n"), 0o644); err != nil {
 		return err
 	}
 	for _, args := range [][]string{{"add", "."}, {"commit", "--quiet", "-m", "Create isolated Markitect release smoke fixture"}} {
@@ -223,7 +237,7 @@ func (s *smoke) buildTools(archive string) error {
 	if err := unzip(archive, source); err != nil {
 		return err
 	}
-	for _, name := range []string{"markitect", "markitect-release", "markitect-legacy", "markitect-adapter-dotnet", "markitect-check-artifacts", "markitect-exchange-executor"} {
+	for _, name := range []string{"markitect", "markitect-release", "markitect-exchange-executor"} {
 		if _, err := s.run(source, nil, "go", "build", "-trimpath", "-buildvcs=false", "-o", s.tool(name), "./src/cmd/"+name); err != nil {
 			return err
 		}
@@ -399,16 +413,6 @@ func (s *smoke) checkConforms(check func() (string, error)) error {
 		return fmt.Errorf("check did not succeed with conforming coverage: %s", out)
 	}
 	return nil
-}
-
-func (s *smoke) selectiveAdoption() error {
-	legacy := s.tool("markitect-legacy")
-	if _, err := s.run(s.repo, []string{"MARKITECT_ADOPTION_BINARY=" + legacy}, "go", "test", "./src/harness/examples", "-run", "^TestSelectiveAdoptionCLI$", "-count=1"); err != nil {
-		return err
-	}
-	_, err := s.run(s.repo, []string{"MARKITECT_POLICY_ANALYSIS_BINARY=" + legacy}, "go", "test", "./src/internal/host/cli", "-count=1",
-		"-run", "^(TestPolicyFailureAnalysisCLIIsExplicitAndKeepsAcceptanceStrict|TestPolicyFailingWorkingTreeRejectsReconciliationAndWritersWithoutMutation|TestPolicyFailureAnalysisBlocksStructuralDiagnostics)$")
-	return err
 }
 
 // gitRepo creates an empty repository on a feature branch, where Markitect

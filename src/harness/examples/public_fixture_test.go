@@ -4,6 +4,7 @@ import (
 	"os"
 	"path/filepath"
 	"runtime"
+	"sort"
 	"testing"
 )
 
@@ -34,4 +35,8 @@ func harnessRepositoryRoot(t *testing.T) string {
 			t.Fatalf("could not find Markitect checkout root above %s", start)
 		}
 	}
+}
+
+func sortStrings(values []string) {
+	sort.Strings(values)
 }

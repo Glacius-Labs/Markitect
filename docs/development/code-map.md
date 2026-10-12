@@ -16,16 +16,16 @@ Tests in `src/internal/tooling/architecture` fail when a Go package is missing f
 |---|---|---|---|
 | `core` | Structural compiler, snapshots and project-model views. No providers, Git processes or writes. | `core`, `host`, `module` | 5 |
 | `infrastructure` | Git and working-tree access: fixed snapshots and guarded writes. | `infrastructure`, `host` | 2 |
-| `application` | Current product use cases and their command and MCP surfaces. | `host` | 10 |
+| `application` | Current product use cases and their command and MCP surfaces. | `host` | 13 |
 | `runtime` | Runs Manager, review and verify roles in owned workspaces. | `host` | 6 |
-| `legacy` | The published v0.13 Project/Domain surfaces. DEC-014 allows removing them. | `host`, `module` | 26 |
-| `module` | Independent capability packages that import only Core. | `module` | 0 |
-| `cli` | Thin entrypoints that delegate to Host. | `cli` | 10 |
+| `legacy` | The published v0.13 Project/Domain surfaces. DEC-014 allows removing them. | `host`, `module` | 0 |
+| `module` | Independent capability packages that import only Core. | `module` | 2 |
+| `cli` | Thin entrypoints that delegate to Host. | `cli` | 5 |
 | `tooling` | Maintainer tooling: import gate, release, publication and notices. | `tooling` | 5 |
 | `bootstrap` | Standalone public bootstrap without Markitect imports. | `bootstrap` | 1 |
-| `harness` | Executable tests, test support and example programs; not product code. | `harness-tests`, `harness-runtime`, `testkit` | 5 |
+| `harness` | Executable tests, test support and example programs; not product code. | `harness-tests`, `harness-runtime`, `testkit` | 2 |
 | `experiment` | Bounded pilots kept with their evaluation. | `harness-runtime` | 1 |
-| `fixture` | Adopting-project code used as test input; it may not import Markitect. | `fixture` | 1 |
+| `fixture` | Adopting-project code used as test input; it may not import Markitect. | `fixture` | 0 |
 
 ## Deterministic core
 
@@ -48,8 +48,11 @@ Tests in `src/internal/tooling/architecture` fail when a Go package is missing f
 
 | Package | Purpose | Owning document |
 |---|---|---|
+| `src/internal/host/architecturecli` | Host command adapter for the repository architecture gate. | [docs/development/modules.md](modules.md#mechanical-dependency-gate) |
 | `src/internal/host/buildinfo` | Shared immutable source and build version for product and release tooling. | [integration/README.md](../../integration/README.md#current-source-release-tooling) |
 | `src/internal/host/mcp` | Local stdio MCP server over the project operations. | [docs/project-operations.md](../project-operations.md#mcp-server-and-tool-groups) |
+| `src/internal/host/modulechecks` | Host composition for the independent Git hooks and pipeline checks. | [CONTRIBUTING.md](../../CONTRIBUTING.md#verify-a-change) |
+| `src/internal/host/modulecli` | Command adapter for the independent Git hooks and pipeline checks. | [CONTRIBUTING.md](../../CONTRIBUTING.md#verify-a-change) |
 | `src/internal/host/projectadoption` | Brownfield adoption that checks fixed-snapshot evidence and prepares model-only changes. | [docs/project-workflow.md](../project-workflow.md#existing-repositories) |
 | `src/internal/host/projectapp` | Shared application facade that the project CLI and MCP server call. | [docs/architecture.md](../architecture.md#application-layer) |
 | `src/internal/host/projectcli` | The `markitect` verb table, its command line and its MCP tools. | [docs/project-operations.md](../project-operations.md#cli-setup-and-current-roots) |
@@ -70,50 +73,21 @@ Tests in `src/internal/tooling/architecture` fail when a Go package is missing f
 | `src/internal/host/projectsetup` | Builds the project-local agent runtime proposal for `project setup`. | [docs/project-operations.md](../project-operations.md#cli-setup-and-current-roots) |
 | `src/internal/host/projectworkspace` | Owned candidate workspaces for bounded runs. | [docs/project-operations.md](../project-operations.md#candidate-workspaces-and-recovery) |
 
-## Legacy and compatibility
+## Modules
 
 | Package | Purpose | Owning document |
 |---|---|---|
-| `src/internal/host` | Host root with the v0.13 Project/Domain commands and their composition. | [docs/architecture.md](../architecture.md#legacy-line) |
-| `src/internal/host/artifactcli` | Command interface of `markitect-check-artifacts` for managed-artifact accounting. | [docs/usage.md](../usage.md#managed-artifact-accounting) |
-| `src/internal/host/authoring` | Source YAML model for v0.13 Projects, Domains and resources. | [docs/usage.md](../usage.md#project-and-resource-model) |
-| `src/internal/host/authoring/contentpackage` | Reads and builds deterministic offline content-package archives. | [docs/content-packages.md](../content-packages.md) |
-| `src/internal/host/azuredevopscli` | Command protocol of the Azure DevOps metadata adapter. | [src/cmd/markitect-adapter-azure-devops/README.md](../../src/cmd/markitect-adapter-azure-devops/README.md) |
-| `src/internal/host/cli` | Top-level `markitect` command dispatcher with the legacy verbs. | [docs/usage.md](../usage.md#commands) |
-| `src/internal/host/compat/v0_13/consumers/agentrules` | Historical v0.13 projection of Codex and Claude entrypoints. | [src/internal/host/compat/v0_13/consumers/agentrules/README.md](../../src/internal/host/compat/v0_13/consumers/agentrules/README.md) |
-| `src/internal/host/compat/v0_13/consumers/agentrules/links` | Rewrites Markdown link targets for the v0.13 agent-rules consumer. | [src/internal/host/compat/v0_13/consumers/agentrules/README.md](../../src/internal/host/compat/v0_13/consumers/agentrules/README.md) |
-| `src/internal/host/compat/v0_13/consumers/artifactcoverage` | Historical v0.13 evaluation of managed-artifact ownership. | [src/internal/host/compat/v0_13/consumers/artifactcoverage/README.md](../../src/internal/host/compat/v0_13/consumers/artifactcoverage/README.md) |
-| `src/internal/host/compat/v0_13/consumers/azuredevops` | Historical v0.13 offline comparison of Azure DevOps Git metadata. | [src/internal/host/compat/v0_13/consumers/azuredevops/README.md](../../src/internal/host/compat/v0_13/consumers/azuredevops/README.md) |
-| `src/internal/host/compat/v0_13/consumers/dotnet` | Historical v0.13 comparison of MSBuild project files. | [src/internal/host/compat/v0_13/consumers/dotnet/README.md](../../src/internal/host/compat/v0_13/consumers/dotnet/README.md) |
-| `src/internal/host/compat/v0_13/consumers/githooks` | Historical v0.13 bounded Git hook checks. | [src/internal/host/compat/v0_13/consumers/githooks/README.md](../../src/internal/host/compat/v0_13/consumers/githooks/README.md) |
-| `src/internal/host/compat/v0_13/consumers/github` | Historical v0.13 offline comparison of GitHub repository metadata. | [src/internal/host/compat/v0_13/consumers/github/README.md](../../src/internal/host/compat/v0_13/consumers/github/README.md) |
-| `src/internal/host/compat/v0_13/consumers/markdown` | Historical v0.13 Markdown views of the semantic model. | [src/internal/host/compat/v0_13/consumers/markdown/README.md](../../src/internal/host/compat/v0_13/consumers/markdown/README.md) |
-| `src/internal/host/compat/v0_13/consumers/markdown/links` | Rewrites Markdown link targets for the v0.13 Markdown consumer. | [src/internal/host/compat/v0_13/consumers/markdown/README.md](../../src/internal/host/compat/v0_13/consumers/markdown/README.md) |
-| `src/internal/host/compat/v0_13/consumers/pipelines` | Historical v0.13 bounded pipeline checks. | [src/internal/host/compat/v0_13/consumers/pipelines/README.md](../../src/internal/host/compat/v0_13/consumers/pipelines/README.md) |
-| `src/internal/host/compat/v0_13/consumers/projections` | Historical v0.13 projection plan, apply and verify API. | [src/internal/host/compat/v0_13/consumers/projections/README.md](../../src/internal/host/compat/v0_13/consumers/projections/README.md) |
-| `src/internal/host/compat/v0_13/kernel` | Historical v0.13 Domain, resource and policy kernel (Go package name `core`). | [src/internal/host/compat/v0_13/README.md](../../src/internal/host/compat/v0_13/README.md) |
-| `src/internal/host/dotnetcli` | Command protocol of the .NET reference adapter. | [src/cmd/markitect-adapter-dotnet/README.md](../../src/cmd/markitect-adapter-dotnet/README.md) |
-| `src/internal/host/embedded` | Tool-shipped authoring guidance compiled as a Markitect context. | [docs/architecture.md](../architecture.md#legacy-line) |
-| `src/internal/host/githubcli` | Command protocol of the GitHub repository-metadata adapter. | [src/cmd/markitect-adapter-github/README.md](../../src/cmd/markitect-adapter-github/README.md) |
-| `src/internal/host/inputs` | Resolves explicitly declared non-Markitect input files for a v0.13 graph. | [docs/architecture.md](../architecture.md#legacy-line) |
-| `src/internal/host/modulecli` | Command interface of `markitect-check-modules`. | [docs/usage.md](../usage.md#independent-module-checks-current-source) |
-| `src/internal/host/projectionengine` | Pure evaluation of explicit projection contracts. | [src/internal/host/projectionengine/README.md](../../src/internal/host/projectionengine/README.md) |
-| `src/internal/modules/adoption/capture` | Selective-capture handoff for v0.13 Copy Me adoption. | [src/internal/modules/adoption/README.md](../../src/internal/modules/adoption/README.md) |
-| `src/internal/modules/adoption/review` | Copy Me review over a selective-adoption handoff. | [src/internal/modules/adoption/README.md](../../src/internal/modules/adoption/README.md) |
+| `src/internal/modules/githooks` | Pure checks for explicitly configured Git hook entrypoints. | [docs/development/modules.md](modules.md#go-capability-packages) |
+| `src/internal/modules/pipelines` | Pure checks for configured pipeline references to project checks. | [docs/development/modules.md](modules.md#go-capability-packages) |
 
 ## Executables
 
 | Package | Purpose | Owning document |
 |---|---|---|
 | `src/cmd/markitect` | The `markitect` executable with the top-level verbs. | [docs/project-operations.md](../project-operations.md#cli-setup-and-current-roots) |
-| `src/cmd/markitect-adapter-azure-devops` | Legacy Azure DevOps metadata adapter executable. | [src/cmd/markitect-adapter-azure-devops/README.md](../../src/cmd/markitect-adapter-azure-devops/README.md) |
-| `src/cmd/markitect-adapter-dotnet` | Legacy .NET reference adapter executable. | [src/cmd/markitect-adapter-dotnet/README.md](../../src/cmd/markitect-adapter-dotnet/README.md) |
-| `src/cmd/markitect-adapter-github` | Legacy GitHub repository-metadata adapter executable. | [src/cmd/markitect-adapter-github/README.md](../../src/cmd/markitect-adapter-github/README.md) |
 | `src/cmd/markitect-check-architecture` | Runs the import gate. | [docs/development/modules.md](modules.md#mechanical-dependency-gate) |
-| `src/cmd/markitect-check-artifacts` | Runs managed-artifact accounting. | [docs/usage.md](../usage.md#managed-artifact-accounting) |
-| `src/cmd/markitect-check-modules` | Runs the independent Module checks used by the pre-commit hook. | [docs/usage.md](../usage.md#independent-module-checks-current-source) |
+| `src/cmd/markitect-check-modules` | Runs the independent Module checks used by the pre-commit hook. | [CONTRIBUTING.md](../../CONTRIBUTING.md#verify-a-change) |
 | `src/cmd/markitect-exchange-executor` | The reference bring-your-own executor executable. | [docs/provider-adapters.md](../provider-adapters.md#bring-your-own-executor) |
-| `src/cmd/markitect-legacy` | Temporary executable for the legacy Project/Domain commands until ARCH-09 removes them. | [docs/design/verb-table.md](../design/verb-table.md#what-leaves-the-product-binary) |
 | `src/cmd/markitect-release` | Prepares or publishes a GitHub release. | [docs/operations.md](../operations.md#release-operations) |
 
 ## Tooling
@@ -136,9 +110,6 @@ Tests in `src/internal/tooling/architecture` fail when a Go package is missing f
 
 | Package | Purpose | Owning document |
 |---|---|---|
-| `examples/selective-adoption` | Replays a bounded public Markitect report for the selective-adoption example. | [examples/selective-adoption/README.md](../../examples/selective-adoption/README.md#public-report-replay) |
-| `examples/selective-adoption/pathspell` | Canonical path spelling for the replay, including Windows short names. | [examples/selective-adoption/README.md](../../examples/selective-adoption/README.md#public-report-replay) |
-| `src/harness/engineering-discovery` | Evidence helper for the engineering-discovery example. | [examples/engineering-discovery/README.md](../../examples/engineering-discovery/README.md) |
 | `src/harness/examples` | Executable tests over the example fixtures. | [examples/README.md](../../examples/README.md) |
 | `src/internal/testkit` | Hermetic Git and temporary-directory fixtures that only tests import. | [CONTRIBUTING.md](../../CONTRIBUTING.md#verify-a-change) |
 
@@ -147,9 +118,3 @@ Tests in `src/internal/tooling/architecture` fail when a Go package is missing f
 | Package | Purpose | Owning document |
 |---|---|---|
 | `experiments/mcp-pilot` | Small local MCP stdio pilot kept with its evaluation. | [experiments/mcp-pilot/README.md](../../experiments/mcp-pilot/README.md) |
-
-## Fixtures
-
-| Package | Purpose | Owning document |
-|---|---|---|
-| `examples/documentation/docs/implementation/src` | Ordinary Go source used as a declared artifact input. | [examples/documentation/README.md](../../examples/documentation/README.md) |

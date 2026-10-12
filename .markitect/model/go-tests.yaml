@@ -14,8 +14,6 @@ spec:
   uses:
     - namespace: product
       name: product
-    - namespace: legacy
-      name: legacy-line
     - namespace: tooling
       name: tooling
     - namespace: examples

@@ -1,4 +1,8 @@
-# Managed artifact coverage
+# Historical managed artifact coverage
+
+This is the earlier Project/Domain `ArtifactCoverage` specification. Its checker, scoped manifest and renderer ownership machinery were retired with ARCH-09. The text below preserves that historical contract; it does not describe a current command.
+
+Current source uses the full repository [project model](../../.markitect/project.yaml) and explicit Artifact paths, checked by `markitect check --repo .` ([project artifact boundary](../architecture.md#project-artifact-boundary)). CI separately compares the generated project-view bytes with a fixed-revision docs preview; coverage alone does not prove freshness or human acceptance.
 
 Managed artifact coverage is a project-owned accounting check over a selected
 set of repository roots. It answers whether each file in those roots has one

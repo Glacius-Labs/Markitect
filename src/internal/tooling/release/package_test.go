@@ -26,7 +26,7 @@ func TestPackageIsDeterministicAndContainsOnlyReleaseSources(t *testing.T) {
 		t.Fatal("packaging the same source twice changed output")
 	}
 	entries := archiveEntries(t, first)
-	want := []string{"LICENSE", "README.md", "go.mod", "go.sum", "schema/manifest.yaml", "src/cmd/markitect/main.go", "src/internal/host/embedded/project.yaml", "src/internal/core/model.go", "src/internal/host/authoring/format/schema.go", "src/internal/tooling/release/package.go", "src/internal/tooling/release/package_test.go"}
+	want := []string{"LICENSE", "README.md", "go.mod", "go.sum", "schema/manifest.yaml", "src/cmd/markitect/main.go", "src/internal/core/model.go", "src/internal/host/authoring/format/schema.go", "src/internal/tooling/release/package.go", "src/internal/tooling/release/package_test.go"}
 	sort.Strings(want)
 	if strings.Join(entries, "\n") != strings.Join(want, "\n") {
 		t.Fatalf("unexpected package contents:\n%v\nwant:\n%v", entries, want)
@@ -44,7 +44,7 @@ func TestPackageIsDeterministicAndContainsOnlyReleaseSources(t *testing.T) {
 	}
 }
 
-func TestPackageIncludesEmbeddedAuthoringProjectAndResourcesOnly(t *testing.T) {
+func TestPackageOmitsRetiredEmbeddedAuthoringSource(t *testing.T) {
 	moduleRoot := sourceModuleRoot(t)
 	prefix, err := sourceLayoutPrefix(moduleRoot)
 	if err != nil {
@@ -66,55 +66,10 @@ func TestPackageIncludesEmbeddedAuthoringProjectAndResourcesOnly(t *testing.T) {
 	if !bytes.Equal(contents["LICENSE"], license) {
 		t.Fatal("source archive omitted or changed the root license")
 	}
-	want := []string{
-		prefix + "internal/host/embedded/resources/rule-canonical-ownership.yaml",
-		prefix + "internal/host/embedded/resources/skill-authoring.yaml",
-		prefix + "internal/host/embedded/resources/text-resource-modelling.yaml",
-		prefix + "internal/host/embedded/resources/workflow-authoring-change.yaml",
-		prefix + "internal/host/embedded/resources/workflow-constitution-change.yaml",
-		prefix + "internal/host/embedded/resources/workflow-engineering-discovery.yaml",
-		prefix + "internal/host/embedded/resources/workflow-markitect-first-change.yaml",
-	}
-	var got []string
 	for name := range contents {
-		if strings.HasPrefix(name, prefix+"internal/host/embedded/resources/") {
-			got = append(got, name)
+		if strings.HasPrefix(name, prefix+"internal/host/embedded/") {
+			t.Errorf("retired embedded authoring source was packaged: %s", name)
 		}
-	}
-	sort.Strings(got)
-	if strings.Join(got, "\n") != strings.Join(want, "\n") {
-		t.Fatalf("bundled authoring resources in source archive = %v, want %v", got, want)
-	}
-	projectPath := prefix + "internal/host/embedded/project.yaml"
-	projectData, err := os.ReadFile(filepath.Join(moduleRoot, filepath.FromSlash(projectPath)))
-	if err != nil {
-		t.Fatal(err)
-	}
-	projectData, err = normalizeTextSource(projectPath, projectData)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if !bytes.Equal(contents[projectPath], projectData) {
-		t.Fatal("archive omitted or changed the embedded authoring Project")
-	}
-	if _, included := contents[prefix+"internal/host/embedded/notes.yaml"]; included {
-		t.Fatal("unrelated YAML under internal/authoring was packaged")
-	}
-	for _, name := range want {
-		data, err := os.ReadFile(filepath.Join(moduleRoot, filepath.FromSlash(name)))
-		if err != nil {
-			t.Fatal(err)
-		}
-		data, err = normalizeTextSource(name, data)
-		if err != nil {
-			t.Fatal(err)
-		}
-		if !bytes.Equal(contents[name], data) {
-			t.Errorf("archive content differs from embedded resource source %s", name)
-		}
-	}
-	if _, included := contents[prefix+"internal/host/embedded/testdata/not-embedded.yaml"]; included {
-		t.Fatal("unrelated YAML under internal was packaged")
 	}
 }
 
