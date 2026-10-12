@@ -20,6 +20,15 @@ const GuardedWritePackage = "src/internal/host/guardedwrite"
 // productLayers are the code-map layers of the current product.
 var productLayers = map[string]bool{"core": true, "infrastructure": true, "application": true, "runtime": true}
 
+// productLayerImports declares direction independently of the code map's
+// display order. Application composes Runtime, Infrastructure and Core.
+var productLayerImports = map[string][]string{
+	"core":           {"core"},
+	"infrastructure": {"core", "infrastructure"},
+	"runtime":        {"core", "infrastructure", "runtime"},
+	"application":    {"core", "infrastructure", "runtime", "application"},
+}
+
 // guardedWriteAPI is an allowlist, so a newly exported guardedwrite
 // identifier is forbidden to product packages until it is listed here.
 var guardedWriteAPI = map[string]bool{
@@ -29,7 +38,8 @@ var guardedWriteAPI = map[string]bool{
 
 // CheckRepository runs every import rule over the repository at root: the
 // coarse rules of Check and the code-map rules of CheckMapLayers and
-// CheckGuardedWriteUse. It reads the code map from root.
+// CheckGuardedWriteUse. It validates the complete code map from root before
+// relying on its package layers; an invalid map is a repository error.
 func CheckRepository(root string) ([]Violation, error) {
 	edges, err := Inspect(root)
 	if err != nil {
@@ -38,6 +48,13 @@ func CheckRepository(root string) ([]Violation, error) {
 	m, err := LoadCodeMap(root)
 	if err != nil {
 		return nil, err
+	}
+	problems, err := CheckCodeMap(root, m)
+	if err != nil {
+		return nil, err
+	}
+	if len(problems) != 0 {
+		return nil, fmt.Errorf("invalid code map:\n%s", strings.Join(problems, "\n"))
 	}
 	guarded, err := CheckGuardedWriteUse(root, edges, m)
 	if err != nil {
@@ -50,15 +67,21 @@ func CheckRepository(root string) ([]Violation, error) {
 }
 
 // CheckMapLayers reports every import, in production or test code, from a
-// product package to a legacy package. Legacy packages may import product
-// packages. Packages missing from the map are reported by CheckCodeMap and
-// skipped here.
+// product package against the four-layer direction and the legacy ban.
+// Legacy packages may import product packages. This helper assumes a valid
+// map; CheckRepository validates completeness and layer labels first.
 func CheckMapLayers(edges []Edge, m CodeMap) []Violation {
 	layers := mapLayers(m)
 	var out []Violation
 	for _, e := range edges {
-		if e.To != "" && productLayers[layers[e.From]] && layers[e.To] == "legacy" {
+		from, to := layers[e.From], layers[e.To]
+		if e.To == "" || !productLayers[from] {
+			continue
+		}
+		if to == "legacy" {
 			out = append(out, Violation{e, "product package may not import a legacy package"})
+		} else if productLayers[to] && !contains(productLayerImports[from], to) {
+			out = append(out, Violation{e, fmt.Sprintf("product-layer direction forbids %s -> %s", from, to)})
 		}
 	}
 	sortViolations(out)

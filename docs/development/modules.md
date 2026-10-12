@@ -28,6 +28,17 @@ Each new capability package under internal/modules/<name> imports only the new C
 
 Project-model subpackages consume explicit values: coverage classifies a supplied census, briefings compare supplied revision models and query a minimal resolution view, and projectvalue owns shared project DTOs, selectors and binding identity. `host/projectcoverage` acquires the census through the caller's selected source acquisition. `host/projecthistory` acquires Git/history facts and owns persisted history, CAS and locks. Application composes those operations with Runtime's finite Host callbacks; Runtime does not import Application packages. Runtime retains run stores, budget accounting, verification, guarded Apply and recovery.
 
+The code map's four product layers obey the following import direction, in addition to the package rules above:
+
+| Importing layer | Permitted product layers |
+| --- | --- |
+| Core | Core |
+| Infrastructure | Core, Infrastructure |
+| Runtime | Core, Infrastructure, Runtime |
+| Application | Core, Infrastructure, Runtime, Application |
+
+Application may import Runtime and Core directly. Product packages may not import legacy packages. These rules apply equally to production, test and platform-specific Go files; they do not relax the separate coarse package boundaries.
+
 ## Responsibility map
 
 The [code map](code-map.md) owns the package list. In short:
@@ -53,7 +64,9 @@ Remove a capability package only after its Host wiring, canonical model referenc
 
 The checker is at `src/internal/tooling/architecture`. It parses Go imports without compiling the inspected production source and examines all supported-platform files and unit tests. Its negative fixtures cover Core-to-Module, Module-to-sibling, Module-to-Host and CLI bypass; the policy also forbids Module-to-Infrastructure and Module-to-Tooling edges. Diagnostics identify the exact file, line and import. No exception allowlist may conceal a violation.
 
-The gate also reads the layers of the [code map](code-map.md) from the checked repository and enforces declared import and guarded-write boundaries in production and test code. Product code may use only `Apply`, `ApplyChecked`, `ApplyOrderedChecked`, `CaptureFiles` and `NewStoredNames`, together with the `Capture`, `Change`, `File`, `Result` and `StoredNames` types from `src/internal/host/guardedwrite`; lower-level filesystem primitives stay behind that boundary. The gate reports forbidden imports, names and dot imports. Its negative fixtures cover each product layer and guarded-write rule.
+The gate validates the complete [code map](code-map.md) with `CheckCodeMap` before checking layer direction. Every Go package must have a valid layer and owning document, including packages with only test or platform-specific files. An incomplete or invalid map fails with a descriptive repository error (the standalone CLI returns exit 2); forbidden imports in a valid map return exit 1. Matrix fixtures cover all ten allowed and six forbidden product-layer directions, and repository fixtures prove that tests and platform files are inspected and omitted packages or unknown layers cannot bypass the gate.
+
+The gate also enforces guarded-write boundaries in production and test code. Product code may use only `Apply`, `ApplyChecked`, `ApplyOrderedChecked`, `CaptureFiles` and `NewStoredNames`, together with the `Capture`, `Change`, `File`, `Result` and `StoredNames` types from `src/internal/host/guardedwrite`; lower-level filesystem primitives stay behind that boundary. The gate reports forbidden imports, names and dot imports. Its negative fixtures cover each product layer and guarded-write rule.
 
 `TestRepositoryArchitecture` makes `go test ./...` exercise the repository scan. The named CI step and `markitect-check-architecture` executable run the architecture gate. This wiring does not establish a passing result; the coordinator reports the fixed candidate's gate outcome. A change is complete only after the gate passes at the exact head and independent review confirms the full diff.
 

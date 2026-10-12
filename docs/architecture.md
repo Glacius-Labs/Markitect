@@ -48,9 +48,10 @@ Current source has four product layers:
 
 Executables under `src/cmd`, maintainer tooling, harnesses and fixtures have their own layers in the code map. The import gate checks each package against its layer ([mechanical dependency gate](development/modules.md#mechanical-dependency-gate)). Package IDs below refer to the [backlog](work-items/backlog.yaml), which owns their status.
 
+The import gate enforces direction between all four product layers and validates code-map completeness before relying on layer labels (ARCH-12). [Dependency direction](development/modules.md#dependency-direction) defines the permitted imports; ARCH-13 separates the Core I/O and Runtime/Application responsibilities.
+
 Known problems across layers:
 
-- The import gate enforces the declared package boundaries, but it does not yet enforce direction between the four product layers. ARCH-13 separates the actual Core I/O and Runtime/Application responsibilities; complete mechanical enforcement of product-layer direction remains ARCH-12.
 - Directory names do not show the layer. Product packages are grouped beneath `src/internal/host` despite their distinct architectural roles (ARCH-16).
 - Small utilities remain package-local across layers: production `sameStrings` definitions exist in two packages, `equalStrings` in three and `containsString` in four. ARCH-05 consolidated the identical comparison within `projectrun`; it introduced no shared cross-layer utility abstraction.
 - Four packages keep their own record store, each with its own file layout and write path: `projectrun` (`store.go`), `projectexplore` (`store.go`), `projecthistory` (`store.go`) and `projectadoption` (`session.go`, `manager_run_ledger.go`) (ARCH-14).
