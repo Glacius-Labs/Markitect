@@ -289,6 +289,31 @@ class StudyFileTests(unittest.TestCase):
         self.assertRejected(variant(limits={"stationSeconds": 0, "totalSeconds": 1}), "limits.stationSeconds")
         self.assertRejected(variant(markitect={"commit": "HEAD", "sourceRepo": "/s"}), "markitect.commit")
 
+    def test_markitect_role_profiles_survive_study_validation_and_run_expansion(self):
+        roles = {
+            "manager": {"provider": "codex", "model": "gpt-6.1-sol", "effort": "high"},
+            "reviewer": {"provider": "process", "model": "reviewer-model-1", "effort": "medium",
+                         "providerExecutable": "/usr/local/bin/reviewer", "providerArgs": ["--readonly"]},
+        }
+        parsed = study.validate(variant(markitect={**STUDY["markitect"], "roles": roles}))
+        runs = study.expand(parsed)
+        mkt = next(entry_ for entry_ in runs if entry_["arm"] == "markitect")["manifest"]
+        conventional = next(entry_ for entry_ in runs if entry_["arm"] == "conventional")["manifest"]
+        self.assertEqual(mkt["markitect"]["roles"], {
+            "manager": {**roles["manager"], "costMode": "metered"},
+            "reviewer": {**roles["reviewer"], "costMode": "unmetered"},
+        })
+        self.assertNotIn("roles", conventional.get("markitect", {}))
+        self.assertEqual(manifest.role_profiles(mkt)["verifier"], {
+            "provider": "codex", "model": STUDY["agent"]["model"],
+            "effort": STUDY["agent"]["effort"], "costMode": "metered"})
+
+    def test_study_role_profiles_are_validated_as_manifest_profiles(self):
+        roles = {"verifier": {"provider": "process", "model": "fake-model-1", "effort": "low",
+                              "providerExecutable": "relative/runner"}}
+        with self.assertRaisesRegex(study.StudyError, "absolute container path"):
+            study.validate(variant(markitect={**STUDY["markitect"], "roles": roles}))
+
     def test_load_resolves_a_relative_source_repo_from_the_study_folder(self):
         with tempfile.TemporaryDirectory() as folder:
             path = Path(folder) / "studies" / "s.json"
@@ -874,6 +899,22 @@ class StudyRunTests(StudyRunBase):
         code, stdout, _stderr = self.run_study(FakeDocker(), "--preflight", path=path)
         self.assertEqual(code, 3)
         self.assertIn("as does markitect.innerModel gpt-6.1-sol", stdout)
+        path = self.write_study(markitect={"sourceRepo": str(self.root / "src"), "commit": "669cecd2",
+                                           "roles": {
+                                               "manager": {"provider": "codex", "model": "gpt-6-luna",
+                                                           "effort": "high"},
+                                               "reviewer": {"provider": "process", "model": "openai/gpt-6.1-sol",
+                                                            "effort": "medium", "providerExecutable": "/usr/bin/reviewer"},
+                                               "verifier": {"provider": "process",
+                                                            "model": "anthropic/Claude-Opus-5-5-20261001",
+                                                            "effort": "low", "providerExecutable": "/usr/bin/verifier"},
+                                           }})
+        code, stdout, _stderr = self.run_study(FakeDocker(), "--preflight", path=path)
+        self.assertEqual(code, 3)
+        self.assertIn("reviewer codex uses model gpt-6.1-sol, as does markitect.roles.reviewer.model "
+                      "openai/gpt-6.1-sol", stdout)
+        self.assertIn("reviewer claude uses model claude-opus-5-5, as does markitect.roles.verifier.model "
+                      "anthropic/Claude-Opus-5-5-20261001", stdout)
 
     def test_a_copied_out_login_that_is_not_one_small_file_is_never_promoted(self):
         for mode in ("huge", "symlink", "dir", "two", "device"):

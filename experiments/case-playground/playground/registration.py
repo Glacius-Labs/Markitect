@@ -240,7 +240,11 @@ def arm_models(manifest: dict | None, roles: list | None = None) -> dict[str, st
 
     manifest = manifest or {}
     add((manifest.get("agent") or {}).get("model"), "agent.model")
-    add((manifest.get("markitect") or {}).get("innerModel"), "markitect.innerModel")
+    product = manifest.get("markitect") or {}
+    if set(product.get("roles") or {}) != {"manager", "reviewer", "verifier"}:
+        add(product.get("innerModel"), "markitect.innerModel")
+    for name, profile in ((manifest.get("markitect") or {}).get("roles") or {}).items():
+        add(profile.get("model"), f"markitect.roles.{name}.model")
     for role in roles or []:
         if isinstance(role, dict):
             label = " ".join(str(role[key]) for key in ("role", "manager") if role.get(key))

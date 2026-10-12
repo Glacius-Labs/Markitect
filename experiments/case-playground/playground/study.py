@@ -159,7 +159,7 @@ def _validate(data: Any, *, base: Path | None, playground: Path | None) -> dict:
     product = None
     if "markitect" in root:
         product = dict(manifest_module._object(root["markitect"], "markitect", required={"commit"},
-                                               optional={"sourceRepo", "innerModel", "innerEffort"}))
+                                               optional={"sourceRepo", "innerModel", "innerEffort", "roles"}))
         source = product.get("sourceRepo")
         if isinstance(source, str) and source.strip() and base is not None:
             source = Path(source).expanduser()

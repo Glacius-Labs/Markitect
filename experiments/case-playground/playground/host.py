@@ -142,7 +142,7 @@ def host_timeout(manifest: dict, stations: int) -> int:
 def needs_codex_auth(manifest: dict) -> bool:
     """Codex as the outer agent, or Markitect's inner roles behind Claude Code."""
     kind = manifest["agent"]["kind"]
-    return kind == "codex" or (kind == "claude" and manifest["method"] == "markitect")
+    return kind == "codex" or (kind == "claude" and manifest_module.uses_native_roles(manifest))
 
 
 def _operator() -> tuple[int, int] | None:

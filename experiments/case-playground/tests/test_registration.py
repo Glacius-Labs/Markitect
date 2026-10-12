@@ -235,6 +235,31 @@ class ReviewerTests(unittest.TestCase):
         self.assertEqual(arms["gpt-6-luna"], "agent.model gpt-6-luna")
         self.assertEqual(arms["claude-opus-5-5"], "role verifier claude-opus-5-5[1m]")
 
+    def test_arm_models_register_each_selected_role_before_independence_checks(self):
+        manifest = {"agent": {"model": "o3"}, "markitect": {
+            "innerModel": "o4-mini",
+            "roles": {
+                "manager": {"provider": "codex", "model": "anthropic/Claude-Opus-5-5-20261001",
+                            "effort": "high", "costMode": "metered"},
+                "reviewer": {"provider": "process", "model": "openai/gpt-6.1-sol", "effort": "medium",
+                             "costMode": "unmetered", "providerExecutable": "/usr/bin/reviewer"},
+                "verifier": {"provider": "codex", "model": "gpt-6-luna", "effort": "low",
+                             "costMode": "metered"},
+            },
+        }}
+        arms = registration.arm_models(manifest)
+        self.assertEqual(set(arms), {"o3", "claude-opus-5-5", "gpt-6.1-sol", "gpt-6-luna"})
+        self.assertEqual(arms["claude-opus-5-5"],
+                         "markitect.roles.manager.model anthropic/Claude-Opus-5-5-20261001")
+        self.assertEqual(arms["gpt-6.1-sol"], "markitect.roles.reviewer.model openai/gpt-6.1-sol")
+        found = registration.clashes(self.CONFIG, ["codex", "claude"], arms)
+        self.assertEqual(found, [
+            {"reviewer": "codex", "model": "gpt-6.1-sol",
+             "arm": "markitect.roles.reviewer.model openai/gpt-6.1-sol"},
+            {"reviewer": "claude", "model": "claude-opus-5-5",
+             "arm": "markitect.roles.manager.model anthropic/Claude-Opus-5-5-20261001"},
+        ])
+
     def test_a_reviewer_model_that_an_arm_uses_clashes(self):
         arms = registration.arm_models({"agent": {"model": "gpt-6-luna"}, "markitect": {"innerModel": "GPT-6.1-Sol"}})
         found = registration.clashes(self.CONFIG, ["codex", "claude"], arms)

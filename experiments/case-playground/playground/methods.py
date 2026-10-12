@@ -11,6 +11,7 @@ AGENTS.md by itself). For Markitect the product's role configuration is read bac
 """
 from __future__ import annotations
 
+import hashlib
 import json
 import os
 import shutil
@@ -20,7 +21,7 @@ from typing import Any, Callable
 
 from .claude_agent import ROUTER as CLAUDE_ROUTER
 from .lifecycle import match_owner, open_plain, read_text as _read, sha_file
-from .manifest import CLAUDE_KINDS
+from .manifest import CLAUDE_KINDS, role_profiles, uses_native_roles
 
 SETUP_IDENTITY = {
     "GIT_AUTHOR_NAME": "Playground setup",
@@ -142,13 +143,16 @@ def _markitect(recorder: _Recorder, ctx: dict, result: dict) -> None:
     binary = _install_markitect(Path(ctx["inDir"]), Path(ctx.get("markitectBinary", MARKITECT_BINARY)))
     notes["markitectBinary"] = str(binary)
     notes["markitectSha256"] = sha_file(binary)
-    codex = ctx.get("codexExecutable") or find_native_codex()
-    if not codex:
+    profiles = role_profiles(manifest)
+    needs_default_codex = any(p["provider"] == "codex" and not p.get("providerExecutable")
+                              for p in profiles.values())
+    codex = (ctx.get("codexExecutable") or find_native_codex()) if needs_default_codex else None
+    if needs_default_codex and not codex:
         raise SetupBlocked("no native Codex executable found (Markitect rejects script shims and symlinks)",
                            "environment")
     agent = manifest["agent"]
     budget = _budget(manifest)
-    notes.update(providerExecutable=str(codex), budget=budget)
+    notes.update(providerExecutable=str(codex) if codex else None, budget=budget)
 
     def product(name: str, *args: str, allow_failure: bool = False) -> tuple[dict, dict | None]:
         record, stdout = recorder.step(name, [str(binary), *args], timeout=PRODUCT_TIMEOUT,
@@ -176,7 +180,8 @@ def _markitect(recorder: _Recorder, ctx: dict, result: dict) -> None:
 
     # Markitect's inner roles run on Codex, so setup needs the Codex guidance; a Claude Code
     # outer agent also gets the product's own Claude guidance.
-    onboard_provider = "both" if agent["kind"] in CLAUDE_KINDS else "codex"
+    onboard_provider = "both" if agent["kind"] in CLAUDE_KINDS and uses_native_roles(manifest) else (
+        "claude" if agent["kind"] in CLAUDE_KINDS else "codex")
     notes["onboardProvider"] = onboard_provider
     onboard_args = [*base, "--provider", onboard_provider]
     _, preview = product("onboard-preview", "onboard", *onboard_args)
@@ -188,16 +193,55 @@ def _markitect(recorder: _Recorder, ctx: dict, result: dict) -> None:
     inner = manifest.get("markitect") or {}
     inner_model, inner_effort = inner.get("innerModel", agent["model"]), inner.get("innerEffort", agent["effort"])
     setup_args = [*base, "--provider", "codex", "--model", inner_model, "--effort", inner_effort,
-                  "--provider-executable", str(codex),
+                  "--provider-executable", str(codex) if codex else "",
                   "--input-micros-per-million", str(budget["inputMicrosPerMillion"]),
                   "--output-micros-per-million", str(budget["outputMicrosPerMillion"]),
                   "--max-cost-micros", str(budget["maxCostMicros"])]
-    _, preview = product("setup-preview", "config", *setup_args)
-    setup_digest = _digest(preview, "setup-preview", "editPlan")
-    _, written = product("setup-write", "config", *setup_args, "--expect", setup_digest, "--write")
+    input_path = None
+    selected = profiles
+    if inner.get("roles"):
+        # Reuse config's complete options record. The same immutable input is used
+        # for preview and digest-guarded write; no hand-written runtime is applied.
+        selected = {name: dict(profile) for name, profile in profiles.items()}
+        for profile in selected.values():
+            if profile["provider"] == "codex" and not profile.get("providerExecutable"):
+                profile["providerExecutable"] = str(codex)
+        options = {"provider": "codex", "model": inner_model, "effort": inner_effort,
+                   "codexProfile": "", "providerExecutable": str(codex) if codex else "",
+                   **budget, "roles": selected}
+        # config --input is a repository-relative product record, not an arbitrary
+        # file. Keep its bytes separately as evidence before removing our draft.
+        record_path = ".markitect/drafts/playground-role-config.json"
+        input_path = recorder.repo / record_path
+        if input_path.exists() or input_path.is_symlink():
+            raise SetupBlocked("role config draft already exists", "harness")
+        input_path.parent.mkdir(parents=True, exist_ok=True)
+        content = json.dumps(options, indent=2) + "\n"
+        (recorder.out_dir / "role-config.json").write_text(content, encoding="utf-8", newline="\n")
+        input_path.write_text(content, encoding="utf-8", newline="\n")
+        try:
+            match_owner(input_path, recorder.repo)
+        except BaseException:
+            input_path.unlink()
+            raise
+        notes["requestedRoles"] = profiles
+        setup_args = [*base, "--input", record_path]
+    try:
+        _, preview = product("setup-preview", "config", *setup_args)
+        setup_digest = _digest(preview, "setup-preview", "editPlan")
+        _, written = product("setup-write", "config", *setup_args, "--expect", setup_digest, "--write")
+    finally:
+        if input_path is not None:
+            input_path.unlink()
     notes["digests"] = {"init": init_digest, "onboard": onboard_digest, "setup": setup_digest}
     text, notes["runtimeSource"] = _runtime_text(written, recorder.repo)
     result["roles"] = runtime_roles(text) if text is not None else None
+    if text is not None:
+        notes["runtimeSha256"] = hashlib.sha256(text.encode("utf-8")).hexdigest()
+    if inner.get("roles"):
+        if notes["runtimeSource"] != RUNTIME_PATH:
+            raise SetupBlocked("written runtime file is unavailable for role confirmation")
+        _confirm_roles(selected, result["roles"])
 
     recorder.git("git-add", "add", "-A")
     recorder.git("git-diff-check", "diff", "--cached", "--check", allow_failure=True)
@@ -272,18 +316,45 @@ def _is_elf(path: Path) -> bool:
 # --- role configuration ----------------------------------------------------------------
 
 def _runtime_text(written: Any, repo: Path) -> tuple[str | None, str | None]:
-    """The runtime the product wrote and where it was read: the content its setup output
-    printed, else the file in the repository."""
+    """The written runtime file, or the product output when the file is unavailable."""
+    # The actual file is authoritative after write; output is a fallback for older
+    # product snapshots that don't expose the file to the setup recorder.
+    handle = open_plain(repo / RUNTIME_PATH)
+    if handle is not None:
+        with handle:
+            return handle.read(RUNTIME_LIMIT).decode("utf-8", errors="replace"), RUNTIME_PATH
     mutation = written.get("mutation") if isinstance(written, dict) else None
     files = mutation.get("files") if isinstance(mutation, dict) else None
     for change in files if isinstance(files, list) else []:
         if isinstance(change, dict) and change.get("path") == RUNTIME_PATH and isinstance(change.get("content"), str):
             return change["content"], "setup-write output"
-    handle = open_plain(repo / RUNTIME_PATH)
-    if handle is None:
-        return None, None
-    with handle:
-        return handle.read(RUNTIME_LIMIT).decode("utf-8", errors="replace"), RUNTIME_PATH
+    return None, None
+
+
+def _confirm_roles(profiles: dict, roles: list | None) -> None:
+    """Refuse silently ignored selections and incomplete effective configuration."""
+    names = {"worker": "manager", "reviewer": "reviewer", "verifier": "verifier"}
+    seen = set()
+    for role in roles or []:
+        name = names.get(role.get("role"))
+        if name is None:
+            continue
+        seen.add(name)
+        requested = profiles[name]
+        transport = "codex-app-server" if requested["provider"] == "codex" else "process"
+        if (role.get("executor"), role.get("model"), role.get("effort")) != (
+                transport, requested["model"], requested["effort"]):
+            raise SetupBlocked(f"runtime {name} executor/model/effort differs from the manifest")
+        if role.get("args", []) != requested.get("providerArgs", []):
+            raise SetupBlocked(f"runtime {name} args differ from the manifest")
+        if role.get("costMode", "metered") != requested.get("costMode", "metered"):
+            raise SetupBlocked(f"runtime {name} cost mode differs from the manifest")
+        if "providerVersion" in requested and role.get("providerVersion") != requested["providerVersion"]:
+            raise SetupBlocked(f"runtime {name} provider version differs from the manifest")
+        if requested.get("providerExecutable") and role.get("command") != requested["providerExecutable"]:
+            raise SetupBlocked(f"runtime {name} executable differs from the manifest")
+    if seen != set(profiles):
+        raise SetupBlocked("runtime does not record every selected role class")
 
 
 def runtime_roles(text: str) -> list[dict]:
@@ -293,9 +364,16 @@ def runtime_roles(text: str) -> list[dict]:
 
     def role(name: str, manager: str | None, agent: dict) -> dict:
         app = agent.get("appServer") if isinstance(agent.get("appServer"), dict) else {}
-        return {"role": name, "manager": _manager_name(manager), "executor": agent.get("transport"),
+        options = agent.get("modelOptions") if isinstance(agent.get("modelOptions"), dict) else {}
+        args = agent.get("args", [])
+        if not isinstance(args, list):
+            args = None
+        return {"role": name, "manager": _manager_name(manager), "executor": agent.get("transport") or "process",
                 "providerVersion": agent.get("providerVersion"), "command": agent.get("command"),
-                "model": agent.get("model"), "effort": app.get("reasoningEffort", agent.get("effort"))}
+                "model": agent.get("model"),
+                "effort": app.get("reasoningEffort", options.get("reasoningEffort", agent.get("effort"))),
+                "args": args,
+                "costMode": agent.get("costMode") or "metered"}
 
     review = data.get("review") if isinstance(data.get("review"), dict) else {}
     roles = []
@@ -318,37 +396,190 @@ def _manager_name(key: str | None) -> str | None:
 
 def _yaml_mappings(text: str) -> dict:
     """The block mappings of a YAML document as nested dicts; scalars stay strings (`null`
-    becomes None). Small and tolerant, enough for the product's generated runtime.yaml:
-    sequences and block scalars are skipped, flow collections stay text."""
+    becomes None). Small and tolerant, enough for the product's generated runtime.yaml;
+    role `args` scalar sequences are decoded so the effective process argv can be checked."""
     root: dict = {}
     stack: list[tuple[int, dict]] = [(-1, root)]
     skip: int | None = None
-    for raw in text.splitlines():
+    lines = text.splitlines()
+    index = 0
+    while index < len(lines):
+        raw = lines[index]
         stripped = raw.strip()
         if not stripped or stripped.startswith("#") or stripped in ("---", "..."):
+            index += 1
             continue
         indent = len(raw) - len(raw.lstrip(" "))
         if skip is not None:
             if indent > skip or (indent == skip and stripped.startswith("-")):
+                index += 1
                 continue
             skip = None
         if stripped == "-" or stripped.startswith("- "):
             skip = indent
+            index += 1
             continue
         key, value = _yaml_entry(stripped)
         if key is None:
+            index += 1
             continue
         while indent <= stack[-1][0]:
             stack.pop()
         parent = stack[-1][1]
+        if key == "args":
+            parent[key], index = _yaml_args(lines, index, indent, value)
+            continue
+        index += 1
         if value == "":
             parent[key] = child = {}
             stack.append((indent, child))
         elif value[:1] in ("|", ">"):
-            parent[key], skip = None, indent
+            parent[key], index = _yaml_block_scalar(lines, index, indent, value)
         else:
             parent[key] = _yaml_scalar(value)
     return root
+
+
+def _yaml_args(lines: list[str], index: int, indent: int, value: str) -> tuple[Any, int]:
+    """Decode runtime argv from a flow sequence or a block sequence of YAML scalars."""
+    if value:
+        stripped = value.strip()
+        if stripped == "[]":
+            return [], index + 1
+        if stripped.startswith("[") and stripped.endswith("]"):
+            return _yaml_flow_scalars(stripped[1:-1]), index + 1
+        return _yaml_scalar(stripped), index + 1
+
+    first = index + 1
+    while first < len(lines) and (not lines[first].strip() or lines[first].lstrip().startswith("#")):
+        first += 1
+    if first >= len(lines):
+        return [], first
+    first_indent = len(lines[first]) - len(lines[first].lstrip(" "))
+    if first_indent <= indent:
+        return [], index + 1
+    if not lines[first].lstrip().startswith("-"):
+        return None, _yaml_sequence_end(lines, first, indent)
+
+    sequence_indent = first_indent
+    result: list[Any] = []
+    cursor = first
+    while cursor < len(lines):
+        raw = lines[cursor]
+        stripped = raw.strip()
+        if not stripped:
+            cursor += 1
+            continue
+        line_indent = len(raw) - len(raw.lstrip(" "))
+        if line_indent < sequence_indent or (line_indent == sequence_indent and not stripped.startswith("-")):
+            break
+        if line_indent != sequence_indent or not stripped.startswith("-"):
+            # Nested YAML values are invalid for argv. Preserve a non-list marker so
+            # confirmation fails closed instead of silently treating them as absent.
+            return None, _yaml_sequence_end(lines, cursor, sequence_indent)
+        item = stripped[1:].lstrip()
+        if item.startswith("|"):
+            value, cursor = _yaml_literal_item(lines, cursor + 1, sequence_indent, item)
+            result.append(value)
+            continue
+        result.append(_yaml_scalar(_uncomment(item)))
+        cursor += 1
+    return result, cursor
+
+
+def _yaml_sequence_end(lines: list[str], index: int, sequence_indent: int) -> int:
+    while index < len(lines):
+        raw = lines[index]
+        if raw.strip() and len(raw) - len(raw.lstrip(" ")) <= sequence_indent:
+            break
+        index += 1
+    return index
+
+
+def _yaml_literal_item(lines: list[str], index: int, sequence_indent: int, marker: str) -> tuple[str | None, int]:
+    """Read a literal block scalar used as one argv item, including YAML chomping."""
+    return _yaml_block_scalar(lines, index, sequence_indent, marker)
+
+
+def _yaml_block_scalar(lines: list[str], index: int, parent_indent: int, marker: str) -> tuple[str | None, int]:
+    """Read a YAML literal/folded block scalar, including chomping indicators."""
+    cursor = index
+    content_indents = []
+    explicit_indent = next((int(char) for char in marker[1:] if char in "123456789"), None)
+    while cursor < len(lines):
+        raw = lines[cursor]
+        if raw.strip():
+            line_indent = len(raw) - len(raw.lstrip(" "))
+            if line_indent <= parent_indent:
+                break
+            if explicit_indent is not None and line_indent < parent_indent + explicit_indent:
+                # Refuse malformed explicit-indentation scalars rather than guessing
+                # their intended content. yaml.v3 currently emits one such malformed
+                # shape for leading-space argv values; runtime setup rejects it first.
+                return None, _yaml_sequence_end(lines, cursor, parent_indent)
+            content_indents.append(line_indent)
+        cursor += 1
+    content_indent = min(content_indents, default=parent_indent + 1)
+    body_lines = []
+    for raw in lines[index:cursor]:
+        if not raw.strip():
+            body_lines.append("")
+        else:
+            line_indent = len(raw) - len(raw.lstrip(" "))
+            body_lines.append(raw[min(content_indent, line_indent):])
+    if marker.startswith(">"):
+        folded = []
+        for line_no, line in enumerate(body_lines):
+            if line_no and line and body_lines[line_no - 1]:
+                folded.append(" ")
+            elif line_no:
+                folded.append("\n")
+            folded.append(line)
+        text = "".join(folded)
+    else:
+        text = "\n".join(body_lines)
+    chomping = marker[1:]
+    if "-" in chomping:
+        text = text.rstrip("\n")
+    elif "+" in chomping:
+        if body_lines:
+            text += "\n"
+    elif body_lines:
+        text = text.rstrip("\n") + "\n"
+    return text, cursor
+
+
+def _yaml_flow_scalars(value: str) -> list[Any] | str:
+    """Split a small flow sequence without commas inside quoted YAML scalars."""
+    if not value.strip():
+        return []
+    parts, start, quote, escaped = [], 0, None, False
+    index = 0
+    while index < len(value):
+        char = value[index]
+        if quote == '"':
+            if escaped:
+                escaped = False
+            elif char == "\\":
+                escaped = True
+            elif char == '"':
+                quote = None
+        elif quote == "'":
+            if char == "'":
+                if index + 1 < len(value) and value[index + 1] == "'":
+                    index += 2
+                    continue
+                quote = None
+        elif char in ("'", '"'):
+            quote = char
+        elif char == ",":
+            parts.append(value[start:index].strip())
+            start = index + 1
+        index += 1
+    parts.append(value[start:].strip())
+    if any(not part for part in parts):
+        return value
+    return [_yaml_scalar(_uncomment(part)) for part in parts]
 
 
 def _yaml_entry(line: str) -> tuple[str | None, str]:
@@ -385,8 +616,38 @@ def _yaml_scalar(value: str) -> str | None:
     if len(value) >= 2 and value[0] == value[-1] == "'":
         return value[1:-1].replace("''", "'")
     if len(value) >= 2 and value[0] == value[-1] == '"':
-        try:
-            return json.loads(value)
-        except ValueError:
-            return value[1:-1]
+        return _yaml_double_quoted(value[1:-1])
     return None if value in ("null", "Null", "NULL", "~") else value
+
+
+def _yaml_double_quoted(value: str) -> str:
+    """Decode YAML escapes used by yaml.v3 for quoted argv strings."""
+    simple = {"0": "\0", "a": "\a", "b": "\b", "t": "\t", "n": "\n", "v": "\v",
+              "f": "\f", "r": "\r", "e": "\x1b", " ": " ", '"': '"', "/": "/", "\\": "\\",
+              "N": "\u0085", "_": "\u00a0", "L": "\u2028", "P": "\u2029"}
+    out, index = [], 0
+    while index < len(value):
+        if value[index] != "\\":
+            out.append(value[index])
+            index += 1
+            continue
+        index += 1
+        if index >= len(value):
+            return value
+        escape = value[index]
+        index += 1
+        if escape in simple:
+            out.append(simple[escape])
+            continue
+        digits = {"x": 2, "u": 4, "U": 8}.get(escape)
+        if digits is None or index + digits > len(value):
+            return value
+        try:
+            codepoint = int(value[index:index + digits], 16)
+            if codepoint > 0x10ffff:
+                return value
+            out.append(chr(codepoint))
+        except ValueError:
+            return value
+        index += digits
+    return "".join(out)

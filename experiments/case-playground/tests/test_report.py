@@ -24,6 +24,27 @@ def usage(outer, every, others=1):
 
 
 class ReportTests(unittest.TestCase):
+    def test_mixed_role_configuration_retains_runtime_provenance(self):
+        manifest = {"method": "markitect", "agent": {"kind": "fake", "model": "outer-model-1", "effort": "high"},
+                    "markitect": {"roles": {"verifier": {"provider": "process", "model": "fake-model-1",
+                                                         "effort": "low", "providerExecutable": "/x/fake"}}}}
+        write(self.out / "runner.json", {"manifest": manifest})
+        write(self.out / "setup" / "setup.json", {
+            "roles": [{"role": "verifier", "manager": None, "executor": "process", "providerVersion": "fake/1",
+                       "command": "/x/fake", "args": ["--verify"], "costMode": "unmetered",
+                       "model": "fake-model-1", "effort": "low"}],
+            "notes": {"requestedRoles": manifest["markitect"]["roles"], "runtimeSource": ".markitect/runtime.yaml",
+                      "runtimeSha256": "c" * 64}})
+        result = report.build(self.out)
+        self.assertEqual(result["stratum"], "outer=fake, inner=codex+process")
+        self.assertEqual(result["roles"][0]["command"], "/x/fake")
+        self.assertEqual(result["roles"][0]["args"], ["--verify"])
+        self.assertEqual(result["roles"][0]["costMode"], "unmetered")
+        self.assertEqual(result["setup"]["requestedRoles"], manifest["markitect"]["roles"])
+        self.assertEqual(result["setup"]["runtimeSha256"], "c" * 64)
+        self.assertEqual(result["setup"]["runtimeSource"], ".markitect/runtime.yaml")
+        self.assertIn("command /x/fake", (self.out / "report.md").read_text(encoding="utf-8"))
+
     def setUp(self):
         temp = tempfile.TemporaryDirectory()
         self.addCleanup(temp.cleanup)
@@ -145,9 +166,10 @@ class ReportTests(unittest.TestCase):
         self.assertEqual(result["roles"], result["setup"]["roles"])
         self.assertEqual(result["roles"][0], {"role": "worker", "manager": "project-owner",
                                               "executor": "codex-app-server", "providerVersion": "codex-cli 0.162.0",
-                                              "model": "gpt-6-luna", "effort": "high"})
+                                                "command": "/x/codex", "args": None, "costMode": None,
+                                                "model": "gpt-6-luna", "effort": "high"})
         text = (self.out / "report.md").read_text(encoding="utf-8")
-        self.assertIn("worker project-owner: codex-app-server (codex-cli 0.162.0), model gpt-6-luna, effort high; "
+        self.assertIn("worker project-owner: codex-app-server (codex-cli 0.162.0), model gpt-6-luna, effort high, command /x/codex, args n/a, cost mode n/a; "
                       "verifier: codex-app-server", text)
         self.assertIn("CLAUDE.md router (`@AGENTS.md`, the same for both methods): added.", text)
         write(self.out / "final" / "final.json", {"passed": 2, "total": 2, "status": "pass"})

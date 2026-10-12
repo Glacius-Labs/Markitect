@@ -13,7 +13,7 @@ from __future__ import annotations
 
 import json
 import re
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 from typing import Any
 
 from . import cases, registration
@@ -23,6 +23,8 @@ METHODS = ("conventional", "markitect")
 # "fake" stands in for Codex, "fake-claude" for Claude Code (both provider-free).
 AGENT_KINDS = ("codex", "fake", "claude", "fake-claude")
 CLAUDE_KINDS = ("claude", "fake-claude")
+ROLE_NAMES = ("manager", "reviewer", "verifier")
+CODEX_EFFORTS = ("minimal", "low", "medium", "high", "xhigh", "max", "ultra")
 # The image always ships both CLIs; Codex manifests may leave the Claude version out.
 DEFAULT_CLAUDE_VERSION = "2.1.296"
 CONTAINER_DEFAULTS = {"cpus": 4, "memory": "8g", "pidsLimit": 2048}
@@ -98,6 +100,8 @@ def validate(data: Any, *, playground: Path | None = None) -> dict:
         # Codex applies it per session; Claude Code has no such setting, so it is only recorded.
         "maxSubagents": _positive_int(agent["maxSubagents"], "agent.maxSubagents"),
     }
+    if kind in ("codex", "fake"):
+        _choice(result["agent"]["effort"], CODEX_EFFORTS, "agent.effort")
 
     limits = _object(root["limits"], "limits", required={"stationSeconds", "totalSeconds"})
     result["limits"] = {name: _positive_int(limits[name], f"limits.{name}")
@@ -117,14 +121,21 @@ def validate(data: Any, *, playground: Path | None = None) -> dict:
         # Markitect's inner roles run on Codex. A Codex outer agent shares its model and effort
         # with them; a Claude Code outer agent needs them named here (product setup input).
         product = _object(root["markitect"], "markitect", required={"commit"},
-                          optional={"sourceRepo", "innerModel", "innerEffort"})
+                          optional={"sourceRepo", "innerModel", "innerEffort", "roles"})
         source = product["sourceRepo"] if "sourceRepo" in product else default_source_repo(playground)
         if not isinstance(source, str) or not source.strip():
             raise ManifestError("markitect.sourceRepo: expected a non-empty path string")
         result["markitect"] = {"sourceRepo": source,
                                "commit": _match(product["commit"], _COMMIT, "markitect.commit")}
         missing = sorted({"innerModel", "innerEffort"} - product.keys())
-        if result["agent"]["kind"] in CLAUDE_KINDS and missing:
+        if "roles" in product:
+            roles = _object(product["roles"], "markitect.roles", optional=set(ROLE_NAMES))
+            if not roles:
+                raise ManifestError("markitect.roles: expected at least one role profile")
+            result["markitect"]["roles"] = {name: _role_profile(roles[name], name)
+                                           for name in ROLE_NAMES if name in roles}
+        complete_roles = set(result["markitect"].get("roles", {})) == set(ROLE_NAMES)
+        if result["agent"]["kind"] in CLAUDE_KINDS and missing and not complete_roles:
             raise ManifestError(f"markitect: missing {', '.join(missing)} (Markitect's inner roles run on "
                                 "Codex, not on the Claude Code outer agent's model)")
         if "innerModel" in product:
@@ -133,7 +144,68 @@ def validate(data: Any, *, playground: Path | None = None) -> dict:
             result["markitect"]["innerEffort"] = _match(product["innerEffort"], _EFFORT, "markitect.innerEffort")
     elif "markitect" in root:
         raise ManifestError("markitect: only allowed when method is 'markitect'")
+    if result["method"] == "markitect":
+        for name, profile in role_profiles(result).items():
+            if profile["provider"] == "codex":
+                _choice(profile["effort"], CODEX_EFFORTS, f"markitect {name} Codex effort")
     return result
+
+
+def _role_profile(value: Any, name: str) -> dict:
+    """The existing product config RoleProfile, with explicit selection per role.
+
+    Executable paths refer to the Linux run container, never the host filesystem.
+    The product remains responsible for executable discovery and fingerprinting.
+    """
+    label = f"markitect.roles.{name}"
+    profile = _object(value, label, required={"provider", "model", "effort"},
+                      optional={"providerExecutable", "providerArgs", "providerVersion", "costMode"})
+    provider = _choice(profile["provider"], ("codex", "process"), f"{label}.provider")
+    result = {"provider": provider, "model": _model(profile["model"], f"{label}.model"),
+              "effort": _match(profile["effort"], _EFFORT, f"{label}.effort"),
+              "costMode": _choice(profile.get("costMode", "unmetered" if provider == "process" else "metered"),
+                                  ("metered", "unmetered"), f"{label}.costMode")}
+    if "providerExecutable" in profile:
+        executable = profile["providerExecutable"]
+        if (not isinstance(executable, str) or not executable.startswith("/")
+                or executable != executable.strip() or "\x00" in executable
+                or ".." in PurePosixPath(executable).parts):
+            raise ManifestError(f"{label}.providerExecutable: expected an absolute container path")
+        result["providerExecutable"] = executable
+    if provider == "codex":
+        _choice(result["effort"], CODEX_EFFORTS, f"{label}.effort")
+        if result["costMode"] != "metered":
+            raise ManifestError(f"{label}.costMode: Codex must be metered")
+        if {"providerArgs", "providerVersion"} & profile.keys():
+            raise ManifestError(f"{label}: providerArgs and providerVersion apply only to process executors")
+    else:
+        if "providerExecutable" not in result:
+            raise ManifestError(f"{label}: process requires providerExecutable (absolute container path)")
+        if "providerArgs" in profile:
+            args = profile["providerArgs"]
+            if not isinstance(args, list) or any(not isinstance(arg, str) or "\x00" in arg for arg in args):
+                raise ManifestError(f"{label}.providerArgs: expected an array of strings without NUL")
+            result["providerArgs"] = list(args)
+        if "providerVersion" in profile:
+            version = profile["providerVersion"]
+            if not isinstance(version, str) or not version.strip() or version != version.strip() or "\x00" in version:
+                raise ManifestError(f"{label}.providerVersion: expected a non-empty version string")
+            result["providerVersion"] = version
+    return result
+
+
+def role_profiles(manifest: dict) -> dict[str, dict]:
+    """Resolved requested profiles; runtime.yaml records what config actually wrote."""
+    product, agent = manifest.get("markitect") or {}, manifest.get("agent") or {}
+    default = {"provider": "codex", "model": product.get("innerModel", agent.get("model")),
+               "effort": product.get("innerEffort", agent.get("effort")), "costMode": "metered"}
+    selected = product.get("roles") or {}
+    return {name: dict(selected.get(name, default)) for name in ROLE_NAMES}
+
+
+def uses_native_roles(manifest: dict) -> bool:
+    return manifest.get("method") == "markitect" and any(
+        profile["provider"] == "codex" for profile in role_profiles(manifest).values())
 
 
 def _model(value: Any, label: str) -> str:
