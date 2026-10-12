@@ -1,7 +1,7 @@
 schema: markitect-roadmap-backlog/v1
 updated: '2026-10-12'
 roadmap: docs/implementation-plan.md
-main_basis: fa02c3e197c59f16ec90ee885c0469fe8aeda41d
+main_basis: 1b621b1e06a3b0670d7f07b67a2632320796c7bf
 
 # Single owner of work-package status. The roadmap explains streams, waves,
 # zones and rules; this file records each package's current state.
@@ -185,9 +185,10 @@ packages:
     title: Executor and model per role in study manifests
     stream: PLAY
     wave: 2
-    status: blocked
+    status: ready
     owner: scientist
     depends_on: [RUN-01, PLAY-05]
+    note: Both dependencies are merged and PLAY-05 has completed the shared-file sequence. No further blocker is recorded; ready for a future Scientist slot, with no session started in this round. This package selects and records role configuration; PLAY-07 protocol/cases/budget and CI-04 provider execution remain separately deferred.
     zone: free
     acceptance:
       - A manifest selects executor, model and effort per role; runs record the effective configuration.
@@ -338,10 +339,12 @@ packages:
     title: One composition root in the application facade
     stream: CLI
     wave: 2
-    status: ready
+    status: active
     owner: interface
+    branch: dev/application-composition
     depends_on: [CLI-02]
     zone: interface
+    note: The Interface session started on 12 October from clean Main 1b621b1e06a3b0670d7f07b67a2632320796c7bf. The integrator reserves this zone exclusively for CLI-03, then CLI-04, then TEST-02, with separate PRs after predecessor integration. Preserve CLI-02/MCP-01 and the accepted-history caller/token/dismissal behavior from BUG-01.
     inputs:
       - docs/work-items/surveys/code-architecture-20261010.md
     acceptance:
@@ -386,10 +389,10 @@ packages:
     title: Doctor checks the Git version
     stream: CLI
     wave: 2
-    status: ready
+    status: blocked
     owner: interface
     depends_on: [CLI-02]
-    note: Explore, Plan and Apply call git check-attr --source, which needs Git 2.40 or newer; older Git fails with an unknown-option error.
+    note: The Interface session implements this after CLI-03 merges and a fresh-Main branch is established; its zone is currently held by CLI-03. Explore, Plan and Apply call git check-attr --source, which needs Git 2.40 or newer; older Git fails with an unknown-option error.
     zone: interface
     inputs:
       - pull request 162 (ARCH-10 known problems)
@@ -489,10 +492,11 @@ packages:
     title: CLI and MCP contract suite with a completeness check
     stream: TEST
     wave: 2
-    status: ready
+    status: blocked
     owner: interface
     depends_on: [CLI-02]
     zone: interface
+    note: Reserved to the same Interface session after CLI-03 and CLI-04 integration, each on fresh Main with its own PR. The zone is currently held by CLI-03; no contract completeness claim is made before the suite is delivered.
     inputs:
       - docs/work-items/surveys/tests-and-ci-20261010.md
       - docs/work-items/surveys/cli-mcp-app-server-20261010.md
@@ -503,14 +507,15 @@ packages:
     title: Split and parallelize the runtime end-to-end tests
     stream: TEST
     wave: 2
-    status: ready
+    status: active
     owner: qa
+    branch: dev/runtime-test-isolation
     depends_on: [RUN-01, TEST-01]
     zone: runtime
     inputs:
       - docs/work-items/surveys/tests-and-ci-20261010.md
       - docs/work-items/surveys/product-readiness-lessons-20261010.md
-    note: Dependencies and the BUG-01 integration queue are merged. On 12 October the integrator releases the runtime zone to QA for this next package; no chat is dispatched by this status update. The race job takes about 16 minutes, about 13 of them projectrun; splitting the runtime end-to-end tests also shortens it. Preserve and investigate the separately recorded Windows one-hour Git timeout before claiming Windows validation.
+    note: The QA session started on 12 October from clean Main 1b621b1e06a3b0670d7f07b67a2632320796c7bf and holds the runtime zone exclusively for TEST-03. TEST-04/05 and RUN-02/RUN-05 wait for a later handoff. Split/isolate and safely parallelize tests without dropping assertions or default required-suite coverage; report comparable source-bound Linux timings. Preserve the separate Windows Git-timeout/update-ref diagnostics without inferring Windows acceptance.
     acceptance:
       - Runtime end-to-end tests live in their own package or tag, share a fixture template and run in parallel.
 
@@ -665,14 +670,21 @@ packages:
     title: Continuous bug hunt with verified findings
     stream: BUG
     wave: 1
-    status: ready
+    status: active
     owner: bughunter
+    branch: fix/helper-cleanup-review
     note: >-
       The integrator merged 205, 221, 223, historical-context ancestor visibility in 225 and the
       Context/brief-list no-write plus atomic dismissal repair in 229 after independent review and
-      fixed-candidate checks. No repair writer remains active. Continuous bug hunting is ready for
-      a future scoped session; core/projectmodel findings go to kg, interface findings to integrator,
-      and fixes in other areas require their assigned zone. Runtime is assigned next to QA TEST-03.
+      fixed-candidate checks. A new Bughunter session started on 12 October from clean Main
+      1b621b1e06a3b0670d7f07b67a2632320796c7bf with read-only review and isolated reproduction.
+      No production repair paths are reserved yet; concrete verified findings go to the integrator
+      for a bounded non-colliding fix assignment. Runtime belongs to QA TEST-03 and interface to
+      CLI-03 then CLI-04 then TEST-02. Core/projectmodel findings remain coordinated with kg.
+      The first bounded sweep reproduced the known helper-cleanup liveness failure after process
+      loss on Main 1b621b1e06a3b0670d7f07b67a2632320796c7bf; the passing observation test confirms
+      the blockade, not successful recovery. A read-only minimal repair design is being reviewed;
+      any Runtime implementation waits behind TEST-03 and an explicit path handoff.
       Historical unconfirmed recovery/census findings remain unconfirmed. The Windows diagnostic
       run on source-equivalent f9ddd795 recorded a one-hour Git timeout and a workspace alias test
       failure; preserve them for bounded investigation, without inferring final-Main Windows results.

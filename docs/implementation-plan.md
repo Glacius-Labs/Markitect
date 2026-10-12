@@ -1,6 +1,6 @@
 # Roadmap
 
-Updated 12 October 2026 against main `fa02c3e197c59f16ec90ee885c0469fe8aeda41d`. The [integration record](validation/integration-queue-20261011.md) closes the six-PR queue and its scoped follow-ups; the [Claude-to-Codex handoff](development/session-handoff.md) preserves the earlier interrupted-session snapshot.
+Updated 12 October 2026 against main `1b621b1e06a3b0670d7f07b67a2632320796c7bf`. The [integration record](validation/integration-queue-20261011.md) closes the previous six-PR queue and its scoped follow-ups; the new role reservations below continue from that green Main. The [Claude-to-Codex handoff](development/session-handoff.md) preserves the earlier interrupted-session snapshot.
 
 This page owns the current direction: how parallel work is organized, the streams and waves, the code zones, and the open owner decisions. The [backlog](work-items/backlog.yaml) is the single owner of each work package's status. The [concept register](concepts/register.md) records the decisions this roadmap relies on. Source changes do not change a published release.
 
@@ -42,21 +42,23 @@ This page owns the current direction: how parallel work is organized, the stream
 
 ### Sessions
 
-A session is a long-running chat for one role. The backlog's `owner` field names the role, and any fresh session can take a role over. The Codex integrator completed the queue with bounded subagents and owns its final status record; no separate role chat is dispatched by this roadmap. The interrupted Claude sessions' snapshot is in [Session continuation](development/session-handoff.md); the [branch survey](work-items/surveys/branches-and-worktrees-20261010.md) preserves the earlier archive inventory. A package's `active` state is not evidence that its old chat is still running.
+A session is a long-running chat for one role. The backlog's `owner` field names the role, and any fresh session can take a role over. After the previous queue closed, the owner requested fresh sessions on 12 October. QA, Interface and Bughunter are now running in separate worktrees from the green Main above; the existing integrator owns canonical status and integration. The interrupted Claude sessions' snapshot is in [Session continuation](development/session-handoff.md); the [branch survey](work-items/surveys/branches-and-worktrees-20261010.md) preserves the earlier archive inventory. A package's `active` state is not evidence that its old chat is still running.
 
 | Role | Streams | Starts |
 |---|---|---|
-| integrator | OPS, register decisions, review and merge order, IDEA-01, LEARN-01 | Verify the final status contribution and Main; future packages follow backlog and zone handoffs |
-| interface | CLI, MCP-01, TEST-02, AGENT-02, AGENT-03 | MCP-01 and caller repairs are integrated; later Wave 2 packages require their own zone assignment |
-| scientist | PLAY | Inventory and Windows fixture repair are integrated; PLAY-06 remains a separate package |
+| integrator | OPS, register decisions, review and merge order, IDEA-01, LEARN-01 | Coordinate current reservations, independent reviews and normal PR integration; verify final Main |
+| interface | CLI, MCP-01, TEST-02, AGENT-02, AGENT-03 | Active CLI-03 on `dev/application-composition`; exclusive interface zone, then CLI-04, then TEST-02 in separate PRs |
+| scientist | PLAY | PLAY-06 is ready after merged dependencies; no Scientist chat is started in this round |
 | kg | KG | KG-04 protocol is prepared; measurement waits for separate authority |
-| bughunter | BUG | Recorded repairs are integrated; future scoped review preserves historical and Windows evidence |
-| qa | CI, TEST | TEST-03 is ready and assigned the next Runtime slot; no role chat is dispatched |
+| bughunter | BUG | Active read-only review and isolated reproduction on `fix/helper-cleanup-review`; fixes need concrete non-colliding path reservation |
+| qa | CI, TEST | Active TEST-03 on `dev/runtime-test-isolation`; exclusive runtime zone, no TEST-04/05 or RUN implementation alongside |
 | cleaner | ARCH, AGENT-01 | ARCH-08 caller analysis is complete; implementation waits for interface ownership |
 | runtime | RUN, MCP-02, ARCH-06 | After QA's TEST-03 assignment and an explicit later zone handoff |
 | government | GOV | After Wave 2 and the explicit GOV-01 dependencies (DEC-019) |
 
 No more than six sessions change code at the same time. Each session uses subagents and workflows inside its own packages as it sees fit.
+
+The active round starts with two implementation writers and one read-only Bughunter. Shared edits are bounded explicitly: QA owns the TEST-03 instructions in CONTRIBUTING; Interface owns the composition corrections in architecture and project operations. New artifact-accounting entries require concrete paths and coordinated approval. Backlog, roadmap and concept register remain integrator-owned. Provider or method studies, KG-04 measurements, Government implementation, releases and worktree cleanup are outside this round.
 
 ### Starting a session
 
