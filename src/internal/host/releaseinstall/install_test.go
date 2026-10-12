@@ -35,6 +35,9 @@ func TestInstallPlansThenWritesCompleteFreshBundleAndNoops(t *testing.T) {
 	if written.Kind != "install" || !written.Applied || len(written.Written) != 5 || written.Recovery != "" {
 		t.Fatalf("fresh write result = %+v", written)
 	}
+	if got := strings.Join(written.Written, ","); got != ".markitect/bootstrap/run.go,.markitect/bootstrap/run_test.go,.markitect/tool/lock.yaml,.markitect/tool/source.zip,.markitect/tool/release.yaml" {
+		t.Fatalf("complete pin must publish its manifest last: %s", got)
+	}
 	commitInstallPins(t, root, "install release")
 	noop, err := Install(root, bundle, false)
 	if err != nil {
@@ -42,6 +45,10 @@ func TestInstallPlansThenWritesCompleteFreshBundleAndNoops(t *testing.T) {
 	}
 	if noop.Kind != "noop" || noop.Applied || len(noop.Written) != 0 {
 		t.Fatalf("no-op plan = %+v", noop)
+	}
+	noop, err = Install(root, bundle, true)
+	if err != nil || noop.Kind != "noop" || !noop.Applied || len(noop.Written) != 0 {
+		t.Fatalf("verified write-mode no-op = %+v, %v", noop, err)
 	}
 }
 
