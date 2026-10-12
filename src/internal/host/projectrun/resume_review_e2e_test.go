@@ -4,6 +4,7 @@ package projectrun
 
 import (
 	"context"
+	"github.com/Glacius-Labs/Markitect/src/internal/host/projectexecutor"
 	"testing"
 )
 
@@ -19,7 +20,7 @@ func TestResumedReviewReworkStartsFromReviewedCandidate(t *testing.T) {
 		t.Fatal(err)
 	}
 	ordersID := e2eManagerID("orders", "orders")
-	invoker := &reworkDispatchInvoker{inner: ProcessInvoker{}, store: fixture.store, runID: fixture.plan.ID, managerID: ordersID, phase: "work"}
+	invoker := &reworkDispatchInvoker{inner: projectexecutor.ProcessInvoker{}, store: fixture.store, runID: fixture.plan.ID, managerID: ordersID, phase: "work"}
 	resumed, resumeErr := Resume(context.Background(), fixture.host, invoker, fixture.root, fixture.plan.ID)
 	if invoker.request == nil || invoker.stateErr != nil {
 		t.Fatalf("Resume did not dispatch the orders rework: status=%s err=%v state=%v", resumed.Status, resumeErr, invoker.stateErr)

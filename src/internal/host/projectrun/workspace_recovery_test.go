@@ -2,8 +2,12 @@ package projectrun
 
 import (
 	"context"
+	"crypto/sha256"
+	"encoding/hex"
 	"encoding/json"
 	"errors"
+	"github.com/Glacius-Labs/Markitect/src/internal/host/projectconfig"
+	"github.com/Glacius-Labs/Markitect/src/internal/host/projectexecutor"
 	"os"
 	"path/filepath"
 	"strings"
@@ -15,6 +19,11 @@ import (
 	"github.com/Glacius-Labs/Markitect/src/internal/host/projectworkspace"
 	"github.com/Glacius-Labs/Markitect/src/internal/infrastructure/source"
 )
+
+func testWorkspaceJournalKey(workspaceID string) string {
+	sum := sha256.Sum256([]byte(workspaceID))
+	return hex.EncodeToString(sum[:])
+}
 
 type recoveryWorkspaceFixture struct {
 	root           string
@@ -138,7 +147,7 @@ func TestRecoverProjectAgentUnknownLifecyclePreservesWorkspaceWithoutReplay(t *t
 	fixture := newRecoveryWorkspaceFixture(t)
 	invoker := &scriptedNativeRecoverer{result: agentexec.RunResult{Receipt: agentexec.Receipt{
 		RunID: fixture.invocation.RunID, InputDigest: fixture.invocation.InputDigest, ConfigDigest: "recovery-fingerprint",
-		Lifecycle: &agentexec.Lifecycle{Provider: TransportCodexAppServer, SessionID: "session-original", TurnID: "turn-original", State: "unknown",
+		Lifecycle: &agentexec.Lifecycle{Provider: projectconfig.TransportCodexAppServer, SessionID: "session-original", TurnID: "turn-original", State: "unknown",
 			StartRequests: []agentexec.RoleStartRequest{{RequestID: fixture.invocation.RunID, Role: agentexec.RoleExecutor, State: "unknown"}}},
 	}}}
 	result, found, err := recoverFixture(t, fixture, invoker)
@@ -185,8 +194,8 @@ func TestRecoverPreparedWorkspaceWithKnownRunIDAndLegacyEmptyReceipt(t *testing.
 	in := &scriptedNativeRecoverer{result: recoveredWorkspaceResult(fixture, "completed")}
 	binding := nativeRecoveryBinding{RunID: fixture.invocation.RunID, InputDigest: fixture.invocation.InputDigest, OwnerRunID: "fixture-run"}
 	result, found, err := RecoverProjectAgent(context.Background(), Host{Workspaces: service, Load: projectwork.Load}, in,
-		fixture.root, fixture.request.TaskID, agentexec.Config{Transport: TransportCodexAppServer, Timeout: 20},
-		Limits{MaxCandidateFileBytes: 1 << 20, MaxCandidateBytes: 4 << 20}, binding, fixture.invocation.Request)
+		fixture.root, fixture.request.TaskID, agentexec.Config{Transport: projectconfig.TransportCodexAppServer, Timeout: 20},
+		projectconfig.Limits{MaxCandidateFileBytes: 1 << 20, MaxCandidateBytes: 4 << 20}, binding, fixture.invocation.Request)
 	if err != nil || !found || in.recoverCalls != 1 || in.runCalls != 0 || result.Receipt.RunID != fixture.invocation.RunID {
 		t.Fatalf("known receipt run ID did not bind a legacy prepared journal to its exact trusted handle: result=%+v found=%t err=%v invoker=%+v", result, found, err, in)
 	}
@@ -207,8 +216,8 @@ func TestRecoverPreparedWorkspaceWithoutReceiptUsesCurrentOwnerNotOlderSameInput
 	in := &scriptedNativeRecoverer{result: recoveredWorkspaceResult(fixture, "completed")}
 	binding := nativeRecoveryBinding{InputDigest: fixture.invocation.InputDigest, OwnerRunID: "fixture-run"}
 	result, found, err := RecoverProjectAgent(context.Background(), Host{Workspaces: service, Load: projectwork.Load}, in,
-		fixture.root, fixture.request.TaskID, agentexec.Config{Transport: TransportCodexAppServer, Timeout: 20},
-		Limits{MaxCandidateFileBytes: 1 << 20, MaxCandidateBytes: 4 << 20}, binding, fixture.invocation.Request)
+		fixture.root, fixture.request.TaskID, agentexec.Config{Transport: projectconfig.TransportCodexAppServer, Timeout: 20},
+		projectconfig.Limits{MaxCandidateFileBytes: 1 << 20, MaxCandidateBytes: 4 << 20}, binding, fixture.invocation.Request)
 	if err != nil || !found || in.recoverCalls != 1 || in.runCalls != 0 || result.Receipt.RunID != fixture.invocation.RunID {
 		t.Fatalf("prepared current-owner turn was not recovered exactly: result=%+v found=%t err=%#v invalidHandle=%t invoker=%+v", result, found, err, errors.Is(err, projectworkspace.ErrInvalidHandle), in)
 	}
@@ -228,8 +237,8 @@ func TestRecoverPreparedWorkspaceWithoutReceiptRejectsMissingCurrentOwnerHandle(
 	in := &scriptedNativeRecoverer{}
 	binding := nativeRecoveryBinding{InputDigest: fixture.invocation.InputDigest, OwnerRunID: "current-run"}
 	_, found, err := RecoverProjectAgent(context.Background(), Host{Workspaces: fixture.service, Load: projectwork.Load}, in,
-		fixture.root, fixture.request.TaskID, agentexec.Config{Transport: TransportCodexAppServer, Timeout: 20},
-		Limits{MaxCandidateFileBytes: 1 << 20, MaxCandidateBytes: 4 << 20}, binding, fixture.invocation.Request)
+		fixture.root, fixture.request.TaskID, agentexec.Config{Transport: projectconfig.TransportCodexAppServer, Timeout: 20},
+		projectconfig.Limits{MaxCandidateFileBytes: 1 << 20, MaxCandidateBytes: 4 << 20}, binding, fixture.invocation.Request)
 	if err == nil || !found || in.recoverCalls != 0 || in.runCalls != 0 {
 		t.Fatalf("workspace without current-owner provenance was accepted: found=%t err=%v invoker=%+v", found, err, in)
 	}
@@ -246,8 +255,8 @@ func TestRecoverPreparedWorkspaceWithoutReceiptRejectsDuplicateCurrentOwner(t *t
 	in := &scriptedNativeRecoverer{}
 	binding := nativeRecoveryBinding{InputDigest: fixture.invocation.InputDigest, OwnerRunID: "fixture-run"}
 	_, found, err := RecoverProjectAgent(context.Background(), Host{Workspaces: fixture.service, Load: projectwork.Load}, in,
-		fixture.root, fixture.request.TaskID, agentexec.Config{Transport: TransportCodexAppServer, Timeout: 20},
-		Limits{MaxCandidateFileBytes: 1 << 20, MaxCandidateBytes: 4 << 20}, binding, fixture.invocation.Request)
+		fixture.root, fixture.request.TaskID, agentexec.Config{Transport: projectconfig.TransportCodexAppServer, Timeout: 20},
+		projectconfig.Limits{MaxCandidateFileBytes: 1 << 20, MaxCandidateBytes: 4 << 20}, binding, fixture.invocation.Request)
 	if err == nil || !found || !strings.Contains(err.Error(), "multiple private workspace journals") || in.recoverCalls != 0 || in.runCalls != 0 {
 		t.Fatalf("duplicate current-owner workspaces were guessed: found=%t err=%v invoker=%+v", found, err, in)
 	}
@@ -294,7 +303,7 @@ func TestRecoverPreparedWorkspaceWithMismatchedRequestRemainsBlocked(t *testing.
 	invoker := &scriptedNativeRecoverer{}
 	binding := nativeRecoveryBinding{RunID: fixture.invocation.RunID, InputDigest: fixture.invocation.InputDigest, OwnerRunID: "fixture-run"}
 	_, found, err := RecoverProjectAgent(context.Background(), Host{Workspaces: fixture.service, Load: projectwork.Load}, invoker, fixture.root, fixture.request.TaskID,
-		agentexec.Config{Transport: TransportCodexAppServer, Timeout: 20}, Limits{MaxCandidateFileBytes: 1 << 20, MaxCandidateBytes: 4 << 20}, binding, request)
+		agentexec.Config{Transport: projectconfig.TransportCodexAppServer, Timeout: 20}, projectconfig.Limits{MaxCandidateFileBytes: 1 << 20, MaxCandidateBytes: 4 << 20}, binding, request)
 	if err == nil || !found || invoker.recoverCalls != 0 || invoker.runCalls != 0 {
 		t.Fatalf("prepared workspace with a mismatched request reached native recovery: found=%t err=%v invoker=%+v", found, err, invoker)
 	}
@@ -305,7 +314,7 @@ func TestRecoverPreparedWorkspaceWithMismatchedRequestRemainsBlocked(t *testing.
 
 func replaceTrustedRecoveryHandles(t *testing.T, fixture recoveryWorkspaceFixture, mutate func(*codexappserver.RecoveryHandle)) {
 	t.Helper()
-	workspaceJournalDir := filepath.Join(fixture.privateDir, nativeJournalDirectory, workspaceJournalKey(fixture.handle.ID))
+	workspaceJournalDir := filepath.Join(fixture.privateDir, "codex-app-server", testWorkspaceJournalKey(fixture.handle.ID))
 	entries, err := os.ReadDir(workspaceJournalDir)
 	if err != nil {
 		t.Fatal(err)
@@ -315,11 +324,11 @@ func replaceTrustedRecoveryHandles(t *testing.T, fixture recoveryWorkspaceFixtur
 			t.Fatal(err)
 		}
 	}
-	journal, err := newNativeJournal(fixture.privateDir, fixture.handle.CWD, fixture.handle.ID)
+	journal, err := projectexecutor.OpenNativeJournal(fixture.privateDir, fixture.handle.CWD, fixture.handle.ID)
 	if err != nil {
 		t.Fatal(err)
 	}
-	wrapped := journal.wrapOptions(codexappserver.Options{})
+	wrapped := journal.WrapOptions(codexappserver.Options{})
 	if err := wrapped.BeforeStart(context.Background(), agentexec.RoleStartRequest{RequestID: fixture.invocation.RunID, Role: agentexec.RoleExecutor}); err != nil {
 		t.Fatal(err)
 	}
@@ -348,11 +357,11 @@ func TestRecoverProjectAgentRejectsConflictingSavedTurns(t *testing.T) {
 	second := fixture.recoveryHandle
 	second.TurnID = "turn-conflict"
 	second.TurnDispatched = true
-	journal, err := newNativeJournal(fixture.privateDir, fixture.handle.CWD, fixture.handle.ID)
+	journal, err := projectexecutor.OpenNativeJournal(fixture.privateDir, fixture.handle.CWD, fixture.handle.ID)
 	if err != nil {
 		t.Fatal(err)
 	}
-	wrapped := journal.wrapOptions(codexappserver.Options{})
+	wrapped := journal.WrapOptions(codexappserver.Options{})
 	if err := wrapped.BeforeStart(context.Background(), agentexec.RoleStartRequest{RequestID: fixture.invocation.RunID, Role: agentexec.RoleExecutor}); err != nil {
 		t.Fatal(err)
 	}
@@ -388,7 +397,7 @@ func TestRecoverProjectAgentRequiresExactReceiptWhenTaskJournalsRepeat(t *testin
 	invoker := &scriptedNativeRecoverer{}
 	binding := nativeRecoveryBinding{RunID: "another-run", InputDigest: fixture.invocation.InputDigest, OwnerRunID: "other-current-run"}
 	_, found, err := RecoverProjectAgent(context.Background(), Host{Workspaces: fixture.service, Load: projectwork.Load}, invoker, fixture.root, fixture.request.TaskID,
-		agentexec.Config{Transport: TransportCodexAppServer, Timeout: 20}, Limits{MaxCandidateFileBytes: 1 << 20, MaxCandidateBytes: 4 << 20}, binding, fixture.invocation.Request)
+		agentexec.Config{Transport: projectconfig.TransportCodexAppServer, Timeout: 20}, projectconfig.Limits{MaxCandidateFileBytes: 1 << 20, MaxCandidateBytes: 4 << 20}, binding, fixture.invocation.Request)
 	if !found || err == nil || !strings.Contains(err.Error(), "no private workspace journal matches") || invoker.recoverCalls != 0 || invoker.runCalls != 0 {
 		t.Fatalf("recovery guessed a repeated task journal without exact run identity: found=%t err=%v invoker=%+v", found, err, invoker)
 	}
@@ -420,11 +429,11 @@ func addSiblingRecoveryJournal(t *testing.T, fixture recoveryWorkspaceFixture, c
 	if err != nil {
 		t.Fatal(err)
 	}
-	journal, err := newNativeJournal(fixture.privateDir, handle.CWD, handle.ID)
+	journal, err := projectexecutor.OpenNativeJournal(fixture.privateDir, handle.CWD, handle.ID)
 	if err != nil {
 		t.Fatal(err)
 	}
-	options := journal.wrapOptions(codexappserver.Options{})
+	options := journal.WrapOptions(codexappserver.Options{})
 	if err := options.BeforeStart(context.Background(), agentexec.RoleStartRequest{RequestID: invocation.RunID, Role: agentexec.RoleExecutor}); err != nil {
 		t.Fatal(err)
 	}
@@ -444,7 +453,7 @@ func addSiblingRecoveryJournal(t *testing.T, fixture recoveryWorkspaceFixture, c
 		Role: invocation.Request.Role, InputDigest: invocation.InputDigest, Outcome: agentexec.OutcomeProposed,
 		CandidateFiles: []agentexec.CandidateFile{}, EvidenceRefs: []string{}, VerifierObservations: []agentexec.Observation{}, Uncertainty: []string{}}
 	receipt := agentexec.Receipt{APIVersion: agentexec.APIVersion, RunID: invocation.RunID, InputDigest: invocation.InputDigest,
-		ConfigDigest: "recovery-fingerprint", Outcome: agentexec.OutcomeProposed, Lifecycle: &agentexec.Lifecycle{Provider: TransportCodexAppServer,
+		ConfigDigest: "recovery-fingerprint", Outcome: agentexec.OutcomeProposed, Lifecycle: &agentexec.Lifecycle{Provider: projectconfig.TransportCodexAppServer,
 			SessionID: "session-sibling", TurnID: "turn-sibling", State: "completed", StartRequests: []agentexec.RoleStartRequest{{RequestID: invocation.RunID, Role: invocation.Request.Role, State: "completed"}}}}
 	cached := agentexec.RunResult{Response: response, Receipt: receipt, Delta: &delta}
 	state := workspaceJournal{OwnerRunID: "prior-run", Request: fixture.request, Handle: handle, OverlayDigest: overlayDigest, State: "closed", Receipt: receipt, Delta: &delta, CachedResult: &cached}
@@ -471,11 +480,11 @@ func addClosedSameInputSibling(t *testing.T, fixture recoveryWorkspaceFixture, o
 	if err != nil {
 		t.Fatal(err)
 	}
-	native, err := newNativeJournal(fixture.privateDir, handle.CWD, handle.ID)
+	native, err := projectexecutor.OpenNativeJournal(fixture.privateDir, handle.CWD, handle.ID)
 	if err != nil {
 		t.Fatal(err)
 	}
-	options := native.wrapOptions(codexappserver.Options{})
+	options := native.WrapOptions(codexappserver.Options{})
 	if err := options.BeforeStart(context.Background(), agentexec.RoleStartRequest{RequestID: invocation.RunID, Role: agentexec.RoleExecutor}); err != nil {
 		t.Fatal(err)
 	}
@@ -496,7 +505,7 @@ func addClosedSameInputSibling(t *testing.T, fixture recoveryWorkspaceFixture, o
 		CandidateFiles: []agentexec.CandidateFile{}, EvidenceRefs: []string{}, VerifierObservations: []agentexec.Observation{}, Uncertainty: []string{}}
 	receipt := agentexec.Receipt{APIVersion: agentexec.APIVersion, RunID: invocation.RunID, InputDigest: invocation.InputDigest,
 		ConfigDigest: "recovery-fingerprint", ProviderVersion: "0.162.0", Outcome: agentexec.OutcomeProposed,
-		Lifecycle: &agentexec.Lifecycle{Provider: TransportCodexAppServer, SessionID: "older-session", TurnID: "older-turn", State: "completed",
+		Lifecycle: &agentexec.Lifecycle{Provider: projectconfig.TransportCodexAppServer, SessionID: "older-session", TurnID: "older-turn", State: "completed",
 			StartRequests: []agentexec.RoleStartRequest{{RequestID: invocation.RunID, Role: agentexec.RoleExecutor, State: "completed"}}}}
 	cached := agentexec.RunResult{Response: response, Receipt: receipt, Delta: &delta}
 	state := workspaceJournal{OwnerRunID: ownerRunID, Request: fixture.request, Handle: handle, OverlayDigest: overlayDigest,
@@ -517,11 +526,11 @@ func addDuplicateExactRecoveryJournal(t *testing.T, fixture recoveryWorkspaceFix
 	if err != nil {
 		t.Fatal(err)
 	}
-	journal, err := newNativeJournal(fixture.privateDir, handle.CWD, handle.ID)
+	journal, err := projectexecutor.OpenNativeJournal(fixture.privateDir, handle.CWD, handle.ID)
 	if err != nil {
 		t.Fatal(err)
 	}
-	options := journal.wrapOptions(codexappserver.Options{})
+	options := journal.WrapOptions(codexappserver.Options{})
 	if err := options.BeforeStart(context.Background(), agentexec.RoleStartRequest{RequestID: fixture.invocation.RunID, Role: agentexec.RoleExecutor}); err != nil {
 		t.Fatal(err)
 	}
@@ -582,11 +591,11 @@ func newRecoveryWorkspaceFixture(t *testing.T) recoveryWorkspaceFixture {
 		t.Fatal(err)
 	}
 	privateDir := filepath.Join(root, ".markitect", "runs", "private")
-	journal, err := newNativeJournal(privateDir, handle.CWD, handle.ID)
+	journal, err := projectexecutor.OpenNativeJournal(privateDir, handle.CWD, handle.ID)
 	if err != nil {
 		t.Fatal(err)
 	}
-	wrapped := journal.wrapOptions(codexappserver.Options{})
+	wrapped := journal.WrapOptions(codexappserver.Options{})
 	if err := wrapped.BeforeStart(context.Background(), agentexec.RoleStartRequest{RequestID: invocation.RunID, Role: agentexec.RoleExecutor}); err != nil {
 		t.Fatal(err)
 	}
@@ -616,7 +625,7 @@ func recoveredWorkspaceResult(f recoveryWorkspaceFixture, state string) agentexe
 		EvidenceRefs:   []string{}, VerifierObservations: []agentexec.Observation{}, Uncertainty: []string{}}
 	return agentexec.RunResult{Response: response, Receipt: agentexec.Receipt{APIVersion: agentexec.APIVersion, RunID: f.invocation.RunID,
 		InputDigest: f.invocation.InputDigest, ConfigDigest: "recovery-fingerprint", ProviderVersion: "0.162.0", Outcome: agentexec.OutcomeProposed,
-		Lifecycle: &agentexec.Lifecycle{Provider: TransportCodexAppServer, SessionID: "session-original", TurnID: "turn-original", State: state,
+		Lifecycle: &agentexec.Lifecycle{Provider: projectconfig.TransportCodexAppServer, SessionID: "session-original", TurnID: "turn-original", State: state,
 			Accounting: "partial", StartRequests: []agentexec.RoleStartRequest{{RequestID: f.invocation.RunID, Role: agentexec.RoleExecutor, State: startState}}}}}
 }
 
@@ -631,10 +640,10 @@ func recoverFixture(t *testing.T, fixture recoveryWorkspaceFixture, invoker *scr
 
 func recoverWithWorkspaceService(t *testing.T, fixture recoveryWorkspaceFixture, invoker Invoker, service projectworkspace.Service) (agentexec.RunResult, bool, error) {
 	t.Helper()
-	config := agentexec.Config{Transport: TransportCodexAppServer, Timeout: 20}
+	config := agentexec.Config{Transport: projectconfig.TransportCodexAppServer, Timeout: 20}
 	binding := nativeRecoveryBinding{RunID: fixture.invocation.RunID, InputDigest: fixture.invocation.InputDigest, OwnerRunID: "fixture-run"}
 	return RecoverProjectAgent(context.Background(), Host{Workspaces: service, Load: projectwork.Load}, invoker, fixture.root, fixture.request.TaskID,
-		config, Limits{MaxCandidateFileBytes: 1 << 20, MaxCandidateBytes: 4 << 20}, binding, fixture.invocation.Request)
+		config, projectconfig.Limits{MaxCandidateFileBytes: 1 << 20, MaxCandidateBytes: 4 << 20}, binding, fixture.invocation.Request)
 }
 
 func TestRecoverProjectAgentRejectsDifferentCurrentRequestBeforeInspection(t *testing.T) {
@@ -644,7 +653,7 @@ func TestRecoverProjectAgentRejectsDifferentCurrentRequestBeforeInspection(t *te
 	request.SourceRevision = "different-selected-source"
 	binding := nativeRecoveryBinding{RunID: fixture.invocation.RunID, InputDigest: fixture.invocation.InputDigest, OwnerRunID: "fixture-run"}
 	_, found, err := RecoverProjectAgent(context.Background(), Host{Workspaces: fixture.service, Load: projectwork.Load}, invoker, fixture.root, fixture.request.TaskID,
-		agentexec.Config{Transport: TransportCodexAppServer, Timeout: 20}, Limits{MaxCandidateFileBytes: 1 << 20, MaxCandidateBytes: 4 << 20}, binding, request)
+		agentexec.Config{Transport: projectconfig.TransportCodexAppServer, Timeout: 20}, projectconfig.Limits{MaxCandidateFileBytes: 1 << 20, MaxCandidateBytes: 4 << 20}, binding, request)
 	if !found || err == nil || invoker.recoverCalls != 0 || invoker.runCalls != 0 {
 		t.Fatalf("mismatched current request inspected/replayed original: found=%t err=%v invoker=%+v", found, err, invoker)
 	}

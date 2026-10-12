@@ -1,6 +1,7 @@
 package projectcli
 
 import (
+	"github.com/Glacius-Labs/Markitect/src/internal/host/projectconfig"
 	"os"
 	"path/filepath"
 	"strings"
@@ -107,21 +108,21 @@ func writeExploreTestRuntime(t *testing.T, repo string, managers []projectmodel.
 	if err != nil {
 		t.Fatal(err)
 	}
-	agent := projectrun.Agent{
+	agent := projectconfig.Agent{
 		Command: executable, Args: []string{"-test.run=^TestNothing$"}, Model: "fixture", ProviderVersion: "fixture-v1",
-		Timeout: projectrun.Duration(30 * time.Second), MaxStdoutBytes: 64 << 10, MaxStderrBytes: 16 << 10,
+		Timeout: projectconfig.Duration(30 * time.Second), MaxStdoutBytes: 64 << 10, MaxStderrBytes: 16 << 10,
 		Environment: []string{"PATH"},
-		Pricing:     projectrun.Pricing{InputMicrosPerMillion: 100, OutputMicrosPerMillion: 100},
+		Pricing:     projectconfig.Pricing{InputMicrosPerMillion: 100, OutputMicrosPerMillion: 100},
 	}
-	agents, reviewers := map[string]projectrun.Agent{}, map[string]projectrun.Agent{}
+	agents, reviewers := map[string]projectconfig.Agent{}, map[string]projectconfig.Agent{}
 	for _, manager := range managers {
 		agents[manager.ID], reviewers[manager.ID] = agent, agent
 	}
-	runtimeConfig := projectrun.Runtime{
-		APIVersion: projectrun.APIVersion, Mode: projectrun.ModeControlledLocal,
-		Agents: agents, Review: &projectrun.ReviewConfig{Agents: reviewers, MaxRounds: 1, MaxManagerRounds: 1},
-		Limits: projectrun.Limits{MaxDepth: 8, MaxStarts: 200, MaxRetries: 1, MaxParallel: 2,
-			MaxDuration: projectrun.Duration(10 * time.Minute), MaxCostMicros: 100_000_000,
+	runtimeConfig := projectconfig.Runtime{
+		APIVersion: projectrun.APIVersion, Mode: projectconfig.ModeControlledLocal,
+		Agents: agents, Review: &projectconfig.ReviewConfig{Agents: reviewers, MaxRounds: 1, MaxManagerRounds: 1},
+		Limits: projectconfig.Limits{MaxDepth: 8, MaxStarts: 200, MaxRetries: 1, MaxParallel: 2,
+			MaxDuration: projectconfig.Duration(10 * time.Minute), MaxCostMicros: 100_000_000,
 			MaxCandidateFileBytes: 1 << 20, MaxCandidateBytes: 8 << 20},
 	}
 	data, err := yaml.Marshal(runtimeConfig)

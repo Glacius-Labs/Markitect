@@ -1,6 +1,7 @@
 package projectrun
 
 import (
+	"github.com/Glacius-Labs/Markitect/src/internal/host/projectconfig"
 	"sort"
 
 	"github.com/Glacius-Labs/Markitect/src/internal/host/codexappserver"
@@ -12,14 +13,14 @@ import (
 const methodRuntimeBindingVersion = 2
 
 type methodPolicy struct {
-	APIVersion       string                       `json:"apiVersion"`
-	Mode             string                       `json:"mode"`
-	RequireIsolation bool                         `json:"requireIsolation"`
-	Agents           map[string]methodAgentPolicy `json:"agents"`
-	Verifier         *methodAgentPolicy           `json:"verifier,omitempty"`
-	Review           *methodReviewPolicy          `json:"review,omitempty"`
-	Strictness       *StrictnessConfig            `json:"strictness,omitempty"`
-	Limits           Limits                       `json:"limits"`
+	APIVersion       string                          `json:"apiVersion"`
+	Mode             string                          `json:"mode"`
+	RequireIsolation bool                            `json:"requireIsolation"`
+	Agents           map[string]methodAgentPolicy    `json:"agents"`
+	Verifier         *methodAgentPolicy              `json:"verifier,omitempty"`
+	Review           *methodReviewPolicy             `json:"review,omitempty"`
+	Strictness       *projectconfig.StrictnessConfig `json:"strictness,omitempty"`
+	Limits           projectconfig.Limits            `json:"limits"`
 }
 
 type methodReviewPolicy struct {
@@ -34,12 +35,12 @@ type methodAgentPolicy struct {
 	ProviderVersion  string                 `json:"providerVersion"`
 	WorkspaceMode    string                 `json:"workspaceMode,omitempty"`
 	InstructionPaths []string               `json:"instructionPaths,omitempty"`
-	Timeout          Duration               `json:"timeout"`
+	Timeout          projectconfig.Duration `json:"timeout"`
 	MaxStdoutBytes   int                    `json:"maxStdoutBytes"`
 	MaxStderrBytes   int                    `json:"maxStderrBytes"`
 	Environment      []string               `json:"environment,omitempty"`
 	CostMode         string                 `json:"costMode,omitempty"`
-	Pricing          Pricing                `json:"pricing"`
+	Pricing          projectconfig.Pricing  `json:"pricing"`
 	AppServer        *methodAppServerPolicy `json:"appServer,omitempty"`
 }
 
@@ -47,12 +48,12 @@ type methodAgentPolicy struct {
 // of method policy. Transport, command, wrapper args, runtime file bytes and
 // executor implementation fingerprints are bound at invocation time.
 type methodAppServerPolicy struct {
-	ReasoningEffort       string                               `json:"reasoningEffort"`
-	PermissionProfile     string                               `json:"permissionProfile,omitempty"`
-	WindowsSandboxBackend codexappserver.WindowsSandboxBackend `json:"windowsSandboxBackend,omitempty"`
-	EnvironmentMode       AppServerEnvironmentMode             `json:"environmentMode,omitempty"`
-	Helpers               AppServerHelpers                     `json:"helpers"`
-	MaxEventBytes         int64                                `json:"maxEventBytes"`
+	ReasoningEffort       string                                 `json:"reasoningEffort"`
+	PermissionProfile     string                                 `json:"permissionProfile,omitempty"`
+	WindowsSandboxBackend codexappserver.WindowsSandboxBackend   `json:"windowsSandboxBackend,omitempty"`
+	EnvironmentMode       projectconfig.AppServerEnvironmentMode `json:"environmentMode,omitempty"`
+	Helpers               projectconfig.AppServerHelpers         `json:"helpers"`
+	MaxEventBytes         int64                                  `json:"maxEventBytes"`
 }
 
 func requireCurrentRuntimeBinding(plan PlanRecord) error {
@@ -62,7 +63,7 @@ func requireCurrentRuntimeBinding(plan PlanRecord) error {
 	return nil
 }
 
-func methodPolicyDigest(runtime Runtime) (string, error) {
+func methodPolicyDigest(runtime projectconfig.Runtime) (string, error) {
 	policy := methodPolicy{
 		APIVersion: runtime.APIVersion, Mode: runtime.Mode, RequireIsolation: runtime.RequireIsolation,
 		Agents: make(map[string]methodAgentPolicy, len(runtime.Agents)), Strictness: runtime.Strictness, Limits: runtime.Limits,
@@ -87,7 +88,7 @@ func methodPolicyDigest(runtime Runtime) (string, error) {
 	return digest(policy)
 }
 
-func methodPolicyForAgent(agent Agent) methodAgentPolicy {
+func methodPolicyForAgent(agent projectconfig.Agent) methodAgentPolicy {
 	environment := append([]string(nil), agent.Environment...)
 	sort.Strings(environment)
 	policy := methodAgentPolicy{

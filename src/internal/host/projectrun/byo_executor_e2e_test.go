@@ -5,6 +5,8 @@ package projectrun
 import (
 	"context"
 	"github.com/Glacius-Labs/Markitect/src/internal/host/codexappserver"
+	"github.com/Glacius-Labs/Markitect/src/internal/host/projectconfig"
+	"github.com/Glacius-Labs/Markitect/src/internal/host/projectexecutor"
 	"github.com/Glacius-Labs/Markitect/src/internal/host/projectworkspace"
 	"github.com/Glacius-Labs/Markitect/src/internal/testkit"
 	"os"
@@ -19,7 +21,7 @@ func TestBringYourOwnExecutorsWithMixedRoleProfilesDeliverWithHonestCost(t *test
 	setupE2EProcess(t, "normal")
 	configureMixedRoleRuntime(t, root)
 	plan := planBothManagers(t, root)
-	run, err := Run(context.Background(), projectworkHost(), ProcessInvoker{}, root, plan.ID)
+	run, err := Run(context.Background(), projectworkHost(), projectexecutor.ProcessInvoker{}, root, plan.ID)
 	if err != nil || run.Status != StatusIntegrated {
 		t.Fatalf("mixed-role run did not integrate: status=%s err=%v", run.Status, err)
 	}
@@ -86,14 +88,14 @@ func TestMeteredProcessReviewerWithoutUsageStillStops(t *testing.T) {
 	root := makeProjectRunFixture(t)
 	setupE2EProcess(t, "normal")
 	configureMixedRoleRuntime(t, root)
-	updateE2ERuntime(t, root, func(config *Runtime) {
+	updateE2ERuntime(t, root, func(config *projectconfig.Runtime) {
 		for id, reviewer := range config.Review.Agents {
-			reviewer.CostMode, reviewer.Pricing = "", Pricing{InputMicrosPerMillion: 1, OutputMicrosPerMillion: 1}
+			reviewer.CostMode, reviewer.Pricing = "", projectconfig.Pricing{InputMicrosPerMillion: 1, OutputMicrosPerMillion: 1}
 			config.Review.Agents[id] = reviewer
 		}
 	})
 	plan := planBothManagers(t, root)
-	run, err := Run(context.Background(), projectworkHost(), ProcessInvoker{}, root, plan.ID)
+	run, err := Run(context.Background(), projectworkHost(), projectexecutor.ProcessInvoker{}, root, plan.ID)
 	if err == nil || !strings.Contains(err.Error(), "reviewer usage is missing") || run.Status == StatusIntegrated {
 		t.Fatalf("metered reviewer without usage was accepted: status=%s err=%v", run.Status, err)
 	}
@@ -109,7 +111,7 @@ func TestBringYourOwnExecutorFaultInjection(t *testing.T) {
 		setupE2EProcess(t, "out-of-scope")
 		configureMixedRoleRuntime(t, root)
 		plan := planBothManagers(t, root)
-		run, err := Run(context.Background(), projectworkHost(), ProcessInvoker{}, root, plan.ID)
+		run, err := Run(context.Background(), projectworkHost(), projectexecutor.ProcessInvoker{}, root, plan.ID)
 		if err == nil || run.Status == StatusIntegrated {
 			t.Fatalf("out-of-scope write closed the run: status=%s err=%v", run.Status, err)
 		}
@@ -131,15 +133,15 @@ func TestBringYourOwnExecutorFaultInjection(t *testing.T) {
 		configureMixedRoleRuntime(t, root)
 		plan := planBothManagers(t, root)
 		host := projectworkHost()
-		run, err := Run(context.Background(), host, ProcessInvoker{}, root, plan.ID)
+		run, err := Run(context.Background(), host, projectexecutor.ProcessInvoker{}, root, plan.ID)
 		if err != nil || run.Status != StatusIntegrated {
 			t.Fatalf("forgotten-file run did not integrate for verification: status=%s err=%v", run.Status, err)
 		}
-		failed, err := Verify(context.Background(), host, ProcessInvoker{}, root, plan.ID)
+		failed, err := Verify(context.Background(), host, projectexecutor.ProcessInvoker{}, root, plan.ID)
 		if err == nil || failed.Status != StatusFailed || !failedCheckWith(failed.Checks, "orders check failed") {
 			t.Fatalf("declared check did not catch the forgotten file: report=%+v err=%v", failed, err)
 		}
-		repaired, err := Repair(context.Background(), host, ProcessInvoker{}, root, plan.ID)
+		repaired, err := Repair(context.Background(), host, projectexecutor.ProcessInvoker{}, root, plan.ID)
 		if err != nil || repaired.Status != StatusIntegrated || len(repaired.RepairRounds) != 1 {
 			t.Fatalf("Repair did not close the check failure: status=%s rounds=%d err=%v", repaired.Status, len(repaired.RepairRounds), err)
 		}
@@ -153,7 +155,7 @@ func TestBringYourOwnExecutorFaultInjection(t *testing.T) {
 		setupE2EProcess(t, "review-defect-fix")
 		configureMixedRoleRuntime(t, root)
 		plan := planBothManagers(t, root)
-		run, err := Run(context.Background(), projectworkHost(), ProcessInvoker{}, root, plan.ID)
+		run, err := Run(context.Background(), projectworkHost(), projectexecutor.ProcessInvoker{}, root, plan.ID)
 		if err != nil || run.Status != StatusIntegrated {
 			t.Fatalf("review repair did not integrate: status=%s err=%v", run.Status, err)
 		}
@@ -188,7 +190,7 @@ func TestBringYourOwnExecutorFaultInjection(t *testing.T) {
 			t.Fatalf("plan omitted the root integration check: %+v", plan.Checks)
 		}
 		host := projectworkHost()
-		run, err := Run(context.Background(), host, ProcessInvoker{}, root, plan.ID)
+		run, err := Run(context.Background(), host, projectexecutor.ProcessInvoker{}, root, plan.ID)
 		if err != nil || run.Status != StatusIntegrated {
 			t.Fatalf("integration run did not integrate: status=%s err=%v", run.Status, err)
 		}
@@ -197,11 +199,11 @@ func TestBringYourOwnExecutorFaultInjection(t *testing.T) {
 				t.Fatalf("child %s is not green before integration verification: %+v", child, task)
 			}
 		}
-		failed, err := Verify(context.Background(), host, ProcessInvoker{}, root, plan.ID)
+		failed, err := Verify(context.Background(), host, projectexecutor.ProcessInvoker{}, root, plan.ID)
 		if err == nil || failed.Status != StatusFailed || !failedCheckWith(failed.Checks, "integration summary") {
 			t.Fatalf("integration check did not catch the inconsistent aggregate: report=%+v err=%v", failed, err)
 		}
-		repaired, err := Repair(context.Background(), host, ProcessInvoker{}, root, plan.ID)
+		repaired, err := Repair(context.Background(), host, projectexecutor.ProcessInvoker{}, root, plan.ID)
 		if err != nil || repaired.Status != StatusIntegrated {
 			t.Fatalf("Repair did not close the integration failure: status=%s err=%v", repaired.Status, err)
 		}
@@ -222,12 +224,12 @@ func TestNativeManagerBeforeProcessManagersSharesThePrivateLogDirectory(t *testi
 	configureWorkspaceBridgeInstructions(t, root)
 	setupE2EProcess(t, "normal")
 	rootID := e2eManagerID("", "project-owner")
-	updateE2ERuntime(t, root, func(runtime *Runtime) {
+	updateE2ERuntime(t, root, func(runtime *projectconfig.Runtime) {
 		base := runtime.Agents[rootID]
 		native := workspaceBridgeAgent(t, root)
 		native.Command, native.Model, native.ProviderVersion, native.Timeout = base.Command, base.Model, codexappserver.SupportedProviderVersion, base.Timeout
 		native.MaxStdoutBytes, native.MaxStderrBytes, native.Pricing = base.MaxStdoutBytes, base.MaxStderrBytes, base.Pricing
-		native.AppServer = &AppServerSettings{ReasoningEffort: "medium", MaxEventBytes: 1 << 20}
+		native.AppServer = &projectconfig.AppServerSettings{ReasoningEffort: "medium", MaxEventBytes: 1 << 20}
 		runtime.Agents[rootID] = native
 	})
 	host := projectworkHost()

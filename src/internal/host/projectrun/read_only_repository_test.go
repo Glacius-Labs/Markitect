@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"github.com/Glacius-Labs/Markitect/src/internal/host/projectconfig"
 	"os"
 	"path/filepath"
 	"strings"
@@ -50,7 +51,7 @@ func TestRunReadOnlyRepositoryUsesSelectedSourceAndPreservesCurrentWIP(t *testin
 	service := readOnlyRepositoryService(t)
 	privateDir := filepath.Join(t.TempDir(), "private")
 	invoker := &readOnlyRepositoryInvoker{call: func(config agentexec.Config, request agentexec.Request, options agentexec.RunOptions) (agentexec.RunResult, error) {
-		if config.Transport != TransportCodexAppServer || request.SourceRevision != sourceSHA {
+		if config.Transport != projectconfig.TransportCodexAppServer || request.SourceRevision != sourceSHA {
 			t.Fatalf("request did not preserve the selected native source revision: config=%+v request=%+v", config, request)
 		}
 		if options.Workspace == nil || sameWorkspacePath(options.Workspace.CWD, sourceRoot) {
@@ -69,8 +70,8 @@ func TestRunReadOnlyRepositoryUsesSelectedSourceAndPreservesCurrentWIP(t *testin
 	}}
 	request := agentexec.Request{Role: agentexec.RoleVerifier, SourceRevision: sourceSHA, ModelDigest: "target-model-digest"}
 	result, err := RunReadOnlyRepository(context.Background(), service, invoker, sourceRoot, privateDir,
-		agentexec.Config{Transport: TransportCodexAppServer}, request,
-		Limits{MaxCandidateFileBytes: 1 << 20, MaxCandidateBytes: 4 << 20})
+		agentexec.Config{Transport: projectconfig.TransportCodexAppServer}, request,
+		projectconfig.Limits{MaxCandidateFileBytes: 1 << 20, MaxCandidateBytes: 4 << 20})
 	if err != nil {
 		t.Fatalf("read-only source invocation: %v", err)
 	}
@@ -93,13 +94,13 @@ func TestRunReadOnlyRepositoryPreservesUnknownLifecycleAndOriginalError(t *testi
 	providerErr := errors.New("original native call error")
 	invoker := &readOnlyRepositoryInvoker{call: func(_ agentexec.Config, _ agentexec.Request, _ agentexec.RunOptions) (agentexec.RunResult, error) {
 		return agentexec.RunResult{Receipt: agentexec.Receipt{RunID: "readonly-unknown", Lifecycle: &agentexec.Lifecycle{
-			Provider: TransportCodexAppServer, SessionID: "session", TurnID: "turn", State: "unknown",
+			Provider: projectconfig.TransportCodexAppServer, SessionID: "session", TurnID: "turn", State: "unknown",
 			StartRequests: []agentexec.RoleStartRequest{{RequestID: "root", State: "unknown"}},
 		}}}, providerErr
 	}}
 	result, err := RunReadOnlyRepository(context.Background(), service, invoker, sourceRoot, privateDir,
-		agentexec.Config{Transport: TransportCodexAppServer}, agentexec.Request{SourceRevision: sourceSHA},
-		Limits{MaxCandidateFileBytes: 1 << 20, MaxCandidateBytes: 4 << 20})
+		agentexec.Config{Transport: projectconfig.TransportCodexAppServer}, agentexec.Request{SourceRevision: sourceSHA},
+		projectconfig.Limits{MaxCandidateFileBytes: 1 << 20, MaxCandidateBytes: 4 << 20})
 	if !errors.Is(err, providerErr) || err == nil || !strings.Contains(err.Error(), "termination is unknown") {
 		t.Fatalf("unknown lifecycle must preserve the original failure and report uncertainty: %v", err)
 	}
@@ -130,8 +131,8 @@ func TestRunReadOnlyRepositoryPreservesUnexpectedWritesAndInvocationError(t *tes
 		return agentexec.RunResult{Receipt: terminalWorkspaceReceipt("readonly-write")}, providerErr
 	}}
 	result, err := RunReadOnlyRepository(context.Background(), service, invoker, sourceRoot, privateDir,
-		agentexec.Config{Transport: TransportCodexAppServer}, agentexec.Request{SourceRevision: sourceSHA},
-		Limits{MaxCandidateFileBytes: 1 << 20, MaxCandidateBytes: 4 << 20})
+		agentexec.Config{Transport: projectconfig.TransportCodexAppServer}, agentexec.Request{SourceRevision: sourceSHA},
+		projectconfig.Limits{MaxCandidateFileBytes: 1 << 20, MaxCandidateBytes: 4 << 20})
 	if !errors.Is(err, providerErr) || err == nil || !strings.Contains(err.Error(), "read-only repository invocation changed source files") {
 		t.Fatalf("unexpected writes must preserve the provider failure and report the violation: %v", err)
 	}
@@ -154,8 +155,8 @@ func TestRunReadOnlyRepositoryRequiresMatchingNativeSourceRevision(t *testing.T)
 	sourceRoot, sourceSHA, _, _ := readOnlyRepositoryRoots(t)
 	invoker := &readOnlyRepositoryInvoker{}
 	_, err := RunReadOnlyRepository(context.Background(), readOnlyRepositoryService(t), invoker, sourceRoot, t.TempDir(),
-		agentexec.Config{Transport: TransportCodexAppServer}, agentexec.Request{SourceRevision: strings.Repeat("0", 40)},
-		Limits{MaxCandidateFileBytes: 1 << 20, MaxCandidateBytes: 4 << 20})
+		agentexec.Config{Transport: projectconfig.TransportCodexAppServer}, agentexec.Request{SourceRevision: strings.Repeat("0", 40)},
+		projectconfig.Limits{MaxCandidateFileBytes: 1 << 20, MaxCandidateBytes: 4 << 20})
 	if err == nil || !strings.Contains(err.Error(), "does not match selected repository HEAD") || invoker.called {
 		t.Fatalf("mismatched source revision was invoked: source=%s err=%v called=%v", sourceSHA, err, invoker.called)
 	}

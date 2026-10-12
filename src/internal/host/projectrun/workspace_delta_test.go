@@ -2,6 +2,7 @@ package projectrun
 
 import (
 	"bytes"
+	"github.com/Glacius-Labs/Markitect/src/internal/host/projectconfig"
 	"testing"
 
 	"github.com/Glacius-Labs/Markitect/src/internal/host/agentexec"
@@ -10,11 +11,11 @@ import (
 	"github.com/Glacius-Labs/Markitect/src/internal/modules/projectmodel"
 )
 
-func workspaceDeltaFixture() (projectwork.Config, projectmodel.Report, ManagerTask, Limits) {
+func workspaceDeltaFixture() (projectwork.Config, projectmodel.Report, ManagerTask, projectconfig.Limits) {
 	manager := ManagerTask{ManagerID: "manager", Owns: []string{"src/"}}
 	config := projectwork.Config{CoverageMode: "selected", InventoryRoots: []string{"src/"}}
 	report := projectmodel.Report{Managers: []projectmodel.Manager{{ID: manager.ManagerID, Owns: []string{"src/"}}}}
-	limits := Limits{MaxCandidateFileBytes: 16, MaxCandidateBytes: 32}
+	limits := projectconfig.Limits{MaxCandidateFileBytes: 16, MaxCandidateBytes: 32}
 	return config, report, manager, limits
 }
 

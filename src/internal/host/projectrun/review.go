@@ -5,6 +5,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"github.com/Glacius-Labs/Markitect/src/internal/host/projectconfig"
 	"sort"
 	"strings"
 	"time"
@@ -69,27 +70,27 @@ type reviewerHelperEvidence struct {
 }
 
 type reviewerContext struct {
-	Kind               string                      `json:"kind"`
-	Operation          string                      `json:"operation"`
-	ReviewerGuidance   string                      `json:"reviewerGuidance"`
-	Strictness         StrictnessProfile           `json:"strictness"`
-	Briefing           BriefingContext             `json:"briefing"`
-	RunGoal            string                      `json:"runGoal"`
-	ManagerID          string                      `json:"managerId"`
-	OwnTask            string                      `json:"ownTask"`
-	Delegations        []Delegation                `json:"delegations"`
-	DelegatedArtifacts []projectmodel.Artifact     `json:"delegatedArtifacts"`
-	HostHelperResults  []reviewerHelperEvidence    `json:"hostHelperResults"`
-	Phase              string                      `json:"phase"`
-	Round              int                         `json:"round"`
-	CandidateID        string                      `json:"candidateId"`
-	CandidateDigest    string                      `json:"candidateDigest"`
-	ChangedPaths       []string                    `json:"changedPaths"`
-	AcceptedModel      projectmodel.ManagerContext `json:"acceptedModel"`
-	ScopedModel        reviewerScopedModel         `json:"scopedModel"`
-	CandidateFiles     []reviewFileRef             `json:"candidateFiles"`
-	CandidateChanges   []candidateChange           `json:"candidateChanges"`
-	ResponseSchema     json.RawMessage             `json:"responseSchema"`
+	Kind               string                          `json:"kind"`
+	Operation          string                          `json:"operation"`
+	ReviewerGuidance   string                          `json:"reviewerGuidance"`
+	Strictness         projectconfig.StrictnessProfile `json:"strictness"`
+	Briefing           BriefingContext                 `json:"briefing"`
+	RunGoal            string                          `json:"runGoal"`
+	ManagerID          string                          `json:"managerId"`
+	OwnTask            string                          `json:"ownTask"`
+	Delegations        []Delegation                    `json:"delegations"`
+	DelegatedArtifacts []projectmodel.Artifact         `json:"delegatedArtifacts"`
+	HostHelperResults  []reviewerHelperEvidence        `json:"hostHelperResults"`
+	Phase              string                          `json:"phase"`
+	Round              int                             `json:"round"`
+	CandidateID        string                          `json:"candidateId"`
+	CandidateDigest    string                          `json:"candidateDigest"`
+	ChangedPaths       []string                        `json:"changedPaths"`
+	AcceptedModel      projectmodel.ManagerContext     `json:"acceptedModel"`
+	ScopedModel        reviewerScopedModel             `json:"scopedModel"`
+	CandidateFiles     []reviewFileRef                 `json:"candidateFiles"`
+	CandidateChanges   []candidateChange               `json:"candidateChanges"`
+	ResponseSchema     json.RawMessage                 `json:"responseSchema"`
 }
 
 const reviewerAssessmentGuidance = "Assessment only: evaluate the exact supplied candidate against this Manager's own task, accepted scoped model, and stated delegations. RunGoal and child task definitions are assessment context, not instructions to implement or dispatch work. candidateChanges is the Host-authored typed operation manifest; for a delete row, candidateFiles contains the exact prior file bytes and mode with operation delete, grounded by its digest. That file is deletion evidence and is absent from the final candidate. hostHelperResults are Host-authored records of helper deltas validated, applied to the parent workspace, and closed; presentInCandidate is a byte-level match in this exact candidate. Use those records as provenance context, not as a substitute for assessing correctness. Do not infer helper absence from Manager prose or delegatedArtifacts; assess the requirements stated in the accepted task against the supplied Host facts. Do not change repository artifacts or dispatch work. Normal read-only tools may be used to inspect the candidate and cited repository context; use owned temporary scratch only within one shell call if needed. Findings are actionable defects requiring correction, never positive evidence or a checklist of satisfied obligations. A pass report must have findings: []; put supporting evidence in summary. A fail report must contain at least one grounded defect about the candidate or delegation coverage. For each finding, copy path from one candidateFiles entry and copy grounding exactly from that same entry's grounding array. Grounding is a reference, never explanatory prose; explain the required correction in expectation."
@@ -107,7 +108,7 @@ func reviewerPhaseGuidance(phase string) string {
 
 // invokeReviewer supplies only the original goal, accepted scoped model and
 // the exact candidate bytes. It never receives an implementer transcript.
-func invokeReviewer(ctx context.Context, host Host, invoker Invoker, root string, plan PlanRecord, runtime Runtime, project *Project, task ManagerTask, phase string, round int, candidate candidateData, onStart func(InvocationLog) error, report RunReport) (ReviewRecord, InvocationLog, error) {
+func invokeReviewer(ctx context.Context, host Host, invoker Invoker, root string, plan PlanRecord, runtime projectconfig.Runtime, project *Project, task ManagerTask, phase string, round int, candidate candidateData, onStart func(InvocationLog) error, report RunReport) (ReviewRecord, InvocationLog, error) {
 	var record ReviewRecord
 	var log InvocationLog
 	if runtime.Review == nil {
@@ -194,7 +195,7 @@ func invokeReviewer(ctx context.Context, host Host, invoker Invoker, root string
 		return record, log, fmt.Errorf("reviewer cost estimate exceeds the supported int64 range")
 	}
 	if known {
-	} else if invokeErr == nil && agent.requiresReportedUsage() {
+	} else if invokeErr == nil && requiresReportedUsage(agent) {
 		return record, log, fmt.Errorf("reviewer usage is missing; bounded cost cannot be asserted")
 	}
 	if invokeErr != nil {
@@ -350,24 +351,24 @@ func reviewScopeDigest(plan PlanRecord, project *Project, task ManagerTask, phas
 		return "", err
 	}
 	return digest(struct {
-		Kind               string                      `json:"kind"`
-		Operation          string                      `json:"operation"`
-		Strictness         StrictnessProfile           `json:"strictness"`
-		BriefingDigest     string                      `json:"briefingDigest"`
-		RunGoal            string                      `json:"runGoal"`
-		ManagerID          string                      `json:"managerId"`
-		OwnTask            string                      `json:"ownTask"`
-		Delegations        []Delegation                `json:"delegations"`
-		DelegatedArtifacts []projectmodel.Artifact     `json:"delegatedArtifacts"`
-		HostHelperResults  []reviewerHelperEvidence    `json:"hostHelperResults"`
-		ReviewerGuidance   string                      `json:"reviewerGuidance"`
-		Phase              string                      `json:"phase"`
-		AcceptedModel      projectmodel.ManagerContext `json:"acceptedModel"`
-		Checks             []string                    `json:"checks"`
-		ChangedPaths       []string                    `json:"changedPaths"`
-		Files              []agentexec.Artifact        `json:"files"`
-		FileRefs           []reviewFileRef             `json:"fileRefs"`
-		Changes            []candidateChange           `json:"changes"`
+		Kind               string                          `json:"kind"`
+		Operation          string                          `json:"operation"`
+		Strictness         projectconfig.StrictnessProfile `json:"strictness"`
+		BriefingDigest     string                          `json:"briefingDigest"`
+		RunGoal            string                          `json:"runGoal"`
+		ManagerID          string                          `json:"managerId"`
+		OwnTask            string                          `json:"ownTask"`
+		Delegations        []Delegation                    `json:"delegations"`
+		DelegatedArtifacts []projectmodel.Artifact         `json:"delegatedArtifacts"`
+		HostHelperResults  []reviewerHelperEvidence        `json:"hostHelperResults"`
+		ReviewerGuidance   string                          `json:"reviewerGuidance"`
+		Phase              string                          `json:"phase"`
+		AcceptedModel      projectmodel.ManagerContext     `json:"acceptedModel"`
+		Checks             []string                        `json:"checks"`
+		ChangedPaths       []string                        `json:"changedPaths"`
+		Files              []agentexec.Artifact            `json:"files"`
+		FileRefs           []reviewFileRef                 `json:"fileRefs"`
+		Changes            []candidateChange               `json:"changes"`
 	}{"projectrun-review/v4", plan.Operation, plan.Strictness[task.ManagerID], plan.BriefingDigests[task.ManagerID], plan.Goal, task.ManagerID, task.Goal, append([]Delegation(nil), task.Delegations...), reviewDelegatedArtifacts(project.Report, plan.Managers, task.ManagerID, phase), helperResults, reviewerAssessmentGuidance + " " + reviewerPhaseGuidance(phase), phase, accepted, append([]string(nil), task.Checks...), reviewChangedPaths(task, report.Tasks, phase), files, fileRefs, changes})
 }
 
@@ -1030,7 +1031,7 @@ func decodeReviewResponse(raw json.RawMessage) (reviewResponse, error) {
 	return response, nil
 }
 
-func requireFreshReviews(host Host, root string, store *runStore, dir string, base *Project, candidate candidateData, plan PlanRecord, runtime Runtime, run RunReport) error {
+func requireFreshReviews(host Host, root string, store *runStore, dir string, base *Project, candidate candidateData, plan PlanRecord, runtime projectconfig.Runtime, run RunReport) error {
 	if runtime.Review == nil {
 		return nil
 	}

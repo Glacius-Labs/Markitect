@@ -4,6 +4,7 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
+	"github.com/Glacius-Labs/Markitect/src/internal/host/projectconfig"
 	"io"
 	"os"
 	"path/filepath"
@@ -29,7 +30,7 @@ func checkWorkingDirectoryLength(dir string) error {
 	return nil
 }
 
-func bindCheckExecutables(checks []CheckPlan, config Runtime) ([]CheckPlan, []string, error) {
+func bindCheckExecutables(checks []CheckPlan, config projectconfig.Runtime) ([]CheckPlan, []string, error) {
 	var findings []string
 	for i := range checks {
 		agent, ok := config.Agents[checks[i].Owner]

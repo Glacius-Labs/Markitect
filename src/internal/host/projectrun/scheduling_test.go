@@ -1,6 +1,7 @@
 package projectrun
 
 import (
+	"github.com/Glacius-Labs/Markitect/src/internal/host/projectconfig"
 	"strings"
 	"testing"
 
@@ -76,7 +77,7 @@ func TestPlanManagersIncludesTypedDependencyOwnerAndAncestors(t *testing.T) {
 		Operation: OperationApply,
 		Goal:      "Update the consumer.",
 		Managers:  []string{consumerID},
-	}, nil, nil, Limits{MaxDepth: 4})
+	}, nil, nil, projectconfig.Limits{MaxDepth: 4})
 	if err != nil {
 		t.Fatalf("planManagers: %v", err)
 	}
@@ -106,7 +107,7 @@ func TestPlanManagersRejectsCyclesInSelectedTypedDependencies(t *testing.T) {
 			{ID: "statement:bravo", Owner: bravoID, Uses: []string{"statement:alpha"}},
 		},
 	}
-	_, _, _, err := planManagers(report, nil, PlanRequest{Operation: OperationApply, Managers: []string{alphaID}}, nil, nil, Limits{MaxDepth: 4})
+	_, _, _, err := planManagers(report, nil, PlanRequest{Operation: OperationApply, Managers: []string{alphaID}}, nil, nil, projectconfig.Limits{MaxDepth: 4})
 	if err == nil || !strings.Contains(err.Error(), "manager dependency cycle") {
 		t.Fatalf("plan cycle result = %v, want selected dependency cycle error", err)
 	}

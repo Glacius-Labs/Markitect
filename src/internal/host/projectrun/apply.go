@@ -3,6 +3,7 @@ package projectrun
 import (
 	"bytes"
 	"fmt"
+	"github.com/Glacius-Labs/Markitect/src/internal/host/projectconfig"
 	"io/fs"
 	"os"
 	"path/filepath"
@@ -113,7 +114,7 @@ func PreflightApply(host Host, root, runID, candidateID string) (ApplyPreflight,
 			return out, err
 		}
 	}
-	runtimeConfig, err := LoadRuntime(root)
+	runtimeConfig, err := projectconfig.LoadRuntime(root)
 	if err != nil {
 		return out, err
 	}
@@ -220,7 +221,7 @@ func Apply(host Host, invoker Invoker, root string, request ApplyRequest) (Apply
 	if !plan.ExecuteAuthorized {
 		return out, ErrNotRunnable
 	}
-	runtime, err := LoadRuntime(root)
+	runtime, err := projectconfig.LoadRuntime(root)
 	if err != nil {
 		return out, err
 	}
@@ -354,7 +355,7 @@ func Apply(host Host, invoker Invoker, root string, request ApplyRequest) (Apply
 		if err := validateChangeImpact(host, root, fixed, plan); err != nil {
 			return err
 		}
-		currentRuntime, loadErr := LoadRuntime(root)
+		currentRuntime, loadErr := projectconfig.LoadRuntime(root)
 		if loadErr != nil {
 			return loadErr
 		}

@@ -6,6 +6,7 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
+	"github.com/Glacius-Labs/Markitect/src/internal/host/projectconfig"
 	"os"
 	"path/filepath"
 	"strings"
@@ -297,32 +298,32 @@ func TestAdoptRunPreviewAndStaleGuardDoNotInvokeProvider(t *testing.T) {
 		t.Fatal(err)
 	}
 	managerID := initialContext.RootManagerID
-	nativeManager := projectrun.Agent{
+	nativeManager := projectconfig.Agent{
 		Command: executable, Args: []string{"NATIVE_MANAGER_ARGUMENT_SENTINEL"}, Model: "native-manager-model", ModelOptions: map[string]any{"secret": "NATIVE_MANAGER_OPTION_SENTINEL"},
 		ProviderVersion: "native-manager-provider-v1", WorkspaceMode: "scoped", InstructionPaths: []string{"AGENTS.md"},
-		Timeout: projectrun.Duration(30 * time.Second), MaxStdoutBytes: 64 << 10, MaxStderrBytes: 16 << 10,
-		RuntimeFiles: []agentexec.RuntimeFile{}, Environment: []string{}, Pricing: projectrun.Pricing{InputMicrosPerMillion: 10, OutputMicrosPerMillion: 20},
+		Timeout: projectconfig.Duration(30 * time.Second), MaxStdoutBytes: 64 << 10, MaxStderrBytes: 16 << 10,
+		RuntimeFiles: []agentexec.RuntimeFile{}, Environment: []string{}, Pricing: projectconfig.Pricing{InputMicrosPerMillion: 10, OutputMicrosPerMillion: 20},
 	}
-	readOnlyAgent := projectrun.Agent{
+	readOnlyAgent := projectconfig.Agent{
 		Command: executable, Args: []string{"READONLY_ARGUMENT_SENTINEL"}, Model: "readonly-review-model", ModelOptions: map[string]any{"review": "READONLY_OPTION_SENTINEL"},
-		ProviderVersion: "readonly-review-provider-v1", Timeout: projectrun.Duration(30 * time.Second), MaxStdoutBytes: 64 << 10, MaxStderrBytes: 16 << 10,
-		RuntimeFiles: []agentexec.RuntimeFile{}, Environment: []string{}, Pricing: projectrun.Pricing{InputMicrosPerMillion: 40, OutputMicrosPerMillion: 80},
+		ProviderVersion: "readonly-review-provider-v1", Timeout: projectconfig.Duration(30 * time.Second), MaxStdoutBytes: 64 << 10, MaxStderrBytes: 16 << 10,
+		RuntimeFiles: []agentexec.RuntimeFile{}, Environment: []string{}, Pricing: projectconfig.Pricing{InputMicrosPerMillion: 40, OutputMicrosPerMillion: 80},
 	}
-	runtimeConfig := projectrun.Runtime{
-		APIVersion: projectrun.APIVersion, Mode: projectrun.ModeControlledLocal,
-		Agents: map[string]projectrun.Agent{managerID: nativeManager},
-		Review: &projectrun.ReviewConfig{Agents: map[string]projectrun.Agent{managerID: readOnlyAgent}, MaxRounds: 1, MaxManagerRounds: 1},
-		Limits: projectrun.Limits{MaxDepth: 4, MaxStarts: 8, MaxRetries: 1, MaxParallel: 1, MaxDuration: projectrun.Duration(5 * time.Minute),
+	runtimeConfig := projectconfig.Runtime{
+		APIVersion: projectrun.APIVersion, Mode: projectconfig.ModeControlledLocal,
+		Agents: map[string]projectconfig.Agent{managerID: nativeManager},
+		Review: &projectconfig.ReviewConfig{Agents: map[string]projectconfig.Agent{managerID: readOnlyAgent}, MaxRounds: 1, MaxManagerRounds: 1},
+		Limits: projectconfig.Limits{MaxDepth: 4, MaxStarts: 8, MaxRetries: 1, MaxParallel: 1, MaxDuration: projectconfig.Duration(5 * time.Minute),
 			MaxCostMicros: 1000, MaxCandidateFileBytes: 1 << 20, MaxCandidateBytes: 8 << 20},
 	}
 	runtimeBytes, err := json.Marshal(runtimeConfig)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if err := os.WriteFile(filepath.Join(repo, filepath.FromSlash(projectrun.RuntimePath)), runtimeBytes, 0o600); err != nil {
+	if err := os.WriteFile(filepath.Join(repo, filepath.FromSlash(projectconfig.RuntimePath)), runtimeBytes, 0o600); err != nil {
 		t.Fatal(err)
 	}
-	runGit(t, repo, "add", projectrun.RuntimePath)
+	runGit(t, repo, "add", projectconfig.RuntimePath)
 	runGitWithEnv(t, repo, testCommitEnv, "commit", "-m", "add manager runtime fixture")
 	commit := gitOutput(t, repo, "rev-parse", "HEAD")
 	discovery, err := projectadoption.Discover(repo, projectadoption.DiscoveryRequest{

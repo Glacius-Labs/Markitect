@@ -3,6 +3,8 @@ package projectrun
 import (
 	"context"
 	"encoding/json"
+	"github.com/Glacius-Labs/Markitect/src/internal/host/projectconfig"
+	"github.com/Glacius-Labs/Markitect/src/internal/host/projectexecutor"
 	"os"
 	"path/filepath"
 	"strings"
@@ -29,28 +31,28 @@ const (
 
 func configureMixedRoleRuntime(t *testing.T, root string) {
 	t.Helper()
-	updateE2ERuntime(t, root, func(config *Runtime) {
-		reviewers := make(map[string]Agent, len(config.Agents))
+	updateE2ERuntime(t, root, func(config *projectconfig.Runtime) {
+		reviewers := make(map[string]projectconfig.Agent, len(config.Agents))
 		for id, agent := range config.Agents {
 			agent.Model, agent.ModelOptions = e2eManagerModel, map[string]any{"reasoningEffort": "high"}
-			agent.Pricing = Pricing{InputMicrosPerMillion: 1_000_000, OutputMicrosPerMillion: 1_000_000}
+			agent.Pricing = projectconfig.Pricing{InputMicrosPerMillion: 1_000_000, OutputMicrosPerMillion: 1_000_000}
 			config.Agents[id] = agent
 			reviewer := agent
 			reviewer.Model, reviewer.ModelOptions = e2eReviewerModel, map[string]any{"reasoningEffort": "medium"}
-			reviewer.CostMode, reviewer.Pricing = CostModeUnmetered, Pricing{}
+			reviewer.CostMode, reviewer.Pricing = projectconfig.CostModeUnmetered, projectconfig.Pricing{}
 			reviewers[id] = reviewer
 		}
 		verifier := config.Agents[e2eManagerID("", "project-owner")]
 		verifier.Model, verifier.ModelOptions = e2eVerifierModel, nil
-		verifier.CostMode, verifier.Pricing = CostModeUnmetered, Pricing{}
+		verifier.CostMode, verifier.Pricing = projectconfig.CostModeUnmetered, projectconfig.Pricing{}
 		config.Verifier = &verifier
-		config.Review = &ReviewConfig{Agents: reviewers, MaxRounds: 3, MaxManagerRounds: 2}
+		config.Review = &projectconfig.ReviewConfig{Agents: reviewers, MaxRounds: 3, MaxManagerRounds: 2}
 		config.Limits.MaxStarts = 64
 		// One bounded repair round for check failures found by Verify.
 		config.Limits.MaxRetries = 1
 		// A loaded Windows host needs minutes per scenario for its Git calls;
 		// no scenario here tests the duration budget.
-		config.Limits.MaxDuration = Duration(30 * time.Minute)
+		config.Limits.MaxDuration = projectconfig.Duration(30 * time.Minute)
 	})
 	setRuntimeFixtureEnv(t, e2eOmitUsageEnv, "review,verify")
 }
@@ -68,7 +70,7 @@ func planBothManagers(t *testing.T, root string) PlanRecord {
 func verifyAndApply(t *testing.T, root string, plan PlanRecord, candidateID string) {
 	t.Helper()
 	host := projectworkHost()
-	verified, err := Verify(context.Background(), host, ProcessInvoker{}, root, plan.ID)
+	verified, err := Verify(context.Background(), host, projectexecutor.ProcessInvoker{}, root, plan.ID)
 	if err != nil || verified.Status != StatusVerified || verified.Verifier == nil {
 		t.Fatalf("Verify did not pass with the independent verifier: report=%+v err=%v", verified, err)
 	}
@@ -76,7 +78,7 @@ func verifyAndApply(t *testing.T, root string, plan PlanRecord, candidateID stri
 	if err != nil {
 		t.Fatalf("PreflightApply: %v", err)
 	}
-	applied, err := Apply(host, ProcessInvoker{}, root, applyRequestFromPreflight(preflight))
+	applied, err := Apply(host, projectexecutor.ProcessInvoker{}, root, applyRequestFromPreflight(preflight))
 	if err != nil || applied.Status != StatusApplied {
 		t.Fatalf("guarded Apply failed: report=%+v err=%v", applied, err)
 	}
@@ -132,10 +134,12 @@ func addRootIntegrationCheck(t *testing.T, root string) {
 // nativeRootInvoker answers native Manager turns in-process, as a completed
 // App Server turn without edits that delegates to every direct child, and runs
 // process Managers through the fixture executor.
-type nativeRootInvoker struct{ process ProcessInvoker }
+type nativeRootInvoker struct {
+	process projectexecutor.ProcessInvoker
+}
 
 func (i nativeRootInvoker) Run(ctx context.Context, config agentexec.Config, request agentexec.Request, options agentexec.RunOptions) (agentexec.RunResult, error) {
-	if config.Transport != TransportCodexAppServer {
+	if config.Transport != projectconfig.TransportCodexAppServer {
 		return i.process.Run(ctx, config, request, options)
 	}
 	var task struct {
@@ -166,7 +170,7 @@ func (i nativeRootInvoker) Run(ctx context.Context, config agentexec.Config, req
 	}
 	tokens := int64(1)
 	usage := &agentexec.Usage{Source: "provider-reported", InputTokens: &tokens, OutputTokens: &tokens}
-	lifecycle := &agentexec.Lifecycle{Provider: TransportCodexAppServer, SessionID: "native-root-session", TurnID: "native-root-" + task.Phase, State: "completed", Accounting: "partial",
+	lifecycle := &agentexec.Lifecycle{Provider: projectconfig.TransportCodexAppServer, SessionID: "native-root-session", TurnID: "native-root-" + task.Phase, State: "completed", Accounting: "partial",
 		StartRequests: []agentexec.RoleStartRequest{{RequestID: invocation.RunID, Role: agentexec.RoleExecutor, State: "completed"}}}
 	return agentexec.RunResult{
 		Response: agentexec.Response{APIVersion: agentexec.APIVersion, RunID: invocation.RunID, Nonce: invocation.Nonce, Role: agentexec.RoleExecutor,
@@ -178,5 +182,5 @@ func (i nativeRootInvoker) Run(ctx context.Context, config agentexec.Config, req
 }
 
 func (nativeRootInvoker) Fingerprint(config agentexec.Config) (string, error) {
-	return NewTransportInvoker(codexappserver.Options{}).Fingerprint(config)
+	return projectexecutor.New(codexappserver.Options{}, NativeHelperPolicy{}).Fingerprint(config)
 }

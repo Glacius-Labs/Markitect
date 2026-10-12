@@ -3,6 +3,7 @@ package projectrun
 import (
 	"context"
 	"errors"
+	"github.com/Glacius-Labs/Markitect/src/internal/host/projectconfig"
 	"testing"
 
 	"github.com/Glacius-Labs/Markitect/src/internal/host/agentexec"
@@ -47,7 +48,7 @@ func TestProjectRoleInvocationBindsExecutorReceiptAndRejectsDrift(t *testing.T) 
 		} {
 			t.Run(role+"/"+scenario.name, func(t *testing.T) {
 				invoker := &invocationIdentityFixture{fingerprints: scenario.identities, receipt: scenario.receipt}
-				result, err := invokeProjectAgent(context.Background(), Host{}, invoker, "", nil, Agent{}, "", role, nil, nil, Limits{}, agentexec.Config{}, agentexec.Request{Role: role})
+				result, err := invokeProjectAgent(context.Background(), Host{}, invoker, "", nil, projectconfig.Agent{}, "", role, nil, nil, projectconfig.Limits{}, agentexec.Config{}, agentexec.Request{Role: role})
 				if errors.Is(err, ErrStale) != scenario.stale || !scenario.stale && err != nil {
 					t.Fatalf("receipt binding: err=%v, expected stale=%v", err, scenario.stale)
 				}

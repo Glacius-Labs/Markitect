@@ -1,4 +1,4 @@
-package projectrun
+package projectexecutor
 
 import (
 	"bufio"
@@ -15,13 +15,14 @@ import (
 
 	"github.com/Glacius-Labs/Markitect/src/internal/host/agentexec"
 	"github.com/Glacius-Labs/Markitect/src/internal/host/codexappserver"
+	"github.com/Glacius-Labs/Markitect/src/internal/host/projectconfig"
 	"github.com/Glacius-Labs/Markitect/src/internal/host/projectworkspace"
 )
 
 func TestNativeJournalBeforeStartPersistsReservationBeforeCallback(t *testing.T) {
 	journal := newTestNativeJournal(t)
 	called := false
-	options := journal.wrapOptions(codexappserver.Options{BeforeStart: func(_ context.Context, request agentexec.RoleStartRequest) error {
+	options := journal.WrapOptions(codexappserver.Options{BeforeStart: func(_ context.Context, request agentexec.RoleStartRequest) error {
 		called = true
 		if request.RequestID != "protocol-root" {
 			t.Fatalf("protocol request ID = %q", request.RequestID)
@@ -47,7 +48,7 @@ func TestNativeJournalFailedStartRemainsAsAppendOnlyFailure(t *testing.T) {
 	journal := newTestNativeJournal(t)
 	wantErr := errors.New("reservation denied")
 	called := 0
-	options := journal.wrapOptions(codexappserver.Options{BeforeStart: func(context.Context, agentexec.RoleStartRequest) error {
+	options := journal.WrapOptions(codexappserver.Options{BeforeStart: func(context.Context, agentexec.RoleStartRequest) error {
 		called++
 		return wantErr
 	}})
@@ -67,9 +68,9 @@ func TestNativeJournalHandleIsBoundAndPersistedBeforeCallback(t *testing.T) {
 		t.Fatal(err)
 	}
 	called := false
-	options := journal.wrapOptions(codexappserver.Options{OnHandle: func(_ context.Context, handle codexappserver.RecoveryHandle) error {
+	options := journal.WrapOptions(codexappserver.Options{OnHandle: func(_ context.Context, handle codexappserver.RecoveryHandle) error {
 		called = true
-		recovered, err := readTrustedRecoveryHandles(filepath.Dir(filepath.Dir(filepath.Dir(journal.directory))), journal.workspaceID)
+		recovered, err := ReadTrustedRecoveryHandles(filepath.Dir(filepath.Dir(filepath.Dir(journal.directory))), journal.workspaceID, false)
 		if err != nil || len(recovered) != 1 || recovered[0].ThreadID != handle.ThreadID {
 			t.Fatalf("recovery handle was not persisted before callback: %#v, %v", recovered, err)
 		}
@@ -94,15 +95,15 @@ func TestNativeJournalHandleIsBoundAndPersistedBeforeCallback(t *testing.T) {
 func TestNativeRecoveryJournalPersistsObservedTurnHandleWithoutReservingANewStart(t *testing.T) {
 	journal := newTestNativeJournal(t)
 	handle := nativeJournalRecoveryHandle(t, journal)
-	if err := journal.bindRecoveryHandle(handle); err != nil {
+	if err := journal.BindRecoveryHandle(handle); err != nil {
 		t.Fatalf("bind exact original turn: %v", err)
 	}
-	if err := journal.bindRecoveryHandle(handle); err != nil {
+	if err := journal.BindRecoveryHandle(handle); err != nil {
 		t.Fatalf("idempotent exact binding: %v", err)
 	}
 
 	beforeStartCalls, onHandleCalls := 0, 0
-	options := journal.wrapOptions(codexappserver.Options{
+	options := journal.WrapOptions(codexappserver.Options{
 		BeforeStart: func(context.Context, agentexec.RoleStartRequest) error {
 			beforeStartCalls++
 			return nil
@@ -112,7 +113,7 @@ func TestNativeRecoveryJournalPersistsObservedTurnHandleWithoutReservingANewStar
 			if !sameRecoveryJournalBinding(handle, observed) {
 				t.Fatalf("recovery changed the bound turn: %+v", observed)
 			}
-			recovered, err := readTrustedRecoveryHandles(filepath.Dir(filepath.Dir(filepath.Dir(journal.directory))), journal.workspaceID)
+			recovered, err := ReadTrustedRecoveryHandles(filepath.Dir(filepath.Dir(filepath.Dir(journal.directory))), journal.workspaceID, false)
 			if err != nil || len(recovered) != 1 || recovered[0].TurnID != handle.TurnID {
 				t.Fatalf("observed recovery handle was not durable before callback: %#v, %v", recovered, err)
 			}
@@ -146,7 +147,7 @@ func TestNativeRecoveryJournalPersistsObservedTurnHandleWithoutReservingANewStar
 	}
 	wrongRoot := handle
 	wrongRoot.Invocation.RunID = "another-root"
-	if err := journal.bindRecoveryHandle(wrongRoot); err == nil {
+	if err := journal.BindRecoveryHandle(wrongRoot); err == nil {
 		t.Fatal("recovery journal accepted an ambiguous root binding")
 	}
 }
@@ -169,7 +170,7 @@ func TestNativeJournalPersistsExactPrivateEventBeforeCallback(t *testing.T) {
 	journal := newTestNativeJournal(t)
 	called := false
 	wire := []byte("{ \"method\":\"item/agentMessage/delta\", \"params\":{\"text\":\"private project bytes\"} }\r\n")
-	options := journal.wrapOptions(codexappserver.Options{OnEvent: func(_ context.Context, event codexappserver.Event) error {
+	options := journal.WrapOptions(codexappserver.Options{OnEvent: func(_ context.Context, event codexappserver.Event) error {
 		called = true
 		data, err := os.ReadFile(filepath.Join(journal.directory, "events.jsonl"))
 		if err != nil {
@@ -200,6 +201,49 @@ func TestNativeJournalPersistsExactPrivateEventBeforeCallback(t *testing.T) {
 	}
 }
 
+func TestNativeHelperEvidenceRequiresStartedBoundStrictOperationalRecord(t *testing.T) {
+	journal := newTestNativeJournal(t)
+	record := helperEvidenceRecord{RequestID: "helper-request", ToolCallID: "call-1", Task: "bounded task",
+		Paths: []string{"src/"}, State: "failed", Handle: &projectworkspace.Handle{ID: journal.workspaceID}, RecordedAt: time.Now().UTC()}
+	wire, err := json.Marshal(record)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := journal.AppendHelperRecord(wire); err == nil {
+		t.Fatal("helper evidence was appended before exclusive log creation")
+	}
+	if err := journal.StartHelperLog(); err != nil {
+		t.Fatal(err)
+	}
+	if err := journal.StartHelperLog(); err == nil {
+		t.Fatal("helper log creation was not exclusive")
+	}
+	unknown := append(append([]byte(nil), wire[:len(wire)-1]...), []byte(`,"extra":true}`)...)
+	for _, malformed := range [][]byte{unknown, append(append([]byte(nil), wire...), []byte(` {}`)...)} {
+		if err := journal.AppendHelperRecord(malformed); err == nil {
+			t.Fatalf("accepted invalid operational helper record %s", malformed)
+		}
+	}
+	record.State = "unknown"
+	record.Handle.ID = "another-workspace"
+	wrongWorkspace, _ := json.Marshal(record)
+	if err := journal.AppendHelperRecord(wrongWorkspace); err == nil {
+		t.Fatal("helper evidence accepted another workspace handle")
+	}
+	record.State = "unknown"
+	record.Handle.ID = journal.workspaceID
+	record.Receipt = nil
+	record.Delta = nil
+	partial, _ := json.Marshal(record)
+	if err := journal.AppendHelperRecord(partial); err != nil {
+		t.Fatalf("valid partial failure evidence was rejected: %v", err)
+	}
+	data, err := os.ReadFile(filepath.Join(journal.directory, "helpers.jsonl"))
+	if err != nil || !strings.Contains(string(data), `"state":"unknown"`) {
+		t.Fatalf("helper evidence log = %q err=%v", data, err)
+	}
+}
+
 func TestNativeJournalWrappingPreservesFingerprintOptions(t *testing.T) {
 	calls := 0
 	original := codexappserver.Options{
@@ -214,14 +258,14 @@ func TestNativeJournalWrappingPreservesFingerprintOptions(t *testing.T) {
 		MaxToolCalls: 3, ToolTimeout: 4 * time.Second,
 	}
 	journal := newTestNativeJournal(t)
-	wrapped := journal.wrapOptions(original)
-	invoker := NewTransportInvoker(original)
-	config := nativeFingerprintConfig(t)
+	wrapped := journal.WrapOptions(original)
+	invoker := New(original, nil)
+	config := nativeFingerprintConfigForExecutorTest(t)
 	before, err := invoker.Fingerprint(config)
 	if err != nil {
 		t.Fatal(err)
 	}
-	adapter, err := invoker.appServerAdapterWithOptions(config, wrapped)
+	adapter, err := newAdapter(config, wrapped)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -245,7 +289,7 @@ func newTestNativeJournal(t *testing.T) *nativeJournal {
 	if err := os.MkdirAll(workspace, 0700); err != nil {
 		t.Fatal(err)
 	}
-	journal, err := newNativeJournal(private, workspace, "workspace-handle")
+	journal, err := openTestNativeJournal(private, workspace, "workspace-handle")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -253,6 +297,36 @@ func newTestNativeJournal(t *testing.T) *nativeJournal {
 		t.Fatal("journal and provider workspace must be separate")
 	}
 	return journal
+}
+
+func openTestNativeJournal(private, workspace, id string) (*nativeJournal, error) {
+	journal, err := OpenNativeJournal(private, workspace, id)
+	if err != nil {
+		return nil, err
+	}
+	concrete, ok := journal.(*nativeJournal)
+	if !ok {
+		return nil, errors.New("native journal has an unexpected implementation")
+	}
+	return concrete, nil
+}
+
+func nativeFingerprintConfigForExecutorTest(t *testing.T) agentexec.Config {
+	t.Helper()
+	command, err := os.Executable()
+	if err != nil {
+		t.Fatal(err)
+	}
+	settings, err := json.Marshal(projectconfig.AppServerSettings{ReasoningEffort: "high",
+		Helpers: projectconfig.AppServerHelpers{Enabled: false}, MaxEventBytes: 1 << 20})
+	if err != nil {
+		t.Fatal(err)
+	}
+	emptyEnvironment := []string{}
+	return agentexec.Config{Transport: projectconfig.TransportCodexAppServer, Command: command,
+		Model: "fixture-model", ProviderVersion: codexappserver.SupportedProviderVersion,
+		Timeout: time.Minute, MaxStdoutBytes: 1 << 20, MaxStderrBytes: 1 << 20,
+		TransportConfig: settings, EnvironmentAllowlist: &emptyEnvironment}
 }
 
 func testNativeRecoveryHandle(workspaceID, runID string) codexappserver.RecoveryHandle {

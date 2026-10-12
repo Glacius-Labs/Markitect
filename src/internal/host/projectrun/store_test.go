@@ -1,6 +1,7 @@
 package projectrun
 
 import (
+	"github.com/Glacius-Labs/Markitect/src/internal/host/projectconfig"
 	"os"
 	"path/filepath"
 	"testing"
@@ -11,7 +12,7 @@ func TestPlanStoreRoundTripBindsRepositoryAndProjectDigests(t *testing.T) {
 	if err := os.MkdirAll(filepath.Join(root, ".markitect"), 0o700); err != nil {
 		t.Fatal(err)
 	}
-	if err := os.WriteFile(filepath.Join(root, RuntimePath), []byte("runtime"), 0o600); err != nil {
+	if err := os.WriteFile(filepath.Join(root, projectconfig.RuntimePath), []byte("runtime"), 0o600); err != nil {
 		t.Fatal(err)
 	}
 	store, err := newRunStore(root)
@@ -82,7 +83,7 @@ func TestRunStateJournalStartsAtPositiveRevision(t *testing.T) {
 	if err := os.MkdirAll(filepath.Join(root, ".markitect"), 0o700); err != nil {
 		t.Fatal(err)
 	}
-	if err := os.WriteFile(filepath.Join(root, RuntimePath), []byte("runtime"), 0o600); err != nil {
+	if err := os.WriteFile(filepath.Join(root, projectconfig.RuntimePath), []byte("runtime"), 0o600); err != nil {
 		t.Fatal(err)
 	}
 	store, err := newRunStore(root)

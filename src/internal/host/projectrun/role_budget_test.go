@@ -4,6 +4,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/Glacius-Labs/Markitect/src/internal/host/projectconfig"
+	"github.com/Glacius-Labs/Markitect/src/internal/host/projectexecutor"
 	"os"
 	"path/filepath"
 	"sync"
@@ -213,7 +215,7 @@ func TestRunHelperBudgetCountsRecordedChecksAgainstMaxStarts(t *testing.T) {
 	if err := os.MkdirAll(filepath.Join(root, filepath.FromSlash(RunsPath)), 0o700); err != nil {
 		t.Fatal(err)
 	}
-	writeE2E(t, root, RuntimePath, "apiVersion: "+APIVersion+"\n")
+	writeE2E(t, root, projectconfig.RuntimePath, "apiVersion: "+APIVersion+"\n")
 	store, err := newRunStore(root)
 	if err != nil {
 		t.Fatal(err)
@@ -226,7 +228,7 @@ func TestRunHelperBudgetCountsRecordedChecksAgainstMaxStarts(t *testing.T) {
 		Tasks:  []ManagerTask{{ID: "orders-task", ManagerID: "orders", WorkAttempts: 1, Attempts: 1}},
 		Checks: []CheckResult{{ID: "check-1", Outcome: "failed", ExitCode: 1}}}
 	const maxStarts = 4
-	_, budget, err := bindRunHelperBudget(ProcessInvoker{}, Host{}, Limits{MaxStarts: maxStarts}, store, &report)
+	_, budget, err := bindRunHelperBudget(projectexecutor.ProcessInvoker{}, Host{}, projectconfig.Limits{MaxStarts: maxStarts}, store, &report)
 	if err != nil {
 		t.Fatal(err)
 	}

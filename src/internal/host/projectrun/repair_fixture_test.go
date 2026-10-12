@@ -3,6 +3,7 @@ package projectrun
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/Glacius-Labs/Markitect/src/internal/host/projectconfig"
 	"strings"
 	"testing"
 	"time"
@@ -75,7 +76,7 @@ func makeSyntheticFailedCheckRun(t *testing.T, root string, plan PlanRecord, exi
 	result := CheckResult{ID: check.ID, Command: append([]string(nil), check.Command...), ExecutablePath: check.ExecutablePath,
 		ExecutableDigest: check.ExecutableDigest, CandidateID: candidate.ID, StartedAt: now, Duration: "1s", ExitCode: exitCode,
 		Outcome: "failed", Error: "exit status 1", Stdout: "found 0, want 1"}
-	run := RunReport{APIVersion: APIVersion, ID: plan.ID, PlanID: plan.ID, Status: runStatus, Mode: ModeControlledLocal,
+	run := RunReport{APIVersion: APIVersion, ID: plan.ID, PlanID: plan.ID, Status: runStatus, Mode: projectconfig.ModeControlledLocal,
 		StartedAt: now, UpdatedAt: now, BaseRevision: plan.BaseRevision, BaseSnapshot: plan.BaseSnapshot, ModelDigest: plan.ModelDigest,
 		RuntimeDigest: plan.RuntimeDigest, Tasks: cloneTasks(plan.Managers), Candidate: candidateRef(candidate, true), Checks: []CheckResult{result}, Revision: 1}
 	if runStatus == StatusBlocked && len(run.Tasks) > 0 {

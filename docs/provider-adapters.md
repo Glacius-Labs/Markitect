@@ -22,6 +22,8 @@ The MCP server advertises closed typed schemas. The outer agent should use those
 
 ## Inner role execution and workspace boundary
 
+`projectexecutor` composes process and native execution, request-aware fingerprints, and private native protocol journals. The application constructs it directly with the method's helper policy. `projectrun` owns helper scope validation, candidate delivery and durable reservations; its injected session binds native tool calls and observed handles and merges child accounting into the receipt. Recovery reads trusted transport handles while the method selects the exact saved invocation; it does not start another turn or reserve another helper.
+
 `config` configures the native Codex App Server runtime by default and pins its resolved executable/configuration. `doctor` inspects local tools and authentication prerequisites without starting roles. Authentication is not established by setup or doctor; only a real provider invocation can exercise it. Setup does not configure Claude, global MCP, editor, hooks, plugins, or account settings.
 
 On Windows, setup defaults to `appServer.windowsSandboxBackend: mxc`; `--windows-sandbox-backend mxc` can also be specified explicitly. The adapter starts only its child Codex process with the documented `-c windows.sandbox=mxc` override before `app-server`; it does not change global Codex configuration. Windows Managed Policy remains in force. Receipts record the requested backend, while effective backend remains unavailable unless Codex provides an authoritative readback. Unsupported values and non-Windows execution fail closed without a fallback.

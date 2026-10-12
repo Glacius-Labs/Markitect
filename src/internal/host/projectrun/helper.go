@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/Glacius-Labs/Markitect/src/internal/host/projectconfig"
 	"io"
 	"os"
 	"path/filepath"
@@ -18,6 +19,7 @@ import (
 	"github.com/Glacius-Labs/Markitect/src/internal/host/agentexec"
 	"github.com/Glacius-Labs/Markitect/src/internal/host/codexappserver"
 	"github.com/Glacius-Labs/Markitect/src/internal/host/guardedwrite"
+	"github.com/Glacius-Labs/Markitect/src/internal/host/projectexecutor"
 	"github.com/Glacius-Labs/Markitect/src/internal/host/projectworkspace"
 	"github.com/Glacius-Labs/Markitect/src/internal/infrastructure/source"
 )
@@ -77,7 +79,7 @@ type HelperSessionOptions struct {
 	ParentRequest       agentexec.Request
 	ParentScope         HelperParentScope
 	Workspaces          projectworkspace.Service
-	Limits              Limits
+	Limits              projectconfig.Limits
 	PrivateLogDirectory string
 	ChildOptions        codexappserver.Options
 	Reserve             HelperReserveFunc
@@ -138,13 +140,13 @@ func NewHelperSession(options HelperSessionOptions) (*HelperSession, error) {
 	if !noAuthority && (workspace.ID == "" || !filepath.IsAbs(workspace.CWD) || workspace.BaseSHA == "" || options.ParentRequest.SourceRevision != workspace.BaseSHA) {
 		return nil, errors.New("helper session requires a parent request bound to its owned workspace")
 	}
-	if options.ParentConfig.Transport != TransportCodexAppServer {
+	if options.ParentConfig.Transport != projectconfig.TransportCodexAppServer {
 		return nil, errors.New("Host helper tool requires a native App Server parent")
 	}
 	if (!noAuthority && options.PrivateLogDirectory == "") || options.Reserve == nil || (!noAuthority && (options.Limits.MaxCandidateFileBytes <= 0 || options.Limits.MaxCandidateBytes <= 0)) {
 		return nil, errors.New("helper session requires private journaling, reservation callback, and positive candidate limits")
 	}
-	settings, err := decodeAppServerSettings(options.ParentConfig.TransportConfig)
+	settings, err := projectexecutor.DecodeAppServerSettings(options.ParentConfig.TransportConfig)
 	if err != nil {
 		return nil, err
 	}
@@ -352,11 +354,11 @@ func (s *HelperSession) runHelper(ctx context.Context, call codexappserver.ToolC
 	if err != nil {
 		return s.failRequest(ctx, requestIndex, reservation, &handle, call.CallID, attempt, "failed", err)
 	}
-	journal, err := newNativeJournal(privateLogs, handle.CWD, handle.ID)
+	journal, err := projectexecutor.OpenNativeJournal(privateLogs, handle.CWD, handle.ID)
 	if err != nil {
 		return s.failRequest(ctx, requestIndex, reservation, &handle, call.CallID, attempt, "failed", fmt.Errorf("create helper private journal: %w", err))
 	}
-	if err := createPrivateFile(filepath.Join(journal.directory, "helpers.jsonl")); err != nil {
+	if err := journal.StartHelperLog(); err != nil {
 		return s.failRequest(ctx, requestIndex, reservation, &handle, call.CallID, attempt, "failed", err, journal)
 	}
 	if err := s.appendHelperRecord(journal, helperJournalRecord{RequestID: attempt.Request.RequestID, ToolCallID: call.CallID,
@@ -367,7 +369,7 @@ func (s *HelperSession) runHelper(ctx context.Context, call codexappserver.ToolC
 	options := s.childOptions(reservation, attempt.Request)
 	newInvoker := s.options.NewInvoker
 	if newInvoker == nil {
-		newInvoker = func(options codexappserver.Options) Invoker { return NewTransportInvokerWithoutHostHelpers(options) }
+		newInvoker = func(options codexappserver.Options) Invoker { return projectexecutor.NewChild(options) }
 	}
 	invoker := newInvoker(options)
 	if invoker == nil {
@@ -574,12 +576,12 @@ func (s *HelperSession) recordRequest(request agentexec.RoleStartRequest) int {
 	return len(s.requests) - 1
 }
 
-func (s *HelperSession) failRequest(ctx context.Context, index int, reservation HelperReservation, handle *projectworkspace.Handle, callID string, attempt HelperStartAttempt, state string, cause error, journals ...*nativeJournal) (codexappserver.ToolResult, error) {
+func (s *HelperSession) failRequest(ctx context.Context, index int, reservation HelperReservation, handle *projectworkspace.Handle, callID string, attempt HelperStartAttempt, state string, cause error, journals ...projectexecutor.NativeJournal) (codexappserver.ToolResult, error) {
 	var journalErr, closeErr error
 	if handle != nil {
 		// The parent reservation remains durable even if workspace preparation or
 		// journal creation fails. No provider was launched, so cleanup is safe.
-		var journal *nativeJournal
+		var journal projectexecutor.NativeJournal
 		if len(journals) != 0 {
 			journal = journals[0]
 		}
@@ -666,8 +668,12 @@ func (s *HelperSession) requestHasReceipt(requestID string) bool {
 	return s.receiptByRequest[requestID]
 }
 
-func (s *HelperSession) appendHelperRecord(journal *nativeJournal, record helperJournalRecord) error {
-	return journal.appendJSONLine("helpers.jsonl", record)
+func (s *HelperSession) appendHelperRecord(journal projectexecutor.NativeJournal, record helperJournalRecord) error {
+	wire, err := json.Marshal(record)
+	if err != nil {
+		return err
+	}
+	return journal.AppendHelperRecord(wire)
 }
 
 func decodeHelperArgs(raw json.RawMessage) (helperToolArgs, error) {
@@ -799,7 +805,7 @@ func helperPathAllowed(scope, file string) bool {
 	return strings.EqualFold(scope, file)
 }
 
-func helperWorkspaceLimits(limits Limits) projectworkspace.Limits {
+func helperWorkspaceLimits(limits projectconfig.Limits) projectworkspace.Limits {
 	return projectworkspace.Limits{MaxFiles: 10000, MaxFileBytes: int(limits.MaxCandidateFileBytes), MaxTotalBytes: int(limits.MaxCandidateBytes)}
 }
 
@@ -1032,7 +1038,7 @@ func lifecycleHostState(lifecycle *agentexec.Lifecycle) string {
 }
 
 func helperInvocationTerminal(lifecycle *agentexec.Lifecycle) bool {
-	if lifecycle == nil || lifecycle.Provider != TransportCodexAppServer || lifecycle.SessionID == "" || lifecycle.TurnID == "" || !terminalWorkspaceState(lifecycle.State) || len(lifecycle.StartRequests) == 0 {
+	if lifecycle == nil || lifecycle.Provider != projectconfig.TransportCodexAppServer || lifecycle.SessionID == "" || lifecycle.TurnID == "" || !terminalWorkspaceState(lifecycle.State) || len(lifecycle.StartRequests) == 0 {
 		return false
 	}
 	// The transport's root request remains in the `started` state after its
@@ -1115,4 +1121,17 @@ func cloneHelperReceipt(receipt agentexec.Receipt) agentexec.Receipt {
 		clone.NativeWork = &work
 	}
 	return clone
+}
+
+func helperParentMetadata(raw json.RawMessage) (string, string) {
+	var value struct {
+		Kind      string `json:"kind"`
+		ManagerID string `json:"managerId"`
+		Phase     string `json:"phase"`
+	}
+	_ = json.Unmarshal(raw, &value)
+	if value.Kind != "projectrun-task/v1" {
+		return "", ""
+	}
+	return value.ManagerID, value.Phase
 }

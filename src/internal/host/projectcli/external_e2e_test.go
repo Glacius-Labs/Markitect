@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/Glacius-Labs/Markitect/src/internal/host/projectconfig"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -57,7 +58,7 @@ func TestExternalGitCLICommitsReviewedCandidate(t *testing.T) {
 		t.Fatal(err)
 	}
 	repo.Write("src/obsolete.txt", "obsolete implementation\n")
-	runtimeConfig, err := projectrun.LoadRuntime(repo.Dir)
+	runtimeConfig, err := projectconfig.LoadRuntime(repo.Dir)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -66,12 +67,12 @@ func TestExternalGitCLICommitsReviewedCandidate(t *testing.T) {
 	if !configured {
 		t.Fatalf("runtime fixture has no executor for reviewer Manager %s", managerID)
 	}
-	runtimeConfig.Review = &projectrun.ReviewConfig{Agents: map[string]projectrun.Agent{managerID: reviewer}, MaxRounds: 1, MaxManagerRounds: 1}
+	runtimeConfig.Review = &projectconfig.ReviewConfig{Agents: map[string]projectconfig.Agent{managerID: reviewer}, MaxRounds: 1, MaxManagerRounds: 1}
 	runtimeBytes, err := yaml.Marshal(runtimeConfig)
 	if err != nil {
 		t.Fatal(err)
 	}
-	repo.Write(projectrun.RuntimePath, string(runtimeBytes))
+	repo.Write(projectconfig.RuntimePath, string(runtimeBytes))
 	repo.Commit("extend runtime fixture artifact for deletion")
 
 	goal := "Implement the modeled value behavior."

@@ -4,13 +4,15 @@ package projectrun
 
 import (
 	"context"
+	"github.com/Glacius-Labs/Markitect/src/internal/host/projectconfig"
+	"github.com/Glacius-Labs/Markitect/src/internal/host/projectexecutor"
 	"testing"
 )
 
 func TestRunDispatchesIndependentManagersConcurrently(t *testing.T) {
 	t.Parallel()
 	root := makeProjectRunFixture(t)
-	updateE2ERuntime(t, root, func(runtime *Runtime) { runtime.Limits.MaxParallel = 2 })
+	updateE2ERuntime(t, root, func(runtime *projectconfig.Runtime) { runtime.Limits.MaxParallel = 2 })
 	setupE2EProcess(t, "")
 	plan, err := Plan(projectworkHost(), root, identityHead(t, root), PlanRequest{
 		Goal: "Implement both independent owned artifacts.", Managers: []string{
@@ -20,7 +22,7 @@ func TestRunDispatchesIndependentManagersConcurrently(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	invoker := &barrierInvoker{inner: ProcessInvoker{}, ready: make(chan struct{})}
+	invoker := &barrierInvoker{inner: projectexecutor.ProcessInvoker{}, ready: make(chan struct{})}
 	report, err := Run(context.Background(), projectworkHost(), invoker, root, plan.ID)
 	if err != nil || report.Status != StatusIntegrated {
 		t.Fatalf("parallel manager run failed: status=%s err=%v", report.Status, err)

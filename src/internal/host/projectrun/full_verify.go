@@ -16,6 +16,7 @@ import (
 
 	"github.com/Glacius-Labs/Markitect/src/internal/host/agentexec"
 	"github.com/Glacius-Labs/Markitect/src/internal/host/projectbriefing"
+	projectconfig "github.com/Glacius-Labs/Markitect/src/internal/host/projectconfig"
 	"github.com/Glacius-Labs/Markitect/src/internal/host/projectwork"
 	"github.com/Glacius-Labs/Markitect/src/internal/modules/projectmodel"
 )
@@ -102,22 +103,22 @@ type FullVerifyReport struct {
 }
 
 type FullManagerAssessment struct {
-	ManagerID       string               `json:"managerId"`
-	ParentID        string               `json:"parentId,omitempty"`
-	Strictness      StrictnessProfile    `json:"strictness"`
-	ScopeDigest     string               `json:"scopeDigest"`
-	Subjects        []string             `json:"subjects"`
-	Status          string               `json:"status"` // passed, failed, or incomplete
-	Summary         string               `json:"summary,omitempty"`
-	Assessments     []FullAssessment     `json:"assessments"`
-	Counterexamples []FullCounterexample `json:"counterexamples"`
-	Findings        []string             `json:"findings"`
-	InputDigest     string               `json:"inputDigest,omitempty"`
-	Receipt         *agentexec.Receipt   `json:"receipt,omitempty"`
-	CostMicros      int64                `json:"costMicros,omitempty"`
-	CostKnown       bool                 `json:"costKnown"`
-	CostOverflow    bool                 `json:"costOverflow,omitempty"`
-	Error           string               `json:"error,omitempty"`
+	ManagerID       string                          `json:"managerId"`
+	ParentID        string                          `json:"parentId,omitempty"`
+	Strictness      projectconfig.StrictnessProfile `json:"strictness"`
+	ScopeDigest     string                          `json:"scopeDigest"`
+	Subjects        []string                        `json:"subjects"`
+	Status          string                          `json:"status"` // passed, failed, or incomplete
+	Summary         string                          `json:"summary,omitempty"`
+	Assessments     []FullAssessment                `json:"assessments"`
+	Counterexamples []FullCounterexample            `json:"counterexamples"`
+	Findings        []string                        `json:"findings"`
+	InputDigest     string                          `json:"inputDigest,omitempty"`
+	Receipt         *agentexec.Receipt              `json:"receipt,omitempty"`
+	CostMicros      int64                           `json:"costMicros,omitempty"`
+	CostKnown       bool                            `json:"costKnown"`
+	CostOverflow    bool                            `json:"costOverflow,omitempty"`
+	Error           string                          `json:"error,omitempty"`
 }
 
 type FullAssessment struct {
@@ -210,7 +211,7 @@ func FullVerify(ctx context.Context, host Host, invoker Invoker, root string, re
 			return empty, err
 		}
 	}
-	runtime, err := LoadRuntime(root)
+	runtime, err := projectconfig.LoadRuntime(root)
 	if err != nil {
 		return empty, err
 	}
@@ -226,7 +227,7 @@ func FullVerify(ctx context.Context, host Host, invoker Invoker, root string, re
 // FullVerifyProject audits an immutable host-composed project. This is the
 // reusable seam for final Run candidates; it performs no candidate/model
 // mutation and never reopens candidate source from the working tree.
-func FullVerifyProject(ctx context.Context, host Host, invoker Invoker, root string, project *projectwork.Project, runtime Runtime, binding FullVerifyBinding) (FullVerifyReport, error) {
+func FullVerifyProject(ctx context.Context, host Host, invoker Invoker, root string, project *projectwork.Project, runtime projectconfig.Runtime, binding FullVerifyBinding) (FullVerifyReport, error) {
 	started := time.Now().UTC()
 	if !binding.StartedAt.IsZero() {
 		started = binding.StartedAt.UTC()
@@ -244,7 +245,7 @@ func FullVerifyProject(ctx context.Context, host Host, invoker Invoker, root str
 	if binding.ExpectedSnapshot == "" || binding.ExpectedSnapshot != project.Snapshot.Digest() {
 		return out, ErrStale
 	}
-	if err := ValidateRuntime(runtime); err != nil {
+	if err := projectconfig.ValidateRuntime(runtime); err != nil {
 		return out, err
 	}
 	if runtime.Review == nil {
@@ -276,278 +277,15 @@ func FullVerifyProject(ctx context.Context, host Host, invoker Invoker, root str
 	deadline := started.Add(time.Duration(runtime.Limits.MaxDuration))
 	ctx, cancel := context.WithDeadline(ctx, deadline)
 	defer cancel()
-	if hasErrorFinding(project.Report.Findings) {
-		out.Status, out.Error = "failed", "compiled project contains error findings"
-		return finishFullVerify(root, binding.Write, out, nil)
+	frame := fullVerifyFrame{
+		ctx: ctx, host: host, invoker: invoker, root: root, project: project,
+		runtime: runtime, binding: binding, runtimePin: runtimePin, out: out,
 	}
-	if project.Config.CoverageMode != "full" {
-		out.Status, out.Error = "incomplete", "full verification requires project CoverageMode: full"
-		return finishFullVerify(root, binding.Write, out, nil)
+	if prepareFullVerifyFrame(&frame) {
+		executeFullVerifyFrame(&frame)
+		finalizeFullVerifyFrame(&frame)
 	}
-	if project.Coverage == nil {
-		out.Status, out.Error = "incomplete", "full verification requires a repository coverage census bound to the project snapshot"
-		return finishFullVerify(root, binding.Write, out, nil)
-	}
-	if !project.Coverage.Accounted || !project.Coverage.Conforming {
-		out.Status, out.Error = "failed", "repository coverage census is not conforming"
-		return finishFullVerify(root, binding.Write, out, nil)
-	}
-	if err := requireArtifacts(project.Report); err != nil {
-		out.Status, out.Error = "failed", err.Error()
-		return finishFullVerify(root, binding.Write, out, nil)
-	}
-	if err := validateCandidateDocument(project); err != nil {
-		out.Status, out.Error = "failed", err.Error()
-		return finishFullVerify(root, binding.Write, out, nil)
-	}
-	managers := append([]projectmodel.Manager(nil), project.Report.Managers...)
-	sort.Slice(managers, func(i, j int) bool {
-		di, dj := managerDepth(projectManagerMap(project.Report.Managers), managers[i].ID), managerDepth(projectManagerMap(project.Report.Managers), managers[j].ID)
-		if di != dj {
-			return di > dj
-		}
-		return managers[i].ID < managers[j].ID
-	})
-	if len(managers) == 0 {
-		out.Status, out.Error = "failed", "project has no active Managers"
-		return finishFullVerify(root, binding.Write, out, nil)
-	}
-	if err := validateStrictnessManagers(runtime.Strictness, managers); err != nil {
-		out.Status, out.Error = "failed", err.Error()
-		return finishFullVerify(root, binding.Write, out, nil)
-	}
-	if binding.PriorStarts < 0 || binding.PriorCostMicros < 0 || binding.PriorStarts > runtime.Limits.MaxStarts || binding.PriorCostMicros > runtime.Limits.MaxCostMicros {
-		out.Status, out.Error = "incomplete", "cumulative runtime budget already exceeded"
-		return finishFullVerify(root, binding.Write, out, nil)
-	}
-	if len(binding.PreverifiedChecks) > binding.PriorStarts {
-		out.Status, out.Error = "incomplete", "preverified checks are not covered by the cumulative start count"
-		return finishFullVerify(root, binding.Write, out, nil)
-	}
-	for _, manager := range managers {
-		profile, profileErr := ResolveStrictness(runtime, manager.ID)
-		row := FullManagerAssessment{ManagerID: manager.ID, ParentID: manager.Parent, Strictness: profile, Assessments: []FullAssessment{}, Findings: []string{}}
-		if profileErr != nil {
-			row.Status, row.Error = "incomplete", profileErr.Error()
-		}
-		out.Managers = append(out.Managers, row)
-	}
-	briefingContexts := make(map[string]BriefingContext, len(managers))
-	briefingBindingInvalid := false
-	for _, manager := range managers {
-		briefing, briefingErr := managerBriefingIn(root, binding.acceptedBriefings, project.Report.ModelDigest, manager.ID, project.Revision)
-		if briefingErr != nil {
-			row := findFullManagerAssessment(out.Managers, manager.ID)
-			row.Status, row.Error = "incomplete", briefingErr.Error()
-			out.Error = "accepted model briefing is missing or stale for one or more Managers"
-			briefingBindingInvalid = true
-			continue
-		}
-		briefingContexts[manager.ID] = briefing
-		out.BriefingDigests[manager.ID] = briefing.Digest
-		if len(binding.ExpectedBriefings) != 0 {
-			expected, ok := binding.ExpectedBriefings[manager.ID]
-			if !ok || expected != briefing.Digest {
-				row := findFullManagerAssessment(out.Managers, manager.ID)
-				row.Status, row.Error = "incomplete", "briefing digest differs from the caller binding"
-				out.Error = ErrStale.Error()
-				briefingBindingInvalid = true
-			}
-		}
-	}
-	if (len(binding.ExpectedBriefings) != 0 && len(binding.ExpectedBriefings) != len(managers)) || briefingBindingInvalid {
-		out.Status, out.Error = "incomplete", "caller briefing binding does not cover every active Manager"
-		return finishFullVerify(root, binding.Write, out, nil)
-	}
-	if len(binding.PreverifiedChecks) > 0 {
-		if len(binding.PreverifiedChecks) > len(project.Report.Checks) {
-			out.Status, out.Error = "incomplete", "preverified check binding contains unrelated entries"
-			return finishFullVerify(root, binding.Write, out, nil)
-		}
-		out.Checks = append(out.Checks, binding.PreverifiedChecks...)
-	}
-	checkErr := error(nil)
-	if out.Starts < runtime.Limits.MaxStarts && out.CostMicros <= runtime.Limits.MaxCostMicros {
-		var checks []CheckResult
-		checks, checkErr = fullRunChecks(ctx, root, project, runtime, &out, binding.CheckCandidateID)
-		out.Checks = append(out.Checks, checks...)
-	}
-	if checkErr != nil {
-		out.Error = checkErr.Error()
-	}
-	knownCostInvocations, unknownCostInvocations := binding.PriorKnownCostInvocations, binding.PriorUnknownCostInvocations
-	for i := range out.Managers {
-		row := &out.Managers[i]
-		if err := ctx.Err(); err != nil {
-			row.Status, row.Error = "incomplete", "cumulative duration budget exhausted"
-			markRemainingFullRows(out.Managers, i+1, "cumulative duration budget exhausted")
-			out.Error = "full verification did not finish within the cumulative duration limit"
-			break
-		}
-		if out.Starts >= runtime.Limits.MaxStarts {
-			row.Status, row.Error = "incomplete", "cumulative start budget exhausted"
-			markRemainingFullRows(out.Managers, i+1, "cumulative start budget exhausted")
-			out.Error = "full verification did not finish within the cumulative start limit"
-			break
-		}
-		if out.CostMicros >= runtime.Limits.MaxCostMicros {
-			row.Status, row.Error = "incomplete", "cumulative cost budget exhausted"
-			markRemainingFullRows(out.Managers, i+1, "cumulative cost budget exhausted")
-			out.Error = "full verification did not finish within the cumulative cost limit"
-			break
-		}
-		if row.Error != "" {
-			out.Error = "strictness could not be resolved for every Manager"
-			continue
-		}
-		if _, ok := briefingContexts[row.ManagerID]; !ok {
-			continue
-		}
-		if err := freshFullBriefingBindings(root, binding.acceptedBriefings, project.Report.ModelDigest, out.BriefingDigests, project.Revision); err != nil {
-			row.Status, row.Error = "incomplete", err.Error()
-			out.Error = ErrStale.Error()
-			markRemainingFullRows(out.Managers, i+1, "not started after stale briefing binding")
-			break
-		}
-		children := fullChildAssessments(out.Managers, project.Report, row.ManagerID)
-		integrationReviews := fullAuditIntegrationReviewsForManager(project.Report, row.ManagerID, binding.CheckCandidateID, binding.checkCandidateDigest, binding.freshReviews)
-		assessment, callErr := fullAuditManager(ctx, host, invoker, root, project, runtime, row.ManagerID, row.Strictness, briefingContexts[row.ManagerID], children, relevantManagerChecks(project.Report, row.ManagerID, out.Checks), integrationReviews, binding.CheckSource, "full-verify-"+binding.ExpectedSnapshot)
-		*row = assessment
-		attempted := row.Receipt != nil && row.Receipt.RunID != ""
-		if attempted {
-			out.Starts++
-		} // A failed or interrupted external attempt still consumes a start.
-		if attempted {
-			cost, usageKnown, overflow := estimateAgentCost(row.Receipt.Usage, runtime.Review.Agents[row.ManagerID])
-			row.CostMicros, row.CostKnown, row.CostOverflow = cost, usageKnown, overflow
-			known, unknown := costCounts([]InvocationLog{{CostKnown: usageKnown, Receipt: *row.Receipt}})
-			knownCostInvocations += known
-			unknownCostInvocations += unknown
-			freshPin, pinErr := runtimeDigestWithInvoker(invoker, runtime)
-			briefingErr := freshFullBriefingBindings(root, binding.acceptedBriefings, project.Report.ModelDigest, out.BriefingDigests, project.Revision)
-			sourceErr := fullAuditFreshBinding(host, root, project, invoker, runtime, binding.CheckSource)
-			if !sameRuntimeSnapshot(project) || pinErr != nil || freshPin != runtimePin || briefingErr != nil || sourceErr != nil {
-				row.Status, row.Error = "incomplete", "snapshot, runtime, or briefing binding changed during audit"
-				out.Error = ErrStale.Error()
-				markRemainingFullRows(out.Managers, i+1, "not started after stale verification binding")
-				break
-			}
-			if row.CostOverflow {
-				_ = addFullKnownCost(&out.CostMicros, row.CostMicros)
-				out.CostMicros = math.MaxInt64
-				row.Status, row.Error = "incomplete", "known cost estimate exceeds the supported int64 range"
-				out.Error = "full verification exceeded the cumulative cost limit"
-				markRemainingFullRows(out.Managers, i+1, "not started after cost estimate overflow")
-				break
-			}
-		}
-		if callErr != nil {
-			if row.Status != "failed" {
-				row.Status = "incomplete"
-			}
-			row.Error = callErr.Error()
-			unknownUsage := false
-			if attempted {
-				if row.CostKnown {
-					cost := row.CostMicros
-					if addFullKnownCost(&out.CostMicros, cost) {
-						row.Status, row.Error = "incomplete", "known cumulative cost exceeds int64; total is saturated at MaxInt64"
-						out.Error = "full verification cannot represent exact cumulative cost after int64 overflow"
-						markRemainingFullRows(out.Managers, i+1, "not started because exact cumulative cost overflowed")
-						break
-					}
-					if out.CostMicros > runtime.Limits.MaxCostMicros {
-						out.Error = "full verification exceeded the cumulative cost limit"
-						markRemainingFullRows(out.Managers, i+1, "not started after cumulative cost limit was exceeded")
-						break
-					}
-				} else {
-					if runtime.Review.Agents[row.ManagerID].requiresReportedUsage() {
-						unknownUsage = true
-						row.Error += "; invocation usage missing, cumulative cost cannot be asserted"
-					}
-				}
-			}
-			if unknownUsage {
-				out.Error = "full verification cannot assert cumulative cost after a Manager invocation"
-				markRemainingFullRows(out.Managers, i+1, "not started because preceding usage was unavailable")
-				break
-			}
-			if out.CostMicros > runtime.Limits.MaxCostMicros {
-				out.Error = "full verification exceeded the cumulative cost limit"
-				markRemainingFullRows(out.Managers, i+1, "not started after cumulative cost limit was exceeded")
-				break
-			}
-			out.Error = "one or more Manager assessments are missing, failed, or incomplete"
-			continue
-		}
-		if !row.CostKnown {
-			if runtime.Review.Agents[row.ManagerID].requiresReportedUsage() {
-				row.Status, row.Error = "incomplete", "reviewer usage is missing; bounded cumulative cost cannot be asserted"
-				out.Error = "one or more Manager assessments are missing, failed, or incomplete"
-				markRemainingFullRows(out.Managers, i+1, "not started because preceding usage was unavailable")
-				break
-			}
-		} else {
-			cost := row.CostMicros
-			if addFullKnownCost(&out.CostMicros, cost) {
-				row.Status, row.Error = "incomplete", "known cumulative cost exceeds int64; total is saturated at MaxInt64"
-				out.Error = "full verification cannot represent exact cumulative cost after int64 overflow"
-				markRemainingFullRows(out.Managers, i+1, "not started because exact cumulative cost overflowed")
-				break
-			}
-			if out.CostMicros > runtime.Limits.MaxCostMicros {
-				row.Status, row.Error = "incomplete", "cumulative cost limit exceeded"
-				out.Error = "full verification exceeded the cumulative cost limit"
-				markRemainingFullRows(out.Managers, i+1, "not started after cumulative cost limit was exceeded")
-				break
-			}
-		}
-		if row.Status != "passed" {
-			out.Error = "one or more Manager assessments did not pass"
-			continue
-		}
-	}
-	out.CostAccounting = costAccountingFromCounts(knownCostInvocations, unknownCostInvocations)
-	bindingStale := false
-	if !sameRuntimeSnapshot(project) || freshFullBriefingBindings(root, binding.acceptedBriefings, project.Report.ModelDigest, out.BriefingDigests, project.Revision) != nil {
-		bindingStale, out.Error = true, ErrStale.Error()
-	} else if freshPin, pinErr := runtimeDigestWithInvoker(invoker, runtime); pinErr != nil || freshPin != runtimePin {
-		bindingStale, out.Error = true, ErrStale.Error()
-	} else if binding.CheckSource && host.Load != nil {
-		fresh, sourceErr := host.Load(root, project.Revision)
-		if sourceErr != nil || fresh == nil || fresh.Snapshot == nil || fresh.Snapshot.Digest() != project.Snapshot.Digest() {
-			bindingStale, out.Error = true, ErrStale.Error()
-		}
-	}
-	out.Status = "passed"
-	for _, manager := range out.Managers {
-		if manager.Status == "failed" {
-			out.Status = "failed"
-			break
-		}
-		if manager.Status != "passed" && out.Status == "passed" {
-			out.Status = "incomplete"
-		}
-	}
-	for _, check := range out.Checks {
-		if check.Outcome != "passed" {
-			if check.Outcome == "failed" {
-				out.Status = "failed"
-			} else if out.Status == "passed" {
-				out.Status = "incomplete"
-			}
-		}
-	}
-	if bindingStale && out.Status != "failed" {
-		out.Status = "incomplete"
-	}
-	if checkErr != nil && (strings.Contains(checkErr.Error(), "maxStarts") || strings.Contains(checkErr.Error(), "duration") || errors.Is(ctx.Err(), context.DeadlineExceeded)) && out.Status != "failed" {
-		out.Status = "incomplete"
-	}
-	if out.Status == "passed" && out.Error != "" {
-		out.Status = "incomplete"
-	}
+	out = frame.out
 	return finishFullVerify(root, binding.Write, out, nil)
 }
 
@@ -573,7 +311,7 @@ func fullVerifyCommitID(value string) bool {
 	return err == nil && len(decoded)*2 == len(value)
 }
 
-func fullRunChecks(ctx context.Context, root string, project *projectwork.Project, runtime Runtime, report *FullVerifyReport, candidateID string) ([]CheckResult, error) {
+func fullRunChecks(ctx context.Context, root string, project *projectwork.Project, runtime projectconfig.Runtime, report *FullVerifyReport, candidateID string) ([]CheckResult, error) {
 	selected := map[string]bool{}
 	for _, manager := range project.Report.Managers {
 		selected[manager.ID] = true
@@ -666,7 +404,7 @@ func fullRunChecks(ctx context.Context, root string, project *projectwork.Projec
 	return results, errors.Join(failures...)
 }
 
-func fullAuditManager(ctx context.Context, host Host, invoker Invoker, root string, project *projectwork.Project, runtime Runtime, managerID string, strictness StrictnessProfile, briefing BriefingContext, childAssessments []fullChildAssessment, checkResults []CheckResult, integrationReviews []fullReviewEvidence, checkSource bool, ownerRunID string) (FullManagerAssessment, error) {
+func fullAuditManager(ctx context.Context, host Host, invoker Invoker, root string, project *projectwork.Project, runtime projectconfig.Runtime, managerID string, strictness projectconfig.StrictnessProfile, briefing BriefingContext, childAssessments []fullChildAssessment, checkResults []CheckResult, integrationReviews []fullReviewEvidence, checkSource bool, ownerRunID string) (FullManagerAssessment, error) {
 	row := FullManagerAssessment{ManagerID: managerID, Status: "incomplete", Assessments: []FullAssessment{}, Findings: []string{}}
 	manager, ok := runtime.Review.Agents[managerID]
 	if !ok {
@@ -676,7 +414,7 @@ func fullAuditManager(ctx context.Context, host Host, invoker Invoker, root stri
 	if err != nil {
 		return row, err
 	}
-	if manager.Transport != TransportCodexAppServer {
+	if manager.Transport != projectconfig.TransportCodexAppServer {
 		if deadline, ok := ctx.Deadline(); ok {
 			remaining := time.Until(deadline)
 			if remaining <= 0 {
@@ -714,20 +452,20 @@ func fullAuditManager(ctx context.Context, host Host, invoker Invoker, root stri
 		fileRefs = append(fileRefs, reviewFileRef{Path: file.Path, Mode: file.Mode, Digest: file.Digest, Grounding: []string{"file-bytes", "file-mode"}})
 	}
 	contextPayload := struct {
-		Kind                    string                      `json:"kind"`
-		SnapshotDigest          string                      `json:"snapshotDigest"`
-		ProjectDigest           string                      `json:"projectDigest"`
-		ModelDigest             string                      `json:"modelDigest"`
-		Manager                 projectmodel.ManagerContext `json:"manager"`
-		Briefing                BriefingContext             `json:"briefing"`
-		IntegrationObligations  []fullObligationView        `json:"integrationObligations"`
-		ChildAssessments        []fullChildAssessment       `json:"childAssessments"`
-		CheckResults            []CheckResult               `json:"checkResults"`
-		FreshIntegrationReviews []fullReviewEvidence        `json:"freshIntegrationReviews"`
-		Files                   []reviewFileRef             `json:"files"`
-		Subjects                []string                    `json:"requiredSubjects"`
-		Strictness              StrictnessProfile           `json:"strictness"`
-		ResponseSchema          json.RawMessage             `json:"responseSchema"`
+		Kind                    string                          `json:"kind"`
+		SnapshotDigest          string                          `json:"snapshotDigest"`
+		ProjectDigest           string                          `json:"projectDigest"`
+		ModelDigest             string                          `json:"modelDigest"`
+		Manager                 projectmodel.ManagerContext     `json:"manager"`
+		Briefing                BriefingContext                 `json:"briefing"`
+		IntegrationObligations  []fullObligationView            `json:"integrationObligations"`
+		ChildAssessments        []fullChildAssessment           `json:"childAssessments"`
+		CheckResults            []CheckResult                   `json:"checkResults"`
+		FreshIntegrationReviews []fullReviewEvidence            `json:"freshIntegrationReviews"`
+		Files                   []reviewFileRef                 `json:"files"`
+		Subjects                []string                        `json:"requiredSubjects"`
+		Strictness              projectconfig.StrictnessProfile `json:"strictness"`
+		ResponseSchema          json.RawMessage                 `json:"responseSchema"`
 	}{"projectrun-full-verify/v1", project.Snapshot.Digest(), project.Digest, project.Report.ModelDigest, modelContext, briefing, fullObligationViews(children, modelContext), childAssessments, checkResults, integrationReviews, fileRefs, subjects, strictness, fullVerifyResponseSchema(subjects, strictness.Counterexamples)}
 	contextJSON, err := json.Marshal(contextPayload)
 	if err != nil {
@@ -757,7 +495,7 @@ func fullAuditManager(ctx context.Context, host Host, invoker Invoker, root stri
 	}
 	var result agentexec.RunResult
 	var invokeErr error
-	if manager.Transport == TransportCodexAppServer {
+	if manager.Transport == projectconfig.TransportCodexAppServer {
 		taskID, err := readOnlyRepositoryTaskID(request)
 		if err != nil {
 			return row, fmt.Errorf("allocate unique full-verification workspace task: %w", err)
@@ -834,7 +572,7 @@ func findFullManagerAssessment(rows []FullManagerAssessment, id string) *FullMan
 	return nil
 }
 
-func fullAuditFreshBinding(host Host, root string, project *projectwork.Project, invoker Invoker, runtime Runtime, checkSource bool) error {
+func fullAuditFreshBinding(host Host, root string, project *projectwork.Project, invoker Invoker, runtime projectconfig.Runtime, checkSource bool) error {
 	if !sameRuntimeSnapshot(project) {
 		return ErrStale
 	}
@@ -855,11 +593,11 @@ func sameRuntimeSnapshot(project *projectwork.Project) bool {
 	if project == nil || project.Snapshot == nil {
 		return false
 	}
-	data, ok := project.Snapshot.Files[RuntimePath]
+	data, ok := project.Snapshot.Files[projectconfig.RuntimePath]
 	if !ok {
 		return false
 	}
-	current, err := os.ReadFile(filepath.Join(project.Root, filepath.FromSlash(RuntimePath)))
+	current, err := os.ReadFile(filepath.Join(project.Root, filepath.FromSlash(projectconfig.RuntimePath)))
 	if err != nil {
 		return false
 	}

@@ -17,7 +17,7 @@ Tests in `src/internal/tooling/architecture` fail when a Go package is missing f
 | `core` | Structural compiler, snapshots and project-model views. No providers, Git processes or writes. | `core`, `host`, `module` | 5 |
 | `infrastructure` | Git and working-tree access: fixed snapshots and guarded writes. | `infrastructure`, `host` | 2 |
 | `application` | Current product use cases and their command and MCP surfaces. | `host` | 13 |
-| `runtime` | Runs Manager, review and verify roles in owned workspaces. | `host` | 6 |
+| `runtime` | Runs Manager, review and verify roles in owned workspaces. | `host` | 8 |
 | `legacy` | The published v0.13 Project/Domain surfaces. DEC-014 allows removing them. | `host`, `module` | 0 |
 | `module` | Independent capability packages that import only Core. | `module` | 2 |
 | `cli` | Thin entrypoints that delegate to Host. | `cli` | 5 |
@@ -69,6 +69,8 @@ Tests in `src/internal/tooling/architecture` fail when a Go package is missing f
 | `src/internal/host/agentexec` | Provider-neutral subprocess boundary for one role invocation and its receipt. | [src/internal/host/agentexec/README.md](../../src/internal/host/agentexec/README.md) |
 | `src/internal/host/codexappserver` | Transport to the native Codex App Server for Manager, review and verify roles. | [docs/provider-adapters.md](../provider-adapters.md#inner-role-execution-and-workspace-boundary) |
 | `src/internal/host/exchangecli` | Reference bring-your-own executor that hands each role invocation to an external party through request and response files. | [docs/provider-adapters.md](../provider-adapters.md#bring-your-own-executor) |
+| `src/internal/host/projectconfig` | Loads and validates the explicit runtime configuration and finite role policies. | [docs/project-operations.md](../project-operations.md#cli-setup-and-current-roots) |
+| `src/internal/host/projectexecutor` | Executes process and native role transports with private protocol evidence and injected helper policy. | [docs/provider-adapters.md](../provider-adapters.md#inner-role-execution-and-workspace-boundary) |
 | `src/internal/host/projectrun` | Runs, resumes, verifies and applies bounded Manager work over fixed snapshots. | [docs/project-workflow.md](../project-workflow.md#execute-verify-and-apply) |
 | `src/internal/host/projectsetup` | Builds the project-local agent runtime proposal for `project setup`. | [docs/project-operations.md](../project-operations.md#cli-setup-and-current-roots) |
 | `src/internal/host/projectworkspace` | Owned candidate workspaces for bounded runs. | [docs/project-operations.md](../project-operations.md#candidate-workspaces-and-recovery) |

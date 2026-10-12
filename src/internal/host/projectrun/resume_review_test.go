@@ -4,6 +4,8 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"github.com/Glacius-Labs/Markitect/src/internal/host/projectconfig"
+	"github.com/Glacius-Labs/Markitect/src/internal/host/projectexecutor"
 	"os"
 	"path/filepath"
 	"strings"
@@ -32,13 +34,13 @@ func (i *resumeReviewInvoker) Run(_ context.Context, _ agentexec.Config, request
 	return agentexec.RunResult{}, errors.New("fixture has no provider")
 }
 func (i *resumeReviewInvoker) Fingerprint(config agentexec.Config) (string, error) {
-	return NewTransportInvoker(codexappserver.Options{}).Fingerprint(config)
+	return projectexecutor.New(codexappserver.Options{}, NativeHelperPolicy{}).Fingerprint(config)
 }
 
 func TestPendingNativeReviewRequiresExactJournalWithoutReservingOrRunning(t *testing.T) {
 	root := makeProjectRunFixture(t)
 	configureWorkspaceBridgeInstructions(t, root)
-	updateE2ERuntime(t, root, func(runtime *Runtime) {
+	updateE2ERuntime(t, root, func(runtime *projectconfig.Runtime) {
 		base := runtime.Agents[e2eManagerID("", "project-owner")]
 		native := workspaceBridgeAgent(t, root)
 		native.Command = base.Command
@@ -48,12 +50,12 @@ func TestPendingNativeReviewRequiresExactJournalWithoutReservingOrRunning(t *tes
 		native.MaxStdoutBytes = base.MaxStdoutBytes
 		native.MaxStderrBytes = base.MaxStderrBytes
 		native.Pricing = base.Pricing
-		native.AppServer = &AppServerSettings{ReasoningEffort: "medium", MaxEventBytes: 1 << 20}
-		reviewers := map[string]Agent{}
+		native.AppServer = &projectconfig.AppServerSettings{ReasoningEffort: "medium", MaxEventBytes: 1 << 20}
+		reviewers := map[string]projectconfig.Agent{}
 		for _, id := range []string{e2eManagerID("", "project-owner"), e2eManagerID("orders", "orders"), e2eManagerID("inventory", "inventory")} {
 			reviewers[id] = native
 		}
-		runtime.Review = &ReviewConfig{Agents: reviewers, MaxRounds: 2, MaxManagerRounds: 2}
+		runtime.Review = &projectconfig.ReviewConfig{Agents: reviewers, MaxRounds: 2, MaxManagerRounds: 2}
 	})
 	host := projectworkHost()
 	workspaceService, err := projectworkspace.NewGitService(t.TempDir(), projectworkspace.Limits{MaxFiles: 128, MaxFileBytes: 1 << 20, MaxTotalBytes: 4 << 20})
@@ -67,7 +69,7 @@ func TestPendingNativeReviewRequiresExactJournalWithoutReservingOrRunning(t *tes
 	if err != nil {
 		t.Fatal(err)
 	}
-	runtime, err := LoadRuntime(root)
+	runtime, err := projectconfig.LoadRuntime(root)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -182,7 +184,7 @@ func seedReviewRework(t *testing.T) reviewReworkFixture {
 	}
 	reviewed := storeReviewFixtureCandidate(t, store, dir, []string{initial.ID}, map[string]string{"src/orders/implementation.txt": reviewedOrdersBytes})
 	rootID, ordersID, inventoryID := e2eManagerID("", "project-owner"), e2eManagerID("orders", "orders"), e2eManagerID("inventory", "inventory")
-	report := RunReport{APIVersion: APIVersion, ID: plan.ID, PlanID: plan.ID, Operation: plan.Operation, Status: StatusInterrupted, Mode: ModeControlledLocal,
+	report := RunReport{APIVersion: APIVersion, ID: plan.ID, PlanID: plan.ID, Operation: plan.Operation, Status: StatusInterrupted, Mode: projectconfig.ModeControlledLocal,
 		StartedAt: time.Now().UTC(), UpdatedAt: time.Now().UTC(), BaseRevision: plan.BaseRevision, BaseSnapshot: plan.BaseSnapshot,
 		ModelDigest: plan.ModelDigest, RuntimeDigest: plan.RuntimeDigest, Tasks: cloneTasks(plan.Managers),
 		Candidate: CandidateRef{ID: reviewed.ID, Snapshot: reviewed.Digest, Files: map[string]string{}}, Revision: 1}
@@ -306,11 +308,11 @@ func (i *nativeFinalReviewInvoker) Run(ctx context.Context, config agentexec.Con
 	if err != nil {
 		return agentexec.RunResult{}, err
 	}
-	journal, err := newNativeJournal(options.PrivateLogDirectory, options.Workspace.CWD, options.Workspace.ID)
+	journal, err := projectexecutor.OpenNativeJournal(options.PrivateLogDirectory, options.Workspace.CWD, options.Workspace.ID)
 	if err != nil {
 		return agentexec.RunResult{}, err
 	}
-	journalOptions := journal.wrapOptions(codexappserver.Options{})
+	journalOptions := journal.WrapOptions(codexappserver.Options{})
 	if err := journalOptions.BeforeStart(ctx, agentexec.RoleStartRequest{RequestID: invocation.RunID, Role: agentexec.RoleExecutor}); err != nil {
 		return agentexec.RunResult{}, err
 	}
@@ -323,7 +325,7 @@ func (i *nativeFinalReviewInvoker) Run(ctx context.Context, config agentexec.Con
 }
 
 func (*nativeFinalReviewInvoker) Fingerprint(config agentexec.Config) (string, error) {
-	return NewTransportInvoker(codexappserver.Options{}).Fingerprint(config)
+	return projectexecutor.New(codexappserver.Options{}, NativeHelperPolicy{}).Fingerprint(config)
 }
 
 func (i *nativeFinalReviewInvoker) Recover(_ context.Context, config agentexec.Config, handle codexappserver.RecoveryHandle, _ agentexec.RunOptions) (agentexec.RunResult, error) {
@@ -363,7 +365,7 @@ func (nativeNoEditManager) Run(_ context.Context, config agentexec.Config, reque
 }
 
 func (nativeNoEditManager) Fingerprint(config agentexec.Config) (string, error) {
-	return NewTransportInvoker(codexappserver.Options{}).Fingerprint(config)
+	return projectexecutor.New(codexappserver.Options{}, NativeHelperPolicy{}).Fingerprint(config)
 }
 
 // nativeTurnResult is a completed native turn reporting report, bound to its
@@ -373,13 +375,13 @@ func nativeTurnResult(config agentexec.Config, invocation agentexec.Invocation, 
 	if err != nil {
 		return agentexec.RunResult{}, err
 	}
-	fingerprint, err := NewTransportInvoker(codexappserver.Options{}).Fingerprint(config)
+	fingerprint, err := projectexecutor.New(codexappserver.Options{}, NativeHelperPolicy{}).Fingerprint(config)
 	if err != nil {
 		return agentexec.RunResult{}, err
 	}
 	tokens := int64(1)
 	usage := &agentexec.Usage{Source: "provider-reported", InputTokens: &tokens, OutputTokens: &tokens}
-	lifecycle := &agentexec.Lifecycle{Provider: TransportCodexAppServer, SessionID: sessionID, TurnID: turnID, State: "completed", Accounting: "partial",
+	lifecycle := &agentexec.Lifecycle{Provider: projectconfig.TransportCodexAppServer, SessionID: sessionID, TurnID: turnID, State: "completed", Accounting: "partial",
 		StartRequests: []agentexec.RoleStartRequest{{RequestID: invocation.RunID, Role: agentexec.RoleExecutor, State: "completed"}}}
 	return agentexec.RunResult{
 		Response: agentexec.Response{APIVersion: agentexec.APIVersion, RunID: invocation.RunID, Nonce: invocation.Nonce, Role: agentexec.RoleExecutor,
@@ -418,13 +420,13 @@ func resumePendingReview(t *testing.T, seed pendingReviewSeed) resumedReview {
 	root := makeProjectRunFixture(t)
 	configureWorkspaceBridgeInstructions(t, root)
 	rootID, ordersID, inventoryID := e2eManagerID("", "project-owner"), e2eManagerID("orders", "orders"), e2eManagerID("inventory", "inventory")
-	updateE2ERuntime(t, root, func(runtime *Runtime) {
+	updateE2ERuntime(t, root, func(runtime *projectconfig.Runtime) {
 		base := runtime.Agents[rootID]
 		native := workspaceBridgeAgent(t, root)
 		native.Command, native.Model, native.ProviderVersion, native.Timeout = base.Command, base.Model, codexappserver.SupportedProviderVersion, base.Timeout
 		native.MaxStdoutBytes, native.MaxStderrBytes, native.Pricing = base.MaxStdoutBytes, base.MaxStderrBytes, base.Pricing
-		native.AppServer = &AppServerSettings{ReasoningEffort: "medium", MaxEventBytes: 1 << 20}
-		runtime.Review = &ReviewConfig{Agents: map[string]Agent{rootID: native, ordersID: native, inventoryID: native}, MaxRounds: 3, MaxManagerRounds: 2}
+		native.AppServer = &projectconfig.AppServerSettings{ReasoningEffort: "medium", MaxEventBytes: 1 << 20}
+		runtime.Review = &projectconfig.ReviewConfig{Agents: map[string]projectconfig.Agent{rootID: native, ordersID: native, inventoryID: native}, MaxRounds: 3, MaxManagerRounds: 2}
 		runtime.Limits.MaxStarts = 32
 		if seed.runManagers {
 			runtime.Agents[rootID] = native
@@ -441,7 +443,7 @@ func resumePendingReview(t *testing.T, seed pendingReviewSeed) resumedReview {
 	if err != nil {
 		t.Fatal(err)
 	}
-	runtime, err := LoadRuntime(root)
+	runtime, err := projectconfig.LoadRuntime(root)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -462,7 +464,7 @@ func resumePendingReview(t *testing.T, seed pendingReviewSeed) resumedReview {
 	integrated := storeReviewFixtureCandidate(t, store, dir, []string{orders.ID, inventory.ID}, map[string]string{
 		"src/orders/implementation.txt": "orders implementation v2 as integrated\n", "src/inventory/implementation.txt": "inventory implementation v2\n",
 		"src/project-integration.txt": "BAD parent integration\n"})
-	report := RunReport{APIVersion: APIVersion, ID: plan.ID, PlanID: plan.ID, Operation: plan.Operation, Status: StatusInterrupted, Mode: ModeControlledLocal,
+	report := RunReport{APIVersion: APIVersion, ID: plan.ID, PlanID: plan.ID, Operation: plan.Operation, Status: StatusInterrupted, Mode: projectconfig.ModeControlledLocal,
 		StartedAt: time.Now().UTC(), UpdatedAt: time.Now().UTC(), BaseRevision: plan.BaseRevision, BaseSnapshot: plan.BaseSnapshot,
 		ModelDigest: plan.ModelDigest, RuntimeDigest: plan.RuntimeDigest, Tasks: cloneTasks(plan.Managers), Candidate: candidateRef(integrated, false), Revision: 1}
 	rootTask, ordersTask, inventoryTask := findTask(report.Tasks, rootID), findTask(report.Tasks, ordersID), findTask(report.Tasks, inventoryID)

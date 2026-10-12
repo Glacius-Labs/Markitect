@@ -4,6 +4,7 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
+	"github.com/Glacius-Labs/Markitect/src/internal/host/projectconfig"
 	"os"
 	"path/filepath"
 	"sort"
@@ -17,7 +18,6 @@ import (
 
 const (
 	nativeWorkspaceAPIVersion = "markitect.example.org/native-workspace/v1"
-	maxNativeInstructionFiles = 128
 	maxNativeInstructionBytes = 4 << 20
 )
 
@@ -30,7 +30,7 @@ type nativeWorkspaceContext struct {
 // instructions for one native Manager invocation to the fixed accepted
 // revision and the current working tree. It does not materialize a workspace;
 // the provider adapter receives these exact artifacts and owns materialization.
-func buildNativeWorkspace(root, revision string, project *Project, agent Agent) (*nativeWorkspaceContext, error) {
+func buildNativeWorkspace(root, revision string, project *Project, agent projectconfig.Agent) (*nativeWorkspaceContext, error) {
 	if agent.WorkspaceMode == "" {
 		return nil, nil
 	}
@@ -50,8 +50,8 @@ func buildNativeWorkspace(root, revision string, project *Project, agent Agent) 
 	if len(paths) == 0 {
 		return nil, fmt.Errorf("scoped native workspace requires explicit instructionPaths")
 	}
-	if len(paths) > maxNativeInstructionFiles {
-		return nil, fmt.Errorf("native workspace instruction count exceeds %d", maxNativeInstructionFiles)
+	if len(paths) > projectconfig.MaxInstructionFiles {
+		return nil, fmt.Errorf("native workspace instruction count exceeds %d", projectconfig.MaxInstructionFiles)
 	}
 
 	root, err = filepath.Abs(root)
@@ -129,7 +129,7 @@ func normalizeNativeInstructionPaths(paths []string, config projectwork.Config) 
 		return nil, nil
 	}
 	copyPaths := append([]string(nil), paths...)
-	if err := validatePortablePaths(copyPaths); err != nil {
+	if err := projectconfig.ValidateInstructionPaths(copyPaths); err != nil {
 		return nil, fmt.Errorf("native instruction paths: %w", err)
 	}
 	seen := make(map[string]string, len(copyPaths))

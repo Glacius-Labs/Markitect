@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"github.com/Glacius-Labs/Markitect/src/internal/host/projectconfig"
 	"os"
 	"path/filepath"
 	"strings"
@@ -135,10 +136,10 @@ func TestInvokeProjectAgentUsesPrivateCandidateWithSourceWIPAndHarvestsByteDelta
 		}
 		return agentexec.RunResult{Receipt: terminalWorkspaceReceipt("workspace-run")}, providerErr
 	}}
-	limits := Limits{MaxCandidateFileBytes: 1 << 20, MaxCandidateBytes: 4 << 20}
+	limits := projectconfig.Limits{MaxCandidateFileBytes: 1 << 20, MaxCandidateBytes: 4 << 20}
 	result, runErr := invokeProjectAgent(context.Background(), host, invoker, root, &candidate,
 		workspaceBridgeAgent(t, root), "workspace-owner-run", "orders-work", []string{"src/orders"}, nil, limits,
-		agentexec.Config{Transport: TransportCodexAppServer}, agentexec.Request{Role: agentexec.RoleExecutor})
+		agentexec.Config{Transport: projectconfig.TransportCodexAppServer}, agentexec.Request{Role: agentexec.RoleExecutor})
 	if !errors.Is(runErr, providerErr) {
 		t.Fatalf("original invocation error was not retained: %v", runErr)
 	}
@@ -175,14 +176,14 @@ func TestInvokeProjectAgentPreservesUnknownRootOrChildLifecycle(t *testing.T) {
 		lifecycle *agentexec.Lifecycle
 	}{
 		{name: "missing lifecycle"},
-		{name: "unknown child", lifecycle: &agentexec.Lifecycle{Provider: TransportCodexAppServer, SessionID: "session", TurnID: "turn", State: "completed", StartRequests: []agentexec.RoleStartRequest{{RequestID: "root", SessionID: "session", Role: "root", State: "completed"}, {RequestID: "child", ParentSessionID: "session", SessionID: "child-session", Role: "worker", State: "unknown"}}}},
+		{name: "unknown child", lifecycle: &agentexec.Lifecycle{Provider: projectconfig.TransportCodexAppServer, SessionID: "session", TurnID: "turn", State: "completed", StartRequests: []agentexec.RoleStartRequest{{RequestID: "root", SessionID: "session", Role: "root", State: "completed"}, {RequestID: "child", ParentSessionID: "session", SessionID: "child-session", Role: "worker", State: "unknown"}}}},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			root, project, service := workspaceBridgeBase(t)
 			invoker := &workspaceBridgeInvoker{result: agentexec.RunResult{Receipt: agentexec.Receipt{RunID: "unknown-run", Lifecycle: tc.lifecycle}}}
 			result, err := invokeProjectAgent(context.Background(), Host{Workspaces: service, Load: projectwork.Load}, invoker, root, project,
 				workspaceBridgeAgent(t, root), "workspace-owner-run", "orders-work", []string{"src/orders"}, nil,
-				Limits{MaxCandidateFileBytes: 1 << 20, MaxCandidateBytes: 4 << 20}, agentexec.Config{}, agentexec.Request{Role: agentexec.RoleExecutor})
+				projectconfig.Limits{MaxCandidateFileBytes: 1 << 20, MaxCandidateBytes: 4 << 20}, agentexec.Config{}, agentexec.Request{Role: agentexec.RoleExecutor})
 			if err == nil || !strings.Contains(err.Error(), "termination is unknown") {
 				t.Fatalf("unknown lifecycle was not reported: %v", err)
 			}
@@ -205,8 +206,8 @@ func TestInvokeProjectAgentRejectsReadOnlyNativeBindingBeforeInvocation(t *testi
 	root, project, service := workspaceBridgeBase(t)
 	invoker := &workspaceBridgeInvoker{}
 	_, err := invokeProjectAgent(context.Background(), Host{Workspaces: service, Load: projectwork.Load}, invoker, root, project,
-		Agent{Transport: TransportCodexAppServer, WorkspaceMode: ""}, "workspace-owner-run", "orders-review", []string{"src/orders"}, nil,
-		Limits{MaxCandidateFileBytes: 1 << 20, MaxCandidateBytes: 4 << 20}, agentexec.Config{}, agentexec.Request{Role: agentexec.RoleExecutor})
+		projectconfig.Agent{Transport: projectconfig.TransportCodexAppServer, WorkspaceMode: ""}, "workspace-owner-run", "orders-review", []string{"src/orders"}, nil,
+		projectconfig.Limits{MaxCandidateFileBytes: 1 << 20, MaxCandidateBytes: 4 << 20}, agentexec.Config{}, agentexec.Request{Role: agentexec.RoleExecutor})
 	if err == nil || invoker.called {
 		t.Fatalf("native read-only binding was allowed into a writable Git workspace: called=%t err=%v", invoker.called, err)
 	}
@@ -226,7 +227,7 @@ func TestInvokeProjectAgentRejectsForgedHarvestDigestOrBinding(t *testing.T) {
 			invoker := &workspaceBridgeInvoker{result: agentexec.RunResult{Receipt: terminalWorkspaceReceipt("forged-run")}}
 			result, err := invokeProjectAgent(context.Background(), Host{Workspaces: service, Load: projectwork.Load}, invoker, root, project,
 				workspaceBridgeAgent(t, root), "workspace-owner-run", "orders-work", []string{"src/orders"}, nil,
-				Limits{MaxCandidateFileBytes: 1 << 20, MaxCandidateBytes: 4 << 20}, agentexec.Config{}, agentexec.Request{Role: agentexec.RoleExecutor})
+				projectconfig.Limits{MaxCandidateFileBytes: 1 << 20, MaxCandidateBytes: 4 << 20}, agentexec.Config{}, agentexec.Request{Role: agentexec.RoleExecutor})
 			if err == nil || result.Delta != nil || result.Receipt.RunID != "forged-run" {
 				t.Fatalf("forged harvested delta was accepted or receipt lost: result=%+v err=%v", result, err)
 			}
@@ -277,7 +278,7 @@ func configureWorkspaceBridgeInstructions(t *testing.T, root string) {
 	gitE2E(t, root, "commit", "--quiet", "-m", "add pinned native instruction fixture")
 }
 
-func workspaceBridgeAgent(t *testing.T, root string) Agent {
+func workspaceBridgeAgent(t *testing.T, root string) projectconfig.Agent {
 	t.Helper()
 	path, err := filepath.Abs(filepath.Join(root, "docs", "agent-instructions.md"))
 	if err != nil {
@@ -287,13 +288,13 @@ func workspaceBridgeAgent(t *testing.T, root string) Agent {
 	if err != nil {
 		t.Fatal(err)
 	}
-	return Agent{Transport: TransportCodexAppServer, WorkspaceMode: "git", InstructionPaths: []string{"docs/agent-instructions.md"},
+	return projectconfig.Agent{Transport: projectconfig.TransportCodexAppServer, WorkspaceMode: "git", InstructionPaths: []string{"docs/agent-instructions.md"},
 		RuntimeFiles: []agentexec.RuntimeFile{{Path: path, Mode: "0644", Digest: "sha256:" + digestBytes(content)}}}
 }
 
 func terminalWorkspaceReceipt(id string) agentexec.Receipt {
 	return agentexec.Receipt{RunID: id, ConfigDigest: "fixture", Lifecycle: &agentexec.Lifecycle{
-		Provider: TransportCodexAppServer, SessionID: "session-" + id, TurnID: "turn-" + id, State: "completed",
+		Provider: projectconfig.TransportCodexAppServer, SessionID: "session-" + id, TurnID: "turn-" + id, State: "completed",
 		Accounting: "complete", StartRequests: []agentexec.RoleStartRequest{{RequestID: "root-" + id, Role: "root", State: "completed"}},
 	}}
 }

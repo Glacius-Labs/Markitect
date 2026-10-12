@@ -3,6 +3,7 @@ package projectrun
 import (
 	"context"
 	"errors"
+	"github.com/Glacius-Labs/Markitect/src/internal/host/projectconfig"
 
 	"github.com/Glacius-Labs/Markitect/src/internal/host/agentexec"
 )
@@ -121,12 +122,12 @@ func withNativeResume(ctx context.Context) context.Context {
 	return context.WithValue(ctx, nativeResumeContextKey{}, true)
 }
 
-func recoverInvocationOnResume(ctx context.Context, host Host, invoker Invoker, root, taskID string, config agentexec.Config, limits Limits, request agentexec.Request, binding nativeRecoveryBinding) (agentexec.RunResult, bool, error) {
+func recoverInvocationOnResume(ctx context.Context, host Host, invoker Invoker, root, taskID string, config agentexec.Config, limits projectconfig.Limits, request agentexec.Request, binding nativeRecoveryBinding) (agentexec.RunResult, bool, error) {
 	if externalExecutionEnabled(ctx) && binding.OwnerRunID != "" {
 		return externalInvocation(ctx, root, binding.OwnerRunID, taskID, config, request)
 	}
 	enabled, _ := ctx.Value(nativeResumeContextKey{}).(bool)
-	if !enabled || config.Transport != TransportCodexAppServer {
+	if !enabled || config.Transport != projectconfig.TransportCodexAppServer {
 		return agentexec.RunResult{}, false, nil
 	}
 	required, _ := ctx.Value(nativeRecoveryRequiredKey{}).(bool)

@@ -5,6 +5,8 @@ package projectrun
 import (
 	"context"
 	"errors"
+	"github.com/Glacius-Labs/Markitect/src/internal/host/projectconfig"
+	"github.com/Glacius-Labs/Markitect/src/internal/host/projectexecutor"
 	"os"
 	"path/filepath"
 	"reflect"
@@ -15,12 +17,12 @@ import (
 func TestProjectRunRepairFailedRequiredCheckThenFreshVerifyAndApply(t *testing.T) {
 	t.Parallel()
 	root := makeProjectRunFixture(t)
-	updateE2ERuntime(t, root, func(runtime *Runtime) {
+	updateE2ERuntime(t, root, func(runtime *projectconfig.Runtime) {
 		runtime.Limits.MaxRetries = 1
 		runtime.Limits.MaxStarts = 11 // 4 initial calls + failed check + 4 repair calls + 2 fresh checks.
 		runtime.Limits.MaxCostMicros = 450
 		for id, agent := range runtime.Agents {
-			agent.Pricing = Pricing{InputMicrosPerMillion: 1_000_000, OutputMicrosPerMillion: 1_000_000}
+			agent.Pricing = projectconfig.Pricing{InputMicrosPerMillion: 1_000_000, OutputMicrosPerMillion: 1_000_000}
 			runtime.Agents[id] = agent
 		}
 	})
@@ -31,14 +33,14 @@ func TestProjectRunRepairFailedRequiredCheckThenFreshVerifyAndApply(t *testing.T
 	if err != nil {
 		t.Fatalf("Plan: %v", err)
 	}
-	initial, err := Run(context.Background(), host, ProcessInvoker{}, root, plan.ID)
+	initial, err := Run(context.Background(), host, projectexecutor.ProcessInvoker{}, root, plan.ID)
 	if err != nil || initial.Status != StatusIntegrated {
 		t.Fatalf("initial manager run did not integrate: status=%s err=%v", initial.Status, err)
 	}
 	failedCandidate := initial.Candidate.ID
 	failedStart := initial.StartedAt
 	initialCalls := len(initial.Invocations)
-	failedVerify, verifyErr := Verify(context.Background(), host, ProcessInvoker{}, root, plan.ID)
+	failedVerify, verifyErr := Verify(context.Background(), host, projectexecutor.ProcessInvoker{}, root, plan.ID)
 	if verifyErr == nil || failedVerify.Status != "failed" || failedVerify.CandidateID != failedCandidate || len(failedVerify.Checks) != 1 || failedVerify.Checks[0].ExitCode == 0 {
 		t.Fatalf("fixture did not produce a known required-check failure: report=%+v err=%v", failedVerify, verifyErr)
 	}
@@ -54,7 +56,7 @@ func TestProjectRunRepairFailedRequiredCheckThenFreshVerifyAndApply(t *testing.T
 		t.Fatalf("failed check attempt was not durably retained: status=%s checks=%+v", failedRun.Status, failedRun.Checks)
 	}
 
-	repaired, err := Repair(context.Background(), host, ProcessInvoker{}, root, plan.ID)
+	repaired, err := Repair(context.Background(), host, projectexecutor.ProcessInvoker{}, root, plan.ID)
 	if err != nil || repaired.Status != StatusIntegrated {
 		t.Fatalf("Repair did not complete the bounded manager loop: status=%s err=%v", repaired.Status, err)
 	}
@@ -97,7 +99,7 @@ func TestProjectRunRepairFailedRequiredCheckThenFreshVerifyAndApply(t *testing.T
 		t.Fatalf("failed verification history was not retained: report=%+v err=%v", oldVerification, err)
 	}
 
-	newVerify, err := Verify(context.Background(), host, ProcessInvoker{}, root, plan.ID)
+	newVerify, err := Verify(context.Background(), host, projectexecutor.ProcessInvoker{}, root, plan.ID)
 	if err != nil || newVerify.Status != "verified" || newVerify.CandidateID != repaired.Candidate.ID {
 		t.Fatalf("repaired candidate did not require and pass a fresh verification: report=%+v err=%v", newVerify, err)
 	}
@@ -107,10 +109,10 @@ func TestProjectRunRepairFailedRequiredCheckThenFreshVerifyAndApply(t *testing.T
 	}
 	oldCandidateRequest := applyRequestFromPreflight(preflight)
 	oldCandidateRequest.CandidateID = failedCandidate
-	if _, err := Apply(host, ProcessInvoker{}, root, oldCandidateRequest); err == nil || !strings.Contains(err.Error(), "not the integrated candidate") {
+	if _, err := Apply(host, projectexecutor.ProcessInvoker{}, root, oldCandidateRequest); err == nil || !strings.Contains(err.Error(), "not the integrated candidate") {
 		t.Fatalf("old failed candidate remained applicable: %v", err)
 	}
-	apply, err := Apply(host, ProcessInvoker{}, root, applyRequestFromPreflight(preflight))
+	apply, err := Apply(host, projectexecutor.ProcessInvoker{}, root, applyRequestFromPreflight(preflight))
 	if err != nil || apply.Status != "applied" {
 		t.Fatalf("freshly verified repaired candidate did not apply: report=%+v err=%v", apply, err)
 	}
@@ -145,7 +147,7 @@ func TestProjectRunRepairRejectsNonCheckFailuresAndSpentRounds(t *testing.T) {
 			root := makeProjectRunFixture(t)
 			setupE2EProcess(t, "")
 			if scenario.maxRetries != 0 {
-				updateE2ERuntime(t, root, func(runtime *Runtime) { runtime.Limits.MaxRetries = scenario.maxRetries })
+				updateE2ERuntime(t, root, func(runtime *projectconfig.Runtime) { runtime.Limits.MaxRetries = scenario.maxRetries })
 			}
 			plan, err := Plan(projectworkHost(), root, identityHead(t, root), PlanRequest{Goal: "Test bounded repair eligibility.",
 				Managers: []string{e2eManagerID("orders", "orders")}, ExecuteAuthorized: true})
@@ -153,7 +155,7 @@ func TestProjectRunRepairRejectsNonCheckFailuresAndSpentRounds(t *testing.T) {
 				t.Fatal(err)
 			}
 			makeSyntheticFailedCheckRun(t, root, plan, scenario.checkExit, scenario.verifier, scenario.runStatus, scenario.priorCost, scenario.priorStarts)
-			_, err = Repair(context.Background(), projectworkHost(), ProcessInvoker{}, root, plan.ID)
+			_, err = Repair(context.Background(), projectworkHost(), projectexecutor.ProcessInvoker{}, root, plan.ID)
 			if err == nil || !strings.Contains(err.Error(), scenario.wantError) {
 				t.Fatalf("Repair accepted an ineligible failure: %v", err)
 			}
@@ -173,7 +175,7 @@ func TestProjectRunRepairRejectsStaleRunBeforeManagerInvocation(t *testing.T) {
 	t.Parallel()
 	root := makeProjectRunFixture(t)
 	setupE2EProcess(t, "")
-	updateE2ERuntime(t, root, func(runtime *Runtime) { runtime.Limits.MaxRetries = 1 })
+	updateE2ERuntime(t, root, func(runtime *projectconfig.Runtime) { runtime.Limits.MaxRetries = 1 })
 	plan, err := Plan(projectworkHost(), root, identityHead(t, root), PlanRequest{Goal: "Test stale repair rejection.",
 		Managers: []string{e2eManagerID("orders", "orders")}, ExecuteAuthorized: true})
 	if err != nil {
@@ -181,7 +183,7 @@ func TestProjectRunRepairRejectsStaleRunBeforeManagerInvocation(t *testing.T) {
 	}
 	makeSyntheticFailedCheckRun(t, root, plan, 1, false, "", 0, 0)
 	writeE2E(t, root, "src/orders/implementation.txt", "user changed selected source\n")
-	_, err = Repair(context.Background(), projectworkHost(), ProcessInvoker{}, root, plan.ID)
+	_, err = Repair(context.Background(), projectworkHost(), projectexecutor.ProcessInvoker{}, root, plan.ID)
 	if !errors.Is(err, ErrStale) {
 		t.Fatalf("stale selected source was accepted for repair: %v", err)
 	}
@@ -199,7 +201,7 @@ func TestProjectRunRepairCannotVerifyNewIDForUnchangedFailedSnapshot(t *testing.
 	t.Parallel()
 	root := makeProjectRunFixture(t)
 	setupE2EProcess(t, "repair-check-no-change")
-	updateE2ERuntime(t, root, func(runtime *Runtime) {
+	updateE2ERuntime(t, root, func(runtime *projectconfig.Runtime) {
 		runtime.Limits.MaxRetries = 1
 		runtime.Limits.MaxStarts = 11
 	})
@@ -209,11 +211,11 @@ func TestProjectRunRepairCannotVerifyNewIDForUnchangedFailedSnapshot(t *testing.
 	if err != nil {
 		t.Fatal(err)
 	}
-	initial, err := Run(context.Background(), host, ProcessInvoker{}, root, plan.ID)
+	initial, err := Run(context.Background(), host, projectexecutor.ProcessInvoker{}, root, plan.ID)
 	if err != nil || initial.Status != StatusIntegrated {
 		t.Fatalf("initial run did not integrate: status=%s err=%v", initial.Status, err)
 	}
-	failedVerification, err := Verify(context.Background(), host, ProcessInvoker{}, root, plan.ID)
+	failedVerification, err := Verify(context.Background(), host, projectexecutor.ProcessInvoker{}, root, plan.ID)
 	if err == nil || failedVerification.Status != "failed" {
 		t.Fatalf("fixture did not fail its first required check: report=%+v err=%v", failedVerification, err)
 	}
@@ -237,7 +239,7 @@ func TestProjectRunRepairCannotVerifyNewIDForUnchangedFailedSnapshot(t *testing.
 	if err != nil {
 		t.Fatal(err)
 	}
-	repaired, repairErr := Repair(context.Background(), host, ProcessInvoker{}, root, plan.ID)
+	repaired, repairErr := Repair(context.Background(), host, projectexecutor.ProcessInvoker{}, root, plan.ID)
 	if repairErr == nil || !strings.Contains(repairErr.Error(), "unchanged failed candidate cannot be verified again") || repaired.Status != StatusFailed {
 		t.Fatalf("unchanged candidate was treated as repaired: status=%s err=%v", repaired.Status, repairErr)
 	}
@@ -255,7 +257,7 @@ func TestProjectRunRepairCannotVerifyNewIDForUnchangedFailedSnapshot(t *testing.
 	if oldSnapshot.Digest() != newSnapshot.Digest() {
 		t.Fatalf("no-change fixture changed snapshot bytes unexpectedly: old=%s new=%s", oldSnapshot.Digest(), newSnapshot.Digest())
 	}
-	if _, err := Verify(context.Background(), host, ProcessInvoker{}, root, plan.ID); err == nil || !strings.Contains(err.Error(), "no exact pending native verifier to recover") {
+	if _, err := Verify(context.Background(), host, projectexecutor.ProcessInvoker{}, root, plan.ID); err == nil || !strings.Contains(err.Error(), "no exact pending native verifier to recover") {
 		t.Fatalf("new candidate ID bypassed failed verification state: %v", err)
 	}
 	if _, err := latestVerification(dir, repaired.Candidate.ID); err == nil {

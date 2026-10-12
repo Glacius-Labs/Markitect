@@ -1,6 +1,7 @@
 package projectrun
 
 import (
+	"github.com/Glacius-Labs/Markitect/src/internal/host/projectconfig"
 	"reflect"
 	"testing"
 
@@ -35,7 +36,7 @@ func TestCleanupAndReconcilePlanEveryManagerAndCheck(t *testing.T) {
 	}
 	for _, operation := range []string{OperationCleanup, OperationReconcile} {
 		t.Run(operation, func(t *testing.T) {
-			tasks, selected, _, err := planManagers(report, map[string][]byte{}, PlanRequest{Operation: operation, Goal: "bounded operation"}, nil, nil, Limits{MaxDepth: 4})
+			tasks, selected, _, err := planManagers(report, map[string][]byte{}, PlanRequest{Operation: operation, Goal: "bounded operation"}, nil, nil, projectconfig.Limits{MaxDepth: 4})
 			if err != nil {
 				t.Fatalf("plan managers: %v", err)
 			}
@@ -69,7 +70,7 @@ func TestCleanupAndReconcileRejectNarrowingInputs(t *testing.T) {
 		}
 		for _, tc := range cases {
 			t.Run(operation+"/"+tc.name, func(t *testing.T) {
-				_, _, _, err := planManagers(projectmodel.Report{Managers: []projectmodel.Manager{{ID: "root"}}}, nil, tc.request, nil, tc.impact, Limits{MaxDepth: 4})
+				_, _, _, err := planManagers(projectmodel.Report{Managers: []projectmodel.Manager{{ID: "root"}}}, nil, tc.request, nil, tc.impact, projectconfig.Limits{MaxDepth: 4})
 				if err == nil {
 					t.Fatal("narrowing input was accepted")
 				}
@@ -79,7 +80,7 @@ func TestCleanupAndReconcileRejectNarrowingInputs(t *testing.T) {
 }
 
 func TestPlanDigestBindsOperation(t *testing.T) {
-	plan := PlanRecord{APIVersion: APIVersion, ID: "operation-digest", Operation: OperationApply, Strictness: map[string]StrictnessProfile{}}
+	plan := PlanRecord{APIVersion: APIVersion, ID: "operation-digest", Operation: OperationApply, Strictness: map[string]projectconfig.StrictnessProfile{}}
 	apply, err := planDigest(plan)
 	if err != nil {
 		t.Fatal(err)
@@ -92,7 +93,7 @@ func TestPlanDigestBindsOperation(t *testing.T) {
 	if apply == cleanup {
 		t.Fatal("plan digest did not change when operation changed")
 	}
-	plan.Strictness["orders"] = StrictnessProfile{Evidence: []string{"transaction boundary"}, Counterexamples: 1}
+	plan.Strictness["orders"] = projectconfig.StrictnessProfile{Evidence: []string{"transaction boundary"}, Counterexamples: 1}
 	strict, err := planDigest(plan)
 	if err != nil {
 		t.Fatal(err)
@@ -111,35 +112,35 @@ func TestPlanDigestBindsOperation(t *testing.T) {
 }
 
 func TestResolveStrictnessAddsManagerRequirementsWithoutWeakeningDefault(t *testing.T) {
-	runtime := Runtime{Strictness: &StrictnessConfig{
-		Default:  StrictnessProfile{Evidence: []string{"test results", "public contract review"}, Counterexamples: 2},
-		Managers: map[string]StrictnessProfile{"orders": {Evidence: []string{"test results", "transaction boundary"}, Counterexamples: 1}},
+	runtime := projectconfig.Runtime{Strictness: &projectconfig.StrictnessConfig{
+		Default:  projectconfig.StrictnessProfile{Evidence: []string{"test results", "public contract review"}, Counterexamples: 2},
+		Managers: map[string]projectconfig.StrictnessProfile{"orders": {Evidence: []string{"test results", "transaction boundary"}, Counterexamples: 1}},
 	}}
-	got, err := ResolveStrictness(runtime, "orders")
+	got, err := projectconfig.ResolveStrictness(runtime, "orders")
 	if err != nil {
 		t.Fatal(err)
 	}
-	want := StrictnessProfile{Evidence: []string{"public contract review", "test results", "transaction boundary"}, Counterexamples: 3}
+	want := projectconfig.StrictnessProfile{Evidence: []string{"public contract review", "test results", "transaction boundary"}, Counterexamples: 3}
 	if !reflect.DeepEqual(got, want) {
 		t.Fatalf("resolved strictness = %+v, want %+v", got, want)
 	}
-	other, err := ResolveStrictness(runtime, "inventory")
+	other, err := projectconfig.ResolveStrictness(runtime, "inventory")
 	if err != nil {
 		t.Fatal(err)
 	}
-	if !reflect.DeepEqual(other, StrictnessProfile{Evidence: []string{"public contract review", "test results"}, Counterexamples: 2}) {
+	if !reflect.DeepEqual(other, projectconfig.StrictnessProfile{Evidence: []string{"public contract review", "test results"}, Counterexamples: 2}) {
 		t.Fatalf("unconfigured Manager weakened the project default: %+v", other)
 	}
 }
 
 func TestValidateStrictnessRejectsLocalWeakeningAndMalformedProfiles(t *testing.T) {
-	for name, config := range map[string]*StrictnessConfig{
-		"negative counterexamples": {Default: StrictnessProfile{Counterexamples: -1}},
-		"blank evidence":           {Managers: map[string]StrictnessProfile{"orders": {Evidence: []string{" "}}}},
-		"blank Manager":            {Managers: map[string]StrictnessProfile{" ": {Evidence: []string{"evidence"}}}},
+	for name, config := range map[string]*projectconfig.StrictnessConfig{
+		"negative counterexamples": {Default: projectconfig.StrictnessProfile{Counterexamples: -1}},
+		"blank evidence":           {Managers: map[string]projectconfig.StrictnessProfile{"orders": {Evidence: []string{" "}}}},
+		"blank Manager":            {Managers: map[string]projectconfig.StrictnessProfile{" ": {Evidence: []string{"evidence"}}}},
 	} {
 		t.Run(name, func(t *testing.T) {
-			if err := ValidateStrictness(config); err == nil {
+			if err := projectconfig.ValidateStrictness(config); err == nil {
 				t.Fatal("invalid strictness config was accepted")
 			}
 		})

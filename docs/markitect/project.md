@@ -2,7 +2,7 @@
 
 # markitect
 
-Model digest: sha256:5e44b10b68adc6668948f83b710b25a284ee54fb0693f1528e431f7ee2106918
+Model digest: sha256:3f428d75ad89ce8754294aefcb911c7fb108d73465252ec81a33562f0f615851
 
 Report status: succeeded
 
@@ -42,7 +42,7 @@ The structural model compiled from the explicitly selected Definition files. Thi
 - Namespace: product
 - Purpose: Owns the current product: its core, infrastructure, application and runtime packages and their executables.
 - Parent Manager: ["project.markitect.example.org/v1alpha1","Manager","","markitect"]
-- Delegated paths: src/cmd/markitect-exchange-executor/, src/cmd/markitect-release/, src/cmd/markitect/, src/internal/core/, src/internal/host/agentexec/, src/internal/host/buildinfo/, src/internal/host/codexappserver/, src/internal/host/exchangecli/, src/internal/host/guardedwrite/, src/internal/host/mcp/, src/internal/host/projectadoption/, src/internal/host/projectapp/, src/internal/host/projectbriefing/, src/internal/host/projectcli/, src/internal/host/projectcoverage/, src/internal/host/projectexplore/, src/internal/host/projectonboarding/, src/internal/host/projectrun/, src/internal/host/projectsetup/, src/internal/host/projectwork/, src/internal/host/projectworkspace/, src/internal/host/releasecli/, src/internal/host/releaseinstall/, src/internal/infrastructure/, src/internal/modules/projectmodel/
+- Delegated paths: src/cmd/markitect-exchange-executor/, src/cmd/markitect-release/, src/cmd/markitect/, src/internal/core/, src/internal/host/agentexec/, src/internal/host/buildinfo/, src/internal/host/codexappserver/, src/internal/host/exchangecli/, src/internal/host/guardedwrite/, src/internal/host/mcp/, src/internal/host/projectadoption/, src/internal/host/projectapp/, src/internal/host/projectbriefing/, src/internal/host/projectcli/, src/internal/host/projectconfig/, src/internal/host/projectcoverage/, src/internal/host/projectexecutor/, src/internal/host/projectexplore/, src/internal/host/projectonboarding/, src/internal/host/projectrun/, src/internal/host/projectsetup/, src/internal/host/projectwork/, src/internal/host/projectworkspace/, src/internal/host/releasecli/, src/internal/host/releaseinstall/, src/internal/infrastructure/, src/internal/modules/projectmodel/
 - Instructions: Read a package's owning document in the code map before you change the package, and update it when the package's behavior changes.
 
 ### tooling
@@ -301,7 +301,7 @@ Maintainer tooling enforces the import gate and the code map, builds and publish
 - Role: implementation
 - Responsible Manager: ["project.markitect.example.org/v1alpha1","Manager","product","product"]
 - Realizes: ["project.markitect.example.org/v1alpha1","Statement","","canonical-sources"], ["project.markitect.example.org/v1alpha1","Statement","","project-local-policy"], ["project.markitect.example.org/v1alpha1","Statement","product","core-stays-generic"], ["project.markitect.example.org/v1alpha1","Statement","product","distinct-state"], ["project.markitect.example.org/v1alpha1","Statement","product","evidence-not-acceptance"], ["project.markitect.example.org/v1alpha1","Statement","product","explicit-relationships"], ["project.markitect.example.org/v1alpha1","Statement","product","legacy-removal"], ["project.markitect.example.org/v1alpha1","Statement","product","product"]
-- Expected paths: [src/cmd/markitect-exchange-executor/](../../src/cmd/markitect-exchange-executor), [src/internal/host/agentexec/](../../src/internal/host/agentexec), [src/internal/host/codexappserver/](../../src/internal/host/codexappserver), [src/internal/host/exchangecli/](../../src/internal/host/exchangecli), [src/internal/host/projectrun/](../../src/internal/host/projectrun), [src/internal/host/projectsetup/](../../src/internal/host/projectsetup), [src/internal/host/projectworkspace/](../../src/internal/host/projectworkspace)
+- Expected paths: [src/cmd/markitect-exchange-executor/](../../src/cmd/markitect-exchange-executor), [src/internal/host/agentexec/](../../src/internal/host/agentexec), [src/internal/host/codexappserver/](../../src/internal/host/codexappserver), [src/internal/host/exchangecli/](../../src/internal/host/exchangecli), [src/internal/host/projectconfig/](../../src/internal/host/projectconfig), [src/internal/host/projectexecutor/](../../src/internal/host/projectexecutor), [src/internal/host/projectrun/](../../src/internal/host/projectrun), [src/internal/host/projectsetup/](../../src/internal/host/projectsetup), [src/internal/host/projectworkspace/](../../src/internal/host/projectworkspace)
 - Related checks: ["project.markitect.example.org/v1alpha1","Check","","go-tests"], ["project.markitect.example.org/v1alpha1","Check","","go-vet"], ["project.markitect.example.org/v1alpha1","Check","tooling","architecture-gate"] (declared; execution not observed)
 - Applicability: The runtime runs Manager, review and verify roles in owned workspaces and applies only verified candidates.
 

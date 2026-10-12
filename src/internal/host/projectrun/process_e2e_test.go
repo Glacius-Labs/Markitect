@@ -4,6 +4,8 @@ package projectrun
 
 import (
 	"context"
+	"github.com/Glacius-Labs/Markitect/src/internal/host/projectconfig"
+	"github.com/Glacius-Labs/Markitect/src/internal/host/projectexecutor"
 	"github.com/Glacius-Labs/Markitect/src/internal/host/projectwork"
 	"github.com/Glacius-Labs/Markitect/src/internal/infrastructure/source"
 	"github.com/Glacius-Labs/Markitect/src/internal/modules/projectmodel"
@@ -34,11 +36,11 @@ func TestProjectRunProcessEndToEndResumeVerifyApply(t *testing.T) {
 	}
 
 	ctx, cancel := context.WithCancel(context.Background())
-	// Stop at the durable pre-dispatch boundary. Cancelling inside ProcessInvoker
+	// Stop at the durable pre-dispatch boundary. Cancelling inside projectexecutor.ProcessInvoker
 	// would leave a task marked invoking before Run has committed the completed
 	// result, which must remain uncertain and non-replayable.
 	cancel()
-	first, runErr := Run(ctx, host, ProcessInvoker{}, root, plan.ID)
+	first, runErr := Run(ctx, host, projectexecutor.ProcessInvoker{}, root, plan.ID)
 	if runErr == nil || first.Status != StatusInterrupted {
 		diagnostic, _ := os.ReadFile(logPath)
 		t.Fatalf("Run should interrupt before dispatch at a durable boundary; status=%s err=%v; process log=%s", first.Status, runErr, diagnostic)
@@ -49,7 +51,7 @@ func TestProjectRunProcessEndToEndResumeVerifyApply(t *testing.T) {
 	if !hasNoActiveManagerActions(first.Tasks) {
 		t.Fatalf("interrupted report does not preserve a safe pre-dispatch boundary: %+v", first.Tasks)
 	}
-	resumed, err := Resume(context.Background(), host, ProcessInvoker{}, root, plan.ID)
+	resumed, err := Resume(context.Background(), host, projectexecutor.ProcessInvoker{}, root, plan.ID)
 	if err != nil {
 		t.Fatalf("Resume: %v", err)
 	}
@@ -63,7 +65,7 @@ func TestProjectRunProcessEndToEndResumeVerifyApply(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	verified, err := Verify(context.Background(), host, ProcessInvoker{}, root, plan.ID)
+	verified, err := Verify(context.Background(), host, projectexecutor.ProcessInvoker{}, root, plan.ID)
 	if err != nil {
 		t.Fatalf("Verify: %v", err)
 	}
@@ -96,7 +98,7 @@ func TestProjectRunProcessEndToEndResumeVerifyApply(t *testing.T) {
 	if err := os.WriteFile(ordersPath, []byte("manual change after verification\n"), 0644); err != nil {
 		t.Fatal(err)
 	}
-	if _, staleErr := Apply(host, ProcessInvoker{}, root, request); staleErr == nil {
+	if _, staleErr := Apply(host, projectexecutor.ProcessInvoker{}, root, request); staleErr == nil {
 		t.Fatal("Apply accepted a working-tree change after verification")
 	}
 	if err := os.WriteFile(ordersPath, originalOrders, 0644); err != nil {
@@ -106,7 +108,7 @@ func TestProjectRunProcessEndToEndResumeVerifyApply(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	applied, err := Apply(host, ProcessInvoker{}, root, request)
+	applied, err := Apply(host, projectexecutor.ProcessInvoker{}, root, request)
 	if err != nil {
 		t.Fatalf("Apply: %v", err)
 	}
@@ -121,8 +123,8 @@ func TestProjectRunReviewerFindingsTriggerTargetedImplementerRepair(t *testing.T
 	t.Parallel()
 	root := makeProjectRunFixture(t)
 	setupE2EProcess(t, "review-defect-fix")
-	updateE2ERuntime(t, root, func(config *Runtime) {
-		config.Review = &ReviewConfig{Agents: map[string]Agent{}, MaxRounds: 2, MaxManagerRounds: 2}
+	updateE2ERuntime(t, root, func(config *projectconfig.Runtime) {
+		config.Review = &projectconfig.ReviewConfig{Agents: map[string]projectconfig.Agent{}, MaxRounds: 2, MaxManagerRounds: 2}
 		for id, agent := range config.Agents {
 			config.Review.Agents[id] = agent
 		}
@@ -134,7 +136,7 @@ func TestProjectRunReviewerFindingsTriggerTargetedImplementerRepair(t *testing.T
 	if err != nil {
 		t.Fatal(err)
 	}
-	run, err := Run(context.Background(), host, ProcessInvoker{}, root, plan.ID)
+	run, err := Run(context.Background(), host, projectexecutor.ProcessInvoker{}, root, plan.ID)
 	if err != nil {
 		t.Fatalf("Run: %v", err)
 	}
@@ -202,14 +204,14 @@ func TestProjectRunReviewerFindingsTriggerTargetedImplementerRepair(t *testing.T
 	}
 	// The changed child file is in both the child's work review and the
 	// parent's integration review scope, so either one is stale.
-	if _, staleErr := Verify(context.Background(), host, ProcessInvoker{}, root, plan.ID); staleErr == nil || !strings.Contains(staleErr.Error(), "has no fresh passed") {
+	if _, staleErr := Verify(context.Background(), host, projectexecutor.ProcessInvoker{}, root, plan.ID); staleErr == nil || !strings.Contains(staleErr.Error(), "has no fresh passed") {
 		t.Fatalf("Verify accepted bytes outside the passed review scope: %v", staleErr)
 	}
 	latest.Candidate = run.Candidate
 	if err := persistState(store, &latest); err != nil {
 		t.Fatal(err)
 	}
-	verified, err := Verify(context.Background(), host, ProcessInvoker{}, root, plan.ID)
+	verified, err := Verify(context.Background(), host, projectexecutor.ProcessInvoker{}, root, plan.ID)
 	if err != nil || verified.Status != "verified" {
 		t.Fatalf("fresh scoped reviews did not permit independent verification: report=%+v err=%v", verified, err)
 	}
@@ -223,7 +225,7 @@ func TestProjectRunReviewerFindingsTriggerTargetedImplementerRepair(t *testing.T
 	}
 	request := ApplyRequest{RunID: plan.ID, PlanID: plan.ID, CandidateID: run.Candidate.ID, ExpectedVerificationDigest: verified.Digest,
 		TargetBranch: gitE2E(t, root, "branch", "--show-current"), ExpectedHead: identityHead(t, root), ExpectedWorktree: worktreeDigest}
-	if _, err := Apply(host, ProcessInvoker{}, root, request); err != nil {
+	if _, err := Apply(host, projectexecutor.ProcessInvoker{}, root, request); err != nil {
 		t.Fatalf("freshly reviewed candidate could not pass guarded Apply: %v", err)
 	}
 }
@@ -233,14 +235,14 @@ func TestProjectRunReviewerRoundLimitBlocksRepeatedDefect(t *testing.T) {
 	root := makeProjectRunFixture(t)
 	setupE2EProcess(t, "review-always-fail")
 	enableE2EReviews(t, root, 100000)
-	updateE2ERuntime(t, root, func(config *Runtime) { config.Review.MaxRounds = 2 })
+	updateE2ERuntime(t, root, func(config *projectconfig.Runtime) { config.Review.MaxRounds = 2 })
 	host := projectworkHost()
 	plan, err := Plan(host, root, identityHead(t, root), PlanRequest{Goal: "Implement and review the owned artifacts.",
 		Managers: []string{e2eManagerID("orders", "orders"), e2eManagerID("inventory", "inventory")}, ExecuteAuthorized: true})
 	if err != nil {
 		t.Fatal(err)
 	}
-	run, err := Run(context.Background(), host, ProcessInvoker{}, root, plan.ID)
+	run, err := Run(context.Background(), host, projectexecutor.ProcessInvoker{}, root, plan.ID)
 	if err == nil || run.Status != StatusBlocked {
 		t.Fatalf("persistent review defect did not block at the configured round limit: status=%s err=%v", run.Status, err)
 	}
@@ -257,8 +259,8 @@ func TestManagerDirectedReworkRerunsOnlyRequestedLeafAndReintegratesAncestors(t 
 	t.Parallel()
 	root := makeProjectRunFixture(t)
 	setupE2EProcess(t, "manager-directed-rework")
-	updateE2ERuntime(t, root, func(config *Runtime) {
-		config.Review = &ReviewConfig{Agents: map[string]Agent{}, MaxRounds: 3, MaxManagerRounds: 2}
+	updateE2ERuntime(t, root, func(config *projectconfig.Runtime) {
+		config.Review = &projectconfig.ReviewConfig{Agents: map[string]projectconfig.Agent{}, MaxRounds: 3, MaxManagerRounds: 2}
 		for id, agent := range config.Agents {
 			config.Review.Agents[id] = agent
 		}
@@ -270,7 +272,7 @@ func TestManagerDirectedReworkRerunsOnlyRequestedLeafAndReintegratesAncestors(t 
 	if err != nil {
 		t.Fatal(err)
 	}
-	run, err := Run(context.Background(), host, ProcessInvoker{}, root, plan.ID)
+	run, err := Run(context.Background(), host, projectexecutor.ProcessInvoker{}, root, plan.ID)
 	if err != nil {
 		t.Fatalf("Run: %v", err)
 	}
@@ -322,7 +324,7 @@ func TestManagerDirectedReworkRerunsOnlyRequestedLeafAndReintegratesAncestors(t 
 	if err := persistState(store, &latest); err != nil {
 		t.Fatal(err)
 	}
-	resumed, resumeErr := Resume(context.Background(), host, ProcessInvoker{}, root, plan.ID)
+	resumed, resumeErr := Resume(context.Background(), host, projectexecutor.ProcessInvoker{}, root, plan.ID)
 	resumedOrders := findTask(resumed.Tasks, ordersTask.ManagerID)
 	if resumeErr != nil || resumed.Status != StatusIntegrated || resumedOrders == nil || resumedOrders.State != "worked" || len(resumed.Invocations) != len(run.Invocations) {
 		t.Fatalf("known-complete targeted rework did not resume without losing state: status=%s task=%+v err=%v", resumed.Status, resumedOrders, resumeErr)
@@ -340,7 +342,7 @@ func TestPureRoutingManagerSkipsWorkReviewButReviewsDeliveredChildOutputs(t *tes
 	if err != nil {
 		t.Fatal(err)
 	}
-	run, err := Run(context.Background(), host, ProcessInvoker{}, root, plan.ID)
+	run, err := Run(context.Background(), host, projectexecutor.ProcessInvoker{}, root, plan.ID)
 	if err != nil || run.Status != StatusIntegrated {
 		t.Fatalf("pure routing fixture failed: status=%s err=%v", run.Status, err)
 	}
@@ -392,7 +394,7 @@ func TestTargetedWorkRejectsNoOpWithCandidateWrites(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	run, err := Run(context.Background(), host, ProcessInvoker{}, root, plan.ID)
+	run, err := Run(context.Background(), host, projectexecutor.ProcessInvoker{}, root, plan.ID)
 	if err == nil || run.Status != StatusBlocked || !strings.Contains(err.Error(), "claimed no-op while proposing files") {
 		t.Fatalf("targeted work accepted no-op alongside candidate writes: status=%s err=%v", run.Status, err)
 	}
@@ -423,7 +425,7 @@ func TestIntegrationReviewFindingsRepairAndRereviewParentCandidate(t *testing.T)
 	if err != nil {
 		t.Fatal(err)
 	}
-	run, err := Run(context.Background(), host, ProcessInvoker{}, root, plan.ID)
+	run, err := Run(context.Background(), host, projectexecutor.ProcessInvoker{}, root, plan.ID)
 	if err != nil || run.Status != StatusIntegrated {
 		t.Fatalf("integration reviewer findings did not lead to corrected closure: status=%s err=%v", run.Status, err)
 	}
@@ -471,14 +473,14 @@ func TestExhaustedIntegrationReviewBlocksBeforeInvokingManager(t *testing.T) {
 	gitE2E(t, root, "commit", "--amend", "--no-edit")
 	setupE2EProcess(t, "integration-review-fix")
 	enableE2EReviews(t, root, 100000)
-	updateE2ERuntime(t, root, func(config *Runtime) { config.Review.MaxRounds = 1 })
+	updateE2ERuntime(t, root, func(config *projectconfig.Runtime) { config.Review.MaxRounds = 1 })
 	host := projectworkHost()
 	plan, err := Plan(host, root, identityHead(t, root), PlanRequest{Goal: "Implement and reconcile the two owned artifacts.",
 		Managers: []string{e2eManagerID("orders", "orders"), e2eManagerID("inventory", "inventory")}, ExecuteAuthorized: true})
 	if err != nil {
 		t.Fatal(err)
 	}
-	run, err := Run(context.Background(), host, ProcessInvoker{}, root, plan.ID)
+	run, err := Run(context.Background(), host, projectexecutor.ProcessInvoker{}, root, plan.ID)
 	if err == nil || run.Status != StatusBlocked || !strings.Contains(err.Error(), "exhausted the cumulative integration review round limit") {
 		t.Fatalf("exhausted integration review did not block on its round limit: status=%s err=%v", run.Status, err)
 	}
@@ -505,8 +507,8 @@ func TestIntegrationReviewRoutesChildReworkBeforeFreshParentReview(t *testing.T)
 	gitE2E(t, root, "add", projectwork.ManifestPath, ".markitect/model/root-statement.yaml")
 	gitE2E(t, root, "commit", "--amend", "--no-edit")
 	setupE2EProcess(t, "integration-review-child-rework")
-	updateE2ERuntime(t, root, func(config *Runtime) {
-		config.Review = &ReviewConfig{Agents: map[string]Agent{}, MaxRounds: 3, MaxManagerRounds: 2}
+	updateE2ERuntime(t, root, func(config *projectconfig.Runtime) {
+		config.Review = &projectconfig.ReviewConfig{Agents: map[string]projectconfig.Agent{}, MaxRounds: 3, MaxManagerRounds: 2}
 		for id, agent := range config.Agents {
 			config.Review.Agents[id] = agent
 		}
@@ -518,7 +520,7 @@ func TestIntegrationReviewRoutesChildReworkBeforeFreshParentReview(t *testing.T)
 	if err != nil {
 		t.Fatal(err)
 	}
-	run, err := Run(context.Background(), host, ProcessInvoker{}, root, plan.ID)
+	run, err := Run(context.Background(), host, projectexecutor.ProcessInvoker{}, root, plan.ID)
 	if err != nil || run.Status != StatusIntegrated {
 		t.Fatalf("review-directed child correction did not close: status=%s err=%v", run.Status, err)
 	}
@@ -606,7 +608,7 @@ func TestNestedReworkDefersEveryAncestorIntegrationAndReview(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	run, err := Run(context.Background(), host, ProcessInvoker{}, root, plan.ID)
+	run, err := Run(context.Background(), host, projectexecutor.ProcessInvoker{}, root, plan.ID)
 	if err != nil || run.Status != StatusIntegrated {
 		t.Fatalf("nested child rework did not close: status=%s err=%v", run.Status, err)
 	}
@@ -689,7 +691,7 @@ func TestReviewerContractFailuresAndUncertainInvocationNeverReplay(t *testing.T)
 			if err != nil {
 				t.Fatal(err)
 			}
-			run, err := Run(context.Background(), host, ProcessInvoker{}, root, plan.ID)
+			run, err := Run(context.Background(), host, projectexecutor.ProcessInvoker{}, root, plan.ID)
 			if err == nil || run.Status != StatusFailed {
 				t.Fatalf("invalid or uncertain review was accepted: status=%s err=%v", run.Status, err)
 			}
@@ -697,7 +699,7 @@ func TestReviewerContractFailuresAndUncertainInvocationNeverReplay(t *testing.T)
 				t.Fatalf("failed reviewer invocation was not retained: %+v", run.Invocations)
 			}
 			before := countE2EProcessCalls(runtimeFixtureEnv(t, e2eLogEnv), e2eManagerID("orders", "orders"), "review") + countE2EProcessCalls(runtimeFixtureEnv(t, e2eLogEnv), e2eManagerID("", "project-owner"), "review")
-			_, resumeErr := Resume(context.Background(), host, ProcessInvoker{}, root, plan.ID)
+			_, resumeErr := Resume(context.Background(), host, projectexecutor.ProcessInvoker{}, root, plan.ID)
 			if resumeErr == nil {
 				t.Fatal("uncertain review invocation was automatically replayed")
 			}
@@ -720,7 +722,7 @@ func TestReviewerCostOverrunBlocksBeforeAcceptingReview(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	run, err := Run(context.Background(), host, ProcessInvoker{}, root, plan.ID)
+	run, err := Run(context.Background(), host, projectexecutor.ProcessInvoker{}, root, plan.ID)
 	if err == nil || run.Status != StatusBlocked || len(run.Invocations) == 0 || run.Invocations[len(run.Invocations)-1].CostMicros <= 1 {
 		t.Fatalf("review cost overrun was not durably blocked: status=%s last=%+v err=%v", run.Status, lastInvocation(run.Invocations), err)
 	}
@@ -738,7 +740,7 @@ func TestReviewerWorkingTreeDriftRetainsUncertainCallWithoutReplay(t *testing.T)
 	if err != nil {
 		t.Fatal(err)
 	}
-	run, runErr := Run(context.Background(), host, ProcessInvoker{}, root, plan.ID)
+	run, runErr := Run(context.Background(), host, projectexecutor.ProcessInvoker{}, root, plan.ID)
 	if runErr == nil || run.Status != StatusFailed {
 		t.Fatalf("reviewer changed the working snapshot but its review was consumed: status=%s err=%v", run.Status, runErr)
 	}
@@ -751,7 +753,7 @@ func TestReviewerWorkingTreeDriftRetainsUncertainCallWithoutReplay(t *testing.T)
 		t.Fatalf("reviewer call receipt was not retained after binding drift: %+v", run.Invocations)
 	}
 	before := countE2EProcessCalls(runtimeFixtureEnv(t, e2eLogEnv), orders, "review")
-	if _, err := Resume(context.Background(), host, ProcessInvoker{}, root, plan.ID); err == nil {
+	if _, err := Resume(context.Background(), host, projectexecutor.ProcessInvoker{}, root, plan.ID); err == nil {
 		t.Fatal("uncertain reviewer invocation was resumed automatically")
 	}
 	if after := countE2EProcessCalls(runtimeFixtureEnv(t, e2eLogEnv), orders, "review"); after != before {
@@ -771,7 +773,7 @@ func TestProjectRunProcessRejectsStaleNonceOutOfScopeAndFailedIntegration(t *tes
 			if err != nil {
 				t.Fatalf("Plan: %v", err)
 			}
-			run, runErr := Run(context.Background(), projectworkHost(), ProcessInvoker{}, root, plan.ID)
+			run, runErr := Run(context.Background(), projectworkHost(), projectexecutor.ProcessInvoker{}, root, plan.ID)
 			if runErr == nil || run.Status == StatusIntegrated || run.Status == StatusVerified || run.Status == StatusApplied {
 				t.Fatalf("behavior %s unexpectedly closed successfully: status=%s err=%v", behavior, run.Status, runErr)
 			}
@@ -782,9 +784,9 @@ func TestProjectRunProcessRejectsStaleNonceOutOfScopeAndFailedIntegration(t *tes
 func TestProjectRunRepairsKnownValidationFailuresInWorkAndIntegration(t *testing.T) {
 	t.Parallel()
 	root := makeProjectRunFixture(t)
-	updateE2ERuntime(t, root, func(config *Runtime) {
+	updateE2ERuntime(t, root, func(config *projectconfig.Runtime) {
 		config.Limits.MaxRetries = 1
-		config.Limits.MaxDuration += Duration(time.Second)
+		config.Limits.MaxDuration += projectconfig.Duration(time.Second)
 	})
 	setupE2EProcess(t, "repair-foreign-first")
 	logPath := runtimeFixtureEnv(t, e2eLogEnv)
@@ -793,7 +795,7 @@ func TestProjectRunRepairsKnownValidationFailuresInWorkAndIntegration(t *testing
 	if err != nil {
 		t.Fatalf("Plan: %v", err)
 	}
-	run, err := Run(context.Background(), projectworkHost(), ProcessInvoker{}, root, plan.ID)
+	run, err := Run(context.Background(), projectworkHost(), projectexecutor.ProcessInvoker{}, root, plan.ID)
 	if err != nil {
 		t.Fatalf("Run did not repair known validation failures: status=%s err=%v", run.Status, err)
 	}
@@ -834,7 +836,7 @@ func TestProjectRunPropagatesRootResolutionThroughForwardedObligationChain(t *te
 	if err != nil {
 		t.Fatalf("Plan: %v", err)
 	}
-	run, err := Run(context.Background(), host, ProcessInvoker{}, root, plan.ID)
+	run, err := Run(context.Background(), host, projectexecutor.ProcessInvoker{}, root, plan.ID)
 	if err != nil || run.Status != StatusIntegrated {
 		t.Fatalf("multilevel escalated run did not integrate after root resolution: status=%s err=%v tasks=%+v escalations=%+v", run.Status, err, run.Tasks, run.Escalations)
 	}
@@ -864,7 +866,7 @@ func TestProjectRunPropagatesRootResolutionThroughForwardedObligationChain(t *te
 			t.Fatalf("candidate review evidence for %s did not survive ancestor-only obligation resolution: %+v", managerID, run.Reviews)
 		}
 	}
-	verified, err := Verify(context.Background(), host, ProcessInvoker{}, root, plan.ID)
+	verified, err := Verify(context.Background(), host, projectexecutor.ProcessInvoker{}, root, plan.ID)
 	if err != nil || verified.Status != StatusVerified {
 		t.Fatalf("Verify rejected the reviewed candidate after root-only obligation resolution: status=%s err=%v", verified.Status, err)
 	}
@@ -872,7 +874,7 @@ func TestProjectRunPropagatesRootResolutionThroughForwardedObligationChain(t *te
 	if err != nil {
 		t.Fatalf("PreflightApply: %v", err)
 	}
-	if _, err := Apply(host, ProcessInvoker{}, root, applyRequestFromPreflight(preflight)); err != nil {
+	if _, err := Apply(host, projectexecutor.ProcessInvoker{}, root, applyRequestFromPreflight(preflight)); err != nil {
 		t.Fatalf("Apply rejected the freshly verified provenance-resolved candidate: %v", err)
 	}
 }
@@ -892,13 +894,13 @@ func TestProjectRunRetryCeilingAndCostAccountingAreDurable(t *testing.T) {
 		t.Run(scenario.name, func(t *testing.T) {
 			t.Parallel()
 			root := makeProjectRunFixture(t)
-			updateE2ERuntime(t, root, func(config *Runtime) {
+			updateE2ERuntime(t, root, func(config *projectconfig.Runtime) {
 				config.Limits.MaxRetries = scenario.retries
 				config.Limits.MaxCostMicros = scenario.maxCost
-				config.Limits.MaxDuration += Duration(time.Second)
+				config.Limits.MaxDuration += projectconfig.Duration(time.Second)
 				orders := e2eManagerID("orders", "orders")
 				agent := config.Agents[orders]
-				agent.Pricing = Pricing{InputMicrosPerMillion: scenario.priceOrders, OutputMicrosPerMillion: scenario.priceOrders}
+				agent.Pricing = projectconfig.Pricing{InputMicrosPerMillion: scenario.priceOrders, OutputMicrosPerMillion: scenario.priceOrders}
 				config.Agents[orders] = agent
 			})
 			setupE2EProcess(t, "repair-foreign-first")
@@ -908,7 +910,7 @@ func TestProjectRunRetryCeilingAndCostAccountingAreDurable(t *testing.T) {
 			if err != nil {
 				t.Fatalf("Plan: %v", err)
 			}
-			run, runErr := Run(context.Background(), projectworkHost(), ProcessInvoker{}, root, plan.ID)
+			run, runErr := Run(context.Background(), projectworkHost(), projectexecutor.ProcessInvoker{}, root, plan.ID)
 			if runErr == nil || run.Status != scenario.wantStatus {
 				t.Fatalf("invalid proposal did not stop at the expected bounded state: status=%s err=%v", run.Status, runErr)
 			}

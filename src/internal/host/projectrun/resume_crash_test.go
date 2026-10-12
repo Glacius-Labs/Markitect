@@ -2,6 +2,7 @@ package projectrun
 
 import (
 	"context"
+	"github.com/Glacius-Labs/Markitect/src/internal/host/projectconfig"
 	"os"
 	"path/filepath"
 	"testing"
@@ -26,7 +27,7 @@ func persistRunningCrashState(t *testing.T, root string, plan PlanRecord, inFlig
 	}
 	state := RunReport{
 		APIVersion: APIVersion, ID: plan.ID, PlanID: plan.ID, Status: StatusRunning,
-		Mode: ModeControlledLocal, StartedAt: time.Now().UTC(), UpdatedAt: time.Now().UTC(),
+		Mode: projectconfig.ModeControlledLocal, StartedAt: time.Now().UTC(), UpdatedAt: time.Now().UTC(),
 		BaseRevision: plan.BaseRevision, BaseSnapshot: plan.BaseSnapshot, ModelDigest: plan.ModelDigest,
 		RuntimeDigest: plan.RuntimeDigest, Tasks: cloneTasks(plan.Managers),
 		Candidate: CandidateRef{ID: plan.InitialCandidateID, Snapshot: candidate.Digest, Files: map[string]string{}, Integrated: false},

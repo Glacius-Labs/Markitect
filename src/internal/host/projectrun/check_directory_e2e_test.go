@@ -4,6 +4,8 @@ package projectrun
 
 import (
 	"context"
+	"github.com/Glacius-Labs/Markitect/src/internal/host/projectconfig"
+	"github.com/Glacius-Labs/Markitect/src/internal/host/projectexecutor"
 	"os"
 	"path/filepath"
 	"strings"
@@ -23,7 +25,7 @@ func TestVerifyChecksSeeFilesModelledInPlace(t *testing.T) {
 	root := makeFullVerifyFixture(t)
 	configureOperationsFullVerify(t, root)
 	setRuntimeFixtureEnv(t, modelledFileCheckEnv, "1")
-	updateE2ERuntime(t, root, func(config *Runtime) {
+	updateE2ERuntime(t, root, func(config *projectconfig.Runtime) {
 		for id, agent := range config.Agents {
 			agent.Environment = append(agent.Environment, modelledFileCheckEnv)
 			config.Agents[id] = agent
@@ -98,7 +100,7 @@ func TestVerifyChecksSeeFilesModelledInPlace(t *testing.T) {
 	if string(compiled.Snapshot.Files[fixtureLegacyOrdersFile]) != legacyOrdersBytes {
 		t.Fatal("precondition: closure did not bind the modelled file's base bytes")
 	}
-	report := RunReport{APIVersion: APIVersion, ID: plan.ID, PlanID: plan.ID, Operation: plan.Operation, Status: StatusIntegrated, Mode: ModeControlledLocal,
+	report := RunReport{APIVersion: APIVersion, ID: plan.ID, PlanID: plan.ID, Operation: plan.Operation, Status: StatusIntegrated, Mode: projectconfig.ModeControlledLocal,
 		StartedAt: time.Now().UTC(), UpdatedAt: time.Now().UTC(), BaseRevision: plan.BaseRevision, BaseSnapshot: plan.BaseSnapshot,
 		ModelDigest: plan.ModelDigest, RuntimeDigest: plan.RuntimeDigest, Tasks: cloneTasks(plan.Managers),
 		Candidate: CandidateRef{ID: final.ID, Snapshot: final.Digest, Files: map[string]string{}, Integrated: true}, Revision: 1}
@@ -125,7 +127,7 @@ func TestVerifyChecksSeeFilesModelledInPlace(t *testing.T) {
 	if err := persistState(store, &report); err != nil {
 		t.Fatal(err)
 	}
-	verified, err := Verify(context.Background(), host, ProcessInvoker{}, root, plan.ID)
+	verified, err := Verify(context.Background(), host, projectexecutor.ProcessInvoker{}, root, plan.ID)
 	if err != nil || verified.Status != StatusVerified {
 		t.Fatalf("Verify: report=%+v err=%v", verified, err)
 	}
@@ -135,11 +137,11 @@ func TestVerifyChecksSeeFilesModelledInPlace(t *testing.T) {
 	}
 	// Full verification materializes its own check tree when no planned check
 	// result covers a declared check.
-	runtimeConfig, err := LoadRuntime(root)
+	runtimeConfig, err := projectconfig.LoadRuntime(root)
 	if err != nil {
 		t.Fatal(err)
 	}
-	full, err := FullVerifyProject(context.Background(), host, ProcessInvoker{}, root, compiled, runtimeConfig, FullVerifyBinding{ExpectedSnapshot: compiled.Snapshot.Digest()})
+	full, err := FullVerifyProject(context.Background(), host, projectexecutor.ProcessInvoker{}, root, compiled, runtimeConfig, FullVerifyBinding{ExpectedSnapshot: compiled.Snapshot.Digest()})
 	if err != nil || full.Status != "passed" {
 		t.Fatalf("FullVerifyProject: report=%+v err=%v", full, err)
 	}
@@ -155,11 +157,11 @@ func TestVerifyRunsDeclaredChecksOutsideTheRunStore(t *testing.T) {
 	root := makeProjectRunFixture(t)
 	setupE2EProcess(t, "normal")
 	plan := planBothManagers(t, root)
-	run, err := Run(context.Background(), projectworkHost(), ProcessInvoker{}, root, plan.ID)
+	run, err := Run(context.Background(), projectworkHost(), projectexecutor.ProcessInvoker{}, root, plan.ID)
 	if err != nil || run.Status != StatusIntegrated {
 		t.Fatalf("Run: status=%s err=%v", run.Status, err)
 	}
-	verified, err := Verify(context.Background(), projectworkHost(), ProcessInvoker{}, root, plan.ID)
+	verified, err := Verify(context.Background(), projectworkHost(), projectexecutor.ProcessInvoker{}, root, plan.ID)
 	if err != nil || verified.Status != StatusVerified {
 		t.Fatalf("Verify: report=%+v err=%v", verified, err)
 	}

@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/Glacius-Labs/Markitect/src/internal/host/projectconfig"
 	"io/fs"
 	"os"
 	"os/exec"
@@ -503,15 +504,15 @@ func failingManagerRepo(t *testing.T) string {
 		t.Fatal(err)
 	}
 	managerID := core.DefinitionIdentity{APIVersion: projectmodel.APIVersion, Kind: "Manager", Name: "project-owner"}.Key()
-	runtimeConfig := projectrun.Runtime{
-		APIVersion: projectrun.APIVersion, Mode: projectrun.ModeControlledLocal,
-		Agents: map[string]projectrun.Agent{managerID: {
+	runtimeConfig := projectconfig.Runtime{
+		APIVersion: projectrun.APIVersion, Mode: projectconfig.ModeControlledLocal,
+		Agents: map[string]projectconfig.Agent{managerID: {
 			Command: executable, Args: []string{"-test.run=^TestFailingManagerHelperProcess$"},
 			Model: "failing-model", ProviderVersion: "failing/1", Environment: []string{failingManagerEnv},
-			Timeout: projectrun.Duration(30 * time.Second), MaxStdoutBytes: 1 << 20, MaxStderrBytes: 1 << 20,
-			Pricing: projectrun.Pricing{InputMicrosPerMillion: 1},
+			Timeout: projectconfig.Duration(30 * time.Second), MaxStdoutBytes: 1 << 20, MaxStderrBytes: 1 << 20,
+			Pricing: projectconfig.Pricing{InputMicrosPerMillion: 1},
 		}},
-		Limits: projectrun.Limits{MaxDepth: 2, MaxStarts: 4, MaxParallel: 1, MaxDuration: projectrun.Duration(time.Minute), MaxCostMicros: 1000,
+		Limits: projectconfig.Limits{MaxDepth: 2, MaxStarts: 4, MaxParallel: 1, MaxDuration: projectconfig.Duration(time.Minute), MaxCostMicros: 1000,
 			MaxCandidateFileBytes: 1 << 20, MaxCandidateBytes: 1 << 20},
 	}
 	encoded, err := yaml.Marshal(runtimeConfig)

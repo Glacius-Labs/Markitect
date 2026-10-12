@@ -2,7 +2,9 @@ package projectrun
 
 import (
 	"fmt"
+	"os"
 	"path"
+	"path/filepath"
 	"runtime"
 	"strings"
 )
@@ -29,17 +31,30 @@ func safeRepoPath(value string) bool {
 	return true
 }
 
-func validatePortablePaths(paths []string) error {
-	seen := map[string]string{}
-	for _, value := range paths {
-		if !safeRepoPath(value) {
-			return fmt.Errorf("candidate contains unsafe repository path %q", value)
+func rejectReparsePath(root, relative string) error {
+	rootInfo, err := os.Lstat(root)
+	if err != nil {
+		return fmt.Errorf("inspect project root: %w", err)
+	}
+	if !rootInfo.IsDir() || rootInfo.Mode()&os.ModeSymlink != 0 {
+		return fmt.Errorf("project root must be a real directory")
+	}
+	current := root
+	for _, segment := range strings.Split(filepath.FromSlash(relative), string(filepath.Separator)) {
+		current = filepath.Join(current, segment)
+		info, statErr := os.Lstat(current)
+		if os.IsNotExist(statErr) && current == filepath.Join(root, ".markitect") {
+			return fmt.Errorf("%s does not exist", relative)
 		}
-		key := strings.ToLower(value)
-		if prior, exists := seen[key]; exists && prior != value {
-			return fmt.Errorf("candidate paths %q and %q collide on case-insensitive filesystems", prior, value)
+		if statErr != nil {
+			return fmt.Errorf("inspect %s: %w", relative, statErr)
 		}
-		seen[key] = value
+		if info.Mode()&os.ModeSymlink != 0 {
+			return fmt.Errorf("%s contains a symlink", relative)
+		}
+		if current != filepath.Join(root, filepath.FromSlash(relative)) && !info.IsDir() {
+			return fmt.Errorf("%s parent must be a directory", relative)
+		}
 	}
 	return nil
 }

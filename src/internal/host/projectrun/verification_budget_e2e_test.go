@@ -5,6 +5,7 @@ package projectrun
 import (
 	"context"
 	"encoding/json"
+	"github.com/Glacius-Labs/Markitect/src/internal/host/projectconfig"
 	"os"
 	"path/filepath"
 	"strings"
@@ -46,10 +47,10 @@ func TestFailedVerifierAttemptIsDurableAndCannotReplayBudget(t *testing.T) {
 		t.Fatal(err)
 	}
 	setRuntimeFixtureEnv(t, verifierProcessHelperEnv, "failed-verifier")
-	agent := Agent{
+	agent := projectconfig.Agent{
 		Command: executable, Args: runtimeFixtureArgs(t, []string{"-test.run=^TestProjectRunVerifierHelperProcess$"}), Model: "fixture",
-		ProviderVersion: "fixture-v1", Timeout: Duration(30 * time.Second), MaxStdoutBytes: 64 << 10, MaxStderrBytes: 16 << 10,
-		Environment: []string{verifierProcessHelperEnv, "SystemRoot"}, Pricing: Pricing{InputMicrosPerMillion: 1000},
+		ProviderVersion: "fixture-v1", Timeout: projectconfig.Duration(30 * time.Second), MaxStdoutBytes: 64 << 10, MaxStderrBytes: 16 << 10,
+		Environment: []string{verifierProcessHelperEnv, "SystemRoot"}, Pricing: projectconfig.Pricing{InputMicrosPerMillion: 1000},
 	}
 	runtime := validRuntime()
 	runtime.Limits.MaxStarts = 2 // one executable check and one verifier process
@@ -62,7 +63,7 @@ func TestFailedVerifierAttemptIsDurableAndCannotReplayBudget(t *testing.T) {
 	// this also exercises an allowlist with no inherited values.
 	checkAgent.Environment = []string{"SystemRoot"}
 	checkAgent.ProviderVersion = "fixture-v1"
-	checkAgent.Timeout = Duration(30 * time.Second)
+	checkAgent.Timeout = projectconfig.Duration(30 * time.Second)
 	checkAgent.RuntimeFiles = []agentexec.RuntimeFile{}
 	runtime.Agents["commerce"] = checkAgent
 	agent.RuntimeFiles = []agentexec.RuntimeFile{}
@@ -75,7 +76,7 @@ func TestFailedVerifierAttemptIsDurableAndCannotReplayBudget(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if err := os.WriteFile(filepath.Join(root, filepath.FromSlash(RuntimePath)), runtimeData, 0o600); err != nil {
+	if err := os.WriteFile(filepath.Join(root, filepath.FromSlash(projectconfig.RuntimePath)), runtimeData, 0o600); err != nil {
 		t.Fatal(err)
 	}
 
@@ -138,7 +139,7 @@ func TestFailedVerifierAttemptIsDurableAndCannotReplayBudget(t *testing.T) {
 	}
 	run := RunReport{
 		APIVersion: APIVersion, ID: runID, PlanID: runID, Status: StatusIntegrated,
-		Mode: ModeControlledLocal, StartedAt: time.Now().UTC(), UpdatedAt: time.Now().UTC(),
+		Mode: projectconfig.ModeControlledLocal, StartedAt: time.Now().UTC(), UpdatedAt: time.Now().UTC(),
 		BaseRevision: head, BaseSnapshot: snapshotBase.Digest(), ModelDigest: project.Report.ModelDigest,
 		RuntimeDigest: runtimeDigest, Candidate: candidateRef(candidate, true), Tasks: []ManagerTask{},
 		Invocations: []InvocationLog{}, Checks: []CheckResult{},
@@ -146,7 +147,7 @@ func TestFailedVerifierAttemptIsDurableAndCannotReplayBudget(t *testing.T) {
 	if err := persistState(store, &run); err != nil {
 		t.Fatal(err)
 	}
-	loadedRuntime, err := LoadRuntime(root)
+	loadedRuntime, err := projectconfig.LoadRuntime(root)
 	if err != nil {
 		t.Fatal(err)
 	}

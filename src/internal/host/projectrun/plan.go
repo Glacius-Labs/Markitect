@@ -8,9 +8,9 @@ import (
 	"path/filepath"
 	"sort"
 	"strings"
-	"time"
 
 	"github.com/Glacius-Labs/Markitect/src/internal/core/snapshot"
+	projectconfig "github.com/Glacius-Labs/Markitect/src/internal/host/projectconfig"
 	"github.com/Glacius-Labs/Markitect/src/internal/infrastructure/source"
 	"github.com/Glacius-Labs/Markitect/src/internal/modules/projectmodel"
 )
@@ -26,323 +26,23 @@ func Plan(host Host, root, revision string, request PlanRequest) (PlanRecord, er
 // set, an authorized plan is persisted only if its PlanPreviewDigest still
 // equals the reviewed preview's; otherwise it returns ErrStale.
 func PlanExpecting(host Host, root, revision string, request PlanRequest, expectedPreview string) (PlanRecord, error) {
-	var plan PlanRecord
-	var err error
-	operation, err := NormalizeOperation(request.Operation)
+	basis, err := loadPlanBasis(host, root, revision, request)
 	if err != nil {
-		return plan, err
+		return PlanRecord{}, err
 	}
-	request.Operation = operation
-	if operation != OperationApply && (len(request.Managers) > 0 || strings.TrimSpace(request.SinceRevision) != "" || request.ModelEdit != nil) {
-		return plan, fmt.Errorf("%s does not accept manager, since-revision, or model-edit narrowing; prepare and accept any model changes separately", operation)
-	}
-	if host.Load == nil || host.FromSnapshot == nil || host.PlanEdit == nil {
-		return plan, fmt.Errorf("project Host frontend is incomplete")
-	}
-	if strings.TrimSpace(request.Goal) == "" {
-		return plan, fmt.Errorf("a bounded project goal is required")
-	}
-	if request.BaseRevision != "" {
-		revision = request.BaseRevision
-	}
-	if strings.TrimSpace(revision) == "" {
-		revision, err = resolveGitHead(root)
-		if err != nil {
-			return plan, fmt.Errorf("resolve fixed default base revision: %w", err)
-		}
-	}
-	targetHead, err := resolveGitHead(root)
+	semantics, err := preparePlanSemantics(host, basis)
 	if err != nil {
-		return plan, fmt.Errorf("capture current target HEAD: %w", err)
+		return PlanRecord{}, err
 	}
-	targetBranch, err := resolveGitBranch(root)
-	if err != nil {
-		return plan, fmt.Errorf("capture current target branch: %w", err)
-	}
-	project, err := host.Load(root, revision)
-	if err != nil {
-		return plan, fmt.Errorf("load selected project revision: %w", err)
-	}
-	if project == nil || project.Snapshot == nil {
-		return plan, fmt.Errorf("project frontend returned no fixed snapshot")
-	}
-	var changeBase *Project
-	var changeImpact *projectmodel.ChangeImpact
-	if strings.TrimSpace(request.SinceRevision) != "" {
-		changeBase, err = host.Load(root, request.SinceRevision)
-		if err != nil {
-			return plan, fmt.Errorf("load project change baseline %q: %w", request.SinceRevision, err)
-		}
-		if changeBase == nil || changeBase.Snapshot == nil {
-			return plan, fmt.Errorf("project frontend returned no change-baseline snapshot")
-		}
-		impact := projectmodel.Impact(changeBase.Report, project.Report)
-		if impact.Digest == "" || impact.BaseDigest != changeBase.Report.Digest || impact.CandidateDigest != project.Report.Digest {
-			return plan, fmt.Errorf("project change impact did not bind both selected reports")
-		}
-		changeImpact = &impact
-	}
-	if project.Snapshot.Provisional {
-		return plan, fmt.Errorf("project run requires a non-provisional snapshot")
-	}
-	// A preview reads accepted history in memory; only an authorized plan
-	// persists it. ExplorationBinding passes the view it already computed.
-	briefingView := request.acceptedBriefings
-	if request.ExecuteAuthorized {
-		briefingView = nil
-	}
-	if briefingView == nil && (project.Config.WorkflowMode == "guided" || request.ExplorationID != "") && request.ModelEdit == nil {
-		if briefingView, err = captureAcceptedHistory(root, project.Revision, request.ExecuteAuthorized); err != nil {
-			return plan, fmt.Errorf("capture accepted model history: %w", err)
-		}
-	}
-	working, err := host.Load(root, "")
-	if err != nil {
-		return plan, fmt.Errorf("capture current project working inputs: %w", err)
-	}
-	if working == nil || working.Snapshot == nil {
-		return plan, fmt.Errorf("project runtime requires a selected working-input snapshot")
-	}
-	if err := requireCleanSelectedBasisAtRevision(root, project.Revision, project.Snapshot, working.Snapshot); err != nil {
-		return plan, err
-	}
-	repository, err := source.IdentifyGit(root)
-	if err != nil {
-		return plan, fmt.Errorf("identify project repository: %w", err)
-	}
-	currentHead, headErr := resolveGitHead(root)
-	currentBranch, branchErr := resolveGitBranch(root)
-	if headErr != nil || branchErr != nil || currentHead != targetHead || currentBranch != targetBranch {
-		return plan, ErrStale
-	}
-	if !startableReport(project.Report) {
-		return plan, fmt.Errorf("project model analysis did not succeed: %s", project.Report.Status)
-	}
-	if hasErrorFinding(project.Report.Findings) {
-		return plan, fmt.Errorf("project model has structural error findings")
-	}
-	runtime, err := LoadRuntime(root)
-	if err != nil {
-		return plan, err
-	}
-	finalProject := project
-	var editPlan *EditPlan
-	initialCandidate, err := emptyCandidate()
-	if err != nil {
-		return plan, err
-	}
-	if request.ModelEdit != nil {
-		if err := validateModelEditPaths(*request.ModelEdit); err != nil {
-			return plan, err
-		}
-		candidate, editErr := host.PlanEdit(project, *request.ModelEdit)
-		if editErr != nil {
-			return plan, fmt.Errorf("validate requested model edit: %w", editErr)
-		}
-		if candidate.BaseDigest == "" || candidate.CandidateDigest == "" || !startableReport(candidate.Report) || hasErrorFinding(candidate.Report.Findings) {
-			return plan, fmt.Errorf("validated model edit is missing fixed digests or has structural findings")
-		}
-		editPlan = &candidate
-		initialCandidate, err = modelEditCandidate(editPlan, project.Snapshot)
-		if err != nil {
-			return plan, err
-		}
-		candidateSnapshot, snapshotErr := snapshotWithCandidate(project.Snapshot, initialCandidate)
-		if snapshotErr != nil {
-			return plan, snapshotErr
-		}
-		validated, validationErr := host.FromSnapshot(root, candidateSnapshot)
-		if validationErr != nil {
-			return plan, fmt.Errorf("recompile model edit candidate: %w", validationErr)
-		}
-		if validated == nil || validated.Snapshot == nil || validated.Report.Digest != candidate.Report.Digest {
-			return plan, fmt.Errorf("model edit candidate did not reproduce its planned report")
-		}
-		finalProject = validated
-	}
-	if !startableReport(finalProject.Report) || hasErrorFinding(finalProject.Report.Findings) {
-		return plan, fmt.Errorf("candidate model analysis did not succeed")
-	}
-	fullCoverage := finalProject.Config.CoverageMode == "full"
-	if fullCoverage && request.ModelEdit != nil {
-		return plan, fmt.Errorf("full coverage requires accepting and committing the model separately before implementation; draft model edits are not an accepted execution basis")
-	}
-	if fullCoverage {
-		for _, basis := range []*Project{project, working, finalProject} {
-			if basis.Coverage == nil || !basis.Coverage.Accounted {
-				return plan, fmt.Errorf("whole-repository coverage is unaccounted; classify unknown paths before planning implementation")
-			}
-		}
-	}
-	if operation != OperationApply && !fullCoverage {
-		return plan, fmt.Errorf("%s requires project coverageMode full", operation)
-	}
-	briefingDigests := map[string]string{}
-	if request.ModelEdit == nil {
-		briefingDigests, err = briefingBindingsIn(root, briefingView, project)
-		if err != nil {
-			return plan, err
-		}
-	} else {
-		// A proposed, not-yet-accepted model has no valid accepted briefing
-		// history. Keep the draft plan explicitly unbound until it is committed.
-		for _, manager := range finalProject.Report.Managers {
-			briefingDigests[manager.ID] = ""
-		}
-	}
-	if changeBase != nil && fullCoverage && request.ModelEdit == nil && changeBase.Report.ModelDigest != project.Report.ModelDigest {
-		for _, manager := range project.Report.Managers {
-			if briefingDigests[manager.ID] == "" {
-				return plan, fmt.Errorf("full coverage after a semantic model change requires an accepted briefing for Manager %s", manager.ID)
-			}
-		}
-	}
-	if err := validateStrictnessManagers(runtime.Strictness, finalProject.Report.Managers); err != nil {
-		return plan, err
-	}
-	id, err := newID()
-	if err != nil {
-		return plan, err
-	}
-	managerTasks, selected, findings, err := planManagers(finalProject.Report, finalProject.Snapshot.Files, request, editPlan, changeImpact, runtime.Limits)
-	if err != nil {
-		return plan, err
-	}
-	strictness := make(map[string]StrictnessProfile, len(managerTasks))
-	profileManagers := make([]string, 0, len(managerTasks))
-	for _, task := range managerTasks {
-		profileManagers = append(profileManagers, task.ManagerID)
-	}
-	if fullCoverage {
-		for _, manager := range finalProject.Report.Managers {
-			profileManagers = append(profileManagers, manager.ID)
-		}
-	}
-	for _, managerID := range uniqueSorted(profileManagers) {
-		profile, profileErr := ResolveStrictness(runtime, managerID)
-		if profileErr != nil {
-			return plan, fmt.Errorf("resolve strictness for Manager %s: %w", managerID, profileErr)
-		}
-		strictness[managerID] = profile
-	}
-	if len(managerTasks) == 0 {
-		return plan, fmt.Errorf("plan has no responsible Manager")
-	}
-	if err := checkDepth(managerTasks, runtime.Limits.MaxDepth); err != nil {
-		return plan, err
-	}
-	var forcedChecks []string
-	if changeImpact != nil {
-		forcedChecks = changeImpact.Checks
-	}
-	checkSelection := selected
-	if fullCoverage {
-		checkSelection = make(map[string]bool, len(finalProject.Report.Managers))
-		for _, manager := range finalProject.Report.Managers {
-			checkSelection[manager.ID] = true
-		}
-	}
-	checkPlans, checkFindings := planChecksWithImpact(finalProject.Report, checkSelection, forcedChecks)
-	findings = append(findings, checkFindings...)
-	checkPlans, executableFindings, executableErr := bindCheckExecutables(checkPlans, runtime)
-	if executableErr != nil {
-		return plan, executableErr
-	}
-	findings = append(findings, executableFindings...)
-	checkFindings = append(checkFindings, executableFindings...)
-	minimumStarts := len(managerTasks) + len(checkPlans)
-	for _, task := range managerTasks {
-		if len(activeChildren(managerTasks, task.ManagerID)) > 0 {
-			minimumStarts++
-		}
-	}
-	if fullCoverage {
-		minimumStarts += len(finalProject.Report.Managers)
-		if runtime.Review == nil {
-			return plan, fmt.Errorf("full coverage requires a configured reviewer for every Manager")
-		}
-		for _, manager := range finalProject.Report.Managers {
-			if _, ok := runtime.Review.Agents[manager.ID]; !ok {
-				return plan, fmt.Errorf("full coverage has no configured reviewer for Manager %s", manager.ID)
-			}
-		}
-	}
-	if runtime.Verifier != nil {
-		minimumStarts++
-	}
-	if runtime.Review != nil {
-		minimumStarts += reviewPhaseStarts(finalProject, managerTasks)
-	}
-	if minimumStarts > runtime.Limits.MaxStarts {
-		return plan, fmt.Errorf("plan requires at least %d manager, check, and verifier starts; configured limit is %d", minimumStarts, runtime.Limits.MaxStarts)
-	}
-	for id, agent := range runtime.Agents {
-		if _, configErr := agent.AgentConfig(); configErr != nil {
-			return plan, fmt.Errorf("invalid runtime agent %s: %w", id, configErr)
-		}
-	}
-	for _, task := range managerTasks {
-		if _, ok := runtime.Agents[task.ManagerID]; !ok {
-			return plan, fmt.Errorf("runtime agent for active Manager %s is not configured", task.ManagerID)
-		}
-	}
-	if runtime.Verifier != nil {
-		if _, configErr := runtime.Verifier.AgentConfig(); configErr != nil {
-			return plan, fmt.Errorf("invalid runtime verifier: %w", configErr)
-		}
-	}
-	if runtime.Review != nil {
-		for managerID, agent := range runtime.Review.Agents {
-			if _, configErr := agent.AgentConfig(); configErr != nil {
-				return plan, fmt.Errorf("invalid runtime reviewer %s: %w", managerID, configErr)
-			}
-		}
-		for _, task := range managerTasks {
-			if _, ok := runtime.Review.Agents[task.ManagerID]; !ok {
-				return plan, fmt.Errorf("runtime reviewer for active Manager %s is not configured", task.ManagerID)
-			}
-		}
-	}
-	if fullCoverage {
-		for _, manager := range finalProject.Report.Managers {
-			if _, ok := runtime.Review.Agents[manager.ID]; !ok {
-				return plan, fmt.Errorf("runtime reviewer for full-coverage Manager %s is not configured", manager.ID)
-			}
-		}
-	}
-	runtimeDigest, err := methodPolicyDigest(runtime)
-	if err != nil {
-		return plan, err
-	}
-	plan = PlanRecord{
-		APIVersion: APIVersion, ID: id, Status: StatusPlanned, Operation: operation, Goal: request.Goal,
-		ExecuteAuthorized: request.ExecuteAuthorized, Root: root,
-		BaseRevision: project.Revision, TargetBranch: targetBranch, TargetHead: targetHead, BaseSnapshot: project.Snapshot.Digest(),
-		WorkingSnapshot:  working.Snapshot.Digest(),
-		RepositoryDigest: repository.Digest, BaseProjectDigest: project.Digest, WorkingProjectDigest: working.Digest,
-		BaseModelDigest: project.Report.ModelDigest,
-		ModelDigest:     finalProject.Report.ModelDigest, ReportDigest: finalProject.Report.Digest,
-		RuntimeDigest: runtimeDigest, RuntimeBindingVersion: methodRuntimeBindingVersion, PlannedAt: time.Now().UTC(), Managers: managerTasks, Strictness: strictness, BriefingDigests: briefingDigests,
-		Checks: checkPlans, ModelEdit: editPlan, InitialCandidateID: initialCandidate.ID,
-		Findings: uniqueSorted(findings), Blockers: uniqueSorted(checkFindings),
-	}
-	if changeBase != nil {
-		plan.ChangeBaseRevision = changeBase.Revision
-		plan.ChangeBaseSnapshot = changeBase.Snapshot.Digest()
-		plan.ChangeBaseProjectDigest = changeBase.Digest
-		plan.ChangeBaseModelDigest = changeBase.Report.ModelDigest
-		plan.ChangeBaseReportDigest = changeBase.Report.Digest
-		plan.ChangeImpact = changeImpact
-		plan.ChangeImpactDigest = changeImpact.Digest
-	}
-	if err := bindExplorationReadiness(root, project, working.Snapshot, request, &plan); err != nil {
+	plan := planFromSemantics(root, basis, semantics)
+	if err := bindExplorationReadiness(root, basis.Project, basis.Working.Snapshot, basis.Request, &plan); err != nil {
 		return plan, err
 	}
 	plan.Digest, err = planDigest(plan)
 	if err != nil {
 		return plan, err
 	}
-	if !request.ExecuteAuthorized {
+	if !basis.Request.ExecuteAuthorized {
 		return plan, nil
 	}
 	if expectedPreview != "" {
@@ -354,29 +54,13 @@ func PlanExpecting(host Host, root, revision string, request PlanRequest, expect
 			return plan, ErrStale
 		}
 	}
-	store, err := newRunStore(root)
-	if err != nil {
-		return plan, err
-	}
-	unlock, err := store.lock()
-	if err != nil {
-		return plan, err
-	}
-	defer unlock()
-	dir, err := store.createRun(id)
-	if err != nil {
-		return plan, err
-	}
-	if err := store.writeCandidate(dir, initialCandidate); err != nil {
-		return plan, err
-	}
-	if err := store.writePlan(plan); err != nil {
+	if err := persistAuthorizedPlan(root, semantics.ID, plan, semantics.InitialCandidate); err != nil {
 		return plan, err
 	}
 	return plan, nil
 }
 
-func planManagers(report projectmodel.Report, baseFiles map[string][]byte, request PlanRequest, edit *EditPlan, changeImpact *projectmodel.ChangeImpact, limits Limits) ([]ManagerTask, map[string]bool, []string, error) {
+func planManagers(report projectmodel.Report, baseFiles map[string][]byte, request PlanRequest, edit *EditPlan, changeImpact *projectmodel.ChangeImpact, limits projectconfig.Limits) ([]ManagerTask, map[string]bool, []string, error) {
 	operation, err := NormalizeOperation(request.Operation)
 	if err != nil {
 		return nil, nil, nil, err

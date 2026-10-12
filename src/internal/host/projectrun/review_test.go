@@ -3,6 +3,8 @@ package projectrun
 import (
 	"context"
 	"encoding/json"
+	"github.com/Glacius-Labs/Markitect/src/internal/host/projectconfig"
+	"github.com/Glacius-Labs/Markitect/src/internal/host/projectexecutor"
 	"os"
 	"path/filepath"
 	"strings"
@@ -20,19 +22,19 @@ func TestReviewerNormalizesEmptyArtifactForReceiptBoundReport(t *testing.T) {
 	root := makeProjectRunFixture(t)
 	host := projectworkHost()
 	managerID := e2eManagerID("orders", "orders")
-	updateE2ERuntime(t, root, func(runtime *Runtime) {
-		agents := map[string]Agent{}
+	updateE2ERuntime(t, root, func(runtime *projectconfig.Runtime) {
+		agents := map[string]projectconfig.Agent{}
 		for id, agent := range runtime.Agents {
 			agents[id] = agent
 		}
-		runtime.Review = &ReviewConfig{Agents: agents, MaxRounds: 2, MaxManagerRounds: 2}
+		runtime.Review = &projectconfig.ReviewConfig{Agents: agents, MaxRounds: 2, MaxManagerRounds: 2}
 	})
 	revision := identityHead(t, root)
 	plan, err := Plan(host, root, revision, PlanRequest{Goal: "Review the empty artifact.", Managers: []string{managerID}, ExecuteAuthorized: true})
 	if err != nil {
 		t.Fatalf("plan review fixture: %v", err)
 	}
-	runtime, err := LoadRuntime(root)
+	runtime, err := projectconfig.LoadRuntime(root)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -570,7 +572,7 @@ func TestIntegrationReviewExpandsRequiredChildDirectoryArtifact(t *testing.T) {
 	rootTask := ManagerTask{ID: "root-task", ManagerID: rootID, Goal: "Integrate orders."}
 	childTask := ManagerTask{ID: "child-task", ManagerID: childID, ParentTask: rootID, Goal: "Implement orders."}
 	plan := PlanRecord{Goal: "Implement orders.", Managers: []ManagerTask{rootTask, childTask}}
-	managerInput, err := scopedArtifacts(project, rootTask, Agent{}, Limits{MaxCandidateFileBytes: 4096, MaxCandidateBytes: 16384}, "integrate", []string{childID})
+	managerInput, err := scopedArtifacts(project, rootTask, projectconfig.Agent{}, projectconfig.Limits{MaxCandidateFileBytes: 4096, MaxCandidateBytes: 16384}, "integrate", []string{childID})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -849,7 +851,7 @@ func TestResumeFailsClosedAtPersistedManagerReworkMarker(t *testing.T) {
 	}
 	rootID := e2eManagerID("", "project-owner")
 	ordersID := e2eManagerID("orders", "orders")
-	report := RunReport{APIVersion: APIVersion, ID: plan.ID, PlanID: plan.ID, Status: StatusInterrupted, Mode: ModeControlledLocal,
+	report := RunReport{APIVersion: APIVersion, ID: plan.ID, PlanID: plan.ID, Status: StatusInterrupted, Mode: projectconfig.ModeControlledLocal,
 		StartedAt: time.Now().UTC(), UpdatedAt: time.Now().UTC(), BaseRevision: plan.BaseRevision, BaseSnapshot: plan.BaseSnapshot,
 		ModelDigest: plan.ModelDigest, RuntimeDigest: plan.RuntimeDigest, Tasks: cloneTasks(plan.Managers),
 		Candidate: CandidateRef{ID: initial.ID, Snapshot: initial.Digest, Files: map[string]string{}}, Revision: 1,
@@ -859,7 +861,7 @@ func TestResumeFailsClosedAtPersistedManagerReworkMarker(t *testing.T) {
 	if err := store.appendState(report); err != nil {
 		t.Fatal(err)
 	}
-	resumed, err := Resume(context.Background(), host, ProcessInvoker{}, root, plan.ID)
+	resumed, err := Resume(context.Background(), host, projectexecutor.ProcessInvoker{}, root, plan.ID)
 	if err == nil || resumed.Status != StatusBlocked || len(resumed.Invocations) != 0 {
 		t.Fatalf("Resume crossed an unfinished persisted rework boundary: status=%s invocations=%d err=%v", resumed.Status, len(resumed.Invocations), err)
 	}

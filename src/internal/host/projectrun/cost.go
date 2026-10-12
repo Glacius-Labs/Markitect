@@ -1,32 +1,25 @@
 package projectrun
 
-import "github.com/Glacius-Labs/Markitect/src/internal/host/agentexec"
+import (
+	"github.com/Glacius-Labs/Markitect/src/internal/host/agentexec"
+	"github.com/Glacius-Labs/Markitect/src/internal/host/projectconfig"
+)
 
 const (
 	CostAccountingComplete = "complete"
 	CostAccountingPartial  = "partial"
 	CostAccountingUnknown  = "unknown"
-
-	CostModeMetered   = "metered"
-	CostModeUnmetered = "unmetered"
 )
 
-// Unmetered reports whether the agent declares that its invocations have no
-// Markitect price. Start, duration and timeout limits still apply to it.
-func (a Agent) Unmetered() bool { return a.CostMode == CostModeUnmetered }
-
-// requiresReportedUsage reports whether missing provider usage must stop the
-// invocation. A metered process executor must report usage so the known-cost
-// budget stays bounded; the native App Server and unmetered agents record
-// missing usage as unknown cost instead.
-func (a Agent) requiresReportedUsage() bool {
-	return a.Transport != TransportCodexAppServer && !a.Unmetered()
+// requiresReportedUsage reports whether missing provider usage must stop an invocation.
+func requiresReportedUsage(agent projectconfig.Agent) bool {
+	return agent.Transport != projectconfig.TransportCodexAppServer && !agent.Unmetered()
 }
 
 // estimateAgentCost prices reported usage with the agent's declared rates. An
 // unmetered agent has no rates, so its cost stays unknown even when the
 // executor reports usage; it never becomes an invented zero.
-func estimateAgentCost(usage *agentexec.Usage, agent Agent) (int64, bool, bool) {
+func estimateAgentCost(usage *agentexec.Usage, agent projectconfig.Agent) (int64, bool, bool) {
 	if agent.Unmetered() {
 		return 0, false, false
 	}
@@ -47,7 +40,7 @@ func costCounts(logs []InvocationLog) (known, unknown int) {
 		} else {
 			unknown++
 		}
-		if life := log.Receipt.Lifecycle; life != nil && life.Provider == TransportCodexAppServer {
+		if life := log.Receipt.Lifecycle; life != nil && life.Provider == projectconfig.TransportCodexAppServer {
 			// Native child/helper role starts have no separately aggregated Usage
 			// in the parent receipt, and partial lifecycle accounting cannot prove
 			// that all model work is represented by this estimate.

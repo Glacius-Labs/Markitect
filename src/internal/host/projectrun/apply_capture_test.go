@@ -3,6 +3,7 @@ package projectrun
 import (
 	"bytes"
 	"context"
+	"github.com/Glacius-Labs/Markitect/src/internal/host/projectexecutor"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -193,11 +194,11 @@ func verifiedApplyRequest(t *testing.T, host Host, root string) (PlanRecord, App
 	if err != nil {
 		t.Fatalf("Plan: %v", err)
 	}
-	run, err := Run(context.Background(), host, ProcessInvoker{}, root, plan.ID)
+	run, err := Run(context.Background(), host, projectexecutor.ProcessInvoker{}, root, plan.ID)
 	if err != nil || run.Status != StatusIntegrated {
 		t.Fatalf("Run: status=%s err=%v", run.Status, err)
 	}
-	verified, err := Verify(context.Background(), host, ProcessInvoker{}, root, plan.ID)
+	verified, err := Verify(context.Background(), host, projectexecutor.ProcessInvoker{}, root, plan.ID)
 	if err != nil || verified.Status != "verified" {
 		t.Fatalf("Verify: status=%s err=%v", verified.Status, err)
 	}

@@ -6,6 +6,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"github.com/Glacius-Labs/Markitect/src/internal/host/projectconfig"
 	"io"
 	"os"
 	"path/filepath"
@@ -33,7 +34,7 @@ const (
 	e2eIntegrationCheckEnv = "MARKITECT_E2E_INTEGRATION_CHECK"
 )
 
-// These process entry points are re-executed by ProcessInvoker and by the
+// These process entry points are re-executed by projectexecutor.ProcessInvoker and by the
 // repository's declared independent checks. They deliberately exercise the
 // same JSON/stdin/stdout boundary as a provider adapter without using a mock
 // Invoker or a paid provider.
@@ -483,7 +484,7 @@ func TestProjectRunExecutorRejectsForeignPathProposal(t *testing.T) {
 	// protects the actual subprocess response parser and authority validator.
 	base := candidateData{Files: map[string]File{}}
 	project := &Project{Report: projectmodel.Report{Managers: []projectmodel.Manager{{ID: "orders", Owns: []string{"src/orders/"}}}}}
-	limits := Limits{MaxCandidateFileBytes: 1024, MaxCandidateBytes: 2048}
+	limits := projectconfig.Limits{MaxCandidateFileBytes: 1024, MaxCandidateBytes: 2048}
 	_, err := applyProposal(base, []agentexec.CandidateFile{{Path: "src/inventory/foreign.txt", Mode: "0644", Content: "x"}},
 		projectwork.Config{InventoryRoots: []string{"src"}}, project.Report,
 		ManagerTask{ManagerID: "orders", Owns: []string{"src/orders/"}}, "work", nil, limits)
@@ -494,8 +495,8 @@ func TestProjectRunExecutorRejectsForeignPathProposal(t *testing.T) {
 
 func enableE2EReviews(t *testing.T, root string, maxCost int64) {
 	t.Helper()
-	updateE2ERuntime(t, root, func(config *Runtime) {
-		config.Review = &ReviewConfig{Agents: map[string]Agent{}, MaxRounds: 3, MaxManagerRounds: 2}
+	updateE2ERuntime(t, root, func(config *projectconfig.Runtime) {
+		config.Review = &projectconfig.ReviewConfig{Agents: map[string]projectconfig.Agent{}, MaxRounds: 3, MaxManagerRounds: 2}
 		for id, agent := range config.Agents {
 			config.Review.Agents[id] = agent
 		}
@@ -540,14 +541,14 @@ func makeMultilevelObligationFixture(t *testing.T) string {
 	writeE2E(t, root, "src/orders/commerce/implementation.txt", "commerce implementation v1\n")
 	gitE2E(t, root, "add", ".")
 	gitE2E(t, root, "commit", "-m", "add nested Commerce obligation fixture")
-	updateE2ERuntime(t, root, func(runtime *Runtime) {
+	updateE2ERuntime(t, root, func(runtime *projectconfig.Runtime) {
 		commerceID := e2eManagerID("orders.commerce", "commerce")
 		runtime.Agents[commerceID] = runtime.Agents[e2eManagerID("orders", "orders")]
-		reviewAgents := make(map[string]Agent, len(runtime.Agents))
+		reviewAgents := make(map[string]projectconfig.Agent, len(runtime.Agents))
 		for managerID, agent := range runtime.Agents {
 			reviewAgents[managerID] = agent
 		}
-		runtime.Review = &ReviewConfig{Agents: reviewAgents, MaxRounds: 3, MaxManagerRounds: 2}
+		runtime.Review = &projectconfig.ReviewConfig{Agents: reviewAgents, MaxRounds: 3, MaxManagerRounds: 2}
 		runtime.Limits.MaxStarts = 24
 	})
 	return root
@@ -604,22 +605,22 @@ func makeProjectRunFixture(t *testing.T) string {
 	args := runtimeFixtureArgs(t, []string{"-test.run=^TestProjectRunExecutorProcess$"})
 	checkCommand := filepath.Base(executable)
 	checkCommandLine := runtimeFixtureCommand(t, checkCommand, "-test.run=^TestProjectRunCheckProcess$")
-	buildAgent := func() Agent {
-		return Agent{Command: executable, Args: args, Model: "fixture-model", ProviderVersion: "e2e-process-v1", Timeout: Duration(30 * time.Second),
+	buildAgent := func() projectconfig.Agent {
+		return projectconfig.Agent{Command: executable, Args: args, Model: "fixture-model", ProviderVersion: "e2e-process-v1", Timeout: projectconfig.Duration(30 * time.Second),
 			MaxStdoutBytes: 1 << 20, MaxStderrBytes: 1 << 20, Environment: []string{"PATH", e2eExecutorEnv, e2eCheckEnv, e2eLogEnv, e2eBehaviorEnv, e2eRootEnv, e2eOmitUsageEnv, e2eIntegrationCheckEnv},
-			Pricing: Pricing{InputMicrosPerMillion: 1, OutputMicrosPerMillion: 1}}
+			Pricing: projectconfig.Pricing{InputMicrosPerMillion: 1, OutputMicrosPerMillion: 1}}
 	}
-	config := Runtime{APIVersion: APIVersion, Mode: ModeControlledLocal, Agents: map[string]Agent{
+	config := projectconfig.Runtime{APIVersion: APIVersion, Mode: projectconfig.ModeControlledLocal, Agents: map[string]projectconfig.Agent{
 		e2eManagerID("", "project-owner"):      buildAgent(),
 		e2eManagerID("orders", "orders"):       buildAgent(),
 		e2eManagerID("inventory", "inventory"): buildAgent(),
-	}, Limits: Limits{MaxDepth: 4, MaxStarts: 16, MaxRetries: 0, MaxParallel: 1, MaxDuration: Duration(4 * time.Minute), MaxCostMicros: 100000,
+	}, Limits: projectconfig.Limits{MaxDepth: 4, MaxStarts: 16, MaxRetries: 0, MaxParallel: 1, MaxDuration: projectconfig.Duration(4 * time.Minute), MaxCostMicros: 100000,
 		MaxCandidateFileBytes: 4096, MaxCandidateBytes: 16384}}
 	configBytes, err := yaml.Marshal(config)
 	if err != nil {
 		t.Fatal(err)
 	}
-	writeE2E(t, root, RuntimePath, string(configBytes))
+	writeE2E(t, root, projectconfig.RuntimePath, string(configBytes))
 	// The check argv is modeled as a literal bare executable plus fixed args.
 	for _, file := range []string{".markitect/model/orders/check.yaml", ".markitect/model/inventory/check.yaml"} {
 		data, err := os.ReadFile(filepath.Join(root, filepath.FromSlash(file)))
@@ -634,20 +635,20 @@ func makeProjectRunFixture(t *testing.T) string {
 	return root
 }
 
-func updateE2ERuntime(t *testing.T, root string, update func(*Runtime)) {
+func updateE2ERuntime(t *testing.T, root string, update func(*projectconfig.Runtime)) {
 	t.Helper()
-	path := filepath.Join(root, filepath.FromSlash(RuntimePath))
+	path := filepath.Join(root, filepath.FromSlash(projectconfig.RuntimePath))
 	data, err := os.ReadFile(path)
 	if err != nil {
 		t.Fatal(err)
 	}
-	var runtime Runtime
+	var runtime projectconfig.Runtime
 	if err := yaml.Unmarshal(data, &runtime); err != nil {
 		t.Fatal(err)
 	}
 	update(&runtime)
-	bind := func(agent Agent) Agent {
-		if agent.Transport == TransportProcess {
+	bind := func(agent projectconfig.Agent) projectconfig.Agent {
+		if agent.Transport == projectconfig.TransportProcess {
 			agent.Args = runtimeFixtureArgs(t, agent.Args)
 		}
 		return agent
@@ -668,8 +669,8 @@ func updateE2ERuntime(t *testing.T, root string, update func(*Runtime)) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	writeE2E(t, root, RuntimePath, string(updated))
-	gitE2E(t, root, "add", RuntimePath)
+	writeE2E(t, root, projectconfig.RuntimePath, string(updated))
+	gitE2E(t, root, "add", projectconfig.RuntimePath)
 	gitE2E(t, root, "commit", "-m", "adjust projectrun test runtime")
 }
 

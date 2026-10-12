@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/Glacius-Labs/Markitect/src/internal/host/projectconfig"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -30,13 +31,13 @@ func RunReadOnlyRepository(
 	sourceRoot, privateLogDirectory string,
 	config agentexec.Config,
 	request agentexec.Request,
-	limits Limits,
+	limits projectconfig.Limits,
 ) (agentexec.RunResult, error) {
 	if ctx == nil || service == nil || invoker == nil {
 		return agentexec.RunResult{}, errors.New("read-only repository invocation requires context, workspace service, and invoker")
 	}
-	if config.Transport != TransportCodexAppServer {
-		return agentexec.RunResult{}, fmt.Errorf("read-only repository invocation requires transport %q", TransportCodexAppServer)
+	if config.Transport != projectconfig.TransportCodexAppServer {
+		return agentexec.RunResult{}, fmt.Errorf("read-only repository invocation requires transport %q", projectconfig.TransportCodexAppServer)
 	}
 	if strings.TrimSpace(privateLogDirectory) == "" || limits.MaxCandidateFileBytes <= 0 || limits.MaxCandidateFileBytes > 8<<20 ||
 		limits.MaxCandidateBytes < limits.MaxCandidateFileBytes || limits.MaxCandidateBytes > 32<<20 {

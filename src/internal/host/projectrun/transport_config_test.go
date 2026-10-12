@@ -3,6 +3,8 @@ package projectrun
 import (
 	"context"
 	"encoding/json"
+	"github.com/Glacius-Labs/Markitect/src/internal/host/projectconfig"
+	"github.com/Glacius-Labs/Markitect/src/internal/host/projectexecutor"
 	"os"
 	"reflect"
 	"strings"
@@ -14,7 +16,7 @@ import (
 	"go.yaml.in/yaml/v3"
 )
 
-func appServerAgent(t *testing.T) Agent {
+func appServerAgent(t *testing.T) projectconfig.Agent {
 	t.Helper()
 	command, err := os.Executable()
 	if err != nil {
@@ -23,12 +25,12 @@ func appServerAgent(t *testing.T) Agent {
 	agent := validRuntime().Agents["commerce"]
 	agent.Command = command
 	agent.Args = nil
-	agent.Transport = TransportCodexAppServer
+	agent.Transport = projectconfig.TransportCodexAppServer
 	agent.WorkspaceMode = "git"
 	agent.InstructionPaths = []string{"AGENTS.md"}
-	agent.AppServer = &AppServerSettings{
+	agent.AppServer = &projectconfig.AppServerSettings{
 		ReasoningEffort: "high",
-		Helpers:         AppServerHelpers{Enabled: false},
+		Helpers:         projectconfig.AppServerHelpers{Enabled: false},
 		MaxEventBytes:   1 << 20,
 	}
 	return agent
@@ -38,20 +40,20 @@ func TestAppServerRuntimeConfigProducesTransportFingerprint(t *testing.T) {
 	config := validRuntime()
 	agent := appServerAgent(t)
 	config.Agents["commerce"] = agent
-	if err := ValidateRuntime(config); err != nil {
+	if err := projectconfig.ValidateRuntime(config); err != nil {
 		t.Fatalf("valid native runtime: %v", err)
 	}
 	shared, err := agent.AgentConfig()
 	if err != nil {
 		t.Fatalf("AgentConfig: %v", err)
 	}
-	if shared.Transport != TransportCodexAppServer || shared.WorkspaceMode != "" || len(shared.TransportConfig) == 0 {
+	if shared.Transport != projectconfig.TransportCodexAppServer || shared.WorkspaceMode != "" || len(shared.TransportConfig) == 0 {
 		t.Fatalf("shared native config leaked or omitted transport binding: %#v", shared)
 	}
 	if shared.EnvironmentAllowlist == nil {
 		t.Fatal("omitted environmentMode must preserve the existing explicit environment name list")
 	}
-	var encoded AppServerSettings
+	var encoded projectconfig.AppServerSettings
 	if err := json.Unmarshal(shared.TransportConfig, &encoded); err != nil || encoded.ReasoningEffort != "high" || encoded.MaxEventBytes != 1<<20 {
 		t.Fatalf("transport config = %#v err=%v", encoded, err)
 	}
@@ -79,7 +81,7 @@ func TestAppServerRuntimeConfigProducesTransportFingerprint(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	var decoded Runtime
+	var decoded projectconfig.Runtime
 	decoder := yaml.NewDecoder(strings.NewReader(string(data)))
 	decoder.KnownFields(true)
 	if err := decoder.Decode(&decoded); err != nil {
@@ -98,9 +100,9 @@ func TestNativeInheritedEnvironmentModeBindsEffectiveCallerEnvironment(t *testin
 	agent.Model = "gpt-6-luna"
 	agent.ProviderVersion = codexappserver.SupportedProviderVersion
 	agent.Environment = []string{"PATH"}
-	agent.AppServer.EnvironmentMode = AppServerEnvironmentModeInherit
+	agent.AppServer.EnvironmentMode = projectconfig.AppServerEnvironmentModeInherit
 	config.Agents["commerce"] = agent
-	if err := ValidateRuntime(config); err != nil {
+	if err := projectconfig.ValidateRuntime(config); err != nil {
 		t.Fatalf("native inherited environment runtime: %v", err)
 	}
 	shared, err := agent.AgentConfig()
@@ -113,15 +115,15 @@ func TestNativeInheritedEnvironmentModeBindsEffectiveCallerEnvironment(t *testin
 	if !reflect.DeepEqual(agent.Environment, []string{"PATH"}) {
 		t.Fatalf("native inheritance must not widen declared-check name policy: %#v", agent.Environment)
 	}
-	var encoded AppServerSettings
-	if err := json.Unmarshal(shared.TransportConfig, &encoded); err != nil || encoded.EnvironmentMode != AppServerEnvironmentModeInherit {
+	var encoded projectconfig.AppServerSettings
+	if err := json.Unmarshal(shared.TransportConfig, &encoded); err != nil || encoded.EnvironmentMode != projectconfig.AppServerEnvironmentModeInherit {
 		t.Fatalf("environment mode did not flow into transport config: %+v err=%v", encoded, err)
 	}
 	serialized, err := json.Marshal(shared)
 	if err != nil || strings.Contains(string(serialized), "first-sensitive-value") {
 		t.Fatalf("effective environment value leaked into invocation config: err=%v", err)
 	}
-	invoker := NewTransportInvokerWithoutHostHelpers(codexappserver.Options{})
+	invoker := projectexecutor.NewChild(codexappserver.Options{})
 	first, err := invoker.Fingerprint(shared)
 	if err != nil {
 		t.Fatalf("fingerprint inherited native environment: %v", err)
@@ -139,10 +141,10 @@ func TestNativeInheritedEnvironmentModeBindsEffectiveCallerEnvironment(t *testin
 	if err != nil {
 		t.Fatal(err)
 	}
-	var decoded Runtime
+	var decoded projectconfig.Runtime
 	decoder := yaml.NewDecoder(strings.NewReader(string(runtimeYAML)))
 	decoder.KnownFields(true)
-	if err := decoder.Decode(&decoded); err != nil || decoded.Agents["commerce"].AppServer.EnvironmentMode != AppServerEnvironmentModeInherit {
+	if err := decoder.Decode(&decoded); err != nil || decoded.Agents["commerce"].AppServer.EnvironmentMode != projectconfig.AppServerEnvironmentModeInherit {
 		t.Fatalf("strict runtime YAML round trip lost environment mode: err=%v", err)
 	}
 }
@@ -150,19 +152,19 @@ func TestNativeInheritedEnvironmentModeBindsEffectiveCallerEnvironment(t *testin
 func TestNativeInheritedEnvironmentModeRequiresNativeOwnedGitAndClosedValue(t *testing.T) {
 	for _, test := range []struct {
 		name   string
-		change func(*Agent)
+		change func(*projectconfig.Agent)
 		want   string
 	}{
-		{"requires owned Git", func(agent *Agent) { agent.WorkspaceMode = ""; agent.InstructionPaths = nil }, "requires native codex-app-server with owned git workspace"},
-		{"closed mode", func(agent *Agent) { agent.AppServer.EnvironmentMode = "all" }, "must be empty or inherit"},
+		{"requires owned Git", func(agent *projectconfig.Agent) { agent.WorkspaceMode = ""; agent.InstructionPaths = nil }, "requires native codex-app-server with owned git workspace"},
+		{"closed mode", func(agent *projectconfig.Agent) { agent.AppServer.EnvironmentMode = "all" }, "must be empty or inherit"},
 	} {
 		t.Run(test.name, func(t *testing.T) {
 			config := validRuntime()
 			agent := appServerAgent(t)
-			agent.AppServer.EnvironmentMode = AppServerEnvironmentModeInherit
+			agent.AppServer.EnvironmentMode = projectconfig.AppServerEnvironmentModeInherit
 			test.change(&agent)
 			config.Agents["commerce"] = agent
-			if err := ValidateRuntime(config); err == nil || !strings.Contains(err.Error(), test.want) {
+			if err := projectconfig.ValidateRuntime(config); err == nil || !strings.Contains(err.Error(), test.want) {
 				t.Fatalf("expected %q validation error, got %v", test.want, err)
 			}
 		})
@@ -173,7 +175,7 @@ func TestWindowsSandboxBackendFlowsThroughRuntimeAndFingerprint(t *testing.T) {
 	config := validRuntime()
 	worker := appServerAgent(t)
 	config.Agents["commerce"] = worker
-	if err := ValidateRuntime(config); err != nil {
+	if err := projectconfig.ValidateRuntime(config); err != nil {
 		t.Fatalf("omitted backend should remain valid: %v", err)
 	}
 	baseShared, err := worker.AgentConfig()
@@ -186,14 +188,14 @@ func TestWindowsSandboxBackendFlowsThroughRuntimeAndFingerprint(t *testing.T) {
 	}
 	worker.AppServer.WindowsSandboxBackend = codexappserver.WindowsSandboxBackendMXC
 	config.Agents["commerce"] = worker
-	if err := ValidateRuntime(config); err != nil {
+	if err := projectconfig.ValidateRuntime(config); err != nil {
 		t.Fatalf("mxc runtime should validate: %v", err)
 	}
 	mxcShared, err := worker.AgentConfig()
 	if err != nil {
 		t.Fatal(err)
 	}
-	var encoded AppServerSettings
+	var encoded projectconfig.AppServerSettings
 	if err := json.Unmarshal(mxcShared.TransportConfig, &encoded); err != nil || encoded.WindowsSandboxBackend != codexappserver.WindowsSandboxBackendMXC {
 		t.Fatalf("mxc setting did not flow into explicit transport config: %+v err=%v", encoded, err)
 	}
@@ -205,7 +207,7 @@ func TestWindowsSandboxBackendFlowsThroughRuntimeAndFingerprint(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	var decoded Runtime
+	var decoded projectconfig.Runtime
 	decoder := yaml.NewDecoder(strings.NewReader(string(runtimeYAML)))
 	decoder.KnownFields(true)
 	if err := decoder.Decode(&decoded); err != nil || decoded.Agents["commerce"].AppServer.WindowsSandboxBackend != codexappserver.WindowsSandboxBackendMXC {
@@ -213,7 +215,7 @@ func TestWindowsSandboxBackendFlowsThroughRuntimeAndFingerprint(t *testing.T) {
 	}
 	worker.AppServer.WindowsSandboxBackend = "other"
 	config.Agents["commerce"] = worker
-	if err := ValidateRuntime(config); err == nil || !strings.Contains(err.Error(), "supported value is mxc") {
+	if err := projectconfig.ValidateRuntime(config); err == nil || !strings.Contains(err.Error(), "supported value is mxc") {
 		t.Fatalf("unsupported backend was accepted: %v", err)
 	}
 }
@@ -225,13 +227,13 @@ func TestNativeGitWorkspaceAllowsSeparateReadOnlyReviewerAndVerifier(t *testing.
 	readonly := appServerAgent(t)
 	readonly.WorkspaceMode = ""
 	readonly.InstructionPaths = nil
-	config.Review = &ReviewConfig{Agents: map[string]Agent{"commerce": readonly}, MaxRounds: 1, MaxManagerRounds: 1}
+	config.Review = &projectconfig.ReviewConfig{Agents: map[string]projectconfig.Agent{"commerce": readonly}, MaxRounds: 1, MaxManagerRounds: 1}
 	config.Verifier = &readonly
-	if err := ValidateRuntime(config); err != nil {
+	if err := projectconfig.ValidateRuntime(config); err != nil {
 		t.Fatalf("separate native read-only roles were rejected: %v", err)
 	}
-	assessment, err := ReadOnlyAgent(config, "commerce")
-	if err != nil || assessment.Transport != TransportCodexAppServer || assessment.WorkspaceMode != "" {
+	assessment, err := projectconfig.ReadOnlyAgent(config, "commerce")
+	if err != nil || assessment.Transport != projectconfig.TransportCodexAppServer || assessment.WorkspaceMode != "" {
 		t.Fatalf("read-only native assessment = %#v, err=%v", assessment, err)
 	}
 }
@@ -239,38 +241,38 @@ func TestNativeGitWorkspaceAllowsSeparateReadOnlyReviewerAndVerifier(t *testing.
 func TestValidateRuntimeRejectsNativeTransportMismatchAndUnboundedSettings(t *testing.T) {
 	tests := []struct {
 		name   string
-		change func(*Agent)
+		change func(*projectconfig.Agent)
 		want   string
 	}{
-		{"unknown transport", func(a *Agent) { a.Transport = "other" }, "unsupported transport"},
-		{"missing app server settings", func(a *Agent) { a.AppServer = nil }, "requires explicit appServer settings"},
-		{"settings with process transport", func(a *Agent) { a.AppServer = appServerAgent(t).AppServer }, "require transport"},
-		{"git workspace with process transport", func(a *Agent) {
-			a.Transport = TransportProcess
+		{"unknown transport", func(a *projectconfig.Agent) { a.Transport = "other" }, "unsupported transport"},
+		{"missing app server settings", func(a *projectconfig.Agent) { a.AppServer = nil }, "requires explicit appServer settings"},
+		{"settings with process transport", func(a *projectconfig.Agent) { a.AppServer = appServerAgent(t).AppServer }, "require transport"},
+		{"git workspace with process transport", func(a *projectconfig.Agent) {
+			a.Transport = projectconfig.TransportProcess
 			a.AppServer = nil
 			a.WorkspaceMode = "git"
 			a.InstructionPaths = []string{"AGENTS.md"}
 		}, "requires transport"},
-		{"relative native executable", func(a *Agent) { a.Command = "codex" }, "absolute executable"},
-		{"native command arguments", func(a *Agent) { a.Args = []string{"--version"} }, "does not accept command arguments"},
-		{"native model options", func(a *Agent) { a.ModelOptions = map[string]any{"temperature": 0.1} }, "does not accept modelOptions"},
-		{"native scoped workspace", func(a *Agent) { a.WorkspaceMode = "scoped" }, "requires workspaceMode git"},
-		{"missing native instructions", func(a *Agent) { a.InstructionPaths = nil }, "instructionPaths"},
-		{"invalid helper bounds", func(a *Agent) {
-			a.AppServer.Helpers = AppServerHelpers{Enabled: true, MaxStartRequests: 0, MaxDepth: 1}
+		{"relative native executable", func(a *projectconfig.Agent) { a.Command = "codex" }, "absolute executable"},
+		{"native command arguments", func(a *projectconfig.Agent) { a.Args = []string{"--version"} }, "does not accept command arguments"},
+		{"native model options", func(a *projectconfig.Agent) { a.ModelOptions = map[string]any{"temperature": 0.1} }, "does not accept modelOptions"},
+		{"native scoped workspace", func(a *projectconfig.Agent) { a.WorkspaceMode = "scoped" }, "requires workspaceMode git"},
+		{"missing native instructions", func(a *projectconfig.Agent) { a.InstructionPaths = nil }, "instructionPaths"},
+		{"invalid helper bounds", func(a *projectconfig.Agent) {
+			a.AppServer.Helpers = projectconfig.AppServerHelpers{Enabled: true, MaxStartRequests: 0, MaxDepth: 1}
 		}, "helper policy"},
-		{"missing event bound", func(a *Agent) { a.AppServer.MaxEventBytes = 0 }, "positive time and event byte limits"},
+		{"missing event bound", func(a *projectconfig.Agent) { a.AppServer.MaxEventBytes = 0 }, "positive time and event byte limits"},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			config := validRuntime()
 			agent := appServerAgent(t)
 			if strings.Contains(test.name, "settings with process") {
-				agent.Transport = TransportProcess
+				agent.Transport = projectconfig.TransportProcess
 			}
 			test.change(&agent)
 			config.Agents["commerce"] = agent
-			if err := ValidateRuntime(config); err == nil || !strings.Contains(err.Error(), test.want) {
+			if err := projectconfig.ValidateRuntime(config); err == nil || !strings.Contains(err.Error(), test.want) {
 				t.Fatalf("expected error containing %q, got %v", test.want, err)
 			}
 		})
@@ -294,7 +296,7 @@ func TestAgentexecFingerprintValidatesTransportConfigAndRunDoesNotLaunchIt(t *te
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 	defer cancel()
-	if _, err := agentexec.Run(ctx, agentexec.Config{Transport: TransportCodexAppServer}, agentexec.Request{}, agentexec.RunOptions{}); err == nil || !strings.Contains(err.Error(), "route through its configured Invoker") {
+	if _, err := agentexec.Run(ctx, agentexec.Config{Transport: projectconfig.TransportCodexAppServer}, agentexec.Request{}, agentexec.RunOptions{}); err == nil || !strings.Contains(err.Error(), "route through its configured Invoker") {
 		t.Fatalf("process runner native routing error = %v", err)
 	}
 }

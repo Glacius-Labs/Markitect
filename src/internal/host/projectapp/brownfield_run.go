@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/Glacius-Labs/Markitect/src/internal/host/projectconfig"
 	"github.com/Glacius-Labs/Markitect/src/internal/host/projectworkspace"
 	"path/filepath"
 	"time"
@@ -78,11 +79,11 @@ func (o Operations) BrownfieldRun(ctx context.Context, operation BrownfieldRunOp
 	if request.IterationID == "" || request.Phase == "" || request.AgentManagerID == "" {
 		return BrownfieldManagerRunOutput{}, errors.New("adopt manager-run input requires iterationId, phase, and agentManagerId")
 	}
-	runtime, err := projectrun.LoadRuntime(operation.Root)
+	runtime, err := projectconfig.LoadRuntime(operation.Root)
 	if err != nil {
 		return BrownfieldManagerRunOutput{}, fmt.Errorf("load target project runtime: %w", err)
 	}
-	selectedAgent, err := projectrun.ReadOnlyAgent(runtime, request.AgentManagerID)
+	selectedAgent, err := projectconfig.ReadOnlyAgent(runtime, request.AgentManagerID)
 	if err != nil {
 		return BrownfieldManagerRunOutput{}, fmt.Errorf("select read-only adoption binding for explicitly selected Manager %q: %w", request.AgentManagerID, err)
 	}
@@ -108,7 +109,7 @@ func (o Operations) BrownfieldRun(ctx context.Context, operation BrownfieldRunOp
 		// On a preview, --expect is an optional current-session precondition.
 		expectedSessionDigest = operation.ExpectedDigest
 	}
-	if selectedAgent.Transport == projectrun.TransportCodexAppServer {
+	if selectedAgent.Transport == projectconfig.TransportCodexAppServer {
 		invoker = brownfieldReadOnlyInvoker{underlying: invoker, service: o.Host.Workspaces, sourceRoot: sourceRoot, privateLogs: filepath.Join(operation.Root, ".markitect", "runs", "private"), limits: runtime.Limits}
 	}
 	preview, err := projectadoption.PreviewManagerStageWithInvoker(sourceRoot, operation.Root, operation.SessionID, request.IterationID,
@@ -143,7 +144,7 @@ type brownfieldReadOnlyInvoker struct {
 	service     projectworkspace.Service
 	sourceRoot  string
 	privateLogs string
-	limits      projectrun.Limits
+	limits      projectconfig.Limits
 }
 
 func (i brownfieldReadOnlyInvoker) Fingerprint(config agentexec.Config) (string, error) {

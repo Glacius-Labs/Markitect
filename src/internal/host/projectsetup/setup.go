@@ -8,6 +8,7 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
+	"github.com/Glacius-Labs/Markitect/src/internal/host/projectconfig"
 	"io"
 	"io/fs"
 	"os"
@@ -21,7 +22,6 @@ import (
 
 	"github.com/Glacius-Labs/Markitect/src/internal/host/agentexec"
 	"github.com/Glacius-Labs/Markitect/src/internal/host/codexappserver"
-	"github.com/Glacius-Labs/Markitect/src/internal/host/projectrun"
 	"github.com/Glacius-Labs/Markitect/src/internal/host/projectwork"
 	"go.yaml.in/yaml/v3"
 )
@@ -109,7 +109,7 @@ type roleProfile struct {
 	provider, model, effort       string
 	executable, version, costMode string
 	args, environment             []string
-	pricing                       projectrun.Pricing
+	pricing                       projectconfig.Pricing
 }
 
 type Tool struct {
@@ -215,7 +215,7 @@ func previewEditWithDiscovery(project *projectwork.Project, options Options, dis
 // BuildRuntime builds the runtime proposal. found is the discovery of the
 // default profile's executable; a role that selects another executable is
 // discovered separately.
-func BuildRuntime(project *projectwork.Project, options Options, found Discovery) (projectrun.Runtime, error) {
+func BuildRuntime(project *projectwork.Project, options Options, found Discovery) (projectconfig.Runtime, error) {
 	return buildRuntime(project, options, cachedDiscovery(map[string]Discovery{discoveryKey(options): found}, Discover))
 }
 
@@ -253,8 +253,8 @@ func discoveryKey(options Options) string {
 	return options.Provider + "\x00" + options.ProviderExecutable + "\x00" + version
 }
 
-func buildRuntime(project *projectwork.Project, options Options, discover func(Options) (Discovery, error)) (projectrun.Runtime, error) {
-	var config projectrun.Runtime
+func buildRuntime(project *projectwork.Project, options Options, discover func(Options) (Discovery, error)) (projectconfig.Runtime, error) {
+	var config projectconfig.Runtime
 	if project == nil || len(project.Report.Managers) == 0 {
 		return config, errors.New("active project must contain at least one Manager")
 	}
@@ -270,7 +270,7 @@ func buildRuntime(project *projectwork.Project, options Options, discover func(O
 		return config, err
 	}
 	builder := &agentBuilder{project: project, options: options, discover: discover}
-	roleAgents := make(map[string]projectrun.Agent, len(profiles))
+	roleAgents := make(map[string]projectconfig.Agent, len(profiles))
 	for _, role := range []string{RoleManager, RoleReviewer, RoleVerifier} {
 		agent, err := builder.agent(role, profiles[role])
 		if err != nil {
@@ -278,8 +278,8 @@ func buildRuntime(project *projectwork.Project, options Options, discover func(O
 		}
 		roleAgents[role] = agent
 	}
-	agents := make(map[string]projectrun.Agent, len(project.Report.Managers))
-	reviewAgents := make(map[string]projectrun.Agent, len(project.Report.Managers))
+	agents := make(map[string]projectconfig.Agent, len(project.Report.Managers))
+	reviewAgents := make(map[string]projectconfig.Agent, len(project.Report.Managers))
 	for _, manager := range project.Report.Managers {
 		if manager.ID == "" {
 			return config, errors.New("active project has a Manager with an empty ID")
@@ -288,29 +288,29 @@ func buildRuntime(project *projectwork.Project, options Options, discover func(O
 		reviewAgents[manager.ID] = cloneAgent(roleAgents[RoleReviewer])
 	}
 	verifier := cloneAgent(roleAgents[RoleVerifier])
-	config = projectrun.Runtime{
-		APIVersion: projectrun.APIVersion, Mode: projectrun.ModeControlledLocal, RequireIsolation: false,
+	config = projectconfig.Runtime{
+		APIVersion: projectconfig.APIVersion, Mode: projectconfig.ModeControlledLocal, RequireIsolation: false,
 		Agents: agents, Verifier: &verifier,
-		Review: &projectrun.ReviewConfig{
+		Review: &projectconfig.ReviewConfig{
 			Agents: reviewAgents, MaxRounds: DefaultReviewMaxRounds, MaxManagerRounds: DefaultReviewMaxManagerRounds,
 		},
-		Limits: projectrun.Limits{
+		Limits: projectconfig.Limits{
 			MaxDepth: DefaultMaxDepth, MaxStarts: DefaultMaxStarts, MaxRetries: 1, MaxParallel: DefaultMaxParallel,
-			MaxDuration: projectrun.Duration(DefaultMaxRunTime), MaxCostMicros: options.MaxCostMicros,
+			MaxDuration: projectconfig.Duration(DefaultMaxRunTime), MaxCostMicros: options.MaxCostMicros,
 			MaxCandidateFileBytes: DefaultMaxFileBytes, MaxCandidateBytes: DefaultMaxTotalBytes,
 		},
 	}
-	if err := projectrun.ValidateRuntime(config); err != nil {
-		return projectrun.Runtime{}, fmt.Errorf("validate generated runtime: %w", err)
+	if err := projectconfig.ValidateRuntime(config); err != nil {
+		return projectconfig.Runtime{}, fmt.Errorf("validate generated runtime: %w", err)
 	}
-	for _, roleAgents := range []map[string]projectrun.Agent{agents, reviewAgents} {
+	for _, roleAgents := range []map[string]projectconfig.Agent{agents, reviewAgents} {
 		for _, agent := range roleAgents {
 			agentConfig, err := agent.AgentConfig()
 			if err != nil {
-				return projectrun.Runtime{}, err
+				return projectconfig.Runtime{}, err
 			}
 			if _, err := agentexec.Fingerprint(agentConfig); err != nil {
-				return projectrun.Runtime{}, fmt.Errorf("validate selected runtime fingerprints: %w", err)
+				return projectconfig.Runtime{}, fmt.Errorf("validate selected runtime fingerprints: %w", err)
 			}
 		}
 	}
@@ -347,7 +347,7 @@ func resolveRoleProfiles(options Options) (map[string]roleProfile, error) {
 	base := roleProfile{provider: options.Provider, model: options.Model, effort: options.Effort,
 		executable: options.ProviderExecutable, version: options.ProviderVersion, costMode: options.CostMode,
 		args: options.ProviderArgs, environment: options.Environment,
-		pricing: projectrun.Pricing{InputMicrosPerMillion: options.InputMicrosPerMillion, OutputMicrosPerMillion: options.OutputMicrosPerMillion}}
+		pricing: projectconfig.Pricing{InputMicrosPerMillion: options.InputMicrosPerMillion, OutputMicrosPerMillion: options.OutputMicrosPerMillion}}
 	var overrides RoleOptions
 	if options.Roles != nil {
 		overrides = *options.Roles
@@ -384,8 +384,8 @@ func resolveRoleProfiles(options Options) (map[string]roleProfile, error) {
 			}
 			if override.CostMode != "" {
 				profile.costMode = override.CostMode
-				if override.CostMode == projectrun.CostModeUnmetered {
-					profile.pricing = projectrun.Pricing{}
+				if override.CostMode == projectconfig.CostModeUnmetered {
+					profile.pricing = projectconfig.Pricing{}
 				}
 			}
 			if override.InputMicrosPerMillion != nil {
@@ -408,21 +408,21 @@ func validateRoleProfile(profile *roleProfile) error {
 		return errors.New("model must be nonempty and have no surrounding whitespace")
 	}
 	switch profile.costMode {
-	case "", projectrun.CostModeMetered:
+	case "", projectconfig.CostModeMetered:
 		if profile.pricing.InputMicrosPerMillion < 0 || profile.pricing.OutputMicrosPerMillion < 0 ||
 			(profile.pricing.InputMicrosPerMillion == 0 && profile.pricing.OutputMicrosPerMillion == 0) {
 			return errors.New("a metered agent requires explicit nonnegative input/output rates with at least one positive rate")
 		}
-	case projectrun.CostModeUnmetered:
-		if profile.pricing != (projectrun.Pricing{}) {
+	case projectconfig.CostModeUnmetered:
+		if profile.pricing != (projectconfig.Pricing{}) {
 			return errors.New("an unmetered agent must not declare input/output rates")
 		}
 	default:
-		return fmt.Errorf("unsupported cost mode %q; use %q or %q", profile.costMode, projectrun.CostModeMetered, projectrun.CostModeUnmetered)
+		return fmt.Errorf("unsupported cost mode %q; use %q or %q", profile.costMode, projectconfig.CostModeMetered, projectconfig.CostModeUnmetered)
 	}
 	switch profile.provider {
 	case ProviderCodex:
-		if profile.costMode == projectrun.CostModeUnmetered {
+		if profile.costMode == projectconfig.CostModeUnmetered {
 			return errors.New("the Codex App Server reports token usage and must be metered; unmetered applies to process executors")
 		}
 		if profile.effort == "" {
@@ -472,29 +472,29 @@ func roleSelection(options Options, profile roleProfile) Options {
 	return selected
 }
 
-func (b *agentBuilder) agent(role string, profile roleProfile) (projectrun.Agent, error) {
+func (b *agentBuilder) agent(role string, profile roleProfile) (projectconfig.Agent, error) {
 	found, err := b.discover(roleSelection(b.options, profile))
 	if err != nil {
-		return projectrun.Agent{}, fmt.Errorf("%s executor: %w", role, err)
+		return projectconfig.Agent{}, fmt.Errorf("%s executor: %w", role, err)
 	}
 	if found.Provider != profile.provider || found.ProviderBinary.Path == "" || !filepath.IsAbs(found.ProviderBinary.Path) {
-		return projectrun.Agent{}, fmt.Errorf("%s executor discovery does not match the selected provider", role)
+		return projectconfig.Agent{}, fmt.Errorf("%s executor discovery does not match the selected provider", role)
 	}
 	if profile.provider == ProviderProcess {
 		return processAgent(profile, found), nil
 	}
 	if found.ProviderBinary.Version != codexappserver.SupportedProviderVersion {
-		return projectrun.Agent{}, errors.New("native Codex setup requires Codex CLI 0.162.0")
+		return projectconfig.Agent{}, errors.New("native Codex setup requires Codex CLI 0.162.0")
 	}
 	if !b.instructionsRead {
 		b.instructionPaths, b.instructionFiles, err = nativeInstructionFiles(b.project, ProviderCodex)
 		if err != nil {
-			return projectrun.Agent{}, err
+			return projectconfig.Agent{}, err
 		}
 		b.instructionsRead = true
 	}
 	if len(b.instructionPaths) == 0 {
-		return projectrun.Agent{}, errors.New("native Codex setup requires existing generated Codex project instructions; run project onboard first")
+		return projectconfig.Agent{}, errors.New("native Codex setup requires existing generated Codex project instructions; run project onboard first")
 	}
 	sandboxBackend := b.options.WindowsSandboxBackend
 	if sandboxBackend == "" && runtime.GOOS == "windows" {
@@ -518,20 +518,20 @@ func (b *agentBuilder) agent(role string, profile roleProfile) (projectrun.Agent
 	return agent, nil
 }
 
-func selectedAgent(found Discovery, model, effort, permissionProfile string, sandboxBackend codexappserver.WindowsSandboxBackend, files []agentexec.RuntimeFile, environment []string, pricing projectrun.Pricing) projectrun.Agent {
-	return projectrun.Agent{
-		Command: found.ProviderBinary.Path, Transport: projectrun.TransportCodexAppServer,
-		AppServer: &projectrun.AppServerSettings{
+func selectedAgent(found Discovery, model, effort, permissionProfile string, sandboxBackend codexappserver.WindowsSandboxBackend, files []agentexec.RuntimeFile, environment []string, pricing projectconfig.Pricing) projectconfig.Agent {
+	return projectconfig.Agent{
+		Command: found.ProviderBinary.Path, Transport: projectconfig.TransportCodexAppServer,
+		AppServer: &projectconfig.AppServerSettings{
 			ReasoningEffort: effort,
 			// BuildRuntime supplies one shared :workspace profile by default.
 			PermissionProfile:     permissionProfile,
-			EnvironmentMode:       projectrun.AppServerEnvironmentModeInherit,
+			EnvironmentMode:       projectconfig.AppServerEnvironmentModeInherit,
 			WindowsSandboxBackend: sandboxBackend,
-			Helpers:               projectrun.AppServerHelpers{Enabled: true, MaxStartRequests: DefaultMaxHelperStarts, MaxDepth: 1},
+			Helpers:               projectconfig.AppServerHelpers{Enabled: true, MaxStartRequests: DefaultMaxHelperStarts, MaxDepth: 1},
 			MaxEventBytes:         DefaultMaxEventBytes,
 		},
 		Model: model, ProviderVersion: found.ProviderBinary.Version,
-		Timeout: projectrun.Duration(DefaultTimeout), MaxStdoutBytes: DefaultMaxStdout, MaxStderrBytes: DefaultMaxStderr,
+		Timeout: projectconfig.Duration(DefaultTimeout), MaxStdoutBytes: DefaultMaxStdout, MaxStderrBytes: DefaultMaxStderr,
 		RuntimeFiles: append([]agentexec.RuntimeFile(nil), files...), Environment: append([]string(nil), environment...), Pricing: pricing,
 	}
 }
@@ -539,7 +539,7 @@ func selectedAgent(found Discovery, model, effort, permissionProfile string, san
 // processAgent selects a bring-your-own executor over the process transport.
 // It receives each invocation on stdin and returns candidate files and reports
 // on stdout; its executable bytes are pinned and its environment is explicit.
-func processAgent(profile roleProfile, found Discovery) projectrun.Agent {
+func processAgent(profile roleProfile, found Discovery) projectconfig.Agent {
 	var modelOptions any
 	if profile.effort != "" {
 		modelOptions = map[string]any{"reasoningEffort": profile.effort}
@@ -553,10 +553,10 @@ func processAgent(profile roleProfile, found Discovery) projectrun.Agent {
 			environment = append(environment, name)
 		}
 	}
-	return projectrun.Agent{
+	return projectconfig.Agent{
 		Command: found.ProviderBinary.Path, Args: append([]string(nil), profile.args...),
 		Model: profile.model, ModelOptions: modelOptions, ProviderVersion: found.ProviderBinary.Version,
-		Timeout: projectrun.Duration(DefaultTimeout), MaxStdoutBytes: DefaultProcessMaxStdout, MaxStderrBytes: DefaultMaxStderr,
+		Timeout: projectconfig.Duration(DefaultTimeout), MaxStdoutBytes: DefaultProcessMaxStdout, MaxStderrBytes: DefaultMaxStderr,
 		RuntimeFiles: []agentexec.RuntimeFile{runtimeFile(found.ProviderBinary)}, Environment: environment,
 		CostMode: costModeField(profile.costMode), Pricing: profile.pricing,
 	}
@@ -564,13 +564,13 @@ func processAgent(profile roleProfile, found Discovery) projectrun.Agent {
 
 // costModeField keeps metered agents in the existing runtime shape.
 func costModeField(mode string) string {
-	if mode == projectrun.CostModeUnmetered {
-		return projectrun.CostModeUnmetered
+	if mode == projectconfig.CostModeUnmetered {
+		return projectconfig.CostModeUnmetered
 	}
 	return ""
 }
 
-func cloneAgent(agent projectrun.Agent) projectrun.Agent {
+func cloneAgent(agent projectconfig.Agent) projectconfig.Agent {
 	agent.Args = append([]string(nil), agent.Args...)
 	agent.InstructionPaths = append([]string(nil), agent.InstructionPaths...)
 	agent.RuntimeFiles = append([]agentexec.RuntimeFile(nil), agent.RuntimeFiles...)

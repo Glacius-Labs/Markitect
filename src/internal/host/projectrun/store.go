@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/Glacius-Labs/Markitect/src/internal/host/projectconfig"
 	"io"
 	"os"
 	"path/filepath"
@@ -50,41 +51,41 @@ func PlanPreviewDigest(plan PlanRecord) (string, error) {
 
 func planDigest(plan PlanRecord) (string, error) {
 	base, err := digest(struct {
-		APIVersion              string                       `json:"apiVersion"`
-		ID                      string                       `json:"id"`
-		Status                  string                       `json:"status"`
-		Operation               string                       `json:"operation"`
-		Goal                    string                       `json:"goal"`
-		ExecuteAuthorized       bool                         `json:"executeAuthorized"`
-		BaseRevision            string                       `json:"baseRevision"`
-		ChangeBaseRevision      string                       `json:"changeBaseRevision,omitempty"`
-		ChangeBaseSnapshot      string                       `json:"changeBaseSnapshot,omitempty"`
-		ChangeBaseProjectDigest string                       `json:"changeBaseProjectDigest,omitempty"`
-		ChangeBaseModelDigest   string                       `json:"changeBaseModelDigest,omitempty"`
-		ChangeBaseReportDigest  string                       `json:"changeBaseReportDigest,omitempty"`
-		ChangeImpact            *projectmodel.ChangeImpact   `json:"changeImpact,omitempty"`
-		ChangeImpactDigest      string                       `json:"changeImpactDigest,omitempty"`
-		TargetBranch            string                       `json:"targetBranch"`
-		TargetHead              string                       `json:"targetHead"`
-		RepositoryDigest        string                       `json:"repositoryDigest"`
-		BaseSnapshot            string                       `json:"baseSnapshot"`
-		WorkingSnapshot         string                       `json:"workingSnapshot"`
-		BaseProjectDigest       string                       `json:"baseProjectDigest"`
-		WorkingProjectDigest    string                       `json:"workingProjectDigest"`
-		BaseModelDigest         string                       `json:"baseModelDigest"`
-		ModelDigest             string                       `json:"modelDigest"`
-		ReportDigest            string                       `json:"reportDigest"`
-		RuntimeDigest           string                       `json:"runtimeDigest"`
-		RuntimeBindingVersion   int                          `json:"runtimeBindingVersion,omitempty"`
-		Managers                []ManagerTask                `json:"managers"`
-		Strictness              map[string]StrictnessProfile `json:"strictness"`
-		BriefingDigests         map[string]string            `json:"briefingDigests,omitempty"`
-		Checks                  []CheckPlan                  `json:"checks"`
-		ModelEdit               *EditPlan                    `json:"modelEdit,omitempty"`
-		InitialCandidateID      string                       `json:"initialCandidateId"`
-		RuntimeAgents           map[string]string            `json:"runtimeAgents"`
-		Findings                []string                     `json:"findings,omitempty"`
-		Blockers                []string                     `json:"blockers,omitempty"`
+		APIVersion              string                                     `json:"apiVersion"`
+		ID                      string                                     `json:"id"`
+		Status                  string                                     `json:"status"`
+		Operation               string                                     `json:"operation"`
+		Goal                    string                                     `json:"goal"`
+		ExecuteAuthorized       bool                                       `json:"executeAuthorized"`
+		BaseRevision            string                                     `json:"baseRevision"`
+		ChangeBaseRevision      string                                     `json:"changeBaseRevision,omitempty"`
+		ChangeBaseSnapshot      string                                     `json:"changeBaseSnapshot,omitempty"`
+		ChangeBaseProjectDigest string                                     `json:"changeBaseProjectDigest,omitempty"`
+		ChangeBaseModelDigest   string                                     `json:"changeBaseModelDigest,omitempty"`
+		ChangeBaseReportDigest  string                                     `json:"changeBaseReportDigest,omitempty"`
+		ChangeImpact            *projectmodel.ChangeImpact                 `json:"changeImpact,omitempty"`
+		ChangeImpactDigest      string                                     `json:"changeImpactDigest,omitempty"`
+		TargetBranch            string                                     `json:"targetBranch"`
+		TargetHead              string                                     `json:"targetHead"`
+		RepositoryDigest        string                                     `json:"repositoryDigest"`
+		BaseSnapshot            string                                     `json:"baseSnapshot"`
+		WorkingSnapshot         string                                     `json:"workingSnapshot"`
+		BaseProjectDigest       string                                     `json:"baseProjectDigest"`
+		WorkingProjectDigest    string                                     `json:"workingProjectDigest"`
+		BaseModelDigest         string                                     `json:"baseModelDigest"`
+		ModelDigest             string                                     `json:"modelDigest"`
+		ReportDigest            string                                     `json:"reportDigest"`
+		RuntimeDigest           string                                     `json:"runtimeDigest"`
+		RuntimeBindingVersion   int                                        `json:"runtimeBindingVersion,omitempty"`
+		Managers                []ManagerTask                              `json:"managers"`
+		Strictness              map[string]projectconfig.StrictnessProfile `json:"strictness"`
+		BriefingDigests         map[string]string                          `json:"briefingDigests,omitempty"`
+		Checks                  []CheckPlan                                `json:"checks"`
+		ModelEdit               *EditPlan                                  `json:"modelEdit,omitempty"`
+		InitialCandidateID      string                                     `json:"initialCandidateId"`
+		RuntimeAgents           map[string]string                          `json:"runtimeAgents"`
+		Findings                []string                                   `json:"findings,omitempty"`
+		Blockers                []string                                   `json:"blockers,omitempty"`
 	}{plan.APIVersion, plan.ID, plan.Status, plan.Operation, plan.Goal, plan.ExecuteAuthorized, plan.BaseRevision, plan.ChangeBaseRevision, plan.ChangeBaseSnapshot, plan.ChangeBaseProjectDigest, plan.ChangeBaseModelDigest, plan.ChangeBaseReportDigest, plan.ChangeImpact, plan.ChangeImpactDigest, plan.TargetBranch, plan.TargetHead, plan.RepositoryDigest, plan.BaseSnapshot, plan.WorkingSnapshot, plan.BaseProjectDigest, plan.WorkingProjectDigest, plan.BaseModelDigest, plan.ModelDigest, plan.ReportDigest, plan.RuntimeDigest, plan.RuntimeBindingVersion, plan.Managers, plan.Strictness, plan.BriefingDigests, plan.Checks, plan.ModelEdit, plan.InitialCandidateID, plan.RuntimeAgents, plan.Findings, plan.Blockers})
 	if err != nil || plan.ExplorationBinding == nil && plan.ExplorationID == "" && plan.ScopeID == "" && plan.ExplorationDigest == "" && plan.ReadinessDigest == "" {
 		return base, err
@@ -117,7 +118,7 @@ func newRunStore(root string) (*runStore, error) {
 	if err != nil {
 		return nil, fmt.Errorf("resolve project root: %w", err)
 	}
-	if err := rejectReparsePath(abs, RuntimePath); err != nil {
+	if err := rejectReparsePath(abs, projectconfig.RuntimePath); err != nil {
 		return nil, err
 	}
 	base := filepath.Join(abs, filepath.FromSlash(RunsPath))

@@ -5,6 +5,8 @@ package projectrun
 import (
 	"context"
 	"encoding/json"
+	"github.com/Glacius-Labs/Markitect/src/internal/host/projectconfig"
+	"github.com/Glacius-Labs/Markitect/src/internal/host/projectexecutor"
 	"os"
 	"path/filepath"
 	"strings"
@@ -28,7 +30,7 @@ func TestFullVerifyAuditsAllManagersAndParentsReceiveIntegrationScope(t *testing
 	head := gitE2E(t, root, "rev-parse", "HEAD")
 	before := gitE2E(t, root, "status", "--porcelain")
 	host := Host{Load: projectwork.Load}
-	got, err := FullVerify(context.Background(), host, ProcessInvoker{}, root, FullVerifyRequest{Revision: head})
+	got, err := FullVerify(context.Background(), host, projectexecutor.ProcessInvoker{}, root, FullVerifyRequest{Revision: head})
 	if err != nil {
 		t.Fatalf("full verify failed: %v report=%+v", err, got)
 	}
@@ -54,7 +56,7 @@ func TestFullVerifyAuditsAllManagersAndParentsReceiveIntegrationScope(t *testing
 	if !strings.Contains(string(data), `"childAssessments":[{"managerId"`) || !strings.Contains(string(data), `"checkResults":[{"id"`) {
 		t.Fatalf("root Manager did not receive direct-child assessment and check evidence: %s", data)
 	}
-	written, err := FullVerify(context.Background(), host, ProcessInvoker{}, root, FullVerifyRequest{Revision: head, Write: true})
+	written, err := FullVerify(context.Background(), host, projectexecutor.ProcessInvoker{}, root, FullVerifyRequest{Revision: head, Write: true})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -80,7 +82,7 @@ func TestFullVerifyMissingManagerAssessmentCannotPassAndStaleSnapshotRejected(t 
 	before := gitE2E(t, root, "status", "--porcelain")
 	host := Host{Load: projectwork.Load}
 	setRuntimeFixtureEnv(t, fullVerifyBadEnv, "orders")
-	report, err := FullVerify(context.Background(), host, ProcessInvoker{}, root, FullVerifyRequest{Revision: head})
+	report, err := FullVerify(context.Background(), host, projectexecutor.ProcessInvoker{}, root, FullVerifyRequest{Revision: head})
 	if err == nil || report.Status == "passed" {
 		t.Fatalf("missing Manager evidence passed: report=%+v err=%v", report, err)
 	}
@@ -92,11 +94,11 @@ func TestFullVerifyMissingManagerAssessmentCannotPassAndStaleSnapshotRejected(t 
 	if err != nil {
 		t.Fatal(err)
 	}
-	runtime, err := LoadRuntime(root)
+	runtime, err := projectconfig.LoadRuntime(root)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if _, err := FullVerifyProject(context.Background(), host, ProcessInvoker{}, root, project, runtime, FullVerifyBinding{ExpectedSnapshot: "stale"}); err != ErrStale {
+	if _, err := FullVerifyProject(context.Background(), host, projectexecutor.ProcessInvoker{}, root, project, runtime, FullVerifyBinding{ExpectedSnapshot: "stale"}); err != ErrStale {
 		t.Fatalf("stale snapshot error = %v, want ErrStale", err)
 	}
 }
@@ -112,7 +114,7 @@ func TestFullVerifyProjectAuditsComposedCandidateBytesWithoutReopeningBaseRevisi
 	if err != nil {
 		t.Fatal(err)
 	}
-	runtime, err := LoadRuntime(root)
+	runtime, err := projectconfig.LoadRuntime(root)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -125,7 +127,7 @@ func TestFullVerifyProjectAuditsComposedCandidateBytesWithoutReopeningBaseRevisi
 	if candidate.Snapshot.Digest() == baseDigest {
 		t.Fatal("candidate composition did not change snapshot binding")
 	}
-	report, err := FullVerifyProject(context.Background(), host, ProcessInvoker{}, root, candidate, runtime, FullVerifyBinding{ExpectedSnapshot: candidate.Snapshot.Digest()})
+	report, err := FullVerifyProject(context.Background(), host, projectexecutor.ProcessInvoker{}, root, candidate, runtime, FullVerifyBinding{ExpectedSnapshot: candidate.Snapshot.Digest()})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -143,7 +145,7 @@ func TestFullVerifyStopsWhenUsageCannotBoundCumulativeCost(t *testing.T) {
 	head := gitE2E(t, root, "rev-parse", "HEAD")
 	host := Host{Load: projectwork.Load}
 	setRuntimeFixtureEnv(t, fullVerifyNoUsageEnv, "inventory")
-	report, err := FullVerify(context.Background(), host, ProcessInvoker{}, root, FullVerifyRequest{Revision: head})
+	report, err := FullVerify(context.Background(), host, projectexecutor.ProcessInvoker{}, root, FullVerifyRequest{Revision: head})
 	if err == nil || report.Status != "incomplete" {
 		t.Fatalf("missing usage did not leave full verification incomplete: report=%+v err=%v", report, err)
 	}
@@ -167,7 +169,7 @@ func TestFullVerifyRecordsKnownCostBeyondLimitForSuccessfulAndFailedCalls(t *tes
 			root := makeFullVerifyFixture(t)
 			setupFullVerifyProcesses(t)
 			configureFullVerifyRuntime(t, root)
-			updateE2ERuntime(t, root, func(runtime *Runtime) {
+			updateE2ERuntime(t, root, func(runtime *projectconfig.Runtime) {
 				runtime.Limits.MaxCostMicros = 1
 				for id, reviewer := range runtime.Review.Agents {
 					reviewer.Pricing.InputMicrosPerMillion = 1_000_000
@@ -179,7 +181,7 @@ func TestFullVerifyRecordsKnownCostBeyondLimitForSuccessfulAndFailedCalls(t *tes
 				setRuntimeFixtureEnv(t, fullVerifyBadEnv, "inventory")
 			}
 			head := gitE2E(t, root, "rev-parse", "HEAD")
-			report, err := FullVerify(context.Background(), Host{Load: projectwork.Load}, ProcessInvoker{}, root, FullVerifyRequest{Revision: head})
+			report, err := FullVerify(context.Background(), Host{Load: projectwork.Load}, projectexecutor.ProcessInvoker{}, root, FullVerifyRequest{Revision: head})
 			if err == nil || report.Status == "passed" {
 				t.Fatalf("over-budget Manager call passed: report=%+v err=%v", report, err)
 			}
@@ -195,10 +197,10 @@ func TestFullVerifyCumulativeStartLimitLeavesUnstartedManagersIncomplete(t *test
 	root := makeFullVerifyFixture(t)
 	setupFullVerifyProcesses(t)
 	configureFullVerifyRuntime(t, root)
-	updateE2ERuntime(t, root, func(runtime *Runtime) { runtime.Limits.MaxStarts = 4 })
+	updateE2ERuntime(t, root, func(runtime *projectconfig.Runtime) { runtime.Limits.MaxStarts = 4 })
 	head := gitE2E(t, root, "rev-parse", "HEAD")
 	host := Host{Load: projectwork.Load}
-	report, err := FullVerify(context.Background(), host, ProcessInvoker{}, root, FullVerifyRequest{Revision: head})
+	report, err := FullVerify(context.Background(), host, projectexecutor.ProcessInvoker{}, root, FullVerifyRequest{Revision: head})
 	if err == nil || report.Status != "incomplete" {
 		t.Fatalf("start-budget exhaustion passed: report=%+v err=%v", report, err)
 	}
