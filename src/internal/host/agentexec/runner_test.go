@@ -315,26 +315,50 @@ func (c *controlledRoleDeadline) Err() error {
 
 func (c *controlledRoleDeadline) expire() { c.once.Do(func() { close(c.done) }) }
 
-func expireWhenFileExists(ctx *controlledRoleDeadline, path string) <-chan struct{} {
-	ready := make(chan struct{})
+func expireWhenFileExists(ctx *controlledRoleDeadline, path string) <-chan bool {
+	return expireWhenFileExistsBefore(ctx, path, time.Now().Add(descendantFixtureReadinessTimeout))
+}
+
+// Record readiness before expiry. The safety cutoff also stops the process,
+// but it cannot stand in for an observed readiness signal.
+func expireWhenFileExistsBefore(ctx *controlledRoleDeadline, path string, deadline time.Time) <-chan bool {
+	observed := make(chan bool, 1)
 	go func() {
-		defer close(ready)
-		deadline := time.Now().Add(descendantFixtureReadinessTimeout)
+		defer close(observed)
 		for time.Now().Before(deadline) {
 			select {
 			case <-ctx.Done():
+				observed <- false
 				return
 			default:
 			}
-			if _, err := os.Stat(path); err == nil {
+			if data, err := os.ReadFile(path); err == nil && string(data) == "ready" {
+				observed <- true
 				ctx.expire()
 				return
 			}
 			time.Sleep(10 * time.Millisecond)
 		}
+		observed <- false
 		ctx.expire()
 	}()
-	return ready
+	return observed
+}
+
+func TestControlledRoleDeadlineRejectsLateReadiness(t *testing.T) {
+	path := filepath.Join(testkit.TempDir(t), "late-ready")
+	ctx := newControlledRoleDeadline(context.Background())
+	observed := <-expireWhenFileExistsBefore(ctx, path, time.Time{})
+	<-ctx.Done()
+	if err := os.WriteFile(path, []byte("ready"), 0600); err != nil {
+		t.Fatal(err)
+	}
+	if observed {
+		t.Fatal("late marker falsely proved readiness before deadline expiry")
+	}
+	if !errors.Is(ctx.Err(), context.DeadlineExceeded) {
+		t.Fatalf("readiness safety cutoff did not stop the role: %v", ctx.Err())
+	}
 }
 
 func TestRunBindsIndependentRolesAndDigests(t *testing.T) {
@@ -750,6 +774,7 @@ func TestRunRecordsFailureTimeoutAndOutputLimitWithoutRetry(t *testing.T) {
 		config := testConfig()
 		config.Timeout = 100 * time.Millisecond
 		var factoryCalls int
+		var readinessObserved bool
 		factory := func(parent context.Context, timeout time.Duration) (context.Context, context.CancelFunc) {
 			factoryCalls++
 			if timeout != config.Timeout {
@@ -757,9 +782,12 @@ func TestRunRecordsFailureTimeoutAndOutputLimitWithoutRetry(t *testing.T) {
 			}
 			ctx := newControlledRoleDeadline(parent)
 			ready := expireWhenFileExists(ctx, readyPath)
+			var stopOnce sync.Once
 			return ctx, func() {
-				ctx.expire()
-				<-ready
+				stopOnce.Do(func() {
+					ctx.expire()
+					readinessObserved = <-ready
+				})
 			}
 		}
 		result, err := runWithTimeout(context.Background(), config, testRequest(RoleExecutor), options, factory)
@@ -772,8 +800,8 @@ func TestRunRecordsFailureTimeoutAndOutputLimitWithoutRetry(t *testing.T) {
 		if factoryCalls != 1 {
 			t.Fatalf("role timeout factory calls = %d, want one", factoryCalls)
 		}
-		if _, err := os.Stat(readyPath); err != nil {
-			t.Fatalf("role deadline expired before the helper reported readiness: %v", err)
+		if !readinessObserved {
+			t.Fatal("role deadline expired without observing helper readiness before expiry")
 		}
 	})
 	t.Run("parent-deadline", func(t *testing.T) {
