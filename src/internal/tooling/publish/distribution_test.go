@@ -82,6 +82,16 @@ func TestSyncDistributionWritesChecksAndExportsDeterministicFiles(t *testing.T) 
 			t.Errorf("generated README omitted %q", want)
 		}
 	}
+	for _, want := range []string{"examples\\project-world", "examples/project-world/.", "markitect check --repo $fixtureRepo", `markitect check --repo "$fixture"`, "src/cmd/markitect@v1.2.3"} {
+		if !strings.Contains(string(gotReadme), want) {
+			t.Errorf("generated README omitted current fixture setup or command %q", want)
+		}
+	}
+	for _, retired := range []string{"examples\\minimal", "examples/minimal", "go install github.com/Glacius-Labs/Markitect/cmd/markitect@"} {
+		if strings.Contains(string(gotReadme), retired) {
+			t.Errorf("generated README retained removed source route %q", retired)
+		}
+	}
 	result, err = SyncDistribution(context.Background(), fake, DistributionOptions{Tag: testTag, RepositoryRoot: root})
 	if err != nil || result.Status != "checked" {
 		t.Fatalf("check after write = %#v, %v", result, err)

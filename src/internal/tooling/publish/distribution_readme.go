@@ -46,12 +46,12 @@ Remove-Item -LiteralPath $source, $download
   "$HOME/.local/bin/markitect" version
 )
 export PATH="$HOME/.local/bin:$PATH"
-` + "```\n\n" + `Add ` + "`~/.local/bin`" + ` to your shell startup file if it is not already on ` + "`PATH`" + `. For developers who already use Go 1.27.1 or later, ` + "`go install github.com/Glacius-Labs/Markitect/cmd/markitect@{{TAG}}`" + ` is a shorter source-build option. macOS and arm64 binaries are not currently released. For signed release and asset attestation verification, project pinning, and upgrades, follow the [distribution guide](integration/README.md). The CLI's ` + "`install`" + ` command installs a **project pin**, not the CLI on your computer.
+` + "```\n\n" + `Add ` + "`~/.local/bin`" + ` to your shell startup file if it is not already on ` + "`PATH`" + `. For developers who already use Go 1.27.1 or later, ` + "`go install github.com/Glacius-Labs/Markitect/src/cmd/markitect@{{TAG}}`" + ` is a shorter source-build option. macOS and arm64 binaries are not currently released. For signed release and asset attestation verification, project pinning, and upgrades, follow the [distribution guide](integration/README.md). Current source prepares project pins through the separate ` + "`markitect-release install`" + ` tooling; that operation does not install the CLI on your computer.
 
 <!-- markitect-release:install:end -->`
 	try := `## Try the installed CLI
 
-Clone the v{{VERSION}} synthetic example and run a structural check with the installed binary. This reads the example without modifying an adopting repository.
+Clone the v{{VERSION}} source, copy its model-first Shop fixture into a disposable repository and run a structural check with the installed binary. The fixture has no configured provider; these commands start no agent and do not modify an adopting repository.
 
 Windows PowerShell:
 
@@ -60,7 +60,21 @@ git clone --depth 1 --branch {{TAG}} https://github.com/Glacius-Labs/Markitect.g
 if ($LASTEXITCODE -ne 0) { throw 'Could not get the v{{VERSION}} synthetic example.' }
 markitect version
 if ($LASTEXITCODE -ne 0) { throw 'Version check failed.' }
-markitect check --repo .\markitect-sample-{{TAG}}\examples\minimal
+$fixtureRepo = Join-Path $env:TEMP ("markitect-shop-" + [guid]::NewGuid().ToString("N"))
+Copy-Item -LiteralPath .\markitect-sample-{{TAG}}\examples\project-world -Destination $fixtureRepo -Recurse -Force -ErrorAction Stop
+git -C $fixtureRepo init -b feature/shop-example
+if ($LASTEXITCODE -ne 0) { throw 'Fixture Git initialization failed.' }
+git -C $fixtureRepo config core.autocrlf false
+if ($LASTEXITCODE -ne 0) { throw 'Fixture Git configuration failed.' }
+git -C $fixtureRepo config user.name "Markitect Fixture"
+if ($LASTEXITCODE -ne 0) { throw 'Fixture Git identity failed.' }
+git -C $fixtureRepo config user.email fixture@example.test
+if ($LASTEXITCODE -ne 0) { throw 'Fixture Git identity failed.' }
+git -C $fixtureRepo add .
+if ($LASTEXITCODE -ne 0) { throw 'Fixture staging failed.' }
+git -C $fixtureRepo commit --quiet -m "Initialize Shop fixture"
+if ($LASTEXITCODE -ne 0) { throw 'Fixture commit failed.' }
+markitect check --repo $fixtureRepo
 if ($LASTEXITCODE -ne 0) { throw 'Example check failed.' }
 ~~~
 
@@ -70,10 +84,18 @@ Linux amd64:
 set -e
 git clone --depth 1 --branch {{TAG}} https://github.com/Glacius-Labs/Markitect.git markitect-sample-{{TAG}}
 markitect version
-markitect check --repo ./markitect-sample-{{TAG}}/examples/minimal
+fixture="$(mktemp -d)"
+cp -R ./markitect-sample-{{TAG}}/examples/project-world/. "$fixture/"
+git -C "$fixture" init -b feature/shop-example
+git -C "$fixture" config core.autocrlf false
+git -C "$fixture" config user.name 'Markitect Fixture'
+git -C "$fixture" config user.email fixture@example.test
+git -C "$fixture" add .
+git -C "$fixture" commit --quiet -m 'Initialize Shop fixture'
+markitect check --repo "$fixture"
 ~~~
 
-The [historical minimal example](https://github.com/Glacius-Labs/Markitect/blob/d083c8f37b6bb1e09a9c5a7947c421651a7e755b/examples/minimal/README.md) is a synthetic, executable fixture from the pre-removal source. To use Markitect in your own repository, follow the [release installation and verification guide](integration/README.md) to preview and install a project pin.
+The [Shop example](https://github.com/Glacius-Labs/Markitect/blob/{{TAG}}/examples/project-world/README.md) documents the current model and its finite fixture checks. Older Project/Domain releases retain their own immutable usage guide; the current binary does not reinterpret their fixtures. Follow the [project workflow](docs/project-workflow.md) to use Markitect in your own repository.
 
 <!-- markitect-release:try:end -->`
 	values := strings.NewReplacer("{{VERSION}}", version, "{{TAG}}", tag, "{{WINDOWS_SHA256}}", windowsDigest, "{{LINUX_SHA256}}", linuxDigest)
