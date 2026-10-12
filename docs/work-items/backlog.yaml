@@ -670,21 +670,22 @@ packages:
     title: Continuous bug hunt with verified findings
     stream: BUG
     wave: 1
-    status: active
+    status: ready
     owner: bughunter
     branch: fix/helper-cleanup-review
     note: >-
       The integrator merged 205, 221, 223, historical-context ancestor visibility in 225 and the
       Context/brief-list no-write plus atomic dismissal repair in 229 after independent review and
       fixed-candidate checks. A new Bughunter session started on 12 October from clean Main
-      1b621b1e06a3b0670d7f07b67a2632320796c7bf with read-only review and isolated reproduction.
-      No production repair paths are reserved yet; concrete verified findings go to the integrator
+      1b621b1e06a3b0670d7f07b67a2632320796c7bf and completed its first bounded read-only review
+      and isolated reproduction. No production repair paths are reserved; future verified findings go to the integrator
       for a bounded non-colliding fix assignment. Runtime belongs to QA TEST-03 and interface to
       CLI-03 then CLI-04 then TEST-02. Core/projectmodel findings remain coordinated with kg.
       The first bounded sweep reproduced the known helper-cleanup liveness failure after process
       loss on Main 1b621b1e06a3b0670d7f07b67a2632320796c7bf; the passing observation test confirms
-      the blockade, not successful recovery. A read-only minimal repair design is being reviewed;
-      any Runtime implementation waits behind TEST-03 and an explicit path handoff.
+      the blockade, not successful recovery. The independently reviewed cross-process reconciliation
+      design is a proposed new Runtime capability, not implemented or accepted. It requires its own
+      accepted intent/acceptance and later Runtime assignment; it is outside this implementation round.
       Historical unconfirmed recovery/census findings remain unconfirmed. The Windows diagnostic
       run on source-equivalent f9ddd795 recorded a one-hour Git timeout and a workspace alias test
       failure; preserve them for bounded investigation, without inferring final-Main Windows results.

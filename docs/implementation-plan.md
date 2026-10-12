@@ -42,7 +42,7 @@ This page owns the current direction: how parallel work is organized, the stream
 
 ### Sessions
 
-A session is a long-running chat for one role. The backlog's `owner` field names the role, and any fresh session can take a role over. After the previous queue closed, the owner requested fresh sessions on 12 October. QA, Interface and Bughunter are now running in separate worktrees from the green Main above; the existing integrator owns canonical status and integration. The interrupted Claude sessions' snapshot is in [Session continuation](development/session-handoff.md); the [branch survey](work-items/surveys/branches-and-worktrees-20261010.md) preserves the earlier archive inventory. A package's `active` state is not evidence that its old chat is still running.
+A session is a long-running chat for one role. The backlog's `owner` field names the role, and any fresh session can take a role over. After the previous queue closed, the owner requested fresh sessions on 12 October. QA and Interface are implementing in separate worktrees from the green Main above; Bughunter completed its first bounded read-only round. The existing integrator owns canonical status and integration. The interrupted Claude sessions' snapshot is in [Session continuation](development/session-handoff.md); the [branch survey](work-items/surveys/branches-and-worktrees-20261010.md) preserves the earlier archive inventory. A package's `active` state is not evidence that its old chat is still running.
 
 | Role | Streams | Starts |
 |---|---|---|
@@ -50,7 +50,7 @@ A session is a long-running chat for one role. The backlog's `owner` field names
 | interface | CLI, MCP-01, TEST-02, AGENT-02, AGENT-03 | Active CLI-03 on `dev/application-composition`; exclusive interface zone, then CLI-04, then TEST-02 in separate PRs |
 | scientist | PLAY | PLAY-06 is ready after merged dependencies; no Scientist chat is started in this round |
 | kg | KG | KG-04 protocol is prepared; measurement waits for separate authority |
-| bughunter | BUG | Active read-only review and isolated reproduction on `fix/helper-cleanup-review`; fixes need concrete non-colliding path reservation |
+| bughunter | BUG | First read-only round on `fix/helper-cleanup-review` complete; helper recovery is a proposed new future capability, with no implementation reservation |
 | qa | CI, TEST | Active TEST-03 on `dev/runtime-test-isolation`; exclusive runtime zone, no TEST-04/05 or RUN implementation alongside |
 | cleaner | ARCH, AGENT-01 | ARCH-08 caller analysis is complete; implementation waits for interface ownership |
 | runtime | RUN, MCP-02, ARCH-06 | After QA's TEST-03 assignment and an explicit later zone handoff |
@@ -58,7 +58,7 @@ A session is a long-running chat for one role. The backlog's `owner` field names
 
 No more than six sessions change code at the same time. Each session uses subagents and workflows inside its own packages as it sees fit.
 
-The active round starts with two implementation writers and one read-only Bughunter. Shared edits are bounded explicitly: QA owns the TEST-03 instructions in CONTRIBUTING; Interface owns the composition corrections in architecture and project operations. New artifact-accounting entries require concrete paths and coordinated approval. Backlog, roadmap and concept register remain integrator-owned. Provider or method studies, KG-04 measurements, Government implementation, releases and worktree cleanup are outside this round.
+The active round has two implementation writers; the first Bughunter sweep is complete. Shared edits are bounded explicitly: QA owns the TEST-03 instructions in CONTRIBUTING; Interface owns the composition corrections in architecture and project operations. New artifact-accounting entries require concrete paths and coordinated approval. Backlog, roadmap and concept register remain integrator-owned. Helper cross-process reconciliation needs its own accepted intent/acceptance and future slot. Provider or method studies, KG-04 measurements, Government implementation, releases and worktree cleanup are outside this round.
 
 ### Starting a session
 
