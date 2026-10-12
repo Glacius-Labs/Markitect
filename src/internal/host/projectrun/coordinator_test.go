@@ -39,8 +39,6 @@ func (i *barrierInvoker) Run(ctx context.Context, config agentexec.Config, reque
 		case <-i.ready:
 		case <-ctx.Done():
 			return agentexec.RunResult{}, ctx.Err()
-		case <-time.After(3 * time.Second):
-			return agentexec.RunResult{}, errors.New("independent manager work did not overlap")
 		}
 	}
 	return i.inner.Run(ctx, config, request, options)
@@ -51,37 +49,55 @@ func (i *barrierInvoker) Fingerprint(config agentexec.Config) (string, error) {
 }
 
 func TestInvokeManagerBatchStartsTogetherAndReturnsStableOrder(t *testing.T) {
-	var mu sync.Mutex
-	started := 0
+	// The watchdog bounds a broken test; only explicit start and release
+	// signals determine whether the batch actually dispatched concurrently.
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+	started := make(chan string, 2)
 	release := make(chan struct{})
-	calls := []managerInvocationCall{
-		{managerID: "bravo", invoke: func(context.Context) (agentexec.RunResult, InvocationLog, error) {
-			return waitForBatchRelease(t, &mu, &started, release), InvocationLog{}, nil
-		}},
-		{managerID: "alpha", invoke: func(context.Context) (agentexec.RunResult, InvocationLog, error) {
-			return waitForBatchRelease(t, &mu, &started, release), InvocationLog{}, nil
-		}},
+	invoke := func(id string) func(context.Context) (agentexec.RunResult, InvocationLog, error) {
+		return func(ctx context.Context) (agentexec.RunResult, InvocationLog, error) {
+			started <- id
+			select {
+			case <-release:
+				return agentexec.RunResult{}, InvocationLog{}, nil
+			case <-ctx.Done():
+				return agentexec.RunResult{}, InvocationLog{}, ctx.Err()
+			}
+		}
 	}
-	results := invokeManagerBatch(context.Background(), calls)
+	calls := []managerInvocationCall{
+		{managerID: "bravo", invoke: invoke("bravo")},
+		{managerID: "alpha", invoke: invoke("alpha")},
+	}
+	completed := make(chan []managerInvocationResult, 1)
+	go func() { completed <- invokeManagerBatch(ctx, calls) }()
+	observed := make(map[string]bool)
+	for len(observed) < len(calls) {
+		select {
+		case id := <-started:
+			if observed[id] {
+				t.Errorf("manager %s was dispatched twice", id)
+			}
+			observed[id] = true
+		case <-ctx.Done():
+			// Drain the owned batch before temporary fixtures can be removed.
+			<-completed
+			t.Fatal("manager batch did not dispatch both calls before release")
+		}
+	}
+	if !observed["alpha"] || !observed["bravo"] {
+		t.Errorf("batch started %v, want alpha and bravo", observed)
+	}
+	close(release)
+	results := <-completed
 	if len(results) != 2 || results[0].managerID != "alpha" || results[1].managerID != "bravo" {
 		t.Fatalf("batch results = %+v, want stable [alpha bravo]", results)
 	}
-}
-
-func waitForBatchRelease(t *testing.T, mu *sync.Mutex, started *int, release chan struct{}) agentexec.RunResult {
-	t.Helper()
-	mu.Lock()
-	*started++
-	if *started == 2 {
-		close(release)
-	}
-	mu.Unlock()
-	select {
-	case <-release:
-		return agentexec.RunResult{}
-	case <-time.After(time.Second):
-		t.Error("manager batch was dispatched serially")
-		return agentexec.RunResult{}
+	for _, result := range results {
+		if result.err != nil {
+			t.Fatalf("manager %s did not finish after release: %v", result.managerID, result.err)
+		}
 	}
 }
 

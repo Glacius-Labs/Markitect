@@ -75,7 +75,13 @@ type runtimeState struct {
 	digest string
 }
 
+type roleTimeoutFactory func(context.Context, time.Duration) (context.Context, context.CancelFunc)
+
 func run(parent context.Context, cfg Config, request Request, opts RunOptions) (RunResult, error) {
+	return runWithTimeout(parent, cfg, request, opts, context.WithTimeout)
+}
+
+func runWithTimeout(parent context.Context, cfg Config, request Request, opts RunOptions, timeout roleTimeoutFactory) (RunResult, error) {
 	if cfg.Transport != "" {
 		return RunResult{}, fmt.Errorf("agentexec process runner cannot execute transport %q; route through its configured Invoker", cfg.Transport)
 	}
@@ -149,7 +155,7 @@ func run(parent context.Context, cfg Config, request Request, opts RunOptions) (
 		return RunResult{}, errors.New("private log path already exists")
 	}
 
-	ctx, cancel := context.WithTimeout(parent, cfg.Timeout)
+	ctx, cancel := timeout(parent, cfg.Timeout)
 	defer cancel()
 	stdout := &limitedBuffer{limit: cfg.MaxStdoutBytes, cancel: cancel}
 	stderr := &limitedBuffer{limit: cfg.MaxStderrBytes, cancel: cancel}

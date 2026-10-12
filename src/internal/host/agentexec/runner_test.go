@@ -17,10 +17,13 @@ import (
 	"sync"
 	"testing"
 	"time"
+
+	"github.com/Glacius-Labs/Markitect/src/internal/testkit"
 )
 
 const (
 	helperEnv = "MARKITECT_AGENTEXEC_TEST_HELPER"
+	readyEnv  = "MARKITECT_AGENTEXEC_TEST_READY"
 
 	descendantFixtureReadinessTimeout = 10 * time.Second
 	descendantFixtureRunTimeout       = 15 * time.Second
@@ -66,6 +69,17 @@ func TestAgentexecHelperProcess(t *testing.T) {
 		}
 		_, _ = os.Stdout.Write([]byte(strings.Repeat("x", 1024)))
 		os.Exit(0)
+	}
+	if mode == "controlled-timeout" {
+		if err := os.WriteFile(os.Getenv(readyEnv), []byte("ready"), 0600); err != nil {
+			fmt.Fprintln(os.Stderr, "controlled timeout fixture readiness failed")
+			os.Exit(14)
+		}
+		// This child cannot complete merely because a fixture delay elapsed.
+		// The owning runner must stop it after the explicit readiness signal.
+		for {
+			time.Sleep(descendantFixtureIntentionalWait)
+		}
 	}
 	if strings.HasPrefix(mode, "spawn-child-") {
 		command := exec.Command(os.Args[0], "-test.run=TestAgentexecHeartbeatChild")
@@ -267,6 +281,84 @@ func runHelper(t *testing.T, mode string, role string, request Request, config C
 	t.Setenv("MARKITECT_AGENTEXEC_TEST_MODE", mode)
 	t.Setenv("MARKITECT_AGENTEXEC_TEST_ROLE", role)
 	return Run(context.Background(), config, request, opts)
+}
+
+func runHelperWithContext(t *testing.T, parent context.Context, mode string, config Config) (RunResult, error) {
+	t.Helper()
+	opts := testOptions(t)
+	t.Setenv("MARKITECT_AGENTEXEC_TEST_MODE", mode)
+	t.Setenv("MARKITECT_AGENTEXEC_TEST_ROLE", "")
+	return Run(parent, config, testRequest(RoleExecutor), opts)
+}
+
+type controlledRoleDeadline struct {
+	parent context.Context
+	done   chan struct{}
+	once   sync.Once
+}
+
+func newControlledRoleDeadline(parent context.Context) *controlledRoleDeadline {
+	return &controlledRoleDeadline{parent: parent, done: make(chan struct{})}
+}
+
+func (c *controlledRoleDeadline) Deadline() (time.Time, bool) { return c.parent.Deadline() }
+func (c *controlledRoleDeadline) Done() <-chan struct{}       { return c.done }
+func (c *controlledRoleDeadline) Value(key any) any           { return c.parent.Value(key) }
+func (c *controlledRoleDeadline) Err() error {
+	select {
+	case <-c.done:
+		return context.DeadlineExceeded
+	default:
+		return c.parent.Err()
+	}
+}
+
+func (c *controlledRoleDeadline) expire() { c.once.Do(func() { close(c.done) }) }
+
+func expireWhenFileExists(ctx *controlledRoleDeadline, path string) <-chan bool {
+	return expireWhenFileExistsBefore(ctx, path, time.Now().Add(descendantFixtureReadinessTimeout))
+}
+
+// Record readiness before expiry. The safety cutoff also stops the process,
+// but it cannot stand in for an observed readiness signal.
+func expireWhenFileExistsBefore(ctx *controlledRoleDeadline, path string, deadline time.Time) <-chan bool {
+	observed := make(chan bool, 1)
+	go func() {
+		defer close(observed)
+		for time.Now().Before(deadline) {
+			select {
+			case <-ctx.Done():
+				observed <- false
+				return
+			default:
+			}
+			if data, err := os.ReadFile(path); err == nil && string(data) == "ready" {
+				observed <- true
+				ctx.expire()
+				return
+			}
+			time.Sleep(10 * time.Millisecond)
+		}
+		observed <- false
+		ctx.expire()
+	}()
+	return observed
+}
+
+func TestControlledRoleDeadlineRejectsLateReadiness(t *testing.T) {
+	path := filepath.Join(testkit.TempDir(t), "late-ready")
+	ctx := newControlledRoleDeadline(context.Background())
+	observed := <-expireWhenFileExistsBefore(ctx, path, time.Time{})
+	<-ctx.Done()
+	if err := os.WriteFile(path, []byte("ready"), 0600); err != nil {
+		t.Fatal(err)
+	}
+	if observed {
+		t.Fatal("late marker falsely proved readiness before deadline expiry")
+	}
+	if !errors.Is(ctx.Err(), context.DeadlineExceeded) {
+		t.Fatalf("readiness safety cutoff did not stop the role: %v", ctx.Err())
+	}
 }
 
 func TestRunBindsIndependentRolesAndDigests(t *testing.T) {
@@ -674,14 +766,58 @@ func TestRunRecordsFailureTimeoutAndOutputLimitWithoutRetry(t *testing.T) {
 		}
 	})
 	t.Run("timeout", func(t *testing.T) {
+		options := testOptions(t)
+		readyPath := filepath.Join(testkit.TempDir(t), "runner-ready")
+		t.Setenv("MARKITECT_AGENTEXEC_TEST_MODE", "controlled-timeout")
+		t.Setenv("MARKITECT_AGENTEXEC_TEST_ROLE", "")
+		t.Setenv(readyEnv, readyPath)
 		config := testConfig()
 		config.Timeout = 100 * time.Millisecond
-		result, err := runHelper(t, "timeout", "", testRequest(RoleExecutor), config)
+		var factoryCalls int
+		var readinessObserved bool
+		factory := func(parent context.Context, timeout time.Duration) (context.Context, context.CancelFunc) {
+			factoryCalls++
+			if timeout != config.Timeout {
+				t.Errorf("role timeout passed to factory = %s, want %s", timeout, config.Timeout)
+			}
+			ctx := newControlledRoleDeadline(parent)
+			ready := expireWhenFileExists(ctx, readyPath)
+			var stopOnce sync.Once
+			return ctx, func() {
+				stopOnce.Do(func() {
+					ctx.expire()
+					readinessObserved = <-ready
+				})
+			}
+		}
+		result, err := runWithTimeout(context.Background(), config, testRequest(RoleExecutor), options, factory)
 		if err == nil || result.Receipt.Outcome != OutcomeIncomplete || result.Receipt.RetryCount != 0 {
 			t.Fatalf("expected incomplete timeout receipt, result=%#v err=%v", result, err)
 		}
 		if !strings.Contains(err.Error(), "configured role timeout") || !errors.Is(err, context.DeadlineExceeded) {
 			t.Fatalf("timeout should identify the role deadline while retaining the sentinel: %v", err)
+		}
+		if factoryCalls != 1 {
+			t.Fatalf("role timeout factory calls = %d, want one", factoryCalls)
+		}
+		if !readinessObserved {
+			t.Fatal("role deadline expired without observing helper readiness before expiry")
+		}
+	})
+	t.Run("parent-deadline", func(t *testing.T) {
+		parent, cancel := context.WithDeadline(context.Background(), time.Now().Add(-time.Second))
+		defer cancel()
+		result, err := runHelperWithContext(t, parent, "", testConfig())
+		if !errors.Is(err, context.DeadlineExceeded) || !strings.Contains(err.Error(), "enclosing job deadline") || result.Receipt.Outcome != OutcomeIncomplete {
+			t.Fatalf("parent deadline should retain its enclosing-job classification, result=%#v err=%v", result, err)
+		}
+	})
+	t.Run("parent-cancel", func(t *testing.T) {
+		parent, cancel := context.WithCancel(context.Background())
+		cancel()
+		result, err := runHelperWithContext(t, parent, "", testConfig())
+		if !errors.Is(err, context.Canceled) || !strings.Contains(err.Error(), "cancelled by its caller") || result.Receipt.Outcome != OutcomeIncomplete {
+			t.Fatalf("parent cancellation should retain its caller-cancel classification, result=%#v err=%v", result, err)
 		}
 	})
 	t.Run("overlimit", func(t *testing.T) {

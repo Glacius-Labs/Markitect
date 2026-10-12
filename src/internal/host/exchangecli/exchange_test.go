@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -130,11 +131,21 @@ func TestExchangeSetsInvalidResponsesAsideAndKeepsWaiting(t *testing.T) {
 
 func TestExchangeStopsWithItsCallerAndRejectsUnsafeInputs(t *testing.T) {
 	dir := t.TempDir()
-	_, wire := testInvocation(t, agentexec.RoleExecutor)
-	ctx, cancel := context.WithTimeout(context.Background(), 300*time.Millisecond)
+	invocation, wire := testInvocation(t, agentexec.RoleExecutor)
+	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
-	if _, err := Exchange(ctx, dir, 100*time.Millisecond, wire, io.Discard); err == nil {
-		t.Fatal("Exchange returned without a response")
+	// Exchange emits this notice only after atomically publishing request.json.
+	// Cancel from that phase signal instead of assuming publication within 300ms.
+	notices := &cancelExchangeOnNotice{cancel: cancel}
+	if _, err := Exchange(ctx, dir, 100*time.Millisecond, wire, notices); !errors.Is(err, context.Canceled) {
+		t.Fatalf("Exchange did not retain caller cancellation: %v", err)
+	}
+	if !notices.observed {
+		t.Fatal("caller cancellation happened before the exchange was waiting")
+	}
+	request, err := os.ReadFile(filepath.Join(dir, invocation.RunID, RequestFile))
+	if err != nil || !bytes.Equal(request, wire) {
+		t.Fatalf("cancelled exchange did not retain its exact request: %v", err)
 	}
 	if _, err := Exchange(context.Background(), "relative", 100*time.Millisecond, wire, io.Discard); err == nil {
 		t.Fatal("relative exchange directory was accepted")
@@ -146,6 +157,19 @@ func TestExchangeStopsWithItsCallerAndRejectsUnsafeInputs(t *testing.T) {
 	if code := Run([]string{"--dir", dir, "--poll", "1ms"}, bytes.NewReader(wire), io.Discard, &stderr); code != 2 {
 		t.Fatalf("out-of-range poll interval exit = %d", code)
 	}
+}
+
+type cancelExchangeOnNotice struct {
+	cancel   context.CancelFunc
+	observed bool
+}
+
+func (w *cancelExchangeOnNotice) Write(p []byte) (int, error) {
+	if bytes.Contains(p, []byte("waiting for ")) {
+		w.observed = true
+		w.cancel()
+	}
+	return len(p), nil
 }
 
 const (
