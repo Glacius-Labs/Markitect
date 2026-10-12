@@ -1,7 +1,7 @@
 schema: markitect-roadmap-backlog/v1
 updated: '2026-10-12'
 roadmap: docs/implementation-plan.md
-main_basis: 04c36968d5df19cf550fcf8fd0bb09f4b12b654f
+main_basis: e9979084dd085a2cd2715828358ed384feba0383
 
 # Single owner of work-package status. The roadmap explains streams, waves,
 # zones and rules; this file records each package's current state.
@@ -233,12 +233,13 @@ packages:
     title: Exchangeable executor, increment 2 (asynchronous boundary)
     stream: RUN
     wave: 2
-    status: active
+    status: done
     owner: runtime
     branch: dev/external-runtime-packets
+    pr: 245
     depends_on: [RUN-01]
     zone: runtime
-    note: Explicitly assigned after TEST-04 actual integration and complete Main push CI38229652026; the existing QA chat holds Runtime without a duplicate writer. PR245 reviewed source6363a1bb7bba5cdda3c4ac62c6b16340455ff54e is composed as409befdf197c2c36c9edd92ecd3674eb29f15df1 on fully green ARCH-09 Main04c36968d5df19cf550fcf8fd0bb09f4b12b654f. RequiredCI38244650365 completed FAIL in Quality/Race; this is not integrated acceptance. A guarded review-freshness regression and separate MCP binding/ceiling findings require an isolated correction, renewed review and new exact-head CI. All43 changed Source/test blobs transfer unchanged; all13new paths belong to current product Manager Artifacts (4application-layer,9runtime-layer), with retired manifest deletion retained and no roots expanded. External packets/Git deletions/executor-independent Plans preserve scope/review/Verify/Apply guards. Originalf500 fullWindows remains separate with observed schema-fixture, retained-parent-fixture and Git-alias failures; corrected focused checks are source-bound, not a new fullWindows PASS. TEST-05/RUN-05/06, positive recovery, provider and study execution keep separate gates.
+    note: Final49cfb9d695acfd790d4bafcef0ac3280d176c601 merged as PR245 to actualMaine9979084dd085a2cd2715828358ed384feba0383; completepushCI38250236626 passed Quality/Race/sourceartifact. Required38249413308 passed both jobs at testedmerge9f0b43580d7d0b2cad4d16a1d2cc4aeec7f0abb9; tree69bf199bd8839ebe8f8617648263fbb2ed6350f9 equals Root656bf5385edca3bb3eca7ee9e101d8f84160f9f7 and actualMain. Independent source and composition reviews plus fixed Check/Context/Impact/module/architecture/view/vet/docs/format/diff passed. All13new paths belong to currentproduct Artifacts (4application,9runtime), retiredmanifest remains absent. External work/review packets store submissions before separate scheduler acceptance; local Verify and guarded Apply remain separate operations. Git deletions retain grounded preimages; method-policy Plans retain actual internal executor identity checks. The corrected per-Manager review baseline and actual merged-input parent preserve scope/mode/model/helper/preimage guards and existing budgets. Exact49cf focusedRuntime21passes0fails and CLI/MCP contracts passed; fullrequired and actualMain jobs each retain1997passes0fails19existingskips. Rejected409CI38244650365 remains FAIL. Originalf500 fullWindows endedEXIT1 with52packagePASS4FAIL/two cumulative60-minute expiries, rawEF72F6EFC6DF428FA627DED3FD1163C9F799B0267093286C46C99CCF4B966585 independentlyverified; no correctedfullWindowsPASS or isolated Git-alias cause. Runtimewriter released; ARCH05 now has Cleaner exclusiveRuntimezone, ARCH06 follows its closure. TEST05/RUN05-06, provider/study execution, packetizedVerifier and positive recovery retain separate scope/gates.
     inputs:
       - docs/concepts/register.md#enh-005-exchangeable-executor-for-the-delegated-method
       - docs/work-items/surveys/tests-and-ci-20261010.md
@@ -838,11 +839,12 @@ packages:
     title: Dead code and duplicate helpers
     stream: ARCH
     wave: 2
-    status: blocked
+    status: active
+    branch: dev/runtime-dead-code
     owner: cleaner
     depends_on: [RUN-01]
     zone: runtime
-    note: RUN-01 is merged; waits for the runtime queue and the roadmap's QA/runtime sequence. Do not remove helpers still used by pending PRs.
+    note: Explicit Cleaner reservation after RUN02 actualMaine997/fullpushCI38250236626 completeSUCCESS; exclusiveRuntimezone, Runtime released untilARCH05closure thenARCH06. Start from currentorigin/main on dev/runtime-dead-code. Revalidate five definition-only projectrun helpers and consolidate the identical package-local string comparison without behavior/API/guard/budget changes; additional cleanup requires concrete reference evidence and bounded coordinator review. Root owns status/architecture documents; no concurrent TEST05/RUN05-06/Windowsfix/provider/study/recovery writer. Earlier ARCH09 sources and raw evidence stay preserved.
     inputs:
       - docs/work-items/surveys/code-architecture-20261010.md
     acceptance:
