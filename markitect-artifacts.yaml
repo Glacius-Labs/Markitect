@@ -850,6 +850,14 @@ spec:
       owner: project-world-implementation
     - path: src/internal/host/projectcli/testmain_test.go
       owner: project-world-implementation
+    - path: src/internal/host/projectcli/contract_suite_test.go
+      owner: project-world-implementation
+    - path: src/internal/host/projectcli/contract_helpers_test.go
+      owner: project-world-implementation
+    - path: src/internal/host/projectcli/contract_runtime_test.go
+      owner: project-world-implementation
+    - path: src/internal/host/projectcli/contract_adoption_test.go
+      owner: project-world-implementation
     - path: src/internal/host/projectcli/main.go
       owner: project-world-implementation
     - path: src/internal/host/projectcli/status.go

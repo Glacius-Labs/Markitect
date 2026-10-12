@@ -92,7 +92,7 @@ func verbTable() []verb {
 	}
 }
 
-const readOnlyInstructions = "This server is read-only: it serves reads and previews, and it writes no project files and starts no agents or checks, whatever the arguments. Known gap: in a guided project, context, brief, plan and ready may still record accepted briefing history under .markitect/state until a read-only history API replaces it. Tools use the explicitly selected repository. Only listed operations are available."
+const readOnlyInstructions = "This server is read-only: it serves reads and previews, and it writes no project files and starts no agents or checks, whatever the arguments. Tools use the explicitly selected repository. Only listed operations are available."
 
 // newMCPServer registers every MCP verb on a server fixed to one root. MCP
 // never takes the root or the adoption source from tool arguments.
