@@ -323,8 +323,83 @@ Unknown fields are rejected at every level.
 | `markitect` | object | required for `markitect`, forbidden otherwise | The product to install. |
 | `markitect.sourceRepo` | non-empty path | the checkout holding the playground, if its `go.mod` declares `github.com/Glacius-Labs/Markitect` | Local Markitect checkout to build from. A relative path or `~` counts from the manifest's folder; recorded as an absolute path. |
 | `markitect.commit` | 7 to 40 lowercase hex | required | Commit to build; the full hash is recorded. |
-| `markitect.innerModel` | like `agent.model` | `agent.model`; required for Claude kinds | Model of Markitect's inner roles. |
-| `markitect.innerEffort` | like `agent.effort` | `agent.effort`; required for Claude kinds | Effort of Markitect's inner roles. |
+| `markitect.innerModel` | like `agent.model` | `agent.model`; required for Claude kinds unless all three role profiles are explicit | Default model for roles without an explicit profile. |
+| `markitect.innerEffort` | like `agent.effort` | `agent.effort`; required for Claude kinds unless all three role profiles are explicit | Default effort for roles without an explicit profile. |
+| `markitect.roles` | object; optional | — | Per-role runtime profile overrides for `manager`, `reviewer` and `verifier`. Omitted roles use the shared inner model and effort, falling back to the Codex outer model and effort. With a Claude outer agent, provide `innerModel` and `innerEffort` unless all three roles have explicit profiles. |
+
+Each `markitect.roles.<role>` profile requires `provider` (`codex` or `process`), a
+full versioned `model` ID, and lowercase `effort`. Codex accepts `minimal`, `low`,
+`medium`, `high`, `xhigh`, `max` or `ultra` and defaults to `costMode: "metered"`;
+Codex must be metered.
+Without `providerExecutable`, Codex uses the native executable discovered in the
+container. A `process` profile requires `providerExecutable`, an absolute POSIX path
+inside the Linux container; it defaults to `costMode: "unmetered"` and has no helper
+sessions. For `process`, `providerArgs` is an optional array of strings (default empty)
+and `providerVersion` is optional. `costMode` defaults to `unmetered` for `process` and
+may be `metered` or `unmetered`; Codex roles cannot set `providerArgs` or
+`providerVersion`.
+
+For example, this selects a different Manager profile while the other two roles inherit
+the shared inner configuration:
+
+```json
+{
+  "markitect": {
+    "commit": "b2dc905b1554bd4c61c53dfdcd588fa1368594dc",
+    "roles": {
+      "manager": {
+        "provider": "codex",
+        "model": "gpt-6-luna",
+        "effort": "medium",
+        "costMode": "metered"
+      }
+    }
+  }
+}
+```
+
+A process profile selects its own executable, argument list and optional declared
+version. In this example the reviewer uses an unmetered process executor while the
+Manager and verifier use the shared inner Codex configuration:
+
+```json
+{
+  "markitect": {
+    "commit": "b2dc905b1554bd4c61c53dfdcd588fa1368594dc",
+    "roles": {
+      "reviewer": {
+        "provider": "process",
+        "model": "local-reviewer-1",
+        "effort": "high",
+        "providerExecutable": "/usr/local/bin/own-executor",
+        "providerArgs": ["--mode", "review"],
+        "providerVersion": "own-executor 1.2.3",
+        "costMode": "unmetered"
+      }
+    }
+  }
+}
+```
+
+`/usr/local/bin/own-executor` must already exist in the Linux image at that absolute
+path and be runnable by the `agent` user; the playground does not install or provision
+it. For setup, the role-options input is temporarily written as the repository record
+`.markitect/drafts/playground-role-config.json` and removed after config preview/write.
+Its evidence copy remains at `results/setup/role-config.json`.
+
+Role profiles are part of both run manifests and study files; a study carries them into
+each expanded run manifest. Setup passes the selected options through the existing
+`markitect config --input` role-options interface. The input file, preview and write
+commands, and the resulting `.markitect/runtime.yaml` hash are recorded. The written
+runtime YAML is the source for the recorded executor, model, effort and command; a
+mismatch with the selected profile blocks setup. This records configuration, not proof
+that a provider honored its requested model or that the product's role lifecycle was
+accepted. It does not authorize a paid provider run, a study or a protocol.
+
+All configured role models count when checking reviewer independence, both at study
+preflight and during assessment. `agent.maxSubagents` keeps its existing meaning: it
+configures Codex concurrency, including its native inner sessions; with Claude Code as
+the outer agent it is recorded only. Explicit role profiles do not change that limit.
 
 ### Study file (schema 1)
 

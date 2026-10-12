@@ -11,6 +11,7 @@ AGENTS.md by itself). For Markitect the product's role configuration is read bac
 """
 from __future__ import annotations
 
+import hashlib
 import json
 import os
 import shutil
@@ -20,7 +21,7 @@ from typing import Any, Callable
 
 from .claude_agent import ROUTER as CLAUDE_ROUTER
 from .lifecycle import match_owner, open_plain, read_text as _read, sha_file
-from .manifest import CLAUDE_KINDS
+from .manifest import CLAUDE_KINDS, role_profiles, uses_native_roles
 
 SETUP_IDENTITY = {
     "GIT_AUTHOR_NAME": "Playground setup",
@@ -142,13 +143,16 @@ def _markitect(recorder: _Recorder, ctx: dict, result: dict) -> None:
     binary = _install_markitect(Path(ctx["inDir"]), Path(ctx.get("markitectBinary", MARKITECT_BINARY)))
     notes["markitectBinary"] = str(binary)
     notes["markitectSha256"] = sha_file(binary)
-    codex = ctx.get("codexExecutable") or find_native_codex()
-    if not codex:
+    profiles = role_profiles(manifest)
+    needs_default_codex = any(p["provider"] == "codex" and not p.get("providerExecutable")
+                              for p in profiles.values())
+    codex = (ctx.get("codexExecutable") or find_native_codex()) if needs_default_codex else None
+    if needs_default_codex and not codex:
         raise SetupBlocked("no native Codex executable found (Markitect rejects script shims and symlinks)",
                            "environment")
     agent = manifest["agent"]
     budget = _budget(manifest)
-    notes.update(providerExecutable=str(codex), budget=budget)
+    notes.update(providerExecutable=str(codex) if codex else None, budget=budget)
 
     def product(name: str, *args: str, allow_failure: bool = False) -> tuple[dict, dict | None]:
         record, stdout = recorder.step(name, [str(binary), *args], timeout=PRODUCT_TIMEOUT,
@@ -176,7 +180,8 @@ def _markitect(recorder: _Recorder, ctx: dict, result: dict) -> None:
 
     # Markitect's inner roles run on Codex, so setup needs the Codex guidance; a Claude Code
     # outer agent also gets the product's own Claude guidance.
-    onboard_provider = "both" if agent["kind"] in CLAUDE_KINDS else "codex"
+    onboard_provider = "both" if agent["kind"] in CLAUDE_KINDS and uses_native_roles(manifest) else (
+        "claude" if agent["kind"] in CLAUDE_KINDS else "codex")
     notes["onboardProvider"] = onboard_provider
     onboard_args = [*base, "--provider", onboard_provider]
     _, preview = product("onboard-preview", "onboard", *onboard_args)
@@ -192,12 +197,51 @@ def _markitect(recorder: _Recorder, ctx: dict, result: dict) -> None:
                   "--input-micros-per-million", str(budget["inputMicrosPerMillion"]),
                   "--output-micros-per-million", str(budget["outputMicrosPerMillion"]),
                   "--max-cost-micros", str(budget["maxCostMicros"])]
-    _, preview = product("setup-preview", "config", *setup_args)
-    setup_digest = _digest(preview, "setup-preview", "editPlan")
-    _, written = product("setup-write", "config", *setup_args, "--expect", setup_digest, "--write")
+    input_path = None
+    selected = profiles
+    if inner.get("roles"):
+        # Reuse config's complete options record. The same immutable input is used
+        # for preview and digest-guarded write; no hand-written runtime is applied.
+        selected = {name: dict(profile) for name, profile in profiles.items()}
+        for profile in selected.values():
+            if profile["provider"] == "codex" and not profile.get("providerExecutable"):
+                profile["providerExecutable"] = str(codex)
+        options = {"provider": "codex", "model": inner_model, "effort": inner_effort,
+                   "codexProfile": "", "providerExecutable": str(codex) if codex else "",
+                   **budget, "roles": selected}
+        # config --input is a repository-relative product record, not an arbitrary
+        # file. Keep its bytes separately as evidence before removing our draft.
+        record_path = ".markitect/drafts/playground-role-config.json"
+        input_path = recorder.repo / record_path
+        if input_path.exists() or input_path.is_symlink():
+            raise SetupBlocked("role config draft already exists", "harness")
+        input_path.parent.mkdir(parents=True, exist_ok=True)
+        content = json.dumps(options, indent=2) + "\n"
+        (recorder.out_dir / "role-config.json").write_text(content, encoding="utf-8", newline="\n")
+        input_path.write_text(content, encoding="utf-8", newline="\n")
+        try:
+            match_owner(input_path, recorder.repo)
+        except BaseException:
+            input_path.unlink()
+            raise
+        notes["requestedRoles"] = profiles
+        setup_args = [*base, "--input", record_path]
+    try:
+        _, preview = product("setup-preview", "config", *setup_args)
+        setup_digest = _digest(preview, "setup-preview", "editPlan")
+        _, written = product("setup-write", "config", *setup_args, "--expect", setup_digest, "--write")
+    finally:
+        if input_path is not None:
+            input_path.unlink()
     notes["digests"] = {"init": init_digest, "onboard": onboard_digest, "setup": setup_digest}
     text, notes["runtimeSource"] = _runtime_text(written, recorder.repo)
     result["roles"] = runtime_roles(text) if text is not None else None
+    if text is not None:
+        notes["runtimeSha256"] = hashlib.sha256(text.encode("utf-8")).hexdigest()
+    if inner.get("roles"):
+        if notes["runtimeSource"] != RUNTIME_PATH:
+            raise SetupBlocked("written runtime file is unavailable for role confirmation")
+        _confirm_roles(selected, result["roles"])
 
     recorder.git("git-add", "add", "-A")
     recorder.git("git-diff-check", "diff", "--cached", "--check", allow_failure=True)
@@ -272,18 +316,39 @@ def _is_elf(path: Path) -> bool:
 # --- role configuration ----------------------------------------------------------------
 
 def _runtime_text(written: Any, repo: Path) -> tuple[str | None, str | None]:
-    """The runtime the product wrote and where it was read: the content its setup output
-    printed, else the file in the repository."""
+    """The written runtime file, or the product output when the file is unavailable."""
+    # The actual file is authoritative after write; output is a fallback for older
+    # product snapshots that don't expose the file to the setup recorder.
+    handle = open_plain(repo / RUNTIME_PATH)
+    if handle is not None:
+        with handle:
+            return handle.read(RUNTIME_LIMIT).decode("utf-8", errors="replace"), RUNTIME_PATH
     mutation = written.get("mutation") if isinstance(written, dict) else None
     files = mutation.get("files") if isinstance(mutation, dict) else None
     for change in files if isinstance(files, list) else []:
         if isinstance(change, dict) and change.get("path") == RUNTIME_PATH and isinstance(change.get("content"), str):
             return change["content"], "setup-write output"
-    handle = open_plain(repo / RUNTIME_PATH)
-    if handle is None:
-        return None, None
-    with handle:
-        return handle.read(RUNTIME_LIMIT).decode("utf-8", errors="replace"), RUNTIME_PATH
+    return None, None
+
+
+def _confirm_roles(profiles: dict, roles: list | None) -> None:
+    """Refuse silently ignored selections and incomplete effective configuration."""
+    names = {"worker": "manager", "reviewer": "reviewer", "verifier": "verifier"}
+    seen = set()
+    for role in roles or []:
+        name = names.get(role.get("role"))
+        if name is None:
+            continue
+        seen.add(name)
+        requested = profiles[name]
+        transport = "codex-app-server" if requested["provider"] == "codex" else "process"
+        if (role.get("executor"), role.get("model"), role.get("effort")) != (
+                transport, requested["model"], requested["effort"]):
+            raise SetupBlocked(f"runtime {name} executor/model/effort differs from the manifest")
+        if requested.get("providerExecutable") and role.get("command") != requested["providerExecutable"]:
+            raise SetupBlocked(f"runtime {name} executable differs from the manifest")
+    if seen != set(profiles):
+        raise SetupBlocked("runtime does not record every selected role class")
 
 
 def runtime_roles(text: str) -> list[dict]:
@@ -293,9 +358,11 @@ def runtime_roles(text: str) -> list[dict]:
 
     def role(name: str, manager: str | None, agent: dict) -> dict:
         app = agent.get("appServer") if isinstance(agent.get("appServer"), dict) else {}
-        return {"role": name, "manager": _manager_name(manager), "executor": agent.get("transport"),
+        options = agent.get("modelOptions") if isinstance(agent.get("modelOptions"), dict) else {}
+        return {"role": name, "manager": _manager_name(manager), "executor": agent.get("transport") or "process",
                 "providerVersion": agent.get("providerVersion"), "command": agent.get("command"),
-                "model": agent.get("model"), "effort": app.get("reasoningEffort", agent.get("effort"))}
+                "model": agent.get("model"),
+                "effort": app.get("reasoningEffort", options.get("reasoningEffort", agent.get("effort")))}
 
     review = data.get("review") if isinstance(data.get("review"), dict) else {}
     roles = []

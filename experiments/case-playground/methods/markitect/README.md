@@ -32,7 +32,12 @@ never reads these notes.
    <model> --effort <effort> --provider-executable <native codex>
    --input-micros-per-million 1000000 --output-micros-per-million 1000000
    --max-cost-micros <totalSeconds x 50000>` (preview), then the same with
-   `--expect <editPlan.digest> --write`. This writes `.markitect/runtime.yaml`.
+   `--expect <editPlan.digest> --write`. When role profiles are present, setup supplies
+   them through `--input <role-options.json>` using the existing role-options contract.
+   It records the input, preview and write commands and the hash of the resulting
+   `.markitect/runtime.yaml`; that written file supplies each role's executor, model,
+   effort and command. If those values do not match the selected manifest profile,
+   setup blocks. See the [manifest role profiles](../../README.md#manifest-schema-1).
 7. **Commit.** "Install Markitect project workflow", fast-forward the start branch and
    delete `markitect-setup`.
 8. **Observation.** `markitect check --repo R`. Right after setup it exits 1:
@@ -56,6 +61,9 @@ enough that it cannot bind before the wall-clock limit that both methods share.
 
 ## Product constraints at commit 669cecd2
 
+These are historical constraints of the product commit named in the heading, not the
+current playground contract:
+
 - Setup accepts only model `gpt-6-luna`, effort `high` and Codex CLI `0.162.0`.
 - Setup needs the onboarding output first (it pins the generated Codex instructions
   and the Codex binary by digest in `runtime.yaml`).
@@ -65,6 +73,23 @@ enough that it cannot bind before the wall-clock limit that both methods share.
   `.agents/skills/*` files, trailing spaces in `docs/markitect/project.md`). The setup
   records this and commits anyway; the agent meets the same issue when its project
   rules ask for `git diff --cached --check`.
+
+## Current role-profile contract
+
+The manifest may define separate `markitect.roles.manager`, `.reviewer` and `.verifier`
+profiles. Each explicit profile selects a provider, a full versioned model ID and effort;
+provider-specific executable, arguments, version and cost mode follow the manifest
+rules above. Roles without profiles use `markitect.innerModel` and `markitect.innerEffort`,
+or the Codex outer model and effort. A Claude outer agent must specify the shared inner
+model and effort unless all three role profiles are explicit.
+
+Setup reuses the existing `markitect config --input` role-options contract. It records
+the input file, preview/write commands and the written runtime YAML hash, then records
+each role's executor, model, effort and command from that YAML. A mismatch blocks setup.
+This is configuration evidence only: it does not show that a provider used the requested
+effective model, certify Markitect's role lifecycle, or authorize a paid provider run,
+study or protocol. Existing image pins and inventory remain the source for the installed
+tools.
 
 ## Final conformance
 

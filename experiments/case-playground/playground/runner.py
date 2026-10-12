@@ -33,7 +33,7 @@ from typing import Any, Callable
 
 from . import assess, claude_agent, codex_agent, lifecycle, methods, report
 from .lifecycle import utc as _utc
-from .manifest import CLAUDE_KINDS, ManifestError, load
+from .manifest import CLAUDE_KINDS, ManifestError, load, uses_native_roles
 
 DEFAULT_STATIONS = 4  # the v1 cases; the host passes the case's own count
 SNAPSHOT_ALLOWANCE = 1200  # one capture (Git reads, sweep, copies, clone)
@@ -228,7 +228,7 @@ class _Trajectory:
 
         stop, setup = None, {}
         # Markitect's inner roles run on Codex, so Claude Code with Markitect needs both logins.
-        needs_codex = self.kind == "codex" or (self.kind == "claude" and self.method == "markitect")
+        needs_codex = self.kind == "codex" or (self.kind == "claude" and uses_native_roles(self.manifest))
         if needs_codex and not self.state["authInstalled"]:
             stop = self.stop("environment", f"codex auth file missing: {self.auth_src}")
         elif self.kind == "claude" and self.token is None:

@@ -121,7 +121,7 @@ def _roles(setup: dict[str, Any] | None) -> list[dict[str, Any]] | None:
     roles = _get(setup, "roles")
     if not isinstance(roles, list):
         return None
-    keys = ("role", "manager", "executor", "providerVersion", "model", "effort")
+    keys = ("role", "manager", "executor", "providerVersion", "command", "model", "effort")
     return [{key: role.get(key) for key in keys} for role in roles if isinstance(role, dict)]
 
 
@@ -130,7 +130,11 @@ def _stratum(manifest: dict[str, Any]) -> str | None:
     kind = _get(manifest, "agent", "kind")
     if kind is None:
         return None
-    return f"outer={kind}" + (", inner=codex" if manifest.get("method") == "markitect" else "")
+    if manifest.get("method") != "markitect":
+        return f"outer={kind}"
+    from .manifest import role_profiles
+    providers = sorted({p["provider"] for p in role_profiles(manifest).values()})
+    return f"outer={kind}, inner={'+'.join(providers)}"
 
 
 def _fairness(manifest: dict[str, Any], versions: dict[str, Any], runner: dict[str, Any] | None) -> dict[str, Any]:
@@ -236,6 +240,9 @@ def build(out: Path) -> dict[str, Any]:
                   "claudeRouter": _get(setup, "notes", "claudeRouter"),
                   "onboardProvider": _get(setup, "notes", "onboardProvider"),
                   "roles": _roles(setup),
+                  "requestedRoles": _get(setup, "notes", "requestedRoles"),
+                  "runtimeSource": _get(setup, "notes", "runtimeSource"),
+                  "runtimeSha256": _get(setup, "notes", "runtimeSha256"),
                   "notes": _setup_notes(setup)},
         "stations": stations,
         "final": _final_summary(final),
@@ -293,7 +300,7 @@ def _tokens(tokens: dict[str, Any]) -> str:
 def _role_text(role: dict[str, Any]) -> str:
     who = role["role"] + (" " + role["manager"] if role.get("manager") else "")
     return (f"{who}: {_fmt(role.get('executor'))} ({_fmt(role.get('providerVersion'))}), "
-            f"model {_fmt(role.get('model'))}, effort {_fmt(role.get('effort'))}")
+            f"model {_fmt(role.get('model'))}, effort {_fmt(role.get('effort'))}, command {_fmt(role.get('command'))}")
 
 
 def render_markdown(report: dict[str, Any]) -> str:

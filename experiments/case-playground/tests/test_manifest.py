@@ -214,6 +214,69 @@ class ManifestTests(unittest.TestCase):
         self.assertRejected(variant(method="markitect", markitect={**inner, "innerEffort": "HIGH"}),
                             "markitect.innerEffort")
 
+    def test_role_profiles_validate_and_resolve_without_changing_absent_manifest_shape(self):
+        self.assertNotIn("roles", manifest.validate(variant(method="markitect", markitect=MARKITECT))["markitect"])
+        product = {**MARKITECT, "innerModel": "gpt-6-luna", "innerEffort": "high",
+                   "roles": {
+                       "manager": {"provider": "codex", "model": "gpt-6.1-sol", "effort": "ultra"},
+                       "reviewer": {"provider": "process", "model": "fake-model-1", "effort": "low",
+                                    "providerExecutable": "/usr/local/bin/reviewer", "providerArgs": ["--read-only"],
+                                    "providerVersion": "reviewer 1.2"},
+                   }}
+        normalized = manifest.validate(variant(method="markitect", markitect=product))
+        self.assertEqual(manifest.validate(normalized), normalized)
+        self.assertEqual(normalized["markitect"]["roles"], {
+            "manager": {"provider": "codex", "model": "gpt-6.1-sol", "effort": "ultra", "costMode": "metered"},
+            "reviewer": {"provider": "process", "model": "fake-model-1", "effort": "low",
+                         "costMode": "unmetered", "providerExecutable": "/usr/local/bin/reviewer",
+                         "providerArgs": ["--read-only"], "providerVersion": "reviewer 1.2"},
+        })
+        profiles = manifest.role_profiles(normalized)
+        self.assertEqual(profiles["manager"], normalized["markitect"]["roles"]["manager"])
+        self.assertEqual(profiles["reviewer"], normalized["markitect"]["roles"]["reviewer"])
+        self.assertEqual(profiles["verifier"], {"provider": "codex", "model": "gpt-6-luna",
+                                                  "effort": "high", "costMode": "metered"})
+
+    def test_role_profile_rejections_are_role_specific(self):
+        base = {"provider": "codex", "model": "gpt-6.1-sol", "effort": "high"}
+        cases = (
+            ({**base, "provider": "claude"}, "markitect.roles.manager.provider"),
+            ({**base, "model": "sonnet"}, "markitect.roles.manager.model"),
+            ({**base, "effort": "HIGH"}, "markitect.roles.manager.effort"),
+            ({**base, "effort": "unbounded"}, "markitect.roles.manager.effort"),
+            ({**base, "costMode": "unmetered"}, "Codex must be metered"),
+            ({**base, "providerArgs": []}, "apply only to process executors"),
+            ({**base, "providerVersion": "codex"}, "apply only to process executors"),
+            ({"provider": "process", "model": "fake-model-1", "effort": "high"},
+             "process requires providerExecutable"),
+            ({"provider": "process", "model": "fake-model-1", "effort": "high",
+              "providerExecutable": "relative/runner"}, "absolute container path"),
+            ({"provider": "process", "model": "fake-model-1", "effort": "high",
+              "providerExecutable": "/opt/../runner"}, "absolute container path"),
+            ({"provider": "process", "model": "fake-model-1", "effort": "high",
+              "providerExecutable": "/opt/runner", "providerArgs": ["--ok", 1]}, "array of strings"),
+            ({"provider": "process", "model": "fake-model-1", "effort": "high",
+              "providerExecutable": "/opt/runner", "providerVersion": " 1.0"}, "non-empty version string"),
+        )
+        for profile, fragment in cases:
+            with self.subTest(profile=profile):
+                self.assertRejected(variant(method="markitect", markitect={**MARKITECT,
+                                                                          "roles": {"manager": profile}}), fragment)
+
+    def test_claude_outer_can_omit_inner_profile_only_when_every_role_is_explicit(self):
+        claude = {"agent__kind": "claude", "agent__claudeVersion": "2.1.296",
+                  "agent__model": "claude-opus-5-5", "method": "markitect"}
+        complete = {role: {"provider": "codex", "model": f"gpt-6.1-{effort}", "effort": effort}
+                    for role, effort in (("manager", "high"), ("reviewer", "medium"), ("verifier", "low"))}
+        result = manifest.validate(variant(**claude, markitect={**MARKITECT, "roles": complete}))
+        self.assertEqual(set(result["markitect"]["roles"]), {"manager", "reviewer", "verifier"})
+        self.assertRejected(variant(**claude, markitect={**MARKITECT, "roles": {"manager": complete["manager"]}}),
+                            "innerEffort, innerModel")
+        partial = {**MARKITECT, "innerModel": "gpt-6-luna", "innerEffort": "high",
+                   "roles": {"manager": complete["manager"]}}
+        self.assertEqual(manifest.validate(variant(**claude, markitect=partial))["markitect"]["roles"],
+                         {"manager": {**complete["manager"], "costMode": "metered"}})
+
     def test_load_reads_utf8_json_and_reports_bad_files(self):
         with tempfile.TemporaryDirectory() as folder:
             path = Path(folder) / "m.json"

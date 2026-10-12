@@ -16,6 +16,23 @@ from playground import host, image, outcome
 from tests import evaluation_repo
 from tests.test_image import DOCKERFILE, sample_inventory
 
+
+class RoleAuthenticationTests(unittest.TestCase):
+    def test_codex_login_follows_selected_native_roles(self):
+        data = {"agent": {"kind": "claude", "model": "claude-opus-5-5", "effort": "high"},
+                "method": "markitect", "markitect": {"roles": {
+                    name: {"provider": "process", "model": "fake-model-1", "effort": "low",
+                           "providerExecutable": "/usr/bin/fake"}
+                    for name in ("manager", "reviewer", "verifier")}}}
+        self.assertFalse(host.needs_codex_auth(data))
+        data["markitect"]["roles"]["reviewer"]["provider"] = "codex"
+        self.assertTrue(host.needs_codex_auth(data))
+        data["agent"]["kind"] = "codex"
+        data["markitect"]["roles"]["reviewer"]["provider"] = "process"
+        self.assertTrue(host.needs_codex_auth(data))
+        data["agent"]["kind"] = "fake"
+        self.assertFalse(host.needs_codex_auth(data))
+
 def station_plan(case: str, sizes: tuple[int, ...]) -> str:
     ids = iter(f"X{i:02d}" for i in range(1, 100))
     return json.dumps({"schema": 1, "case": case, "stations": [

@@ -103,6 +103,11 @@ elif action == "onboard":
             handle.write("\n## Markitect\n\nUse the project MCP tools.\n")
     print(json.dumps({"apiVersion": "onboarding/v1", "digest": digests["onboard"], "files": []}))
 elif action == "config":
+    if "--input" in args:
+        record = pathlib.PurePosixPath(opt("--input"))
+        if record.is_absolute() or record.parts[:2] != (".markitect", "drafts"):
+            stop("input must be a repository-relative draft record")
+        json.loads((repo / record).read_text(encoding="utf-8"))
     if write:
         (repo / ".markitect" / "runtime.yaml").write_text(RUNTIME, encoding="utf-8")
     print(json.dumps({"apiVersion": "setup/v1", "editPlan": {"digest": digests["config"]},
@@ -206,11 +211,12 @@ class MarkitectSetupTest(unittest.TestCase):
         self.codex = self.root / "codex-native"
         self.codex.write_bytes(b"\x7fELF fake")
 
-    def run_setup(self, fail: str | None = None, kind: str = "codex", binary: bool = True) -> dict:
+    def run_setup(self, fail: str | None = None, kind: str = "codex", binary: bool = True,
+                  roles: dict | None = None, runtime: str = RUNTIME_YAML) -> dict:
         in_dir = self.root / "in"
         (in_dir / "bin").mkdir(parents=True)
         script = (FAKE_MARKITECT.replace("__LOG__", repr(str(self.log))).replace("__FAIL__", repr(fail))
-                  .replace("__RUNTIME__", repr(RUNTIME_YAML)))
+                  .replace("__RUNTIME__", repr(runtime)))
         if binary:
             (in_dir / "bin" / "markitect").write_text(script, encoding="utf-8")
         manifest = dict(MANIFEST, agent={**MANIFEST["agent"], "kind": kind, "claudeVersion": "2.1.296"},
@@ -218,6 +224,8 @@ class MarkitectSetupTest(unittest.TestCase):
         if kind in ("claude", "fake-claude"):  # the outer model is no Codex model
             manifest["agent"]["model"] = "claude-opus-5-5"
             manifest["markitect"].update(innerModel="gpt-6-luna", innerEffort="high")
+        if roles is not None:
+            manifest["markitect"]["roles"] = roles
         ctx = {"manifest": manifest, "case": "readinglog", "inDir": in_dir, "outDir": self.root / "out",
                "agentHome": self.root / "home", "runAsAgent": local_runner(self.installed),
                "markitectBinary": self.installed, "codexExecutable": str(self.codex)}
@@ -258,8 +266,76 @@ class MarkitectSetupTest(unittest.TestCase):
                                            {"role": "reviewer", "manager": "project-owner", **ROLE},
                                            {"role": "verifier", "manager": None, **ROLE}])
         self.assertEqual((result["notes"]["runtimeSource"], result["notes"]["onboardProvider"]),
-                         ("setup-write output", "codex"))
+                         (methods.RUNTIME_PATH, "codex"))
         self.assertFalse((self.repo / "CLAUDE.md").exists())
+
+    def test_role_profiles_use_one_product_input_for_preview_and_write(self):
+        selected = {"reviewer": {"provider": "codex", "model": "gpt-6-sol", "effort": "medium",
+                                 "costMode": "metered"},
+                    "verifier": {"provider": "process", "model": "fake-model-1", "effort": "low",
+                                 "providerExecutable": "/usr/bin/fake-executor", "providerArgs": ["--verify"],
+                                 "providerVersion": "fake/1", "costMode": "unmetered"}}
+        runtime = RUNTIME_YAML
+        # Independent runtime bytes model what product config actually wrote.
+        before, review = runtime.split("review:\n", 1)
+        worker, _ = before.split("verifier:\n", 1)
+        runtime = (worker + "verifier:\n    command: /usr/bin/fake-executor\n    model: fake-model-1\n"
+                   "    modelOptions:\n        reasoningEffort: low\n    providerVersion: fake/1\n"
+                   + "review:\n" + review.replace("model: gpt-6-luna", "model: gpt-6-sol")
+                   .replace("reasoningEffort: high", "reasoningEffort: medium"))
+        runtime = runtime.replace("/usr/lib/codex/vendor/bin/codex", str(self.codex))
+        result = self.run_setup(roles=selected, runtime=runtime)
+        self.assertEqual((result["status"], result["error"]), ("ready", None))
+        calls = [call for call in self.calls() if call[0] == "config"]
+        self.assertEqual(calls[1], [*calls[0], "--expect", "c" * 64, "--write"])
+        self.assertEqual(calls[0][calls[0].index("--input") + 1], ".markitect/drafts/playground-role-config.json")
+        self.assertFalse((self.repo / ".markitect/drafts/playground-role-config.json").exists())
+        options = json.loads((self.root / "out/role-config.json").read_text(encoding="utf-8"))
+        self.assertEqual(options["roles"]["verifier"], selected["verifier"])
+        self.assertEqual(options["roles"]["reviewer"]["providerExecutable"], str(self.codex))
+        self.assertEqual(options["roles"]["manager"]["model"], MANIFEST["agent"]["model"])
+        self.assertEqual([(r["executor"], r["model"], r["effort"]) for r in result["roles"]],
+                         [("codex-app-server", "gpt-6-luna", "high"),
+                          ("codex-app-server", "gpt-6-sol", "medium"), ("process", "fake-model-1", "low")])
+        self.assertEqual(result["notes"]["runtimeSha256"], methods.sha_file(self.repo / methods.RUNTIME_PATH))
+        self.assertEqual(git(self.repo, "status", "--porcelain"), "")
+
+    def test_ignored_role_selection_blocks_instead_of_claiming_effective_configuration(self):
+        result = self.run_setup(roles={"reviewer": {"provider": "codex", "model": "gpt-6-sol",
+                                                   "effort": "medium", "costMode": "metered"}},
+                                runtime=RUNTIME_YAML.replace("/usr/lib/codex/vendor/bin/codex", str(self.codex)))
+        self.assertEqual((result["status"], result["blockedBy"]), ("blocked", "product"))
+        self.assertIn("runtime reviewer executor/model/effort differs", result["error"])
+        self.assertIsNone(result["commit"])
+
+    def test_all_process_roles_need_no_native_codex_discovery(self):
+        selected = {name: {"provider": "process", "model": "fake-model-1", "effort": "low",
+                           "providerExecutable": "/usr/bin/fake-executor", "costMode": "unmetered"}
+                    for name in ("manager", "reviewer", "verifier")}
+        runtime = (RUNTIME_YAML.replace("/usr/lib/codex/vendor/bin/codex", "/usr/bin/fake-executor")
+                   .replace("transport: codex-app-server", "transport: process")
+                   .replace("model: gpt-6-luna", "model: fake-model-1")
+                   .replace("        modelOptions: null\n", "")
+                   .replace("appServer:", "modelOptions:")
+                   .replace("reasoningEffort: high", "reasoningEffort: low"))
+        with mock.patch.object(methods, "find_native_codex", side_effect=AssertionError("native discovery")):
+            result = self.run_setup(kind="fake-claude", roles=selected, runtime=runtime)
+        self.assertEqual(result["status"], "ready", result["error"])
+        self.assertEqual(result["notes"]["onboardProvider"], "claude")
+        self.assertIsNone(result["notes"]["providerExecutable"])
+
+    def test_discovered_native_command_mismatch_blocks_setup(self):
+        result = self.run_setup(roles={"reviewer": {"provider": "codex", "model": "gpt-6-luna",
+                                                   "effort": "high", "costMode": "metered"}})
+        self.assertEqual((result["status"], result["blockedBy"]), ("blocked", "product"))
+        self.assertIn("runtime manager executable differs", result["error"])
+
+    def test_failed_config_removes_its_temporary_draft_and_retains_input_evidence(self):
+        result = self.run_setup(fail="config", roles={"reviewer": {
+            "provider": "codex", "model": "gpt-6-luna", "effort": "medium", "costMode": "metered"}})
+        self.assertEqual(result["status"], "blocked")
+        self.assertFalse((self.repo / ".markitect/drafts/playground-role-config.json").exists())
+        self.assertTrue((self.root / "out/role-config.json").is_file())
 
     def test_claude_outer_agent_gets_router_and_both_onboardings(self):
         result = self.run_setup(kind="claude")
@@ -295,6 +371,23 @@ class MarkitectSetupTest(unittest.TestCase):
 
 
 class RuntimeRolesTest(unittest.TestCase):
+    def test_written_file_takes_precedence_over_returned_proposal(self):
+        with tempfile.TemporaryDirectory() as folder:
+            repo = Path(folder)
+            (repo / ".markitect").mkdir()
+            (repo / methods.RUNTIME_PATH).write_bytes(b"actual runtime bytes\n")
+            output = {"mutation": {"files": [{"path": methods.RUNTIME_PATH, "content": "stale proposal"}]}}
+            self.assertEqual(methods._runtime_text(output, repo), ("actual runtime bytes\n", methods.RUNTIME_PATH))
+
+    def test_missing_and_mismatched_effective_roles_are_refused(self):
+        profiles = {name: {"provider": "codex", "model": "gpt-6-luna", "effort": "high"}
+                    for name in ("manager", "reviewer", "verifier")}
+        with self.assertRaisesRegex(methods.SetupBlocked, "every selected role"):
+            methods._confirm_roles(profiles, methods.runtime_roles(RUNTIME_YAML)[:1])
+        profiles["verifier"]["providerExecutable"] = "/different/codex"
+        with self.assertRaisesRegex(methods.SetupBlocked, "executable differs"):
+            methods._confirm_roles(profiles, methods.runtime_roles(RUNTIME_YAML))
+
     def test_reads_roles_from_runtime_yaml(self):
         roles = methods.runtime_roles(RUNTIME_YAML)
         self.assertEqual([(r["role"], r["manager"]) for r in roles],
@@ -311,7 +404,7 @@ class RuntimeRolesTest(unittest.TestCase):
         self.assertEqual(methods.runtime_roles(text), [
             {"role": "worker", "manager": "a: b", "executor": "exec", "providerVersion": None, "command": None,
              "model": "it's", "effort": "low"},
-            {"role": "worker", "manager": "plain", "executor": None, "providerVersion": None, "command": None,
+            {"role": "worker", "manager": "plain", "executor": "process", "providerVersion": None, "command": None,
              "model": "m2", "effort": None}])
         self.assertEqual(methods.runtime_roles(""), [])
         self.assertEqual(methods.runtime_roles("not: [yaml\n  - at all"), [])
