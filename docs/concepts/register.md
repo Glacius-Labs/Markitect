@@ -427,14 +427,15 @@ These entries record agreed or endorsed direction. Recording an enhancement does
 - **Status:** Accepted direction, owner, 10 October 2026. A separate configuration for every agent role was already planned.
 - **Current source:**
   - `.markitect/runtime.yaml` binds one executor and one reviewer per Manager. Each binding has its own model, plus a reasoning effort for the App Server or model options for the process transport. One verifier is configured globally.
-  - `project setup` generates a default profile for every role: Codex App Server, `gpt-6-luna`, `high` effort. Since RUN-01, a setup options record gives Managers, reviewers and the verifier their own provider (`codex` or `process`), model, effort and cost mode, and profiles can be mixed ([role profiles](../provider-adapters.md#role-profiles)).
+  - `config` generates a default profile for every role: Codex App Server, `gpt-6-luna`, `high` effort. Since RUN-01, a setup options record gives Managers, reviewers and the verifier their own provider (`codex` or `process`), model, effort and cost mode, and profiles can be mixed ([role profiles](../provider-adapters.md#role-profiles)).
+  - PLAY-06 is integrated as [PR241](https://github.com/Glacius-Labs/Markitect/pull/241) at Main `d083c8f37b6bb1e09a9c5a7947c421651a7e755b` with complete [push CI38231391134](https://github.com/Glacius-Labs/Markitect/actions/runs/38231391134). Playground manifests select role executor/model/effort; setup confirms actual runtime arguments, effective cost mode and requested process version, and reports the configuration. Provider-free checks and fake setup prove this configuration path, not provider honor or a method study; PLAY-07 remains gated.
   - Helpers inherit their parent's configuration.
   - The Manager implements its own slice; there is no separate implementer role.
 - **Direction:**
   - Configure model, reasoning effort and provider per role (Manager or implementer, helper, reviewer, verifier), and possibly per Manager.
   - Allow mixing, for example one model implements and another reviews.
   - Evaluate combinations as an experimental factor ([ASM-005](#assumptions-and-hypotheses), [OQ-003](#open-questions)).
-- **Work items:** RUN-01 (merged as pull request #104) and PLAY-06 in the [backlog](../work-items/backlog.yaml).
+- **Work items:** RUN-01 (merged as pull request #104) and PLAY-06 (merged as pull request #241) in the [backlog](../work-items/backlog.yaml).
 
 ### ENH-005 Exchangeable executor for the delegated method
 
@@ -445,7 +446,7 @@ These entries record agreed or endorsed direction. Recording an enhancement does
     - a hand-configurable process transport with a versioned JSON protocol (`agent-execution/v1alpha1`);
     - the native Codex App Server transport.
   - Repository end-to-end tests drive Plan, Run, Review, Verify and guarded Apply through a scripted, model-free process executor.
-  - Since RUN-01, `project setup` selects a process executor per role, `costMode: unmetered` covers executors that cannot report token usage, such as scripts or people, and `markitect-exchange-executor` is a reference adapter that hands each invocation to a person, a script or another session through files ([bring your own executor](../provider-adapters.md#bring-your-own-executor)).
+  - Since RUN-01, the role options accepted by `config` select a process executor per role, `costMode: unmetered` covers executors that cannot report token usage, such as scripts or people, and `markitect-exchange-executor` is a reference adapter that hands each invocation to a person, a script or another session through files ([bring your own executor](../provider-adapters.md#bring-your-own-executor)).
   - What is missing is product surface:
     - export of work packets;
     - submission of external candidates and review verdicts;

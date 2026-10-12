@@ -1,7 +1,7 @@
 schema: markitect-roadmap-backlog/v1
 updated: '2026-10-12'
 roadmap: docs/implementation-plan.md
-main_basis: b2dc905b1554bd4c61c53dfdcd588fa1368594dc
+main_basis: d083c8f37b6bb1e09a9c5a7947c421651a7e755b
 
 # Single owner of work-package status. The roadmap explains streams, waves,
 # zones and rules; this file records each package's current state.
@@ -189,11 +189,12 @@ packages:
     title: Executor and model per role in study manifests
     stream: PLAY
     wave: 2
-    status: active
+    status: done
     owner: scientist
     branch: dev/playground-role-configuration
+    pr: 241
     depends_on: [RUN-01, PLAY-05]
-    note: The new Scientist chat owns experiments/case-playground in checkout d5f0 from Main b2dc905b1554bd4c61c53dfdcd588fa1368594dc. Both dependencies are merged; PLAY-06 now selects and records role configuration with provider-free fixtures. PLAY-07 protocol/cases/budget and CI-04 provider execution retain their separate owner gates. Subsequent accepted work is assigned through the integrator's continuous DAG and zone check.
+    note: PR241 merged corrected head 26bcc12ea49dbf6e9e23222d7c9a1512f2192613 as actual Main d083c8f37b6bb1e09a9c5a7947c421651a7e755b after independent source review, provider-free fixtures and required Quality/Race; complete actual-Main push CI38231391134 passed. Runtime readback confirms selected executor/model/effort, arguments, effective cost mode and requested version; configuration evidence is not provider or method-study acceptance. Final playground-profile-confirmation and original d5f0 sources/evidence are preserved. The Scientist writer is released; no protocol-writing or further study scope is assigned. PLAY-07 stays parked with protocol/cases/budget owner gate, and CI-04 retains credentials/cost authority.
     zone: free
     acceptance:
       - A manifest selects executor, model and effort per role; runs record the effective configuration.
@@ -232,10 +233,12 @@ packages:
     title: Exchangeable executor, increment 2 (asynchronous boundary)
     stream: RUN
     wave: 2
-    status: proposed
+    status: active
     owner: runtime
+    branch: dev/asynchronous-executor
     depends_on: [RUN-01]
     zone: runtime
+    note: Explicitly assigned after TEST-04 actual integration and complete Main push CI38229652026. The existing QA chat now holds the Runtime role without a duplicate writer; checkout asynchronous-executor started clean on current Main d083c8f37b6bb1e09a9c5a7947c421651a7e755b. Scope is the endorsed ENH-005 asynchronous boundary through existing Runtime and bounded projectapp/projectcli surfaces, preserving candidate/snapshot/scope/review/Verify/Apply guards. New files stay in already-owned packages; exact accounting additions and ARCH-09's equivalent current-model migration are coordinated. This is not positive kill recovery, provider execution or a study. TEST-05 and RUN-05/06 keep separate later slots.
     inputs:
       - docs/concepts/register.md#enh-005-exchangeable-executor-for-the-delegated-method
       - docs/work-items/surveys/tests-and-ci-20261010.md
@@ -534,12 +537,13 @@ packages:
     title: Method end-to-end tests through the exchange executor
     stream: TEST
     wave: 2
-    status: active
+    status: done
     owner: qa
     branch: dev/scripted-runtime-scenarios
+    pr: 242
     depends_on: [RUN-01]
     zone: runtime
-    note: Runtime is reserved exclusively for the resumed QA chat in fresh checkout scripted-runtime-scenarios from Main b2dc905b1554bd4c61c53dfdcd588fa1368594dc; frozen TEST-03 source and Windows logs remain untouched. The real-binary exchange harness owns method_exchange_fixture_test.go and method_exchange_e2e_test.go in src/harness/examples. Happy/fault scenarios proceed under existing product contracts. A real in-flight process/exchange kill currently produces blocked resume and no replay; successful continuation is not inferred from that guard result and full package acceptance remains subject to concrete candidate review. RUN-02 and later Runtime packages wait for integration and a new reservation.
+    note: Corrected head 3029f5dfb042f861c936c268bcfa194c068b43dc merged as PR242 to actual Main f7827e4ff7708bedfbfe872a94f6c519829323c8; complete push CI38229652026 passed Quality/Race/source artifact, including all six method cases without method skips. The real CLI exercises happy/fault/repair/review/Verify/Apply and real resume after kill; the latter durably blocks an uncertain process invocation without replay, not successful continuation or new recovery. Missing required artifacts fail structurally before checks; forgotten tracked replacements fail a literal check and enter explicit repair. Exact 3029 targeted Windows integration passed; earlier a242 full Windows 5-pass/1-decoder-fail and WIP log gap remain separate. Scheduled CI38229769410 on f782 later failed the Windows projectadoption lock test; its separate failure does not change the successful push verdict or prove a product lock cause. RUN-02 now has its own Runtime reservation; old TEST-03/04 sources and raw evidence remain preserved.
     inputs:
       - docs/work-items/surveys/tests-and-ci-20261010.md
       - pull request 104 (exchange executor, superseding 92, and fault-injection tests)
@@ -691,10 +695,16 @@ packages:
       fixed-candidate checks. A new Bughunter session started on 12 October from clean Main
       1b621b1e06a3b0670d7f07b67a2632320796c7bf and completed its first bounded read-only review
       and isolated reproduction. No production repair paths are reserved; future verified findings go to the integrator
-      for a bounded non-colliding fix assignment. Runtime has no current implementation writer;
-      future work needs a scope and slot assignment. The later autonomous restart reserves Runtime for TEST-04,
-      interface for ARCH-08 and experiments/case-playground for PLAY-06. Fresh reviews require changed sources;
-      the completed initial sweep is not automatically repeated. Core/projectmodel findings remain coordinated with kg.
+      for a bounded non-colliding fix assignment. The first autonomous group TEST-04, ARCH-08 and PLAY-06
+      is now integrated with complete actual-Main push checks; Runtime is explicitly reserved for RUN-02
+      and Legacy for ARCH-09. The initial sweep is not automatically repeated. New Windows evidence
+      prompted a second bounded read-only review of fixed f7827e4ff7708bedfbfe872a94f6c519829323c8
+      Gitblobs, preserving the old 2a48 checkout/branch at 1b621b1e. Scheduled CI38229769410 failed
+      TestProcessFileLockReleasesAfterProcessKill; the primary successful competing acquisition remains
+      unisolated, while a P2 test failure-cleanup bug is confirmed. No product lock defect, Runtime fix,
+      execution or automatic retry is inferred. The external windows-process-lock-f782-diagnosis.md
+      records a possible future test-only Hold/Release and child-exit/stderr probe; it has no writer slot yet.
+      The second read-only episode is complete. Core/projectmodel findings remain coordinated with kg.
       The first bounded sweep reproduced the known helper-cleanup liveness failure after process
       loss on Main 1b621b1e06a3b0670d7f07b67a2632320796c7bf; the passing observation test confirms
       the blockade, not successful recovery. The independently reviewed cross-process reconciliation
@@ -873,12 +883,13 @@ packages:
     title: Move distribution commands to release tooling
     stream: ARCH
     wave: 3
-    status: active
+    status: done
     owner: cleaner
     branch: dev/release-tooling
+    pr: 240
     depends_on: [CLI-01]
     decision: DEC-014
-    note: Cleaner now owns the explicitly assigned interface zone in checkout 57a5 from Main b2dc905b1554bd4c61c53dfdcd588fa1368594dc after the completed interface queue. Bounded release/CI/bootstrap/installer crosspaths are coordinated; new releaseinstall/buildinfo packages belong to product with strict ownership/accounting and generated-view updates. The migration must retain preview, freshness, pin validation and final checks under the writer lock; no import-gate exception or release publication is authorized. Reconcile release-benchmark.yaml and benchmark/run.ps1 legacy callers with ARCH-09's removal direction; historical releases and evidence remain immutable. ARCH-09 follows actual integration and its own legacy reservation.
+    note: PR240 merged corrected head 2c7ff3d3c06d1ef8572b9c221f712714a6f98cf6 as actual Main 4b41d29a219836472e17a50fb17fa5d5e98ce2cd; complete push CI38227756946 passed after independent guarded-write/docs review, fixed gates, required Quality/Race and exact bundle smoke. Installer callbacks bind the original capture, including whole-struct replacement; rejected d3 and insufficient first-fix evidence remain separate. The atomic releaseinstall/buildinfo ownership move retains preview/freshness/pin validation and manifest-last writes without import exceptions. Historical benchmarks are manual and pinned through v0.14.1; no release or measurement ran. Original d3 Windows full suite ended FAIL with two cumulative package timeouts and an audit Git error; its source/ref/raw log remain preserved, not current-Main Windows evidence. ARCH-09 now has its own Legacy reservation.
     zone: interface
     inputs:
       - docs/work-items/surveys/code-architecture-20261010.md
@@ -889,10 +900,12 @@ packages:
     title: Remove the v0.13 Project/Domain line
     stream: ARCH
     wave: 3
-    status: blocked
+    status: active
     owner: cleaner
+    branch: dev/legacy-removal
     depends_on: [ARCH-07, ARCH-08]
     zone: legacy
+    note: Explicitly assigned after ARCH-08 actual merge and complete push Main CI38227756946. Checkout legacy-removal started clean on current Main d083c8f37b6bb1e09a9c5a7947c421651a7e755b. Remove the precise legacy inventory and audited callers while retaining current product, Shop, both method-exchange harness files and historical benchmark/release evidence. Rehome architecture command glue and current module checks with equivalent byte/owner/check/digest validation; migrate canonical ownership/accounting and regenerate the view atomically. No required-coverage waiver, placeholder, import exception, Runtime API/recovery change or release is assigned. Shared model/codemap/CI and retiring legacy artifact manifest are coordinated with RUN-02's exact existing-package additions; backlog/roadmap/register remain integrator-owned.
     inputs:
       - docs/work-items/surveys/code-architecture-20261010.md
     acceptance:

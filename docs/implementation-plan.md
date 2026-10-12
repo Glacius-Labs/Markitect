@@ -1,6 +1,6 @@
 # Roadmap
 
-Updated 12 October 2026 against main `b2dc905b1554bd4c61c53dfdcd588fa1368594dc`, with complete [Main CI](https://github.com/Glacius-Labs/Markitect/actions/runs/38212349933). The [previous integration record](validation/integration-queue-20261011.md) closes the six-PR queue and its scoped follow-ups. The [role-round record](validation/integration-round-20261012.md) accounts for integrated TEST-03, CLI-03, CLI-04 and TEST-02 and the completed first Bughunter episode. The owner has now authorized continuous backlog-wave restart; the current reservations are TEST-04, ARCH-08 and PLAY-06. The [Claude-to-Codex handoff](development/session-handoff.md) preserves the earlier interrupted-session snapshot.
+Updated 12 October 2026 against main `d083c8f37b6bb1e09a9c5a7947c421651a7e755b`, with complete [Main CI](https://github.com/Glacius-Labs/Markitect/actions/runs/38231391134). The [previous integration record](validation/integration-queue-20261011.md) closes the six-PR queue and its scoped follow-ups. The [role-round record](validation/integration-round-20261012.md) accounts for integrated TEST-03, CLI-03, CLI-04 and TEST-02, the subsequent TEST-04/ARCH-08/PLAY-06 group and the two completed Bughunter episodes. The owner has authorized continuous backlog-wave restart; the current reservations are RUN-02 and ARCH-09. The [Claude-to-Codex handoff](development/session-handoff.md) preserves the earlier interrupted-session snapshot.
 
 This page owns the current direction: how parallel work is organized, the streams and waves, the code zones, and the open owner decisions. The [backlog](work-items/backlog.yaml) is the single owner of each work package's status. The [concept register](concepts/register.md) records the decisions this roadmap relies on. Source changes do not change a published release.
 
@@ -53,17 +53,19 @@ On 12 October the owner instructed: **“Beginne die Wellen selbstständig neu.�
 |---|---|---|
 | integrator | OPS, register decisions, review and merge order, IDEA-01, LEARN-01 | Coordinate current reservations, independent reviews and normal PR integration; verify final Main |
 | interface | CLI, MCP-01, TEST-02, AGENT-02, AGENT-03 | CLI-03, CLI-04 and TEST-02 integrated; no current implementation reservation, later packages require their own assignment |
-| scientist | PLAY | PLAY-06 active on `dev/playground-role-configuration` in d5f0; exclusive `experiments/case-playground`, provider-free configuration work |
+| scientist | PLAY | PLAY-06 integrated with complete actual-Main CI; writer released, no protocol-writing or study scope while PLAY-07/CI-04 owner gates remain |
 | kg | KG | KG-04 protocol is prepared; measurement waits for separate authority |
-| bughunter | BUG | First read-only round on `fix/helper-cleanup-review` complete; helper recovery is a proposed new future capability, with no implementation reservation |
-| qa | CI, TEST | TEST-04 active on `dev/scripted-runtime-scenarios` in its fresh checkout; exclusive Runtime scope and two method-harness files; old TEST-03 source/logs preserved |
-| cleaner | ARCH, AGENT-01 | ARCH-08 active on `dev/release-tooling` in 57a5; exclusive interface scope plus explicitly coordinated release/installer/CI crosspaths |
-| runtime | RUN, MCP-02, ARCH-06 | Runtime zone currently reserved for QA TEST-04; RUN-02 follows its integration with an explicit scope/slot handoff |
+| bughunter | BUG | Both bounded read-only episodes complete; new Windows lock cause unisolated, P2 test cleanup issue recorded, no fixwriter; helper recovery remains unaccepted |
+| qa | CI, TEST | TEST-04 integrated with complete actual-Main CI; the existing chat now holds the separate Runtime role, no concurrent QA/TEST-05 writer |
+| cleaner | ARCH, AGENT-01 | ARCH-08 integrated; ARCH-09 active on `dev/legacy-removal` in `legacy-removal`, started from Main D083; exclusive Legacy scope and coordinated checker/module/model/CI crosspaths |
+| runtime | RUN, MCP-02, ARCH-06 | RUN-02 active on `dev/asynchronous-executor` in `asynchronous-executor`, started from Main D083 after verified TEST-04 integration; existing chat reused, no duplicate writer |
 | government | GOV | After Wave 2 and the explicit GOV-01 dependencies (DEC-019) |
 
 No more than six sessions change code at the same time. Each session uses subagents and workflows inside its own packages as it sees fit.
 
-Three implementation writers are currently assigned: QA TEST-04, Cleaner ARCH-08 and Scientist PLAY-06. The integrator owns docs-entry, canonical status and source-evidence records. Shared accounting/model changes require concrete paths and coordinated approval; the ARCH-08 ownership/file move must form one coherent candidate without weakening required coverage or inventing placeholders. Its installer migration preserves existing preview and guarded-write semantics. The TEST-04 real-kill fixture must report the existing uncertain process/exchange invocation's blocked/no-replay result; this is not proof of successful continuation or permission to add product recovery. Later assignments remain exclusive and bounded. Backlog, roadmap and concept register remain integrator-owned. Provider or method studies, KG-04 measurements, Government implementation, releases and worktree cleanup are not assigned by these three reservations.
+The first autonomous group is integrated: ARCH-08 as `4b41d29a219836472e17a50fb17fa5d5e98ce2cd`, TEST-04 as `f7827e4ff7708bedfbfe872a94f6c519829323c8`, and PLAY-06 as current Main `d083c8f37b6bb1e09a9c5a7947c421651a7e755b`. Each actual merge has complete successful push Quality/Race/source-artifact CI. The [integration record](validation/integration-round-20261012.md#autonomous-wave-and-next-reservations) keeps literal heads, compositions, tested hosted checkouts and actual Main results distinct. The separate scheduled Windows run on F782 failed a process-lock test; independent read-only diagnosis leaves its primary cause unisolated and confirms a test failure-cleanup issue. It does not change the successful push-run verdict or establish Windows acceptance.
+
+Two implementation writers are now assigned: Runtime RUN-02 and Cleaner ARCH-09, each from full Main D083 in a verified fresh checkout. RUN-02 stays within the endorsed asynchronous executor boundary and bounded public surfaces; ARCH-09 removes the precise legacy inventory while retaining current product/Shop/method harness and historical data. The shared legacy artifact manifest is edited only for Runtime's exact existing-package files on its branch and migrated/retired only after equivalent current-model checks on the Legacy branch; the integrator composes both with the then-current schema. Cleaner owns shared codemap/code-map/model/CI migration. No required-coverage waiver, placeholder or import exception is allowed. Backlog, roadmap, register and source-evidence records remain integrator-owned. The completed TEST-04 real-kill fixture proves blocked/uncertain/no-replay, not positive continuation or new recovery. A possible test-only Windows follow-up has no concurrent writer reservation. Provider or method studies, KG-04 measurements, Government, publication and live worktree/resource cleanup retain their gates.
 
 ### Starting a session
 
@@ -160,8 +162,8 @@ A zone is a code area in which only one active package changes code at a time. T
 
 ### Wave 2: one interface, a clean runtime
 
-- **Interface zone:** CLI-02, CLI-03, MCP-01, CLI-04, TEST-02 and AGENT-02 are integrated. Cleaner now owns ARCH-08; ARCH-09 follows its actual integration and a separate legacy reservation.
-- **Runtime zone, remaining sequence:** TEST-04 → RUN-02 → ARCH-05 → ARCH-06 after integrated TEST-03. QA owns TEST-04 now. The integrator assigns RUN-02 after its integration and keeps the sequence serialized. TEST-05 needs an explicitly documented later slot or nonconflicting slice; RUN-05/RUN-06 are separate packages with their own risk and reservation checks.
+- **Interface zone:** CLI-02, CLI-03, MCP-01, CLI-04, TEST-02, AGENT-02 and ARCH-08 are integrated. Cleaner now owns ARCH-09 under a separate Legacy reservation.
+- **Runtime zone, remaining sequence:** RUN-02 → ARCH-05 → ARCH-06 after integrated TEST-03/TEST-04. The existing QA chat now owns RUN-02 as Runtime; the sequence stays serialized. PLAY-06 is also integrated. TEST-05 needs an explicitly documented later slot or nonconflicting slice; RUN-05/RUN-06 are separate packages with their own risk and reservation checks.
 - **Also in this wave:**
   - CI-03: one smoke driver.
   - CI-04: container runtime tier.
