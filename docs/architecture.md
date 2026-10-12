@@ -114,15 +114,14 @@ Known problems:
 - Runtime configuration lives in `projectrun`: `Runtime`, `Agent`, `Limits` and `Pricing` (`types.go`) and `ValidateRuntime` (`config.go`). `projectsetup` and `mcp` import `projectrun` for these types, and the native transport invoker is built there too (ARCH-06).
 - Runtime and application import each other. `projectrun` imports `projectwork` and `projectexplore`, and `projectsetup` imports `projectwork`; `projectapp`, `projectadoption` and `projectcli` import `projectrun` (ARCH-13; ARCH-06 works on the same seam).
 - Five functions in `projectrun/run.go` have no callers: `ownedPath`, `addCost`, `estimateCost`, `resolvesConflicts` and `resolveObligations` (ARCH-05).
-- Plan and Apply call `git check-attr --source` (`plan.go`, `apply.go`), which needs Git 2.40 or later. CONTRIBUTING and the [project workflow](project-workflow.md#connect-and-inspect) state the requirement, but no check enforces it (CLI-04).
+- Plan and Apply call `git check-attr --source` (`plan.go`, `apply.go`), which needs Git 2.40 or later. Doctor reports the installed version and a failed prerequisite below 2.40, before model or provider inspection (CLI-04, #235). Doctor does not automatically guard later Plan or Apply calls; their operation-time Git failures remain separate.
 - A helper whose Close fails stays `cleanup-pending` (`helper.go`). `validateReportClosure` (`obligations.go`) then blocks Verify and Apply, and nothing reconciles the state (BUG-01).
 - Bring-your-own executor gaps (RUN-05):
   - `maxCostMicros` is required even when every role is unmetered (`config.go`).
   - Setup rejects script shims only for the native provider, not for process executors (`discoverProcess` in `projectsetup/setup.go`).
   - The exchange adapter has no deadline of its own (`exchangecli/exchange.go`).
   - Declared checks see only the owning agent's environment allowlist (`explicitEnvironment` in `verify.go`).
-- `agentexec/lifecycle.go` and `codexappserver/contracts.go` are not gofmt-formatted. CI runs `go vet` but no gofmt check (CI-06).
-- Runtime tests run serially. No test calls `t.Parallel`, and the process end-to-end tests re-execute the test binary (for example `projectrun/process_e2e_test.go`). The [tests and CI survey](work-items/surveys/tests-and-ci-20261010.md) measured `projectrun` at 1,467 s on Windows against 112 s on Linux, so the Windows job runs nightly or on demand and does not block merges ([DEC-013](concepts/register.md#dec-013-linux-first-for-tests-and-the-playground)) (TEST-03, CI-05).
+- The process end-to-end cases re-execute the test binary with isolated per-test child descriptors and run in parallel after the serial cases finish (TEST-03, #232). Twelve files carry `!runtime_unit`; the normal untagged Quality/Race suites include all scenarios. The dated [tests and CI survey](work-items/surveys/tests-and-ci-20261010.md) recorded `projectrun` at 1,467 s on Windows against 112 s on Linux before that change. Windows validation remains nightly or on demand and does not block ordinary merges ([DEC-013](concepts/register.md#dec-013-linux-first-for-tests-and-the-playground)); CI-05 still owns the future support decision.
 
 ## Legacy line
 

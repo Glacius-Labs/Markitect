@@ -6,6 +6,7 @@ Records may link to files that were removed later; read them at release v0.14.1 
 
 ## Project workflow and integration reports
 
+- [Role-round integration — 12 October 2026](integration-round-20261012.md)
 - [Integration queue — 11–12 October 2026](integration-queue-20261011.md)
 - [Markitect-first dogfood](markitect-first-dogfood.md)
 - [Markitect-first v0.13.0 release-readiness record](markitect-first-release-readiness.md)
