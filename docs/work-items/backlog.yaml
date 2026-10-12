@@ -391,7 +391,7 @@ packages:
     wave: 2
     status: blocked
     owner: interface
-    depends_on: [CLI-02]
+    depends_on: [CLI-02, CLI-03]
     note: The Interface session implements this after CLI-03 merges and a fresh-Main branch is established; its zone is currently held by CLI-03. Explore, Plan and Apply call git check-attr --source, which needs Git 2.40 or newer; older Git fails with an unknown-option error.
     zone: interface
     inputs:
@@ -494,7 +494,7 @@ packages:
     wave: 2
     status: blocked
     owner: interface
-    depends_on: [CLI-02]
+    depends_on: [CLI-02, CLI-04]
     zone: interface
     note: Reserved to the same Interface session after CLI-03 and CLI-04 integration, each on fresh Main with its own PR. The zone is currently held by CLI-03; no contract completeness claim is made before the suite is delivered.
     inputs:
