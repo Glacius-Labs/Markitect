@@ -1,38 +1,15 @@
 package projectwork
 
 import (
+	"github.com/Glacius-Labs/Markitect/src/internal/modules/projectmodel/projectvalue"
 	"os"
 	"path/filepath"
 	"strings"
 	"testing"
 
 	"github.com/Glacius-Labs/Markitect/src/internal/core/snapshot"
-	"github.com/Glacius-Labs/Markitect/src/internal/host/projectcoverage"
+	modelcoverage "github.com/Glacius-Labs/Markitect/src/internal/modules/projectmodel/projectcoverage"
 )
-
-func TestNativeSkillPathsHaveExactToolOwnership(t *testing.T) {
-	for _, provider := range []string{"codex", "claude"} {
-		paths := NativeSkillPaths(provider)
-		if len(paths) != 1+2*len(NativeSkillNames()) {
-			t.Fatalf("incomplete %s native paths", provider)
-		}
-		for _, path := range paths {
-			if !IsToolPath(Config{}, path) {
-				t.Fatalf("generated file lacks ownership: %s", path)
-			}
-		}
-	}
-	for _, path := range []string{".agents/skills/markitect-model-first/SKILL.md", ".claude/skills/markitect-model-first/SKILL.md"} {
-		if IsToolPath(Config{}, path) {
-			t.Fatalf("obsolete router path remains registered as an owned output: %s", path)
-		}
-	}
-	for _, path := range []string{".agents/skills/custom/SKILL.md", ".agents/skills/markitect-implement/custom.md", ".claude/skills/markitect-check/private.md"} {
-		if IsToolPath(Config{}, path) {
-			t.Fatalf("unmanaged skill claimed by Markitect: %s", path)
-		}
-	}
-}
 
 func TestFullCoverageBindsUnknownOutsideLegacyRoots(t *testing.T) {
 	root := testGitRoot(t)
@@ -63,14 +40,14 @@ func TestTransitionalExclusionIsAccountedButBlocksConformance(t *testing.T) {
 	if _, err := Init(root, "Coverage fixture", true); err != nil {
 		t.Fatal(err)
 	}
-	manifestPath := filepath.Join(root, filepath.FromSlash(ManifestPath))
+	manifestPath := filepath.Join(root, filepath.FromSlash(projectvalue.ManifestPath))
 	manifest, err := os.ReadFile(manifestPath)
 	if err != nil {
 		t.Fatal(err)
 	}
-	updated := strings.Replace(string(manifest), "documentPath: "+DefaultDocumentPath+"\n", "documentPath: README.md\n", 1)
-	updated = strings.Replace(updated, "transitionalExclusions: []\n", "transitionalExclusions:\n  - path: "+DefaultDocumentPath+"\n    reason: Prior generated view awaits migration\n  - path: legacy/\n    reason: Existing file awaits explicit modeling\n", 1)
-	writeFile(t, root, ManifestPath, updated)
+	updated := strings.Replace(string(manifest), "documentPath: "+projectvalue.DefaultDocumentPath+"\n", "documentPath: README.md\n", 1)
+	updated = strings.Replace(updated, "transitionalExclusions: []\n", "transitionalExclusions:\n  - path: "+projectvalue.DefaultDocumentPath+"\n    reason: Prior generated view awaits migration\n  - path: legacy/\n    reason: Existing file awaits explicit modeling\n", 1)
+	writeFile(t, root, projectvalue.ManifestPath, updated)
 	writeFile(t, root, "legacy/unmodeled.txt", "tracked by the migration boundary\n")
 	project, err := Load(root, "")
 	if err != nil {
@@ -81,7 +58,7 @@ func TestTransitionalExclusionIsAccountedButBlocksConformance(t *testing.T) {
 	}
 	for _, entry := range project.Coverage.Entries {
 		if entry.Path == "legacy/unmodeled.txt" {
-			if entry.Class != projectcoverage.ClassTransitional || entry.Reason != "Existing file awaits explicit modeling" {
+			if entry.Class != modelcoverage.ClassTransitional || entry.Reason != "Existing file awaits explicit modeling" {
 				t.Fatalf("transitional path classification = %+v", entry)
 			}
 			return
@@ -98,8 +75,8 @@ func TestCandidateCoverageKeepsExactIgnoreSatisfiedByCensus(t *testing.T) {
 	if _, err := Init(root, "Coverage fixture", true); err != nil {
 		t.Fatal(err)
 	}
-	ignore := "apiVersion: " + projectcoverage.IgnoreAPIVersion + "\nkind: RepositoryIgnore\nentries:\n  - path: README.md\n    reason: Fixture readme outside the model\n"
-	writeFile(t, root, projectcoverage.IgnorePath, ignore)
+	ignore := "apiVersion: " + modelcoverage.IgnoreAPIVersion + "\nkind: RepositoryIgnore\nentries:\n  - path: README.md\n    reason: Fixture readme outside the model\n"
+	writeFile(t, root, modelcoverage.IgnorePath, ignore)
 	gitTest(t, root, "add", ".")
 	gitTest(t, root, "commit", "-m", "init with exact ignore")
 	head := strings.TrimSpace(gitTest(t, root, "rev-parse", "HEAD"))
@@ -135,7 +112,7 @@ func TestCandidateCoverageKeepsTransitionalPathsNonconforming(t *testing.T) {
 	if _, err := Init(root, "Coverage fixture", true); err != nil {
 		t.Fatal(err)
 	}
-	manifestPath := filepath.Join(root, filepath.FromSlash(ManifestPath))
+	manifestPath := filepath.Join(root, filepath.FromSlash(projectvalue.ManifestPath))
 	manifest, err := os.ReadFile(manifestPath)
 	if err != nil {
 		t.Fatal(err)
@@ -144,7 +121,7 @@ func TestCandidateCoverageKeepsTransitionalPathsNonconforming(t *testing.T) {
 	if updated == string(manifest) {
 		t.Fatal("could not add transitional exclusions")
 	}
-	writeFile(t, root, ManifestPath, updated)
+	writeFile(t, root, projectvalue.ManifestPath, updated)
 	writeFile(t, root, "legacy/old.txt", "legacy bytes\n")
 	gitTest(t, root, "add", ".")
 	gitTest(t, root, "commit", "-m", "init with transitional exclusions")
@@ -172,7 +149,7 @@ func TestProjectDocumentListsTransitionalPathsThatBlockConformance(t *testing.T)
 	if _, err := Init(root, "Coverage fixture", true); err != nil {
 		t.Fatal(err)
 	}
-	manifest, err := os.ReadFile(filepath.Join(root, filepath.FromSlash(ManifestPath)))
+	manifest, err := os.ReadFile(filepath.Join(root, filepath.FromSlash(projectvalue.ManifestPath)))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -180,7 +157,7 @@ func TestProjectDocumentListsTransitionalPathsThatBlockConformance(t *testing.T)
 	if updated == string(manifest) {
 		t.Fatal("could not add transitional exclusions")
 	}
-	writeFile(t, root, ManifestPath, updated)
+	writeFile(t, root, projectvalue.ManifestPath, updated)
 	writeFile(t, root, "legacy/old.txt", "legacy bytes\n")
 	gitTest(t, root, "add", ".")
 	gitTest(t, root, "commit", "-m", "init with transitional exclusions")
@@ -242,9 +219,9 @@ func TestCandidateCoverageDropsRenamedAndDeletedPaths(t *testing.T) {
 // coverage must not report it unclassified before the change is committed. A
 // fixed revision that still holds the unlisted file keeps reporting it.
 func TestWorkingTreeCoverageFollowsModelFileMoves(t *testing.T) {
-	const notePath, renamedPath = ModelRoot + "/goal.yaml", ModelRoot + "/renamed.yaml"
+	const notePath, renamedPath = projectvalue.ModelRoot + "/goal.yaml", projectvalue.ModelRoot + "/renamed.yaml"
 	manifest := func(mode string, modelFiles ...string) string {
-		text := "apiVersion: " + APIVersion + "\nname: Coverage fixture\ncoverageMode: " + mode + "\ndocumentPath: " + DefaultDocumentPath + "\nmodelFiles:\n  - " + initManagerPath + "\n"
+		text := "apiVersion: " + projectvalue.APIVersion + "\nname: Coverage fixture\ncoverageMode: " + mode + "\ndocumentPath: " + projectvalue.DefaultDocumentPath + "\nmodelFiles:\n  - " + initManagerPath + "\n"
 		for _, file := range modelFiles {
 			text += "  - " + file + "\n"
 		}
@@ -279,13 +256,13 @@ func TestWorkingTreeCoverageFollowsModelFileMoves(t *testing.T) {
 				if _, err := Init(root, "Coverage fixture", true); err != nil {
 					t.Fatal(err)
 				}
-				writeFile(t, root, ManifestPath, manifest(mode, notePath))
-				writeFile(t, root, projectcoverage.IgnorePath, "apiVersion: "+projectcoverage.IgnoreAPIVersion+"\nkind: RepositoryIgnore\nentries:\n  - path: README.md\n    reason: Fixture readme outside the model\n")
+				writeFile(t, root, projectvalue.ManifestPath, manifest(mode, notePath))
+				writeFile(t, root, modelcoverage.IgnorePath, "apiVersion: "+modelcoverage.IgnoreAPIVersion+"\nkind: RepositoryIgnore\nentries:\n  - path: README.md\n    reason: Fixture readme outside the model\n")
 				writeFile(t, root, notePath, statementDefinition("A standalone goal."))
 				gitTest(t, root, "add", ".")
 				gitTest(t, root, "commit", "-m", "model with a second file")
 				moved := move(t, root)
-				writeFile(t, root, ManifestPath, manifest(mode, moved...))
+				writeFile(t, root, projectvalue.ManifestPath, manifest(mode, moved...))
 				report, err := Coverage(root, "")
 				if err != nil {
 					t.Fatal(err)
@@ -296,7 +273,7 @@ func TestWorkingTreeCoverageFollowsModelFileMoves(t *testing.T) {
 				if len(moved) != 0 {
 					return
 				}
-				gitTest(t, root, "commit", "-m", "unlist the model file only", "--", ManifestPath)
+				gitTest(t, root, "commit", "-m", "unlist the model file only", "--", projectvalue.ManifestPath)
 				fixed, err := Coverage(root, strings.TrimSpace(gitTest(t, root, "rev-parse", "HEAD")))
 				if err != nil {
 					t.Fatal(err)
@@ -319,12 +296,12 @@ func TestWorkingTreeCoverageReportsIgnoreEntryOfDeletedFile(t *testing.T) {
 			if _, err := Init(root, "Coverage fixture", true); err != nil {
 				t.Fatal(err)
 			}
-			manifest, err := os.ReadFile(filepath.Join(root, filepath.FromSlash(ManifestPath)))
+			manifest, err := os.ReadFile(filepath.Join(root, filepath.FromSlash(projectvalue.ManifestPath)))
 			if err != nil {
 				t.Fatal(err)
 			}
-			writeFile(t, root, ManifestPath, strings.Replace(string(manifest), "coverageMode: full\n", "coverageMode: "+mode+"\n", 1))
-			writeFile(t, root, projectcoverage.IgnorePath, "apiVersion: "+projectcoverage.IgnoreAPIVersion+"\nkind: RepositoryIgnore\nentries:\n  - path: README.md\n    reason: Fixture readme outside the model\n")
+			writeFile(t, root, projectvalue.ManifestPath, strings.Replace(string(manifest), "coverageMode: full\n", "coverageMode: "+mode+"\n", 1))
+			writeFile(t, root, modelcoverage.IgnorePath, "apiVersion: "+modelcoverage.IgnoreAPIVersion+"\nkind: RepositoryIgnore\nentries:\n  - path: README.md\n    reason: Fixture readme outside the model\n")
 			gitTest(t, root, "add", ".")
 			gitTest(t, root, "commit", "-m", "ignore the readme")
 			head := strings.TrimSpace(gitTest(t, root, "rev-parse", "HEAD"))
@@ -361,7 +338,7 @@ func TestWorkingTreeCoverageConformsAfterDeletingTransitionalFile(t *testing.T) 
 				// Selected mode sees the required Artifact only through its inventory roots.
 				manifest = strings.Replace(strings.Replace(manifest, "coverageMode: full\n", "coverageMode: selected\n", 1), "inventoryRoots: []\n", "inventoryRoots:\n  - src\n", 1)
 			}
-			writeFile(t, root, ManifestPath, manifest)
+			writeFile(t, root, projectvalue.ManifestPath, manifest)
 			gitTest(t, root, "commit", "-a", "--allow-empty", "-m", "coverage mode "+mode)
 			head := strings.TrimSpace(gitTest(t, root, "rev-parse", "HEAD"))
 			gitTest(t, root, "rm", "-q", "src/legacy.txt")
@@ -396,7 +373,7 @@ func TestCandidateCoverageReadsTransitionalFileModelledInPlace(t *testing.T) {
 		if base.Coverage == nil || !base.Coverage.Accounted || base.Coverage.Conforming {
 			t.Fatalf("precondition (revision %q): census must be accounted but nonconforming: %+v", revision, base.Coverage)
 		}
-		s := changedSnapshot(base.Snapshot, map[string]string{ManifestPath: coverageManifest(), coverageArtifactPath: coverageArtifact("src/a.txt", "src/legacy.txt")})
+		s := changedSnapshot(base.Snapshot, map[string]string{projectvalue.ManifestPath: coverageManifest(), coverageArtifactPath: coverageArtifact("src/a.txt", "src/legacy.txt")})
 		candidate := classifiedCandidate(t, base, s)
 		if !candidate.Coverage.Conforming {
 			t.Errorf("revision %q: in-place modelled transitional file is not conforming: status=%s findings=%+v", revision, candidate.Report.Status, candidate.Coverage.Findings)
@@ -476,7 +453,7 @@ func TestProjectDocumentChangesOnlyWithModelOrFindings(t *testing.T) {
 	}
 }
 
-const coverageArtifactPath = ModelRoot + "/code.yaml"
+const coverageArtifactPath = projectvalue.ModelRoot + "/code.yaml"
 
 // modelledCoverageFixture commits a full-coverage project whose required
 // Artifact realizes artifactPaths, with the readme ignored and the given
@@ -487,9 +464,9 @@ func modelledCoverageFixture(t *testing.T, transitional []string, files map[stri
 	if _, err := Init(root, "Coverage fixture", true); err != nil {
 		t.Fatal(err)
 	}
-	writeFile(t, root, ManifestPath, coverageManifest(transitional...))
-	writeFile(t, root, projectcoverage.IgnorePath, "apiVersion: "+projectcoverage.IgnoreAPIVersion+"\nkind: RepositoryIgnore\nentries:\n  - path: README.md\n    reason: Fixture readme outside the model\n")
-	writeFile(t, root, ModelRoot+"/goal.yaml", statementDefinition("Realize the fixture."))
+	writeFile(t, root, projectvalue.ManifestPath, coverageManifest(transitional...))
+	writeFile(t, root, modelcoverage.IgnorePath, "apiVersion: "+modelcoverage.IgnoreAPIVersion+"\nkind: RepositoryIgnore\nentries:\n  - path: README.md\n    reason: Fixture readme outside the model\n")
+	writeFile(t, root, projectvalue.ModelRoot+"/goal.yaml", statementDefinition("Realize the fixture."))
 	writeFile(t, root, coverageArtifactPath, coverageArtifact(artifactPaths...))
 	for name, content := range files {
 		writeFile(t, root, name, content)
@@ -500,8 +477,8 @@ func modelledCoverageFixture(t *testing.T, transitional []string, files map[stri
 }
 
 func coverageManifest(transitional ...string) string {
-	text := "apiVersion: " + APIVersion + "\nname: Coverage fixture\ncoverageMode: full\ndocumentPath: " + DefaultDocumentPath +
-		"\nmodelFiles:\n  - " + initManagerPath + "\n  - " + ModelRoot + "/goal.yaml\n  - " + coverageArtifactPath + "\ninventoryRoots: []\nexclusions: []\n"
+	text := "apiVersion: " + projectvalue.APIVersion + "\nname: Coverage fixture\ncoverageMode: full\ndocumentPath: " + projectvalue.DefaultDocumentPath +
+		"\nmodelFiles:\n  - " + initManagerPath + "\n  - " + projectvalue.ModelRoot + "/goal.yaml\n  - " + coverageArtifactPath + "\ninventoryRoots: []\nexclusions: []\n"
 	if len(transitional) > 0 {
 		text += "transitionalExclusions:\n"
 		for _, path := range transitional {
@@ -512,7 +489,7 @@ func coverageManifest(transitional ...string) string {
 }
 
 func coverageArtifact(paths ...string) string {
-	return "apiVersion: " + APIVersion + "\nkind: Artifact\nmetadata:\n  name: project-code\n  namespace: \"\"\npurpose: Realizes the project goal.\nspec:\n  role: implementation\n  realizes:\n    - apiVersion: " + APIVersion +
+	return "apiVersion: " + projectvalue.APIVersion + "\nkind: Artifact\nmetadata:\n  name: project-code\n  namespace: \"\"\npurpose: Realizes the project goal.\nspec:\n  role: implementation\n  realizes:\n    - apiVersion: " + projectvalue.APIVersion +
 		"\n      kind: Statement\n      namespace: \"\"\n      name: project-goal\n  paths: [" + strings.Join(paths, ", ") + "]\n  required: true\n"
 }
 
@@ -531,7 +508,7 @@ func changedSnapshot(base *snapshot.Snapshot, writes map[string]string, deletes 
 	return result
 }
 
-func classifiedCandidate(t *testing.T, base *Project, s *snapshot.Snapshot) *Project {
+func classifiedCandidate(t *testing.T, base *projectvalue.Project, s *snapshot.Snapshot) *projectvalue.Project {
 	t.Helper()
 	compiled, err := FromSnapshot(base.Root, s)
 	if err != nil {
@@ -564,7 +541,7 @@ func TestExplorationOperationalRegistrationIsExact(t *testing.T) {
 	var explorationRegistered bool
 	for _, entry := range withExploration.Coverage.Entries {
 		if entry.Path == ".markitect/state/explorations/readiness.json" {
-			explorationRegistered = entry.Class == projectcoverage.ClassToolOwned && entry.Operational
+			explorationRegistered = entry.Class == modelcoverage.ClassToolOwned && entry.Operational
 		}
 	}
 	if !explorationRegistered {
@@ -634,7 +611,7 @@ func TestDraftProposalBytesDoNotInvalidateTheirProjectBasis(t *testing.T) {
 	var classified bool
 	for _, entry := range changed.Coverage.Entries {
 		if entry.Path == ".markitect/drafts/proposal.json" {
-			classified = entry.Class == projectcoverage.ClassToolOwned && entry.Operational
+			classified = entry.Class == modelcoverage.ClassToolOwned && entry.Operational
 		}
 	}
 	if !classified {
@@ -647,8 +624,8 @@ func TestIgnoredBytesAreUnboundButMembershipIsBound(t *testing.T) {
 	if _, err := Init(root, "Coverage fixture", true); err != nil {
 		t.Fatal(err)
 	}
-	ignore := "apiVersion: " + projectcoverage.IgnoreAPIVersion + "\nkind: RepositoryIgnore\nentries:\n  - path: scratch/\n    reason: Temporary local outputs\n"
-	writeFile(t, root, projectcoverage.IgnorePath, ignore)
+	ignore := "apiVersion: " + modelcoverage.IgnoreAPIVersion + "\nkind: RepositoryIgnore\nentries:\n  - path: scratch/\n    reason: Temporary local outputs\n"
+	writeFile(t, root, modelcoverage.IgnorePath, ignore)
 	writeFile(t, root, "scratch/output.bin", "first bytes\n")
 	first, err := Load(root, "")
 	if err != nil {

@@ -3,8 +3,6 @@ package projectrun
 import (
 	"context"
 	"encoding/json"
-	"github.com/Glacius-Labs/Markitect/src/internal/host/projectconfig"
-	"github.com/Glacius-Labs/Markitect/src/internal/host/projectexecutor"
 	"os"
 	"path/filepath"
 	"strings"
@@ -13,14 +11,15 @@ import (
 
 	"github.com/Glacius-Labs/Markitect/src/internal/core/snapshot"
 	"github.com/Glacius-Labs/Markitect/src/internal/host/agentexec"
-	"github.com/Glacius-Labs/Markitect/src/internal/host/projectwork"
+	"github.com/Glacius-Labs/Markitect/src/internal/host/projectconfig"
+	"github.com/Glacius-Labs/Markitect/src/internal/host/projectexecutor"
 	"github.com/Glacius-Labs/Markitect/src/internal/host/projectworkspace"
 	"github.com/Glacius-Labs/Markitect/src/internal/modules/projectmodel"
+	"github.com/Glacius-Labs/Markitect/src/internal/modules/projectmodel/projectvalue"
 )
 
 func TestReviewerNormalizesEmptyArtifactForReceiptBoundReport(t *testing.T) {
 	root := makeProjectRunFixture(t)
-	host := projectworkHost()
 	managerID := e2eManagerID("orders", "orders")
 	updateE2ERuntime(t, root, func(runtime *projectconfig.Runtime) {
 		agents := map[string]projectconfig.Agent{}
@@ -30,6 +29,8 @@ func TestReviewerNormalizesEmptyArtifactForReceiptBoundReport(t *testing.T) {
 		runtime.Review = &projectconfig.ReviewConfig{Agents: agents, MaxRounds: 2, MaxManagerRounds: 2}
 	})
 	revision := identityHead(t, root)
+	project := processRuntimeProject(t, root, revision, false)
+	host := processRuntimeHost(root, project)
 	plan, err := Plan(host, root, revision, PlanRequest{Goal: "Review the empty artifact.", Managers: []string{managerID}, ExecuteAuthorized: true})
 	if err != nil {
 		t.Fatalf("plan review fixture: %v", err)
@@ -38,16 +39,13 @@ func TestReviewerNormalizesEmptyArtifactForReceiptBoundReport(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	base, err := host.Load(root, plan.BaseRevision)
-	if err != nil {
-		t.Fatal(err)
-	}
+	base := project
 	const path = "src/orders/implementation.txt"
 	candidate := candidateData{APIVersion: APIVersion, ID: "empty-artifact-candidate", Files: map[string]File{
 		path: {Path: path, Mode: "0644", Content: nil},
 	}}
 	candidate.Digest = candidateSnapshotHash(base.Snapshot, candidate)
-	project, err := projectForCandidate(host, root, base.Snapshot, candidate)
+	candidateProject, err := projectForCandidate(host, root, base.Snapshot, candidate)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -56,7 +54,7 @@ func TestReviewerNormalizesEmptyArtifactForReceiptBoundReport(t *testing.T) {
 		t.Fatal("review fixture did not plan the selected Manager")
 	}
 	invoker := &normalizedReviewInvoker{}
-	review, log, err := invokeReviewer(context.Background(), host, invoker, root, plan, runtime, project, *task, "work", 1, candidate, nil, RunReport{})
+	review, log, err := invokeReviewer(context.Background(), host, invoker, root, plan, runtime, candidateProject, *task, "work", 1, candidate, nil, RunReport{})
 	if err != nil {
 		t.Fatalf("valid response for empty candidate artifact was rejected: %v", err)
 	}
@@ -225,8 +223,8 @@ func TestReviewerScopeExcludesForeignArtifactBytesButRetainsInterfaceAndFreshnes
 		orderPath     = "src/shop/orders/cancellation.py"
 		engineerPath  = "tests/test_cancellation.py"
 	)
-	project := &Project{
-		Config: projectwork.Config{InventoryRoots: []string{"src", "tests"}},
+	project := &projectvalue.Project{
+		Config: projectvalue.Config{InventoryRoots: []string{"src", "tests"}},
 		Snapshot: &snapshot.Snapshot{
 			Files: map[string][]byte{orderPath: []byte("orders implementation"), engineerPath: []byte("engineering test")},
 			Modes: map[string]string{orderPath: snapshot.RegularMode, engineerPath: snapshot.RegularMode},
@@ -287,10 +285,9 @@ func TestReviewerScopeExcludesForeignArtifactBytesButRetainsInterfaceAndFreshnes
 
 func TestReviewScopeDigestSurvivesSiblingMergeButChangesWithOwnedBytes(t *testing.T) {
 	root := makeProjectRunFixture(t)
-	base, err := projectworkHost().Load(root, identityHead(t, root))
-	if err != nil {
-		t.Fatal(err)
-	}
+	revision := identityHead(t, root)
+	base := processRuntimeProject(t, root, revision, false)
+	host := processRuntimeHost(root, base)
 	plan := PlanRecord{Goal: "Implement both fixture artifacts."}
 	task := ManagerTask{ManagerID: e2eManagerID("orders", "orders"), Goal: "Implement the orders artifact.", Owns: []string{"src/orders/"}}
 	initial, err := reviewScopeDigest(plan, base, task, "work", RunReport{})
@@ -298,7 +295,7 @@ func TestReviewScopeDigestSurvivesSiblingMergeButChangesWithOwnedBytes(t *testin
 		t.Fatal(err)
 	}
 	siblingChange := candidateData{Files: map[string]File{"src/inventory/implementation.txt": {Path: "src/inventory/implementation.txt", Mode: "0644", Content: []byte("inventory changed")}}}
-	mergedSibling, err := projectForCandidate(projectworkHost(), root, base.Snapshot, siblingChange)
+	mergedSibling, err := projectForCandidate(host, root, base.Snapshot, siblingChange)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -307,7 +304,7 @@ func TestReviewScopeDigestSurvivesSiblingMergeButChangesWithOwnedBytes(t *testin
 		t.Fatalf("unaffected review scope changed after sibling merge: got=%s want=%s err=%v", unchanged, initial, err)
 	}
 	ownedChange := candidateData{Files: map[string]File{"src/orders/implementation.txt": {Path: "src/orders/implementation.txt", Mode: "0644", Content: []byte("orders changed")}}}
-	mergedOwned, err := projectForCandidate(projectworkHost(), root, base.Snapshot, ownedChange)
+	mergedOwned, err := projectForCandidate(host, root, base.Snapshot, ownedChange)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -355,8 +352,8 @@ func TestReviewerContextSeparatesWorkDelegationFromIntegrationDelivery(t *testin
 		tests   = "tests/test_greeting.py"
 		docs    = "docs/greeting.md"
 	)
-	project := &Project{
-		Config: projectwork.Config{CoverageMode: "full", InventoryRoots: []string{"src", "tests", "docs"}},
+	project := &projectvalue.Project{
+		Config: projectvalue.Config{CoverageMode: "full", InventoryRoots: []string{"src", "tests", "docs"}},
 		Snapshot: &snapshot.Snapshot{
 			Files: map[string][]byte{readme: []byte("Project README"), source: []byte("def greet(name): return name"), tests: []byte("assert greet('Ada')"), docs: []byte("Use greet(name).")},
 			Modes: map[string]string{readme: snapshot.RegularMode, source: snapshot.RegularMode, tests: snapshot.RegularMode, docs: snapshot.RegularMode},
@@ -498,9 +495,9 @@ func TestIntegrationReviewBindsChildDeliveredFileOutsideRequiredArtifacts(t *tes
 		impl    = "src/orders/implementation.txt"
 		notes   = "src/orders/notes.txt"
 	)
-	newProject := func(notesBytes string) *Project {
-		return &Project{
-			Config: projectwork.Config{InventoryRoots: []string{"src"}},
+	newProject := func(notesBytes string) *projectvalue.Project {
+		return &projectvalue.Project{
+			Config: projectvalue.Config{InventoryRoots: []string{"src"}},
 			Snapshot: &snapshot.Snapshot{
 				Files: map[string][]byte{impl: []byte("orders implementation v2\n"), notes: []byte(notesBytes)},
 				Modes: map[string]string{impl: snapshot.RegularMode, notes: snapshot.RegularMode},
@@ -557,8 +554,8 @@ func TestIntegrationReviewExpandsRequiredChildDirectoryArtifact(t *testing.T) {
 		childID = "project/orders"
 		file    = "src/orders/api.txt"
 	)
-	project := &Project{
-		Config: projectwork.Config{InventoryRoots: []string{"src"}},
+	project := &projectvalue.Project{
+		Config: projectvalue.Config{InventoryRoots: []string{"src"}},
 		Snapshot: &snapshot.Snapshot{
 			Files: map[string][]byte{file: []byte("orders api v2\n")},
 			Modes: map[string]string{file: snapshot.RegularMode},
@@ -597,8 +594,8 @@ func TestFileLessParentIntegrationReviewRequiredForDeliveringChildren(t *testing
 		ordersNotes = "src/orders/notes.txt"
 		inventory   = "src/inventory/implementation.txt"
 	)
-	project := &Project{
-		Config: projectwork.Config{InventoryRoots: []string{"src"}},
+	project := &projectvalue.Project{
+		Config: projectvalue.Config{InventoryRoots: []string{"src"}},
 		Snapshot: &snapshot.Snapshot{
 			Files: map[string][]byte{ordersNotes: []byte("orders notes v2\n"), inventory: []byte("inventory implementation v2\n")},
 			Modes: map[string]string{ordersNotes: snapshot.RegularMode, inventory: snapshot.RegularMode},
@@ -658,9 +655,9 @@ func TestFullVerifyReviewedFilesBindChildDeliveredFileOutsideRequiredArtifacts(t
 		impl    = "src/orders/implementation.txt"
 		notes   = "src/orders/notes.txt"
 	)
-	newProject := func(notesBytes string) *Project {
-		return &Project{
-			Config: projectwork.Config{InventoryRoots: []string{"src"}},
+	newProject := func(notesBytes string) *projectvalue.Project {
+		return &projectvalue.Project{
+			Config: projectvalue.Config{InventoryRoots: []string{"src"}},
 			Snapshot: &snapshot.Snapshot{
 				Files: map[string][]byte{impl: []byte("orders implementation v2\n"), notes: []byte(notesBytes)},
 				Modes: map[string]string{impl: snapshot.RegularMode, notes: snapshot.RegularMode},
@@ -683,7 +680,7 @@ func TestFullVerifyReviewedFilesBindChildDeliveredFileOutsideRequiredArtifacts(t
 	runChild := plannedChild
 	runChild.State, runChild.WrittenPaths = "worked", []string{impl, notes}
 	run := RunReport{Tasks: []ManagerTask{runRoot, runChild}}
-	notesEvidence := func(project *Project) fullReviewFileReference {
+	notesEvidence := func(project *projectvalue.Project) fullReviewFileReference {
 		t.Helper()
 		refs, err := currentReviewFileReferences(project, plan, runRoot, "integrate", run)
 		if err != nil {
@@ -722,10 +719,7 @@ func cloneHelperDeliveryPtr(delivery *HelperDelivery) *HelperDelivery {
 
 func TestCheckRepairPreservesReviewScopeHistoryForDeletedPaths(t *testing.T) {
 	root := makeProjectRunFixture(t)
-	base, err := projectworkHost().Load(root, identityHead(t, root))
-	if err != nil {
-		t.Fatal(err)
-	}
+	base := processRuntimeProject(t, root, identityHead(t, root), false)
 	task := ManagerTask{
 		ManagerID:       e2eManagerID("", "project-owner"),
 		Goal:            "Reconcile integration.",
@@ -831,8 +825,10 @@ func TestResumeFailsClosedAtPersistedManagerReworkMarker(t *testing.T) {
 	root := makeProjectRunFixture(t)
 	setupE2EProcess(t, "normal")
 	enableE2EReviews(t, root, 100000)
-	host := projectworkHost()
-	plan, err := Plan(host, root, identityHead(t, root), PlanRequest{Goal: "Implement and review owned artifacts.",
+	revision := identityHead(t, root)
+	project := processRuntimeProject(t, root, revision, false)
+	host := processRuntimeHost(root, project)
+	plan, err := Plan(host, root, revision, PlanRequest{Goal: "Implement and review owned artifacts.",
 		Managers: []string{e2eManagerID("orders", "orders"), e2eManagerID("inventory", "inventory")}, ExecuteAuthorized: true})
 	if err != nil {
 		t.Fatal(err)

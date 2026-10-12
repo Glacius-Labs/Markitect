@@ -1,5 +1,7 @@
 package projectapp
 
+import "github.com/Glacius-Labs/Markitect/src/internal/modules/projectmodel/projectvalue"
+
 import (
 	"bytes"
 	"encoding/json"
@@ -79,7 +81,7 @@ func TestExploreOperationPreviewsAndWritesWithExpectedDigest(t *testing.T) {
 
 func TestExploreAcceptsGitCleanAutocrlfAndRejectsCapturedSourceChanges(t *testing.T) {
 	root := makePlanFixture(t)
-	manifestPath := filepath.Join(root, filepath.FromSlash(projectwork.ManifestPath))
+	manifestPath := filepath.Join(root, filepath.FromSlash(projectvalue.ManifestPath))
 	manifest, err := os.ReadFile(manifestPath)
 	if err != nil {
 		t.Fatal(err)
@@ -268,7 +270,7 @@ func runExploreGit(t *testing.T, root string, args ...string) string {
 
 func TestReadinessRequiresExplicitAcknowledgementForWrite(t *testing.T) {
 	loads := 0
-	operations := Operations{Host: projectrun.Host{Load: func(string, string) (*projectrun.Project, error) {
+	operations := Operations{Host: projectrun.Host{Load: func(string, string) (*projectvalue.Project, error) {
 		loads++
 		return nil, nil
 	}}}

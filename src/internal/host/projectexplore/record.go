@@ -10,8 +10,9 @@ import (
 	"io"
 	"path"
 	"regexp"
-	"sort"
 	"strings"
+
+	"github.com/Glacius-Labs/Markitect/src/internal/modules/projectmodel/projectvalue"
 )
 
 var safeID = regexp.MustCompile(`^[a-z0-9][a-z0-9-]{0,79}$`)
@@ -26,7 +27,7 @@ func validateRecord(record Record) error {
 	if strings.TrimSpace(record.Request) == "" || len(record.Request) > 64<<10 {
 		return errors.New("exploration request must be nonempty and at most 64 KiB")
 	}
-	if !validDigest(record.CreatedAgainst) {
+	if !projectvalue.IsValidDigest(record.CreatedAgainst) {
 		return errors.New("exploration record must retain its creation binding digest")
 	}
 	if record.Scopes == nil || record.Decisions == nil || record.Drafts == nil || record.Acknowledgements == nil || record.Completions == nil {
@@ -97,7 +98,7 @@ func validateRecord(record Record) error {
 	}
 	acks := map[string]bool{}
 	for _, ack := range record.Acknowledgements {
-		if _, exists := scopes[ack.ScopeID]; !exists || !validDigest(ack.BindingDigest) || !validDigest(ack.StructureDigest) || strings.TrimSpace(ack.Actor) == "" || strings.TrimSpace(ack.Authority) == "" || strings.TrimSpace(ack.Provenance) == "" || ack.RecordedAt.IsZero() {
+		if _, exists := scopes[ack.ScopeID]; !exists || !projectvalue.IsValidDigest(ack.BindingDigest) || !projectvalue.IsValidDigest(ack.StructureDigest) || strings.TrimSpace(ack.Actor) == "" || strings.TrimSpace(ack.Authority) == "" || strings.TrimSpace(ack.Provenance) == "" || ack.RecordedAt.IsZero() {
 			return fmt.Errorf("structure acknowledgement for scope %q is incomplete", ack.ScopeID)
 		}
 		key := ack.ScopeID + "\x00" + ack.BindingDigest + "\x00" + ack.StructureDigest
@@ -126,9 +127,9 @@ func validateRecord(record Record) error {
 }
 
 func validateApplyReceipt(receipt ApplyReceipt) error {
-	if receipt.Status != "applied" || !validDigest(receipt.BindingDigest) || !validDigest(receipt.StructureDigest) ||
-		receipt.RunID == "" || receipt.PlanID == "" || !validDigest(receipt.PlanDigest) || receipt.CandidateID == "" || !validDigest(receipt.CandidateDigest) ||
-		receipt.VerificationID == "" || receipt.VerificationStatus != "passed" || !validDigest(receipt.VerificationDigest) || receipt.ApplyID == "" || !validDigest(receipt.ApplyDigest) || receipt.AppliedAt.IsZero() {
+	if receipt.Status != "applied" || !projectvalue.IsValidDigest(receipt.BindingDigest) || !projectvalue.IsValidDigest(receipt.StructureDigest) ||
+		receipt.RunID == "" || receipt.PlanID == "" || !projectvalue.IsValidDigest(receipt.PlanDigest) || receipt.CandidateID == "" || !projectvalue.IsValidDigest(receipt.CandidateDigest) ||
+		receipt.VerificationID == "" || receipt.VerificationStatus != "passed" || !projectvalue.IsValidDigest(receipt.VerificationDigest) || receipt.ApplyID == "" || !projectvalue.IsValidDigest(receipt.ApplyDigest) || receipt.AppliedAt.IsZero() {
 		return errors.New("completion requires a successful Apply receipt with run, plan, candidate, verification, and Apply bindings")
 	}
 	return nil
@@ -159,14 +160,6 @@ func digest(value any) (string, error) {
 	}
 	sum := sha256.Sum256(data)
 	return "sha256:" + hex.EncodeToString(sum[:]), nil
-}
-
-func validDigest(value string) bool {
-	if !strings.HasPrefix(value, "sha256:") || len(value) != len("sha256:")+64 {
-		return false
-	}
-	_, err := hex.DecodeString(strings.TrimPrefix(value, "sha256:"))
-	return err == nil
 }
 
 func EncodeRecord(record Record) ([]byte, error) {
@@ -295,89 +288,4 @@ func rejectDuplicateJSONKeys(data []byte) error {
 		return errors.New("exploration JSON must contain exactly one value")
 	}
 	return nil
-}
-
-func normalizeBinding(binding Binding) (Binding, error) {
-	if strings.TrimSpace(binding.RepositoryRoot) == "" || strings.TrimSpace(binding.Branch) == "" || strings.TrimSpace(binding.Head) == "" && binding.ModelAccepted {
-		return Binding{}, errors.New("exploration binding requires a repository root, branch, and accepted HEAD identity")
-	}
-	if binding.ModelAccepted && (!fullObjectID(binding.Head) || binding.ModelRevision != binding.Head || strings.TrimSpace(binding.AcceptancePolicy) == "") {
-		return Binding{}, errors.New("accepted readiness binding requires a fixed committed model at HEAD and an explicit acceptance policy")
-	}
-	for _, field := range []struct{ name, value string }{{"projectDigest", binding.ProjectDigest}, {"modelDigest", binding.ModelDigest}, {"snapshotDigest", binding.SnapshotDigest}, {"selectionDigest", binding.SelectionDigest}} {
-		if !validDigest(field.value) {
-			return Binding{}, fmt.Errorf("binding %s is not a sha256 digest", field.name)
-		}
-	}
-	if binding.ScopeID == "" || strings.TrimSpace(binding.ScopeName) == "" || strings.TrimSpace(binding.Goal) == "" || binding.Operation == "" || binding.ManagerIDs == nil || !uniqueValues(binding.ManagerIDs, false) || binding.RequiredArtifacts == nil || binding.FileStructure == nil || binding.Checks == nil || binding.BasisFiles == nil {
-		return Binding{}, errors.New("binding requires a named scope, goal, operation, Managers, and explicit artifact/file/check/basis arrays")
-	}
-	if !uniqueValues(binding.ResponsibleManagerIDs, false) {
-		return Binding{}, errors.New("binding responsible Manager IDs must be unique")
-	}
-	if !uniqueValues(binding.RequiredArtifacts, true) || !uniqueValues(binding.FileStructure, false) || !uniqueValues(binding.Checks, true) {
-		return Binding{}, errors.New("binding artifact, file, and check lists must be unique and nonempty where applicable")
-	}
-	for _, value := range binding.FileStructure {
-		if strings.TrimSpace(value) == "" || len(value) > 1024 || strings.ContainsRune(value, 0) {
-			return Binding{}, fmt.Errorf("binding file structure entry %q is invalid", value)
-		}
-	}
-	for _, basis := range binding.BasisFiles {
-		if !validRepoPath(basis.Path) || !validDigest(basis.Digest) {
-			return Binding{}, fmt.Errorf("binding basis file %q is invalid", basis.Path)
-		}
-	}
-	seenBasis := map[string]bool{}
-	for _, basis := range binding.BasisFiles {
-		if seenBasis[basis.Path] {
-			return Binding{}, fmt.Errorf("binding repeats basis file %q", basis.Path)
-		}
-		seenBasis[basis.Path] = true
-	}
-	return binding, nil
-}
-
-func validRepoPath(value string) bool {
-	return value != "" && !strings.Contains(value, "\\") && !strings.ContainsRune(value, 0) && !path.IsAbs(value) && path.Clean(value) == value && value != "." && !strings.HasPrefix(value, "../") && !strings.Contains(value, "/../") && !strings.HasSuffix(value, "/..")
-}
-
-func fullObjectID(value string) bool {
-	if len(value) != 40 && len(value) != 64 {
-		return false
-	}
-	_, err := hex.DecodeString(value)
-	return err == nil
-}
-
-func canonicalBinding(binding Binding) (Binding, error) {
-	binding, err := normalizeBinding(binding)
-	if err != nil {
-		return Binding{}, err
-	}
-	binding.ManagerIDs = sortedCopy(binding.ManagerIDs)
-	binding.ResponsibleManagerIDs = sortedCopy(binding.ResponsibleManagerIDs)
-	binding.RequiredArtifacts = sortedCopy(binding.RequiredArtifacts)
-	binding.FileStructure = sortedCopy(binding.FileStructure)
-	binding.Checks = sortedCopy(binding.Checks)
-	binding.BasisFiles = append([]BasisFile{}, binding.BasisFiles...)
-	sort.Slice(binding.BasisFiles, func(i, j int) bool { return binding.BasisFiles[i].Path < binding.BasisFiles[j].Path })
-	return binding, nil
-}
-
-func sortedCopy(values []string) []string {
-	copyValues := append([]string{}, values...)
-	sort.Strings(copyValues)
-	return copyValues
-}
-
-func uniqueValues(values []string, nonempty bool) bool {
-	seen := map[string]bool{}
-	for _, value := range values {
-		if nonempty && strings.TrimSpace(value) == "" || seen[value] {
-			return false
-		}
-		seen[value] = true
-	}
-	return true
 }

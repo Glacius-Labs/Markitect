@@ -9,81 +9,41 @@ import (
 	"io/fs"
 	"os"
 	"os/exec"
-	"path"
 	"path/filepath"
 	"sort"
 	"strings"
-	"unicode"
-	"unicode/utf8"
 
 	"github.com/Glacius-Labs/Markitect/src/internal/core/snapshot"
 	"github.com/Glacius-Labs/Markitect/src/internal/infrastructure/source"
+	modelcoverage "github.com/Glacius-Labs/Markitect/src/internal/modules/projectmodel/projectcoverage"
 )
-
-// FromSnapshot builds a pure in-memory candidate universe from the exact
-// files supplied by a caller. It performs no filesystem or Git I/O. Unlike
-// ObserveWorking, it can account only for paths present in the snapshot; the
-// caller should use it for candidate diagnostics, while base/final gates use
-// a repository census.
-func FromSnapshot(s *snapshot.Snapshot, options Options) (*Universe, error) {
-	if s == nil {
-		return nil, fmt.Errorf("candidate snapshot is required")
-	}
-	if err := validateOptions(options); err != nil {
-		return nil, err
-	}
-	paths := make(map[string]*PathState, len(s.Files))
-	ignoreBytes := append([]byte(nil), s.Files[IgnorePath]...)
-	if _, err := DecodeIgnore(ignoreBytes); err != nil {
-		return nil, err
-	}
-	for name, data := range s.Files {
-		if err := validatePath(name); err != nil {
-			return nil, err
-		}
-		mode := s.Modes[name]
-		if mode != "100644" && mode != "100755" {
-			return nil, fmt.Errorf("candidate path %q has unsupported source mode %q", name, mode)
-		}
-		if _, exists := paths[name]; exists {
-			return nil, fmt.Errorf("candidate repeats path %q", name)
-		}
-		paths[name] = &PathState{Path: name, Worktree: FileState{Present: true, Mode: mode, Digest: sha256Hex(data)}}
-	}
-	if err := validatePathSet(paths); err != nil {
-		return nil, err
-	}
-	result := makeUniverse(s.ID, "snapshot", paths, ignoreBytes, options, false)
-	result.Snapshot = cloneSnapshot(s)
-	return result, nil
-}
 
 // ObserveWorking captures the fixed HEAD, index and current filesystem path
 // universe. Git ignore rules are not consulted. A root .git directory or file
 // is repository administration and is omitted; nested repositories are opaque
 // boundaries and are never traversed.
-func ObserveWorking(root string, options Options) (*Universe, error) {
+func ObserveWorking(root string, options modelcoverage.Options) (*modelcoverage.Universe, error) {
 	return observeWorking(root, options, nil)
 }
 
 // ObserveWorkingIn is ObserveWorking for a caller that reads the repository
 // through acquisition. The census adds no identity checks of its own; the
 // caller confirms the acquisition after its last read.
-func ObserveWorkingIn(acquisition *source.Acquisition, options Options) (*Universe, error) {
+func ObserveWorkingIn(acquisition *source.Acquisition, options modelcoverage.Options) (*modelcoverage.Universe, error) {
 	return observeWorkingIn(acquisition, options, nil)
 }
 
 // observeWorking keeps an internal mutation seam immediately before the final
 // consistency check so tests can exercise concurrent path changes without
 // timing-dependent filesystem races.
-func observeWorking(root string, options Options, beforeRecheck func() error) (*Universe, error) {
-	return acquireCensus(root, func(acquisition *source.Acquisition) (*Universe, error) {
+func observeWorking(root string, options modelcoverage.Options, beforeRecheck func() error) (*modelcoverage.Universe, error) {
+	return acquireCensus(root, func(acquisition *source.Acquisition) (*modelcoverage.Universe, error) {
 		return observeWorkingIn(acquisition, options, beforeRecheck)
 	})
 }
 
 // acquireCensus runs one census as its own repository acquisition.
-func acquireCensus(root string, census func(*source.Acquisition) (*Universe, error)) (*Universe, error) {
+func acquireCensus(root string, census func(*source.Acquisition) (*modelcoverage.Universe, error)) (*modelcoverage.Universe, error) {
 	acquisition, err := source.BeginAcquisition(root)
 	if err != nil {
 		return nil, err
@@ -98,7 +58,7 @@ func acquireCensus(root string, census func(*source.Acquisition) (*Universe, err
 	return universe, nil
 }
 
-func observeWorkingIn(acquisition *source.Acquisition, options Options, beforeRecheck func() error) (*Universe, error) {
+func observeWorkingIn(acquisition *source.Acquisition, options modelcoverage.Options, beforeRecheck func() error) (*modelcoverage.Universe, error) {
 	identity := acquisition.Identity()
 	head, err := source.GitOutput(identity.Root, "rev-parse", "--verify", "HEAD^{commit}")
 	revision := ""
@@ -118,7 +78,7 @@ func observeWorkingIn(acquisition *source.Acquisition, options Options, beforeRe
 			return nil, fmt.Errorf("Git returned an invalid full HEAD commit")
 		}
 	}
-	paths := map[string]*PathState{}
+	paths := map[string]*modelcoverage.PathState{}
 	gitlinks := map[string]bool{}
 	if revision != "" {
 		if err := addHeadPaths(identity.Root, revision, paths, gitlinks); err != nil {
@@ -139,26 +99,26 @@ func observeWorkingIn(acquisition *source.Acquisition, options Options, beforeRe
 	normalizeWorktreeModes(paths, worktreeModes, fileModeEnabled)
 	for name, mode := range worktreeModes {
 		state := pathState(paths, name)
-		state.Worktree = FileState{Present: true, Mode: mode}
+		state.Worktree = modelcoverage.FileState{Present: true, Mode: mode}
 	}
 	for name := range boundaries {
 		state := pathState(paths, name)
 		state.OpaqueBoundary = true
-		state.Worktree = FileState{Present: true, Mode: "opaque-repository"}
+		state.Worktree = modelcoverage.FileState{Present: true, Mode: "opaque-repository"}
 	}
 	ignoreBytes, err := readWorkingIgnore(acquisition)
 	if err != nil {
 		return nil, err
 	}
-	ignore, err := DecodeIgnore(ignoreBytes)
+	ignore, err := modelcoverage.DecodeIgnore(ignoreBytes)
 	if err != nil {
 		return nil, err
 	}
-	if err := validateOptions(options); err != nil {
+	if err := modelcoverage.ValidateOptions(options); err != nil {
 		return nil, err
 	}
-	contentPaths := selectedContentPaths(paths, ignore, options, true)
-	contentPaths = append(contentPaths, IgnorePath)
+	contentPaths := modelcoverage.SelectWorkingContentPaths(pathStates(paths), ignore, options)
+	contentPaths = append(contentPaths, modelcoverage.IgnorePath)
 	contentPaths = uniquePaths(contentPaths)
 	observed, observeErr := acquisition.ObserveSelectedWorking(contentPaths)
 	if observeErr != nil {
@@ -166,28 +126,28 @@ func observeWorkingIn(acquisition *source.Acquisition, options Options, beforeRe
 	}
 	if len(observed.MissingPaths) > 0 {
 		for _, missing := range observed.MissingPaths {
-			if missing != IgnorePath {
+			if missing != modelcoverage.IgnorePath {
 				return nil, fmt.Errorf("repository path %q changed during census", missing)
 			}
 		}
 	}
-	observedIgnore := observed.Snapshot.Files[IgnorePath]
+	observedIgnore := observed.Snapshot.Files[modelcoverage.IgnorePath]
 	if !bytes.Equal(observedIgnore, ignoreBytes) {
 		return nil, fmt.Errorf("repository ignore policy changed during census")
 	}
 	for name, data := range observed.Snapshot.Files {
-		if name == IgnorePath {
+		if name == modelcoverage.IgnorePath {
 			state := pathState(paths, name)
-			state.Worktree = FileState{Present: true, Mode: observed.Snapshot.Modes[name], Digest: sha256Hex(data)}
+			state.Worktree = modelcoverage.FileState{Present: true, Mode: observed.Snapshot.Modes[name], Digest: sha256Hex(data)}
 			continue
 		}
 		state := pathState(paths, name)
-		state.Worktree = FileState{Present: true, Mode: observed.Snapshot.Modes[name], Digest: sha256Hex(data)}
+		state.Worktree = modelcoverage.FileState{Present: true, Mode: observed.Snapshot.Modes[name], Digest: sha256Hex(data)}
 	}
 	// Fixed HEAD blobs are read separately from the live worktree. This allows
 	// a single report to bind the commit layer without treating an unrelated
 	// staged or unstaged change as part of that commit.
-	headContent := selectedHeadContentPaths(paths, ignore, options)
+	headContent := modelcoverage.SelectRevisionContentPaths(pathStates(paths), ignore, options)
 	if revision != "" && len(headContent) > 0 {
 		selected, loadErr := acquisition.LoadSelected(revision, headContent)
 		if loadErr != nil {
@@ -206,22 +166,22 @@ func observeWorkingIn(acquisition *source.Acquisition, options Options, beforeRe
 	if err := recheckWorkingUniverse(identity.Root, revision, unbornRef, paths, gitlinks, options); err != nil {
 		return nil, err
 	}
-	result := makeUniverse(revision, identity.Digest, paths, ignoreBytes, options, false)
+	result := modelcoverage.NewUniverse(revision, identity.Digest, pathStates(paths), ignoreBytes, options, false)
 	result.Snapshot = cloneSnapshot(observed.Snapshot)
 	return result, nil
 }
 
 // ObserveRevision captures only the named immutable Git tree. Index and live
 // worktree state are deliberately absent from the result.
-func ObserveRevision(root, revision string, options Options) (*Universe, error) {
-	return acquireCensus(root, func(acquisition *source.Acquisition) (*Universe, error) {
+func ObserveRevision(root, revision string, options modelcoverage.Options) (*modelcoverage.Universe, error) {
+	return acquireCensus(root, func(acquisition *source.Acquisition) (*modelcoverage.Universe, error) {
 		return ObserveRevisionIn(acquisition, revision, options)
 	})
 }
 
 // ObserveRevisionIn is ObserveRevision for a caller that reads the repository
 // through acquisition, as ObserveWorkingIn is for ObserveWorking.
-func ObserveRevisionIn(acquisition *source.Acquisition, revision string, options Options) (*Universe, error) {
+func ObserveRevisionIn(acquisition *source.Acquisition, revision string, options modelcoverage.Options) (*modelcoverage.Universe, error) {
 	identity := acquisition.Identity()
 	resolved, err := source.GitOutput(identity.Root, "rev-parse", "--verify", "--end-of-options", revision+"^{commit}")
 	if err != nil {
@@ -231,32 +191,32 @@ func ObserveRevisionIn(acquisition *source.Acquisition, revision string, options
 	if !validCommit(full, identity.ObjectFormat) {
 		return nil, fmt.Errorf("Git returned an invalid full commit")
 	}
-	paths := map[string]*PathState{}
+	paths := map[string]*modelcoverage.PathState{}
 	gitlinks := map[string]bool{}
 	if err := addHeadPaths(identity.Root, full, paths, gitlinks); err != nil {
 		return nil, err
 	}
 	ignoreBytes := []byte(nil)
-	if state := paths[IgnorePath]; state != nil && state.Head.Present {
-		selected, loadErr := acquisition.LoadSelected(full, []string{IgnorePath})
+	if state := paths[modelcoverage.IgnorePath]; state != nil && state.Head.Present {
+		selected, loadErr := acquisition.LoadSelected(full, []string{modelcoverage.IgnorePath})
 		if loadErr != nil {
 			return nil, loadErr
 		}
-		ignoreBytes = append([]byte(nil), selected.Snapshot.Files[IgnorePath]...)
+		ignoreBytes = append([]byte(nil), selected.Snapshot.Files[modelcoverage.IgnorePath]...)
 	}
-	ignore, err := DecodeIgnore(ignoreBytes)
+	ignore, err := modelcoverage.DecodeIgnore(ignoreBytes)
 	if err != nil {
 		return nil, err
 	}
-	if err := validateOptions(options); err != nil {
+	if err := modelcoverage.ValidateOptions(options); err != nil {
 		return nil, err
 	}
-	contentPaths := selectedHeadContentPaths(paths, ignore, options)
+	contentPaths := modelcoverage.SelectRevisionContentPaths(pathStates(paths), ignore, options)
 	// Capture the exact fixed-revision bytes used by both classification and
 	// Host model compilation in one selected-snapshot read.
 	allContent := append([]string(nil), contentPaths...)
-	if state := paths[IgnorePath]; state != nil && state.Head.Present {
-		allContent = append(allContent, IgnorePath)
+	if state := paths[modelcoverage.IgnorePath]; state != nil && state.Head.Present {
+		allContent = append(allContent, modelcoverage.IgnorePath)
 	}
 	allContent = uniquePaths(allContent)
 	selected, err := acquisition.LoadSelected(full, allContent)
@@ -264,18 +224,18 @@ func ObserveRevisionIn(acquisition *source.Acquisition, revision string, options
 		return nil, fmt.Errorf("capture fixed revision census snapshot: %w", err)
 	}
 	for name, data := range selected.Snapshot.Files {
-		if name == IgnorePath {
+		if name == modelcoverage.IgnorePath {
 			continue
 		}
 		state := pathState(paths, name)
 		state.Head.Digest = sha256Hex(data)
 	}
-	result := makeUniverse(full, identity.Digest, paths, ignoreBytes, options, true)
+	result := modelcoverage.NewUniverse(full, identity.Digest, pathStates(paths), ignoreBytes, options, true)
 	result.Snapshot = cloneSnapshot(selected.Snapshot)
 	return result, nil
 }
 
-func addHeadPaths(root, revision string, paths map[string]*PathState, gitlinks map[string]bool) error {
+func addHeadPaths(root, revision string, paths map[string]*modelcoverage.PathState, gitlinks map[string]bool) error {
 	out, err := source.GitOutput(root, "ls-tree", "-r", "-z", "--full-tree", "--long", revision)
 	if err != nil {
 		return fmt.Errorf("list fixed Git tree: %w", err)
@@ -293,13 +253,13 @@ func addHeadPaths(root, revision string, paths map[string]*PathState, gitlinks m
 			return fmt.Errorf("malformed Git tree header for %q", name)
 		}
 		mode, kind := fields[0], fields[1]
-		if err := validatePath(name); err != nil {
+		if err := modelcoverage.ValidateRepositoryPath(name); err != nil {
 			return err
 		}
 		if mode == "160000" || kind == "commit" {
 			gitlinks[name] = true
 			state := pathState(paths, strings.TrimSuffix(name, "/")+"/")
-			state.Head = FileState{Present: true, Mode: "opaque-repository", Digest: fields[2]}
+			state.Head = modelcoverage.FileState{Present: true, Mode: "opaque-repository", Digest: fields[2]}
 			state.OpaqueBoundary = true
 			continue
 		}
@@ -310,12 +270,12 @@ func addHeadPaths(root, revision string, paths map[string]*PathState, gitlinks m
 			return fmt.Errorf("unsupported Git tree entry %q (mode %s, kind %s)", name, mode, kind)
 		}
 		state := pathState(paths, name)
-		state.Head = FileState{Present: true, Mode: mode}
+		state.Head = modelcoverage.FileState{Present: true, Mode: mode}
 	}
-	return validatePathSet(paths)
+	return validateAcquiredPathSet(paths)
 }
 
-func addIndexPaths(root string, paths map[string]*PathState, gitlinks map[string]bool) error {
+func addIndexPaths(root string, paths map[string]*modelcoverage.PathState, gitlinks map[string]bool) error {
 	out, err := source.GitOutput(root, "ls-files", "--stage", "-z")
 	if err != nil {
 		return fmt.Errorf("list Git index: %w", err)
@@ -335,14 +295,14 @@ func addIndexPaths(root string, paths map[string]*PathState, gitlinks map[string
 		if fields[2] != "0" {
 			return fmt.Errorf("Git index has unresolved conflict stage %s for %q", fields[2], name)
 		}
-		if err := validatePath(name); err != nil {
+		if err := modelcoverage.ValidateRepositoryPath(name); err != nil {
 			return err
 		}
 		mode := fields[0]
 		if mode == "160000" {
 			gitlinks[name] = true
 			state := pathState(paths, strings.TrimSuffix(name, "/")+"/")
-			state.Index = FileState{Present: true, Mode: "opaque-repository", Digest: fields[1]}
+			state.Index = modelcoverage.FileState{Present: true, Mode: "opaque-repository", Digest: fields[1]}
 			state.OpaqueBoundary = true
 			continue
 		}
@@ -353,9 +313,9 @@ func addIndexPaths(root string, paths map[string]*PathState, gitlinks map[string
 			return fmt.Errorf("unsupported Git index mode %s for %q", mode, name)
 		}
 		state := pathState(paths, name)
-		state.Index = FileState{Present: true, Mode: mode, Digest: fields[1]}
+		state.Index = modelcoverage.FileState{Present: true, Mode: mode, Digest: fields[1]}
 	}
-	return validatePathSet(paths)
+	return validateAcquiredPathSet(paths)
 }
 
 func walkWorking(root string, gitlinks map[string]bool) (map[string]bool, map[string]string, error) {
@@ -389,7 +349,7 @@ func walkWorking(root string, gitlinks map[string]bool) (map[string]bool, map[st
 				}
 				continue
 			}
-			if err := validatePath(rel); err != nil {
+			if err := modelcoverage.ValidateRepositoryPath(rel); err != nil {
 				return err
 			}
 			info, statErr := os.Lstat(filepath.Join(absDir, name))
@@ -427,7 +387,7 @@ func walkWorking(root string, gitlinks map[string]bool) (map[string]bool, map[st
 	if err := walk(rootAbs, ""); err != nil {
 		return nil, nil, err
 	}
-	if err := validatePortableNames(files); err != nil {
+	if err := validateAcquiredPathNames(files); err != nil {
 		return nil, nil, err
 	}
 	return boundaries, files, nil
@@ -439,14 +399,14 @@ func hasGitMetadata(directory string) bool {
 }
 
 func readWorkingIgnore(acquisition *source.Acquisition) ([]byte, error) {
-	observed, err := acquisition.ObserveSelectedWorking([]string{IgnorePath})
+	observed, err := acquisition.ObserveSelectedWorking([]string{modelcoverage.IgnorePath})
 	if err != nil {
-		return nil, fmt.Errorf("read %s: %w", IgnorePath, err)
+		return nil, fmt.Errorf("read %s: %w", modelcoverage.IgnorePath, err)
 	}
 	if len(observed.MissingPaths) != 0 {
 		return nil, nil
 	}
-	return append([]byte(nil), observed.Snapshot.Files[IgnorePath]...), nil
+	return append([]byte(nil), observed.Snapshot.Files[modelcoverage.IgnorePath]...), nil
 }
 
 func isUnbornRepository(root string) (bool, string, error) {
@@ -469,7 +429,7 @@ func isUnbornRepository(root string) (bool, string, error) {
 	return false, "", fmt.Errorf("inspect symbolic HEAD ref %q: %w", name, err)
 }
 
-func recheckWorkingUniverse(root, revision, unbornRef string, original map[string]*PathState, gitlinks map[string]bool, options Options) error {
+func recheckWorkingUniverse(root, revision, unbornRef string, original map[string]*modelcoverage.PathState, gitlinks map[string]bool, options modelcoverage.Options) error {
 	head, err := source.GitOutput(root, "rev-parse", "--verify", "HEAD^{commit}")
 	if err != nil {
 		unborn, ref, unbornErr := isUnbornRepository(root)
@@ -479,7 +439,7 @@ func recheckWorkingUniverse(root, revision, unbornRef string, original map[strin
 	} else if strings.TrimSpace(string(head)) != revision {
 		return fmt.Errorf("repository HEAD changed during census")
 	}
-	paths := map[string]*PathState{}
+	paths := map[string]*modelcoverage.PathState{}
 	links := map[string]bool{}
 	if revision != "" {
 		if err := addHeadPaths(root, revision, paths, links); err != nil {
@@ -500,12 +460,12 @@ func recheckWorkingUniverse(root, revision, unbornRef string, original map[strin
 	normalizeWorktreeModes(paths, modes, fileModeEnabled)
 	for name, mode := range modes {
 		state := pathState(paths, name)
-		state.Worktree = FileState{Present: true, Mode: mode}
+		state.Worktree = modelcoverage.FileState{Present: true, Mode: mode}
 	}
 	for name := range boundaries {
 		state := pathState(paths, name)
 		state.OpaqueBoundary = true
-		state.Worktree = FileState{Present: true, Mode: "opaque-repository"}
+		state.Worktree = modelcoverage.FileState{Present: true, Mode: "opaque-repository"}
 	}
 	if !sameCensusMetadata(original, paths, options) || !sameLinks(gitlinks, links) {
 		return fmt.Errorf("repository membership, mode, HEAD, or index changed during census")
@@ -513,7 +473,7 @@ func recheckWorkingUniverse(root, revision, unbornRef string, original map[strin
 	return nil
 }
 
-func normalizeWorktreeModes(paths map[string]*PathState, worktreeModes map[string]string, fileModeEnabled bool) {
+func normalizeWorktreeModes(paths map[string]*modelcoverage.PathState, worktreeModes map[string]string, fileModeEnabled bool) {
 	if fileModeEnabled {
 		return
 	}
@@ -524,9 +484,9 @@ func normalizeWorktreeModes(paths map[string]*PathState, worktreeModes map[strin
 	}
 }
 
-func sameCensusMetadata(left, right map[string]*PathState, options Options) bool {
+func sameCensusMetadata(left, right map[string]*modelcoverage.PathState, options modelcoverage.Options) bool {
 	for name, a := range left {
-		if isOperational(name, options) {
+		if modelcoverage.IsOperationalPath(name, options) {
 			continue
 		}
 		b := right[name]
@@ -537,7 +497,7 @@ func sameCensusMetadata(left, right map[string]*PathState, options Options) bool
 		}
 	}
 	for name := range right {
-		if isOperational(name, options) {
+		if modelcoverage.IsOperationalPath(name, options) {
 			continue
 		}
 		if _, exists := left[name]; !exists {
@@ -557,20 +517,6 @@ func sameLinks(left, right map[string]bool) bool {
 		}
 	}
 	return true
-}
-
-func cloneSnapshot(input *snapshot.Snapshot) *snapshot.Snapshot {
-	if input == nil {
-		return nil
-	}
-	result := &snapshot.Snapshot{ID: input.ID, Provisional: input.Provisional, Files: make(map[string][]byte, len(input.Files)), Modes: make(map[string]string, len(input.Modes))}
-	for name, data := range input.Files {
-		result.Files[name] = append([]byte(nil), data...)
-	}
-	for name, mode := range input.Modes {
-		result.Modes[name] = mode
-	}
-	return result
 }
 
 func uniquePaths(values []string) []string {
@@ -598,126 +544,51 @@ func sameStrings(left, right []string) bool {
 	return true
 }
 
-func pathState(paths map[string]*PathState, name string) *PathState {
+func pathState(paths map[string]*modelcoverage.PathState, name string) *modelcoverage.PathState {
 	state := paths[name]
 	if state == nil {
-		state = &PathState{Path: name}
+		state = &modelcoverage.PathState{Path: name}
 		paths[name] = state
 	}
 	return state
 }
 
-func makeUniverse(revision, identity string, paths map[string]*PathState, ignoreBytes []byte, options Options, fixed bool) *Universe {
-	result := &Universe{Revision: revision, IdentityDigest: identity, FixedRevision: fixed, IgnoreBytes: append([]byte(nil), ignoreBytes...), IgnoreBytesDigest: sha256Hex(ignoreBytes)}
+func pathStates(paths map[string]*modelcoverage.PathState) []modelcoverage.PathState {
+	result := make([]modelcoverage.PathState, 0, len(paths))
 	for _, state := range paths {
-		copy := *state
-		result.Paths = append(result.Paths, copy)
+		result = append(result, *state)
 	}
-	sort.Slice(result.Paths, func(i, j int) bool { return result.Paths[i].Path < result.Paths[j].Path })
-	result.Digest = universeDigest(result, options)
 	return result
 }
 
-func selectedContentPaths(paths map[string]*PathState, ignore IgnoreFile, options Options, working bool) []string {
-	var result []string
-	for name, state := range paths {
-		if state.OpaqueBoundary || isIgnored(name, ignore) || isTransitional(name, options) || isOperational(name, options) || name == IgnorePath || !state.Worktree.Present {
-			continue
-		}
-		result = append(result, name)
-	}
-	sort.Strings(result)
-	return result
-}
-
-func selectedHeadContentPaths(paths map[string]*PathState, ignore IgnoreFile, options Options) []string {
-	var result []string
-	for name, state := range paths {
-		if state.OpaqueBoundary || isIgnored(name, ignore) || isTransitional(name, options) || isOperational(name, options) || name == IgnorePath || !state.Head.Present {
-			continue
-		}
-		result = append(result, name)
-	}
-	sort.Strings(result)
-	return result
-}
-
-func validatePath(name string) error {
-	cleanName := strings.TrimSuffix(name, "/")
-	if cleanName == "" || !utf8.ValidString(cleanName) || strings.ContainsAny(cleanName, "\\:\x00") || strings.HasPrefix(cleanName, "/") || path.Clean(cleanName) != cleanName {
-		return fmt.Errorf("unsafe or non-normalized repository path %q", name)
-	}
-	for _, part := range strings.Split(cleanName, "/") {
-		if !safePathComponent(part) {
-			return fmt.Errorf("repository path %q contains a reserved or traversal component", name)
-		}
-	}
-	return nil
-}
-
-func safePathComponent(part string) bool {
-	if part == "" || part == "." || part == ".." || strings.EqualFold(part, ".git") || strings.TrimRight(part, " .") != part || strings.ContainsAny(part, "<>:\\|?*\x00") {
-		return false
-	}
-	for _, r := range part {
-		if unicode.IsControl(r) {
-			return false
-		}
-	}
-	base := strings.ToUpper(strings.SplitN(part, ".", 2)[0])
-	switch base {
-	case "CON", "PRN", "AUX", "NUL", "COM1", "COM2", "COM3", "COM4", "COM5", "COM6", "COM7", "COM8", "COM9", "LPT1", "LPT2", "LPT3", "LPT4", "LPT5", "LPT6", "LPT7", "LPT8", "LPT9":
-		return false
-	}
-	return true
-}
-
-func validatePathSet(paths map[string]*PathState) error {
-	seen := map[string]string{}
-	terminals := map[string]string{}
+func validateAcquiredPathSet(paths map[string]*modelcoverage.PathState) error {
+	names := make([]string, 0, len(paths))
 	for name := range paths {
-		clean := strings.TrimSuffix(name, "/")
-		terminalKey := strings.ToLower(clean)
-		if previous, ok := terminals[terminalKey]; ok && previous != name {
-			return fmt.Errorf("repository contains colliding file and repository-boundary paths %q and %q", previous, name)
-		}
-		terminals[terminalKey] = name
-		parts := strings.Split(clean, "/")
-		for i := range parts {
-			actual := strings.Join(parts[:i+1], "/")
-			key := strings.ToLower(actual)
-			if previous, ok := seen[key]; ok && previous != actual {
-				return fmt.Errorf("repository contains case-colliding paths %q and %q", previous, actual)
-			}
-			seen[key] = actual
-		}
+		names = append(names, name)
 	}
-	return nil
+	return modelcoverage.ValidateRepositoryPaths(names)
 }
 
-func validateUniversePaths(paths []PathState) error {
-	set := make(map[string]*PathState, len(paths))
-	for _, state := range paths {
-		if strings.HasSuffix(state.Path, "/") && !state.OpaqueBoundary {
-			return fmt.Errorf("repository file path %q unexpectedly ends with a slash", state.Path)
-		}
-		if err := validatePath(state.Path); err != nil {
-			return err
-		}
-		if _, exists := set[state.Path]; exists {
-			return fmt.Errorf("candidate contains duplicate path %q", state.Path)
-		}
-		set[state.Path] = &PathState{Path: state.Path}
-	}
-	return validatePathSet(set)
-}
-
-func validatePortableNames(files map[string]string) error {
-	paths := make(map[string]*PathState, len(files))
+func validateAcquiredPathNames(files map[string]string) error {
+	names := make([]string, 0, len(files))
 	for name := range files {
-		paths[name] = &PathState{Path: name}
+		names = append(names, name)
 	}
-	return validatePathSet(paths)
+	return modelcoverage.ValidateRepositoryPaths(names)
+}
+
+func cloneSnapshot(input *snapshot.Snapshot) *snapshot.Snapshot {
+	if input == nil {
+		return nil
+	}
+	result := &snapshot.Snapshot{ID: input.ID, Provisional: input.Provisional, Files: make(map[string][]byte, len(input.Files)), Modes: make(map[string]string, len(input.Modes))}
+	for name, data := range input.Files {
+		result.Files[name] = append([]byte(nil), data...)
+	}
+	for name, mode := range input.Modes {
+		result.Modes[name] = mode
+	}
+	return result
 }
 
 func validCommit(commit, objectFormat string) bool {

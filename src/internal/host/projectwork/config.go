@@ -8,142 +8,140 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/Glacius-Labs/Markitect/src/internal/modules/projectmodel"
+	"github.com/Glacius-Labs/Markitect/src/internal/modules/projectmodel/projectvalue"
 	"go.yaml.in/yaml/v3"
 )
 
 const maxProjectConfigBytes = 1 << 20
 
-const APIVersion = projectmodel.APIVersion
-
 var modelNamespaceSegment = regexp.MustCompile(`^[a-z][a-z0-9-]*$`)
 
 // DecodeConfig parses the deliberately closed project selection manifest.
 // The manifest chooses exact model bytes; it never causes a directory scan.
-func DecodeConfig(data []byte) (Config, error) {
+func DecodeConfig(data []byte) (projectvalue.Config, error) {
 	if len(data) == 0 || len(data) > maxProjectConfigBytes {
-		return Config{}, fmt.Errorf("project config must be between 1 and %d bytes", maxProjectConfigBytes)
+		return projectvalue.Config{}, fmt.Errorf("project config must be between 1 and %d bytes", maxProjectConfigBytes)
 	}
 	dec := yaml.NewDecoder(bytes.NewReader(data))
 	var document yaml.Node
 	if err := dec.Decode(&document); err != nil {
-		return Config{}, fmt.Errorf("invalid project config: %w", err)
+		return projectvalue.Config{}, fmt.Errorf("invalid project config: %w", err)
 	}
 	if err := rejectProjectYAMLNode(&document); err != nil {
-		return Config{}, err
+		return projectvalue.Config{}, err
 	}
 	if err := validateProjectYAMLFields(&document); err != nil {
-		return Config{}, err
+		return projectvalue.Config{}, err
 	}
 	var extra yaml.Node
 	if err := dec.Decode(&extra); err != io.EOF {
 		if err == nil {
-			return Config{}, fmt.Errorf("project config must contain exactly one YAML document")
+			return projectvalue.Config{}, fmt.Errorf("project config must contain exactly one YAML document")
 		}
-		return Config{}, fmt.Errorf("invalid project config: %w", err)
+		return projectvalue.Config{}, fmt.Errorf("invalid project config: %w", err)
 	}
 	known := yaml.NewDecoder(bytes.NewReader(data))
 	known.KnownFields(true)
-	var config Config
+	var config projectvalue.Config
 	if err := known.Decode(&config); err != nil {
-		return Config{}, fmt.Errorf("invalid project config: %w", err)
+		return projectvalue.Config{}, fmt.Errorf("invalid project config: %w", err)
 	}
-	if config.APIVersion != APIVersion {
-		return Config{}, fmt.Errorf("project config apiVersion must be %q", APIVersion)
+	if config.APIVersion != projectvalue.APIVersion {
+		return projectvalue.Config{}, fmt.Errorf("project config apiVersion must be %q", projectvalue.APIVersion)
 	}
 	if strings.TrimSpace(config.Name) == "" || config.Name != strings.TrimSpace(config.Name) {
-		return Config{}, fmt.Errorf("project config name must be nonempty and have no surrounding whitespace")
+		return projectvalue.Config{}, fmt.Errorf("project config name must be nonempty and have no surrounding whitespace")
 	}
 	if config.CoverageMode != "" && config.CoverageMode != "selected" && config.CoverageMode != "full" {
-		return Config{}, fmt.Errorf("coverageMode must be selected or full")
+		return projectvalue.Config{}, fmt.Errorf("coverageMode must be selected or full")
 	}
-	if config.WorkflowMode != "" && config.WorkflowMode != WorkflowModeGuided && config.WorkflowMode != WorkflowModeEmpty {
-		return Config{}, fmt.Errorf("workflowMode must be guided or empty")
+	if config.WorkflowMode != "" && config.WorkflowMode != projectvalue.WorkflowModeGuided && config.WorkflowMode != projectvalue.WorkflowModeEmpty {
+		return projectvalue.Config{}, fmt.Errorf("workflowMode must be guided or empty")
 	}
-	if config.AcceptancePolicy != "" && config.AcceptancePolicy != AcceptancePolicyCommittedModel {
-		return Config{}, fmt.Errorf("acceptancePolicy must be committed-model")
+	if config.AcceptancePolicy != "" && config.AcceptancePolicy != projectvalue.AcceptancePolicyCommittedModel {
+		return projectvalue.Config{}, fmt.Errorf("acceptancePolicy must be committed-model")
 	}
 	if config.DocumentPath != "" {
 		if err := validateRepoPath(config.DocumentPath); err != nil {
-			return Config{}, fmt.Errorf("documentPath: %w", err)
+			return projectvalue.Config{}, fmt.Errorf("documentPath: %w", err)
 		}
-		if !strings.HasSuffix(config.DocumentPath, ".md") || strings.HasPrefix(config.DocumentPath, ".markitect/model/") || config.DocumentPath == ManifestPath || config.DocumentPath == RuntimePath {
-			return Config{}, fmt.Errorf("documentPath must be a Markdown output outside canonical model inputs")
+		if !strings.HasSuffix(config.DocumentPath, ".md") || strings.HasPrefix(config.DocumentPath, ".markitect/model/") || config.DocumentPath == projectvalue.ManifestPath || config.DocumentPath == projectvalue.RuntimePath {
+			return projectvalue.Config{}, fmt.Errorf("documentPath must be a Markdown output outside canonical model inputs")
 		}
 		registered := config
 		registered.DocumentPath = ""
-		if IsToolPath(registered, config.DocumentPath) && !pathWithin(config.DocumentPath, ".markitect/views") {
-			return Config{}, fmt.Errorf("documentPath %q collides with a registered Markitect control or onboarding path", config.DocumentPath)
+		if projectvalue.IsToolPath(registered, config.DocumentPath) && !pathWithin(config.DocumentPath, ".markitect/views") {
+			return projectvalue.Config{}, fmt.Errorf("documentPath %q collides with a registered Markitect control or onboarding path", config.DocumentPath)
 		}
 	}
 	if len(config.ModelFiles) == 0 {
-		return Config{}, fmt.Errorf("project config must select at least one model file")
+		return projectvalue.Config{}, fmt.Errorf("project config must select at least one model file")
 	}
 	if err := validateExactPaths("modelFiles", config.ModelFiles, true); err != nil {
-		return Config{}, err
+		return projectvalue.Config{}, err
 	}
 	for _, file := range config.ModelFiles {
-		if !strings.HasPrefix(file, ModelRoot+"/") || !strings.HasSuffix(file, ".yaml") && !strings.HasSuffix(file, ".yml") {
-			return Config{}, fmt.Errorf("modelFiles entry %q must be an exact YAML file under %s/", file, ModelRoot)
+		if !strings.HasPrefix(file, projectvalue.ModelRoot+"/") || !strings.HasSuffix(file, ".yaml") && !strings.HasSuffix(file, ".yml") {
+			return projectvalue.Config{}, fmt.Errorf("modelFiles entry %q must be an exact YAML file under %s/", file, projectvalue.ModelRoot)
 		}
 		if _, err := namespaceForModelPath(file); err != nil {
-			return Config{}, err
+			return projectvalue.Config{}, err
 		}
 	}
 	if err := validateExactPaths("inventoryRoots", config.InventoryRoots, false); err != nil {
-		return Config{}, err
+		return projectvalue.Config{}, err
 	}
 	for i, root := range config.InventoryRoots {
 		if strings.EqualFold(root, ".markitect") || strings.HasPrefix(strings.ToLower(root), ".markitect/") {
-			return Config{}, fmt.Errorf("inventoryRoots entry %q may not include Markitect runtime, cache, model, or view files", root)
+			return projectvalue.Config{}, fmt.Errorf("inventoryRoots entry %q may not include Markitect runtime, cache, model, or view files", root)
 		}
 		for j, other := range config.InventoryRoots {
 			if i == j {
 				continue
 			}
 			if pathWithin(root, other) || pathWithin(other, root) {
-				return Config{}, fmt.Errorf("inventoryRoots entries %q and %q overlap", root, other)
+				return projectvalue.Config{}, fmt.Errorf("inventoryRoots entries %q and %q overlap", root, other)
 			}
 		}
 	}
 	for i, exclusion := range config.Exclusions {
 		if err := validateRepoPath(exclusion.Path); err != nil {
-			return Config{}, fmt.Errorf("exclusions[%d].path: %w", i, err)
+			return projectvalue.Config{}, fmt.Errorf("exclusions[%d].path: %w", i, err)
 		}
 		if strings.TrimSpace(exclusion.Reason) == "" || exclusion.Reason != strings.TrimSpace(exclusion.Reason) {
-			return Config{}, fmt.Errorf("exclusions[%d].reason must be nonempty and have no surrounding whitespace", i)
+			return projectvalue.Config{}, fmt.Errorf("exclusions[%d].reason must be nonempty and have no surrounding whitespace", i)
 		}
 		for j := 0; j < i; j++ {
 			if strings.EqualFold(config.Exclusions[j].Path, exclusion.Path) {
-				return Config{}, fmt.Errorf("exclusions repeats or aliases path %q", exclusion.Path)
+				return projectvalue.Config{}, fmt.Errorf("exclusions repeats or aliases path %q", exclusion.Path)
 			}
 		}
 	}
 	for i, exclusion := range config.TransitionalExclusions {
 		if err := validateRepoSelector(exclusion.Path); err != nil {
-			return Config{}, fmt.Errorf("transitionalExclusions[%d].path: %w", i, err)
+			return projectvalue.Config{}, fmt.Errorf("transitionalExclusions[%d].path: %w", i, err)
 		}
 		if strings.TrimSpace(exclusion.Reason) == "" || exclusion.Reason != strings.TrimSpace(exclusion.Reason) {
-			return Config{}, fmt.Errorf("transitionalExclusions[%d].reason must be nonempty and have no surrounding whitespace", i)
+			return projectvalue.Config{}, fmt.Errorf("transitionalExclusions[%d].reason must be nonempty and have no surrounding whitespace", i)
 		}
 		for j := 0; j < i; j++ {
 			if repoSelectorsOverlap(config.TransitionalExclusions[j].Path, exclusion.Path) {
-				return Config{}, fmt.Errorf("transitionalExclusions paths %q and %q duplicate or overlap", config.TransitionalExclusions[j].Path, exclusion.Path)
+				return projectvalue.Config{}, fmt.Errorf("transitionalExclusions paths %q and %q duplicate or overlap", config.TransitionalExclusions[j].Path, exclusion.Path)
 			}
 		}
 		for _, ordinary := range config.Exclusions {
 			if repoSelectorsOverlap(ordinary.Path, exclusion.Path) {
-				return Config{}, fmt.Errorf("transitional exclusion %q overlaps ordinary exclusion %q", exclusion.Path, ordinary.Path)
+				return projectvalue.Config{}, fmt.Errorf("transitional exclusion %q overlaps ordinary exclusion %q", exclusion.Path, ordinary.Path)
 			}
 		}
 		for _, modelFile := range config.ModelFiles {
 			if repoSelectorsOverlap(modelFile, exclusion.Path) {
-				return Config{}, fmt.Errorf("transitional exclusion %q overlaps canonical model file %q", exclusion.Path, modelFile)
+				return projectvalue.Config{}, fmt.Errorf("transitional exclusion %q overlaps canonical model file %q", exclusion.Path, modelFile)
 			}
 		}
-		for _, tool := range ToolPaths(config) {
+		for _, tool := range projectvalue.ToolPaths(config) {
 			if repoSelectorsOverlap(tool.Selector, exclusion.Path) {
-				return Config{}, fmt.Errorf("transitional exclusion %q overlaps registered tool path %q", exclusion.Path, tool.Selector)
+				return projectvalue.Config{}, fmt.Errorf("transitional exclusion %q overlaps registered tool path %q", exclusion.Path, tool.Selector)
 			}
 		}
 	}
@@ -266,10 +264,10 @@ func validateRepoPath(value string) error {
 }
 
 func namespaceForModelPath(file string) (string, error) {
-	if !strings.HasPrefix(file, ModelRoot+"/") {
-		return "", fmt.Errorf("model path %q is outside %s", file, ModelRoot)
+	if !strings.HasPrefix(file, projectvalue.ModelRoot+"/") {
+		return "", fmt.Errorf("model path %q is outside %s", file, projectvalue.ModelRoot)
 	}
-	relative := strings.TrimPrefix(file, ModelRoot+"/")
+	relative := strings.TrimPrefix(file, projectvalue.ModelRoot+"/")
 	parent := path.Dir(relative)
 	if parent == "." {
 		return "", nil

@@ -1,5 +1,7 @@
 package projectapp
 
+import "github.com/Glacius-Labs/Markitect/src/internal/modules/projectmodel/projectvalue"
+
 import (
 	"crypto/sha256"
 	"encoding/hex"
@@ -8,11 +10,11 @@ import (
 	"github.com/Glacius-Labs/Markitect/src/internal/core"
 	"strings"
 
-	"github.com/Glacius-Labs/Markitect/src/internal/host/projectbriefing"
-	"github.com/Glacius-Labs/Markitect/src/internal/host/projectcoverage"
+	"github.com/Glacius-Labs/Markitect/src/internal/host/projecthistory"
 	"github.com/Glacius-Labs/Markitect/src/internal/host/projectrun"
 	"github.com/Glacius-Labs/Markitect/src/internal/host/projectwork"
 	"github.com/Glacius-Labs/Markitect/src/internal/modules/projectmodel"
+	"github.com/Glacius-Labs/Markitect/src/internal/modules/projectmodel/projectcoverage"
 )
 
 type InitOperation struct {
@@ -53,10 +55,10 @@ type DocumentOperation struct {
 }
 
 type EditOperation struct {
-	Selection      Selection            `json:"selection"`
-	Mutation       projectwork.Mutation `json:"mutation"`
-	Write          bool                 `json:"write,omitempty"`
-	ExpectedDigest string               `json:"expectedDigest,omitempty"`
+	Selection      Selection             `json:"selection"`
+	Mutation       projectvalue.Mutation `json:"mutation"`
+	Write          bool                  `json:"write,omitempty"`
+	ExpectedDigest string                `json:"expectedDigest,omitempty"`
 }
 
 type ImpactOperation struct {
@@ -131,8 +133,8 @@ func (o Operations) Context(operation ContextOperation) (projectmodel.ManagerCon
 	if err != nil {
 		return projectmodel.ManagerContext{}, err
 	}
-	if project.Config.WorkflowMode == projectwork.WorkflowModeGuided && !project.Provisional && project.Revision != "" {
-		if _, err := projectbriefing.ReadAcceptedHistory(operation.Selection.Root, project.Revision); err != nil {
+	if project.Config.WorkflowMode == projectvalue.WorkflowModeGuided && !project.Provisional && project.Revision != "" {
+		if _, err := projecthistory.ReadAcceptedHistory(operation.Selection.Root, project.Revision); err != nil {
 			return projectmodel.ManagerContext{}, err
 		}
 	}
@@ -189,7 +191,7 @@ func (o Operations) Document(operation DocumentOperation) (DocumentResult, error
 	if err != nil {
 		return DocumentResult{}, err
 	}
-	result := DocumentResult{Revision: project.Revision, Path: projectwork.DocumentPath(project.Config), Digest: contentDigest(content), Content: content}
+	result := DocumentResult{Revision: project.Revision, Path: projectvalue.DocumentPath(project.Config), Digest: contentDigest(content), Content: content}
 	if !operation.Write {
 		return result, nil
 	}
@@ -216,20 +218,20 @@ func contentDigest(content string) string {
 	return "sha256:" + hex.EncodeToString(sum[:])
 }
 
-func (o Operations) Edit(operation EditOperation) (projectwork.EditPlan, error) {
+func (o Operations) Edit(operation EditOperation) (projectvalue.EditPlan, error) {
 	project, err := loadSelectedProject(operation.Selection)
 	if err != nil {
-		return projectwork.EditPlan{}, err
+		return projectvalue.EditPlan{}, err
 	}
 	plan, err := projectwork.PlanEdit(project, operation.Mutation)
 	if err != nil {
-		return projectwork.EditPlan{}, err
+		return projectvalue.EditPlan{}, err
 	}
 	if !operation.Write {
 		return plan, nil
 	}
 	if operation.ExpectedDigest != plan.Digest {
-		return projectwork.EditPlan{}, fmt.Errorf("--expect does not match the exact edit plan digest %s", plan.Digest)
+		return projectvalue.EditPlan{}, fmt.Errorf("--expect does not match the exact edit plan digest %s", plan.Digest)
 	}
 	return projectwork.ApplyEdit(operation.Selection.Root, plan, plan.BaseDigest)
 }
@@ -287,7 +289,7 @@ func (o Operations) Coverage(selection Selection) (projectcoverage.Report, error
 	return projectwork.Coverage(selection.Root, selection.Revision)
 }
 
-func loadSelectedProject(selection Selection) (*projectwork.Project, error) {
+func loadSelectedProject(selection Selection) (*projectvalue.Project, error) {
 	if err := requireRoot(selection.Root); err != nil {
 		return nil, err
 	}

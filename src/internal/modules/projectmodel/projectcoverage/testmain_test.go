@@ -1,4 +1,4 @@
-package projectbriefing
+package projectcoverage
 
 import (
 	"testing"

@@ -1,5 +1,7 @@
 package projectrun
 
+import "github.com/Glacius-Labs/Markitect/src/internal/modules/projectmodel/projectvalue"
+
 import (
 	"context"
 	"crypto/sha256"
@@ -17,7 +19,6 @@ import (
 
 	"github.com/Glacius-Labs/Markitect/src/internal/core/snapshot"
 	"github.com/Glacius-Labs/Markitect/src/internal/host/agentexec"
-	"github.com/Glacius-Labs/Markitect/src/internal/host/projectwork"
 	"github.com/Glacius-Labs/Markitect/src/internal/infrastructure/source"
 	"github.com/Glacius-Labs/Markitect/src/internal/modules/projectmodel"
 )
@@ -65,7 +66,7 @@ func runOrResume(ctx context.Context, host Host, invoker Invoker, root, id strin
 	}
 	return execution.execute()
 }
-func beginRepair(store *runStore, dir string, host Host, root string, plan PlanRecord, runtime projectconfig.Runtime, project *Project, report RunReport) (RunReport, error) {
+func beginRepair(store *runStore, dir string, host Host, root string, plan PlanRecord, runtime projectconfig.Runtime, project *projectvalue.Project, report RunReport) (RunReport, error) {
 	if report.Status != StatusFailed {
 		return report, fmt.Errorf("run status %s cannot be repaired; repair requires a failed required-check verification", report.Status)
 	}
@@ -198,7 +199,7 @@ func boundedFeedbackText(value string, maximum int) string {
 	return value
 }
 
-func invokeManager(ctx context.Context, host Host, invoker Invoker, root string, runtime projectconfig.Runtime, plan PlanRecord, project *Project, task ManagerTask, phase string, activeChildIDs, conflicts []string, childReports []childReport, repairDiagnostic string, repairRound int, repairChecks []RepairCheckFeedback, start int) (result agentexec.RunResult, log InvocationLog, returnErr error) {
+func invokeManager(ctx context.Context, host Host, invoker Invoker, root string, runtime projectconfig.Runtime, plan PlanRecord, project *projectvalue.Project, task ManagerTask, phase string, activeChildIDs, conflicts []string, childReports []childReport, repairDiagnostic string, repairRound int, repairChecks []RepairCheckFeedback, start int) (result agentexec.RunResult, log InvocationLog, returnErr error) {
 	configAgent, ok := runtime.Agents[task.ManagerID]
 	if !ok {
 		return result, log, fmt.Errorf("no configured agent for manager %s", task.ManagerID)
@@ -260,7 +261,7 @@ func invokeManager(ctx context.Context, host Host, invoker Invoker, root string,
 	responsibilities := activeResponsibilities(project.Report, plan.Managers)
 	briefing := BriefingContext{}
 	if plan.ModelEdit == nil {
-		briefing, err = managerBriefing(root, project.Report.ModelDigest, task.ManagerID, project.Revision)
+		briefing, err = managerBriefing(host, root, project.Report.ModelDigest, task.ManagerID, project.Revision)
 		if err != nil {
 			return result, log, err
 		}
@@ -361,7 +362,7 @@ func invokeManager(ctx context.Context, host Host, invoker Invoker, root string,
 	return result, log, nil
 }
 
-func managerInvocationRequest(root string, runtime projectconfig.Runtime, plan PlanRecord, project *Project, task ManagerTask, phase string, activeChildIDs, conflicts []string, childReports []childReport, repairDiagnostic string, repairRound int, repairChecks []RepairCheckFeedback) (agentexec.Request, error) {
+func managerInvocationRequest(host Host, root string, runtime projectconfig.Runtime, plan PlanRecord, project *projectvalue.Project, task ManagerTask, phase string, activeChildIDs, conflicts []string, childReports []childReport, repairDiagnostic string, repairRound int, repairChecks []RepairCheckFeedback) (agentexec.Request, error) {
 	configAgent, ok := runtime.Agents[task.ManagerID]
 	if !ok {
 		return agentexec.Request{}, fmt.Errorf("no configured agent for manager %s", task.ManagerID)
@@ -398,7 +399,7 @@ func managerInvocationRequest(root string, runtime projectconfig.Runtime, plan P
 	responsibilities := activeResponsibilities(project.Report, plan.Managers)
 	briefing := BriefingContext{}
 	if plan.ModelEdit == nil {
-		briefing, err = managerBriefing(root, project.Report.ModelDigest, task.ManagerID, project.Revision)
+		briefing, err = managerBriefing(host, root, project.Report.ModelDigest, task.ManagerID, project.Revision)
 		if err != nil {
 			return agentexec.Request{}, err
 		}
@@ -630,8 +631,8 @@ func activeResponsibilities(report projectmodel.Report, tasks []ManagerTask) []a
 	return out
 }
 
-func allowedWritePaths(config projectwork.Config, report projectmodel.Report, task ManagerTask, phase string, conflicts []string, inputs ...*Snapshot) []string {
-	var input *Snapshot
+func allowedWritePaths(config projectvalue.Config, report projectmodel.Report, task ManagerTask, phase string, conflicts []string, inputs ...*snapshot.Snapshot) []string {
+	var input *snapshot.Snapshot
 	if len(inputs) > 0 {
 		input = inputs[0]
 	}
@@ -765,7 +766,7 @@ func requiredChildArtifacts(report projectmodel.Report, activeChildren []string)
 	return artifacts
 }
 
-func scopedArtifacts(project *Project, task ManagerTask, agent projectconfig.Agent, limits projectconfig.Limits, phase string, activeChildIDs []string) ([]agentexec.Artifact, error) {
+func scopedArtifacts(project *projectvalue.Project, task ManagerTask, agent projectconfig.Agent, limits projectconfig.Limits, phase string, activeChildIDs []string) ([]agentexec.Artifact, error) {
 	paths := map[string]bool{}
 	for _, entry := range project.Report.Files {
 		if entry.Owner == task.ManagerID {
@@ -833,8 +834,8 @@ func scopedArtifacts(project *Project, task ManagerTask, agent projectconfig.Age
 	return out, nil
 }
 
-func applyProposal(base candidateData, proposals []agentexec.CandidateFile, config projectwork.Config, report projectmodel.Report, task ManagerTask, phase string, conflictPaths []string, limits projectconfig.Limits, inputs ...*Snapshot) (candidateData, error) {
-	var input *Snapshot
+func applyProposal(base candidateData, proposals []agentexec.CandidateFile, config projectvalue.Config, report projectmodel.Report, task ManagerTask, phase string, conflictPaths []string, limits projectconfig.Limits, inputs ...*snapshot.Snapshot) (candidateData, error) {
+	var input *snapshot.Snapshot
 	if len(inputs) > 0 {
 		input = inputs[0]
 	}
@@ -917,8 +918,8 @@ func forbiddenRuntimePath(path string) bool {
 	return lower == ".markitect" || strings.HasPrefix(lower, ".markitect/")
 }
 
-func projectPathAllowed(config projectwork.Config, path string) bool {
-	if !safeRepoPath(path) || strings.HasPrefix(strings.ToLower(path), ".markitect/") || projectwork.IsToolPath(config, path) || projectwork.IsCanonicalModelPath(config, path) {
+func projectPathAllowed(config projectvalue.Config, path string) bool {
+	if !safeRepoPath(path) || strings.HasPrefix(strings.ToLower(path), ".markitect/") || projectvalue.IsToolPath(config, path) || projectvalue.IsCanonicalModelPath(config, path) {
 		return false
 	}
 	if config.CoverageMode == "full" {
@@ -1016,7 +1017,7 @@ func activeChildrenFromContext(c projectmodel.ManagerContext) []string {
 	sort.Strings(out)
 	return out
 }
-func projectForCandidate(host Host, root string, base *Snapshot, c candidateData) (*Project, error) {
+func projectForCandidate(host Host, root string, base *snapshot.Snapshot, c candidateData) (*projectvalue.Project, error) {
 	snap, err := snapshotWithCandidate(base, c)
 	if err != nil {
 		return nil, err
@@ -1028,7 +1029,7 @@ func projectForCandidate(host Host, root string, base *Snapshot, c candidateData
 // every review that Verify or Apply later checks, so all see one view: full
 // coverage is classified against the base census plus the candidate delta,
 // not only against the paths present in the candidate snapshot.
-func finalProjectForCandidate(host Host, root string, base *Project, c candidateData) (*Project, error) {
+func finalProjectForCandidate(host Host, root string, base *projectvalue.Project, c candidateData) (*projectvalue.Project, error) {
 	compiled, err := projectForCandidate(host, root, base.Snapshot, c)
 	if err != nil {
 		return nil, err
@@ -1039,9 +1040,12 @@ func finalProjectForCandidate(host Host, root string, base *Project, c candidate
 			deleted = append(deleted, path)
 		}
 	}
-	return projectwork.ClassifyCandidate(base, compiled, deleted...)
+	if host.ClassifyCandidate == nil {
+		return nil, fmt.Errorf("candidate classification is not bound")
+	}
+	return host.ClassifyCandidate(base, compiled, deleted...)
 }
-func candidateSnapshotHash(base *Snapshot, c candidateData) string {
+func candidateSnapshotHash(base *snapshot.Snapshot, c candidateData) string {
 	snap, err := snapshotWithCandidate(base, c)
 	if err != nil {
 		return ""
@@ -1273,7 +1277,7 @@ func repositoryMatches(root string, plan PlanRecord) error {
 }
 
 func ensureWorkingBinding(host Host, root string, plan PlanRecord) error {
-	if err := validateExplorationReadiness(root, plan); err != nil {
+	if err := validateExplorationReadiness(host, root, plan); err != nil {
 		return err
 	}
 	working, err := host.Load(root, "")
@@ -1467,7 +1471,7 @@ func findRootCandidate(tasks []ManagerTask) string {
 	}
 	return ""
 }
-func validateFinalCandidate(host Host, root string, base *Project, c candidateData, plan PlanRecord) error {
+func validateFinalCandidate(host Host, root string, base *projectvalue.Project, c candidateData, plan PlanRecord) error {
 	compiled, err := finalProjectForCandidate(host, root, base, c)
 	if err != nil {
 		return err
@@ -1484,7 +1488,7 @@ func validateFinalCandidate(host Host, root string, base *Project, c candidateDa
 	if err := validateIgnoredCandidatePaths(base.Snapshot, c, compiled.Config); err != nil {
 		return err
 	}
-	return validateCandidateDocument(compiled)
+	return validateCandidateDocument(host, compiled)
 }
 
 func validateTaskOutcome(outcome string, response TaskResponse) error {

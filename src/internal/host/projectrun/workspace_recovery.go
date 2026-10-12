@@ -52,7 +52,7 @@ func safeRecoveryError(err error, message string) error {
 // task journal exists, including when its workspace must be preserved on error.
 func RecoverProjectAgent(ctx context.Context, host Host, invoker Invoker, root, taskID string, config agentexec.Config, limits projectconfig.Limits, expected nativeRecoveryBinding, expectedRequest agentexec.Request) (result agentexec.RunResult, found bool, err error) {
 	if externalExecutionEnabled(ctx) {
-		return externalInvocation(ctx, root, expected.OwnerRunID, taskID, config, expectedRequest)
+		return externalInvocation(ctx, host, root, expected.OwnerRunID, taskID, config, expectedRequest)
 	}
 	if ctx == nil || strings.TrimSpace(taskID) == "" || config.Transport != projectconfig.TransportCodexAppServer {
 		return result, false, errors.New("native recovery requires a context, task ID, and codex-app-server transport")

@@ -1,5 +1,9 @@
 package projectadoption
 
+import "go.yaml.in/yaml/v3"
+
+import "github.com/Glacius-Labs/Markitect/src/internal/modules/projectmodel/projectvalue"
+
 import (
 	"encoding/json"
 	"os"
@@ -7,9 +11,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/Glacius-Labs/Markitect/src/internal/host/projectcoverage"
+	"github.com/Glacius-Labs/Markitect/src/internal/modules/projectmodel/projectcoverage"
 	"github.com/Glacius-Labs/Markitect/src/internal/host/projectwork"
-	"go.yaml.in/yaml/v3"
 )
 
 func TestBrownfieldSessionPersistsAndResumesWithoutReplayingStages(t *testing.T) {
@@ -109,7 +112,7 @@ func TestBrownfieldResumeTreatsCleanAutoCRLFCheckoutAsTargetCurrent(t *testing.T
 		}
 	}
 	repo.Git("checkout", "--", ".")
-	manifestPath := filepath.Join(root, projectwork.ManifestPath)
+	manifestPath := filepath.Join(root, projectvalue.ManifestPath)
 	manifest, err := os.ReadFile(manifestPath)
 	if err != nil || !strings.Contains(string(manifest), "\r\n") {
 		t.Fatalf("precondition: manifest not CRLF after autocrlf checkout (err=%v)", err)
@@ -346,7 +349,7 @@ func TestManagerIterationUsesAssignedEvidenceAndParentIntegratesChildProposal(t 
 		Evidence: []EvidenceRef{{EvidenceID: "orders-doc", StartLine: 1, EndLine: 1, Excerpt: "Orders are managed by the order module."}}, Uncertainty: []string{}})
 	integrated.Scopes[0].ClaimIDs = []string{"orders-claim", "root-orders-intent"}
 	integrated.Questions = []Question{{ID: "clarify-orders", ScopeID: "orders", Prompt: "Which behavior is accepted?", Alternatives: []string{"implementation", "documentation"}, ClaimIDs: []string{"orders-claim", "root-orders-intent"}, Blocking: boolValue(true)}}
-	integrated.Proposal.Files[0].Content = "apiVersion: " + projectwork.APIVersion + "\nkind: Statement\n"
+	integrated.Proposal.Files[0].Content = "apiVersion: " + projectvalue.APIVersion + "\nkind: Statement\n"
 	SealDistillation(&integrated)
 	integration := ManagerIntegration{ManagerID: session.TargetContext.RootManagerID, ChildProposalDigests: []string{childDigest}, ChildContracts: []IntegratedChildContracts{{ManagerID: childManager.ID, ProposalDigest: childDigest, Contracts: []ManagerPublicContract{publicOrderContract}}}, Report: integrated, Conflicts: []SessionConflict{{
 		ID: "orders-intent-conflict", ScopeID: "orders", QuestionID: "clarify-orders", Description: "Implementation and documentation differ.", EvidenceIDs: []string{"orders-code", "orders-doc"}, Disposition: "unresolved", Reason: "The manager cannot decide desired behavior.",
@@ -562,7 +565,7 @@ func TestLeafChildCannotIntegrateUnderIntegratedParent(t *testing.T) {
 
 // leafChildSession records a root proposal that assigns one leaf child and
 // that child's proposal, leaving both integrations open.
-func leafChildSession(t *testing.T) (string, *projectwork.Project, BrownfieldSession, Distillation) {
+func leafChildSession(t *testing.T) (string, *projectvalue.Project, BrownfieldSession, Distillation) {
 	t.Helper()
 	root, discovery, _, target := distillationDiscovery(t)
 	session, err := StartBrownfieldSession(root, target, discovery, []ScopeStatus{})
@@ -630,7 +633,7 @@ func sessionReport(discovery Discovery, evidenceID, scopeID, excerpt, statement 
 			Evidence: []EvidenceRef{{EvidenceID: evidenceID, StartLine: line, EndLine: line, Excerpt: excerpt}}, Uncertainty: []string{}}},
 		Terms: []Term{}, Contradictions: []Contradiction{}, Questions: []Question{},
 		Scopes:   []ScopeProposal{{ID: scopeID, Name: "Order responsibilities", ClaimIDs: []string{claimID}}},
-		Proposal: ModelProposal{Goal: "Represent observed order responsibility", Files: []ProposedFile{{ScopeID: scopeID, Path: ".markitect/model/orders/statement.yaml", Content: "apiVersion: " + projectwork.APIVersion + "\nkind: Statement\n"}}},
+		Proposal: ModelProposal{Goal: "Represent observed order responsibility", Files: []ProposedFile{{ScopeID: scopeID, Path: ".markitect/model/orders/statement.yaml", Content: "apiVersion: " + projectvalue.APIVersion + "\nkind: Statement\n"}}},
 	}
 	SealDistillation(&report)
 	return report
@@ -643,7 +646,7 @@ func TestAcceptedManagerTreeRequiresParentAssignmentAndIntegratesRecursively(t *
 	if _, err := projectwork.Init(root, "Accepted tree fixture", true); err != nil {
 		t.Fatal(err)
 	}
-	manifestPath := filepath.Join(root, filepath.FromSlash(projectwork.ManifestPath))
+	manifestPath := filepath.Join(root, filepath.FromSlash(projectvalue.ManifestPath))
 	manifestBytes, err := os.ReadFile(manifestPath)
 	if err != nil {
 		t.Fatal(err)
@@ -661,7 +664,7 @@ func TestAcceptedManagerTreeRequiresParentAssignmentAndIntegratesRecursively(t *
 	if err := os.WriteFile(manifestPath, encodedConfig, 0o644); err != nil {
 		t.Fatal(err)
 	}
-	managerYAML := "apiVersion: " + projectwork.APIVersion + "\nkind: Manager\nmetadata:\n  name: orders\n  namespace: orders\npurpose: Owns order responsibilities.\nspec:\n  parent:\n    apiVersion: " + projectwork.APIVersion + "\n    kind: Manager\n    namespace: \"\"\n    name: project-owner\n  owns: [src/]\n"
+	managerYAML := "apiVersion: " + projectvalue.APIVersion + "\nkind: Manager\nmetadata:\n  name: orders\n  namespace: orders\npurpose: Owns order responsibilities.\nspec:\n  parent:\n    apiVersion: " + projectvalue.APIVersion + "\n    kind: Manager\n    namespace: \"\"\n    name: project-owner\n  owns: [src/]\n"
 	if err := os.MkdirAll(filepath.Dir(filepath.Join(root, filepath.FromSlash(childPath))), 0o755); err != nil {
 		t.Fatal(err)
 	}

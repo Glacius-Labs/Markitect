@@ -1,5 +1,7 @@
 package projectapp
 
+import "github.com/Glacius-Labs/Markitect/src/internal/modules/projectmodel/projectvalue"
+
 import (
 	"crypto/sha256"
 	"encoding/hex"
@@ -12,7 +14,7 @@ import (
 
 	"github.com/Glacius-Labs/Markitect/src/internal/host/projectexplore"
 	"github.com/Glacius-Labs/Markitect/src/internal/host/projectrun"
-	"github.com/Glacius-Labs/Markitect/src/internal/host/projectwork"
+
 	"github.com/Glacius-Labs/Markitect/src/internal/infrastructure/source"
 )
 
@@ -145,7 +147,7 @@ type ReadinessOperation struct {
 type ReadinessResult struct {
 	Exploration projectexplore.Record          `json:"exploration"`
 	Scope       projectexplore.Scope           `json:"scope"`
-	Binding     projectexplore.Binding         `json:"binding"`
+	Binding     projectvalue.Binding           `json:"binding"`
 	Readiness   projectexplore.ReadinessReport `json:"readiness"`
 	WritePlan   *projectexplore.WritePlan      `json:"writePlan,omitempty"`
 	Persisted   *projectexplore.Record         `json:"persisted,omitempty"`
@@ -222,9 +224,9 @@ func (o Operations) Readiness(operation ReadinessOperation) (ReadinessResult, er
 	return result, nil
 }
 
-func readinessBinding(host projectrun.Host, root, revision string, record projectexplore.Record, scope projectexplore.Scope) (projectexplore.Binding, error) {
+func readinessBinding(host projectrun.Host, root, revision string, record projectexplore.Record, scope projectexplore.Scope) (projectvalue.Binding, error) {
 	if strings.TrimSpace(scope.Goal) == "" {
-		return projectexplore.Binding{}, fmt.Errorf("exploration scope %q has no goal", scope.ID)
+		return projectvalue.Binding{}, fmt.Errorf("exploration scope %q has no goal", scope.ID)
 	}
 	return projectrun.ExplorationBinding(host, root, revision, projectrun.PlanRequest{
 		ExplorationID: record.ID, ScopeID: scope.ID, Goal: scope.Goal, Operation: scope.Operation,
@@ -234,8 +236,8 @@ func readinessBinding(host projectrun.Host, root, revision string, record projec
 
 // explorationCRUDModelBinding is model-only: record edits remain possible
 // before runtime setup and model acceptance, while CAS still binds exact source.
-func explorationCRUDModelBinding(host projectrun.Host, root, revision string, scope projectexplore.Scope) (projectexplore.Binding, error) {
-	var binding projectexplore.Binding
+func explorationCRUDModelBinding(host projectrun.Host, root, revision string, scope projectexplore.Scope) (projectvalue.Binding, error) {
+	var binding projectvalue.Binding
 	project, err := host.Load(root, revision)
 	if err != nil {
 		return binding, err
@@ -321,19 +323,19 @@ func explorationCRUDModelBinding(host projectrun.Host, root, revision string, sc
 	for path, data := range working.Snapshot.Files {
 		basisByPath[path] = bytesDigest(data)
 	}
-	runtime, runtimeErr := source.ObserveSelectedWorking(root, []string{projectwork.RuntimePath})
+	runtime, runtimeErr := source.ObserveSelectedWorking(root, []string{projectvalue.RuntimePath})
 	if runtimeErr != nil {
 		return binding, fmt.Errorf("capture optional runtime basis: %w", runtimeErr)
 	}
-	if data, ok := runtime.Snapshot.Files[projectwork.RuntimePath]; ok {
-		basisByPath[projectwork.RuntimePath] = bytesDigest(data)
+	if data, ok := runtime.Snapshot.Files[projectvalue.RuntimePath]; ok {
+		basisByPath[projectvalue.RuntimePath] = bytesDigest(data)
 	}
-	basisFiles := make([]projectexplore.BasisFile, 0, len(basisByPath))
+	basisFiles := make([]projectvalue.BasisFile, 0, len(basisByPath))
 	for path, digest := range basisByPath {
-		basisFiles = append(basisFiles, projectexplore.BasisFile{Path: path, Digest: digest})
+		basisFiles = append(basisFiles, projectvalue.BasisFile{Path: path, Digest: digest})
 	}
 	sort.Slice(basisFiles, func(i, j int) bool { return basisFiles[i].Path < basisFiles[j].Path })
-	binding = projectexplore.Binding{
+	binding = projectvalue.Binding{
 		RepositoryRoot: identity.Root, Branch: strings.TrimSpace(string(branchBytes)), Head: head,
 		ModelRevision: project.Revision, ModelAccepted: false, AcceptancePolicy: project.Config.AcceptancePolicy,
 		ProjectDigest: prefixedDigest(project.Digest), ModelDigest: prefixedDigest(project.Report.ModelDigest), SnapshotDigest: prefixedDigest(project.Snapshot.Digest()),
@@ -341,7 +343,7 @@ func explorationCRUDModelBinding(host projectrun.Host, root, revision string, sc
 		Goal: scope.Goal, Operation: scope.Operation, ManagerIDs: append([]string{}, scope.ManagerIDs...),
 		RequiredArtifacts: stringKeys(artifacts), FileStructure: stringKeys(files), Checks: stringKeys(checks), BasisFiles: basisFiles,
 	}
-	_, err = projectexplore.BindingDigest(binding)
+	_, err = projectvalue.BindingDigest(binding)
 	if err != nil {
 		return binding, fmt.Errorf("validate model-only scope binding %q (scopeName=%q goal=%q operation=%q managers=%d artifacts=%d files=%d checks=%d basis=%d): %w",
 			scope.ID, binding.ScopeName, binding.Goal, binding.Operation, len(binding.ManagerIDs), len(binding.RequiredArtifacts), len(binding.FileStructure), len(binding.Checks), len(binding.BasisFiles), err)

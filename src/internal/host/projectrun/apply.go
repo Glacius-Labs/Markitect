@@ -1,5 +1,8 @@
 package projectrun
 
+import "github.com/Glacius-Labs/Markitect/src/internal/core/snapshot"
+import "github.com/Glacius-Labs/Markitect/src/internal/modules/projectmodel/projectvalue"
+
 import (
 	"bytes"
 	"fmt"
@@ -14,7 +17,7 @@ import (
 
 	"github.com/Glacius-Labs/Markitect/src/internal/host/agentexec"
 	"github.com/Glacius-Labs/Markitect/src/internal/host/guardedwrite"
-	"github.com/Glacius-Labs/Markitect/src/internal/host/projectwork"
+
 	"github.com/Glacius-Labs/Markitect/src/internal/infrastructure/source"
 )
 
@@ -54,7 +57,7 @@ func PreflightApply(host Host, root, runID, candidateID string) (ApplyPreflight,
 	if err != nil {
 		return out, err
 	}
-	if err := validateExplorationReadiness(root, plan); err != nil {
+	if err := validateExplorationReadiness(host, root, plan); err != nil {
 		return out, err
 	}
 	run, err := store.readLatestState(runID)
@@ -106,7 +109,7 @@ func PreflightApply(host Host, root, runID, candidateID string) (ApplyPreflight,
 		return out, err
 	}
 	if compiled.Config.CoverageMode == "full" {
-		briefings, briefingErr := briefingBindings(root, compiled)
+		briefings, briefingErr := briefingBindings(host, root, compiled)
 		if briefingErr != nil {
 			return out, briefingErr
 		}
@@ -137,9 +140,9 @@ func PreflightApply(host Host, root, runID, candidateID string) (ApplyPreflight,
 	}
 	capturePaths := append([]string(nil), paths...)
 	if len(capturePaths) == 0 {
-		capturePaths = []string{projectwork.ManifestPath}
+		capturePaths = []string{projectvalue.ManifestPath}
 	}
-	capturePaths, err = explorationApplyCapturePaths(plan, capturePaths)
+	capturePaths, err = explorationApplyCapturePaths(host, plan, capturePaths)
 	if err != nil {
 		return out, err
 	}
@@ -199,7 +202,7 @@ func Apply(host Host, invoker Invoker, root string, request ApplyRequest) (Apply
 	if err := requireCurrentRuntimeBinding(plan); err != nil {
 		return out, err
 	}
-	if err := validateExplorationReadiness(root, plan); err != nil {
+	if err := validateExplorationReadiness(host, root, plan); err != nil {
 		return out, err
 	}
 	if plan.ID != request.RunID {
@@ -275,7 +278,7 @@ func Apply(host Host, invoker Invoker, root string, request ApplyRequest) (Apply
 		return out, err
 	}
 	if compiled.Config.CoverageMode == "full" {
-		briefings, briefingErr := briefingBindings(root, compiled)
+		briefings, briefingErr := briefingBindings(host, root, compiled)
 		if briefingErr != nil {
 			return out, briefingErr
 		}
@@ -301,9 +304,9 @@ func Apply(host Host, invoker Invoker, root string, request ApplyRequest) (Apply
 	}
 	capturePaths := append([]string(nil), paths...)
 	if len(capturePaths) == 0 {
-		capturePaths = []string{projectwork.ManifestPath}
+		capturePaths = []string{projectvalue.ManifestPath}
 	}
-	capturePaths, err = explorationApplyCapturePaths(plan, capturePaths)
+	capturePaths, err = explorationApplyCapturePaths(host, plan, capturePaths)
 	if err != nil {
 		return out, err
 	}
@@ -332,7 +335,7 @@ func Apply(host Host, invoker Invoker, root string, request ApplyRequest) (Apply
 		return out, err
 	}
 	validate := func() error {
-		if err := validateExplorationReadiness(root, plan); err != nil {
+		if err := validateExplorationReadiness(host, root, plan); err != nil {
 			return err
 		}
 		if err := validateCheckExecutables(plan); err != nil {
@@ -406,7 +409,7 @@ func Apply(host Host, invoker Invoker, root string, request ApplyRequest) (Apply
 			return loadErr
 		}
 		if freshCompiled.Config.CoverageMode == "full" {
-			currentBriefings, bindingErr := briefingBindings(root, freshCompiled)
+			currentBriefings, bindingErr := briefingBindings(host, root, freshCompiled)
 			if bindingErr != nil {
 				return bindingErr
 			}
@@ -451,7 +454,7 @@ func Apply(host Host, invoker Invoker, root string, request ApplyRequest) (Apply
 		out.Error = "files applied but apply report journal failed: " + err.Error()
 		return out, fmt.Errorf("files applied; apply report journal failed: %w", err)
 	}
-	if err := completeExploration(root, plan, candidate, verify, out); err != nil {
+	if err := completeExploration(host, root, plan, candidate, verify, out); err != nil {
 		return out, fmt.Errorf("files applied and journalled; exploration completion needs recovery using the same run: %w", err)
 	}
 	return out, nil
@@ -460,7 +463,7 @@ func Apply(host Host, invoker Invoker, root string, request ApplyRequest) (Apply
 // validateFullApplyVerification ensures a full-coverage candidate is still
 // bound to the exact model, repository snapshot, runtime, checks, and accepted
 // Manager briefing context that passed Full Verify.
-func validateFullApplyVerification(plan PlanRecord, candidate candidateData, compiled *Project, verification VerifyReport, currentBriefings map[string]string) error {
+func validateFullApplyVerification(plan PlanRecord, candidate candidateData, compiled *projectvalue.Project, verification VerifyReport, currentBriefings map[string]string) error {
 	if compiled == nil || compiled.Snapshot == nil || compiled.Config.CoverageMode != "full" {
 		return fmt.Errorf("full coverage candidate is not conforming")
 	}
@@ -566,7 +569,7 @@ func stringMapsEqual(a, b map[string]string) bool {
 	return true
 }
 
-func loadApplyInputs(host Host, root, runID string) (PlanRecord, RunReport, candidateData, *Snapshot, error) {
+func loadApplyInputs(host Host, root, runID string) (PlanRecord, RunReport, candidateData, *snapshot.Snapshot, error) {
 	var p PlanRecord
 	var r RunReport
 	var c candidateData
@@ -597,7 +600,7 @@ func loadApplyInputs(host Host, root, runID string) (PlanRecord, RunReport, cand
 	return p, r, c, project.Snapshot, nil
 }
 
-func candidateDeltaPaths(base *Snapshot, c candidateData) []string {
+func candidateDeltaPaths(base *snapshot.Snapshot, c candidateData) []string {
 	var paths []string
 	for p, f := range c.Files {
 		old, exists := base.Files[p]
@@ -615,7 +618,7 @@ func candidateDeltaPaths(base *Snapshot, c candidateData) []string {
 	sort.Strings(paths)
 	return paths
 }
-func compareCaptureToBase(root, revision string, capture *guardedwrite.Capture, base *Snapshot, paths []string) error {
+func compareCaptureToBase(root, revision string, capture *guardedwrite.Capture, base *snapshot.Snapshot, paths []string) error {
 	for _, p := range paths {
 		current, ok := capture.Files[p]
 		if !ok {
@@ -643,8 +646,8 @@ func compareCaptureToBase(root, revision string, capture *guardedwrite.Capture, 
 			if err := compareTargetIndexToBase(root, p, base); err != nil {
 				return err
 			}
-			fixed := &Snapshot{Files: map[string][]byte{p: old}, Modes: map[string]string{p: base.Modes[p]}}
-			working := &Snapshot{Files: map[string][]byte{p: current.Bytes}, Modes: map[string]string{p: base.Modes[p]}}
+			fixed := &snapshot.Snapshot{Files: map[string][]byte{p: old}, Modes: map[string]string{p: base.Modes[p]}}
+			working := &snapshot.Snapshot{Files: map[string][]byte{p: current.Bytes}, Modes: map[string]string{p: base.Modes[p]}}
 			if err := requireCleanSelectedBasisAtRevision(root, revision, fixed, working); err != nil {
 				return fmt.Errorf("target path %s differs from fixed base bytes or mode: %w", p, err)
 			}
@@ -655,7 +658,7 @@ func compareCaptureToBase(root, revision string, capture *guardedwrite.Capture, 
 	return nil
 }
 
-func compareTargetIndexToBase(root, path string, base *Snapshot) error {
+func compareTargetIndexToBase(root, path string, base *snapshot.Snapshot) error {
 	output, err := source.GitOutput(root, "--literal-pathspecs", "ls-files", "--stage", "-z", "--", path)
 	if err != nil {
 		return fmt.Errorf("inspect staged target path %q: %w", path, err)

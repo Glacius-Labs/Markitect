@@ -2,6 +2,8 @@
 
 package projectrun
 
+import "github.com/Glacius-Labs/Markitect/src/internal/modules/projectmodel/projectvalue"
+
 import (
 	"context"
 	"encoding/json"
@@ -82,13 +84,13 @@ func TestFailedVerifierAttemptIsDurableAndCannotReplayBudget(t *testing.T) {
 
 	snapshotBase := &snapshot.Snapshot{ID: head, Files: map[string][]byte{"fixture.txt": []byte("base")}, Modes: map[string]string{"fixture.txt": "100644"}}
 	modelDigest := "sha256:" + strings.Repeat("a", 64)
-	project := &Project{Root: root, Revision: head, Digest: "project-digest", Report: projectmodel.Report{
+	project := &projectvalue.Project{Root: root, Revision: head, Digest: "project-digest", Report: projectmodel.Report{
 		ModelDigest: modelDigest, Digest: "project-report-digest", Status: "complete",
 		Artifacts: []projectmodel.Artifact{}, Findings: []projectmodel.Finding{},
 	}, Snapshot: snapshotBase}
 	host := Host{
-		Load: func(_, _ string) (*Project, error) { return project, nil },
-		FromSnapshot: func(_ string, snap *Snapshot) (*Project, error) {
+		Load: func(_, _ string) (*projectvalue.Project, error) { return project, nil },
+		FromSnapshot: func(_ string, snap *snapshot.Snapshot) (*projectvalue.Project, error) {
 			copy := *project
 			copy.Snapshot = snap
 			return &copy, nil

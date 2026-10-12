@@ -1,5 +1,7 @@
 package projectrun
 
+import "github.com/Glacius-Labs/Markitect/src/internal/modules/projectmodel/projectvalue"
+
 import (
 	"context"
 	"errors"
@@ -22,7 +24,7 @@ type runExecution struct {
 	dir                     string
 	plan                    PlanRecord
 	runtime                 projectconfig.Runtime
-	project                 *Project
+	project                 *projectvalue.Project
 	report                  RunReport
 	pendingRecoveries       []pendingNativeRecovery
 	recoveredReintegrations []string
@@ -31,7 +33,7 @@ type runExecution struct {
 	spent                   int64
 	baseCandidateID         string
 	baseCandidate           candidateData
-	boundProject            *Project
+	boundProject            *projectvalue.Project
 	dependencies            map[string][]string
 	recoveredResults        map[string]managerInvocationResult
 }
@@ -126,7 +128,7 @@ func (e *runExecution) recoverNativeInvocations() (RunReport, error) {
 			return blockRun(e.store, e.report, fmt.Errorf("native recovery input for %s could not be reconstructed", task.ManagerID))
 		}
 		repairRound, repairChecks := repairContext(e.report, *task)
-		request, requestErr := managerInvocationRequest(e.root, e.runtime, e.plan, input, *task, pending.phase, children, conflicts, childReports, task.RepairDiagnostic, repairRound, repairChecks)
+		request, requestErr := managerInvocationRequest(e.host, e.root, e.runtime, e.plan, input, *task, pending.phase, children, conflicts, childReports, task.RepairDiagnostic, repairRound, repairChecks)
 		if requestErr != nil {
 			return blockRun(e.store, e.report, fmt.Errorf("native recovery request for %s could not be reconstructed", task.ManagerID))
 		}

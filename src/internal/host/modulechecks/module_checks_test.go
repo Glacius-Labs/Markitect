@@ -1,5 +1,9 @@
 package modulechecks
 
+import "go.yaml.in/yaml/v3"
+
+import "github.com/Glacius-Labs/Markitect/src/internal/modules/projectmodel/projectvalue"
+
 import (
 	"bytes"
 	"crypto/sha256"
@@ -10,13 +14,12 @@ import (
 	"testing"
 
 	"github.com/Glacius-Labs/Markitect/src/internal/core"
-	"github.com/Glacius-Labs/Markitect/src/internal/host/projectwork"
+
 	"github.com/Glacius-Labs/Markitect/src/internal/infrastructure/source"
 	"github.com/Glacius-Labs/Markitect/src/internal/modules/githooks"
 	"github.com/Glacius-Labs/Markitect/src/internal/modules/pipelines"
 	"github.com/Glacius-Labs/Markitect/src/internal/modules/projectmodel"
 	"github.com/Glacius-Labs/Markitect/src/internal/testkit"
-	"go.yaml.in/yaml/v3"
 )
 
 const (
@@ -168,7 +171,7 @@ func newModuleFixture(t *testing.T, includeHookOwnership, includeBothConfigs boo
 	for path, definition := range definitions {
 		repo.Write(path, string(encodeDefinition(t, definition)))
 	}
-	repo.Write(projectwork.ManifestPath, string(encodeProjectConfig(t)))
+	repo.Write(projectvalue.ManifestPath, string(encodeProjectConfig(t)))
 	repo.Write(testHooksConfig, string(encodeHooks(t, hook, owner, digestBytes(hook))))
 	if includeBothConfigs {
 		repo.Write(testPipelinesConfig, string(encodePipelines(t, workflow, owner)))
@@ -181,9 +184,9 @@ func newModuleFixture(t *testing.T, includeHookOwnership, includeBothConfigs boo
 
 func encodeProjectConfig(t *testing.T) []byte {
 	t.Helper()
-	data, err := yaml.Marshal(projectwork.Config{APIVersion: projectmodel.APIVersion, Name: "module-check-fixture", CoverageMode: "selected",
+	data, err := yaml.Marshal(projectvalue.Config{APIVersion: projectmodel.APIVersion, Name: "module-check-fixture", CoverageMode: "selected",
 		ModelFiles:     []string{".markitect/model/manager.yaml", ".markitect/model/tooling/module-verification.yaml", ".markitect/model/tooling/go-tests.yaml"},
-		InventoryRoots: []string{}, Exclusions: []projectwork.Exclusion{},
+		InventoryRoots: []string{}, Exclusions: []projectvalue.Exclusion{},
 	})
 	if err != nil {
 		t.Fatal(err)

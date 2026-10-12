@@ -1,13 +1,13 @@
 package projectadoption
 
+import "github.com/Glacius-Labs/Markitect/src/internal/modules/projectmodel/projectvalue"
+
 import (
 	"errors"
 	"fmt"
 	"path"
 	"sort"
 	"strings"
-
-	"github.com/Glacius-Labs/Markitect/src/internal/host/projectwork"
 )
 
 // DistillationTargetManager is accepted target-model context. It informs
@@ -50,7 +50,7 @@ type DistillationTargetContext struct {
 
 // TargetContextForProject derives a bounded target context from a Project
 // already loaded and accepted by the caller. It performs no repository reads.
-func TargetContextForProject(project *projectwork.Project) (DistillationTargetContext, error) {
+func TargetContextForProject(project *projectvalue.Project) (DistillationTargetContext, error) {
 	if project == nil || project.Snapshot == nil || project.Provisional || project.Snapshot.Provisional || !validFullCommit(project.Revision) || project.Snapshot.ID != project.Revision {
 		return DistillationTargetContext{}, errors.New("target context requires a fixed committed Project revision and snapshot")
 	}
@@ -173,7 +173,7 @@ func ValidateTargetContext(target DistillationTargetContext) error {
 	}
 	seenPaths := map[string]bool{}
 	for _, file := range target.ModelFiles {
-		if err := validateRepoPath(file); err != nil || !strings.HasPrefix(file, projectwork.ModelRoot+"/") || path.Ext(file) != ".yaml" && path.Ext(file) != ".yml" {
+		if err := validateRepoPath(file); err != nil || !strings.HasPrefix(file, projectvalue.ModelRoot+"/") || path.Ext(file) != ".yaml" && path.Ext(file) != ".yml" {
 			return fmt.Errorf("target model path %q is not a canonical selected YAML file", file)
 		}
 		key := strings.ToLower(file)
@@ -193,7 +193,7 @@ func ValidateTargetContext(target DistillationTargetContext) error {
 // ValidateDistillationTarget checks an optional Distillation target binding
 // against the exact fixed target Project. Older non-agent reports may omit
 // all target fields; agent-generated reports are target-bound by validation.
-func ValidateDistillationTarget(report Distillation, target *projectwork.Project) error {
+func ValidateDistillationTarget(report Distillation, target *projectvalue.Project) error {
 	if report.TargetBasis == "" && report.TargetRevision == "" && report.TargetContextDigest == "" {
 		if report.Method == "agent-assisted" {
 			return errors.New("agent-assisted distillation must bind its fixed target project and context")

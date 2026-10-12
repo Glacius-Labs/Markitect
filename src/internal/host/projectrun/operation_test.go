@@ -1,5 +1,7 @@
 package projectrun
 
+import "github.com/Glacius-Labs/Markitect/src/internal/modules/projectmodel/projectvalue"
+
 import (
 	"github.com/Glacius-Labs/Markitect/src/internal/host/projectconfig"
 	"reflect"
@@ -66,7 +68,7 @@ func TestCleanupAndReconcileRejectNarrowingInputs(t *testing.T) {
 			{name: "explicit Manager", request: PlanRequest{Operation: operation, Managers: []string{"orders"}}},
 			{name: "since revision", request: PlanRequest{Operation: operation, SinceRevision: "base"}},
 			{name: "change impact", request: PlanRequest{Operation: operation}, impact: &projectmodel.ChangeImpact{}},
-			{name: "model edit", request: PlanRequest{Operation: operation, ModelEdit: &Mutation{}}},
+			{name: "model edit", request: PlanRequest{Operation: operation, ModelEdit: &projectvalue.Mutation{}}},
 		}
 		for _, tc := range cases {
 			t.Run(operation+"/"+tc.name, func(t *testing.T) {

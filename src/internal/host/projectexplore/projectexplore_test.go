@@ -2,6 +2,7 @@ package projectexplore
 
 import (
 	"encoding/json"
+	"github.com/Glacius-Labs/Markitect/src/internal/modules/projectmodel/projectvalue"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -25,9 +26,9 @@ func testRepository(t *testing.T, committed bool) (string, string, string) {
 	return repo.Dir, head, basisPath
 }
 
-func testBinding(root, head, basisPath string, accepted bool) Binding {
+func testBinding(root, head, basisPath string, accepted bool) projectvalue.Binding {
 	content, _ := os.ReadFile(filepath.Join(root, filepath.FromSlash(basisPath)))
-	return Binding{
+	return projectvalue.Binding{
 		RepositoryRoot: root, Branch: "codex/explore-test", Head: head, ModelRevision: head,
 		ModelAccepted: accepted, AcceptancePolicy: map[bool]string{true: "canonical-committed-head", false: ""}[accepted],
 		ProjectDigest: testDigest("project"), ModelDigest: testDigest("model"), SnapshotDigest: testDigest("snapshot"), SelectionDigest: testDigest("selection"),
@@ -35,11 +36,11 @@ func testBinding(root, head, basisPath string, accepted bool) Binding {
 		Goal: "Implement the requested behavior", Operation: "apply", ManagerIDs: []string{"orders"}, RequiredArtifacts: []string{"order-service"},
 		ResponsibleManagerIDs: []string{"orders"},
 		FileStructure:         []string{"internal/orders/service.go", "internal/orders/service_test.go"}, Checks: []string{"go test ./internal/orders"},
-		BasisFiles: []BasisFile{{Path: basisPath, Digest: fileDigest(content)}},
+		BasisFiles: []projectvalue.BasisFile{{Path: basisPath, Digest: fileDigest(content)}},
 	}
 }
 
-func testRecord(binding Binding, decisions []Decision) Record {
+func testRecord(binding projectvalue.Binding, decisions []Decision) Record {
 	return Record{
 		APIVersion: APIVersion, ID: "work-item-1", Status: StatusActive, Request: "Add the requested order behavior",
 		Scopes:    []Scope{{ID: binding.ScopeID, Name: binding.ScopeName, Goal: binding.Goal, Operation: binding.Operation, ManagerIDs: []string{"orders"}}},
@@ -52,7 +53,7 @@ func testDigest(value string) string {
 	return digest
 }
 
-func createRecord(t *testing.T, root string, binding Binding, record Record) Record {
+func createRecord(t *testing.T, root string, binding projectvalue.Binding, record Record) Record {
 	t.Helper()
 	plan, err := CreatePreview(root, record, binding)
 	if err != nil {
@@ -149,11 +150,11 @@ func TestReadinessRequiresAcceptedModelDecisionResolutionAndExactAcknowledgement
 	deferred := Decision{ID: "later-reporting", ScopeIDs: []string{binding.ScopeID}, Question: "Should a later reporting view be added?", Blocking: false, Status: "deferred", Reason: "Outside this work item", Authority: "asserted project owner", Provenance: "conversation:defer-1"}
 	record := createRecord(t, root, binding, testRecord(binding, []Decision{open, deferred}))
 	stateDigest := record.Digest
-	structureDigest, err := StructureDigest(binding)
+	structureDigest, err := projectvalue.StructureDigest(binding)
 	if err != nil {
 		t.Fatal(err)
 	}
-	bindingDigest, err := BindingDigest(binding)
+	bindingDigest, err := projectvalue.BindingDigest(binding)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -193,7 +194,7 @@ func TestReadinessRequiresAcceptedModelDecisionResolutionAndExactAcknowledgement
 	}
 	changed := binding
 	changed.FileStructure = append(append([]string(nil), binding.FileStructure...), "internal/orders/new.go")
-	changed.FileStructure = sortedCopy(changed.FileStructure)
+	changed.FileStructure = projectvalue.SortedCopy(changed.FileStructure)
 	changedReport, err := EvaluateReadiness(record, binding.ScopeID, changed)
 	if err != nil || changedReport.Ready || !strings.Contains(strings.Join(changedReport.Blockers, " "), "acknowledged") {
 		t.Fatalf("changed structure reused old acknowledgement: %+v, %v", changedReport, err)
@@ -256,8 +257,8 @@ func TestCompleteRequiresSuccessfulVerifiedApplyAndIsIdempotent(t *testing.T) {
 	binding := testBinding(root, head, basis, true)
 	record := createRecord(t, root, binding, testRecord(binding, []Decision{}))
 	stateDigest := record.Digest
-	bindingDigest, _ := BindingDigest(binding)
-	structureDigest, _ := StructureDigest(binding)
+	bindingDigest, _ := projectvalue.BindingDigest(binding)
+	structureDigest, _ := projectvalue.StructureDigest(binding)
 	ack := StructureAcknowledgement{ScopeID: binding.ScopeID, BindingDigest: bindingDigest, StructureDigest: structureDigest, Actor: "owner", Authority: "asserted owner", Provenance: "conversation:reviewed", RecordedAt: time.Now().UTC()}
 	if err := AcknowledgeStructure(&record, binding.ScopeID, binding, ack); err != nil {
 		t.Fatal(err)
@@ -316,11 +317,11 @@ func TestStoredAcknowledgementAndReceiptWithForeignOffsetMatchThemselves(t *test
 				t.Skipf("machine local offset equals %s; decoding would reuse time.Local", offset.name)
 			}
 			binding := testBinding(t.TempDir(), "", ".markitect/model/work.yaml", false)
-			bindingDigest, err := BindingDigest(binding)
+			bindingDigest, err := projectvalue.BindingDigest(binding)
 			if err != nil {
 				t.Fatal(err)
 			}
-			structureDigest, err := StructureDigest(binding)
+			structureDigest, err := projectvalue.StructureDigest(binding)
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -393,8 +394,8 @@ func TestGenericWriteCannotMintCompletionReceipt(t *testing.T) {
 	binding := testBinding(root, head, basis, true)
 	record := createRecord(t, root, binding, testRecord(binding, []Decision{}))
 	stateDigest := record.Digest
-	bindingDigest, _ := BindingDigest(binding)
-	structureDigest, _ := StructureDigest(binding)
+	bindingDigest, _ := projectvalue.BindingDigest(binding)
+	structureDigest, _ := projectvalue.StructureDigest(binding)
 	ack := StructureAcknowledgement{ScopeID: binding.ScopeID, BindingDigest: bindingDigest, StructureDigest: structureDigest, Actor: "owner", Authority: "asserted owner", Provenance: "conversation:reviewed", RecordedAt: time.Now().UTC()}
 	if err := AcknowledgeStructure(&record, binding.ScopeID, binding, ack); err != nil {
 		t.Fatal(err)
@@ -464,7 +465,7 @@ func TestGenericWriteCannotDisableSourceBasisVerification(t *testing.T) {
 func TestBindingDigestCanonicalizesUnorderedSelectionInputs(t *testing.T) {
 	root, head, basis := testRepository(t, true)
 	binding := testBinding(root, head, basis, true)
-	left, err := BindingDigest(binding)
+	left, err := projectvalue.BindingDigest(binding)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -472,8 +473,8 @@ func TestBindingDigestCanonicalizesUnorderedSelectionInputs(t *testing.T) {
 	binding.RequiredArtifacts = []string{"z-artifact", "a-artifact"}
 	binding.FileStructure = []string{"z/file.go", "a/file.go"}
 	binding.Checks = []string{"z-check", "a-check"}
-	binding.BasisFiles = append(binding.BasisFiles, BasisFile{Path: "README.md", Digest: testDigest("readme")})
-	right, err := BindingDigest(binding)
+	binding.BasisFiles = append(binding.BasisFiles, projectvalue.BasisFile{Path: "README.md", Digest: testDigest("readme")})
+	right, err := projectvalue.BindingDigest(binding)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -481,8 +482,8 @@ func TestBindingDigestCanonicalizesUnorderedSelectionInputs(t *testing.T) {
 	binding.RequiredArtifacts = []string{"a-artifact", "z-artifact"}
 	binding.FileStructure = []string{"a/file.go", "z/file.go"}
 	binding.Checks = []string{"a-check", "z-check"}
-	binding.BasisFiles = []BasisFile{{Path: basis, Digest: binding.BasisFiles[0].Digest}, {Path: "README.md", Digest: testDigest("readme")}}
-	canonical, err := BindingDigest(binding)
+	binding.BasisFiles = []projectvalue.BasisFile{{Path: basis, Digest: binding.BasisFiles[0].Digest}, {Path: "README.md", Digest: testDigest("readme")}}
+	canonical, err := projectvalue.BindingDigest(binding)
 	if err != nil || right != canonical || left == right {
 		t.Fatalf("binding canonicalization changed: original=%s unordered=%s canonical=%s err=%v", left, right, canonical, err)
 	}
@@ -492,7 +493,7 @@ func TestBindingDigestNamesInvalidDigestFieldsInFixedOrder(t *testing.T) {
 	binding := testBinding(t.TempDir(), "", ".markitect/model/work.yaml", false)
 	binding.ProjectDigest, binding.ModelDigest, binding.SnapshotDigest, binding.SelectionDigest = "bad", "bad", "bad", "bad"
 	for i := 0; i < 100; i++ {
-		if _, err := BindingDigest(binding); err == nil || err.Error() != "binding projectDigest is not a sha256 digest" {
+		if _, err := projectvalue.BindingDigest(binding); err == nil || err.Error() != "binding projectDigest is not a sha256 digest" {
 			t.Fatalf("BindingDigest error = %v, want the first invalid field in declaration order", err)
 		}
 	}
@@ -504,11 +505,11 @@ func TestBindingDigestPreservesExplicitEmptyScopeArrays(t *testing.T) {
 	binding.ManagerIDs = []string{}
 	binding.RequiredArtifacts = []string{}
 	binding.Checks = []string{}
-	binding.BasisFiles = []BasisFile{}
-	if _, err := BindingDigest(binding); err != nil {
+	binding.BasisFiles = []projectvalue.BasisFile{}
+	if _, err := projectvalue.BindingDigest(binding); err != nil {
 		t.Fatal(err)
 	}
-	canonical, err := canonicalBinding(binding)
+	canonical, err := projectvalue.CanonicalBinding(binding)
 	if err != nil {
 		t.Fatal(err)
 	}

@@ -1,5 +1,9 @@
 package projectcli
 
+import "go.yaml.in/yaml/v3"
+
+import "github.com/Glacius-Labs/Markitect/src/internal/modules/projectmodel/projectvalue"
+
 import (
 	"bytes"
 	"context"
@@ -23,7 +27,6 @@ import (
 	"github.com/Glacius-Labs/Markitect/src/internal/host/projectrun"
 	"github.com/Glacius-Labs/Markitect/src/internal/host/projectwork"
 	"github.com/Glacius-Labs/Markitect/src/internal/modules/projectmodel"
-	"go.yaml.in/yaml/v3"
 )
 
 var testCommitEnv = []string{"GIT_AUTHOR_NAME=Test", "GIT_AUTHOR_EMAIL=test@example.invalid", "GIT_COMMITTER_NAME=Test", "GIT_COMMITTER_EMAIL=test@example.invalid"}
@@ -209,12 +212,12 @@ func TestProjectWorldFixtureAndReviewedEdit(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	mutation := projectwork.Mutation{
-		APIVersion: projectwork.APIVersion,
+	mutation := projectvalue.Mutation{
+		APIVersion: projectvalue.APIVersion,
 		BaseDigest: editBasis.Digest,
-		Actor:      projectwork.HumanActor,
+		Actor:      projectvalue.HumanActor,
 		Goal:       "Clarify the cancellation transition",
-		Files: []projectwork.FileChange{{
+		Files: []projectvalue.FileChange{{
 			Path:    rulePath,
 			Content: strings.Replace(string(content), "Cancellation is valid only while the order is confirmed; a shipped order cannot be cancelled.", "Cancellation is valid only before shipment; shipped orders remain unchanged.", 1),
 		}},
@@ -228,7 +231,7 @@ func TestProjectWorldFixtureAndReviewedEdit(t *testing.T) {
 		t.Fatal(err)
 	}
 	input := writeDraft(t, repo, ".markitect/drafts/cancel-rule.json", proposalBytes)
-	editPreview := decodeOutput[projectwork.EditPlan](t, mustCLI(t, "edit", "--repo", repo, "--input", input))
+	editPreview := decodeOutput[projectvalue.EditPlan](t, mustCLI(t, "edit", "--repo", repo, "--input", input))
 	if editPreview.Digest != plan.Digest {
 		t.Fatalf("preview digest=%q want %q", editPreview.Digest, plan.Digest)
 	}
@@ -262,13 +265,13 @@ func TestProjectRuntimeSetupUsesReviewedEditWithoutHandEditing(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	mutation := projectwork.Mutation{
-		APIVersion: projectwork.APIVersion,
+	mutation := projectvalue.Mutation{
+		APIVersion: projectvalue.APIVersion,
 		BaseDigest: project.Digest,
-		Actor:      projectwork.HumanActor,
+		Actor:      projectvalue.HumanActor,
 		Goal:       "Select the project-owned bounded agent runtime",
-		Files: []projectwork.FileChange{{
-			Path:    projectwork.RuntimePath,
+		Files: []projectvalue.FileChange{{
+			Path:    projectvalue.RuntimePath,
 			Content: "mode: controlled-local\n",
 		}},
 	}
@@ -277,12 +280,12 @@ func TestProjectRuntimeSetupUsesReviewedEditWithoutHandEditing(t *testing.T) {
 		t.Fatal(err)
 	}
 	path := writeDraft(t, repo, ".markitect/drafts/runtime-edit.json", encoded)
-	plan := decodeOutput[projectwork.EditPlan](t, mustCLI(t, "edit", "--repo", repo, "--input", path))
-	if plan.CandidateDigest == project.Digest || plan.Report.Digest != project.Report.Digest || len(plan.Mutation.Files) != 1 || plan.Mutation.Files[0].Path != projectwork.RuntimePath {
+	plan := decodeOutput[projectvalue.EditPlan](t, mustCLI(t, "edit", "--repo", repo, "--input", path))
+	if plan.CandidateDigest == project.Digest || plan.Report.Digest != project.Report.Digest || len(plan.Mutation.Files) != 1 || plan.Mutation.Files[0].Path != projectvalue.RuntimePath {
 		t.Fatalf("runtime edit preview changed unexpected project data: %+v", plan)
 	}
 	mustCLI(t, "edit", "--repo", repo, "--input", path, "--expect", plan.Digest, "--write")
-	updated, err := os.ReadFile(filepath.Join(repo, filepath.FromSlash(projectwork.RuntimePath)))
+	updated, err := os.ReadFile(filepath.Join(repo, filepath.FromSlash(projectvalue.RuntimePath)))
 	if err != nil || string(updated) != mutation.Files[0].Content {
 		t.Fatalf("runtime edit bytes=%q err=%v", updated, err)
 	}
@@ -486,7 +489,7 @@ func failingManagerRepo(t *testing.T) string {
 	}
 	for _, file := range initPlan.Files {
 		content := file.Content
-		if file.Path == projectwork.ManifestPath {
+		if file.Path == projectvalue.ManifestPath {
 			content = strings.Replace(content, "coverageMode: full", "coverageMode: selected", 1)
 			// Staged (non-guided) mode: plan without an exploration scope.
 			content = strings.Replace(content, "workflowMode: guided", "workflowMode: empty", 1)
@@ -519,7 +522,7 @@ func failingManagerRepo(t *testing.T) string {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if err := os.WriteFile(filepath.Join(root, filepath.FromSlash(projectwork.RuntimePath)), encoded, 0o600); err != nil {
+	if err := os.WriteFile(filepath.Join(root, filepath.FromSlash(projectvalue.RuntimePath)), encoded, 0o600); err != nil {
 		t.Fatal(err)
 	}
 	runGit(t, root, "init", "--initial-branch=feature-failing-manager")

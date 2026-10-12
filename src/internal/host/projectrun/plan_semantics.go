@@ -1,5 +1,7 @@
 package projectrun
 
+import "github.com/Glacius-Labs/Markitect/src/internal/modules/projectmodel/projectvalue"
+
 import (
 	"fmt"
 	"time"
@@ -11,8 +13,8 @@ import (
 // plan basis. It is not durable until PlanExpecting binds readiness and digest.
 type planSemantics struct {
 	ID               string
-	FinalProject     *Project
-	EditPlan         *EditPlan
+	FinalProject     *projectvalue.Project
+	EditPlan         *projectvalue.EditPlan
 	InitialCandidate candidateData
 	BriefingDigests  map[string]string
 	Managers         []ManagerTask
@@ -28,7 +30,7 @@ func preparePlanSemantics(host Host, basis planBasis) (planSemantics, error) {
 	request, project, working := basis.Request, basis.Project, basis.Working
 	runtime := basis.Runtime
 	finalProject := project
-	var editPlan *EditPlan
+	var editPlan *projectvalue.EditPlan
 	initialCandidate, err := emptyCandidate()
 	if err != nil {
 		return result, err
@@ -70,7 +72,7 @@ func preparePlanSemantics(host Host, basis planBasis) (planSemantics, error) {
 		return result, fmt.Errorf("full coverage requires accepting and committing the model separately before implementation; draft model edits are not an accepted execution basis")
 	}
 	if fullCoverage {
-		for _, candidateBasis := range []*Project{project, working, finalProject} {
+		for _, candidateBasis := range []*projectvalue.Project{project, working, finalProject} {
 			if candidateBasis.Coverage == nil || !candidateBasis.Coverage.Accounted {
 				return result, fmt.Errorf("whole-repository coverage is unaccounted; classify unknown paths before planning implementation")
 			}
@@ -81,7 +83,7 @@ func preparePlanSemantics(host Host, basis planBasis) (planSemantics, error) {
 	}
 	briefingDigests := map[string]string{}
 	if request.ModelEdit == nil {
-		briefingDigests, err = briefingBindingsIn(basis.Root, basis.BriefingView, project)
+		briefingDigests, err = briefingBindingsIn(host, basis.Root, basis.BriefingView, project)
 		if err != nil {
 			return result, err
 		}

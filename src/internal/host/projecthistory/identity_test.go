@@ -1,61 +1,17 @@
-package projectbriefing
+package projecthistory
 
 import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	projectbriefing "github.com/Glacius-Labs/Markitect/src/internal/modules/projectmodel/projectbriefing"
 	"os"
 	"path/filepath"
 	"strings"
 	"testing"
 
-	"github.com/Glacius-Labs/Markitect/src/internal/core"
 	"github.com/Glacius-Labs/Markitect/src/internal/host/projectwork"
 )
-
-func TestBriefingEventRejectsMalformedIdentitiesUsingCompilerGrammar(t *testing.T) {
-	root, base, revision := identityProjectFixture(t, "example", "modified")
-	bundle, err := Generate(root, base, revision, testProvenance())
-	if err != nil {
-		t.Fatal(err)
-	}
-	for _, test := range []struct {
-		name   string
-		mutate func(*core.DefinitionIdentity)
-	}{
-		{"missing API version", func(i *core.DefinitionIdentity) { i.APIVersion = "" }},
-		{"invalid API version", func(i *core.DefinitionIdentity) { i.APIVersion = "invalid" }},
-		{"missing kind", func(i *core.DefinitionIdentity) { i.Kind = "" }},
-		{"invalid kind", func(i *core.DefinitionIdentity) { i.Kind = "bad kind" }},
-		{"missing name", func(i *core.DefinitionIdentity) { i.Name = "" }},
-		{"invalid name", func(i *core.DefinitionIdentity) { i.Name = "bad/name" }},
-		{"invalid namespace", func(i *core.DefinitionIdentity) { i.Namespace = "bad/namespace" }},
-		{"whitespace namespace", func(i *core.DefinitionIdentity) { i.Namespace = " " }},
-	} {
-		t.Run(test.name, func(t *testing.T) {
-			data, err := json.Marshal(bundle.Events[0])
-			if err != nil {
-				t.Fatal(err)
-			}
-			var event Event
-			if err := json.Unmarshal(data, &event); err != nil {
-				t.Fatal(err)
-			}
-			test.mutate(&event.DefinitionID)
-			for _, value := range []*core.Definition{event.Before, event.After} {
-				value.APIVersion, value.Kind = event.DefinitionID.APIVersion, event.DefinitionID.Kind
-				value.Metadata = core.Metadata{Namespace: event.DefinitionID.Namespace, Name: event.DefinitionID.Name}
-			}
-			// Re-seal the event so identity rejection cannot be masked by a stale
-			// digest or mismatched before/after payload.
-			event.Digest = eventDigest(event.Predecessor, event.DefinitionID.Key(), event.Change, event.Before, event.After)
-			event.ID = "model-change-" + event.Digest[:24]
-			if err := validateEvent(bundle, event); !errors.Is(err, ErrInvalidBundle) || !strings.Contains(err.Error(), "invalid definition identity") {
-				t.Fatalf("malformed identity passed or failed an unrelated binding: %v", err)
-			}
-		})
-	}
-}
 
 func TestGlobalBriefingRetainsEventAndReferenceRejections(t *testing.T) {
 	root, base, revision := identityProjectFixture(t, "", "modified")
@@ -65,44 +21,41 @@ func TestGlobalBriefingRetainsEventAndReferenceRejections(t *testing.T) {
 	}
 	for _, test := range []struct {
 		name   string
-		mutate func(*Bundle)
+		mutate func(*projectbriefing.Bundle)
 	}{
-		{"event ID", func(b *Bundle) { b.Events[0].ID = "invented-event" }},
-		{"event digest", func(b *Bundle) { b.Events[0].Digest = strings.Repeat("f", 64) }},
-		{"provenance", func(b *Bundle) { b.Events[0].Provenance.Actor = "different actor" }},
-		{"missing decision", func(b *Bundle) { b.Provenance.DecisionReference = "" }},
-		{"unknown change", func(b *Bundle) { b.Events[0].Change = "invented" }},
-		{"payload identity", func(b *Bundle) { b.Events[0].After.Metadata.Name = "unrelated" }},
-		{"duplicate event", func(b *Bundle) { b.Events = append(b.Events, b.Events[0]) }},
-		{"global event ref", func(b *Bundle) { b.Global.EventIDs = []string{"unknown-event"} }},
-		{"manager event ref", func(b *Bundle) { b.Managers[0].EventIDs = []string{"unknown-event"} }},
-		{"duplicate affected ref", func(b *Bundle) {
+		{"event ID", func(b *projectbriefing.Bundle) { b.Events[0].ID = "invented-event" }},
+		{"event digest", func(b *projectbriefing.Bundle) { b.Events[0].Digest = strings.Repeat("f", 64) }},
+		{"provenance", func(b *projectbriefing.Bundle) { b.Events[0].Provenance.Actor = "different actor" }},
+		{"missing decision", func(b *projectbriefing.Bundle) { b.Provenance.DecisionReference = "" }},
+		{"unknown change", func(b *projectbriefing.Bundle) { b.Events[0].Change = "invented" }},
+		{"payload identity", func(b *projectbriefing.Bundle) { b.Events[0].After.Metadata.Name = "unrelated" }},
+		{"duplicate event", func(b *projectbriefing.Bundle) { b.Events = append(b.Events, b.Events[0]) }},
+		{"global event ref", func(b *projectbriefing.Bundle) { b.Global.EventIDs = []string{"unknown-event"} }},
+		{"manager event ref", func(b *projectbriefing.Bundle) { b.Managers[0].EventIDs = []string{"unknown-event"} }},
+		{"duplicate affected ref", func(b *projectbriefing.Bundle) {
 			b.Events[0].AffectedManagers = append(b.Events[0].AffectedManagers, b.Events[0].AffectedManagers[0])
 		}},
-		{"missing model digest", func(b *Bundle) { b.ModelDigest = "" }},
+		{"missing model digest", func(b *projectbriefing.Bundle) { b.ModelDigest = "" }},
 	} {
 		t.Run(test.name, func(t *testing.T) {
 			data, err := json.Marshal(bundle)
 			if err != nil {
 				t.Fatal(err)
 			}
-			var invalid Bundle
+			var invalid projectbriefing.Bundle
 			if err := json.Unmarshal(data, &invalid); err != nil {
 				t.Fatal(err)
 			}
 			test.mutate(&invalid)
-			invalid.Digest = FullBundleDigest(invalid)
-			if err := validateBundle(invalid); !errors.Is(err, ErrInvalidBundle) {
-				t.Fatalf("invalid bundle accepted: %v", err)
-			}
-			_, initial, err := Read(root)
+			invalid.Digest = projectbriefing.FullBundleDigest(invalid)
+			_, initial, err := readState(root)
 			if err != nil {
 				t.Fatal(err)
 			}
-			if _, err := Write(root, invalid, initial); !errors.Is(err, ErrInvalidBundle) {
+			if _, err := Write(root, invalid, initial); !errors.Is(err, projectbriefing.ErrInvalidBundle) {
 				t.Fatalf("invalid bundle persisted: %v", err)
 			}
-			state, after, err := Read(root)
+			state, after, err := readState(root)
 			if err != nil || initial != after || len(state.Briefings) != 0 {
 				t.Fatalf("rejected record mutated store: state=%+v err=%v", state, err)
 			}
@@ -126,7 +79,11 @@ func TestGlobalAndNamedDefinitionChangesRoundTrip(t *testing.T) {
 				if err != nil {
 					t.Fatal(err)
 				}
-				built, err := Build(before, after, testProvenance())
+				built, err := projectbriefing.Build(
+					projectbriefing.RevisionModel{Revision: before.Revision, Provisional: before.Provisional, Model: before.Model, Report: before.Report},
+					projectbriefing.RevisionModel{Revision: after.Revision, Provisional: after.Provisional, Model: after.Model, Report: after.Report},
+					testProvenance(),
+				)
 				if err != nil {
 					t.Fatal(err)
 				}
@@ -138,7 +95,7 @@ func TestGlobalAndNamedDefinitionChangesRoundTrip(t *testing.T) {
 				if event.Change != change || event.DefinitionID.Namespace != namespace {
 					t.Fatalf("changed definition identity or operation lost: %+v", event)
 				}
-				_, initial, err := Read(root)
+				_, initial, err := readState(root)
 				if err != nil {
 					t.Fatal(err)
 				}
@@ -146,7 +103,7 @@ func TestGlobalAndNamedDefinitionChangesRoundTrip(t *testing.T) {
 				if err != nil {
 					t.Fatalf("persist legal %q namespace: %v", namespace, err)
 				}
-				stored, loaded, err := Read(root)
+				stored, loaded, err := readState(root)
 				if err != nil || written != loaded || len(stored.Briefings) != 1 || stored.Briefings[0].Digest != generated.Digest {
 					t.Fatalf("reload differs: state=%+v digest=%s err=%v", stored, loaded, err)
 				}
@@ -172,7 +129,7 @@ func TestGlobalAndNamedAcceptedHistoryReloadAndResume(t *testing.T) {
 			if err != nil || first.BaselineRevision != base || len(first.Bundles) != 1 {
 				t.Fatalf("accepted canonical change: receipt=%+v err=%v", first, err)
 			}
-			state, binding, err := Read(root)
+			state, binding, err := readState(root)
 			if err != nil || state.History == nil || state.History.Revision != revision || binding != first.StoreDigest {
 				t.Fatalf("accepted history reload: state=%+v digest=%s err=%v", state, binding, err)
 			}

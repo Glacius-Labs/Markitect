@@ -4,16 +4,18 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"github.com/Glacius-Labs/Markitect/src/internal/host/projectconfig"
 	"os"
 	"path/filepath"
 	"strings"
 	"testing"
 
+	"github.com/Glacius-Labs/Markitect/src/internal/core"
 	"github.com/Glacius-Labs/Markitect/src/internal/host/agentexec"
-	"github.com/Glacius-Labs/Markitect/src/internal/host/projectwork"
+	"github.com/Glacius-Labs/Markitect/src/internal/host/projectconfig"
 	"github.com/Glacius-Labs/Markitect/src/internal/host/projectworkspace"
 	"github.com/Glacius-Labs/Markitect/src/internal/infrastructure/source"
+	"github.com/Glacius-Labs/Markitect/src/internal/modules/projectmodel"
+	"github.com/Glacius-Labs/Markitect/src/internal/modules/projectmodel/projectvalue"
 )
 
 type workspaceBridgeInvoker struct {
@@ -74,10 +76,7 @@ func TestInvokeProjectAgentUsesPrivateCandidateWithSourceWIPAndHarvestsByteDelta
 	gitE2E(t, root, "add", ".")
 	gitE2E(t, root, "commit", "--quiet", "-m", "add workspace deletion fixture")
 	revision := identityHead(t, root)
-	base, err := projectwork.Load(root, revision)
-	if err != nil {
-		t.Fatal(err)
-	}
+	base := workspaceProjectFixture(root, revision)
 	writeE2E(t, root, "source-wip.txt", "source WIP that must remain in the private workspace\n")
 
 	// The manager receives a parent candidate overlay on top of the complete
@@ -98,7 +97,7 @@ func TestInvokeProjectAgentUsesPrivateCandidateWithSourceWIPAndHarvestsByteDelta
 	if err != nil {
 		t.Fatal(err)
 	}
-	host := Host{Workspaces: service, Load: projectwork.Load}
+	host := hostForProjectWithWorkspace(root, base, service)
 	providerErr := errors.New("original native invocation failure")
 	invoker := &workspaceBridgeInvoker{call: func(options agentexec.RunOptions) (agentexec.RunResult, error) {
 		if options.Workspace == nil {
@@ -181,7 +180,7 @@ func TestInvokeProjectAgentPreservesUnknownRootOrChildLifecycle(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			root, project, service := workspaceBridgeBase(t)
 			invoker := &workspaceBridgeInvoker{result: agentexec.RunResult{Receipt: agentexec.Receipt{RunID: "unknown-run", Lifecycle: tc.lifecycle}}}
-			result, err := invokeProjectAgent(context.Background(), Host{Workspaces: service, Load: projectwork.Load}, invoker, root, project,
+			result, err := invokeProjectAgent(context.Background(), hostForProjectWithWorkspace(root, project, service), invoker, root, project,
 				workspaceBridgeAgent(t, root), "workspace-owner-run", "orders-work", []string{"src/orders"}, nil,
 				projectconfig.Limits{MaxCandidateFileBytes: 1 << 20, MaxCandidateBytes: 4 << 20}, agentexec.Config{}, agentexec.Request{Role: agentexec.RoleExecutor})
 			if err == nil || !strings.Contains(err.Error(), "termination is unknown") {
@@ -205,7 +204,7 @@ func TestInvokeProjectAgentPreservesUnknownRootOrChildLifecycle(t *testing.T) {
 func TestInvokeProjectAgentRejectsReadOnlyNativeBindingBeforeInvocation(t *testing.T) {
 	root, project, service := workspaceBridgeBase(t)
 	invoker := &workspaceBridgeInvoker{}
-	_, err := invokeProjectAgent(context.Background(), Host{Workspaces: service, Load: projectwork.Load}, invoker, root, project,
+	_, err := invokeProjectAgent(context.Background(), hostForProjectWithWorkspace(root, project, service), invoker, root, project,
 		projectconfig.Agent{Transport: projectconfig.TransportCodexAppServer, WorkspaceMode: ""}, "workspace-owner-run", "orders-review", []string{"src/orders"}, nil,
 		projectconfig.Limits{MaxCandidateFileBytes: 1 << 20, MaxCandidateBytes: 4 << 20}, agentexec.Config{}, agentexec.Request{Role: agentexec.RoleExecutor})
 	if err == nil || invoker.called {
@@ -225,7 +224,7 @@ func TestInvokeProjectAgentRejectsForgedHarvestDigestOrBinding(t *testing.T) {
 			root, project, gitService := workspaceBridgeBase(t)
 			service := &tamperingWorkspaceService{candidateWorkspaceServiceAdapter: &candidateWorkspaceServiceAdapter{service: gitService}, mutate: tc.mutate}
 			invoker := &workspaceBridgeInvoker{result: agentexec.RunResult{Receipt: terminalWorkspaceReceipt("forged-run")}}
-			result, err := invokeProjectAgent(context.Background(), Host{Workspaces: service, Load: projectwork.Load}, invoker, root, project,
+			result, err := invokeProjectAgent(context.Background(), hostForProjectWithWorkspace(root, project, service), invoker, root, project,
 				workspaceBridgeAgent(t, root), "workspace-owner-run", "orders-work", []string{"src/orders"}, nil,
 				projectconfig.Limits{MaxCandidateFileBytes: 1 << 20, MaxCandidateBytes: 4 << 20}, agentexec.Config{}, agentexec.Request{Role: agentexec.RoleExecutor})
 			if err == nil || result.Delta != nil || result.Receipt.RunID != "forged-run" {
@@ -243,15 +242,62 @@ func TestInvokeProjectAgentRejectsForgedHarvestDigestOrBinding(t *testing.T) {
 	}
 }
 
-func workspaceBridgeBase(t *testing.T) (string, *Project, *projectworkspace.GitService) {
+func hostWithWorkspace(service projectworkspace.Service) Host {
+	return Host{Workspaces: service}
+}
+
+func hostForProjectWithWorkspace(root string, project *projectvalue.Project, service projectworkspace.Service) Host {
+	fixed := *project
+	return Host{Workspaces: service, Load: func(loadRoot, revision string) (*projectvalue.Project, error) {
+		if loadRoot != root || (revision != "" && revision != fixed.Revision) {
+			return nil, errors.New("runtime workspace fixture received an unbound project load")
+		}
+		loaded := fixed
+		return &loaded, nil
+	}}
+}
+
+func workspaceProjectFixture(root, revision string) *projectvalue.Project {
+	rootManagerID := e2eManagerID("", "project-owner")
+	ordersManagerID := e2eManagerID("orders", "orders")
+	inventoryManagerID := e2eManagerID("inventory", "inventory")
+	ordersArtifactID := workspaceFixtureIdentity("Artifact", "orders", "orders-code")
+	inventoryArtifactID := workspaceFixtureIdentity("Artifact", "inventory", "inventory-code")
+	project := runtimeProjectFixture(revision, map[string][]byte{
+		"README.md":                        []byte("project-run process fixture\n"),
+		"src/orders/implementation.txt":    []byte("orders implementation v1\n"),
+		"src/orders/obsolete.txt":          []byte("delete this tracked file\n"),
+		"src/inventory/implementation.txt": []byte("inventory implementation v1\n"),
+	}, map[string]string{
+		"README.md": "100644", "src/orders/implementation.txt": "100644", "src/orders/obsolete.txt": "100644", "src/inventory/implementation.txt": "100644",
+	}, core.Model{}, projectmodel.Report{
+		APIVersion: projectmodel.APIVersion, ModelDigest: "runtime-fixture-model", Digest: "runtime-fixture-report", Status: "succeeded",
+		Managers: []projectmodel.Manager{
+			{ID: rootManagerID, Name: "project-owner", Purpose: "Owns integration and project-wide delivery.", Owns: []string{"."}},
+			{ID: ordersManagerID, Name: "orders", Namespace: "orders", Purpose: "Owns the orders implementation.", Parent: rootManagerID, Owns: []string{"src/orders/"}},
+			{ID: inventoryManagerID, Name: "inventory", Namespace: "inventory", Purpose: "Owns the inventory implementation.", Parent: rootManagerID, Owns: []string{"src/inventory/"}},
+		},
+		Artifacts: []projectmodel.Artifact{
+			{ID: ordersArtifactID, Name: "orders-code", Owner: ordersManagerID, Paths: []string{"src/orders/implementation.txt"}, Required: true},
+			{ID: inventoryArtifactID, Name: "inventory-code", Owner: inventoryManagerID, Paths: []string{"src/inventory/implementation.txt"}, Required: true},
+		},
+	})
+	project.Root = root
+	project.Config = projectvalue.Config{APIVersion: projectvalue.APIVersion, Name: "Process fixture", InventoryRoots: []string{"src"}, WorkflowMode: projectvalue.WorkflowModeEmpty}
+	return project
+}
+
+func workspaceFixtureIdentity(kind, namespace, name string) string {
+	data, _ := json.Marshal([]string{projectmodel.APIVersion, kind, namespace, name})
+	return string(data)
+}
+
+func workspaceBridgeBase(t *testing.T) (string, *projectvalue.Project, *projectworkspace.GitService) {
 	t.Helper()
 	root := makeProjectRunFixture(t)
 	configureWorkspaceBridgeInstructions(t, root)
 	revision := identityHead(t, root)
-	project, err := projectwork.Load(root, revision)
-	if err != nil {
-		t.Fatal(err)
-	}
+	project := workspaceProjectFixture(root, revision)
 	service, err := projectworkspace.NewGitService(t.TempDir(), projectworkspace.Limits{MaxFiles: 128, MaxFileBytes: 1 << 20, MaxTotalBytes: 4 << 20})
 	if err != nil {
 		t.Fatal(err)
@@ -261,7 +307,7 @@ func workspaceBridgeBase(t *testing.T) (string, *Project, *projectworkspace.GitS
 
 func configureWorkspaceBridgeInstructions(t *testing.T, root string) {
 	t.Helper()
-	manifestPath := filepath.Join(root, filepath.FromSlash(projectwork.ManifestPath))
+	manifestPath := filepath.Join(root, filepath.FromSlash(projectvalue.ManifestPath))
 	manifest, err := os.ReadFile(manifestPath)
 	if err != nil {
 		t.Fatal(err)

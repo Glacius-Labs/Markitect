@@ -3,18 +3,19 @@ package projectrun
 import (
 	"context"
 	"encoding/json"
-	"github.com/Glacius-Labs/Markitect/src/internal/host/projectconfig"
-	"github.com/Glacius-Labs/Markitect/src/internal/host/projectexecutor"
 	"os"
 	"path/filepath"
 	"strings"
 	"testing"
 	"time"
 
+	"github.com/Glacius-Labs/Markitect/src/internal/core/snapshot"
 	"github.com/Glacius-Labs/Markitect/src/internal/host/agentexec"
 	"github.com/Glacius-Labs/Markitect/src/internal/host/codexappserver"
-	"github.com/Glacius-Labs/Markitect/src/internal/host/projectwork"
+	"github.com/Glacius-Labs/Markitect/src/internal/host/projectconfig"
+	"github.com/Glacius-Labs/Markitect/src/internal/host/projectexecutor"
 	"github.com/Glacius-Labs/Markitect/src/internal/modules/projectmodel"
+	"github.com/Glacius-Labs/Markitect/src/internal/modules/projectmodel/projectvalue"
 )
 
 // These end-to-end tests drive the delegated method through bring-your-own
@@ -57,9 +58,83 @@ func configureMixedRoleRuntime(t *testing.T, root string) {
 	setRuntimeFixtureEnv(t, e2eOmitUsageEnv, "review,verify")
 }
 
+func runtimeLifecycleProject(t *testing.T, root string, nested bool) *projectvalue.Project {
+	t.Helper()
+	revision := identityHead(t, root)
+	return processRuntimeProject(t, root, revision, nested)
+}
+
+func runtimeLifecycleHost(t *testing.T, root string) Host {
+	return processRuntimeHost(root, runtimeLifecycleProject(t, root, false))
+}
+
+func includeFiniteRuntimeFiles(t *testing.T, project *projectvalue.Project, root string, paths ...string) {
+	t.Helper()
+	for _, path := range paths {
+		content, err := os.ReadFile(filepath.Join(root, filepath.FromSlash(path)))
+		if err != nil {
+			t.Fatalf("read explicit Runtime fixture file %s: %v", path, err)
+		}
+		project.Snapshot.Files[path] = append([]byte(nil), content...)
+		project.Snapshot.Modes[path] = "100644"
+	}
+}
+
+func runtimeProjectWithDigest(project *projectvalue.Project, suffix string) *projectvalue.Project {
+	copy := *project
+	copy.Digest = project.Digest + suffix
+	return &copy
+}
+
+func runtimeProjectWithFile(project *projectvalue.Project, path string, content []byte) *projectvalue.Project {
+	copy := *project
+	files := make(map[string][]byte, len(project.Snapshot.Files)+1)
+	for existing, bytes := range project.Snapshot.Files {
+		files[existing] = append([]byte(nil), bytes...)
+	}
+	files[path] = append([]byte(nil), content...)
+	modes := make(map[string]string, len(project.Snapshot.Modes)+1)
+	for existing, mode := range project.Snapshot.Modes {
+		modes[existing] = mode
+	}
+	if modes[path] == "" {
+		modes[path] = "100644"
+	}
+	copy.Snapshot = &snapshot.Snapshot{ID: project.Snapshot.ID, Provisional: project.Snapshot.Provisional, Files: files, Modes: modes}
+	copy.Digest = project.Digest + ":source-change"
+	return &copy
+}
+
+func addRuntimeIntegrationFacts(t *testing.T, project *projectvalue.Project) {
+	t.Helper()
+	rootID := e2eManagerID("", "project-owner")
+	statementID := e2eFixtureIdentity("Statement", "", "integration-summary")
+	artifactID := e2eFixtureIdentity("Artifact", "", "integration-summary-file")
+	checkID := e2eFixtureIdentity("Check", "", "integration-check")
+	executable, err := os.Executable()
+	if err != nil {
+		t.Fatal(err)
+	}
+	command := append([]string{filepath.Base(executable)}, runtimeFixtureArgs(t, []string{"-test.run=^TestProjectRunIntegrationCheckProcess$"})...)
+	project.Report.Statements = append(project.Report.Statements, projectmodel.Statement{
+		ID: statementID, Name: "integration-summary", Owner: rootID, Category: "concept", Description: "The integration summary lists the integrated child artifacts.",
+	})
+	project.Report.Artifacts = append(project.Report.Artifacts, projectmodel.Artifact{
+		ID: artifactID, Name: "integration-summary-file", Owner: rootID, Role: "implementation", Realizes: []string{statementID}, Paths: []string{"src/project-integration.txt"}, Checks: []string{checkID}, Required: true,
+	})
+	project.Report.Checks = append(project.Report.Checks, projectmodel.Check{
+		ID: checkID, Name: "integration-check", Owner: rootID, Command: command, Uses: []string{statementID}, Limitation: "This fixture check compares candidate bytes only.",
+	})
+	project.Report.Files = append(project.Report.Files, projectmodel.FileEntry{
+		Path: "src/project-integration.txt", Owner: rootID, Class: "source", Statements: []string{statementID}, Artifacts: []string{artifactID}, Checks: []string{checkID}, Exists: true,
+	})
+	project.Snapshot.Files["src/project-integration.txt"] = []byte("pending integration\n")
+	project.Snapshot.Modes["src/project-integration.txt"] = "100644"
+	project.Report.Digest = "sha256:5555555555555555555555555555555555555555555555555555555555555555"
+}
 func planBothManagers(t *testing.T, root string) PlanRecord {
 	t.Helper()
-	plan, err := Plan(projectworkHost(), root, identityHead(t, root), PlanRequest{Goal: "Implement both owned artifacts and integrate them.",
+	plan, err := Plan(runtimeLifecycleHost(t, root), root, identityHead(t, root), PlanRequest{Goal: "Implement both owned artifacts and integrate them.",
 		Managers: []string{e2eManagerID("orders", "orders"), e2eManagerID("inventory", "inventory")}, ExecuteAuthorized: true})
 	if err != nil {
 		t.Fatalf("Plan: %v", err)
@@ -67,9 +142,15 @@ func planBothManagers(t *testing.T, root string) PlanRecord {
 	return plan
 }
 
-func verifyAndApply(t *testing.T, root string, plan PlanRecord, candidateID string) {
+func verifyAndApply(t *testing.T, root string, plan PlanRecord, candidateID string, hosts ...Host) {
 	t.Helper()
-	host := projectworkHost()
+	host := runtimeLifecycleHost(t, root)
+	if len(hosts) > 1 {
+		t.Fatalf("verifyAndApply received %d Host values", len(hosts))
+	}
+	if len(hosts) == 1 {
+		host = hosts[0]
+	}
 	verified, err := Verify(context.Background(), host, projectexecutor.ProcessInvoker{}, root, plan.ID)
 	if err != nil || verified.Status != StatusVerified || verified.Verifier == nil {
 		t.Fatalf("Verify did not pass with the independent verifier: report=%+v err=%v", verified, err)
@@ -108,7 +189,7 @@ func planHasCheck(plan PlanRecord, name string) bool {
 // its own declared check, which only the aggregate candidate can satisfy.
 func addRootIntegrationCheck(t *testing.T, root string) {
 	t.Helper()
-	manifestPath := filepath.Join(root, filepath.FromSlash(projectwork.ManifestPath))
+	manifestPath := filepath.Join(root, filepath.FromSlash(projectvalue.ManifestPath))
 	manifest, err := os.ReadFile(manifestPath)
 	if err != nil {
 		t.Fatal(err)
@@ -118,7 +199,7 @@ func addRootIntegrationCheck(t *testing.T, root string) {
 	if updated == string(manifest) {
 		t.Fatal("could not add the root integration model files")
 	}
-	writeE2E(t, root, projectwork.ManifestPath, updated)
+	writeE2E(t, root, projectvalue.ManifestPath, updated)
 	executable, err := os.Executable()
 	if err != nil {
 		t.Fatal(err)

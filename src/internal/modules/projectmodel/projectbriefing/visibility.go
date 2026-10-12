@@ -1,15 +1,13 @@
 package projectbriefing
 
 import (
-	"fmt"
 	"sort"
 
 	"github.com/Glacius-Labs/Markitect/src/internal/core"
-	"github.com/Glacius-Labs/Markitect/src/internal/host/projectwork"
 	"github.com/Glacius-Labs/Markitect/src/internal/modules/projectmodel"
 )
 
-type managerView struct {
+type ManagerView struct {
 	context    projectmodel.ManagerContext
 	statements map[string]projectmodel.Statement
 	artifacts  map[string]bool
@@ -18,12 +16,12 @@ type managerView struct {
 	managers   map[string]bool
 }
 
-func newManagerView(project *projectwork.Project, managerID string) (managerView, error) {
-	context, err := projectmodel.Context(project.Report, managerID)
+func NewManagerView(report projectmodel.Report, managerID string) (ManagerView, error) {
+	context, err := projectmodel.Context(report, managerID)
 	if err != nil {
-		return managerView{}, err
+		return ManagerView{}, err
 	}
-	view := managerView{
+	view := ManagerView{
 		context:    context,
 		statements: map[string]projectmodel.Statement{},
 		artifacts:  map[string]bool{},
@@ -55,7 +53,7 @@ func newManagerView(project *projectwork.Project, managerID string) (managerView
 	return view, nil
 }
 
-func (v managerView) projectDefinition(definition *core.Definition) (*core.Definition, bool) {
+func (v ManagerView) projectDefinition(definition *core.Definition) (*core.Definition, bool) {
 	if definition == nil {
 		return nil, false
 	}
@@ -114,7 +112,7 @@ func cloneSpec(spec map[string]any) map[string]any {
 	return cloned
 }
 
-func projectEvent(event Event, before, after managerView) (Event, bool) {
+func ProjectEvent(event Event, before, after ManagerView) (Event, bool) {
 	projectedBefore, beforeVisible := before.projectDefinition(event.Before)
 	projectedAfter, afterVisible := after.projectDefinition(event.After)
 	if !beforeVisible && !afterVisible {
@@ -155,20 +153,8 @@ func projectEvent(event Event, before, after managerView) (Event, bool) {
 	return event, true
 }
 
-func loadManagerView(root, revision, managerID string) (managerView, error) {
-	project, err := projectwork.Load(root, revision)
-	if err != nil {
-		return managerView{}, fmt.Errorf("load manager briefing visibility at %s: %w", revision, err)
-	}
-	view, err := newManagerView(project, managerID)
-	if err != nil {
-		return managerView{}, fmt.Errorf("load manager briefing visibility at %s: %w", revision, err)
-	}
-	return view, nil
-}
-
-func emptyManagerView() managerView {
-	return managerView{
+func EmptyManagerView() ManagerView {
+	return ManagerView{
 		statements: map[string]projectmodel.Statement{},
 		artifacts:  map[string]bool{},
 		checks:     map[string]projectmodel.Check{},

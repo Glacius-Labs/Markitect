@@ -14,9 +14,9 @@ Tests in `src/internal/tooling/architecture` fail when a Go package is missing f
 
 | Layer | Meaning | Import gate layers | Packages |
 |---|---|---|---|
-| `core` | Structural compiler, snapshots and project-model views. No providers, Git processes or writes. | `core`, `host`, `module` | 5 |
+| `core` | Structural compiler, snapshots and project-model views. No providers, Git processes or writes. | `core`, `host`, `module` | 6 |
 | `infrastructure` | Git and working-tree access: fixed snapshots and guarded writes. | `infrastructure`, `host` | 2 |
-| `application` | Current product use cases and their command and MCP surfaces. | `host` | 13 |
+| `application` | Current product use cases and their command and MCP surfaces. | `host` | 15 |
 | `runtime` | Runs Manager, review and verify roles in owned workspaces. | `host` | 8 |
 | `legacy` | The published v0.13 Project/Domain surfaces. DEC-014 allows removing them. | `host`, `module` | 0 |
 | `module` | Independent capability packages that import only Core. | `module` | 2 |
@@ -33,9 +33,10 @@ Tests in `src/internal/tooling/architecture` fail when a Go package is missing f
 |---|---|---|
 | `src/internal/core` | Compiles explicitly supplied Schemas and Definitions into a pure structural model. | [src/internal/core/README.md](../../src/internal/core/README.md) |
 | `src/internal/core/snapshot` | Fixed sets of source files and deterministic comparisons over them. | [docs/source-snapshots.md](../source-snapshots.md#current-value) |
-| `src/internal/host/projectbriefing` | Records deterministic briefings for accepted model changes from committed history. | [docs/architecture.md](../architecture.md#core-layer) |
-| `src/internal/host/projectcoverage` | Inventories repository paths and classifies how the project model covers them. | [docs/architecture.md](../architecture.md#core-layer) |
 | `src/internal/modules/projectmodel` | Derives management, artifact and impact views from the compiled project model. | [docs/architecture.md](../architecture.md#core-layer) |
+| `src/internal/modules/projectmodel/projectbriefing` | Derives deterministic briefings and resolution status from explicitly supplied model values. | [docs/architecture.md](../architecture.md#core-layer) |
+| `src/internal/modules/projectmodel/projectcoverage` | Classifies explicitly supplied repository census values against the project model. | [docs/architecture.md](../architecture.md#core-layer) |
+| `src/internal/modules/projectmodel/projectvalue` | Holds shared project values, path selectors and deterministic binding identity. | [docs/architecture.md](../architecture.md#core-layer) |
 
 ## Infrastructure
 
@@ -56,6 +57,8 @@ Tests in `src/internal/tooling/architecture` fail when a Go package is missing f
 | `src/internal/host/projectadoption` | Brownfield adoption that checks fixed-snapshot evidence and prepares model-only changes. | [docs/project-workflow.md](../project-workflow.md#existing-repositories) |
 | `src/internal/host/projectapp` | Shared application facade that the project CLI and MCP server call. | [docs/architecture.md](../architecture.md#application-layer) |
 | `src/internal/host/projectcli` | The `markitect` verb table, its command line and its MCP tools. | [docs/project-operations.md](../project-operations.md#cli-setup-and-current-roots) |
+| `src/internal/host/projectcoverage` | Acquires repository census values from the selected working tree or committed revision. | [docs/source-snapshots.md](../source-snapshots.md#adapter-and-use-case-ownership) |
+| `src/internal/host/projecthistory` | Acquires accepted model history and persists guarded briefing, resolution and dismissal records. | [docs/architecture.md](../architecture.md#application-layer) |
 | `src/internal/host/projectexplore` | Stores explorations, open decisions, scope readiness and Apply receipts. | [docs/project-workflow.md](../project-workflow.md#model-and-readiness) |
 | `src/internal/host/projectonboarding` | Writes project-local guidance and skills for Codex and Claude contributors. | [docs/project-workflow.md](../project-workflow.md#connect-and-inspect) |
 | `src/internal/host/projectwork` | Loads the selected project model and writes model changes under guard. | [docs/project-workflow.md](../project-workflow.md#model-and-readiness) |

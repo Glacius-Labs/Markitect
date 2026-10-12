@@ -6,6 +6,7 @@ import (
 	"bytes"
 	"context"
 	"github.com/Glacius-Labs/Markitect/src/internal/host/projectexecutor"
+	"github.com/Glacius-Labs/Markitect/src/internal/modules/projectmodel/projectvalue"
 	"os"
 	"path/filepath"
 	"strings"
@@ -27,7 +28,15 @@ func TestPreflightApplyAndApplyPreserveRawCRLFCAS(t *testing.T) {
 			t.Fatalf("materialize CRLF target %s: %v", path, err)
 		}
 	}
-	host := projectworkHost()
+	project := runtimeLifecycleProject(t, root, false)
+	for _, path := range []string{"src/orders/implementation.txt", "src/inventory/implementation.txt"} {
+		content, err := os.ReadFile(filepath.Join(root, filepath.FromSlash(path)))
+		if err != nil {
+			t.Fatalf("read finite CRLF source %s: %v", path, err)
+		}
+		project.Snapshot.Files[path] = append([]byte(nil), content...)
+	}
+	host := processRuntimeHost(root, project)
 	plan, err := Plan(host, root, identityHead(t, root), PlanRequest{Goal: "Implement both owned artifacts and run the declared checks.",
 		Managers: []string{e2eManagerID("orders", "orders"), e2eManagerID("inventory", "inventory")}, ExecuteAuthorized: true})
 	if err != nil {
@@ -75,7 +84,7 @@ func TestApplyRechecksTargetIndexAtGuardedWriteBoundary(t *testing.T) {
 	t.Parallel()
 	root := makeProjectRunFixture(t)
 	setupE2EProcess(t, "normal")
-	host := projectworkHost()
+	host := runtimeLifecycleHost(t, root)
 	plan, err := Plan(host, root, identityHead(t, root), PlanRequest{Goal: "Implement both owned artifacts and run the declared checks.",
 		Managers: []string{e2eManagerID("orders", "orders"), e2eManagerID("inventory", "inventory")}, ExecuteAuthorized: true})
 	if err != nil {
@@ -103,7 +112,7 @@ func TestApplyRechecksTargetIndexAtGuardedWriteBoundary(t *testing.T) {
 	baseLoad := host.Load
 	var injectIndexDrift bool
 	var baseLoads int
-	host.Load = func(loadRoot, revision string) (*Project, error) {
+	host.Load = func(loadRoot, revision string) (*projectvalue.Project, error) {
 		project, loadErr := baseLoad(loadRoot, revision)
 		if loadErr != nil {
 			return project, loadErr
@@ -140,7 +149,7 @@ func TestApplyRefusedByHeldWriterLockKeepsRunVerified(t *testing.T) {
 	t.Parallel()
 	root := makeProjectRunFixture(t)
 	setupE2EProcess(t, "normal")
-	host := projectworkHost()
+	host := runtimeLifecycleHost(t, root)
 	plan, request := verifiedApplyRequest(t, host, root)
 	lockPath := filepath.Join(root, ".markitect", "write.lock")
 	if err := os.WriteFile(lockPath, []byte("held by another Host writer\n"), 0o600); err != nil {
@@ -162,8 +171,25 @@ func TestApplyStaleUnderWriterLockIsRejectedLikeEarlyStaleness(t *testing.T) {
 	t.Parallel()
 	root := makeProjectRunFixture(t)
 	setupE2EProcess(t, "normal")
-	host := projectworkHost()
+	host := runtimeLifecycleHost(t, root)
 	plan, request := verifiedApplyRequest(t, host, root)
+	baseLoad := host.Load
+	staleModel := false
+	changedProject, err := baseLoad(root, plan.BaseRevision)
+	if err != nil {
+		t.Fatal(err)
+	}
+	changedProject = runtimeProjectWithDigest(changedProject, ":model-change")
+	host.Load = func(loadRoot, revision string) (*projectvalue.Project, error) {
+		project, loadErr := baseLoad(loadRoot, revision)
+		if loadErr != nil {
+			return nil, loadErr
+		}
+		if revision == "" && staleModel {
+			return changedProject, nil
+		}
+		return project, nil
+	}
 	modelPath := filepath.Join(root, ".markitect", "model", "orders", "statement.yaml")
 	original, err := os.ReadFile(modelPath)
 	if err != nil {
@@ -173,22 +199,24 @@ func TestApplyStaleUnderWriterLockIsRejectedLikeEarlyStaleness(t *testing.T) {
 	if err := os.WriteFile(modelPath, edited, 0o644); err != nil {
 		t.Fatal(err)
 	}
+	staleModel = true
 	early, err := Apply(host, projectexecutor.ProcessInvoker{}, root, request)
 	assertApplyRejectedKeepsRunVerified(t, root, plan.ID, early, err)
 	if err := os.WriteFile(modelPath, original, 0o644); err != nil {
 		t.Fatal(err)
 	}
+	staleModel = false
 
 	// The same edit first observed by the guarded-write precondition, while
 	// the Host writer lock is held, is the same rejection.
 	writerLock := filepath.Join(root, ".markitect", "write.lock")
-	baseLoad := host.Load
 	injected := false
 	guardedHost := host
-	guardedHost.Load = func(loadRoot, revision string) (*Project, error) {
+	guardedHost.Load = func(loadRoot, revision string) (*projectvalue.Project, error) {
 		if revision == "" && !injected {
 			if _, statErr := os.Stat(writerLock); statErr == nil {
 				injected = true
+				staleModel = true
 				if err := os.WriteFile(modelPath, edited, 0o644); err != nil {
 					t.Errorf("inject concurrent edit: %v", err)
 				}
@@ -204,6 +232,7 @@ func TestApplyStaleUnderWriterLockIsRejectedLikeEarlyStaleness(t *testing.T) {
 	if err := os.WriteFile(modelPath, original, 0o644); err != nil {
 		t.Fatal(err)
 	}
+	staleModel = false
 	retry, err := Apply(host, projectexecutor.ProcessInvoker{}, root, request)
 	if err != nil || retry.Status != StatusApplied {
 		t.Fatalf("retry after reverting the transient edit did not apply: status=%s err=%v", retry.Status, err)
@@ -217,7 +246,7 @@ func TestApplyGenuinePartialWriteFailsRunAndKeepsReceipt(t *testing.T) {
 	}
 	root := makeProjectRunFixture(t)
 	setupE2EProcess(t, "normal")
-	host := projectworkHost()
+	host := runtimeLifecycleHost(t, root)
 	plan, request := verifiedApplyRequest(t, host, root)
 	paths, err := ApplyPaths(host, root, plan.ID)
 	if err != nil {

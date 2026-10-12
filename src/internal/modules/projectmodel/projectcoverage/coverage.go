@@ -127,6 +127,14 @@ func Classify(request Request) (Report, error) {
 	return report, nil
 }
 
+// ValidateOptions validates a host-supplied repository coverage policy without
+// acquiring repository state.
+func ValidateOptions(options Options) error { return validateOptions(options) }
+
+// IsOperationalPath reports whether a path is explicitly marked operational
+// by the supplied coverage policy.
+func IsOperationalPath(name string, options Options) bool { return isOperational(name, options) }
+
 func Overlay(base *Universe, delta []Delta, options Options) (*Universe, error) {
 	if base == nil {
 		return nil, fmt.Errorf("base repository universe is required")
@@ -202,6 +210,67 @@ func Overlay(base *Universe, delta []Delta, options Options) (*Universe, error) 
 	}
 	result.Digest = universeDigest(result, options)
 	return result, nil
+}
+
+// NewUniverse constructs the deterministic universe value produced by Host
+// acquisition. Paths and ignore bytes are copied so the returned coverage
+// basis cannot be changed through caller-owned slices.
+func NewUniverse(revision, identity string, paths []PathState, ignoreBytes []byte, options Options, fixed bool) *Universe {
+	result := &Universe{Revision: revision, IdentityDigest: identity, FixedRevision: fixed,
+		Paths: append([]PathState(nil), paths...), IgnoreBytes: append([]byte(nil), ignoreBytes...),
+		IgnoreBytesDigest: sha256Hex(ignoreBytes)}
+	sort.Slice(result.Paths, func(i, j int) bool { return result.Paths[i].Path < result.Paths[j].Path })
+	result.Digest = universeDigest(result, options)
+	return result
+}
+
+// SelectWorkingContentPaths returns the observed worktree file paths whose
+// bytes bind a working-tree universe under the supplied policy.
+func SelectWorkingContentPaths(paths []PathState, ignore IgnoreFile, options Options) []string {
+	return selectContentPaths(paths, ignore, options, false)
+}
+
+// SelectRevisionContentPaths returns the observed fixed-revision file paths
+// whose bytes bind a revision universe under the supplied policy.
+func SelectRevisionContentPaths(paths []PathState, ignore IgnoreFile, options Options) []string {
+	return selectContentPaths(paths, ignore, options, true)
+}
+
+func selectContentPaths(paths []PathState, ignore IgnoreFile, options Options, fixed bool) []string {
+	var result []string
+	for _, state := range paths {
+		present := state.Worktree.Present
+		if fixed {
+			present = state.Head.Present
+		}
+		if state.OpaqueBoundary || isIgnored(state.Path, ignore) || isTransitional(state.Path, options) ||
+			isOperational(state.Path, options) || state.Path == IgnorePath || !present {
+			continue
+		}
+		result = append(result, state.Path)
+	}
+	sort.Strings(result)
+	return result
+}
+
+// ValidateRepositoryPath applies the portable repository-path rules used by
+// both census acquisition and coverage classification.
+func ValidateRepositoryPath(name string) error { return validatePath(name) }
+
+// ValidateRepositoryPaths validates a set of exact repository paths,
+// including portable case collisions and file/repository-boundary aliases.
+func ValidateRepositoryPaths(paths []string) error {
+	set := make(map[string]*PathState, len(paths))
+	for _, name := range paths {
+		if err := validatePath(name); err != nil {
+			return err
+		}
+		if _, exists := set[name]; exists {
+			return fmt.Errorf("repository contains duplicate path %q", name)
+		}
+		set[name] = &PathState{Path: name}
+	}
+	return validatePathSet(set)
 }
 
 // UnboundPaths lists current files in universe whose bytes were never read

@@ -8,7 +8,6 @@ import (
 	"regexp"
 
 	"github.com/Glacius-Labs/Markitect/src/internal/core/snapshot"
-	"github.com/Glacius-Labs/Markitect/src/internal/host/projectwork"
 	"github.com/Glacius-Labs/Markitect/src/internal/host/projectworkspace"
 	"github.com/Glacius-Labs/Markitect/src/internal/infrastructure/source"
 )
@@ -20,7 +19,7 @@ var externalGitSnapshotDigest = regexp.MustCompile("^[0-9a-f]{64}$")
 // exact base snapshot supplied to an external task. The caller binds
 // expectedBaseDigest to the packet's candidate digest; candidate changes are
 // derived from Git objects rather than accepted from response JSON.
-func ImportExternalGitCandidate(root, baseCommit, finalCommit, expectedBaseDigest string,
+func ImportExternalGitCandidate(host Host, root, baseCommit, finalCommit, expectedBaseDigest string,
 	request projectworkspace.Request, handle projectworkspace.Handle, limits projectworkspace.Limits,
 ) (projectworkspace.Delta, error) {
 	if !externalGitCommitID.MatchString(baseCommit) || !externalGitCommitID.MatchString(finalCommit) {
@@ -58,11 +57,14 @@ func ImportExternalGitCandidate(root, baseCommit, finalCommit, expectedBaseDiges
 	if base.ID != baseCommit {
 		return projectworkspace.Delta{}, errors.New("external Git base did not resolve to the supplied immutable commit")
 	}
-	projectBase, err := projectwork.Load(root, baseCommit)
+	if host.Load == nil {
+		return projectworkspace.Delta{}, errors.New("project acquisition is not bound")
+	}
+	projectBase, err := host.Load(root, baseCommit)
 	if err != nil {
 		return projectworkspace.Delta{}, fmt.Errorf("load selected external Git base: %w", err)
 	}
-	if projectBase.Snapshot == nil || projectBase.Snapshot.Digest() != expectedBaseDigest {
+	if projectBase == nil || projectBase.Snapshot == nil || projectBase.Snapshot.Digest() != expectedBaseDigest {
 		return projectworkspace.Delta{}, errors.New("external Git base project snapshot differs from the packet candidate digest")
 	}
 	if handle.BaseDigest != "sha256:"+expectedBaseDigest {

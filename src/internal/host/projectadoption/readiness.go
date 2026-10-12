@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"sort"
 
-	"github.com/Glacius-Labs/Markitect/src/internal/host/projectcoverage"
+	"github.com/Glacius-Labs/Markitect/src/internal/modules/projectmodel/projectcoverage"
 )
 
 // AssessReadiness reports source/model discussion status without treating

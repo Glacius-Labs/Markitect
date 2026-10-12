@@ -1,5 +1,9 @@
 package modulecli
 
+import "go.yaml.in/yaml/v3"
+
+import "github.com/Glacius-Labs/Markitect/src/internal/modules/projectmodel/projectvalue"
+
 import (
 	"bytes"
 	"crypto/sha256"
@@ -8,11 +12,10 @@ import (
 	"testing"
 
 	"github.com/Glacius-Labs/Markitect/src/internal/core"
-	"github.com/Glacius-Labs/Markitect/src/internal/host/projectwork"
+
 	"github.com/Glacius-Labs/Markitect/src/internal/modules/githooks"
 	"github.com/Glacius-Labs/Markitect/src/internal/modules/projectmodel"
 	"github.com/Glacius-Labs/Markitect/src/internal/testkit"
-	"go.yaml.in/yaml/v3"
 )
 
 const (
@@ -41,7 +44,7 @@ func TestRunReportsPassFindingsAndInvalidInputExitCodes(t *testing.T) {
 	hookBytes := []byte("#!/bin/sh\nexit 0\n")
 	configBytes := encodeHooksConfig(t, hookBytes)
 	for file, data := range map[string][]byte{
-		projectwork.ManifestPath:                            projectManifest(t),
+		projectvalue.ManifestPath:                           projectManifest(t),
 		".markitect/model/manager.yaml":                     definitionBytes(t, core.Definition{APIVersion: projectmodel.APIVersion, Kind: "Manager", Metadata: core.Metadata{Name: "root"}, Purpose: "Own the fixture repository.", Spec: map[string]any{"owns": []any{"."}}}),
 		".markitect/model/tooling/module-verification.yaml": definitionBytes(t, core.Definition{APIVersion: projectmodel.APIVersion, Kind: "Artifact", Metadata: core.Metadata{Name: "module-verification", Namespace: "tooling"}, Purpose: "Maps exact module inputs.", Spec: map[string]any{"role": "verification", "paths": []any{cliHooksConfig, cliHookPath}, "required": true, "reason": "The fixture module checks its exact configured files."}}),
 		".markitect/model/tooling/go-tests.yaml":            definitionBytes(t, core.Definition{APIVersion: projectmodel.APIVersion, Kind: "Check", Metadata: core.Metadata{Name: "go-tests", Namespace: "tooling"}, Purpose: "Runs the Go tests.", Spec: map[string]any{"command": []any{"go", "test", "./..."}, "uses": []any{}, "limitation": "Does not establish provider execution."}}),
@@ -82,10 +85,10 @@ func encodeHooksConfig(t *testing.T, hook []byte) []byte {
 
 func projectManifest(t *testing.T) []byte {
 	t.Helper()
-	data, err := yaml.Marshal(projectwork.Config{
+	data, err := yaml.Marshal(projectvalue.Config{
 		APIVersion: projectmodel.APIVersion, Name: "module-cli-fixture", CoverageMode: "selected",
 		ModelFiles:     []string{".markitect/model/manager.yaml", ".markitect/model/tooling/module-verification.yaml", ".markitect/model/tooling/go-tests.yaml"},
-		InventoryRoots: []string{}, Exclusions: []projectwork.Exclusion{},
+		InventoryRoots: []string{}, Exclusions: []projectvalue.Exclusion{},
 	})
 	if err != nil {
 		t.Fatal(err)

@@ -3,6 +3,8 @@
 // semantics or provider transport.
 package projectrun
 
+import "github.com/Glacius-Labs/Markitect/src/internal/modules/projectmodel/projectvalue"
+
 import (
 	"context"
 	"errors"
@@ -11,20 +13,11 @@ import (
 
 	"github.com/Glacius-Labs/Markitect/src/internal/core/snapshot"
 	"github.com/Glacius-Labs/Markitect/src/internal/host/agentexec"
-	"github.com/Glacius-Labs/Markitect/src/internal/host/projectbriefing"
-	"github.com/Glacius-Labs/Markitect/src/internal/host/projectexplore"
-	"github.com/Glacius-Labs/Markitect/src/internal/host/projectwork"
+	"github.com/Glacius-Labs/Markitect/src/internal/modules/projectmodel/projectbriefing"
+
 	"github.com/Glacius-Labs/Markitect/src/internal/host/projectworkspace"
 	"github.com/Glacius-Labs/Markitect/src/internal/modules/projectmodel"
 )
-
-type Project = projectwork.Project
-type Config = projectwork.Config
-type Exclusion = projectwork.Exclusion
-type Mutation = projectwork.Mutation
-type FileChange = projectwork.FileChange
-type EditPlan = projectwork.EditPlan
-type Snapshot = snapshot.Snapshot
 
 const (
 	APIVersion = "markitect.example.org/project-run/v1alpha1"
@@ -59,8 +52,8 @@ type PlanRequest struct {
 	BaseRevision  string   `json:"baseRevision,omitempty"`
 	// SinceRevision is an optional older selected-project revision used only to
 	// derive change impact. The execution basis remains BaseRevision (or HEAD).
-	SinceRevision string    `json:"sinceRevision,omitempty"`
-	ModelEdit     *Mutation `json:"modelEdit,omitempty"`
+	SinceRevision string                 `json:"sinceRevision,omitempty"`
+	ModelEdit     *projectvalue.Mutation `json:"modelEdit,omitempty"`
 	// ExecuteAuthorized is set by an explicitly invoked write/run command. It
 	// represents the caller's existing authorization, not an agent decision.
 	ExecuteAuthorized bool `json:"executeAuthorized"`
@@ -74,7 +67,7 @@ type PlanRecord struct {
 	ScopeID                 string                                     `json:"scopeId,omitempty"`
 	ExplorationDigest       string                                     `json:"explorationDigest,omitempty"`
 	ReadinessDigest         string                                     `json:"readinessDigest,omitempty"`
-	ExplorationBinding      *projectexplore.Binding                    `json:"explorationBinding,omitempty"`
+	ExplorationBinding      *projectvalue.Binding                      `json:"explorationBinding,omitempty"`
 	BriefingDigests         map[string]string                          `json:"briefingDigests,omitempty"`
 	Strictness              map[string]projectconfig.StrictnessProfile `json:"strictness,omitempty"`
 	Operation               string                                     `json:"operation,omitempty"`
@@ -107,7 +100,7 @@ type PlanRecord struct {
 	PlannedAt               time.Time                                  `json:"plannedAt"`
 	Managers                []ManagerTask                              `json:"managers"`
 	Checks                  []CheckPlan                                `json:"checks"`
-	ModelEdit               *EditPlan                                  `json:"modelEdit,omitempty"`
+	ModelEdit               *projectvalue.EditPlan                     `json:"modelEdit,omitempty"`
 	InitialCandidateID      string                                     `json:"initialCandidateId"`
 	RuntimeAgents           map[string]string                          `json:"runtimeAgents"`
 	Findings                []string                                   `json:"findings,omitempty"`
@@ -421,16 +414,27 @@ type ApplyPreflight struct {
 	Paths              []string `json:"paths"`
 }
 
-// Host is the function bundle for the selected project frontend. It composes
-// directly from projectwork's APIs without introducing a dependency cycle.
+// Host supplies the selected frontend and operational record observations.
+// Application composes these operations; Runtime retains each lifecycle gate.
 type Host struct {
 	// Workspaces owns native Git candidate preparation, observation and cleanup.
 	// Unknown execution preserves the original workspace for exact-turn recovery.
-	Workspaces   projectworkspace.Service
-	Load         func(root, revision string) (*Project, error)
-	FromSnapshot func(root string, source *Snapshot) (*Project, error)
-	PlanEdit     func(project *Project, mutation Mutation) (EditPlan, error)
-	ApplyEdit    func(root string, plan EditPlan, expected string) (EditPlan, error)
+	Workspaces               projectworkspace.Service
+	Load                     func(root, revision string) (*projectvalue.Project, error)
+	FromSnapshot             func(root string, source *snapshot.Snapshot) (*projectvalue.Project, error)
+	PlanEdit                 func(project *projectvalue.Project, mutation projectvalue.Mutation) (projectvalue.EditPlan, error)
+	ApplyEdit                func(root string, plan projectvalue.EditPlan, expected string) (projectvalue.EditPlan, error)
+	ClassifyCandidate        func(base, candidate *projectvalue.Project, deleted ...string) (*projectvalue.Project, error)
+	RenderDocument           func(project *projectvalue.Project) (string, error)
+	PrepareBriefings         func(root, revision string, persist bool) (*projectbriefing.Store, error)
+	BriefingForManager       func(root, revision, modelDigest, managerID string, view *projectbriefing.Store) (BriefingContext, error)
+	ResolveVerifiedBriefing  func(root string, evidence DeliveredResolution) error
+	LoadDeliveryScope        func(root, explorationID, scopeID string) (DeliveryScope, error)
+	LoadExplorationReadiness func(root, explorationID, scopeID string) (DeliveryScope, projectvalue.Binding, ExplorationReadiness, error)
+	BindExploration          func(root string, binding projectvalue.Binding, request PlanRequest, plan PlanRecord) (ExplorationAdmission, error)
+	ValidateExploration      func(root string, plan PlanRecord) error
+	ExplorationCapturePaths  func(plan PlanRecord) ([]string, error)
+	CompleteExploration      func(root string, completion ExplorationCompletion) error
 }
 
 // Invoker preserves the shared request/response/receipt boundary and permits

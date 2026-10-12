@@ -4,8 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"github.com/Glacius-Labs/Markitect/src/internal/host/projectconfig"
-	"github.com/Glacius-Labs/Markitect/src/internal/host/projectexecutor"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -15,8 +13,11 @@ import (
 
 	"github.com/Glacius-Labs/Markitect/src/internal/host/agentexec"
 	"github.com/Glacius-Labs/Markitect/src/internal/host/codexappserver"
+	"github.com/Glacius-Labs/Markitect/src/internal/host/projectconfig"
+	"github.com/Glacius-Labs/Markitect/src/internal/host/projectexecutor"
 	"github.com/Glacius-Labs/Markitect/src/internal/host/projectworkspace"
 	"github.com/Glacius-Labs/Markitect/src/internal/infrastructure/source"
+	"github.com/Glacius-Labs/Markitect/src/internal/modules/projectmodel/projectvalue"
 )
 
 type nativeResumeFixtureInvoker struct {
@@ -374,7 +375,7 @@ func assertNativeReviewPassed(t *testing.T, invoker *nativeDeltaOnlyInvoker, rep
 // loadNativeReworkState prepares the persisted run state for a direct targeted
 // rework call. The planned runtime already binds the reviewers, so the review
 // of the reworked candidate runs end to end.
-func loadNativeReworkState(t *testing.T, fixture nativeResumeRunFixture) (RunReport, *Project, projectconfig.Runtime) {
+func loadNativeReworkState(t *testing.T, fixture nativeResumeRunFixture) (RunReport, *projectvalue.Project, projectconfig.Runtime) {
 	t.Helper()
 	runtime := mustLoadRuntime(t, fixture.root)
 	report, err := fixture.store.readLatestState(fixture.plan.ID)
@@ -406,6 +407,19 @@ func seedNativeReviewedRun(t *testing.T, phase string) nativeResumeRunFixture {
 	return seedNativeRun(t, phase, false, true)
 }
 
+func nativeResumeRuntimeHost(t *testing.T, root, phase string) Host {
+	t.Helper()
+	revision := identityHead(t, root)
+	project := processRuntimeProject(t, root, revision, false)
+	includeFiniteRuntimeFiles(t, project, root, "AGENTS.md", "src/project-owner.txt", "src/orders/implementation.txt", "src/inventory/implementation.txt")
+	if phase == "integrate" {
+		project.Report.Checks = nil
+		for i := range project.Report.Artifacts {
+			project.Report.Artifacts[i].Checks = nil
+		}
+	}
+	return processRuntimeHost(root, project)
+}
 func seedNativeRun(t *testing.T, phase string, reviewRework, reviewed bool) nativeResumeRunFixture {
 	t.Helper()
 	root := makeProjectRunFixture(t)
@@ -477,7 +491,7 @@ func seedNativeRun(t *testing.T, phase string, reviewRework, reviewed bool) nati
 	if err != nil {
 		t.Fatal(err)
 	}
-	host := projectworkHost()
+	host := nativeResumeRuntimeHost(t, root, phase)
 	host.Workspaces = preparationService
 	plan, err := Plan(host, root, identityHead(t, root), PlanRequest{
 		Goal: "Implement the project owner's isolated fixture artifact.", Managers: []string{selectorID}, ExecuteAuthorized: true,
@@ -582,7 +596,7 @@ func seedNativeRun(t *testing.T, phase string, reviewRework, reviewed bool) nati
 		t.Fatal(err)
 	}
 	repairRound, repairChecks := repairContext(report, *task)
-	request, err := managerInvocationRequest(root, mustLoadRuntime(t, root), plan, input, *task, phase, children, conflicts, childReports, task.RepairDiagnostic, repairRound, repairChecks)
+	request, err := managerInvocationRequest(host, root, mustLoadRuntime(t, root), plan, input, *task, phase, children, conflicts, childReports, task.RepairDiagnostic, repairRound, repairChecks)
 	if err != nil {
 		t.Fatal(err)
 	}

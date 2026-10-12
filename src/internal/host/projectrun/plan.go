@@ -1,5 +1,7 @@
 package projectrun
 
+import "github.com/Glacius-Labs/Markitect/src/internal/modules/projectmodel/projectvalue"
+
 import (
 	"bytes"
 	"crypto/sha256"
@@ -35,7 +37,7 @@ func PlanExpecting(host Host, root, revision string, request PlanRequest, expect
 		return PlanRecord{}, err
 	}
 	plan := planFromSemantics(root, basis, semantics)
-	if err := bindExplorationReadiness(root, basis.Project, basis.Working.Snapshot, basis.Request, &plan); err != nil {
+	if err := bindExplorationReadiness(host, root, basis.Project, basis.Working.Snapshot, basis.Request, &plan); err != nil {
 		return plan, err
 	}
 	plan.Digest, err = planDigest(plan)
@@ -60,7 +62,7 @@ func PlanExpecting(host Host, root, revision string, request PlanRequest, expect
 	return plan, nil
 }
 
-func planManagers(report projectmodel.Report, baseFiles map[string][]byte, request PlanRequest, edit *EditPlan, changeImpact *projectmodel.ChangeImpact, limits projectconfig.Limits) ([]ManagerTask, map[string]bool, []string, error) {
+func planManagers(report projectmodel.Report, baseFiles map[string][]byte, request PlanRequest, edit *projectvalue.EditPlan, changeImpact *projectmodel.ChangeImpact, limits projectconfig.Limits) ([]ManagerTask, map[string]bool, []string, error) {
 	operation, err := NormalizeOperation(request.Operation)
 	if err != nil {
 		return nil, nil, nil, err
@@ -290,7 +292,7 @@ func planManagers(report projectmodel.Report, baseFiles map[string][]byte, reque
 	return tasks, selected, findings, nil
 }
 
-func requireCleanSelectedBasis(fixed, working *Snapshot) error {
+func requireCleanSelectedBasis(fixed, working *snapshot.Snapshot) error {
 	if fixed == nil || working == nil {
 		return fmt.Errorf("fixed and working selected snapshots are required")
 	}
@@ -300,7 +302,7 @@ func requireCleanSelectedBasis(fixed, working *Snapshot) error {
 	return nil
 }
 
-func requireCleanSelectedBasisAtRevision(root, revision string, fixed, working *Snapshot) error {
+func requireCleanSelectedBasisAtRevision(root, revision string, fixed, working *snapshot.Snapshot) error {
 	if fixed == nil || working == nil {
 		return fmt.Errorf("fixed and working selected snapshots are required")
 	}
@@ -384,7 +386,7 @@ func requireCleanSelectedBasisAtRevision(root, revision string, fixed, working *
 
 // RequireCleanSelectedBasisAtRevision verifies a captured selected working
 // snapshot against the exact fixed project revision using Git's clean filters.
-func RequireCleanSelectedBasisAtRevision(root, revision string, fixed, working *Snapshot) error {
+func RequireCleanSelectedBasisAtRevision(root, revision string, fixed, working *snapshot.Snapshot) error {
 	return requireCleanSelectedBasisAtRevision(root, revision, fixed, working)
 }
 
@@ -394,7 +396,7 @@ func selectedBasisChangedError() error {
 
 // validateChangeImpact re-derives the optional since-impact from both fixed
 // project revisions. Its digests are also covered by the persisted plan digest.
-func validateChangeImpact(host Host, root string, current *Project, plan PlanRecord) error {
+func validateChangeImpact(host Host, root string, current *projectvalue.Project, plan PlanRecord) error {
 	if plan.ChangeImpact == nil {
 		if plan.ChangeBaseRevision != "" || plan.ChangeBaseSnapshot != "" || plan.ChangeBaseProjectDigest != "" ||
 			plan.ChangeBaseModelDigest != "" || plan.ChangeBaseReportDigest != "" || plan.ChangeImpactDigest != "" {
@@ -555,7 +557,7 @@ func emptyCandidate() (candidateData, error) {
 // required whenever direct children deliver files (phaseReviewRequired), which
 // planning cannot know yet, so the count is conservative: a tight start limit
 // is rejected here instead of blocking the run.
-func reviewPhaseStarts(project *Project, tasks []ManagerTask) int {
+func reviewPhaseStarts(project *projectvalue.Project, tasks []ManagerTask) int {
 	starts := 0
 	for _, task := range tasks {
 		if reviewRequired(project, task) {
@@ -568,7 +570,7 @@ func reviewPhaseStarts(project *Project, tasks []ManagerTask) int {
 	return starts
 }
 
-func modelEditCandidate(plan *EditPlan, base *Snapshot) (candidateData, error) {
+func modelEditCandidate(plan *projectvalue.EditPlan, base *snapshot.Snapshot) (candidateData, error) {
 	data := candidateData{ID: planDigestID(plan.Digest), Files: map[string]File{}}
 	for _, change := range plan.Mutation.Files {
 		if !safeRepoPath(change.Path) || !strings.HasPrefix(change.Path, ".markitect/model/") {
@@ -583,7 +585,7 @@ func modelEditCandidate(plan *EditPlan, base *Snapshot) (candidateData, error) {
 	return data, nil
 }
 
-func validateModelEditPaths(mutation Mutation) error {
+func validateModelEditPaths(mutation projectvalue.Mutation) error {
 	for _, change := range mutation.Files {
 		if !safeRepoPath(change.Path) || !strings.HasPrefix(change.Path, ".markitect/model/") {
 			return fmt.Errorf("projectrun ModelEdit path %q must remain within .markitect/model; edit runtime configuration before planning", change.Path)

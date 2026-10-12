@@ -21,7 +21,7 @@ func TestBringYourOwnExecutorsWithMixedRoleProfilesDeliverWithHonestCost(t *test
 	setupE2EProcess(t, "normal")
 	configureMixedRoleRuntime(t, root)
 	plan := planBothManagers(t, root)
-	run, err := Run(context.Background(), projectworkHost(), projectexecutor.ProcessInvoker{}, root, plan.ID)
+	run, err := Run(context.Background(), runtimeLifecycleHost(t, root), projectexecutor.ProcessInvoker{}, root, plan.ID)
 	if err != nil || run.Status != StatusIntegrated {
 		t.Fatalf("mixed-role run did not integrate: status=%s err=%v", run.Status, err)
 	}
@@ -95,7 +95,7 @@ func TestMeteredProcessReviewerWithoutUsageStillStops(t *testing.T) {
 		}
 	})
 	plan := planBothManagers(t, root)
-	run, err := Run(context.Background(), projectworkHost(), projectexecutor.ProcessInvoker{}, root, plan.ID)
+	run, err := Run(context.Background(), runtimeLifecycleHost(t, root), projectexecutor.ProcessInvoker{}, root, plan.ID)
 	if err == nil || !strings.Contains(err.Error(), "reviewer usage is missing") || run.Status == StatusIntegrated {
 		t.Fatalf("metered reviewer without usage was accepted: status=%s err=%v", run.Status, err)
 	}
@@ -111,14 +111,14 @@ func TestBringYourOwnExecutorFaultInjection(t *testing.T) {
 		setupE2EProcess(t, "out-of-scope")
 		configureMixedRoleRuntime(t, root)
 		plan := planBothManagers(t, root)
-		run, err := Run(context.Background(), projectworkHost(), projectexecutor.ProcessInvoker{}, root, plan.ID)
+		run, err := Run(context.Background(), runtimeLifecycleHost(t, root), projectexecutor.ProcessInvoker{}, root, plan.ID)
 		if err == nil || run.Status == StatusIntegrated {
 			t.Fatalf("out-of-scope write closed the run: status=%s err=%v", run.Status, err)
 		}
 		if _, ok := run.Candidate.Files["src/inventory/foreign.txt"]; ok {
 			t.Fatalf("foreign path entered the candidate: %+v", run.Candidate.Files)
 		}
-		if _, err := PreflightApply(projectworkHost(), root, plan.ID, run.Candidate.ID); err == nil {
+		if _, err := PreflightApply(runtimeLifecycleHost(t, root), root, plan.ID, run.Candidate.ID); err == nil {
 			t.Fatal("an unverified candidate passed Apply preflight")
 		}
 		if _, err := os.Stat(filepath.Join(root, "src", "inventory", "foreign.txt")); !os.IsNotExist(err) {
@@ -132,7 +132,7 @@ func TestBringYourOwnExecutorFaultInjection(t *testing.T) {
 		setupE2EProcess(t, "forgotten-file")
 		configureMixedRoleRuntime(t, root)
 		plan := planBothManagers(t, root)
-		host := projectworkHost()
+		host := runtimeLifecycleHost(t, root)
 		run, err := Run(context.Background(), host, projectexecutor.ProcessInvoker{}, root, plan.ID)
 		if err != nil || run.Status != StatusIntegrated {
 			t.Fatalf("forgotten-file run did not integrate for verification: status=%s err=%v", run.Status, err)
@@ -155,7 +155,7 @@ func TestBringYourOwnExecutorFaultInjection(t *testing.T) {
 		setupE2EProcess(t, "review-defect-fix")
 		configureMixedRoleRuntime(t, root)
 		plan := planBothManagers(t, root)
-		run, err := Run(context.Background(), projectworkHost(), projectexecutor.ProcessInvoker{}, root, plan.ID)
+		run, err := Run(context.Background(), runtimeLifecycleHost(t, root), projectexecutor.ProcessInvoker{}, root, plan.ID)
 		if err != nil || run.Status != StatusIntegrated {
 			t.Fatalf("review repair did not integrate: status=%s err=%v", run.Status, err)
 		}
@@ -185,11 +185,17 @@ func TestBringYourOwnExecutorFaultInjection(t *testing.T) {
 		setupE2EProcess(t, "integration-stale-summary")
 		setRuntimeFixtureEnv(t, e2eIntegrationCheckEnv, "1")
 		configureMixedRoleRuntime(t, root)
-		plan := planBothManagers(t, root)
+		project := runtimeLifecycleProject(t, root, false)
+		addRuntimeIntegrationFacts(t, project)
+		host := processRuntimeHost(root, project)
+		plan, err := Plan(host, root, identityHead(t, root), PlanRequest{Goal: "Implement both owned artifacts and integrate them.",
+			Managers: []string{orders, inventory}, ExecuteAuthorized: true})
+		if err != nil {
+			t.Fatal(err)
+		}
 		if !planHasCheck(plan, "integration-check") {
 			t.Fatalf("plan omitted the root integration check: %+v", plan.Checks)
 		}
-		host := projectworkHost()
 		run, err := Run(context.Background(), host, projectexecutor.ProcessInvoker{}, root, plan.ID)
 		if err != nil || run.Status != StatusIntegrated {
 			t.Fatalf("integration run did not integrate: status=%s err=%v", run.Status, err)
@@ -210,7 +216,7 @@ func TestBringYourOwnExecutorFaultInjection(t *testing.T) {
 		if calls := countE2EProcessCalls(runtimeFixtureEnv(t, e2eLogEnv), owner, "integrate"); calls < 2 {
 			t.Fatalf("integration owner ran %d times, want a repair integration", calls)
 		}
-		verifyAndApply(t, root, plan, repaired.Candidate.ID)
+		verifyAndApply(t, root, plan, repaired.Candidate.ID, host)
 		assertFileContents(t, root, "src/project-integration.txt", "orders implementation v2\ninventory implementation v2\n")
 	})
 }
@@ -232,7 +238,9 @@ func TestNativeManagerBeforeProcessManagersSharesThePrivateLogDirectory(t *testi
 		native.AppServer = &projectconfig.AppServerSettings{ReasoningEffort: "medium", MaxEventBytes: 1 << 20}
 		runtime.Agents[rootID] = native
 	})
-	host := projectworkHost()
+	project := runtimeLifecycleProject(t, root, false)
+	includeFiniteRuntimeFiles(t, project, root, "AGENTS.md")
+	host := processRuntimeHost(root, project)
 	workspaces, err := projectworkspace.NewGitService(testkit.TempDir(t), projectworkspace.Limits{MaxFiles: 128, MaxFileBytes: 1 << 20, MaxTotalBytes: 4 << 20})
 	if err != nil {
 		t.Fatal(err)

@@ -1,5 +1,7 @@
 package projectrun
 
+import "github.com/Glacius-Labs/Markitect/src/internal/modules/projectmodel/projectvalue"
+
 import (
 	"github.com/Glacius-Labs/Markitect/src/internal/host/projectconfig"
 	"io/fs"
@@ -11,7 +13,7 @@ import (
 )
 
 func TestProjectProposalPathsStayInSelectedInventory(t *testing.T) {
-	config := Config{InventoryRoots: []string{"src/"}, Exclusions: []Exclusion{{Path: "src/private/", Reason: "private"}}}
+	config := projectvalue.Config{InventoryRoots: []string{"src/"}, Exclusions: []projectvalue.Exclusion{{Path: "src/private/", Reason: "private"}}}
 	for _, path := range []string{"outside/new.go", "src/private/secret.go", "src/Private/new.go", ".markitect/model/new.yaml", ".markitect/drafts/agent-fixtures/x.md", ".markitect/new-control-file"} {
 		if projectPathAllowed(config, path) {
 			t.Errorf("proposal path %q should be rejected", path)
@@ -43,7 +45,7 @@ func TestCaptureModeMatchesGitUsesWindowsPermissionSemantics(t *testing.T) {
 }
 
 func TestApplyProposalRejectsUninventoriedAndControlPlanePaths(t *testing.T) {
-	config := Config{InventoryRoots: []string{"src/"}}
+	config := projectvalue.Config{InventoryRoots: []string{"src/"}}
 	report := projectmodel.Report{Managers: []projectmodel.Manager{{ID: "root", Owns: []string{"."}}}}
 	task := ManagerTask{ManagerID: "root", Owns: []string{"."}}
 	for _, path := range []string{"outside/new.go", ".markitect/drafts/agent-fixtures/test.md"} {

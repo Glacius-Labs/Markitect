@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/Glacius-Labs/Markitect/src/internal/modules/projectmodel/projectvalue"
 	"io/fs"
 	"os"
 	"os/exec"
@@ -14,8 +15,8 @@ import (
 
 	"github.com/Glacius-Labs/Markitect/src/internal/core"
 	"github.com/Glacius-Labs/Markitect/src/internal/core/snapshot"
-	"github.com/Glacius-Labs/Markitect/src/internal/host/projectcoverage"
 	"github.com/Glacius-Labs/Markitect/src/internal/modules/projectmodel"
+	modelcoverage "github.com/Glacius-Labs/Markitect/src/internal/modules/projectmodel/projectcoverage"
 )
 
 func TestInitPreviewAndGuardedWriteCreateControlPlaneAndDocumentation(t *testing.T) {
@@ -28,7 +29,7 @@ func TestInitPreviewAndGuardedWriteCreateControlPlaneAndDocumentation(t *testing
 		t.Fatalf("preview planned %d files, want 5", len(preview.Files))
 	}
 	for _, file := range preview.Files {
-		if !strings.HasPrefix(file.Path, ".markitect/") && file.Path != DefaultDocumentPath {
+		if !strings.HasPrefix(file.Path, ".markitect/") && file.Path != projectvalue.DefaultDocumentPath {
 			t.Fatalf("Init planned a path outside .markitect: %s", file.Path)
 		}
 		// Reads may record local state; Git must not see it as untracked.
@@ -53,7 +54,7 @@ func TestInitPreviewAndGuardedWriteCreateControlPlaneAndDocumentation(t *testing
 	if len(project.Report.Managers) != 1 || project.Report.Managers[0].Namespace != "" || len(project.Report.Statements) != 0 {
 		t.Fatalf("Init invented domain definitions: %+v", project.Report)
 	}
-	if project.Config.WorkflowMode != WorkflowModeGuided || project.Config.AcceptancePolicy != AcceptancePolicyCommittedModel {
+	if project.Config.WorkflowMode != projectvalue.WorkflowModeGuided || project.Config.AcceptancePolicy != projectvalue.AcceptancePolicyCommittedModel {
 		t.Fatalf("Init defaults = workflow %q, acceptance %q", project.Config.WorkflowMode, project.Config.AcceptancePolicy)
 	}
 	document, err := Document(project, true)
@@ -76,7 +77,7 @@ func TestWorkflowAndAcceptanceConfigModesAreClosedAndLegacyCompatible(t *testing
 	if legacy.WorkflowMode != "" || legacy.AcceptancePolicy != "" {
 		t.Fatalf("legacy omitted fields were not preserved as compatibility defaults: %+v", legacy)
 	}
-	for _, mode := range []string{WorkflowModeGuided, WorkflowModeEmpty} {
+	for _, mode := range []string{projectvalue.WorkflowModeGuided, projectvalue.WorkflowModeEmpty} {
 		data := strings.Replace(projectConfig(initManagerPath), "name: Fixture\n", "name: Fixture\nworkflowMode: "+mode+"\n", 1)
 		config, err := DecodeConfig([]byte(data))
 		if err != nil || config.WorkflowMode != mode {
@@ -84,7 +85,7 @@ func TestWorkflowAndAcceptanceConfigModesAreClosedAndLegacyCompatible(t *testing
 		}
 	}
 	committed := strings.Replace(projectConfig(initManagerPath), "name: Fixture\n", "name: Fixture\nacceptancePolicy: committed-model\n", 1)
-	if config, err := DecodeConfig([]byte(committed)); err != nil || config.AcceptancePolicy != AcceptancePolicyCommittedModel {
+	if config, err := DecodeConfig([]byte(committed)); err != nil || config.AcceptancePolicy != projectvalue.AcceptancePolicyCommittedModel {
 		t.Fatalf("committed-model acceptance policy decode = %+v, %v", config, err)
 	}
 	for field, value := range map[string]string{"workflowMode": "automatic", "acceptancePolicy": "drafts-accepted"} {
@@ -158,17 +159,17 @@ func TestLoadModelWithoutRuntimeForWorkingAndFixedSnapshots(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if _, ok := withRuntime.Snapshot.Files[RuntimePath]; !ok {
+	if _, ok := withRuntime.Snapshot.Files[projectvalue.RuntimePath]; !ok {
 		t.Fatal("initial fixed snapshot did not include the present runtime file")
 	}
-	if err := os.Remove(filepath.Join(root, filepath.FromSlash(RuntimePath))); err != nil {
+	if err := os.Remove(filepath.Join(root, filepath.FromSlash(projectvalue.RuntimePath))); err != nil {
 		t.Fatal(err)
 	}
 	working, err := Load(root, "")
 	if err != nil {
 		t.Fatalf("working model load without runtime failed: %v", err)
 	}
-	if _, ok := working.Snapshot.Files[RuntimePath]; ok {
+	if _, ok := working.Snapshot.Files[projectvalue.RuntimePath]; ok {
 		t.Fatal("working snapshot bound a runtime file that is absent")
 	}
 	if working.Digest == withRuntime.Digest {
@@ -177,7 +178,7 @@ func TestLoadModelWithoutRuntimeForWorkingAndFixedSnapshots(t *testing.T) {
 	if _, err := projectmodel.Context(working.Report, working.Report.Managers[0].ID); err != nil {
 		t.Fatalf("model context required runtime configuration: %v", err)
 	}
-	gitTest(t, root, "add", "-u", RuntimePath)
+	gitTest(t, root, "add", "-u", projectvalue.RuntimePath)
 	gitTest(t, root, "commit", "-m", "remove optional runtime configuration")
 	withoutRuntimeRevision := strings.TrimSpace(gitTest(t, root, "rev-parse", "HEAD"))
 	fixed, err := Load(root, withoutRuntimeRevision)
@@ -187,7 +188,7 @@ func TestLoadModelWithoutRuntimeForWorkingAndFixedSnapshots(t *testing.T) {
 	if fixed.Provisional || fixed.Revision != withoutRuntimeRevision {
 		t.Fatalf("fixed model identity changed: %+v", fixed)
 	}
-	if _, ok := fixed.Snapshot.Files[RuntimePath]; ok {
+	if _, ok := fixed.Snapshot.Files[projectvalue.RuntimePath]; ok {
 		t.Fatal("fixed snapshot bound a runtime file that is absent")
 	}
 	if _, err := projectmodel.Context(fixed.Report, fixed.Report.Managers[0].ID); err != nil {
@@ -209,27 +210,27 @@ func TestLoadFullCoverageModelWithoutRuntimeForWorkingAndFixedSnapshots(t *testi
 	}
 	gitTest(t, root, "add", ".")
 	gitTest(t, root, "commit", "-m", "initialize full-coverage model")
-	if err := os.Remove(filepath.Join(root, filepath.FromSlash(RuntimePath))); err != nil {
+	if err := os.Remove(filepath.Join(root, filepath.FromSlash(projectvalue.RuntimePath))); err != nil {
 		t.Fatal(err)
 	}
 	working, err := Load(root, "")
 	if err != nil {
 		t.Fatalf("working full-coverage model load without runtime failed: %v", err)
 	}
-	if _, ok := working.Snapshot.Files[RuntimePath]; ok {
+	if _, ok := working.Snapshot.Files[projectvalue.RuntimePath]; ok {
 		t.Fatal("working full-coverage snapshot bound an absent runtime")
 	}
 	if _, err := projectmodel.Context(working.Report, working.Report.Managers[0].ID); err != nil {
 		t.Fatalf("working full-coverage context required runtime configuration: %v", err)
 	}
-	gitTest(t, root, "add", "-u", RuntimePath)
+	gitTest(t, root, "add", "-u", projectvalue.RuntimePath)
 	gitTest(t, root, "commit", "-m", "remove runtime from full-coverage project")
 	revision := strings.TrimSpace(gitTest(t, root, "rev-parse", "HEAD"))
 	fixed, err := Load(root, revision)
 	if err != nil {
 		t.Fatalf("fixed full-coverage model load without runtime failed: %v", err)
 	}
-	if _, ok := fixed.Snapshot.Files[RuntimePath]; ok {
+	if _, ok := fixed.Snapshot.Files[projectvalue.RuntimePath]; ok {
 		t.Fatal("fixed full-coverage snapshot bound an absent runtime")
 	}
 	if _, err := projectmodel.Context(fixed.Report, fixed.Report.Managers[0].ID); err != nil {
@@ -291,7 +292,7 @@ func TestPlanAndApplyEditBindCandidateAndRejectStaleOrSelfAuthority(t *testing.T
 		t.Fatal(err)
 	}
 	path := ".markitect/model/statement.yaml"
-	mutation := Mutation{APIVersion: APIVersion, BaseDigest: project.Digest, Actor: rootManagerID(), Goal: "Clarify the project goal", Files: []FileChange{{Path: path, Content: statementDefinition("A clarified project goal.")}}}
+	mutation := projectvalue.Mutation{APIVersion: projectvalue.APIVersion, BaseDigest: project.Digest, Actor: rootManagerID(), Goal: "Clarify the project goal", Files: []projectvalue.FileChange{{Path: path, Content: statementDefinition("A clarified project goal.")}}}
 	plan, err := PlanEdit(project, mutation)
 	if err != nil {
 		t.Fatal(err)
@@ -316,7 +317,7 @@ func TestPlanAndApplyEditBindCandidateAndRejectStaleOrSelfAuthority(t *testing.T
 		t.Fatal(err)
 	}
 	manager := strings.Replace(managerDefinition(), "    - .", "    - src/", 1)
-	_, err = PlanEdit(project, Mutation{APIVersion: APIVersion, BaseDigest: project.Digest, Actor: rootManagerID(), Goal: "Expand own authority", Files: []FileChange{{Path: initManagerPath, Content: manager}}})
+	_, err = PlanEdit(project, projectvalue.Mutation{APIVersion: projectvalue.APIVersion, BaseDigest: project.Digest, Actor: rootManagerID(), Goal: "Expand own authority", Files: []projectvalue.FileChange{{Path: initManagerPath, Content: manager}}})
 	if err == nil || !strings.Contains(err.Error(), "cannot change the active mandate") {
 		t.Fatalf("self-authorized manager change error = %v", err)
 	}
@@ -357,7 +358,7 @@ func TestFixedHEADPlanCanApplyOnlyWhileWorkingInputsMatch(t *testing.T) {
 // With core.filemode=false the snapshot takes a tracked file's mode from the
 // Git index, so guarded writes must not compare it with on-disk permission bits.
 func TestUnchangedTrackedExecutableWithoutFileModeDoesNotBlockGuardedWrites(t *testing.T) {
-	setup := func(t *testing.T) (string, *Project) {
+	setup := func(t *testing.T) (string, *projectvalue.Project) {
 		t.Helper()
 		root := testGitRoot(t)
 		gitTest(t, root, "config", "core.filemode", "false")
@@ -390,8 +391,8 @@ func TestUnchangedTrackedExecutableWithoutFileModeDoesNotBlockGuardedWrites(t *t
 		if edited == original {
 			t.Fatal("could not edit manager purpose")
 		}
-		mutation := Mutation{APIVersion: APIVersion, BaseDigest: p.Digest, Actor: HumanActor, Goal: "Edit manager purpose",
-			Files: []FileChange{{Path: initManagerPath, Content: edited}}}
+		mutation := projectvalue.Mutation{APIVersion: projectvalue.APIVersion, BaseDigest: p.Digest, Actor: projectvalue.HumanActor, Goal: "Edit manager purpose",
+			Files: []projectvalue.FileChange{{Path: initManagerPath, Content: edited}}}
 		plan, err := PlanEdit(p, mutation)
 		if err != nil {
 			t.Fatal(err)
@@ -421,7 +422,7 @@ func TestUserCanSelectNewInventoryThroughReviewedManifestEdit(t *testing.T) {
 		t.Fatal(err)
 	}
 	config := strings.Replace(projectConfig(initManagerPath), "name: Fixture", "name: New project", 1)
-	mutation := Mutation{APIVersion: APIVersion, BaseDigest: project.Digest, Actor: HumanActor, Goal: "Select the source inventory", Files: []FileChange{{Path: ManifestPath, Content: config}}}
+	mutation := projectvalue.Mutation{APIVersion: projectvalue.APIVersion, BaseDigest: project.Digest, Actor: projectvalue.HumanActor, Goal: "Select the source inventory", Files: []projectvalue.FileChange{{Path: projectvalue.ManifestPath, Content: config}}}
 	plan, err := PlanEdit(project, mutation)
 	if err != nil {
 		t.Fatal(err)
@@ -477,10 +478,10 @@ func TestUserCanSelectNewInventoryThroughReviewedManifestEdit(t *testing.T) {
 func TestNonRootManagerCannotChangeInventoryScope(t *testing.T) {
 	root, _ := testProject(t)
 	childPath := ".markitect/model/orders/manager.yaml"
-	child := "apiVersion: " + APIVersion + "\nkind: Manager\nmetadata:\n  name: orders\n  namespace: orders\npurpose: Owns order responsibilities.\nspec:\n  parent:\n    apiVersion: " + APIVersion + "\n    kind: Manager\n    namespace: \"\"\n    name: project-owner\n  owns: [src/]\n"
+	child := "apiVersion: " + projectvalue.APIVersion + "\nkind: Manager\nmetadata:\n  name: orders\n  namespace: orders\npurpose: Owns order responsibilities.\nspec:\n  parent:\n    apiVersion: " + projectvalue.APIVersion + "\n    kind: Manager\n    namespace: \"\"\n    name: project-owner\n  owns: [src/]\n"
 	writeFile(t, root, childPath, child)
 	config := strings.Replace(projectConfig(".markitect/model/manager.yaml", ".markitect/model/statement.yaml", childPath), "inventoryRoots:\n  - src\n", "inventoryRoots:\n  - src\n", 1)
-	writeFile(t, root, ManifestPath, config)
+	writeFile(t, root, projectvalue.ManifestPath, config)
 	project, err := Load(root, "")
 	if err != nil {
 		t.Fatal(err)
@@ -495,7 +496,7 @@ func TestNonRootManagerCannotChangeInventoryScope(t *testing.T) {
 		t.Fatalf("child Manager missing from report: %+v", project.Report.Managers)
 	}
 	changedScope := strings.Replace(config, "inventoryRoots:\n  - src\n", "inventoryRoots:\n  - docs\n", 1)
-	_, err = PlanEdit(project, Mutation{APIVersion: APIVersion, BaseDigest: project.Digest, Actor: childID, Goal: "Change inventory boundary", Files: []FileChange{{Path: ManifestPath, Content: changedScope}}})
+	_, err = PlanEdit(project, projectvalue.Mutation{APIVersion: projectvalue.APIVersion, BaseDigest: project.Digest, Actor: childID, Goal: "Change inventory boundary", Files: []projectvalue.FileChange{{Path: projectvalue.ManifestPath, Content: changedScope}}})
 	if err == nil || !strings.Contains(err.Error(), "active root Manager") {
 		t.Fatalf("non-root Manager inventory scope error = %v", err)
 	}
@@ -507,24 +508,24 @@ func TestPlanEditRejectsNamespaceMismatchPathEscapeAndClosedInputAliases(t *test
 	if err != nil {
 		t.Fatal(err)
 	}
-	_, err = PlanEdit(project, Mutation{APIVersion: APIVersion, BaseDigest: project.Digest, Actor: HumanActor, Goal: "Escape", Files: []FileChange{{Path: ".markitect/model/../outside.yaml", Content: "x"}}})
+	_, err = PlanEdit(project, projectvalue.Mutation{APIVersion: projectvalue.APIVersion, BaseDigest: project.Digest, Actor: projectvalue.HumanActor, Goal: "Escape", Files: []projectvalue.FileChange{{Path: ".markitect/model/../outside.yaml", Content: "x"}}})
 	if err == nil || !strings.Contains(err.Error(), "normalized repository-relative") {
 		t.Fatalf("path escape error = %v", err)
 	}
 	s := mapSnapshot(map[string]string{
-		ManifestPath:                             "apiVersion: " + APIVersion + "\nname: Fixture\nmodelFiles: [.markitect/model/orders/statement.yaml]\ninventoryRoots: [src]\nexclusions: []\n",
-		RuntimePath:                              "{}\n",
+		projectvalue.ManifestPath:                "apiVersion: " + projectvalue.APIVersion + "\nname: Fixture\nmodelFiles: [.markitect/model/orders/statement.yaml]\ninventoryRoots: [src]\nexclusions: []\n",
+		projectvalue.RuntimePath:                 "{}\n",
 		initManagerPath:                          managerDefinition(),
 		".markitect/model/orders/statement.yaml": statementDefinition("Wrong namespace."),
 	})
 	if _, err := FromSnapshot(root, s); err == nil || !strings.Contains(err.Error(), "requires \"orders\"") {
 		t.Fatalf("namespace mismatch error = %v", err)
 	}
-	alias := []byte("apiVersion: " + APIVersion + "\nname: &project Fixture\nmodelFiles: [.markitect/model/manager.yaml]\ninventoryRoots: []\nexclusions: []\n")
+	alias := []byte("apiVersion: " + projectvalue.APIVersion + "\nname: &project Fixture\nmodelFiles: [.markitect/model/manager.yaml]\ninventoryRoots: []\nexclusions: []\n")
 	if _, err := DecodeConfig(alias); err == nil || !strings.Contains(err.Error(), "aliases and anchors") {
 		t.Fatalf("YAML alias error = %v", err)
 	}
-	duplicate := []byte("apiVersion: " + APIVersion + "\nname: Fixture\nname: Duplicate\nmodelFiles: [.markitect/model/manager.yaml]\ninventoryRoots: []\nexclusions: []\n")
+	duplicate := []byte("apiVersion: " + projectvalue.APIVersion + "\nname: Fixture\nname: Duplicate\nmodelFiles: [.markitect/model/manager.yaml]\ninventoryRoots: []\nexclusions: []\n")
 	if _, err := DecodeConfig(duplicate); err == nil || !strings.Contains(err.Error(), "duplicate key") {
 		t.Fatalf("duplicate YAML key error = %v", err)
 	}
@@ -532,12 +533,12 @@ func TestPlanEditRejectsNamespaceMismatchPathEscapeAndClosedInputAliases(t *test
 
 func TestConfigRejectsCaseAliasedScopesAndReservedRuntimeRoots(t *testing.T) {
 	for _, roots := range []string{"[src, SRC/generated]", "[.MARKITECT/cache]"} {
-		data := []byte("apiVersion: " + APIVersion + "\nname: Fixture\nmodelFiles: [.markitect/model/manager.yaml]\ninventoryRoots: " + roots + "\nexclusions: []\n")
+		data := []byte("apiVersion: " + projectvalue.APIVersion + "\nname: Fixture\nmodelFiles: [.markitect/model/manager.yaml]\ninventoryRoots: " + roots + "\nexclusions: []\n")
 		if _, err := DecodeConfig(data); err == nil {
 			t.Errorf("inventory roots %s should be rejected", roots)
 		}
 	}
-	wrongCase := []byte("ApiVersion: " + APIVersion + "\nname: Fixture\nmodelFiles: [.markitect/model/manager.yaml]\ninventoryRoots: []\nexclusions: []\n")
+	wrongCase := []byte("ApiVersion: " + projectvalue.APIVersion + "\nname: Fixture\nmodelFiles: [.markitect/model/manager.yaml]\ninventoryRoots: []\nexclusions: []\n")
 	if _, err := DecodeConfig(wrongCase); err == nil {
 		t.Fatal("incorrectly cased YAML field should be rejected")
 	}
@@ -552,23 +553,23 @@ func TestConfigRejectsDocumentControlPathCollisionsAndLinksFromCustomPath(t *tes
 		".markitect/ignore.yaml",
 		".markitect/workflows/model-first.md",
 	} {
-		data := []byte("apiVersion: " + APIVersion + "\nname: Fixture\ndocumentPath: " + destination + "\nmodelFiles: [.markitect/model/manager.yaml]\ninventoryRoots: []\nexclusions: []\n")
+		data := []byte("apiVersion: " + projectvalue.APIVersion + "\nname: Fixture\ndocumentPath: " + destination + "\nmodelFiles: [.markitect/model/manager.yaml]\ninventoryRoots: []\nexclusions: []\n")
 		if _, err := DecodeConfig(data); err == nil {
 			t.Errorf("documentPath %q should be rejected", destination)
 		}
 	}
-	config, err := DecodeConfig([]byte("apiVersion: " + APIVersion + "\nname: Fixture\ndocumentPath: docs/generated/overview.md\nmodelFiles: [.markitect/model/manager.yaml]\ninventoryRoots: []\nexclusions: []\n"))
+	config, err := DecodeConfig([]byte("apiVersion: " + projectvalue.APIVersion + "\nname: Fixture\ndocumentPath: docs/generated/overview.md\nmodelFiles: [.markitect/model/manager.yaml]\ninventoryRoots: []\nexclusions: []\n"))
 	if err != nil {
 		t.Fatal(err)
 	}
-	if got, want := sourceLinkAt(DocumentPath(config), "src/feature/file.go"), "[src/feature/file.go](../../src/feature/file.go)"; got != want {
+	if got, want := sourceLinkAt(projectvalue.DocumentPath(config), "src/feature/file.go"), "[src/feature/file.go](../../src/feature/file.go)"; got != want {
 		t.Fatalf("custom document source link = %q, want %q", got, want)
 	}
 }
 
 func TestArtifactPathLinksAreRelativeToConfiguredDocumentPath(t *testing.T) {
-	project := &Project{
-		Config: Config{Name: "Fixture", CoverageMode: "full", DocumentPath: "ARCHITECTURE.md"},
+	project := &projectvalue.Project{
+		Config: projectvalue.Config{Name: "Fixture", CoverageMode: "full", DocumentPath: "ARCHITECTURE.md"},
 		Report: projectmodel.Report{
 			Statements: []projectmodel.Statement{{ID: "s", Name: "Goal", Source: ".markitect/model/goal.yaml", Description: "Goal."}},
 			Artifacts:  []projectmodel.Artifact{{ID: "a", Name: "Main", Paths: []string{"src/main.go"}}},
@@ -596,15 +597,15 @@ func TestArtifactPathLinksAreRelativeToConfiguredDocumentPath(t *testing.T) {
 // the golden copy of the view: no revision, binding or inventory, and only the
 // paths and definitions with a finding.
 func TestProjectDocumentLinesHaveNoTrailingWhitespace(t *testing.T) {
-	ignore := "apiVersion: " + projectcoverage.IgnoreAPIVersion + "\nkind: RepositoryIgnore\nentries:\n  - path: build/\n    reason: Generated output.\n"
-	project := &Project{
+	ignore := "apiVersion: " + modelcoverage.IgnoreAPIVersion + "\nkind: RepositoryIgnore\nentries:\n  - path: build/\n    reason: Generated output.\n"
+	project := &projectvalue.Project{
 		Revision: "0123abc",
 		Digest:   "sha256:binding",
-		Config: Config{Name: "Fixture", CoverageMode: "full", DocumentPath: DefaultDocumentPath, InventoryRoots: []string{"src"},
-			Exclusions: []Exclusion{{Path: "vendor/", Reason: "Third-party code. "}}, TransitionalExclusions: []Exclusion{{Path: "legacy/", Reason: "Awaits modeling."}}},
+		Config: projectvalue.Config{Name: "Fixture", CoverageMode: "full", DocumentPath: projectvalue.DefaultDocumentPath, InventoryRoots: []string{"src"},
+			Exclusions: []projectvalue.Exclusion{{Path: "vendor/", Reason: "Third-party code. "}}, TransitionalExclusions: []projectvalue.Exclusion{{Path: "legacy/", Reason: "Awaits modeling."}}},
 		Model:    core.Model{Digest: "sha256:model"},
-		Snapshot: mapSnapshot(map[string]string{projectcoverage.IgnorePath: ignore}),
-		Coverage: &projectcoverage.Report{Accounted: true, Findings: []projectcoverage.Finding{
+		Snapshot: mapSnapshot(map[string]string{modelcoverage.IgnorePath: ignore}),
+		Coverage: &modelcoverage.Report{Accounted: true, Findings: []modelcoverage.Finding{
 			{Code: "coverage.unclassified", Path: "src/extra.txt", Message: "Repository path has no Artifact.", Severity: "error"}}},
 		Report: projectmodel.Report{
 			Status: "succeeded",
@@ -777,7 +778,7 @@ func TestConfigDoesNotReserveRemovedRouterDocumentPath(t *testing.T) {
 		".agents/skills/markitect-model-first/SKILL.md",
 		".claude/skills/markitect-model-first/SKILL.md",
 	} {
-		data := []byte("apiVersion: " + APIVersion + "\nname: Fixture\ndocumentPath: " + destination + "\nmodelFiles: [.markitect/model/manager.yaml]\ninventoryRoots: []\nexclusions: []\n")
+		data := []byte("apiVersion: " + projectvalue.APIVersion + "\nname: Fixture\ndocumentPath: " + destination + "\nmodelFiles: [.markitect/model/manager.yaml]\ninventoryRoots: []\nexclusions: []\n")
 		if _, err := DecodeConfig(data); err != nil {
 			t.Errorf("removed router path %q remains reserved: %v", destination, err)
 		}
@@ -785,19 +786,19 @@ func TestConfigDoesNotReserveRemovedRouterDocumentPath(t *testing.T) {
 }
 
 func TestDecodeMutationRejectsDuplicateAndUnknownJSONFields(t *testing.T) {
-	duplicate := []byte("{\"apiVersion\":\"" + APIVersion + "\",\"apiVersion\":\"" + APIVersion + "\",\"baseDigest\":\"x\",\"actor\":\"user\",\"goal\":\"x\",\"files\":[]}")
+	duplicate := []byte("{\"apiVersion\":\"" + projectvalue.APIVersion + "\",\"apiVersion\":\"" + projectvalue.APIVersion + "\",\"baseDigest\":\"x\",\"actor\":\"user\",\"goal\":\"x\",\"files\":[]}")
 	if _, err := DecodeMutation(duplicate); err == nil || !strings.Contains(err.Error(), "duplicate key") {
 		t.Fatalf("duplicate JSON field error = %v", err)
 	}
-	unknown := map[string]any{"apiVersion": APIVersion, "baseDigest": "x", "actor": "user", "goal": "x", "files": []any{}, "authority": "root"}
+	unknown := map[string]any{"apiVersion": projectvalue.APIVersion, "baseDigest": "x", "actor": "user", "goal": "x", "files": []any{}, "authority": "root"}
 	data, _ := json.Marshal(unknown)
 	if _, err := DecodeMutation(data); err == nil || !strings.Contains(err.Error(), "unknown") {
 		t.Fatalf("unknown JSON field error = %v", err)
 	}
 	for name, raw := range map[string]string{
-		"case alias":            `{"apiVersion":"` + APIVersion + `","baseDigest":"x","actor":"user","Actor":"user","goal":"x","files":[]}`,
-		"wrong root spelling":   `{"ApiVersion":"` + APIVersion + `","baseDigest":"x","actor":"user","goal":"x","files":[]}`,
-		"wrong nested spelling": `{"apiVersion":"` + APIVersion + `","baseDigest":"x","actor":"user","goal":"x","files":[{"Path":".markitect/model/statement.yaml","content":"x"}]}`,
+		"case alias":            `{"apiVersion":"` + projectvalue.APIVersion + `","baseDigest":"x","actor":"user","Actor":"user","goal":"x","files":[]}`,
+		"wrong root spelling":   `{"ApiVersion":"` + projectvalue.APIVersion + `","baseDigest":"x","actor":"user","goal":"x","files":[]}`,
+		"wrong nested spelling": `{"apiVersion":"` + projectvalue.APIVersion + `","baseDigest":"x","actor":"user","goal":"x","files":[{"Path":".markitect/model/statement.yaml","content":"x"}]}`,
 	} {
 		if _, err := DecodeMutation([]byte(raw)); err == nil {
 			t.Errorf("%s should be rejected", name)
@@ -814,8 +815,8 @@ func testProject(t *testing.T) (string, string) {
 	if err := os.MkdirAll(filepath.Join(root, "src"), 0755); err != nil {
 		t.Fatal(err)
 	}
-	writeFile(t, root, ManifestPath, projectConfig(initManagerPath, ".markitect/model/statement.yaml"))
-	writeFile(t, root, RuntimePath, "{}\n")
+	writeFile(t, root, projectvalue.ManifestPath, projectConfig(initManagerPath, ".markitect/model/statement.yaml"))
+	writeFile(t, root, projectvalue.RuntimePath, "{}\n")
 	writeFile(t, root, initManagerPath, managerDefinition())
 	writeFile(t, root, ".markitect/model/statement.yaml", statementDefinition("The project has a goal."))
 	writeFile(t, root, "src/unmodeled.txt", "observed but unassigned\n")
@@ -837,17 +838,17 @@ func testGitRoot(t *testing.T) string {
 }
 
 func managerDefinition() string {
-	return "apiVersion: " + APIVersion + "\nkind: Manager\nmetadata:\n  name: project-owner\n  namespace: \"\"\npurpose: Owns the project.\nspec:\n  owns:\n    - .\n"
+	return "apiVersion: " + projectvalue.APIVersion + "\nkind: Manager\nmetadata:\n  name: project-owner\n  namespace: \"\"\npurpose: Owns the project.\nspec:\n  owns:\n    - .\n"
 }
 
 func statementDefinition(description string) string {
 	encoded, _ := json.Marshal(description)
-	return "apiVersion: " + APIVersion + "\nkind: Statement\nmetadata:\n  name: project-goal\n  namespace: \"\"\npurpose: Project goal.\nspec:\n  category: concept\n  description: " + string(encoded) + "\n"
+	return "apiVersion: " + projectvalue.APIVersion + "\nkind: Statement\nmetadata:\n  name: project-goal\n  namespace: \"\"\npurpose: Project goal.\nspec:\n  category: concept\n  description: " + string(encoded) + "\n"
 }
 
 func projectConfig(files ...string) string {
 	var b strings.Builder
-	fmt.Fprintf(&b, "apiVersion: %s\nname: Fixture\nmodelFiles:\n", APIVersion)
+	fmt.Fprintf(&b, "apiVersion: %s\nname: Fixture\nmodelFiles:\n", projectvalue.APIVersion)
 	for _, file := range files {
 		fmt.Fprintf(&b, "  - %s\n", file)
 	}
@@ -856,12 +857,12 @@ func projectConfig(files ...string) string {
 }
 
 func rootManagerID() string {
-	encoded, _ := json.Marshal([]string{APIVersion, "Manager", "", "project-owner"})
+	encoded, _ := json.Marshal([]string{projectvalue.APIVersion, "Manager", "", "project-owner"})
 	return string(encoded)
 }
 
-func mutationFor(project *Project, file, description string) Mutation {
-	return Mutation{APIVersion: APIVersion, BaseDigest: project.Digest, Actor: rootManagerID(), Goal: "Edit statement", Files: []FileChange{{Path: file, Content: statementDefinition(description)}}}
+func mutationFor(project *projectvalue.Project, file, description string) projectvalue.Mutation {
+	return projectvalue.Mutation{APIVersion: projectvalue.APIVersion, BaseDigest: project.Digest, Actor: rootManagerID(), Goal: "Edit statement", Files: []projectvalue.FileChange{{Path: file, Content: statementDefinition(description)}}}
 }
 
 func mapSnapshot(files map[string]string) *snapshot.Snapshot {

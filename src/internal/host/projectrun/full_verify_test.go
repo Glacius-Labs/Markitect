@@ -4,8 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"github.com/Glacius-Labs/Markitect/src/internal/host/projectconfig"
-	"github.com/Glacius-Labs/Markitect/src/internal/host/projectexecutor"
 	"io"
 	"math"
 	"os"
@@ -15,11 +13,13 @@ import (
 	"testing"
 	"time"
 
+	"github.com/Glacius-Labs/Markitect/src/internal/core/snapshot"
 	"github.com/Glacius-Labs/Markitect/src/internal/host/agentexec"
-	"github.com/Glacius-Labs/Markitect/src/internal/host/projectcoverage"
-	"github.com/Glacius-Labs/Markitect/src/internal/host/projectwork"
+	"github.com/Glacius-Labs/Markitect/src/internal/host/projectconfig"
+	"github.com/Glacius-Labs/Markitect/src/internal/host/projectexecutor"
 	"github.com/Glacius-Labs/Markitect/src/internal/host/projectworkspace"
 	"github.com/Glacius-Labs/Markitect/src/internal/modules/projectmodel"
+	"github.com/Glacius-Labs/Markitect/src/internal/modules/projectmodel/projectvalue"
 	"github.com/Glacius-Labs/Markitect/src/internal/testkit"
 )
 
@@ -110,44 +110,25 @@ func TestFullVerifyCheckProcess(t *testing.T) {
 }
 
 func TestFullVerifyReviewEvidenceIncludesOnlyCurrentParentIntegrationAndPreservesOriginalBindings(t *testing.T) {
-	root := makeProjectRunFixture(t)
-	project, err := projectwork.Load(root, identityHead(t, root))
-	if err != nil {
-		t.Fatal(err)
-	}
-	var target projectmodel.Manager
-	var sibling projectmodel.Manager
-	for _, manager := range project.Report.Managers {
-		if manager.Parent != "" {
-			target = manager
-			break
-		}
-	}
-	if target.ID == "" {
-		t.Fatal("fixture has no child Manager")
-	}
-	for _, manager := range project.Report.Managers {
-		if manager.ID != target.ID && manager.Parent == target.Parent {
-			sibling = manager
-			break
-		}
-	}
-	if sibling.ID == "" {
-		t.Fatal("fixture has no sibling Manager")
-	}
-	project.Report.Managers = append(project.Report.Managers, projectmodel.Manager{ID: "unrelated-manager", Parent: "other-root"})
+	rootID, targetID, siblingID := "manager:root", "manager:target", "manager:sibling"
+	report := projectmodel.Report{Managers: []projectmodel.Manager{
+		{ID: rootID, Name: "root"},
+		{ID: targetID, Name: "target", Parent: rootID},
+		{ID: siblingID, Name: "sibling", Parent: rootID},
+		{ID: "unrelated-manager", Name: "unrelated", Parent: "other-root"},
+	}}
 	finalCandidateID := "candidate-final"
 	finalCandidateDigest := "sha256:final-candidate"
-	want := fullReviewEvidence{TaskID: "task-parent", ManagerID: target.Parent, Phase: "integrate",
+	want := fullReviewEvidence{TaskID: "task-parent", ManagerID: rootID, Phase: "integrate",
 		ReviewCandidateID: "candidate-reviewed", ReviewCandidateDigest: "sha256:reviewed",
 		FinalCandidateID: finalCandidateID, FinalCandidateDigest: finalCandidateDigest,
 		ScopeDigest: "sha256:scope", InputDigest: "sha256:input", ReceiptRunID: "review-run", Outcome: "pass", Findings: []ReviewFinding{}}
-	got := fullAuditIntegrationReviewsForManager(project.Report, target.ID, finalCandidateID, finalCandidateDigest, []fullReviewEvidence{
-		{ManagerID: target.ID, Outcome: "pass", FinalCandidateID: finalCandidateID, FinalCandidateDigest: finalCandidateDigest},
-		{ManagerID: sibling.ID, Phase: "work", Outcome: "pass", FinalCandidateID: finalCandidateID, FinalCandidateDigest: finalCandidateDigest},
-		{ManagerID: target.Parent, Phase: "work", Outcome: "pass", FinalCandidateID: finalCandidateID, FinalCandidateDigest: finalCandidateDigest},
-		{ManagerID: target.Parent, Phase: "integrate", Outcome: "pass", FinalCandidateID: "stale-candidate", FinalCandidateDigest: "sha256:stale"},
-		{ManagerID: target.Parent, Phase: "integrate", Outcome: "fail", FinalCandidateID: finalCandidateID, FinalCandidateDigest: finalCandidateDigest},
+	got := fullAuditIntegrationReviewsForManager(report, targetID, finalCandidateID, finalCandidateDigest, []fullReviewEvidence{
+		{ManagerID: targetID, Outcome: "pass", FinalCandidateID: finalCandidateID, FinalCandidateDigest: finalCandidateDigest},
+		{ManagerID: siblingID, Phase: "work", Outcome: "pass", FinalCandidateID: finalCandidateID, FinalCandidateDigest: finalCandidateDigest},
+		{ManagerID: rootID, Phase: "work", Outcome: "pass", FinalCandidateID: finalCandidateID, FinalCandidateDigest: finalCandidateDigest},
+		{ManagerID: rootID, Phase: "integrate", Outcome: "pass", FinalCandidateID: "stale-candidate", FinalCandidateDigest: "sha256:stale"},
+		{ManagerID: rootID, Phase: "integrate", Outcome: "fail", FinalCandidateID: finalCandidateID, FinalCandidateDigest: finalCandidateDigest},
 		want,
 		{ManagerID: "unrelated-manager", Outcome: "pass", FinalCandidateID: finalCandidateID, FinalCandidateDigest: finalCandidateDigest},
 	})
@@ -158,12 +139,12 @@ func TestFullVerifyReviewEvidenceIncludesOnlyCurrentParentIntegrationAndPreserve
 		t.Fatalf("parent review provenance or findings changed: got=%+v want=%+v", got[0], want)
 	}
 	rootReview := want
-	rootReview.TaskID, rootReview.ManagerID, rootReview.ReviewCandidateID = "task-root", target.Parent, "root-reviewed-partial-candidate"
+	rootReview.TaskID, rootReview.ManagerID, rootReview.ReviewCandidateID = "task-root", rootID, "root-reviewed-partial-candidate"
 	rootReview.ReviewCandidateDigest, rootReview.ReceiptRunID = "sha256:root-reviewed", "root-integration-receipt"
-	rootReviews := fullAuditIntegrationReviewsForManager(project.Report, target.Parent, finalCandidateID, finalCandidateDigest, []fullReviewEvidence{
+	rootReviews := fullAuditIntegrationReviewsForManager(report, rootID, finalCandidateID, finalCandidateDigest, []fullReviewEvidence{
 		rootReview,
-		{ManagerID: target.ID, Phase: "integrate", Outcome: "pass", FinalCandidateID: finalCandidateID, FinalCandidateDigest: finalCandidateDigest},
-		{ManagerID: target.Parent, Phase: "work", Outcome: "pass", FinalCandidateID: finalCandidateID, FinalCandidateDigest: finalCandidateDigest},
+		{ManagerID: targetID, Phase: "integrate", Outcome: "pass", FinalCandidateID: finalCandidateID, FinalCandidateDigest: finalCandidateDigest},
+		{ManagerID: rootID, Phase: "work", Outcome: "pass", FinalCandidateID: finalCandidateID, FinalCandidateDigest: finalCandidateDigest},
 	})
 	if len(rootReviews) != 1 || !reflect.DeepEqual(rootReviews[0], rootReview) {
 		t.Fatalf("top-level Manager did not receive its own exact integration review: %+v", rootReviews)
@@ -171,44 +152,30 @@ func TestFullVerifyReviewEvidenceIncludesOnlyCurrentParentIntegrationAndPreserve
 }
 
 func TestFreshReviewEvidenceForVerifySelectsCurrentScopeAndRetainsPartialCandidate(t *testing.T) {
-	root := makeProjectRunFixture(t)
-	project, err := projectwork.Load(root, identityHead(t, root))
-	if err != nil {
-		t.Fatal(err)
-	}
-	var target projectmodel.Manager
-	var artifactID string
-	for _, artifact := range project.Report.Artifacts {
-		if len(artifact.Paths) != 0 {
-			for _, manager := range project.Report.Managers {
-				if manager.ID == artifact.Owner {
-					target, artifactID = manager, artifact.ID
-					break
-				}
-			}
-		}
-		if target.ID != "" {
-			break
-		}
-	}
-	if target.ID == "" || artifactID == "" {
-		t.Fatal("fixture has no manager-owned artifact for a scoped review")
-	}
+	root := t.TempDir()
+	targetID, artifactID := "manager:inventory", "artifact:inventory"
 	documentPath := "src/inventory/docs/greeting.md"
 	documentContent := []byte("The greeting is displayed to the caller.\n")
-	project.Snapshot.Files[documentPath] = documentContent
-	project.Snapshot.Modes[documentPath] = "0644"
-	project.Report.Files = append(project.Report.Files, projectmodel.FileEntry{Path: documentPath, Mode: "0644", Owner: target.ID,
-		Class: "documentation", Artifacts: []string{artifactID}, Exists: true})
-	for i := range project.Report.Artifacts {
-		if project.Report.Artifacts[i].ID == artifactID {
-			project.Report.Artifacts[i].Paths = append(project.Report.Artifacts[i].Paths, documentPath)
-			break
-		}
+	implementationPath := "src/inventory/implementation.txt"
+	project := &projectvalue.Project{
+		Revision: strings.Repeat("a", 40),
+		Config:   projectvalue.Config{CoverageMode: "selected"},
+		Snapshot: &snapshot.Snapshot{Files: map[string][]byte{
+			documentPath: documentContent, implementationPath: []byte("fixed implementation bytes\n"),
+		}, Modes: map[string]string{documentPath: snapshot.RegularMode, implementationPath: snapshot.RegularMode}},
+		Report: projectmodel.Report{
+			Managers:   []projectmodel.Manager{{ID: targetID, Name: "inventory"}},
+			Statements: []projectmodel.Statement{{ID: "statement:inventory", Owner: targetID, Public: true, Description: "Own the inventory implementation."}},
+			Artifacts:  []projectmodel.Artifact{{ID: artifactID, Owner: targetID, Required: true, Realizes: []string{"statement:inventory"}, Paths: []string{implementationPath, documentPath}}},
+			Files: []projectmodel.FileEntry{
+				{Path: implementationPath, Mode: snapshot.RegularMode, Owner: targetID, Class: "implementation", Artifacts: []string{artifactID}, Exists: true},
+				{Path: documentPath, Mode: snapshot.RegularMode, Owner: targetID, Class: "documentation", Artifacts: []string{artifactID}, Exists: true},
+			},
+		},
 	}
-	task := ManagerTask{ID: "task-current", ManagerID: target.ID, Goal: "Review the owned artifact.", Artifacts: []string{artifactID}}
+	task := ManagerTask{ID: "task-current", ManagerID: targetID, Goal: "Review the owned artifact.", Artifacts: []string{artifactID}}
 	plan := PlanRecord{ID: "plan-current", Goal: "Complete the project artifact.", Operation: OperationApply,
-		Managers: []ManagerTask{task}, BriefingDigests: map[string]string{}, Strictness: map[string]projectconfig.StrictnessProfile{}}
+		BaseRevision: project.Revision, Managers: []ManagerTask{task}, BriefingDigests: map[string]string{}, Strictness: map[string]projectconfig.StrictnessProfile{}}
 	run := RunReport{ID: "0123456789abcdef0123456789abcdef", Tasks: []ManagerTask{task}}
 	currentScope, err := reviewScopeDigest(plan, project, task, "work", run)
 	if err != nil {
@@ -253,7 +220,13 @@ func TestFreshReviewEvidenceForVerifySelectsCurrentScopeAndRetainsPartialCandida
 	historical := current
 	historical.CandidateID, historical.CandidateDigest, historical.ScopeDigest, historical.Receipt.RunID = "33333333333333333333333333333333", "sha256:old", "sha256:old-scope", "review-run-old"
 	run.Reviews = []ReviewRecord{current, historical}
-	evidence, err := freshReviewEvidenceForVerify(store, dir, project, final, plan, projectconfig.Runtime{Review: &projectconfig.ReviewConfig{}}, run)
+	host := Host{Load: func(_ string, revision string) (*projectvalue.Project, error) {
+		if revision != project.Revision {
+			return nil, errors.New("unexpected review revision")
+		}
+		return project, nil
+	}}
+	evidence, err := freshReviewEvidenceForVerify(store, dir, project, final, plan, projectconfig.Runtime{Review: &projectconfig.ReviewConfig{}}, run, host)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -274,7 +247,7 @@ func TestFreshReviewEvidenceForVerifySelectsCurrentScopeAndRetainsPartialCandida
 	tampered := run
 	tampered.Reviews = append([]ReviewRecord(nil), run.Reviews...)
 	tampered.Reviews[0].CandidateDigest = "sha256:wrong-retained-candidate"
-	if _, err := freshReviewEvidenceForVerify(store, dir, project, final, plan, projectconfig.Runtime{Review: &projectconfig.ReviewConfig{}}, tampered); err == nil {
+	if _, err := freshReviewEvidenceForVerify(store, dir, project, final, plan, projectconfig.Runtime{Review: &projectconfig.ReviewConfig{}}, tampered, host); err == nil {
 		t.Fatal("review with a mismatched retained-candidate digest was accepted")
 	}
 }
@@ -358,10 +331,8 @@ func TestFullVerifyNativeAssessmentUsesReadOnlyOwnedWorkspaceWithoutProvider(t *
 	root := makeProjectRunFixture(t)
 	configureWorkspaceBridgeInstructions(t, root)
 	revision := identityHead(t, root)
-	project, err := projectwork.Load(root, revision)
-	if err != nil {
-		t.Fatal(err)
-	}
+	project := fullVerifyProjectFacts(t, root, revision)
+	var err error
 	service, err := projectworkspace.NewGitService(t.TempDir(), projectworkspace.Limits{MaxFiles: 128, MaxFileBytes: 1 << 20, MaxTotalBytes: 4 << 20})
 	if err != nil {
 		t.Fatal(err)
@@ -401,7 +372,7 @@ func TestFullVerifyNativeAssessmentUsesReadOnlyOwnedWorkspaceWithoutProvider(t *
 	integrationReviews := fullAuditIntegrationReviewsForManager(project.Report, managerID, finalID, finalDigest, []fullReviewEvidence{parentReview})
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
-	row, err := fullAuditManager(ctx, Host{Workspaces: service, Load: projectwork.Load}, invoker, root, project, runtime,
+	row, err := fullAuditManager(ctx, Host{Workspaces: service}, invoker, root, project, runtime,
 		managerID, projectconfig.StrictnessProfile{}, BriefingContext{}, nil, nil, integrationReviews, false, "full-verify-test")
 	if err != nil {
 		t.Fatalf("native Manager audit failed: row=%+v err=%v", row, err)
@@ -434,10 +405,8 @@ func TestFullVerifyInvocationReceivesExplicitCrossManagerArtifactEvidence(t *tes
 	root := makeProjectRunFixture(t)
 	configureWorkspaceBridgeInstructions(t, root)
 	revision := identityHead(t, root)
-	project, err := projectwork.Load(root, revision)
-	if err != nil {
-		t.Fatal(err)
-	}
+	project := fullVerifyProjectFacts(t, root, revision)
+	var err error
 	if len(project.Report.Artifacts) == 0 || len(project.Report.Managers) < 2 {
 		t.Fatalf("fixture lacks cross-Manager model definitions: artifacts=%d managers=%d", len(project.Report.Artifacts), len(project.Report.Managers))
 	}
@@ -451,6 +420,14 @@ func TestFullVerifyInvocationReceivesExplicitCrossManagerArtifactEvidence(t *tes
 	}
 	if otherManagerID == "" {
 		t.Fatal("fixture has no second Manager for cross-Manager evidence")
+	}
+	// The explicit base facts include one child for the native-workspace
+	// predicate. This test builds its own child obligations below, so make the
+	// other existing Manager a peer before adding that separate child.
+	for index := range project.Report.Managers {
+		if project.Report.Managers[index].ID == otherManagerID {
+			project.Report.Managers[index].Parent = ""
+		}
 	}
 	publicRelation := projectmodel.Statement{ID: "statement:public-relation", Owner: otherManagerID, Public: true, Description: "Public related contract."}
 	privateRelation := projectmodel.Statement{ID: "statement:private-relation", Owner: otherManagerID, Public: false, Description: "Private related detail."}
@@ -526,7 +503,7 @@ func TestFullVerifyInvocationReceivesExplicitCrossManagerArtifactEvidence(t *tes
 	childAssessments := fullChildAssessments([]FullManagerAssessment{childRow}, project.Report, managerID)
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
-	if _, err := fullAuditManager(ctx, Host{Workspaces: service, Load: projectwork.Load}, invoker, root, project, runtime,
+	if _, err := fullAuditManager(ctx, Host{Workspaces: service}, invoker, root, project, runtime,
 		managerID, projectconfig.StrictnessProfile{}, BriefingContext{}, childAssessments, results, nil, false, "full-verify-support-test"); err != nil {
 		t.Fatalf("Manager audit failed: %v", err)
 	}
@@ -696,10 +673,8 @@ func TestFullVerifyTypedIncompleteAuditCannotPass(t *testing.T) {
 	root := makeProjectRunFixture(t)
 	configureWorkspaceBridgeInstructions(t, root)
 	revision := identityHead(t, root)
-	project, err := projectwork.Load(root, revision)
-	if err != nil {
-		t.Fatal(err)
-	}
+	project := fullVerifyProjectFacts(t, root, revision)
+	var err error
 	service, err := projectworkspace.NewGitService(t.TempDir(), projectworkspace.Limits{MaxFiles: 128, MaxFileBytes: 1 << 20, MaxTotalBytes: 4 << 20})
 	if err != nil {
 		t.Fatal(err)
@@ -719,13 +694,52 @@ func TestFullVerifyTypedIncompleteAuditCannotPass(t *testing.T) {
 	invoker := &fullVerifyNativeWorkspaceInvoker{root: root, typedIncomplete: true}
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
-	row, err := fullAuditManager(ctx, Host{Workspaces: service, Load: projectwork.Load}, invoker, root, project, runtime,
+	row, err := fullAuditManager(ctx, Host{Workspaces: service}, invoker, root, project, runtime,
 		managerID, projectconfig.StrictnessProfile{}, BriefingContext{}, nil, nil, nil, false, "full-verify-incomplete-test")
 	if err == nil || row.Status != "incomplete" {
 		t.Fatalf("typed incomplete audit was accepted: row=%+v err=%v", row, err)
 	}
 	if len(row.Assessments) == 0 || row.Assessments[0].Outcome != "incomplete" || row.Receipt == nil {
 		t.Fatalf("typed incomplete evidence or terminal receipt was not preserved: %+v", row)
+	}
+}
+
+// fullVerifyProjectFacts supplies an explicit Runtime input for audit-gate
+// tests. Source acquisition and model compilation are exercised separately by
+// Application integration tests.
+func fullVerifyProjectFacts(t *testing.T, root, revision string) *projectvalue.Project {
+	t.Helper()
+	const rootManager = "manager:root"
+	const childManager = "manager:peer"
+	runtimePath := filepath.Join(root, filepath.FromSlash(projectconfig.RuntimePath))
+	runtimeBytes, err := os.ReadFile(runtimePath)
+	if err != nil {
+		t.Fatalf("read exact Runtime bytes from the workspace fixture: %v", err)
+	}
+	files := map[string][]byte{
+		"docs/greeting.md":        []byte("greeting documentation\n"),
+		"src/greeting.py":         []byte("def greeting(): return 'hello'\n"),
+		projectconfig.RuntimePath: runtimeBytes,
+	}
+	modes := map[string]string{"docs/greeting.md": snapshot.RegularMode, "src/greeting.py": snapshot.RegularMode, projectconfig.RuntimePath: snapshot.RegularMode}
+	return &projectvalue.Project{
+		Root: root, Revision: revision, Digest: "sha256:full-verify-project",
+		Config:   projectvalue.Config{CoverageMode: "full", DocumentPath: "README.md"},
+		Snapshot: &snapshot.Snapshot{ID: "sha256:full-verify-snapshot", Files: files, Modes: modes},
+		Report: projectmodel.Report{Digest: "sha256:full-verify-report", ModelDigest: "sha256:full-verify-model",
+			Managers: []projectmodel.Manager{{ID: rootManager, Name: "root"}, {ID: childManager, Name: "child", Parent: rootManager}},
+			Statements: []projectmodel.Statement{
+				{ID: "statement:greeting", Owner: rootManager, Public: true, Description: "Provide a greeting."},
+				{ID: "statement:child", Owner: childManager, Public: true, Description: "Support the greeting."},
+			},
+			Artifacts: []projectmodel.Artifact{{ID: "artifact:greeting", Owner: rootManager, Required: true,
+				Realizes: []string{"statement:greeting"}, Paths: []string{"docs/greeting.md", "src/greeting.py"}}},
+			Checks: []projectmodel.Check{{ID: "check:greeting", Owner: rootManager, Command: []string{"python", "-m", "unittest"}}},
+			Files: []projectmodel.FileEntry{
+				{Path: "docs/greeting.md", Mode: snapshot.RegularMode, Owner: rootManager, Class: "documentation", Artifacts: []string{"artifact:greeting"}, Exists: true},
+				{Path: "src/greeting.py", Mode: snapshot.RegularMode, Owner: rootManager, Class: "implementation", Artifacts: []string{"artifact:greeting"}, Exists: true},
+			},
+		},
 	}
 }
 
@@ -736,19 +750,15 @@ func TestFullVerifyKnownCostOverflowSaturatesExplicitly(t *testing.T) {
 	}
 }
 
-func TestFullVerifyRejectsStrictnessForUnknownManagerBeforeChecks(t *testing.T) {
-	root := makeFullVerifyFixture(t)
-	configureFullVerifyRuntime(t, root)
-	updateE2ERuntime(t, root, func(runtime *projectconfig.Runtime) {
-		runtime.Strictness = &projectconfig.StrictnessConfig{Managers: map[string]projectconfig.StrictnessProfile{"not-in-model": {Evidence: []string{"typed evidence"}}}}
-	})
-	head := gitE2E(t, root, "rev-parse", "HEAD")
-	report, err := FullVerify(context.Background(), Host{Load: projectwork.Load}, projectexecutor.ProcessInvoker{}, root, FullVerifyRequest{Revision: head})
-	if err == nil || report.Status != "failed" || !strings.Contains(report.Error, "Manager absent from the accepted model") {
-		t.Fatalf("unknown strictness Manager was not rejected: report=%+v err=%v", report, err)
+func TestFullVerifyProjectRejectsStaleExpectedSnapshotBeforeAudit(t *testing.T) {
+	project := &projectvalue.Project{
+		Revision: strings.Repeat("a", 40),
+		Snapshot: &snapshot.Snapshot{Files: map[string][]byte{"README.md": []byte("fixed bytes\n")}, Modes: map[string]string{"README.md": snapshot.RegularMode}},
 	}
-	if report.Starts != 0 {
-		t.Fatalf("strictness validation happened after checks or provider calls: starts=%d", report.Starts)
+	_, err := FullVerifyProject(context.Background(), Host{}, projectexecutor.ProcessInvoker{}, t.TempDir(), project,
+		projectconfig.Runtime{}, FullVerifyBinding{ExpectedSnapshot: "sha256:stale"})
+	if err != ErrStale {
+		t.Fatalf("stale expected snapshot error = %v, want ErrStale", err)
 	}
 }
 
@@ -828,77 +838,6 @@ func TestFullVerifyResponseSchemaUsesExactDynamicSubjectEnum(t *testing.T) {
 			t.Errorf("schema %s is missing its contract description", name)
 		}
 	}
-}
-
-func TestFullVerifyRejectsUnknownRepositoryCoverageBeforeManagerCalls(t *testing.T) {
-	root := makeFullVerifyFixture(t)
-	writeE2E(t, root, "outside/unclassified.txt", "not represented by the project model\n")
-	gitE2E(t, root, "add", "outside/unclassified.txt")
-	gitE2E(t, root, "commit", "-m", "add unclassified repository path")
-	setupFullVerifyProcesses(t)
-	configureFullVerifyRuntime(t, root)
-	head := gitE2E(t, root, "rev-parse", "HEAD")
-	host := Host{Load: projectwork.Load}
-	report, err := FullVerify(context.Background(), host, projectexecutor.ProcessInvoker{}, root, FullVerifyRequest{Revision: head})
-	if err == nil || report.Status != "failed" || !strings.Contains(report.Error, "coverage census") {
-		t.Fatalf("unknown repository path did not fail the full census gate: report=%+v err=%v", report, err)
-	}
-	if report.Starts != 0 || len(report.Managers) != 0 {
-		t.Fatalf("provider or check calls started before coverage was conforming: %+v", report)
-	}
-	if _, statErr := os.Stat(runtimeFixtureEnv(t, fullVerifyLogEnv)); !os.IsNotExist(statErr) {
-		if data, readErr := os.ReadFile(runtimeFixtureEnv(t, fullVerifyLogEnv)); readErr == nil && len(data) != 0 {
-			t.Fatalf("Manager called before coverage census passed: %s", data)
-		}
-	}
-}
-
-func TestFullVerifyRejectsStaleGeneratedDocumentBeforeManagerCalls(t *testing.T) {
-	root := makeFullVerifyFixture(t)
-	writeE2E(t, root, "README.md", "stale hand-edited document\n")
-	gitE2E(t, root, "add", "README.md")
-	gitE2E(t, root, "commit", "-m", "make generated document stale")
-	setupFullVerifyProcesses(t)
-	configureFullVerifyRuntime(t, root)
-	head := gitE2E(t, root, "rev-parse", "HEAD")
-	report, err := FullVerify(context.Background(), Host{Load: projectwork.Load}, projectexecutor.ProcessInvoker{}, root, FullVerifyRequest{Revision: head})
-	if err == nil || report.Status != "failed" || !strings.Contains(report.Error, "generated documentation is missing or stale") {
-		t.Fatalf("stale generated document did not fail the pre-provider gate: report=%+v err=%v", report, err)
-	}
-	if report.Starts != 0 || len(report.Managers) != 0 {
-		t.Fatalf("provider or check calls started before document validation: %+v", report)
-	}
-}
-
-func makeFullVerifyFixture(t *testing.T) string {
-	t.Helper()
-	root := makeProjectRunFixture(t)
-	manifest := filepath.Join(root, filepath.FromSlash(projectwork.ManifestPath))
-	data, err := os.ReadFile(manifest)
-	if err != nil {
-		t.Fatal(err)
-	}
-	updated := strings.Replace(string(data), "name: Process fixture\n", "name: Process fixture\ndocumentPath: README.md\ncoverageMode: full\n", 1)
-	if updated == string(data) {
-		t.Fatal("could not set full coverage mode in fixture manifest")
-	}
-	writeE2E(t, root, projectwork.ManifestPath, updated)
-	writeE2E(t, root, projectcoverage.IgnorePath, "apiVersion: "+projectcoverage.IgnoreAPIVersion+"\nkind: RepositoryIgnore\nentries: []\n")
-	gitE2E(t, root, "add", projectwork.ManifestPath)
-	gitE2E(t, root, "add", projectcoverage.IgnorePath)
-	gitE2E(t, root, "commit", "-m", "enable full project coverage")
-	project, err := projectwork.Load(root, gitE2E(t, root, "rev-parse", "HEAD"))
-	if err != nil {
-		t.Fatal(err)
-	}
-	document, err := projectwork.Document(project, false)
-	if err != nil {
-		t.Fatal(err)
-	}
-	writeE2E(t, root, projectwork.DocumentPath(project.Config), document)
-	gitE2E(t, root, "add", projectwork.DocumentPath(project.Config))
-	gitE2E(t, root, "commit", "-m", "generate full project document")
-	return root
 }
 
 func setupFullVerifyProcesses(t *testing.T) {

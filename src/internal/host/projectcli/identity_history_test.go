@@ -1,5 +1,9 @@
 package projectcli
 
+import "github.com/Glacius-Labs/Markitect/src/internal/host/projecthistory"
+
+import "github.com/Glacius-Labs/Markitect/src/internal/modules/projectmodel/projectvalue"
+
 import (
 	"fmt"
 	"os"
@@ -8,7 +12,6 @@ import (
 	"testing"
 
 	"github.com/Glacius-Labs/Markitect/src/internal/host/projectapp"
-	"github.com/Glacius-Labs/Markitect/src/internal/host/projectbriefing"
 	"github.com/Glacius-Labs/Markitect/src/internal/host/projectexplore"
 	"github.com/Glacius-Labs/Markitect/src/internal/host/projectwork"
 )
@@ -75,15 +78,15 @@ func TestGlobalAndNamedCanonicalEditSupportsBriefingsAndReadiness(t *testing.T) 
 			if err != nil {
 				t.Fatal(err)
 			}
-			mutation := projectwork.Mutation{APIVersion: projectwork.APIVersion, BaseDigest: project.Digest,
-				Actor: projectwork.HumanActor, Goal: "Clarify the generic Manager mandate.",
-				Files: []projectwork.FileChange{{Path: modelPath, Content: strings.Replace(string(data), "repository-wide engineering mandate", "repository-wide notification mandate", 1)}}}
+			mutation := projectvalue.Mutation{APIVersion: projectvalue.APIVersion, BaseDigest: project.Digest,
+				Actor: projectvalue.HumanActor, Goal: "Clarify the generic Manager mandate.",
+				Files: []projectvalue.FileChange{{Path: modelPath, Content: strings.Replace(string(data), "repository-wide engineering mandate", "repository-wide notification mandate", 1)}}}
 			proposal, err := projectwork.EncodeMutation(mutation)
 			if err != nil {
 				t.Fatal(err)
 			}
 			editInput := writeDraft(t, root, ".markitect/drafts/identity-edit.json", proposal)
-			preview := decodeOutput[projectwork.EditPlan](t, cli("edit", "--input", editInput))
+			preview := decodeOutput[projectvalue.EditPlan](t, cli("edit", "--input", editInput))
 			cli("edit", "--input", editInput, "--expect", preview.Digest, "--write")
 			writeDocs()
 			runGit(t, root, "add", modelPath, "docs/markitect/project.md")
@@ -119,11 +122,11 @@ func TestGlobalAndNamedCanonicalEditSupportsBriefingsAndReadiness(t *testing.T) 
 			if len(list.Notifications) != 1 || list.Notifications[0].DefinitionID.Namespace != namespace || list.Notifications[0].ResolutionStatus != "unresolved" {
 				t.Fatalf("legal namespace briefing lost or falsely resolved: %+v", list)
 			}
-			accepted, err := projectbriefing.ReadAcceptedHistory(root, revision)
+			accepted, err := projecthistory.ReadAcceptedHistory(root, revision)
 			if err != nil || accepted.State.History == nil || accepted.State.History.Revision != revision || len(accepted.State.Briefings) != 1 {
 				t.Fatalf("CLI accepted history view=%+v err=%v", accepted.State, err)
 			}
-			if _, err := projectbriefing.EnsureAcceptedHistory(root, revision); err != nil {
+			if _, err := projecthistory.EnsureAcceptedHistory(root, revision); err != nil {
 				t.Fatalf("materialize accepted history for status overview: %v", err)
 			}
 			summary := decodeOutput[overview](t, cli("status"))
@@ -131,7 +134,7 @@ func TestGlobalAndNamedCanonicalEditSupportsBriefingsAndReadiness(t *testing.T) 
 				t.Fatalf("status overview has no pending briefings: %+v", summary)
 			}
 			resumed := decodeOutput[projectapp.ReadinessResult](t, cli(readyArgs...))
-			afterAccepted, err := projectbriefing.ReadAcceptedHistory(root, revision)
+			afterAccepted, err := projecthistory.ReadAcceptedHistory(root, revision)
 			if err != nil || afterAccepted.Receipt.StoreDigest != accepted.Receipt.StoreDigest || resumed.Readiness.Digest != ready.Readiness.Digest {
 				t.Fatalf("readiness resume changed the immutable history/binding: err=%v", err)
 			}

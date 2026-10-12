@@ -61,13 +61,16 @@ func TestManagerFailurePersistsReturnedReceiptExactlyOnce(t *testing.T) {
 			root := makeProjectRunFixture(t)
 			setupE2EProcess(t, "")
 			invoker := &failedManagerReceiptInvoker{mode: mode}
-			plan, err := Plan(projectworkHost(), root, identityHead(t, root), PlanRequest{
+			revision := identityHead(t, root)
+			project := processRuntimeProject(t, root, revision, false)
+			host := processRuntimeHost(root, project)
+			plan, err := Plan(host, root, revision, PlanRequest{
 				Goal: "Implement the owned orders artifact.", Managers: []string{e2eManagerID("orders", "orders")}, ExecuteAuthorized: true,
 			})
 			if err != nil {
 				t.Fatalf("Plan: %v", err)
 			}
-			run, runErr := Run(context.Background(), projectworkHost(), invoker, root, plan.ID)
+			run, runErr := Run(context.Background(), host, invoker, root, plan.ID)
 			if runErr == nil || run.Status != StatusFailed {
 				t.Fatalf("Manager failure was not terminal: status=%s err=%v", run.Status, runErr)
 			}

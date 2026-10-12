@@ -1,9 +1,10 @@
-package projectbriefing
+package projecthistory
 
 import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	projectbriefing "github.com/Glacius-Labs/Markitect/src/internal/modules/projectmodel/projectbriefing"
 	"os"
 	"path/filepath"
 	"sort"
@@ -31,7 +32,7 @@ func TestEnsureAcceptedHistoryBootstrapsAndAutomaticallyRecordsCommittedChanges(
 	if bundle.Provenance.DecisionReference != "git-commit:"+changed || !strings.HasPrefix(bundle.Provenance.Actor, "git-commit-author:") || !strings.Contains(bundle.Provenance.Authority, "Git identity is not authenticated") {
 		t.Fatalf("automatic provenance overclaims or omits source: %#v", bundle.Provenance)
 	}
-	state, digest, err := Read(root)
+	state, digest, err := readState(root)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -88,7 +89,7 @@ func TestEnsureAcceptedHistoryAdvancesCodeOnlyAndIgnoresWorkingDraft(t *testing.
 	if err != nil || len(advanced.Bundles) != 0 || advanced.BaselineRevision != baseline || advanced.Revision != codeOnly {
 		t.Fatalf("code-only commit did not advance cursor without event receipt=%#v err=%v", advanced, err)
 	}
-	state, _, err := Read(root)
+	state, _, err := readState(root)
 	if err != nil || state.History == nil || state.History.Revision != codeOnly || len(state.Briefings) != 1 {
 		t.Fatalf("code-only cursor state=%#v err=%v", state, err)
 	}
@@ -111,7 +112,7 @@ func TestEnsureAcceptedHistorySurvivesCodeOnlyTopicBranchAndNoFFMerge(t *testing
 		t.Fatalf("precondition: ensure on topic: %v", err)
 	}
 	gitTest(t, root, "checkout", mainBranch)
-	_, onTopic, err := Read(root)
+	_, onTopic, err := readState(root)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -119,7 +120,7 @@ func TestEnsureAcceptedHistorySurvivesCodeOnlyTopicBranchAndNoFFMerge(t *testing
 	if err != nil || view.State.History == nil || view.State.History.Revision != changed || view.PersistedDigest != onTopic {
 		t.Errorf("read-only view did not derive main's cursor: view=%#v err=%v", view.State.History, err)
 	}
-	if _, after, err := Read(root); err != nil || after != onTopic {
+	if _, after, err := readState(root); err != nil || after != onTopic {
 		t.Fatalf("read-only view changed the store: before=%s after=%s err=%v", onTopic, after, err)
 	}
 	if receipt, err := EnsureAcceptedHistory(root, changed); err != nil {
@@ -132,7 +133,7 @@ func TestEnsureAcceptedHistorySurvivesCodeOnlyTopicBranchAndNoFFMerge(t *testing
 	if _, err := EnsureAcceptedHistory(root, merged); err != nil {
 		t.Errorf("ensure after --no-ff merge %s: %v", merged, err)
 	}
-	state, _, err := Read(root)
+	state, _, err := readState(root)
 	if err != nil || state.History == nil || state.History.Revision != merged || len(state.Briefings) != 1 {
 		t.Fatalf("merged cursor state=%#v err=%v", state.History, err)
 	}
@@ -160,7 +161,7 @@ func TestEnsureAcceptedHistoryKeepsTopicModelChangeProvisionalOnDivergedMain(t *
 	} else if receipt.StoreDigest != view.Receipt.StoreDigest {
 		t.Fatalf("ensure persisted %s, read-only view computed %s", receipt.StoreDigest, view.Receipt.StoreDigest)
 	}
-	state, _, err := Read(root)
+	state, _, err := readState(root)
 	if err != nil || len(state.Briefings) != 1 || state.Briefings[0].Revision != changed {
 		t.Fatalf("main counted the topic's provisional briefing: %#v err=%v", state.Briefings, err)
 	}
@@ -171,7 +172,7 @@ func TestEnsureAcceptedHistoryKeepsTopicModelChangeProvisionalOnDivergedMain(t *
 	if _, err := EnsureAcceptedHistory(root, topic); err != nil {
 		t.Fatalf("ensure back on the topic: %v", err)
 	}
-	if state, _, err := Read(root); err != nil || len(state.Briefings) != 2 {
+	if state, _, err := readState(root); err != nil || len(state.Briefings) != 2 {
 		t.Fatalf("topic lost its own briefing: %#v err=%v", state.Briefings, err)
 	}
 }
@@ -216,11 +217,11 @@ func TestEnsureAcceptedHistoryAcceptsMergedTopicModelChangeOnce(t *testing.T) {
 			if again, err := EnsureAcceptedHistory(root, merged); err != nil || len(again.Bundles) != 0 {
 				t.Fatalf("repeated ensure after %s merge: receipt=%#v err=%v", merge, again, err)
 			}
-			state, _, err := Read(root)
+			state, _, err := readState(root)
 			if err != nil {
 				t.Fatal(err)
 			}
-			var accepted []Bundle
+			var accepted []projectbriefing.Bundle
 			for _, bundle := range state.Briefings {
 				if bundle.ModelDigest == topicDigest {
 					accepted = append(accepted, bundle)
@@ -283,7 +284,7 @@ func TestEnsureAcceptedHistoryRejectsConflictingBriefingOnActiveLine(t *testing.
 	if err != nil {
 		t.Fatal(err)
 	}
-	var stored Store
+	var stored projectbriefing.Store
 	if err := json.Unmarshal(data, &stored); err != nil {
 		t.Fatal(err)
 	}
@@ -294,17 +295,17 @@ func TestEnsureAcceptedHistoryRejectsConflictingBriefingOnActiveLine(t *testing.
 	if err := os.WriteFile(path, data, 0600); err != nil {
 		t.Fatal(err)
 	}
-	_, before, err := Read(root)
+	_, before, err := readState(root)
 	if err != nil {
 		t.Fatalf("precondition: injected briefing must be a valid store entry: %v", err)
 	}
-	if _, err := ReadAcceptedHistory(root, third); !errors.Is(err, ErrAmbiguousHistory) {
+	if _, err := ReadAcceptedHistory(root, third); !errors.Is(err, projectbriefing.ErrAmbiguousHistory) {
 		t.Fatalf("read-only view accepted a briefing that skips a transition on the active line: %v", err)
 	}
-	if _, err := EnsureAcceptedHistory(root, third); !errors.Is(err, ErrAmbiguousHistory) {
+	if _, err := EnsureAcceptedHistory(root, third); !errors.Is(err, projectbriefing.ErrAmbiguousHistory) {
 		t.Fatalf("briefing that skips a transition on the active line was accepted: %v", err)
 	}
-	if _, after, err := Read(root); err != nil || after != before {
+	if _, after, err := readState(root); err != nil || after != before {
 		t.Fatalf("rejected ambiguous history changed the store: before=%s after=%s err=%v", before, after, err)
 	}
 }
@@ -342,7 +343,7 @@ func TestReadAcceptedHistoryWritesNothingAndMatchesEnsure(t *testing.T) {
 	if _, err := os.Stat(stateDir); !os.IsNotExist(err) {
 		t.Fatalf("read-only accepted history created operational state: %v", err)
 	}
-	if view.PersistedDigest != StoreDigest(emptyStore()) || view.Receipt.BaselineRevision != baseline || view.Receipt.Revision != changed || len(view.Receipt.Bundles) != 1 || len(view.State.Briefings) != 1 {
+	if view.PersistedDigest != projectbriefing.StoreDigest(emptyStore()) || view.Receipt.BaselineRevision != baseline || view.Receipt.Revision != changed || len(view.Receipt.Bundles) != 1 || len(view.State.Briefings) != 1 {
 		t.Fatalf("read-only view of a fresh repository = %#v", view.Receipt)
 	}
 	project, err := projectwork.Load(root, changed)
@@ -361,7 +362,7 @@ func TestReadAcceptedHistoryWritesNothingAndMatchesEnsure(t *testing.T) {
 	if hash(receipt) != hash(view.Receipt) {
 		t.Fatalf("ensure persisted a different answer than the read-only view:\nensure=%#v\nview=%#v", receipt, view.Receipt)
 	}
-	state, digest, err := Read(root)
+	state, digest, err := readState(root)
 	if err != nil || digest != view.Receipt.StoreDigest || hash(state) != hash(view.State) {
 		t.Fatalf("persisted history differs from the read-only view: digest=%s view=%s err=%v", digest, view.Receipt.StoreDigest, err)
 	}
@@ -378,7 +379,7 @@ func TestReadAcceptedHistoryWritesNothingAndMatchesEnsure(t *testing.T) {
 	if err != nil || newer.PersistedDigest != digest || newer.State.History == nil || newer.State.History.Revision != head || len(newer.Receipt.Bundles) != 0 {
 		t.Fatalf("read-only view ahead of the persisted cursor = %#v err=%v", newer.Receipt, err)
 	}
-	if _, after, err := Read(root); err != nil || after != digest {
+	if _, after, err := readState(root); err != nil || after != digest {
 		t.Fatalf("read-only view changed the persisted store: before=%s after=%s err=%v", digest, after, err)
 	}
 	if ensured, err := EnsureAcceptedHistory(root, head); err != nil || ensured.StoreDigest != newer.Receipt.StoreDigest {
@@ -406,7 +407,7 @@ func TestReadAcceptedHistoryChainsSuccessiveUnpersistedChangesLikeEnsure(t *test
 	if err != nil || hash(receipt) != hash(view.Receipt) {
 		t.Fatalf("ensure persisted other events than the read-only view: ensure=%#v err=%v", receipt, err)
 	}
-	if state, _, err := Read(root); err != nil || hash(state) != hash(view.State) {
+	if state, _, err := readState(root); err != nil || hash(state) != hash(view.State) {
 		t.Fatalf("persisted history differs from the read-only view: err=%v", err)
 	}
 	if again, err := EnsureAcceptedHistory(root, head); err != nil || len(again.Bundles) != 0 {
@@ -431,7 +432,7 @@ func TestEnsureAcceptedHistoryChainsChangeRevertAndReapplyInOneCall(t *testing.T
 	if err != nil || len(receipt.Bundles) != 3 {
 		t.Fatalf("one ensure over change, revert and re-apply: receipt=%#v err=%v", receipt, err)
 	}
-	events := make([]Event, 0, 3)
+	events := make([]projectbriefing.Event, 0, 3)
 	for i, bundle := range receipt.Bundles {
 		if len(bundle.Events) != 1 || len(view.Receipt.Bundles) != 3 || len(view.Receipt.Bundles[i].Events) != 1 || view.Receipt.Bundles[i].Events[0].ID != bundle.Events[0].ID {
 			t.Fatalf("briefing %d: ensure events %#v, read-only view %#v", i, bundle.Events, view.Receipt.Bundles)
@@ -470,13 +471,13 @@ func TestReadAcceptedHistorySucceedsInParallelAfterNewCommits(t *testing.T) {
 	if _, err := EnsureAcceptedHistory(root, changed); err != nil {
 		t.Fatal(err)
 	}
-	_, persisted, err := Read(root)
+	_, persisted, err := readState(root)
 	if err != nil {
 		t.Fatal(err)
 	}
 	head := commitNewAcceptedHistoryTest(t, root)
 	const parallel = 6
-	views := make([]AcceptedHistory, parallel)
+	views := make([]projectbriefing.AcceptedHistory, parallel)
 	errs := make([]error, parallel)
 	var wait sync.WaitGroup
 	for i := range parallel {
@@ -496,7 +497,7 @@ func TestReadAcceptedHistorySucceedsInParallelAfterNewCommits(t *testing.T) {
 			t.Errorf("parallel read-only view %d = %#v", i, views[i].Receipt)
 		}
 	}
-	if _, after, err := Read(root); err != nil || after != persisted {
+	if _, after, err := readState(root); err != nil || after != persisted {
 		t.Fatalf("parallel reads changed the persisted store: before=%s after=%s err=%v", persisted, after, err)
 	}
 	assertOnlyBriefingStoreFileTest(t, root)
@@ -506,8 +507,8 @@ func TestEnsureAcceptedHistoryParallelWritersConvergeOnOneStore(t *testing.T) {
 	root, _, _ := committedModelFixture(t)
 	head := commitNewAcceptedHistoryTest(t, root)
 	const writers, readers = 6, 2
-	receipts := make([]EnsureReceipt, writers)
-	views := make([]AcceptedHistory, readers)
+	receipts := make([]projectbriefing.EnsureReceipt, writers)
+	views := make([]projectbriefing.AcceptedHistory, readers)
 	errs := make([]error, writers+readers)
 	var wait sync.WaitGroup
 	for i := range writers {
@@ -533,7 +534,7 @@ func TestEnsureAcceptedHistoryParallelWritersConvergeOnOneStore(t *testing.T) {
 	if t.Failed() {
 		return
 	}
-	state, digest, err := Read(root)
+	state, digest, err := readState(root)
 	if err != nil || state.History == nil || state.History.Revision != head || len(state.Briefings) != 2 {
 		t.Fatalf("parallel writers left history=%#v briefings=%d err=%v", state.History, len(state.Briefings), err)
 	}
@@ -571,8 +572,8 @@ func TestBriefingStoreReadersAndWritersSurviveConcurrentReplacement(t *testing.T
 					continue
 				}
 				revision := fmt.Sprintf("%040x", w*writes+n+1)
-				if _, err := update(root, digest, func(state *Store) error {
-					state.History = &HistoryCursor{Policy: acceptedPolicy, BaselineRevision: revision, BaselineModelDigest: "baseline", Revision: revision, ModelDigest: "model"}
+				if _, err := update(root, digest, func(state *projectbriefing.Store) error {
+					state.History = &projectbriefing.HistoryCursor{Policy: acceptedPolicy, BaselineRevision: revision, BaselineModelDigest: "baseline", Revision: revision, ModelDigest: "model"}
 					return nil
 				}); err != nil && !errors.Is(err, ErrStaleStore) {
 					errs <- err
@@ -660,13 +661,13 @@ func commitReadmeTest(t *testing.T, root, content, message string) string {
 
 // storedBriefingsTest returns every persisted briefing, provisional ones
 // included, straight from the store file.
-func storedBriefingsTest(t *testing.T, root string) []Bundle {
+func storedBriefingsTest(t *testing.T, root string) []projectbriefing.Bundle {
 	t.Helper()
 	data, err := os.ReadFile(filepath.Join(root, filepath.FromSlash(storePath)))
 	if err != nil {
 		t.Fatal(err)
 	}
-	var stored Store
+	var stored projectbriefing.Store
 	if err := json.Unmarshal(data, &stored); err != nil {
 		t.Fatal(err)
 	}
@@ -693,7 +694,7 @@ func TestEnsureAcceptedHistoryPreservesRevertAndRejectsManualAggregateWrite(t *t
 	if err != nil || len(receipt.Bundles) != 1 || receipt.Bundles[0].SinceRevision != changed || receipt.Bundles[0].Revision != reverted {
 		t.Fatalf("revert was not recorded as its own adjacent event: receipt=%#v err=%v", receipt, err)
 	}
-	state, digest, err := Read(root)
+	state, digest, err := readState(root)
 	if err != nil || len(state.Briefings) != 2 {
 		t.Fatalf("history did not retain both transitions: %#v err=%v", state, err)
 	}
@@ -701,14 +702,14 @@ func TestEnsureAcceptedHistoryPreservesRevertAndRejectsManualAggregateWrite(t *t
 	if err != nil {
 		t.Fatal(err)
 	}
-	if _, err := Write(root, aggregate, digest); !errors.Is(err, ErrAmbiguousHistory) && !errors.Is(err, ErrStaleModel) {
+	if _, err := Write(root, aggregate, digest); !errors.Is(err, projectbriefing.ErrAmbiguousHistory) && !errors.Is(err, projectbriefing.ErrStaleModel) {
 		t.Fatalf("manual aggregate write crossed accepted cursor: %v", err)
 	}
 }
 
 func TestEnsureAcceptedHistoryRequiresCommittedCompleteValidActiveHistory(t *testing.T) {
 	root, _, revision := committedModelFixture(t)
-	if _, err := EnsureAcceptedHistory(root, strings.Repeat("a", 40)); !errors.Is(err, ErrUncommittedModel) {
+	if _, err := EnsureAcceptedHistory(root, strings.Repeat("a", 40)); !errors.Is(err, projectbriefing.ErrUncommittedModel) {
 		t.Fatalf("non-HEAD revision error = %v", err)
 	}
 	path := filepath.Join(root, ".markitect", "model", "commerce", "sales", "orders", "cancel-before-shipped.yaml")
@@ -801,7 +802,7 @@ func TestEnsureAcceptedHistoryRejectsAnalyzedStructuralErrorsButAllowsIncomplete
 	if _, err := EnsureAcceptedHistory(root, incompleteRevision); err != nil {
 		t.Fatalf("incomplete implementation/coverage was treated as an invalid canonical model: %v", err)
 	}
-	priorState, priorDigest, err := Read(root)
+	priorState, priorDigest, err := readState(root)
 	if err != nil || priorState.History == nil || priorState.History.Revision != incompleteRevision {
 		t.Fatalf("incomplete valid model did not establish accepted cursor: state=%#v err=%v", priorState.History, err)
 	}
@@ -827,10 +828,10 @@ func TestEnsureAcceptedHistoryRejectsAnalyzedStructuralErrorsButAllowsIncomplete
 	if project.Model.Digest == "" || !hasStructuralError(project.Report.Findings) {
 		t.Fatalf("fixture did not produce a compiled model with a structural report error: digest=%q findings=%#v", project.Model.Digest, project.Report.Findings)
 	}
-	if _, err := EnsureAcceptedHistory(root, revision); !errors.Is(err, ErrAmbiguousHistory) {
+	if _, err := EnsureAcceptedHistory(root, revision); !errors.Is(err, projectbriefing.ErrAmbiguousHistory) {
 		t.Fatalf("structurally invalid committed model was accepted: %v", err)
 	}
-	state, digest, err := Read(root)
+	state, digest, err := readState(root)
 	if err != nil || state.History == nil || state.History.Revision != incompleteRevision || digest != priorDigest {
 		t.Fatalf("structurally invalid model advanced accepted history: state=%#v digest=%s err=%v", state.History, digest, err)
 	}
@@ -871,7 +872,7 @@ func TestEnsureAcceptedHistoryRejectsMissingProjectAndShallowAncestry(t *testing
 	if err := os.WriteFile(shallowFile, []byte(revision+"\n"), 0600); err != nil {
 		t.Fatal(err)
 	}
-	if _, err := EnsureAcceptedHistory(root, revision); !errors.Is(err, ErrAmbiguousHistory) {
+	if _, err := EnsureAcceptedHistory(root, revision); !errors.Is(err, projectbriefing.ErrAmbiguousHistory) {
 		t.Fatalf("shallow history error = %v", err)
 	}
 	if _, err := os.Stat(filepath.Join(root, filepath.FromSlash(storePath))); !os.IsNotExist(err) {
@@ -890,7 +891,7 @@ func TestEnsureAcceptedHistoryFirstModelIsBaselineWithoutInventedChange(t *testi
 	if err != nil || receipt.BaselineRevision != baseline || receipt.Revision != baseline || len(receipt.Bundles) != 0 {
 		t.Fatalf("first committed project model bootstrap receipt=%#v err=%v", receipt, err)
 	}
-	state, _, err := Read(root)
+	state, _, err := readState(root)
 	if err != nil || len(state.Briefings) != 0 || state.History == nil {
 		t.Fatalf("initial model was invented as a change: %#v err=%v", state, err)
 	}
@@ -904,7 +905,7 @@ func TestEnsureAcceptedHistoryFirstModelIsBaselineWithoutInventedChange(t *testi
 func TestEnsureAcceptedHistoryInitWaitsForFirstCommittedModel(t *testing.T) {
 	root := t.TempDir()
 	gitTest(t, root, "init", "--initial-branch=feature-init-history")
-	if _, err := EnsureAcceptedHistory(root, strings.Repeat("a", 40)); !errors.Is(err, ErrUncommittedModel) {
+	if _, err := EnsureAcceptedHistory(root, strings.Repeat("a", 40)); !errors.Is(err, projectbriefing.ErrUncommittedModel) {
 		t.Fatalf("unborn repository error = %v", err)
 	}
 	if err := os.MkdirAll(filepath.Join(root, ".markitect"), 0755); err != nil {
@@ -930,7 +931,7 @@ func TestVerifiedResolutionIsCandidateBoundSeparateFromDismissal(t *testing.T) {
 	if _, err := EnsureAcceptedHistory(root, revision); err != nil {
 		t.Fatal(err)
 	}
-	state, digest, err := Read(root)
+	state, digest, err := readState(root)
 	if err != nil || len(state.Briefings) != 1 || len(state.Briefings[0].Events) == 0 {
 		t.Fatalf("briefing history state=%#v err=%v", state, err)
 	}
@@ -940,37 +941,37 @@ func TestVerifiedResolutionIsCandidateBoundSeparateFromDismissal(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	state, digest, err = Read(root)
-	if err != nil || EventResolutionStatus(state, event.ID).Status != "unresolved" {
-		t.Fatalf("dismissal changed resolution status: status=%#v err=%v", EventResolutionStatus(state, event.ID), err)
+	state, digest, err = readState(root)
+	if err != nil || resolutionStatusTest(t, root, event.ID).Status != "unresolved" {
+		t.Fatalf("dismissal changed resolution status: status=%#v err=%v", resolutionStatusTest(t, root, event.ID), err)
 	}
 	project, err := projectwork.Load(root, revision)
 	if err != nil {
 		t.Fatal(err)
 	}
 	evidence := validResolutionEvidence(event.ID, project.Report.Managers)
-	if _, err := ResolveVerified(root, revision, "stale-model-digest", evidence, digest); !errors.Is(err, ErrStaleModel) {
+	if _, err := ResolveVerified(root, revision, "stale-model-digest", evidence, digest); !errors.Is(err, projectbriefing.ErrStaleModel) {
 		t.Fatalf("stale selected model resolved event: %v", err)
 	}
 	incomplete := evidence
 	incomplete.FullVerifyPassed = false
-	if _, err := ResolveVerified(root, revision, project.Model.Digest, incomplete, digest); !errors.Is(err, ErrResolution) {
+	if _, err := ResolveVerified(root, revision, project.Model.Digest, incomplete, digest); !errors.Is(err, projectbriefing.ErrResolution) {
 		t.Fatalf("failed full Verify resolved event: %v", err)
 	}
 	missingManager := evidence
 	missingManager.CoveredManagerIDs = missingManager.CoveredManagerIDs[:len(missingManager.CoveredManagerIDs)-1]
-	if _, err := ResolveVerified(root, revision, project.Model.Digest, missingManager, digest); !errors.Is(err, ErrResolution) {
+	if _, err := ResolveVerified(root, revision, project.Model.Digest, missingManager, digest); !errors.Is(err, projectbriefing.ErrResolution) {
 		t.Fatalf("partial Manager coverage resolved event: %v", err)
 	}
 	newDigest, err := ResolveVerified(root, revision, project.Model.Digest, evidence, digest)
 	if err != nil {
 		t.Fatal(err)
 	}
-	state, current, err := Read(root)
+	state, current, err := readState(root)
 	if err != nil || current != newDigest || len(state.Dismissals) != 1 || len(state.Resolutions) != 1 {
 		t.Fatalf("resolution/dismissal store state=%#v digest=%s err=%v", state, current, err)
 	}
-	status := EventResolutionStatus(state, event.ID)
+	status := resolutionStatusTest(t, root, event.ID)
 	if status.Status != "resolved" || status.Resolution == nil || status.Resolution.Evidence.ApplyDigest != evidence.ApplyDigest {
 		t.Fatalf("event resolution status=%#v", status)
 	}
@@ -996,7 +997,7 @@ func TestVerifiedResolutionIsCandidateBoundSeparateFromDismissal(t *testing.T) {
 	if err := os.WriteFile(path, data, 0600); err != nil {
 		t.Fatal(err)
 	}
-	if _, _, err := Read(root); !errors.Is(err, ErrResolution) {
+	if _, _, err := readState(root); !errors.Is(err, projectbriefing.ErrResolution) {
 		t.Fatalf("tampered resolution evidence passed store validation: %v", err)
 	}
 }
@@ -1024,11 +1025,11 @@ func TestVerifiedResolutionRejectsFutureEventAtOldModelRevision(t *testing.T) {
 	if _, err := EnsureAcceptedHistory(root, futureRevision); err != nil {
 		t.Fatal(err)
 	}
-	state, digest, err := Read(root)
+	state, digest, err := readState(root)
 	if err != nil || len(state.Briefings) != 2 {
 		t.Fatalf("future history state=%#v err=%v", state, err)
 	}
-	var futureEvent Event
+	var futureEvent projectbriefing.Event
 	for _, bundle := range state.Briefings {
 		if bundle.Revision == futureRevision && len(bundle.Events) > 0 {
 			futureEvent = bundle.Events[0]
@@ -1042,7 +1043,7 @@ func TestVerifiedResolutionRejectsFutureEventAtOldModelRevision(t *testing.T) {
 		t.Fatal(err)
 	}
 	evidence := validResolutionEvidence(futureEvent.ID, oldProject.Report.Managers)
-	if _, err := ResolveVerified(root, firstRevision, oldProject.Model.Digest, evidence, digest); !errors.Is(err, ErrStaleModel) {
+	if _, err := ResolveVerified(root, firstRevision, oldProject.Model.Digest, evidence, digest); !errors.Is(err, projectbriefing.ErrStaleModel) {
 		t.Fatalf("future event was resolved against an older model: %v", err)
 	}
 }
@@ -1058,7 +1059,7 @@ func TestUnmergedTopicResolutionStaysProvisionalWhileDismissalFollowsEvent(t *te
 	if _, err := EnsureAcceptedHistory(root, topic); err != nil {
 		t.Fatal(err)
 	}
-	state, digest, err := Read(root)
+	state, digest, err := readState(root)
 	if err != nil || len(state.Briefings) != 1 {
 		t.Fatalf("topic history state=%#v err=%v", state.Briefings, err)
 	}
@@ -1070,21 +1071,21 @@ func TestUnmergedTopicResolutionStaysProvisionalWhileDismissalFollowsEvent(t *te
 	gitTest(t, root, "add", deliveredPathTest)
 	gitCommitTest(t, root, "commit the delivery")
 	gitTest(t, root, "checkout", mainBranch)
-	state, _, err = Read(root)
+	state, _, err = readState(root)
 	if err != nil {
 		t.Fatal(err)
 	}
 	// The event is accepted on main too, so its dismissal is; the delivery is
 	// not.
-	if status := EventResolutionStatus(state, event.ID); status.Status != "unresolved" || len(state.Dismissals) != 1 || len(state.Briefings) != 1 {
+	if status := resolutionStatusTest(t, root, event.ID); status.Status != "unresolved" || len(state.Dismissals) != 1 || len(state.Briefings) != 1 {
 		t.Fatalf("unmerged topic resolution counted or dismissal lost on %s: status=%#v dismissals=%#v", mainBranch, status, state.Dismissals)
 	}
 	gitTest(t, root, "merge", "--no-ff", "-m", "merge topic", "topic")
-	state, _, err = Read(root)
+	state, _, err = readState(root)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if status := EventResolutionStatus(state, event.ID); status.Status != "resolved" || status.Resolution.ModelRevision != topic || len(state.Dismissals) != 1 {
+	if status := resolutionStatusTest(t, root, event.ID); status.Status != "resolved" || status.Resolution.ModelRevision != topic || len(state.Dismissals) != 1 {
 		t.Fatalf("merged topic resolution or dismissal not accepted: status=%#v dismissals=%#v", status, state.Dismissals)
 	}
 }
@@ -1100,7 +1101,7 @@ func TestVerifiedResolutionOnUnmergedTopicDoesNotBlockMain(t *testing.T) {
 	if _, err := EnsureAcceptedHistory(root, topic); err != nil {
 		t.Fatal(err)
 	}
-	state, _, err := Read(root)
+	state, _, err := readState(root)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -1116,7 +1117,7 @@ func TestVerifiedResolutionOnUnmergedTopicDoesNotBlockMain(t *testing.T) {
 	if _, err := EnsureAcceptedHistory(root, changed); err != nil {
 		t.Fatal(err)
 	}
-	_, digest, err := Read(root)
+	_, digest, err := readState(root)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -1125,8 +1126,8 @@ func TestVerifiedResolutionOnUnmergedTopicDoesNotBlockMain(t *testing.T) {
 	if _, err := ResolveVerified(root, changed, project.Model.Digest, evidence, digest); err != nil {
 		t.Fatalf("provisional topic resolution blocked resolving on %s: %v", mainBranch, err)
 	}
-	state, _, err = Read(root)
-	if status := EventResolutionStatus(state, event.ID); err != nil || status.Status != "resolved" || status.Resolution.Evidence.RunID != "run-on-main" {
+	state, _, err = readState(root)
+	if status := resolutionStatusTest(t, root, event.ID); err != nil || status.Status != "resolved" || status.Resolution.Evidence.RunID != "run-on-main" {
 		t.Fatalf("main resolution status=%#v err=%v", status, err)
 	}
 }
@@ -1140,7 +1141,7 @@ func TestDeliveryOnFreshTopicResolvesOnlyWhereItsResultIsCommitted(t *testing.T)
 				t.Fatal(err)
 			}
 			gitTest(t, root, "checkout", "-b", "topic")
-			state, _, err := Read(root)
+			state, _, err := readState(root)
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -1205,7 +1206,7 @@ func TestSquashedTopicResolutionRanksWhereItsResultEnteredTheLine(t *testing.T) 
 	if _, err := EnsureAcceptedHistory(root, changed); err != nil {
 		t.Fatal(err)
 	}
-	state, _, err := Read(root)
+	state, _, err := readState(root)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -1244,11 +1245,11 @@ func TestEarlierStoreFormatIsRefusedWithRebuildInstruction(t *testing.T) {
 		t.Fatal(err)
 	}
 	const earlier = "markitect.example.org/project-model-briefing/v1alpha1"
-	older := strings.ReplaceAll(string(data), APIVersion, earlier)
+	older := strings.ReplaceAll(string(data), projectbriefing.APIVersion, earlier)
 	if err := os.WriteFile(path, []byte(older), 0600); err != nil {
 		t.Fatal(err)
 	}
-	read := func() error { _, _, err := Read(root); return err }
+	read := func() error { _, _, err := readState(root); return err }
 	ensure := func() error { _, err := EnsureAcceptedHistory(root, changed); return err }
 	for name, call := range map[string]func() error{"read": read, "ensure": ensure} {
 		err := call()
@@ -1271,7 +1272,7 @@ func TestReappliedModelChangeGetsItsOwnEventID(t *testing.T) {
 	if _, err := EnsureAcceptedHistory(root, reapplied); err != nil {
 		t.Fatal(err)
 	}
-	state, _, err := Read(root)
+	state, _, err := readState(root)
 	if err != nil || len(state.Briefings) != 3 {
 		t.Fatalf("change, revert and re-apply were not briefed: %#v err=%v", state.Briefings, err)
 	}
@@ -1295,7 +1296,7 @@ func TestUnreadableHeadTreeNeverResolvesDelivery(t *testing.T) {
 	if _, err := EnsureAcceptedHistory(root, changed); err != nil {
 		t.Fatal(err)
 	}
-	state, digest, err := Read(root)
+	state, digest, err := readState(root)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -1310,7 +1311,7 @@ func TestUnreadableHeadTreeNeverResolvesDelivery(t *testing.T) {
 		t.Fatal(err)
 	}
 	evidence := validResolutionEvidence(event.ID, project.Report.Managers)
-	evidence.Delivered = []DeliveredFile{removed}
+	evidence.Delivered = []projectbriefing.DeliveredFile{removed}
 	if _, err := ResolveVerified(root, changed, project.Model.Digest, evidence, digest); err != nil {
 		t.Fatal(err)
 	}
@@ -1340,7 +1341,7 @@ func TestUncommittedDeliveryIsReportedButNotResolved(t *testing.T) {
 		t.Fatal(err)
 	}
 	gitTest(t, root, "checkout", "-b", "topic")
-	state, digest, err := Read(root)
+	state, digest, err := readState(root)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -1360,7 +1361,7 @@ func TestUncommittedDeliveryIsReportedButNotResolved(t *testing.T) {
 		t.Fatal(err)
 	}
 	evidence := validResolutionEvidence(event.ID, project.Report.Managers)
-	evidence.Delivered = []DeliveredFile{written, removed}
+	evidence.Delivered = []projectbriefing.DeliveredFile{written, removed}
 	recorded, err := ResolveVerified(root, changed, project.Model.Digest, evidence, digest)
 	if err != nil {
 		t.Fatal(err)
@@ -1377,7 +1378,7 @@ func TestUncommittedDeliveryIsReportedButNotResolved(t *testing.T) {
 	if status := resolutionStatusTest(t, root, event.ID); status.Status != "delivered-uncommitted" || status.Resolution == nil || status.Resolution.Evidence.RunID != evidence.RunID {
 		t.Fatalf("uncommitted delivery status = %#v, want delivered-uncommitted", status)
 	}
-	if _, current, err := Read(root); err != nil || current != recorded {
+	if _, current, err := readState(root); err != nil || current != recorded {
 		t.Fatalf("status hint changed the store: recorded=%s current=%s err=%v", recorded, current, err)
 	}
 	gitTest(t, root, "add", "--", deliveredPathTest, removedPath)
@@ -1396,7 +1397,7 @@ func TestLatestAcceptedResolutionOnLineWins(t *testing.T) {
 	if _, err := EnsureAcceptedHistory(root, changed); err != nil {
 		t.Fatal(err)
 	}
-	state, _, err := Read(root)
+	state, _, err := readState(root)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -1424,7 +1425,7 @@ func TestDismissalFollowsItsEvent(t *testing.T) {
 		t.Fatal(err)
 	}
 	gitTest(t, root, "checkout", "-b", "topic")
-	state, digest, err := Read(root)
+	state, digest, err := readState(root)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -1439,7 +1440,7 @@ func TestDismissalFollowsItsEvent(t *testing.T) {
 		want     int
 	}{{[]string{"topic"}, 1}, {[]string{mainBranch}, 1}, {[]string{"--detach", changed}, 1}, {[]string{"--detach", base}, 0}} {
 		gitTest(t, root, append([]string{"checkout", "-q"}, check.checkout...)...)
-		if state, _, err := Read(root); err != nil || len(state.Dismissals) != check.want {
+		if state, _, err := readState(root); err != nil || len(state.Dismissals) != check.want {
 			t.Fatalf("dismissals after checkout %v = %#v, want %d (err=%v)", check.checkout, state.Dismissals, check.want, err)
 		}
 	}
@@ -1458,7 +1459,7 @@ func resolveDeliveredTest(t *testing.T, root, revision, eventID, runID, path, co
 	if err != nil {
 		t.Fatal(err)
 	}
-	_, digest, err := Read(root)
+	_, digest, err := readState(root)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -1468,7 +1469,7 @@ func resolveDeliveredTest(t *testing.T, root, revision, eventID, runID, path, co
 	if err != nil {
 		t.Fatal(err)
 	}
-	evidence.Delivered = []DeliveredFile{delivered}
+	evidence.Delivered = []projectbriefing.DeliveredFile{delivered}
 	if _, err := ResolveVerified(root, revision, project.Model.Digest, evidence, digest); err != nil {
 		t.Fatal(err)
 	}
@@ -1477,13 +1478,13 @@ func resolveDeliveredTest(t *testing.T, root, revision, eventID, runID, path, co
 	}
 }
 
-func resolutionStatusTest(t *testing.T, root, eventID string) ResolutionStatus {
+func resolutionStatusTest(t *testing.T, root, eventID string) projectbriefing.ResolutionStatus {
 	t.Helper()
-	state, _, err := Read(root)
+	result, err := Read(root)
 	if err != nil {
 		t.Fatal(err)
 	}
-	return EventResolutionStatus(state, eventID)
+	return projectbriefing.EventResolutionStatus(result.StatusView, eventID)
 }
 
 func mergeTopicTest(t *testing.T, root, merge string) {
@@ -1499,17 +1500,17 @@ func mergeTopicTest(t *testing.T, root, merge string) {
 	}
 }
 
-func validResolutionEvidence(eventID string, managers []projectmodel.Manager) VerifiedResolutionEvidence {
+func validResolutionEvidence(eventID string, managers []projectmodel.Manager) projectbriefing.VerifiedResolutionEvidence {
 	managerIDs := make([]string, 0, len(managers))
 	for _, manager := range managers {
 		managerIDs = append(managerIDs, manager.ID)
 	}
 	sort.Strings(managerIDs)
-	return VerifiedResolutionEvidence{
+	return projectbriefing.VerifiedResolutionEvidence{
 		EventIDs: []string{eventID}, RunID: "run-verified", PlanDigest: "plan-digest",
 		CandidateID: "candidate-verified", CandidateDigest: "candidate-digest",
 		VerificationDigest: "full-verify-digest", ApplyDigest: "apply-digest", FullVerifyPassed: true,
 		CoveredManagerIDs: managerIDs, EvidenceRefs: []string{"check:integration", "verify:all-managers"},
-		Delivered: []DeliveredFile{},
+		Delivered: []projectbriefing.DeliveredFile{},
 	}
 }

@@ -1,5 +1,7 @@
 package projectcli
 
+import "github.com/Glacius-Labs/Markitect/src/internal/modules/projectmodel/projectvalue"
+
 import (
 	"bytes"
 	"context"
@@ -601,7 +603,7 @@ func runBrownfieldPlanWithOutput(t *testing.T, repo, sessionID, iterationID stri
 	return decodeOutput[projectapp.BrownfieldResult](t, out), string(out)
 }
 
-func makeApplyableStagedDistillation(discovery projectadoption.Discovery, target *projectwork.Project, contextDigest, schemaDigest string) projectadoption.Distillation {
+func makeApplyableStagedDistillation(discovery projectadoption.Discovery, target *projectvalue.Project, contextDigest, schemaDigest string) projectadoption.Distillation {
 	evidence := discovery.Evidence[0]
 	line := strings.Split(strings.ReplaceAll(evidence.Content, "\r\n", "\n"), "\n")[0]
 	content := "apiVersion: project.markitect.example.org/v1alpha1\nkind: Statement\nmetadata:\n  name: brownfield-cancellation\n  namespace: commerce.sales.orders\npurpose: Records the owner-reviewed cancellation rule.\nspec:\n  category: rule\n  description: A confirmed order can be cancelled before shipment.\n  public: true\n  uses: []\n  requires: []\n"
@@ -673,7 +675,7 @@ func runBrownfieldMutation(t *testing.T, repo, sessionID, stage string, request 
 	return written
 }
 
-func makeStagedDistillation(discovery projectadoption.Discovery, target *projectwork.Project, contextDigest, schemaDigest, scopeID, claimID, evidenceID, kind, method, statement string) projectadoption.Distillation {
+func makeStagedDistillation(discovery projectadoption.Discovery, target *projectvalue.Project, contextDigest, schemaDigest, scopeID, claimID, evidenceID, kind, method, statement string) projectadoption.Distillation {
 	var evidence projectadoption.Evidence
 	for _, item := range discovery.Evidence {
 		if item.ID == evidenceID {
@@ -690,7 +692,7 @@ func makeStagedDistillation(discovery projectadoption.Discovery, target *project
 	)
 }
 
-func makeStagedIntegratedDistillation(discovery projectadoption.Discovery, target *projectwork.Project, contextDigest, schemaDigest string) projectadoption.Distillation {
+func makeStagedIntegratedDistillation(discovery projectadoption.Discovery, target *projectvalue.Project, contextDigest, schemaDigest string) projectadoption.Distillation {
 	var doc, code projectadoption.Evidence
 	for _, item := range discovery.Evidence {
 		if item.ID == "cancellation-doc" {
@@ -710,7 +712,7 @@ func makeStagedIntegratedDistillation(discovery projectadoption.Discovery, targe
 	)
 }
 
-func makeStagedReport(discovery projectadoption.Discovery, target *projectwork.Project, contextDigest, schemaDigest string, claims []projectadoption.Claim, scopes []projectadoption.ScopeProposal, files []projectadoption.ProposedFile) projectadoption.Distillation {
+func makeStagedReport(discovery projectadoption.Discovery, target *projectvalue.Project, contextDigest, schemaDigest string, claims []projectadoption.Claim, scopes []projectadoption.ScopeProposal, files []projectadoption.ProposedFile) projectadoption.Distillation {
 	report := projectadoption.Distillation{APIVersion: projectadoption.DistillationVersion, DiscoveryDigest: discovery.Digest,
 		TargetBasis: target.Digest, TargetRevision: target.Revision, TargetContextDigest: contextDigest, Method: "human-review", SchemaDigest: schemaDigest,
 		Claims: claims, Terms: []projectadoption.Term{}, Contradictions: []projectadoption.Contradiction{}, Questions: []projectadoption.Question{},

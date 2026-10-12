@@ -24,7 +24,7 @@ spec:
     - src/internal/host/mcp/
     - src/internal/host/projectadoption/
     - src/internal/host/projectapp/
-    - src/internal/host/projectbriefing/
+    - src/internal/host/projecthistory/
     - src/internal/host/projectcli/
     - src/internal/host/projectcoverage/
     - src/internal/host/projectexplore/

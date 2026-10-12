@@ -1,13 +1,15 @@
 package projectcli
 
+import "github.com/Glacius-Labs/Markitect/src/internal/host/projecthistory"
+
 import (
 	"os"
 	"path/filepath"
 	"strings"
 	"testing"
 
-	"github.com/Glacius-Labs/Markitect/src/internal/host/projectbriefing"
 	"github.com/Glacius-Labs/Markitect/src/internal/host/projectwork"
+	"github.com/Glacius-Labs/Markitect/src/internal/modules/projectmodel/projectbriefing"
 )
 
 // briefListOutput is the `brief list` overview without --manager.
@@ -85,8 +87,8 @@ func TestBriefCreateListDismissAndManagerContext(t *testing.T) {
 	if len(preview.Bundle.Events) != 1 || preview.Bundle.Events[0].Severity != "info" {
 		t.Fatalf("preview events = %#v", preview.Bundle.Events)
 	}
-	if state, _, err := projectbriefing.Read(repo); err != nil || len(state.Briefings) != 0 {
-		t.Fatalf("brief preview recorded a briefing: %+v %v", state.Briefings, err)
+	if read, err := projecthistory.Read(repo); err != nil || len(read.Accepted.Briefings) != 0 {
+		t.Fatalf("brief preview recorded a briefing: %+v %v", read.Accepted.Briefings, err)
 	}
 	// create is the default action and may also be named.
 	if named := decodeOutput[briefOutput](t, mustCLI(t, append([]string{"brief", "create"}, args[1:]...)...)); named.StateDigest != preview.StateDigest || named.Bundle.Digest != preview.Bundle.Digest {
@@ -132,7 +134,7 @@ func TestBriefCreateListDismissAndManagerContext(t *testing.T) {
 
 func TestBriefListUsesPredictedAcceptedHistoryAndStaleDismissDoesNotWrite(t *testing.T) {
 	repo, base, revision := commitBriefingModelChange(t)
-	accepted, err := projectbriefing.ReadAcceptedHistory(repo, revision)
+	accepted, err := projecthistory.ReadAcceptedHistory(repo, revision)
 	if err != nil || len(accepted.State.Briefings) != 1 {
 		t.Fatalf("accepted history = %+v, err=%v", accepted, err)
 	}
@@ -164,18 +166,20 @@ func TestBriefListUsesPredictedAcceptedHistoryAndStaleDismissDoesNotWrite(t *tes
 	if code, _, stderr := runCLI(t, "brief", "dismiss", "--repo", repo, "--event", event.ID, "--manager", manager, "--expect", accepted.Receipt.StoreDigest, "--write"); code != 0 {
 		t.Fatalf("valid predicted-token dismissal exit=%d stderr=%q", code, stderr)
 	}
-	state, _, err := projectbriefing.Read(repo)
+	read, err := projecthistory.Read(repo)
+	state := read.Accepted
 	if err != nil || len(state.Dismissals) != 1 || state.History == nil || state.History.Revision != revision || base == revision {
-		t.Fatalf("valid dismissal did not persist accepted event: state=%+v err=%v", state, err)
+		t.Fatalf("valid dismissal did not persist accepted event: state=%+v err=%v", read.Accepted, err)
 	}
 }
 
 func TestBriefListPreservesDeliveredUncommittedResolutionStatus(t *testing.T) {
 	repo, _, revision := commitBriefingModelChange(t)
-	if _, err := projectbriefing.EnsureAcceptedHistory(repo, revision); err != nil {
+	if _, err := projecthistory.EnsureAcceptedHistory(repo, revision); err != nil {
 		t.Fatal(err)
 	}
-	state, digest, err := projectbriefing.Read(repo)
+	read, err := projecthistory.Read(repo)
+	state, digest := read.Accepted, read.PersistedDigest
 	if err != nil || len(state.Briefings) != 1 {
 		t.Fatalf("persisted briefing history = %+v err=%v", state, err)
 	}
@@ -186,7 +190,7 @@ func TestBriefListPreservesDeliveredUncommittedResolutionStatus(t *testing.T) {
 	bundle := state.Briefings[0]
 	event := bundle.Events[0]
 	content := []byte("# Delivered, not committed\n")
-	delivered, err := projectbriefing.NewDeliveredFile(repo, "docs/uncommitted-delivery.txt", "100644", content, false)
+	delivered, err := projecthistory.NewDeliveredFile(repo, "docs/uncommitted-delivery.txt", "100644", content, false)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -201,7 +205,7 @@ func TestBriefListPreservesDeliveredUncommittedResolutionStatus(t *testing.T) {
 		CoveredManagerIDs: managerIDs, EvidenceRefs: []string{"check:integration", "verify:all-managers"},
 		Delivered: []projectbriefing.DeliveredFile{delivered},
 	}
-	if _, err := projectbriefing.ResolveVerified(repo, revision, project.Report.ModelDigest, evidence, digest); err != nil {
+	if _, err := projecthistory.ResolveVerified(repo, revision, project.Report.ModelDigest, evidence, digest); err != nil {
 		t.Fatalf("record verified resolution: %v", err)
 	}
 	if err := os.WriteFile(filepath.Join(repo, "docs", "uncommitted-delivery.txt"), content, 0o644); err != nil {

@@ -1,19 +1,22 @@
 package projectrun
 
+import "github.com/Glacius-Labs/Markitect/src/internal/core/snapshot"
+import "github.com/Glacius-Labs/Markitect/src/internal/modules/projectmodel/projectvalue"
+
 import (
 	"bytes"
 	"github.com/Glacius-Labs/Markitect/src/internal/host/projectconfig"
 	"testing"
 
 	"github.com/Glacius-Labs/Markitect/src/internal/host/agentexec"
-	"github.com/Glacius-Labs/Markitect/src/internal/host/projectwork"
+
 	"github.com/Glacius-Labs/Markitect/src/internal/host/projectworkspace"
 	"github.com/Glacius-Labs/Markitect/src/internal/modules/projectmodel"
 )
 
-func workspaceDeltaFixture() (projectwork.Config, projectmodel.Report, ManagerTask, projectconfig.Limits) {
+func workspaceDeltaFixture() (projectvalue.Config, projectmodel.Report, ManagerTask, projectconfig.Limits) {
 	manager := ManagerTask{ManagerID: "manager", Owns: []string{"src/"}}
-	config := projectwork.Config{CoverageMode: "selected", InventoryRoots: []string{"src/"}}
+	config := projectvalue.Config{CoverageMode: "selected", InventoryRoots: []string{"src/"}}
 	report := projectmodel.Report{Managers: []projectmodel.Manager{{ID: manager.ManagerID, Owns: []string{"src/"}}}}
 	limits := projectconfig.Limits{MaxCandidateFileBytes: 16, MaxCandidateBytes: 32}
 	return config, report, manager, limits
@@ -43,7 +46,7 @@ func TestApplyWorkspaceDeltaRepresentsDeleteAndRename(t *testing.T) {
 	report.Files = []projectmodel.FileEntry{{Path: "src/old.bin", Owner: manager.ManagerID, Exists: true}, {Path: "src/remove.bin", Owner: manager.ManagerID, Exists: true}}
 	base := candidateData{Files: map[string]File{"src/prior.txt": {Path: "src/prior.txt", Mode: "100644", Content: []byte("prior")}}}
 	content := []byte("renamed bytes")
-	input := &Snapshot{Files: map[string][]byte{"src/old.bin": []byte("old bytes"), "src/remove.bin": []byte("removed bytes")}, Modes: map[string]string{"src/old.bin": "100644", "src/remove.bin": "100644"}}
+	input := &snapshot.Snapshot{Files: map[string][]byte{"src/old.bin": []byte("old bytes"), "src/remove.bin": []byte("removed bytes")}, Modes: map[string]string{"src/old.bin": "100644", "src/remove.bin": "100644"}}
 	out, err := applyWorkspaceDelta(base, projectworkspace.Delta{Changes: []projectworkspace.Change{
 		{Kind: projectworkspace.ChangeDelete, Path: "src/remove.bin"},
 		{Kind: projectworkspace.ChangeRename, OldPath: "src/old.bin", Path: "src/new.bin", Mode: "100644", Content: content},
@@ -130,7 +133,7 @@ func TestApplyWorkspaceDeltaEnforcesByteLimits(t *testing.T) {
 // neither literally nor through git~1, the usual Windows 8.3 short name of
 // .git that Git's core.protectNTFS refuses on every platform.
 func TestWorkspaceWritePathRefusesGitMetadataAndItsShortName(t *testing.T) {
-	config := projectwork.Config{CoverageMode: "full"}
+	config := projectvalue.Config{CoverageMode: "full"}
 	report := projectmodel.Report{Managers: []projectmodel.Manager{{ID: "root", Owns: []string{"."}}}}
 	task := ManagerTask{ManagerID: "root"}
 	for _, path := range []string{".git/hooks/pre-commit", "GIT~1/hooks/pre-commit", "src/git~1/config", ".markitect/runtime.yaml"} {

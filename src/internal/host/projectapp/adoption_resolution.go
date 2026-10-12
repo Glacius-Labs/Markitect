@@ -1,12 +1,14 @@
 package projectapp
 
+import "github.com/Glacius-Labs/Markitect/src/internal/modules/projectmodel/projectvalue"
+
 import (
 	"errors"
 	"fmt"
 	"strings"
 
 	"github.com/Glacius-Labs/Markitect/src/internal/host/projectadoption"
-	"github.com/Glacius-Labs/Markitect/src/internal/host/projectwork"
+
 	"github.com/Glacius-Labs/Markitect/src/internal/modules/projectmodel"
 )
 
@@ -30,7 +32,7 @@ func (c ResolutionChoices) validate() error {
 
 // resolveFromChoices builds the sealed Resolution for one integrated
 // iteration from the session's own discovery and integration report.
-func resolveFromChoices(session projectadoption.BrownfieldSession, target *projectwork.Project, request BrownfieldResolveInput) (projectadoption.Resolution, error) {
+func resolveFromChoices(session projectadoption.BrownfieldSession, target *projectvalue.Project, request BrownfieldResolveInput) (projectadoption.Resolution, error) {
 	for _, iteration := range session.Iterations {
 		if iteration.ID == request.IterationID {
 			if iteration.Integration == nil {
@@ -44,7 +46,7 @@ func resolveFromChoices(session projectadoption.BrownfieldSession, target *proje
 
 // buildResolution seals a Resolution from human choices against the fixed
 // discovery, distillation report and target project.
-func buildResolution(discovery projectadoption.Discovery, report projectadoption.Distillation, target *projectwork.Project, choices ResolutionChoices) (projectadoption.Resolution, error) {
+func buildResolution(discovery projectadoption.Discovery, report projectadoption.Distillation, target *projectvalue.Project, choices ResolutionChoices) (projectadoption.Resolution, error) {
 	var result projectadoption.Resolution
 	if err := choices.validate(); err != nil {
 		return result, err
@@ -55,7 +57,7 @@ func buildResolution(discovery projectadoption.Discovery, report projectadoption
 	if err := projectadoption.ValidateDistillationTarget(report, target); err != nil {
 		return result, fmt.Errorf("distillation target binding does not match the fixed target project: %w", err)
 	}
-	actorValid := choices.Actor == projectwork.HumanActor
+	actorValid := choices.Actor == projectvalue.HumanActor
 	for _, manager := range target.Report.Managers {
 		if manager.ID == choices.Actor {
 			actorValid = true

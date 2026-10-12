@@ -1,7 +1,8 @@
-package projectbriefing
+package projecthistory
 
 import (
 	"errors"
+	projectbriefing "github.com/Glacius-Labs/Markitect/src/internal/modules/projectmodel/projectbriefing"
 	"os"
 	"path/filepath"
 	"testing"
@@ -23,7 +24,7 @@ func TestDismissAcceptedHistoryPersistsPredictedHistoryAndDismissalTogether(t *t
 	if err != nil {
 		t.Fatalf("dismiss with predicted store token: %v", err)
 	}
-	state, persistedDigest, err := Read(root)
+	state, persistedDigest, err := readState(root)
 	if err != nil || persistedDigest != digest || state.History == nil || state.History.Revision != revision || len(state.Briefings) != 1 || len(state.Dismissals) != 1 || state.Dismissals[0].EventID != event.ID || state.Dismissals[0].ManagerID != manager {
 		t.Fatalf("accepted history and dismissal were not persisted together: state=%+v digest=%s err=%v", state, persistedDigest, err)
 	}
@@ -53,7 +54,7 @@ func TestDismissAcceptedHistoryRejectsStoreAdvanceAfterHistoryReadWithoutOverwri
 	if err != nil || string(after) != string(before) {
 		t.Fatalf("stale dismissal replaced the advanced store: err=%v", err)
 	}
-	state, _, err := Read(root)
+	state, _, err := readState(root)
 	if err != nil || len(state.Dismissals) != 0 {
 		t.Fatalf("stale dismissal changed dismissal state: %+v err=%v", state.Dismissals, err)
 	}
@@ -87,7 +88,7 @@ func TestDismissAcceptedHistoryPreservesProvisionalBriefings(t *testing.T) {
 	}
 }
 
-func managerWithEventContextTest(t *testing.T, bundle Bundle, event Event) string {
+func managerWithEventContextTest(t *testing.T, bundle projectbriefing.Bundle, event projectbriefing.Event) string {
 	t.Helper()
 	for _, briefing := range bundle.Managers {
 		if !contains(event.AffectedManagers, briefing.ManagerID) {

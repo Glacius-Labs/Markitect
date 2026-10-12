@@ -1,5 +1,9 @@
 package projectonboarding
 
+import "go.yaml.in/yaml/v3"
+
+import "github.com/Glacius-Labs/Markitect/src/internal/modules/projectmodel/projectvalue"
+
 import (
 	"bytes"
 	"crypto/sha256"
@@ -16,10 +20,9 @@ import (
 
 	"github.com/Glacius-Labs/Markitect/src/internal/host/projectexplore"
 	"github.com/Glacius-Labs/Markitect/src/internal/host/projectwork"
-	"go.yaml.in/yaml/v3"
 )
 
-func onboardingRepo(t *testing.T) (string, *projectwork.Project) {
+func onboardingRepo(t *testing.T) (string, *projectvalue.Project) {
 	t.Helper()
 	root := t.TempDir()
 	commands := [][]string{{"init", "-b", "codex/onboarding-test"}, {"config", "user.name", "Onboarding Test"}, {"config", "user.email", "onboarding@example.invalid"}}
@@ -234,12 +237,12 @@ func TestPreviewProtectsConfiguredDocumentAtLegacySkillPath(t *testing.T) {
 	} {
 		t.Run(string(test.provider), func(t *testing.T) {
 			root, _ := onboardingRepo(t)
-			manifestPath := filepath.Join(root, filepath.FromSlash(projectwork.ManifestPath))
+			manifestPath := filepath.Join(root, filepath.FromSlash(projectvalue.ManifestPath))
 			manifest, err := os.ReadFile(manifestPath)
 			if err != nil {
 				t.Fatal(err)
 			}
-			updated := strings.Replace(string(manifest), "documentPath: "+projectwork.DefaultDocumentPath, "documentPath: "+test.path, 1)
+			updated := strings.Replace(string(manifest), "documentPath: "+projectvalue.DefaultDocumentPath, "documentPath: "+test.path, 1)
 			if updated == string(manifest) {
 				t.Fatal("fixture did not contain its default documentPath")
 			}
@@ -368,7 +371,7 @@ func TestApplyRejectsStaleModelAndConfiguration(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		modelPath := filepath.Join(root, filepath.FromSlash(projectwork.ModelRoot+"/manager.yaml"))
+		modelPath := filepath.Join(root, filepath.FromSlash(projectvalue.ModelRoot+"/manager.yaml"))
 		model, err := os.ReadFile(modelPath)
 		if err != nil {
 			t.Fatal(err)
@@ -403,7 +406,7 @@ func TestApplyRejectsStaleModelAndConfiguration(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		manifestPath := filepath.Join(root, filepath.FromSlash(projectwork.ManifestPath))
+		manifestPath := filepath.Join(root, filepath.FromSlash(projectvalue.ManifestPath))
 		manifest, err := os.ReadFile(manifestPath)
 		if err != nil {
 			t.Fatal(err)
@@ -433,7 +436,7 @@ func TestPreviewRejectsUnsafeOrUnconfiguredDocumentationDestinations(t *testing.
 
 func TestOnboardingUsesAndPreservesLegacyHiddenDocumentationDestination(t *testing.T) {
 	root, _ := onboardingRepo(t)
-	manifestPath := filepath.Join(root, projectwork.ManifestPath)
+	manifestPath := filepath.Join(root, projectvalue.ManifestPath)
 	manifest, err := os.ReadFile(manifestPath)
 	if err != nil {
 		t.Fatal(err)
@@ -446,14 +449,14 @@ func TestOnboardingUsesAndPreservesLegacyHiddenDocumentationDestination(t *testi
 	if err != nil {
 		t.Fatalf("load legacy project without documentPath: %v", err)
 	}
-	if got := projectwork.DocumentPath(project.Config); got != projectwork.ViewPath {
-		t.Fatalf("legacy document destination = %q, want %q", got, projectwork.ViewPath)
+	if got := projectvalue.DocumentPath(project.Config); got != projectvalue.ViewPath {
+		t.Fatalf("legacy document destination = %q, want %q", got, projectvalue.ViewPath)
 	}
 	view, err := projectwork.Document(project, false)
 	if err != nil {
 		t.Fatalf("render legacy view: %v", err)
 	}
-	legacyViewPath := filepath.Join(root, filepath.FromSlash(projectwork.ViewPath))
+	legacyViewPath := filepath.Join(root, filepath.FromSlash(projectvalue.ViewPath))
 	if err := os.MkdirAll(filepath.Dir(legacyViewPath), 0755); err != nil {
 		t.Fatal(err)
 	}
@@ -474,10 +477,10 @@ func TestOnboardingUsesAndPreservesLegacyHiddenDocumentationDestination(t *testi
 	if err != nil {
 		t.Fatalf("preview onboarding for legacy project: %v", err)
 	}
-	if plan.Options.DocumentationPath != projectwork.ViewPath {
-		t.Fatalf("onboarding destination = %q, want legacy %q", plan.Options.DocumentationPath, projectwork.ViewPath)
+	if plan.Options.DocumentationPath != projectvalue.ViewPath {
+		t.Fatalf("onboarding destination = %q, want legacy %q", plan.Options.DocumentationPath, projectvalue.ViewPath)
 	}
-	if !strings.Contains(fileFor(t, plan, workflowPath).Content, projectwork.ViewPath) {
+	if !strings.Contains(fileFor(t, plan, workflowPath).Content, projectvalue.ViewPath) {
 		t.Fatal("shared workflow does not retain the legacy documentation destination")
 	}
 	if _, err := Apply(root, plan, plan.Digest); err != nil {
@@ -574,7 +577,7 @@ func TestGeneratedSkillsHaveDiscoverableFrontmatterAndInstalledReferences(t *tes
 
 func TestRenderedSkillPathsMatchProjectOwnershipRegistry(t *testing.T) {
 	capabilities := capabilitySkills()
-	registeredNames := projectwork.NativeSkillNames()
+	registeredNames := projectvalue.NativeSkillNames()
 	if len(capabilities) != len(registeredNames) {
 		t.Fatalf("renderer exposes %d operation skills, project ownership registers %d", len(capabilities), len(registeredNames))
 	}
@@ -597,7 +600,7 @@ func TestRenderedSkillPathsMatchProjectOwnershipRegistry(t *testing.T) {
 			root, providerName = ".claude/skills", "claude"
 		}
 		registeredPaths := make(map[string]bool)
-		for _, target := range projectwork.NativeSkillPaths(providerName) {
+		for _, target := range projectvalue.NativeSkillPaths(providerName) {
 			registeredPaths[target] = true
 			fileFor(t, Plan{Files: files}, target)
 		}
@@ -722,14 +725,14 @@ func TestRenderedExploreRecordDecodesAndCreatesBoundPreview(t *testing.T) {
 	}
 	managerIDs := append([]string{}, record.Scopes[0].ManagerIDs...)
 	empty := []string{}
-	binding := projectexplore.Binding{
+	binding := projectvalue.Binding{
 		RepositoryRoot: root, Branch: strings.TrimSpace(string(branch)), Head: strings.TrimSpace(string(head)),
 		ModelRevision: project.Revision, ModelAccepted: false, AcceptancePolicy: project.Config.AcceptancePolicy,
 		ProjectDigest: testDigest(project.Digest), ModelDigest: testDigest(project.Report.ModelDigest),
 		SnapshotDigest: testDigest(project.Snapshot.Digest()), SelectionDigest: testDigest("selection"),
 		ScopeID: record.Scopes[0].ID, ScopeName: record.Scopes[0].Name, Goal: record.Scopes[0].Goal,
 		Operation: record.Scopes[0].Operation, ManagerIDs: managerIDs, ResponsibleManagerIDs: empty,
-		RequiredArtifacts: []string{}, FileStructure: []string{}, Checks: []string{}, BasisFiles: []projectexplore.BasisFile{},
+		RequiredArtifacts: []string{}, FileStructure: []string{}, Checks: []string{}, BasisFiles: []projectvalue.BasisFile{},
 	}
 	preview, err := projectexplore.CreatePreview(root, record, binding)
 	if err != nil {

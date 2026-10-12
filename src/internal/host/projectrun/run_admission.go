@@ -20,7 +20,7 @@ func prepareRunExecution(ctx context.Context, host Host, invoker Invoker, root, 
 	if !plan.ExecuteAuthorized {
 		return nil, RunReport{}, ErrNotRunnable
 	}
-	if err := validateExplorationReadiness(root, plan); err != nil {
+	if err := validateExplorationReadiness(host, root, plan); err != nil {
 		report, supersedeErr := supersedeExisting(store, id, err)
 		return nil, report, supersedeErr
 	}

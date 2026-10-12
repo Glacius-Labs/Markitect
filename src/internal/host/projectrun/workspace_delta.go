@@ -1,12 +1,15 @@
 package projectrun
 
+import "github.com/Glacius-Labs/Markitect/src/internal/modules/projectmodel/projectvalue"
+import "github.com/Glacius-Labs/Markitect/src/internal/core/snapshot"
+
 import (
 	"fmt"
 	"github.com/Glacius-Labs/Markitect/src/internal/host/projectconfig"
 	"strings"
 
 	"github.com/Glacius-Labs/Markitect/src/internal/host/agentexec"
-	"github.com/Glacius-Labs/Markitect/src/internal/host/projectwork"
+
 	"github.com/Glacius-Labs/Markitect/src/internal/host/projectworkspace"
 	"github.com/Glacius-Labs/Markitect/src/internal/modules/projectmodel"
 )
@@ -16,7 +19,7 @@ import (
 // repository, base SHA, overlay, task ID, and base digest to the exact
 // workspace request and handle. This function rechecks product write policy;
 // it does not treat model proposals as a source of candidate bytes.
-func applyWorkspaceDelta(base candidateData, delta projectworkspace.Delta, proposals []agentexec.CandidateFile, config projectwork.Config, report projectmodel.Report, task ManagerTask, phase string, conflictPaths []string, limits projectconfig.Limits, input *Snapshot) (candidateData, error) {
+func applyWorkspaceDelta(base candidateData, delta projectworkspace.Delta, proposals []agentexec.CandidateFile, config projectvalue.Config, report projectmodel.Report, task ManagerTask, phase string, conflictPaths []string, limits projectconfig.Limits, input *snapshot.Snapshot) (candidateData, error) {
 	ignored, err := ignoredWritePaths(config, input)
 	if err != nil {
 		return candidateData{}, err
@@ -152,7 +155,7 @@ func applyWorkspaceDelta(base candidateData, delta projectworkspace.Delta, propo
 	return base, nil
 }
 
-func validateWorkspaceWritePath(path string, config projectwork.Config, report projectmodel.Report, task ManagerTask, phase string, conflictSet map[string]bool, ignored []string) error {
+func validateWorkspaceWritePath(path string, config projectvalue.Config, report projectmodel.Report, task ManagerTask, phase string, conflictSet map[string]bool, ignored []string) error {
 	if !safeRepoPath(path) || forbiddenRuntimePath(path) || !projectPathAllowed(config, path) {
 		return fmt.Errorf("workspace delta path %s is outside selected inventory or enters Markitect control-plane state", path)
 	}
@@ -213,7 +216,7 @@ func bytesEqual(left, right []byte) bool {
 }
 
 // applyAgentCandidate selects the explicit byte source returned by the Host.
-func applyAgentCandidate(base candidateData, result agentexec.RunResult, config projectwork.Config, report projectmodel.Report, task ManagerTask, phase string, conflictPaths []string, limits projectconfig.Limits, input *Snapshot) (candidateData, error) {
+func applyAgentCandidate(base candidateData, result agentexec.RunResult, config projectvalue.Config, report projectmodel.Report, task ManagerTask, phase string, conflictPaths []string, limits projectconfig.Limits, input *snapshot.Snapshot) (candidateData, error) {
 	if result.Delta != nil {
 		return applyWorkspaceDelta(base, *result.Delta, result.Response.CandidateFiles, config, report, task, phase, conflictPaths, limits, input)
 	}

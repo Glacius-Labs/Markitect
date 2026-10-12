@@ -1,5 +1,7 @@
 package projectadoption
 
+import "github.com/Glacius-Labs/Markitect/src/internal/modules/projectmodel/projectvalue"
+
 import (
 	"bytes"
 	"errors"
@@ -155,7 +157,7 @@ type Readiness struct {
 // model as two independent bases. It performs no model/provider call and
 // returns only a session that ValidateBrownfieldSession accepts, so a
 // previewed start is also writable.
-func StartBrownfieldSession(sourceRoot string, target *projectwork.Project, discovery Discovery, scopeStates []ScopeStatus) (BrownfieldSession, error) {
+func StartBrownfieldSession(sourceRoot string, target *projectvalue.Project, discovery Discovery, scopeStates []ScopeStatus) (BrownfieldSession, error) {
 	if err := ValidateDiscovery(discovery); err != nil {
 		return BrownfieldSession{}, err
 	}

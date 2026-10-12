@@ -1,5 +1,10 @@
 package projectapp
 
+import "go.yaml.in/yaml/v3"
+
+import "github.com/Glacius-Labs/Markitect/src/internal/core/snapshot"
+import "github.com/Glacius-Labs/Markitect/src/internal/modules/projectmodel/projectvalue"
+
 import (
 	"context"
 	"errors"
@@ -16,12 +21,11 @@ import (
 	"github.com/Glacius-Labs/Markitect/src/internal/host/projectrun"
 	"github.com/Glacius-Labs/Markitect/src/internal/host/projectwork"
 	"github.com/Glacius-Labs/Markitect/src/internal/modules/projectmodel"
-	"go.yaml.in/yaml/v3"
 )
 
 func TestRunRequiresExplicitRootBeforeLoadingOrInvoking(t *testing.T) {
 	loads := 0
-	host := projectrun.Host{Load: func(string, string) (*projectrun.Project, error) {
+	host := projectrun.Host{Load: func(string, string) (*projectvalue.Project, error) {
 		loads++
 		return nil, errors.New("unexpected load")
 	}}
@@ -50,16 +54,16 @@ func TestPlanPassesExplicitSelectionAndUnauthenticatedRequestToExistingService(t
 	var loadedRevision string
 	loadErr := errors.New("stop at selected revision")
 	host := projectrun.Host{
-		Load: func(_ string, selectedRevision string) (*projectrun.Project, error) {
+		Load: func(_ string, selectedRevision string) (*projectvalue.Project, error) {
 			loadCalls++
 			loadedRevision = selectedRevision
 			return nil, loadErr
 		},
-		FromSnapshot: func(string, *projectrun.Snapshot) (*projectrun.Project, error) {
+		FromSnapshot: func(string, *snapshot.Snapshot) (*projectvalue.Project, error) {
 			return nil, errors.New("unexpected snapshot")
 		},
-		PlanEdit: func(*projectrun.Project, projectrun.Mutation) (projectrun.EditPlan, error) {
-			return projectrun.EditPlan{}, errors.New("unexpected edit")
+		PlanEdit: func(*projectvalue.Project, projectvalue.Mutation) (projectvalue.EditPlan, error) {
+			return projectvalue.EditPlan{}, errors.New("unexpected edit")
 		},
 	}
 	request := projectrun.PlanRequest{Operation: projectrun.OperationApply, Goal: "Review a bounded change", ExecuteAuthorized: false}
@@ -84,15 +88,15 @@ func TestPlanRejectsConflictingExplicitRevisionsBeforeHost(t *testing.T) {
 	runGit(t, root, "commit", "-m", "fixture")
 	loads := 0
 	operations := Operations{Host: projectrun.Host{
-		Load: func(string, string) (*projectrun.Project, error) {
+		Load: func(string, string) (*projectvalue.Project, error) {
 			loads++
 			return nil, errors.New("Host must not be called")
 		},
-		FromSnapshot: func(string, *projectrun.Snapshot) (*projectrun.Project, error) {
+		FromSnapshot: func(string, *snapshot.Snapshot) (*projectvalue.Project, error) {
 			return nil, errors.New("unexpected snapshot")
 		},
-		PlanEdit: func(*projectrun.Project, projectrun.Mutation) (projectrun.EditPlan, error) {
-			return projectrun.EditPlan{}, errors.New("unexpected edit")
+		PlanEdit: func(*projectvalue.Project, projectvalue.Mutation) (projectvalue.EditPlan, error) {
+			return projectvalue.EditPlan{}, errors.New("unexpected edit")
 		},
 	}}
 	_, err := operations.Plan(PlanOperation{
@@ -139,7 +143,7 @@ func makePlanFixture(t *testing.T) string {
 	}
 	for _, file := range plan.Files {
 		content := file.Content
-		if file.Path == projectwork.ManifestPath {
+		if file.Path == projectvalue.ManifestPath {
 			content = strings.Replace(content, "coverageMode: full", "coverageMode: selected", 1)
 		}
 		path := filepath.Join(root, filepath.FromSlash(file.Path))
@@ -169,7 +173,7 @@ func makePlanFixture(t *testing.T) string {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if err := os.WriteFile(filepath.Join(root, filepath.FromSlash(projectwork.RuntimePath)), encodedRuntime, 0o600); err != nil {
+	if err := os.WriteFile(filepath.Join(root, filepath.FromSlash(projectvalue.RuntimePath)), encodedRuntime, 0o600); err != nil {
 		t.Fatal(err)
 	}
 	runGit(t, root, "init", "-b", "facade-plan")

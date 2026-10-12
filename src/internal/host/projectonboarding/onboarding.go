@@ -2,6 +2,8 @@
 // using Codex and/or Claude. It never changes global agent configuration.
 package projectonboarding
 
+import "github.com/Glacius-Labs/Markitect/src/internal/modules/projectmodel/projectvalue"
+
 import (
 	"crypto/sha256"
 	"encoding/hex"
@@ -77,7 +79,7 @@ func Preview(root, modelDigest string, options Options) (Plan, error) {
 	if err != nil {
 		return plan, fmt.Errorf("load current project: %w", err)
 	}
-	canonicalDocumentationPath := projectwork.DocumentPath(project.Config)
+	canonicalDocumentationPath := projectvalue.DocumentPath(project.Config)
 	if options.DocumentationPath == "" {
 		options.DocumentationPath = canonicalDocumentationPath
 	}
@@ -253,7 +255,7 @@ func validateDocumentationPath(value string) error {
 	if value == "" || strings.ContainsAny(value, "\\\x00") || path.IsAbs(value) || path.Clean(value) != value || value == "." || strings.HasPrefix(value, "../") || !strings.HasSuffix(strings.ToLower(value), ".md") {
 		return fmt.Errorf("documentation destination %q must be a normalized repository-relative Markdown path", value)
 	}
-	legacyView := value == projectwork.ViewPath || strings.HasPrefix(strings.ToLower(value), ".markitect/views/")
+	legacyView := value == projectvalue.ViewPath || strings.HasPrefix(strings.ToLower(value), ".markitect/views/")
 	if strings.EqualFold(value, ".markitect") || strings.HasPrefix(strings.ToLower(value), ".markitect/") && !legacyView {
 		return errors.New("documentation destination must be outside .markitect/")
 	}

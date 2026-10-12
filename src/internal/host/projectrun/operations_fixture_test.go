@@ -10,8 +10,6 @@ import (
 	"testing"
 
 	"github.com/Glacius-Labs/Markitect/src/internal/host/agentexec"
-	"github.com/Glacius-Labs/Markitect/src/internal/host/projectbriefing"
-	"github.com/Glacius-Labs/Markitect/src/internal/host/projectwork"
 	"github.com/Glacius-Labs/Markitect/src/internal/testkit"
 )
 
@@ -255,59 +253,4 @@ func configureOperationsFullVerify(t *testing.T, root string) string {
 		runtime.Review = &projectconfig.ReviewConfig{Agents: reviewers, MaxRounds: 1, MaxManagerRounds: 1}
 	})
 	return logPath
-}
-
-func TestDismissedAcceptedModelEventStillLoadsForManagerContext(t *testing.T) {
-	root := makeFullVerifyFixture(t)
-	statementPath := ".markitect/model/orders/statement.yaml"
-	statement, err := os.ReadFile(filepath.Join(root, filepath.FromSlash(statementPath)))
-	if err != nil {
-		t.Fatal(err)
-	}
-	updated := strings.Replace(string(statement), "Implement the orders artifact.", "Implement the orders artifact with audited invariants.", 1)
-	if updated == string(statement) {
-		t.Fatal("Orders statement fixture text was not found")
-	}
-	writeE2E(t, root, statementPath, updated)
-	gitE2E(t, root, "add", statementPath)
-	gitE2E(t, root, "commit", "-m", "accept Orders model clarification")
-	revision := gitE2E(t, root, "rev-parse", "HEAD")
-	receipt, err := projectbriefing.EnsureAcceptedHistory(root, revision)
-	if err != nil {
-		t.Fatalf("ensure accepted-model history: %v", err)
-	}
-	if len(receipt.Bundles) != 1 || len(receipt.Bundles[0].Events) == 0 {
-		t.Fatalf("fixture did not create one accepted event bundle: bundles=%d", len(receipt.Bundles))
-	}
-	bundle := receipt.Bundles[0]
-	ordersID := e2eManagerID("orders", "orders")
-	var ordersEvent string
-	for _, event := range bundle.Events {
-		for _, managerID := range event.AffectedManagers {
-			if managerID == ordersID {
-				ordersEvent = event.ID
-			}
-		}
-	}
-	if ordersEvent == "" {
-		t.Fatalf("accepted change did not affect Orders: %+v", bundle.Events)
-	}
-	_, digest, err := projectbriefing.Read(root)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if _, err := projectbriefing.Dismiss(root, ordersEvent, ordersID, digest); err != nil {
-		t.Fatalf("dismiss accepted event: %v", err)
-	}
-	current, err := projectwork.Load(root, revision)
-	if err != nil {
-		t.Fatal(err)
-	}
-	context, err := managerBriefing(root, current.Report.ModelDigest, ordersID)
-	if err != nil {
-		t.Fatalf("load later Orders manager context: %v", err)
-	}
-	if len(context.Events) != 1 || context.Events[0].ID != ordersEvent {
-		t.Fatalf("dismissal removed accepted event from later Manager context: %+v", context.Events)
-	}
 }

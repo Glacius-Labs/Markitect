@@ -23,8 +23,6 @@ spec:
       name: declared-inputs
   paths:
     - src/internal/core/
-    - src/internal/host/projectbriefing/
-    - src/internal/host/projectcoverage/
     - src/internal/modules/projectmodel/
   checks:
     - namespace: ""

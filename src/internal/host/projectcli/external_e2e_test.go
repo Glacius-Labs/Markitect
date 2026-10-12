@@ -1,5 +1,9 @@
 package projectcli
 
+import "go.yaml.in/yaml/v3"
+
+import "github.com/Glacius-Labs/Markitect/src/internal/modules/projectmodel/projectvalue"
+
 import (
 	"context"
 	"encoding/json"
@@ -18,7 +22,6 @@ import (
 	"github.com/Glacius-Labs/Markitect/src/internal/host/projectrun"
 	"github.com/Glacius-Labs/Markitect/src/internal/host/projectwork"
 	"github.com/Glacius-Labs/Markitect/src/internal/infrastructure/source"
-	"go.yaml.in/yaml/v3"
 )
 
 // TestExternalGitCLICommitsReviewedCandidate exercises the shipped CLI process:
@@ -40,12 +43,12 @@ func TestExternalGitCLICommitsReviewedCandidate(t *testing.T) {
 	obsoleteArtifact = strings.Replace(obsoleteArtifact, "paths: [src/value.txt]", "paths: [src/obsolete.txt]", 1)
 	obsoleteArtifact = strings.Replace(obsoleteArtifact, "required: true", "required: false", 1)
 	repo.Write(".markitect/model/obsolete-artifact.yaml", obsoleteArtifact)
-	manifestPath := filepath.Join(repo.Dir, filepath.FromSlash(projectwork.ManifestPath))
+	manifestPath := filepath.Join(repo.Dir, filepath.FromSlash(projectvalue.ManifestPath))
 	manifestBytes, err := os.ReadFile(manifestPath)
 	if err != nil {
 		t.Fatal(err)
 	}
-	var manifest projectwork.Config
+	var manifest projectvalue.Config
 	if err := yaml.Unmarshal(manifestBytes, &manifest); err != nil {
 		t.Fatal(err)
 	}

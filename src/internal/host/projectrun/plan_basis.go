@@ -1,10 +1,12 @@
 package projectrun
 
+import "github.com/Glacius-Labs/Markitect/src/internal/modules/projectmodel/projectvalue"
+
 import (
 	"fmt"
 	"strings"
 
-	"github.com/Glacius-Labs/Markitect/src/internal/host/projectbriefing"
+	"github.com/Glacius-Labs/Markitect/src/internal/modules/projectmodel/projectbriefing"
 	projectconfig "github.com/Glacius-Labs/Markitect/src/internal/host/projectconfig"
 	"github.com/Glacius-Labs/Markitect/src/internal/infrastructure/source"
 	"github.com/Glacius-Labs/Markitect/src/internal/modules/projectmodel"
@@ -16,9 +18,9 @@ type planBasis struct {
 	Root             string
 	Request          PlanRequest
 	Operation        string
-	Project          *Project
-	Working          *Project
-	ChangeBase       *Project
+	Project          *projectvalue.Project
+	Working          *projectvalue.Project
+	ChangeBase       *projectvalue.Project
 	ChangeImpact     *projectmodel.ChangeImpact
 	BriefingView     *projectbriefing.Store
 	Runtime          projectconfig.Runtime
@@ -67,7 +69,7 @@ func loadPlanBasis(host Host, root, revision string, request PlanRequest) (planB
 	if project == nil || project.Snapshot == nil {
 		return basis, fmt.Errorf("project frontend returned no fixed snapshot")
 	}
-	var changeBase *Project
+	var changeBase *projectvalue.Project
 	var changeImpact *projectmodel.ChangeImpact
 	if strings.TrimSpace(request.SinceRevision) != "" {
 		changeBase, err = host.Load(root, request.SinceRevision)
@@ -93,7 +95,7 @@ func loadPlanBasis(host Host, root, revision string, request PlanRequest) (planB
 		briefingView = nil
 	}
 	if briefingView == nil && (project.Config.WorkflowMode == "guided" || request.ExplorationID != "") && request.ModelEdit == nil {
-		if briefingView, err = captureAcceptedHistory(root, project.Revision, request.ExecuteAuthorized); err != nil {
+		if briefingView, err = captureAcceptedHistory(host, root, project.Revision, request.ExecuteAuthorized); err != nil {
 			return basis, fmt.Errorf("capture accepted model history: %w", err)
 		}
 	}

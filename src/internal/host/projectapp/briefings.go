@@ -9,9 +9,11 @@ import (
 	"time"
 
 	"github.com/Glacius-Labs/Markitect/src/internal/core"
-	"github.com/Glacius-Labs/Markitect/src/internal/host/projectbriefing"
+	"github.com/Glacius-Labs/Markitect/src/internal/host/projecthistory"
 	"github.com/Glacius-Labs/Markitect/src/internal/host/projectwork"
 	"github.com/Glacius-Labs/Markitect/src/internal/infrastructure/source"
+	"github.com/Glacius-Labs/Markitect/src/internal/modules/projectmodel/projectbriefing"
+	"github.com/Glacius-Labs/Markitect/src/internal/modules/projectmodel/projectvalue"
 )
 
 type VisibleNotification struct {
@@ -81,7 +83,7 @@ func visibleBriefings(root string, state projectbriefing.Store) ([]VisibleNotifi
 			commitUnix = value
 			commitTimes[item.revision] = value
 		}
-		resolution := projectbriefing.EventResolutionStatus(state, event.ID)
+		resolution := projectbriefing.EventResolutionStatus(projectbriefing.NewResolutionView(state, nil), event.ID)
 		nextAction := "Review the declared model change and its affected responsibilities."
 		if resolution.Status == "resolved" {
 			nextAction = "Inspect the recorded full verification and Apply evidence."
@@ -173,11 +175,12 @@ func (o Operations) BriefCreate(root string, in BriefInput) (any, error) {
 	if err := requireRoot(root); err != nil {
 		return nil, err
 	}
-	_, stateDigest, err := projectbriefing.Read(root)
+	read, err := projecthistory.Read(root)
 	if err != nil {
 		return nil, err
 	}
-	bundle, err := projectbriefing.Generate(root, in.Since, in.Revision, projectbriefing.Provenance{
+	stateDigest := read.PersistedDigest
+	bundle, err := projecthistory.Generate(root, in.Since, in.Revision, projectbriefing.Provenance{
 		DecisionReference: in.Provenance,
 		Actor:             "cli-caller",
 		Authority:         "explicit caller declaration; identity is not authenticated",
@@ -186,7 +189,7 @@ func (o Operations) BriefCreate(root string, in BriefInput) (any, error) {
 		return nil, err
 	}
 	if in.Write {
-		if stateDigest, err = projectbriefing.Write(root, bundle, in.Expect); err != nil {
+		if stateDigest, err = projecthistory.Write(root, bundle, in.Expect); err != nil {
 			return nil, err
 		}
 	}
@@ -209,49 +212,48 @@ func (o Operations) BriefList(root, manager string) (any, error) {
 		return nil, err
 	}
 	state, stateDigest := projectbriefing.Store{}, ""
-	statusState := projectbriefing.Store{}
-	if project.Config.WorkflowMode == projectwork.WorkflowModeGuided {
-		accepted, err := projectbriefing.ReadAcceptedHistory(root, revision)
+	statusView := projectbriefing.ResolutionView{}
+	if project.Config.WorkflowMode == projectvalue.WorkflowModeGuided {
+		accepted, err := projecthistory.ReadAcceptedHistory(root, revision)
 		if err != nil {
 			return nil, err
 		}
 		state = accepted.State
 		stateDigest = accepted.Receipt.StoreDigest
-		var persistedDigest string
-		statusState, persistedDigest, err = projectbriefing.Read(root)
+		persisted, err := projecthistory.Read(root)
 		if err != nil {
 			return nil, err
 		}
-		if persistedDigest != accepted.PersistedDigest {
-			return nil, projectbriefing.ErrStaleStore
+		if persisted.PersistedDigest != accepted.PersistedDigest {
+			return nil, projecthistory.ErrStaleStore
 		}
+		statusView = persisted.StatusView
 	} else {
-		var err error
-		state, stateDigest, err = projectbriefing.Read(root)
+		read, err := projecthistory.Read(root)
 		if err != nil {
 			return nil, err
 		}
-		statusState = state
+		state, stateDigest, statusView = read.Accepted, read.PersistedDigest, read.StatusView
 	}
 	if manager == "" {
 		notifications, hidden, err := visibleBriefings(root, state)
 		if err != nil {
 			return nil, err
 		}
-		applyBriefingResolutionHints(notifications, statusState)
+		applyBriefingResolutionHints(notifications, statusView)
 		return struct {
 			Notifications        []VisibleNotification `json:"notifications"`
 			HiddenDismissedCount int                   `json:"hiddenDismissedCount"`
 			StateDigest          string                `json:"stateDigest"`
 		}{notifications, hidden, stateDigest}, nil
 	}
-	briefings, events, binding, err := projectbriefing.LoadForManagerFrom(root, state, project.Report.ModelDigest, manager, project.Revision)
+	briefings, events, binding, err := projecthistory.LoadForManagerFrom(root, state, project.Report.ModelDigest, manager, project.Revision)
 	if err != nil {
 		return nil, err
 	}
 	withStatus := make([]ManagerEvent, 0, len(events))
 	for _, event := range events {
-		resolution := projectbriefing.EventResolutionStatus(statusState, event.ID)
+		resolution := projectbriefing.EventResolutionStatus(statusView, event.ID)
 		withStatus = append(withStatus, ManagerEvent{Event: event, ResolutionStatus: resolution.Status, Resolution: resolution.Resolution})
 	}
 	return struct {
@@ -264,9 +266,9 @@ func (o Operations) BriefList(root, manager string) (any, error) {
 
 // ReadAcceptedHistory omits Read's transient delivered-uncommitted hints.
 // Keep those display-only hints from the matching persisted-store view.
-func applyBriefingResolutionHints(notifications []VisibleNotification, persisted projectbriefing.Store) {
+func applyBriefingResolutionHints(notifications []VisibleNotification, statusView projectbriefing.ResolutionView) {
 	for i := range notifications {
-		resolution := projectbriefing.EventResolutionStatus(persisted, notifications[i].EventID)
+		resolution := projectbriefing.EventResolutionStatus(statusView, notifications[i].EventID)
 		notifications[i].ResolutionStatus = resolution.Status
 		notifications[i].Resolution = resolution.Resolution
 		if resolution.Status == projectbriefing.StatusResolved {
@@ -289,7 +291,7 @@ func (o Operations) BriefDismiss(root string, in BriefInput) (any, error) {
 	if err != nil {
 		return nil, fmt.Errorf("resolve the committed model revision for briefings: %w", err)
 	}
-	binding, err := projectbriefing.DismissAcceptedHistory(root, revision, in.Event, in.Manager, in.Expect)
+	binding, err := projecthistory.DismissAcceptedHistory(root, revision, in.Event, in.Manager, in.Expect)
 	if err != nil {
 		return nil, err
 	}

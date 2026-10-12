@@ -1,5 +1,9 @@
 package projectcli
 
+import "github.com/Glacius-Labs/Markitect/src/internal/host/projecthistory"
+
+import "github.com/Glacius-Labs/Markitect/src/internal/modules/projectmodel/projectvalue"
+
 import (
 	"context"
 	"crypto/sha256"
@@ -16,10 +20,10 @@ import (
 	"github.com/Glacius-Labs/Markitect/src/internal/host/agentexec"
 	"github.com/Glacius-Labs/Markitect/src/internal/host/mcp"
 	"github.com/Glacius-Labs/Markitect/src/internal/host/projectapp"
-	"github.com/Glacius-Labs/Markitect/src/internal/host/projectbriefing"
 	"github.com/Glacius-Labs/Markitect/src/internal/host/projectexplore"
 	"github.com/Glacius-Labs/Markitect/src/internal/host/projectrun"
 	"github.com/Glacius-Labs/Markitect/src/internal/host/projectwork"
+	"github.com/Glacius-Labs/Markitect/src/internal/modules/projectmodel/projectbriefing"
 	"github.com/Glacius-Labs/Markitect/src/internal/testkit"
 )
 
@@ -168,7 +172,7 @@ func newContractModel(t *testing.T) *testkit.Repo {
 	}
 	for _, file := range plan.Files {
 		content := file.Content
-		if file.Path == projectwork.ManifestPath {
+		if file.Path == projectvalue.ManifestPath {
 			content = strings.Replace(content, "coverageMode: full", "coverageMode: selected", 1)
 		}
 		repo.Write(file.Path, content)
@@ -278,7 +282,7 @@ func inspectionContextNoWrite(t *testing.T, surface string) {
 	ops.Invoker = invoker
 	caller := newContractCaller(t, surface, repo.Dir, ops)
 	manager := inspectionManagerID(t, caller, repo)
-	accepted, err := projectbriefing.ReadAcceptedHistory(repo.Dir, revision)
+	accepted, err := projecthistory.ReadAcceptedHistory(repo.Dir, revision)
 	if err != nil || len(accepted.Receipt.Bundles) != 1 {
 		t.Fatalf("fixture has no prospective accepted-history change: receipt=%+v err=%v", accepted.Receipt, err)
 	}
@@ -375,7 +379,7 @@ func inspectionDocsNoWrite(t *testing.T, surface string) {
 func inspectionDocs(t *testing.T, caller *contractCaller) {
 	t.Helper()
 	result := decodeOutput[projectapp.DocumentResult](t, caller.Success("docs", nil, map[string]any{}))
-	if result.Written || result.Digest == "" || result.Path != projectwork.DefaultDocumentPath || !strings.Contains(result.Content, "project-owner") {
+	if result.Written || result.Digest == "" || result.Path != projectvalue.DefaultDocumentPath || !strings.Contains(result.Content, "project-owner") {
 		t.Fatalf("docs preview is incomplete or persisted: %+v", result)
 	}
 }
@@ -396,8 +400,8 @@ func inspectionEditFixture(t *testing.T, surface string) (*contractCaller, *cont
 	if changed == string(content) {
 		t.Fatal("fixture Manager purpose did not contain the expected text")
 	}
-	mutation := projectwork.Mutation{APIVersion: projectwork.APIVersion, BaseDigest: project.Digest, Actor: projectwork.HumanActor,
-		Goal: "Clarify the project-owner mandate", Files: []projectwork.FileChange{{Path: path, Content: changed}}}
+	mutation := projectvalue.Mutation{APIVersion: projectvalue.APIVersion, BaseDigest: project.Digest, Actor: projectvalue.HumanActor,
+		Goal: "Clarify the project-owner mandate", Files: []projectvalue.FileChange{{Path: path, Content: changed}}}
 	encoded, err := projectwork.EncodeMutation(mutation)
 	if err != nil {
 		t.Fatal(err)
@@ -408,7 +412,7 @@ func inspectionEditFixture(t *testing.T, surface string) (*contractCaller, *cont
 func inspectionEdit(t *testing.T, caller *contractCaller, inputPath string) {
 	t.Helper()
 	input := map[string]any{"input": readContractDraft(t, caller.root, inputPath)}
-	plan := decodeOutput[projectwork.EditPlan](t, caller.Success("edit", []string{"--input", inputPath}, input))
+	plan := decodeOutput[projectvalue.EditPlan](t, caller.Success("edit", []string{"--input", inputPath}, input))
 	if plan.Digest == "" || plan.Mutation.Goal != "Clarify the project-owner mandate" || len(plan.Mutation.Files) != 1 || plan.Mutation.Files[0].Path != ".markitect/model/manager.yaml" || !strings.Contains(plan.Mutation.Files[0].Content, "repository-wide product mandate") || plan.CandidateDigest == "" || plan.CandidateDigest == plan.BaseDigest {
 		t.Fatalf("edit did not return the valid mutation preview: %+v", plan)
 	}
@@ -444,7 +448,7 @@ func inspectionBriefHappy(t *testing.T, surface string) {
 }
 func inspectionBriefNoWrite(t *testing.T, surface string) {
 	caller, invoker, _, revision := inspectionBriefFixture(t, surface)
-	accepted, err := projectbriefing.ReadAcceptedHistory(caller.root, revision)
+	accepted, err := projecthistory.ReadAcceptedHistory(caller.root, revision)
 	if err != nil || len(accepted.Receipt.Bundles) != 1 || len(accepted.Receipt.Bundles[0].Events) != 1 {
 		t.Fatalf("fixture has no expected accepted-history event: receipt=%+v err=%v", accepted.Receipt, err)
 	}

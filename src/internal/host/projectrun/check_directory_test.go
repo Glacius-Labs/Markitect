@@ -1,5 +1,7 @@
 package projectrun
 
+import "github.com/Glacius-Labs/Markitect/src/internal/core/snapshot"
+
 import (
 	"context"
 	"fmt"
@@ -71,7 +73,7 @@ func TestMaterializeCandidateRefusesWindowsAliasesOfExistingEntries(t *testing.T
 	if runtime.GOOS != "windows" {
 		t.Skip("short names and case aliases are resolved by Windows")
 	}
-	base := &Snapshot{
+	base := &snapshot.Snapshot{
 		Files: map[string][]byte{".markitect/project.yaml": []byte("project\n"), "Docs/guide.md": []byte("guide\n")},
 		Modes: map[string]string{".markitect/project.yaml": "100644", "Docs/guide.md": "100644"},
 	}

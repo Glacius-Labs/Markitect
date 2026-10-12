@@ -1,9 +1,11 @@
-package projectbriefing
+package projecthistory
 
 import (
 	"errors"
 	"sort"
 	"strings"
+
+	"github.com/Glacius-Labs/Markitect/src/internal/modules/projectmodel/projectbriefing"
 )
 
 // DismissAcceptedHistory records a local visibility choice for an event on
@@ -22,24 +24,24 @@ func DismissAcceptedHistory(root, targetRevision, eventID, managerID, expectedDi
 	return dismissAcceptedHistoryFrom(root, active, next, receipt, persistedDigest, eventID, managerID, expectedDigest)
 }
 
-func acceptedDismissalPreview(root, targetRevision string) (*line, Store, EnsureReceipt, string, error) {
+func acceptedDismissalPreview(root, targetRevision string) (*line, projectbriefing.Store, projectbriefing.EnsureReceipt, string, error) {
 	active, err := activeLine(root)
 	if err != nil {
-		return nil, Store{}, EnsureReceipt{}, "", err
+		return nil, projectbriefing.Store{}, projectbriefing.EnsureReceipt{}, "", err
 	}
 	stored, persistedDigest, err := readStore(root)
 	if err != nil {
-		return nil, Store{}, EnsureReceipt{}, "", err
+		return nil, projectbriefing.Store{}, projectbriefing.EnsureReceipt{}, "", err
 	}
 	next, receipt, err := acceptHistory(root, active, targetRevision, stored)
 	if err != nil {
-		return nil, Store{}, EnsureReceipt{}, "", err
+		return nil, projectbriefing.Store{}, projectbriefing.EnsureReceipt{}, "", err
 	}
-	receipt.StoreDigest = StoreDigest(next)
+	receipt.StoreDigest = projectbriefing.StoreDigest(next)
 	return active, next, receipt, persistedDigest, nil
 }
 
-func dismissAcceptedHistoryFrom(root string, active *line, next Store, receipt EnsureReceipt, persistedDigest, eventID, managerID, expectedDigest string) (string, error) {
+func dismissAcceptedHistoryFrom(root string, active *line, next projectbriefing.Store, receipt projectbriefing.EnsureReceipt, persistedDigest, eventID, managerID, expectedDigest string) (string, error) {
 	if strings.TrimSpace(eventID) == "" || strings.TrimSpace(managerID) == "" {
 		return "", ErrDismissal
 	}
@@ -66,7 +68,7 @@ func dismissAcceptedHistoryFrom(root string, active *line, next Store, receipt E
 		}
 	}
 	if !alreadyDismissed {
-		next.Dismissals = append(next.Dismissals, Dismissal{EventID: eventID, ManagerID: managerID})
+		next.Dismissals = append(next.Dismissals, projectbriefing.Dismissal{EventID: eventID, ManagerID: managerID})
 		sort.Slice(next.Dismissals, func(i, j int) bool {
 			if next.Dismissals[i].EventID != next.Dismissals[j].EventID {
 				return next.Dismissals[i].EventID < next.Dismissals[j].EventID
@@ -74,7 +76,7 @@ func dismissAcceptedHistoryFrom(root string, active *line, next Store, receipt E
 			return next.Dismissals[i].ManagerID < next.Dismissals[j].ManagerID
 		})
 	}
-	return update(root, persistedDigest, func(current *Store) error {
+	return update(root, persistedDigest, func(current *projectbriefing.Store) error {
 		*current = next
 		return nil
 	})

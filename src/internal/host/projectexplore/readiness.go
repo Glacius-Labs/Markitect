@@ -3,60 +3,26 @@ package projectexplore
 import (
 	"errors"
 	"fmt"
+	"github.com/Glacius-Labs/Markitect/src/internal/modules/projectmodel/projectvalue"
 	"sort"
 	"strings"
 )
 
-type structureShape struct {
-	ScopeID               string   `json:"scopeId"`
-	ScopeName             string   `json:"scopeName"`
-	Goal                  string   `json:"goal"`
-	Operation             string   `json:"operation"`
-	ManagerIDs            []string `json:"managerIds"`
-	ResponsibleManagerIDs []string `json:"responsibleManagerIds"`
-	RequiredArtifacts     []string `json:"requiredArtifacts"`
-	Files                 []string `json:"files"`
-	Checks                []string `json:"checks"`
-}
-
-// BindingDigest returns a stable digest of the complete current basis and
-// named scope. No random run or plan ID participates in this identity.
-func BindingDigest(binding Binding) (string, error) {
-	binding, err := canonicalBinding(binding)
-	if err != nil {
-		return "", err
-	}
-	return digest(binding)
-}
-
-// StructureDigest binds the exact named-scope file structure and its declared
-// Managers, artifacts, operation, and checks, independent of run identifiers.
-func StructureDigest(binding Binding) (string, error) {
-	binding, err := canonicalBinding(binding)
-	if err != nil {
-		return "", err
-	}
-	return digest(structureShape{
-		ScopeID: binding.ScopeID, ScopeName: binding.ScopeName, Goal: binding.Goal, Operation: binding.Operation,
-		ManagerIDs: binding.ManagerIDs, ResponsibleManagerIDs: binding.ResponsibleManagerIDs, RequiredArtifacts: binding.RequiredArtifacts, Files: binding.FileStructure, Checks: binding.Checks,
-	})
-}
-
 // EvaluateReadiness computes readiness against the exact caller-supplied fixed
 // binding. A stale or changed binding does not reuse a previous acknowledgement.
-func EvaluateReadiness(record Record, scopeID string, binding Binding) (ReadinessReport, error) {
+func EvaluateReadiness(record Record, scopeID string, binding projectvalue.Binding) (ReadinessReport, error) {
 	var report ReadinessReport
 	if err := validateRecord(record); err != nil {
 		return report, err
 	}
-	binding, err := canonicalBinding(binding)
+	binding, err := projectvalue.CanonicalBinding(binding)
 	if err != nil {
 		return report, err
 	}
 	if binding.ScopeID != scopeID {
 		return report, errors.New("readiness scope does not match its fixed binding")
 	}
-	modelAccepted := binding.ModelAccepted && binding.ModelRevision != "" && binding.ModelRevision == binding.Head && fullObjectID(binding.Head) && strings.TrimSpace(binding.AcceptancePolicy) != ""
+	modelAccepted := binding.ModelAccepted && binding.ModelRevision != "" && binding.ModelRevision == binding.Head && projectvalue.IsFullObjectID(binding.Head) && strings.TrimSpace(binding.AcceptancePolicy) != ""
 	scope, ok := findScope(record, scopeID)
 	if !ok {
 		return report, fmt.Errorf("exploration %s has no scope %q", record.ID, scopeID)
@@ -64,11 +30,11 @@ func EvaluateReadiness(record Record, scopeID string, binding Binding) (Readines
 	if scope.Name != binding.ScopeName || scope.Goal != binding.Goal || scope.Operation != binding.Operation || !equalStrings(scope.ManagerIDs, binding.ManagerIDs) {
 		return report, errors.New("readiness binding differs from the recorded named scope")
 	}
-	bindingDigest, err := BindingDigest(binding)
+	bindingDigest, err := projectvalue.BindingDigest(binding)
 	if err != nil {
 		return report, err
 	}
-	structureDigest, err := StructureDigest(binding)
+	structureDigest, err := projectvalue.StructureDigest(binding)
 	if err != nil {
 		return report, err
 	}
@@ -127,15 +93,15 @@ func EvaluateReadiness(record Record, scopeID string, binding Binding) (Readines
 // AcknowledgeStructure appends a caller-declared review assertion only when it
 // binds the exact current repository and structure. It does not authenticate
 // the actor or alter canonical model files.
-func AcknowledgeStructure(record *Record, scopeID string, binding Binding, ack StructureAcknowledgement) error {
+func AcknowledgeStructure(record *Record, scopeID string, binding projectvalue.Binding, ack StructureAcknowledgement) error {
 	if record == nil {
 		return errors.New("exploration record is required")
 	}
-	bindingDigest, err := BindingDigest(binding)
+	bindingDigest, err := projectvalue.BindingDigest(binding)
 	if err != nil {
 		return err
 	}
-	structureDigest, err := StructureDigest(binding)
+	structureDigest, err := projectvalue.StructureDigest(binding)
 	if err != nil {
 		return err
 	}
@@ -171,7 +137,7 @@ func AcknowledgeStructure(record *Record, scopeID string, binding Binding, ack S
 // scope. Repeating the same receipt is idempotent; a different receipt cannot
 // rewrite completion history. The package-private entry point prevents generic
 // callers from creating a completion-capable WritePlan.
-func completeScope(record *Record, scopeID string, binding Binding, receipt ApplyReceipt) error {
+func completeScope(record *Record, scopeID string, binding projectvalue.Binding, receipt ApplyReceipt) error {
 	if record == nil {
 		return errors.New("exploration record is required")
 	}
@@ -184,7 +150,7 @@ func completeScope(record *Record, scopeID string, binding Binding, receipt Appl
 		}
 		return errors.New("scope already has a different successful Apply receipt")
 	}
-	if _, err := canonicalBinding(binding); err != nil {
+	if _, err := projectvalue.CanonicalBinding(binding); err != nil {
 		return err
 	}
 	if receipt.ScopeID != scopeID || binding.ScopeID != scopeID {

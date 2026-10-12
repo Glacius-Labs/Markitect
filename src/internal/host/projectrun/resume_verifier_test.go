@@ -3,8 +3,6 @@ package projectrun
 import (
 	"context"
 	"encoding/json"
-	"github.com/Glacius-Labs/Markitect/src/internal/host/projectconfig"
-	"github.com/Glacius-Labs/Markitect/src/internal/host/projectexecutor"
 	"os"
 	"path/filepath"
 	"sort"
@@ -12,9 +10,11 @@ import (
 
 	"github.com/Glacius-Labs/Markitect/src/internal/host/agentexec"
 	"github.com/Glacius-Labs/Markitect/src/internal/host/codexappserver"
-	"github.com/Glacius-Labs/Markitect/src/internal/host/projectwork"
+	"github.com/Glacius-Labs/Markitect/src/internal/host/projectconfig"
+	"github.com/Glacius-Labs/Markitect/src/internal/host/projectexecutor"
 	"github.com/Glacius-Labs/Markitect/src/internal/host/projectworkspace"
 	"github.com/Glacius-Labs/Markitect/src/internal/infrastructure/source"
+	"github.com/Glacius-Labs/Markitect/src/internal/modules/projectmodel/projectvalue"
 )
 
 func TestPendingNativeVerifierAndSavedChecksRequireOriginalEvidence(t *testing.T) {
@@ -150,7 +150,7 @@ func TestRunVerifierConsumesClosedOriginalCacheWithoutAnotherStart(t *testing.T)
 	starts := 0
 	original := InvocationLog{TaskID: "verifier", Role: agentexec.RoleVerifier, Phase: "verify", InputDigest: invocation.InputDigest,
 		Receipt: agentexec.Receipt{RunID: invocation.RunID, InputDigest: invocation.InputDigest}}
-	report, log, err := runVerifier(requireNativeRecovery(context.Background(), "verifier-run", []InvocationLog{original}), Host{Load: projectwork.Load, Workspaces: service}, invoker, root,
+	report, log, err := runVerifier(requireNativeRecovery(context.Background(), "verifier-run", []InvocationLog{original}), hostWithWorkspace(service), invoker, root,
 		PlanRecord{ID: "verifier-run"}, runtime, project, candidate, []CheckResult{}, func(InvocationLog) error { starts++; return nil })
 	if err != nil || report == nil || report.Outcome != agentexec.OutcomePassed {
 		t.Fatalf("closed original verifier result was not consumed: report=%+v err=%v", report, err)
@@ -164,7 +164,7 @@ func TestRunVerifierConsumesClosedOriginalCacheWithoutAnotherStart(t *testing.T)
 	}
 }
 
-func verifierRequest(project *Project, candidate candidateData, plan PlanRecord) agentexec.Request {
+func verifierRequest(project *projectvalue.Project, candidate candidateData, plan PlanRecord) agentexec.Request {
 	checks, artifacts, subjects, refs := []string{}, []string{}, []string{}, []string{}
 	for _, check := range plan.Checks {
 		if check.Required {

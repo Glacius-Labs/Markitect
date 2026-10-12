@@ -1,5 +1,7 @@
 package projectadoption
 
+import "github.com/Glacius-Labs/Markitect/src/internal/modules/projectmodel/projectvalue"
+
 import (
 	"encoding/hex"
 	"errors"
@@ -8,8 +10,6 @@ import (
 	"sort"
 	"strings"
 	"unicode/utf8"
-
-	"github.com/Glacius-Labs/Markitect/src/internal/host/projectwork"
 )
 
 func ValidateDistillation(discovery Discovery, report Distillation) error {
@@ -410,8 +410,8 @@ func validateProposal(proposal ModelProposal, scopes map[string]ScopeProposal) e
 		if _, ok := scopes[file.ScopeID]; !ok {
 			return fmt.Errorf("proposed file %q refers to unknown scope %q", file.Path, file.ScopeID)
 		}
-		if file.Path == projectwork.ManifestPath || !strings.HasPrefix(file.Path, projectwork.ModelRoot+"/") || path.Clean(file.Path) != file.Path || (!strings.HasSuffix(file.Path, ".yaml") && !strings.HasSuffix(file.Path, ".yml")) {
-			return fmt.Errorf("proposal may contain only canonical model files under %s", projectwork.ModelRoot)
+		if file.Path == projectvalue.ManifestPath || !strings.HasPrefix(file.Path, projectvalue.ModelRoot+"/") || path.Clean(file.Path) != file.Path || (!strings.HasSuffix(file.Path, ".yaml") && !strings.HasSuffix(file.Path, ".yml")) {
+			return fmt.Errorf("proposal may contain only canonical model files under %s", projectvalue.ModelRoot)
 		}
 		if err := validateRepoPath(file.Path); err != nil {
 			return err

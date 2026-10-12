@@ -1,5 +1,7 @@
 package projectrun
 
+import "github.com/Glacius-Labs/Markitect/src/internal/modules/projectmodel/projectvalue"
+
 import (
 	"crypto/rand"
 	"crypto/sha256"
@@ -81,7 +83,7 @@ func planDigest(plan PlanRecord) (string, error) {
 		Strictness              map[string]projectconfig.StrictnessProfile `json:"strictness"`
 		BriefingDigests         map[string]string                          `json:"briefingDigests,omitempty"`
 		Checks                  []CheckPlan                                `json:"checks"`
-		ModelEdit               *EditPlan                                  `json:"modelEdit,omitempty"`
+		ModelEdit               *projectvalue.EditPlan                     `json:"modelEdit,omitempty"`
 		InitialCandidateID      string                                     `json:"initialCandidateId"`
 		RuntimeAgents           map[string]string                          `json:"runtimeAgents"`
 		Findings                []string                                   `json:"findings,omitempty"`

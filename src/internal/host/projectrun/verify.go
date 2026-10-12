@@ -1,5 +1,8 @@
 package projectrun
 
+import "github.com/Glacius-Labs/Markitect/src/internal/core/snapshot"
+import "github.com/Glacius-Labs/Markitect/src/internal/modules/projectmodel/projectvalue"
+
 import (
 	"bytes"
 	"context"
@@ -54,7 +57,7 @@ func Verify(ctx context.Context, host Host, invoker Invoker, root, runID string)
 	if err := requireCurrentRuntimeBinding(plan); err != nil {
 		return out, err
 	}
-	if err := validateExplorationReadiness(root, plan); err != nil {
+	if err := validateExplorationReadiness(host, root, plan); err != nil {
 		return out, err
 	}
 	run, err := s.readLatestState(runID)
@@ -320,7 +323,7 @@ func Verify(ctx context.Context, host Host, invoker Invoker, root, runID string)
 // deletion evidence is derived from the exact retained candidate ancestry.
 // A missing optional Host preserves the pure snapshot-only helper seam used
 // by existing tests; production does not use that branch.
-func freshReviewEvidenceForVerify(store *runStore, dir string, finalProject *Project, finalCandidate candidateData, plan PlanRecord, runtime projectconfig.Runtime, run RunReport, hosts ...Host) ([]fullReviewEvidence, error) {
+func freshReviewEvidenceForVerify(store *runStore, dir string, finalProject *projectvalue.Project, finalCandidate candidateData, plan PlanRecord, runtime projectconfig.Runtime, run RunReport, hosts ...Host) ([]fullReviewEvidence, error) {
 	if runtime.Review == nil {
 		return []fullReviewEvidence{}, nil
 	}
@@ -395,7 +398,7 @@ func cloneReviewFindings(findings []ReviewFinding) []ReviewFinding {
 	return append([]ReviewFinding{}, findings...)
 }
 
-func currentReviewFileReferences(project *Project, plan PlanRecord, task ManagerTask, phase string, run RunReport, changeStates ...reviewCandidateState) ([]fullReviewFileReference, error) {
+func currentReviewFileReferences(project *projectvalue.Project, plan PlanRecord, task ManagerTask, phase string, run RunReport, changeStates ...reviewCandidateState) ([]fullReviewFileReference, error) {
 	files := reviewCandidateFiles(project, task, run.Tasks, phase)
 	accepted, err := scopedReviewModel(project.Report, task.ManagerID, plan.Managers, files, phase)
 	if err != nil {
@@ -457,7 +460,7 @@ func requireArtifacts(report projectmodel.Report) error {
 // source on demand, such as a transitional file the candidate models in place.
 // Checks then run on exactly the closure view, using the bytes that compile
 // read and full verification binds, without a second read.
-func checkTreeBase(base *Snapshot, candidate candidateData, closure *Project) *Snapshot {
+func checkTreeBase(base *snapshot.Snapshot, candidate candidateData, closure *projectvalue.Project) *snapshot.Snapshot {
 	if closure == nil || closure.Snapshot == nil {
 		return base
 	}
@@ -472,7 +475,7 @@ func checkTreeBase(base *Snapshot, candidate candidateData, closure *Project) *S
 	if len(read) == 0 {
 		return base
 	}
-	tree := &Snapshot{ID: base.ID, Provisional: base.Provisional, Files: make(map[string][]byte, len(base.Files)+len(read)), Modes: make(map[string]string, len(base.Modes)+len(read))}
+	tree := &snapshot.Snapshot{ID: base.ID, Provisional: base.Provisional, Files: make(map[string][]byte, len(base.Files)+len(read)), Modes: make(map[string]string, len(base.Modes)+len(read))}
 	for path, data := range base.Files {
 		tree.Files[path], tree.Modes[path] = data, base.Modes[path]
 	}
@@ -482,7 +485,7 @@ func checkTreeBase(base *Snapshot, candidate candidateData, closure *Project) *S
 	return tree
 }
 
-func materializeCandidate(dest string, base *Snapshot, candidate candidateData) error {
+func materializeCandidate(dest string, base *snapshot.Snapshot, candidate candidateData) error {
 	if err := ensureDirectory(dest); err != nil {
 		return err
 	}
@@ -652,7 +655,7 @@ func explicitEnvironment(names []string) []string {
 }
 func runtimeOSNeedsSystemRoot(names []string) bool { return false }
 
-func runVerifier(ctx context.Context, host Host, invoker Invoker, root string, plan PlanRecord, runtime projectconfig.Runtime, project *Project, candidate candidateData, checkResults []CheckResult, onStart func(InvocationLog) error) (*VerifierReport, InvocationLog, error) {
+func runVerifier(ctx context.Context, host Host, invoker Invoker, root string, plan PlanRecord, runtime projectconfig.Runtime, project *projectvalue.Project, candidate candidateData, checkResults []CheckResult, onStart func(InvocationLog) error) (*VerifierReport, InvocationLog, error) {
 	var log InvocationLog
 	config, err := runtime.Verifier.AgentConfig()
 	if err != nil {
@@ -809,7 +812,7 @@ func freshBindings(host Host, invoker Invoker, root string, plan PlanRecord, run
 	if err := requireCurrentRuntimeBinding(plan); err != nil {
 		return err
 	}
-	if err := validateExplorationReadiness(root, plan); err != nil {
+	if err := validateExplorationReadiness(host, root, plan); err != nil {
 		return err
 	}
 	fresh, err := host.Load(root, "")
@@ -829,7 +832,7 @@ func freshBindings(host Host, invoker Invoker, root string, plan PlanRecord, run
 		// The working snapshot above establishes live source freshness; it is
 		// provisional and cannot establish accepted-model ancestry. Briefings
 		// remain bound to the plan's exact committed model revision.
-		briefing, err := managerBriefing(root, fresh.Report.ModelDigest, manager.ID, plan.BaseRevision)
+		briefing, err := managerBriefing(host, root, fresh.Report.ModelDigest, manager.ID, plan.BaseRevision)
 		if err != nil {
 			return err
 		}
