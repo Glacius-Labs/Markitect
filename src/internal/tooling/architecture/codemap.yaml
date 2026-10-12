@@ -82,14 +82,14 @@ packages:
     layer: application
     purpose: Acquires repository census values from the selected working tree or committed revision.
     doc: docs/source-snapshots.md#adapter-and-use-case-ownership
-  - path: src/internal/host/projecthistory
-    layer: application
-    purpose: Acquires accepted model history and persists guarded briefing, resolution and dismissal records.
-    doc: docs/architecture.md#application-layer
   - path: src/internal/host/projectexplore
     layer: application
     purpose: Stores explorations, open decisions, scope readiness and Apply receipts.
     doc: docs/project-workflow.md#model-and-readiness
+  - path: src/internal/host/projecthistory
+    layer: application
+    purpose: Acquires accepted model history and persists guarded briefing, resolution and dismissal records.
+    doc: docs/architecture.md#application-layer
   - path: src/internal/host/projectonboarding
     layer: application
     purpose: Writes project-local guidance and skills for Codex and Claude contributors.

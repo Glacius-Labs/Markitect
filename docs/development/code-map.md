@@ -58,8 +58,8 @@ Tests in `src/internal/tooling/architecture` fail when a Go package is missing f
 | `src/internal/host/projectapp` | Shared application facade that the project CLI and MCP server call. | [docs/architecture.md](../architecture.md#application-layer) |
 | `src/internal/host/projectcli` | The `markitect` verb table, its command line and its MCP tools. | [docs/project-operations.md](../project-operations.md#cli-setup-and-current-roots) |
 | `src/internal/host/projectcoverage` | Acquires repository census values from the selected working tree or committed revision. | [docs/source-snapshots.md](../source-snapshots.md#adapter-and-use-case-ownership) |
-| `src/internal/host/projecthistory` | Acquires accepted model history and persists guarded briefing, resolution and dismissal records. | [docs/architecture.md](../architecture.md#application-layer) |
 | `src/internal/host/projectexplore` | Stores explorations, open decisions, scope readiness and Apply receipts. | [docs/project-workflow.md](../project-workflow.md#model-and-readiness) |
+| `src/internal/host/projecthistory` | Acquires accepted model history and persists guarded briefing, resolution and dismissal records. | [docs/architecture.md](../architecture.md#application-layer) |
 | `src/internal/host/projectonboarding` | Writes project-local guidance and skills for Codex and Claude contributors. | [docs/project-workflow.md](../project-workflow.md#connect-and-inspect) |
 | `src/internal/host/projectwork` | Loads the selected project model and writes model changes under guard. | [docs/project-workflow.md](../project-workflow.md#model-and-readiness) |
 | `src/internal/host/releasecli` | Command interface of `markitect-release` for preparing or publishing a GitHub release. | [docs/operations.md](../operations.md#release-operations) |
