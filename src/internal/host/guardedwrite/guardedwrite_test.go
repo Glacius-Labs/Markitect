@@ -29,7 +29,13 @@ func TestOrderedCheckedApplyKeepsLockThroughReadbackAndPreservesOrder(t *testing
 		return nil
 	}
 	seen := 0
-	result, err := ApplyOrderedChecked(root, capture, changes, assertLock, func() error { seen++; return assertLock() }, func(result Result) error {
+	result, err := ApplyOrderedChecked(root, capture, changes, func() error {
+		// Changing caller-owned inputs after validation must not change the
+		// selected paths or the candidate bytes used by the writer.
+		changes[0].Path = "outside"
+		changes[0].Bytes[0] = 'X'
+		return assertLock()
+	}, func() error { seen++; return assertLock() }, func(result Result) error {
 		if err := assertLock(); err != nil {
 			return err
 		}
@@ -166,6 +172,57 @@ func TestOrderedCheckedApplyRejectsCaptureMutationBeforeWriting(t *testing.T) {
 			}
 			if string(mustRead(t, filepath.Join(root, "README.md"))) != string(before) {
 				t.Fatal("captured file was overwritten")
+			}
+		})
+	}
+}
+
+func TestOrderedCheckedApplyRejectsReplacementCaptureAcrossCallbacks(t *testing.T) {
+	for _, stage := range []string{"preflight", "target", "readback", "existing-preflight"} {
+		t.Run(stage, func(t *testing.T) {
+			root := testRepo(t, "feature/captured")
+			capture, err := CaptureFiles(root, []string{"README.md"})
+			if err != nil {
+				t.Fatal(err)
+			}
+			before := mustRead(t, filepath.Join(root, "README.md"))
+			replace := func() error {
+				runGit(t, root, "checkout", "-b", "feature/rebound")
+				fresh, err := CaptureFiles(root, []string{"README.md"})
+				if err != nil {
+					return err
+				}
+				// Whole-value assignment also copies private fields. Checking the
+				// replacement's self-seal cannot establish the original binding.
+				*capture = *fresh
+				return nil
+			}
+			var preflight, target func() error
+			var readback func(Result) error
+			switch stage {
+			case "preflight", "existing-preflight":
+				preflight = replace
+			case "target":
+				target = replace
+			case "readback":
+				readback = func(Result) error { return replace() }
+			}
+			changes := []Change{{Path: "README.md", Bytes: []byte("candidate\n"), Mode: 0644}}
+			var result Result
+			if stage == "existing-preflight" {
+				result, err = ApplyChecked(root, capture, changes, preflight)
+			} else {
+				result, err = ApplyOrderedChecked(root, capture, changes, preflight, target, readback)
+			}
+			want := 0
+			if stage == "readback" {
+				want = 1
+			}
+			if err == nil || !strings.Contains(err.Error(), "capture changed") || len(result.CompletedPaths) != want {
+				t.Fatalf("%s accepted rebound capture: result=%v err=%v", stage, result, err)
+			}
+			if want == 0 && string(mustRead(t, filepath.Join(root, "README.md"))) != string(before) {
+				t.Fatal("rebound capture overwrote selected file")
 			}
 		})
 	}
