@@ -439,18 +439,16 @@ These entries record agreed or endorsed direction. Recording an enhancement does
 
 ### ENH-005 Exchangeable executor for the delegated method
 
-- **Status:** Endorsed by the owner on 10 October 2026. Increment 1 is merged (RUN-01); the asynchronous boundary is pending (RUN-02). This is the product side of [DEC-010](#dec-010-evaluate-the-method-separately-from-its-execution-runtime).
+- **Status:** Endorsed by the owner on 10 October 2026. Increment 1 (RUN-01) and the asynchronous work/review boundary (RUN-02, [PR245](https://github.com/Glacius-Labs/Markitect/pull/245)) are merged. Actual-Main push CI38250236626 passed Quality, Race and source-artifact publication at e9979084dd085a2cd2715828358ed384feba0383. This is the product side of [DEC-010](#dec-010-evaluate-the-method-separately-from-its-execution-runtime); runtime extraction, provider execution and recovery retain their separate packages and gates.
 - **Problem:** In practice every delegated role runs through one native runtime, the Codex App Server adapter. Runtime and environment failures therefore block both product use and evaluation of the method.
 - **Current source:**
-  - Run invokes every role through the `projectrun.Invoker` interface. That interface has two transports:
+  - Internal role invocations use the `projectrun.Invoker` interface. That interface has two transports:
     - a hand-configurable process transport with a versioned JSON protocol (`agent-execution/v1alpha1`);
     - the native Codex App Server transport.
   - Repository end-to-end tests drive Plan, Run, Review, Verify and guarded Apply through a scripted, model-free process executor.
   - Since RUN-01, the role options accepted by `config` select a process executor per role, `costMode: unmetered` covers executors that cannot report token usage, such as scripts or people, and `markitect-exchange-executor` is a reference adapter that hands each invocation to a person, a script or another session through files ([bring your own executor](../provider-adapters.md#bring-your-own-executor)).
-  - What is missing is product surface:
-    - export of work packets;
-    - submission of external candidates and review verdicts;
-    - plans that do not depend on executor fingerprints.
+  - RUN-02 adds deterministic Manager/reviewer packet export, read-only listing and digest-bound response or fixed Git-candidate submission through CLI/MCP. Submission stores data; a later explicit scheduler continuation validates the response and advances Manager/review work. Verify uses the existing local path, and guarded Apply remains a separate operation. Git candidates include grounded deletions. New Plans bind method policy independently of an installed executor, while actual internal invocations retain executor identity checks.
+  - Passed review reuse binds the review's retained parent, current scoped bytes/modes, typed operations, deletion preimages and current model/helper policy. Integration/rework retains the actual materialized merged input as its direct parent. This is provider-free capability and source-bound technical proof; packetized Verifier, successful interruption recovery, provider studies and human acceptance are separate.
 - **Direction (proposal):**
   - Separate the deterministic method from the execution runtime.
     - The method covers the compiled model, coverage, impact, Manager scopes and briefings, required reviews, candidate validation, Verify and guarded Apply.
