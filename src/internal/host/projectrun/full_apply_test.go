@@ -54,8 +54,17 @@ func TestFullApplyAcceptsVerifiedImplementationDigestDifferentFromPlanReport(t *
 		"src/orders/implementation.txt": {Path: "src/orders/implementation.txt", Mode: snapshot.RegularMode, Content: content},
 	}}
 	host := Host{
-		ClassifyCandidate: func(_, _ *projectvalue.Project, _ ...string) (*projectvalue.Project, error) { return compiled, nil },
-		RenderDocument:    func(*projectvalue.Project) (string, error) { return "fixed generated view\n", nil },
+		FromSnapshot: func(root string, selected *snapshot.Snapshot) (*projectvalue.Project, error) {
+			projected := *base
+			projected.Root, projected.Snapshot = root, selected
+			return &projected, nil
+		},
+		ClassifyCandidate: func(_, candidate *projectvalue.Project, _ ...string) (*projectvalue.Project, error) {
+			classified := *candidate
+			classified.Report, classified.Digest, classified.Coverage = compiled.Report, compiled.Digest, compiled.Coverage
+			return &classified, nil
+		},
+		RenderDocument: func(*projectvalue.Project) (string, error) { return "fixed generated view\n", nil },
 	}
 	if compiled.Report.ModelDigest != base.Report.ModelDigest || compiled.Report.Digest == base.Report.Digest {
 		t.Fatalf("finite implementation facts did not isolate model-stable project digest change: model=%t report=%t", compiled.Report.ModelDigest == base.Report.ModelDigest, compiled.Report.Digest != base.Report.Digest)
@@ -78,7 +87,18 @@ func TestFullApplyRejectsUnclassifiedCandidatePath(t *testing.T) {
 	candidate := candidateData{ID: "candidate-unclassified", Files: map[string]File{
 		"unexpected/unowned.txt": {Path: "unexpected/unowned.txt", Mode: snapshot.RegularMode, Content: []byte("unclassified candidate content\n")},
 	}}
-	host := Host{ClassifyCandidate: func(_, _ *projectvalue.Project, _ ...string) (*projectvalue.Project, error) { return compiled, nil }}
+	host := Host{
+		FromSnapshot: func(root string, selected *snapshot.Snapshot) (*projectvalue.Project, error) {
+			projected := *base
+			projected.Root, projected.Snapshot = root, selected
+			return &projected, nil
+		},
+		ClassifyCandidate: func(_, candidate *projectvalue.Project, _ ...string) (*projectvalue.Project, error) {
+			classified := *candidate
+			classified.Coverage = compiled.Coverage
+			return &classified, nil
+		},
+	}
 	if err := validateFinalCandidate(host, t.TempDir(), base, candidate, PlanRecord{ModelDigest: compiled.Report.ModelDigest}); err == nil {
 		t.Fatal("unclassified candidate path passed final candidate validation")
 	}
