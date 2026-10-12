@@ -9,6 +9,16 @@ spec:
     namespace: ""
     name: markitect
   owns:
+    - .markitect/modules/githooks.config
+    - .markitect/modules/pipelines.config
+    - .githooks/pre-commit
+    - .github/workflows/ci.yaml
+    - src/cmd/markitect-check-modules/
+    - src/internal/host/modulecli/
+    - src/internal/host/modulechecks/
+    - src/internal/modules/githooks/
+    - src/internal/modules/pipelines/
+    - src/internal/host/architecturecli/
     - integration/
     - packaging/
     - src/cmd/markitect-check-architecture/

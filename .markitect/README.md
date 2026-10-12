@@ -1,9 +1,9 @@
 # Markitect project configuration
 
-[project.yaml](project.yaml) selects this repository's project model under `model/`, which `markitect check --repo .` checks. The files below belong to the legacy line until ARCH-09 removes it.
+[project.yaml](project.yaml) selects this repository's current model under `model/`. `markitect check --repo .` checks the full repository against its explicit Artifact paths.
 
-The development Area owns repository-specific checks and their explicit module inputs.
+The tooling Manager owns the [module pin contract](model/tooling/module-pin-contract.yaml) and [exact verification inputs](model/tooling/module-verification.yaml).
 
-- [Module verification Rule](areas/development/module-verification.rule.yaml) declares the checked inputs and the limits of the hook and pipeline assertions.
-- [Git hooks module configuration](modules/githooks.config) selects the tracked pre-commit file. It is not installed automatically.
-- [Pipeline module configuration](modules/pipelines.config) binds selected workflow scalars to literal Project check argv renderings.
+- [Git hooks configuration](modules/githooks.config) pins the tracked pre-commit bytes; the check does not install or execute the hook.
+- [Pipeline configuration](modules/pipelines.config) pins workflow bytes and selected YAML scalars to literal current Check command arguments; the check does not execute CI.
+- [Generated project view](../docs/markitect/project.md) is checked separately for byte freshness.

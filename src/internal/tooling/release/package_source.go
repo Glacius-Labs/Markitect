@@ -74,8 +74,7 @@ func walkSourceTree(moduleDir, start string, files *[]sourceFile) error {
 			return fmt.Errorf("refusing symlink in Markitect source tree: %s", rel)
 		}
 		ext := strings.ToLower(filepath.Ext(entry.Name()))
-		embeddedResource := embeddedAuthoringSource(rel)
-		if ext != ".go" && !embeddedResource && !embeddedNotices(rel) {
+		if ext != ".go" && !embeddedNotices(rel) {
 			return nil
 		}
 		return appendRegularFile(moduleDir, rel, files, true)

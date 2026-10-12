@@ -1,0 +1,22 @@
+apiVersion: project.markitect.example.org/v1alpha1
+kind: Check
+metadata:
+  name: project-accounting
+  namespace: ''
+purpose: Checks complete repository Artifact coverage using the current project model.
+spec:
+  command:
+  - go
+  - run
+  - ./src/cmd/markitect
+  - check
+  - --repo
+  - .
+  uses:
+  - namespace: ''
+    name: repository
+  - namespace: ''
+    name: canonical-sources
+  limitation: Checks current structural relationships and complete artifact coverage;
+    does not authenticate intent or prove generated-view freshness or behavior. CI
+    separately checks the fixed source and view bytes.

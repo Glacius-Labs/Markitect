@@ -1,7 +1,0 @@
-apiVersion: engineering.markitect.org/v1alpha1
-kind: Authorizer
-metadata:
-    name: order-write-authorization
-    namespace: engineering
-spec:
-    summary: Confirms the actor may create orders.

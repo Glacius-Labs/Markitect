@@ -13,13 +13,14 @@ spec:
       name: published-releases
     - namespace: product
       name: core-stays-generic
-    - namespace: legacy
+    - namespace: product
       name: legacy-removal
     - namespace: ""
       name: canonical-sources
     - namespace: product
       name: evidence-not-acceptance
   paths:
+    - src/internal/host/architecturecli/
     - src/cmd/markitect-check-architecture/
     - src/internal/tooling/
     - tools/

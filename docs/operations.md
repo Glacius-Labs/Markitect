@@ -1,45 +1,38 @@
 # Operations
 
-This document defines product-side development and release operations. [Usage](usage.md) owns command syntax; [Integration](../integration/README.md) describes distribution provisioning; the [production assessment](production-assessment.md) records release evidence.
+This document describes current model-first development and release operations. [Project operations](project-operations.md) is the CLI and runtime reference; the repository [distribution guide](../integration/README.md) owns packaging and publication. Dated evidence remains bound to its recorded source and environment in the [production assessment](production-assessment.md).
 
 ## Authoring and checking
 
-Use a named feature branch. A new repository can preview `init` before creating its first Project; the write also works on an unborn feature branch. Commit that baseline before subsequent controlled edits. Begin through the [canonical Markitect-first workflow](../src/internal/host/embedded/resources/workflow-markitect-first-change.yaml), obtain fixed context and classify the change. For engineering-intent changes, edit/check the desired canonical state and review impact before corresponding implementation. Implementation-only work requires no artificial model edit. Format changed canonical YAML, render the owned generic and explicitly configured outputs, then run `check` and declared artifact accounting. Commit the complete candidate before collecting fixed-revision `context`, `impact`, or `verify` evidence. A source edit creates a new candidate and its applicable evidence must be refreshed.
+Use the [Project workflow](project-workflow.md) for ordinary changes and Brownfield adoption. Keep canonical intent in `.markitect/model/`; review generated readable views rather than editing them. A committed model and its digest bind bytes but do not authenticate human approval. Check the selected revision, project coverage and Manager context before planning work. Implementation-only changes do not need an artificial model edit.
 
-`check` validates resource structure, managed-output drift, and local documentation routers when `spec.documentation.roots` is configured. Router findings validate navigation structure; authoring still requires locating and updating the canonical owner. `verify --revision COMMIT` repeats structural checks on that immutable snapshot and executes only its declared `Project.spec.checks`. A check is an argv array: the executable name must be a bare name resolved using `PATH`, remaining values are literal arguments, and no shell is involved. To run a script, declare its interpreter as the executable. Missing declarations yield `incomplete-evidence`; unavailable commands or execution limits are also incomplete, not successful verification.
-
-After a schema-changing upgrade, an older baseline may no longer parse with the current CLI. In that case, cross-version `impact` and review reuse are unavailable. Keep prior evidence as historical, commit the complete upgraded configuration and content, and establish a new baseline with the current `check`/`verify`, fresh context, and any required new review. Preserve strict parsing; do not manufacture an impact result across incompatible schemas.
-
-The optional per-check budget below is an unreleased source follow-up. The published v0.14.1 CLI retains its fixed 600-second check limit and does not accept `timeoutSeconds` on Project checks. The source candidate accepts up to 5400 seconds per check.
-
-Each declared check defaults to a 600-second execution limit. An optional integer `timeoutSeconds` on that check may select 1 through 5400 seconds; the fixed Project bytes bind this setting. YAML results record the effective limit as `timeoutMilliseconds` alongside elapsed `milliseconds`. The one MiB captured-output limit and two-second pipe-wait limit still apply. Timeout remains incomplete evidence and a nonzero exit remains failure. Commands can have their own inner deadlines: a Go suite needing more than Go's default ten-minute test-binary limit must also declare an appropriate `-timeout` argument. Markitect's own source Project keeps the default for all its checks and runs its full Go suite as a separate CI step. Actor and study budgets are separate. Cancellation targets the direct process; it is not a security sandbox and cannot guarantee termination of every child process. Checks use local caller authority. Declare read-only commands scoped to the fixed project snapshot.
+The repository's full-coverage project check accounts for source artifacts. Separate module and architecture checks enforce implementation ownership and import boundaries. The current contributor gate list and fixed-revision command forms are maintained in [CONTRIBUTING.md](../CONTRIBUTING.md#verify-a-change). They are source gates, not adopting-project acceptance.
 
 ## Rendering and controlled writes
 
-`render` checks or writes outputs selected by the Project's explicit targets and provider-adapter configuration. Generic Markdown views require the explicit `markdown` target and live under `docs/markitect/`; provider outputs route directly to canonical YAML. It does not choose provider outputs from repository identity or inspect local conventions to infer a renderer. The adopting project owns its root navigation, hooks, custom formats, and import scripts.
+`docs` previews the readable project view. Write only after reviewing the preview and supply the returned digest with `--expect`; generated files are not edited directly. Model changes and generated output must be reviewed together. Other mutations use the operation-specific preview, authorization and digest bindings described in [Project operations](project-operations.md).
 
-Writers take a shared lock, validate their plan, and check relevant source state. Existing-output writers use atomic replacement for each file; `init` exclusively creates new files so that a concurrent collision is never overwritten. A multi-file write is not a filesystem transaction. Read the command's complete written-path list and recovery guidance after any partial failure. Git is the boundary for reviewing, integrating, and reverting a multi-file candidate. Do not overwrite unmanaged collisions to make a command pass.
+Markitect executes with the local caller's authority; project workspaces are not an operating-system sandbox. Guarded Apply checks the captured repository identity and bytes before writing. Multi-file operations can report partial failure and are not filesystem transactions. Preserve the operation's written-path list and recovery guidance when a write stops part-way through.
 
 ## Troubleshooting
 
 | Observation | Response |
 |---|---|
-| `output-drift` | Run format, render the declared outputs, then check again. Inspect the full diff. |
-| Write refuses a protected branch | Continue on a named feature branch. |
-| Source changed during a write | Re-read the working snapshot and rerun the full command; inspect paths already written first. |
-| An existing `write.lock` blocks a command | Establish that no writer owns it before removing an abandoned lock. |
-| `verify` returns `incomplete-evidence` | Check that the fixed Project declares required commands and that each executable is available. |
-| Gate fails or times out | Inspect bounded output and the exact command. Repair the cause and verify a new candidate. |
-| Archive or executable integrity fails | Compare against the selected immutable release; provision exact verified bytes rather than editing a digest. |
+| Project check reports uncovered paths | Assign each path to the responsible Manager Artifact or add a justified ignore entry, then check the fixed candidate again. |
+| A preview digest is stale | Re-read the current model and inputs, preview again and use only the returned digest. |
+| A write refuses changed repository state | Inspect the affected paths and repository identity, then create a fresh preview against the intended candidate. |
+| A guarded write reports partial completion | Preserve its path report, inspect each path, and recover explicitly before retrying. |
+| A gate fails or times out | Inspect bounded output and the exact command; repair the cause and verify a new candidate. |
+| Archive or executable integrity fails | Compare against the selected immutable release and provision exact verified bytes. |
 | Review evidence is ineligible | Read the diagnostic and assess the new fixed context; do not alter old evidence hashes. |
 
 ## Release operations
 
-The manually selected historical [benchmark workflow](../benchmark/README.md) consumes attested binaries from immutable releases using a fixture that matches each release's Project and output contract. It compares only the shared scenarios supported by both versions. It uploads raw data and a summary as workflow artifacts and never modifies the published release. Its timing variation is diagnostic, not a publication gate. The published-release trigger is retired: the v1/v2 workload requires the legacy Project/Domain commands and cannot measure a model-first release. Existing records remain evidence for their original inputs.
+The manually selected historical [benchmark workflow](../benchmark/README.md) consumes attested binaries from immutable releases using a fixture that matches each release's Project and output contract. It compares only shared scenarios, uploads raw data and summary artifacts, and never modifies a published release. Its timing variation is diagnostic, not a publication gate. The published-release trigger is retired because the v1/v2 workload requires historical Project/Domain commands and cannot measure a model-first release; existing records remain evidence for their original inputs.
 
 Current source distribution preparation uses the independent `markitect-release package`, `bundle` and `install` commands described in [integration](../integration/README.md#current-source-release-tooling). These local operations do not publish a release; installation writes require `--write`.
 
-A source version string does not prove a release exists. Release only a clean reviewed full commit after standalone tests, vet, build, schema/example checks, and Windows/Linux gates pass. Bundle contents, provenance, tag, source commit, workflow run, and asset digests must agree. The immutable GitHub release is the durable distribution; a workflow artifact is only temporary transport.
+A source version string does not prove a release exists. Release only a clean reviewed full commit after standalone tests, vet, build, module and architecture checks, documentation validation, and Windows/Linux gates pass. Bundle contents, provenance, tag, source commit, workflow run, and asset digests must agree. The immutable GitHub release is the durable distribution; a workflow artifact is only temporary transport.
 
 Publication uses the authenticated release owner's local GitHub CLI session and a fail-closed tool. CI does not store a personal access token or publish with a token that lacks permission to read the immutable-release setting. The owner reviews the read-only plan before choosing publication. Verify the resulting immutable release and every attached asset. Never overwrite a tag or release. Recovery from a failed draft publication is an explicit owner decision after checking the tag target, run artifact, asset set, and digests.
 

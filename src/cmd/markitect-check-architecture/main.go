@@ -1,8 +1,9 @@
 package main
 
 import (
-	"github.com/Glacius-Labs/Markitect/src/internal/host"
 	"os"
+
+	"github.com/Glacius-Labs/Markitect/src/internal/host/architecturecli"
 )
 
-func main() { os.Exit(host.RunArchitectureCheck(os.Args[1:], os.Stdout, os.Stderr)) }
+func main() { os.Exit(architecturecli.Run(os.Args[1:], os.Stdout, os.Stderr)) }

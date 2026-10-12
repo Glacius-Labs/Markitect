@@ -12,6 +12,6 @@ spec:
   uses:
     - namespace: product
       name: core-stays-generic
-    - namespace: legacy
+    - namespace: product
       name: legacy-removal
   limitation: The gate checks Go imports and the code map; it does not check behavior or documentation.

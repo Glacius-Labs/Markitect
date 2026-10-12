@@ -42,6 +42,10 @@ packages:
     doc: docs/source-snapshots.md#adapter-and-use-case-ownership
 
   # --- application --------------------------------------------------------
+  - path: src/internal/host/architecturecli
+    layer: application
+    purpose: Host command adapter for the repository architecture gate.
+    doc: docs/development/modules.md#mechanical-dependency-gate
   - path: src/internal/host/buildinfo
     layer: application
     purpose: Shared immutable source and build version for product and release tooling.
@@ -50,6 +54,14 @@ packages:
     layer: application
     purpose: Local stdio MCP server over the project operations.
     doc: docs/project-operations.md#mcp-server-and-tool-groups
+  - path: src/internal/host/modulechecks
+    layer: application
+    purpose: Host composition for the independent Git hooks and pipeline checks.
+    doc: CONTRIBUTING.md#verify-a-change
+  - path: src/internal/host/modulecli
+    layer: application
+    purpose: Command adapter for the independent Git hooks and pipeline checks.
+    doc: CONTRIBUTING.md#verify-a-change
   - path: src/internal/host/projectadoption
     layer: application
     purpose: Brownfield adoption that checks fixed-snapshot evidence and prepares model-only changes.
@@ -110,148 +122,34 @@ packages:
     doc: docs/project-operations.md#candidate-workspaces-and-recovery
 
   # --- legacy -------------------------------------------------------------
-  - path: src/internal/host
-    layer: legacy
-    purpose: Host root with the v0.13 Project/Domain commands and their composition.
-    doc: docs/architecture.md#legacy-line
-  - path: src/internal/host/artifactcli
-    layer: legacy
-    purpose: Command interface of `markitect-check-artifacts` for managed-artifact accounting.
-    doc: docs/usage.md#managed-artifact-accounting
-  - path: src/internal/host/authoring
-    layer: legacy
-    purpose: Source YAML model for v0.13 Projects, Domains and resources.
-    doc: docs/usage.md#project-and-resource-model
-  - path: src/internal/host/authoring/contentpackage
-    layer: legacy
-    purpose: Reads and builds deterministic offline content-package archives.
-    doc: docs/content-packages.md
-  - path: src/internal/host/azuredevopscli
-    layer: legacy
-    purpose: Command protocol of the Azure DevOps metadata adapter.
-    doc: src/cmd/markitect-adapter-azure-devops/README.md
-  - path: src/internal/host/cli
-    layer: legacy
-    purpose: Top-level `markitect` command dispatcher with the legacy verbs.
-    doc: docs/usage.md#commands
-  - path: src/internal/host/compat/v0_13/consumers/agentrules
-    layer: legacy
-    purpose: Historical v0.13 projection of Codex and Claude entrypoints.
-    doc: src/internal/host/compat/v0_13/consumers/agentrules/README.md
-  - path: src/internal/host/compat/v0_13/consumers/agentrules/links
-    layer: legacy
-    purpose: Rewrites Markdown link targets for the v0.13 agent-rules consumer.
-    doc: src/internal/host/compat/v0_13/consumers/agentrules/README.md
-  - path: src/internal/host/compat/v0_13/consumers/artifactcoverage
-    layer: legacy
-    purpose: Historical v0.13 evaluation of managed-artifact ownership.
-    doc: src/internal/host/compat/v0_13/consumers/artifactcoverage/README.md
-  - path: src/internal/host/compat/v0_13/consumers/azuredevops
-    layer: legacy
-    purpose: Historical v0.13 offline comparison of Azure DevOps Git metadata.
-    doc: src/internal/host/compat/v0_13/consumers/azuredevops/README.md
-  - path: src/internal/host/compat/v0_13/consumers/dotnet
-    layer: legacy
-    purpose: Historical v0.13 comparison of MSBuild project files.
-    doc: src/internal/host/compat/v0_13/consumers/dotnet/README.md
-  - path: src/internal/host/compat/v0_13/consumers/githooks
-    layer: legacy
-    purpose: Historical v0.13 bounded Git hook checks.
-    doc: src/internal/host/compat/v0_13/consumers/githooks/README.md
-  - path: src/internal/host/compat/v0_13/consumers/github
-    layer: legacy
-    purpose: Historical v0.13 offline comparison of GitHub repository metadata.
-    doc: src/internal/host/compat/v0_13/consumers/github/README.md
-  - path: src/internal/host/compat/v0_13/consumers/markdown
-    layer: legacy
-    purpose: Historical v0.13 Markdown views of the semantic model.
-    doc: src/internal/host/compat/v0_13/consumers/markdown/README.md
-  - path: src/internal/host/compat/v0_13/consumers/markdown/links
-    layer: legacy
-    purpose: Rewrites Markdown link targets for the v0.13 Markdown consumer.
-    doc: src/internal/host/compat/v0_13/consumers/markdown/README.md
-  - path: src/internal/host/compat/v0_13/consumers/pipelines
-    layer: legacy
-    purpose: Historical v0.13 bounded pipeline checks.
-    doc: src/internal/host/compat/v0_13/consumers/pipelines/README.md
-  - path: src/internal/host/compat/v0_13/consumers/projections
-    layer: legacy
-    purpose: Historical v0.13 projection plan, apply and verify API.
-    doc: src/internal/host/compat/v0_13/consumers/projections/README.md
-  - path: src/internal/host/compat/v0_13/kernel
-    layer: legacy
-    purpose: Historical v0.13 Domain, resource and policy kernel (Go package name `core`).
-    doc: src/internal/host/compat/v0_13/README.md
-  - path: src/internal/host/dotnetcli
-    layer: legacy
-    purpose: Command protocol of the .NET reference adapter.
-    doc: src/cmd/markitect-adapter-dotnet/README.md
-  - path: src/internal/host/embedded
-    layer: legacy
-    purpose: Tool-shipped authoring guidance compiled as a Markitect context.
-    doc: docs/architecture.md#legacy-line
-  - path: src/internal/host/githubcli
-    layer: legacy
-    purpose: Command protocol of the GitHub repository-metadata adapter.
-    doc: src/cmd/markitect-adapter-github/README.md
-  - path: src/internal/host/inputs
-    layer: legacy
-    purpose: Resolves explicitly declared non-Markitect input files for a v0.13 graph.
-    doc: docs/architecture.md#legacy-line
-  - path: src/internal/host/modulecli
-    layer: legacy
-    purpose: Command interface of `markitect-check-modules`.
-    doc: docs/usage.md#independent-module-checks-current-source
-  - path: src/internal/host/projectionengine
-    layer: legacy
-    purpose: Pure evaluation of explicit projection contracts.
-    doc: src/internal/host/projectionengine/README.md
-  - path: src/internal/modules/adoption/capture
-    layer: legacy
-    purpose: Selective-capture handoff for v0.13 Copy Me adoption.
-    doc: src/internal/modules/adoption/README.md
-  - path: src/internal/modules/adoption/review
-    layer: legacy
-    purpose: Copy Me review over a selective-adoption handoff.
-    doc: src/internal/modules/adoption/README.md
+
+  # --- module -------------------------------------------------------------
+  - path: src/internal/modules/githooks
+    layer: module
+    purpose: Pure checks for explicitly configured Git hook entrypoints.
+    doc: docs/development/modules.md#go-capability-packages
+  - path: src/internal/modules/pipelines
+    layer: module
+    purpose: Pure checks for configured pipeline references to project checks.
+    doc: docs/development/modules.md#go-capability-packages
 
   # --- cli ----------------------------------------------------------------
   - path: src/cmd/markitect
     layer: cli
     purpose: The `markitect` executable with the top-level verbs.
     doc: docs/project-operations.md#cli-setup-and-current-roots
-  - path: src/cmd/markitect-adapter-azure-devops
-    layer: cli
-    purpose: Legacy Azure DevOps metadata adapter executable.
-    doc: src/cmd/markitect-adapter-azure-devops/README.md
-  - path: src/cmd/markitect-adapter-dotnet
-    layer: cli
-    purpose: Legacy .NET reference adapter executable.
-    doc: src/cmd/markitect-adapter-dotnet/README.md
-  - path: src/cmd/markitect-adapter-github
-    layer: cli
-    purpose: Legacy GitHub repository-metadata adapter executable.
-    doc: src/cmd/markitect-adapter-github/README.md
   - path: src/cmd/markitect-check-architecture
     layer: cli
     purpose: Runs the import gate.
     doc: docs/development/modules.md#mechanical-dependency-gate
-  - path: src/cmd/markitect-check-artifacts
-    layer: cli
-    purpose: Runs managed-artifact accounting.
-    doc: docs/usage.md#managed-artifact-accounting
   - path: src/cmd/markitect-check-modules
     layer: cli
     purpose: Runs the independent Module checks used by the pre-commit hook.
-    doc: docs/usage.md#independent-module-checks-current-source
+    doc: CONTRIBUTING.md#verify-a-change
   - path: src/cmd/markitect-exchange-executor
     layer: cli
     purpose: The reference bring-your-own executor executable.
     doc: docs/provider-adapters.md#bring-your-own-executor
-  - path: src/cmd/markitect-legacy
-    layer: cli
-    purpose: Temporary executable for the legacy Project/Domain commands until ARCH-09 removes them.
-    doc: docs/design/verb-table.md#what-leaves-the-product-binary
   - path: src/cmd/markitect-release
     layer: cli
     purpose: Prepares or publishes a GitHub release.
@@ -286,18 +184,6 @@ packages:
     doc: integration/README.md
 
   # --- harness ------------------------------------------------------------
-  - path: examples/selective-adoption
-    layer: harness
-    purpose: Replays a bounded public Markitect report for the selective-adoption example.
-    doc: examples/selective-adoption/README.md#public-report-replay
-  - path: examples/selective-adoption/pathspell
-    layer: harness
-    purpose: Canonical path spelling for the replay, including Windows short names.
-    doc: examples/selective-adoption/README.md#public-report-replay
-  - path: src/harness/engineering-discovery
-    layer: harness
-    purpose: Evidence helper for the engineering-discovery example.
-    doc: examples/engineering-discovery/README.md
   - path: src/harness/examples
     layer: harness
     purpose: Executable tests over the example fixtures.
@@ -312,9 +198,3 @@ packages:
     layer: experiment
     purpose: Small local MCP stdio pilot kept with its evaluation.
     doc: experiments/mcp-pilot/README.md
-
-  # --- fixture ------------------------------------------------------------
-  - path: examples/documentation/docs/implementation/src
-    layer: fixture
-    purpose: Ordinary Go source used as a declared artifact input.
-    doc: examples/documentation/README.md

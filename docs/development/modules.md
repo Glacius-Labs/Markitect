@@ -4,7 +4,9 @@ This page owns the dependency rules between Markitect's packages and how they ar
 
 ## Go capability packages
 
-Go packages under `internal/modules/<name>` are implementation units, not installable manifests. Today they are the project model (`projectmodel`, in the core layer) and the adoption capture and review helpers of the legacy line (`adoption`).
+Go packages under `src/internal/modules/<name>` are implementation units, not installable manifests. The current packages are the project model (`projectmodel`, in the core layer) and pure Git-hook and pipeline checks (`githooks` and `pipelines`, in the module layer). Host composes the latter through `src/internal/host/modulechecks`; those packages receive explicit values and perform no filesystem access or process execution.
+
+The module check's inputs have an exact Artifact contract. This repository's `tooling/module-verification` Artifact declares `.markitect/modules/githooks.config`, `.markitect/modules/pipelines.config`, `.githooks/pre-commit`, and `.github/workflows/ci.yaml` as exact paths in `spec.paths`. In general, each selected module config and every configured hook or workflow file must be a present, exact path in a canonical Artifact; prefix-only path ownership does not authorize an input. Host loads bytes from one selected snapshot and supplies compiled model facts, exact owner links and, for pipeline checks, expected check references. The modules validate configured digests, owner links and selected YAML scalar references; they do not install or execute hooks or workflows.
 
 ## Dependency direction
 
@@ -32,7 +34,6 @@ The [code map](code-map.md) owns the package list. In short:
 - **Infrastructure:** Git and working-tree access, fixed snapshots and guarded writes. It owns Git acquisition and file-mode conversion.
 - **Application:** the product's use cases and their CLI and MCP surfaces.
 - **Runtime:** the inner roles in owned candidate workspaces.
-- **Legacy:** the earlier Project/Domain line. Product layers may not import it; ARCH-09 removes it.
 - **Executables, tooling, bootstrap, harnesses, experiments and fixtures** complete the map.
 
 The earlier map with its v0.13 compatibility rows is in the [history record](../history/development-modules-legacy-sections-20261010.md#responsibility-map).
@@ -44,15 +45,15 @@ Create a capability package only for an independently owned capability with clea
 
 A capability package's concrete generic limitation is a request to the coordinator, not permission to edit Core. Include at least two concrete cases from distinct vocabularies, the current expression and exact failure, finite normalization/check/adapter alternatives, affected consumers, exact version/input behavior, diagnostics, digest/context/impact effects and a deterministic test. The coordinator decides whether shared semantics change and owns any Core edit before dependent package work proceeds.
 
-Remove a capability package only after its Host wiring, Project references, generated-output ownership, tests and documentation are accounted for. Delete its private implementation and fixtures together, verify that no production or test imports remain, and rerun the architecture gate. Do not leave an empty package, stale generated output or an unused generic Core primitive simply because the package was removed.
+Remove a capability package only after its Host wiring, canonical model references, generated-output ownership, tests and documentation are accounted for. Delete its private implementation and fixtures together, verify that no production or test imports remain, and rerun the architecture gate. Do not leave an empty package, stale generated output or an unused generic Core primitive simply because the package was removed.
 
 ## Mechanical dependency gate
 
-The checker is at `internal/tooling/architecture`. It parses Go imports without compiling the inspected production source and examines all supported-platform files and unit tests. Its negative fixtures cover Core-to-Module, Module-to-sibling, Module-to-Host and CLI bypass; the policy also forbids Module-to-Infrastructure and Module-to-Tooling edges. Diagnostics identify the exact file, line and import. No exception allowlist may conceal a violation.
+The checker is at `src/internal/tooling/architecture`. It parses Go imports without compiling the inspected production source and examines all supported-platform files and unit tests. Its negative fixtures cover Core-to-Module, Module-to-sibling, Module-to-Host and CLI bypass; the policy also forbids Module-to-Infrastructure and Module-to-Tooling edges. Diagnostics identify the exact file, line and import. No exception allowlist may conceal a violation.
 
-The gate also reads the layers of the [code map](code-map.md) from the checked repository. Core, infrastructure, application and runtime packages may not import legacy packages, in production or test code. Legacy packages may still import them. These product packages may use only the guarded API of `src/internal/host/guardedwrite`: `CaptureFiles`, `Apply`, `ApplyChecked`, `NewStoredNames` (a read-only name check for their private copies) and the types `Capture`, `Change`, `File`, `Result` and `StoredNames`. Its other exports are low-level primitives for the remaining legacy writers. The gate parses each product file that imports the package and reports every other name the file uses from it, and every dot import. The gate lists the permitted names, so a new export stays forbidden to product packages until it is added to that list. Negative fixtures cover each product layer and each form of the guarded-write rule.
+The gate also reads the layers of the [code map](code-map.md) from the checked repository and enforces declared import and guarded-write boundaries in production and test code. Product code may use only `Apply`, `ApplyChecked`, `ApplyOrderedChecked`, `CaptureFiles` and `NewStoredNames`, together with the `Capture`, `Change`, `File`, `Result` and `StoredNames` types from `src/internal/host/guardedwrite`; lower-level filesystem primitives stay behind that boundary. The gate reports forbidden imports, names and dot imports. Its negative fixtures cover each product layer and guarded-write rule.
 
-`TestRepositoryArchitecture` makes `go test ./...` exercise the repository scan. The named CI step runs the package gate, the explicit `architecture-imports` Project check delegates through Host, and the release workflow runs the same CI through its reusable quality job. This wiring does not establish a passing result; exact-head gate outcomes and migration status remain for the coordinator's report. A migration candidate is complete only after the same gate passes at the exact head and independent review confirms the full diff.
+`TestRepositoryArchitecture` makes `go test ./...` exercise the repository scan. The named CI step and `markitect-check-architecture` executable run the architecture gate. This wiring does not establish a passing result; the coordinator reports the fixed candidate's gate outcome. A change is complete only after the gate passes at the exact head and independent review confirms the full diff.
 
 ## Historical module links
 

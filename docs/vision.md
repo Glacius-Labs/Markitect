@@ -1,6 +1,6 @@
 # Product vision
 
-This is the canonical owner of Markitect's product thesis, intended division of responsibility, delegated method and long-term operating model. [Architecture](architecture.md) owns technical boundaries, the [engineering constitution](engineering-constitution.md) owns kernel invariants, the [roadmap](implementation-plan.md) owns released/source/planned status, [Measurement](measurement.md) owns staged readiness and how to test benefits, and the [concept record](concepts/README.md) owns individual product decisions, promises, assumptions and agreed but unscheduled directions, each with its origin. This vision does not authorize a feature, weaken an acceptance gate or establish a measured outcome.
+This is the canonical owner of Markitect's product thesis, intended division of responsibility, delegated method and long-term operating model. [Architecture](architecture.md) owns technical boundaries and kernel invariants, the [roadmap](implementation-plan.md) owns released/source/planned status, [Measurement](measurement.md) owns staged readiness and how to test benefits, and the [concept record](concepts/README.md) owns individual product decisions, promises, assumptions and agreed but unscheduled directions, each with its origin. This vision does not authorize a feature, weaken an acceptance gate or establish a measured outcome.
 
 ## Markitect in brief
 

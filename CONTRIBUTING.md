@@ -6,13 +6,12 @@ For coordinated parallel work, follow [Pull requests and parallel work](#pull-re
 
 ## Ownership and layout
 
-Current source has four product layers and the legacy line ([Architecture](docs/architecture.md#layers)):
+Current source has four product layers ([Architecture](docs/architecture.md#layers)):
 
 - **Core:** the structural compiler, snapshots and project-model views.
 - **Infrastructure:** Git and working-tree access, and guarded writes.
 - **Application:** the use cases and their CLI and MCP surfaces.
 - **Runtime:** the inner roles in owned candidate workspaces.
-- **Legacy:** the earlier Project/Domain line, which ARCH-09 removes.
 
 Outside the layers:
 
@@ -45,7 +44,7 @@ Several sessions change this repository at the same time, each in its own worktr
 
 - Run `git show --stat` for each new commit, or `git diff --name-only origin/main HEAD`, and check that only the intended files changed.
 - Never use `git stash`. The stash is shared by all worktrees of this repository, so a pop can apply another session's changes. Use a patch file instead (`git diff > change.patch`, later `git apply change.patch`) or a separate worktree.
-- Run the cheap gates first: managed-artifact accounting, `check`, `format`, the module checks and the documentation check (see [Verify a change](#verify-a-change)). A new file under a managed root needs an owner entry in `markitect-artifacts.yaml`. A change to `.github/workflows/ci.yaml` needs a renewed digest in `.markitect/modules/pipelines.config`.
+- Run the cheap gates first: the full project `check`, module and architecture checks, and the documentation check (see [Verify a change](#verify-a-change)). A new source or test file must be covered by its Manager's Artifact path. A change to a module configuration must keep its declared checks synchronized with the implementation.
 
 **While CI runs**
 
@@ -71,29 +70,15 @@ Begin through the repository's model-first contributor guidance and classify a r
 
 ```powershell
 go run ./src/cmd/markitect check --repo .
+go run ./src/cmd/markitect-check-modules --repo . --hooks .markitect/modules/githooks.config --pipelines .markitect/modules/pipelines.config
+go run ./src/cmd/markitect-check-architecture --repo .
+go run ./src/cmd/markitect check --repo . --revision HEAD
+go run ./src/cmd/markitect context --repo . --revision HEAD product
+go run ./src/cmd/markitect impact --repo . --revision HEAD
+python -B scripts/check-docs.py
 go test ./... -count=1 -timeout=60m
 go vet ./...
 go run ./tools/smoke -repo .
-go run ./src/cmd/markitect-legacy schema --repo .
-go run ./src/cmd/markitect-legacy check --repo examples/minimal
-go run ./src/cmd/markitect-legacy check --repo examples/repository-layout
-go run ./src/cmd/markitect-legacy check --repo examples/canonical-engineering
-go run ./src/cmd/markitect-legacy format --repo examples/canonical-engineering
-go run ./src/cmd/markitect-legacy model --repo examples/canonical-engineering
-go run ./src/cmd/markitect-legacy check --repo examples/engineering-constitution
-go run ./src/cmd/markitect-legacy format --repo examples/engineering-constitution
-go run ./src/cmd/markitect-legacy model --repo examples/engineering-constitution
-go run ./src/cmd/markitect-legacy check --repo examples/engineering-discovery
-go run ./src/cmd/markitect-legacy format --repo examples/engineering-discovery
-go run ./src/cmd/markitect-legacy check --repo examples/software-architecture
-go run ./src/cmd/markitect-legacy format --repo examples/software-architecture
-go run ./src/cmd/markitect-legacy model --repo examples/software-architecture
-go run ./src/cmd/markitect-legacy context --repo examples/software-architecture --namespace engineering --kind Skill --name implement-order
-go run ./src/cmd/markitect-legacy check --repo examples/delivery-target-equality
-go run ./src/cmd/markitect-legacy format --repo examples/delivery-target-equality
-go run ./src/cmd/markitect-legacy model --repo examples/delivery-target-equality
-go run ./src/cmd/markitect-legacy context --repo examples/delivery-target-equality --namespace engineering --kind Skill --name deployment-review
-go run ./src/cmd/markitect-legacy check --repo benchmark/fixtures/v2
 git diff --check
 ```
 
@@ -109,7 +94,7 @@ A parallel race-detector job runs the complete untagged suite with `go test -rac
 
 Go sources must be gofmt-clean: CI fails when `gofmt -l` lists any tracked Go file, so run `gofmt -w` on the files you change.
 
-`go run ./tools/smoke -repo .` packages the source, tests the standalone bootstrap, builds the tools from the packaged source and checks them end to end: the version output, `init` and `onboard` with preview, a refused stale digest, digest-checked write and `check`, a fixed policy edit with its `impact` between full commit IDs, a fixed-revision `verify --execute` of the project-world example with a scripted auditor through `markitect-exchange-executor`, the selective-adoption replay, artifact accounting, and a marked group of legacy checks that ARCH-09 removes. CI runs it in the quality job on every operating system. `go run ./tools/smoke bundle -revision <commit>` runs the same checks against the release bundle installed into a consumer repository; the release workflow runs it on Linux and Windows with the bundle hash from its preflight. Together they replace the earlier shell-specific smoke steps.
+`go run ./tools/smoke -repo .` packages the source, tests the standalone bootstrap, builds the tools from the packaged source and checks their model-first flows end to end, including preview/write behavior, fixed-revision impact and Verify, and the project-world example. CI runs it in the quality job. `go run ./tools/smoke bundle -revision <commit>` runs the same checks against the release bundle installed into a consumer repository; the release workflow runs it on Linux and Windows with the bundle hash from its preflight.
 
 The [playground smoke](.github/workflows/playground-smoke.yaml) runs the case playground's unit tests and its provider-free container run: a fake agent drives the Markitect arm (`project init`, `onboard`, `setup`, every station and the final `project check`) against a Linux build of the commit. It runs nightly, on manual dispatch and on pull requests that change `src/`, `go.mod`, `go.sum` or `experiments/case-playground/`. It makes no model call and uses no secrets.
 
@@ -117,25 +102,15 @@ CI never retries a test. Each run attempt uploads its Go test results, and the w
 
 For prose-only changes, validate the fixed candidate with `check`, selected `context` and `impact`, managed-artifact accounting, relevant local links/anchors and any changed command examples, plus independent documentation review. Do not repeat an unchanged full suite locally merely to refresh a prose-only SHA; retain its actual tested revision. Required hosted CI and release gates still apply, and focused documentation checks are not a new full Project Verify result.
 
-Run `python -B scripts/check-docs.py` for local links and heading/HTML anchors in the maintained entry documents. Pass exact repository-relative Markdown paths to check additional changed pages, including historical records. Run `python -B -m unittest discover -s scripts -p test_check_docs.py` when changing the checker. CI runs both commands. The [documentation maintenance guide](docs/development/documentation.md) describes scope and placement; this repository check is separate from the optional product documentation-router feature.
+Run `python -B scripts/check-docs.py` for local links and heading/HTML anchors in the maintained entry documents. Pass exact repository-relative Markdown paths to check additional changed pages, including historical records. Run `python -B -m unittest discover -s scripts -p test_check_docs.py` when changing the checker. CI runs both commands. The [documentation maintenance guide](docs/development/documentation.md) describes scope and placement.
 
-The standalone checks do not require another repository or an AI model. CI runs the Linux gate on every pull request and the Windows job nightly. A successful source gate establishes only the product checks that ran; it does not establish semantic correctness or an adopting project's acceptance. The import checker at `src/internal/tooling/architecture` statically examines production and test imports, including supported-platform files, and has negative fixtures for forbidden directions. The repository test calls it through `go test ./...`, CI has a named gate step, the explicit Project check delegates through Host, and the release quality job reuses CI. These routes are wired; wiring is not a gate result. Consult the [consolidation report](docs/validation/clean-architecture-consolidation.md) for exact-head status, and do not add an exception allowlist.
+The standalone checks do not require another repository or an AI model. CI runs the Linux gate on every pull request and the Windows job nightly. A successful source gate establishes only the product checks that ran; it does not establish semantic correctness or an adopting project's acceptance. The import checker at `src/internal/tooling/architecture` statically examines production and test imports, including supported-platform files, and has negative fixtures for forbidden directions. `go test ./...` includes the repository architecture test, while CI also runs `markitect-check-architecture` as a named gate. The release quality job reuses CI. These routes are wired; wiring is not a gate result. Consult the [consolidation report](docs/validation/clean-architecture-consolidation.md) for exact-head status, and do not add an exception allowlist.
 
-Edit validation declarations and regenerate schemas with `schema --repo . --write`. Edit example YAML, then run `format`, `render --repo examples/minimal --write`, and `check`. For package or consumer example changes, also run `go run ./src/cmd/markitect-legacy check --repo examples/package-consumer`. Edit core authoring at `src/internal/host/embedded/resources/*.yaml`; its content is canonical for that embedded guidance. Tests compile those resources through the ordinary application API. The model-first project path is specified in [Project workflow](docs/project-workflow.md); compiler commands and immutable release histories are described in [Usage](docs/usage.md#legacy-projectdomain-cli-compatibility). The [roadmap](docs/implementation-plan.md) owns current source status. The v0.3.0 content-package contract and consumer workflow are documented in [Content packages](docs/content-packages.md); executable fixtures live under `examples/content-package` and `examples/package-consumer`.
+Edit canonical model YAML and regenerate its readable view with the digest-bound `docs` preview/write workflow in [AGENTS.md](AGENTS.md). Current project operations and release tooling are documented in [Project operations](docs/project-operations.md) and the [distribution guide](integration/README.md). The [roadmap](docs/implementation-plan.md) owns current source status. Earlier Project/Domain commands and content-package contracts remain available in the immutable [v0.14.1 source and guide](https://github.com/Glacius-Labs/Markitect/tree/v0.14.1).
 
-## Legacy Project/Domain checks and rendering
+## Historical Project/Domain contracts
 
-These rules apply to the legacy line, whose own checks still run in this repository's CI until ARCH-09. New projects use the model-first [Project workflow](docs/project-workflow.md).
-
-For a Project to produce complete `verify` evidence, declare every required command under `spec.checks`. Each check has a stable `name` and a `run` argument array. The first item must be a bare executable name resolvable through `PATH`; use an interpreter command such as `go run tools/check-docs.go` for a repository script. Markitect passes arguments directly and does not insert a shell. This avoids implicit shell expansion and keeps the executed command visible in the fixed Project snapshot.
-
-Checks run against a materialized fixed revision within the documented time and output bounds. They run with the caller's local authority; the materialized copy is not a sandbox. Do not configure commands that mutate the checkout or access unrelated data. Missing or empty check declarations make `verify` incomplete rather than successful.
-
-Rendering writes only explicitly selected outputs. Add `markdown` to `spec.targets` to generate resource views under `docs/markitect/`; add Codex and Claude targets, rule mappings and shared entrypoints for the provider outputs the Project owns. Provider entrypoints link directly to canonical YAML. Only declared outputs are rendered or checked. An adopting repository owns its root navigation, hooks, custom output formats and import scripts.
-
-## Published top-level `init` behavior
-
-The published v0.14.1 release has a top-level `markitect init` for the legacy line; current source replaced it. New model-first repositories use the current `markitect init`, which creates the `.markitect/project.yaml` model tree, runtime, ignore rules and generated readable view. Use the command supported by the selected source or release; do not reinterpret existing Project files as project-model sources or silently convert them.
+The removed Project/Domain command surface, rendering rules and content-package contract are preserved at the immutable [v0.14.1 tag](https://github.com/Glacius-Labs/Markitect/tree/v0.14.1). Current contributors use the model-first [Project workflow](docs/project-workflow.md) and current [operations guide](docs/project-operations.md); no conversion of older project files is implied.
 
 ## Release work
 
@@ -147,6 +122,6 @@ Markitect is licensed under [Apache-2.0](LICENSE); the root license is included 
 
 If a restricted local environment refuses the default Go build cache, use an explicit cache outside snapshot inputs, for example `GOCACHE` at `.cache/go-build` or an external workspace. Do not place a growing cache at an admitted source path and assume `.gitignore` filters working-tree snapshots: Markitect uses its own documented source exclusions. This is development-environment setup, not a change to snapshot semantics or the published CLI's permissions.
 
-## Canonical Projection alpha (removed)
+## Historical release contracts
 
-The experimental canonical Projection alpha bundled with v0.14.1 has been removed from current source; its contracts remain documented at the [v0.14.1 tag](https://github.com/Glacius-Labs/Markitect/blob/v0.14.1/docs/canonical-projections.md). `src/internal/core` remains the structural compiler for Schema, Kind, Property and Definition that the model-first project model uses. The v0.13 Domain and policy kernel and its consumers stay in current source under `src/internal/host/compat/v0_13` until ARCH-09 removes them; neither is an authoring format for model-first projects. Do not silently translate their resources into `.markitect/model/`.
+The v0.14.1 Project/Domain and canonical Projection contracts are preserved at the immutable [release tag](https://github.com/Glacius-Labs/Markitect/tree/v0.14.1). They are not current source interfaces or contributor gates.

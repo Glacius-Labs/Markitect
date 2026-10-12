@@ -132,14 +132,14 @@ func TestInspectTestFirstDoesNotHideProductionFile(t *testing.T) {
 	}
 }
 
-func TestAdoptingCodeFixtureHasNoProductDependencyPrivilege(t *testing.T) {
+func TestRetiredAdoptingCodeFixtureHasNoImportPrivilege(t *testing.T) {
 	const fixture = "examples/documentation/docs/implementation/src"
-	if got := Check([]Edge{{From: fixture}}); len(got) != 0 {
-		t.Fatal(got)
+	if got := Check([]Edge{{From: fixture}}); len(got) != 1 || got[0].Rule != "unclassified product package" {
+		t.Fatalf("retired fixture package must remain unclassified: %v", got)
 	}
 	for _, target := range []string{"src/internal/core", "src/internal/host", "src/internal/modules/a"} {
-		if got := Check([]Edge{{From: fixture, To: target}}); len(got) != 1 {
-			t.Fatalf("hidden product edge: %s: %v", target, got)
+		if got := Check([]Edge{{From: fixture, To: target}}); len(got) != 1 || got[0].Rule != "unclassified internal package" {
+			t.Fatalf("retired fixture import was not rejected: %s: %v", target, got)
 		}
 	}
 }

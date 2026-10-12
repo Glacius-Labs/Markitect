@@ -2,7 +2,7 @@
 
 # markitect
 
-Model digest: sha256:09a570f7b628cc395d8a3fd5ceec6b673daed5d1399a4e110fce58d4f2564b72
+Model digest: sha256:5e44b10b68adc6668948f83b710b25a284ee54fb0693f1528e431f7ee2106918
 
 Report status: succeeded
 
@@ -36,15 +36,6 @@ The structural model compiled from the explicitly selected Definition files. Thi
 - Delegated paths: benchmark/, examples/, experiments/, src/harness/, src/internal/testkit/
 - Instructions: Keep examples executable and keep each example's own policy inside it.
 
-### legacy
-
-- Identity: ["project.markitect.example.org/v1alpha1","Manager","legacy","legacy"]
-- Namespace: legacy
-- Purpose: Owns the earlier Project/Domain line and its dogfood files until ARCH-09 removes them.
-- Parent Manager: ["project.markitect.example.org/v1alpha1","Manager","","markitect"]
-- Delegated paths: .agents/skills/authoring/, .agents/skills/engineering-change/, .claude/skills/authoring/, .claude/skills/engineering-change/, .markitect/README.md, .markitect/areas/, .markitect/modules/, markitect-artifacts.yaml, markitect.yaml, schema/, src/cmd/markitect-adapter-azure-devops/, src/cmd/markitect-adapter-dotnet/, src/cmd/markitect-adapter-github/, src/cmd/markitect-check-artifacts/, src/cmd/markitect-check-modules/, src/cmd/markitect-legacy/, src/internal/host/adapter_command.go, src/internal/host/adoption_prepare.go, src/internal/host/adoption_prepare_test.go, src/internal/host/adoption_workspace.go, src/internal/host/app_context_test.go, src/internal/host/app_fixture_test.go, src/internal/host/app_impact_test.go, src/internal/host/app_outputs_test.go, src/internal/host/architecture.go, src/internal/host/artifact_coverage.go, src/internal/host/artifact_coverage_test.go, src/internal/host/artifactcli/, src/internal/host/authoring/, src/internal/host/azuredevopscli/, src/internal/host/benchmark_test.go, src/internal/host/cli/, src/internal/host/compat/, src/internal/host/composition.go, src/internal/host/consistency.go, src/internal/host/consistency_test.go, src/internal/host/contentpackage.go, src/internal/host/contentpackage_test.go, src/internal/host/context.go, src/internal/host/context_provenance_test.go, src/internal/host/context_test.go, src/internal/host/documentation_routers.go, src/internal/host/documentation_routers_test.go, src/internal/host/documentation_scenario_test.go, src/internal/host/domain_inputs.go, src/internal/host/domain_inputs_test.go, src/internal/host/domain_provenance_test.go, src/internal/host/dotnetcli/, src/internal/host/embedded/, src/internal/host/format.go, src/internal/host/format_write_test.go, src/internal/host/githubcli/, src/internal/host/impact.go, src/internal/host/impact_analysis.go, src/internal/host/impact_analysis_test.go, src/internal/host/impact_policy_test.go, src/internal/host/inputs/, src/internal/host/install.go, src/internal/host/install_fixture_test.go, src/internal/host/install_plan.go, src/internal/host/install_safety_test.go, src/internal/host/install_test.go, src/internal/host/install_write.go, src/internal/host/load.go, src/internal/host/model.go, src/internal/host/module_checks.go, src/internal/host/module_checks_test.go, src/internal/host/modulecli/, src/internal/host/outputs.go, src/internal/host/outputs_git_test.go, src/internal/host/outputs_nested_test.go, src/internal/host/outputs_package_write_test.go, src/internal/host/outputs_provider.go, src/internal/host/outputs_provider_test.go, src/internal/host/outputs_test.go, src/internal/host/outputs_write.go, src/internal/host/parallel_wave_risk_test.go, src/internal/host/policy_analysis.go, src/internal/host/policy_analysis_boundary_test.go, src/internal/host/policy_results_test.go, src/internal/host/project.go, src/internal/host/projection_analysis.go, src/internal/host/projection_analysis_test.go, src/internal/host/projection_boundary_test.go, src/internal/host/projection_envelope.go, src/internal/host/projection_example_test.go, src/internal/host/projection_primitives_test.go, src/internal/host/projection_registration.go, src/internal/host/projection_registration_test.go, src/internal/host/projectionengine/, src/internal/host/projections.go, src/internal/host/projections_test.go, src/internal/host/query.go, src/internal/host/query_test.go, src/internal/host/reconcile.go, src/internal/host/reconcile_conflict_test.go, src/internal/host/reconcile_stale_test.go, src/internal/host/reconcile_write_test.go, src/internal/host/review.go, src/internal/host/review_decode.go, src/internal/host/review_decode_test.go, src/internal/host/review_fixture_test.go, src/internal/host/review_test.go, src/internal/host/review_validation.go, src/internal/host/run_context.go, src/internal/host/run_context_test.go, src/internal/host/same_target_test.go, src/internal/host/shared_helpers.go, src/internal/host/snapshot_neutrality_test.go, src/internal/host/testmain_test.go, src/internal/host/verify.go, src/internal/host/verify_test.go, src/internal/host/writers_test.go, src/internal/host/yaml_inputs_test.go, src/internal/modules/adoption/
-- Instructions: Change the legacy line only to remove it, and keep its own checks in CI passing until then.
-
 ### product
 
 - Identity: ["project.markitect.example.org/v1alpha1","Manager","product","product"]
@@ -60,7 +51,7 @@ The structural model compiled from the explicitly selected Definition files. Thi
 - Namespace: tooling
 - Purpose: Owns maintainer tooling: the import gate, release building and publication, notices, packaging and the bootstrap.
 - Parent Manager: ["project.markitect.example.org/v1alpha1","Manager","","markitect"]
-- Delegated paths: integration/, packaging/, src/cmd/markitect-check-architecture/, src/internal/tooling/, tools/
+- Delegated paths: .githooks/pre-commit, .github/workflows/ci.yaml, .markitect/modules/githooks.config, .markitect/modules/pipelines.config, integration/, packaging/, src/cmd/markitect-check-architecture/, src/cmd/markitect-check-modules/, src/internal/host/architecturecli/, src/internal/host/modulechecks/, src/internal/host/modulecli/, src/internal/modules/githooks/, src/internal/modules/pipelines/, src/internal/tooling/, tools/
 - Instructions: Validate a release candidate and publish it only through the documented release process.
 
 ## Statements
@@ -110,24 +101,6 @@ The documentation explains the product, its architecture and operations, the roa
 
 Examples and benchmark fixtures are executable inputs that the harnesses and CI test; the test kit gives every package's tests hermetic fixtures; experiments are bounded pilots kept with their evaluation.
 
-### legacy-line
-
-- Identity: ["project.markitect.example.org/v1alpha1","Statement","legacy","legacy-line"]
-- Category: architecture
-- Responsible Manager: ["project.markitect.example.org/v1alpha1","Manager","legacy","legacy"]
-- Source: [.markitect/model/legacy/legacy-line.yaml](../../.markitect/model/legacy/legacy-line.yaml)
-
-The legacy line is the `markitect-legacy` executable, the host root package and the packages the code map marks legacy, with the dogfood model, views and module checks it still runs for this repository.
-
-### legacy-removal
-
-- Identity: ["project.markitect.example.org/v1alpha1","Statement","legacy","legacy-removal"]
-- Category: rule
-- Responsible Manager: ["project.markitect.example.org/v1alpha1","Manager","legacy","legacy"]
-- Source: [.markitect/model/legacy/legacy-removal.yaml](../../.markitect/model/legacy/legacy-removal.yaml)
-
-Product packages do not import legacy packages: the host root package, `compat/v0_13`, the canonical projection alpha and their helpers. Change the legacy lines only to remove them. Compatibility is not a reason to keep a function, mode or fallback (DEC-014).
-
 ### core-stays-generic
 
 - Identity: ["project.markitect.example.org/v1alpha1","Statement","product","core-stays-generic"]
@@ -173,6 +146,15 @@ AI evidence, passing checks and digests are not human acceptance. Agent settings
 
 Relationships and input scope are explicit. Do not infer dependencies from prose, README links or paths. Fixed-snapshot results are deterministic, unknown impact stays conservative, and every generated output has one canonical owner.
 
+### legacy-removal
+
+- Identity: ["project.markitect.example.org/v1alpha1","Statement","product","legacy-removal"]
+- Category: rule
+- Responsible Manager: ["project.markitect.example.org/v1alpha1","Manager","product","product"]
+- Source: [.markitect/model/product/legacy-removal.yaml](../../.markitect/model/product/legacy-removal.yaml)
+
+Product packages do not import legacy packages: the host root package, `compat/v0_13`, the canonical projection alpha and their helpers. Change the legacy lines only to remove them. Compatibility is not a reason to keep a function, mode or fallback (DEC-014).
+
 ### product
 
 - Identity: ["project.markitect.example.org/v1alpha1","Statement","product","product"]
@@ -181,6 +163,17 @@ Relationships and input scope are explicit. Do not infer dependencies from prose
 - Source: [.markitect/model/product/purpose.yaml](../../.markitect/model/product/purpose.yaml)
 
 The product is the packages that the code map assigns to the core, infrastructure, application and runtime layers, with the `markitect`, exchange executor and release executables that delegate to them.
+
+### module-pin-contract
+
+- Identity: ["project.markitect.example.org/v1alpha1","Statement","tooling","module-pin-contract"]
+- Category: rule
+- Responsible Manager: ["project.markitect.example.org/v1alpha1","Manager","tooling","tooling"]
+- Source: [.markitect/model/tooling/module-pin-contract.yaml](../../.markitect/model/tooling/module-pin-contract.yaml)
+
+Hook and pipeline configuration names exact tracked artifact paths and their canonical Artifact identities. Checks load one selected project snapshot, require a passed complete project model, validate exact bytes against recorded digests, and compare selected workflow YAML scalars to literal space-joined Check command arguments selected by unique check name. Check namespaces are not pipeline reference keys; duplicate names fail closed. They neither install or execute hooks nor execute workflows; these pins do not establish behavior or human acceptance.
+
+Uses: ["project.markitect.example.org/v1alpha1","Statement","","canonical-sources"]
 
 ### published-releases
 
@@ -221,7 +214,7 @@ Maintainer tooling enforces the import gate and the code map, builds and publish
 - Responsible Manager: ["project.markitect.example.org/v1alpha1","Manager","","markitect"]
 - Realizes: ["project.markitect.example.org/v1alpha1","Statement","","canonical-sources"], ["project.markitect.example.org/v1alpha1","Statement","","repository"]
 - Expected paths: [.githooks/](../../.githooks), [.github/](../../.github), [scripts/](../../scripts)
-- Related checks: ["project.markitect.example.org/v1alpha1","Check","","script-tests"], ["project.markitect.example.org/v1alpha1","Check","documentation","docs-links"], ["project.markitect.example.org/v1alpha1","Check","legacy","module-checks"] (declared; execution not observed)
+- Related checks: ["project.markitect.example.org/v1alpha1","Check","","script-tests"], ["project.markitect.example.org/v1alpha1","Check","documentation","docs-links"], ["project.markitect.example.org/v1alpha1","Check","tooling","module-checks"] (declared; execution not observed)
 - Applicability: These files run the repository's checks on every change.
 
 ### repository-guides
@@ -231,7 +224,7 @@ Maintainer tooling enforces the import gate and the code map, builds and publish
 - Role: documentation
 - Responsible Manager: ["project.markitect.example.org/v1alpha1","Manager","","markitect"]
 - Realizes: ["project.markitect.example.org/v1alpha1","Statement","","project-local-policy"], ["project.markitect.example.org/v1alpha1","Statement","","repository"]
-- Expected paths: [CONTRIBUTING.md](../../CONTRIBUTING.md), [LICENSE](../../LICENSE), [README.md](../../README.md), [SECURITY.md](../../SECURITY.md), [SUPPORT.md](../../SUPPORT.md)
+- Expected paths: [.markitect/README.md](../../.markitect/README.md), [CONTRIBUTING.md](../../CONTRIBUTING.md), [LICENSE](../../LICENSE), [README.md](../../README.md), [SECURITY.md](../../SECURITY.md), [SUPPORT.md](../../SUPPORT.md)
 - Related checks: ["project.markitect.example.org/v1alpha1","Check","documentation","docs-links"] (declared; execution not observed)
 - Applicability: Readers and contributors start from these files.
 
@@ -245,17 +238,6 @@ Maintainer tooling enforces the import gate and the code map, builds and publish
 - Expected paths: [docs/](..)
 - Related checks: ["project.markitect.example.org/v1alpha1","Check","documentation","docs-links"] (declared; execution not observed)
 - Applicability: The prefix also matches the tool-owned model view, so it cannot be a required path.
-
-### legacy-views
-
-- Identity: ["project.markitect.example.org/v1alpha1","Artifact","documentation","legacy-views"]
-- Requirement: optional
-- Role: documentation
-- Responsible Manager: ["project.markitect.example.org/v1alpha1","Manager","documentation","documentation"]
-- Realizes: ["project.markitect.example.org/v1alpha1","Statement","","canonical-sources"], ["project.markitect.example.org/v1alpha1","Statement","documentation","documentation"], ["project.markitect.example.org/v1alpha1","Statement","legacy","legacy-line"]
-- Expected paths: [docs/markitect/README.md](README.md), [docs/markitect/core/](core), [docs/markitect/development/](development)
-- Related checks: ["project.markitect.example.org/v1alpha1","Check","legacy","artifact-accounting"] (declared; execution not observed)
-- Applicability: The legacy renderer regenerates these views until ARCH-09 removes them, so they are not required.
 
 ### executable-examples
 
@@ -279,46 +261,13 @@ Maintainer tooling enforces the import gate and the code map, builds and publish
 - Related checks: ["project.markitect.example.org/v1alpha1","Check","","go-tests"] (declared; execution not observed)
 - Applicability: Experiments keep their inputs next to their evaluation so the recorded result stays reproducible.
 
-### legacy-code
-
-- Identity: ["project.markitect.example.org/v1alpha1","Artifact","legacy","legacy-code"]
-- Requirement: optional
-- Role: implementation
-- Responsible Manager: ["project.markitect.example.org/v1alpha1","Manager","legacy","legacy"]
-- Realizes: ["project.markitect.example.org/v1alpha1","Statement","legacy","legacy-line"], ["project.markitect.example.org/v1alpha1","Statement","legacy","legacy-removal"]
-- Expected paths: [src/cmd/markitect-adapter-azure-devops/](../../src/cmd/markitect-adapter-azure-devops), [src/cmd/markitect-adapter-dotnet/](../../src/cmd/markitect-adapter-dotnet), [src/cmd/markitect-adapter-github/](../../src/cmd/markitect-adapter-github), [src/cmd/markitect-check-artifacts/](../../src/cmd/markitect-check-artifacts), [src/cmd/markitect-check-modules/](../../src/cmd/markitect-check-modules), [src/cmd/markitect-legacy/](../../src/cmd/markitect-legacy), [src/internal/host/adapter_command.go](../../src/internal/host/adapter_command.go), [src/internal/host/adoption_prepare.go](../../src/internal/host/adoption_prepare.go), [src/internal/host/adoption_prepare_test.go](../../src/internal/host/adoption_prepare_test.go), [src/internal/host/adoption_workspace.go](../../src/internal/host/adoption_workspace.go), [src/internal/host/app_context_test.go](../../src/internal/host/app_context_test.go), [src/internal/host/app_fixture_test.go](../../src/internal/host/app_fixture_test.go), [src/internal/host/app_impact_test.go](../../src/internal/host/app_impact_test.go), [src/internal/host/app_outputs_test.go](../../src/internal/host/app_outputs_test.go), [src/internal/host/architecture.go](../../src/internal/host/architecture.go), [src/internal/host/artifact_coverage.go](../../src/internal/host/artifact_coverage.go), [src/internal/host/artifact_coverage_test.go](../../src/internal/host/artifact_coverage_test.go), [src/internal/host/artifactcli/](../../src/internal/host/artifactcli), [src/internal/host/authoring/](../../src/internal/host/authoring), [src/internal/host/azuredevopscli/](../../src/internal/host/azuredevopscli), [src/internal/host/benchmark_test.go](../../src/internal/host/benchmark_test.go), [src/internal/host/cli/](../../src/internal/host/cli), [src/internal/host/compat/](../../src/internal/host/compat), [src/internal/host/composition.go](../../src/internal/host/composition.go), [src/internal/host/consistency.go](../../src/internal/host/consistency.go), [src/internal/host/consistency_test.go](../../src/internal/host/consistency_test.go), [src/internal/host/contentpackage.go](../../src/internal/host/contentpackage.go), [src/internal/host/contentpackage_test.go](../../src/internal/host/contentpackage_test.go), [src/internal/host/context.go](../../src/internal/host/context.go), [src/internal/host/context_provenance_test.go](../../src/internal/host/context_provenance_test.go), [src/internal/host/context_test.go](../../src/internal/host/context_test.go), [src/internal/host/documentation_routers.go](../../src/internal/host/documentation_routers.go), [src/internal/host/documentation_routers_test.go](../../src/internal/host/documentation_routers_test.go), [src/internal/host/documentation_scenario_test.go](../../src/internal/host/documentation_scenario_test.go), [src/internal/host/domain_inputs.go](../../src/internal/host/domain_inputs.go), [src/internal/host/domain_inputs_test.go](../../src/internal/host/domain_inputs_test.go), [src/internal/host/domain_provenance_test.go](../../src/internal/host/domain_provenance_test.go), [src/internal/host/dotnetcli/](../../src/internal/host/dotnetcli), [src/internal/host/embedded/](../../src/internal/host/embedded), [src/internal/host/format.go](../../src/internal/host/format.go), [src/internal/host/format_write_test.go](../../src/internal/host/format_write_test.go), [src/internal/host/githubcli/](../../src/internal/host/githubcli), [src/internal/host/impact.go](../../src/internal/host/impact.go), [src/internal/host/impact_analysis.go](../../src/internal/host/impact_analysis.go), [src/internal/host/impact_analysis_test.go](../../src/internal/host/impact_analysis_test.go), [src/internal/host/impact_policy_test.go](../../src/internal/host/impact_policy_test.go), [src/internal/host/inputs/](../../src/internal/host/inputs), [src/internal/host/install_fixture_test.go](../../src/internal/host/install_fixture_test.go), [src/internal/host/install_test.go](../../src/internal/host/install_test.go), [src/internal/host/load.go](../../src/internal/host/load.go), [src/internal/host/model.go](../../src/internal/host/model.go), [src/internal/host/module_checks.go](../../src/internal/host/module_checks.go), [src/internal/host/module_checks_test.go](../../src/internal/host/module_checks_test.go), [src/internal/host/modulecli/](../../src/internal/host/modulecli), [src/internal/host/outputs.go](../../src/internal/host/outputs.go), [src/internal/host/outputs_git_test.go](../../src/internal/host/outputs_git_test.go), [src/internal/host/outputs_nested_test.go](../../src/internal/host/outputs_nested_test.go), [src/internal/host/outputs_package_write_test.go](../../src/internal/host/outputs_package_write_test.go), [src/internal/host/outputs_provider.go](../../src/internal/host/outputs_provider.go), [src/internal/host/outputs_provider_test.go](../../src/internal/host/outputs_provider_test.go), [src/internal/host/outputs_test.go](../../src/internal/host/outputs_test.go), [src/internal/host/outputs_write.go](../../src/internal/host/outputs_write.go), [src/internal/host/parallel_wave_risk_test.go](../../src/internal/host/parallel_wave_risk_test.go), [src/internal/host/policy_analysis.go](../../src/internal/host/policy_analysis.go), [src/internal/host/policy_analysis_boundary_test.go](../../src/internal/host/policy_analysis_boundary_test.go), [src/internal/host/policy_results_test.go](../../src/internal/host/policy_results_test.go), [src/internal/host/project.go](../../src/internal/host/project.go), [src/internal/host/projection_analysis.go](../../src/internal/host/projection_analysis.go), [src/internal/host/projection_analysis_test.go](../../src/internal/host/projection_analysis_test.go), [src/internal/host/projection_boundary_test.go](../../src/internal/host/projection_boundary_test.go), [src/internal/host/projection_envelope.go](../../src/internal/host/projection_envelope.go), [src/internal/host/projection_example_test.go](../../src/internal/host/projection_example_test.go), [src/internal/host/projection_primitives_test.go](../../src/internal/host/projection_primitives_test.go), [src/internal/host/projection_registration.go](../../src/internal/host/projection_registration.go), [src/internal/host/projection_registration_test.go](../../src/internal/host/projection_registration_test.go), [src/internal/host/projectionengine/](../../src/internal/host/projectionengine), [src/internal/host/projections.go](../../src/internal/host/projections.go), [src/internal/host/projections_test.go](../../src/internal/host/projections_test.go), [src/internal/host/query.go](../../src/internal/host/query.go), [src/internal/host/query_test.go](../../src/internal/host/query_test.go), [src/internal/host/reconcile.go](../../src/internal/host/reconcile.go), [src/internal/host/reconcile_conflict_test.go](../../src/internal/host/reconcile_conflict_test.go), [src/internal/host/reconcile_stale_test.go](../../src/internal/host/reconcile_stale_test.go), [src/internal/host/reconcile_write_test.go](../../src/internal/host/reconcile_write_test.go), [src/internal/host/review.go](../../src/internal/host/review.go), [src/internal/host/review_decode.go](../../src/internal/host/review_decode.go), [src/internal/host/review_decode_test.go](../../src/internal/host/review_decode_test.go), [src/internal/host/review_fixture_test.go](../../src/internal/host/review_fixture_test.go), [src/internal/host/review_test.go](../../src/internal/host/review_test.go), [src/internal/host/review_validation.go](../../src/internal/host/review_validation.go), [src/internal/host/run_context.go](../../src/internal/host/run_context.go), [src/internal/host/run_context_test.go](../../src/internal/host/run_context_test.go), [src/internal/host/same_target_test.go](../../src/internal/host/same_target_test.go), [src/internal/host/shared_helpers.go](../../src/internal/host/shared_helpers.go), [src/internal/host/snapshot_neutrality_test.go](../../src/internal/host/snapshot_neutrality_test.go), [src/internal/host/testmain_test.go](../../src/internal/host/testmain_test.go), [src/internal/host/verify.go](../../src/internal/host/verify.go), [src/internal/host/verify_test.go](../../src/internal/host/verify_test.go), [src/internal/host/writers_test.go](../../src/internal/host/writers_test.go), [src/internal/host/yaml_inputs_test.go](../../src/internal/host/yaml_inputs_test.go), [src/internal/modules/adoption/](../../src/internal/modules/adoption)
-- Related checks: ["project.markitect.example.org/v1alpha1","Check","","go-tests"], ["project.markitect.example.org/v1alpha1","Check","","go-vet"], ["project.markitect.example.org/v1alpha1","Check","tooling","architecture-gate"] (declared; execution not observed)
-- Applicability: The legacy line stays only until ARCH-09 removes it, so its files are not required.
-
-### legacy-dogfood
-
-- Identity: ["project.markitect.example.org/v1alpha1","Artifact","legacy","legacy-dogfood"]
-- Requirement: optional
-- Role: configuration
-- Responsible Manager: ["project.markitect.example.org/v1alpha1","Manager","legacy","legacy"]
-- Realizes: ["project.markitect.example.org/v1alpha1","Statement","","canonical-sources"], ["project.markitect.example.org/v1alpha1","Statement","legacy","legacy-line"]
-- Expected paths: [.markitect/README.md](../../.markitect/README.md), [.markitect/areas/](../../.markitect/areas), [.markitect/modules/](../../.markitect/modules), [markitect-artifacts.yaml](../../markitect-artifacts.yaml), [markitect.yaml](../../markitect.yaml), [schema/](../../schema)
-- Related checks: ["project.markitect.example.org/v1alpha1","Check","legacy","artifact-accounting"], ["project.markitect.example.org/v1alpha1","Check","legacy","module-checks"] (declared; execution not observed)
-- Applicability: The legacy line stays only until ARCH-09 removes it, so its files are not required.
-
-### legacy-skill-views
-
-- Identity: ["project.markitect.example.org/v1alpha1","Artifact","legacy","legacy-skill-views"]
-- Requirement: optional
-- Role: documentation
-- Responsible Manager: ["project.markitect.example.org/v1alpha1","Manager","legacy","legacy"]
-- Realizes: ["project.markitect.example.org/v1alpha1","Statement","","canonical-sources"], ["project.markitect.example.org/v1alpha1","Statement","legacy","legacy-line"]
-- Expected paths: [.agents/skills/authoring/](../../.agents/skills/authoring), [.agents/skills/engineering-change/](../../.agents/skills/engineering-change), [.claude/skills/authoring/](../../.claude/skills/authoring), [.claude/skills/engineering-change/](../../.claude/skills/engineering-change)
-- Related checks: ["project.markitect.example.org/v1alpha1","Check","legacy","artifact-accounting"] (declared; execution not observed)
-- Applicability: The legacy line stays only until ARCH-09 removes it, so its files are not required.
-
 ### application-layer
 
 - Identity: ["project.markitect.example.org/v1alpha1","Artifact","product","application-layer"]
 - Requirement: required
 - Role: implementation
 - Responsible Manager: ["project.markitect.example.org/v1alpha1","Manager","product","product"]
-- Realizes: ["project.markitect.example.org/v1alpha1","Statement","","canonical-sources"], ["project.markitect.example.org/v1alpha1","Statement","","project-local-policy"], ["project.markitect.example.org/v1alpha1","Statement","legacy","legacy-removal"], ["project.markitect.example.org/v1alpha1","Statement","product","core-stays-generic"], ["project.markitect.example.org/v1alpha1","Statement","product","distinct-state"], ["project.markitect.example.org/v1alpha1","Statement","product","evidence-not-acceptance"], ["project.markitect.example.org/v1alpha1","Statement","product","explicit-relationships"], ["project.markitect.example.org/v1alpha1","Statement","product","product"], ["project.markitect.example.org/v1alpha1","Statement","tooling","published-releases"]
+- Realizes: ["project.markitect.example.org/v1alpha1","Statement","","canonical-sources"], ["project.markitect.example.org/v1alpha1","Statement","","project-local-policy"], ["project.markitect.example.org/v1alpha1","Statement","product","core-stays-generic"], ["project.markitect.example.org/v1alpha1","Statement","product","distinct-state"], ["project.markitect.example.org/v1alpha1","Statement","product","evidence-not-acceptance"], ["project.markitect.example.org/v1alpha1","Statement","product","explicit-relationships"], ["project.markitect.example.org/v1alpha1","Statement","product","legacy-removal"], ["project.markitect.example.org/v1alpha1","Statement","product","product"], ["project.markitect.example.org/v1alpha1","Statement","tooling","published-releases"]
 - Expected paths: [src/cmd/markitect-release/](../../src/cmd/markitect-release), [src/cmd/markitect/](../../src/cmd/markitect), [src/internal/host/buildinfo/](../../src/internal/host/buildinfo), [src/internal/host/mcp/](../../src/internal/host/mcp), [src/internal/host/projectadoption/](../../src/internal/host/projectadoption), [src/internal/host/projectapp/](../../src/internal/host/projectapp), [src/internal/host/projectcli/](../../src/internal/host/projectcli), [src/internal/host/projectexplore/](../../src/internal/host/projectexplore), [src/internal/host/projectonboarding/](../../src/internal/host/projectonboarding), [src/internal/host/projectwork/](../../src/internal/host/projectwork), [src/internal/host/releasecli/](../../src/internal/host/releasecli), [src/internal/host/releaseinstall/](../../src/internal/host/releaseinstall)
 - Related checks: ["project.markitect.example.org/v1alpha1","Check","","go-tests"], ["project.markitect.example.org/v1alpha1","Check","","go-vet"], ["project.markitect.example.org/v1alpha1","Check","tooling","architecture-gate"] (declared; execution not observed)
 - Applicability: The verbs, their MCP tools, the release command and the use cases behind them are the product surface.
@@ -329,7 +278,7 @@ Maintainer tooling enforces the import gate and the code map, builds and publish
 - Requirement: required
 - Role: implementation
 - Responsible Manager: ["project.markitect.example.org/v1alpha1","Manager","product","product"]
-- Realizes: ["project.markitect.example.org/v1alpha1","Statement","","canonical-sources"], ["project.markitect.example.org/v1alpha1","Statement","","project-local-policy"], ["project.markitect.example.org/v1alpha1","Statement","legacy","legacy-removal"], ["project.markitect.example.org/v1alpha1","Statement","product","core-stays-generic"], ["project.markitect.example.org/v1alpha1","Statement","product","declared-inputs"], ["project.markitect.example.org/v1alpha1","Statement","product","explicit-relationships"], ["project.markitect.example.org/v1alpha1","Statement","product","product"]
+- Realizes: ["project.markitect.example.org/v1alpha1","Statement","","canonical-sources"], ["project.markitect.example.org/v1alpha1","Statement","","project-local-policy"], ["project.markitect.example.org/v1alpha1","Statement","product","core-stays-generic"], ["project.markitect.example.org/v1alpha1","Statement","product","declared-inputs"], ["project.markitect.example.org/v1alpha1","Statement","product","explicit-relationships"], ["project.markitect.example.org/v1alpha1","Statement","product","legacy-removal"], ["project.markitect.example.org/v1alpha1","Statement","product","product"]
 - Expected paths: [src/internal/core/](../../src/internal/core), [src/internal/host/projectbriefing/](../../src/internal/host/projectbriefing), [src/internal/host/projectcoverage/](../../src/internal/host/projectcoverage), [src/internal/modules/projectmodel/](../../src/internal/modules/projectmodel)
 - Related checks: ["project.markitect.example.org/v1alpha1","Check","","go-tests"], ["project.markitect.example.org/v1alpha1","Check","","go-vet"], ["project.markitect.example.org/v1alpha1","Check","tooling","architecture-gate"] (declared; execution not observed)
 - Applicability: The core compiles the model, reads snapshots and derives coverage, impact and briefings without providers or writes.
@@ -340,7 +289,7 @@ Maintainer tooling enforces the import gate and the code map, builds and publish
 - Requirement: required
 - Role: implementation
 - Responsible Manager: ["project.markitect.example.org/v1alpha1","Manager","product","product"]
-- Realizes: ["project.markitect.example.org/v1alpha1","Statement","","canonical-sources"], ["project.markitect.example.org/v1alpha1","Statement","","project-local-policy"], ["project.markitect.example.org/v1alpha1","Statement","legacy","legacy-removal"], ["project.markitect.example.org/v1alpha1","Statement","product","core-stays-generic"], ["project.markitect.example.org/v1alpha1","Statement","product","distinct-state"], ["project.markitect.example.org/v1alpha1","Statement","product","explicit-relationships"], ["project.markitect.example.org/v1alpha1","Statement","product","product"]
+- Realizes: ["project.markitect.example.org/v1alpha1","Statement","","canonical-sources"], ["project.markitect.example.org/v1alpha1","Statement","","project-local-policy"], ["project.markitect.example.org/v1alpha1","Statement","product","core-stays-generic"], ["project.markitect.example.org/v1alpha1","Statement","product","distinct-state"], ["project.markitect.example.org/v1alpha1","Statement","product","explicit-relationships"], ["project.markitect.example.org/v1alpha1","Statement","product","legacy-removal"], ["project.markitect.example.org/v1alpha1","Statement","product","product"]
 - Expected paths: [src/internal/host/guardedwrite/](../../src/internal/host/guardedwrite), [src/internal/infrastructure/](../../src/internal/infrastructure)
 - Related checks: ["project.markitect.example.org/v1alpha1","Check","","go-tests"], ["project.markitect.example.org/v1alpha1","Check","","go-vet"], ["project.markitect.example.org/v1alpha1","Check","tooling","architecture-gate"] (declared; execution not observed)
 - Applicability: Fixed snapshots and guarded writes are the only Git and working-tree access of the product.
@@ -351,7 +300,7 @@ Maintainer tooling enforces the import gate and the code map, builds and publish
 - Requirement: required
 - Role: implementation
 - Responsible Manager: ["project.markitect.example.org/v1alpha1","Manager","product","product"]
-- Realizes: ["project.markitect.example.org/v1alpha1","Statement","","canonical-sources"], ["project.markitect.example.org/v1alpha1","Statement","","project-local-policy"], ["project.markitect.example.org/v1alpha1","Statement","legacy","legacy-removal"], ["project.markitect.example.org/v1alpha1","Statement","product","core-stays-generic"], ["project.markitect.example.org/v1alpha1","Statement","product","distinct-state"], ["project.markitect.example.org/v1alpha1","Statement","product","evidence-not-acceptance"], ["project.markitect.example.org/v1alpha1","Statement","product","explicit-relationships"], ["project.markitect.example.org/v1alpha1","Statement","product","product"]
+- Realizes: ["project.markitect.example.org/v1alpha1","Statement","","canonical-sources"], ["project.markitect.example.org/v1alpha1","Statement","","project-local-policy"], ["project.markitect.example.org/v1alpha1","Statement","product","core-stays-generic"], ["project.markitect.example.org/v1alpha1","Statement","product","distinct-state"], ["project.markitect.example.org/v1alpha1","Statement","product","evidence-not-acceptance"], ["project.markitect.example.org/v1alpha1","Statement","product","explicit-relationships"], ["project.markitect.example.org/v1alpha1","Statement","product","legacy-removal"], ["project.markitect.example.org/v1alpha1","Statement","product","product"]
 - Expected paths: [src/cmd/markitect-exchange-executor/](../../src/cmd/markitect-exchange-executor), [src/internal/host/agentexec/](../../src/internal/host/agentexec), [src/internal/host/codexappserver/](../../src/internal/host/codexappserver), [src/internal/host/exchangecli/](../../src/internal/host/exchangecli), [src/internal/host/projectrun/](../../src/internal/host/projectrun), [src/internal/host/projectsetup/](../../src/internal/host/projectsetup), [src/internal/host/projectworkspace/](../../src/internal/host/projectworkspace)
 - Related checks: ["project.markitect.example.org/v1alpha1","Check","","go-tests"], ["project.markitect.example.org/v1alpha1","Check","","go-vet"], ["project.markitect.example.org/v1alpha1","Check","tooling","architecture-gate"] (declared; execution not observed)
 - Applicability: The runtime runs Manager, review and verify roles in owned workspaces and applies only verified candidates.
@@ -373,10 +322,21 @@ Maintainer tooling enforces the import gate and the code map, builds and publish
 - Requirement: required
 - Role: implementation
 - Responsible Manager: ["project.markitect.example.org/v1alpha1","Manager","tooling","tooling"]
-- Realizes: ["project.markitect.example.org/v1alpha1","Statement","","canonical-sources"], ["project.markitect.example.org/v1alpha1","Statement","legacy","legacy-removal"], ["project.markitect.example.org/v1alpha1","Statement","product","core-stays-generic"], ["project.markitect.example.org/v1alpha1","Statement","product","evidence-not-acceptance"], ["project.markitect.example.org/v1alpha1","Statement","tooling","published-releases"], ["project.markitect.example.org/v1alpha1","Statement","tooling","tooling"]
-- Expected paths: [src/cmd/markitect-check-architecture/](../../src/cmd/markitect-check-architecture), [src/internal/tooling/](../../src/internal/tooling), [tools/](../../tools)
+- Realizes: ["project.markitect.example.org/v1alpha1","Statement","","canonical-sources"], ["project.markitect.example.org/v1alpha1","Statement","product","core-stays-generic"], ["project.markitect.example.org/v1alpha1","Statement","product","evidence-not-acceptance"], ["project.markitect.example.org/v1alpha1","Statement","product","legacy-removal"], ["project.markitect.example.org/v1alpha1","Statement","tooling","published-releases"], ["project.markitect.example.org/v1alpha1","Statement","tooling","tooling"]
+- Expected paths: [src/cmd/markitect-check-architecture/](../../src/cmd/markitect-check-architecture), [src/internal/host/architecturecli/](../../src/internal/host/architecturecli), [src/internal/tooling/](../../src/internal/tooling), [tools/](../../tools)
 - Related checks: ["project.markitect.example.org/v1alpha1","Check","","go-tests"], ["project.markitect.example.org/v1alpha1","Check","","go-vet"], ["project.markitect.example.org/v1alpha1","Check","tooling","architecture-gate"] (declared; execution not observed)
 - Applicability: The import gate, release, publication, notices, provider runners and smoke driver keep the repository releasable.
+
+### module-verification
+
+- Identity: ["project.markitect.example.org/v1alpha1","Artifact","tooling","module-verification"]
+- Requirement: required
+- Role: verification
+- Responsible Manager: ["project.markitect.example.org/v1alpha1","Manager","tooling","tooling"]
+- Realizes: ["project.markitect.example.org/v1alpha1","Statement","","canonical-sources"], ["project.markitect.example.org/v1alpha1","Statement","tooling","module-pin-contract"], ["project.markitect.example.org/v1alpha1","Statement","tooling","tooling"]
+- Expected paths: [.githooks/pre-commit](../../.githooks/pre-commit), [.github/workflows/ci.yaml](../../.github/workflows/ci.yaml), [.markitect/modules/githooks.config](../../.markitect/modules/githooks.config), [.markitect/modules/pipelines.config](../../.markitect/modules/pipelines.config), [src/cmd/markitect-check-modules/](../../src/cmd/markitect-check-modules), [src/internal/host/modulechecks/](../../src/internal/host/modulechecks), [src/internal/host/modulecli/](../../src/internal/host/modulecli), [src/internal/modules/githooks/](../../src/internal/modules/githooks), [src/internal/modules/pipelines/](../../src/internal/modules/pipelines)
+- Related checks: ["project.markitect.example.org/v1alpha1","Check","","go-tests"], ["project.markitect.example.org/v1alpha1","Check","","go-vet"], ["project.markitect.example.org/v1alpha1","Check","tooling","architecture-gate"], ["project.markitect.example.org/v1alpha1","Check","tooling","module-checks"] (declared; execution not observed)
+- Applicability: These exact files and packages preserve byte, ownership and literal workflow-command checks without the retired Project/Domain model.
 
 ## Declared checks
 
@@ -384,16 +344,20 @@ Maintainer tooling enforces the import gate and the code map, builds and publish
   - Limit: CI adds JSON reporting and a longer timeout on Windows; the tests cover finite cases and do not establish that the model is complete or correct.
 - go-vet (["project.markitect.example.org/v1alpha1","Check","","go-vet"]), owned by ["project.markitect.example.org/v1alpha1","Manager","","markitect"]: go vet ./... — declared only; no run result is bound to this report.
   - Limit: Vet finds suspicious constructs; it does not establish behavior.
+- project-accounting (["project.markitect.example.org/v1alpha1","Check","","project-accounting"]), owned by ["project.markitect.example.org/v1alpha1","Manager","","markitect"]: go run ./src/cmd/markitect check --repo . — declared only; no run result is bound to this report.
+  - Limit: Checks current structural relationships and complete artifact coverage; does not authenticate intent or prove generated-view freshness or behavior. CI separately checks the fixed source and view bytes.
 - script-tests (["project.markitect.example.org/v1alpha1","Check","","script-tests"]), owned by ["project.markitect.example.org/v1alpha1","Manager","","markitect"]: python -B -m unittest discover -s scripts -p test_check_docs.py — declared only; no run result is bound to this report.
   - Limit: It runs only the documentation checker's tests; CI also runs the tests of the other repository scripts.
 - docs-links (["project.markitect.example.org/v1alpha1","Check","documentation","docs-links"]), owned by ["project.markitect.example.org/v1alpha1","Manager","documentation","documentation"]: python -B scripts/check-docs.py — declared only; no run result is bound to this report.
   - Limit: The default corpus is the maintained entry documents; it checks local targets and anchors, not prose or dependencies.
-- artifact-accounting (["project.markitect.example.org/v1alpha1","Check","legacy","artifact-accounting"]), owned by ["project.markitect.example.org/v1alpha1","Manager","legacy","legacy"]: go run ./src/cmd/markitect-check-artifacts --repo . --config markitect-artifacts.yaml — declared only; no run result is bound to this report.
-  - Limit: It covers only the managed roots of markitect-artifacts.yaml, not every repository file.
-- module-checks (["project.markitect.example.org/v1alpha1","Check","legacy","module-checks"]), owned by ["project.markitect.example.org/v1alpha1","Manager","legacy","legacy"]: go run ./src/cmd/markitect-check-modules --repo . --hooks .markitect/modules/githooks.config --pipelines .markitect/modules/pipelines.config — declared only; no run result is bound to this report.
-  - Limit: It compares the hook and ci.yaml bytes with recorded digests and selected step scalars with literal argv; it runs neither.
 - architecture-gate (["project.markitect.example.org/v1alpha1","Check","tooling","architecture-gate"]), owned by ["project.markitect.example.org/v1alpha1","Manager","tooling","tooling"]: go test ./src/internal/tooling/architecture — declared only; no run result is bound to this report.
   - Limit: The gate checks Go imports and the code map; it does not check behavior or documentation.
+- claude-protocol (["project.markitect.example.org/v1alpha1","Check","tooling","claude-protocol"]), owned by ["project.markitect.example.org/v1alpha1","Manager","tooling","tooling"]: python -B -m unittest discover -s src/internal/tooling/clauderunner — declared only; no run result is bound to this report.
+  - Limit: Tests the local adapter protocol without real providers; does not establish provider behavior.
+- codex-protocol (["project.markitect.example.org/v1alpha1","Check","tooling","codex-protocol"]), owned by ["project.markitect.example.org/v1alpha1","Manager","tooling","tooling"]: python -B -m unittest discover -s src/internal/tooling/codexrunner — declared only; no run result is bound to this report.
+  - Limit: Tests the local adapter protocol without real providers; does not establish provider behavior.
+- module-checks (["project.markitect.example.org/v1alpha1","Check","tooling","module-checks"]), owned by ["project.markitect.example.org/v1alpha1","Manager","tooling","tooling"]: go run ./src/cmd/markitect-check-modules --repo . --hooks .markitect/modules/githooks.config --pipelines .markitect/modules/pipelines.config — declared only; no run result is bound to this report.
+  - Limit: Compares bytes and selected literal YAML command scalars by unique check name in one snapshot; namespaces are not pipeline reference keys. Runs neither hooks nor workflows.
 
 ## Declared exclusions
 

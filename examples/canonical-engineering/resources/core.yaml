@@ -1,7 +1,0 @@
-apiVersion: software.markitect.org/v1alpha1
-kind: Core
-metadata:
-    name: platform-core
-    namespace: engineering
-spec:
-    purpose: Shared runtime and data-access primitives.
