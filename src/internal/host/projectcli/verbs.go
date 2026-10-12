@@ -6,12 +6,10 @@ import (
 	"errors"
 	"fmt"
 	"reflect"
-	"regexp"
 	"strings"
 
 	"github.com/Glacius-Labs/Markitect/src/internal/host/mcp"
 	"github.com/Glacius-Labs/Markitect/src/internal/host/projectapp"
-	"github.com/Glacius-Labs/Markitect/src/internal/infrastructure/source"
 )
 
 // The verb table is the single source of the command surface: CLI parsing,
@@ -146,8 +144,6 @@ func define[In, Out any](v verb, handler func(context.Context, env, In) (Out, er
 	return v
 }
 
-var fullCommitID = regexp.MustCompile(`^(?:[0-9a-f]{40}|[0-9a-f]{64})$`)
-
 // resolveRevisions turns each revision argument into the full commit ID it
 // names, so a caller may write HEAD, a branch or a short ID while the Host
 // still binds one fixed, full commit and records it.
@@ -162,9 +158,8 @@ func resolveRevisions(root string, in reflect.Value) error {
 			name = "--since"
 		}
 		// Git peels tags to their commit, whatever the case of the ID.
-		out, err := source.GitOutput(root, "rev-parse", "--verify", "--quiet", "--end-of-options", f.String()+"^{commit}")
-		full := strings.ToLower(strings.TrimSpace(string(out)))
-		if err == nil && fullCommitID.MatchString(full) {
+		full, err := projectOperations().ResolveRevision(root, f.String())
+		if err == nil {
 			f.SetString(full)
 			continue
 		}

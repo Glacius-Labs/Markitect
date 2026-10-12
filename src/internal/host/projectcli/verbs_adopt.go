@@ -61,10 +61,10 @@ var adoptVerb = define(verb{
 		if input.Run == nil {
 			return nil, usagef("adopt run requires --input with a \"run\" record")
 		}
-		return e.ops.BrownfieldRun(ctx, projectapp.BrownfieldRunOperation{
+		return e.ops.RunBrownfield(ctx, projectapp.BrownfieldRunOperation{
 			Root: e.root, SourceRoot: e.sourceRoot, Revision: in.Revision, SessionID: in.Session,
 			Request: *input.Run, Write: in.Write, ExpectedDigest: in.Expect,
-		}, e.ops.Invoker)
+		})
 	}
 	return e.ops.Brownfield(projectapp.BrownfieldOperation{
 		Root: e.root, SourceRoot: e.sourceRoot, Revision: in.Revision, SessionID: in.Session,
