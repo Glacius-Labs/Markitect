@@ -242,7 +242,8 @@ func TestNativeManagerBeforeProcessManagersSharesThePrivateLogDirectory(t *testi
 		runtime.Agents[rootID] = native
 	})
 	project := runtimeLifecycleProject(t, root, false)
-	includeFiniteRuntimeFiles(t, project, root, "AGENTS.md")
+	project.Config.DocumentPath = workspaceInstructionPath
+	includeFiniteRuntimeFiles(t, project, root, workspaceInstructionPath, "AGENTS.md")
 	host := processRuntimeHost(root, project)
 	workspaces, err := projectworkspace.NewGitService(testkit.TempDir(t), projectworkspace.Limits{MaxFiles: 128, MaxFileBytes: 1 << 20, MaxTotalBytes: 4 << 20})
 	if err != nil {
