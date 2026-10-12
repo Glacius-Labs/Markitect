@@ -1,10 +1,14 @@
 schema: markitect-roadmap-backlog/v1
 updated: '2026-10-12'
 roadmap: docs/implementation-plan.md
-main_basis: 0a6b2273287f7387078b0fe602a7109e4bd14fb1
+main_basis: b2dc905b1554bd4c61c53dfdcd588fa1368594dc
 
 # Single owner of work-package status. The roadmap explains streams, waves,
 # zones and rules; this file records each package's current state.
+# The owner's 12 October instruction, "Beginne die Wellen selbstständig neu",
+# authorizes continuous assignment of dependency-ready accepted packages.
+# The integrator still reserves each zone explicitly; needs_owner, parked,
+# intent, provider/study budget and publication gates remain in force.
 #
 # status: proposed | ready | active | review | done | blocked | parked
 #   proposed  scope written, not yet started; may still need an owner decision
@@ -185,10 +189,11 @@ packages:
     title: Executor and model per role in study manifests
     stream: PLAY
     wave: 2
-    status: ready
+    status: active
     owner: scientist
+    branch: dev/playground-role-configuration
     depends_on: [RUN-01, PLAY-05]
-    note: Both dependencies are merged and PLAY-05 has completed the shared-file sequence. No further blocker is recorded; ready for a future Scientist slot, with no session started in this round. This package selects and records role configuration; PLAY-07 protocol/cases/budget and CI-04 provider execution remain separately deferred.
+    note: The new Scientist chat owns experiments/case-playground in checkout d5f0 from Main b2dc905b1554bd4c61c53dfdcd588fa1368594dc. Both dependencies are merged; PLAY-06 now selects and records role configuration with provider-free fixtures. PLAY-07 protocol/cases/budget and CI-04 provider execution retain their separate owner gates. Subsequent accepted work is assigned through the integrator's continuous DAG and zone check.
     zone: free
     acceptance:
       - A manifest selects executor, model and effort per role; runs record the effective configuration.
@@ -395,7 +400,7 @@ packages:
     owner: interface
     branch: dev/git-version-doctor
     depends_on: [CLI-02, CLI-03]
-    note: PR235 reports the installed Git version and a failed prerequisite below 2.40 before model or provider inspection, with CLI/MCP parity and no project writes. Independently reviewed head 173bf5a9e490eb32e232e5e45b7a10be47c158c6 passed fixed checks/Verify, focused contracts and required Linux Quality/Race; actual Main merge is d95d886eb37ee81e72dd9e264be6c5ceedc2e7bc. Its separate Windows run remains source-bound; Doctor does not automatically guard subsequent Plan/Apply calls. All three assigned Interface packages are integrated; no further package is assigned.
+    note: PR235 reports the installed Git version and a failed prerequisite below 2.40 before model or provider inspection, with CLI/MCP parity and no project writes. Independently reviewed head 173bf5a9e490eb32e232e5e45b7a10be47c158c6 passed fixed checks/Verify, focused contracts and required Linux Quality/Race; actual Main merge is d95d886eb37ee81e72dd9e264be6c5ceedc2e7bc. Its separate Windows run remains source-bound; Doctor does not automatically guard subsequent Plan/Apply calls. All three initial Interface packages are integrated; the later autonomous restart assigns ARCH-08 to Cleaner in the interface zone.
     zone: free
     inputs:
       - pull request 162 (ARCH-10 known problems)
@@ -501,7 +506,7 @@ packages:
     branch: dev/interface-contract-guards
     depends_on: [CLI-02, CLI-04]
     zone: free
-    note: PR237 merged as 0a6b2273287f7387078b0fe602a7109e4bd14fb1 after both independent source reviews, fixed Check/Impact/Verify, required Linux Quality/Race and current-Main composition checks. Reviewed head 92e7724db9ab81ac3160b0a3a5e27c1f40851f7e proves the explicit 27 CLI / 23 normal MCP / 18 read-only MCP surface and all contract categories; default brief-create and target-isolation review gaps are closed. The original c2 Windows full run remains bound to its unchanged checkout and cannot validate this corrected head. Interface holds no current implementation package; future work requires its own assignment. See docs/validation/integration-round-20261012.md.
+    note: PR237 merged as 0a6b2273287f7387078b0fe602a7109e4bd14fb1 after both independent source reviews, fixed Check/Impact/Verify, required Linux Quality/Race and current-Main composition checks. Reviewed head 92e7724db9ab81ac3160b0a3a5e27c1f40851f7e proves the explicit 27 CLI / 23 normal MCP / 18 read-only MCP surface and all contract categories; default brief-create and target-isolation review gaps are closed. The original c2 Windows full run remains bound to its unchanged checkout and cannot validate this corrected head. The initial Interface slice is complete; ARCH-08 now holds the interface zone under the later restart instruction. See docs/validation/integration-round-20261012.md.
     inputs:
       - docs/work-items/surveys/tests-and-ci-20261010.md
       - docs/work-items/surveys/cli-mcp-app-server-20261010.md
@@ -521,7 +526,7 @@ packages:
     inputs:
       - docs/work-items/surveys/tests-and-ci-20261010.md
       - docs/work-items/surveys/product-readiness-lessons-20261010.md
-    note: PR232 merged after exact-head independent review, full hosted Quality/Race/provider-free smoke and current-Main composition checks. All 295 test functions plus TestMain and 51 process E2E flows are retained; the default required suites remain complete. One hosted source comparison had identical 2511 test/subtest results, with projectrun Race 878.142 to 386.181 seconds and Quality 123.800 to 101.309 seconds; this is one probe, not a guaranteed timing or method study. Runtime has no current implementation writer; future packages need their own scope/slot assignment. The original literal-35211841 Windows suite ended with exit 1, 53 package passes, 15 no-test packages and two 60-minute package timeouts in projectbriefing/projectrun before the parallel E2E group ran; complete raw evidence is preserved without retry. This is not a current-Main Windows PASS.
+    note: PR232 merged after exact-head independent review, full hosted Quality/Race/provider-free smoke and current-Main composition checks. All 295 test functions plus TestMain and 51 process E2E flows are retained; the default required suites remain complete. One hosted source comparison had identical 2511 test/subtest results, with projectrun Race 878.142 to 386.181 seconds and Quality 123.800 to 101.309 seconds; this is one probe, not a guaranteed timing or method study. The later autonomous restart reserves Runtime for QA TEST-04; further packages remain serialized and need their own scope/slot assignment. The original literal-35211841 Windows suite ended with exit 1, 53 package passes, 15 no-test packages and two 60-minute package timeouts in projectbriefing/projectrun before the parallel E2E group ran; complete raw evidence is preserved without retry. This is not a current-Main Windows PASS.
     acceptance:
       - Runtime end-to-end tests live in their own package or tag, share a fixture template and run in parallel.
 
@@ -529,11 +534,12 @@ packages:
     title: Method end-to-end tests through the exchange executor
     stream: TEST
     wave: 2
-    status: ready
+    status: active
     owner: qa
+    branch: dev/scripted-runtime-scenarios
     depends_on: [RUN-01]
     zone: runtime
-    note: RUN-01 and TEST-03 are merged; this is the next future QA runtime package. No continuation chat or implementation is started by this status update; its own scope and slot must be assigned.
+    note: Runtime is reserved exclusively for the resumed QA chat in fresh checkout scripted-runtime-scenarios from Main b2dc905b1554bd4c61c53dfdcd588fa1368594dc; frozen TEST-03 source and Windows logs remain untouched. The real-binary exchange harness owns method_exchange_fixture_test.go and method_exchange_e2e_test.go in src/harness/examples. Happy/fault scenarios proceed under existing product contracts. A real in-flight process/exchange kill currently produces blocked resume and no replay; successful continuation is not inferred from that guard result and full package acceptance remains subject to concrete candidate review. RUN-02 and later Runtime packages wait for integration and a new reservation.
     inputs:
       - docs/work-items/surveys/tests-and-ci-20261010.md
       - pull request 104 (exchange executor, superseding 92, and fault-injection tests)
@@ -686,8 +692,9 @@ packages:
       1b621b1e06a3b0670d7f07b67a2632320796c7bf and completed its first bounded read-only review
       and isolated reproduction. No production repair paths are reserved; future verified findings go to the integrator
       for a bounded non-colliding fix assignment. Runtime has no current implementation writer;
-      future work needs a scope and slot assignment. CLI-03, CLI-04 and TEST-02 are merged; Interface has no current
-      implementation reservation. Core/projectmodel findings remain coordinated with kg.
+      future work needs a scope and slot assignment. The later autonomous restart reserves Runtime for TEST-04,
+      interface for ARCH-08 and experiments/case-playground for PLAY-06. Fresh reviews require changed sources;
+      the completed initial sweep is not automatically repeated. Core/projectmodel findings remain coordinated with kg.
       The first bounded sweep reproduced the known helper-cleanup liveness failure after process
       loss on Main 1b621b1e06a3b0670d7f07b67a2632320796c7bf; the passing observation test confirms
       the blockade, not successful recovery. The independently reviewed cross-process reconciliation
@@ -866,11 +873,12 @@ packages:
     title: Move distribution commands to release tooling
     stream: ARCH
     wave: 3
-    status: blocked
+    status: active
     owner: cleaner
+    branch: dev/release-tooling
     depends_on: [CLI-01]
     decision: DEC-014
-    note: CLI-02 and MCP-01 are merged; the bounded read-only release impact analysis is complete. Implementation waits for explicit interface-zone assignment after the Wave 2 interface queue. Before the next release, reconcile release-benchmark.yaml and benchmark/run.ps1, which call legacy check, context and impact on published binaries, with ARCH-09's removal direction.
+    note: Cleaner now owns the explicitly assigned interface zone in checkout 57a5 from Main b2dc905b1554bd4c61c53dfdcd588fa1368594dc after the completed interface queue. Bounded release/CI/bootstrap/installer crosspaths are coordinated; new releaseinstall/buildinfo packages belong to product with strict ownership/accounting and generated-view updates. The migration must retain preview, freshness, pin validation and final checks under the writer lock; no import-gate exception or release publication is authorized. Reconcile release-benchmark.yaml and benchmark/run.ps1 legacy callers with ARCH-09's removal direction; historical releases and evidence remain immutable. ARCH-09 follows actual integration and its own legacy reservation.
     zone: interface
     inputs:
       - docs/work-items/surveys/code-architecture-20261010.md

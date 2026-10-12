@@ -1,6 +1,6 @@
 # Roadmap
 
-Updated 12 October 2026 against main `0a6b2273287f7387078b0fe602a7109e4bd14fb1`. The [previous integration record](validation/integration-queue-20261011.md) closes the six-PR queue and its scoped follow-ups. The [new role-round record](validation/integration-round-20261012.md) accounts for integrated TEST-03, CLI-03, CLI-04 and TEST-02 and the completed first Bughunter episode. The [Claude-to-Codex handoff](development/session-handoff.md) preserves the earlier interrupted-session snapshot.
+Updated 12 October 2026 against main `b2dc905b1554bd4c61c53dfdcd588fa1368594dc`, with complete [Main CI](https://github.com/Glacius-Labs/Markitect/actions/runs/38212349933). The [previous integration record](validation/integration-queue-20261011.md) closes the six-PR queue and its scoped follow-ups. The [role-round record](validation/integration-round-20261012.md) accounts for integrated TEST-03, CLI-03, CLI-04 and TEST-02 and the completed first Bughunter episode. The owner has now authorized continuous backlog-wave restart; the current reservations are TEST-04, ARCH-08 and PLAY-06. The [Claude-to-Codex handoff](development/session-handoff.md) preserves the earlier interrupted-session snapshot.
 
 This page owns the current direction: how parallel work is organized, the streams and waves, the code zones, and the open owner decisions. The [backlog](work-items/backlog.yaml) is the single owner of each work package's status. The [concept register](concepts/register.md) records the decisions this roadmap relies on. Source changes do not change a published release.
 
@@ -47,21 +47,23 @@ This page owns the current direction: how parallel work is organized, the stream
 
 A session is a long-running chat for one role. The backlog's `owner` field names the role, and any fresh session can take a role over. After the previous queue closed, the owner requested fresh sessions on 12 October. QA delivered TEST-03 and preserved its separate failed Windows diagnostic run; Interface delivered CLI-03, CLI-04 and TEST-02; its assigned implementation round is complete. Bughunter completed its first bounded read-only round. The existing integrator owns canonical status and integration. The interrupted Claude sessions' snapshot is in [Session continuation](development/session-handoff.md); the [branch survey](work-items/surveys/branches-and-worktrees-20261010.md) preserves the earlier archive inventory. A package's `active` state is not evidence that its old chat is still running.
 
+On 12 October the owner instructed: **“Beginne die Wellen selbstständig neu.”** The integrator continuously selects dependency-ready work within accepted roadmap intent, explicitly assigns its scope and zone, coordinates independent review and normal integration, and verifies complete Main CI at the actual full merge SHA. After a package or group closes, it rechecks the DAG and starts the next eligible assignment through existing role chats, or a new role chat when needed. A green intermediate Main is a checkpoint, not a reason to wait for another owner session-start request. `proposed` alone means written scope not yet started; it neither bans assignment nor grants product approval. Intent, `needs_owner`, parked work, credentials/cost, provider/study execution, publication and cleanup retain their actual gates. Unaccepted helper recovery remains a proposal. Prior reviews are reused only for unchanged exact sources; fresh changed candidates get their own review.
+
 | Role | Streams | Starts |
 |---|---|---|
 | integrator | OPS, register decisions, review and merge order, IDEA-01, LEARN-01 | Coordinate current reservations, independent reviews and normal PR integration; verify final Main |
 | interface | CLI, MCP-01, TEST-02, AGENT-02, AGENT-03 | CLI-03, CLI-04 and TEST-02 integrated; no current implementation reservation, later packages require their own assignment |
-| scientist | PLAY | PLAY-06 is ready after merged dependencies; no Scientist chat is started in this round |
+| scientist | PLAY | PLAY-06 active on `dev/playground-role-configuration` in d5f0; exclusive `experiments/case-playground`, provider-free configuration work |
 | kg | KG | KG-04 protocol is prepared; measurement waits for separate authority |
 | bughunter | BUG | First read-only round on `fix/helper-cleanup-review` complete; helper recovery is a proposed new future capability, with no implementation reservation |
-| qa | CI, TEST | TEST-03 integrated; its bounded role round is complete and separate Windows failure evidence is preserved |
-| cleaner | ARCH, AGENT-01 | ARCH-08 caller analysis is complete; implementation waits for interface ownership |
-| runtime | RUN, MCP-02, ARCH-06 | No current writer; future work follows TEST-04 and an explicit scope/slot handoff |
+| qa | CI, TEST | TEST-04 active on `dev/scripted-runtime-scenarios` in its fresh checkout; exclusive Runtime scope and two method-harness files; old TEST-03 source/logs preserved |
+| cleaner | ARCH, AGENT-01 | ARCH-08 active on `dev/release-tooling` in 57a5; exclusive interface scope plus explicitly coordinated release/installer/CI crosspaths |
+| runtime | RUN, MCP-02, ARCH-06 | Runtime zone currently reserved for QA TEST-04; RUN-02 follows its integration with an explicit scope/slot handoff |
 | government | GOV | After Wave 2 and the explicit GOV-01 dependencies (DEC-019) |
 
 No more than six sessions change code at the same time. Each session uses subagents and workflows inside its own packages as it sees fit.
 
-The assigned Interface and QA implementation round and the first Bughunter sweep are complete. No implementation writer is currently assigned. The integrator owns canonical status and source-evidence records; a later package needs its own bounded scope and zone reservation. New artifact-accounting entries require concrete paths and coordinated approval. Backlog, roadmap and concept register remain integrator-owned. Helper cross-process reconciliation needs its own accepted intent/acceptance and future slot. Provider or method studies, KG-04 measurements, Government implementation, releases and worktree cleanup are outside this round.
+Three implementation writers are currently assigned: QA TEST-04, Cleaner ARCH-08 and Scientist PLAY-06. The integrator owns docs-entry, canonical status and source-evidence records. Shared accounting/model changes require concrete paths and coordinated approval; the ARCH-08 ownership/file move must form one coherent candidate without weakening required coverage or inventing placeholders. Its installer migration preserves existing preview and guarded-write semantics. The TEST-04 real-kill fixture must report the existing uncertain process/exchange invocation's blocked/no-replay result; this is not proof of successful continuation or permission to add product recovery. Later assignments remain exclusive and bounded. Backlog, roadmap and concept register remain integrator-owned. Provider or method studies, KG-04 measurements, Government implementation, releases and worktree cleanup are not assigned by these three reservations.
 
 ### Starting a session
 
@@ -158,8 +160,8 @@ A zone is a code area in which only one active package changes code at a time. T
 
 ### Wave 2: one interface, a clean runtime
 
-- **Interface zone:** CLI-02, CLI-03, MCP-01, CLI-04, TEST-02 and AGENT-02 are integrated. This assigned slice is complete; later packages, including ARCH-08, require their own explicit assignment.
-- **Runtime zone, remaining sequence:** TEST-04 → RUN-02 → ARCH-05 → ARCH-06 after integrated TEST-03. No Runtime implementation session is assigned now. TEST-05 needs a later explicit handoff or a separately assigned nonconflicting slice.
+- **Interface zone:** CLI-02, CLI-03, MCP-01, CLI-04, TEST-02 and AGENT-02 are integrated. Cleaner now owns ARCH-08; ARCH-09 follows its actual integration and a separate legacy reservation.
+- **Runtime zone, remaining sequence:** TEST-04 → RUN-02 → ARCH-05 → ARCH-06 after integrated TEST-03. QA owns TEST-04 now. The integrator assigns RUN-02 after its integration and keeps the sequence serialized. TEST-05 needs an explicitly documented later slot or nonconflicting slice; RUN-05/RUN-06 are separate packages with their own risk and reservation checks.
 - **Also in this wave:**
   - CI-03: one smoke driver.
   - CI-04: container runtime tier.
@@ -172,15 +174,16 @@ A zone is a code area in which only one active package changes code at a time. T
 - ARCH-08: release tooling separated.
 - ARCH-09: the Project/Domain line removed.
 - RUN-03: Claude Code as an inner executor.
-- AGENT-03.
-- CI-05: revisit Windows.
+- GOV-01: Government code after the interface/runtime conditions in [DEC-019](concepts/register.md#dec-019-government-code-starts-after-wave-2) and its actual backlog dependencies; the old evaluation and dirty v1 basis remain unaccepted inputs.
+- AGENT-03 remains parked in the backlog; wave placement does not activate it.
+- CI-05 remains parked for the owner's Windows-support decision.
 
 ### Wave 4: evidence and extensions
 
 These wait for the conditions in [DEC-011](concepts/register.md#dec-011-detailed-planning-of-future-ideas-waits), a stable version and case-study numbers, unless the owner decides otherwise:
 - PLAY-07: first method study over a change series.
 - KG-03: the knowledge graph as a variant.
-- GOV-01 and GOV-02.
+- GOV-02; GOV-01's code-start conditions are separately governed by DEC-019.
 - IDEA-02 to IDEA-04: the register's enhancements ENH-001 to ENH-003.
 - Follow-ups selected from LEARN-01.
 
