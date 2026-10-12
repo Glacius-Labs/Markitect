@@ -2,6 +2,22 @@
 
 Markitect's distribution unit is a versioned, immutable GitHub Release. Source files and release assets are never retagged or overwritten. Check [GitHub Releases](https://github.com/Glacius-Labs/Markitect/releases) for available versions and verify the exact tag, source commit, and assets before use. [Usage](../docs/usage.md) describes structural commands and historical release contracts. For the model-first development source, use [Project workflow](../docs/project-workflow.md) and [Project operations](../docs/project-operations.md); the [roadmap](../docs/implementation-plan.md) records source status.
 
+## Current source release tooling
+
+The current source keeps local distribution commands in `markitect-release`, separately from the product verbs and the temporary legacy dispatcher. `package` writes a source package to an absent directory; `bundle` binds an absent ZIP to a fixed source commit; `install` verifies the supplied ZIP digest and previews the complete five-file pin, with `--write` required to apply it. Neither command calls a provider or publishes a release. `version` and `licenses` also work without a project. The product binary retains its information verbs and uses the same independent build version.
+
+```powershell
+go run ./src/cmd/markitect-release package --repo . --output ABSENT_DIRECTORY
+go run ./src/cmd/markitect-release bundle --repo . --revision FULL_COMMIT --output ABSENT_BUNDLE.zip
+go run ./src/cmd/markitect-release install --repo CONSUMER --bundle BUNDLE.zip --sha256 EXPECTED_SHA256
+go run ./src/cmd/markitect-release version
+go run ./src/cmd/markitect-release licenses
+```
+
+The source/bootstrap and portable build inject `src/internal/host/buildinfo.version`. The bootstrap selects the historical linker location when building an older immutable source archive. The installer uses the public guarded-write API, holds the shared writer lock through the final complete-pin readback, writes the manifest last, and reports completed paths on failure. Preview remains available in an empty non-Git directory. Unchanged pins retain their bytes and modes; ZIP pins remain byte-exact.
+
+The following download and installed-binary examples describe the selected published release's contract. They do not claim that a current source change updated its assets.
+
 ## Release contents and verification
 
 A Markitect release attaches four files: `markitect-vTAG-bundle.zip`, `markitect-vTAG-windows-amd64.exe`, `markitect-vTAG-linux-amd64`, and `markitect-vTAG-provenance.yaml`. From v0.9.0, the bundle is limited to 64 MiB and contains five pinned files: `.markitect/tool/release.yaml`, `.markitect/tool/lock.yaml`, `.markitect/tool/source.zip`, `.markitect/bootstrap/run.go`, and `.markitect/bootstrap/run_test.go`. The manifest binds the other files by SHA-256 and records version, source commit, and source repository. Provenance records tag, commit, workflow run, toolchain, and payload digests. It is a self-declared record; GitHub's immutable-release attestation is authoritative for the published tag, commit, and attached assets. Published releases remain immutable and retain the paths in their own manifest; earlier bundles may therefore use the previous `tools/markitect/`, root lock, and `scripts/` layout.

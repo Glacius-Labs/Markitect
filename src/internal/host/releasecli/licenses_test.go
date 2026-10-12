@@ -1,4 +1,4 @@
-package cli
+package releasecli
 
 import (
 	"strings"
@@ -6,7 +6,7 @@ import (
 )
 
 func TestLicensesProvidesCompleteNoticesWithoutProject(t *testing.T) {
-	code, output, stderr := invoke("licenses")
+	code, output, stderr := invokeRelease(t, "licenses")
 	if code != 0 || stderr != "" {
 		t.Fatalf("licenses: code=%d stderr=%s", code, stderr)
 	}
@@ -16,8 +16,20 @@ func TestLicensesProvidesCompleteNoticesWithoutProject(t *testing.T) {
 		}
 	}
 	for _, args := range [][]string{{"licenses", "--write"}, {"licenses", "--repo", "."}, {"licenses", "unexpected"}} {
-		if code, _, _ := invoke(args...); code != 2 {
+		if code, _, _ := invokeRelease(t, args...); code != 2 {
 			t.Errorf("licenses accepted unsupported arguments %v: %d", args, code)
+		}
+	}
+}
+
+func TestVersionWorksWithoutRepositoryAndRejectsArguments(t *testing.T) {
+	code, output, stderr := invokeRelease(t, "version")
+	if code != 0 || stderr != "" || !strings.HasPrefix(output, "Markitect ") {
+		t.Fatalf("version: code=%d stdout=%q stderr=%q", code, output, stderr)
+	}
+	for _, args := range [][]string{{"version", "unexpected"}, {"version", "--repo", "."}} {
+		if code, _, _ := invokeRelease(t, args...); code != 2 {
+			t.Errorf("version accepted unsupported arguments %v: %d", args, code)
 		}
 	}
 }

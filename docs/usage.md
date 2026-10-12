@@ -357,6 +357,10 @@ For project-owned Codex, Claude, and shared entrypoints, declare `spec.targets` 
 
 `render` checks or writes only the managed output families selected by Project `spec.targets` and `spec.ruleAdapters`. The `markdown` target produces opt-in resource views under `docs/markitect/`; Codex and Claude outputs use their native provider paths. No generic Markdown view is created by default. Provider outputs route directly to canonical YAML and do not depend on the Markdown target. An undeclared output is not covered.
 
+## Current source distribution commands
+
+Local `package`, `bundle`, `install`, `version` and `licenses` run through `go run ./src/cmd/markitect-release COMMAND`. They no longer dispatch through `markitect-legacy`; see [current source release tooling](../integration/README.md#current-source-release-tooling) for flags and write boundaries. Product information verbs remain available in `markitect`. Versioned installed-binary examples below retain their historical contracts.
+
 ## Commands
 
 | Command | Purpose |

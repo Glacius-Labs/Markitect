@@ -9,6 +9,17 @@ param(
 )
 $ErrorActionPreference = 'Stop'
 
+# Reject unsupported inputs before fixture creation or timing.
+foreach ($selection in @(@{ binary = $CurrentBinary; tag = $CurrentTag }, @{ binary = $PreviousBinary; tag = $PreviousTag })) {
+    if ($selection.tag -notmatch '^v(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$' -or [version]$selection.tag.Substring(1) -gt [version]'0.14.1') {
+        throw 'This workload supports historical Project/Domain releases through v0.14.1 only.'
+    }
+    $help = (& $selection.binary --help 2>&1 | Out-String)
+    if ($LASTEXITCODE -ne 0 -or $help -notmatch '\brender\b' -or $help -notmatch '\bcontext\b' -or $help -notmatch '\bimpact\b') {
+        throw "Binary for $($selection.tag) lacks the historical Project/Domain workload; no measurement ran."
+    }
+}
+
 function Get-FixtureVersion([string]$root) {
     $version = Split-Path -Leaf ([IO.Path]::GetFullPath($root).TrimEnd([IO.Path]::DirectorySeparatorChar, [IO.Path]::AltDirectorySeparatorChar))
     if ($version -notmatch '^v[1-9][0-9]*$') { throw "Fixture root '$root' must end in an immutable version directory such as v1 or v2" }

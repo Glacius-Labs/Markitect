@@ -348,7 +348,7 @@ jobs:
         shell: bash
         run: |
           package_dir="$RUNNER_TEMP/markitect-source-$GITHUB_SHA"
-          go run ./src/cmd/markitect-legacy package --repo . --output "$package_dir"
+          go run ./src/cmd/markitect-release package --repo . --output "$package_dir"
           mkdir -p "$package_dir/.markitect/bootstrap"
           cp integration/run-markitect.go "$package_dir/.markitect/bootstrap/run.go"
           cp integration/run-markitect_test.go "$package_dir/.markitect/bootstrap/run_test.go"

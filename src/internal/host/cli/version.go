@@ -1,6 +1,5 @@
 package cli
 
-var version = "0.14.1"
+import "github.com/Glacius-Labs/Markitect/src/internal/host/buildinfo"
 
-// Version returns the version reported by this CLI.
-func Version() string { return version }
+var version = buildinfo.Version()

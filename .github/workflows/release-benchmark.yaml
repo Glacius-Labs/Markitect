@@ -1,12 +1,10 @@
-name: Published release benchmark
+name: Historical published release benchmark
 
 on:
-  release:
-    types: [published]
   workflow_dispatch:
     inputs:
       tag:
-        description: Published immutable release to measure
+        description: Historical immutable Project/Domain release through v0.14.1
         required: true
         type: string
 
@@ -28,10 +26,19 @@ jobs:
           - os: windows-latest
             asset: windows-amd64.exe
     steps:
+      - name: Reject releases outside the historical workload
+        shell: pwsh
+        env:
+          TAG: ${{ inputs.tag }}
+        run: |
+          if ($env:TAG -notmatch '^v(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$' -or [version]$env:TAG.Substring(1) -gt [version]'0.14.1') {
+            throw 'This workload supports historical Project/Domain releases through v0.14.1 only.'
+          }
+
       - name: Check out the immutable release source
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          ref: ${{ github.event.release.tag_name || inputs.tag }}
+          ref: ${{ inputs.tag }}
           persist-credentials: false
 
       - name: Set up Go for the fixture verification gate
@@ -44,7 +51,7 @@ jobs:
         shell: pwsh
         env:
           GH_TOKEN: ${{ github.token }}
-          TAG: ${{ github.event.release.tag_name || inputs.tag }}
+          TAG: ${{ inputs.tag }}
           ASSET: ${{ matrix.asset }}
         run: |
           $ErrorActionPreference = 'Stop'
@@ -95,7 +102,7 @@ jobs:
         env:
           CURRENT_BINARY: ${{ steps.releases.outputs.current_binary }}
           PREVIOUS_BINARY: ${{ steps.releases.outputs.previous_binary }}
-          CURRENT_TAG: ${{ github.event.release.tag_name || inputs.tag }}
+          CURRENT_TAG: ${{ inputs.tag }}
           PREVIOUS_TAG: ${{ steps.releases.outputs.previous }}
           PREVIOUS_FIXTURE_VERSION: ${{ steps.releases.outputs.previous_fixture }}
         run: |
@@ -106,7 +113,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
-          name: release-benchmark-${{ github.event.release.tag_name || inputs.tag }}-${{ matrix.os }}
+          name: release-benchmark-${{ inputs.tag }}-${{ matrix.os }}
           path: ${{ runner.temp }}/markitect-benchmark/results.json
           if-no-files-found: warn
 
@@ -114,6 +121,6 @@ jobs:
         if: always()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
-          name: release-benchmark-summary-${{ github.event.release.tag_name || inputs.tag }}-${{ matrix.os }}
+          name: release-benchmark-summary-${{ inputs.tag }}-${{ matrix.os }}
           path: ${{ runner.temp }}/markitect-benchmark/summary.md
           if-no-files-found: warn

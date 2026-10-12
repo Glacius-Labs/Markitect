@@ -35,7 +35,9 @@ Writers take a shared lock, validate their plan, and check relevant source state
 
 ## Release operations
 
-The post-publication [benchmark workflow](measurement.md) consumes attested binaries from immutable releases using a fixture that matches each release's Project and output contract. It compares only the shared scenarios supported by both versions. It uploads raw data and a summary as workflow artifacts and never modifies the published release. Its timing variation is diagnostic, not a publication gate.
+The manually selected historical [benchmark workflow](../benchmark/README.md) consumes attested binaries from immutable releases using a fixture that matches each release's Project and output contract. It compares only the shared scenarios supported by both versions. It uploads raw data and a summary as workflow artifacts and never modifies the published release. Its timing variation is diagnostic, not a publication gate. The published-release trigger is retired: the v1/v2 workload requires the legacy Project/Domain commands and cannot measure a model-first release. Existing records remain evidence for their original inputs.
+
+Current source distribution preparation uses the independent `markitect-release package`, `bundle` and `install` commands described in [integration](../integration/README.md#current-source-release-tooling). These local operations do not publish a release; installation writes require `--write`.
 
 A source version string does not prove a release exists. Release only a clean reviewed full commit after standalone tests, vet, build, schema/example checks, and Windows/Linux gates pass. Bundle contents, provenance, tag, source commit, workflow run, and asset digests must agree. The immutable GitHub release is the durable distribution; a workflow artifact is only temporary transport.
 

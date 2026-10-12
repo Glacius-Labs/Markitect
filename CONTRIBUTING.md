@@ -139,6 +139,8 @@ The published v0.14.1 release has a top-level `markitect init` for the legacy li
 
 ## Release work
 
+Local package, bundle and install preparation uses `go run ./src/cmd/markitect-release COMMAND`; see [current source release tooling](integration/README.md#current-source-release-tooling). Product and release tools share independent build metadata. The legacy fixture benchmark is manual historical tooling; it does not automatically run on model-first published releases.
+
 Markitect is licensed under [Apache-2.0](LICENSE); the root license is included in source distributions. The canonical [third-party notices](src/internal/tooling/licenses/notices.md) are embedded in the CLI and included in both source distribution paths. When dependencies or the build toolchain change, compare their upstream notices and update this file in the same candidate when needed. Check `markitect licenses` from the packaged bootstrap as well as the source build.
 
 [Operations and releases](docs/operations.md) describes the supported source and publication gates. The [roadmap](docs/implementation-plan.md) owns current source status; [GitHub Releases](https://github.com/Glacius-Labs/Markitect/releases) lists available distributions. The [production assessment](docs/production-assessment.md) records dated release evidence. A source version does not imply acceptance by any adopting project.

@@ -1,9 +1,10 @@
-package host
+package releaseinstall
 
 import (
 	"bytes"
 	"errors"
 	"fmt"
+	"io/fs"
 	"os"
 	"path/filepath"
 
@@ -53,6 +54,7 @@ type InstallFilePlan struct {
 type installFileState struct {
 	data      []byte // raw filesystem bytes
 	canonical []byte // LF-normalized text bytes for pin/HEAD validation
+	mode      fs.FileMode
 	exists    bool
 }
 
@@ -65,8 +67,8 @@ type installState struct {
 
 // Install validates a release bundle and returns a safe installation plan.
 // With write=false it makes no filesystem changes. With write=true it requires
-// a named non-protected branch, holds Markitect's shared writer lock, repeats
-// the full preflight, then writes the complete five-file set.
+// a named non-protected branch and committed HEAD, repeats the full preflight
+// under Markitect's shared writer lock, then writes the complete five-file set.
 func Install(root string, bundle *release.Bundle, write bool) (*InstallPlan, error) {
 	if err := validateIncomingBundle(bundle); err != nil {
 		return nil, err
@@ -83,23 +85,11 @@ func Install(root string, bundle *release.Bundle, write bool) (*InstallPlan, err
 	}
 
 	var branch string
-	var unlock func()
-	var writeRoot *guardedwrite.Root
 	if write {
 		branch, err = installableBranch(rootAbs)
 		if err != nil {
 			return nil, err
 		}
-		writeRoot, err = guardedwrite.OpenRoot(rootAbs)
-		if err != nil {
-			return nil, err
-		}
-		defer writeRoot.Close()
-		unlock, err = writeRoot.LockWriter()
-		if err != nil {
-			return nil, err
-		}
-		defer unlock()
 	}
 
 	plan, state, err := buildInstallPlan(rootAbs, bundle)
@@ -119,57 +109,83 @@ func Install(root string, bundle *release.Bundle, write bool) (*InstallPlan, err
 		}
 		return plan, errors.New("branch changed during install preflight; rerun the plan")
 	}
-	if err := ensureInstallStateUnchanged(rootAbs, state); err != nil {
+	capture, err := guardedwrite.CaptureFiles(rootAbs, installPaths)
+	if err != nil {
 		return plan, err
 	}
-	if plan.Kind == "noop" {
-		plan.Applied = true
-		return plan, nil
-	}
-
+	changes := make([]guardedwrite.Change, 0, len(plan.Files))
 	for _, file := range plan.Files {
 		if file.Action == "unchanged" {
 			continue
 		}
-		if err := ensureInstallStateUnchanged(rootAbs, state); err != nil {
-			return installWriteFailure(plan, state, err)
-		}
-		if _, err := safeInstallDestination(rootAbs, file.Path); err != nil {
-			return installWriteFailure(plan, state, err)
-		}
-		if _, err = safeInstallDestination(rootAbs, file.Path); err != nil {
-			return installWriteFailure(plan, state, err)
-		}
-		current, err := readInstallFile(rootAbs, file.Path)
-		if err != nil {
-			return installWriteFailure(plan, state, err)
-		}
-		before := state.files[file.Path]
-		if current.exists != before.exists || (current.exists && !bytes.Equal(current.data, before.data)) {
-			return installWriteFailure(plan, state, fmt.Errorf("install target changed during write: %s", file.Path))
-		}
-		if err := guardedwrite.EnsureBranch(rootAbs, state.branch); err != nil {
-			return installWriteFailure(plan, state, err)
-		}
-		if err = writeRoot.AtomicWrite(file.Path, bundle.Files[file.Path], 0644); err != nil {
-			if guardedwrite.WasPublished(err) {
-				plan.Written = append(plan.Written, file.Path)
-				data := append([]byte(nil), bundle.Files[file.Path]...)
-				state.files[file.Path] = installFileState{data: data, canonical: canonicalInstallReadback(file.Path, data), exists: true}
-			}
-			return installWriteFailure(plan, state, fmt.Errorf("write %s: %w", file.Path, err))
-		}
-		plan.Written = append(plan.Written, file.Path)
-		data := append([]byte(nil), bundle.Files[file.Path]...)
-		state.files[file.Path] = installFileState{data: data, canonical: canonicalInstallReadback(file.Path, data), exists: true}
+		changes = append(changes, guardedwrite.Change{
+			Path: file.Path, Bytes: bundle.Files[file.Path], Mode: 0644,
+		})
+	}
+	changedPaths := make([]string, len(changes))
+	for i, change := range changes {
+		changedPaths[i] = change.Path
 	}
 
-	if err := verifyInstalledBundle(rootAbs, bundle); err != nil {
-		return installWriteFailure(plan, state, fmt.Errorf("verify completed install: %w", err))
+	preflight := func() error {
+		if err := ensureInstallStateUnchanged(rootAbs, state); err != nil {
+			return err
+		}
+		return ensureCapturedMatchesState(capture, state)
 	}
-	if err := ensureInstallStateUnchanged(rootAbs, state); err != nil {
-		return installWriteFailure(plan, state, err)
+	beforeTarget := func() error {
+		return ensureNoStagedInstallPins(rootAbs, true)
+	}
+	readback := func(result guardedwrite.Result) error {
+		if !samePaths(result.CompletedPaths, changedPaths) {
+			return fmt.Errorf("guarded install completed paths %v do not match planned changes %v", result.CompletedPaths, changedPaths)
+		}
+		if err := ensureInstallBranchAndHead(rootAbs, state); err != nil {
+			return err
+		}
+		if err := ensureNoStagedInstallPins(rootAbs, true); err != nil {
+			return err
+		}
+		if err := verifyInstalledBundle(rootAbs, bundle); err != nil {
+			return fmt.Errorf("verify completed install: %w", err)
+		}
+		return nil
+	}
+
+	result, applyErr := guardedwrite.ApplyOrderedChecked(rootAbs, capture, changes, preflight, beforeTarget, readback)
+	plan.Written = append([]string(nil), result.CompletedPaths...)
+	if applyErr != nil {
+		return installWriteFailure(plan, state, applyErr)
 	}
 	plan.Applied = true
 	return plan, nil
+}
+
+func ensureCapturedMatchesState(capture *guardedwrite.Capture, state *installState) error {
+	if capture == nil {
+		return errors.New("installer capture is missing")
+	}
+	for _, name := range installPaths {
+		captured, ok := capture.Files[name]
+		if !ok {
+			return fmt.Errorf("installer capture is missing selected path %s", name)
+		}
+		before := state.files[name]
+		if captured.Exists != before.exists || (captured.Exists && (!bytes.Equal(captured.Bytes, before.data) || captured.Mode.Perm() != before.mode.Perm())) {
+			return fmt.Errorf("install target changed between plan and guarded capture: %s", name)
+		}
+	}
+	return nil
+}
+
+func samePaths(left, right []string) bool {
+	if len(left) != len(right) {
+		return false
+	}
+	for i := range left {
+		if left[i] != right[i] {
+			return false
+		}
+	}
+	return true
 }

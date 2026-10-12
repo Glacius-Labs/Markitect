@@ -61,11 +61,23 @@ func Run(args []string, out, errout io.Writer) int {
 }
 
 func run(args []string, out, errout io.Writer) error {
+	if len(args) > 0 {
+		switch args[0] {
+		case "package", "bundle", "install", "version", "licenses":
+			return runLocal(args[0], args[1:], out, errout)
+		}
+	}
 	if len(args) > 0 && args[0] == "distribution" {
 		return runDistribution(args[1:], out, errout)
 	}
 	flags := flag.NewFlagSet("markitect-release", flag.ContinueOnError)
 	flags.SetOutput(errout)
+	flags.Usage = func() {
+		fmt.Fprintln(errout, "Usage of markitect-release:")
+		fmt.Fprintln(errout, "  package, bundle, install, version, licenses: local release preparation")
+		fmt.Fprintln(errout, "  distribution: sync verified published manifests")
+		flags.PrintDefaults()
+	}
 	tag := flags.String("tag", "", "release tag, for example v1.2.3")
 	runID := flags.String("run", "", "successful GitHub Actions Release workflow run ID")
 	assets := flags.String("assets", "", "directory containing the four locally downloaded release assets")

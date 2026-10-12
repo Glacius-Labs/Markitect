@@ -28,6 +28,8 @@ spec:
   paths:
     - src/cmd/markitect/
     - src/cmd/markitect-release/
+    - src/internal/host/buildinfo/
+    - src/internal/host/releaseinstall/
     - src/internal/host/mcp/
     - src/internal/host/projectadoption/
     - src/internal/host/projectapp/

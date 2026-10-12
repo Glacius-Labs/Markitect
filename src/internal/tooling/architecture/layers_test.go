@@ -66,7 +66,7 @@ func TestGuardedWriteUseAllowsOnlyTheGuardedAPI(t *testing.T) {
 `,
 		"src/internal/host/guardedwrite/guardedwrite.go": "package guardedwrite\n\nfunc OpenRoot(string) {}\n",
 		"src/internal/host/guardedwrite/root_test.go":    "package guardedwrite_test\n\nimport " + imp + "\n\nvar _ = guardedwrite.OpenRoot\n",
-		"src/internal/host/projectwork/ok.go":            "package projectwork\n\nimport " + imp + "\n\nvar _ = guardedwrite.Apply\nvar _ []guardedwrite.Change\nvar _ *guardedwrite.Capture\n",
+		"src/internal/host/projectwork/ok.go":            "package projectwork\n\nimport " + imp + "\n\nvar _ = guardedwrite.Apply\nvar _ = guardedwrite.ApplyOrderedChecked\nvar _ []guardedwrite.Change\nvar _ *guardedwrite.Capture\n",
 		"src/internal/host/projectwork/bad.go":           "package projectwork\n\nimport " + imp + "\n\nvar _ = guardedwrite.CaptureFiles\nvar _ = guardedwrite.OpenRoot\n",
 		"src/internal/host/projectrun/alias_test.go":     "package projectrun\n\nimport gw " + imp + "\n\nvar _ = gw.Apply\nvar _ = gw.SafeDestination\n",
 		"src/internal/host/projectsetup/dot.go":          "package projectsetup\n\nimport . " + imp + "\n\nvar _ = Apply\n",
@@ -92,7 +92,7 @@ func TestGuardedWriteUseAllowsOnlyTheGuardedAPI(t *testing.T) {
 	}
 	// The coarse gate already forbids guardedwrite's own external test package
 	// from importing it; the selector rule adds no second finding there.
-	const api = "product package may use only the guarded write API (Apply, ApplyChecked, Capture, CaptureFiles, Change, File, NewStoredNames, Result, StoredNames), not "
+	const api = "product package may use only the guarded write API (Apply, ApplyChecked, ApplyOrderedChecked, Capture, CaptureFiles, Change, File, NewStoredNames, Result, StoredNames), not "
 	want := []string{
 		"src/internal/host/guardedwrite/root_test.go:3: src/internal/host/guardedwrite imports src/internal/host/guardedwrite: self-import is forbidden",
 		"src/internal/host/projectrun/alias_test.go:6: src/internal/host/projectrun imports src/internal/host/guardedwrite: " + api + "guardedwrite.SafeDestination",

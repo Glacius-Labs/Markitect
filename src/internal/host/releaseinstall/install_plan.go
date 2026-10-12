@@ -1,4 +1,4 @@
-package host
+package releaseinstall
 
 import (
 	"bytes"
@@ -11,7 +11,6 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/Glacius-Labs/Markitect/src/internal/host/guardedwrite"
 	"github.com/Glacius-Labs/Markitect/src/internal/infrastructure/source"
 	"github.com/Glacius-Labs/Markitect/src/internal/tooling/release"
 )
@@ -197,7 +196,7 @@ func readInstallFile(root, name string) (installFileState, error) {
 	if err != nil {
 		return installFileState{}, fmt.Errorf("read install target %s: %w", name, err)
 	}
-	return installFileState{data: data, canonical: canonicalInstallReadback(name, data), exists: true}, nil
+	return installFileState{data: data, canonical: canonicalInstallReadback(name, data), mode: info.Mode().Perm(), exists: true}, nil
 }
 
 // canonicalInstallReadback normalizes the four text pins (flat lock, bootstrap
@@ -236,11 +235,15 @@ func allInstallBytesMatch(current map[string]installFileState, target map[string
 }
 
 func installableBranch(root string) (string, error) {
-	branch, err := guardedwrite.BranchName(root)
+	branch, err := source.GitOutput(root, "branch", "--show-current")
 	if err != nil {
 		return "", fmt.Errorf("install requires a Git worktree on a named non-protected branch: %w", err)
 	}
-	return branch, nil
+	name := strings.TrimSpace(string(branch))
+	if name == "" || strings.EqualFold(name, "master") || strings.EqualFold(name, "main") {
+		return "", errors.New("install requires a Git worktree on a named non-protected branch: detached HEAD and protected branches are not writable")
+	}
+	return name, nil
 }
 
 func validInstallDigest(value string) bool {
