@@ -58,7 +58,7 @@ On 12 October the owner instructed: **“Beginne die Wellen selbstständig neu.�
 | bughunter | BUG | Both bounded read-only episodes complete; new Windows lock cause unisolated, P2 test cleanup issue recorded, no fixwriter; helper recovery remains unaccepted |
 | qa | CI, TEST | TEST-04 integrated with complete actual-Main CI; the existing chat now holds the separate Runtime role, no concurrent QA/TEST-05 writer |
 | cleaner | ARCH, AGENT-01 | ARCH-08/ARCH-09 integrated with complete actual-Main CI; writer released, later ARCH-12/13/14/15/16 remain dependent on ARCH-06/13 |
-| runtime | RUN, MCP-02, ARCH-06 | RUN-02 active in PR245 on `dev/external-runtime-packets`; independently reviewed composed head409 on Main04c runs required CI; original f500/8d1/6363 source states and evidence stay separate |
+| runtime | RUN, MCP-02, ARCH-06 | RUN-02 active in PR245 on `dev/external-runtime-packets`; composed head409 failed required CI38244650365 in Quality/Race and remains unaccepted pending an isolated correction, renewed review and CI; original f500/8d1/6363 source states and evidence stay separate |
 | government | GOV | After Wave 2 and the explicit GOV-01 dependencies (DEC-019) |
 
 No more than six sessions change code at the same time. Each session uses subagents and workflows inside its own packages as it sees fit.
