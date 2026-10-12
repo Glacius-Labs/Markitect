@@ -95,6 +95,8 @@ spec:
     - docs/validation/project-operations-2026-10-09.md
     - src/internal/host/projectexplore
     - src/harness/examples/project_world_workflow_test.go
+    - src/harness/examples/method_exchange_fixture_test.go
+    - src/harness/examples/method_exchange_e2e_test.go
     - docs/design/work-item-comparison-20261009.md
     - src/internal/host/buildinfo
     - src/internal/host/releaseinstall
@@ -702,6 +704,10 @@ spec:
     - path: docs/design/work-item-comparison-20261009.md
       owner: project-world-implementation
     - path: src/harness/examples/project_world_workflow_test.go
+      owner: project-world-implementation
+    - path: src/harness/examples/method_exchange_fixture_test.go
+      owner: project-world-implementation
+    - path: src/harness/examples/method_exchange_e2e_test.go
       owner: project-world-implementation
     - path: src/internal/host/projectadoption/readiness.go
       owner: project-world-implementation
