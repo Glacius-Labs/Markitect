@@ -1,6 +1,7 @@
 package projectsetup
 
 import (
+	"github.com/Glacius-Labs/Markitect/src/internal/host/projectconfig"
 	"path/filepath"
 	"reflect"
 	"runtime"
@@ -8,7 +9,6 @@ import (
 	"testing"
 
 	"github.com/Glacius-Labs/Markitect/src/internal/host/agentexec"
-	"github.com/Glacius-Labs/Markitect/src/internal/host/projectrun"
 	"github.com/Glacius-Labs/Markitect/src/internal/host/projectwork"
 	"github.com/Glacius-Labs/Markitect/src/internal/modules/projectmodel"
 	"go.yaml.in/yaml/v3"
@@ -49,7 +49,7 @@ func TestBuildRuntimeMixesRoleProfilesAcrossProvidersModelsAndCostModes(t *testi
 		Roles: &RoleOptions{
 			Reviewer: &RoleProfile{Model: "gpt-6-sol", Effort: "medium", InputMicrosPerMillion: int64Ref(3)},
 			Verifier: &RoleProfile{Provider: ProviderProcess, Model: "human-reviewer", Effort: "high", ProviderExecutable: executor.Path,
-				ProviderArgs: []string{"--dir", "exchange"}, ProviderVersion: "exchange/1", CostMode: projectrun.CostModeUnmetered,
+				ProviderArgs: []string{"--dir", "exchange"}, ProviderVersion: "exchange/1", CostMode: projectconfig.CostModeUnmetered,
 				Environment: []string{"EXCHANGE_TOKEN"}},
 		}}
 	config, err := BuildRuntime(project, options, Discovery{Provider: ProviderCodex, ProviderBinary: provider})
@@ -58,13 +58,13 @@ func TestBuildRuntimeMixesRoleProfilesAcrossProvidersModelsAndCostModes(t *testi
 	}
 	for _, id := range []string{"root-manager", "orders-manager"} {
 		manager := config.Agents[id]
-		if manager.Transport != projectrun.TransportCodexAppServer || manager.Model != "gpt-6-luna" || manager.AppServer.ReasoningEffort != DefaultCodexEffort ||
-			manager.WorkspaceMode != "git" || manager.CostMode != "" || manager.Pricing != (projectrun.Pricing{InputMicrosPerMillion: 7, OutputMicrosPerMillion: 11}) {
+		if manager.Transport != projectconfig.TransportCodexAppServer || manager.Model != "gpt-6-luna" || manager.AppServer.ReasoningEffort != DefaultCodexEffort ||
+			manager.WorkspaceMode != "git" || manager.CostMode != "" || manager.Pricing != (projectconfig.Pricing{InputMicrosPerMillion: 7, OutputMicrosPerMillion: 11}) {
 			t.Fatalf("Manager %s did not keep the default native profile: %+v", id, manager)
 		}
 		reviewer := config.Review.Agents[id]
-		if reviewer.Transport != projectrun.TransportCodexAppServer || reviewer.Model != "gpt-6-sol" || reviewer.AppServer.ReasoningEffort != "medium" ||
-			reviewer.WorkspaceMode != "git" || reviewer.Pricing != (projectrun.Pricing{InputMicrosPerMillion: 3, OutputMicrosPerMillion: 11}) ||
+		if reviewer.Transport != projectconfig.TransportCodexAppServer || reviewer.Model != "gpt-6-sol" || reviewer.AppServer.ReasoningEffort != "medium" ||
+			reviewer.WorkspaceMode != "git" || reviewer.Pricing != (projectconfig.Pricing{InputMicrosPerMillion: 3, OutputMicrosPerMillion: 11}) ||
 			!reflect.DeepEqual(reviewer.InstructionPaths, manager.InstructionPaths) {
 			t.Fatalf("reviewer %s did not receive its own native model, effort and rate: %+v", id, reviewer)
 		}
@@ -75,9 +75,9 @@ func TestBuildRuntimeMixesRoleProfilesAcrossProvidersModelsAndCostModes(t *testi
 		wantEnvironment = append(wantEnvironment, "SystemRoot")
 	}
 	wantEnvironment = append(wantEnvironment, "EXCHANGE_TOKEN")
-	if verifier == nil || verifier.Transport != projectrun.TransportProcess || verifier.AppServer != nil || verifier.WorkspaceMode != "" ||
+	if verifier == nil || verifier.Transport != projectconfig.TransportProcess || verifier.AppServer != nil || verifier.WorkspaceMode != "" ||
 		verifier.Command != executor.Path || !reflect.DeepEqual(verifier.Args, []string{"--dir", "exchange"}) || verifier.Model != "human-reviewer" ||
-		verifier.ProviderVersion != "exchange/1" || verifier.CostMode != projectrun.CostModeUnmetered || verifier.Pricing != (projectrun.Pricing{}) ||
+		verifier.ProviderVersion != "exchange/1" || verifier.CostMode != projectconfig.CostModeUnmetered || verifier.Pricing != (projectconfig.Pricing{}) ||
 		!reflect.DeepEqual(verifier.Environment, wantEnvironment) || verifier.MaxStdoutBytes != DefaultProcessMaxStdout {
 		t.Fatalf("verifier is not the selected unmetered process executor: %+v", verifier)
 	}
@@ -100,7 +100,7 @@ func TestBuildRuntimeProcessOnlyProfileNeedsNoNativeInstructions(t *testing.T) {
 	root := t.TempDir()
 	executor := processExecutorTool(t, root)
 	project := &projectwork.Project{Root: root, Report: projectmodel.Report{Managers: []projectmodel.Manager{{ID: "root"}}}}
-	options := Options{Provider: ProviderProcess, Model: "scripted", ProviderExecutable: executor.Path, CostMode: projectrun.CostModeUnmetered, MaxCostMicros: 1}
+	options := Options{Provider: ProviderProcess, Model: "scripted", ProviderExecutable: executor.Path, CostMode: projectconfig.CostModeUnmetered, MaxCostMicros: 1}
 	found, err := Discover(options)
 	if err != nil {
 		t.Fatalf("Discover process executor: %v", err)
@@ -112,12 +112,12 @@ func TestBuildRuntimeProcessOnlyProfileNeedsNoNativeInstructions(t *testing.T) {
 	if err != nil {
 		t.Fatalf("BuildRuntime: %v", err)
 	}
-	for name, agent := range map[string]projectrun.Agent{"manager": config.Agents["root"], "reviewer": config.Review.Agents["root"], "verifier": *config.Verifier} {
-		if agent.Transport != projectrun.TransportProcess || len(agent.InstructionPaths) != 0 || !agent.Unmetered() || agent.ModelOptions != nil || agent.ProviderVersion != UndeclaredProviderVersion {
+	for name, agent := range map[string]projectconfig.Agent{"manager": config.Agents["root"], "reviewer": config.Review.Agents["root"], "verifier": *config.Verifier} {
+		if agent.Transport != projectconfig.TransportProcess || len(agent.InstructionPaths) != 0 || !agent.Unmetered() || agent.ModelOptions != nil || agent.ProviderVersion != UndeclaredProviderVersion {
 			t.Fatalf("%s is not a context-only unmetered process executor: %+v", name, agent)
 		}
 	}
-	if config.Limits.MaxCostMicros != 1 || config.Limits.MaxStarts != DefaultMaxStarts || config.Limits.MaxDuration != projectrun.Duration(DefaultMaxRunTime) {
+	if config.Limits.MaxCostMicros != 1 || config.Limits.MaxStarts != DefaultMaxStarts || config.Limits.MaxDuration != projectconfig.Duration(DefaultMaxRunTime) {
 		t.Fatalf("unmetered profile changed the start or duration limits: %+v", config.Limits)
 	}
 }
@@ -135,7 +135,7 @@ func TestBuildRuntimeRejectsInvalidRoleProfiles(t *testing.T) {
 		roles RoleOptions
 		want  string
 	}{
-		{"unmetered with rates", RoleOptions{Reviewer: &RoleProfile{CostMode: projectrun.CostModeUnmetered, InputMicrosPerMillion: int64Ref(1)}}, "must not declare"},
+		{"unmetered with rates", RoleOptions{Reviewer: &RoleProfile{CostMode: projectconfig.CostModeUnmetered, InputMicrosPerMillion: int64Ref(1)}}, "must not declare"},
 		{"metered without rates", RoleOptions{Reviewer: &RoleProfile{InputMicrosPerMillion: int64Ref(0), OutputMicrosPerMillion: int64Ref(0)}}, "at least one positive rate"},
 		{"unknown cost mode", RoleOptions{Reviewer: &RoleProfile{CostMode: "free"}}, "unsupported cost mode"},
 		{"process without executable", RoleOptions{Manager: &RoleProfile{Provider: ProviderProcess, Model: "m"}}, "absolute providerExecutable"},
@@ -144,7 +144,7 @@ func TestBuildRuntimeRejectsInvalidRoleProfiles(t *testing.T) {
 		{"codex with process arguments", RoleOptions{Reviewer: &RoleProfile{ProviderArgs: []string{"--x"}}}, "apply only to process executors"},
 		{"unknown role provider", RoleOptions{Verifier: &RoleProfile{Provider: "claude", Model: "sonnet"}}, `unsupported provider "claude"`},
 		{"unsupported native effort", RoleOptions{Verifier: &RoleProfile{Effort: "turbo"}}, "unsupported Codex reasoning effort"},
-		{"unmetered native role", RoleOptions{Reviewer: &RoleProfile{CostMode: projectrun.CostModeUnmetered}}, "must be metered"},
+		{"unmetered native role", RoleOptions{Reviewer: &RoleProfile{CostMode: projectconfig.CostModeUnmetered}}, "must be metered"},
 	}
 	for _, test := range cases {
 		t.Run(test.name, func(t *testing.T) {
@@ -164,7 +164,7 @@ func TestPreviewDiscoversEachRoleExecutableOnce(t *testing.T) {
 	provider := testTool(t, t.TempDir(), providerName(), true)
 	provider.Version = "codex-cli 0.162.0"
 	executor := processExecutorTool(t, t.TempDir())
-	process := &RoleProfile{Provider: ProviderProcess, Model: "scripted", ProviderExecutable: executor.Path, CostMode: projectrun.CostModeUnmetered}
+	process := &RoleProfile{Provider: ProviderProcess, Model: "scripted", ProviderExecutable: executor.Path, CostMode: projectconfig.CostModeUnmetered}
 	options := Options{Provider: ProviderCodex, Model: "gpt-6-luna", Effort: "high", InputMicrosPerMillion: 7, OutputMicrosPerMillion: 11, MaxCostMicros: 5000,
 		Roles: &RoleOptions{Reviewer: process, Verifier: process}}
 	calls := map[string]int{}
@@ -184,15 +184,15 @@ func TestPreviewDiscoversEachRoleExecutableOnce(t *testing.T) {
 	if preview.Discovery.Provider != ProviderCodex || len(preview.Roles) != 3 || preview.Roles[RoleReviewer].ProviderBinary.Path != executor.Path || preview.Roles[RoleManager].Provider != ProviderCodex {
 		t.Fatalf("preview does not show each role's pinned executable: discovery=%+v roles=%+v", preview.Discovery, preview.Roles)
 	}
-	var config projectrun.Runtime
+	var config projectconfig.Runtime
 	if err := yaml.Unmarshal([]byte(preview.Mutation.Files[0].Content), &config); err != nil {
 		t.Fatal(err)
 	}
-	if err := projectrun.ValidateRuntime(config); err != nil {
+	if err := projectconfig.ValidateRuntime(config); err != nil {
 		t.Fatalf("previewed mixed runtime is invalid: %v", err)
 	}
 	for id, reviewer := range config.Review.Agents {
-		if reviewer.Transport != projectrun.TransportProcess || !reviewer.Unmetered() || config.Agents[id].Transport != projectrun.TransportCodexAppServer {
+		if reviewer.Transport != projectconfig.TransportProcess || !reviewer.Unmetered() || config.Agents[id].Transport != projectconfig.TransportCodexAppServer {
 			t.Fatalf("previewed roles lost their profiles: manager=%+v reviewer=%+v", config.Agents[id], reviewer)
 		}
 	}
@@ -201,7 +201,7 @@ func TestPreviewDiscoversEachRoleExecutableOnce(t *testing.T) {
 func TestPreviewSkipsTheDefaultExecutableWhenNoRoleUsesIt(t *testing.T) {
 	project := setupProjectFixture(t)
 	executor := processExecutorTool(t, t.TempDir())
-	process := &RoleProfile{Provider: ProviderProcess, Model: "scripted", ProviderExecutable: executor.Path, CostMode: projectrun.CostModeUnmetered}
+	process := &RoleProfile{Provider: ProviderProcess, Model: "scripted", ProviderExecutable: executor.Path, CostMode: projectconfig.CostModeUnmetered}
 	options := Options{Provider: ProviderCodex, Model: "gpt-6-luna", InputMicrosPerMillion: 7, OutputMicrosPerMillion: 11, MaxCostMicros: 5000,
 		Roles: &RoleOptions{Manager: process, Reviewer: process, Verifier: process}}
 	calls := map[string]int{}
@@ -220,14 +220,14 @@ func TestPreviewSkipsTheDefaultExecutableWhenNoRoleUsesIt(t *testing.T) {
 func TestRoleThatSwitchesProviderDoesNotInheritTheCostMode(t *testing.T) {
 	executable := filepath.Join(t.TempDir(), "executor.exe")
 	profiles, err := resolveRoleProfiles(Options{Provider: ProviderProcess, Model: "scripted", ProviderExecutable: executable,
-		CostMode: projectrun.CostModeUnmetered, MaxCostMicros: 1, Roles: &RoleOptions{Manager: &RoleProfile{Provider: ProviderCodex, Model: "gpt-6-luna"}}})
+		CostMode: projectconfig.CostModeUnmetered, MaxCostMicros: 1, Roles: &RoleOptions{Manager: &RoleProfile{Provider: ProviderCodex, Model: "gpt-6-luna"}}})
 	if err == nil || !strings.Contains(err.Error(), "metered agent requires explicit") {
 		t.Fatalf("a Codex role under an unmetered default must ask for rates, got profiles=%+v err=%v", profiles, err)
 	}
 	profiles, err = resolveRoleProfiles(Options{Provider: ProviderProcess, Model: "scripted", ProviderExecutable: executable,
-		CostMode: projectrun.CostModeUnmetered, MaxCostMicros: 1, Roles: &RoleOptions{Manager: &RoleProfile{Provider: ProviderCodex, Model: "gpt-6-luna",
+		CostMode: projectconfig.CostModeUnmetered, MaxCostMicros: 1, Roles: &RoleOptions{Manager: &RoleProfile{Provider: ProviderCodex, Model: "gpt-6-luna",
 			InputMicrosPerMillion: int64Ref(1), OutputMicrosPerMillion: int64Ref(2)}}})
-	if err != nil || profiles[RoleManager].costMode != "" || profiles[RoleReviewer].costMode != projectrun.CostModeUnmetered {
+	if err != nil || profiles[RoleManager].costMode != "" || profiles[RoleReviewer].costMode != projectconfig.CostModeUnmetered {
 		t.Fatalf("switched Codex role is not metered while process roles stay unmetered: %+v err=%v", profiles, err)
 	}
 }

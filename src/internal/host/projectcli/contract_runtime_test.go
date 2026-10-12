@@ -3,6 +3,7 @@ package projectcli
 import (
 	"context"
 	"encoding/json"
+	"github.com/Glacius-Labs/Markitect/src/internal/host/projectconfig"
 	"os"
 	"path/filepath"
 	"strings"
@@ -111,7 +112,7 @@ func newRuntimeContract(t *testing.T, surface string, invalidFirst bool) (*contr
 	for _, file := range initPlan.Files {
 		if file.Path == projectwork.ManifestPath {
 			repo.Write(file.Path, strings.Replace(file.Content, "coverageMode: full", "coverageMode: selected", 1))
-		} else if file.Path == projectrun.RuntimePath {
+		} else if file.Path == projectconfig.RuntimePath {
 			repo.Write(file.Path, runtimeContractYAML(checkExe))
 		} else {
 			repo.Write(file.Path, file.Content)
@@ -153,20 +154,20 @@ func newRuntimeContract(t *testing.T, surface string, invalidFirst bool) (*contr
 }
 
 func runtimeContractYAML(executable string) string {
-	config := projectrun.Runtime{
-		APIVersion: projectrun.APIVersion,
+	config := projectconfig.Runtime{
+		APIVersion: projectconfig.APIVersion,
 		Mode:       "controlled-local",
-		Agents: map[string]projectrun.Agent{
+		Agents: map[string]projectconfig.Agent{
 			contractManagerID(): {
 				Command: executable, Model: "contract-fixture", ProviderVersion: "contract-runtime-v1",
-				CostMode: "unmetered", Timeout: projectrun.Duration(30 * time.Second),
+				CostMode: "unmetered", Timeout: projectconfig.Duration(30 * time.Second),
 				MaxStdoutBytes: 1048576, MaxStderrBytes: 1048576, RuntimeFiles: []agentexec.RuntimeFile{},
-				Environment: []string{"PATH", "PATHEXT", "TEMP", "TMP", "TMPDIR", "GOCACHE"}, Pricing: projectrun.Pricing{},
+				Environment: []string{"PATH", "PATHEXT", "TEMP", "TMP", "TMPDIR", "GOCACHE"}, Pricing: projectconfig.Pricing{},
 			},
 		},
-		Limits: projectrun.Limits{
+		Limits: projectconfig.Limits{
 			MaxDepth: 2, MaxStarts: 8, MaxRetries: 1, MaxParallel: 1,
-			MaxDuration: projectrun.Duration(2 * time.Minute), MaxCostMicros: 100000,
+			MaxDuration: projectconfig.Duration(2 * time.Minute), MaxCostMicros: 100000,
 			MaxCandidateFileBytes: 4096, MaxCandidateBytes: 8192,
 		},
 	}

@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/Glacius-Labs/Markitect/src/internal/host/projectconfig"
 	"io"
 	"reflect"
 	"strconv"
@@ -12,7 +13,6 @@ import (
 	"time"
 
 	"github.com/Glacius-Labs/Markitect/src/internal/host/codexappserver"
-	"github.com/Glacius-Labs/Markitect/src/internal/host/projectrun"
 )
 
 // Schemas derive from the DTOs actually decoded, avoiding a second operation
@@ -52,12 +52,12 @@ func specialSchema(t reflect.Type) (map[string]any, bool) {
 		// RawMessage emits its underlying JSON value, unlike ordinary []byte's
 		// base64 string. The shared service owns validation of this embedded value.
 		return map[string]any{}, true
-	case reflect.TypeFor[projectrun.Duration](), reflect.TypeFor[[]byte]():
+	case reflect.TypeFor[projectconfig.Duration](), reflect.TypeFor[[]byte]():
 		return map[string]any{"type": "string"}, true
 	case reflect.TypeFor[codexappserver.WindowsSandboxBackend]():
 		return map[string]any{"type": "string", "enum": []string{string(codexappserver.WindowsSandboxBackendMXC)}}, true
-	case reflect.TypeFor[projectrun.AppServerEnvironmentMode]():
-		return map[string]any{"type": "string", "enum": []string{string(projectrun.AppServerEnvironmentModeInherit)}}, true
+	case reflect.TypeFor[projectconfig.AppServerEnvironmentMode]():
+		return map[string]any{"type": "string", "enum": []string{string(projectconfig.AppServerEnvironmentModeInherit)}}, true
 	case reflect.TypeFor[time.Time]():
 		return map[string]any{"type": "string", "format": "date-time"}, true
 	}

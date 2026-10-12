@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/Glacius-Labs/Markitect/src/internal/host/projectconfig"
 	"math"
 	"math/big"
 	"sort"
@@ -57,1096 +58,14 @@ func runOrResume(ctx context.Context, host Host, invoker Invoker, root, id strin
 		return empty, err
 	}
 	defer unlock()
-	plan, err := store.readPlan(id)
-	if err != nil {
-		return empty, err
-	}
-	if !plan.ExecuteAuthorized {
-		return empty, ErrNotRunnable
-	}
-	if err := validateExplorationReadiness(root, plan); err != nil {
-		return supersedeExisting(store, id, err)
-	}
-	runtime, err := LoadRuntime(root)
-	if err != nil {
-		return empty, err
-	}
-	if resume && !repair {
-		ctx = withNativeResume(ctx)
-	}
-	project, err := host.Load(root, plan.BaseRevision)
-	if err != nil {
-		return supersedeExisting(store, id, fmt.Errorf("reload fixed plan base: %w", err))
-	}
-	if project.Snapshot == nil || project.Snapshot.Digest() != plan.BaseSnapshot || project.Digest != plan.BaseProjectDigest || project.Report.ModelDigest != plan.BaseModelDigest {
-		return supersedeExisting(store, id, fmt.Errorf("%w: fixed source or model binding differs from the plan", ErrStale))
-	}
-	if err := validateChangeImpact(host, root, project, plan); err != nil {
-		return supersedeExisting(store, id, fmt.Errorf("change impact binding: %w", err))
-	}
-	working, err := host.Load(root, "")
-	if err != nil {
-		return supersedeExisting(store, id, err)
-	}
-	if working.Snapshot == nil || working.Snapshot.Digest() != plan.WorkingSnapshot || working.Digest != plan.WorkingProjectDigest {
-		return supersedeExisting(store, id, fmt.Errorf("%w: working source or model binding differs from the plan", ErrStale))
-	}
-	if err := repositoryMatches(root, plan); err != nil {
-		return supersedeExisting(store, id, fmt.Errorf("Git repository or target binding: %w", err))
-	}
-	if err := validateRuntimeBinding(invoker, runtime, plan); err != nil {
-		return supersedeExisting(store, id, fmt.Errorf("method policy binding: %w", err))
-	}
-	dir, err := store.runDir(id)
-	if err != nil {
-		return empty, err
-	}
-	report, stateErr := store.readLatestState(id)
-	var pendingRecoveries []pendingNativeRecovery
-	var recoveredReintegrations []string
-	pendingReviewRecovered := false
-	if stateErr != nil && !errors.Is(stateErr, ErrNotFound) {
-		return empty, stateErr
-	}
-	if errors.Is(stateErr, ErrNotFound) {
-		if resume {
-			return empty, ErrNotFound
-		}
-		if len(plan.Blockers) > 0 {
-			return empty, fmt.Errorf("plan has blocking obligations: %s", strings.Join(plan.Blockers, "; "))
-		}
-		report = RunReport{APIVersion: APIVersion, Operation: plan.Operation, ID: id, PlanID: id, Status: StatusRunning, ExternalExecution: externalExecutionEnabled(ctx),
-			Mode: ModeControlledLocal, StartedAt: time.Now().UTC(), UpdatedAt: time.Now().UTC(),
-			BaseRevision: plan.BaseRevision, BaseSnapshot: plan.BaseSnapshot, ModelDigest: plan.ModelDigest,
-			RuntimeDigest: plan.RuntimeDigest, Tasks: cloneTasks(plan.Managers), Candidate: CandidateRef{ID: plan.InitialCandidateID,
-				Files: map[string]string{}, Integrated: false}, Revision: 1, CostAccounting: CostAccountingComplete}
-		initial, err := store.readCandidate(dir, plan.InitialCandidateID)
-		if err != nil {
-			return empty, err
-		}
-		report.Candidate.Snapshot = initial.Digest
-		if err := store.appendState(report); err != nil {
-			return empty, err
-		}
-	} else {
-		if report.ExternalExecution != externalExecutionEnabled(ctx) {
-			return report, fmt.Errorf("run execution mode is fixed; use the original internal or external interface")
-		}
-		if !resume {
-			return report, fmt.Errorf("run %s already has durable state; use Resume", id)
-		}
-		if repair {
-			report, err = beginRepair(store, dir, host, root, plan, runtime, project, report)
-			if err != nil {
-				return report, err
-			}
-		} else {
-			if report.Status == StatusVerified || report.Status == StatusApplied {
-				return report, nil
-			}
-			if report.Status == StatusSuperseded {
-				return report, ErrStale
-			}
-			if report.Status != StatusInterrupted && report.Status != StatusRunning && report.Status != StatusFailed && report.Status != StatusBlocked && report.Status != StatusAwaitingExternal {
-				return report, fmt.Errorf("run status %s cannot be resumed", report.Status)
-			}
-			for _, round := range report.ManagerReworkRounds {
-				if round.Status != "running" {
-					continue
-				}
-				report.Status = StatusBlocked
-				report.Findings = append(report.Findings, fmt.Sprintf("manager-directed rework round %d was unfinished at the resume boundary; it will not be replayed automatically", round.Number))
-				if err := persistState(store, &report); err != nil {
-					return empty, err
-				}
-				return report, fmt.Errorf("unfinished manager-directed rework round %d requires a new plan", round.Number)
-			}
-			for _, task := range report.Tasks {
-				if task.ReviewStatus == "invoking" || task.ReviewStatus == "uncertain" || task.ReviewStatus == StatusAwaitingExternal {
-					reintegrate, recoveryErr := recoverPendingNativeReview(ctx, host, invoker, root, store, dir, plan, runtime, project, &report, task.ManagerID)
-					if recoveryErr == nil {
-						pendingReviewRecovered = true
-						if reintegrate {
-							recoveredReintegrations = append(recoveredReintegrations, task.ManagerID)
-						}
-						continue
-					}
-					if errors.Is(recoveryErr, ErrAwaitingExternal) {
-						return awaitExternalRun(store, report)
-					}
-					var unrouted unroutedReviewError
-					if errors.As(recoveryErr, &unrouted) {
-						return blockRun(store, report, fmt.Errorf("recovered final review for %s failed and its findings have no rework route: %w", task.ManagerID, unrouted.cause))
-					}
-					if current := findTask(report.Tasks, task.ManagerID); current != nil {
-						current.State = "uncertain"
-					}
-					report.Status = StatusBlocked
-					report.Findings = append(report.Findings, "prior native reviewer outcome is uncertain for "+task.ManagerID+"; exact-candidate recovery failed and it will not be replayed automatically: "+boundedRepairDiagnostic(recoveryErr))
-					if err := persistState(store, &report); err != nil {
-						return empty, err
-					}
-					return report, fmt.Errorf("uncertain in-flight reviewer recovery remains blocked for %s: %w", task.ManagerID, recoveryErr)
-				}
-				if task.State == "invoking" || task.State == "integrating" || task.State == "uncertain" || task.State == StatusAwaitingExternal {
-					phase := task.RepairPhase
-					if phase == "" {
-						if task.State == "integrating" || task.IntegrationAttempts > 0 && task.CandidateID != "" {
-							phase = "integrate"
-						} else {
-							phase = "work"
-						}
-					}
-					agent, configured := runtime.Agents[task.ManagerID]
-					config := agentexec.Config{}
-					var configErr error
-					if configured {
-						config, configErr = agent.AgentConfig()
-					}
-					if !configured || configErr != nil || (config.Transport != TransportCodexAppServer && !externalExecutionEnabled(ctx)) || task.ID == "" {
-						if current := findTask(report.Tasks, task.ManagerID); current != nil {
-							current.State = "uncertain"
-						}
-						report.Status = StatusBlocked
-						report.Findings = append(report.Findings, "prior process outcome is uncertain for "+task.ManagerID+"; it will not be replayed automatically")
-						if err := persistState(store, &report); err != nil {
-							return empty, err
-						}
-						return report, fmt.Errorf("uncertain in-flight manager process requires a new plan: %s", task.ManagerID)
-					}
-					pendingRecoveries = append(pendingRecoveries, pendingNativeRecovery{managerID: task.ManagerID, phase: phase, taskID: nativeTaskAttemptID(task, phase)})
-				}
-			}
-			if (report.Status == StatusFailed || report.Status == StatusBlocked) && len(pendingRecoveries) == 0 && !pendingReviewRecovered {
-				return report, fmt.Errorf("run status %s cannot be resumed without an exact native invocation to recover", report.Status)
-			}
-			report.Status = StatusRunning
-			report.UpdatedAt = time.Now().UTC()
-			report.Revision++
-			if err := store.appendState(report); err != nil {
-				return empty, err
-			}
-		}
-	}
-	deadline := report.StartedAt.Add(time.Duration(runtime.Limits.MaxDuration))
-	if !time.Now().Before(deadline) {
-		return blockRun(store, report, fmt.Errorf("total runtime duration limit exceeded"))
-	}
-	boundedCtx, cancel := context.WithDeadline(ctx, deadline)
-	defer cancel()
-	ctx = boundedCtx
-	invoker, roleBudget, err := bindRunHelperBudget(invoker, host, runtime.Limits, store, &report)
-	if err != nil {
-		return failRun(store, report, fmt.Errorf("bind runtime helper budget: %w", err))
-	}
-	starts := roleBudget.Accounting().ObservedTotal + len(report.Checks)
-	refreshStarts := func() { starts = roleBudget.Accounting().ObservedTotal + len(report.Checks) }
-	spent := totalCost(report.Invocations)
-	baseCandidateID := plan.InitialCandidateID
-	if report.ActiveRepairCandidateID != "" {
-		baseCandidateID = report.ActiveRepairCandidateID
-	}
-	baseCandidate, err := store.readCandidate(dir, baseCandidateID)
-	if err != nil {
-		return empty, err
-	}
-	modelCandidate, err := snapshotWithCandidate(project.Snapshot, baseCandidate)
-	if err != nil {
-		return empty, err
-	}
-	boundProject, err := host.FromSnapshot(root, modelCandidate)
-	if err != nil {
-		return empty, fmt.Errorf("compile planned candidate model: %w", err)
-	}
-	if boundProject.Report.ModelDigest != plan.ModelDigest || hasErrorFinding(boundProject.Report.Findings) || (report.ActiveRepairCandidateID == "" && boundProject.Report.Digest != plan.ReportDigest) {
-		return supersedeExisting(store, id, ErrStale)
-	}
-	dependencies, err := managerDependencies(boundProject.Report, report.Tasks)
-	if err != nil {
-		return failRun(store, report, err)
-	}
-	recoveredResults := make(map[string]managerInvocationResult, len(pendingRecoveries))
-	for _, pending := range pendingRecoveries {
-		task := findTask(report.Tasks, pending.managerID)
-		if task == nil {
-			return blockRun(store, report, fmt.Errorf("native recovery task %s is absent from the run", pending.managerID))
-		}
-		agent := runtime.Agents[task.ManagerID]
-		config, configErr := agent.AgentConfig()
-		if configErr != nil {
-			return blockRun(store, report, fmt.Errorf("native recovery configuration for %s is invalid", task.ManagerID))
-		}
-		input, children, childReports, conflicts, inputErr := recoveryManagerInput(store, dir, host, root, project.Snapshot, boundProject.Report, report, plan, *task, pending.phase, dependencies[task.ManagerID])
-		if inputErr != nil {
-			return blockRun(store, report, fmt.Errorf("native recovery input for %s could not be reconstructed", task.ManagerID))
-		}
-		repairRound, repairChecks := repairContext(report, *task)
-		request, requestErr := managerInvocationRequest(root, runtime, plan, input, *task, pending.phase, children, conflicts, childReports, task.RepairDiagnostic, repairRound, repairChecks)
-		if requestErr != nil {
-			return blockRun(store, report, fmt.Errorf("native recovery request for %s could not be reconstructed", task.ManagerID))
-		}
-		binding, bindingErr := originalNativeRecoveryBinding(report.ID, report.Invocations, task.ID, agentexec.RoleExecutor, pending.phase, request)
-		if bindingErr != nil {
-			return blockRun(store, report, fmt.Errorf("native recovery for %s is blocked: %w", task.ManagerID, bindingErr))
-		}
-		result, found, recoverErr := RecoverProjectAgent(ctx, host, invoker, root, pending.taskID, config, runtime.Limits, binding, request)
-		if recoverErr != nil || !found {
-			if result.Receipt.RunID != "" {
-				upsertRecoveredInvocation(&report, invocationLogForResult(*task, pending.phase, result, agent))
-			}
-			if current := findTask(report.Tasks, task.ManagerID); current != nil {
-				current.State = "uncertain"
-			}
-			cause := fmt.Errorf("native invocation for %s could not be safely recovered", task.ManagerID)
-			return blockRun(store, report, errors.Join(cause, recoverErr))
-		}
-		invocation := invocationLogForResult(*task, pending.phase, result, agent)
-		upsertRecoveredInvocation(&report, invocation)
-		recoveredResults[taskActionKey(task.ManagerID, pending.phase)] = managerInvocationResult{managerID: task.ManagerID, result: result, log: invocation}
-		if pending.phase == "integrate" {
-			task.State = "integration-retry-ready"
-		} else {
-			task.State = "work-retry-ready"
-		}
-		if err := persistState(store, &report); err != nil {
-			return empty, err
-		}
-	}
-	refreshStarts()
-	spent = totalCost(report.Invocations)
-	// A recovered failed integration review is reworked in place, as the
-	// integration review loop does, before scheduling continues.
-	for _, managerID := range recoveredReintegrations {
-		task := findTask(report.Tasks, managerID)
-		if task == nil {
-			return failRun(store, report, fmt.Errorf("recovered Manager %s is absent from the run", managerID))
-		}
-		requests, reworkErr := reintegrateAfterRework(ctx, host, invoker, root, store, dir, plan, runtime, project, &report, task, &starts, &spent)
-		if reworkErr != nil {
-			return blockRun(store, report, reworkErr)
-		}
-		task.ReworkRequests = append(task.ReworkRequests, requests...)
-		if err := persistState(store, &report); err != nil {
-			return empty, err
-		}
-	}
-	// The scheduler chooses each next batch from durable task state. Work and
-	// bottom-up integrations therefore interleave as dependency trees complete.
-	for {
-		actions, scheduleErr := readyManagerActions(report.Tasks, dependencies, runtime.Limits.MaxParallel)
-		if scheduleErr != nil {
-			return failRun(store, report, scheduleErr)
-		}
-		if len(actions) == 0 {
-			break
-		}
-		if actions[0].phase == "work" {
-			remainingStarts := runtime.Limits.MaxStarts - starts
-			freshActions := 0
-			limited := make([]managerAction, 0, len(actions))
-			for _, action := range actions {
-				if _, recovered := recoveredResults[taskActionKey(action.managerID, "work")]; recovered {
-					limited = append(limited, action)
-					continue
-				}
-				if freshActions >= remainingStarts {
-					continue
-				}
-				freshActions++
-				limited = append(limited, action)
-			}
-			actions = limited
-			if len(actions) == 0 {
-				return blockRun(store, report, fmt.Errorf("runtime start limit %d exceeded", runtime.Limits.MaxStarts))
-			}
-			if freshActions > 0 && spent >= runtime.Limits.MaxCostMicros {
-				return blockRun(store, report, fmt.Errorf("estimated cost limit reached before Manager work"))
-			}
-			if bindErr := ensureWorkingBinding(host, root, plan); bindErr != nil {
-				return supersedeExisting(store, id, bindErr)
-			}
-			prepared := make(map[string]preparedWorkAction, len(actions))
-			calls := make([]managerInvocationCall, 0, len(actions))
-			for _, action := range actions {
-				if recovered, ok := recoveredResults[taskActionKey(action.managerID, "work")]; ok {
-					task := findTask(report.Tasks, action.managerID)
-					if task == nil {
-						return failRun(store, report, fmt.Errorf("recovered Manager %s is absent from the run", action.managerID))
-					}
-					current, readErr := workCandidate(store, dir, report, *task, baseCandidateID)
-					if readErr != nil {
-						return failRun(store, report, readErr)
-					}
-					input, children, _, _, inputErr := recoveryManagerInput(store, dir, host, root, project.Snapshot, boundProject.Report, report, plan, *task, "work", dependencies[task.ManagerID])
-					if inputErr != nil {
-						return failRun(store, report, inputErr)
-					}
-					prepared[action.managerID] = preparedWorkAction{current: current, input: input, children: children, result: recovered}
-					continue
-				}
-				task := findTask(report.Tasks, action.managerID)
-				if task == nil {
-					return failRun(store, report, fmt.Errorf("scheduled Manager %s is absent from the run", action.managerID))
-				}
-				if err := ctx.Err(); err != nil {
-					return interruptRun(store, report, err)
-				}
-				current, readErr := workCandidate(store, dir, report, *task, baseCandidateID)
-				if readErr != nil {
-					return failRun(store, report, readErr)
-				}
-				inputCandidate, mergeErr := mergeDependencyInputs(store, dir, report.Tasks, current, dependencies[task.ManagerID])
-				if mergeErr != nil {
-					return failRun(store, report, mergeErr)
-				}
-				input, projectErr := projectForCandidate(host, root, project.Snapshot, inputCandidate)
-				if projectErr != nil {
-					return failRun(store, report, projectErr)
-				}
-				children := activeChildren(report.Tasks, task.ManagerID)
-				task.State = "invoking"
-				task.RepairPhase = "work"
-				task.WorkAttempts++
-				task.Attempts++
-				start := starts
-				starts++
-				taskCopy := *task
-				repairRound, repairChecks := repairContext(report, taskCopy)
-				prepared[action.managerID] = preparedWorkAction{current: current, input: input, children: children}
-				calls = append(calls, managerInvocationCall{managerID: action.managerID, invoke: func(callCtx context.Context) (agentexec.RunResult, InvocationLog, error) {
-					return invokeManager(callCtx, host, invoker, root, runtime, plan, input, taskCopy, "work", children, nil, nil,
-						taskCopy.RepairDiagnostic, repairRound, repairChecks, start)
-				}})
-			}
-			if err := persistState(store, &report); err != nil {
-				return empty, err
-			}
-			results := invokeManagerBatch(ctx, calls)
-			for _, result := range results {
-				prepared[result.managerID] = preparedWorkAction{
-					current: prepared[result.managerID].current, input: prepared[result.managerID].input,
-					children: prepared[result.managerID].children, result: result,
-				}
-				appendInvocationReceipt(&report, result.log)
-				if result.err != nil {
-					if task := findTask(report.Tasks, result.managerID); task != nil {
-						task.State = "uncertain"
-					}
-				}
-			}
-			spent = totalCost(report.Invocations)
-			if err := persistState(store, &report); err != nil {
-				return empty, err
-			}
-			refreshStarts()
-			if dispatchErr := batchInvocationError(results); dispatchErr != nil {
-				return failRun(store, report, fmt.Errorf("parallel Manager work dispatch failed: %w", dispatchErr))
-			}
-			for _, action := range actions {
-				task := findTask(report.Tasks, action.managerID)
-				if task == nil {
-					return failRun(store, report, fmt.Errorf("scheduled Manager %s is absent from the run", action.managerID))
-				}
-				if task.State == "worked" || task.State == "integrated" || task.State == "complete" || task.State == "integration-retry-ready" {
-					continue
-				}
-				if err := ctx.Err(); err != nil {
-					return interruptRun(store, report, err)
-				}
-				preparedAction := prepared[action.managerID]
-				current, input, children := preparedAction.current, preparedAction.input, preparedAction.children
-				reviewRounds := 1
-				reviewRoundBase := 0
-				if runtime.Review != nil {
-					reviewRounds = runtime.Review.MaxRounds
-					reviewRoundBase = reviewCount(report.Reviews, task.ManagerID, "work")
-					if reviewRoundBase >= reviewRounds {
-						return blockRun(store, report, fmt.Errorf("Manager %s exhausted the cumulative work review round limit", task.ManagerID))
-					}
-				}
-				batchResultPending := true
-				for reviewRound := reviewRoundBase + 1; reviewRound <= reviewRounds; reviewRound++ {
-					var proposal agentexec.RunResult
-					var invocation InvocationLog
-					var parsed TaskResponse
-					var candidate candidateData
-					for {
-						var invokeErr error
-						fromBatch := batchResultPending
-						if batchResultPending {
-							dispatched := preparedAction.result
-							proposal, invocation, invokeErr = dispatched.result, dispatched.log, dispatched.err
-							delete(recoveredResults, taskActionKey(task.ManagerID, "work"))
-							batchResultPending = false
-						} else {
-							if starts >= runtime.Limits.MaxStarts {
-								return blockRun(store, report, fmt.Errorf("runtime start limit %d exceeded before %s work repair", runtime.Limits.MaxStarts, task.ManagerID))
-							}
-							if spent >= runtime.Limits.MaxCostMicros {
-								return blockRun(store, report, fmt.Errorf("estimated cost limit reached before %s work repair", task.ManagerID))
-							}
-							task.State = "invoking"
-							task.RepairPhase = "work"
-							task.WorkAttempts++
-							task.Attempts++
-							if err := persistState(store, &report); err != nil {
-								return empty, err
-							}
-							refreshStarts()
-							repairRound, repairChecks := repairContext(report, *task)
-							proposal, invocation, invokeErr = invokeManager(ctx, host, invoker, root, runtime, plan, input, *task, "work", children, nil, nil, task.RepairDiagnostic, repairRound, repairChecks, starts)
-							starts++
-						}
-						if invokeErr != nil {
-							if !fromBatch && appendInvocationReceipt(&report, invocation) {
-								spent = totalCost(report.Invocations)
-							}
-							task.State = "uncertain"
-							if errors.Is(invokeErr, ErrStale) {
-								if err := persistState(store, &report); err != nil {
-									return empty, err
-								}
-								return supersedeExisting(store, id, invokeErr)
-							}
-							_ = persistState(store, &report)
-							refreshStarts()
-							if ctx.Err() != nil {
-								return interruptRun(store, report, ctx.Err())
-							}
-							return failRun(store, report, fmt.Errorf("manager %s work: %w", task.ManagerID, invokeErr))
-						}
-						if !fromBatch {
-							report.Invocations = append(report.Invocations, invocation)
-							spent = totalCost(report.Invocations)
-							if err := persistState(store, &report); err != nil {
-								return empty, err
-							}
-							refreshStarts()
-						}
-						if costExceedsLimit(report.Invocations, runtime.Limits.MaxCostMicros) {
-							return blockRun(store, report, fmt.Errorf("estimated cost limit exceeded"))
-						}
-						parseErr := func() error {
-							var decodeErr error
-							parsed, decodeErr = decodeTaskResponse(proposal.Response.ReportJSON, "work", children)
-							if decodeErr != nil {
-								return decodeErr
-							}
-							if parsed.Status == "blocked" {
-								return terminalTaskResponseError{blocked: true, err: fmt.Errorf("manager %s reported blocked: %s", task.ManagerID, parsed.Summary)}
-							}
-							if parsed.Status == "failed" {
-								return terminalTaskResponseError{err: fmt.Errorf("manager %s reported failed: %s", task.ManagerID, parsed.Summary)}
-							}
-							if outcomeErr := validateTaskOutcome(proposal.Response.Outcome, parsed); outcomeErr != nil {
-								return outcomeErr
-							}
-							if parsed.Status == "complete" && (len(parsed.Questions) > 0 || len(parsed.Risks) > 0) {
-								return fmt.Errorf("manager %s reported complete with unresolved questions or risks", task.ManagerID)
-							}
-							if parsed.Status == "partial" && len(parsed.Questions) == 0 && len(parsed.Risks) == 0 {
-								return fmt.Errorf("manager %s reported partial without an actionable question or risk", task.ManagerID)
-							}
-							if parsed.EscalateTo != "" && parsed.EscalateTo != escalationTarget(*task) {
-								return fmt.Errorf("Manager %s may escalate only to its nearest empowered recipient %q", task.ManagerID, escalationTarget(*task))
-							}
-							if parsed.Status == "no-op" && (len(proposal.Response.CandidateFiles) > 0 || (proposal.Delta != nil && len(proposal.Delta.Changes) > 0)) {
-								return fmt.Errorf("manager %s claimed no-op while proposing files", task.ManagerID)
-							}
-							var applyErr error
-							candidate, applyErr = applyAgentCandidate(current, proposal, input.Config, input.Report, *task, "work", nil, runtime.Limits, input.Snapshot)
-							return applyErr
-						}()
-						if parseErr == nil {
-							task.RepairPhase, task.RepairDiagnostic = "", ""
-							break
-						}
-						var terminal terminalTaskResponseError
-						if errors.As(parseErr, &terminal) {
-							if terminal.blocked {
-								return blockRun(store, report, terminal.err)
-							}
-							return failRun(store, report, terminal.err)
-						}
-						task.RepairDiagnostic = boundedRepairDiagnostic(parseErr)
-						if task.WorkAttempts > runtime.Limits.MaxRetries {
-							return failRun(store, report, fmt.Errorf("manager %s work response remained invalid after %d attempt(s): %s", task.ManagerID, task.WorkAttempts, task.RepairDiagnostic))
-						}
-						task.State = "work-retry-ready"
-						if err := persistState(store, &report); err != nil {
-							return empty, err
-						}
-					}
-					task.Obligations, err = newLocalObligations(task.ManagerID, parsed.Questions, parsed.Risks)
-					if err != nil {
-						return blockRun(store, report, fmt.Errorf("Manager %s obligation provenance: %w", task.ManagerID, err))
-					}
-					if parsed.EscalateTo != "" {
-						if err := recordEscalation(&report, *task, parsed); err != nil {
-							return blockRun(store, report, err)
-						}
-					}
-					for _, delegation := range parsed.Delegations {
-						child := findTask(report.Tasks, delegation.ManagerID)
-						if child == nil {
-							return failRun(store, report, fmt.Errorf("delegation target %s is not in the active plan", delegation.ManagerID))
-						}
-						child.Goal = delegation.Goal
-					}
-					candidate.ID, err = newID()
-					if err != nil {
-						return failRun(store, report, err)
-					}
-					candidate.Parents = []string{current.ID}
-					if err := store.writeCandidate(dir, candidate); err != nil {
-						return failRun(store, report, err)
-					}
-					candidate, err = store.readCandidate(dir, candidate.ID)
-					if err != nil {
-						return failRun(store, report, err)
-					}
-					task.State, task.ReportID, task.CandidateID = "worked", invocation.ReportID, candidate.ID
-					task.WrittenPaths = unionPaths(task.WrittenPaths, agentCandidatePaths(proposal))
-					task.Summary, task.Questions, task.Risks, task.Delegations, task.ReportStatus = parsed.Summary, parsed.Questions, parsed.Risks, parsed.Delegations, parsed.Status
-					report.Candidate = candidateRef(candidate, false)
-					if err := persistState(store, &report); err != nil {
-						return empty, err
-					}
-					if runtime.Review == nil {
-						break
-					}
-					candidateProject, compileErr := finalProjectForCandidate(host, root, project, candidate)
-					if compileErr != nil {
-						return failRun(store, report, compileErr)
-					}
-					if !reviewRequired(candidateProject, *task) {
-						task.ReviewStatus, task.ReviewCandidateID, task.ReviewRound = "not-required", candidate.ID, 0
-						if err := persistState(store, &report); err != nil {
-							return empty, err
-						}
-						break
-					}
-					task.ReviewStatus, task.ReviewCandidateID, task.ReviewRound = "invoking", candidate.ID, reviewRound
-					if err := persistState(store, &report); err != nil {
-						return empty, err
-					}
-					if starts >= runtime.Limits.MaxStarts || spent >= runtime.Limits.MaxCostMicros {
-						return blockRun(store, report, fmt.Errorf("review for %s exceeds the cumulative run budget", task.ManagerID))
-					}
-					startedIndex := -1
-					review, reviewLog, reviewErr := invokeReviewer(ctx, host, invoker, root, plan, runtime, candidateProject, *task, "work", reviewRound, candidate, func(started InvocationLog) error {
-						report.Invocations = append(report.Invocations, started)
-						startedIndex = len(report.Invocations) - 1
-						return persistState(store, &report)
-					}, report)
-					starts++
-					if startedIndex >= 0 {
-						report.Invocations[startedIndex] = reviewLog
-						if reviewErr == nil {
-							report.Reviews = append(report.Reviews, review)
-						}
-						spent = totalCost(report.Invocations)
-						if costExceedsLimit(report.Invocations, runtime.Limits.MaxCostMicros) {
-							return blockRun(store, report, fmt.Errorf("estimated cost limit exceeded during review"))
-						}
-						if err := persistState(store, &report); err != nil {
-							return empty, err
-						}
-						refreshStarts()
-					}
-					if reviewErr != nil {
-						task.State, task.ReviewStatus = "uncertain", "uncertain"
-						_ = persistState(store, &report)
-						if ctx.Err() != nil {
-							return interruptRun(store, report, ctx.Err())
-						}
-						return failRun(store, report, fmt.Errorf("manager %s review: %w", task.ManagerID, reviewErr))
-					}
-					task.ReviewStatus = review.Outcome
-					if review.Outcome == "pass" {
-						if err := persistState(store, &report); err != nil {
-							return empty, err
-						}
-						break
-					}
-					if reviewRound == reviewRounds {
-						return blockRun(store, report, fmt.Errorf("manager %s reached the configured review round limit", task.ManagerID))
-					}
-					var diagnostics []string
-					for _, finding := range review.Findings {
-						diagnostics = append(diagnostics, fmt.Sprintf("%s: %s (%s)", finding.Path, finding.Expectation, finding.Grounding))
-					}
-					task.RepairDiagnostic = boundedRepairDiagnostic(fmt.Errorf("independent review findings: %s", strings.Join(diagnostics, "; ")))
-					task.ReviewStatus = "rework-requested"
-					current = candidate
-					reworkInputCandidate, mergeErr := mergeDependencyInputs(store, dir, report.Tasks, current, dependencies[task.ManagerID])
-					if mergeErr != nil {
-						return failRun(store, report, mergeErr)
-					}
-					input, err = projectForCandidate(host, root, project.Snapshot, reworkInputCandidate)
-					if err != nil {
-						return failRun(store, report, err)
-					}
-					task.State = "review-rework-ready"
-					if err := persistState(store, &report); err != nil {
-						return empty, err
-					}
-				}
-			}
-			continue
-		}
-		// Integration is bottom-up. Each parent receives actual child candidates
-		// and must report that it integrated them; reports alone cannot close the tree.
-		for _, action := range actions {
-			if action.phase != "integrate" {
-				return failRun(store, report, fmt.Errorf("unknown scheduled Manager action phase %q", action.phase))
-			}
-			task := findTask(report.Tasks, action.managerID)
-			if task == nil {
-				return failRun(store, report, fmt.Errorf("scheduled Manager %s is absent from the run", action.managerID))
-			}
-			children := activeChildren(report.Tasks, task.ManagerID)
-			if len(children) == 0 || task.State == "integrated" || task.State == "complete" {
-				continue
-			}
-			if runtime.Review != nil && hasPendingReworkInSubtree(report.Tasks, task.ManagerID) {
-				// A deeper Manager has already asked for child work. Defer this
-				// ancestor too; the bounded rework loop will rebuild the whole
-				// affected chain from the corrected descendant candidate.
-				task.State = "integration-deferred"
-				if err := persistState(store, &report); err != nil {
-					return empty, err
-				}
-				continue
-			}
-			if err := ctx.Err(); err != nil {
-				return interruptRun(store, report, err)
-			}
-			_, hasRecoveredIntegration := recoveredResults[taskActionKey(task.ManagerID, "integrate")]
-			if starts >= runtime.Limits.MaxStarts && !hasRecoveredIntegration {
-				return blockRun(store, report, fmt.Errorf("runtime start limit %d exceeded", runtime.Limits.MaxStarts))
-			}
-			if bindErr := ensureWorkingBinding(host, root, plan); bindErr != nil {
-				return supersedeExisting(store, id, bindErr)
-			}
-			merged, conflicts, err := mergeChildCandidates(store, dir, report.Tasks, *task, children)
-			if err != nil {
-				return failRun(store, report, err)
-			}
-			input, err := projectForCandidate(host, root, project.Snapshot, merged)
-			if err != nil {
-				return failRun(store, report, err)
-			}
-			childSummaries := buildChildSummaries(store, dir, report.Tasks, report.Reviews, children)
-			var proposal agentexec.RunResult
-			var invocation InvocationLog
-			var parsed TaskResponse
-			var resolved candidateData
-			var remainingQ, remainingR []string
-			var resolvedObligations, remainingObligations []Obligation
-			for {
-				var invokeErr error
-				fromRecovery := false
-				if recovered, ok := recoveredResults[taskActionKey(task.ManagerID, "integrate")]; ok {
-					fromRecovery = true
-					proposal, invocation, invokeErr = recovered.result, recovered.log, recovered.err
-					delete(recoveredResults, taskActionKey(task.ManagerID, "integrate"))
-				} else {
-					if starts >= runtime.Limits.MaxStarts {
-						return blockRun(store, report, fmt.Errorf("runtime start limit %d exceeded before %s integration repair", runtime.Limits.MaxStarts, task.ManagerID))
-					}
-					if spent >= runtime.Limits.MaxCostMicros {
-						return blockRun(store, report, fmt.Errorf("estimated cost limit reached before %s integration repair", task.ManagerID))
-					}
-					task.State = "integrating"
-					task.RepairPhase = "integrate"
-					task.IntegrationAttempts++
-					task.Attempts++
-					if err := persistState(store, &report); err != nil {
-						return empty, err
-					}
-					repairRound, repairChecks := repairContext(report, *task)
-					proposal, invocation, invokeErr = invokeManager(ctx, host, invoker, root, runtime, plan, input, *task, "integrate", children, conflicts, childSummaries, task.RepairDiagnostic, repairRound, repairChecks, starts)
-					starts++
-				}
-				if invokeErr != nil {
-					if !fromRecovery && appendInvocationReceipt(&report, invocation) {
-						spent = totalCost(report.Invocations)
-					}
-					task.State = "uncertain"
-					if errors.Is(invokeErr, ErrStale) {
-						if err := persistState(store, &report); err != nil {
-							return empty, err
-						}
-						return supersedeExisting(store, id, invokeErr)
-					}
-					_ = persistState(store, &report)
-					refreshStarts()
-					if ctx.Err() != nil {
-						return interruptRun(store, report, ctx.Err())
-					}
-					return failRun(store, report, fmt.Errorf("manager %s integration: %w", task.ManagerID, invokeErr))
-				}
-				if !fromRecovery {
-					report.Invocations = append(report.Invocations, invocation)
-				}
-				spent = totalCost(report.Invocations)
-				if costExceedsLimit(report.Invocations, runtime.Limits.MaxCostMicros) {
-					return blockRun(store, report, fmt.Errorf("estimated cost limit exceeded"))
-				}
-				refreshStarts()
-				validationErr := func() error {
-					var decodeErr error
-					parsed, decodeErr = decodeTaskResponse(proposal.Response.ReportJSON, "integrate", children)
-					if decodeErr != nil {
-						return decodeErr
-					}
-					if parsed.Status == "blocked" || parsed.Status == "failed" || parsed.Status == "no-op" {
-						return terminalTaskResponseError{blocked: true, err: fmt.Errorf("manager %s integration is %s: %s", task.ManagerID, parsed.Status, parsed.Summary)}
-					}
-					if outcomeErr := validateTaskOutcome(proposal.Response.Outcome, parsed); outcomeErr != nil {
-						return outcomeErr
-					}
-					if parsed.EscalateTo != "" && parsed.EscalateTo != escalationTarget(*task) {
-						return fmt.Errorf("Manager %s may escalate only to its nearest empowered recipient %q", task.ManagerID, escalationTarget(*task))
-					}
-					candidate, candidateErr := applyAgentCandidate(merged, proposal, input.Config, input.Report, *task, "integrate", conflicts, runtime.Limits, input.Snapshot)
-					if candidateErr != nil {
-						return candidateErr
-					}
-					if len(conflicts) > 0 && !proposesEvery(agentCandidatePaths(proposal), conflicts) {
-						return fmt.Errorf("manager %s did not resolve child path conflict(s): %s", task.ManagerID, strings.Join(conflicts, ", "))
-					}
-					outstanding, obligationErr := managerObligationRecords(*task, report.Tasks, children)
-					if obligationErr != nil {
-						return terminalTaskResponseError{blocked: true, err: fmt.Errorf("manager %s obligations: %w", task.ManagerID, obligationErr)}
-					}
-					resolvedObligations, remainingObligations, obligationErr = resolveObligationRecords(outstanding, parsed.ResolvedQuestions, parsed.ResolvedRisks)
-					if obligationErr != nil {
-						return fmt.Errorf("manager %s obligation resolution: %w", task.ManagerID, obligationErr)
-					}
-					remainingQ, remainingR = obligationTexts(remainingObligations)
-					remainingQ = append(remainingQ, parsed.Questions...)
-					remainingR = append(remainingR, parsed.Risks...)
-					if len(remainingQ)+len(remainingR) > 0 {
-						if parsed.Status != "partial" || parsed.EscalateTo != escalationTarget(*task) {
-							return fmt.Errorf("manager %s has unresolved obligations that did not escalate to its nearest parent", task.ManagerID)
-						}
-					} else if parsed.Status != "complete" {
-						return fmt.Errorf("manager %s integration is partial without unresolved obligations", task.ManagerID)
-					}
-					if parsed.EscalateTo != "" && len(parsed.Questions)+len(parsed.Risks) == 0 {
-						return fmt.Errorf("Manager %s escalation requires an actionable question or risk", task.ManagerID)
-					}
-					resolved = candidate
-					return nil
-				}()
-				if validationErr == nil {
-					task.RepairPhase, task.RepairDiagnostic = "", ""
-					break
-				}
-				var terminal terminalTaskResponseError
-				if errors.As(validationErr, &terminal) {
-					if terminal.blocked {
-						return blockRun(store, report, terminal.err)
-					}
-					return failRun(store, report, terminal.err)
-				}
-				task.RepairDiagnostic = boundedRepairDiagnostic(validationErr)
-				if task.IntegrationAttempts > runtime.Limits.MaxRetries {
-					return failRun(store, report, fmt.Errorf("manager %s integration response remained invalid after %d attempt(s): %s", task.ManagerID, task.IntegrationAttempts, task.RepairDiagnostic))
-				}
-				task.State = "integration-retry-ready"
-				if err := persistState(store, &report); err != nil {
-					return empty, err
-				}
-			}
-			newLocal, err := newLocalResponseObligations(task.ManagerID, remainingObligations, parsed.Questions, parsed.Risks)
-			if err != nil {
-				return blockRun(store, report, fmt.Errorf("Manager %s obligation provenance: %w", task.ManagerID, err))
-			}
-			forwarded := appendForwardedObligations(remainingObligations, task.ManagerID)
-			if err := applyObligationResolutions(&report, resolvedObligations); err != nil {
-				return blockRun(store, report, fmt.Errorf("Manager %s obligation resolution: %w", task.ManagerID, err))
-			}
-			task.Obligations = append(forwarded, newLocal...)
-			if len(remainingQ)+len(remainingR) > 0 {
-				if err := recordEscalation(&report, *task, TaskResponse{Summary: parsed.Summary, Questions: remainingQ, Risks: remainingR, EscalateTo: parsed.EscalateTo}); err != nil {
-					return blockRun(store, report, err)
-				}
-			}
-			task.ReworkRequests = append([]ReworkRequest(nil), parsed.ReworkRequests...)
-			if len(remainingQ)+len(remainingR) > 0 {
-				markObligationEscalationsEscalated(&report, task.ManagerID, task.Obligations)
-			}
-			task.Questions, task.Risks = uniqueSorted(remainingQ), uniqueSorted(remainingR)
-			if len(remainingQ) == 0 && len(remainingR) == 0 {
-				task.ReportStatus = "complete"
-			} else {
-				task.ReportStatus = "partial"
-			}
-			resolved.ID, err = newID()
-			if err != nil {
-				return failRun(store, report, err)
-			}
-			resolved.Parents = []string{merged.ID}
-			if err := store.writeCandidate(dir, resolved); err != nil {
-				return failRun(store, report, err)
-			}
-			resolved, err = store.readCandidate(dir, resolved.ID)
-			if err != nil {
-				return failRun(store, report, err)
-			}
-			task.State, task.IntegrationReportID, task.IntegrationCandidateID = "integrated", invocation.ReportID, resolved.ID
-			task.IntegratedPaths = unionPaths(task.IntegratedPaths, changedCandidatePaths(merged, resolved))
-			task.Summary = parsed.Summary
-			report.Candidate = candidateRef(resolved, false)
-			if err := persistState(store, &report); err != nil {
-				return empty, err
-			}
-			refreshStarts()
-			if runtime.Review != nil {
-				// A candidate that explicitly requests direct-child rework is
-				// known to be stale until that child and this Manager's ancestor
-				// chain have been rerun. Do not spend a review round on it.
-				if len(task.ReworkRequests) > 0 {
-					task.ReviewStatus, task.ReviewCandidateID, task.ReviewRound = "", "", 0
-					if err := persistState(store, &report); err != nil {
-						return empty, err
-					}
-					continue
-				}
-				candidateProject, compileErr := finalProjectForCandidate(host, root, project, resolved)
-				if compileErr != nil {
-					return failRun(store, report, compileErr)
-				}
-				if !phaseReviewRequired(candidateProject, *task, report.Tasks, "integrate") {
-					task.ReviewStatus, task.ReviewCandidateID, task.ReviewRound = "not-required", resolved.ID, 0
-					if err := persistState(store, &report); err != nil {
-						return empty, err
-					}
-					continue
-				}
-				integrationReviewRound := reviewCount(report.Reviews, task.ManagerID, "integrate") + 1
-				if integrationReviewRound > runtime.Review.MaxRounds {
-					return blockRun(store, report, fmt.Errorf("Manager %s exhausted the cumulative integration review round limit", task.ManagerID))
-				}
-				task.ReviewStatus, task.ReviewCandidateID, task.ReviewRound = "invoking", resolved.ID, integrationReviewRound
-				if err := persistState(store, &report); err != nil {
-					return empty, err
-				}
-				if starts >= runtime.Limits.MaxStarts || spent >= runtime.Limits.MaxCostMicros {
-					return blockRun(store, report, fmt.Errorf("review for %s exceeds the cumulative run budget", task.ManagerID))
-				}
-				startedIndex := -1
-				review, reviewLog, reviewErr := invokeReviewer(ctx, host, invoker, root, plan, runtime, candidateProject, *task, "integrate", integrationReviewRound, resolved, func(started InvocationLog) error {
-					report.Invocations = append(report.Invocations, started)
-					startedIndex = len(report.Invocations) - 1
-					return persistState(store, &report)
-				}, report)
-				starts++
-				if startedIndex >= 0 {
-					report.Invocations[startedIndex] = reviewLog
-					if reviewErr == nil {
-						report.Reviews = append(report.Reviews, review)
-					}
-					spent = totalCost(report.Invocations)
-					if costExceedsLimit(report.Invocations, runtime.Limits.MaxCostMicros) {
-						return blockRun(store, report, fmt.Errorf("estimated cost limit exceeded during integration review"))
-					}
-					if err := persistState(store, &report); err != nil {
-						return empty, err
-					}
-				}
-				if reviewErr != nil {
-					task.State, task.ReviewStatus = "uncertain", "uncertain"
-					_ = persistState(store, &report)
-					if ctx.Err() != nil {
-						return interruptRun(store, report, ctx.Err())
-					}
-					return failRun(store, report, fmt.Errorf("manager %s integration review: %w", task.ManagerID, reviewErr))
-				}
-				task.ReviewStatus = review.Outcome
-				if review.Outcome != "pass" {
-					var findings []string
-					for _, finding := range review.Findings {
-						findings = append(findings, finding.Path+": "+finding.Expectation+" ("+finding.Grounding+")")
-					}
-					task.RepairDiagnostic = boundedRepairDiagnostic(fmt.Errorf("integration review findings: %s", strings.Join(findings, "; ")))
-					requests, reworkErr := reintegrateAfterRework(ctx, host, invoker, root, store, dir, plan, runtime, project, &report, task, &starts, &spent)
-					if reworkErr != nil {
-						return blockRun(store, report, reworkErr)
-					}
-					task.ReworkRequests = append(task.ReworkRequests, requests...)
-				}
-				if err := persistState(store, &report); err != nil {
-					return empty, err
-				}
-			}
-		}
-	}
-	if err := runManagerReworkRounds(ctx, host, invoker, root, store, dir, plan, runtime, project, &report, &starts, &spent); err != nil {
-		return blockRun(store, report, err)
-	}
-	rootCandidateID := findRootCandidate(report.Tasks)
-	if rootCandidateID == "" {
-		rootCandidateID = report.Candidate.ID
-	}
-	finalCandidate, err := store.readCandidate(dir, rootCandidateID)
-	if err != nil {
-		return failRun(store, report, err)
-	}
-	if runtime.Review != nil {
-		finalProject, compileErr := finalProjectForCandidate(host, root, project, finalCandidate)
-		if compileErr != nil {
-			return failRun(store, report, compileErr)
-		}
-		for i := range report.Tasks {
-			task := &report.Tasks[i]
-			phase := "work"
-			if len(activeChildren(report.Tasks, task.ManagerID)) > 0 {
-				phase = "integrate"
-			}
-			if !phaseReviewRequired(finalProject, *task, report.Tasks, phase) {
-				task.ReviewStatus, task.ReviewCandidateID, task.ReviewRound = "not-required", finalCandidate.ID, 0
-				if err := persistState(store, &report); err != nil {
-					return empty, err
-				}
-				continue
-			}
-			_, _, fresh, freshnessErr := freshPassedReviewForScope(host, root, store, dir, plan, report, finalProject, finalCandidate, *task, phase)
-			if freshnessErr != nil {
-				return failRun(store, report, freshnessErr)
-			}
-			if fresh {
-				continue
-			}
-			reviewRound := reviewCount(report.Reviews, task.ManagerID, phase) + 1
-			if reviewRound > runtime.Review.MaxRounds {
-				return blockRun(store, report, fmt.Errorf("Manager %s exhausted the cumulative final review round limit", task.ManagerID))
-			}
-			if starts >= runtime.Limits.MaxStarts || spent >= runtime.Limits.MaxCostMicros {
-				return blockRun(store, report, fmt.Errorf("final review for %s exceeds the cumulative run budget", task.ManagerID))
-			}
-			task.ReviewStatus, task.ReviewCandidateID = "invoking", finalCandidate.ID
-			task.ReviewRound = reviewRound
-			if err := persistState(store, &report); err != nil {
-				return empty, err
-			}
-			startedIndex := -1
-			review, reviewLog, reviewErr := invokeReviewer(ctx, host, invoker, root, plan, runtime, finalProject, *task, phase, reviewRound, finalCandidate, func(started InvocationLog) error {
-				report.Invocations = append(report.Invocations, started)
-				startedIndex = len(report.Invocations) - 1
-				return persistState(store, &report)
-			}, report)
-			starts++
-			if startedIndex >= 0 {
-				report.Invocations[startedIndex] = reviewLog
-				if reviewErr == nil {
-					report.Reviews = append(report.Reviews, review)
-				}
-				spent = totalCost(report.Invocations)
-				if costExceedsLimit(report.Invocations, runtime.Limits.MaxCostMicros) {
-					return blockRun(store, report, fmt.Errorf("estimated cost limit exceeded during final review"))
-				}
-				if err := persistState(store, &report); err != nil {
-					return empty, err
-				}
-			}
-			if reviewErr != nil {
-				task.State, task.ReviewStatus = "uncertain", "uncertain"
-				_ = persistState(store, &report)
-				if ctx.Err() != nil {
-					return interruptRun(store, report, ctx.Err())
-				}
-				return failRun(store, report, fmt.Errorf("final review for %s: %w", task.ManagerID, reviewErr))
-			}
-			task.ReviewStatus = review.Outcome
-			if review.Outcome != "pass" {
-				requester, requests, routeErr := routeReviewFindings(*task, review, finalProject.Report, report.Tasks)
-				if routeErr != nil {
-					if task.ParentTask != "" || len(activeChildren(report.Tasks, task.ManagerID)) == 0 {
-						return blockRun(store, report, routeErr)
-					}
-					var diagnostics []string
-					for _, finding := range review.Findings {
-						diagnostics = append(diagnostics, fmt.Sprintf("%s: %s (%s)", finding.Path, finding.Expectation, finding.Grounding))
-					}
-					task.RepairDiagnostic = boundedRepairDiagnostic(fmt.Errorf("final review findings: %s", strings.Join(diagnostics, "; ")))
-					_, reworkErr := reintegrateAfterRework(ctx, host, invoker, root, store, dir, plan, runtime, project, &report, task, &starts, &spent)
-					if reworkErr != nil {
-						return blockRun(store, report, reworkErr)
-					}
-					requester = task.ManagerID
-				}
-				parent := findTask(report.Tasks, requester)
-				if parent == nil {
-					return blockRun(store, report, fmt.Errorf("review findings for %s have no empowered direct parent", task.ManagerID))
-				}
-				parent.ReworkRequests = append(parent.ReworkRequests, requests...)
-				if err := runManagerReworkRounds(ctx, host, invoker, root, store, dir, plan, runtime, project, &report, &starts, &spent); err != nil {
-					return blockRun(store, report, err)
-				}
-				rootCandidateID = findRootCandidate(report.Tasks)
-				finalCandidate, err = store.readCandidate(dir, rootCandidateID)
-				if err != nil {
-					return failRun(store, report, err)
-				}
-				finalProject, err = finalProjectForCandidate(host, root, project, finalCandidate)
-				if err != nil {
-					return failRun(store, report, err)
-				}
-				i = -1
-				continue
-			}
-			if err := persistState(store, &report); err != nil {
-				return empty, err
-			}
-		}
-	}
-	if err := validateReportClosure(report); err != nil {
-		return blockRun(store, report, err)
-	}
-	finalCandidate, err = completeCandidateDocument(host, root, store, dir, project, finalCandidate)
-	if err != nil {
-		return blockRun(store, report, err)
-	}
-	if err := validateFinalCandidate(host, root, project, finalCandidate, plan); err != nil {
-		return blockRun(store, report, err)
-	}
-	if err := requireFreshReviews(host, root, store, dir, project, finalCandidate, plan, runtime, report); err != nil {
-		return blockRun(store, report, err)
-	}
-	if report.ActiveRepairCandidateID != "" {
-		seed, seedErr := store.readCandidate(dir, report.ActiveRepairCandidateID)
-		if seedErr != nil {
-			return failRun(store, report, seedErr)
-		}
-		before, snapshotErr := snapshotWithCandidate(project.Snapshot, seed)
-		if snapshotErr != nil {
-			return failRun(store, report, snapshotErr)
-		}
-		after, snapshotErr := snapshotWithCandidate(project.Snapshot, finalCandidate)
-		if snapshotErr != nil {
-			return failRun(store, report, snapshotErr)
-		}
-		if before.Digest() == after.Digest() {
-			return failRun(store, report, fmt.Errorf("repair round produced no source or model change; the unchanged failed candidate cannot be verified again"))
-		}
-		last := &report.RepairRounds[len(report.RepairRounds)-1]
-		last.CandidateID, last.Status = finalCandidate.ID, "integrated"
-		report.ActiveRepairCandidateID = ""
-	}
-	report.Candidate = candidateRef(finalCandidate, true)
-	report.Status = StatusIntegrated
-	report.UpdatedAt = time.Now().UTC()
-	if err := persistState(store, &report); err != nil {
-		return empty, err
-	}
-	return report, nil
-}
 
-func beginRepair(store *runStore, dir string, host Host, root string, plan PlanRecord, runtime Runtime, project *Project, report RunReport) (RunReport, error) {
+	execution, completed, err := prepareRunExecution(ctx, host, invoker, root, id, resume, repair, store)
+	if err != nil || execution == nil {
+		return completed, err
+	}
+	return execution.execute()
+}
+func beginRepair(store *runStore, dir string, host Host, root string, plan PlanRecord, runtime projectconfig.Runtime, project *Project, report RunReport) (RunReport, error) {
 	if report.Status != StatusFailed {
 		return report, fmt.Errorf("run status %s cannot be repaired; repair requires a failed required-check verification", report.Status)
 	}
@@ -1279,7 +198,7 @@ func boundedFeedbackText(value string, maximum int) string {
 	return value
 }
 
-func invokeManager(ctx context.Context, host Host, invoker Invoker, root string, runtime Runtime, plan PlanRecord, project *Project, task ManagerTask, phase string, activeChildIDs, conflicts []string, childReports []childReport, repairDiagnostic string, repairRound int, repairChecks []RepairCheckFeedback, start int) (result agentexec.RunResult, log InvocationLog, returnErr error) {
+func invokeManager(ctx context.Context, host Host, invoker Invoker, root string, runtime projectconfig.Runtime, plan PlanRecord, project *Project, task ManagerTask, phase string, activeChildIDs, conflicts []string, childReports []childReport, repairDiagnostic string, repairRound int, repairChecks []RepairCheckFeedback, start int) (result agentexec.RunResult, log InvocationLog, returnErr error) {
 	configAgent, ok := runtime.Agents[task.ManagerID]
 	if !ok {
 		return result, log, fmt.Errorf("no configured agent for manager %s", task.ManagerID)
@@ -1350,34 +269,34 @@ func invokeManager(ctx context.Context, host Host, invoker Invoker, root string,
 		return result, log, ErrStale
 	}
 	ctxPayload := struct {
-		ManagerID              string                      `json:"managerId"`
-		NativeWorkspace        *nativeWorkspaceContext     `json:"nativeWorkspace,omitempty"`
-		Kind                   string                      `json:"kind"`
-		Operation              string                      `json:"operation"`
-		OperationGuidance      string                      `json:"operationGuidance"`
-		Strictness             StrictnessProfile           `json:"strictness"`
-		Briefing               BriefingContext             `json:"briefing"`
-		Phase                  string                      `json:"phase"`
-		PhaseGuidance          string                      `json:"phaseGuidance"`
-		EscalationTarget       string                      `json:"escalationTarget"`
-		GlobalGoal             string                      `json:"globalGoal"`
-		OwnTask                string                      `json:"ownTask"`
-		RepairDiagnostic       string                      `json:"repairDiagnostic,omitempty"`
-		RepairRound            int                         `json:"repairRound,omitempty"`
-		RepairChecks           []RepairCheckFeedback       `json:"repairChecks,omitempty"`
-		AllowedWritePaths      []string                    `json:"allowedWritePaths"`
-		ExcludedWritePaths     []string                    `json:"excludedWritePaths"`
-		ArtifactRelations      []artifactPathRelation      `json:"artifactRelations"`
-		ForeignOwnership       []foreignOwnershipMetadata  `json:"foreignOwnership"`
-		ActiveResponsibilities []activeResponsibility      `json:"activeResponsibilities"`
-		Manager                projectmodel.ManagerContext `json:"manager"`
-		DirectChildren         []string                    `json:"directChildren"`
-		DirectChildContracts   []projectmodel.Statement    `json:"directChildContracts"`
-		DirectChildArtifacts   []projectmodel.Artifact     `json:"directChildArtifacts"`
-		ChildReports           []childReport               `json:"childReports,omitempty"`
-		ConflictPaths          []string                    `json:"conflictPaths,omitempty"`
-		CandidateDigest        string                      `json:"candidateDigest"`
-		ResponseSchema         json.RawMessage             `json:"responseSchema"`
+		ManagerID              string                          `json:"managerId"`
+		NativeWorkspace        *nativeWorkspaceContext         `json:"nativeWorkspace,omitempty"`
+		Kind                   string                          `json:"kind"`
+		Operation              string                          `json:"operation"`
+		OperationGuidance      string                          `json:"operationGuidance"`
+		Strictness             projectconfig.StrictnessProfile `json:"strictness"`
+		Briefing               BriefingContext                 `json:"briefing"`
+		Phase                  string                          `json:"phase"`
+		PhaseGuidance          string                          `json:"phaseGuidance"`
+		EscalationTarget       string                          `json:"escalationTarget"`
+		GlobalGoal             string                          `json:"globalGoal"`
+		OwnTask                string                          `json:"ownTask"`
+		RepairDiagnostic       string                          `json:"repairDiagnostic,omitempty"`
+		RepairRound            int                             `json:"repairRound,omitempty"`
+		RepairChecks           []RepairCheckFeedback           `json:"repairChecks,omitempty"`
+		AllowedWritePaths      []string                        `json:"allowedWritePaths"`
+		ExcludedWritePaths     []string                        `json:"excludedWritePaths"`
+		ArtifactRelations      []artifactPathRelation          `json:"artifactRelations"`
+		ForeignOwnership       []foreignOwnershipMetadata      `json:"foreignOwnership"`
+		ActiveResponsibilities []activeResponsibility          `json:"activeResponsibilities"`
+		Manager                projectmodel.ManagerContext     `json:"manager"`
+		DirectChildren         []string                        `json:"directChildren"`
+		DirectChildContracts   []projectmodel.Statement        `json:"directChildContracts"`
+		DirectChildArtifacts   []projectmodel.Artifact         `json:"directChildArtifacts"`
+		ChildReports           []childReport                   `json:"childReports,omitempty"`
+		ConflictPaths          []string                        `json:"conflictPaths,omitempty"`
+		CandidateDigest        string                          `json:"candidateDigest"`
+		ResponseSchema         json.RawMessage                 `json:"responseSchema"`
 	}{Kind: "projectrun-task/v1", Operation: plan.Operation, OperationGuidance: OperationGuidance(plan.Operation), Strictness: plan.Strictness[task.ManagerID], Briefing: briefing, Phase: phase, PhaseGuidance: managerPhaseGuidance(phase, repairRound) + " ExcludedWritePaths are explicit deny scopes and override every allowedWritePaths scope; never propose changes within them.", EscalationTarget: escalationTarget(task), GlobalGoal: plan.Goal, OwnTask: task.Goal, RepairDiagnostic: repairDiagnostic, ExcludedWritePaths: ignoredPaths,
 		ManagerID: task.ManagerID, NativeWorkspace: nativeWorkspace, RepairRound: repairRound, RepairChecks: repairChecks,
 		AllowedWritePaths: writePaths, ArtifactRelations: artifactRelations, ForeignOwnership: foreignOwnership, ActiveResponsibilities: responsibilities,
@@ -1395,7 +314,7 @@ func invokeManager(ctx context.Context, host Host, invoker Invoker, root string,
 	request := agentexec.Request{Role: agentexec.RoleExecutor, SourceRevision: project.Revision, ModelDigest: project.Report.ModelDigest,
 		ModulePin: project.Report.Digest, ProjectionID: project.Report.Digest, ScopeIDs: uniqueSorted(scopeIDs), PolicyIDs: append([]string(nil), task.Checks...), Context: contextJSON, Artifacts: artifacts}
 	attemptID := task.ID + "-" + phase
-	if config.Transport == TransportCodexAppServer || externalExecutionEnabled(ctx) {
+	if config.Transport == projectconfig.TransportCodexAppServer || externalExecutionEnabled(ctx) {
 		attemptID = nativeTaskAttemptID(task, phase)
 	}
 	result, err = invokeProjectAgent(ctx, host, invoker, root, project, configAgent, plan.ID, attemptID, writePaths, ignoredPaths, runtime.Limits, config, request)
@@ -1436,13 +355,13 @@ func invokeManager(ctx context.Context, host Host, invoker Invoker, root string,
 	if overflow {
 		return result, log, fmt.Errorf("agent cost estimate exceeds the supported int64 range")
 	}
-	if !known && configAgent.requiresReportedUsage() {
+	if !known && requiresReportedUsage(configAgent) {
 		return result, log, fmt.Errorf("agent usage is missing; bounded cost cannot be asserted")
 	}
 	return result, log, nil
 }
 
-func managerInvocationRequest(root string, runtime Runtime, plan PlanRecord, project *Project, task ManagerTask, phase string, activeChildIDs, conflicts []string, childReports []childReport, repairDiagnostic string, repairRound int, repairChecks []RepairCheckFeedback) (agentexec.Request, error) {
+func managerInvocationRequest(root string, runtime projectconfig.Runtime, plan PlanRecord, project *Project, task ManagerTask, phase string, activeChildIDs, conflicts []string, childReports []childReport, repairDiagnostic string, repairRound int, repairChecks []RepairCheckFeedback) (agentexec.Request, error) {
 	configAgent, ok := runtime.Agents[task.ManagerID]
 	if !ok {
 		return agentexec.Request{}, fmt.Errorf("no configured agent for manager %s", task.ManagerID)
@@ -1488,34 +407,34 @@ func managerInvocationRequest(root string, runtime Runtime, plan PlanRecord, pro
 		return agentexec.Request{}, ErrStale
 	}
 	contextPayload := struct {
-		ManagerID              string                      `json:"managerId"`
-		NativeWorkspace        *nativeWorkspaceContext     `json:"nativeWorkspace,omitempty"`
-		Kind                   string                      `json:"kind"`
-		Operation              string                      `json:"operation"`
-		OperationGuidance      string                      `json:"operationGuidance"`
-		Strictness             StrictnessProfile           `json:"strictness"`
-		Briefing               BriefingContext             `json:"briefing"`
-		Phase                  string                      `json:"phase"`
-		PhaseGuidance          string                      `json:"phaseGuidance"`
-		EscalationTarget       string                      `json:"escalationTarget"`
-		GlobalGoal             string                      `json:"globalGoal"`
-		OwnTask                string                      `json:"ownTask"`
-		RepairDiagnostic       string                      `json:"repairDiagnostic,omitempty"`
-		RepairRound            int                         `json:"repairRound,omitempty"`
-		RepairChecks           []RepairCheckFeedback       `json:"repairChecks,omitempty"`
-		AllowedWritePaths      []string                    `json:"allowedWritePaths"`
-		ExcludedWritePaths     []string                    `json:"excludedWritePaths"`
-		ArtifactRelations      []artifactPathRelation      `json:"artifactRelations"`
-		ForeignOwnership       []foreignOwnershipMetadata  `json:"foreignOwnership"`
-		ActiveResponsibilities []activeResponsibility      `json:"activeResponsibilities"`
-		Manager                projectmodel.ManagerContext `json:"manager"`
-		DirectChildren         []string                    `json:"directChildren"`
-		DirectChildContracts   []projectmodel.Statement    `json:"directChildContracts"`
-		DirectChildArtifacts   []projectmodel.Artifact     `json:"directChildArtifacts"`
-		ChildReports           []childReport               `json:"childReports,omitempty"`
-		ConflictPaths          []string                    `json:"conflictPaths,omitempty"`
-		CandidateDigest        string                      `json:"candidateDigest"`
-		ResponseSchema         json.RawMessage             `json:"responseSchema"`
+		ManagerID              string                          `json:"managerId"`
+		NativeWorkspace        *nativeWorkspaceContext         `json:"nativeWorkspace,omitempty"`
+		Kind                   string                          `json:"kind"`
+		Operation              string                          `json:"operation"`
+		OperationGuidance      string                          `json:"operationGuidance"`
+		Strictness             projectconfig.StrictnessProfile `json:"strictness"`
+		Briefing               BriefingContext                 `json:"briefing"`
+		Phase                  string                          `json:"phase"`
+		PhaseGuidance          string                          `json:"phaseGuidance"`
+		EscalationTarget       string                          `json:"escalationTarget"`
+		GlobalGoal             string                          `json:"globalGoal"`
+		OwnTask                string                          `json:"ownTask"`
+		RepairDiagnostic       string                          `json:"repairDiagnostic,omitempty"`
+		RepairRound            int                             `json:"repairRound,omitempty"`
+		RepairChecks           []RepairCheckFeedback           `json:"repairChecks,omitempty"`
+		AllowedWritePaths      []string                        `json:"allowedWritePaths"`
+		ExcludedWritePaths     []string                        `json:"excludedWritePaths"`
+		ArtifactRelations      []artifactPathRelation          `json:"artifactRelations"`
+		ForeignOwnership       []foreignOwnershipMetadata      `json:"foreignOwnership"`
+		ActiveResponsibilities []activeResponsibility          `json:"activeResponsibilities"`
+		Manager                projectmodel.ManagerContext     `json:"manager"`
+		DirectChildren         []string                        `json:"directChildren"`
+		DirectChildContracts   []projectmodel.Statement        `json:"directChildContracts"`
+		DirectChildArtifacts   []projectmodel.Artifact         `json:"directChildArtifacts"`
+		ChildReports           []childReport                   `json:"childReports,omitempty"`
+		ConflictPaths          []string                        `json:"conflictPaths,omitempty"`
+		CandidateDigest        string                          `json:"candidateDigest"`
+		ResponseSchema         json.RawMessage                 `json:"responseSchema"`
 	}{Kind: "projectrun-task/v1", Operation: plan.Operation, OperationGuidance: OperationGuidance(plan.Operation), Strictness: plan.Strictness[task.ManagerID], Briefing: briefing, Phase: phase, PhaseGuidance: managerPhaseGuidance(phase, repairRound) + " ExcludedWritePaths are explicit deny scopes and override every allowedWritePaths scope; never propose changes within them.", EscalationTarget: escalationTarget(task), GlobalGoal: plan.Goal, OwnTask: task.Goal, RepairDiagnostic: repairDiagnostic, ExcludedWritePaths: ignoredPaths,
 		ManagerID: task.ManagerID, NativeWorkspace: nativeWorkspace, RepairRound: repairRound, RepairChecks: repairChecks,
 		AllowedWritePaths: writePaths, ArtifactRelations: artifactRelations, ForeignOwnership: foreignOwnership, ActiveResponsibilities: responsibilities,
@@ -1539,7 +458,7 @@ func appendInvocationReceipt(report *RunReport, invocation InvocationLog) bool {
 	return true
 }
 
-func invocationLogForResult(task ManagerTask, phase string, result agentexec.RunResult, agent Agent) InvocationLog {
+func invocationLogForResult(task ManagerTask, phase string, result agentexec.RunResult, agent projectconfig.Agent) InvocationLog {
 	cost, known, overflow := estimateAgentCost(result.Receipt.Usage, agent)
 	if !known {
 		cost = 0
@@ -1846,7 +765,7 @@ func requiredChildArtifacts(report projectmodel.Report, activeChildren []string)
 	return artifacts
 }
 
-func scopedArtifacts(project *Project, task ManagerTask, agent Agent, limits Limits, phase string, activeChildIDs []string) ([]agentexec.Artifact, error) {
+func scopedArtifacts(project *Project, task ManagerTask, agent projectconfig.Agent, limits projectconfig.Limits, phase string, activeChildIDs []string) ([]agentexec.Artifact, error) {
 	paths := map[string]bool{}
 	for _, entry := range project.Report.Files {
 		if entry.Owner == task.ManagerID {
@@ -1914,7 +833,7 @@ func scopedArtifacts(project *Project, task ManagerTask, agent Agent, limits Lim
 	return out, nil
 }
 
-func applyProposal(base candidateData, proposals []agentexec.CandidateFile, config projectwork.Config, report projectmodel.Report, task ManagerTask, phase string, conflictPaths []string, limits Limits, inputs ...*Snapshot) (candidateData, error) {
+func applyProposal(base candidateData, proposals []agentexec.CandidateFile, config projectwork.Config, report projectmodel.Report, task ManagerTask, phase string, conflictPaths []string, limits projectconfig.Limits, inputs ...*Snapshot) (candidateData, error) {
 	var input *Snapshot
 	if len(inputs) > 0 {
 		input = inputs[0]
@@ -2276,7 +1195,7 @@ func costExceedsLimit(logs []InvocationLog, limit int64) bool {
 	return knownCostOverflow(logs) || totalCost(logs) > limit
 }
 
-func estimateCostDetailed(usage *agentexec.Usage, p Pricing) (int64, bool, bool) {
+func estimateCostDetailed(usage *agentexec.Usage, p projectconfig.Pricing) (int64, bool, bool) {
 	if usage == nil || usage.InputTokens == nil || usage.OutputTokens == nil {
 		return 0, false, false
 	}
@@ -2317,7 +1236,7 @@ func snapshotMode(mode string) string {
 		return ""
 	}
 }
-func validateRuntimeBinding(invoker Invoker, runtime Runtime, plan PlanRecord) error {
+func validateRuntimeBinding(invoker Invoker, runtime projectconfig.Runtime, plan PlanRecord) error {
 	if plan.RuntimeBindingVersion != methodRuntimeBindingVersion {
 		return fmt.Errorf("unsupported runtime binding version; create a fresh plan")
 	}

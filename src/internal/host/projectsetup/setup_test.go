@@ -5,6 +5,8 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"github.com/Glacius-Labs/Markitect/src/internal/host/projectconfig"
+	"github.com/Glacius-Labs/Markitect/src/internal/host/projectexecutor"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -56,10 +58,10 @@ func TestBuildRuntimeMapsAllManagersAndPinsTools(t *testing.T) {
 		if !ok {
 			t.Fatalf("missing runtime mapping for %s", id)
 		}
-		if agent.Command != provider.Path || len(agent.Args) != 0 || agent.Transport != projectrun.TransportCodexAppServer || agent.Model != "gpt-6-luna" || agent.ProviderVersion != provider.Version {
+		if agent.Command != provider.Path || len(agent.Args) != 0 || agent.Transport != projectconfig.TransportCodexAppServer || agent.Model != "gpt-6-luna" || agent.ProviderVersion != provider.Version {
 			t.Fatalf("unexpected mapping for %s: %#v", id, agent)
 		}
-		if agent.WorkspaceMode != "git" || agent.AppServer == nil || agent.AppServer.ReasoningEffort != "high" || agent.AppServer.PermissionProfile != ":workspace" || agent.AppServer.WindowsSandboxBackend != wantBackend || agent.AppServer.EnvironmentMode != projectrun.AppServerEnvironmentModeInherit || !agent.AppServer.Helpers.Enabled {
+		if agent.WorkspaceMode != "git" || agent.AppServer == nil || agent.AppServer.ReasoningEffort != "high" || agent.AppServer.PermissionProfile != ":workspace" || agent.AppServer.WindowsSandboxBackend != wantBackend || agent.AppServer.EnvironmentMode != projectconfig.AppServerEnvironmentModeInherit || !agent.AppServer.Helpers.Enabled {
 			t.Fatalf("default setup must select the typed native Codex App Server worker: %#v", agent)
 		}
 		if agent.ModelOptions != nil || agent.AppServer.Helpers.MaxStartRequests != DefaultMaxHelperStarts || agent.AppServer.Helpers.MaxDepth != 1 || agent.AppServer.MaxEventBytes != DefaultMaxEventBytes {
@@ -72,13 +74,13 @@ func TestBuildRuntimeMapsAllManagersAndPinsTools(t *testing.T) {
 		if !ok {
 			t.Fatalf("missing reviewer mapping for %s", id)
 		}
-		if reviewer.WorkspaceMode != "git" || reviewer.Transport != projectrun.TransportCodexAppServer || len(reviewer.InstructionPaths) != len(agent.InstructionPaths) || len(reviewer.RuntimeFiles) != len(agent.RuntimeFiles) || reviewer.Command != provider.Path {
+		if reviewer.WorkspaceMode != "git" || reviewer.Transport != projectconfig.TransportCodexAppServer || len(reviewer.InstructionPaths) != len(agent.InstructionPaths) || len(reviewer.RuntimeFiles) != len(agent.RuntimeFiles) || reviewer.Command != provider.Path {
 			t.Fatalf("reviewer config for %s must use a fresh native owned workspace with pinned instructions: %#v", id, reviewer)
 		}
 		if reviewer.ModelOptions != nil || reviewer.AppServer == nil || reviewer.AppServer.PermissionProfile != ":workspace" || reviewer.Model != agent.Model || reviewer.ProviderVersion != agent.ProviderVersion {
 			t.Fatalf("reviewer model profile for %s differs from worker profile", id)
 		}
-		if reviewer.AppServer.WindowsSandboxBackend != wantBackend || reviewer.AppServer.EnvironmentMode != projectrun.AppServerEnvironmentModeInherit {
+		if reviewer.AppServer.WindowsSandboxBackend != wantBackend || reviewer.AppServer.EnvironmentMode != projectconfig.AppServerEnvironmentModeInherit {
 			t.Fatalf("reviewer sandbox/environment settings for %s = %#v, want sandbox %q and inherited caller environment", id, reviewer.AppServer, wantBackend)
 		}
 		if containsName(reviewer.Environment, "CODEX_HOME") {
@@ -100,13 +102,13 @@ func TestBuildRuntimeMapsAllManagersAndPinsTools(t *testing.T) {
 	if config.Verifier.AppServer.WindowsSandboxBackend != wantBackend || !reflect.DeepEqual(config.Verifier.RuntimeFiles, config.Agents["root-manager"].RuntimeFiles) || !reflect.DeepEqual(config.Verifier.InstructionPaths, config.Agents["root-manager"].InstructionPaths) {
 		t.Fatalf("verifier does not use platform sandbox or share pinned executable/instructions: verifier=%+v root=%+v", config.Verifier, config.Agents["root-manager"])
 	}
-	if config.Mode != "controlled-local" || config.RequireIsolation || config.Limits.MaxRetries != 1 || config.Limits.MaxParallel != 2 || config.Limits.MaxStarts != DefaultMaxStarts || config.Limits.MaxDuration != projectrun.Duration(DefaultMaxRunTime) || config.Limits.MaxCostMicros != 5000 {
+	if config.Mode != "controlled-local" || config.RequireIsolation || config.Limits.MaxRetries != 1 || config.Limits.MaxParallel != 2 || config.Limits.MaxStarts != DefaultMaxStarts || config.Limits.MaxDuration != projectconfig.Duration(DefaultMaxRunTime) || config.Limits.MaxCostMicros != 5000 {
 		t.Fatalf("unsafe or unexpected limits: %#v", config)
 	}
 	if config.Limits.MaxDuration <= 0 || config.Limits.MaxCostMicros <= 0 {
 		t.Fatalf("runtime budget and deadline must remain finite and positive: %#v", config.Limits)
 	}
-	if err := projectrun.ValidateRuntime(config); err != nil {
+	if err := projectconfig.ValidateRuntime(config); err != nil {
 		t.Fatalf("generated runtime is invalid: %v", err)
 	}
 }
@@ -122,7 +124,7 @@ func TestBuildRuntimeRoleOptionSurfacesConstructNativeAdapters(t *testing.T) {
 		t.Fatalf("normal setup runtime: %v", err)
 	}
 	managerID := project.Report.Managers[0].ID
-	invoker := projectrun.NewTransportInvoker(codexappserver.Options{})
+	invoker := projectexecutor.New(codexappserver.Options{}, projectrun.NativeHelperPolicy{})
 
 	for _, helpersEnabled := range []bool{true, false} {
 		name := "helpers-enabled"
@@ -131,7 +133,7 @@ func TestBuildRuntimeRoleOptionSurfacesConstructNativeAdapters(t *testing.T) {
 		}
 		t.Run(name, func(t *testing.T) {
 			candidate := runtimeConfig
-			candidate.Agents = make(map[string]projectrun.Agent, len(runtimeConfig.Agents))
+			candidate.Agents = make(map[string]projectconfig.Agent, len(runtimeConfig.Agents))
 			for id, agent := range runtimeConfig.Agents {
 				settings := *agent.AppServer
 				agent.AppServer = &settings
@@ -142,7 +144,7 @@ func TestBuildRuntimeRoleOptionSurfacesConstructNativeAdapters(t *testing.T) {
 				}
 				candidate.Agents[id] = agent
 			}
-			candidate.Review = &projectrun.ReviewConfig{Agents: make(map[string]projectrun.Agent, len(runtimeConfig.Review.Agents)),
+			candidate.Review = &projectconfig.ReviewConfig{Agents: make(map[string]projectconfig.Agent, len(runtimeConfig.Review.Agents)),
 				MaxRounds: runtimeConfig.Review.MaxRounds, MaxManagerRounds: runtimeConfig.Review.MaxManagerRounds}
 			for id, agent := range runtimeConfig.Review.Agents {
 				settings := *agent.AppServer
@@ -166,9 +168,9 @@ func TestBuildRuntimeRoleOptionSurfacesConstructNativeAdapters(t *testing.T) {
 
 			roles := []struct {
 				name    string
-				agent   projectrun.Agent
+				agent   projectconfig.Agent
 				request agentexec.Request
-				invoker *projectrun.TransportInvoker
+				invoker *projectexecutor.Executor
 			}{
 				{name: "manager", agent: candidate.Agents[managerID], request: agentexec.Request{Role: agentexec.RoleExecutor,
 					Context: json.RawMessage(`{"kind":"projectrun-task/v1","managerId":"root","phase":"work","allowedWritePaths":["src/"]}`)}},
@@ -176,7 +178,7 @@ func TestBuildRuntimeRoleOptionSurfacesConstructNativeAdapters(t *testing.T) {
 					Context: json.RawMessage(`{"kind":"projectrun-review/v1"}`)}},
 				{name: "verifier", agent: *candidate.Verifier, request: agentexec.Request{Role: agentexec.RoleVerifier,
 					Context: json.RawMessage(`{"kind":"projectrun-verify/v1"}`)}},
-				{name: "helper", agent: candidate.Agents[managerID], invoker: projectrun.NewTransportInvokerWithoutHostHelpers(codexappserver.Options{}), request: agentexec.Request{Role: agentexec.RoleExecutor,
+				{name: "helper", agent: candidate.Agents[managerID], invoker: projectexecutor.NewChild(codexappserver.Options{}), request: agentexec.Request{Role: agentexec.RoleExecutor,
 					Context: json.RawMessage(`{"kind":"projectrun-helper/v1","managerId":"root","helperDepth":1,"allowedWritePaths":["src/"]}`)}},
 			}
 			for _, role := range roles {
@@ -268,7 +270,7 @@ func TestBuildRuntimeDefaultsWindowsMXCAndSharedWorkspaceProfile(t *testing.T) {
 		wantBackend = codexappserver.WindowsSandboxBackendMXC
 	}
 	managerID := project.Report.Managers[0].ID
-	profiles := []projectrun.Agent{config.Agents[managerID], config.Review.Agents[managerID]}
+	profiles := []projectconfig.Agent{config.Agents[managerID], config.Review.Agents[managerID]}
 	if config.Verifier != nil {
 		profiles = append(profiles, *config.Verifier)
 	}
@@ -317,7 +319,7 @@ func TestBuildRuntimeDefaultsNativeModelAndBindsInstructions(t *testing.T) {
 		if !reflect.DeepEqual(agent.InstructionPaths, wantPaths) {
 			t.Fatalf("instruction paths for %s = %#v, want %#v", id, agent.InstructionPaths, wantPaths)
 		}
-		if agent.Transport != projectrun.TransportCodexAppServer || len(agent.Args) != 0 || agent.Command != provider.Path || agent.ModelOptions != nil {
+		if agent.Transport != projectconfig.TransportCodexAppServer || len(agent.Args) != 0 || agent.Command != provider.Path || agent.ModelOptions != nil {
 			t.Fatalf("manager must use the selected native executable directly with no wrapper arguments/options: %#v", agent)
 		}
 		if len(agent.RuntimeFiles) != 3 {
@@ -525,11 +527,11 @@ func TestBuildRuntimeExplicitCodexProfileIsSharedAndPreviewIsDigestGuarded(t *te
 	if discoveryCalls != 1 || preview.EditPlan.Digest == "" || len(preview.Mutation.Files) != 1 || preview.Mutation.Files[0].Path != projectwork.RuntimePath {
 		t.Fatalf("preview is not a single digest-bound runtime edit: calls=%d preview=%+v", discoveryCalls, preview)
 	}
-	var runtimeConfig projectrun.Runtime
+	var runtimeConfig projectconfig.Runtime
 	if err := yaml.Unmarshal([]byte(preview.Mutation.Files[0].Content), &runtimeConfig); err != nil {
 		t.Fatalf("decode proposed runtime: %v", err)
 	}
-	if err := projectrun.ValidateRuntime(runtimeConfig); err != nil {
+	if err := projectconfig.ValidateRuntime(runtimeConfig); err != nil {
 		t.Fatalf("proposed runtime is invalid: %v", err)
 	}
 	if runtimeConfig.Review == nil || len(runtimeConfig.Agents) != 1 || len(runtimeConfig.Review.Agents) != 1 {
@@ -559,7 +561,7 @@ func TestBuildRuntimeExplicitCodexProfileIsSharedAndPreviewIsDigestGuarded(t *te
 	if err != nil {
 		t.Fatal(err)
 	}
-	var applied projectrun.Runtime
+	var applied projectconfig.Runtime
 	if err := yaml.Unmarshal(written, &applied); err != nil || applied.Agents[managerID].AppServer.PermissionProfile != ":workspace" || applied.Review.Agents[managerID].AppServer.PermissionProfile != ":workspace" || applied.Verifier == nil || applied.Verifier.AppServer.PermissionProfile != ":workspace" {
 		t.Fatalf("guarded write did not preserve the shared role profile: runtime=%+v err=%v", applied, err)
 	}
@@ -644,9 +646,9 @@ func providerName() string {
 	return "codex"
 }
 
-func assertSameNativePins(t *testing.T, manager, reviewer projectrun.Agent, provider Tool, options Options) {
+func assertSameNativePins(t *testing.T, manager, reviewer projectconfig.Agent, provider Tool, options Options) {
 	t.Helper()
-	if manager.Command != provider.Path || reviewer.Command != provider.Path || len(manager.Args) != 0 || len(reviewer.Args) != 0 || manager.Transport != projectrun.TransportCodexAppServer || reviewer.Transport != projectrun.TransportCodexAppServer {
+	if manager.Command != provider.Path || reviewer.Command != provider.Path || len(manager.Args) != 0 || len(reviewer.Args) != 0 || manager.Transport != projectconfig.TransportCodexAppServer || reviewer.Transport != projectconfig.TransportCodexAppServer {
 		t.Fatalf("permission profile altered native process selection: manager=%+v reviewer=%+v", manager, reviewer)
 	}
 	if manager.Model != options.Model || reviewer.Model != options.Model || manager.ProviderVersion != provider.Version || reviewer.ProviderVersion != provider.Version || manager.AppServer.ReasoningEffort != options.Effort || reviewer.AppServer.ReasoningEffort != options.Effort {

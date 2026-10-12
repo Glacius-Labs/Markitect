@@ -3,6 +3,7 @@ package projectrun
 import (
 	"encoding/json"
 	"errors"
+	"github.com/Glacius-Labs/Markitect/src/internal/host/projectconfig"
 	"os"
 	"path/filepath"
 	"strings"
@@ -27,7 +28,7 @@ func TestReviewerContextCarriesOperationStrictnessAndAcceptedBriefing(t *testing
 	}
 	plan := PlanRecord{
 		Operation: OperationCleanup, Goal: "Improve order cancellation safely.",
-		Strictness:      map[string]StrictnessProfile{managerID: {Evidence: []string{"tests", "public interface"}, Counterexamples: 2}},
+		Strictness:      map[string]projectconfig.StrictnessProfile{managerID: {Evidence: []string{"tests", "public interface"}, Counterexamples: 2}},
 		BriefingDigests: map[string]string{managerID: beforeDismissal.Digest},
 	}
 	briefing, err := reviewerBriefing(root, plan, project, managerID)
@@ -156,7 +157,7 @@ func TestReviewScopeDigestBindsOperationStrictnessAndBriefing(t *testing.T) {
 	}
 	task := ManagerTask{ManagerID: e2eManagerID("orders", "orders"), Goal: "Implement the orders artifact.", Owns: []string{"src/orders/"}}
 	plan := PlanRecord{Goal: "Implement both fixture artifacts.", Operation: OperationApply,
-		Strictness:      map[string]StrictnessProfile{task.ManagerID: {Evidence: []string{"tests"}, Counterexamples: 1}},
+		Strictness:      map[string]projectconfig.StrictnessProfile{task.ManagerID: {Evidence: []string{"tests"}, Counterexamples: 1}},
 		BriefingDigests: map[string]string{task.ManagerID: "briefing-digest-a"}}
 	base, err := reviewScopeDigest(plan, project, task, "work", RunReport{})
 	if err != nil {
@@ -167,7 +168,7 @@ func TestReviewScopeDigestBindsOperationStrictnessAndBriefing(t *testing.T) {
 	operation.Operation = OperationCleanup
 	variants["operation"] = operation
 	strictness := plan
-	strictness.Strictness = map[string]StrictnessProfile{task.ManagerID: {Evidence: []string{"tests", "interfaces"}, Counterexamples: 1}}
+	strictness.Strictness = map[string]projectconfig.StrictnessProfile{task.ManagerID: {Evidence: []string{"tests", "interfaces"}, Counterexamples: 1}}
 	variants["strictness"] = strictness
 	briefing := plan
 	briefing.BriefingDigests = map[string]string{task.ManagerID: "briefing-digest-b"}

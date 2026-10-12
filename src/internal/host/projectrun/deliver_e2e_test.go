@@ -4,6 +4,8 @@ package projectrun
 
 import (
 	"context"
+	"github.com/Glacius-Labs/Markitect/src/internal/host/projectconfig"
+	"github.com/Glacius-Labs/Markitect/src/internal/host/projectexecutor"
 	"os"
 	"path/filepath"
 	"testing"
@@ -23,8 +25,8 @@ func TestDeliverResumesIntegratedRunAndCompletesAcknowledgedScope(t *testing.T) 
 	// whole-repository audit. Keep the cumulative fixture window generous enough
 	// for the same provider-free subprocess workload under a loaded Windows suite;
 	// per-process timeout and start/cost bounds remain unchanged.
-	updateE2ERuntime(t, root, func(runtime *Runtime) {
-		runtime.Limits.MaxDuration = Duration(15 * time.Minute)
+	updateE2ERuntime(t, root, func(runtime *projectconfig.Runtime) {
+		runtime.Limits.MaxDuration = projectconfig.Duration(15 * time.Minute)
 	})
 	setupE2EProcess(t, "normal")
 	const explorationID, scopeID = "deliver-orders", "orders-change"
@@ -37,13 +39,13 @@ func TestDeliverResumesIntegratedRunAndCompletesAcknowledgedScope(t *testing.T) 
 	if err != nil {
 		t.Fatal(err)
 	}
-	initial, err := Run(context.Background(), projectworkHost(), ProcessInvoker{}, root, plan.ID)
+	initial, err := Run(context.Background(), projectworkHost(), projectexecutor.ProcessInvoker{}, root, plan.ID)
 	if err != nil || initial.Status != StatusIntegrated {
 		t.Fatalf("setup run = %+v, err=%v", initial, err)
 	}
 	priorInvocations := len(initial.Invocations)
 
-	got, err := Deliver(context.Background(), projectworkHost(), ProcessInvoker{}, root, DeliverRequest{
+	got, err := Deliver(context.Background(), projectworkHost(), projectexecutor.ProcessInvoker{}, root, DeliverRequest{
 		ExplorationID: explorationID, ScopeID: scopeID, RunID: plan.ID, ExecuteAuthorized: true,
 	})
 	if err != nil {
@@ -76,7 +78,7 @@ func TestDeliverResumesIntegratedRunAndCompletesAcknowledgedScope(t *testing.T) 
 	}
 	// Re-entering a completed delivery must recover from the immutable Apply
 	// receipt, not make another proposal, verification, or write.
-	second, err := Deliver(context.Background(), projectworkHost(), ProcessInvoker{}, root, DeliverRequest{
+	second, err := Deliver(context.Background(), projectworkHost(), projectexecutor.ProcessInvoker{}, root, DeliverRequest{
 		ExplorationID: explorationID, ScopeID: scopeID, RunID: plan.ID, ExecuteAuthorized: true,
 	})
 	if err != nil || second.Status != StatusApplied {
@@ -115,11 +117,11 @@ func TestApplyRejectsReadinessEditAtGuardedWriteBoundary(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	run, err := Run(context.Background(), projectworkHost(), ProcessInvoker{}, root, plan.ID)
+	run, err := Run(context.Background(), projectworkHost(), projectexecutor.ProcessInvoker{}, root, plan.ID)
 	if err != nil || run.Status != StatusIntegrated {
 		t.Fatalf("Run = %s, %v", run.Status, err)
 	}
-	verified, err := Verify(context.Background(), projectworkHost(), ProcessInvoker{}, root, plan.ID)
+	verified, err := Verify(context.Background(), projectworkHost(), projectexecutor.ProcessInvoker{}, root, plan.ID)
 	if err != nil || verified.Status != "verified" {
 		t.Fatalf("Verify = %s, %v", verified.Status, err)
 	}
@@ -138,7 +140,7 @@ func TestApplyRejectsReadinessEditAtGuardedWriteBoundary(t *testing.T) {
 		}
 		return baseHost.Load(path, revision)
 	}
-	apply, err := Apply(guardedHost, ProcessInvoker{}, root, ApplyRequest{
+	apply, err := Apply(guardedHost, projectexecutor.ProcessInvoker{}, root, ApplyRequest{
 		RunID: preflight.RunID, PlanID: preflight.PlanID, CandidateID: preflight.CandidateID,
 		ExpectedVerificationDigest: preflight.VerificationDigest, TargetBranch: preflight.TargetBranch,
 		ExpectedHead: preflight.ExpectedHead, ExpectedWorktree: preflight.ExpectedWorktree,
@@ -188,7 +190,7 @@ func TestGuidedPreviewsMatchExecuteWithoutWritingHistory(t *testing.T) {
 				t.Fatalf("plan preview: %v", err)
 			}
 			if !laterChange {
-				report, _ := FullVerify(context.Background(), projectworkHost(), ProcessInvoker{}, root, FullVerifyRequest{Revision: gitE2E(t, root, "rev-parse", "HEAD")})
+				report, _ := FullVerify(context.Background(), projectworkHost(), projectexecutor.ProcessInvoker{}, root, FullVerifyRequest{Revision: gitE2E(t, root, "rev-parse", "HEAD")})
 				if !stringMapsEqual(report.BriefingDigests, preview.BriefingDigests) {
 					t.Fatalf("full Verify preview briefings %v differ from the plan preview %v", report.BriefingDigests, preview.BriefingDigests)
 				}

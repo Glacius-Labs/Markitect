@@ -5,6 +5,7 @@ package projectrun
 import (
 	"bytes"
 	"context"
+	"github.com/Glacius-Labs/Markitect/src/internal/host/projectexecutor"
 	"os"
 	"path/filepath"
 	"strings"
@@ -32,11 +33,11 @@ func TestPreflightApplyAndApplyPreserveRawCRLFCAS(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Plan: %v", err)
 	}
-	run, err := Run(context.Background(), host, ProcessInvoker{}, root, plan.ID)
+	run, err := Run(context.Background(), host, projectexecutor.ProcessInvoker{}, root, plan.ID)
 	if err != nil || run.Status != StatusIntegrated {
 		t.Fatalf("Run: status=%s err=%v", run.Status, err)
 	}
-	verified, err := Verify(context.Background(), host, ProcessInvoker{}, root, plan.ID)
+	verified, err := Verify(context.Background(), host, projectexecutor.ProcessInvoker{}, root, plan.ID)
 	if err != nil || verified.Status != "verified" {
 		t.Fatalf("Verify: status=%s err=%v", verified.Status, err)
 	}
@@ -57,14 +58,14 @@ func TestPreflightApplyAndApplyPreserveRawCRLFCAS(t *testing.T) {
 	if err := os.WriteFile(firstTarget, bytes.ReplaceAll(lfBytes, []byte("\r\n"), []byte("\n")), 0o644); err != nil {
 		t.Fatal(err)
 	}
-	stale, err := Apply(host, ProcessInvoker{}, root, request)
+	stale, err := Apply(host, projectexecutor.ProcessInvoker{}, root, request)
 	if err == nil || len(stale.Written) != 0 {
 		t.Fatalf("Apply did not reject raw-byte change after PreflightApply without writing: report=%+v err=%v", stale, err)
 	}
 	if err := os.WriteFile(firstTarget, lfBytes, 0o644); err != nil {
 		t.Fatal(err)
 	}
-	applied, err := Apply(host, ProcessInvoker{}, root, request)
+	applied, err := Apply(host, projectexecutor.ProcessInvoker{}, root, request)
 	if err != nil || applied.Status != "applied" {
 		t.Fatalf("Apply rejected unchanged CRLF targets from preflight: status=%s err=%v", applied.Status, err)
 	}
@@ -80,11 +81,11 @@ func TestApplyRechecksTargetIndexAtGuardedWriteBoundary(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Plan: %v", err)
 	}
-	run, err := Run(context.Background(), host, ProcessInvoker{}, root, plan.ID)
+	run, err := Run(context.Background(), host, projectexecutor.ProcessInvoker{}, root, plan.ID)
 	if err != nil || run.Status != StatusIntegrated {
 		t.Fatalf("Run: status=%s err=%v", run.Status, err)
 	}
-	verified, err := Verify(context.Background(), host, ProcessInvoker{}, root, plan.ID)
+	verified, err := Verify(context.Background(), host, projectexecutor.ProcessInvoker{}, root, plan.ID)
 	if err != nil || verified.Status != "verified" {
 		t.Fatalf("Verify: status=%s err=%v", verified.Status, err)
 	}
@@ -119,7 +120,7 @@ func TestApplyRechecksTargetIndexAtGuardedWriteBoundary(t *testing.T) {
 		return project, nil
 	}
 	injectIndexDrift = true
-	report, err := Apply(host, ProcessInvoker{}, root, request)
+	report, err := Apply(host, projectexecutor.ProcessInvoker{}, root, request)
 	if err == nil || !strings.Contains(err.Error(), "staged index content differs") {
 		t.Fatalf("Apply did not reject index drift at the guarded-write boundary: report=%+v err=%v", report, err)
 	}
@@ -145,13 +146,13 @@ func TestApplyRefusedByHeldWriterLockKeepsRunVerified(t *testing.T) {
 	if err := os.WriteFile(lockPath, []byte("held by another Host writer\n"), 0o600); err != nil {
 		t.Fatal(err)
 	}
-	report, err := Apply(host, ProcessInvoker{}, root, request)
+	report, err := Apply(host, projectexecutor.ProcessInvoker{}, root, request)
 	assertApplyRejectedKeepsRunVerified(t, root, plan.ID, report, err)
 	assertFileContents(t, root, "src/orders/implementation.txt", "orders implementation v1\n")
 	if err := os.Remove(lockPath); err != nil {
 		t.Fatal(err)
 	}
-	retry, err := Apply(host, ProcessInvoker{}, root, request)
+	retry, err := Apply(host, projectexecutor.ProcessInvoker{}, root, request)
 	if err != nil || retry.Status != StatusApplied {
 		t.Fatalf("retry after releasing the writer lock did not apply: status=%s err=%v", retry.Status, err)
 	}
@@ -172,7 +173,7 @@ func TestApplyStaleUnderWriterLockIsRejectedLikeEarlyStaleness(t *testing.T) {
 	if err := os.WriteFile(modelPath, edited, 0o644); err != nil {
 		t.Fatal(err)
 	}
-	early, err := Apply(host, ProcessInvoker{}, root, request)
+	early, err := Apply(host, projectexecutor.ProcessInvoker{}, root, request)
 	assertApplyRejectedKeepsRunVerified(t, root, plan.ID, early, err)
 	if err := os.WriteFile(modelPath, original, 0o644); err != nil {
 		t.Fatal(err)
@@ -195,7 +196,7 @@ func TestApplyStaleUnderWriterLockIsRejectedLikeEarlyStaleness(t *testing.T) {
 		}
 		return baseLoad(loadRoot, revision)
 	}
-	late, err := Apply(guardedHost, ProcessInvoker{}, root, request)
+	late, err := Apply(guardedHost, projectexecutor.ProcessInvoker{}, root, request)
 	if !injected {
 		t.Fatal("test did not reach the guarded-write precondition")
 	}
@@ -203,7 +204,7 @@ func TestApplyStaleUnderWriterLockIsRejectedLikeEarlyStaleness(t *testing.T) {
 	if err := os.WriteFile(modelPath, original, 0o644); err != nil {
 		t.Fatal(err)
 	}
-	retry, err := Apply(host, ProcessInvoker{}, root, request)
+	retry, err := Apply(host, projectexecutor.ProcessInvoker{}, root, request)
 	if err != nil || retry.Status != StatusApplied {
 		t.Fatalf("retry after reverting the transient edit did not apply: status=%s err=%v", retry.Status, err)
 	}
@@ -232,7 +233,7 @@ func TestApplyGenuinePartialWriteFailsRunAndKeepsReceipt(t *testing.T) {
 		t.Fatal(err)
 	}
 	blockApplyTargetReplace(t, secondTarget)
-	report, applyErr := Apply(host, ProcessInvoker{}, root, request)
+	report, applyErr := Apply(host, projectexecutor.ProcessInvoker{}, root, request)
 	if applyErr == nil || report.Status != "partial" || report.Error == "" ||
 		!stringSlicesEqual(report.Written, []string{first}) || !stringSlicesEqual(report.Journal, []string{first}) {
 		t.Fatalf("Apply that wrote only %s did not report a partial write: report=%+v err=%v", first, report, applyErr)

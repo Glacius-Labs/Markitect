@@ -4,6 +4,8 @@ package projectrun
 
 import (
 	"context"
+	"github.com/Glacius-Labs/Markitect/src/internal/host/projectconfig"
+	"github.com/Glacius-Labs/Markitect/src/internal/host/projectexecutor"
 	"os"
 	"path/filepath"
 	"strings"
@@ -28,7 +30,7 @@ func TestTargetedPlanStillFullVerifiesUnimpactedManagerDrift(t *testing.T) {
 	if len(plan.Managers) != 2 || plan.Managers[0].ManagerID != e2eManagerID("", "project-owner") || plan.Managers[1].ManagerID != e2eManagerID("orders", "orders") {
 		t.Fatalf("Plan should stay scoped to root and Orders: %+v", plan.Managers)
 	}
-	report, err := FullVerify(context.Background(), host, ProcessInvoker{}, root, FullVerifyRequest{Revision: head})
+	report, err := FullVerify(context.Background(), host, projectexecutor.ProcessInvoker{}, root, FullVerifyRequest{Revision: head})
 	if err == nil || report.Status != "failed" {
 		t.Fatalf("full Verify did not reject the unimpacted drift: status=%s err=%v", report.Status, err)
 	}
@@ -55,7 +57,7 @@ func TestFullCoverageBlocksUnclassifiedOrdinaryFile(t *testing.T) {
 		t.Fatalf("full coverage accepted an unclassified ordinary file: %+v", project.Coverage)
 	}
 	configureOperationsFullVerify(t, root)
-	report, err := FullVerify(context.Background(), Host{Load: projectwork.Load}, ProcessInvoker{}, root, FullVerifyRequest{Revision: project.Revision})
+	report, err := FullVerify(context.Background(), Host{Load: projectwork.Load}, projectexecutor.ProcessInvoker{}, root, FullVerifyRequest{Revision: project.Revision})
 	if err == nil || report.Status == "passed" {
 		t.Fatalf("full Verify closed despite an unclassified ordinary file: report=%+v err=%v", report, err)
 	}
@@ -81,10 +83,10 @@ func TestCleanupAndReconcileNoOpVerifyFullTreeAndGuardedApply(t *testing.T) {
 			if ordersStrictness.Counterexamples != 2 || !containsString(ordersStrictness.Evidence, "project checks reviewed") || !containsString(ordersStrictness.Evidence, "orders contract review") {
 				t.Fatalf("%s bypassed or replaced additive Orders strictness: %+v", operation, ordersStrictness)
 			}
-			run, err := Run(context.Background(), host, ProcessInvoker{}, root, plan.ID)
+			run, err := Run(context.Background(), host, projectexecutor.ProcessInvoker{}, root, plan.ID)
 			if err != nil || run.Status != StatusIntegrated {
 				debug, _ := os.ReadFile(runtimeFixtureEnv(t, operationsVerifyLogEnv))
-				runtimeConfig, _ := LoadRuntime(root)
+				runtimeConfig, _ := projectconfig.LoadRuntime(root)
 				reviewer := runtimeConfig.Review.Agents[e2eManagerID("inventory", "inventory")]
 				t.Fatalf("%s no-op run did not integrate: status=%s err=%v reviewer trace=%s reviewer=%+v", operation, run.Status, err, debug, reviewer)
 			}
@@ -93,7 +95,7 @@ func TestCleanupAndReconcileNoOpVerifyFullTreeAndGuardedApply(t *testing.T) {
 					t.Errorf("Manager %s did not report a justified no-op: %s", task.ManagerID, task.ReportStatus)
 				}
 			}
-			verified, err := Verify(context.Background(), host, ProcessInvoker{}, root, run.ID)
+			verified, err := Verify(context.Background(), host, projectexecutor.ProcessInvoker{}, root, run.ID)
 			if err != nil || verified.Status != "verified" {
 				t.Fatalf("%s no-op did not pass checks and full Verify: status=%s err=%v scope=%s", operation, verified.Status, err, verified.VerificationScope)
 			}
@@ -105,7 +107,7 @@ func TestCleanupAndReconcileNoOpVerifyFullTreeAndGuardedApply(t *testing.T) {
 			if err := os.WriteFile(untracked, []byte("new ordinary file\n"), 0600); err != nil {
 				t.Fatal(err)
 			}
-			_, staleErr := Apply(host, ProcessInvoker{}, root, ApplyRequest{RunID: run.ID, PlanID: plan.ID, CandidateID: run.Candidate.ID,
+			_, staleErr := Apply(host, projectexecutor.ProcessInvoker{}, root, ApplyRequest{RunID: run.ID, PlanID: plan.ID, CandidateID: run.Candidate.ID,
 				ExpectedVerificationDigest: preflight.VerificationDigest, TargetBranch: preflight.TargetBranch, ExpectedHead: preflight.ExpectedHead, ExpectedWorktree: preflight.ExpectedWorktree})
 			if staleErr == nil {
 				t.Fatal("Apply accepted a changed repository after no-op preflight")
@@ -117,7 +119,7 @@ func TestCleanupAndReconcileNoOpVerifyFullTreeAndGuardedApply(t *testing.T) {
 			if err != nil {
 				t.Fatalf("fresh no-op preflight: %v", err)
 			}
-			applied, err := Apply(host, ProcessInvoker{}, root, ApplyRequest{RunID: run.ID, PlanID: plan.ID, CandidateID: run.Candidate.ID,
+			applied, err := Apply(host, projectexecutor.ProcessInvoker{}, root, ApplyRequest{RunID: run.ID, PlanID: plan.ID, CandidateID: run.Candidate.ID,
 				ExpectedVerificationDigest: preflight.VerificationDigest, TargetBranch: preflight.TargetBranch, ExpectedHead: preflight.ExpectedHead, ExpectedWorktree: preflight.ExpectedWorktree})
 			if err != nil || applied.Status != "applied" || len(applied.Written) != 0 {
 				t.Fatalf("%s verified no-op Apply = %+v, %v", operation, applied, err)
@@ -138,7 +140,7 @@ func TestCleanupSourceChangeGeneratesAndAppliesExactVerifiedDocument(t *testing.
 	if err != nil {
 		t.Fatalf("plan cleanup source change: %v", err)
 	}
-	run, err := Run(context.Background(), host, ProcessInvoker{}, root, plan.ID)
+	run, err := Run(context.Background(), host, projectexecutor.ProcessInvoker{}, root, plan.ID)
 	if err != nil || run.Status != StatusIntegrated {
 		t.Fatalf("integrate cleanup source change: status=%s err=%v", run.Status, err)
 	}
@@ -177,7 +179,7 @@ func TestCleanupSourceChangeGeneratesAndAppliesExactVerifiedDocument(t *testing.
 	if !containsString(paths, "src/orders/implementation.txt") {
 		t.Fatalf("candidate did not bind its implementation change: %v", paths)
 	}
-	verified, err := Verify(context.Background(), host, ProcessInvoker{}, root, run.ID)
+	verified, err := Verify(context.Background(), host, projectexecutor.ProcessInvoker{}, root, run.ID)
 	if err != nil || verified.Status != "verified" {
 		t.Fatalf("verify source and generated document together: status=%s err=%v", verified.Status, err)
 	}
@@ -188,7 +190,7 @@ func TestCleanupSourceChangeGeneratesAndAppliesExactVerifiedDocument(t *testing.
 	if !containsString(preflight.Paths, "src/orders/implementation.txt") {
 		t.Fatalf("guarded Apply omitted the exact verified implementation path: %+v", preflight.Paths)
 	}
-	applied, err := Apply(host, ProcessInvoker{}, root, ApplyRequest{RunID: run.ID, PlanID: plan.ID, CandidateID: run.Candidate.ID,
+	applied, err := Apply(host, projectexecutor.ProcessInvoker{}, root, ApplyRequest{RunID: run.ID, PlanID: plan.ID, CandidateID: run.Candidate.ID,
 		ExpectedVerificationDigest: preflight.VerificationDigest, TargetBranch: preflight.TargetBranch, ExpectedHead: preflight.ExpectedHead, ExpectedWorktree: preflight.ExpectedWorktree})
 	if err != nil || applied.Status != "applied" {
 		t.Fatalf("apply verified source and generated document: report=%+v err=%v", applied, err)

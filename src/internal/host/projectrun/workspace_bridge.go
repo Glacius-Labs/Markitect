@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/Glacius-Labs/Markitect/src/internal/host/projectconfig"
 	"os"
 	"path/filepath"
 	"sort"
@@ -37,7 +38,7 @@ type workspaceJournal struct {
 // invokeProjectAgent owns workspace preparation and observation. A model cannot
 // supply a delta. Unknown transport/child termination preserves the private
 // workspace and journal for recovery; it never permits a blind cleanup/replay.
-func invokeProjectAgent(ctx context.Context, host Host, invoker Invoker, root string, project *Project, agent Agent, ownerRunID, taskID string, allowed, excluded []string, limits Limits, cfg agentexec.Config, req agentexec.Request) (result agentexec.RunResult, returnErr error) {
+func invokeProjectAgent(ctx context.Context, host Host, invoker Invoker, root string, project *Project, agent projectconfig.Agent, ownerRunID, taskID string, allowed, excluded []string, limits projectconfig.Limits, cfg agentexec.Config, req agentexec.Request) (result agentexec.RunResult, returnErr error) {
 	if result, handled, err := externalInvocation(ctx, root, ownerRunID, taskID, cfg, req); handled {
 		return result, err
 	}
@@ -55,7 +56,7 @@ func invokeProjectAgent(ctx context.Context, host Host, invoker Invoker, root st
 		}
 	}()
 	opts := agentexec.RunOptions{PrivateLogDirectory: filepath.Join(root, ".markitect", "runs", "private")}
-	if agent.Transport != TransportCodexAppServer {
+	if agent.Transport != projectconfig.TransportCodexAppServer {
 		return invokeAgent(ctx, invoker, cfg, req, opts)
 	}
 	if strings.TrimSpace(ownerRunID) == "" {
@@ -157,7 +158,7 @@ func invokeProjectAgent(ctx context.Context, host Host, invoker Invoker, root st
 }
 
 func workspaceInvocationTerminal(life *agentexec.Lifecycle) bool {
-	if life == nil || life.Provider != TransportCodexAppServer || life.SessionID == "" || life.TurnID == "" || !terminalWorkspaceState(life.State) || len(life.StartRequests) == 0 {
+	if life == nil || life.Provider != projectconfig.TransportCodexAppServer || life.SessionID == "" || life.TurnID == "" || !terminalWorkspaceState(life.State) || len(life.StartRequests) == 0 {
 		return false
 	}
 	for _, start := range life.StartRequests {

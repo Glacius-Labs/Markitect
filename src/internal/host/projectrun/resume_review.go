@@ -3,6 +3,7 @@ package projectrun
 import (
 	"context"
 	"fmt"
+	"github.com/Glacius-Labs/Markitect/src/internal/host/projectconfig"
 	"strings"
 	"time"
 )
@@ -19,7 +20,7 @@ func (e unroutedReviewError) Unwrap() error { return e.cause }
 // reports reintegrate when a failed review of the Manager's own integration
 // must be reworked in place, as the integration review loop does, once the
 // run's start budget is bound.
-func recoverPendingNativeReview(ctx context.Context, host Host, invoker Invoker, root string, store *runStore, dir string, plan PlanRecord, runtime Runtime, base *Project, report *RunReport, managerID string) (reintegrate bool, err error) {
+func recoverPendingNativeReview(ctx context.Context, host Host, invoker Invoker, root string, store *runStore, dir string, plan PlanRecord, runtime projectconfig.Runtime, base *Project, report *RunReport, managerID string) (reintegrate bool, err error) {
 	task := findTask(report.Tasks, managerID)
 	if task == nil || (task.ReviewStatus != "invoking" && task.ReviewStatus != "uncertain" && task.ReviewStatus != StatusAwaitingExternal) {
 		return false, nil
@@ -28,7 +29,7 @@ func recoverPendingNativeReview(ctx context.Context, host Host, invoker Invoker,
 		return false, fmt.Errorf("pending review has no configured reviewer")
 	}
 	agent, ok := runtime.Review.Agents[managerID]
-	if !ok || (agent.Transport != TransportCodexAppServer && !externalExecutionEnabled(ctx)) || task.ReviewCandidateID == "" || task.ReviewRound < 1 {
+	if !ok || (agent.Transport != projectconfig.TransportCodexAppServer && !externalExecutionEnabled(ctx)) || task.ReviewCandidateID == "" || task.ReviewRound < 1 {
 		return false, fmt.Errorf("pending review lacks an exact native candidate and round; replay is prohibited")
 	}
 	phase, final := "work", false

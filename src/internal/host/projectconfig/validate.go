@@ -1,24 +1,14 @@
-package projectrun
+package projectconfig
 
 import (
-	"bytes"
 	"encoding/json"
-	"errors"
 	"fmt"
-	"io"
-	"os"
+	"github.com/Glacius-Labs/Markitect/src/internal/host/codexappserver"
 	"path/filepath"
 	"regexp"
-	"sort"
 	"strings"
 	"time"
-
-	"github.com/Glacius-Labs/Markitect/src/internal/host/agentexec"
-	"github.com/Glacius-Labs/Markitect/src/internal/host/codexappserver"
-	"go.yaml.in/yaml/v3"
 )
-
-const maxRuntimeConfigBytes = 1 << 20
 
 var environmentName = regexp.MustCompile(`^[A-Za-z_][A-Za-z0-9_]*$`)
 
@@ -29,80 +19,6 @@ var forbiddenEnvironmentPrefixes = []string{
 var forbiddenEnvironmentNames = map[string]bool{
 	"CODEX_HOME": true, "CLAUDE_CONFIG_DIR": true, "HOME": true,
 	"USERPROFILE": true, "APPDATA": true, "LOCALAPPDATA": true,
-}
-
-// UnmarshalYAML requires a human-readable duration with a unit.
-func (d *Duration) UnmarshalYAML(node *yaml.Node) error {
-	if node.Kind != yaml.ScalarNode || node.Tag != "!!str" {
-		return fmt.Errorf("duration must be a string such as 30s or 5m")
-	}
-	parsed, err := time.ParseDuration(strings.TrimSpace(node.Value))
-	if err != nil || parsed <= 0 {
-		return fmt.Errorf("duration must be a positive Go duration: %q", node.Value)
-	}
-	*d = Duration(parsed)
-	return nil
-}
-
-func (d Duration) MarshalYAML() (any, error) {
-	return time.Duration(d).String(), nil
-}
-
-func (d Duration) MarshalJSON() ([]byte, error) {
-	return json.Marshal(time.Duration(d).String())
-}
-
-// LoadRuntime reads and strictly validates the project-owned runtime config.
-// It never resolves or starts a provider. Isolation claims are rejected here
-// until a host-controlled launcher supplies verified evidence.
-func LoadRuntime(root string) (Runtime, error) {
-	var config Runtime
-	if strings.TrimSpace(root) == "" {
-		return config, fmt.Errorf("project root is required")
-	}
-	root, err := filepath.Abs(root)
-	if err != nil {
-		return config, fmt.Errorf("resolve project root: %w", err)
-	}
-	if err := rejectReparsePath(root, RuntimePath); err != nil {
-		return config, err
-	}
-	path := filepath.Join(root, filepath.FromSlash(RuntimePath))
-	file, err := os.Open(path)
-	if err != nil {
-		return config, fmt.Errorf("open %s: %w", RuntimePath, err)
-	}
-	defer file.Close()
-	info, err := file.Stat()
-	if err != nil {
-		return config, fmt.Errorf("stat %s: %w", RuntimePath, err)
-	}
-	if !info.Mode().IsRegular() {
-		return config, fmt.Errorf("%s must be a regular file", RuntimePath)
-	}
-	data, err := io.ReadAll(io.LimitReader(file, maxRuntimeConfigBytes+1))
-	if err != nil {
-		return config, fmt.Errorf("read %s: %w", RuntimePath, err)
-	}
-	if len(data) > maxRuntimeConfigBytes {
-		return config, fmt.Errorf("%s exceeds %d bytes", RuntimePath, maxRuntimeConfigBytes)
-	}
-	decoder := yaml.NewDecoder(bytes.NewReader(data))
-	decoder.KnownFields(true)
-	if err := decoder.Decode(&config); err != nil {
-		return config, fmt.Errorf("decode %s: %w", RuntimePath, err)
-	}
-	var extra any
-	if err := decoder.Decode(&extra); !errors.Is(err, io.EOF) {
-		if err == nil {
-			return config, fmt.Errorf("%s must contain exactly one YAML document", RuntimePath)
-		}
-		return config, fmt.Errorf("decode trailing YAML in %s: %w", RuntimePath, err)
-	}
-	if err := ValidateRuntime(config); err != nil {
-		return config, err
-	}
-	return config, nil
 }
 
 // ValidateRuntime checks configuration shape and finite bounds independently
@@ -157,10 +73,10 @@ func ValidateRuntime(config Runtime) error {
 			return fmt.Errorf("runtime agent %q instructionPaths require scoped workspaceMode", managerID)
 		}
 		if agent.WorkspaceMode == "scoped" || agent.WorkspaceMode == "git" {
-			if len(agent.InstructionPaths) == 0 || len(agent.InstructionPaths) > maxNativeInstructionFiles {
-				return fmt.Errorf("runtime agent %q workspace requires 1..%d instructionPaths", managerID, maxNativeInstructionFiles)
+			if len(agent.InstructionPaths) == 0 || len(agent.InstructionPaths) > MaxInstructionFiles {
+				return fmt.Errorf("runtime agent %q workspace requires 1..%d instructionPaths", managerID, MaxInstructionFiles)
 			}
-			if err := validatePortablePaths(agent.InstructionPaths); err != nil {
+			if err := ValidateInstructionPaths(agent.InstructionPaths); err != nil {
 				return fmt.Errorf("runtime agent %q instructionPaths: %w", managerID, err)
 			}
 		}
@@ -290,110 +206,4 @@ func validateAgentTransport(managerID string, agent Agent) error {
 
 func supportsReadOnlyGitWorkspace(agent Agent) bool {
 	return agent.Transport == TransportCodexAppServer && agent.WorkspaceMode == "git" && len(agent.InstructionPaths) > 0
-}
-
-// ReadOnlyAgent selects the explicit transport for a Manager assessment or
-// Brownfield model proposal. Native Manager bindings stay exclusive to scoped
-// implementation tasks; their separately configured review binding serves a
-// fresh read-only invocation, not a reused reviewer conversation.
-func ReadOnlyAgent(config Runtime, managerID string) (Agent, error) {
-	manager, ok := config.Agents[managerID]
-	if !ok || strings.TrimSpace(managerID) == "" {
-		return Agent{}, fmt.Errorf("runtime has no agent mapped to Manager %q", managerID)
-	}
-	if manager.WorkspaceMode == "" {
-		// Explicit custom adapters can perform context-only work without a
-		// native workspace. This is a current transport contract.
-		return manager, nil
-	}
-	if manager.WorkspaceMode != "scoped" && manager.WorkspaceMode != "git" {
-		return Agent{}, fmt.Errorf("Manager %q has unsupported workspace mode %q", managerID, manager.WorkspaceMode)
-	}
-	if config.Review == nil {
-		return Agent{}, fmt.Errorf("native Manager %q requires a configured read-only assessment binding", managerID)
-	}
-	assessment, ok := config.Review.Agents[managerID]
-	if !ok || ((assessment.WorkspaceMode != "" || len(assessment.InstructionPaths) != 0) && !supportsReadOnlyGitWorkspace(assessment)) {
-		return Agent{}, fmt.Errorf("native Manager %q requires a separate read-only assessment binding", managerID)
-	}
-	return assessment, nil
-}
-
-// AgentConfig builds the explicit subprocess config for one manager. The
-// configured environment contains names only; agentexec resolves values.
-func (a Agent) AgentConfig() (agentexec.Config, error) {
-	if err := ValidateRuntime(Runtime{APIVersion: APIVersion, Mode: ModeControlledLocal,
-		Agents: map[string]Agent{"manager": a},
-		Limits: Limits{MaxDepth: 1, MaxStarts: 1, MaxParallel: 1, MaxDuration: Duration(time.Minute), MaxCostMicros: 1,
-			MaxCandidateFileBytes: 1, MaxCandidateBytes: 1}}); err != nil {
-		return agentexec.Config{}, err
-	}
-	var modelOptions []byte
-	if a.ModelOptions != nil {
-		encoded, err := json.Marshal(a.ModelOptions)
-		if err != nil {
-			return agentexec.Config{}, fmt.Errorf("encode modelOptions: %w", err)
-		}
-		modelOptions = encoded
-	}
-	env := append([]string{}, a.Environment...)
-	sort.Strings(env)
-	var transportConfig json.RawMessage
-	if a.Transport == TransportCodexAppServer {
-		encoded, err := json.Marshal(a.AppServer)
-		if err != nil {
-			return agentexec.Config{}, fmt.Errorf("encode App Server settings: %w", err)
-		}
-		transportConfig = encoded
-	}
-	workspaceMode := a.WorkspaceMode
-	if workspaceMode == "git" {
-		// The native adapter binds Git worktree semantics from the source runtime
-		// config. Its shared agentexec fingerprint remains transport-neutral.
-		workspaceMode = ""
-	}
-	var environmentAllowlist *[]string
-	if a.Transport == TransportCodexAppServer && a.AppServer != nil && a.AppServer.EnvironmentMode == AppServerEnvironmentModeInherit {
-		// Agent.Environment remains the selected-name policy for declared
-		// checks. Only the native App Server child inherits all caller values.
-	} else {
-		environmentAllowlist = &env
-	}
-	return agentexec.Config{
-		Command: a.Command, Args: append([]string(nil), a.Args...), Model: a.Model,
-		ModelOptions: modelOptions, ProviderVersion: a.ProviderVersion, Transport: a.Transport,
-		TransportConfig: transportConfig,
-		WorkspaceMode:   workspaceMode,
-		Timeout:         time.Duration(a.Timeout), MaxStdoutBytes: a.MaxStdoutBytes,
-		MaxStderrBytes: a.MaxStderrBytes, RuntimeFiles: append([]agentexec.RuntimeFile(nil), a.RuntimeFiles...),
-		EnvironmentAllowlist: environmentAllowlist,
-	}, nil
-}
-
-func rejectReparsePath(root, relative string) error {
-	rootInfo, err := os.Lstat(root)
-	if err != nil {
-		return fmt.Errorf("inspect project root: %w", err)
-	}
-	if !rootInfo.IsDir() || rootInfo.Mode()&os.ModeSymlink != 0 {
-		return fmt.Errorf("project root must be a real directory")
-	}
-	current := root
-	for _, segment := range strings.Split(filepath.FromSlash(relative), string(filepath.Separator)) {
-		current = filepath.Join(current, segment)
-		info, statErr := os.Lstat(current)
-		if os.IsNotExist(statErr) && current == filepath.Join(root, ".markitect") {
-			return fmt.Errorf("%s does not exist", relative)
-		}
-		if statErr != nil {
-			return fmt.Errorf("inspect %s: %w", relative, statErr)
-		}
-		if info.Mode()&os.ModeSymlink != 0 {
-			return fmt.Errorf("%s contains a symlink", relative)
-		}
-		if current != filepath.Join(root, filepath.FromSlash(relative)) && !info.IsDir() {
-			return fmt.Errorf("%s parent must be a directory", relative)
-		}
-	}
-	return nil
 }

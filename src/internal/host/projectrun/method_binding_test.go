@@ -1,6 +1,7 @@
 package projectrun
 
 import (
+	"github.com/Glacius-Labs/Markitect/src/internal/host/projectconfig"
 	"path/filepath"
 	"testing"
 
@@ -15,7 +16,7 @@ func TestMethodPolicyDigestExcludesExecutorIdentityAndRetainsPolicy(t *testing.T
 	baseAgent.RuntimeFiles = []agentexec.RuntimeFile{{Path: `C:\agents\wrapper.py`, Mode: "0644", Digest: "sha256:one"}}
 	baseAgent.Environment = []string{"MARKITECT_MODE", "MARKITECT_REGION"}
 	base.Agents["commerce"] = baseAgent
-	base.Review = &ReviewConfig{Agents: map[string]Agent{"commerce": baseAgent}, MaxRounds: 1, MaxManagerRounds: 2}
+	base.Review = &projectconfig.ReviewConfig{Agents: map[string]projectconfig.Agent{"commerce": baseAgent}, MaxRounds: 1, MaxManagerRounds: 2}
 
 	baseDigest, err := methodPolicyDigest(base)
 	if err != nil {
@@ -27,10 +28,10 @@ func TestMethodPolicyDigestExcludesExecutorIdentityAndRetainsPolicy(t *testing.T
 	changedAgent.Command = `D:\tools\manager-b.exe`
 	changedAgent.Args = []string{"--different-wrapper", "two"}
 	changedAgent.RuntimeFiles = []agentexec.RuntimeFile{{Path: `D:\tools\wrapper.py`, Mode: "0600", Digest: "sha256:two"}}
-	changedAgent.Transport = TransportCodexAppServer
+	changedAgent.Transport = projectconfig.TransportCodexAppServer
 	changedAgent.Environment = []string{"MARKITECT_REGION", "MARKITECT_MODE"}
-	changedExecutor.Agents = map[string]Agent{"commerce": changedAgent}
-	changedExecutor.Review = &ReviewConfig{Agents: map[string]Agent{"commerce": changedAgent}, MaxRounds: 1, MaxManagerRounds: 2}
+	changedExecutor.Agents = map[string]projectconfig.Agent{"commerce": changedAgent}
+	changedExecutor.Review = &projectconfig.ReviewConfig{Agents: map[string]projectconfig.Agent{"commerce": changedAgent}, MaxRounds: 1, MaxManagerRounds: 2}
 	changedDigest, err := methodPolicyDigest(changedExecutor)
 	if err != nil {
 		t.Fatal(err)
@@ -39,34 +40,34 @@ func TestMethodPolicyDigestExcludesExecutorIdentityAndRetainsPolicy(t *testing.T
 		t.Fatalf("executor-only changes altered method policy digest: got %s want %s", changedDigest, baseDigest)
 	}
 
-	for name, mutate := range map[string]func(*Runtime){
-		"model": func(runtime *Runtime) {
+	for name, mutate := range map[string]func(*projectconfig.Runtime){
+		"model": func(runtime *projectconfig.Runtime) {
 			agent := runtime.Agents["commerce"]
 			agent.Model = "different-model"
 			runtime.Agents["commerce"] = agent
 		},
-		"role options": func(runtime *Runtime) {
+		"role options": func(runtime *projectconfig.Runtime) {
 			agent := runtime.Agents["commerce"]
 			agent.ModelOptions = map[string]any{"temperature": 0.2}
 			runtime.Agents["commerce"] = agent
 		},
-		"workspace authority": func(runtime *Runtime) {
+		"workspace authority": func(runtime *projectconfig.Runtime) {
 			agent := runtime.Agents["commerce"]
 			agent.WorkspaceMode = "scoped"
 			agent.InstructionPaths = []string{"AGENTS.md"}
 			runtime.Agents["commerce"] = agent
 		},
-		"environment policy": func(runtime *Runtime) {
+		"environment policy": func(runtime *projectconfig.Runtime) {
 			agent := runtime.Agents["commerce"]
 			agent.Environment = append(agent.Environment, "MARKITECT_EXTRA")
 			runtime.Agents["commerce"] = agent
 		},
-		"finite limits":     func(runtime *Runtime) { runtime.Limits.MaxStarts++ },
-		"review strictness": func(runtime *Runtime) { runtime.Review.MaxRounds++ },
-		"strictness profile": func(runtime *Runtime) {
-			runtime.Strictness = &StrictnessConfig{Default: StrictnessProfile{Counterexamples: 2}}
+		"finite limits":     func(runtime *projectconfig.Runtime) { runtime.Limits.MaxStarts++ },
+		"review strictness": func(runtime *projectconfig.Runtime) { runtime.Review.MaxRounds++ },
+		"strictness profile": func(runtime *projectconfig.Runtime) {
+			runtime.Strictness = &projectconfig.StrictnessConfig{Default: projectconfig.StrictnessProfile{Counterexamples: 2}}
 		},
-		"output bounds": func(runtime *Runtime) {
+		"output bounds": func(runtime *projectconfig.Runtime) {
 			agent := runtime.Agents["commerce"]
 			agent.MaxStdoutBytes++
 			runtime.Agents["commerce"] = agent
@@ -74,8 +75,8 @@ func TestMethodPolicyDigestExcludesExecutorIdentityAndRetainsPolicy(t *testing.T
 	} {
 		t.Run(name, func(t *testing.T) {
 			changed := base
-			changed.Agents = map[string]Agent{"commerce": baseAgent}
-			changed.Review = &ReviewConfig{Agents: map[string]Agent{"commerce": baseAgent}, MaxRounds: 1, MaxManagerRounds: 2}
+			changed.Agents = map[string]projectconfig.Agent{"commerce": baseAgent}
+			changed.Review = &projectconfig.ReviewConfig{Agents: map[string]projectconfig.Agent{"commerce": baseAgent}, MaxRounds: 1, MaxManagerRounds: 2}
 			mutate(&changed)
 			got, err := methodPolicyDigest(changed)
 			if err != nil {
@@ -102,7 +103,7 @@ func TestRequireCurrentRuntimeBindingFailsClosedForOldAndUnknownPlans(t *testing
 func TestPlanDoesNotResolveExecutorAndBindsOnlyMethodPolicy(t *testing.T) {
 	root := makeProjectRunFixture(t)
 	missingA := filepath.Join(t.TempDir(), "executor-a-that-does-not-exist")
-	updateE2ERuntime(t, root, func(runtime *Runtime) {
+	updateE2ERuntime(t, root, func(runtime *projectconfig.Runtime) {
 		for id, agent := range runtime.Agents {
 			agent.Command = missingA
 			agent.Args = []string{"--before"}
@@ -130,7 +131,7 @@ func TestPlanDoesNotResolveExecutorAndBindsOnlyMethodPolicy(t *testing.T) {
 		t.Fatalf("new plan persisted executor fingerprints: %v", plan.RuntimeAgents)
 	}
 
-	runtime, err := LoadRuntime(root)
+	runtime, err := projectconfig.LoadRuntime(root)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -141,14 +142,14 @@ func TestPlanDoesNotResolveExecutorAndBindsOnlyMethodPolicy(t *testing.T) {
 	// Moving to a different currently-missing executable does not stale the
 	// plan; changing an actual role policy still does.
 	missingB := filepath.Join(t.TempDir(), "executor-b-that-does-not-exist")
-	updateE2ERuntime(t, root, func(runtime *Runtime) {
+	updateE2ERuntime(t, root, func(runtime *projectconfig.Runtime) {
 		for id, agent := range runtime.Agents {
 			agent.Command = missingB
 			agent.Args = []string{"--after"}
 			runtime.Agents[id] = agent
 		}
 	})
-	runtime, err = LoadRuntime(root)
+	runtime, err = projectconfig.LoadRuntime(root)
 	if err != nil {
 		t.Fatal(err)
 	}

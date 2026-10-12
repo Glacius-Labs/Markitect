@@ -2,6 +2,7 @@ package projectapp
 
 import (
 	"github.com/Glacius-Labs/Markitect/src/internal/host/codexappserver"
+	"github.com/Glacius-Labs/Markitect/src/internal/host/projectexecutor"
 	"github.com/Glacius-Labs/Markitect/src/internal/host/projectrun"
 	"github.com/Glacius-Labs/Markitect/src/internal/host/projectwork"
 )
@@ -13,5 +14,5 @@ func NewOperations() Operations {
 		Load: projectwork.Load, FromSnapshot: projectwork.FromSnapshot,
 		PlanEdit: projectwork.PlanEdit, ApplyEdit: projectwork.ApplyEdit,
 		Workspaces: projectrun.NewLocalWorkspaceService(),
-	}, Invoker: projectrun.NewTransportInvoker(codexappserver.Options{})}
+	}, Invoker: projectexecutor.New(codexappserver.Options{}, projectrun.NativeHelperPolicy{})}
 }

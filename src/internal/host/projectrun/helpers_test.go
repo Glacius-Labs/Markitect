@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"github.com/Glacius-Labs/Markitect/src/internal/host/projectconfig"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -605,7 +606,7 @@ func (f *helperFakeInvoker) Run(ctx context.Context, config agentexec.Config, re
 	}
 	result := agentexec.RunResult{Response: agentexec.Response{Outcome: agentexec.OutcomeProposed, CandidateFiles: candidates},
 		Receipt: agentexec.Receipt{RunID: inv.RunID, InputDigest: inv.InputDigest, ConfigDigest: "fake", Outcome: agentexec.OutcomeProposed,
-			Lifecycle: &agentexec.Lifecycle{Provider: TransportCodexAppServer, SessionID: "child-session", TurnID: "child-turn", State: state,
+			Lifecycle: &agentexec.Lifecycle{Provider: projectconfig.TransportCodexAppServer, SessionID: "child-session", TurnID: "child-turn", State: state,
 				Accounting: "partial", StartRequests: []agentexec.RoleStartRequest{{RequestID: inv.RunID, Role: "executor", State: "started"}}}}}
 	if f.behavior.nestedLifecycleState != "" {
 		result.Receipt.Lifecycle.StartRequests = append(result.Receipt.Lifecycle.StartRequests,
@@ -714,12 +715,12 @@ func newHelperFixture(t *testing.T) *helperFixture {
 	reserver := &helperFakeReserver{}
 	options := HelperSessionOptions{
 		ParentWorkspace: workspace,
-		ParentConfig: agentexec.Config{Transport: TransportCodexAppServer, ProviderVersion: codexappserver.SupportedProviderVersion,
+		ParentConfig: agentexec.Config{Transport: projectconfig.TransportCodexAppServer, ProviderVersion: codexappserver.SupportedProviderVersion,
 			Command: "codex", Model: "gpt-6-luna", Timeout: time.Minute, TransportConfig: json.RawMessage(`{"reasoningEffort":"high","helpers":{"enabled":true,"maxStartRequests":2,"maxDepth":1},"maxEventBytes":1048576}`)},
 		ParentRequest: agentexec.Request{Role: agentexec.RoleExecutor, SourceRevision: head, ModelDigest: "sha256:0000000000000000000000000000000000000000000000000000000000000000", ModulePin: "module-pin", ProjectionID: "projection", Context: json.RawMessage(`{"kind":"projectrun-task/v1","managerId":"orders"}`), ScopeIDs: []string{"orders"}, PolicyIDs: []string{}, Artifacts: []agentexec.Artifact{}},
 		ParentScope: HelperParentScope{ManagerID: "orders", AllowedWritePaths: []string{"src/"}, ExcludedWritePaths: []string{"src/generated/"},
 			ActiveResponsibilities: []HelperResponsibility{{ManagerID: "orders", Owns: []string{"src/"}}, {ManagerID: "docs", Owns: []string{"docs/"}}}},
-		Workspaces: service, Limits: Limits{MaxCandidateFileBytes: 1 << 20, MaxCandidateBytes: 4 << 20},
+		Workspaces: service, Limits: projectconfig.Limits{MaxCandidateFileBytes: 1 << 20, MaxCandidateBytes: 4 << 20},
 		PrivateLogDirectory: filepath.Join(root, "private"), ChildOptions: codexappserver.Options{DynamicTools: []codexappserver.DynamicTool{HelperDynamicTool(), {Type: "function", Name: "native_read", InputSchema: json.RawMessage(`{"type":"object"}`)}}, HandleToolCall: func(context.Context, codexappserver.ToolCall) (codexappserver.ToolResult, error) {
 			return codexappserver.ToolResult{}, nil
 		}, MaxToolCalls: 4, ToolTimeout: time.Minute},

@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/Glacius-Labs/Markitect/src/internal/host/projectconfig"
 	"io"
 	"os"
 	"os/exec"
@@ -66,7 +67,7 @@ func Verify(ctx context.Context, host Host, invoker Invoker, root, runID string)
 	if err := validateReportClosure(run); err != nil {
 		return out, err
 	}
-	runtime, err := LoadRuntime(root)
+	runtime, err := projectconfig.LoadRuntime(root)
 	if err != nil {
 		return out, err
 	}
@@ -74,7 +75,7 @@ func Verify(ctx context.Context, host Host, invoker Invoker, root, runID string)
 	if run.Status != StatusIntegrated && !recoverVerifier {
 		return out, fmt.Errorf("verification has no exact pending native verifier to recover")
 	}
-	if runtime.Mode != ModeControlledLocal {
+	if runtime.Mode != projectconfig.ModeControlledLocal {
 		return out, fmt.Errorf("verification mode is unsupported")
 	}
 	deadline := run.StartedAt.Add(time.Duration(runtime.Limits.MaxDuration))
@@ -319,7 +320,7 @@ func Verify(ctx context.Context, host Host, invoker Invoker, root, runID string)
 // deletion evidence is derived from the exact retained candidate ancestry.
 // A missing optional Host preserves the pure snapshot-only helper seam used
 // by existing tests; production does not use that branch.
-func freshReviewEvidenceForVerify(store *runStore, dir string, finalProject *Project, finalCandidate candidateData, plan PlanRecord, runtime Runtime, run RunReport, hosts ...Host) ([]fullReviewEvidence, error) {
+func freshReviewEvidenceForVerify(store *runStore, dir string, finalProject *Project, finalCandidate candidateData, plan PlanRecord, runtime projectconfig.Runtime, run RunReport, hosts ...Host) ([]fullReviewEvidence, error) {
 	if runtime.Review == nil {
 		return []fullReviewEvidence{}, nil
 	}
@@ -554,7 +555,7 @@ func (b *boundedBuffer) Write(p []byte) (int, error) {
 	return n, nil
 }
 
-func runCheck(parent context.Context, dir string, check CheckPlan, agent Agent, maximum Duration, onStart func(CheckResult) error) CheckResult {
+func runCheck(parent context.Context, dir string, check CheckPlan, agent projectconfig.Agent, maximum projectconfig.Duration, onStart func(CheckResult) error) CheckResult {
 	out := CheckResult{ID: check.ID, Command: append([]string(nil), check.Command...), ExecutablePath: check.ExecutablePath, ExecutableDigest: check.ExecutableDigest, StartedAt: time.Now().UTC(), Outcome: "failed"}
 	if check.ExecutablePath == "" || check.ExecutableDigest == "" {
 		out.Error = "check executable was not pinned at plan time"
@@ -651,7 +652,7 @@ func explicitEnvironment(names []string) []string {
 }
 func runtimeOSNeedsSystemRoot(names []string) bool { return false }
 
-func runVerifier(ctx context.Context, host Host, invoker Invoker, root string, plan PlanRecord, runtime Runtime, project *Project, candidate candidateData, checkResults []CheckResult, onStart func(InvocationLog) error) (*VerifierReport, InvocationLog, error) {
+func runVerifier(ctx context.Context, host Host, invoker Invoker, root string, plan PlanRecord, runtime projectconfig.Runtime, project *Project, candidate candidateData, checkResults []CheckResult, onStart func(InvocationLog) error) (*VerifierReport, InvocationLog, error) {
 	var log InvocationLog
 	config, err := runtime.Verifier.AgentConfig()
 	if err != nil {
@@ -757,7 +758,7 @@ func runVerifier(ctx context.Context, host Host, invoker Invoker, root string, p
 	if costOverflow {
 		return verifierReport, log, fmt.Errorf("verifier cost estimate exceeds the supported int64 range")
 	}
-	if !costKnown && runtime.Verifier.requiresReportedUsage() {
+	if !costKnown && requiresReportedUsage(*runtime.Verifier) {
 		return verifierReport, log, fmt.Errorf("verifier usage is missing; bounded cost cannot be asserted")
 	}
 	return verifierReport, log, nil
@@ -804,7 +805,7 @@ func validateVerifierCoverage(observations []agentexec.Observation, subjects, re
 	return nil
 }
 
-func freshBindings(host Host, invoker Invoker, root string, plan PlanRecord, runtime Runtime) error {
+func freshBindings(host Host, invoker Invoker, root string, plan PlanRecord, runtime projectconfig.Runtime) error {
 	if err := requireCurrentRuntimeBinding(plan); err != nil {
 		return err
 	}
@@ -852,7 +853,7 @@ func freshBindings(host Host, invoker Invoker, root string, plan PlanRecord, run
 // runtimeDigestWithInvoker retains its historic call shape for full-verify
 // and Apply call sites. Executor fingerprints belong to invocation receipts;
 // this durable digest covers only the method policy.
-func runtimeDigestWithInvoker(_ Invoker, runtime Runtime) (string, error) {
+func runtimeDigestWithInvoker(_ Invoker, runtime projectconfig.Runtime) (string, error) {
 	return methodPolicyDigest(runtime)
 }
 func persistVerify(s *runStore, dir string, report VerifyReport) error {

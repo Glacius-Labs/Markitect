@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"github.com/Glacius-Labs/Markitect/src/internal/host/projectconfig"
 	"os"
 	"path/filepath"
 	"reflect"
@@ -115,7 +116,7 @@ func TestExternalPacketListRejectsStaleSourceAndMethodPolicy(t *testing.T) {
 	// Restore the exact source bytes, then change only the durable method policy
 	// so this second listing independently exercises its policy binding.
 	repo.Write("src/value.txt", "initial\n")
-	runtime, err := projectrun.LoadRuntime(repo.Dir)
+	runtime, err := projectconfig.LoadRuntime(repo.Dir)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -124,7 +125,7 @@ func TestExternalPacketListRejectsStaleSourceAndMethodPolicy(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	repo.Write(projectrun.RuntimePath, string(runtimeBytes))
+	repo.Write(projectconfig.RuntimePath, string(runtimeBytes))
 	server, err := newMCPServer(env{root: repo.Dir, ops: ops, readOnly: true})
 	if err != nil {
 		t.Fatal(err)

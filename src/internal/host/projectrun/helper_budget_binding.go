@@ -1,12 +1,13 @@
 package projectrun
 
-// helperHostBinder keeps protocol fixtures and alternate process invokers usable
-// while binding the normal native router to this run's durable quota ledger.
-type helperHostBinder interface {
-	WithHelperHost(TransportHelperHost) Invoker
-}
+import (
+	"github.com/Glacius-Labs/Markitect/src/internal/host/projectconfig"
+	"github.com/Glacius-Labs/Markitect/src/internal/host/projectexecutor"
+)
 
-func bindRunHelperBudget(invoker Invoker, host Host, limits Limits, store *runStore, report *RunReport) (Invoker, *RoleStartBudget, error) {
+// bindRunHelperBudget clones the native executor with this run's durable
+// helper reservation policy while leaving its stable fingerprint options intact.
+func bindRunHelperBudget(invoker Invoker, host Host, limits projectconfig.Limits, store *runStore, report *RunReport) (Invoker, *RoleStartBudget, error) {
 	budget, err := NewRoleStartBudget(limits.MaxStarts, func() RunReport { return *report }, func(record RoleStartReservation) error {
 		found := false
 		for index, prior := range report.RoleStartReservations {
@@ -24,8 +25,9 @@ func bindRunHelperBudget(invoker Invoker, host Host, limits Limits, store *runSt
 	if err != nil {
 		return invoker, nil, err
 	}
-	if binder, ok := invoker.(helperHostBinder); ok {
-		invoker = binder.WithHelperHost(TransportHelperHost{Workspaces: host.Workspaces, Limits: limits, MaxStartRequests: limits.MaxStarts, Reserve: budget.ReserveHelper})
+	if binder, ok := invoker.(projectexecutor.HelperBinder); ok {
+		invoker = binder.WithHelperPolicy(NativeHelperPolicy{Workspaces: host.Workspaces, Limits: limits,
+			MaxStartRequests: limits.MaxStarts, Reserve: budget.ReserveHelper})
 	}
 	return invoker, budget, nil
 }

@@ -28,6 +28,8 @@ spec:
     - src/internal/host/agentexec/
     - src/internal/host/codexappserver/
     - src/internal/host/exchangecli/
+    - src/internal/host/projectconfig/
+    - src/internal/host/projectexecutor/
     - src/internal/host/projectrun/
     - src/internal/host/projectsetup/
     - src/internal/host/projectworkspace/

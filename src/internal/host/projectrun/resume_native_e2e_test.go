@@ -4,6 +4,8 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"github.com/Glacius-Labs/Markitect/src/internal/host/projectconfig"
+	"github.com/Glacius-Labs/Markitect/src/internal/host/projectexecutor"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -50,11 +52,11 @@ func (i *nativeResumeFixtureInvoker) Run(_ context.Context, config agentexec.Con
 		CandidateFiles: []agentexec.CandidateFile{{Path: "src/project-owner.txt", Mode: "0644", Content: retryBytes}},
 		EvidenceRefs:   []string{}, VerifierObservations: []agentexec.Observation{}, ReportJSON: reportJSON, Uncertainty: []string{},
 		Usage: &agentexec.Usage{Source: "provider-reported", InputTokens: &tokensIn, OutputTokens: &tokensOut}}
-	fingerprint, err := NewTransportInvoker(codexappserver.Options{}).Fingerprint(config)
+	fingerprint, err := projectexecutor.New(codexappserver.Options{}, NativeHelperPolicy{}).Fingerprint(config)
 	if err != nil {
 		return agentexec.RunResult{}, err
 	}
-	lifecycle := &agentexec.Lifecycle{Provider: TransportCodexAppServer, SessionID: "repair-session", TurnID: "repair-turn", State: "completed", Accounting: "partial",
+	lifecycle := &agentexec.Lifecycle{Provider: projectconfig.TransportCodexAppServer, SessionID: "repair-session", TurnID: "repair-turn", State: "completed", Accounting: "partial",
 		StartRequests: []agentexec.RoleStartRequest{{RequestID: invocation.RunID, Role: agentexec.RoleExecutor, State: "completed"}}}
 	receipt := agentexec.Receipt{APIVersion: agentexec.APIVersion, RunID: invocation.RunID, InputDigest: invocation.InputDigest,
 		ConfigDigest: fingerprint, ProviderVersion: config.ProviderVersion, Outcome: agentexec.OutcomeProposed, Usage: response.Usage, Lifecycle: lifecycle}
@@ -62,12 +64,12 @@ func (i *nativeResumeFixtureInvoker) Run(_ context.Context, config agentexec.Con
 }
 
 func (*nativeResumeFixtureInvoker) Fingerprint(config agentexec.Config) (string, error) {
-	return NewTransportInvoker(codexappserver.Options{}).Fingerprint(config)
+	return projectexecutor.New(codexappserver.Options{}, NativeHelperPolicy{}).Fingerprint(config)
 }
 
 func (i *nativeResumeFixtureInvoker) Recover(_ context.Context, config agentexec.Config, handle codexappserver.RecoveryHandle, options agentexec.RunOptions) (agentexec.RunResult, error) {
 	i.recoverCalls++
-	if config.Transport != TransportCodexAppServer || options.Workspace == nil || options.Workspace.ID != handle.Workspace.ID {
+	if config.Transport != projectconfig.TransportCodexAppServer || options.Workspace == nil || options.Workspace.ID != handle.Workspace.ID {
 		return agentexec.RunResult{}, errors.New("recovery did not retain the original native workspace")
 	}
 	i.workspaceIDs = append(i.workspaceIDs, options.Workspace.TaskID)
@@ -372,7 +374,7 @@ func assertNativeReviewPassed(t *testing.T, invoker *nativeDeltaOnlyInvoker, rep
 // loadNativeReworkState prepares the persisted run state for a direct targeted
 // rework call. The planned runtime already binds the reviewers, so the review
 // of the reworked candidate runs end to end.
-func loadNativeReworkState(t *testing.T, fixture nativeResumeRunFixture) (RunReport, *Project, Runtime) {
+func loadNativeReworkState(t *testing.T, fixture nativeResumeRunFixture) (RunReport, *Project, projectconfig.Runtime) {
 	t.Helper()
 	runtime := mustLoadRuntime(t, fixture.root)
 	report, err := fixture.store.readLatestState(fixture.plan.ID)
@@ -441,13 +443,13 @@ func seedNativeRun(t *testing.T, phase string, reviewRework, reviewed bool) nati
 		gitE2E(t, root, "add", "AGENTS.md", "src/project-owner.txt")
 	}
 	gitE2E(t, root, "commit", "-m", "add native instruction and owner fixtures")
-	updateE2ERuntime(t, root, func(runtime *Runtime) {
+	updateE2ERuntime(t, root, func(runtime *projectconfig.Runtime) {
 		runtime.Limits.MaxRetries = 1
 		if phase == "integrate" {
 			runtime.Limits.MaxStarts = 3
 		}
 		if reviewed {
-			runtime.Review = &ReviewConfig{Agents: map[string]Agent{}, MaxRounds: 1, MaxManagerRounds: 1}
+			runtime.Review = &projectconfig.ReviewConfig{Agents: map[string]projectconfig.Agent{}, MaxRounds: 1, MaxManagerRounds: 1}
 			for id, agent := range runtime.Agents {
 				runtime.Review.Agents[id] = agent
 			}
@@ -503,7 +505,7 @@ func seedNativeRun(t *testing.T, phase string, reviewRework, reviewed bool) nati
 		t.Fatal(err)
 	}
 	report := RunReport{APIVersion: APIVersion, ID: plan.ID, PlanID: plan.ID, Operation: plan.Operation,
-		Status: StatusInterrupted, Mode: ModeControlledLocal, StartedAt: time.Now().UTC(), UpdatedAt: time.Now().UTC(),
+		Status: StatusInterrupted, Mode: projectconfig.ModeControlledLocal, StartedAt: time.Now().UTC(), UpdatedAt: time.Now().UTC(),
 		BaseRevision: plan.BaseRevision, BaseSnapshot: plan.BaseSnapshot, ModelDigest: plan.ModelDigest,
 		RuntimeDigest: plan.RuntimeDigest, Tasks: cloneTasks(plan.Managers),
 		Candidate: CandidateRef{ID: initial.ID, Snapshot: initial.Digest, Files: map[string]string{}}, Revision: 1}
@@ -636,11 +638,11 @@ func seedNativeRun(t *testing.T, phase string, reviewRework, reviewed bool) nati
 		}
 	}
 
-	fingerprint, err := NewTransportInvoker(codexappserver.Options{}).Fingerprint(config)
+	fingerprint, err := projectexecutor.New(codexappserver.Options{}, NativeHelperPolicy{}).Fingerprint(config)
 	if err != nil {
 		t.Fatal(err)
 	}
-	lifecycle := &agentexec.Lifecycle{Provider: TransportCodexAppServer, SessionID: "resume-session", TurnID: "resume-turn", State: "completed", Accounting: "partial",
+	lifecycle := &agentexec.Lifecycle{Provider: projectconfig.TransportCodexAppServer, SessionID: "resume-session", TurnID: "resume-turn", State: "completed", Accounting: "partial",
 		StartRequests: []agentexec.RoleStartRequest{{RequestID: invocation.RunID, Role: agentexec.RoleExecutor, State: "completed"}}}
 	tokensIn, tokensOut := int64(3), int64(2)
 	taskResponse := TaskResponse{Status: "complete", Summary: "Recovered exact native work.", Delegations: []Delegation{},
@@ -665,11 +667,11 @@ func seedNativeRun(t *testing.T, phase string, reviewRework, reviewed bool) nati
 		InputDigest: invocation.InputDigest, ConfigDigest: fingerprint, ProviderVersion: configAgent.ProviderVersion,
 		Outcome: agentexec.OutcomeProposed, Usage: response.Usage, Lifecycle: lifecycle}}
 	privateDir := filepath.Join(root, ".markitect", "runs", "private")
-	nativeJournal, err := newNativeJournal(privateDir, handle.CWD, handle.ID)
+	nativeJournal, err := projectexecutor.OpenNativeJournal(privateDir, handle.CWD, handle.ID)
 	if err != nil {
 		t.Fatal(err)
 	}
-	journalOptions := nativeJournal.wrapOptions(codexappserver.Options{})
+	journalOptions := nativeJournal.WrapOptions(codexappserver.Options{})
 	if err := journalOptions.BeforeStart(context.Background(), agentexec.RoleStartRequest{RequestID: invocation.RunID, Role: agentexec.RoleExecutor}); err != nil {
 		t.Fatal(err)
 	}
@@ -747,9 +749,9 @@ func assertNativeResumeResult(t *testing.T, fixture nativeResumeRunFixture, resu
 	}
 }
 
-func mustLoadRuntime(t *testing.T, root string) Runtime {
+func mustLoadRuntime(t *testing.T, root string) projectconfig.Runtime {
 	t.Helper()
-	runtime, err := LoadRuntime(root)
+	runtime, err := projectconfig.LoadRuntime(root)
 	if err != nil {
 		t.Fatal(err)
 	}

@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/Glacius-Labs/Markitect/src/internal/host/projectconfig"
 	"os"
 	"path/filepath"
 	"sort"
@@ -375,7 +376,7 @@ func importExternalGitCandidate(root string, packet ExternalPacket, candidate Ex
 	if err := json.Unmarshal(packet.Invocation.Request.Context, &scopes); err != nil {
 		return projectworkspace.Delta{}, fmt.Errorf("decode packet write scopes: %w", err)
 	}
-	runtime, err := LoadRuntime(root)
+	runtime, err := projectconfig.LoadRuntime(root)
 	if err != nil {
 		return projectworkspace.Delta{}, err
 	}
@@ -476,7 +477,7 @@ func validateExternalSubmissionBinding(host Host, root string, plan PlanRecord) 
 	if err := repositoryMatches(root, plan); err != nil {
 		return err
 	}
-	runtime, err := LoadRuntime(root)
+	runtime, err := projectconfig.LoadRuntime(root)
 	if err != nil {
 		return err
 	}

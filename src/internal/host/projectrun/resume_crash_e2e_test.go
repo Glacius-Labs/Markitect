@@ -5,6 +5,7 @@ package projectrun
 import (
 	"context"
 	"fmt"
+	"github.com/Glacius-Labs/Markitect/src/internal/host/projectexecutor"
 	"strings"
 	"testing"
 
@@ -38,7 +39,7 @@ func TestResumeReconcilesDurableRunningStateAfterCrash(t *testing.T) {
 				t.Fatalf("Plan: %v", err)
 			}
 			report := persistRunningCrashState(t, root, plan, scenario.inFlight, scenario.retryReady)
-			invoker := &resumeCountingInvoker{inner: ProcessInvoker{}}
+			invoker := &resumeCountingInvoker{inner: projectexecutor.ProcessInvoker{}}
 			resumed, resumeErr := Resume(context.Background(), projectworkHost(), invoker, root, plan.ID)
 			if scenario.inFlight {
 				if resumeErr == nil || !strings.Contains(resumeErr.Error(), "uncertain in-flight") {
@@ -97,7 +98,7 @@ func TestPersistedClosureRejectsHiddenTypedObligationsWithoutReplay(t *testing.T
 	if err != nil {
 		t.Fatalf("Plan: %v", err)
 	}
-	invoker := &resumeCountingInvoker{inner: ProcessInvoker{}}
+	invoker := &resumeCountingInvoker{inner: projectexecutor.ProcessInvoker{}}
 	run, err := Run(context.Background(), host, invoker, root, plan.ID)
 	if err != nil || run.Status != StatusIntegrated {
 		t.Fatalf("Run: status=%s err=%v", run.Status, err)
@@ -168,7 +169,7 @@ func TestApplyRechecksReportClosureAtGuardedWriteBoundary(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Plan: %v", err)
 	}
-	invoker := &resumeCountingInvoker{inner: ProcessInvoker{}}
+	invoker := &resumeCountingInvoker{inner: projectexecutor.ProcessInvoker{}}
 	run, err := Run(context.Background(), host, invoker, root, plan.ID)
 	if err != nil || run.Status != StatusIntegrated {
 		t.Fatalf("Run: status=%s err=%v", run.Status, err)

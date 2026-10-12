@@ -1,4 +1,4 @@
-package projectrun
+package projectexecutor
 
 import (
 	"context"
@@ -20,6 +20,7 @@ import (
 
 	"github.com/Glacius-Labs/Markitect/src/internal/host/agentexec"
 	"github.com/Glacius-Labs/Markitect/src/internal/host/codexappserver"
+	"github.com/Glacius-Labs/Markitect/src/internal/host/projectworkspace"
 )
 
 const (
@@ -30,15 +31,26 @@ const (
 )
 
 type nativeJournal struct {
-	directory      string
-	workspaceID    string
-	workspaceCWD   string
-	mu             sync.Mutex
-	usedRequestIDs map[string]bool
-	rootRequestID  string
-	recoveryHandle *codexappserver.RecoveryHandle
-	eventBytes     int64
-	eventSequence  uint64
+	directory        string
+	workspaceID      string
+	workspaceCWD     string
+	mu               sync.Mutex
+	helperLogStarted bool
+	usedRequestIDs   map[string]bool
+	rootRequestID    string
+	recoveryHandle   *codexappserver.RecoveryHandle
+	eventBytes       int64
+	eventSequence    uint64
+}
+
+// NativeJournal exposes only the journal operations the transport and its
+// method-owned helper session require. It does not expose a path or arbitrary
+// record filename.
+type NativeJournal interface {
+	WrapOptions(codexappserver.Options) codexappserver.Options
+	StartHelperLog() error
+	AppendHelperRecord(json.RawMessage) error
+	BindRecoveryHandle(codexappserver.RecoveryHandle) error
 }
 
 type nativeStartRecord struct {
@@ -72,10 +84,26 @@ type nativeRecoveryRecord struct {
 	Handle            codexappserver.RecoveryHandle `json:"handle"`
 }
 
+// helperEvidenceRecord is the bounded operational evidence written by the
+// method-owned helper session. Keep this wire shape explicit so the journal
+// cannot become a general-purpose JSON append surface.
+type helperEvidenceRecord struct {
+	RequestID  string                   `json:"requestId"`
+	ToolCallID string                   `json:"toolCallId"`
+	Task       string                   `json:"task,omitempty"`
+	Paths      []string                 `json:"paths,omitempty"`
+	State      string                   `json:"state"`
+	Error      string                   `json:"error,omitempty"`
+	Handle     *projectworkspace.Handle `json:"handle,omitempty"`
+	Receipt    *agentexec.Receipt       `json:"receipt,omitempty"`
+	Delta      *projectworkspace.Delta  `json:"delta,omitempty"`
+	RecordedAt time.Time                `json:"recordedAt"`
+}
+
 // newNativeJournal creates one private journal for an owned workspace handle.
 // Its event and recovery files are placed under PrivateLogDirectory and never
 // inside the provider's working directory.
-func newNativeJournal(privateLogDirectory, workspaceCWD, workspaceID string) (*nativeJournal, error) {
+func OpenNativeJournal(privateLogDirectory, workspaceCWD, workspaceID string) (NativeJournal, error) {
 	if strings.TrimSpace(workspaceID) == "" || strings.TrimSpace(privateLogDirectory) == "" || !filepath.IsAbs(workspaceCWD) {
 		return nil, errors.New("native journal requires a bound workspace handle and absolute CWD")
 	}
@@ -145,11 +173,11 @@ func newNativeJournal(privateLogDirectory, workspaceCWD, workspaceID string) (*n
 // dispatched turn. Recovery does not execute BeforeStart and must not create a
 // second role-start record; this binding only lets an observed update to the
 // same trusted invocation be persisted in the recovery journal.
-func (j *nativeJournal) bindRecoveryHandle(handle codexappserver.RecoveryHandle) error {
+func (j *nativeJournal) BindRecoveryHandle(handle codexappserver.RecoveryHandle) error {
 	if j == nil || handle.Workspace.ID != j.workspaceID || !sameNativeJournalPath(handle.Workspace.CWD, j.workspaceCWD) ||
 		handle.Invocation.RunID == "" || handle.Invocation.Nonce == "" || handle.Invocation.InputDigest == "" ||
 		handle.ThreadID == "" || handle.SessionID == "" || handle.TurnID == "" || !handle.TurnDispatched ||
-		!requestMatch(handle.Invocation.Request, handle.Invocation) {
+		!sameInvocationRequest(handle.Invocation.Request, handle.Invocation) {
 		return errors.New("recovery journal requires the exact trusted dispatched invocation and workspace")
 	}
 	j.mu.Lock()
@@ -175,7 +203,9 @@ func sameNativeJournalPath(left, right string) bool {
 	if leftErr != nil || rightErr != nil {
 		return false
 	}
-	if sameRecoveryPath(left, right) {
+	leftReal, leftRealErr := filepath.EvalSymlinks(left)
+	rightReal, rightRealErr := filepath.EvalSymlinks(right)
+	if leftRealErr == nil && rightRealErr == nil && samePath(leftReal, rightReal) {
 		return true
 	}
 	if runtime.GOOS != "windows" {
@@ -195,7 +225,7 @@ func sameRecoveryJournalBinding(left, right codexappserver.RecoveryHandle) bool 
 		left.TurnDispatched && right.TurnDispatched
 }
 
-func (j *nativeJournal) wrapOptions(original codexappserver.Options) codexappserver.Options {
+func (j *nativeJournal) WrapOptions(original codexappserver.Options) codexappserver.Options {
 	wrapped := original
 	originalBeforeStart := original.BeforeStart
 	wrapped.BeforeStart = func(ctx context.Context, request agentexec.RoleStartRequest) error {
@@ -235,6 +265,68 @@ func (j *nativeJournal) wrapOptions(original codexappserver.Options) codexappser
 		return nil
 	}
 	return wrapped
+}
+
+// StartHelperLog exclusively creates the fixed helper evidence log after the
+// helper session has been bound to its durable run reservation.
+func (j *nativeJournal) StartHelperLog() error {
+	if j == nil {
+		return errors.New("native journal is unavailable")
+	}
+	j.mu.Lock()
+	defer j.mu.Unlock()
+	if j.helperLogStarted {
+		return errors.New("native helper journal has already been started")
+	}
+	if err := createPrivateFile(filepath.Join(j.directory, "helpers.jsonl")); err != nil {
+		return err
+	}
+	j.helperLogStarted = true
+	return nil
+}
+
+// AppendHelperRecord stores one bounded operational helper record. The strict
+// decoder rejects unknown fields, multiple values, and records not bound to
+// this invocation's workspace before appending to the fixed helpers log.
+func (j *nativeJournal) AppendHelperRecord(wire json.RawMessage) error {
+	if j == nil || len(wire) == 0 || len(wire) > nativeJournalMaxRecord {
+		return errors.New("helper journal record must be one bounded JSON value")
+	}
+	var record helperEvidenceRecord
+	decoder := json.NewDecoder(strings.NewReader(string(wire)))
+	decoder.DisallowUnknownFields()
+	if err := decoder.Decode(&record); err != nil {
+		return fmt.Errorf("decode native helper evidence record: %w", err)
+	}
+	var trailing any
+	if err := decoder.Decode(&trailing); !errors.Is(err, io.EOF) {
+		return errors.New("native helper evidence record has trailing data")
+	}
+	validState := false
+	switch record.State {
+	case "prepared", "running", "unknown", "failed", "delta-harvested", "delta-applied", "cleanup-pending", "closed":
+		validState = true
+	}
+	if strings.TrimSpace(record.RequestID) == "" || strings.TrimSpace(record.ToolCallID) == "" || strings.TrimSpace(record.Task) == "" ||
+		!validState || record.Handle == nil || record.RecordedAt.IsZero() || len(record.Task) > 8192 || len(record.Paths) == 0 ||
+		len(record.Paths) > 64 || len(record.Error) > 2048 {
+		return errors.New("native helper evidence record is incomplete or exceeds its bound")
+	}
+	for _, path := range record.Paths {
+		if strings.TrimSpace(path) == "" || len(path) > 1024 {
+			return errors.New("native helper evidence record has an invalid path")
+		}
+	}
+	if record.Handle.ID != j.workspaceID {
+		return errors.New("native helper evidence record is bound to another workspace")
+	}
+	j.mu.Lock()
+	started := j.helperLogStarted
+	j.mu.Unlock()
+	if !started {
+		return errors.New("native helper log has not been started")
+	}
+	return j.appendJSONLine("helpers.jsonl", record)
 }
 
 func (j *nativeJournal) reserveStart(request agentexec.RoleStartRequest) (nativeStartRecord, error) {
@@ -284,7 +376,7 @@ func (j *nativeJournal) persistHandle(handle codexappserver.RecoveryHandle) erro
 	}
 	if recoveryHandle != nil {
 		if !sameNativeJournalPath(handle.Workspace.CWD, j.workspaceCWD) || handle.Invocation.APIVersion != agentexec.APIVersion ||
-			!requestMatch(handle.Invocation.Request, handle.Invocation) || !sameRecoveryJournalBinding(*recoveryHandle, handle) {
+			!sameInvocationRequest(handle.Invocation.Request, handle.Invocation) || !sameRecoveryJournalBinding(*recoveryHandle, handle) {
 			return errors.New("App Server recovery handle differs from the exact bound turn")
 		}
 	}
@@ -382,14 +474,7 @@ func (j *nativeJournal) uniqueRequestIDLocked() (string, error) {
 
 // readTrustedRecoveryHandles returns only Host-written recovery handles whose
 // embedded workspace identity matches the caller's currently owned handle.
-func readTrustedRecoveryHandles(privateLogDirectory, workspaceHandleID string) ([]codexappserver.RecoveryHandle, error) {
-	return readTrustedRecoveryHandlesForCache(privateLogDirectory, workspaceHandleID, false)
-}
-
-// readTrustedRecoveryHandlesForCache permits an absent workspace path only
-// for a caller that already found a Host-cached closed result. Active recovery
-// continues to require the original workspace to resolve.
-func readTrustedRecoveryHandlesForCache(privateLogDirectory, workspaceHandleID string, allowMissingWorkspace bool) ([]codexappserver.RecoveryHandle, error) {
+func ReadTrustedRecoveryHandles(privateLogDirectory, workspaceHandleID string, allowMissingWorkspace bool) ([]codexappserver.RecoveryHandle, error) {
 	if strings.TrimSpace(workspaceHandleID) == "" {
 		return nil, errors.New("workspace handle identity is required for recovery lookup")
 	}
@@ -612,4 +697,11 @@ func pathIsWithin(root, path string) bool {
 		return true
 	}
 	return !filepath.IsAbs(rel) && rel != ".." && !strings.HasPrefix(rel, ".."+string(filepath.Separator))
+}
+
+func samePath(left, right string) bool {
+	if runtime.GOOS == "windows" {
+		return strings.EqualFold(filepath.Clean(left), filepath.Clean(right))
+	}
+	return filepath.Clean(left) == filepath.Clean(right)
 }

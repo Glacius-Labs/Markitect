@@ -3,6 +3,7 @@ package projectrun
 import (
 	"bytes"
 	"encoding/json"
+	"github.com/Glacius-Labs/Markitect/src/internal/host/projectconfig"
 	"os"
 	"path/filepath"
 	"strings"
@@ -16,7 +17,7 @@ import (
 )
 
 func TestProjectModelEditCannotChangeRuntimeConfiguration(t *testing.T) {
-	for _, path := range []string{RuntimePath, ".markitect/runtime.yaml/child", ".markitect/project.yaml"} {
+	for _, path := range []string{projectconfig.RuntimePath, ".markitect/runtime.yaml/child", ".markitect/project.yaml"} {
 		if err := validateModelEditPaths(Mutation{Files: []FileChange{{Path: path}}}); err == nil {
 			t.Fatalf("ModelEdit path %q unexpectedly passed the model-only contract", path)
 		}
@@ -257,7 +258,7 @@ func TestSinceImpactAndExplicitManagerRouteThroughRequiredHierarchy(t *testing.T
 		{ID: inventory, Parent: sales},
 	}}
 	impact := &projectmodel.ChangeImpact{Managers: []string{orders}}
-	tasks, _, _, err := planManagers(report, map[string][]byte{}, PlanRequest{Goal: "Prevent cancelled orders from shipping.", Managers: []string{inventory}}, nil, impact, Limits{MaxDepth: 8})
+	tasks, _, _, err := planManagers(report, map[string][]byte{}, PlanRequest{Goal: "Prevent cancelled orders from shipping.", Managers: []string{inventory}}, nil, impact, projectconfig.Limits{MaxDepth: 8})
 	if err != nil {
 		t.Fatalf("plan hierarchical impact: %v", err)
 	}

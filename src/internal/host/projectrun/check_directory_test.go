@@ -3,6 +3,7 @@ package projectrun
 import (
 	"context"
 	"fmt"
+	"github.com/Glacius-Labs/Markitect/src/internal/host/projectconfig"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -142,9 +143,9 @@ func TestCheckTimeoutStopsDescendantsHoldingOutput(t *testing.T) {
 	check := CheckPlan{ID: "descendant-timeout", Owner: "orders", Required: true,
 		Command:        []string{filepath.Base(executable), "-test.run=^TestCheckDescendantHelperProcess$"},
 		ExecutablePath: resolved, ExecutableDigest: rawContentDigest(raw)}
-	agent := Agent{Timeout: Duration(time.Second), Environment: []string{checkDescendantHelperEnv, "PATH", "SystemRoot"}}
+	agent := projectconfig.Agent{Timeout: projectconfig.Duration(time.Second), Environment: []string{checkDescendantHelperEnv, "PATH", "SystemRoot"}}
 	started := time.Now()
-	result := runCheck(context.Background(), t.TempDir(), check, agent, Duration(time.Minute), nil)
+	result := runCheck(context.Background(), t.TempDir(), check, agent, projectconfig.Duration(time.Minute), nil)
 	elapsed := time.Since(started)
 	if result.Outcome != "failed" || result.Error != "check timed out" {
 		t.Fatalf("timed-out check = outcome %q error %q, want failed / check timed out", result.Outcome, result.Error)

@@ -7,16 +7,15 @@ import (
 	"github.com/Glacius-Labs/Markitect/src/internal/host/agentexec"
 )
 
-// ProcessInvoker delegates transport, input binding and receipts to the shared
-// agentexec package. ProjectRun adds task scope and durable orchestration.
-type ProcessInvoker struct{}
-
-func (ProcessInvoker) Run(ctx context.Context, config agentexec.Config, request agentexec.Request, options agentexec.RunOptions) (agentexec.RunResult, error) {
-	return agentexec.Run(ctx, config, request, options)
+type requestFingerprinter interface {
+	FingerprintForRequest(agentexec.Config, agentexec.Request) (string, error)
 }
 
-func (ProcessInvoker) Fingerprint(config agentexec.Config) (string, error) {
-	return agentexec.Fingerprint(config)
+func fingerprintForRequest(invoker Invoker, config agentexec.Config, request agentexec.Request) (string, error) {
+	if aware, ok := invoker.(requestFingerprinter); ok {
+		return aware.FingerprintForRequest(config, request)
+	}
+	return invoker.Fingerprint(config)
 }
 
 // invokeAgent keeps the current v1 candidate pipeline from silently discarding

@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"github.com/Glacius-Labs/Markitect/src/internal/host/projectconfig"
 	"slices"
 
 	"github.com/Glacius-Labs/Markitect/src/internal/host/codexappserver"
@@ -118,7 +119,7 @@ func (in configInput) options(readOnly bool) (projectsetup.Options, error) {
 		ProviderArgs: append([]string(nil), in.ProviderArg...), ProviderVersion: in.ProviderVersion, CostMode: in.CostMode,
 		MaxCostMicros: *in.MaxCostMicros,
 	}
-	if in.CostMode == projectrun.CostModeUnmetered {
+	if in.CostMode == projectconfig.CostModeUnmetered {
 		if in.InputMicrosPerMillion != nil || in.OutputMicrosPerMillion != nil {
 			return projectsetup.Options{}, usagef("--cost-mode unmetered declares no price; omit the input and output rates")
 		}

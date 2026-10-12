@@ -2,6 +2,7 @@ package projectrun
 
 import (
 	"encoding/json"
+	"github.com/Glacius-Labs/Markitect/src/internal/host/projectconfig"
 	"io"
 	"os"
 	"path/filepath"
@@ -78,8 +79,8 @@ func TestOperationsFullVerifyProcess(t *testing.T) {
 				ID string `json:"id"`
 			} `json:"manager"`
 		} `json:"manager"`
-		Subjects   []string          `json:"requiredSubjects"`
-		Strictness StrictnessProfile `json:"strictness"`
+		Subjects   []string                        `json:"requiredSubjects"`
+		Strictness projectconfig.StrictnessProfile `json:"strictness"`
 	}
 	if err := json.Unmarshal(invocation.Request.Context, &request); err != nil || request.Kind != "projectrun-full-verify/v1" {
 		t.Fatalf("unexpected full-verify request: %s (%v)", invocation.Request.Context, err)
@@ -214,22 +215,22 @@ func configureOperationsNoOpRuntime(t *testing.T, root string) {
 	setRuntimeFixtureEnv(t, operationsVerifyHelperEnv, "1")
 	setRuntimeFixtureEnv(t, operationsVerifyLogEnv, filepath.Join(testkit.TempDir(t), "operations-review.jsonl"))
 	setupOperationsFullVerifyChildren(t)
-	updateE2ERuntime(t, root, func(runtime *Runtime) {
+	updateE2ERuntime(t, root, func(runtime *projectconfig.Runtime) {
 		for id, agent := range runtime.Agents {
 			agent.Command = executable
 			agent.Args = []string{"-test.run=^TestOperationsNoOpTaskProcess$"}
 			agent.Environment = append(agent.Environment, operationsTaskHelperEnv, operationsSourceChangeEnv)
 			runtime.Agents[id] = agent
 		}
-		reviewers := make(map[string]Agent, len(runtime.Agents))
+		reviewers := make(map[string]projectconfig.Agent, len(runtime.Agents))
 		for id, agent := range runtime.Agents {
 			agent.Args = []string{"-test.run=^TestOperationsFullVerifyProcess$"}
 			agent.Environment = append(agent.Environment, operationsVerifyHelperEnv, operationsVerifyLogEnv)
 			reviewers[id] = agent
 		}
-		runtime.Review = &ReviewConfig{Agents: reviewers, MaxRounds: 1, MaxManagerRounds: 1}
-		runtime.Strictness = &StrictnessConfig{Default: StrictnessProfile{Evidence: []string{"project checks reviewed"}, Counterexamples: 1},
-			Managers: map[string]StrictnessProfile{e2eManagerID("orders", "orders"): {Evidence: []string{"orders contract review"}, Counterexamples: 1}}}
+		runtime.Review = &projectconfig.ReviewConfig{Agents: reviewers, MaxRounds: 1, MaxManagerRounds: 1}
+		runtime.Strictness = &projectconfig.StrictnessConfig{Default: projectconfig.StrictnessProfile{Evidence: []string{"project checks reviewed"}, Counterexamples: 1},
+			Managers: map[string]projectconfig.StrictnessProfile{e2eManagerID("orders", "orders"): {Evidence: []string{"orders contract review"}, Counterexamples: 1}}}
 	})
 }
 
@@ -243,15 +244,15 @@ func configureOperationsFullVerify(t *testing.T, root string) string {
 	setRuntimeFixtureEnv(t, operationsVerifyHelperEnv, "1")
 	setRuntimeFixtureEnv(t, operationsVerifyLogEnv, logPath)
 	setupOperationsFullVerifyChildren(t)
-	updateE2ERuntime(t, root, func(runtime *Runtime) {
-		reviewers := make(map[string]Agent, len(runtime.Agents))
+	updateE2ERuntime(t, root, func(runtime *projectconfig.Runtime) {
+		reviewers := make(map[string]projectconfig.Agent, len(runtime.Agents))
 		for id, agent := range runtime.Agents {
 			agent.Command = executable
 			agent.Args = []string{"-test.run=^TestOperationsFullVerifyProcess$"}
 			agent.Environment = append(agent.Environment, operationsVerifyHelperEnv, operationsVerifyLogEnv)
 			reviewers[id] = agent
 		}
-		runtime.Review = &ReviewConfig{Agents: reviewers, MaxRounds: 1, MaxManagerRounds: 1}
+		runtime.Review = &projectconfig.ReviewConfig{Agents: reviewers, MaxRounds: 1, MaxManagerRounds: 1}
 	})
 	return logPath
 }

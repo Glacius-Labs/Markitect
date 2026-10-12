@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"github.com/Glacius-Labs/Markitect/src/internal/host/projectconfig"
 	"io"
 	"os"
 	"path/filepath"
@@ -15,6 +16,7 @@ import (
 
 	"github.com/Glacius-Labs/Markitect/src/internal/host/agentexec"
 	"github.com/Glacius-Labs/Markitect/src/internal/host/codexappserver"
+	"github.com/Glacius-Labs/Markitect/src/internal/host/projectexecutor"
 	"github.com/Glacius-Labs/Markitect/src/internal/host/projectworkspace"
 	"github.com/Glacius-Labs/Markitect/src/internal/infrastructure/source"
 )
@@ -48,11 +50,11 @@ func safeRecoveryError(err error, message string) error {
 // RecoverProjectAgent resumes inspection of the exact saved native turn for a
 // task. It never starts a role or replays a turn. found is true once an exact
 // task journal exists, including when its workspace must be preserved on error.
-func RecoverProjectAgent(ctx context.Context, host Host, invoker Invoker, root, taskID string, config agentexec.Config, limits Limits, expected nativeRecoveryBinding, expectedRequest agentexec.Request) (result agentexec.RunResult, found bool, err error) {
+func RecoverProjectAgent(ctx context.Context, host Host, invoker Invoker, root, taskID string, config agentexec.Config, limits projectconfig.Limits, expected nativeRecoveryBinding, expectedRequest agentexec.Request) (result agentexec.RunResult, found bool, err error) {
 	if externalExecutionEnabled(ctx) {
 		return externalInvocation(ctx, root, expected.OwnerRunID, taskID, config, expectedRequest)
 	}
-	if ctx == nil || strings.TrimSpace(taskID) == "" || config.Transport != TransportCodexAppServer {
+	if ctx == nil || strings.TrimSpace(taskID) == "" || config.Transport != projectconfig.TransportCodexAppServer {
 		return result, false, errors.New("native recovery requires a context, task ID, and codex-app-server transport")
 	}
 	if expected.OwnerRunID == "" || expected.InputDigest == "" {
@@ -122,7 +124,7 @@ func RecoverProjectAgent(ctx context.Context, host Host, invoker Invoker, root, 
 			}
 		}
 		closedCache := journal.State == "closed" && journal.CachedResult != nil
-		handles, handleErr := readTrustedRecoveryHandlesForCache(privateDir, journal.Handle.ID, closedCache)
+		handles, handleErr := projectexecutor.ReadTrustedRecoveryHandles(privateDir, journal.Handle.ID, closedCache)
 		if handleErr != nil {
 			return result, true, errors.New("private native recovery handles are unavailable or invalid")
 		}
@@ -465,7 +467,7 @@ func requestMatch(request agentexec.Request, invocation agentexec.Invocation) bo
 	return err == nil && expected.InputDigest == invocation.InputDigest && reflect.DeepEqual(expected.Request, invocation.Request)
 }
 
-func validateCachedWorkspaceResult(journal workspaceJournal, handle codexappserver.RecoveryHandle, fingerprint string, limits Limits) (agentexec.RunResult, error) {
+func validateCachedWorkspaceResult(journal workspaceJournal, handle codexappserver.RecoveryHandle, fingerprint string, limits projectconfig.Limits) (agentexec.RunResult, error) {
 	if journal.CachedResult == nil || journal.State != "closed" && journal.State != "harvested" {
 		return agentexec.RunResult{}, errors.New("closed native workspace has no trusted cached result")
 	}

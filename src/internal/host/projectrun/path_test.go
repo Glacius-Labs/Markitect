@@ -1,6 +1,7 @@
 package projectrun
 
 import (
+	"github.com/Glacius-Labs/Markitect/src/internal/host/projectconfig"
 	"io/fs"
 	"runtime"
 	"testing"
@@ -46,7 +47,7 @@ func TestApplyProposalRejectsUninventoriedAndControlPlanePaths(t *testing.T) {
 	report := projectmodel.Report{Managers: []projectmodel.Manager{{ID: "root", Owns: []string{"."}}}}
 	task := ManagerTask{ManagerID: "root", Owns: []string{"."}}
 	for _, path := range []string{"outside/new.go", ".markitect/drafts/agent-fixtures/test.md"} {
-		_, err := applyProposal(candidateData{Files: map[string]File{}}, []agentexec.CandidateFile{{Path: path, Mode: "0644", Content: "x"}}, config, report, task, "work", nil, Limits{MaxCandidateFileBytes: 1024, MaxCandidateBytes: 2048})
+		_, err := applyProposal(candidateData{Files: map[string]File{}}, []agentexec.CandidateFile{{Path: path, Mode: "0644", Content: "x"}}, config, report, task, "work", nil, projectconfig.Limits{MaxCandidateFileBytes: 1024, MaxCandidateBytes: 2048})
 		if err == nil {
 			t.Errorf("proposal to %q unexpectedly passed", path)
 		}

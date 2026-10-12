@@ -1,6 +1,7 @@
 package projectrun
 
 import (
+	"github.com/Glacius-Labs/Markitect/src/internal/host/projectconfig"
 	"os"
 	"path/filepath"
 	"strings"
@@ -309,7 +310,7 @@ func TestVerifyReviewChecksAcceptReviewsOfTheClosureCandidateView(t *testing.T) 
 	task := ManagerTask{ID: "task-orders", ManagerID: managerID, Goal: "Model the legacy orders file.", Artifacts: []string{artifactID}}
 	plan := PlanRecord{ID: runID, Goal: "Model the legacy orders file.", Operation: OperationApply, BaseRevision: base.Revision,
 		InitialCandidateID: initial.ID, Managers: []ManagerTask{task},
-		BriefingDigests: map[string]string{}, Strictness: map[string]StrictnessProfile{}}
+		BriefingDigests: map[string]string{}, Strictness: map[string]projectconfig.StrictnessProfile{}}
 	run := RunReport{ID: runID, Tasks: []ManagerTask{task}}
 	reviewState, err := reviewCandidateStateFor(host, root, plan, run, candidate)
 	if err != nil {
@@ -321,7 +322,7 @@ func TestVerifyReviewChecksAcceptReviewsOfTheClosureCandidateView(t *testing.T) 
 	}
 	run.Reviews = []ReviewRecord{{TaskID: task.ID, ManagerID: managerID, Phase: "work", CandidateID: candidate.ID, CandidateDigest: candidate.Digest,
 		ScopeDigest: scope, InputDigest: "sha256:review-input", Outcome: "pass", Findings: []ReviewFinding{}, Receipt: agentexec.Receipt{RunID: "review-run"}}}
-	runtime := Runtime{Review: &ReviewConfig{}}
+	runtime := projectconfig.Runtime{Review: &projectconfig.ReviewConfig{}}
 	if err := requireFreshReviews(host, root, store, dir, base, candidate, plan, runtime, run); err != nil {
 		t.Fatalf("Verify's review freshness check rejected a review of the closure view: %v", err)
 	}

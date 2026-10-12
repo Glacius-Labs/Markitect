@@ -2,6 +2,7 @@ package projectrun
 
 import (
 	"context"
+	"github.com/Glacius-Labs/Markitect/src/internal/host/projectconfig"
 	"math"
 	"os"
 	"path/filepath"
@@ -52,7 +53,7 @@ func (i *fullVerifyPartialLifecycleInvoker) Run(ctx context.Context, config agen
 	return result, err
 }
 
-func nativeFullVerifyCostFixture(t *testing.T) (string, *projectwork.Project, Runtime, Host, *fullVerifyNativeWorkspaceInvoker) {
+func nativeFullVerifyCostFixture(t *testing.T) (string, *projectwork.Project, projectconfig.Runtime, Host, *fullVerifyNativeWorkspaceInvoker) {
 	t.Helper()
 	root := makeFullVerifyFixture(t)
 	setupFullVerifyProcesses(t)
@@ -71,20 +72,20 @@ func nativeFullVerifyCostFixture(t *testing.T) (string, *projectwork.Project, Ru
 	if err != nil {
 		t.Fatal(err)
 	}
-	baseAgent := Agent{Transport: TransportCodexAppServer, WorkspaceMode: "git", InstructionPaths: []string{"README.md"},
+	baseAgent := projectconfig.Agent{Transport: projectconfig.TransportCodexAppServer, WorkspaceMode: "git", InstructionPaths: []string{"README.md"},
 		RuntimeFiles: []agentexec.RuntimeFile{{Path: instructionPath, Mode: "0644", Digest: "sha256:" + digestBytes(instructionBytes)}}}
 	baseAgent.Command = filepath.Join(t.TempDir(), "codex-app-server")
 	baseAgent.Model = "gpt-6-luna"
 	baseAgent.ProviderVersion = "codex-cli 0.162.0"
-	baseAgent.AppServer = &AppServerSettings{ReasoningEffort: "high", MaxEventBytes: 1 << 20}
-	baseAgent.Timeout = Duration(time.Hour)
+	baseAgent.AppServer = &projectconfig.AppServerSettings{ReasoningEffort: "high", MaxEventBytes: 1 << 20}
+	baseAgent.Timeout = projectconfig.Duration(time.Hour)
 	baseAgent.MaxStdoutBytes, baseAgent.MaxStderrBytes = 1<<20, 1<<20
-	baseAgent.Pricing = Pricing{InputMicrosPerMillion: 1_000_000, OutputMicrosPerMillion: 1_000_000}
-	runtime, err := LoadRuntime(root)
+	baseAgent.Pricing = projectconfig.Pricing{InputMicrosPerMillion: 1_000_000, OutputMicrosPerMillion: 1_000_000}
+	runtime, err := projectconfig.LoadRuntime(root)
 	if err != nil {
 		t.Fatal(err)
 	}
-	reviewers := map[string]Agent{}
+	reviewers := map[string]projectconfig.Agent{}
 	for _, manager := range project.Report.Managers {
 		reviewers[manager.ID] = baseAgent
 	}
@@ -146,7 +147,7 @@ func TestCostAccountingDistinguishesPartialFromUnknown(t *testing.T) {
 		t.Fatalf("unavailable accounting = %q, want unknown", got)
 	}
 	report := RunReport{Invocations: []InvocationLog{{CostKnown: true, Receipt: agentexec.Receipt{Lifecycle: &agentexec.Lifecycle{
-		Provider: TransportCodexAppServer, Accounting: "complete", StartRequests: []agentexec.RoleStartRequest{
+		Provider: projectconfig.TransportCodexAppServer, Accounting: "complete", StartRequests: []agentexec.RoleStartRequest{
 			{RequestID: "root", Role: "executor", State: "completed"},
 			{RequestID: "helper-1", Role: "helper", State: "completed"},
 		},
@@ -159,13 +160,13 @@ func TestCostAccountingDistinguishesPartialFromUnknown(t *testing.T) {
 
 func TestEstimateCostSaturatesKnownArithmeticOverflow(t *testing.T) {
 	usage := &agentexec.Usage{InputTokens: int64Ptr(2_000_000), OutputTokens: int64Ptr(0)}
-	cost, known, overflow := estimateCostDetailed(usage, Pricing{InputMicrosPerMillion: math.MaxInt64, OutputMicrosPerMillion: 1})
+	cost, known, overflow := estimateCostDetailed(usage, projectconfig.Pricing{InputMicrosPerMillion: math.MaxInt64, OutputMicrosPerMillion: 1})
 	if !known || !overflow || cost != math.MaxInt64 {
 		t.Fatalf("complete usage overflow = (%d, %t, %t), want (MaxInt64, true, true)", cost, known, overflow)
 	}
 	exactMaxCost, exactKnown, exactOverflow := estimateCostDetailed(
 		&agentexec.Usage{InputTokens: int64Ptr(1_000_000), OutputTokens: int64Ptr(0)},
-		Pricing{InputMicrosPerMillion: math.MaxInt64, OutputMicrosPerMillion: 0})
+		projectconfig.Pricing{InputMicrosPerMillion: math.MaxInt64, OutputMicrosPerMillion: 0})
 	if !exactKnown || exactOverflow || exactMaxCost != math.MaxInt64 {
 		t.Fatalf("representable MaxInt64 estimate = (%d, %t, %t), want (MaxInt64, true, false)", exactMaxCost, exactKnown, exactOverflow)
 	}
@@ -176,7 +177,7 @@ func TestNativeFullVerificationStopsOnKnownEstimateOverflow(t *testing.T) {
 	invoker := &fullVerifyOverflowUsageInvoker{fullVerifyNativeWorkspaceInvoker: baseInvoker}
 	runtime.Limits.MaxCostMicros = math.MaxInt64
 	for id, agent := range runtime.Review.Agents {
-		agent.Pricing = Pricing{InputMicrosPerMillion: math.MaxInt64, OutputMicrosPerMillion: 1}
+		agent.Pricing = projectconfig.Pricing{InputMicrosPerMillion: math.MaxInt64, OutputMicrosPerMillion: 1}
 		runtime.Review.Agents[id] = agent
 	}
 	report, err := FullVerifyProject(context.Background(), host, invoker, root, project, runtime,

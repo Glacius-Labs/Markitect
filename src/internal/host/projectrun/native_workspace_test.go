@@ -1,6 +1,7 @@
 package projectrun
 
 import (
+	"github.com/Glacius-Labs/Markitect/src/internal/host/projectconfig"
 	"os"
 	"path/filepath"
 	"testing"
@@ -10,7 +11,7 @@ import (
 	"github.com/Glacius-Labs/Markitect/src/internal/host/projectwork"
 )
 
-func nativeWorkspaceFixture(t *testing.T) (string, string, *Project, Agent) {
+func nativeWorkspaceFixture(t *testing.T) (string, string, *Project, projectconfig.Agent) {
 	t.Helper()
 	root := t.TempDir()
 	content := []byte("# Project instructions\nFollow the selected project contract.\n")
@@ -33,7 +34,7 @@ func nativeWorkspaceFixture(t *testing.T) (string, string, *Project, Agent) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	agent := Agent{
+	agent := projectconfig.Agent{
 		WorkspaceMode:    "scoped",
 		InstructionPaths: []string{path},
 		RuntimeFiles:     []agentexec.RuntimeFile{{Path: pinnedPath, Mode: "0644", Digest: "sha256:" + digestBytes(content)}},
@@ -115,7 +116,7 @@ func TestBuildNativeWorkspaceRejectsReparseInstruction(t *testing.T) {
 }
 
 func TestBuildNativeWorkspaceProposalModeRemainsCompatible(t *testing.T) {
-	got, err := buildNativeWorkspace("", "", nil, Agent{})
+	got, err := buildNativeWorkspace("", "", nil, projectconfig.Agent{})
 	if err != nil || got != nil {
 		t.Fatalf("empty workspace mode = %#v, %v; want nil, nil", got, err)
 	}

@@ -3,11 +3,12 @@ package projectrun
 import (
 	"fmt"
 	"github.com/Glacius-Labs/Markitect/src/internal/host/agentexec"
+	"github.com/Glacius-Labs/Markitect/src/internal/host/projectconfig"
 	"reflect"
 )
 
-func pendingNativeVerifier(run RunReport, runtime Runtime) bool {
-	if runtime.Verifier == nil || runtime.Verifier.Transport != TransportCodexAppServer || (run.Status != StatusVerifying && run.Status != StatusFailed) {
+func pendingNativeVerifier(run RunReport, runtime projectconfig.Runtime) bool {
+	if runtime.Verifier == nil || runtime.Verifier.Transport != projectconfig.TransportCodexAppServer || (run.Status != StatusVerifying && run.Status != StatusFailed) {
 		return false
 	}
 	for i := len(run.Invocations) - 1; i >= 0; i-- {

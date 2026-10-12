@@ -4,6 +4,8 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"github.com/Glacius-Labs/Markitect/src/internal/host/projectconfig"
+	"github.com/Glacius-Labs/Markitect/src/internal/host/projectexecutor"
 	"io"
 	"math"
 	"os"
@@ -206,7 +208,7 @@ func TestFreshReviewEvidenceForVerifySelectsCurrentScopeAndRetainsPartialCandida
 	}
 	task := ManagerTask{ID: "task-current", ManagerID: target.ID, Goal: "Review the owned artifact.", Artifacts: []string{artifactID}}
 	plan := PlanRecord{ID: "plan-current", Goal: "Complete the project artifact.", Operation: OperationApply,
-		Managers: []ManagerTask{task}, BriefingDigests: map[string]string{}, Strictness: map[string]StrictnessProfile{}}
+		Managers: []ManagerTask{task}, BriefingDigests: map[string]string{}, Strictness: map[string]projectconfig.StrictnessProfile{}}
 	run := RunReport{ID: "0123456789abcdef0123456789abcdef", Tasks: []ManagerTask{task}}
 	currentScope, err := reviewScopeDigest(plan, project, task, "work", run)
 	if err != nil {
@@ -251,7 +253,7 @@ func TestFreshReviewEvidenceForVerifySelectsCurrentScopeAndRetainsPartialCandida
 	historical := current
 	historical.CandidateID, historical.CandidateDigest, historical.ScopeDigest, historical.Receipt.RunID = "33333333333333333333333333333333", "sha256:old", "sha256:old-scope", "review-run-old"
 	run.Reviews = []ReviewRecord{current, historical}
-	evidence, err := freshReviewEvidenceForVerify(store, dir, project, final, plan, Runtime{Review: &ReviewConfig{}}, run)
+	evidence, err := freshReviewEvidenceForVerify(store, dir, project, final, plan, projectconfig.Runtime{Review: &projectconfig.ReviewConfig{}}, run)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -272,7 +274,7 @@ func TestFreshReviewEvidenceForVerifySelectsCurrentScopeAndRetainsPartialCandida
 	tampered := run
 	tampered.Reviews = append([]ReviewRecord(nil), run.Reviews...)
 	tampered.Reviews[0].CandidateDigest = "sha256:wrong-retained-candidate"
-	if _, err := freshReviewEvidenceForVerify(store, dir, project, final, plan, Runtime{Review: &ReviewConfig{}}, tampered); err == nil {
+	if _, err := freshReviewEvidenceForVerify(store, dir, project, final, plan, projectconfig.Runtime{Review: &projectconfig.ReviewConfig{}}, tampered); err == nil {
 		t.Fatal("review with a mismatched retained-candidate digest was accepted")
 	}
 }
@@ -375,13 +377,13 @@ func TestFullVerifyNativeAssessmentUsesReadOnlyOwnedWorkspaceWithoutProvider(t *
 	assessmentAgent.Command = filepath.Join(t.TempDir(), "codex-app-server")
 	assessmentAgent.Model = "gpt-6-luna"
 	assessmentAgent.ProviderVersion = "codex-cli 0.162.0"
-	assessmentAgent.AppServer = &AppServerSettings{ReasoningEffort: "high", MaxEventBytes: 1 << 20}
-	assessmentAgent.Timeout = Duration(time.Hour)
+	assessmentAgent.AppServer = &projectconfig.AppServerSettings{ReasoningEffort: "high", MaxEventBytes: 1 << 20}
+	assessmentAgent.Timeout = projectconfig.Duration(time.Hour)
 	assessmentAgent.MaxStdoutBytes = 1 << 20
 	assessmentAgent.MaxStderrBytes = 1 << 20
-	assessmentAgent.Pricing = Pricing{InputMicrosPerMillion: 1, OutputMicrosPerMillion: 1}
-	runtime := Runtime{Agents: map[string]Agent{managerID: assessmentAgent}, Review: &ReviewConfig{Agents: map[string]Agent{managerID: assessmentAgent}},
-		Limits: Limits{MaxDepth: 1, MaxStarts: 256, MaxParallel: 2, MaxDuration: Duration(4 * time.Hour), MaxCostMicros: 1000, MaxCandidateFileBytes: 1 << 20, MaxCandidateBytes: 4 << 20}}
+	assessmentAgent.Pricing = projectconfig.Pricing{InputMicrosPerMillion: 1, OutputMicrosPerMillion: 1}
+	runtime := projectconfig.Runtime{Agents: map[string]projectconfig.Agent{managerID: assessmentAgent}, Review: &projectconfig.ReviewConfig{Agents: map[string]projectconfig.Agent{managerID: assessmentAgent}},
+		Limits: projectconfig.Limits{MaxDepth: 1, MaxStarts: 256, MaxParallel: 2, MaxDuration: projectconfig.Duration(4 * time.Hour), MaxCostMicros: 1000, MaxCandidateFileBytes: 1 << 20, MaxCandidateBytes: 4 << 20}}
 	invoker := &fullVerifyNativeWorkspaceInvoker{root: root}
 	finalID, finalDigest := "final-candidate-id", "sha256:final-candidate"
 	parentID := ""
@@ -400,7 +402,7 @@ func TestFullVerifyNativeAssessmentUsesReadOnlyOwnedWorkspaceWithoutProvider(t *
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 	row, err := fullAuditManager(ctx, Host{Workspaces: service, Load: projectwork.Load}, invoker, root, project, runtime,
-		managerID, StrictnessProfile{}, BriefingContext{}, nil, nil, integrationReviews, false, "full-verify-test")
+		managerID, projectconfig.StrictnessProfile{}, BriefingContext{}, nil, nil, integrationReviews, false, "full-verify-test")
 	if err != nil {
 		t.Fatalf("native Manager audit failed: row=%+v err=%v", row, err)
 	}
@@ -504,13 +506,13 @@ func TestFullVerifyInvocationReceivesExplicitCrossManagerArtifactEvidence(t *tes
 	assessmentAgent.Command = filepath.Join(t.TempDir(), "codex-app-server")
 	assessmentAgent.Model = "gpt-6-luna"
 	assessmentAgent.ProviderVersion = "codex-cli 0.162.0"
-	assessmentAgent.AppServer = &AppServerSettings{ReasoningEffort: "high", MaxEventBytes: 1 << 20}
-	assessmentAgent.Timeout = Duration(time.Hour)
+	assessmentAgent.AppServer = &projectconfig.AppServerSettings{ReasoningEffort: "high", MaxEventBytes: 1 << 20}
+	assessmentAgent.Timeout = projectconfig.Duration(time.Hour)
 	assessmentAgent.MaxStdoutBytes = 1 << 20
 	assessmentAgent.MaxStderrBytes = 1 << 20
-	assessmentAgent.Pricing = Pricing{InputMicrosPerMillion: 1, OutputMicrosPerMillion: 1}
-	runtime := Runtime{Agents: map[string]Agent{managerID: assessmentAgent}, Review: &ReviewConfig{Agents: map[string]Agent{managerID: assessmentAgent}},
-		Limits: Limits{MaxDepth: 1, MaxStarts: 8, MaxParallel: 1, MaxDuration: Duration(time.Hour), MaxCostMicros: 1000, MaxCandidateFileBytes: 1 << 20, MaxCandidateBytes: 4 << 20}}
+	assessmentAgent.Pricing = projectconfig.Pricing{InputMicrosPerMillion: 1, OutputMicrosPerMillion: 1}
+	runtime := projectconfig.Runtime{Agents: map[string]projectconfig.Agent{managerID: assessmentAgent}, Review: &projectconfig.ReviewConfig{Agents: map[string]projectconfig.Agent{managerID: assessmentAgent}},
+		Limits: projectconfig.Limits{MaxDepth: 1, MaxStarts: 8, MaxParallel: 1, MaxDuration: projectconfig.Duration(time.Hour), MaxCostMicros: 1000, MaxCandidateFileBytes: 1 << 20, MaxCandidateBytes: 4 << 20}}
 	invoker := &fullVerifyNativeWorkspaceInvoker{root: root}
 	failedResult := CheckResult{ID: attachedCheck.ID, Outcome: "failed", ExitCode: 1, Stderr: "assertion failed"}
 	results := relevantManagerChecks(project.Report, managerID, []CheckResult{failedResult, {ID: unrelatedCheck.ID, Outcome: "passed"}})
@@ -525,7 +527,7 @@ func TestFullVerifyInvocationReceivesExplicitCrossManagerArtifactEvidence(t *tes
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 	if _, err := fullAuditManager(ctx, Host{Workspaces: service, Load: projectwork.Load}, invoker, root, project, runtime,
-		managerID, StrictnessProfile{}, BriefingContext{}, childAssessments, results, nil, false, "full-verify-support-test"); err != nil {
+		managerID, projectconfig.StrictnessProfile{}, BriefingContext{}, childAssessments, results, nil, false, "full-verify-support-test"); err != nil {
 		t.Fatalf("Manager audit failed: %v", err)
 	}
 	var auditContext struct {
@@ -707,18 +709,18 @@ func TestFullVerifyTypedIncompleteAuditCannotPass(t *testing.T) {
 	agent.Command = filepath.Join(t.TempDir(), "codex-app-server")
 	agent.Model = "gpt-6-luna"
 	agent.ProviderVersion = "codex-cli 0.162.0"
-	agent.AppServer = &AppServerSettings{ReasoningEffort: "high", MaxEventBytes: 1 << 20}
-	agent.Timeout = Duration(time.Hour)
+	agent.AppServer = &projectconfig.AppServerSettings{ReasoningEffort: "high", MaxEventBytes: 1 << 20}
+	agent.Timeout = projectconfig.Duration(time.Hour)
 	agent.MaxStdoutBytes = 1 << 20
 	agent.MaxStderrBytes = 1 << 20
-	agent.Pricing = Pricing{InputMicrosPerMillion: 1, OutputMicrosPerMillion: 1}
-	runtime := Runtime{Agents: map[string]Agent{managerID: agent}, Review: &ReviewConfig{Agents: map[string]Agent{managerID: agent}},
-		Limits: Limits{MaxDepth: 1, MaxStarts: 256, MaxParallel: 2, MaxDuration: Duration(4 * time.Hour), MaxCostMicros: 1000, MaxCandidateFileBytes: 1 << 20, MaxCandidateBytes: 4 << 20}}
+	agent.Pricing = projectconfig.Pricing{InputMicrosPerMillion: 1, OutputMicrosPerMillion: 1}
+	runtime := projectconfig.Runtime{Agents: map[string]projectconfig.Agent{managerID: agent}, Review: &projectconfig.ReviewConfig{Agents: map[string]projectconfig.Agent{managerID: agent}},
+		Limits: projectconfig.Limits{MaxDepth: 1, MaxStarts: 256, MaxParallel: 2, MaxDuration: projectconfig.Duration(4 * time.Hour), MaxCostMicros: 1000, MaxCandidateFileBytes: 1 << 20, MaxCandidateBytes: 4 << 20}}
 	invoker := &fullVerifyNativeWorkspaceInvoker{root: root, typedIncomplete: true}
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 	row, err := fullAuditManager(ctx, Host{Workspaces: service, Load: projectwork.Load}, invoker, root, project, runtime,
-		managerID, StrictnessProfile{}, BriefingContext{}, nil, nil, nil, false, "full-verify-incomplete-test")
+		managerID, projectconfig.StrictnessProfile{}, BriefingContext{}, nil, nil, nil, false, "full-verify-incomplete-test")
 	if err == nil || row.Status != "incomplete" {
 		t.Fatalf("typed incomplete audit was accepted: row=%+v err=%v", row, err)
 	}
@@ -737,11 +739,11 @@ func TestFullVerifyKnownCostOverflowSaturatesExplicitly(t *testing.T) {
 func TestFullVerifyRejectsStrictnessForUnknownManagerBeforeChecks(t *testing.T) {
 	root := makeFullVerifyFixture(t)
 	configureFullVerifyRuntime(t, root)
-	updateE2ERuntime(t, root, func(runtime *Runtime) {
-		runtime.Strictness = &StrictnessConfig{Managers: map[string]StrictnessProfile{"not-in-model": {Evidence: []string{"typed evidence"}}}}
+	updateE2ERuntime(t, root, func(runtime *projectconfig.Runtime) {
+		runtime.Strictness = &projectconfig.StrictnessConfig{Managers: map[string]projectconfig.StrictnessProfile{"not-in-model": {Evidence: []string{"typed evidence"}}}}
 	})
 	head := gitE2E(t, root, "rev-parse", "HEAD")
-	report, err := FullVerify(context.Background(), Host{Load: projectwork.Load}, ProcessInvoker{}, root, FullVerifyRequest{Revision: head})
+	report, err := FullVerify(context.Background(), Host{Load: projectwork.Load}, projectexecutor.ProcessInvoker{}, root, FullVerifyRequest{Revision: head})
 	if err == nil || report.Status != "failed" || !strings.Contains(report.Error, "Manager absent from the accepted model") {
 		t.Fatalf("unknown strictness Manager was not rejected: report=%+v err=%v", report, err)
 	}
@@ -837,7 +839,7 @@ func TestFullVerifyRejectsUnknownRepositoryCoverageBeforeManagerCalls(t *testing
 	configureFullVerifyRuntime(t, root)
 	head := gitE2E(t, root, "rev-parse", "HEAD")
 	host := Host{Load: projectwork.Load}
-	report, err := FullVerify(context.Background(), host, ProcessInvoker{}, root, FullVerifyRequest{Revision: head})
+	report, err := FullVerify(context.Background(), host, projectexecutor.ProcessInvoker{}, root, FullVerifyRequest{Revision: head})
 	if err == nil || report.Status != "failed" || !strings.Contains(report.Error, "coverage census") {
 		t.Fatalf("unknown repository path did not fail the full census gate: report=%+v err=%v", report, err)
 	}
@@ -859,7 +861,7 @@ func TestFullVerifyRejectsStaleGeneratedDocumentBeforeManagerCalls(t *testing.T)
 	setupFullVerifyProcesses(t)
 	configureFullVerifyRuntime(t, root)
 	head := gitE2E(t, root, "rev-parse", "HEAD")
-	report, err := FullVerify(context.Background(), Host{Load: projectwork.Load}, ProcessInvoker{}, root, FullVerifyRequest{Revision: head})
+	report, err := FullVerify(context.Background(), Host{Load: projectwork.Load}, projectexecutor.ProcessInvoker{}, root, FullVerifyRequest{Revision: head})
 	if err == nil || report.Status != "failed" || !strings.Contains(report.Error, "generated documentation is missing or stale") {
 		t.Fatalf("stale generated document did not fail the pre-provider gate: report=%+v err=%v", report, err)
 	}
@@ -908,19 +910,19 @@ func setupFullVerifyProcesses(t *testing.T) {
 
 func configureFullVerifyRuntime(t *testing.T, root string) {
 	t.Helper()
-	updateE2ERuntime(t, root, func(runtime *Runtime) {
+	updateE2ERuntime(t, root, func(runtime *projectconfig.Runtime) {
 		executable, err := os.Executable()
 		if err != nil {
 			t.Fatal(err)
 		}
 		args := []string{"-test.run=^TestFullVerifyHelperProcess$"}
-		reviewers := make(map[string]Agent, len(runtime.Agents))
+		reviewers := make(map[string]projectconfig.Agent, len(runtime.Agents))
 		for id, agent := range runtime.Agents {
 			agent.Command, agent.Args = executable, args
 			agent.Environment = append(agent.Environment, fullVerifyHelperEnv, fullVerifyBadEnv, fullVerifyLogEnv, fullVerifyNoUsageEnv)
 			reviewers[id] = agent
 		}
-		runtime.Review = &ReviewConfig{Agents: reviewers, MaxRounds: 1, MaxManagerRounds: 1}
+		runtime.Review = &projectconfig.ReviewConfig{Agents: reviewers, MaxRounds: 1, MaxManagerRounds: 1}
 		for id, agent := range runtime.Agents {
 			agent.Args = []string{"-test.run=^TestFullVerifyCheckProcess$"}
 			agent.Environment = append(agent.Environment, fullVerifyCheckEnv)

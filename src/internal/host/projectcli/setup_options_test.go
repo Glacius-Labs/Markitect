@@ -1,13 +1,13 @@
 package projectcli
 
 import (
+	"github.com/Glacius-Labs/Markitect/src/internal/host/projectconfig"
 	"path/filepath"
 	"reflect"
 	"strings"
 	"testing"
 
 	"github.com/Glacius-Labs/Markitect/src/internal/host/mcp"
-	"github.com/Glacius-Labs/Markitect/src/internal/host/projectrun"
 	"github.com/Glacius-Labs/Markitect/src/internal/host/projectsetup"
 )
 
@@ -35,7 +35,7 @@ func TestConfigProcessExecutorFlagsAndCostModes(t *testing.T) {
 		t.Fatalf("map process config: %v", err)
 	}
 	if options.Provider != projectsetup.ProviderProcess || options.ProviderExecutable != executor || !reflect.DeepEqual(options.ProviderArgs, []string{"--dir", "exchange"}) || options.ProviderVersion != "exchange/1" ||
-		options.CostMode != projectrun.CostModeUnmetered || options.InputMicrosPerMillion != 0 || options.OutputMicrosPerMillion != 0 || options.MaxCostMicros != 1 {
+		options.CostMode != projectconfig.CostModeUnmetered || options.InputMicrosPerMillion != 0 || options.OutputMicrosPerMillion != 0 || options.MaxCostMicros != 1 {
 		t.Fatalf("unexpected process config options: %+v", options)
 	}
 	repo := t.TempDir()
@@ -71,7 +71,7 @@ func TestConfigInputRecordCarriesRoleProfiles(t *testing.T) {
 		t.Fatalf("read config input: %v", err)
 	}
 	if options.Roles == nil || options.Roles.Reviewer == nil || options.Roles.Reviewer.Model != "gpt-6-sol" || options.Roles.Verifier == nil ||
-		options.Roles.Verifier.Provider != projectsetup.ProviderProcess || options.Roles.Verifier.CostMode != projectrun.CostModeUnmetered || options.Roles.Manager != nil {
+		options.Roles.Verifier.Provider != projectsetup.ProviderProcess || options.Roles.Verifier.CostMode != projectconfig.CostModeUnmetered || options.Roles.Manager != nil {
 		t.Fatalf("role profiles were not decoded: %+v", options.Roles)
 	}
 	in := configInput{Input: &options}

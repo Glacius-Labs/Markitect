@@ -1,6 +1,7 @@
 package projectrun
 
 import (
+	"github.com/Glacius-Labs/Markitect/src/internal/host/projectconfig"
 	"strings"
 	"testing"
 
@@ -42,7 +43,7 @@ func TestReportClosureDoesNotTreatPartialNativeAccountingAsOpenHelper(t *testing
 		RequestID: "root-request", Role: "executor", State: "unknown",
 	}}}
 	report.Invocations = []InvocationLog{{Role: agentexec.RoleExecutor, Phase: "work", Receipt: agentexec.Receipt{
-		Lifecycle: &agentexec.Lifecycle{Provider: TransportCodexAppServer, SessionID: "parent-session", Accounting: "partial",
+		Lifecycle: &agentexec.Lifecycle{Provider: projectconfig.TransportCodexAppServer, SessionID: "parent-session", Accounting: "partial",
 			StartRequests: []agentexec.RoleStartRequest{{RequestID: "root-request", Role: "executor", State: "unknown"},
 				{RequestID: "untracked-child", ParentSessionID: "parent-session", Role: "worker", State: "unknown"}}},
 	}}}

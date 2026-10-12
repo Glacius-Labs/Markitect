@@ -2,6 +2,7 @@ package projectrun
 
 import (
 	"fmt"
+	"github.com/Glacius-Labs/Markitect/src/internal/host/projectconfig"
 	"strings"
 
 	"github.com/Glacius-Labs/Markitect/src/internal/host/agentexec"
@@ -15,7 +16,7 @@ import (
 // repository, base SHA, overlay, task ID, and base digest to the exact
 // workspace request and handle. This function rechecks product write policy;
 // it does not treat model proposals as a source of candidate bytes.
-func applyWorkspaceDelta(base candidateData, delta projectworkspace.Delta, proposals []agentexec.CandidateFile, config projectwork.Config, report projectmodel.Report, task ManagerTask, phase string, conflictPaths []string, limits Limits, input *Snapshot) (candidateData, error) {
+func applyWorkspaceDelta(base candidateData, delta projectworkspace.Delta, proposals []agentexec.CandidateFile, config projectwork.Config, report projectmodel.Report, task ManagerTask, phase string, conflictPaths []string, limits projectconfig.Limits, input *Snapshot) (candidateData, error) {
 	ignored, err := ignoredWritePaths(config, input)
 	if err != nil {
 		return candidateData{}, err
@@ -165,7 +166,7 @@ func validateWorkspaceWritePath(path string, config projectwork.Config, report p
 	return nil
 }
 
-func addWorkspaceBytes(total *int64, size int64, path string, limits Limits) error {
+func addWorkspaceBytes(total *int64, size int64, path string, limits projectconfig.Limits) error {
 	if limits.MaxCandidateFileBytes <= 0 || size > limits.MaxCandidateFileBytes {
 		return fmt.Errorf("workspace file %s exceeds size limit", path)
 	}
@@ -212,7 +213,7 @@ func bytesEqual(left, right []byte) bool {
 }
 
 // applyAgentCandidate selects the explicit byte source returned by the Host.
-func applyAgentCandidate(base candidateData, result agentexec.RunResult, config projectwork.Config, report projectmodel.Report, task ManagerTask, phase string, conflictPaths []string, limits Limits, input *Snapshot) (candidateData, error) {
+func applyAgentCandidate(base candidateData, result agentexec.RunResult, config projectwork.Config, report projectmodel.Report, task ManagerTask, phase string, conflictPaths []string, limits projectconfig.Limits, input *Snapshot) (candidateData, error) {
 	if result.Delta != nil {
 		return applyWorkspaceDelta(base, *result.Delta, result.Response.CandidateFiles, config, report, task, phase, conflictPaths, limits, input)
 	}

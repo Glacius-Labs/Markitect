@@ -3,6 +3,7 @@ package projectrun
 import (
 	"context"
 	"encoding/json"
+	"github.com/Glacius-Labs/Markitect/src/internal/host/projectexecutor"
 	"io"
 	"os"
 	"os/exec"
@@ -83,11 +84,11 @@ type countingProcessInvoker struct {
 
 func (i *countingProcessInvoker) Run(ctx context.Context, config agentexec.Config, request agentexec.Request, options agentexec.RunOptions) (agentexec.RunResult, error) {
 	i.calls++
-	return (ProcessInvoker{}).Run(ctx, config, request, options)
+	return (projectexecutor.ProcessInvoker{}).Run(ctx, config, request, options)
 }
 
 func (i *countingProcessInvoker) Fingerprint(config agentexec.Config) (string, error) {
-	return (ProcessInvoker{}).Fingerprint(config)
+	return (projectexecutor.ProcessInvoker{}).Fingerprint(config)
 }
 
 func git(t *testing.T, root string, args ...string) string {

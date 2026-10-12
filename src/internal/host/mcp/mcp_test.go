@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/Glacius-Labs/Markitect/src/internal/host/projectconfig"
 	"io"
 	"io/fs"
 	"reflect"
@@ -173,7 +174,7 @@ func TestSetupSchemaExposesClosedWindowsSandboxBackendEnum(t *testing.T) {
 }
 
 func TestAppServerEnvironmentModeSchemaIsClosed(t *testing.T) {
-	modeSchema := schema(reflect.TypeFor[projectrun.AppServerEnvironmentMode]())
+	modeSchema := schema(reflect.TypeFor[projectconfig.AppServerEnvironmentMode]())
 	if modeSchema["type"] != "string" || !reflect.DeepEqual(modeSchema["enum"], []string{"inherit"}) {
 		t.Fatalf("App Server environment mode schema = %#v, want closed inherit enum", modeSchema)
 	}
@@ -608,12 +609,12 @@ func sampleValue(t reflect.Type, depth int) reflect.Value {
 		return reflect.ValueOf(time.Date(2026, 10, 11, 0, 0, 0, 0, time.UTC))
 	case reflect.TypeFor[json.RawMessage]():
 		return reflect.ValueOf(json.RawMessage(`{"sample":true}`))
-	case reflect.TypeFor[projectrun.Duration]():
-		return reflect.ValueOf(projectrun.Duration(time.Second))
+	case reflect.TypeFor[projectconfig.Duration]():
+		return reflect.ValueOf(projectconfig.Duration(time.Second))
 	case reflect.TypeFor[codexappserver.WindowsSandboxBackend]():
 		return reflect.ValueOf(codexappserver.WindowsSandboxBackendMXC)
-	case reflect.TypeFor[projectrun.AppServerEnvironmentMode]():
-		return reflect.ValueOf(projectrun.AppServerEnvironmentModeInherit)
+	case reflect.TypeFor[projectconfig.AppServerEnvironmentMode]():
+		return reflect.ValueOf(projectconfig.AppServerEnvironmentModeInherit)
 	}
 	switch t.Kind() {
 	case reflect.Struct:

@@ -3,6 +3,8 @@ package projectrun
 import (
 	"context"
 	"encoding/json"
+	"github.com/Glacius-Labs/Markitect/src/internal/host/projectconfig"
+	"github.com/Glacius-Labs/Markitect/src/internal/host/projectexecutor"
 	"os"
 	"path/filepath"
 	"sort"
@@ -16,7 +18,7 @@ import (
 )
 
 func TestPendingNativeVerifierAndSavedChecksRequireOriginalEvidence(t *testing.T) {
-	runtime := Runtime{Verifier: &Agent{Transport: TransportCodexAppServer}}
+	runtime := projectconfig.Runtime{Verifier: &projectconfig.Agent{Transport: projectconfig.TransportCodexAppServer}}
 	run := RunReport{Status: StatusVerifying, Invocations: []InvocationLog{{Role: agentexec.RoleVerifier, Phase: "verify", Outcome: "started"}}}
 	if !pendingNativeVerifier(run, runtime) {
 		t.Fatal("started native verifier was not classified as pending")
@@ -29,7 +31,7 @@ func TestPendingNativeVerifierAndSavedChecksRequireOriginalEvidence(t *testing.T
 	if pendingNativeVerifier(run, runtime) {
 		t.Fatal("completed verifier was treated as pending")
 	}
-	runtime.Verifier.Transport = TransportProcess
+	runtime.Verifier.Transport = projectconfig.TransportProcess
 	if pendingNativeVerifier(run, runtime) {
 		t.Fatal("process verifier was treated as recoverable native work")
 	}
@@ -101,11 +103,11 @@ func TestRunVerifierConsumesClosedOriginalCacheWithoutAnotherStart(t *testing.T)
 		t.Fatal(err)
 	}
 	privateDir := filepath.Join(root, ".markitect", "runs", "private")
-	journal, err := newNativeJournal(privateDir, handle.CWD, handle.ID)
+	journal, err := projectexecutor.OpenNativeJournal(privateDir, handle.CWD, handle.ID)
 	if err != nil {
 		t.Fatal(err)
 	}
-	options := journal.wrapOptions(codexappserver.Options{})
+	options := journal.WrapOptions(codexappserver.Options{})
 	if err := options.BeforeStart(context.Background(), agentexec.RoleStartRequest{RequestID: invocation.RunID, Role: agentexec.RoleVerifier}); err != nil {
 		t.Fatal(err)
 	}
@@ -139,12 +141,12 @@ func TestRunVerifierConsumesClosedOriginalCacheWithoutAnotherStart(t *testing.T)
 			VerifierObservations: observations, Uncertainty: []string{}},
 		Receipt: agentexec.Receipt{APIVersion: agentexec.APIVersion, RunID: invocation.RunID, InputDigest: invocation.InputDigest,
 			ConfigDigest: "recovery-fingerprint", Outcome: agentexec.OutcomePassed, Usage: &agentexec.Usage{InputTokens: &zero, OutputTokens: &zero},
-			Lifecycle: &agentexec.Lifecycle{Provider: TransportCodexAppServer, SessionID: "session-verifier", TurnID: "turn-verifier", State: "completed",
+			Lifecycle: &agentexec.Lifecycle{Provider: projectconfig.TransportCodexAppServer, SessionID: "session-verifier", TurnID: "turn-verifier", State: "completed",
 				StartRequests: []agentexec.RoleStartRequest{{RequestID: invocation.RunID, Role: agentexec.RoleVerifier, State: "completed"}}}},
 	}
 	invoker := &verifierRecoveryOnly{result: result}
 	verifier := appServerAgent(t)
-	runtime := Runtime{Verifier: &verifier, Limits: Limits{MaxCandidateFileBytes: 1 << 20, MaxCandidateBytes: 4 << 20}}
+	runtime := projectconfig.Runtime{Verifier: &verifier, Limits: projectconfig.Limits{MaxCandidateFileBytes: 1 << 20, MaxCandidateBytes: 4 << 20}}
 	starts := 0
 	original := InvocationLog{TaskID: "verifier", Role: agentexec.RoleVerifier, Phase: "verify", InputDigest: invocation.InputDigest,
 		Receipt: agentexec.Receipt{RunID: invocation.RunID, InputDigest: invocation.InputDigest}}

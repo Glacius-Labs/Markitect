@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/Glacius-Labs/Markitect/src/internal/host/projectexecutor"
 	"os"
 	"path/filepath"
 	"strings"
@@ -29,7 +30,7 @@ func TestDeliverRejectsStaleExistingRunBeforeResuming(t *testing.T) {
 		t.Fatal(err)
 	}
 	appendBlockingDecision(t, projectworkHost(), root, explorationID, scopeID)
-	got, err := Deliver(context.Background(), projectworkHost(), ProcessInvoker{}, root, DeliverRequest{
+	got, err := Deliver(context.Background(), projectworkHost(), projectexecutor.ProcessInvoker{}, root, DeliverRequest{
 		ExplorationID: explorationID, ScopeID: scopeID, RunID: plan.ID, ExecuteAuthorized: true,
 	})
 	if !errors.Is(err, ErrStale) || !strings.Contains(err.Error(), "readiness changed") {
@@ -84,7 +85,7 @@ func (i *failingDeliverInvoker) Run(context.Context, agentexec.Config, agentexec
 }
 
 func (*failingDeliverInvoker) Fingerprint(config agentexec.Config) (string, error) {
-	return (ProcessInvoker{}).Fingerprint(config)
+	return (projectexecutor.ProcessInvoker{}).Fingerprint(config)
 }
 
 func TestGuidedPlanCannotBypassAcknowledgedExploration(t *testing.T) {

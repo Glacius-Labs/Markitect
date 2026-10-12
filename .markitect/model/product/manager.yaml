@@ -29,6 +29,8 @@ spec:
     - src/internal/host/projectcoverage/
     - src/internal/host/projectexplore/
     - src/internal/host/projectonboarding/
+    - src/internal/host/projectconfig/
+    - src/internal/host/projectexecutor/
     - src/internal/host/projectrun/
     - src/internal/host/projectsetup/
     - src/internal/host/projectwork/
