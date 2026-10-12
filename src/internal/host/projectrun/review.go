@@ -13,9 +13,9 @@ import (
 	"time"
 
 	"github.com/Glacius-Labs/Markitect/src/internal/host/agentexec"
-	"github.com/Glacius-Labs/Markitect/src/internal/modules/projectmodel/projectbriefing"
 	"github.com/Glacius-Labs/Markitect/src/internal/host/projectworkspace"
 	"github.com/Glacius-Labs/Markitect/src/internal/modules/projectmodel"
+	"github.com/Glacius-Labs/Markitect/src/internal/modules/projectmodel/projectbriefing"
 )
 
 type reviewFindingResponse struct {

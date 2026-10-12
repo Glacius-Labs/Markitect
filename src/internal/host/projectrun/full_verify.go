@@ -17,8 +17,8 @@ import (
 	"time"
 
 	"github.com/Glacius-Labs/Markitect/src/internal/host/agentexec"
-	"github.com/Glacius-Labs/Markitect/src/internal/modules/projectmodel/projectbriefing"
 	projectconfig "github.com/Glacius-Labs/Markitect/src/internal/host/projectconfig"
+	"github.com/Glacius-Labs/Markitect/src/internal/modules/projectmodel/projectbriefing"
 
 	"github.com/Glacius-Labs/Markitect/src/internal/modules/projectmodel"
 )

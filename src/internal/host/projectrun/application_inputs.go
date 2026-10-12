@@ -6,38 +6,38 @@ import "github.com/Glacius-Labs/Markitect/src/internal/modules/projectmodel/proj
 // Their identities are persisted by the existing plan and receipt records.
 type DeliveryScope struct {
 	ExplorationID string
-	ScopeID string
-	Name string
-	Goal string
-	Operation string
-	ManagerIDs []string
+	ScopeID       string
+	Name          string
+	Goal          string
+	Operation     string
+	ManagerIDs    []string
 }
 
 type ExplorationReadiness struct {
-	Ready bool
-	Digest string
+	Ready    bool
+	Digest   string
 	Blockers []string
 }
 
 type ExplorationAdmission struct {
-	Binding projectvalue.Binding
+	Binding           projectvalue.Binding
 	ExplorationDigest string
-	ReadinessDigest string
+	ReadinessDigest   string
 }
 
 type DeliveredResolution struct {
-	Plan PlanRecord
-	CandidateID string
+	Plan            PlanRecord
+	CandidateID     string
 	CandidateDigest string
-	Files map[string]File
-	Verification VerifyReport
-	Apply ApplyReport
+	Files           map[string]File
+	Verification    VerifyReport
+	Apply           ApplyReport
 }
 
 type ExplorationCompletion struct {
-	Plan PlanRecord
-	CandidateID string
+	Plan            PlanRecord
+	CandidateID     string
 	CandidateDigest string
-	Verification VerifyReport
-	Apply ApplyReport
+	Verification    VerifyReport
+	Apply           ApplyReport
 }

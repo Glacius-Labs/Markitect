@@ -11,8 +11,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/Glacius-Labs/Markitect/src/internal/modules/projectmodel/projectcoverage"
 	"github.com/Glacius-Labs/Markitect/src/internal/host/projectwork"
+	"github.com/Glacius-Labs/Markitect/src/internal/modules/projectmodel/projectcoverage"
 )
 
 func TestBrownfieldSessionPersistsAndResumesWithoutReplayingStages(t *testing.T) {

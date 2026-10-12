@@ -6,10 +6,10 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/Glacius-Labs/Markitect/src/internal/modules/projectmodel/projectbriefing"
 	projectconfig "github.com/Glacius-Labs/Markitect/src/internal/host/projectconfig"
 	"github.com/Glacius-Labs/Markitect/src/internal/infrastructure/source"
 	"github.com/Glacius-Labs/Markitect/src/internal/modules/projectmodel"
+	"github.com/Glacius-Labs/Markitect/src/internal/modules/projectmodel/projectbriefing"
 )
 
 // planBasis contains the immutable project inputs and runtime policy that one

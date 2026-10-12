@@ -17,7 +17,7 @@ func TestFinalCandidateCoverageUsesRepositoryCensus(t *testing.T) {
 		root := deliveryFixture(t)
 		deliveryWrite(t, root, "scratch.txt", "ignored notes\n")
 		deliveryWrite(t, root, projectcoverage.IgnorePath, "apiVersion: "+projectcoverage.IgnoreAPIVersion+"\nkind: RepositoryIgnore\nentries:\n  - path: scratch.txt\n    reason: Local notes outside the model\n")
-		commitDeliveryModel(t, root, "commit exact scratch ignore", "scratch.txt")
+		commitDeliveryModel(t, root, "commit exact scratch ignore", projectcoverage.IgnorePath, "scratch.txt")
 		base := loadDeliveryProject(t, root)
 		if base.Coverage == nil || !base.Coverage.Conforming {
 			t.Fatalf("precondition: census not conforming: %+v", base.Coverage)
