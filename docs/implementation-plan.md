@@ -1,6 +1,6 @@
 # Roadmap
 
-Updated 12 October 2026 against main `1bf4d36018de8b6ca6d7fa0ad05e8ecbc4caf97a`. The [integration record](validation/integration-queue-20261011.md) closes the previous six-PR queue and its scoped follow-ups; the new role round has integrated TEST-03 and CLI-03 and continues with CLI-04, then TEST-02. The [Claude-to-Codex handoff](development/session-handoff.md) preserves the earlier interrupted-session snapshot.
+Updated 12 October 2026 against main `d95d886eb37ee81e72dd9e264be6c5ceedc2e7bc`. The [previous integration record](validation/integration-queue-20261011.md) closes the six-PR queue and its scoped follow-ups. The [new role-round record](validation/integration-round-20261012.md) accounts for integrated TEST-03, CLI-03 and CLI-04; Interface now works on TEST-02. The [Claude-to-Codex handoff](development/session-handoff.md) preserves the earlier interrupted-session snapshot.
 
 This page owns the current direction: how parallel work is organized, the streams and waves, the code zones, and the open owner decisions. The [backlog](work-items/backlog.yaml) is the single owner of each work package's status. The [concept register](concepts/register.md) records the decisions this roadmap relies on. Source changes do not change a published release.
 
@@ -15,6 +15,7 @@ This page owns the current direction: how parallel work is organized, the stream
 - Read-only accepted briefing history (#205), guided previews (#221), structured private child assessment filtering (#223), smaller typed MCP schemas (#218), and the reviewed pinned-image inventory (#219).
 - Historical-context projection of private briefing event details (#225), read-only Context/list callers with atomic accepted-history dismissal (#229), LF-stable Windows playground fixtures (#228), delegated DEC-023/hypothesis provenance (#226) and the prepared KG-04 protocol (#227). KG-04 measurement remains NOT RUN.
 - TEST-03's shared isolated process fixtures and parallel E2E selection (#232) retain all default-suite assertions; CLI-03's application composition/read facade and CLI boundary/size check (#231) preserve the briefing semantics above.
+- CLI-04's Doctor Git-version prerequisite (#235) reports unsupported Git before model or provider inspection and retains CLI/MCP diagnostics without project writes.
 
 **Remaining older product line:** The canonical projection alpha has been removed (ARCH-04). The Project/Domain line and its explicit legacy gates remain until ARCH-09; distribution separation is ARCH-08. Current contributor instructions, CI and hooks also check the self-hosted model. Do not reuse the old survey's code-size estimate as a current measurement.
 
@@ -43,23 +44,23 @@ This page owns the current direction: how parallel work is organized, the stream
 
 ### Sessions
 
-A session is a long-running chat for one role. The backlog's `owner` field names the role, and any fresh session can take a role over. After the previous queue closed, the owner requested fresh sessions on 12 October. QA delivered TEST-03 and preserves its separate Windows diagnostic run; Interface continues with CLI-04, then TEST-02, in fresh worktrees. Bughunter completed its first bounded read-only round. The existing integrator owns canonical status and integration. The interrupted Claude sessions' snapshot is in [Session continuation](development/session-handoff.md); the [branch survey](work-items/surveys/branches-and-worktrees-20261010.md) preserves the earlier archive inventory. A package's `active` state is not evidence that its old chat is still running.
+A session is a long-running chat for one role. The backlog's `owner` field names the role, and any fresh session can take a role over. After the previous queue closed, the owner requested fresh sessions on 12 October. QA delivered TEST-03 and preserved its separate failed Windows diagnostic run; Interface delivered CLI-03 and CLI-04 and continues with TEST-02 in a fresh worktree. Bughunter completed its first bounded read-only round. The existing integrator owns canonical status and integration. The interrupted Claude sessions' snapshot is in [Session continuation](development/session-handoff.md); the [branch survey](work-items/surveys/branches-and-worktrees-20261010.md) preserves the earlier archive inventory. A package's `active` state is not evidence that its old chat is still running.
 
 | Role | Streams | Starts |
 |---|---|---|
 | integrator | OPS, register decisions, review and merge order, IDEA-01, LEARN-01 | Coordinate current reservations, independent reviews and normal PR integration; verify final Main |
-| interface | CLI, MCP-01, TEST-02, AGENT-02, AGENT-03 | CLI-03 integrated; active CLI-04 on `dev/git-version-doctor`, then TEST-02, exclusive interface zone |
+| interface | CLI, MCP-01, TEST-02, AGENT-02, AGENT-03 | CLI-03 and CLI-04 integrated; TEST-02 on `dev/interface-contracts` holds the exclusive interface zone |
 | scientist | PLAY | PLAY-06 is ready after merged dependencies; no Scientist chat is started in this round |
 | kg | KG | KG-04 protocol is prepared; measurement waits for separate authority |
 | bughunter | BUG | First read-only round on `fix/helper-cleanup-review` complete; helper recovery is a proposed new future capability, with no implementation reservation |
-| qa | CI, TEST | TEST-03 integrated; preserve separate Windows evidence, no further implementation in this role round |
+| qa | CI, TEST | TEST-03 integrated; its bounded role round is complete and separate Windows failure evidence is preserved |
 | cleaner | ARCH, AGENT-01 | ARCH-08 caller analysis is complete; implementation waits for interface ownership |
 | runtime | RUN, MCP-02, ARCH-06 | No current writer; future work follows TEST-04 and an explicit scope/slot handoff |
 | government | GOV | After Wave 2 and the explicit GOV-01 dependencies (DEC-019) |
 
 No more than six sessions change code at the same time. Each session uses subagents and workflows inside its own packages as it sees fit.
 
-Interface is the current implementation writer; TEST-03 and the first Bughunter sweep are complete. Shared edits are bounded explicitly: Interface owns the current Git-prerequisite corrections in project operations; the integrator owns the handed-off architecture wording and status. New artifact-accounting entries require concrete paths and coordinated approval. Backlog, roadmap and concept register remain integrator-owned. Helper cross-process reconciliation needs its own accepted intent/acceptance and future slot. Provider or method studies, KG-04 measurements, Government implementation, releases and worktree cleanup are outside this round.
+Interface is the current implementation writer for TEST-02; TEST-03 and the first Bughunter sweep are complete. Shared edits are bounded explicitly: Interface owns minimal contract-related wording in project operations; the integrator owns architecture, status and source-evidence records. New artifact-accounting entries require concrete paths and coordinated approval. Backlog, roadmap and concept register remain integrator-owned. Helper cross-process reconciliation needs its own accepted intent/acceptance and future slot. Provider or method studies, KG-04 measurements, Government implementation, releases and worktree cleanup are outside this round.
 
 ### Starting a session
 
@@ -156,8 +157,8 @@ A zone is a code area in which only one active package changes code at a time. T
 
 ### Wave 2: one interface, a clean runtime
 
-- **Interface zone, in sequence:** CLI-02 → CLI-03 and MCP-01 → CLI-04 → TEST-02 → AGENT-02. The current Interface session completes CLI-03, CLI-04 and TEST-02 serially, integrating each before starting the next fresh-Main branch.
-- **Runtime zone, in sequence:** TEST-03 → TEST-04 → RUN-02 → ARCH-05 → ARCH-06. The 12 October assignment puts TEST-03 first after the bug integration queue closes. TEST-05 needs a later explicit handoff or a separately assigned nonconflicting slice.
+- **Interface zone, remaining sequence:** TEST-02 → AGENT-02 after integrated CLI-02, CLI-03, MCP-01 and CLI-04. The current Interface session completes TEST-02 on fresh Main; later packages require their own assignment.
+- **Runtime zone, remaining sequence:** TEST-04 → RUN-02 → ARCH-05 → ARCH-06 after integrated TEST-03. No Runtime implementation session is assigned now. TEST-05 needs a later explicit handoff or a separately assigned nonconflicting slice.
 - **Also in this wave:**
   - CI-03: one smoke driver.
   - CI-04: container runtime tier.

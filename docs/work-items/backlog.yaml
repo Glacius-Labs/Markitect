@@ -1,7 +1,7 @@
 schema: markitect-roadmap-backlog/v1
 updated: '2026-10-12'
 roadmap: docs/implementation-plan.md
-main_basis: 1bf4d36018de8b6ca6d7fa0ad05e8ecbc4caf97a
+main_basis: d95d886eb37ee81e72dd9e264be6c5ceedc2e7bc
 
 # Single owner of work-package status. The roadmap explains streams, waves,
 # zones and rules; this file records each package's current state.
@@ -345,7 +345,7 @@ packages:
     pr: 231
     depends_on: [CLI-02]
     zone: free
-    note: PR231 merged after independent source reviews, required Quality/Race/provider-free smoke and current-Main composition checks. Product composition and reads are in the shared application facade; the AST boundary/size contract guards CLI delegation. BUG-01 accepted-history digests, read-only list/context and atomic dismissal are preserved. Local full Windows evidence remains separately bound to the original f66c4f13 code head.
+    note: PR231 merged after independent source reviews, required Quality/Race/provider-free smoke and current-Main composition checks. Product composition and reads are in the shared application facade; the AST boundary/size contract guards CLI delegation. BUG-01 accepted-history digests, read-only list/context and atomic dismissal are preserved. The original f66c4f13 full Windows run ended with exit 1 after projectbriefing, projectcli and projectrun exhausted their 60-minute package budgets; its complete log remains separate from current Main and individual-hang claims.
     inputs:
       - docs/work-items/surveys/code-architecture-20261010.md
     acceptance:
@@ -390,12 +390,13 @@ packages:
     title: Doctor checks the Git version
     stream: CLI
     wave: 2
-    status: active
+    status: done
+    pr: 235
     owner: interface
     branch: dev/git-version-doctor
     depends_on: [CLI-02, CLI-03]
-    note: Interface holds this zone after CLI-03 integration, on a separate managed checkout from Main 1bf4d36018de8b6ca6d7fa0ad05e8ecbc4caf97a while the original CLI-03 Windows test source stays unchanged. Doctor must report the Git version and a clear diagnostic below 2.40; TEST-02 follows after this PR integrates.
-    zone: interface
+    note: PR235 reports the installed Git version and a failed prerequisite below 2.40 before model or provider inspection, with CLI/MCP parity and no project writes. Independently reviewed head 173bf5a9e490eb32e232e5e45b7a10be47c158c6 passed fixed checks/Verify, focused contracts and required Linux Quality/Race; actual Main merge is d95d886eb37ee81e72dd9e264be6c5ceedc2e7bc. Its separate Windows run remains source-bound; Doctor does not automatically guard subsequent Plan/Apply calls. TEST-02 now holds Interface.
+    zone: free
     inputs:
       - pull request 162 (ARCH-10 known problems)
     acceptance:
@@ -494,11 +495,12 @@ packages:
     title: CLI and MCP contract suite with a completeness check
     stream: TEST
     wave: 2
-    status: blocked
+    status: active
     owner: interface
+    branch: dev/interface-contracts
     depends_on: [CLI-02, CLI-04]
     zone: interface
-    note: Reserved to the same Interface session after CLI-04 integration, on fresh Main with its own PR. The zone is currently held by CLI-04; no contract completeness claim is made before the suite is delivered.
+    note: The Interface session holds this zone after actual CLI-04 integration, on a fresh managed checkout from Main d95d886eb37ee81e72dd9e264be6c5ceedc2e7bc while the Doctor Windows source remains unchanged. Its separate PR must prove completeness; no delivered contract-suite claim is made yet.
     inputs:
       - docs/work-items/surveys/tests-and-ci-20261010.md
       - docs/work-items/surveys/cli-mcp-app-server-20261010.md
@@ -518,7 +520,7 @@ packages:
     inputs:
       - docs/work-items/surveys/tests-and-ci-20261010.md
       - docs/work-items/surveys/product-readiness-lessons-20261010.md
-    note: PR232 merged after exact-head independent review, full hosted Quality/Race/provider-free smoke and current-Main composition checks. All 295 test names and 51 process E2E flows are retained; the default required suites remain complete. One hosted source comparison had identical 2511 test/subtest results, with projectrun Race 878.142 to 386.181 seconds and Quality 123.800 to 101.309 seconds; this is one probe, not a guaranteed timing or method study. Runtime has no current implementation writer; future packages need their own scope/slot assignment. The separate local Windows run is not a Linux-derived Windows PASS.
+    note: PR232 merged after exact-head independent review, full hosted Quality/Race/provider-free smoke and current-Main composition checks. All 295 test functions plus TestMain and 51 process E2E flows are retained; the default required suites remain complete. One hosted source comparison had identical 2511 test/subtest results, with projectrun Race 878.142 to 386.181 seconds and Quality 123.800 to 101.309 seconds; this is one probe, not a guaranteed timing or method study. Runtime has no current implementation writer; future packages need their own scope/slot assignment. The original literal-35211841 Windows suite ended with exit 1, 53 package passes, 15 no-test packages and two 60-minute package timeouts in projectbriefing/projectrun before the parallel E2E group ran; complete raw evidence is preserved without retry. This is not a current-Main Windows PASS.
     acceptance:
       - Runtime end-to-end tests live in their own package or tag, share a fixture template and run in parallel.
 
@@ -646,7 +648,7 @@ packages:
     pr: 192
     owner: qa
     depends_on: [CLI-02]
-    note: agentexec/lifecycle.go and codexappserver/contracts.go are not gofmt-clean, and CI has no formatting step.
+    note: PR192 made the Go sources gofmt-clean and added the failing tracked-source formatting gate to CI; the earlier unformatted-file finding is resolved.
     zone: ci
     inputs:
       - pull request 162 (ARCH-10 known problems)
@@ -682,8 +684,9 @@ packages:
       fixed-candidate checks. A new Bughunter session started on 12 October from clean Main
       1b621b1e06a3b0670d7f07b67a2632320796c7bf and completed its first bounded read-only review
       and isolated reproduction. No production repair paths are reserved; future verified findings go to the integrator
-      for a bounded non-colliding fix assignment. Runtime belongs to QA TEST-03 and interface to
-      CLI-03 then CLI-04 then TEST-02. Core/projectmodel findings remain coordinated with kg.
+      for a bounded non-colliding fix assignment. Runtime has no current implementation writer;
+      future work needs a scope and slot assignment. Interface belongs to TEST-02 after merged
+      CLI-03 and CLI-04. Core/projectmodel findings remain coordinated with kg.
       The first bounded sweep reproduced the known helper-cleanup liveness failure after process
       loss on Main 1b621b1e06a3b0670d7f07b67a2632320796c7bf; the passing observation test confirms
       the blockade, not successful recovery. The independently reviewed cross-process reconciliation
