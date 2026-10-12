@@ -323,14 +323,6 @@ func freshReviewEvidenceForVerify(store *runStore, dir string, finalProject *Pro
 	if runtime.Review == nil {
 		return []fullReviewEvidence{}, nil
 	}
-	var changeState *reviewCandidateState
-	if len(hosts) > 0 {
-		state, err := reviewCandidateStateFor(hosts[0], store.root, plan, run, finalCandidate)
-		if err != nil {
-			return nil, fmt.Errorf("load exact full-verification review change state: %w", err)
-		}
-		changeState = &state
-	}
 	var selected []fullReviewEvidence
 	for _, planned := range plan.Managers {
 		task := planned
@@ -344,49 +336,53 @@ func freshReviewEvidenceForVerify(store *runStore, dir string, finalProject *Pro
 		if !phaseReviewRequired(finalProject, task, run.Tasks, phase) {
 			continue
 		}
-		var scopeDigest string
+		var review ReviewRecord
+		var state reviewCandidateState
+		var found bool
 		var err error
-		if changeState != nil {
-			scopeDigest, err = reviewScopeDigest(plan, finalProject, task, phase, run, *changeState)
+		if len(hosts) > 0 {
+			review, state, found, err = freshPassedReviewForScope(hosts[0], store.root, store, dir, plan, run, finalProject, finalCandidate, task, phase)
 		} else {
+			var scopeDigest string
 			scopeDigest, err = reviewScopeDigest(plan, finalProject, task, phase, run)
+			if err == nil {
+				for i := len(run.Reviews) - 1; i >= 0; i-- {
+					priorReview := run.Reviews[i]
+					if priorReview.ManagerID != task.ManagerID || priorReview.Phase != phase || priorReview.Outcome != "pass" || priorReview.ScopeDigest != scopeDigest {
+						continue
+					}
+					prior, readErr := store.readCandidate(dir, priorReview.CandidateID)
+					if readErr != nil || prior.ID != priorReview.CandidateID || prior.Digest != priorReview.CandidateDigest {
+						return nil, fmt.Errorf("review for Manager %s is not bound to a retained exact candidate", task.ManagerID)
+					}
+					review, found = priorReview, true
+					break
+				}
+			}
 		}
 		if err != nil {
 			return nil, err
 		}
-		found := false
-		for i := len(run.Reviews) - 1; i >= 0; i-- {
-			review := run.Reviews[i]
-			if review.ManagerID != task.ManagerID || review.Phase != phase || review.Outcome != "pass" || review.ScopeDigest != scopeDigest {
-				continue
-			}
-			prior, err := store.readCandidate(dir, review.CandidateID)
-			if err != nil || prior.ID != review.CandidateID || prior.Digest != review.CandidateDigest {
-				return nil, fmt.Errorf("review for Manager %s is not bound to a retained exact candidate", task.ManagerID)
-			}
-			var reviewedFiles []fullReviewFileReference
-			if changeState != nil {
-				reviewedFiles, err = currentReviewFileReferences(finalProject, plan, task, phase, run, *changeState)
-			} else {
-				reviewedFiles, err = currentReviewFileReferences(finalProject, plan, task, phase, run)
-			}
-			if err != nil {
-				return nil, err
-			}
-			selected = append(selected, fullReviewEvidence{
-				TaskID: review.TaskID, ManagerID: review.ManagerID, Phase: review.Phase,
-				ReviewCandidateID: review.CandidateID, ReviewCandidateDigest: review.CandidateDigest,
-				FinalCandidateID: finalCandidate.ID, FinalCandidateDigest: finalCandidate.Digest,
-				ScopeDigest: review.ScopeDigest, InputDigest: review.InputDigest,
-				ReceiptRunID: review.Receipt.RunID, Outcome: review.Outcome,
-				Findings: cloneReviewFindings(review.Findings), ReviewedFiles: reviewedFiles,
-			})
-			found = true
-			break
-		}
 		if !found {
 			return nil, fmt.Errorf("Manager %s has no fresh passed %s review for its final candidate scope", task.ManagerID, phase)
 		}
+		var reviewedFiles []fullReviewFileReference
+		if len(hosts) > 0 {
+			reviewedFiles, err = currentReviewFileReferences(finalProject, plan, task, phase, run, state)
+		} else {
+			reviewedFiles, err = currentReviewFileReferences(finalProject, plan, task, phase, run)
+		}
+		if err != nil {
+			return nil, err
+		}
+		selected = append(selected, fullReviewEvidence{
+			TaskID: review.TaskID, ManagerID: review.ManagerID, Phase: review.Phase,
+			ReviewCandidateID: review.CandidateID, ReviewCandidateDigest: review.CandidateDigest,
+			FinalCandidateID: finalCandidate.ID, FinalCandidateDigest: finalCandidate.Digest,
+			ScopeDigest: review.ScopeDigest, InputDigest: review.InputDigest,
+			ReceiptRunID: review.Receipt.RunID, Outcome: review.Outcome,
+			Findings: cloneReviewFindings(review.Findings), ReviewedFiles: reviewedFiles,
+		})
 	}
 	return selected, nil
 }

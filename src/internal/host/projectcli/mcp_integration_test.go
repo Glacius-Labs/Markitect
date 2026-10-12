@@ -612,7 +612,8 @@ func TestExplainAndTraceAreEqualThroughCLIAndMCP(t *testing.T) {
 var toolSizeCeilings = map[string]int{
 	"adopt": 32000, "apply": 1500, "brief": 1500, "check": 3500, "config": 11000, "context": 5000, "deliver": 28500,
 	"docs": 1500, "doctor": 1500, "edit": 7000, "explore": 10000, "impact": 3000, "init": 1500, "model": 4500,
-	"onboard": 2000, "plan": 14000, "ready": 7500, "repair": 13500, "resume": 13500, "run": 13500, "schema": 1000,
+	"onboard": 2000, "packet-export": 750, "packet-list": 2650, "packet-submit": 1210,
+	"plan": 14000, "ready": 7500, "repair": 13500, "resume": 13500, "run": 13500, "schema": 1000,
 	"status": 1000, "verify": 1000,
 }
 

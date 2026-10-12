@@ -1038,10 +1038,6 @@ func requireFreshReviews(host Host, root string, store *runStore, dir string, ba
 	if err != nil {
 		return err
 	}
-	changeState, err := reviewCandidateStateFor(host, root, plan, run, candidate)
-	if err != nil {
-		return fmt.Errorf("load final review change state: %w", err)
-	}
 	for _, planned := range plan.Managers {
 		task := planned
 		if current := findTask(run.Tasks, planned.ManagerID); current != nil {
@@ -1054,22 +1050,9 @@ func requireFreshReviews(host Host, root string, store *runStore, dir string, ba
 		if !phaseReviewRequired(finalProject, task, run.Tasks, phase) {
 			continue
 		}
-		scopeDigest, err := reviewScopeDigest(plan, finalProject, task, phase, run, changeState)
+		_, _, found, err := freshPassedReviewForScope(host, root, store, dir, plan, run, finalProject, candidate, task, phase)
 		if err != nil {
 			return err
-		}
-		found := false
-		for i := len(run.Reviews) - 1; i >= 0; i-- {
-			review := run.Reviews[i]
-			if review.ManagerID != task.ManagerID || review.Phase != phase || review.Outcome != "pass" || review.ScopeDigest != scopeDigest {
-				continue
-			}
-			prior, err := store.readCandidate(dir, review.CandidateID)
-			if err != nil || prior.Digest != review.CandidateDigest {
-				return fmt.Errorf("review for Manager %s is not bound to a retained exact candidate", task.ManagerID)
-			}
-			found = true
-			break
 		}
 		if !found {
 			return fmt.Errorf("Manager %s has no fresh passed %s review for its final candidate scope", task.ManagerID, phase)

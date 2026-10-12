@@ -889,7 +889,7 @@ func runOrResume(ctx context.Context, host Host, invoker Invoker, root, id strin
 			if err != nil {
 				return failRun(store, report, err)
 			}
-			resolved.Parents = childCandidateIDs(report.Tasks, children)
+			resolved.Parents = []string{merged.ID}
 			if err := store.writeCandidate(dir, resolved); err != nil {
 				return failRun(store, report, err)
 			}
@@ -1001,10 +1001,6 @@ func runOrResume(ctx context.Context, host Host, invoker Invoker, root, id strin
 		if compileErr != nil {
 			return failRun(store, report, compileErr)
 		}
-		reviewState, stateErr := reviewCandidateStateFor(host, root, plan, report, finalCandidate)
-		if stateErr != nil {
-			return failRun(store, report, stateErr)
-		}
 		for i := range report.Tasks {
 			task := &report.Tasks[i]
 			phase := "work"
@@ -1018,17 +1014,9 @@ func runOrResume(ctx context.Context, host Host, invoker Invoker, root, id strin
 				}
 				continue
 			}
-			scopeDigest, digestErr := reviewScopeDigest(plan, finalProject, *task, phase, report, reviewState)
-			if digestErr != nil {
-				return failRun(store, report, digestErr)
-			}
-			fresh := false
-			for j := len(report.Reviews) - 1; j >= 0; j-- {
-				prior := report.Reviews[j]
-				if prior.ManagerID == task.ManagerID && prior.Phase == phase && prior.Outcome == "pass" && prior.ScopeDigest == scopeDigest {
-					fresh = true
-					break
-				}
+			_, _, fresh, freshnessErr := freshPassedReviewForScope(host, root, store, dir, plan, report, finalProject, finalCandidate, *task, phase)
+			if freshnessErr != nil {
+				return failRun(store, report, freshnessErr)
 			}
 			if fresh {
 				continue
@@ -2536,23 +2524,6 @@ func findTask(tasks []ManagerTask, id string) *ManagerTask {
 		}
 	}
 	return nil
-}
-func childCandidateIDs(tasks []ManagerTask, children []string) []string {
-	out := []string{}
-	for _, id := range children {
-		t := findTask(tasks, id)
-		if t != nil {
-			cid := t.IntegrationCandidateID
-			if cid == "" {
-				cid = t.CandidateID
-			}
-			if cid != "" {
-				out = append(out, cid)
-			}
-		}
-	}
-	sort.Strings(out)
-	return out
 }
 func buildChildSummaries(store *runStore, dir string, tasks []ManagerTask, reviews []ReviewRecord, children []string) []childReport {
 	out := make([]childReport, 0, len(children))

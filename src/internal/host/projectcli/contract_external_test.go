@@ -172,6 +172,17 @@ func externalPacketSubmitHappy(t *testing.T, surface string) {
 	if err := json.Unmarshal(response, &responseInput); err != nil {
 		t.Fatal(err)
 	}
+	expectedStoredResponse := response
+	if surface == "mcp" {
+		// MCP transports a JSON value, so the request contains the compact
+		// serialization of the decoded map rather than the fixture's original
+		// struct field order. The product stores the exact bytes it receives.
+		wireResponse, err := json.Marshal(responseInput)
+		if err != nil {
+			t.Fatal(err)
+		}
+		expectedStoredResponse = wireResponse
+	}
 	data := caller.Success("packet-submit", []string{plan.ID, "--packet", packet.ID, "--expect", packet.Digest, "--response", responsePath, "--execute"}, map[string]any{
 		"run": plan.ID, "packet": packet.ID, "expect": packet.Digest, "response": responseInput, "execute": true,
 	})
@@ -208,7 +219,7 @@ func externalPacketSubmitHappy(t *testing.T, surface string) {
 		ResponseDigest string `json:"responseDigest"`
 		Response       []byte `json:"response"`
 	}
-	if err := json.Unmarshal(stored, &submission); err != nil || submission.PacketID != packet.ID || submission.PacketDigest != packet.Digest || !reflect.DeepEqual(submission.Response, response) {
+	if err := json.Unmarshal(stored, &submission); err != nil || submission.PacketID != packet.ID || submission.PacketDigest != packet.Digest || !reflect.DeepEqual(submission.Response, expectedStoredResponse) {
 		t.Fatalf("stored raw response is not bound to the submitted packet: submission=%+v err=%v", submission, err)
 	}
 	if invoker.calls != 0 {

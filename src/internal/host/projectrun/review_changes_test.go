@@ -1,12 +1,289 @@
 package projectrun
 
 import (
+	"os"
+	"path/filepath"
 	"testing"
 
 	"github.com/Glacius-Labs/Markitect/src/internal/core/snapshot"
 	"github.com/Glacius-Labs/Markitect/src/internal/host/projectwork"
 	"github.com/Glacius-Labs/Markitect/src/internal/modules/projectmodel"
 )
+
+type freshReviewFixture struct {
+	root          string
+	host          Host
+	store         *runStore
+	dir           string
+	base          *Project
+	plan          PlanRecord
+	run           RunReport
+	initial       candidateData
+	inventory     candidateData
+	orders        candidateData
+	merged        candidateData
+	inventoryTask ManagerTask
+	ordersTask    ManagerTask
+}
+
+func newFreshReviewFixture(t *testing.T) freshReviewFixture {
+	t.Helper()
+	root := makeProjectRunFixture(t)
+	host := projectworkHost()
+	baseRevision := identityHead(t, root)
+	base, err := host.Load(root, baseRevision)
+	if err != nil {
+		t.Fatal(err)
+	}
+	store, err := newRunStore(root)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := os.MkdirAll(filepath.Join(root, filepath.FromSlash(RunsPath)), 0o700); err != nil {
+		t.Fatal(err)
+	}
+	const runID = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+	dir, err := store.createRun(runID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	fixture := freshReviewFixture{
+		root: root, host: host, store: store, dir: dir, base: base,
+		plan: PlanRecord{BaseRevision: baseRevision, InitialCandidateID: "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"},
+		run:  RunReport{ID: runID},
+	}
+	rootTask := ManagerTask{ManagerID: e2eManagerID("", "project-owner"), Goal: "Reconcile the project deliveries."}
+	fixture.inventoryTask = ManagerTask{
+		ID: "inventory-task", ManagerID: e2eManagerID("inventory", "inventory"), ParentTask: rootTask.ManagerID,
+		Goal: "Implement the inventory artifact.", Artifacts: []string{"inventory-code"}, WrittenPaths: []string{"src/inventory/implementation.txt"},
+	}
+	fixture.ordersTask = ManagerTask{
+		ID: "orders-task", ManagerID: e2eManagerID("orders", "orders"), ParentTask: rootTask.ManagerID,
+		Goal: "Implement the orders artifact.", Artifacts: []string{"orders-code"}, WrittenPaths: []string{"src/orders/implementation.txt"},
+	}
+	fixture.plan.Managers = []ManagerTask{rootTask, fixture.inventoryTask, fixture.ordersTask}
+	fixture.run.Tasks = append([]ManagerTask(nil), fixture.plan.Managers...)
+	fixture.initial = candidateData{ID: fixture.plan.InitialCandidateID, Files: map[string]File{}}
+	fixture.inventory = candidateData{
+		ID: "cccccccccccccccccccccccccccccccc", Parents: []string{fixture.initial.ID},
+		Files: map[string]File{"src/inventory/implementation.txt": {Path: "src/inventory/implementation.txt", Mode: "0644", Content: []byte("inventory implementation v2\n")}},
+	}
+	fixture.orders = candidateData{
+		ID: "dddddddddddddddddddddddddddddddd", Parents: []string{fixture.initial.ID},
+		Files: map[string]File{"src/orders/implementation.txt": {Path: "src/orders/implementation.txt", Mode: "0644", Content: []byte("orders implementation v2\n")}},
+	}
+	fixture.merged = candidateData{
+		ID: "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee", Parents: []string{fixture.inventory.ID, fixture.orders.ID},
+		Files: map[string]File{
+			"src/inventory/implementation.txt": fixture.inventory.Files["src/inventory/implementation.txt"],
+			"src/orders/implementation.txt":    fixture.orders.Files["src/orders/implementation.txt"],
+		},
+	}
+	for _, candidate := range []candidateData{fixture.initial, fixture.inventory, fixture.orders, fixture.merged} {
+		if err := store.writeCandidate(dir, candidate); err != nil {
+			t.Fatal(err)
+		}
+	}
+	fixture.initial, err = store.readCandidate(dir, fixture.initial.ID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	fixture.inventory, err = store.readCandidate(dir, fixture.inventory.ID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	fixture.orders, err = store.readCandidate(dir, fixture.orders.ID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	fixture.merged, err = store.readCandidate(dir, fixture.merged.ID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return fixture
+}
+
+func (fixture *freshReviewFixture) addPassedReview(t *testing.T, manager ManagerTask, candidate candidateData) {
+	t.Helper()
+	project, err := projectForCandidate(fixture.host, fixture.root, fixture.base.Snapshot, candidate)
+	if err != nil {
+		t.Fatal(err)
+	}
+	state, err := reviewCandidateStateFor(fixture.host, fixture.root, fixture.plan, fixture.run, candidate)
+	if err != nil {
+		t.Fatal(err)
+	}
+	scope, err := reviewScopeDigest(fixture.plan, project, manager, "work", fixture.run, state)
+	if err != nil {
+		t.Fatal(err)
+	}
+	fixture.run.Reviews = append(fixture.run.Reviews, ReviewRecord{
+		ManagerID: manager.ManagerID, Phase: "work", Round: 1, CandidateID: candidate.ID,
+		CandidateDigest: candidate.Digest, ScopeDigest: scope, Outcome: "pass",
+	})
+}
+
+func TestFreshPassedReviewUsesItsOwnParentAfterSiblingMerge(t *testing.T) {
+	fixture := newFreshReviewFixture(t)
+	fixture.addPassedReview(t, fixture.inventoryTask, fixture.inventory)
+	fixture.addPassedReview(t, fixture.ordersTask, fixture.orders)
+	finalProject, err := projectForCandidate(fixture.host, fixture.root, fixture.base.Snapshot, fixture.merged)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, task := range []ManagerTask{fixture.inventoryTask, fixture.ordersTask} {
+		review, state, found, err := freshPassedReviewForScope(fixture.host, fixture.root, fixture.store, fixture.dir,
+			fixture.plan, fixture.run, finalProject, fixture.merged, task, "work")
+		if err != nil || !found || review.ManagerID != task.ManagerID || state.Candidate.ID != fixture.merged.ID {
+			t.Fatalf("unchanged %s review did not survive sibling integration: review=%+v found=%t err=%v", task.ManagerID, review, found, err)
+		}
+	}
+	corruptLedger := fixture.run
+	corruptLedger.Reviews = append([]ReviewRecord(nil), fixture.run.Reviews...)
+	corruptLedger.Reviews[0].CandidateDigest = "sha256:wrong"
+	if _, _, _, err := freshPassedReviewForScope(fixture.host, fixture.root, fixture.store, fixture.dir,
+		fixture.plan, corruptLedger, finalProject, fixture.merged, fixture.inventoryTask, "work"); err == nil {
+		t.Fatal("freshness accepted a passed review whose retained candidate digest was changed")
+	}
+
+	changedInventory := fixture.merged
+	changedInventory.ID = "ffffffffffffffffffffffffffffffff"
+	changedInventory.Files = map[string]File{
+		"src/inventory/implementation.txt": {Path: "src/inventory/implementation.txt", Mode: "0644", Content: []byte("inventory implementation v3\n")},
+		"src/orders/implementation.txt":    fixture.merged.Files["src/orders/implementation.txt"],
+	}
+	if err := fixture.store.writeCandidate(fixture.dir, changedInventory); err != nil {
+		t.Fatal(err)
+	}
+	changedInventory, err = fixture.store.readCandidate(fixture.dir, changedInventory.ID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	changedProject, err := projectForCandidate(fixture.host, fixture.root, fixture.base.Snapshot, changedInventory)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, _, found, err := freshPassedReviewForScope(fixture.host, fixture.root, fixture.store, fixture.dir,
+		fixture.plan, fixture.run, changedProject, changedInventory, fixture.inventoryTask, "work"); err != nil || found {
+		t.Fatalf("changed owned bytes reused a prior pass: found=%t err=%v", found, err)
+	}
+	changedMode := changedInventory
+	changedMode.ID = "11111111111111111111111111111111"
+	changedMode.Files = map[string]File{
+		"src/inventory/implementation.txt": {Path: "src/inventory/implementation.txt", Mode: "0755", Content: []byte("inventory implementation v2\n")},
+		"src/orders/implementation.txt":    fixture.merged.Files["src/orders/implementation.txt"],
+	}
+	if err := fixture.store.writeCandidate(fixture.dir, changedMode); err != nil {
+		t.Fatal(err)
+	}
+	changedMode, err = fixture.store.readCandidate(fixture.dir, changedMode.ID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	modeProject, err := projectForCandidate(fixture.host, fixture.root, fixture.base.Snapshot, changedMode)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, _, found, err := freshPassedReviewForScope(fixture.host, fixture.root, fixture.store, fixture.dir,
+		fixture.plan, fixture.run, modeProject, changedMode, fixture.inventoryTask, "work"); err != nil || found {
+		t.Fatalf("changed owned mode reused a prior pass: found=%t err=%v", found, err)
+	}
+	changedTask := fixture.inventoryTask
+	changedTask.Goal = "Implement the inventory artifact and its declared checks."
+	if _, _, found, err := freshPassedReviewForScope(fixture.host, fixture.root, fixture.store, fixture.dir,
+		fixture.plan, fixture.run, finalProject, fixture.merged, changedTask, "work"); err != nil || found {
+		t.Fatalf("changed task contract reused a prior pass: found=%t err=%v", found, err)
+	}
+}
+
+func TestFreshPassedReviewBindsDeletionPreimageAndSource(t *testing.T) {
+	fixture := newFreshReviewFixture(t)
+	const path = "src/orders/implementation.txt"
+	prior, present := fixture.base.Snapshot.Files[path]
+	if !present {
+		t.Fatal("fixture source file is missing")
+	}
+	deleted := candidateData{
+		ID: "22222222222222222222222222222222", Parents: []string{fixture.initial.ID},
+		Files: map[string]File{path: {Path: path, Mode: fixture.base.Snapshot.Modes[path], Content: append([]byte(nil), prior...), Delete: true}},
+	}
+	if err := fixture.store.writeCandidate(fixture.dir, deleted); err != nil {
+		t.Fatal(err)
+	}
+	deleted, err := fixture.store.readCandidate(fixture.dir, deleted.ID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	deleteTask := fixture.ordersTask
+	deleteTask.WrittenPaths = []string{path}
+	fixture.addPassedReview(t, deleteTask, deleted)
+	deleteProject, err := projectForCandidate(fixture.host, fixture.root, fixture.base.Snapshot, deleted)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, _, found, err := freshPassedReviewForScope(fixture.host, fixture.root, fixture.store, fixture.dir,
+		fixture.plan, fixture.run, deleteProject, deleted, deleteTask, "work"); err != nil || !found {
+		t.Fatalf("unchanged source-grounded deletion did not retain its review: found=%t err=%v", found, err)
+	}
+
+	for name, mutation := range map[string]struct {
+		id     string
+		mutate func(*candidateData)
+	}{
+		"preimage": {id: "33333333333333333333333333333333", mutate: func(candidate *candidateData) {
+			candidate.Files[path] = File{Path: path, Mode: fixture.base.Snapshot.Modes[path], Content: []byte("other prior bytes"), Delete: true}
+		}},
+		"mode": {id: "55555555555555555555555555555555", mutate: func(candidate *candidateData) {
+			candidate.Files[path] = File{Path: path, Mode: "0755", Content: append([]byte(nil), prior...), Delete: true}
+		}},
+	} {
+		t.Run(name, func(t *testing.T) {
+			changed := deleted
+			changed.ID = mutation.id
+			changed.Files = map[string]File{path: deleted.Files[path]}
+			mutation.mutate(&changed)
+			if err := fixture.store.writeCandidate(fixture.dir, changed); err != nil {
+				t.Fatal(err)
+			}
+			changed, err = fixture.store.readCandidate(fixture.dir, changed.ID)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if _, _, found, err := freshPassedReviewForScope(fixture.host, fixture.root, fixture.store, fixture.dir,
+				fixture.plan, fixture.run, deleteProject, changed, deleteTask, "work"); err != nil || found {
+				t.Fatalf("changed deletion %s reused a prior pass: found=%t err=%v", name, found, err)
+			}
+		})
+	}
+
+	for name, candidateFixture := range map[string]struct {
+		id   string
+		file File
+	}{
+		"wrong source bytes": {id: "44444444444444444444444444444444", file: File{Path: path, Mode: fixture.base.Snapshot.Modes[path], Content: []byte("unrelated"), Delete: true}},
+		"wrong source mode":  {id: "66666666666666666666666666666666", file: File{Path: path, Mode: "0755", Content: append([]byte(nil), prior...), Delete: true}},
+		"missing source":     {id: "77777777777777777777777777777777", file: File{Path: "src/not-in-source.txt", Mode: "0644", Content: []byte("not grounded"), Delete: true}},
+	} {
+		t.Run(name, func(t *testing.T) {
+			invalid := candidateData{ID: candidateFixture.id, Parents: []string{fixture.initial.ID}, Files: map[string]File{candidateFixture.file.Path: candidateFixture.file}}
+			if err := fixture.store.writeCandidate(fixture.dir, invalid); err != nil {
+				t.Fatal(err)
+			}
+			invalid, err = fixture.store.readCandidate(fixture.dir, invalid.ID)
+			if err != nil {
+				t.Fatal(err)
+			}
+			fixture.run.Reviews = []ReviewRecord{{ManagerID: deleteTask.ManagerID, Phase: "work", CandidateID: invalid.ID,
+				CandidateDigest: invalid.Digest, ScopeDigest: "sha256:tampered-review", Outcome: "pass"}}
+			invalidTask := deleteTask
+			invalidTask.WrittenPaths = []string{candidateFixture.file.Path}
+			if _, _, _, err := freshPassedReviewForScope(fixture.host, fixture.root, fixture.store, fixture.dir,
+				fixture.plan, fixture.run, deleteProject, invalid, invalidTask, "work"); err == nil {
+				t.Fatal("review accepted a retained deletion whose prior bytes or mode did not match its source baseline")
+			}
+		})
+	}
+}
 
 func TestReviewCandidateChangesGroundsDeletionWithPriorBytes(t *testing.T) {
 	base := &Snapshot{Files: map[string][]byte{

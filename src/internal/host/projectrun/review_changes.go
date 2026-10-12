@@ -1,6 +1,7 @@
 package projectrun
 
 import (
+	"bytes"
 	"fmt"
 	"sort"
 
@@ -39,12 +40,7 @@ func reviewCandidateStateFor(host Host, root string, plan PlanRecord, run RunRep
 	if run.ID == "" {
 		return reviewCandidateState{Base: base, Candidate: candidate}, nil
 	}
-	parentID := ""
-	if len(candidate.Parents) > 0 {
-		parentID = candidate.Parents[0]
-	} else if plan.InitialCandidateID != candidate.ID {
-		parentID = plan.InitialCandidateID
-	}
+	parentID := reviewParentCandidateID(plan, candidate)
 	if parentID == "" {
 		return reviewCandidateState{Base: base, Candidate: candidate}, nil
 	}
@@ -65,6 +61,113 @@ func reviewCandidateStateFor(host Host, root string, plan PlanRecord, run RunRep
 		return reviewCandidateState{}, err
 	}
 	return reviewCandidateState{Base: base, Candidate: candidate}, nil
+}
+
+func reviewParentCandidateID(plan PlanRecord, candidate candidateData) string {
+	if len(candidate.Parents) > 0 {
+		return candidate.Parents[0]
+	}
+	if plan.InitialCandidateID != candidate.ID {
+		return plan.InitialCandidateID
+	}
+	return ""
+}
+
+// sameReviewDeletePreimages prevents a current candidate from reusing a prior
+// pass after its retained deletion evidence changed. The operation scope
+// digest binds the source preimage; this exact candidate-row comparison also
+// catches tampering in a deletion row when the source path is already absent
+// from the stable review baseline.
+func sameReviewDeletePreimages(reviewed, current candidateData, paths []string) bool {
+	for _, path := range paths {
+		prior, hadPrior := reviewed.Files[path]
+		now, hasNow := current.Files[path]
+		priorDelete := hadPrior && prior.Delete
+		currentDelete := hasNow && now.Delete
+		if priorDelete != currentDelete {
+			return false
+		}
+		if priorDelete && (prior.Mode != now.Mode || !bytes.Equal(prior.Content, now.Content)) {
+			return false
+		}
+	}
+	return true
+}
+
+// reviewCandidateDeletesMatchBaseline rejects a retained delete row whose
+// preimage disagrees with the source snapshot used for that review. If the
+// immediate baseline already contains a delete, reviewCandidateChanges binds
+// its retained prior bytes into the scope digest instead.
+func reviewCandidateDeletesMatchBaseline(state reviewCandidateState, parent *candidateData, paths []string) bool {
+	for _, path := range paths {
+		file, exists := state.Candidate.Files[path]
+		if !exists || !file.Delete {
+			continue
+		}
+		prior, exists := snapshotFile(state.Base, path)
+		mode := ""
+		if exists {
+			mode = protocolMode(state.Base.Modes[path])
+		} else if parent != nil {
+			parentFile, present := parent.Files[path]
+			if !present || !parentFile.Delete {
+				return false
+			}
+			prior = append([]byte(nil), parentFile.Content...)
+			mode = reviewProtocolMode(parentFile.Mode)
+		}
+		if mode == "" || !bytes.Equal(file.Content, prior) || reviewProtocolMode(file.Mode) != mode {
+			return false
+		}
+	}
+	return true
+}
+
+// freshPassedReviewForScope finds the newest retained passed review whose
+// exact candidate-relative operation baseline still produces the current
+// Manager scope. Sibling integration can change the root candidate's parent
+// ordering, so freshness must be recomputed from each reviewed candidate's
+// own parent, with only the candidate bytes replaced by the current final
+// candidate.
+func freshPassedReviewForScope(host Host, root string, store *runStore, dir string, plan PlanRecord, run RunReport, project *Project, currentCandidate candidateData, task ManagerTask, phase string) (ReviewRecord, reviewCandidateState, bool, error) {
+	for index := len(run.Reviews) - 1; index >= 0; index-- {
+		review := run.Reviews[index]
+		if review.ManagerID != task.ManagerID || review.Phase != phase || review.Outcome != "pass" {
+			continue
+		}
+		retained, err := store.readCandidate(dir, review.CandidateID)
+		if err != nil || retained.ID != review.CandidateID || retained.Digest != review.CandidateDigest {
+			return ReviewRecord{}, reviewCandidateState{}, false, fmt.Errorf("review for Manager %s is not bound to a retained exact candidate", task.ManagerID)
+		}
+		state, err := reviewCandidateStateFor(host, root, plan, run, retained)
+		if err != nil {
+			return ReviewRecord{}, reviewCandidateState{}, false, fmt.Errorf("load retained review scope for Manager %s: %w", task.ManagerID, err)
+		}
+		paths := uniqueSorted(append(reviewScopePaths(reviewCandidateFiles(project, task, run.Tasks, phase)), reviewChangedPaths(task, run.Tasks, phase)...))
+		var parent *candidateData
+		if parentID := reviewParentCandidateID(plan, retained); parentID != "" {
+			parentCandidate, err := store.readCandidate(dir, parentID)
+			if err != nil {
+				return ReviewRecord{}, reviewCandidateState{}, false, fmt.Errorf("load retained deletion source candidate for Manager %s: %w", task.ManagerID, err)
+			}
+			parent = &parentCandidate
+		}
+		if !reviewCandidateDeletesMatchBaseline(state, parent, paths) {
+			return ReviewRecord{}, reviewCandidateState{}, false, fmt.Errorf("review for Manager %s has deletion evidence that does not match its exact source baseline", task.ManagerID)
+		}
+		if !sameReviewDeletePreimages(retained, currentCandidate, paths) {
+			continue
+		}
+		state.Candidate = currentCandidate
+		scopeDigest, err := reviewScopeDigest(plan, project, task, phase, run, state)
+		if err != nil {
+			return ReviewRecord{}, reviewCandidateState{}, false, err
+		}
+		if scopeDigest == review.ScopeDigest {
+			return review, state, true, nil
+		}
+	}
+	return ReviewRecord{}, reviewCandidateState{}, false, nil
 }
 
 func reviewCandidateChanges(base *Snapshot, candidate candidateData, selectedPaths []string) ([]candidateChange, []agentexec.Artifact, error) {
