@@ -1,7 +1,7 @@
 schema: markitect-roadmap-backlog/v1
 updated: '2026-10-12'
 roadmap: docs/implementation-plan.md
-main_basis: d083c8f37b6bb1e09a9c5a7947c421651a7e755b
+main_basis: 04c36968d5df19cf550fcf8fd0bb09f4b12b654f
 
 # Single owner of work-package status. The roadmap explains streams, waves,
 # zones and rules; this file records each package's current state.
@@ -235,10 +235,10 @@ packages:
     wave: 2
     status: active
     owner: runtime
-    branch: dev/asynchronous-executor
+    branch: dev/external-runtime-packets
     depends_on: [RUN-01]
     zone: runtime
-    note: Explicitly assigned after TEST-04 actual integration and complete Main push CI38229652026. The existing QA chat now holds the Runtime role without a duplicate writer; checkout asynchronous-executor started clean on current Main d083c8f37b6bb1e09a9c5a7947c421651a7e755b. Scope is the endorsed ENH-005 asynchronous boundary through existing Runtime and bounded projectapp/projectcli surfaces, preserving candidate/snapshot/scope/review/Verify/Apply guards. New files stay in already-owned packages; exact accounting additions and ARCH-09's equivalent current-model migration are coordinated. This is not positive kill recovery, provider execution or a study. TEST-05 and RUN-05/06 keep separate later slots.
+    note: Explicitly assigned after TEST-04 actual integration and complete Main push CI38229652026; the existing QA chat holds Runtime without a duplicate writer. PR245 reviewed source6363a1bb7bba5cdda3c4ac62c6b16340455ff54e is composed as409befdf197c2c36c9edd92ecd3674eb29f15df1 on fully green ARCH-09 Main04c36968d5df19cf550fcf8fd0bb09f4b12b654f. RequiredCI38244650365 completed FAIL in Quality/Race; this is not integrated acceptance. A guarded review-freshness regression and separate MCP binding/ceiling findings require an isolated correction, renewed review and new exact-head CI. All43 changed Source/test blobs transfer unchanged; all13new paths belong to current product Manager Artifacts (4application-layer,9runtime-layer), with retired manifest deletion retained and no roots expanded. External packets/Git deletions/executor-independent Plans preserve scope/review/Verify/Apply guards. Originalf500 fullWindows remains separate with observed schema-fixture, retained-parent-fixture and Git-alias failures; corrected focused checks are source-bound, not a new fullWindows PASS. TEST-05/RUN-05/06, positive recovery, provider and study execution keep separate gates.
     inputs:
       - docs/concepts/register.md#enh-005-exchangeable-executor-for-the-delegated-method
       - docs/work-items/surveys/tests-and-ci-20261010.md
@@ -900,12 +900,13 @@ packages:
     title: Remove the v0.13 Project/Domain line
     stream: ARCH
     wave: 3
-    status: active
+    status: done
+    pr: 243
     owner: cleaner
     branch: dev/legacy-removal
     depends_on: [ARCH-07, ARCH-08]
     zone: legacy
-    note: Explicitly assigned after ARCH-08 actual merge and complete push Main CI38227756946. Checkout legacy-removal started clean on current Main d083c8f37b6bb1e09a9c5a7947c421651a7e755b. Remove the precise legacy inventory and audited callers while retaining current product, Shop, both method-exchange harness files and historical benchmark/release evidence. Rehome architecture command glue and current module checks with equivalent byte/owner/check/digest validation; migrate canonical ownership/accounting and regenerate the view atomically. No required-coverage waiver, placeholder, import exception, Runtime API/recovery change or release is assigned. Shared model/codemap/CI and retiring legacy artifact manifest are coordinated with RUN-02's exact existing-package additions; backlog/roadmap/register remain integrator-owned.
+    note: PR243 finaldaff06821011de13461d9eeb56f56b5281e39171 merged as actualMain04c36968d5df19cf550fcf8fd0bb09f4b12b654f; complete pushCI38242466955 passed Quality/Race/source artifact, with tree557fce6bc743d18f6e97d0f280eb74f4bde884fd equal reviewed compositiond388 and tested synthetic386. Audited legacy commands/packages/binaries/examples and obsolete generated skill stubs are removed; current product, Shop, both method harness files and immutable history remain. Current module/architecture/Artifact checks replace the retired line without waivers/import exceptions; model/view/CI migration is atomic. Rejected1193 Quality/Race and separate fullWindows FAIL31packagePASS4FAIL/3 cumulative60m package expiries remain preserved with rawSHA05b9159a3a6a03903600e115c53f1bf111358d428f5a3d6b30fc0496ec92d19b; no cause or currentMain Windows PASS is inferred. Cleaner released; ARCH-12/13/14/15/16 keep their actual dependencies. Runtime new-file ownership is verified under the current model at its own composition, not through a restored manifest.
     inputs:
       - docs/work-items/surveys/code-architecture-20261010.md
     acceptance:
