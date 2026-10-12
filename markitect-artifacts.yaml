@@ -599,6 +599,32 @@ spec:
       owner: project-world-validation
     - path: src/internal/host/projectrun/process_e2e_test.go
       owner: project-world-implementation
+    - path: src/internal/host/projectrun/runtime_fixture_test.go
+      owner: project-world-implementation
+    - path: src/internal/host/projectrun/process_fixture_test.go
+      owner: project-world-implementation
+    - path: src/internal/host/projectrun/operations_fixture_test.go
+      owner: project-world-implementation
+    - path: src/internal/host/projectrun/byo_executor_fixture_test.go
+      owner: project-world-implementation
+    - path: src/internal/host/projectrun/repair_fixture_test.go
+      owner: project-world-implementation
+    - path: src/internal/host/projectrun/full_verify_e2e_test.go
+      owner: project-world-implementation
+    - path: src/internal/host/projectrun/deliver_e2e_test.go
+      owner: project-world-implementation
+    - path: src/internal/host/projectrun/apply_capture_e2e_test.go
+      owner: project-world-implementation
+    - path: src/internal/host/projectrun/check_directory_e2e_test.go
+      owner: project-world-implementation
+    - path: src/internal/host/projectrun/coordinator_e2e_test.go
+      owner: project-world-implementation
+    - path: src/internal/host/projectrun/resume_crash_e2e_test.go
+      owner: project-world-implementation
+    - path: src/internal/host/projectrun/resume_review_e2e_test.go
+      owner: project-world-implementation
+    - path: src/internal/host/projectrun/verification_budget_e2e_test.go
+      owner: project-world-implementation
     - path: src/internal/host/projectrun/byo_executor_e2e_test.go
       owner: project-world-implementation
     - path: src/internal/host/projectrun/check_directory_test.go

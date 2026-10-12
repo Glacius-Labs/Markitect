@@ -23,6 +23,10 @@ const nativeVerifierFixtureEnv = "MARKITECT_PROJECTRUN_NATIVE_VERIFIER_FIXTURE"
 // TestMain exposes this test binary as a protocol-only App Server executable
 // for the integration below. No Codex CLI, account, or model is started.
 func TestMain(m *testing.M) {
+	if err := prepareRuntimeFixtureProcess(); err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(2)
+	}
 	if os.Getenv(nativeVerifierFixtureEnv) == "1" {
 		if len(os.Args) > 1 && os.Args[1] == "--version" {
 			fmt.Println(codexappserver.SupportedProviderVersion)
@@ -30,6 +34,10 @@ func TestMain(m *testing.M) {
 		}
 		serveNativeVerifierFixture()
 		os.Exit(0)
+	}
+	if err := initializeRuntimeFixturePATH(); err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(2)
 	}
 	testkit.Main(m)
 }
