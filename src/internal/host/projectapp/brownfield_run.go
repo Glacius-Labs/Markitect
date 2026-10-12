@@ -152,3 +152,8 @@ func (i brownfieldReadOnlyInvoker) Fingerprint(config agentexec.Config) (string,
 func (i brownfieldReadOnlyInvoker) Run(ctx context.Context, config agentexec.Config, request agentexec.Request, options agentexec.RunOptions) (agentexec.RunResult, error) {
 	return projectrun.RunReadOnlyRepository(ctx, i.service, i.underlying, i.sourceRoot, i.privateLogs, config, request, i.limits)
 }
+
+// RunBrownfield uses the invoker selected by the application composition root.
+func (o Operations) RunBrownfield(ctx context.Context, operation BrownfieldRunOperation) (BrownfieldManagerRunOutput, error) {
+	return o.BrownfieldRun(ctx, operation, o.Invoker)
+}

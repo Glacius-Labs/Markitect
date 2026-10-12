@@ -6,6 +6,8 @@ This page is the current operational reference for the model-first `markitect <v
 
 Start the repository-local stdio server with `markitect mcp --repo ABSOLUTE_PROJECT_ROOT`. The server fixes Host authority to that root at startup. MCP schemas are typed; input schemas are closed, result schemas are open. Write operations enforce the exact authorization, preview digest, compare-and-swap, or durable-identity rules declared by their schemas. Consult `tools/list` for the exact current schema. Input schemas are written inline and closed. Result schemas (`outputSchema`) write each repeated type once under `$defs` and are not closed objects, which keeps `tools/list` small; they keep their required lists. `markitect mcp --read-only` serves only reads and previews; it writes nothing and starts no agents or checks.
 
+CLI and MCP share the application composition root `projectapp.NewOperations`. It supplies the model Host, local workspace service and transport invoker without starting a provider or creating a workspace. Adapters parse and present requests; the facade owns product reads, briefing history, status aggregation and runtime calls.
+
 The composed project server exposes these operation groups:
 
 - **Inspect:** `schema`, `model`, `check`, `context`, `impact`, `status`.

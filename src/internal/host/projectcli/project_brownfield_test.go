@@ -376,7 +376,7 @@ func TestAdoptRunPreviewAndStaleGuardDoNotInvokeProvider(t *testing.T) {
 	}
 
 	operations := func(invoker projectrun.Invoker) projectapp.Operations {
-		return projectapp.Operations{Host: projectRunHost(), Invoker: invoker}
+		return projectapp.Operations{Host: projectapp.NewOperations().Host, Invoker: invoker}
 	}
 	invoker := &countingManagerInvoker{}
 	if code, out, errout := runCLIWith(t, operations(invoker), append(args, "--expect", preview.PreviewDigest, "--write")...); code != 2 || out != "" || !strings.Contains(errout, "requires --execute") || invoker.runCalls != 0 {

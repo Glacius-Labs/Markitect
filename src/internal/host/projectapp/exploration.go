@@ -369,3 +369,8 @@ func findScope(record projectexplore.Record, id string) (projectexplore.Scope, b
 	}
 	return projectexplore.Scope{}, false
 }
+
+// DecodeExplorationInput validates the transport record using the use case's input contract.
+func (o Operations) DecodeExplorationInput(data []byte) (projectexplore.Record, error) {
+	return projectexplore.DecodeRecordInput(data)
+}

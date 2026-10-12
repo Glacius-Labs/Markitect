@@ -233,7 +233,7 @@ var schemaVerb = define(verb{
 }, func(ctx context.Context, e env, in noInput) (json.RawMessage, error) {
 	// core.Schema is recursive (a Property has Properties), so it is returned
 	// as raw JSON: the derived MCP output schema stays finite.
-	return json.Marshal(projectmodel.Schema())
+	return json.Marshal(e.ops.Schema())
 })
 
 type checkInput struct {

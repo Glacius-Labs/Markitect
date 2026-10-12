@@ -6,7 +6,7 @@ Markitect is model-first development with delegated realization ([Markitect in b
 
 - People keep one canonical model of the project under `.markitect/` ([project workflow](project-workflow.md)).
 - An outer Codex or Claude Code client calls typed operations on a local stdio MCP server, or uses the CLI. The server is fixed to one project root at startup; tool arguments cannot change it.
-- The MCP server calls a shared application facade. The CLI uses the same facade for most operations but still calls the runtime directly for runs ([application layer](#application-layer)).
+- CLI and MCP call the same application facade, which owns the product composition root ([application layer](#application-layer)).
 - Markitect compiles the selected model, binds work to fixed Git snapshots and records plans, runs and receipts.
 - Managers, reviewers and verifiers run as inner roles in owned candidate workspaces. By default every role runs through the Codex App Server; setup can select another profile per role, including a process executor ([provider adapters](provider-adapters.md#role-profiles)).
 - Markitect validates and integrates the candidate deltas, verifies the result and writes the checkout only through guarded Apply.
@@ -89,7 +89,7 @@ The application layer holds the product's use cases and the surfaces that expose
 - `projectexplore` stores explorations, open decisions, scope readiness and Apply receipts.
 - `projectadoption` runs Brownfield adoption: fixed-snapshot evidence, Manager proposals and a model-only adoption plan.
 - `projectonboarding` writes project-local guidance and skills for Codex and Claude Code.
-- `projectapp` is the shared facade over these use cases and the runtime. The MCP server calls only this facade.
+- `projectapp` is the shared facade over these use cases and the runtime. `NewOperations` composes the Host, local workspace service and transport invoker once for either adapter. CLI and MCP delegate product operations, including briefing history and the read-only status overview, to this facade.
 - `projectcli` holds the verb table behind the `markitect` command line and its MCP tools, and `mcp` is the stdio MCP adapter ([project operations](project-operations.md)).
 - `releasecli` is the command interface of `markitect-release`.
 

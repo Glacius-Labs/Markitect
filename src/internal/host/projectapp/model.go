@@ -5,6 +5,7 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
+	"github.com/Glacius-Labs/Markitect/src/internal/core"
 	"strings"
 
 	"github.com/Glacius-Labs/Markitect/src/internal/host/projectbriefing"
@@ -299,3 +300,6 @@ func loadSelectedProject(selection Selection) (*projectwork.Project, error) {
 	}
 	return project, nil
 }
+
+// Schema returns the model schema exposed by both product transports.
+func (o Operations) Schema() core.Schema { return projectmodel.Schema() }

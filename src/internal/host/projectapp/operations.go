@@ -142,3 +142,8 @@ func requireRoot(root string) error {
 	}
 	return nil
 }
+
+// PlanPreviewDigest gives transports the token for persisting a reviewed plan.
+func (o Operations) PlanPreviewDigest(plan projectrun.PlanRecord) (string, error) {
+	return projectrun.PlanPreviewDigest(plan)
+}

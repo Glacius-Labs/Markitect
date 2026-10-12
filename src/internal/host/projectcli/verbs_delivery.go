@@ -3,12 +3,10 @@ package projectcli
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"strings"
 	"time"
 
 	"github.com/Glacius-Labs/Markitect/src/internal/host/projectapp"
-	"github.com/Glacius-Labs/Markitect/src/internal/host/projectbriefing"
 	"github.com/Glacius-Labs/Markitect/src/internal/host/projectexplore"
 	"github.com/Glacius-Labs/Markitect/src/internal/host/projectrun"
 	"github.com/Glacius-Labs/Markitect/src/internal/host/projectwork"
@@ -51,7 +49,7 @@ func (r *exploreRecord) record() (*projectexplore.Record, error) {
 	if err != nil {
 		return nil, err
 	}
-	record, err := projectexplore.DecodeRecordInput(data)
+	record, err := projectOperations().DecodeExplorationInput(data)
 	if err != nil {
 		return nil, usageError{err}
 	}
@@ -163,132 +161,23 @@ var briefVerb = define(verb{
 		if in.Since == "" || in.Revision == "" || in.Provenance == "" {
 			return nil, usagef("brief requires --since, --revision and --provenance")
 		}
-		return briefCreate(e.root, in)
+		return e.ops.BriefCreate(e.root, projectapp.BriefInput(in))
 	case "list":
 		if in.Since != "" || in.Revision != "" || in.Provenance != "" || in.Event != "" || in.Write {
 			return nil, usagef("brief list takes only --manager")
 		}
-		return briefList(e.root, in.Manager)
+		return e.ops.BriefList(e.root, in.Manager)
 	case "dismiss":
 		if in.Event == "" || in.Manager == "" || !in.Write {
 			return nil, usagef("brief dismiss requires --event, --manager, --expect and --write")
 		}
-		revision, err := gitHeadRevision(e.root)
-		if err != nil {
-			return nil, fmt.Errorf("resolve the committed model revision for briefings: %w", err)
-		}
-		binding, err := projectbriefing.DismissAcceptedHistory(e.root, revision, in.Event, in.Manager, in.Expect)
-		if err != nil {
-			return nil, err
-		}
-		return struct {
-			StateDigest string `json:"stateDigest"`
-			Note        string `json:"note"`
-		}{binding, "Dismissal affects visibility only; the event remains unresolved and available in manager briefings."}, nil
+		return e.ops.BriefDismiss(e.root, projectapp.BriefInput(in))
 	}
 	return nil, usagef("unknown brief action %q", in.Action)
 })
 
-func briefCreate(root string, in briefInput) (any, error) {
-	_, stateDigest, err := projectbriefing.Read(root)
-	if err != nil {
-		return nil, err
-	}
-	bundle, err := projectbriefing.Generate(root, in.Since, in.Revision, projectbriefing.Provenance{
-		DecisionReference: in.Provenance,
-		Actor:             "cli-caller",
-		Authority:         "explicit caller declaration; identity is not authenticated",
-	})
-	if err != nil {
-		return nil, err
-	}
-	if in.Write {
-		if stateDigest, err = projectbriefing.Write(root, bundle, in.Expect); err != nil {
-			return nil, err
-		}
-	}
-	return struct {
-		Bundle      projectbriefing.Bundle `json:"bundle"`
-		StateDigest string                 `json:"stateDigest"`
-	}{bundle, stateDigest}, nil
-}
-
 func briefList(root, manager string) (any, error) {
-	revision, err := gitHeadRevision(root)
-	if err != nil {
-		return nil, fmt.Errorf("resolve the committed model revision for briefings: %w", err)
-	}
-	project, err := projectwork.Load(root, revision)
-	if err != nil {
-		return nil, err
-	}
-	state, stateDigest := projectbriefing.Store{}, ""
-	statusState := projectbriefing.Store{}
-	if project.Config.WorkflowMode == projectwork.WorkflowModeGuided {
-		accepted, err := projectbriefing.ReadAcceptedHistory(root, revision)
-		if err != nil {
-			return nil, err
-		}
-		state = accepted.State
-		stateDigest = accepted.Receipt.StoreDigest
-		var persistedDigest string
-		statusState, persistedDigest, err = projectbriefing.Read(root)
-		if err != nil {
-			return nil, err
-		}
-		if persistedDigest != accepted.PersistedDigest {
-			return nil, projectbriefing.ErrStaleStore
-		}
-	} else {
-		var err error
-		state, stateDigest, err = projectbriefing.Read(root)
-		if err != nil {
-			return nil, err
-		}
-		statusState = state
-	}
-	if manager == "" {
-		notifications, hidden, err := visibleBriefings(root, state)
-		if err != nil {
-			return nil, err
-		}
-		applyBriefingResolutionHints(notifications, statusState)
-		return struct {
-			Notifications        []visibleNotification `json:"notifications"`
-			HiddenDismissedCount int                   `json:"hiddenDismissedCount"`
-			StateDigest          string                `json:"stateDigest"`
-		}{notifications, hidden, stateDigest}, nil
-	}
-	briefings, events, binding, err := projectbriefing.LoadForManagerFrom(root, state, project.Report.ModelDigest, manager, project.Revision)
-	if err != nil {
-		return nil, err
-	}
-	withStatus := make([]managerEvent, 0, len(events))
-	for _, event := range events {
-		resolution := projectbriefing.EventResolutionStatus(statusState, event.ID)
-		withStatus = append(withStatus, managerEvent{Event: event, ResolutionStatus: resolution.Status, Resolution: resolution.Resolution})
-	}
-	return struct {
-		Briefings     []projectbriefing.Briefing `json:"briefings"`
-		Events        []managerEvent             `json:"events"`
-		ContextDigest string                     `json:"contextDigest"`
-		StateDigest   string                     `json:"stateDigest"`
-	}{briefings, withStatus, binding, stateDigest}, nil
-}
-
-// ReadAcceptedHistory omits Read's transient delivered-uncommitted hints.
-// Keep those display-only hints from the matching persisted-store view.
-func applyBriefingResolutionHints(notifications []visibleNotification, persisted projectbriefing.Store) {
-	for i := range notifications {
-		resolution := projectbriefing.EventResolutionStatus(persisted, notifications[i].EventID)
-		notifications[i].ResolutionStatus = resolution.Status
-		notifications[i].Resolution = resolution.Resolution
-		if resolution.Status == projectbriefing.StatusResolved {
-			notifications[i].NextAction = "Inspect the recorded full verification and Apply evidence."
-		} else {
-			notifications[i].NextAction = "Review the declared model change and its affected responsibilities."
-		}
-	}
+	return projectOperations().BriefList(root, manager)
 }
 
 // --- Delivery -------------------------------------------------------------
@@ -343,7 +232,7 @@ var planVerb = define(verb{
 	if err != nil {
 		return staleOnly(planReport{PlanRecord: plan}, err)
 	}
-	preview, err := projectrun.PlanPreviewDigest(plan)
+	preview, err := e.ops.PlanPreviewDigest(plan)
 	if err != nil {
 		return planReport{}, err
 	}

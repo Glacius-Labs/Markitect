@@ -792,6 +792,16 @@ spec:
       owner: project-world-implementation
     - path: src/internal/host/projectapp/operations.go
       owner: project-world-implementation
+    - path: src/internal/host/projectapp/composition.go
+      owner: project-world-implementation
+    - path: src/internal/host/projectapp/overview.go
+      owner: project-world-implementation
+    - path: src/internal/host/projectapp/briefings.go
+      owner: project-world-implementation
+    - path: src/internal/host/projectapp/records.go
+      owner: project-world-implementation
+    - path: src/internal/host/projectcli/facade_boundary_test.go
+      owner: project-world-implementation
     - path: src/internal/host/projectapp/operations_test.go
       owner: project-world-implementation
     - path: src/internal/host/codexappserver/contracts.go
