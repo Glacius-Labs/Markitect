@@ -34,16 +34,17 @@ const (
 	ModeControlledLocal = "controlled-local"
 	ModeIsolated        = "isolated"
 
-	StatusPlanned     = "planned"
-	StatusRunning     = "running"
-	StatusInterrupted = "interrupted"
-	StatusBlocked     = "blocked"
-	StatusFailed      = "failed"
-	StatusIntegrated  = "integrated"
-	StatusVerifying   = "verifying"
-	StatusVerified    = "verified"
-	StatusApplied     = "applied"
-	StatusSuperseded  = "superseded"
+	StatusPlanned          = "planned"
+	StatusRunning          = "running"
+	StatusAwaitingExternal = "awaiting-external"
+	StatusInterrupted      = "interrupted"
+	StatusBlocked          = "blocked"
+	StatusFailed           = "failed"
+	StatusIntegrated       = "integrated"
+	StatusVerifying        = "verifying"
+	StatusVerified         = "verified"
+	StatusApplied          = "applied"
+	StatusSuperseded       = "superseded"
 )
 
 var (
@@ -201,6 +202,7 @@ type PlanRecord struct {
 	ModelDigest             string                       `json:"modelDigest"`
 	ReportDigest            string                       `json:"reportDigest"`
 	RuntimeDigest           string                       `json:"runtimeDigest"`
+	RuntimeBindingVersion   int                          `json:"runtimeBindingVersion,omitempty"`
 	PlannedAt               time.Time                    `json:"plannedAt"`
 	Managers                []ManagerTask                `json:"managers"`
 	Checks                  []CheckPlan                  `json:"checks"`
@@ -273,6 +275,7 @@ type CheckPlan struct {
 }
 
 type RunReport struct {
+	ExternalExecution       bool                   `json:"externalExecution,omitempty"`
 	Operation               string                 `json:"operation,omitempty"`
 	APIVersion              string                 `json:"apiVersion"`
 	ID                      string                 `json:"id"`

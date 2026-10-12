@@ -122,6 +122,9 @@ func withNativeResume(ctx context.Context) context.Context {
 }
 
 func recoverInvocationOnResume(ctx context.Context, host Host, invoker Invoker, root, taskID string, config agentexec.Config, limits Limits, request agentexec.Request, binding nativeRecoveryBinding) (agentexec.RunResult, bool, error) {
+	if externalExecutionEnabled(ctx) && binding.OwnerRunID != "" {
+		return externalInvocation(ctx, root, binding.OwnerRunID, taskID, config, request)
+	}
 	enabled, _ := ctx.Value(nativeResumeContextKey{}).(bool)
 	if !enabled || config.Transport != TransportCodexAppServer {
 		return agentexec.RunResult{}, false, nil

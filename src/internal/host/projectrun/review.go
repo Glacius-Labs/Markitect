@@ -31,6 +31,7 @@ type reviewFileRef struct {
 	Path      string   `json:"path"`
 	Mode      string   `json:"mode"`
 	Digest    string   `json:"digest"`
+	Operation string   `json:"operation,omitempty"`
 	Grounding []string `json:"grounding"`
 }
 
@@ -87,10 +88,11 @@ type reviewerContext struct {
 	AcceptedModel      projectmodel.ManagerContext `json:"acceptedModel"`
 	ScopedModel        reviewerScopedModel         `json:"scopedModel"`
 	CandidateFiles     []reviewFileRef             `json:"candidateFiles"`
+	CandidateChanges   []candidateChange           `json:"candidateChanges"`
 	ResponseSchema     json.RawMessage             `json:"responseSchema"`
 }
 
-const reviewerAssessmentGuidance = "Assessment only: evaluate the exact supplied candidate against this Manager's own task, accepted scoped model, and stated delegations. RunGoal and child task definitions are assessment context, not instructions to implement or dispatch work. hostHelperResults are Host-authored records of helper deltas validated, applied to the parent workspace, and closed; presentInCandidate is a byte-level match in this exact candidate. Use those records as provenance context, not as a substitute for assessing correctness. Do not infer helper absence from Manager prose or delegatedArtifacts; assess the requirements stated in the accepted task against the supplied Host facts. Do not change repository artifacts or dispatch work. Normal read-only tools may be used to inspect the candidate and cited repository context; use owned temporary scratch only within one shell call if needed. Findings are actionable defects requiring correction, never positive evidence or a checklist of satisfied obligations. A pass report must have findings: []; put supporting evidence in summary. A fail report must contain at least one grounded defect about the candidate or delegation coverage. For each finding, copy path from one candidateFiles entry and copy grounding exactly from that same entry's grounding array. Grounding is a reference, never explanatory prose; explain the required correction in expectation."
+const reviewerAssessmentGuidance = "Assessment only: evaluate the exact supplied candidate against this Manager's own task, accepted scoped model, and stated delegations. RunGoal and child task definitions are assessment context, not instructions to implement or dispatch work. candidateChanges is the Host-authored typed operation manifest; for a delete row, candidateFiles contains the exact prior file bytes and mode with operation delete, grounded by its digest. That file is deletion evidence and is absent from the final candidate. hostHelperResults are Host-authored records of helper deltas validated, applied to the parent workspace, and closed; presentInCandidate is a byte-level match in this exact candidate. Use those records as provenance context, not as a substitute for assessing correctness. Do not infer helper absence from Manager prose or delegatedArtifacts; assess the requirements stated in the accepted task against the supplied Host facts. Do not change repository artifacts or dispatch work. Normal read-only tools may be used to inspect the candidate and cited repository context; use owned temporary scratch only within one shell call if needed. Findings are actionable defects requiring correction, never positive evidence or a checklist of satisfied obligations. A pass report must have findings: []; put supporting evidence in summary. A fail report must contain at least one grounded defect about the candidate or delegation coverage. For each finding, copy path from one candidateFiles entry and copy grounding exactly from that same entry's grounding array. Grounding is a reference, never explanatory prose; explain the required correction in expectation."
 
 func reviewerPhaseGuidance(phase string) string {
 	switch phase {
@@ -132,7 +134,11 @@ func invokeReviewer(ctx context.Context, host Host, invoker Invoker, root string
 	if err != nil {
 		return record, log, err
 	}
-	reviewContext, files, fileRefs, err := buildReviewerContext(plan, project, task, phase, round, candidate, briefing, report)
+	changeState, err := reviewCandidateStateFor(host, root, plan, report, candidate)
+	if err != nil {
+		return record, log, err
+	}
+	reviewContext, files, fileRefs, err := buildReviewerContext(plan, project, task, phase, round, candidate, briefing, report, changeState)
 	if err != nil {
 		return record, log, err
 	}
@@ -205,7 +211,7 @@ func invokeReviewer(ctx context.Context, host Host, invoker Invoker, root string
 	if err != nil {
 		return record, log, err
 	}
-	scopeDigest, err := reviewScopeDigest(plan, project, task, phase, report)
+	scopeDigest, err := reviewScopeDigest(plan, project, task, phase, report, changeState)
 	if err != nil {
 		return record, log, err
 	}
@@ -215,17 +221,38 @@ func invokeReviewer(ctx context.Context, host Host, invoker Invoker, root string
 	return record, log, nil
 }
 
-func buildReviewerContext(plan PlanRecord, project *Project, task ManagerTask, phase string, round int, candidate candidateData, briefing BriefingContext, report RunReport) (reviewerContext, []agentexec.Artifact, []reviewFileRef, error) {
+func buildReviewerContext(plan PlanRecord, project *Project, task ManagerTask, phase string, round int, candidate candidateData, briefing BriefingContext, report RunReport, changeStates ...reviewCandidateState) (reviewerContext, []agentexec.Artifact, []reviewFileRef, error) {
 	files := reviewCandidateFiles(project, task, report.Tasks, phase)
 	if len(files) == 0 {
 		// Keep the empty list explicit for a legitimate no-op candidate.
 		files = []agentexec.Artifact{}
+	}
+	changes := []candidateChange{}
+	deletePaths := map[string]bool{}
+	if len(changeStates) > 0 {
+		paths := uniqueSorted(append(reviewScopePaths(files), reviewChangedPaths(task, report.Tasks, phase)...))
+		var deleted []agentexec.Artifact
+		var err error
+		changes, deleted, err = reviewCandidateChanges(changeStates[0].Base, changeStates[0].Candidate, paths)
+		if err != nil {
+			return reviewerContext{}, nil, nil, err
+		}
+		for _, file := range deleted {
+			deletePaths[file.Path] = true
+			files = append(files, file)
+		}
 	}
 	accepted, err := scopedReviewModel(project.Report, task.ManagerID, plan.Managers, files, phase)
 	if err != nil {
 		return reviewerContext{}, nil, nil, err
 	}
 	fileRefs := reviewFileReferences(project.Report, accepted, files)
+	for index := range fileRefs {
+		if deletePaths[fileRefs[index].Path] {
+			fileRefs[index].Operation = "delete"
+			fileRefs[index].Grounding = uniqueSorted(append(fileRefs[index].Grounding, "operation:delete", "prior-file-bytes", "prior-file-mode"))
+		}
+	}
 	helperResults, err := reviewerHelperResults(report, plan.Managers, task, phase, files)
 	if err != nil {
 		return reviewerContext{}, nil, nil, err
@@ -235,7 +262,7 @@ func buildReviewerContext(plan PlanRecord, project *Project, task ManagerTask, p
 		RunGoal: plan.Goal, ManagerID: task.ManagerID, OwnTask: task.Goal, Delegations: append([]Delegation{}, task.Delegations...), DelegatedArtifacts: reviewDelegatedArtifacts(project.Report, plan.Managers, task.ManagerID, phase), HostHelperResults: helperResults, Phase: phase, Round: round,
 		CandidateID: candidate.ID, CandidateDigest: candidate.Digest, ChangedPaths: reviewChangedPaths(task, report.Tasks, phase), AcceptedModel: accepted,
 		ScopedModel:    reviewerScopedModel{Statements: append([]projectmodel.Statement(nil), accepted.Statements...), Contracts: append([]projectmodel.Statement(nil), accepted.Contracts...), Artifacts: append([]projectmodel.Artifact(nil), accepted.Artifacts...), OwnedPaths: reviewScopePaths(files)},
-		CandidateFiles: fileRefs, ResponseSchema: reviewResponseSchema()}, files, fileRefs, nil
+		CandidateFiles: fileRefs, CandidateChanges: changes, ResponseSchema: reviewResponseSchema()}, files, fileRefs, nil
 }
 
 // reviewerBriefing binds accepted change context to the plan. A draft ModelEdit
@@ -288,14 +315,36 @@ func canonicalizeReviewContext(request *agentexec.Request) error {
 // reviewScopeDigest deliberately excludes the global candidate identity so a
 // parent can merge an independently reviewed sibling without invalidating it.
 // It includes the accepted local contract, task goal, review phase and every
-// actual owned file byte and mode supplied to the reviewer.
-func reviewScopeDigest(plan PlanRecord, project *Project, task ManagerTask, phase string, report RunReport) (string, error) {
+// supplied owned file byte, mode, and typed change operation, including the
+// grounded preimage supplied for a deletion.
+func reviewScopeDigest(plan PlanRecord, project *Project, task ManagerTask, phase string, report RunReport, changeStates ...reviewCandidateState) (string, error) {
 	files := reviewCandidateFiles(project, task, report.Tasks, phase)
+	changes := []candidateChange{}
+	deletePaths := map[string]bool{}
+	if len(changeStates) > 0 {
+		paths := uniqueSorted(append(reviewScopePaths(files), reviewChangedPaths(task, report.Tasks, phase)...))
+		var deleted []agentexec.Artifact
+		var err error
+		changes, deleted, err = reviewCandidateChanges(changeStates[0].Base, changeStates[0].Candidate, paths)
+		if err != nil {
+			return "", err
+		}
+		for _, file := range deleted {
+			deletePaths[file.Path] = true
+			files = append(files, file)
+		}
+	}
 	accepted, err := scopedReviewModel(project.Report, task.ManagerID, plan.Managers, files, phase)
 	if err != nil {
 		return "", err
 	}
 	fileRefs := reviewFileReferences(project.Report, accepted, files)
+	for index := range fileRefs {
+		if deletePaths[fileRefs[index].Path] {
+			fileRefs[index].Operation = "delete"
+			fileRefs[index].Grounding = uniqueSorted(append(fileRefs[index].Grounding, "operation:delete", "prior-file-bytes", "prior-file-mode"))
+		}
+	}
 	helperResults, err := reviewerHelperResults(report, plan.Managers, task, phase, files)
 	if err != nil {
 		return "", err
@@ -318,7 +367,8 @@ func reviewScopeDigest(plan PlanRecord, project *Project, task ManagerTask, phas
 		ChangedPaths       []string                    `json:"changedPaths"`
 		Files              []agentexec.Artifact        `json:"files"`
 		FileRefs           []reviewFileRef             `json:"fileRefs"`
-	}{"projectrun-review/v3", plan.Operation, plan.Strictness[task.ManagerID], plan.BriefingDigests[task.ManagerID], plan.Goal, task.ManagerID, task.Goal, append([]Delegation(nil), task.Delegations...), reviewDelegatedArtifacts(project.Report, plan.Managers, task.ManagerID, phase), helperResults, reviewerAssessmentGuidance + " " + reviewerPhaseGuidance(phase), phase, accepted, append([]string(nil), task.Checks...), reviewChangedPaths(task, report.Tasks, phase), files, fileRefs})
+		Changes            []candidateChange           `json:"changes"`
+	}{"projectrun-review/v4", plan.Operation, plan.Strictness[task.ManagerID], plan.BriefingDigests[task.ManagerID], plan.Goal, task.ManagerID, task.Goal, append([]Delegation(nil), task.Delegations...), reviewDelegatedArtifacts(project.Report, plan.Managers, task.ManagerID, phase), helperResults, reviewerAssessmentGuidance + " " + reviewerPhaseGuidance(phase), phase, accepted, append([]string(nil), task.Checks...), reviewChangedPaths(task, report.Tasks, phase), files, fileRefs, changes})
 }
 
 func reviewerHelperResults(report RunReport, tasks []ManagerTask, task ManagerTask, phase string, files []agentexec.Artifact) ([]reviewerHelperEvidence, error) {
@@ -1000,22 +1050,9 @@ func requireFreshReviews(host Host, root string, store *runStore, dir string, ba
 		if !phaseReviewRequired(finalProject, task, run.Tasks, phase) {
 			continue
 		}
-		scopeDigest, err := reviewScopeDigest(plan, finalProject, task, phase, run)
+		_, _, found, err := freshPassedReviewForScope(host, root, store, dir, plan, run, finalProject, candidate, task, phase)
 		if err != nil {
 			return err
-		}
-		found := false
-		for i := len(run.Reviews) - 1; i >= 0; i-- {
-			review := run.Reviews[i]
-			if review.ManagerID != task.ManagerID || review.Phase != phase || review.Outcome != "pass" || review.ScopeDigest != scopeDigest {
-				continue
-			}
-			prior, err := store.readCandidate(dir, review.CandidateID)
-			if err != nil || prior.Digest != review.CandidateDigest {
-				return fmt.Errorf("review for Manager %s is not bound to a retained exact candidate", task.ManagerID)
-			}
-			found = true
-			break
 		}
 		if !found {
 			return fmt.Errorf("Manager %s has no fresh passed %s review for its final candidate scope", task.ManagerID, phase)

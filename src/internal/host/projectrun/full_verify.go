@@ -70,6 +70,7 @@ type fullReviewEvidence struct {
 }
 
 type fullReviewFileReference struct {
+	Operation     string `json:"operation,omitempty"`
 	Path          string `json:"path"`
 	Mode          string `json:"mode"`
 	ContentDigest string `json:"contentDigest"`

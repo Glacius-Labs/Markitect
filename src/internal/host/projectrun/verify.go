@@ -50,6 +50,9 @@ func Verify(ctx context.Context, host Host, invoker Invoker, root, runID string)
 	if err != nil {
 		return out, err
 	}
+	if err := requireCurrentRuntimeBinding(plan); err != nil {
+		return out, err
+	}
 	if err := validateExplorationReadiness(root, plan); err != nil {
 		return out, err
 	}
@@ -127,7 +130,7 @@ func Verify(ctx context.Context, host Host, invoker Invoker, root, runID string)
 	}
 	var freshReviews []fullReviewEvidence
 	if compiled.Config.CoverageMode == "full" {
-		freshReviews, err = freshReviewEvidenceForVerify(s, dir, compiled, candidate, plan, runtime, run)
+		freshReviews, err = freshReviewEvidenceForVerify(s, dir, compiled, candidate, plan, runtime, run, host)
 		if err != nil {
 			return out, err
 		}
@@ -312,8 +315,11 @@ func Verify(ctx context.Context, host Host, invoker Invoker, root, runID string)
 // freshReviewEvidenceForVerify projects the same latest passing review scopes
 // required by requireFreshReviews into Full Verify context. The original
 // review candidate remains distinct from the final candidate whose current
-// scope digest was checked.
-func freshReviewEvidenceForVerify(store *runStore, dir string, finalProject *Project, finalCandidate candidateData, plan PlanRecord, runtime Runtime, run RunReport) ([]fullReviewEvidence, error) {
+// scope digest was checked. The operational Verify path supplies the Host so
+// deletion evidence is derived from the exact retained candidate ancestry.
+// A missing optional Host preserves the pure snapshot-only helper seam used
+// by existing tests; production does not use that branch.
+func freshReviewEvidenceForVerify(store *runStore, dir string, finalProject *Project, finalCandidate candidateData, plan PlanRecord, runtime Runtime, run RunReport, hosts ...Host) ([]fullReviewEvidence, error) {
 	if runtime.Review == nil {
 		return []fullReviewEvidence{}, nil
 	}
@@ -330,38 +336,53 @@ func freshReviewEvidenceForVerify(store *runStore, dir string, finalProject *Pro
 		if !phaseReviewRequired(finalProject, task, run.Tasks, phase) {
 			continue
 		}
-		scopeDigest, err := reviewScopeDigest(plan, finalProject, task, phase, run)
+		var review ReviewRecord
+		var state reviewCandidateState
+		var found bool
+		var err error
+		if len(hosts) > 0 {
+			review, state, found, err = freshPassedReviewForScope(hosts[0], store.root, store, dir, plan, run, finalProject, finalCandidate, task, phase)
+		} else {
+			var scopeDigest string
+			scopeDigest, err = reviewScopeDigest(plan, finalProject, task, phase, run)
+			if err == nil {
+				for i := len(run.Reviews) - 1; i >= 0; i-- {
+					priorReview := run.Reviews[i]
+					if priorReview.ManagerID != task.ManagerID || priorReview.Phase != phase || priorReview.Outcome != "pass" || priorReview.ScopeDigest != scopeDigest {
+						continue
+					}
+					prior, readErr := store.readCandidate(dir, priorReview.CandidateID)
+					if readErr != nil || prior.ID != priorReview.CandidateID || prior.Digest != priorReview.CandidateDigest {
+						return nil, fmt.Errorf("review for Manager %s is not bound to a retained exact candidate", task.ManagerID)
+					}
+					review, found = priorReview, true
+					break
+				}
+			}
+		}
 		if err != nil {
 			return nil, err
-		}
-		found := false
-		for i := len(run.Reviews) - 1; i >= 0; i-- {
-			review := run.Reviews[i]
-			if review.ManagerID != task.ManagerID || review.Phase != phase || review.Outcome != "pass" || review.ScopeDigest != scopeDigest {
-				continue
-			}
-			prior, err := store.readCandidate(dir, review.CandidateID)
-			if err != nil || prior.ID != review.CandidateID || prior.Digest != review.CandidateDigest {
-				return nil, fmt.Errorf("review for Manager %s is not bound to a retained exact candidate", task.ManagerID)
-			}
-			reviewedFiles, err := currentReviewFileReferences(finalProject, plan, task, phase, run)
-			if err != nil {
-				return nil, err
-			}
-			selected = append(selected, fullReviewEvidence{
-				TaskID: review.TaskID, ManagerID: review.ManagerID, Phase: review.Phase,
-				ReviewCandidateID: review.CandidateID, ReviewCandidateDigest: review.CandidateDigest,
-				FinalCandidateID: finalCandidate.ID, FinalCandidateDigest: finalCandidate.Digest,
-				ScopeDigest: review.ScopeDigest, InputDigest: review.InputDigest,
-				ReceiptRunID: review.Receipt.RunID, Outcome: review.Outcome,
-				Findings: cloneReviewFindings(review.Findings), ReviewedFiles: reviewedFiles,
-			})
-			found = true
-			break
 		}
 		if !found {
 			return nil, fmt.Errorf("Manager %s has no fresh passed %s review for its final candidate scope", task.ManagerID, phase)
 		}
+		var reviewedFiles []fullReviewFileReference
+		if len(hosts) > 0 {
+			reviewedFiles, err = currentReviewFileReferences(finalProject, plan, task, phase, run, state)
+		} else {
+			reviewedFiles, err = currentReviewFileReferences(finalProject, plan, task, phase, run)
+		}
+		if err != nil {
+			return nil, err
+		}
+		selected = append(selected, fullReviewEvidence{
+			TaskID: review.TaskID, ManagerID: review.ManagerID, Phase: review.Phase,
+			ReviewCandidateID: review.CandidateID, ReviewCandidateDigest: review.CandidateDigest,
+			FinalCandidateID: finalCandidate.ID, FinalCandidateDigest: finalCandidate.Digest,
+			ScopeDigest: review.ScopeDigest, InputDigest: review.InputDigest,
+			ReceiptRunID: review.Receipt.RunID, Outcome: review.Outcome,
+			Findings: cloneReviewFindings(review.Findings), ReviewedFiles: reviewedFiles,
+		})
 	}
 	return selected, nil
 }
@@ -373,7 +394,7 @@ func cloneReviewFindings(findings []ReviewFinding) []ReviewFinding {
 	return append([]ReviewFinding{}, findings...)
 }
 
-func currentReviewFileReferences(project *Project, plan PlanRecord, task ManagerTask, phase string, run RunReport) ([]fullReviewFileReference, error) {
+func currentReviewFileReferences(project *Project, plan PlanRecord, task ManagerTask, phase string, run RunReport, changeStates ...reviewCandidateState) ([]fullReviewFileReference, error) {
 	files := reviewCandidateFiles(project, task, run.Tasks, phase)
 	accepted, err := scopedReviewModel(project.Report, task.ManagerID, plan.Managers, files, phase)
 	if err != nil {
@@ -383,6 +404,16 @@ func currentReviewFileReferences(project *Project, plan PlanRecord, task Manager
 	out := make([]fullReviewFileReference, 0, len(refs))
 	for _, ref := range refs {
 		out = append(out, fullReviewFileReference{Path: ref.Path, Mode: ref.Mode, ContentDigest: ref.Digest})
+	}
+	if len(changeStates) > 0 {
+		paths := uniqueSorted(append(reviewScopePaths(files), reviewChangedPaths(task, run.Tasks, phase)...))
+		deleteRefs, _, _, err := reviewChangeRefs(project.Report, accepted, changeStates[0].Base, changeStates[0].Candidate, paths)
+		if err != nil {
+			return nil, err
+		}
+		for _, ref := range deleteRefs {
+			out = append(out, fullReviewFileReference{Path: ref.Path, Mode: ref.Mode, ContentDigest: ref.Digest, Operation: ref.Operation})
+		}
 	}
 	return out, nil
 }
@@ -626,6 +657,17 @@ func runVerifier(ctx context.Context, host Host, invoker Invoker, root string, p
 	if err != nil {
 		return nil, log, err
 	}
+	fixedBase, err := host.Load(root, plan.BaseRevision)
+	if err != nil {
+		return nil, log, fmt.Errorf("load fixed verifier change base: %w", err)
+	}
+	if fixedBase == nil || fixedBase.Snapshot == nil {
+		return nil, log, fmt.Errorf("fixed verifier change base is unavailable")
+	}
+	candidateChanges, deletedArtifacts, err := reviewCandidateChanges(fixedBase.Snapshot, candidate, nil)
+	if err != nil {
+		return nil, log, fmt.Errorf("bind verifier candidate changes: %w", err)
+	}
 	checks := []string{}
 	for _, c := range plan.Checks {
 		if c.Required {
@@ -652,13 +694,14 @@ func runVerifier(ctx context.Context, host Host, invoker Invoker, root string, p
 		return nil, log, fmt.Errorf("verifier required evidence references exceed the supported %d values", maxVerifierCoverageReferences)
 	}
 	contextJSON, _ := json.Marshal(struct {
-		CandidateDigest      string        `json:"candidateDigest"`
-		CandidateFiles       []string      `json:"candidateFiles"`
-		RequiredSubjects     []string      `json:"requiredSubjects"`
-		RequiredEvidenceRefs []string      `json:"requiredEvidenceRefs"`
-		CheckResults         []CheckResult `json:"checkResults"`
-	}{candidate.Digest, sortedFileKeys(candidate.Files), subjects, refs, checkResults})
-	request := agentexec.Request{Role: agentexec.RoleVerifier, SourceRevision: project.Revision, ModelDigest: project.Report.ModelDigest, ModulePin: project.Report.Digest, ProjectionID: project.Report.Digest, ScopeIDs: refs, PolicyIDs: checks, Context: contextJSON, Artifacts: []agentexec.Artifact{}}
+		CandidateDigest      string            `json:"candidateDigest"`
+		CandidateFiles       []string          `json:"candidateFiles"`
+		CandidateChanges     []candidateChange `json:"candidateChanges,omitempty"`
+		RequiredSubjects     []string          `json:"requiredSubjects"`
+		RequiredEvidenceRefs []string          `json:"requiredEvidenceRefs"`
+		CheckResults         []CheckResult     `json:"checkResults"`
+	}{candidate.Digest, sortedFileKeys(candidate.Files), candidateChanges, subjects, refs, checkResults})
+	request := agentexec.Request{Role: agentexec.RoleVerifier, SourceRevision: project.Revision, ModelDigest: project.Report.ModelDigest, ModulePin: project.Report.Digest, ProjectionID: project.Report.Digest, ScopeIDs: refs, PolicyIDs: checks, Context: contextJSON, Artifacts: append([]agentexec.Artifact{}, deletedArtifacts...)}
 	inputDigest, digestErr := digest(request)
 	if digestErr != nil {
 		return nil, log, digestErr
@@ -762,6 +805,9 @@ func validateVerifierCoverage(observations []agentexec.Observation, subjects, re
 }
 
 func freshBindings(host Host, invoker Invoker, root string, plan PlanRecord, runtime Runtime) error {
+	if err := requireCurrentRuntimeBinding(plan); err != nil {
+		return err
+	}
 	if err := validateExplorationReadiness(root, plan); err != nil {
 		return err
 	}
@@ -802,50 +848,12 @@ func freshBindings(host Host, invoker Invoker, root string, plan PlanRecord, run
 	}
 	return nil
 }
-func runtimeDigestWithInvoker(invoker Invoker, runtime Runtime) (string, error) {
-	if invoker == nil {
-		return "", fmt.Errorf("runtime invoker is required for binding")
-	}
-	fps := map[string]string{}
-	for id, a := range runtime.Agents {
-		cfg, err := a.AgentConfig()
-		if err != nil {
-			return "", err
-		}
-		fp, err := invoker.Fingerprint(cfg)
-		if err != nil {
-			return "", err
-		}
-		fps[id] = fp
-	}
-	if runtime.Verifier != nil {
-		cfg, err := runtime.Verifier.AgentConfig()
-		if err != nil {
-			return "", err
-		}
-		fp, err := invoker.Fingerprint(cfg)
-		if err != nil {
-			return "", err
-		}
-		fps["$verifier"] = fp
-	}
-	if runtime.Review != nil {
-		for id, reviewer := range runtime.Review.Agents {
-			cfg, err := reviewer.AgentConfig()
-			if err != nil {
-				return "", err
-			}
-			fp, err := invoker.Fingerprint(cfg)
-			if err != nil {
-				return "", err
-			}
-			fps["$reviewer:"+id] = fp
-		}
-	}
-	return digest(struct {
-		Runtime      Runtime           `json:"runtime"`
-		Fingerprints map[string]string `json:"fingerprints"`
-	}{runtime, fps})
+
+// runtimeDigestWithInvoker retains its historic call shape for full-verify
+// and Apply call sites. Executor fingerprints belong to invocation receipts;
+// this durable digest covers only the method policy.
+func runtimeDigestWithInvoker(_ Invoker, runtime Runtime) (string, error) {
+	return methodPolicyDigest(runtime)
 }
 func persistVerify(s *runStore, dir string, report VerifyReport) error {
 	if err := ensureDirectory(filepath.Join(dir, "verification")); err != nil {

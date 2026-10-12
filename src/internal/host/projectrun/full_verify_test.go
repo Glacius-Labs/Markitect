@@ -342,6 +342,7 @@ func (i *fullVerifyNativeWorkspaceInvoker) Run(_ context.Context, config agentex
 		EvidenceRefs: []string{}, VerifierObservations: []agentexec.Observation{}, ReportJSON: report, Uncertainty: []string{}, Usage: usage}
 	receipt := terminalWorkspaceReceipt("full-verify-native-run")
 	receipt.InputDigest = inputDigest
+	receipt.ConfigDigest = "native-fixture-fingerprint"
 	receipt.Outcome = agentexec.OutcomeProposed
 	receipt.Usage = usage
 	return agentexec.RunResult{Response: response, Receipt: receipt}, nil

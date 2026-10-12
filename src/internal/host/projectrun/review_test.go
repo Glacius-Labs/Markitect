@@ -82,9 +82,13 @@ func TestReviewerNormalizesEmptyArtifactForReceiptBoundReport(t *testing.T) {
 
 type normalizedReviewInvoker struct{ request agentexec.Request }
 
-func (i *normalizedReviewInvoker) Run(_ context.Context, _ agentexec.Config, request agentexec.Request, _ agentexec.RunOptions) (agentexec.RunResult, error) {
+func (i *normalizedReviewInvoker) Run(_ context.Context, config agentexec.Config, request agentexec.Request, _ agentexec.RunOptions) (agentexec.RunResult, error) {
 	i.request = request
 	invocation, _, err := agentexec.PrepareInvocation(request)
+	if err != nil {
+		return agentexec.RunResult{}, err
+	}
+	configDigest, err := agentexec.Fingerprint(config)
 	if err != nil {
 		return agentexec.RunResult{}, err
 	}
@@ -93,7 +97,7 @@ func (i *normalizedReviewInvoker) Run(_ context.Context, _ agentexec.Config, req
 		Response: agentexec.Response{APIVersion: agentexec.APIVersion, RunID: invocation.RunID, Nonce: invocation.Nonce, Role: agentexec.RoleExecutor,
 			InputDigest: invocation.InputDigest, Outcome: agentexec.OutcomeProposed, CandidateFiles: []agentexec.CandidateFile{}, EvidenceRefs: []string{},
 			VerifierObservations: []agentexec.Observation{}, Uncertainty: []string{}, ReportJSON: json.RawMessage(`{"status":"pass","summary":"The empty artifact satisfies the scoped contract.","findings":[]}`)},
-		Receipt: agentexec.Receipt{APIVersion: agentexec.APIVersion, RunID: invocation.RunID, InputDigest: invocation.InputDigest,
+		Receipt: agentexec.Receipt{APIVersion: agentexec.APIVersion, RunID: invocation.RunID, InputDigest: invocation.InputDigest, ConfigDigest: configDigest,
 			Outcome: agentexec.OutcomeProposed, Usage: &agentexec.Usage{InputTokens: &zero, OutputTokens: &zero}},
 	}, nil
 }

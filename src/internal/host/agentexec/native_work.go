@@ -110,14 +110,20 @@ func nativeDeltaDigest(files []CandidateFile) (string, error) {
 	ordered := append([]CandidateFile(nil), files...)
 	sort.Slice(ordered, func(i, j int) bool { return ordered[i].Path < ordered[j].Path })
 	type deltaFile struct {
-		Digest string `json:"digest"`
-		Mode   string `json:"mode"`
+		Delete bool   `json:"delete,omitempty"`
+		Digest string `json:"digest,omitempty"`
+		Mode   string `json:"mode,omitempty"`
 		Path   string `json:"path"`
 	}
 	delta := make([]deltaFile, 0, len(ordered))
 	for _, file := range ordered {
+		if file.Delete {
+			delta = append(delta, deltaFile{Delete: true, Path: file.Path})
+			continue
+		}
 		contentDigest := sha256.Sum256([]byte(file.Content))
 		delta = append(delta, deltaFile{
+			Delete: file.Delete,
 			Digest: "sha256:" + hex.EncodeToString(contentDigest[:]),
 			Mode:   file.Mode,
 			Path:   file.Path,

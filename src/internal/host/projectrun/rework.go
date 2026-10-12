@@ -415,7 +415,7 @@ func reintegrateAfterRework(ctx context.Context, host Host, invoker Invoker, roo
 	if err != nil {
 		return nil, err
 	}
-	candidate.Parents = childCandidateIDs(report.Tasks, children)
+	candidate.Parents = []string{merged.ID}
 	if err := store.writeCandidate(dir, candidate); err != nil {
 		return nil, err
 	}

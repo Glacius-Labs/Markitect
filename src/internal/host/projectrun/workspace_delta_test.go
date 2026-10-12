@@ -42,15 +42,19 @@ func TestApplyWorkspaceDeltaRepresentsDeleteAndRename(t *testing.T) {
 	report.Files = []projectmodel.FileEntry{{Path: "src/old.bin", Owner: manager.ManagerID, Exists: true}, {Path: "src/remove.bin", Owner: manager.ManagerID, Exists: true}}
 	base := candidateData{Files: map[string]File{"src/prior.txt": {Path: "src/prior.txt", Mode: "100644", Content: []byte("prior")}}}
 	content := []byte("renamed bytes")
+	input := &Snapshot{Files: map[string][]byte{"src/old.bin": []byte("old bytes"), "src/remove.bin": []byte("removed bytes")}, Modes: map[string]string{"src/old.bin": "100644", "src/remove.bin": "100644"}}
 	out, err := applyWorkspaceDelta(base, projectworkspace.Delta{Changes: []projectworkspace.Change{
 		{Kind: projectworkspace.ChangeDelete, Path: "src/remove.bin"},
 		{Kind: projectworkspace.ChangeRename, OldPath: "src/old.bin", Path: "src/new.bin", Mode: "100644", Content: content},
-	}}, []agentexec.CandidateFile{{Path: "src/new.bin", Mode: "0644", Content: string(content)}}, config, report, manager, "work", nil, limits, nil)
+	}}, []agentexec.CandidateFile{{Path: "src/new.bin", Mode: "0644", Content: string(content)}}, config, report, manager, "work", nil, limits, input)
 	if err != nil {
 		t.Fatal(err)
 	}
 	if !out.Files["src/remove.bin"].Delete || !out.Files["src/old.bin"].Delete {
 		t.Fatalf("delete/rename source were not represented as deletes: %+v", out.Files)
+	}
+	if string(out.Files["src/remove.bin"].Content) != "removed bytes" || string(out.Files["src/old.bin"].Content) != "old bytes" {
+		t.Fatal("delete and rename lost their exact review preimages")
 	}
 	if got := out.Files["src/new.bin"]; got.Delete || got.Mode != "100644" || string(got.Content) != string(content) {
 		t.Fatalf("rename destination = %+v", got)

@@ -75,6 +75,7 @@ func planDigest(plan PlanRecord) (string, error) {
 		ModelDigest             string                       `json:"modelDigest"`
 		ReportDigest            string                       `json:"reportDigest"`
 		RuntimeDigest           string                       `json:"runtimeDigest"`
+		RuntimeBindingVersion   int                          `json:"runtimeBindingVersion,omitempty"`
 		Managers                []ManagerTask                `json:"managers"`
 		Strictness              map[string]StrictnessProfile `json:"strictness"`
 		BriefingDigests         map[string]string            `json:"briefingDigests,omitempty"`
@@ -84,7 +85,7 @@ func planDigest(plan PlanRecord) (string, error) {
 		RuntimeAgents           map[string]string            `json:"runtimeAgents"`
 		Findings                []string                     `json:"findings,omitempty"`
 		Blockers                []string                     `json:"blockers,omitempty"`
-	}{plan.APIVersion, plan.ID, plan.Status, plan.Operation, plan.Goal, plan.ExecuteAuthorized, plan.BaseRevision, plan.ChangeBaseRevision, plan.ChangeBaseSnapshot, plan.ChangeBaseProjectDigest, plan.ChangeBaseModelDigest, plan.ChangeBaseReportDigest, plan.ChangeImpact, plan.ChangeImpactDigest, plan.TargetBranch, plan.TargetHead, plan.RepositoryDigest, plan.BaseSnapshot, plan.WorkingSnapshot, plan.BaseProjectDigest, plan.WorkingProjectDigest, plan.BaseModelDigest, plan.ModelDigest, plan.ReportDigest, plan.RuntimeDigest, plan.Managers, plan.Strictness, plan.BriefingDigests, plan.Checks, plan.ModelEdit, plan.InitialCandidateID, plan.RuntimeAgents, plan.Findings, plan.Blockers})
+	}{plan.APIVersion, plan.ID, plan.Status, plan.Operation, plan.Goal, plan.ExecuteAuthorized, plan.BaseRevision, plan.ChangeBaseRevision, plan.ChangeBaseSnapshot, plan.ChangeBaseProjectDigest, plan.ChangeBaseModelDigest, plan.ChangeBaseReportDigest, plan.ChangeImpact, plan.ChangeImpactDigest, plan.TargetBranch, plan.TargetHead, plan.RepositoryDigest, plan.BaseSnapshot, plan.WorkingSnapshot, plan.BaseProjectDigest, plan.WorkingProjectDigest, plan.BaseModelDigest, plan.ModelDigest, plan.ReportDigest, plan.RuntimeDigest, plan.RuntimeBindingVersion, plan.Managers, plan.Strictness, plan.BriefingDigests, plan.Checks, plan.ModelEdit, plan.InitialCandidateID, plan.RuntimeAgents, plan.Findings, plan.Blockers})
 	if err != nil || plan.ExplorationBinding == nil && plan.ExplorationID == "" && plan.ScopeID == "" && plan.ExplorationDigest == "" && plan.ReadinessDigest == "" {
 		return base, err
 	}

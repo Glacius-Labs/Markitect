@@ -287,7 +287,11 @@ func TestVerifyReviewChecksAcceptReviewsOfTheClosureCandidateView(t *testing.T) 
 	if err != nil {
 		t.Fatal(err)
 	}
-	candidate, err := completeCandidateDocument(host, root, store, dir, base, candidateData{ID: "00000000000000000000000000000002", Files: inPlaceModellingFiles(manifest)})
+	initial := candidateData{ID: "00000000000000000000000000000002", Files: inPlaceModellingFiles(manifest)}
+	if err := store.writeCandidate(dir, initial); err != nil {
+		t.Fatal(err)
+	}
+	candidate, err := completeCandidateDocument(host, root, store, dir, base, initial)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -303,10 +307,15 @@ func TestVerifyReviewChecksAcceptReviewsOfTheClosureCandidateView(t *testing.T) 
 		}
 	}
 	task := ManagerTask{ID: "task-orders", ManagerID: managerID, Goal: "Model the legacy orders file.", Artifacts: []string{artifactID}}
-	plan := PlanRecord{ID: runID, Goal: "Model the legacy orders file.", Operation: OperationApply, Managers: []ManagerTask{task},
+	plan := PlanRecord{ID: runID, Goal: "Model the legacy orders file.", Operation: OperationApply, BaseRevision: base.Revision,
+		InitialCandidateID: initial.ID, Managers: []ManagerTask{task},
 		BriefingDigests: map[string]string{}, Strictness: map[string]StrictnessProfile{}}
 	run := RunReport{ID: runID, Tasks: []ManagerTask{task}}
-	scope, err := reviewScopeDigest(plan, reviewed, task, "work", run)
+	reviewState, err := reviewCandidateStateFor(host, root, plan, run, candidate)
+	if err != nil {
+		t.Fatal(err)
+	}
+	scope, err := reviewScopeDigest(plan, reviewed, task, "work", run, reviewState)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -316,7 +325,7 @@ func TestVerifyReviewChecksAcceptReviewsOfTheClosureCandidateView(t *testing.T) 
 	if err := requireFreshReviews(host, root, store, dir, base, candidate, plan, runtime, run); err != nil {
 		t.Fatalf("Verify's review freshness check rejected a review of the closure view: %v", err)
 	}
-	evidence, err := freshReviewEvidenceForVerify(store, dir, reviewed, candidate, plan, runtime, run)
+	evidence, err := freshReviewEvidenceForVerify(store, dir, reviewed, candidate, plan, runtime, run, host)
 	if err != nil || len(evidence) != 1 {
 		t.Fatalf("Verify's review evidence = %+v, err=%v", evidence, err)
 	}
