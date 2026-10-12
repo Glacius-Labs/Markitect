@@ -195,6 +195,9 @@ func Apply(host Host, invoker Invoker, root string, request ApplyRequest) (Apply
 	if err != nil {
 		return out, err
 	}
+	if err := requireCurrentRuntimeBinding(plan); err != nil {
+		return out, err
+	}
 	if err := validateExplorationReadiness(root, plan); err != nil {
 		return out, err
 	}

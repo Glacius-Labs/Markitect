@@ -82,14 +82,15 @@ var (
 
 // verbTable lists every verb in help order.
 func verbTable() []verb {
-	return []verb{
+	verbs := []verb{
 		initVerb, configVerb, onboardVerb, doctorVerb, mcpVerb,
 		schemaVerb, checkVerb, modelVerb, contextVerb, impactVerb, docsVerb, editVerb,
 		exploreVerb, readyVerb, briefVerb,
 		planVerb, runVerb, resumeVerb, repairVerb, statusVerb, verifyVerb, applyVerb, deliverVerb,
-		adoptVerb,
-		versionVerb, licensesVerb, helpVerb,
 	}
+	verbs = append(verbs, externalVerbs...)
+	verbs = append(verbs, adoptVerb, versionVerb, licensesVerb, helpVerb)
+	return verbs
 }
 
 const readOnlyInstructions = "This server is read-only: it serves reads and previews, and it writes no project files and starts no agents or checks, whatever the arguments. Tools use the explicitly selected repository. Only listed operations are available."

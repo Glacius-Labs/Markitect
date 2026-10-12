@@ -1068,3 +1068,29 @@ spec:
       owner: independent-release-tooling
     - path: src/internal/host/releasecli/testmain_test.go
       owner: independent-release-tooling
+    - path: src/internal/host/agentexec/candidate_delete_test.go
+      owner: bounded-agent-execution-host
+    - path: src/internal/host/projectapp/external.go
+      owner: project-world-implementation
+    - path: src/internal/host/projectcli/verbs_external.go
+      owner: project-world-implementation
+    - path: src/internal/host/projectcli/contract_external_test.go
+      owner: project-world-implementation
+    - path: src/internal/host/projectcli/external_e2e_test.go
+      owner: project-world-implementation
+    - path: src/internal/host/projectrun/external.go
+      owner: project-world-implementation
+    - path: src/internal/host/projectrun/external_test.go
+      owner: project-world-implementation
+    - path: src/internal/host/projectrun/external_git.go
+      owner: project-world-implementation
+    - path: src/internal/host/projectrun/external_git_test.go
+      owner: project-world-implementation
+    - path: src/internal/host/projectrun/method_binding.go
+      owner: project-world-implementation
+    - path: src/internal/host/projectrun/method_binding_test.go
+      owner: project-world-implementation
+    - path: src/internal/host/projectrun/review_changes.go
+      owner: project-world-implementation
+    - path: src/internal/host/projectrun/review_changes_test.go
+      owner: project-world-implementation

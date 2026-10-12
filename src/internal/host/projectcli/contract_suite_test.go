@@ -23,20 +23,22 @@ import (
 var contractCLI = []string{
 	"init", "config", "onboard", "doctor", "mcp", "schema", "check", "model", "context", "impact", "docs", "edit",
 	"explore", "ready", "brief", "plan", "run", "resume", "repair", "status", "verify", "apply", "deliver", "adopt", "version", "licenses", "help",
+	"packet-export", "packet-list", "packet-submit",
 }
 var contractMCP = []string{
 	"init", "config", "onboard", "doctor", "schema", "check", "model", "context", "impact", "docs", "edit",
 	"explore", "ready", "brief", "plan", "run", "resume", "repair", "status", "verify", "apply", "deliver", "adopt",
+	"packet-export", "packet-list", "packet-submit",
 }
 var contractReadOnlyMCP = []string{
 	"init", "config", "onboard", "doctor", "schema", "check", "model", "context", "impact", "docs", "edit",
-	"explore", "ready", "brief", "plan", "status", "apply", "adopt",
+	"explore", "ready", "brief", "plan", "status", "apply", "adopt", "packet-list",
 }
 
 func interfaceContractCases(t *testing.T) map[string]contractCase {
 	t.Helper()
 	cases := map[string]contractCase{}
-	for _, group := range []map[string]contractCase{inspectionContractCases(), adoptionContractCases(), runtimeContractCases(), informationContractCases()} {
+	for _, group := range []map[string]contractCase{inspectionContractCases(), adoptionContractCases(), runtimeContractCases(), externalContractCases(), informationContractCases()} {
 		for name, entry := range group {
 			if _, duplicate := cases[name]; duplicate {
 				t.Fatalf("duplicate contract case %s", name)
@@ -135,8 +137,10 @@ func contractUnknownArguments(name string) map[string]any {
 		"edit":  {"input": projectwork.Mutation{APIVersion: projectwork.APIVersion, BaseDigest: "fixture", Actor: "user", Goal: "contract", Files: []projectwork.FileChange{}}},
 		"ready": {"exploration": "contract", "scope": "contract"}, "plan": {"goal": "contract"},
 		"run": {"plan": "contract"}, "resume": {"run": "contract"}, "repair": {"run": "contract"},
-		"apply":   {"plan": "contract", "run": "contract", "candidate": "contract"},
-		"deliver": {"exploration": "contract", "scope": "contract"}, "adopt": {"action": "status"},
+		"packet-export": {"run": "contract"}, "packet-list": {"run": "contract"},
+		"packet-submit": {"run": "contract", "packet": "packet-contract", "expect": "sha256:contract", "response": map[string]any{"contract": true}, "execute": true},
+		"apply":         {"plan": "contract", "run": "contract", "candidate": "contract"},
+		"deliver":       {"exploration": "contract", "scope": "contract"}, "adopt": {"action": "status"},
 	}
 	for key, value := range fields[name] {
 		arguments[key] = value

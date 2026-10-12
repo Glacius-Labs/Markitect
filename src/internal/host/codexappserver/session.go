@@ -408,7 +408,7 @@ func nativeTurnPrompt(inv agentexec.Invocation, wire []byte, workspaceCWD string
 			"- evidenceRefs may contain only exact strings supplied in request.artifacts[].path, request.scopeIds, or request.policyIds. Do not invent references from context pointers, context field names, unsupplied paths, or unverified test/tool claims. Do not repeat a reference; [] is valid.\n" +
 			"- Do not include nativeWork or usage; the Host owns lifecycle, workspace delta, and provider telemetry when available.\n"
 	}
-	contract += "- CandidateFile output entries have exactly path, mode, and content; mode is 0644 or 0755 for this Git workspace, and content is plain UTF-8 text, not base64. Input Artifact digest/base64 fields are not the output format. Copy identifiers as decoded JSON string values, without adding escaping characters.\n"
+	contract += "- Each CandidateFile output entry must be exactly one of these forms: a write with path, mode, and content, or a deletion with path and delete=true. A deletion must omit mode and content; never represent it as an empty write. Write mode is 0644 or 0755 for this Git workspace, and content is plain UTF-8 text, not base64. Input Artifact digest/base64 fields are not the output format. Copy identifiers as decoded JSON string values, without adding escaping characters.\n"
 	switch inv.Request.Role {
 	case agentexec.RoleExecutor:
 		contract += "- For executor responses, outer outcome must be one of proposed, failed, incomplete, or escalated. Never use a task report status such as blocked, complete, or partial as the outer outcome. verifierObservations must be an empty array; omit candidateJson.\n"
@@ -509,7 +509,9 @@ func nativeTurnOutputSchema(inv agentexec.Invocation) map[string]any {
 	list := func(items any) map[string]any {
 		return map[string]any{"type": "array", "items": items, "maxItems": nativeResponseArrayMaxItems}
 	}
-	candidates := list(map[string]any{"type": "object", "additionalProperties": false, "required": []string{"path", "mode", "content"}, "properties": map[string]any{"path": boundedText, "mode": map[string]any{"type": "string", "enum": []string{"0644", "0755"}}, "content": text}})
+	writeCandidate := map[string]any{"type": "object", "additionalProperties": false, "required": []string{"path", "mode", "content"}, "properties": map[string]any{"path": boundedText, "mode": map[string]any{"type": "string", "enum": []string{"0644", "0755"}}, "content": text}}
+	deleteCandidate := map[string]any{"type": "object", "additionalProperties": false, "required": []string{"path", "delete"}, "properties": map[string]any{"path": boundedText, "delete": map[string]any{"type": "boolean", "enum": []bool{true}}}}
+	candidates := list(map[string]any{"anyOf": []any{writeCandidate, deleteCandidate}})
 	observations := list(map[string]any{"type": "object", "additionalProperties": false, "required": []string{"subject", "outcome", "detail"}, "properties": map[string]any{"subject": boundedText, "outcome": map[string]any{"type": "string", "enum": []string{"passed", "failed", "incomplete", "escalated"}}, "detail": boundedText}})
 	outcomes := []string{"proposed", "failed", "incomplete", "escalated"}
 	if inv.Request.Role == agentexec.RoleVerifier {

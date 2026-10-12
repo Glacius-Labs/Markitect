@@ -604,7 +604,7 @@ func (f *helperFakeInvoker) Run(ctx context.Context, config agentexec.Config, re
 		candidates = []agentexec.CandidateFile{{Path: f.behavior.path, Mode: f.behavior.mode, Content: modelContent}}
 	}
 	result := agentexec.RunResult{Response: agentexec.Response{Outcome: agentexec.OutcomeProposed, CandidateFiles: candidates},
-		Receipt: agentexec.Receipt{RunID: inv.RunID, InputDigest: inv.InputDigest, Outcome: agentexec.OutcomeProposed,
+		Receipt: agentexec.Receipt{RunID: inv.RunID, InputDigest: inv.InputDigest, ConfigDigest: "fake", Outcome: agentexec.OutcomeProposed,
 			Lifecycle: &agentexec.Lifecycle{Provider: TransportCodexAppServer, SessionID: "child-session", TurnID: "child-turn", State: state,
 				Accounting: "partial", StartRequests: []agentexec.RoleStartRequest{{RequestID: inv.RunID, Role: "executor", State: "started"}}}}}
 	if f.behavior.nestedLifecycleState != "" {

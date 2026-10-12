@@ -292,7 +292,7 @@ func workspaceBridgeAgent(t *testing.T, root string) Agent {
 }
 
 func terminalWorkspaceReceipt(id string) agentexec.Receipt {
-	return agentexec.Receipt{RunID: id, Lifecycle: &agentexec.Lifecycle{
+	return agentexec.Receipt{RunID: id, ConfigDigest: "fixture", Lifecycle: &agentexec.Lifecycle{
 		Provider: TransportCodexAppServer, SessionID: "session-" + id, TurnID: "turn-" + id, State: "completed",
 		Accounting: "complete", StartRequests: []agentexec.RoleStartRequest{{RequestID: "root-" + id, Role: "root", State: "completed"}},
 	}}

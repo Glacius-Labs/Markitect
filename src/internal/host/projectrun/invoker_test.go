@@ -14,6 +14,51 @@ type observedDeltaInvoker struct {
 	err    error
 }
 
+type invocationIdentityFixture struct {
+	fingerprints []string
+	reads        int
+	receipt      string
+}
+
+func (i *invocationIdentityFixture) Fingerprint(agentexec.Config) (string, error) {
+	index := i.reads
+	if index >= len(i.fingerprints) {
+		index = len(i.fingerprints) - 1
+	}
+	i.reads++
+	return i.fingerprints[index], nil
+}
+
+func (i *invocationIdentityFixture) Run(context.Context, agentexec.Config, agentexec.Request, agentexec.RunOptions) (agentexec.RunResult, error) {
+	return agentexec.RunResult{Receipt: agentexec.Receipt{RunID: "observed-invocation", ConfigDigest: i.receipt}}, nil
+}
+
+func TestProjectRoleInvocationBindsExecutorReceiptAndRejectsDrift(t *testing.T) {
+	for _, role := range []string{"manager", "reviewer", "verifier"} {
+		for _, scenario := range []struct {
+			name       string
+			identities []string
+			receipt    string
+			stale      bool
+		}{
+			{"bound", []string{"executor-a", "executor-a"}, "executor-a", false},
+			{"changed-executable", []string{"executor-a", "executor-b"}, "executor-a", true},
+			{"wrong-receipt", []string{"executor-a", "executor-a"}, "executor-b", true},
+		} {
+			t.Run(role+"/"+scenario.name, func(t *testing.T) {
+				invoker := &invocationIdentityFixture{fingerprints: scenario.identities, receipt: scenario.receipt}
+				result, err := invokeProjectAgent(context.Background(), Host{}, invoker, "", nil, Agent{}, "", role, nil, nil, Limits{}, agentexec.Config{}, agentexec.Request{Role: role})
+				if errors.Is(err, ErrStale) != scenario.stale || !scenario.stale && err != nil {
+					t.Fatalf("receipt binding: err=%v, expected stale=%v", err, scenario.stale)
+				}
+				if result.Receipt.RunID != "observed-invocation" {
+					t.Fatal("binding rejection discarded the actual invocation receipt")
+				}
+			})
+		}
+	}
+}
+
 func (i observedDeltaInvoker) Run(context.Context, agentexec.Config, agentexec.Request, agentexec.RunOptions) (agentexec.RunResult, error) {
 	return i.result, i.err
 }
