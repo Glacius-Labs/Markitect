@@ -119,7 +119,7 @@ func writeExploreTestRuntime(t *testing.T, repo string, managers []projectmodel.
 		agents[manager.ID], reviewers[manager.ID] = agent, agent
 	}
 	runtimeConfig := projectconfig.Runtime{
-		APIVersion: projectrun.APIVersion, Mode: projectconfig.ModeControlledLocal,
+		APIVersion: projectconfig.APIVersion, Mode: projectconfig.ModeControlledLocal,
 		Agents: agents, Review: &projectconfig.ReviewConfig{Agents: reviewers, MaxRounds: 1, MaxManagerRounds: 1},
 		Limits: projectconfig.Limits{MaxDepth: 8, MaxStarts: 200, MaxRetries: 1, MaxParallel: 2,
 			MaxDuration: projectconfig.Duration(10 * time.Minute), MaxCostMicros: 100_000_000,

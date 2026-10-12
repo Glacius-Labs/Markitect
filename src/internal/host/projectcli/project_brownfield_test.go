@@ -310,7 +310,7 @@ func TestAdoptRunPreviewAndStaleGuardDoNotInvokeProvider(t *testing.T) {
 		RuntimeFiles: []agentexec.RuntimeFile{}, Environment: []string{}, Pricing: projectconfig.Pricing{InputMicrosPerMillion: 40, OutputMicrosPerMillion: 80},
 	}
 	runtimeConfig := projectconfig.Runtime{
-		APIVersion: projectrun.APIVersion, Mode: projectconfig.ModeControlledLocal,
+		APIVersion: projectconfig.APIVersion, Mode: projectconfig.ModeControlledLocal,
 		Agents: map[string]projectconfig.Agent{managerID: nativeManager},
 		Review: &projectconfig.ReviewConfig{Agents: map[string]projectconfig.Agent{managerID: readOnlyAgent}, MaxRounds: 1, MaxManagerRounds: 1},
 		Limits: projectconfig.Limits{MaxDepth: 4, MaxStarts: 8, MaxRetries: 1, MaxParallel: 1, MaxDuration: projectconfig.Duration(5 * time.Minute),

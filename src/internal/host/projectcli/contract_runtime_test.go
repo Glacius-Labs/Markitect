@@ -155,7 +155,7 @@ func newRuntimeContract(t *testing.T, surface string, invalidFirst bool) (*contr
 
 func runtimeContractYAML(executable string) string {
 	config := projectconfig.Runtime{
-		APIVersion: projectrun.APIVersion,
+		APIVersion: projectconfig.APIVersion,
 		Mode:       "controlled-local",
 		Agents: map[string]projectconfig.Agent{
 			contractManagerID(): {

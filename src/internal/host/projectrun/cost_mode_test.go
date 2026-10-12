@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/Glacius-Labs/Markitect/src/internal/host/agentexec"
+	"github.com/Glacius-Labs/Markitect/src/internal/testkit"
 )
 
 func TestCostModeValidationAndUnmeteredCostStaysUnknown(t *testing.T) {
@@ -54,7 +55,7 @@ func TestCostModeValidationAndUnmeteredCostStaysUnknown(t *testing.T) {
 		t.Fatal("native App Server missing usage must stay unknown cost, not a stop")
 	}
 	native.CostMode, native.Pricing = projectconfig.CostModeUnmetered, projectconfig.Pricing{}
-	native.Command = filepath.Clean("C:/fixture/executor")
+	native.Command = filepath.Join(testkit.TempDir(t), "executor")
 	native.AppServer = &projectconfig.AppServerSettings{ReasoningEffort: "medium", MaxEventBytes: 1 << 20}
 	config := validRuntime()
 	config.Agents = map[string]projectconfig.Agent{"manager": native}

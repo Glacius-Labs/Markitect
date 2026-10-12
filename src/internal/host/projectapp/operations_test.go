@@ -156,7 +156,7 @@ func makePlanFixture(t *testing.T) string {
 	}
 	managerID := core.DefinitionIdentity{APIVersion: projectmodel.APIVersion, Kind: "Manager", Name: "project-owner"}.Key()
 	runtime := projectconfig.Runtime{
-		APIVersion: projectrun.APIVersion, Mode: projectconfig.ModeControlledLocal,
+		APIVersion: projectconfig.APIVersion, Mode: projectconfig.ModeControlledLocal,
 		Agents: map[string]projectconfig.Agent{managerID: {
 			Command: executable, Model: "fixture-model", ProviderVersion: "fixture/1",
 			Timeout: projectconfig.Duration(30 * time.Second), MaxStdoutBytes: 1 << 20, MaxStderrBytes: 1 << 20,

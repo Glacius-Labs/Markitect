@@ -505,7 +505,7 @@ func failingManagerRepo(t *testing.T) string {
 	}
 	managerID := core.DefinitionIdentity{APIVersion: projectmodel.APIVersion, Kind: "Manager", Name: "project-owner"}.Key()
 	runtimeConfig := projectconfig.Runtime{
-		APIVersion: projectrun.APIVersion, Mode: projectconfig.ModeControlledLocal,
+		APIVersion: projectconfig.APIVersion, Mode: projectconfig.ModeControlledLocal,
 		Agents: map[string]projectconfig.Agent{managerID: {
 			Command: executable, Args: []string{"-test.run=^TestFailingManagerHelperProcess$"},
 			Model: "failing-model", ProviderVersion: "failing/1", Environment: []string{failingManagerEnv},
