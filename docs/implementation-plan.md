@@ -114,7 +114,7 @@ A zone is a code area in which only one active package changes code at a time. T
 |---|---|---|
 | runtime | `src/internal/host/{projectrun,projectconfig,projectexecutor,projectsetup,agentexec,codexappserver,projectworkspace}` and the exchange executor | RUN, TEST-03 to TEST-05, ARCH-05, ARCH-06 |
 | interface | `src/internal/host/{cli,projectcli,mcp,projectapp,projectonboarding}` | CLI, MCP-01, TEST-02, AGENT-02, AGENT-03, ARCH-08 |
-| model | `src/internal/core`, `src/internal/modules/projectmodel`, `src/internal/host/{projectwork,projectcoverage,projectbriefing}` | KG, GOV-01, IDEA-02 to IDEA-04 |
+| model | `src/internal/core`, `src/internal/modules/projectmodel`, `src/internal/host/{projectwork,projectcoverage,projectbriefing}` | KG, GOV-01, IDEA-02 to IDEA-04, ARCH-13 (plan preparation; cross-zone implementation paths require Root coordination) |
 | legacy (retired) | historical sources only; the earlier host root, compatibility and authoring packages are removed | ARCH-02, ARCH-04, ARCH-09 completed |
 | ci | `.github/workflows`, `markitect.yaml`, `scripts`, `.githooks` | CI, ARCH-07 |
 | docs-entry | `AGENTS.md`, `README.md`, `docs/README.md`, this page, the backlog | OPS, AGENT-01 |
