@@ -93,6 +93,8 @@ Nach Modellergänzung und Klärung reservierter Entscheidungen wird erneut auf e
 
 ## 3. Welche Aussagen sind relevant?
 
+Einordnung nach der Architekturergänzung vom 13. Oktober: Die folgende Tabelle erläutert die fachliche Wirkung. Das [erweiterte Bibliotheksmodell](library-model-example.md) und sein [Architektur-YAML](library-architecture-example.md) ergänzen Provider/Consumer, Modulzuordnung und getrennte Repositorybeiträge. Ein vollständiger neuer Durchlauf muss auch diese Kanten berücksichtigen; die Tabelle ist keine berechnete vollständige Impactliste.
+
 | Aussage | Grund ihrer Relevanz |
 | --- | --- |
 | `eligible-member` | Direkt geänderte Rule. |
@@ -114,10 +116,12 @@ Die Regeln für die neuen nominalen Kinds Concept, Rule und UseCase müssen in d
 
 | Deklaration im Beispiel | Erwarteter Untersuchungsbereich |
 | --- | --- |
-| `library-implementation` realisiert Berechtigung und Ausleihe. | `src/Library/` |
-| `library-verification` realisiert deren Prüfpflichten. | `tests/Library/` |
-| `library-documentation` erklärt den Ausleihvertrag. | `docs/library/` |
-| `library-contract-check` untersucht die betroffenen Verträge/Regeln. | Deklariertes Prüfverfahren; derzeit nur Platzhalter. |
+| `backend-implementation` trägt Berechtigung, Ausleihe und technische Adapter. | `backend/` |
+| `frontend-implementation` trägt Bedienung und Ablehnungsdarstellung. | `frontend/` |
+| `database-configuration` trägt Datenhaltung und nötige Schema-/Migrationsbeiträge. | `deployment/database/`, sofern die tatsächliche Änderung diese Beiträge betrifft. |
+| `library-verification` liefert Fach-/Vertrags-/Architekturprüfbeiträge. | `tests/` |
+| `library-documentation` erklärt System und Ausleihvertrag. | `docs/library/`, Projektansicht und README. |
+| Fach-/Architektur-Checks untersuchen die benannten Verpflichtungen. | Deklarierte Prüfverfahren; derzeit nur Platzhalter. |
 
 Ein tatsächliches Dateiinventar liefert die konkreten Dateien innerhalb dieser Bereiche. Die Zuordnung ist breit und garantiert keine Auswahl einzelner Funktionen. Der Agent untersucht die Inhalte, bevor er entscheidet, welche Kandidatendateien anzupassen sind. Betroffen heißt nicht automatisch zu verändern.
 

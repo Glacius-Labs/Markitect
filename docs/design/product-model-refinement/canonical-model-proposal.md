@@ -1,6 +1,6 @@
 # Proposal: Kanonisches Modell mit nominalen Regeln und methodischem Review
 
-Erstellt am 11. Oktober 2026; vollständig konsolidiert am 12. Oktober 2026. Status: beauftragter Konzept- und Umsetzungsentwurf auf Basis des Bibliotheksgesprächs. Dateiname `mandate.yaml` und die eigenen Kinds `Concept`, `Rule`, `UseCase` sind gewählt. Weitere Syntax- und Referenzdetails sind Vorschläge, keine implementierten Produktverträge.
+Erstellt am 11. Oktober 2026; konsolidiert am 12. und architektonisch erweitert am 13. Oktober 2026. Status: beauftragter Konzept- und Umsetzungsentwurf auf Basis des Bibliotheksgesprächs. Dateiname `mandate.yaml`, die fachlichen Kinds `Concept`, `Rule`, `UseCase` sowie `System`, `Component`, `Module`, `Interface` sind gewählt. Weitere Syntax- und Referenzdetails sind Vorschläge, keine implementierten Produktverträge.
 
 ## 1. Auftrag und Maßstab
 
@@ -10,7 +10,7 @@ Das Modell enthält Zweck, Umfang, Begriffe, Verhalten, Regeln, technische und o
 
 Die drei Produktblöcke bleiben: kanonisches Modell, realisierendes Repository und abstrakter Apply-Mechanismus. Git-Historie und Work Items sind weiterhin außerhalb der geltenden Systembeschreibung. Ein beobachteter Implementierungsfehler verändert die kanonische Regel nicht automatisch.
 
-Die [aktuelle Bibliotheksdarstellung](library-model-example.md) konkretisiert diese Fassung. Der [Änderungsdurchlauf](library-change-walkthrough.md) zeigt Koordination und Review. Der [Main-Abgleich vom 11. Oktober](canonical-model-main-comparison.md) ist historische, SHA-gebundene Implementierungsevidenz; er wurde heute nicht erneuert.
+Die [aktuelle Bibliotheksdarstellung](library-model-example.md) und ihr [Architektur-YAML](library-architecture-example.md) konkretisieren diese Fassung. Der [Änderungsdurchlauf](library-change-walkthrough.md) zeigt Koordination und Review. Der [Main-Abgleich vom 11. Oktober](canonical-model-main-comparison.md) ist historische, SHA-gebundene Implementierungsevidenz; er wurde heute nicht erneuert.
 
 ## 2. Empfohlener Aufbau
 
@@ -63,25 +63,55 @@ Eine dokumentierte Entscheidung referenziert ihren Gegenstand und bewahrt Begrü
 | --- | --- | --- |
 | Namespace-/Dateibaum | Kohäsive Ablage und adressierbarer Bereich. | Die bekannte Loader-Konvention bindet Namespace und Verzeichnis; sie ist keine Laufzeitarchitektur. |
 | Verantwortungsbaum | Parent, Zuständigkeit und ausdrückliche Delegation. | Ein Graphpfad allein verleiht keine Befugnis. |
-| Fachlicher Beziehungsgraph | Kontextbedarf und Verpflichtungen zwischen Definitionen. | Querbeziehungen verändern keine Elternschaft. |
+| Fach-/Architekturgraph | Kontext, Verpflichtungen, Bausteine und Zusammenarbeit zwischen Definitionen. | Querbeziehungen verändern keine strukturelle oder organisatorische Elternschaft. |
 | Ausführungsablauf | Abgeleitete Aufgaben, Reviews und Integration. | Eine fachliche Dependency ist nicht automatisch ein Ausführungsplan. |
 
 Ein kleiner Bibliotheksausschnitt kann einen Root-Manager besitzen. Untergeordnete Verantwortungen entstehen, wenn begrenzte Aufträge und Bereiche sie rechtfertigen. Übergreifende Interessen brauchen ausdrückliche Mandate oder Beziehungen. Zyklen werden je Relation beurteilt; Parent-Zyklen sind anders zu behandeln als mögliche fachliche Querreferenzen.
+
+### 4.0 Architekturbegriffe und ihre Abgrenzung
+
+Am 13. Oktober 2026 beauftragt: System, Component, Module und Interface samt Beziehungen werden als eigenständige Projektvokabular-Kinds festgehalten. Sie sind keine neuen universellen Core-Primitiven.
+
+| Kind | Bedeutung | Bibliothek |
+| --- | --- | --- |
+| `System` | Zweck, Nutzer und erklärte Grenze einer zusammengehörigen Lösung zur Umgebung. | Bibliotheksanwendung. |
+| `Component` | Technischer Baustein mit Laufzeit-/Bereitstellungsrolle. | Webfrontend, Backenddienst, Datenbankdienst. |
+| `Module` | Kohäsive logische Gliederung, ohne notwendige eigene Laufzeit. | Bestand, Mitgliedschaft, Ausleihe, Adapter. |
+| `Interface` | Benannter Vertrag der Zusammenarbeit, getrennt von seinem Anbieter. | Bibliotheks-API und Speicherverträge. |
+
+Ein System kann im Projektumfang realisiert oder extern beschrieben sein. Für externe Systeme werden relevante Grenzen/Verträge deklariert, ohne ihre Interna als eigene Realisierungspflicht zu erfinden. Die Component-Definition ist eine bewusste Laufzeitbedeutung dieses Entwurfs.
+
+`System.ownership` bezeichnet im Beispiel die Verantwortung für den erklärten Systemvertrag und seinen Zusammenbau. `owned` behauptet keine eigene Entwicklung aller enthaltenen Komponentenimplementierungen: Der Datenbankserver kann wiederverwendete Fremdsoftware sein, während Konfiguration, Schema und Migrationen Projektbeiträge sind. Eine feinere Zuständigkeitsdarstellung auf Component-Ebene bleibt offen.
+
+`System.components`, `Component.modules` und `Module.modules` deklarieren direkte Zusammensetzung. Im ersten vollständigen Bibliotheksvertrag hat ein Component genau ein System als Parent; ein Module genau einen Component oder Parent-Module. Parents werden aus diesen Listen abgeleitet, nicht als zweite manuelle Wahrheit gepflegt. Selbstbezüge und Zusammensetzungszyklen sind ungültig. Components dürfen bewusst nicht modellierte Interna haben, etwa der bereitgestellte Datenbankdienst.
+
+`provides` und `consumes` stehen am konkreten Anbieter/Verbraucher. Die veröffentlichte Component-Sicht kann aus seinen Modules abgeleitet werden; dieselbe Providerbeziehung wird nicht nochmals auf dem Parent kopiert. Direkt deklarierte Component-Verträge eignen sich für undurchsichtige Laufzeitbausteine. Konsumierte Interfaces benötigen im ersten Beispielvertrag einen eindeutigen Provider im erklärten Umfang; Mehrfachprovider-Auswahl ist noch nicht entworfen. Externe Systems können Verträge direkt bereitstellen.
+
+`Module.dependsOn` beschreibt explizite Implementierungs-/Buildabhängigkeit zu Modules. Interface-Konsum ist Vertrags-/Zusammenarbeit und importiert nicht automatisch die Anbieterimplementierung. Keine doppelte Pflege derselben abgeleiteten Tatsache. Kommunikations- und Dependencyzyklen werden je Relation und geltenden Rules beurteilt, nicht pauschal verboten.
+
+`Module.realizes` beziehungsweise ein direkter Component-Beitrag ordnet gewünschte Fachverantwortung der Architektur zu. Mehrere Bausteine können einen UseCase tragen; Prosa erläutert Bedienung, Orchestrierung oder Speicherung. Die Zuordnung ist weder Codebeleg noch Schreibowner. `Artifact.realizes` erklärt dagegen erwartete Repositorybeiträge; konkrete Dateien und Nachweise werden getrennt erhoben.
 
 ### 4.1 Minimaler Beziehungsvertrag
 
 | Feld | Bedeutung | Kandidat für zulässige Ziel-Kinds |
 | --- | --- | --- |
-| `uses` | Benötigter Kontext. | `Concept`, `Rule`, `UseCase` |
-| `UseCase.requires` | Normative Verpflichtung, die ein Vertrag erfüllen oder erhalten muss. | Im ersten Bibliotheksentwurf `Rule` |
-| `Artifact.realizes` | Erwarteter Realisierungsbeitrag. | `Concept`, `Rule`, `UseCase` |
-| `Artifact.checks` | Benanntes ausführbares Prüfverfahren. | `Check` |
-| `Check.uses` | Aussagen im Prüfgegenstand. | `Concept`, `Rule`, `UseCase` |
+| `uses` | Benötigter Kontext. | `Concept`, `Rule`, `UseCase`, `System`, `Component`, `Module`, `Interface` |
+| `UseCase.requires`, `Interface.requires` | Normative Verpflichtung. | `Rule` |
+| `System.components` | Direkte Laufzeitbausteine. | `Component` |
+| `Component.modules`, `Module.modules` | Direkte logische Gliederung. | `Module` |
+| `provides`, `consumes` auf Component/Module, bei externem System an dessen Grenze | Vertrag anbieten beziehungsweise benötigen. | `Interface` |
+| `Module.dependsOn` | Implementierungs-/Buildabhängigkeit. | `Module` |
+| `Module.realizes`, direkter `Component.realizes` | Gewünschter architektonischer Fachbeitrag. | `Concept`, `Rule`, `UseCase` |
+| `Interface.useCases` | Über den Vertrag angebotene fachliche Fähigkeiten. | `UseCase` |
+| `Rule.appliesTo` | Ausdrücklicher Geltungsbereich. | `Concept`, `Rule`, `UseCase`, `System`, `Component`, `Module`, `Interface` |
+| `Artifact.realizes` | Erwarteter Repositorybeitrag. | `Concept`, `Rule`, `UseCase`, `System`, `Component`, `Module`, `Interface` |
+| `Artifact.checks` | Ausführbares Prüfverfahren. | `Check` |
+| `Check.uses` | Aussagen im Prüfgegenstand. | `Concept`, `Rule`, `UseCase`, `System`, `Component`, `Module`, `Interface` |
 | `Manager.parent` | Direkt übergeordnete Verantwortung. | `Manager` |
-| `Decision.subject` | Gegenstand einer begründeten Entscheidung. | Kandidat: `Concept`, `Rule`, `UseCase` |
+| `Decision.subject` | Gegenstand einer begründeten Entscheidung. | `Concept`, `Rule`, `UseCase`, `System`, `Component`, `Module`, `Interface` |
 | `Decision.actor` | Aufgezeichnete Provenienz. | `Manager` |
 
-Bei `requires` erklärt die Fachprosa zunächst, ob eine Regel Voraussetzung oder erhaltene Invariante ist. `uses` sagt weder „gilt für“ noch etwas über die Zahl konkreter Bücher. Zusätzliche Kanten wie `appliesTo`, `contains` oder `provides` sind Erweiterungskandidaten, keine still vorausgesetzten Pflichtfelder.
+Bei `requires` erklärt Fachprosa zunächst Voraussetzung oder erhaltene Invariante. `uses` sagt weder „gilt für“ noch etwas über die Zahl konkreter Bücher. `Rule.appliesTo` wirkt im ersten Vertrag direkt auf die benannten Ziele; dort muss die Regel im Kontext und Prüfumfang sichtbar sein. Automatische Subtree-Geltung wird nicht vorausgesetzt. Interfaceoperationen, Daten und Fehler werden zunächst in Prosa erklärt; eine UseCase-Referenz allein ist kein vollständiger Protokollvertrag.
 
 Die hier eingeschränkte `requires`-Zielmenge ist ein neuer Vorschlag für diesen Bibliotheksvertrag. Der bisherige Statement-Vertrag konnte auch andere Statement-Verpflichtungen ausdrücken. Bestehende Projekte dürfen deshalb nicht automatisch oder verlustbehaftet umgedeutet werden.
 
@@ -137,7 +167,15 @@ Eine Definition pro Datei übernimmt die Grenze des bisher geprüften Loaders. D
       one-active-loan.yaml
       borrow.yaml
       return.yaml
-      library-implementation.yaml
+      library-system.yaml
+      frontend.yaml
+      backend.yaml
+      database.yaml
+      circulation.yaml
+      library-api.yaml
+      frontend-implementation.yaml
+      backend-implementation.yaml
+      database-configuration.yaml
       library-verification.yaml
       library-documentation.yaml
       library-contract-check.yaml
@@ -151,7 +189,7 @@ Der Nutzer hat `Concept`, `Rule` und `UseCase` als eigene Kinds gewählt. Concep
 
 Für diese Unterscheidung entfällt `category`. Gemeinsame Header und Beschreibungsfelder folgen derselben Konvention; jeder Kind besitzt seinen geschlossenen Feld- und Referenzvertrag. Der nominale Unterschied ermöglicht gezielte Zieltypprüfung, ohne eine vollständig formalisierte Fachsprache zu verlangen.
 
-Die Systemübersicht der Bibliothek wird im Beispiel als Concept beschrieben. Ein eigener Kind System oder die Umbenennung von Manager zu Mandate sind nicht vorausgesetzt. Einen allgemeinen Statement-Kind braucht der erste Bibliotheksvertrag nicht. Weitere Beschreibungstypen entstehen nur bei einem konkreten Bedarf, der sich durch die gewählten Kinds nicht sinnvoll ausdrücken lässt.
+Die Systemübersicht ist nach der Architekturergänzung ein `System`. Components, Modules und Interfaces erklären technische Aufteilung und Zusammenarbeit. Ein allgemeiner Statement-Kind wird nicht vorausgesetzt; die Umbenennung von Manager zu Mandate ist weiterhin nicht beschlossen. Weitere Beschreibungstypen benötigen einen konkreten Ausdrucksbedarf.
 
 #### 6.2.1 Feldkandidat für den ersten Vertrag
 
@@ -160,14 +198,18 @@ Diese Arbeitstabelle konkretisiert den Entwurf für P0; sie behauptet kein vorha
 | Kind | Spec-Felder des Kandidaten | Pflicht und Begrenzung |
 | --- | --- | --- |
 | `Concept` | `description`, `public`, `uses` | Beschreibung erforderlich; Kontextbezüge optional. Keine Kategorie concept. |
-| `Rule` | `description`, `public`, `uses` | Beschreibung erforderlich; keine Kategorie rule. Kontextbezüge optional; keine formale Bedingung vorausgesetzt. |
+| `Rule` | `description`, `public`, `uses`, `appliesTo` | Beschreibung erforderlich; Kontext und Geltungsziele explizit. Keine formale Bedingung vorausgesetzt. |
 | `UseCase` | `description`, `public`, `uses`, `requires` | Beschreibung erforderlich; Kontextbezüge optional, Verpflichtungen als Rule-Referenzen. Keine Kategorie use-case. |
+| `System` | `description`, `public`, `ownership`, `components`, `uses`, bei externer Grenze `provides`/`consumes` | Beschreibung und Scope owned/external; direkte Components, externe Interna optional. |
+| `Component` | `description`, `public`, `modules`, `provides`, `consumes`, `realizes`, `uses` | Laufzeitrolle erklären; Verträge und Modules passend zuordnen. |
+| `Module` | `description`, `public`, `modules`, `provides`, `consumes`, `dependsOn`, `realizes`, `uses` | Logische Aufgabe/Beitrag; genau ein struktureller Parent im vollständigen Beispiel. |
+| `Interface` | `description`, `public`, `useCases`, `uses`, `requires` | Vertrag erklären; Verpflichtungen als Rules; Provider/Consumer stehen an Bausteinen. |
 | `Manager` | `parent`, `owns`, `instructions` | Höchstens ein Parent; optionale Pfadliste und lesbare Anweisungen. Roots/Ownerregeln werden getrennt validiert. |
 | `Artifact` | `role`, `realizes`, `paths`, `checks`, `required`, `reason` | Rolle implementation/documentation/verification/configuration; optionale Ziel-/Pfad-/Checklisten, Erforderlichkeit und Begründung. |
 | `Check` | `command`, `uses`, `limitation` | Nicht leere Liste literal argv; deklarierter Gegenstand und Evidenzgrenze. Ein Befehl ist keine Shell-Prosa. |
 | `Decision` | `subject`, `decision`, `reason`, `actor` | Genau ein Subject und Actor sowie lesbare Entscheidung und Begründung. Actor authentifiziert keine Befugnis. |
 
-Für Concept/Rule/UseCase ist `public` als Boolean vorgesehen; ohne ausdrückliches Public bleibt eine fremde Definition im Kandidaten privat. Ihre `uses`-Listen können auf die endliche Zielmenge Concept/Rule/UseCase zeigen. Referenzen werden gegen die Zielmengen aus Abschnitt 4 geprüft. Die Mengenfelder bestimmen Modellwerte; sie zählen keine Laufzeitinstanzen. Ausführliche Defaults, Kardinalitäten und Normalisierung werden im versionierten P0-Vertrag festgeschrieben. Weitere Felder brauchen einen erklärten Bedarf und ihre Behandlung in allen Sichten.
+Für fachliche und architektonische Definitions-Kinds ist `public` als Boolean vorgesehen; ohne ausdrückliches Public bleibt eine fremde Definition im Kandidaten privat. Ihre `uses`-Listen zeigen nur auf die endliche Zielmenge aus Abschnitt 4. Referenzen werden gegen die Zielmengen aus Abschnitt 4 geprüft. Die Mengenfelder bestimmen Modellwerte; sie zählen keine Laufzeitinstanzen. Ausführliche Defaults, Kardinalitäten und Normalisierung werden im versionierten P0-Vertrag festgeschrieben. Weitere Felder brauchen einen erklärten Bedarf und ihre Behandlung in allen Sichten.
 
 ### 6.3 Begrenzte Formalisierung
 
@@ -202,9 +244,9 @@ Nutzerentscheidung vom 12. Oktober 2026: „Okay, dann nehmen wir Concept, Rule 
 
 ## 7. Bibliotheksbeispiel und methodischer Ablauf
 
-Die elf Ausgangsaussagen sind Systemzweck, Titel, Exemplar, Mitglied, Ausleihe, aktive Ausleihe, berechtigtes Mitglied, verfügbares Exemplar, höchstens eine aktive Ausleihe, Ausleihen und Rückgabe. Systemzweck, Titel, Exemplar, Mitglied, Ausleihe und aktive Ausleihe werden sechs Concepts; die drei Bedingungen/Invarianten werden Rules; Ausleihen und Rückgabe werden zwei UseCases.
+Die elf Ausgangsaussagen sind Systemzweck, Titel, Exemplar, Mitglied, Ausleihe, aktive Ausleihe, berechtigtes Mitglied, verfügbares Exemplar, höchstens eine aktive Ausleihe, Ausleihen und Rückgabe. Die Systemübersicht wird zum System; die übrigen fünf Concepts, drei Fach-Rules und zwei UseCases bleiben. Hinzu kommen drei Components, sechs Modules, fünf Interfaces und eine Architekturregel. Identität und Referenzen der bisherigen Concept-Systemübersicht werden ausdrücklich aktualisiert.
 
-Ein Root-Manager ist für den kleinen Ausschnitt ausreichend. Code, Prüfungen und Bedienungsdokumentation sind getrennte Realisierungsbeiträge. Der beschriebene Check ist ein klar markierter, nicht ausgeführter Platzhalter.
+Ein Root-Manager ist ausreichend. Frontendcode, Backendcode, Datenbankkonfiguration, Prüfungen und Bedienungsdokumentation sind fünf getrennte Realisierungsbeiträge. Die beiden Fach-/Architektur-Checks sind klar markierte, nicht ausgeführte Platzhalter.
 
 Die Wiederholungsrückgabe ohne Änderung des ursprünglichen Rückgabezeitpunkts und Berechtigung über aktiven Mitgliedsstatus sind vorgeschlagene Fachentscheidungen. Fristberechnung und Behandlung unbekannter Kennungen bleiben offen. Das Beispiel ist kein Vollständigkeitsnachweis und keine fertige Anwendung.
 
@@ -226,7 +268,7 @@ Modelländerung → feste Basis/Kandidat → Strukturprüfung → Modellreview �
 
 Der Impact muss hinzugefügte, geänderte und entfernte Definitionen/Beziehungen berücksichtigen. Der konservative Ausgangspunkt untersucht Erreichbarkeit in beiden Richtungen auf der Vereinigung der deklarierten Kanten aus alter und neuer Sicht. Das umfasst mindestens die in jedem Einzelstand betroffenen Erreichbarkeiten und kann zusätzliche Pfade über kombinierte alte/neue Kanten enthalten. Veränderte Owners, Pfade und Check-Bindungen bleiben sichtbar. Unbekannter Umfang führt zu Erweiterung oder ausdrücklichem Unknown, nicht zu unbegründetem Weglassen.
 
-Der bisher geprüfte Routingstand bildet eine konservative Hülle über `uses`/`requires` in beide Richtungen. Im eng verbundenen Bibliotheksmodell kann diese nahezu alle fachlichen Aussagen erreichen. Change/Context dient der Erklärung und Priorisierung; es verkürzt die relevante Menge nicht automatisch. Ein anderer engerer Algorithmus wäre eine eigene begründete Produktentscheidung.
+Alle neuen Beziehungen brauchen definierte Wirkung: Vertragsänderung erreicht Provider/Consumer; geänderte Fachzuordnung zugeordnete Bausteine/Artefakte; geänderte Zusammensetzung ihre Integration; Geltungsänderung alte/neue Ziele. Das sind Entwurfsanforderungen, keine implementierten Routingregeln. Der bisher geprüfte Routingstand bildet eine konservative Hülle über `uses`/`requires` in beide Richtungen. Im eng verbundenen Bibliotheksmodell kann diese nahezu alle fachlichen Aussagen erreichen. Change/Context dient der Erklärung und Priorisierung; es verkürzt die relevante Menge nicht automatisch. Ein anderer engerer Algorithmus wäre eine eigene begründete Produktentscheidung.
 
 Breite Artefaktpfade wie `src/Library/` liefern einen Untersuchungsbereich. Sie wählen keine einzelnen Funktionen aus und garantieren keinen kleinen Blast Radius. Welche Dateien verändert werden müssen, ist innerhalb dieses Bereichs zu untersuchen.
 
@@ -239,7 +281,7 @@ Der [Überfälligkeitsdurchlauf](library-change-walkthrough.md) zeigt, wie eine 
 | Entscheidung | Begründung und Abwägung |
 | --- | --- |
 | Kleine Struktur, fachliche Prosa | Explizite Zuordnung und Methodik zuerst nutzen; zusätzlichen Pflegeaufwand für Formalisierung an konkretem Nutzen prüfen. |
-| Nominale Concept-, Rule- und UseCase-Kinds | Fachbegriffe, normative Aussagen und Verhalten als referenzierbare Zieltypen unterscheiden; dies benötigt noch keinen allgemeinen Fach- oder Regelauswerter. |
+| Nominale Fach- und Architektur-Kinds | Fachlichkeit, Grenzen, Bausteine und Verträge als Zieltypen unterscheiden; ohne allgemeinen Fachevaluator. |
 | Keine Kategorie für die gewählten Rollen | Der Kind trägt die strukturelle Unterscheidung direkt; gemeinsame Beschreibungskonventionen werden geteilt. Weitere Kinds benötigen einen konkreten Ausdrucksbedarf. |
 | Mandat von Agentenbindung unterscheiden | Ein stabiler Auftrag kann von unterschiedlichen Agenten umgesetzt werden; Datei, Modell-Kind und Runtime-Identität sind eigene Benennungsentscheidungen. |
 | Explizite Beziehungen und konservativer Impact | Koordination nachvollziehbar aus deklarierten Daten ableiten; Prosalinks allein liefern keine geprüften Kanten. |
@@ -256,11 +298,11 @@ Der Dokumentationsbranch stammt aus einer älteren Main-Basis. Den Implementieru
 
 | Paket | Ergebnis | Voraussichtlicher Bereich | Abnahmekriterium |
 | --- | --- | --- | --- |
-| P0 — Ausgangspunkt und Verträge | Main-Delta, Versionierung, Concept-/Rule-/UseCase-Schemas und zulässige Referenzziele gemeinsam fixieren. | Produkt-/Modellvertrag; Core-Ausdrucksbedarf prüfen. | Keine stille alpha-Umdeutung; gemischte Zielmengen sind explizit gelöst. |
-| P1 — Vollständiger kleiner Durchstich | Bibliotheksmodell mit Mandat, Concepts, Rules, UseCases, Artefakten und Check-Anschluss laden/validieren. | Schema, Loader und Beispiel; Core nur bei belegter Lücke. | Gültige Definitionen auflösbar; falscher Zielkind, unbekanntes Feld und falscher Namespace mit deterministischer Diagnose. |
-| P2 — Sichten und Bedeutungserhalt | Concepts, Rules, UseCases und alle neuen Kanten in Report, Kontext, Graph und Digest führen. | Projectmodel-Analyse/Typen und vorhandene Ausgabeanschlüsse. | Zuständige Rollen sehen benötigte Regeln; private Inhalte werden nicht über eine zweite Sichtbarkeitslogik geladen. |
-| P3 — Änderungsfolgen | Concept-/Rule-/UseCase-Änderung, entfernte Kanten und gemischte Beziehungen in Impact/Explain behandeln. | Projectmodel-Impact/Explain und feste Host-Bindungen. | Alt/Neu-Wirkung erhalten; unbekannter Umfang bleibt konservativ; kombinierte Änderungen verlieren keine Pflicht. |
-| P4 — Realisierung und Review | Rule-Zuordnung, Coverage, Check-Bindungen und dokumentierten Reviewablauf durch vorhandene Ausführung führen. | Artefakte, Projectcoverage/Projectwork und bei Vertragsänderung Projectrun. | Keine neue Regel verschwindet aus Realisierung/Prüfung; Reviewergebnisse nennen Befunde und Grenzen. |
+| P0 — Ausgangspunkt und Verträge | Main-Delta, Versionierung, Fach-/Architekturschemas, Provider-/Parentregeln und Referenzziele fixieren. | Produkt-/Modellvertrag; Core-Ausdrucksbedarf prüfen. | Keine stille alpha-Umdeutung; gemischte Zielmengen sind explizit gelöst. |
+| P1 — Vollständiger kleiner Durchstich | Bibliotheksmodell mit Mandat, Fach-/Architekturdefinitionen, Artefakten und Check-Anschlüssen laden/validieren. | Schema, Loader und Beispiel; Core nur bei belegter Lücke. | Gültige Ziele/Parents/Provider auflösbar; falscher Kind, Namespace, Zyklus oder mehrdeutiger Provider mit Diagnose. |
+| P2 — Sichten und Bedeutungserhalt | Alle Fach-/Architektur-Kinds und neuen Kanten in Report, Kontext, Graph und Digest führen; AppliesTo bringt Regeln an Ziele. | Projectmodel-Analyse/Typen und vorhandene Ausgabeanschlüsse. | Zuständige Rollen sehen benötigte Regeln; private Inhalte werden nicht über eine zweite Sichtbarkeitslogik geladen. |
+| P3 — Änderungsfolgen | Fach-, Vertrags-, Provider-, Zuordnungs- und Zusammensetzungsänderung unter Alt/Neu in Impact/Explain behandeln. | Projectmodel-Impact/Explain und feste Host-Bindungen. | Alt/Neu-Wirkung erhalten; unbekannter Umfang bleibt konservativ; kombinierte Änderungen verlieren keine Pflicht. |
+| P4 — Realisierung und Review | Fach-/Architekturzuordnung, Coverage, Check-Bindungen und dokumentierten Reviewablauf durch vorhandene Ausführung führen. | Artefakte, Projectcoverage/Projectwork und bei Vertragsänderung Projectrun. | Keine neue Regel verschwindet aus Realisierung/Prüfung; Reviewergebnisse nennen Befunde und Grenzen. |
 | P5 — Kontrast und Integration | Kleines CLI-Gegenbeispiel, aktuelle Nutzer-/Formatdokumentation und normale Kandidatengates. | Beispiele, Tests und zuständige Dokumente. | Kein Bibliotheks-, Datenbank- oder Mehrmanager-Zwang; Checks gelten für festen Kandidaten. |
 
 P1 bis P4 bilden gemeinsam einen vollständigen Durchstich. Ein nur zugelassener neuer Kind ist kein fertiges Feature. Die Pakete sind Vorschläge, keine vergebenen Backlog-IDs und keine gestarteten Implementierungsaufträge.
@@ -274,7 +316,9 @@ Heute sind diese Prüfungen ausschließlich geplant. Bei Umsetzung gelten zusät
 | Risiko | Gezielter Nachweis |
 | --- | --- |
 | Nominaler Kind ist nur ein Label | Verweis auf Concept oder UseCase an einem Rule-only-Ziel wird abgewiesen; gültiger Rule-Verweis wird aufgelöst. |
-| Gemischte Referenz verliert Bedeutung | Concept/Rule/UseCase in Kontext, Realisierung, Check und Entscheidung bleiben eindeutig, digest-relevant und im richtigen Scope. |
+| Gemischte Referenz verliert Bedeutung | Alle sieben Fach-/Architekturtypen bleiben in Kontext, Realisierung, Check und Entscheidung eindeutig und digest-relevant. |
+| Struktur oder Anbieter ist mehrdeutig | Doppelte Parentzuordnung, Zusammensetzungszyklus sowie fehlender/mehrdeutiger Provider eines konsumierten Interface erzeugen Befunde. |
+| Architekturzuordnung verschwindet | Geänderte Fachzuordnung, Interfacevertrag und AppliesTo-Ziel erreichen die relevanten alten/neuen Bausteine, Artefakte und Prüfungen; Prosa allein gilt nicht als vollständiger Codebeleg. |
 | Neue Regel fehlt im Impact | Geänderte Rule und hinzugefügte/entfernte Kante erreichen erwartete Pflichten, Owners, Artefakte und Checks unter Alt/Neu-Betrachtung. |
 | Scope wird still verkleinert | Kombinierte Änderungen erhalten Pflichten; Unknown und Context werden nicht unbegründet aus Prüfung gestrichen. |
 | Pfadregeln sind irreführend | Neue Datei im Präfix wird klassifiziert; unzugeordnete Datei und widersprüchliche Owner bleiben Befunde. |
@@ -290,7 +334,9 @@ Die strukturelle Zusage lautet: erkläre Definitionen und Beziehungen im gewähl
 Offen bleiben besonders:
 - Exakte API-Version und Migrationsweg.
 - Referenzunion versus getrennte Properties sowie zulässige Zielmengen.
-- Bedarf für weitere Beschreibungstypen, etwa System, Architektur oder Workflow, ohne die gewählten Kinds zu universellen Sammeltypen zu machen.
+- Regeln für externen Scope, nicht modellierte Interna und mögliche Mehrfachprovider.
+- Beitragsteilung bei gemeinsamer UseCase-Realisierung und Rolle von Architekturchecks.
+- Bedarf weiterer Beschreibungstypen, ohne universelle Sammeltypen zu schaffen.
 - Regelbedingungen versus Invarianten: zunächst Prosa oder eigener nominaler/Feldvertrag?
 - Verbindliche Protokollierung der Reviewpflicht ohne Verwechslung mit Autorisierung.
 - Angemessene Zuordnungsgranularität und Breite des Impact.
@@ -304,8 +350,10 @@ Offen bleiben besonders:
 - Branch: `docs/product-model-concepts`.
 - Eingang der vollständigen Konsolidierung: `07e03215c968302361f5acedc8e69bd573ac95be`; beim Beginn sauber.
 - Eingang der Kind-Aktualisierung: `5d18e8f4438cc1d24a10882f04b10501d65db20e`; beim Beginn sauber.
+- Eingang der Architekturergänzung vom 13. Oktober: `ec7ba72d25c7f17cedcfb61e6b77f11d5cddb5ed`; beim Beginn sauber.
 - Ursprüngliche Branchbasis: `ecc69b0ad99236a5ddd02b85bf9ba656a0000f15`.
 - Letzter gesonderter Main-Abgleich: `32afd1a57e715130d056e98e433721c6e7a10278` vom 11. Oktober; heute nicht als aktuell neu verifiziert.
+- Zusätzlicher reiner Quellenrefresh im Gespräch am 13. Oktober: `c19d9d1259fcd493e2cc7ad93d10226778b2b7f4`. Das Projektvokabular besitzt dort weiterhin die fünf bisherigen Kinds und einzelne Reference-Zielkinds; die neuen Fach-/Architektur-Kinds und Referenzmengen dieses Entwurfs sind nicht implementiert. Der historische Vergleichsbericht bleibt unverändert datiert.
 - Lokale Änderungen dieses Auftrags: ausschließlich Konzept-, Beispiel-, Ablauf- und Navigationsdokumentation. Keine Produktimplementierung, Modellkompilierung, Tests, Studien oder Agentenausführung am Bibliotheksprojekt.
 
 Die frühere Facettenempfehlung wird durch diesen zusammenhängenden Arbeitsentwurf abgelöst. Datierte Vorarbeiten bleiben mit Statushinweis erhalten. Kanonische Produktdokumente, Konzeptregister und Backlog werden durch diesen Entwurf nicht automatisch geändert.

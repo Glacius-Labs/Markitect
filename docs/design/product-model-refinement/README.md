@@ -1,6 +1,6 @@
 # Markitect: Grundmodell und aktueller Konzeptentwurf
 
-Aktualisiert am 12. Oktober 2026. Diese Map trennt vereinbarte Produktgrundlagen, bestätigte Entwurfsrichtung, offene Detailvorschläge und datierte Vorarbeiten. Sie ist kein Implementierungs- oder Testnachweis.
+Aktualisiert am 13. Oktober 2026. Diese Map trennt vereinbarte Produktgrundlagen, bestätigte Entwurfsrichtung, offene Detailvorschläge und datierte Vorarbeiten. Sie ist kein Implementierungs- oder Testnachweis.
 
 ## Grundmodell
 
@@ -12,16 +12,17 @@ Aktualisiert am 12. Oktober 2026. Diese Map trennt vereinbarte Produktgrundlagen
 
 Die Arbeitsidee bleibt, das Modell zu pflegen und seine Realisierung durchführen zu lassen. Die interne Zuordnung dieses abstrakten Apply-Begriffs zu konkreten CLI-Kommandos ist damit nicht festgelegt.
 
-Der gewählte Verantwortungsdateiname ist `mandate.yaml`. `Concept`, `Rule` und `UseCase` sind als eigene Kinds gewählt; die bisherige Category-Unterscheidung entfällt dafür. Die Umbenennung des vorhandenen Kinds `Manager` ist nicht beschlossen.
+Der gewählte Verantwortungsdateiname ist `mandate.yaml`. `Concept`, `Rule`, `UseCase` sowie die Architektur-Kinds `System`, `Component`, `Module`, `Interface` sind gewählt; die bisherige Category-Unterscheidung entfällt dafür. Die Umbenennung des vorhandenen Kinds `Manager` ist nicht beschlossen.
 
 ## Aktueller Arbeitsstand und Lesereihenfolge
 
 1. [Konsolidierter Konzept- und Umsetzungsentwurf](canonical-model-proposal.md): kleine Struktur, nominale Regeln, verbindliche Prosa, explizite Beziehungen und methodische Reviews.
-2. [Vollständiges aktuelles Bibliotheks-YAML](library-model-example.md): Mandat, sechs Concepts, drei Rules, zwei UseCases, Artefakte und Check-Platzhalter; Kind-angereicherte Referenzen als versionierter Zukunftskandidat.
-3. [Konkreter Änderungsdurchlauf](library-change-walkthrough.md): Überfälligkeitsregel, fehlende Abhängigkeit, Modellreview, konservative Wirkung und neue Prüfaufträge.
-4. [Fester Main-Abgleich vom 11. Oktober](canonical-model-main-comparison.md): Ausgangspunkt für einen beim Implementierungsstart zu erneuernden Vergleich.
+2. [Vollständiges aktuelles Bibliotheksmodell](library-model-example.md): Manifest, Mandat, Fachdefinitionen und getrennte Frontend-/Backend-/Datenbank-/Prüf-/Dokumentationsbeiträge.
+3. [Architektur als YAML](library-architecture-example.md): System, Components, Modules, Interfaces, ihre Beziehungen und Architekturregel; zusammen mit dem Fachmodell 34 Definitionen.
+4. [Konkreter Änderungsdurchlauf](library-change-walkthrough.md): Überfälligkeitsregel, fehlende Abhängigkeit, Modellreview, konservative Wirkung und neue Prüfaufträge.
+5. [Fester Main-Abgleich vom 11. Oktober](canonical-model-main-comparison.md): Ausgangspunkt für einen beim Implementierungsstart zu erneuernden Vergleich.
 
-Der methodische Ausgangspunkt und die nominalen Kinds Concept, Rule und UseCase sind miteinander vereinbar. Wie tief Fachproperties und Bedingungen formalisiert werden, bleibt eine separate Frage. Umfangreiche Facetten sind eine mögliche spätere Erweiterung. Prosa bleibt verbindlich; ihre Bedeutung und die Vollständigkeit der Beziehungen werden nicht allein vom Strukturcompiler bewiesen.
+Der methodische Ausgangspunkt und die nominalen Fach-/Architektur-Kinds sind miteinander vereinbar. Zusammensetzung, Interface-Zusammenarbeit, Fachzuordnung, Artefaktrealisierung und Mandate bleiben eigene Beziehungen. Wie tief Fachproperties und Bedingungen formalisiert werden, bleibt eine separate Frage. Umfangreiche Facetten sind eine mögliche spätere Erweiterung. Prosa bleibt verbindlich; ihre Bedeutung und die Vollständigkeit der Beziehungen werden nicht allein vom Strukturcompiler bewiesen.
 
 Offen sind insbesondere Zielmengen und Umsetzung gemischter Referenzen, Versions-/Migrationsvertrag, Bedarf für weitere Beschreibungstypen sowie konkrete Fachdetails des Beispiels. `vNext` ist ein Platzhalter. Das neue Beispiel wurde nicht angelegt, kompiliert oder ausgeführt.
 
@@ -53,6 +54,7 @@ Produktgespräch `01a121f1-b948-7050-ae5d-9921b99db9c0`, Grundlagen vom 10. Okto
 - Ursprüngliche Branchbasis: `ecc69b0ad99236a5ddd02b85bf9ba656a0000f15`.
 - Eingang der vollständigen Konsolidierung: `07e03215c968302361f5acedc8e69bd573ac95be`; beim Beginn sauber.
 - Eingang der Kind-Aktualisierung: `5d18e8f4438cc1d24a10882f04b10501d65db20e`; beim Beginn sauber.
+- Eingang der Architekturergänzung: `ec7ba72d25c7f17cedcfb61e6b77f11d5cddb5ed`; beim Beginn sauber, am 13. Oktober ausdrücklich beauftragt.
 - Letzter gesonderter Implementierungsvergleich: `32afd1a57e715130d056e98e433721c6e7a10278` vom 11. Oktober; heute nicht neu als aktueller Stand verifiziert.
 
 Kanonische Produktdokumente bleiben [Vision](../../vision.md), [Konzeptregister](../../concepts/register.md) und [Architektur](../../architecture.md). Dieser Konzeptordner setzt ihre aktuellen Verträge und den koordinierten Modell-Owner nicht automatisch außer Kraft.
