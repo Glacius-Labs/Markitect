@@ -557,11 +557,17 @@ packages:
     title: Remove timing-dependent tests
     stream: TEST
     wave: 2
-    status: blocked
+    status: active
     owner: qa
     depends_on: [TEST-01]
     zone: runtime
-    note: Slices 158 (non-timing test limits) and 159 (flake-report capability) are merged; 151 cleared the adapter_test.go dependency. Timer injection or fakes remain incomplete and were not implemented by TEST-03. A future runtime slot behind TEST-04, or a bounded non-colliding assignment, is still required.
+    note: >-
+      QA has a read-only plan-preparation slot against actualMain a3 after full
+      ARCH13 closure. Runtime is free and separate from ARCH12 Tooling writes;
+      concrete timer/fake paths, alternatives, invariants and checks require Root
+      review before source edits. Slices158/159 and adapter151 remain complete;
+      timer injection/fakes are still incomplete. No automatic test retries,
+      timeout relaxation, Windows repair or broad Runtime redesign is assigned.
     inputs:
       - docs/work-items/surveys/tests-and-ci-20261010.md
       - docs/work-items/surveys/product-readiness-lessons-20261010.md
@@ -960,10 +966,19 @@ packages:
     title: Layer direction in the architecture gate
     stream: ARCH
     wave: 3
-    status: blocked
+    status: active
+    branch: dev/layer-direction
     owner: cleaner
     depends_on: [ARCH-13]
-    note: The gate forbids only product-to-legacy imports and restricts guardedwrite use; it checks no direction between the product layers (layers.go CheckMapLayers).
+    note: >-
+      Reserved after complete ARCH13 actual-Main a3 and CI38306645978 closure.
+      Fresh isolated dev/layer-direction from a3. Scope is layers.go/layers_test.go,
+      docs/development/modules.md and only the ARCH12 known problem in
+      docs/architecture.md. Enforce exact code-map Core/Infrastructure/Runtime/App
+      inward direction for production/test imports, ten allowed and six forbidden
+      pairs; validate map completeness and labels before classification.
+      Existing coarse imports, legacy denial, guardedwrite rules and CI remain.
+      Root owns canonical status and coordinates shared paths; no ARCH14/15/16.
     zone: free
     inputs:
       - pull request 162 (ARCH-10 known problems)
@@ -974,21 +989,24 @@ packages:
     title: Dependencies point inward
     stream: ARCH
     wave: 3
-    status: active
+    status: done
     branch: dev/inward-dependencies
+    pr: 252
     owner: cleaner
     depends_on: [ARCH-06, CLI-02, KG-02]
     note: >-
-      Cleaner explicitly reserved after complete ARCH06 actual-Main4c260/full CI38274318826;
-      CLI02 and KG02 prerequisites are done. PLAN PREPARATION ONLY on fresh isolated
-      dev/inward-dependencies at currentorigin/main; exact path/head/tree/clean state confirmed.
-      Inventory current Core Git/state writes and application imports plus Runtime/Application
-      layer edges, then provide reasoning, alternatives, concrete package/import/file ownership,
-      narrow model/code-map/generated-view accounting and verification plan. Root independent
-      review and exact shared-file coordination precede source/model/test edits. Preserve public
-      CLI/MCP/record/digest/staleness, guarded writes, budgets, freshness/no-replay and all E2Es.
-      ARCH12/14/15/16, store framework, new model kinds, provider/study/Government/Windows repair,
-      positive recovery, release and cleanup remain separate; Root owns canonical status docs.
+      PR252 final7876f2b699d345509ef559f31e753c1b38ed48fd merged as actualMain
+      a3a393f9fcf2a70a85a04ee1fae934be85c8fdac; reviewed/hosted/Main tree04b10e9a
+      matches. Required38305411089 Quality/Race and fake38305411402 passed;
+      actualMain38306645978 all three jobs including source publication passed.
+      Both independently parsed Main reports have47 packages,2040 test passes,
+      19 skips,zero failures/incomplete tests and all six public method cases PASS.
+      Core evaluation consumes finite values; App owns Git/history persistence;
+      Runtime uses finite App callbacks without importing App. Additive fixture
+      corrections preserve evidence/guards/assertions; the extracted evidence
+      predicate exactly matches baseline883. Original97 and all rejected heads,
+      focused attempts and original Windows60m fullFAIL remain immutable and
+      separate. Cleaner released from ARCH13; ARCH12 is its next bounded slot.
     zone: model
     inputs:
       - pull request 162 (ARCH-10 known problems)
