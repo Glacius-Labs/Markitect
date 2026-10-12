@@ -65,7 +65,7 @@ func TestApplicationFacadeBoundary(t *testing.T) {
 }
 
 func TestCLIFunctionSize(t *testing.T) {
-	for _, dir := range []string{".", "../cli"} {
+	for _, dir := range []string{".", "../releasecli"} {
 		fset := token.NewFileSet()
 		packages, err := parser.ParseDir(fset, dir, func(info os.FileInfo) bool {
 			return !strings.HasSuffix(info.Name(), "_test.go")

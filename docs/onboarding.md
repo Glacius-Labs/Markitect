@@ -16,7 +16,7 @@ The release binary is already installed when the measurement script receives `-M
 
 ## Run the bounded task
 
-The synthetic [parcel-support fixture](../examples/onboarding/delivery-service/README.md) contains shared customer-data guidance, a policy, workflow, contract, agent, and Skill entrypoint. `tasks/query-only-prompt.md` with `tasks/query-only-expected.yaml` is the shared read-only task for MCP/CLI find, explain, and context parity. `tasks/policy-edit-prompt.md` with `tasks/expected.yaml` is a separate CLI-only mutation task that also exercises verification and fixed-SHA impact. Oracle and prompt files are excluded from the measured project's Git snapshots.
+The synthetic [parcel-support fixture](https://github.com/Glacius-Labs/Markitect/blob/d083c8f37b6bb1e09a9c5a7947c421651a7e755b/examples/onboarding/delivery-service/README.md) contains shared customer-data guidance, a policy, workflow, contract, agent, and Skill entrypoint. `tasks/query-only-prompt.md` with `tasks/query-only-expected.yaml` is the shared read-only task for MCP/CLI find, explain, and context parity. `tasks/policy-edit-prompt.md` with `tasks/expected.yaml` is a separate CLI-only mutation task that also exercises verification and fixed-SHA impact. Oracle and prompt files are excluded from the measured project's Git snapshots.
 
 The scripted replay of this task, `scripts/onboarding/Measure-Adoption.ps1`, was retired on 11 October 2026 (backlog CI-03). It mixed the model-first `init` with legacy commands. Two checks now cover the model-first onboarding path:
 - On every pull request, the [smoke driver](../tools/smoke/main.go) runs `init` and `onboard` with a preview, a digest-checked write and `check`.
@@ -28,7 +28,7 @@ The dated result below is the record of the retired script.
 
 ## Dated result
 
-The published-binary run completed on 2026-10-01 with `v0.5.0` (`windows/amd64`, SHA-256 `6f5b98dad2ea6003bc0368800691af70084a44d2c225c26fe12d120bcda27178`). The full machine run took 8.973 seconds; the timed Markitect commands totaled 7.600 seconds. The base and candidate commits were `973f11d9cfc157610ed84f4e9582c3534c67018c` and `26c88c133cf09e09dd7f03a630c8e470128c002d`. The exact durations and passed expected sets are in [`measurement.yaml`](../examples/onboarding/delivery-service/measurement.yaml).
+The published-binary run completed on 2026-10-01 with `v0.5.0` (`windows/amd64`, SHA-256 `6f5b98dad2ea6003bc0368800691af70084a44d2c225c26fe12d120bcda27178`). The full machine run took 8.973 seconds; the timed Markitect commands totaled 7.600 seconds. The base and candidate commits were `973f11d9cfc157610ed84f4e9582c3534c67018c` and `26c88c133cf09e09dd7f03a630c8e470128c002d`. The exact durations and passed expected sets are in [`measurement.yaml`](https://github.com/Glacius-Labs/Markitect/blob/d083c8f37b6bb1e09a9c5a7947c421651a7e755b/examples/onboarding/delivery-service/measurement.yaml).
 
 The executable was supplied at a verified local path for this run; package installation itself was setup, not a timed or independently observed step. The first fixture draft also exposed a modeling correction: the policy must be authored in its Text YAML resource and its managed Markdown view regenerated. Context includes the Text YAML input, while impact reports both the changed YAML and its rendered view. The final fixture includes the generated baseline views, and the runner keeps prompts/oracles outside both fixed project snapshots.
 

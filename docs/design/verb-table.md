@@ -2,7 +2,9 @@
 
 Specification for backlog CLI-01, 10 October 2026, against main `a98921cc`. It implements register [DEC-017](../concepts/register.md#dec-017-command-model-top-level-verbs-from-one-verb-table) and the command consequences of [DEC-014](../concepts/register.md#dec-014-compatibility-does-not-drive-decisions). Its input is the [CLI, MCP and App Server survey](../work-items/surveys/cli-mcp-app-server-20261010.md).
 
-This page is the target contract. CLI-02 implements the verbs, the tools and the `markitect-legacy` split; CLI-03, MCP-01, TEST-02, AGENT-02 and ARCH-08 in the [backlog](../work-items/backlog.yaml) complete it. [Usage](../usage.md) and the [Project workflow](../project-workflow.md) describe the commands as they exist.
+This is the historical design for the command transition. The temporary `markitect-legacy` split used during implementation is retired with ARCH-09; release preparation uses `markitect-release`. The tables below preserve the staged design rather than establish current implementation or acceptance. [Project operations](../project-operations.md) and [Project workflow](../project-workflow.md) own the current command contract; the [backlog](../work-items/backlog.yaml) owns package status and evidence.
+
+The current removal keeps the meaningful repository gates: `markitect-check-modules` now composes pure hook and pipeline checks over the current project model, and `markitect-check-architecture` delegates through a narrow Host adapter. Full project Artifact coverage replaces the retired scoped artifact checker. The old Project/Domain commands, adapter binaries and fixture closure are removed; the staged binary list below is historical.
 
 ## Summary
 

@@ -1,6 +1,6 @@
 # MCP evaluation runbook
 
-The delivery-service fixture owns the single shared actor prompt at [`query-only-prompt.md`](../../examples/onboarding/delivery-service/tasks/query-only-prompt.md) and the evaluator-only oracle at [`query-only-expected.yaml`](../../examples/onboarding/delivery-service/tasks/query-only-expected.yaml). Keep task wording and expected answers there; do not duplicate them in this runbook.
+The delivery-service fixture owns the single shared actor prompt at [`query-only-prompt.md`](https://github.com/Glacius-Labs/Markitect/blob/d083c8f37b6bb1e09a9c5a7947c421651a7e755b/examples/onboarding/delivery-service/tasks/query-only-prompt.md) and the evaluator-only oracle at [`query-only-expected.yaml`](https://github.com/Glacius-Labs/Markitect/blob/d083c8f37b6bb1e09a9c5a7947c421651a7e755b/examples/onboarding/delivery-service/tasks/query-only-expected.yaml). Keep task wording and expected answers there; do not duplicate them in this runbook.
 
 The recorded baseline is `973f11d9cfc157610ed84f4e9582c3534c67018c`; the published CLI reports snapshot digest `3bb9fe30d2188c86bcce1bf77fc551bcbd6741f4728ea34f270f7d9cc3668e87`. The separate CLI-only mutation candidate is `26c88c133cf09e09dd7f03a630c8e470128c002d`.
 

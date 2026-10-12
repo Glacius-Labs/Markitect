@@ -73,7 +73,7 @@ markitect version
 markitect check --repo ./markitect-sample-{{TAG}}/examples/minimal
 ~~~
 
-The [minimal example](examples/minimal/README.md) is a synthetic, executable fixture. To use Markitect in your own repository, follow the [release installation and verification guide](integration/README.md) to preview and install a project pin.
+The [minimal example from {{TAG}}](https://github.com/Glacius-Labs/Markitect/tree/{{TAG}}/examples/minimal) is a synthetic, executable fixture. To use Markitect in your own repository, follow the [release installation and verification guide](integration/README.md) to preview and install a project pin.
 
 <!-- markitect-release:try:end -->`
 	values := strings.NewReplacer("{{VERSION}}", version, "{{TAG}}", tag, "{{WINDOWS_SHA256}}", windowsDigest, "{{LINUX_SHA256}}", linuxDigest)
