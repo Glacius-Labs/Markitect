@@ -558,16 +558,18 @@ packages:
     stream: TEST
     wave: 2
     status: active
+    branch: dev/controlled-timeouts
     owner: qa
     depends_on: [TEST-01]
     zone: runtime
     note: >-
-      QA has a read-only plan-preparation slot against actualMain a3 after full
-      ARCH13 closure. Runtime is free and separate from ARCH12 Tooling writes;
-      concrete timer/fake paths, alternatives, invariants and checks require Root
-      review before source edits. Slices158/159 and adapter151 remain complete;
-      timer injection/fakes are still incomplete. No automatic test retries,
-      timeout relaxation, Windows repair or broad Runtime redesign is assigned.
+      Root and independent review approved a bounded private per-call timeout
+      and test-barrier implementation at actualMain a3 after full ARCH13 closure.
+      Fresh dev/controlled-timeouts uses nine named Runtime files, separate from
+      ARCH12 Tooling. Public Run/Config/RunOptions, cumulative clocks, evidence,
+      budgets and actual OS descendant/dynamic-tool timeout assertions stay fixed.
+      Slices158/159 and adapter151 remain complete; reuse the no-retry flake report.
+      No automatic retries, timeout relaxation, Windows repair or Runtime redesign.
     inputs:
       - docs/work-items/surveys/tests-and-ci-20261010.md
       - docs/work-items/surveys/product-readiness-lessons-20261010.md
