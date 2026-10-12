@@ -557,19 +557,29 @@ packages:
     title: Remove timing-dependent tests
     stream: TEST
     wave: 2
-    status: active
+    status: done
     branch: dev/controlled-timeouts
+    pr: 255
     owner: qa
     depends_on: [TEST-01]
     zone: runtime
     note: >-
-      Root and independent review approved the bounded private per-call timeout
-      and test-barrier implementation plan at actualMain a3 after full ARCH13 closure.
-      Fresh dev/controlled-timeouts uses nine named Runtime files, separate from
-      ARCH12 Tooling. Public Run/Config/RunOptions, cumulative clocks, evidence,
-      budgets and actual OS descendant/dynamic-tool timeout assertions stay fixed.
-      Slices158/159 and adapter151 remain complete; reuse the no-retry flake report.
-      No automatic retries, timeout relaxation, Windows repair or Runtime redesign.
+      PR255 frozen 086d8c581a61881980e7680a066a8fb6fba636e4 merged as actual Main
+      c19d9d1259fcd493e2cc7ad93d10226778b2b7f4, tree0356a557, on c696 plus 086d.
+      Required CI 38315660326 Quality/Race and fake 38315660341 passed on earlier
+      hosted base ab; Root composed current c696 and passed vet, check and architecture.
+      Actual-Main CI 38316964350 all three jobs passed. Root and QA independently
+      verified both full Main reports (2109 PASS, 19 skips, zero failures/incomplete,
+      all six public methods) and all 460 packaged Git blobs, bootstrap and lock.
+      Seven of nine reserved files changed; per-call private timer constructors,
+      phase barriers and corrected readiness ordering preserve public APIs,
+      cumulative budgets, receipts, no-replay and real OS/process timeout assertions.
+      The existing no-retry flake report was exercised on the two actual PR reports;
+      its zero failing/flaky rows are scoped to that one run, not general flake freedom.
+      Original 086d Windows once ended naturally exit1 at 22:43:14.3930014Z with
+      1728 passes, 5 test failures, 29 skips, 6 package failures and 56 unfinished tests; no retry or cause
+      claim. Original source/ref and all raw evidence remain preserved. Runtime
+      implementation reservation released; no further QA implementation assigned.
     inputs:
       - docs/work-items/surveys/tests-and-ci-20261010.md
       - docs/work-items/surveys/product-readiness-lessons-20261010.md
@@ -968,19 +978,23 @@ packages:
     title: Layer direction in the architecture gate
     stream: ARCH
     wave: 3
-    status: active
+    status: done
     branch: dev/layer-direction
+    pr: 254
     owner: cleaner
     depends_on: [ARCH-13]
     note: >-
-      Reserved after complete ARCH13 actual-Main a3 and CI38306645978 closure.
-      Fresh isolated dev/layer-direction from a3. Scope is layers.go/layers_test.go,
-      docs/development/modules.md and only the ARCH12 known problem in
-      docs/architecture.md. Enforce exact code-map Core/Infrastructure/Runtime/App
-      inward direction for production/test imports, ten allowed and six forbidden
-      pairs; validate map completeness and labels before classification.
-      Existing coarse imports, legacy denial, guardedwrite rules and CI remain.
-      Root owns canonical status and coordinates shared paths; no ARCH14/15/16.
+      PR254 frozen 46e046451ea920eed1ff4f729c95e6a334655e97 merged as actual Main
+      c696df9150b05b2781fa148a376574951eae2ab1, tree0733184c. Required CI 38314307666
+      Quality/Race and fake 38314307692 passed. Actual-Main CI 38315787149 all three
+      jobs passed; each complete Main report has 2096 test passes, 19 skips, zero
+      failures or incomplete tests, all six public methods and 48 matrix leaves PASS.
+      Root and independent reviewers verified full reports and all 459 packaged Git
+      blobs, bootstrap and lock. Exact four-layer direction and fail-closed code-map
+      completeness retain coarse, legacy and guarded API boundaries. Original 46e
+      Windows full exit1 (1527 passes, 6 test failures, 28 skips, 55 unfinished) and packaged smoke
+      FAIL remain immutable separate diagnostics; no retry or causal attribution.
+      Cleaner released from ARCH12 and holds the approved separate ARCH16 slot.
     zone: free
     inputs:
       - pull request 162 (ARCH-10 known problems)
@@ -1002,7 +1016,7 @@ packages:
       matches. Required38305411089 Quality/Race and fake38305411402 passed;
       actualMain38306645978 all three jobs including source publication passed.
       Both independently parsed Main reports have47 packages,2040 test passes,
-      19 skips,zero failures/incomplete tests and all six public method cases PASS.
+      19 skips, zero failures/incomplete tests and all six public method cases PASS.
       Core evaluation consumes finite values; App owns Git/history persistence;
       Runtime uses finite App callbacks without importing App. Additive fixture
       corrections preserve evidence/guards/assertions; the extracted evidence
@@ -1047,10 +1061,25 @@ packages:
     title: Package directories show their layer
     stream: ARCH
     wave: 3
-    status: blocked
+    status: active
+    branch: dev/layer-directories
     owner: cleaner
     depends_on: [ARCH-13, ARCH-09]
-    note: Product core and infrastructure packages (projectbriefing, projectcoverage, guardedwrite) live in src/internal/host next to the legacy root.
+    note: >-
+      Root approved the complete plan at actual Main c19 after full TEST05 closure;
+      plan SHA256 9284f7a60d64b0214df82e78fde97875af39a9977527227adc0ace7a937b5d0f.
+      Fresh isolated dev/layer-directories begins with fixed check and Product,
+      Tooling and Documentation contexts before edits. The plan moves all 28 product packages
+      to Core/Infrastructure/Application/Runtime directories; all 47 catalogue
+      rows, 390 file pairs and 815 allowed paths are independently accounted.
+      Core projectmodel and Infrastructure guardedwrite keep their existing coarse
+      capability/composition families; the fine matrix and all import policies stay.
+      Eight canonical YAML ownership updates retain twelve Product Application
+      packages and three Tooling adapters, and must regenerate both views.
+      Bootstrap and release selectors retain supported immutable archive layouts.
+      Root reserves backlog/roadmap/integration record/concepts; no forwarding
+      packages, guard relaxation, Windows repair, provider work or source closure
+      is inferred from this plan. Ordinary frozen-head and actual-Main proof follow.
     zone: free
     inputs:
       - pull request 162 (ARCH-10 known problems)
