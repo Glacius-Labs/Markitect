@@ -427,17 +427,19 @@ func inspectionBriefHappy(t *testing.T, surface string) {
 	const provenance = "contract-briefing"
 	argv := []string{"--since", since, "--revision", revision, "--provenance", provenance}
 	input := map[string]any{"since": since, "revision": revision, "provenance": provenance}
-	result := decodeOutput[struct {
-		Bundle      projectbriefing.Bundle `json:"bundle"`
-		StateDigest string                 `json:"stateDigest"`
-	}](t, caller.Success("brief", argv, input))
-	if len(result.Bundle.Events) != 1 || result.Bundle.Digest == "" || result.StateDigest == "" || result.Bundle.SinceRevision != since || result.Bundle.Revision != revision {
-		t.Fatalf("brief preview omitted accepted-history event/digest: %+v", result)
-	}
-	event := result.Bundle.Events[0]
-	if event.DefinitionID.Kind != "Manager" || event.DefinitionID.Name != "project-owner" || event.Change != "modified" || event.After == nil || event.After.Purpose != "Owns the repository-wide project mandate and delegates bounded responsibility." {
-		t.Fatalf("brief preview did not describe the expected Manager-purpose change: %+v", event)
-	}
+	caller.NoWrite(func() {
+		result := decodeOutput[struct {
+			Bundle      projectbriefing.Bundle `json:"bundle"`
+			StateDigest string                 `json:"stateDigest"`
+		}](t, caller.Success("brief", argv, input))
+		if len(result.Bundle.Events) != 1 || result.Bundle.Digest == "" || result.StateDigest == "" || result.Bundle.SinceRevision != since || result.Bundle.Revision != revision {
+			t.Fatalf("brief preview omitted accepted-history event/digest: %+v", result)
+		}
+		event := result.Bundle.Events[0]
+		if event.DefinitionID.Kind != "Manager" || event.DefinitionID.Name != "project-owner" || event.Change != "modified" || event.After == nil || event.After.Purpose != "Owns the repository-wide project mandate and delegates bounded responsibility." {
+			t.Fatalf("brief preview did not describe the expected Manager-purpose change: %+v", event)
+		}
+	})
 	assertNoAgents(t, invoker)
 }
 func inspectionBriefNoWrite(t *testing.T, surface string) {

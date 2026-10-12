@@ -281,9 +281,10 @@ func contractPlanNoWrite(t *testing.T, surface string) {
 
 func contractRunHappy(t *testing.T, surface string) {
 	t.Helper()
-	caller, ops, _, invoker := newRuntimeContract(t, surface, false)
+	caller, ops, repo, invoker := newRuntimeContract(t, surface, false)
 	plan := contractPersistPlan(t, caller, ops)
 	report := contractSuccess(t, caller, "run", []string{plan.ID, "--execute"}, map[string]any{"plan": plan.ID, "execute": true})
+	assertRuntimeContractTargetInitial(t, repo.Dir)
 	if contractString(t, report, "status") != projectrun.StatusIntegrated || contractString(t, report, "candidate.id") == "" || invoker.calls != 1 {
 		t.Fatalf("run did not integrate the one Manager's work: calls=%d report=%v", invoker.calls, report)
 	}
@@ -291,12 +292,14 @@ func contractRunHappy(t *testing.T, surface string) {
 
 func contractRunNoWrite(t *testing.T, surface string) {
 	t.Helper()
-	caller, ops, _, invoker := newRuntimeContract(t, surface, false)
+	caller, ops, repo, invoker := newRuntimeContract(t, surface, false)
 	plan := contractPersistPlan(t, caller, ops)
+	assertRuntimeContractTargetInitial(t, repo.Dir)
 	before := invoker.calls
 	caller.NoWrite(func() {
 		contractUsageRejected(t, caller, "run", []string{plan.ID}, map[string]any{"plan": plan.ID})
 	})
+	assertRuntimeContractTargetInitial(t, repo.Dir)
 	if invoker.calls != before {
 		t.Fatalf("unauthorized run invoked runtime: before=%d after=%d", before, invoker.calls)
 	}
@@ -312,7 +315,9 @@ func contractResumeHappy(t *testing.T, surface string) {
 	if err == nil || interrupted.Status != projectrun.StatusInterrupted || invoker.calls != 0 {
 		t.Fatalf("setup did not retain a safe queued interruption: status=%s calls=%d err=%v", interrupted.Status, invoker.calls, err)
 	}
+	assertRuntimeContractTargetInitial(t, repo.Dir)
 	report := contractSuccess(t, caller, "resume", []string{plan.ID, "--execute"}, map[string]any{"run": plan.ID, "execute": true})
+	assertRuntimeContractTargetInitial(t, repo.Dir)
 	if contractString(t, report, "status") != projectrun.StatusIntegrated || invoker.calls != 1 {
 		t.Fatalf("resume failed to continue the known queued run: calls=%d report=%v", invoker.calls, report)
 	}
@@ -328,10 +333,12 @@ func contractResumeNoWrite(t *testing.T, surface string) {
 	if err == nil || interrupted.Status != projectrun.StatusInterrupted || invoker.calls != 0 {
 		t.Fatalf("setup did not retain a safe queued interruption: status=%s calls=%d err=%v", interrupted.Status, invoker.calls, err)
 	}
+	assertRuntimeContractTargetInitial(t, repo.Dir)
 	before := invoker.calls
 	caller.NoWrite(func() {
 		contractUsageRejected(t, caller, "resume", []string{plan.ID}, map[string]any{"run": plan.ID})
 	})
+	assertRuntimeContractTargetInitial(t, repo.Dir)
 	if invoker.calls != before {
 		t.Fatalf("unauthorized resume invoked runtime: before=%d after=%d", before, invoker.calls)
 	}
@@ -345,15 +352,19 @@ func contractRepairHappy(t *testing.T, surface string) {
 	if err != nil || run.Status != projectrun.StatusIntegrated {
 		t.Fatalf("setup run did not integrate: status=%s err=%v", run.Status, err)
 	}
+	assertRuntimeContractTargetInitial(t, repo.Dir)
 	failed, err := ops.Verify(context.Background(), projectapp.RunOperation{Root: repo.Dir, RunID: plan.ID})
 	if err == nil || failed.Status != "failed" || len(failed.Checks) != 1 || failed.Checks[0].ExitCode == 0 {
 		t.Fatalf("setup check did not fail as intended: report=%+v err=%v", failed, err)
 	}
+	assertRuntimeContractTargetInitial(t, repo.Dir)
 	repaired := contractSuccess(t, caller, "repair", []string{plan.ID, "--execute"}, map[string]any{"run": plan.ID, "execute": true})
+	assertRuntimeContractTargetInitial(t, repo.Dir)
 	if contractString(t, repaired, "status") != projectrun.StatusIntegrated || invoker.calls != 2 {
 		t.Fatalf("repair did not produce a fresh integrated candidate: calls=%d report=%v", invoker.calls, repaired)
 	}
 	verified := contractSuccess(t, caller, "verify", []string{plan.ID, "--execute"}, map[string]any{"run": plan.ID, "execute": true})
+	assertRuntimeContractTargetInitial(t, repo.Dir)
 	if contractString(t, verified, "status") != "verified" {
 		t.Fatalf("repaired candidate did not pass fresh verification: %v", verified)
 	}
@@ -367,14 +378,17 @@ func contractRepairNoWrite(t *testing.T, surface string) {
 	if err != nil || run.Status != projectrun.StatusIntegrated {
 		t.Fatalf("setup run did not integrate: status=%s err=%v", run.Status, err)
 	}
+	assertRuntimeContractTargetInitial(t, repo.Dir)
 	failure, err := ops.Verify(context.Background(), projectapp.RunOperation{Root: repo.Dir, RunID: plan.ID})
 	if err == nil || failure.Status != projectrun.StatusFailed || len(failure.Checks) != 1 || failure.Checks[0].ExitCode == 0 {
 		t.Fatalf("setup required-check failure was not recorded: report=%+v err=%v", failure, err)
 	}
+	assertRuntimeContractTargetInitial(t, repo.Dir)
 	before := invoker.calls
 	caller.NoWrite(func() {
 		contractUsageRejected(t, caller, "repair", []string{plan.ID}, map[string]any{"run": plan.ID})
 	})
+	assertRuntimeContractTargetInitial(t, repo.Dir)
 	if invoker.calls != before {
 		t.Fatalf("unauthorized repair invoked runtime: before=%d after=%d", before, invoker.calls)
 	}
@@ -387,7 +401,9 @@ func contractVerifyHappy(t *testing.T, surface string) {
 	if _, err := ops.Run(context.Background(), projectapp.RunOperation{Root: repo.Dir, RunID: plan.ID}); err != nil {
 		t.Fatal(err)
 	}
+	assertRuntimeContractTargetInitial(t, repo.Dir)
 	verified := contractSuccess(t, caller, "verify", []string{plan.ID, "--execute"}, map[string]any{"run": plan.ID, "execute": true})
+	assertRuntimeContractTargetInitial(t, repo.Dir)
 	if contractString(t, verified, "status") != "verified" || invoker.calls != 1 {
 		t.Fatalf("verify did not pass the required check without a verifier call: calls=%d report=%v", invoker.calls, verified)
 	}
@@ -400,10 +416,12 @@ func contractVerifyNoWrite(t *testing.T, surface string) {
 	if _, err := ops.Run(context.Background(), projectapp.RunOperation{Root: repo.Dir, RunID: plan.ID}); err != nil {
 		t.Fatal(err)
 	}
+	assertRuntimeContractTargetInitial(t, repo.Dir)
 	before := invoker.calls
 	caller.NoWrite(func() {
 		contractUsageRejected(t, caller, "verify", []string{plan.ID}, map[string]any{"run": plan.ID})
 	})
+	assertRuntimeContractTargetInitial(t, repo.Dir)
 	if invoker.calls != before {
 		t.Fatalf("unauthorized verify invoked runtime: before=%d after=%d", before, invoker.calls)
 	}
@@ -417,13 +435,16 @@ func contractApplyHappy(t *testing.T, surface string) {
 	if err != nil || run.Status != projectrun.StatusIntegrated {
 		t.Fatalf("setup run failed: status=%s err=%v", run.Status, err)
 	}
+	assertRuntimeContractTargetInitial(t, repo.Dir)
 	verification, err := ops.Verify(context.Background(), projectapp.RunOperation{Root: repo.Dir, RunID: plan.ID})
 	if err != nil || verification.Status != "verified" {
 		t.Fatalf("setup verification failed: status=%s err=%v", verification.Status, err)
 	}
+	assertRuntimeContractTargetInitial(t, repo.Dir)
 	preflight := contractSuccess(t, caller, "apply", []string{"--plan", plan.ID, "--run", plan.ID, "--candidate", run.Candidate.ID}, map[string]any{
 		"plan": plan.ID, "run": plan.ID, "candidate": run.Candidate.ID,
 	})
+	assertRuntimeContractTargetInitial(t, repo.Dir) // Read-only preflight must leave it untouched.
 	branch, head := contractString(t, preflight, "targetBranch"), contractString(t, preflight, "expectedHead")
 	worktree, verifyDigest := contractString(t, preflight, "expectedWorktree"), contractString(t, preflight, "verificationDigest")
 	if branch == "" || head == "" || worktree == "" || verifyDigest != verification.Digest {
@@ -448,19 +469,24 @@ func contractApplyNoWrite(t *testing.T, surface string) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	assertRuntimeContractTargetInitial(t, repo.Dir)
 	verification, err := ops.Verify(context.Background(), projectapp.RunOperation{Root: repo.Dir, RunID: plan.ID})
 	if err != nil || verification.Status != "verified" {
 		t.Fatalf("setup verification failed: report=%+v err=%v", verification, err)
 	}
+	assertRuntimeContractTargetInitial(t, repo.Dir)
 	beforeCalls := invoker.calls
 	caller.NoWrite(func() {
+		assertRuntimeContractTargetInitial(t, repo.Dir)
 		preflight := contractSuccess(t, caller, "apply", []string{"--plan", plan.ID, "--run", plan.ID, "--candidate", run.Candidate.ID}, map[string]any{
 			"plan": plan.ID, "run": plan.ID, "candidate": run.Candidate.ID,
 		})
+		assertRuntimeContractTargetInitial(t, repo.Dir)
 		if contractString(t, preflight, "verificationDigest") != verification.Digest {
 			t.Fatalf("read-only preflight is not bound to successful verification: %v", preflight)
 		}
 	})
+	assertRuntimeContractTargetInitial(t, repo.Dir)
 	if invoker.calls != beforeCalls {
 		t.Fatalf("read-only preflight invoked runtime: before=%d after=%d", beforeCalls, invoker.calls)
 	}
@@ -470,6 +496,7 @@ func contractDeliverHappy(t *testing.T, surface string) {
 	t.Helper()
 	caller, _, repo, invoker := newRuntimeContract(t, surface, false)
 	contractAcknowledgeExploration(t, repo.Dir)
+	assertRuntimeContractTargetInitial(t, repo.Dir)
 	result := contractSuccess(t, caller, "deliver", []string{"--exploration", "runtime-delivery", "--scope", "value-scope", "--execute", "--write"}, map[string]any{
 		"exploration": "runtime-delivery", "scope": "value-scope", "execute": true, "write": true,
 	})
@@ -483,6 +510,7 @@ func contractDeliverNoWrite(t *testing.T, surface string) {
 	t.Helper()
 	caller, _, repo, invoker := newRuntimeContract(t, surface, false)
 	contractAcknowledgeExploration(t, repo.Dir)
+	assertRuntimeContractTargetInitial(t, repo.Dir)
 	before := invoker.calls
 	caller.NoWrite(func() {
 		contractUsageRejected(t, caller, "deliver", []string{"--exploration", "runtime-delivery", "--scope", "value-scope"}, map[string]any{
@@ -495,8 +523,20 @@ func contractDeliverNoWrite(t *testing.T, surface string) {
 			"exploration": "runtime-delivery", "scope": "value-scope", "write": true,
 		})
 	})
+	assertRuntimeContractTargetInitial(t, repo.Dir)
 	if invoker.calls != before {
 		t.Fatalf("unauthorized deliver invoked runtime: before=%d after=%d", before, invoker.calls)
+	}
+}
+
+func assertRuntimeContractTargetInitial(t *testing.T, root string) {
+	t.Helper()
+	content, err := os.ReadFile(filepath.Join(root, "src", "value.txt"))
+	if err != nil {
+		t.Fatalf("read target artifact before guarded apply: %v", err)
+	}
+	if string(content) != "initial\n" {
+		t.Fatalf("runtime wrote target artifact before guarded apply: got %q, want %q", content, "initial\n")
 	}
 }
 
