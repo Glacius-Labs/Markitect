@@ -2,9 +2,9 @@
 
 # markitect
 
-Model digest: sha256:ebd1c99e098e5bc6061e0a7ebf9b27ccbaec896b8e4a402dc3903e1754679abd
+Model digest: sha256:09a570f7b628cc395d8a3fd5ceec6b673daed5d1399a4e110fce58d4f2564b72
 
-Report status: incomplete
+Report status: succeeded
 
 The structural model compiled from the explicitly selected Definition files. This view does not establish that repository code, tests, or prose conform to the model. Declared checks are not evidence that they ran.
 
@@ -51,7 +51,7 @@ The structural model compiled from the explicitly selected Definition files. Thi
 - Namespace: product
 - Purpose: Owns the current product: its core, infrastructure, application and runtime packages and their executables.
 - Parent Manager: ["project.markitect.example.org/v1alpha1","Manager","","markitect"]
-- Delegated paths: src/cmd/markitect-exchange-executor/, src/cmd/markitect-release/, src/cmd/markitect/, src/internal/core/, src/internal/host/agentexec/, src/internal/host/codexappserver/, src/internal/host/exchangecli/, src/internal/host/guardedwrite/, src/internal/host/mcp/, src/internal/host/projectadoption/, src/internal/host/projectapp/, src/internal/host/projectbriefing/, src/internal/host/projectcli/, src/internal/host/projectcoverage/, src/internal/host/projectexplore/, src/internal/host/projectonboarding/, src/internal/host/projectrun/, src/internal/host/projectsetup/, src/internal/host/projectwork/, src/internal/host/projectworkspace/, src/internal/host/releasecli/, src/internal/infrastructure/, src/internal/modules/projectmodel/
+- Delegated paths: src/cmd/markitect-exchange-executor/, src/cmd/markitect-release/, src/cmd/markitect/, src/internal/core/, src/internal/host/agentexec/, src/internal/host/buildinfo/, src/internal/host/codexappserver/, src/internal/host/exchangecli/, src/internal/host/guardedwrite/, src/internal/host/mcp/, src/internal/host/projectadoption/, src/internal/host/projectapp/, src/internal/host/projectbriefing/, src/internal/host/projectcli/, src/internal/host/projectcoverage/, src/internal/host/projectexplore/, src/internal/host/projectonboarding/, src/internal/host/projectrun/, src/internal/host/projectsetup/, src/internal/host/projectwork/, src/internal/host/projectworkspace/, src/internal/host/releasecli/, src/internal/host/releaseinstall/, src/internal/infrastructure/, src/internal/modules/projectmodel/
 - Instructions: Read a package's owning document in the code map before you change the package, and update it when the package's behavior changes.
 
 ### tooling
@@ -402,21 +402,7 @@ No exclusions are declared.
 ## Coverage and findings
 
 - Coverage mode: full (the whole repository)
-- Accounted: no
-- Conforming: no
+- Accounted: yes
+- Conforming: yes
 
-Only the paths and definitions with a finding are listed.
-
-- ["project.markitect.example.org/v1alpha1","Artifact","product","application-layer"]
-  - error (coverage.required-artifact-missing): Required Artifact path is absent from the current candidate: src/internal/host/buildinfo/
-  - error (coverage.required-artifact-missing): Required Artifact path is absent from the current candidate: src/internal/host/releaseinstall/
-  - incomplete (coverage.required-artifact-missing): Expected Artifact path is absent from the supplied inventory: src/internal/host/buildinfo/
-  - incomplete (coverage.required-artifact-missing): Expected Artifact path is absent from the supplied inventory: src/internal/host/releaseinstall/
-- src/internal/host/install.go
-  - error (coverage.unclassified): Repository path has no canonical model, Artifact realization, registered tool owner, ignore reason, or transitional exclusion.
-- src/internal/host/install_plan.go
-  - error (coverage.unclassified): Repository path has no canonical model, Artifact realization, registered tool owner, ignore reason, or transitional exclusion.
-- src/internal/host/install_safety_test.go
-  - error (coverage.unclassified): Repository path has no canonical model, Artifact realization, registered tool owner, ignore reason, or transitional exclusion.
-- src/internal/host/install_write.go
-  - error (coverage.unclassified): Repository path has no canonical model, Artifact realization, registered tool owner, ignore reason, or transitional exclusion.
+No path or definition has a finding.

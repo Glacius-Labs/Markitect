@@ -42,6 +42,10 @@ packages:
     doc: docs/source-snapshots.md#adapter-and-use-case-ownership
 
   # --- application --------------------------------------------------------
+  - path: src/internal/host/buildinfo
+    layer: application
+    purpose: Shared immutable source and build version for product and release tooling.
+    doc: integration/README.md#current-source-release-tooling
   - path: src/internal/host/mcp
     layer: application
     purpose: Local stdio MCP server over the project operations.
@@ -74,6 +78,10 @@ packages:
     layer: application
     purpose: Command interface of `markitect-release` for preparing or publishing a GitHub release.
     doc: docs/operations.md#release-operations
+  - path: src/internal/host/releaseinstall
+    layer: application
+    purpose: Plans and applies complete verified bundle pins through guarded writes.
+    doc: integration/README.md#current-source-release-tooling
 
   # --- runtime ------------------------------------------------------------
   - path: src/internal/host/agentexec

@@ -10,6 +10,135 @@ import (
 	"testing"
 )
 
+func TestOrderedCheckedApplyKeepsLockThroughReadbackAndPreservesOrder(t *testing.T) {
+	root := testRepo(t, "feature/ordered")
+	paths := []string{"z-pin", "a-pin", "manifest"}
+	capture, err := CaptureFiles(root, paths)
+	if err != nil {
+		t.Fatal(err)
+	}
+	changes := []Change{}
+	for _, path := range paths {
+		changes = append(changes, Change{Path: path, Bytes: []byte(path), Mode: 0644})
+	}
+	lock := filepath.Join(root, ".artifacts", "markitect", "write.lock")
+	assertLock := func() error {
+		if _, err := os.Stat(lock); err != nil {
+			return err
+		}
+		return nil
+	}
+	seen := 0
+	result, err := ApplyOrderedChecked(root, capture, changes, assertLock, func() error { seen++; return assertLock() }, func(result Result) error {
+		if err := assertLock(); err != nil {
+			return err
+		}
+		if !reflect.DeepEqual(result.CompletedPaths, paths) {
+			t.Fatalf("readback order: %v", result.CompletedPaths)
+		}
+		for _, path := range paths {
+			if string(mustRead(t, filepath.Join(root, path))) != path {
+				t.Fatalf("readback omitted %s", path)
+			}
+		}
+		other, err := CaptureFiles(root, paths)
+		if err != nil {
+			return err
+		}
+		if _, err := Apply(root, other, nil); err == nil || !strings.Contains(err.Error(), "lock is already present") {
+			t.Fatalf("competing writer during readback: %v", err)
+		}
+		// Callback-owned report bytes must not alter the caller's result.
+		result.CompletedPaths[0] = "modified-report"
+		return nil
+	})
+	if err != nil || seen != len(paths) || !reflect.DeepEqual(result.CompletedPaths, paths) {
+		t.Fatalf("ordered apply = %v, %v; guards=%d", result, err, seen)
+	}
+	if _, err := os.Stat(lock); !os.IsNotExist(err) {
+		t.Fatalf("lock after apply: %v", err)
+	}
+	capture, err = CaptureFiles(root, paths)
+	if err != nil {
+		t.Fatal(err)
+	}
+	checked := false
+	result, err = ApplyOrderedChecked(root, capture, nil, assertLock, nil, func(result Result) error { checked = true; return assertLock() })
+	if err != nil || !checked || len(result.CompletedPaths) != 0 {
+		t.Fatalf("no-op validation = %v, %v, checked=%v", result, err, checked)
+	}
+}
+
+func TestOrderedCheckedApplyReportsFailureAtEachGuardBoundary(t *testing.T) {
+	for _, stage := range []string{"preflight", "second-target", "readback", "target-edit", "readback-edit"} {
+		t.Run(stage, func(t *testing.T) {
+			root := testRepo(t, "feature/failure")
+			paths := []string{"z-pin", "a-pin", "manifest"}
+			capture, err := CaptureFiles(root, paths)
+			if err != nil {
+				t.Fatal(err)
+			}
+			changes := []Change{}
+			for _, path := range paths {
+				changes = append(changes, Change{Path: path, Bytes: []byte(path), Mode: 0644})
+			}
+			guardError := errors.New("caller validation failed")
+			seen := 0
+			result, err := ApplyOrderedChecked(root, capture, changes, func() error {
+				if stage == "preflight" {
+					return guardError
+				}
+				return nil
+			}, func() error {
+				seen++
+				if stage == "second-target" && seen == 2 {
+					return guardError
+				}
+				if stage == "target-edit" {
+					return os.WriteFile(filepath.Join(root, "a-pin"), []byte("foreign edit"), 0644)
+				}
+				return nil
+			}, func(Result) error {
+				if stage == "readback" {
+					return guardError
+				}
+				if stage == "readback-edit" {
+					return os.WriteFile(filepath.Join(root, "a-pin"), []byte("foreign edit"), 0644)
+				}
+				return nil
+			})
+			wantCount := map[string]int{"preflight": 0, "second-target": 1, "readback": 3, "target-edit": 0, "readback-edit": 3}[stage]
+			if err == nil || len(result.CompletedPaths) != wantCount {
+				t.Fatalf("%s result=%v err=%v", stage, result, err)
+			}
+			if wantCount > 0 && !reflect.DeepEqual(result.CompletedPaths, paths[:wantCount]) {
+				t.Fatalf("failure order: %v", result.CompletedPaths)
+			}
+			if _, err := os.Stat(filepath.Join(root, ".artifacts", "markitect", "write.lock")); !os.IsNotExist(err) {
+				t.Fatalf("lock leaked: %v", err)
+			}
+		})
+	}
+}
+
+func TestOrderedCheckedApplyRejectsInvalidScopeBeforeCallbacks(t *testing.T) {
+	root := testRepo(t, "feature/scope")
+	capture, err := CaptureFiles(root, []string{"selected"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	called := false
+	for _, changes := range [][]Change{
+		{{Path: "outside", Bytes: []byte("x"), Mode: 0644}},
+		{{Path: "selected", Mode: 0644}, {Path: "selected", Mode: 0644}},
+	} {
+		result, err := ApplyOrderedChecked(root, capture, changes, func() error { called = true; return nil }, nil, nil)
+		if err == nil || called || len(result.CompletedPaths) != 0 {
+			t.Fatalf("invalid selection was applied: %v, %v", result, err)
+		}
+	}
+}
+
 func TestGuardedWriteCapturesAndAppliesCreateReplaceAndDelete(t *testing.T) {
 	root := testRepo(t, "feature/guarded")
 	if err := os.WriteFile(filepath.Join(root, "delete.txt"), []byte("remove me\n"), 0644); err != nil {

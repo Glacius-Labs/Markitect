@@ -1,6 +1,8 @@
-# Published release benchmark
+# Historical published release benchmark
 
 `run.ps1` compares two published Markitect binaries with a deterministic synthetic rollback-review task. The benchmark intentionally measures CLI work only: each command runs in a fresh process, while fixture creation, Git commits, and output preparation happen before timing.
+
+This harness is retained for explicitly selected immutable Project/Domain releases through v0.14.1. It rejects product binaries lacking the required legacy command surface before creating a fixture or measuring anything. The workflow has only a manual historical-release entrypoint; source/release work does not trigger a measurement. Current model-first releases need a separately accepted workload. Their results cannot be compared to this fixture's timings as if the work were identical. Existing fixtures, raw data and published asset records remain unchanged.
 
 ## Fixture contract
 

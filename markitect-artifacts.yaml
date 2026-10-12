@@ -28,7 +28,6 @@ spec:
     - docs/validation/standard-operating-model.md
     - docs/design/host-write-identity.md
     - src/internal/host/format.go
-    - src/internal/host/install.go
     - src/internal/host/outputs_write.go
     - src/internal/host/projections.go
     - src/internal/host/guardedwrite
@@ -97,6 +96,9 @@ spec:
     - src/internal/host/projectexplore
     - src/harness/examples/project_world_workflow_test.go
     - docs/design/work-item-comparison-20261009.md
+    - src/internal/host/buildinfo
+    - src/internal/host/releaseinstall
+    - src/internal/host/releasecli
   tooling:
     - path: README.md
       owner: repository-documentation-navigation
@@ -137,8 +139,6 @@ spec:
     - path: docs/validation/standard-operating-model.md
       owner: standard-operating-model-closure
     - path: src/internal/host/format.go
-      owner: anchored-host-write-boundary
-    - path: src/internal/host/install.go
       owner: anchored-host-write-boundary
     - path: src/internal/host/outputs_write.go
       owner: anchored-host-write-boundary
@@ -1032,3 +1032,33 @@ spec:
       owner: project-world-implementation
     - path: docs/history/implementation-plan-before-product-integration-20261009.md
       owner: project-world-implementation
+    - path: src/internal/host/buildinfo/version.go
+      owner: independent-release-tooling
+    - path: src/internal/host/releaseinstall/install.go
+      owner: independent-release-tooling
+    - path: src/internal/host/releaseinstall/install_fixture_test.go
+      owner: independent-release-tooling
+    - path: src/internal/host/releaseinstall/install_plan.go
+      owner: independent-release-tooling
+    - path: src/internal/host/releaseinstall/install_safety_test.go
+      owner: independent-release-tooling
+    - path: src/internal/host/releaseinstall/install_test.go
+      owner: independent-release-tooling
+    - path: src/internal/host/releaseinstall/install_write.go
+      owner: independent-release-tooling
+    - path: src/internal/host/releaseinstall/testmain_test.go
+      owner: independent-release-tooling
+    - path: src/internal/host/releasecli/licenses_test.go
+      owner: independent-release-tooling
+    - path: src/internal/host/releasecli/local.go
+      owner: independent-release-tooling
+    - path: src/internal/host/releasecli/local_distribution.go
+      owner: independent-release-tooling
+    - path: src/internal/host/releasecli/local_distribution_test.go
+      owner: independent-release-tooling
+    - path: src/internal/host/releasecli/main.go
+      owner: independent-release-tooling
+    - path: src/internal/host/releasecli/main_test.go
+      owner: independent-release-tooling
+    - path: src/internal/host/releasecli/testmain_test.go
+      owner: independent-release-tooling

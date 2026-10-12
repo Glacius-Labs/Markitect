@@ -1,4 +1,4 @@
-package host
+package releaseinstall
 
 import (
 	"os"
@@ -109,6 +109,19 @@ func TestInstallWriteRequiresNonProtectedBranchAndSharedLock(t *testing.T) {
 			t.Fatalf("lock error = %v", err)
 		}
 	})
+}
+
+func TestInstallRejectsStagedReleasePin(t *testing.T) {
+	root := installTestRepo(t, "feature/staged-pin")
+	writeFixture(t, root, map[string][]byte{".markitect/tool/lock.yaml": []byte("staged pin\n")})
+	runWriterGit(t, root, "add", ".markitect/tool/lock.yaml")
+	if _, err := Install(root, installTestBundle(t, "a", "0.1.0-rc.4", "candidate"), true); err == nil || !strings.Contains(err.Error(), "staged changes") {
+		t.Fatalf("staged pin error = %v", err)
+	}
+	data, err := os.ReadFile(filepath.Join(root, ".markitect", "tool", "lock.yaml"))
+	if err != nil || string(data) != "staged pin\n" {
+		t.Fatalf("staged pin changed: %q, %v", data, err)
+	}
 }
 
 func TestInstallRejectsSymlinkedPinPath(t *testing.T) {

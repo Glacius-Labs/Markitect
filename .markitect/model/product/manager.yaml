@@ -19,6 +19,8 @@ spec:
     - src/internal/host/codexappserver/
     - src/internal/host/exchangecli/
     - src/internal/host/guardedwrite/
+    - src/internal/host/buildinfo/
+    - src/internal/host/releaseinstall/
     - src/internal/host/mcp/
     - src/internal/host/projectadoption/
     - src/internal/host/projectapp/

@@ -124,7 +124,7 @@ func (s *smoke) bundle(revision, expectSHA string) error {
 	sum := ""
 	checks := []check{
 		{"bundle the revision", func() error {
-			if _, err := s.run(s.repo, nil, "go", "run", "./src/cmd/markitect-legacy", "bundle", "--repo", s.repo, "--revision", revision, "--output", bundle); err != nil {
+			if _, err := s.run(s.repo, nil, "go", "run", "./src/cmd/markitect-release", "bundle", "--repo", s.repo, "--revision", revision, "--output", bundle); err != nil {
 				return err
 			}
 			var err error
@@ -183,7 +183,7 @@ func (s *smoke) installBundle(consumer, bundle, sum string) error {
 			return err
 		}
 	}
-	_, err := s.run(s.repo, nil, "go", "run", "./src/cmd/markitect-legacy", "install", "--repo", consumer, "--bundle", bundle, "--sha256", sum, "--write")
+	_, err := s.run(s.repo, nil, "go", "run", "./src/cmd/markitect-release", "install", "--repo", consumer, "--bundle", bundle, "--sha256", sum, "--write")
 	return err
 }
 
@@ -197,7 +197,7 @@ func sha256File(path string) (string, error) {
 }
 
 func (s *smoke) packageSource(pkg string) error {
-	if _, err := s.run(s.repo, nil, "go", "run", "./src/cmd/markitect-legacy", "package", "--repo", s.repo, "--output", pkg); err != nil {
+	if _, err := s.run(s.repo, nil, "go", "run", "./src/cmd/markitect-release", "package", "--repo", s.repo, "--output", pkg); err != nil {
 		return err
 	}
 	bootstrap := filepath.Join(pkg, ".markitect", "bootstrap")
@@ -223,7 +223,7 @@ func (s *smoke) buildTools(archive string) error {
 	if err := unzip(archive, source); err != nil {
 		return err
 	}
-	for _, name := range []string{"markitect", "markitect-legacy", "markitect-adapter-dotnet", "markitect-check-artifacts", "markitect-exchange-executor"} {
+	for _, name := range []string{"markitect", "markitect-release", "markitect-legacy", "markitect-adapter-dotnet", "markitect-check-artifacts", "markitect-exchange-executor"} {
 		if _, err := s.run(source, nil, "go", "build", "-trimpath", "-buildvcs=false", "-o", s.tool(name), "./src/cmd/"+name); err != nil {
 			return err
 		}

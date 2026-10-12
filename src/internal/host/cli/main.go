@@ -3,7 +3,6 @@ package cli
 import (
 	"fmt"
 	"io"
-	"runtime"
 
 	"github.com/Glacius-Labs/Markitect/src/internal/host"
 )
@@ -30,18 +29,6 @@ func Run(args []string, out, errout io.Writer) int {
 	if !known {
 		fmt.Fprintf(errout, "unknown command %q\n", command)
 		return 2
-	}
-	if command == "version" {
-		if len(args) == 2 && (args[1] == "--help" || args[1] == "-h") {
-			fmt.Fprintln(out, "usage: markitect version")
-			return 0
-		}
-		if len(args) != 1 {
-			fmt.Fprintln(errout, "version accepts no arguments")
-			return 2
-		}
-		fmt.Fprintf(out, "Markitect %s (%s/%s)\n", version, runtime.GOOS, runtime.GOARCH)
-		return 0
 	}
 	o, code, done := parseOptions(command, args, allowed, out, errout)
 	if done {

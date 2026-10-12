@@ -7,7 +7,6 @@ import (
 
 	"github.com/Glacius-Labs/Markitect/src/internal/host"
 	core "github.com/Glacius-Labs/Markitect/src/internal/host/compat/v0_13/kernel"
-	"github.com/Glacius-Labs/Markitect/src/internal/tooling/licenses"
 )
 
 func dispatchCommand(command string, o commandOptions, out, errout io.Writer, emit func(any) int, fail func(error) int) int {
@@ -17,29 +16,14 @@ func dispatchCommand(command string, o commandOptions, out, errout io.Writer, em
 	if command == "copy-me" {
 		return runCopyMe(o, emit, fail)
 	}
-	if command == "licenses" {
-		if _, err := io.WriteString(out, licenses.Text); err != nil {
-			return fail(err)
-		}
-		return 0
-	}
-	if command == "bundle" {
-		return runBundle(o.root, o.revision, o.output, emit, fail)
-	}
 	if command == "pack" {
 		return runPack(o.root, o.revision, o.output, emit, fail)
-	}
-	if command == "install" {
-		return runInstall(o.root, o.bundlePath, o.bundleSHA, o.write, emit, fail)
 	}
 	if command == "authoring" {
 		return runAuthoring(o, errout, emit, fail)
 	}
 	if command == "schema" {
 		return runSchema(o, errout, emit, fail)
-	}
-	if command == "package" {
-		return runPackage(o, emit, fail)
 	}
 	if command == "inventory" {
 		return runInventory(o, emit, fail)

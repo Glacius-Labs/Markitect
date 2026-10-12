@@ -58,7 +58,7 @@ jobs:
           [[ "$TAG" == "v$source_version" ]] || { echo "release tag $TAG does not match source version $source_version" >&2; exit 1; }
 
           bundle_path="$RUNNER_TEMP/markitect-$TAG-bundle.zip"
-          go run ./src/cmd/markitect-legacy bundle --repo . --revision "$SOURCE_SHA" --output "$bundle_path"
+          go run ./src/cmd/markitect-release bundle --repo . --revision "$SOURCE_SHA" --output "$bundle_path"
           bundle_sha256="$(sha256sum "$bundle_path" | cut -d ' ' -f 1)"
           echo "tag=$TAG" >> "$GITHUB_OUTPUT"
           echo "version=$source_version" >> "$GITHUB_OUTPUT"
@@ -158,14 +158,14 @@ jobs:
           out="$RUNNER_TEMP/markitect-release-$GITHUB_SHA"
           mkdir -p "$out"
           bundle="$out/markitect-$TAG-bundle.zip"
-          go run ./src/cmd/markitect-legacy bundle --repo . --revision "$SOURCE_SHA" --output "$bundle"
+          go run ./src/cmd/markitect-release bundle --repo . --revision "$SOURCE_SHA" --output "$bundle"
           bundle_sha256="$(sha256sum "$bundle" | cut -d ' ' -f 1)"
           [[ "$bundle_sha256" == "$EXPECTED_BUNDLE_SHA256" ]] || { echo "release bundle differs from the bundle tested on both platforms" >&2; exit 1; }
 
           linux_binary="$out/markitect-$TAG-linux-amd64"
           windows_binary="$out/markitect-$TAG-windows-amd64.exe"
-          CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -trimpath -buildvcs=false -ldflags "-s -w -X github.com/Glacius-Labs/Markitect/src/internal/host/cli.version=$VERSION" -o "$linux_binary" ./src/cmd/markitect
-          CGO_ENABLED=0 GOOS=windows GOARCH=amd64 go build -trimpath -buildvcs=false -ldflags "-s -w -X github.com/Glacius-Labs/Markitect/src/internal/host/cli.version=$VERSION" -o "$windows_binary" ./src/cmd/markitect
+          CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -trimpath -buildvcs=false -ldflags "-s -w -X github.com/Glacius-Labs/Markitect/src/internal/host/buildinfo.version=$VERSION" -o "$linux_binary" ./src/cmd/markitect
+          CGO_ENABLED=0 GOOS=windows GOARCH=amd64 go build -trimpath -buildvcs=false -ldflags "-s -w -X github.com/Glacius-Labs/Markitect/src/internal/host/buildinfo.version=$VERSION" -o "$windows_binary" ./src/cmd/markitect
 
           linux_sha256="$(sha256sum "$linux_binary" | cut -d ' ' -f 1)"
           windows_sha256="$(sha256sum "$windows_binary" | cut -d ' ' -f 1)"

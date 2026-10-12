@@ -10,6 +10,47 @@ import (
 
 var fullGitCommitID = regexp.MustCompile(`^(?:[0-9a-f]{40}|[0-9a-f]{64})$`)
 
+func commandFlags(command string) (map[string]bool, bool) {
+	flags := map[string]bool{}
+	var names []string
+	switch command {
+	case "check", "verify", "inventory", "model":
+		names = []string{"repo", "revision"}
+	case "context", "explain":
+		names = []string{"repo", "revision", "api-version", "kind", "name", "namespace", "package"}
+		if command == "context" {
+			names = append(names, "run", "analyze-policy-failures")
+		}
+	case "review":
+		names = []string{"repo", "revision", "api-version", "kind", "name", "namespace", "package", "config", "report", "evidence"}
+	case "find":
+		names = []string{"repo", "revision", "api-version", "query", "kind", "namespace", "package"}
+	case "impact":
+		names = []string{"repo", "revision", "base", "analyze-policy-failures"}
+	case "render", "format":
+		names = []string{"repo", "revision", "write", "check"}
+	case "reconcile":
+		names = []string{"repo", "revision", "action", "adapter", "plan", "write"}
+	case "projection":
+		names = []string{"repo", "revision", "action", "config", "coverage", "plan", "report", "expect", "write"}
+	case "schema":
+		names = []string{"repo", "write", "check"}
+	case "pack":
+		names = []string{"repo", "revision", "output"}
+	case "prepare":
+		names = []string{"scope", "output", "expect", "write"}
+	case "copy-me":
+		names = []string{"workspace", "queue", "decision"}
+	case "authoring":
+	default:
+		return nil, false
+	}
+	for _, name := range names {
+		flags[name] = true
+	}
+	return flags, true
+}
+
 type commandOptions struct {
 	scope                 string
 	expect                string
@@ -30,8 +71,6 @@ type commandOptions struct {
 	check                 bool
 	analyzePolicyFailures bool
 	output                string
-	bundlePath            string
-	bundleSHA             string
 	action                string
 	adapter               string
 	plan                  string
@@ -63,9 +102,7 @@ func parseOptions(command string, args []string, allowed map[string]bool, out, e
 	write := fs.Bool("write", false, "explicitly write planned files (prepare: reviewed external capture)")
 	check := fs.Bool("check", false, "check rendered outputs (default)")
 	analyzePolicyFailures := fs.Bool("analyze-policy-failures", false, "allow read-only analysis of structurally valid policy failures (context, impact)")
-	output := fs.String("output", "", "absent directory (package/prepare) or ZIP file (bundle)")
-	bundlePath := fs.String("bundle", "", "local release ZIP to validate and install")
-	bundleSHA := fs.String("sha256", "", "expected SHA-256 of the release ZIP")
+	output := fs.String("output", "", "absent directory (prepare) or content package ZIP (pack)")
 	action := fs.String("action", "", "action for reconciliation or projection operations")
 	adapter := fs.String("adapter", "", "configured reconciliation adapter name")
 	plan := fs.String("plan", "", "saved concrete action plan")
@@ -105,8 +142,8 @@ func parseOptions(command string, args []string, allowed map[string]bool, out, e
 		fmt.Fprintf(errout, "--%s does not apply to %s\n", invalid, command)
 		return commandOptions{}, 2, true
 	}
-	if *write && ((command != "render" && command != "schema" && command != "format" && command != "install" && command != "reconcile" && command != "prepare" && command != "projection") || *revision != "" || *check || ((command == "reconcile" || command == "projection") && *action != "apply")) {
-		fmt.Fprintln(errout, "--write supports render, format, schema, install, reconcile/projection apply, or prepare external capture")
+	if *write && ((command != "render" && command != "schema" && command != "format" && command != "reconcile" && command != "prepare" && command != "projection") || *revision != "" || *check || ((command == "reconcile" || command == "projection") && *action != "apply")) {
+		fmt.Fprintln(errout, "--write supports render, format, schema, reconcile/projection apply, or prepare external capture")
 		return commandOptions{}, 2, true
 	}
 	if command == "projection" {
@@ -185,8 +222,6 @@ func parseOptions(command string, args []string, allowed map[string]bool, out, e
 		check:                 *check,
 		analyzePolicyFailures: *analyzePolicyFailures,
 		output:                *output,
-		bundlePath:            *bundlePath,
-		bundleSHA:             *bundleSHA,
 		action:                *action,
 		adapter:               *adapter,
 		plan:                  *plan,

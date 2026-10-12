@@ -16,7 +16,7 @@ Tests in `src/internal/tooling/architecture` fail when a Go package is missing f
 |---|---|---|---|
 | `core` | Structural compiler, snapshots and project-model views. No providers, Git processes or writes. | `core`, `host`, `module` | 5 |
 | `infrastructure` | Git and working-tree access: fixed snapshots and guarded writes. | `infrastructure`, `host` | 2 |
-| `application` | Current product use cases and their command and MCP surfaces. | `host` | 8 |
+| `application` | Current product use cases and their command and MCP surfaces. | `host` | 10 |
 | `runtime` | Runs Manager, review and verify roles in owned workspaces. | `host` | 6 |
 | `legacy` | The published v0.13 Project/Domain surfaces. DEC-014 allows removing them. | `host`, `module` | 26 |
 | `module` | Independent capability packages that import only Core. | `module` | 0 |
@@ -48,6 +48,7 @@ Tests in `src/internal/tooling/architecture` fail when a Go package is missing f
 
 | Package | Purpose | Owning document |
 |---|---|---|
+| `src/internal/host/buildinfo` | Shared immutable source and build version for product and release tooling. | [integration/README.md](../../integration/README.md#current-source-release-tooling) |
 | `src/internal/host/mcp` | Local stdio MCP server over the project operations. | [docs/project-operations.md](../project-operations.md#mcp-server-and-tool-groups) |
 | `src/internal/host/projectadoption` | Brownfield adoption that checks fixed-snapshot evidence and prepares model-only changes. | [docs/project-workflow.md](../project-workflow.md#existing-repositories) |
 | `src/internal/host/projectapp` | Shared application facade that the project CLI and MCP server call. | [docs/architecture.md](../architecture.md#application-layer) |
@@ -56,6 +57,7 @@ Tests in `src/internal/tooling/architecture` fail when a Go package is missing f
 | `src/internal/host/projectonboarding` | Writes project-local guidance and skills for Codex and Claude contributors. | [docs/project-workflow.md](../project-workflow.md#connect-and-inspect) |
 | `src/internal/host/projectwork` | Loads the selected project model and writes model changes under guard. | [docs/project-workflow.md](../project-workflow.md#model-and-readiness) |
 | `src/internal/host/releasecli` | Command interface of `markitect-release` for preparing or publishing a GitHub release. | [docs/operations.md](../operations.md#release-operations) |
+| `src/internal/host/releaseinstall` | Plans and applies complete verified bundle pins through guarded writes. | [integration/README.md](../../integration/README.md#current-source-release-tooling) |
 
 ## Execution runtime
 

@@ -1,10 +1,8 @@
 package cli
 
 import (
-	"fmt"
 	"os"
 	"path/filepath"
-	"runtime"
 	"strings"
 	"testing"
 
@@ -25,7 +23,7 @@ func TestRunInvalidArgumentsAndUnknownFlagsReturnTwo(t *testing.T) {
 		{"unexpected argument", []string{"check", "--repo", repo.root, "unexpected"}},
 		{"missing context fields", []string{"context", "--repo", repo.root, "--kind", "Skill", "--name", "entry"}},
 		{"invalid write combination", []string{"render", "--repo", repo.root, "--write", "--revision", repo.base}},
-		{"version rejects arguments", []string{"version", "--not-a-flag"}},
+		{"version command removed", []string{"version"}},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -107,7 +105,7 @@ func TestCheckDiagnosticsReturnOne(t *testing.T) {
 	}
 }
 
-func TestImpactRenderInventoryAndVersionCommands(t *testing.T) {
+func TestImpactRenderAndInventoryCommands(t *testing.T) {
 	repo := newCLIRepo(t, false)
 	code, output, stderr := invoke("render", "--repo", repo.root, "--revision", repo.base)
 	if code != 0 {
@@ -156,9 +154,4 @@ func TestImpactRenderInventoryAndVersionCommands(t *testing.T) {
 		t.Errorf("inventory duplicated generated views as legacy inputs: %v", seen)
 	}
 
-	code, output, _ = invoke("version")
-	wantVersion := fmt.Sprintf("Markitect %s (%s/%s)\n", version, runtime.GOOS, runtime.GOARCH)
-	if code != 0 || output != wantVersion {
-		t.Fatalf("version output = (%d, %q), want (%d, %q)", code, output, 0, wantVersion)
-	}
 }

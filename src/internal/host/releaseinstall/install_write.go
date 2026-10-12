@@ -1,4 +1,4 @@
-package host
+package releaseinstall
 
 import (
 	"bytes"
@@ -9,7 +9,6 @@ import (
 	"strings"
 
 	"github.com/Glacius-Labs/Markitect/src/internal/core/snapshot"
-	"github.com/Glacius-Labs/Markitect/src/internal/host/guardedwrite"
 	"github.com/Glacius-Labs/Markitect/src/internal/infrastructure/source"
 	"github.com/Glacius-Labs/Markitect/src/internal/tooling/release"
 )
@@ -36,7 +35,7 @@ func ensureInstallStateUnchanged(root string, state *installState) error {
 			return err
 		}
 		before := state.files[name]
-		if current.exists != before.exists || (current.exists && !bytes.Equal(current.data, before.data)) {
+		if current.exists != before.exists || (current.exists && (!bytes.Equal(current.data, before.data) || current.mode.Perm() != before.mode.Perm())) {
 			return fmt.Errorf("release pin changed during install: %s", name)
 		}
 	}
@@ -59,6 +58,17 @@ func ensureHeadUnchanged(root string, before *snapshot.Snapshot) error {
 		return errors.New("Git HEAD changed during install; rerun the plan")
 	}
 	return nil
+}
+
+func ensureInstallBranchAndHead(root string, state *installState) error {
+	branch, err := installableBranch(root)
+	if err != nil {
+		return fmt.Errorf("install branch is no longer writable: %w", err)
+	}
+	if branch != state.branch {
+		return errors.New("branch changed during install")
+	}
+	return ensureHeadUnchanged(root, state.head)
 }
 
 func installWriteFailure(plan *InstallPlan, state *installState, cause error) (*InstallPlan, error) {
@@ -96,14 +106,21 @@ func verifyInstalledBundle(root string, bundle *release.Bundle) error {
 }
 
 func safeInstallDestination(root, name string) (string, error) {
-	dest, err := guardedwrite.SafeDestination(root, name)
-	if err != nil {
-		return "", err
+	allowed := false
+	for _, candidate := range installPaths {
+		if name == candidate {
+			allowed = true
+			break
+		}
+	}
+	if !allowed {
+		return "", fmt.Errorf("install path is outside the fixed release pin set: %s", name)
 	}
 	absolute, err := filepath.Abs(root)
 	if err != nil {
 		return "", err
 	}
+	dest := filepath.Join(absolute, filepath.FromSlash(name))
 	current := absolute
 	parts := strings.Split(name, "/")
 	for i, part := range parts {

@@ -1061,7 +1061,11 @@ func buildOrReuse(root string, m manifest, archive *sourceArchive, goPath string
 	if err := os.Remove(tempName); err != nil {
 		return "", err
 	}
-	args := []string{"build", "-buildvcs=false", "-trimpath", "-ldflags", "-X main.version=" + m.version + " -X github.com/Glacius-Labs/Markitect/" + archive.sourcePrefix + "internal/host/cli.version=" + m.version, "-o", tempName, "./" + archive.sourcePrefix + "cmd/markitect"}
+	versionPackage := archive.sourcePrefix + "internal/host/cli"
+	if _, err := os.Stat(filepath.Join(sourceDir, filepath.FromSlash(archive.sourcePrefix+"internal/host/buildinfo/version.go"))); err == nil {
+		versionPackage = archive.sourcePrefix + "internal/host/buildinfo"
+	}
+	args := []string{"build", "-buildvcs=false", "-trimpath", "-ldflags", "-X main.version=" + m.version + " -X github.com/Glacius-Labs/Markitect/" + versionPackage + ".version=" + m.version, "-o", tempName, "./" + archive.sourcePrefix + "cmd/markitect"}
 	if err := builder(goPath, args, sourceDir, buildEnv); err != nil {
 		return "", fmt.Errorf("build pinned Markitect source: %w", err)
 	}

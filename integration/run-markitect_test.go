@@ -49,6 +49,7 @@ func validZipEntries() []zipFixtureEntry {
 		{name: "go.mod", data: []byte("module markitect\n\ngo 1.24.0\n"), mode: 0644},
 		{name: "go.sum", data: []byte(""), mode: 0644},
 		{name: "src/cmd/markitect/main.go", data: []byte("package main\n"), mode: 0644},
+		{name: "src/internal/host/buildinfo/version.go", data: []byte("package buildinfo\nvar version = \"0.1.0-dev\"\n"), mode: 0644},
 		{name: "src/internal/app/host.go", data: []byte("package app\n"), mode: 0644},
 	}
 }
@@ -157,8 +158,8 @@ func TestReadArchiveVerifiesDigestLayoutAndRejectsUnsafeEntries(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(a.files) != 4 {
-		t.Fatalf("archive has %d files, want 4", len(a.files))
+	if len(a.files) != len(validZipEntries()) {
+		t.Fatalf("archive has %d files, want %d", len(a.files), len(validZipEntries()))
 	}
 	if _, err := readArchive(archivePath, strings.Repeat("b", 64), defaultLimits); err == nil || !strings.Contains(err.Error(), "SHA-256") {
 		t.Fatalf("wrong digest error = %v", err)
@@ -319,7 +320,7 @@ func TestBuildCacheReusesOnlyVerifiedBinaryAndUsesLocalGoCaches(t *testing.T) {
 	if noiseReuse != first || buildCount != 1 {
 		t.Fatalf("irrelevant caller environment invalidated cache: builds=%d", buildCount)
 	}
-	if indexOf(buildArgs, "-buildvcs=false") < 0 || indexOf(buildArgs, "-trimpath") < 0 || !contains(buildArgs, "-X main.version="+m.version+" -X github.com/Glacius-Labs/Markitect/src/internal/host/cli.version="+m.version) || !contains(buildArgs, "./src/cmd/markitect") {
+	if indexOf(buildArgs, "-buildvcs=false") < 0 || indexOf(buildArgs, "-trimpath") < 0 || !contains(buildArgs, "-X main.version="+m.version+" -X github.com/Glacius-Labs/Markitect/src/internal/host/buildinfo.version="+m.version) || !contains(buildArgs, "./src/cmd/markitect") {
 		t.Fatalf("build flags missing: %v", buildArgs)
 	}
 	base := filepath.Join(root, ".artifacts", "markitect")

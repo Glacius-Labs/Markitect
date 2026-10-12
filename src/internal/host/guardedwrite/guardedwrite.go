@@ -126,7 +126,23 @@ func ApplyChecked(root string, capture *Capture, changes []Change, validate func
 	return applyGuardedWrite(root, capture, changes, validate, nil)
 }
 
+// ApplyOrderedChecked preserves the supplied, validated change order. All
+// callbacks run under the shared writer lock: preflight before mutation, the
+// target guard before each path, and readback after the complete change set.
+// A callback error returns the actual completed paths without claiming success.
+func ApplyOrderedChecked(root string, capture *Capture, changes []Change, preflight, beforeTarget func() error, readback func(Result) error) (Result, error) {
+	var guard func(string) error
+	if beforeTarget != nil {
+		guard = func(string) error { return beforeTarget() }
+	}
+	return applyGuardedWriteWithReadback(root, capture, changes, preflight, guard, true, readback)
+}
+
 func applyGuardedWrite(root string, capture *Capture, changes []Change, validate func() error, beforeTarget func(string) error) (Result, error) {
+	return applyGuardedWriteWithReadback(root, capture, changes, validate, beforeTarget, false, nil)
+}
+
+func applyGuardedWriteWithReadback(root string, capture *Capture, changes []Change, validate func() error, beforeTarget func(string) error, ordered bool, readback func(Result) error) (Result, error) {
 	result := Result{CompletedPaths: []string{}}
 	if capture == nil || capture.rootIdentity == nil || len(capture.seal) == 0 {
 		return result, errors.New("guarded apply requires an intact Host capture")
@@ -156,6 +172,15 @@ func applyGuardedWrite(root string, capture *Capture, changes []Change, validate
 	normalizedChanges, err := normalizeGuardedChanges(changes, capture.Files)
 	if err != nil {
 		return result, err
+	}
+	if ordered {
+		positions := make(map[string]int, len(changes))
+		for i, change := range changes {
+			positions[change.Path] = i
+		}
+		sort.Slice(normalizedChanges, func(i, j int) bool {
+			return positions[normalizedChanges[i].Path] < positions[normalizedChanges[j].Path]
+		})
 	}
 	writer, err := OpenRoot(root)
 	if err != nil {
@@ -272,6 +297,25 @@ func applyGuardedWrite(root string, capture *Capture, changes []Change, validate
 			return result, fmt.Errorf("completed path changed immediately after write: %s", change.Path)
 		}
 		expectedFiles[change.Path] = written
+	}
+	if readback != nil {
+		report := Result{CompletedPaths: append([]string(nil), result.CompletedPaths...)}
+		if err := readback(report); err != nil {
+			return result, fmt.Errorf("guarded write readback failed: %w", err)
+		}
+		seal, err := guardedCaptureSeal(capture)
+		if err != nil || seal != capture.seal {
+			return result, errors.New("guarded write capture changed during readback")
+		}
+		if err := writer.CheckIdentity(); err != nil {
+			return result, err
+		}
+		if err := ensureGuardedGitState(root, capture.Identity, capture.Branch, capture.Head); err != nil {
+			return result, err
+		}
+		if err := compareGuardedFiles(writer, expectedFiles); err != nil {
+			return result, fmt.Errorf("selected files changed during readback: %w", err)
+		}
 	}
 	return result, nil
 }

@@ -205,12 +205,15 @@ func snapshotRegularFile(snapshot *snapshot.Snapshot, name string) bool {
 }
 
 func validateSourceVersion(snapshot *snapshot.Snapshot, version string) error {
-	sourcePath := "src/internal/host/cli/version.go"
+	sourcePath := "src/internal/host/buildinfo/version.go"
 	declarationToken := token.VAR
 	// Historical immutable source distributions have their version in the
 	// executable entrypoint. Compatibility is confined to release tooling.
 	if _, exists := snapshot.Files[sourcePath]; !exists {
-		sourcePath = "internal/host/cli/version.go"
+		sourcePath = "src/internal/host/cli/version.go"
+		if _, exists := snapshot.Files[sourcePath]; !exists {
+			sourcePath = "internal/host/cli/version.go"
+		}
 		if _, exists := snapshot.Files[sourcePath]; !exists {
 			sourcePath = "src/cmd/markitect/main.go"
 			if _, exists := snapshot.Files[sourcePath]; !exists {
