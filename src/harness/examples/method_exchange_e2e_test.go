@@ -323,6 +323,9 @@ func (d *methodCLIDriver) assertIntegrationReview(f *methodExchangeFixture, cand
 				continue
 			}
 			for _, entry := range f.snapshotEntries() {
+				if entry.Kind != methodExchangeReviewKind || entry.ManagerID != methodExchangeRootID || entry.Phase != "integrate" {
+					continue
+				}
 				var request struct {
 					InputDigest string
 					Request     struct {
