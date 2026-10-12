@@ -1196,7 +1196,7 @@ func beginRepair(store *runStore, dir string, host Host, root string, plan PlanR
 		if !ok || !check.Required || result.CandidateID != candidate.ID || result.Outcome != "failed" || result.ExitCode == 0 {
 			continue
 		}
-		if result.ExecutablePath != check.ExecutablePath || result.ExecutableDigest != check.ExecutableDigest || !sameStrings(result.Command, check.Command) {
+		if result.ExecutablePath != check.ExecutablePath || result.ExecutableDigest != check.ExecutableDigest || !equalStrings(result.Command, check.Command) {
 			return report, fmt.Errorf("failed verification check %s does not match the planned command", result.ID)
 		}
 		feedback = append(feedback, RepairCheckFeedback{ID: check.ID, Owner: check.Owner, Command: append([]string(nil), check.Command...),
@@ -1277,18 +1277,6 @@ func boundedFeedbackText(value string, maximum int) string {
 		value = value[:len(value)-size]
 	}
 	return value
-}
-
-func sameStrings(left, right []string) bool {
-	if len(left) != len(right) {
-		return false
-	}
-	for i := range left {
-		if left[i] != right[i] {
-			return false
-		}
-	}
-	return true
 }
 
 func invokeManager(ctx context.Context, host Host, invoker Invoker, root string, runtime Runtime, plan PlanRecord, project *Project, task ManagerTask, phase string, activeChildIDs, conflicts []string, childReports []childReport, repairDiagnostic string, repairRound int, repairChecks []RepairCheckFeedback, start int) (result agentexec.RunResult, log InvocationLog, returnErr error) {
@@ -2044,14 +2032,6 @@ func pathWithinPortable(path, prefix string) bool {
 	}
 	return path == prefix || strings.HasPrefix(path, prefix+"/")
 }
-func ownedPath(owns []string, path string) bool {
-	for _, own := range owns {
-		if pathWithin(path, own) {
-			return true
-		}
-	}
-	return false
-}
 func pathWithin(path, prefix string) bool {
 	prefix = strings.TrimSuffix(prefix, "/")
 	if prefix == "." || prefix == "" {
@@ -2294,17 +2274,6 @@ func knownCostOverflow(logs []InvocationLog) bool {
 
 func costExceedsLimit(logs []InvocationLog, limit int64) bool {
 	return knownCostOverflow(logs) || totalCost(logs) > limit
-}
-
-func addCost(current, next int64) int64 {
-	if current < 0 || next < 0 || current > math.MaxInt64-next {
-		return math.MaxInt64
-	}
-	return current + next
-}
-func estimateCost(usage *agentexec.Usage, p Pricing) (int64, bool) {
-	cost, known, _ := estimateCostDetailed(usage, p)
-	return cost, known
 }
 
 func estimateCostDetailed(usage *agentexec.Usage, p Pricing) (int64, bool, bool) {
@@ -2551,14 +2520,6 @@ func buildChildSummaries(store *runStore, dir string, tasks []ManagerTask, revie
 	}
 	return out
 }
-func resolvesConflicts(c candidateData, paths []string) bool {
-	for _, p := range paths {
-		if _, ok := c.Files[p]; !ok {
-			return false
-		}
-	}
-	return true
-}
 func proposesEvery(proposed, paths []string) bool {
 	seen := map[string]bool{}
 	for _, p := range proposed {
@@ -2684,29 +2645,6 @@ func managerObligations(parent ManagerTask, tasks []ManagerTask, children []stri
 	return uniqueSorted(questions), uniqueSorted(risks), nil
 }
 
-func resolveObligations(outstanding, resolved []string) ([]string, []string, error) {
-	want := map[string]bool{}
-	for _, v := range outstanding {
-		want[v] = true
-	}
-	seen := map[string]bool{}
-	for _, v := range resolved {
-		if seen[v] {
-			return nil, nil, fmt.Errorf("resolution duplicates %q", v)
-		}
-		if !want[v] {
-			return nil, nil, fmt.Errorf("resolution invents or repeats obligation %q", v)
-		}
-		seen[v] = true
-	}
-	var remaining []string
-	for _, v := range outstanding {
-		if !seen[v] {
-			remaining = append(remaining, v)
-		}
-	}
-	return uniqueSorted(resolved), uniqueSorted(remaining), nil
-}
 func containsAll(have, want []string) bool {
 	set := map[string]bool{}
 	for _, v := range have {
