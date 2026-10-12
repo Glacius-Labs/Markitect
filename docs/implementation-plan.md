@@ -56,7 +56,7 @@ On 12 October the owner instructed: **“Beginne die Wellen selbstständig neu.�
 | scientist | PLAY | PLAY-06 integrated with complete actual-Main CI; writer released, no protocol-writing or study scope while PLAY-07/CI-04 owner gates remain |
 | kg | KG | KG-04 protocol is prepared; measurement waits for separate authority |
 | bughunter | BUG | Both bounded read-only episodes complete; new Windows lock cause unisolated, P2 test cleanup issue recorded, no fixwriter; helper recovery remains unaccepted |
-| qa | CI, TEST | TEST-05 reviewed timer/barrier implementation in `dev/controlled-timeouts` from a3, within nine named Runtime files; public APIs, cumulative clocks and actual process timeout assertions stay fixed; no collision with Cleaner Tooling paths |
+| qa | CI, TEST | TEST-05 approved timer/barrier implementation plan in `dev/controlled-timeouts` from a3, within nine named Runtime files; public APIs, cumulative clocks and actual process timeout assertions stay fixed; no collision with Cleaner Tooling paths |
 | cleaner | ARCH, AGENT-01 | ARCH-13 closed with full actual-Main proof; ARCH-12 plan reviewed and implementation reserved on fresh `dev/layer-direction` from a3 for the four-layer matrix and fail-closed code-map gate, with four named files |
 | runtime | RUN, MCP-02, ARCH-06 | ARCH-06 integrated as PR250/current4c260 with complete actual-Main CI; writer released, no next Runtime package; original source refs and Windows/selected evidence preserved |
 | government | GOV | After Wave 2 and the explicit GOV-01 dependencies (DEC-019) |

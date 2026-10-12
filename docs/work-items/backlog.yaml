@@ -563,8 +563,8 @@ packages:
     depends_on: [TEST-01]
     zone: runtime
     note: >-
-      Root and independent review approved a bounded private per-call timeout
-      and test-barrier implementation at actualMain a3 after full ARCH13 closure.
+      Root and independent review approved the bounded private per-call timeout
+      and test-barrier implementation plan at actualMain a3 after full ARCH13 closure.
       Fresh dev/controlled-timeouts uses nine named Runtime files, separate from
       ARCH12 Tooling. Public Run/Config/RunOptions, cumulative clocks, evidence,
       budgets and actual OS descendant/dynamic-tool timeout assertions stay fixed.
