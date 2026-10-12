@@ -559,6 +559,13 @@ func (b *boundedBuffer) Write(p []byte) (int, error) {
 }
 
 func runCheck(parent context.Context, dir string, check CheckPlan, agent projectconfig.Agent, maximum projectconfig.Duration, onStart func(CheckResult) error) CheckResult {
+	return runCheckWithTimeoutContext(parent, dir, check, agent, maximum, onStart, context.WithTimeout)
+}
+
+// runCheckWithTimeoutContext keeps the timeout constructor local to one
+// check invocation so tests can control timeout creation without changing
+// production clock, persistence, or process behavior.
+func runCheckWithTimeoutContext(parent context.Context, dir string, check CheckPlan, agent projectconfig.Agent, maximum projectconfig.Duration, onStart func(CheckResult) error, withTimeout func(context.Context, time.Duration) (context.Context, context.CancelFunc)) CheckResult {
 	out := CheckResult{ID: check.ID, Command: append([]string(nil), check.Command...), ExecutablePath: check.ExecutablePath, ExecutableDigest: check.ExecutableDigest, StartedAt: time.Now().UTC(), Outcome: "failed"}
 	if check.ExecutablePath == "" || check.ExecutableDigest == "" {
 		out.Error = "check executable was not pinned at plan time"
@@ -576,7 +583,7 @@ func runCheck(parent context.Context, dir string, check CheckPlan, agent project
 	if timeout > time.Duration(maximum) {
 		timeout = time.Duration(maximum)
 	}
-	ctx, cancel := context.WithTimeout(parent, timeout)
+	ctx, cancel := withTimeout(parent, timeout)
 	defer cancel()
 	cmd := exec.CommandContext(ctx, check.ExecutablePath, check.Command[1:]...)
 	cmd.Args[0] = check.Command[0]

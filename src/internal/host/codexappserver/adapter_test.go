@@ -1430,13 +1430,13 @@ func TestTimeoutInterruptionAndReservation(t *testing.T) {
 			a, cfg, req, opts := fixture(t, mode, Options{OnHandle: func(_ context.Context, handle RecoveryHandle) error {
 				if handle.TurnDispatched && handle.TurnID != "" {
 					dispatchObserved = true
-					ctx.arm(100 * time.Millisecond)
+					ctx.expire()
 				}
 				return nil
 			}})
 			r, err := a.Run(ctx, cfg, req, opts)
-			if !dispatchObserved || !ctx.armed() {
-				t.Fatal("negative timeout did not start after turn dispatch")
+			if !dispatchObserved || !ctx.expired() {
+				t.Fatal("controlled deadline did not follow durable turn dispatch")
 			}
 			if err == nil {
 				t.Fatal("timeout accepted")
@@ -1457,41 +1457,36 @@ func TestTimeoutInterruptionAndReservation(t *testing.T) {
 }
 
 // postDispatchTimeoutContext gives Run an ordinary unbounded context while it
-// probes the executable and completes handshake. The test arms a finite
-// DeadlineExceeded only after OnHandle proves turn dispatch, so this tests the
-// actual uncertain/interrupted turn path under slow test-suite load.
+// probes the executable and completes handshake. The test explicitly expires
+// it only after OnHandle proves durable turn dispatch, so suite load cannot
+// change when the actual uncertain/interrupted turn path begins.
 type postDispatchTimeoutContext struct {
-	parent   context.Context
-	done     chan struct{}
-	mu       sync.Mutex
-	deadline time.Time
-	expired  bool
+	parent    context.Context
+	done      chan struct{}
+	mu        sync.Mutex
+	deadline  time.Time
+	didExpire bool
 }
 
 func newPostDispatchTimeoutContext(parent context.Context) *postDispatchTimeoutContext {
 	return &postDispatchTimeoutContext{parent: parent, done: make(chan struct{})}
 }
 
-func (c *postDispatchTimeoutContext) arm(timeout time.Duration) {
-	c.mu.Lock()
-	if !c.deadline.IsZero() {
-		c.mu.Unlock()
-		return
-	}
-	c.deadline = time.Now().Add(timeout)
-	c.mu.Unlock()
-	time.AfterFunc(timeout, func() {
-		c.mu.Lock()
-		c.expired = true
-		close(c.done)
-		c.mu.Unlock()
-	})
-}
-
-func (c *postDispatchTimeoutContext) armed() bool {
+func (c *postDispatchTimeoutContext) expire() {
 	c.mu.Lock()
 	defer c.mu.Unlock()
-	return !c.deadline.IsZero()
+	if c.didExpire {
+		return
+	}
+	c.deadline = time.Now()
+	c.didExpire = true
+	close(c.done)
+}
+
+func (c *postDispatchTimeoutContext) expired() bool {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	return c.didExpire
 }
 
 func (c *postDispatchTimeoutContext) Deadline() (time.Time, bool) {
@@ -1505,13 +1500,47 @@ func (c *postDispatchTimeoutContext) Done() <-chan struct{} { return c.done }
 func (c *postDispatchTimeoutContext) Err() error {
 	c.mu.Lock()
 	defer c.mu.Unlock()
-	if c.expired {
+	if c.didExpire {
 		return context.DeadlineExceeded
 	}
 	return nil
 }
 
 func (c *postDispatchTimeoutContext) Value(key any) any { return c.parent.Value(key) }
+
+func TestPostDispatchTimeoutContextExpiresOnlyWhenRequested(t *testing.T) {
+	type contextKey string
+	parent := context.WithValue(context.Background(), contextKey("trace"), "fixture")
+	ctx := newPostDispatchTimeoutContext(parent)
+	if _, ok := ctx.Deadline(); ok {
+		t.Fatal("controlled context has a deadline before explicit expiration")
+	}
+	if ctx.Err() != nil {
+		t.Fatalf("controlled context expired early: %v", ctx.Err())
+	}
+	select {
+	case <-ctx.Done():
+		t.Fatal("controlled context closed Done before explicit expiration")
+	default:
+	}
+	if got := ctx.Value(contextKey("trace")); got != "fixture" {
+		t.Fatalf("parent context value was not preserved: %v", got)
+	}
+
+	ctx.expire()
+	ctx.expire()
+	select {
+	case <-ctx.Done():
+	default:
+		t.Fatal("controlled context did not close Done on expiration")
+	}
+	if err := ctx.Err(); !errors.Is(err, context.DeadlineExceeded) {
+		t.Fatalf("controlled context error = %v, want DeadlineExceeded", err)
+	}
+	if deadline, ok := ctx.Deadline(); !ok || deadline.After(time.Now()) {
+		t.Fatalf("expired context deadline = %v, %v; want a deadline at or before now", deadline, ok)
+	}
+}
 
 func TestDynamicToolAndRecovery(t *testing.T) {
 	called := 0
