@@ -16,28 +16,40 @@ never reads these notes.
 
 1. **Binary.** Copy `/in/bin/markitect` (a Linux build of the pinned commit, made by
    the host) to `/usr/local/bin/markitect` and record its SHA-256.
-2. **Native Codex.** `command -v codex` is the npm Node launcher (a symlink to a `#!`
-   script). `config` accepts only a direct native executable, so the setup uses
-   the ELF binary that the npm package ships under `vendor/.../bin/codex` (same
-   version).
+2. **Inner native Codex, when needed.** For each selected Markitect role using Codex
+   without an explicit `providerExecutable`, setup locates the native binary in the
+   pinned CLI package. `command -v codex` is the npm Node launcher (a symlink to a `#!`
+   script), while `config` accepts only a direct executable; setup therefore uses the
+   package's ELF binary under `vendor/.../bin/codex`. This inner executable lookup is
+   skipped when every role uses `process`, regardless of outer agent kind. A Codex outer
+   agent separately uses its CLI and login as the outer runner.
 3. **Feature branch.** Product writes refuse `main`/`master`, so the setup works on
    `markitect-setup`.
 4. **Init.** `markitect init --repo R --name <case>` (preview), then the same
    with `--expect <digest> --write`. The harness checks that the write returns
    the preview digest.
-5. **Onboard.** `markitect onboard --repo R --provider codex` (preview), then
-   with `--expect <digest> --write`. This merges Markitect guidance into `AGENTS.md`
-   and adds `.agents/skills/markitect-*` and `.markitect/workflows/model-first.md`.
-6. **Runtime setup.** `markitect config --repo R --provider codex --model
-   <model> --effort <effort> --provider-executable <native codex>
+5. **Onboard.** Onboard the providers actually used: `codex` for a Codex/fake outer
+   agent or any selected Codex role, `claude` for a Claude outer agent with all three
+   roles on `process`, and `both` for a Claude outer agent with at least one Codex role.
+   Preview `markitect onboard --repo R --provider <provider>`, then write with
+   `--expect <digest> --write`. This merges the corresponding guidance into `AGENTS.md`
+   and adds the matching `.agents/skills/*` and `.markitect/workflows/model-first.md`.
+6. **Runtime setup.** For the Codex default configuration, run
+   `markitect config --repo R --provider codex --model <model> --effort <effort>
+   --provider-executable <native codex>
    --input-micros-per-million 1000000 --output-micros-per-million 1000000
    --max-cost-micros <totalSeconds x 50000>` (preview), then the same with
    `--expect <editPlan.digest> --write`. When role profiles are present, setup supplies
-   them through `--input <role-options.json>` using the existing role-options contract.
+   them through `--input <role-options.json>` using the existing role-options contract;
+   with three explicit process profiles, their executables come from that input and no
+   inner Codex binary lookup is needed.
    It records the input, preview and write commands and the hash of the resulting
    `.markitect/runtime.yaml`; that written file supplies each role's executor, model,
-   effort and command. If those values do not match the selected manifest profile,
-   setup blocks. See the [manifest role profiles](../../README.md#manifest-schema-1).
+   effort, command, arguments, effective cost mode and explicitly requested process
+   provider version. A mismatch blocks setup. Codex roles and Codex/fake outer agents
+   use one of the supported native Codex efforts; an unused shared `innerEffort` does
+   not need to be Codex-supported when all roles have explicit profiles. See the
+   [manifest role profiles](../../README.md#manifest-schema-1).
 7. **Commit.** "Install Markitect project workflow", fast-forward the start branch and
    delete `markitect-setup`.
 8. **Observation.** `markitect check --repo R`. Right after setup it exits 1:
@@ -81,12 +93,17 @@ profiles. Each explicit profile selects a provider, a full versioned model ID an
 provider-specific executable, arguments, version and cost mode follow the manifest
 rules above. Roles without profiles use `markitect.innerModel` and `markitect.innerEffort`,
 or the Codex outer model and effort. A Claude outer agent must specify the shared inner
-model and effort unless all three role profiles are explicit.
+model and effort unless all three role profiles are explicit. Runtime Codex use is
+conditional on the selected profiles: a missing role profile defaults to Codex, while
+three explicit process profiles need no native Codex executable or login. Codex effort
+validation applies to each selected Codex role and to Codex/fake outer agents; an unused
+generic `innerEffort` may be outside that set.
 
 Setup reuses the existing `markitect config --input` role-options contract. It records
-the input file, preview/write commands and the written runtime YAML hash, then records
-each role's executor, model, effort and command from that YAML. A mismatch blocks setup.
-This is configuration evidence only: it does not show that a provider used the requested
+the input file, preview/write commands and the written runtime YAML hash, then reports
+each role's executor, model, effort, command, arguments and effective cost mode, plus an
+explicitly requested process provider version. A mismatch blocks setup. This is
+configuration evidence only: it does not show that a provider used the requested
 effective model, certify Markitect's role lifecycle, or authorize a paid provider run,
 study or protocol. Existing image pins and inventory remain the source for the installed
 tools.

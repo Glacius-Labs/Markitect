@@ -121,7 +121,7 @@ def _roles(setup: dict[str, Any] | None) -> list[dict[str, Any]] | None:
     roles = _get(setup, "roles")
     if not isinstance(roles, list):
         return None
-    keys = ("role", "manager", "executor", "providerVersion", "command", "model", "effort")
+    keys = ("role", "manager", "executor", "providerVersion", "command", "args", "costMode", "model", "effort")
     return [{key: role.get(key) for key in keys} for role in roles if isinstance(role, dict)]
 
 
@@ -300,7 +300,8 @@ def _tokens(tokens: dict[str, Any]) -> str:
 def _role_text(role: dict[str, Any]) -> str:
     who = role["role"] + (" " + role["manager"] if role.get("manager") else "")
     return (f"{who}: {_fmt(role.get('executor'))} ({_fmt(role.get('providerVersion'))}), "
-            f"model {_fmt(role.get('model'))}, effort {_fmt(role.get('effort'))}, command {_fmt(role.get('command'))}")
+            f"model {_fmt(role.get('model'))}, effort {_fmt(role.get('effort'))}, command {_fmt(role.get('command'))}, "
+            f"args {_fmt(role.get('args'))}, cost mode {_fmt(role.get('costMode'))}")
 
 
 def render_markdown(report: dict[str, Any]) -> str:

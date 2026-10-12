@@ -79,7 +79,7 @@ The smokes run the whole pipeline with a scripted fake agent. No model call, no 
 | Linux host with Docker (Linux engine) | everything | The reference platform ([DEC-013](../../docs/concepts/register.md#dec-013-linux-first-for-tests-and-the-playground)). Your user must be allowed to run `docker`. |
 | Python 3.11 or newer | everything | Standard library only, nothing to install. |
 | Git and Go | Markitect arm only | The host builds a linux/amd64 `markitect` binary from a local product checkout. Go follows the product's `go.mod` (`GOTOOLCHAIN=auto`). |
-| Codex login `~/.codex/auth.json` | real Codex runs, Markitect behind Claude Code, Codex reviewer | Not for the smokes. See [Logins](#logins). |
+| Codex login `~/.codex/auth.json` | real Codex runs, Codex reviewer, or a Markitect run with any selected Codex role | Not for the smokes. A Claude outer run with all three Markitect roles explicitly set to `process` does not need Codex login. See [Logins](#logins). |
 | Claude Code token file | real Claude Code runs, Claude reviewer | Not for the smokes. |
 
 The first image build downloads the pinned base image, the Debian packages from
@@ -277,9 +277,12 @@ run, the final assessment when at least one wave ran. The host kills the contain
 
 ## Logins
 
-- **Codex:** `~/.codex/auth.json` from `codex login`, or `--codex-auth PATH`: for agent
-  kind `codex`, for kind `claude` in the Markitect arm (inner roles run on Codex) and for
-  the Codex reviewer. The fake agent gets one only when `--codex-auth` is given.
+- **Codex:** `~/.codex/auth.json` from `codex login`, or `--codex-auth PATH`: for outer
+  agent kind `codex`, a Codex reviewer, or a Markitect run whose selected role profiles
+  include `provider: "codex"`. Missing role profiles default to Codex, so a Claude outer
+  run avoids this login only when all three roles explicitly select `process`. The fake
+  outer agent gets one only when `--codex-auth` is given; it does not create a Codex
+  login requirement for process-only Markitect roles.
 - **Claude Code:** a token from `claude setup-token`, alone in a file. `study` and
   `assess` read `~/.markitect-playground/claude-token` by default; `host run` needs
   `--claude-token PATH` for kind `claude`. Your own `~/.claude` login is never used.
@@ -310,7 +313,7 @@ Unknown fields are rejected at every level.
 | `stations` | positive integer, at most the case's waves | all waves | The run gets the first N waves only (waves build on each other). A fairness field. |
 | `method` | `conventional`, `markitect` | required | The arm. |
 | `agent.kind` | `codex`, `claude`, `fake` (for Codex), `fake-claude` (for Claude Code) | required | Outer agent. |
-| `agent.codexVersion` | `[0-9][0-9A-Za-z.-]{0,55}` | required | `@openai/codex` in the image. Always needed: Codex also runs Markitect's inner roles. |
+| `agent.codexVersion` | `[0-9][0-9A-Za-z.-]{0,55}` | required | Exact `@openai/codex` image pin and inventory entry. The pinned CLI is present in the image, but a Codex executable/login is needed at runtime only for a Codex outer agent or a selected Markitect role using Codex. |
 | `agent.claudeVersion` | same pattern | `2.1.296`; required for Claude kinds | `@anthropic-ai/claude-code` in the image. |
 | `agent.model` | `[A-Za-z0-9][A-Za-z0-9._:/-]{0,127}`, a full model id | required | Outer model; for Codex also the subagent default. An alias is refused ([Reviewers](#reviewers)). |
 | `agent.effort` | `[a-z]{1,32}` | required | Outer reasoning effort. |
@@ -324,13 +327,17 @@ Unknown fields are rejected at every level.
 | `markitect.sourceRepo` | non-empty path | the checkout holding the playground, if its `go.mod` declares `github.com/Glacius-Labs/Markitect` | Local Markitect checkout to build from. A relative path or `~` counts from the manifest's folder; recorded as an absolute path. |
 | `markitect.commit` | 7 to 40 lowercase hex | required | Commit to build; the full hash is recorded. |
 | `markitect.innerModel` | like `agent.model` | `agent.model`; required for Claude kinds unless all three role profiles are explicit | Default model for roles without an explicit profile. |
-| `markitect.innerEffort` | like `agent.effort` | `agent.effort`; required for Claude kinds unless all three role profiles are explicit | Default effort for roles without an explicit profile. |
+| `markitect.innerEffort` | like `agent.effort` | `agent.effort`; required for Claude kinds unless all three role profiles are explicit | Default effort for roles without an explicit profile. If no role consumes this default, its value need not be a Codex-supported effort. |
 | `markitect.roles` | object; optional | — | Per-role runtime profile overrides for `manager`, `reviewer` and `verifier`. Omitted roles use the shared inner model and effort, falling back to the Codex outer model and effort. With a Claude outer agent, provide `innerModel` and `innerEffort` unless all three roles have explicit profiles. |
 
 Each `markitect.roles.<role>` profile requires `provider` (`codex` or `process`), a
-full versioned `model` ID, and lowercase `effort`. Codex accepts `minimal`, `low`,
-`medium`, `high`, `xhigh`, `max` or `ultra` and defaults to `costMode: "metered"`;
-Codex must be metered.
+full versioned `model` ID, and lowercase `effort`. When a role uses Codex, its effective
+effort must be one of `minimal`, `low`, `medium`, `high`, `xhigh`, `max` or `ultra`;
+Codex defaults to `costMode: "metered"` and must be metered. The same supported-effort
+set applies to the outer effort for `codex` and `fake` agents. A shared `innerEffort`
+that no role uses (because each role has an explicit profile) may be another lowercase
+effort. This makes it possible to define all three roles as `process` without a Codex
+runtime dependency, including with a Claude outer agent.
 Without `providerExecutable`, Codex uses the native executable discovered in the
 container. A `process` profile requires `providerExecutable`, an absolute POSIX path
 inside the Linux container; it defaults to `costMode: "unmetered"` and has no helper
@@ -391,10 +398,11 @@ Role profiles are part of both run manifests and study files; a study carries th
 each expanded run manifest. Setup passes the selected options through the existing
 `markitect config --input` role-options interface. The input file, preview and write
 commands, and the resulting `.markitect/runtime.yaml` hash are recorded. The written
-runtime YAML is the source for the recorded executor, model, effort and command; a
-mismatch with the selected profile blocks setup. This records configuration, not proof
-that a provider honored its requested model or that the product's role lifecycle was
-accepted. It does not authorize a paid provider run, a study or a protocol.
+runtime YAML supplies the recorded executor, model, effort, command, arguments, effective
+cost mode and (when explicitly requested for a process role) provider version. A mismatch
+with the selected profile blocks setup. This records configuration, not proof that a
+provider honored its requested model or that the product's role lifecycle was accepted.
+It does not authorize a paid provider run, a study or a protocol.
 
 All configured role models count when checking reviewer independence, both at study
 preflight and during assessment. `agent.maxSubagents` keeps its existing meaning: it
@@ -730,7 +738,10 @@ not record (older runs), even when both lack it. This is stricter than `host run
   debian-security) comes from snapshot.debian.org at that time, with `Check-Valid-Until`
   off. apt retries every download (`Acquire::Retries`) and the step runs at most three
   times. The host passes `SOURCE_DATE_EPOCH` from it as a build argument.
-- `CLAUDE_VERSION` and the manifest's `codexVersion`: exact npm versions.
+- `CLAUDE_VERSION` and the manifest's `codexVersion`: exact npm versions. Both CLI
+  packages are pinned and inventoried in the image; runtime use of Codex is conditional
+  on the outer agent or selected Markitect role providers, so a Claude outer run with
+  three explicit process roles does not need Codex login or native-executable discovery.
 
 The last build step writes `/usr/share/markitect-playground/inventory.txt`: base, snapshot,
 Node version, every installed Debian package (`name version arch`) and every package in

@@ -65,7 +65,8 @@ limits:
     maxDepth: 8
 """
 ROLE = {"executor": "codex-app-server", "providerVersion": "codex-cli 0.162.0",
-        "command": "/usr/lib/codex/vendor/bin/codex", "model": "gpt-6-luna", "effort": "high"}
+        "command": "/usr/lib/codex/vendor/bin/codex", "model": "gpt-6-luna", "effort": "high",
+        "args": [], "costMode": "metered"}
 
 # Stand-in for the product CLI: records argv, returns preview JSON with digests,
 # writes only with --write and the matching --expect, and refuses writes on main.
@@ -280,7 +281,9 @@ class MarkitectSetupTest(unittest.TestCase):
         before, review = runtime.split("review:\n", 1)
         worker, _ = before.split("verifier:\n", 1)
         runtime = (worker + "verifier:\n    command: /usr/bin/fake-executor\n    model: fake-model-1\n"
+                   "    args:\n        - --verify\n"
                    "    modelOptions:\n        reasoningEffort: low\n    providerVersion: fake/1\n"
+                   "    costMode: unmetered\n"
                    + "review:\n" + review.replace("model: gpt-6-luna", "model: gpt-6-sol")
                    .replace("reasoningEffort: high", "reasoningEffort: medium"))
         runtime = runtime.replace("/usr/lib/codex/vendor/bin/codex", str(self.codex))
@@ -317,7 +320,13 @@ class MarkitectSetupTest(unittest.TestCase):
                    .replace("model: gpt-6-luna", "model: fake-model-1")
                    .replace("        modelOptions: null\n", "")
                    .replace("appServer:", "modelOptions:")
-                   .replace("reasoningEffort: high", "reasoningEffort: low"))
+                   .replace("reasoningEffort: high", "reasoningEffort: low")
+                   .replace("        instructionPaths:\n            - AGENTS.md\n        runtimeFiles:",
+                            "        instructionPaths:\n            - AGENTS.md\n        costMode: unmetered\n        runtimeFiles:")
+                   .replace("verifier:\n    command:", "verifier:\n    costMode: unmetered\n    command:")
+                   .replace("            providerVersion: codex-cli 0.162.0\n    maxRounds:",
+                            "            providerVersion: codex-cli 0.162.0\n"
+                            "            costMode: unmetered\n    maxRounds:"))
         with mock.patch.object(methods, "find_native_codex", side_effect=AssertionError("native discovery")):
             result = self.run_setup(kind="fake-claude", roles=selected, runtime=runtime)
         self.assertEqual(result["status"], "ready", result["error"])
@@ -392,6 +401,148 @@ class RuntimeRolesTest(unittest.TestCase):
         roles = methods.runtime_roles(RUNTIME_YAML)
         self.assertEqual([(r["role"], r["manager"]) for r in roles],
                          [("worker", "project-owner"), ("reviewer", "project-owner"), ("verifier", None)])
+        self.assertTrue(all(role["args"] == [] and role["costMode"] == "metered" for role in roles))
+
+    def test_process_args_decode_block_flow_escaped_and_literal_values(self):
+        text = ("verifier:\n"
+                "    command: /usr/bin/fake-executor\n"
+                "    args:\n"
+                "        - --verify\n"
+                "        - --dir\n"
+                "        - \"a: b\"\n"
+                "        - \"escaped\\tvalue\\nnext\"\n"
+                "        - |-\n"
+                "            line one\n"
+                "            line two\n"
+                "    transport: process\n"
+                "    model: fake-model-1\n"
+                "    modelOptions:\n"
+                "        reasoningEffort: low\n"
+                "    providerVersion: fake/1\n"
+                "    costMode: unmetered\n")
+        roles = methods.runtime_roles(text)
+        expected_args = ["--verify", "--dir", "a: b", "escaped\tvalue\nnext", "line one\nline two"]
+        self.assertEqual(roles, [{"role": "verifier", "manager": None, "executor": "process",
+                                  "providerVersion": "fake/1", "command": "/usr/bin/fake-executor",
+                                  "model": "fake-model-1", "effort": "low", "args": expected_args,
+                                  "costMode": "unmetered"}])
+        profiles = {"verifier": {"provider": "process", "model": "fake-model-1", "effort": "low",
+                                 "providerExecutable": "/usr/bin/fake-executor", "providerArgs": expected_args,
+                                 "providerVersion": "fake/1", "costMode": "unmetered"}}
+        methods._confirm_roles(profiles, roles)
+
+    def test_yaml_v3_generated_args_round_trip_syntax(self):
+        # This is the shape emitted by go.yaml.in/yaml/v3 for the corresponding argv.
+        # In particular, commas and apostrophes may remain plain, while escaped control
+        # bytes and multiline values use double-quoted and literal block scalars.
+        text = ('verifier:\n'
+                '    command: /usr/bin/fake-executor\n'
+                '    args:\n'
+                '        - ""\n'
+                '        - --verify\n'
+                "        - 'a: b'\n"
+                "        - comma,apostrophe's\n"
+                '        - |-\n'
+                '            line1\n'
+                '            line2\n'
+                "        - 'trailing  '\n"
+                '        - |\n'
+                '            trailing-newline\n'
+                '        - |+\n'
+                '            multi-trailing\n'
+                '\n'
+                '        - "bell\\aescape\\e"\n'
+                '        - nonbreaking space\n'
+                '    transport: process\n'
+                '    model: fake-model-1\n'
+                '    providerVersion: |-\n'
+                '        version\n'
+                '        line\n'
+                '    costMode: unmetered\n')
+        expected = ["", "--verify", "a: b", "comma,apostrophe's", "line1\nline2",
+                    "trailing  ", "trailing-newline\n", "multi-trailing\n\n",
+                    "bell\aescape\x1b", "nonbreaking space"]
+        role = methods.runtime_roles(text)[0]
+        self.assertEqual(role["args"], expected)
+        self.assertEqual(role["providerVersion"], "version\nline")
+        methods._confirm_roles({"verifier": {"provider": "process", "model": "fake-model-1",
+                                               "effort": None, "providerExecutable": "/usr/bin/fake-executor",
+                                               "providerArgs": expected, "providerVersion": "version\nline",
+                                               "costMode": "unmetered"}}, [role])
+
+    def test_malformed_yaml_v3_explicit_indent_argument_fails_closed(self):
+        # yaml.v3 emits these bytes for argv ["  leading\\nnext"], but its own
+        # Unmarshal rejects the less-indented continuation. Do not treat the intended
+        # string as an effective runtime value when setup cannot write this YAML.
+        text = ("verifier:\n    args:\n"
+                "        - |4-\n"
+                "            leading\n"
+                "          next\n"
+                "    transport: process\n")
+        role = methods.runtime_roles(text)[0]
+        self.assertEqual(role["args"], [None])
+        with self.assertRaisesRegex(methods.SetupBlocked, "args differ"):
+            methods._confirm_roles({"verifier": {"provider": "process", "model": None,
+                                                   "effort": None,
+                                                   "providerArgs": ["  leading\nnext"]}}, [role])
+
+    def test_multiline_provider_version_block_scalar_is_read_and_confirmed(self):
+        text = ("verifier:\n"
+                "    command: /usr/bin/fake-executor\n"
+                "    transport: process\n"
+                "    model: fake-model-1\n"
+                "    providerVersion: |-\n"
+                "        fake executor\n"
+                "        build 1\n"
+                "    costMode: unmetered\n")
+        roles = methods.runtime_roles(text)
+        self.assertEqual(roles[0]["providerVersion"], "fake executor\nbuild 1")
+        methods._confirm_roles({"verifier": {"provider": "process", "model": "fake-model-1", "effort": None,
+                                              "providerExecutable": "/usr/bin/fake-executor",
+                                              "providerVersion": "fake executor\nbuild 1",
+                                              "costMode": "unmetered"}}, roles)
+        escaped = text.replace("providerVersion: |-\n        fake executor\n        build 1",
+                              'providerVersion: "fake\\a\\eversion"')
+        escaped_role = methods.runtime_roles(escaped)[0]
+        self.assertEqual(escaped_role["providerVersion"], "fake\a\x1bversion")
+        methods._confirm_roles({"verifier": {"provider": "process", "model": "fake-model-1", "effort": None,
+                                              "providerExecutable": "/usr/bin/fake-executor",
+                                              "providerVersion": "fake\a\x1bversion",
+                                              "costMode": "unmetered"}}, [escaped_role])
+
+    def test_selected_args_cost_mode_and_explicit_version_must_match_runtime(self):
+        profile = {"provider": "process", "model": "fake-model-1", "effort": "low",
+                   "providerExecutable": "/usr/bin/fake-executor", "providerArgs": ["--verify"],
+                   "providerVersion": "fake/1", "costMode": "unmetered"}
+        profiles = {"verifier": profile}
+        runtime = ("verifier:\n    command: /usr/bin/fake-executor\n    args: [--verify]\n"
+                   "    transport: process\n    model: fake-model-1\n"
+                   "    modelOptions:\n        reasoningEffort: low\n    providerVersion: fake/1\n"
+                   "    costMode: unmetered\n")
+        methods._confirm_roles(profiles, methods.runtime_roles(runtime))
+        for changed, expected in ((runtime.replace("args: [--verify]", "args: []"), "args differ"),
+                                  (runtime.replace("costMode: unmetered", "costMode: metered"), "cost mode differs"),
+                                  (runtime.replace("providerVersion: fake/1", "providerVersion: fake/2"),
+                                   "provider version differs")):
+            with self.subTest(expected=expected):
+                with self.assertRaisesRegex(methods.SetupBlocked, expected):
+                    methods._confirm_roles(profiles, methods.runtime_roles(changed))
+
+    def test_flow_args_keep_commas_and_doubled_single_quotes_inside_scalars(self):
+        text = ('verifier:\n'
+                '    args: ["comma,apostrophe\'s", \'it\'\'s,okay\', "a,b"]\n'
+                '    transport: process\n')
+        self.assertEqual(methods.runtime_roles(text)[0]["args"],
+                         ["comma,apostrophe's", "it's,okay", "a,b"])
+
+    def test_unreadable_args_shape_fails_closed_even_when_empty_was_requested(self):
+        text = "verifier:\n    args:\n        nested: value\n    transport: process\n"
+        role = methods.runtime_roles(text)[0]
+        self.assertIsNone(role["args"])
+        with self.assertRaisesRegex(methods.SetupBlocked, "args differ"):
+            methods._confirm_roles({"verifier": {"provider": "process", "model": None,
+                                                   "effort": None, "providerArgs": [],
+                                                   "costMode": "metered"}}, [role])
 
     def test_tolerates_other_yaml_shapes(self):
         text = ("# comment\n---\nagents:\n"
@@ -403,9 +554,9 @@ class RuntimeRolesTest(unittest.TestCase):
                 "verifier: null\n")
         self.assertEqual(methods.runtime_roles(text), [
             {"role": "worker", "manager": "a: b", "executor": "exec", "providerVersion": None, "command": None,
-             "model": "it's", "effort": "low"},
+             "model": "it's", "effort": "low", "args": [], "costMode": "metered"},
             {"role": "worker", "manager": "plain", "executor": "process", "providerVersion": None, "command": None,
-             "model": "m2", "effort": None}])
+             "model": "m2", "effort": None, "args": [], "costMode": "metered"}])
         self.assertEqual(methods.runtime_roles(""), [])
         self.assertEqual(methods.runtime_roles("not: [yaml\n  - at all"), [])
 

@@ -100,6 +100,8 @@ def validate(data: Any, *, playground: Path | None = None) -> dict:
         # Codex applies it per session; Claude Code has no such setting, so it is only recorded.
         "maxSubagents": _positive_int(agent["maxSubagents"], "agent.maxSubagents"),
     }
+    if kind in ("codex", "fake"):
+        _choice(result["agent"]["effort"], CODEX_EFFORTS, "agent.effort")
 
     limits = _object(root["limits"], "limits", required={"stationSeconds", "totalSeconds"})
     result["limits"] = {name: _positive_int(limits[name], f"limits.{name}")
@@ -142,6 +144,10 @@ def validate(data: Any, *, playground: Path | None = None) -> dict:
             result["markitect"]["innerEffort"] = _match(product["innerEffort"], _EFFORT, "markitect.innerEffort")
     elif "markitect" in root:
         raise ManifestError("markitect: only allowed when method is 'markitect'")
+    if result["method"] == "markitect":
+        for name, profile in role_profiles(result).items():
+            if profile["provider"] == "codex":
+                _choice(profile["effort"], CODEX_EFFORTS, f"markitect {name} Codex effort")
     return result
 
 

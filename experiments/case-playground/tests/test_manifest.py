@@ -51,6 +51,30 @@ def variant(**changes):
 
 
 class ManifestTests(unittest.TestCase):
+    def test_native_outer_and_used_fallback_efforts_are_supported(self):
+        for kind in ("codex", "fake"):
+            self.assertRejected(variant(agent__kind=kind, agent__effort="turbo"), "agent.effort")
+        self.assertRejected(variant(method="markitect", markitect={**MARKITECT, "innerEffort": "turbo"}),
+                            "manager Codex effort")
+        self.assertRejected(variant(method="markitect", markitect={**MARKITECT, "innerEffort": "turbo",
+                            "roles": {"manager": {"provider": "process", "model": "fake-model-1", "effort": "low",
+                                                   "providerExecutable": "/usr/bin/fake"}}}),
+                            "reviewer Codex effort")
+        explicit = {name: {"provider": "codex", "model": "gpt-6-luna", "effort": "high"}
+                    for name in ("manager", "reviewer", "verifier")}
+        normalized = manifest.validate(variant(method="markitect", markitect={**MARKITECT,
+                                       "innerEffort": "turbo", "roles": explicit}))
+        self.assertEqual(normalized["markitect"]["innerEffort"], "turbo")
+        for effort in manifest.CODEX_EFFORTS:
+            self.assertEqual(manifest.validate(variant(agent__effort=effort))["agent"]["effort"], effort)
+
+    def test_claude_outer_effort_is_not_mistaken_for_a_native_inner_profile(self):
+        roles = {name: {"provider": "process", "model": "fake-model-1", "effort": "custom",
+                        "providerExecutable": "/usr/bin/fake"} for name in manifest.ROLE_NAMES}
+        data = variant(agent__kind="claude", agent__claudeVersion="2.1.296", agent__model="claude-opus-5-5",
+                       agent__effort="custom", method="markitect", markitect={**MARKITECT, "roles": roles})
+        self.assertEqual(manifest.validate(data)["agent"]["effort"], "custom")
+
     def assertRejected(self, data, fragment):
         with self.assertRaises(manifest.ManifestError) as caught:
             manifest.validate(data)
