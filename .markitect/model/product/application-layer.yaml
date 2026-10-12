@@ -28,18 +28,18 @@ spec:
   paths:
     - src/cmd/markitect/
     - src/cmd/markitect-release/
-    - src/internal/host/buildinfo/
-    - src/internal/host/releaseinstall/
-    - src/internal/host/mcp/
-    - src/internal/host/projectadoption/
-    - src/internal/host/projectapp/
-    - src/internal/host/projectcli/
-    - src/internal/host/projectcoverage/
-    - src/internal/host/projecthistory/
-    - src/internal/host/projectexplore/
-    - src/internal/host/projectonboarding/
-    - src/internal/host/projectwork/
-    - src/internal/host/releasecli/
+    - src/internal/application/buildinfo/
+    - src/internal/application/releaseinstall/
+    - src/internal/application/mcp/
+    - src/internal/application/projectadoption/
+    - src/internal/application/projectapp/
+    - src/internal/application/projectcli/
+    - src/internal/application/projectcoverage/
+    - src/internal/application/projecthistory/
+    - src/internal/application/projectexplore/
+    - src/internal/application/projectonboarding/
+    - src/internal/application/projectwork/
+    - src/internal/application/releasecli/
   checks:
     - namespace: ""
       name: go-tests

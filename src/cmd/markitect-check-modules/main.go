@@ -3,7 +3,7 @@ package main
 import (
 	"os"
 
-	"github.com/Glacius-Labs/Markitect/src/internal/host/modulecli"
+	"github.com/Glacius-Labs/Markitect/src/internal/application/modulecli"
 )
 
 func main() { os.Exit(modulecli.Run(os.Args[1:], os.Stdout, os.Stderr)) }

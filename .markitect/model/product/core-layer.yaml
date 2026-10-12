@@ -23,7 +23,6 @@ spec:
       name: declared-inputs
   paths:
     - src/internal/core/
-    - src/internal/modules/projectmodel/
   checks:
     - namespace: ""
       name: go-tests

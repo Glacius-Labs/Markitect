@@ -74,11 +74,11 @@ func TestCodeMapLayersMatchGateLayers(t *testing.T) {
 		path, layer string
 		ok          bool
 	}{
-		{"src/internal/modules/projectmodel/projectcoverage", "core", true},
-		{"src/internal/host/projectcoverage", "application", true},
-		{"src/internal/modules/projectmodel", "core", true},
+		{"src/internal/core/projectmodel/projectcoverage", "core", true},
+		{"src/internal/application/projectcoverage", "application", true},
+		{"src/internal/core/projectmodel", "core", true},
 		{"src/internal/modules/markdown", "legacy", true},
-		{"src/internal/host/projectrun", "runtime", true},
+		{"src/internal/runtime/projectrun", "runtime", true},
 		{"src/internal/modules/markdown", "application", false},
 		{"src/cmd/markitect", "legacy", false},
 		{"src/internal/core", "legacy", false},

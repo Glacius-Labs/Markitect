@@ -1062,7 +1062,9 @@ func buildOrReuse(root string, m manifest, archive *sourceArchive, goPath string
 		return "", err
 	}
 	versionPackage := archive.sourcePrefix + "internal/host/cli"
-	if _, err := os.Stat(filepath.Join(sourceDir, filepath.FromSlash(archive.sourcePrefix+"internal/host/buildinfo/version.go"))); err == nil {
+	if _, err := os.Stat(filepath.Join(sourceDir, filepath.FromSlash(archive.sourcePrefix+"internal/application/buildinfo/version.go"))); err == nil {
+		versionPackage = archive.sourcePrefix + "internal/application/buildinfo"
+	} else if _, err := os.Stat(filepath.Join(sourceDir, filepath.FromSlash(archive.sourcePrefix+"internal/host/buildinfo/version.go"))); err == nil {
 		versionPackage = archive.sourcePrefix + "internal/host/buildinfo"
 	}
 	args := []string{"build", "-buildvcs=false", "-trimpath", "-ldflags", "-X main.version=" + m.version + " -X github.com/Glacius-Labs/Markitect/" + versionPackage + ".version=" + m.version, "-o", tempName, "./" + archive.sourcePrefix + "cmd/markitect"}

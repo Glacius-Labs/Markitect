@@ -123,9 +123,9 @@ conformance are recorded as method conformance, separate from the public checks.
 - `docs/provider-adapters.md`: `codex mcp add markitect -- ... mcp --repo ...`.
 - `docs/usage.md` ("Initialize a project") and `docs/onboarding.md`: init preview, then
   write, on a feature branch.
-- `src/internal/host/projectcli/options.go`, `run.go`, `mcp.go`, `operations.go`: flags,
+- `src/internal/application/projectcli/options.go`, `run.go`, `mcp.go`, `operations.go`: flags,
   `--expect` rules, JSON output and exit codes.
-- `src/internal/host/projectsetup/setup.go`: native executable rules, model/effort/
+- `src/internal/runtime/projectsetup/setup.go`: native executable rules, model/effort/
   version checks, runtime defaults.
-- `src/internal/host/projectwork/init.go` and `src/internal/host/write_safety.go`:
+- `src/internal/application/projectwork/init.go` and `src/internal/host/write_safety.go`:
   init files and the protected-branch rule.

@@ -34,8 +34,14 @@ func (v Violation) String() string {
 // legacy paths receive no permanent exemption.
 func layer(p string) (string, string) {
 	switch {
+	// Preserve the project-model family's capability boundary at its Core
+	// location; structural Core and sibling capabilities cannot import it.
+	case p == "src/internal/core/projectmodel" || strings.HasPrefix(p, "src/internal/core/projectmodel/"):
+		return "module", "src/internal/core/projectmodel"
 	case p == "src/internal/core" || strings.HasPrefix(p, "src/internal/core/"):
 		return "core", "core"
+	case p == "src/internal/application" || strings.HasPrefix(p, "src/internal/application/") || p == "src/internal/runtime" || strings.HasPrefix(p, "src/internal/runtime/"):
+		return "host", "host"
 	case p == "src/internal/host" || strings.HasPrefix(p, "src/internal/host/"):
 		return "host", "host"
 	case p == "src/internal/modules" || strings.HasPrefix(p, "src/internal/modules/"):
@@ -44,6 +50,10 @@ func layer(p string) (string, string) {
 			return "module", strings.Join(parts[:4], "/")
 		}
 		return "unknown", p
+	// The moved writer keeps its existing composition boundary. Its finer
+	// Infrastructure direction and guarded selectors are checked separately.
+	case p == GuardedWritePackage || strings.HasPrefix(p, GuardedWritePackage+"/"):
+		return "host", "host"
 	case p == "src/internal/infrastructure" || strings.HasPrefix(p, "src/internal/infrastructure/"):
 		return "infrastructure", "infrastructure"
 	case p == "src/internal/tooling" || strings.HasPrefix(p, "src/internal/tooling/") || p == "tools" || strings.HasPrefix(p, "tools/"):

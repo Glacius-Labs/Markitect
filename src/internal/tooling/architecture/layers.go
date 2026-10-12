@@ -15,7 +15,7 @@ import (
 // GuardedWritePackage owns guarded working-tree writes. Product packages may
 // use only its guarded API; its other exports are primitives for the
 // remaining legacy writers.
-const GuardedWritePackage = "src/internal/host/guardedwrite"
+const GuardedWritePackage = "src/internal/infrastructure/guardedwrite"
 
 // productLayers are the code-map layers of the current product.
 var productLayers = map[string]bool{"core": true, "infrastructure": true, "application": true, "runtime": true}
