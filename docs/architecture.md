@@ -89,7 +89,7 @@ The application layer holds the product's use cases and the surfaces that expose
 - `projectexplore` stores explorations, open decisions, scope readiness and Apply receipts.
 - `projectadoption` runs Brownfield adoption: fixed-snapshot evidence, Manager proposals and a model-only adoption plan.
 - `projectonboarding` writes project-local guidance and skills for Codex and Claude Code.
-- `projectapp` is the shared facade over these use cases and the runtime. `NewOperations` composes the Host, local workspace service and transport invoker once for either adapter. CLI and MCP delegate product operations, including briefing history and the read-only status overview, to this facade.
+- `projectapp` is the shared facade over these use cases and the runtime. `NewOperations` is their shared composition factory for the Host, local workspace service and transport invoker. CLI and MCP delegate product operations, including briefing history and the read-only status overview, to this facade. Lightweight read helpers may construct another instance; construction itself starts no provider or workspace.
 - `projectcli` holds the verb table behind the `markitect` command line and its MCP tools, and `mcp` is the stdio MCP adapter ([project operations](project-operations.md)).
 - `releasecli` is the command interface of `markitect-release`.
 
