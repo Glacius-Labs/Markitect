@@ -382,7 +382,7 @@ func TestFullVerifyNativeAssessmentUsesReadOnlyOwnedWorkspaceWithoutProvider(t *
 	integrationReviews := fullAuditIntegrationReviewsForManager(project.Report, managerID, finalID, finalDigest, []fullReviewEvidence{parentReview})
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
-	row, err := fullAuditManager(ctx, Host{Workspaces: service}, invoker, root, project, runtime,
+	row, err := fullAuditManager(ctx, hostForProjectWithWorkspace(root, project, service), invoker, root, project, runtime,
 		managerID, projectconfig.StrictnessProfile{}, BriefingContext{}, nil, nil, integrationReviews, false, "full-verify-test")
 	if err != nil {
 		t.Fatalf("native Manager audit failed: row=%+v err=%v", row, err)
@@ -513,7 +513,7 @@ func TestFullVerifyInvocationReceivesExplicitCrossManagerArtifactEvidence(t *tes
 	childAssessments := fullChildAssessments([]FullManagerAssessment{childRow}, project.Report, managerID)
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
-	if _, err := fullAuditManager(ctx, Host{Workspaces: service}, invoker, root, project, runtime,
+	if _, err := fullAuditManager(ctx, hostForProjectWithWorkspace(root, project, service), invoker, root, project, runtime,
 		managerID, projectconfig.StrictnessProfile{}, BriefingContext{}, childAssessments, results, nil, false, "full-verify-support-test"); err != nil {
 		t.Fatalf("Manager audit failed: %v", err)
 	}
@@ -704,7 +704,7 @@ func TestFullVerifyTypedIncompleteAuditCannotPass(t *testing.T) {
 	invoker := &fullVerifyNativeWorkspaceInvoker{root: root, typedIncomplete: true}
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
-	row, err := fullAuditManager(ctx, Host{Workspaces: service}, invoker, root, project, runtime,
+	row, err := fullAuditManager(ctx, hostForProjectWithWorkspace(root, project, service), invoker, root, project, runtime,
 		managerID, projectconfig.StrictnessProfile{}, BriefingContext{}, nil, nil, nil, false, "full-verify-incomplete-test")
 	if err == nil || row.Status != "incomplete" {
 		t.Fatalf("typed incomplete audit was accepted: row=%+v err=%v", row, err)
@@ -740,7 +740,7 @@ func fullVerifyProjectFacts(t *testing.T, root, revision string) *projectvalue.P
 	return &projectvalue.Project{
 		Root: root, Revision: revision, Digest: strings.Repeat("f", 64),
 		Config:   projectvalue.Config{CoverageMode: "full", DocumentPath: instructionPath},
-		Snapshot: &snapshot.Snapshot{ID: "sha256:full-verify-snapshot", Files: files, Modes: modes},
+		Snapshot: &snapshot.Snapshot{ID: revision, Files: files, Modes: modes},
 		Report: projectmodel.Report{Digest: "sha256:" + strings.Repeat("a", 64), ModelDigest: "sha256:" + strings.Repeat("b", 64),
 			Managers: []projectmodel.Manager{{ID: rootManager, Name: "root"}, {ID: childManager, Name: "child", Parent: rootManager}},
 			Statements: []projectmodel.Statement{

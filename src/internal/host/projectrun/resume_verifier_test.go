@@ -150,8 +150,8 @@ func TestRunVerifierConsumesClosedOriginalCacheWithoutAnotherStart(t *testing.T)
 	starts := 0
 	original := InvocationLog{TaskID: "verifier", Role: agentexec.RoleVerifier, Phase: "verify", InputDigest: invocation.InputDigest,
 		Receipt: agentexec.Receipt{RunID: invocation.RunID, InputDigest: invocation.InputDigest}}
-	report, log, err := runVerifier(requireNativeRecovery(context.Background(), "verifier-run", []InvocationLog{original}), hostWithWorkspace(service), invoker, root,
-		PlanRecord{ID: "verifier-run"}, runtime, project, candidate, []CheckResult{}, func(InvocationLog) error { starts++; return nil })
+	report, log, err := runVerifier(requireNativeRecovery(context.Background(), "verifier-run", []InvocationLog{original}), hostForProjectWithWorkspace(root, project, service), invoker, root,
+		PlanRecord{ID: "verifier-run", BaseRevision: project.Revision}, runtime, project, candidate, []CheckResult{}, func(InvocationLog) error { starts++; return nil })
 	if err != nil || report == nil || report.Outcome != agentexec.OutcomePassed {
 		t.Fatalf("closed original verifier result was not consumed: report=%+v err=%v", report, err)
 	}

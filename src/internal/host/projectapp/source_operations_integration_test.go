@@ -354,11 +354,15 @@ func TestVerifyChecksSeeFilesModelledInPlace(t *testing.T) {
 	sourceOperationsConfigureChecks(t, root, "legacy")
 	sourceOperationsRegenerateDocument(t, operations, root)
 	deliveryGit(t, root, "add", ".")
-	deliveryGit(t, root, "commit", "-m", "model the transitional legacy orders file")
+	deliveryGit(t, root, "commit", "-m", "introduce transitional legacy orders file")
 
-	// The candidate removes only the transitional marker; the real Application
-	// compiler supplies the generated document for the resulting source model.
-	sourceOperationsConfigureWorker(t, root, sourceOperationsManifestPath, string(manifest), "")
+	// Commit the explicit model transition before planning: the legacy file is
+	// now owned by Orders and no longer excluded. The worker change below is a
+	// normal implementation edit to another Orders-owned source file.
+	deliveryWrite(t, root, sourceOperationsManifestPath, string(manifest))
+	sourceOperationsRegenerateDocument(t, operations, root)
+	sourceOperationsCommitInputs(t, root, "model legacy orders file in place")
+	sourceOperationsConfigureWorker(t, root, "src/orders/implementation.txt", "orders implementation v2\n", "")
 	sourceOperationsCommitInputs(t, root, "configure modelled-file process fixture")
 	request := projectrun.PlanRequest{Operation: projectrun.OperationApply, Goal: "Model the legacy orders file in place.", Managers: deliveryManagers(), ExecuteAuthorized: true}
 	sourceOperationsCreateAcknowledgedScope(t, operations, root, &request, "legacy-file", "legacy-file-change")
@@ -369,7 +373,8 @@ func TestVerifyChecksSeeFilesModelledInPlace(t *testing.T) {
 		t.Fatalf("Verify: report=%+v err=%v", verified, err)
 	}
 	assertSourceOperationsChecksObservedLegacy(t, verified.Checks)
-	if verified.ManagerVerification == nil || verified.ManagerVerification.Status != "passed" || verified.ManagerVerification.SnapshotDigest != run.Candidate.Snapshot {
+	if verified.ManagerVerification == nil || verified.ManagerVerification.Status != "passed" ||
+		verified.ManagerVerification.CandidateID != run.Candidate.ID || verified.ManagerVerification.CandidateID != verified.CandidateID {
 		t.Fatalf("verification did not bind a passing whole-project audit: %+v", verified.ManagerVerification)
 	}
 	preflight, err := operations.PreflightApply(PreflightOperation{Root: root, RunID: run.ID, CandidateID: run.Candidate.ID})
@@ -383,9 +388,20 @@ func TestVerifyChecksSeeFilesModelledInPlace(t *testing.T) {
 	}
 	deliveryGit(t, root, append([]string{"add", "--"}, applied.Written...)...)
 	deliveryGit(t, root, "commit", "-m", "apply modelled-file candidate")
-	full, err := operations.FullVerify(context.Background(), FullVerifyOperation{Root: root, Request: projectrun.FullVerifyRequest{Revision: deliveryGit(t, root, "rev-parse", "HEAD")}})
+	appliedRevision := deliveryGit(t, root, "rev-parse", "HEAD")
+	appliedProject, err := operations.Host.Load(root, appliedRevision)
+	if err != nil {
+		t.Fatalf("load committed applied project: %v", err)
+	}
+	if verified.ManagerVerification.SnapshotDigest != appliedProject.Snapshot.Digest() {
+		t.Fatalf("whole-project audit snapshot %q differs from the committed applied project snapshot %q", verified.ManagerVerification.SnapshotDigest, appliedProject.Snapshot.Digest())
+	}
+	full, err := operations.FullVerify(context.Background(), FullVerifyOperation{Root: root, Request: projectrun.FullVerifyRequest{Revision: appliedRevision}})
 	if err != nil || full.Status != "passed" {
 		t.Fatalf("FullVerify: report=%+v err=%v", full, err)
+	}
+	if full.SnapshotDigest != appliedProject.Snapshot.Digest() {
+		t.Fatalf("FullVerify snapshot %q differs from the committed applied project snapshot %q", full.SnapshotDigest, appliedProject.Snapshot.Digest())
 	}
 	assertSourceOperationsFullChecksObservedLegacy(t, full.Checks)
 }
@@ -603,6 +619,14 @@ func TestCleanupSourceChangeGeneratesAndAppliesExactVerifiedDocument(t *testing.
 	t.Parallel()
 	root := deliveryFixture(t)
 	operations := deliveryOperations()
+	initialDocument, err := operations.Document(DocumentOperation{Selection: Selection{Root: root}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	// Keep a valid generated-document marker but make the committed view stale.
+	// CandidateDocument should then add the exact current Host rendering to the
+	// candidate alongside the source edit.
+	deliveryWrite(t, root, initialDocument.Path, initialDocument.Content+"\nStale committed fixture content.\n")
 	sourceOperationsConfigureWorker(t, root, "src/orders/implementation.txt", "orders implementation v2\n", "")
 	sourceOperationsCommitInputs(t, root, "configure cleanup source-change worker")
 	request := projectrun.PlanRequest{Operation: projectrun.OperationCleanup,
@@ -621,7 +645,7 @@ func TestCleanupSourceChangeGeneratesAndAppliesExactVerifiedDocument(t *testing.
 	if !sourceOperationsContains(preflight.Paths, "src/orders/implementation.txt") {
 		t.Fatalf("guarded Apply omitted the exact verified implementation path: %+v", preflight.Paths)
 	}
-	if !sourceOperationsContains(preflight.Paths, "README.md") {
+	if !sourceOperationsContains(preflight.Paths, initialDocument.Path) {
 		t.Fatalf("guarded Apply omitted the generated document: %+v", preflight.Paths)
 	}
 	applied, err := operations.Apply(ApplyOperation{Root: root, Request: projectrun.ApplyRequest{RunID: run.ID, PlanID: plan.ID, CandidateID: run.Candidate.ID,
