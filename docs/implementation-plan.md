@@ -1,6 +1,6 @@
 # Roadmap
 
-Updated 12 October 2026 against main `b2dc905b1554bd4c61c53dfdcd588fa1368594dc`, with complete [Main CI](https://github.com/Glacius-Labs/Markitect/actions/runs/38212349933). The [previous integration record](validation/integration-queue-20261011.md) closes the six-PR queue and its scoped follow-ups. The [role-round record](validation/integration-round-20261012.md) accounts for integrated TEST-03, CLI-03, CLI-04 and TEST-02 and the completed first Bughunter episode. The owner has now authorized continuous backlog-wave restart; the current reservations are TEST-04, ARCH-08 and PLAY-06. The [Claude-to-Codex handoff](development/session-handoff.md) preserves the earlier interrupted-session snapshot.
+Updated 12 October 2026 against main `d083c8f37b6bb1e09a9c5a7947c421651a7e755b`, with complete [Main CI](https://github.com/Glacius-Labs/Markitect/actions/runs/38231391134). The [previous integration record](validation/integration-queue-20261011.md) closes the six-PR queue and its scoped follow-ups. The [role-round record](validation/integration-round-20261012.md) accounts for integrated TEST-03, CLI-03, CLI-04 and TEST-02, the subsequent TEST-04/ARCH-08/PLAY-06 group and the two completed Bughunter episodes. The owner has authorized continuous backlog-wave restart; the current reservations are RUN-02 and ARCH-09. The [Claude-to-Codex handoff](development/session-handoff.md) preserves the earlier interrupted-session snapshot.
 
 This page owns the current direction: how parallel work is organized, the streams and waves, the code zones, and the open owner decisions. The [backlog](work-items/backlog.yaml) is the single owner of each work package's status. The [concept register](concepts/register.md) records the decisions this roadmap relies on. Source changes do not change a published release.
 
@@ -162,8 +162,8 @@ A zone is a code area in which only one active package changes code at a time. T
 
 ### Wave 2: one interface, a clean runtime
 
-- **Interface zone:** CLI-02, CLI-03, MCP-01, CLI-04, TEST-02 and AGENT-02 are integrated. Cleaner now owns ARCH-08; ARCH-09 follows its actual integration and a separate legacy reservation.
-- **Runtime zone, remaining sequence:** TEST-04 → RUN-02 → ARCH-05 → ARCH-06 after integrated TEST-03. QA owns TEST-04 now. The integrator assigns RUN-02 after its integration and keeps the sequence serialized. TEST-05 needs an explicitly documented later slot or nonconflicting slice; RUN-05/RUN-06 are separate packages with their own risk and reservation checks.
+- **Interface zone:** CLI-02, CLI-03, MCP-01, CLI-04, TEST-02, AGENT-02 and ARCH-08 are integrated. Cleaner now owns ARCH-09 under a separate Legacy reservation.
+- **Runtime zone, remaining sequence:** RUN-02 → ARCH-05 → ARCH-06 after integrated TEST-03/TEST-04. The existing QA chat now owns RUN-02 as Runtime; the sequence stays serialized. PLAY-06 is also integrated. TEST-05 needs an explicitly documented later slot or nonconflicting slice; RUN-05/RUN-06 are separate packages with their own risk and reservation checks.
 - **Also in this wave:**
   - CI-03: one smoke driver.
   - CI-04: container runtime tier.
