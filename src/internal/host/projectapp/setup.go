@@ -46,12 +46,5 @@ func (o Operations) Setup(operation SetupOperation) (projectsetup.Preview, error
 }
 
 func (o Operations) Doctor(operation DoctorOperation) (projectsetup.DoctorReport, error) {
-	if err := requireRoot(operation.Root); err != nil {
-		return projectsetup.DoctorReport{}, err
-	}
-	project, err := projectwork.Load(operation.Root, "")
-	if err != nil {
-		return projectsetup.DoctorReport{}, err
-	}
-	return projectsetup.Doctor(project, operation.Options)
+	return o.doctor(operation, readGitVersion)
 }
