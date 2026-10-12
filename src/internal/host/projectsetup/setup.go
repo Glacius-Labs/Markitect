@@ -8,7 +8,6 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
-	"github.com/Glacius-Labs/Markitect/src/internal/host/projectconfig"
 	"io"
 	"io/fs"
 	"os"
@@ -22,7 +21,8 @@ import (
 
 	"github.com/Glacius-Labs/Markitect/src/internal/host/agentexec"
 	"github.com/Glacius-Labs/Markitect/src/internal/host/codexappserver"
-	"github.com/Glacius-Labs/Markitect/src/internal/host/projectwork"
+	"github.com/Glacius-Labs/Markitect/src/internal/host/projectconfig"
+	"github.com/Glacius-Labs/Markitect/src/internal/modules/projectmodel/projectvalue"
 	"go.yaml.in/yaml/v3"
 )
 
@@ -131,10 +131,20 @@ type Preview struct {
 	Discovery  Discovery `json:"discovery"`
 	// Roles shows the executable each role class pins when role profiles
 	// override the default; Discovery then describes the Manager profile.
-	Roles        map[string]Discovery `json:"roles,omitempty"`
-	PricingBasis string               `json:"pricingBasis"`
-	Mutation     projectwork.Mutation `json:"mutation"`
-	EditPlan     projectwork.EditPlan `json:"editPlan"`
+	Roles        map[string]Discovery  `json:"roles,omitempty"`
+	PricingBasis string                `json:"pricingBasis"`
+	Mutation     projectvalue.Mutation `json:"mutation"`
+	EditPlan     projectvalue.EditPlan `json:"editPlan"`
+}
+
+// Proposal contains only the runtime configuration and discovery facts that
+// Runtime can derive. Application owns Mutation/EditPlan construction.
+type Proposal struct {
+	APIVersion     string               `json:"apiVersion"`
+	Discovery      Discovery            `json:"discovery"`
+	Roles          map[string]Discovery `json:"roles,omitempty"`
+	PricingBasis   string               `json:"pricingBasis"`
+	RuntimeContent string               `json:"runtimeContent"`
 }
 
 type Check struct {
@@ -152,12 +162,12 @@ type DoctorReport struct {
 
 var versionPattern = regexp.MustCompile(`(?i)(?:^|[^0-9])v?([0-9]+\.[0-9]+\.[0-9]+(?:[-+][0-9A-Za-z.-]+)?)`)
 
-func PreviewEdit(project *projectwork.Project, options Options) (Preview, error) {
+func PreviewEdit(project *projectvalue.Project, options Options) (Proposal, error) {
 	return previewEditWithDiscovery(project, options, Discover)
 }
 
-func previewEditWithDiscovery(project *projectwork.Project, options Options, discover func(Options) (Discovery, error)) (Preview, error) {
-	var result Preview
+func previewEditWithDiscovery(project *projectvalue.Project, options Options, discover func(Options) (Discovery, error)) (Proposal, error) {
+	var result Proposal
 	if project == nil {
 		return result, errors.New("active project is required")
 	}
@@ -192,30 +202,19 @@ func previewEditWithDiscovery(project *projectwork.Project, options Options, dis
 	if err != nil {
 		return result, fmt.Errorf("encode runtime proposal: %w", err)
 	}
-	mutation := projectwork.Mutation{
-		APIVersion: projectwork.APIVersion,
-		BaseDigest: project.Digest,
-		Actor:      projectwork.HumanActor,
-		Goal:       "Configure the project-local agent runtime from explicitly selected local tools",
-		Files:      []projectwork.FileChange{{Path: projectwork.RuntimePath, Content: string(content)}},
-	}
-	plan, err := projectwork.PlanEdit(project, mutation)
-	if err != nil {
-		return result, fmt.Errorf("validate runtime edit proposal: %w", err)
-	}
-	return Preview{
-		APIVersion:   "markitect.example.org/project-setup/v1alpha1",
-		Discovery:    discovery,
-		Roles:        roles,
-		PricingBasis: "Caller-supplied budget estimate; not a provider price quote, invoice, or hard billing cap.",
-		Mutation:     mutation, EditPlan: plan,
+	return Proposal{
+		APIVersion:     "markitect.example.org/project-setup/v1alpha1",
+		Discovery:      discovery,
+		Roles:          roles,
+		PricingBasis:   "Caller-supplied budget estimate; not a provider price quote, invoice, or hard billing cap.",
+		RuntimeContent: string(content),
 	}, nil
 }
 
 // BuildRuntime builds the runtime proposal. found is the discovery of the
 // default profile's executable; a role that selects another executable is
 // discovered separately.
-func BuildRuntime(project *projectwork.Project, options Options, found Discovery) (projectconfig.Runtime, error) {
+func BuildRuntime(project *projectvalue.Project, options Options, found Discovery) (projectconfig.Runtime, error) {
 	return buildRuntime(project, options, cachedDiscovery(map[string]Discovery{discoveryKey(options): found}, Discover))
 }
 
@@ -253,7 +252,7 @@ func discoveryKey(options Options) string {
 	return options.Provider + "\x00" + options.ProviderExecutable + "\x00" + version
 }
 
-func buildRuntime(project *projectwork.Project, options Options, discover func(Options) (Discovery, error)) (projectconfig.Runtime, error) {
+func buildRuntime(project *projectvalue.Project, options Options, discover func(Options) (Discovery, error)) (projectconfig.Runtime, error) {
 	var config projectconfig.Runtime
 	if project == nil || len(project.Report.Managers) == 0 {
 		return config, errors.New("active project must contain at least one Manager")
@@ -453,7 +452,7 @@ func validateRoleProfile(profile *roleProfile) error {
 // agentBuilder discovers each role's executable and builds its runtime agent.
 // Native instruction pins are read once and only when a role uses Codex.
 type agentBuilder struct {
-	project          *projectwork.Project
+	project          *projectvalue.Project
 	options          Options
 	discover         func(Options) (Discovery, error)
 	instructionsRead bool
@@ -593,7 +592,7 @@ func containsString(values []string, want string) bool {
 
 // Doctor performs local prerequisite checks without reading provider
 // credentials or invoking login/status commands.
-func Doctor(project *projectwork.Project, options Options) (DoctorReport, error) {
+func Doctor(project *projectvalue.Project, options Options) (DoctorReport, error) {
 	result := DoctorReport{APIVersion: "markitect.example.org/project-doctor/v1alpha1", Provider: options.Provider, Authentication: "not-verified"}
 	if project == nil {
 		return result, errors.New("active project is required")
@@ -641,7 +640,7 @@ func runtimeFile(tool Tool) agentexec.RuntimeFile {
 // nativeInstructionFiles selects only existing, non-operational Codex
 // instruction files owned by onboarding. Paths stay project-relative in the
 // invocation contract; runtime pins bind their exact absolute bytes and modes.
-func nativeInstructionFiles(project *projectwork.Project, provider string) ([]string, []agentexec.RuntimeFile, error) {
+func nativeInstructionFiles(project *projectvalue.Project, provider string) ([]string, []agentexec.RuntimeFile, error) {
 	if project == nil || project.Root == "" {
 		return nil, nil, errors.New("native Codex instructions require an active project root")
 	}
@@ -658,7 +657,7 @@ func nativeInstructionFiles(project *projectwork.Project, provider string) ([]st
 	}
 	var paths []string
 	var files []agentexec.RuntimeFile
-	for _, tool := range projectwork.ToolPaths(project.Config) {
+	for _, tool := range projectvalue.ToolPaths(project.Config) {
 		path := tool.Selector
 		lower := strings.ToLower(filepath.ToSlash(path))
 		if tool.Operational || tool.Owner != "project-onboarding" || !strings.HasSuffix(lower, ".md") || strings.HasPrefix(lower, ".markitect/") {

@@ -18,14 +18,14 @@ func TestProjectEventScopesDefinitionSidesAndRelationsToHistoricalContext(t *tes
 	}
 	id := definition.Identity().Key()
 	managerID := `manager:demo`
-	visibleBefore := managerView{
+	visibleBefore := ManagerView{
 		statements: map[string]projectmodel.Statement{
 			id: {ID: id, Public: true, Uses: []string{"public-target"}, Requires: []string{"public-requirement"}},
 		},
 		artifacts: map[string]bool{}, checks: map[string]projectmodel.Check{}, decisions: map[string]bool{},
 		managers: map[string]bool{managerID: true},
 	}
-	hiddenAfter := emptyManagerView()
+	hiddenAfter := EmptyManagerView()
 	event := Event{
 		ID: "event", DefinitionID: definition.Identity(), Change: "modified",
 		Before: &definition, After: &definition,
@@ -33,7 +33,7 @@ func TestProjectEventScopesDefinitionSidesAndRelationsToHistoricalContext(t *tes
 		AffectedArtifacts: []string{`artifact:private-child`},
 	}
 
-	projected, visible := projectEvent(event, visibleBefore, hiddenAfter)
+	projected, visible := ProjectEvent(event, visibleBefore, hiddenAfter)
 	if !visible {
 		t.Fatal("public Before should keep the event visible to its historical ManagerContext")
 	}
@@ -55,7 +55,7 @@ func TestProjectEventScopesDefinitionSidesAndRelationsToHistoricalContext(t *tes
 		t.Fatalf("private affected identifiers survived projection: managers=%v artifacts=%v", projected.AffectedManagers, projected.AffectedArtifacts)
 	}
 
-	projected, visible = projectEvent(event, hiddenAfter, visibleBefore)
+	projected, visible = ProjectEvent(event, hiddenAfter, visibleBefore)
 	if !visible || projected.Before != nil || projected.After == nil {
 		t.Fatalf("private-to-public projection retained wrong sides: visible=%v Before=%v After=%v", visible, projected.Before, projected.After)
 	}

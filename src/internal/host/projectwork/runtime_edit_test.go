@@ -1,6 +1,7 @@
 package projectwork
 
 import (
+	"github.com/Glacius-Labs/Markitect/src/internal/modules/projectmodel/projectvalue"
 	"strings"
 	"testing"
 )
@@ -13,12 +14,12 @@ func TestRuntimeConfigEditUserPlanApplyAndModelIsolation(t *testing.T) {
 	}
 	modelDigest := project.Model.Digest
 	content := "mode: intentionally-not-a-runtime-mode\n"
-	mutation := Mutation{APIVersion: APIVersion, BaseDigest: project.Digest, Actor: HumanActor, Goal: "Configure the project runtime", Files: []FileChange{{Path: RuntimePath, Content: content}}}
+	mutation := projectvalue.Mutation{APIVersion: projectvalue.APIVersion, BaseDigest: project.Digest, Actor: projectvalue.HumanActor, Goal: "Configure the project runtime", Files: []projectvalue.FileChange{{Path: projectvalue.RuntimePath, Content: content}}}
 	plan, err := PlanEdit(project, mutation)
 	if err != nil {
 		t.Fatalf("syntactically valid runtime edit should be reviewable: %v", err)
 	}
-	if len(plan.Mutation.Files) != 1 || plan.Mutation.Files[0].Path != RuntimePath {
+	if len(plan.Mutation.Files) != 1 || plan.Mutation.Files[0].Path != projectvalue.RuntimePath {
 		t.Fatalf("runtime preview changed unexpected paths: %+v", plan.Mutation.Files)
 	}
 	if plan.Report.Digest != project.Report.Digest || plan.CandidateDigest == project.Digest {
@@ -31,7 +32,7 @@ func TestRuntimeConfigEditUserPlanApplyAndModelIsolation(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if got := string(updated.Snapshot.Files[RuntimePath]); got != content {
+	if got := string(updated.Snapshot.Files[projectvalue.RuntimePath]); got != content {
 		t.Fatalf("runtime bytes = %q, want %q", got, content)
 	}
 	if updated.Model.Digest != modelDigest {
@@ -42,9 +43,9 @@ func TestRuntimeConfigEditUserPlanApplyAndModelIsolation(t *testing.T) {
 func TestRuntimeConfigEditAllowsOnlyUserOrRootManager(t *testing.T) {
 	root, _ := testProject(t)
 	childPath := ".markitect/model/orders/manager.yaml"
-	child := "apiVersion: " + APIVersion + "\nkind: Manager\nmetadata:\n  name: orders\n  namespace: orders\npurpose: Owns order responsibilities.\nspec:\n  parent:\n    apiVersion: " + APIVersion + "\n    kind: Manager\n    namespace: \"\"\n    name: project-owner\n  owns: [src/]\n"
+	child := "apiVersion: " + projectvalue.APIVersion + "\nkind: Manager\nmetadata:\n  name: orders\n  namespace: orders\npurpose: Owns order responsibilities.\nspec:\n  parent:\n    apiVersion: " + projectvalue.APIVersion + "\n    kind: Manager\n    namespace: \"\"\n    name: project-owner\n  owns: [src/]\n"
 	writeFile(t, root, childPath, child)
-	writeFile(t, root, ManifestPath, projectConfig(initManagerPath, ".markitect/model/statement.yaml", childPath))
+	writeFile(t, root, projectvalue.ManifestPath, projectConfig(initManagerPath, ".markitect/model/statement.yaml", childPath))
 	project, err := Load(root, "")
 	if err != nil {
 		t.Fatal(err)
@@ -59,7 +60,7 @@ func TestRuntimeConfigEditAllowsOnlyUserOrRootManager(t *testing.T) {
 		t.Fatalf("child manager missing from report: %+v", project.Report.Managers)
 	}
 	for _, actor := range []string{rootManagerID(), childID} {
-		_, err := PlanEdit(project, Mutation{APIVersion: APIVersion, BaseDigest: project.Digest, Actor: actor, Goal: "Configure runtime", Files: []FileChange{{Path: RuntimePath, Content: "mode: controlled-local\n"}}})
+		_, err := PlanEdit(project, projectvalue.Mutation{APIVersion: projectvalue.APIVersion, BaseDigest: project.Digest, Actor: actor, Goal: "Configure runtime", Files: []projectvalue.FileChange{{Path: projectvalue.RuntimePath, Content: "mode: controlled-local\n"}}})
 		if actor == childID {
 			if err == nil || !strings.Contains(err.Error(), "active root Manager") {
 				t.Fatalf("child Manager runtime edit error = %v", err)
@@ -76,9 +77,9 @@ func TestRuntimeConfigEditRejectsDeleteStaleAndAmbiguousYAML(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	base := Mutation{APIVersion: APIVersion, BaseDigest: project.Digest, Actor: HumanActor, Goal: "Configure runtime"}
+	base := projectvalue.Mutation{APIVersion: projectvalue.APIVersion, BaseDigest: project.Digest, Actor: projectvalue.HumanActor, Goal: "Configure runtime"}
 	deleted := base
-	deleted.Files = []FileChange{{Path: RuntimePath, Delete: true}}
+	deleted.Files = []projectvalue.FileChange{{Path: projectvalue.RuntimePath, Delete: true}}
 	if _, err := PlanEdit(project, deleted); err == nil || !strings.Contains(err.Error(), "only model files may be deleted") {
 		t.Fatalf("runtime deletion error = %v", err)
 	}
@@ -93,18 +94,18 @@ func TestRuntimeConfigEditRejectsDeleteStaleAndAmbiguousYAML(t *testing.T) {
 		"oversize content": "value: " + strings.Repeat("x", (1<<20)+1) + "\n",
 	} {
 		mutation := base
-		mutation.Files = []FileChange{{Path: RuntimePath, Content: content}}
+		mutation.Files = []projectvalue.FileChange{{Path: projectvalue.RuntimePath, Content: content}}
 		if _, err := PlanEdit(project, mutation); err == nil {
 			t.Errorf("%s should be rejected", name)
 		}
 	}
 	mutation := base
-	mutation.Files = []FileChange{{Path: RuntimePath, Content: "mode: controlled-local\n"}}
+	mutation.Files = []projectvalue.FileChange{{Path: projectvalue.RuntimePath, Content: "mode: controlled-local\n"}}
 	plan, err := PlanEdit(project, mutation)
 	if err != nil {
 		t.Fatal(err)
 	}
-	writeFile(t, root, RuntimePath, "mode: changed-after-review\n")
+	writeFile(t, root, projectvalue.RuntimePath, "mode: changed-after-review\n")
 	if _, err := ApplyEdit(root, plan, plan.BaseDigest); err == nil || !strings.Contains(err.Error(), "changed after planning") {
 		t.Fatalf("stale runtime edit error = %v", err)
 	}

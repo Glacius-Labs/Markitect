@@ -1,5 +1,9 @@
 package projectadoption
 
+import "go.yaml.in/yaml/v3"
+
+import "github.com/Glacius-Labs/Markitect/src/internal/modules/projectmodel/projectvalue"
+
 import (
 	"errors"
 	"fmt"
@@ -9,13 +13,12 @@ import (
 
 	"github.com/Glacius-Labs/Markitect/src/internal/host/projectwork"
 	"github.com/Glacius-Labs/Markitect/src/internal/modules/projectmodel"
-	"go.yaml.in/yaml/v3"
 )
 
 // PlanAdoption turns only named, resolved scopes into canonical project model
 // writes. It validates against the selected target project through the frozen
 // projectwork edit planner; it never changes implementation or documentation.
-func PlanAdoption(sourceRoot string, target *projectwork.Project, discovery Discovery, report Distillation, resolution Resolution, schemaDigest, buildDigest string) (AdoptionPlan, error) {
+func PlanAdoption(sourceRoot string, target *projectvalue.Project, discovery Discovery, report Distillation, resolution Resolution, schemaDigest, buildDigest string) (AdoptionPlan, error) {
 	if target == nil || target.Snapshot == nil || target.Provisional {
 		return AdoptionPlan{}, errors.New("adoption requires a loaded committed target project snapshot")
 	}
@@ -56,7 +59,7 @@ func PlanAdoption(sourceRoot string, target *projectwork.Project, discovery Disc
 			deferredScopes[decision.ScopeID] = true
 		}
 	}
-	files := make([]projectwork.FileChange, 0, len(report.Proposal.Files)+1)
+	files := make([]projectvalue.FileChange, 0, len(report.Proposal.Files)+1)
 	modelFiles := make([]string, 0, len(report.Proposal.Files))
 	seenPaths := map[string]bool{}
 	for _, proposed := range report.Proposal.Files {
@@ -68,7 +71,7 @@ func PlanAdoption(sourceRoot string, target *projectwork.Project, discovery Disc
 			return AdoptionPlan{}, fmt.Errorf("duplicate or case-aliased proposal path %q", proposed.Path)
 		}
 		seenPaths[key] = true
-		files = append(files, projectwork.FileChange{Path: proposed.Path, Content: proposed.Content})
+		files = append(files, projectvalue.FileChange{Path: proposed.Path, Content: proposed.Content})
 		modelFiles = append(modelFiles, proposed.Path)
 	}
 	if len(selectedScopes) == 0 {
@@ -90,9 +93,9 @@ func PlanAdoption(sourceRoot string, target *projectwork.Project, discovery Disc
 	if err != nil {
 		return AdoptionPlan{}, err
 	}
-	files = append(files, projectwork.FileChange{Path: projectwork.ManifestPath, Content: updatedManifest})
+	files = append(files, projectvalue.FileChange{Path: projectvalue.ManifestPath, Content: updatedManifest})
 	sort.Slice(files, func(i, j int) bool { return files[i].Path < files[j].Path })
-	mutation := projectwork.Mutation{
+	mutation := projectvalue.Mutation{
 		APIVersion: projectmodel.APIVersion,
 		BaseDigest: target.Digest,
 		Actor:      resolution.Actor,
@@ -121,7 +124,7 @@ func PlanAdoption(sourceRoot string, target *projectwork.Project, discovery Disc
 
 // ApplyAdoption rechecks source, target, proposal and resolution bindings,
 // then delegates only the validated Markitect-owned changes to projectwork.
-func ApplyAdoption(sourceRoot, targetRoot string, target *projectwork.Project, discovery Discovery, report Distillation, resolution Resolution, plan AdoptionPlan, expectedPlanDigest, schemaDigest, buildDigest string) (AdoptionReceipt, error) {
+func ApplyAdoption(sourceRoot, targetRoot string, target *projectvalue.Project, discovery Discovery, report Distillation, resolution Resolution, plan AdoptionPlan, expectedPlanDigest, schemaDigest, buildDigest string) (AdoptionReceipt, error) {
 	if err := ValidateAdoptionPlan(plan); err != nil {
 		return AdoptionReceipt{}, err
 	}
@@ -213,7 +216,7 @@ func RefreshSource(root string, discovery Discovery) error {
 	return err
 }
 
-func manifestWithModelFiles(config projectwork.Config, additions []string) (string, error) {
+func manifestWithModelFiles(config projectvalue.Config, additions []string) (string, error) {
 	seen := map[string]bool{}
 	files := make([]string, 0, len(config.ModelFiles)+len(additions))
 	for _, name := range config.ModelFiles {
@@ -238,9 +241,9 @@ func manifestWithModelFiles(config projectwork.Config, additions []string) (stri
 	return string(data), nil
 }
 
-func validateCanonicalOnly(files []projectwork.FileChange) error {
+func validateCanonicalOnly(files []projectvalue.FileChange) error {
 	for _, file := range files {
-		if file.Delete || (file.Path != projectwork.ManifestPath && !strings.HasPrefix(file.Path, projectwork.ModelRoot+"/")) {
+		if file.Delete || (file.Path != projectvalue.ManifestPath && !strings.HasPrefix(file.Path, projectvalue.ModelRoot+"/")) {
 			return fmt.Errorf("adoption cannot write outside canonical project metadata/model paths: %s", file.Path)
 		}
 	}

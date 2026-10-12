@@ -2,24 +2,21 @@ package projectrun
 
 import (
 	"bytes"
+	"errors"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"testing"
 
-	"github.com/Glacius-Labs/Markitect/src/internal/host/projectwork"
+	"github.com/Glacius-Labs/Markitect/src/internal/core/snapshot"
 	"github.com/Glacius-Labs/Markitect/src/internal/host/projectworkspace"
 	"github.com/Glacius-Labs/Markitect/src/internal/infrastructure/source"
-	"go.yaml.in/yaml/v3"
+	"github.com/Glacius-Labs/Markitect/src/internal/modules/projectmodel/projectvalue"
 )
 
 func TestImportExternalGitCandidatePreservesBinaryModesAndDeletes(t *testing.T) {
-	root, baseCommit, finalCommit := newExternalGitCandidateRepo(t)
-	base, err := projectwork.Load(root, baseCommit)
-	if err != nil {
-		t.Fatal(err)
-	}
-	baseDigest := base.Snapshot.Digest()
+	root, baseCommit, finalCommit, baseSnapshot := newExternalGitCandidateRepo(t)
+	baseDigest := baseSnapshot.Digest()
 	identity, err := source.IdentifyGit(root)
 	if err != nil {
 		t.Fatal(err)
@@ -35,7 +32,7 @@ func TestImportExternalGitCandidatePreservesBinaryModesAndDeletes(t *testing.T) 
 		OverlayDigest: request.OverlayDigest, TaskID: request.TaskID,
 		BaseDigest: "sha256:" + baseDigest,
 	}
-	delta, err := ImportExternalGitCandidate(root, baseCommit, finalCommit, baseDigest, request, handle,
+	delta, err := ImportExternalGitCandidate(externalGitHost(root, baseCommit, baseSnapshot), root, baseCommit, finalCommit, baseDigest, request, handle,
 		projectworkspace.Limits{MaxFiles: 20, MaxFileBytes: 1 << 20, MaxTotalBytes: 2 << 20})
 	if err != nil {
 		t.Fatal(err)
@@ -73,12 +70,8 @@ func TestImportExternalGitCandidatePreservesBinaryModesAndDeletes(t *testing.T) 
 }
 
 func TestImportExternalGitCandidateBindsBaseDigestAndAllowedScope(t *testing.T) {
-	root, baseCommit, finalCommit := newExternalGitCandidateRepo(t)
-	base, err := projectwork.Load(root, baseCommit)
-	if err != nil {
-		t.Fatal(err)
-	}
-	baseDigest := base.Snapshot.Digest()
+	root, baseCommit, finalCommit, baseSnapshot := newExternalGitCandidateRepo(t)
+	baseDigest := baseSnapshot.Digest()
 	identity, err := source.IdentifyGit(root)
 	if err != nil {
 		t.Fatal(err)
@@ -92,19 +85,19 @@ func TestImportExternalGitCandidateBindsBaseDigestAndAllowedScope(t *testing.T) 
 		RepositoryIdentity: identity.Digest, BaseSHA: baseCommit, OverlayDigest: request.OverlayDigest,
 		TaskID: request.TaskID, BaseDigest: "sha256:" + baseDigest}
 	limits := projectworkspace.Limits{MaxFiles: 20, MaxFileBytes: 1 << 20, MaxTotalBytes: 2 << 20}
-	if _, err := ImportExternalGitCandidate(root, baseCommit, finalCommit, baseDigest, request, handle, limits); err == nil {
+	if _, err := ImportExternalGitCandidate(externalGitHost(root, baseCommit, baseSnapshot), root, baseCommit, finalCommit, baseDigest, request, handle, limits); err == nil {
 		t.Fatal("out-of-scope Git change was imported")
 	}
 	request.AllowedPaths = []string{"src"}
-	if _, err := ImportExternalGitCandidate(root, baseCommit, finalCommit, "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff", request, handle, limits); err == nil {
+	if _, err := ImportExternalGitCandidate(externalGitHost(root, baseCommit, baseSnapshot), root, baseCommit, finalCommit, "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff", request, handle, limits); err == nil {
 		t.Fatal("a Git base unrelated to the packet candidate digest was imported")
 	}
-	if _, err := ImportExternalGitCandidate(root, baseCommit[:12], finalCommit, baseDigest, request, handle, limits); err == nil {
+	if _, err := ImportExternalGitCandidate(externalGitHost(root, baseCommit, baseSnapshot), root, baseCommit[:12], finalCommit, baseDigest, request, handle, limits); err == nil {
 		t.Fatal("mutable/abbreviated base revision was accepted")
 	}
 }
 
-func newExternalGitCandidateRepo(t *testing.T) (root, baseCommit, finalCommit string) {
+func newExternalGitCandidateRepo(t *testing.T) (root, baseCommit, finalCommit string, baseSnapshot *snapshot.Snapshot) {
 	t.Helper()
 	root = t.TempDir()
 	run := func(args ...string) {
@@ -121,28 +114,6 @@ func newExternalGitCandidateRepo(t *testing.T) (root, baseCommit, finalCommit st
 	run("config", "user.name", "Fixture")
 	run("config", "user.email", "fixture@example.invalid")
 	run("switch", "-c", "dev/external-git-fixture")
-	if _, err := projectwork.Init(root, "external-git-fixture", true); err != nil {
-		t.Fatal(err)
-	}
-	manifestPath := filepath.Join(root, filepath.FromSlash(projectwork.ManifestPath))
-	manifestBytes, err := os.ReadFile(manifestPath)
-	if err != nil {
-		t.Fatal(err)
-	}
-	var manifest projectwork.Config
-	if err := yaml.Unmarshal(manifestBytes, &manifest); err != nil {
-		t.Fatal(err)
-	}
-	manifest.CoverageMode = "selected"
-	manifest.WorkflowMode = projectwork.WorkflowModeEmpty
-	manifest.InventoryRoots = []string{"src"}
-	manifestBytes, err = yaml.Marshal(manifest)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if err := os.WriteFile(manifestPath, manifestBytes, 0o644); err != nil {
-		t.Fatal(err)
-	}
 	write := func(path string, data []byte, mode os.FileMode) {
 		t.Helper()
 		target := filepath.Join(root, filepath.FromSlash(path))
@@ -157,6 +128,14 @@ func newExternalGitCandidateRepo(t *testing.T) (root, baseCommit, finalCommit st
 	write("src/removed.txt", []byte("removed\n"), 0o644)
 	write("src/unchanged.txt", []byte("unchanged\n"), 0o644)
 	write("src/script.sh", []byte("#!/bin/sh\necho base\n"), 0o644)
+	baseSnapshot = &snapshot.Snapshot{Files: map[string][]byte{
+		"src/changed.bin":   {0x00, 0x11, 0x7f, 0x00, 0x80, 0x42},
+		"src/removed.txt":   []byte("removed\n"),
+		"src/unchanged.txt": []byte("unchanged\n"),
+		"src/script.sh":     []byte("#!/bin/sh\necho base\n"),
+	}, Modes: map[string]string{
+		"src/changed.bin": "100644", "src/removed.txt": "100644", "src/unchanged.txt": "100644", "src/script.sh": "100644",
+	}}
 	run("add", "-A")
 	run("commit", "-qm", "fixed external base")
 	baseCommit = gitExternalOutput(t, root, "rev-parse", "HEAD")
@@ -173,7 +152,16 @@ func newExternalGitCandidateRepo(t *testing.T) (root, baseCommit, finalCommit st
 	finalCommit = gitExternalOutput(t, root, "rev-parse", "HEAD")
 	// Mutable checkout bytes must not affect an import bound to finalCommit.
 	write("src/changed.bin", []byte("uncommitted checkout data"), 0o644)
-	return root, baseCommit, finalCommit
+	return root, baseCommit, finalCommit, baseSnapshot
+}
+
+func externalGitHost(root, revision string, baseSnapshot *snapshot.Snapshot) Host {
+	return Host{Load: func(loadRoot, loadRevision string) (*projectvalue.Project, error) {
+		if loadRoot != root || loadRevision != revision {
+			return nil, errors.New("external Git fixture received an unbound project load")
+		}
+		return &projectvalue.Project{Root: root, Revision: revision, Snapshot: baseSnapshot}, nil
+	}}
 }
 
 func gitExternalOutput(t *testing.T, root string, args ...string) string {

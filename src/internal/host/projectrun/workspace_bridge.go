@@ -1,5 +1,8 @@
 package projectrun
 
+import "github.com/Glacius-Labs/Markitect/src/internal/core/snapshot"
+import "github.com/Glacius-Labs/Markitect/src/internal/modules/projectmodel/projectvalue"
+
 import (
 	"bytes"
 	"context"
@@ -38,8 +41,8 @@ type workspaceJournal struct {
 // invokeProjectAgent owns workspace preparation and observation. A model cannot
 // supply a delta. Unknown transport/child termination preserves the private
 // workspace and journal for recovery; it never permits a blind cleanup/replay.
-func invokeProjectAgent(ctx context.Context, host Host, invoker Invoker, root string, project *Project, agent projectconfig.Agent, ownerRunID, taskID string, allowed, excluded []string, limits projectconfig.Limits, cfg agentexec.Config, req agentexec.Request) (result agentexec.RunResult, returnErr error) {
-	if result, handled, err := externalInvocation(ctx, root, ownerRunID, taskID, cfg, req); handled {
+func invokeProjectAgent(ctx context.Context, host Host, invoker Invoker, root string, project *projectvalue.Project, agent projectconfig.Agent, ownerRunID, taskID string, allowed, excluded []string, limits projectconfig.Limits, cfg agentexec.Config, req agentexec.Request) (result agentexec.RunResult, returnErr error) {
+	if result, handled, err := externalInvocation(ctx, host, root, ownerRunID, taskID, cfg, req); handled {
 		return result, err
 	}
 	fingerprint, err := fingerprintForRequest(invoker, cfg, req)
@@ -205,7 +208,7 @@ func persistWorkspaceJournal(path string, journal workspaceJournal) error {
 	return os.Rename(tmp, path)
 }
 
-func workspaceOverlay(before, after *Snapshot) ([]projectworkspace.Change, error) {
+func workspaceOverlay(before, after *snapshot.Snapshot) ([]projectworkspace.Change, error) {
 	if before == nil || after == nil {
 		return nil, fmt.Errorf("workspace overlay requires source and candidate snapshots")
 	}

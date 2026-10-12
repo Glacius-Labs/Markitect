@@ -34,6 +34,8 @@ spec:
     - src/internal/host/projectadoption/
     - src/internal/host/projectapp/
     - src/internal/host/projectcli/
+    - src/internal/host/projectcoverage/
+    - src/internal/host/projecthistory/
     - src/internal/host/projectexplore/
     - src/internal/host/projectonboarding/
     - src/internal/host/projectwork/

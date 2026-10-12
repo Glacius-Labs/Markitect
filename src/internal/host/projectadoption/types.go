@@ -2,7 +2,7 @@
 // prepares owner-decided model-only adoption through projectwork.
 package projectadoption
 
-import "github.com/Glacius-Labs/Markitect/src/internal/host/projectwork"
+import "github.com/Glacius-Labs/Markitect/src/internal/modules/projectmodel/projectvalue"
 
 const (
 	DiscoveryVersion     = "markitect.example.org/project-discovery/v1alpha1"
@@ -216,14 +216,14 @@ type Resolution struct {
 }
 
 type AdoptionPlan struct {
-	APIVersion         string               `json:"apiVersion"`
-	DiscoveryDigest    string               `json:"discoveryDigest"`
-	DistillationDigest string               `json:"distillationDigest"`
-	ResolutionDigest   string               `json:"resolutionDigest"`
-	TargetBasis        string               `json:"targetBasis"`
-	PlanDigest         string               `json:"planDigest"`
-	Status             string               `json:"status"` // complete or partial
-	AdoptedScopes      []string             `json:"adoptedScopes"`
-	DeferredScopes     []string             `json:"deferredScopes"`
-	Edit               projectwork.EditPlan `json:"edit"`
+	APIVersion         string                `json:"apiVersion"`
+	DiscoveryDigest    string                `json:"discoveryDigest"`
+	DistillationDigest string                `json:"distillationDigest"`
+	ResolutionDigest   string                `json:"resolutionDigest"`
+	TargetBasis        string                `json:"targetBasis"`
+	PlanDigest         string                `json:"planDigest"`
+	Status             string                `json:"status"` // complete or partial
+	AdoptedScopes      []string              `json:"adoptedScopes"`
+	DeferredScopes     []string              `json:"deferredScopes"`
+	Edit               projectvalue.EditPlan `json:"edit"`
 }

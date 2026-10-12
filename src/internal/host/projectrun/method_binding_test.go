@@ -1,11 +1,11 @@
 package projectrun
 
 import (
-	"github.com/Glacius-Labs/Markitect/src/internal/host/projectconfig"
 	"path/filepath"
 	"testing"
 
 	"github.com/Glacius-Labs/Markitect/src/internal/host/agentexec"
+	"github.com/Glacius-Labs/Markitect/src/internal/host/projectconfig"
 )
 
 func TestMethodPolicyDigestExcludesExecutorIdentityAndRetainsPolicy(t *testing.T) {
@@ -120,7 +120,10 @@ func TestPlanDoesNotResolveExecutorAndBindsOnlyMethodPolicy(t *testing.T) {
 		}
 	})
 
-	plan, err := Plan(projectworkHost(), root, identityHead(t, root), PlanRequest{Goal: "Plan with an unavailable executor."})
+	revision := identityHead(t, root)
+	project := processRuntimeProject(t, root, revision, false)
+	host := processRuntimeHost(root, project)
+	plan, err := Plan(host, root, revision, PlanRequest{Goal: "Plan with an unavailable executor."})
 	if err != nil {
 		t.Fatalf("Plan resolved or required an available executor: %v", err)
 	}

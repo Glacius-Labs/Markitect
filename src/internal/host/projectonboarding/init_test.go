@@ -1,5 +1,7 @@
 package projectonboarding
 
+import "github.com/Glacius-Labs/Markitect/src/internal/modules/projectmodel/projectvalue"
+
 import (
 	"bytes"
 	"os"
@@ -34,7 +36,7 @@ func TestInitOnUnbornFeatureBranchCanPreviewAndApplyOnboardingIdempotently(t *te
 	if err != nil {
 		t.Fatalf("load initialized project without a commit: %v", err)
 	}
-	if got := projectwork.DocumentPath(project.Config); got != "docs/markitect/project.md" {
+	if got := projectvalue.DocumentPath(project.Config); got != "docs/markitect/project.md" {
 		t.Fatalf("document path = %q, want initialized default", got)
 	}
 	headCheck := exec.Command("git", "rev-parse", "--verify", "HEAD")

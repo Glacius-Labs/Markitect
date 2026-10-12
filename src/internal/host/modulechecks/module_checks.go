@@ -2,6 +2,8 @@
 // snapshot and the current canonical project model.
 package modulechecks
 
+import "github.com/Glacius-Labs/Markitect/src/internal/modules/projectmodel/projectvalue"
+
 import (
 	"crypto/sha256"
 	"encoding/hex"
@@ -156,7 +158,7 @@ func runPipelinesModule(snap *snapshot.Snapshot, model pipelines.ModelFacts, own
 	return Result{Name: "pipelines", ConfigPath: configPath, ConfigDigest: native.ConfigDigest, Status: native.Status, Pipelines: &native}, nil
 }
 
-func hookModelFacts(project *projectwork.Project, snap *snapshot.Snapshot, report projectmodel.Report) githooks.ModelFacts {
+func hookModelFacts(project *projectvalue.Project, snap *snapshot.Snapshot, report projectmodel.Report) githooks.ModelFacts {
 	facts := githooks.ModelFacts{
 		StructuralStatus: "passed", SnapshotID: snap.ID, SnapshotDigest: snap.Digest(),
 		ModelDigest: project.Model.Digest, OwnerIDs: make([]string, 0, len(report.Artifacts)),
@@ -168,7 +170,7 @@ func hookModelFacts(project *projectwork.Project, snap *snapshot.Snapshot, repor
 	return facts
 }
 
-func pipelineModelFacts(project *projectwork.Project, snap *snapshot.Snapshot, report projectmodel.Report) pipelines.ModelFacts {
+func pipelineModelFacts(project *projectvalue.Project, snap *snapshot.Snapshot, report projectmodel.Report) pipelines.ModelFacts {
 	facts := pipelines.ModelFacts{
 		StructuralStatus: "passed", SnapshotID: snap.ID, SnapshotDigest: snap.Digest(),
 		ModelDigest: project.Model.Digest, OwnerIDs: make([]string, 0, len(report.Artifacts)),

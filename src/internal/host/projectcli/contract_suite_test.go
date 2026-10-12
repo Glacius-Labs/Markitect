@@ -1,5 +1,7 @@
 package projectcli
 
+import "github.com/Glacius-Labs/Markitect/src/internal/modules/projectmodel/projectvalue"
+
 import (
 	"bytes"
 	"context"
@@ -14,7 +16,7 @@ import (
 
 	"github.com/Glacius-Labs/Markitect/src/internal/host/mcp"
 	"github.com/Glacius-Labs/Markitect/src/internal/host/projectapp"
-	"github.com/Glacius-Labs/Markitect/src/internal/host/projectwork"
+
 	"github.com/Glacius-Labs/Markitect/src/internal/testkit"
 )
 
@@ -134,7 +136,7 @@ func contractUnknownArguments(name string) map[string]any {
 	fields := map[string]map[string]any{
 		"init": {"name": "contract"}, "onboard": {"provider": "codex"}, "doctor": {"provider": "process"},
 		"context": {"manager": "project-owner"}, "impact": {"since": "HEAD", "revision": "HEAD"},
-		"edit":  {"input": projectwork.Mutation{APIVersion: projectwork.APIVersion, BaseDigest: "fixture", Actor: "user", Goal: "contract", Files: []projectwork.FileChange{}}},
+		"edit":  {"input": projectvalue.Mutation{APIVersion: projectvalue.APIVersion, BaseDigest: "fixture", Actor: "user", Goal: "contract", Files: []projectvalue.FileChange{}}},
 		"ready": {"exploration": "contract", "scope": "contract"}, "plan": {"goal": "contract"},
 		"run": {"plan": "contract"}, "resume": {"run": "contract"}, "repair": {"run": "contract"},
 		"packet-export": {"run": "contract"}, "packet-list": {"run": "contract"},

@@ -8,9 +8,10 @@ import (
 )
 
 var layerFixtureMap = CodeMap{Packages: []MappedPackage{
-	{Path: "src/internal/host/projectcoverage", Layer: "core"},
+	{Path: "src/internal/modules/projectmodel/projectcoverage", Layer: "core"},
 	{Path: "src/internal/host/guardedwrite", Layer: "infrastructure"},
 	{Path: "src/internal/infrastructure/source", Layer: "infrastructure"},
+	{Path: "src/internal/host/projectcoverage", Layer: "application"},
 	{Path: "src/internal/host/projectwork", Layer: "application"},
 	{Path: "src/internal/host/projectrun", Layer: "runtime"},
 	{Path: "src/internal/host", Layer: "legacy"},
@@ -21,7 +22,7 @@ var layerFixtureMap = CodeMap{Packages: []MappedPackage{
 
 func TestMapLayersForbidProductToLegacy(t *testing.T) {
 	for _, e := range []Edge{
-		{"coverage.go", 3, "src/internal/host/projectcoverage", "src/internal/host", false},
+		{"coverage.go", 3, "src/internal/modules/projectmodel/projectcoverage", "src/internal/host", false},
 		{"source.go", 4, "src/internal/infrastructure/source", "src/internal/host/compat/v0_13/kernel", false},
 		{"work.go", 5, "src/internal/host/projectwork", "src/internal/host", false},
 		{"run.go", 6, "src/internal/host/projectrun", "src/internal/host/compat/v0_13/kernel", false},

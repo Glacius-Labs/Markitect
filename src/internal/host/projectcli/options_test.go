@@ -1,5 +1,7 @@
 package projectcli
 
+import "github.com/Glacius-Labs/Markitect/src/internal/modules/projectmodel/projectvalue"
+
 import (
 	"encoding/json"
 	"os"
@@ -10,7 +12,6 @@ import (
 
 	"github.com/Glacius-Labs/Markitect/src/internal/host/mcp"
 	"github.com/Glacius-Labs/Markitect/src/internal/host/projectexplore"
-	"github.com/Glacius-Labs/Markitect/src/internal/host/projectwork"
 )
 
 // parseFields parses CLI arguments into the verb's JSON input fields, exactly
@@ -200,7 +201,7 @@ func TestMainUsageHelpAndInformationVerbs(t *testing.T) {
 func TestEffectRulesRejectBeforeAnyOperation(t *testing.T) {
 	repo := t.TempDir()
 	runGit(t, repo, "init", "--initial-branch=feature-effects")
-	editDraft := writeDraft(t, repo, ".markitect/drafts/edit.json", projectwork.Mutation{APIVersion: projectwork.APIVersion, BaseDigest: "sha256:base", Actor: projectwork.HumanActor, Goal: "g", Files: []projectwork.FileChange{}})
+	editDraft := writeDraft(t, repo, ".markitect/drafts/edit.json", projectvalue.Mutation{APIVersion: projectvalue.APIVersion, BaseDigest: "sha256:base", Actor: projectvalue.HumanActor, Goal: "g", Files: []projectvalue.FileChange{}})
 	exploreDraft := writeDraft(t, repo, ".markitect/drafts/explore.json", projectexplore.Record{
 		APIVersion: projectexplore.APIVersion, ID: "x", Status: projectexplore.StatusActive, Request: "r",
 		Scopes: []projectexplore.Scope{}, Decisions: []projectexplore.Decision{}, Drafts: []projectexplore.DraftProposal{},

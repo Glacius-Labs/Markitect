@@ -1,5 +1,7 @@
 package projectrun
 
+import "github.com/Glacius-Labs/Markitect/src/internal/modules/projectmodel/projectvalue"
+
 import (
 	"github.com/Glacius-Labs/Markitect/src/internal/host/projectconfig"
 	"os"
@@ -8,10 +10,9 @@ import (
 
 	"github.com/Glacius-Labs/Markitect/src/internal/core/snapshot"
 	"github.com/Glacius-Labs/Markitect/src/internal/host/agentexec"
-	"github.com/Glacius-Labs/Markitect/src/internal/host/projectwork"
 )
 
-func nativeWorkspaceFixture(t *testing.T) (string, string, *Project, projectconfig.Agent) {
+func nativeWorkspaceFixture(t *testing.T) (string, string, *projectvalue.Project, projectconfig.Agent) {
 	t.Helper()
 	root := t.TempDir()
 	content := []byte("# Project instructions\nFollow the selected project contract.\n")
@@ -25,9 +26,9 @@ func nativeWorkspaceFixture(t *testing.T) (string, string, *Project, projectconf
 	gitE2E(t, root, "add", path)
 	gitE2E(t, root, "commit", "--quiet", "-m", "fixture")
 	revision := gitE2E(t, root, "rev-parse", "HEAD")
-	project := &Project{
+	project := &projectvalue.Project{
 		Revision: revision,
-		Config:   projectwork.Config{},
+		Config:   projectvalue.Config{},
 		Snapshot: &snapshot.Snapshot{ID: revision, Files: map[string][]byte{path: content}, Modes: map[string]string{path: "100644"}},
 	}
 	pinnedPath, err := filepath.Abs(filepath.Join(root, filepath.FromSlash(path)))
@@ -92,7 +93,7 @@ func TestBuildNativeWorkspaceRejectsStaleInstructionAndUndeclaredPaths(t *testin
 	if _, err := buildNativeWorkspace(root, revision, project, agent); err == nil {
 		t.Fatal("noncanonical instruction path alias was accepted")
 	}
-	if !declaredNativeInstructionPath("docs/reference.md", projectwork.Config{DocumentPath: "docs/reference.md"}) {
+	if !declaredNativeInstructionPath("docs/reference.md", projectvalue.Config{DocumentPath: "docs/reference.md"}) {
 		t.Fatal("exact declared Markdown reference ToolPath was rejected")
 	}
 }

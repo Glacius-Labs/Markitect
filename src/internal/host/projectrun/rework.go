@@ -1,5 +1,7 @@
 package projectrun
 
+import "github.com/Glacius-Labs/Markitect/src/internal/modules/projectmodel/projectvalue"
+
 import (
 	"context"
 	"fmt"
@@ -20,7 +22,7 @@ type queuedManagerRework struct {
 // against the requester's active direct children. Each requested subtree is
 // rerun through its existing child tree, then only the affected ancestor chain
 // is reintegrated. Other child candidate identities and ledgers remain intact.
-func runManagerReworkRounds(ctx context.Context, host Host, invoker Invoker, root string, store *runStore, dir string, plan PlanRecord, runtime projectconfig.Runtime, base *Project, report *RunReport, starts *int, spent *int64) error {
+func runManagerReworkRounds(ctx context.Context, host Host, invoker Invoker, root string, store *runStore, dir string, plan PlanRecord, runtime projectconfig.Runtime, base *projectvalue.Project, report *RunReport, starts *int, spent *int64) error {
 	if runtime.Review == nil {
 		for _, task := range report.Tasks {
 			if len(task.ReworkRequests) > 0 {
@@ -164,7 +166,7 @@ func hasPendingReworkInSubtree(tasks []ManagerTask, managerID string) bool {
 	return false
 }
 
-func executeReworkSubtree(ctx context.Context, host Host, invoker Invoker, root string, store *runStore, dir string, plan PlanRecord, runtime projectconfig.Runtime, base *Project, report *RunReport, managerID, goal, reason string, starts *int, spent *int64) error {
+func executeReworkSubtree(ctx context.Context, host Host, invoker Invoker, root string, store *runStore, dir string, plan PlanRecord, runtime projectconfig.Runtime, base *projectvalue.Project, report *RunReport, managerID, goal, reason string, starts *int, spent *int64) error {
 	task := findTask(report.Tasks, managerID)
 	if task == nil {
 		return fmt.Errorf("rework target %s is absent", managerID)
@@ -330,7 +332,7 @@ func executeReworkSubtree(ctx context.Context, host Host, invoker Invoker, root 
 	return nil
 }
 
-func reintegrateAfterRework(ctx context.Context, host Host, invoker Invoker, root string, store *runStore, dir string, plan PlanRecord, runtime projectconfig.Runtime, base *Project, report *RunReport, task *ManagerTask, starts *int, spent *int64) ([]ReworkRequest, error) {
+func reintegrateAfterRework(ctx context.Context, host Host, invoker Invoker, root string, store *runStore, dir string, plan PlanRecord, runtime projectconfig.Runtime, base *projectvalue.Project, report *RunReport, task *ManagerTask, starts *int, spent *int64) ([]ReworkRequest, error) {
 	children := activeChildren(report.Tasks, task.ManagerID)
 	if len(children) == 0 {
 		return nil, nil
@@ -524,7 +526,7 @@ func unionPaths(groups ...[]string) []string {
 	return paths
 }
 
-func recordReview(ctx context.Context, host Host, invoker Invoker, root string, store *runStore, report *RunReport, plan PlanRecord, runtime projectconfig.Runtime, project *Project, task ManagerTask, phase string, round int, candidate candidateData) (ReviewRecord, InvocationLog, error) {
+func recordReview(ctx context.Context, host Host, invoker Invoker, root string, store *runStore, report *RunReport, plan PlanRecord, runtime projectconfig.Runtime, project *projectvalue.Project, task ManagerTask, phase string, round int, candidate candidateData) (ReviewRecord, InvocationLog, error) {
 	startedIndex := -1
 	review, invocation, err := invokeReviewer(ctx, host, invoker, root, plan, runtime, project, task, phase, round, candidate, func(started InvocationLog) error {
 		report.Invocations = append(report.Invocations, started)

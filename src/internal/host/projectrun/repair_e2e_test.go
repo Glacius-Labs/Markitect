@@ -7,6 +7,7 @@ import (
 	"errors"
 	"github.com/Glacius-Labs/Markitect/src/internal/host/projectconfig"
 	"github.com/Glacius-Labs/Markitect/src/internal/host/projectexecutor"
+	"github.com/Glacius-Labs/Markitect/src/internal/modules/projectmodel/projectvalue"
 	"os"
 	"path/filepath"
 	"reflect"
@@ -27,7 +28,7 @@ func TestProjectRunRepairFailedRequiredCheckThenFreshVerifyAndApply(t *testing.T
 		}
 	})
 	setupE2EProcess(t, "repair-check-fail")
-	host := projectworkHost()
+	host := runtimeLifecycleHost(t, root)
 	plan, err := Plan(host, root, identityHead(t, root), PlanRequest{Goal: "Implement both owned artifacts and integrate them.",
 		Managers: []string{e2eManagerID("orders", "orders"), e2eManagerID("inventory", "inventory")}, ExecuteAuthorized: true})
 	if err != nil {
@@ -149,13 +150,13 @@ func TestProjectRunRepairRejectsNonCheckFailuresAndSpentRounds(t *testing.T) {
 			if scenario.maxRetries != 0 {
 				updateE2ERuntime(t, root, func(runtime *projectconfig.Runtime) { runtime.Limits.MaxRetries = scenario.maxRetries })
 			}
-			plan, err := Plan(projectworkHost(), root, identityHead(t, root), PlanRequest{Goal: "Test bounded repair eligibility.",
+			plan, err := Plan(runtimeLifecycleHost(t, root), root, identityHead(t, root), PlanRequest{Goal: "Test bounded repair eligibility.",
 				Managers: []string{e2eManagerID("orders", "orders")}, ExecuteAuthorized: true})
 			if err != nil {
 				t.Fatal(err)
 			}
 			makeSyntheticFailedCheckRun(t, root, plan, scenario.checkExit, scenario.verifier, scenario.runStatus, scenario.priorCost, scenario.priorStarts)
-			_, err = Repair(context.Background(), projectworkHost(), projectexecutor.ProcessInvoker{}, root, plan.ID)
+			_, err = Repair(context.Background(), runtimeLifecycleHost(t, root), projectexecutor.ProcessInvoker{}, root, plan.ID)
 			if err == nil || !strings.Contains(err.Error(), scenario.wantError) {
 				t.Fatalf("Repair accepted an ineligible failure: %v", err)
 			}
@@ -176,14 +177,27 @@ func TestProjectRunRepairRejectsStaleRunBeforeManagerInvocation(t *testing.T) {
 	root := makeProjectRunFixture(t)
 	setupE2EProcess(t, "")
 	updateE2ERuntime(t, root, func(runtime *projectconfig.Runtime) { runtime.Limits.MaxRetries = 1 })
-	plan, err := Plan(projectworkHost(), root, identityHead(t, root), PlanRequest{Goal: "Test stale repair rejection.",
+	host := runtimeLifecycleHost(t, root)
+	plan, err := Plan(host, root, identityHead(t, root), PlanRequest{Goal: "Test stale repair rejection.",
 		Managers: []string{e2eManagerID("orders", "orders")}, ExecuteAuthorized: true})
 	if err != nil {
 		t.Fatal(err)
 	}
 	makeSyntheticFailedCheckRun(t, root, plan, 1, false, "", 0, 0)
 	writeE2E(t, root, "src/orders/implementation.txt", "user changed selected source\n")
-	_, err = Repair(context.Background(), projectworkHost(), projectexecutor.ProcessInvoker{}, root, plan.ID)
+	baseLoad := host.Load
+	baseProject, err := baseLoad(root, plan.BaseRevision)
+	if err != nil {
+		t.Fatal(err)
+	}
+	changedProject := runtimeProjectWithFile(baseProject, "src/orders/implementation.txt", []byte("user changed selected source\n"))
+	host.Load = func(loadRoot, revision string) (*projectvalue.Project, error) {
+		if revision == "" {
+			return changedProject, nil
+		}
+		return baseLoad(loadRoot, revision)
+	}
+	_, err = Repair(context.Background(), host, projectexecutor.ProcessInvoker{}, root, plan.ID)
 	if !errors.Is(err, ErrStale) {
 		t.Fatalf("stale selected source was accepted for repair: %v", err)
 	}
@@ -205,7 +219,7 @@ func TestProjectRunRepairCannotVerifyNewIDForUnchangedFailedSnapshot(t *testing.
 		runtime.Limits.MaxRetries = 1
 		runtime.Limits.MaxStarts = 11
 	})
-	host := projectworkHost()
+	host := runtimeLifecycleHost(t, root)
 	plan, err := Plan(host, root, identityHead(t, root), PlanRequest{Goal: "Test unchanged failed snapshot repair rejection.",
 		Managers: []string{e2eManagerID("orders", "orders"), e2eManagerID("inventory", "inventory")}, ExecuteAuthorized: true})
 	if err != nil {

@@ -1,8 +1,9 @@
-package projectbriefing
+package projecthistory
 
 import (
 	"encoding/json"
 	"errors"
+	projectbriefing "github.com/Glacius-Labs/Markitect/src/internal/modules/projectmodel/projectbriefing"
 	"io/fs"
 	"os"
 	"os/exec"
@@ -14,73 +15,8 @@ import (
 	"github.com/Glacius-Labs/Markitect/src/internal/core"
 	"github.com/Glacius-Labs/Markitect/src/internal/host/projectwork"
 	"github.com/Glacius-Labs/Markitect/src/internal/modules/projectmodel"
+	"github.com/Glacius-Labs/Markitect/src/internal/modules/projectmodel/projectvalue"
 )
-
-func TestBuildProducesStructuredBeforeAfterAndManagerNeighborContract(t *testing.T) {
-	before, after := fixtureProjects()
-	bundle, err := Build(before, after, testProvenance())
-	if err != nil {
-		t.Fatal(err)
-	}
-	if len(bundle.Events) != 1 {
-		t.Fatalf("events = %d, want 1", len(bundle.Events))
-	}
-	event := bundle.Events[0]
-	if event.Change != "modified" || event.Before == nil || event.After == nil {
-		t.Fatalf("event change payload incomplete: %#v", event)
-	}
-	if event.Before.Spec["description"] != "old rule" || event.After.Spec["description"] != "new rule" {
-		t.Fatalf("declared before/after content lost: %#v", event)
-	}
-	if len(event.AffectedArtifacts) != 1 || event.AffectedArtifacts[0] != artifactID() {
-		t.Fatalf("affected artifacts = %v", event.AffectedArtifacts)
-	}
-	rootID, childID := managerIDs()
-	if !contains(event.AffectedManagers, childID) || !contains(event.AffectedManagers, rootID) {
-		t.Fatalf("affected managers = %v", event.AffectedManagers)
-	}
-	var rootBriefing *Briefing
-	for i := range bundle.Managers {
-		if bundle.Managers[i].ManagerID == rootID {
-			rootBriefing = &bundle.Managers[i]
-		}
-	}
-	if rootBriefing == nil || len(rootBriefing.Contracts) != 1 || rootBriefing.Contracts[0].ID != changedStatementID() {
-		t.Fatalf("parent briefing did not retain the relevant public neighbor contract: %#v", rootBriefing)
-	}
-	if bundle.Global.ID == "" || bundle.Global.ModelDigest != after.Model.Digest {
-		t.Fatalf("global briefing is not bound to accepted model: %#v", bundle.Global)
-	}
-}
-
-func TestBuildUnchangedModelHasNoEventsAndStableBriefingIDs(t *testing.T) {
-	before, after := fixtureProjects()
-	unchanged := cloneProject(after)
-	unchanged.Revision = strings.Repeat("c", 40)
-	first, err := Build(after, unchanged, testProvenance())
-	if err != nil {
-		t.Fatal(err)
-	}
-	second, err := Build(after, unchanged, testProvenance())
-	if err != nil {
-		t.Fatal(err)
-	}
-	if len(first.Events) != 0 {
-		t.Fatalf("unchanged model produced %d events", len(first.Events))
-	}
-	if first.Global.ID != second.Global.ID {
-		t.Fatalf("briefing id changed: %s vs %s", first.Global.ID, second.Global.ID)
-	}
-	_ = before
-}
-
-func TestBuildRejectsProvisionalRevision(t *testing.T) {
-	before, after := fixtureProjects()
-	after.Provisional = true
-	if _, err := Build(before, after, testProvenance()); !errors.Is(err, ErrUncommittedModel) {
-		t.Fatalf("error = %v, want ErrUncommittedModel", err)
-	}
-}
 
 func TestDismissIsSeparateFromImmutableEventAndLoadRequiresExactModelDigest(t *testing.T) {
 	root, base, revision := committedModelFixture(t)
@@ -92,7 +28,7 @@ func TestDismissIsSeparateFromImmutableEventAndLoadRequiresExactModelDigest(t *t
 	if err != nil {
 		t.Fatal(err)
 	}
-	_, digest, err := Read(root)
+	_, digest, err := readState(root)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -114,10 +50,10 @@ func TestDismissIsSeparateFromImmutableEventAndLoadRequiresExactModelDigest(t *t
 	if err != nil || len(eventsAfterDismiss) != 1 || hash(eventsAfterDismiss[0]) != hash(storedEvent) {
 		t.Fatalf("dismissal changed or resolved the event: %#v err=%v", eventsAfterDismiss, err)
 	}
-	if _, _, _, err := LoadForManager(root, "old-model-digest", managerID); !errors.Is(err, ErrStaleModel) {
+	if _, _, _, err := LoadForManager(root, "old-model-digest", managerID); !errors.Is(err, projectbriefing.ErrStaleModel) {
 		t.Fatalf("stale model error = %v", err)
 	}
-	stateAfter, _, err := Read(root)
+	stateAfter, _, err := readState(root)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -129,7 +65,7 @@ func TestDismissIsSeparateFromImmutableEventAndLoadRequiresExactModelDigest(t *t
 	if err != nil {
 		t.Fatal(err)
 	}
-	var tampered Store
+	var tampered projectbriefing.Store
 	if err := json.Unmarshal(data, &tampered); err != nil {
 		t.Fatal(err)
 	}
@@ -141,14 +77,14 @@ func TestDismissIsSeparateFromImmutableEventAndLoadRequiresExactModelDigest(t *t
 	if err := os.WriteFile(path, data, 0600); err != nil {
 		t.Fatal(err)
 	}
-	if _, _, err := Read(root); !errors.Is(err, ErrInvalidBundle) {
+	if _, _, err := readState(root); !errors.Is(err, projectbriefing.ErrInvalidBundle) {
 		t.Fatalf("tampered nested event passed store read: %v", err)
 	}
 }
 
 func TestGenerateChecksAncestryAndNoOpWriteDoesNotAppend(t *testing.T) {
 	root, base, revision := committedModelFixture(t)
-	if _, err := Generate(root, revision, base, testProvenance()); !errors.Is(err, ErrRevisionNotAncestor) {
+	if _, err := Generate(root, revision, base, testProvenance()); !errors.Is(err, projectbriefing.ErrRevisionNotAncestor) {
 		t.Fatalf("reverse revision pair error = %v", err)
 	}
 	baseProject, err := projectwork.Load(root, revision)
@@ -169,7 +105,7 @@ func TestGenerateChecksAncestryAndNoOpWriteDoesNotAppend(t *testing.T) {
 	if len(noOp.Events) != 0 || noOp.SinceModelDigest != noOp.ModelDigest || baseProject.Model.Digest != noOp.ModelDigest {
 		t.Fatalf("documentation-only revision generated model events: %#v", noOp)
 	}
-	_, digest, err := Read(root)
+	_, digest, err := readState(root)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -177,7 +113,7 @@ func TestGenerateChecksAncestryAndNoOpWriteDoesNotAppend(t *testing.T) {
 	if err != nil || result != digest {
 		t.Fatalf("no-op write digest=%q err=%v want current digest %q", result, err, digest)
 	}
-	state, _, err := Read(root)
+	state, _, err := readState(root)
 	if err != nil || len(state.Briefings) != 0 {
 		t.Fatalf("no-op write appended history: %#v err=%v", state, err)
 	}
@@ -213,7 +149,7 @@ func committedModelFixture(t *testing.T) (root, base, revision string) {
 	return root, base, revision
 }
 
-func managerExposingEvent(t *testing.T, project *projectwork.Project, event Event) string {
+func managerExposingEvent(t *testing.T, project *projectvalue.Project, event projectbriefing.Event) string {
 	t.Helper()
 	for _, managerID := range event.AffectedManagers {
 		context, err := projectmodel.Context(project.Report, managerID)
@@ -235,14 +171,14 @@ func managerExposingEvent(t *testing.T, project *projectwork.Project, event Even
 	return ""
 }
 
-func managerExposingEventInHistory(t *testing.T, before, after *projectwork.Project, event Event) string {
+func managerExposingEventInHistory(t *testing.T, before, after *projectvalue.Project, event projectbriefing.Event) string {
 	t.Helper()
 	for _, managerID := range event.AffectedManagers {
-		for _, project := range []*projectwork.Project{before, after} {
+		for _, project := range []*projectvalue.Project{before, after} {
 			if project == nil {
 				continue
 			}
-			view, err := newManagerView(project, managerID)
+			view, err := projectmodel.Context(project.Report, managerID)
 			if err != nil {
 				continue
 			}
@@ -250,8 +186,10 @@ func managerExposingEventInHistory(t *testing.T, before, after *projectwork.Proj
 				if definition == nil || definition.Kind != "Statement" {
 					continue
 				}
-				if _, visible := view.statements[definition.Identity().Key()]; visible {
-					return managerID
+				for _, statement := range view.Statements {
+					if statement.ID == definition.Identity().Key() {
+						return managerID
+					}
 				}
 			}
 		}
@@ -339,7 +277,7 @@ func TestManagerHistoryUsesRevisionAncestryAcrossModelRevert(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	_, digest, err := Read(root)
+	_, digest, err := readState(root)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -389,7 +327,7 @@ func TestManagerHistoryRejectsUnbriefedModelGapIncludingRevert(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	_, digest, err := Read(root)
+	_, digest, err := readState(root)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -417,7 +355,7 @@ func TestManagerHistoryRejectsUnbriefedModelGapIncludingRevert(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if _, _, _, err := LoadForManager(root, unbriefedProject.Model.Digest, manager, unbriefedRevision); !errors.Is(err, ErrStaleModel) {
+	if _, _, _, err := LoadForManager(root, unbriefedProject.Model.Digest, manager, unbriefedRevision); !errors.Is(err, projectbriefing.ErrStaleModel) {
 		t.Fatalf("unbriefed target model error = %v", err)
 	}
 	if err := os.WriteFile(modelPath, changedBytes, 0644); err != nil {
@@ -430,7 +368,7 @@ func TestManagerHistoryRejectsUnbriefedModelGapIncludingRevert(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if _, _, _, err := LoadForManager(root, briefedProject.Model.Digest, manager, revertedRevision); !errors.Is(err, ErrStaleModel) {
+	if _, _, _, err := LoadForManager(root, briefedProject.Model.Digest, manager, revertedRevision); !errors.Is(err, projectbriefing.ErrStaleModel) {
 		t.Fatalf("unbriefed intermediate change/revert error = %v", err)
 	}
 }
@@ -442,11 +380,11 @@ func TestWriteRejectsTamperedPreviewBundle(t *testing.T) {
 		t.Fatal(err)
 	}
 	bundle.Events[0].After.Spec["description"] = "tampered preview"
-	_, digest, err := Read(root)
+	_, digest, err := readState(root)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if _, err := Write(root, bundle, digest); !errors.Is(err, ErrInvalidBundle) {
+	if _, err := Write(root, bundle, digest); !errors.Is(err, projectbriefing.ErrInvalidBundle) {
 		t.Fatalf("tampered bundle write error = %v", err)
 	}
 }
@@ -549,7 +487,7 @@ spec:
 	if _, err := EnsureAcceptedHistory(root, revision); err != nil {
 		t.Fatal(err)
 	}
-	state, _, err := Read(root)
+	state, _, err := readState(root)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -604,7 +542,7 @@ spec:
 			}
 			for _, relatedID := range append(append([]string(nil), contract.Uses...), contract.Requires...) {
 				if relatedID == privateStatement.ID {
-					t.Fatalf("Briefing.Contracts leaked private Statement relation %s", relatedID)
+					t.Fatalf("projectbriefing.Briefing.Contracts leaked private Statement relation %s", relatedID)
 				}
 			}
 		}
@@ -632,7 +570,7 @@ spec:
 	}
 	storedPrivateEvent := false
 	for _, bundle := range state.Briefings {
-		if FullBundleDigest(bundle) != bundle.Digest {
+		if projectbriefing.FullBundleDigest(bundle) != bundle.Digest {
 			t.Fatalf("manager projection changed the stored bundle digest for %s", bundle.Revision)
 		}
 		for _, event := range bundle.Events {
@@ -648,7 +586,7 @@ spec:
 
 func TestReadMissingStoreDoesNotCreateOperationalDirectories(t *testing.T) {
 	root := t.TempDir()
-	if _, _, err := Read(root); err != nil {
+	if _, _, err := readState(root); err != nil {
 		t.Fatal(err)
 	}
 	if _, err := os.Lstat(filepath.Join(root, ".markitect")); !os.IsNotExist(err) {
@@ -656,49 +594,6 @@ func TestReadMissingStoreDoesNotCreateOperationalDirectories(t *testing.T) {
 	}
 }
 
-func fixtureProjects() (*projectwork.Project, *projectwork.Project) {
-	rootID, childID := managerIDs()
-	changedID, neighborID, artID := changedStatementID(), neighborStatementID(), artifactID()
-	managerRoot := projectmodel.Manager{ID: rootID, Name: "root", Namespace: "demo", Owns: []string{"."}}
-	managerChild := projectmodel.Manager{ID: childID, Name: "orders", Namespace: "demo", Parent: rootID, Owns: []string{"orders/"}}
-	changed := projectmodel.Statement{ID: changedID, Name: "order-rule", Namespace: "demo", Owner: childID, Category: "rule", Description: "old rule", Public: true, Uses: []string{}, Requires: []string{}}
-	neighbor := projectmodel.Statement{ID: neighborID, Name: "integration-contract", Namespace: "demo", Owner: rootID, Category: "architecture", Description: "uses order rule", Public: true, Uses: []string{changedID}, Requires: []string{}}
-	artifact := projectmodel.Artifact{ID: artID, Name: "orders-api", Owner: childID, Role: "implementation", Realizes: []string{changedID}, Paths: []string{"orders/api.go"}, Checks: []string{}, Required: true}
-	oldDef := core.Definition{APIVersion: projectmodel.APIVersion, Kind: "Statement", Metadata: core.Metadata{Name: "order-rule", Namespace: "demo"}, Purpose: "Rule", Spec: map[string]any{"category": "rule", "description": "old rule", "public": true, "uses": []any{}, "requires": []any{}}, Source: core.Source{Path: ".markitect/model/demo.yaml", Digest: "old"}}
-	newDef := oldDef
-	newDef.Spec = map[string]any{"category": "rule", "description": "new rule", "public": true, "uses": []any{}, "requires": []any{}}
-	newDef.Source = core.Source{Path: ".markitect/model/demo.yaml", Digest: "new"}
-	rootDef := core.Definition{APIVersion: projectmodel.APIVersion, Kind: "Manager", Metadata: core.Metadata{Name: "root", Namespace: "demo"}, Purpose: "Root", Spec: map[string]any{"owns": []any{"."}}, Source: core.Source{Path: ".markitect/model/demo.yaml"}}
-	childDef := core.Definition{APIVersion: projectmodel.APIVersion, Kind: "Manager", Metadata: core.Metadata{Name: "orders", Namespace: "demo"}, Purpose: "Orders", Spec: map[string]any{"parent": rootID, "owns": []any{"orders/"}}, Source: core.Source{Path: ".markitect/model/demo.yaml"}}
-	old := fixtureProject(strings.Repeat("a", 40), []core.Definition{rootDef, childDef, oldDef}, []projectmodel.Manager{managerRoot, managerChild}, []projectmodel.Statement{changed, neighbor}, []projectmodel.Artifact{artifact})
-	changed.Description = "new rule"
-	newer := fixtureProject(strings.Repeat("b", 40), []core.Definition{rootDef, childDef, newDef}, []projectmodel.Manager{managerRoot, managerChild}, []projectmodel.Statement{changed, neighbor}, []projectmodel.Artifact{artifact})
-	return old, newer
-}
-
-func fixtureProject(revision string, defs []core.Definition, managers []projectmodel.Manager, statements []projectmodel.Statement, artifacts []projectmodel.Artifact) *projectwork.Project {
-	return &projectwork.Project{Revision: revision, Model: core.Model{Digest: "model-" + revision[:1], Definitions: defs}, Report: projectmodel.Report{Digest: "report-" + revision[:1], Managers: managers, Statements: statements, Artifacts: artifacts, Checks: []projectmodel.Check{}}}
-}
-func cloneProject(p *projectwork.Project) *projectwork.Project {
-	cp := *p
-	cp.Model = core.Model{Digest: p.Model.Digest, Definitions: append([]core.Definition(nil), p.Model.Definitions...)}
-	cp.Report = p.Report
-	return &cp
-}
-func testProvenance() Provenance {
-	return Provenance{DecisionReference: "ADR-17", Actor: "project-owner", Authority: "accepted model decision"}
-}
-func managerIDs() (string, string) {
-	root := core.DefinitionIdentity{APIVersion: projectmodel.APIVersion, Kind: "Manager", Namespace: "demo", Name: "root"}.Key()
-	child := core.DefinitionIdentity{APIVersion: projectmodel.APIVersion, Kind: "Manager", Namespace: "demo", Name: "orders"}.Key()
-	return root, child
-}
-func changedStatementID() string {
-	return core.DefinitionIdentity{APIVersion: projectmodel.APIVersion, Kind: "Statement", Namespace: "demo", Name: "order-rule"}.Key()
-}
-func neighborStatementID() string {
-	return core.DefinitionIdentity{APIVersion: projectmodel.APIVersion, Kind: "Statement", Namespace: "demo", Name: "integration-contract"}.Key()
-}
-func artifactID() string {
-	return core.DefinitionIdentity{APIVersion: projectmodel.APIVersion, Kind: "Artifact", Namespace: "demo", Name: "orders-api"}.Key()
+func testProvenance() projectbriefing.Provenance {
+	return projectbriefing.Provenance{DecisionReference: "ADR-17", Actor: "project-owner", Authority: "accepted model decision"}
 }

@@ -1,5 +1,8 @@
 package projectrun
 
+import "github.com/Glacius-Labs/Markitect/src/internal/modules/projectmodel/projectvalue"
+import "github.com/Glacius-Labs/Markitect/src/internal/core/snapshot"
+
 import (
 	"bytes"
 	"fmt"
@@ -12,7 +15,7 @@ import (
 // reviewCandidateState binds a review to the immutable source snapshot and
 // retained candidate that produced the bytes under assessment.
 type reviewCandidateState struct {
-	Base      *Snapshot
+	Base      *snapshot.Snapshot
 	Candidate candidateData
 }
 
@@ -129,7 +132,7 @@ func reviewCandidateDeletesMatchBaseline(state reviewCandidateState, parent *can
 // ordering, so freshness must be recomputed from each reviewed candidate's
 // own parent, with only the candidate bytes replaced by the current final
 // candidate.
-func freshPassedReviewForScope(host Host, root string, store *runStore, dir string, plan PlanRecord, run RunReport, project *Project, currentCandidate candidateData, task ManagerTask, phase string) (ReviewRecord, reviewCandidateState, bool, error) {
+func freshPassedReviewForScope(host Host, root string, store *runStore, dir string, plan PlanRecord, run RunReport, project *projectvalue.Project, currentCandidate candidateData, task ManagerTask, phase string) (ReviewRecord, reviewCandidateState, bool, error) {
 	for index := len(run.Reviews) - 1; index >= 0; index-- {
 		review := run.Reviews[index]
 		if review.ManagerID != task.ManagerID || review.Phase != phase || review.Outcome != "pass" {
@@ -170,7 +173,7 @@ func freshPassedReviewForScope(host Host, root string, store *runStore, dir stri
 	return ReviewRecord{}, reviewCandidateState{}, false, nil
 }
 
-func reviewCandidateChanges(base *Snapshot, candidate candidateData, selectedPaths []string) ([]candidateChange, []agentexec.Artifact, error) {
+func reviewCandidateChanges(base *snapshot.Snapshot, candidate candidateData, selectedPaths []string) ([]candidateChange, []agentexec.Artifact, error) {
 	selected := map[string]bool{}
 	for _, path := range selectedPaths {
 		selected[path] = true
@@ -227,7 +230,7 @@ func reviewProtocolMode(mode string) string {
 	return protocolMode(mode)
 }
 
-func snapshotFile(base *Snapshot, path string) ([]byte, bool) {
+func snapshotFile(base *snapshot.Snapshot, path string) ([]byte, bool) {
 	if base == nil {
 		return nil, false
 	}
@@ -245,7 +248,7 @@ func digestIfPresent(content []byte, present bool) string {
 	return rawContentDigest(content)
 }
 
-func reviewChangeRefs(report projectmodel.Report, accepted projectmodel.ManagerContext, base *Snapshot, candidate candidateData, selectedPaths []string) ([]reviewFileRef, []candidateChange, []agentexec.Artifact, error) {
+func reviewChangeRefs(report projectmodel.Report, accepted projectmodel.ManagerContext, base *snapshot.Snapshot, candidate candidateData, selectedPaths []string) ([]reviewFileRef, []candidateChange, []agentexec.Artifact, error) {
 	changes, deleted, err := reviewCandidateChanges(base, candidate, selectedPaths)
 	if err != nil {
 		return nil, nil, nil, err

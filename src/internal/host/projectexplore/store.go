@@ -5,6 +5,7 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
+	"github.com/Glacius-Labs/Markitect/src/internal/modules/projectmodel/projectvalue"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -25,9 +26,9 @@ func RecordPath(id string) (string, error) {
 
 // CreatePreview prepares a new one-scope exploration record without writing.
 // Its initial source binding is retained as immutable provenance.
-func CreatePreview(root string, record Record, binding Binding) (WritePlan, error) {
+func CreatePreview(root string, record Record, binding projectvalue.Binding) (WritePlan, error) {
 	var empty WritePlan
-	binding, err := canonicalBinding(binding)
+	binding, err := projectvalue.CanonicalBinding(binding)
 	if err != nil {
 		return empty, err
 	}
@@ -41,7 +42,7 @@ func CreatePreview(root string, record Record, binding Binding) (WritePlan, erro
 		record.Status = StatusActive
 	}
 	if record.CreatedAgainst == "" {
-		record.CreatedAgainst, err = BindingDigest(binding)
+		record.CreatedAgainst, err = projectvalue.BindingDigest(binding)
 		if err != nil {
 			return empty, err
 		}
@@ -86,16 +87,16 @@ func CreatePreview(root string, record Record, binding Binding) (WritePlan, erro
 
 // UpdatePreview prepares a CAS update. Decision and scope identities cannot be
 // silently deleted, and the original creation binding is immutable.
-func UpdatePreview(root string, next Record, expectedStateDigest string, binding Binding) (WritePlan, error) {
+func UpdatePreview(root string, next Record, expectedStateDigest string, binding projectvalue.Binding) (WritePlan, error) {
 	return updatePreview(root, next, expectedStateDigest, binding, true, false)
 }
 
-func updatePreview(root string, next Record, expectedStateDigest string, binding Binding, verifyBasis, allowCompletion bool) (WritePlan, error) {
+func updatePreview(root string, next Record, expectedStateDigest string, binding projectvalue.Binding, verifyBasis, allowCompletion bool) (WritePlan, error) {
 	var empty WritePlan
-	if !validDigest(expectedStateDigest) {
+	if !projectvalue.IsValidDigest(expectedStateDigest) {
 		return empty, errors.New("exploration update requires the exact current state digest")
 	}
-	binding, err := canonicalBinding(binding)
+	binding, err := projectvalue.CanonicalBinding(binding)
 	if err != nil {
 		return empty, err
 	}
@@ -150,7 +151,7 @@ func updatePreview(root string, next Record, expectedStateDigest string, binding
 
 // Write publishes a preview only when the plan digest, caller's fresh binding,
 // state CAS, source bytes, branch, and HEAD still match.
-func Write(root string, plan WritePlan, expectPlanDigest string, currentBinding Binding) (Record, error) {
+func Write(root string, plan WritePlan, expectPlanDigest string, currentBinding projectvalue.Binding) (Record, error) {
 	if expectPlanDigest == "" || plan.Digest == "" || expectPlanDigest != plan.Digest {
 		return Record{}, errors.New("exploration write requires the exact preview digest")
 	}
@@ -162,11 +163,11 @@ func Write(root string, plan WritePlan, expectPlanDigest string, currentBinding 
 	if plan.APIVersion != APIVersion || pathErr != nil || plan.Path != expectedPath || plan.Target.Path != plan.Path {
 		return Record{}, errors.New("exploration write plan API version or record path is invalid")
 	}
-	currentBinding, err = canonicalBinding(currentBinding)
+	currentBinding, err = projectvalue.CanonicalBinding(currentBinding)
 	if err != nil {
 		return Record{}, err
 	}
-	currentDigest, err := BindingDigest(currentBinding)
+	currentDigest, err := projectvalue.BindingDigest(currentBinding)
 	if err != nil || currentDigest != plan.BindingDigest {
 		return Record{}, errors.New("exploration write binding changed after preview")
 	}
@@ -201,7 +202,7 @@ func Write(root string, plan WritePlan, expectPlanDigest string, currentBinding 
 		return Record{}, err
 	}
 	_, err = guardedwrite.ApplyChecked(capture.Root, capture, []guardedwrite.Change{{Path: plan.Path, Bytes: encoded, Mode: 0o600}}, func() error {
-		if digest, bindErr := BindingDigest(currentBinding); bindErr != nil || digest != plan.BindingDigest {
+		if digest, bindErr := projectvalue.BindingDigest(currentBinding); bindErr != nil || digest != plan.BindingDigest {
 			return errors.New("current exploration binding changed during guarded write")
 		}
 		return validateWriteTransition(plan, target.Bytes)
@@ -216,7 +217,7 @@ func Write(root string, plan WritePlan, expectPlanDigest string, currentBinding 
 // caller has verified an immutable successful Apply receipt. The binding and
 // acknowledgement retain the pre-run readiness basis; source bytes may differ
 // because the successful Apply just changed them.
-func Complete(root, id, scopeID string, currentBinding Binding, receipt ApplyReceipt) (Record, error) {
+func Complete(root, id, scopeID string, currentBinding projectvalue.Binding, receipt ApplyReceipt) (Record, error) {
 	current, err := Load(root, id)
 	if err != nil {
 		return Record{}, err
@@ -314,7 +315,7 @@ func List(root string) ([]Record, error) {
 	return records, nil
 }
 
-func captureBinding(root string, binding Binding, targetPath string, verifyBasis bool) (*guardedwrite.Capture, error) {
+func captureBinding(root string, binding projectvalue.Binding, targetPath string, verifyBasis bool) (*guardedwrite.Capture, error) {
 	paths := make([]string, 0, len(binding.BasisFiles)+1)
 	for _, basis := range binding.BasisFiles {
 		if basis.Path == targetPath {
@@ -377,7 +378,7 @@ func validateRecordIdentity(record Record) error {
 	return nil
 }
 
-func validateScopeBinding(record Record, binding Binding) error {
+func validateScopeBinding(record Record, binding projectvalue.Binding) error {
 	if err := validateRecordIdentity(record); err != nil {
 		return err
 	}
@@ -438,8 +439,8 @@ func sameDecision(left, right Decision) bool {
 	return left.ID == right.ID && equalStrings(left.ScopeIDs, right.ScopeIDs) && left.Question == right.Question && left.Blocking == right.Blocking && left.Status == right.Status && left.Answer == right.Answer && left.Reason == right.Reason && left.Authority == right.Authority && left.Provenance == right.Provenance
 }
 
-func mustBindingDigest(binding Binding) string {
-	digest, _ := BindingDigest(binding)
+func mustBindingDigest(binding projectvalue.Binding) string {
+	digest, _ := projectvalue.BindingDigest(binding)
 	return digest
 }
 

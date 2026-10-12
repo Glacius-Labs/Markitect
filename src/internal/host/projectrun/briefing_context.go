@@ -1,9 +1,11 @@
 package projectrun
 
+import "github.com/Glacius-Labs/Markitect/src/internal/modules/projectmodel/projectvalue"
+
 import (
 	"fmt"
 
-	"github.com/Glacius-Labs/Markitect/src/internal/host/projectbriefing"
+	"github.com/Glacius-Labs/Markitect/src/internal/modules/projectmodel/projectbriefing"
 )
 
 // BriefingContext contains structured changes and public contracts, never
@@ -18,54 +20,40 @@ type BriefingContext struct {
 // write path persists it and its briefings are then read from the store (nil
 // view). A read preview writes nothing and returns the history computed in
 // memory, so it reports the same briefings the write path would persist.
-func captureAcceptedHistory(root, revision string, persist bool) (*projectbriefing.Store, error) {
-	if persist {
-		_, err := projectbriefing.EnsureAcceptedHistory(root, revision)
-		return nil, err
+func captureAcceptedHistory(host Host, root, revision string, persist bool) (*projectbriefing.Store, error) {
+	if host.PrepareBriefings == nil {
+		return nil, fmt.Errorf("accepted history acquisition is not bound")
 	}
-	history, err := projectbriefing.ReadAcceptedHistory(root, revision)
-	if err != nil {
-		return nil, err
-	}
-	return &history.State, nil
+	return host.PrepareBriefings(root, revision, persist)
 }
 
-func managerBriefing(root, modelDigest, manager string, revision ...string) (BriefingContext, error) {
-	return managerBriefingIn(root, nil, modelDigest, manager, revision...)
+func managerBriefing(host Host, root, modelDigest, manager string, revision ...string) (BriefingContext, error) {
+	return managerBriefingIn(host, root, nil, modelDigest, manager, revision...)
 }
 
 // managerBriefingIn reads a Manager's briefing context from view, the
 // accepted history a read preview computed, or from the persisted store when
 // view is nil.
-func managerBriefingIn(root string, view *projectbriefing.Store, modelDigest, manager string, revision ...string) (BriefingContext, error) {
-	var state projectbriefing.Store
-	if view != nil {
-		state = *view
-	} else {
-		var err error
-		if state, _, err = projectbriefing.Read(root); err != nil {
-			return BriefingContext{}, err
-		}
+func managerBriefingIn(host Host, root string, view *projectbriefing.Store, modelDigest, manager string, revision ...string) (BriefingContext, error) {
+	if host.BriefingForManager == nil {
+		return BriefingContext{}, fmt.Errorf("manager briefing acquisition is not bound")
 	}
-	if len(state.Briefings) == 0 {
-		return BriefingContext{Briefings: []projectbriefing.Briefing{}, Events: []projectbriefing.Event{}}, nil
+	selectedRevision := ""
+	if len(revision) != 0 {
+		selectedRevision = revision[0]
 	}
-	briefings, events, binding, err := projectbriefing.LoadForManagerFrom(root, state, modelDigest, manager, revision...)
-	if err != nil {
-		return BriefingContext{}, fmt.Errorf("record accepted model briefing before work on this model: %w", err)
-	}
-	return BriefingContext{Digest: binding, Briefings: briefings, Events: events}, nil
+	return host.BriefingForManager(root, selectedRevision, modelDigest, manager, view)
 }
 
-func briefingBindings(root string, project *Project) (map[string]string, error) {
-	return briefingBindingsIn(root, nil, project)
+func briefingBindings(host Host, root string, project *projectvalue.Project) (map[string]string, error) {
+	return briefingBindingsIn(host, root, nil, project)
 }
 
 // briefingBindingsIn is briefingBindings over view, as in managerBriefingIn.
-func briefingBindingsIn(root string, view *projectbriefing.Store, project *Project) (map[string]string, error) {
+func briefingBindingsIn(host Host, root string, view *projectbriefing.Store, project *projectvalue.Project) (map[string]string, error) {
 	result := map[string]string{}
 	for _, manager := range project.Report.Managers {
-		briefing, err := managerBriefingIn(root, view, project.Report.ModelDigest, manager.ID, project.Revision)
+		briefing, err := managerBriefingIn(host, root, view, project.Report.ModelDigest, manager.ID, project.Revision)
 		if err != nil {
 			return nil, err
 		}

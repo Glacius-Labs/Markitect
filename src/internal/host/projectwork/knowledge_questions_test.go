@@ -2,6 +2,7 @@ package projectwork
 
 import (
 	"fmt"
+	"github.com/Glacius-Labs/Markitect/src/internal/modules/projectmodel/projectvalue"
 	"io/fs"
 	"os"
 	"path/filepath"
@@ -67,7 +68,7 @@ type knowledgeQuestion struct {
 
 type shopFixture struct {
 	files   map[string]string
-	project *Project
+	project *projectvalue.Project
 }
 
 func TestShopKnowledgeQuestions(t *testing.T) {
@@ -242,7 +243,7 @@ spec:
     namespace: commerce.sales.inventory
     name: inventory
 `
-		replaceInShop(t, files, ManifestPath, "  - .markitect/model/commerce/sales/inventory/manager.yaml\n",
+		replaceInShop(t, files, projectvalue.ManifestPath, "  - .markitect/model/commerce/sales/inventory/manager.yaml\n",
 			"  - .markitect/model/commerce/sales/inventory/manager.yaml\n  - "+decisionPath+"\n", 1)
 	})
 	decision := shopID("Decision", "commerce.sales.inventory", "release-once")
@@ -302,7 +303,7 @@ func askShopMissingArtifact(t *testing.T, shop shopFixture) {
 	}
 	// A declared but undefined Check is no finding: the model does not compile.
 	withoutCheck := shop.edited(t, func(files map[string]string) {
-		replaceInShop(t, files, ManifestPath, "  - .markitect/model/engineering/checks.yaml\n", "", 1)
+		replaceInShop(t, files, projectvalue.ManifestPath, "  - .markitect/model/engineering/checks.yaml\n", "", 1)
 		delete(files, ".markitect/model/engineering/checks.yaml")
 	})
 	if _, err := FromSnapshot(t.TempDir(), mapSnapshot(withoutCheck)); err == nil || !strings.Contains(err.Error(), shopCancellationTests) {
@@ -317,13 +318,13 @@ func askShopRename(t *testing.T, shop shopFixture) {
 		const newPath = ".markitect/model/commerce/sales/orders/cancel-unshipped-order.yaml"
 		files[newPath] = files[oldPath]
 		delete(files, oldPath)
-		replaceInShop(t, files, ManifestPath, "orders/cancel-order.yaml", "orders/cancel-unshipped-order.yaml", 1)
+		replaceInShop(t, files, projectvalue.ManifestPath, "orders/cancel-order.yaml", "orders/cancel-unshipped-order.yaml", 1)
 		for _, path := range []string{newPath, ".markitect/model/commerce/architecture.yaml", ".markitect/model/commerce/sales/integration.yaml",
 			".markitect/model/commerce/sales/orders/artifacts.yaml", ".markitect/model/engineering/checks.yaml"} {
 			replaceInShop(t, files, path, "name: cancel-order\n", "name: cancel-unshipped-order\n", 1)
 		}
 		for path, content := range files {
-			if strings.HasPrefix(path, ModelRoot+"/") && strings.Contains(content, "name: cancel-order\n") {
+			if strings.HasPrefix(path, projectvalue.ModelRoot+"/") && strings.Contains(content, "name: cancel-order\n") {
 				t.Fatalf("rename missed a reference in %s", path)
 			}
 		}
@@ -504,7 +505,7 @@ func TestShopModelEdgesMatchYAMLLists(t *testing.T) {
 	}
 	var declared []string
 	for path, content := range files {
-		if !strings.HasPrefix(path, ModelRoot+"/") || !strings.HasSuffix(path, ".yaml") {
+		if !strings.HasPrefix(path, projectvalue.ModelRoot+"/") || !strings.HasSuffix(path, ".yaml") {
 			continue
 		}
 		var d definition
@@ -583,13 +584,13 @@ func readShopExample(t *testing.T) map[string]string {
 	}); err != nil {
 		t.Fatal(err)
 	}
-	if _, ok := files[ManifestPath]; !ok {
-		t.Fatalf("Shop example lacks %s", ManifestPath)
+	if _, ok := files[projectvalue.ManifestPath]; !ok {
+		t.Fatalf("Shop example lacks %s", projectvalue.ManifestPath)
 	}
 	return files
 }
 
-func loadShopSnapshot(t *testing.T, files map[string]string) *Project {
+func loadShopSnapshot(t *testing.T, files map[string]string) *projectvalue.Project {
 	t.Helper()
 	project, err := FromSnapshot(t.TempDir(), mapSnapshot(files))
 	if err != nil {
@@ -599,7 +600,7 @@ func loadShopSnapshot(t *testing.T, files map[string]string) *Project {
 }
 
 // candidate loads a copy of the Shop after edit changed its files.
-func (shop shopFixture) candidate(t *testing.T, edit func(files map[string]string)) *Project {
+func (shop shopFixture) candidate(t *testing.T, edit func(files map[string]string)) *projectvalue.Project {
 	t.Helper()
 	return loadShopSnapshot(t, shop.edited(t, edit))
 }

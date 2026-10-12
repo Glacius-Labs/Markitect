@@ -50,10 +50,10 @@ Executables under `src/cmd`, maintainer tooling, harnesses and fixtures have the
 
 Known problems across layers:
 
-- The import gate enforces the declared package boundaries, but it does not yet enforce direction between the four product layers. The core and runtime sections below show imports that break the intended direction (ARCH-12).
+- The import gate enforces the declared package boundaries, but it does not yet enforce direction between the four product layers. ARCH-13 separates the actual Core I/O and Runtime/Application responsibilities; complete mechanical enforcement of product-layer direction remains ARCH-12.
 - Directory names do not show the layer. Product packages are grouped beneath `src/internal/host` despite their distinct architectural roles (ARCH-16).
 - Small utilities remain package-local across layers: production `sameStrings` definitions exist in two packages, `equalStrings` in three and `containsString` in four. ARCH-05 consolidated the identical comparison within `projectrun`; it introduced no shared cross-layer utility abstraction.
-- Four packages keep their own record store, each with its own file layout and write path: `projectrun` (`store.go`), `projectexplore` (`store.go`), `projectbriefing` (`store.go`) and `projectadoption` (`session.go`, `manager_run_ledger.go`) (ARCH-14).
+- Four packages keep their own record store, each with its own file layout and write path: `projectrun` (`store.go`), `projectexplore` (`store.go`), `projecthistory` (`store.go`) and `projectadoption` (`session.go`, `manager_run_ledger.go`) (ARCH-14).
 
 ## Core layer
 
@@ -62,12 +62,12 @@ The core turns explicit inputs into deterministic results. The same model and sn
 - `src/internal/core` compiles explicitly supplied Schemas and Definitions into a structural model with a semantic digest ([Core README](../src/internal/core/README.md)). It has no engineering assertion language, no providers and no I/O.
 - `core/snapshot` holds fixed sets of files and compares them ([source snapshots](source-snapshots.md#current-value)).
 - `modules/projectmodel` derives Manager, artifact and impact views from the compiled model.
-- `projectcoverage` inventories repository paths and classifies how the model covers them ([DEC-006](concepts/register.md#dec-006-every-file-is-covered-or-explicitly-ignored)).
-- `projectbriefing` derives briefings for accepted model changes from committed history and records their dismissal ([briefing design](design/project-world/operation-scopes-and-model-briefings.md)).
+- `modules/projectmodel/projectcoverage` classifies an explicitly supplied repository census and overlays candidate snapshots ([DEC-006](concepts/register.md#dec-006-every-file-is-covered-or-explicitly-ignored)). Git and working-tree acquisition belong to the Application adapter.
+- `modules/projectmodel/projectbriefing` derives events, briefing digests and historical Manager visibility from supplied committed model/report values ([briefing design](design/project-world/operation-scopes-and-model-briefings.md)). Its pure resolution-status view gives accepted resolutions precedence over non-persisted delivered hints; a hint leaves the event unresolved.
+- `modules/projectmodel/projectvalue` holds the actual project/config/edit and exploration-binding values shared by Application and Runtime. A full acquired census remains an in-memory input. Source selection, executable build identity and the project digest remain in the Application frontend.
 
 Known problems:
 
-- `projectbriefing` and `projectcoverage` run Git through `infrastructure/source` (`projectbriefing/store.go`, `projectcoverage/census.go`). `projectbriefing` also imports the application package `projectwork` and writes its own store under `.markitect/state/briefings/`. The code map defines core as free of Git processes and writes (ARCH-13).
 - The binding size limit of `core.Compile` is its preflight budget: 100,000 value nodes, with every input string byte charged six times (`MaxPreflightNodes` and `preflightStringCost` in `compile.go`). It rejects input with `model.input-limit` well before `MaxDefinitions` (10,000) or `MaxTotalInputBytes` (128 MiB) is reached. For example, 10,000 Definitions with two one-byte fields already exceed it.
 - `core.Compile` checks `MaxDefinitionBytes` and `MaxTotalInputBytes` on the input as written, before each reference gains its target `apiVersion` and `kind`. A Schema with a long target Kind name can therefore make the normalized model and its edges far larger than these limits. The host compiles only the fixed project Schema, whose names are short. Charge the expansion during validation once a second or untrusted Schema becomes possible.
 - `modules/projectmodel` assumes the project Schema is the only one. `Analyze` groups Definitions by Kind name without checking their `apiVersion`, so another Schema's `Statement` would be projected as a project Statement. A change to a Definition of another Schema widens impact only when nothing else changed. Production compiles only the project Schema; multi-schema support would have to fix both.
@@ -89,6 +89,8 @@ Known problems:
 
 ## Application layer
 
+`projectcoverage` is the census acquisition adapter: it reuses the frontend's source acquisition and retains identity rechecks while returning pure coverage values. `projecthistory` owns accepted Git history, actual store reads, dismissal/resolution policy and the existing lock/temp/fsync/rename/CAS writer. `ReadAcceptedHistory` computes a hint-free preview without writing; actual `Read` additionally supplies display-only delivery status and the raw persisted digest. Guided notifications retain their separate accepted preview and matching persisted-read status overlay. Core receives no Git or persistence dependency.
+
 The application layer holds the product's use cases and the surfaces that expose them.
 
 - `projectwork` loads the selected model from the working tree or a commit, and plans and writes model edits under guard.
@@ -107,6 +109,8 @@ Known problems:
 
 The runtime runs Manager, review, integration and verify roles and records what happened.
 
+Application composes Runtime with finite typed Host callbacks for project loading, candidate classification/rendering, history and exploration operations. Runtime retains scheduling, quotas, independent review, verification, guarded Apply and exact-turn recovery; Application performs the required record observations and CAS writes. A read-only Full Verify audits its captured accepted-history input throughout that invocation; writing paths read persisted history at their existing freshness gates. The callbacks preserve each lifecycle gate, including the logical readiness precondition under the Apply writer lock and captured-file checks before each changed path. Completion follows successful Verify and journalled Apply, and recovery does not replay work.
+
 - `projectrun` plans, runs, resumes, repairs, verifies and applies bounded Manager work over fixed snapshots. It owns the run store under `.markitect/runs/`, the budgets, the review rounds and the Apply preflight.
 - `projectconfig` owns runtime types, strict bounded loading and validation, agent projection and strictness profiles. Setup and MCP schema reflection consume it directly; accepted Manager references and cumulative policy enforcement remain in the method coordinator.
 - `projectexecutor` composes process/native dispatch, request-aware fingerprints and private transport journals. Application composition injects the method's helper policy; exact-turn recovery retains the existing no-replay boundary.
@@ -114,13 +118,12 @@ The runtime runs Manager, review, integration and verify roles and records what 
 - `codexappserver` is the transport to the native Codex App Server.
 - `exchangecli` is the reference bring-your-own executor. It hands each invocation to an outside party through request and response files ([provider adapters](provider-adapters.md#bring-your-own-executor)).
 - `projectworkspace` creates, harvests and recovers owned candidate workspaces.
-- `projectsetup` builds the runtime proposal for `config` and the prerequisite report for `doctor`.
+- `projectsetup` builds configuration and prerequisites from explicit project facts and discovers concrete tools. `projectapp` plans the `config` model edit and applies its exact preview under the existing expected-digest/write guard; discovery starts no roles.
 
 [ARCH-06 / PR250](https://github.com/Glacius-Labs/Markitect/pull/250) delivered the configuration/executor boundary and focused Plan, Full Verify and Run phases at Main `4c260449009d115333d2f9af4cdf09564d7dde0b`. A production AST gate covers declarations and anonymous functions in `projectrun`, `projectconfig` and `projectexecutor`, including supported-platform files, with an inclusive 300-line maximum. Existing E2E assertions and normal untagged CI coverage are preserved. The [integration record](validation/integration-round-20261012.md#arch-06-closure-and-arch-13-preparation) separates required/actual-Main Linux proof from the original Windows subset expiry.
 
 Known problems:
 
-- Runtime and application retain opposite layer dependencies: `projectrun` imports `projectwork` and `projectexplore`, and `projectsetup` imports `projectwork`; `projectapp`, `projectadoption` and `projectcli` import `projectrun`. These are layer-direction problems, not a Go import cycle. ARCH-13 is the next accepted package, starting with a concrete responsibility/dependency plan after ARCH-06 closure.
 - ARCH-05 removed five proven unused `projectrun/run.go` helpers (`ownedPath`, `addCost`, `estimateCost`, `resolvesConflicts`, `resolveObligations`) and its duplicate `sameStrings` comparison in [PR248](https://github.com/Glacius-Labs/Markitect/pull/248). Existing cost, obligation, repair and comparison behavior is retained; the subsequent ARCH-06 extraction is integrated.
 - Plan and Apply call `git check-attr --source` (`plan.go`, `apply.go`), which needs Git 2.40 or later. Doctor reports the installed version and a failed prerequisite below 2.40, before model or provider inspection (CLI-04, #235). Doctor does not automatically guard later Plan or Apply calls; their operation-time Git failures remain separate.
 - A helper whose Close fails stays `cleanup-pending` (`helper.go`). `validateReportClosure` (`obligations.go`) then blocks Verify and Apply, and nothing reconciles the state (BUG-01).
@@ -129,7 +132,7 @@ Known problems:
   - Setup rejects script shims only for the native provider, not for process executors (`discoverProcess` in `projectsetup/setup.go`).
   - The exchange adapter has no deadline of its own (`exchangecli/exchange.go`).
   - Declared checks see only the owning agent's environment allowlist (`explicitEnvironment` in `verify.go`).
-- The process end-to-end cases re-execute the test binary with isolated per-test child descriptors and run in parallel after the serial cases finish (TEST-03, #232). Twelve files carry `!runtime_unit`; the normal untagged Quality/Race suites include all scenarios. The dated [tests and CI survey](work-items/surveys/tests-and-ci-20261010.md) recorded `projectrun` at 1,467 s on Windows against 112 s on Linux before that change. Windows validation remains nightly or on demand and does not block ordinary merges ([DEC-013](concepts/register.md#dec-013-linux-first-for-tests-and-the-playground)); CI-05 still owns the future support decision.
+- The process end-to-end cases re-execute the test binary with isolated per-test child descriptors and run in parallel after the serial cases finish (TEST-03, #232). The process scenarios follow their Runtime and Application owners. The normal untagged Quality/Race suites include all scenarios; `runtime_unit` remains a focused selection, not a complete source gate. The dated [tests and CI survey](work-items/surveys/tests-and-ci-20261010.md) recorded `projectrun` at 1,467 s on Windows against 112 s on Linux before that change. Windows validation remains nightly or on demand and does not block ordinary merges ([DEC-013](concepts/register.md#dec-013-linux-first-for-tests-and-the-playground)); CI-05 still owns the future support decision.
 
 ## Historical Project/Domain architecture
 

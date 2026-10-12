@@ -1,5 +1,7 @@
 package projectrun
 
+import "github.com/Glacius-Labs/Markitect/src/internal/modules/projectmodel/projectvalue"
+
 import (
 	"crypto/sha256"
 	"encoding/hex"
@@ -12,7 +14,7 @@ import (
 	"unicode/utf8"
 
 	"github.com/Glacius-Labs/Markitect/src/internal/host/agentexec"
-	"github.com/Glacius-Labs/Markitect/src/internal/host/projectwork"
+
 	"github.com/Glacius-Labs/Markitect/src/internal/infrastructure/source"
 )
 
@@ -30,7 +32,7 @@ type nativeWorkspaceContext struct {
 // instructions for one native Manager invocation to the fixed accepted
 // revision and the current working tree. It does not materialize a workspace;
 // the provider adapter receives these exact artifacts and owns materialization.
-func buildNativeWorkspace(root, revision string, project *Project, agent projectconfig.Agent) (*nativeWorkspaceContext, error) {
+func buildNativeWorkspace(root, revision string, project *projectvalue.Project, agent projectconfig.Agent) (*nativeWorkspaceContext, error) {
 	if agent.WorkspaceMode == "" {
 		return nil, nil
 	}
@@ -124,7 +126,7 @@ func buildNativeWorkspace(root, revision string, project *Project, agent project
 	return &nativeWorkspaceContext{APIVersion: nativeWorkspaceAPIVersion, Instructions: artifacts}, nil
 }
 
-func normalizeNativeInstructionPaths(paths []string, config projectwork.Config) ([]string, error) {
+func normalizeNativeInstructionPaths(paths []string, config projectvalue.Config) ([]string, error) {
 	if len(paths) == 0 {
 		return nil, nil
 	}
@@ -147,11 +149,11 @@ func normalizeNativeInstructionPaths(paths []string, config projectwork.Config) 
 	return copyPaths, nil
 }
 
-func declaredNativeInstructionPath(path string, config projectwork.Config) bool {
+func declaredNativeInstructionPath(path string, config projectvalue.Config) bool {
 	if !safeRepoPath(path) || strings.HasPrefix(strings.ToLower(path), ".markitect/") || !strings.EqualFold(filepath.Ext(path), ".md") {
 		return false
 	}
-	for _, tool := range projectwork.ToolPaths(config) {
+	for _, tool := range projectvalue.ToolPaths(config) {
 		if tool.Selector == path && !tool.Operational && !strings.HasSuffix(tool.Selector, "/") {
 			return true
 		}

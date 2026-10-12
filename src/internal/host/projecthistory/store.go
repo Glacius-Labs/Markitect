@@ -1,4 +1,4 @@
-package projectbriefing
+package projecthistory
 
 import (
 	"bytes"
@@ -9,7 +9,6 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"path"
 	"path/filepath"
 	"runtime"
 	"sort"
@@ -20,23 +19,22 @@ import (
 	"github.com/Glacius-Labs/Markitect/src/internal/host/projectwork"
 	"github.com/Glacius-Labs/Markitect/src/internal/infrastructure/source"
 	"github.com/Glacius-Labs/Markitect/src/internal/modules/projectmodel"
+	projectbriefing "github.com/Glacius-Labs/Markitect/src/internal/modules/projectmodel/projectbriefing"
+	"github.com/Glacius-Labs/Markitect/src/internal/modules/projectmodel/projectvalue"
 )
 
 const storePath = ".markitect/state/briefings/history.json"
 
 var (
-	ErrStaleStore       = errors.New("briefing store changed since it was read")
-	ErrStaleModel       = errors.New("no briefing history is bound to the requested model digest")
-	ErrAmbiguousHistory = errors.New("briefing history has multiple accepted paths to the requested model digest")
-	ErrHistoryTooDeep   = errors.New("briefing history closure exceeds the bounded commit scan")
-	ErrDismissal        = errors.New("dismissal requires an event and manager")
-	ErrNoAcceptedModel  = errors.New("no valid committed project model exists at the selected revision")
-	ErrResolution       = errors.New("verified resolution evidence is invalid or stale")
-	ErrAlreadyResolved  = errors.New("model-change event already has different resolution evidence")
+	ErrStaleStore      = errors.New("briefing store changed since it was read")
+	ErrHistoryTooDeep  = errors.New("briefing history closure exceeds the bounded commit scan")
+	ErrDismissal       = errors.New("dismissal requires an event and manager")
+	ErrNoAcceptedModel = errors.New("no valid committed project model exists at the selected revision")
+	ErrAlreadyResolved = errors.New("model-change event already has different resolution evidence")
 )
 
 const (
-	acceptedPolicy            = "committed-model policy: manifest-selected canonical .markitect/model YAML on the active first-parent branch is the accepted repository specification; exploration records and other drafts remain proposals; Git identity is not authenticated"
+	acceptedPolicy            = projectbriefing.AcceptedPolicy
 	maxAcceptedHistoryCommits = 4096
 	// maxEnsureAttempts bounds how often EnsureAcceptedHistory recomputes after
 	// another writer changed the store between its read and its write.
@@ -45,376 +43,41 @@ const (
 	storeLockWait = 10 * time.Second
 )
 
-func validateStore(state Store) error {
-	if state.History != nil {
-		history := state.History
-		if !fullObjectID(history.BaselineRevision) || strings.TrimSpace(history.BaselineModelDigest) == "" || !fullObjectID(history.Revision) || strings.TrimSpace(history.ModelDigest) == "" || history.Policy != acceptedPolicy {
-			return errors.New("accepted history cursor has invalid revisions or model digests")
-		}
-	}
-	bundlesByID := map[string]bool{}
-	bundleByRevision := map[string]Bundle{}
-	eventsByID := map[string]Event{}
-	managerByEvent := map[string]map[string]bool{}
-	for _, bundle := range state.Briefings {
-		if err := validateBundle(bundle); err != nil {
-			return err
-		}
-		if bundle.SinceModelDigest == bundle.ModelDigest {
-			return fmt.Errorf("%w: no-op briefings are not history entries", ErrInvalidBundle)
-		}
-		if bundlesByID[bundle.Global.ID] {
-			return fmt.Errorf("duplicate briefing bundle %s", bundle.Global.ID)
-		}
-		bundlesByID[bundle.Global.ID] = true
-		if prior, exists := bundleByRevision[bundle.Revision]; exists {
-			if hash(prior) != hash(bundle) {
-				return ErrAmbiguousHistory
-			}
-			return fmt.Errorf("duplicate briefing bundle for revision %s", bundle.Revision)
-		}
-		bundleByRevision[bundle.Revision] = bundle
-		// The same change can be briefed at several commits, for example on a
-		// topic and where it was merged; its content must then agree.
-		for _, event := range bundle.Events {
-			if prior, exists := eventsByID[event.ID]; exists && prior.Digest != event.Digest {
-				return fmt.Errorf("event %s has conflicting definitions", event.ID)
-			}
-			eventsByID[event.ID] = event
-			if managerByEvent[event.ID] == nil {
-				managerByEvent[event.ID] = make(map[string]bool)
-			}
-			for _, manager := range event.AffectedManagers {
-				managerByEvent[event.ID][manager] = true
-			}
-		}
-	}
-	for _, bundle := range state.Briefings {
-		for _, event := range bundle.Events {
-			if event.Predecessor != "" && eventsByID[event.Predecessor].DefinitionID.Key() != event.DefinitionID.Key() {
-				return fmt.Errorf("event %s continues unknown or unrelated event %s", event.ID, event.Predecessor)
-			}
-		}
-	}
-	dismissals := map[string]bool{}
-	for _, dismissal := range state.Dismissals {
-		key := dismissal.EventID + "\x00" + dismissal.ManagerID
-		if dismissal.EventID == "" || dismissal.ManagerID == "" || dismissals[key] {
-			return errors.New("invalid or duplicate dismissal")
-		}
-		if !managerByEvent[dismissal.EventID][dismissal.ManagerID] {
-			return fmt.Errorf("dismissal references unknown event-manager pair %s", dismissal.EventID)
-		}
-		dismissals[key] = true
-	}
-	resolutions := map[string]bool{}
-	for _, resolution := range state.Resolutions {
-		if resolution.EventID == "" || !fullObjectID(resolution.ModelRevision) || strings.TrimSpace(resolution.ModelDigest) == "" || !validVerifiedEvidence(resolution.Evidence) || resolution.Digest != resolutionDigest(resolution) {
-			return ErrResolution
-		}
-		if resolutions[resolution.Digest] || eventsByID[resolution.EventID].ID == "" {
-			return ErrResolution
-		}
-		if !contains(resolution.Evidence.EventIDs, resolution.EventID) {
-			return ErrResolution
-		}
-		for _, eventID := range resolution.Evidence.EventIDs {
-			if eventsByID[eventID].ID == "" {
-				return ErrResolution
-			}
-		}
-		resolutions[resolution.Digest] = true
-	}
-	return nil
+// Read returns the accepted store value, raw persisted CAS digest, and
+// process-only status view derived from actual working-tree observations.
+type ReadResult struct {
+	Accepted        projectbriefing.Store
+	PersistedDigest string
+	StatusView      projectbriefing.ResolutionView
 }
 
-func validateBundle(bundle Bundle) error {
-	if bundle.APIVersion != APIVersion || !fullObjectID(bundle.SinceRevision) || !fullObjectID(bundle.Revision) || bundle.SinceRevision == bundle.Revision || bundle.SinceModelDigest == "" || bundle.ModelDigest == "" {
-		return fmt.Errorf("%w: invalid revisions, model digests, or API version", ErrInvalidBundle)
-	}
-	if strings.TrimSpace(bundle.Provenance.DecisionReference) == "" || strings.TrimSpace(bundle.Provenance.Actor) == "" || strings.TrimSpace(bundle.Provenance.Authority) == "" {
-		return fmt.Errorf("%w: incomplete decision provenance", ErrInvalidBundle)
-	}
-	if bundle.SinceReportDigest == "" || bundle.ReportDigest == "" || bundle.Impact.BaseDigest != bundle.SinceReportDigest || bundle.Impact.CandidateDigest != bundle.ReportDigest || bundle.Impact.Digest == "" {
-		return fmt.Errorf("%w: impact is not bound to the bundle report digests", ErrInvalidBundle)
-	}
-	eventIDs := make([]string, 0, len(bundle.Events))
-	managerSet := map[string]bool{}
-	seenEvents := map[string]bool{}
-	for _, event := range bundle.Events {
-		if err := validateEvent(bundle, event); err != nil {
-			return err
-		}
-		if seenEvents[event.ID] {
-			return fmt.Errorf("%w: duplicate event %s", ErrInvalidBundle, event.ID)
-		}
-		seenEvents[event.ID] = true
-		eventIDs = append(eventIDs, event.ID)
-		for _, manager := range event.AffectedManagers {
-			managerSet[manager] = true
-		}
-	}
-	global := bundle.Global
-	if global.ManagerID != "" || global.Revision != bundle.Revision || global.ModelDigest != bundle.ModelDigest || !equalStrings(global.EventIDs, eventIDs) || global.ID != briefingID("", global.Revision, global.ModelDigest, global.EventIDs) {
-		return fmt.Errorf("%w: global briefing identity or event references do not match", ErrInvalidBundle)
-	}
-	if len(bundle.Managers) != len(managerSet) {
-		return fmt.Errorf("%w: manager briefing set does not match affected managers", ErrInvalidBundle)
-	}
-	seenManagers := map[string]bool{}
-	for _, briefing := range bundle.Managers {
-		if briefing.ManagerID == "" || seenManagers[briefing.ManagerID] || !managerSet[briefing.ManagerID] || briefing.Revision != bundle.Revision || briefing.ModelDigest != bundle.ModelDigest || briefing.ID != briefingID(briefing.ManagerID, briefing.Revision, briefing.ModelDigest, briefing.EventIDs) {
-			return fmt.Errorf("%w: invalid manager briefing identity", ErrInvalidBundle)
-		}
-		seenManagers[briefing.ManagerID] = true
-		wantIDs := make([]string, 0)
-		for _, event := range bundle.Events {
-			if contains(event.AffectedManagers, briefing.ManagerID) {
-				wantIDs = append(wantIDs, event.ID)
-			}
-		}
-		if !equalStrings(briefing.EventIDs, wantIDs) {
-			return fmt.Errorf("%w: manager briefing references unrelated events", ErrInvalidBundle)
-		}
-	}
-	if bundle.Digest == "" || bundle.Digest != FullBundleDigest(bundle) {
-		return fmt.Errorf("%w: full bundle digest mismatch", ErrInvalidBundle)
-	}
-	return nil
-}
-
-func validateEvent(bundle Bundle, event Event) error {
-	if event.ID == "" || len(event.Digest) != 64 || event.ID != "model-change-"+event.Digest[:24] || !fullHexDigest(event.Digest) {
-		return fmt.Errorf("%w: invalid event ID or digest", ErrInvalidBundle)
-	}
-	if !event.DefinitionID.Valid() {
-		return fmt.Errorf("%w: invalid definition identity", ErrInvalidBundle)
-	}
-	if event.Provenance != bundle.Provenance || event.Category == "" || event.Severity == "" {
-		return fmt.Errorf("%w: event provenance or notification fields do not match", ErrInvalidBundle)
-	}
-	for _, values := range [][]string{event.AffectedManagers, event.AffectedArtifacts} {
-		if !sortedUniqueNonempty(values) {
-			return fmt.Errorf("%w: affected references are not sorted and unique", ErrInvalidBundle)
-		}
-	}
-	switch event.Change {
-	case "added":
-		if event.Before != nil || event.After == nil || event.After.Identity() != event.DefinitionID {
-			return fmt.Errorf("%w: invalid added definition payload", ErrInvalidBundle)
-		}
-	case "removed":
-		if event.Before == nil || event.After != nil || event.Before.Identity() != event.DefinitionID {
-			return fmt.Errorf("%w: invalid removed definition payload", ErrInvalidBundle)
-		}
-	case "modified":
-		if event.Before == nil || event.After == nil || event.Before.Identity() != event.DefinitionID || event.After.Identity() != event.DefinitionID || sameDefinition(*event.Before, *event.After) {
-			return fmt.Errorf("%w: invalid modified definition payload", ErrInvalidBundle)
-		}
-	default:
-		return fmt.Errorf("%w: unknown model change %q", ErrInvalidBundle, event.Change)
-	}
-	if event.Predecessor != "" && !validEventID(event.Predecessor) {
-		return fmt.Errorf("%w: invalid predecessor event ID", ErrInvalidBundle)
-	}
-	if eventDigest(event.Predecessor, event.DefinitionID.Key(), event.Change, event.Before, event.After) != event.Digest {
-		return fmt.Errorf("%w: event digest does not match its declared content", ErrInvalidBundle)
-	}
-	return nil
-}
-
-func briefingID(manager, revision, modelDigest string, eventIDs []string) string {
-	payload := struct {
-		Manager, Revision, ModelDigest string
-		EventIDs                       []string
-	}{manager, revision, modelDigest, eventIDs}
-	digest := hash(payload)
-	return "briefing-" + digest[:24]
-}
-
-func equalStrings(a, b []string) bool {
-	if len(a) != len(b) {
-		return false
-	}
-	for i := range a {
-		if a[i] != b[i] {
-			return false
-		}
-	}
-	return true
-}
-
-func sortedUniqueNonempty(values []string) bool {
-	for i, value := range values {
-		if value == "" || (i > 0 && values[i-1] >= value) {
-			return false
-		}
-	}
-	return true
-}
-
-func fullHexDigest(value string) bool {
-	if len(value) != 64 {
-		return false
-	}
-	_, err := hex.DecodeString(value)
-	return err == nil
-}
-
-// Dismissal hides an event from one Manager's notifications. It is keyed by
-// the content-based event ID only, so it counts wherever that event is
-// accepted: across merges, squashes, fast-forwards and on a detached HEAD.
-type Dismissal struct {
-	EventID   string `json:"eventId"`
-	ManagerID string `json:"managerId"`
-}
-
-type Store struct {
-	APIVersion  string         `json:"apiVersion"`
-	History     *HistoryCursor `json:"history,omitempty"`
-	Briefings   []Bundle       `json:"briefings"`
-	Dismissals  []Dismissal    `json:"dismissals"`
-	Resolutions []Resolution   `json:"resolutions,omitempty"`
-	// uncommitted is a status hint Read fills: per accepted event without an
-	// accepted resolution, the latest resolution whose delivered result is
-	// in the working tree but not in HEAD's tree. It is never persisted and
-	// never makes anything accepted.
-	uncommitted map[string]Resolution
-}
-
-// VerifiedResolutionEvidence binds a completed full verification and applied
-// candidate to its durable run, plan, checks, and complete Manager coverage.
-// It records Host evidence; it is not human approval or authenticated identity.
-type VerifiedResolutionEvidence struct {
-	EventIDs           []string `json:"eventIds"`
-	RunID              string   `json:"runId"`
-	PlanDigest         string   `json:"planDigest"`
-	CandidateID        string   `json:"candidateId"`
-	CandidateDigest    string   `json:"candidateDigest"`
-	VerificationDigest string   `json:"verificationDigest"`
-	ApplyDigest        string   `json:"applyDigest"`
-	FullVerifyPassed   bool     `json:"fullVerifyPassed"`
-	CoveredManagerIDs  []string `json:"coveredManagerIds"`
-	EvidenceRefs       []string `json:"evidenceRefs"`
-	// Delivered is what Apply wrote. The resolution counts only while HEAD's
-	// committed tree holds all of it.
-	Delivered []DeliveredFile `json:"delivered"`
-}
-
-// DeliveredFile is one path a delivery wrote: its Git blob and mode, or its
-// removal.
-type DeliveredFile struct {
-	Path    string `json:"path"`
-	Mode    string `json:"mode,omitempty"`
-	Object  string `json:"object,omitempty"`
-	Deleted bool   `json:"deleted,omitempty"`
-}
-
-// NewDeliveredFile records content written to filePath, or its removal, with
-// the Git blob ID that content has when committed unchanged.
-func NewDeliveredFile(root, filePath, mode string, content []byte, deleted bool) (DeliveredFile, error) {
-	if deleted {
-		return DeliveredFile{Path: filePath, Deleted: true}, nil
-	}
-	object, err := source.GitOutputInput(root, content, "hash-object", "--no-filters", "--stdin")
-	if err != nil {
-		return DeliveredFile{}, fmt.Errorf("hash delivered %s: %w", filePath, err)
-	}
-	return DeliveredFile{Path: filePath, Mode: mode, Object: strings.TrimSpace(string(object))}, nil
-}
-
-func validDelivered(files []DeliveredFile) bool {
-	for i, file := range files {
-		if file.Path == "" || file.Path != path.Clean(file.Path) || path.IsAbs(file.Path) || file.Path == ".." || strings.HasPrefix(file.Path, "../") || strings.Contains(file.Path, "\\") || (i > 0 && files[i-1].Path >= file.Path) {
-			return false
-		}
-		if file.Deleted {
-			if file.Mode != "" || file.Object != "" {
-				return false
-			}
-		} else if (file.Mode != "100644" && file.Mode != "100755") || !fullObjectID(file.Object) {
-			return false
-		}
-	}
-	return true
-}
-
-// Resolution is an immutable status record. Dismissal and resolution remain
-// separate: one changes visibility; the other cites fresh Host evidence.
-type Resolution struct {
-	EventID       string                     `json:"eventId"`
-	ModelRevision string                     `json:"modelRevision"`
-	ModelDigest   string                     `json:"modelDigest"`
-	Evidence      VerifiedResolutionEvidence `json:"evidence"`
-	Digest        string                     `json:"digest"`
-}
-
-type ResolutionStatus struct {
-	Status     string      `json:"status"`
-	Resolution *Resolution `json:"resolution,omitempty"`
-}
-
-// Status values reported by EventResolutionStatus.
-const (
-	StatusResolved   = "resolved"
-	StatusUnresolved = "unresolved"
-	// StatusDeliveredUncommitted means a delivery's result is in the working
-	// tree but not yet committed. The event is not resolved.
-	StatusDeliveredUncommitted = "delivered-uncommitted"
-)
-
-// HistoryCursor records the committed model history accepted by repository
-// policy. It is operational state, separate from draft/exploration content.
-// The stored cursor is where accepted history was last reconciled; on another
-// first-parent line it is provisional and that line's own cursor is derived.
-type HistoryCursor struct {
-	Policy              string `json:"policy"`
-	BaselineRevision    string `json:"baselineRevision"`
-	BaselineModelDigest string `json:"baselineModelDigest"`
-	Revision            string `json:"revision"`
-	ModelDigest         string `json:"modelDigest"`
-}
-
-// EnsureReceipt is the fixed-revision result after accepted model history has
-// been reconciled. Bundles are the immutable entries added during this call.
-type EnsureReceipt struct {
-	BaselineRevision    string   `json:"baselineRevision"`
-	BaselineModelDigest string   `json:"baselineModelDigest"`
-	Revision            string   `json:"revision"`
-	ModelDigest         string   `json:"modelDigest"`
-	StoreDigest         string   `json:"storeDigest"`
-	Bundles             []Bundle `json:"bundles"`
-}
-
-// Read validates the operational event history and returns the part of it
-// accepted on the checked-out branch, with the persisted store's digest as the
-// optimistic write token. Accepted history is the first-parent line of HEAD.
-// A briefing counts when it was recorded at a commit on that line, and its
-// events with it. A resolution of such an event counts when HEAD's committed
-// tree holds everything its delivery wrote; of several, the latest on the
-// line is returned. A dismissal counts wherever its event does. Other entries
-// are provisional: they stay stored and count once those conditions hold. History is the line's cursor. A
-// missing store has an empty deterministic state and digest.
-func Read(root string) (Store, string, error) {
+func Read(root string) (ReadResult, error) {
 	state, digest, err := readStore(root)
-	if err != nil || (state.History == nil && len(state.Briefings) == 0) {
-		return state, digest, err
+	if err != nil {
+		return ReadResult{}, err
+	}
+	if state.History == nil && len(state.Briefings) == 0 {
+		return ReadResult{Accepted: state, PersistedDigest: digest, StatusView: projectbriefing.NewResolutionView(state, nil)}, nil
 	}
 	active, err := activeLine(root)
 	if err != nil {
-		return Store{}, "", err
+		return ReadResult{}, err
 	}
-	view := active.accepted(state)
-	view.uncommitted = active.uncommitted(state, view)
-	return view, digest, nil
+	accepted := active.accepted(state)
+	hintsByEvent := active.uncommitted(state, accepted)
+	hints := make([]projectbriefing.Resolution, 0, len(hintsByEvent))
+	for _, resolution := range hintsByEvent {
+		hints = append(hints, resolution)
+	}
+	return ReadResult{Accepted: accepted, PersistedDigest: digest, StatusView: projectbriefing.NewResolutionView(accepted, hints)}, nil
 }
 
 // readStore validates and returns the persisted store, provisional entries
 // included, and its content digest.
-func readStore(root string) (Store, string, error) {
+func readStore(root string) (projectbriefing.Store, string, error) {
 	path, err := stateFile(root, false)
 	if err != nil {
-		return Store{}, "", err
+		return projectbriefing.Store{}, "", err
 	}
 	var data []byte
 	err = waitWhileBusy(func() (bool, error) {
@@ -424,56 +87,46 @@ func readStore(root string) (Store, string, error) {
 	})
 	if os.IsNotExist(err) {
 		state := emptyStore()
-		return state, StoreDigest(state), nil
+		return state, projectbriefing.StoreDigest(state), nil
 	}
 	if err != nil {
-		return Store{}, "", err
+		return projectbriefing.Store{}, "", err
 	}
 	if len(data) > 64<<20 {
-		return Store{}, "", errors.New("briefing store exceeds size limit")
+		return projectbriefing.Store{}, "", errors.New("briefing store exceeds size limit")
 	}
-	var state Store
+	var state projectbriefing.Store
 	decoder := json.NewDecoder(bytes.NewReader(data))
 	decoder.DisallowUnknownFields()
 	if err := decoder.Decode(&state); err != nil {
-		return Store{}, "", fmt.Errorf("decode briefing store: %w", err)
+		return projectbriefing.Store{}, "", fmt.Errorf("decode briefing store: %w", err)
 	}
 	if err := decoder.Decode(new(any)); err != io.EOF {
-		return Store{}, "", errors.New("briefing store contains trailing data")
+		return projectbriefing.Store{}, "", errors.New("briefing store contains trailing data")
 	}
-	if state.APIVersion != APIVersion {
-		return Store{}, "", fmt.Errorf("briefing store %s has format %q, not %q; delete it and run a guided command to rebuild it: accepted history is re-briefed from the first committed model, and the stored dismissals and resolutions are lost", storePath, state.APIVersion, APIVersion)
+	if state.APIVersion != projectbriefing.APIVersion {
+		return projectbriefing.Store{}, "", fmt.Errorf("briefing store %s has format %q, not %q; delete it and run a guided command to rebuild it: accepted history is re-briefed from the first committed model, and the stored dismissals and resolutions are lost", storePath, state.APIVersion, projectbriefing.APIVersion)
 	}
 	if state.Briefings == nil || state.Dismissals == nil {
-		return Store{}, "", errors.New("briefing store has invalid shape")
+		return projectbriefing.Store{}, "", errors.New("briefing store has invalid shape")
 	}
-	if err := validateStore(state); err != nil {
-		return Store{}, "", fmt.Errorf("validate briefing store: %w", err)
+	if err := projectbriefing.ValidateStore(state); err != nil {
+		return projectbriefing.Store{}, "", fmt.Errorf("validate briefing store: %w", err)
 	}
-	return state, StoreDigest(state), nil
+	return state, projectbriefing.StoreDigest(state), nil
 }
 
-// StoreDigest returns the canonical digest used as the optimistic write token.
-func StoreDigest(state Store) string { return hash(state) }
-
-// EventResolutionStatus reports conformity resolution independently of
-// dismissal. Events remain available in manager context after either choice.
-// Given a state from Read, it reports the latest resolution accepted on the
-// checked-out branch as StatusResolved. Without one, it reports
-// StatusDeliveredUncommitted, with that resolution, when a delivery's result
-// is in the working tree but not committed; this is only a hint and the event
-// stays unresolved. Otherwise it reports StatusUnresolved.
-func EventResolutionStatus(state Store, eventID string) ResolutionStatus {
-	for i := range state.Resolutions {
-		if state.Resolutions[i].EventID == eventID {
-			copy := state.Resolutions[i]
-			return ResolutionStatus{Status: StatusResolved, Resolution: &copy}
-		}
+// NewDeliveredFile records the exact Git blob corresponding to bytes that
+// Apply wrote, or records a delivered removal without reading the filesystem.
+func NewDeliveredFile(root, filePath, mode string, content []byte, deleted bool) (projectbriefing.DeliveredFile, error) {
+	if deleted {
+		return projectbriefing.DeliveredFile{Path: filePath, Deleted: true}, nil
 	}
-	if resolution, ok := state.uncommitted[eventID]; ok {
-		return ResolutionStatus{Status: StatusDeliveredUncommitted, Resolution: &resolution}
+	object, err := source.GitOutputInput(root, content, "hash-object", "--no-filters", "--stdin")
+	if err != nil {
+		return projectbriefing.DeliveredFile{}, fmt.Errorf("hash delivered %s: %w", filePath, err)
 	}
-	return ResolutionStatus{Status: StatusUnresolved}
+	return projectbriefing.DeliveredFile{Path: filePath, Mode: mode, Object: strings.TrimSpace(string(object))}, nil
 }
 
 // ResolveVerified records fresh full-Manager Verify and successful Apply
@@ -481,14 +134,14 @@ func EventResolutionStatus(state Store, eventID string) ResolutionStatus {
 // to invoke this only from the Host's successful after-Apply path, with
 // evidence.Delivered listing what Apply wrote. The resolution counts once
 // HEAD's committed tree holds that delivered result.
-func ResolveVerified(root, modelRevision, modelDigest string, evidence VerifiedResolutionEvidence, expectedStoreDigest string) (string, error) {
+func ResolveVerified(root, modelRevision, modelDigest string, evidence projectbriefing.VerifiedResolutionEvidence, expectedStoreDigest string) (string, error) {
 	if evidence.Delivered == nil {
-		return "", ErrResolution
+		return "", projectbriefing.ErrResolution
 	}
-	evidence.Delivered = append([]DeliveredFile{}, evidence.Delivered...)
+	evidence.Delivered = append([]projectbriefing.DeliveredFile{}, evidence.Delivered...)
 	sort.Slice(evidence.Delivered, func(i, j int) bool { return evidence.Delivered[i].Path < evidence.Delivered[j].Path })
-	if strings.TrimSpace(modelRevision) == "" || strings.TrimSpace(modelDigest) == "" || !validVerifiedEvidence(evidence) {
-		return "", ErrResolution
+	if strings.TrimSpace(modelRevision) == "" || strings.TrimSpace(modelDigest) == "" || !projectbriefing.ValidVerifiedEvidence(evidence) {
+		return "", projectbriefing.ErrResolution
 	}
 	stored, storeDigest, err := readStore(root)
 	if err != nil {
@@ -503,11 +156,11 @@ func ResolveVerified(root, modelRevision, modelDigest string, evidence VerifiedR
 	}
 	state := active.accepted(stored)
 	if state.History == nil {
-		return "", ErrStaleModel
+		return "", projectbriefing.ErrStaleModel
 	}
 	project, err := projectwork.Load(root, modelRevision)
 	if err != nil || project == nil || project.Provisional || project.Model.Digest != modelDigest {
-		return "", ErrStaleModel
+		return "", projectbriefing.ErrStaleModel
 	}
 	cursorProjects, err := acceptedProjects(root, state.History.Revision)
 	if err != nil {
@@ -517,13 +170,13 @@ func ResolveVerified(root, modelRevision, modelDigest string, evidence VerifiedR
 		return "", err
 	}
 	if indexOf(projectRevisions(cursorProjects), modelRevision) < 0 {
-		return "", ErrAmbiguousHistory
+		return "", projectbriefing.ErrAmbiguousHistory
 	}
 	if _, err := source.GitOutput(root, "merge-base", "--is-ancestor", state.History.BaselineRevision, modelRevision); err != nil {
-		return "", ErrAmbiguousHistory
+		return "", projectbriefing.ErrAmbiguousHistory
 	}
 	if _, err := source.GitOutput(root, "merge-base", "--is-ancestor", modelRevision, state.History.Revision); err != nil {
-		return "", ErrStaleModel
+		return "", projectbriefing.ErrStaleModel
 	}
 	managerIDs := make([]string, 0, len(project.Report.Managers))
 	for _, manager := range project.Report.Managers {
@@ -531,9 +184,9 @@ func ResolveVerified(root, modelRevision, modelDigest string, evidence VerifiedR
 	}
 	sort.Strings(managerIDs)
 	if !equalStrings(managerIDs, evidence.CoveredManagerIDs) {
-		return "", fmt.Errorf("full verification did not cover every selected Manager: %w", ErrResolution)
+		return "", fmt.Errorf("full verification did not cover every selected Manager: %w", projectbriefing.ErrResolution)
 	}
-	events := make(map[string]Event, len(evidence.EventIDs))
+	events := make(map[string]projectbriefing.Event, len(evidence.EventIDs))
 	for _, bundle := range state.Briefings {
 		for _, event := range bundle.Events {
 			if !contains(evidence.EventIDs, event.ID) {
@@ -548,22 +201,22 @@ func ResolveVerified(root, modelRevision, modelDigest string, evidence VerifiedR
 		}
 	}
 	if len(events) != len(evidence.EventIDs) {
-		return "", ErrStaleModel
+		return "", projectbriefing.ErrStaleModel
 	}
 	for _, eventID := range evidence.EventIDs {
 		for _, managerID := range events[eventID].AffectedManagers {
 			if !contains(evidence.CoveredManagerIDs, managerID) {
-				return "", fmt.Errorf("full verification omitted affected Manager %s: %w", managerID, ErrResolution)
+				return "", fmt.Errorf("full verification omitted affected Manager %s: %w", managerID, projectbriefing.ErrResolution)
 			}
 		}
 	}
-	resolutions := make([]Resolution, 0, len(evidence.EventIDs))
+	resolutions := make([]projectbriefing.Resolution, 0, len(evidence.EventIDs))
 	for _, eventID := range evidence.EventIDs {
-		resolution := Resolution{EventID: eventID, ModelRevision: modelRevision, ModelDigest: modelDigest, Evidence: evidence}
-		resolution.Digest = resolutionDigest(resolution)
+		resolution := projectbriefing.Resolution{EventID: eventID, ModelRevision: modelRevision, ModelDigest: modelDigest, Evidence: evidence}
+		resolution.Digest = projectbriefing.ResolutionDigest(resolution)
 		resolutions = append(resolutions, resolution)
 	}
-	return update(root, expectedStoreDigest, func(current *Store) error {
+	return update(root, expectedStoreDigest, func(current *projectbriefing.Store) error {
 		// A provisional resolution, for example one whose delivered result is
 		// not committed here, does not block.
 		accepted := active.accepted(*current)
@@ -595,36 +248,12 @@ func ResolveVerified(root, modelRevision, modelDigest string, evidence VerifiedR
 	})
 }
 
-func validVerifiedEvidence(evidence VerifiedResolutionEvidence) bool {
-	return sortedUniqueNonempty(evidence.EventIDs) && strings.TrimSpace(evidence.RunID) != "" && strings.TrimSpace(evidence.PlanDigest) != "" && strings.TrimSpace(evidence.CandidateID) != "" && strings.TrimSpace(evidence.CandidateDigest) != "" && strings.TrimSpace(evidence.VerificationDigest) != "" && strings.TrimSpace(evidence.ApplyDigest) != "" && evidence.FullVerifyPassed && sortedUniqueNonempty(evidence.CoveredManagerIDs) && sortedUniqueNonempty(evidence.EvidenceRefs) && evidence.Delivered != nil && validDelivered(evidence.Delivered)
-}
-
-func resolutionDigest(resolution Resolution) string {
-	resolution.Digest = ""
-	return hash(resolution)
-}
-
-func projectRevisions(projects []*projectwork.Project) []string {
+func projectRevisions(projects []*projectvalue.Project) []string {
 	revisions := make([]string, 0, len(projects))
 	for _, project := range projects {
 		revisions = append(revisions, project.Revision)
 	}
 	return revisions
-}
-
-// AcceptedHistory is the accepted model history at one fixed revision,
-// computed from Git and the persisted store without writing anything.
-type AcceptedHistory struct {
-	// Receipt is what EnsureAcceptedHistory would return for the same
-	// revision: Bundles are the entries not yet persisted and StoreDigest is
-	// the digest the persisted store would have afterwards.
-	Receipt EnsureReceipt
-	// State is the history accepted on the checked-out branch, as Read would
-	// return it after EnsureAcceptedHistory; it is a view, not a store to write.
-	State Store
-	// PersistedDigest is the digest of the persisted store State was computed
-	// from: the expected digest for writers such as Dismiss and ResolveVerified.
-	PersistedDigest string
 }
 
 // ReadAcceptedHistory computes in memory the accepted history that
@@ -635,24 +264,24 @@ type AcceptedHistory struct {
 // kept, exactly as EnsureAcceptedHistory would do. It never fails because the
 // persisted store is behind or another writer is active; it fails closed on
 // ambiguous or invalid history with the same errors as EnsureAcceptedHistory.
-func ReadAcceptedHistory(root, targetRevision string) (AcceptedHistory, error) {
-	if !fullObjectID(targetRevision) {
-		return AcceptedHistory{}, ErrUncommittedModel
+func ReadAcceptedHistory(root, targetRevision string) (projectbriefing.AcceptedHistory, error) {
+	if !projectbriefing.ValidObjectID(targetRevision) {
+		return projectbriefing.AcceptedHistory{}, projectbriefing.ErrUncommittedModel
 	}
 	active, err := activeLine(root)
 	if err != nil {
-		return AcceptedHistory{}, err
+		return projectbriefing.AcceptedHistory{}, err
 	}
 	stored, digest, err := readStore(root)
 	if err != nil {
-		return AcceptedHistory{}, err
+		return projectbriefing.AcceptedHistory{}, err
 	}
 	next, receipt, err := acceptHistory(root, active, targetRevision, stored)
 	if err != nil {
-		return AcceptedHistory{}, err
+		return projectbriefing.AcceptedHistory{}, err
 	}
-	receipt.StoreDigest = StoreDigest(next)
-	return AcceptedHistory{Receipt: receipt, State: active.accepted(next), PersistedDigest: digest}, nil
+	receipt.StoreDigest = projectbriefing.StoreDigest(next)
+	return projectbriefing.AcceptedHistory{Receipt: receipt, State: active.accepted(next), PersistedDigest: digest}, nil
 }
 
 // EnsureAcceptedHistory reconciles the bounded first-parent history ending at
@@ -670,28 +299,28 @@ func ReadAcceptedHistory(root, targetRevision string) (AcceptedHistory, error) {
 // or past the target is success. Working-tree state is never inspected or
 // accepted. Git commit identity is retained only as unauthenticated source
 // metadata.
-func EnsureAcceptedHistory(root, targetRevision string) (EnsureReceipt, error) {
-	if !fullObjectID(targetRevision) {
-		return EnsureReceipt{}, ErrUncommittedModel
+func EnsureAcceptedHistory(root, targetRevision string) (projectbriefing.EnsureReceipt, error) {
+	if !projectbriefing.ValidObjectID(targetRevision) {
+		return projectbriefing.EnsureReceipt{}, projectbriefing.ErrUncommittedModel
 	}
 	active, err := activeLine(root)
 	if err != nil {
-		return EnsureReceipt{}, err
+		return projectbriefing.EnsureReceipt{}, err
 	}
 	for attempt := 1; ; attempt++ {
 		stored, digest, err := readStore(root)
 		if err != nil {
-			return EnsureReceipt{}, err
+			return projectbriefing.EnsureReceipt{}, err
 		}
 		next, receipt, err := acceptHistory(root, active, targetRevision, stored)
 		if err != nil {
-			return EnsureReceipt{}, err
+			return projectbriefing.EnsureReceipt{}, err
 		}
-		if StoreDigest(next) == digest {
+		if projectbriefing.StoreDigest(next) == digest {
 			receipt.StoreDigest = digest
 			return receipt, nil
 		}
-		written, err := update(root, digest, func(current *Store) error {
+		written, err := update(root, digest, func(current *projectbriefing.Store) error {
 			*current = next
 			return nil
 		})
@@ -699,7 +328,7 @@ func EnsureAcceptedHistory(root, targetRevision string) (EnsureReceipt, error) {
 			continue
 		}
 		if err != nil {
-			return EnsureReceipt{}, err
+			return projectbriefing.EnsureReceipt{}, err
 		}
 		receipt.StoreDigest = written
 		return receipt, nil
@@ -710,45 +339,45 @@ func EnsureAcceptedHistory(root, targetRevision string) (EnsureReceipt, error) {
 // and EnsureAcceptedHistory. From the persisted store it returns the store
 // that accepts targetRevision on the active line, provisional entries kept,
 // and a receipt whose Bundles are the entries it added; the receipt's
-// StoreDigest is left to the caller.
-func acceptHistory(root string, active *line, targetRevision string, state Store) (Store, EnsureReceipt, error) {
-	var receipt EnsureReceipt
+// StoreDigest field is left to the caller.
+func acceptHistory(root string, active *line, targetRevision string, state projectbriefing.Store) (projectbriefing.Store, projectbriefing.EnsureReceipt, error) {
+	var receipt projectbriefing.EnsureReceipt
 	targetIndex := active.index(targetRevision)
 	if targetIndex < 0 {
-		return Store{}, receipt, fmt.Errorf("accepted history target must be on the active first-parent branch: %w", ErrUncommittedModel)
+		return projectbriefing.Store{}, receipt, fmt.Errorf("accepted history target must be on the active first-parent branch: %w", projectbriefing.ErrUncommittedModel)
 	}
 	projects, err := acceptedProjects(root, targetRevision)
 	if err != nil {
-		return Store{}, receipt, err
+		return projectbriefing.Store{}, receipt, err
 	}
 	if len(projects) == 0 || projects[len(projects)-1].Revision != targetRevision {
-		return Store{}, receipt, ErrNoAcceptedModel
+		return projectbriefing.Store{}, receipt, ErrNoAcceptedModel
 	}
 	if state.History == nil && len(state.Briefings) > 0 {
-		return Store{}, receipt, fmt.Errorf("existing briefing entries have no accepted-history cursor and cannot be safely rebased: %w", ErrAmbiguousHistory)
+		return projectbriefing.Store{}, receipt, fmt.Errorf("existing briefing entries have no accepted-history cursor and cannot be safely rebased: %w", projectbriefing.ErrAmbiguousHistory)
 	}
 	// Work on a copy: the cursor is shared by pointer and briefings are re-sorted.
 	if state.History != nil {
 		cursor := *state.History
 		state.History = &cursor
 	}
-	state.Briefings = append([]Bundle{}, state.Briefings...)
+	state.Briefings = append([]projectbriefing.Bundle{}, state.Briefings...)
 	// Without a stored baseline on this line (no history yet, or a project
 	// model that entered the line through a squash or rebase), the line starts
 	// at its own first committed model.
 	if active.cursor(state) == nil {
 		first := projects[0]
-		state.History = &HistoryCursor{Policy: acceptedPolicy, BaselineRevision: first.Revision, BaselineModelDigest: first.Model.Digest, Revision: first.Revision, ModelDigest: first.Model.Digest}
+		state.History = &projectbriefing.HistoryCursor{Policy: acceptedPolicy, BaselineRevision: first.Revision, BaselineModelDigest: first.Model.Digest, Revision: first.Revision, ModelDigest: first.Model.Digest}
 	}
 	view := active.acceptedHistory(state)
 	accepted := projects
 	if active.index(view.History.Revision) > targetIndex {
 		if accepted, err = acceptedProjects(root, view.History.Revision); err != nil {
-			return Store{}, receipt, err
+			return projectbriefing.Store{}, receipt, err
 		}
 	}
 	if err := validateAcceptedPrefix(view, accepted); err != nil {
-		return Store{}, receipt, err
+		return projectbriefing.Store{}, receipt, err
 	}
 	receipt.BaselineRevision = view.History.BaselineRevision
 	receipt.BaselineModelDigest = view.History.BaselineModelDigest
@@ -763,49 +392,49 @@ func acceptHistory(root string, active *line, targetRevision string, state Store
 		previous, current := projects[i-1], projects[i]
 		if current.Model.Digest == previous.Model.Digest {
 			if err := advanceCursor(root, active, &state, previous, current); err != nil {
-				return Store{}, receipt, err
+				return projectbriefing.Store{}, receipt, err
 			}
 			continue
 		}
 		provenance, err := gitProvenance(root, current.Revision)
 		if err != nil {
-			return Store{}, receipt, err
+			return projectbriefing.Store{}, receipt, err
 		}
 		// Chain to the events this computation already added, not only the
 		// persisted ones.
 		bundle, err := generate(root, previous.Revision, current.Revision, provenance, &state)
 		if err != nil {
-			return Store{}, receipt, fmt.Errorf("generate accepted model change at %s: %w", current.Revision, err)
+			return projectbriefing.Store{}, receipt, fmt.Errorf("generate accepted model change at %s: %w", current.Revision, err)
 		}
 		if err := appendBundle(root, active, &state, bundle); err != nil {
-			return Store{}, receipt, err
+			return projectbriefing.Store{}, receipt, err
 		}
 		receipt.Bundles = append(receipt.Bundles, bundle)
 	}
 	if cursor := active.cursor(state); cursor == nil || cursor.Revision != targetRevision || cursor.ModelDigest != receipt.ModelDigest {
-		return Store{}, receipt, ErrStaleModel
+		return projectbriefing.Store{}, receipt, projectbriefing.ErrStaleModel
 	}
-	if err := validateStore(state); err != nil {
-		return Store{}, receipt, fmt.Errorf("validate accepted history: %w", err)
+	if err := projectbriefing.ValidateStore(state); err != nil {
+		return projectbriefing.Store{}, receipt, fmt.Errorf("validate accepted history: %w", err)
 	}
 	return state, receipt, nil
 }
 
-func acceptedProjects(root, targetRevision string) ([]*projectwork.Project, error) {
+func acceptedProjects(root, targetRevision string) ([]*projectvalue.Project, error) {
 	shallow, err := source.GitOutput(root, "rev-parse", "--is-shallow-repository")
 	if err != nil {
 		return nil, fmt.Errorf("inspect repository history completeness: %w", err)
 	}
 	if strings.TrimSpace(string(shallow)) != "false" {
-		return nil, fmt.Errorf("accepted history requires complete Git ancestry: %w", ErrAmbiguousHistory)
+		return nil, fmt.Errorf("accepted history requires complete Git ancestry: %w", projectbriefing.ErrAmbiguousHistory)
 	}
 	revisions, err := firstParentRevisions(root, targetRevision)
 	if err != nil {
 		return nil, fmt.Errorf("enumerate accepted first-parent history: %w", err)
 	}
-	projects := make([]*projectwork.Project, 0, len(revisions))
+	projects := make([]*projectvalue.Project, 0, len(revisions))
 	for _, revision := range revisions {
-		paths, err := source.GitOutput(root, "ls-tree", "-r", "--name-only", revision, "--", projectwork.ManifestPath)
+		paths, err := source.GitOutput(root, "ls-tree", "-r", "--name-only", revision, "--", projectvalue.ManifestPath)
 		if err != nil {
 			return nil, fmt.Errorf("inspect project manifest at %s: %w", revision, err)
 		}
@@ -813,14 +442,14 @@ func acceptedProjects(root, targetRevision string) ([]*projectwork.Project, erro
 			if len(projects) == 0 {
 				continue
 			}
-			return nil, fmt.Errorf("project manifest disappeared at %s: %w", revision, ErrAmbiguousHistory)
+			return nil, fmt.Errorf("project manifest disappeared at %s: %w", revision, projectbriefing.ErrAmbiguousHistory)
 		}
 		project, err := projectwork.Load(root, revision)
 		if err != nil {
 			return nil, fmt.Errorf("load committed project model at %s: %w", revision, err)
 		}
 		if project == nil || project.Provisional || project.Model.Digest == "" {
-			return nil, fmt.Errorf("invalid committed model at %s: %w", revision, ErrAmbiguousHistory)
+			return nil, fmt.Errorf("invalid committed model at %s: %w", revision, projectbriefing.ErrAmbiguousHistory)
 		}
 		for _, finding := range project.Report.Findings {
 			// `incomplete` findings describe absent implementation or inventory
@@ -829,7 +458,7 @@ func acceptedProjects(root, targetRevision string) ([]*projectwork.Project, erro
 			// specification (for example unresolved references or invalid
 			// ownership), even when Core compilation produced a model digest.
 			if finding.Severity == "error" {
-				return nil, fmt.Errorf("committed project model at %s has structural finding %s (%s): %w", revision, finding.Code, finding.Subject, ErrAmbiguousHistory)
+				return nil, fmt.Errorf("committed project model at %s has structural finding %s (%s): %w", revision, finding.Code, finding.Subject, projectbriefing.ErrAmbiguousHistory)
 			}
 		}
 		projects = append(projects, project)
@@ -858,12 +487,12 @@ func indexOf(revisions []string, revision string) int {
 	return -1
 }
 
-func validateAcceptedPrefix(state Store, projects []*projectwork.Project) error {
+func validateAcceptedPrefix(state projectbriefing.Store, projects []*projectvalue.Project) error {
 	if state.History == nil {
 		return nil
 	}
 	if len(projects) == 0 || projects[0].Revision != state.History.BaselineRevision || projects[0].Model.Digest != state.History.BaselineModelDigest {
-		return ErrAmbiguousHistory
+		return projectbriefing.ErrAmbiguousHistory
 	}
 	cursorIndex := -1
 	for i, project := range projects {
@@ -873,9 +502,9 @@ func validateAcceptedPrefix(state Store, projects []*projectwork.Project) error 
 		}
 	}
 	if cursorIndex < 0 || projects[cursorIndex].Model.Digest != state.History.ModelDigest {
-		return ErrAmbiguousHistory
+		return projectbriefing.ErrAmbiguousHistory
 	}
-	bundles := make(map[string]Bundle, len(state.Briefings))
+	bundles := make(map[string]projectbriefing.Bundle, len(state.Briefings))
 	for _, bundle := range state.Briefings {
 		bundles[bundle.Revision] = bundle
 	}
@@ -887,20 +516,20 @@ func validateAcceptedPrefix(state Store, projects []*projectwork.Project) error 
 		bundle, exists := bundles[current.Revision]
 		if current.Model.Digest != previous.Model.Digest {
 			if !exists {
-				return fmt.Errorf("accepted model transition %s..%s is not completely briefed: %w", previous.Revision, current.Revision, ErrStaleModel)
+				return fmt.Errorf("accepted model transition %s..%s is not completely briefed: %w", previous.Revision, current.Revision, projectbriefing.ErrStaleModel)
 			}
 			if bundle.SinceRevision != previous.Revision || bundle.SinceModelDigest != previous.Model.Digest || bundle.ModelDigest != current.Model.Digest {
-				return fmt.Errorf("briefing at %s contradicts the accepted model transition %s..%s: %w", current.Revision, previous.Revision, current.Revision, ErrAmbiguousHistory)
+				return fmt.Errorf("briefing at %s contradicts the accepted model transition %s..%s: %w", current.Revision, previous.Revision, current.Revision, projectbriefing.ErrAmbiguousHistory)
 			}
 			for _, event := range bundle.Events {
 				key := event.DefinitionID.Key()
 				if event.Predecessor != last[key] {
-					return fmt.Errorf("event %s at %s does not continue its definition's accepted events: %w", event.ID, current.Revision, ErrAmbiguousHistory)
+					return fmt.Errorf("event %s at %s does not continue its definition's accepted events: %w", event.ID, current.Revision, projectbriefing.ErrAmbiguousHistory)
 				}
 				last[key] = event.ID
 			}
 		} else if exists {
-			return fmt.Errorf("no-op model revision %s has a briefing bundle: %w", current.Revision, ErrAmbiguousHistory)
+			return fmt.Errorf("no-op model revision %s has a briefing bundle: %w", current.Revision, projectbriefing.ErrAmbiguousHistory)
 		}
 	}
 	for revision := range bundles {
@@ -912,7 +541,7 @@ func validateAcceptedPrefix(state Store, projects []*projectwork.Project) error 
 			}
 		}
 		if !found {
-			return ErrAmbiguousHistory
+			return projectbriefing.ErrAmbiguousHistory
 		}
 	}
 	return nil
@@ -944,7 +573,7 @@ type treeEntry struct {
 func activeLine(root string) (*line, error) {
 	head, err := source.GitOutput(root, "rev-parse", "--verify", "HEAD^{commit}")
 	if err != nil {
-		return nil, fmt.Errorf("resolve active accepted branch: %w", ErrUncommittedModel)
+		return nil, fmt.Errorf("resolve active accepted branch: %w", projectbriefing.ErrUncommittedModel)
 	}
 	revisions, err := firstParentRevisions(root, strings.TrimSpace(string(head)))
 	if err != nil {
@@ -1002,7 +631,7 @@ func (l *line) position(revision string) int {
 // rank orders a resolution along the line for latest-wins: where its commit
 // lies on the line or was merged in, else, for a delivery that reached the
 // line through a squash or rebase, where its delivered result entered it.
-func (l *line) rank(resolution Resolution) int {
+func (l *line) rank(resolution projectbriefing.Resolution) int {
 	if i := l.position(resolution.ModelRevision); i >= 0 {
 		return i
 	}
@@ -1012,7 +641,7 @@ func (l *line) rank(resolution Resolution) int {
 // entered returns the line position of the newest first-parent commit that
 // wrote one of the delivered blobs at its path or removed one of the removed
 // paths, or -1 when none did or the history cannot be read.
-func (l *line) entered(files []DeliveredFile) int {
+func (l *line) entered(files []projectbriefing.DeliveredFile) int {
 	at := -1
 	for _, file := range files {
 		filter := "--find-object=" + file.Object
@@ -1070,7 +699,7 @@ func (l *line) readTree(paths []string) {
 // inHead reports whether HEAD's committed tree holds a delivered result: each
 // written path with its blob and mode, and no entry at each removed path.
 // known is false when HEAD's tree could not be read for one of the paths.
-func (l *line) inHead(files []DeliveredFile) (present, known bool) {
+func (l *line) inHead(files []projectbriefing.DeliveredFile) (present, known bool) {
 	paths := make([]string, 0, len(files))
 	for _, file := range files {
 		paths = append(paths, file.Path)
@@ -1095,7 +724,7 @@ func (l *line) inHead(files []DeliveredFile) (present, known bool) {
 
 // present reports whether HEAD's committed tree verifiably holds a delivered
 // result; an unreadable tree never verifies one.
-func (l *line) present(files []DeliveredFile) bool {
+func (l *line) present(files []projectbriefing.DeliveredFile) bool {
 	present, known := l.inHead(files)
 	return present && known
 }
@@ -1104,7 +733,7 @@ func (l *line) present(files []DeliveredFile) bool {
 // resolution, the latest resolution whose delivered result the working tree
 // holds although HEAD's tree does not. It reads the working tree only to tell
 // users why an event is not resolved yet; it never makes anything accepted.
-func (l *line) uncommitted(state, view Store) map[string]Resolution {
+func (l *line) uncommitted(state, view projectbriefing.Store) map[string]projectbriefing.Resolution {
 	events, resolved := map[string]bool{}, map[string]bool{}
 	for _, bundle := range view.Briefings {
 		for _, event := range bundle.Events {
@@ -1114,7 +743,7 @@ func (l *line) uncommitted(state, view Store) map[string]Resolution {
 	for _, resolution := range view.Resolutions {
 		resolved[resolution.EventID] = true
 	}
-	result := map[string]Resolution{}
+	result := map[string]projectbriefing.Resolution{}
 	for _, resolution := range state.Resolutions {
 		id := resolution.EventID
 		if !events[id] || resolved[id] {
@@ -1135,7 +764,7 @@ func (l *line) uncommitted(state, view Store) map[string]Resolution {
 // each written path as a regular file with the delivered blob, hashed like
 // NewDeliveredFile, and each removed path absent. Modes are not compared;
 // not every platform's working tree keeps them.
-func (l *line) inWorkingTree(files []DeliveredFile) bool {
+func (l *line) inWorkingTree(files []projectbriefing.DeliveredFile) bool {
 	written, objects := []string{}, []string{}
 	for _, file := range files {
 		info, err := os.Lstat(filepath.Join(l.root, filepath.FromSlash(file.Path)))
@@ -1163,7 +792,7 @@ func (l *line) inWorkingTree(files []DeliveredFile) bool {
 // cursor returns the accepted-history cursor on the line: the stored cursor
 // when it lies on the line, else the baseline, moved up to the last briefing
 // recorded on the line. It is nil when the stored baseline is off the line.
-func (l *line) cursor(state Store) *HistoryCursor {
+func (l *line) cursor(state projectbriefing.Store) *projectbriefing.HistoryCursor {
 	if state.History == nil || l.index(state.History.BaselineRevision) < 0 {
 		return nil
 	}
@@ -1180,8 +809,8 @@ func (l *line) cursor(state Store) *HistoryCursor {
 }
 
 // acceptedHistory returns the line's cursor and the briefings recorded on it.
-func (l *line) acceptedHistory(state Store) Store {
-	view := Store{APIVersion: state.APIVersion, History: l.cursor(state), Briefings: []Bundle{}, Dismissals: []Dismissal{}, Resolutions: []Resolution{}}
+func (l *line) acceptedHistory(state projectbriefing.Store) projectbriefing.Store {
+	view := projectbriefing.Store{APIVersion: state.APIVersion, History: l.cursor(state), Briefings: []projectbriefing.Bundle{}, Dismissals: []projectbriefing.Dismissal{}, Resolutions: []projectbriefing.Resolution{}}
 	for _, bundle := range state.Briefings {
 		if l.index(bundle.Revision) >= 0 {
 			view.Briefings = append(view.Briefings, bundle)
@@ -1193,7 +822,7 @@ func (l *line) acceptedHistory(state Store) Store {
 // accepted returns acceptedHistory with the dismissals and resolutions of its
 // events that are accepted on the line, keeping only the latest resolution of
 // each event by rank, and of equals the one recorded last.
-func (l *line) accepted(state Store) Store {
+func (l *line) accepted(state projectbriefing.Store) projectbriefing.Store {
 	view := l.acceptedHistory(state)
 	events := map[string]bool{}
 	for _, bundle := range view.Briefings {
@@ -1233,13 +862,13 @@ func (l *line) accepted(state Store) Store {
 
 // advanceCursor moves the line's cursor over one first-parent commit that
 // leaves the accepted model digest unchanged.
-func advanceCursor(root string, active *line, state *Store, previous, current *projectwork.Project) error {
+func advanceCursor(root string, active *line, state *projectbriefing.Store, previous, current *projectvalue.Project) error {
 	if previous == nil || current == nil || previous.Model.Digest != current.Model.Digest {
-		return ErrStaleModel
+		return projectbriefing.ErrStaleModel
 	}
 	cursor := active.cursor(*state)
 	if cursor == nil || cursor.Revision != previous.Revision || cursor.ModelDigest != previous.Model.Digest {
-		return ErrStaleModel
+		return projectbriefing.ErrStaleModel
 	}
 	if err := requireNextFirstParent(root, previous.Revision, current.Revision); err != nil {
 		return err
@@ -1256,21 +885,21 @@ func requireNextFirstParent(root, sinceRevision, revision string) error {
 	}
 	fields := strings.Fields(string(output))
 	if len(fields) < 2 || fields[0] != revision || fields[1] != sinceRevision {
-		return ErrAmbiguousHistory
+		return projectbriefing.ErrAmbiguousHistory
 	}
 	return nil
 }
 
-func gitProvenance(root, revision string) (Provenance, error) {
+func gitProvenance(root, revision string) (projectbriefing.Provenance, error) {
 	author, err := source.GitOutput(root, "show", "-s", "--format=%an", revision)
 	if err != nil {
-		return Provenance{}, fmt.Errorf("read accepted model commit metadata: %w", err)
+		return projectbriefing.Provenance{}, fmt.Errorf("read accepted model commit metadata: %w", err)
 	}
 	name := strings.TrimSpace(string(author))
 	if name == "" {
-		return Provenance{}, ErrMissingProvenance
+		return projectbriefing.Provenance{}, projectbriefing.ErrMissingProvenance
 	}
-	return Provenance{
+	return projectbriefing.Provenance{
 		DecisionReference: "git-commit:" + revision,
 		Actor:             "git-commit-author:" + name,
 		Authority:         acceptedPolicy,
@@ -1279,22 +908,22 @@ func gitProvenance(root, revision string) (Provenance, error) {
 
 // Write appends an immutable briefing bundle. expectedDigest must be the token
 // returned by Read; pass the empty-store digest for a not-yet-created store.
-func Write(root string, bundle Bundle, expectedDigest string) (string, error) {
-	if err := validateBundle(bundle); err != nil {
+func Write(root string, bundle projectbriefing.Bundle, expectedDigest string) (string, error) {
+	if err := projectbriefing.ValidateBundle(bundle); err != nil {
 		return "", err
 	}
 	if bundle.SinceRevision == bundle.Revision {
-		return "", ErrInvalidBundle
+		return "", projectbriefing.ErrInvalidBundle
 	}
 	regenerated, err := Generate(root, bundle.SinceRevision, bundle.Revision, bundle.Provenance)
 	if err != nil {
 		return "", fmt.Errorf("regenerate briefing from fixed source revisions: %w", err)
 	}
 	if hash(regenerated) != hash(bundle) {
-		return "", fmt.Errorf("%w: submitted bundle differs from fixed-source regeneration", ErrInvalidBundle)
+		return "", fmt.Errorf("%w: submitted bundle differs from fixed-source regeneration", projectbriefing.ErrInvalidBundle)
 	}
 	if bundle.SinceModelDigest == bundle.ModelDigest && len(bundle.Events) != 0 {
-		return "", fmt.Errorf("%w: unchanged model digest cannot carry events", ErrInvalidBundle)
+		return "", fmt.Errorf("%w: unchanged model digest cannot carry events", projectbriefing.ErrInvalidBundle)
 	}
 	active, err := activeLine(root)
 	if err != nil {
@@ -1312,11 +941,11 @@ func Write(root string, bundle Bundle, expectedDigest string) (string, error) {
 			if hash(prior) == hash(bundle) {
 				return current, nil
 			}
-			return "", ErrAmbiguousHistory
+			return "", projectbriefing.ErrAmbiguousHistory
 		}
 		if state.History != nil {
 			if cursor := active.cursor(state); cursor == nil || cursor.Revision != bundle.SinceRevision || cursor.ModelDigest != bundle.SinceModelDigest {
-				return "", ErrAmbiguousHistory
+				return "", projectbriefing.ErrAmbiguousHistory
 			}
 			if err := requireNextFirstParent(root, bundle.SinceRevision, bundle.Revision); err != nil {
 				return "", err
@@ -1335,7 +964,7 @@ func Write(root string, bundle Bundle, expectedDigest string) (string, error) {
 		if hash(prior) == hash(bundle) {
 			return currentDigest, nil
 		}
-		return "", ErrAmbiguousHistory
+		return "", projectbriefing.ErrAmbiguousHistory
 	}
 	if state.History == nil {
 		projects, err := acceptedProjects(root, bundle.Revision)
@@ -1343,14 +972,14 @@ func Write(root string, bundle Bundle, expectedDigest string) (string, error) {
 			return "", err
 		}
 		if len(projects) < 2 || projects[0].Revision != bundle.SinceRevision {
-			return "", fmt.Errorf("first persisted briefing must begin at the earliest committed project model: %w", ErrAmbiguousHistory)
+			return "", fmt.Errorf("first persisted briefing must begin at the earliest committed project model: %w", projectbriefing.ErrAmbiguousHistory)
 		}
-		currentDigest, err = update(root, currentDigest, func(current *Store) error {
+		currentDigest, err = update(root, currentDigest, func(current *projectbriefing.Store) error {
 			if current.History != nil || len(current.Briefings) != 0 {
 				return ErrStaleStore
 			}
 			baseline := projects[0]
-			current.History = &HistoryCursor{Policy: acceptedPolicy, BaselineRevision: baseline.Revision, BaselineModelDigest: baseline.Model.Digest, Revision: baseline.Revision, ModelDigest: baseline.Model.Digest}
+			current.History = &projectbriefing.HistoryCursor{Policy: acceptedPolicy, BaselineRevision: baseline.Revision, BaselineModelDigest: baseline.Model.Digest, Revision: baseline.Revision, ModelDigest: baseline.Model.Digest}
 			return nil
 		})
 		if err != nil {
@@ -1360,30 +989,30 @@ func Write(root string, bundle Bundle, expectedDigest string) (string, error) {
 	return appendCanonicalBundle(root, active, bundle, currentDigest)
 }
 
-func bundleForRevision(state Store, revision string) (Bundle, bool) {
+func bundleForRevision(state projectbriefing.Store, revision string) (projectbriefing.Bundle, bool) {
 	for _, bundle := range state.Briefings {
 		if bundle.Revision == revision {
 			return bundle, true
 		}
 	}
-	return Bundle{}, false
+	return projectbriefing.Bundle{}, false
 }
 
-func appendCanonicalBundle(root string, active *line, bundle Bundle, expectedDigest string) (string, error) {
-	return update(root, expectedDigest, func(state *Store) error {
+func appendCanonicalBundle(root string, active *line, bundle projectbriefing.Bundle, expectedDigest string) (string, error) {
+	return update(root, expectedDigest, func(state *projectbriefing.Store) error {
 		return appendBundle(root, active, state, bundle)
 	})
 }
 
 // appendBundle adds a briefing that extends the line's cursor by one
 // first-parent commit and moves the cursor onto it.
-func appendBundle(root string, active *line, state *Store, bundle Bundle) error {
+func appendBundle(root string, active *line, state *projectbriefing.Store, bundle projectbriefing.Bundle) error {
 	cursor := active.cursor(*state)
 	if cursor == nil {
-		return ErrStaleModel
+		return projectbriefing.ErrStaleModel
 	}
 	if cursor.Revision != bundle.SinceRevision || cursor.ModelDigest != bundle.SinceModelDigest {
-		return fmt.Errorf("briefing must extend the accepted cursor: %w", ErrStaleModel)
+		return fmt.Errorf("briefing must extend the accepted cursor: %w", projectbriefing.ErrStaleModel)
 	}
 	if err := requireNextFirstParent(root, bundle.SinceRevision, bundle.Revision); err != nil {
 		return err
@@ -1397,14 +1026,14 @@ func appendBundle(root string, active *line, state *Store, bundle Bundle) error 
 		return err
 	}
 	if before.Model.Digest != bundle.SinceModelDigest || after.Model.Digest != bundle.ModelDigest || before.Model.Digest == after.Model.Digest {
-		return ErrStaleModel
+		return projectbriefing.ErrStaleModel
 	}
 	for _, prior := range state.Briefings {
 		if prior.Revision == bundle.Revision {
 			if hash(prior) == hash(bundle) {
 				return nil
 			}
-			return ErrAmbiguousHistory
+			return projectbriefing.ErrAmbiguousHistory
 		}
 		if prior.Global.ID == bundle.Global.ID {
 			if hash(prior) == hash(bundle) {
@@ -1445,7 +1074,7 @@ func Dismiss(root, eventID, managerID, expectedDigest string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	return update(root, expectedDigest, func(state *Store) error {
+	return update(root, expectedDigest, func(state *projectbriefing.Store) error {
 		accepted := active.accepted(*state)
 		found := false
 		for _, bundle := range accepted.Briefings {
@@ -1463,7 +1092,7 @@ func Dismiss(root, eventID, managerID, expectedDigest string) (string, error) {
 				return nil
 			}
 		}
-		state.Dismissals = append(state.Dismissals, Dismissal{EventID: eventID, ManagerID: managerID})
+		state.Dismissals = append(state.Dismissals, projectbriefing.Dismissal{EventID: eventID, ManagerID: managerID})
 		sort.Slice(state.Dismissals, func(i, j int) bool {
 			if state.Dismissals[i].EventID != state.Dismissals[j].EventID {
 				return state.Dismissals[i].EventID < state.Dismissals[j].EventID
@@ -1478,25 +1107,25 @@ func Dismiss(root, eventID, managerID, expectedDigest string) (string, error) {
 // modelDigest, with their events and a digest over the returned immutable data.
 // Only briefings accepted on the checked-out branch count, as in Read. It
 // rejects a stale digest instead of silently switching to a newer model.
-func LoadForManager(root, modelDigest, managerID string, requestedRevision ...string) ([]Briefing, []Event, string, error) {
+func LoadForManager(root, modelDigest, managerID string, requestedRevision ...string) ([]projectbriefing.Briefing, []projectbriefing.Event, string, error) {
 	if strings.TrimSpace(modelDigest) == "" || strings.TrimSpace(managerID) == "" || len(requestedRevision) > 1 {
-		return nil, nil, "", ErrStaleModel
+		return nil, nil, "", projectbriefing.ErrStaleModel
 	}
-	state, _, err := Read(root)
+	read, err := Read(root)
 	if err != nil {
 		return nil, nil, "", err
 	}
-	return LoadForManagerFrom(root, state, modelDigest, managerID, requestedRevision...)
+	return LoadForManagerFrom(root, read.Accepted, modelDigest, managerID, requestedRevision...)
 }
 
 // LoadForManagerFrom is LoadForManager over an accepted view that was already
 // read: the state from Read or the State of ReadAcceptedHistory.
-func LoadForManagerFrom(root string, state Store, modelDigest, managerID string, requestedRevision ...string) ([]Briefing, []Event, string, error) {
+func LoadForManagerFrom(root string, state projectbriefing.Store, modelDigest, managerID string, requestedRevision ...string) ([]projectbriefing.Briefing, []projectbriefing.Event, string, error) {
 	if strings.TrimSpace(modelDigest) == "" || strings.TrimSpace(managerID) == "" || len(requestedRevision) > 1 {
-		return nil, nil, "", ErrStaleModel
+		return nil, nil, "", projectbriefing.ErrStaleModel
 	}
-	var chain []Bundle
-	var project *projectwork.Project
+	var chain []projectbriefing.Bundle
+	var project *projectvalue.Project
 	var err error
 	if len(requestedRevision) == 1 {
 		project, err = projectwork.Load(root, requestedRevision[0])
@@ -1504,7 +1133,7 @@ func LoadForManagerFrom(root string, state Store, modelDigest, managerID string,
 			return nil, nil, "", fmt.Errorf("load manager briefing basis: %w", err)
 		}
 		if project.Provisional || project.Model.Digest != modelDigest {
-			return nil, nil, "", ErrStaleModel
+			return nil, nil, "", projectbriefing.ErrStaleModel
 		}
 		line, err := source.GitOutput(root, "rev-list", "--reverse", "--topo-order", project.Revision)
 		if err != nil {
@@ -1519,35 +1148,35 @@ func LoadForManagerFrom(root string, state Store, modelDigest, managerID string,
 		for _, bundle := range state.Briefings {
 			if _, ancestor := rank[bundle.Revision]; ancestor {
 				if _, err := source.GitOutput(root, "merge-base", "--is-ancestor", bundle.SinceRevision, bundle.Revision); err != nil {
-					return nil, nil, "", ErrAmbiguousHistory
+					return nil, nil, "", projectbriefing.ErrAmbiguousHistory
 				}
 				chain = append(chain, bundle)
 			}
 		}
 		if len(chain) == 0 {
 			if state.History == nil || state.History.BaselineModelDigest != modelDigest {
-				return nil, nil, "", ErrStaleModel
+				return nil, nil, "", projectbriefing.ErrStaleModel
 			}
 			if _, err := source.GitOutput(root, "merge-base", "--is-ancestor", state.History.BaselineRevision, project.Revision); err != nil {
-				return nil, nil, "", ErrAmbiguousHistory
+				return nil, nil, "", projectbriefing.ErrAmbiguousHistory
 			}
 			if _, err := source.GitOutput(root, "merge-base", "--is-ancestor", project.Revision, state.History.Revision); err != nil {
-				return nil, nil, "", ErrStaleModel
+				return nil, nil, "", projectbriefing.ErrStaleModel
 			}
-			return []Briefing{}, []Event{}, hash(struct {
+			return []projectbriefing.Briefing{}, []projectbriefing.Event{}, hash(struct {
 				ModelDigest, ManagerID, Revision string
 			}{modelDigest, managerID, project.Revision}), nil
 		}
 		sort.Slice(chain, func(i, j int) bool { return rank[chain[i].Revision] < rank[chain[j].Revision] })
 		if chain[len(chain)-1].ModelDigest != modelDigest {
-			return nil, nil, "", ErrStaleModel
+			return nil, nil, "", projectbriefing.ErrStaleModel
 		}
 		for i := 1; i < len(chain); i++ {
 			if chain[i].SinceModelDigest != chain[i-1].ModelDigest {
-				return nil, nil, "", ErrAmbiguousHistory
+				return nil, nil, "", projectbriefing.ErrAmbiguousHistory
 			}
 			if _, err := source.GitOutput(root, "merge-base", "--is-ancestor", chain[i-1].Revision, chain[i].Revision); err != nil {
-				return nil, nil, "", ErrAmbiguousHistory
+				return nil, nil, "", projectbriefing.ErrAmbiguousHistory
 			}
 		}
 		if err := verifyHistoryClosure(root, chain[len(chain)-1], project); err != nil {
@@ -1564,12 +1193,12 @@ func LoadForManagerFrom(root string, state Store, modelDigest, managerID string,
 			return nil, nil, "", fmt.Errorf("load manager briefing visibility: %w", err)
 		}
 	}
-	currentView, err := newManagerView(project, managerID)
+	currentView, err := projectbriefing.NewManagerView(project.Report, managerID)
 	if err != nil {
 		return nil, nil, "", fmt.Errorf("load manager briefing visibility: %w", err)
 	}
-	views := map[string]managerView{}
-	viewAt := func(revision string) (managerView, error) {
+	views := map[string]projectbriefing.ManagerView{}
+	viewAt := func(revision string) (projectbriefing.ManagerView, error) {
 		if view, ok := views[revision]; ok {
 			return view, nil
 		}
@@ -1579,14 +1208,14 @@ func LoadForManagerFrom(root string, state Store, modelDigest, managerID string,
 			err = nil
 		}
 		if err != nil {
-			return managerView{}, err
+			return projectbriefing.ManagerView{}, err
 		}
 		views[revision] = view
 		return view, nil
 	}
 	views[project.Revision] = currentView
-	briefings := make([]Briefing, 0)
-	events := make([]Event, 0)
+	briefings := make([]projectbriefing.Briefing, 0)
+	events := make([]projectbriefing.Event, 0)
 	seenEvents := map[string]bool{}
 	for _, bundle := range chain {
 		for _, briefing := range bundle.Managers {
@@ -1604,7 +1233,7 @@ func LoadForManagerFrom(root string, state Store, modelDigest, managerID string,
 			}
 			for _, event := range bundle.Events {
 				if contains(briefing.EventIDs, event.ID) && !seenEvents[event.ID] {
-					projected, visible := projectEvent(event, beforeView, afterView)
+					projected, visible := projectbriefing.ProjectEvent(event, beforeView, afterView)
 					if !visible {
 						continue
 					}
@@ -1616,23 +1245,23 @@ func LoadForManagerFrom(root string, state Store, modelDigest, managerID string,
 	}
 	return briefings, events, hash(struct {
 		ModelDigest, ManagerID string
-		Briefings              []Briefing
-		Events                 []Event
+		Briefings              []projectbriefing.Briefing
+		Events                 []projectbriefing.Event
 	}{modelDigest, managerID, briefings, events}), nil
 }
 
-func verifyHistoryClosure(root string, latest Bundle, target *projectwork.Project) error {
+func verifyHistoryClosure(root string, latest projectbriefing.Bundle, target *projectvalue.Project) error {
 	if target == nil || target.Provisional || target.Model.Digest != latest.ModelDigest {
-		return ErrStaleModel
+		return projectbriefing.ErrStaleModel
 	}
 	base, err := projectwork.Load(root, latest.Revision)
 	if err != nil {
 		return fmt.Errorf("load last briefed model revision: %w", err)
 	}
 	if base.Model.Digest != latest.ModelDigest {
-		return ErrStaleModel
+		return projectbriefing.ErrStaleModel
 	}
-	paths := map[string]bool{projectwork.ManifestPath: true}
+	paths := map[string]bool{projectvalue.ManifestPath: true}
 	for _, path := range base.Config.ModelFiles {
 		paths[path] = true
 	}
@@ -1664,7 +1293,7 @@ func verifyHistoryClosure(root string, latest Bundle, target *projectwork.Projec
 				return fmt.Errorf("load model-input history commit %s: %w", commit, err)
 			}
 			if project.Model.Digest != latest.ModelDigest {
-				return fmt.Errorf("%w: accepted model digest changed at unbriefed revision %s", ErrStaleModel, commit)
+				return fmt.Errorf("%w: accepted model digest changed at unbriefed revision %s", projectbriefing.ErrStaleModel, commit)
 			}
 			for _, path := range project.Config.ModelFiles {
 				if !paths[path] {
@@ -1680,16 +1309,16 @@ func verifyHistoryClosure(root string, latest Bundle, target *projectwork.Projec
 	return ErrHistoryTooDeep
 }
 
-func legacyDigestChain(bundles []Bundle, modelDigest string) ([]Bundle, error) {
-	chain := make([]Bundle, 0)
+func legacyDigestChain(bundles []projectbriefing.Bundle, modelDigest string) ([]projectbriefing.Bundle, error) {
+	chain := make([]projectbriefing.Bundle, 0)
 	cursor := modelDigest
 	seen := map[string]bool{}
 	for cursor != "" {
 		if seen[cursor] {
-			return nil, ErrAmbiguousHistory
+			return nil, projectbriefing.ErrAmbiguousHistory
 		}
 		seen[cursor] = true
-		matches := make([]Bundle, 0)
+		matches := make([]projectbriefing.Bundle, 0)
 		for _, bundle := range bundles {
 			if bundle.ModelDigest == cursor {
 				matches = append(matches, bundle)
@@ -1699,14 +1328,14 @@ func legacyDigestChain(bundles []Bundle, modelDigest string) ([]Bundle, error) {
 			break
 		}
 		if len(matches) > 1 {
-			return nil, ErrAmbiguousHistory
+			return nil, projectbriefing.ErrAmbiguousHistory
 		}
 		parents := map[string]bool{}
 		for _, bundle := range matches {
 			parents[bundle.SinceModelDigest] = true
 		}
 		if len(parents) != 1 {
-			return nil, ErrAmbiguousHistory
+			return nil, projectbriefing.ErrAmbiguousHistory
 		}
 		chain = append(chain, matches...)
 		for parent := range parents {
@@ -1714,7 +1343,7 @@ func legacyDigestChain(bundles []Bundle, modelDigest string) ([]Bundle, error) {
 		}
 	}
 	if len(chain) == 0 {
-		return nil, ErrStaleModel
+		return nil, projectbriefing.ErrStaleModel
 	}
 	for i, j := 0, len(chain)-1; i < j; i, j = i+1, j-1 {
 		chain[i], chain[j] = chain[j], chain[i]
@@ -1722,11 +1351,11 @@ func legacyDigestChain(bundles []Bundle, modelDigest string) ([]Bundle, error) {
 	return chain, nil
 }
 
-func emptyStore() Store {
-	return Store{APIVersion: APIVersion, Briefings: []Bundle{}, Dismissals: []Dismissal{}, Resolutions: []Resolution{}}
+func emptyStore() projectbriefing.Store {
+	return projectbriefing.Store{APIVersion: projectbriefing.APIVersion, Briefings: []projectbriefing.Bundle{}, Dismissals: []projectbriefing.Dismissal{}, Resolutions: []projectbriefing.Resolution{}}
 }
 
-func update(root, expected string, mutate func(*Store) error) (string, error) {
+func update(root, expected string, mutate func(*projectbriefing.Store) error) (string, error) {
 	path, err := stateFile(root, true)
 	if err != nil {
 		return "", err
@@ -1747,7 +1376,7 @@ func update(root, expected string, mutate func(*Store) error) (string, error) {
 	if err := mutate(&state); err != nil {
 		return "", err
 	}
-	if StoreDigest(state) == current {
+	if projectbriefing.StoreDigest(state) == current {
 		return current, nil
 	}
 	data, err := json.MarshalIndent(state, "", "  ")
@@ -1778,7 +1407,7 @@ func update(root, expected string, mutate func(*Store) error) (string, error) {
 		_ = os.Remove(tmp)
 		return "", err
 	}
-	return StoreDigest(state), nil
+	return projectbriefing.StoreDigest(state), nil
 }
 
 // acquireStoreLock waits while another writer holds the store lock. It never

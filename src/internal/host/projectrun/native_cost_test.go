@@ -2,16 +2,22 @@ package projectrun
 
 import (
 	"context"
-	"github.com/Glacius-Labs/Markitect/src/internal/host/projectconfig"
+	"encoding/json"
+	"errors"
 	"math"
 	"os"
 	"path/filepath"
 	"testing"
 	"time"
 
+	"github.com/Glacius-Labs/Markitect/src/internal/core"
 	"github.com/Glacius-Labs/Markitect/src/internal/host/agentexec"
-	"github.com/Glacius-Labs/Markitect/src/internal/host/projectwork"
+	"github.com/Glacius-Labs/Markitect/src/internal/host/projectconfig"
 	"github.com/Glacius-Labs/Markitect/src/internal/host/projectworkspace"
+	"github.com/Glacius-Labs/Markitect/src/internal/modules/projectmodel"
+	"github.com/Glacius-Labs/Markitect/src/internal/modules/projectmodel/projectbriefing"
+	"github.com/Glacius-Labs/Markitect/src/internal/modules/projectmodel/projectcoverage"
+	"github.com/Glacius-Labs/Markitect/src/internal/modules/projectmodel/projectvalue"
 )
 
 type fullVerifyUnknownUsageInvoker struct {
@@ -53,13 +59,15 @@ func (i *fullVerifyPartialLifecycleInvoker) Run(ctx context.Context, config agen
 	return result, err
 }
 
-func nativeFullVerifyCostFixture(t *testing.T) (string, *projectwork.Project, projectconfig.Runtime, Host, *fullVerifyNativeWorkspaceInvoker) {
+func nativeFullVerifyCostFixture(t *testing.T) (string, *projectvalue.Project, projectconfig.Runtime, Host, *fullVerifyNativeWorkspaceInvoker) {
 	t.Helper()
-	root := makeFullVerifyFixture(t)
+	// These Runtime accounting cases supply the finite audit inputs directly;
+	// repository census and document-rendering behavior is owned elsewhere.
+	root := makeProjectRunFixture(t)
 	setupFullVerifyProcesses(t)
 	configureFullVerifyRuntime(t, root)
 	revision := identityHead(t, root)
-	project, err := projectwork.Load(root, revision)
+	runtimeBytes, err := os.ReadFile(filepath.Join(root, filepath.FromSlash(projectconfig.RuntimePath)))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -67,13 +75,10 @@ func nativeFullVerifyCostFixture(t *testing.T) (string, *projectwork.Project, pr
 	if err != nil {
 		t.Fatal(err)
 	}
+	const instruction = "project-run process fixture\n"
 	instructionPath := filepath.Join(root, "README.md")
-	instructionBytes, err := os.ReadFile(instructionPath)
-	if err != nil {
-		t.Fatal(err)
-	}
 	baseAgent := projectconfig.Agent{Transport: projectconfig.TransportCodexAppServer, WorkspaceMode: "git", InstructionPaths: []string{"README.md"},
-		RuntimeFiles: []agentexec.RuntimeFile{{Path: instructionPath, Mode: "0644", Digest: "sha256:" + digestBytes(instructionBytes)}}}
+		RuntimeFiles: []agentexec.RuntimeFile{{Path: instructionPath, Mode: "0644", Digest: "sha256:" + digestBytes([]byte(instruction))}}}
 	baseAgent.Command = filepath.Join(t.TempDir(), "codex-app-server")
 	baseAgent.Model = "gpt-6-luna"
 	baseAgent.ProviderVersion = "codex-cli 0.162.0"
@@ -85,12 +90,82 @@ func nativeFullVerifyCostFixture(t *testing.T) (string, *projectwork.Project, pr
 	if err != nil {
 		t.Fatal(err)
 	}
-	reviewers := map[string]projectconfig.Agent{}
-	for _, manager := range project.Report.Managers {
-		reviewers[manager.ID] = baseAgent
+	rootManagerID := e2eManagerID("", "project-owner")
+	ordersManagerID := e2eManagerID("orders", "orders")
+	inventoryManagerID := e2eManagerID("inventory", "inventory")
+	runtime.Review.Agents = map[string]projectconfig.Agent{
+		rootManagerID: baseAgent, ordersManagerID: baseAgent, inventoryManagerID: baseAgent,
 	}
-	runtime.Review.Agents = reviewers
-	return root, project, runtime, Host{Workspaces: service, Load: projectwork.Load}, &fullVerifyNativeWorkspaceInvoker{root: root}
+	checkExecutable, err := os.Executable()
+	if err != nil {
+		t.Fatal(err)
+	}
+	checkArgs := append([]string{filepath.Base(checkExecutable)}, runtimeFixtureArgs(t, []string{"-test.run=^TestFullVerifyCheckProcess$"})...)
+	files := map[string][]byte{
+		"README.md":                        []byte(instruction),
+		projectconfig.RuntimePath:          runtimeBytes,
+		"src/orders/implementation.txt":    []byte("orders implementation v1\n"),
+		"src/inventory/implementation.txt": []byte("inventory implementation v1\n"),
+	}
+	modes := map[string]string{}
+	for path := range files {
+		modes[path] = "100644"
+	}
+	ordersStatement := nativeCostIdentity("Statement", "orders", "orders-work")
+	inventoryStatement := nativeCostIdentity("Statement", "inventory", "inventory-work")
+	ordersArtifact := nativeCostIdentity("Artifact", "orders", "orders-code")
+	inventoryArtifact := nativeCostIdentity("Artifact", "inventory", "inventory-code")
+	ordersCheck := nativeCostIdentity("Check", "orders", "orders-check")
+	inventoryCheck := nativeCostIdentity("Check", "inventory", "inventory-check")
+	report := projectmodel.Report{
+		APIVersion: projectmodel.APIVersion, ModelDigest: "runtime-cost-fixture-model", Digest: "runtime-cost-fixture-report",
+		Status: "succeeded",
+		Managers: []projectmodel.Manager{
+			{ID: rootManagerID, Name: "project-owner", Purpose: "Owns integration and project-wide delivery.", Owns: []string{"."}},
+			{ID: ordersManagerID, Name: "orders", Namespace: "orders", Purpose: "Owns the orders implementation.", Parent: rootManagerID, Owns: []string{"src/orders/"}},
+			{ID: inventoryManagerID, Name: "inventory", Namespace: "inventory", Purpose: "Owns the inventory implementation.", Parent: rootManagerID, Owns: []string{"src/inventory/"}},
+		},
+		Statements: []projectmodel.Statement{
+			{ID: ordersStatement, Name: "orders-work", Namespace: "orders", Owner: ordersManagerID, Category: "concept", Description: "Implement the orders artifact."},
+			{ID: inventoryStatement, Name: "inventory-work", Namespace: "inventory", Owner: inventoryManagerID, Category: "concept", Description: "Implement the inventory artifact."},
+		},
+		Artifacts: []projectmodel.Artifact{
+			{ID: ordersArtifact, Name: "orders-code", Owner: ordersManagerID, Role: "implementation", Realizes: []string{ordersStatement}, Paths: []string{"src/orders/implementation.txt"}, Checks: []string{ordersCheck}, Required: true},
+			{ID: inventoryArtifact, Name: "inventory-code", Owner: inventoryManagerID, Role: "implementation", Realizes: []string{inventoryStatement}, Paths: []string{"src/inventory/implementation.txt"}, Checks: []string{inventoryCheck}, Required: true},
+		},
+		Checks: []projectmodel.Check{
+			{ID: ordersCheck, Name: "orders-check", Owner: ordersManagerID, Command: checkArgs, Uses: []string{ordersStatement}, Limitation: "Validates the explicit Runtime fixture bytes."},
+			{ID: inventoryCheck, Name: "inventory-check", Owner: inventoryManagerID, Command: checkArgs, Uses: []string{inventoryStatement}, Limitation: "Validates the explicit Runtime fixture bytes."},
+		},
+		Files: []projectmodel.FileEntry{
+			{Path: "src/orders/implementation.txt", Owner: ordersManagerID, Class: "source", Statements: []string{ordersStatement}, Artifacts: []string{ordersArtifact}, Checks: []string{ordersCheck}, Exists: true},
+			{Path: "src/inventory/implementation.txt", Owner: inventoryManagerID, Class: "source", Statements: []string{inventoryStatement}, Artifacts: []string{inventoryArtifact}, Checks: []string{inventoryCheck}, Exists: true},
+		},
+	}
+	project := runtimeProjectFixture(revision, files, modes, core.Model{}, report)
+	project.Root = root
+	project.Digest = "runtime-cost-fixture-project"
+	project.Config = projectvalue.Config{DocumentPath: "README.md", CoverageMode: "full", WorkflowMode: projectvalue.WorkflowModeEmpty}
+	project.Coverage = &projectcoverage.Report{Accounted: true, Conforming: true, Digest: "runtime-cost-fixture-coverage"}
+	host := hostForProjectWithWorkspace(root, project, service)
+	host.RenderDocument = func(project *projectvalue.Project) (string, error) {
+		if project == nil || project.Root != root || project.Revision != revision || project.Snapshot == nil {
+			return "", errors.New("native cost fixture received an unbound document request")
+		}
+		return string(project.Snapshot.Files["README.md"]), nil
+	}
+	host.BriefingForManager = func(loadRoot, loadRevision, modelDigest, requestedManager string, _ *projectbriefing.Store) (BriefingContext, error) {
+		if loadRoot != root || loadRevision != revision || modelDigest != report.ModelDigest || requestedManager != rootManagerID && requestedManager != ordersManagerID && requestedManager != inventoryManagerID {
+			return BriefingContext{}, errors.New("native cost fixture received an unbound briefing request")
+		}
+		return BriefingContext{Digest: "runtime-cost-fixture-empty-briefing"}, nil
+	}
+	return root, project, runtime, host, &fullVerifyNativeWorkspaceInvoker{root: root}
+}
+
+func nativeCostIdentity(kind, namespace, name string) string {
+	data, _ := json.Marshal([]string{projectmodel.APIVersion, kind, namespace, name})
+	return string(data)
 }
 
 func TestNativeFullVerificationAllowsUnknownUsageWithHonestAccounting(t *testing.T) {

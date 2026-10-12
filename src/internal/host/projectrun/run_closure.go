@@ -1,5 +1,7 @@
 package projectrun
 
+import "github.com/Glacius-Labs/Markitect/src/internal/modules/projectmodel/projectvalue"
+
 import (
 	"fmt"
 	"strings"
@@ -111,7 +113,7 @@ func (e *runExecution) reviewFinalManagers(finalCandidate *candidateData, rootCa
 	return RunReport{}, nil
 }
 
-func (e *runExecution) reviewFinalManager(task *ManagerTask, finalProject *Project, finalCandidate candidateData, phase string, reviewRound int, candidateProject *Project, candidate *candidateData, rootCandidateID *string, index *int) (RunReport, error) {
+func (e *runExecution) reviewFinalManager(task *ManagerTask, finalProject *projectvalue.Project, finalCandidate candidateData, phase string, reviewRound int, candidateProject *projectvalue.Project, candidate *candidateData, rootCandidateID *string, index *int) (RunReport, error) {
 	startedIndex := -1
 	review, reviewLog, reviewErr := invokeReviewer(e.ctx, e.host, e.invoker, e.root, e.plan, e.runtime, finalProject, *task, phase, reviewRound, finalCandidate, func(started InvocationLog) error {
 		e.report.Invocations = append(e.report.Invocations, started)

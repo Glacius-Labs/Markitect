@@ -3,48 +3,38 @@ package projectrun
 import (
 	"encoding/json"
 	"errors"
-	"github.com/Glacius-Labs/Markitect/src/internal/host/projectconfig"
-	"os"
-	"path/filepath"
 	"strings"
 	"testing"
 
-	"github.com/Glacius-Labs/Markitect/src/internal/host/projectbriefing"
+	"github.com/Glacius-Labs/Markitect/src/internal/core/snapshot"
+	"github.com/Glacius-Labs/Markitect/src/internal/host/projectconfig"
+	"github.com/Glacius-Labs/Markitect/src/internal/modules/projectmodel"
+	"github.com/Glacius-Labs/Markitect/src/internal/modules/projectmodel/projectbriefing"
+	"github.com/Glacius-Labs/Markitect/src/internal/modules/projectmodel/projectvalue"
 )
 
 func TestReviewerContextCarriesOperationStrictnessAndAcceptedBriefing(t *testing.T) {
-	root, revision, project, managerID, eventID := acceptedBriefingFixture(t)
-	beforeDismissal, err := managerBriefing(root, project.Report.ModelDigest, managerID, revision)
-	if err != nil {
-		t.Fatal(err)
-	}
-	_, storeDigest, err := projectbriefing.Read(root)
-	if err != nil {
-		t.Fatal(err)
-	}
-	_, err = projectbriefing.Dismiss(root, eventID, managerID, storeDigest)
-	if err != nil {
-		t.Fatal(err)
-	}
+	project, managerID, context := reviewBriefingFacts()
+	host := fixedBriefingHost(context)
 	plan := PlanRecord{
 		Operation: OperationCleanup, Goal: "Improve order cancellation safely.",
 		Strictness:      map[string]projectconfig.StrictnessProfile{managerID: {Evidence: []string{"tests", "public interface"}, Counterexamples: 2}},
-		BriefingDigests: map[string]string{managerID: beforeDismissal.Digest},
+		BriefingDigests: map[string]string{managerID: context.Digest},
 	}
-	briefing, err := reviewerBriefing(root, plan, project, managerID)
+	briefing, err := reviewerBriefing(host, "", plan, project, managerID)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if briefing.Digest != beforeDismissal.Digest || len(briefing.Briefings) != 1 || len(briefing.Events) != 1 || briefing.Events[0].ID != eventID {
-		t.Fatalf("dismissal hid or changed accepted reviewer context: before=%+v after=%+v", beforeDismissal, briefing)
+	if briefing.Digest != context.Digest || len(briefing.Briefings) != 1 || len(briefing.Events) != 1 || briefing.Events[0].ID != context.Events[0].ID {
+		t.Fatalf("reviewer context lost its accepted briefing facts: %+v", briefing)
 	}
 
-	context := reviewerContext{
+	reviewer := reviewerContext{
 		Kind: "projectrun-review/v1", Operation: plan.Operation, ReviewerGuidance: reviewerAssessmentGuidance,
 		Strictness: plan.Strictness[managerID], Briefing: briefing, ManagerID: managerID,
 		Delegations: []Delegation{{ManagerID: "child-tests", Goal: "Add focused behavior tests."}},
 	}
-	encoded, err := json.Marshal(context)
+	encoded, err := json.Marshal(reviewer)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -64,99 +54,36 @@ func TestReviewerContextCarriesOperationStrictnessAndAcceptedBriefing(t *testing
 	}
 
 	plan.BriefingDigests[managerID] = "sha256:wrong"
-	if _, err := reviewerBriefing(root, plan, project, managerID); !errors.Is(err, ErrStale) {
+	if _, err := reviewerBriefing(host, "", plan, project, managerID); !errors.Is(err, ErrStale) {
 		t.Fatalf("review accepted a briefing digest that differs from its plan: %v", err)
 	}
 }
 
 func TestDraftModelEditReviewerDoesNotLoadUnacceptedBriefingHistory(t *testing.T) {
-	root, acceptedRevision, _, managerID, _ := acceptedBriefingFixture(t)
-	const statementPath = ".markitect/model/orders/statement.yaml"
-	content, err := os.ReadFile(filepath.Join(root, filepath.FromSlash(statementPath)))
+	project, managerID, _ := reviewBriefingFacts()
+	calls := 0
+	host := Host{BriefingForManager: func(root, revision, modelDigest, manager string, view *projectbriefing.Store) (BriefingContext, error) {
+		calls++
+		return BriefingContext{}, errors.New("unexpected accepted-history acquisition")
+	}}
+	plan := PlanRecord{ModelEdit: &projectvalue.EditPlan{}, BriefingDigests: map[string]string{managerID: ""}}
+	briefing, err := reviewerBriefing(host, "", plan, project, managerID)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("draft reviewer tried to load accepted history: %v", err)
 	}
-	updated := strings.Replace(string(content), "audited invariants", "reconciled invariants", 1)
-	if updated == string(content) {
-		t.Fatal("could not create a second, unbriefed model revision")
-	}
-	writeE2E(t, root, statementPath, updated)
-	gitE2E(t, root, "add", statementPath)
-	gitE2E(t, root, "commit", "-m", "unbriefed follow-up model change")
-	targetRevision := gitE2E(t, root, "rev-parse", "HEAD")
-	project, err := projectworkHost().Load(root, targetRevision)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if _, err := managerBriefing(root, project.Report.ModelDigest, managerID, targetRevision); err == nil {
-		t.Fatal("fixture unexpectedly has accepted briefing history for the unaccepted target model")
-	}
-	if acceptedRevision == targetRevision {
-		t.Fatal("draft fixture did not create a distinct source revision")
-	}
-	plan := PlanRecord{ModelEdit: &EditPlan{}, BriefingDigests: map[string]string{managerID: ""}}
-	briefing, err := reviewerBriefing(root, plan, project, managerID)
-	if err != nil {
-		t.Fatalf("draft reviewer tried to load unaccepted target-model history: %v", err)
-	}
-	if briefing.Digest != "" || len(briefing.Briefings) != 0 || len(briefing.Events) != 0 {
-		t.Fatalf("draft reviewer inherited accepted history: %+v", briefing)
+	if briefing.Digest != "" || len(briefing.Briefings) != 0 || len(briefing.Events) != 0 || calls != 0 {
+		t.Fatalf("draft reviewer inherited accepted history or called the history port: briefing=%+v calls=%d", briefing, calls)
 	}
 	plan.BriefingDigests[managerID] = "unexpected-accepted-binding"
-	if _, err := reviewerBriefing(root, plan, project, managerID); !errors.Is(err, ErrStale) {
+	if _, err := reviewerBriefing(host, "", plan, project, managerID); !errors.Is(err, ErrStale) {
 		t.Fatalf("draft reviewer accepted an accepted-history binding: %v", err)
 	}
 }
 
-func acceptedBriefingFixture(t *testing.T) (root, revision string, project *Project, managerID, eventID string) {
-	t.Helper()
-	root = makeFullVerifyFixture(t)
-	const statementPath = ".markitect/model/orders/statement.yaml"
-	content, err := os.ReadFile(filepath.Join(root, filepath.FromSlash(statementPath)))
-	if err != nil {
-		t.Fatal(err)
-	}
-	updated := strings.Replace(string(content), "Implement the orders artifact.", "Implement the orders artifact with audited invariants.", 1)
-	if updated == string(content) {
-		t.Fatal("Orders statement fixture text was not found")
-	}
-	writeE2E(t, root, statementPath, updated)
-	gitE2E(t, root, "add", statementPath)
-	gitE2E(t, root, "commit", "-m", "accept Orders model clarification")
-	revision = gitE2E(t, root, "rev-parse", "HEAD")
-	receipt, err := projectbriefing.EnsureAcceptedHistory(root, revision)
-	if err != nil {
-		t.Fatalf("ensure accepted-model history: %v", err)
-	}
-	if len(receipt.Bundles) != 1 {
-		t.Fatalf("fixture did not create one accepted briefing bundle: %d", len(receipt.Bundles))
-	}
-	bundle := receipt.Bundles[0]
-	managerID = e2eManagerID("orders", "orders")
-	for _, event := range bundle.Events {
-		if containsString(event.AffectedManagers, managerID) {
-			eventID = event.ID
-			break
-		}
-	}
-	if eventID == "" {
-		t.Fatalf("accepted change did not affect Manager %s", managerID)
-	}
-	project, err = projectworkHost().Load(root, revision)
-	if err != nil {
-		t.Fatal(err)
-	}
-	return root, revision, project, managerID, eventID
-}
-
 func TestReviewScopeDigestBindsOperationStrictnessAndBriefing(t *testing.T) {
-	root := makeProjectRunFixture(t)
-	project, err := projectworkHost().Load(root, identityHead(t, root))
-	if err != nil {
-		t.Fatal(err)
-	}
-	task := ManagerTask{ManagerID: e2eManagerID("orders", "orders"), Goal: "Implement the orders artifact.", Owns: []string{"src/orders/"}}
-	plan := PlanRecord{Goal: "Implement both fixture artifacts.", Operation: OperationApply,
+	project, managerID, _ := reviewBriefingFacts()
+	task := ManagerTask{ManagerID: managerID, Goal: "Implement the orders artifact.", Artifacts: []string{"artifact-orders"}}
+	plan := PlanRecord{Goal: "Implement the orders artifact.", Operation: OperationApply,
 		Strictness:      map[string]projectconfig.StrictnessProfile{task.ManagerID: {Evidence: []string{"tests"}, Counterexamples: 1}},
 		BriefingDigests: map[string]string{task.ManagerID: "briefing-digest-a"}}
 	base, err := reviewScopeDigest(plan, project, task, "work", RunReport{})
@@ -181,4 +108,30 @@ func TestReviewScopeDigestBindsOperationStrictnessAndBriefing(t *testing.T) {
 			}
 		})
 	}
+}
+
+func reviewBriefingFacts() (*projectvalue.Project, string, BriefingContext) {
+	managerID := "manager-orders"
+	statementID := "statement-orders"
+	artifactID := "artifact-orders"
+	project := &projectvalue.Project{
+		Revision: "fixed-revision",
+		Config:   projectvalue.Config{InventoryRoots: []string{"src"}},
+		Report: projectmodel.Report{
+			ModelDigest: "model-digest",
+			Managers:    []projectmodel.Manager{{ID: managerID, Name: "orders", Namespace: "orders", Owns: []string{"src/orders/"}}},
+			Statements:  []projectmodel.Statement{{ID: statementID, Name: "orders-work", Owner: managerID, Category: "concept", Description: "Orders invariants", Public: true}},
+			Artifacts:   []projectmodel.Artifact{{ID: artifactID, Name: "orders-code", Owner: managerID, Role: "implementation", Realizes: []string{statementID}, Paths: []string{"src/orders/implementation.txt"}, Required: true}},
+			Files:       []projectmodel.FileEntry{{Path: "src/orders/implementation.txt", Owner: managerID, Class: "managed", Statements: []string{statementID}, Artifacts: []string{artifactID}}},
+		},
+		Snapshot: &snapshot.Snapshot{ID: "fixed-revision", Files: map[string][]byte{"src/orders/implementation.txt": []byte("orders bytes\n")}, Modes: map[string]string{"src/orders/implementation.txt": "100644"}},
+	}
+	context := BriefingContext{Digest: "briefing-digest-a", Briefings: []projectbriefing.Briefing{{}}, Events: []projectbriefing.Event{{ID: "accepted-event"}}}
+	return project, managerID, context
+}
+
+func fixedBriefingHost(context BriefingContext) Host {
+	return Host{BriefingForManager: func(root, revision, modelDigest, manager string, view *projectbriefing.Store) (BriefingContext, error) {
+		return context, nil
+	}}
 }

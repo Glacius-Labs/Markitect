@@ -1,5 +1,7 @@
 package projectadoption
 
+import "github.com/Glacius-Labs/Markitect/src/internal/modules/projectmodel/projectvalue"
+
 import (
 	"context"
 	"encoding/json"
@@ -72,7 +74,7 @@ func TestManagerRunExecutorHelper(t *testing.T) {
 		Terms: []Term{}, Contradictions: []Contradiction{}, Questions: []DistillationDraftQuestion{},
 		Scopes: []DistillationDraftScope{{ID: scopeID, Name: "Order behavior", ParentID: "", ClaimIDs: []string{claimID}, OwnerCandidate: ""}},
 		Proposal: ModelProposal{Goal: "Represent observed order behavior", Files: []ProposedFile{{ScopeID: scopeID, Path: ".markitect/model/orders/statement.yaml",
-			Content: "apiVersion: " + projectwork.APIVersion + "\nkind: Statement\nmetadata:\n  name: orders\n  namespace: orders\npurpose: Order behavior\nspec:\n  category: concept\n  description: Order behavior\n  public: false\n  uses: []\n  requires: []\n"}}},
+			Content: "apiVersion: " + projectvalue.APIVersion + "\nkind: Statement\nmetadata:\n  name: orders\n  namespace: orders\npurpose: Order behavior\nspec:\n  category: concept\n  description: Order behavior\n  public: false\n  uses: []\n  requires: []\n"}}},
 	}
 	// These modes return a child that passes proposal checks but that the
 	// session ledger rejects: an invalid ID, or an accepted Manager ID whose

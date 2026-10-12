@@ -6,6 +6,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"github.com/Glacius-Labs/Markitect/src/internal/modules/projectmodel/projectvalue"
 	"path/filepath"
 	"runtime/debug"
 	"sort"
@@ -13,9 +14,10 @@ import (
 
 	"github.com/Glacius-Labs/Markitect/src/internal/core"
 	"github.com/Glacius-Labs/Markitect/src/internal/core/snapshot"
-	"github.com/Glacius-Labs/Markitect/src/internal/host/projectcoverage"
+	coverageacquisition "github.com/Glacius-Labs/Markitect/src/internal/host/projectcoverage"
 	"github.com/Glacius-Labs/Markitect/src/internal/infrastructure/source"
 	"github.com/Glacius-Labs/Markitect/src/internal/modules/projectmodel"
+	modelcoverage "github.com/Glacius-Labs/Markitect/src/internal/modules/projectmodel/projectcoverage"
 )
 
 // Load loads only the Project manifest and exact paths it selects. A working
@@ -23,7 +25,7 @@ import (
 // captured through Infrastructure's selected-snapshot API. All selected reads
 // share one repository acquisition: the identity is checked once before the
 // first read and confirmed once after the last.
-func Load(root, revision string) (*Project, error) {
+func Load(root, revision string) (*projectvalue.Project, error) {
 	acquisition, err := source.BeginAcquisition(root)
 	if err != nil {
 		return nil, err
@@ -31,46 +33,46 @@ func Load(root, revision string) (*Project, error) {
 	// Full coverage observes the entire repository independently of the legacy
 	// selected inventory roots. The fixed-revision path never consults the live
 	// worktree when constructing its snapshot semantics.
-	var fullUniverse *projectcoverage.Universe
-	var fullOptions projectcoverage.Options
+	var fullUniverse *modelcoverage.Universe
+	var fullOptions modelcoverage.Options
 	var expectedManifest []byte
 	var fixedManifest *snapshot.Snapshot
 	if revision == "" {
 		// The manifest determines exact canonical model paths and optional view
 		// output ownership, so read it before building the full registry.
-		manifestCapture, captureErr := acquisition.ObserveSelectedWorking([]string{ManifestPath})
+		manifestCapture, captureErr := acquisition.ObserveSelectedWorking([]string{projectvalue.ManifestPath})
 		if captureErr != nil {
 			return nil, captureErr
 		}
 		if len(manifestCapture.MissingPaths) != 0 {
-			return nil, fmt.Errorf("project manifest %q is missing", ManifestPath)
+			return nil, fmt.Errorf("project manifest %q is missing", projectvalue.ManifestPath)
 		}
-		config, decodeErr := DecodeConfig(manifestCapture.Snapshot.Files[ManifestPath])
+		config, decodeErr := DecodeConfig(manifestCapture.Snapshot.Files[projectvalue.ManifestPath])
 		if decodeErr != nil {
-			return nil, fmt.Errorf("%s: %w", ManifestPath, decodeErr)
+			return nil, fmt.Errorf("%s: %w", projectvalue.ManifestPath, decodeErr)
 		}
 		fullOptions = coverageOptions(config)
-		expectedManifest = append([]byte(nil), manifestCapture.Snapshot.Files[ManifestPath]...)
+		expectedManifest = append([]byte(nil), manifestCapture.Snapshot.Files[projectvalue.ManifestPath]...)
 		if config.CoverageMode == "full" {
-			fullUniverse, err = projectcoverage.ObserveWorkingIn(acquisition, fullOptions)
+			fullUniverse, err = coverageacquisition.ObserveWorkingIn(acquisition, fullOptions)
 			if err != nil {
 				return nil, fmt.Errorf("observe full repository coverage: %w", err)
 			}
 		}
 	} else {
-		manifestCapture, captureErr := acquisition.LoadSelected(revision, []string{ManifestPath})
+		manifestCapture, captureErr := acquisition.LoadSelected(revision, []string{projectvalue.ManifestPath})
 		if captureErr != nil {
 			return nil, captureErr
 		}
 		fixedManifest = manifestCapture.Snapshot
-		config, decodeErr := DecodeConfig(manifestCapture.Snapshot.Files[ManifestPath])
+		config, decodeErr := DecodeConfig(manifestCapture.Snapshot.Files[projectvalue.ManifestPath])
 		if decodeErr != nil {
-			return nil, fmt.Errorf("%s: %w", ManifestPath, decodeErr)
+			return nil, fmt.Errorf("%s: %w", projectvalue.ManifestPath, decodeErr)
 		}
 		fullOptions = coverageOptions(config)
-		expectedManifest = append([]byte(nil), manifestCapture.Snapshot.Files[ManifestPath]...)
+		expectedManifest = append([]byte(nil), manifestCapture.Snapshot.Files[projectvalue.ManifestPath]...)
 		if config.CoverageMode == "full" {
-			fullUniverse, err = projectcoverage.ObserveRevisionIn(acquisition, manifestCapture.Snapshot.ID, fullOptions)
+			fullUniverse, err = coverageacquisition.ObserveRevisionIn(acquisition, manifestCapture.Snapshot.ID, fullOptions)
 			if err != nil {
 				return nil, fmt.Errorf("observe fixed revision coverage: %w", err)
 			}
@@ -81,46 +83,46 @@ func Load(root, revision string) (*Project, error) {
 	// err is shared with the optional coverage observation above.
 	if fullUniverse != nil {
 		manifest = fullUniverse.Snapshot
-		if manifest == nil || !bytes.Equal(manifest.Files[ManifestPath], expectedManifest) {
+		if manifest == nil || !bytes.Equal(manifest.Files[projectvalue.ManifestPath], expectedManifest) {
 			return nil, fmt.Errorf("project manifest changed while acquiring the full repository snapshot")
 		}
 	} else if revision == "" {
-		observed, observeErr := acquisition.ObserveSelectedWorking([]string{ManifestPath})
+		observed, observeErr := acquisition.ObserveSelectedWorking([]string{projectvalue.ManifestPath})
 		if observeErr != nil {
 			return nil, observeErr
 		}
 		if len(observed.MissingPaths) != 0 {
-			return nil, fmt.Errorf("project manifest %q is missing", ManifestPath)
+			return nil, fmt.Errorf("project manifest %q is missing", projectvalue.ManifestPath)
 		}
 		manifest = observed.Snapshot
 	} else {
 		// The fixed revision cannot change, so its manifest is read only once.
 		manifest = fixedManifest
 	}
-	configBytes = manifest.Files[ManifestPath]
+	configBytes = manifest.Files[projectvalue.ManifestPath]
 	config, err := DecodeConfig(configBytes)
 	if err != nil {
-		return nil, fmt.Errorf("%s: %w", ManifestPath, err)
+		return nil, fmt.Errorf("%s: %w", projectvalue.ManifestPath, err)
 	}
-	paths := append([]string{ManifestPath}, config.ModelFiles...)
+	paths := append([]string{projectvalue.ManifestPath}, config.ModelFiles...)
 	if config.CoverageMode != "full" && revision != "" {
 		// Runtime configuration is optional while loading the accepted model.
 		// Inspect only this exact fixed-revision path to decide whether to bind
 		// its bytes; runtime-dependent operations validate it separately.
-		runtimeInventory, inventoryErr := acquisition.InventoryRevisionRoots(manifest.ID, []string{RuntimePath})
+		runtimeInventory, inventoryErr := acquisition.InventoryRevisionRoots(manifest.ID, []string{projectvalue.RuntimePath})
 		if inventoryErr != nil {
 			return nil, fmt.Errorf("inspect optional runtime path: %w", inventoryErr)
 		}
 		for _, entry := range runtimeInventory.Entries {
-			if entry.Path != RuntimePath {
-				return nil, fmt.Errorf("%s must be a regular file", RuntimePath)
+			if entry.Path != projectvalue.RuntimePath {
+				return nil, fmt.Errorf("%s must be a regular file", projectvalue.RuntimePath)
 			}
-			paths = append(paths, RuntimePath)
+			paths = append(paths, projectvalue.RuntimePath)
 		}
 	} else if config.CoverageMode != "full" {
 		// Request the exact runtime path even when absent. The selected working
 		// snapshot records presence or absence deterministically in its digest.
-		paths = append(paths, RuntimePath)
+		paths = append(paths, projectvalue.RuntimePath)
 	}
 	if config.CoverageMode == "full" {
 		paths = append(paths, fullSnapshotPaths(fullUniverse)...)
@@ -151,7 +153,7 @@ func Load(root, revision string) (*Project, error) {
 	var selected *snapshot.Snapshot
 	if fullUniverse != nil {
 		selected = fullUniverse.Snapshot
-		if selected == nil || !bytes.Equal(selected.Files[ManifestPath], expectedManifest) {
+		if selected == nil || !bytes.Equal(selected.Files[projectvalue.ManifestPath], expectedManifest) {
 			return nil, fmt.Errorf("project manifest changed while acquiring the full repository snapshot")
 		}
 	} else if revision == "" {
@@ -163,17 +165,17 @@ func Load(root, revision string) (*Project, error) {
 		for _, file := range observed.MissingPaths {
 			missing[file] = true
 		}
-		for _, required := range append([]string{ManifestPath}, config.ModelFiles...) {
+		for _, required := range append([]string{projectvalue.ManifestPath}, config.ModelFiles...) {
 			if missing[required] {
 				return nil, fmt.Errorf("selected project input %q is missing", required)
 			}
 		}
 		for _, missingPath := range observed.MissingPaths {
-			if missingPath != RuntimePath {
+			if missingPath != projectvalue.RuntimePath {
 				return nil, fmt.Errorf("selected inventory file %q disappeared while acquiring the project snapshot", missingPath)
 			}
 		}
-		if !bytes.Equal(observed.Snapshot.Files[ManifestPath], configBytes) {
+		if !bytes.Equal(observed.Snapshot.Files[projectvalue.ManifestPath], configBytes) {
 			return nil, fmt.Errorf("project manifest changed while acquiring the selected snapshot")
 		}
 		selected = observed.Snapshot
@@ -193,13 +195,13 @@ func Load(root, revision string) (*Project, error) {
 		return nil, err
 	}
 	if fullUniverse != nil {
-		coverage, coverageErr := projectcoverage.Classify(projectcoverage.Request{Universe: fullUniverse, Model: project.Report,
+		coverage, coverageErr := modelcoverage.Classify(modelcoverage.Request{Universe: fullUniverse, Model: project.Report,
 			Options: fullOptions, LegacyRoots: config.InventoryRoots, LegacyExclusions: legacyExclusions(config.Exclusions)})
 		if coverageErr != nil {
 			return nil, fmt.Errorf("classify full repository coverage: %w", coverageErr)
 		}
 		project.Coverage = &coverage
-		project.census = fullUniverse
+		project.Census = fullUniverse
 		project.Digest, err = digestProject(project)
 		if err != nil {
 			return nil, err
@@ -212,7 +214,7 @@ func Load(root, revision string) (*Project, error) {
 // manifest and derives a report from the inventory bytes present in s and
 // admitted by configured roots. Other snapshot entries are ignored. Its full
 // coverage sees only snapshot paths; closure gates use ClassifyCandidate.
-func FromSnapshot(root string, s *snapshot.Snapshot) (*Project, error) {
+func FromSnapshot(root string, s *snapshot.Snapshot) (*projectvalue.Project, error) {
 	if s == nil {
 		return nil, fmt.Errorf("project snapshot is required")
 	}
@@ -220,23 +222,23 @@ func FromSnapshot(root string, s *snapshot.Snapshot) (*Project, error) {
 	if err != nil {
 		return nil, err
 	}
-	manifest, ok := s.Files[ManifestPath]
+	manifest, ok := s.Files[projectvalue.ManifestPath]
 	if !ok {
-		return nil, fmt.Errorf("selected project snapshot is missing %q", ManifestPath)
+		return nil, fmt.Errorf("selected project snapshot is missing %q", projectvalue.ManifestPath)
 	}
 	config, err := DecodeConfig(manifest)
 	if err != nil {
-		return nil, fmt.Errorf("%s: %w", ManifestPath, err)
+		return nil, fmt.Errorf("%s: %w", projectvalue.ManifestPath, err)
 	}
-	files := map[string][]byte{ManifestPath: append([]byte(nil), manifest...)}
-	modes := map[string]string{ManifestPath: s.Modes[ManifestPath]}
-	if modes[ManifestPath] == "" {
+	files := map[string][]byte{projectvalue.ManifestPath: append([]byte(nil), manifest...)}
+	modes := map[string]string{projectvalue.ManifestPath: s.Modes[projectvalue.ManifestPath]}
+	if modes[projectvalue.ManifestPath] == "" {
 		return nil, fmt.Errorf("selected project manifest has no source mode")
 	}
-	if runtimeBytes, present := s.Files[RuntimePath]; present {
-		files[RuntimePath] = append([]byte(nil), runtimeBytes...)
-		modes[RuntimePath] = s.Modes[RuntimePath]
-		if modes[RuntimePath] == "" {
+	if runtimeBytes, present := s.Files[projectvalue.RuntimePath]; present {
+		files[projectvalue.RuntimePath] = append([]byte(nil), runtimeBytes...)
+		modes[projectvalue.RuntimePath] = s.Modes[projectvalue.RuntimePath]
+		if modes[projectvalue.RuntimePath] == "" {
 			return nil, fmt.Errorf("selected runtime config has no source mode")
 		}
 	}
@@ -267,7 +269,7 @@ func FromSnapshot(root string, s *snapshot.Snapshot) (*Project, error) {
 	}
 	var inventory []projectmodel.File
 	for file, data := range s.Files {
-		selectedInventory := config.CoverageMode != "full" && inInventoryRoots(config, file) && !excludedPath(config, file) && !strings.HasPrefix(file, ".markitect/") && file != ManifestPath && file != RuntimePath
+		selectedInventory := config.CoverageMode != "full" && inInventoryRoots(config, file) && !excludedPath(config, file) && !strings.HasPrefix(file, ".markitect/") && file != projectvalue.ManifestPath && file != projectvalue.RuntimePath
 		fullInventory := config.CoverageMode == "full" && !coverageToolOwned(config, file) && !coverageCanonicalModel(config, file)
 		fullToolInput := config.CoverageMode == "full" && coverageToolOwned(config, file)
 		if !(selectedInventory || fullInventory || fullToolInput) {
@@ -291,14 +293,14 @@ func FromSnapshot(root string, s *snapshot.Snapshot) (*Project, error) {
 	}
 	report := projectmodel.Analyze(model, inventory)
 	selected := &snapshot.Snapshot{ID: s.ID, Provisional: s.Provisional, Files: files, Modes: modes}
-	project := &Project{Root: rootAbs, Revision: s.ID, Provisional: s.Provisional, Config: config, Model: model, Report: report, Snapshot: selected}
+	project := &projectvalue.Project{Root: rootAbs, Revision: s.ID, Provisional: s.Provisional, Config: config, Model: model, Report: report, Snapshot: selected}
 	if config.CoverageMode == "full" {
 		options := coverageOptions(config)
-		universe, universeErr := projectcoverage.FromSnapshot(s, options)
+		universe, universeErr := modelcoverage.FromSnapshot(s, options)
 		if universeErr != nil {
 			return nil, fmt.Errorf("build candidate coverage universe: %w", universeErr)
 		}
-		coverage, coverageErr := projectcoverage.Classify(projectcoverage.Request{Universe: universe, Model: report, Options: options,
+		coverage, coverageErr := modelcoverage.Classify(modelcoverage.Request{Universe: universe, Model: report, Options: options,
 			LegacyRoots: config.InventoryRoots, LegacyExclusions: legacyExclusions(config.Exclusions)})
 		if coverageErr != nil {
 			return nil, fmt.Errorf("classify candidate repository snapshot: %w", coverageErr)
@@ -312,7 +314,7 @@ func FromSnapshot(root string, s *snapshot.Snapshot) (*Project, error) {
 	return project, nil
 }
 
-func digestProject(project *Project) (string, error) {
+func digestProject(project *projectvalue.Project) (string, error) {
 	h := sha256.New()
 	write := func(label string, data []byte) {
 		_, _ = fmt.Fprintf(h, "%d:", len(label))
@@ -349,7 +351,7 @@ func digestProject(project *Project) (string, error) {
 	return hex.EncodeToString(h.Sum(nil)), nil
 }
 
-func inInventoryRoots(config Config, file string) bool {
+func inInventoryRoots(config projectvalue.Config, file string) bool {
 	for _, root := range config.InventoryRoots {
 		if file == root || strings.HasPrefix(file, strings.TrimSuffix(root, "/")+"/") {
 			return true
@@ -358,7 +360,7 @@ func inInventoryRoots(config Config, file string) bool {
 	return false
 }
 
-func excludedPath(config Config, file string) bool {
+func excludedPath(config projectvalue.Config, file string) bool {
 	for _, exclusion := range config.Exclusions {
 		if pathWithin(file, exclusion.Path) {
 			return true

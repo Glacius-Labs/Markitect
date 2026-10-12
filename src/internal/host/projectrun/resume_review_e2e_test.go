@@ -61,7 +61,7 @@ func TestResumedReviewReworkStartsFromReviewedCandidate(t *testing.T) {
 		t.Fatal(err)
 	}
 	repairRound, repairChecks := repairContext(invoker.state, *dispatched)
-	rebuilt, err := managerInvocationRequest(fixture.root, mustLoadRuntime(t, fixture.root), fixture.plan, input, *dispatched, "work", children, conflicts, childReports,
+	rebuilt, err := managerInvocationRequest(fixture.host, fixture.root, mustLoadRuntime(t, fixture.root), fixture.plan, input, *dispatched, "work", children, conflicts, childReports,
 		dispatched.RepairDiagnostic, repairRound, repairChecks)
 	if err != nil {
 		t.Fatal(err)

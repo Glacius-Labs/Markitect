@@ -1,17 +1,19 @@
 package projectrun
 
+import "github.com/Glacius-Labs/Markitect/src/internal/core/snapshot"
+import "github.com/Glacius-Labs/Markitect/src/internal/modules/projectmodel/projectvalue"
+
 import (
 	"bytes"
 	"fmt"
 	"strings"
 
-	"github.com/Glacius-Labs/Markitect/src/internal/host/projectcoverage"
-	"github.com/Glacius-Labs/Markitect/src/internal/host/projectwork"
+	"github.com/Glacius-Labs/Markitect/src/internal/modules/projectmodel/projectcoverage"
 )
 
 // Complete coverage is a closure requirement. Planning may admit a missing
 // required artifact so Reconcile can create it; a final candidate may not.
-func requireFullCoverage(project *Project) error {
+func requireFullCoverage(project *projectvalue.Project) error {
 	if project.Config.CoverageMode != "full" {
 		return nil
 	}
@@ -25,7 +27,7 @@ func requireFullCoverage(project *Project) error {
 // integration, then verified at the same immutable snapshot as every other file.
 // It renders the closure compile, which may bind census files the candidate
 // now models, so validateCandidateDocument sees the same view.
-func completeCandidateDocument(host Host, root string, store *runStore, dir string, base *Project, candidate candidateData) (candidateData, error) {
+func completeCandidateDocument(host Host, root string, store *runStore, dir string, base *projectvalue.Project, candidate candidateData) (candidateData, error) {
 	project, err := finalProjectForCandidate(host, root, base, candidate)
 	if err != nil {
 		return candidate, err
@@ -33,13 +35,16 @@ func completeCandidateDocument(host Host, root string, store *runStore, dir stri
 	if project.Config.CoverageMode != "full" {
 		return candidate, nil
 	}
-	content, err := projectwork.Document(project, false)
+	if host.RenderDocument == nil {
+		return candidate, fmt.Errorf("document rendering is not bound")
+	}
+	content, err := host.RenderDocument(project)
 	if err != nil {
 		return candidate, err
 	}
-	file := projectwork.DocumentPath(project.Config)
+	file := projectvalue.DocumentPath(project.Config)
 	old, exists := project.Snapshot.Files[file]
-	if exists && !projectwork.IsGeneratedDocument(old) {
+	if exists && !projectvalue.IsGeneratedDocument(old) {
 		return candidate, fmt.Errorf("refusing to replace non-generated documentation at %s", file)
 	}
 	if exists && bytes.Equal(old, []byte(content)) {
@@ -62,22 +67,25 @@ func completeCandidateDocument(host Host, root string, store *runStore, dir stri
 	return store.readCandidate(dir, completed.ID)
 }
 
-func validateCandidateDocument(project *Project) error {
+func validateCandidateDocument(host Host, project *projectvalue.Project) error {
 	if project.Config.CoverageMode != "full" {
 		return nil
 	}
-	content, err := projectwork.Document(project, false)
+	if host.RenderDocument == nil {
+		return fmt.Errorf("document rendering is not bound")
+	}
+	content, err := host.RenderDocument(project)
 	if err != nil {
 		return err
 	}
-	file := projectwork.DocumentPath(project.Config)
+	file := projectvalue.DocumentPath(project.Config)
 	if !bytes.Equal(project.Snapshot.Files[file], []byte(content)) {
 		return fmt.Errorf("generated documentation is missing or stale at %s", file)
 	}
 	return nil
 }
 
-func validateIgnoredCandidatePaths(base *Snapshot, candidate candidateData, config projectwork.Config) error {
+func validateIgnoredCandidatePaths(base *snapshot.Snapshot, candidate candidateData, config projectvalue.Config) error {
 	ignored, err := ignoredWritePaths(config, base)
 	if err != nil {
 		return err
@@ -90,7 +98,7 @@ func validateIgnoredCandidatePaths(base *Snapshot, candidate candidateData, conf
 	return nil
 }
 
-func ignoredWritePaths(config projectwork.Config, input *Snapshot) ([]string, error) {
+func ignoredWritePaths(config projectvalue.Config, input *snapshot.Snapshot) ([]string, error) {
 	if config.CoverageMode != "full" {
 		return []string{}, nil
 	}

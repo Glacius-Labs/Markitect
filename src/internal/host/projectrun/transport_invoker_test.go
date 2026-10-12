@@ -3,8 +3,6 @@ package projectrun
 import (
 	"context"
 	"encoding/json"
-	"github.com/Glacius-Labs/Markitect/src/internal/host/projectconfig"
-	"github.com/Glacius-Labs/Markitect/src/internal/host/projectexecutor"
 	"os"
 	"path/filepath"
 	"strings"
@@ -13,6 +11,8 @@ import (
 
 	"github.com/Glacius-Labs/Markitect/src/internal/host/agentexec"
 	"github.com/Glacius-Labs/Markitect/src/internal/host/codexappserver"
+	"github.com/Glacius-Labs/Markitect/src/internal/host/projectconfig"
+	"github.com/Glacius-Labs/Markitect/src/internal/host/projectexecutor"
 	"github.com/Glacius-Labs/Markitect/src/internal/host/projectworkspace"
 )
 
@@ -151,7 +151,10 @@ func TestPlanBindsNativeMethodPolicySeparatelyFromPerRoleExecutorFingerprints(t 
 				runtime.Verifier = &verifier
 			})
 
-			plan, err := Plan(projectworkHost(), root, identityHead(t, root), PlanRequest{Goal: "Check the default native transport binding."})
+			revision := identityHead(t, root)
+			project := processRuntimeProject(t, root, revision, false)
+			host := processRuntimeHost(root, project)
+			plan, err := Plan(host, root, revision, PlanRequest{Goal: "Check the default native transport binding."})
 			if err != nil {
 				t.Fatalf("Plan: %v", err)
 			}

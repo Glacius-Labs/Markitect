@@ -115,7 +115,7 @@ func ResumeExternal(ctx context.Context, host Host, invoker Invoker, root, runID
 // externalInvocation is called by the scheduler while it owns the run lock.
 // It is intentionally before provider start accounting: a pending packet is
 // durable but is not an uncertain native/process invocation.
-func externalInvocation(ctx context.Context, root, planID, attemptID string, config agentexec.Config, request agentexec.Request) (agentexec.RunResult, bool, error) {
+func externalInvocation(ctx context.Context, host Host, root, planID, attemptID string, config agentexec.Config, request agentexec.Request) (agentexec.RunResult, bool, error) {
 	if !externalExecutionEnabled(ctx) {
 		return agentexec.RunResult{}, false, nil
 	}
@@ -175,7 +175,7 @@ func externalInvocation(ctx context.Context, root, planID, attemptID string, con
 			stored.TaskID != packet.AttemptID || stored.BaseDigest != "sha256:"+packet.CandidateDigest {
 			return agentexec.RunResult{}, true, errors.New("external Git delta does not match its packet binding")
 		}
-		observed, err := importExternalGitCandidate(root, packet, *submission.GitCandidate)
+		observed, err := importExternalGitCandidate(host, root, packet, *submission.GitCandidate)
 		if err != nil {
 			return agentexec.RunResult{}, true, err
 		}
@@ -321,7 +321,7 @@ func SubmitExternalResponse(host Host, root, runID, packetID, expectedDigest str
 	}
 	var importedDelta *projectworkspace.Delta
 	if gitCandidate != nil {
-		delta, err := importExternalGitCandidate(root, packet, *gitCandidate)
+		delta, err := importExternalGitCandidate(host, root, packet, *gitCandidate)
 		if err != nil {
 			return ExternalPacket{}, false, err
 		}
@@ -353,7 +353,7 @@ func SubmitExternalResponse(host Host, root, runID, packetID, expectedDigest str
 	return packet, true, nil
 }
 
-func importExternalGitCandidate(root string, packet ExternalPacket, candidate ExternalGitCandidate) (projectworkspace.Delta, error) {
+func importExternalGitCandidate(host Host, root string, packet ExternalPacket, candidate ExternalGitCandidate) (projectworkspace.Delta, error) {
 	if packet.Kind != "projectrun-task/v1" || (packet.Phase != "work" && packet.Phase != "integrate") {
 		return projectworkspace.Delta{}, errors.New("Git candidates are supported only for executor work and integration packets")
 	}
@@ -387,7 +387,7 @@ func importExternalGitCandidate(root string, packet ExternalPacket, candidate Ex
 		RepositoryIdentity: identity.Digest, BaseSHA: candidate.BaseRevision, OverlayDigest: packet.RequestDigest,
 		TaskID: packet.AttemptID, BaseDigest: "sha256:" + packet.CandidateDigest}
 	limits := projectworkspace.Limits{MaxFiles: 10000, MaxFileBytes: int(runtime.Limits.MaxCandidateFileBytes), MaxTotalBytes: int(runtime.Limits.MaxCandidateBytes)}
-	return ImportExternalGitCandidate(candidateRoot, candidate.BaseRevision, candidate.Revision, packet.CandidateDigest, request, handle, limits)
+	return ImportExternalGitCandidate(host, candidateRoot, candidate.BaseRevision, candidate.Revision, packet.CandidateDigest, request, handle, limits)
 }
 
 func validateGitCandidateProposals(proposals []agentexec.CandidateFile, delta projectworkspace.Delta) error {
@@ -454,7 +454,7 @@ func validateExternalSubmissionBinding(host Host, root string, plan PlanRecord) 
 	if err := requireCurrentRuntimeBinding(plan); err != nil {
 		return err
 	}
-	if err := validateExplorationReadiness(root, plan); err != nil {
+	if err := validateExplorationReadiness(host, root, plan); err != nil {
 		return err
 	}
 	base, err := host.Load(root, plan.BaseRevision)

@@ -1,5 +1,8 @@
 package projectrun
 
+import "github.com/Glacius-Labs/Markitect/src/internal/core/snapshot"
+import "github.com/Glacius-Labs/Markitect/src/internal/modules/projectmodel/projectvalue"
+
 import (
 	"context"
 	"errors"
@@ -53,7 +56,7 @@ type managerInvocationResult struct {
 
 type preparedWorkAction struct {
 	current  candidateData
-	input    *Project
+	input    *projectvalue.Project
 	children []string
 	result   managerInvocationResult
 }
@@ -66,9 +69,9 @@ type pendingNativeRecovery struct {
 
 func taskActionKey(managerID, phase string) string { return managerID + "\x00" + phase }
 
-func recoveryManagerInput(store *runStore, dir string, host Host, root string, base *Snapshot, model projectmodel.Report, report RunReport, plan PlanRecord, task ManagerTask, phase string, dependencyIDs []string) (*Project, []string, []childReport, []string, error) {
+func recoveryManagerInput(store *runStore, dir string, host Host, root string, base *snapshot.Snapshot, model projectmodel.Report, report RunReport, plan PlanRecord, task ManagerTask, phase string, dependencyIDs []string) (*projectvalue.Project, []string, []childReport, []string, error) {
 	children := activeChildren(report.Tasks, task.ManagerID)
-	var input *Project
+	var input *projectvalue.Project
 	var conflicts []string
 	var childReports []childReport
 	if phase == "work" {

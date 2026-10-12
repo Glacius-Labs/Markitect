@@ -1,5 +1,7 @@
 package projectrun
 
+import "github.com/Glacius-Labs/Markitect/src/internal/modules/projectmodel/projectvalue"
+
 import (
 	"context"
 	"errors"
@@ -8,7 +10,7 @@ import (
 	"strings"
 
 	projectconfig "github.com/Glacius-Labs/Markitect/src/internal/host/projectconfig"
-	"github.com/Glacius-Labs/Markitect/src/internal/host/projectwork"
+
 	"github.com/Glacius-Labs/Markitect/src/internal/modules/projectmodel"
 )
 
@@ -19,7 +21,7 @@ type fullVerifyFrame struct {
 	host             Host
 	invoker          Invoker
 	root             string
-	project          *projectwork.Project
+	project          *projectvalue.Project
 	runtime          projectconfig.Runtime
 	binding          FullVerifyBinding
 	runtimePin       string
@@ -55,7 +57,7 @@ func prepareFullVerifyFrame(frame *fullVerifyFrame) bool {
 		out.Status, out.Error = "failed", err.Error()
 		return false
 	}
-	if err := validateCandidateDocument(project); err != nil {
+	if err := validateCandidateDocument(frame.host, project); err != nil {
 		out.Status, out.Error = "failed", err.Error()
 		return false
 	}
@@ -88,7 +90,7 @@ func prepareFullVerifyFrame(frame *fullVerifyFrame) bool {
 	frame.briefingContexts = make(map[string]BriefingContext, len(managers))
 	briefingBindingInvalid := false
 	for _, manager := range managers {
-		briefing, briefingErr := managerBriefingIn(frame.root, binding.acceptedBriefings, project.Report.ModelDigest, manager.ID, project.Revision)
+		briefing, briefingErr := managerBriefingIn(frame.host, frame.root, binding.acceptedBriefings, project.Report.ModelDigest, manager.ID, project.Revision)
 		if briefingErr != nil {
 			row := findFullManagerAssessment(out.Managers, manager.ID)
 			row.Status, row.Error = "incomplete", briefingErr.Error()
@@ -174,7 +176,7 @@ func executeFullVerifyFrame(frame *fullVerifyFrame) {
 		if _, ok := frame.briefingContexts[row.ManagerID]; !ok {
 			continue
 		}
-		if err := freshFullBriefingBindings(frame.root, binding.acceptedBriefings, project.Report.ModelDigest, out.BriefingDigests, project.Revision); err != nil {
+		if err := freshFullBriefingBindings(frame.host, frame.root, binding.acceptedBriefings, project.Report.ModelDigest, out.BriefingDigests, project.Revision); err != nil {
 			row.Status, row.Error = "incomplete", err.Error()
 			out.Error = ErrStale.Error()
 			markRemainingFullRows(out.Managers, i+1, "not started after stale briefing binding")
@@ -202,7 +204,7 @@ func (frame *fullVerifyFrame) recordManagerAudit(i int, row *FullManagerAssessme
 		frame.knownCost += known
 		frame.unknownCost += unknown
 		freshPin, pinErr := runtimeDigestWithInvoker(frame.invoker, runtime)
-		briefingErr := freshFullBriefingBindings(frame.root, binding.acceptedBriefings, project.Report.ModelDigest, out.BriefingDigests, project.Revision)
+		briefingErr := freshFullBriefingBindings(frame.host, frame.root, binding.acceptedBriefings, project.Report.ModelDigest, out.BriefingDigests, project.Revision)
 		sourceErr := fullAuditFreshBinding(frame.host, frame.root, project, frame.invoker, runtime, binding.CheckSource)
 		if !sameRuntimeSnapshot(project) || pinErr != nil || freshPin != frame.runtimePin || briefingErr != nil || sourceErr != nil {
 			row.Status, row.Error = "incomplete", "snapshot, runtime, or briefing binding changed during audit"
@@ -298,7 +300,7 @@ func finalizeFullVerifyFrame(frame *fullVerifyFrame) {
 	out := &frame.out
 	out.CostAccounting = costAccountingFromCounts(frame.knownCost, frame.unknownCost)
 	bindingStale := false
-	if !sameRuntimeSnapshot(project) || freshFullBriefingBindings(frame.root, binding.acceptedBriefings, project.Report.ModelDigest, out.BriefingDigests, project.Revision) != nil {
+	if !sameRuntimeSnapshot(project) || freshFullBriefingBindings(frame.host, frame.root, binding.acceptedBriefings, project.Report.ModelDigest, out.BriefingDigests, project.Revision) != nil {
 		bindingStale, out.Error = true, ErrStale.Error()
 	} else if freshPin, pinErr := runtimeDigestWithInvoker(frame.invoker, runtime); pinErr != nil || freshPin != frame.runtimePin {
 		bindingStale, out.Error = true, ErrStale.Error()

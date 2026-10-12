@@ -10,10 +10,11 @@ import (
 	"sort"
 
 	"github.com/Glacius-Labs/Markitect/src/internal/host/projectadoption"
-	"github.com/Glacius-Labs/Markitect/src/internal/host/projectbriefing"
 	"github.com/Glacius-Labs/Markitect/src/internal/host/projectexplore"
+	"github.com/Glacius-Labs/Markitect/src/internal/host/projecthistory"
 	"github.com/Glacius-Labs/Markitect/src/internal/host/projectrun"
-	"github.com/Glacius-Labs/Markitect/src/internal/host/projectwork"
+	"github.com/Glacius-Labs/Markitect/src/internal/modules/projectmodel/projectbriefing"
+	"github.com/Glacius-Labs/Markitect/src/internal/modules/projectmodel/projectvalue"
 )
 
 // OverviewOperation selects the project model and source repository whose
@@ -106,7 +107,7 @@ func (o Operations) Overview(operation OverviewOperation) (Overview, error) {
 		conforming := result.Coverage.Conforming
 		out.Project.Conforming = &conforming
 	}
-	if data, err := os.ReadFile(filepath.Join(operation.Root, filepath.FromSlash(projectwork.RuntimePath))); err == nil {
+	if data, err := os.ReadFile(filepath.Join(operation.Root, filepath.FromSlash(projectvalue.RuntimePath))); err == nil {
 		sum := sha256.Sum256(data)
 		out.Runtime = OverviewRuntime{Configured: true, Digest: "sha256:" + hex.EncodeToString(sum[:])}
 	} else if !errors.Is(err, os.ErrNotExist) {
@@ -174,10 +175,11 @@ func overviewExplorations(root string) ([]OverviewExploration, error) {
 // overviewPendingBriefings counts unresolved, undismissed events per affected
 // Manager from the recorded store only.
 func overviewPendingBriefings(root string) ([]OverviewBriefings, error) {
-	state, _, err := projectbriefing.Read(root)
+	read, err := projecthistory.Read(root)
 	if err != nil {
 		return nil, err
 	}
+	state := read.Accepted
 	dismissed := map[[2]string]bool{}
 	for _, item := range state.Dismissals {
 		dismissed[[2]string{item.EventID, item.ManagerID}] = true
@@ -186,7 +188,7 @@ func overviewPendingBriefings(root string) ([]OverviewBriefings, error) {
 	seen := map[string]bool{}
 	for _, bundle := range state.Briefings {
 		for _, event := range bundle.Events {
-			if seen[event.ID] || projectbriefing.EventResolutionStatus(state, event.ID).Status == "resolved" {
+			if seen[event.ID] || projectbriefing.EventResolutionStatus(read.StatusView, event.ID).Status == projectbriefing.StatusResolved {
 				continue
 			}
 			seen[event.ID] = true

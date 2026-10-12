@@ -5,11 +5,11 @@ package projectrun
 import (
 	"context"
 	"fmt"
-	"github.com/Glacius-Labs/Markitect/src/internal/host/projectexecutor"
 	"strings"
 	"testing"
 
-	"github.com/Glacius-Labs/Markitect/src/internal/host/projectwork"
+	"github.com/Glacius-Labs/Markitect/src/internal/host/projectexecutor"
+	"github.com/Glacius-Labs/Markitect/src/internal/modules/projectmodel/projectvalue"
 )
 
 func TestResumeReconcilesDurableRunningStateAfterCrash(t *testing.T) {
@@ -30,7 +30,9 @@ func TestResumeReconcilesDurableRunningStateAfterCrash(t *testing.T) {
 			t.Parallel()
 			root := makeProjectRunFixture(t)
 			setupE2EProcess(t, "")
-			plan, err := Plan(projectworkHost(), root, identityHead(t, root), PlanRequest{
+			revision := identityHead(t, root)
+			host := resumeCrashHost(root, resumeCrashProject(t, root, revision))
+			plan, err := Plan(host, root, revision, PlanRequest{
 				Goal:              "Implement both owned artifacts and integrate them.",
 				Managers:          []string{e2eManagerID("orders", "orders"), e2eManagerID("inventory", "inventory")},
 				ExecuteAuthorized: true,
@@ -40,7 +42,7 @@ func TestResumeReconcilesDurableRunningStateAfterCrash(t *testing.T) {
 			}
 			report := persistRunningCrashState(t, root, plan, scenario.inFlight, scenario.retryReady)
 			invoker := &resumeCountingInvoker{inner: projectexecutor.ProcessInvoker{}}
-			resumed, resumeErr := Resume(context.Background(), projectworkHost(), invoker, root, plan.ID)
+			resumed, resumeErr := Resume(context.Background(), host, invoker, root, plan.ID)
 			if scenario.inFlight {
 				if resumeErr == nil || !strings.Contains(resumeErr.Error(), "uncertain in-flight") {
 					t.Fatalf("in-flight process was not reported uncertain: %v", resumeErr)
@@ -89,8 +91,9 @@ func TestPersistedClosureRejectsHiddenTypedObligationsWithoutReplay(t *testing.T
 	t.Parallel()
 	root := makeProjectRunFixture(t)
 	setupE2EProcess(t, "")
-	host := projectworkHost()
-	plan, err := Plan(host, root, identityHead(t, root), PlanRequest{
+	revision := identityHead(t, root)
+	host := resumeCrashHost(root, resumeCrashProject(t, root, revision))
+	plan, err := Plan(host, root, revision, PlanRequest{
 		Goal:              "Implement both owned artifacts and integrate them.",
 		Managers:          []string{e2eManagerID("orders", "orders"), e2eManagerID("inventory", "inventory")},
 		ExecuteAuthorized: true,
@@ -160,8 +163,9 @@ func TestApplyRechecksReportClosureAtGuardedWriteBoundary(t *testing.T) {
 	t.Parallel()
 	root := makeProjectRunFixture(t)
 	setupE2EProcess(t, "")
-	host := projectworkHost()
-	plan, err := Plan(host, root, identityHead(t, root), PlanRequest{
+	revision := identityHead(t, root)
+	host := resumeCrashHost(root, resumeCrashProject(t, root, revision))
+	plan, err := Plan(host, root, revision, PlanRequest{
 		Goal:              "Implement both owned artifacts and integrate them.",
 		Managers:          []string{e2eManagerID("orders", "orders"), e2eManagerID("inventory", "inventory")},
 		ExecuteAuthorized: true,
@@ -187,7 +191,7 @@ func TestApplyRechecksReportClosureAtGuardedWriteBoundary(t *testing.T) {
 	}
 	workingLoads := 0
 	guardedHost := host
-	guardedHost.Load = func(loadRoot, revision string) (*Project, error) {
+	guardedHost.Load = func(loadRoot, revision string) (*projectvalue.Project, error) {
 		if revision == "" {
 			workingLoads++
 			if workingLoads == 2 {
@@ -205,7 +209,7 @@ func TestApplyRechecksReportClosureAtGuardedWriteBoundary(t *testing.T) {
 				}
 			}
 		}
-		return projectwork.Load(loadRoot, revision)
+		return host.Load(loadRoot, revision)
 	}
 	result, err := Apply(guardedHost, invoker, root, applyRequestFromPreflight(preflight))
 	if err == nil || !strings.Contains(err.Error(), "unresolved report status or obligations") {

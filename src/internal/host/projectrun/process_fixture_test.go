@@ -6,7 +6,6 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
-	"github.com/Glacius-Labs/Markitect/src/internal/host/projectconfig"
 	"io"
 	"os"
 	"path/filepath"
@@ -15,9 +14,13 @@ import (
 	"testing"
 	"time"
 
+	"github.com/Glacius-Labs/Markitect/src/internal/core"
+	"github.com/Glacius-Labs/Markitect/src/internal/core/snapshot"
 	"github.com/Glacius-Labs/Markitect/src/internal/host/agentexec"
-	"github.com/Glacius-Labs/Markitect/src/internal/host/projectwork"
+	"github.com/Glacius-Labs/Markitect/src/internal/host/projectconfig"
 	"github.com/Glacius-Labs/Markitect/src/internal/modules/projectmodel"
+	"github.com/Glacius-Labs/Markitect/src/internal/modules/projectmodel/projectbriefing"
+	"github.com/Glacius-Labs/Markitect/src/internal/modules/projectmodel/projectvalue"
 	"github.com/Glacius-Labs/Markitect/src/internal/testkit"
 	"go.yaml.in/yaml/v3"
 )
@@ -483,10 +486,10 @@ func TestProjectRunExecutorRejectsForeignPathProposal(t *testing.T) {
 	// The main flow proves the positive protocol; this table-level process check
 	// protects the actual subprocess response parser and authority validator.
 	base := candidateData{Files: map[string]File{}}
-	project := &Project{Report: projectmodel.Report{Managers: []projectmodel.Manager{{ID: "orders", Owns: []string{"src/orders/"}}}}}
+	project := &projectvalue.Project{Report: projectmodel.Report{Managers: []projectmodel.Manager{{ID: "orders", Owns: []string{"src/orders/"}}}}}
 	limits := projectconfig.Limits{MaxCandidateFileBytes: 1024, MaxCandidateBytes: 2048}
 	_, err := applyProposal(base, []agentexec.CandidateFile{{Path: "src/inventory/foreign.txt", Mode: "0644", Content: "x"}},
-		projectwork.Config{InventoryRoots: []string{"src"}}, project.Report,
+		projectvalue.Config{InventoryRoots: []string{"src"}}, project.Report,
 		ManagerTask{ManagerID: "orders", Owns: []string{"src/orders/"}}, "work", nil, limits)
 	if err == nil || !strings.Contains(err.Error(), "proposed path") {
 		t.Fatalf("foreign-path candidate was not rejected: %v", err)
@@ -515,7 +518,7 @@ func lastInvocation(invocations []InvocationLog) InvocationLog {
 func makeMultilevelObligationFixture(t *testing.T) string {
 	t.Helper()
 	root := makeProjectRunFixture(t)
-	manifestPath := filepath.Join(root, filepath.FromSlash(projectwork.ManifestPath))
+	manifestPath := filepath.Join(root, filepath.FromSlash(projectvalue.ManifestPath))
 	manifest, err := os.ReadFile(manifestPath)
 	if err != nil {
 		t.Fatal(err)
@@ -554,8 +557,148 @@ func makeMultilevelObligationFixture(t *testing.T) string {
 	return root
 }
 
-func projectworkHost() Host {
-	return Host{Load: projectwork.Load, FromSnapshot: projectwork.FromSnapshot, PlanEdit: projectwork.PlanEdit, ApplyEdit: projectwork.ApplyEdit}
+// runtimeProjectFixture supplies finite, already-compiled facts to private
+// Runtime tests. Callers own the model, report, revision, and file bytes; this
+// helper only copies those facts into the shared value types. It performs no
+// source acquisition, model compilation, or project digest calculation.
+func runtimeProjectFixture(revision string, files map[string][]byte, modes map[string]string, model core.Model, report projectmodel.Report) *projectvalue.Project {
+	fileCopy := make(map[string][]byte, len(files))
+	for path, content := range files {
+		fileCopy[path] = append([]byte(nil), content...)
+	}
+	modeCopy := make(map[string]string, len(modes))
+	for path, mode := range modes {
+		modeCopy[path] = mode
+	}
+	managerCopy := append([]projectmodel.Manager(nil), report.Managers...)
+	report.Managers = managerCopy
+	for i := range report.Managers {
+		report.Managers[i].Owns = append([]string(nil), report.Managers[i].Owns...)
+	}
+	return &projectvalue.Project{
+		Revision: revision,
+		Model:    model,
+		Report:   report,
+		Snapshot: &snapshot.Snapshot{ID: revision, Files: fileCopy, Modes: modeCopy},
+	}
+}
+
+// processRuntimeProject gives private Runtime process tests explicit, fixed
+// project facts. The model and report are fixture values, not a compilation of
+// the repository's YAML; only the supplied revision and filesystem bytes vary.
+func processRuntimeProject(t *testing.T, root, revision string, nested bool) *projectvalue.Project {
+	t.Helper()
+	base := resumeCrashProject(t, root, revision)
+	project := runtimeProjectFixture(revision, base.Snapshot.Files, base.Snapshot.Modes, base.Model, base.Report)
+	project.Root = root
+	project.Config = base.Config
+	project.Digest = "1111111111111111111111111111111111111111111111111111111111111111"
+	project.Model.Digest = "sha256:2222222222222222222222222222222222222222222222222222222222222222"
+	project.Report.ModelDigest = project.Model.Digest
+	project.Report.Digest = "sha256:3333333333333333333333333333333333333333333333333333333333333333"
+	if !nested {
+		return project
+	}
+
+	const commercePath = "src/orders/commerce/implementation.txt"
+	ordersID := e2eManagerID("orders", "orders")
+	commerceID := e2eManagerID("orders.commerce", "commerce")
+	statementID := e2eFixtureIdentity("Statement", "orders.commerce", "commerce-work")
+	artifactID := e2eFixtureIdentity("Artifact", "orders.commerce", "commerce-code")
+	project.Report.Managers = append(project.Report.Managers, projectmodel.Manager{
+		ID: commerceID, Name: "commerce", Namespace: "orders.commerce", Purpose: "Owns the nested Commerce implementation.", Parent: ordersID, Owns: []string{"src/orders/commerce/"},
+	})
+	project.Report.Statements = append(project.Report.Statements, projectmodel.Statement{
+		ID: statementID, Name: "commerce-work", Namespace: "orders.commerce", Owner: commerceID, Category: "concept", Description: "Resolve nested Commerce cancellation obligations.",
+	})
+	project.Report.Artifacts = append(project.Report.Artifacts, projectmodel.Artifact{
+		ID: artifactID, Name: "commerce-code", Owner: commerceID, Role: "implementation", Realizes: []string{statementID}, Paths: []string{commercePath}, Required: false,
+	})
+	project.Report.Files = append(project.Report.Files, projectmodel.FileEntry{
+		Path: commercePath, Owner: commerceID, Class: "source", Statements: []string{statementID}, Artifacts: []string{artifactID}, Exists: true,
+	})
+	project.Snapshot.Files[commercePath] = []byte("commerce implementation v1\n")
+	project.Snapshot.Modes[commercePath] = "100644"
+	return project
+}
+
+// processRuntimeProjectWithRootStatement adds the one explicit parent-owned
+// integration contract used by Runtime review-freshness tests. The fact is
+// fixture input, not a compilation of the repository's model files.
+func processRuntimeProjectWithRootStatement(t *testing.T, root, revision string) *projectvalue.Project {
+	t.Helper()
+	project := processRuntimeProject(t, root, revision, false)
+	project.Report.Statements = append(project.Report.Statements, projectmodel.Statement{
+		ID: e2eFixtureIdentity("Statement", "", "integration-quality"), Name: "integration-quality",
+		Owner: e2eManagerID("", "project-owner"), Category: "concept",
+		Description: "Parent-owned integration files contain the corrected summary.",
+	})
+	return project
+}
+
+// processRuntimeProjectWithRootArtifact adds one explicit, parent-owned source
+// file for native resume/rework tests. The test repository supplies the same
+// pinned baseline bytes before this finite Project is constructed.
+func processRuntimeProjectWithRootArtifact(t *testing.T, root, revision string) *projectvalue.Project {
+	t.Helper()
+	project := processRuntimeProjectWithRootStatement(t, root, revision)
+	const path = "src/project-owner.txt"
+	rootID := e2eManagerID("", "project-owner")
+	statementID := e2eFixtureIdentity("Statement", "", "integration-quality")
+	artifactID := e2eFixtureIdentity("Artifact", "", "project-owner-source")
+	project.Report.Artifacts = append(project.Report.Artifacts, projectmodel.Artifact{
+		ID: artifactID, Name: "project-owner-source", Owner: rootID, Role: "implementation",
+		Realizes: []string{statementID}, Paths: []string{path}, Required: false,
+	})
+	project.Report.Files = append(project.Report.Files, projectmodel.FileEntry{
+		Path: path, Owner: rootID, Class: "source", Statements: []string{statementID}, Artifacts: []string{artifactID}, Exists: true,
+	})
+	project.Snapshot.Files[path] = []byte("project owner baseline\n")
+	project.Snapshot.Modes[path] = "100644"
+	return project
+}
+
+// processRuntimeProjectWithInstructions binds the exact instruction document
+// selected by Config to the same pinned bytes and mode consumed by Runtime.
+func processRuntimeProjectWithInstructions(t *testing.T, root, revision string) *projectvalue.Project {
+	t.Helper()
+	const path = "docs/agent-instructions.md"
+	project := processRuntimeProject(t, root, revision, false)
+	content, err := os.ReadFile(filepath.Join(root, filepath.FromSlash(path)))
+	if err != nil {
+		t.Fatalf("read pinned Runtime instruction document: %v", err)
+	}
+	project.Config.DocumentPath = path
+	project.Snapshot.Files[path] = append([]byte(nil), content...)
+	project.Snapshot.Modes[path] = "100644"
+	return project
+}
+
+// processRuntimeHost serves only the explicit project facts above and candidate
+// snapshots supplied by Runtime. It never calls the Application frontend.
+func processRuntimeHost(root string, project *projectvalue.Project) Host {
+	host := resumeCrashHost(root, project)
+	host.PlanEdit = func(*projectvalue.Project, projectvalue.Mutation) (projectvalue.EditPlan, error) {
+		return projectvalue.EditPlan{}, fmt.Errorf("process Runtime fixture has no model-edit capability")
+	}
+	host.BriefingForManager = func(loadRoot, revision, modelDigest, managerID string, _ *projectbriefing.Store) (BriefingContext, error) {
+		if loadRoot != root || (revision != "" && revision != project.Revision) || modelDigest != project.Report.ModelDigest {
+			return BriefingContext{}, fmt.Errorf("process Runtime fixture received unbound briefing inputs")
+		}
+		for _, manager := range project.Report.Managers {
+			if manager.ID == managerID {
+				return BriefingContext{Digest: strings.Repeat("4", 64)}, nil
+			}
+		}
+		return BriefingContext{}, fmt.Errorf("process Runtime fixture received unknown Manager %q", managerID)
+	}
+	host.PrepareBriefings = func(loadRoot, revision string, _ bool) (*projectbriefing.Store, error) {
+		if loadRoot != root || (revision != "" && revision != project.Revision) {
+			return nil, fmt.Errorf("process Runtime fixture received unbound history inputs")
+		}
+		return &projectbriefing.Store{APIVersion: projectbriefing.APIVersion, Briefings: []projectbriefing.Bundle{}, Dismissals: []projectbriefing.Dismissal{}}, nil
+	}
+	return host
 }
 
 func e2eManagerID(namespace, name string) string {
@@ -585,7 +728,7 @@ func makeProjectRunFixture(t *testing.T) string {
 	root := repository.Dir
 	setRuntimeFixtureEnv(t, e2eRootEnv, root)
 	writeE2E(t, root, "README.md", "project-run process fixture\n")
-	writeE2E(t, root, ".markitect/project.yaml", "apiVersion: "+projectwork.APIVersion+"\nname: Process fixture\nmodelFiles:\n  - .markitect/model/manager.yaml\n  - .markitect/model/orders/manager.yaml\n  - .markitect/model/orders/statement.yaml\n  - .markitect/model/orders/artifact.yaml\n  - .markitect/model/orders/check.yaml\n  - .markitect/model/inventory/manager.yaml\n  - .markitect/model/inventory/statement.yaml\n  - .markitect/model/inventory/artifact.yaml\n  - .markitect/model/inventory/check.yaml\ninventoryRoots:\n  - src\nexclusions: []\n")
+	writeE2E(t, root, ".markitect/project.yaml", "apiVersion: "+projectvalue.APIVersion+"\nname: Process fixture\nmodelFiles:\n  - .markitect/model/manager.yaml\n  - .markitect/model/orders/manager.yaml\n  - .markitect/model/orders/statement.yaml\n  - .markitect/model/orders/artifact.yaml\n  - .markitect/model/orders/check.yaml\n  - .markitect/model/inventory/manager.yaml\n  - .markitect/model/inventory/statement.yaml\n  - .markitect/model/inventory/artifact.yaml\n  - .markitect/model/inventory/check.yaml\ninventoryRoots:\n  - src\nexclusions: []\n")
 	rootManager := "apiVersion: " + projectmodel.APIVersion + "\nkind: Manager\nmetadata:\n  name: project-owner\n  namespace: \"\"\npurpose: Owns integration and project-wide delivery.\nspec:\n  owns: [.]\n"
 	writeE2E(t, root, ".markitect/model/manager.yaml", rootManager)
 	writeE2E(t, root, ".markitect/model/orders/manager.yaml", e2eChildManager("orders"))

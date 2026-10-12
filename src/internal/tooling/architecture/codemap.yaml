@@ -18,17 +18,21 @@ packages:
     layer: core
     purpose: Fixed sets of source files and deterministic comparisons over them.
     doc: docs/source-snapshots.md#current-value
-  - path: src/internal/host/projectbriefing
-    layer: core
-    purpose: Records deterministic briefings for accepted model changes from committed history.
-    doc: docs/architecture.md#core-layer
-  - path: src/internal/host/projectcoverage
-    layer: core
-    purpose: Inventories repository paths and classifies how the project model covers them.
-    doc: docs/architecture.md#core-layer
   - path: src/internal/modules/projectmodel
     layer: core
     purpose: Derives management, artifact and impact views from the compiled project model.
+    doc: docs/architecture.md#core-layer
+  - path: src/internal/modules/projectmodel/projectbriefing
+    layer: core
+    purpose: Derives deterministic briefings and resolution status from explicitly supplied model values.
+    doc: docs/architecture.md#core-layer
+  - path: src/internal/modules/projectmodel/projectcoverage
+    layer: core
+    purpose: Classifies explicitly supplied repository census values against the project model.
+    doc: docs/architecture.md#core-layer
+  - path: src/internal/modules/projectmodel/projectvalue
+    layer: core
+    purpose: Holds shared project values, path selectors and deterministic binding identity.
     doc: docs/architecture.md#core-layer
 
   # --- infrastructure -----------------------------------------------------
@@ -74,10 +78,18 @@ packages:
     layer: application
     purpose: The `markitect` verb table, its command line and its MCP tools.
     doc: docs/project-operations.md#cli-setup-and-current-roots
+  - path: src/internal/host/projectcoverage
+    layer: application
+    purpose: Acquires repository census values from the selected working tree or committed revision.
+    doc: docs/source-snapshots.md#adapter-and-use-case-ownership
   - path: src/internal/host/projectexplore
     layer: application
     purpose: Stores explorations, open decisions, scope readiness and Apply receipts.
     doc: docs/project-workflow.md#model-and-readiness
+  - path: src/internal/host/projecthistory
+    layer: application
+    purpose: Acquires accepted model history and persists guarded briefing, resolution and dismissal records.
+    doc: docs/architecture.md#application-layer
   - path: src/internal/host/projectonboarding
     layer: application
     purpose: Writes project-local guidance and skills for Codex and Claude contributors.

@@ -1,5 +1,7 @@
 package projectadoption
 
+import "github.com/Glacius-Labs/Markitect/src/internal/modules/projectmodel/projectvalue"
+
 import (
 	"bytes"
 	"context"
@@ -485,7 +487,7 @@ func TestTargetContextRejectsUncommittedProject(t *testing.T) {
 	}
 }
 
-func distillationDiscovery(t *testing.T) (string, Discovery, DistillationTargetContext, *projectwork.Project) {
+func distillationDiscovery(t *testing.T) (string, Discovery, DistillationTargetContext, *projectvalue.Project) {
 	t.Helper()
 	repo, commit := committedRepository(t, map[string]string{"src/orders/cancel.go": "package orders\nfunc Cancel() {}\n"})
 	root := repo.Dir

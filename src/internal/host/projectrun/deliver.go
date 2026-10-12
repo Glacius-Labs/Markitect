@@ -1,11 +1,11 @@
 package projectrun
 
+import "github.com/Glacius-Labs/Markitect/src/internal/modules/projectmodel/projectvalue"
+
 import (
 	"context"
 	"errors"
 	"fmt"
-
-	"github.com/Glacius-Labs/Markitect/src/internal/host/projectexplore"
 )
 
 // DeliverRequest identifies one acknowledged work-item scope. ExecuteAuthorized
@@ -50,7 +50,7 @@ func Deliver(ctx context.Context, host Host, invoker Invoker, root string, reque
 	var run RunReport
 	newPlan := request.RunID == ""
 	if newPlan {
-		record, scope, _, readiness, err := LoadExplorationReadiness(host, root, request.ExplorationID, request.ScopeID)
+		scope, _, readiness, err := loadExplorationReadiness(host, root, request.ExplorationID, request.ScopeID)
 		if err != nil {
 			return out, err
 		}
@@ -64,7 +64,7 @@ func Deliver(ctx context.Context, host Host, invoker Invoker, root string, reque
 		if err != nil {
 			return out, err
 		}
-		if plan.ExplorationID != record.ID || plan.ScopeID != scope.ID {
+		if plan.ExplorationID != scope.ExplorationID || plan.ScopeID != scope.ScopeID {
 			return out, fmt.Errorf("new plan did not retain its exploration scope binding")
 		}
 		request.RunID = plan.ID
@@ -89,11 +89,11 @@ func Deliver(ctx context.Context, host Host, invoker Invoker, root string, reque
 			out.RunID, out.Status, out.Plan, out.Run = request.RunID, StatusApplied, &plan, &stored.Run
 			return out, nil
 		}
-		if _, _, binding, readiness, err := LoadExplorationReadiness(host, root, request.ExplorationID, request.ScopeID); err != nil {
+		if _, binding, readiness, err := loadExplorationReadiness(host, root, request.ExplorationID, request.ScopeID); err != nil {
 			return out, err
 		} else {
-			currentDigest, digestErr := projectexplore.BindingDigest(binding)
-			storedDigest, storedErr := projectexplore.BindingDigest(*plan.ExplorationBinding)
+			currentDigest, digestErr := projectvalue.BindingDigest(binding)
+			storedDigest, storedErr := projectvalue.BindingDigest(*plan.ExplorationBinding)
 			if digestErr != nil {
 				return out, digestErr
 			}

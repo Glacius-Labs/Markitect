@@ -1,5 +1,7 @@
 package projectapp
 
+import "github.com/Glacius-Labs/Markitect/src/internal/modules/projectmodel/projectvalue"
+
 import (
 	"bytes"
 	"encoding/json"
@@ -79,7 +81,7 @@ func TestExploreOperationPreviewsAndWritesWithExpectedDigest(t *testing.T) {
 
 func TestExploreAcceptsGitCleanAutocrlfAndRejectsCapturedSourceChanges(t *testing.T) {
 	root := makePlanFixture(t)
-	manifestPath := filepath.Join(root, filepath.FromSlash(projectwork.ManifestPath))
+	manifestPath := filepath.Join(root, filepath.FromSlash(projectvalue.ManifestPath))
 	manifest, err := os.ReadFile(manifestPath)
 	if err != nil {
 		t.Fatal(err)
@@ -135,7 +137,7 @@ func TestExploreAcceptsGitCleanAutocrlfAndRejectsCapturedSourceChanges(t *testin
 		Decisions: []projectexplore.Decision{}, Drafts: []projectexplore.DraftProposal{},
 		Acknowledgements: []projectexplore.StructureAcknowledgement{}, Completions: []projectexplore.ApplyReceipt{},
 	}
-	operations := Operations{Host: projectrun.Host{Load: projectwork.Load, FromSnapshot: projectwork.FromSnapshot, PlanEdit: projectwork.PlanEdit}}
+	operations := NewOperations()
 	selection := Selection{Root: root, Revision: revision}
 	preview, err := operations.Explore(ExploreOperation{Selection: selection, Record: &record})
 	if err != nil {
@@ -190,7 +192,7 @@ func TestReadinessAcknowledgementUsesRawCapturedModelCheckoutBytes(t *testing.T)
 		t.Fatal(err)
 	}
 
-	operations := Operations{Host: projectrun.Host{Load: projectwork.Load, FromSnapshot: projectwork.FromSnapshot, PlanEdit: projectwork.PlanEdit}}
+	operations := NewOperations()
 	selection := Selection{Root: root, Revision: revision}
 	record := projectexplore.Record{
 		APIVersion: projectexplore.APIVersion, ID: "autocrlf-readiness", Status: projectexplore.StatusActive,
@@ -268,7 +270,7 @@ func runExploreGit(t *testing.T, root string, args ...string) string {
 
 func TestReadinessRequiresExplicitAcknowledgementForWrite(t *testing.T) {
 	loads := 0
-	operations := Operations{Host: projectrun.Host{Load: func(string, string) (*projectrun.Project, error) {
+	operations := Operations{Host: projectrun.Host{Load: func(string, string) (*projectvalue.Project, error) {
 		loads++
 		return nil, nil
 	}}}

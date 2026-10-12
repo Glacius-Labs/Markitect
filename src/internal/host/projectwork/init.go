@@ -5,6 +5,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"github.com/Glacius-Labs/Markitect/src/internal/modules/projectmodel/projectvalue"
 	"path/filepath"
 	"sort"
 	"strings"
@@ -15,7 +16,7 @@ import (
 	"go.yaml.in/yaml/v3"
 )
 
-const initManagerPath = ModelRoot + "/manager.yaml"
+const initManagerPath = projectvalue.ModelRoot + "/manager.yaml"
 
 // Init creates a read-only exact plan by default. A write creates only the
 // five named Markitect-owned files through Host's guarded writer.
@@ -24,12 +25,12 @@ func Init(root, name string, write bool) (InitPlan, error) {
 		return InitPlan{}, fmt.Errorf("project name must be nonempty and have no surrounding whitespace")
 	}
 	config := map[string]any{
-		"apiVersion":             APIVersion,
+		"apiVersion":             projectvalue.APIVersion,
 		"name":                   name,
 		"coverageMode":           "full",
-		"workflowMode":           WorkflowModeGuided,
-		"acceptancePolicy":       AcceptancePolicyCommittedModel,
-		"documentPath":           DefaultDocumentPath,
+		"workflowMode":           projectvalue.WorkflowModeGuided,
+		"acceptancePolicy":       projectvalue.AcceptancePolicyCommittedModel,
+		"documentPath":           projectvalue.DefaultDocumentPath,
 		"modelFiles":             []string{initManagerPath},
 		"inventoryRoots":         []string{},
 		"exclusions":             []any{},
@@ -50,9 +51,9 @@ func Init(root, name string, write bool) (InitPlan, error) {
 	if err != nil {
 		return InitPlan{}, fmt.Errorf("encode root Manager: %w", err)
 	}
-	files := []FileChange{
-		{Path: ManifestPath, Content: string(configBytes)},
-		{Path: RuntimePath, Content: "{}\n"},
+	files := []projectvalue.FileChange{
+		{Path: projectvalue.ManifestPath, Content: string(configBytes)},
+		{Path: projectvalue.RuntimePath, Content: "{}\n"},
 		{Path: initManagerPath, Content: string(managerBytes)},
 		{Path: ".markitect/.gitignore", Content: "/cache/\n/runs/\n/state/\n/views/\n"},
 	}
@@ -65,9 +66,9 @@ func Init(root, name string, write bool) (InitPlan, error) {
 	if err != nil {
 		return InitPlan{}, fmt.Errorf("validate initial project model: %w", err)
 	}
-	files = append(files, FileChange{Path: DocumentPath(project.Config), Content: documentText(project)})
+	files = append(files, projectvalue.FileChange{Path: projectvalue.DocumentPath(project.Config), Content: documentText(project)})
 	sort.Slice(files, func(i, j int) bool { return files[i].Path < files[j].Path })
-	plan := InitPlan{APIVersion: APIVersion, Name: name, Files: files}
+	plan := InitPlan{APIVersion: projectvalue.APIVersion, Name: name, Files: files}
 	plan.Digest, err = initPlanDigest(plan)
 	if err != nil {
 		return InitPlan{}, err

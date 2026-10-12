@@ -2,8 +2,10 @@ package projectapp
 
 import (
 	"fmt"
+
 	"github.com/Glacius-Labs/Markitect/src/internal/host/projectsetup"
 	"github.com/Glacius-Labs/Markitect/src/internal/host/projectwork"
+	"github.com/Glacius-Labs/Markitect/src/internal/modules/projectmodel/projectvalue"
 )
 
 // SetupOperation previews or writes the exact guarded runtime edit. Options
@@ -28,9 +30,24 @@ func (o Operations) Setup(operation SetupOperation) (projectsetup.Preview, error
 	if err != nil {
 		return projectsetup.Preview{}, err
 	}
-	preview, err := projectsetup.PreviewEdit(project, operation.Options)
+	proposal, err := projectsetup.PreviewEdit(project, operation.Options)
 	if err != nil {
 		return projectsetup.Preview{}, err
+	}
+	mutation := projectvalue.Mutation{
+		APIVersion: projectvalue.APIVersion,
+		BaseDigest: project.Digest,
+		Actor:      projectvalue.HumanActor,
+		Goal:       "Configure the project-local agent runtime from explicitly selected local tools",
+		Files:      []projectvalue.FileChange{{Path: projectvalue.RuntimePath, Content: proposal.RuntimeContent}},
+	}
+	plan, err := projectwork.PlanEdit(project, mutation)
+	if err != nil {
+		return projectsetup.Preview{}, fmt.Errorf("validate runtime edit proposal: %w", err)
+	}
+	preview := projectsetup.Preview{
+		APIVersion: proposal.APIVersion, Discovery: proposal.Discovery, Roles: proposal.Roles,
+		PricingBasis: proposal.PricingBasis, Mutation: mutation, EditPlan: plan,
 	}
 	if operation.Write {
 		if operation.ExpectedDigest != preview.EditPlan.Digest {

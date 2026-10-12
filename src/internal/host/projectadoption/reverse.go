@@ -1,12 +1,12 @@
 package projectadoption
 
+import "github.com/Glacius-Labs/Markitect/src/internal/modules/projectmodel/projectvalue"
+
 import (
 	"errors"
 	"fmt"
 	"sort"
 	"strings"
-
-	"github.com/Glacius-Labs/Markitect/src/internal/host/projectwork"
 )
 
 type ManagerReverseEvidence struct {
@@ -235,7 +235,7 @@ func anyProposedManager(session BrownfieldSession, id string) (ProposedManager, 
 // BeginReverseIteration appends a fixed, evidence-selected Manager work item.
 // The Manager identity must belong to the accepted target tree and a child
 // iteration can only be routed beneath its declared, not yet integrated parent.
-func BeginReverseIteration(sourceRoot string, target *projectwork.Project, session BrownfieldSession, request ReverseIterationRequest) (BrownfieldSession, error) {
+func BeginReverseIteration(sourceRoot string, target *projectvalue.Project, session BrownfieldSession, request ReverseIterationRequest) (BrownfieldSession, error) {
 	if err := ValidateBrownfieldSession(session); err != nil {
 		return BrownfieldSession{}, err
 	}
@@ -449,7 +449,7 @@ func RecordSessionResolution(session BrownfieldSession, iterationID string, reso
 	return result, nil
 }
 
-func PlanSessionAdoption(sourceRoot string, target *projectwork.Project, session BrownfieldSession, iterationID, schemaDigest, buildDigest string) (AdoptionPlan, error) {
+func PlanSessionAdoption(sourceRoot string, target *projectvalue.Project, session BrownfieldSession, iterationID, schemaDigest, buildDigest string) (AdoptionPlan, error) {
 	if err := ValidateBrownfieldSession(session); err != nil {
 		return AdoptionPlan{}, err
 	}

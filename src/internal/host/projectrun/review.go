@@ -1,5 +1,7 @@
 package projectrun
 
+import "github.com/Glacius-Labs/Markitect/src/internal/modules/projectmodel/projectvalue"
+
 import (
 	"context"
 	"encoding/hex"
@@ -11,9 +13,9 @@ import (
 	"time"
 
 	"github.com/Glacius-Labs/Markitect/src/internal/host/agentexec"
-	"github.com/Glacius-Labs/Markitect/src/internal/host/projectbriefing"
 	"github.com/Glacius-Labs/Markitect/src/internal/host/projectworkspace"
 	"github.com/Glacius-Labs/Markitect/src/internal/modules/projectmodel"
+	"github.com/Glacius-Labs/Markitect/src/internal/modules/projectmodel/projectbriefing"
 )
 
 type reviewFindingResponse struct {
@@ -108,7 +110,7 @@ func reviewerPhaseGuidance(phase string) string {
 
 // invokeReviewer supplies only the original goal, accepted scoped model and
 // the exact candidate bytes. It never receives an implementer transcript.
-func invokeReviewer(ctx context.Context, host Host, invoker Invoker, root string, plan PlanRecord, runtime projectconfig.Runtime, project *Project, task ManagerTask, phase string, round int, candidate candidateData, onStart func(InvocationLog) error, report RunReport) (ReviewRecord, InvocationLog, error) {
+func invokeReviewer(ctx context.Context, host Host, invoker Invoker, root string, plan PlanRecord, runtime projectconfig.Runtime, project *projectvalue.Project, task ManagerTask, phase string, round int, candidate candidateData, onStart func(InvocationLog) error, report RunReport) (ReviewRecord, InvocationLog, error) {
 	var record ReviewRecord
 	var log InvocationLog
 	if runtime.Review == nil {
@@ -131,7 +133,7 @@ func invokeReviewer(ctx context.Context, host Host, invoker Invoker, root string
 			config.Timeout = remaining
 		}
 	}
-	briefing, err := reviewerBriefing(root, plan, project, task.ManagerID)
+	briefing, err := reviewerBriefing(host, root, plan, project, task.ManagerID)
 	if err != nil {
 		return record, log, err
 	}
@@ -222,7 +224,7 @@ func invokeReviewer(ctx context.Context, host Host, invoker Invoker, root string
 	return record, log, nil
 }
 
-func buildReviewerContext(plan PlanRecord, project *Project, task ManagerTask, phase string, round int, candidate candidateData, briefing BriefingContext, report RunReport, changeStates ...reviewCandidateState) (reviewerContext, []agentexec.Artifact, []reviewFileRef, error) {
+func buildReviewerContext(plan PlanRecord, project *projectvalue.Project, task ManagerTask, phase string, round int, candidate candidateData, briefing BriefingContext, report RunReport, changeStates ...reviewCandidateState) (reviewerContext, []agentexec.Artifact, []reviewFileRef, error) {
 	files := reviewCandidateFiles(project, task, report.Tasks, phase)
 	if len(files) == 0 {
 		// Keep the empty list explicit for a legitimate no-op candidate.
@@ -268,14 +270,14 @@ func buildReviewerContext(plan PlanRecord, project *Project, task ManagerTask, p
 
 // reviewerBriefing binds accepted change context to the plan. A draft ModelEdit
 // has not been accepted, so it must not inherit history from the target model.
-func reviewerBriefing(root string, plan PlanRecord, project *Project, managerID string) (BriefingContext, error) {
+func reviewerBriefing(host Host, root string, plan PlanRecord, project *projectvalue.Project, managerID string) (BriefingContext, error) {
 	if plan.ModelEdit != nil {
 		if plan.BriefingDigests[managerID] != "" {
 			return BriefingContext{}, ErrStale
 		}
 		return BriefingContext{Briefings: []projectbriefing.Briefing{}, Events: []projectbriefing.Event{}}, nil
 	}
-	briefing, err := managerBriefing(root, project.Report.ModelDigest, managerID, project.Revision)
+	briefing, err := managerBriefing(host, root, project.Report.ModelDigest, managerID, project.Revision)
 	if err != nil {
 		return BriefingContext{}, err
 	}
@@ -318,7 +320,7 @@ func canonicalizeReviewContext(request *agentexec.Request) error {
 // It includes the accepted local contract, task goal, review phase and every
 // supplied owned file byte, mode, and typed change operation, including the
 // grounded preimage supplied for a deletion.
-func reviewScopeDigest(plan PlanRecord, project *Project, task ManagerTask, phase string, report RunReport, changeStates ...reviewCandidateState) (string, error) {
+func reviewScopeDigest(plan PlanRecord, project *projectvalue.Project, task ManagerTask, phase string, report RunReport, changeStates ...reviewCandidateState) (string, error) {
 	files := reviewCandidateFiles(project, task, report.Tasks, phase)
 	changes := []candidateChange{}
 	deletePaths := map[string]bool{}
@@ -660,7 +662,7 @@ func reviewDelegatedArtifacts(report projectmodel.Report, tasks []ManagerTask, m
 // delivered paths from direct children. tasks must be the run report's tasks,
 // because only they carry delivered paths. Work reviews stay limited to this
 // Manager's current candidate.
-func reviewCandidateFiles(project *Project, task ManagerTask, tasks []ManagerTask, phase string) []agentexec.Artifact {
+func reviewCandidateFiles(project *projectvalue.Project, task ManagerTask, tasks []ManagerTask, phase string) []agentexec.Artifact {
 	files := scopedCandidateFiles(project, task)
 	if phase != "integrate" || project == nil || project.Snapshot == nil {
 		return files
@@ -775,7 +777,7 @@ func reviewScopeIDs(managerID string, accepted projectmodel.ManagerContext) []st
 	return uniqueSorted(ids)
 }
 
-func scopedCandidateFiles(project *Project, task ManagerTask) []agentexec.Artifact {
+func scopedCandidateFiles(project *projectvalue.Project, task ManagerTask) []agentexec.Artifact {
 	if project == nil || project.Snapshot == nil {
 		return nil
 	}
@@ -825,7 +827,7 @@ func scopedCandidateFiles(project *Project, task ManagerTask) []agentexec.Artifa
 // reviewRequired distinguishes pure routing from work with reviewable scope.
 // Declared artifacts and paths changed at any point remain mandatory even if
 // the final snapshot has no bytes at those paths (for example, a deletion).
-func reviewRequired(project *Project, task ManagerTask) bool {
+func reviewRequired(project *projectvalue.Project, task ManagerTask) bool {
 	return project != nil && (len(scopedCandidateFiles(project, task)) > 0 || len(task.Artifacts) > 0 || len(task.WrittenPaths) > 0 || len(task.IntegratedPaths) > 0)
 }
 
@@ -834,7 +836,7 @@ func reviewRequired(project *Project, task ManagerTask) bool {
 // nothing while integrating, so a reviewer always sees the children's outputs
 // together. tasks must be the run report's tasks, because only they carry
 // delivered paths.
-func phaseReviewRequired(project *Project, task ManagerTask, tasks []ManagerTask, phase string) bool {
+func phaseReviewRequired(project *projectvalue.Project, task ManagerTask, tasks []ManagerTask, phase string) bool {
 	return reviewRequired(project, task) || project != nil && len(reviewChangedPaths(task, tasks, phase)) > 0
 }
 
@@ -1031,7 +1033,7 @@ func decodeReviewResponse(raw json.RawMessage) (reviewResponse, error) {
 	return response, nil
 }
 
-func requireFreshReviews(host Host, root string, store *runStore, dir string, base *Project, candidate candidateData, plan PlanRecord, runtime projectconfig.Runtime, run RunReport) error {
+func requireFreshReviews(host Host, root string, store *runStore, dir string, base *projectvalue.Project, candidate candidateData, plan PlanRecord, runtime projectconfig.Runtime, run RunReport) error {
 	if runtime.Review == nil {
 		return nil
 	}

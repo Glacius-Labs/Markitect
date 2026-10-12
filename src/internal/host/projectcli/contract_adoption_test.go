@@ -1,5 +1,7 @@
 package projectcli
 
+import "github.com/Glacius-Labs/Markitect/src/internal/modules/projectmodel/projectvalue"
+
 import (
 	"encoding/json"
 	"os"
@@ -10,7 +12,7 @@ import (
 	"github.com/Glacius-Labs/Markitect/src/internal/host/projectapp"
 	"github.com/Glacius-Labs/Markitect/src/internal/host/projectonboarding"
 	"github.com/Glacius-Labs/Markitect/src/internal/host/projectsetup"
-	"github.com/Glacius-Labs/Markitect/src/internal/host/projectwork"
+
 	"github.com/Glacius-Labs/Markitect/src/internal/testkit"
 )
 
@@ -270,7 +272,7 @@ func assertInitPreview(t *testing.T, data json.RawMessage, name string) {
 	for _, file := range plan.Files {
 		paths = append(paths, file.Path)
 	}
-	assertContractNames(t, "init owned files", []string{projectwork.ManifestPath, projectwork.RuntimePath, ".markitect/model/manager.yaml", ".markitect/.gitignore", "docs/markitect/project.md"}, paths)
+	assertContractNames(t, "init owned files", []string{projectvalue.ManifestPath, projectvalue.RuntimePath, ".markitect/model/manager.yaml", ".markitect/.gitignore", "docs/markitect/project.md"}, paths)
 }
 
 func assertConfigPreview(t *testing.T, data json.RawMessage) {
@@ -283,7 +285,7 @@ func assertConfigPreview(t *testing.T, data json.RawMessage) {
 	for _, file := range preview.EditPlan.Mutation.Files {
 		paths = append(paths, file.Path)
 	}
-	assertContractNames(t, "config owned files", []string{projectwork.RuntimePath}, paths)
+	assertContractNames(t, "config owned files", []string{projectvalue.RuntimePath}, paths)
 }
 
 func assertOnboardPreview(t *testing.T, data json.RawMessage) {

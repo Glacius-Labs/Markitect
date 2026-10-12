@@ -1,5 +1,7 @@
 package projectrun
 
+import "github.com/Glacius-Labs/Markitect/src/internal/modules/projectmodel/projectvalue"
+
 import (
 	"errors"
 	"fmt"
@@ -128,7 +130,7 @@ func (e *runExecution) runIntegrationAction(action managerAction) (RunReport, er
 	return e.reviewIntegration(task, candidateProject, resolved)
 }
 
-func (e *runExecution) invokeIntegration(task *ManagerTask, children []string, merged candidateData, conflicts []string, input *Project, childSummaries []childReport) (agentexec.RunResult, InvocationLog, TaskResponse, candidateData, []string, []string, []Obligation, []Obligation, RunReport, error) {
+func (e *runExecution) invokeIntegration(task *ManagerTask, children []string, merged candidateData, conflicts []string, input *projectvalue.Project, childSummaries []childReport) (agentexec.RunResult, InvocationLog, TaskResponse, candidateData, []string, []string, []Obligation, []Obligation, RunReport, error) {
 	var proposal agentexec.RunResult
 	var invocation InvocationLog
 	var parsed TaskResponse
@@ -219,7 +221,7 @@ func (e *runExecution) invokeIntegration(task *ManagerTask, children []string, m
 	}
 }
 
-func validateIntegrationProposal(task *ManagerTask, children []string, merged candidateData, conflicts []string, input *Project, limits projectconfig.Limits, report *RunReport, proposal agentexec.RunResult, parsed *TaskResponse, resolved *candidateData, remainingQ, remainingR *[]string, resolvedObligations, remainingObligations *[]Obligation) error {
+func validateIntegrationProposal(task *ManagerTask, children []string, merged candidateData, conflicts []string, input *projectvalue.Project, limits projectconfig.Limits, report *RunReport, proposal agentexec.RunResult, parsed *TaskResponse, resolved *candidateData, remainingQ, remainingR *[]string, resolvedObligations, remainingObligations *[]Obligation) error {
 	var decodeErr error
 	*parsed, decodeErr = decodeTaskResponse(proposal.Response.ReportJSON, "integrate", children)
 	if decodeErr != nil {
@@ -266,7 +268,7 @@ func validateIntegrationProposal(task *ManagerTask, children []string, merged ca
 	return nil
 }
 
-func (e *runExecution) reviewIntegration(task *ManagerTask, candidateProject *Project, candidate candidateData) (RunReport, error) {
+func (e *runExecution) reviewIntegration(task *ManagerTask, candidateProject *projectvalue.Project, candidate candidateData) (RunReport, error) {
 	reviewRound := reviewCount(e.report.Reviews, task.ManagerID, "integrate") + 1
 	if reviewRound > e.runtime.Review.MaxRounds {
 		return blockRun(e.store, e.report, fmt.Errorf("Manager %s exhausted the cumulative integration review round limit", task.ManagerID))

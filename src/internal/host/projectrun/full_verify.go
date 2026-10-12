@@ -1,5 +1,7 @@
 package projectrun
 
+import "github.com/Glacius-Labs/Markitect/src/internal/modules/projectmodel/projectvalue"
+
 import (
 	"context"
 	"crypto/sha256"
@@ -15,9 +17,9 @@ import (
 	"time"
 
 	"github.com/Glacius-Labs/Markitect/src/internal/host/agentexec"
-	"github.com/Glacius-Labs/Markitect/src/internal/host/projectbriefing"
 	projectconfig "github.com/Glacius-Labs/Markitect/src/internal/host/projectconfig"
-	"github.com/Glacius-Labs/Markitect/src/internal/host/projectwork"
+	"github.com/Glacius-Labs/Markitect/src/internal/modules/projectmodel/projectbriefing"
+
 	"github.com/Glacius-Labs/Markitect/src/internal/modules/projectmodel"
 )
 
@@ -207,7 +209,7 @@ func FullVerify(ctx context.Context, host Host, invoker Invoker, root string, re
 	// it in memory and audits against that view.
 	var briefingView *projectbriefing.Store
 	if project.Config.WorkflowMode == "guided" {
-		if briefingView, err = captureAcceptedHistory(root, project.Revision, request.Write); err != nil {
+		if briefingView, err = captureAcceptedHistory(host, root, project.Revision, request.Write); err != nil {
 			return empty, err
 		}
 	}
@@ -227,7 +229,7 @@ func FullVerify(ctx context.Context, host Host, invoker Invoker, root string, re
 // FullVerifyProject audits an immutable host-composed project. This is the
 // reusable seam for final Run candidates; it performs no candidate/model
 // mutation and never reopens candidate source from the working tree.
-func FullVerifyProject(ctx context.Context, host Host, invoker Invoker, root string, project *projectwork.Project, runtime projectconfig.Runtime, binding FullVerifyBinding) (FullVerifyReport, error) {
+func FullVerifyProject(ctx context.Context, host Host, invoker Invoker, root string, project *projectvalue.Project, runtime projectconfig.Runtime, binding FullVerifyBinding) (FullVerifyReport, error) {
 	started := time.Now().UTC()
 	if !binding.StartedAt.IsZero() {
 		started = binding.StartedAt.UTC()
@@ -311,7 +313,7 @@ func fullVerifyCommitID(value string) bool {
 	return err == nil && len(decoded)*2 == len(value)
 }
 
-func fullRunChecks(ctx context.Context, root string, project *projectwork.Project, runtime projectconfig.Runtime, report *FullVerifyReport, candidateID string) ([]CheckResult, error) {
+func fullRunChecks(ctx context.Context, root string, project *projectvalue.Project, runtime projectconfig.Runtime, report *FullVerifyReport, candidateID string) ([]CheckResult, error) {
 	selected := map[string]bool{}
 	for _, manager := range project.Report.Managers {
 		selected[manager.ID] = true
@@ -404,7 +406,7 @@ func fullRunChecks(ctx context.Context, root string, project *projectwork.Projec
 	return results, errors.Join(failures...)
 }
 
-func fullAuditManager(ctx context.Context, host Host, invoker Invoker, root string, project *projectwork.Project, runtime projectconfig.Runtime, managerID string, strictness projectconfig.StrictnessProfile, briefing BriefingContext, childAssessments []fullChildAssessment, checkResults []CheckResult, integrationReviews []fullReviewEvidence, checkSource bool, ownerRunID string) (FullManagerAssessment, error) {
+func fullAuditManager(ctx context.Context, host Host, invoker Invoker, root string, project *projectvalue.Project, runtime projectconfig.Runtime, managerID string, strictness projectconfig.StrictnessProfile, briefing BriefingContext, childAssessments []fullChildAssessment, checkResults []CheckResult, integrationReviews []fullReviewEvidence, checkSource bool, ownerRunID string) (FullManagerAssessment, error) {
 	row := FullManagerAssessment{ManagerID: managerID, Status: "incomplete", Assessments: []FullAssessment{}, Findings: []string{}}
 	manager, ok := runtime.Review.Agents[managerID]
 	if !ok {
@@ -550,9 +552,9 @@ func fullAuditManager(ctx context.Context, host Host, invoker Invoker, root stri
 	return row, nil
 }
 
-func freshFullBriefingBindings(root string, view *projectbriefing.Store, modelDigest string, expected map[string]string, revision ...string) error {
+func freshFullBriefingBindings(host Host, root string, view *projectbriefing.Store, modelDigest string, expected map[string]string, revision ...string) error {
 	for managerID, digest := range expected {
-		briefing, err := managerBriefingIn(root, view, modelDigest, managerID, revision...)
+		briefing, err := managerBriefingIn(host, root, view, modelDigest, managerID, revision...)
 		if err != nil {
 			return err
 		}
@@ -572,7 +574,7 @@ func findFullManagerAssessment(rows []FullManagerAssessment, id string) *FullMan
 	return nil
 }
 
-func fullAuditFreshBinding(host Host, root string, project *projectwork.Project, invoker Invoker, runtime projectconfig.Runtime, checkSource bool) error {
+func fullAuditFreshBinding(host Host, root string, project *projectvalue.Project, invoker Invoker, runtime projectconfig.Runtime, checkSource bool) error {
 	if !sameRuntimeSnapshot(project) {
 		return ErrStale
 	}
@@ -589,7 +591,7 @@ func fullAuditFreshBinding(host Host, root string, project *projectwork.Project,
 	return err
 }
 
-func sameRuntimeSnapshot(project *projectwork.Project) bool {
+func sameRuntimeSnapshot(project *projectvalue.Project) bool {
 	if project == nil || project.Snapshot == nil {
 		return false
 	}
@@ -605,7 +607,7 @@ func sameRuntimeSnapshot(project *projectwork.Project) bool {
 	return a == b
 }
 
-func fullManagerFiles(project *projectwork.Project, managerID string) ([]agentexec.Artifact, error) {
+func fullManagerFiles(project *projectvalue.Project, managerID string) ([]agentexec.Artifact, error) {
 	selected := map[string]bool{}
 	for _, file := range project.Report.Files {
 		if file.Owner == managerID && file.Exists {

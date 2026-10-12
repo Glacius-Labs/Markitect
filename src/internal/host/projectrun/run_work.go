@@ -1,5 +1,7 @@
 package projectrun
 
+import "github.com/Glacius-Labs/Markitect/src/internal/modules/projectmodel/projectvalue"
+
 import (
 	"context"
 	"errors"
@@ -337,7 +339,7 @@ func (e *runExecution) runWorkAction(action managerAction, preparedAction prepar
 	return RunReport{}, nil
 }
 
-func validateWorkResponse(task *ManagerTask, children []string, current candidateData, input *Project, limits projectconfig.Limits, proposal agentexec.RunResult, parsed *TaskResponse, candidate *candidateData) error {
+func validateWorkResponse(task *ManagerTask, children []string, current candidateData, input *projectvalue.Project, limits projectconfig.Limits, proposal agentexec.RunResult, parsed *TaskResponse, candidate *candidateData) error {
 	decoded, err := decodeTaskResponse(proposal.Response.ReportJSON, "work", children)
 	if err != nil {
 		return err

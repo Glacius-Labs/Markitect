@@ -1,5 +1,5 @@
-// Package projectcoverage inventories and classifies repository paths without
-// depending on the projectwork frontend or any model provider.
+// Package projectcoverage defines and classifies immutable repository coverage
+// values. It performs no source acquisition or filesystem access.
 package projectcoverage
 
 import (

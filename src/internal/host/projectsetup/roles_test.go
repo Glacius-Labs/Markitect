@@ -1,7 +1,6 @@
 package projectsetup
 
 import (
-	"github.com/Glacius-Labs/Markitect/src/internal/host/projectconfig"
 	"path/filepath"
 	"reflect"
 	"runtime"
@@ -9,8 +8,9 @@ import (
 	"testing"
 
 	"github.com/Glacius-Labs/Markitect/src/internal/host/agentexec"
-	"github.com/Glacius-Labs/Markitect/src/internal/host/projectwork"
+	"github.com/Glacius-Labs/Markitect/src/internal/host/projectconfig"
 	"github.com/Glacius-Labs/Markitect/src/internal/modules/projectmodel"
+	"github.com/Glacius-Labs/Markitect/src/internal/modules/projectmodel/projectvalue"
 	"go.yaml.in/yaml/v3"
 )
 
@@ -42,7 +42,7 @@ func TestBuildRuntimeMixesRoleProfilesAcrossProvidersModelsAndCostModes(t *testi
 	provider := testTool(t, root, "codex.exe", true)
 	provider.Version = "codex-cli 0.162.0"
 	executor := processExecutorTool(t, root)
-	project := &projectwork.Project{Root: root, Report: projectmodel.Report{Managers: []projectmodel.Manager{
+	project := &projectvalue.Project{Root: root, Report: projectmodel.Report{Managers: []projectmodel.Manager{
 		{ID: "root-manager"}, {ID: "orders-manager", Parent: "root-manager"},
 	}}}
 	options := Options{Provider: ProviderCodex, Model: "gpt-6-luna", InputMicrosPerMillion: 7, OutputMicrosPerMillion: 11, MaxCostMicros: 5000,
@@ -99,7 +99,7 @@ func TestBuildRuntimeMixesRoleProfilesAcrossProvidersModelsAndCostModes(t *testi
 func TestBuildRuntimeProcessOnlyProfileNeedsNoNativeInstructions(t *testing.T) {
 	root := t.TempDir()
 	executor := processExecutorTool(t, root)
-	project := &projectwork.Project{Root: root, Report: projectmodel.Report{Managers: []projectmodel.Manager{{ID: "root"}}}}
+	project := &projectvalue.Project{Root: root, Report: projectmodel.Report{Managers: []projectmodel.Manager{{ID: "root"}}}}
 	options := Options{Provider: ProviderProcess, Model: "scripted", ProviderExecutable: executor.Path, CostMode: projectconfig.CostModeUnmetered, MaxCostMicros: 1}
 	found, err := Discover(options)
 	if err != nil {
@@ -128,7 +128,7 @@ func TestBuildRuntimeRejectsInvalidRoleProfiles(t *testing.T) {
 	provider := testTool(t, root, "codex.exe", true)
 	provider.Version = "codex-cli 0.162.0"
 	executor := processExecutorTool(t, root)
-	project := &projectwork.Project{Root: root, Report: projectmodel.Report{Managers: []projectmodel.Manager{{ID: "root"}}}}
+	project := &projectvalue.Project{Root: root, Report: projectmodel.Report{Managers: []projectmodel.Manager{{ID: "root"}}}}
 	base := Options{Provider: ProviderCodex, Model: "gpt-6-luna", InputMicrosPerMillion: 1, OutputMicrosPerMillion: 1, MaxCostMicros: 10}
 	cases := []struct {
 		name  string
@@ -185,7 +185,7 @@ func TestPreviewDiscoversEachRoleExecutableOnce(t *testing.T) {
 		t.Fatalf("preview does not show each role's pinned executable: discovery=%+v roles=%+v", preview.Discovery, preview.Roles)
 	}
 	var config projectconfig.Runtime
-	if err := yaml.Unmarshal([]byte(preview.Mutation.Files[0].Content), &config); err != nil {
+	if err := yaml.Unmarshal([]byte(preview.RuntimeContent), &config); err != nil {
 		t.Fatal(err)
 	}
 	if err := projectconfig.ValidateRuntime(config); err != nil {

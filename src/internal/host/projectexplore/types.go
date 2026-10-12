@@ -3,7 +3,10 @@
 // this package are operational state; they never become an accepted model.
 package projectexplore
 
-import "time"
+import (
+	"github.com/Glacius-Labs/Markitect/src/internal/modules/projectmodel/projectvalue"
+	"time"
+)
 
 const (
 	APIVersion      = "markitect.example.org/project-exploration/v1alpha1"
@@ -61,41 +64,6 @@ type DraftFile struct {
 	Delete  bool   `json:"delete,omitempty"`
 }
 
-// BasisFile binds source bytes which are not adequately represented by Git
-// HEAD alone, such as project configuration, runtime configuration, or state.
-type BasisFile struct {
-	Path   string `json:"path"`
-	Digest string `json:"digest"`
-}
-
-// Binding is supplied by the Host after it has loaded the exact fixed project
-// model and computed the requested work-item scope. Plan identifiers are
-// intentionally absent so this binding remains stable across plan creation.
-type Binding struct {
-	RepositoryRoot        string      `json:"repositoryRoot"`
-	Branch                string      `json:"branch"`
-	Head                  string      `json:"head"`
-	ModelRevision         string      `json:"modelRevision"`
-	ModelAccepted         bool        `json:"modelAccepted"`
-	AcceptancePolicy      string      `json:"acceptancePolicy"`
-	ProjectDigest         string      `json:"projectDigest"`
-	ModelDigest           string      `json:"modelDigest"`
-	SnapshotDigest        string      `json:"snapshotDigest"`
-	SelectionDigest       string      `json:"selectionDigest"`
-	RuntimeDigest         string      `json:"runtimeDigest,omitempty"`
-	BriefingDigest        string      `json:"briefingDigest,omitempty"`
-	ScopeID               string      `json:"scopeId"`
-	ScopeName             string      `json:"scopeName"`
-	Goal                  string      `json:"goal"`
-	Operation             string      `json:"operation"`
-	ManagerIDs            []string    `json:"managerIds"`
-	ResponsibleManagerIDs []string    `json:"responsibleManagerIds"`
-	RequiredArtifacts     []string    `json:"requiredArtifacts"`
-	FileStructure         []string    `json:"fileStructure"`
-	Checks                []string    `json:"checks"`
-	BasisFiles            []BasisFile `json:"basisFiles"`
-}
-
 type StructureAcknowledgement struct {
 	ScopeID         string    `json:"scopeId"`
 	BindingDigest   string    `json:"bindingDigest"`
@@ -146,17 +114,17 @@ type TargetBasis struct {
 
 // WritePlan is an exact preview for creating or CAS-updating one record.
 type WritePlan struct {
-	APIVersion          string      `json:"apiVersion"`
-	RepositoryRoot      string      `json:"repositoryRoot"`
-	Branch              string      `json:"branch"`
-	Head                string      `json:"head"`
-	Binding             Binding     `json:"binding"`
-	BindingDigest       string      `json:"bindingDigest"`
-	VerifyBasis         bool        `json:"verifyBasis"`
-	Path                string      `json:"path"`
-	ExpectedStateDigest string      `json:"expectedStateDigest,omitempty"`
-	Target              TargetBasis `json:"target"`
-	Next                Record      `json:"next"`
-	Digest              string      `json:"digest"`
+	APIVersion          string               `json:"apiVersion"`
+	RepositoryRoot      string               `json:"repositoryRoot"`
+	Branch              string               `json:"branch"`
+	Head                string               `json:"head"`
+	Binding             projectvalue.Binding `json:"binding"`
+	BindingDigest       string               `json:"bindingDigest"`
+	VerifyBasis         bool                 `json:"verifyBasis"`
+	Path                string               `json:"path"`
+	ExpectedStateDigest string               `json:"expectedStateDigest,omitempty"`
+	Target              TargetBasis          `json:"target"`
+	Next                Record               `json:"next"`
+	Digest              string               `json:"digest"`
 	allowCompletion     bool
 }

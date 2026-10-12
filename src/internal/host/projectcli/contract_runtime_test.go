@@ -1,5 +1,11 @@
 package projectcli
 
+import "go.yaml.in/yaml/v3"
+
+import "github.com/Glacius-Labs/Markitect/src/internal/host/projecthistory"
+
+import "github.com/Glacius-Labs/Markitect/src/internal/modules/projectmodel/projectvalue"
+
 import (
 	"context"
 	"encoding/json"
@@ -12,13 +18,11 @@ import (
 
 	"github.com/Glacius-Labs/Markitect/src/internal/host/agentexec"
 	"github.com/Glacius-Labs/Markitect/src/internal/host/projectapp"
-	"github.com/Glacius-Labs/Markitect/src/internal/host/projectbriefing"
 	"github.com/Glacius-Labs/Markitect/src/internal/host/projectexplore"
 	"github.com/Glacius-Labs/Markitect/src/internal/host/projectrun"
 	"github.com/Glacius-Labs/Markitect/src/internal/host/projectwork"
 	"github.com/Glacius-Labs/Markitect/src/internal/modules/projectmodel"
 	"github.com/Glacius-Labs/Markitect/src/internal/testkit"
-	"go.yaml.in/yaml/v3"
 )
 
 const runtimeContractCheck = "TestContractRuntimeRequiredCheckProcess"
@@ -110,7 +114,7 @@ func newRuntimeContract(t *testing.T, surface string, invalidFirst bool) (*contr
 		t.Fatal(err)
 	}
 	for _, file := range initPlan.Files {
-		if file.Path == projectwork.ManifestPath {
+		if file.Path == projectvalue.ManifestPath {
 			repo.Write(file.Path, strings.Replace(file.Content, "coverageMode: full", "coverageMode: selected", 1))
 		} else if file.Path == projectconfig.RuntimePath {
 			repo.Write(file.Path, runtimeContractYAML(checkExe))
@@ -126,17 +130,17 @@ func newRuntimeContract(t *testing.T, surface string, invalidFirst bool) (*contr
 	for _, file := range model {
 		repo.Write(file.path, file.body)
 	}
-	manifestPath := filepath.Join(repo.Dir, filepath.FromSlash(projectwork.ManifestPath))
+	manifestPath := filepath.Join(repo.Dir, filepath.FromSlash(projectvalue.ManifestPath))
 	manifestBytes, err := os.ReadFile(manifestPath)
 	if err != nil {
 		t.Fatal(err)
 	}
-	var manifest projectwork.Config
+	var manifest projectvalue.Config
 	if err := yaml.Unmarshal(manifestBytes, &manifest); err != nil {
 		t.Fatal(err)
 	}
 	manifest.CoverageMode = "selected"
-	manifest.WorkflowMode = projectwork.WorkflowModeEmpty
+	manifest.WorkflowMode = projectvalue.WorkflowModeEmpty
 	manifest.ModelFiles = append(manifest.ModelFiles,
 		".markitect/model/statement.yaml", ".markitect/model/artifact.yaml", ".markitect/model/check.yaml")
 	manifest.InventoryRoots = []string{"src"}
@@ -144,7 +148,7 @@ func newRuntimeContract(t *testing.T, surface string, invalidFirst bool) (*contr
 	if err != nil {
 		t.Fatal(err)
 	}
-	repo.Write(projectwork.ManifestPath, string(manifestBytes))
+	repo.Write(projectvalue.ManifestPath, string(manifestBytes))
 	repo.Write("src/value.txt", "initial\n")
 	repo.Commit("runtime contract fixture")
 	invoker := &contractRuntimeInvoker{invalidFirst: invalidFirst}
@@ -238,20 +242,20 @@ func contractPlanHappy(t *testing.T, surface string) {
 func contractPlanNoWrite(t *testing.T, surface string) {
 	t.Helper()
 	caller, _, repo, invoker := newRuntimeContract(t, surface, false)
-	manifestBytes, err := os.ReadFile(filepath.Join(repo.Dir, filepath.FromSlash(projectwork.ManifestPath)))
+	manifestBytes, err := os.ReadFile(filepath.Join(repo.Dir, filepath.FromSlash(projectvalue.ManifestPath)))
 	if err != nil {
 		t.Fatal(err)
 	}
-	var manifest projectwork.Config
+	var manifest projectvalue.Config
 	if err := yaml.Unmarshal(manifestBytes, &manifest); err != nil {
 		t.Fatal(err)
 	}
-	manifest.WorkflowMode = projectwork.WorkflowModeGuided
+	manifest.WorkflowMode = projectvalue.WorkflowModeGuided
 	manifestBytes, err = yaml.Marshal(manifest)
 	if err != nil {
 		t.Fatal(err)
 	}
-	repo.Write(projectwork.ManifestPath, string(manifestBytes))
+	repo.Write(projectvalue.ManifestPath, string(manifestBytes))
 	managerPath := filepath.Join(repo.Dir, ".markitect", "model", "manager.yaml")
 	managerBytes, err := os.ReadFile(managerPath)
 	if err != nil {
@@ -263,7 +267,7 @@ func contractPlanNoWrite(t *testing.T, surface string) {
 	}
 	repo.Write(".markitect/model/manager.yaml", managerText)
 	repo.Commit("add guided history context")
-	history, err := projectbriefing.ReadAcceptedHistory(repo.Dir, contractGitHead(t, repo.Dir))
+	history, err := projecthistory.ReadAcceptedHistory(repo.Dir, contractGitHead(t, repo.Dir))
 	if err != nil || len(history.Receipt.Bundles) != 1 {
 		t.Fatalf("guided pending accepted history: bundles=%d err=%v", len(history.Receipt.Bundles), err)
 	}
@@ -561,7 +565,8 @@ func contractAcknowledgeExploration(t *testing.T, root string) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	_, _, scopeBinding, readiness, err := projectrun.LoadExplorationReadiness(contractProjectHost(), root, id, scope)
+	readyResult, err := projectapp.NewOperations().Readiness(projectapp.ReadinessOperation{Selection: projectapp.Selection{Root: root}, ExplorationID: id, ScopeID: scope})
+	scopeBinding, readiness := readyResult.Binding, readyResult.Readiness
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -652,5 +657,5 @@ func contractGitHead(t *testing.T, root string) string {
 }
 
 func contractProjectHost() projectrun.Host {
-	return projectrun.Host{Load: projectwork.Load, FromSnapshot: projectwork.FromSnapshot, PlanEdit: projectwork.PlanEdit, ApplyEdit: projectwork.ApplyEdit}
+	return projectapp.NewOperations().Host
 }

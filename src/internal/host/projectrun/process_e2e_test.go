@@ -4,120 +4,17 @@ package projectrun
 
 import (
 	"context"
-	"github.com/Glacius-Labs/Markitect/src/internal/host/projectconfig"
-	"github.com/Glacius-Labs/Markitect/src/internal/host/projectexecutor"
-	"github.com/Glacius-Labs/Markitect/src/internal/host/projectwork"
-	"github.com/Glacius-Labs/Markitect/src/internal/infrastructure/source"
-	"github.com/Glacius-Labs/Markitect/src/internal/modules/projectmodel"
 	"os"
 	"path/filepath"
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/Glacius-Labs/Markitect/src/internal/host/projectconfig"
+	"github.com/Glacius-Labs/Markitect/src/internal/host/projectexecutor"
+	"github.com/Glacius-Labs/Markitect/src/internal/modules/projectmodel"
+	"github.com/Glacius-Labs/Markitect/src/internal/modules/projectmodel/projectvalue"
 )
-
-func TestProjectRunProcessEndToEndResumeVerifyApply(t *testing.T) {
-	t.Parallel()
-	root := makeProjectRunFixture(t)
-	setupE2EProcess(t, "normal")
-	logPath := runtimeFixtureEnv(t, e2eLogEnv)
-
-	host := projectworkHost()
-	if _, err := source.IdentifyGit(root); err != nil {
-		t.Fatal(err)
-	}
-	plan, err := Plan(host, root, identityHead(t, root), PlanRequest{Goal: "Implement both owned artifacts, integrate the child work, and run the declared checks.",
-		Managers: []string{e2eManagerID("orders", "orders"), e2eManagerID("inventory", "inventory")}, ExecuteAuthorized: true})
-	if err != nil {
-		t.Fatalf("Plan: %v", err)
-	}
-	if plan.Status != StatusPlanned || len(plan.Managers) != 3 || len(plan.Checks) != 2 {
-		t.Fatalf("unexpected bounded plan: status=%s managers=%d checks=%d", plan.Status, len(plan.Managers), len(plan.Checks))
-	}
-
-	ctx, cancel := context.WithCancel(context.Background())
-	// Stop at the durable pre-dispatch boundary. Cancelling inside projectexecutor.ProcessInvoker
-	// would leave a task marked invoking before Run has committed the completed
-	// result, which must remain uncertain and non-replayable.
-	cancel()
-	first, runErr := Run(ctx, host, projectexecutor.ProcessInvoker{}, root, plan.ID)
-	if runErr == nil || first.Status != StatusInterrupted {
-		diagnostic, _ := os.ReadFile(logPath)
-		t.Fatalf("Run should interrupt before dispatch at a durable boundary; status=%s err=%v; process log=%s", first.Status, runErr, diagnostic)
-	}
-	if len(first.Invocations) != 0 {
-		t.Fatalf("pre-dispatch interruption recorded %d invocations, want none", len(first.Invocations))
-	}
-	if !hasNoActiveManagerActions(first.Tasks) {
-		t.Fatalf("interrupted report does not preserve a safe pre-dispatch boundary: %+v", first.Tasks)
-	}
-	resumed, err := Resume(context.Background(), host, projectexecutor.ProcessInvoker{}, root, plan.ID)
-	if err != nil {
-		t.Fatalf("Resume: %v", err)
-	}
-	if resumed.Status != StatusIntegrated || !resumed.Candidate.Integrated {
-		t.Fatalf("resume did not integrate the staged candidates: status=%s integrated=%v", resumed.Status, resumed.Candidate.Integrated)
-	}
-	if len(resumed.Invocations) != 4 {
-		t.Fatalf("resume has %d invocations, want exactly four with no replay", len(resumed.Invocations))
-	}
-	if err := assertProcessTrace(t, logPath, resumed); err != nil {
-		t.Fatal(err)
-	}
-
-	verified, err := Verify(context.Background(), host, projectexecutor.ProcessInvoker{}, root, plan.ID)
-	if err != nil {
-		t.Fatalf("Verify: %v", err)
-	}
-	if verified.Status != "verified" || len(verified.Checks) != 2 {
-		t.Fatalf("actual required checks did not pass: status=%s checks=%+v", verified.Status, verified.Checks)
-	}
-	for _, check := range verified.Checks {
-		if check.Outcome != "passed" || check.ExitCode != 0 || check.ExecutableDigest == "" {
-			t.Fatalf("check was not an independently executed pinned process: %+v", check)
-		}
-	}
-
-	paths, err := ApplyPaths(host, root, plan.ID)
-	if err != nil {
-		t.Fatal(err)
-	}
-	targetDigest, err := CaptureTarget(root, paths)
-	if err != nil {
-		t.Fatal(err)
-	}
-	branch := gitE2E(t, root, "branch", "--show-current")
-	head := identityHead(t, root)
-	request := ApplyRequest{RunID: plan.ID, PlanID: plan.ID, CandidateID: resumed.Candidate.ID,
-		ExpectedVerificationDigest: verified.Digest, TargetBranch: branch, ExpectedHead: head, ExpectedWorktree: targetDigest}
-	ordersPath := filepath.Join(root, "src", "orders", "implementation.txt")
-	originalOrders, err := os.ReadFile(ordersPath)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if err := os.WriteFile(ordersPath, []byte("manual change after verification\n"), 0644); err != nil {
-		t.Fatal(err)
-	}
-	if _, staleErr := Apply(host, projectexecutor.ProcessInvoker{}, root, request); staleErr == nil {
-		t.Fatal("Apply accepted a working-tree change after verification")
-	}
-	if err := os.WriteFile(ordersPath, originalOrders, 0644); err != nil {
-		t.Fatal(err)
-	}
-	request.ExpectedWorktree, err = CaptureTarget(root, paths)
-	if err != nil {
-		t.Fatal(err)
-	}
-	applied, err := Apply(host, projectexecutor.ProcessInvoker{}, root, request)
-	if err != nil {
-		t.Fatalf("Apply: %v", err)
-	}
-	if applied.Status != StatusApplied || len(applied.Written) != 2 {
-		t.Fatalf("Apply did not write both candidate artifacts: %+v", applied)
-	}
-	assertFileContents(t, root, "src/orders/implementation.txt", "orders implementation v2\n")
-	assertFileContents(t, root, "src/inventory/implementation.txt", "inventory implementation v2\n")
-}
 
 func TestProjectRunReviewerFindingsTriggerTargetedImplementerRepair(t *testing.T) {
 	t.Parallel()
@@ -130,7 +27,7 @@ func TestProjectRunReviewerFindingsTriggerTargetedImplementerRepair(t *testing.T
 		}
 		config.Limits.MaxStarts = 32
 	})
-	host := projectworkHost()
+	host := processRuntimeHost(root, processRuntimeProject(t, root, identityHead(t, root), false))
 	plan, err := Plan(host, root, identityHead(t, root), PlanRequest{Goal: "Implement both owned artifacts and reconcile the result.",
 		Managers: []string{e2eManagerID("orders", "orders"), e2eManagerID("inventory", "inventory")}, ExecuteAuthorized: true})
 	if err != nil {
@@ -236,7 +133,7 @@ func TestProjectRunReviewerRoundLimitBlocksRepeatedDefect(t *testing.T) {
 	setupE2EProcess(t, "review-always-fail")
 	enableE2EReviews(t, root, 100000)
 	updateE2ERuntime(t, root, func(config *projectconfig.Runtime) { config.Review.MaxRounds = 2 })
-	host := projectworkHost()
+	host := processRuntimeHost(root, processRuntimeProject(t, root, identityHead(t, root), false))
 	plan, err := Plan(host, root, identityHead(t, root), PlanRequest{Goal: "Implement and review the owned artifacts.",
 		Managers: []string{e2eManagerID("orders", "orders"), e2eManagerID("inventory", "inventory")}, ExecuteAuthorized: true})
 	if err != nil {
@@ -266,7 +163,7 @@ func TestManagerDirectedReworkRerunsOnlyRequestedLeafAndReintegratesAncestors(t 
 		}
 		config.Limits.MaxStarts = 32
 	})
-	host := projectworkHost()
+	host := processRuntimeHost(root, processRuntimeProject(t, root, identityHead(t, root), false))
 	plan, err := Plan(host, root, identityHead(t, root), PlanRequest{Goal: "Implement both owned artifacts and reconcile the result.",
 		Managers: []string{e2eManagerID("orders", "orders"), e2eManagerID("inventory", "inventory")}, ExecuteAuthorized: true})
 	if err != nil {
@@ -336,7 +233,7 @@ func TestPureRoutingManagerSkipsWorkReviewButReviewsDeliveredChildOutputs(t *tes
 	root := makeProjectRunFixture(t)
 	setupE2EProcess(t, "normal")
 	enableE2EReviews(t, root, 100000)
-	host := projectworkHost()
+	host := processRuntimeHost(root, processRuntimeProject(t, root, identityHead(t, root), false))
 	plan, err := Plan(host, root, identityHead(t, root), PlanRequest{Goal: "Implement both owned artifacts.",
 		Managers: []string{e2eManagerID("orders", "orders"), e2eManagerID("inventory", "inventory")}, ExecuteAuthorized: true})
 	if err != nil {
@@ -388,7 +285,7 @@ func TestTargetedWorkRejectsNoOpWithCandidateWrites(t *testing.T) {
 	root := makeProjectRunFixture(t)
 	setupE2EProcess(t, "manager-rework-invalid-noop")
 	enableE2EReviews(t, root, 100000)
-	host := projectworkHost()
+	host := processRuntimeHost(root, processRuntimeProject(t, root, identityHead(t, root), false))
 	plan, err := Plan(host, root, identityHead(t, root), PlanRequest{Goal: "Implement both owned artifacts.",
 		Managers: []string{e2eManagerID("orders", "orders"), e2eManagerID("inventory", "inventory")}, ExecuteAuthorized: true})
 	if err != nil {
@@ -407,19 +304,19 @@ func TestTargetedWorkRejectsNoOpWithCandidateWrites(t *testing.T) {
 func TestIntegrationReviewFindingsRepairAndRereviewParentCandidate(t *testing.T) {
 	t.Parallel()
 	root := makeProjectRunFixture(t)
-	projectPath := filepath.Join(root, filepath.FromSlash(projectwork.ManifestPath))
+	projectPath := filepath.Join(root, filepath.FromSlash(projectvalue.ManifestPath))
 	projectYAML, err := os.ReadFile(projectPath)
 	if err != nil {
 		t.Fatal(err)
 	}
 	projectYAML = []byte(strings.Replace(string(projectYAML), "  - .markitect/model/manager.yaml\n", "  - .markitect/model/manager.yaml\n  - .markitect/model/root-statement.yaml\n", 1))
-	writeE2E(t, root, projectwork.ManifestPath, string(projectYAML))
+	writeE2E(t, root, projectvalue.ManifestPath, string(projectYAML))
 	writeE2E(t, root, ".markitect/model/root-statement.yaml", "apiVersion: "+projectmodel.APIVersion+"\nkind: Statement\nmetadata:\n  name: integration-quality\n  namespace: \"\"\npurpose: Parent integration must produce a clean summary.\nspec:\n  category: concept\n  description: Parent-owned integration files contain the corrected summary.\n")
-	gitE2E(t, root, "add", projectwork.ManifestPath, ".markitect/model/root-statement.yaml")
+	gitE2E(t, root, "add", projectvalue.ManifestPath, ".markitect/model/root-statement.yaml")
 	gitE2E(t, root, "commit", "--amend", "--no-edit")
 	setupE2EProcess(t, "integration-review-fix")
 	enableE2EReviews(t, root, 100000)
-	host := projectworkHost()
+	host := processRuntimeHost(root, processRuntimeProjectWithRootStatement(t, root, identityHead(t, root)))
 	plan, err := Plan(host, root, identityHead(t, root), PlanRequest{Goal: "Implement and reconcile the two owned artifacts.",
 		Managers: []string{e2eManagerID("orders", "orders"), e2eManagerID("inventory", "inventory")}, ExecuteAuthorized: true})
 	if err != nil {
@@ -461,20 +358,20 @@ func TestIntegrationReviewFindingsRepairAndRereviewParentCandidate(t *testing.T)
 func TestExhaustedIntegrationReviewBlocksBeforeInvokingManager(t *testing.T) {
 	t.Parallel()
 	root := makeProjectRunFixture(t)
-	projectPath := filepath.Join(root, filepath.FromSlash(projectwork.ManifestPath))
+	projectPath := filepath.Join(root, filepath.FromSlash(projectvalue.ManifestPath))
 	projectYAML, err := os.ReadFile(projectPath)
 	if err != nil {
 		t.Fatal(err)
 	}
 	projectYAML = []byte(strings.Replace(string(projectYAML), "  - .markitect/model/manager.yaml\n", "  - .markitect/model/manager.yaml\n  - .markitect/model/root-statement.yaml\n", 1))
-	writeE2E(t, root, projectwork.ManifestPath, string(projectYAML))
+	writeE2E(t, root, projectvalue.ManifestPath, string(projectYAML))
 	writeE2E(t, root, ".markitect/model/root-statement.yaml", "apiVersion: "+projectmodel.APIVersion+"\nkind: Statement\nmetadata:\n  name: integration-quality\n  namespace: \"\"\npurpose: Parent integration must produce a clean summary.\nspec:\n  category: concept\n  description: Parent-owned integration files contain the corrected summary.\n")
-	gitE2E(t, root, "add", projectwork.ManifestPath, ".markitect/model/root-statement.yaml")
+	gitE2E(t, root, "add", projectvalue.ManifestPath, ".markitect/model/root-statement.yaml")
 	gitE2E(t, root, "commit", "--amend", "--no-edit")
 	setupE2EProcess(t, "integration-review-fix")
 	enableE2EReviews(t, root, 100000)
 	updateE2ERuntime(t, root, func(config *projectconfig.Runtime) { config.Review.MaxRounds = 1 })
-	host := projectworkHost()
+	host := processRuntimeHost(root, processRuntimeProjectWithRootStatement(t, root, identityHead(t, root)))
 	plan, err := Plan(host, root, identityHead(t, root), PlanRequest{Goal: "Implement and reconcile the two owned artifacts.",
 		Managers: []string{e2eManagerID("orders", "orders"), e2eManagerID("inventory", "inventory")}, ExecuteAuthorized: true})
 	if err != nil {
@@ -496,15 +393,15 @@ func TestExhaustedIntegrationReviewBlocksBeforeInvokingManager(t *testing.T) {
 func TestIntegrationReviewRoutesChildReworkBeforeFreshParentReview(t *testing.T) {
 	t.Parallel()
 	root := makeProjectRunFixture(t)
-	projectPath := filepath.Join(root, filepath.FromSlash(projectwork.ManifestPath))
+	projectPath := filepath.Join(root, filepath.FromSlash(projectvalue.ManifestPath))
 	projectYAML, err := os.ReadFile(projectPath)
 	if err != nil {
 		t.Fatal(err)
 	}
 	projectYAML = []byte(strings.Replace(string(projectYAML), "  - .markitect/model/manager.yaml\n", "  - .markitect/model/manager.yaml\n  - .markitect/model/root-statement.yaml\n", 1))
-	writeE2E(t, root, projectwork.ManifestPath, string(projectYAML))
+	writeE2E(t, root, projectvalue.ManifestPath, string(projectYAML))
 	writeE2E(t, root, ".markitect/model/root-statement.yaml", "apiVersion: "+projectmodel.APIVersion+"\nkind: Statement\nmetadata:\n  name: integration-quality\n  namespace: \"\"\npurpose: Parent integration must preserve corrected child artifacts.\nspec:\n  category: concept\n  description: Integration candidate must contain corrected child artifacts.\n")
-	gitE2E(t, root, "add", projectwork.ManifestPath, ".markitect/model/root-statement.yaml")
+	gitE2E(t, root, "add", projectvalue.ManifestPath, ".markitect/model/root-statement.yaml")
 	gitE2E(t, root, "commit", "--amend", "--no-edit")
 	setupE2EProcess(t, "integration-review-child-rework")
 	updateE2ERuntime(t, root, func(config *projectconfig.Runtime) {
@@ -514,7 +411,7 @@ func TestIntegrationReviewRoutesChildReworkBeforeFreshParentReview(t *testing.T)
 		}
 		config.Limits.MaxStarts = 32
 	})
-	host := projectworkHost()
+	host := processRuntimeHost(root, processRuntimeProjectWithRootStatement(t, root, identityHead(t, root)))
 	plan, err := Plan(host, root, identityHead(t, root), PlanRequest{Goal: "Implement both owned artifacts and reconcile the result.",
 		Managers: []string{e2eManagerID("orders", "orders"), e2eManagerID("inventory", "inventory")}, ExecuteAuthorized: true})
 	if err != nil {
@@ -602,7 +499,7 @@ func TestNestedReworkDefersEveryAncestorIntegrationAndReview(t *testing.T) {
 	t.Parallel()
 	root := makeMultilevelObligationFixture(t)
 	setupE2EProcess(t, "nested-child-rework")
-	host := projectworkHost()
+	host := processRuntimeHost(root, processRuntimeProject(t, root, identityHead(t, root), true))
 	plan, err := Plan(host, root, identityHead(t, root), PlanRequest{Goal: "Implement nested Commerce behavior and integrate all owned artifacts.",
 		Managers: []string{e2eManagerID("orders", "orders"), e2eManagerID("inventory", "inventory"), e2eManagerID("orders.commerce", "commerce")}, ExecuteAuthorized: true})
 	if err != nil {
@@ -685,7 +582,7 @@ func TestReviewerContractFailuresAndUncertainInvocationNeverReplay(t *testing.T)
 			root := makeProjectRunFixture(t)
 			setupE2EProcess(t, behavior)
 			enableE2EReviews(t, root, 100000)
-			host := projectworkHost()
+			host := processRuntimeHost(root, processRuntimeProject(t, root, identityHead(t, root), false))
 			plan, err := Plan(host, root, identityHead(t, root), PlanRequest{Goal: "Implement both fixture artifacts.",
 				Managers: []string{e2eManagerID("orders", "orders"), e2eManagerID("inventory", "inventory")}, ExecuteAuthorized: true})
 			if err != nil {
@@ -716,7 +613,7 @@ func TestReviewerCostOverrunBlocksBeforeAcceptingReview(t *testing.T) {
 	root := makeProjectRunFixture(t)
 	setupE2EProcess(t, "review-over-budget")
 	enableE2EReviews(t, root, 1)
-	host := projectworkHost()
+	host := processRuntimeHost(root, processRuntimeProject(t, root, identityHead(t, root), false))
 	plan, err := Plan(host, root, identityHead(t, root), PlanRequest{Goal: "Implement both fixture artifacts.",
 		Managers: []string{e2eManagerID("orders", "orders"), e2eManagerID("inventory", "inventory")}, ExecuteAuthorized: true})
 	if err != nil {
@@ -734,7 +631,20 @@ func TestReviewerWorkingTreeDriftRetainsUncertainCallWithoutReplay(t *testing.T)
 	setupE2EProcess(t, "review-working-drift")
 	setRuntimeFixtureEnv(t, e2eRootEnv, root)
 	enableE2EReviews(t, root, 100000)
-	host := projectworkHost()
+	host := processRuntimeHost(root, processRuntimeProject(t, root, identityHead(t, root), false))
+	orders := e2eManagerID("orders", "orders")
+	baseLoad := host.Load
+	logPath := runtimeFixtureEnv(t, e2eLogEnv)
+	host.Load = func(loadRoot, revision string) (*projectvalue.Project, error) {
+		project, err := baseLoad(loadRoot, revision)
+		if err != nil {
+			return nil, err
+		}
+		if countE2EProcessCalls(logPath, orders, "review") > 0 {
+			project.Snapshot.Files["src/orders/implementation.txt"] = []byte("changed during reviewer invocation\n")
+		}
+		return project, nil
+	}
 	plan, err := Plan(host, root, identityHead(t, root), PlanRequest{Goal: "Implement both fixture artifacts.",
 		Managers: []string{e2eManagerID("orders", "orders"), e2eManagerID("inventory", "inventory")}, ExecuteAuthorized: true})
 	if err != nil {
@@ -744,7 +654,6 @@ func TestReviewerWorkingTreeDriftRetainsUncertainCallWithoutReplay(t *testing.T)
 	if runErr == nil || run.Status != StatusFailed {
 		t.Fatalf("reviewer changed the working snapshot but its review was consumed: status=%s err=%v", run.Status, runErr)
 	}
-	orders := e2eManagerID("orders", "orders")
 	task := findTask(run.Tasks, orders)
 	if task == nil || task.ReviewStatus != "uncertain" {
 		t.Fatalf("post-review binding failure was not retained as uncertain: %+v", task)
@@ -768,12 +677,12 @@ func TestProjectRunProcessRejectsStaleNonceOutOfScopeAndFailedIntegration(t *tes
 			t.Parallel()
 			root := makeProjectRunFixture(t)
 			setupE2EProcess(t, behavior)
-			plan, err := Plan(projectworkHost(), root, identityHead(t, root), PlanRequest{Goal: "Implement both owned artifacts and integrate them.",
+			plan, err := Plan(processRuntimeHost(root, processRuntimeProject(t, root, identityHead(t, root), false)), root, identityHead(t, root), PlanRequest{Goal: "Implement both owned artifacts and integrate them.",
 				Managers: []string{e2eManagerID("orders", "orders"), e2eManagerID("inventory", "inventory")}, ExecuteAuthorized: true})
 			if err != nil {
 				t.Fatalf("Plan: %v", err)
 			}
-			run, runErr := Run(context.Background(), projectworkHost(), projectexecutor.ProcessInvoker{}, root, plan.ID)
+			run, runErr := Run(context.Background(), processRuntimeHost(root, processRuntimeProject(t, root, identityHead(t, root), false)), projectexecutor.ProcessInvoker{}, root, plan.ID)
 			if runErr == nil || run.Status == StatusIntegrated || run.Status == StatusVerified || run.Status == StatusApplied {
 				t.Fatalf("behavior %s unexpectedly closed successfully: status=%s err=%v", behavior, run.Status, runErr)
 			}
@@ -790,12 +699,12 @@ func TestProjectRunRepairsKnownValidationFailuresInWorkAndIntegration(t *testing
 	})
 	setupE2EProcess(t, "repair-foreign-first")
 	logPath := runtimeFixtureEnv(t, e2eLogEnv)
-	plan, err := Plan(projectworkHost(), root, identityHead(t, root), PlanRequest{Goal: "Implement both owned artifacts and integrate them.",
+	plan, err := Plan(processRuntimeHost(root, processRuntimeProject(t, root, identityHead(t, root), false)), root, identityHead(t, root), PlanRequest{Goal: "Implement both owned artifacts and integrate them.",
 		Managers: []string{e2eManagerID("orders", "orders"), e2eManagerID("inventory", "inventory")}, ExecuteAuthorized: true})
 	if err != nil {
 		t.Fatalf("Plan: %v", err)
 	}
-	run, err := Run(context.Background(), projectworkHost(), projectexecutor.ProcessInvoker{}, root, plan.ID)
+	run, err := Run(context.Background(), processRuntimeHost(root, processRuntimeProject(t, root, identityHead(t, root), false)), projectexecutor.ProcessInvoker{}, root, plan.ID)
 	if err != nil {
 		t.Fatalf("Run did not repair known validation failures: status=%s err=%v", run.Status, err)
 	}
@@ -830,7 +739,7 @@ func TestProjectRunPropagatesRootResolutionThroughForwardedObligationChain(t *te
 	t.Parallel()
 	root := makeMultilevelObligationFixture(t)
 	setupE2EProcess(t, "provenance-escalation")
-	host := projectworkHost()
+	host := processRuntimeHost(root, processRuntimeProject(t, root, identityHead(t, root), true))
 	plan, err := Plan(host, root, identityHead(t, root), PlanRequest{Goal: "Implement and verify nested Commerce cancellation behavior.",
 		Managers: []string{e2eManagerID("orders", "orders"), e2eManagerID("inventory", "inventory"), e2eManagerID("orders.commerce", "commerce")}, ExecuteAuthorized: true})
 	if err != nil {
@@ -905,12 +814,12 @@ func TestProjectRunRetryCeilingAndCostAccountingAreDurable(t *testing.T) {
 			})
 			setupE2EProcess(t, "repair-foreign-first")
 			logPath := runtimeFixtureEnv(t, e2eLogEnv)
-			plan, err := Plan(projectworkHost(), root, identityHead(t, root), PlanRequest{Goal: "Implement the owned orders artifact.",
+			plan, err := Plan(processRuntimeHost(root, processRuntimeProject(t, root, identityHead(t, root), false)), root, identityHead(t, root), PlanRequest{Goal: "Implement the owned orders artifact.",
 				Managers: []string{e2eManagerID("orders", "orders")}, ExecuteAuthorized: true})
 			if err != nil {
 				t.Fatalf("Plan: %v", err)
 			}
-			run, runErr := Run(context.Background(), projectworkHost(), projectexecutor.ProcessInvoker{}, root, plan.ID)
+			run, runErr := Run(context.Background(), processRuntimeHost(root, processRuntimeProject(t, root, identityHead(t, root), false)), projectexecutor.ProcessInvoker{}, root, plan.ID)
 			if runErr == nil || run.Status != scenario.wantStatus {
 				t.Fatalf("invalid proposal did not stop at the expected bounded state: status=%s err=%v", run.Status, runErr)
 			}

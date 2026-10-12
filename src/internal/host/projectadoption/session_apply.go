@@ -1,15 +1,15 @@
 package projectadoption
 
+import "github.com/Glacius-Labs/Markitect/src/internal/modules/projectmodel/projectvalue"
+
 import (
 	"errors"
-
-	"github.com/Glacius-Labs/Markitect/src/internal/host/projectwork"
 )
 
 // ApplyAndRecordSessionAdoption derives the plan from immutable session stages,
 // requires the reviewed plan digest, runs the guarded model-only Apply path,
 // then records only the receipt returned by that Apply.
-func ApplyAndRecordSessionAdoption(sourceRoot, targetRoot string, target *projectwork.Project, session BrownfieldSession, iterationID, expectedPlanDigest, schemaDigest, buildDigest string) (BrownfieldSession, AdoptionPlan, AdoptionReceipt, error) {
+func ApplyAndRecordSessionAdoption(sourceRoot, targetRoot string, target *projectvalue.Project, session BrownfieldSession, iterationID, expectedPlanDigest, schemaDigest, buildDigest string) (BrownfieldSession, AdoptionPlan, AdoptionReceipt, error) {
 	if err := ValidateBrownfieldSession(session); err != nil {
 		return BrownfieldSession{}, AdoptionPlan{}, AdoptionReceipt{}, err
 	}

@@ -1,5 +1,7 @@
 package projectadoption
 
+import "github.com/Glacius-Labs/Markitect/src/internal/modules/projectmodel/projectvalue"
+
 import (
 	"encoding/json"
 	"fmt"
@@ -372,7 +374,7 @@ func TestPlanAndApplyAdoptOnlyResolvedModelScope(t *testing.T) {
 		t.Fatalf("plan did not preserve partial scope outcome: %#v", plan)
 	}
 	for _, file := range plan.Edit.Mutation.Files {
-		if file.Path != projectwork.ManifestPath && file.Path != ".markitect/model/orders/statement.yaml" {
+		if file.Path != projectvalue.ManifestPath && file.Path != ".markitect/model/orders/statement.yaml" {
 			t.Fatalf("plan includes non-adopted or noncanonical output %q", file.Path)
 		}
 	}
@@ -481,7 +483,7 @@ func multiScopeDistillation(discovery Discovery, schemaDigest string, scopes []s
 	}
 	for _, id := range fileScopes {
 		report.Proposal.Files = append(report.Proposal.Files, ProposedFile{ScopeID: id, Path: ".markitect/model/" + id + "/statement.yaml",
-			Content: "apiVersion: " + projectwork.APIVersion + "\nkind: Statement\nmetadata:\n  name: " + id + "\n  namespace: " + id + "\npurpose: Scope " + id + "\nspec:\n  category: concept\n  description: Scope " + id + "\n  public: false\n  uses: []\n  requires: []\n"})
+			Content: "apiVersion: " + projectvalue.APIVersion + "\nkind: Statement\nmetadata:\n  name: " + id + "\n  namespace: " + id + "\npurpose: Scope " + id + "\nspec:\n  category: concept\n  description: Scope " + id + "\n  public: false\n  uses: []\n  requires: []\n"})
 	}
 	SealDistillation(&report)
 	return report

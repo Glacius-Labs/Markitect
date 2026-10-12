@@ -6,6 +6,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"github.com/Glacius-Labs/Markitect/src/internal/modules/projectmodel/projectvalue"
 	"io"
 	"io/fs"
 	"path"
@@ -22,38 +23,37 @@ import (
 )
 
 const maxMutationBytes = 4 << 20
-const HumanActor = "user"
 
 // DecodeMutation decodes the closed JSON proposal envelope. Duplicate keys,
 // unknown fields, malformed trailing values, and oversized input are refused.
-func DecodeMutation(data []byte) (Mutation, error) {
+func DecodeMutation(data []byte) (projectvalue.Mutation, error) {
 	if len(data) == 0 || len(data) > maxMutationBytes || !utf8.Valid(data) {
-		return Mutation{}, fmt.Errorf("mutation JSON must be valid UTF-8 between 1 and %d bytes", maxMutationBytes)
+		return projectvalue.Mutation{}, fmt.Errorf("mutation JSON must be valid UTF-8 between 1 and %d bytes", maxMutationBytes)
 	}
 	if err := validateJSONDuplicates(data); err != nil {
-		return Mutation{}, err
+		return projectvalue.Mutation{}, err
 	}
 	decoder := json.NewDecoder(bytes.NewReader(data))
 	decoder.DisallowUnknownFields()
-	var mutation Mutation
+	var mutation projectvalue.Mutation
 	if err := decoder.Decode(&mutation); err != nil {
-		return Mutation{}, fmt.Errorf("invalid mutation JSON: %w", err)
+		return projectvalue.Mutation{}, fmt.Errorf("invalid mutation JSON: %w", err)
 	}
 	var trailing any
 	if err := decoder.Decode(&trailing); err != io.EOF {
 		if err == nil {
-			return Mutation{}, fmt.Errorf("mutation JSON must contain exactly one value")
+			return projectvalue.Mutation{}, fmt.Errorf("mutation JSON must contain exactly one value")
 		}
-		return Mutation{}, fmt.Errorf("invalid trailing mutation JSON: %w", err)
+		return projectvalue.Mutation{}, fmt.Errorf("invalid trailing mutation JSON: %w", err)
 	}
 	return mutation, nil
 }
 
 // EncodeMutation writes the canonical JSON representation used by plan/apply.
-func EncodeMutation(mutation Mutation) ([]byte, error) { return json.Marshal(mutation) }
+func EncodeMutation(mutation projectvalue.Mutation) ([]byte, error) { return json.Marshal(mutation) }
 
 // EncodeEditPlan writes the canonical JSON representation of a reviewed plan.
-func EncodeEditPlan(plan EditPlan) ([]byte, error) { return json.Marshal(plan) }
+func EncodeEditPlan(plan projectvalue.EditPlan) ([]byte, error) { return json.Marshal(plan) }
 
 func validateJSONDuplicates(data []byte) error {
 	decoder := json.NewDecoder(bytes.NewReader(data))
@@ -136,61 +136,61 @@ func validateJSONDuplicates(data []byte) error {
 
 // PlanEdit validates a prospective full project revision against the active
 // model and binds its report, impact, source bytes, schema and tool build.
-func PlanEdit(project *Project, mutation Mutation) (EditPlan, error) {
+func PlanEdit(project *projectvalue.Project, mutation projectvalue.Mutation) (projectvalue.EditPlan, error) {
 	if project == nil || project.Snapshot == nil {
-		return EditPlan{}, fmt.Errorf("active Project is required")
+		return projectvalue.EditPlan{}, fmt.Errorf("active Project is required")
 	}
-	if mutation.APIVersion != APIVersion {
-		return EditPlan{}, fmt.Errorf("mutation apiVersion must be %q", APIVersion)
+	if mutation.APIVersion != projectvalue.APIVersion {
+		return projectvalue.EditPlan{}, fmt.Errorf("mutation apiVersion must be %q", projectvalue.APIVersion)
 	}
 	if mutation.BaseDigest == "" || mutation.BaseDigest != project.Digest {
-		return EditPlan{}, fmt.Errorf("mutation baseDigest does not match the active Project")
+		return projectvalue.EditPlan{}, fmt.Errorf("mutation baseDigest does not match the active Project")
 	}
 	if strings.TrimSpace(mutation.Goal) == "" || mutation.Goal != strings.TrimSpace(mutation.Goal) {
-		return EditPlan{}, fmt.Errorf("mutation goal must be nonempty and have no surrounding whitespace")
+		return projectvalue.EditPlan{}, fmt.Errorf("mutation goal must be nonempty and have no surrounding whitespace")
 	}
 	if len(mutation.Files) == 0 {
-		return EditPlan{}, fmt.Errorf("mutation must contain at least one model or manifest change")
+		return projectvalue.EditPlan{}, fmt.Errorf("mutation must contain at least one model or manifest change")
 	}
 	actor, user, err := resolveActor(project, mutation.Actor)
 	if err != nil {
-		return EditPlan{}, err
+		return projectvalue.EditPlan{}, err
 	}
 	seen := map[string]string{}
 	candidateSnapshot := cloneSnapshot(project.Snapshot)
 	for _, change := range mutation.Files {
-		if change.Path != ManifestPath && change.Path != RuntimePath && !strings.HasPrefix(change.Path, ModelRoot+"/") {
-			return EditPlan{}, fmt.Errorf("mutation path %q is outside the selected project model and manifest", change.Path)
+		if change.Path != projectvalue.ManifestPath && change.Path != projectvalue.RuntimePath && !strings.HasPrefix(change.Path, projectvalue.ModelRoot+"/") {
+			return projectvalue.EditPlan{}, fmt.Errorf("mutation path %q is outside the selected project model and manifest", change.Path)
 		}
 		if err := validateRepoPath(change.Path); err != nil {
-			return EditPlan{}, fmt.Errorf("mutation path %q: %w", change.Path, err)
+			return projectvalue.EditPlan{}, fmt.Errorf("mutation path %q: %w", change.Path, err)
 		}
 		if old, ok := seen[strings.ToLower(change.Path)]; ok {
-			return EditPlan{}, fmt.Errorf("mutation repeats or case-aliases paths %q and %q", old, change.Path)
+			return projectvalue.EditPlan{}, fmt.Errorf("mutation repeats or case-aliases paths %q and %q", old, change.Path)
 		}
 		seen[strings.ToLower(change.Path)] = change.Path
-		if change.Path == RuntimePath && !user {
+		if change.Path == projectvalue.RuntimePath && !user {
 			root := nearestManager(project.Report.Managers, "")
 			if root == nil || root.Namespace != "" || actor == nil || actor.ID != root.ID {
-				return EditPlan{}, fmt.Errorf("only the explicit user actor or active root Manager may update runtime configuration")
+				return projectvalue.EditPlan{}, fmt.Errorf("only the explicit user actor or active root Manager may update runtime configuration")
 			}
 		}
 		if change.Delete {
-			if change.Path == ManifestPath || change.Path == RuntimePath || change.Content != "" {
-				return EditPlan{}, fmt.Errorf("only model files may be deleted and delete content must be empty")
+			if change.Path == projectvalue.ManifestPath || change.Path == projectvalue.RuntimePath || change.Content != "" {
+				return projectvalue.EditPlan{}, fmt.Errorf("only model files may be deleted and delete content must be empty")
 			}
 			if !selectedModelFiles(project.Config)[change.Path] {
-				return EditPlan{}, fmt.Errorf("cannot delete unselected model path %q", change.Path)
+				return projectvalue.EditPlan{}, fmt.Errorf("cannot delete unselected model path %q", change.Path)
 			}
 			delete(candidateSnapshot.Files, change.Path)
 			delete(candidateSnapshot.Modes, change.Path)
 		} else {
 			if !utf8.ValidString(change.Content) || len(change.Content) == 0 || len(change.Content) > source.DefaultMaxFileBytes {
-				return EditPlan{}, fmt.Errorf("mutation content for %q must be nonempty UTF-8 and within the source file limit", change.Path)
+				return projectvalue.EditPlan{}, fmt.Errorf("mutation content for %q must be nonempty UTF-8 and within the source file limit", change.Path)
 			}
-			if change.Path == RuntimePath {
+			if change.Path == projectvalue.RuntimePath {
 				if err := validateRuntimeEditYAML(change.Content); err != nil {
-					return EditPlan{}, err
+					return projectvalue.EditPlan{}, err
 				}
 			}
 			candidateSnapshot.Files[change.Path] = []byte(change.Content)
@@ -199,16 +199,16 @@ func PlanEdit(project *Project, mutation Mutation) (EditPlan, error) {
 			}
 		}
 	}
-	_, changedManifest := seen[strings.ToLower(ManifestPath)]
+	_, changedManifest := seen[strings.ToLower(projectvalue.ManifestPath)]
 	candidateConfig := project.Config
 	if changedManifest {
-		manifest := candidateSnapshot.Files[ManifestPath]
+		manifest := candidateSnapshot.Files[projectvalue.ManifestPath]
 		decoded, decodeErr := DecodeConfig(manifest)
 		if decodeErr != nil {
-			return EditPlan{}, fmt.Errorf("prospective project manifest: %w", decodeErr)
+			return projectvalue.EditPlan{}, fmt.Errorf("prospective project manifest: %w", decodeErr)
 		}
 		if decoded.Name != project.Config.Name {
-			return EditPlan{}, fmt.Errorf("project identity is fixed by the active Project")
+			return projectvalue.EditPlan{}, fmt.Errorf("project identity is fixed by the active Project")
 		}
 		scopeChanged := !reflect.DeepEqual(decoded.InventoryRoots, project.Config.InventoryRoots) ||
 			!reflect.DeepEqual(decoded.Exclusions, project.Config.Exclusions) ||
@@ -218,14 +218,14 @@ func PlanEdit(project *Project, mutation Mutation) (EditPlan, error) {
 			decoded.AcceptancePolicy != project.Config.AcceptancePolicy ||
 			decoded.DocumentPath != project.Config.DocumentPath
 		if scopeChanged && !mayChangeInventoryScope(project, actor, user) {
-			return EditPlan{}, fmt.Errorf("only the explicit user actor or active root Manager may change project scope or acceptance policy")
+			return projectvalue.EditPlan{}, fmt.Errorf("only the explicit user actor or active root Manager may change project scope or acceptance policy")
 		}
 		candidateConfig = decoded
 	}
 	if !reflect.DeepEqual(candidateConfig.InventoryRoots, project.Config.InventoryRoots) || !reflect.DeepEqual(candidateConfig.Exclusions, project.Config.Exclusions) || candidateConfig.CoverageMode != project.Config.CoverageMode {
 		inventory, inventoryErr := loadConfiguredInventory(project.Root, project.Revision, project.Provisional, candidateConfig)
 		if inventoryErr != nil {
-			return EditPlan{}, fmt.Errorf("acquire prospective selected inventory: %w", inventoryErr)
+			return projectvalue.EditPlan{}, fmt.Errorf("acquire prospective selected inventory: %w", inventoryErr)
 		}
 		for file := range candidateSnapshot.Files {
 			if !strings.HasPrefix(file, ".markitect/") {
@@ -240,7 +240,7 @@ func PlanEdit(project *Project, mutation Mutation) (EditPlan, error) {
 	}
 	for _, file := range candidateConfig.ModelFiles {
 		if _, present := candidateSnapshot.Files[file]; !present {
-			return EditPlan{}, fmt.Errorf("prospective manifest selects missing model file %q", file)
+			return projectvalue.EditPlan{}, fmt.Errorf("prospective manifest selects missing model file %q", file)
 		}
 	}
 	selected := map[string]bool{}
@@ -248,52 +248,52 @@ func PlanEdit(project *Project, mutation Mutation) (EditPlan, error) {
 		selected[file] = true
 	}
 	for file := range candidateSnapshot.Files {
-		if strings.HasPrefix(file, ModelRoot+"/") && !selected[file] {
-			return EditPlan{}, fmt.Errorf("prospective snapshot retains unselected model file %q; remove it from the candidate or select it explicitly", file)
+		if strings.HasPrefix(file, projectvalue.ModelRoot+"/") && !selected[file] {
+			return projectvalue.EditPlan{}, fmt.Errorf("prospective snapshot retains unselected model file %q; remove it from the candidate or select it explicitly", file)
 		}
 	}
 	for _, change := range mutation.Files {
-		if change.Path == ManifestPath || change.Path == RuntimePath {
+		if change.Path == projectvalue.ManifestPath || change.Path == projectvalue.RuntimePath {
 			continue
 		}
 		namespace, namespaceErr := namespaceForModelPath(change.Path)
 		if namespaceErr != nil {
-			return EditPlan{}, namespaceErr
+			return projectvalue.EditPlan{}, namespaceErr
 		}
 		if !user {
 			if err := authorizeModelPath(project.Report, actor, namespace, change.Path); err != nil {
-				return EditPlan{}, err
+				return projectvalue.EditPlan{}, err
 			}
 		}
 	}
 	if !user {
 		for _, change := range mutation.Files {
-			if change.Path == ManifestPath {
+			if change.Path == projectvalue.ManifestPath {
 				root := nearestManager(project.Report.Managers, "")
 				if root == nil || actor.ID != root.ID {
-					return EditPlan{}, fmt.Errorf("only the active root Manager or user may update model selection")
+					return projectvalue.EditPlan{}, fmt.Errorf("only the active root Manager or user may update model selection")
 				}
 			}
 		}
 	}
 	prospective, err := FromSnapshot(project.Root, candidateSnapshot)
 	if err != nil {
-		return EditPlan{}, fmt.Errorf("prospective project model is invalid: %w", err)
+		return projectvalue.EditPlan{}, fmt.Errorf("prospective project model is invalid: %w", err)
 	}
 	if prospective.Report.Status == "failed" {
-		return EditPlan{}, fmt.Errorf("prospective project report failed structural validation")
+		return projectvalue.EditPlan{}, fmt.Errorf("prospective project report failed structural validation")
 	}
 	if err := checkManagerChanges(project.Report, prospective.Report, actor, user); err != nil {
-		return EditPlan{}, err
+		return projectvalue.EditPlan{}, err
 	}
 	if !user {
 		if err := preserveRequiredArtifacts(project.Report, prospective.Report); err != nil {
-			return EditPlan{}, err
+			return projectvalue.EditPlan{}, err
 		}
 	}
 	impact := projectmodel.Impact(project.Report, prospective.Report)
-	plan := EditPlan{
-		APIVersion:      APIVersion,
+	plan := projectvalue.EditPlan{
+		APIVersion:      projectvalue.APIVersion,
 		BaseDigest:      project.Digest,
 		Mutation:        mutation,
 		CandidateDigest: prospective.Digest,
@@ -302,7 +302,7 @@ func PlanEdit(project *Project, mutation Mutation) (EditPlan, error) {
 	}
 	plan.Digest, err = editPlanDigest(plan)
 	if err != nil {
-		return EditPlan{}, err
+		return projectvalue.EditPlan{}, err
 	}
 	return plan, nil
 }
@@ -338,7 +338,7 @@ func validateRuntimeEditYAML(content string) error {
 
 // ApplyEdit recomputes and applies an exact mutation only while the active
 // selected bytes still match the reviewed base digest.
-func ApplyEdit(root string, plan EditPlan, expected string) (EditPlan, error) {
+func ApplyEdit(root string, plan projectvalue.EditPlan, expected string) (projectvalue.EditPlan, error) {
 	if expected == "" || expected != plan.BaseDigest {
 		return plan, fmt.Errorf("expected digest must equal the reviewed plan baseDigest")
 	}
@@ -377,7 +377,7 @@ func ApplyEdit(root string, plan EditPlan, expected string) (EditPlan, error) {
 	}
 	candidateConfig := current.Config
 	for _, change := range plan.Mutation.Files {
-		if change.Path == ManifestPath {
+		if change.Path == projectvalue.ManifestPath {
 			candidateConfig, err = DecodeConfig([]byte(change.Content))
 			if err != nil {
 				return plan, fmt.Errorf("decode reviewed candidate manifest: %w", err)
@@ -444,7 +444,7 @@ func ApplyEdit(root string, plan EditPlan, expected string) (EditPlan, error) {
 		}
 	}
 	validateBasis := func() error {
-		var latest *Project
+		var latest *projectvalue.Project
 		var loadErr error
 		if current.Provisional {
 			latest, loadErr = Load(root, "")
@@ -483,8 +483,8 @@ func ApplyEdit(root string, plan EditPlan, expected string) (EditPlan, error) {
 	return plan, nil
 }
 
-func resolveActor(project *Project, id string) (*projectmodel.Manager, bool, error) {
-	if id == HumanActor {
+func resolveActor(project *projectvalue.Project, id string) (*projectmodel.Manager, bool, error) {
+	if id == projectvalue.HumanActor {
 		return nil, true, nil
 	}
 	for i := range project.Report.Managers {
@@ -496,7 +496,7 @@ func resolveActor(project *Project, id string) (*projectmodel.Manager, bool, err
 	return nil, false, fmt.Errorf("actor %q is neither an active Manager ID nor the reserved user actor", id)
 }
 
-func mayChangeInventoryScope(project *Project, actor *projectmodel.Manager, user bool) bool {
+func mayChangeInventoryScope(project *projectvalue.Project, actor *projectmodel.Manager, user bool) bool {
 	if user {
 		return true
 	}
@@ -657,7 +657,7 @@ func cloneSnapshot(input *snapshot.Snapshot) *snapshot.Snapshot {
 	return result
 }
 
-func editPlanDigest(plan EditPlan) (string, error) {
+func editPlanDigest(plan projectvalue.EditPlan) (string, error) {
 	plan.Digest = ""
 	data, err := json.Marshal(plan)
 	if err != nil {
@@ -667,7 +667,7 @@ func editPlanDigest(plan EditPlan) (string, error) {
 	return hex.EncodeToString(digest[:]), nil
 }
 
-func selectedModelFiles(config Config) map[string]bool {
+func selectedModelFiles(config projectvalue.Config) map[string]bool {
 	result := make(map[string]bool, len(config.ModelFiles))
 	for _, file := range config.ModelFiles {
 		result[file] = true

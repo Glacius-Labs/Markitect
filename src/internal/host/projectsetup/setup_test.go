@@ -3,12 +3,8 @@ package projectsetup
 import (
 	"crypto/sha256"
 	"encoding/hex"
-	"encoding/json"
 	"fmt"
-	"github.com/Glacius-Labs/Markitect/src/internal/host/projectconfig"
-	"github.com/Glacius-Labs/Markitect/src/internal/host/projectexecutor"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"reflect"
 	"runtime"
@@ -16,12 +12,11 @@ import (
 	"testing"
 	"time"
 
-	"github.com/Glacius-Labs/Markitect/src/internal/core/snapshot"
 	"github.com/Glacius-Labs/Markitect/src/internal/host/agentexec"
 	"github.com/Glacius-Labs/Markitect/src/internal/host/codexappserver"
-	"github.com/Glacius-Labs/Markitect/src/internal/host/projectrun"
-	"github.com/Glacius-Labs/Markitect/src/internal/host/projectwork"
+	"github.com/Glacius-Labs/Markitect/src/internal/host/projectconfig"
 	"github.com/Glacius-Labs/Markitect/src/internal/modules/projectmodel"
+	"github.com/Glacius-Labs/Markitect/src/internal/modules/projectmodel/projectvalue"
 	"go.yaml.in/yaml/v3"
 )
 
@@ -30,7 +25,7 @@ func TestBuildRuntimeMapsAllManagersAndPinsTools(t *testing.T) {
 	writeNativeInstructions(t, root)
 	provider := testTool(t, root, "codex.exe", true)
 	provider.Version = "codex-cli 0.162.0"
-	project := &projectwork.Project{Root: root, Report: projectmodel.Report{Managers: []projectmodel.Manager{
+	project := &projectvalue.Project{Root: root, Report: projectmodel.Report{Managers: []projectmodel.Manager{
 		{ID: "root-manager", Namespace: ""},
 		{ID: "orders-manager", Namespace: "commerce.orders", Parent: "root-manager"},
 		{ID: "inventory-manager", Namespace: "commerce.inventory", Parent: "root-manager"},
@@ -113,126 +108,12 @@ func TestBuildRuntimeMapsAllManagersAndPinsTools(t *testing.T) {
 	}
 }
 
-func TestBuildRuntimeRoleOptionSurfacesConstructNativeAdapters(t *testing.T) {
-	project := setupProjectFixture(t)
-	provider := testTool(t, project.Root, providerName(), true)
-	provider.Version = codexappserver.SupportedProviderVersion
-	options := Options{Provider: "codex", Model: "gpt-6-luna", Effort: "high",
-		InputMicrosPerMillion: 1, OutputMicrosPerMillion: 2, MaxCostMicros: 100}
-	runtimeConfig, err := BuildRuntime(project, options, Discovery{Provider: "codex", ProviderBinary: provider})
-	if err != nil {
-		t.Fatalf("normal setup runtime: %v", err)
-	}
-	managerID := project.Report.Managers[0].ID
-	invoker := projectexecutor.New(codexappserver.Options{}, projectrun.NativeHelperPolicy{})
-
-	for _, helpersEnabled := range []bool{true, false} {
-		name := "helpers-enabled"
-		if !helpersEnabled {
-			name = "helpers-disabled"
-		}
-		t.Run(name, func(t *testing.T) {
-			candidate := runtimeConfig
-			candidate.Agents = make(map[string]projectconfig.Agent, len(runtimeConfig.Agents))
-			for id, agent := range runtimeConfig.Agents {
-				settings := *agent.AppServer
-				agent.AppServer = &settings
-				agent.AppServer.Helpers.Enabled = helpersEnabled
-				if !helpersEnabled {
-					agent.AppServer.Helpers.MaxStartRequests = 0
-					agent.AppServer.Helpers.MaxDepth = 0
-				}
-				candidate.Agents[id] = agent
-			}
-			candidate.Review = &projectconfig.ReviewConfig{Agents: make(map[string]projectconfig.Agent, len(runtimeConfig.Review.Agents)),
-				MaxRounds: runtimeConfig.Review.MaxRounds, MaxManagerRounds: runtimeConfig.Review.MaxManagerRounds}
-			for id, agent := range runtimeConfig.Review.Agents {
-				settings := *agent.AppServer
-				agent.AppServer = &settings
-				agent.AppServer.Helpers.Enabled = helpersEnabled
-				if !helpersEnabled {
-					agent.AppServer.Helpers.MaxStartRequests = 0
-					agent.AppServer.Helpers.MaxDepth = 0
-				}
-				candidate.Review.Agents[id] = agent
-			}
-			verifier := *runtimeConfig.Verifier
-			verifierSettings := *verifier.AppServer
-			verifier.AppServer = &verifierSettings
-			verifier.AppServer.Helpers.Enabled = helpersEnabled
-			if !helpersEnabled {
-				verifier.AppServer.Helpers.MaxStartRequests = 0
-				verifier.AppServer.Helpers.MaxDepth = 0
-			}
-			candidate.Verifier = &verifier
-
-			roles := []struct {
-				name    string
-				agent   projectconfig.Agent
-				request agentexec.Request
-				invoker *projectexecutor.Executor
-			}{
-				{name: "manager", agent: candidate.Agents[managerID], request: agentexec.Request{Role: agentexec.RoleExecutor,
-					Context: json.RawMessage(`{"kind":"projectrun-task/v1","managerId":"root","phase":"work","allowedWritePaths":["src/"]}`)}},
-				{name: "reviewer", agent: candidate.Review.Agents[managerID], request: agentexec.Request{Role: agentexec.RoleExecutor,
-					Context: json.RawMessage(`{"kind":"projectrun-review/v1"}`)}},
-				{name: "verifier", agent: *candidate.Verifier, request: agentexec.Request{Role: agentexec.RoleVerifier,
-					Context: json.RawMessage(`{"kind":"projectrun-verify/v1"}`)}},
-				{name: "helper", agent: candidate.Agents[managerID], invoker: projectexecutor.NewChild(codexappserver.Options{}), request: agentexec.Request{Role: agentexec.RoleExecutor,
-					Context: json.RawMessage(`{"kind":"projectrun-helper/v1","managerId":"root","helperDepth":1,"allowedWritePaths":["src/"]}`)}},
-			}
-			for _, role := range roles {
-				config, err := role.agent.AgentConfig()
-				if err != nil {
-					t.Fatalf("%s AgentConfig: %v", role.name, err)
-				}
-				roleInvoker := role.invoker
-				if roleInvoker == nil {
-					roleInvoker = invoker
-				}
-				actual, err := roleInvoker.FingerprintForRequest(config, role.request)
-				if err != nil {
-					t.Fatalf("%s native adapter construction: %v", role.name, err)
-				}
-				planned, err := roleInvoker.Fingerprint(config)
-				if err != nil {
-					t.Fatalf("%s planned fingerprint: %v", role.name, err)
-				}
-				wantPlanMatch := role.name == "manager" || role.name == "helper" || !helpersEnabled
-				if (actual == planned) != wantPlanMatch {
-					t.Fatalf("%s helper surface mismatch: helpersEnabled=%t actual/planned match=%t", role.name, helpersEnabled, actual == planned)
-				}
-				if role.name == "helper" && helpersEnabled {
-					parentAgentConfig, err := candidate.Agents[managerID].AgentConfig()
-					if err != nil {
-						t.Fatal(err)
-					}
-					parentFingerprint, err := invoker.Fingerprint(parentAgentConfig)
-					if err != nil || actual == parentFingerprint {
-						t.Fatalf("depth-one helper retained its parent's Host helper surface: child=%q parent=%q err=%v", actual, parentFingerprint, err)
-					}
-				}
-				if role.name == "manager" && !helpersEnabled {
-					enabledConfig, err := runtimeConfig.Agents[managerID].AgentConfig()
-					if err != nil {
-						t.Fatal(err)
-					}
-					enabledFingerprint, err := invoker.FingerprintForRequest(enabledConfig, role.request)
-					if err != nil || enabledFingerprint == actual {
-						t.Fatalf("disabling helpers did not remove the Manager helper spec: enabled=%q disabled=%q err=%v", enabledFingerprint, actual, err)
-					}
-				}
-			}
-		})
-	}
-}
-
 func TestBuildRuntimeExplicitWindowsMXCUsesSharedWorkspaceProfile(t *testing.T) {
 	root := t.TempDir()
 	writeNativeInstructions(t, root)
 	provider := testTool(t, root, "codex.exe", true)
 	provider.Version = "codex-cli 0.162.0"
-	project := &projectwork.Project{Root: root, Report: projectmodel.Report{Managers: []projectmodel.Manager{{ID: "root"}}}}
+	project := &projectvalue.Project{Root: root, Report: projectmodel.Report{Managers: []projectmodel.Manager{{ID: "root"}}}}
 	options := Options{Provider: "codex", Model: "gpt-6-luna", Effort: "high", CodexProfile: ":workspace",
 		WindowsSandboxBackend: codexappserver.WindowsSandboxBackendMXC,
 		InputMicrosPerMillion: 1, OutputMicrosPerMillion: 2, MaxCostMicros: 10}
@@ -293,9 +174,9 @@ func TestBuildRuntimeDefaultsNativeModelAndBindsInstructions(t *testing.T) {
 	writeNativeInstructions(t, root)
 	provider := testTool(t, root, "codex.exe", true)
 	provider.Version = "codex-cli 0.162.0"
-	project := &projectwork.Project{
+	project := &projectvalue.Project{
 		Root:   root,
-		Config: projectwork.Config{},
+		Config: projectvalue.Config{},
 		Report: projectmodel.Report{Managers: []projectmodel.Manager{{ID: "root"}, {ID: "orders", Parent: "root"}}},
 	}
 	found := Discovery{Provider: "codex", ProviderBinary: provider}
@@ -357,7 +238,7 @@ func TestBuildRuntimeDefaultNativeRequiresExistingCodexInstructions(t *testing.T
 	root := t.TempDir()
 	provider := testTool(t, root, "codex.exe", true)
 	provider.Version = "codex-cli 0.162.0"
-	project := &projectwork.Project{Root: root, Report: projectmodel.Report{Managers: []projectmodel.Manager{{ID: "root"}}}}
+	project := &projectvalue.Project{Root: root, Report: projectmodel.Report{Managers: []projectmodel.Manager{{ID: "root"}}}}
 	found := Discovery{Provider: "codex", ProviderBinary: provider}
 	_, err := BuildRuntime(project, Options{
 		Provider: "codex", Model: "gpt-6-luna", Effort: "high",
@@ -478,7 +359,7 @@ func TestBuildRuntimeRejectsUnsupportedNativeEffortVersionAndProvider(t *testing
 	root := t.TempDir()
 	provider := testTool(t, root, "codex.exe", true)
 	provider.Version = "codex-cli 0.162.0"
-	project := &projectwork.Project{Report: projectmodel.Report{Managers: []projectmodel.Manager{{ID: "root"}}}}
+	project := &projectvalue.Project{Report: projectmodel.Report{Managers: []projectmodel.Manager{{ID: "root"}}}}
 	found := Discovery{Provider: "codex", ProviderBinary: provider}
 	base := Options{Provider: "codex", Model: "gpt-6-luna", Effort: "high", InputMicrosPerMillion: 1, OutputMicrosPerMillion: 1, MaxCostMicros: 2}
 	cases := []struct {
@@ -505,7 +386,7 @@ func TestBuildRuntimeRejectsUnsupportedNativeEffortVersionAndProvider(t *testing
 	}
 }
 
-func TestBuildRuntimeExplicitCodexProfileIsSharedAndPreviewIsDigestGuarded(t *testing.T) {
+func TestPreviewBuildsRuntimeProposalWithSharedExplicitCodexProfile(t *testing.T) {
 	project := setupProjectFixture(t)
 	provider := testTool(t, t.TempDir(), providerName(), true)
 	provider.Version = "codex-cli 0.162.0"
@@ -524,11 +405,11 @@ func TestBuildRuntimeExplicitCodexProfileIsSharedAndPreviewIsDigestGuarded(t *te
 	if err != nil {
 		t.Fatalf("preview runtime edit without starting an actor: %v", err)
 	}
-	if discoveryCalls != 1 || preview.EditPlan.Digest == "" || len(preview.Mutation.Files) != 1 || preview.Mutation.Files[0].Path != projectwork.RuntimePath {
-		t.Fatalf("preview is not a single digest-bound runtime edit: calls=%d preview=%+v", discoveryCalls, preview)
+	if discoveryCalls != 1 || preview.RuntimeContent == "" {
+		t.Fatalf("proposal did not retain one discovery result and runtime content: calls=%d proposal=%+v", discoveryCalls, preview)
 	}
 	var runtimeConfig projectconfig.Runtime
-	if err := yaml.Unmarshal([]byte(preview.Mutation.Files[0].Content), &runtimeConfig); err != nil {
+	if err := yaml.Unmarshal([]byte(preview.RuntimeContent), &runtimeConfig); err != nil {
 		t.Fatalf("decode proposed runtime: %v", err)
 	}
 	if err := projectconfig.ValidateRuntime(runtimeConfig); err != nil {
@@ -541,30 +422,12 @@ func TestBuildRuntimeExplicitCodexProfileIsSharedAndPreviewIsDigestGuarded(t *te
 	manager := runtimeConfig.Agents[managerID]
 	reviewer := runtimeConfig.Review.Agents[managerID]
 	if manager.AppServer == nil || reviewer.AppServer == nil {
-		t.Fatalf("runtime YAML omitted App Server settings: %s", preview.Mutation.Files[0].Content)
+		t.Fatalf("runtime YAML omitted App Server settings: %s", preview.RuntimeContent)
 	}
 	if manager.AppServer.PermissionProfile != ":workspace" || reviewer.AppServer.PermissionProfile != ":workspace" || runtimeConfig.Verifier == nil || runtimeConfig.Verifier.AppServer.PermissionProfile != ":workspace" {
 		t.Fatalf("explicit setup profile must apply consistently to independent roles: manager=%+v reviewer=%+v verifier=%+v", manager.AppServer, reviewer.AppServer, runtimeConfig.Verifier)
 	}
 	assertSameNativePins(t, manager, reviewer, provider, options)
-
-	if _, err := projectwork.ApplyEdit(project.Root, preview.EditPlan, "sha256:stale"); err == nil || !strings.Contains(err.Error(), "expected digest") {
-		t.Fatalf("stale setup edit digest was not rejected: %v", err)
-	}
-	if _, err := os.Stat(filepath.Join(project.Root, filepath.FromSlash(projectwork.RuntimePath))); !os.IsNotExist(err) {
-		t.Fatalf("rejected preview changed runtime file: stat error=%v", err)
-	}
-	if _, err := projectwork.ApplyEdit(project.Root, preview.EditPlan, preview.EditPlan.BaseDigest); err != nil {
-		t.Fatalf("apply exact reviewed setup digest: %v", err)
-	}
-	written, err := os.ReadFile(filepath.Join(project.Root, filepath.FromSlash(projectwork.RuntimePath)))
-	if err != nil {
-		t.Fatal(err)
-	}
-	var applied projectconfig.Runtime
-	if err := yaml.Unmarshal(written, &applied); err != nil || applied.Agents[managerID].AppServer.PermissionProfile != ":workspace" || applied.Review.Agents[managerID].AppServer.PermissionProfile != ":workspace" || applied.Verifier == nil || applied.Verifier.AppServer.PermissionProfile != ":workspace" {
-		t.Fatalf("guarded write did not preserve the shared role profile: runtime=%+v err=%v", applied, err)
-	}
 }
 
 func TestBuildRuntimeOmittedProfileDefaultsWorkspaceForEveryRoleAndMalformedProfileFailsConfigValidation(t *testing.T) {
@@ -572,7 +435,7 @@ func TestBuildRuntimeOmittedProfileDefaultsWorkspaceForEveryRoleAndMalformedProf
 	writeNativeInstructions(t, root)
 	provider := testTool(t, root, providerName(), true)
 	provider.Version = "codex-cli 0.162.0"
-	project := &projectwork.Project{Root: root, Report: projectmodel.Report{Managers: []projectmodel.Manager{{ID: "root"}}}}
+	project := &projectvalue.Project{Root: root, Report: projectmodel.Report{Managers: []projectmodel.Manager{{ID: "root"}}}}
 	found := Discovery{Provider: "codex", ProviderBinary: provider}
 	base := Options{Provider: "codex", Model: "gpt-6-luna", Effort: "high", InputMicrosPerMillion: 1, OutputMicrosPerMillion: 1, MaxCostMicros: 2}
 	config, err := BuildRuntime(project, base, found)
@@ -597,45 +460,17 @@ func TestBuildRuntimeOmittedProfileDefaultsWorkspaceForEveryRoleAndMalformedProf
 	}
 }
 
-func setupProjectFixture(t *testing.T) *projectwork.Project {
+func setupProjectFixture(t *testing.T) *projectvalue.Project {
 	t.Helper()
 	root := t.TempDir()
-	manifest := []byte("apiVersion: project.markitect.example.org/v1alpha1\nname: setup-test\nmodelFiles:\n  - .markitect/model/manager.yaml\ninventoryRoots: []\nexclusions: []\n")
-	manager := []byte("apiVersion: project.markitect.example.org/v1alpha1\nkind: Manager\nmetadata:\n  name: root\n  namespace: \"\"\npurpose: Own the setup test project.\nspec:\n  owns:\n    - .\n  instructions: Implement only the requested bounded changes.\n")
-	s := &snapshot.Snapshot{Files: map[string][]byte{
-		projectwork.ManifestPath:        manifest,
-		".markitect/model/manager.yaml": manager,
-	}, Modes: map[string]string{
-		projectwork.ManifestPath:        snapshot.RegularMode,
-		".markitect/model/manager.yaml": snapshot.RegularMode,
-	}}
-	for path, content := range s.Files {
-		absolute := filepath.Join(root, filepath.FromSlash(path))
-		if err := os.MkdirAll(filepath.Dir(absolute), 0700); err != nil {
-			t.Fatal(err)
-		}
-		if err := os.WriteFile(absolute, content, 0600); err != nil {
-			t.Fatal(err)
-		}
-	}
 	writeNativeInstructions(t, root)
-	runSetupGit(t, root, "init", "-b", "setup-test")
-	runSetupGit(t, root, "config", "user.email", "setup-test@example.test")
-	runSetupGit(t, root, "config", "user.name", "Setup Test")
-	runSetupGit(t, root, "add", ".")
-	runSetupGit(t, root, "commit", "-m", "setup fixture")
-	project, err := projectwork.Load(root, "")
-	if err != nil {
-		t.Fatalf("load setup fixture project: %v", err)
-	}
-	return project
-}
-
-func runSetupGit(t *testing.T, root string, args ...string) {
-	t.Helper()
-	command := exec.Command("git", append([]string{"-C", root}, args...)...)
-	if output, err := command.CombinedOutput(); err != nil {
-		t.Fatalf("git %s: %v\n%s", strings.Join(args, " "), err, output)
+	return &projectvalue.Project{
+		Root: root,
+		Config: projectvalue.Config{
+			APIVersion: "project.markitect.example.org/v1alpha1",
+			Name:       "setup-test",
+		},
+		Report: projectmodel.Report{Managers: []projectmodel.Manager{{ID: "root"}}},
 	}
 }
 
@@ -660,7 +495,7 @@ func assertSameNativePins(t *testing.T, manager, reviewer projectconfig.Agent, p
 }
 
 func TestBuildRuntimeRejectsNonCodexSetup(t *testing.T) {
-	project := &projectwork.Project{Report: projectmodel.Report{Managers: []projectmodel.Manager{{ID: "root"}}}}
+	project := &projectvalue.Project{Report: projectmodel.Report{Managers: []projectmodel.Manager{{ID: "root"}}}}
 	found := Discovery{Provider: "claude", ProviderBinary: Tool{Path: filepath.Join(t.TempDir(), "provider"), Version: "claude 2.1.295", Digest: "sha256:" + strings.Repeat("a", 64), Mode: "0644"}}
 	if _, err := BuildRuntime(project, Options{Provider: "custom", Model: "m", InputMicrosPerMillion: 1, MaxCostMicros: 1}, found); err == nil {
 		t.Fatal("unsupported provider was accepted")

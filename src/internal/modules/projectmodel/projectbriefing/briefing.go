@@ -1,40 +1,20 @@
-// Package projectbriefing records deterministic briefings for accepted project
-// model changes. It compares compiled declarations only; it does not infer
-// meaning from prose. Accepted history is the first-parent line of the
-// checked-out HEAD: briefings count when recorded on it, their events with
-// them, resolutions when their delivered result is in HEAD's tree, and
-// dismissals wherever their event counts. Other entries stay provisional. An
-// event's identity is its change's content and the previous event for the
-// same definition, so a change keeps its identity when a topic is merged or
-// squashed, and a change re-applied after a revert gets a new one.
-// Read paths use ReadAcceptedHistory, which computes the accepted history in
-// memory and writes nothing; EnsureAcceptedHistory and the other writers
-// persist it under a store lock that writers wait for.
+// Package projectbriefing derives immutable briefing values from explicit
+// project model revisions and projects events through explicit Manager views.
 package projectbriefing
 
 import (
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"sort"
 	"strings"
 
 	"github.com/Glacius-Labs/Markitect/src/internal/core"
-	"github.com/Glacius-Labs/Markitect/src/internal/host/projectwork"
-	"github.com/Glacius-Labs/Markitect/src/internal/infrastructure/source"
 	"github.com/Glacius-Labs/Markitect/src/internal/modules/projectmodel"
 )
 
 const APIVersion = "markitect.example.org/project-model-briefing/v1alpha2"
-
-var (
-	ErrUncommittedModel    = errors.New("briefings require explicit committed model revisions")
-	ErrMissingProvenance   = errors.New("accepted model change requires explicit decision provenance")
-	ErrRevisionNotAncestor = errors.New("since revision is not an ancestor of the accepted revision")
-	ErrInvalidBundle       = errors.New("briefing bundle is invalid")
-)
 
 // Provenance binds the source decision reference, declared actor, and authority
 // policy. Automatically collected Git metadata is source attribution only and
@@ -93,86 +73,26 @@ type Bundle struct {
 	Managers          []Briefing                `json:"managers"`
 }
 
-// Generate loads the two explicitly named committed revisions and generates
-// stable global and manager-scoped briefing records.
-func Generate(root, sinceRevision, revision string, provenance Provenance) (Bundle, error) {
-	return generate(root, sinceRevision, revision, provenance, nil)
+// RevisionModel contains the model facts needed to derive a briefing. The
+// caller supplies fixed revisions; this package does not load or verify them.
+type RevisionModel struct {
+	Revision    string
+	Provisional bool
+	Model       core.Model
+	Report      projectmodel.Report
 }
 
-// generate is Generate with event predecessors taken from state, the
-// in-memory history being reconciled, or from the persisted store when state
-// is nil.
-func generate(root, sinceRevision, revision string, provenance Provenance, state *Store) (Bundle, error) {
-	if strings.TrimSpace(sinceRevision) == "" || strings.TrimSpace(revision) == "" || sinceRevision == revision {
-		return Bundle{}, ErrUncommittedModel
-	}
-	before, err := projectwork.Load(root, sinceRevision)
-	if err != nil {
-		return Bundle{}, fmt.Errorf("load since revision: %w", err)
-	}
-	after, err := projectwork.Load(root, revision)
-	if err != nil {
-		return Bundle{}, fmt.Errorf("load revision: %w", err)
-	}
-	if before.Provisional || after.Provisional || before.Revision == after.Revision {
-		return Bundle{}, ErrUncommittedModel
-	}
-	if err := requireAncestor(root, before.Revision, after.Revision); err != nil {
-		return Bundle{}, err
-	}
-	if state == nil {
-		stored, _, err := readStore(root)
-		if err != nil {
-			return Bundle{}, err
-		}
-		state = &stored
-	}
-	predecessors, err := lastEvents(root, *state, before.Revision)
-	if err != nil {
-		return Bundle{}, err
-	}
-	return build(before, after, provenance, predecessors)
+// Build compares explicitly supplied project revisions. Both revisions must
+// be committed, full Git object IDs and distinct. Its events start their
+// definitions' histories; Application can chain predecessors from history.
+func Build(before, after RevisionModel, provenance Provenance) (Bundle, error) {
+	return BuildWithPredecessors(before, after, provenance, nil)
 }
 
-// lastEvents returns, per definition key, the ID of the newest event that
-// state briefs for that definition on the first-parent line ending at
-// revision. Generate chains new events to it.
-func lastEvents(root string, state Store, revision string) (map[string]string, error) {
-	revisions, err := firstParentRevisions(root, revision)
-	if err != nil {
-		return nil, fmt.Errorf("enumerate briefed history before %s: %w", revision, err)
-	}
-	positions := make(map[string]int, len(revisions))
-	for i, item := range revisions {
-		positions[item] = i
-	}
-	last, at := map[string]string{}, map[string]int{}
-	for _, bundle := range state.Briefings {
-		i, onLine := positions[bundle.Revision]
-		if !onLine {
-			continue
-		}
-		for _, event := range bundle.Events {
-			key := event.DefinitionID.Key()
-			if prior, seen := at[key]; !seen || i > prior {
-				last[key], at[key] = event.ID, i
-			}
-		}
-	}
-	return last, nil
-}
-
-// Build compares already loaded, fixed project revisions. Both projects must
-// come from committed snapshots and carry distinct full Git object IDs. Its
-// events start their definitions' histories; Generate continues the briefed
-// history instead.
-func Build(before, after *projectwork.Project, provenance Provenance) (Bundle, error) {
-	return build(before, after, provenance, nil)
-}
-
-// build is Build with each event chained to predecessors[key].
-func build(before, after *projectwork.Project, provenance Provenance, predecessors map[string]string) (Bundle, error) {
-	if before == nil || after == nil || before.Provisional || after.Provisional || !fullObjectID(before.Revision) || !fullObjectID(after.Revision) || before.Revision == after.Revision {
+// BuildWithPredecessors chains each event to predecessors[key]. A missing
+// predecessor map starts a new briefing history.
+func BuildWithPredecessors(before, after RevisionModel, provenance Provenance, predecessors map[string]string) (Bundle, error) {
+	if before.Provisional || after.Provisional || !fullObjectID(before.Revision) || !fullObjectID(after.Revision) || before.Revision == after.Revision {
 		return Bundle{}, ErrUncommittedModel
 	}
 	if strings.TrimSpace(provenance.DecisionReference) == "" || strings.TrimSpace(provenance.Actor) == "" || strings.TrimSpace(provenance.Authority) == "" {
@@ -286,8 +206,17 @@ func validEventID(id string) bool {
 	return err == nil
 }
 
-func makeBriefing(manager string, p *projectwork.Project, ids []string, contracts []projectmodel.Statement, summary string) Briefing {
+func makeBriefing(manager string, p RevisionModel, ids []string, contracts []projectmodel.Statement, summary string) Briefing {
 	return Briefing{ID: briefingID(manager, p.Revision, p.Model.Digest, ids), ManagerID: manager, Revision: p.Revision, ModelDigest: p.Model.Digest, EventIDs: ids, Contracts: contracts, Summary: summary}
+}
+
+func briefingID(manager, revision, modelDigest string, eventIDs []string) string {
+	payload := struct {
+		Manager, Revision, ModelDigest string
+		EventIDs                       []string
+	}{manager, revision, modelDigest, eventIDs}
+	digest := hash(payload)
+	return "briefing-" + digest[:24]
 }
 
 func definitionMap(defs []core.Definition) map[string]core.Definition {
@@ -311,15 +240,6 @@ func fullObjectID(id string) bool {
 	return err == nil
 }
 
-func requireAncestor(root, sinceRevision, revision string) error {
-	if sinceRevision == revision {
-		return ErrUncommittedModel
-	}
-	if _, err := source.GitOutput(root, "merge-base", "--is-ancestor", sinceRevision, revision); err != nil {
-		return fmt.Errorf("%w: %s..%s: %v", ErrRevisionNotAncestor, sinceRevision, revision, err)
-	}
-	return nil
-}
 func sortedKeys(set map[string]bool) []string {
 	out := make([]string, 0, len(set))
 	for k := range set {

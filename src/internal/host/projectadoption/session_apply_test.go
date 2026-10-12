@@ -1,5 +1,9 @@
 package projectadoption
 
+import "go.yaml.in/yaml/v3"
+
+import "github.com/Glacius-Labs/Markitect/src/internal/modules/projectmodel/projectvalue"
+
 import (
 	"os"
 	"path/filepath"
@@ -8,7 +12,6 @@ import (
 
 	"github.com/Glacius-Labs/Markitect/src/internal/host/projectwork"
 	"github.com/Glacius-Labs/Markitect/src/internal/modules/projectmodel"
-	"go.yaml.in/yaml/v3"
 )
 
 func TestApplyAndRecordSessionAdoptionRequiresReviewedPlanAndRecordsGuardedResult(t *testing.T) {
@@ -18,7 +21,7 @@ func TestApplyAndRecordSessionAdoptionRequiresReviewedPlanAndRecordsGuardedResul
 	if _, err := projectwork.Init(root, "Session adoption fixture", true); err != nil {
 		t.Fatal(err)
 	}
-	manifestPath := filepath.Join(root, filepath.FromSlash(projectwork.ManifestPath))
+	manifestPath := filepath.Join(root, filepath.FromSlash(projectvalue.ManifestPath))
 	manifestBytes, err := os.ReadFile(manifestPath)
 	if err != nil {
 		t.Fatal(err)

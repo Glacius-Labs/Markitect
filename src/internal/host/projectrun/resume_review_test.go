@@ -4,8 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"github.com/Glacius-Labs/Markitect/src/internal/host/projectconfig"
-	"github.com/Glacius-Labs/Markitect/src/internal/host/projectexecutor"
 	"os"
 	"path/filepath"
 	"strings"
@@ -15,6 +13,8 @@ import (
 	"github.com/Glacius-Labs/Markitect/src/internal/core/snapshot"
 	"github.com/Glacius-Labs/Markitect/src/internal/host/agentexec"
 	"github.com/Glacius-Labs/Markitect/src/internal/host/codexappserver"
+	"github.com/Glacius-Labs/Markitect/src/internal/host/projectconfig"
+	"github.com/Glacius-Labs/Markitect/src/internal/host/projectexecutor"
 	"github.com/Glacius-Labs/Markitect/src/internal/host/projectworkspace"
 	"github.com/Glacius-Labs/Markitect/src/internal/modules/projectmodel"
 )
@@ -57,13 +57,14 @@ func TestPendingNativeReviewRequiresExactJournalWithoutReservingOrRunning(t *tes
 		}
 		runtime.Review = &projectconfig.ReviewConfig{Agents: reviewers, MaxRounds: 2, MaxManagerRounds: 2}
 	})
-	host := projectworkHost()
 	workspaceService, err := projectworkspace.NewGitService(t.TempDir(), projectworkspace.Limits{MaxFiles: 128, MaxFileBytes: 1 << 20, MaxTotalBytes: 4 << 20})
 	if err != nil {
 		t.Fatal(err)
 	}
-	host.Workspaces = workspaceService
 	revision := identityHead(t, root)
+	project := processRuntimeProjectWithInstructions(t, root, revision)
+	host := processRuntimeHost(root, project)
+	host.Workspaces = workspaceService
 	plan, err := Plan(host, root, revision, PlanRequest{Goal: "Review the parent-owned candidate.",
 		Managers: []string{e2eManagerID("", "project-owner"), e2eManagerID("orders", "orders"), e2eManagerID("inventory", "inventory")}, ExecuteAuthorized: true})
 	if err != nil {
@@ -98,12 +99,12 @@ func TestPendingNativeReviewRequiresExactJournalWithoutReservingOrRunning(t *tes
 	task.ReviewCandidateID = candidate.ID
 	task.CandidateID = candidate.ID // Parent review is work-phase even while children remain active.
 	task.ReviewRound = 1
-	project, err := projectForCandidate(host, root, base.Snapshot, candidate)
+	candidateProject, err := projectForCandidate(host, root, base.Snapshot, candidate)
 	if err != nil {
 		t.Fatal(err)
 	}
 	invoker := &resumeReviewInvoker{}
-	_, originalLog, err := invokeReviewer(context.Background(), host, invoker, root, plan, runtime, project, task,
+	_, originalLog, err := invokeReviewer(context.Background(), host, invoker, root, plan, runtime, candidateProject, task,
 		"work", 1, candidate, nil, RunReport{})
 	if err == nil || invoker.runCalls != 1 || invoker.request.Role != agentexec.RoleExecutor {
 		t.Fatalf("dry request capture did not reach the scripted invoker: err=%v calls=%d", err, invoker.runCalls)
@@ -164,8 +165,10 @@ func seedReviewRework(t *testing.T) reviewReworkFixture {
 	root := makeProjectRunFixture(t)
 	enableE2EReviews(t, root, 100000)
 	setupE2EProcess(t, "")
-	host := projectworkHost()
-	plan, err := Plan(host, root, identityHead(t, root), PlanRequest{Goal: "Implement and review owned artifacts.",
+	revision := identityHead(t, root)
+	project := processRuntimeProject(t, root, revision, false)
+	host := processRuntimeHost(root, project)
+	plan, err := Plan(host, root, revision, PlanRequest{Goal: "Implement and review owned artifacts.",
 		Managers: []string{e2eManagerID("orders", "orders"), e2eManagerID("inventory", "inventory")}, ExecuteAuthorized: true})
 	if err != nil {
 		t.Fatal(err)
@@ -432,14 +435,16 @@ func resumePendingReview(t *testing.T, seed pendingReviewSeed) resumedReview {
 			runtime.Agents[rootID] = native
 		}
 	})
-	host := projectworkHost()
 	storage, workspaceLimits := t.TempDir(), projectworkspace.Limits{MaxFiles: 128, MaxFileBytes: 1 << 20, MaxTotalBytes: 4 << 20}
 	workspaces, err := projectworkspace.NewGitService(storage, workspaceLimits)
 	if err != nil {
 		t.Fatal(err)
 	}
+	revision := identityHead(t, root)
+	project := processRuntimeProjectWithInstructions(t, root, revision)
+	host := processRuntimeHost(root, project)
 	host.Workspaces = workspaces
-	plan, err := Plan(host, root, identityHead(t, root), PlanRequest{Goal: "Implement and review owned artifacts.", Managers: []string{ordersID, inventoryID}, ExecuteAuthorized: true})
+	plan, err := Plan(host, root, revision, PlanRequest{Goal: "Implement and review owned artifacts.", Managers: []string{ordersID, inventoryID}, ExecuteAuthorized: true})
 	if err != nil {
 		t.Fatal(err)
 	}

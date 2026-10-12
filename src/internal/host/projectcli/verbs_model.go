@@ -1,5 +1,7 @@
 package projectcli
 
+import "github.com/Glacius-Labs/Markitect/src/internal/modules/projectmodel/projectvalue"
+
 import (
 	"context"
 	"encoding/json"
@@ -9,12 +11,12 @@ import (
 
 	"github.com/Glacius-Labs/Markitect/src/internal/host/codexappserver"
 	"github.com/Glacius-Labs/Markitect/src/internal/host/projectapp"
-	"github.com/Glacius-Labs/Markitect/src/internal/host/projectcoverage"
 	"github.com/Glacius-Labs/Markitect/src/internal/host/projectonboarding"
 	"github.com/Glacius-Labs/Markitect/src/internal/host/projectrun"
 	"github.com/Glacius-Labs/Markitect/src/internal/host/projectsetup"
 	"github.com/Glacius-Labs/Markitect/src/internal/host/projectwork"
 	"github.com/Glacius-Labs/Markitect/src/internal/modules/projectmodel"
+	"github.com/Glacius-Labs/Markitect/src/internal/modules/projectmodel/projectcoverage"
 )
 
 // Arguments shared by several verbs.
@@ -426,10 +428,10 @@ var docsVerb = define(verb{
 })
 
 type editInput struct {
-	Input    projectwork.Mutation `json:"input"`
-	Revision string               `json:"revision,omitempty"`
-	Expect   string               `json:"expect,omitempty"`
-	Write    bool                 `json:"write,omitempty"`
+	Input    projectvalue.Mutation `json:"input"`
+	Revision string                `json:"revision,omitempty"`
+	Expect   string                `json:"expect,omitempty"`
+	Write    bool                  `json:"write,omitempty"`
 }
 
 var editVerb = define(verb{
@@ -439,7 +441,7 @@ var editVerb = define(verb{
 	args: []arg{argRepo,
 		{name: "input", kind: kindRecord, value: "FILE", required: true, help: "Model mutation record."},
 		argRevision, argExpect, argWrite},
-}, func(ctx context.Context, e env, in editInput) (projectwork.EditPlan, error) {
+}, func(ctx context.Context, e env, in editInput) (projectvalue.EditPlan, error) {
 	return e.ops.Edit(projectapp.EditOperation{Selection: projectapp.Selection{Root: e.root, Revision: in.Revision}, Mutation: in.Input, Write: in.Write, ExpectedDigest: in.Expect})
 })
 

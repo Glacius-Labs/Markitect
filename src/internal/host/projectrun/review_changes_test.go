@@ -6,8 +6,8 @@ import (
 	"testing"
 
 	"github.com/Glacius-Labs/Markitect/src/internal/core/snapshot"
-	"github.com/Glacius-Labs/Markitect/src/internal/host/projectwork"
 	"github.com/Glacius-Labs/Markitect/src/internal/modules/projectmodel"
+	"github.com/Glacius-Labs/Markitect/src/internal/modules/projectmodel/projectvalue"
 )
 
 type freshReviewFixture struct {
@@ -15,7 +15,7 @@ type freshReviewFixture struct {
 	host          Host
 	store         *runStore
 	dir           string
-	base          *Project
+	base          *projectvalue.Project
 	plan          PlanRecord
 	run           RunReport
 	initial       candidateData
@@ -29,12 +29,9 @@ type freshReviewFixture struct {
 func newFreshReviewFixture(t *testing.T) freshReviewFixture {
 	t.Helper()
 	root := makeProjectRunFixture(t)
-	host := projectworkHost()
 	baseRevision := identityHead(t, root)
-	base, err := host.Load(root, baseRevision)
-	if err != nil {
-		t.Fatal(err)
-	}
+	base := processRuntimeProject(t, root, baseRevision, false)
+	host := processRuntimeHost(root, base)
 	store, err := newRunStore(root)
 	if err != nil {
 		t.Fatal(err)
@@ -286,7 +283,7 @@ func TestFreshPassedReviewBindsDeletionPreimageAndSource(t *testing.T) {
 }
 
 func TestReviewCandidateChangesGroundsDeletionWithPriorBytes(t *testing.T) {
-	base := &Snapshot{Files: map[string][]byte{
+	base := &snapshot.Snapshot{Files: map[string][]byte{
 		"src/deleted.txt": []byte("prior contents"),
 		"src/changed.txt": []byte("before"),
 	}, Modes: map[string]string{
@@ -320,12 +317,12 @@ func TestReviewContextAndScopeBindDeletedPathOperationAndPreimage(t *testing.T) 
 	const managerID = "shop/orders"
 	const path = "src/orders/implementation.txt"
 	prior := []byte("prior implementation")
-	base := &Snapshot{Files: map[string][]byte{path: prior}, Modes: map[string]string{path: snapshot.RegularMode}}
+	base := &snapshot.Snapshot{Files: map[string][]byte{path: prior}, Modes: map[string]string{path: snapshot.RegularMode}}
 	candidate := candidateData{ID: "candidate", Files: map[string]File{
 		path: {Path: path, Mode: "0644", Content: append([]byte(nil), prior...), Delete: true},
 	}}
-	project := &Project{
-		Config:   projectwork.Config{InventoryRoots: []string{"src"}},
+	project := &projectvalue.Project{
+		Config:   projectvalue.Config{InventoryRoots: []string{"src"}},
 		Snapshot: &snapshot.Snapshot{Files: map[string][]byte{}, Modes: map[string]string{}},
 		Report: projectmodel.Report{
 			Managers:  []projectmodel.Manager{{ID: managerID}},
@@ -359,7 +356,7 @@ func TestReviewContextAndScopeBindDeletedPathOperationAndPreimage(t *testing.T) 
 	if err != nil {
 		t.Fatal(err)
 	}
-	changedBase := &Snapshot{Files: map[string][]byte{path: []byte("different prior bytes")}, Modes: map[string]string{path: snapshot.RegularMode}}
+	changedBase := &snapshot.Snapshot{Files: map[string][]byte{path: []byte("different prior bytes")}, Modes: map[string]string{path: snapshot.RegularMode}}
 	changedScope, err := reviewScopeDigest(plan, project, task, "work", RunReport{}, reviewCandidateState{Base: changedBase, Candidate: candidate})
 	if err != nil {
 		t.Fatal(err)
@@ -373,7 +370,7 @@ func TestReviewCandidateChangesUsesRetainedDeletionPreimageAndRequiresGrounding(
 	candidate := candidateData{Files: map[string]File{
 		"src/empty.txt": {Path: "src/empty.txt", Mode: "0644", Content: []byte{}, Delete: true},
 	}}
-	changes, deleted, err := reviewCandidateChanges(&Snapshot{Files: map[string][]byte{}, Modes: map[string]string{}}, candidate, []string{"src/empty.txt"})
+	changes, deleted, err := reviewCandidateChanges(&snapshot.Snapshot{Files: map[string][]byte{}, Modes: map[string]string{}}, candidate, []string{"src/empty.txt"})
 	if err != nil {
 		t.Fatalf("valid empty-file deletion preimage rejected: %v", err)
 	}
@@ -383,7 +380,7 @@ func TestReviewCandidateChangesUsesRetainedDeletionPreimageAndRequiresGrounding(
 	}
 
 	missing := candidateData{Files: map[string]File{"src/missing.txt": {Path: "src/missing.txt", Delete: true}}}
-	if _, _, err := reviewCandidateChanges(&Snapshot{Files: map[string][]byte{}, Modes: map[string]string{}}, missing, []string{"src/missing.txt"}); err == nil {
+	if _, _, err := reviewCandidateChanges(&snapshot.Snapshot{Files: map[string][]byte{}, Modes: map[string]string{}}, missing, []string{"src/missing.txt"}); err == nil {
 		t.Fatal("ungrounded deletion without prior bytes or mode was accepted")
 	}
 }

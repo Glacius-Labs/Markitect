@@ -1,5 +1,7 @@
 package projectrun
 
+import "github.com/Glacius-Labs/Markitect/src/internal/modules/projectmodel/projectvalue"
+
 import (
 	"context"
 	"fmt"
@@ -20,7 +22,7 @@ func (e unroutedReviewError) Unwrap() error { return e.cause }
 // reports reintegrate when a failed review of the Manager's own integration
 // must be reworked in place, as the integration review loop does, once the
 // run's start budget is bound.
-func recoverPendingNativeReview(ctx context.Context, host Host, invoker Invoker, root string, store *runStore, dir string, plan PlanRecord, runtime projectconfig.Runtime, base *Project, report *RunReport, managerID string) (reintegrate bool, err error) {
+func recoverPendingNativeReview(ctx context.Context, host Host, invoker Invoker, root string, store *runStore, dir string, plan PlanRecord, runtime projectconfig.Runtime, base *projectvalue.Project, report *RunReport, managerID string) (reintegrate bool, err error) {
 	task := findTask(report.Tasks, managerID)
 	if task == nil || (task.ReviewStatus != "invoking" && task.ReviewStatus != "uncertain" && task.ReviewStatus != StatusAwaitingExternal) {
 		return false, nil

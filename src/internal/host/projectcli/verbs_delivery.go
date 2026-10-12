@@ -1,5 +1,7 @@
 package projectcli
 
+import "github.com/Glacius-Labs/Markitect/src/internal/modules/projectmodel/projectvalue"
+
 import (
 	"context"
 	"encoding/json"
@@ -9,7 +11,6 @@ import (
 	"github.com/Glacius-Labs/Markitect/src/internal/host/projectapp"
 	"github.com/Glacius-Labs/Markitect/src/internal/host/projectexplore"
 	"github.com/Glacius-Labs/Markitect/src/internal/host/projectrun"
-	"github.com/Glacius-Labs/Markitect/src/internal/host/projectwork"
 )
 
 const runRecovery = "Inspect the run with `status RUN` and its blockers before resuming or repairing the same run."
@@ -183,16 +184,16 @@ func briefList(root, manager string) (any, error) {
 // --- Delivery -------------------------------------------------------------
 
 type planInput struct {
-	Goal        string                `json:"goal"`
-	Operation   string                `json:"operation,omitempty"`
-	Manager     []string              `json:"manager,omitempty"`
-	Revision    string                `json:"revision,omitempty"`
-	Since       string                `json:"since,omitempty"`
-	Exploration string                `json:"exploration,omitempty"`
-	Scope       string                `json:"scope,omitempty"`
-	Input       *projectwork.Mutation `json:"input,omitempty"`
-	Expect      string                `json:"expect,omitempty"`
-	Write       bool                  `json:"write,omitempty"`
+	Goal        string                 `json:"goal"`
+	Operation   string                 `json:"operation,omitempty"`
+	Manager     []string               `json:"manager,omitempty"`
+	Revision    string                 `json:"revision,omitempty"`
+	Since       string                 `json:"since,omitempty"`
+	Exploration string                 `json:"exploration,omitempty"`
+	Scope       string                 `json:"scope,omitempty"`
+	Input       *projectvalue.Mutation `json:"input,omitempty"`
+	Expect      string                 `json:"expect,omitempty"`
+	Write       bool                   `json:"write,omitempty"`
 }
 
 // planReport is the plan record plus the digest that `plan --write --expect`
