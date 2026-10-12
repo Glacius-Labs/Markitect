@@ -1,7 +1,7 @@
 schema: markitect-roadmap-backlog/v1
 updated: '2026-10-12'
 roadmap: docs/implementation-plan.md
-main_basis: d95d886eb37ee81e72dd9e264be6c5ceedc2e7bc
+main_basis: 0a6b2273287f7387078b0fe602a7109e4bd14fb1
 
 # Single owner of work-package status. The roadmap explains streams, waves,
 # zones and rules; this file records each package's current state.
@@ -395,7 +395,7 @@ packages:
     owner: interface
     branch: dev/git-version-doctor
     depends_on: [CLI-02, CLI-03]
-    note: PR235 reports the installed Git version and a failed prerequisite below 2.40 before model or provider inspection, with CLI/MCP parity and no project writes. Independently reviewed head 173bf5a9e490eb32e232e5e45b7a10be47c158c6 passed fixed checks/Verify, focused contracts and required Linux Quality/Race; actual Main merge is d95d886eb37ee81e72dd9e264be6c5ceedc2e7bc. Its separate Windows run remains source-bound; Doctor does not automatically guard subsequent Plan/Apply calls. TEST-02 now holds Interface.
+    note: PR235 reports the installed Git version and a failed prerequisite below 2.40 before model or provider inspection, with CLI/MCP parity and no project writes. Independently reviewed head 173bf5a9e490eb32e232e5e45b7a10be47c158c6 passed fixed checks/Verify, focused contracts and required Linux Quality/Race; actual Main merge is d95d886eb37ee81e72dd9e264be6c5ceedc2e7bc. Its separate Windows run remains source-bound; Doctor does not automatically guard subsequent Plan/Apply calls. All three assigned Interface packages are integrated; no further package is assigned.
     zone: free
     inputs:
       - pull request 162 (ARCH-10 known problems)
@@ -495,12 +495,13 @@ packages:
     title: CLI and MCP contract suite with a completeness check
     stream: TEST
     wave: 2
-    status: active
+    status: done
+    pr: 237
     owner: interface
-    branch: dev/interface-contracts
+    branch: dev/interface-contract-guards
     depends_on: [CLI-02, CLI-04]
-    zone: interface
-    note: The Interface session holds this zone after actual CLI-04 integration, on a fresh managed checkout from Main d95d886eb37ee81e72dd9e264be6c5ceedc2e7bc while the Doctor Windows source remains unchanged. Its separate PR must prove completeness; no delivered contract-suite claim is made yet.
+    zone: free
+    note: PR237 merged as 0a6b2273287f7387078b0fe602a7109e4bd14fb1 after both independent source reviews, fixed Check/Impact/Verify, required Linux Quality/Race and current-Main composition checks. Reviewed head 92e7724db9ab81ac3160b0a3a5e27c1f40851f7e proves the explicit 27 CLI / 23 normal MCP / 18 read-only MCP surface and all contract categories; default brief-create and target-isolation review gaps are closed. The original c2 Windows full run remains bound to its unchanged checkout and cannot validate this corrected head. Interface holds no current implementation package; future work requires its own assignment. See docs/validation/integration-round-20261012.md.
     inputs:
       - docs/work-items/surveys/tests-and-ci-20261010.md
       - docs/work-items/surveys/cli-mcp-app-server-20261010.md
@@ -685,8 +686,8 @@ packages:
       1b621b1e06a3b0670d7f07b67a2632320796c7bf and completed its first bounded read-only review
       and isolated reproduction. No production repair paths are reserved; future verified findings go to the integrator
       for a bounded non-colliding fix assignment. Runtime has no current implementation writer;
-      future work needs a scope and slot assignment. Interface belongs to TEST-02 after merged
-      CLI-03 and CLI-04. Core/projectmodel findings remain coordinated with kg.
+      future work needs a scope and slot assignment. CLI-03, CLI-04 and TEST-02 are merged; Interface has no current
+      implementation reservation. Core/projectmodel findings remain coordinated with kg.
       The first bounded sweep reproduced the known helper-cleanup liveness failure after process
       loss on Main 1b621b1e06a3b0670d7f07b67a2632320796c7bf; the passing observation test confirms
       the blockade, not successful recovery. The independently reviewed cross-process reconciliation
