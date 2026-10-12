@@ -14,7 +14,7 @@ go run ./src/cmd/markitect-release version
 go run ./src/cmd/markitect-release licenses
 ```
 
-The source/bootstrap and portable build inject `src/internal/host/buildinfo.version`. The bootstrap selects the historical linker location when building an older immutable source archive. The installer uses the public guarded-write API, holds the shared writer lock through the final complete-pin readback, writes the manifest last, and reports completed paths on failure. Preview remains available in an empty non-Git directory. Unchanged pins retain their bytes and modes; ZIP pins remain byte-exact.
+The source/bootstrap and portable build inject `src/internal/application/buildinfo.version`. The bootstrap selects the historical linker location when building an older immutable source archive. The installer uses the public guarded-write API, holds the shared writer lock through the final complete-pin readback, writes the manifest last, and reports completed paths on failure. Preview remains available in an empty non-Git directory. Unchanged pins retain their bytes and modes; ZIP pins remain byte-exact.
 
 The following download and installed-binary examples describe the selected published release's contract. They do not claim that a current source change updated its assets.
 

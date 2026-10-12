@@ -10,12 +10,12 @@ import (
 )
 
 var layerFixtureMap = CodeMap{Packages: []MappedPackage{
-	{Path: "src/internal/modules/projectmodel/projectcoverage", Layer: "core"},
-	{Path: "src/internal/host/guardedwrite", Layer: "infrastructure"},
+	{Path: "src/internal/core/projectmodel/projectcoverage", Layer: "core"},
+	{Path: "src/internal/infrastructure/guardedwrite", Layer: "infrastructure"},
 	{Path: "src/internal/infrastructure/source", Layer: "infrastructure"},
-	{Path: "src/internal/host/projectcoverage", Layer: "application"},
-	{Path: "src/internal/host/projectwork", Layer: "application"},
-	{Path: "src/internal/host/projectrun", Layer: "runtime"},
+	{Path: "src/internal/application/projectcoverage", Layer: "application"},
+	{Path: "src/internal/application/projectwork", Layer: "application"},
+	{Path: "src/internal/runtime/projectrun", Layer: "runtime"},
 	{Path: "src/internal/host", Layer: "legacy"},
 	{Path: "src/internal/host/compat/v0_13/kernel", Layer: "legacy"},
 	{Path: "src/cmd/markitect", Layer: "cli"},
@@ -24,11 +24,11 @@ var layerFixtureMap = CodeMap{Packages: []MappedPackage{
 
 func TestMapLayersForbidProductToLegacy(t *testing.T) {
 	for _, e := range []Edge{
-		{"coverage.go", 3, "src/internal/modules/projectmodel/projectcoverage", "src/internal/host", false},
+		{"coverage.go", 3, "src/internal/core/projectmodel/projectcoverage", "src/internal/host", false},
 		{"source.go", 4, "src/internal/infrastructure/source", "src/internal/host/compat/v0_13/kernel", false},
-		{"work.go", 5, "src/internal/host/projectwork", "src/internal/host", false},
-		{"run.go", 6, "src/internal/host/projectrun", "src/internal/host/compat/v0_13/kernel", false},
-		{"work_test.go", 7, "src/internal/host/projectwork", "src/internal/host/compat/v0_13/kernel", true},
+		{"work.go", 5, "src/internal/application/projectwork", "src/internal/host", false},
+		{"run.go", 6, "src/internal/runtime/projectrun", "src/internal/host/compat/v0_13/kernel", false},
+		{"work_test.go", 7, "src/internal/application/projectwork", "src/internal/host/compat/v0_13/kernel", true},
 	} {
 		got := CheckMapLayers([]Edge{e}, layerFixtureMap)
 		want := []Violation{{e, "product package may not import a legacy package"}}
@@ -40,15 +40,15 @@ func TestMapLayersForbidProductToLegacy(t *testing.T) {
 
 func TestMapLayersAllowOtherEdges(t *testing.T) {
 	edges := []Edge{
-		{From: "src/internal/host", To: "src/internal/host/projectwork"},
+		{From: "src/internal/host", To: "src/internal/application/projectwork"},
 		{From: "src/internal/host/compat/v0_13/kernel", To: "src/internal/host"},
-		{From: "src/internal/host/projectwork", To: "src/internal/host/projectrun"},
-		{From: "src/internal/host/projectrun", To: "src/internal/host/guardedwrite"},
+		{From: "src/internal/application/projectwork", To: "src/internal/runtime/projectrun"},
+		{From: "src/internal/runtime/projectrun", To: "src/internal/infrastructure/guardedwrite"},
 		{From: "src/harness/examples", To: "src/internal/host", Test: true},
 		{From: "src/cmd/markitect", To: "src/internal/host"},
 		{From: "src/internal/host/unmapped", To: "src/internal/host"},
-		{From: "src/internal/host/projectwork", To: "src/internal/host/unmapped"},
-		{File: "work.go", From: "src/internal/host/projectwork"},
+		{From: "src/internal/application/projectwork", To: "src/internal/host/unmapped"},
+		{File: "work.go", From: "src/internal/application/projectwork"},
 	}
 	if got := CheckMapLayers(edges, layerFixtureMap); len(got) != 0 {
 		t.Fatal(got)
@@ -61,21 +61,21 @@ func TestGuardedWriteUseAllowsOnlyTheGuardedAPI(t *testing.T) {
 	files := map[string]string{
 		"README.md": "# Fixture\n",
 		CodeMapSource: `packages:
-  - {path: src/internal/host/guardedwrite, layer: infrastructure, purpose: Writes., doc: README.md}
-  - {path: src/internal/host/projectexplore, layer: application, purpose: Explores., doc: README.md}
-  - {path: src/internal/host/projectwork, layer: application, purpose: Works., doc: README.md}
-  - {path: src/internal/host/projectrun, layer: runtime, purpose: Runs., doc: README.md}
-  - {path: src/internal/host/projectsetup, layer: runtime, purpose: Sets up., doc: README.md}
+  - {path: src/internal/infrastructure/guardedwrite, layer: infrastructure, purpose: Writes., doc: README.md}
+  - {path: src/internal/application/projectexplore, layer: application, purpose: Explores., doc: README.md}
+  - {path: src/internal/application/projectwork, layer: application, purpose: Works., doc: README.md}
+  - {path: src/internal/runtime/projectrun, layer: runtime, purpose: Runs., doc: README.md}
+  - {path: src/internal/runtime/projectsetup, layer: runtime, purpose: Sets up., doc: README.md}
   - {path: src/internal/host, layer: legacy, purpose: Legacy., doc: README.md}
 `,
-		"src/internal/host/guardedwrite/guardedwrite.go": "package guardedwrite\n\nfunc OpenRoot(string) {}\n",
-		"src/internal/host/guardedwrite/root_test.go":    "package guardedwrite_test\n\nimport " + imp + "\n\nvar _ = guardedwrite.OpenRoot\n",
-		"src/internal/host/projectwork/ok.go":            "package projectwork\n\nimport " + imp + "\n\nvar _ = guardedwrite.Apply\nvar _ = guardedwrite.ApplyOrderedChecked\nvar _ []guardedwrite.Change\nvar _ *guardedwrite.Capture\n",
-		"src/internal/host/projectwork/bad.go":           "package projectwork\n\nimport " + imp + "\n\nvar _ = guardedwrite.CaptureFiles\nvar _ = guardedwrite.OpenRoot\n",
-		"src/internal/host/projectrun/alias_test.go":     "package projectrun\n\nimport gw " + imp + "\n\nvar _ = gw.Apply\nvar _ = gw.SafeDestination\n",
-		"src/internal/host/projectsetup/dot.go":          "package projectsetup\n\nimport . " + imp + "\n\nvar _ = Apply\n",
-		"src/internal/host/projectexplore/blank.go":      "package projectexplore\n\nimport _ " + imp + "\n",
-		"src/internal/host/legacy.go":                    "package host\n\nimport " + imp + "\n\nvar _ = guardedwrite.OpenRoot\n",
+		"src/internal/infrastructure/guardedwrite/guardedwrite.go": "package guardedwrite\n\nfunc OpenRoot(string) {}\n",
+		"src/internal/infrastructure/guardedwrite/root_test.go":    "package guardedwrite_test\n\nimport " + imp + "\n\nvar _ = guardedwrite.OpenRoot\n",
+		"src/internal/application/projectwork/ok.go":               "package projectwork\n\nimport " + imp + "\n\nvar _ = guardedwrite.Apply\nvar _ = guardedwrite.ApplyOrderedChecked\nvar _ []guardedwrite.Change\nvar _ *guardedwrite.Capture\n",
+		"src/internal/application/projectwork/bad.go":              "package projectwork\n\nimport " + imp + "\n\nvar _ = guardedwrite.CaptureFiles\nvar _ = guardedwrite.OpenRoot\n",
+		"src/internal/runtime/projectrun/alias_test.go":            "package projectrun\n\nimport gw " + imp + "\n\nvar _ = gw.Apply\nvar _ = gw.SafeDestination\n",
+		"src/internal/runtime/projectsetup/dot.go":                 "package projectsetup\n\nimport . " + imp + "\n\nvar _ = Apply\n",
+		"src/internal/application/projectexplore/blank.go":         "package projectexplore\n\nimport _ " + imp + "\n",
+		"src/internal/host/legacy.go":                              "package host\n\nimport " + imp + "\n\nvar _ = guardedwrite.OpenRoot\n",
 	}
 	for name, content := range files {
 		p := filepath.Join(root, filepath.FromSlash(name))
@@ -98,15 +98,15 @@ func TestGuardedWriteUseAllowsOnlyTheGuardedAPI(t *testing.T) {
 	// from importing it; the selector rule adds no second finding there.
 	const api = "product package may use only the guarded write API (Apply, ApplyChecked, ApplyOrderedChecked, Capture, CaptureFiles, Change, File, NewStoredNames, Result, StoredNames), not "
 	want := []string{
-		"src/internal/host/guardedwrite/root_test.go:3: src/internal/host/guardedwrite imports src/internal/host/guardedwrite: self-import is forbidden",
-		"src/internal/host/projectrun/alias_test.go:6: src/internal/host/projectrun imports src/internal/host/guardedwrite: " + api + "guardedwrite.SafeDestination",
-		"src/internal/host/projectsetup/dot.go:3: src/internal/host/projectsetup imports src/internal/host/guardedwrite: product package may not dot-import guardedwrite; use qualified names so the gate can check them",
-		"src/internal/host/projectwork/bad.go:6: src/internal/host/projectwork imports src/internal/host/guardedwrite: " + api + "guardedwrite.OpenRoot",
+		"src/internal/application/projectwork/bad.go:6: src/internal/application/projectwork imports src/internal/infrastructure/guardedwrite: " + api + "guardedwrite.OpenRoot",
+		"src/internal/infrastructure/guardedwrite/root_test.go:3: src/internal/infrastructure/guardedwrite imports src/internal/infrastructure/guardedwrite: self-import is forbidden",
+		"src/internal/runtime/projectrun/alias_test.go:6: src/internal/runtime/projectrun imports src/internal/infrastructure/guardedwrite: " + api + "guardedwrite.SafeDestination",
+		"src/internal/runtime/projectsetup/dot.go:3: src/internal/runtime/projectsetup imports src/internal/infrastructure/guardedwrite: product package may not dot-import guardedwrite; use qualified names so the gate can check them",
 	}
 	if !reflect.DeepEqual(got, want) {
 		t.Fatalf("violations:\n%q\nwant:\n%q", got, want)
 	}
-	if !violations[1].Edge.Test || violations[2].Edge.Test {
+	if !violations[2].Edge.Test || violations[3].Edge.Test {
 		t.Errorf("test-file marking: %v", violations)
 	}
 }
@@ -119,10 +119,10 @@ func TestCheckRepositoryRequiresCodeMap(t *testing.T) {
 
 func TestMapLayersDirectionMatrix(t *testing.T) {
 	packages := map[string]string{
-		"core":           "src/internal/modules/projectmodel/projectcoverage",
-		"infrastructure": "src/internal/host/guardedwrite",
-		"runtime":        "src/internal/host/projectrun",
-		"application":    "src/internal/host/projectwork",
+		"core":           "src/internal/core/projectmodel/projectcoverage",
+		"infrastructure": "src/internal/infrastructure/guardedwrite",
+		"runtime":        "src/internal/runtime/projectrun",
+		"application":    "src/internal/application/projectwork",
 	}
 	for _, test := range []struct {
 		from, to string
@@ -173,7 +173,7 @@ func TestMapLayersDirectionMatrix(t *testing.T) {
 
 func TestCheckRepositoryLayerDirectionIncludesTestsAndPlatforms(t *testing.T) {
 	root := t.TempDir()
-	const target = "src/internal/host/projectwork"
+	const target = "src/internal/application/projectwork"
 	files := map[string]string{
 		"README.md":         "# Fixture\n",
 		CodeMapSource:       layerDirectionFixtureMap("infrastructure", true, true),
@@ -203,7 +203,7 @@ func TestCheckRepositoryLayerDirectionIncludesTestsAndPlatforms(t *testing.T) {
 }
 
 func TestCheckRepositoryRejectsIncompleteOrInvalidLayers(t *testing.T) {
-	const target = "src/internal/host/projectwork"
+	const target = "src/internal/application/projectwork"
 	for _, test := range []struct {
 		name, layer         string
 		source, destination bool
@@ -246,7 +246,7 @@ func layerDirectionFixtureMap(layer string, source, destination bool) string {
 		entries = append(entries, fmt.Sprintf("  - {path: %s, layer: %q, purpose: Writes., doc: README.md}\n", GuardedWritePackage, layer))
 	}
 	if destination {
-		entries = append(entries, "  - {path: src/internal/host/projectwork, layer: application, purpose: Works., doc: README.md}\n")
+		entries = append(entries, "  - {path: src/internal/application/projectwork, layer: application, purpose: Works., doc: README.md}\n")
 	}
 	return "packages:\n" + strings.Join(entries, "")
 }

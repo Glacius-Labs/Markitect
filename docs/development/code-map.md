@@ -8,7 +8,7 @@ The page is generated from [codemap.yaml](../../src/internal/tooling/architectur
 go test ./src/internal/tooling/architecture -run TestCodeMapPage -update
 ```
 
-Tests in `src/internal/tooling/architecture` fail when a Go package is missing from the map, when an entry names a directory that is no longer a package, when an owning document is missing, or when this page is stale. Each layer must agree with the coarse layer of the [import gate](modules.md#mechanical-dependency-gate). The gate also enforces two rules of the finer layers: `core`, `infrastructure`, `application` and `runtime` packages may not import `legacy` packages, and they may use only the guarded API of `src/internal/host/guardedwrite`.
+Tests in `src/internal/tooling/architecture` fail when a Go package is missing from the map, when an entry names a directory that is no longer a package, when an owning document is missing, or when this page is stale. Each layer must agree with the coarse layer of the [import gate](modules.md#mechanical-dependency-gate). The gate also enforces two rules of the finer layers: `core`, `infrastructure`, `application` and `runtime` packages may not import `legacy` packages, and they may use only the guarded API of `src/internal/infrastructure/guardedwrite`.
 
 ## Layers
 
@@ -32,51 +32,51 @@ Tests in `src/internal/tooling/architecture` fail when a Go package is missing f
 | Package | Purpose | Owning document |
 |---|---|---|
 | `src/internal/core` | Compiles explicitly supplied Schemas and Definitions into a pure structural model. | [src/internal/core/README.md](../../src/internal/core/README.md) |
+| `src/internal/core/projectmodel` | Derives management, artifact and impact views from the compiled project model. | [docs/architecture.md](../architecture.md#core-layer) |
+| `src/internal/core/projectmodel/projectbriefing` | Derives deterministic briefings and resolution status from explicitly supplied model values. | [docs/architecture.md](../architecture.md#core-layer) |
+| `src/internal/core/projectmodel/projectcoverage` | Classifies explicitly supplied repository census values against the project model. | [docs/architecture.md](../architecture.md#core-layer) |
+| `src/internal/core/projectmodel/projectvalue` | Holds shared project values, path selectors and deterministic binding identity. | [docs/architecture.md](../architecture.md#core-layer) |
 | `src/internal/core/snapshot` | Fixed sets of source files and deterministic comparisons over them. | [docs/source-snapshots.md](../source-snapshots.md#current-value) |
-| `src/internal/modules/projectmodel` | Derives management, artifact and impact views from the compiled project model. | [docs/architecture.md](../architecture.md#core-layer) |
-| `src/internal/modules/projectmodel/projectbriefing` | Derives deterministic briefings and resolution status from explicitly supplied model values. | [docs/architecture.md](../architecture.md#core-layer) |
-| `src/internal/modules/projectmodel/projectcoverage` | Classifies explicitly supplied repository census values against the project model. | [docs/architecture.md](../architecture.md#core-layer) |
-| `src/internal/modules/projectmodel/projectvalue` | Holds shared project values, path selectors and deterministic binding identity. | [docs/architecture.md](../architecture.md#core-layer) |
 
 ## Infrastructure
 
 | Package | Purpose | Owning document |
 |---|---|---|
-| `src/internal/host/guardedwrite` | Applies selected working-tree changes only while repository, branch, HEAD and captured bytes are unchanged. | [docs/architecture.md](../architecture.md#infrastructure-layer) |
+| `src/internal/infrastructure/guardedwrite` | Applies selected working-tree changes only while repository, branch, HEAD and captured bytes are unchanged. | [docs/architecture.md](../architecture.md#infrastructure-layer) |
 | `src/internal/infrastructure/source` | Loads fixed snapshots from the working tree or a Git commit with hardened Git processes. | [docs/source-snapshots.md](../source-snapshots.md#adapter-and-use-case-ownership) |
 
 ## Product application
 
 | Package | Purpose | Owning document |
 |---|---|---|
-| `src/internal/host/architecturecli` | Host command adapter for the repository architecture gate. | [docs/development/modules.md](modules.md#mechanical-dependency-gate) |
-| `src/internal/host/buildinfo` | Shared immutable source and build version for product and release tooling. | [integration/README.md](../../integration/README.md#current-source-release-tooling) |
-| `src/internal/host/mcp` | Local stdio MCP server over the project operations. | [docs/project-operations.md](../project-operations.md#mcp-server-and-tool-groups) |
-| `src/internal/host/modulechecks` | Host composition for the independent Git hooks and pipeline checks. | [CONTRIBUTING.md](../../CONTRIBUTING.md#verify-a-change) |
-| `src/internal/host/modulecli` | Command adapter for the independent Git hooks and pipeline checks. | [CONTRIBUTING.md](../../CONTRIBUTING.md#verify-a-change) |
-| `src/internal/host/projectadoption` | Brownfield adoption that checks fixed-snapshot evidence and prepares model-only changes. | [docs/project-workflow.md](../project-workflow.md#existing-repositories) |
-| `src/internal/host/projectapp` | Shared application facade that the project CLI and MCP server call. | [docs/architecture.md](../architecture.md#application-layer) |
-| `src/internal/host/projectcli` | The `markitect` verb table, its command line and its MCP tools. | [docs/project-operations.md](../project-operations.md#cli-setup-and-current-roots) |
-| `src/internal/host/projectcoverage` | Acquires repository census values from the selected working tree or committed revision. | [docs/source-snapshots.md](../source-snapshots.md#adapter-and-use-case-ownership) |
-| `src/internal/host/projectexplore` | Stores explorations, open decisions, scope readiness and Apply receipts. | [docs/project-workflow.md](../project-workflow.md#model-and-readiness) |
-| `src/internal/host/projecthistory` | Acquires accepted model history and persists guarded briefing, resolution and dismissal records. | [docs/architecture.md](../architecture.md#application-layer) |
-| `src/internal/host/projectonboarding` | Writes project-local guidance and skills for Codex and Claude contributors. | [docs/project-workflow.md](../project-workflow.md#connect-and-inspect) |
-| `src/internal/host/projectwork` | Loads the selected project model and writes model changes under guard. | [docs/project-workflow.md](../project-workflow.md#model-and-readiness) |
-| `src/internal/host/releasecli` | Command interface of `markitect-release` for preparing or publishing a GitHub release. | [docs/operations.md](../operations.md#release-operations) |
-| `src/internal/host/releaseinstall` | Plans and applies complete verified bundle pins through guarded writes. | [integration/README.md](../../integration/README.md#current-source-release-tooling) |
+| `src/internal/application/architecturecli` | Host command adapter for the repository architecture gate. | [docs/development/modules.md](modules.md#mechanical-dependency-gate) |
+| `src/internal/application/buildinfo` | Shared immutable source and build version for product and release tooling. | [integration/README.md](../../integration/README.md#current-source-release-tooling) |
+| `src/internal/application/mcp` | Local stdio MCP server over the project operations. | [docs/project-operations.md](../project-operations.md#mcp-server-and-tool-groups) |
+| `src/internal/application/modulechecks` | Host composition for the independent Git hooks and pipeline checks. | [CONTRIBUTING.md](../../CONTRIBUTING.md#verify-a-change) |
+| `src/internal/application/modulecli` | Command adapter for the independent Git hooks and pipeline checks. | [CONTRIBUTING.md](../../CONTRIBUTING.md#verify-a-change) |
+| `src/internal/application/projectadoption` | Brownfield adoption that checks fixed-snapshot evidence and prepares model-only changes. | [docs/project-workflow.md](../project-workflow.md#existing-repositories) |
+| `src/internal/application/projectapp` | Shared application facade that the project CLI and MCP server call. | [docs/architecture.md](../architecture.md#application-layer) |
+| `src/internal/application/projectcli` | The `markitect` verb table, its command line and its MCP tools. | [docs/project-operations.md](../project-operations.md#cli-setup-and-current-roots) |
+| `src/internal/application/projectcoverage` | Acquires repository census values from the selected working tree or committed revision. | [docs/source-snapshots.md](../source-snapshots.md#adapter-and-use-case-ownership) |
+| `src/internal/application/projectexplore` | Stores explorations, open decisions, scope readiness and Apply receipts. | [docs/project-workflow.md](../project-workflow.md#model-and-readiness) |
+| `src/internal/application/projecthistory` | Acquires accepted model history and persists guarded briefing, resolution and dismissal records. | [docs/architecture.md](../architecture.md#application-layer) |
+| `src/internal/application/projectonboarding` | Writes project-local guidance and skills for Codex and Claude contributors. | [docs/project-workflow.md](../project-workflow.md#connect-and-inspect) |
+| `src/internal/application/projectwork` | Loads the selected project model and writes model changes under guard. | [docs/project-workflow.md](../project-workflow.md#model-and-readiness) |
+| `src/internal/application/releasecli` | Command interface of `markitect-release` for preparing or publishing a GitHub release. | [docs/operations.md](../operations.md#release-operations) |
+| `src/internal/application/releaseinstall` | Plans and applies complete verified bundle pins through guarded writes. | [integration/README.md](../../integration/README.md#current-source-release-tooling) |
 
 ## Execution runtime
 
 | Package | Purpose | Owning document |
 |---|---|---|
-| `src/internal/host/agentexec` | Provider-neutral subprocess boundary for one role invocation and its receipt. | [src/internal/host/agentexec/README.md](../../src/internal/host/agentexec/README.md) |
-| `src/internal/host/codexappserver` | Transport to the native Codex App Server for Manager, review and verify roles. | [docs/provider-adapters.md](../provider-adapters.md#inner-role-execution-and-workspace-boundary) |
-| `src/internal/host/exchangecli` | Reference bring-your-own executor that hands each role invocation to an external party through request and response files. | [docs/provider-adapters.md](../provider-adapters.md#bring-your-own-executor) |
-| `src/internal/host/projectconfig` | Loads and validates the explicit runtime configuration and finite role policies. | [docs/project-operations.md](../project-operations.md#cli-setup-and-current-roots) |
-| `src/internal/host/projectexecutor` | Executes process and native role transports with private protocol evidence and injected helper policy. | [docs/provider-adapters.md](../provider-adapters.md#inner-role-execution-and-workspace-boundary) |
-| `src/internal/host/projectrun` | Runs, resumes, verifies and applies bounded Manager work over fixed snapshots. | [docs/project-workflow.md](../project-workflow.md#execute-verify-and-apply) |
-| `src/internal/host/projectsetup` | Builds the project-local agent runtime proposal for `project setup`. | [docs/project-operations.md](../project-operations.md#cli-setup-and-current-roots) |
-| `src/internal/host/projectworkspace` | Owned candidate workspaces for bounded runs. | [docs/project-operations.md](../project-operations.md#candidate-workspaces-and-recovery) |
+| `src/internal/runtime/agentexec` | Provider-neutral subprocess boundary for one role invocation and its receipt. | [src/internal/runtime/agentexec/README.md](../../src/internal/runtime/agentexec/README.md) |
+| `src/internal/runtime/codexappserver` | Transport to the native Codex App Server for Manager, review and verify roles. | [docs/provider-adapters.md](../provider-adapters.md#inner-role-execution-and-workspace-boundary) |
+| `src/internal/runtime/exchangecli` | Reference bring-your-own executor that hands each role invocation to an external party through request and response files. | [docs/provider-adapters.md](../provider-adapters.md#bring-your-own-executor) |
+| `src/internal/runtime/projectconfig` | Loads and validates the explicit runtime configuration and finite role policies. | [docs/project-operations.md](../project-operations.md#cli-setup-and-current-roots) |
+| `src/internal/runtime/projectexecutor` | Executes process and native role transports with private protocol evidence and injected helper policy. | [docs/provider-adapters.md](../provider-adapters.md#inner-role-execution-and-workspace-boundary) |
+| `src/internal/runtime/projectrun` | Runs, resumes, verifies and applies bounded Manager work over fixed snapshots. | [docs/project-workflow.md](../project-workflow.md#execute-verify-and-apply) |
+| `src/internal/runtime/projectsetup` | Builds the project-local agent runtime proposal for `project setup`. | [docs/project-operations.md](../project-operations.md#cli-setup-and-current-roots) |
+| `src/internal/runtime/projectworkspace` | Owned candidate workspaces for bounded runs. | [docs/project-operations.md](../project-operations.md#candidate-workspaces-and-recovery) |
 
 ## Modules
 

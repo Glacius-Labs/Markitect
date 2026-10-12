@@ -22,7 +22,6 @@ spec:
     - namespace: product
       name: distinct-state
   paths:
-    - src/internal/host/guardedwrite/
     - src/internal/infrastructure/
   checks:
     - namespace: ""

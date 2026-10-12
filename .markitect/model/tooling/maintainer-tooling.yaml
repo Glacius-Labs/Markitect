@@ -20,7 +20,7 @@ spec:
     - namespace: product
       name: evidence-not-acceptance
   paths:
-    - src/internal/host/architecturecli/
+    - src/internal/application/architecturecli/
     - src/cmd/markitect-check-architecture/
     - src/internal/tooling/
     - tools/

@@ -49,7 +49,7 @@ func validZipEntries() []zipFixtureEntry {
 		{name: "go.mod", data: []byte("module markitect\n\ngo 1.24.0\n"), mode: 0644},
 		{name: "go.sum", data: []byte(""), mode: 0644},
 		{name: "src/cmd/markitect/main.go", data: []byte("package main\n"), mode: 0644},
-		{name: "src/internal/host/buildinfo/version.go", data: []byte("package buildinfo\nvar version = \"0.1.0-dev\"\n"), mode: 0644},
+		{name: "src/internal/application/buildinfo/version.go", data: []byte("package buildinfo\nvar version = \"0.1.0-dev\"\n"), mode: 0644},
 		{name: "src/internal/app/host.go", data: []byte("package app\n"), mode: 0644},
 	}
 }
@@ -66,6 +66,52 @@ func legacyZipEntries() []zipFixtureEntry {
 func fixtureManifest(data []byte) manifest {
 	digest := sha256.Sum256(data)
 	return manifest{version: "0.1.0-dev", source: ".markitect/tool/source.zip", sha256: hex.EncodeToString(digest[:])}
+}
+
+func TestPinnedArchiveBuildVersionLocations(t *testing.T) {
+	for _, prefix := range []string{"src/", ""} {
+		for _, location := range []string{"internal/application/buildinfo", "internal/host/buildinfo", "internal/host/cli"} {
+			t.Run(prefix+location, func(t *testing.T) {
+				entries := []zipFixtureEntry{
+					{name: "go.mod", data: []byte("module markitect\n\ngo 1.24.0\n"), mode: 0644},
+					{name: "go.sum", mode: 0644},
+					{name: prefix + "cmd/markitect/main.go", data: []byte("package main\n"), mode: 0644},
+					{name: prefix + location + "/version.go", data: []byte("package version\nvar version = \"0.1.0-dev\"\n"), mode: 0644},
+				}
+				if location == "internal/application/buildinfo" {
+					entries = append(entries, zipFixtureEntry{name: prefix + "internal/host/buildinfo/version.go", data: []byte("package buildinfo\n"), mode: 0644})
+				}
+				if location != "internal/host/cli" {
+					entries = append(entries, zipFixtureEntry{name: prefix + "internal/host/cli/version.go", data: []byte("package cli\n"), mode: 0644})
+				}
+				data := makeZip(t, entries)
+				archivePath := filepath.Join(t.TempDir(), "source.zip")
+				if err := os.WriteFile(archivePath, data, 0644); err != nil {
+					t.Fatal(err)
+				}
+				archive, err := readArchive(archivePath, hexDigest(data), defaultLimits)
+				if err != nil {
+					t.Fatal(err)
+				}
+				var buildArgs []string
+				_, err = buildOrReuse(t.TempDir(), fixtureManifest(data), archive, "fake-go", os.Environ(), func(_ string, args []string, _ string, _ []string) error {
+					buildArgs = append([]string(nil), args...)
+					output := indexOf(args, "-o")
+					if output < 0 || output+1 >= len(args) {
+						return errors.New("missing output argument")
+					}
+					return os.WriteFile(args[output+1], []byte("mock executable"), 0755)
+				}, func(_, _ string, _ []string) (string, error) { return "go1.27.1", nil })
+				if err != nil {
+					t.Fatal(err)
+				}
+				want := "-X main.version=0.1.0-dev -X github.com/Glacius-Labs/Markitect/" + prefix + location + ".version=0.1.0-dev"
+				if !contains(buildArgs, want) || !contains(buildArgs, "./"+prefix+"cmd/markitect") {
+					t.Fatalf("wrong pinned version/executable selection: %v, want %s", buildArgs, want)
+				}
+			})
+		}
+	}
 }
 
 func TestParseManifestStrictFieldsAndCRLF(t *testing.T) {
@@ -320,7 +366,7 @@ func TestBuildCacheReusesOnlyVerifiedBinaryAndUsesLocalGoCaches(t *testing.T) {
 	if noiseReuse != first || buildCount != 1 {
 		t.Fatalf("irrelevant caller environment invalidated cache: builds=%d", buildCount)
 	}
-	if indexOf(buildArgs, "-buildvcs=false") < 0 || indexOf(buildArgs, "-trimpath") < 0 || !contains(buildArgs, "-X main.version="+m.version+" -X github.com/Glacius-Labs/Markitect/src/internal/host/buildinfo.version="+m.version) || !contains(buildArgs, "./src/cmd/markitect") {
+	if indexOf(buildArgs, "-buildvcs=false") < 0 || indexOf(buildArgs, "-trimpath") < 0 || !contains(buildArgs, "-X main.version="+m.version+" -X github.com/Glacius-Labs/Markitect/src/internal/application/buildinfo.version="+m.version) || !contains(buildArgs, "./src/cmd/markitect") {
 		t.Fatalf("build flags missing: %v", buildArgs)
 	}
 	base := filepath.Join(root, ".artifacts", "markitect")

@@ -20,8 +20,8 @@ spec:
   - .githooks/pre-commit
   - .github/workflows/ci.yaml
   - src/cmd/markitect-check-modules/
-  - src/internal/host/modulecli/
-  - src/internal/host/modulechecks/
+  - src/internal/application/modulecli/
+  - src/internal/application/modulechecks/
   - src/internal/modules/githooks/
   - src/internal/modules/pipelines/
   checks:

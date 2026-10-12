@@ -3,8 +3,8 @@ package main
 import (
 	"os"
 
-	"github.com/Glacius-Labs/Markitect/src/internal/host/buildinfo"
-	"github.com/Glacius-Labs/Markitect/src/internal/host/projectcli"
+	"github.com/Glacius-Labs/Markitect/src/internal/application/buildinfo"
+	"github.com/Glacius-Labs/Markitect/src/internal/application/projectcli"
 )
 
 // The product binary dispatches the verb table using independent build metadata.

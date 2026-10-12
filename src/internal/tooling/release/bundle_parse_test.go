@@ -148,7 +148,7 @@ func TestToolLockValidation(t *testing.T) {
 
 func TestBundleManifestRequiresSourceVersionLiteral(t *testing.T) {
 	snapshot := bundleSnapshot()
-	snapshot.Files["src/internal/host/buildinfo/version.go"] = []byte("package buildinfo\nvar version = 1.2.3\n")
+	snapshot.Files["src/internal/application/buildinfo/version.go"] = []byte("package buildinfo\nvar version = 1.2.3\n")
 	if _, err := BuildBundle(snapshot, "1.2.3"); err == nil {
 		t.Fatal("non-string source version literal was accepted")
 	}
@@ -159,5 +159,43 @@ func TestBundleVersionErrorIncludesMismatch(t *testing.T) {
 	_, err := BuildBundle(snapshot, "1.2.4")
 	if err == nil || !strings.Contains(err.Error(), "does not match") {
 		t.Fatalf("version mismatch error = %v", err)
+	}
+}
+
+func TestImmutableSourceVersionLocations(t *testing.T) {
+	const current = "src/internal/application/buildinfo/version.go"
+	locations := []string{
+		current,
+		"src/internal/host/buildinfo/version.go",
+		"src/internal/host/cli/version.go",
+		"internal/host/cli/version.go",
+		"src/cmd/markitect/main.go",
+		"cmd/markitect/main.go",
+	}
+	for _, location := range locations {
+		t.Run(location, func(t *testing.T) {
+			snapshot := bundleSnapshot()
+			for _, other := range locations {
+				delete(snapshot.Files, other)
+				delete(snapshot.Modes, other)
+			}
+			snapshot.Files[location] = []byte("package version\nvar version = \"1.2.3\"\n")
+			snapshot.Modes[location] = "100644"
+			if err := validateSourceVersion(snapshot, "1.2.3"); err != nil {
+				t.Fatalf("immutable source version rejected: %v", err)
+			}
+			if err := validateSourceVersion(snapshot, "1.2.4"); err == nil || !strings.Contains(err.Error(), "does not match") {
+				t.Fatalf("immutable source version mismatch accepted: %v", err)
+			}
+		})
+	}
+	snapshot := bundleSnapshot()
+	snapshot.Files["src/internal/host/buildinfo/version.go"] = []byte("package buildinfo\nvar version = \"1.2.4\"\n")
+	snapshot.Modes["src/internal/host/buildinfo/version.go"] = "100644"
+	if err := validateSourceVersion(snapshot, "1.2.3"); err != nil {
+		t.Fatalf("current version did not take precedence over historical version: %v", err)
+	}
+	if err := validateSourceVersion(snapshot, "1.2.4"); err == nil {
+		t.Fatal("historical version bypassed current source mismatch")
 	}
 }

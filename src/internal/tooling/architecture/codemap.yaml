@@ -14,29 +14,29 @@ packages:
     layer: core
     purpose: Compiles explicitly supplied Schemas and Definitions into a pure structural model.
     doc: src/internal/core/README.md
+  - path: src/internal/core/projectmodel
+    layer: core
+    purpose: Derives management, artifact and impact views from the compiled project model.
+    doc: docs/architecture.md#core-layer
+  - path: src/internal/core/projectmodel/projectbriefing
+    layer: core
+    purpose: Derives deterministic briefings and resolution status from explicitly supplied model values.
+    doc: docs/architecture.md#core-layer
+  - path: src/internal/core/projectmodel/projectcoverage
+    layer: core
+    purpose: Classifies explicitly supplied repository census values against the project model.
+    doc: docs/architecture.md#core-layer
+  - path: src/internal/core/projectmodel/projectvalue
+    layer: core
+    purpose: Holds shared project values, path selectors and deterministic binding identity.
+    doc: docs/architecture.md#core-layer
   - path: src/internal/core/snapshot
     layer: core
     purpose: Fixed sets of source files and deterministic comparisons over them.
     doc: docs/source-snapshots.md#current-value
-  - path: src/internal/modules/projectmodel
-    layer: core
-    purpose: Derives management, artifact and impact views from the compiled project model.
-    doc: docs/architecture.md#core-layer
-  - path: src/internal/modules/projectmodel/projectbriefing
-    layer: core
-    purpose: Derives deterministic briefings and resolution status from explicitly supplied model values.
-    doc: docs/architecture.md#core-layer
-  - path: src/internal/modules/projectmodel/projectcoverage
-    layer: core
-    purpose: Classifies explicitly supplied repository census values against the project model.
-    doc: docs/architecture.md#core-layer
-  - path: src/internal/modules/projectmodel/projectvalue
-    layer: core
-    purpose: Holds shared project values, path selectors and deterministic binding identity.
-    doc: docs/architecture.md#core-layer
 
   # --- infrastructure -----------------------------------------------------
-  - path: src/internal/host/guardedwrite
+  - path: src/internal/infrastructure/guardedwrite
     layer: infrastructure
     purpose: Applies selected working-tree changes only while repository, branch, HEAD and captured bytes are unchanged.
     doc: docs/architecture.md#infrastructure-layer
@@ -46,97 +46,97 @@ packages:
     doc: docs/source-snapshots.md#adapter-and-use-case-ownership
 
   # --- application --------------------------------------------------------
-  - path: src/internal/host/architecturecli
+  - path: src/internal/application/architecturecli
     layer: application
     purpose: Host command adapter for the repository architecture gate.
     doc: docs/development/modules.md#mechanical-dependency-gate
-  - path: src/internal/host/buildinfo
+  - path: src/internal/application/buildinfo
     layer: application
     purpose: Shared immutable source and build version for product and release tooling.
     doc: integration/README.md#current-source-release-tooling
-  - path: src/internal/host/mcp
+  - path: src/internal/application/mcp
     layer: application
     purpose: Local stdio MCP server over the project operations.
     doc: docs/project-operations.md#mcp-server-and-tool-groups
-  - path: src/internal/host/modulechecks
+  - path: src/internal/application/modulechecks
     layer: application
     purpose: Host composition for the independent Git hooks and pipeline checks.
     doc: CONTRIBUTING.md#verify-a-change
-  - path: src/internal/host/modulecli
+  - path: src/internal/application/modulecli
     layer: application
     purpose: Command adapter for the independent Git hooks and pipeline checks.
     doc: CONTRIBUTING.md#verify-a-change
-  - path: src/internal/host/projectadoption
+  - path: src/internal/application/projectadoption
     layer: application
     purpose: Brownfield adoption that checks fixed-snapshot evidence and prepares model-only changes.
     doc: docs/project-workflow.md#existing-repositories
-  - path: src/internal/host/projectapp
+  - path: src/internal/application/projectapp
     layer: application
     purpose: Shared application facade that the project CLI and MCP server call.
     doc: docs/architecture.md#application-layer
-  - path: src/internal/host/projectcli
+  - path: src/internal/application/projectcli
     layer: application
     purpose: The `markitect` verb table, its command line and its MCP tools.
     doc: docs/project-operations.md#cli-setup-and-current-roots
-  - path: src/internal/host/projectcoverage
+  - path: src/internal/application/projectcoverage
     layer: application
     purpose: Acquires repository census values from the selected working tree or committed revision.
     doc: docs/source-snapshots.md#adapter-and-use-case-ownership
-  - path: src/internal/host/projectexplore
+  - path: src/internal/application/projectexplore
     layer: application
     purpose: Stores explorations, open decisions, scope readiness and Apply receipts.
     doc: docs/project-workflow.md#model-and-readiness
-  - path: src/internal/host/projecthistory
+  - path: src/internal/application/projecthistory
     layer: application
     purpose: Acquires accepted model history and persists guarded briefing, resolution and dismissal records.
     doc: docs/architecture.md#application-layer
-  - path: src/internal/host/projectonboarding
+  - path: src/internal/application/projectonboarding
     layer: application
     purpose: Writes project-local guidance and skills for Codex and Claude contributors.
     doc: docs/project-workflow.md#connect-and-inspect
-  - path: src/internal/host/projectwork
+  - path: src/internal/application/projectwork
     layer: application
     purpose: Loads the selected project model and writes model changes under guard.
     doc: docs/project-workflow.md#model-and-readiness
-  - path: src/internal/host/releasecli
+  - path: src/internal/application/releasecli
     layer: application
     purpose: Command interface of `markitect-release` for preparing or publishing a GitHub release.
     doc: docs/operations.md#release-operations
-  - path: src/internal/host/releaseinstall
+  - path: src/internal/application/releaseinstall
     layer: application
     purpose: Plans and applies complete verified bundle pins through guarded writes.
     doc: integration/README.md#current-source-release-tooling
 
   # --- runtime ------------------------------------------------------------
-  - path: src/internal/host/agentexec
+  - path: src/internal/runtime/agentexec
     layer: runtime
     purpose: Provider-neutral subprocess boundary for one role invocation and its receipt.
-    doc: src/internal/host/agentexec/README.md
-  - path: src/internal/host/codexappserver
+    doc: src/internal/runtime/agentexec/README.md
+  - path: src/internal/runtime/codexappserver
     layer: runtime
     purpose: Transport to the native Codex App Server for Manager, review and verify roles.
     doc: docs/provider-adapters.md#inner-role-execution-and-workspace-boundary
-  - path: src/internal/host/exchangecli
+  - path: src/internal/runtime/exchangecli
     layer: runtime
     purpose: Reference bring-your-own executor that hands each role invocation to an external party through request and response files.
     doc: docs/provider-adapters.md#bring-your-own-executor
-  - path: src/internal/host/projectconfig
+  - path: src/internal/runtime/projectconfig
     layer: runtime
     purpose: Loads and validates the explicit runtime configuration and finite role policies.
     doc: docs/project-operations.md#cli-setup-and-current-roots
-  - path: src/internal/host/projectexecutor
+  - path: src/internal/runtime/projectexecutor
     layer: runtime
     purpose: Executes process and native role transports with private protocol evidence and injected helper policy.
     doc: docs/provider-adapters.md#inner-role-execution-and-workspace-boundary
-  - path: src/internal/host/projectrun
+  - path: src/internal/runtime/projectrun
     layer: runtime
     purpose: Runs, resumes, verifies and applies bounded Manager work over fixed snapshots.
     doc: docs/project-workflow.md#execute-verify-and-apply
-  - path: src/internal/host/projectsetup
+  - path: src/internal/runtime/projectsetup
     layer: runtime
     purpose: Builds the project-local agent runtime proposal for `project setup`.
     doc: docs/project-operations.md#cli-setup-and-current-roots
-  - path: src/internal/host/projectworkspace
+  - path: src/internal/runtime/projectworkspace
     layer: runtime
     purpose: Owned candidate workspaces for bounded runs.
     doc: docs/project-operations.md#candidate-workspaces-and-recovery

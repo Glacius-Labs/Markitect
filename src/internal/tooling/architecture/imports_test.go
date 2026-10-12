@@ -22,16 +22,105 @@ func TestPermittedEdges(t *testing.T) {
 	}
 }
 
+func TestRelocatedFamiliesPreserveImportBoundaries(t *testing.T) {
+	const model = "src/internal/core/projectmodel"
+	const core = "src/internal/core/snapshot"
+	const hooks = "src/internal/modules/githooks"
+	const pipelines = "src/internal/modules/pipelines"
+	const app = "src/internal/application/projectwork"
+	const runtime = "src/internal/runtime/projectrun"
+	const source = "src/internal/infrastructure/source"
+	const tooling = "src/internal/tooling/release"
+	const cli = "src/cmd/markitect"
+	for _, test := range []struct {
+		from, to string
+		allowed  bool
+	}{
+		{core, model, false},
+		{core, model + "/projectvalue", false},
+		{model, core, true},
+		{model + "/projectbriefing", core, true},
+		{model, model + "/projectvalue", true},
+		{model + "/projectbriefing", model + "/projectvalue", true},
+		{model, hooks, false},
+		{hooks, model, false},
+		{model, pipelines, false},
+		{pipelines, model, false},
+		{hooks, pipelines, false},
+		{pipelines, hooks, false},
+		{hooks, core, true},
+		{pipelines, core, true},
+		{app, model, true},
+		{runtime, model, true},
+		{model, app, false},
+		{model, runtime, false},
+		{model, source, false},
+		{model, tooling, false},
+		{tooling, GuardedWritePackage, false},
+		{source, GuardedWritePackage, false},
+		{GuardedWritePackage, model, true},
+		{core, GuardedWritePackage, false},
+		{hooks, GuardedWritePackage, false},
+		{GuardedWritePackage, cli, false},
+		{cli, GuardedWritePackage, true},
+		{cli, app, true},
+		{cli, "src/internal/runtime/exchangecli", true},
+		{app, cli, false},
+		{runtime, cli, false},
+		{app, "src/harness/examples", false},
+		{runtime, "src/harness/examples", false},
+		{source, "src/harness/examples", false},
+	} {
+		for _, file := range []struct {
+			name string
+			test bool
+		}{{"boundary.go", false}, {"boundary_test.go", true}, {"boundary_windows.go", false}} {
+			t.Run(test.from+"_to_"+test.to+"/"+file.name, func(t *testing.T) {
+				got := Check([]Edge{{File: file.name, From: test.from, To: test.to, Test: file.test}})
+				if (len(got) == 0) != test.allowed {
+					t.Fatalf("allowed=%v, findings=%v", test.allowed, got)
+				}
+			})
+		}
+	}
+	for _, from := range []string{model, app, runtime, GuardedWritePackage, source} {
+		if got := Check([]Edge{{From: from, To: "src/internal/testkit"}}); len(got) != 1 {
+			t.Fatalf("production testkit import from %s: %v", from, got)
+		}
+		if got := Check([]Edge{{From: from, To: "src/internal/testkit", Test: true}}); len(got) != 0 {
+			t.Fatalf("testkit import from test in %s: %v", from, got)
+		}
+	}
+}
+
+func TestRelocatedFamilyPrefixesDoNotClaimSiblingNames(t *testing.T) {
+	for _, test := range []struct {
+		path, layer, owner string
+	}{
+		{"src/internal/core/projectmodel", "module", "src/internal/core/projectmodel"},
+		{"src/internal/core/projectmodel/projectvalue", "module", "src/internal/core/projectmodel"},
+		{"src/internal/core/projectmodelx", "core", "core"},
+		{GuardedWritePackage, "host", "host"},
+		{GuardedWritePackage + "/private", "host", "host"},
+		{GuardedWritePackage + "x", "infrastructure", "infrastructure"},
+	} {
+		got, owner := layer(test.path)
+		if got != test.layer || owner != test.owner {
+			t.Fatalf("%s classified as %s/%s, want %s/%s", test.path, got, owner, test.layer, test.owner)
+		}
+	}
+}
+
 // DEC-020: the gate restricts only imports between Markitect packages, so a
 // third-party library is allowed in every layer, in production and tests.
 func TestThirdPartyImportsAreNotRestricted(t *testing.T) {
 	root := t.TempDir()
 	for name, content := range map[string]string{
-		"src/internal/core/generic.go":                 "package core\nimport (\n\"fmt\"\n_ \"go.yaml.in/yaml/v3\"\n)\n",
-		"src/internal/core/provider_test.go":           "package core\nimport _ \"example.org/provider/sdk\"\n",
-		"src/internal/modules/a/a.go":                  "package a\nimport _ \"go.yaml.in/yaml/v3\"\n",
-		"src/internal/infrastructure/source/s.go":      "package source\nimport _ \"example.org/git/client\"\n",
-		"src/internal/host/projectwork/projectwork.go": "package projectwork\nimport _ \"example.org/any/library\"\n",
+		"src/internal/core/generic.go":                        "package core\nimport (\n\"fmt\"\n_ \"go.yaml.in/yaml/v3\"\n)\n",
+		"src/internal/core/provider_test.go":                  "package core\nimport _ \"example.org/provider/sdk\"\n",
+		"src/internal/modules/a/a.go":                         "package a\nimport _ \"go.yaml.in/yaml/v3\"\n",
+		"src/internal/infrastructure/source/s.go":             "package source\nimport _ \"example.org/git/client\"\n",
+		"src/internal/application/projectwork/projectwork.go": "package projectwork\nimport _ \"example.org/any/library\"\n",
 	} {
 		p := filepath.Join(root, filepath.FromSlash(name))
 		if err := os.MkdirAll(filepath.Dir(p), 0755); err != nil {
