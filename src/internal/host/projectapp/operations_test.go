@@ -113,12 +113,7 @@ func TestPlanRejectsConflictingExplicitRevisionsBeforeHost(t *testing.T) {
 
 func TestUnauthenticatedPlanReturnsPreviewWithoutCreatingRun(t *testing.T) {
 	root := makePlanFixture(t)
-	operations := Operations{Host: projectrun.Host{
-		Load:         projectwork.Load,
-		FromSnapshot: projectwork.FromSnapshot,
-		PlanEdit:     projectwork.PlanEdit,
-		ApplyEdit:    projectwork.ApplyEdit,
-	}}
+	operations := NewOperations()
 	plan, err := operations.Plan(PlanOperation{
 		Selection: Selection{Root: root},
 		Request:   projectrun.PlanRequest{Operation: projectrun.OperationApply, Goal: "Review a bounded change"},

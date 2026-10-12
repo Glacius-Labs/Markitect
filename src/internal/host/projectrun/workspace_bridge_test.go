@@ -18,6 +18,11 @@ import (
 	"github.com/Glacius-Labs/Markitect/src/internal/modules/projectmodel/projectvalue"
 )
 
+const (
+	workspaceInstructionPath = "docs/agent-instructions.md"
+	workspaceInstructionText = "Follow the selected fixture contract.\n"
+)
+
 type workspaceBridgeInvoker struct {
 	result    agentexec.RunResult
 	err       error
@@ -263,15 +268,17 @@ func workspaceProjectFixture(root, revision string) *projectvalue.Project {
 	inventoryManagerID := e2eManagerID("inventory", "inventory")
 	ordersArtifactID := workspaceFixtureIdentity("Artifact", "orders", "orders-code")
 	inventoryArtifactID := workspaceFixtureIdentity("Artifact", "inventory", "inventory-code")
+	modelDigest := "sha256:dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd"
 	project := runtimeProjectFixture(revision, map[string][]byte{
 		"README.md":                        []byte("project-run process fixture\n"),
+		workspaceInstructionPath:           []byte(workspaceInstructionText),
 		"src/orders/implementation.txt":    []byte("orders implementation v1\n"),
 		"src/orders/obsolete.txt":          []byte("delete this tracked file\n"),
 		"src/inventory/implementation.txt": []byte("inventory implementation v1\n"),
 	}, map[string]string{
-		"README.md": "100644", "src/orders/implementation.txt": "100644", "src/orders/obsolete.txt": "100644", "src/inventory/implementation.txt": "100644",
-	}, core.Model{}, projectmodel.Report{
-		APIVersion: projectmodel.APIVersion, ModelDigest: "runtime-fixture-model", Digest: "runtime-fixture-report", Status: "succeeded",
+		"README.md": "100644", workspaceInstructionPath: "100644", "src/orders/implementation.txt": "100644", "src/orders/obsolete.txt": "100644", "src/inventory/implementation.txt": "100644",
+	}, core.Model{Digest: modelDigest}, projectmodel.Report{
+		APIVersion: projectmodel.APIVersion, ModelDigest: modelDigest, Digest: "sha256:eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee", Status: "succeeded",
 		Managers: []projectmodel.Manager{
 			{ID: rootManagerID, Name: "project-owner", Purpose: "Owns integration and project-wide delivery.", Owns: []string{"."}},
 			{ID: ordersManagerID, Name: "orders", Namespace: "orders", Purpose: "Owns the orders implementation.", Parent: rootManagerID, Owns: []string{"src/orders/"}},
@@ -283,7 +290,8 @@ func workspaceProjectFixture(root, revision string) *projectvalue.Project {
 		},
 	})
 	project.Root = root
-	project.Config = projectvalue.Config{APIVersion: projectvalue.APIVersion, Name: "Process fixture", InventoryRoots: []string{"src"}, WorkflowMode: projectvalue.WorkflowModeEmpty}
+	project.Digest = "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+	project.Config = projectvalue.Config{APIVersion: projectvalue.APIVersion, Name: "Process fixture", DocumentPath: workspaceInstructionPath, InventoryRoots: []string{"src"}, WorkflowMode: projectvalue.WorkflowModeEmpty}
 	return project
 }
 
@@ -319,14 +327,14 @@ func configureWorkspaceBridgeInstructions(t *testing.T, root string) {
 	if err := os.WriteFile(manifestPath, []byte(manifestText), 0o644); err != nil {
 		t.Fatal(err)
 	}
-	writeE2E(t, root, "docs/agent-instructions.md", "Follow the selected fixture contract.\n")
+	writeE2E(t, root, workspaceInstructionPath, workspaceInstructionText)
 	gitE2E(t, root, "add", ".")
 	gitE2E(t, root, "commit", "--quiet", "-m", "add pinned native instruction fixture")
 }
 
 func workspaceBridgeAgent(t *testing.T, root string) projectconfig.Agent {
 	t.Helper()
-	path, err := filepath.Abs(filepath.Join(root, "docs", "agent-instructions.md"))
+	path, err := filepath.Abs(filepath.Join(root, filepath.FromSlash(workspaceInstructionPath)))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -334,7 +342,7 @@ func workspaceBridgeAgent(t *testing.T, root string) projectconfig.Agent {
 	if err != nil {
 		t.Fatal(err)
 	}
-	return projectconfig.Agent{Transport: projectconfig.TransportCodexAppServer, WorkspaceMode: "git", InstructionPaths: []string{"docs/agent-instructions.md"},
+	return projectconfig.Agent{Transport: projectconfig.TransportCodexAppServer, WorkspaceMode: "git", InstructionPaths: []string{workspaceInstructionPath},
 		RuntimeFiles: []agentexec.RuntimeFile{{Path: path, Mode: "0644", Digest: "sha256:" + digestBytes(content)}}}
 }
 

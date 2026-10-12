@@ -592,7 +592,7 @@ func processRuntimeProject(t *testing.T, root, revision string, nested bool) *pr
 	project := runtimeProjectFixture(revision, base.Snapshot.Files, base.Snapshot.Modes, base.Model, base.Report)
 	project.Root = root
 	project.Config = base.Config
-	project.Digest = "sha256:1111111111111111111111111111111111111111111111111111111111111111"
+	project.Digest = "1111111111111111111111111111111111111111111111111111111111111111"
 	project.Model.Digest = "sha256:2222222222222222222222222222222222222222222222222222222222222222"
 	project.Report.ModelDigest = project.Model.Digest
 	project.Report.Digest = "sha256:3333333333333333333333333333333333333333333333333333333333333333"
@@ -636,6 +636,44 @@ func processRuntimeProjectWithRootStatement(t *testing.T, root, revision string)
 	return project
 }
 
+// processRuntimeProjectWithRootArtifact adds one explicit, parent-owned source
+// file for native resume/rework tests. The test repository supplies the same
+// pinned baseline bytes before this finite Project is constructed.
+func processRuntimeProjectWithRootArtifact(t *testing.T, root, revision string) *projectvalue.Project {
+	t.Helper()
+	project := processRuntimeProjectWithRootStatement(t, root, revision)
+	const path = "src/project-owner.txt"
+	rootID := e2eManagerID("", "project-owner")
+	statementID := e2eFixtureIdentity("Statement", "", "integration-quality")
+	artifactID := e2eFixtureIdentity("Artifact", "", "project-owner-source")
+	project.Report.Artifacts = append(project.Report.Artifacts, projectmodel.Artifact{
+		ID: artifactID, Name: "project-owner-source", Owner: rootID, Role: "implementation",
+		Realizes: []string{statementID}, Paths: []string{path}, Required: false,
+	})
+	project.Report.Files = append(project.Report.Files, projectmodel.FileEntry{
+		Path: path, Owner: rootID, Class: "source", Statements: []string{statementID}, Artifacts: []string{artifactID}, Exists: true,
+	})
+	project.Snapshot.Files[path] = []byte("project owner baseline\n")
+	project.Snapshot.Modes[path] = "100644"
+	return project
+}
+
+// processRuntimeProjectWithInstructions binds the exact instruction document
+// selected by Config to the same pinned bytes and mode consumed by Runtime.
+func processRuntimeProjectWithInstructions(t *testing.T, root, revision string) *projectvalue.Project {
+	t.Helper()
+	const path = "docs/agent-instructions.md"
+	project := processRuntimeProject(t, root, revision, false)
+	content, err := os.ReadFile(filepath.Join(root, filepath.FromSlash(path)))
+	if err != nil {
+		t.Fatalf("read pinned Runtime instruction document: %v", err)
+	}
+	project.Config.DocumentPath = path
+	project.Snapshot.Files[path] = append([]byte(nil), content...)
+	project.Snapshot.Modes[path] = "100644"
+	return project
+}
+
 // processRuntimeHost serves only the explicit project facts above and candidate
 // snapshots supplied by Runtime. It never calls the Application frontend.
 func processRuntimeHost(root string, project *projectvalue.Project) Host {
@@ -649,7 +687,7 @@ func processRuntimeHost(root string, project *projectvalue.Project) Host {
 		}
 		for _, manager := range project.Report.Managers {
 			if manager.ID == managerID {
-				return BriefingContext{Digest: "sha256:4444444444444444444444444444444444444444444444444444444444444444"}, nil
+				return BriefingContext{Digest: strings.Repeat("4", 64)}, nil
 			}
 		}
 		return BriefingContext{}, fmt.Errorf("process Runtime fixture received unknown Manager %q", managerID)

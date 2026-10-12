@@ -3,6 +3,7 @@
 package projectapp
 
 import (
+	"bufio"
 	"context"
 	"crypto/sha256"
 	"encoding/hex"
@@ -13,9 +14,11 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/Glacius-Labs/Markitect/src/internal/host/agentexec"
 	"github.com/Glacius-Labs/Markitect/src/internal/host/projectconfig"
+	"github.com/Glacius-Labs/Markitect/src/internal/host/projectexplore"
 	"github.com/Glacius-Labs/Markitect/src/internal/host/projectrun"
 	"go.yaml.in/yaml/v3"
 )
@@ -357,7 +360,9 @@ func TestVerifyChecksSeeFilesModelledInPlace(t *testing.T) {
 	// compiler supplies the generated document for the resulting source model.
 	sourceOperationsConfigureWorker(t, root, sourceOperationsManifestPath, string(manifest), "")
 	sourceOperationsCommitInputs(t, root, "configure modelled-file process fixture")
-	plan := sourceOperationsPlan(t, operations, root, projectrun.PlanRequest{Goal: "Model the legacy orders file in place.", Managers: deliveryManagers(), ExecuteAuthorized: true})
+	request := projectrun.PlanRequest{Operation: projectrun.OperationApply, Goal: "Model the legacy orders file in place.", Managers: deliveryManagers(), ExecuteAuthorized: true}
+	sourceOperationsCreateAcknowledgedScope(t, operations, root, &request, "legacy-file", "legacy-file-change")
+	plan := sourceOperationsPlan(t, operations, root, request)
 	run := sourceOperationsRun(t, operations, root, plan)
 	verified, err := operations.Verify(context.Background(), RunOperation{Root: root, RunID: run.ID})
 	if err != nil || verified.Status != projectrun.StatusVerified {
@@ -409,7 +414,9 @@ func TestVerifyRunsDeclaredChecksOutsideTheRunStore(t *testing.T) {
 	sourceOperationsConfigureChecks(t, root, "cwd")
 	sourceOperationsConfigureWorker(t, root, "", "", "")
 	sourceOperationsCommitInputs(t, root, "configure isolated check process fixture")
-	plan := sourceOperationsPlan(t, operations, root, projectrun.PlanRequest{Goal: "Verify declared checks run in an isolated working directory.", Managers: deliveryManagers(), ExecuteAuthorized: true})
+	request := projectrun.PlanRequest{Operation: projectrun.OperationApply, Goal: "Verify declared checks run in an isolated working directory.", Managers: deliveryManagers(), ExecuteAuthorized: true}
+	sourceOperationsCreateAcknowledgedScope(t, operations, root, &request, "isolated-check", "isolated-check-change")
+	plan := sourceOperationsPlan(t, operations, root, request)
 	run := sourceOperationsRun(t, operations, root, plan)
 	verified, err := operations.Verify(context.Background(), RunOperation{Root: root, RunID: run.ID})
 	if err != nil || verified.Status != projectrun.StatusVerified {
@@ -453,8 +460,62 @@ func TestTargetedPlanStillFullVerifiesUnimpactedManagerDrift(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if !strings.Contains(string(data), deliveryManagerID("inventory", "inventory")) {
+	var auditedInventory bool
+	scanner := bufio.NewScanner(strings.NewReader(string(data)))
+	for scanner.Scan() {
+		var entry struct {
+			ManagerID string `json:"managerId"`
+		}
+		if err := json.Unmarshal(scanner.Bytes(), &entry); err != nil {
+			t.Fatalf("decode full-verification audit record: %v", err)
+		}
+		if entry.ManagerID == deliveryManagerID("inventory", "inventory") {
+			auditedInventory = true
+		}
+	}
+	if err := scanner.Err(); err != nil {
+		t.Fatal(err)
+	}
+	if !auditedInventory {
 		t.Fatalf("unimpacted Inventory was not independently audited: %s", data)
+	}
+}
+
+func sourceOperationsCreateAcknowledgedScope(t *testing.T, operations Operations, root string, request *projectrun.PlanRequest, explorationID, scopeID string) {
+	t.Helper()
+	operation, err := projectrun.NormalizeOperation(request.Operation)
+	if err != nil {
+		t.Fatal(err)
+	}
+	request.Operation = operation
+	request.ExplorationID, request.ScopeID = explorationID, scopeID
+	// Keep full selection explicit as an empty array in both the plan request
+	// and named scope; a nil scope ManagerIDs slice is invalid record data.
+	request.Managers = append([]string{}, request.Managers...)
+	selection := Selection{Root: root}
+	record := projectexplore.Record{
+		APIVersion: projectexplore.APIVersion, ID: explorationID, Status: projectexplore.StatusActive,
+		Request:   request.Goal,
+		Scopes:    []projectexplore.Scope{{ID: scopeID, Name: scopeID, Goal: request.Goal, Operation: operation, ManagerIDs: append([]string{}, request.Managers...)}},
+		Decisions: []projectexplore.Decision{}, Drafts: []projectexplore.DraftProposal{}, Acknowledgements: []projectexplore.StructureAcknowledgement{}, Completions: []projectexplore.ApplyReceipt{},
+	}
+	preview, err := operations.Explore(ExploreOperation{Selection: selection, Record: &record})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := operations.Explore(ExploreOperation{Selection: selection, Record: &record, Write: true, ExpectedDigest: preview.Plan.Digest}); err != nil {
+		t.Fatal(err)
+	}
+	ack := StructureAcknowledgementInput{Actor: "fixture-user", Authority: "approved for test", Provenance: "source-operations-test", RecordedAt: time.Now().UTC()}
+	ready, err := operations.Readiness(ReadinessOperation{Selection: selection, ExplorationID: explorationID, ScopeID: scopeID, Acknowledgement: &ack})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !ready.Readiness.Ready {
+		t.Fatalf("source-operation scope is not ready: %+v", ready.Readiness)
+	}
+	if _, err := operations.Readiness(ReadinessOperation{Selection: selection, ExplorationID: explorationID, ScopeID: scopeID, Acknowledgement: &ack, Write: true, ExpectedDigest: ready.WritePlan.Digest}); err != nil {
+		t.Fatal(err)
 	}
 }
 
@@ -489,7 +550,9 @@ func TestCleanupAndReconcileNoOpVerifyFullTreeAndGuardedApply(t *testing.T) {
 			sourceOperationsConfigureWorker(t, root, "", "", "")
 			sourceOperationsConfigureNoOpStrictness(t, root)
 			sourceOperationsCommitInputs(t, root, "configure no-op operation workers")
-			plan := sourceOperationsPlan(t, operations, root, projectrun.PlanRequest{Operation: operation, Goal: "Review the complete project and improve only if warranted", ExecuteAuthorized: true})
+			request := projectrun.PlanRequest{Operation: operation, Goal: "Review the complete project and improve only if warranted", ExecuteAuthorized: true}
+			sourceOperationsCreateAcknowledgedScope(t, operations, root, &request, "no-op-"+operation, "no-op-scope")
+			plan := sourceOperationsPlan(t, operations, root, request)
 			if len(plan.Managers) != 3 || len(plan.Checks) != 2 {
 				t.Fatalf("%s plan did not include every Manager and check: managers=%d checks=%d", operation, len(plan.Managers), len(plan.Checks))
 			}
@@ -542,8 +605,10 @@ func TestCleanupSourceChangeGeneratesAndAppliesExactVerifiedDocument(t *testing.
 	operations := deliveryOperations()
 	sourceOperationsConfigureWorker(t, root, "src/orders/implementation.txt", "orders implementation v2\n", "")
 	sourceOperationsCommitInputs(t, root, "configure cleanup source-change worker")
-	plan := sourceOperationsPlan(t, operations, root, projectrun.PlanRequest{Operation: projectrun.OperationCleanup,
-		Goal: "Review the complete project and improve Orders where the accepted model permits it", ExecuteAuthorized: true})
+	request := projectrun.PlanRequest{Operation: projectrun.OperationCleanup,
+		Goal: "Review the complete project and improve Orders where the accepted model permits it", ExecuteAuthorized: true}
+	sourceOperationsCreateAcknowledgedScope(t, operations, root, &request, "cleanup-source", "cleanup-source-change")
+	plan := sourceOperationsPlan(t, operations, root, request)
 	run := sourceOperationsRun(t, operations, root, plan)
 	verified, err := operations.Verify(context.Background(), RunOperation{Root: root, RunID: run.ID})
 	if err != nil || verified.Status != projectrun.StatusVerified {

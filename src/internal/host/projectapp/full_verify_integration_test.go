@@ -3,6 +3,8 @@
 package projectapp
 
 import (
+	"bufio"
+	"bytes"
 	"context"
 	"encoding/json"
 	"os"
@@ -10,8 +12,10 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/Glacius-Labs/Markitect/src/internal/core"
 	"github.com/Glacius-Labs/Markitect/src/internal/host/projectconfig"
 	"github.com/Glacius-Labs/Markitect/src/internal/host/projectrun"
+	"github.com/Glacius-Labs/Markitect/src/internal/modules/projectmodel"
 )
 
 func TestApplicationFullVerifyAuditsEveryManagerAndPersistsReceiptAndChecks(t *testing.T) {
@@ -40,20 +44,72 @@ func TestApplicationFullVerifyAuditsEveryManagerAndPersistsReceiptAndChecks(t *t
 	if err != nil {
 		t.Fatal(err)
 	}
-	if strings.Count(string(data), `"context":`) != 3 {
-		t.Fatalf("logged Manager calls = %d, want 3", strings.Count(string(data), `"context":`))
+	type loggedFullVerify struct {
+		ManagerID string `json:"managerId"`
+		Context   struct {
+			RequiredSubjects []string `json:"requiredSubjects"`
+			ChildAssessments []struct {
+				ManagerID string `json:"managerId"`
+				Status    string `json:"status"`
+			} `json:"childAssessments"`
+			CheckResults []projectrun.CheckResult `json:"checkResults"`
+		} `json:"context"`
 	}
-	if !strings.Contains(string(data), "integration:manager:") || !strings.Contains(string(data), "integration:artifact:") {
-		t.Fatalf("root Manager did not receive direct-child integration obligations: %s", data)
+	var rootAudit *loggedFullVerify
+	var managerCalls int
+	scanner := bufio.NewScanner(bytes.NewReader(data))
+	for scanner.Scan() {
+		var record loggedFullVerify
+		if err := json.Unmarshal(scanner.Bytes(), &record); err != nil {
+			t.Fatalf("decode FullVerify Manager log record: %v", err)
+		}
+		managerCalls++
+		if record.ManagerID == deliveryManagerID("", "project-owner") {
+			rootAudit = &record
+		}
 	}
-	if !strings.Contains(string(data), `"childAssessments":[{"managerId"`) || !strings.Contains(string(data), `"checkResults":[{"id"`) {
-		t.Fatalf("root Manager did not receive direct-child assessment and check evidence: %s", data)
+	if err := scanner.Err(); err != nil {
+		t.Fatal(err)
+	}
+	if managerCalls != 3 {
+		t.Fatalf("logged Manager calls = %d, want 3", managerCalls)
+	}
+	if rootAudit == nil {
+		t.Fatalf("FullVerify did not log the actual root Manager audit: %s", data)
+	}
+	var managerObligation, artifactObligation bool
+	for _, subject := range rootAudit.Context.RequiredSubjects {
+		managerObligation = managerObligation || strings.HasPrefix(subject, "integration:manager:")
+		artifactObligation = artifactObligation || strings.HasPrefix(subject, "integration:artifact:")
+	}
+	if !managerObligation || !artifactObligation {
+		t.Fatalf("root Manager did not receive direct-child integration obligations: %+v", rootAudit.Context.RequiredSubjects)
+	}
+	children := map[string]string{}
+	for _, child := range rootAudit.Context.ChildAssessments {
+		children[child.ManagerID] = child.Status
+	}
+	if len(children) != 2 || children[deliveryManagerID("orders", "orders")] != "passed" || children[deliveryManagerID("inventory", "inventory")] != "passed" {
+		t.Fatalf("root Manager did not receive both direct-child assessments: %+v", rootAudit.Context.ChildAssessments)
+	}
+	checks := map[string]string{}
+	for _, check := range rootAudit.Context.CheckResults {
+		checks[check.ID] = check.Outcome
+	}
+	ordersCheck := core.DefinitionIdentity{APIVersion: projectmodel.APIVersion, Kind: "Check", Namespace: "orders", Name: "orders-check"}.Key()
+	inventoryCheck := core.DefinitionIdentity{APIVersion: projectmodel.APIVersion, Kind: "Check", Namespace: "inventory", Name: "inventory-check"}.Key()
+	if len(checks) != 2 || checks[ordersCheck] != "passed" || checks[inventoryCheck] != "passed" {
+		t.Fatalf("root Manager did not receive both passing direct-child checks: %+v", rootAudit.Context.CheckResults)
 	}
 	written, err := operations.FullVerify(context.Background(), FullVerifyOperation{Root: root, Request: projectrun.FullVerifyRequest{Revision: head, Write: true}})
 	if err != nil {
 		t.Fatal(err)
 	}
-	persisted, err := os.ReadFile(filepath.Join(root, filepath.FromSlash(written.PersistedPath)))
+	persistedPath := filepath.FromSlash(written.PersistedPath)
+	if !filepath.IsAbs(persistedPath) {
+		persistedPath = filepath.Join(root, persistedPath)
+	}
+	persisted, err := os.ReadFile(persistedPath)
 	if err != nil {
 		t.Fatalf("persisted report missing: %v", err)
 	}

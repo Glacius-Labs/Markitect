@@ -29,13 +29,6 @@ func TestPreflightApplyAndApplyPreserveRawCRLFCAS(t *testing.T) {
 		}
 	}
 	project := runtimeLifecycleProject(t, root, false)
-	for _, path := range []string{"src/orders/implementation.txt", "src/inventory/implementation.txt"} {
-		content, err := os.ReadFile(filepath.Join(root, filepath.FromSlash(path)))
-		if err != nil {
-			t.Fatalf("read finite CRLF source %s: %v", path, err)
-		}
-		project.Snapshot.Files[path] = append([]byte(nil), content...)
-	}
 	host := processRuntimeHost(root, project)
 	plan, err := Plan(host, root, identityHead(t, root), PlanRequest{Goal: "Implement both owned artifacts and run the declared checks.",
 		Managers: []string{e2eManagerID("orders", "orders"), e2eManagerID("inventory", "inventory")}, ExecuteAuthorized: true})
@@ -180,6 +173,7 @@ func TestApplyStaleUnderWriterLockIsRejectedLikeEarlyStaleness(t *testing.T) {
 		t.Fatal(err)
 	}
 	changedProject = runtimeProjectWithDigest(changedProject, ":model-change")
+	changedProject.Digest = strings.Repeat("d", 64)
 	host.Load = func(loadRoot, revision string) (*projectvalue.Project, error) {
 		project, loadErr := baseLoad(loadRoot, revision)
 		if loadErr != nil {
@@ -221,6 +215,9 @@ func TestApplyStaleUnderWriterLockIsRejectedLikeEarlyStaleness(t *testing.T) {
 					t.Errorf("inject concurrent edit: %v", err)
 				}
 			}
+		}
+		if revision == "" && staleModel {
+			return changedProject, nil
 		}
 		return baseLoad(loadRoot, revision)
 	}

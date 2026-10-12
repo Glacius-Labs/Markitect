@@ -62,7 +62,7 @@ func TestPendingNativeReviewRequiresExactJournalWithoutReservingOrRunning(t *tes
 		t.Fatal(err)
 	}
 	revision := identityHead(t, root)
-	project := processRuntimeProject(t, root, revision, false)
+	project := processRuntimeProjectWithInstructions(t, root, revision)
 	host := processRuntimeHost(root, project)
 	host.Workspaces = workspaceService
 	plan, err := Plan(host, root, revision, PlanRequest{Goal: "Review the parent-owned candidate.",
@@ -441,7 +441,7 @@ func resumePendingReview(t *testing.T, seed pendingReviewSeed) resumedReview {
 		t.Fatal(err)
 	}
 	revision := identityHead(t, root)
-	project := processRuntimeProject(t, root, revision, false)
+	project := processRuntimeProjectWithInstructions(t, root, revision)
 	host := processRuntimeHost(root, project)
 	host.Workspaces = workspaces
 	plan, err := Plan(host, root, revision, PlanRequest{Goal: "Implement and review owned artifacts.", Managers: []string{ordersID, inventoryID}, ExecuteAuthorized: true})

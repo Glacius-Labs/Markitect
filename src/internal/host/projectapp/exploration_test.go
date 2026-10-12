@@ -137,7 +137,7 @@ func TestExploreAcceptsGitCleanAutocrlfAndRejectsCapturedSourceChanges(t *testin
 		Decisions: []projectexplore.Decision{}, Drafts: []projectexplore.DraftProposal{},
 		Acknowledgements: []projectexplore.StructureAcknowledgement{}, Completions: []projectexplore.ApplyReceipt{},
 	}
-	operations := Operations{Host: projectrun.Host{Load: projectwork.Load, FromSnapshot: projectwork.FromSnapshot, PlanEdit: projectwork.PlanEdit}}
+	operations := NewOperations()
 	selection := Selection{Root: root, Revision: revision}
 	preview, err := operations.Explore(ExploreOperation{Selection: selection, Record: &record})
 	if err != nil {
@@ -192,7 +192,7 @@ func TestReadinessAcknowledgementUsesRawCapturedModelCheckoutBytes(t *testing.T)
 		t.Fatal(err)
 	}
 
-	operations := Operations{Host: projectrun.Host{Load: projectwork.Load, FromSnapshot: projectwork.FromSnapshot, PlanEdit: projectwork.PlanEdit}}
+	operations := NewOperations()
 	selection := Selection{Root: root, Revision: revision}
 	record := projectexplore.Record{
 		APIVersion: projectexplore.APIVersion, ID: "autocrlf-readiness", Status: projectexplore.StatusActive,

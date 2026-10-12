@@ -5,14 +5,36 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/Glacius-Labs/Markitect/src/internal/core"
 	"github.com/Glacius-Labs/Markitect/src/internal/core/snapshot"
+	"github.com/Glacius-Labs/Markitect/src/internal/host/projectconfig"
 	"github.com/Glacius-Labs/Markitect/src/internal/modules/projectmodel"
 	"github.com/Glacius-Labs/Markitect/src/internal/modules/projectmodel/projectbriefing"
 	"github.com/Glacius-Labs/Markitect/src/internal/modules/projectmodel/projectvalue"
+	yaml "go.yaml.in/yaml/v3"
 )
+
+func writeFiniteRuntimeFile(t *testing.T, root string) []byte {
+	t.Helper()
+	runtimeBytes, err := yaml.Marshal(validRuntime())
+	if err != nil {
+		t.Fatalf("marshal explicit Runtime fixture: %v", err)
+	}
+	path := filepath.Join(root, filepath.FromSlash(projectconfig.RuntimePath))
+	if err := os.MkdirAll(filepath.Dir(path), 0o700); err != nil {
+		t.Fatalf("create Runtime fixture directory: %v", err)
+	}
+	if err := os.WriteFile(path, runtimeBytes, 0o644); err != nil {
+		t.Fatalf("write explicit Runtime fixture: %v", err)
+	}
+	if err := os.Chmod(path, 0o644); err != nil {
+		t.Fatalf("set explicit Runtime fixture mode: %v", err)
+	}
+	return runtimeBytes
+}
 
 // resumeCrashProject provides only the model/report/file facts consumed by
 // private Run lifecycle gates; it does not acquire or compile repository YAML.
@@ -36,6 +58,7 @@ func resumeCrashProject(t *testing.T, root, revision string) *projectvalue.Proje
 		t.Fatal(err)
 	}
 	checkCommand := append([]string{filepath.Base(executable)}, runtimeFixtureArgs(t, []string{"-test.run=^TestProjectRunCheckProcess$"})...)
+	modelDigest := "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
 	files := map[string][]byte{
 		"README.md":   []byte("project-run process fixture\n"),
 		ordersPath:    []byte("orders implementation v1\n"),
@@ -43,7 +66,7 @@ func resumeCrashProject(t *testing.T, root, revision string) *projectvalue.Proje
 	}
 	modes := map[string]string{"README.md": "100644", ordersPath: "100644", inventoryPath: "100644"}
 	report := projectmodel.Report{
-		APIVersion: projectmodel.APIVersion, ModelDigest: "resume-crash-fixture-model", Digest: "resume-crash-fixture-report", Status: "succeeded",
+		APIVersion: projectmodel.APIVersion, ModelDigest: modelDigest, Digest: "sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb", Status: "succeeded",
 		Managers: []projectmodel.Manager{
 			{ID: rootID, Name: "project-owner", Purpose: "Owns integration and project-wide delivery.", Owns: []string{"."}},
 			{ID: ordersID, Name: "orders", Namespace: "orders", Purpose: "Owns the orders implementation.", Parent: rootID, Owns: []string{"src/orders/"}},
@@ -66,9 +89,9 @@ func resumeCrashProject(t *testing.T, root, revision string) *projectvalue.Proje
 			{Path: inventoryPath, Owner: inventoryID, Class: "source", Statements: []string{inventoryStatement}, Artifacts: []string{inventoryArtifact}, Checks: []string{inventoryCheck}, Exists: true},
 		},
 	}
-	project := runtimeProjectFixture(revision, files, modes, core.Model{}, report)
+	project := runtimeProjectFixture(revision, files, modes, core.Model{Digest: modelDigest}, report)
 	project.Root = root
-	project.Digest = "resume-crash-fixture-project"
+	project.Digest = "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
 	project.Config = projectvalue.Config{APIVersion: projectvalue.APIVersion, Name: "Resume crash fixture", WorkflowMode: projectvalue.WorkflowModeEmpty, InventoryRoots: []string{"src"}}
 	return project
 }
@@ -120,7 +143,7 @@ func resumeCrashHost(root string, project *projectvalue.Project) Host {
 			if loadRoot != root || (revision != "" && revision != project.Revision) || modelDigest != project.Report.ModelDigest || !managerIDs[managerID] {
 				return BriefingContext{}, fmt.Errorf("resume crash fixture received an unbound briefing request")
 			}
-			return BriefingContext{Digest: "resume-crash-fixture-empty-briefing"}, nil
+			return BriefingContext{Digest: strings.Repeat("d", 64)}, nil
 		},
 	}
 }

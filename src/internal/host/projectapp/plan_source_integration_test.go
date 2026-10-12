@@ -75,21 +75,37 @@ func TestSelectedBasisAcceptsOperationalStateAndGitNormalizedCheckout(t *testing
 	root := makePlanFixture(t)
 	commitGuidedWorkflow(t, root)
 	runGit(t, root, "config", "core.autocrlf", "true")
-	if err := os.WriteFile(filepath.Join(root, ".gitattributes"), []byte("binary.dat -text\n"), 0o600); err != nil {
+	manifestPath := filepath.Join(root, filepath.FromSlash(projectvalue.ManifestPath))
+	manifest, err := os.ReadFile(manifestPath)
+	if err != nil {
 		t.Fatal(err)
 	}
-	if err := os.WriteFile(filepath.Join(root, "binary.dat"), []byte("binary\ncontent\x00"), 0o600); err != nil {
+	selectedManifest := bytes.Replace(manifest, []byte("inventoryRoots: []\n"), []byte("inventoryRoots:\n  - docs\n"), 1)
+	if bytes.Equal(selectedManifest, manifest) {
+		t.Fatal("fixture did not start with empty selected inventory roots")
+	}
+	if err := os.WriteFile(manifestPath, selectedManifest, 0o600); err != nil {
 		t.Fatal(err)
 	}
-	if err := os.WriteFile(filepath.Join(root, "README.md"), []byte("selected source\n"), 0o600); err != nil {
+	docsRoot := filepath.Join(root, "docs")
+	if err := os.MkdirAll(docsRoot, 0o700); err != nil {
 		t.Fatal(err)
 	}
-	runGit(t, root, "add", ".gitattributes", "binary.dat", "README.md")
+	if err := os.WriteFile(filepath.Join(docsRoot, ".gitattributes"), []byte("binary.dat -text\n"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(docsRoot, "binary.dat"), []byte("binary\ncontent\x00"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(docsRoot, "README.md"), []byte("selected source\n"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	runGit(t, root, "add", projectvalue.ManifestPath, "docs")
 	runGit(t, root, "commit", "-m", "record source normalization fixture")
 	revision := gitOutput(t, root, "rev-parse", "HEAD")
 	operations := NewOperations()
 
-	readmePath := filepath.Join(root, "README.md")
+	readmePath := filepath.Join(docsRoot, "README.md")
 	readmeBytes, err := os.ReadFile(readmePath)
 	if err != nil {
 		t.Fatal(err)
@@ -112,7 +128,7 @@ func TestSelectedBasisAcceptsOperationalStateAndGitNormalizedCheckout(t *testing
 		t.Fatalf("fixture did not retain distinct fixed and raw working bindings for the normalized checkout: base=%q working=%q", plan.BaseSnapshot, plan.WorkingSnapshot)
 	}
 
-	binaryPath := filepath.Join(root, "binary.dat")
+	binaryPath := filepath.Join(docsRoot, "binary.dat")
 	binaryBytes, err := os.ReadFile(binaryPath)
 	if err != nil {
 		t.Fatal(err)
@@ -127,9 +143,9 @@ func TestSelectedBasisAcceptsOperationalStateAndGitNormalizedCheckout(t *testing
 	if err := os.WriteFile(readmePath, append(readmeBytes, []byte("manual source change\r\n")...), 0o600); err != nil {
 		t.Fatal(err)
 	}
-	runGit(t, root, "update-index", "--assume-unchanged", "README.md")
+	runGit(t, root, "update-index", "--assume-unchanged", "docs/README.md")
 	if _, err := operations.Plan(PlanOperation{Selection: Selection{Root: root, Revision: revision}, Request: request}); err == nil || !strings.Contains(err.Error(), "assume-unchanged or skip-worktree") {
 		t.Fatalf("substantive source change hidden by Git's assume-unchanged flag should remain blocked, got %v", err)
 	}
-	runGit(t, root, "update-index", "--no-assume-unchanged", "README.md")
+	runGit(t, root, "update-index", "--no-assume-unchanged", "docs/README.md")
 }

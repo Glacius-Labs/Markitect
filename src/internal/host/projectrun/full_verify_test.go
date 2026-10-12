@@ -153,16 +153,18 @@ func TestFullVerifyReviewEvidenceIncludesOnlyCurrentParentIntegrationAndPreserve
 
 func TestFreshReviewEvidenceForVerifySelectsCurrentScopeAndRetainsPartialCandidate(t *testing.T) {
 	root := t.TempDir()
+	runtimeBytes := writeFiniteRuntimeFile(t, root)
 	targetID, artifactID := "manager:inventory", "artifact:inventory"
 	documentPath := "src/inventory/docs/greeting.md"
 	documentContent := []byte("The greeting is displayed to the caller.\n")
 	implementationPath := "src/inventory/implementation.txt"
 	project := &projectvalue.Project{
-		Revision: strings.Repeat("a", 40),
-		Config:   projectvalue.Config{CoverageMode: "selected"},
+		Root: root, Revision: strings.Repeat("a", 40), Digest: strings.Repeat("a", 64),
+		Config: projectvalue.Config{CoverageMode: "selected", InventoryRoots: []string{"src"}},
 		Snapshot: &snapshot.Snapshot{Files: map[string][]byte{
 			documentPath: documentContent, implementationPath: []byte("fixed implementation bytes\n"),
-		}, Modes: map[string]string{documentPath: snapshot.RegularMode, implementationPath: snapshot.RegularMode}},
+			projectconfig.RuntimePath: runtimeBytes,
+		}, Modes: map[string]string{documentPath: snapshot.RegularMode, implementationPath: snapshot.RegularMode, projectconfig.RuntimePath: snapshot.RegularMode}},
 		Report: projectmodel.Report{
 			Managers:   []projectmodel.Manager{{ID: targetID, Name: "inventory"}},
 			Statements: []projectmodel.Statement{{ID: "statement:inventory", Owner: targetID, Public: true, Description: "Own the inventory implementation."}},
@@ -217,8 +219,16 @@ func TestFreshReviewEvidenceForVerifySelectsCurrentScopeAndRetainsPartialCandida
 	current := ReviewRecord{TaskID: task.ID, ManagerID: task.ManagerID, Phase: "work", CandidateID: partial.ID,
 		CandidateDigest: partial.Digest, ScopeDigest: currentScope, InputDigest: "sha256:review-input", Outcome: "pass",
 		Findings: []ReviewFinding{}, Receipt: agentexec.Receipt{RunID: "review-run-current"}}
+	historicalCandidate := candidateData{ID: "33333333333333333333333333333333", Files: map[string]File{}}
+	if err := store.writeCandidate(dir, historicalCandidate); err != nil {
+		t.Fatal(err)
+	}
+	historicalCandidate, err = store.readCandidate(dir, historicalCandidate.ID)
+	if err != nil {
+		t.Fatal(err)
+	}
 	historical := current
-	historical.CandidateID, historical.CandidateDigest, historical.ScopeDigest, historical.Receipt.RunID = "33333333333333333333333333333333", "sha256:old", "sha256:old-scope", "review-run-old"
+	historical.CandidateID, historical.CandidateDigest, historical.ScopeDigest, historical.Receipt.RunID = historicalCandidate.ID, historicalCandidate.Digest, "sha256:old-scope", "review-run-old"
 	run.Reviews = []ReviewRecord{current, historical}
 	host := Host{Load: func(_ string, revision string) (*projectvalue.Project, error) {
 		if revision != project.Revision {
@@ -711,22 +721,27 @@ func fullVerifyProjectFacts(t *testing.T, root, revision string) *projectvalue.P
 	t.Helper()
 	const rootManager = "manager:root"
 	const childManager = "manager:peer"
-	runtimePath := filepath.Join(root, filepath.FromSlash(projectconfig.RuntimePath))
-	runtimeBytes, err := os.ReadFile(runtimePath)
+	runtimeBytes, err := os.ReadFile(filepath.Join(root, filepath.FromSlash(projectconfig.RuntimePath)))
 	if err != nil {
 		t.Fatalf("read exact Runtime bytes from the workspace fixture: %v", err)
 	}
+	instructionPath := "docs/agent-instructions.md"
+	instructionBytes, err := os.ReadFile(filepath.Join(root, filepath.FromSlash(instructionPath)))
+	if err != nil {
+		t.Fatalf("read exact instruction document from the workspace fixture: %v", err)
+	}
 	files := map[string][]byte{
 		"docs/greeting.md":        []byte("greeting documentation\n"),
+		instructionPath:           instructionBytes,
 		"src/greeting.py":         []byte("def greeting(): return 'hello'\n"),
 		projectconfig.RuntimePath: runtimeBytes,
 	}
-	modes := map[string]string{"docs/greeting.md": snapshot.RegularMode, "src/greeting.py": snapshot.RegularMode, projectconfig.RuntimePath: snapshot.RegularMode}
+	modes := map[string]string{"docs/greeting.md": snapshot.RegularMode, instructionPath: snapshot.RegularMode, "src/greeting.py": snapshot.RegularMode, projectconfig.RuntimePath: snapshot.RegularMode}
 	return &projectvalue.Project{
-		Root: root, Revision: revision, Digest: "sha256:full-verify-project",
-		Config:   projectvalue.Config{CoverageMode: "full", DocumentPath: "README.md"},
+		Root: root, Revision: revision, Digest: strings.Repeat("f", 64),
+		Config:   projectvalue.Config{CoverageMode: "full", DocumentPath: instructionPath},
 		Snapshot: &snapshot.Snapshot{ID: "sha256:full-verify-snapshot", Files: files, Modes: modes},
-		Report: projectmodel.Report{Digest: "sha256:full-verify-report", ModelDigest: "sha256:full-verify-model",
+		Report: projectmodel.Report{Digest: "sha256:" + strings.Repeat("a", 64), ModelDigest: "sha256:" + strings.Repeat("b", 64),
 			Managers: []projectmodel.Manager{{ID: rootManager, Name: "root"}, {ID: childManager, Name: "child", Parent: rootManager}},
 			Statements: []projectmodel.Statement{
 				{ID: "statement:greeting", Owner: rootManager, Public: true, Description: "Provide a greeting."},
@@ -756,7 +771,7 @@ func TestFullVerifyProjectRejectsStaleExpectedSnapshotBeforeAudit(t *testing.T) 
 		Snapshot: &snapshot.Snapshot{Files: map[string][]byte{"README.md": []byte("fixed bytes\n")}, Modes: map[string]string{"README.md": snapshot.RegularMode}},
 	}
 	_, err := FullVerifyProject(context.Background(), Host{}, projectexecutor.ProcessInvoker{}, t.TempDir(), project,
-		projectconfig.Runtime{}, FullVerifyBinding{ExpectedSnapshot: "sha256:stale"})
+		projectconfig.Runtime{}, FullVerifyBinding{ExpectedSnapshot: strings.Repeat("f", 64)})
 	if err != ErrStale {
 		t.Fatalf("stale expected snapshot error = %v, want ErrStale", err)
 	}

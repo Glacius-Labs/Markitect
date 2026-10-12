@@ -46,8 +46,8 @@ func TestFullApplyVerificationBindsAllManagersAndReceipts(t *testing.T) {
 func TestFullApplyAcceptsVerifiedImplementationDigestDifferentFromPlanReport(t *testing.T) {
 	base := fullApplyProjectFacts()
 	compiled := fullApplyProjectFacts()
-	compiled.Report.Digest = "sha256:candidate-report"
-	compiled.Digest = "sha256:candidate-project"
+	compiled.Report.Digest = "sha256:" + strings.Repeat("9", 64)
+	compiled.Digest = strings.Repeat("c", 64)
 	content := []byte("verified candidate implementation update\n")
 	compiled.Snapshot.Files["src/orders/implementation.txt"] = content
 	candidate := candidateData{ID: "candidate-updated-implementation", Files: map[string]File{
@@ -109,7 +109,7 @@ func TestFullApplyRejectsUnclassifiedCandidatePath(t *testing.T) {
 
 func TestFullApplyRejectsDeletionOutsideReviewedSnapshot(t *testing.T) {
 	root := t.TempDir()
-	base := closureReviewProjectFacts(root)
+	base := closureReviewProjectFacts(t, root)
 	deletion := candidateData{ID: "candidate-delete-census-only-file", Files: map[string]File{
 		fixtureLegacyOrdersFile: {Path: fixtureLegacyOrdersFile, Delete: true},
 	}}
@@ -149,14 +149,14 @@ func TestFullApplyRejectsDeletionOutsideReviewedSnapshot(t *testing.T) {
 func fullApplyProjectFacts() *projectvalue.Project {
 	managerID := "manager:orders"
 	return &projectvalue.Project{
-		Revision: strings.Repeat("a", 40), Digest: "sha256:fixed-project",
+		Revision: strings.Repeat("a", 40), Digest: strings.Repeat("f", 64),
 		Config: projectvalue.Config{CoverageMode: "full", DocumentPath: "README.md"},
 		Snapshot: &snapshot.Snapshot{Files: map[string][]byte{
 			".markitect/repository-ignore.yaml": []byte("apiVersion: " + projectcoverage.IgnoreAPIVersion + "\nkind: RepositoryIgnore\nentries: []\n"),
 			"README.md":                         []byte("fixed generated view\n"), "src/orders/implementation.txt": []byte("orders implementation v1\n"),
 		}, Modes: map[string]string{".markitect/repository-ignore.yaml": snapshot.RegularMode, "README.md": snapshot.RegularMode, "src/orders/implementation.txt": snapshot.RegularMode}},
-		Coverage: &projectcoverage.Report{Digest: "sha256:coverage", Accounted: true, Conforming: true},
-		Report: projectmodel.Report{Digest: "sha256:report", ModelDigest: "sha256:model",
+		Coverage: &projectcoverage.Report{Digest: strings.Repeat("a", 64), Accounted: true, Conforming: true},
+		Report: projectmodel.Report{Digest: "sha256:" + strings.Repeat("b", 64), ModelDigest: "sha256:" + strings.Repeat("c", 64),
 			Managers: []projectmodel.Manager{{ID: managerID, Name: "orders"}},
 			Checks:   []projectmodel.Check{{ID: "check:orders", Owner: managerID, Command: []string{"true"}}},
 		},
@@ -169,12 +169,12 @@ func fullApplyProjectFacts() *projectvalue.Project {
 // then finds no fresh passed review.
 func TestVerifyReviewChecksAcceptReviewsOfTheClosureCandidateView(t *testing.T) {
 	root := t.TempDir()
-	base := closureReviewProjectFacts(root)
+	base := closureReviewProjectFacts(t, root)
 	closureManifest := "apiVersion: " + projectvalue.APIVersion + "\nname: Review fixture\ncoverageMode: full\ndocumentPath: docs/project.md\n"
 	closureArtifact := "artifact: orders owns src/orders/implementation.txt and src/orders/legacy.txt\n"
 	closureReport := base.Report
-	closureReport.Digest = "sha256:closure-report"
-	closureReport.ModelDigest = "sha256:closure-model"
+	closureReport.Digest = "sha256:" + strings.Repeat("7", 64)
+	closureReport.ModelDigest = "sha256:" + strings.Repeat("8", 64)
 	closureReport.Artifacts = []projectmodel.Artifact{{ID: "artifact:orders", Owner: "manager:orders", Required: true,
 		Realizes: []string{"statement:orders"}, Paths: []string{"src/orders/implementation.txt", fixtureLegacyOrdersFile, "docs/project.md"}}}
 	closureReport.Files = []projectmodel.FileEntry{
@@ -200,9 +200,9 @@ func TestVerifyReviewChecksAcceptReviewsOfTheClosureCandidateView(t *testing.T) 
 			classified.Snapshot.Files[fixtureLegacyOrdersFile] = []byte("fixed transitional source bytes\n")
 			classified.Snapshot.Modes[fixtureLegacyOrdersFile] = snapshot.RegularMode
 			classified.Report = closureReport
-			classified.Report.Digest, classified.Report.ModelDigest = "sha256:closure-report", "sha256:closure-model"
-			classified.Digest = "sha256:closure-project"
-			classified.Coverage = &projectcoverage.Report{Digest: "sha256:closure-coverage", Accounted: true, Conforming: true}
+			classified.Report.Digest, classified.Report.ModelDigest = "sha256:"+strings.Repeat("d", 64), "sha256:"+strings.Repeat("e", 64)
+			classified.Digest = strings.Repeat("c", 64)
+			classified.Coverage = &projectcoverage.Report{Digest: strings.Repeat("f", 64), Accounted: true, Conforming: true}
 			return &classified, nil
 		},
 		RenderDocument: func(*projectvalue.Project) (string, error) {
@@ -236,7 +236,7 @@ func TestVerifyReviewChecksAcceptReviewsOfTheClosureCandidateView(t *testing.T) 
 	if err != nil {
 		t.Fatal(err)
 	}
-	managerID := e2eManagerID("orders", "orders")
+	managerID := "manager:orders"
 	var artifactID string
 	for _, artifact := range reviewed.Report.Artifacts {
 		if artifact.Owner == managerID {
@@ -278,25 +278,28 @@ func TestVerifyReviewChecksAcceptReviewsOfTheClosureCandidateView(t *testing.T) 
 	}
 }
 
-func closureReviewProjectFacts(root string) *projectvalue.Project {
+func closureReviewProjectFacts(t *testing.T, root string) *projectvalue.Project {
+	t.Helper()
 	const document = "docs/project.md"
 	managerID := "manager:orders"
+	runtimeBytes := writeFiniteRuntimeFile(t, root)
 	return &projectvalue.Project{
-		Root: root, Revision: strings.Repeat("b", 40), Digest: "sha256:base-project",
+		Root: root, Revision: strings.Repeat("b", 40), Digest: strings.Repeat("b", 64),
 		Config: projectvalue.Config{CoverageMode: "full", DocumentPath: document, InventoryRoots: []string{"src"}},
 		Snapshot: &snapshot.Snapshot{Files: map[string][]byte{
 			projectvalue.ManifestPath:       []byte("apiVersion: " + projectvalue.APIVersion + "\nname: Review fixture\ncoverageMode: full\ndocumentPath: docs/project.md\ntransitionalExclusions:\n  - path: src/orders/legacy.txt\n    reason: Awaiting explicit modeling\n"),
+			projectconfig.RuntimePath:       runtimeBytes,
 			fixtureOrdersArtifact:           []byte("artifact: orders owns src/orders/implementation.txt\n"),
 			projectcoverage.IgnorePath:      []byte("apiVersion: " + projectcoverage.IgnoreAPIVersion + "\nkind: RepositoryIgnore\nentries: []\n"),
 			document:                        []byte(projectvalue.GeneratedViewMarker + "\ntransitional legacy path\n"),
 			"src/orders/implementation.txt": []byte("fixed orders implementation\n"),
 		}, Modes: map[string]string{
-			projectvalue.ManifestPath: snapshot.RegularMode, fixtureOrdersArtifact: snapshot.RegularMode,
+			projectvalue.ManifestPath: snapshot.RegularMode, projectconfig.RuntimePath: snapshot.RegularMode, fixtureOrdersArtifact: snapshot.RegularMode,
 			projectcoverage.IgnorePath: snapshot.RegularMode, document: snapshot.RegularMode,
 			"src/orders/implementation.txt": snapshot.RegularMode,
 		}},
-		Coverage: &projectcoverage.Report{Digest: "sha256:base-coverage", Accounted: true, Conforming: false},
-		Report: projectmodel.Report{Digest: "sha256:base-report", ModelDigest: "sha256:base-model",
+		Coverage: &projectcoverage.Report{Digest: strings.Repeat("1", 64), Accounted: true, Conforming: false},
+		Report: projectmodel.Report{Digest: "sha256:" + strings.Repeat("2", 64), ModelDigest: "sha256:" + strings.Repeat("3", 64),
 			Managers:   []projectmodel.Manager{{ID: managerID, Name: "orders"}},
 			Statements: []projectmodel.Statement{{ID: "statement:orders", Owner: managerID, Public: true, Description: "Own orders implementation."}},
 			Artifacts:  []projectmodel.Artifact{{ID: "artifact:orders", Owner: managerID, Required: true, Realizes: []string{"statement:orders"}, Paths: []string{"src/orders/implementation.txt", document}}},

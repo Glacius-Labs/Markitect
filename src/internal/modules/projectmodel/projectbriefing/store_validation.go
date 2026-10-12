@@ -225,7 +225,7 @@ func ValidVerifiedEvidence(evidence VerifiedResolutionEvidence) bool {
 }
 
 func validVerifiedEvidence(evidence VerifiedResolutionEvidence) bool {
-	return len(evidence.EventIDs) > 0 && sortedUniqueNonempty(evidence.EventIDs) && evidence.RunID != "" && fullHexDigest(evidence.PlanDigest) && evidence.CandidateID != "" && fullHexDigest(evidence.CandidateDigest) && fullHexDigest(evidence.VerificationDigest) && fullHexDigest(evidence.ApplyDigest) && evidence.FullVerifyPassed && sortedUniqueNonempty(evidence.CoveredManagerIDs) && sortedUniqueNonempty(evidence.EvidenceRefs) && validDelivered(evidence.Delivered)
+	return sortedUniqueNonempty(evidence.EventIDs) && strings.TrimSpace(evidence.RunID) != "" && strings.TrimSpace(evidence.PlanDigest) != "" && strings.TrimSpace(evidence.CandidateID) != "" && strings.TrimSpace(evidence.CandidateDigest) != "" && strings.TrimSpace(evidence.VerificationDigest) != "" && strings.TrimSpace(evidence.ApplyDigest) != "" && evidence.FullVerifyPassed && sortedUniqueNonempty(evidence.CoveredManagerIDs) && sortedUniqueNonempty(evidence.EvidenceRefs) && evidence.Delivered != nil && validDelivered(evidence.Delivered)
 }
 
 func resolutionDigest(resolution Resolution) string {

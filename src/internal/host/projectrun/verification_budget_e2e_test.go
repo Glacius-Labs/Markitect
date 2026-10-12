@@ -7,6 +7,7 @@ import "github.com/Glacius-Labs/Markitect/src/internal/modules/projectmodel/proj
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"github.com/Glacius-Labs/Markitect/src/internal/host/projectconfig"
 	"os"
 	"path/filepath"
@@ -84,8 +85,8 @@ func TestFailedVerifierAttemptIsDurableAndCannotReplayBudget(t *testing.T) {
 
 	snapshotBase := &snapshot.Snapshot{ID: head, Files: map[string][]byte{"fixture.txt": []byte("base")}, Modes: map[string]string{"fixture.txt": "100644"}}
 	modelDigest := "sha256:" + strings.Repeat("a", 64)
-	project := &projectvalue.Project{Root: root, Revision: head, Digest: "project-digest", Report: projectmodel.Report{
-		ModelDigest: modelDigest, Digest: "project-report-digest", Status: "complete",
+	project := &projectvalue.Project{Root: root, Revision: head, Digest: "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb", Report: projectmodel.Report{
+		ModelDigest: modelDigest, Digest: "sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc", Status: "complete",
 		Artifacts: []projectmodel.Artifact{}, Findings: []projectmodel.Finding{},
 	}, Snapshot: snapshotBase}
 	host := Host{
@@ -94,6 +95,12 @@ func TestFailedVerifierAttemptIsDurableAndCannotReplayBudget(t *testing.T) {
 			copy := *project
 			copy.Snapshot = snap
 			return &copy, nil
+		},
+		ClassifyCandidate: func(base, candidate *projectvalue.Project, _ ...string) (*projectvalue.Project, error) {
+			if base == nil || base.Revision != head || candidate == nil || candidate.Revision != head || candidate.Snapshot == nil {
+				return nil, fmt.Errorf("verification-budget fixture received an unbound candidate")
+			}
+			return candidate, nil
 		},
 	}
 	invoker := &countingProcessInvoker{}

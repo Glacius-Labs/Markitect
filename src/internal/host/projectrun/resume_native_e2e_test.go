@@ -410,7 +410,7 @@ func seedNativeReviewedRun(t *testing.T, phase string) nativeResumeRunFixture {
 func nativeResumeRuntimeHost(t *testing.T, root, phase string) Host {
 	t.Helper()
 	revision := identityHead(t, root)
-	project := processRuntimeProject(t, root, revision, false)
+	project := processRuntimeProjectWithRootArtifact(t, root, revision)
 	includeFiniteRuntimeFiles(t, project, root, "AGENTS.md", "src/project-owner.txt", "src/orders/implementation.txt", "src/inventory/implementation.txt")
 	if phase == "integrate" {
 		project.Report.Checks = nil

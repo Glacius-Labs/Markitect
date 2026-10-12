@@ -228,6 +228,9 @@ func TestNativeManagerBeforeProcessManagersSharesThePrivateLogDirectory(t *testi
 	t.Parallel()
 	root := makeProjectRunFixture(t)
 	configureWorkspaceBridgeInstructions(t, root)
+	writeE2E(t, root, "AGENTS.md", "Native manager instructions for the pinned mixed-runtime fixture.\n")
+	gitE2E(t, root, "add", "AGENTS.md")
+	gitE2E(t, root, "commit", "--quiet", "-m", "add pinned native manager instructions")
 	setupE2EProcess(t, "normal")
 	rootID := e2eManagerID("", "project-owner")
 	updateE2ERuntime(t, root, func(runtime *projectconfig.Runtime) {

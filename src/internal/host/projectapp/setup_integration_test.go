@@ -19,6 +19,9 @@ import (
 
 func TestSetupRoutesRuntimeEditThroughApplicationAndGuardsReviewedDigest(t *testing.T) {
 	root := makePlanFixture(t)
+	writeSetupNativeInstructions(t, root)
+	runGit(t, root, "add", "AGENTS.md", ".agents/skills/markitect-implement/SKILL.md")
+	runGit(t, root, "commit", "-m", "complete project onboarding")
 	runtimePath := filepath.Join(root, filepath.FromSlash(projectvalue.RuntimePath))
 	if err := os.Remove(runtimePath); err != nil {
 		t.Fatal(err)
@@ -29,7 +32,6 @@ func TestSetupRoutesRuntimeEditThroughApplicationAndGuardsReviewedDigest(t *test
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Setenv("MARKITECT_APP_SETUP_VERSION_HELPER", "1")
 	options := projectsetup.Options{
 		Provider: "codex", Model: "gpt-6-luna", Effort: "high", CodexProfile: ":workspace",
 		ProviderExecutable: executable, InputMicrosPerMillion: 7, OutputMicrosPerMillion: 11, MaxCostMicros: 5000,
@@ -91,6 +93,9 @@ func TestSetupRoutesRuntimeEditThroughApplicationAndGuardsReviewedDigest(t *test
 
 func TestSetupRoleOptionsPreserveNativeExecutorSurface(t *testing.T) {
 	root := makePlanFixture(t)
+	writeSetupNativeInstructions(t, root)
+	runGit(t, root, "add", "AGENTS.md", ".agents/skills/markitect-implement/SKILL.md")
+	runGit(t, root, "commit", "-m", "complete project onboarding")
 	runtimePath := filepath.Join(root, filepath.FromSlash(projectvalue.RuntimePath))
 	if err := os.Remove(runtimePath); err == nil {
 		runGit(t, root, "rm", projectvalue.RuntimePath)
@@ -106,7 +111,6 @@ func TestSetupRoleOptionsPreserveNativeExecutorSurface(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Setenv("MARKITECT_APP_SETUP_VERSION_HELPER", "1")
 	options := projectsetup.Options{
 		Provider: "codex", Model: "gpt-6-luna", Effort: "high", ProviderExecutable: executable,
 		InputMicrosPerMillion: 1, OutputMicrosPerMillion: 2, MaxCostMicros: 100,
@@ -237,8 +241,24 @@ func TestSetupRoleOptionsPreserveNativeExecutorSurface(t *testing.T) {
 }
 
 func init() {
-	if os.Getenv("MARKITECT_APP_SETUP_VERSION_HELPER") == "1" {
+	if len(os.Args) == 2 && os.Args[1] == "--version" {
 		_, _ = os.Stdout.WriteString("codex-cli 0.162.0\n")
 		os.Exit(0)
+	}
+}
+
+func writeSetupNativeInstructions(t *testing.T, root string) {
+	t.Helper()
+	for path, content := range map[string]string{
+		"AGENTS.md": "# Project agent instructions\n",
+		".agents/skills/markitect-implement/SKILL.md": "# Generated implementation skill\n",
+	} {
+		absolute := filepath.Join(root, filepath.FromSlash(path))
+		if err := os.MkdirAll(filepath.Dir(absolute), 0o700); err != nil {
+			t.Fatal(err)
+		}
+		if err := os.WriteFile(absolute, []byte(content), 0o600); err != nil {
+			t.Fatal(err)
+		}
 	}
 }
