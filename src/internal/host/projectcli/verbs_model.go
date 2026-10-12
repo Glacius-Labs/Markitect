@@ -195,7 +195,7 @@ var doctorVerb = define(verb{
 	name: "doctor", group: "Set up", effect: effectRead,
 	summary:  "Inspect local tools and authentication prerequisites without starting agents.",
 	synopsis: "doctor --provider codex|process [--provider-executable PATH]",
-	notes:    "It runs only the provider's --version.",
+	notes:    "It reports Git's version and requires Git 2.40 or later for check-attr --source. Native provider inspection runs only --version; no agents start.",
 	args: []arg{argRepo,
 		{name: "provider", value: "P", required: true, help: "codex or process."},
 		{name: "provider-executable", value: "PATH", readOnlyOmit: true, help: "Provider executable to inspect."}},
@@ -206,6 +206,9 @@ var doctorVerb = define(verb{
 	}
 	for _, check := range report.Checks {
 		if check.Status == "blocked" || check.Status == "missing" {
+			if check.Name == "git-version" {
+				return report, outcomef("%s", check.Detail)
+			}
 			return report, outcomef("one or more local prerequisites need attention")
 		}
 	}

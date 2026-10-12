@@ -6,8 +6,10 @@ import (
 	"context"
 	"encoding/json"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"regexp"
+	"runtime"
 	"slices"
 	"sort"
 	"strconv"
@@ -18,7 +20,61 @@ import (
 	"github.com/Glacius-Labs/Markitect/src/internal/host/projectapp"
 	"github.com/Glacius-Labs/Markitect/src/internal/host/projectexplore"
 	"github.com/Glacius-Labs/Markitect/src/internal/host/projectonboarding"
+	"github.com/Glacius-Labs/Markitect/src/internal/host/projectsetup"
+	"github.com/Glacius-Labs/Markitect/src/internal/testkit"
 )
+
+// Exercise the actual Git subprocess, facade and transport result mappings.
+// The selected directory has no model; the old-Git result must take priority.
+func TestDoctorOldGitReportsVersionAndNonconformingWithoutWrites(t *testing.T) {
+	bin := testkit.TempDir(t)
+	program := filepath.Join(bin, "git_stub.go")
+	const stub = `package main
+import ("fmt"; "os")
+func main() {
+ for _, arg := range os.Args[1:] {
+  if arg == "--version" { fmt.Println("git version 2.39.5"); return }
+ }
+ fmt.Fprintln(os.Stderr, "unexpected Git operation before version prerequisite")
+ os.Exit(42)
+}`
+	if err := os.WriteFile(program, []byte(stub), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	git := filepath.Join(bin, "git")
+	if runtime.GOOS == "windows" {
+		git += ".exe"
+	}
+	command := exec.Command("go", "build", "-buildvcs=false", "-o", git, program)
+	if output, err := command.CombinedOutput(); err != nil {
+		t.Fatalf("build Git prerequisite stub: %v\n%s", err, output)
+	}
+	t.Setenv("PATH", bin+string(os.PathListSeparator)+os.Getenv("PATH"))
+	root := testkit.TempDir(t)
+	code, output, stderr := runCLI(t, "doctor", "--repo", root, "--provider", "process")
+	if code != 1 || !strings.Contains(stderr, "git version 2.39.5") || !strings.Contains(stderr, "check-attr --source") {
+		t.Fatalf("CLI prerequisite result exit=%d stderr=%q output=%s", code, stderr, output)
+	}
+	report := decodeOutput[projectsetup.DoctorReport](t, []byte(output))
+	if len(report.Checks) != 1 || report.Checks[0].Name != "git-version" || report.Checks[0].Status != "blocked" || !strings.Contains(report.Checks[0].Detail, "git version 2.39.5") {
+		t.Fatalf("CLI prerequisite report = %+v", report)
+	}
+	server, err := newMCPServer(env{root: root, ops: projectOperations()})
+	if err != nil {
+		t.Fatal(err)
+	}
+	result, err := server.Call(context.Background(), "doctor", json.RawMessage(`{"provider":"process"}`))
+	if err != nil || !result.IsError {
+		t.Fatalf("MCP prerequisite result = %+v error=%v", result, err)
+	}
+	outcome := decodeOutput[mcp.Outcome[projectsetup.DoctorReport]](t, mustRaw(t, result.StructuredContent))
+	if outcome.Diagnostic == nil || outcome.Diagnostic.Code != "nonconforming" || !strings.Contains(outcome.Diagnostic.Message, "git version 2.39.5") || !strings.Contains(outcome.Diagnostic.Message, "Git 2.40") || outcome.Data == nil || len(outcome.Data.Checks) != 1 {
+		t.Fatalf("MCP prerequisite outcome = %+v", outcome)
+	}
+	if entries, err := os.ReadDir(root); err != nil || len(entries) != 0 {
+		t.Fatalf("doctor wrote to the selected root: %v %v", entries, err)
+	}
+}
 
 func TestMCPSharedExplorePreviewAndCASParity(t *testing.T) {
 	root := copyProjectWorld(t)

@@ -830,6 +830,10 @@ spec:
       owner: project-world-implementation
     - path: src/internal/host/projectapp/setup.go
       owner: project-world-implementation
+    - path: src/internal/host/projectapp/doctor_git.go
+      owner: project-world-implementation
+    - path: src/internal/host/projectapp/doctor_git_test.go
+      owner: project-world-implementation
     - path: src/internal/host/projectapp/model.go
       owner: project-world-implementation
     - path: src/internal/host/projectapp/model_test.go
