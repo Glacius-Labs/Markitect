@@ -1,9 +1,12 @@
 package agentexec
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
+	"io"
 	"time"
 
 	"github.com/Glacius-Labs/Markitect/src/internal/host/projectworkspace"
@@ -60,6 +63,64 @@ type CandidateFile struct {
 	Path    string `json:"path"`
 	Mode    string `json:"mode"`
 	Content string `json:"content"`
+	Delete  bool   `json:"delete,omitempty"`
+}
+
+func (file CandidateFile) MarshalJSON() ([]byte, error) {
+	if file.Delete {
+		if file.Mode != "" || file.Content != "" {
+			return nil, errors.New("candidate deletion cannot include mode or content")
+		}
+		return json.Marshal(struct {
+			Path   string `json:"path"`
+			Delete bool   `json:"delete"`
+		}{Path: file.Path, Delete: true})
+	}
+	return json.Marshal(struct {
+		Path    string `json:"path"`
+		Mode    string `json:"mode"`
+		Content string `json:"content"`
+	}{Path: file.Path, Mode: file.Mode, Content: file.Content})
+}
+
+// UnmarshalJSON keeps deletion as a distinct wire operation: a delete entry
+// may not smuggle mode or content values alongside its path.
+func (file *CandidateFile) UnmarshalJSON(data []byte) error {
+	var fields map[string]json.RawMessage
+	if err := json.Unmarshal(data, &fields); err != nil {
+		return err
+	}
+	for key := range fields {
+		if key != "path" && key != "mode" && key != "content" && key != "delete" {
+			return fmt.Errorf("candidate file has noncanonical or unknown field %q", key)
+		}
+	}
+	type candidateFileWire CandidateFile
+	decoder := json.NewDecoder(bytes.NewReader(data))
+	decoder.DisallowUnknownFields()
+	var decoded candidateFileWire
+	if err := decoder.Decode(&decoded); err != nil {
+		return err
+	}
+	if err := decoder.Decode(new(any)); err != io.EOF {
+		return fmt.Errorf("candidate file contains trailing data")
+	}
+	if rawDelete, present := fields["delete"]; present {
+		var explicitDelete bool
+		if err := json.Unmarshal(rawDelete, &explicitDelete); err != nil || !explicitDelete {
+			return errors.New("candidate delete field must be true when present")
+		}
+	}
+	if decoded.Delete {
+		if _, present := fields["mode"]; present {
+			return errors.New("candidate deletion cannot include mode")
+		}
+		if _, present := fields["content"]; present {
+			return errors.New("candidate deletion cannot include content")
+		}
+	}
+	*file = CandidateFile(decoded)
+	return nil
 }
 
 type Observation struct {

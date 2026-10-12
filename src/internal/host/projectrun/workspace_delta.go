@@ -66,7 +66,14 @@ func applyWorkspaceDelta(base candidateData, delta projectworkspace.Delta, propo
 			if change.OldPath != "" || change.Mode != "" || change.Content != nil {
 				return candidateData{}, fmt.Errorf("workspace delete %s cannot carry old path, mode, or content", change.Path)
 			}
-			files[change.Path] = File{Path: change.Path, Delete: true}
+			if input == nil {
+				return candidateData{}, fmt.Errorf("workspace deletion requires its supplied input snapshot")
+			}
+			prior, present := input.Files[change.Path]
+			if !present {
+				return candidateData{}, fmt.Errorf("workspace deletion %s is absent from supplied input", change.Path)
+			}
+			files[change.Path] = File{Path: change.Path, Mode: input.Modes[change.Path], Content: append([]byte(nil), prior...), Delete: true}
 		case projectworkspace.ChangeRename:
 			if !safeRepoPath(change.OldPath) || change.OldPath == change.Path || change.Content == nil {
 				return candidateData{}, fmt.Errorf("workspace rename %s has an invalid old path or content", change.Path)
@@ -85,7 +92,14 @@ func applyWorkspaceDelta(base candidateData, delta projectworkspace.Delta, propo
 				return candidateData{}, err
 			}
 			file := File{Path: change.Path, Mode: mode, Content: append([]byte(nil), change.Content...)}
-			files[change.OldPath] = File{Path: change.OldPath, Delete: true}
+			if input == nil {
+				return candidateData{}, fmt.Errorf("workspace rename requires its supplied input snapshot")
+			}
+			prior, present := input.Files[change.OldPath]
+			if !present {
+				return candidateData{}, fmt.Errorf("workspace rename source %s is absent from supplied input", change.OldPath)
+			}
+			files[change.OldPath] = File{Path: change.OldPath, Mode: input.Modes[change.OldPath], Content: append([]byte(nil), prior...), Delete: true}
 			files[change.Path] = file
 			observedWrites[change.Path] = file
 		default:
@@ -106,6 +120,23 @@ func applyWorkspaceDelta(base candidateData, delta projectworkspace.Delta, propo
 			return candidateData{}, fmt.Errorf("duplicate proposal path %s", proposal.Path)
 		}
 		seenProposals[key] = proposal.Path
+		if proposal.Delete {
+			observed, exists := files[proposal.Path]
+			if !exists || !observed.Delete || proposal.Mode != "" || proposal.Content != "" {
+				return candidateData{}, fmt.Errorf("model deletion %s contradicts the observed workspace delta", proposal.Path)
+			}
+			observedInDelta := false
+			for _, change := range delta.Changes {
+				if change.Kind == projectworkspace.ChangeDelete && change.Path == proposal.Path || change.Kind == projectworkspace.ChangeRename && change.OldPath == proposal.Path {
+					observedInDelta = true
+					break
+				}
+			}
+			if !observedInDelta {
+				return candidateData{}, fmt.Errorf("model deletion %s was not observed in this workspace delta", proposal.Path)
+			}
+			continue
+		}
 		observed, exists := observedWrites[proposal.Path]
 		if !exists {
 			return candidateData{}, fmt.Errorf("model proposal %s was not observed in the workspace delta", proposal.Path)

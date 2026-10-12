@@ -118,7 +118,8 @@ func TestFailedVerifierAttemptIsDurableAndCannotReplayBudget(t *testing.T) {
 		BaseRevision: head, TargetBranch: branch, TargetHead: head, RepositoryDigest: identity.Digest, BaseSnapshot: snapshotBase.Digest(), WorkingSnapshot: snapshotBase.Digest(),
 		BaseProjectDigest: project.Digest, WorkingProjectDigest: project.Digest, BaseModelDigest: project.Report.ModelDigest,
 		ModelDigest: project.Report.ModelDigest, ReportDigest: project.Report.Digest, RuntimeDigest: runtimeDigest,
-		Checks: []CheckPlan{check}, InitialCandidateID: candidateID, RuntimeAgents: map[string]string{"commerce": "fixture"},
+		RuntimeBindingVersion: methodRuntimeBindingVersion,
+		Checks:                []CheckPlan{check}, InitialCandidateID: candidateID,
 	}
 	plan.Digest, err = planDigest(plan)
 	if err != nil {

@@ -12,7 +12,7 @@ The composed project server exposes these operation groups:
 
 - **Inspect:** `schema`, `model`, `check`, `context`, `impact`, `status`.
 - **Work Item and model:** `explore`, `ready`, `brief`, `edit`, `plan`, `deliver`.
-- **Execution lifecycle:** `run`, `resume`, `repair`, `verify`, `apply`.
+- **Execution lifecycle:** `run`, `resume`, `repair`, `verify`, `apply`, `packet-export`, `packet-list`, `packet-submit`.
 - **Brownfield:** `adopt`.
 - **Setup and views:** `init`, `onboard`, `config`, `doctor`, `docs`.
 
@@ -51,6 +51,8 @@ Native App Server roles inherit the caller's environment through `appServer.envi
 Within Manager work and integration turns, `markitect_start_helper` delegates scoped file authoring and returns Host-validated file changes after delivery and cleanup. Its current contract has no report-only result for standalone read-only inspection or analysis. Use normal parent tools and the parent's typed report for that work, or the existing independent Review roles for candidate assessment. Authoring helpers may still inspect context and run checks for their edits. Safe read-only and analysis-helper returns are backlog package RUN-04 in the [backlog](work-items/backlog.yaml); this capability is not implemented.
 
 ## Candidate workspaces and recovery
+
+An authorized plan can use external execution with `packet-export RUN --execute`. This advances the existing scheduler until a Manager or independent review packet is ready and returns `awaiting-external`. `packet-list RUN` checks current source and method-policy bindings before reading immutable pending requests; source or policy drift is reported as stale. Each packet binds its plan, selected source, scope, task attempt and exact candidate; repeated reads preserve its original invocation bytes. Store the complete protocol response under `.markitect/drafts/` or `.markitect/runs/`, then use `packet-submit RUN --packet ID --expect DIGEST --response RELATIVE_FILE --execute` and continue with `packet-export RUN --execute`. The same three operations are available through MCP; only `packet-list` is available on the read-only server. Submission returns `stored: true`; the scheduler validates its task or review content during continuation. Verify and guarded Apply remain separate operations, and the configured verifier runs through the normal local verification path. Run budgets, including elapsed duration, remain in force while awaiting a response. External reported usage feeds cost estimates and does not authenticate provider spending. An external verdict does not establish human acceptance. Internal runs keep their original execution mode and uncertainty handling.
 
 Native work executes in an owned candidate workspace. The bridge binds each candidate to the fixed accepted source, repository identity, overlay, task, and candidate delta. The source working tree is preserved as the service baseline; the fixed accepted project snapshot supplies only the candidate overlay. Apply rechecks freshness and writes only the reviewed delta through guarded Host operations.
 

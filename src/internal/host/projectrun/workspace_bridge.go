@@ -37,7 +37,23 @@ type workspaceJournal struct {
 // invokeProjectAgent owns workspace preparation and observation. A model cannot
 // supply a delta. Unknown transport/child termination preserves the private
 // workspace and journal for recovery; it never permits a blind cleanup/replay.
-func invokeProjectAgent(ctx context.Context, host Host, invoker Invoker, root string, project *Project, agent Agent, ownerRunID, taskID string, allowed, excluded []string, limits Limits, cfg agentexec.Config, req agentexec.Request) (agentexec.RunResult, error) {
+func invokeProjectAgent(ctx context.Context, host Host, invoker Invoker, root string, project *Project, agent Agent, ownerRunID, taskID string, allowed, excluded []string, limits Limits, cfg agentexec.Config, req agentexec.Request) (result agentexec.RunResult, returnErr error) {
+	if result, handled, err := externalInvocation(ctx, root, ownerRunID, taskID, cfg, req); handled {
+		return result, err
+	}
+	fingerprint, err := fingerprintForRequest(invoker, cfg, req)
+	if err != nil {
+		return agentexec.RunResult{}, err
+	}
+	defer func() {
+		if returnErr != nil {
+			return
+		}
+		fresh, err := fingerprintForRequest(invoker, cfg, req)
+		if err != nil || fresh != fingerprint || result.Receipt.ConfigDigest != fingerprint {
+			returnErr = errors.Join(ErrStale, err)
+		}
+	}()
 	opts := agentexec.RunOptions{PrivateLogDirectory: filepath.Join(root, ".markitect", "runs", "private")}
 	if agent.Transport != TransportCodexAppServer {
 		return invokeAgent(ctx, invoker, cfg, req, opts)

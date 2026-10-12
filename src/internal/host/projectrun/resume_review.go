@@ -21,14 +21,14 @@ func (e unroutedReviewError) Unwrap() error { return e.cause }
 // run's start budget is bound.
 func recoverPendingNativeReview(ctx context.Context, host Host, invoker Invoker, root string, store *runStore, dir string, plan PlanRecord, runtime Runtime, base *Project, report *RunReport, managerID string) (reintegrate bool, err error) {
 	task := findTask(report.Tasks, managerID)
-	if task == nil || (task.ReviewStatus != "invoking" && task.ReviewStatus != "uncertain") {
+	if task == nil || (task.ReviewStatus != "invoking" && task.ReviewStatus != "uncertain" && task.ReviewStatus != StatusAwaitingExternal) {
 		return false, nil
 	}
 	if runtime.Review == nil {
 		return false, fmt.Errorf("pending review has no configured reviewer")
 	}
 	agent, ok := runtime.Review.Agents[managerID]
-	if !ok || agent.Transport != TransportCodexAppServer || task.ReviewCandidateID == "" || task.ReviewRound < 1 {
+	if !ok || (agent.Transport != TransportCodexAppServer && !externalExecutionEnabled(ctx)) || task.ReviewCandidateID == "" || task.ReviewRound < 1 {
 		return false, fmt.Errorf("pending review lacks an exact native candidate and round; replay is prohibited")
 	}
 	phase, final := "work", false

@@ -49,6 +49,9 @@ func safeRecoveryError(err error, message string) error {
 // task. It never starts a role or replays a turn. found is true once an exact
 // task journal exists, including when its workspace must be preserved on error.
 func RecoverProjectAgent(ctx context.Context, host Host, invoker Invoker, root, taskID string, config agentexec.Config, limits Limits, expected nativeRecoveryBinding, expectedRequest agentexec.Request) (result agentexec.RunResult, found bool, err error) {
+	if externalExecutionEnabled(ctx) {
+		return externalInvocation(ctx, root, expected.OwnerRunID, taskID, config, expectedRequest)
+	}
 	if ctx == nil || strings.TrimSpace(taskID) == "" || config.Transport != TransportCodexAppServer {
 		return result, false, errors.New("native recovery requires a context, task ID, and codex-app-server transport")
 	}

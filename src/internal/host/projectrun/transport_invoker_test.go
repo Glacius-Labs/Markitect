@@ -108,7 +108,7 @@ func TestTransportInvokerRecoveryRequiresExactDispatchedBindingBeforeJournalOrPr
 	}
 }
 
-func TestPlanRuntimeFingerprintsMatchDefaultNativeCLIInvokerForEveryRole(t *testing.T) {
+func TestPlanBindsNativeMethodPolicySeparatelyFromPerRoleExecutorFingerprints(t *testing.T) {
 	for _, helpersEnabled := range []bool{false, true} {
 		t.Run(map[bool]string{false: "helpers-disabled", true: "helpers-enabled"}[helpersEnabled], func(t *testing.T) {
 			root := makeProjectRunFixture(t)
@@ -153,34 +153,18 @@ func TestPlanRuntimeFingerprintsMatchDefaultNativeCLIInvokerForEveryRole(t *test
 			if err != nil {
 				t.Fatalf("Plan: %v", err)
 			}
+			if plan.RuntimeBindingVersion != methodRuntimeBindingVersion || len(plan.RuntimeAgents) != 0 {
+				t.Fatalf("new plan must carry method binding v%d without plan-time executor fingerprints: version=%d fingerprints=%v", methodRuntimeBindingVersion, plan.RuntimeBindingVersion, plan.RuntimeAgents)
+			}
 			runtime, err := LoadRuntime(root)
 			if err != nil {
 				t.Fatal(err)
 			}
 			invoker := NewTransportInvoker(codexappserver.Options{})
-			gotDigest, err := runtimeDigestWithInvoker(invoker, runtime)
+			gotDigest, err := methodPolicyDigest(runtime)
 			if err != nil || gotDigest != plan.RuntimeDigest {
-				t.Fatalf("planned runtime digest does not match default CLI invoker: got %q want %q err=%v", gotDigest, plan.RuntimeDigest, err)
+				t.Fatalf("planned runtime digest does not match method policy: got %q want %q err=%v", gotDigest, plan.RuntimeDigest, err)
 			}
-			for _, role := range []struct {
-				name  string
-				agent Agent
-				key   string
-			}{
-				{name: "manager", agent: runtime.Agents[e2eManagerID("", "project-owner")], key: e2eManagerID("", "project-owner")},
-				{name: "reviewer", agent: runtime.Review.Agents[e2eManagerID("", "project-owner")], key: "$reviewer:" + e2eManagerID("", "project-owner")},
-				{name: "verifier", agent: *runtime.Verifier, key: "$verifier"},
-			} {
-				config, err := role.agent.AgentConfig()
-				if err != nil {
-					t.Fatalf("%s AgentConfig: %v", role.name, err)
-				}
-				want, err := invoker.Fingerprint(config)
-				if err != nil || plan.RuntimeAgents[role.key] != want {
-					t.Fatalf("%s fingerprint mismatch: got %q want %q err=%v", role.name, plan.RuntimeAgents[role.key], want, err)
-				}
-			}
-
 			customOptions := codexappserver.Options{
 				DynamicTools: []codexappserver.DynamicTool{{Type: "function", Name: "custom_host_tool", InputSchema: json.RawMessage(`{"type":"object"}`)}},
 				HandleToolCall: func(context.Context, codexappserver.ToolCall) (codexappserver.ToolResult, error) {
@@ -188,8 +172,47 @@ func TestPlanRuntimeFingerprintsMatchDefaultNativeCLIInvokerForEveryRole(t *test
 				},
 				MaxToolCalls: 1, ToolTimeout: time.Second,
 			}
-			if drifted, err := runtimeDigestWithInvoker(NewTransportInvoker(customOptions), runtime); err != nil || drifted == plan.RuntimeDigest {
-				t.Fatalf("custom App Server options drift did not stale the plan: got %q want != %q err=%v", drifted, plan.RuntimeDigest, err)
+			customInvoker := NewTransportInvoker(customOptions)
+			for _, role := range []struct {
+				name  string
+				agent Agent
+			}{
+				{name: "manager", agent: runtime.Agents[e2eManagerID("", "project-owner")]},
+				{name: "reviewer", agent: runtime.Review.Agents[e2eManagerID("", "project-owner")]},
+				{name: "verifier", agent: *runtime.Verifier},
+			} {
+				config, err := role.agent.AgentConfig()
+				if err != nil {
+					t.Fatalf("%s AgentConfig: %v", role.name, err)
+				}
+				defaultFingerprint, err := invoker.Fingerprint(config)
+				if err != nil || defaultFingerprint == "" {
+					t.Fatalf("%s default executor fingerprint is unavailable: %q err=%v", role.name, defaultFingerprint, err)
+				}
+				customFingerprint, err := customInvoker.Fingerprint(config)
+				if err != nil || customFingerprint == "" || customFingerprint == defaultFingerprint {
+					t.Fatalf("%s custom executor identity was not distinguished at invocation binding: default=%q custom=%q err=%v", role.name, defaultFingerprint, customFingerprint, err)
+				}
+			}
+			if drifted, err := runtimeDigestWithInvoker(customInvoker, runtime); err != nil || drifted != plan.RuntimeDigest {
+				t.Fatalf("executor implementation change altered method policy digest: got %q want %q err=%v", drifted, plan.RuntimeDigest, err)
+			}
+			policyDrift := runtime
+			policyDrift.Agents = make(map[string]Agent, len(runtime.Agents))
+			for managerID, manager := range runtime.Agents {
+				if manager.AppServer == nil {
+					t.Fatalf("manager %s has no native policy settings", managerID)
+				}
+				settings := *manager.AppServer
+				settings.Helpers = AppServerHelpers{Enabled: !helpersEnabled}
+				if !helpersEnabled {
+					settings.Helpers.MaxStartRequests, settings.Helpers.MaxDepth = 2, 1
+				}
+				manager.AppServer = &settings
+				policyDrift.Agents[managerID] = manager
+			}
+			if drifted, err := methodPolicyDigest(policyDrift); err != nil || drifted == plan.RuntimeDigest {
+				t.Fatalf("App Server role capability drift did not stale method policy: got %q want != %q err=%v", drifted, plan.RuntimeDigest, err)
 			}
 			driftedRuntime := runtime
 			driftedRuntime.Agents = make(map[string]Agent, len(runtime.Agents))

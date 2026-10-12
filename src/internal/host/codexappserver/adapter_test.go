@@ -803,10 +803,65 @@ func TestNativeRoleSchemasStayWithinStrictResponseBounds(t *testing.T) {
 			}
 			observations := properties["verifierObservations"].(map[string]any)
 			candidates := properties["candidateFiles"].(map[string]any)
-			candidateProperties := candidates["items"].(map[string]any)["properties"].(map[string]any)
-			modes := candidateProperties["mode"].(map[string]any)["enum"].([]string)
+			items, ok := candidates["items"].(map[string]any)
+			if !ok {
+				t.Fatalf("candidate schema has no item schema: %#v", candidates)
+			}
+			branches, ok := items["anyOf"].([]any)
+			if !ok || len(branches) != 2 {
+				t.Fatalf("candidate schema must distinguish write and delete forms: %#v", items)
+			}
+			candidateBranch := func(index int, required, keys []string) map[string]any {
+				t.Helper()
+				branch, ok := branches[index].(map[string]any)
+				if !ok || branch["type"] != "object" || branch["additionalProperties"] != false || !reflect.DeepEqual(branch["required"], required) {
+					t.Fatalf("candidate operation branch %d is not a closed object with required fields %v: %#v", index, required, branches[index])
+				}
+				branchProperties, ok := branch["properties"].(map[string]any)
+				if !ok {
+					t.Fatalf("candidate operation branch %d has no properties: %#v", index, branch)
+				}
+				gotKeys := make([]string, 0, len(branchProperties))
+				for key := range branchProperties {
+					gotKeys = append(gotKeys, key)
+				}
+				sort.Strings(gotKeys)
+				wantKeys := append([]string(nil), keys...)
+				sort.Strings(wantKeys)
+				if !reflect.DeepEqual(gotKeys, wantKeys) {
+					t.Fatalf("candidate operation branch %d properties = %v, want exactly %v", index, gotKeys, wantKeys)
+				}
+				path, ok := branchProperties["path"].(map[string]any)
+				wantPath := map[string]any{"type": "string", "minLength": 1, "maxLength": nativeResponseTextMaxLength}
+				if !ok || !reflect.DeepEqual(path, wantPath) {
+					t.Fatalf("candidate operation branch %d path bound changed: %#v", index, branchProperties["path"])
+				}
+				return branchProperties
+			}
+			writeProperties := candidateBranch(0, []string{"path", "mode", "content"}, []string{"path", "mode", "content"})
+			mode, ok := writeProperties["mode"].(map[string]any)
+			if !ok || mode["type"] != "string" || !reflect.DeepEqual(mode["enum"], []string{"0644", "0755"}) {
+				t.Fatalf("candidate write modes do not match the native Git workspace contract: %#v", writeProperties["mode"])
+			}
+			content, ok := writeProperties["content"].(map[string]any)
+			if !ok || content["type"] != "string" {
+				t.Fatalf("candidate write content is not a string: %#v", writeProperties["content"])
+			}
+			deleteProperties := candidateBranch(1, []string{"path", "delete"}, []string{"path", "delete"})
+			deleteOperation, ok := deleteProperties["delete"].(map[string]any)
+			if !ok || deleteOperation["type"] != "boolean" || !reflect.DeepEqual(deleteOperation["enum"], []bool{true}) {
+				t.Fatalf("candidate deletion must require delete:true: %#v", deleteProperties["delete"])
+			}
+			modes := mode["enum"].([]string)
 			if strings.Join(modes, ",") != "0644,0755" {
 				t.Fatalf("candidate modes do not match the native Git workspace contract: %#v", modes)
+			}
+			wantCandidateMaxItems := nativeResponseArrayMaxItems
+			if tc.role == agentexec.RoleVerifier || tc.responseSchema != "" {
+				wantCandidateMaxItems = 0
+			}
+			if candidates["maxItems"] != wantCandidateMaxItems {
+				t.Fatalf("candidate array limit = %#v, want %d for %s", candidates["maxItems"], wantCandidateMaxItems, tc.name)
 			}
 			if tc.role == agentexec.RoleVerifier {
 				if observations["maxItems"] != nativeResponseArrayMaxItems || candidates["maxItems"] != 0 {

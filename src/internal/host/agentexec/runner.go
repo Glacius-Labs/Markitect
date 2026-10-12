@@ -621,6 +621,12 @@ func validateResponse(response Response, req Request, invocation Invocation, wor
 			return errors.New("candidate paths contain a duplicate or alias")
 		}
 		seen[key] = struct{}{}
+		if file.Delete {
+			if file.Mode != "" || file.Content != "" {
+				return errors.New("candidate deletion cannot include mode or content")
+			}
+			continue
+		}
 		if file.Mode != "0644" && file.Mode != "0755" && file.Mode != "0600" {
 			return errors.New("candidate mode is unsupported")
 		}

@@ -11,8 +11,6 @@ import (
 	"time"
 
 	"github.com/Glacius-Labs/Markitect/src/internal/core/snapshot"
-	"github.com/Glacius-Labs/Markitect/src/internal/host/agentexec"
-	"github.com/Glacius-Labs/Markitect/src/internal/host/codexappserver"
 	"github.com/Glacius-Labs/Markitect/src/internal/infrastructure/source"
 	"github.com/Glacius-Labs/Markitect/src/internal/modules/projectmodel"
 )
@@ -278,45 +276,26 @@ func PlanExpecting(host Host, root, revision string, request PlanRequest, expect
 	if minimumStarts > runtime.Limits.MaxStarts {
 		return plan, fmt.Errorf("plan requires at least %d manager, check, and verifier starts; configured limit is %d", minimumStarts, runtime.Limits.MaxStarts)
 	}
-	fingerprints := map[string]string{}
 	for id, agent := range runtime.Agents {
-		config, configErr := agent.AgentConfig()
-		if configErr != nil {
+		if _, configErr := agent.AgentConfig(); configErr != nil {
 			return plan, fmt.Errorf("invalid runtime agent %s: %w", id, configErr)
 		}
-		fingerprint, fingerprintErr := planRuntimeFingerprint(config)
-		if fingerprintErr != nil {
-			return plan, fmt.Errorf("fingerprint runtime agent %s: %w", id, fingerprintErr)
-		}
-		fingerprints[id] = fingerprint
 	}
 	for _, task := range managerTasks {
-		if _, ok := fingerprints[task.ManagerID]; !ok {
+		if _, ok := runtime.Agents[task.ManagerID]; !ok {
 			return plan, fmt.Errorf("runtime agent for active Manager %s is not configured", task.ManagerID)
 		}
 	}
 	if runtime.Verifier != nil {
-		config, configErr := runtime.Verifier.AgentConfig()
-		if configErr != nil {
+		if _, configErr := runtime.Verifier.AgentConfig(); configErr != nil {
 			return plan, fmt.Errorf("invalid runtime verifier: %w", configErr)
 		}
-		fingerprint, fingerprintErr := planRuntimeFingerprint(config)
-		if fingerprintErr != nil {
-			return plan, fmt.Errorf("fingerprint runtime verifier: %w", fingerprintErr)
-		}
-		fingerprints["$verifier"] = fingerprint
 	}
 	if runtime.Review != nil {
 		for managerID, agent := range runtime.Review.Agents {
-			config, configErr := agent.AgentConfig()
-			if configErr != nil {
+			if _, configErr := agent.AgentConfig(); configErr != nil {
 				return plan, fmt.Errorf("invalid runtime reviewer %s: %w", managerID, configErr)
 			}
-			fingerprint, fingerprintErr := planRuntimeFingerprint(config)
-			if fingerprintErr != nil {
-				return plan, fmt.Errorf("fingerprint runtime reviewer %s: %w", managerID, fingerprintErr)
-			}
-			fingerprints["$reviewer:"+managerID] = fingerprint
 		}
 		for _, task := range managerTasks {
 			if _, ok := runtime.Review.Agents[task.ManagerID]; !ok {
@@ -326,15 +305,12 @@ func PlanExpecting(host Host, root, revision string, request PlanRequest, expect
 	}
 	if fullCoverage {
 		for _, manager := range finalProject.Report.Managers {
-			if _, ok := fingerprints["$reviewer:"+manager.ID]; !ok {
-				return plan, fmt.Errorf("runtime reviewer for full-coverage Manager %s is not fingerprinted", manager.ID)
+			if _, ok := runtime.Review.Agents[manager.ID]; !ok {
+				return plan, fmt.Errorf("runtime reviewer for full-coverage Manager %s is not configured", manager.ID)
 			}
 		}
 	}
-	runtimeDigest, err := digest(struct {
-		Runtime      Runtime           `json:"runtime"`
-		Fingerprints map[string]string `json:"fingerprints"`
-	}{Runtime: runtime, Fingerprints: fingerprints})
+	runtimeDigest, err := methodPolicyDigest(runtime)
 	if err != nil {
 		return plan, err
 	}
@@ -346,9 +322,9 @@ func PlanExpecting(host Host, root, revision string, request PlanRequest, expect
 		RepositoryDigest: repository.Digest, BaseProjectDigest: project.Digest, WorkingProjectDigest: working.Digest,
 		BaseModelDigest: project.Report.ModelDigest,
 		ModelDigest:     finalProject.Report.ModelDigest, ReportDigest: finalProject.Report.Digest,
-		RuntimeDigest: runtimeDigest, PlannedAt: time.Now().UTC(), Managers: managerTasks, Strictness: strictness, BriefingDigests: briefingDigests,
+		RuntimeDigest: runtimeDigest, RuntimeBindingVersion: methodRuntimeBindingVersion, PlannedAt: time.Now().UTC(), Managers: managerTasks, Strictness: strictness, BriefingDigests: briefingDigests,
 		Checks: checkPlans, ModelEdit: editPlan, InitialCandidateID: initialCandidate.ID,
-		RuntimeAgents: fingerprints, Findings: uniqueSorted(findings), Blockers: uniqueSorted(checkFindings),
+		Findings: uniqueSorted(findings), Blockers: uniqueSorted(checkFindings),
 	}
 	if changeBase != nil {
 		plan.ChangeBaseRevision = changeBase.Revision
@@ -398,18 +374,6 @@ func PlanExpecting(host Host, root, revision string, request PlanRequest, expect
 		return plan, err
 	}
 	return plan, nil
-}
-
-// planRuntimeFingerprint mirrors the default CLI invoker used by Project Run.
-// Process agents retain the existing transport-neutral fingerprint contract;
-// native agents additionally bind the App Server protocol and stable Host
-// helper tool specification advertised by NewTransportInvoker's default
-// options. Per-run callbacks and journal paths are intentionally not included.
-func planRuntimeFingerprint(config agentexec.Config) (string, error) {
-	if config.Transport == TransportCodexAppServer {
-		return NewTransportInvoker(codexappserver.Options{}).Fingerprint(config)
-	}
-	return agentexec.Fingerprint(config)
 }
 
 func planManagers(report projectmodel.Report, baseFiles map[string][]byte, request PlanRequest, edit *EditPlan, changeImpact *projectmodel.ChangeImpact, limits Limits) ([]ManagerTask, map[string]bool, []string, error) {

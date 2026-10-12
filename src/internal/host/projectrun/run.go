@@ -79,23 +79,23 @@ func runOrResume(ctx context.Context, host Host, invoker Invoker, root, id strin
 		return supersedeExisting(store, id, fmt.Errorf("reload fixed plan base: %w", err))
 	}
 	if project.Snapshot == nil || project.Snapshot.Digest() != plan.BaseSnapshot || project.Digest != plan.BaseProjectDigest || project.Report.ModelDigest != plan.BaseModelDigest {
-		return supersedeExisting(store, id, ErrStale)
+		return supersedeExisting(store, id, fmt.Errorf("%w: fixed source or model binding differs from the plan", ErrStale))
 	}
 	if err := validateChangeImpact(host, root, project, plan); err != nil {
-		return supersedeExisting(store, id, err)
+		return supersedeExisting(store, id, fmt.Errorf("change impact binding: %w", err))
 	}
 	working, err := host.Load(root, "")
 	if err != nil {
 		return supersedeExisting(store, id, err)
 	}
 	if working.Snapshot == nil || working.Snapshot.Digest() != plan.WorkingSnapshot || working.Digest != plan.WorkingProjectDigest {
-		return supersedeExisting(store, id, ErrStale)
+		return supersedeExisting(store, id, fmt.Errorf("%w: working source or model binding differs from the plan", ErrStale))
 	}
 	if err := repositoryMatches(root, plan); err != nil {
-		return supersedeExisting(store, id, err)
+		return supersedeExisting(store, id, fmt.Errorf("Git repository or target binding: %w", err))
 	}
 	if err := validateRuntimeBinding(invoker, runtime, plan); err != nil {
-		return supersedeExisting(store, id, err)
+		return supersedeExisting(store, id, fmt.Errorf("method policy binding: %w", err))
 	}
 	dir, err := store.runDir(id)
 	if err != nil {
@@ -115,7 +115,7 @@ func runOrResume(ctx context.Context, host Host, invoker Invoker, root, id strin
 		if len(plan.Blockers) > 0 {
 			return empty, fmt.Errorf("plan has blocking obligations: %s", strings.Join(plan.Blockers, "; "))
 		}
-		report = RunReport{APIVersion: APIVersion, Operation: plan.Operation, ID: id, PlanID: id, Status: StatusRunning,
+		report = RunReport{APIVersion: APIVersion, Operation: plan.Operation, ID: id, PlanID: id, Status: StatusRunning, ExternalExecution: externalExecutionEnabled(ctx),
 			Mode: ModeControlledLocal, StartedAt: time.Now().UTC(), UpdatedAt: time.Now().UTC(),
 			BaseRevision: plan.BaseRevision, BaseSnapshot: plan.BaseSnapshot, ModelDigest: plan.ModelDigest,
 			RuntimeDigest: plan.RuntimeDigest, Tasks: cloneTasks(plan.Managers), Candidate: CandidateRef{ID: plan.InitialCandidateID,
@@ -129,6 +129,9 @@ func runOrResume(ctx context.Context, host Host, invoker Invoker, root, id strin
 			return empty, err
 		}
 	} else {
+		if report.ExternalExecution != externalExecutionEnabled(ctx) {
+			return report, fmt.Errorf("run execution mode is fixed; use the original internal or external interface")
+		}
 		if !resume {
 			return report, fmt.Errorf("run %s already has durable state; use Resume", id)
 		}
@@ -144,7 +147,7 @@ func runOrResume(ctx context.Context, host Host, invoker Invoker, root, id strin
 			if report.Status == StatusSuperseded {
 				return report, ErrStale
 			}
-			if report.Status != StatusInterrupted && report.Status != StatusRunning && report.Status != StatusFailed && report.Status != StatusBlocked {
+			if report.Status != StatusInterrupted && report.Status != StatusRunning && report.Status != StatusFailed && report.Status != StatusBlocked && report.Status != StatusAwaitingExternal {
 				return report, fmt.Errorf("run status %s cannot be resumed", report.Status)
 			}
 			for _, round := range report.ManagerReworkRounds {
@@ -159,7 +162,7 @@ func runOrResume(ctx context.Context, host Host, invoker Invoker, root, id strin
 				return report, fmt.Errorf("unfinished manager-directed rework round %d requires a new plan", round.Number)
 			}
 			for _, task := range report.Tasks {
-				if task.ReviewStatus == "invoking" || task.ReviewStatus == "uncertain" {
+				if task.ReviewStatus == "invoking" || task.ReviewStatus == "uncertain" || task.ReviewStatus == StatusAwaitingExternal {
 					reintegrate, recoveryErr := recoverPendingNativeReview(ctx, host, invoker, root, store, dir, plan, runtime, project, &report, task.ManagerID)
 					if recoveryErr == nil {
 						pendingReviewRecovered = true
@@ -167,6 +170,9 @@ func runOrResume(ctx context.Context, host Host, invoker Invoker, root, id strin
 							recoveredReintegrations = append(recoveredReintegrations, task.ManagerID)
 						}
 						continue
+					}
+					if errors.Is(recoveryErr, ErrAwaitingExternal) {
+						return awaitExternalRun(store, report)
 					}
 					var unrouted unroutedReviewError
 					if errors.As(recoveryErr, &unrouted) {
@@ -182,7 +188,7 @@ func runOrResume(ctx context.Context, host Host, invoker Invoker, root, id strin
 					}
 					return report, fmt.Errorf("uncertain in-flight reviewer recovery remains blocked for %s: %w", task.ManagerID, recoveryErr)
 				}
-				if task.State == "invoking" || task.State == "integrating" || task.State == "uncertain" {
+				if task.State == "invoking" || task.State == "integrating" || task.State == "uncertain" || task.State == StatusAwaitingExternal {
 					phase := task.RepairPhase
 					if phase == "" {
 						if task.State == "integrating" || task.IntegrationAttempts > 0 && task.CandidateID != "" {
@@ -197,7 +203,7 @@ func runOrResume(ctx context.Context, host Host, invoker Invoker, root, id strin
 					if configured {
 						config, configErr = agent.AgentConfig()
 					}
-					if !configured || configErr != nil || config.Transport != TransportCodexAppServer || task.ID == "" {
+					if !configured || configErr != nil || (config.Transport != TransportCodexAppServer && !externalExecutionEnabled(ctx)) || task.ID == "" {
 						if current := findTask(report.Tasks, task.ManagerID); current != nil {
 							current.State = "uncertain"
 						}
@@ -995,6 +1001,10 @@ func runOrResume(ctx context.Context, host Host, invoker Invoker, root, id strin
 		if compileErr != nil {
 			return failRun(store, report, compileErr)
 		}
+		reviewState, stateErr := reviewCandidateStateFor(host, root, plan, report, finalCandidate)
+		if stateErr != nil {
+			return failRun(store, report, stateErr)
+		}
 		for i := range report.Tasks {
 			task := &report.Tasks[i]
 			phase := "work"
@@ -1008,7 +1018,7 @@ func runOrResume(ctx context.Context, host Host, invoker Invoker, root, id strin
 				}
 				continue
 			}
-			scopeDigest, digestErr := reviewScopeDigest(plan, finalProject, *task, phase, report)
+			scopeDigest, digestErr := reviewScopeDigest(plan, finalProject, *task, phase, report, reviewState)
 			if digestErr != nil {
 				return failRun(store, report, digestErr)
 			}
@@ -1409,7 +1419,7 @@ func invokeManager(ctx context.Context, host Host, invoker Invoker, root string,
 	request := agentexec.Request{Role: agentexec.RoleExecutor, SourceRevision: project.Revision, ModelDigest: project.Report.ModelDigest,
 		ModulePin: project.Report.Digest, ProjectionID: project.Report.Digest, ScopeIDs: uniqueSorted(scopeIDs), PolicyIDs: append([]string(nil), task.Checks...), Context: contextJSON, Artifacts: artifacts}
 	attemptID := task.ID + "-" + phase
-	if config.Transport == TransportCodexAppServer {
+	if config.Transport == TransportCodexAppServer || externalExecutionEnabled(ctx) {
 		attemptID = nativeTaskAttemptID(task, phase)
 	}
 	result, err = invokeProjectAgent(ctx, host, invoker, root, project, configAgent, plan.ID, attemptID, writePaths, ignoredPaths, runtime.Limits, config, request)
@@ -1437,12 +1447,14 @@ func invokeManager(ctx context.Context, host Host, invoker Invoker, root string,
 	if err := repositoryMatches(root, plan); err != nil {
 		return result, log, err
 	}
-	configFingerprint, err := invoker.Fingerprint(config)
-	if err != nil {
-		return result, log, err
-	}
-	if plan.RuntimeAgents[task.ManagerID] != configFingerprint {
-		return result, log, ErrStale
+	if !externalExecutionEnabled(ctx) {
+		configFingerprint, err := fingerprintForRequest(invoker, config, request)
+		if err != nil {
+			return result, log, err
+		}
+		if result.Receipt.ConfigDigest != configFingerprint {
+			return result, log, ErrStale
+		}
 	}
 	_, known, overflow := estimateAgentCost(result.Receipt.Usage, configAgent)
 	if overflow {
@@ -1966,6 +1978,17 @@ func applyProposal(base candidateData, proposals []agentexec.CandidateFile, conf
 		if !known || (owner != task.ManagerID && !conflictSet[p.Path]) {
 			return candidateData{}, fmt.Errorf("manager %s proposed path owned by %q (phase %s): %s", task.ManagerID, owner, phase, p.Path)
 		}
+		if p.Delete {
+			if p.Content != "" || p.Mode != "" || input == nil {
+				return candidateData{}, fmt.Errorf("invalid deletion proposal %s", p.Path)
+			}
+			prior, present := input.Files[p.Path]
+			if !present {
+				return candidateData{}, fmt.Errorf("deletion proposal %s does not exist in the supplied candidate", p.Path)
+			}
+			files[p.Path] = File{Path: p.Path, Mode: input.Modes[p.Path], Content: append([]byte(nil), prior...), Delete: true}
+			continue
+		}
 		if int64(len(p.Content)) > limits.MaxCandidateFileBytes {
 			return candidateData{}, fmt.Errorf("proposal file %s exceeds size limit", p.Path)
 		}
@@ -2181,6 +2204,9 @@ func interruptRun(s *runStore, r RunReport, cause error) (RunReport, error) {
 	return r, cause
 }
 func blockRun(s *runStore, r RunReport, cause error) (RunReport, error) {
+	if errors.Is(cause, ErrAwaitingExternal) {
+		return awaitExternalRun(s, r)
+	}
 	r.Status = StatusBlocked
 	r.Findings = append(r.Findings, cause.Error())
 	if err := persistState(s, &r); err != nil {
@@ -2189,12 +2215,35 @@ func blockRun(s *runStore, r RunReport, cause error) (RunReport, error) {
 	return r, cause
 }
 func failRun(s *runStore, r RunReport, cause error) (RunReport, error) {
+	if errors.Is(cause, ErrAwaitingExternal) {
+		return awaitExternalRun(s, r)
+	}
 	r.Status = StatusFailed
 	r.Findings = append(r.Findings, cause.Error())
 	if err := persistState(s, &r); err != nil {
 		return r, err
 	}
 	return r, cause
+}
+
+func awaitExternalRun(s *runStore, r RunReport) (RunReport, error) {
+	if !r.ExternalExecution {
+		return r, fmt.Errorf("external wait requires an explicitly external run")
+	}
+	r.Status = StatusAwaitingExternal
+	for i := range r.Tasks {
+		task := &r.Tasks[i]
+		if task.State == "invoking" || task.State == "integrating" || task.State == "uncertain" {
+			task.State = StatusAwaitingExternal
+		}
+		if task.ReviewStatus == "invoking" || task.ReviewStatus == "uncertain" {
+			task.ReviewStatus = StatusAwaitingExternal
+		}
+	}
+	if err := persistState(s, &r); err != nil {
+		return r, err
+	}
+	return r, ErrAwaitingExternal
 }
 
 func supersedeExisting(store *runStore, id string, cause error) (RunReport, error) {
@@ -2312,6 +2361,9 @@ func snapshotMode(mode string) string {
 	}
 }
 func validateRuntimeBinding(invoker Invoker, runtime Runtime, plan PlanRecord) error {
+	if plan.RuntimeBindingVersion != methodRuntimeBindingVersion {
+		return fmt.Errorf("unsupported runtime binding version; create a fresh plan")
+	}
 	d, err := runtimeDigestWithInvoker(invoker, runtime)
 	if err != nil {
 		return err
