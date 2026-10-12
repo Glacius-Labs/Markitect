@@ -74,7 +74,8 @@ go run ./src/cmd/markitect-check-modules --repo . --hooks .markitect/modules/git
 go run ./src/cmd/markitect-check-architecture --repo .
 go run ./src/cmd/markitect check --repo . --revision HEAD
 go run ./src/cmd/markitect context --repo . --revision HEAD product
-go run ./src/cmd/markitect impact --repo . --revision HEAD
+$base = git merge-base HEAD origin/main
+go run ./src/cmd/markitect impact --repo . --since $base --revision HEAD
 python -B scripts/check-docs.py
 go test ./... -count=1 -timeout=60m
 go vet ./...
@@ -86,7 +87,7 @@ Tests must not depend on the machine's Git configuration. A package whose tests 
 
 The runtime process end-to-end scenarios in `projectrun` have the build constraint `!runtime_unit`. Normal `go test ./...` and the required Quality/Race jobs include every scenario. For a focused pass over the remaining tests, use `go test -tags runtime_unit ./src/internal/host/projectrun -count=1 -timeout=30m`; this selection is not a complete source gate. Compare its test list with `go test ./src/internal/host/projectrun -list .` to see the excluded scenarios. The shared repository template uses `testkit.NewRepo`; each scenario supplies a private child descriptor through argv, with its own logs and temporary directory. Only the re-executed child loads those settings. Parallel scenarios never call `t.Setenv` or change the parent working directory. Keep a scenario's descriptor stable while its child invocations run, and wait for those invocations before cleanup.
 
-Full source gates use `-count=1` to require fresh test execution rather than report a cached test success as a new candidate run. The complete suite runs once per CI job; this source Project's `verify` does not declare it as a check, so the dogfood Verify does not run it a second time. Focused checks use a ten-minute default, broad package runs thirty minutes and a complete local suite run sixty minutes. Preserve already-running work and original timeout evidence; investigate a real expiry rather than automatically retrying it.
+Full source gates use `-count=1` to require fresh test execution rather than report a cached test success as a new candidate run. The complete suite runs once per CI job. The structural project-model check does not execute its declared Check commands; CI invokes the repository gates explicitly. Focused checks use a ten-minute default, broad package runs thirty minutes and a complete local suite run sixty minutes. Preserve already-running work and original timeout evidence; investigate a real expiry rather than automatically retrying it.
 
 Pull requests and main commits run the hosted quality job on Linux; that job is the required gate. It has a 30-minute limit and gives the suite a 20-minute test-binary limit, so a hung test still ends with Go's timeout report. Windows runs the same job nightly, on manual dispatch and in releases, with a 90-minute job limit and a 60-minute test-binary limit, and does not block merges ([DEC-013](docs/concepts/register.md#dec-013-linux-first-for-tests-and-the-playground)). The job also executes the package, adapter, schema and example gates and the fixed-revision dogfood Verify.
 
