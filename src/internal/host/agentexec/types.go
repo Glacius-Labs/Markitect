@@ -105,6 +105,12 @@ func (file *CandidateFile) UnmarshalJSON(data []byte) error {
 	if err := decoder.Decode(new(any)); err != io.EOF {
 		return fmt.Errorf("candidate file contains trailing data")
 	}
+	if rawDelete, present := fields["delete"]; present {
+		var explicitDelete bool
+		if err := json.Unmarshal(rawDelete, &explicitDelete); err != nil || !explicitDelete {
+			return errors.New("candidate delete field must be true when present")
+		}
+	}
 	if decoded.Delete {
 		if _, present := fields["mode"]; present {
 			return errors.New("candidate deletion cannot include mode")

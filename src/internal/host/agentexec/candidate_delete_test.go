@@ -24,12 +24,16 @@ func TestCandidateFileDeletionIsAnExplicitWireOperation(t *testing.T) {
 	for _, raw := range []string{
 		`{"path":"src/old.txt","delete":true,"mode":"0644"}`,
 		`{"path":"src/old.txt","delete":true,"content":""}`,
+		`{"path":"src/old.txt","delete":true,"mode":null}`,
+		`{"path":"src/old.txt","delete":true,"content":null}`,
 		`{"path":"src/old.txt","delete":true,"extra":false}`,
+		`{"path":"src/new.txt","mode":"0644","content":"","delete":false}`,
+		`{"path":"src/new.txt","mode":"0644","content":"","delete":null}`,
 	} {
 		t.Run(raw, func(t *testing.T) {
 			var got CandidateFile
 			if err := strictDecode([]byte(raw), &got); err == nil {
-				t.Fatalf("ambiguous or unknown deletion fields were accepted: %s", raw)
+				t.Fatalf("mixed or invalid candidate operation fields were accepted: %s", raw)
 			}
 		})
 	}
