@@ -855,12 +855,23 @@ packages:
     title: Separate method and runtime inside projectrun
     stream: ARCH
     wave: 2
-    status: active
+    status: done
     branch: dev/method-runtime-boundary
+    pr: 250
     owner: runtime
     depends_on: [RUN-01, TEST-04]
     zone: runtime
-    note: ExplicitRuntimeexclusivezone assignedafterARCH05actualMainc996/fullpushCI38256213636completeSUCCESS; Cleanerreleased, noQA/Windowswriter. Startfreshcurrentorigin/main ondev/method-runtime-boundary. Firstconcretepackages/importgraph/configfieldpartition/nativehelperjournalhook/functionsize/verificationplan reviewedbyRoot before sharedmodel/newSiblingPaths; exactadditiveArtifact/codemap/generatedview accounting coordinatedatomically, no broadroots/waivers/exceptions. Acceptedconfig/nativeexecutorboundary extraction and focusedproductionunits<=300 preserve wireYAMLJSON/schema, methodpolicyvsactualexecutoridentity, receipt/fingerprint/prepostApplychecks, budgets/unknowncost/durablehelperaccounting, alreadyturnRecovery/noreplay, candidate/review/scopedbytesmodes/retainedparents/deletionpreimage/modelhelperfreshness and unchangedE2Eassertions. No newIntent/modelKinds, allRun/lifecyclemove/ARCH13-16, positiveRecovery/providerstudies/TEST05/RUN05-06/Windowslockfix/release/cleanup.
+    note: >-
+      Integrated as PR250, final b25e29f9ef4ebc6bf2274fbc2badacdd7f797570 and actual Main
+      4c260449009d115333d2f9af4cdf09564d7dde0b, tree 2d92ffaea2b1e232d346df3342092d171f1fd45c.
+      Required CI38272843345 and actual-Main push CI38274318826 passed complete untagged Quality/Race;
+      actual Main also published its source artifact. Both Main reports have 2005 passes, no failures
+      and 19 skips. Real projectconfig/projectexecutor boundaries and focused method phases preserve
+      wire contracts, method/executor identity, budgets, ancestry/freshness/deletion/recovery/no-replay
+      guards and E2E assertions. Root coordinated only two new ownership/Artifact paths, two code-map
+      entries and generated views. Original37df Windows CLI subset expired at its cumulative30-minute
+      deadline; its raw9AC61 report and tagged413/2skip selection remain separate, without retry or
+      corrected full-Windows claim. Runtime writer released; all source refs/raw retained.
     inputs:
       - docs/work-items/surveys/code-architecture-20261010.md
     acceptance:
@@ -963,10 +974,21 @@ packages:
     title: Dependencies point inward
     stream: ARCH
     wave: 3
-    status: blocked
+    status: active
+    branch: dev/inward-dependencies
     owner: cleaner
     depends_on: [ARCH-06, CLI-02, KG-02]
-    note: projectbriefing and projectcoverage run Git and write state; projectbriefing imports projectwork; runtime and application packages import each other (projectrun, projectsetup, projectapp, projectadoption, projectcli).
+    note: >-
+      Cleaner explicitly reserved after complete ARCH06 actual-Main4c260/full CI38274318826;
+      CLI02 and KG02 prerequisites are done. PLAN PREPARATION ONLY on fresh isolated
+      dev/inward-dependencies at currentorigin/main; exact path/head/tree/clean state confirmed.
+      Inventory current Core Git/state writes and application imports plus Runtime/Application
+      layer edges, then provide reasoning, alternatives, concrete package/import/file ownership,
+      narrow model/code-map/generated-view accounting and verification plan. Root independent
+      review and exact shared-file coordination precede source/model/test edits. Preserve public
+      CLI/MCP/record/digest/staleness, guarded writes, budgets, freshness/no-replay and all E2Es.
+      ARCH12/14/15/16, store framework, new model kinds, provider/study/Government/Windows repair,
+      positive recovery, release and cleanup remain separate; Root owns canonical status docs.
     zone: model
     inputs:
       - pull request 162 (ARCH-10 known problems)
