@@ -1,6 +1,6 @@
 # Bibliothek: aktueller Modell- und Referenzentwurf
 
-Datum: 12. Oktober 2026. Status: zusammenhängendes YAML-Gesprächsbeispiel zum [konsolidierten Konzept](canonical-model-proposal.md). Der Dateiname `mandate.yaml` ist gewählt; `Rule` ist die bestätigte nominale Richtung. `vNext`, Zielmengen und Kind-angereicherte Referenzen sind neue Vertragskandidaten, keine unterstützte Version oder kompilierte Fixture.
+Datum: 12. Oktober 2026. Status: zusammenhängendes YAML-Gesprächsbeispiel zum [konsolidierten Konzept](canonical-model-proposal.md). Der Dateiname `mandate.yaml` sowie `Concept`, `Rule` und `UseCase` als eigene Kinds sind gewählt. `vNext`, Zielmengen und Kind-angereicherte Referenzen sind neue Vertragskandidaten, keine unterstützte Version oder kompilierte Fixture.
 
 ## Umfang und Fachentscheidungen
 
@@ -8,19 +8,19 @@ Ausleihe und Rückgabe bilden den betrachteten Ausschnitt; Beschaffung, Gebühre
 
 | Definition | Kind im Entwurf | Rolle |
 | --- | --- | --- |
-| `library-system` | `Statement` | System-, Fach- oder Zustandsbeschreibung als Prosa. |
-| `title` | `Statement` | System-, Fach- oder Zustandsbeschreibung als Prosa. |
-| `copy` | `Statement` | System-, Fach- oder Zustandsbeschreibung als Prosa. |
-| `member` | `Statement` | System-, Fach- oder Zustandsbeschreibung als Prosa. |
-| `loan` | `Statement` | System-, Fach- oder Zustandsbeschreibung als Prosa. |
-| `active-loan` | `Statement` | System-, Fach- oder Zustandsbeschreibung als Prosa. |
+| `library-system` | `Concept` | System-, Fach- oder Zustandsbeschreibung als Prosa. |
+| `title` | `Concept` | System-, Fach- oder Zustandsbeschreibung als Prosa. |
+| `copy` | `Concept` | System-, Fach- oder Zustandsbeschreibung als Prosa. |
+| `member` | `Concept` | System-, Fach- oder Zustandsbeschreibung als Prosa. |
+| `loan` | `Concept` | System-, Fach- oder Zustandsbeschreibung als Prosa. |
+| `active-loan` | `Concept` | System-, Fach- oder Zustandsbeschreibung als Prosa. |
 | `eligible-member` | `Rule` | Normative Bedingung beziehungsweise Invariante. |
 | `available-copy` | `Rule` | Normative Bedingung beziehungsweise Invariante. |
 | `one-active-loan` | `Rule` | Normative Bedingung beziehungsweise Invariante. |
-| `borrow` | `Statement` | Verhaltensvertrag als Prosa. |
-| `return` | `Statement` | Verhaltensvertrag als Prosa. |
+| `borrow` | `UseCase` | Verhaltensvertrag als Prosa. |
+| `return` | `UseCase` | Verhaltensvertrag als Prosa. |
 
-`Statement` behält für Nicht-Regeln vorläufig die bisherige grobe Kategorie. Für `Rule` entfällt die Kategorie `rule`. Andere nominale Kinds wie Concept, UseCase oder Mandate werden dadurch nicht still eingeführt. Der semantische Auftrag steht in `mandate.yaml`; sein Kind bleibt vorerst `Manager`.
+`Concept` beschreibt fachliche Gegenstände, Begriffe und Zustände; `Rule` normative Bedingungen und Invarianten; `UseCase` Fähigkeiten und Abläufe. Für diese Unterscheidung entfällt `category`. Die Systemübersicht `library-system` ist hier ebenfalls ein Concept: Sie beschreibt, was die Bibliothek ist und welchen Zweck sie erfüllt. Ein eigener System-Kind ist nicht vorausgesetzt. Der Auftrag steht in `mandate.yaml`; sein Kind bleibt vorerst `Manager`.
 
 ## Dateisystem und explizite Eingaben
 
@@ -108,13 +108,12 @@ Eine Kante auf den Modelldatentyp `copy` beschreibt nicht automatisch eine konkr
 
 ```yaml
 apiVersion: project.markitect.example.org/vNext
-kind: Statement
+kind: Concept
 metadata:
   namespace: library
   name: library-system
 purpose: Beschreibt Zweck und Umfang der Bibliotheksanwendung.
 spec:
-  category: concept
   public: true
   description: |
     Mitglieder können vorhandene Bücher zeitweise ausleihen und zurückgeben.
@@ -126,13 +125,12 @@ spec:
 
 ```yaml
 apiVersion: project.markitect.example.org/vNext
-kind: Statement
+kind: Concept
 metadata:
   namespace: library
   name: title
 purpose: Beschreibt einen Buchtitel.
 spec:
-  category: concept
   public: true
   description: |
     Ein Titel beschreibt ein Werk beziehungsweise eine Ausgabe.
@@ -143,19 +141,18 @@ spec:
 
 ```yaml
 apiVersion: project.markitect.example.org/vNext
-kind: Statement
+kind: Concept
 metadata:
   namespace: library
   name: copy
 purpose: Beschreibt ein einzelnes physisches Exemplar.
 spec:
-  category: concept
   public: true
   description: |
     Ein Exemplar besitzt eine eindeutige Identität und gehört genau einem Titel.
     Die Modelldefinition beschreibt den Fachtyp; konkrete Exemplare sind Anwendungsdaten.
   uses:
-    - kind: Statement
+    - kind: Concept
       namespace: library
       name: title
 ```
@@ -164,13 +161,12 @@ spec:
 
 ```yaml
 apiVersion: project.markitect.example.org/vNext
-kind: Statement
+kind: Concept
 metadata:
   namespace: library
   name: member
 purpose: Beschreibt ein Mitglied der Bibliothek.
 spec:
-  category: concept
   public: true
   description: |
     Ein Mitglied besitzt eine eindeutige Identität und einen Status seiner Ausleihberechtigung.
@@ -181,23 +177,22 @@ spec:
 
 ```yaml
 apiVersion: project.markitect.example.org/vNext
-kind: Statement
+kind: Concept
 metadata:
   namespace: library
   name: loan
 purpose: Beschreibt eine Ausleihe und ihre Daten.
 spec:
-  category: concept
   public: true
   description: |
     Eine Ausleihe verbindet genau ein Mitglied mit genau einem Exemplar.
     Sie besitzt eine Identität, einen Beginn, eine Fälligkeit und einen optionalen Rückgabezeitpunkt.
     Die konkrete Fristberechnung ist vor der Umsetzung festzulegen.
   uses:
-    - kind: Statement
+    - kind: Concept
       namespace: library
       name: member
-    - kind: Statement
+    - kind: Concept
       namespace: library
       name: copy
 ```
@@ -206,18 +201,17 @@ spec:
 
 ```yaml
 apiVersion: project.markitect.example.org/vNext
-kind: Statement
+kind: Concept
 metadata:
   namespace: library
   name: active-loan
 purpose: Definiert den Zustand einer aktiven Ausleihe.
 spec:
-  category: concept
   public: true
   description: |
     Eine gespeicherte Ausleihe ist aktiv, solange kein Rückgabezeitpunkt erfasst ist.
   uses:
-    - kind: Statement
+    - kind: Concept
       namespace: library
       name: loan
 ```
@@ -237,7 +231,7 @@ spec:
     Ein Mitglied darf ausleihen, wenn es existiert und seine Ausleihberechtigung aktiv ist.
     Die Bedingung wird bei der Vergabe geprüft.
   uses:
-    - kind: Statement
+    - kind: Concept
       namespace: library
       name: member
 ```
@@ -257,10 +251,10 @@ spec:
     Ein Exemplar ist für die Vergabe verfügbar, wenn es existiert und keine aktive Ausleihe besitzt.
     Eine frühere Verfügbarkeitsabfrage allein garantiert keine erfolgreiche Vergabe.
   uses:
-    - kind: Statement
+    - kind: Concept
       namespace: library
       name: copy
-    - kind: Statement
+    - kind: Concept
       namespace: library
       name: active-loan
 ```
@@ -281,10 +275,10 @@ spec:
     Diese Regel gilt auch bei konkurrierenden Anfragen und muss nach erfolgreichen
     sowie abgelehnten Operationen erhalten sein.
   uses:
-    - kind: Statement
+    - kind: Concept
       namespace: library
       name: copy
-    - kind: Statement
+    - kind: Concept
       namespace: library
       name: active-loan
 ```
@@ -293,13 +287,12 @@ spec:
 
 ```yaml
 apiVersion: project.markitect.example.org/vNext
-kind: Statement
+kind: UseCase
 metadata:
   namespace: library
   name: borrow
 purpose: Beschreibt die Vergabe eines Exemplars an ein Mitglied.
 spec:
-  category: use-case
   public: true
   description: |
     Ein berechtigtes Mitglied darf ein verfügbares Exemplar ausleihen.
@@ -308,13 +301,13 @@ spec:
     Bei konkurrierenden Anfragen muss one-active-loan erhalten bleiben.
     Die technische Umsetzung der atomaren Vergabe darf der verantwortliche Bereich wählen.
   uses:
-    - kind: Statement
+    - kind: Concept
       namespace: library
       name: member
-    - kind: Statement
+    - kind: Concept
       namespace: library
       name: copy
-    - kind: Statement
+    - kind: Concept
       namespace: library
       name: loan
   requires:
@@ -333,13 +326,12 @@ spec:
 
 ```yaml
 apiVersion: project.markitect.example.org/vNext
-kind: Statement
+kind: UseCase
 metadata:
   namespace: library
   name: return
 purpose: Beschreibt die Beendigung einer Ausleihe durch Rückgabe.
 spec:
-  category: use-case
   public: true
   description: |
     Die Rückgabe einer aktiven Ausleihe wird dauerhaft durch einen Rückgabezeitpunkt erfasst.
@@ -347,10 +339,10 @@ spec:
     Eine wiederholte Rückgabe verändert den bereits erfassten Rückgabezeitpunkt nicht.
     Die Behandlung einer unbekannten Ausleihkennung ist vor der Umsetzung festzulegen.
   uses:
-    - kind: Statement
+    - kind: Concept
       namespace: library
       name: loan
-    - kind: Statement
+    - kind: Concept
       namespace: library
       name: active-loan
   requires:
@@ -363,7 +355,7 @@ spec:
 
 ## Realisierungsbeiträge
 
-`realizes` erlaubt im Entwurf Statement- und Rule-Ziele; `checks` nur Check-Ziele. Die deklarierte Rolle unterscheidet Implementierung, Prüfung und Dokumentation. Eine Datei kann mehrere Aussagen betreffen; ihre konkrete Schreibverantwortung bleibt eindeutig.
+`realizes` erlaubt im Entwurf Concept-, Rule- und UseCase-Ziele; `checks` nur Check-Ziele. Die deklarierte Rolle unterscheidet Implementierung, Prüfung und Dokumentation. Eine Datei kann mehrere Aussagen betreffen; ihre konkrete Schreibverantwortung bleibt eindeutig.
 
 ### `model/library/library-implementation.yaml`
 
@@ -377,19 +369,19 @@ purpose: Der Anwendungscode muss Fachbegriffe, Ausleihe, Rückgabe und ihre Bedi
 spec:
   role: implementation
   realizes:
-    - kind: Statement
+    - kind: Concept
       namespace: library
       name: title
-    - kind: Statement
+    - kind: Concept
       namespace: library
       name: copy
-    - kind: Statement
+    - kind: Concept
       namespace: library
       name: member
-    - kind: Statement
+    - kind: Concept
       namespace: library
       name: loan
-    - kind: Statement
+    - kind: Concept
       namespace: library
       name: active-loan
     - kind: Rule
@@ -401,10 +393,10 @@ spec:
     - kind: Rule
       namespace: library
       name: one-active-loan
-    - kind: Statement
+    - kind: UseCase
       namespace: library
       name: borrow
-    - kind: Statement
+    - kind: UseCase
       namespace: library
       name: return
   paths:
@@ -429,10 +421,10 @@ purpose: Verträge und Regeln benötigen geeignete Nachweise einschließlich Kon
 spec:
   role: verification
   realizes:
-    - kind: Statement
+    - kind: UseCase
       namespace: library
       name: borrow
-    - kind: Statement
+    - kind: UseCase
       namespace: library
       name: return
     - kind: Rule
@@ -466,13 +458,13 @@ purpose: Zweck, Bedienung und Ablehnungen müssen verständlich beschrieben werd
 spec:
   role: documentation
   realizes:
-    - kind: Statement
+    - kind: Concept
       namespace: library
       name: library-system
-    - kind: Statement
+    - kind: UseCase
       namespace: library
       name: borrow
-    - kind: Statement
+    - kind: UseCase
       namespace: library
       name: return
   paths:
@@ -498,10 +490,10 @@ spec:
   command:
     - "<library-contract-check>"
   uses:
-    - kind: Statement
+    - kind: UseCase
       namespace: library
       name: borrow
-    - kind: Statement
+    - kind: UseCase
       namespace: library
       name: return
     - kind: Rule
@@ -535,6 +527,7 @@ Der [Überfälligkeitsdurchlauf](library-change-walkthrough.md) zeigt eine neue 
 - Worktree: `C:\Users\Consiliari\.codex\worktrees\product-model-concepts\Markitect`.
 - Branch: `docs/product-model-concepts`.
 - Eingang der Konsolidierung: `07e03215c968302361f5acedc8e69bd573ac95be`; beim Beginn sauber.
+- Kind-Aktualisierung am 12. Oktober 2026 ausdrücklich beauftragt; Eingang `5d18e8f4438cc1d24a10882f04b10501d65db20e`, beim Beginn sauber.
 - Vorstufe: [methodische v1alpha1-Darstellung](library-methodical-alternative.md); deren Feldform und Referenzen sind nicht dieselben wie dieser vNext-Kandidat.
 - Kein neuer Main-Abgleich, keine angelegte Projektfixture, Modellkompilierung, Tests, Provider- oder Agentenausführung.
 

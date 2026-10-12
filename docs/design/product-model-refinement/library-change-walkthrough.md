@@ -28,7 +28,7 @@ spec:
     seine Ausleihberechtigung aktiv ist und es
     keine überfällige aktive Ausleihe besitzt.
   uses:
-    - kind: Statement
+    - kind: Concept
       namespace: library
       name: member
 ```
@@ -43,13 +43,12 @@ Der Review erkennt den neuen Begriff und fragt nach Zeitquelle, Zeitgrenze, Zeit
 
 ```yaml
 apiVersion: project.markitect.example.org/vNext
-kind: Statement
+kind: Concept
 metadata:
   namespace: library
   name: overdue-loan
 purpose: Definiert den Begriff einer überfälligen Ausleihe.
 spec:
-  category: concept
   public: true
   description: |
     Eine Ausleihe ist überfällig, wenn sie aktiv ist
@@ -57,10 +56,10 @@ spec:
     Zeitquelle, Zeitzone und genaue Grenzbehandlung sind
     vor Umsetzung ausdrücklich festzulegen.
   uses:
-    - kind: Statement
+    - kind: Concept
       namespace: library
       name: loan
-    - kind: Statement
+    - kind: Concept
       namespace: library
       name: active-loan
 ```
@@ -69,10 +68,10 @@ Die Rule `eligible-member` erhält zusätzlich:
 
 ```yaml
 uses:
-  - kind: Statement
+  - kind: Concept
     namespace: library
     name: member
-  - kind: Statement
+  - kind: Concept
     namespace: library
     name: overdue-loan
 ```
@@ -109,7 +108,7 @@ Die alleinstehende Systemübersicht wird nicht aufgrund ihres Namens automatisch
 
 Die Vereinigung der Kanten aus Alt- und Neusicht wird in beiden Richtungen untersucht. Dadurch bleiben mindestens die in jedem Einzelstand betroffenen Erreichbarkeiten erhalten; kombinierte alte/neue Kanten können weitere Pfade bilden. Entfernte Kanten, Pfade oder Owners verlieren ihre bisherige Wirkung nicht einfach aus der Prüfung. Unknown führt zu konservativer Erweiterung oder ausdrücklich ungelöstem Umfang. Explain-Klassen `change`/`context` sind Priorisierung und Erklärung; sie geben keine generelle Erlaubnis zum Weglassen.
 
-Die Regeln für den neuen nominalen Rule-Kind müssen in der späteren Implementierung ausdrücklich dieselbe Behandlung erhalten. Das heute geplante vNext-Modell wurde nicht mit dem alten Code ausgeführt.
+Die Regeln für die neuen nominalen Kinds Concept, Rule und UseCase müssen in der späteren Implementierung ausdrücklich dieselbe Behandlung erhalten. Das heute geplante vNext-Modell wurde nicht mit dem alten Code ausgeführt.
 
 ## 4. Von Aussagen zu Dateien und Checks
 
@@ -162,4 +161,4 @@ Die vorgesehene Struktur macht Änderungsgegenstand, explizite Beziehungen, Vera
 
 Strukturell gültig, vollständige Coverage, ein tatsächlich bestandener Check, unabhängiger Review und menschliche Zustimmung sind getrennte Befunde. Auch eine breite Impact-Hülle beweist keine vollständige Modellierung.
 
-Quellenbasis der historischen Routingbeschreibung: [Code an Main-SHA 32afd1…](https://github.com/Glacius-Labs/Markitect/blob/32afd1a57e715130d056e98e433721c6e7a10278/src/internal/modules/projectmodel/impact.go). Dieser Sourcebefund wurde im Gespräch gelesen; heute wurde weder aktuelles Main erneut abgerufen noch dieses Beispiel ausgeführt. Eingang der Dokumentationskonsolidierung: `07e03215c968302361f5acedc8e69bd573ac95be`, Branch `docs/product-model-concepts`, Worktree `C:\Users\Consiliari\.codex\worktrees\product-model-concepts\Markitect`.
+Quellenbasis der historischen Routingbeschreibung: [Code an Main-SHA 32afd1…](https://github.com/Glacius-Labs/Markitect/blob/32afd1a57e715130d056e98e433721c6e7a10278/src/internal/modules/projectmodel/impact.go). Dieser Sourcebefund wurde im Gespräch gelesen; heute wurde weder aktuelles Main erneut abgerufen noch dieses Beispiel ausgeführt. Eingang der Dokumentationskonsolidierung: `07e03215c968302361f5acedc8e69bd573ac95be`; Kind-Aktualisierung am 12. Oktober 2026 ausgehend von `5d18e8f4438cc1d24a10882f04b10501d65db20e`, Branch `docs/product-model-concepts`, Worktree `C:\Users\Consiliari\.codex\worktrees\product-model-concepts\Markitect`.

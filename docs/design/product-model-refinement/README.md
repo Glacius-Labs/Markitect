@@ -12,18 +12,18 @@ Aktualisiert am 12. Oktober 2026. Diese Map trennt vereinbarte Produktgrundlagen
 
 Die Arbeitsidee bleibt, das Modell zu pflegen und seine Realisierung durchführen zu lassen. Die interne Zuordnung dieses abstrakten Apply-Begriffs zu konkreten CLI-Kommandos ist damit nicht festgelegt.
 
-Der gewählte Verantwortungsdateiname ist `mandate.yaml`. `kind: Rule` ist nach dem Bibliotheksgespräch die bestätigte nominale Entwurfsrichtung. Die Umbenennung des vorhandenen Kinds `Manager` und eigene Kinds für Concept oder UseCase sind nicht beschlossen.
+Der gewählte Verantwortungsdateiname ist `mandate.yaml`. `Concept`, `Rule` und `UseCase` sind als eigene Kinds gewählt; die bisherige Category-Unterscheidung entfällt dafür. Die Umbenennung des vorhandenen Kinds `Manager` ist nicht beschlossen.
 
 ## Aktueller Arbeitsstand und Lesereihenfolge
 
 1. [Konsolidierter Konzept- und Umsetzungsentwurf](canonical-model-proposal.md): kleine Struktur, nominale Regeln, verbindliche Prosa, explizite Beziehungen und methodische Reviews.
-2. [Vollständiges aktuelles Bibliotheks-YAML](library-model-example.md): Mandat, acht Statements, drei Rules, Artefakte und Check-Platzhalter; Kind-angereicherte Referenzen als versionierter Zukunftskandidat.
+2. [Vollständiges aktuelles Bibliotheks-YAML](library-model-example.md): Mandat, sechs Concepts, drei Rules, zwei UseCases, Artefakte und Check-Platzhalter; Kind-angereicherte Referenzen als versionierter Zukunftskandidat.
 3. [Konkreter Änderungsdurchlauf](library-change-walkthrough.md): Überfälligkeitsregel, fehlende Abhängigkeit, Modellreview, konservative Wirkung und neue Prüfaufträge.
 4. [Fester Main-Abgleich vom 11. Oktober](canonical-model-main-comparison.md): Ausgangspunkt für einen beim Implementierungsstart zu erneuernden Vergleich.
 
-Der methodische Ausgangspunkt und der nominale Rule-Kind sind miteinander vereinbar. Wie tief Fachproperties und Bedingungen formalisiert werden, bleibt eine separate Frage. Umfangreiche Facetten sind eine mögliche spätere Erweiterung. Prosa bleibt verbindlich; ihre Bedeutung und die Vollständigkeit der Beziehungen werden nicht allein vom Strukturcompiler bewiesen.
+Der methodische Ausgangspunkt und die nominalen Kinds Concept, Rule und UseCase sind miteinander vereinbar. Wie tief Fachproperties und Bedingungen formalisiert werden, bleibt eine separate Frage. Umfangreiche Facetten sind eine mögliche spätere Erweiterung. Prosa bleibt verbindlich; ihre Bedeutung und die Vollständigkeit der Beziehungen werden nicht allein vom Strukturcompiler bewiesen.
 
-Offen sind insbesondere Zielmengen und Umsetzung gemischter Referenzen, Versions-/Migrationsvertrag, Behandlung der übrigen Statement-Kategorien sowie konkrete Fachdetails des Beispiels. `vNext` ist ein Platzhalter. Das neue Beispiel wurde nicht angelegt, kompiliert oder ausgeführt.
+Offen sind insbesondere Zielmengen und Umsetzung gemischter Referenzen, Versions-/Migrationsvertrag, Bedarf für weitere Beschreibungstypen sowie konkrete Fachdetails des Beispiels. `vNext` ist ein Platzhalter. Das neue Beispiel wurde nicht angelegt, kompiliert oder ausgeführt.
 
 ## Übergabe an den Implementer
 
@@ -51,7 +51,8 @@ Produktgespräch `01a121f1-b948-7050-ae5d-9921b99db9c0`, Grundlagen vom 10. Okto
 - Worktree: `C:\Users\Consiliari\.codex\worktrees\product-model-concepts\Markitect`.
 - Branch: `docs/product-model-concepts`.
 - Ursprüngliche Branchbasis: `ecc69b0ad99236a5ddd02b85bf9ba656a0000f15`.
-- Eingang der jetzigen Aktualisierung: `07e03215c968302361f5acedc8e69bd573ac95be`; beim Beginn sauber.
+- Eingang der vollständigen Konsolidierung: `07e03215c968302361f5acedc8e69bd573ac95be`; beim Beginn sauber.
+- Eingang der Kind-Aktualisierung: `5d18e8f4438cc1d24a10882f04b10501d65db20e`; beim Beginn sauber.
 - Letzter gesonderter Implementierungsvergleich: `32afd1a57e715130d056e98e433721c6e7a10278` vom 11. Oktober; heute nicht neu als aktueller Stand verifiziert.
 
 Kanonische Produktdokumente bleiben [Vision](../../vision.md), [Konzeptregister](../../concepts/register.md) und [Architektur](../../architecture.md). Dieser Konzeptordner setzt ihre aktuellen Verträge und den koordinierten Modell-Owner nicht automatisch außer Kraft.

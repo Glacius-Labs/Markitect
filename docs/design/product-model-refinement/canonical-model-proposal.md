@@ -1,6 +1,6 @@
 # Proposal: Kanonisches Modell mit nominalen Regeln und methodischem Review
 
-Erstellt am 11. Oktober 2026; vollständig konsolidiert am 12. Oktober 2026. Status: beauftragter Konzept- und Umsetzungsentwurf auf Basis des Bibliotheksgesprächs. Dateiname `mandate.yaml` gewählt; `kind: Rule` ist die bestätigte Entwurfsrichtung. Weitere Syntax- und Referenzdetails sind Vorschläge, keine implementierten Produktverträge.
+Erstellt am 11. Oktober 2026; vollständig konsolidiert am 12. Oktober 2026. Status: beauftragter Konzept- und Umsetzungsentwurf auf Basis des Bibliotheksgesprächs. Dateiname `mandate.yaml` und die eigenen Kinds `Concept`, `Rule`, `UseCase` sind gewählt. Weitere Syntax- und Referenzdetails sind Vorschläge, keine implementierten Produktverträge.
 
 ## 1. Auftrag und Maßstab
 
@@ -72,13 +72,13 @@ Ein kleiner Bibliotheksausschnitt kann einen Root-Manager besitzen. Untergeordne
 
 | Feld | Bedeutung | Kandidat für zulässige Ziel-Kinds |
 | --- | --- | --- |
-| `uses` | Benötigter Kontext. | `Statement`, `Rule` |
-| `requires` | Normative Verpflichtung, die ein Vertrag erfüllen oder erhalten muss. | Im ersten Bibliotheksentwurf `Rule` |
-| `Artifact.realizes` | Erwarteter Realisierungsbeitrag. | `Statement`, `Rule` |
+| `uses` | Benötigter Kontext. | `Concept`, `Rule`, `UseCase` |
+| `UseCase.requires` | Normative Verpflichtung, die ein Vertrag erfüllen oder erhalten muss. | Im ersten Bibliotheksentwurf `Rule` |
+| `Artifact.realizes` | Erwarteter Realisierungsbeitrag. | `Concept`, `Rule`, `UseCase` |
 | `Artifact.checks` | Benanntes ausführbares Prüfverfahren. | `Check` |
-| `Check.uses` | Aussagen im Prüfgegenstand. | `Statement`, `Rule` |
+| `Check.uses` | Aussagen im Prüfgegenstand. | `Concept`, `Rule`, `UseCase` |
 | `Manager.parent` | Direkt übergeordnete Verantwortung. | `Manager` |
-| `Decision.subject` | Gegenstand einer begründeten Entscheidung. | Kandidat: `Statement`, `Rule` |
+| `Decision.subject` | Gegenstand einer begründeten Entscheidung. | Kandidat: `Concept`, `Rule`, `UseCase` |
 | `Decision.actor` | Aufgezeichnete Provenienz. | `Manager` |
 
 Bei `requires` erklärt die Fachprosa zunächst, ob eine Regel Voraussetzung oder erhaltene Invariante ist. `uses` sagt weder „gilt für“ noch etwas über die Zahl konkreter Bücher. Zusätzliche Kanten wie `appliesTo`, `contains` oder `provides` sind Erweiterungskandidaten, keine still vorausgesetzten Pflichtfelder.
@@ -145,13 +145,13 @@ Eine Definition pro Datei übernimmt die Grenze des bisher geprüften Loaders. D
 
 Der vollständige Baum und das Manifest stehen im [Bibliotheksbeispiel](library-model-example.md). Eine feinere fachliche Gliederung kann später Bestand, Mitgliedschaft und Ausleihe in eigene Namespacebereiche teilen.
 
-### 6.2 Empfohlene erste Sprachform: benannte Aussagen und nominale Regeln
+### 6.2 Empfohlene erste Sprachform: Concept, Rule und UseCase
 
-Der kleinste neue Sprachkandidat trennt `Statement` und `Rule`. Ein Statement beschreibt einen Begriff, Verhalten, Architektur oder Arbeitsweise. Eine Rule beschreibt eine normative Bedingung oder Invariante. Fachlicher Inhalt bleibt zunächst verbindliche Prosa.
+Der Nutzer hat `Concept`, `Rule` und `UseCase` als eigene Kinds gewählt. Concepts beschreiben fachliche Gegenstände, Begriffe und Zustände; Rules normative Bedingungen und Invarianten; UseCases Fähigkeiten und Abläufe. Fachlicher Inhalt bleibt zunächst verbindliche Prosa.
 
-Für die übrigen Statement-Rollen bleiben die bisherigen Kategorien im Beispiel vorläufig erhalten. `Rule` benötigt keine zusätzliche Kategorie `rule`. Eigene Kinds `Concept`, `UseCase`, `System` oder `Mandate` sind noch nicht beschlossen. Ihre Notwendigkeit muss aus einem konkreten Zieltyp- oder Feldvertrag folgen.
+Für diese Unterscheidung entfällt `category`. Gemeinsame Header und Beschreibungsfelder folgen derselben Konvention; jeder Kind besitzt seinen geschlossenen Feld- und Referenzvertrag. Der nominale Unterschied ermöglicht gezielte Zieltypprüfung, ohne eine vollständig formalisierte Fachsprache zu verlangen.
 
-Nominale Typisierung und Tiefe der Formalisierung sind unabhängig: Ein Rule-Kind kann gezielte Referenzprüfung ermöglichen, während der Regeltext methodisch beurteilt wird.
+Die Systemübersicht der Bibliothek wird im Beispiel als Concept beschrieben. Ein eigener Kind System oder die Umbenennung von Manager zu Mandate sind nicht vorausgesetzt. Einen allgemeinen Statement-Kind braucht der erste Bibliotheksvertrag nicht. Weitere Beschreibungstypen entstehen nur bei einem konkreten Bedarf, der sich durch die gewählten Kinds nicht sinnvoll ausdrücken lässt.
 
 #### 6.2.1 Feldkandidat für den ersten Vertrag
 
@@ -159,14 +159,15 @@ Diese Arbeitstabelle konkretisiert den Entwurf für P0; sie behauptet kein vorha
 
 | Kind | Spec-Felder des Kandidaten | Pflicht und Begrenzung |
 | --- | --- | --- |
-| `Statement` | `category`, `description`, `public`, `uses`, `requires` | Kategorie zunächst concept/use-case/architecture/workflow; Beschreibung erforderlich. Uses/Requires sind optionale Referenzlisten. |
+| `Concept` | `description`, `public`, `uses` | Beschreibung erforderlich; Kontextbezüge optional. Keine Kategorie concept. |
 | `Rule` | `description`, `public`, `uses` | Beschreibung erforderlich; keine Kategorie rule. Kontextbezüge optional; keine formale Bedingung vorausgesetzt. |
+| `UseCase` | `description`, `public`, `uses`, `requires` | Beschreibung erforderlich; Kontextbezüge optional, Verpflichtungen als Rule-Referenzen. Keine Kategorie use-case. |
 | `Manager` | `parent`, `owns`, `instructions` | Höchstens ein Parent; optionale Pfadliste und lesbare Anweisungen. Roots/Ownerregeln werden getrennt validiert. |
 | `Artifact` | `role`, `realizes`, `paths`, `checks`, `required`, `reason` | Rolle implementation/documentation/verification/configuration; optionale Ziel-/Pfad-/Checklisten, Erforderlichkeit und Begründung. |
 | `Check` | `command`, `uses`, `limitation` | Nicht leere Liste literal argv; deklarierter Gegenstand und Evidenzgrenze. Ein Befehl ist keine Shell-Prosa. |
 | `Decision` | `subject`, `decision`, `reason`, `actor` | Genau ein Subject und Actor sowie lesbare Entscheidung und Begründung. Actor authentifiziert keine Befugnis. |
 
-Für Statement/Rule ist `public` als Boolean vorgesehen; ohne ausdrückliches Public bleibt eine fremde Definition im Kandidaten privat. Referenzen werden gegen die Zielmengen aus Abschnitt 4 geprüft. Die Mengenfelder bestimmen Modellwerte; sie zählen keine Laufzeitinstanzen. Ausführliche Defaults, Kardinalitäten und Normalisierung werden im versionierten P0-Vertrag festgeschrieben. Weitere Felder brauchen einen erklärten Bedarf und ihre Behandlung in allen Sichten.
+Für Concept/Rule/UseCase ist `public` als Boolean vorgesehen; ohne ausdrückliches Public bleibt eine fremde Definition im Kandidaten privat. Ihre `uses`-Listen können auf die endliche Zielmenge Concept/Rule/UseCase zeigen. Referenzen werden gegen die Zielmengen aus Abschnitt 4 geprüft. Die Mengenfelder bestimmen Modellwerte; sie zählen keine Laufzeitinstanzen. Ausführliche Defaults, Kardinalitäten und Normalisierung werden im versionierten P0-Vertrag festgeschrieben. Weitere Felder brauchen einen erklärten Bedarf und ihre Behandlung in allen Sichten.
 
 ### 6.3 Begrenzte Formalisierung
 
@@ -189,7 +190,7 @@ Fehler, Warnung und Reviewpflicht sind unterscheidbare Reaktionen. Ein allgemein
 
 ### 6.5 Alternative B: Minimale Struktur und methodisches Review
 
-Die zuvor als Alternative B dokumentierte methodische Variante ist die Arbeitsbasis dieser konsolidierten Empfehlung. Sie wird mit der bevorzugten nominalen Rule-Richtung verbunden. Daraus folgt keine Annahme, dass umfangreiche Fachfacetten grundsätzlich unnötig sind; die weitergehende Formalisierung bleibt eine alternative Tiefe des gleichen Modells.
+Die zuvor als Alternative B dokumentierte methodische Variante ist die Arbeitsbasis dieser konsolidierten Empfehlung. Sie wird mit den gewählten nominalen Kinds Concept, Rule und UseCase verbunden. Daraus folgt keine Annahme, dass umfangreiche Fachfacetten grundsätzlich unnötig sind; die weitergehende Formalisierung bleibt eine alternative Tiefe des gleichen Modells.
 
 Das [bisherige v1alpha1-Beispiel](library-methodical-alternative.md) bleibt als datierte Vorstufe erhalten. Das [aktuelle vNext-Beispiel](library-model-example.md) zeigt erstmals alle Regeln und Referenzen konsistent in der neuen Entwurfsrichtung. `vNext` und seine Referenzform sind Platzhalter, keine unterstützte Version.
 
@@ -197,11 +198,11 @@ Das [bisherige v1alpha1-Beispiel](library-methodical-alternative.md) bleibt als 
 
 Nutzerentscheidung: „Wir nehmen mandate.“ Die Verantwortungsdatei heißt `mandate.yaml`. Der bisherige Modell-Kind `Manager` bleibt im Beispiel erhalten; weder dessen Umbenennung noch die Benennung eines Runtime-Agenten ist dadurch entschieden.
 
-Nutzerpräferenz: „Was category angeht fände ich kind rule interessanter“, anschließend Zustimmung zum Beispiel und Auftrag zur kompletten Konzeptaktualisierung. `kind: Rule` ist deshalb die bestätigte Entwurfsrichtung. Feld- und Referenzdetails bleiben zu konkretisieren. Der semantische Begriff Mandat beschreibt Auftrag, Zuständigkeit, Befugnisse und Grenzen, ohne selbst eine authentifizierte Autorisierung zu beweisen.
+Nutzerentscheidung vom 12. Oktober 2026: „Okay, dann nehmen wir Concept, Rule und UseCase als eigene Kinds. Aktualisiere das Konzept und das Bibliotheksbeispiel entsprechend auf deinem Branch.“ Diese drei Kinds ersetzen die bisherige Statement-/Category-Einordnung im aktuellen Entwurf. Feld-, Versions- und Referenzdetails bleiben zu konkretisieren. Der semantische Begriff Mandat beschreibt Auftrag, Zuständigkeit, Befugnisse und Grenzen, ohne selbst eine authentifizierte Autorisierung zu beweisen.
 
 ## 7. Bibliotheksbeispiel und methodischer Ablauf
 
-Die elf Ausgangsaussagen sind Systemzweck, Titel, Exemplar, Mitglied, Ausleihe, aktive Ausleihe, berechtigtes Mitglied, verfügbares Exemplar, höchstens eine aktive Ausleihe, Ausleihen und Rückgabe. Die drei Bedingungen/Invarianten werden Rules; die übrigen Inhalte bleiben Statements.
+Die elf Ausgangsaussagen sind Systemzweck, Titel, Exemplar, Mitglied, Ausleihe, aktive Ausleihe, berechtigtes Mitglied, verfügbares Exemplar, höchstens eine aktive Ausleihe, Ausleihen und Rückgabe. Systemzweck, Titel, Exemplar, Mitglied, Ausleihe und aktive Ausleihe werden sechs Concepts; die drei Bedingungen/Invarianten werden Rules; Ausleihen und Rückgabe werden zwei UseCases.
 
 Ein Root-Manager ist für den kleinen Ausschnitt ausreichend. Code, Prüfungen und Bedienungsdokumentation sind getrennte Realisierungsbeiträge. Der beschriebene Check ist ein klar markierter, nicht ausgeführter Platzhalter.
 
@@ -238,8 +239,8 @@ Der [Überfälligkeitsdurchlauf](library-change-walkthrough.md) zeigt, wie eine 
 | Entscheidung | Begründung und Abwägung |
 | --- | --- |
 | Kleine Struktur, fachliche Prosa | Explizite Zuordnung und Methodik zuerst nutzen; zusätzlichen Pflegeaufwand für Formalisierung an konkretem Nutzen prüfen. |
-| Nominaler Rule-Kind | Regeln als referenzierbaren Zieltyp unterscheiden; dies benötigt noch keinen allgemeinen Regelauswerter. |
-| Statement vorerst beibehalten | Weitere Rollen nicht ohne konkreten Bedarf zu neuen Kinds machen; ihre Kategorien bleiben zunächst lesbare Einordnung. |
+| Nominale Concept-, Rule- und UseCase-Kinds | Fachbegriffe, normative Aussagen und Verhalten als referenzierbare Zieltypen unterscheiden; dies benötigt noch keinen allgemeinen Fach- oder Regelauswerter. |
+| Keine Kategorie für die gewählten Rollen | Der Kind trägt die strukturelle Unterscheidung direkt; gemeinsame Beschreibungskonventionen werden geteilt. Weitere Kinds benötigen einen konkreten Ausdrucksbedarf. |
 | Mandat von Agentenbindung unterscheiden | Ein stabiler Auftrag kann von unterschiedlichen Agenten umgesetzt werden; Datei, Modell-Kind und Runtime-Identität sind eigene Benennungsentscheidungen. |
 | Explizite Beziehungen und konservativer Impact | Koordination nachvollziehbar aus deklarierten Daten ableiten; Prosalinks allein liefern keine geprüften Kanten. |
 | Erneuerbarer Dateibestand | Pfadregeln pflegen und konkrete Dateien erfassen; eine zweite manuelle Zuordnungsliste vermeiden. |
@@ -255,14 +256,14 @@ Der Dokumentationsbranch stammt aus einer älteren Main-Basis. Den Implementieru
 
 | Paket | Ergebnis | Voraussichtlicher Bereich | Abnahmekriterium |
 | --- | --- | --- | --- |
-| P0 — Ausgangspunkt und Verträge | Main-Delta, Versionierung, Rule-Schema und zulässige Referenzziele gemeinsam fixieren. | Produkt-/Modellvertrag; Core-Ausdrucksbedarf prüfen. | Keine stille alpha-Umdeutung; gemischte Zielmengen sind explizit gelöst. |
-| P1 — Vollständiger kleiner Durchstich | Bibliotheksmodell mit Mandat, Statements, Rules, Artefakten und Check-Anschluss laden/validieren. | Schema, Loader und Beispiel; Core nur bei belegter Lücke. | Gültige Definitionen auflösbar; falscher Zielkind, unbekanntes Feld und falscher Namespace mit deterministischer Diagnose. |
-| P2 — Sichten und Bedeutungserhalt | Rules und alle neuen Kanten in Report, Kontext, Graph und Digest führen. | Projectmodel-Analyse/Typen und vorhandene Ausgabeanschlüsse. | Zuständige Rollen sehen benötigte Regeln; private Inhalte werden nicht über eine zweite Sichtbarkeitslogik geladen. |
-| P3 — Änderungsfolgen | Rule-/Statement-Änderung, entfernte Kanten und gemischte Beziehungen in Impact/Explain behandeln. | Projectmodel-Impact/Explain und feste Host-Bindungen. | Alt/Neu-Wirkung erhalten; unbekannter Umfang bleibt konservativ; kombinierte Änderungen verlieren keine Pflicht. |
+| P0 — Ausgangspunkt und Verträge | Main-Delta, Versionierung, Concept-/Rule-/UseCase-Schemas und zulässige Referenzziele gemeinsam fixieren. | Produkt-/Modellvertrag; Core-Ausdrucksbedarf prüfen. | Keine stille alpha-Umdeutung; gemischte Zielmengen sind explizit gelöst. |
+| P1 — Vollständiger kleiner Durchstich | Bibliotheksmodell mit Mandat, Concepts, Rules, UseCases, Artefakten und Check-Anschluss laden/validieren. | Schema, Loader und Beispiel; Core nur bei belegter Lücke. | Gültige Definitionen auflösbar; falscher Zielkind, unbekanntes Feld und falscher Namespace mit deterministischer Diagnose. |
+| P2 — Sichten und Bedeutungserhalt | Concepts, Rules, UseCases und alle neuen Kanten in Report, Kontext, Graph und Digest führen. | Projectmodel-Analyse/Typen und vorhandene Ausgabeanschlüsse. | Zuständige Rollen sehen benötigte Regeln; private Inhalte werden nicht über eine zweite Sichtbarkeitslogik geladen. |
+| P3 — Änderungsfolgen | Concept-/Rule-/UseCase-Änderung, entfernte Kanten und gemischte Beziehungen in Impact/Explain behandeln. | Projectmodel-Impact/Explain und feste Host-Bindungen. | Alt/Neu-Wirkung erhalten; unbekannter Umfang bleibt konservativ; kombinierte Änderungen verlieren keine Pflicht. |
 | P4 — Realisierung und Review | Rule-Zuordnung, Coverage, Check-Bindungen und dokumentierten Reviewablauf durch vorhandene Ausführung führen. | Artefakte, Projectcoverage/Projectwork und bei Vertragsänderung Projectrun. | Keine neue Regel verschwindet aus Realisierung/Prüfung; Reviewergebnisse nennen Befunde und Grenzen. |
 | P5 — Kontrast und Integration | Kleines CLI-Gegenbeispiel, aktuelle Nutzer-/Formatdokumentation und normale Kandidatengates. | Beispiele, Tests und zuständige Dokumente. | Kein Bibliotheks-, Datenbank- oder Mehrmanager-Zwang; Checks gelten für festen Kandidaten. |
 
-P1 bis P4 bilden gemeinsam einen vollständigen Durchstich. Ein nur zugelassener Rule-Kind ist kein fertiges Feature. Die Pakete sind Vorschläge, keine vergebenen Backlog-IDs und keine gestarteten Implementierungsaufträge.
+P1 bis P4 bilden gemeinsam einen vollständigen Durchstich. Ein nur zugelassener neuer Kind ist kein fertiges Feature. Die Pakete sind Vorschläge, keine vergebenen Backlog-IDs und keine gestarteten Implementierungsaufträge.
 
 Der breitere Facetten-/Ausdrucksentwurf folgt nur bei konkret begründetem Bedarf. Government, Cockpit, Providerstudien, universelle Sourceanalyse und Releasepublikation sind nicht Teil dieses ersten Durchstichs.
 
@@ -272,8 +273,8 @@ Heute sind diese Prüfungen ausschließlich geplant. Bei Umsetzung gelten zusät
 
 | Risiko | Gezielter Nachweis |
 | --- | --- |
-| Nominaler Kind ist nur ein Label | Verweis auf Statement an einem Rule-only-Ziel wird abgewiesen; gültiger Rule-Verweis wird aufgelöst. |
-| Gemischte Referenz verliert Bedeutung | Statement/Rule in Kontext, Realisierung, Check und Entscheidung bleiben eindeutig, digest-relevant und im richtigen Scope. |
+| Nominaler Kind ist nur ein Label | Verweis auf Concept oder UseCase an einem Rule-only-Ziel wird abgewiesen; gültiger Rule-Verweis wird aufgelöst. |
+| Gemischte Referenz verliert Bedeutung | Concept/Rule/UseCase in Kontext, Realisierung, Check und Entscheidung bleiben eindeutig, digest-relevant und im richtigen Scope. |
 | Neue Regel fehlt im Impact | Geänderte Rule und hinzugefügte/entfernte Kante erreichen erwartete Pflichten, Owners, Artefakte und Checks unter Alt/Neu-Betrachtung. |
 | Scope wird still verkleinert | Kombinierte Änderungen erhalten Pflichten; Unknown und Context werden nicht unbegründet aus Prüfung gestrichen. |
 | Pfadregeln sind irreführend | Neue Datei im Präfix wird klassifiziert; unzugeordnete Datei und widersprüchliche Owner bleiben Befunde. |
@@ -289,7 +290,7 @@ Die strukturelle Zusage lautet: erkläre Definitionen und Beziehungen im gewähl
 Offen bleiben besonders:
 - Exakte API-Version und Migrationsweg.
 - Referenzunion versus getrennte Properties sowie zulässige Zielmengen.
-- Beibehaltung oder spätere Ablösung der Kategorien für Nicht-Regel-Statements.
+- Bedarf für weitere Beschreibungstypen, etwa System, Architektur oder Workflow, ohne die gewählten Kinds zu universellen Sammeltypen zu machen.
 - Regelbedingungen versus Invarianten: zunächst Prosa oder eigener nominaler/Feldvertrag?
 - Verbindliche Protokollierung der Reviewpflicht ohne Verwechslung mit Autorisierung.
 - Angemessene Zuordnungsgranularität und Breite des Impact.
@@ -301,7 +302,8 @@ Offen bleiben besonders:
 - Produktgespräch: `01a121f1-b948-7050-ae5d-9921b99db9c0`; Konsolidierung ausdrücklich am 12. Oktober 2026 beauftragt.
 - Worktree: `C:\Users\Consiliari\.codex\worktrees\product-model-concepts\Markitect`.
 - Branch: `docs/product-model-concepts`.
-- Eingang dieser Aktualisierung: `07e03215c968302361f5acedc8e69bd573ac95be`; beim Beginn sauber.
+- Eingang der vollständigen Konsolidierung: `07e03215c968302361f5acedc8e69bd573ac95be`; beim Beginn sauber.
+- Eingang der Kind-Aktualisierung: `5d18e8f4438cc1d24a10882f04b10501d65db20e`; beim Beginn sauber.
 - Ursprüngliche Branchbasis: `ecc69b0ad99236a5ddd02b85bf9ba656a0000f15`.
 - Letzter gesonderter Main-Abgleich: `32afd1a57e715130d056e98e433721c6e7a10278` vom 11. Oktober; heute nicht als aktuell neu verifiziert.
 - Lokale Änderungen dieses Auftrags: ausschließlich Konzept-, Beispiel-, Ablauf- und Navigationsdokumentation. Keine Produktimplementierung, Modellkompilierung, Tests, Studien oder Agentenausführung am Bibliotheksprojekt.
