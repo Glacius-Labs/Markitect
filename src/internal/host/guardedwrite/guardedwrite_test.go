@@ -139,6 +139,38 @@ func TestOrderedCheckedApplyRejectsInvalidScopeBeforeCallbacks(t *testing.T) {
 	}
 }
 
+func TestOrderedCheckedApplyRejectsCaptureMutationBeforeWriting(t *testing.T) {
+	for _, binding := range []string{"root", "branch", "head"} {
+		t.Run(binding, func(t *testing.T) {
+			root := testRepo(t, "feature/captured")
+			capture, err := CaptureFiles(root, []string{"README.md"})
+			if err != nil {
+				t.Fatal(err)
+			}
+			before := mustRead(t, filepath.Join(root, "README.md"))
+			result, err := ApplyOrderedChecked(root, capture, []Change{{Path: "README.md", Bytes: []byte("candidate\n"), Mode: 0644}}, nil, func() error {
+				switch binding {
+				case "root":
+					capture.Root += "-changed"
+				case "branch":
+					runGit(t, root, "checkout", "-b", "feature/other")
+					capture.Branch = "feature/other"
+				case "head":
+					runGit(t, root, "commit", "--allow-empty", "-m", "foreign HEAD")
+					capture.Head = runGit(t, root, "rev-parse", "HEAD")
+				}
+				return nil
+			}, func(Result) error { return nil })
+			if err == nil || !strings.Contains(err.Error(), "capture changed") || len(result.CompletedPaths) != 0 {
+				t.Fatalf("capture %s mutation wrote before rejection: result=%v err=%v", binding, result, err)
+			}
+			if string(mustRead(t, filepath.Join(root, "README.md"))) != string(before) {
+				t.Fatal("captured file was overwritten")
+			}
+		})
+	}
+}
+
 func TestGuardedWriteCapturesAndAppliesCreateReplaceAndDelete(t *testing.T) {
 	root := testRepo(t, "feature/guarded")
 	if err := os.WriteFile(filepath.Join(root, "delete.txt"), []byte("remove me\n"), 0644); err != nil {

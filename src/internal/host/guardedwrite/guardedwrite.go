@@ -247,6 +247,10 @@ func applyGuardedWriteWithReadback(root string, capture *Capture, changes []Chan
 			if err := beforeTarget(change.Path); err != nil {
 				return result, err
 			}
+			seal, err := guardedCaptureSeal(capture)
+			if err != nil || seal != capture.seal {
+				return result, errors.New("guarded write capture changed during target validation")
+			}
 		}
 		if err := writer.CheckIdentity(); err != nil {
 			return result, err
