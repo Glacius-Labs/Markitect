@@ -18,8 +18,11 @@ The default native path uses the same coordinator, candidate validation and loca
 flowchart LR
   Outer[Outer Codex or Claude Code] -->|typed MCP| MCP[Fixed-root MCP server]
   MCP --> App[Shared project application facade]
-  App --> Host[Project model, ledger, checks and run coordinator]
-  Host --> Adapter[Codex App Server adapter]
+  App --> Config[Runtime configuration]
+  App --> Host[Project model, ledger, checks and method coordinator]
+  App --> Executor[Process and native executor]
+  Host -->|role request and helper policy| Executor
+  Executor --> Adapter[Codex App Server adapter]
   Adapter --> Candidate[Owned candidate workspaces]
   Candidate --> Delta[Validated candidate delta]
   Delta --> Verify[Required review and local Verify]
@@ -105,22 +108,24 @@ Known problems:
 The runtime runs Manager, review, integration and verify roles and records what happened.
 
 - `projectrun` plans, runs, resumes, repairs, verifies and applies bounded Manager work over fixed snapshots. It owns the run store under `.markitect/runs/`, the budgets, the review rounds and the Apply preflight.
+- `projectconfig` owns runtime types, strict bounded loading and validation, agent projection and strictness profiles. Setup and MCP schema reflection consume it directly; accepted Manager references and cumulative policy enforcement remain in the method coordinator.
+- `projectexecutor` composes process/native dispatch, request-aware fingerprints and private transport journals. Application composition injects the method's helper policy; exact-turn recovery retains the existing no-replay boundary.
 - `agentexec` is the provider-neutral process boundary for one role invocation and its receipt.
 - `codexappserver` is the transport to the native Codex App Server.
 - `exchangecli` is the reference bring-your-own executor. It hands each invocation to an outside party through request and response files ([provider adapters](provider-adapters.md#bring-your-own-executor)).
 - `projectworkspace` creates, harvests and recovers owned candidate workspaces.
-- `projectsetup` builds the runtime proposal for `project setup` and the prerequisite report for `project doctor`.
+- `projectsetup` builds the runtime proposal for `config` and the prerequisite report for `doctor`.
+
+[ARCH-06 / PR250](https://github.com/Glacius-Labs/Markitect/pull/250) delivered the configuration/executor boundary and focused Plan, Full Verify and Run phases at Main `4c260449009d115333d2f9af4cdf09564d7dde0b`. A production AST gate covers declarations and anonymous functions in `projectrun`, `projectconfig` and `projectexecutor`, including supported-platform files, with an inclusive 300-line maximum. Existing E2E assertions and normal untagged CI coverage are preserved. The [integration record](validation/integration-round-20261012.md#arch-06-closure-and-arch-13-preparation) separates required/actual-Main Linux proof from the original Windows subset expiry.
 
 Known problems:
 
-- `projectrun` is large: well over 15,000 production lines. `run.go` alone has more than 2,500 lines, and `runOrResume` more than 1,000. `Plan` (`plan.go`) and `FullVerifyProject` (`full_verify.go`) also exceed 300 lines (ARCH-06).
-- Runtime configuration lives in `projectrun`: `Runtime`, `Agent`, `Limits` and `Pricing` (`types.go`) and `ValidateRuntime` (`config.go`). `projectsetup` and `mcp` import `projectrun` for these types, and the native transport invoker is built there too (ARCH-06).
-- Runtime and application import each other. `projectrun` imports `projectwork` and `projectexplore`, and `projectsetup` imports `projectwork`; `projectapp`, `projectadoption` and `projectcli` import `projectrun` (ARCH-13; ARCH-06 works on the same seam).
-- ARCH-05 removed five proven unused `projectrun/run.go` helpers (`ownedPath`, `addCost`, `estimateCost`, `resolvesConflicts`, `resolveObligations`) and its duplicate `sameStrings` comparison in [PR248](https://github.com/Glacius-Labs/Markitect/pull/248). Existing cost, obligation, repair and comparison behavior is retained; runtime extraction remains ARCH-06.
+- Runtime and application retain opposite layer dependencies: `projectrun` imports `projectwork` and `projectexplore`, and `projectsetup` imports `projectwork`; `projectapp`, `projectadoption` and `projectcli` import `projectrun`. These are layer-direction problems, not a Go import cycle. ARCH-13 is the next accepted package, starting with a concrete responsibility/dependency plan after ARCH-06 closure.
+- ARCH-05 removed five proven unused `projectrun/run.go` helpers (`ownedPath`, `addCost`, `estimateCost`, `resolvesConflicts`, `resolveObligations`) and its duplicate `sameStrings` comparison in [PR248](https://github.com/Glacius-Labs/Markitect/pull/248). Existing cost, obligation, repair and comparison behavior is retained; the subsequent ARCH-06 extraction is integrated.
 - Plan and Apply call `git check-attr --source` (`plan.go`, `apply.go`), which needs Git 2.40 or later. Doctor reports the installed version and a failed prerequisite below 2.40, before model or provider inspection (CLI-04, #235). Doctor does not automatically guard later Plan or Apply calls; their operation-time Git failures remain separate.
 - A helper whose Close fails stays `cleanup-pending` (`helper.go`). `validateReportClosure` (`obligations.go`) then blocks Verify and Apply, and nothing reconciles the state (BUG-01).
 - Bring-your-own executor gaps (RUN-05):
-  - `maxCostMicros` is required even when every role is unmetered (`config.go`).
+  - `maxCostMicros` is required even when every role is unmetered (`projectconfig/validate.go`).
   - Setup rejects script shims only for the native provider, not for process executors (`discoverProcess` in `projectsetup/setup.go`).
   - The exchange adapter has no deadline of its own (`exchangecli/exchange.go`).
   - Declared checks see only the owning agent's environment allowlist (`explicitEnvironment` in `verify.go`).
