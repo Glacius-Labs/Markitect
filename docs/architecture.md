@@ -9,7 +9,10 @@ Markitect is model-first development with delegated realization ([Markitect in b
 - CLI and MCP call the same application facade, which owns the product composition root ([application layer](#application-layer)).
 - Markitect compiles the selected model, binds work to fixed Git snapshots and records plans, runs and receipts.
 - Managers, reviewers and verifiers run as inner roles in owned candidate workspaces. By default every role runs through the Codex App Server; setup can select another profile per role, including a process executor ([provider adapters](provider-adapters.md#role-profiles)).
+- RUN-02 also exports deterministic Manager/reviewer packets and stores externally produced responses or fixed Git candidates. A later explicit scheduler continuation validates the submission and advances Manager/review work. Verify uses the existing local path; guarded Apply is separate ([external packets](project-operations.md)).
 - Markitect validates and integrates the candidate deltas, verifies the result and writes the checkout only through guarded Apply.
+
+The default native path uses the same coordinator, candidate validation and local Verify as the configured process and external packet paths:
 
 ```mermaid
 flowchart LR
@@ -19,7 +22,8 @@ flowchart LR
   Host --> Adapter[Codex App Server adapter]
   Adapter --> Candidate[Owned candidate workspaces]
   Candidate --> Delta[Validated candidate delta]
-  Delta -->|guarded Apply| Repo[Adopting repository]
+  Delta --> Verify[Required review and local Verify]
+  Verify -->|guarded Apply| Repo[Adopting repository]
 ```
 
 ## Authority and evidence
@@ -45,7 +49,7 @@ Known problems across layers:
 
 - The import gate enforces the declared package boundaries, but it does not yet enforce direction between the four product layers. The core and runtime sections below show imports that break the intended direction (ARCH-12).
 - Directory names do not show the layer. Product packages are grouped beneath `src/internal/host` despite their distinct architectural roles (ARCH-16).
-- Small helpers are copied: `sameStrings` exists in four packages, `equalStrings` in three and `containsString` in five, for example in `core/compile.go` and `projectrun/run.go` (ARCH-05).
+- Small utilities remain package-local across layers: production `sameStrings` definitions exist in two packages, `equalStrings` in three and `containsString` in four. ARCH-05 consolidated the identical comparison within `projectrun`; it introduced no shared cross-layer utility abstraction.
 - Four packages keep their own record store, each with its own file layout and write path: `projectrun` (`store.go`), `projectexplore` (`store.go`), `projectbriefing` (`store.go`) and `projectadoption` (`session.go`, `manager_run_ledger.go`) (ARCH-14).
 
 ## Core layer
@@ -112,7 +116,7 @@ Known problems:
 - `projectrun` is large: well over 15,000 production lines. `run.go` alone has more than 2,500 lines, and `runOrResume` more than 1,000. `Plan` (`plan.go`) and `FullVerifyProject` (`full_verify.go`) also exceed 300 lines (ARCH-06).
 - Runtime configuration lives in `projectrun`: `Runtime`, `Agent`, `Limits` and `Pricing` (`types.go`) and `ValidateRuntime` (`config.go`). `projectsetup` and `mcp` import `projectrun` for these types, and the native transport invoker is built there too (ARCH-06).
 - Runtime and application import each other. `projectrun` imports `projectwork` and `projectexplore`, and `projectsetup` imports `projectwork`; `projectapp`, `projectadoption` and `projectcli` import `projectrun` (ARCH-13; ARCH-06 works on the same seam).
-- Five functions in `projectrun/run.go` have no callers: `ownedPath`, `addCost`, `estimateCost`, `resolvesConflicts` and `resolveObligations` (ARCH-05).
+- ARCH-05 removed five proven unused `projectrun/run.go` helpers (`ownedPath`, `addCost`, `estimateCost`, `resolvesConflicts`, `resolveObligations`) and its duplicate `sameStrings` comparison in [PR248](https://github.com/Glacius-Labs/Markitect/pull/248). Existing cost, obligation, repair and comparison behavior is retained; runtime extraction remains ARCH-06.
 - Plan and Apply call `git check-attr --source` (`plan.go`, `apply.go`), which needs Git 2.40 or later. Doctor reports the installed version and a failed prerequisite below 2.40, before model or provider inspection (CLI-04, #235). Doctor does not automatically guard later Plan or Apply calls; their operation-time Git failures remain separate.
 - A helper whose Close fails stays `cleanup-pending` (`helper.go`). `validateReportClosure` (`obligations.go`) then blocks Verify and Apply, and nothing reconciles the state (BUG-01).
 - Bring-your-own executor gaps (RUN-05):

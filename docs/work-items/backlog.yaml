@@ -1,7 +1,7 @@
 schema: markitect-roadmap-backlog/v1
 updated: '2026-10-12'
 roadmap: docs/implementation-plan.md
-main_basis: e9979084dd085a2cd2715828358ed384feba0383
+main_basis: c996de0931908db99a42766df794029eb15c77c2
 
 # Single owner of work-package status. The roadmap explains streams, waves,
 # zones and rules; this file records each package's current state.
@@ -839,12 +839,13 @@ packages:
     title: Dead code and duplicate helpers
     stream: ARCH
     wave: 2
-    status: active
+    status: done
     branch: dev/runtime-dead-code
+    pr: 248
     owner: cleaner
     depends_on: [RUN-01]
     zone: runtime
-    note: Explicit Cleaner reservation after RUN02 actualMaine997/fullpushCI38250236626 completeSUCCESS; exclusiveRuntimezone, Runtime released untilARCH05closure thenARCH06. Start from currentorigin/main on dev/runtime-dead-code. Revalidate five definition-only projectrun helpers and consolidate the identical package-local string comparison without behavior/API/guard/budget changes; additional cleanup requires concrete reference evidence and bounded coordinator review. Root owns status/architecture documents; no concurrent TEST05/RUN05-06/Windowsfix/provider/study/recovery writer. Earlier ARCH09 sources and raw evidence stay preserved.
+    note: Final4827e0b1e60042a6ece895ea2f22bd5f87077e04 merged PR248 to actualMainc996de0931908db99a42766df794029eb15c77c2; fullpushCI38256213636 passed Quality/Race/sourceartifact. Tree151311fb1ef3814bf487c53449a507143faea168 equals reviewedRoot482 and finalrequired38254949946 testedmerge7f7a6b95b16ec6453424d8d739311d262a8e8b94. Five provenunused helpers removed and oneidenticalpackage-localcomparisonconsolidated, exactlyrun.go+1/-63; nobehavior/API/model/CI/budget/guard/testassertionchange. Sourcef5bba5a1811ce3f3adb603bb78055f366fdb4b9b remainscleanpreserved withsixfocusedRuntimeWindowsPASS92.146s/rawae160af7 and firstrequired38252767573PASSatolde997/ecea/treea698. AllGo/source/testblobs identicalf5b in finalcomposition; fourRootstatusdocs transferred fromcurrentMain. Independentreviews/fixednativeCheckContextImpact/module/arch/view/vet/docs/format/diff passed, fullfinalrequired+actualMain each1997PASS0FAIL19existingskips. Cleanerwriterreleased; ARCH06 nowexplicitRuntimeexclusivezone. Cross-layerutilityabstraction, Windowslockfix/helperrecovery/providerstudies/TEST05/RUN05-06/release/cleanup remainoutsideScope, originals1193/daff/f650/Runtime refs/raw preserved.
     inputs:
       - docs/work-items/surveys/code-architecture-20261010.md
     acceptance:
@@ -854,10 +855,12 @@ packages:
     title: Separate method and runtime inside projectrun
     stream: ARCH
     wave: 2
-    status: blocked
+    status: active
+    branch: dev/method-runtime-boundary
     owner: runtime
     depends_on: [RUN-01, TEST-04]
     zone: runtime
+    note: ExplicitRuntimeexclusivezone assignedafterARCH05actualMainc996/fullpushCI38256213636completeSUCCESS; Cleanerreleased, noQA/Windowswriter. Startfreshcurrentorigin/main ondev/method-runtime-boundary. Firstconcretepackages/importgraph/configfieldpartition/nativehelperjournalhook/functionsize/verificationplan reviewedbyRoot before sharedmodel/newSiblingPaths; exactadditiveArtifact/codemap/generatedview accounting coordinatedatomically, no broadroots/waivers/exceptions. Acceptedconfig/nativeexecutorboundary extraction and focusedproductionunits<=300 preserve wireYAMLJSON/schema, methodpolicyvsactualexecutoridentity, receipt/fingerprint/prepostApplychecks, budgets/unknowncost/durablehelperaccounting, alreadyturnRecovery/noreplay, candidate/review/scopedbytesmodes/retainedparents/deletionpreimage/modelhelperfreshness and unchangedE2Eassertions. No newIntent/modelKinds, allRun/lifecyclemove/ARCH13-16, positiveRecovery/providerstudies/TEST05/RUN05-06/Windowslockfix/release/cleanup.
     inputs:
       - docs/work-items/surveys/code-architecture-20261010.md
     acceptance:
