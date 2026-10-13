@@ -496,7 +496,7 @@ func writeManagerRunLedger(dir string, ledger ManagerRunLedger) error {
 		return err
 	}
 	path := filepath.Join(dir, managerRunLedgerName)
-	if err := atomicReplaceFile(temp, path); err != nil {
+	if err := os.Rename(temp, path); err != nil {
 		_ = os.Remove(temp)
 		return err
 	}

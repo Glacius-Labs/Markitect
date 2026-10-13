@@ -20,10 +20,11 @@ import (
 	"github.com/Glacius-Labs/Markitect/src/internal/core/projectmodel"
 	projectbriefing "github.com/Glacius-Labs/Markitect/src/internal/core/projectmodel/projectbriefing"
 	"github.com/Glacius-Labs/Markitect/src/internal/core/projectmodel/projectvalue"
+	"github.com/Glacius-Labs/Markitect/src/internal/infrastructure/recordstore"
 	"github.com/Glacius-Labs/Markitect/src/internal/infrastructure/source"
 )
 
-const storePath = ".markitect/state/briefings/history.json"
+const storePath = ".markitect/records/briefing/accepted/record.json"
 
 var (
 	ErrStaleStore      = errors.New("briefing store changed since it was read")
@@ -74,27 +75,31 @@ func Read(root string) (ReadResult, error) {
 
 // readStore validates and returns the persisted store, provisional entries
 // included, and its content digest.
+func historyName() recordstore.Name {
+	return recordstore.Name{Kind: recordstore.Briefing, ID: "accepted", Role: "record.json"}
+}
 func readStore(root string) (projectbriefing.Store, string, error) {
-	path, err := stateFile(root, false)
+	store, err := recordstore.Open(root)
 	if err != nil {
 		return projectbriefing.Store{}, "", err
 	}
-	var data []byte
+	defer store.Close()
+	var file recordstore.File
 	err = waitWhileBusy(func() (bool, error) {
-		var err error
-		data, err = os.ReadFile(path)
-		return windowsBusy(err), err
+		var e error
+		file, e = store.Read(historyName(), 64<<20)
+		return windowsBusy(e), e
 	})
-	if os.IsNotExist(err) {
+	if err != nil {
+		return projectbriefing.Store{}, "", err
+	}
+	if !file.Exists {
 		state := emptyStore()
 		return state, projectbriefing.StoreDigest(state), nil
 	}
-	if err != nil {
-		return projectbriefing.Store{}, "", err
-	}
-	if len(data) > 64<<20 {
-		return projectbriefing.Store{}, "", errors.New("briefing store exceeds size limit")
-	}
+	return decodeHistoryStore(file.Bytes)
+}
+func decodeHistoryStore(data []byte) (projectbriefing.Store, string, error) {
 	var state projectbriefing.Store
 	decoder := json.NewDecoder(bytes.NewReader(data))
 	decoder.DisallowUnknownFields()
@@ -1356,27 +1361,39 @@ func emptyStore() projectbriefing.Store {
 }
 
 func update(root, expected string, mutate func(*projectbriefing.Store) error) (string, error) {
-	path, err := stateFile(root, true)
+	store, err := recordstore.Open(root)
 	if err != nil {
 		return "", err
 	}
-	lockPath := filepath.Join(filepath.Dir(path), ".briefings.lock")
-	lock, err := acquireStoreLock(lockPath)
+	defer store.Close()
+	lease, err := store.Exclusive(recordstore.Briefing, "accepted", ".briefings.lock", nil, storeLockWait, nil)
+	if err != nil {
+		if os.IsExist(err) {
+			return "", fmt.Errorf("acquire briefing store lock: %s is still held after %s; if no Markitect process is running, delete that file: %w", filepath.Join(root, filepath.Dir(filepath.FromSlash(storePath)), ".briefings.lock"), storeLockWait, err)
+		}
+		return "", err
+	}
+	defer lease.Close()
+	prior, err := store.Read(historyName(), 64<<20)
 	if err != nil {
 		return "", err
 	}
-	defer func() { _ = lock.Close(); _ = os.Remove(lockPath) }()
-	state, current, err := readStore(root)
-	if err != nil {
-		return "", err
+	state := emptyStore()
+	current := projectbriefing.StoreDigest(state)
+	if prior.Exists {
+		state, current, err = decodeHistoryStore(prior.Bytes)
+		if err != nil {
+			return "", err
+		}
 	}
 	if current != expected {
 		return "", ErrStaleStore
 	}
-	if err := mutate(&state); err != nil {
+	if err = mutate(&state); err != nil {
 		return "", err
 	}
-	if projectbriefing.StoreDigest(state) == current {
+	next := projectbriefing.StoreDigest(state)
+	if next == current {
 		return current, nil
 	}
 	data, err := json.MarshalIndent(state, "", "  ")
@@ -1384,54 +1401,21 @@ func update(root, expected string, mutate func(*projectbriefing.Store) error) (s
 		return "", err
 	}
 	data = append(data, '\n')
-	tmp := filepath.Join(filepath.Dir(path), fmt.Sprintf(".briefings-%d.tmp", time.Now().UnixNano()))
-	f, err := os.OpenFile(tmp, os.O_CREATE|os.O_EXCL|os.O_WRONLY, 0600)
+	if err = store.Replace(historyName(), prior, data, lease.Check); err != nil {
+		return "", err
+	}
+	observed, err := store.Read(historyName(), 64<<20)
 	if err != nil {
-		return "", err
+		return "", &recordstore.PublicationError{Path: storePath, Outcome: recordstore.Published, Cause: err}
 	}
-	if _, err = f.Write(data); err == nil {
-		err = f.Sync()
-	}
-	closeErr := f.Close()
-	if err == nil {
-		err = closeErr
-	}
-	if err != nil {
-		_ = os.Remove(tmp)
-		return "", err
-	}
-	if err := waitWhileBusy(func() (bool, error) {
-		err := os.Rename(tmp, path)
-		return windowsBusy(err), err
-	}); err != nil {
-		_ = os.Remove(tmp)
-		return "", err
-	}
-	return projectbriefing.StoreDigest(state), nil
-}
-
-// acquireStoreLock waits while another writer holds the store lock. It never
-// removes a lock it did not create: a lock left behind by a crashed writer
-// keeps failing writers after the wait until it is removed by hand. Readers
-// never take the lock.
-func acquireStoreLock(path string) (*os.File, error) {
-	var lock *os.File
-	err := waitWhileBusy(func() (bool, error) {
-		var err error
-		lock, err = os.OpenFile(path, os.O_CREATE|os.O_EXCL|os.O_WRONLY, 0600)
-		return os.IsExist(err) || windowsBusy(err), err
-	})
-	if os.IsExist(err) {
-		shown := path
-		if absolute, absErr := filepath.Abs(path); absErr == nil {
-			shown = absolute
+	_, digest, err := decodeHistoryStore(observed.Bytes)
+	if err != nil || digest != next {
+		if err == nil {
+			err = errors.New("published history domain digest differs")
 		}
-		return nil, fmt.Errorf("acquire briefing store lock: %s is still held after %s; if no Markitect process is running, delete that file: %w", shown, storeLockWait, err)
+		return "", &recordstore.PublicationError{Path: storePath, Outcome: recordstore.Published, Cause: err}
 	}
-	if err != nil {
-		return nil, fmt.Errorf("acquire briefing store lock: %w", err)
-	}
-	return lock, nil
+	return next, nil
 }
 
 // waitWhileBusy retries attempt with backoff for at most storeLockWait while it
@@ -1466,50 +1450,24 @@ func windowsBusy(err error) bool {
 }
 
 func stateFile(root string, create bool) (string, error) {
-	if strings.TrimSpace(root) == "" {
-		return "", errors.New("briefing store root is required")
+	store, err := recordstore.Open(root)
+	if err != nil {
+		return "", err
+	}
+	defer store.Close()
+	if err = store.CheckCutover(recordstore.Briefing); err != nil {
+		return "", err
+	}
+	if create {
+		if err = store.Ensure(recordstore.Briefing, "accepted", ""); err != nil {
+			return "", err
+		}
 	}
 	abs, err := filepath.Abs(root)
 	if err != nil {
 		return "", err
 	}
-	info, err := os.Lstat(abs)
-	if err != nil {
-		return "", err
-	}
-	if !info.IsDir() || info.Mode()&os.ModeSymlink != 0 {
-		return "", errors.New("briefing store root must be a real directory")
-	}
-	meta := filepath.Join(abs, ".markitect")
-	stateDir := filepath.Join(meta, "state")
-	briefingsDir := filepath.Join(stateDir, "briefings")
-	for _, dir := range []string{meta, stateDir, briefingsDir} {
-		info, err := os.Lstat(dir)
-		if os.IsNotExist(err) && create {
-			if err = os.Mkdir(dir, 0700); err != nil && !os.IsExist(err) {
-				return "", err
-			}
-			info, err = os.Lstat(dir)
-		}
-		if err != nil {
-			if os.IsNotExist(err) && !create {
-				return filepath.Join(abs, filepath.FromSlash(storePath)), nil
-			}
-			return "", err
-		}
-		if !info.IsDir() || info.Mode()&os.ModeSymlink != 0 {
-			return "", fmt.Errorf("unsafe briefing state directory %s", dir)
-		}
-	}
-	path := filepath.Join(abs, filepath.FromSlash(storePath))
-	if info, err := os.Lstat(path); err == nil {
-		if !info.Mode().IsRegular() || info.Mode()&os.ModeSymlink != 0 {
-			return "", errors.New("briefing store target is not a regular file")
-		}
-	} else if !os.IsNotExist(err) {
-		return "", err
-	}
-	return path, nil
+	return filepath.Join(abs, filepath.FromSlash(storePath)), nil
 }
 
 // DigestBytes exposes a stable digest for CLI optimistic-concurrency prompts.

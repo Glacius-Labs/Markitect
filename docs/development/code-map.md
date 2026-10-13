@@ -15,7 +15,7 @@ Tests in `src/internal/tooling/architecture` fail when a Go package is missing f
 | Layer | Meaning | Import gate layers | Packages |
 |---|---|---|---|
 | `core` | Structural compiler, snapshots and project-model views. No providers, Git processes or writes. | `core`, `host`, `module` | 6 |
-| `infrastructure` | Git and working-tree access: fixed snapshots and guarded writes. | `infrastructure`, `host` | 2 |
+| `infrastructure` | Git and working-tree access: fixed snapshots and guarded writes. | `infrastructure`, `host` | 3 |
 | `application` | Current product use cases and their command and MCP surfaces. | `host` | 15 |
 | `runtime` | Runs Manager, review and verify roles in owned workspaces. | `host` | 8 |
 | `legacy` | The published v0.13 Project/Domain surfaces. DEC-014 allows removing them. | `host`, `module` | 0 |
@@ -43,6 +43,7 @@ Tests in `src/internal/tooling/architecture` fail when a Go package is missing f
 | Package | Purpose | Owning document |
 |---|---|---|
 | `src/internal/infrastructure/guardedwrite` | Applies selected working-tree changes only while repository, branch, HEAD and captured bytes are unchanged. | [docs/architecture.md](../architecture.md#infrastructure-layer) |
+| `src/internal/infrastructure/recordstore` | Publishes confined operational record bytes with shared layout, identity-bound leases and qualified outcomes. | [docs/architecture.md](../architecture.md#infrastructure-layer) |
 | `src/internal/infrastructure/source` | Loads fixed snapshots from the working tree or a Git commit with hardened Git processes. | [docs/source-snapshots.md](../source-snapshots.md#adapter-and-use-case-ownership) |
 
 ## Product application

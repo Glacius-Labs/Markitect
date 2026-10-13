@@ -19,11 +19,14 @@ import (
 
 	"github.com/Glacius-Labs/Markitect/src/internal/core/projectmodel"
 	"github.com/Glacius-Labs/Markitect/src/internal/core/snapshot"
+	"github.com/Glacius-Labs/Markitect/src/internal/infrastructure/recordstore"
 )
 
 type runStore struct {
-	root string
-	base string
+	root     string
+	base     string
+	storage  *recordstore.Store
+	identity os.FileInfo
 }
 
 type candidateData struct {
@@ -131,7 +134,15 @@ func newRunStore(root string) (*runStore, error) {
 	} else if !os.IsNotExist(statErr) {
 		return nil, fmt.Errorf("inspect runtime state path %s: %w", base, statErr)
 	}
-	return &runStore{root: abs, base: base}, nil
+	physical, err := recordstore.Open(abs)
+	if err != nil {
+		return nil, err
+	}
+	defer physical.Close()
+	if err = physical.CheckCutover(recordstore.Run); err != nil {
+		return nil, err
+	}
+	return &runStore{root: abs, base: base, identity: physical.Identity()}, nil
 }
 
 func ensureDirectory(path string) error {
@@ -155,99 +166,62 @@ func ensureDirectory(path string) error {
 	return nil
 }
 
-func (s *runStore) lock() (func(), error) {
-	if err := ensureDirectory(filepath.Dir(s.base)); err != nil {
-		return nil, err
-	}
-	if err := ensureDirectory(s.base); err != nil {
-		return nil, err
-	}
-	path := filepath.Join(s.base, ".write.lock")
-	file, err := os.OpenFile(path, os.O_CREATE|os.O_EXCL|os.O_WRONLY, 0o600)
-	if os.IsExist(err) {
-		removed, staleErr := removeStaleRuntimeLock(path, s.root)
-		if staleErr != nil {
-			return nil, staleErr
+func (s *runStore) physical() (*recordstore.Store, func(), error) {
+	if s.storage != nil {
+		if err := s.storage.CheckIdentity(); err != nil {
+			return nil, nil, err
 		}
-		if removed {
-			file, err = os.OpenFile(path, os.O_CREATE|os.O_EXCL|os.O_WRONLY, 0o600)
-		}
+		return s.storage, func() {}, nil
 	}
+	store, err := recordstore.Open(s.root)
 	if err != nil {
+		return nil, nil, err
+	}
+	if s.identity != nil && !os.SameFile(s.identity, store.Identity()) {
+		store.Close()
+		return nil, nil, errors.New("Runtime record root identity changed")
+	}
+	return store, func() { store.Close() }, nil
+}
+func (s *runStore) lock() (func(), error) {
+	store, done, err := s.physical()
+	if err != nil {
+		return nil, err
+	}
+	data, err := json.Marshal(runtimeLock{PID: os.Getpid(), Root: s.root, StartedAt: time.Now().UTC()})
+	if err != nil {
+		done()
+		return nil, err
+	}
+	lease, err := store.Exclusive(recordstore.Run, "", ".write.lock", append(data, '\n'), 0, func(raw []byte) (bool, error) {
+		var owner runtimeLock
+		if err := decodeRuntimeJSON(raw, &owner); err != nil {
+			return false, fmt.Errorf("runtime writer lock unreadable and remains held: %w", err)
+		}
+		if owner.Root != s.root || owner.PID <= 0 {
+			return false, errors.New("runtime lock owner invalid and remains held")
+		}
+		alive, err := processAlive(owner.PID)
+		if err != nil || alive {
+			return false, ErrLocked
+		}
+		return true, nil
+	})
+	if err != nil {
+		done()
 		if os.IsExist(err) {
 			return nil, ErrLocked
 		}
-		return nil, fmt.Errorf("create runtime writer lock: %w", err)
+		return nil, err
 	}
-	lockData, marshalErr := json.Marshal(runtimeLock{PID: os.Getpid(), Root: s.root, StartedAt: time.Now().UTC()})
-	if marshalErr != nil {
-		_ = file.Close()
-		_ = os.Remove(path)
-		return nil, marshalErr
-	}
-	if _, err := file.Write(append(lockData, '\n')); err != nil {
-		_ = file.Close()
-		_ = os.Remove(path)
-		return nil, fmt.Errorf("write runtime writer lock: %w", err)
-	}
-	if err := file.Sync(); err != nil {
-		_ = file.Close()
-		_ = os.Remove(path)
-		return nil, fmt.Errorf("flush runtime writer lock: %w", err)
-	}
-	lockInfo, statErr := file.Stat()
-	if statErr != nil {
-		_ = file.Close()
-		_ = os.Remove(path)
-		return nil, statErr
-	}
-	if err := file.Close(); err != nil {
-		_ = os.Remove(path)
-		return nil, fmt.Errorf("close runtime writer lock: %w", err)
-	}
-	return func() {
-		if current, err := os.Stat(path); err == nil && os.SameFile(current, lockInfo) {
-			_ = os.Remove(path)
-		}
-	}, nil
+	s.storage = store
+	return func() { lease.Close(); s.storage = nil; done() }, nil
 }
 
 type runtimeLock struct {
 	PID       int       `json:"pid"`
 	Root      string    `json:"root"`
 	StartedAt time.Time `json:"startedAt"`
-}
-
-func removeStaleRuntimeLock(path, root string) (bool, error) {
-	before, err := os.Lstat(path)
-	if err != nil {
-		return false, err
-	}
-	if !before.Mode().IsRegular() || before.Mode()&os.ModeSymlink != 0 {
-		return false, fmt.Errorf("runtime lock path is not a regular file")
-	}
-	var lock runtimeLock
-	if err := readJSON(path, &lock); err != nil {
-		return false, fmt.Errorf("runtime writer lock is unreadable and remains held: %w", err)
-	}
-	if lock.Root != root || lock.PID <= 0 {
-		return false, fmt.Errorf("runtime writer lock owner is invalid and remains held")
-	}
-	alive, err := processAlive(lock.PID)
-	if err != nil || alive {
-		return false, ErrLocked
-	}
-	current, err := os.Lstat(path)
-	if err != nil {
-		return false, err
-	}
-	if !os.SameFile(before, current) {
-		return false, ErrLocked
-	}
-	if err := os.Remove(path); err != nil {
-		return false, fmt.Errorf("remove stale runtime lock: %w", err)
-	}
-	return true, nil
 }
 
 func (s *runStore) runDir(id string) (string, error) {
@@ -285,17 +259,18 @@ func (s *runStore) createRun(id string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	if err := os.Mkdir(dir, 0o700); err != nil {
-		return "", fmt.Errorf("create run directory: %w", err)
-	}
-	if err := ensureDirectory(filepath.Join(dir, "states")); err != nil {
+	store, done, err := s.physical()
+	if err != nil {
 		return "", err
 	}
-	if err := ensureDirectory(filepath.Join(dir, "candidates")); err != nil {
+	defer done()
+	if err = store.CreateContainer(recordstore.Run, id); err != nil {
 		return "", err
 	}
-	if err := ensureDirectory(filepath.Join(dir, "reports")); err != nil {
-		return "", err
+	for _, role := range []string{"states", "candidates", "reports"} {
+		if err = store.Ensure(recordstore.Run, id, role); err != nil {
+			return "", err
+		}
 	}
 	return dir, nil
 }
@@ -377,77 +352,76 @@ func validID(id string) bool {
 	return true
 }
 
-func writeImmutableJSON(path string, value any) error {
+func recordPathOwner(absolute string, owners ...*runStore) (*recordstore.Store, recordstore.Name, func(), error) {
+	slash := filepath.ToSlash(filepath.Clean(absolute))
+	marker := "/" + recordstore.RootPath + "/"
+	pos := strings.LastIndex(slash, marker)
+	if pos < 0 {
+		return nil, recordstore.Name{}, nil, errors.New("runtime record outside canonical store")
+	}
+	root := filepath.FromSlash(slash[:pos])
+	name, err := recordstore.Parse(slash[pos+1:])
+	if err != nil {
+		return nil, name, nil, err
+	}
+	if len(owners) > 0 && owners[0] != nil {
+		if !sameRecoveryPath(root, owners[0].root) {
+			return nil, name, nil, errors.New("runtime record differs from owning root")
+		}
+		store, done, err := owners[0].physical()
+		return store, name, done, err
+	}
+	store, err := recordstore.Open(root)
+	return store, name, func() {
+		if store != nil {
+			store.Close()
+		}
+	}, err
+}
+func writeImmutableJSON(path string, value any, owners ...*runStore) error {
 	data, err := json.MarshalIndent(value, "", "  ")
 	if err != nil {
-		return fmt.Errorf("encode %s: %w", path, err)
+		return err
 	}
-	return writeImmutable(path, append(data, '\n'))
+	return writeImmutable(path, append(data, '\n'), owners...)
 }
-
-func writeImmutable(path string, data []byte) error {
-	parent := filepath.Dir(path)
-	info, err := os.Lstat(parent)
-	if err != nil || !info.IsDir() || info.Mode()&os.ModeSymlink != 0 {
-		return fmt.Errorf("runtime parent %s is not a real directory", parent)
-	}
-	tmpID, err := newID()
+func writeImmutable(path string, data []byte, owners ...*runStore) error {
+	store, name, done, err := recordPathOwner(path, owners...)
 	if err != nil {
 		return err
 	}
-	tmp := filepath.Join(parent, ".pending-"+tmpID)
-	f, err := os.OpenFile(tmp, os.O_CREATE|os.O_EXCL|os.O_WRONLY, 0o600)
-	if err != nil {
-		return fmt.Errorf("create pending runtime file: %w", err)
-	}
-	if _, err := f.Write(data); err != nil {
-		_ = f.Close()
-		return fmt.Errorf("write pending runtime file: %w", err)
-	}
-	if err := f.Sync(); err != nil {
-		_ = f.Close()
-		return fmt.Errorf("flush pending runtime file: %w", err)
-	}
-	if err := f.Close(); err != nil {
-		return fmt.Errorf("close pending runtime file: %w", err)
-	}
-	if err := os.Link(tmp, path); err != nil {
-		_ = os.Remove(tmp)
-		return fmt.Errorf("publish runtime file: %w", err)
-	}
-	if err := os.Remove(tmp); err != nil {
-		return fmt.Errorf("remove published runtime temporary file: %w", err)
-	}
-	return nil
+	defer done()
+	return store.Create(name, data)
 }
-
-func readJSON(path string, dest any) error {
-	info, err := os.Lstat(path)
+func readJSON(path string, dest any, owners ...*runStore) error {
+	store, name, done, err := recordPathOwner(path, owners...)
 	if err != nil {
 		return err
 	}
-	if !info.Mode().IsRegular() || info.Mode()&os.ModeSymlink != 0 {
-		return fmt.Errorf("runtime file %s must be a regular file", path)
-	}
-	data, err := os.ReadFile(path)
+	defer done()
+	file, err := store.Read(name, 0)
 	if err != nil {
 		return err
 	}
+	if !file.Exists {
+		return os.ErrNotExist
+	}
+	return decodeRuntimeJSON(file.Bytes, dest)
+}
+func decodeRuntimeJSON(data []byte, dest any) error {
 	if err := validateNoDuplicateJSONKeys(data); err != nil {
-		return fmt.Errorf("decode runtime file %s: %w", path, err)
+		return err
 	}
 	decoder := json.NewDecoder(strings.NewReader(string(data)))
 	decoder.DisallowUnknownFields()
 	if err := decoder.Decode(dest); err != nil {
-		return fmt.Errorf("decode runtime file %s: %w", path, err)
+		return err
 	}
-	var extra any
-	if err := decoder.Decode(&extra); !errors.Is(err, io.EOF) {
-		return fmt.Errorf("runtime file %s has trailing data", path)
+	if err := decoder.Decode(new(any)); !errors.Is(err, io.EOF) {
+		return errors.New("runtime record has trailing data")
 	}
 	return nil
 }
-
 func validateNoDuplicateJSONKeys(data []byte) error {
 	decoder := json.NewDecoder(strings.NewReader(string(data)))
 	decoder.UseNumber()
@@ -510,7 +484,7 @@ func (s *runStore) writePlan(plan PlanRecord) error {
 	if err != nil {
 		return err
 	}
-	if err := writeImmutableJSON(filepath.Join(dir, "plan.json"), plan); err != nil {
+	if err := writeImmutableJSON(filepath.Join(dir, "plan.json"), plan, s); err != nil {
 		return err
 	}
 	return nil
@@ -522,7 +496,7 @@ func (s *runStore) readPlan(id string) (PlanRecord, error) {
 	if err != nil {
 		return plan, err
 	}
-	if err := readJSON(filepath.Join(dir, "plan.json"), &plan); err != nil {
+	if err := readJSON(filepath.Join(dir, "plan.json"), &plan, s); err != nil {
 		if os.IsNotExist(err) {
 			return plan, ErrNotFound
 		}
@@ -553,7 +527,7 @@ func (s *runStore) appendState(report RunReport) error {
 	}
 	report.Digest = computed
 	path := filepath.Join(dir, "states", fmt.Sprintf("%08d.json", report.Revision))
-	return writeImmutableJSON(path, report)
+	return writeImmutableJSON(path, report, s)
 }
 
 func (s *runStore) readLatestState(id string) (RunReport, error) {
@@ -590,7 +564,7 @@ func (s *runStore) readLatestState(id string) (RunReport, error) {
 	}
 	for _, name := range paths {
 		var state RunReport
-		if err := readJSON(filepath.Join(statesDir, name), &state); err != nil {
+		if err := readJSON(filepath.Join(statesDir, name), &state, s); err != nil {
 			return latest, err
 		}
 		if state.ID != id || state.APIVersion != APIVersion {
@@ -631,7 +605,7 @@ func (s *runStore) writeCandidate(dir string, data candidateData) error {
 		return err
 	}
 	data.Digest = computed
-	return writeImmutableJSON(filepath.Join(dir, "candidates", data.ID+".json"), data)
+	return writeImmutableJSON(filepath.Join(dir, "candidates", data.ID+".json"), data, s)
 }
 
 func (s *runStore) readCandidate(dir, id string) (candidateData, error) {
@@ -643,7 +617,7 @@ func (s *runStore) readCandidate(dir, id string) (candidateData, error) {
 	if err != nil {
 		return data, err
 	}
-	if err := readJSON(filepath.Join(candidateDir, id+".json"), &data); err != nil {
+	if err := readJSON(filepath.Join(candidateDir, id+".json"), &data, s); err != nil {
 		return data, err
 	}
 	if data.ID != id || data.APIVersion != APIVersion {

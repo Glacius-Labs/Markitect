@@ -22,7 +22,7 @@ import (
 
 const (
 	APIVersion = "markitect.example.org/project-run/v1alpha1"
-	RunsPath   = ".markitect/runs"
+	RunsPath   = ".markitect/records/run"
 
 	StatusPlanned          = "planned"
 	StatusRunning          = "running"

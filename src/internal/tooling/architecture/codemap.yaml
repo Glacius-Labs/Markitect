@@ -40,6 +40,10 @@ packages:
     layer: infrastructure
     purpose: Applies selected working-tree changes only while repository, branch, HEAD and captured bytes are unchanged.
     doc: docs/architecture.md#infrastructure-layer
+  - path: src/internal/infrastructure/recordstore
+    layer: infrastructure
+    purpose: Publishes confined operational record bytes with shared layout, identity-bound leases and qualified outcomes.
+    doc: docs/architecture.md#infrastructure-layer
   - path: src/internal/infrastructure/source
     layer: infrastructure
     purpose: Loads fixed snapshots from the working tree or a Git commit with hardened Git processes.

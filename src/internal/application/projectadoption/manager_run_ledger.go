@@ -3,6 +3,7 @@ package projectadoption
 import (
 	"errors"
 	"fmt"
+	"github.com/Glacius-Labs/Markitect/src/internal/infrastructure/recordstore"
 	"math"
 	"os"
 	"path/filepath"
@@ -241,21 +242,6 @@ func loadManagerRunLedger(dir, sessionID string) (ManagerRunLedger, error) {
 	return ledger, nil
 }
 
-func acquireNamedLock(dir, name string) (func(), error) {
-	dirInfo, err := os.Lstat(dir)
-	if err != nil {
-		return nil, err
-	}
-	if !dirInfo.IsDir() || dirInfo.Mode()&os.ModeSymlink != 0 {
-		return nil, errors.New("manager run lock directory must be a regular nonsymlink directory")
-	}
-	unlock, err := acquireProcessFileLock(filepath.Join(dir, name))
-	if err != nil {
-		return nil, fmt.Errorf("manager execution is already active: %w", err)
-	}
-	return unlock, nil
-}
-
 func sealManagerRunEvent(event *ManagerRunEvent) {
 	copy := *event
 	copy.Digest = ""
@@ -275,21 +261,40 @@ func reflectTypeOfManagerIntegrationDraft() reflect.Type {
 // AcquireManagerStageLease holds the established per-session process-file
 // lock through Runtime work, typed review and the existing Session CAS.
 func AcquireManagerStageLease(sourceRoot, sessionID string) (func(), error) {
-	dir, err := sessionDirectory(sourceRoot, sessionID, false)
+	store, err := recordstore.Open(sourceRoot)
 	if err != nil {
 		return nil, err
 	}
-	unlock, err := acquireNamedLock(dir, managerRunLockName)
-	if err != nil {
+	if err = store.CheckWrite(recordstore.Brownfield); err != nil {
+		store.Close()
 		return nil, err
 	}
+	lease, err := store.Kernel(sessionID, managerRunLockName)
+	if err != nil {
+		store.Close()
+		return nil, err
+	}
+	dir := filepath.Join(sourceRoot, filepath.FromSlash(BrownfieldSessionPath), sessionID)
 	ledger, err := loadManagerRunLedger(dir, sessionID)
 	if err == nil && (ledger.Budget != nil || len(ledger.Events) != 0) {
 		err = errors.New("legacy Manager execution ledger blocks Runtime stage admission; historical bytes remain untouched")
 	}
 	if err != nil {
-		unlock()
+		lease.Close()
+		store.Close()
 		return nil, err
 	}
-	return unlock, nil
+	return func() { _ = lease.Close(); _ = store.Close() }, nil
+}
+
+// The historical parser only observes publication remnants; it never repairs them.
+func ensureNoIncompleteAtomicWrite(dir, basename string) error {
+	for _, suffix := range []string{".tmp", ".previous"} {
+		if _, err := os.Lstat(filepath.Join(dir, "."+basename+suffix)); err == nil {
+			return fmt.Errorf("ledger publication has an unreconciled %s file", suffix)
+		} else if !errors.Is(err, os.ErrNotExist) {
+			return err
+		}
+	}
+	return nil
 }
