@@ -3,12 +3,15 @@
 package projectrun
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"strings"
 	"testing"
 
 	"github.com/Glacius-Labs/Markitect/src/internal/core/projectmodel/projectvalue"
+	"github.com/Glacius-Labs/Markitect/src/internal/core/snapshot"
+	"github.com/Glacius-Labs/Markitect/src/internal/infrastructure/source"
 	"github.com/Glacius-Labs/Markitect/src/internal/runtime/projectexecutor"
 )
 
@@ -41,6 +44,28 @@ func TestResumeReconcilesDurableRunningStateAfterCrash(t *testing.T) {
 				t.Fatalf("Plan: %v", err)
 			}
 			report := persistRunningCrashState(t, root, plan, scenario.inFlight, scenario.retryReady)
+			var originalRequest []byte
+			var originalSource *snapshot.Snapshot
+			if scenario.inFlight {
+				originalSource, err = source.Load(root, "")
+				if err != nil {
+					t.Fatal(err)
+				}
+				if len(report.Invocations) != 1 || len(report.RoleStartReservations) != 1 || report.Invocations[0].Attempt == nil || report.Invocations[0].Attempt.Status != "started" || report.RoleStartReservations[0].Request.State != "requested" {
+					t.Fatal("fixture did not seed one exact charged pre-dispatch attempt")
+				}
+				store, err := newRunStore(root)
+				if err != nil {
+					t.Fatal(err)
+				}
+				originalRequest, err = readStageEvidence(store, plan.ID, report.Invocations[0].Attempt.RequestRef)
+				if err != nil {
+					t.Fatal(err)
+				}
+				if report.Invocations[0].Attempt.RequestDigest != rawContentDigest(originalRequest) || report.Invocations[0].Receipt.RunID != "" || report.Invocations[0].Attempt.ResponseRef != nil || report.Invocations[0].Attempt.ReportRef != nil || !report.Invocations[0].Attempt.FinishedAt.IsZero() {
+					t.Fatal("fixture fabricated output or lost original request binding")
+				}
+			}
 			invoker := &resumeCountingInvoker{inner: projectexecutor.ProcessInvoker{}}
 			resumed, resumeErr := Resume(context.Background(), host, invoker, root, plan.ID)
 			if scenario.inFlight {
@@ -51,7 +76,7 @@ func TestResumeReconcilesDurableRunningStateAfterCrash(t *testing.T) {
 					t.Fatalf("in-flight process was replayed or not blocked: status=%s invokes=%d", resumed.Status, invoker.calls)
 				}
 				uncertainTask := findTask(resumed.Tasks, e2eManagerID("", "project-owner"))
-				if len(resumed.Invocations) != 0 || uncertainTask == nil || uncertainTask.State != "uncertain" {
+				if len(resumed.Invocations) != 1 || len(resumed.RoleStartReservations) != 1 || uncertainTask == nil || uncertainTask.State != "uncertain" {
 					t.Fatalf("uncertain task state was not retained: %+v", uncertainTask)
 				}
 				store, err := newRunStore(root)
@@ -65,6 +90,66 @@ func TestResumeReconcilesDurableRunningStateAfterCrash(t *testing.T) {
 				persistedTask := findTask(persisted.Tasks, uncertainTask.ManagerID)
 				if persisted.Status != StatusBlocked || persistedTask == nil || persistedTask.State != "uncertain" {
 					t.Fatalf("uncertainty was not durably blocked: status=%s task=%+v", persisted.Status, persistedTask)
+				}
+				original := report.Invocations[0]
+				current := persisted.Invocations[0]
+				if current.Attempt == nil || current.Attempt.Status != "uncertain" || current.Receipt.RunID != "" || current.Attempt.ResponseRef != nil || current.Attempt.ReportRef != nil || !current.Attempt.FinishedAt.IsZero() || persisted.RoleStartReservations[0].Request.State != "unknown" {
+					t.Fatal("unknown original attempt gained invented terminal output or lost its charged ticket")
+				}
+				attempt := *current.Attempt
+				attempt.Status = original.Attempt.Status
+				current.Attempt = &attempt
+				a, _ := digest(current)
+				b, _ := digest(original)
+				if a != b {
+					t.Fatal("resume changed original immutable invocation/request/receipt fields")
+				}
+				reservation := persisted.RoleStartReservations[0]
+				if reservation.RecordedAt.Before(report.RoleStartReservations[0].RecordedAt) {
+					t.Fatal("reservation lifecycle timestamp regressed")
+				}
+				reservation.RecordedAt = report.RoleStartReservations[0].RecordedAt
+				reservation.Request.State = report.RoleStartReservations[0].Request.State
+				a, _ = digest(reservation)
+				b, _ = digest(report.RoleStartReservations[0])
+				if a != b {
+					t.Fatal("resume replaced the original charged reservation")
+				}
+				request, err := readStageEvidence(store, plan.ID, persisted.Invocations[0].Attempt.RequestRef)
+				if err != nil || !bytes.Equal(request, originalRequest) {
+					t.Fatal("protected original request bytes changed")
+				}
+				again, againErr := Resume(context.Background(), host, invoker, root, plan.ID)
+				if againErr == nil || !strings.Contains(againErr.Error(), "uncertain in-flight") || again.Status != StatusBlocked || invoker.calls != 0 {
+					t.Fatal("repeat resume replayed or accepted unknown process")
+				}
+				a, _ = digest(again.Invocations)
+				b, _ = digest(persisted.Invocations)
+				x, _ := digest(again.RoleStartReservations)
+				y, _ := digest(persisted.RoleStartReservations)
+				starts, _ := reportStartAccounting(again)
+				repeatedTask := findTask(again.Tasks, uncertainTask.ManagerID)
+				if a != b || x != y || starts.ObservedTotal != 1 || len(again.Invocations) != 1 || len(again.RoleStartReservations) != 1 || repeatedTask == nil || repeatedTask.WorkAttempts != uncertainTask.WorkAttempts || repeatedTask.Attempts != uncertainTask.Attempts {
+					t.Fatal("repeat resume changed original authority or refilled its one charged start")
+				}
+				snapshotAfter, err := source.Load(root, "")
+				if err != nil {
+					t.Fatal(err)
+				}
+				changes := snapshot.Compare(originalSource, snapshotAfter)
+				if len(changes.Modified) != 0 || len(changes.Removed) != 0 {
+					t.Fatalf("blocked resume modified or removed original source/history: %+v", changes)
+				}
+				for _, changed := range changes.Added {
+					// Only the existing run's durable status history may grow.
+					// Request evidence, source/model/runtime and other runs stay exact.
+					if !strings.HasPrefix(changed, RunsPath+"/"+plan.ID+"/states/") {
+						t.Fatalf("blocked resume changed source outside original status history: %s", changed)
+					}
+				}
+				request, err = readStageEvidence(store, plan.ID, again.Invocations[0].Attempt.RequestRef)
+				if err != nil || !bytes.Equal(request, originalRequest) {
+					t.Fatal("repeat resume changed original request bytes")
 				}
 				return
 			}
