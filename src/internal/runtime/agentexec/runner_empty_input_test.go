@@ -1,6 +1,8 @@
 package agentexec
 
 import (
+	"context"
+	"errors"
 	"os"
 	"path/filepath"
 	"testing"
@@ -112,5 +114,26 @@ func TestSnapshotEmptyInputRejectsReplacementAndSymlink(t *testing.T) {
 				t.Fatal("full input-change guard missed changed empty input")
 			}
 		})
+	}
+}
+
+func TestRunRejectsChildMutationOfInitiallyEmptyAuditedInput(t *testing.T) {
+	opts := testOptions(t)
+	path := filepath.Join(opts.InputRoots[0], "input.txt")
+	if err := os.WriteFile(path, nil, 0600); err != nil {
+		t.Fatal(err)
+	}
+	t.Setenv("MARKITECT_AGENTEXEC_TEST_MODE", "mutate")
+	t.Setenv("MARKITECT_AGENTEXEC_TEST_ROLE", "")
+	result, err := Run(context.Background(), testConfig(), testRequest(RoleExecutor), opts)
+	if !errors.Is(err, ErrInputChanged) {
+		t.Fatalf("child mutation of empty input was accepted: %v", err)
+	}
+	data, readErr := os.ReadFile(path)
+	if readErr != nil || string(data) != "changed" {
+		t.Fatalf("child did not mutate the initial empty file: %q %v", data, readErr)
+	}
+	if result.Receipt.RunID == "" || result.Receipt.RetryCount != 0 {
+		t.Fatalf("missing original receipt or unexpected retry: %+v", result.Receipt)
 	}
 }

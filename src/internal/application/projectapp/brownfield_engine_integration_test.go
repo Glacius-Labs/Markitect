@@ -325,7 +325,7 @@ func TestBrownfieldEngineRecoversCompletionBeforeSessionCAS(t *testing.T) {
 		t.Fatal("fixture unexpectedly attached Session")
 	}
 	recovered, err := previewAndRunBrownfield(t, f, f.operation)
-	if err != nil || recovered.Proposal == nil || recovered.Attempt.ID != manager.AttemptID {
+	if err != nil || recovered.Status != "recovered" || recovered.Proposal == nil || recovered.Attempt.ID != manager.AttemptID {
 		t.Fatalf("same Runtime completion did not recover Session CAS: %+v %v", recovered, err)
 	}
 	calls, _ := os.ReadFile(f.counter)
@@ -354,7 +354,7 @@ func TestBrownfieldEnginePricedInvalidDraftRequiresExplicitRetry(t *testing.T) {
 			operation := f.operation
 			operation.Request.RetryOfAttemptID = failed.Attempt.ID
 			retried, err := previewAndRunBrownfield(t, f, operation)
-			if err != nil || retried.Proposal == nil || retried.Attempt.ID == failed.Attempt.ID {
+			if err != nil || retried.Status != "recorded" || retried.Proposal == nil || retried.Attempt.ID == failed.Attempt.ID {
 				t.Fatalf("explicit priced retry failed: %+v %v", retried, err)
 			}
 			calls, _ = os.ReadFile(f.counter)
@@ -468,5 +468,55 @@ func TestBrownfieldEngineLeafIntegrationUnderIntegratedParentRetainsFailure(t *t
 	calls, _ := os.ReadFile(f.counter)
 	if string(calls) != "xxxx" {
 		t.Fatalf("child integration failure did not preserve exactly one attempt: %q", calls)
+	}
+}
+
+type brownfieldReviewEnvelopeInvoker struct {
+	inner  projectrun.Invoker
+	defect string
+}
+
+func (i brownfieldReviewEnvelopeInvoker) Fingerprint(config agentexec.Config) (string, error) {
+	return i.inner.Fingerprint(config)
+}
+func (i brownfieldReviewEnvelopeInvoker) Run(ctx context.Context, config agentexec.Config, request agentexec.Request, options agentexec.RunOptions) (agentexec.RunResult, error) {
+	result, err := i.inner.Run(ctx, config, request, options)
+	var kind struct {
+		Kind string `json:"kind"`
+	}
+	_ = json.Unmarshal(request.Context, &kind)
+	if kind.Kind == "projectrun-review/v1" && err == nil {
+		if i.defect == "config" {
+			result.Receipt.ConfigDigest = "forged-reviewer-config"
+		} else {
+			usage := *result.Response.Usage
+			n := *usage.InputTokens + 1
+			usage.InputTokens = &n
+			result.Response.Usage = &usage
+		}
+	}
+	return result, err
+}
+func TestBrownfieldEngineForgedReviewerEnvelopeCannotCASOrRedispatch(t *testing.T) {
+	for _, defect := range []string{"config", "usage"} {
+		t.Run(defect, func(t *testing.T) {
+			f := newBrownfieldEngineFixture(t, true)
+			f.operations.Invoker = brownfieldReviewEnvelopeInvoker{inner: f.operations.Invoker, defect: defect}
+			output, err := previewAndRunBrownfield(t, f, f.operation)
+			if err == nil || output.Status != "review-failed" {
+				t.Fatalf("forged reviewer was accepted: %+v %v", output, err)
+			}
+			session, err := projectadoption.LoadBrownfieldSession(f.sourceRoot, f.session.ID)
+			if err != nil || session.Digest != f.session.Digest {
+				t.Fatal("forged reviewer performed Session CAS")
+			}
+			if _, err := previewAndRunBrownfield(t, f, f.operation); err == nil {
+				t.Fatal("forged reviewer recovered")
+			}
+			calls, err := os.ReadFile(f.counter)
+			if err != nil || string(calls) != "xx" {
+				t.Fatalf("forged reviewer redispatched: %q %v", calls, err)
+			}
+		})
 	}
 }

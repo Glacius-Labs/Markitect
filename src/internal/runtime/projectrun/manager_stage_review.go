@@ -186,6 +186,18 @@ func ReviewManagerStage(ctx context.Context, host Host, invoker Invoker, root, r
 		}
 		for _, row := range report.Invocations {
 			if row.Attempt != nil && row.Attempt.ParentAttemptID == attemptID && row.Receipt.RunID == record.Receipt.RunID {
+				input, err := readStageEvidence(store, runID, row.Attempt.RequestRef)
+				if err != nil {
+					return ManagerStageReviewResult{}, err
+				}
+				var original agentexec.Request
+				if err := json.Unmarshal(input, &original); err != nil {
+					return ManagerStageReviewResult{}, err
+				}
+				actual, err := fingerprintForRequest(invoker, spec.Config, original)
+				if err != nil || actual != row.Attempt.ConfigFingerprint {
+					return ManagerStageReviewResult{}, errors.New("original accepted reviewer request configuration changed; no replay")
+				}
 				if err := journal.reconcileTerminalReservation(row); err != nil {
 					return ManagerStageReviewResult{}, err
 				}
@@ -226,7 +238,7 @@ func ReviewManagerStage(ctx context.Context, host Host, invoker Invoker, root, r
 		return ManagerStageReviewResult{}, err
 	}
 	requestFP, err := fingerprintForRequest(invoker, spec.Config, request)
-	if err != nil || requestFP != projection.ConfigFingerprint {
+	if err != nil || requestFP == "" {
 		return ManagerStageReviewResult{}, errors.New("Manager reviewer request fingerprint changed")
 	}
 	limits := spec.RuntimeLimits
@@ -251,6 +263,9 @@ func finishManagerStageReview(host Host, journal *managerStageJournal, parent, l
 		return ManagerStageReviewResult{}, errors.New("read-only Manager reviewer changed source files")
 	}
 	if err := journal.reconcileTerminalReservation(log); err != nil {
+		return ManagerStageReviewResult{}, err
+	}
+	if err := validateManagerStageReviewEnvelope(journal.store, *journal.report, log, result); err != nil {
 		return ManagerStageReviewResult{}, err
 	}
 	parsed, findings, err := validatePreparedManagerReview(result, protocol, refs)
@@ -316,6 +331,10 @@ func recoverManagerStageReview(ctx context.Context, host Host, invoker Invoker, 
 	var original agentexec.Request
 	if err := json.Unmarshal(originalData, &original); err != nil {
 		return ManagerStageReviewResult{}, err
+	}
+	requestFP, err := fingerprintForRequest(invoker, spec.Config, original)
+	if err != nil || requestFP != a.ConfigFingerprint {
+		return ManagerStageReviewResult{}, errors.New("original reviewer request configuration changed; no replay")
 	}
 	protocol, err := nativeRequestInputDigest(original)
 	if err != nil {
@@ -387,6 +406,9 @@ func validateStageReviewRecords(store *runStore, report RunReport) error {
 		if err != nil || protocol != record.InputDigest {
 			return errors.New("Manager ReviewRecord input differs")
 		}
+		if err := validateManagerStageReviewEnvelope(store, report, row, output); err != nil {
+			return err
+		}
 		parsed, findings, err := validatePreparedManagerReview(output, protocol, reviewContext.CandidateFiles)
 		if err != nil {
 			return err
@@ -433,4 +455,25 @@ func canonicalizeManagerStageReviewRoots(root string, report RunReport, parent I
 	spec.SourceRoot, spec.TargetRoot = sourceRoot, targetRoot
 	spec.Validation.SourceRoot, spec.Validation.TargetRoot = sourceRoot, targetRoot
 	return nil
+}
+
+// Validate the returned reviewer envelope against the protected original input.
+// Generic policy fingerprints do not replace request-aware invocation identity.
+func validateManagerStageReviewEnvelope(store *runStore, report RunReport, log InvocationLog, result agentexec.RunResult) error {
+	if log.Attempt == nil || log.Attempt.ParentAttemptID == "" || log.Attempt.ConfigFingerprint == "" {
+		return errors.New("Manager reviewer has no exact invocation binding")
+	}
+	data, err := readStageEvidence(store, report.ID, log.Attempt.RequestRef)
+	if err != nil {
+		return err
+	}
+	var request agentexec.Request
+	if err := json.Unmarshal(data, &request); err != nil {
+		return err
+	}
+	actual, err := digest(request)
+	if err != nil || actual != log.Attempt.RequestDigest {
+		return errors.New("Manager reviewer protected request differs from its original attempt")
+	}
+	return validateManagerStageEnvelope(result, request, log.Attempt.ConfigFingerprint)
 }

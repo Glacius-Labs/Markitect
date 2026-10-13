@@ -12,6 +12,7 @@ import (
 
 	"github.com/Glacius-Labs/Markitect/src/internal/application/projectwork"
 	"github.com/Glacius-Labs/Markitect/src/internal/runtime/agentexec"
+	"github.com/Glacius-Labs/Markitect/src/internal/runtime/projectexecutor"
 )
 
 const (
@@ -144,7 +145,7 @@ func TestManagerRunLedgerChangeInvalidatesPreview(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	_, err = PrepareManagerStage(root, targetRoot, session.ID, iterationID, ManagerRunPhasePropose, session.TargetContext.RootManagerID, "", "", config, limits, AgentExecManagerRunInvoker{})
+	_, err = PrepareManagerStage(root, targetRoot, session.ID, iterationID, ManagerRunPhasePropose, session.TargetContext.RootManagerID, "", "", config, limits, projectexecutor.ProcessInvoker{})
 	if unlock, leaseErr := AcquireManagerStageLease(root, session.ID); leaseErr == nil {
 		unlock()
 		t.Fatal("nonempty legacy ledger admitted Runtime lease")
@@ -196,7 +197,7 @@ func TestManagerRunPendingAttemptIsFailClosedAndNotReplayed(t *testing.T) {
 		unlock()
 		t.Fatal("pending legacy attempt acquired Runtime lease")
 	}
-	if _, err := PrepareManagerStage(root, targetRoot, session.ID, iterationID, ManagerRunPhasePropose, session.TargetContext.RootManagerID, "", "", config, limits, AgentExecManagerRunInvoker{}); err == nil {
+	if _, err := PrepareManagerStage(root, targetRoot, session.ID, iterationID, ManagerRunPhasePropose, session.TargetContext.RootManagerID, "", "", config, limits, projectexecutor.ProcessInvoker{}); err == nil {
 		t.Fatal("pending legacy attempt prepared Runtime dispatch")
 	}
 	after, readErr := os.ReadFile(filepath.Join(ledgerDir, managerRunLedgerName))
@@ -230,7 +231,7 @@ func TestLegacyManagerRunSealedBudgetCannotStartRuntimeAuthority(t *testing.T) {
 		t.Fatal(err)
 	}
 	limits.MaxStarts = 8
-	if _, err := PrepareManagerStage(root, targetRoot, session.ID, iterationID, ManagerRunPhasePropose, session.TargetContext.RootManagerID, "", "", config, limits, AgentExecManagerRunInvoker{}); err == nil {
+	if _, err := PrepareManagerStage(root, targetRoot, session.ID, iterationID, ManagerRunPhasePropose, session.TargetContext.RootManagerID, "", "", config, limits, projectexecutor.ProcessInvoker{}); err == nil {
 		t.Fatal("sealed empty legacy budget was refilled/imported")
 	}
 	if unlock, err := AcquireManagerStageLease(root, session.ID); err == nil {

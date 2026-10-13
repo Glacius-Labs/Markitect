@@ -328,3 +328,128 @@ func TestManagerStageReviewOverrunCannotRecoverOrAttach(t *testing.T) {
 		})
 	}
 }
+
+type stageReviewEnvelopeInvoker struct {
+	*stageStoreInvoker
+	defect       string
+	requestAware bool
+}
+
+func (i *stageReviewEnvelopeInvoker) FingerprintForRequest(config agentexec.Config, request agentexec.Request) (string, error) {
+	fp, err := i.Fingerprint(config)
+	if i.requestAware && bytes.Contains(request.Context, []byte(`"kind":"projectrun-review/v1"`)) {
+		fp = rawContentDigest([]byte(fp + string(request.Context)))
+	}
+	return fp, err
+}
+func (i *stageReviewEnvelopeInvoker) Run(ctx context.Context, config agentexec.Config, request agentexec.Request, options agentexec.RunOptions) (agentexec.RunResult, error) {
+	result, err := i.stageStoreInvoker.Run(ctx, config, request, options)
+	if !bytes.Contains(request.Context, []byte(`"kind":"projectrun-review/v1"`)) {
+		return result, err
+	}
+	result.Receipt.ConfigDigest, _ = i.FingerprintForRequest(config, request)
+	switch i.defect {
+	case "config":
+		result.Receipt.ConfigDigest = "forged-configuration"
+	case "usage":
+		usage := *result.Response.Usage
+		n := *usage.InputTokens + 1
+		usage.InputTokens = &n
+		result.Response.Usage = &usage
+	}
+	return result, err
+}
+func TestManagerStageReviewRejectsForgedEnvelopeWithoutReplayOrCompletion(t *testing.T) {
+	for _, defect := range []string{"config", "usage"} {
+		t.Run(defect, func(t *testing.T) {
+			root, spec, reviewSpec, inner, host := stageReviewFixture(t)
+			invoker := &stageReviewEnvelopeInvoker{stageStoreInvoker: inner, defect: defect}
+			preview, err := PreviewManagerStage(invoker, root, spec)
+			if err != nil {
+				t.Fatal(err)
+			}
+			manager, err := RunManagerStage(context.Background(), host, invoker, root, spec, preview.PreviewDigest)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if _, err := ReviewManagerStage(context.Background(), host, invoker, root, manager.RunID, manager.AttemptID, reviewSpec, manager.StateDigest); err == nil {
+				t.Fatal("forged reviewer envelope was accepted")
+			}
+			store, _ := newManagerStageStore(root)
+			state, err := store.readLatestState(manager.RunID)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if len(state.Reviews) != 0 || len(state.RoleStartReservations) != 2 {
+				t.Fatal("forged review became accepted or lost original charges")
+			}
+			if _, err := ReviewManagerStage(context.Background(), host, invoker, root, manager.RunID, manager.AttemptID, reviewSpec, state.Digest); err == nil {
+				t.Fatal("forged reviewer envelope recovered")
+			}
+			if _, err := CompleteManagerStage(root, manager.RunID, manager.AttemptID, state.Digest, ManagerStageValidation{Accepted: true, TypedResultDigest: "typed"}); err == nil {
+				t.Fatal("forged reviewer envelope allowed completion")
+			}
+			if invoker.calls != 2 {
+				t.Fatal("forged reviewer was redispatched")
+			}
+		})
+	}
+}
+func TestManagerStageReviewBindsActualRequestAwareFingerprintAndReadback(t *testing.T) {
+	root, spec, reviewSpec, inner, host := stageReviewFixture(t)
+	invoker := &stageReviewEnvelopeInvoker{stageStoreInvoker: inner, requestAware: true}
+	preview, err := PreviewManagerStage(invoker, root, spec)
+	if err != nil {
+		t.Fatal(err)
+	}
+	manager, err := RunManagerStage(context.Background(), host, invoker, root, spec, preview.PreviewDigest)
+	if err != nil {
+		t.Fatal(err)
+	}
+	review, err := ReviewManagerStage(context.Background(), host, invoker, root, manager.RunID, manager.AttemptID, reviewSpec, manager.StateDigest)
+	if err != nil {
+		t.Fatal(err)
+	}
+	store, _ := newManagerStageStore(root)
+	state, err := store.readLatestState(manager.RunID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if state.Invocations[1].Attempt.ConfigFingerprint == preview.Review.ConfigFingerprint {
+		t.Fatal("actual reviewer fingerprint was replaced by generic policy identity")
+	}
+	recovered, err := ReviewManagerStage(context.Background(), host, invoker, root, manager.RunID, manager.AttemptID, reviewSpec, review.StateDigest)
+	if err != nil || recovered.Status != "pass" || invoker.calls != 2 {
+		t.Fatalf("valid request-aware review did not recover: %v", err)
+	}
+	invoker.requestAware = false
+	if _, err := ReviewManagerStage(context.Background(), host, invoker, root, manager.RunID, manager.AttemptID, reviewSpec, recovered.StateDigest); err == nil {
+		t.Fatal("accepted reviewer recovery ignored changed request-aware configuration")
+	}
+	invoker.requestAware = true
+	if invoker.calls != 2 {
+		t.Fatal("changed accepted reviewer was redispatched")
+	}
+	if _, err := CompleteManagerStage(root, manager.RunID, manager.AttemptID, recovered.StateDigest, ManagerStageValidation{Accepted: true, TypedResultDigest: "typed"}); err != nil {
+		t.Fatal(err)
+	}
+	for _, defect := range []string{"config", "usage"} {
+		t.Run(defect, func(t *testing.T) {
+			copy := state
+			copy.Invocations = append([]InvocationLog(nil), state.Invocations...)
+			copy.Reviews = append([]ReviewRecord(nil), state.Reviews...)
+			if defect == "config" {
+				copy.Invocations[1].Receipt.ConfigDigest = "forged"
+			} else {
+				usage := *copy.Invocations[1].Receipt.Usage
+				n := *usage.InputTokens + 1
+				usage.InputTokens = &n
+				copy.Invocations[1].Receipt.Usage = &usage
+			}
+			copy.Reviews[0].Receipt = copy.Invocations[1].Receipt
+			if err := validateStageReviewRecords(store, copy); err == nil {
+				t.Fatal("readback accepted forged original envelope despite matching ReviewRecord")
+			}
+		})
+	}
+}

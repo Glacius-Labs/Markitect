@@ -7,14 +7,13 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/Glacius-Labs/Markitect/src/internal/runtime/projectconfig"
-	"github.com/Glacius-Labs/Markitect/src/internal/runtime/projectworkspace"
 	"path/filepath"
 	"time"
 
 	"github.com/Glacius-Labs/Markitect/src/internal/application/projectadoption"
 	"github.com/Glacius-Labs/Markitect/src/internal/core/projectmodel"
 	"github.com/Glacius-Labs/Markitect/src/internal/runtime/agentexec"
+	"github.com/Glacius-Labs/Markitect/src/internal/runtime/projectconfig"
 	"github.com/Glacius-Labs/Markitect/src/internal/runtime/projectrun"
 )
 
@@ -56,7 +55,7 @@ type BrownfieldManagerAttempt struct {
 // BrownfieldRun shares the provider-free preview and one-shot execution
 // path across transports. The service owns per-session lock,
 // durable invocation events, budget accounting, validation, and CAS attach.
-func (o Operations) BrownfieldRun(ctx context.Context, operation BrownfieldRunOperation, invoker projectadoption.ManagerRunInvoker) (BrownfieldManagerRunOutput, error) {
+func (o Operations) BrownfieldRun(ctx context.Context, operation BrownfieldRunOperation, invoker projectrun.Invoker) (BrownfieldManagerRunOutput, error) {
 	if err := requireRoot(operation.Root); err != nil {
 		return BrownfieldManagerRunOutput{}, err
 	}
@@ -214,27 +213,10 @@ func (o Operations) BrownfieldRun(ctx context.Context, operation BrownfieldRunOp
 		return output, err
 	}
 	output.Status, output.SessionDigest, output.Proposal, output.Integration = "recorded", next.Digest, proposal, integration
-	if runtimePreview.LatestAttempt != nil {
+	if runtimePreview.LatestAttempt != nil && runtimePreview.LatestAttempt.ID == result.AttemptID {
 		output.Status = "recovered"
 	}
 	return output, nil
-}
-
-// The Brownfield source and target model are independently bound. Native
-// assessment reads an owned source Git workspace and cannot write any path.
-type brownfieldReadOnlyInvoker struct {
-	underlying  projectadoption.ManagerRunInvoker
-	service     projectworkspace.Service
-	sourceRoot  string
-	privateLogs string
-	limits      projectconfig.Limits
-}
-
-func (i brownfieldReadOnlyInvoker) Fingerprint(config agentexec.Config) (string, error) {
-	return i.underlying.Fingerprint(config)
-}
-func (i brownfieldReadOnlyInvoker) Run(ctx context.Context, config agentexec.Config, request agentexec.Request, options agentexec.RunOptions) (agentexec.RunResult, error) {
-	return projectrun.RunReadOnlyRepository(ctx, i.service, i.underlying, i.sourceRoot, i.privateLogs, config, request, i.limits)
 }
 
 // RunBrownfield uses the invoker selected by the application composition root.
@@ -261,7 +243,7 @@ func brownfieldStageCanonicalRoot(root string) (string, error) {
 	return filepath.Abs(resolved)
 }
 
-func (o Operations) prepareBrownfieldRuntimeStage(sourceRoot string, operation BrownfieldRunOperation, runtime projectconfig.Runtime, agent projectconfig.Agent, config agentexec.Config, limits projectadoption.ManagerRunLimits, expectedSession string, invoker projectadoption.ManagerRunInvoker) (projectadoption.PreparedManagerStage, projectrun.ManagerStageSpec, projectmodel.ManagerContext, projectrun.ManagerStagePreview, error) {
+func (o Operations) prepareBrownfieldRuntimeStage(sourceRoot string, operation BrownfieldRunOperation, runtime projectconfig.Runtime, agent projectconfig.Agent, config agentexec.Config, limits projectadoption.ManagerRunLimits, expectedSession string, invoker projectrun.Invoker) (projectadoption.PreparedManagerStage, projectrun.ManagerStageSpec, projectmodel.ManagerContext, projectrun.ManagerStagePreview, error) {
 	var emptySpec projectrun.ManagerStageSpec
 	var emptyModel projectmodel.ManagerContext
 	var emptyPreview projectrun.ManagerStagePreview

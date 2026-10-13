@@ -273,7 +273,7 @@ func sortedUnique(values []string) []string {
 // Prepared facts are rebuilt from the current Session, accepted target and
 // target Runtime at each finite Runtime boundary. Supplied paths/context are
 // never treated as Application authority.
-func (o Operations) brownfieldStageHost(sourceRoot string, operation BrownfieldRunOperation, invoker projectadoption.ManagerRunInvoker) projectrun.Host {
+func (o Operations) brownfieldStageHost(sourceRoot string, operation BrownfieldRunOperation, invoker projectrun.Invoker) projectrun.Host {
 	host := o.Host
 	host.ValidateManagerStage = func(binding projectrun.ManagerStageValidationBinding) error {
 		runtime, err := projectconfig.LoadRuntime(operation.Root)

@@ -1,7 +1,6 @@
 package projectadoption
 
 import (
-	"context"
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
@@ -14,6 +13,7 @@ import (
 
 	"github.com/Glacius-Labs/Markitect/src/internal/core/projectmodel"
 	"github.com/Glacius-Labs/Markitect/src/internal/runtime/agentexec"
+	"github.com/Glacius-Labs/Markitect/src/internal/runtime/projectexecutor"
 	"github.com/Glacius-Labs/Markitect/src/internal/runtime/projectrun"
 )
 
@@ -46,22 +46,6 @@ type ManagerRunLimits struct {
 	MaxStderrBytes              int           `json:"maxStderrBytes"`
 	TempParent                  string        `json:"-"`
 	PrivateLogDirectory         string        `json:"-"`
-}
-
-// ManagerRunInvoker is the only execution seam. The Host builds a bounded,
-// typed report request and passes it to this caller-supplied executor once.
-type ManagerRunInvoker interface {
-	Run(context.Context, agentexec.Config, agentexec.Request, agentexec.RunOptions) (agentexec.RunResult, error)
-	Fingerprint(agentexec.Config) (string, error)
-}
-
-type AgentExecManagerRunInvoker struct{}
-
-func (AgentExecManagerRunInvoker) Run(ctx context.Context, config agentexec.Config, request agentexec.Request, options agentexec.RunOptions) (agentexec.RunResult, error) {
-	return agentexec.Run(ctx, config, request, options)
-}
-func (AgentExecManagerRunInvoker) Fingerprint(config agentexec.Config) (string, error) {
-	return agentexec.Fingerprint(config)
 }
 
 type ManagerRunPreview struct {
@@ -97,9 +81,8 @@ type ManagerRunPreview struct {
 	Review                      *projectrun.ManagerStageReviewProjection `json:"review,omitempty"`
 }
 
-// ManagerRunEvent is an immutable journal entry. A start event is flushed
-// before invoking the child process; terminal events retain receipts and only
-// safe rejection categories, never transcripts or private log bodies.
+// ManagerRunEvent describes the historical ledger for strict read-only parsing.
+// New Manager attempts and receipts are written only by the Runtime run store.
 type ManagerRunEvent struct {
 	Sequence                    int                 `json:"sequence"`
 	AttemptID                   string              `json:"attemptId"`
@@ -196,24 +179,24 @@ type managerRunRequestContext struct {
 // an agent. expectedSessionDigest and retryOfAttemptID are optional for a new
 // preview; either becomes part of the preview binding when supplied.
 func PreviewManagerStage(sourceRoot, targetRoot, sessionID, iterationID, phase, agentManagerID, expectedSessionDigest, retryOfAttemptID string, config agentexec.Config, limits ManagerRunLimits) (ManagerRunPreview, error) {
-	return buildManagerRunPreview(sourceRoot, targetRoot, sessionID, iterationID, phase, agentManagerID, expectedSessionDigest, retryOfAttemptID, config, limits, AgentExecManagerRunInvoker{})
+	return buildManagerRunPreview(sourceRoot, targetRoot, sessionID, iterationID, phase, agentManagerID, expectedSessionDigest, retryOfAttemptID, config, limits, projectexecutor.ProcessInvoker{})
 }
 
 // PreviewManagerStageWithInvoker binds preview to the same explicitly selected
 // transport fingerprint used by guarded execution. It never invokes a role.
-func PreviewManagerStageWithInvoker(sourceRoot, targetRoot, sessionID, iterationID, phase, agentManagerID, expectedSessionDigest, retryOfAttemptID string, config agentexec.Config, limits ManagerRunLimits, invoker ManagerRunInvoker) (ManagerRunPreview, error) {
+func PreviewManagerStageWithInvoker(sourceRoot, targetRoot, sessionID, iterationID, phase, agentManagerID, expectedSessionDigest, retryOfAttemptID string, config agentexec.Config, limits ManagerRunLimits, invoker projectrun.Invoker) (ManagerRunPreview, error) {
 	if invoker == nil {
 		return ManagerRunPreview{}, errors.New("manager preview requires an invoker")
 	}
 	return buildManagerRunPreview(sourceRoot, targetRoot, sessionID, iterationID, phase, agentManagerID, expectedSessionDigest, retryOfAttemptID, config, limits, invoker)
 }
 
-func buildManagerRunPreview(sourceRoot, targetRoot, sessionID, iterationID, phase, agentManagerID, expectedSessionDigest, retryOfAttemptID string, config agentexec.Config, limits ManagerRunLimits, invoker ManagerRunInvoker) (ManagerRunPreview, error) {
+func buildManagerRunPreview(sourceRoot, targetRoot, sessionID, iterationID, phase, agentManagerID, expectedSessionDigest, retryOfAttemptID string, config agentexec.Config, limits ManagerRunLimits, invoker projectrun.Invoker) (ManagerRunPreview, error) {
 	preview, _, _, _, err := buildManagerRunPreviewInternal(sourceRoot, targetRoot, sessionID, iterationID, phase, agentManagerID, expectedSessionDigest, retryOfAttemptID, config, limits, invoker)
 	return preview, err
 }
 
-func buildManagerRunPreviewInternal(sourceRoot, targetRoot, sessionID, iterationID, phase, agentManagerID, expectedSessionDigest, retryOfAttemptID string, config agentexec.Config, limits ManagerRunLimits, invoker ManagerRunInvoker, runtimeStage ...bool) (ManagerRunPreview, BrownfieldSession, agentexec.Request, managerRunRequestContext, error) {
+func buildManagerRunPreviewInternal(sourceRoot, targetRoot, sessionID, iterationID, phase, agentManagerID, expectedSessionDigest, retryOfAttemptID string, config agentexec.Config, limits ManagerRunLimits, invoker projectrun.Invoker, runtimeStage ...bool) (ManagerRunPreview, BrownfieldSession, agentexec.Request, managerRunRequestContext, error) {
 	var empty ManagerRunPreview
 	var emptySession BrownfieldSession
 	var emptyRequest agentexec.Request
@@ -518,43 +501,6 @@ func managerRuntimeFileDigest(targetRoot string) (string, error) {
 	return "sha256:" + hex.EncodeToString(hash[:]), nil
 }
 
-func revalidateManagerRunBases(sourceRoot, targetRoot, sessionID, sessionDigest, runtimeDigest string, invoker ManagerRunInvoker, config agentexec.Config, configFingerprint string) error {
-	current, readiness, err := ResumeBrownfieldSession(sourceRoot, targetRoot, sessionID)
-	if err != nil {
-		return fmt.Errorf("revalidate fixed Brownfield bases: %w", err)
-	}
-	if current.Digest != sessionDigest || !readiness.SourceCurrent || !readiness.TargetCurrent {
-		return errors.New("Brownfield session or fixed bases changed during manager invocation")
-	}
-	gotRuntime, err := managerRuntimeFileDigest(targetRoot)
-	if err != nil || gotRuntime != runtimeDigest {
-		return errors.New("target Runtime changed during manager invocation")
-	}
-	fingerprint, err := invoker.Fingerprint(config)
-	if err != nil || fingerprint != configFingerprint {
-		return errors.New("manager runtime fingerprint changed during invocation")
-	}
-	return nil
-}
-
-func validateManagerExecutorEnvelope(result agentexec.RunResult, request agentexec.Request, attemptID string) error {
-	response := result.Response
-	if response.APIVersion != agentexec.APIVersion || response.Role != agentexec.RoleExecutor || response.Outcome != agentexec.OutcomeProposed || response.InputDigest != result.Receipt.InputDigest || response.InputDigest == "" || response.RunID != result.Receipt.RunID {
-		return errors.New("manager executor did not return a proposed response bound to its execution receipt")
-	}
-	if len(response.CandidateFiles) != 0 || len(response.CandidateJSON) != 0 || len(response.VerifierObservations) != 0 || len(response.ReportJSON) == 0 {
-		return errors.New("manager executor must return a report-only response without candidate files or JSON")
-	}
-	if result.Receipt.Outcome != agentexec.OutcomeProposed || result.Receipt.ContextDigest == "" || result.Receipt.ConfigDigest == "" || len(request.Context) == 0 {
-		return errors.New("manager executor receipt does not bind the requested context and configuration")
-	}
-	if digestValue(response.Usage) != digestValue(result.Receipt.Usage) {
-		return errors.New("manager executor receipt usage differs from the returned response")
-	}
-	_ = attemptID
-	return nil
-}
-
 func acceptManagerStageDraft(session BrownfieldSession, iterationID, phase, managerID string, reportJSON json.RawMessage, config agentexec.Config, receipt agentexec.Receipt) (*ManagerProposal, *ManagerIntegration, error) {
 	iteration, ok := findIteration(session, iterationID)
 	if !ok {
@@ -668,7 +614,7 @@ type PreparedManagerStage struct {
 	built       managerRunRequestContext
 }
 
-func PrepareManagerStage(sourceRoot, targetRoot, sessionID, iterationID, phase, agentManagerID, expectedSessionDigest, retryOfAttemptID string, config agentexec.Config, limits ManagerRunLimits, invoker ManagerRunInvoker) (PreparedManagerStage, error) {
+func PrepareManagerStage(sourceRoot, targetRoot, sessionID, iterationID, phase, agentManagerID, expectedSessionDigest, retryOfAttemptID string, config agentexec.Config, limits ManagerRunLimits, invoker projectrun.Invoker) (PreparedManagerStage, error) {
 	preview, session, request, built, err := buildManagerRunPreviewInternal(sourceRoot, targetRoot, sessionID, iterationID, phase, agentManagerID, expectedSessionDigest, retryOfAttemptID, config, limits, invoker, true)
 	return PreparedManagerStage{Preview: preview, Session: session, Request: request, Context: built.ManagerContext, Purpose: built.Purpose, Integration: built.Integration, built: built}, err
 }
