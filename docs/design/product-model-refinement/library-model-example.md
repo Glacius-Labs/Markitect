@@ -1,6 +1,6 @@
 # Bibliothek: vollständiger Fach- und Architekturentwurf
 
-Aktualisiert am 13. Oktober 2026. Status: zusammenhängendes Gesprächsbeispiel zum [Konzept](canonical-model-proposal.md). Gewählt sind `mandate.yaml` mit Kind Mandate, Concept, Rule, UseCase und die ergänzten Architektur-Kinds System, Component, Module und Interface. `vNext`, Referenz- und Feldregeln sind Vertragskandidaten, keine unterstützte Version oder kompilierte Fixture.
+Aktualisiert am 14. Oktober 2026. Status: zusammenhängendes Gesprächsbeispiel zum [Konzept](canonical-model-proposal.md). Gewählt sind `mandate.yaml` mit Kind Mandate, Concept, Rule, UseCase und die ergänzten Architektur-Kinds System, Component, Module und Interface. `vNext`, Referenz- und Feldregeln sind Vertragskandidaten, keine unterstützte Version oder kompilierte Fixture.
 
 Der Project-Kandidat, Modellordner, Fachdefinitionen, Mandat, Artefakte und Checks stehen hier. Die aktuellen Architekturdefinitionen werden ausschließlich im [Architektur-YAML](library-architecture-example.md) ausgeschrieben. Zusammen zeigen beide Dokumente 35 Modelldefinitionen: 1 Project, 1 Mandate, 1 System, 3 Components, 6 Modules, 5 Interfaces, 5 Concepts, 4 Rules, 2 UseCases, 5 Artifacts und 2 Checks.
 
@@ -82,7 +82,6 @@ kind: Project
 metadata:
   namespace: ""
   name: library
-purpose: Unterstützt die Verwaltung einer Bibliothek.
 spec:
   description: |
     Das Projekt stellt Software zur Verwaltung des Bestands,
@@ -103,8 +102,9 @@ kind: Mandate
 metadata:
   namespace: ""
   name: library-project
-purpose: Verantwortet den Bibliotheksausschnitt und seine Realisierung.
 spec:
+  description: |
+    Legt den Auftrag zur Realisierung des Bibliotheksausschnitts und zur Prüfung seiner Regeln fest.
   owns:
     - .
   instructions: |
@@ -128,7 +128,6 @@ kind: Concept
 metadata:
   namespace: library
   name: title
-purpose: Beschreibt einen Buchtitel.
 spec:
   public: true
   description: |
@@ -144,7 +143,6 @@ kind: Concept
 metadata:
   namespace: library
   name: copy
-purpose: Beschreibt ein einzelnes physisches Exemplar.
 spec:
   public: true
   description: |
@@ -164,7 +162,6 @@ kind: Concept
 metadata:
   namespace: library
   name: member
-purpose: Beschreibt ein Mitglied der Bibliothek.
 spec:
   public: true
   description: |
@@ -180,7 +177,6 @@ kind: Concept
 metadata:
   namespace: library
   name: loan
-purpose: Beschreibt eine Ausleihe und ihre Daten.
 spec:
   public: true
   description: |
@@ -204,7 +200,6 @@ kind: Concept
 metadata:
   namespace: library
   name: active-loan
-purpose: Definiert den Zustand einer aktiven Ausleihe.
 spec:
   public: true
   description: |
@@ -223,7 +218,6 @@ kind: Rule
 metadata:
   namespace: library
   name: eligible-member
-purpose: Definiert die Berechtigungsbedingung für das Ausleihen.
 spec:
   public: true
   description: |
@@ -243,7 +237,6 @@ kind: Rule
 metadata:
   namespace: library
   name: available-copy
-purpose: Definiert die Verfügbarkeitsbedingung für das Ausleihen.
 spec:
   public: true
   description: |
@@ -266,7 +259,6 @@ kind: Rule
 metadata:
   namespace: library
   name: one-active-loan
-purpose: Definiert die Eindeutigkeitsinvariante der Vergabe.
 spec:
   public: true
   description: |
@@ -290,7 +282,6 @@ kind: UseCase
 metadata:
   namespace: library
   name: borrow
-purpose: Beschreibt die Vergabe eines Exemplars an ein Mitglied.
 spec:
   public: true
   description: |
@@ -326,7 +317,6 @@ kind: UseCase
 metadata:
   namespace: library
   name: return
-purpose: Beschreibt die Beendigung einer Ausleihe durch Rückgabe.
 spec:
   public: true
   description: |
@@ -368,8 +358,9 @@ kind: Artifact
 metadata:
   namespace: library
   name: frontend-implementation
-purpose: Realisiert Bedienung und API-Verwendung des Frontends.
 spec:
+  description: |
+    Realisiert Bedienung und API-Verwendung des Frontends.
   role: implementation
   realizes:
     - kind: Component
@@ -400,8 +391,9 @@ kind: Artifact
 metadata:
   namespace: library
   name: backend-implementation
-purpose: Realisiert Backend, fachliche Abläufe und technische Adapter.
 spec:
+  description: |
+    Realisiert Backend, fachliche Abläufe und technische Adapter.
   role: implementation
   realizes:
     - kind: Component
@@ -471,8 +463,9 @@ kind: Artifact
 metadata:
   namespace: library
   name: database-configuration
-purpose: Stellt Datenbankkonfiguration, Schema und nötige Migrationen bereit.
 spec:
+  description: |
+    Stellt Datenbankkonfiguration, Schema und nötige Migrationen bereit.
   role: configuration
   realizes:
     - kind: Component
@@ -503,8 +496,9 @@ kind: Artifact
 metadata:
   namespace: library
   name: library-verification
-purpose: Liefert Prüfbeiträge zu Fachverträgen, Interfaces und Architektur.
 spec:
+  description: |
+    Liefert Prüfbeiträge zu Fachverträgen, Interfaces und Architektur.
   role: verification
   realizes:
     - kind: Rule
@@ -562,8 +556,9 @@ kind: Artifact
 metadata:
   namespace: library
   name: library-documentation
-purpose: Erklärt System, Architektur, Bedienung und erklärten Prüfumfang.
 spec:
+  description: |
+    Erklärt System, Architektur, Bedienung und erklärten Prüfumfang.
   role: documentation
   realizes:
     - kind: System
@@ -610,8 +605,9 @@ kind: Check
 metadata:
   namespace: library
   name: library-contract-check
-purpose: Prüft die Ausleih- und Rückgabeverträge anhand konkreter Fälle.
 spec:
+  description: |
+    Prüft die Ausleih- und Rückgabeverträge anhand konkreter Fälle.
   command:
     - "<library-contract-check>"
   uses:
@@ -644,8 +640,9 @@ kind: Check
 metadata:
   namespace: library
   name: architecture-contract-check
-purpose: Untersucht Architektur- und Interfacepflichten am realisierten Stand.
 spec:
+  description: |
+    Untersucht Architektur- und Interfacepflichten am realisierten Stand.
   command:
     - "<architecture-contract-check>"
   uses:

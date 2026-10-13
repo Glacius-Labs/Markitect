@@ -1,6 +1,6 @@
 # Proposal: Kanonisches Modell mit nominalen Regeln und methodischem Review
 
-Erstellt am 11. Oktober 2026; konsolidiert am 12. und architektonisch erweitert am 13. Oktober 2026. Status: beauftragter Konzept- und Umsetzungsentwurf auf Basis des Bibliotheksgesprächs. Dateiname `mandate.yaml`, der Auftragstyp `Mandate`, die fachlichen Kinds `Concept`, `Rule`, `UseCase` sowie `System`, `Component`, `Module`, `Interface` sind gewählt. Weitere Syntax- und Referenzdetails sind Vorschläge, keine implementierten Produktverträge.
+Erstellt am 11. Oktober 2026; konsolidiert am 12., architektonisch erweitert am 13. und im gemeinsamen Beschreibungsfeld am 14. Oktober 2026 aktualisiert. Status: beauftragter Konzept- und Umsetzungsentwurf auf Basis des Bibliotheksgesprächs. Dateiname `mandate.yaml`, der Auftragstyp `Mandate`, die fachlichen Kinds `Concept`, `Rule`, `UseCase` sowie `System`, `Component`, `Module`, `Interface` sind gewählt. Weitere Syntax- und Referenzdetails sind Vorschläge, keine implementierten Produktverträge.
 
 ## 1. Auftrag und Maßstab
 
@@ -236,7 +236,11 @@ Die Systemübersicht ist nach der Architekturergänzung ein `System`. Components
 
 #### 6.2.1 Feldkandidat für den ersten Vertrag
 
-Diese Arbeitstabelle konkretisiert den Entwurf für P0; sie behauptet kein vorhandenes Schema. Alle Definitionen besitzen `apiVersion`, `kind`, `metadata.name`, `metadata.namespace` und einen lesbaren `purpose`. Der Namespace kann für die Wurzel leer sein. Header und Spec sind geschlossen; unbenannte Zusatzfelder werden nicht still akzeptiert.
+Diese Arbeitstabelle konkretisiert den Entwurf für P0; sie behauptet kein vorhandenes Schema. Die Hülle mit apiVersion/kind, metadata und spec bleibt erhalten. Metadata enthält gemeinsame Identifikationsangaben; spec beschreibt den Inhalt des jeweiligen Kinds. Der Namespace kann für die Wurzel leer sein. Header und Spec sind geschlossen; unbenannte Zusatzfelder werden nicht still akzeptiert.
+
+Nutzerentscheidung vom 14. Oktober 2026: Jede Definition besitzt eine verpflichtende `description`; das zusätzliche Feld `purpose` entfällt. Die Beschreibung erklärt auch Existenzgrund und Beitrag des Elements. Die Kind-Definition erläutert die passenden inhaltlichen Schwerpunkte: Bei Module sind dies Zweck, Aufgaben und Zuständigkeitsgrenzen, bei Rule die geltende Bedingung oder Invariante, bei Concept dessen Bedeutung und Eigenschaften. Diese Schwerpunkte sind methodische Vorgaben, keine zusätzlichen Pflichtfelder für jeden Einzelaspekt. Eine bloße Wiederholung des Namens genügt als Beschreibung nicht.
+
+Im aktuellen YAML-Kandidaten bleibt description unter spec, wo die vorhandenen Beschreibungen bereits stehen. Es ist ein gemeinsames Pflichtfeld mit je Kind passendem fachlichem Inhalt; seine endgültige Platzierung und die übrigen Headerattribute werden im laufenden Typreview weiter geprüft. Das Vorhandensein einer Beschreibung ist strukturell prüfbar, ihre fachliche Tragfähigkeit Gegenstand des Reviews.
 
 | Kind | Spec-Felder des Kandidaten | Pflicht und Begrenzung |
 | --- | --- | --- |
@@ -248,10 +252,10 @@ Diese Arbeitstabelle konkretisiert den Entwurf für P0; sie behauptet kein vorha
 | `Component` | `description`, `public`, `contains`, `provides`, `consumes`, `realizes`, `uses` | Laufzeitrolle erklären; contains mit ausdrücklichem Module-Kind, Verträge passend zuordnen. |
 | `Module` | `description`, `public`, `contains`, `provides`, `consumes`, `dependsOn`, `realizes`, `uses` | Logische Aufgabe/Beitrag; optionale untergeordnete Modules mit ausdrücklichem Kind, genau ein struktureller Parent im vollständigen Beispiel. |
 | `Interface` | `description`, `public`, `useCases`, `uses`, `requires` | Vertrag erklären; Verpflichtungen als Rules; Provider/Consumer stehen an Bausteinen. |
-| `Mandate` | `parent`, `owns`, `instructions` | Auftrag mit höchstens einem übergeordneten Mandat, optionaler Pfadliste und lesbaren Anweisungen. Bisherige Felder sind Prüfkandidaten; Benennung eines Mandats ist keine Agentenbindung oder authentifizierte Autorisierung. |
-| `Artifact` | `role`, `realizes`, `paths`, `checks`, `required`, `reason` | Rolle implementation/documentation/verification/configuration; optionale Ziel-/Pfad-/Checklisten, Erforderlichkeit und Begründung. |
-| `Check` | `command`, `uses`, `limitation` | Nicht leere Liste literal argv; deklarierter Gegenstand und Evidenzgrenze. Ein Befehl ist keine Shell-Prosa. |
-| `Decision` | `subject`, `decision`, `reason`, `actor` | Genau ein Subject und Actor sowie lesbare Entscheidung und Begründung. Actor authentifiziert keine Befugnis. |
+| `Mandate` | `description`, `parent`, `owns`, `instructions` | Auftrag mit höchstens einem übergeordneten Mandat, optionaler Pfadliste und lesbaren Anweisungen. Bisherige Felder sind Prüfkandidaten; Benennung eines Mandats ist keine Agentenbindung oder authentifizierte Autorisierung. |
+| `Artifact` | `description`, `role`, `realizes`, `paths`, `checks`, `required`, `reason` | Rolle implementation/documentation/verification/configuration; optionale Ziel-/Pfad-/Checklisten, Erforderlichkeit und Begründung. Eigenständigen Nutzen von reason im Typreview prüfen. |
+| `Check` | `description`, `command`, `uses`, `limitation` | Nicht leere Liste literal argv; deklarierter Gegenstand und Evidenzgrenze. Ein Befehl ist keine Shell-Prosa. |
+| `Decision` | `description`, `subject`, `decision`, `reason`, `actor` | Genau ein Subject und Actor sowie lesbare Entscheidung und Begründung. Actor authentifiziert keine Befugnis; Abgrenzung der Textfelder im Typreview prüfen. |
 
 Für fachliche und architektonische Definitions-Kinds ist `public` als Boolean vorgesehen; ohne ausdrückliches Public bleibt eine fremde Definition im Kandidaten privat. Ihre `uses`-Listen zeigen nur auf die endliche Zielmenge aus Abschnitt 4. Referenzen werden gegen die Zielmengen aus Abschnitt 4 geprüft. Die Mengenfelder bestimmen Modellwerte; sie zählen keine Laufzeitinstanzen. Ausführliche Defaults, Kardinalitäten und Normalisierung werden im versionierten P0-Vertrag festgeschrieben. Weitere Felder brauchen einen erklärten Bedarf und ihre Behandlung in allen Sichten.
 
@@ -327,6 +331,7 @@ Der [Überfälligkeitsdurchlauf](library-change-walkthrough.md) zeigt, wie eine 
 | Kleine Struktur, fachliche Prosa | Explizite Zuordnung und Methodik zuerst nutzen; zusätzlichen Pflegeaufwand für Formalisierung an konkretem Nutzen prüfen. |
 | Nominale Fach- und Architektur-Kinds | Fachlichkeit, Grenzen, Bausteine und Verträge als Zieltypen unterscheiden; ohne allgemeinen Fachevaluator. |
 | Keine Kategorie für die gewählten Rollen | Der Kind trägt die strukturelle Unterscheidung direkt; gemeinsame Beschreibungskonventionen werden geteilt. Weitere Kinds benötigen einen konkreten Ausdrucksbedarf. |
+| Eine gemeinsame description statt zusätzlichem purpose | Existenzgrund und fachlichen Inhalt zusammenhängend erklären; eine zweite Kurzbeschreibung vermeiden. Der Kind bestimmt die inhaltlichen Schwerpunkte. |
 | Mandat von Agentenbindung unterscheiden | Ein stabiler Auftrag kann von unterschiedlichen Agenten umgesetzt werden; Datei, Modell-Kind und Runtime-Identität sind eigene Benennungsentscheidungen. |
 | Explizite Beziehungen und konservativer Impact | Koordination nachvollziehbar aus deklarierten Daten ableiten; Prosalinks allein liefern keine geprüften Kanten. |
 | Zielkind aus dem Feld, wo eindeutig | Bei speziellen Feldern Wiederholung vermeiden; gemischte Zielmengen benötigen einen Kind-Discriminator. Auflösung und Prüfung behalten die vollständige Zielidentität. |
@@ -410,6 +415,7 @@ Offen bleiben besonders:
 - Eingang der realizes-Umfangsentscheidung vom 13. Oktober: `25828d773cf2d7ea0bfc7c9bbb69c04d8e09c7fe`; beim Beginn sauber.
 - Eingang der Mandate-Umbenennung und des vereinbarten Typreviews vom 13. Oktober: `d50fa8c39bd11eadbd24c4c55357cb890f08a871`; beim Beginn sauber.
 - Eingang der Project-/Ladevereinfachung vom 13. Oktober: `6df6c02e51e2aba3fda2845025cfe32f7d5b5ddd`; beim Beginn sauber.
+- Eingang der gemeinsamen description-Entscheidung vom 14. Oktober: `afc0dc30b400a25213bdda19fd5b4539ec3dafe7`; beim Beginn sauber.
 - Ursprüngliche Branchbasis: `ecc69b0ad99236a5ddd02b85bf9ba656a0000f15`.
 - Letzter gesonderter Main-Abgleich: `32afd1a57e715130d056e98e433721c6e7a10278` vom 11. Oktober; heute nicht als aktuell neu verifiziert.
 - Zusätzlicher reiner Quellenrefresh im Gespräch am 13. Oktober: `c19d9d1259fcd493e2cc7ad93d10226778b2b7f4`. Das Projektvokabular besitzt dort weiterhin die fünf bisherigen Kinds und einzelne Reference-Zielkinds; die neuen Fach-/Architektur-Kinds und Referenzmengen dieses Entwurfs sind nicht implementiert. Der historische Vergleichsbericht bleibt unverändert datiert.

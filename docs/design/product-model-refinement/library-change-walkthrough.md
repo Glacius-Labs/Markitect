@@ -2,6 +2,8 @@
 
 Datum: 12. Oktober 2026. Status: konzeptioneller Durchlauf zum [aktuellen Modell](library-model-example.md), kein ausgeführter Impact-, Verify- oder Apply-Lauf. Die fachliche Änderung ist ein Gesprächsbeispiel und kein erteilter Implementierungsauftrag.
 
+YAML-Schreibweise aktualisiert am 14. Oktober 2026: description ist das gemeinsame Beschreibungsfeld; das separate purpose-Feld entfällt. Die fachliche Beispieländerung bleibt unverändert.
+
 ## Ausgangspunkt und gewünschte Änderung
 
 Bisher fordert `eligible-member` ein existierendes Mitglied mit aktiver Ausleihberechtigung. Der Verhaltensvertrag `borrow` verlangt diese Rule. Der neue Wunsch lautet:
@@ -20,7 +22,6 @@ kind: Rule
 metadata:
   namespace: library
   name: eligible-member
-purpose: Definiert die Berechtigungsbedingung für das Ausleihen.
 spec:
   public: true
   description: |
@@ -47,7 +48,6 @@ kind: Concept
 metadata:
   namespace: library
   name: overdue-loan
-purpose: Definiert den Begriff einer überfälligen Ausleihe.
 spec:
   public: true
   description: |

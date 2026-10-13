@@ -1,6 +1,6 @@
 # Markitect: Grundmodell und aktueller Konzeptentwurf
 
-Aktualisiert am 13. Oktober 2026. Diese Map trennt vereinbarte Produktgrundlagen, bestätigte Entwurfsrichtung, offene Detailvorschläge und datierte Vorarbeiten. Sie ist kein Implementierungs- oder Testnachweis.
+Aktualisiert am 14. Oktober 2026. Diese Map trennt vereinbarte Produktgrundlagen, bestätigte Entwurfsrichtung, offene Detailvorschläge und datierte Vorarbeiten. Sie ist kein Implementierungs- oder Testnachweis.
 
 ## Grundmodell
 
@@ -19,6 +19,8 @@ Der gewählte Verantwortungsdateiname ist `mandate.yaml`; der Modell-Kind heißt
 Realizes umfasst automatisch das referenzierte Ziel und alle über contains enthaltenen Definitionen entsprechend dem beschriebenen Beitrag; ein scope-Feld entfällt. Querbeziehungen erweitern diese Unterstruktur nicht automatisch. Ableitbare Doppelzuordnungen sind im Beispiel entfernt; die weitere Bedeutung und Verwendung von realizes bleibt zu besprechen.
 
 Project beschreibt das Gesamtprojekt; Markitect-Konfiguration ist getrennt. Coverage und seine Moduskonfiguration werden vorerst entfernt. Alle kanonischen Definitionen liegen im Modellordner und werden durch rekursive Suche und Symbolauflösung geladen; modelFiles entfällt. Ein Dokumentationszielpfad gehört nicht in Project. Der konkrete Ordnername und die Project-Felder sind weitere Reviewthemen; das YAML bleibt ein Kandidat.
+
+Description ist das gemeinsame Pflichtfeld jeder Definition und erklärt auch deren Existenzgrund und Beitrag; purpose entfällt als separates Feld. Die Kind-Definition erläutert passende inhaltliche Schwerpunkte. Die bisherigen Beschreibungen stehen im Kandidaten weiter unter spec; die genaue Platzierung und weitere Attribute werden einzeln geprüft.
 
 ## Weiteres Vorgehen im Produktgespräch
 
@@ -70,6 +72,7 @@ Produktgespräch `01a121f1-b948-7050-ae5d-9921b99db9c0`, Grundlagen vom 10. Okto
 - Eingang der realizes-Umfangsentscheidung: `25828d773cf2d7ea0bfc7c9bbb69c04d8e09c7fe`; beim Beginn sauber, am 13. Oktober ausdrücklich beauftragt.
 - Eingang der Mandate-Umbenennung und des vereinbarten Typreviews: `d50fa8c39bd11eadbd24c4c55357cb890f08a871`; beim Beginn sauber, am 13. Oktober ausdrücklich beauftragt.
 - Eingang der Project-/Ladevereinfachung: `6df6c02e51e2aba3fda2845025cfe32f7d5b5ddd`; beim Beginn sauber, am 13. Oktober ausdrücklich beauftragt.
+- Eingang der gemeinsamen description-Entscheidung: `afc0dc30b400a25213bdda19fd5b4539ec3dafe7`; beim Beginn sauber, am 14. Oktober ausdrücklich beauftragt.
 - Letzter gesonderter Implementierungsvergleich: `32afd1a57e715130d056e98e433721c6e7a10278` vom 11. Oktober; heute nicht neu als aktueller Stand verifiziert.
 
 Kanonische Produktdokumente bleiben [Vision](../../vision.md), [Konzeptregister](../../concepts/register.md) und [Architektur](../../architecture.md). Dieser Konzeptordner setzt ihre aktuellen Verträge und den koordinierten Modell-Owner nicht automatisch außer Kraft.

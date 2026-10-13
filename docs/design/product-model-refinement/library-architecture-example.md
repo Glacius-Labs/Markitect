@@ -4,6 +4,8 @@ Datum: 13. Oktober 2026. Status: auf Nutzerwunsch ergänzter Architekturentwurf 
 
 Das [Bibliotheksmodell](library-model-example.md) zeigt den Project-Kandidaten, den Modellordner, die Fachdefinitionen, das Mandat und die Artefakte/Checks. Die Quellen werden im Modellordner gefunden; eine Manifestliste wird nicht gepflegt. Dieses Dokument ist die einzige aktuelle YAML-Darstellung der hier aufgeführten Architekturdefinitionen; die Modelldateien sind als spätere Eingaben benannt, heute nicht angelegt.
 
+YAML-Schreibweise aktualisiert am 14. Oktober 2026: Jede Definition besitzt description; purpose entfällt als separates Feld. Die Architekturaufteilung bleibt dabei unverändert.
+
 ## Unterscheidung und Struktur
 
 | Kind | Bedeutung | Beispiel |
@@ -74,7 +76,6 @@ kind: System
 metadata:
   namespace: library
   name: library-system
-purpose: Beschreibt Grenze und Architektur der Bibliotheksanwendung.
 spec:
   description: |
     Die Anwendung ermöglicht Ausleihe und Rückgabe vorhandener Exemplare.
@@ -103,7 +104,6 @@ kind: Component
 metadata:
   namespace: library
   name: frontend
-purpose: Beschreibt den Webclient der Bibliothek.
 spec:
   description: |
     Der Webclient stellt die Bedienung von Ausleihe und Rückgabe bereit.
@@ -124,7 +124,6 @@ kind: Component
 metadata:
   namespace: library
   name: backend
-purpose: Beschreibt den Backenddienst der Bibliothek.
 spec:
   description: |
     Der Dienst stellt die Bibliotheks-API bereit und erhält die Fachregeln.
@@ -157,7 +156,6 @@ kind: Component
 metadata:
   namespace: library
   name: database
-purpose: Beschreibt den bereitgestellten Datenbankdienst.
 spec:
   description: |
     Der Datenbankdienst speichert Bibliotheksdaten dauerhaft.
@@ -178,7 +176,6 @@ kind: Module
 metadata:
   namespace: library
   name: lending-ui
-purpose: Ordnet die Bedienung der Ausleihabläufe zu.
 spec:
   description: |
     Dieses Modul trägt zur Nutzung von Ausleihe und Rückgabe bei.
@@ -205,7 +202,6 @@ kind: Module
 metadata:
   namespace: library
   name: inventory
-purpose: Ordnet Titel- und Exemplarinformationen zu.
 spec:
   description: |
     Dieses Modul beschreibt und verwaltet Titel und physische Exemplare.
@@ -232,7 +228,6 @@ kind: Module
 metadata:
   namespace: library
   name: membership
-purpose: Ordnet Mitglieds- und Berechtigungsinformationen zu.
 spec:
   description: |
     Dieses Modul verwaltet Mitgliedsidentität und Berechtigungsstatus.
@@ -260,7 +255,6 @@ kind: Module
 metadata:
   namespace: library
   name: circulation
-purpose: Ordnet Ausleihzustand und Ausleihabläufe zu.
 spec:
   description: |
     Dieses Modul koordiniert Ausleihe und Rückgabe und erhält ihre Regeln.
@@ -303,7 +297,6 @@ kind: Module
 metadata:
   namespace: library
   name: http-adapter
-purpose: Ordnet den externen API-Adapter zu.
 spec:
   description: |
     Dieses Modul übersetzt API-Eingaben, Ergebnisse und Fehler in die vereinbarten
@@ -333,7 +326,6 @@ kind: Module
 metadata:
   namespace: library
   name: persistence-adapter
-purpose: Ordnet die Umsetzung des fachlichen Speichervertrags zu.
 spec:
   description: |
     Dieses Modul stellt den fachlichen Ausleihspeicher auf dem Datenbankdienst bereit.
@@ -369,7 +361,6 @@ kind: Interface
 metadata:
   namespace: library
   name: library-api
-purpose: Beschreibt den von außen verwendbaren Ausleihvertrag.
 spec:
   description: |
     Der API-Vertrag bietet Ausleihe und Rückgabe mit den jeweils geltenden
@@ -405,7 +396,6 @@ kind: Interface
 metadata:
   namespace: library
   name: inventory-access
-purpose: Beschreibt die benötigte Bestandsabfrage.
 spec:
   description: |
     Dieser Vertrag liefert die Existenz und relevanten Informationen eines
@@ -429,7 +419,6 @@ kind: Interface
 metadata:
   namespace: library
   name: member-access
-purpose: Beschreibt die benötigte Mitgliedsabfrage.
 spec:
   description: |
     Dieser Vertrag liefert Existenz, Identität und Berechtigungsstatus eines Mitglieds.
@@ -449,7 +438,6 @@ kind: Interface
 metadata:
   namespace: library
   name: loan-storage
-purpose: Beschreibt den fachlichen Ausleihspeicher.
 spec:
   description: |
     Dieser Vertrag speichert und liest Ausleihen und erfasst Rückgaben dauerhaft.
@@ -480,7 +468,6 @@ kind: Interface
 metadata:
   namespace: library
   name: database-access
-purpose: Beschreibt den technischen Vertrag des Datenbankdiensts.
 spec:
   description: |
     Dieser Vertrag beschreibt die benötigte dauerhafte Datenhaltung und ihre
@@ -502,7 +489,6 @@ kind: Rule
 metadata:
   namespace: library
   name: domain-independent-of-storage
-purpose: Begrenzt die Abhängigkeit der Fachmodule auf Persistenztechnik.
 spec:
   description: |
     Die Fachmodule dürfen nicht direkt von Datenbankdienst oder konkretem
