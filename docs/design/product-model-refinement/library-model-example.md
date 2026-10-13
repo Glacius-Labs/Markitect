@@ -68,7 +68,7 @@ Die bisher als Concept gezeigte Übersicht `library-system` ist jetzt ein System
         └── architecture-contract-check.yaml
 ```
 
-Eine Definition pro Datei und Namespace aus dem Verzeichnis übernehmen die bisher untersuchte Ladeform. Alle Definitionen außer dem Root-Mandat liegen im Namespace library. Die Anwendung muss diese Ablage nicht spiegeln. Zusammensetzung ist über `components`/`modules` erklärt, nicht durch diesen flachen Modellordner.
+Eine Definition pro Datei und Namespace aus dem Verzeichnis übernehmen die bisher untersuchte Ladeform. Alle Definitionen außer dem Root-Mandat liegen im Namespace library. Die Anwendung muss diese Ablage nicht spiegeln. Zusammensetzung ist über `contains` mit ausdrücklichem Zielkind erklärt, nicht durch diesen flachen Modellordner.
 
 Die Manifestliste nennt Modellquellen, nicht jede Anwendungsdatei. Artefaktpfade erfassen konkrete Realisierungsbereiche. Weitere tatsächliche Dateien benötigen Zuordnung oder ausdrückliche Ausnahme. Die gezeigten Pfade sind kein Beweis vollständiger späterer Build-/CI-/Konfigurationsabdeckung.
 
@@ -139,7 +139,7 @@ Die Anweisungen formulieren Pflichten und Entscheidungsspielräume, beweisen abe
 
 ## Fachliche Concepts, Rules und UseCases
 
-`uses` liefert Kontext; `UseCase.requires` benennt normative Verpflichtungen. Referenzen nennen ihren Zielkind nur bei mehreren zulässigen Ziel-Kinds: `uses` braucht `kind`, `requires` und `checks` erhalten den festen Zieltyp aus dem Schema. Auch eine aktuell rein fachliche `uses`-Liste bleibt typgemischt zulässig und nennt daher den Kind. Die API-Version folgt dem gemeinsamen versionierten Vertrag. Laufzeitinstanzen und deren Kardinalitäten bleiben von Modellreferenzen unterscheidbar.
+`uses` liefert Kontext; `UseCase.requires` benennt normative Verpflichtungen. Referenzen nennen ihren Zielkind bei mehreren zulässigen Ziel-Kinds und immer bei der einheitlichen Zusammensetzungsbeziehung `contains`: `uses` braucht `kind`, `requires` und `checks` erhalten den festen Zieltyp aus dem Schema. Auch eine aktuell rein fachliche `uses`-Liste bleibt typgemischt zulässig und nennt daher den Kind. Die API-Version folgt dem gemeinsamen versionierten Vertrag. Laufzeitinstanzen und deren Kardinalitäten bleiben von Modellreferenzen unterscheidbar.
 
 ### `model/library/title.yaml`
 

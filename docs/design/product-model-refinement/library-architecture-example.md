@@ -26,11 +26,11 @@ System library-system
 └── Component database
 ```
 
-Ein Component besitzt in diesem ersten Zusammensetzungsvertrag genau ein System als Parent; ein Module genau einen Component oder ein übergeordnetes Module. Die Zusammensetzung ist zyklenfrei. Der Datenbankdienst hat keine hier modellierten Interna; seine bereitgestellte Implementierung und die projektverantwortete Konfiguration sind ausdrücklich getrennt.
+`contains` erklärt direkte strukturelle Bestandteile mit ausdrücklich genanntem Zielkind. Im ersten Beispielvertrag enthält ein System Components; ein Component oder Module kann Modules enthalten. Ein Component besitzt genau ein System als Parent; ein Module genau einen Component oder ein übergeordnetes Module. Parents werden aus den contains-Kanten abgeleitet. Die Zusammensetzung ist zyklenfrei. Der Datenbankdienst hat keine hier modellierten Interna; seine bereitgestellte Implementierung und die projektverantwortete Konfiguration sind ausdrücklich getrennt.
 
 Das ownership-Feld entfällt vorerst. Der Datenbankserver kann Fremdsoftware sein; Konfiguration, Schema und Migrationen bleiben erklärte Projektbeiträge. Feinere Zuständigkeiten oder ein strukturiertes Feld zur Unterscheidung eigener und externer Systeme sind noch nicht festgelegt.
 
-Bei festem Zieltyp entfällt `kind` in der Referenz: `components` verweist auf Component, `modules` und `dependsOn` auf Module, `provides`/`consumes` auf Interface, `useCases` auf UseCase und `requires` auf Rule. Bei `realizes`, `uses` und `appliesTo` bleiben mehrere Ziel-Kinds zulässig und `kind` erforderlich. Die Definitionsdateien behalten ihren eigenen Kind. `contains` ist als Alternative im [Konzept](canonical-model-proposal.md#42-identität-und-referenzsyntax) vermerkt, hier aber nicht gewählt.
+`contains` ersetzt die bisherigen Felder `components`/`modules` und nennt immer den Zielkind. Das Schema des jeweiligen Quell-Kinds prüft, welche Kinder zulässig sind. Die gemeinsame Form ist für weitere Modelltypen wiederverwendbar, ohne deren Kinder bereits freizugeben. Bei anderen festen Zieltypen entfällt `kind`: `dependsOn` verweist auf Module, `provides`/`consumes` auf Interface, `useCases` auf UseCase und `requires` auf Rule. Bei `realizes`, `uses` und `appliesTo` bleiben mehrere Ziel-Kinds zulässig und `kind` erforderlich. Die Definitionsdateien behalten ihren eigenen Kind.
 
 Parent, Namespace und Mandat sind verschiedene Beziehungen. Der Namespace bleibt hier für alle Definitionsdateien `library`; Zusammensetzung wird ausdrücklich deklariert. Die Modellablage muss weder Runtime- noch Codegliederung nachahmen. Die eindeutige Parentbeziehung begründet keine Agentenbefugnis.
 
@@ -81,12 +81,15 @@ spec:
     Frameworks, Datenbankprodukt und Deploymentumgebung sind vor Umsetzung
     festzulegen oder ausdrücklich zu delegieren.
   public: true
-  components:
-    - namespace: library
+  contains:
+    - kind: Component
+      namespace: library
       name: frontend
-    - namespace: library
+    - kind: Component
+      namespace: library
       name: backend
-    - namespace: library
+    - kind: Component
+      namespace: library
       name: database
 ```
 
@@ -105,8 +108,9 @@ spec:
     Er verwendet den Bibliotheks-API-Vertrag über sein Bedienmodul.
     API-Adresse, Build und Auslieferung werden als technische Bedingungen festgelegt.
   public: true
-  modules:
-    - namespace: library
+  contains:
+    - kind: Module
+      namespace: library
       name: lending-ui
 ```
 
@@ -125,16 +129,21 @@ spec:
     Er verbindet Fachmodule und technische Adapter bei seiner Zusammenstellung.
     Er bringt einen erklärten Start-, Konfigurations- und Betriebsvertrag mit.
   public: true
-  modules:
-    - namespace: library
+  contains:
+    - kind: Module
+      namespace: library
       name: inventory
-    - namespace: library
+    - kind: Module
+      namespace: library
       name: membership
-    - namespace: library
+    - kind: Module
+      namespace: library
       name: circulation
-    - namespace: library
+    - kind: Module
+      namespace: library
       name: http-adapter
-    - namespace: library
+    - kind: Module
+      namespace: library
       name: persistence-adapter
 ```
 

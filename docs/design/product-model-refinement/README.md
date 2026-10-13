@@ -14,7 +14,7 @@ Die Arbeitsidee bleibt, das Modell zu pflegen und seine Realisierung durchführe
 
 Der gewählte Verantwortungsdateiname ist `mandate.yaml`. `Concept`, `Rule`, `UseCase` sowie die Architektur-Kinds `System`, `Component`, `Module`, `Interface` sind gewählt; die bisherige Category-Unterscheidung entfällt dafür. Die Umbenennung des vorhandenen Kinds `Manager` ist nicht beschlossen.
 
-Die Referenzschreibweise nennt `kind` nur bei mehreren zulässigen Ziel-Kinds; feste Zieltypen folgen aus dem Feldschema. `ownership` entfällt vorerst. `contains` als gemeinsame Zusammensetzungsbeziehung ist eine offene Alternative zu `components`/`modules`.
+`contains` ist als einheitliche Beziehung für direkte strukturelle Zusammensetzung gewählt und ersetzt `components`/`modules`; ihre Referenzen nennen immer ausdrücklich `kind`. Bei anderen Feldern nennt die Referenz `kind` nur bei mehreren zulässigen Ziel-Kinds; feste Zieltypen folgen aus dem Feldschema. `ownership` entfällt vorerst. Weitere Quell-Kinds können contains übernehmen, sobald ihre zulässigen Kinder und Zusammensetzungsregeln definiert sind.
 
 ## Aktueller Arbeitsstand und Lesereihenfolge
 
@@ -58,6 +58,7 @@ Produktgespräch `01a121f1-b948-7050-ae5d-9921b99db9c0`, Grundlagen vom 10. Okto
 - Eingang der Kind-Aktualisierung: `5d18e8f4438cc1d24a10882f04b10501d65db20e`; beim Beginn sauber.
 - Eingang der Architekturergänzung: `ec7ba72d25c7f17cedcfb61e6b77f11d5cddb5ed`; beim Beginn sauber, am 13. Oktober ausdrücklich beauftragt.
 - Eingang der Referenzvereinfachung und Entfernung von ownership: `a188878bd5c8283acf02fd6f754cf404b1d3503e`; beim Beginn sauber, am 13. Oktober ausdrücklich beauftragt.
+- Eingang der contains-Entscheidung: `def47b05ed553918ed80d7b74728d2a77a8c7572`; beim Beginn sauber, am 13. Oktober ausdrücklich beauftragt.
 - Letzter gesonderter Implementierungsvergleich: `32afd1a57e715130d056e98e433721c6e7a10278` vom 11. Oktober; heute nicht neu als aktueller Stand verifiziert.
 
 Kanonische Produktdokumente bleiben [Vision](../../vision.md), [Konzeptregister](../../concepts/register.md) und [Architektur](../../architecture.md). Dieser Konzeptordner setzt ihre aktuellen Verträge und den koordinierten Modell-Owner nicht automatisch außer Kraft.

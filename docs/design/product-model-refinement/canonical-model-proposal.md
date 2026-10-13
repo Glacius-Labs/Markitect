@@ -83,7 +83,9 @@ Ein System kann im Projektumfang realisiert oder extern beschrieben sein. Für e
 
 Nutzerentscheidung vom 13. Oktober 2026: `ownership` entfällt vorerst. Der beschriebene Realisierungsumfang bleibt Prosa und Artefaktzuordnung: Der Datenbankserver kann wiederverwendete Fremdsoftware sein, während Konfiguration, Schema und Migrationen Projektbeiträge sind. Ein strukturiertes Feld zur Unterscheidung eigener und externer Systeme oder feinerer Zuständigkeiten ist nicht festgelegt.
 
-`System.components`, `Component.modules` und `Module.modules` deklarieren direkte Zusammensetzung. Im ersten vollständigen Bibliotheksvertrag hat ein Component genau ein System als Parent; ein Module genau einen Component oder Parent-Module. Parents werden aus diesen Listen abgeleitet, nicht als zweite manuelle Wahrheit gepflegt. Selbstbezüge und Zusammensetzungszyklen sind ungültig. Components dürfen bewusst nicht modellierte Interna haben, etwa der bereitgestellte Datenbankdienst.
+Nutzerentscheidung vom 13. Oktober 2026: `contains` ist die einheitliche Beziehung für direkte strukturelle Zusammensetzung. Ihre Referenzen nennen immer ausdrücklich den Zielkind; die bisherigen Felder `components` und `modules` entfallen im aktuellen Entwurf. Für System sind zunächst Component-Ziele, für Component und Module jeweils Module-Ziele vorgesehen. Weitere Kinds können dieselbe Beziehung verwenden, sobald ihr Schema zulässige Kinder und Zusammensetzungsregeln definiert; diese Wiederverwendbarkeit gibt nicht automatisch beliebige Zieltypen frei.
+
+Im ersten vollständigen Bibliotheksvertrag hat ein Component genau ein System als Parent; ein Module genau einen Component oder Parent-Module. Parents werden aus den `contains`-Listen abgeleitet, nicht als zweite manuelle Wahrheit gepflegt. Selbstbezüge und Zusammensetzungszyklen sind ungültig. Components dürfen bewusst nicht modellierte Interna haben, etwa der bereitgestellte Datenbankdienst. Zusammensetzung erklärt weder Agentenbefugnis noch Interface-Zusammenarbeit, Implementierungsabhängigkeit oder Realisierungsbeitrag; dafür bestehen eigene Beziehungen.
 
 `provides` und `consumes` stehen am konkreten Anbieter/Verbraucher. Die veröffentlichte Component-Sicht kann aus seinen Modules abgeleitet werden; dieselbe Providerbeziehung wird nicht nochmals auf dem Parent kopiert. Direkt deklarierte Component-Verträge eignen sich für undurchsichtige Laufzeitbausteine. Konsumierte Interfaces benötigen im ersten Beispielvertrag einen eindeutigen Provider im erklärten Umfang; Mehrfachprovider-Auswahl ist noch nicht entworfen. Externe Systems können Verträge direkt bereitstellen.
 
@@ -97,8 +99,8 @@ Nutzerentscheidung vom 13. Oktober 2026: `ownership` entfällt vorerst. Der besc
 | --- | --- | --- |
 | `uses` | Benötigter Kontext. | `Concept`, `Rule`, `UseCase`, `System`, `Component`, `Module`, `Interface` |
 | `UseCase.requires`, `Interface.requires` | Normative Verpflichtung. | `Rule` |
-| `System.components` | Direkte Laufzeitbausteine. | `Component` |
-| `Component.modules`, `Module.modules` | Direkte logische Gliederung. | `Module` |
+| `System.contains` | Direkte strukturelle Bestandteile; Zielkind immer ausdrücklich. | `Component` |
+| `Component.contains`, `Module.contains` | Direkte strukturelle Bestandteile; Zielkind immer ausdrücklich. | `Module` |
 | `provides`, `consumes` auf Component/Module, bei externem System an dessen Grenze | Vertrag anbieten beziehungsweise benötigen. | `Interface` |
 | `Module.dependsOn` | Implementierungs-/Buildabhängigkeit. | `Module` |
 | `Module.realizes`, direkter `Component.realizes` | Gewünschter architektonischer Fachbeitrag. | `Concept`, `Rule`, `UseCase` |
@@ -119,7 +121,7 @@ Die hier eingeschränkte `requires`-Zielmenge ist ein neuer Vorschlag für diese
 
 Identität umfasst API-Version, Kind, Namespace und Name. Umbenennung oder Kind-Wechsel benötigt Referenz- und Evidenzbehandlung. Ein UUID-Zwang wird nicht vorgeschlagen.
 
-Nutzerentscheidung vom 13. Oktober 2026: Eine Referenz nennt `kind` nur, wenn das Feld mehrere Ziel-Kinds zulässt. Bei genau einem zulässigen Ziel-Kind bestimmen Schema und Beziehungsfeld den Typ; die Referenz enthält Namespace und Name. Die Zielauflösung bleibt typisiert, nicht allein namensbasiert. Der Kind einer Definitionsdatei bleibt ausdrücklich angegeben.
+Nutzerentscheidung vom 13. Oktober 2026, anschließend um `contains` präzisiert: Eine Referenz nennt `kind` bei mehreren zulässigen Ziel-Kinds sowie immer bei `contains`. Bei anderen Feldern mit genau einem zulässigen Ziel-Kind bestimmen Schema und Beziehungsfeld den Typ; die Referenz enthält Namespace und Name. Die Zielauflösung bleibt typisiert, nicht allein namensbasiert. Der Kind einer Definitionsdatei bleibt ausdrücklich angegeben.
 
 `requires` ist auf Rule festgelegt:
 
@@ -138,13 +140,20 @@ uses:
     name: copy
 ```
 
-Ohne `kind` werden die einheitlich typisierten Felder `components`, `modules`, `provides`, `consumes`, `dependsOn`, `requires`, `useCases`, `checks`, `parent` und `actor` geschrieben. Bei `uses`, `realizes`, `appliesTo` und `subject` bleibt `kind` erforderlich. Maßgeblich ist jeweils die zulässige Zielmenge aus Abschnitt 4.1, nicht die zufällige Zusammensetzung einer konkreten Liste. Vor Digest, Kontext, Graph und Impact wird der feste Ziel-Kind aus dem Schema ergänzt; Kürzung der Schreibweise entfernt keine Identität oder Kante.
+Ohne `kind` werden die einheitlich typisierten Felder `provides`, `consumes`, `dependsOn`, `requires`, `useCases`, `checks`, `parent` und `actor` geschrieben. Bei `contains`, `uses`, `realizes`, `appliesTo` und `subject` ist `kind` erforderlich. Bei gemischten Referenzen ist die zulässige Zielmenge aus Abschnitt 4.1 maßgeblich, nicht die zufällige Zusammensetzung einer konkreten Liste. Vor Digest, Kontext, Graph und Impact wird ein aus dem Schema abgeleiteter fester Ziel-Kind ergänzt; Kürzung der Schreibweise entfernt keine Identität oder Kante.
 
-**Alternative für Zusammensetzung:** Der Nutzer hat `contains` statt `components` als Möglichkeit eingebracht. Das ist noch nicht gewählt. Ein gemeinsames `contains` für System und Component könnte je Quell-Kind einen festen Zieltyp haben (System → Component, Component/Module → Module); dann bliebe `kind` entbehrlich. Ein gemischtes `contains` mit mehreren zulässigen Zieltypen würde dagegen ausdrückliches `kind` benötigen. Vor einer Auswahl sind erlaubte Kinder und Parentregeln zu bestimmen. Der aktuelle Entwurf behält die sprechenden Felder `components` und `modules`.
+**Gewählte einheitliche Form:** `contains` benennt die Beziehung und `kind` den enthaltenen Baustein. Auch bei momentan nur einem erlaubten Zieltyp bleibt der Kind sichtbar. Das ist eine bewusste Ausnahme von der Kurzschreibweise, damit dieselbe Form über verschiedene Quell-Kinds und später gegebenenfalls gemischte Kinder wiederverwendbar ist. Der Validator prüft trotzdem den angegebenen Kind gegen das Schema des Quell-Kinds.
+
+```yaml
+contains:
+  - kind: Component
+    namespace: library
+    name: backend
+```
 
 Die API-Version des Ziels wird im Beispiel aus dem versionierten Referenzvertrag bestimmt: Alle Ziel-Kinds dieser Fassung gehören ausdrücklich zur gleichen `vNext`-Version. Das ist eine vorgeschlagene Versionierungsregel, keine freie Auflösung auf eine zufällig vorhandene Version. Cross-Version-Referenzen sind nicht implizit freigegeben. Jede Property hat eine endliche Zielmenge; „beliebiger Kind“ ist kein Ersatz für Typprüfung. Auch `uses`, Realisierung, Checks und Entscheidungsbezüge brauchen konsistente Auflösung.
 
-**Implementierungsentscheidung offen:** Der bisher geprüfte Core-Vertrag benennt pro Reference-Property genau einen Zielkind. Gemischte Zielmengen verlangen entweder eine eng begrenzte, explizite Referenzunion oder getrennte typisierte Properties. Der gemeinsame YAML-Kandidat verwendet die Kind-angereicherte Referenzform nur bei gemischten Zielmengen; bei festen Zieltypen folgt der Kind aus dem Schema. Ob Core und Validator dies ohne neue Primitive tragen können, ist vor der Implementierung an aktuellem Main zu prüfen. Die Kurzform darf die bisherigen Diagnosen und Graphkanten nicht umgehen.
+**Implementierungsentscheidung offen:** Der bisher geprüfte Core-Vertrag benennt pro Reference-Property genau einen Zielkind. Gemischte Zielmengen verlangen entweder eine eng begrenzte, explizite Referenzunion oder getrennte typisierte Properties. Der gemeinsame YAML-Kandidat verwendet die Kind-angereicherte Referenzform bei gemischten Zielmengen und stets bei `contains`; bei anderen festen Zieltypen folgt der Kind aus dem Schema. Ob Core und Validator dies ohne neue Primitive tragen können, ist vor der Implementierung an aktuellem Main zu prüfen. Die Kurzform darf die bisherigen Diagnosen und Graphkanten nicht umgehen.
 
 ## 5. Realisierung ohne Aufzählung jeder Datei
 
@@ -214,9 +223,9 @@ Diese Arbeitstabelle konkretisiert den Entwurf für P0; sie behauptet kein vorha
 | `Concept` | `description`, `public`, `uses` | Beschreibung erforderlich; Kontextbezüge optional. Keine Kategorie concept. |
 | `Rule` | `description`, `public`, `uses`, `appliesTo` | Beschreibung erforderlich; Kontext und Geltungsziele explizit. Keine formale Bedingung vorausgesetzt. |
 | `UseCase` | `description`, `public`, `uses`, `requires` | Beschreibung erforderlich; Kontextbezüge optional, Verpflichtungen als Rule-Referenzen. Keine Kategorie use-case. |
-| `System` | `description`, `public`, `components`, `uses`, bei externer Grenze `provides`/`consumes` | Zweck, Grenze und Realisierungsumfang in Prosa; direkte Components, externe Interna optional. Kein ownership-Feld. |
-| `Component` | `description`, `public`, `modules`, `provides`, `consumes`, `realizes`, `uses` | Laufzeitrolle erklären; Verträge und Modules passend zuordnen. |
-| `Module` | `description`, `public`, `modules`, `provides`, `consumes`, `dependsOn`, `realizes`, `uses` | Logische Aufgabe/Beitrag; genau ein struktureller Parent im vollständigen Beispiel. |
+| `System` | `description`, `public`, `contains`, `uses`, bei externer Grenze `provides`/`consumes` | Zweck, Grenze und Realisierungsumfang in Prosa; contains mit ausdrücklichem Component-Kind, externe Interna optional. Kein ownership-Feld. |
+| `Component` | `description`, `public`, `contains`, `provides`, `consumes`, `realizes`, `uses` | Laufzeitrolle erklären; contains mit ausdrücklichem Module-Kind, Verträge passend zuordnen. |
+| `Module` | `description`, `public`, `contains`, `provides`, `consumes`, `dependsOn`, `realizes`, `uses` | Logische Aufgabe/Beitrag; optionale untergeordnete Modules mit ausdrücklichem Kind, genau ein struktureller Parent im vollständigen Beispiel. |
 | `Interface` | `description`, `public`, `useCases`, `uses`, `requires` | Vertrag erklären; Verpflichtungen als Rules; Provider/Consumer stehen an Bausteinen. |
 | `Manager` | `parent`, `owns`, `instructions` | Höchstens ein Parent; optionale Pfadliste und lesbare Anweisungen. Roots/Ownerregeln werden getrennt validiert. |
 | `Artifact` | `role`, `realizes`, `paths`, `checks`, `required`, `reason` | Rolle implementation/documentation/verification/configuration; optionale Ziel-/Pfad-/Checklisten, Erforderlichkeit und Begründung. |
@@ -299,7 +308,8 @@ Der [Überfälligkeitsdurchlauf](library-change-walkthrough.md) zeigt, wie eine 
 | Keine Kategorie für die gewählten Rollen | Der Kind trägt die strukturelle Unterscheidung direkt; gemeinsame Beschreibungskonventionen werden geteilt. Weitere Kinds benötigen einen konkreten Ausdrucksbedarf. |
 | Mandat von Agentenbindung unterscheiden | Ein stabiler Auftrag kann von unterschiedlichen Agenten umgesetzt werden; Datei, Modell-Kind und Runtime-Identität sind eigene Benennungsentscheidungen. |
 | Explizite Beziehungen und konservativer Impact | Koordination nachvollziehbar aus deklarierten Daten ableiten; Prosalinks allein liefern keine geprüften Kanten. |
-| Zielkind aus dem Feld, wo eindeutig | Wiederholung vermeiden; nur gemischte Zielmengen benötigen einen Kind-Discriminator. Auflösung und Prüfung behalten die vollständige Zielidentität. |
+| Zielkind aus dem Feld, wo eindeutig | Bei speziellen Feldern Wiederholung vermeiden; gemischte Zielmengen benötigen einen Kind-Discriminator. Auflösung und Prüfung behalten die vollständige Zielidentität. |
+| Einheitliches contains mit ausdrücklichem Kind | Zusammensetzung durch einen Beziehungsnamen beschreiben; sichtbare Zieltypen erhalten eine wiederverwendbare Form. Erlaubte Kinder und Parentregeln bleiben im jeweiligen Schema definiert. |
 | Erneuerbarer Dateibestand | Pfadregeln pflegen und konkrete Dateien erfassen; eine zweite manuelle Zuordnungsliste vermeiden. |
 | Unabhängige Reviews und begrenzte Checks | Fachbedeutung und tatsächliche Realisierung prüfen; Struktur und Prüferfolg nicht als universelle Korrektheit ausgeben. |
 
@@ -313,7 +323,7 @@ Der Dokumentationsbranch stammt aus einer älteren Main-Basis. Den Implementieru
 
 | Paket | Ergebnis | Voraussichtlicher Bereich | Abnahmekriterium |
 | --- | --- | --- | --- |
-| P0 — Ausgangspunkt und Verträge | Main-Delta, Versionierung, Fach-/Architekturschemas, Provider-/Parentregeln, Referenzziele und bedingte Kind-Angabe fixieren. | Produkt-/Modellvertrag; Core-Ausdrucksbedarf prüfen. | Keine stille alpha-Umdeutung; feste Ziel-Kinds aus Schema, gemischte Zielmengen explizit aufgelöst. |
+| P0 — Ausgangspunkt und Verträge | Main-Delta, Versionierung, Fach-/Architekturschemas, contains-/Provider-/Parentregeln, Referenzziele und bedingte Kind-Angabe fixieren. | Produkt-/Modellvertrag; Core-Ausdrucksbedarf prüfen. | Keine stille alpha-Umdeutung; contains immer mit geprüftem Kind, sonst feste Ziel-Kinds aus Schema oder gemischte Zielmengen explizit aufgelöst. |
 | P1 — Vollständiger kleiner Durchstich | Bibliotheksmodell mit Mandat, Fach-/Architekturdefinitionen, Artefakten und Check-Anschlüssen laden/validieren. | Schema, Loader und Beispiel; Core nur bei belegter Lücke. | Gültige Ziele/Parents/Provider auflösbar; falscher Kind, Namespace, Zyklus oder mehrdeutiger Provider mit Diagnose. |
 | P2 — Sichten und Bedeutungserhalt | Alle Fach-/Architektur-Kinds und neuen Kanten in Report, Kontext, Graph und Digest führen; AppliesTo bringt Regeln an Ziele. | Projectmodel-Analyse/Typen und vorhandene Ausgabeanschlüsse. | Zuständige Rollen sehen benötigte Regeln; private Inhalte werden nicht über eine zweite Sichtbarkeitslogik geladen. |
 | P3 — Änderungsfolgen | Fach-, Vertrags-, Provider-, Zuordnungs- und Zusammensetzungsänderung unter Alt/Neu in Impact/Explain behandeln. | Projectmodel-Impact/Explain und feste Host-Bindungen. | Alt/Neu-Wirkung erhalten; unbekannter Umfang bleibt konservativ; kombinierte Änderungen verlieren keine Pflicht. |
@@ -332,6 +342,7 @@ Heute sind diese Prüfungen ausschließlich geplant. Bei Umsetzung gelten zusät
 | --- | --- |
 | Nominaler Kind ist nur ein Label | Verweis auf Concept oder UseCase an einem Rule-only-Ziel wird abgewiesen; gültiger Rule-Verweis wird aufgelöst. |
 | Kurzreferenz verliert Typ oder Identität | Rule-only-Referenz ohne kind löst gegen Rule auf, nicht gegen gleichnamigen Concept; fehlender/unerlaubter kind bei gemischten Zielmengen ist ein Befund. Normalisierte Zielidentität bleibt in Digest, Kontext und Graph erhalten. |
+| contains wird zum untypisierten Sammelfeld | Fehlender kind und nach Quell-Kind unzulässiger Zielkind erzeugen Befunde, auch bei nur einem erlaubten Zieltyp. Gültige direkte Kinder erzeugen Zusammensetzungskanten und abgeleitete Parents. |
 | Gemischte Referenz verliert Bedeutung | Alle sieben Fach-/Architekturtypen bleiben in Kontext, Realisierung, Check und Entscheidung eindeutig und digest-relevant. |
 | Struktur oder Anbieter ist mehrdeutig | Doppelte Parentzuordnung, Zusammensetzungszyklus sowie fehlender/mehrdeutiger Provider eines konsumierten Interface erzeugen Befunde. |
 | Architekturzuordnung verschwindet | Geänderte Fachzuordnung, Interfacevertrag und AppliesTo-Ziel erreichen die relevanten alten/neuen Bausteine, Artefakte und Prüfungen; Prosa allein gilt nicht als vollständiger Codebeleg. |
@@ -351,7 +362,7 @@ Offen bleiben besonders:
 - Exakte API-Version und Migrationsweg.
 - Referenzunion versus getrennte Properties sowie zulässige Zielmengen.
 - Regeln für externen Scope, nicht modellierte Interna und mögliche Mehrfachprovider.
-- `contains` als Alternative zu `components`/`modules`; feste oder gemischte Zielmengen und passende Parentregeln wären zu entscheiden.
+- Weitere Quell-Kinds für `contains`, zusätzliche erlaubte Kinder und deren Parentregeln; die gemeinsame Beziehung und die ausdrückliche Kind-Angabe sind bereits gewählt.
 - Beitragsteilung bei gemeinsamer UseCase-Realisierung und Rolle von Architekturchecks.
 - Bedarf weiterer Beschreibungstypen, ohne universelle Sammeltypen zu schaffen.
 - Regelbedingungen versus Invarianten: zunächst Prosa oder eigener nominaler/Feldvertrag?
@@ -369,6 +380,7 @@ Offen bleiben besonders:
 - Eingang der Kind-Aktualisierung: `5d18e8f4438cc1d24a10882f04b10501d65db20e`; beim Beginn sauber.
 - Eingang der Architekturergänzung vom 13. Oktober: `ec7ba72d25c7f17cedcfb61e6b77f11d5cddb5ed`; beim Beginn sauber.
 - Eingang der Referenzvereinfachung und Entfernung von ownership vom 13. Oktober: `a188878bd5c8283acf02fd6f754cf404b1d3503e`; beim Beginn sauber.
+- Eingang der contains-Entscheidung vom 13. Oktober: `def47b05ed553918ed80d7b74728d2a77a8c7572`; beim Beginn sauber.
 - Ursprüngliche Branchbasis: `ecc69b0ad99236a5ddd02b85bf9ba656a0000f15`.
 - Letzter gesonderter Main-Abgleich: `32afd1a57e715130d056e98e433721c6e7a10278` vom 11. Oktober; heute nicht als aktuell neu verifiziert.
 - Zusätzlicher reiner Quellenrefresh im Gespräch am 13. Oktober: `c19d9d1259fcd493e2cc7ad93d10226778b2b7f4`. Das Projektvokabular besitzt dort weiterhin die fünf bisherigen Kinds und einzelne Reference-Zielkinds; die neuen Fach-/Architektur-Kinds und Referenzmengen dieses Entwurfs sind nicht implementiert. Der historische Vergleichsbericht bleibt unverändert datiert.
