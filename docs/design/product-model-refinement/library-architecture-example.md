@@ -28,7 +28,9 @@ System library-system
 
 Ein Component besitzt in diesem ersten Zusammensetzungsvertrag genau ein System als Parent; ein Module genau einen Component oder ein übergeordnetes Module. Die Zusammensetzung ist zyklenfrei. Der Datenbankdienst hat keine hier modellierten Interna; seine bereitgestellte Implementierung und die projektverantwortete Konfiguration sind ausdrücklich getrennt.
 
-`System.ownership: owned` beschreibt Verantwortung für den Systemvertrag und den Zusammenbau, nicht eigene Entwicklung jeder Komponentenimplementierung. Insbesondere kann der Datenbankserver Fremdsoftware sein; Konfiguration, Schema und Migrationen bleiben Projektbeiträge. Feinere Zuständigkeiten einzelner Components sind noch nicht festgelegt.
+Das ownership-Feld entfällt vorerst. Der Datenbankserver kann Fremdsoftware sein; Konfiguration, Schema und Migrationen bleiben erklärte Projektbeiträge. Feinere Zuständigkeiten oder ein strukturiertes Feld zur Unterscheidung eigener und externer Systeme sind noch nicht festgelegt.
+
+Bei festem Zieltyp entfällt `kind` in der Referenz: `components` verweist auf Component, `modules` und `dependsOn` auf Module, `provides`/`consumes` auf Interface, `useCases` auf UseCase und `requires` auf Rule. Bei `realizes`, `uses` und `appliesTo` bleiben mehrere Ziel-Kinds zulässig und `kind` erforderlich. Die Definitionsdateien behalten ihren eigenen Kind. `contains` ist als Alternative im [Konzept](canonical-model-proposal.md#42-identität-und-referenzsyntax) vermerkt, hier aber nicht gewählt.
 
 Parent, Namespace und Mandat sind verschiedene Beziehungen. Der Namespace bleibt hier für alle Definitionsdateien `library`; Zusammensetzung wird ausdrücklich deklariert. Die Modellablage muss weder Runtime- noch Codegliederung nachahmen. Die eindeutige Parentbeziehung begründet keine Agentenbefugnis.
 
@@ -79,16 +81,12 @@ spec:
     Frameworks, Datenbankprodukt und Deploymentumgebung sind vor Umsetzung
     festzulegen oder ausdrücklich zu delegieren.
   public: true
-  ownership: owned
   components:
-    - kind: Component
-      namespace: library
+    - namespace: library
       name: frontend
-    - kind: Component
-      namespace: library
+    - namespace: library
       name: backend
-    - kind: Component
-      namespace: library
+    - namespace: library
       name: database
 ```
 
@@ -108,8 +106,7 @@ spec:
     API-Adresse, Build und Auslieferung werden als technische Bedingungen festgelegt.
   public: true
   modules:
-    - kind: Module
-      namespace: library
+    - namespace: library
       name: lending-ui
 ```
 
@@ -129,20 +126,15 @@ spec:
     Er bringt einen erklärten Start-, Konfigurations- und Betriebsvertrag mit.
   public: true
   modules:
-    - kind: Module
-      namespace: library
+    - namespace: library
       name: inventory
-    - kind: Module
-      namespace: library
+    - namespace: library
       name: membership
-    - kind: Module
-      namespace: library
+    - namespace: library
       name: circulation
-    - kind: Module
-      namespace: library
+    - namespace: library
       name: http-adapter
-    - kind: Module
-      namespace: library
+    - namespace: library
       name: persistence-adapter
 ```
 
@@ -163,8 +155,7 @@ spec:
     Das konkrete Produkt und dessen Betriebsvertrag bleiben festzulegen.
   public: true
   provides:
-    - kind: Interface
-      namespace: library
+    - namespace: library
       name: database-access
 ```
 
@@ -184,8 +175,7 @@ spec:
     Die serverseitige Erhaltung der Fachregeln liegt beim Backend.
   public: true
   consumes:
-    - kind: Interface
-      namespace: library
+    - namespace: library
       name: library-api
   realizes:
     - kind: UseCase
@@ -212,8 +202,7 @@ spec:
     Ausleihverfügbarkeit ergibt sich zusätzlich aus aktiven Ausleihen.
   public: true
   provides:
-    - kind: Interface
-      namespace: library
+    - namespace: library
       name: inventory-access
   realizes:
     - kind: Concept
@@ -241,8 +230,7 @@ spec:
     und ist erneut architektonisch zuzuordnen.
   public: true
   provides:
-    - kind: Interface
-      namespace: library
+    - namespace: library
       name: member-access
   realizes:
     - kind: Concept
@@ -269,14 +257,11 @@ spec:
     Die konkrete Persistenztechnik bleibt außerhalb der Fachlogik.
   public: true
   consumes:
-    - kind: Interface
-      namespace: library
+    - namespace: library
       name: inventory-access
-    - kind: Interface
-      namespace: library
+    - namespace: library
       name: member-access
-    - kind: Interface
-      namespace: library
+    - namespace: library
       name: loan-storage
   realizes:
     - kind: Concept
@@ -315,12 +300,10 @@ spec:
     Authentisierung, Fehlerabbildung und Versionsvertrag sind vor Umsetzung zu klären.
   public: true
   provides:
-    - kind: Interface
-      namespace: library
+    - namespace: library
       name: library-api
   dependsOn:
-    - kind: Module
-      namespace: library
+    - namespace: library
       name: circulation
   realizes:
     - kind: UseCase
@@ -347,16 +330,13 @@ spec:
     Es übernimmt keine eigenständige Neudefinition der Fachregeln.
   public: true
   provides:
-    - kind: Interface
-      namespace: library
+    - namespace: library
       name: loan-storage
   consumes:
-    - kind: Interface
-      namespace: library
+    - namespace: library
       name: database-access
   dependsOn:
-    - kind: Module
-      namespace: library
+    - namespace: library
       name: circulation
   realizes:
     - kind: Concept
@@ -387,11 +367,9 @@ spec:
     Der Adapterentwurf geht von einem HTTP-Vertrag aus.
   public: true
   useCases:
-    - kind: UseCase
-      namespace: library
+    - namespace: library
       name: borrow
-    - kind: UseCase
-      namespace: library
+    - namespace: library
       name: return
   uses:
     - kind: Concept
@@ -404,8 +382,7 @@ spec:
       namespace: library
       name: loan
   requires:
-    - kind: Rule
-      namespace: library
+    - namespace: library
       name: one-active-loan
 ```
 
@@ -480,8 +457,7 @@ spec:
       namespace: library
       name: copy
   requires:
-    - kind: Rule
-      namespace: library
+    - namespace: library
       name: one-active-loan
 ```
 

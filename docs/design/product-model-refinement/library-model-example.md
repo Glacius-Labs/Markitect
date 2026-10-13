@@ -139,7 +139,7 @@ Die Anweisungen formulieren Pflichten und Entscheidungsspielräume, beweisen abe
 
 ## Fachliche Concepts, Rules und UseCases
 
-`uses` liefert Kontext; `UseCase.requires` benennt normative Verpflichtungen. Alle Referenzen nennen ihren Zielkind. Die API-Version folgt dem gemeinsamen versionierten Vertrag. Laufzeitinstanzen und deren Kardinalitäten bleiben von Modellreferenzen unterscheidbar.
+`uses` liefert Kontext; `UseCase.requires` benennt normative Verpflichtungen. Referenzen nennen ihren Zielkind nur bei mehreren zulässigen Ziel-Kinds: `uses` braucht `kind`, `requires` und `checks` erhalten den festen Zieltyp aus dem Schema. Auch eine aktuell rein fachliche `uses`-Liste bleibt typgemischt zulässig und nennt daher den Kind. Die API-Version folgt dem gemeinsamen versionierten Vertrag. Laufzeitinstanzen und deren Kardinalitäten bleiben von Modellreferenzen unterscheidbar.
 
 ### `model/library/title.yaml`
 
@@ -331,14 +331,11 @@ spec:
       namespace: library
       name: loan
   requires:
-    - kind: Rule
-      namespace: library
+    - namespace: library
       name: eligible-member
-    - kind: Rule
-      namespace: library
+    - namespace: library
       name: available-copy
-    - kind: Rule
-      namespace: library
+    - namespace: library
       name: one-active-loan
 ```
 
@@ -366,8 +363,7 @@ spec:
       namespace: library
       name: active-loan
   requires:
-    - kind: Rule
-      namespace: library
+    - namespace: library
       name: one-active-loan
 ```
 
@@ -410,11 +406,9 @@ spec:
   paths:
     - frontend/
   checks:
-    - kind: Check
-      namespace: library
+    - namespace: library
       name: library-contract-check
-    - kind: Check
-      namespace: library
+    - namespace: library
       name: architecture-contract-check
   required: true
   reason: Realisiert Bedienung und API-Verwendung des Frontends.
@@ -498,11 +492,9 @@ spec:
   paths:
     - backend/
   checks:
-    - kind: Check
-      namespace: library
+    - namespace: library
       name: library-contract-check
-    - kind: Check
-      namespace: library
+    - namespace: library
       name: architecture-contract-check
   required: true
   reason: Realisiert Backend, fachliche Abläufe und technische Adapter.
@@ -532,11 +524,9 @@ spec:
   paths:
     - deployment/database/
   checks:
-    - kind: Check
-      namespace: library
+    - namespace: library
       name: library-contract-check
-    - kind: Check
-      namespace: library
+    - namespace: library
       name: architecture-contract-check
   required: true
   reason: Stellt Datenbankkonfiguration, Schema und nötige Migrationen bereit.
@@ -620,11 +610,9 @@ spec:
   paths:
     - tests/
   checks:
-    - kind: Check
-      namespace: library
+    - namespace: library
       name: library-contract-check
-    - kind: Check
-      namespace: library
+    - namespace: library
       name: architecture-contract-check
   required: true
   reason: Liefert Prüfbeiträge zu Fachverträgen, Interfaces und Architektur.
