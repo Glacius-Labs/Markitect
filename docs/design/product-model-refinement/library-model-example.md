@@ -74,7 +74,7 @@ Markitect liest die YAML-Definitionen im Modellordner rekursiv ein und erfasst i
 
 ### `model/project.yaml` — Project-Kandidat
 
-Project beschreibt das Gesamtprojekt. Die Grundstruktur mit apiVersion, kind, metadata und spec sowie metadata.description ist vereinbart; die übrigen Attributregeln und die System-Zuordnung werden im Typreview geprüft. Die Darstellung ist kein bereits implementiertes Schema. Markitect-Konfiguration, Dateilisten, Coverage-Modus und ein Dokumentationszielpfad sind hier nicht enthalten.
+Project beschreibt das Gesamtprojekt. Die Grundstruktur mit apiVersion, kind, metadata und spec ist vereinbart; metadata enthält genau name, description und namespace. Die kindspezifischen spec-Felder, hier die System-Zuordnung, werden im Typreview geprüft. Die Darstellung ist kein bereits implementiertes Schema. Markitect-Konfiguration, Dateilisten, Coverage-Modus und ein Dokumentationszielpfad sind hier nicht enthalten.
 
 ```yaml
 apiVersion: project.markitect.example.org/vNext

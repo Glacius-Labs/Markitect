@@ -20,7 +20,7 @@ Realizes umfasst automatisch das referenzierte Ziel und alle über contains enth
 
 Project beschreibt das Gesamtprojekt; Markitect-Konfiguration ist getrennt. Coverage und seine Moduskonfiguration werden vorerst entfernt. Alle kanonischen Definitionen liegen im Modellordner und werden durch rekursive Suche und Symbolauflösung geladen; modelFiles entfällt. Ein Dokumentationszielpfad gehört nicht in Project. Der konkrete Ordnername und die Project-Felder sind weitere Reviewthemen; das YAML bleibt ein Kandidat.
 
-Alle Definitionstypen besitzen dieselbe Grundstruktur aus apiVersion, kind, metadata und spec. Metadata hat für alle Kinds denselben Feldvertrag; spec ist kindspezifisch und kann Relationen oder andere Werte enthalten. Die weiteren Attribute werden einzeln geprüft.
+Alle Definitionstypen besitzen dieselbe geklärte Grundstruktur aus apiVersion, kind, metadata und spec. Metadata enthält für alle Kinds genau name, description und namespace; weitere Metadaten sind nicht vorgesehen. Spec ist kindspezifisch und kann Relationen oder andere Werte enthalten. Der weitere Typreview konzentriert sich auf die jeweiligen spec-Felder.
 
 Description steht als gemeinsames Pflichtfeld unter metadata und erklärt auch Existenzgrund und Beitrag; purpose entfällt als separates Feld. Die Kind-Definition erläutert passende inhaltliche Schwerpunkte. Die Beschreibung bleibt verbindlicher kanonischer Inhalt, auch unter metadata.
 
