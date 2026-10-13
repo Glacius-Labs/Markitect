@@ -55,7 +55,7 @@ Product package directories name their layers: `src/internal/core`, `infrastruct
 Known problems across layers:
 
 - Small utilities remain package-local across layers: production `sameStrings` definitions exist in two packages, `equalStrings` in three and `containsString` in four. ARCH-05 consolidated the identical comparison within `projectrun`; it introduced no shared cross-layer utility abstraction.
-- Four packages keep their own record store, each with its own file layout and write path: `projectrun` (`store.go`), `projectexplore` (`store.go`), `projecthistory` (`store.go`) and `projectadoption` (`session.go`, `manager_run_ledger.go`) (ARCH-14).
+- Four packages keep their own record store, each with its own file layout and write path: `projectrun` (`store.go`), `projectexplore` (`store.go`), `projecthistory` (`store.go`) and `projectadoption` (`session.go`; `manager_run_ledger.go` retains read-only historical parsing) (ARCH-14).
 
 ## Core layer
 
@@ -103,9 +103,7 @@ The application layer holds the product's use cases and the surfaces that expose
 - `projectcli` holds the verb table behind the `markitect` command line and its MCP tools, and `mcp` is the stdio MCP adapter ([project operations](project-operations.md)).
 - `releasecli` is the command interface of `markitect-release`.
 
-Known problems:
-
-- `projectadoption` runs its Managers through its own stack and ledger on `agentexec` (`manager_run.go`, `manager_run_ledger.go`), separate from `projectrun` (ARCH-15).
+Brownfield discovery, accepted target context, Manager evidence assignment, typed proposal/integration validation, human resolution and Session CAS remain in Application. `projectapp.BrownfieldRun` prepares the existing domain request and calls Runtime's finite `PreviewManagerStage`, `RunManagerStage`, `ReviewManagerStage` and `CompleteManagerStage` ports. It holds the existing per-session process-file lease from admission through the Session CAS. Historical `manager-runs.json` records remain readable under their original digest meaning; any nonempty or budget-sealed legacy journal blocks new Runtime admission without conversion or rewriting.
 
 ## Runtime layer
 
@@ -113,7 +111,9 @@ The runtime runs Manager, review, integration and verify roles and records what 
 
 Application composes Runtime with finite typed Host callbacks for project loading, candidate classification/rendering, history and exploration operations. Runtime retains scheduling, quotas, independent review, verification, guarded Apply and exact-turn recovery; Application performs the required record observations and CAS writes. A read-only Full Verify audits its captured accepted-history input throughout that invocation; writing paths read persisted history at their existing freshness gates. The callbacks preserve each lifecycle gate, including the logical readiness precondition under the Apply writer lock and captured-file checks before each changed path. Completion follows successful Verify and journalled Apply, and recovery does not replay work.
 
-- `projectrun` plans, runs, resumes, repairs, verifies and applies bounded Manager work over fixed snapshots. It owns the run store under `.markitect/runs/`, the budgets, the review rounds and the Apply preflight.
+- `projectrun` plans, runs, resumes, repairs, verifies and applies bounded Manager work over fixed snapshots. Ordinary Manager work, integration, rework and independent reviews share its durable attempt and role-reservation lifecycle with Brownfield Manager stages. Brownfield uses a disjoint planless binding in the existing run store under `.markitect/runs/`; it creates no synthetic plan, task or implementation candidate. Runtime retains immutable original report bytes and exact-turn recovery before Application attaches a typed result. Verify, Full Verify and guarded Apply retain their existing lower-role lifecycles.
+- Brownfield freezes cumulative starts, explicit retries, duration and reported-cost ceilings at first admission and persists tightening without refill. Input and output costs round upward separately; ordinary pricing and wall-clock deadlines keep their existing meaning. Configured report review is independent and required; nil review keeps the disabled policy. `MaxRounds` bounds cumulative reviewer rounds per Manager/phase, while `MaxManagerRounds` remains the ordinary Manager-directed rework ceiling. Brownfield performs no automatic Manager rework.
+- Brownfield process and exchange calls audit both canonical source and target roots, with private invocation/log directories outside them. Ordinary transport options and parallel batches stay unchanged. Empty regular audit inputs retain their complete facts and read-access/identity/type/size/mode/time checks without a DATA read, so the unchanged Windows session byte-range lock can remain held. This is an input-change check, not an operating-system sandbox or a claim to detect transient rewrites restored before observations.
 - `projectconfig` owns runtime types, strict bounded loading and validation, agent projection and strictness profiles. Setup and MCP schema reflection consume it directly; accepted Manager references and cumulative policy enforcement remain in the method coordinator.
 - `projectexecutor` composes process/native dispatch, request-aware fingerprints and private transport journals. Application composition injects the method's helper policy; exact-turn recovery retains the existing no-replay boundary.
 - `agentexec` is the provider-neutral process boundary for one role invocation and its receipt.

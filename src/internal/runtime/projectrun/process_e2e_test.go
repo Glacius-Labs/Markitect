@@ -57,6 +57,19 @@ func TestProjectRunReviewerFindingsTriggerTargetedImplementerRepair(t *testing.T
 	if err != nil {
 		t.Fatal(err)
 	}
+	seenAttempts := map[string]bool{}
+	for _, invocation := range run.Invocations {
+		if invocation.Attempt == nil || seenAttempts[invocation.Attempt.ID] || invocation.Attempt.RequestRef == nil || invocation.Attempt.ResponseRef == nil || invocation.Attempt.ReportRef == nil {
+			t.Fatal("ordinary route lost or duplicated its durable attempt")
+		}
+		seenAttempts[invocation.Attempt.ID] = true
+		if _, err := readStageEvidence(store, run.ID, invocation.Attempt.ReportRef); err != nil {
+			t.Fatal(err)
+		}
+	}
+	if len(run.RoleStartReservations) != len(seenAttempts) {
+		t.Fatal("ordinary roots were charged twice or not reserved")
+	}
 	for i, review := range ordersReviews {
 		candidate, err := store.readCandidate(dir, review.CandidateID)
 		if err != nil || candidate.Digest != review.CandidateDigest {

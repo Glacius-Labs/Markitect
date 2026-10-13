@@ -32,6 +32,9 @@ func (e *runExecution) resumeExisting() (bool, RunReport, error) {
 		}
 		return false, e.report, fmt.Errorf("unfinished manager-directed rework round %d requires a new plan", round.Number)
 	}
+	if report, err := e.bindRuntimeBudget(); err != nil {
+		return false, report, err
+	}
 	pendingReviewRecovered := false
 	for _, task := range e.report.Tasks {
 		if task.ReviewStatus == "invoking" || task.ReviewStatus == "uncertain" || task.ReviewStatus == StatusAwaitingExternal {
@@ -80,6 +83,9 @@ func (e *runExecution) resumeExisting() (bool, RunReport, error) {
 			config, configErr = agent.AgentConfig()
 		}
 		if !configured || configErr != nil || (config.Transport != projectconfig.TransportCodexAppServer && !externalExecutionEnabled(e.ctx)) || task.ID == "" {
+			if err := journalFromContext(e.ctx).markOrdinaryProcessAttemptUncertain(task, phase); err != nil {
+				return false, e.report, err
+			}
 			if current := findTask(e.report.Tasks, task.ManagerID); current != nil {
 				current.State = "uncertain"
 			}
@@ -90,7 +96,7 @@ func (e *runExecution) resumeExisting() (bool, RunReport, error) {
 			}
 			return false, e.report, fmt.Errorf("uncertain in-flight manager process requires a new plan: %s", task.ManagerID)
 		}
-		e.pendingRecoveries = append(e.pendingRecoveries, pendingNativeRecovery{managerID: task.ManagerID, phase: phase, taskID: nativeTaskAttemptID(task, phase)})
+		e.pendingRecoveries = append(e.pendingRecoveries, pendingNativeRecovery{managerID: task.ManagerID, phase: phase, taskID: ordinaryRunAttemptID(e.report, nativeTaskAttemptID(task, phase))})
 	}
 	if (e.report.Status == StatusFailed || e.report.Status == StatusBlocked) && len(e.pendingRecoveries) == 0 && !pendingReviewRecovered {
 		return false, e.report, fmt.Errorf("run status %s cannot be resumed without an exact native invocation to recover", e.report.Status)

@@ -1,13 +1,11 @@
 package projectadoption
 
 import (
-	"context"
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"fmt"
-	"math"
 	"os"
 	"path/filepath"
 	"sort"
@@ -15,6 +13,8 @@ import (
 
 	"github.com/Glacius-Labs/Markitect/src/internal/core/projectmodel"
 	"github.com/Glacius-Labs/Markitect/src/internal/runtime/agentexec"
+	"github.com/Glacius-Labs/Markitect/src/internal/runtime/projectexecutor"
+	"github.com/Glacius-Labs/Markitect/src/internal/runtime/projectrun"
 )
 
 const (
@@ -48,57 +48,41 @@ type ManagerRunLimits struct {
 	PrivateLogDirectory         string        `json:"-"`
 }
 
-// ManagerRunInvoker is the only execution seam. The Host builds a bounded,
-// typed report request and passes it to this caller-supplied executor once.
-type ManagerRunInvoker interface {
-	Run(context.Context, agentexec.Config, agentexec.Request, agentexec.RunOptions) (agentexec.RunResult, error)
-	Fingerprint(agentexec.Config) (string, error)
-}
-
-type AgentExecManagerRunInvoker struct{}
-
-func (AgentExecManagerRunInvoker) Run(ctx context.Context, config agentexec.Config, request agentexec.Request, options agentexec.RunOptions) (agentexec.RunResult, error) {
-	return agentexec.Run(ctx, config, request, options)
-}
-func (AgentExecManagerRunInvoker) Fingerprint(config agentexec.Config) (string, error) {
-	return agentexec.Fingerprint(config)
-}
-
 type ManagerRunPreview struct {
-	SessionDigest               string        `json:"sessionDigest"`
-	IterationID                 string        `json:"iterationId"`
-	Phase                       string        `json:"phase"`
-	ManagerID                   string        `json:"managerId"`
-	AgentManagerID              string        `json:"agentManagerId"`
-	ManagerOrigin               string        `json:"managerOrigin"`
-	ProviderVersion             string        `json:"providerVersion"`
-	Model                       string        `json:"model"`
-	ConfigFingerprint           string        `json:"configFingerprint"`
-	RuntimeFileDigest           string        `json:"runtimeFileDigest"`
-	LimitsDigest                string        `json:"limitsDigest"`
-	LedgerDigest                string        `json:"ledgerDigest"`
-	ContextDigest               string        `json:"contextDigest"`
-	RequestDigest               string        `json:"requestDigest"`
-	RequestContractDigest       string        `json:"requestContractDigest"`
-	PreviewDigest               string        `json:"previewDigest"`
-	RetryOfAttemptID            string        `json:"retryOfAttemptId,omitempty"`
-	EvidenceCount               int           `json:"evidenceCount"`
-	ChildReportCount            int           `json:"childReportCount"`
-	RemainingStarts             int           `json:"remainingStarts"`
-	RemainingRetries            int           `json:"remainingRetries"`
-	RemainingDuration           time.Duration `json:"remainingDuration"`
-	RemainingCostMicros         int64         `json:"remainingCostMicros"`
-	Timeout                     time.Duration `json:"timeout"`
-	MaxStdoutBytes              int           `json:"maxStdoutBytes"`
-	MaxStderrBytes              int           `json:"maxStderrBytes"`
-	InputPriceMicrosPerMillion  int64         `json:"inputPriceMicrosPerMillion"`
-	OutputPriceMicrosPerMillion int64         `json:"outputPriceMicrosPerMillion"`
-	Completed                   bool          `json:"completed"`
+	SessionDigest               string                                   `json:"sessionDigest"`
+	IterationID                 string                                   `json:"iterationId"`
+	Phase                       string                                   `json:"phase"`
+	ManagerID                   string                                   `json:"managerId"`
+	AgentManagerID              string                                   `json:"agentManagerId"`
+	ManagerOrigin               string                                   `json:"managerOrigin"`
+	ProviderVersion             string                                   `json:"providerVersion"`
+	Model                       string                                   `json:"model"`
+	ConfigFingerprint           string                                   `json:"configFingerprint"`
+	RuntimeFileDigest           string                                   `json:"runtimeFileDigest"`
+	LimitsDigest                string                                   `json:"limitsDigest"`
+	LedgerDigest                string                                   `json:"ledgerDigest"`
+	ContextDigest               string                                   `json:"contextDigest"`
+	RequestDigest               string                                   `json:"requestDigest"`
+	RequestContractDigest       string                                   `json:"requestContractDigest"`
+	PreviewDigest               string                                   `json:"previewDigest"`
+	RetryOfAttemptID            string                                   `json:"retryOfAttemptId,omitempty"`
+	EvidenceCount               int                                      `json:"evidenceCount"`
+	ChildReportCount            int                                      `json:"childReportCount"`
+	RemainingStarts             int                                      `json:"remainingStarts"`
+	RemainingRetries            int                                      `json:"remainingRetries"`
+	RemainingDuration           time.Duration                            `json:"remainingDuration"`
+	RemainingCostMicros         int64                                    `json:"remainingCostMicros"`
+	Timeout                     time.Duration                            `json:"timeout"`
+	MaxStdoutBytes              int                                      `json:"maxStdoutBytes"`
+	MaxStderrBytes              int                                      `json:"maxStderrBytes"`
+	InputPriceMicrosPerMillion  int64                                    `json:"inputPriceMicrosPerMillion"`
+	OutputPriceMicrosPerMillion int64                                    `json:"outputPriceMicrosPerMillion"`
+	Completed                   bool                                     `json:"completed"`
+	Review                      *projectrun.ManagerStageReviewProjection `json:"review,omitempty"`
 }
 
-// ManagerRunEvent is an immutable journal entry. A start event is flushed
-// before invoking the child process; terminal events retain receipts and only
-// safe rejection categories, never transcripts or private log bodies.
+// ManagerRunEvent describes the historical ledger for strict read-only parsing.
+// New Manager attempts and receipts are written only by the Runtime run store.
 type ManagerRunEvent struct {
 	Sequence                    int                 `json:"sequence"`
 	AttemptID                   string              `json:"attemptId"`
@@ -180,6 +164,7 @@ type managerRunRequestContext struct {
 	Kind            string                     `json:"kind"`
 	Instructions    string                     `json:"instructions"`
 	Phase           string                     `json:"phase"`
+	Purpose         string                     `json:"purpose"`
 	SessionDigest   string                     `json:"sessionDigest"`
 	DiscoveryDigest string                     `json:"discoveryDigest"`
 	TargetDigest    string                     `json:"targetContextDigest"`
@@ -194,206 +179,24 @@ type managerRunRequestContext struct {
 // an agent. expectedSessionDigest and retryOfAttemptID are optional for a new
 // preview; either becomes part of the preview binding when supplied.
 func PreviewManagerStage(sourceRoot, targetRoot, sessionID, iterationID, phase, agentManagerID, expectedSessionDigest, retryOfAttemptID string, config agentexec.Config, limits ManagerRunLimits) (ManagerRunPreview, error) {
-	return buildManagerRunPreview(sourceRoot, targetRoot, sessionID, iterationID, phase, agentManagerID, expectedSessionDigest, retryOfAttemptID, config, limits, AgentExecManagerRunInvoker{})
+	return buildManagerRunPreview(sourceRoot, targetRoot, sessionID, iterationID, phase, agentManagerID, expectedSessionDigest, retryOfAttemptID, config, limits, projectexecutor.ProcessInvoker{})
 }
 
 // PreviewManagerStageWithInvoker binds preview to the same explicitly selected
 // transport fingerprint used by guarded execution. It never invokes a role.
-func PreviewManagerStageWithInvoker(sourceRoot, targetRoot, sessionID, iterationID, phase, agentManagerID, expectedSessionDigest, retryOfAttemptID string, config agentexec.Config, limits ManagerRunLimits, invoker ManagerRunInvoker) (ManagerRunPreview, error) {
+func PreviewManagerStageWithInvoker(sourceRoot, targetRoot, sessionID, iterationID, phase, agentManagerID, expectedSessionDigest, retryOfAttemptID string, config agentexec.Config, limits ManagerRunLimits, invoker projectrun.Invoker) (ManagerRunPreview, error) {
 	if invoker == nil {
 		return ManagerRunPreview{}, errors.New("manager preview requires an invoker")
 	}
 	return buildManagerRunPreview(sourceRoot, targetRoot, sessionID, iterationID, phase, agentManagerID, expectedSessionDigest, retryOfAttemptID, config, limits, invoker)
 }
 
-// RunManagerStage repeats preview construction under a per-session execution
-// lock and invokes exactly one explicitly requested stage only when its digest
-// matches. A repeated completed or failed request returns its durable result;
-// explicit retry requires the latest failed attempt ID and a fresh preview.
-func RunManagerStage(ctx context.Context, sourceRoot, targetRoot, sessionID, iterationID, phase, agentManagerID, expectedPreviewDigest, retryOfAttemptID string, config agentexec.Config, limits ManagerRunLimits, invoker ManagerRunInvoker) (ManagerRunResult, error) {
-	var empty ManagerRunResult
-	if ctx == nil || invoker == nil {
-		return empty, errors.New("manager stage requires context and an invoker")
-	}
-	dir, err := sessionDirectory(sourceRoot, sessionID, false)
-	if err != nil {
-		return empty, err
-	}
-	unlock, err := acquireNamedLock(dir, managerRunLockName)
-	if err != nil {
-		return empty, err
-	}
-	defer unlock()
-	preview, session, request, _, err := buildManagerRunPreviewInternal(sourceRoot, targetRoot, sessionID, iterationID, phase, agentManagerID, "", retryOfAttemptID, config, limits, invoker)
-	if err != nil {
-		return empty, err
-	}
-	if expectedPreviewDigest == "" || expectedPreviewDigest != preview.PreviewDigest {
-		return ManagerRunResult{Status: "stale-preview", PriorSessionDigest: session.Digest, SessionDigest: session.Digest, IterationID: iterationID, Phase: phase}, errors.New("manager stage preview changed; regenerate preview before invocation")
-	}
-	ledger, err := loadManagerRunLedger(dir, sessionID)
-	if err != nil {
-		return empty, err
-	}
-	limits, err = frozenManagerRunLimits(ledger, limits)
-	if err != nil {
-		return empty, err
-	}
-	if complete := completedManagerStage(session, iterationID, phase); complete {
-		return managerRunCompletedResult(session, ledger, iterationID, phase), nil
-	}
-	if prior, ok := latestManagerAttempt(ledger, iterationID, phase); ok {
-		if retryOfAttemptID == "" {
-			if prior.Status == "succeeded" {
-				return recoverManagerRunStage(sourceRoot, targetRoot, session, ledger, prior, preview, invoker, config)
-			}
-			result := managerRunAttemptResult(session, ledger, prior, "attempt-exists")
-			if prior.Status == "failed" && prior.Execution != nil && prior.CostKnown {
-				return result, fmt.Errorf("prior Manager attempt failed (%s); retry explicitly with attempt ID %s after reviewing the recorded receipt", prior.SafeFailure, prior.AttemptID)
-			}
-			return result, fmt.Errorf("prior Manager attempt %s has no recoverable priced terminal receipt; no automatic replay is allowed", prior.Status)
-		}
-		if prior.AttemptID != retryOfAttemptID || prior.Status != "failed" || prior.Execution == nil || !prior.CostKnown {
-			return empty, errors.New("explicit retry must name the latest failed attempt with a known receipt and cost")
-		}
-	}
-	if err := checkManagerRunBudget(ledger, limits, config.Timeout, retryOfAttemptID != ""); err != nil {
-		return empty, err
-	}
-	_, _, elapsedBefore, _, unknownBefore := managerRunUsage(ledger)
-	if unknownBefore {
-		return empty, errors.New("prior manager invocation has unknown cost; session is blocked fail-closed")
-	}
-	if ledger.Digest != preview.LedgerDigest {
-		return ManagerRunResult{Status: "stale-preview", PriorSessionDigest: session.Digest, SessionDigest: session.Digest, IterationID: iterationID, Phase: phase}, errors.New("manager run ledger changed; regenerate preview before invocation")
-	}
-	if err := revalidateManagerRunBases(sourceRoot, targetRoot, sessionID, session.Digest, preview.RuntimeFileDigest, invoker, config, preview.ConfigFingerprint); err != nil {
-		return empty, err
-	}
-	attemptID, err := newSessionRunID()
-	if err != nil {
-		return empty, err
-	}
-	started := time.Now().UTC()
-	privateLogs := limits.PrivateLogDirectory
-	if privateLogs == "" {
-		privateLogs, err = newPrivateLogDirectory(os.TempDir())
-		if err != nil {
-			return empty, fmt.Errorf("prepare private invocation log directory: %w", err)
-		}
-	}
-	tempParent := limits.TempParent
-	if tempParent == "" {
-		tempParent = os.TempDir()
-	}
-	if ledger.Budget == nil {
-		budget := budgetProjection(limits)
-		ledger.Budget = &budget
-	}
-	start := ManagerRunEvent{Sequence: len(ledger.Events) + 1, AttemptID: attemptID, RetryOfAttemptID: retryOfAttemptID, Event: "started", SessionDigest: session.Digest,
-		IterationID: iterationID, Phase: phase, ManagerID: preview.ManagerID, AgentManagerID: agentManagerID,
-		PreviewDigest: preview.PreviewDigest, ContextDigest: preview.ContextDigest, RequestDigest: preview.RequestDigest, RequestContractDigest: preview.RequestContractDigest,
-		ConfigFingerprint: preview.ConfigFingerprint, RuntimeFileDigest: preview.RuntimeFileDigest, LimitsDigest: preview.LimitsDigest,
-		Timeout: preview.Timeout, MaxStdoutBytes: preview.MaxStdoutBytes, MaxStderrBytes: preview.MaxStderrBytes,
-		InputPriceMicrosPerMillion: preview.InputPriceMicrosPerMillion, OutputPriceMicrosPerMillion: preview.OutputPriceMicrosPerMillion, StartedAt: started}
-	sealManagerRunEvent(&start)
-	ledger.Events = append(ledger.Events, start)
-	sealManagerRunLedger(&ledger)
-	if err := writeManagerRunLedger(dir, ledger); err != nil {
-		return empty, fmt.Errorf("persist manager invocation start: %w", err)
-	}
-	result := ManagerRunResult{Status: "invoking", PriorSessionDigest: session.Digest, SessionDigest: session.Digest, IterationID: iterationID, Phase: phase, AttemptID: attemptID}
-	runResult, invokeErr := invoker.Run(ctx, config, request, agentexec.RunOptions{InputRoots: []string{}, TempParent: tempParent, PrivateLogDirectory: privateLogs})
-	terminal := ManagerRunEvent{Sequence: len(ledger.Events) + 1, AttemptID: attemptID, Event: "terminal", SessionDigest: session.Digest,
-		IterationID: iterationID, Phase: phase, ManagerID: preview.ManagerID, AgentManagerID: agentManagerID,
-		PreviewDigest: preview.PreviewDigest, ContextDigest: preview.ContextDigest, RequestDigest: preview.RequestDigest, RequestContractDigest: preview.RequestContractDigest,
-		ConfigFingerprint: preview.ConfigFingerprint, RuntimeFileDigest: preview.RuntimeFileDigest, LimitsDigest: preview.LimitsDigest,
-		Timeout: preview.Timeout, MaxStdoutBytes: preview.MaxStdoutBytes, MaxStderrBytes: preview.MaxStderrBytes,
-		InputPriceMicrosPerMillion: preview.InputPriceMicrosPerMillion, OutputPriceMicrosPerMillion: preview.OutputPriceMicrosPerMillion,
-		StartedAt: started, FinishedAt: time.Now().UTC(), Status: "failed", SafeFailure: "invocation-failed"}
-	if runResult.Receipt.RunID != "" {
-		receipt := runResult.Receipt
-		terminal.Execution = &receipt
-		terminal.ExecutionDigest = digestValue(receipt)
-		if cost, known := managerRunCost(receipt.Usage, limits); known {
-			terminal.CostKnown, terminal.EstimatedCostMicros = true, cost
-		}
-	}
-	if invokeErr == nil && terminal.Execution == nil {
-		invokeErr = errors.New("manager executor returned no execution receipt")
-	}
-	if invokeErr == nil {
-		if err := validateManagerExecutorEnvelope(runResult, request, attemptID); err != nil {
-			invokeErr = err
-			terminal.SafeFailure = "invalid-executor-envelope"
-		}
-	}
-	if invokeErr == nil && !terminal.CostKnown {
-		invokeErr = errors.New("manager executor omitted provider-reported token usage; session cost is unknown")
-		terminal.SafeFailure = "usage-unknown"
-	}
-	var proposal *ManagerProposal
-	var integration *ManagerIntegration
-	if invokeErr == nil {
-		proposal, integration, invokeErr = acceptManagerStageDraft(session, iterationID, phase, preview.ManagerID, runResult.Response.ReportJSON, config, *terminal.Execution)
-		if invokeErr != nil {
-			terminal.SafeFailure = "invalid-manager-report"
-		}
-	}
-	if invokeErr == nil && terminal.EstimatedCostMicros > preview.RemainingCostMicros {
-		invokeErr = errors.New("manager stage exceeded the session-wide reported cost budget")
-		terminal.SafeFailure = "cost-budget-exceeded"
-	}
-	terminal.FinishedAt = time.Now().UTC()
-	if invokeErr == nil && (terminal.FinishedAt.Sub(started) > time.Duration(math.MaxInt64)-elapsedBefore || elapsedBefore+terminal.FinishedAt.Sub(started) > limits.MaxDuration) {
-		invokeErr = errors.New("manager stage exceeded the session-wide elapsed-duration budget")
-		terminal.SafeFailure = "duration-budget-exceeded"
-	}
-	terminal.Status = "failed"
-	if invokeErr == nil {
-		terminal.Status = "succeeded"
-		terminal.Proposal, terminal.Integration = proposal, integration
-	}
-	sealManagerRunEvent(&terminal)
-	ledger.Events = append(ledger.Events, terminal)
-	sealManagerRunLedger(&ledger)
-	if err := writeManagerRunLedger(dir, ledger); err != nil {
-		return result, fmt.Errorf("retain manager execution receipt: %w", err)
-	}
-	result.AttemptStatus, result.Execution, result.ExecutionDigest, result.LedgerDigest = terminal.Status, terminal.Execution, terminal.ExecutionDigest, ledger.Digest
-	if invokeErr != nil {
-		result.Status = "failed"
-		return result, invokeErr
-	}
-	if err := revalidateManagerRunBases(sourceRoot, targetRoot, sessionID, session.Digest, preview.RuntimeFileDigest, invoker, config, preview.ConfigFingerprint); err != nil {
-		result.Status = "stale-after-invocation"
-		return result, err
-	}
-	var next BrownfieldSession
-	if proposal != nil {
-		next, err = RecordManagerProposal(session, iterationID, *proposal)
-	} else {
-		next, err = IntegrateManagerProposal(session, iterationID, preview.ManagerID, *integration)
-	}
-	if err != nil {
-		result.Status = "stage-not-recorded"
-		return result, err
-	}
-	if _, err = WriteBrownfieldSession(sourceRoot, next, session.Digest); err != nil {
-		result.Status = "stage-not-recorded"
-		return result, fmt.Errorf("persist validated manager stage after retaining receipt: %w", err)
-	}
-	result.Status, result.SessionDigest = "recorded", next.Digest
-	result.Proposal, result.Integration = proposal, integration
-	return result, nil
-}
-
-func buildManagerRunPreview(sourceRoot, targetRoot, sessionID, iterationID, phase, agentManagerID, expectedSessionDigest, retryOfAttemptID string, config agentexec.Config, limits ManagerRunLimits, invoker ManagerRunInvoker) (ManagerRunPreview, error) {
+func buildManagerRunPreview(sourceRoot, targetRoot, sessionID, iterationID, phase, agentManagerID, expectedSessionDigest, retryOfAttemptID string, config agentexec.Config, limits ManagerRunLimits, invoker projectrun.Invoker) (ManagerRunPreview, error) {
 	preview, _, _, _, err := buildManagerRunPreviewInternal(sourceRoot, targetRoot, sessionID, iterationID, phase, agentManagerID, expectedSessionDigest, retryOfAttemptID, config, limits, invoker)
 	return preview, err
 }
 
-func buildManagerRunPreviewInternal(sourceRoot, targetRoot, sessionID, iterationID, phase, agentManagerID, expectedSessionDigest, retryOfAttemptID string, config agentexec.Config, limits ManagerRunLimits, invoker ManagerRunInvoker) (ManagerRunPreview, BrownfieldSession, agentexec.Request, managerRunRequestContext, error) {
+func buildManagerRunPreviewInternal(sourceRoot, targetRoot, sessionID, iterationID, phase, agentManagerID, expectedSessionDigest, retryOfAttemptID string, config agentexec.Config, limits ManagerRunLimits, invoker projectrun.Invoker, runtimeStage ...bool) (ManagerRunPreview, BrownfieldSession, agentexec.Request, managerRunRequestContext, error) {
 	var empty ManagerRunPreview
 	var emptySession BrownfieldSession
 	var emptyRequest agentexec.Request
@@ -461,6 +264,9 @@ func buildManagerRunPreviewInternal(sourceRoot, targetRoot, sessionID, iteration
 	if err != nil {
 		return empty, emptySession, emptyRequest, emptyContext, err
 	}
+	if len(runtimeStage) > 0 && runtimeStage[0] && (ledger.Budget != nil || len(ledger.Events) != 0) {
+		return empty, emptySession, emptyRequest, emptyContext, errors.New("legacy Manager execution ledger cannot be imported or refilled")
+	}
 	limits, err = frozenManagerRunLimits(ledger, limits)
 	if err != nil {
 		return empty, emptySession, emptyRequest, emptyContext, err
@@ -527,7 +333,7 @@ func buildManagerRunPreviewInternal(sourceRoot, targetRoot, sessionID, iteration
 		preview.RemainingCostMicros = 0
 	}
 	preview.Completed = completedManagerStage(session, iterationID, phase)
-	if retryOfAttemptID != "" {
+	if retryOfAttemptID != "" && (len(runtimeStage) == 0 || !runtimeStage[0]) {
 		latest, exists := latestManagerAttempt(ledger, iterationID, phase)
 		if !exists || latest.AttemptID != retryOfAttemptID || latest.Status != "failed" || latest.Execution == nil || !latest.CostKnown {
 			return empty, emptySession, emptyRequest, emptyContext, errors.New("retry must name the latest failed attempt with a known receipt and cost")
@@ -560,7 +366,7 @@ Use modelSchema as authoritative. Do not invent fields or silently normalize YAM
 	}
 	requestContext := managerRunRequestContext{Kind: kind, Instructions: instructions, Phase: phase,
 		SessionDigest: session.Digest, DiscoveryDigest: session.Source.Digest, TargetDigest: session.TargetContext.Digest,
-		ManagerContext: managerContext, Integration: integration, ModelSchema: projectmodel.Schema(), Schema: schemaBytes, Budget: budget}
+		Purpose: iteration.Purpose, ManagerContext: managerContext, Integration: integration, ModelSchema: projectmodel.Schema(), Schema: schemaBytes, Budget: budget}
 	children := 0
 	if integration != nil {
 		children = len(integration.Children)
@@ -695,43 +501,6 @@ func managerRuntimeFileDigest(targetRoot string) (string, error) {
 	return "sha256:" + hex.EncodeToString(hash[:]), nil
 }
 
-func revalidateManagerRunBases(sourceRoot, targetRoot, sessionID, sessionDigest, runtimeDigest string, invoker ManagerRunInvoker, config agentexec.Config, configFingerprint string) error {
-	current, readiness, err := ResumeBrownfieldSession(sourceRoot, targetRoot, sessionID)
-	if err != nil {
-		return fmt.Errorf("revalidate fixed Brownfield bases: %w", err)
-	}
-	if current.Digest != sessionDigest || !readiness.SourceCurrent || !readiness.TargetCurrent {
-		return errors.New("Brownfield session or fixed bases changed during manager invocation")
-	}
-	gotRuntime, err := managerRuntimeFileDigest(targetRoot)
-	if err != nil || gotRuntime != runtimeDigest {
-		return errors.New("target Runtime changed during manager invocation")
-	}
-	fingerprint, err := invoker.Fingerprint(config)
-	if err != nil || fingerprint != configFingerprint {
-		return errors.New("manager runtime fingerprint changed during invocation")
-	}
-	return nil
-}
-
-func validateManagerExecutorEnvelope(result agentexec.RunResult, request agentexec.Request, attemptID string) error {
-	response := result.Response
-	if response.APIVersion != agentexec.APIVersion || response.Role != agentexec.RoleExecutor || response.Outcome != agentexec.OutcomeProposed || response.InputDigest != result.Receipt.InputDigest || response.InputDigest == "" || response.RunID != result.Receipt.RunID {
-		return errors.New("manager executor did not return a proposed response bound to its execution receipt")
-	}
-	if len(response.CandidateFiles) != 0 || len(response.CandidateJSON) != 0 || len(response.VerifierObservations) != 0 || len(response.ReportJSON) == 0 {
-		return errors.New("manager executor must return a report-only response without candidate files or JSON")
-	}
-	if result.Receipt.Outcome != agentexec.OutcomeProposed || result.Receipt.ContextDigest == "" || result.Receipt.ConfigDigest == "" || len(request.Context) == 0 {
-		return errors.New("manager executor receipt does not bind the requested context and configuration")
-	}
-	if digestValue(response.Usage) != digestValue(result.Receipt.Usage) {
-		return errors.New("manager executor receipt usage differs from the returned response")
-	}
-	_ = attemptID
-	return nil
-}
-
 func acceptManagerStageDraft(session BrownfieldSession, iterationID, phase, managerID string, reportJSON json.RawMessage, config agentexec.Config, receipt agentexec.Receipt) (*ManagerProposal, *ManagerIntegration, error) {
 	iteration, ok := findIteration(session, iterationID)
 	if !ok {
@@ -831,4 +600,49 @@ func bindManagerDistillationDraft(session BrownfieldSession, iterationID string,
 		return Distillation{}, err
 	}
 	return report, nil
+}
+
+// PreparedManagerStage is transient Application input. It preserves the exact
+// existing domain builders without projecting request content into new state.
+type PreparedManagerStage struct {
+	Preview     ManagerRunPreview          `json:"-"`
+	Session     BrownfieldSession          `json:"-"`
+	Request     agentexec.Request          `json:"-"`
+	Context     ManagerReverseContext      `json:"-"`
+	Purpose     string                     `json:"-"`
+	Integration *ManagerIntegrationContext `json:"-"`
+	built       managerRunRequestContext
+}
+
+func PrepareManagerStage(sourceRoot, targetRoot, sessionID, iterationID, phase, agentManagerID, expectedSessionDigest, retryOfAttemptID string, config agentexec.Config, limits ManagerRunLimits, invoker projectrun.Invoker) (PreparedManagerStage, error) {
+	preview, session, request, built, err := buildManagerRunPreviewInternal(sourceRoot, targetRoot, sessionID, iterationID, phase, agentManagerID, expectedSessionDigest, retryOfAttemptID, config, limits, invoker, true)
+	return PreparedManagerStage{Preview: preview, Session: session, Request: request, Context: built.ManagerContext, Purpose: built.Purpose, Integration: built.Integration, built: built}, err
+}
+
+func AcceptManagerStageDraft(session BrownfieldSession, iterationID, phase, managerID string, raw json.RawMessage, config agentexec.Config, receipt agentexec.Receipt) (*ManagerProposal, *ManagerIntegration, error) {
+	return acceptManagerStageDraft(session, iterationID, phase, managerID, raw, config, receipt)
+}
+
+// Rebind only the already declared cumulative counters. The static request
+// contract and original Manager context remain authoritative.
+func BindPreparedManagerStageBudget(prepared *PreparedManagerStage, budget ManagerRunContextBudget) error {
+	built := prepared.built
+	if built.Kind == "" {
+		return errors.New("prepared Manager request is absent")
+	}
+	built.Budget = budget
+	encoded, err := json.Marshal(built)
+	if err != nil {
+		return err
+	}
+	prepared.Request.Context = encoded
+	prepared.Preview.RequestDigest = digestValue(prepared.Request)
+	contract, err := managerRequestContractDigest(prepared.Request, built)
+	if err != nil {
+		return err
+	}
+	if contract != prepared.Preview.RequestContractDigest {
+		return errors.New("Manager static request contract changed while binding Runtime counters")
+	}
+	return nil
 }

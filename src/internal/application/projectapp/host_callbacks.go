@@ -8,12 +8,15 @@ import (
 	"fmt"
 	"sort"
 	"strings"
+	"time"
 
+	"github.com/Glacius-Labs/Markitect/src/internal/application/projectadoption"
 	"github.com/Glacius-Labs/Markitect/src/internal/application/projectexplore"
 	"github.com/Glacius-Labs/Markitect/src/internal/application/projecthistory"
 	"github.com/Glacius-Labs/Markitect/src/internal/core/projectmodel/projectbriefing"
 	"github.com/Glacius-Labs/Markitect/src/internal/core/projectmodel/projectvalue"
 	"github.com/Glacius-Labs/Markitect/src/internal/infrastructure/source"
+	"github.com/Glacius-Labs/Markitect/src/internal/runtime/projectconfig"
 	"github.com/Glacius-Labs/Markitect/src/internal/runtime/projectrun"
 )
 
@@ -265,4 +268,35 @@ func sortedUnique(values []string) []string {
 		}
 	}
 	return out
+}
+
+// Prepared facts are rebuilt from the current Session, accepted target and
+// target Runtime at each finite Runtime boundary. Supplied paths/context are
+// never treated as Application authority.
+func (o Operations) brownfieldStageHost(sourceRoot string, operation BrownfieldRunOperation, invoker projectrun.Invoker) projectrun.Host {
+	host := o.Host
+	host.ValidateManagerStage = func(binding projectrun.ManagerStageValidationBinding) error {
+		runtime, err := projectconfig.LoadRuntime(operation.Root)
+		if err != nil {
+			return err
+		}
+		agent, err := projectconfig.ReadOnlyAgent(runtime, operation.Request.AgentManagerID)
+		if err != nil {
+			return err
+		}
+		config, err := agent.AgentConfig()
+		if err != nil {
+			return err
+		}
+		limits := projectadoption.ManagerRunLimits{MaxStarts: runtime.Limits.MaxStarts, MaxRetries: runtime.Limits.MaxRetries, MaxDuration: time.Duration(runtime.Limits.MaxDuration), MaxCostMicros: runtime.Limits.MaxCostMicros, InputPriceMicrosPerMillion: agent.Pricing.InputMicrosPerMillion, OutputPriceMicrosPerMillion: agent.Pricing.OutputMicrosPerMillion, MaxTimeout: config.Timeout, MaxStdoutBytes: config.MaxStdoutBytes, MaxStderrBytes: config.MaxStderrBytes}
+		_, spec, _, _, err := o.prepareBrownfieldRuntimeStage(sourceRoot, operation, runtime, agent, config, limits, binding.SessionDigest, invoker)
+		if err != nil {
+			return err
+		}
+		if brownfieldStageValueDigest(spec.Validation) != brownfieldStageValueDigest(binding) || spec.Validation.SourceRoot != binding.SourceRoot || spec.Validation.TargetRoot != binding.TargetRoot {
+			return errors.New("prepared Brownfield facts changed before Runtime acceptance")
+		}
+		return nil
+	}
+	return host
 }

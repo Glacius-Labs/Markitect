@@ -8,6 +8,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"reflect"
 	"regexp"
 	"runtime"
 	"slices"
@@ -15,11 +16,14 @@ import (
 	"strconv"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/Glacius-Labs/Markitect/src/internal/application/mcp"
 	"github.com/Glacius-Labs/Markitect/src/internal/application/projectapp"
 	"github.com/Glacius-Labs/Markitect/src/internal/application/projectexplore"
 	"github.com/Glacius-Labs/Markitect/src/internal/application/projectonboarding"
+	"github.com/Glacius-Labs/Markitect/src/internal/runtime/agentexec"
+	"github.com/Glacius-Labs/Markitect/src/internal/runtime/projectrun"
 	"github.com/Glacius-Labs/Markitect/src/internal/runtime/projectsetup"
 	"github.com/Glacius-Labs/Markitect/src/internal/testkit"
 )
@@ -679,5 +683,157 @@ func TestRealResultsMatchTheirPublishedOutputSchemas(t *testing.T) {
 		if err := server.ValidateResult(call.tool, result); err != nil {
 			t.Errorf("%s %s result does not match its output schema: %v", call.tool, call.args, err)
 		}
+	}
+}
+
+func ordinaryOutputFixture() projectrun.RunReport {
+	return projectrun.RunReport{
+		ManagerStageBinding: &projectrun.ManagerStageBinding{SessionID: "private-stage"}, ManagerStageLimits: &projectrun.ManagerStageBudget{MaxStarts: 3},
+		ExternalExecution: true, Operation: "realization", APIVersion: "version", ID: "run", PlanID: "plan", Status: "blocked", Mode: "mode",
+		StartedAt: time.Unix(100, 0).UTC(), UpdatedAt: time.Unix(200, 0).UTC(), BaseRevision: "revision", BaseSnapshot: "snapshot", ModelDigest: "model", RuntimeDigest: "runtime",
+		Candidate:             projectrun.CandidateRef{ID: "candidate", Snapshot: "candidate-snapshot", Files: map[string]string{"file": "digest"}, Parents: []string{"parent"}, Integrated: true},
+		Tasks:                 []projectrun.ManagerTask{{ID: "task", ManagerID: "manager", State: "uncertain"}},
+		Invocations:           []projectrun.InvocationLog{{Attempt: &projectrun.ManagerStageAttempt{ID: "original-attempt", Status: "uncertain"}, TaskID: "task", Role: "executor", Phase: "work", InputDigest: "input", Receipt: agentexec.Receipt{RunID: "receipt", ConfigDigest: "config", ContextDigest: "context", InputDigest: "input"}, ReportID: "report", Outcome: "proposed", CostMicros: 7, CostKnown: true, CostOverflow: true}},
+		RoleStartReservations: []projectrun.RoleStartReservation{{Key: "charged", Kind: "root", TaskID: "task", Request: agentexec.RoleStartRequest{RequestID: "original-attempt", State: "unknown"}}},
+		CostMicros:            7, CostAccounting: "partial", Checks: []projectrun.CheckResult{{ID: "check", Command: []string{"tool"}, ExitCode: 1}}, Findings: []string{"finding"},
+		Escalations: []projectrun.Escalation{{ID: "escalation", Question: "question"}}, RepairRounds: []projectrun.RepairRound{{Number: 1, Status: "failed"}},
+		Reviews: []projectrun.ReviewRecord{{TaskID: "task", Outcome: "fail"}}, ManagerReworkRounds: []projectrun.ManagerReworkRound{{Number: 2, Status: "running"}},
+		ActiveRepairCandidateID: "repair-candidate", Revision: 4, Digest: "state-digest",
+	}
+}
+func TestOrdinaryRunOutputPreservesPublicFieldsAndRuntimeAuthority(t *testing.T) {
+	original := ordinaryOutputFixture()
+	for _, invocations := range [][]projectrun.InvocationLog{original.Invocations, nil, {}} {
+		report := original
+		report.Invocations = invocations
+		before := mustRaw(t, report)
+		expected := map[string]any{}
+		if err := json.Unmarshal(before, &expected); err != nil {
+			t.Fatal(err)
+		}
+		delete(expected, "managerStageBinding")
+		delete(expected, "managerStageLimits")
+		if rows, ok := expected["invocations"].([]any); ok {
+			for _, row := range rows {
+				delete(row.(map[string]any), "attempt")
+			}
+		}
+		actual := map[string]any{}
+		if err := json.Unmarshal(mustRaw(t, outputRunReport(report)), &actual); err != nil {
+			t.Fatal(err)
+		}
+		if !reflect.DeepEqual(actual, expected) {
+			t.Fatal("ordinary output lost or changed a public value, nil/empty distinction or invocation row")
+		}
+		if !bytes.Equal(before, mustRaw(t, report)) {
+			t.Fatal("output conversion changed Runtime authority")
+		}
+	}
+	for _, pair := range [][2]reflect.Type{{reflect.TypeFor[projectrun.RunReport](), reflect.TypeFor[runReportOutput]()}, {reflect.TypeFor[projectrun.InvocationLog](), reflect.TypeFor[invocationOutput]()}, {reflect.TypeFor[projectrun.DeliverReport](), reflect.TypeFor[deliverOutput]()}} {
+		index := 0
+		for i := 0; i < pair[0].NumField(); i++ {
+			field := pair[0].Field(i)
+			if field.Name == "ManagerStageBinding" || field.Name == "ManagerStageLimits" || field.Name == "Attempt" {
+				continue
+			}
+			if index >= pair[1].NumField() {
+				t.Fatal("public field was omitted")
+			}
+			output := pair[1].Field(index)
+			if field.Name != output.Name || field.Tag.Get("json") != output.Tag.Get("json") {
+				t.Fatalf("public JSON field order/tag changed: %s", field.Name)
+			}
+			index++
+		}
+		if index != pair[1].NumField() {
+			t.Fatal("ordinary output added a field")
+		}
+	}
+}
+func TestOrdinaryDeliverOutputPreservesNestedPartialRunAndNil(t *testing.T) {
+	run := ordinaryOutputFixture()
+	report := projectrun.DeliverReport{ExplorationID: "exploration", ScopeID: "scope", RunID: run.ID, Status: "blocked", Plan: &projectrun.PlanRecord{ID: "plan"}, Run: &run, Verification: &projectrun.VerifyReport{RunID: "run"}, Preflight: &projectrun.ApplyPreflight{RunID: "run"}, Apply: &projectrun.ApplyReport{RunID: "run"}}
+	for _, nested := range []*projectrun.RunReport{&run, nil} {
+		report.Run = nested
+		expected := map[string]any{}
+		if err := json.Unmarshal(mustRaw(t, report), &expected); err != nil {
+			t.Fatal(err)
+		}
+		if value, ok := expected["run"].(map[string]any); ok {
+			delete(value, "managerStageBinding")
+			delete(value, "managerStageLimits")
+			for _, row := range value["invocations"].([]any) {
+				delete(row.(map[string]any), "attempt")
+			}
+		}
+		actual := map[string]any{}
+		if err := json.Unmarshal(mustRaw(t, outputDeliverReport(report)), &actual); err != nil {
+			t.Fatal(err)
+		}
+		if !reflect.DeepEqual(actual, expected) {
+			t.Fatal("delivery output discarded a partial stage or changed its nil/value behavior")
+		}
+	}
+}
+func TestOrdinaryOutputsPublishNoPrivateStageSchemaAndPreserveErrorReports(t *testing.T) {
+	e := env{root: t.TempDir(), ops: projectapp.Operations{}}
+	server, err := newMCPServer(e)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, tool := range server.Tools() {
+		if tool.Name != "run" && tool.Name != "resume" && tool.Name != "repair" && tool.Name != "deliver" {
+			continue
+		}
+		run := ordinaryOutputFixture()
+		var projected any = outputRunReport(run)
+		if tool.Name == "deliver" {
+			projected = outputDeliverReport(projectrun.DeliverReport{ExplorationID: "e", ScopeID: "s", RunID: run.ID, Status: "applied", Run: &run})
+		}
+		normal := map[string]any{}
+		decoder := json.NewDecoder(bytes.NewReader(mustRaw(t, map[string]any{"operation": tool.Name, "data": projected})))
+		decoder.UseNumber()
+		if err := decoder.Decode(&normal); err != nil {
+			t.Fatal(err)
+		}
+		if err := server.ValidateResult(tool.Name, mcp.CallResult{StructuredContent: normal}); err != nil {
+			t.Fatalf("normal %s projected report violates its published schema: %v", tool.Name, err)
+		}
+		schema := mustRaw(t, tool.OutputSchema)
+		for _, name := range []string{"managerStageBinding", "managerStageLimits", "ManagerStageAttempt", "\"attempt\""} {
+			if bytes.Contains(schema, []byte(name)) {
+				t.Fatalf("ordinary %s publishes internal stage schema %s", tool.Name, name)
+			}
+		}
+	}
+	for _, call := range []struct{ name, args string }{{"run", `{"plan":"p","execute":true}`}, {"resume", `{"run":"r","execute":true}`}, {"repair", `{"run":"r","execute":true}`}} {
+		result, err := server.Call(context.Background(), call.name, json.RawMessage(call.args))
+		if err != nil || !result.IsError {
+			t.Fatalf("%s failure changed: %+v %v", call.name, result, err)
+		}
+		outcome := result.StructuredContent.(map[string]any)
+		if outcome["data"] != nil {
+			t.Fatalf("%s zero report became a partial result", call.name)
+		}
+		if err := server.ValidateResult(call.name, result); err != nil {
+			t.Fatal(err)
+		}
+	}
+	args := json.RawMessage(`{"exploration":"e","scope":"s","execute":true,"write":true}`)
+	expected, expectedErr := e.ops.Deliver(context.Background(), projectapp.DeliverOperation{Root: e.root, Request: projectrun.DeliverRequest{ExplorationID: "e", ScopeID: "s", ExecuteAuthorized: true}})
+	output, err := deliverVerb.invoke(context.Background(), e, args)
+	if expectedErr == nil || err == nil || err.Error() != expectedErr.Error() || !reflect.DeepEqual(output, outputDeliverReport(expected)) {
+		t.Fatal("delivery callback discarded its partial report or changed the original error")
+	}
+	result, err := server.Call(context.Background(), "deliver", args)
+	if err != nil || !result.IsError {
+		t.Fatalf("delivery error was hidden: %+v %v", result, err)
+	}
+	partial := result.StructuredContent.(map[string]any)["data"].(map[string]any)
+	if partial["explorationId"] != "e" || partial["scopeId"] != "s" || partial["status"] != "blocked" {
+		t.Fatal("MCP discarded partial delivery identity/status")
+	}
+	if err := server.ValidateResult("deliver", result); err != nil {
+		t.Fatal(err)
 	}
 }

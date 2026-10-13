@@ -2,15 +2,18 @@ package projectapp
 
 import (
 	"context"
+	"crypto/sha256"
+	"encoding/hex"
+	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/Glacius-Labs/Markitect/src/internal/runtime/projectconfig"
-	"github.com/Glacius-Labs/Markitect/src/internal/runtime/projectworkspace"
 	"path/filepath"
 	"time"
 
 	"github.com/Glacius-Labs/Markitect/src/internal/application/projectadoption"
+	"github.com/Glacius-Labs/Markitect/src/internal/core/projectmodel"
 	"github.com/Glacius-Labs/Markitect/src/internal/runtime/agentexec"
+	"github.com/Glacius-Labs/Markitect/src/internal/runtime/projectconfig"
 	"github.com/Glacius-Labs/Markitect/src/internal/runtime/projectrun"
 )
 
@@ -52,7 +55,7 @@ type BrownfieldManagerAttempt struct {
 // BrownfieldRun shares the provider-free preview and one-shot execution
 // path across transports. The service owns per-session lock,
 // durable invocation events, budget accounting, validation, and CAS attach.
-func (o Operations) BrownfieldRun(ctx context.Context, operation BrownfieldRunOperation, invoker projectadoption.ManagerRunInvoker) (BrownfieldManagerRunOutput, error) {
+func (o Operations) BrownfieldRun(ctx context.Context, operation BrownfieldRunOperation, invoker projectrun.Invoker) (BrownfieldManagerRunOutput, error) {
 	if err := requireRoot(operation.Root); err != nil {
 		return BrownfieldManagerRunOutput{}, err
 	}
@@ -109,52 +112,232 @@ func (o Operations) BrownfieldRun(ctx context.Context, operation BrownfieldRunOp
 		// On a preview, --expect is an optional current-session precondition.
 		expectedSessionDigest = operation.ExpectedDigest
 	}
-	if selectedAgent.Transport == projectconfig.TransportCodexAppServer {
-		invoker = brownfieldReadOnlyInvoker{underlying: invoker, service: o.Host.Workspaces, sourceRoot: sourceRoot, privateLogs: filepath.Join(operation.Root, ".markitect", "runs", "private"), limits: runtime.Limits}
+	if operation.Write {
+		unlock, err := projectadoption.AcquireManagerStageLease(sourceRoot, operation.SessionID)
+		if err != nil {
+			return BrownfieldManagerRunOutput{}, err
+		}
+		defer unlock()
 	}
-	preview, err := projectadoption.PreviewManagerStageWithInvoker(sourceRoot, operation.Root, operation.SessionID, request.IterationID,
-		request.Phase, request.AgentManagerID, expectedSessionDigest, request.RetryOfAttemptID, config, limits, invoker)
+	prepared, spec, accepted, runtimePreview, err := o.prepareBrownfieldRuntimeStage(sourceRoot, operation, runtime, selectedAgent, config, limits, expectedSessionDigest, invoker)
 	if err != nil {
 		return BrownfieldManagerRunOutput{}, err
 	}
+	preview := prepared.Preview
+	mapBrownfieldRuntimePreview(&preview, runtimePreview)
+	output := BrownfieldManagerRunOutput{Status: "preview", Action: "run", SessionDigest: prepared.Session.Digest, PreviewDigest: preview.PreviewDigest, Preview: &preview}
 	if !operation.Write {
-		return BrownfieldManagerRunOutput{Status: "preview", Action: "run", SessionDigest: preview.SessionDigest, PreviewDigest: preview.PreviewDigest, Preview: &preview}, nil
+		return output, nil
 	}
 	if operation.ExpectedDigest != preview.PreviewDigest {
-		return BrownfieldManagerRunOutput{}, errors.New("--expect does not match the exact manager-run preview digest; regenerate the preview and review the changed context, runtime, or budget")
+		return BrownfieldManagerRunOutput{}, errors.New("--expect does not match the exact manager-run preview digest; regenerate the preview")
 	}
-	result, runErr := projectadoption.RunManagerStage(ctx, sourceRoot, operation.Root, operation.SessionID, request.IterationID,
-		request.Phase, request.AgentManagerID, operation.ExpectedDigest, request.RetryOfAttemptID, config, limits, invoker)
-	output := BrownfieldManagerRunOutput{Status: result.Status, Action: "run", SessionDigest: result.SessionDigest,
-		PreviewDigest: preview.PreviewDigest, Preview: &preview, Proposal: result.Proposal, Integration: result.Integration}
-	if output.SessionDigest == "" {
-		output.SessionDigest = preview.SessionDigest
+	if preview.Completed {
+		output.Status = "completed"
+		for _, iteration := range prepared.Session.Iterations {
+			if iteration.ID == request.IterationID {
+				if request.Phase == projectadoption.ManagerRunPhasePropose {
+					output.Proposal = iteration.Proposal
+				} else {
+					output.Integration = iteration.Integration
+				}
+			}
+		}
+		if runtimePreview.LatestAttempt != nil {
+			output.Attempt = &BrownfieldManagerAttempt{ID: runtimePreview.LatestAttempt.ID, Status: runtimePreview.LatestAttempt.Status, LedgerDigest: runtimePreview.StateDigest}
+		}
+		return output, nil
 	}
-	if result.AttemptID != "" {
-		output.Attempt = &BrownfieldManagerAttempt{ID: result.AttemptID, Status: result.AttemptStatus,
-			Execution: result.Execution, ExecutionDigest: result.ExecutionDigest, LedgerDigest: result.LedgerDigest}
+	host := o.brownfieldStageHost(sourceRoot, operation, invoker)
+	result, err := projectrun.RunManagerStage(ctx, host, invoker, spec.SelectedSourceRoot, spec, runtimePreview.PreviewDigest)
+	projectBrownfieldAttempt(&output, result)
+	if err != nil {
+		output.Status = "failed"
+		return output, err
 	}
-	return output, runErr
-}
-
-// The Brownfield source and target model are independently bound. Native
-// assessment reads an owned source Git workspace and cannot write any path.
-type brownfieldReadOnlyInvoker struct {
-	underlying  projectadoption.ManagerRunInvoker
-	service     projectworkspace.Service
-	sourceRoot  string
-	privateLogs string
-	limits      projectconfig.Limits
-}
-
-func (i brownfieldReadOnlyInvoker) Fingerprint(config agentexec.Config) (string, error) {
-	return i.underlying.Fingerprint(config)
-}
-func (i brownfieldReadOnlyInvoker) Run(ctx context.Context, config agentexec.Config, request agentexec.Request, options agentexec.RunOptions) (agentexec.RunResult, error) {
-	return projectrun.RunReadOnlyRepository(ctx, i.service, i.underlying, i.sourceRoot, i.privateLogs, config, request, i.limits)
+	proposal, integration, err := projectadoption.AcceptManagerStageDraft(prepared.Session, request.IterationID, request.Phase, preview.ManagerID, result.Result.Response.ReportJSON, config, result.Result.Receipt)
+	if err != nil {
+		completion, completionErr := projectrun.CompleteManagerStage(spec.SelectedSourceRoot, result.RunID, result.AttemptID, result.StateDigest, projectrun.ManagerStageValidation{SafeFailure: "invalid-manager-report"})
+		if completionErr == nil {
+			projectBrownfieldAttempt(&output, completion)
+		}
+		output.Status = "failed"
+		return output, errors.Join(err, completionErr)
+	}
+	if runtime.Review != nil {
+		reviewSpec, err := brownfieldRuntimeReview(prepared, spec, accepted, runtime)
+		if err != nil {
+			return output, err
+		}
+		review, err := projectrun.ReviewManagerStage(ctx, host, invoker, spec.SelectedSourceRoot, result.RunID, result.AttemptID, reviewSpec, result.StateDigest)
+		if err != nil {
+			output.Status = "review-failed"
+			return output, err
+		}
+		result.StateDigest = review.StateDigest
+		if review.Status != "pass" {
+			completion, err := projectrun.CompleteManagerStage(spec.SelectedSourceRoot, result.RunID, result.AttemptID, result.StateDigest, projectrun.ManagerStageValidation{SafeFailure: "configured-review-failed"})
+			if err == nil {
+				projectBrownfieldAttempt(&output, completion)
+			}
+			output.Status = "review-failed"
+			return output, errors.Join(errors.New("configured Manager review did not pass"), err)
+		}
+	}
+	typedDigest := brownfieldStageValueDigest(struct {
+		Proposal    *projectadoption.ManagerProposal
+		Integration *projectadoption.ManagerIntegration
+	}{proposal, integration})
+	completed, err := projectrun.CompleteManagerStage(spec.SelectedSourceRoot, result.RunID, result.AttemptID, result.StateDigest, projectrun.ManagerStageValidation{Accepted: true, TypedResultDigest: typedDigest})
+	projectBrownfieldAttempt(&output, completed)
+	if err != nil {
+		output.Status = "stage-not-recorded"
+		return output, err
+	}
+	if err := host.ValidateManagerStage(spec.Validation); err != nil {
+		output.Status = "stale-after-invocation"
+		return output, err
+	}
+	var next projectadoption.BrownfieldSession
+	if proposal != nil {
+		next, err = projectadoption.RecordManagerProposal(prepared.Session, request.IterationID, *proposal)
+	} else {
+		next, err = projectadoption.IntegrateManagerProposal(prepared.Session, request.IterationID, preview.ManagerID, *integration)
+	}
+	if err != nil {
+		output.Status = "stage-not-recorded"
+		return output, err
+	}
+	if _, err := projectadoption.WriteBrownfieldSession(spec.SelectedSourceRoot, next, prepared.Session.Digest); err != nil {
+		output.Status = "stage-not-recorded"
+		return output, err
+	}
+	output.Status, output.SessionDigest, output.Proposal, output.Integration = "recorded", next.Digest, proposal, integration
+	if runtimePreview.LatestAttempt != nil && runtimePreview.LatestAttempt.ID == result.AttemptID {
+		output.Status = "recovered"
+	}
+	return output, nil
 }
 
 // RunBrownfield uses the invoker selected by the application composition root.
 func (o Operations) RunBrownfield(ctx context.Context, operation BrownfieldRunOperation) (BrownfieldManagerRunOutput, error) {
 	return o.BrownfieldRun(ctx, operation, o.Invoker)
+}
+
+func brownfieldStageValueDigest(value any) string {
+	encoded, err := json.Marshal(value)
+	if err != nil {
+		panic("Application stage facts cannot be encoded")
+	}
+	return brownfieldStageRawDigest(encoded)
+}
+func brownfieldStageRawDigest(data []byte) string {
+	sum := sha256.Sum256(data)
+	return "sha256:" + hex.EncodeToString(sum[:])
+}
+func brownfieldStageCanonicalRoot(root string) (string, error) {
+	resolved, err := filepath.EvalSymlinks(root)
+	if err != nil {
+		return "", err
+	}
+	return filepath.Abs(resolved)
+}
+
+func (o Operations) prepareBrownfieldRuntimeStage(sourceRoot string, operation BrownfieldRunOperation, runtime projectconfig.Runtime, agent projectconfig.Agent, config agentexec.Config, limits projectadoption.ManagerRunLimits, expectedSession string, invoker projectrun.Invoker) (projectadoption.PreparedManagerStage, projectrun.ManagerStageSpec, projectmodel.ManagerContext, projectrun.ManagerStagePreview, error) {
+	var emptySpec projectrun.ManagerStageSpec
+	var emptyModel projectmodel.ManagerContext
+	var emptyPreview projectrun.ManagerStagePreview
+	prepared, err := projectadoption.PrepareManagerStage(sourceRoot, operation.Root, operation.SessionID, operation.Request.IterationID, operation.Request.Phase, operation.Request.AgentManagerID, expectedSession, operation.Request.RetryOfAttemptID, config, limits, invoker)
+	if err != nil {
+		return prepared, emptySpec, emptyModel, emptyPreview, err
+	}
+	sourceRoot, err = brownfieldStageCanonicalRoot(sourceRoot)
+	if err != nil {
+		return prepared, emptySpec, emptyModel, emptyPreview, err
+	}
+	targetRoot, err := brownfieldStageCanonicalRoot(operation.Root)
+	if err != nil {
+		return prepared, emptySpec, emptyModel, emptyPreview, err
+	}
+	if o.Host.Load == nil {
+		return prepared, emptySpec, emptyModel, emptyPreview, errors.New("Brownfield stages require the accepted target project Host")
+	}
+	target, err := o.Host.Load(targetRoot, prepared.Session.Target.Revision)
+	if err != nil {
+		return prepared, emptySpec, emptyModel, emptyPreview, err
+	}
+	accepted, err := projectmodel.Context(target.Report, operation.Request.AgentManagerID)
+	if err != nil {
+		return prepared, emptySpec, emptyModel, emptyPreview, err
+	}
+	fingerprint := prepared.Preview.ConfigFingerprint
+	if aware, ok := invoker.(interface {
+		FingerprintForRequest(agentexec.Config, agentexec.Request) (string, error)
+	}); ok {
+		fingerprint, err = aware.FingerprintForRequest(config, prepared.Request)
+		if err != nil {
+			return prepared, emptySpec, emptyModel, emptyPreview, err
+		}
+	}
+	budget := projectrun.ManagerStageBudget{MaxStarts: limits.MaxStarts, MaxRetries: limits.MaxRetries, MaxDuration: limits.MaxDuration, MaxCostMicros: limits.MaxCostMicros}
+	validation := projectrun.ManagerStageValidationBinding{SessionID: prepared.Session.ID, SessionDigest: prepared.Session.Digest, IterationID: operation.Request.IterationID, ManagerID: prepared.Preview.ManagerID, AgentManagerID: operation.Request.AgentManagerID, Phase: operation.Request.Phase, AcceptedTargetHead: prepared.Session.Target.Revision, ContextDigest: prepared.Preview.ContextDigest, RequestContractDigest: prepared.Preview.RequestContractDigest, ConfigFingerprint: fingerprint, RuntimeFileDigest: prepared.Preview.RuntimeFileDigest, AcceptedModelDigest: brownfieldStageValueDigest(accepted), SourceRoot: sourceRoot, TargetRoot: targetRoot}
+	binding := projectrun.ManagerStageBinding{SessionID: prepared.Session.ID, SourceIdentity: prepared.Session.Source.Identity.Digest, TargetIdentity: brownfieldStageRawDigest([]byte(targetRoot)), SourceRevision: prepared.Session.Source.Commit, DiscoveryDigest: prepared.Session.Source.Digest, InitialTargetRevision: prepared.Session.Target.Revision, TargetContextDigest: prepared.Session.TargetContext.Digest, Budget: budget, SourceRootDigest: brownfieldStageRawDigest([]byte(sourceRoot)), TargetRootDigest: brownfieldStageRawDigest([]byte(targetRoot))}
+	spec := projectrun.ManagerStageSpec{SelectedSourceRoot: sourceRoot, TargetRoot: targetRoot, Binding: binding, Validation: validation, RetryOfAttemptID: operation.Request.RetryOfAttemptID, Agent: agent, Config: config, Request: prepared.Request, Limits: budget, RuntimeLimits: runtime.Limits, Review: runtime.Review}
+	preview, err := projectrun.PreviewManagerStage(invoker, sourceRoot, spec)
+	if err != nil {
+		return prepared, spec, accepted, preview, err
+	}
+	if err := projectadoption.BindPreparedManagerStageBudget(&prepared, projectadoption.ManagerRunContextBudget{RemainingStarts: preview.RemainingStarts, RemainingRetries: preview.RemainingRetries, RemainingDuration: preview.RemainingDuration, RemainingCostMicros: preview.RemainingCostMicros, RequestedTimeout: config.Timeout}); err != nil {
+		return prepared, spec, accepted, preview, err
+	}
+	spec.Request = prepared.Request
+	prepared.Preview.ConfigFingerprint = fingerprint
+	preview, err = projectrun.PreviewManagerStage(invoker, sourceRoot, spec)
+	return prepared, spec, accepted, preview, err
+}
+
+func mapBrownfieldRuntimePreview(preview *projectadoption.ManagerRunPreview, runtime projectrun.ManagerStagePreview) {
+	preview.PreviewDigest, preview.LedgerDigest, preview.LimitsDigest, preview.RequestDigest = runtime.PreviewDigest, runtime.StateDigest, runtime.LimitsDigest, runtime.RequestDigest
+	preview.RemainingStarts, preview.RemainingRetries, preview.RemainingDuration, preview.RemainingCostMicros = runtime.RemainingStarts, runtime.RemainingRetries, runtime.RemainingDuration, runtime.RemainingCostMicros
+	if runtime.Review.Enabled {
+		review := runtime.Review
+		preview.Review = &review
+	}
+}
+func projectBrownfieldAttempt(output *BrownfieldManagerRunOutput, result projectrun.ManagerStageResult) {
+	if result.AttemptID == "" {
+		return
+	}
+	output.Attempt = &BrownfieldManagerAttempt{ID: result.AttemptID, Status: result.Status, LedgerDigest: result.StateDigest}
+	if result.Result.Receipt.RunID != "" {
+		receipt := result.Result.Receipt
+		output.Attempt.Execution = &receipt
+		output.Attempt.ExecutionDigest = brownfieldStageValueDigest(receipt)
+	}
+}
+
+func brownfieldRuntimeReview(prepared projectadoption.PreparedManagerStage, spec projectrun.ManagerStageSpec, accepted projectmodel.ManagerContext, runtime projectconfig.Runtime) (projectrun.ManagerStageReviewSpec, error) {
+	review := *runtime.Review
+	agent, ok := review.Agents[spec.Validation.AgentManagerID]
+	if !ok {
+		return projectrun.ManagerStageReviewSpec{}, errors.New("configured review requires the explicit accepted Manager binding")
+	}
+	config, err := agent.AgentConfig()
+	if err != nil {
+		return projectrun.ManagerStageReviewSpec{}, err
+	}
+	strictness, err := projectconfig.ResolveStrictness(runtime, spec.Validation.AgentManagerID)
+	if err != nil {
+		return projectrun.ManagerStageReviewSpec{}, err
+	}
+	grounding := map[string][]string{}
+	for _, evidence := range prepared.Context.Evidence {
+		grounding["evidence/"+evidence.EvidenceID+".txt"] = []string{"evidence:" + evidence.EvidenceID}
+	}
+	draft, _ := json.Marshal(struct{ Classification, ManagerID, Phase, RequestContractDigest string }{"manager-proposed-draft", spec.Validation.ManagerID, spec.Validation.Phase, spec.Validation.RequestContractDigest})
+	var children json.RawMessage
+	if prepared.Integration != nil {
+		children, _ = json.Marshal(prepared.Integration.Children)
+	}
+	return projectrun.ManagerStageReviewSpec{Validation: spec.Validation, Agent: agent, Config: config, AcceptedModel: accepted, AcceptedModelDigest: spec.Validation.AcceptedModelDigest, Purpose: prepared.Purpose + "\nDiscovery purpose: " + prepared.Session.Source.Purpose + "\nAccepted Manager purpose: " + prepared.Context.Manager.Purpose, ProposedContext: draft, Evidence: prepared.Request.Artifacts, Grounding: grounding, ChildBindings: children, SourceRoot: spec.SelectedSourceRoot, TargetRoot: spec.TargetRoot, Limits: spec.Limits, RuntimeLimits: spec.RuntimeLimits, Review: review, Strictness: strictness}, nil
 }

@@ -217,7 +217,7 @@ func executeReworkSubtree(ctx context.Context, host Host, invoker Invoker, root 
 			_ = persistState(store, report)
 			return fmt.Errorf("targeted work for %s: %w", managerID, invokeErr)
 		}
-		report.Invocations = append(report.Invocations, invocation)
+		appendInvocationReceipt(report, invocation)
 		*spent = totalCost(report.Invocations)
 		if costExceedsLimit(report.Invocations, runtime.Limits.MaxCostMicros) {
 			return fmt.Errorf("estimated cost limit exceeded during targeted work")
@@ -374,7 +374,7 @@ func reintegrateAfterRework(ctx context.Context, host Host, invoker Invoker, roo
 		_ = persistState(store, report)
 		return nil, err
 	}
-	report.Invocations = append(report.Invocations, invocation)
+	appendInvocationReceipt(report, invocation)
 	*spent = totalCost(report.Invocations)
 	if costExceedsLimit(report.Invocations, runtime.Limits.MaxCostMicros) {
 		return nil, fmt.Errorf("estimated cost limit exceeded during targeted integration")
@@ -528,11 +528,8 @@ func unionPaths(groups ...[]string) []string {
 
 func recordReview(ctx context.Context, host Host, invoker Invoker, root string, store *runStore, report *RunReport, plan PlanRecord, runtime projectconfig.Runtime, project *projectvalue.Project, task ManagerTask, phase string, round int, candidate candidateData) (ReviewRecord, InvocationLog, error) {
 	startedIndex := -1
-	review, invocation, err := invokeReviewer(ctx, host, invoker, root, plan, runtime, project, task, phase, round, candidate, func(started InvocationLog) error {
-		report.Invocations = append(report.Invocations, started)
-		startedIndex = len(report.Invocations) - 1
-		return persistState(store, report)
-	}, *report)
+	review, invocation, err := invokeReviewer(ctx, host, invoker, root, plan, runtime, project, task, phase, round, candidate, *report)
+	startedIndex = invocationAttemptIndex(report.Invocations, invocation)
 	if startedIndex >= 0 {
 		report.Invocations[startedIndex] = invocation
 		if err == nil {

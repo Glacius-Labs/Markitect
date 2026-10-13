@@ -3,7 +3,6 @@ package projectadoption
 import "github.com/Glacius-Labs/Markitect/src/internal/core/projectmodel/projectvalue"
 
 import (
-	"context"
 	"encoding/json"
 	"os"
 	"path/filepath"
@@ -13,6 +12,7 @@ import (
 
 	"github.com/Glacius-Labs/Markitect/src/internal/application/projectwork"
 	"github.com/Glacius-Labs/Markitect/src/internal/runtime/agentexec"
+	"github.com/Glacius-Labs/Markitect/src/internal/runtime/projectexecutor"
 )
 
 const (
@@ -109,303 +109,11 @@ func TestManagerRunExecutorHelper(t *testing.T) {
 	os.Exit(0)
 }
 
-func TestManagerRunPersistsOneExplicitCallPerStageAndRecoversReplay(t *testing.T) {
-	root, targetRoot, session, iterationID := managerRunFixture(t)
-	counter := filepath.Join(t.TempDir(), "calls.txt")
-	config := managerRunTestConfig(t, counter)
-	limits := managerRunTestLimits()
-
-	proposalPreview, err := PreviewManagerStage(root, targetRoot, session.ID, iterationID, ManagerRunPhasePropose,
-		session.TargetContext.RootManagerID, session.Digest, "", config, limits)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if proposalPreview.PreviewDigest == "" || proposalPreview.RemainingStarts != 4 || proposalPreview.EvidenceCount != 1 {
-		t.Fatalf("preview omitted its guard or bounded evidence/budget: %+v", proposalPreview)
-	}
-	proposed, err := RunManagerStage(context.Background(), root, targetRoot, session.ID, iterationID, ManagerRunPhasePropose,
-		session.TargetContext.RootManagerID, proposalPreview.PreviewDigest, "", config, limits, AgentExecManagerRunInvoker{})
-	if err != nil {
-		t.Fatalf("proposal stage: %v", err)
-	}
-	if proposed.Status != "recorded" || proposed.Proposal == nil || proposed.Proposal.Report.Method != "agent-assisted" || proposed.Proposal.Report.RunnerIdentity == "" || proposed.Proposal.Report.SchemaDigest == "" {
-		t.Fatalf("proposal stage did not bind its executed report: %+v", proposed)
-	}
-
-	// A fresh preview of the already persisted proposal is replay-safe: it
-	// returns completion without making a second executor call.
-	replayPreview, err := PreviewManagerStage(root, targetRoot, session.ID, iterationID, ManagerRunPhasePropose,
-		session.TargetContext.RootManagerID, proposed.SessionDigest, "", config, limits)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if !replayPreview.Completed {
-		t.Fatal("proposal replay preview did not report the persisted stage complete")
-	}
-	replayed, err := RunManagerStage(context.Background(), root, targetRoot, session.ID, iterationID, ManagerRunPhasePropose,
-		session.TargetContext.RootManagerID, replayPreview.PreviewDigest, "", config, limits, AgentExecManagerRunInvoker{})
-	if err != nil || replayed.Status != "already-completed" {
-		t.Fatalf("completed proposal replay = %+v, err=%v", replayed, err)
-	}
-
-	integrationPreview, err := PreviewManagerStage(root, targetRoot, session.ID, iterationID, ManagerRunPhaseIntegrate,
-		session.TargetContext.RootManagerID, proposed.SessionDigest, "", config, limits)
-	if err != nil {
-		t.Fatal(err)
-	}
-	integrated, err := RunManagerStage(context.Background(), root, targetRoot, session.ID, iterationID, ManagerRunPhaseIntegrate,
-		session.TargetContext.RootManagerID, integrationPreview.PreviewDigest, "", config, limits, AgentExecManagerRunInvoker{})
-	if err != nil {
-		t.Fatalf("integration stage: %v", err)
-	}
-	if integrated.Status != "recorded" || integrated.Integration == nil || integrated.Integration.ManagerID != session.TargetContext.RootManagerID {
-		t.Fatalf("integration stage was not independently recorded: %+v", integrated)
-	}
-	calls, _ := os.ReadFile(counter)
-	if string(calls) != "xx" {
-		t.Fatalf("expected exactly one distinct process per explicit phase, calls=%q", calls)
-	}
-}
-
-func TestManagerRunRecoversReceiptAfterSessionCASCrash(t *testing.T) {
-	root, targetRoot, session, iterationID := managerRunFixture(t)
-	counter := filepath.Join(t.TempDir(), "calls.txt")
-	config, limits := managerRunTestConfig(t, counter), managerRunTestLimits()
-	preview, err := PreviewManagerStage(root, targetRoot, session.ID, iterationID, ManagerRunPhasePropose,
-		session.TargetContext.RootManagerID, session.Digest, "", config, limits)
-	if err != nil {
-		t.Fatal(err)
-	}
-	completed, err := RunManagerStage(context.Background(), root, targetRoot, session.ID, iterationID, ManagerRunPhasePropose,
-		session.TargetContext.RootManagerID, preview.PreviewDigest, "", config, limits, AgentExecManagerRunInvoker{})
-	if err != nil {
-		t.Fatal(err)
-	}
-	// Simulate a crash after the immutable terminal receipt was stored but
-	// before the session CAS became durable.
-	if _, err := WriteBrownfieldSession(root, session, completed.SessionDigest); err != nil {
-		t.Fatal(err)
-	}
-	recoveryPreview, err := PreviewManagerStage(root, targetRoot, session.ID, iterationID, ManagerRunPhasePropose,
-		session.TargetContext.RootManagerID, session.Digest, "", config, limits)
-	if err != nil {
-		t.Fatal(err)
-	}
-	recovered, err := RunManagerStage(context.Background(), root, targetRoot, session.ID, iterationID, ManagerRunPhasePropose,
-		session.TargetContext.RootManagerID, recoveryPreview.PreviewDigest, "", config, limits, AgentExecManagerRunInvoker{})
-	if err != nil || recovered.Status != "recovered" || recovered.Proposal == nil {
-		t.Fatalf("stored stage receipt did not recover: %+v err=%v", recovered, err)
-	}
-	if calls, _ := os.ReadFile(counter); string(calls) != "x" {
-		t.Fatalf("recovery launched a second executor: %q", calls)
-	}
-}
-
-func TestManagerRunStalePreviewAndExplicitFailureRetry(t *testing.T) {
-	t.Run("runtime change before guarded start", func(t *testing.T) {
-		root, targetRoot, session, iterationID := managerRunFixture(t)
-		counter := filepath.Join(t.TempDir(), "calls.txt")
-		config := managerRunTestConfig(t, counter)
-		limits := managerRunTestLimits()
-		preview, err := PreviewManagerStage(root, targetRoot, session.ID, iterationID, ManagerRunPhasePropose,
-			session.TargetContext.RootManagerID, session.Digest, "", config, limits)
-		if err != nil {
-			t.Fatal(err)
-		}
-		runtimePath := filepath.Join(targetRoot, filepath.FromSlash(managerRunRuntimePath))
-		original, err := os.ReadFile(runtimePath)
-		if err != nil {
-			t.Fatal(err)
-		}
-		if err := os.WriteFile(runtimePath, append(original, []byte("# changed\n")...), 0o644); err != nil {
-			t.Fatal(err)
-		}
-		_, err = RunManagerStage(context.Background(), root, targetRoot, session.ID, iterationID, ManagerRunPhasePropose,
-			session.TargetContext.RootManagerID, preview.PreviewDigest, "", config, limits, AgentExecManagerRunInvoker{})
-		if err == nil {
-			t.Fatal("runtime changed after preview must invalidate the invocation guard")
-		}
-		calls, _ := os.ReadFile(counter)
-		if len(calls) != 0 {
-			t.Fatalf("stale runtime launched an executor: %q", calls)
-		}
-	})
-
-	t.Run("executable configuration change before guarded start", func(t *testing.T) {
-		root, targetRoot, session, iterationID := managerRunFixture(t)
-		counter := filepath.Join(t.TempDir(), "calls.txt")
-		config := managerRunTestConfig(t, counter)
-		limits := managerRunTestLimits()
-		preview, err := PreviewManagerStage(root, targetRoot, session.ID, iterationID, ManagerRunPhasePropose,
-			session.TargetContext.RootManagerID, session.Digest, "", config, limits)
-		if err != nil {
-			t.Fatal(err)
-		}
-		config.Args = append(config.Args, "changed-after-preview")
-		_, err = RunManagerStage(context.Background(), root, targetRoot, session.ID, iterationID, ManagerRunPhasePropose,
-			session.TargetContext.RootManagerID, preview.PreviewDigest, "", config, limits, AgentExecManagerRunInvoker{})
-		if err == nil {
-			t.Fatal("changed executable invocation configuration must invalidate the preview")
-		}
-		calls, _ := os.ReadFile(counter)
-		if len(calls) != 0 {
-			t.Fatalf("stale executable configuration launched an executor: %q", calls)
-		}
-	})
-
-	t.Run("known failure only retries explicitly", func(t *testing.T) {
-		root, targetRoot, session, iterationID := managerRunFixture(t)
-		counter := filepath.Join(t.TempDir(), "calls.txt")
-		config := managerRunTestConfig(t, counter)
-		limits := managerRunTestLimits()
-		t.Setenv(managerRunModeEnv, "invalid-report")
-		preview, err := PreviewManagerStage(root, targetRoot, session.ID, iterationID, ManagerRunPhasePropose,
-			session.TargetContext.RootManagerID, session.Digest, "", config, limits)
-		if err != nil {
-			t.Fatal(err)
-		}
-		failed, err := RunManagerStage(context.Background(), root, targetRoot, session.ID, iterationID, ManagerRunPhasePropose,
-			session.TargetContext.RootManagerID, preview.PreviewDigest, "", config, limits, AgentExecManagerRunInvoker{})
-		if err == nil || failed.AttemptStatus != "failed" || failed.Execution == nil {
-			t.Fatalf("bad report should retain a priced execution receipt: %+v err=%v", failed, err)
-		}
-		ledgerDir, _ := sessionDirectory(root, session.ID, false)
-		ledger, err := loadManagerRunLedger(ledgerDir, session.ID)
-		if err != nil {
-			t.Fatal(err)
-		}
-		if len(ledger.Events) != 2 || ledger.Events[1].SafeFailure != "invalid-manager-report" || !ledger.Events[1].CostKnown {
-			t.Fatalf("failed attempt ledger incomplete: %+v", ledger)
-		}
-		// Repeating the same stage is a durable replay and must not invoke again.
-		replayPreview, err := PreviewManagerStage(root, targetRoot, session.ID, iterationID, ManagerRunPhasePropose,
-			session.TargetContext.RootManagerID, session.Digest, "", config, limits)
-		if err != nil {
-			t.Fatal(err)
-		}
-		replayed, err := RunManagerStage(context.Background(), root, targetRoot, session.ID, iterationID, ManagerRunPhasePropose,
-			session.TargetContext.RootManagerID, replayPreview.PreviewDigest, "", config, limits, AgentExecManagerRunInvoker{})
-		if err == nil || replayed.Status != "attempt-exists" {
-			t.Fatalf("failed replay=%+v err=%v", replayed, err)
-		}
-		if b, _ := os.ReadFile(counter); string(b) != "x" {
-			t.Fatalf("implicit replay made an extra call: %q", b)
-		}
-
-		// Only an explicit retry ID can authorize another invocation.
-		retryPreview, err := PreviewManagerStage(root, targetRoot, session.ID, iterationID, ManagerRunPhasePropose,
-			session.TargetContext.RootManagerID, session.Digest, failed.AttemptID, config, limits)
-		if err != nil {
-			t.Fatal(err)
-		}
-		_, err = RunManagerStage(context.Background(), root, targetRoot, session.ID, iterationID, ManagerRunPhasePropose,
-			session.TargetContext.RootManagerID, retryPreview.PreviewDigest, failed.AttemptID, config, limits, AgentExecManagerRunInvoker{})
-		if err == nil {
-			t.Fatal("explicit retry still returns the intentionally invalid report")
-		}
-		if b, _ := os.ReadFile(counter); string(b) != "xx" {
-			t.Fatalf("explicit retry invocation count=%q", b)
-		}
-	})
-}
-
-func TestManagerRunUnrecordableHierarchyIsRetryableFailure(t *testing.T) {
-	for _, mode := range []string{"invalid-child-id", "accepted-child-mismatch"} {
-		t.Run(mode, func(t *testing.T) {
-			root, targetRoot, session, iterationID := managerRunFixture(t)
-			counter := filepath.Join(t.TempDir(), "calls.txt")
-			config := managerRunTestConfig(t, counter)
-			limits := managerRunTestLimits()
-			t.Setenv(managerRunModeEnv, mode)
-			rootID := session.TargetContext.RootManagerID
-			preview, err := PreviewManagerStage(root, targetRoot, session.ID, iterationID, ManagerRunPhasePropose, rootID, session.Digest, "", config, limits)
-			if err != nil {
-				t.Fatal(err)
-			}
-			failed, err := RunManagerStage(context.Background(), root, targetRoot, session.ID, iterationID, ManagerRunPhasePropose,
-				rootID, preview.PreviewDigest, "", config, limits, AgentExecManagerRunInvoker{})
-			if err == nil || failed.Status != "failed" || failed.AttemptStatus != "failed" || failed.Execution == nil {
-				t.Fatalf("a hierarchy the session rejects must seal a failed attempt with its receipt: %+v err=%v", failed, err)
-			}
-			ledgerDir, _ := sessionDirectory(root, session.ID, false)
-			ledger, err := loadManagerRunLedger(ledgerDir, session.ID)
-			if err != nil {
-				t.Fatal(err)
-			}
-			if len(ledger.Events) != 2 || ledger.Events[1].SafeFailure != "invalid-manager-report" || ledger.Events[1].Proposal != nil {
-				t.Fatalf("failed attempt must be recorded as invalid-manager-report without a recoverable proposal: %+v", ledger.Events)
-			}
-			replayPreview, err := PreviewManagerStage(root, targetRoot, session.ID, iterationID, ManagerRunPhasePropose, rootID, session.Digest, "", config, limits)
-			if err != nil {
-				t.Fatal(err)
-			}
-			replayed, err := RunManagerStage(context.Background(), root, targetRoot, session.ID, iterationID, ManagerRunPhasePropose,
-				rootID, replayPreview.PreviewDigest, "", config, limits, AgentExecManagerRunInvoker{})
-			if err == nil || replayed.Status != "attempt-exists" {
-				t.Fatalf("plain re-run must report the failed attempt, not recover it: %+v err=%v", replayed, err)
-			}
-			if _, err := PreviewManagerStage(root, targetRoot, session.ID, iterationID, ManagerRunPhasePropose, rootID, session.Digest, failed.AttemptID, config, limits); err != nil {
-				t.Fatalf("explicit retry of the failed attempt must be allowed: %v", err)
-			}
-			if b, _ := os.ReadFile(counter); string(b) != "x" {
-				t.Fatalf("invocation count=%q", b)
-			}
-		})
-	}
-}
-
-func TestManagerRunLeafIntegrationUnderIntegratedParentIsRetryableFailure(t *testing.T) {
-	root, target, session, report := leafChildSession(t)
-	session, err := integrateLeafParent(session, report)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if _, err := WriteBrownfieldSession(root, session, session.Digest); err != nil {
-		t.Fatal(err)
-	}
-	counter := filepath.Join(t.TempDir(), "calls.txt")
-	config := managerRunTestConfig(t, counter)
-	limits := managerRunTestLimits()
-	rootID := session.TargetContext.RootManagerID
-	preview, err := PreviewManagerStage(root, target.Root, session.ID, "orders-pass", ManagerRunPhaseIntegrate, rootID, session.Digest, "", config, limits)
-	if err != nil {
-		t.Fatal(err)
-	}
-	failed, err := RunManagerStage(context.Background(), root, target.Root, session.ID, "orders-pass", ManagerRunPhaseIntegrate,
-		rootID, preview.PreviewDigest, "", config, limits, AgentExecManagerRunInvoker{})
-	if err == nil || failed.Status != "failed" || failed.AttemptStatus != "failed" || failed.Execution == nil {
-		t.Fatalf("an integration the session rejects must seal a failed attempt with its receipt: %+v err=%v", failed, err)
-	}
-	ledgerDir, _ := sessionDirectory(root, session.ID, false)
-	ledger, err := loadManagerRunLedger(ledgerDir, session.ID)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if len(ledger.Events) != 2 || ledger.Events[1].SafeFailure != "invalid-manager-report" || ledger.Events[1].Integration != nil {
-		t.Fatalf("failed attempt must be recorded as invalid-manager-report without a recoverable integration: %+v", ledger.Events)
-	}
-	replayPreview, err := PreviewManagerStage(root, target.Root, session.ID, "orders-pass", ManagerRunPhaseIntegrate, rootID, session.Digest, "", config, limits)
-	if err != nil {
-		t.Fatal(err)
-	}
-	replayed, err := RunManagerStage(context.Background(), root, target.Root, session.ID, "orders-pass", ManagerRunPhaseIntegrate,
-		rootID, replayPreview.PreviewDigest, "", config, limits, AgentExecManagerRunInvoker{})
-	if err == nil || replayed.Status != "attempt-exists" {
-		t.Fatalf("plain re-run must report the failed attempt, not recover it: %+v err=%v", replayed, err)
-	}
-	if _, err := PreviewManagerStage(root, target.Root, session.ID, "orders-pass", ManagerRunPhaseIntegrate, rootID, session.Digest, failed.AttemptID, config, limits); err != nil {
-		t.Fatalf("explicit retry of the failed attempt must be allowed: %v", err)
-	}
-	if b, _ := os.ReadFile(counter); string(b) != "x" {
-		t.Fatalf("invocation count=%q", b)
-	}
-}
-
 func TestManagerRunLedgerChangeInvalidatesPreview(t *testing.T) {
 	root, targetRoot, session, iterationID := managerRunFixture(t)
 	counter := filepath.Join(t.TempDir(), "calls.txt")
 	config, limits := managerRunTestConfig(t, counter), managerRunTestLimits()
-	preview, err := PreviewManagerStage(root, targetRoot, session.ID, iterationID, ManagerRunPhasePropose,
+	_, err := PreviewManagerStage(root, targetRoot, session.ID, iterationID, ManagerRunPhasePropose,
 		session.TargetContext.RootManagerID, session.Digest, "", config, limits)
 	if err != nil {
 		t.Fatal(err)
@@ -433,8 +141,19 @@ func TestManagerRunLedgerChangeInvalidatesPreview(t *testing.T) {
 	if err := writeManagerRunLedger(ledgerDir, ledger); err != nil {
 		t.Fatal(err)
 	}
-	_, err = RunManagerStage(context.Background(), root, targetRoot, session.ID, iterationID, ManagerRunPhasePropose,
-		session.TargetContext.RootManagerID, preview.PreviewDigest, "", config, limits, AgentExecManagerRunInvoker{})
+	before, err := os.ReadFile(filepath.Join(ledgerDir, managerRunLedgerName))
+	if err != nil {
+		t.Fatal(err)
+	}
+	_, err = PrepareManagerStage(root, targetRoot, session.ID, iterationID, ManagerRunPhasePropose, session.TargetContext.RootManagerID, "", "", config, limits, projectexecutor.ProcessInvoker{})
+	if unlock, leaseErr := AcquireManagerStageLease(root, session.ID); leaseErr == nil {
+		unlock()
+		t.Fatal("nonempty legacy ledger admitted Runtime lease")
+	}
+	after, readErr := os.ReadFile(filepath.Join(ledgerDir, managerRunLedgerName))
+	if readErr != nil || string(before) != string(after) {
+		t.Fatal("legacy bytes changed during failed admission")
+	}
 	if err == nil {
 		t.Fatal("changed attempt ledger must invalidate the preview")
 	}
@@ -465,49 +184,63 @@ func TestManagerRunPendingAttemptIsFailClosedAndNotReplayed(t *testing.T) {
 	if err := writeManagerRunLedger(ledgerDir, ledger); err != nil {
 		t.Fatal(err)
 	}
-	preview, err := PreviewManagerStage(root, targetRoot, session.ID, iterationID, ManagerRunPhasePropose,
+	_, err = PreviewManagerStage(root, targetRoot, session.ID, iterationID, ManagerRunPhasePropose,
 		session.TargetContext.RootManagerID, session.Digest, "", config, limits)
 	if err != nil {
 		t.Fatal(err)
 	}
-	result, err := RunManagerStage(context.Background(), root, targetRoot, session.ID, iterationID, ManagerRunPhasePropose,
-		session.TargetContext.RootManagerID, preview.PreviewDigest, "", config, limits, AgentExecManagerRunInvoker{})
-	if err == nil || result.AttemptStatus != "uncertain" {
-		t.Fatalf("pending attempt should block with its durable status: %+v err=%v", result, err)
+	before, err := os.ReadFile(filepath.Join(ledgerDir, managerRunLedgerName))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if unlock, err := AcquireManagerStageLease(root, session.ID); err == nil {
+		unlock()
+		t.Fatal("pending legacy attempt acquired Runtime lease")
+	}
+	if _, err := PrepareManagerStage(root, targetRoot, session.ID, iterationID, ManagerRunPhasePropose, session.TargetContext.RootManagerID, "", "", config, limits, projectexecutor.ProcessInvoker{}); err == nil {
+		t.Fatal("pending legacy attempt prepared Runtime dispatch")
+	}
+	after, readErr := os.ReadFile(filepath.Join(ledgerDir, managerRunLedgerName))
+	if readErr != nil || string(before) != string(after) {
+		t.Fatal("pending historical evidence changed")
 	}
 	if calls, _ := os.ReadFile(counter); len(calls) != 0 {
 		t.Fatalf("pending attempt was implicitly replayed: %q", calls)
 	}
 }
 
-func TestManagerRunBudgetCannotRefillFromChangedRuntime(t *testing.T) {
-	initial := managerRunTestLimits()
-	startedAt := time.Now().UTC().Add(-time.Second)
-	ledger := ManagerRunLedger{Events: []ManagerRunEvent{
-		{Event: "started", AttemptID: "prior", StartedAt: startedAt},
-		{Event: "terminal", AttemptID: "prior", Status: "failed", CostKnown: true, EstimatedCostMicros: 9, StartedAt: startedAt, FinishedAt: time.Now().UTC()},
-	}, Budget: ptrManagerRunLimits(budgetProjection(initial))}
-	changed := initial
-	changed.MaxStarts += 3
-	changed.MaxRetries += 1
-	changed.MaxDuration += time.Hour
-	changed.MaxCostMicros *= 2
-	changed.InputPriceMicrosPerMillion *= 2
-	effective, err := frozenManagerRunLimits(ledger, changed)
+func TestLegacyManagerRunSealedBudgetCannotStartRuntimeAuthority(t *testing.T) {
+	root, targetRoot, session, iterationID := managerRunFixture(t)
+	config := managerRunTestConfig(t, filepath.Join(t.TempDir(), "calls.txt"))
+	limits := managerRunTestLimits()
+	dir, err := sessionDirectory(root, session.ID, false)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if effective.MaxStarts != initial.MaxStarts || effective.MaxRetries != initial.MaxRetries || effective.MaxDuration != initial.MaxDuration || effective.MaxCostMicros != initial.MaxCostMicros || effective.InputPriceMicrosPerMillion != changed.InputPriceMicrosPerMillion {
-		t.Fatalf("changed runtime refilled the session budget: got %+v initial %+v", effective, initial)
+	ledger, err := loadManagerRunLedger(dir, session.ID)
+	if err != nil {
+		t.Fatal(err)
 	}
-	usage := &agentexec.Usage{Source: "provider-reported", InputTokens: int64Pointer(100), OutputTokens: int64Pointer(50), ToolCalls: int64Pointer(0)}
-	_, _, _, historicalCost, unknown := managerRunUsage(ledger)
-	if unknown || historicalCost != 9 {
-		t.Fatalf("sealed historical cost was recomputed or lost: cost=%d unknown=%v", historicalCost, unknown)
+	ledger.Budget = ptrManagerRunLimits(budgetProjection(limits))
+	sealManagerRunLedger(&ledger)
+	if err := writeManagerRunLedger(dir, ledger); err != nil {
+		t.Fatal(err)
 	}
-	newCost, known := managerRunCost(usage, effective)
-	if !known || newCost <= 0 {
-		t.Fatalf("current Manager's explicit price was not used for its own call: cost=%d known=%v", newCost, known)
+	before, err := os.ReadFile(filepath.Join(dir, managerRunLedgerName))
+	if err != nil {
+		t.Fatal(err)
+	}
+	limits.MaxStarts = 8
+	if _, err := PrepareManagerStage(root, targetRoot, session.ID, iterationID, ManagerRunPhasePropose, session.TargetContext.RootManagerID, "", "", config, limits, projectexecutor.ProcessInvoker{}); err == nil {
+		t.Fatal("sealed empty legacy budget was refilled/imported")
+	}
+	if unlock, err := AcquireManagerStageLease(root, session.ID); err == nil {
+		unlock()
+		t.Fatal("sealed empty legacy budget acquired Runtime lease")
+	}
+	after, err := os.ReadFile(filepath.Join(dir, managerRunLedgerName))
+	if err != nil || string(before) != string(after) {
+		t.Fatal("sealed budget bytes changed")
 	}
 }
 
@@ -736,3 +469,36 @@ func TestManagerRunLimitsAcceptProductDefaultStartsAndFourHourJob(t *testing.T) 
 }
 
 func ptrManagerRunLimits(value ManagerRunLimits) *ManagerRunLimits { return &value }
+
+// Historical journal fixture writer; production contains no ledger writer.
+func writeManagerRunLedger(dir string, ledger ManagerRunLedger) error {
+	if err := ensureNoIncompleteAtomicWrite(dir, managerRunLedgerName); err != nil {
+		return err
+	}
+	data, err := encodeClosedJSON(ledger)
+	if err != nil {
+		return err
+	}
+	temp := filepath.Join(dir, ".manager-runs.json.tmp")
+	file, err := os.OpenFile(temp, os.O_WRONLY|os.O_CREATE|os.O_EXCL, 0o600)
+	if err != nil {
+		return err
+	}
+	if _, err = file.Write(data); err == nil {
+		err = file.Sync()
+	}
+	closeErr := file.Close()
+	if err == nil {
+		err = closeErr
+	}
+	if err != nil {
+		_ = os.Remove(temp)
+		return err
+	}
+	path := filepath.Join(dir, managerRunLedgerName)
+	if err := atomicReplaceFile(temp, path); err != nil {
+		_ = os.Remove(temp)
+		return err
+	}
+	return nil
+}

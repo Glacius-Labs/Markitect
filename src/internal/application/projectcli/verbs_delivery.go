@@ -251,8 +251,9 @@ var runVerb = define(verb{
 	synopsis: "run PLAN --execute",
 	recovery: runRecovery,
 	args:     []arg{{name: "plan", value: "PLAN", operand: true, required: true, help: "Plan ID from `plan --write`."}, argRepo, argExecute},
-}, func(ctx context.Context, e env, in runPlanInput) (projectrun.RunReport, error) {
-	return e.ops.Run(ctx, projectapp.RunOperation{Root: e.root, RunID: in.Plan})
+}, func(ctx context.Context, e env, in runPlanInput) (runReportOutput, error) {
+	report, err := e.ops.Run(ctx, projectapp.RunOperation{Root: e.root, RunID: in.Plan})
+	return outputRunReport(report), err
 })
 
 type runIDInput struct {
@@ -266,8 +267,9 @@ var resumeVerb = define(verb{
 	synopsis: "resume RUN --execute",
 	recovery: runRecovery,
 	args:     []arg{{name: "run", value: "RUN", operand: true, required: true, help: "Run ID."}, argRepo, argExecute},
-}, func(ctx context.Context, e env, in runIDInput) (projectrun.RunReport, error) {
-	return e.ops.Resume(ctx, projectapp.RunOperation{Root: e.root, RunID: in.Run})
+}, func(ctx context.Context, e env, in runIDInput) (runReportOutput, error) {
+	report, err := e.ops.Resume(ctx, projectapp.RunOperation{Root: e.root, RunID: in.Run})
+	return outputRunReport(report), err
 })
 
 var repairVerb = define(verb{
@@ -277,8 +279,9 @@ var repairVerb = define(verb{
 	notes:    "Inspect the run with `status RUN` first.",
 	recovery: runRecovery,
 	args:     []arg{{name: "run", value: "RUN", operand: true, required: true, help: "Run ID."}, argRepo, argExecute},
-}, func(ctx context.Context, e env, in runIDInput) (projectrun.RunReport, error) {
-	return e.ops.Repair(ctx, projectapp.RunOperation{Root: e.root, RunID: in.Run})
+}, func(ctx context.Context, e env, in runIDInput) (runReportOutput, error) {
+	report, err := e.ops.Repair(ctx, projectapp.RunOperation{Root: e.root, RunID: in.Run})
+	return outputRunReport(report), err
 })
 
 type statusInput struct {
@@ -409,15 +412,15 @@ var deliverVerb = define(verb{
 		{name: "run", value: "ID", help: "Existing run to continue."},
 		argExecute,
 		{name: "write", kind: kindBool, help: "Apply the verified result to the target branch."}},
-}, func(ctx context.Context, e env, in deliverInput) (projectrun.DeliverReport, error) {
+}, func(ctx context.Context, e env, in deliverInput) (deliverOutput, error) {
 	if !in.Write {
-		return projectrun.DeliverReport{}, usagef("deliver applies its result and requires --write as well as --execute")
+		return deliverOutput{}, usagef("deliver applies its result and requires --write as well as --execute")
 	}
 	report, err := e.ops.Deliver(ctx, projectapp.DeliverOperation{Root: e.root, Request: projectrun.DeliverRequest{
 		ExplorationID: in.Exploration, ScopeID: in.Scope, RunID: in.Run, ExecuteAuthorized: true,
 	}})
 	if err == nil && report.Status != projectrun.StatusApplied {
-		return report, outcomef("delivery status is %s", report.Status)
+		return outputDeliverReport(report), outcomef("delivery status is %s", report.Status)
 	}
-	return report, err
+	return outputDeliverReport(report), err
 })

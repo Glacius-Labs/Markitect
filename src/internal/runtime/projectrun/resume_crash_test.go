@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/Glacius-Labs/Markitect/src/internal/runtime/agentexec"
+	"github.com/Glacius-Labs/Markitect/src/internal/runtime/projectexecutor"
 )
 
 func persistRunningCrashState(t *testing.T, root string, plan PlanRecord, inFlight, retryReady bool) RunReport {
@@ -41,6 +42,43 @@ func persistRunningCrashState(t *testing.T, root string, plan PlanRecord, inFlig
 		rootTask.State = "invoking"
 		rootTask.WorkAttempts = 1
 		rootTask.Attempts = 1
+		rootTask.RepairPhase = "work"
+		if err := store.appendState(state); err != nil {
+			t.Fatal(err)
+		}
+		runtime, err := projectconfig.LoadRuntime(root)
+		if err != nil {
+			t.Fatal(err)
+		}
+		project := resumeCrashProject(t, root, plan.BaseRevision)
+		host := resumeCrashHost(root, project)
+		request, err := managerInvocationRequest(host, root, runtime, plan, project, *rootTask, "work", activeChildren(state.Tasks, rootTask.ManagerID), nil, nil, "", 0, nil)
+		if err != nil {
+			t.Fatal(err)
+		}
+		agent := runtime.Agents[rootTask.ManagerID]
+		config, err := agent.AgentConfig()
+		if err != nil {
+			t.Fatal(err)
+		}
+		journal, err := newManagerStageJournal(store, &state, runtime.Limits)
+		if err != nil {
+			t.Fatal(err)
+		}
+		log, err := ordinaryManagerAttemptLog(journal, projectexecutor.ProcessInvoker{}, config, agent, *rootTask, "work", nativeTaskAttemptID(*rootTask, "work"), request)
+		if err != nil {
+			t.Fatal(err)
+		}
+		start := agentexec.RoleStartRequest{RequestID: log.Attempt.ID, ParentSessionID: state.ID, Role: log.Role, State: "requested"}
+		if _, err := journal.budget.ReserveRecordedTaskRoot(context.Background(), rootTask.ID, "work", start); err != nil {
+			t.Fatal(err)
+		}
+		if err := journal.start(log, request); err != nil {
+			t.Fatal(err)
+		}
+		// The actual protected pre-dispatch authority is durable, with no Run
+		// call, fabricated response, receipt or terminal process observation.
+		return state
 	} else if retryReady {
 		rootTask.State = "work-retry-ready"
 		rootTask.WorkAttempts = 1

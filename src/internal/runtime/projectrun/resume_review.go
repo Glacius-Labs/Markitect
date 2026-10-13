@@ -60,7 +60,7 @@ func recoverPendingNativeReview(ctx context.Context, host Host, invoker Invoker,
 	deadline := report.StartedAt.Add(time.Duration(runtime.Limits.MaxDuration))
 	bounded, cancel := context.WithDeadline(ctx, deadline)
 	defer cancel()
-	record, log, err := invokeReviewer(requireNativeRecovery(bounded, report.ID, report.Invocations), host, invoker, root, plan, runtime, selected, *task, phase, task.ReviewRound, candidate, func(InvocationLog) error { return fmt.Errorf("recovery cannot reserve a new reviewer") }, *report)
+	record, log, err := invokeReviewer(requireNativeRecovery(bounded, report.ID, report.Invocations), host, invoker, root, plan, runtime, selected, *task, phase, task.ReviewRound, candidate, *report)
 	index, matchErr := originalInvocationIndex(report.Invocations, log)
 	if matchErr != nil {
 		return false, fmt.Errorf("reconcile original reviewer start: %w", matchErr)

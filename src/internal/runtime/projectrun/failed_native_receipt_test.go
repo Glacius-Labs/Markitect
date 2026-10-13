@@ -89,8 +89,22 @@ func TestManagerFailurePersistsReturnedReceiptExactlyOnce(t *testing.T) {
 			if mode == "preflight" {
 				wantReceipts = 0
 			}
-			if len(run.Invocations) != wantReceipts {
-				t.Fatalf("run retained %d invocation receipts, want %d: %+v", len(run.Invocations), wantReceipts, run.Invocations)
+			receiptCount := 0
+			for _, invocation := range run.Invocations {
+				if invocation.Receipt.RunID != "" {
+					receiptCount++
+				}
+			}
+			if receiptCount != wantReceipts {
+				t.Fatalf("run retained %d returned receipts, want %d", receiptCount, wantReceipts)
+			}
+			if mode == "preflight" {
+				if len(run.Invocations) != 1 || run.Invocations[0].Attempt == nil || run.Invocations[0].Attempt.Status != "uncertain" || run.Invocations[0].Receipt.RunID != "" || run.Invocations[0].CostKnown {
+					t.Fatal("preflight lost its charged uncertain original attempt or invented a receipt")
+				}
+				if len(run.RoleStartReservations) != 1 || run.RoleStartReservations[0].Request.RequestID != run.Invocations[0].Attempt.ID || run.RoleStartReservations[0].Request.State != "unknown" {
+					t.Fatal("preflight lost or replaced its original charged reservation")
+				}
 			}
 			if wantReceipts == 1 {
 				invocation := run.Invocations[0]
@@ -113,11 +127,29 @@ func TestManagerFailurePersistsReturnedReceiptExactlyOnce(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
-			if len(persisted.Invocations) != wantReceipts {
-				t.Fatalf("durable state retained %d invocation receipts, want %d", len(persisted.Invocations), wantReceipts)
+			durableReceiptCount := 0
+			for _, invocation := range persisted.Invocations {
+				if invocation.Receipt.RunID != "" {
+					durableReceiptCount++
+				}
+			}
+			if durableReceiptCount != wantReceipts {
+				t.Fatalf("durable state retained %d returned receipts, want %d", durableReceiptCount, wantReceipts)
 			}
 			if !reflect.DeepEqual(persisted.Invocations, run.Invocations) {
 				t.Fatalf("durable invocation receipt differs from returned report: returned=%+v persisted=%+v", run.Invocations, persisted.Invocations)
+			}
+			if mode == "preflight" {
+				if _, err := Resume(context.Background(), host, invoker, root, plan.ID); err == nil {
+					t.Fatal("unpriced uncertain preflight automatically replayed")
+				}
+				after, err := store.readLatestState(run.ID)
+				if err != nil {
+					t.Fatal(err)
+				}
+				if invoker.calls != 1 || len(after.RoleStartReservations) != 1 || after.RoleStartReservations[0].Key != run.RoleStartReservations[0].Key || len(after.Invocations) != 1 || after.Invocations[0].Attempt.ID != run.Invocations[0].Attempt.ID {
+					t.Fatal("uncertain preflight replayed, replaced or refilled its authority")
+				}
 			}
 			if wantReceipts == 1 && persisted.Invocations[0].Receipt.RunID != "fixture-native-manager-run" {
 				t.Fatalf("durable state lost Manager receipt: %+v", persisted.Invocations)

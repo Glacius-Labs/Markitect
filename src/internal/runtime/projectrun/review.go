@@ -6,6 +6,7 @@ import (
 	"context"
 	"encoding/hex"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"github.com/Glacius-Labs/Markitect/src/internal/runtime/projectconfig"
 	"sort"
@@ -72,6 +73,10 @@ type reviewerHelperEvidence struct {
 }
 
 type reviewerContext struct {
+	SubjectKind        string                          `json:"subjectKind,omitempty"`
+	ProposedContext    json.RawMessage                 `json:"proposedContext,omitempty"`
+	ChildBindings      json.RawMessage                 `json:"childBindings,omitempty"`
+	SourceEvidence     []reviewFileRef                 `json:"sourceEvidence,omitempty"`
 	Kind               string                          `json:"kind"`
 	Operation          string                          `json:"operation"`
 	ReviewerGuidance   string                          `json:"reviewerGuidance"`
@@ -110,7 +115,7 @@ func reviewerPhaseGuidance(phase string) string {
 
 // invokeReviewer supplies only the original goal, accepted scoped model and
 // the exact candidate bytes. It never receives an implementer transcript.
-func invokeReviewer(ctx context.Context, host Host, invoker Invoker, root string, plan PlanRecord, runtime projectconfig.Runtime, project *projectvalue.Project, task ManagerTask, phase string, round int, candidate candidateData, onStart func(InvocationLog) error, report RunReport) (ReviewRecord, InvocationLog, error) {
+func invokeReviewer(ctx context.Context, host Host, invoker Invoker, root string, plan PlanRecord, runtime projectconfig.Runtime, project *projectvalue.Project, task ManagerTask, phase string, round int, candidate candidateData, report RunReport) (ReviewRecord, InvocationLog, error) {
 	var record ReviewRecord
 	var log InvocationLog
 	if runtime.Review == nil {
@@ -169,36 +174,51 @@ func invokeReviewer(ctx context.Context, host Host, invoker Invoker, root string
 	if err != nil {
 		return record, log, err
 	}
-	log = InvocationLog{TaskID: task.ID, Role: "reviewer", Phase: "review", InputDigest: ledgerInputDigest, Outcome: "started"}
+	journal := journalFromContext(ctx)
+	attemptID := fmt.Sprintf("%s-review-%s-%d", task.ID, phase, round)
+	log, err = ordinaryManagerAttemptLog(journal, invoker, config, agent, task, "review", attemptID, request)
+	if err != nil {
+		return record, log, err
+	}
+	log.Role = "reviewer"
+	attemptID = log.Attempt.ID
 	var recoveryBinding nativeRecoveryBinding
-	if required, _ := ctx.Value(nativeRecoveryRequiredKey{}).(bool); required {
+	required, _ := ctx.Value(nativeRecoveryRequiredKey{}).(bool)
+	if required {
 		recoveryBinding, err = originalNativeRecoveryBinding(report.ID, report.Invocations, task.ID, "reviewer", "review", request)
 		if err != nil {
 			return record, log, err
 		}
-	}
-	result, recovered, invokeErr := recoverInvocationOnResume(ctx, host, invoker, root, fmt.Sprintf("%s-review-%s-%d", task.ID, phase, round), config, runtime.Limits, request, recoveryBinding)
-	if !recovered && invokeErr == nil {
-		if onStart != nil {
-			if err := onStart(log); err != nil {
-				return record, log, fmt.Errorf("persist reviewer start: %w", err)
-			}
+		index := invocationAttemptIndex(journal.report.Invocations, log)
+		if index < 0 || journal.report.Invocations[index].Attempt.RequestDigest != ledgerInputDigest || journal.report.Invocations[index].Attempt.ConfigFingerprint != log.Attempt.ConfigFingerprint {
+			return record, log, errors.New("original reviewer durable attempt is absent or stale; no replay")
 		}
-		result, invokeErr = invokeProjectAgent(ctx, host, invoker, root, project, agent, plan.ID, fmt.Sprintf("%s-review-%s-%d", task.ID, phase, round), nil, nil, runtime.Limits, config, request)
+		log = journal.report.Invocations[index]
+	}
+	result, recovered, invokeErr := recoverInvocationOnResume(ctx, host, invoker, root, attemptID, config, runtime.Limits, request, recoveryBinding)
+	if recovered {
+		cost, known, overflow := estimateAgentCost(result.Receipt.Usage, agent)
+		log.CostMicros, log.CostKnown, log.CostOverflow = cost, known, overflow
+		log, err = journal.terminal(log, result, invokeErr)
+		invokeErr = errors.Join(invokeErr, err)
+		if err == nil {
+			invokeErr = errors.Join(invokeErr, journal.reconcileTerminalReservation(log))
+		}
+	} else if invokeErr == nil {
+		result, log, invokeErr = invokeManagerAttempt(ctx, journal, log, request, agent, func(call context.Context) (agentexec.RunResult, error) {
+			return invokeProjectAgent(call, host, invoker, root, project, agent, plan.ID, attemptID, nil, nil, runtime.Limits, config, request)
+		})
 	}
 	if invokeErr == nil && result.Delta != nil && len(result.Delta.Changes) != 0 {
 		invokeErr = fmt.Errorf("read-only reviewer changed its owned workspace")
 	}
-	log = InvocationLog{TaskID: task.ID, Role: "reviewer", Phase: "review", InputDigest: ledgerInputDigest,
-		Receipt: result.Receipt, ReportID: result.Receipt.RunID, Outcome: result.Receipt.Outcome}
-	usageCost, known, overflow := estimateAgentCost(result.Receipt.Usage, agent)
-	log.CostMicros, log.CostKnown, log.CostOverflow = usageCost, known, overflow
+	known, overflow := log.CostKnown, log.CostOverflow
 	if overflow {
 		return record, log, fmt.Errorf("reviewer cost estimate exceeds the supported int64 range")
 	}
 	if known {
-	} else if invokeErr == nil && requiresReportedUsage(agent) {
-		return record, log, fmt.Errorf("reviewer usage is missing; bounded cost cannot be asserted")
+	} else if requiresReportedUsage(agent) {
+		return record, log, errors.Join(invokeErr, fmt.Errorf("reviewer usage is missing; bounded cost cannot be asserted"))
 	}
 	if invokeErr != nil {
 		return record, log, invokeErr
@@ -206,11 +226,7 @@ func invokeReviewer(ctx context.Context, host Host, invoker Invoker, root string
 	if err := freshBindings(host, invoker, root, plan, runtime); err != nil {
 		return record, log, err
 	}
-	parsed, err := validateReviewerResponse(result.Response, result.Receipt, protocolInputDigest)
-	if err != nil {
-		return record, log, err
-	}
-	findings, err := validateReviewFindings(parsed.Findings, fileRefs)
+	parsed, findings, err := validatePreparedManagerReview(result, protocolInputDigest, fileRefs)
 	if err != nil {
 		return record, log, err
 	}

@@ -45,7 +45,7 @@ func reportStartAccounting(report RunReport) (StartAccounting, []agentexec.RoleS
 	}
 
 	for _, invocation := range report.Invocations {
-		taskRoot := invocation.Role == agentexec.RoleExecutor && (invocation.Phase == "work" || invocation.Phase == "integrate")
+		taskRoot := report.ManagerStageBinding == nil && invocation.Role == agentexec.RoleExecutor && (invocation.Phase == "work" || invocation.Phase == "integrate")
 		if taskRoot {
 			taskRootInvocationLogs++
 		} else {

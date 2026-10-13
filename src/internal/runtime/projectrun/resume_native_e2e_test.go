@@ -250,7 +250,7 @@ func TestTargetedReworkAppliesNativeWorkspaceDelta(t *testing.T) {
 	report, base, runtime := loadNativeReworkState(t, fixture)
 	starts, spent := 1, int64(0)
 	invoker := &nativeDeltaOnlyInvoker{inner: fixture.invoker}
-	reworkErr := executeReworkSubtree(context.Background(), fixture.host, invoker, fixture.root, fixture.store, fixture.dir, fixture.plan, runtime, base, &report,
+	reworkErr := executeReworkSubtree(ordinaryLoadedJournalFixture(t, fixture.store, runtime.Limits, &report), fixture.host, invoker, fixture.root, fixture.store, fixture.dir, fixture.plan, runtime, base, &report,
 		fixture.managerID, "Correct the project owner artifact.", "Independent review requested a correction.", &starts, &spent)
 	if reworkErr != nil {
 		t.Fatalf("targeted native rework and its review: %v", reworkErr)
@@ -282,7 +282,7 @@ func TestTargetedReworkRejectsNativeNoOpWithWorkspaceChanges(t *testing.T) {
 	noOp := TaskResponse{Status: "no-op", Summary: "Nothing to change.", Delegations: []Delegation{}, ReworkRequests: []ReworkRequest{},
 		Questions: []string{}, Risks: []string{}, ResolvedQuestions: []string{}, ResolvedRisks: []string{}}
 	starts, spent := 1, int64(0)
-	reworkErr := executeReworkSubtree(context.Background(), fixture.host, &nativeDeltaOnlyInvoker{inner: fixture.invoker, report: &noOp}, fixture.root, fixture.store, fixture.dir, fixture.plan, runtime, base, &report,
+	reworkErr := executeReworkSubtree(ordinaryLoadedJournalFixture(t, fixture.store, runtime.Limits, &report), fixture.host, &nativeDeltaOnlyInvoker{inner: fixture.invoker, report: &noOp}, fixture.root, fixture.store, fixture.dir, fixture.plan, runtime, base, &report,
 		fixture.managerID, "Correct the project owner artifact.", "Independent review requested a correction.", &starts, &spent)
 	if reworkErr == nil || !strings.Contains(reworkErr.Error(), "claimed no-op while proposing files") {
 		t.Fatalf("native no-op with harvested workspace changes was accepted: %v", reworkErr)
@@ -320,7 +320,7 @@ func TestReintegrationAfterReworkAppliesNativeWorkspaceDelta(t *testing.T) {
 				ReworkRequests: []ReworkRequest{}, Integrated: true, Questions: []string{}, Risks: []string{}, ResolvedQuestions: []string{}, ResolvedRisks: []string{}}
 			invoker := &nativeDeltaOnlyInvoker{inner: fixture.invoker, report: &integrated, writes: test.writes}
 			starts, spent := 2, int64(0)
-			_, reintegrateErr := reintegrateAfterRework(context.Background(), fixture.host, invoker, fixture.root, fixture.store, fixture.dir, fixture.plan, runtime, base, &report, task, &starts, &spent)
+			_, reintegrateErr := reintegrateAfterRework(ordinaryLoadedJournalFixture(t, fixture.store, runtime.Limits, &report), fixture.host, invoker, fixture.root, fixture.store, fixture.dir, fixture.plan, runtime, base, &report, task, &starts, &spent)
 			if test.wantErr != "" {
 				if reintegrateErr == nil || !strings.Contains(reintegrateErr.Error(), test.wantErr) {
 					t.Fatalf("reintegration error = %v, want %q", reintegrateErr, test.wantErr)
@@ -420,7 +420,7 @@ func nativeResumeRuntimeHost(t *testing.T, root, phase string) Host {
 	}
 	return processRuntimeHost(root, project)
 }
-func seedNativeRun(t *testing.T, phase string, reviewRework, reviewed bool) nativeResumeRunFixture {
+func seedNativeRun(t *testing.T, phase string, reviewRework, reviewed bool, repairNumber ...int) nativeResumeRunFixture {
 	t.Helper()
 	root := makeProjectRunFixture(t)
 	writeE2E(t, root, "AGENTS.md", "native manager instructions\n")
@@ -572,6 +572,14 @@ func seedNativeRun(t *testing.T, phase string, reviewRework, reviewed bool) nati
 		}
 		child.State, child.WorkAttempts, child.Attempts, child.CandidateID, child.ReportStatus = "worked", 1, 1, childWork.ID, "complete"
 	}
+	if len(repairNumber) > 0 {
+		prior := cloneTasks(report.Tasks)
+		for i := range prior {
+			prior[i].State = "worked"
+		}
+		report.RepairRounds = []RepairRound{{Number: repairNumber[0], Status: "running", StartedAt: time.Now().UTC(), PriorCandidateID: initial.ID, SeedCandidateID: initial.ID, PriorTasks: prior}}
+		report.ActiveRepairCandidateID = initial.ID
+	}
 	if err := store.appendState(report); err != nil {
 		t.Fatal(err)
 	}
@@ -603,6 +611,22 @@ func seedNativeRun(t *testing.T, phase string, reviewRework, reviewed bool) nati
 	configAgent := mustLoadRuntime(t, root).Agents[managerID]
 	config, err := configAgent.AgentConfig()
 	if err != nil {
+		t.Fatal(err)
+	}
+	// Persist the exact original task admission before native workspace evidence.
+	runtime := mustLoadRuntime(t, root)
+	journalAuthority, err := newManagerStageJournal(store, &report, runtime.Limits)
+	if err != nil {
+		t.Fatal(err)
+	}
+	originalLog, err := ordinaryManagerAttemptLog(journalAuthority, projectexecutor.New(codexappserver.Options{}, NativeHelperPolicy{}), config, configAgent, *task, phase, nativeTaskAttemptID(*task, phase), request)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := journalAuthority.budget.ReserveRecordedTaskRoot(context.Background(), task.ID, phase, agentexec.RoleStartRequest{RequestID: originalLog.Attempt.ID, ParentSessionID: report.ID, Role: agentexec.RoleExecutor, State: "requested"}); err != nil {
+		t.Fatal(err)
+	}
+	if err := journalAuthority.start(originalLog, request); err != nil {
 		t.Fatal(err)
 	}
 	invocation, _, err := agentexec.PrepareInvocation(request)
@@ -639,7 +663,7 @@ func seedNativeRun(t *testing.T, phase string, reviewRework, reviewed bool) nati
 		t.Fatal(err)
 	}
 	workspaceRequest := projectworkspace.Request{RepositoryRoot: filepath.Clean(absoluteRoot), RepositoryIdentity: identity.Digest,
-		BaseSHA: input.Revision, OverlayDigest: binding.OverlayDigest, TaskID: nativeTaskAttemptID(*task, phase),
+		BaseSHA: input.Revision, OverlayDigest: binding.OverlayDigest, TaskID: originalLog.Attempt.ID,
 		AllowedPaths: allowed, ExcludedPaths: excluded}
 	handle, err := preparationService.PrepareCandidate(context.Background(), workspaceRequest, overlay, overlayDigest)
 	if err != nil {
@@ -770,4 +794,41 @@ func mustLoadRuntime(t *testing.T, root string) projectconfig.Runtime {
 		t.Fatal(err)
 	}
 	return runtime
+}
+
+func TestNativeRepairRoundUsesSameDurableDispatchAndRecoveryIdentity(t *testing.T) {
+	fixture := seedNativeRun(t, "work", false, false, 1)
+	before, err := fixture.store.readLatestState(fixture.plan.ID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	task := findTask(before.Tasks, fixture.managerID)
+	baseID := nativeTaskAttemptID(*task, "work")
+	exactID := ordinaryRunAttemptID(before, baseID)
+	if exactID == baseID || len(before.Invocations) != 1 || before.Invocations[0].Attempt.ID != exactID || before.RoleStartReservations[0].Request.RequestID != exactID || fixture.handle.TaskID != exactID {
+		t.Fatal("repair round reset collided with old dispatch/reservation identity")
+	}
+	lifecycle := *fixture.invoker.result.Receipt.Lifecycle
+	lifecycle.StartRequests = append([]agentexec.RoleStartRequest(nil), lifecycle.StartRequests...)
+	lifecycle.State = "inProgress"
+	lifecycle.StartRequests[0].State = "inProgress"
+	fixture.invoker.result.Receipt.Lifecycle = &lifecycle
+	blocked, err := Resume(context.Background(), fixture.host, fixture.invoker, fixture.root, fixture.plan.ID)
+	if err == nil || blocked.Status != StatusBlocked || fixture.invoker.runCalls != 0 || fixture.invoker.recoverCalls != 1 {
+		t.Fatal("unfinished repair turn replayed or lost its original inspection")
+	}
+	lifecycle.State = "completed"
+	lifecycle.StartRequests[0].State = "completed"
+	resumed, err := Resume(context.Background(), fixture.host, fixture.invoker, fixture.root, fixture.plan.ID)
+	if err != nil || resumed.Status != StatusIntegrated || fixture.invoker.runCalls != 0 || fixture.invoker.recoverCalls != 2 {
+		t.Fatalf("same repair turn recovery failed: %s %v", resumed.Status, err)
+	}
+	if len(resumed.Invocations) != 1 || resumed.Invocations[0].Attempt.ID != exactID || len(resumed.RoleStartReservations) != 1 || resumed.RoleStartReservations[0].Key != before.RoleStartReservations[0].Key {
+		t.Fatal("repair recovery replaced or recharged durable authority")
+	}
+	for _, id := range fixture.invoker.workspaceIDs {
+		if id != exactID {
+			t.Fatal("native inspection selected an older reset-ordinal workspace")
+		}
+	}
 }

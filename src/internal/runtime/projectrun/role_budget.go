@@ -67,6 +67,21 @@ func NewRoleStartBudget(limit int, snapshot func() RunReport, persist func(RoleS
 			rootKeys[reservation.Key] = true
 		}
 	}
+	// Pending task counters in an initial/resumed snapshot are already charged.
+	// Their exact ordinal tickets are not additional roots when first attached.
+	for _, task := range initial.Tasks {
+		phase := ""
+		if task.State == "invoking" && task.RepairPhase == "work" && task.WorkAttempts > 0 {
+			phase = "work"
+		}
+		if task.State == "integrating" && task.RepairPhase == "integrate" && task.IntegrationAttempts > 0 {
+			phase = "integrate"
+		}
+		if phase != "" {
+			request := agentexec.RoleStartRequest{RequestID: ordinaryRunAttemptID(initial, nativeTaskAttemptID(task, phase))}
+			rootKeys[rootReservationKey(task.ID, phase, request)] = true
+		}
+	}
 	rootFloor := accounting.Roots
 	if len(rootKeys) > rootFloor {
 		rootFloor = len(rootKeys)
@@ -98,12 +113,42 @@ func (b *RoleStartBudget) ReserveHelper(ctx context.Context, attempt HelperStart
 }
 
 func (b *RoleStartBudget) reserve(ctx context.Context, record RoleStartReservation) (*RoleStartPermit, error) {
+	return b.reserveRootOrHelper(ctx, record, false)
+}
+
+// ReserveRecordedTaskRoot attaches the stable reservation to the ordinary
+// task counter already durably charged by the scheduler. It grants no extra slot.
+func (b *RoleStartBudget) ReserveRecordedTaskRoot(ctx context.Context, taskID, phase string, request agentexec.RoleStartRequest) (*RoleStartPermit, error) {
+	if ctx == nil || (phase != "work" && phase != "integrate") {
+		return nil, errors.New("recorded task root requires its work or integration phase")
+	}
+	return b.reserveRootOrHelper(ctx, RoleStartReservation{Key: rootReservationKey(taskID, phase, request), Kind: "root", TaskID: taskID, Phase: phase, Request: request}, true)
+}
+
+func (b *RoleStartBudget) reserveRootOrHelper(ctx context.Context, record RoleStartReservation, countedTask bool) (*RoleStartPermit, error) {
 	b.mu.Lock()
 	defer b.mu.Unlock()
 	if record.Key == "" || record.Request.RequestID == "" {
 		return nil, errors.New("role-start reservation requires a stable request ID")
 	}
 	report := cloneRoleStartDeliveries(b.snapshot())
+	if countedTask {
+		valid := false
+		for _, task := range report.Tasks {
+			if task.ID != record.TaskID {
+				continue
+			}
+			count := task.WorkAttempts
+			if record.Phase == "integrate" {
+				count = task.IntegrationAttempts
+			}
+			pending := task.State == "invoking" && record.Phase == "work" || task.State == "integrating" && record.Phase == "integrate"
+			valid = report.ManagerStageBinding == nil && pending && task.RepairPhase == record.Phase && count > 0 && record.Request.RequestID == ordinaryRunAttemptID(report, nativeTaskAttemptID(task, record.Phase)) && record.Request.ParentSessionID == report.ID
+		}
+		if !valid {
+			return nil, errors.New("root reservation is not bound to its charged task attempt")
+		}
+	}
 	for _, existing := range report.RoleStartReservations {
 		if existing.Key == record.Key {
 			return &RoleStartPermit{budget: b, key: record.Key}, ErrRoleStartAlreadyReserved
@@ -118,7 +163,8 @@ func (b *RoleStartBudget) reserve(ctx context.Context, record RoleStartReservati
 		record.RecordedAt = time.Now().UTC()
 	}
 	// Checks are not role starts, but they consume the run's shared start limit.
-	if b.accounting(report).ObservedTotal+len(report.Checks) >= b.limit {
+	used := b.accounting(report).ObservedTotal + len(report.Checks)
+	if used > b.limit || !countedTask && used == b.limit {
 		record.Request.State = "failed"
 		if err := b.persist(cloneRoleStartReservation(record)); err != nil {
 			return nil, errors.Join(ErrRoleStartBudgetExceeded, fmt.Errorf("persist rejected role-start request: %w", err))
@@ -279,3 +325,13 @@ func helperReservationKey(request agentexec.RoleStartRequest) string {
 }
 
 var _ HelperReservation = (*RoleStartPermit)(nil)
+
+// A check-driven repair resets current task ordinals. Its existing durable
+// repair round distinguishes the new run iteration without changing workspace
+// task IDs or granting another start for a previous ticket.
+func ordinaryRunAttemptID(report RunReport, taskAttemptID string) string {
+	if len(report.RepairRounds) == 0 {
+		return taskAttemptID
+	}
+	return fmt.Sprintf("%s-repair-%d", taskAttemptID, report.RepairRounds[len(report.RepairRounds)-1].Number)
+}

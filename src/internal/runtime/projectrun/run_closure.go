@@ -115,12 +115,9 @@ func (e *runExecution) reviewFinalManagers(finalCandidate *candidateData, rootCa
 
 func (e *runExecution) reviewFinalManager(task *ManagerTask, finalProject *projectvalue.Project, finalCandidate candidateData, phase string, reviewRound int, candidateProject *projectvalue.Project, candidate *candidateData, rootCandidateID *string, index *int) (RunReport, error) {
 	startedIndex := -1
-	review, reviewLog, reviewErr := invokeReviewer(e.ctx, e.host, e.invoker, e.root, e.plan, e.runtime, finalProject, *task, phase, reviewRound, finalCandidate, func(started InvocationLog) error {
-		e.report.Invocations = append(e.report.Invocations, started)
-		startedIndex = len(e.report.Invocations) - 1
-		return persistState(e.store, &e.report)
-	}, e.report)
-	e.starts++
+	review, reviewLog, reviewErr := invokeReviewer(e.ctx, e.host, e.invoker, e.root, e.plan, e.runtime, finalProject, *task, phase, reviewRound, finalCandidate, e.report)
+	startedIndex = invocationAttemptIndex(e.report.Invocations, reviewLog)
+	e.refreshStarts()
 	if startedIndex >= 0 {
 		e.report.Invocations[startedIndex] = reviewLog
 		if reviewErr == nil {
