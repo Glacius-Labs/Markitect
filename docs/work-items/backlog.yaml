@@ -1036,7 +1036,11 @@ packages:
     status: blocked
     owner: cleaner
     depends_on: [ARCH-06]
-    note: Runs, explorations, briefings and adoption sessions keep four stores with their own layouts and write paths.
+    note: >-
+      ARCH-06 and ARCH-15 source closure now precede a fresh bounded plan checkpoint
+      against current Main. Runs, explorations, briefings and adoption sessions need
+      one layout/write primitive while retaining distinct domain validation and CAS.
+      No implementation writer or path reservation is assigned by this checkpoint.
     zone: runtime
     inputs:
       - pull request 162 (ARCH-10 known problems)
@@ -1047,34 +1051,29 @@ packages:
     title: Adoption runs Managers through the run engine
     stream: ARCH
     wave: 3
-    status: active
+    status: done
     branch: dev/brownfield-run-engine
+    pr: 259
     owner: cleaner
     depends_on: [ARCH-06]
     note: >-
-      Root approved the complete V8 implementation contract after ARCH-16 Main
-      658fd1988958a34efc10be7f73e6a43ece533ca7 closure and independent Interface
-      and Privacy reviews. Plan SHA256
-      cd6bd7d7d9ca00f05c92b61dde12d90844a1ee96bb04844959c30789c60b8d75;
-      closed reservation SHA256
-      99756cfefe5116cccce69c1cc55e27fccb14c05ae5a21baf5ff1b4dd0d2672f6.
-      Exactly 55 paths: 48 existing canonical Git hashes and seven absent new files.
-      One Cleaner writer in fresh isolated dev/brownfield-run-engine; fixed baseline
-      check and Product/Documentation contexts complete before edits. All four Root
-      status/concept paths remain excluded. Existing runStore/RunReport becomes the
-      sole durable Manager/reviewer attempt authority for ordinary work, integration,
-      rework, final review and explicit Brownfield stages; no parallel engine/ledger.
-      Application retains typed context, validation, continuous session lease and CAS.
-      Original ReportJSON, receipt, review and exact state digest precede Session CAS;
-      uncertain starts never replay. Frozen session ceilings, per-call prices/process
-      bounds, review policy, evidence isolation and model-only Apply remain.
-      New two-root audit applies only to Brownfield, preserving ordinary parallel
-      transport options. Persisted/public metadata exclude raw configs and secrets.
-      Optional safe evidence and review projection are approved; new LedgerDigest
-      means Runtime state, historical output retains its old meaning. Nonempty old
-      ledger blocks new dispatch without migration. This plan authorizes bounded
-      implementation, not source completion, provider/release or human acceptance.
-    zone: runtime
+      Final f7355ff8b51696134234e6857e7d9bc5a6928f9e integrated as PR259 at actual Main
+      daa30ec130e148414f7fb6462b55a51d04b8198d, tree 982c91fed61c8916851af750615d95aefc61803b.
+      Required CI38350386014 Quality/Race and fake38350386245 passed; actual-Main
+      CI38351438193 passed all three jobs, with complete source ZIP/bootstrap/lock
+      matching canonical Git bytes. Both full Main reports have 2327 passes, 19 skips,
+      no failures/incomplete tests, all six public method cases and both architecture matrices.
+      Ordinary and explicit Brownfield Manager/reviewer attempts share the existing
+      Runtime journal and RunReport; Application keeps its lease, validation and CAS.
+      Whole V8 plus finite receipt/audit/CI/metadata/crash-fixture amendments account
+      for 44 changed paths within the approved 64-path upper bound and all nine new files.
+      Final f735 changes only two tests; production equals independently reviewed78c.
+      Original703/78c required failures and mixed-source92c-to703/full78c Runtime
+      Windows diagnostics remain separate in the integration record. No unchanged
+      retry, replay, guard/timeout relaxation or corrected Windows pass is inferred.
+      Source assignment completed; new-code reservation released. Original sources,
+      refs and evidence remain preserved. ARCH-14 follows with fresh planning only.
+    zone: free
     inputs:
       - pull request 162 (ARCH-10 known problems)
     acceptance:
