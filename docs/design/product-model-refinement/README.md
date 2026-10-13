@@ -26,6 +26,8 @@ Description steht als gemeinsames Pflichtfeld unter metadata und erklärt auch E
 
 ## Weiteres Vorgehen im Produktgespräch
 
+Auf Nutzerwunsch festgehalten ist die [programmiernahe Richtung mit typisierter Prosa](canonical-model-proposal.md#23-programmiernahe-arbeitsrichtung-typisierte-prosa): Der Kind ist ein Sprachkonstrukt und bestimmt die Interpretation seines Inhalts. Kind-Definitionen beschreiben Aussageart, Referenzbedeutung, erwartete Realisierung und Prüfung. Einordnung plus generische Referenzen werden als minimale Grundlage geprüft; konkrete Syntaxänderungen sind damit noch nicht beschlossen. Die [erneute Project-Betrachtung](canonical-model-proposal.md#24-project-deklaration-und-interpretation-als-kandidat) trennt vereinbarten Gesamtprojektrahmen und konkrete Feldkandidaten.
+
 Auf Nutzerwunsch gehen wir wieder langsam und am Beispiel vor: zuerst klären, welche Inhalte zur Beschreibung eines Softwareprojekts und seines Repositories tatsächlich nötig sind; anschließend die Typen beginnend bei Project einzeln anhand ihres Bibliotheks-YAML durchgehen. Für jeden Typ betrachten wir Bedeutung und Zweck, gemeinsame beziehungsweise typspezifische Felder, enthaltene Beziehungen, Erforderlichkeit und mögliche Ableitungen. Die Unterscheidung gemeinsamer und spezifischer Felder ist eine Reviewhilfe, keine vorweggenommene Pflichtstruktur für alle Typen. Beziehungen, insbesondere contains und realizes, werden dabei ebenfalls einzeln besprochen. Eine Aussage wird erst nach Einigung als Entscheidung festgehalten. Der bestehende Entwurf ist Gesprächsgrundlage; weitere Gruppierungen und die automatische Ausbreitung anderer Beziehungen werden nicht vorweggenommen.
 
 ## Aktueller Arbeitsstand und Lesereihenfolge
@@ -76,6 +78,7 @@ Produktgespräch `01a121f1-b948-7050-ae5d-9921b99db9c0`, Grundlagen vom 10. Okto
 - Eingang der Project-/Ladevereinfachung: `6df6c02e51e2aba3fda2845025cfe32f7d5b5ddd`; beim Beginn sauber, am 13. Oktober ausdrücklich beauftragt.
 - Eingang der gemeinsamen description-Entscheidung: `afc0dc30b400a25213bdda19fd5b4539ec3dafe7`; beim Beginn sauber, am 14. Oktober ausdrücklich beauftragt.
 - Eingang der einheitlichen Grundstruktur und Verschiebung nach metadata.description: `d818dd2943cd9d3329a9c5eb713dd0dd090e15e6`; beim Beginn sauber, am 14. Oktober ausdrücklich beauftragt.
+- Eingang der programmiernahen Richtung und erneuten Project-Betrachtung: `ec7eda39a26486a992a3a0fcdfb2bc18fcde55cb`; beim Beginn sauber, am 14. Oktober ausdrücklich beauftragt.
 - Letzter gesonderter Implementierungsvergleich: `32afd1a57e715130d056e98e433721c6e7a10278` vom 11. Oktober; heute nicht neu als aktueller Stand verifiziert.
 
 Kanonische Produktdokumente bleiben [Vision](../../vision.md), [Konzeptregister](../../concepts/register.md) und [Architektur](../../architecture.md). Dieser Konzeptordner setzt ihre aktuellen Verträge und den koordinierten Modell-Owner nicht automatisch außer Kraft.

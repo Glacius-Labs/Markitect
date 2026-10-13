@@ -76,6 +76,8 @@ Markitect liest die YAML-Definitionen im Modellordner rekursiv ein und erfasst i
 
 Project beschreibt das Gesamtprojekt. Die Grundstruktur mit apiVersion, kind, metadata und spec ist vereinbart; metadata enthält genau name, description und namespace. Die kindspezifischen spec-Felder, hier die System-Zuordnung, werden im Typreview geprüft. Die Darstellung ist kein bereits implementiertes Schema. Markitect-Konfiguration, Dateilisten, Coverage-Modus und ein Dokumentationszielpfad sind hier nicht enthalten.
 
+Unter der [programmiernahen Richtung](canonical-model-proposal.md#23-programmiernahe-arbeitsrichtung-typisierte-prosa) ist dieses YAML eine Projektdeklaration: Der Compiler erkennt den gemeinsamen Rahmen und löst den Systemverweis auf; Agents richten die Repositorybeiträge an Zweck, Umfang und Grenzen aus. Fachdetails bleiben in den eigenen Definitionen. Contains ist hier noch die bisherige Beziehungsform, während die minimale Einordnung-/Referenzsprache weiter diskutiert wird.
+
 ```yaml
 apiVersion: project.markitect.example.org/vNext
 kind: Project
@@ -83,10 +85,17 @@ metadata:
   namespace: ""
   name: library
   description: |
-    Das Projekt stellt Software zur Verwaltung des Bestands,
-    der Mitglieder sowie der Ausleihe und Rückgabe bereit.
-    Beschaffung, Gebühren und Mahnungen liegen zunächst
-    außerhalb des Umfangs.
+    Unterstützt eine Bibliothek bei der nachvollziehbaren
+    Ausleihe und Rückgabe ihrer vorhandenen Exemplare.
+
+    Umfasst die Anwendung und die zugehörigen Implementierungs-,
+    Konfigurations-, Dokumentations- und Prüfbeiträge.
+    Bestand, Mitgliedschaft und Ausleihzustand sind die
+    dafür benötigten fachlichen Bereiche.
+
+    Die fachlichen Details sind in den Definitionen der
+    Bibliotheksanwendung beschrieben. Beschaffung, Gebühren
+    und Mahnungen liegen zunächst außerhalb des Umfangs.
 spec:
   contains:
     - kind: System

@@ -38,6 +38,31 @@ Die kanonischen Definitionen liegen gemeinsam in einem festgelegten Modellordner
 
 Für einen festen Repositorystand wird die gefundene Eingabemenge vollständig erfasst und deterministisch verarbeitet. Doppelte Identitäten, ungültige Definitionen und nicht auflösbare Referenzen werden diagnostiziert, nicht still übersprungen. Hinzugefügte und entfernte Modelldateien sind Teil des Vergleichs alter und neuer Modellstände. Die bisherige Namespace-/Verzeichniskonvention bleibt im Beispiel erhalten. Name, Auffinden und gegebenenfalls Konfiguration des Modellordners gehören zur separat zu klärenden Markitect-Ladekonvention, nicht in Project. Die Project-Felder werden davon unabhängig im Typreview geprüft. Die Ladekonvention beschreibt keinen bereits implementierten Loader.
 
+### 2.3 Programmiernahe Arbeitsrichtung: Typisierte Prosa
+
+Am 14. Oktober 2026 auf Nutzerwunsch festgehalten: Das kanonische Modell wird als deklarative Beschreibungssprache betrachtet. Der Kind ist ein Sprachkonstrukt; die verbindliche Prosa in metadata.description ist dessen Inhalt. Ihre Interpretation und der erwartete Realisierungsbeitrag hängen vom Kind ab. Die Kind-Definition erklärt deshalb nicht nur erlaubte YAML-Felder, sondern auch Aussageart, Referenzbedeutung, erwartete Realisierung und geeignete Prüfaufträge.
+
+| Kind | Was seine Prosa deklariert | Erwarteter Beitrag |
+| --- | --- | --- |
+| Project | Zweck, Umfang, Grenzen und Gesamtrahmen des Projekts. | Ein Repository, dessen Beiträge dem beschriebenen Projekt dienen. |
+| Concept | Fachbegriff, Eigenschaften und Zusammenhänge. | Passende Datenstrukturen und deren Verwendung. |
+| Rule | Geltende Bedingung oder Invariante. | Umsetzung, die diese Bedingung erhält. |
+| UseCase | Operation mit Voraussetzungen, Ergebnissen und Verhalten. | Entsprechendes Verhalten der Software. |
+| Module | Zusammengehöriger Aufgabenbereich mit Grenzen. | Passende logische Gliederung der Implementierung. |
+| Mandate | Arbeitsauftrag und Grenzen der Ausführung. | Entsprechendes Vorgehen der ausführenden Agents. |
+
+Als Compilerphasen werden Einlesen in typisierte Definitionen, Symbolerfassung, Referenzauflösung, Struktur-/Typprüfung und Vorbereitung der betroffenen Realisierungsbereiche betrachtet. Die Zwischendarstellung bewahrt Prosa, Identitäten, aufgelöste Referenzen und ihre Quellen; sie behauptet keinen formal bewiesenen oder unmittelbar ausführbaren Prosaalgorithmus. Agents interpretieren die Prosa gemäß der Kind-Definition und realisieren Repositorybeiträge. Reviews und Checks beurteilen die Ergebnisse. Die spätere Ausführung der erzeugten Software ist davon getrennt.
+
+Einordnung und generische Referenzen sind die zu prüfende minimale Sprachbasis. Eine zusätzliche Relationsart benötigt einen konkreten Ausdrucks- oder Ableitungsbedarf. Bedeutung kann aus Kind, Verwendung und Beschreibung folgen, wenn dieser Vertrag eindeutig festgelegt ist. Imports beziehungsweise Referenzen allein beschreiben noch kein vollständiges Verhalten. Ob Einordnung aus Namespace-/Ordnerstruktur oder ausdrücklicher Zusammensetzung folgt, und ob benannte Relationen durch generische Referenzen ersetzt werden können, bleibt im Typreview zu klären. Die bisher dokumentierten contains-/realizes-Felder bleiben deshalb Beispiele und Gesprächsgrundlage; mit dieser Richtung ist noch kein Ersatzformat beschlossen.
+
+### 2.4 Project: Deklaration und Interpretation als Kandidat
+
+Vereinbart ist, dass Project das Gesamtprojekt beschreibt und keine Markitect-Konfiguration ist. Unter der programmiernahen Denkweise deklariert es den übergeordneten Zweck, den geltenden Umfang und die Grenzen der zusammengehörigen Lösung. Seine Beschreibung soll erklären, weshalb das Projekt existiert und welchen Gesamtbeitrag das Repository liefern soll. Fachdetails und einzelne Operationen bleiben in ihren eigenen Definitionen.
+
+Vorgeschlagene Interpretation: Der Compiler erkennt die Projektdeklaration, erfasst sie als gemeinsamen Projektrahmen und löst ihre Verweise auf beschriebene Bestandteile auf. Realisierende Agents verwenden diesen Rahmen, um die Beiträge der einzelnen Definitionen auf dasselbe Ziel und dieselben Grenzen auszurichten. Review untersucht die Vereinbarkeit von Modell und Repositorybeiträgen mit diesem Rahmen; daraus folgt kein automatischer Beweis fachlicher Vollständigkeit. Die Rootwahl bei mehreren Project-Definitionen ist ein späterer Vertragspunkt.
+
+Das Bibliotheks-YAML zeigt weiterhin contains als vorhandenen Kandidaten für die Zugehörigkeit des Systems. Die Auswahl dieser Schreibweise ist von der vereinbarten Rolle des Project zu unterscheiden. Es kommen dadurch keine Dateiliste, Coverage-Konfiguration, Dokumentationszielpfade oder automatisch aus Prosa erfundene Modellbestandteile hinzu. Der Beispielordner wird weiterhin vollständig für die Symbolerfassung gelesen.
+
 ## 3. Was beschrieben werden können muss
 
 Die Perspektiven sind ein Fragenkatalog zur Abdeckung, keine Pflichtordner und kein universeller Klassenkatalog.
@@ -420,6 +445,7 @@ Offen bleiben besonders:
 - Eingang der Project-/Ladevereinfachung vom 13. Oktober: `6df6c02e51e2aba3fda2845025cfe32f7d5b5ddd`; beim Beginn sauber.
 - Eingang der gemeinsamen description-Entscheidung vom 14. Oktober: `afc0dc30b400a25213bdda19fd5b4539ec3dafe7`; beim Beginn sauber.
 - Eingang der einheitlichen Grundstruktur und Verschiebung nach metadata.description vom 14. Oktober: `d818dd2943cd9d3329a9c5eb713dd0dd090e15e6`; beim Beginn sauber.
+- Eingang der programmiernahen Richtung und erneuten Project-Betrachtung vom 14. Oktober: `ec7eda39a26486a992a3a0fcdfb2bc18fcde55cb`; beim Beginn sauber.
 - Ursprüngliche Branchbasis: `ecc69b0ad99236a5ddd02b85bf9ba656a0000f15`.
 - Letzter gesonderter Main-Abgleich: `32afd1a57e715130d056e98e433721c6e7a10278` vom 11. Oktober; heute nicht als aktuell neu verifiziert.
 - Zusätzlicher reiner Quellenrefresh im Gespräch am 13. Oktober: `c19d9d1259fcd493e2cc7ad93d10226778b2b7f4`. Das Projektvokabular besitzt dort weiterhin die fünf bisherigen Kinds und einzelne Reference-Zielkinds; die neuen Fach-/Architektur-Kinds und Referenzmengen dieses Entwurfs sind nicht implementiert. Der historische Vergleichsbericht bleibt unverändert datiert.
