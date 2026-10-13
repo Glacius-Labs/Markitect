@@ -11,6 +11,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/Glacius-Labs/Markitect/src/internal/infrastructure/recordstore"
 	"github.com/Glacius-Labs/Markitect/src/internal/runtime/agentexec"
 	"github.com/Glacius-Labs/Markitect/src/internal/runtime/projectconfig"
 )
@@ -81,21 +82,11 @@ func stageEvidencePath(store *runStore, id string, ref ManagerStageEvidenceRef) 
 	if err != nil {
 		return "", err
 	}
-	reports, err := requireRealSubdirectory(dir, "reports")
+	reports, err := requireRealSubdirectory(dir, "reports", store)
 	if err != nil {
 		return "", err
 	}
 	path := filepath.Join(reports, parts[1])
-	if err := rejectReparsePath(store.root, filepath.ToSlash(filepath.Join(RunsPath, id, "reports"))); err != nil {
-		return "", err
-	}
-	if _, err := os.Lstat(path); err == nil {
-		if err := rejectReparsePath(store.root, filepath.ToSlash(filepath.Join(RunsPath, id, ref.Path))); err != nil {
-			return "", err
-		}
-	} else if !os.IsNotExist(err) {
-		return "", err
-	}
 	return path, nil
 }
 
@@ -106,7 +97,7 @@ func writeStageEvidence(store *runStore, id, attempt, suffix string, data []byte
 	if err != nil {
 		return nil, err
 	}
-	if old, readErr := os.ReadFile(path); readErr == nil {
+	if old, readErr := readRecordBytes(path, store); readErr == nil {
 		if rawContentDigest(old) != ref.Digest {
 			return nil, errors.New("immutable Manager evidence changed")
 		}
@@ -114,7 +105,7 @@ func writeStageEvidence(store *runStore, id, attempt, suffix string, data []byte
 	} else if !os.IsNotExist(readErr) {
 		return nil, readErr
 	}
-	if err := writeImmutable(path, data); err != nil {
+	if err := writeImmutable(path, data, store); err != nil {
 		return nil, err
 	}
 	return &ref, nil
@@ -128,14 +119,7 @@ func readStageEvidence(store *runStore, id string, ref *ManagerStageEvidenceRef)
 	if err != nil {
 		return nil, err
 	}
-	info, err := os.Lstat(path)
-	if err != nil {
-		return nil, err
-	}
-	if !info.Mode().IsRegular() {
-		return nil, errors.New("Manager evidence is not a regular file")
-	}
-	data, err := os.ReadFile(path)
+	data, err := readRecordBytes(path, store)
 	if err != nil {
 		return nil, err
 	}
@@ -454,31 +438,15 @@ func newManagerStageStore(root string) (*runStore, error) {
 	if err != nil {
 		return nil, err
 	}
-	info, err := os.Lstat(abs)
+	physical, err := recordstore.Open(abs)
 	if err != nil {
 		return nil, err
 	}
-	if !info.IsDir() || info.Mode()&os.ModeSymlink != 0 {
-		return nil, errors.New("Manager stage root must be a real directory")
-	}
-	for _, relative := range []string{".markitect", RunsPath} {
-		if _, err := os.Lstat(filepath.Join(abs, filepath.FromSlash(relative))); err == nil {
-			if err := rejectReparsePath(abs, relative); err != nil {
-				return nil, err
-			}
-		} else if !os.IsNotExist(err) {
-			return nil, err
-		}
-	}
-	base := filepath.Join(abs, filepath.FromSlash(RunsPath))
-	if info, err := os.Lstat(base); err == nil {
-		if !info.IsDir() || info.Mode()&os.ModeSymlink != 0 {
-			return nil, errors.New("Manager stage store must be a real directory")
-		}
-	} else if !os.IsNotExist(err) {
+	defer physical.Close()
+	if err := physical.CheckCutover(recordstore.Run); err != nil {
 		return nil, err
 	}
-	return &runStore{root: abs, base: base}, nil
+	return &runStore{root: abs, base: filepath.Join(abs, filepath.FromSlash(RunsPath)), identity: physical.Identity()}, nil
 }
 
 // A terminal row may have been flushed just before its reservation update.

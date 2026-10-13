@@ -96,7 +96,7 @@ func TestStatusOverviewNeedsNoRuntimeConfiguration(t *testing.T) {
 	if summary.Runtime.Configured || len(summary.Runs) != 0 || summary.Project.Name != "shop-cancellation" {
 		t.Fatalf("status overview without runtime = %+v", summary)
 	}
-	if _, err := os.Stat(filepath.Join(repo, ".markitect", "runs")); !os.IsNotExist(err) {
+	if _, err := os.Stat(filepath.Join(repo, ".markitect", "records", "run")); !os.IsNotExist(err) {
 		t.Fatalf("status overview created runtime state: %v", err)
 	}
 }

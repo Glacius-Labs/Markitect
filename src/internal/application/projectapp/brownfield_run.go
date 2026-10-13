@@ -12,6 +12,7 @@ import (
 
 	"github.com/Glacius-Labs/Markitect/src/internal/application/projectadoption"
 	"github.com/Glacius-Labs/Markitect/src/internal/core/projectmodel"
+	"github.com/Glacius-Labs/Markitect/src/internal/infrastructure/recordstore"
 	"github.com/Glacius-Labs/Markitect/src/internal/runtime/agentexec"
 	"github.com/Glacius-Labs/Markitect/src/internal/runtime/projectconfig"
 	"github.com/Glacius-Labs/Markitect/src/internal/runtime/projectrun"
@@ -55,7 +56,7 @@ type BrownfieldManagerAttempt struct {
 // BrownfieldRun shares the provider-free preview and one-shot execution
 // path across transports. The service owns per-session lock,
 // durable invocation events, budget accounting, validation, and CAS attach.
-func (o Operations) BrownfieldRun(ctx context.Context, operation BrownfieldRunOperation, invoker projectrun.Invoker) (BrownfieldManagerRunOutput, error) {
+func (o Operations) BrownfieldRun(ctx context.Context, operation BrownfieldRunOperation, invoker projectrun.Invoker) (returnedOutput BrownfieldManagerRunOutput, resultErr error) {
 	if err := requireRoot(operation.Root); err != nil {
 		return BrownfieldManagerRunOutput{}, err
 	}
@@ -117,7 +118,14 @@ func (o Operations) BrownfieldRun(ctx context.Context, operation BrownfieldRunOp
 		if err != nil {
 			return BrownfieldManagerRunOutput{}, err
 		}
-		defer unlock()
+		defer func() {
+			if releaseErr := unlock(); releaseErr != nil {
+				if returnedOutput.Status == "recorded" || returnedOutput.Status == "recovered" {
+					releaseErr = &recordstore.PublicationError{Path: projectadoption.BrownfieldSessionPath + "/" + operation.SessionID + "/record.json", Outcome: recordstore.Published, Cause: releaseErr}
+				}
+				resultErr = errors.Join(resultErr, releaseErr)
+			}
+		}()
 	}
 	prepared, spec, accepted, runtimePreview, err := o.prepareBrownfieldRuntimeStage(sourceRoot, operation, runtime, selectedAgent, config, limits, expectedSessionDigest, invoker)
 	if err != nil {

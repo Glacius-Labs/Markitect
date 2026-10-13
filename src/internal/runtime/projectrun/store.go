@@ -145,7 +145,15 @@ func newRunStore(root string) (*runStore, error) {
 	return &runStore{root: abs, base: base, identity: physical.Identity()}, nil
 }
 
-func ensureDirectory(path string) error {
+func ensureDirectory(path string, owners ...*runStore) error {
+	if strings.Contains(filepath.ToSlash(path), "/"+recordstore.RootPath+"/") {
+		store, kind, id, role, done, err := recordDirectoryOwner(path, owners...)
+		if err != nil {
+			return err
+		}
+		defer done()
+		return store.Ensure(kind, id, role)
+	}
 	info, err := os.Lstat(path)
 	if err == nil {
 		if !info.IsDir() || info.Mode()&os.ModeSymlink != 0 {
@@ -183,7 +191,7 @@ func (s *runStore) physical() (*recordstore.Store, func(), error) {
 	}
 	return store, func() { store.Close() }, nil
 }
-func (s *runStore) lock() (func(), error) {
+func (s *runStore) lock() (func() error, error) {
 	store, done, err := s.physical()
 	if err != nil {
 		return nil, err
@@ -209,13 +217,21 @@ func (s *runStore) lock() (func(), error) {
 	})
 	if err != nil {
 		done()
-		if os.IsExist(err) {
+		if errors.Is(err, os.ErrExist) {
 			return nil, ErrLocked
 		}
 		return nil, err
 	}
 	s.storage = store
-	return func() { lease.Close(); s.storage = nil; done() }, nil
+	return func() error {
+		err := lease.Close()
+		s.storage = nil
+		done()
+		if err != nil {
+			return &recordstore.PublicationError{Path: RunsPath + "/.write.lock", Outcome: recordstore.Published, Cause: err}
+		}
+		return nil
+	}, nil
 }
 
 type runtimeLock struct {
@@ -239,11 +255,22 @@ func (s *runStore) runDir(id string) (string, error) {
 	return dir, nil
 }
 
-func requireRealSubdirectory(parent, name string) (string, error) {
+func requireRealSubdirectory(parent, name string, owners ...*runStore) (string, error) {
 	if name == "" || filepath.Base(name) != name {
 		return "", fmt.Errorf("invalid runtime state directory %q", name)
 	}
 	path := filepath.Join(parent, name)
+	if strings.Contains(filepath.ToSlash(path), "/"+recordstore.RootPath+"/") {
+		store, kind, id, role, done, err := recordDirectoryOwner(path, owners...)
+		if err != nil {
+			return "", err
+		}
+		defer done()
+		if _, err := store.List(kind, id, role); err != nil {
+			return "", err
+		}
+		return path, nil
+	}
 	info, err := os.Lstat(path)
 	if err != nil {
 		return "", err
@@ -292,23 +319,34 @@ func ListRuns(root string) ([]RunSummary, error) {
 	if err != nil {
 		return nil, fmt.Errorf("resolve project root: %w", err)
 	}
-	// Listing needs no runtime configuration, only a real runs directory.
+	// Listing needs no runtime configuration and never creates records or leases.
 	base := filepath.Join(abs, filepath.FromSlash(RunsPath))
-	if _, statErr := os.Lstat(base); os.IsNotExist(statErr) {
-		return []RunSummary{}, nil
-	}
-	if err := rejectReparsePath(abs, RunsPath); err != nil {
+	physical, err := recordstore.Open(abs)
+	if err != nil {
 		return nil, err
 	}
-	s := &runStore{root: abs, base: base}
-	entries, err := os.ReadDir(s.base)
+	defer physical.Close()
+	s := &runStore{root: abs, base: base, identity: physical.Identity(), storage: physical}
+	entries, err := physical.List(recordstore.Run, "", "")
 	if err != nil {
 		return nil, err
 	}
 	runs := []RunSummary{}
 	for _, entry := range entries {
-		if !entry.IsDir() || !validID(entry.Name()) {
+		if !entry.IsDir() {
+			if entry.Name() == ".write.lock" {
+				continue
+			}
+			return nil, fmt.Errorf("unknown Run container entry %q", entry.Name())
+		}
+		if strings.HasPrefix(entry.Name(), "full-") {
+			if _, err := (recordstore.Name{Kind: recordstore.Run, ID: entry.Name(), Role: "record.json"}).Path(); err != nil {
+				return nil, err
+			}
 			continue
+		}
+		if !validID(entry.Name()) {
+			return nil, fmt.Errorf("unknown Run container ID %q", entry.Name())
 		}
 		plan, err := s.readPlan(entry.Name())
 		if errors.Is(err, ErrNotFound) {
@@ -377,6 +415,60 @@ func recordPathOwner(absolute string, owners ...*runStore) (*recordstore.Store, 
 			store.Close()
 		}
 	}, err
+}
+func recordDirectoryOwner(absolute string, owners ...*runStore) (*recordstore.Store, recordstore.Kind, string, string, func(), error) {
+	slash := filepath.ToSlash(filepath.Clean(absolute))
+	marker := "/" + recordstore.RootPath + "/"
+	pos := strings.LastIndex(slash, marker)
+	if pos < 0 {
+		return nil, "", "", "", nil, errors.New("runtime directory outside canonical records")
+	}
+	parts := strings.Split(slash[pos+len(marker):], "/")
+	kind := recordstore.Kind(parts[0])
+	id, role := "", ""
+	if len(parts) > 1 {
+		id = parts[1]
+	}
+	if len(parts) > 2 {
+		role = strings.Join(parts[2:], "/")
+	}
+	root := filepath.FromSlash(slash[:pos])
+	if len(owners) > 0 && owners[0] != nil {
+		if !sameRecoveryPath(root, owners[0].root) {
+			return nil, kind, id, role, nil, errors.New("runtime directory differs from owning root")
+		}
+		store, done, err := owners[0].physical()
+		return store, kind, id, role, done, err
+	}
+	store, err := recordstore.Open(root)
+	return store, kind, id, role, func() {
+		if store != nil {
+			store.Close()
+		}
+	}, err
+}
+func listRecordDirectory(absolute string, owners ...*runStore) ([]os.DirEntry, error) {
+	store, kind, id, role, done, err := recordDirectoryOwner(absolute, owners...)
+	if err != nil {
+		return nil, err
+	}
+	defer done()
+	return store.List(kind, id, role)
+}
+func readRecordBytes(absolute string, owners ...*runStore) ([]byte, error) {
+	store, name, done, err := recordPathOwner(absolute, owners...)
+	if err != nil {
+		return nil, err
+	}
+	defer done()
+	file, err := store.Read(name, 0)
+	if err != nil {
+		return nil, err
+	}
+	if !file.Exists {
+		return nil, os.ErrNotExist
+	}
+	return file.Bytes, nil
 }
 func writeImmutableJSON(path string, value any, owners ...*runStore) error {
 	data, err := json.MarshalIndent(value, "", "  ")
@@ -536,11 +628,11 @@ func (s *runStore) readLatestState(id string) (RunReport, error) {
 	if err != nil {
 		return latest, err
 	}
-	statesDir, err := requireRealSubdirectory(dir, "states")
+	statesDir, err := requireRealSubdirectory(dir, "states", s)
 	if err != nil {
 		return latest, err
 	}
-	entries, err := os.ReadDir(statesDir)
+	entries, err := listRecordDirectory(statesDir, s)
 	if err != nil {
 		if os.IsNotExist(err) {
 			return latest, ErrNotFound
@@ -569,6 +661,9 @@ func (s *runStore) readLatestState(id string) (RunReport, error) {
 		}
 		if state.ID != id || state.APIVersion != APIVersion {
 			return latest, fmt.Errorf("stored run state identity is invalid")
+		}
+		if state.Revision <= 0 || name != fmt.Sprintf("%08d.json", state.Revision) {
+			return latest, errors.New("stored run revision filename differs")
 		}
 		storedDigest := state.Digest
 		state.Digest = ""
@@ -613,7 +708,7 @@ func (s *runStore) readCandidate(dir, id string) (candidateData, error) {
 	if !validID(id) {
 		return data, fmt.Errorf("invalid candidate ID")
 	}
-	candidateDir, err := requireRealSubdirectory(dir, "candidates")
+	candidateDir, err := requireRealSubdirectory(dir, "candidates", s)
 	if err != nil {
 		return data, err
 	}

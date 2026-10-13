@@ -33,7 +33,7 @@ func TestInitPreviewAndGuardedWriteCreateControlPlaneAndDocumentation(t *testing
 			t.Fatalf("Init planned a path outside .markitect: %s", file.Path)
 		}
 		// Reads may record local state; Git must not see it as untracked.
-		if file.Path == ".markitect/.gitignore" && !strings.Contains(file.Content, "/state/\n") {
+		if file.Path == ".markitect/.gitignore" && (!strings.Contains(file.Content, "/state/\n") || !strings.Contains(file.Content, "/records/\n")) {
 			t.Fatalf("Init does not ignore .markitect/state/: %q", file.Content)
 		}
 		if _, err := os.Lstat(filepath.Join(root, filepath.FromSlash(file.Path))); !os.IsNotExist(err) {
@@ -938,5 +938,27 @@ func countGitStarts(t *testing.T) func(run func()) []string {
 			t.Fatal(err)
 		}
 		return strings.Split(strings.TrimSuffix(string(data), "\n"), "\n")
+	}
+}
+
+func TestInitRefusesExistingIgnoreWithoutChangingItsBytes(t *testing.T) {
+	root := testGitRoot(t)
+	p := filepath.Join(root, ".markitect", ".gitignore")
+	if err := os.MkdirAll(filepath.Dir(p), 0755); err != nil {
+		t.Fatal(err)
+	}
+	content := "/custom/\n"
+	if err := os.WriteFile(p, []byte(content), 0644); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := Init(root, "Existing", true); err == nil {
+		t.Fatal("Init overwrote existing ignore")
+	}
+	wire, err := os.ReadFile(p)
+	if err != nil || string(wire) != content {
+		t.Fatal("existing ignore changed")
+	}
+	if _, err := os.Stat(filepath.Join(root, filepath.FromSlash(projectvalue.ManifestPath))); !os.IsNotExist(err) {
+		t.Fatal("refused initialization published manifest")
 	}
 }

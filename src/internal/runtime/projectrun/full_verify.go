@@ -17,6 +17,7 @@ import (
 	"time"
 
 	"github.com/Glacius-Labs/Markitect/src/internal/core/projectmodel/projectbriefing"
+	"github.com/Glacius-Labs/Markitect/src/internal/infrastructure/recordstore"
 	"github.com/Glacius-Labs/Markitect/src/internal/runtime/agentexec"
 	projectconfig "github.com/Glacius-Labs/Markitect/src/internal/runtime/projectconfig"
 
@@ -24,7 +25,7 @@ import (
 )
 
 // FullVerifyRequest selects an immutable source revision and whether to write
-// the resulting report and receipts below .markitect/runs.
+// the resulting report under .markitect/records/run/.
 type FullVerifyRequest struct {
 	Revision string `json:"revision"`
 	Write    bool   `json:"write,omitempty"`
@@ -34,6 +35,7 @@ type FullVerifyRequest struct {
 // project, including a Run candidate. ExpectedSnapshot is required and lets
 // the caller prevent accidental verification of a different candidate.
 type FullVerifyBinding struct {
+	recordStore          *runStore
 	ExpectedSnapshot     string `json:"expectedSnapshot"`
 	CheckCandidateID     string `json:"checkCandidateId,omitempty"`
 	checkCandidateDigest string
@@ -190,8 +192,21 @@ type fullChildSubject struct {
 // FullVerify loads one fixed revision and audits every active Manager against
 // the same compiled project snapshot. The selected runtime configuration must
 // be the exact runtime file in that snapshot.
-func FullVerify(ctx context.Context, host Host, invoker Invoker, root string, request FullVerifyRequest) (FullVerifyReport, error) {
+func FullVerify(ctx context.Context, host Host, invoker Invoker, root string, request FullVerifyRequest) (returnedReport FullVerifyReport, resultErr error) {
 	var empty FullVerifyReport
+	var storage *runStore
+	if request.Write {
+		var err error
+		storage, err = newRunStore(root)
+		if err != nil {
+			return empty, err
+		}
+		release, err := storage.lock()
+		if err != nil {
+			return empty, err
+		}
+		defer func() { resultErr = errors.Join(resultErr, release()) }()
+	}
 	if host.Load == nil || invoker == nil || strings.TrimSpace(request.Revision) == "" {
 		return empty, fmt.Errorf("full verification requires Host.Load, an invoker, and an explicit revision")
 	}
@@ -221,6 +236,7 @@ func FullVerify(ctx context.Context, host Host, invoker Invoker, root string, re
 		return empty, ErrStale
 	}
 	return FullVerifyProject(ctx, host, invoker, root, project, runtime, FullVerifyBinding{
+		recordStore:      storage,
 		ExpectedSnapshot: project.Snapshot.Digest(), CheckCandidateID: project.Snapshot.Digest(), Write: request.Write, CheckSource: true,
 		acceptedBriefings: briefingView,
 	})
@@ -229,7 +245,28 @@ func FullVerify(ctx context.Context, host Host, invoker Invoker, root string, re
 // FullVerifyProject audits an immutable host-composed project. This is the
 // reusable seam for final Run candidates; it performs no candidate/model
 // mutation and never reopens candidate source from the working tree.
-func FullVerifyProject(ctx context.Context, host Host, invoker Invoker, root string, project *projectvalue.Project, runtime projectconfig.Runtime, binding FullVerifyBinding) (FullVerifyReport, error) {
+func FullVerifyProject(ctx context.Context, host Host, invoker Invoker, root string, project *projectvalue.Project, runtime projectconfig.Runtime, binding FullVerifyBinding) (returnedReport FullVerifyReport, resultErr error) {
+	physical, err := recordstore.Open(root)
+	if err != nil {
+		return FullVerifyReport{}, err
+	}
+	cutoverErr := physical.CheckCutover(recordstore.Run)
+	closeErr := physical.Close()
+	if err := errors.Join(cutoverErr, closeErr); err != nil {
+		return FullVerifyReport{}, err
+	}
+	if binding.Write && binding.recordStore == nil {
+		store, err := newRunStore(root)
+		if err != nil {
+			return FullVerifyReport{}, err
+		}
+		release, err := store.lock()
+		if err != nil {
+			return FullVerifyReport{}, err
+		}
+		defer func() { resultErr = errors.Join(resultErr, release()) }()
+		binding.recordStore = store
+	}
 	started := time.Now().UTC()
 	if !binding.StartedAt.IsZero() {
 		started = binding.StartedAt.UTC()
@@ -288,7 +325,7 @@ func FullVerifyProject(ctx context.Context, host Host, invoker Invoker, root str
 		finalizeFullVerifyFrame(&frame)
 	}
 	out = frame.out
-	return finishFullVerify(root, binding.Write, out, nil)
+	return finishFullVerify(root, binding.Write, out, nil, binding.recordStore)
 }
 
 // addFullKnownCost always records a known nonnegative cost. If the exact sum
@@ -984,7 +1021,7 @@ func markRemainingFullRows(rows []FullManagerAssessment, start int, reason strin
 	}
 }
 
-func finishFullVerify(root string, write bool, report FullVerifyReport, cause error) (FullVerifyReport, error) {
+func finishFullVerify(root string, write bool, report FullVerifyReport, cause error, owners ...*runStore) (returnedReport FullVerifyReport, resultErr error) {
 	report.FinishedAt = time.Now().UTC()
 	digestValue, err := FullVerifyReportDigest(report)
 	if err != nil {
@@ -992,34 +1029,42 @@ func finishFullVerify(root string, write bool, report FullVerifyReport, cause er
 	}
 	report.Digest = digestValue
 	if write {
-		path := filepath.Join(root, ".markitect", "runs", "full-verifications", report.Digest+".json")
-		store, err := newRunStore(root)
+		var store *runStore
+		if len(owners) > 0 {
+			store = owners[0]
+		}
+		if store == nil {
+			store, err = newRunStore(root)
+			if err != nil {
+				return report, errors.Join(cause, err)
+			}
+			release, err := store.lock()
+			if err != nil {
+				return report, errors.Join(cause, err)
+			}
+			defer func() { resultErr = errors.Join(resultErr, release()) }()
+		}
+		id := "full-" + strings.TrimPrefix(report.Digest, "sha256:")
+		physical, done, err := store.physical()
 		if err != nil {
 			return report, errors.Join(cause, err)
 		}
-		if err := ensureDirectory(filepath.Dir(store.base)); err != nil {
+		defer done()
+		if err := physical.CreateContainer(recordstore.Run, id); err != nil {
 			return report, errors.Join(cause, err)
 		}
-		if err := ensureDirectory(store.base); err != nil {
+		name := recordstore.Name{Kind: recordstore.Run, ID: id, Role: "record.json"}
+		relative, err := name.Path()
+		if err != nil {
 			return report, errors.Join(cause, err)
 		}
-		if err := ensureDirectory(filepath.Dir(path)); err != nil {
-			return report, errors.Join(cause, err)
-		}
+		path := filepath.Join(root, filepath.FromSlash(relative))
 		report.PersistedPath = filepath.ToSlash(path)
 		data, err := json.MarshalIndent(report, "", "  ")
 		if err != nil {
 			return report, errors.Join(cause, err)
 		}
-		file, err := os.OpenFile(path, os.O_CREATE|os.O_EXCL|os.O_WRONLY, 0o600)
-		if err != nil {
-			return report, errors.Join(cause, err)
-		}
-		if _, err := file.Write(append(data, '\n')); err != nil {
-			_ = file.Close()
-			return report, errors.Join(cause, err)
-		}
-		if err := file.Close(); err != nil {
+		if err := physical.Create(name, append(data, '\n')); err != nil {
 			return report, errors.Join(cause, err)
 		}
 	}

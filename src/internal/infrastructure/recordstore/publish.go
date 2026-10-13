@@ -32,6 +32,13 @@ func WasPublished(err error) bool {
 	var e *PublicationError
 	return errors.As(err, &e) && e.Outcome == Published
 }
+
+// WasPublishedAt distinguishes a published record from a created ancestor or
+// control leaf whose later observation failed.
+func WasPublishedAt(err error, relative string) bool {
+	var e *PublicationError
+	return errors.As(err, &e) && e.Outcome == Published && e.Path == relative
+}
 func OutcomeUnknown(err error) bool {
 	var e *PublicationError
 	return errors.As(err, &e) && e.Outcome == Unknown
@@ -46,7 +53,7 @@ func randomLeaf() (string, error) {
 	}
 	return ".pending-" + hex.EncodeToString(id[:]), nil
 }
-func removeOwned(d *directory, name string, identity os.FileInfo) error {
+func removeOwned(d *directory, name string, identity os.FileInfo, expected ...[]byte) error {
 	if err := d.check(); err != nil {
 		return err
 	}
@@ -60,7 +67,16 @@ func removeOwned(d *directory, name string, identity os.FileInfo) error {
 	if platformIsReparse(current) || !os.SameFile(current, identity) {
 		return errors.New("cleanup retains replaced record leaf")
 	}
-	return d.root.Remove(name)
+	if len(expected) > 0 {
+		file, err := readLeaf(d, name, int64(len(expected[0]))+1)
+		if err != nil {
+			return err
+		}
+		if !file.Exists || !bytes.Equal(file.Bytes, expected[0]) {
+			return errors.New("cleanup retains changed record bytes")
+		}
+	}
+	return platformRemoveOwned(d, name, identity)
 }
 func (s *Store) Create(n Name, data []byte) error { return s.publish(n, nil, data, nil) }
 func (s *Store) Replace(n Name, expected File, data []byte, validate func() error) error {
@@ -113,15 +129,20 @@ func (s *Store) publish(n Name, expected *File, data []byte, validate func() err
 	}
 	identity, err := f.Stat()
 	if err != nil {
-		f.Close()
-		return err
+		return &PublicationError{Path: path.Dir(p) + "/" + tmp, Outcome: Published, Cause: errors.Join(err, f.Close())}
 	}
 	published := false
 	ambiguous := false
 	defer func() {
-		_ = f.Close()
+		if closeErr := f.Close(); closeErr != nil {
+			if published {
+				result = errors.Join(result, &PublicationError{p, Published, closeErr})
+			} else {
+				result = errors.Join(result, closeErr)
+			}
+		}
 		if !published && !ambiguous {
-			result = errors.Join(result, removeOwned(d, tmp, identity))
+			result = errors.Join(result, removeOwned(d, tmp, identity, data))
 		}
 	}()
 	if err = f.Chmod(0600); err != nil {
@@ -164,6 +185,17 @@ func (s *Store) publish(n Name, expected *File, data []byte, validate func() err
 	if err = d.check(); err != nil {
 		return err
 	}
+	temporary, err := readLeaf(d, tmp, int64(len(data))+1)
+	if err != nil {
+		return err
+	}
+	held, err := f.Stat()
+	if err != nil || !temporary.Exists || !os.SameFile(identity, held) || !os.SameFile(identity, temporary.identity) || !held.Mode().IsRegular() || platformIsReparse(held) || !bytes.Equal(temporary.Bytes, data) {
+		return errors.New("written temporary record identity or bytes changed")
+	}
+	if err := platformMode(held, 0600); err != nil {
+		return err
+	}
 	published, err = platformPublish(d.root, parent, f, tmp, leaf, expected != nil && prior.Exists)
 	if err != nil {
 		ambiguous = errors.Is(err, errAmbiguous)
@@ -192,9 +224,9 @@ func (s *Store) publish(n Name, expected *File, data []byte, validate func() err
 		return &PublicationError{p, Published, err}
 	}
 	observed, err := readLeaf(d, leaf, int64(len(data))+1)
-	if err != nil || !observed.Exists || !bytes.Equal(observed.Bytes, data) {
+	if err != nil || !observed.Exists || observed.identity == nil || !os.SameFile(identity, observed.identity) || !bytes.Equal(observed.Bytes, data) {
 		if err == nil {
-			err = errors.New("published record readback differs")
+			err = errors.New("published record readback identity or bytes differ")
 		}
 		return &PublicationError{p, Published, err}
 	}

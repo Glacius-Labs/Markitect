@@ -224,7 +224,7 @@ func contractPlanHappy(t *testing.T, surface string) {
 	if persistedID == "" || contractString(t, persisted, "status") != projectrun.StatusPlanned || invoker.calls != 0 {
 		t.Fatalf("persisted plan omitted its independent identity/status or invoked runtime: plan=%v calls=%d", persisted, invoker.calls)
 	}
-	planBytes, err := os.ReadFile(filepath.Join(caller.root, ".markitect", "runs", persistedID, "plan.json"))
+	planBytes, err := os.ReadFile(filepath.Join(caller.root, ".markitect", "records", "run", persistedID, "plan.json"))
 	if err != nil {
 		t.Fatalf("read persisted plan %s: %v", persistedID, err)
 	}

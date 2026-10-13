@@ -341,7 +341,7 @@ func initializeManagerStage(store *runStore, b ManagerStageBinding) (RunReport, 
 		return RunReport{}, err
 	}
 	for _, name := range []string{"states", "reports", "candidates"} {
-		if err := ensureDirectory(filepath.Join(dir, name)); err != nil {
+		if err := ensureDirectory(filepath.Join(dir, name), store); err != nil {
 			return RunReport{}, err
 		}
 	}
@@ -358,7 +358,7 @@ func newStageInvocation(spec ManagerStageSpec, preview ManagerStagePreview, id s
 	return InvocationLog{TaskID: spec.Validation.IterationID, Role: agentexec.RoleExecutor, Phase: spec.Validation.Phase, InputDigest: preview.RequestDigest, Outcome: "started", Attempt: a}
 }
 
-func RunManagerStage(ctx context.Context, host Host, invoker Invoker, root string, spec ManagerStageSpec, expectedPreviewDigest string) (ManagerStageResult, error) {
+func RunManagerStage(ctx context.Context, host Host, invoker Invoker, root string, spec ManagerStageSpec, expectedPreviewDigest string) (returnedReport ManagerStageResult, resultErr error) {
 	if ctx == nil || host.ValidateManagerStage == nil {
 		return ManagerStageResult{}, errors.New("Manager stage requires context and Application fact validation")
 	}
@@ -377,7 +377,7 @@ func RunManagerStage(ctx context.Context, host Host, invoker Invoker, root strin
 	if err != nil {
 		return ManagerStageResult{}, err
 	}
-	defer unlock()
+	defer func() { resultErr = errors.Join(resultErr, unlock()) }()
 	preview, err := PreviewManagerStage(invoker, root, spec)
 	if err != nil {
 		return ManagerStageResult{}, err
@@ -530,7 +530,7 @@ func recoverManagerStage(ctx context.Context, host Host, invoker Invoker, j *man
 	return out, errors.Join(err, managerStageAttachability(*j.report, frozenManagerStageBudget(effectiveManagerStageBudget(*j.report), spec.Limits)))
 }
 
-func CompleteManagerStage(root, runID, attemptID, expectedStateDigest string, validation ManagerStageValidation) (ManagerStageResult, error) {
+func CompleteManagerStage(root, runID, attemptID, expectedStateDigest string, validation ManagerStageValidation) (returnedReport ManagerStageResult, resultErr error) {
 	store, err := newManagerStageStore(root)
 	if err != nil {
 		return ManagerStageResult{}, err
@@ -539,7 +539,7 @@ func CompleteManagerStage(root, runID, attemptID, expectedStateDigest string, va
 	if err != nil {
 		return ManagerStageResult{}, err
 	}
-	defer unlock()
+	defer func() { resultErr = errors.Join(resultErr, unlock()) }()
 	report, err := store.readLatestState(runID)
 	if err != nil {
 		return ManagerStageResult{}, err

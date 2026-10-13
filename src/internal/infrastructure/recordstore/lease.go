@@ -1,6 +1,7 @@
 package recordstore
 
 import (
+	"bytes"
 	"errors"
 	"io/fs"
 	"os"
@@ -16,15 +17,18 @@ type Lease struct {
 	leaf      string
 	exclusive bool
 	unlock    func() error
+	data      []byte
 }
 
 func (l *Lease) Close() error {
-	var err error
+	err := l.Check()
 	if l.unlock != nil {
-		err = l.unlock()
+		err = errors.Join(err, l.unlock())
 	}
 	if l.exclusive {
-		err = errors.Join(err, removeOwned(l.directory, l.leaf, l.identity))
+		if err == nil {
+			err = errors.Join(err, removeOwned(l.directory, l.leaf, l.identity))
+		}
 	}
 	err = errors.Join(err, l.file.Close())
 	l.directory.close()
@@ -41,6 +45,20 @@ func (l *Lease) Check() error {
 	if platformIsReparse(i) || !os.SameFile(l.identity, i) {
 		return errors.New("record lease name identity changed")
 	}
+	if l.exclusive {
+		current, err := readLeaf(l.directory, l.leaf, int64(len(l.data))+1)
+		if err != nil {
+			return err
+		}
+		if !bytes.Equal(current.Bytes, l.data) {
+			return errors.New("record lease bytes changed")
+		}
+	} else {
+		held, err := l.file.Stat()
+		if err != nil || held.Size() != 0 {
+			return errors.New("kernel lease must remain empty")
+		}
+	}
 	return nil
 }
 func leaseName(kind Kind, id, leaf string) (Name, error) {
@@ -55,6 +73,15 @@ func leaseName(kind Kind, id, leaf string) (Name, error) {
 	return n, nil
 }
 func (s *Store) Exclusive(kind Kind, id, leaf string, data []byte, wait time.Duration, dead func([]byte) (bool, error)) (*Lease, error) {
+	if kind != Run && kind != Briefing {
+		return nil, errors.New("exclusive leases support only Run and Briefing")
+	}
+	if kind != Run && dead != nil {
+		return nil, errors.New("dead-owner recovery is restricted to the Runtime Run lease")
+	}
+	if wait < 0 || kind == Briefing && wait > 10*time.Second {
+		return nil, errors.New("lease wait exceeds the approved bound")
+	}
 	n, err := leaseName(kind, id, leaf)
 	if err != nil {
 		return nil, err
@@ -94,7 +121,7 @@ func (s *Store) Exclusive(kind Kind, id, leaf string, data []byte, wait time.Dur
 				return nil, e
 			}
 			if remove {
-				if e = removeOwned(d, leaf, prior.identity); e != nil {
+				if e = removeOwned(d, leaf, prior.identity, prior.Bytes); e != nil {
 					return nil, e
 				}
 				continue
@@ -110,9 +137,9 @@ func (s *Store) Exclusive(kind Kind, id, leaf string, data []byte, wait time.Dur
 		info, err := f.Stat()
 		if err != nil {
 			f.Close()
-			return nil, err
+			return nil, &PublicationError{Path: p, Outcome: Published, Cause: err}
 		}
-		l := &Lease{file: f, directory: d, identity: info, leaf: leaf, exclusive: true}
+		l := &Lease{file: f, directory: d, identity: info, leaf: leaf, exclusive: true, data: append([]byte(nil), data...)}
 		if err = f.Chmod(0600); err == nil {
 			_, err = f.Write(data)
 		}
@@ -125,10 +152,19 @@ func (s *Store) Exclusive(kind Kind, id, leaf string, data []byte, wait time.Dur
 		if err == nil {
 			err = l.Check()
 		}
+		if err == nil {
+			held, openErr := platformLeaseHandle(d, parent, f, leaf, info)
+			if openErr != nil {
+				err = openErr
+			} else {
+				f = held
+				l.file = held
+				err = l.Check()
+			}
+		}
 		if err != nil {
-			_ = l.Close()
-			success = true
-			return nil, err
+			_ = f.Close()
+			return nil, &PublicationError{Path: p, Outcome: Published, Cause: err}
 		}
 		success = true
 		return l, nil
@@ -170,16 +206,32 @@ func (s *Store) EstablishKernelLeaf(id, leaf string) error {
 		return err
 	}
 	defer f.Close()
+	created := func(err error) error {
+		if err != nil {
+			return &PublicationError{Path: p, Outcome: Published, Cause: err}
+		}
+		return nil
+	}
 	if err = f.Chmod(0600); err != nil {
-		return err
+		return created(err)
+	}
+	if s.hooks.fileSync != nil {
+		if err = s.hooks.fileSync(); err != nil {
+			return created(err)
+		}
 	}
 	if err = f.Sync(); err != nil {
-		return err
+		return created(err)
+	}
+	if s.hooks.directorySync != nil {
+		if err = s.hooks.directorySync(); err != nil {
+			return created(err)
+		}
 	}
 	if err = platformSyncDir(parent); err != nil {
-		return err
+		return created(err)
 	}
-	return d.check()
+	return created(d.check())
 }
 
 // Kernel opens an established empty leaf without creation or byte mutation.
@@ -231,7 +283,7 @@ func (s *Store) Kernel(id, leaf string) (*Lease, error) {
 	}
 	l := &Lease{file: f, directory: d, identity: info, leaf: leaf, unlock: unlock}
 	if err = l.Check(); err != nil {
-		_ = l.Close()
+		err = errors.Join(err, l.Close())
 		success = true
 		return nil, err
 	}

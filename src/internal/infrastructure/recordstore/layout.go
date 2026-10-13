@@ -27,7 +27,7 @@ type Name struct {
 
 var hex32 = regexp.MustCompile(`^[0-9a-f]{32}$`)
 var hex64 = regexp.MustCompile(`^[0-9a-f]{64}$`)
-var revisionName = regexp.MustCompile(`^[0-9]{8,}\.json$`)
+var revisionName = regexp.MustCompile(`^(?:[0-9]{8}|[1-9][0-9]{8,})\.json$`)
 var component = regexp.MustCompile(`^[A-Za-z0-9][A-Za-z0-9._-]*$`)
 
 func safeComponent(s string) bool {

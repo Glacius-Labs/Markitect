@@ -13,6 +13,7 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/Glacius-Labs/Markitect/src/internal/infrastructure/recordstore"
 	"github.com/Glacius-Labs/Markitect/src/internal/infrastructure/source"
 	"github.com/Glacius-Labs/Markitect/src/internal/runtime/agentexec"
 	"github.com/Glacius-Labs/Markitect/src/internal/runtime/projectworkspace"
@@ -156,7 +157,7 @@ func externalInvocation(ctx context.Context, host Host, root, planID, attemptID 
 	if err != nil {
 		return agentexec.RunResult{}, true, err
 	}
-	submission, err := readExternalSubmission(dir, packet.ID)
+	submission, err := readExternalSubmission(dir, packet.ID, store)
 	if os.IsNotExist(err) {
 		return agentexec.RunResult{}, true, fmt.Errorf("%w: %s", ErrAwaitingExternal, packet.ID)
 	}
@@ -220,13 +221,13 @@ func ExternalPackets(host Host, root, runID string) ([]ExternalPacket, error) {
 	if err := validateExternalSubmissionBinding(host, root, plan); err != nil {
 		return nil, err
 	}
-	packets, err := readExternalPackets(dir)
+	packets, err := readExternalPackets(dir, store)
 	if err != nil {
 		return nil, err
 	}
 	result := make([]ExternalPacket, 0, len(packets))
 	for _, packet := range packets {
-		if _, err := readExternalSubmission(dir, packet.ID); err == nil {
+		if _, err := readExternalSubmission(dir, packet.ID, store); err == nil {
 			continue
 		} else if !os.IsNotExist(err) {
 			return nil, err
@@ -267,7 +268,7 @@ func ExportExternalPacket(host Host, root, runID, packetID string) (ExternalPack
 // returned bool is false for an exact duplicate; changed duplicate bytes are
 // rejected. The caller must separately resume the run with explicit execute
 // authority.
-func SubmitExternalResponse(host Host, root, runID, packetID, expectedDigest string, responseBytes []byte, gitCandidate *ExternalGitCandidate) (ExternalPacket, bool, error) {
+func SubmitExternalResponse(host Host, root, runID, packetID, expectedDigest string, responseBytes []byte, gitCandidate *ExternalGitCandidate) (returnedPacket ExternalPacket, returnedStored bool, resultErr error) {
 	store, err := newRunStore(root)
 	if err != nil {
 		return ExternalPacket{}, false, err
@@ -276,7 +277,7 @@ func SubmitExternalResponse(host Host, root, runID, packetID, expectedDigest str
 	if err != nil {
 		return ExternalPacket{}, false, err
 	}
-	defer unlock()
+	defer func() { resultErr = errors.Join(resultErr, unlock()) }()
 	dir, err := store.runDir(runID)
 	if err != nil {
 		return ExternalPacket{}, false, err
@@ -289,7 +290,7 @@ func SubmitExternalResponse(host Host, root, runID, packetID, expectedDigest str
 	if err != nil {
 		return ExternalPacket{}, false, err
 	}
-	packet, err := readExternalPacket(dir, packetID)
+	packet, err := readExternalPacket(dir, packetID, store)
 	if err != nil {
 		return ExternalPacket{}, false, err
 	}
@@ -297,7 +298,7 @@ func SubmitExternalResponse(host Host, root, runID, packetID, expectedDigest str
 		return ExternalPacket{}, false, errors.New("external packet digest does not match --expect")
 	}
 	responseDigest := externalResponseDigest(responseBytes, gitCandidate, nil)
-	if existing, readErr := readExternalSubmission(dir, packet.ID); readErr == nil {
+	if existing, readErr := readExternalSubmission(dir, packet.ID, store); readErr == nil {
 		if existing.PacketDigest != packet.Digest {
 			return ExternalPacket{}, false, errors.New("stored external submission does not match packet digest")
 		}
@@ -335,15 +336,18 @@ func SubmitExternalResponse(host Host, root, runID, packetID, expectedDigest str
 		PacketDigest: packet.Digest, ResponseHash: responseDigest, Response: append([]byte(nil), responseBytes...),
 		GitCandidate: cloneExternalGitCandidate(gitCandidate), GitDelta: importedDelta}
 	path := externalSubmissionPath(dir, packet.ID)
-	if err := ensureDirectory(filepath.Join(dir, "external")); err != nil {
+	if err := ensureDirectory(filepath.Join(dir, "external"), store); err != nil {
 		return ExternalPacket{}, false, err
 	}
-	if err := ensureDirectory(filepath.Join(dir, "external", "responses")); err != nil {
+	if err := ensureDirectory(filepath.Join(dir, "external", "responses"), store); err != nil {
 		return ExternalPacket{}, false, err
 	}
-	if err := writeImmutableJSON(path, submission); err != nil {
-		if _, readErr := readExternalSubmission(dir, packet.ID); readErr == nil {
-			existing, readErr := readExternalSubmission(dir, packet.ID)
+	if err := writeImmutableJSON(path, submission, store); err != nil {
+		if recordstore.WasPublished(err) || recordstore.OutcomeUnknown(err) {
+			return ExternalPacket{}, false, err
+		}
+		if _, readErr := readExternalSubmission(dir, packet.ID, store); readErr == nil {
+			existing, readErr := readExternalSubmission(dir, packet.ID, store)
 			if readErr == nil && existing.ResponseHash == responseDigest {
 				return packet, false, nil
 			}
@@ -513,7 +517,7 @@ func createOrReadExternalPacket(store *runStore, dir string, plan PlanRecord, re
 	if !validID(packetID) {
 		return ExternalPacket{}, errors.New("external packet identity is invalid")
 	}
-	if packet, err := readExternalPacket(dir, packetID); err == nil {
+	if packet, err := readExternalPacket(dir, packetID, store); err == nil {
 		if packet.TaskID != task.ID || packet.AttemptID != attemptID || packet.ManagerID != task.ManagerID ||
 			packet.Kind != meta.Kind || packet.Phase != meta.Phase || packet.Attempt != attempt ||
 			packet.RequestDigest != requestDigest || packet.PlanDigest != plan.Digest ||
@@ -538,16 +542,19 @@ func createOrReadExternalPacket(store *runStore, dir string, plan PlanRecord, re
 		return ExternalPacket{}, err
 	}
 	externalDir := filepath.Join(dir, "external")
-	if err := ensureDirectory(externalDir); err != nil {
+	if err := ensureDirectory(externalDir, store); err != nil {
 		return ExternalPacket{}, err
 	}
 	packetDir := filepath.Join(externalDir, "packets")
-	if err := ensureDirectory(packetDir); err != nil {
+	if err := ensureDirectory(packetDir, store); err != nil {
 		return ExternalPacket{}, err
 	}
 	path := filepath.Join(packetDir, packet.ID+".json")
-	if err := writeImmutableJSON(path, packet); err != nil {
-		if existing, readErr := readExternalPacket(dir, packet.ID); readErr == nil && existing.Digest == packet.Digest {
+	if err := writeImmutableJSON(path, packet, store); err != nil {
+		if recordstore.WasPublished(err) || recordstore.OutcomeUnknown(err) {
+			return ExternalPacket{}, err
+		}
+		if existing, readErr := readExternalPacket(dir, packet.ID, store); readErr == nil && existing.Digest == packet.Digest {
 			return existing, nil
 		}
 		return ExternalPacket{}, err
@@ -636,8 +643,8 @@ func taskForPacket(report RunReport, packet ExternalPacket) ManagerTask {
 	return ManagerTask{}
 }
 
-func readExternalPackets(dir string) ([]ExternalPacket, error) {
-	externalDir, err := requireRealSubdirectory(dir, "external")
+func readExternalPackets(dir string, owners ...*runStore) ([]ExternalPacket, error) {
+	externalDir, err := requireRealSubdirectory(dir, "external", owners...)
 	if os.IsNotExist(err) {
 		return []ExternalPacket{}, nil
 	}
@@ -645,15 +652,7 @@ func readExternalPackets(dir string) ([]ExternalPacket, error) {
 		return nil, err
 	}
 	packetDir := filepath.Join(externalDir, "packets")
-	if _, err := os.Lstat(packetDir); os.IsNotExist(err) {
-		return []ExternalPacket{}, nil
-	} else if err != nil {
-		return nil, err
-	}
-	if _, err := requireRealSubdirectory(externalDir, "packets"); err != nil {
-		return nil, err
-	}
-	entries, err := os.ReadDir(packetDir)
+	entries, err := listRecordDirectory(packetDir, owners...)
 	if err != nil {
 		return nil, err
 	}
@@ -665,7 +664,7 @@ func readExternalPackets(dir string) ([]ExternalPacket, error) {
 		if entry.IsDir() || !strings.HasSuffix(entry.Name(), ".json") {
 			return nil, fmt.Errorf("unknown external packet entry %q", entry.Name())
 		}
-		packet, err := readExternalPacketByPath(filepath.Join(packetDir, entry.Name()))
+		packet, err := readExternalPacketByPath(filepath.Join(packetDir, entry.Name()), owners...)
 		if err != nil {
 			return nil, err
 		}
@@ -678,24 +677,24 @@ func readExternalPackets(dir string) ([]ExternalPacket, error) {
 	return packets, nil
 }
 
-func readExternalPacket(dir, packetID string) (ExternalPacket, error) {
+func readExternalPacket(dir, packetID string, owners ...*runStore) (ExternalPacket, error) {
 	if !validID(packetID) {
 		return ExternalPacket{}, ErrNotFound
 	}
-	externalDir, err := requireRealSubdirectory(dir, "external")
+	externalDir, err := requireRealSubdirectory(dir, "external", owners...)
 	if err != nil {
 		return ExternalPacket{}, err
 	}
-	packetDir, err := requireRealSubdirectory(externalDir, "packets")
+	packetDir, err := requireRealSubdirectory(externalDir, "packets", owners...)
 	if err != nil {
 		return ExternalPacket{}, err
 	}
-	return readExternalPacketByPath(filepath.Join(packetDir, packetID+".json"))
+	return readExternalPacketByPath(filepath.Join(packetDir, packetID+".json"), owners...)
 }
 
-func readExternalPacketByPath(path string) (ExternalPacket, error) {
+func readExternalPacketByPath(path string, owners ...*runStore) (ExternalPacket, error) {
 	var packet ExternalPacket
-	if err := readJSON(path, &packet); err != nil {
+	if err := readJSON(path, &packet, owners...); err != nil {
 		return packet, err
 	}
 	wire, err := json.Marshal(packet.Invocation)
@@ -713,21 +712,21 @@ func readExternalPacketByPath(path string) (ExternalPacket, error) {
 	return packet, nil
 }
 
-func readExternalSubmission(dir, packetID string) (externalSubmission, error) {
+func readExternalSubmission(dir, packetID string, owners ...*runStore) (externalSubmission, error) {
 	var submission externalSubmission
 	if !validID(packetID) {
 		return submission, ErrNotFound
 	}
-	externalDir, err := requireRealSubdirectory(dir, "external")
+	externalDir, err := requireRealSubdirectory(dir, "external", owners...)
 	if err != nil {
 		return submission, err
 	}
-	responseDir, err := requireRealSubdirectory(externalDir, "responses")
+	responseDir, err := requireRealSubdirectory(externalDir, "responses", owners...)
 	if err != nil {
 		return submission, err
 	}
 	path := filepath.Join(responseDir, packetID+".json")
-	if err := readJSON(path, &submission); err != nil {
+	if err := readJSON(path, &submission, owners...); err != nil {
 		return submission, err
 	}
 	if submission.APIVersion != externalPacketVersion || submission.PacketID != packetID ||

@@ -286,7 +286,7 @@ func inspectionContextNoWrite(t *testing.T, surface string) {
 	if err != nil || len(accepted.Receipt.Bundles) != 1 {
 		t.Fatalf("fixture has no prospective accepted-history change: receipt=%+v err=%v", accepted.Receipt, err)
 	}
-	store := filepath.Join(repo.Dir, filepath.FromSlash(".markitect/state/briefings/history.json"))
+	store := filepath.Join(repo.Dir, filepath.FromSlash(".markitect/records/briefing/accepted/record.json"))
 	if _, err := os.Stat(store); !os.IsNotExist(err) {
 		t.Fatalf("fixture materialized accepted history before context: %v", err)
 	}

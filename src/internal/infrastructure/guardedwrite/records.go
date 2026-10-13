@@ -11,7 +11,7 @@ import (
 
 // ApplyRecordChecked preserves the sealed Git/source authorization and shared
 // Host lease for one exploration record, while recordstore owns publication.
-func ApplyRecordChecked(root string, capture *Capture, name recordstore.Name, data []byte, validate func() error) (Result, error) {
+func ApplyRecordChecked(root string, capture *Capture, name recordstore.Name, data []byte, validate func() error) (returnedResult Result, resultErr error) {
 	result := Result{CompletedPaths: []string{}}
 	if name.Kind != recordstore.Exploration || name.Role != "record.json" {
 		return result, errors.New("guarded record Apply permits one exploration record")
@@ -48,12 +48,30 @@ func ApplyRecordChecked(root string, capture *Capture, name recordstore.Name, da
 		return result, err
 	}
 	defer writer.Close()
+	var hostParent *os.Root
+	var hostIdentity os.FileInfo
+	checkLease := func() error {
+		if hostParent == nil {
+			return nil
+		}
+		if err := writer.checkNamedDirectoryIdentity(".markitect", hostParent); err != nil {
+			return err
+		}
+		current, err := hostParent.Lstat("write.lock")
+		if err != nil || !current.Mode().IsRegular() || IsReparsePoint(current) || !os.SameFile(hostIdentity, current) || current.Size() != 0 {
+			return errors.New("shared Host record lease identity or bytes changed")
+		}
+		return nil
+	}
 	check := func() error {
 		seal, err := guardedCaptureSeal(capture)
 		if err != nil || seal != originalSeal {
 			return errors.New("guarded record capture changed")
 		}
 		if err = writer.CheckIdentity(); err != nil {
+			return err
+		}
+		if err := checkLease(); err != nil {
 			return err
 		}
 		if !os.SameFile(capture.rootIdentity, writer.identity) {
@@ -71,7 +89,33 @@ func ApplyRecordChecked(root string, capture *Capture, name recordstore.Name, da
 	if err != nil {
 		return result, err
 	}
-	defer unlock()
+	defer func() {
+		leaseErr := checkLease()
+		unlock()
+		if leaseErr == nil && hostParent != nil {
+			if err := writer.checkNamedDirectoryIdentity(".markitect", hostParent); err != nil {
+				leaseErr = err
+			} else if current, err := hostParent.Lstat("write.lock"); err == nil && os.SameFile(hostIdentity, current) {
+				leaseErr = errors.New("shared Host record lease was not released")
+			} else if err != nil && !os.IsNotExist(err) {
+				leaseErr = err
+			}
+		}
+		if hostParent != nil {
+			leaseErr = errors.Join(leaseErr, hostParent.Close())
+		}
+		if leaseErr != nil {
+			resultErr = errors.Join(resultErr, &recordstore.PublicationError{Path: ".markitect/write.lock", Outcome: recordstore.Published, Cause: leaseErr})
+		}
+	}()
+	hostParent, _, err = writer.openDirectory(".markitect", false, 0)
+	if err != nil {
+		return result, err
+	}
+	hostIdentity, err = hostParent.Lstat("write.lock")
+	if err != nil {
+		return result, err
+	}
 	if err = check(); err != nil {
 		return result, err
 	}
@@ -93,7 +137,7 @@ func ApplyRecordChecked(root string, capture *Capture, name recordstore.Name, da
 		}
 		return check()
 	})
-	if err == nil || recordstore.WasPublished(err) {
+	if err == nil || recordstore.WasPublishedAt(err, p) {
 		result.CompletedPaths = append(result.CompletedPaths, p)
 	}
 	if err != nil {

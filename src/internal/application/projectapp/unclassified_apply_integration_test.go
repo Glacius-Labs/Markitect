@@ -44,7 +44,7 @@ func TestApplicationApplyRejectsUnclassifiedPathAfterVerifiedPreflight(t *testin
 	if got := run.Candidate.Files[document.Path]; got == "" || got != contentDigest(document.Content) {
 		t.Fatalf("candidate document digest %q does not bind the exact generated document %q", got, contentDigest(document.Content))
 	}
-	candidatePath := fmt.Sprintf(".markitect/runs/%s/candidates/%s.json", run.ID, run.Candidate.ID)
+	candidatePath := fmt.Sprintf(".markitect/records/run/%s/candidates/%s.json", run.ID, run.Candidate.ID)
 	storedBytes, err := operations.ReadRecord(root, candidatePath)
 	if err != nil {
 		t.Fatalf("read persisted candidate through the public Application record path: %v", err)
@@ -82,8 +82,8 @@ func TestApplicationApplyRejectsUnclassifiedPathAfterVerifiedPreflight(t *testin
 	if err != nil || beforeStatus.Run.Status != projectrun.StatusVerified {
 		t.Fatalf("pre-Apply status: report=%+v err=%v", beforeStatus, err)
 	}
-	planPath := ".markitect/runs/" + plan.ID + "/plan.json"
-	statePath := fmt.Sprintf(".markitect/runs/%s/states/%08d.json", run.ID, beforeStatus.Run.Revision)
+	planPath := ".markitect/records/run/" + plan.ID + "/plan.json"
+	statePath := fmt.Sprintf(".markitect/records/run/%s/states/%08d.json", run.ID, beforeStatus.Run.Revision)
 	planBytes, err := operations.ReadRecord(root, planPath)
 	if err != nil {
 		t.Fatalf("read persisted plan before rejected Apply: %v", err)
@@ -143,7 +143,7 @@ func TestApplicationApplyRejectsUnclassifiedPathAfterVerifiedPreflight(t *testin
 	if err != nil || !bytes.Equal(stateAfter, stateBytes) {
 		t.Fatalf("rejected Apply changed the durable verified state: err=%v", err)
 	}
-	if _, err := os.Stat(filepath.Join(root, ".markitect", "runs", run.ID, "apply")); !os.IsNotExist(err) {
+	if _, err := os.Stat(filepath.Join(root, ".markitect", "records", "run", run.ID, "apply")); !os.IsNotExist(err) {
 		t.Fatalf("rejected Apply persisted an apply receipt directory: %v", err)
 	}
 }

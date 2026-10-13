@@ -363,7 +363,7 @@ func sessionName(id string) recordstore.Name {
 
 // WriteBrownfieldSession uses the sealed preview token for creation and the
 // prior domain digest for later CAS. Storage byte tokens are separate.
-func WriteBrownfieldSession(sourceRoot string, session BrownfieldSession, expectedDigest string) (BrownfieldSession, error) {
+func WriteBrownfieldSession(sourceRoot string, session BrownfieldSession, expectedDigest string) (returnedSession BrownfieldSession, resultErr error) {
 	if err := ValidateBrownfieldSession(session); err != nil {
 		return BrownfieldSession{}, err
 	}
@@ -387,7 +387,15 @@ func WriteBrownfieldSession(sourceRoot string, session BrownfieldSession, expect
 	if err != nil {
 		return BrownfieldSession{}, err
 	}
-	defer lease.Close()
+	defer func() {
+		if closeErr := lease.Close(); closeErr != nil {
+			if returnedSession.ID != "" {
+				p, _ := sessionName(session.ID).Path()
+				closeErr = &recordstore.PublicationError{Path: p, Outcome: recordstore.Published, Cause: closeErr}
+			}
+			resultErr = errors.Join(resultErr, closeErr)
+		}
+	}()
 	name := sessionName(session.ID)
 	if err = store.Incomplete(name); err != nil {
 		return BrownfieldSession{}, err
@@ -420,6 +428,9 @@ func WriteBrownfieldSession(sourceRoot string, session BrownfieldSession, expect
 		return BrownfieldSession{}, err
 	}
 	observed, err := store.Read(name, maxRecordBytes)
+	if err == nil && (!observed.Exists || !bytes.Equal(observed.Bytes, data)) {
+		err = errors.New("published Session bytes differ")
+	}
 	if err == nil {
 		var decoded BrownfieldSession
 		decoded, err = DecodeBrownfieldSession(observed.Bytes)
@@ -433,7 +444,7 @@ func WriteBrownfieldSession(sourceRoot string, session BrownfieldSession, expect
 	}
 	return session, nil
 }
-func LoadBrownfieldSession(sourceRoot, id string) (BrownfieldSession, error) {
+func LoadBrownfieldSession(sourceRoot, id string) (returnedSession BrownfieldSession, resultErr error) {
 	if !validID(id) {
 		return BrownfieldSession{}, errors.New("invalid Brownfield session ID")
 	}
@@ -446,7 +457,7 @@ func LoadBrownfieldSession(sourceRoot, id string) (BrownfieldSession, error) {
 	if err != nil {
 		return BrownfieldSession{}, err
 	}
-	defer lease.Close()
+	defer func() { resultErr = errors.Join(resultErr, lease.Close()) }()
 	name := sessionName(id)
 	if err = store.Incomplete(name); err != nil {
 		return BrownfieldSession{}, err

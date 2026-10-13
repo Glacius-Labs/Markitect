@@ -1,10 +1,12 @@
 package projecthistory
 
 import (
+	"bytes"
 	"encoding/json"
 	"errors"
 	"fmt"
 	projectbriefing "github.com/Glacius-Labs/Markitect/src/internal/core/projectmodel/projectbriefing"
+	"github.com/Glacius-Labs/Markitect/src/internal/infrastructure/recordstore"
 	"os"
 	"path/filepath"
 	"sort"
@@ -616,16 +618,16 @@ func commitNewAcceptedHistoryTest(t *testing.T, root string) string {
 
 func assertOnlyBriefingStoreFileTest(t *testing.T, root string) {
 	t.Helper()
-	entries, err := os.ReadDir(filepath.Join(root, ".markitect", "state", "briefings"))
+	entries, err := os.ReadDir(filepath.Join(root, ".markitect", "records", "briefing", "accepted"))
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(entries) != 1 || entries[0].Name() != "history.json" {
+	if len(entries) != 1 || entries[0].Name() != "record.json" {
 		names := []string{}
 		for _, entry := range entries {
 			names = append(names, entry.Name())
 		}
-		t.Fatalf("briefing store directory holds %v, want only history.json", names)
+		t.Fatalf("briefing store directory holds %v, want only record.json", names)
 	}
 }
 
@@ -1512,5 +1514,50 @@ func validResolutionEvidence(eventID string, managers []projectmodel.Manager) pr
 		VerificationDigest: "full-verify-digest", ApplyDigest: "apply-digest", FullVerifyPassed: true,
 		CoveredManagerIDs: managerIDs, EvidenceRefs: []string{"check:integration", "verify:all-managers"},
 		Delivered: []projectbriefing.DeliveredFile{},
+	}
+}
+
+func TestPublishedHistoryRequiresExactBytesAlongsideDomainDigest(t *testing.T) {
+	root := t.TempDir()
+	storage, err := recordstore.Open(root)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer storage.Close()
+	state := emptyStore()
+	expected, err := json.MarshalIndent(state, "", "  ")
+	if err != nil {
+		t.Fatal(err)
+	}
+	expected = append(expected, '\n')
+	if err := storage.Create(historyName(), expected); err != nil {
+		t.Fatal(err)
+	}
+	equivalent, err := json.Marshal(state)
+	if err != nil {
+		t.Fatal(err)
+	}
+	equivalent = append(equivalent, '\n')
+	_, originalDigest, err := decodeHistoryStore(expected)
+	if err != nil {
+		t.Fatal(err)
+	}
+	_, changedDigest, err := decodeHistoryStore(equivalent)
+	if err != nil || changedDigest != originalDigest {
+		t.Fatal("fixture does not retain domain semantics")
+	}
+	if bytes.Equal(expected, equivalent) {
+		t.Fatal("fixture bytes do not differ")
+	}
+	p := filepath.Join(root, filepath.FromSlash(storePath))
+	if err := os.WriteFile(p, equivalent, 0600); err != nil {
+		t.Fatal(err)
+	}
+	if err := observePublishedHistory(storage, expected, originalDigest); !recordstore.WasPublished(err) {
+		t.Fatalf("equivalent different bytes accepted: %v", err)
+	}
+	wire, err := os.ReadFile(p)
+	if err != nil || !bytes.Equal(wire, equivalent) {
+		t.Fatal("published evidence rolled back")
 	}
 }

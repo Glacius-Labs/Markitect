@@ -6,6 +6,7 @@ import (
 	"os"
 	"path/filepath"
 	"testing"
+	"time"
 )
 
 func TestKindWideExclusiveLeaseAndReplacementRelease(t *testing.T) {
@@ -30,6 +31,48 @@ func TestKindWideExclusiveLeaseAndReplacementRelease(t *testing.T) {
 	wire, _ := os.ReadFile(p)
 	if string(wire) != "replacement" {
 		t.Fatal("release deleted another lease")
+	}
+}
+func TestFiniteLeaseMechanismsRejectBeforeCreatingAnything(t *testing.T) {
+	for _, call := range []func(*Store) error{
+		func(s *Store) error {
+			_, err := s.Exclusive(Brownfield, "session", "session.lock", nil, 0, nil)
+			return err
+		},
+		func(s *Store) error {
+			_, err := s.Exclusive(Briefing, "accepted", ".briefings.lock", nil, 0, func([]byte) (bool, error) { return true, nil })
+			return err
+		},
+		func(s *Store) error {
+			_, err := s.Exclusive(Briefing, "accepted", ".briefings.lock", nil, 11*time.Second, nil)
+			return err
+		},
+	} {
+		s, root := openFixture(t)
+		if err := call(s); err == nil {
+			t.Fatal("invalid lease mechanism accepted")
+		}
+		if _, err := os.Stat(filepath.Join(root, ".markitect")); !os.IsNotExist(err) {
+			t.Fatalf("invalid policy created metadata: %v", err)
+		}
+	}
+}
+func TestKernelLeafSyncFailurePreservesCreatedIncompleteControl(t *testing.T) {
+	s, root := openFixture(t)
+	s.hooks.fileSync = func() error { return errors.New("injected lease sync failure") }
+	err := s.EstablishKernelLeaf("session", "session.lock")
+	if !WasPublished(err) {
+		t.Fatalf("missing created outcome: %v", err)
+	}
+	p := filepath.Join(root, filepath.FromSlash(RootPath), "brownfield", "session", "session.lock")
+	if i, err := os.Stat(p); err != nil || i.Size() != 0 {
+		t.Fatalf("created leaf lost: %v", err)
+	}
+	if _, err := s.Kernel("session", "session.lock"); err == nil {
+		t.Fatal("incomplete dual lease accepted")
+	}
+	if _, err := os.Stat(filepath.Join(filepath.Dir(p), "manager-runs.lock")); !os.IsNotExist(err) {
+		t.Fatal("read healed incomplete control")
 	}
 }
 func TestKernelLeavesEstablishedAndMissingReadNeverHeals(t *testing.T) {

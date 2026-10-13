@@ -53,9 +53,14 @@ func readLeaf(d *directory, leaf string, limit int64) (File, error) {
 	if limit > 0 {
 		reader = io.LimitReader(f, limit+1)
 	}
-	data, err := io.ReadAll(reader)
-	if err != nil {
-		return File{}, err
+	var data []byte
+	// Empty persistent kernel leaves are validated by facts, without a DATA
+	// read that conflicts with the unchanged Windows byte-range lease.
+	if opened.Size() != 0 {
+		data, err = io.ReadAll(reader)
+		if err != nil {
+			return File{}, err
+		}
 	}
 	if limit > 0 && int64(len(data)) > limit {
 		return File{}, errors.New("record exceeds caller byte bound")
@@ -126,5 +131,5 @@ func (s *Store) List(kind Kind, id, role string) ([]fs.DirEntry, error) {
 	return entries, nil
 }
 func equalPreimage(a, b File) bool {
-	return a.Exists == b.Exists && (!a.Exists || a.Mode == b.Mode && bytes.Equal(a.Bytes, b.Bytes) && (a.identity == nil || os.SameFile(a.identity, b.identity)))
+	return a.Exists == b.Exists && (!a.Exists || a.Mode == b.Mode && bytes.Equal(a.Bytes, b.Bytes) && a.identity != nil && b.identity != nil && os.SameFile(a.identity, b.identity))
 }

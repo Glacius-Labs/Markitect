@@ -143,7 +143,7 @@ func Deliver(ctx context.Context, host Host, invoker Invoker, root string, reque
 		if err != nil {
 			return stopDelivery(out, run, err)
 		}
-		verified, err := latestVerification(dir, run.Candidate.ID)
+		verified, err := latestVerification(dir, run.Candidate.ID, store)
 		if err != nil {
 			return stopDelivery(out, run, err)
 		}

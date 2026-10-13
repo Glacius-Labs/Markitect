@@ -259,7 +259,7 @@ func copyShopTree(source, destination string) error {
 		if relative == "." {
 			return os.MkdirAll(destination, 0755)
 		}
-		if entry.IsDir() && (relative == ".git" || relative == filepath.Join(".markitect", "runs") || relative == filepath.Join(".markitect", "state", "runs")) {
+		if entry.IsDir() && (relative == ".git" || relative == filepath.Join(".markitect", "runs") || relative == filepath.Join(".markitect", "records") || relative == filepath.Join(".markitect", "state", "runs")) {
 			return filepath.SkipDir
 		}
 		target := filepath.Join(destination, relative)
@@ -280,7 +280,11 @@ func treeDigest(root string) (string, error) {
 		if walkErr != nil {
 			return walkErr
 		}
-		if entry.IsDir() && (entry.Name() == ".git" || filepath.Base(path) == "runs") {
+		relative, err := filepath.Rel(root, path)
+		if err != nil {
+			return err
+		}
+		if entry.IsDir() && (relative == ".git" || relative == filepath.Join(".markitect", "runs") || relative == filepath.Join(".markitect", "records") || relative == filepath.Join(".markitect", "state", "runs")) {
 			return filepath.SkipDir
 		}
 		if !entry.IsDir() {
@@ -330,4 +334,43 @@ func cliSmoke(t *testing.T, binary, root string, args ...string) (stdout []byte,
 		t.Fatalf("start markitect %s: %v", strings.Join(args, " "), err)
 	}
 	return stdout, errout.String(), exit.ExitCode()
+}
+
+func TestShopCopyAndDigestExcludeOnlyExactOperationalTrees(t *testing.T) {
+	root := t.TempDir()
+	write := func(rel, content string) {
+		t.Helper()
+		p := filepath.Join(root, filepath.FromSlash(rel))
+		if err := os.MkdirAll(filepath.Dir(p), 0755); err != nil {
+			t.Fatal(err)
+		}
+		if err := os.WriteFile(p, []byte(content), 0644); err != nil {
+			t.Fatal(err)
+		}
+	}
+	write("src/records/source.go", "ordinary source")
+	before, err := treeDigest(root)
+	if err != nil {
+		t.Fatal(err)
+	}
+	write(".markitect/records/run/sentinel/record.json", "operational sentinel")
+	after, err := treeDigest(root)
+	if err != nil || after != before {
+		t.Fatalf("record affected source digest: %v", err)
+	}
+	dest := filepath.Join(t.TempDir(), "copy")
+	if err := copyShopTree(root, dest); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := os.Stat(filepath.Join(dest, ".markitect", "records")); !os.IsNotExist(err) {
+		t.Fatal("record sentinel copied")
+	}
+	if _, err := os.Stat(filepath.Join(dest, "src", "records", "source.go")); err != nil {
+		t.Fatal("ordinary records directory excluded")
+	}
+	write("src/records/source.go", "changed ordinary source")
+	changed, err := treeDigest(root)
+	if err != nil || changed == before {
+		t.Fatal("ordinary source change omitted from digest")
+	}
 }

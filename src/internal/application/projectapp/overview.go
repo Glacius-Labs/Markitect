@@ -14,6 +14,7 @@ import (
 	"github.com/Glacius-Labs/Markitect/src/internal/application/projecthistory"
 	"github.com/Glacius-Labs/Markitect/src/internal/core/projectmodel/projectbriefing"
 	"github.com/Glacius-Labs/Markitect/src/internal/core/projectmodel/projectvalue"
+	"github.com/Glacius-Labs/Markitect/src/internal/infrastructure/recordstore"
 	"github.com/Glacius-Labs/Markitect/src/internal/runtime/projectrun"
 )
 
@@ -210,11 +211,12 @@ func overviewPendingBriefings(root string) ([]OverviewBriefings, error) {
 // overviewAdoptions reads session records without the session lock, so the
 // overview never writes.
 func overviewAdoptions(sourceRoot string) ([]OverviewAdoption, error) {
-	base := filepath.Join(sourceRoot, filepath.FromSlash(projectadoption.BrownfieldSessionPath))
-	entries, err := os.ReadDir(base)
-	if errors.Is(err, os.ErrNotExist) {
-		return []OverviewAdoption{}, nil
+	store, err := recordstore.Open(sourceRoot)
+	if err != nil {
+		return nil, err
 	}
+	defer store.Close()
+	entries, err := store.List(recordstore.Brownfield, "", "")
 	if err != nil {
 		return nil, err
 	}
@@ -223,12 +225,15 @@ func overviewAdoptions(sourceRoot string) ([]OverviewAdoption, error) {
 		if !entry.IsDir() {
 			continue
 		}
-		data, err := os.ReadFile(filepath.Join(base, entry.Name(), "session.json"))
+		file, err := store.Read(recordstore.Name{Kind: recordstore.Brownfield, ID: entry.Name(), Role: "record.json"}, 32<<20)
 		if err != nil {
+			return nil, err
+		}
+		if !file.Exists {
 			continue
 		}
 		var session projectadoption.BrownfieldSession
-		if json.Unmarshal(data, &session) != nil || session.ID != entry.Name() {
+		if json.Unmarshal(file.Bytes, &session) != nil || session.ID != entry.Name() {
 			out = append(out, OverviewAdoption{Session: entry.Name(), Stage: "invalid"})
 			continue
 		}

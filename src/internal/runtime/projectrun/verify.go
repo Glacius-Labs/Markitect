@@ -36,7 +36,7 @@ const maxVerifierCoverageReferences = 128
 // Verify executes every planned check as a separate direct argv process in a
 // fresh materialized candidate. An optional AI verifier is another invocation
 // and cannot replace these concrete checks.
-func Verify(ctx context.Context, host Host, invoker Invoker, root, runID string) (VerifyReport, error) {
+func Verify(ctx context.Context, host Host, invoker Invoker, root, runID string) (returnedReport VerifyReport, resultErr error) {
 	var out VerifyReport
 	if host.Load == nil || host.FromSnapshot == nil || invoker == nil {
 		return out, fmt.Errorf("verification requires a project Host frontend")
@@ -49,7 +49,7 @@ func Verify(ctx context.Context, host Host, invoker Invoker, root, runID string)
 	if err != nil {
 		return out, err
 	}
-	defer unlock()
+	defer func() { resultErr = errors.Join(resultErr, unlock()) }()
 	plan, err := s.readPlan(runID)
 	if err != nil {
 		return out, err
@@ -112,7 +112,7 @@ func Verify(ctx context.Context, host Host, invoker Invoker, root, runID string)
 	if candidate.ID != run.Candidate.ID {
 		return out, fmt.Errorf("candidate identity mismatch")
 	}
-	hasPriorAttempt, err := persistedVerificationAttempt(dir, runID, candidate.ID)
+	hasPriorAttempt, err := persistedVerificationAttempt(dir, runID, candidate.ID, s)
 	if err != nil {
 		return out, err
 	}
@@ -867,7 +867,7 @@ func runtimeDigestWithInvoker(_ Invoker, runtime projectconfig.Runtime) (string,
 	return methodPolicyDigest(runtime)
 }
 func persistVerify(s *runStore, dir string, report VerifyReport) error {
-	if err := ensureDirectory(filepath.Join(dir, "verification")); err != nil {
+	if err := ensureDirectory(filepath.Join(dir, "verification"), s); err != nil {
 		return err
 	}
 	id, err := newID()
@@ -875,12 +875,12 @@ func persistVerify(s *runStore, dir string, report VerifyReport) error {
 		return err
 	}
 	name := filepath.Join(dir, "verification", id+".json")
-	return writeImmutableJSON(name, report)
+	return writeImmutableJSON(name, report, s)
 }
 
-func persistedVerificationAttempt(dir, runID, candidateID string) (bool, error) {
+func persistedVerificationAttempt(dir, runID, candidateID string, owners ...*runStore) (bool, error) {
 	verificationDir := filepath.Join(dir, "verification")
-	entries, err := os.ReadDir(verificationDir)
+	entries, err := listRecordDirectory(verificationDir, owners...)
 	if os.IsNotExist(err) {
 		return false, nil
 	}
@@ -895,12 +895,8 @@ func persistedVerificationAttempt(dir, runID, candidateID string) (bool, error) 
 			return false, fmt.Errorf("unknown verification record %q", entry.Name())
 		}
 		path := filepath.Join(verificationDir, entry.Name())
-		info, err := os.Lstat(path)
-		if err != nil || !info.Mode().IsRegular() {
-			return false, fmt.Errorf("verification record %q is not a regular file", entry.Name())
-		}
 		var report VerifyReport
-		if err := readJSON(path, &report); err != nil {
+		if err := readJSON(path, &report, owners...); err != nil {
 			return false, fmt.Errorf("read prior verification record %q: %w", entry.Name(), err)
 		}
 		if report.APIVersion != APIVersion || report.RunID != runID || report.CandidateID == "" {

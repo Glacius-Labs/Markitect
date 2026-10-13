@@ -295,7 +295,7 @@ func List(root string) ([]Record, error) {
 	records := make([]Record, 0, len(entries))
 	for _, entry := range entries {
 		if !entry.IsDir() {
-			continue
+			return nil, fmt.Errorf("unknown exploration container entry %q", entry.Name())
 		}
 		record, err := Load(root, entry.Name())
 		if err != nil {

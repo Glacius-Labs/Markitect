@@ -12,8 +12,12 @@ A Markitect project keeps its control plane in `.markitect/` and its application
   model/                       Managers, concepts, rules and artifact responsibilities
   runtime.yaml                 inner roles, profiles and finite budgets
   workflows/model-first.md     shared workflow installed by onboarding
-  state/                       explorations, decisions and briefings
-  runs/                        plans, candidates, receipts and verification evidence
+  records/
+    run/                       plans, candidates, receipts and verification evidence
+    exploration/               explorations and decisions
+    briefing/                  accepted History briefings
+    brownfield/                Brownfield sessions
+  runs/                        retained transport inputs and private runtime material
   .gitignore                   excludes local state and generated views
 .agents/skills/                optional Codex skills installed by onboarding
 .claude/skills/                optional Claude Code skills installed by onboarding
@@ -27,7 +31,7 @@ docs/markitect/project.md      generated readable view of the accepted model
 - Each ordinary file has one accountable Manager. Shared responsibility and dependencies are explicit in the model.
 - Markitect does not infer behavior, dependencies or ownership from paths, names or Markdown links.
 - The generated project view is not a source of intent. Commit accepted model changes under the repository's policy before implementation.
-- Markitect keeps local runtime state under `.markitect/state/` and `.markitect/runs/`; these paths are excluded from Git by project-local rules.
+- Markitect keeps domain records under `.markitect/records/`; retained transport/private runtime material stays under `.markitect/runs/`. New Init ignores records; existing projects add the anchored rule through a reviewed setup edit. [Cutover](project-operations.md#record-layout-and-cutover) requires quiescent writers and preserves old domain bytes.
 
 ## Ownership and boundaries
 
@@ -35,7 +39,8 @@ docs/markitect/project.md      generated readable view of the accepted model
 |---|---|
 | `.markitect/project.yaml` and the model paths | Project identity, policy, Managers, concepts, rules, artifact responsibilities and checks |
 | `.markitect/runtime.yaml` | Local role profiles, helper policy and finite budgets |
-| `.markitect/state/` and `.markitect/runs/` | Durable workflow records, plans, candidates, receipts and verification evidence |
+| `.markitect/records/` | Domain-owned Run, Explore, accepted History and Brownfield records |
+| `.markitect/runs/` | Retained transport inputs and private native execution/recovery material |
 | `AGENTS.md`, `CLAUDE.md`, `.agents/skills/`, `.claude/skills/` | Outer-agent guidance; onboarding keeps custom text outside its managed blocks |
 | Application paths and `tests/` | The adopting repository's implementation, tests and acceptance policy |
 | `docs/` | Human-owned documents and the generated model view |

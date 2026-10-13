@@ -70,7 +70,7 @@ func TestGuardedWriteUseAllowsOnlyTheGuardedAPI(t *testing.T) {
 `,
 		"src/internal/infrastructure/guardedwrite/guardedwrite.go": "package guardedwrite\n\nfunc OpenRoot(string) {}\n",
 		"src/internal/infrastructure/guardedwrite/root_test.go":    "package guardedwrite_test\n\nimport " + imp + "\n\nvar _ = guardedwrite.OpenRoot\n",
-		"src/internal/application/projectwork/ok.go":               "package projectwork\n\nimport " + imp + "\n\nvar _ = guardedwrite.Apply\nvar _ = guardedwrite.ApplyOrderedChecked\nvar _ []guardedwrite.Change\nvar _ *guardedwrite.Capture\n",
+		"src/internal/application/projectwork/ok.go":               "package projectwork\n\nimport " + imp + "\n\nvar _ = guardedwrite.Apply\nvar _ = guardedwrite.ApplyOrderedChecked\nvar _ = guardedwrite.ApplyRecordChecked\nvar _ []guardedwrite.Change\nvar _ *guardedwrite.Capture\n",
 		"src/internal/application/projectwork/bad.go":              "package projectwork\n\nimport " + imp + "\n\nvar _ = guardedwrite.CaptureFiles\nvar _ = guardedwrite.OpenRoot\n",
 		"src/internal/runtime/projectrun/alias_test.go":            "package projectrun\n\nimport gw " + imp + "\n\nvar _ = gw.Apply\nvar _ = gw.SafeDestination\n",
 		"src/internal/runtime/projectsetup/dot.go":                 "package projectsetup\n\nimport . " + imp + "\n\nvar _ = Apply\n",
@@ -96,7 +96,7 @@ func TestGuardedWriteUseAllowsOnlyTheGuardedAPI(t *testing.T) {
 	}
 	// The coarse gate already forbids guardedwrite's own external test package
 	// from importing it; the selector rule adds no second finding there.
-	const api = "product package may use only the guarded write API (Apply, ApplyChecked, ApplyOrderedChecked, Capture, CaptureFiles, Change, File, NewStoredNames, Result, StoredNames), not "
+	const api = "product package may use only the guarded write API (Apply, ApplyChecked, ApplyOrderedChecked, ApplyRecordChecked, Capture, CaptureFiles, Change, File, NewStoredNames, Result, StoredNames), not "
 	want := []string{
 		"src/internal/application/projectwork/bad.go:6: src/internal/application/projectwork imports src/internal/infrastructure/guardedwrite: " + api + "guardedwrite.OpenRoot",
 		"src/internal/infrastructure/guardedwrite/root_test.go:3: src/internal/infrastructure/guardedwrite imports src/internal/infrastructure/guardedwrite: self-import is forbidden",

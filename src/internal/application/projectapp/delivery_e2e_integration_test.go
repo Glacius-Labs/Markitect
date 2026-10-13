@@ -94,7 +94,7 @@ func TestGuidedPreviewsMatchExecuteWithoutWritingHistory(t *testing.T) {
 				deliveryCommitStatementChange(t, root, "Implement the %s artifact.", "Implement the %s artifact with explicitly documented line-item behavior.")
 			}
 			head := deliveryGit(t, root, "rev-parse", "HEAD")
-			historyPath := filepath.Join(root, filepath.FromSlash(".markitect/state/briefings/history.json"))
+			historyPath := filepath.Join(root, filepath.FromSlash(".markitect/records/briefing/accepted/record.json"))
 			beforeRead, err := projecthistory.Read(root)
 			if err != nil {
 				t.Fatal(err)

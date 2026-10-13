@@ -61,6 +61,9 @@ func nativeError(status uint32) error {
 	if status == statusCollision {
 		return fmt.Errorf("NTSTATUS 0x%08x: %w", status, fs.ErrExist)
 	}
+	if err := ntDOS.Find(); err != nil {
+		return fmt.Errorf("NTSTATUS 0x%08x; status conversion unavailable: %w", status, err)
+	}
 	dos, _, _ := ntDOS.Call(uintptr(status))
 	return fmt.Errorf("NTSTATUS 0x%08x: %w", status, syscall.Errno(dos))
 }
@@ -86,6 +89,9 @@ func attributes(parent *os.File, leaf string) (objectAttributes, []uint16, error
 	return a, u, nil
 }
 func openNative(parent *os.File, leaf string, access, options uint32) (*os.File, error) {
+	if err := ntOpen.Find(); err != nil {
+		return nil, fmt.Errorf("record native open API unavailable: %w", err)
+	}
 	a, u, err := attributes(parent, leaf)
 	if err != nil {
 		return nil, err
@@ -101,6 +107,9 @@ func openNative(parent *os.File, leaf string, access, options uint32) (*os.File,
 	return os.NewFile(uintptr(handle), parent.Name()+"/"+leaf), nil
 }
 func createNative(parent *os.File, leaf string, options, attrs, access uint32) (*os.File, error) {
+	if err := ntCreate.Find(); err != nil {
+		return nil, fmt.Errorf("record native create API unavailable: %w", err)
+	}
 	a, u, err := attributes(parent, leaf)
 	if err != nil {
 		return nil, err
@@ -115,6 +124,30 @@ func createNative(parent *os.File, leaf string, options, attrs, access uint32) (
 	}
 	return os.NewFile(uintptr(handle), parent.Name()+"/"+leaf), nil
 }
+
+var writerABI = func() bool { return runtime.GOARCH == "amd64" && unsafe.Sizeof(uintptr(0)) == 8 }
+var openWriterParent = func(f *os.File) (*os.File, error) {
+	return openNative(f, ".", parentRights, directoryFile|synchronousIO|openReparse|writeThrough)
+}
+var writerFlush = func(f *os.File) (uintptr, error) { ok, _, err := flushBuffers.Call(f.Fd()); return ok, err }
+var writerVersion = func(v *versionInfo) uint32 {
+	status, _, _ := ntVersion.Call(uintptr(unsafe.Pointer(v)))
+	return uint32(status)
+}
+var writerVolume = func(parent *os.File, data []byte, class uint32) (uintptr, uint32) {
+	var iosb [2]uintptr
+	status, _, _ := ntVolume.Call(parent.Fd(), uintptr(unsafe.Pointer(&iosb)), uintptr(unsafe.Pointer(&data[0])), uintptr(len(data)), uintptr(class))
+	return iosb[1], uint32(status)
+}
+var findWriterAPIs = func() error {
+	for _, p := range []*syscall.LazyProc{ntOpen, ntCreate, ntRename, ntVolume, ntVersion, ntDOS, flushBuffers, lockFile, unlockFile} {
+		if err := p.Find(); err != nil {
+			return fmt.Errorf("record native API unavailable: %w", err)
+		}
+	}
+	return nil
+}
+
 func platformIsReparse(info os.FileInfo) bool {
 	data, ok := info.Sys().(*syscall.Win32FileAttributeData)
 	return !ok || info.Mode()&os.ModeSymlink != 0 || data.FileAttributes&0x400 != 0
@@ -124,7 +157,13 @@ func platformIsReparse(info os.FileInfo) bool {
 // their approved parent's descriptor; private agent logs have another owner.
 func platformMode(os.FileInfo, os.FileMode) error { return nil }
 func platformWritableParent(f *os.File) (*os.File, error) {
-	opened, err := openNative(f, ".", parentRights, directoryFile|synchronousIO|openReparse|writeThrough)
+	if !writerABI() {
+		return nil, errors.New("record writes require measured Windows amd64 ABI")
+	}
+	if err := findWriterAPIs(); err != nil {
+		return nil, err
+	}
+	opened, err := openWriterParent(f)
 	if err != nil {
 		return nil, err
 	}
@@ -137,7 +176,7 @@ func platformWritableParent(f *os.File) (*os.File, error) {
 	return opened, nil
 }
 func platformSyncDir(f *os.File) error {
-	ok, _, err := flushBuffers.Call(f.Fd())
+	ok, err := writerFlush(f)
 	if ok == 0 {
 		if err == syscall.Errno(0) {
 			err = syscall.EINVAL
@@ -147,33 +186,30 @@ func platformSyncDir(f *os.File) error {
 	return nil
 }
 func platformCheckWriter(parent *os.File) error {
-	if runtime.GOARCH != "amd64" || unsafe.Sizeof(uintptr(0)) != 8 {
+	if !writerABI() {
 		return errors.New("record writes require measured Windows amd64 ABI")
 	}
-	for _, p := range []*syscall.LazyProc{ntOpen, ntCreate, ntRename, ntVolume, ntVersion, ntDOS, flushBuffers, lockFile, unlockFile} {
-		if err := p.Find(); err != nil {
-			return fmt.Errorf("record native API unavailable: %w", err)
-		}
+	if err := findWriterAPIs(); err != nil {
+		return err
 	}
 	v := versionInfo{Size: uint32(unsafe.Sizeof(versionInfo{}))}
-	status, _, _ := ntVersion.Call(uintptr(unsafe.Pointer(&v)))
+	status := writerVersion(&v)
 	if uint32(status) != 0 {
 		return nativeError(uint32(status))
 	}
 	if v.Major != 10 || v.Minor != 0 || v.Build != 26100 {
 		return errors.New("record writes support only measured Windows API version 10.0.26100.0")
 	}
-	var iosb [2]uintptr
 	attrs := make([]byte, 128)
-	status, _, _ = ntVolume.Call(parent.Fd(), uintptr(unsafe.Pointer(&iosb)), uintptr(unsafe.Pointer(&attrs[0])), uintptr(len(attrs)), 5)
+	lengthReturned, status := writerVolume(parent, attrs, 5)
 	if uint32(status) != 0 {
 		return nativeError(uint32(status))
 	}
-	if iosb[1] < 12 || iosb[1] > uintptr(len(attrs)) {
+	if lengthReturned < 12 || lengthReturned > uintptr(len(attrs)) {
 		return errors.New("invalid filesystem attribute query length")
 	}
 	length := binary.LittleEndian.Uint32(attrs[8:12])
-	if length != 8 || iosb[1] < 20 {
+	if length != 8 || lengthReturned < 20 {
 		return errors.New("record writes require local NTFS")
 	}
 	for i, c := range []uint16{'N', 'T', 'F', 'S'} {
@@ -182,23 +218,28 @@ func platformCheckWriter(parent *os.File) error {
 		}
 	}
 	var device [8]byte
-	status, _, _ = ntVolume.Call(parent.Fd(), uintptr(unsafe.Pointer(&iosb)), uintptr(unsafe.Pointer(&device[0])), 8, 4)
+	lengthReturned, status = writerVolume(parent, device[:], 4)
 	if uint32(status) != 0 {
 		return nativeError(uint32(status))
 	}
 	deviceType := binary.LittleEndian.Uint32(device[:4])
 	flags := binary.LittleEndian.Uint32(device[4:])
-	if iosb[1] != 8 || (deviceType != 7 && deviceType != 8) || flags&0x10 != 0 {
+	if lengthReturned != 8 || (deviceType != 7 && deviceType != 8) || flags&0x10 != 0 {
 		return errors.New("record writes require measured local NTFS device")
 	}
 	return platformSyncDir(parent)
 }
-func platformMkdir(_ *os.Root, parent *os.File, leaf string) error {
+func platformMkdir(r *os.Root, parent *os.File, leaf string) error {
 	f, err := createNative(parent, leaf, directoryFile, 0x10, parentRights)
 	if err != nil {
 		return err
 	}
 	defer f.Close()
+	held, statErr := f.Stat()
+	named, nameErr := r.Lstat(leaf)
+	if statErr != nil || nameErr != nil || !held.IsDir() || platformIsReparse(held) || platformIsReparse(named) || !os.SameFile(held, named) {
+		return &PublicationError{leaf, Published, errors.New("created directory identity changed")}
+	}
 	if err = platformSyncDir(f); err == nil {
 		err = platformSyncDir(parent)
 	}
@@ -209,6 +250,58 @@ func platformMkdir(_ *os.Root, parent *os.File, leaf string) error {
 }
 func platformCreate(_ *os.Root, parent *os.File, leaf string) (*os.File, error) {
 	return createNative(parent, leaf, nonDirectory, 0x80, readWriteAccess|deleteAccess|synchronize)
+}
+func platformLeaseHandle(d *directory, parent, f *os.File, leaf string, identity os.FileInfo) (*os.File, error) {
+	// Holding DELETE access would prevent existing plain os.Open audit readers,
+	// whose sharing flags omit deletion, from opening this nonempty lease.
+	if err := d.check(); err != nil {
+		return nil, err
+	}
+	held, err := openNative(parent, leaf, readWriteAccess|synchronize, nonDirectory|synchronousIO|openReparse)
+	if err != nil {
+		return nil, err
+	}
+	actual, err := held.Stat()
+	if err != nil || platformIsReparse(actual) || !actual.Mode().IsRegular() || !os.SameFile(identity, actual) {
+		held.Close()
+		return nil, errors.New("exclusive lease changed while reopening audit-readable holder")
+	}
+	if err := f.Close(); err != nil {
+		held.Close()
+		return nil, err
+	}
+	return held, nil
+}
+func platformRemoveOwned(d *directory, leaf string, identity os.FileInfo) error {
+	parent, err := platformWritableParent(d.file)
+	if err != nil {
+		return err
+	}
+	defer parent.Close()
+	f, err := openNative(parent, leaf, readWriteAccess|deleteAccess|synchronize, nonDirectory|synchronousIO|openReparse)
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+	actual, err := f.Stat()
+	if err != nil || platformIsReparse(actual) || !actual.Mode().IsRegular() || !os.SameFile(identity, actual) {
+		return errors.New("cleanup retains replaced record leaf")
+	}
+	if err := d.check(); err != nil {
+		return err
+	}
+	// FileDispositionInformationEx acts on this verified object handle.
+	// DELETE|POSIX_SEMANTICS removes its link when this handle closes.
+	flags := uint32(3)
+	var iosb [2]uintptr
+	status, _, _ := ntRename.Call(f.Fd(), uintptr(unsafe.Pointer(&iosb)), uintptr(unsafe.Pointer(&flags)), 4, 64)
+	if uint32(status) != 0 {
+		return nativeError(uint32(status))
+	}
+	if err := f.Close(); err != nil {
+		return err
+	}
+	return platformSyncDir(parent)
 }
 func platformPublish(_ *os.Root, parent, f *os.File, _, leaf string, replace bool) (bool, error) {
 	u, err := syscall.UTF16FromString(leaf)

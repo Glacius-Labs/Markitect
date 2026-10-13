@@ -73,7 +73,7 @@ func TestContextReadsAcceptedHistoryWithoutPersistingIt(t *testing.T) {
 	if err != nil || len(accepted.Receipt.Bundles) != 1 {
 		t.Fatalf("accepted history preview = %+v, err=%v", accepted.Receipt, err)
 	}
-	storePath := filepath.Join(root, filepath.FromSlash(".markitect/state/briefings/history.json"))
+	storePath := filepath.Join(root, filepath.FromSlash(".markitect/records/briefing/accepted/record.json"))
 	if _, err := os.Stat(storePath); !os.IsNotExist(err) {
 		t.Fatalf("accepted history preview unexpectedly persisted the store: %v", err)
 	}

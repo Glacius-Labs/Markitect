@@ -36,6 +36,10 @@ For Brownfield adoption, select fixed source and target revisions, explicit inve
 
 Brownfield adoption writes only the planned canonical model through guarded Apply. Review and commit that model before a separate implementation Work Item. Do not infer intended behavior from filenames, metadata, or a Manager report alone. Use `ready` and current coverage/check results before execution.
 
+## Record setup and interrupted work
+
+Domain records use `.markitect/records/<kind>/<id>/`; they are operational evidence rather than canonical model intent. Existing projects add anchored `/records/` to their local ignore file through a reviewed edit. Stop and quiesce old-layout writers before upgrading. An affected kind with preserved old domain records or remnants refuses new work without import, deletion or replay; inspect it using the original source after stopping current writers. Private recovery material and explicit transport inputs retain their old paths. Follow [record setup and cutover](project-operations.md#record-layout-and-cutover) and preserve any unknown publication outcome.
+
 ## Acceptance and status
 
 A successful compiler check establishes structural conformity; declared checks and scoped Manager/reviewer reports establish only their stated evidence. A successful Apply records technical materialization, not semantic correctness, owner acceptance, or human approval. The adopting repository owns its approval, merge, and release policy.

@@ -12,6 +12,7 @@ import (
 	"github.com/Glacius-Labs/Markitect/src/internal/application/projectadoption"
 	"github.com/Glacius-Labs/Markitect/src/internal/application/projectwork"
 	"github.com/Glacius-Labs/Markitect/src/internal/core/projectmodel/projectvalue"
+	"github.com/Glacius-Labs/Markitect/src/internal/infrastructure/recordstore"
 	"github.com/Glacius-Labs/Markitect/src/internal/runtime/agentexec"
 	"github.com/Glacius-Labs/Markitect/src/internal/runtime/projectconfig"
 	"github.com/Glacius-Labs/Markitect/src/internal/runtime/projectexecutor"
@@ -132,6 +133,48 @@ func TestBrownfieldEngineExecutorHelper(t *testing.T) {
 		ReportJSON: reportBytes, Uncertainty: []string{}, Usage: usage}
 	_ = json.NewEncoder(os.Stdout).Encode(response)
 	os.Exit(0)
+}
+
+type brownfieldLeaseReplacementInvoker struct {
+	inner projectrun.Invoker
+	lock  string
+}
+
+func (i brownfieldLeaseReplacementInvoker) Fingerprint(config agentexec.Config) (string, error) {
+	return i.inner.Fingerprint(config)
+}
+func (i brownfieldLeaseReplacementInvoker) Run(ctx context.Context, config agentexec.Config, request agentexec.Request, options agentexec.RunOptions) (agentexec.RunResult, error) {
+	result, err := i.inner.Run(ctx, config, request, options)
+	if err != nil {
+		return result, err
+	}
+	if err := os.Rename(i.lock, i.lock+"-original"); err != nil {
+		return result, err
+	}
+	if err := os.WriteFile(i.lock, nil, 0600); err != nil {
+		return result, err
+	}
+	return result, nil
+}
+func TestBrownfieldOuterReleaseFailureReturnsPersistedSessionAndPreservesEvidence(t *testing.T) {
+	f := newBrownfieldEngineFixture(t, false)
+	lock := filepath.Join(f.sourceRoot, filepath.FromSlash(projectadoption.BrownfieldSessionPath), f.session.ID, "manager-runs.lock")
+	f.operations.Invoker = brownfieldLeaseReplacementInvoker{inner: f.operations.Invoker, lock: lock}
+	output, err := previewAndRunBrownfield(t, f, f.operation)
+	if !recordstore.WasPublished(err) || output.Status != "recorded" || output.Proposal == nil || output.SessionDigest == f.session.Digest {
+		t.Fatalf("persisted output/release outcome: %+v %v", output, err)
+	}
+	stored, loadErr := projectadoption.LoadBrownfieldSession(f.sourceRoot, f.session.ID)
+	if loadErr != nil || stored.Digest != output.SessionDigest {
+		t.Fatalf("persisted Session lost: %+v %v", stored, loadErr)
+	}
+	if info, err := os.Stat(lock); err != nil || info.Size() != 0 {
+		t.Fatal("replacement kernel control deleted")
+	}
+	calls, err := os.ReadFile(f.counter)
+	if err != nil || string(calls) != "x" {
+		t.Fatalf("Manager replayed: %q %v", calls, err)
+	}
 }
 
 type brownfieldEngineFixture struct {

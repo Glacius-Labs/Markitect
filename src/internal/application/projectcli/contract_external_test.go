@@ -209,7 +209,7 @@ func externalPacketSubmitHappy(t *testing.T, surface string) {
 			t.Fatalf("packet-submit did not report an idempotent stored duplicate: %+v", repeat)
 		}
 	})
-	storedPath := filepath.Join(repo.Dir, ".markitect", "runs", plan.ID, "external", "responses", packet.ID+".json")
+	storedPath := filepath.Join(repo.Dir, ".markitect", "records", "run", plan.ID, "external", "responses", packet.ID+".json")
 	stored, err := os.ReadFile(storedPath)
 	if err != nil {
 		t.Fatalf("packet-submit did not persist its raw response: %v", err)

@@ -124,7 +124,7 @@ func TestUnauthenticatedPlanReturnsPreviewWithoutCreatingRun(t *testing.T) {
 	if plan.Status != projectrun.StatusPlanned || plan.ExecuteAuthorized || plan.Digest == "" {
 		t.Fatalf("unauthenticated plan did not retain ordinary preview semantics: %#v", plan)
 	}
-	if _, err := os.Stat(filepath.Join(root, ".markitect", "runs")); !os.IsNotExist(err) {
+	if _, err := os.Stat(filepath.Join(root, ".markitect", "records", "run")); !os.IsNotExist(err) {
 		t.Fatalf("unauthenticated plan created a durable run: %v", err)
 	}
 }

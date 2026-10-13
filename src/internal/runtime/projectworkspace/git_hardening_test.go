@@ -173,6 +173,7 @@ func TestGitServiceHostOperationalWritesDoNotStaleSourceOrLeakIntoContext(t *tes
 	fixture := newGitFixture(t)
 	writeFixtureFile(t, fixture.root, ".markitect/model.yaml", []byte("canonical: stable\n"), 0644)
 	writeFixtureFile(t, fixture.root, ".markitect/runs/private/log.json", []byte("private host log\n"), 0644)
+	writeFixtureFile(t, fixture.root, ".markitect/records/run/host/record.json", []byte("operational record\n"), 0644)
 	service, r := newGitServiceRequest(t, fixture, filepath.Join(t.TempDir(), "storage"), "host-records", []string{"src"}, nil)
 	h, err := service.Prepare(context.Background(), r)
 	if err != nil {
@@ -182,6 +183,10 @@ func TestGitServiceHostOperationalWritesDoNotStaleSourceOrLeakIntoContext(t *tes
 	if _, err := os.Stat(filepath.Join(h.CWD, ".markitect/runs/private/log.json")); !os.IsNotExist(err) {
 		t.Fatalf("Host private record copied into context: %v", err)
 	}
+	if _, err := os.Stat(filepath.Join(h.CWD, ".markitect/records/run/host/record.json")); !os.IsNotExist(err) {
+		t.Fatalf("Host domain record copied into context: %v", err)
+	}
+	writeFixtureFile(t, fixture.root, ".markitect/records/run/host/record.json", []byte("updated operational record\n"), 0644)
 	writeFixtureFile(t, fixture.root, ".markitect/runs/private/log.json", []byte("updated host receipt\n"), 0644)
 	if _, err := service.Harvest(context.Background(), h); err != nil {
 		t.Fatalf("Host record staled task: %v", err)
@@ -191,6 +196,13 @@ func TestGitServiceHostOperationalWritesDoNotStaleSourceOrLeakIntoContext(t *tes
 		t.Fatal("task control write was silently excluded")
 	}
 	if err := os.Remove(filepath.Join(h.CWD, ".markitect/runs/fake.json")); err != nil {
+		t.Fatal(err)
+	}
+	writeFixtureFile(t, h.CWD, ".markitect/records/run/task/record.json", []byte("unauthorized domain record"), 0644)
+	if _, err := service.Harvest(context.Background(), h); err == nil {
+		t.Fatal("new record control write silently excluded")
+	}
+	if err := os.Remove(filepath.Join(h.CWD, ".markitect/records/run/task/record.json")); err != nil {
 		t.Fatal(err)
 	}
 	writeFixtureFile(t, fixture.root, ".markitect/model.yaml", []byte("canonical: changed\n"), 0644)

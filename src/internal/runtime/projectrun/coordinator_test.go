@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"path/filepath"
 	"strings"
 	"sync"
 	"testing"
@@ -173,11 +172,7 @@ func TestNativeTaskAttemptIDChangesForRetries(t *testing.T) {
 }
 
 func TestMergeDependencyInputsCarriesProviderBytesWithoutChangingBranchBase(t *testing.T) {
-	store := &runStore{}
-	dir := t.TempDir()
-	if err := ensureDirectory(filepath.Join(dir, "candidates")); err != nil {
-		t.Fatal(err)
-	}
+	store, dir := canonicalRunFixture(t)
 	baseID := "00000000000000000000000000000000"
 	workID := "11111111111111111111111111111111"
 	base := candidateData{ID: baseID, Files: map[string]File{

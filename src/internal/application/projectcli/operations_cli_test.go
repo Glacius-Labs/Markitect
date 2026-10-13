@@ -138,7 +138,7 @@ func TestBriefListUsesPredictedAcceptedHistoryAndStaleDismissDoesNotWrite(t *tes
 	if err != nil || len(accepted.State.Briefings) != 1 {
 		t.Fatalf("accepted history = %+v, err=%v", accepted, err)
 	}
-	storePath := filepath.Join(repo, ".markitect", "state", "briefings", "history.json")
+	storePath := filepath.Join(repo, ".markitect", "records", "briefing", "accepted", "record.json")
 	listed, err := briefList(repo, "")
 	if err != nil {
 		t.Fatalf("read-only brief list: %v", err)

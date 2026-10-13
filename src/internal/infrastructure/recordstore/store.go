@@ -21,6 +21,7 @@ type Store struct {
 type hooks struct {
 	beforeOpen, beforePublish, afterPublish func() error
 	fileSync, directorySync                 func() error
+	directoryCreated                        func() error
 }
 type directory struct {
 	root   *os.Root
@@ -119,10 +120,14 @@ func storedName(r *os.Root, leaf string) error {
 	}
 	return nil
 }
-func (s *Store) openDirectory(relative string, create, private bool) (*directory, error) {
+func (s *Store) openDirectory(relative string, create, private bool) (result *directory, resultErr error) {
 	d := &directory{root: s.root, store: s}
 	success := false
+	created := false
 	defer func() {
+		if created && resultErr != nil && !WasPublished(resultErr) && !OutcomeUnknown(resultErr) {
+			resultErr = &PublicationError{Path: relative, Outcome: Published, Cause: resultErr}
+		}
 		if !success {
 			d.close()
 		}
@@ -156,6 +161,12 @@ func (s *Store) openDirectory(relative string, create, private bool) (*directory
 				writer.Close()
 				if err != nil {
 					return nil, err
+				}
+				created = true
+				if s.hooks.directoryCreated != nil {
+					if err = s.hooks.directoryCreated(); err != nil {
+						return nil, err
+					}
 				}
 				info, err = d.root.Lstat(leaf)
 			}

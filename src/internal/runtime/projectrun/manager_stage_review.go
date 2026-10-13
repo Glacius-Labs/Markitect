@@ -107,7 +107,7 @@ func passedManagerStageReview(report RunReport, parent InvocationLog) bool {
 	return false
 }
 
-func ReviewManagerStage(ctx context.Context, host Host, invoker Invoker, root, runID, attemptID string, spec ManagerStageReviewSpec, expectedStateDigest string) (ManagerStageReviewResult, error) {
+func ReviewManagerStage(ctx context.Context, host Host, invoker Invoker, root, runID, attemptID string, spec ManagerStageReviewSpec, expectedStateDigest string) (returnedReport ManagerStageReviewResult, resultErr error) {
 	if ctx == nil || host.ValidateManagerStage == nil || invoker == nil {
 		return ManagerStageReviewResult{}, errors.New("stage review requires context, invoker and Application fact validation")
 	}
@@ -122,7 +122,7 @@ func ReviewManagerStage(ctx context.Context, host Host, invoker Invoker, root, r
 	if err != nil {
 		return ManagerStageReviewResult{}, err
 	}
-	defer unlock()
+	defer func() { resultErr = errors.Join(resultErr, unlock()) }()
 	report, err := store.readLatestState(runID)
 	if err != nil {
 		return ManagerStageReviewResult{}, err

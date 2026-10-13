@@ -260,7 +260,7 @@ func reflectTypeOfManagerIntegrationDraft() reflect.Type {
 
 // AcquireManagerStageLease holds the established per-session process-file
 // lock through Runtime work, typed review and the existing Session CAS.
-func AcquireManagerStageLease(sourceRoot, sessionID string) (func(), error) {
+func AcquireManagerStageLease(sourceRoot, sessionID string) (func() error, error) {
 	store, err := recordstore.Open(sourceRoot)
 	if err != nil {
 		return nil, err
@@ -280,11 +280,9 @@ func AcquireManagerStageLease(sourceRoot, sessionID string) (func(), error) {
 		err = errors.New("legacy Manager execution ledger blocks Runtime stage admission; historical bytes remain untouched")
 	}
 	if err != nil {
-		lease.Close()
-		store.Close()
-		return nil, err
+		return nil, errors.Join(err, lease.Close(), store.Close())
 	}
-	return func() { _ = lease.Close(); _ = store.Close() }, nil
+	return func() error { return errors.Join(lease.Close(), store.Close()) }, nil
 }
 
 // The historical parser only observes publication remnants; it never repairs them.

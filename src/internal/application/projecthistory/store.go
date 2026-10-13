@@ -1360,7 +1360,7 @@ func emptyStore() projectbriefing.Store {
 	return projectbriefing.Store{APIVersion: projectbriefing.APIVersion, Briefings: []projectbriefing.Bundle{}, Dismissals: []projectbriefing.Dismissal{}, Resolutions: []projectbriefing.Resolution{}}
 }
 
-func update(root, expected string, mutate func(*projectbriefing.Store) error) (string, error) {
+func update(root, expected string, mutate func(*projectbriefing.Store) error) (returnedDigest string, resultErr error) {
 	store, err := recordstore.Open(root)
 	if err != nil {
 		return "", err
@@ -1368,12 +1368,16 @@ func update(root, expected string, mutate func(*projectbriefing.Store) error) (s
 	defer store.Close()
 	lease, err := store.Exclusive(recordstore.Briefing, "accepted", ".briefings.lock", nil, storeLockWait, nil)
 	if err != nil {
-		if os.IsExist(err) {
+		if errors.Is(err, os.ErrExist) {
 			return "", fmt.Errorf("acquire briefing store lock: %s is still held after %s; if no Markitect process is running, delete that file: %w", filepath.Join(root, filepath.Dir(filepath.FromSlash(storePath)), ".briefings.lock"), storeLockWait, err)
 		}
 		return "", err
 	}
-	defer lease.Close()
+	defer func() {
+		if err := lease.Close(); err != nil {
+			resultErr = errors.Join(resultErr, &recordstore.PublicationError{Path: filepath.ToSlash(filepath.Join(filepath.Dir(storePath), ".briefings.lock")), Outcome: recordstore.Published, Cause: err})
+		}
+	}()
 	prior, err := store.Read(historyName(), 64<<20)
 	if err != nil {
 		return "", err
@@ -1404,18 +1408,28 @@ func update(root, expected string, mutate func(*projectbriefing.Store) error) (s
 	if err = store.Replace(historyName(), prior, data, lease.Check); err != nil {
 		return "", err
 	}
+	if err := observePublishedHistory(store, data, next); err != nil {
+		return "", err
+	}
+	return next, nil
+}
+
+func observePublishedHistory(store *recordstore.Store, data []byte, next string) error {
 	observed, err := store.Read(historyName(), 64<<20)
 	if err != nil {
-		return "", &recordstore.PublicationError{Path: storePath, Outcome: recordstore.Published, Cause: err}
+		return &recordstore.PublicationError{Path: storePath, Outcome: recordstore.Published, Cause: err}
+	}
+	if !observed.Exists || !bytes.Equal(observed.Bytes, data) {
+		return &recordstore.PublicationError{Path: storePath, Outcome: recordstore.Published, Cause: errors.New("published history bytes differ")}
 	}
 	_, digest, err := decodeHistoryStore(observed.Bytes)
 	if err != nil || digest != next {
 		if err == nil {
 			err = errors.New("published history domain digest differs")
 		}
-		return "", &recordstore.PublicationError{Path: storePath, Outcome: recordstore.Published, Cause: err}
+		return &recordstore.PublicationError{Path: storePath, Outcome: recordstore.Published, Cause: err}
 	}
-	return next, nil
+	return nil
 }
 
 // waitWhileBusy retries attempt with backoff for at most storeLockWait while it
