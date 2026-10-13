@@ -72,6 +72,10 @@ type reviewerHelperEvidence struct {
 }
 
 type reviewerContext struct {
+	SubjectKind        string                          `json:"subjectKind,omitempty"`
+	ProposedContext    json.RawMessage                 `json:"proposedContext,omitempty"`
+	ChildBindings      json.RawMessage                 `json:"childBindings,omitempty"`
+	SourceEvidence     []reviewFileRef                 `json:"sourceEvidence,omitempty"`
 	Kind               string                          `json:"kind"`
 	Operation          string                          `json:"operation"`
 	ReviewerGuidance   string                          `json:"reviewerGuidance"`

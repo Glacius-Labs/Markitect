@@ -27,15 +27,18 @@ type candidateWorkspaceService interface {
 }
 
 type workspaceJournal struct {
-	OwnerRunID    string                    `json:"ownerRunId,omitempty"`
-	Request       projectworkspace.Request  `json:"request"`
-	Handle        projectworkspace.Handle   `json:"handle"`
-	Overlay       []projectworkspace.Change `json:"overlay"`
-	OverlayDigest string                    `json:"overlayDigest"`
-	State         string                    `json:"state"`
-	Receipt       agentexec.Receipt         `json:"receipt"`
-	Delta         *projectworkspace.Delta   `json:"delta,omitempty"`
-	CachedResult  *agentexec.RunResult      `json:"cachedResult,omitempty"`
+	// Protected original report bytes survive JSON RawMessage compaction in cache.
+	ReportJSONBytes  []byte                    `json:"reportJsonBytes,omitempty"`
+	ReportJSONDigest string                    `json:"reportJsonDigest,omitempty"`
+	OwnerRunID       string                    `json:"ownerRunId,omitempty"`
+	Request          projectworkspace.Request  `json:"request"`
+	Handle           projectworkspace.Handle   `json:"handle"`
+	Overlay          []projectworkspace.Change `json:"overlay"`
+	OverlayDigest    string                    `json:"overlayDigest"`
+	State            string                    `json:"state"`
+	Receipt          agentexec.Receipt         `json:"receipt"`
+	Delta            *projectworkspace.Delta   `json:"delta,omitempty"`
+	CachedResult     *agentexec.RunResult      `json:"cachedResult,omitempty"`
 }
 
 // invokeProjectAgent owns workspace preparation and observation. A model cannot

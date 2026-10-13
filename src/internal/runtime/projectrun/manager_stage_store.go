@@ -1,0 +1,466 @@
+package projectrun
+
+import (
+	"context"
+	"encoding/json"
+	"errors"
+	"fmt"
+	"os"
+	"path/filepath"
+	"strings"
+	"sync"
+	"time"
+
+	"github.com/Glacius-Labs/Markitect/src/internal/runtime/agentexec"
+	"github.com/Glacius-Labs/Markitect/src/internal/runtime/projectconfig"
+)
+
+type managerStageJournalKey struct{}
+
+// Only journal mutation is serialized. Transport calls and the existing
+// ordinary Manager batch remain concurrent. Budget locks precede this lock.
+type managerStageJournal struct {
+	mu     sync.Mutex
+	store  *runStore
+	report *RunReport
+	budget *RoleStartBudget
+}
+
+func newManagerStageJournal(store *runStore, report *RunReport, limits projectconfig.Limits) (*managerStageJournal, error) {
+	j := &managerStageJournal{store: store, report: report}
+	budget, err := NewRoleStartBudget(limits.MaxStarts, j.snapshot, j.reserve)
+	if err != nil {
+		return nil, err
+	}
+	j.budget = budget
+	return j, nil
+}
+
+func (j *managerStageJournal) snapshot() RunReport {
+	j.mu.Lock()
+	defer j.mu.Unlock()
+	data, err := json.Marshal(j.report)
+	if err != nil {
+		panic("Runtime report cannot be snapshotted")
+	}
+	var copy RunReport
+	if json.Unmarshal(data, &copy) != nil {
+		panic("Runtime report snapshot cannot be read")
+	}
+	return copy
+}
+
+func (j *managerStageJournal) reserve(record RoleStartReservation) error {
+	j.mu.Lock()
+	defer j.mu.Unlock()
+	for i, prior := range j.report.RoleStartReservations {
+		if prior.Key == record.Key {
+			j.report.RoleStartReservations[i] = record
+			return persistState(j.store, j.report)
+		}
+	}
+	j.report.RoleStartReservations = append(j.report.RoleStartReservations, record)
+	return persistState(j.store, j.report)
+}
+
+func journalFromContext(ctx context.Context) *managerStageJournal {
+	journal, _ := ctx.Value(managerStageJournalKey{}).(*managerStageJournal)
+	return journal
+}
+
+func withManagerStageJournal(ctx context.Context, journal *managerStageJournal) context.Context {
+	return context.WithValue(ctx, managerStageJournalKey{}, journal)
+}
+
+func stageEvidencePath(store *runStore, id string, ref ManagerStageEvidenceRef) (string, error) {
+	parts := strings.Split(ref.Path, "/")
+	if len(parts) != 2 || parts[0] != "reports" || parts[1] == "" || filepath.Base(parts[1]) != parts[1] || strings.ContainsAny(parts[1], "\\:") {
+		return "", errors.New("invalid Manager evidence reference")
+	}
+	dir, err := store.runDir(id)
+	if err != nil {
+		return "", err
+	}
+	reports, err := requireRealSubdirectory(dir, "reports")
+	if err != nil {
+		return "", err
+	}
+	path := filepath.Join(reports, parts[1])
+	if err := rejectReparsePath(store.root, filepath.ToSlash(filepath.Join(RunsPath, id, "reports"))); err != nil {
+		return "", err
+	}
+	if _, err := os.Lstat(path); err == nil {
+		if err := rejectReparsePath(store.root, filepath.ToSlash(filepath.Join(RunsPath, id, ref.Path))); err != nil {
+			return "", err
+		}
+	} else if !os.IsNotExist(err) {
+		return "", err
+	}
+	return path, nil
+}
+
+func writeStageEvidence(store *runStore, id, attempt, suffix string, data []byte) (*ManagerStageEvidenceRef, error) {
+	name := strings.TrimPrefix(rawContentDigest([]byte(attempt)), "sha256:") + suffix
+	ref := ManagerStageEvidenceRef{Path: "reports/" + name, Digest: rawContentDigest(data)}
+	path, err := stageEvidencePath(store, id, ref)
+	if err != nil {
+		return nil, err
+	}
+	if old, readErr := os.ReadFile(path); readErr == nil {
+		if rawContentDigest(old) != ref.Digest {
+			return nil, errors.New("immutable Manager evidence changed")
+		}
+		return &ref, nil
+	} else if !os.IsNotExist(readErr) {
+		return nil, readErr
+	}
+	if err := writeImmutable(path, data); err != nil {
+		return nil, err
+	}
+	return &ref, nil
+}
+
+func readStageEvidence(store *runStore, id string, ref *ManagerStageEvidenceRef) ([]byte, error) {
+	if ref == nil || !strings.HasPrefix(ref.Digest, "sha256:") {
+		return nil, errors.New("Manager evidence reference is missing")
+	}
+	path, err := stageEvidencePath(store, id, *ref)
+	if err != nil {
+		return nil, err
+	}
+	info, err := os.Lstat(path)
+	if err != nil {
+		return nil, err
+	}
+	if !info.Mode().IsRegular() {
+		return nil, errors.New("Manager evidence is not a regular file")
+	}
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return nil, err
+	}
+	if rawContentDigest(data) != ref.Digest {
+		return nil, errors.New("Manager evidence byte digest differs")
+	}
+	return data, nil
+}
+
+func (j *managerStageJournal) start(log InvocationLog, request agentexec.Request) error {
+	if log.Attempt == nil || log.Attempt.ID == "" {
+		return errors.New("Manager start lacks its stable attempt")
+	}
+	j.mu.Lock()
+	defer j.mu.Unlock()
+	for _, prior := range j.report.Invocations {
+		if prior.Attempt != nil && prior.Attempt.ID == log.Attempt.ID {
+			return errors.New("Manager attempt already exists; replay prohibited")
+		}
+	}
+	data, err := json.Marshal(request)
+	if err != nil {
+		return err
+	}
+	ref, err := writeStageEvidence(j.store, j.report.ID, log.Attempt.ID, ".request.json", data)
+	if err != nil {
+		return err
+	}
+	log.Attempt.RequestRef = ref
+	j.report.Invocations = append(j.report.Invocations, log)
+	return persistState(j.store, j.report)
+}
+
+func (j *managerStageJournal) terminal(log InvocationLog, result agentexec.RunResult, invokeErr error) (InvocationLog, error) {
+	if log.Attempt == nil {
+		return log, errors.New("Manager terminal lacks its original attempt")
+	}
+	j.mu.Lock()
+	defer j.mu.Unlock()
+	index := -1
+	for i, prior := range j.report.Invocations {
+		if prior.Attempt != nil && prior.Attempt.ID == log.Attempt.ID {
+			index = i
+			break
+		}
+	}
+	if index < 0 {
+		return log, errors.New("original Manager start is absent")
+	}
+	prior := j.report.Invocations[index]
+	if result.Receipt.RunID == "" && prior.Receipt.RunID != "" {
+		return prior, errors.New("original Manager receipt retained; recovery remains unresolved")
+	}
+	if prior.Attempt.Status != "started" && prior.Attempt.Status != "uncertain" {
+		if prior.Receipt.RunID != result.Receipt.RunID {
+			return log, errors.New("terminal Manager receipt identity changed")
+		}
+		return prior, nil
+	}
+	attempt := *prior.Attempt
+	attempt.FinishedAt = time.Now().UTC()
+	attempt.Status = "transport-failed"
+	if result.Receipt.RunID == "" || result.Receipt.Lifecycle != nil && !workspaceInvocationTerminal(result.Receipt.Lifecycle) {
+		attempt.Status = "uncertain"
+	}
+	if invokeErr == nil && attempt.Status != "uncertain" {
+		attempt.Status = "transport-succeeded"
+	}
+	if invokeErr != nil {
+		attempt.SafeFailure = "invocation-failed"
+	}
+	if len(result.Response.ReportJSON) > 0 {
+		ref, err := writeStageEvidence(j.store, j.report.ID, attempt.ID, ".report.json", append([]byte(nil), result.Response.ReportJSON...))
+		if err != nil {
+			return log, err
+		}
+		attempt.ReportRef = ref
+	}
+	// Response is protected protocol output evidence. The metadata row exposes
+	// only its digest/reference; no invocation configuration is encoded here.
+	output := result.Response
+	output.ReportJSON = nil
+	encoded, err := json.Marshal(output)
+	if err != nil {
+		return log, err
+	}
+	ref, err := writeStageEvidence(j.store, j.report.ID, attempt.ID, ".response.json", encoded)
+	if err != nil {
+		return log, err
+	}
+	attempt.ResponseRef = ref
+	log.Attempt = &attempt
+	log.Receipt = result.Receipt
+	log.ReportID = result.Receipt.RunID
+	log.Outcome = result.Receipt.Outcome
+	if result.Receipt.RunID == "" {
+		log.Outcome = "uncertain"
+	}
+	if log.Role == agentexec.RoleExecutor && result.Receipt.InputDigest != "" {
+		log.InputDigest = result.Receipt.InputDigest
+	}
+	j.report.Invocations[index] = log
+	if err := persistState(j.store, j.report); err != nil {
+		return log, err
+	}
+	return log, nil
+}
+
+func readStageResult(store *runStore, report RunReport, log InvocationLog) (agentexec.RunResult, error) {
+	if log.Attempt == nil || log.Attempt.ResponseRef == nil {
+		return agentexec.RunResult{}, errors.New("Manager terminal output is unavailable")
+	}
+	data, err := readStageEvidence(store, report.ID, log.Attempt.ResponseRef)
+	if err != nil {
+		return agentexec.RunResult{}, err
+	}
+	var response agentexec.Response
+	if err := json.Unmarshal(data, &response); err != nil {
+		return agentexec.RunResult{}, err
+	}
+	if log.Attempt.ReportRef != nil {
+		data, err = readStageEvidence(store, report.ID, log.Attempt.ReportRef)
+		if err != nil {
+			return agentexec.RunResult{}, err
+		}
+		response.ReportJSON = append(json.RawMessage(nil), data...)
+	}
+	if response.RunID != log.Receipt.RunID || response.InputDigest != log.Receipt.InputDigest {
+		return agentexec.RunResult{}, errors.New("Manager output differs from its terminal receipt")
+	}
+	return agentexec.RunResult{Response: response, Receipt: log.Receipt}, nil
+}
+
+func validateManagerStageState(store *runStore, state, prior RunReport) error {
+	binding := state.ManagerStageBinding
+	if binding != nil {
+		if state.PlanID != "" || state.Candidate.ID != "" || len(state.Tasks) > 0 || binding.SessionID == "" || managerStageRunID(binding.SessionID) != state.ID {
+			return errors.New("planless Manager stage has invalid authority")
+		}
+		if err := validateManagerStageBudget(binding.Budget); err != nil {
+			return err
+		}
+		if prior.ManagerStageBinding != nil {
+			a, _ := digest(prior.ManagerStageBinding)
+			b, _ := digest(binding)
+			if a != b {
+				return errors.New("Manager session authority or frozen ceiling changed")
+			}
+		} else if prior.ID != "" {
+			return errors.New("ordinary run cannot become a Manager stage")
+		}
+	} else if prior.ManagerStageBinding != nil {
+		return errors.New("Manager stage cannot become an ordinary run")
+	}
+	seen := map[string]bool{}
+	old := map[string]InvocationLog{}
+	for _, log := range prior.Invocations {
+		if log.Attempt != nil {
+			old[log.Attempt.ID] = log
+		}
+	}
+	for _, log := range state.Invocations {
+		a := log.Attempt
+		if a == nil {
+			if binding != nil {
+				return errors.New("Manager stage contains an unbound invocation")
+			}
+			continue
+		}
+		if a.ID == "" || a.StageKey == "" || a.RequestDigest == "" || a.StartedAt.IsZero() || seen[a.ID] {
+			return errors.New("Manager attempt identity is invalid or repeated")
+		}
+		seen[a.ID] = true
+		switch a.Status {
+		case "started", "uncertain", "transport-succeeded", "transport-failed", "accepted", "rejected":
+		default:
+			return errors.New("Manager attempt status is invalid")
+		}
+		if previous, ok := old[a.ID]; ok {
+			before := *previous.Attempt
+			after := *a
+			before.FinishedAt = after.FinishedAt
+			before.Status = after.Status
+			before.SafeFailure = after.SafeFailure
+			before.ValidationDigest = after.ValidationDigest
+			before.ResponseRef = after.ResponseRef
+			before.ReportRef = after.ReportRef
+			x, _ := digest(before)
+			y, _ := digest(after)
+			if x != y {
+				return errors.New("immutable Manager attempt bindings changed")
+			}
+			if previous.Receipt.RunID != "" && previous.Receipt.RunID != log.Receipt.RunID {
+				return errors.New("Manager receipt changed")
+			}
+			if previous.Attempt.Status == "accepted" && a.Status != "accepted" {
+				return errors.New("accepted Manager attempt was rewritten")
+			}
+			delete(old, a.ID)
+		}
+		if a.RequestRef != nil {
+			if _, err := readStageEvidence(store, state.ID, a.RequestRef); err != nil {
+				return err
+			}
+		}
+		if a.ResponseRef != nil {
+			if _, err := readStageEvidence(store, state.ID, a.ResponseRef); err != nil {
+				return err
+			}
+		}
+		if a.ReportRef != nil {
+			if _, err := readStageEvidence(store, state.ID, a.ReportRef); err != nil {
+				return err
+			}
+		}
+		if a.Status != "started" && a.Status != "uncertain" && (a.FinishedAt.IsZero() || a.FinishedAt.Before(a.StartedAt)) {
+			return errors.New("Manager terminal duration is invalid")
+		}
+		if binding != nil && a.IterationID == "" {
+			return errors.New("Manager stage iteration is absent")
+		}
+	}
+	if len(old) > 0 {
+		return fmt.Errorf("durable Manager attempts were removed")
+	}
+	return validateStageReviewRecords(store, state)
+}
+
+// invokeManagerAttempt is the shared attempt lifecycle for ordinary manager,
+// independent reviewer and Brownfield calls. Workflow adapters own requests,
+// dispatch options and typed acceptance. No configuration is persisted.
+func invokeManagerAttempt(ctx context.Context, j *managerStageJournal, log InvocationLog, request agentexec.Request, agent projectconfig.Agent, dispatch func(context.Context) (agentexec.RunResult, error)) (agentexec.RunResult, InvocationLog, error) {
+	if j == nil || log.Attempt == nil {
+		return agentexec.RunResult{}, log, errors.New("Manager invocation requires its durable Runtime journal")
+	}
+	if err := ctx.Err(); err != nil {
+		return agentexec.RunResult{}, log, err
+	}
+	if _, _, err := agentexec.PrepareInvocation(request); err != nil {
+		return agentexec.RunResult{}, log, errors.New("Manager request violates the bounded protocol")
+	}
+	roleRequest := agentexec.RoleStartRequest{RequestID: log.Attempt.ID, ParentSessionID: j.report.ID, Role: agentexec.RoleExecutor, State: "requested"}
+	var permit *RoleStartPermit
+	var err error
+	if j.report.ManagerStageBinding == nil && log.Role == agentexec.RoleExecutor && (log.Phase == "work" || log.Phase == "integrate") {
+		permit, err = j.budget.ReserveRecordedTaskRoot(ctx, log.TaskID, log.Phase, roleRequest)
+	} else {
+		permit, err = j.budget.ReserveRoot(ctx, log.TaskID, log.Phase, roleRequest)
+	}
+	if err != nil {
+		return agentexec.RunResult{}, log, err
+	}
+	if err = j.start(log, request); err != nil {
+		return agentexec.RunResult{}, log, fmt.Errorf("retain Manager start after role reservation: %w", err)
+	}
+	result, invokeErr := dispatch(ctx)
+	cost, known, overflow := estimateAgentCost(result.Receipt.Usage, agent)
+	if j.report.ManagerStageBinding != nil {
+		cost, known, overflow = managerStageCost(result.Receipt.Usage, log.Attempt.Bounds)
+	}
+	log.CostMicros, log.CostKnown, log.CostOverflow = cost, known, overflow
+	if overflow {
+		invokeErr = errors.Join(invokeErr, errors.New("Manager cost overflow"))
+	}
+	if !known && requiresReportedUsage(agent) {
+		invokeErr = errors.Join(invokeErr, errors.New("Manager reported usage is missing"))
+	}
+	terminal, persistErr := j.terminal(log, result, invokeErr)
+	if persistErr != nil {
+		return result, terminal, errors.Join(invokeErr, fmt.Errorf("retain Manager terminal receipt: %w", persistErr))
+	}
+	roleRequest.State = "completed"
+	if terminal.Attempt.Status == "uncertain" {
+		roleRequest.State = "unknown"
+	}
+	if terminal.Attempt.Status == "transport-failed" {
+		roleRequest.State = "failed"
+	}
+	if err := permit.Update(context.Background(), roleRequest); err != nil {
+		return result, terminal, errors.Join(invokeErr, err)
+	}
+	return result, terminal, invokeErr
+}
+
+func (j *managerStageJournal) result(log InvocationLog, result agentexec.RunResult) (ManagerStageResult, error) {
+	j.mu.Lock()
+	defer j.mu.Unlock()
+	state, err := j.store.readLatestState(j.report.ID)
+	if err != nil {
+		return ManagerStageResult{}, err
+	}
+	return ManagerStageResult{RunID: state.ID, AttemptID: log.Attempt.ID, StateDigest: state.Digest, Status: log.Attempt.Status, Invocation: log, Result: result}, nil
+}
+
+// Stage storage uses the existing runStore primitives in the source session
+// repository. Runtime configuration belongs to the independently bound target;
+// ordinary newRunStore still requires its normal runtime-file admission.
+func newManagerStageStore(root string) (*runStore, error) {
+	abs, err := filepath.Abs(root)
+	if err != nil {
+		return nil, err
+	}
+	info, err := os.Lstat(abs)
+	if err != nil {
+		return nil, err
+	}
+	if !info.IsDir() || info.Mode()&os.ModeSymlink != 0 {
+		return nil, errors.New("Manager stage root must be a real directory")
+	}
+	for _, relative := range []string{".markitect", RunsPath} {
+		if _, err := os.Lstat(filepath.Join(abs, filepath.FromSlash(relative))); err == nil {
+			if err := rejectReparsePath(abs, relative); err != nil {
+				return nil, err
+			}
+		} else if !os.IsNotExist(err) {
+			return nil, err
+		}
+	}
+	base := filepath.Join(abs, filepath.FromSlash(RunsPath))
+	if info, err := os.Lstat(base); err == nil {
+		if !info.IsDir() || info.Mode()&os.ModeSymlink != 0 {
+			return nil, errors.New("Manager stage store must be a real directory")
+		}
+	} else if !os.IsNotExist(err) {
+		return nil, err
+	}
+	return &runStore{root: abs, base: base}, nil
+}

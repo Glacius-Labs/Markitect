@@ -250,3 +250,38 @@ func TestRunHelperBudgetCountsRecordedChecksAgainstMaxStarts(t *testing.T) {
 		t.Errorf("helper budget granted %d helper starts after a shared ledger of %d (1 root + %d checks): total starts %d, want exactly MaxStarts %d", granted, ledger, len(report.Checks), total, maxStarts)
 	}
 }
+
+func TestRecordedTaskRootUsesOneChargedSlotAndRejectsForgedTickets(t *testing.T) {
+	makeStore := func() *roleBudgetMemoryStore {
+		return &roleBudgetMemoryStore{report: RunReport{ID: "original-run", Tasks: []ManagerTask{{ID: "orders", State: "invoking", RepairPhase: "work", WorkAttempts: 1}}}}
+	}
+	t.Run("exact-bound", func(t *testing.T) {
+		store := makeStore()
+		budget := newRoleBudgetForTest(t, store, 1)
+		request := agentexec.RoleStartRequest{RequestID: "orders-work-1", ParentSessionID: "original-run", Role: agentexec.RoleExecutor}
+		if _, err := budget.ReserveRecordedTaskRoot(context.Background(), "orders", "work", request); err != nil {
+			t.Fatal(err)
+		}
+		if got := budget.Accounting(); got.Roots != 1 || got.ObservedTotal != 1 {
+			t.Fatal("recorded task attachment double-charged or granted another slot")
+		}
+		if _, err := budget.ReserveRecordedTaskRoot(context.Background(), "orders", "work", request); !errors.Is(err, ErrRoleStartAlreadyReserved) {
+			t.Fatal("reservation-only uncertainty granted a replacement ticket")
+		}
+		if _, err := budget.ReserveRoot(context.Background(), "review", "review", agentexec.RoleStartRequest{RequestID: "extra-review", Role: "reviewer"}); !errors.Is(err, ErrRoleStartBudgetExceeded) {
+			t.Fatal("counted attachment refilled quota")
+		}
+	})
+	cases := []struct{ name, state, phase, task, request, parent string }{{"terminal", "worked", "work", "orders", "orders-work-1", "original-run"}, {"ordinal", "invoking", "work", "orders", "orders-work-2", "original-run"}, {"phase", "invoking", "integrate", "orders", "orders-integrate-1", "original-run"}, {"task", "invoking", "work", "other", "orders-work-1", "original-run"}, {"owner", "invoking", "work", "orders", "orders-work-1", "other-run"}}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			store := makeStore()
+			store.report.Tasks[0].State = tc.state
+			budget := newRoleBudgetForTest(t, store, 1)
+			_, err := budget.ReserveRecordedTaskRoot(context.Background(), tc.task, tc.phase, agentexec.RoleStartRequest{RequestID: tc.request, ParentSessionID: tc.parent, Role: agentexec.RoleExecutor})
+			if err == nil || len(store.snapshot().RoleStartReservations) != 0 {
+				t.Fatal("forged/terminal charged-task proof granted a root reservation")
+			}
+		})
+	}
+}

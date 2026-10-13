@@ -7,6 +7,7 @@ import "github.com/Glacius-Labs/Markitect/src/internal/core/projectmodel/project
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"github.com/Glacius-Labs/Markitect/src/internal/runtime/projectconfig"
 	"time"
@@ -169,6 +170,7 @@ type CheckPlan struct {
 }
 
 type RunReport struct {
+	ManagerStageBinding     *ManagerStageBinding   `json:"managerStageBinding,omitempty"`
 	ExternalExecution       bool                   `json:"externalExecution,omitempty"`
 	Operation               string                 `json:"operation,omitempty"`
 	APIVersion              string                 `json:"apiVersion"`
@@ -317,16 +319,17 @@ type CandidateRef struct {
 }
 
 type InvocationLog struct {
-	TaskID       string            `json:"taskId"`
-	Role         string            `json:"role"`
-	Phase        string            `json:"phase"`
-	InputDigest  string            `json:"inputDigest"`
-	Receipt      agentexec.Receipt `json:"receipt"`
-	ReportID     string            `json:"reportId"`
-	Outcome      string            `json:"outcome"`
-	CostMicros   int64             `json:"costMicros"`
-	CostKnown    bool              `json:"costKnown"`
-	CostOverflow bool              `json:"costOverflow,omitempty"`
+	Attempt      *ManagerStageAttempt `json:"attempt,omitempty"`
+	TaskID       string               `json:"taskId"`
+	Role         string               `json:"role"`
+	Phase        string               `json:"phase"`
+	InputDigest  string               `json:"inputDigest"`
+	Receipt      agentexec.Receipt    `json:"receipt"`
+	ReportID     string               `json:"reportId"`
+	Outcome      string               `json:"outcome"`
+	CostMicros   int64                `json:"costMicros"`
+	CostKnown    bool                 `json:"costKnown"`
+	CostOverflow bool                 `json:"costOverflow,omitempty"`
 }
 
 type CheckResult struct {
@@ -417,6 +420,8 @@ type ApplyPreflight struct {
 // Host supplies the selected frontend and operational record observations.
 // Application composes these operations; Runtime retains each lifecycle gate.
 type Host struct {
+	// ValidateManagerStage revalidates prepared Application facts without writing.
+	ValidateManagerStage func(ManagerStageValidationBinding) error
 	// Workspaces owns native Git candidate preparation, observation and cleanup.
 	// Unknown execution preserves the original workspace for exact-turn recovery.
 	Workspaces               projectworkspace.Service
@@ -442,4 +447,173 @@ type Host struct {
 type Invoker interface {
 	Run(context.Context, agentexec.Config, agentexec.Request, agentexec.RunOptions) (agentexec.RunResult, error)
 	Fingerprint(agentexec.Config) (string, error)
+}
+
+// ManagerStageBudget seals cumulative session ceilings; prices are per attempt.
+type ManagerStageBudget struct {
+	MaxStarts     int           `json:"maxStarts"`
+	MaxRetries    int           `json:"maxRetries"`
+	MaxDuration   time.Duration `json:"maxDuration"`
+	MaxCostMicros int64         `json:"maxCostMicros"`
+}
+
+// ManagerStageBinding is the disjoint, planless branch of the existing run store.
+// It contains identities and digests, never selected provider configuration.
+type ManagerStageBinding struct {
+	SessionID             string             `json:"sessionId"`
+	SourceIdentity        string             `json:"sourceIdentity"`
+	TargetIdentity        string             `json:"targetIdentity"`
+	SourceRevision        string             `json:"sourceRevision"`
+	DiscoveryDigest       string             `json:"discoveryDigest"`
+	InitialTargetRevision string             `json:"initialTargetRevision"`
+	TargetContextDigest   string             `json:"targetContextDigest"`
+	Budget                ManagerStageBudget `json:"budget"`
+}
+
+type ManagerStageValidationBinding struct {
+	SessionID             string
+	SessionDigest         string
+	IterationID           string
+	ManagerID             string
+	AgentManagerID        string
+	Phase                 string
+	AcceptedTargetHead    string
+	ContextDigest         string
+	RequestContractDigest string
+	ConfigFingerprint     string
+	RuntimeFileDigest     string
+}
+
+// ManagerStageSpec is transient prepared invocation input. In particular no
+// configuration, paths, context, or provider options can be JSON-projected.
+type ManagerStageSpec struct {
+	SelectedSourceRoot string                        `json:"-"`
+	TargetRoot         string                        `json:"-"`
+	Binding            ManagerStageBinding           `json:"-"`
+	Validation         ManagerStageValidationBinding `json:"-"`
+	RetryOfAttemptID   string                        `json:"-"`
+	Agent              projectconfig.Agent           `json:"-"`
+	Config             agentexec.Config              `json:"-"`
+	Request            agentexec.Request             `json:"-"`
+	Limits             ManagerStageBudget            `json:"-"`
+	RuntimeLimits      projectconfig.Limits          `json:"-"`
+	Review             *projectconfig.ReviewConfig   `json:"-"`
+}
+
+type ManagerStageBounds struct {
+	Timeout                     time.Duration `json:"timeout"`
+	MaxStdoutBytes              int           `json:"maxStdoutBytes"`
+	MaxStderrBytes              int           `json:"maxStderrBytes"`
+	InputPriceMicrosPerMillion  int64         `json:"inputPriceMicrosPerMillion"`
+	OutputPriceMicrosPerMillion int64         `json:"outputPriceMicrosPerMillion"`
+}
+
+type ManagerStageEvidenceRef struct {
+	Path   string `json:"path"`
+	Digest string `json:"digest"`
+}
+
+// ManagerStageAttempt is safe attempt metadata subordinate to one RunReport.
+// ReportJSON remains a byte-exact protected evidence blob, not a typed rewrite.
+type ManagerStageAttempt struct {
+	ID                    string                   `json:"id"`
+	StageKey              string                   `json:"stageKey"`
+	RetryOfAttemptID      string                   `json:"retryOfAttemptId,omitempty"`
+	ParentAttemptID       string                   `json:"parentAttemptId,omitempty"`
+	SessionDigest         string                   `json:"sessionDigest,omitempty"`
+	IterationID           string                   `json:"iterationId,omitempty"`
+	ManagerID             string                   `json:"managerId"`
+	AgentManagerID        string                   `json:"agentManagerId,omitempty"`
+	Phase                 string                   `json:"phase"`
+	PreviewDigest         string                   `json:"previewDigest,omitempty"`
+	ContextDigest         string                   `json:"contextDigest"`
+	RequestDigest         string                   `json:"requestDigest"`
+	RequestContractDigest string                   `json:"requestContractDigest,omitempty"`
+	ConfigFingerprint     string                   `json:"configFingerprint"`
+	RuntimeFileDigest     string                   `json:"runtimeFileDigest,omitempty"`
+	LimitsDigest          string                   `json:"limitsDigest,omitempty"`
+	AcceptedTargetHead    string                   `json:"acceptedTargetHead,omitempty"`
+	Bounds                ManagerStageBounds       `json:"bounds"`
+	StartedAt             time.Time                `json:"startedAt"`
+	FinishedAt            time.Time                `json:"finishedAt,omitempty"`
+	Status                string                   `json:"status"`
+	SafeFailure           string                   `json:"safeFailure,omitempty"`
+	ValidationDigest      string                   `json:"validationDigest,omitempty"`
+	ReviewRequired        bool                     `json:"reviewRequired,omitempty"`
+	ReviewRound           int                      `json:"reviewRound,omitempty"`
+	ReviewSubjectDigest   string                   `json:"reviewSubjectDigest,omitempty"`
+	ReviewPolicyDigest    string                   `json:"reviewPolicyDigest,omitempty"`
+	RequestRef            *ManagerStageEvidenceRef `json:"requestRef,omitempty"`
+	ResponseRef           *ManagerStageEvidenceRef `json:"responseRef,omitempty"`
+	ReportRef             *ManagerStageEvidenceRef `json:"reportRef,omitempty"`
+}
+
+type ManagerStageReviewProjection struct {
+	Enabled           bool   `json:"enabled"`
+	AgentManagerID    string `json:"agentManagerId,omitempty"`
+	ConfigFingerprint string `json:"configFingerprint,omitempty"`
+	PolicyDigest      string `json:"policyDigest,omitempty"`
+	MaxRounds         int    `json:"maxRounds,omitempty"`
+	MaxManagerRounds  int    `json:"maxManagerRounds,omitempty"`
+}
+
+type ManagerStagePreview struct {
+	RunID               string                       `json:"runId"`
+	StateDigest         string                       `json:"stateDigest"`
+	PreviewDigest       string                       `json:"previewDigest"`
+	RequestDigest       string                       `json:"requestDigest"`
+	LimitsDigest        string                       `json:"limitsDigest"`
+	RemainingStarts     int                          `json:"remainingStarts"`
+	RemainingRetries    int                          `json:"remainingRetries"`
+	RemainingDuration   time.Duration                `json:"remainingDuration"`
+	RemainingCostMicros int64                        `json:"remainingCostMicros"`
+	Bounds              ManagerStageBounds           `json:"bounds"`
+	Review              ManagerStageReviewProjection `json:"review"`
+	LatestAttempt       *ManagerStageAttempt         `json:"latestAttempt,omitempty"`
+}
+
+type ManagerStageResult struct {
+	RunID       string
+	AttemptID   string
+	StateDigest string
+	Status      string
+	Invocation  InvocationLog
+	Result      agentexec.RunResult
+}
+
+// ManagerStageReviewSpec carries only prepared, independently scoped inputs.
+// Draft context is explicitly distinct from the real accepted target model.
+type ManagerStageReviewSpec struct {
+	SourceRevision      string                          `json:"-"`
+	Validation          ManagerStageValidationBinding   `json:"-"`
+	Agent               projectconfig.Agent             `json:"-"`
+	Config              agentexec.Config                `json:"-"`
+	AcceptedModel       projectmodel.ManagerContext     `json:"-"`
+	AcceptedModelDigest string                          `json:"-"`
+	Purpose             string                          `json:"-"`
+	ProposedContext     json.RawMessage                 `json:"-"`
+	Evidence            []agentexec.Artifact            `json:"-"`
+	Grounding           map[string][]string             `json:"-"`
+	ChildBindings       json.RawMessage                 `json:"-"`
+	Strictness          projectconfig.StrictnessProfile `json:"-"`
+	SourceRoot          string                          `json:"-"`
+	TargetRoot          string                          `json:"-"`
+	Limits              ManagerStageBudget              `json:"-"`
+	RuntimeLimits       projectconfig.Limits            `json:"-"`
+	Review              projectconfig.ReviewConfig      `json:"-"`
+}
+
+type ManagerStageReviewResult struct {
+	ReviewRecord    ReviewRecord
+	RunID           string
+	ParentAttemptID string
+	SubjectDigest   string
+	StateDigest     string
+	Status          string
+}
+
+type ManagerStageValidation struct {
+	Accepted          bool
+	SafeFailure       string
+	TypedResultDigest string
 }

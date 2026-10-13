@@ -336,6 +336,12 @@ func ListRuns(root string) ([]RunSummary, error) {
 			continue
 		}
 		plan, err := s.readPlan(entry.Name())
+		if errors.Is(err, ErrNotFound) {
+			state, stateErr := s.readLatestState(entry.Name())
+			if stateErr == nil && state.ManagerStageBinding != nil {
+				continue
+			}
+		}
 		if err != nil {
 			runs = append(runs, RunSummary{ID: entry.Name(), Status: "invalid"})
 			continue
@@ -602,6 +608,9 @@ func (s *runStore) readLatestState(id string) (RunReport, error) {
 		state.Digest = storedDigest
 		if state.Revision <= latest.Revision {
 			return latest, fmt.Errorf("stored run state revisions are not increasing")
+		}
+		if err := validateManagerStageState(s, state, latest); err != nil {
+			return latest, err
 		}
 		latest = state
 	}
