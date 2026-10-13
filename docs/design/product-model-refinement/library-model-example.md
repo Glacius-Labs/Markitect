@@ -1,8 +1,8 @@
 # Bibliothek: vollständiger Fach- und Architekturentwurf
 
-Aktualisiert am 13. Oktober 2026. Status: zusammenhängendes Gesprächsbeispiel zum [Konzept](canonical-model-proposal.md). Gewählt sind `mandate.yaml`, Concept, Rule, UseCase und die ergänzten Architektur-Kinds System, Component, Module und Interface. `vNext`, Referenz- und Feldregeln sind Vertragskandidaten, keine unterstützte Version oder kompilierte Fixture.
+Aktualisiert am 13. Oktober 2026. Status: zusammenhängendes Gesprächsbeispiel zum [Konzept](canonical-model-proposal.md). Gewählt sind `mandate.yaml` mit Kind Mandate, Concept, Rule, UseCase und die ergänzten Architektur-Kinds System, Component, Module und Interface. `vNext`, Referenz- und Feldregeln sind Vertragskandidaten, keine unterstützte Version oder kompilierte Fixture.
 
-Die Fachdefinitionen, Mandat, Artefakte, Checks und das vollständige Manifest stehen hier. Die aktuellen Architekturdefinitionen werden ausschließlich im [Architektur-YAML](library-architecture-example.md) ausgeschrieben. Zusammen zeigen beide Dokumente 34 Modelldefinitionen: 1 Manager, 1 System, 3 Components, 6 Modules, 5 Interfaces, 5 Concepts, 4 Rules, 2 UseCases, 5 Artifacts und 2 Checks.
+Die Fachdefinitionen, Mandat, Artefakte, Checks und das vollständige Manifest stehen hier. Die aktuellen Architekturdefinitionen werden ausschließlich im [Architektur-YAML](library-architecture-example.md) ausgeschrieben. Zusammen zeigen beide Dokumente 34 Modelldefinitionen: 1 Mandate, 1 System, 3 Components, 6 Modules, 5 Interfaces, 5 Concepts, 4 Rules, 2 UseCases, 5 Artifacts und 2 Checks.
 
 ## Umfang und Fachentscheidungen
 
@@ -23,7 +23,7 @@ Die Architektur ergänzt Webfrontend, Backend, einen Datenbankdienst und die ben
 | `borrow` | `UseCase` | Verhaltensvertrag als Prosa. |
 | `return` | `UseCase` | Verhaltensvertrag als Prosa. |
 
-Die bisher als Concept gezeigte Übersicht `library-system` ist jetzt ein System; ihre Identität und alle aktuellen Referenzen ändern sich entsprechend. Concept, Rule und UseCase behalten ihre Bedeutung. Architekturzugehörigkeit verleiht keine Agentenbefugnis; der Auftrag steht weiterhin in `mandate.yaml` mit Kind Manager.
+Die bisher als Concept gezeigte Übersicht `library-system` ist jetzt ein System; ihre Identität und alle aktuellen Referenzen ändern sich entsprechend. Concept, Rule und UseCase behalten ihre Bedeutung. Architekturzugehörigkeit verleiht keine Agentenbefugnis; der Auftrag steht in `mandate.yaml` mit dem gewählten Kind Mandate. Dieser ersetzt Manager im aktuellen Entwurf, benennt aber keine ausführende Runtime-Rolle um.
 
 ## Dateisystem und explizite Eingaben
 
@@ -120,7 +120,7 @@ modelFiles:
 
 ```yaml
 apiVersion: project.markitect.example.org/vNext
-kind: Manager
+kind: Mandate
 metadata:
   namespace: ""
   name: library-project
@@ -619,7 +619,7 @@ spec:
   reason: Erklärt System, Architektur, Bedienung und erklärten Prüfumfang.
 ```
 
-Die Bereiche frontend/, backend/, deployment/database/, tests/ und docs/library/ sind bewusst deklarierte Zuordnung. Sie garantieren keinen engen Blast Radius und wählen keine einzelnen Funktionen aus. Der Root-Manager bleibt der einzige Schreibowner dieses kleinen Beispiels. Keine dieser tatsächlichen Dateien wurde erzeugt.
+Die Bereiche frontend/, backend/, deployment/database/, tests/ und docs/library/ sind bewusst deklarierte Zuordnung. Sie garantieren keinen engen Blast Radius und wählen keine einzelnen Funktionen aus. Das Wurzelmandat beschreibt die einzige Schreibzuständigkeit dieses kleinen Beispiels; seine Agentenbindung und ihre Einhaltung sind gesondert zu bestimmen. Keine dieser tatsächlichen Dateien wurde erzeugt.
 
 ## Prüfanschlüsse
 

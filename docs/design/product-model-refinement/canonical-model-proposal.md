@@ -1,6 +1,6 @@
 # Proposal: Kanonisches Modell mit nominalen Regeln und methodischem Review
 
-Erstellt am 11. Oktober 2026; konsolidiert am 12. und architektonisch erweitert am 13. Oktober 2026. Status: beauftragter Konzept- und Umsetzungsentwurf auf Basis des Bibliotheksgesprächs. Dateiname `mandate.yaml`, die fachlichen Kinds `Concept`, `Rule`, `UseCase` sowie `System`, `Component`, `Module`, `Interface` sind gewählt. Weitere Syntax- und Referenzdetails sind Vorschläge, keine implementierten Produktverträge.
+Erstellt am 11. Oktober 2026; konsolidiert am 12. und architektonisch erweitert am 13. Oktober 2026. Status: beauftragter Konzept- und Umsetzungsentwurf auf Basis des Bibliotheksgesprächs. Dateiname `mandate.yaml`, der Auftragstyp `Mandate`, die fachlichen Kinds `Concept`, `Rule`, `UseCase` sowie `System`, `Component`, `Module`, `Interface` sind gewählt. Weitere Syntax- und Referenzdetails sind Vorschläge, keine implementierten Produktverträge.
 
 ## 1. Auftrag und Maßstab
 
@@ -21,7 +21,7 @@ Die [aktuelle Bibliotheksdarstellung](library-model-example.md) und ihr [Archite
 | Struktureller Core | Definitionen, Identitäten, Schemas, Werttypen und typisierte Referenzen; deterministische Normalisierung und Diagnosen. |
 | Projektvokabular | Bedeutung der Definitionen und ihrer Beziehungen; insbesondere Regeln, Verantwortungen, Realisierung und Prüfanschlüsse. |
 | Kanonische Projektdefinitionen | Was gilt, welche Entscheidungen frei bleiben und welche Beiträge erwartet werden. |
-| Abgeleitete Sichten | Dokumentation, Managerkontext, Graph, Impact-Erklärung und konkreter Dateibestand. |
+| Abgeleitete Sichten | Dokumentation, Kontext für Mandate und ihre Ausführer, Graph, Impact-Erklärung und konkreter Dateibestand. |
 | Ausführung und Evidenz | Agentenbindung, Kandidaten, unabhängige Bewertung, Checks und Apply an festen Ständen. |
 
 ### 2.1 Eine maßgebliche Quelle pro Aussage
@@ -66,7 +66,7 @@ Eine dokumentierte Entscheidung referenziert ihren Gegenstand und bewahrt Begrü
 | Fach-/Architekturgraph | Kontext, Verpflichtungen, Bausteine und Zusammenarbeit zwischen Definitionen. | Querbeziehungen verändern keine strukturelle oder organisatorische Elternschaft. |
 | Ausführungsablauf | Abgeleitete Aufgaben, Reviews und Integration. | Eine fachliche Dependency ist nicht automatisch ein Ausführungsplan. |
 
-Ein kleiner Bibliotheksausschnitt kann einen Root-Manager besitzen. Untergeordnete Verantwortungen entstehen, wenn begrenzte Aufträge und Bereiche sie rechtfertigen. Übergreifende Interessen brauchen ausdrückliche Mandate oder Beziehungen. Zyklen werden je Relation beurteilt; Parent-Zyklen sind anders zu behandeln als mögliche fachliche Querreferenzen.
+Ein kleiner Bibliotheksausschnitt kann ein Wurzelmandat besitzen. Untergeordnete Mandate entstehen, wenn begrenzte Aufträge und Bereiche sie rechtfertigen. Übergreifende Interessen brauchen ausdrückliche Mandate oder Beziehungen. Zyklen werden je Relation beurteilt; Parent-Zyklen sind anders zu behandeln als mögliche fachliche Querreferenzen. Das Mandat beschreibt den Auftrag; seine Bindung an einen ausführenden Agenten wird separat festgelegt.
 
 ### 4.0 Architekturbegriffe und ihre Abgrenzung
 
@@ -121,9 +121,9 @@ Im derzeit dokumentierten Bibliotheksmodell enthält das Backend technische Modu
 | `Artifact.realizes` | Erwarteter Repositorybeitrag entsprechend der Rolle, einschließlich contains-Unterstruktur. | `Concept`, `Rule`, `UseCase`, `System`, `Component`, `Module`, `Interface` |
 | `Artifact.checks` | Ausführbares Prüfverfahren. | `Check` |
 | `Check.uses` | Aussagen im Prüfgegenstand. | `Concept`, `Rule`, `UseCase`, `System`, `Component`, `Module`, `Interface` |
-| `Manager.parent` | Direkt übergeordnete Verantwortung. | `Manager` |
+| `Mandate.parent` | Direkt übergeordnetes Mandat. | `Mandate` |
 | `Decision.subject` | Gegenstand einer begründeten Entscheidung. | `Concept`, `Rule`, `UseCase`, `System`, `Component`, `Module`, `Interface` |
-| `Decision.actor` | Aufgezeichnete Provenienz. | `Manager` |
+| `Decision.actor` | Bezug auf das verwendete Mandat; Feldname und Provenienzbedeutung noch einzeln zu prüfen. | `Mandate` |
 
 Bei `requires` erklärt Fachprosa zunächst Voraussetzung oder erhaltene Invariante. `uses` sagt weder „gilt für“ noch etwas über die Zahl konkreter Bücher. `Rule.appliesTo` wirkt im ersten Vertrag direkt auf die benannten Ziele; dort muss die Regel im Kontext und Prüfumfang sichtbar sein. Automatische Subtree-Geltung wird nicht vorausgesetzt. Interfaceoperationen, Daten und Fehler werden zunächst in Prosa erklärt; eine UseCase-Referenz allein ist kein vollständiger Protokollvertrag.
 
@@ -224,7 +224,7 @@ Der Nutzer hat `Concept`, `Rule` und `UseCase` als eigene Kinds gewählt. Concep
 
 Für diese Unterscheidung entfällt `category`. Gemeinsame Header und Beschreibungsfelder folgen derselben Konvention; jeder Kind besitzt seinen geschlossenen Feld- und Referenzvertrag. Der nominale Unterschied ermöglicht gezielte Zieltypprüfung, ohne eine vollständig formalisierte Fachsprache zu verlangen.
 
-Die Systemübersicht ist nach der Architekturergänzung ein `System`. Components, Modules und Interfaces erklären technische Aufteilung und Zusammenarbeit. Ein allgemeiner Statement-Kind wird nicht vorausgesetzt; die Umbenennung von Manager zu Mandate ist weiterhin nicht beschlossen. Weitere Beschreibungstypen benötigen einen konkreten Ausdrucksbedarf.
+Die Systemübersicht ist nach der Architekturergänzung ein `System`. Components, Modules und Interfaces erklären technische Aufteilung und Zusammenarbeit. Ein allgemeiner Statement-Kind wird nicht vorausgesetzt. Nutzerentscheidung vom 13. Oktober 2026: Der Definitionstyp `Manager` wird durch `Mandate` ersetzt. Er beschreibt einen Auftrag und dessen Grenzen; ein ausführender Agent ist separat gebunden. Weitere Beschreibungstypen benötigen einen konkreten Ausdrucksbedarf.
 
 #### 6.2.1 Feldkandidat für den ersten Vertrag
 
@@ -239,7 +239,7 @@ Diese Arbeitstabelle konkretisiert den Entwurf für P0; sie behauptet kein vorha
 | `Component` | `description`, `public`, `contains`, `provides`, `consumes`, `realizes`, `uses` | Laufzeitrolle erklären; contains mit ausdrücklichem Module-Kind, Verträge passend zuordnen. |
 | `Module` | `description`, `public`, `contains`, `provides`, `consumes`, `dependsOn`, `realizes`, `uses` | Logische Aufgabe/Beitrag; optionale untergeordnete Modules mit ausdrücklichem Kind, genau ein struktureller Parent im vollständigen Beispiel. |
 | `Interface` | `description`, `public`, `useCases`, `uses`, `requires` | Vertrag erklären; Verpflichtungen als Rules; Provider/Consumer stehen an Bausteinen. |
-| `Manager` | `parent`, `owns`, `instructions` | Höchstens ein Parent; optionale Pfadliste und lesbare Anweisungen. Roots/Ownerregeln werden getrennt validiert. |
+| `Mandate` | `parent`, `owns`, `instructions` | Auftrag mit höchstens einem übergeordneten Mandat, optionaler Pfadliste und lesbaren Anweisungen. Bisherige Felder sind Prüfkandidaten; Benennung eines Mandats ist keine Agentenbindung oder authentifizierte Autorisierung. |
 | `Artifact` | `role`, `realizes`, `paths`, `checks`, `required`, `reason` | Rolle implementation/documentation/verification/configuration; optionale Ziel-/Pfad-/Checklisten, Erforderlichkeit und Begründung. |
 | `Check` | `command`, `uses`, `limitation` | Nicht leere Liste literal argv; deklarierter Gegenstand und Evidenzgrenze. Ein Befehl ist keine Shell-Prosa. |
 | `Decision` | `subject`, `decision`, `reason`, `actor` | Genau ein Subject und Actor sowie lesbare Entscheidung und Begründung. Actor authentifiziert keine Befugnis. |
@@ -273,7 +273,7 @@ Das [bisherige v1alpha1-Beispiel](library-methodical-alternative.md) bleibt als 
 
 ### 6.6 Gewählter Dateiname und bevorzugte Kind-Richtung
 
-Nutzerentscheidung: „Wir nehmen mandate.“ Die Verantwortungsdatei heißt `mandate.yaml`. Der bisherige Modell-Kind `Manager` bleibt im Beispiel erhalten; weder dessen Umbenennung noch die Benennung eines Runtime-Agenten ist dadurch entschieden.
+Nutzerentscheidung: „Wir nehmen mandate.“ Die Verantwortungsdatei heißt `mandate.yaml`. Ergänzende Nutzerentscheidung vom 13. Oktober 2026: „Okay, dann nehmen wir Mandate statt Manager.“ Der Modell-Kind heißt jetzt `Mandate`; dies benennt den Auftrag und keine ausführende Runtime-Rolle um. Identität und Referenzziele werden im vNext-Entwurf entsprechend angepasst. Die vorhandenen Felder werden beim schrittweisen Typreview gesondert geprüft; ihre bisherige Form ist durch die Umbenennung nicht abschließend bestätigt.
 
 Nutzerentscheidung vom 12. Oktober 2026: „Okay, dann nehmen wir Concept, Rule und UseCase als eigene Kinds. Aktualisiere das Konzept und das Bibliotheksbeispiel entsprechend auf deinem Branch.“ Diese drei Kinds ersetzen die bisherige Statement-/Category-Einordnung im aktuellen Entwurf. Feld-, Versions- und Referenzdetails bleiben zu konkretisieren. Der semantische Begriff Mandat beschreibt Auftrag, Zuständigkeit, Befugnisse und Grenzen, ohne selbst eine authentifizierte Autorisierung zu beweisen.
 
@@ -281,7 +281,7 @@ Nutzerentscheidung vom 12. Oktober 2026: „Okay, dann nehmen wir Concept, Rule 
 
 Die elf Ausgangsaussagen sind Systemzweck, Titel, Exemplar, Mitglied, Ausleihe, aktive Ausleihe, berechtigtes Mitglied, verfügbares Exemplar, höchstens eine aktive Ausleihe, Ausleihen und Rückgabe. Die Systemübersicht wird zum System; die übrigen fünf Concepts, drei Fach-Rules und zwei UseCases bleiben. Hinzu kommen drei Components, sechs Modules, fünf Interfaces und eine Architekturregel. Identität und Referenzen der bisherigen Concept-Systemübersicht werden ausdrücklich aktualisiert.
 
-Ein Root-Manager ist ausreichend. Frontendcode, Backendcode, Datenbankkonfiguration, Prüfungen und Bedienungsdokumentation sind fünf getrennte Realisierungsbeiträge. Die beiden Fach-/Architektur-Checks sind klar markierte, nicht ausgeführte Platzhalter.
+Ein Wurzelmandat ist ausreichend. Frontendcode, Backendcode, Datenbankkonfiguration, Prüfungen und Bedienungsdokumentation sind fünf getrennte Realisierungsbeiträge. Die beiden Fach-/Architektur-Checks sind klar markierte, nicht ausgeführte Platzhalter.
 
 Die Wiederholungsrückgabe ohne Änderung des ursprünglichen Rückgabezeitpunkts und Berechtigung über aktiven Mitgliedsstatus sind vorgeschlagene Fachentscheidungen. Fristberechnung und Behandlung unbekannter Kennungen bleiben offen. Das Beispiel ist kein Vollständigkeitsnachweis und keine fertige Anwendung.
 
@@ -341,7 +341,7 @@ Der Dokumentationsbranch stammt aus einer älteren Main-Basis. Den Implementieru
 | P2 — Sichten und Bedeutungserhalt | Alle Fach-/Architektur-Kinds und neuen Kanten in Report, Kontext, Graph und Digest führen; realizes-Umfang über contains ableiten, AppliesTo bringt Regeln an Ziele. | Projectmodel-Analyse/Typen und vorhandene Ausgabeanschlüsse. | Direkte und abgeleitete realizes-Ziele sind erklärbar; Rollen sehen benötigte Regeln, private Inhalte werden nicht über eine zweite Sichtbarkeitslogik geladen. |
 | P3 — Änderungsfolgen | Fach-, Vertrags-, Provider-, Zuordnungs- und Zusammensetzungsänderung unter Alt/Neu in Impact/Explain behandeln. | Projectmodel-Impact/Explain und feste Host-Bindungen. | Alt/Neu-Wirkung erhalten; unbekannter Umfang bleibt konservativ; kombinierte Änderungen verlieren keine Pflicht. |
 | P4 — Realisierung und Review | Fach-/Architekturzuordnung, Coverage, Check-Bindungen und dokumentierten Reviewablauf durch vorhandene Ausführung führen. | Artefakte, Projectcoverage/Projectwork und bei Vertragsänderung Projectrun. | Keine neue Regel verschwindet aus Realisierung/Prüfung; Reviewergebnisse nennen Befunde und Grenzen. |
-| P5 — Kontrast und Integration | Kleines CLI-Gegenbeispiel, aktuelle Nutzer-/Formatdokumentation und normale Kandidatengates. | Beispiele, Tests und zuständige Dokumente. | Kein Bibliotheks-, Datenbank- oder Mehrmanager-Zwang; Checks gelten für festen Kandidaten. |
+| P5 — Kontrast und Integration | Kleines CLI-Gegenbeispiel, aktuelle Nutzer-/Formatdokumentation und normale Kandidatengates. | Beispiele, Tests und zuständige Dokumente. | Kein Bibliotheks-, Datenbank- oder Zwang zu mehreren Mandaten; Checks gelten für festen Kandidaten. |
 
 P1 bis P4 bilden gemeinsam einen vollständigen Durchstich. Ein nur zugelassener neuer Kind ist kein fertiges Feature. Die Pakete sind Vorschläge, keine vergebenen Backlog-IDs und keine gestarteten Implementierungsaufträge.
 
@@ -384,6 +384,7 @@ Offen bleiben besonders:
 - Angemessene Zuordnungsgranularität und Breite des Impact.
 - Kriterien, die spätere Fachformalismen oder Strictness-Profile rechtfertigen.
 - Konkrete noch offene Fachentscheidungen des Bibliotheksbeispiels.
+- Felder und Beziehungen aller Typen im schrittweisen Bibliotheksreview; insbesondere Mandate.parent/owns/instructions und der Mandatsbezug von Decision.actor.
 
 ## 10. Herkunft und Status
 
@@ -396,6 +397,7 @@ Offen bleiben besonders:
 - Eingang der Referenzvereinfachung und Entfernung von ownership vom 13. Oktober: `a188878bd5c8283acf02fd6f754cf404b1d3503e`; beim Beginn sauber.
 - Eingang der contains-Entscheidung vom 13. Oktober: `def47b05ed553918ed80d7b74728d2a77a8c7572`; beim Beginn sauber.
 - Eingang der realizes-Umfangsentscheidung vom 13. Oktober: `25828d773cf2d7ea0bfc7c9bbb69c04d8e09c7fe`; beim Beginn sauber.
+- Eingang der Mandate-Umbenennung und des vereinbarten Typreviews vom 13. Oktober: `d50fa8c39bd11eadbd24c4c55357cb890f08a871`; beim Beginn sauber.
 - Ursprüngliche Branchbasis: `ecc69b0ad99236a5ddd02b85bf9ba656a0000f15`.
 - Letzter gesonderter Main-Abgleich: `32afd1a57e715130d056e98e433721c6e7a10278` vom 11. Oktober; heute nicht als aktuell neu verifiziert.
 - Zusätzlicher reiner Quellenrefresh im Gespräch am 13. Oktober: `c19d9d1259fcd493e2cc7ad93d10226778b2b7f4`. Das Projektvokabular besitzt dort weiterhin die fünf bisherigen Kinds und einzelne Reference-Zielkinds; die neuen Fach-/Architektur-Kinds und Referenzmengen dieses Entwurfs sind nicht implementiert. Der historische Vergleichsbericht bleibt unverändert datiert.
