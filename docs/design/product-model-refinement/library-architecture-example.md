@@ -56,6 +56,8 @@ Der erste Beispielvertrag bindet jedes konsumierte Interface an genau einen dekl
 
 `Artifact.realizes` verbindet erwartete Repositorybeiträge mit Fach- oder Architekturdefinitionen. Erst Inventar, Kandidatenprüfung und Checks liefern Evidenz über tatsächliche Dateien. Der Root-Manager bleibt eindeutiger Schreibowner; die Architektur erzeugt keine zusätzliche automatische Verantwortungsstruktur.
 
+Ein realizes-Ziel schließt automatisch seine gesamte transitive contains-Unterstruktur ein; ein scope-Feld ist nicht vorgesehen. Das Backendartefakt muss deshalb die fünf enthaltenen Modules nicht zusätzlich aufzählen. Der Beitrag bleibt durch seine Artefaktrolle bestimmt und ist kein Nachweis. Andere Beziehungen werden nicht als Zusammensetzung verfolgt. Im aktuellen Beispiel sind Fachdefinitionen und Interfaces nicht in contains einsortiert; ihre eigenständigen Zuordnungen bleiben ausdrücklich erhalten. Ob Modules künftig auch Concepts, Rules oder UseCases enthalten sollen und wie realizes insgesamt verstanden wird, ist Gegenstand der weiteren schrittweisen Diskussion.
+
 `Rule.appliesTo` erklärt den Geltungsbereich einer Regel und muss sie in den Kontext der ausdrücklich genannten Ziele bringen. Für dieses Beispiel gilt die Relation direkt, ohne automatische Subtree- oder beliebige Graphausbreitung. Falls weitere Ziele nötig sind, werden sie deklariert. Die neue Architekturregel ist zunächst Prosa und kein vom Compiler ausgeführter Importtest.
 
 Die deklarierte `dependsOn`-Liste ist keine ausführbare Verbotsmatrix. Eine automatische Durchsetzung verbotener Abhängigkeiten benötigt später einen definierten Regelmechanismus oder einen gebundenen Check; hier beurteilt der methodische Review die Einhaltung.

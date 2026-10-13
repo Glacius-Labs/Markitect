@@ -377,6 +377,8 @@ Das Ausleihmodul konsumiert Bestands-, Mitglieds- und Speicherverträge. Der HTT
 
 Module.realizes ist eine architektonische Zuordnung gewünschter Beiträge. Artifact.realizes erklärt erwartete Repositoryrealisierung; erst konkrete Dateien, Reviews und ausgeführte Checks liefern Evidenz. Bedienung, Fachlogik, Adapter und Konfiguration können gemeinsam einen UseCase oder eine Rule tragen. Die Beschreibungen unterscheiden diese Beiträge.
 
+Realizes umfasst das direkte Ziel einschließlich aller über contains enthaltenen Definitionen, ohne scope-Feld. Frontend- und Backendartefakte nennen deshalb ihre Component statt deren Modules zusätzlich aufzuzählen. Dokumentations- und Verifikationsartefakte nennen für den technischen Gesamtbereich das System. Der abgeleitete Beitrag gilt entsprechend ihrer Rolle und beweist keine geprüfte Umsetzung. Fachdefinitionen und Interfaces liegen im aktuellen Beispiel außerhalb der contains-Struktur; deren ausdrücklich gewünschte Beiträge bleiben separat referenziert. Andere Beziehungen erweitern den enthaltenen Bereich nicht automatisch.
+
 Die Artefaktrolle konkretisiert den Beitrag: `implementation` implementiert Verhalten, `configuration` konfiguriert dessen technische Umgebung, `verification` stellt Prüfungen bereit und `documentation` erklärt das System. Ein Verifikations- oder Dokumentationsartefakt behauptet damit keine produktive Implementierung des referenzierten UseCase. Alle gezeigten Zuordnungen beschreiben erwartete Beiträge, keine bereits erbrachten Nachweise.
 
 ### `model/library/frontend-implementation.yaml`
@@ -394,9 +396,6 @@ spec:
     - kind: Component
       namespace: library
       name: frontend
-    - kind: Module
-      namespace: library
-      name: lending-ui
     - kind: UseCase
       namespace: library
       name: borrow
@@ -429,21 +428,6 @@ spec:
     - kind: Component
       namespace: library
       name: backend
-    - kind: Module
-      namespace: library
-      name: inventory
-    - kind: Module
-      namespace: library
-      name: membership
-    - kind: Module
-      namespace: library
-      name: circulation
-    - kind: Module
-      namespace: library
-      name: http-adapter
-    - kind: Module
-      namespace: library
-      name: persistence-adapter
     - kind: Interface
       namespace: library
       name: library-api
@@ -562,33 +546,6 @@ spec:
     - kind: System
       namespace: library
       name: library-system
-    - kind: Component
-      namespace: library
-      name: frontend
-    - kind: Component
-      namespace: library
-      name: backend
-    - kind: Component
-      namespace: library
-      name: database
-    - kind: Module
-      namespace: library
-      name: lending-ui
-    - kind: Module
-      namespace: library
-      name: inventory
-    - kind: Module
-      namespace: library
-      name: membership
-    - kind: Module
-      namespace: library
-      name: circulation
-    - kind: Module
-      namespace: library
-      name: http-adapter
-    - kind: Module
-      namespace: library
-      name: persistence-adapter
     - kind: Interface
       namespace: library
       name: library-api
@@ -633,33 +590,6 @@ spec:
     - kind: System
       namespace: library
       name: library-system
-    - kind: Component
-      namespace: library
-      name: frontend
-    - kind: Component
-      namespace: library
-      name: backend
-    - kind: Component
-      namespace: library
-      name: database
-    - kind: Module
-      namespace: library
-      name: lending-ui
-    - kind: Module
-      namespace: library
-      name: inventory
-    - kind: Module
-      namespace: library
-      name: membership
-    - kind: Module
-      namespace: library
-      name: circulation
-    - kind: Module
-      namespace: library
-      name: http-adapter
-    - kind: Module
-      namespace: library
-      name: persistence-adapter
     - kind: Interface
       namespace: library
       name: library-api

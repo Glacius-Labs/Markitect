@@ -93,6 +93,18 @@ Im ersten vollständigen Bibliotheksvertrag hat ein Component genau ein System a
 
 `Module.realizes` beziehungsweise ein direkter Component-Beitrag ordnet gewünschte Fachverantwortung der Architektur zu. Mehrere Bausteine können einen UseCase tragen; Prosa erläutert Bedienung, Orchestrierung oder Speicherung. Die Zuordnung ist weder Codebeleg noch Schreibowner. `Artifact.realizes` erklärt dagegen erwartete Repositorybeiträge; konkrete Dateien und Nachweise werden getrennt erhoben.
 
+### Automatischer Umfang von realizes
+
+Nutzerentscheidung vom 13. Oktober 2026: `realizes` schließt sein ausdrücklich referenziertes Ziel und alle unmittelbar oder mittelbar über `contains` enthaltenen Definitionen ein. Dafür gibt es kein `scope`-Feld und keinen zusätzlichen Schalter. Ein Artefakt für das Backend umfasst entsprechend seiner Rolle auch die enthaltenen Backend-Modules. Für einen kleineren Bereich wird dessen Zieldefinition direkt referenziert.
+
+Der effektive Umfang ist die Vereinigung aus jedem direkten realizes-Ziel und dessen transitiver contains-Unterstruktur. Mehrfach erreichte Definitionen werden nur einmal als Ziel geführt; die ausdrücklichen und abgeleiteten Pfade bleiben erklärbar. Die Regel gilt überall, wo realizes zugelassen ist. Zulässige direkte Referenzziele und zulässige contains-Kinder bleiben durch ihre jeweiligen Schemas begrenzt.
+
+Die Zielmenge für direkte realizes-Referenzen filtert enthaltene Nachfahren nicht nachträglich heraus. Falls contains künftig weitere Kinds zulässt, muss deren Einschluss mit der beschriebenen Beitragsrolle vereinbar sein; diese Schemaerweiterungen sind gesondert zu prüfen. Die gewählte Umfangsregel umfasst alle enthaltenen Definitionen.
+
+Diese Umfangsableitung folgt ausschließlich `contains`. Sie erweitert sich nicht automatisch über `uses`, `requires`, `dependsOn`, `provides`, `consumes`, `appliesTo` oder eine weitere realizes-Beziehung. Solche Beziehungen liefern eigenen Kontext beziehungsweise Verpflichtungen und Beiträge; sie machen deren Ziele nicht zu enthaltenen Bestandteilen. Die Artefaktrolle bestimmt den Beitrag: Implementation implementiert, Dokumentation erklärt, Verifikation stellt Prüfungen bereit und Konfiguration konfiguriert. Der abgeleitete Auftrag beweist keine tatsächliche Realisierung oder bestandene Prüfung und erzeugt keine zusätzliche Schreibbefugnis.
+
+Im derzeit dokumentierten Bibliotheksmodell enthält das Backend technische Modules. Concepts, Rules, UseCases und Interfaces sind dort über andere Beziehungen verbunden; eine zukünftige Einordnung dieser Definitionen unter contains ist noch zu besprechen. Ihre unabhängigen Artefaktzuordnungen bleiben deshalb ausdrücklich bestehen. Eine zusätzliche allgemeine Realisierungssemantik über alle Beziehungstypen ist mit dieser Entscheidung nicht eingeführt.
+
 ### 4.1 Minimaler Beziehungsvertrag
 
 | Feld | Bedeutung | Kandidat für zulässige Ziel-Kinds |
@@ -103,10 +115,10 @@ Im ersten vollständigen Bibliotheksvertrag hat ein Component genau ein System a
 | `Component.contains`, `Module.contains` | Direkte strukturelle Bestandteile; Zielkind immer ausdrücklich. | `Module` |
 | `provides`, `consumes` auf Component/Module, bei externem System an dessen Grenze | Vertrag anbieten beziehungsweise benötigen. | `Interface` |
 | `Module.dependsOn` | Implementierungs-/Buildabhängigkeit. | `Module` |
-| `Module.realizes`, direkter `Component.realizes` | Gewünschter architektonischer Fachbeitrag. | `Concept`, `Rule`, `UseCase` |
+| `Module.realizes`, direkter `Component.realizes` | Gewünschter architektonischer Fachbeitrag einschließlich contains-Unterstruktur. | `Concept`, `Rule`, `UseCase` |
 | `Interface.useCases` | Über den Vertrag angebotene fachliche Fähigkeiten. | `UseCase` |
 | `Rule.appliesTo` | Ausdrücklicher Geltungsbereich. | `Concept`, `Rule`, `UseCase`, `System`, `Component`, `Module`, `Interface` |
-| `Artifact.realizes` | Erwarteter Repositorybeitrag. | `Concept`, `Rule`, `UseCase`, `System`, `Component`, `Module`, `Interface` |
+| `Artifact.realizes` | Erwarteter Repositorybeitrag entsprechend der Rolle, einschließlich contains-Unterstruktur. | `Concept`, `Rule`, `UseCase`, `System`, `Component`, `Module`, `Interface` |
 | `Artifact.checks` | Ausführbares Prüfverfahren. | `Check` |
 | `Check.uses` | Aussagen im Prüfgegenstand. | `Concept`, `Rule`, `UseCase`, `System`, `Component`, `Module`, `Interface` |
 | `Manager.parent` | Direkt übergeordnete Verantwortung. | `Manager` |
@@ -310,6 +322,7 @@ Der [Überfälligkeitsdurchlauf](library-change-walkthrough.md) zeigt, wie eine 
 | Explizite Beziehungen und konservativer Impact | Koordination nachvollziehbar aus deklarierten Daten ableiten; Prosalinks allein liefern keine geprüften Kanten. |
 | Zielkind aus dem Feld, wo eindeutig | Bei speziellen Feldern Wiederholung vermeiden; gemischte Zielmengen benötigen einen Kind-Discriminator. Auflösung und Prüfung behalten die vollständige Zielidentität. |
 | Einheitliches contains mit ausdrücklichem Kind | Zusammensetzung durch einen Beziehungsnamen beschreiben; sichtbare Zieltypen erhalten eine wiederverwendbare Form. Erlaubte Kinder und Parentregeln bleiben im jeweiligen Schema definiert. |
+| Realizes schließt contains-Unterstruktur ein | Umfang aus der einmal gepflegten Zusammensetzung ableiten; Unterdefinitionen nicht erneut aufzählen. Ein kleinerer Zielknoten begrenzt den Auftrag. Kein scope-Feld; keine automatische Erweiterung über Querbeziehungen. |
 | Erneuerbarer Dateibestand | Pfadregeln pflegen und konkrete Dateien erfassen; eine zweite manuelle Zuordnungsliste vermeiden. |
 | Unabhängige Reviews und begrenzte Checks | Fachbedeutung und tatsächliche Realisierung prüfen; Struktur und Prüferfolg nicht als universelle Korrektheit ausgeben. |
 
@@ -325,7 +338,7 @@ Der Dokumentationsbranch stammt aus einer älteren Main-Basis. Den Implementieru
 | --- | --- | --- | --- |
 | P0 — Ausgangspunkt und Verträge | Main-Delta, Versionierung, Fach-/Architekturschemas, contains-/Provider-/Parentregeln, Referenzziele und bedingte Kind-Angabe fixieren. | Produkt-/Modellvertrag; Core-Ausdrucksbedarf prüfen. | Keine stille alpha-Umdeutung; contains immer mit geprüftem Kind, sonst feste Ziel-Kinds aus Schema oder gemischte Zielmengen explizit aufgelöst. |
 | P1 — Vollständiger kleiner Durchstich | Bibliotheksmodell mit Mandat, Fach-/Architekturdefinitionen, Artefakten und Check-Anschlüssen laden/validieren. | Schema, Loader und Beispiel; Core nur bei belegter Lücke. | Gültige Ziele/Parents/Provider auflösbar; falscher Kind, Namespace, Zyklus oder mehrdeutiger Provider mit Diagnose. |
-| P2 — Sichten und Bedeutungserhalt | Alle Fach-/Architektur-Kinds und neuen Kanten in Report, Kontext, Graph und Digest führen; AppliesTo bringt Regeln an Ziele. | Projectmodel-Analyse/Typen und vorhandene Ausgabeanschlüsse. | Zuständige Rollen sehen benötigte Regeln; private Inhalte werden nicht über eine zweite Sichtbarkeitslogik geladen. |
+| P2 — Sichten und Bedeutungserhalt | Alle Fach-/Architektur-Kinds und neuen Kanten in Report, Kontext, Graph und Digest führen; realizes-Umfang über contains ableiten, AppliesTo bringt Regeln an Ziele. | Projectmodel-Analyse/Typen und vorhandene Ausgabeanschlüsse. | Direkte und abgeleitete realizes-Ziele sind erklärbar; Rollen sehen benötigte Regeln, private Inhalte werden nicht über eine zweite Sichtbarkeitslogik geladen. |
 | P3 — Änderungsfolgen | Fach-, Vertrags-, Provider-, Zuordnungs- und Zusammensetzungsänderung unter Alt/Neu in Impact/Explain behandeln. | Projectmodel-Impact/Explain und feste Host-Bindungen. | Alt/Neu-Wirkung erhalten; unbekannter Umfang bleibt konservativ; kombinierte Änderungen verlieren keine Pflicht. |
 | P4 — Realisierung und Review | Fach-/Architekturzuordnung, Coverage, Check-Bindungen und dokumentierten Reviewablauf durch vorhandene Ausführung führen. | Artefakte, Projectcoverage/Projectwork und bei Vertragsänderung Projectrun. | Keine neue Regel verschwindet aus Realisierung/Prüfung; Reviewergebnisse nennen Befunde und Grenzen. |
 | P5 — Kontrast und Integration | Kleines CLI-Gegenbeispiel, aktuelle Nutzer-/Formatdokumentation und normale Kandidatengates. | Beispiele, Tests und zuständige Dokumente. | Kein Bibliotheks-, Datenbank- oder Mehrmanager-Zwang; Checks gelten für festen Kandidaten. |
@@ -343,6 +356,7 @@ Heute sind diese Prüfungen ausschließlich geplant. Bei Umsetzung gelten zusät
 | Nominaler Kind ist nur ein Label | Verweis auf Concept oder UseCase an einem Rule-only-Ziel wird abgewiesen; gültiger Rule-Verweis wird aufgelöst. |
 | Kurzreferenz verliert Typ oder Identität | Rule-only-Referenz ohne kind löst gegen Rule auf, nicht gegen gleichnamigen Concept; fehlender/unerlaubter kind bei gemischten Zielmengen ist ein Befund. Normalisierte Zielidentität bleibt in Digest, Kontext und Graph erhalten. |
 | contains wird zum untypisierten Sammelfeld | Fehlender kind und nach Quell-Kind unzulässiger Zielkind erzeugen Befunde, auch bei nur einem erlaubten Zieltyp. Gültige direkte Kinder erzeugen Zusammensetzungskanten und abgeleitete Parents. |
+| Realisierungsumfang driftet oder wächst über Querbeziehungen | Referenz auf Backend umfasst direkte und tiefere contains-Kinder; referenziertes Mitglied über uses wird nur Kontext, nicht zusätzliches Realisierungsziel. Neuer/entfernter/verschobener contains-Nachfahre verändert den abgeleiteten Umfang an Alt/Neu-Ständen nachvollziehbar; mehrfach erreichte Ziele bleiben eindeutig. |
 | Gemischte Referenz verliert Bedeutung | Alle sieben Fach-/Architekturtypen bleiben in Kontext, Realisierung, Check und Entscheidung eindeutig und digest-relevant. |
 | Struktur oder Anbieter ist mehrdeutig | Doppelte Parentzuordnung, Zusammensetzungszyklus sowie fehlender/mehrdeutiger Provider eines konsumierten Interface erzeugen Befunde. |
 | Architekturzuordnung verschwindet | Geänderte Fachzuordnung, Interfacevertrag und AppliesTo-Ziel erreichen die relevanten alten/neuen Bausteine, Artefakte und Prüfungen; Prosa allein gilt nicht als vollständiger Codebeleg. |
@@ -381,6 +395,7 @@ Offen bleiben besonders:
 - Eingang der Architekturergänzung vom 13. Oktober: `ec7ba72d25c7f17cedcfb61e6b77f11d5cddb5ed`; beim Beginn sauber.
 - Eingang der Referenzvereinfachung und Entfernung von ownership vom 13. Oktober: `a188878bd5c8283acf02fd6f754cf404b1d3503e`; beim Beginn sauber.
 - Eingang der contains-Entscheidung vom 13. Oktober: `def47b05ed553918ed80d7b74728d2a77a8c7572`; beim Beginn sauber.
+- Eingang der realizes-Umfangsentscheidung vom 13. Oktober: `25828d773cf2d7ea0bfc7c9bbb69c04d8e09c7fe`; beim Beginn sauber.
 - Ursprüngliche Branchbasis: `ecc69b0ad99236a5ddd02b85bf9ba656a0000f15`.
 - Letzter gesonderter Main-Abgleich: `32afd1a57e715130d056e98e433721c6e7a10278` vom 11. Oktober; heute nicht als aktuell neu verifiziert.
 - Zusätzlicher reiner Quellenrefresh im Gespräch am 13. Oktober: `c19d9d1259fcd493e2cc7ad93d10226778b2b7f4`. Das Projektvokabular besitzt dort weiterhin die fünf bisherigen Kinds und einzelne Reference-Zielkinds; die neuen Fach-/Architektur-Kinds und Referenzmengen dieses Entwurfs sind nicht implementiert. Der historische Vergleichsbericht bleibt unverändert datiert.
