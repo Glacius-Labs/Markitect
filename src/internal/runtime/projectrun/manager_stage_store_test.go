@@ -496,3 +496,178 @@ func TestManagerStageStrictReportedUsage(t *testing.T) {
 		t.Fatal("overflow is attachable")
 	}
 }
+
+func ordinaryInterruptedJournalFixture(t *testing.T) (*managerStageJournal, ManagerTask, *stageStoreInvoker, projectconfig.Runtime) {
+	t.Helper()
+	root, _, invoker, _ := stageStoreFixture(t)
+	store, err := newManagerStageStore(root)
+	if err != nil {
+		t.Fatal(err)
+	}
+	task := ManagerTask{ID: "task", ManagerID: "root", State: "invoking", RepairPhase: "work", WorkAttempts: 1, Attempts: 1}
+	report := &RunReport{APIVersion: APIVersion, ID: strings.Repeat("c", 32), PlanID: strings.Repeat("c", 32), Status: StatusRunning, Tasks: []ManagerTask{task}, RepairRounds: []RepairRound{{Number: 3, Status: "completed"}}}
+	unlock, err := store.lock()
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer unlock()
+	if _, err := store.createRun(report.ID); err != nil {
+		t.Fatal(err)
+	}
+	limits := projectconfig.Limits{MaxStarts: 1}
+	journal, err := newManagerStageJournal(store, report, limits)
+	if err != nil {
+		t.Fatal(err)
+	}
+	request := agentexec.Request{Role: agentexec.RoleExecutor, Context: json.RawMessage(`{"goal":"original immutable work"}`)}
+	agent := projectconfig.Agent{Command: "process-fixture", Model: "fixture", ProviderVersion: "fixture/1", Timeout: projectconfig.Duration(time.Second), MaxStdoutBytes: 4096, MaxStderrBytes: 4096, Pricing: projectconfig.Pricing{InputMicrosPerMillion: 1, OutputMicrosPerMillion: 1}}
+	config, err := agent.AgentConfig()
+	if err != nil {
+		t.Fatal(err)
+	}
+	log, err := ordinaryManagerAttemptLog(journal, invoker, config, agent, task, "work", nativeTaskAttemptID(task, "work"), request)
+	if err != nil {
+		t.Fatal(err)
+	}
+	log.Attempt.SafeFailure = "unchanged-safe-marker"
+	start := agentexec.RoleStartRequest{RequestID: log.Attempt.ID, ParentSessionID: report.ID, Role: log.Role, State: "requested"}
+	if _, err := journal.budget.ReserveRecordedTaskRoot(context.Background(), task.ID, "work", start); err != nil {
+		t.Fatal(err)
+	}
+	if err := journal.start(log, request); err != nil {
+		t.Fatal(err)
+	}
+	return journal, task, invoker, projectconfig.Runtime{Agents: map[string]projectconfig.Agent{task.ManagerID: agent}, Limits: limits}
+}
+func TestOrdinaryProcessResumeRetainsOneChargedUnknownAttemptWithoutDispatch(t *testing.T) {
+	journal, task, invoker, runtime := ordinaryInterruptedJournalFixture(t)
+	before := journal.snapshot()
+	original, err := readStageEvidence(journal.store, before.ID, before.Invocations[0].Attempt.RequestRef)
+	if err != nil {
+		t.Fatal(err)
+	}
+	execution := &runExecution{ctx: context.Background(), store: journal.store, report: before, runtime: runtime, invoker: invoker}
+	continued, report, err := execution.resumeExisting()
+	if err == nil || continued || report.Status != StatusBlocked || invoker.calls != 0 {
+		t.Fatal("lost process outcome dispatched or was accepted")
+	}
+	after, err := journal.store.readLatestState(before.ID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(after.Invocations) != 1 || len(after.RoleStartReservations) != 1 || after.Tasks[0].State != "uncertain" || after.Invocations[0].Attempt.Status != "uncertain" || after.RoleStartReservations[0].Request.State != "unknown" {
+		t.Fatal("original charged uncertainty was not durably reconciled")
+	}
+	recovered := *after.Invocations[0].Attempt
+	recovered.Status = before.Invocations[0].Attempt.Status
+	a, _ := digest(recovered)
+	b, _ := digest(before.Invocations[0].Attempt)
+	if a != b || !after.Invocations[0].Attempt.FinishedAt.IsZero() {
+		t.Fatal("metadata reconciliation changed immutable attempt fields or fabricated finish time")
+	}
+	reservation := after.RoleStartReservations[0]
+	reservation.Request.State = before.RoleStartReservations[0].Request.State
+	if reservation.RecordedAt.Before(before.RoleStartReservations[0].RecordedAt) {
+		t.Fatal("lifecycle update timestamp regressed")
+	}
+	reservation.RecordedAt = before.RoleStartReservations[0].RecordedAt
+	a, _ = digest(reservation)
+	b, _ = digest(before.RoleStartReservations[0])
+	if a != b {
+		t.Fatal("metadata reconciliation replaced, refunded or changed original ticket")
+	}
+	raw, err := readStageEvidence(journal.store, after.ID, after.Invocations[0].Attempt.RequestRef)
+	if err != nil || !bytes.Equal(original, raw) {
+		t.Fatal("original protected request changed")
+	}
+	if after.Invocations[0].Receipt.RunID != "" || after.Invocations[0].Attempt.ResponseRef != nil || after.Invocations[0].Attempt.ReportRef != nil {
+		t.Fatal("unknown process acquired invented output")
+	}
+	repeated := &runExecution{ctx: context.Background(), store: journal.store, report: after, runtime: runtime, invoker: invoker}
+	if continued, _, err := repeated.resumeExisting(); err == nil || continued {
+		t.Fatal("second resume accepted or dispatched unknown process")
+	}
+	latest, err := journal.store.readLatestState(before.ID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	a, _ = digest(latest.Invocations)
+	b, _ = digest(after.Invocations)
+	if a != b || len(latest.RoleStartReservations) != 1 || invoker.calls != 0 || repeated.roleBudget.Accounting().ObservedTotal != 1 {
+		t.Fatal("second resume changed attempt authority or refilled start quota")
+	}
+	a, _ = digest(latest.RoleStartReservations)
+	b, _ = digest(after.RoleStartReservations)
+	if a != b {
+		t.Fatal("idempotent second resume rewrote original reservation lifecycle")
+	}
+	request := agentexec.RoleStartRequest{RequestID: "replacement", ParentSessionID: latest.ID, Role: agentexec.RoleExecutor}
+	if _, err := repeated.roleBudget.ReserveRoot(context.Background(), task.ID, "work", request); err == nil {
+		t.Fatal("unknown original start granted a replacement ticket")
+	}
+}
+func TestOrdinaryProcessUncertaintyRejectsIncompatibleAuthority(t *testing.T) {
+	cases := []string{"missing-attempt", "duplicate-attempt", "wrong-task", "wrong-phase", "wrong-role", "wrong-digest", "bad-protected-bytes", "missing-reservation", "duplicate-reservation", "wrong-key", "wrong-request-id", "wrong-parent", "wrong-reservation-role", "terminal-reservation", "terminal-attempt", "receipt", "response", "finished", "wrong-repair-round"}
+	for _, defect := range cases {
+		t.Run(defect, func(t *testing.T) {
+			journal, task, invoker, _ := ordinaryInterruptedJournalFixture(t)
+			row := &journal.report.Invocations[0]
+			reservation := &journal.report.RoleStartReservations[0]
+			switch defect {
+			case "missing-attempt":
+				journal.report.Invocations = nil
+			case "duplicate-attempt":
+				journal.report.Invocations = append(journal.report.Invocations, *row)
+			case "wrong-task":
+				row.TaskID = "other"
+			case "wrong-phase":
+				row.Phase = "integrate"
+			case "wrong-role":
+				row.Role = "reviewer"
+			case "wrong-digest":
+				row.Attempt.RequestDigest = "sha256:wrong"
+			case "bad-protected-bytes":
+				path, err := stageEvidencePath(journal.store, journal.report.ID, *row.Attempt.RequestRef)
+				if err != nil {
+					t.Fatal(err)
+				}
+				if err := os.WriteFile(path, []byte(`{"changed":true}`), 0600); err != nil {
+					t.Fatal(err)
+				}
+			case "missing-reservation":
+				journal.report.RoleStartReservations = nil
+			case "duplicate-reservation":
+				journal.report.RoleStartReservations = append(journal.report.RoleStartReservations, *reservation)
+			case "wrong-key":
+				reservation.Key = "different"
+			case "wrong-request-id":
+				reservation.Request.RequestID = "different"
+			case "wrong-parent":
+				reservation.Request.ParentSessionID = "different"
+			case "wrong-reservation-role":
+				reservation.Request.Role = "reviewer"
+			case "terminal-reservation":
+				reservation.Request.State = "completed"
+			case "terminal-attempt":
+				row.Attempt.Status = "accepted"
+			case "receipt":
+				row.Receipt.RunID = "invented"
+			case "response":
+				row.Attempt.ResponseRef = &ManagerStageEvidenceRef{Path: "reports/invented.json", Digest: "sha256:invented"}
+			case "finished":
+				row.Attempt.FinishedAt = time.Now().UTC()
+			case "wrong-repair-round":
+				journal.report.RepairRounds[0].Number++
+			}
+			before := journal.snapshot()
+			if err := journal.markOrdinaryProcessAttemptUncertain(task, "work"); err == nil {
+				t.Fatal("incompatible or ambiguous process authority reconciled")
+			}
+			a, _ := digest(before)
+			b, _ := digest(journal.snapshot())
+			if a != b || invoker.calls != 0 {
+				t.Fatal("failed reconciliation mutated authority or dispatched")
+			}
+		})
+	}
+}

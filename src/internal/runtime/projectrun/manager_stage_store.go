@@ -587,3 +587,78 @@ func recoverOrdinaryManagerAttempt(journal *managerStageJournal, attemptID strin
 	}
 	return log, journal.reconcileTerminalReservation(log)
 }
+
+// A lost plain-process caller cannot establish terminal output. Preserve its
+// exact charged attempt and protected request; reconcile no replacement ticket.
+func (j *managerStageJournal) markOrdinaryProcessAttemptUncertain(task ManagerTask, phase string) error {
+	j.mu.Lock()
+	log, index, err := j.originalUnfinishedProcessAttempt(task, phase)
+	if err == nil && log.Attempt.Status == "started" {
+		attempt := *log.Attempt
+		attempt.Status = "uncertain"
+		log.Attempt = &attempt
+		j.report.Invocations[index] = log
+		err = persistState(j.store, j.report)
+	}
+	j.mu.Unlock()
+	if err != nil {
+		return err
+	}
+	// Budget mutation takes the budget lock before the journal lock.
+	return j.reconcileTerminalReservation(log)
+}
+func (j *managerStageJournal) originalUnfinishedProcessAttempt(task ManagerTask, phase string) (InvocationLog, int, error) {
+	fail := func() (InvocationLog, int, error) {
+		return InvocationLog{}, -1, errors.New("original process attempt/request/reservation authority is missing, ambiguous or incompatible; no replay")
+	}
+	if j.report.ManagerStageBinding != nil || j.report.ID == "" || task.ID == "" || task.ManagerID == "" || task.RepairPhase != phase || phase != "work" && phase != "integrate" {
+		return fail()
+	}
+	id := ordinaryRunAttemptID(*j.report, nativeTaskAttemptID(task, phase))
+	index, count := -1, 0
+	for i, row := range j.report.Invocations {
+		if row.Attempt != nil && row.Attempt.ID == id {
+			index = i
+			count++
+		}
+	}
+	if count != 1 {
+		return fail()
+	}
+	log := j.report.Invocations[index]
+	a := log.Attempt
+	receipt, _ := digest(log.Receipt)
+	emptyReceipt, _ := digest(agentexec.Receipt{})
+	if log.TaskID != task.ID || log.Phase != phase || log.Role != agentexec.RoleExecutor || log.InputDigest != a.RequestDigest || log.ReportID != "" || receipt != emptyReceipt || a.ManagerID != task.ManagerID || a.IterationID != task.ID || a.Phase != phase || a.StageKey != j.report.ID+"/"+id || a.ParentAttemptID != "" || a.Status != "started" && a.Status != "uncertain" || !a.FinishedAt.IsZero() || a.ResponseRef != nil || a.ReportRef != nil || a.ValidationDigest != "" {
+		return fail()
+	}
+	input, err := readStageEvidence(j.store, j.report.ID, a.RequestRef)
+	if err != nil {
+		return InvocationLog{}, -1, err
+	}
+	var original agentexec.Request
+	if err := json.Unmarshal(input, &original); err != nil {
+		return InvocationLog{}, -1, err
+	}
+	requestDigest, err := digest(original)
+	if err != nil || requestDigest != a.RequestDigest || original.Role != log.Role || rawContentDigest(original.Context) != a.ContextDigest {
+		return fail()
+	}
+	request := agentexec.RoleStartRequest{RequestID: id, ParentSessionID: j.report.ID, Role: log.Role}
+	key := rootReservationKey(task.ID, phase, request)
+	count = 0
+	for _, reservation := range j.report.RoleStartReservations {
+		if reservation.Key != key && reservation.Request.RequestID != id {
+			continue
+		}
+		count++
+		r := reservation.Request
+		if reservation.Key != key || reservation.Kind != "root" || reservation.TaskID != task.ID || reservation.Phase != phase || r.RequestID != id || r.ParentSessionID != j.report.ID || r.Role != log.Role || r.State != "requested" && r.State != "unknown" {
+			return fail()
+		}
+	}
+	if count != 1 {
+		return fail()
+	}
+	return log, index, nil
+}

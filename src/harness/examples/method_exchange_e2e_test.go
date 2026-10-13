@@ -15,6 +15,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/Glacius-Labs/Markitect/src/internal/runtime/projectrun"
 	"github.com/Glacius-Labs/Markitect/src/internal/testkit"
 )
 
@@ -441,13 +442,7 @@ func (d *methodCLIDriver) killAndResume(f *methodExchangeFixture, id string) {
 	}
 	status := d.must("status", id)
 	d.t.Logf("hard-kill durable status before kill: %s", status)
-	var state struct {
-		Run struct {
-			Status      string
-			Tasks       []struct{ State string }
-			Invocations []json.RawMessage
-		}
-	}
+	var state projectrun.StatusReport
 	if err := json.Unmarshal(status, &state); err != nil {
 		d.t.Fatal(err)
 	}
@@ -457,9 +452,10 @@ func (d *methodCLIDriver) killAndResume(f *methodExchangeFixture, id string) {
 			invoking++
 		}
 	}
-	if state.Run.Status != "running" || invoking != 1 || len(state.Run.Invocations) != 0 {
+	if state.Run.Status != "running" || invoking != 1 {
 		d.t.Fatalf("held request lacks durable in-flight state: %s", status)
 	}
+	originalAttempt, originalReservation := assertHeldMethodAttempt(d.t, state.Run, "started", "requested")
 	if runtime.GOOS == "windows" {
 		kill := exec.Command("taskkill", "/PID", strconv.Itoa(cmd.Process.Pid), "/T", "/F")
 		if output, err := kill.CombinedOutput(); err != nil {
@@ -520,8 +516,20 @@ func (d *methodCLIDriver) killAndResume(f *methodExchangeFixture, id string) {
 	if err := json.Unmarshal(status, &state); err != nil {
 		d.t.Fatal(err)
 	}
-	if state.Run.Status != "blocked" || len(state.Run.Invocations) != 0 {
+	if state.Run.Status != "blocked" {
 		d.t.Fatalf("blocked state/empty receipts not durable: %s", status)
+	}
+	recoveredAttempt, recoveredReservation := assertHeldMethodAttempt(d.t, state.Run, "uncertain", "unknown")
+	// Only knowledge of the original start changed; no terminal receipt,
+	// replacement attempt, request or charged ticket may appear.
+	recoveredAttempt.Status = originalAttempt.Status
+	recoveredReservation.Request.State = originalReservation.Request.State
+	if recoveredReservation.RecordedAt.Before(originalReservation.RecordedAt) {
+		d.t.Fatal("reservation lifecycle timestamp regressed")
+	}
+	recoveredReservation.RecordedAt = originalReservation.RecordedAt
+	if !bytes.Equal(methodMarshal(d.t, originalAttempt), methodMarshal(d.t, recoveredAttempt)) || !bytes.Equal(methodMarshal(d.t, originalReservation), methodMarshal(d.t, recoveredReservation)) {
+		d.t.Fatalf("resume replaced or changed original attempt/request/reservation authority: %s", status)
 	}
 	uncertain := 0
 	for _, task := range state.Run.Tasks {
@@ -740,4 +748,36 @@ func (d *methodCLIDriver) refuseApply(id, candidate string) {
 	if _, code := d.call("apply", "--plan", id, "--run", id, "--candidate", candidate); code == 0 {
 		d.t.Fatal("unverified/failed/old candidate remained applicable")
 	}
+}
+
+func assertHeldMethodAttempt(t *testing.T, run projectrun.RunReport, attemptStatus, reservationState string) (projectrun.ManagerStageAttempt, projectrun.RoleStartReservation) {
+	t.Helper()
+	if len(run.Invocations) != 1 || len(run.RoleStartReservations) != 1 {
+		t.Fatalf("original charged attempt was absent, replaced or duplicated: %s", methodMarshal(t, run))
+	}
+	row := run.Invocations[0]
+	a := row.Attempt
+	r := run.RoleStartReservations[0]
+	empty := projectrun.InvocationLog{}.Receipt
+	if a == nil || a.ID == "" || a.Status != attemptStatus || a.RequestRef == nil || a.RequestRef.Digest == "" || a.RequestDigest == "" || row.InputDigest != a.RequestDigest || a.ResponseRef != nil || a.ReportRef != nil || !a.FinishedAt.IsZero() || !bytes.Equal(methodMarshal(t, row.Receipt), methodMarshal(t, empty)) || row.ReportID != "" {
+		t.Fatalf("original pending request gained terminal output or lost its binding: %s", methodMarshal(t, row))
+	}
+	taskFound := false
+	for _, task := range run.Tasks {
+		if task.ID == row.TaskID && task.ManagerID == a.ManagerID && task.RepairPhase == row.Phase && task.WorkAttempts == 1 && task.Attempts == 1 {
+			taskFound = true
+		}
+	}
+	if !taskFound || a.IterationID != row.TaskID || a.Phase != row.Phase || row.Role != "executor" || a.StageKey != run.ID+"/"+a.ID || r.Kind != "root" || r.TaskID != row.TaskID || r.Phase != row.Phase || r.Request.RequestID != a.ID || r.Request.ParentSessionID != run.ID || r.Request.Role != row.Role || r.Request.State != reservationState || r.Key != "root\x00"+row.TaskID+"\x00"+row.Phase+"\x00"+a.ID {
+		t.Fatalf("pending attempt has no exact original charged reservation: %s", methodMarshal(t, run))
+	}
+	return *a, r
+}
+func methodMarshal(t *testing.T, value any) []byte {
+	t.Helper()
+	data, err := json.Marshal(value)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return data
 }

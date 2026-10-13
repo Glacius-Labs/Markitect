@@ -83,6 +83,9 @@ func (e *runExecution) resumeExisting() (bool, RunReport, error) {
 			config, configErr = agent.AgentConfig()
 		}
 		if !configured || configErr != nil || (config.Transport != projectconfig.TransportCodexAppServer && !externalExecutionEnabled(e.ctx)) || task.ID == "" {
+			if err := journalFromContext(e.ctx).markOrdinaryProcessAttemptUncertain(task, phase); err != nil {
+				return false, e.report, err
+			}
 			if current := findTask(e.report.Tasks, task.ManagerID); current != nil {
 				current.State = "uncertain"
 			}
