@@ -2,7 +2,7 @@
 
 Datum: 13. Oktober 2026. Status: auf Nutzerwunsch ergänzter Architekturentwurf zum [Konzept](canonical-model-proposal.md). Die vier Kinds und ihre Beziehungsrollen werden festgehalten; konkrete Feld-, Referenz-, Provider- und Versionsregeln sind Vertragskandidaten für die Implementierung. Alle YAML-Blöcke sind Dokumentation mit `vNext` als Platzhalter, keine kompilierte oder ausgeführte Projektfixture.
 
-Das [Bibliotheksmodell](library-model-example.md) besitzt das vollständige Manifest, die Fachdefinitionen, das Mandat und die Artefakte/Checks. Dieses Dokument ist die einzige aktuelle YAML-Darstellung der hier aufgeführten Architekturdefinitionen; die Modelldateien sind als spätere Eingaben benannt, heute nicht angelegt.
+Das [Bibliotheksmodell](library-model-example.md) zeigt den Project-Kandidaten, den Modellordner, die Fachdefinitionen, das Mandat und die Artefakte/Checks. Die Quellen werden im Modellordner gefunden; eine Manifestliste wird nicht gepflegt. Dieses Dokument ist die einzige aktuelle YAML-Darstellung der hier aufgeführten Architekturdefinitionen; die Modelldateien sind als spätere Eingaben benannt, heute nicht angelegt.
 
 ## Unterscheidung und Struktur
 
@@ -538,7 +538,7 @@ Die Frontend-/Backendaufteilung ist als konkrete Architektur dieses Gesprächsbe
 
 Strukturprüfung untersucht Identitäten, endliche Zielmengen, eindeutige Parentbeziehungen, Zusammensetzungszyklen und Providerzuordnung. Fach- und Realisierungsreview beurteilen Verträge, Beitragsteilung, tatsächliche Abhängigkeiten und geeignete Evidenz. Eine im Modell deklarierte dependency beweist keine Codekonformität. Interfacezyklen sind nicht pauschal Zusammensetzungszyklen.
 
-Alle neuen Beziehungen brauchen Behandlung in Digest, Kontext, Graph, Alt/Neu-Impact, Coverage und Prüfauswahl. Die vormals besprochene Überfälligkeitsänderung muss auch die Architekturzuordnung prüfen, weil ihre Bedingung Mitglieds- und Ausleihkontext verbindet.
+Alle neuen Beziehungen brauchen Behandlung in Digest, Kontext, Graph, Alt/Neu-Impact, Artefaktzuordnung und Prüfauswahl. Die vormals besprochene Überfälligkeitsänderung muss auch die Architekturzuordnung prüfen, weil ihre Bedingung Mitglieds- und Ausleihkontext verbindet.
 
 ## Herkunft
 

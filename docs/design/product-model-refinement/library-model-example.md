@@ -2,7 +2,7 @@
 
 Aktualisiert am 13. Oktober 2026. Status: zusammenhängendes Gesprächsbeispiel zum [Konzept](canonical-model-proposal.md). Gewählt sind `mandate.yaml` mit Kind Mandate, Concept, Rule, UseCase und die ergänzten Architektur-Kinds System, Component, Module und Interface. `vNext`, Referenz- und Feldregeln sind Vertragskandidaten, keine unterstützte Version oder kompilierte Fixture.
 
-Die Fachdefinitionen, Mandat, Artefakte, Checks und das vollständige Manifest stehen hier. Die aktuellen Architekturdefinitionen werden ausschließlich im [Architektur-YAML](library-architecture-example.md) ausgeschrieben. Zusammen zeigen beide Dokumente 34 Modelldefinitionen: 1 Mandate, 1 System, 3 Components, 6 Modules, 5 Interfaces, 5 Concepts, 4 Rules, 2 UseCases, 5 Artifacts und 2 Checks.
+Der Project-Kandidat, Modellordner, Fachdefinitionen, Mandat, Artefakte und Checks stehen hier. Die aktuellen Architekturdefinitionen werden ausschließlich im [Architektur-YAML](library-architecture-example.md) ausgeschrieben. Zusammen zeigen beide Dokumente 35 Modelldefinitionen: 1 Project, 1 Mandate, 1 System, 3 Components, 6 Modules, 5 Interfaces, 5 Concepts, 4 Rules, 2 UseCases, 5 Artifacts und 2 Checks.
 
 ## Umfang und Fachentscheidungen
 
@@ -25,12 +25,12 @@ Die Architektur ergänzt Webfrontend, Backend, einen Datenbankdienst und die ben
 
 Die bisher als Concept gezeigte Übersicht `library-system` ist jetzt ein System; ihre Identität und alle aktuellen Referenzen ändern sich entsprechend. Concept, Rule und UseCase behalten ihre Bedeutung. Architekturzugehörigkeit verleiht keine Agentenbefugnis; der Auftrag steht in `mandate.yaml` mit dem gewählten Kind Mandate. Dieser ersetzt Manager im aktuellen Entwurf, benennt aber keine ausführende Runtime-Rolle um.
 
-## Dateisystem und explizite Eingaben
+## Modellordner und automatische Symbolerfassung
 
 ```text
 .markitect/
-├── project.yaml
 └── model/
+    ├── project.yaml
     ├── mandate.yaml
     └── library/
         ├── library-system.yaml
@@ -68,52 +68,31 @@ Die bisher als Concept gezeigte Übersicht `library-system` ist jetzt ein System
         └── architecture-contract-check.yaml
 ```
 
-Eine Definition pro Datei und Namespace aus dem Verzeichnis übernehmen die bisher untersuchte Ladeform. Alle Definitionen außer dem Root-Mandat liegen im Namespace library. Die Anwendung muss diese Ablage nicht spiegeln. Zusammensetzung ist über `contains` mit ausdrücklichem Zielkind erklärt, nicht durch diesen flachen Modellordner.
+Eine Definition pro Datei und Namespace aus dem Verzeichnis übernehmen die bisher untersuchte Ladeform. Project und Wurzelmandat liegen im leeren Namespace; alle anderen Definitionen im Namespace library. Die Anwendung muss diese Ablage nicht spiegeln. Zusammensetzung ist über `contains` mit ausdrücklichem Zielkind erklärt, nicht durch diesen flachen Modellordner.
 
-Die Manifestliste nennt Modellquellen, nicht jede Anwendungsdatei. Artefaktpfade erfassen konkrete Realisierungsbereiche. Weitere tatsächliche Dateien benötigen Zuordnung oder ausdrückliche Ausnahme. Die gezeigten Pfade sind kein Beweis vollständiger späterer Build-/CI-/Konfigurationsabdeckung.
+Markitect liest die YAML-Definitionen im Modellordner rekursiv ein und erfasst ihre Symbole. Referenzen werden anschließend gegen die deklarierte Identität aufgelöst. Hinzufügen einer Datei genügt für ihre Aufnahme; eine modelFiles-Liste wird nicht gepflegt. Der gefundene Dateibestand wird an den untersuchten Repositorystand gebunden. Artefaktpfade ordnen Realisierungsbereiche zu; eine gesonderte Coverage-Prüfung ist in diesem Entwurf nicht vorgesehen.
 
-### `project.yaml`
+### `model/project.yaml` — Project-Kandidat
+
+Project beschreibt das Gesamtprojekt. Die konkrete Form seiner Header, Beschreibung und System-Zuordnung wird im Typreview geprüft; sie ist kein bereits festgelegtes oder implementiertes Schema. Markitect-Konfiguration, Dateilisten, Coverage-Modus und ein Dokumentationszielpfad sind hier nicht enthalten.
 
 ```yaml
 apiVersion: project.markitect.example.org/vNext
-name: library-architecture-example
-coverageMode: full
-documentPath: docs/markitect/project.md
-modelFiles:
-  - .markitect/model/mandate.yaml
-  - .markitect/model/library/library-system.yaml
-  - .markitect/model/library/title.yaml
-  - .markitect/model/library/copy.yaml
-  - .markitect/model/library/member.yaml
-  - .markitect/model/library/loan.yaml
-  - .markitect/model/library/active-loan.yaml
-  - .markitect/model/library/eligible-member.yaml
-  - .markitect/model/library/available-copy.yaml
-  - .markitect/model/library/one-active-loan.yaml
-  - .markitect/model/library/borrow.yaml
-  - .markitect/model/library/return.yaml
-  - .markitect/model/library/frontend.yaml
-  - .markitect/model/library/backend.yaml
-  - .markitect/model/library/database.yaml
-  - .markitect/model/library/lending-ui.yaml
-  - .markitect/model/library/inventory.yaml
-  - .markitect/model/library/membership.yaml
-  - .markitect/model/library/circulation.yaml
-  - .markitect/model/library/http-adapter.yaml
-  - .markitect/model/library/persistence-adapter.yaml
-  - .markitect/model/library/library-api.yaml
-  - .markitect/model/library/inventory-access.yaml
-  - .markitect/model/library/member-access.yaml
-  - .markitect/model/library/loan-storage.yaml
-  - .markitect/model/library/database-access.yaml
-  - .markitect/model/library/domain-independent-of-storage.yaml
-  - .markitect/model/library/frontend-implementation.yaml
-  - .markitect/model/library/backend-implementation.yaml
-  - .markitect/model/library/database-configuration.yaml
-  - .markitect/model/library/library-verification.yaml
-  - .markitect/model/library/library-documentation.yaml
-  - .markitect/model/library/library-contract-check.yaml
-  - .markitect/model/library/architecture-contract-check.yaml
+kind: Project
+metadata:
+  namespace: ""
+  name: library
+purpose: Unterstützt die Verwaltung einer Bibliothek.
+spec:
+  description: |
+    Das Projekt stellt Software zur Verwaltung des Bestands,
+    der Mitglieder sowie der Ausleihe und Rückgabe bereit.
+    Beschaffung, Gebühren und Mahnungen liegen zunächst
+    außerhalb des Umfangs.
+  contains:
+    - kind: System
+      namespace: library
+      name: library-system
 ```
 
 ## Auftrag: `model/mandate.yaml`
@@ -369,7 +348,7 @@ spec:
 
 ## System, Components, Modules und Interfaces
 
-Die [Architekturdarstellung](library-architecture-example.md) definiert die hier im Manifest geladenen Ressourcen samt Provider-/Consumerverträgen, Zuordnung fachlicher Beiträge und Architekturregel. Jede aktuelle YAML-Definition wird dort genau einmal gezeigt.
+Die [Architekturdarstellung](library-architecture-example.md) definiert die im Modellordner gefundenen Ressourcen samt Provider-/Consumerverträgen, Zuordnung fachlicher Beiträge und Architekturregel. Jede aktuelle YAML-Definition wird dort genau einmal gezeigt.
 
 Das Ausleihmodul konsumiert Bestands-, Mitglieds- und Speicherverträge. Der HTTP-Adapter stellt die Bibliotheks-API bereit; der Persistenzadapter den fachlichen Speichervertrag. Der Datenbankdienst stellt einen davon getrennten technischen Vertrag bereit. Fachmodule müssen die konkrete Datenbanktechnik nicht importieren.
 
@@ -730,7 +709,7 @@ Beide Befehle sind nicht ausführbare Platzhalter. Vor Nutzung sind tatsächlich
 
 Modellreview untersucht Fachbeschreibung, offene Entscheidungen, vollständige Beziehungen, Architekturgrenzen, Verträge und die gewünschte Beitragsteilung. Ein unabhängiger Realisierungsreview prüft die tatsächlichen Kandidatendateien, Interfaceverträge, Fachregeln, Abhängigkeitsrichtung und belastbare Nachweise.
 
-Ein deklarierter Anbieter beweist noch keine korrekte Interfaceimplementierung. Eine deklarierte Abhängigkeit beweist keine tatsächliche Codeabhängigkeit. Eine Rule-Prosa ist kein ausgeführter Importvalidator. Strukturelle Gültigkeit, Coverage, Fachkonformität und menschliche Zustimmung bleiben verschieden.
+Ein deklarierter Anbieter beweist noch keine korrekte Interfaceimplementierung. Eine deklarierte Abhängigkeit beweist keine tatsächliche Codeabhängigkeit. Eine Rule-Prosa ist kein ausgeführter Importvalidator. Strukturelle Gültigkeit, Fachkonformität und menschliche Zustimmung bleiben verschieden.
 
 Der [Überfälligkeitsdurchlauf](library-change-walkthrough.md) muss bei seiner Erweiterung auch die Modul-/Interfacezuordnung berücksichtigen: Eine fachliche Berechtigungsregel kann Mitglieds- und Ausleihkontext verbinden. Der Durchlauf ist keine aktuelle vollständige Impactliste dieser erweiterten Architektur.
 

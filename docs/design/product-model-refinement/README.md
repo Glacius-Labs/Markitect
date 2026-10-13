@@ -18,6 +18,8 @@ Der gewählte Verantwortungsdateiname ist `mandate.yaml`; der Modell-Kind heißt
 
 Realizes umfasst automatisch das referenzierte Ziel und alle über contains enthaltenen Definitionen entsprechend dem beschriebenen Beitrag; ein scope-Feld entfällt. Querbeziehungen erweitern diese Unterstruktur nicht automatisch. Ableitbare Doppelzuordnungen sind im Beispiel entfernt; die weitere Bedeutung und Verwendung von realizes bleibt zu besprechen.
 
+Project beschreibt das Gesamtprojekt; Markitect-Konfiguration ist getrennt. Coverage und seine Moduskonfiguration werden vorerst entfernt. Alle kanonischen Definitionen liegen im Modellordner und werden durch rekursive Suche und Symbolauflösung geladen; modelFiles entfällt. Ein Dokumentationszielpfad gehört nicht in Project. Der konkrete Ordnername und die Project-Felder sind weitere Reviewthemen; das YAML bleibt ein Kandidat.
+
 ## Weiteres Vorgehen im Produktgespräch
 
 Auf Nutzerwunsch gehen wir wieder langsam und am Beispiel vor: zuerst klären, welche Inhalte zur Beschreibung eines Softwareprojekts und seines Repositories tatsächlich nötig sind; anschließend die Typen beginnend bei Project einzeln anhand ihres Bibliotheks-YAML durchgehen. Für jeden Typ betrachten wir Bedeutung und Zweck, gemeinsame beziehungsweise typspezifische Felder, enthaltene Beziehungen, Erforderlichkeit und mögliche Ableitungen. Die Unterscheidung gemeinsamer und spezifischer Felder ist eine Reviewhilfe, keine vorweggenommene Pflichtstruktur für alle Typen. Beziehungen, insbesondere contains und realizes, werden dabei ebenfalls einzeln besprochen. Eine Aussage wird erst nach Einigung als Entscheidung festgehalten. Der bestehende Entwurf ist Gesprächsgrundlage; weitere Gruppierungen und die automatische Ausbreitung anderer Beziehungen werden nicht vorweggenommen.
@@ -25,8 +27,8 @@ Auf Nutzerwunsch gehen wir wieder langsam und am Beispiel vor: zuerst klären, w
 ## Aktueller Arbeitsstand und Lesereihenfolge
 
 1. [Konsolidierter Konzept- und Umsetzungsentwurf](canonical-model-proposal.md): kleine Struktur, nominale Regeln, verbindliche Prosa, explizite Beziehungen und methodische Reviews.
-2. [Vollständiges aktuelles Bibliotheksmodell](library-model-example.md): Manifest, Mandat, Fachdefinitionen und getrennte Frontend-/Backend-/Datenbank-/Prüf-/Dokumentationsbeiträge.
-3. [Architektur als YAML](library-architecture-example.md): System, Components, Modules, Interfaces, ihre Beziehungen und Architekturregel; zusammen mit dem Fachmodell 34 Definitionen.
+2. [Vollständiges aktuelles Bibliotheksmodell](library-model-example.md): Project-Kandidat, Modellordner, Mandat, Fachdefinitionen und getrennte Frontend-/Backend-/Datenbank-/Prüf-/Dokumentationsbeiträge.
+3. [Architektur als YAML](library-architecture-example.md): System, Components, Modules, Interfaces, ihre Beziehungen und Architekturregel; zusammen mit Project- und Fachmodell 35 Definitionen.
 4. [Konkreter Änderungsdurchlauf](library-change-walkthrough.md): Überfälligkeitsregel, fehlende Abhängigkeit, Modellreview, konservative Wirkung und neue Prüfaufträge.
 5. [Fester Main-Abgleich vom 11. Oktober](canonical-model-main-comparison.md): Ausgangspunkt für einen beim Implementierungsstart zu erneuernden Vergleich.
 
@@ -67,6 +69,7 @@ Produktgespräch `01a121f1-b948-7050-ae5d-9921b99db9c0`, Grundlagen vom 10. Okto
 - Eingang der contains-Entscheidung: `def47b05ed553918ed80d7b74728d2a77a8c7572`; beim Beginn sauber, am 13. Oktober ausdrücklich beauftragt.
 - Eingang der realizes-Umfangsentscheidung: `25828d773cf2d7ea0bfc7c9bbb69c04d8e09c7fe`; beim Beginn sauber, am 13. Oktober ausdrücklich beauftragt.
 - Eingang der Mandate-Umbenennung und des vereinbarten Typreviews: `d50fa8c39bd11eadbd24c4c55357cb890f08a871`; beim Beginn sauber, am 13. Oktober ausdrücklich beauftragt.
+- Eingang der Project-/Ladevereinfachung: `6df6c02e51e2aba3fda2845025cfe32f7d5b5ddd`; beim Beginn sauber, am 13. Oktober ausdrücklich beauftragt.
 - Letzter gesonderter Implementierungsvergleich: `32afd1a57e715130d056e98e433721c6e7a10278` vom 11. Oktober; heute nicht neu als aktueller Stand verifiziert.
 
 Kanonische Produktdokumente bleiben [Vision](../../vision.md), [Konzeptregister](../../concepts/register.md) und [Architektur](../../architecture.md). Dieser Konzeptordner setzt ihre aktuellen Verträge und den koordinierten Modell-Owner nicht automatisch außer Kraft.

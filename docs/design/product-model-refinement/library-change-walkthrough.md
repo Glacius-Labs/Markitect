@@ -87,7 +87,7 @@ borrow
                             uses → active-loan
 ```
 
-Das Manifest muss die neue Modelldatei explizit laden. Ihre Realisierung wird dem Implementierungsartefakt zugeordnet; Prüfbeiträge und Check-Scope sind bewusst zu bestätigen beziehungsweise zu ergänzen. Der neue benannte Begriff allein erzeugt noch keinen Nachweis.
+Die neue Definition liegt im festgelegten Modellordner und wird bei dessen nächster vollständiger Erfassung automatisch geladen; eine zusätzliche Dateiliste ist nicht zu ergänzen. Ihre Realisierung wird dem Implementierungsartefakt zugeordnet; Prüfbeiträge und Check-Scope sind bewusst zu bestätigen beziehungsweise zu ergänzen. Der neue benannte Begriff allein erzeugt noch keinen Nachweis.
 
 Nach Modellergänzung und Klärung reservierter Entscheidungen wird erneut auf einem festen Modellstand verglichen. Ein vor Ergänzung berechneter Plan wird nicht still als Plan für den neuen Digest verwendet.
 
@@ -163,6 +163,6 @@ Der Scope des vorhandenen Checks macht ihn relevant; er beweist nicht, dass neue
 
 Die vorgesehene Struktur macht Änderungsgegenstand, explizite Beziehungen, Verantwortung, Realisierungsbereiche und Check-Auswahl nachvollziehbar. Der methodische Ablauf vervollständigt Bedeutung, entdeckt fehlende Beziehungen und beurteilt Umsetzung sowie geeignete Evidenz.
 
-Strukturell gültig, vollständige Coverage, ein tatsächlich bestandener Check, unabhängiger Review und menschliche Zustimmung sind getrennte Befunde. Auch eine breite Impact-Hülle beweist keine vollständige Modellierung.
+Strukturell gültig, ein tatsächlich bestandener Check, unabhängiger Review und menschliche Zustimmung sind getrennte Befunde. Auch eine breite Impact-Hülle beweist keine vollständige Modellierung.
 
 Quellenbasis der historischen Routingbeschreibung: [Code an Main-SHA 32afd1…](https://github.com/Glacius-Labs/Markitect/blob/32afd1a57e715130d056e98e433721c6e7a10278/src/internal/modules/projectmodel/impact.go). Dieser Sourcebefund wurde im Gespräch gelesen; heute wurde weder aktuelles Main erneut abgerufen noch dieses Beispiel ausgeführt. Eingang der Dokumentationskonsolidierung: `07e03215c968302361f5acedc8e69bd573ac95be`; Kind-Aktualisierung am 12. Oktober 2026 ausgehend von `5d18e8f4438cc1d24a10882f04b10501d65db20e`, Branch `docs/product-model-concepts`, Worktree `C:\Users\Consiliari\.codex\worktrees\product-model-concepts\Markitect`.

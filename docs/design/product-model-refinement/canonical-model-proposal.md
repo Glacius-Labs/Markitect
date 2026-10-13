@@ -30,6 +30,14 @@ Eine geltende Aussage wird einmal definiert und andernorts referenziert. YAML tr
 
 Falls Markdown später kanonischer Inhalt wird, braucht es eindeutige Verantwortung, explizites Laden und Digest-Bindung. Externe Vorgaben und Beobachtungen behalten Quelle, Stand und Aktualitätsverantwortung; die gewählte Bindung an sie ist von ihrer externen Herkunft unterscheidbar.
 
+### 2.2 Project und Modellordner
+
+Nutzerentscheidung vom 13. Oktober 2026: Project beschreibt das Gesamtprojekt; Markitect-Konfiguration wird davon getrennt. Ein Pfad für eine generierte Dokumentationsansicht gehört nicht in Project. Coverage wird aus diesem Konzeptschritt entfernt; ein späterer Bedarf ist gesondert zu begründen. Weder coverageMode noch modelFiles sind Project-Felder.
+
+Die kanonischen Definitionen liegen gemeinsam in einem festgelegten Modellordner. Im Beispiel ist das `.markitect/model/`, einschließlich der Project-Definition. Markitect durchsucht diesen Ordner rekursiv nach YAML-Definitionen und baut aus ihren deklarierten Identitäten eine Symboltabelle auf. Referenzen werden anschließend anhand von API-Version, Kind, Namespace und Name aufgelöst. Der Ordnerinhalt wird eingelesen; contains beschreibt Zusammensetzung und ist keine Dateiauswahlliste. Eine neu hinzugefügte Definition muss nicht nochmals in einer modelFiles-Liste registriert werden.
+
+Für einen festen Repositorystand wird die gefundene Eingabemenge vollständig erfasst und deterministisch verarbeitet. Doppelte Identitäten, ungültige Definitionen und nicht auflösbare Referenzen werden diagnostiziert, nicht still übersprungen. Hinzugefügte und entfernte Modelldateien sind Teil des Vergleichs alter und neuer Modellstände. Die bisherige Namespace-/Verzeichniskonvention bleibt im Beispiel erhalten. Name, Auffinden und gegebenenfalls Konfiguration des Modellordners gehören zur separat zu klärenden Markitect-Ladekonvention, nicht in Project. Die Project-Felder werden davon unabhängig im Typreview geprüft. Die Ladekonvention beschreibt keinen bereits implementierten Loader.
+
 ## 3. Was beschrieben werden können muss
 
 Die Perspektiven sind ein Fragenkatalog zur Abdeckung, keine Pflichtordner und kein universeller Klassenkatalog.
@@ -111,6 +119,7 @@ Im derzeit dokumentierten Bibliotheksmodell enthält das Backend technische Modu
 | --- | --- | --- |
 | `uses` | Benötigter Kontext. | `Concept`, `Rule`, `UseCase`, `System`, `Component`, `Module`, `Interface` |
 | `UseCase.requires`, `Interface.requires` | Normative Verpflichtung. | `Rule` |
+| `Project.contains` | Direkte Bestandteile des Gesamtprojekts; gezeigte System-Zuordnung ist ein Feldkandidat. | Im Beispiel `System`; genaue Zielmenge noch im Typreview. |
 | `System.contains` | Direkte strukturelle Bestandteile; Zielkind immer ausdrücklich. | `Component` |
 | `Component.contains`, `Module.contains` | Direkte strukturelle Bestandteile; Zielkind immer ausdrücklich. | `Module` |
 | `provides`, `consumes` auf Component/Module, bei externem System an dessen Grenze | Vertrag anbieten beziehungsweise benötigen. | `Interface` |
@@ -171,16 +180,15 @@ Die API-Version des Ziels wird im Beispiel aus dem versionierten Referenzvertrag
 
 Das Modell beschreibt benötigte Beiträge und ausgewählte technische Vorgaben. Artefakte ordnen diese Aussagen über exakte Pfade oder Verzeichnispräfixe zu. Der konkrete Dateibestand wird an einem festen Stand erfasst und daraus klassifiziert.
 
-Modellquellen im Manifest explizit zu nennen ist etwas anderes als jede Anwendungsdatei einzeln zu spezifizieren. Private Hilfsdateien benötigen keine eigene Fachdefinition. Viele Aussagen können eine Datei betreffen; eine Aussage kann viele Dateien benötigen. Jede konkrete Schreibausgabe braucht trotzdem einen eindeutigen Owner.
+Modellquellen werden im Modellordner gefunden; eine zusätzliche Manifestliste wird nicht gepflegt. Private Hilfsdateien benötigen keine eigene Fachdefinition. Viele Aussagen können eine Datei betreffen; eine Aussage kann viele Dateien benötigen. Jede konkrete Schreibausgabe braucht trotzdem einen eindeutigen Owner. Die Zuordnung über Artefakte bleibt relevant, auch ohne einen gesonderten Coverage-Begriff oder -Modus.
 
 | Urteil | Was es aussagt |
 | --- | --- |
 | Struktur gültig | Definierte Typen, Identitäten und Beziehungen passen zum gewählten Sprachvertrag. |
-| Coverage vollständig | Jede Datei im erklärten Umfang ist zugeordnet oder ausdrücklich ausgenommen. |
 | Realisierung konform | Die untersuchten Inhalte erfüllen die untersuchten Aussagen. |
 | Beschreibung ausreichend | Der erklärte Umfang ist fachlich hinreichend beschrieben und freie Entscheidungen sind klar. |
 
-Keines dieser Urteile ersetzt die anderen. Eine deklarierte Zuordnung beweist nicht, dass der Dateiinhalt die Aussage erfüllt. Ignorieren und Übergangsausnahmen sind explizit und behalten ihre Begrenzung.
+Keines dieser Urteile ersetzt die anderen. Eine deklarierte Zuordnung beweist nicht, dass der Dateiinhalt die Aussage erfüllt. Eine zusätzliche Prüfung auf vollständige Repositoryabdeckung ist in dieser Fassung nicht spezifiziert.
 
 ## 6. Autorenformat und Sprachform
 
@@ -190,8 +198,8 @@ Eine Definition pro Datei übernimmt die Grenze des bisher geprüften Loaders. D
 
 ```text
 .markitect/
-  project.yaml
   model/
+    project.yaml
     mandate.yaml
     library/
       copy.yaml
@@ -216,7 +224,7 @@ Eine Definition pro Datei übernimmt die Grenze des bisher geprüften Loaders. D
       library-contract-check.yaml
 ```
 
-Der vollständige Baum und das Manifest stehen im [Bibliotheksbeispiel](library-model-example.md). Eine feinere fachliche Gliederung kann später Bestand, Mitgliedschaft und Ausleihe in eigene Namespacebereiche teilen.
+Der vollständige Baum und ein Project-YAML-Kandidat stehen im [Bibliotheksbeispiel](library-model-example.md). Die Quellen werden durch Ordnersuche ermittelt. Eine feinere fachliche Gliederung kann später Bestand, Mitgliedschaft und Ausleihe in eigene Namespacebereiche teilen.
 
 ### 6.2 Empfohlene erste Sprachform: Concept, Rule und UseCase
 
@@ -232,6 +240,7 @@ Diese Arbeitstabelle konkretisiert den Entwurf für P0; sie behauptet kein vorha
 
 | Kind | Spec-Felder des Kandidaten | Pflicht und Begrenzung |
 | --- | --- | --- |
+| `Project` | `description`, `contains` | Beschreibt das Gesamtprojekt; gezeigte Felder und System-Ziele sind Diskussionskandidaten. Kein coverageMode, modelFiles oder documentPath. Markitect-Konfiguration ist getrennt. |
 | `Concept` | `description`, `public`, `uses` | Beschreibung erforderlich; Kontextbezüge optional. Keine Kategorie concept. |
 | `Rule` | `description`, `public`, `uses`, `appliesTo` | Beschreibung erforderlich; Kontext und Geltungsziele explizit. Keine formale Bedingung vorausgesetzt. |
 | `UseCase` | `description`, `public`, `uses`, `requires` | Beschreibung erforderlich; Kontextbezüge optional, Verpflichtungen als Rule-Referenzen. Keine Kategorie use-case. |
@@ -323,6 +332,7 @@ Der [Überfälligkeitsdurchlauf](library-change-walkthrough.md) zeigt, wie eine 
 | Zielkind aus dem Feld, wo eindeutig | Bei speziellen Feldern Wiederholung vermeiden; gemischte Zielmengen benötigen einen Kind-Discriminator. Auflösung und Prüfung behalten die vollständige Zielidentität. |
 | Einheitliches contains mit ausdrücklichem Kind | Zusammensetzung durch einen Beziehungsnamen beschreiben; sichtbare Zieltypen erhalten eine wiederverwendbare Form. Erlaubte Kinder und Parentregeln bleiben im jeweiligen Schema definiert. |
 | Realizes schließt contains-Unterstruktur ein | Umfang aus der einmal gepflegten Zusammensetzung ableiten; Unterdefinitionen nicht erneut aufzählen. Ein kleinerer Zielknoten begrenzt den Auftrag. Kein scope-Feld; keine automatische Erweiterung über Querbeziehungen. |
+| Modellquellen durch Ordnersuche | Neu angelegte Definitionen werden ohne zweite Dateiliste erkannt. Ein fester Stand bindet die gefundene Eingabemenge; Identitäten und Referenzen werden vollständig geprüft. |
 | Erneuerbarer Dateibestand | Pfadregeln pflegen und konkrete Dateien erfassen; eine zweite manuelle Zuordnungsliste vermeiden. |
 | Unabhängige Reviews und begrenzte Checks | Fachbedeutung und tatsächliche Realisierung prüfen; Struktur und Prüferfolg nicht als universelle Korrektheit ausgeben. |
 
@@ -336,11 +346,11 @@ Der Dokumentationsbranch stammt aus einer älteren Main-Basis. Den Implementieru
 
 | Paket | Ergebnis | Voraussichtlicher Bereich | Abnahmekriterium |
 | --- | --- | --- | --- |
-| P0 — Ausgangspunkt und Verträge | Main-Delta, Versionierung, Fach-/Architekturschemas, contains-/Provider-/Parentregeln, Referenzziele und bedingte Kind-Angabe fixieren. | Produkt-/Modellvertrag; Core-Ausdrucksbedarf prüfen. | Keine stille alpha-Umdeutung; contains immer mit geprüftem Kind, sonst feste Ziel-Kinds aus Schema oder gemischte Zielmengen explizit aufgelöst. |
-| P1 — Vollständiger kleiner Durchstich | Bibliotheksmodell mit Mandat, Fach-/Architekturdefinitionen, Artefakten und Check-Anschlüssen laden/validieren. | Schema, Loader und Beispiel; Core nur bei belegter Lücke. | Gültige Ziele/Parents/Provider auflösbar; falscher Kind, Namespace, Zyklus oder mehrdeutiger Provider mit Diagnose. |
+| P0 — Ausgangspunkt und Verträge | Main-Delta, Versionierung, Project- und Fach-/Architekturschemas, Ordnersuche, contains-/Provider-/Parentregeln, Referenzziele und bedingte Kind-Angabe fixieren. | Produkt-/Modellvertrag; Core-Ausdrucksbedarf prüfen. | Keine stille alpha-Umdeutung; contains immer mit geprüftem Kind, sonst feste Ziel-Kinds aus Schema oder gemischte Zielmengen explizit aufgelöst. |
+| P1 — Vollständiger kleiner Durchstich | Project und Bibliotheksdefinitionen im Modellordner finden, Symboltabelle aufbauen und Mandat, Fach-/Architekturdefinitionen, Artefakte und Check-Anschlüsse validieren. | Schema, Loader und Beispiel; Core nur bei belegter Lücke. | Keine modelFiles-Liste nötig; neue Definitionen werden erkannt, doppelte Identitäten und ungültige oder fehlende Ziele diagnostiziert. Parents/Provider bleiben geprüft. |
 | P2 — Sichten und Bedeutungserhalt | Alle Fach-/Architektur-Kinds und neuen Kanten in Report, Kontext, Graph und Digest führen; realizes-Umfang über contains ableiten, AppliesTo bringt Regeln an Ziele. | Projectmodel-Analyse/Typen und vorhandene Ausgabeanschlüsse. | Direkte und abgeleitete realizes-Ziele sind erklärbar; Rollen sehen benötigte Regeln, private Inhalte werden nicht über eine zweite Sichtbarkeitslogik geladen. |
 | P3 — Änderungsfolgen | Fach-, Vertrags-, Provider-, Zuordnungs- und Zusammensetzungsänderung unter Alt/Neu in Impact/Explain behandeln. | Projectmodel-Impact/Explain und feste Host-Bindungen. | Alt/Neu-Wirkung erhalten; unbekannter Umfang bleibt konservativ; kombinierte Änderungen verlieren keine Pflicht. |
-| P4 — Realisierung und Review | Fach-/Architekturzuordnung, Coverage, Check-Bindungen und dokumentierten Reviewablauf durch vorhandene Ausführung führen. | Artefakte, Projectcoverage/Projectwork und bei Vertragsänderung Projectrun. | Keine neue Regel verschwindet aus Realisierung/Prüfung; Reviewergebnisse nennen Befunde und Grenzen. |
+| P4 — Realisierung und Review | Fach-/Architekturzuordnung, Check-Bindungen und dokumentierten Reviewablauf durch vorhandene Ausführung führen. | Artefakte, Projectwork und bei Vertragsänderung Projectrun. | Keine neue Regel verschwindet aus Realisierung/Prüfung; Reviewergebnisse nennen Befunde und Grenzen. |
 | P5 — Kontrast und Integration | Kleines CLI-Gegenbeispiel, aktuelle Nutzer-/Formatdokumentation und normale Kandidatengates. | Beispiele, Tests und zuständige Dokumente. | Kein Bibliotheks-, Datenbank- oder Zwang zu mehreren Mandaten; Checks gelten für festen Kandidaten. |
 
 P1 bis P4 bilden gemeinsam einen vollständigen Durchstich. Ein nur zugelassener neuer Kind ist kein fertiges Feature. Die Pakete sind Vorschläge, keine vergebenen Backlog-IDs und keine gestarteten Implementierungsaufträge.
@@ -356,13 +366,14 @@ Heute sind diese Prüfungen ausschließlich geplant. Bei Umsetzung gelten zusät
 | Nominaler Kind ist nur ein Label | Verweis auf Concept oder UseCase an einem Rule-only-Ziel wird abgewiesen; gültiger Rule-Verweis wird aufgelöst. |
 | Kurzreferenz verliert Typ oder Identität | Rule-only-Referenz ohne kind löst gegen Rule auf, nicht gegen gleichnamigen Concept; fehlender/unerlaubter kind bei gemischten Zielmengen ist ein Befund. Normalisierte Zielidentität bleibt in Digest, Kontext und Graph erhalten. |
 | contains wird zum untypisierten Sammelfeld | Fehlender kind und nach Quell-Kind unzulässiger Zielkind erzeugen Befunde, auch bei nur einem erlaubten Zieltyp. Gültige direkte Kinder erzeugen Zusammensetzungskanten und abgeleitete Parents. |
+| Ordnersuche verliert Eingaben oder verändert ihre Bedeutung | Neue/tiefere Definition wird ohne Dateilistenänderung geladen; Entfernung, doppelte Identität, ungültiges YAML und nicht auflösbare Referenz sind sichtbar. Gefundene Eingabemengen bleiben an feste Alt/Neu-Stände gebunden. |
 | Realisierungsumfang driftet oder wächst über Querbeziehungen | Referenz auf Backend umfasst direkte und tiefere contains-Kinder; referenziertes Mitglied über uses wird nur Kontext, nicht zusätzliches Realisierungsziel. Neuer/entfernter/verschobener contains-Nachfahre verändert den abgeleiteten Umfang an Alt/Neu-Ständen nachvollziehbar; mehrfach erreichte Ziele bleiben eindeutig. |
 | Gemischte Referenz verliert Bedeutung | Alle sieben Fach-/Architekturtypen bleiben in Kontext, Realisierung, Check und Entscheidung eindeutig und digest-relevant. |
 | Struktur oder Anbieter ist mehrdeutig | Doppelte Parentzuordnung, Zusammensetzungszyklus sowie fehlender/mehrdeutiger Provider eines konsumierten Interface erzeugen Befunde. |
 | Architekturzuordnung verschwindet | Geänderte Fachzuordnung, Interfacevertrag und AppliesTo-Ziel erreichen die relevanten alten/neuen Bausteine, Artefakte und Prüfungen; Prosa allein gilt nicht als vollständiger Codebeleg. |
 | Neue Regel fehlt im Impact | Geänderte Rule und hinzugefügte/entfernte Kante erreichen erwartete Pflichten, Owners, Artefakte und Checks unter Alt/Neu-Betrachtung. |
 | Scope wird still verkleinert | Kombinierte Änderungen erhalten Pflichten; Unknown und Context werden nicht unbegründet aus Prüfung gestrichen. |
-| Pfadregeln sind irreführend | Neue Datei im Präfix wird klassifiziert; unzugeordnete Datei und widersprüchliche Owner bleiben Befunde. |
+| Pfadregeln sind irreführend | Neue Datei im deklarierten Artefaktpräfix wird zugeordnet; widersprüchliche Schreibzuständigkeiten bleiben Befunde. |
 | Prüfauswahl wird als Beweis ausgegeben | Auswahl eines Checks, seine tatsächliche Ausführung und Eignung für den neuen Fall bleiben unterscheidbar. |
 | Neue Version bricht alte Bedeutung | Explizite Versions-/Migrationsentscheidung; unveränderte alte Vertragsbedeutung, keine stillen nominalen Umdeutungen. |
 
@@ -398,6 +409,7 @@ Offen bleiben besonders:
 - Eingang der contains-Entscheidung vom 13. Oktober: `def47b05ed553918ed80d7b74728d2a77a8c7572`; beim Beginn sauber.
 - Eingang der realizes-Umfangsentscheidung vom 13. Oktober: `25828d773cf2d7ea0bfc7c9bbb69c04d8e09c7fe`; beim Beginn sauber.
 - Eingang der Mandate-Umbenennung und des vereinbarten Typreviews vom 13. Oktober: `d50fa8c39bd11eadbd24c4c55357cb890f08a871`; beim Beginn sauber.
+- Eingang der Project-/Ladevereinfachung vom 13. Oktober: `6df6c02e51e2aba3fda2845025cfe32f7d5b5ddd`; beim Beginn sauber.
 - Ursprüngliche Branchbasis: `ecc69b0ad99236a5ddd02b85bf9ba656a0000f15`.
 - Letzter gesonderter Main-Abgleich: `32afd1a57e715130d056e98e433721c6e7a10278` vom 11. Oktober; heute nicht als aktuell neu verifiziert.
 - Zusätzlicher reiner Quellenrefresh im Gespräch am 13. Oktober: `c19d9d1259fcd493e2cc7ad93d10226778b2b7f4`. Das Projektvokabular besitzt dort weiterhin die fünf bisherigen Kinds und einzelne Reference-Zielkinds; die neuen Fach-/Architektur-Kinds und Referenzmengen dieses Entwurfs sind nicht implementiert. Der historische Vergleichsbericht bleibt unverändert datiert.
