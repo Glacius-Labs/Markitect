@@ -1047,10 +1047,33 @@ packages:
     title: Adoption runs Managers through the run engine
     stream: ARCH
     wave: 3
-    status: blocked
+    status: active
+    branch: dev/brownfield-run-engine
     owner: cleaner
     depends_on: [ARCH-06]
-    note: projectadoption has its own Manager-run stack on agentexec (manager_run.go), separate from projectrun.
+    note: >-
+      Root approved the complete V8 implementation contract after ARCH-16 Main
+      658fd1988958a34efc10be7f73e6a43ece533ca7 closure and independent Interface
+      and Privacy reviews. Plan SHA256
+      cd6bd7d7d9ca00f05c92b61dde12d90844a1ee96bb04844959c30789c60b8d75;
+      closed reservation SHA256
+      99756cfefe5116cccce69c1cc55e27fccb14c05ae5a21baf5ff1b4dd0d2672f6.
+      Exactly 55 paths: 48 existing canonical Git hashes and seven absent new files.
+      One Cleaner writer in fresh isolated dev/brownfield-run-engine; fixed baseline
+      check and Product/Documentation contexts complete before edits. All four Root
+      status/concept paths remain excluded. Existing runStore/RunReport becomes the
+      sole durable Manager/reviewer attempt authority for ordinary work, integration,
+      rework, final review and explicit Brownfield stages; no parallel engine/ledger.
+      Application retains typed context, validation, continuous session lease and CAS.
+      Original ReportJSON, receipt, review and exact state digest precede Session CAS;
+      uncertain starts never replay. Frozen session ceilings, per-call prices/process
+      bounds, review policy, evidence isolation and model-only Apply remain.
+      New two-root audit applies only to Brownfield, preserving ordinary parallel
+      transport options. Persisted/public metadata exclude raw configs and secrets.
+      Optional safe evidence and review projection are approved; new LedgerDigest
+      means Runtime state, historical output retains its old meaning. Nonempty old
+      ledger blocks new dispatch without migration. This plan authorizes bounded
+      implementation, not source completion, provider/release or human acceptance.
     zone: runtime
     inputs:
       - pull request 162 (ARCH-10 known problems)
@@ -1061,25 +1084,34 @@ packages:
     title: Package directories show their layer
     stream: ARCH
     wave: 3
-    status: active
+    status: done
     branch: dev/layer-directories
+    pr: 257
     owner: cleaner
     depends_on: [ARCH-13, ARCH-09]
     note: >-
-      Root approved the complete plan at actual Main c19 after full TEST05 closure;
-      plan SHA256 9284f7a60d64b0214df82e78fde97875af39a9977527227adc0ace7a937b5d0f.
-      Fresh isolated dev/layer-directories begins with fixed check and Product,
-      Tooling and Documentation contexts before edits. The plan moves all 28 product packages
-      to Core/Infrastructure/Application/Runtime directories; all 47 catalogue
-      rows, 390 file pairs and 815 allowed paths are independently accounted.
-      Core projectmodel and Infrastructure guardedwrite keep their existing coarse
-      capability/composition families; the fine matrix and all import policies stay.
-      Eight canonical YAML ownership updates retain twelve Product Application
-      packages and three Tooling adapters, and must regenerate both views.
-      Bootstrap and release selectors retain supported immutable archive layouts.
-      Root reserves backlog/roadmap/integration record/concepts; no forwarding
-      packages, guard relaxation, Windows repair, provider work or source closure
-      is inferred from this plan. Ordinary frozen-head and actual-Main proof follow.
+      PR257 frozen source 8f28b0628931cfd5bb21713ad9b43167eadd095c merged as actual Main
+      658fd1988958a34efc10be7f73e6a43ece533ca7, tree b7b6b8ae, parents aed plus 8f.
+      All 28 product-package moves, 47 catalogue rows, 390 canonical file pairs and
+      815 named paths were independently reviewed; coarse and fine import rules,
+      guarded API, public surfaces, budgets and TEST-05 assertions remain intact.
+      Eight canonical model updates and both generated views retain ownership.
+      Required PR CI 38322290760 and provider-free smoke 38322290740 passed; Root
+      composition 163e matched the tested tree and passed vet/check/architecture.
+      Actual Main CI 38323287449 all three jobs passed. Both complete Main reports
+      have 2227 test passes, 19 skips, zero failures/incomplete tests, all six public
+      cases, 48 fine and 102 coarse matrix leaves. Root, producer and independent
+      review verified all 460 source ZIP Git bytes, bootstrap and flat 0.14.1 lock.
+      The once-only packaged smoke and all three source Manager contexts passed.
+      An optional native-view link scan retains 13 preexisting token-extraction
+      failures; required maintained/authored links and view freshness passed.
+      Original source 8f Windows once naturally ended exit 1 at 00:01:33.6382774Z:
+      1977 passes, 29 skips, eight test failures, four failed packages and eleven
+      unfinished tests, with three cumulative 60-minute package expiries. The
+      integration-defect sharing-read failure follows its completed CLI flow;
+      five other public cases and both matrices passed. No retry, repair or cause claim.
+      New-code reservation released; original sources, refs and evidence preserved.
+      ARCH-15 follows under its separately reviewed V8 plan and fresh writer reservation.
     zone: free
     inputs:
       - pull request 162 (ARCH-10 known problems)
