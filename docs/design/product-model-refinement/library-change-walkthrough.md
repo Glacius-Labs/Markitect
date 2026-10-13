@@ -2,7 +2,7 @@
 
 Datum: 12. Oktober 2026. Status: konzeptioneller Durchlauf zum [aktuellen Modell](library-model-example.md), kein ausgeführter Impact-, Verify- oder Apply-Lauf. Die fachliche Änderung ist ein Gesprächsbeispiel und kein erteilter Implementierungsauftrag.
 
-YAML-Schreibweise aktualisiert am 14. Oktober 2026: metadata.description ist das gemeinsame Beschreibungsfeld in der einheitlichen Grundstruktur; das separate purpose-Feld entfällt. Die fachliche Beispieländerung bleibt unverändert.
+YAML-Schreibweise aktualisiert am 14. Oktober 2026: Der eigenständige Definitionskörper wird mit dem Syntaxkandidaten definition gezeigt; das separate purpose-Feld entfällt. Die fachliche Beispieländerung bleibt unverändert. Der Durchlauf verwendet noch die bisherigen uses-/requires-Felder. Die neue Linkschreibweise wird zuerst an Loan, Member und Exemplar im aktuellen Modell erprobt; dieser ältere Ablauf ist noch kein Durchlauf der Linkvorschlagsfunktion.
 
 ## Ausgangspunkt und gewünschte Änderung
 
@@ -22,10 +22,10 @@ kind: Rule
 metadata:
   namespace: library
   name: eligible-member
-  description: |
-    Ein Mitglied darf ausleihen, wenn es existiert,
-    seine Ausleihberechtigung aktiv ist und es
-    keine überfällige aktive Ausleihe besitzt.
+definition: |
+  Ein Mitglied darf ausleihen, wenn es existiert,
+  seine Ausleihberechtigung aktiv ist und es
+  keine überfällige aktive Ausleihe besitzt.
 spec:
   public: true
   uses:
@@ -48,11 +48,11 @@ kind: Concept
 metadata:
   namespace: library
   name: overdue-loan
-  description: |
-    Eine Ausleihe ist überfällig, wenn sie aktiv ist
-    und der maßgebliche Zeitpunkt nach ihrer Fälligkeit liegt.
-    Zeitquelle, Zeitzone und genaue Grenzbehandlung sind
-    vor Umsetzung ausdrücklich festzulegen.
+definition: |
+  Eine Ausleihe ist überfällig, wenn sie aktiv ist
+  und der maßgebliche Zeitpunkt nach ihrer Fälligkeit liegt.
+  Zeitquelle, Zeitzone und genaue Grenzbehandlung sind
+  vor Umsetzung ausdrücklich festzulegen.
 spec:
   public: true
   uses:
