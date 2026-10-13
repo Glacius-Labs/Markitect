@@ -4,7 +4,7 @@ Datum: 13. Oktober 2026. Status: auf Nutzerwunsch ergänzter Architekturentwurf 
 
 Das [Bibliotheksmodell](library-model-example.md) zeigt den Project-Kandidaten, den Modellordner, die Fachdefinitionen, das Mandat und die Artefakte/Checks. Die Quellen werden im Modellordner gefunden; eine Manifestliste wird nicht gepflegt. Dieses Dokument ist die einzige aktuelle YAML-Darstellung der hier aufgeführten Architekturdefinitionen; die Modelldateien sind als spätere Eingaben benannt, heute nicht angelegt.
 
-YAML-Schreibweise aktualisiert am 14. Oktober 2026: Jede Definition besitzt description; purpose entfällt als separates Feld. Die Architekturaufteilung bleibt dabei unverändert.
+YAML-Schreibweise aktualisiert am 14. Oktober 2026: Jede Definition besitzt metadata.description in der einheitlichen Grundstruktur; purpose entfällt als separates Feld. Die Architekturaufteilung bleibt dabei unverändert.
 
 ## Unterscheidung und Struktur
 
@@ -76,13 +76,13 @@ kind: System
 metadata:
   namespace: library
   name: library-system
-spec:
   description: |
     Die Anwendung ermöglicht Ausleihe und Rückgabe vorhandener Exemplare.
     Sie umfasst Webfrontend, Backend und einen bereitgestellten Datenbankdienst.
     Beschaffung, Gebühren und Mahnungen liegen außerhalb des Ausschnitts.
     Frameworks, Datenbankprodukt und Deploymentumgebung sind vor Umsetzung
     festzulegen oder ausdrücklich zu delegieren.
+spec:
   public: true
   contains:
     - kind: Component
@@ -104,11 +104,11 @@ kind: Component
 metadata:
   namespace: library
   name: frontend
-spec:
   description: |
     Der Webclient stellt die Bedienung von Ausleihe und Rückgabe bereit.
     Er verwendet den Bibliotheks-API-Vertrag über sein Bedienmodul.
     API-Adresse, Build und Auslieferung werden als technische Bedingungen festgelegt.
+spec:
   public: true
   contains:
     - kind: Module
@@ -124,11 +124,11 @@ kind: Component
 metadata:
   namespace: library
   name: backend
-spec:
   description: |
     Der Dienst stellt die Bibliotheks-API bereit und erhält die Fachregeln.
     Er verbindet Fachmodule und technische Adapter bei seiner Zusammenstellung.
     Er bringt einen erklärten Start-, Konfigurations- und Betriebsvertrag mit.
+spec:
   public: true
   contains:
     - kind: Module
@@ -156,12 +156,12 @@ kind: Component
 metadata:
   namespace: library
   name: database
-spec:
   description: |
     Der Datenbankdienst speichert Bibliotheksdaten dauerhaft.
     Seine Serverimplementierung wird nicht in diesem Projekt entwickelt;
     das Projekt verantwortet Konfiguration, Schema und nötige Migrationen.
     Das konkrete Produkt und dessen Betriebsvertrag bleiben festzulegen.
+spec:
   public: true
   provides:
     - namespace: library
@@ -176,11 +176,11 @@ kind: Module
 metadata:
   namespace: library
   name: lending-ui
-spec:
   description: |
     Dieses Modul trägt zur Nutzung von Ausleihe und Rückgabe bei.
     Es erfasst Eingaben und stellt Ergebnisse sowie Ablehnungen dar.
     Die serverseitige Erhaltung der Fachregeln liegt beim Backend.
+spec:
   public: true
   consumes:
     - namespace: library
@@ -202,11 +202,11 @@ kind: Module
 metadata:
   namespace: library
   name: inventory
-spec:
   description: |
     Dieses Modul beschreibt und verwaltet Titel und physische Exemplare.
     Sein Bestandsvertrag liefert benötigte Informationen;
     Ausleihverfügbarkeit ergibt sich zusätzlich aus aktiven Ausleihen.
+spec:
   public: true
   provides:
     - namespace: library
@@ -228,12 +228,12 @@ kind: Module
 metadata:
   namespace: library
   name: membership
-spec:
   description: |
     Dieses Modul verwaltet Mitgliedsidentität und Berechtigungsstatus.
     Die ursprüngliche Statusregel wird hier fachlich zugeordnet.
     Eine spätere Überfälligkeitsbedingung benötigt zusätzlich Ausleihkontext
     und ist erneut architektonisch zuzuordnen.
+spec:
   public: true
   provides:
     - namespace: library
@@ -255,11 +255,11 @@ kind: Module
 metadata:
   namespace: library
   name: circulation
-spec:
   description: |
     Dieses Modul koordiniert Ausleihe und Rückgabe und erhält ihre Regeln.
     Bestands-, Mitglieds- und Speicherinformationen kommen über benannte Verträge.
     Die konkrete Persistenztechnik bleibt außerhalb der Fachlogik.
+spec:
   public: true
   consumes:
     - namespace: library
@@ -297,11 +297,11 @@ kind: Module
 metadata:
   namespace: library
   name: http-adapter
-spec:
   description: |
     Dieses Modul übersetzt API-Eingaben, Ergebnisse und Fehler in die vereinbarten
     Ausleihabläufe. Es ruft die Anwendungsschnittstellen des Ausleihmoduls auf.
     Authentisierung, Fehlerabbildung und Versionsvertrag sind vor Umsetzung zu klären.
+spec:
   public: true
   provides:
     - namespace: library
@@ -326,11 +326,11 @@ kind: Module
 metadata:
   namespace: library
   name: persistence-adapter
-spec:
   description: |
     Dieses Modul stellt den fachlichen Ausleihspeicher auf dem Datenbankdienst bereit.
     Es hängt für Fachwerte und Speichervertrag nach innen vom Ausleihmodul ab.
     Es übernimmt keine eigenständige Neudefinition der Fachregeln.
+spec:
   public: true
   provides:
     - namespace: library
@@ -361,12 +361,12 @@ kind: Interface
 metadata:
   namespace: library
   name: library-api
-spec:
   description: |
     Der API-Vertrag bietet Ausleihe und Rückgabe mit den jeweils geltenden
     Voraussetzungen, Ergebnissen und Fehlern an. Er verwendet benannte Identitäten.
     Transport, Versionierung und konkrete Datenformen sind verbindlich zu präzisieren.
     Der Adapterentwurf geht von einem HTTP-Vertrag aus.
+spec:
   public: true
   useCases:
     - namespace: library
@@ -396,11 +396,11 @@ kind: Interface
 metadata:
   namespace: library
   name: inventory-access
-spec:
   description: |
     Dieser Vertrag liefert die Existenz und relevanten Informationen eines
     Exemplars anhand seiner Identität sowie dessen Titelbezug.
     Er entscheidet nicht allein über aktive Ausleihen.
+spec:
   public: true
   uses:
     - kind: Concept
@@ -419,10 +419,10 @@ kind: Interface
 metadata:
   namespace: library
   name: member-access
-spec:
   description: |
     Dieser Vertrag liefert Existenz, Identität und Berechtigungsstatus eines Mitglieds.
     Er liefert damit Kontext zur Beurteilung der geltenden Berechtigungsregel.
+spec:
   public: true
   uses:
     - kind: Concept
@@ -438,12 +438,12 @@ kind: Interface
 metadata:
   namespace: library
   name: loan-storage
-spec:
   description: |
     Dieser Vertrag speichert und liest Ausleihen und erfasst Rückgaben dauerhaft.
     Eine konkurrierende Vergabe darf keine zweite aktive Ausleihe erzeugen.
     Verfügbarkeit und Erzeugung müssen durch das gewählte Verfahren konsistent sein.
     Die konkrete Datenbanktechnik wird durch diesen Vertrag nicht festgelegt.
+spec:
   public: true
   uses:
     - kind: Concept
@@ -468,12 +468,12 @@ kind: Interface
 metadata:
   namespace: library
   name: database-access
-spec:
   description: |
     Dieser Vertrag beschreibt die benötigte dauerhafte Datenhaltung und ihre
     Zugriffs-, Konsistenz- und Konfigurationsbedingungen. Der Persistenzadapter
     verwendet ihn. Produkt, konkrete Operationen und Datenschema werden vor Umsetzung
     festgelegt; dieser Text ist kein vollständiger Datenbankprotokollvertrag.
+spec:
   public: true
   uses:
     - kind: Concept
@@ -489,12 +489,12 @@ kind: Rule
 metadata:
   namespace: library
   name: domain-independent-of-storage
-spec:
   description: |
     Die Fachmodule dürfen nicht direkt von Datenbankdienst oder konkretem
     Persistenzadapter abhängen. Nötige Speicherzugriffe erfolgen über den fachlichen
     loan-storage-Vertrag. Technische Adapter dürfen von Fachwerten nach innen abhängen.
     Die tatsächlichen Codeabhängigkeiten sind durch Review und geeignete Checks zu prüfen.
+spec:
   public: true
   uses:
     - kind: Component

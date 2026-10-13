@@ -236,26 +236,28 @@ Die Systemübersicht ist nach der Architekturergänzung ein `System`. Components
 
 #### 6.2.1 Feldkandidat für den ersten Vertrag
 
-Diese Arbeitstabelle konkretisiert den Entwurf für P0; sie behauptet kein vorhandenes Schema. Die Hülle mit apiVersion/kind, metadata und spec bleibt erhalten. Metadata enthält gemeinsame Identifikationsangaben; spec beschreibt den Inhalt des jeweiligen Kinds. Der Namespace kann für die Wurzel leer sein. Header und Spec sind geschlossen; unbenannte Zusatzfelder werden nicht still akzeptiert.
+Nutzerentscheidung vom 14. Oktober 2026: Jede Modelldefinition besitzt dieselbe Grundstruktur aus `apiVersion`, `kind`, `metadata` und `spec`. ApiVersion bestimmt den verwendeten Sprachvertrag, kind den Definitionstyp. Metadata hat für alle Kinds denselben Feldvertrag und enthält die gemeinsamen Metadaten; spec besitzt den jeweils kindspezifischen Feld- und Beziehungsvertrag. Spec kann Relationen und andere Werte enthalten. Die Grundstruktur gilt für Definitionsdateien; eingebettete Referenzobjekte behalten ihre eigene Referenzform.
+
+Die aktuellen Metadatenfelder sind name, namespace und die verpflichtende description. Der Namespace kann im Beispiel für die Wurzel leer sein. Weitere Metadaten und die genauen Regeln der übrigen Attribute bleiben im schrittweisen Typreview zu prüfen. Die gemeinsame Metadatenstruktur wird einmal definiert und für alle Kinds verwendet; sie erhält keine kindspezifischen Zusatzfelder. Header, metadata und spec besitzen geschlossene Feldverträge; unbenannte Zusatzfelder werden nicht still akzeptiert. Diese Arbeitstabelle beschreibt den Entwurf für P0, kein bereits implementiertes Schema.
 
 Nutzerentscheidung vom 14. Oktober 2026: Jede Definition besitzt eine verpflichtende `description`; das zusätzliche Feld `purpose` entfällt. Die Beschreibung erklärt auch Existenzgrund und Beitrag des Elements. Die Kind-Definition erläutert die passenden inhaltlichen Schwerpunkte: Bei Module sind dies Zweck, Aufgaben und Zuständigkeitsgrenzen, bei Rule die geltende Bedingung oder Invariante, bei Concept dessen Bedeutung und Eigenschaften. Diese Schwerpunkte sind methodische Vorgaben, keine zusätzlichen Pflichtfelder für jeden Einzelaspekt. Eine bloße Wiederholung des Namens genügt als Beschreibung nicht.
 
-Im aktuellen YAML-Kandidaten bleibt description unter spec, wo die vorhandenen Beschreibungen bereits stehen. Es ist ein gemeinsames Pflichtfeld mit je Kind passendem fachlichem Inhalt; seine endgültige Platzierung und die übrigen Headerattribute werden im laufenden Typreview weiter geprüft. Das Vorhandensein einer Beschreibung ist strukturell prüfbar, ihre fachliche Tragfähigkeit Gegenstand des Reviews.
+Description steht auf Nutzerentscheidung unter `metadata.description` und entfällt unter spec. Die Einordnung als Metadatum macht ihren Inhalt nicht unverbindlich: Er bleibt Teil der kanonischen Beschreibung, des Digests, des Agentenkontexts und des Reviews. Das Vorhandensein einer Beschreibung ist strukturell prüfbar, ihre fachliche Tragfähigkeit Gegenstand des Reviews. Die genaue Bedeutung der übrigen Headerattribute wird im laufenden Typreview weiter geprüft.
 
 | Kind | Spec-Felder des Kandidaten | Pflicht und Begrenzung |
 | --- | --- | --- |
-| `Project` | `description`, `contains` | Beschreibt das Gesamtprojekt; gezeigte Felder und System-Ziele sind Diskussionskandidaten. Kein coverageMode, modelFiles oder documentPath. Markitect-Konfiguration ist getrennt. |
-| `Concept` | `description`, `public`, `uses` | Beschreibung erforderlich; Kontextbezüge optional. Keine Kategorie concept. |
-| `Rule` | `description`, `public`, `uses`, `appliesTo` | Beschreibung erforderlich; Kontext und Geltungsziele explizit. Keine formale Bedingung vorausgesetzt. |
-| `UseCase` | `description`, `public`, `uses`, `requires` | Beschreibung erforderlich; Kontextbezüge optional, Verpflichtungen als Rule-Referenzen. Keine Kategorie use-case. |
-| `System` | `description`, `public`, `contains`, `uses`, bei externer Grenze `provides`/`consumes` | Zweck, Grenze und Realisierungsumfang in Prosa; contains mit ausdrücklichem Component-Kind, externe Interna optional. Kein ownership-Feld. |
-| `Component` | `description`, `public`, `contains`, `provides`, `consumes`, `realizes`, `uses` | Laufzeitrolle erklären; contains mit ausdrücklichem Module-Kind, Verträge passend zuordnen. |
-| `Module` | `description`, `public`, `contains`, `provides`, `consumes`, `dependsOn`, `realizes`, `uses` | Logische Aufgabe/Beitrag; optionale untergeordnete Modules mit ausdrücklichem Kind, genau ein struktureller Parent im vollständigen Beispiel. |
-| `Interface` | `description`, `public`, `useCases`, `uses`, `requires` | Vertrag erklären; Verpflichtungen als Rules; Provider/Consumer stehen an Bausteinen. |
-| `Mandate` | `description`, `parent`, `owns`, `instructions` | Auftrag mit höchstens einem übergeordneten Mandat, optionaler Pfadliste und lesbaren Anweisungen. Bisherige Felder sind Prüfkandidaten; Benennung eines Mandats ist keine Agentenbindung oder authentifizierte Autorisierung. |
-| `Artifact` | `description`, `role`, `realizes`, `paths`, `checks`, `required`, `reason` | Rolle implementation/documentation/verification/configuration; optionale Ziel-/Pfad-/Checklisten, Erforderlichkeit und Begründung. Eigenständigen Nutzen von reason im Typreview prüfen. |
-| `Check` | `description`, `command`, `uses`, `limitation` | Nicht leere Liste literal argv; deklarierter Gegenstand und Evidenzgrenze. Ein Befehl ist keine Shell-Prosa. |
-| `Decision` | `description`, `subject`, `decision`, `reason`, `actor` | Genau ein Subject und Actor sowie lesbare Entscheidung und Begründung. Actor authentifiziert keine Befugnis; Abgrenzung der Textfelder im Typreview prüfen. |
+| `Project` | `contains` | Beschreibt das Gesamtprojekt; gezeigte Felder und System-Ziele sind Diskussionskandidaten. Kein coverageMode, modelFiles oder documentPath. Markitect-Konfiguration ist getrennt. |
+| `Concept` | `public`, `uses` | Beschreibung erforderlich; Kontextbezüge optional. Keine Kategorie concept. |
+| `Rule` | `public`, `uses`, `appliesTo` | Beschreibung erforderlich; Kontext und Geltungsziele explizit. Keine formale Bedingung vorausgesetzt. |
+| `UseCase` | `public`, `uses`, `requires` | Beschreibung erforderlich; Kontextbezüge optional, Verpflichtungen als Rule-Referenzen. Keine Kategorie use-case. |
+| `System` | `public`, `contains`, `uses`, bei externer Grenze `provides`/`consumes` | Zweck, Grenze und Realisierungsumfang in Prosa; contains mit ausdrücklichem Component-Kind, externe Interna optional. Kein ownership-Feld. |
+| `Component` | `public`, `contains`, `provides`, `consumes`, `realizes`, `uses` | Laufzeitrolle erklären; contains mit ausdrücklichem Module-Kind, Verträge passend zuordnen. |
+| `Module` | `public`, `contains`, `provides`, `consumes`, `dependsOn`, `realizes`, `uses` | Logische Aufgabe/Beitrag; optionale untergeordnete Modules mit ausdrücklichem Kind, genau ein struktureller Parent im vollständigen Beispiel. |
+| `Interface` | `public`, `useCases`, `uses`, `requires` | Vertrag erklären; Verpflichtungen als Rules; Provider/Consumer stehen an Bausteinen. |
+| `Mandate` | `parent`, `owns`, `instructions` | Auftrag mit höchstens einem übergeordneten Mandat, optionaler Pfadliste und lesbaren Anweisungen. Bisherige Felder sind Prüfkandidaten; Benennung eines Mandats ist keine Agentenbindung oder authentifizierte Autorisierung. |
+| `Artifact` | `role`, `realizes`, `paths`, `checks`, `required`, `reason` | Rolle implementation/documentation/verification/configuration; optionale Ziel-/Pfad-/Checklisten, Erforderlichkeit und Begründung. Eigenständigen Nutzen von reason im Typreview prüfen. |
+| `Check` | `command`, `uses`, `limitation` | Nicht leere Liste literal argv; deklarierter Gegenstand und Evidenzgrenze. Ein Befehl ist keine Shell-Prosa. |
+| `Decision` | `subject`, `decision`, `reason`, `actor` | Genau ein Subject und Actor sowie lesbare Entscheidung und Begründung. Actor authentifiziert keine Befugnis; Abgrenzung der Textfelder im Typreview prüfen. |
 
 Für fachliche und architektonische Definitions-Kinds ist `public` als Boolean vorgesehen; ohne ausdrückliches Public bleibt eine fremde Definition im Kandidaten privat. Ihre `uses`-Listen zeigen nur auf die endliche Zielmenge aus Abschnitt 4. Referenzen werden gegen die Zielmengen aus Abschnitt 4 geprüft. Die Mengenfelder bestimmen Modellwerte; sie zählen keine Laufzeitinstanzen. Ausführliche Defaults, Kardinalitäten und Normalisierung werden im versionierten P0-Vertrag festgeschrieben. Weitere Felder brauchen einen erklärten Bedarf und ihre Behandlung in allen Sichten.
 
@@ -332,6 +334,7 @@ Der [Überfälligkeitsdurchlauf](library-change-walkthrough.md) zeigt, wie eine 
 | Nominale Fach- und Architektur-Kinds | Fachlichkeit, Grenzen, Bausteine und Verträge als Zieltypen unterscheiden; ohne allgemeinen Fachevaluator. |
 | Keine Kategorie für die gewählten Rollen | Der Kind trägt die strukturelle Unterscheidung direkt; gemeinsame Beschreibungskonventionen werden geteilt. Weitere Kinds benötigen einen konkreten Ausdrucksbedarf. |
 | Eine gemeinsame description statt zusätzlichem purpose | Existenzgrund und fachlichen Inhalt zusammenhängend erklären; eine zweite Kurzbeschreibung vermeiden. Der Kind bestimmt die inhaltlichen Schwerpunkte. |
+| Eine Grundhülle und ein gemeinsamer Metadatenvertrag | Alle Kinds haben apiVersion, kind, metadata und spec. Gemeinsame Angaben einschließlich description sind einheitlich unter metadata angeordnet; spec enthält die kindspezifischen Felder und Beziehungen. |
 | Mandat von Agentenbindung unterscheiden | Ein stabiler Auftrag kann von unterschiedlichen Agenten umgesetzt werden; Datei, Modell-Kind und Runtime-Identität sind eigene Benennungsentscheidungen. |
 | Explizite Beziehungen und konservativer Impact | Koordination nachvollziehbar aus deklarierten Daten ableiten; Prosalinks allein liefern keine geprüften Kanten. |
 | Zielkind aus dem Feld, wo eindeutig | Bei speziellen Feldern Wiederholung vermeiden; gemischte Zielmengen benötigen einen Kind-Discriminator. Auflösung und Prüfung behalten die vollständige Zielidentität. |
@@ -416,6 +419,7 @@ Offen bleiben besonders:
 - Eingang der Mandate-Umbenennung und des vereinbarten Typreviews vom 13. Oktober: `d50fa8c39bd11eadbd24c4c55357cb890f08a871`; beim Beginn sauber.
 - Eingang der Project-/Ladevereinfachung vom 13. Oktober: `6df6c02e51e2aba3fda2845025cfe32f7d5b5ddd`; beim Beginn sauber.
 - Eingang der gemeinsamen description-Entscheidung vom 14. Oktober: `afc0dc30b400a25213bdda19fd5b4539ec3dafe7`; beim Beginn sauber.
+- Eingang der einheitlichen Grundstruktur und Verschiebung nach metadata.description vom 14. Oktober: `d818dd2943cd9d3329a9c5eb713dd0dd090e15e6`; beim Beginn sauber.
 - Ursprüngliche Branchbasis: `ecc69b0ad99236a5ddd02b85bf9ba656a0000f15`.
 - Letzter gesonderter Main-Abgleich: `32afd1a57e715130d056e98e433721c6e7a10278` vom 11. Oktober; heute nicht als aktuell neu verifiziert.
 - Zusätzlicher reiner Quellenrefresh im Gespräch am 13. Oktober: `c19d9d1259fcd493e2cc7ad93d10226778b2b7f4`. Das Projektvokabular besitzt dort weiterhin die fünf bisherigen Kinds und einzelne Reference-Zielkinds; die neuen Fach-/Architektur-Kinds und Referenzmengen dieses Entwurfs sind nicht implementiert. Der historische Vergleichsbericht bleibt unverändert datiert.

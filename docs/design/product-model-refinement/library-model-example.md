@@ -74,7 +74,7 @@ Markitect liest die YAML-Definitionen im Modellordner rekursiv ein und erfasst i
 
 ### `model/project.yaml` — Project-Kandidat
 
-Project beschreibt das Gesamtprojekt. Die konkrete Form seiner Header, Beschreibung und System-Zuordnung wird im Typreview geprüft; sie ist kein bereits festgelegtes oder implementiertes Schema. Markitect-Konfiguration, Dateilisten, Coverage-Modus und ein Dokumentationszielpfad sind hier nicht enthalten.
+Project beschreibt das Gesamtprojekt. Die Grundstruktur mit apiVersion, kind, metadata und spec sowie metadata.description ist vereinbart; die übrigen Attributregeln und die System-Zuordnung werden im Typreview geprüft. Die Darstellung ist kein bereits implementiertes Schema. Markitect-Konfiguration, Dateilisten, Coverage-Modus und ein Dokumentationszielpfad sind hier nicht enthalten.
 
 ```yaml
 apiVersion: project.markitect.example.org/vNext
@@ -82,12 +82,12 @@ kind: Project
 metadata:
   namespace: ""
   name: library
-spec:
   description: |
     Das Projekt stellt Software zur Verwaltung des Bestands,
     der Mitglieder sowie der Ausleihe und Rückgabe bereit.
     Beschaffung, Gebühren und Mahnungen liegen zunächst
     außerhalb des Umfangs.
+spec:
   contains:
     - kind: System
       namespace: library
@@ -102,9 +102,9 @@ kind: Mandate
 metadata:
   namespace: ""
   name: library-project
-spec:
   description: |
     Legt den Auftrag zur Realisierung des Bibliotheksausschnitts und zur Prüfung seiner Regeln fest.
+spec:
   owns:
     - .
   instructions: |
@@ -128,11 +128,11 @@ kind: Concept
 metadata:
   namespace: library
   name: title
-spec:
-  public: true
   description: |
     Ein Titel beschreibt ein Werk beziehungsweise eine Ausgabe.
     Mehrere physische Exemplare können demselben Titel zugeordnet sein.
+spec:
+  public: true
 ```
 
 ### `model/library/copy.yaml`
@@ -143,11 +143,11 @@ kind: Concept
 metadata:
   namespace: library
   name: copy
-spec:
-  public: true
   description: |
     Ein Exemplar besitzt eine eindeutige Identität und gehört genau einem Titel.
     Die Modelldefinition beschreibt den Fachtyp; konkrete Exemplare sind Anwendungsdaten.
+spec:
+  public: true
   uses:
     - kind: Concept
       namespace: library
@@ -162,11 +162,11 @@ kind: Concept
 metadata:
   namespace: library
   name: member
-spec:
-  public: true
   description: |
     Ein Mitglied besitzt eine eindeutige Identität und einen Status seiner Ausleihberechtigung.
     Für diesen Entwurf unterscheiden wir aktive und nicht aktive Ausleihberechtigung.
+spec:
+  public: true
 ```
 
 ### `model/library/loan.yaml`
@@ -177,12 +177,12 @@ kind: Concept
 metadata:
   namespace: library
   name: loan
-spec:
-  public: true
   description: |
     Eine Ausleihe verbindet genau ein Mitglied mit genau einem Exemplar.
     Sie besitzt eine Identität, einen Beginn, eine Fälligkeit und einen optionalen Rückgabezeitpunkt.
     Die konkrete Fristberechnung ist vor der Umsetzung festzulegen.
+spec:
+  public: true
   uses:
     - kind: Concept
       namespace: library
@@ -200,10 +200,10 @@ kind: Concept
 metadata:
   namespace: library
   name: active-loan
-spec:
-  public: true
   description: |
     Eine gespeicherte Ausleihe ist aktiv, solange kein Rückgabezeitpunkt erfasst ist.
+spec:
+  public: true
   uses:
     - kind: Concept
       namespace: library
@@ -218,11 +218,11 @@ kind: Rule
 metadata:
   namespace: library
   name: eligible-member
-spec:
-  public: true
   description: |
     Ein Mitglied darf ausleihen, wenn es existiert und seine Ausleihberechtigung aktiv ist.
     Die Bedingung wird bei der Vergabe geprüft.
+spec:
+  public: true
   uses:
     - kind: Concept
       namespace: library
@@ -237,11 +237,11 @@ kind: Rule
 metadata:
   namespace: library
   name: available-copy
-spec:
-  public: true
   description: |
     Ein Exemplar ist für die Vergabe verfügbar, wenn es existiert und keine aktive Ausleihe besitzt.
     Eine frühere Verfügbarkeitsabfrage allein garantiert keine erfolgreiche Vergabe.
+spec:
+  public: true
   uses:
     - kind: Concept
       namespace: library
@@ -259,12 +259,12 @@ kind: Rule
 metadata:
   namespace: library
   name: one-active-loan
-spec:
-  public: true
   description: |
     Für jedes Exemplar besteht höchstens eine aktive Ausleihe.
     Diese Regel gilt auch bei konkurrierenden Anfragen und muss nach erfolgreichen
     sowie abgelehnten Operationen erhalten sein.
+spec:
+  public: true
   uses:
     - kind: Concept
       namespace: library
@@ -282,14 +282,14 @@ kind: UseCase
 metadata:
   namespace: library
   name: borrow
-spec:
-  public: true
   description: |
     Ein berechtigtes Mitglied darf ein verfügbares Exemplar ausleihen.
     Erfolg erzeugt eine dauerhaft gespeicherte aktive Ausleihe.
     Ablehnung erzeugt keine neue Ausleihe.
     Bei konkurrierenden Anfragen muss one-active-loan erhalten bleiben.
     Die technische Umsetzung der atomaren Vergabe darf der verantwortliche Bereich wählen.
+spec:
+  public: true
   uses:
     - kind: Concept
       namespace: library
@@ -317,13 +317,13 @@ kind: UseCase
 metadata:
   namespace: library
   name: return
-spec:
-  public: true
   description: |
     Die Rückgabe einer aktiven Ausleihe wird dauerhaft durch einen Rückgabezeitpunkt erfasst.
     Danach ist diese Ausleihe nicht mehr aktiv.
     Eine wiederholte Rückgabe verändert den bereits erfassten Rückgabezeitpunkt nicht.
     Die Behandlung einer unbekannten Ausleihkennung ist vor der Umsetzung festzulegen.
+spec:
+  public: true
   uses:
     - kind: Concept
       namespace: library
@@ -358,9 +358,9 @@ kind: Artifact
 metadata:
   namespace: library
   name: frontend-implementation
-spec:
   description: |
     Realisiert Bedienung und API-Verwendung des Frontends.
+spec:
   role: implementation
   realizes:
     - kind: Component
@@ -391,9 +391,9 @@ kind: Artifact
 metadata:
   namespace: library
   name: backend-implementation
-spec:
   description: |
     Realisiert Backend, fachliche Abläufe und technische Adapter.
+spec:
   role: implementation
   realizes:
     - kind: Component
@@ -463,9 +463,9 @@ kind: Artifact
 metadata:
   namespace: library
   name: database-configuration
-spec:
   description: |
     Stellt Datenbankkonfiguration, Schema und nötige Migrationen bereit.
+spec:
   role: configuration
   realizes:
     - kind: Component
@@ -496,9 +496,9 @@ kind: Artifact
 metadata:
   namespace: library
   name: library-verification
-spec:
   description: |
     Liefert Prüfbeiträge zu Fachverträgen, Interfaces und Architektur.
+spec:
   role: verification
   realizes:
     - kind: Rule
@@ -556,9 +556,9 @@ kind: Artifact
 metadata:
   namespace: library
   name: library-documentation
-spec:
   description: |
     Erklärt System, Architektur, Bedienung und erklärten Prüfumfang.
+spec:
   role: documentation
   realizes:
     - kind: System
@@ -605,9 +605,9 @@ kind: Check
 metadata:
   namespace: library
   name: library-contract-check
-spec:
   description: |
     Prüft die Ausleih- und Rückgabeverträge anhand konkreter Fälle.
+spec:
   command:
     - "<library-contract-check>"
   uses:
@@ -640,9 +640,9 @@ kind: Check
 metadata:
   namespace: library
   name: architecture-contract-check
-spec:
   description: |
     Untersucht Architektur- und Interfacepflichten am realisierten Stand.
+spec:
   command:
     - "<architecture-contract-check>"
   uses:

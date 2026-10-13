@@ -20,7 +20,9 @@ Realizes umfasst automatisch das referenzierte Ziel und alle über contains enth
 
 Project beschreibt das Gesamtprojekt; Markitect-Konfiguration ist getrennt. Coverage und seine Moduskonfiguration werden vorerst entfernt. Alle kanonischen Definitionen liegen im Modellordner und werden durch rekursive Suche und Symbolauflösung geladen; modelFiles entfällt. Ein Dokumentationszielpfad gehört nicht in Project. Der konkrete Ordnername und die Project-Felder sind weitere Reviewthemen; das YAML bleibt ein Kandidat.
 
-Description ist das gemeinsame Pflichtfeld jeder Definition und erklärt auch deren Existenzgrund und Beitrag; purpose entfällt als separates Feld. Die Kind-Definition erläutert passende inhaltliche Schwerpunkte. Die bisherigen Beschreibungen stehen im Kandidaten weiter unter spec; die genaue Platzierung und weitere Attribute werden einzeln geprüft.
+Alle Definitionstypen besitzen dieselbe Grundstruktur aus apiVersion, kind, metadata und spec. Metadata hat für alle Kinds denselben Feldvertrag; spec ist kindspezifisch und kann Relationen oder andere Werte enthalten. Die weiteren Attribute werden einzeln geprüft.
+
+Description steht als gemeinsames Pflichtfeld unter metadata und erklärt auch Existenzgrund und Beitrag; purpose entfällt als separates Feld. Die Kind-Definition erläutert passende inhaltliche Schwerpunkte. Die Beschreibung bleibt verbindlicher kanonischer Inhalt, auch unter metadata.
 
 ## Weiteres Vorgehen im Produktgespräch
 
@@ -73,6 +75,7 @@ Produktgespräch `01a121f1-b948-7050-ae5d-9921b99db9c0`, Grundlagen vom 10. Okto
 - Eingang der Mandate-Umbenennung und des vereinbarten Typreviews: `d50fa8c39bd11eadbd24c4c55357cb890f08a871`; beim Beginn sauber, am 13. Oktober ausdrücklich beauftragt.
 - Eingang der Project-/Ladevereinfachung: `6df6c02e51e2aba3fda2845025cfe32f7d5b5ddd`; beim Beginn sauber, am 13. Oktober ausdrücklich beauftragt.
 - Eingang der gemeinsamen description-Entscheidung: `afc0dc30b400a25213bdda19fd5b4539ec3dafe7`; beim Beginn sauber, am 14. Oktober ausdrücklich beauftragt.
+- Eingang der einheitlichen Grundstruktur und Verschiebung nach metadata.description: `d818dd2943cd9d3329a9c5eb713dd0dd090e15e6`; beim Beginn sauber, am 14. Oktober ausdrücklich beauftragt.
 - Letzter gesonderter Implementierungsvergleich: `32afd1a57e715130d056e98e433721c6e7a10278` vom 11. Oktober; heute nicht neu als aktueller Stand verifiziert.
 
 Kanonische Produktdokumente bleiben [Vision](../../vision.md), [Konzeptregister](../../concepts/register.md) und [Architektur](../../architecture.md). Dieser Konzeptordner setzt ihre aktuellen Verträge und den koordinierten Modell-Owner nicht automatisch außer Kraft.
