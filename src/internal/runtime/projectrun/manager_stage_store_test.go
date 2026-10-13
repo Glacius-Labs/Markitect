@@ -10,6 +10,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/Glacius-Labs/Markitect/src/internal/core/projectmodel"
 	"github.com/Glacius-Labs/Markitect/src/internal/runtime/agentexec"
 	"github.com/Glacius-Labs/Markitect/src/internal/runtime/projectconfig"
 	"github.com/Glacius-Labs/Markitect/src/internal/testkit"
@@ -65,7 +66,10 @@ func stageStoreFixture(t *testing.T) (string, ManagerStageSpec, *stageStoreInvok
 	fp, _ := invoker.Fingerprint(agentexec.Config{Command: "fixture", Model: "fixture"})
 	budget := ManagerStageBudget{MaxStarts: 4, MaxRetries: 2, MaxDuration: time.Minute, MaxCostMicros: 1000}
 	binding := ManagerStageBinding{SessionID: "fixture-session", SourceIdentity: rawContentDigest([]byte("source")), TargetIdentity: rawContentDigest([]byte("target")), SourceRevision: strings.Repeat("a", 40), DiscoveryDigest: rawContentDigest([]byte("discovery")), InitialTargetRevision: strings.Repeat("b", 40), TargetContextDigest: rawContentDigest([]byte("accepted")), Budget: budget}
-	validation := ManagerStageValidationBinding{SessionID: binding.SessionID, SessionDigest: rawContentDigest([]byte("session")), IterationID: "iteration", ManagerID: "root", AgentManagerID: "root", Phase: "propose", AcceptedTargetHead: binding.InitialTargetRevision, ContextDigest: rawContentDigest([]byte("context")), RequestContractDigest: rawContentDigest([]byte("contract")), ConfigFingerprint: fp, RuntimeFileDigest: rawContentDigest([]byte("runtime"))}
+	binding.SourceRootDigest = rawContentDigest([]byte(sourceRoot))
+	binding.TargetRootDigest = rawContentDigest([]byte(targetRoot))
+	acceptedDigest, _ := digest(projectmodel.ManagerContext{Manager: projectmodel.Manager{ID: "accepted-ancestor"}})
+	validation := ManagerStageValidationBinding{AcceptedModelDigest: acceptedDigest, SourceRoot: sourceRoot, TargetRoot: targetRoot, SessionID: binding.SessionID, SessionDigest: rawContentDigest([]byte("session")), IterationID: "iteration", ManagerID: "root", AgentManagerID: "root", Phase: "propose", AcceptedTargetHead: binding.InitialTargetRevision, ContextDigest: rawContentDigest([]byte("context")), RequestContractDigest: rawContentDigest([]byte("contract")), ConfigFingerprint: fp, RuntimeFileDigest: rawContentDigest([]byte("runtime"))}
 	agent := projectconfig.Agent{Command: "fixture", Model: "fixture", ProviderVersion: "fixture/1", Timeout: projectconfig.Duration(time.Second), MaxStdoutBytes: 1 << 20, MaxStderrBytes: 1 << 20, Pricing: projectconfig.Pricing{InputMicrosPerMillion: 1, OutputMicrosPerMillion: 1}}
 	config := agentexec.Config{Command: agent.Command, Model: agent.Model, ProviderVersion: agent.ProviderVersion, Timeout: time.Second, MaxStdoutBytes: 1 << 20, MaxStderrBytes: 1 << 20}
 	request := agentexec.Request{Role: agentexec.RoleExecutor, SourceRevision: binding.SourceRevision, ModelDigest: rawContentDigest([]byte("model")), ModulePin: "fixture-module", ProjectionID: "fixture-stage", ScopeIDs: []string{"root"}, PolicyIDs: []string{"report-only"}, Context: json.RawMessage(`{"kind":"projectadoption-manager-proposal/v1","phase":"propose"}`), Artifacts: []agentexec.Artifact{}}
@@ -316,4 +320,179 @@ func TestManagerStageBudgetCannotRefillAndUnpricedUsageCannotRetry(t *testing.T)
 			t.Fatal("unpriced failure replayed")
 		}
 	})
+}
+
+func TestManagerStageTerminalReservationCrashReconcilesSamePermit(t *testing.T) {
+	root, spec, invoker, host := stageStoreFixture(t)
+	preview, err := PreviewManagerStage(invoker, root, spec)
+	if err != nil {
+		t.Fatal(err)
+	}
+	manager, err := RunManagerStage(context.Background(), host, invoker, root, spec, preview.PreviewDigest)
+	if err != nil {
+		t.Fatal(err)
+	}
+	store, _ := newManagerStageStore(root)
+	unlock, err := store.lock()
+	if err != nil {
+		t.Fatal(err)
+	}
+	report, err := store.readLatestState(manager.RunID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	// Model the durable boundary immediately before permit.Update, keeping receipt.
+	report.RoleStartReservations[0].Request.State = "requested"
+	if err := persistState(store, &report); err != nil {
+		t.Fatal(err)
+	}
+	unlock()
+	preview, err = PreviewManagerStage(invoker, root, spec)
+	if err != nil {
+		t.Fatal(err)
+	}
+	recovered, err := RunManagerStage(context.Background(), host, invoker, root, spec, preview.PreviewDigest)
+	if err != nil {
+		t.Fatal(err)
+	}
+	after, err := store.readLatestState(manager.RunID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if invoker.calls != 1 || recovered.AttemptID != manager.AttemptID || len(after.RoleStartReservations) != 1 || after.RoleStartReservations[0].Request.State != "completed" {
+		t.Fatal("terminal recovery replaced/recharged or left its original permit pending")
+	}
+}
+
+func TestManagerStageOverrunCannotRecoverOrComplete(t *testing.T) {
+	for _, kind := range []string{"cost", "duration"} {
+		t.Run(kind, func(t *testing.T) {
+			root, spec, invoker, host := stageStoreFixture(t)
+			if kind == "cost" {
+				spec.Binding.Budget.MaxCostMicros, spec.Limits.MaxCostMicros = 1, 1
+			} else {
+				spec.Config.Timeout = time.Millisecond
+				spec.Binding.Budget.MaxDuration, spec.Limits.MaxDuration = 2*time.Millisecond, 2*time.Millisecond
+				invoker.observe = func() { time.Sleep(10 * time.Millisecond) }
+			}
+			preview, err := PreviewManagerStage(invoker, root, spec)
+			if err != nil {
+				t.Fatal(err)
+			}
+			original, err := RunManagerStage(context.Background(), host, invoker, root, spec, preview.PreviewDigest)
+			if err == nil || original.Invocation.Attempt == nil || original.Invocation.Attempt.ReportRef == nil {
+				t.Fatal("overrun was accepted or lost durable receipt")
+			}
+			store, _ := newManagerStageStore(root)
+			raw, err := readStageEvidence(store, original.RunID, original.Invocation.Attempt.ReportRef)
+			if err != nil || !bytes.Equal(raw, invoker.raw) {
+				t.Fatal("overrun original evidence was lost")
+			}
+			preview, err = PreviewManagerStage(invoker, root, spec)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if _, err := RunManagerStage(context.Background(), host, invoker, root, spec, preview.PreviewDigest); err == nil {
+				t.Fatal("overrun recovered as attachable")
+			}
+			state, err := store.readLatestState(original.RunID)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if _, err := CompleteManagerStage(root, original.RunID, original.AttemptID, state.Digest, ManagerStageValidation{Accepted: true, TypedResultDigest: "typed"}); err == nil {
+				t.Fatal("overrun completed directly")
+			}
+			if invoker.calls != 1 {
+				t.Fatal("overrun replayed provider")
+			}
+		})
+	}
+}
+
+func TestManagerStageAcceptedCompletionIsImmutableAndIdempotent(t *testing.T) {
+	root, spec, invoker, host := stageStoreFixture(t)
+	spec.Binding.Budget.MaxCostMicros, spec.Limits.MaxCostMicros = 2, 2
+	preview, err := PreviewManagerStage(invoker, root, spec)
+	if err != nil {
+		t.Fatal(err)
+	}
+	manager, err := RunManagerStage(context.Background(), host, invoker, root, spec, preview.PreviewDigest)
+	if err != nil {
+		t.Fatal(err)
+	}
+	accepted, err := CompleteManagerStage(root, manager.RunID, manager.AttemptID, manager.StateDigest, ManagerStageValidation{Accepted: true, TypedResultDigest: "digest-A"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	again, err := CompleteManagerStage(root, manager.RunID, manager.AttemptID, accepted.StateDigest, ManagerStageValidation{Accepted: true, TypedResultDigest: "digest-A"})
+	if err != nil || again.StateDigest != accepted.StateDigest {
+		t.Fatal("same completion appended or failed")
+	}
+	if _, err := CompleteManagerStage(root, manager.RunID, manager.AttemptID, again.StateDigest, ManagerStageValidation{Accepted: true, TypedResultDigest: "digest-B"}); err == nil {
+		t.Fatal("accepted result rewritten")
+	}
+}
+
+func TestManagerStageTightenedCeilingCannotRefillOrComplete(t *testing.T) {
+	root, spec, invoker, host := stageStoreFixture(t)
+	preview, err := PreviewManagerStage(invoker, root, spec)
+	if err != nil {
+		t.Fatal(err)
+	}
+	manager, err := RunManagerStage(context.Background(), host, invoker, root, spec, preview.PreviewDigest)
+	if err != nil {
+		t.Fatal(err)
+	}
+	spec.Limits.MaxCostMicros = 1
+	preview, err = PreviewManagerStage(invoker, root, spec)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := RunManagerStage(context.Background(), host, invoker, root, spec, preview.PreviewDigest); err == nil {
+		t.Fatal("tightened overrun recovered")
+	}
+	spec.Limits.MaxCostMicros = 1000
+	preview, err = PreviewManagerStage(invoker, root, spec)
+	if err != nil || preview.RemainingCostMicros != 0 {
+		t.Fatal("tightened budget refilled")
+	}
+	if _, err := CompleteManagerStage(root, manager.RunID, manager.AttemptID, preview.StateDigest, ManagerStageValidation{Accepted: true, TypedResultDigest: "typed"}); err == nil {
+		t.Fatal("completion bypassed tightened budget")
+	}
+	if invoker.calls != 1 {
+		t.Fatal("tightening replayed")
+	}
+}
+
+func TestManagerStageStrictReportedUsage(t *testing.T) {
+	one, zero, negative, huge := int64(1), int64(0), int64(-1), int64(1<<63-1)
+	valid := func() *agentexec.Usage {
+		return &agentexec.Usage{Source: "provider-reported", InputTokens: &one, OutputTokens: &one}
+	}
+	bounds := ManagerStageBounds{InputPriceMicrosPerMillion: 1, OutputPriceMicrosPerMillion: 1}
+	cases := []struct {
+		name            string
+		usage           *agentexec.Usage
+		known, overflow bool
+	}{
+		{"nil", nil, false, false}, {"valid", valid(), true, false},
+		{"estimated", &agentexec.Usage{Source: "estimated", InputTokens: &one, OutputTokens: &one}, false, false},
+		{"input-missing", &agentexec.Usage{Source: "provider-reported", OutputTokens: &one}, false, false},
+		{"output-missing", &agentexec.Usage{Source: "provider-reported", InputTokens: &one}, false, false},
+		{"negative", &agentexec.Usage{Source: "provider-reported", InputTokens: &negative, OutputTokens: &one}, false, false},
+		{"tools", &agentexec.Usage{Source: "provider-reported", InputTokens: &one, OutputTokens: &one, ToolCalls: &one}, false, false},
+		{"zero-tools", &agentexec.Usage{Source: "provider-reported", InputTokens: &one, OutputTokens: &one, ToolCalls: &zero}, true, false},
+	}
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			_, known, overflow := managerStageCost(c.usage, bounds)
+			if known != c.known || overflow != c.overflow {
+				t.Fatal("usage trust boundary changed")
+			}
+		})
+	}
+	_, known, overflow := managerStageCost(&agentexec.Usage{Source: "provider-reported", InputTokens: &huge, OutputTokens: &huge}, ManagerStageBounds{InputPriceMicrosPerMillion: 1_000_000_000_000, OutputPriceMicrosPerMillion: 1_000_000_000_000})
+	if known || !overflow {
+		t.Fatal("overflow is attachable")
+	}
 }

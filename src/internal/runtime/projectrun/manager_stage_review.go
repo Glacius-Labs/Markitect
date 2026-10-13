@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"path/filepath"
 	"time"
 
 	"github.com/Glacius-Labs/Markitect/src/internal/core/projectmodel"
@@ -141,15 +140,27 @@ func ReviewManagerStage(ctx context.Context, host Host, invoker Invoker, root, r
 	if parent.Attempt == nil || parent.Attempt.ReportRef == nil || !parent.Attempt.ReviewRequired || parent.Attempt.Status != "transport-succeeded" && parent.Attempt.Status != "accepted" {
 		return ManagerStageReviewResult{}, errors.New("Manager review has no exact terminal report subject")
 	}
-	if spec.Validation.SessionID != report.ManagerStageBinding.SessionID || spec.Validation.SessionDigest != parent.Attempt.SessionDigest || spec.Validation.IterationID != parent.Attempt.IterationID || spec.Validation.ManagerID != parent.Attempt.ManagerID || spec.Validation.AgentManagerID != parent.Attempt.AgentManagerID || spec.Validation.Phase != parent.Phase || spec.Validation.ContextDigest != parent.Attempt.ContextDigest || spec.Validation.RequestContractDigest != parent.Attempt.RequestContractDigest || spec.Validation.RuntimeFileDigest != parent.Attempt.RuntimeFileDigest {
+	if spec.Validation.SessionID != report.ManagerStageBinding.SessionID || spec.Validation.SessionDigest != parent.Attempt.SessionDigest || spec.Validation.IterationID != parent.Attempt.IterationID || spec.Validation.ManagerID != parent.Attempt.ManagerID || spec.Validation.AgentManagerID != parent.Attempt.AgentManagerID || spec.Validation.Phase != parent.Phase || spec.Validation.ContextDigest != parent.Attempt.ContextDigest || spec.Validation.RequestContractDigest != parent.Attempt.RequestContractDigest || spec.Validation.RuntimeFileDigest != parent.Attempt.RuntimeFileDigest || spec.Validation.AcceptedTargetHead != parent.Attempt.AcceptedTargetHead || spec.Validation.AcceptedModelDigest != parent.Attempt.AcceptedModelDigest {
 		return ManagerStageReviewResult{}, errors.New("Manager review prepared facts differ from its original stage")
 	}
-	sourceRoot, err := filepath.EvalSymlinks(spec.SourceRoot)
+	if err := canonicalizeManagerStageReviewRoots(root, report, parent, &spec); err != nil {
+		return ManagerStageReviewResult{}, err
+	}
+	budget, err := tightenManagerStageBudget(store, &report, spec.Limits)
 	if err != nil {
 		return ManagerStageReviewResult{}, err
 	}
-	if !sameRecoveryPath(sourceRoot, root) {
-		return ManagerStageReviewResult{}, errors.New("Manager review source differs from its store")
+	if err := managerStageAttachability(report, budget); err != nil {
+		// Only the original unfinished reviewer may be inspected without a new start.
+		unfinished := false
+		for _, row := range report.Invocations {
+			if row.Attempt != nil && row.Attempt.ParentAttemptID == attemptID && (row.Attempt.Status == "started" || row.Attempt.Status == "uncertain") {
+				unfinished = true
+			}
+		}
+		if !unfinished {
+			return ManagerStageReviewResult{}, err
+		}
 	}
 	spec.SourceRevision = report.ManagerStageBinding.SourceRevision
 	projection, err := managerStageReviewProjection(invoker, ManagerStageSpec{Validation: spec.Validation, Review: &spec.Review})
@@ -167,7 +178,24 @@ func ReviewManagerStage(ctx context.Context, host Host, invoker Invoker, root, r
 		return ManagerStageReviewResult{}, err
 	}
 	if record, ok := existingManagerStageReview(report, parent); ok {
-		return ManagerStageReviewResult{ReviewRecord: record, RunID: runID, ParentAttemptID: attemptID, SubjectDigest: parent.Attempt.ReportRef.Digest, StateDigest: report.Digest, Status: record.Outcome}, nil
+		limits := spec.RuntimeLimits
+		limits.MaxStarts = frozenManagerStageBudget(effectiveManagerStageBudget(report), spec.Limits).MaxStarts
+		journal, err := newManagerStageJournal(store, &report, limits)
+		if err != nil {
+			return ManagerStageReviewResult{}, err
+		}
+		for _, row := range report.Invocations {
+			if row.Attempt != nil && row.Attempt.ParentAttemptID == attemptID && row.Receipt.RunID == record.Receipt.RunID {
+				if err := journal.reconcileTerminalReservation(row); err != nil {
+					return ManagerStageReviewResult{}, err
+				}
+			}
+		}
+		current, err := store.readLatestState(runID)
+		if err != nil {
+			return ManagerStageReviewResult{}, err
+		}
+		return ManagerStageReviewResult{ReviewRecord: record, RunID: runID, ParentAttemptID: attemptID, SubjectDigest: parent.Attempt.ReportRef.Digest, StateDigest: current.Digest, Status: record.Outcome}, nil
 	}
 	for _, previous := range report.Invocations {
 		if previous.Attempt != nil && previous.Attempt.ParentAttemptID == attemptID {
@@ -178,7 +206,6 @@ func ReviewManagerStage(ctx context.Context, host Host, invoker Invoker, root, r
 	if round > spec.Review.MaxRounds {
 		return ManagerStageReviewResult{}, errors.New("Manager phase review round ceiling is exhausted")
 	}
-	budget := frozenManagerStageBudget(report.ManagerStageBinding.Budget, spec.Limits)
 	if err := managerStageAdmission(report, budget, spec.Config.Timeout, false); err != nil {
 		return ManagerStageReviewResult{}, err
 	}
@@ -209,7 +236,7 @@ func ReviewManagerStage(ctx context.Context, host Host, invoker Invoker, root, r
 		return ManagerStageReviewResult{}, err
 	}
 	id := fmt.Sprintf("%s-review-%d", attemptID, round)
-	log := InvocationLog{TaskID: parent.TaskID, Role: "reviewer", Phase: parent.Phase, InputDigest: rawDigest, Outcome: "started", Attempt: &ManagerStageAttempt{ID: id, StageKey: parent.Attempt.StageKey + "\x00review", ParentAttemptID: attemptID, SessionDigest: parent.Attempt.SessionDigest, IterationID: parent.Attempt.IterationID, ManagerID: parent.Attempt.ManagerID, AgentManagerID: parent.Attempt.AgentManagerID, Phase: parent.Phase, ContextDigest: rawContentDigest(request.Context), RequestDigest: rawDigest, RequestContractDigest: parent.Attempt.RequestContractDigest, ConfigFingerprint: requestFP, RuntimeFileDigest: parent.Attempt.RuntimeFileDigest, LimitsDigest: parent.Attempt.LimitsDigest, AcceptedTargetHead: parent.Attempt.AcceptedTargetHead, Bounds: managerStageBounds(spec.Agent, spec.Config), StartedAt: time.Now().UTC(), Status: "started", ReviewRound: round, ReviewSubjectDigest: parent.Attempt.ReportRef.Digest, ReviewPolicyDigest: parent.Attempt.ReviewPolicyDigest}}
+	log := InvocationLog{TaskID: parent.TaskID, Role: "reviewer", Phase: parent.Phase, InputDigest: rawDigest, Outcome: "started", Attempt: &ManagerStageAttempt{ID: id, StageKey: parent.Attempt.StageKey + "\x00review", ParentAttemptID: attemptID, SessionDigest: parent.Attempt.SessionDigest, IterationID: parent.Attempt.IterationID, ManagerID: parent.Attempt.ManagerID, AgentManagerID: parent.Attempt.AgentManagerID, Phase: parent.Phase, ContextDigest: rawContentDigest(request.Context), RequestDigest: rawDigest, RequestContractDigest: parent.Attempt.RequestContractDigest, ConfigFingerprint: requestFP, RuntimeFileDigest: parent.Attempt.RuntimeFileDigest, LimitsDigest: parent.Attempt.LimitsDigest, AcceptedTargetHead: parent.Attempt.AcceptedTargetHead, AcceptedModelDigest: parent.Attempt.AcceptedModelDigest, Bounds: managerStageBounds(spec.Agent, spec.Config), StartedAt: time.Now().UTC(), Status: "started", ReviewRound: round, ReviewSubjectDigest: parent.Attempt.ReportRef.Digest, ReviewPolicyDigest: parent.Attempt.ReviewPolicyDigest}}
 	result, log, invokeErr := invokeManagerAttempt(ctx, journal, log, request, spec.Agent, func(call context.Context) (agentexec.RunResult, error) {
 		return dispatchReadOnlyManagerStage(call, host, invoker, spec.SourceRoot, spec.TargetRoot, runID, id, spec.Config, request, spec.RuntimeLimits)
 	})
@@ -223,6 +250,9 @@ func finishManagerStageReview(host Host, journal *managerStageJournal, parent, l
 	if result.Delta != nil && len(result.Delta.Changes) > 0 {
 		return ManagerStageReviewResult{}, errors.New("read-only Manager reviewer changed source files")
 	}
+	if err := journal.reconcileTerminalReservation(log); err != nil {
+		return ManagerStageReviewResult{}, err
+	}
 	parsed, findings, err := validatePreparedManagerReview(result, protocol, refs)
 	if err != nil {
 		return ManagerStageReviewResult{}, err
@@ -231,9 +261,8 @@ func finishManagerStageReview(host Host, journal *managerStageJournal, parent, l
 		return ManagerStageReviewResult{}, err
 	}
 	report := journal.report
-	_, _, elapsed, cost, unknown := managerStageUsage(*report)
-	if unknown || elapsed > budget.MaxDuration || cost > budget.MaxCostMicros {
-		return ManagerStageReviewResult{}, errors.New("Manager review exceeded shared session accounting")
+	if err := managerStageAttachability(*report, budget); err != nil {
+		return ManagerStageReviewResult{}, err
 	}
 	record := ReviewRecord{TaskID: parent.TaskID, ManagerID: parent.Attempt.ManagerID, Round: log.Attempt.ReviewRound, Phase: parent.Phase, CandidateID: parent.Attempt.ID, CandidateDigest: parent.Attempt.ReportRef.Digest, ScopeDigest: scope, InputDigest: protocol, Outcome: parsed.Status, Findings: findings, Receipt: result.Receipt, CostMicros: log.CostMicros, CostKnown: log.CostKnown, CostOverflow: log.CostOverflow, At: time.Now().UTC()}
 	journal.mu.Lock()
@@ -292,7 +321,7 @@ func recoverManagerStageReview(ctx context.Context, host Host, invoker Invoker, 
 	if err != nil {
 		return ManagerStageReviewResult{}, err
 	}
-	budget := frozenManagerStageBudget(report.ManagerStageBinding.Budget, spec.Limits)
+	budget := frozenManagerStageBudget(effectiveManagerStageBudget(*report), spec.Limits)
 	limits := spec.RuntimeLimits
 	limits.MaxStarts = budget.MaxStarts
 	journal, err := newManagerStageJournal(store, report, limits)
@@ -370,5 +399,38 @@ func validateStageReviewRecords(store *runStore, report RunReport) error {
 			return errors.New("Manager ReviewRecord verdict differs from retained response")
 		}
 	}
+	return nil
+}
+
+func canonicalizeManagerStageReviewRoots(root string, report RunReport, parent InvocationLog, spec *ManagerStageReviewSpec) error {
+	sourceRoot, err := canonicalManagerStageRoot(spec.SourceRoot)
+	if err != nil {
+		return err
+	}
+	storeRoot, err := canonicalManagerStageRoot(root)
+	if err != nil {
+		return err
+	}
+	targetRoot, err := canonicalManagerStageRoot(spec.TargetRoot)
+	if err != nil {
+		return err
+	}
+	trustedSource, err := canonicalManagerStageRoot(spec.Validation.SourceRoot)
+	if err != nil {
+		return err
+	}
+	trustedTarget, err := canonicalManagerStageRoot(spec.Validation.TargetRoot)
+	if err != nil {
+		return err
+	}
+	accepted, err := digest(spec.AcceptedModel)
+	if err != nil {
+		return err
+	}
+	if !sameRecoveryPath(storeRoot, sourceRoot) || !sameRecoveryPath(trustedSource, sourceRoot) || !sameRecoveryPath(trustedTarget, targetRoot) || rawContentDigest([]byte(sourceRoot)) != report.ManagerStageBinding.SourceRootDigest || rawContentDigest([]byte(targetRoot)) != report.ManagerStageBinding.TargetRootDigest || accepted != parent.Attempt.AcceptedModelDigest || spec.AcceptedModelDigest != accepted {
+		return errors.New("review roots or accepted context differ from the original trusted stage")
+	}
+	spec.SourceRoot, spec.TargetRoot = sourceRoot, targetRoot
+	spec.Validation.SourceRoot, spec.Validation.TargetRoot = sourceRoot, targetRoot
 	return nil
 }

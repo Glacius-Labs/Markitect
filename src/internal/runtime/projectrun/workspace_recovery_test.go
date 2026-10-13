@@ -661,3 +661,57 @@ func TestRecoverProjectAgentRejectsDifferentCurrentRequestBeforeInspection(t *te
 		t.Fatalf("mismatched request closed owned workspace: %v", err)
 	}
 }
+
+func TestManagerStageNativeRecoveryRequiresOriginalOpaqueBytes(t *testing.T) {
+	for _, variant := range []string{"valid", "missing", "empty", "corrupt", "ambiguous"} {
+		t.Run(variant, func(t *testing.T) {
+			fixture := newRecoveryWorkspaceFixture(t)
+			original := []byte("{\n  \"value\" : 1, \"opaque\": true\n}")
+			fixture.journal.ReportJSONBytes = append([]byte(nil), original...)
+			fixture.journal.ReportJSONDigest = rawContentDigest(original)
+			switch variant {
+			case "missing":
+				fixture.journal.ReportJSONBytes = nil
+				fixture.journal.ReportJSONDigest = ""
+			case "empty":
+				fixture.journal.ReportJSONBytes = []byte{}
+				fixture.journal.ReportJSONDigest = rawContentDigest(nil)
+			case "corrupt":
+				fixture.journal.ReportJSONBytes = []byte(`{"changed":true}`)
+			}
+			if err := persistWorkspaceJournal(fixture.journalPath, fixture.journal); err != nil {
+				t.Fatal(err)
+			}
+			if variant == "ambiguous" {
+				// Same original receipt advertised by a second protected journal.
+				if err := persistWorkspaceJournal(filepath.Join(fixture.privateDir, "workspaces", "duplicate-original.json"), fixture.journal); err != nil {
+					t.Fatal(err)
+				}
+			}
+			result := recoveredWorkspaceResult(fixture, "completed")
+			result.Response.CandidateFiles = []agentexec.CandidateFile{}
+			result.Response.ReportJSON = json.RawMessage(`{"value":1,"opaque":true}`)
+			invoker := &scriptedNativeRecoverer{result: result}
+			service, serviceErr := projectworkspace.NewGitService(fixture.storage, projectworkspace.Limits{MaxFiles: 128, MaxFileBytes: 1 << 20, MaxTotalBytes: 4 << 20})
+			if serviceErr != nil {
+				t.Fatal(serviceErr)
+			}
+			recovered, err := recoverReadOnlyManagerStage(context.Background(), hostWithWorkspace(service), invoker, fixture.root, "fixture-run", fixture.request.TaskID, agentexec.Config{Transport: projectconfig.TransportCodexAppServer, Timeout: 20}, fixture.invocation.Request, projectconfig.Limits{MaxCandidateFileBytes: 1 << 20, MaxCandidateBytes: 4 << 20}, fixture.journal.Receipt)
+			if variant == "valid" {
+				if err != nil || string(recovered.Response.ReportJSON) != string(original) || invoker.recoverCalls != 1 {
+					t.Fatalf("exact native byte recovery failed: %v calls=%d", err, invoker.recoverCalls)
+				}
+			} else {
+				if err == nil || invoker.recoverCalls != 0 {
+					t.Fatalf("unproven raw evidence inspected/accepted: %v calls=%d", err, invoker.recoverCalls)
+				}
+				if _, err := os.Stat(fixture.handle.CWD); err != nil {
+					t.Fatal("rejected recovery removed original workspace")
+				}
+			}
+			if invoker.runCalls != 0 {
+				t.Fatal("native recovery started replacement role")
+			}
+		})
+	}
+}

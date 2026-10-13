@@ -151,6 +151,21 @@ func canonicalManagerStageSpec(root string, spec ManagerStageSpec, invoker Invok
 		return spec, errors.New("selected source differs from its session store")
 	}
 	spec.SelectedSourceRoot, spec.TargetRoot = selected, target
+	if spec.Validation.SourceRoot == "" || spec.Validation.TargetRoot == "" || spec.Validation.AcceptedModelDigest == "" {
+		return spec, errors.New("Manager stage lacks trusted accepted context/root facts")
+	}
+	trustedSource, err := canonicalManagerStageRoot(spec.Validation.SourceRoot)
+	if err != nil {
+		return spec, err
+	}
+	trustedTarget, err := canonicalManagerStageRoot(spec.Validation.TargetRoot)
+	if err != nil {
+		return spec, err
+	}
+	if !sameRecoveryPath(selected, trustedSource) || !sameRecoveryPath(target, trustedTarget) || spec.Binding.SourceRootDigest != rawContentDigest([]byte(selected)) || spec.Binding.TargetRootDigest != rawContentDigest([]byte(target)) {
+		return spec, errors.New("Manager stage roots differ from trusted session facts")
+	}
+	spec.Validation.SourceRoot, spec.Validation.TargetRoot = selected, target
 	if err := validateManagerStageBudget(spec.Binding.Budget); err != nil {
 		return spec, err
 	}
@@ -255,9 +270,9 @@ func PreviewManagerStage(invoker Invoker, root string, spec ManagerStageSpec) (M
 	if err != nil {
 		return ManagerStagePreview{}, err
 	}
-	budget := spec.Limits
+	budget := frozenManagerStageBudget(spec.Binding.Budget, spec.Limits)
 	if exists {
-		budget = frozenManagerStageBudget(report.ManagerStageBinding.Budget, budget)
+		budget = frozenManagerStageBudget(effectiveManagerStageBudget(report), budget)
 	}
 	starts, retries, elapsed, cost, _ := managerStageUsage(report)
 	preview := ManagerStagePreview{RunID: managerStageRunID(spec.Binding.SessionID), StateDigest: report.Digest, Bounds: managerStageBounds(spec.Agent, spec.Config), RemainingStarts: max(0, budget.MaxStarts-starts), RemainingRetries: max(0, budget.MaxRetries-retries), RemainingDuration: max(0, budget.MaxDuration-elapsed), RemainingCostMicros: max(0, budget.MaxCostMicros-cost)}
@@ -331,7 +346,7 @@ func initializeManagerStage(store *runStore, b ManagerStageBinding) (RunReport, 
 		}
 	}
 	now := time.Now().UTC()
-	report := RunReport{APIVersion: APIVersion, ID: id, Status: StatusRunning, Mode: projectconfig.ModeControlledLocal, StartedAt: now, UpdatedAt: now, BaseRevision: b.SourceRevision, ModelDigest: b.TargetContextDigest, ManagerStageBinding: &b, Revision: 1}
+	report := RunReport{APIVersion: APIVersion, ID: id, Status: StatusRunning, Mode: projectconfig.ModeControlledLocal, StartedAt: now, UpdatedAt: now, BaseRevision: b.SourceRevision, ModelDigest: b.TargetContextDigest, ManagerStageBinding: &b, ManagerStageLimits: &b.Budget, Revision: 1}
 	if err := store.appendState(report); err != nil {
 		return report, err
 	}
@@ -339,7 +354,7 @@ func initializeManagerStage(store *runStore, b ManagerStageBinding) (RunReport, 
 }
 
 func newStageInvocation(spec ManagerStageSpec, preview ManagerStagePreview, id string) InvocationLog {
-	a := &ManagerStageAttempt{ID: id, StageKey: managerStageKey(spec.Binding.SessionID, spec.Validation.IterationID, spec.Validation.Phase, spec.Validation.ManagerID), RetryOfAttemptID: spec.RetryOfAttemptID, SessionDigest: spec.Validation.SessionDigest, IterationID: spec.Validation.IterationID, ManagerID: spec.Validation.ManagerID, AgentManagerID: spec.Validation.AgentManagerID, Phase: spec.Validation.Phase, PreviewDigest: preview.PreviewDigest, ContextDigest: spec.Validation.ContextDigest, RequestDigest: preview.RequestDigest, RequestContractDigest: spec.Validation.RequestContractDigest, ConfigFingerprint: spec.Validation.ConfigFingerprint, RuntimeFileDigest: spec.Validation.RuntimeFileDigest, LimitsDigest: preview.LimitsDigest, AcceptedTargetHead: spec.Validation.AcceptedTargetHead, Bounds: preview.Bounds, StartedAt: time.Now().UTC(), Status: "started", ReviewRequired: preview.Review.Enabled, ReviewPolicyDigest: preview.Review.PolicyDigest}
+	a := &ManagerStageAttempt{ID: id, StageKey: managerStageKey(spec.Binding.SessionID, spec.Validation.IterationID, spec.Validation.Phase, spec.Validation.ManagerID), RetryOfAttemptID: spec.RetryOfAttemptID, SessionDigest: spec.Validation.SessionDigest, IterationID: spec.Validation.IterationID, ManagerID: spec.Validation.ManagerID, AgentManagerID: spec.Validation.AgentManagerID, Phase: spec.Validation.Phase, PreviewDigest: preview.PreviewDigest, ContextDigest: spec.Validation.ContextDigest, RequestDigest: preview.RequestDigest, RequestContractDigest: spec.Validation.RequestContractDigest, ConfigFingerprint: spec.Validation.ConfigFingerprint, RuntimeFileDigest: spec.Validation.RuntimeFileDigest, LimitsDigest: preview.LimitsDigest, AcceptedTargetHead: spec.Validation.AcceptedTargetHead, AcceptedModelDigest: spec.Validation.AcceptedModelDigest, Bounds: preview.Bounds, StartedAt: time.Now().UTC(), Status: "started", ReviewRequired: preview.Review.Enabled, ReviewPolicyDigest: preview.Review.PolicyDigest}
 	return InvocationLog{TaskID: spec.Validation.IterationID, Role: agentexec.RoleExecutor, Phase: spec.Validation.Phase, InputDigest: preview.RequestDigest, Outcome: "started", Attempt: a}
 }
 
@@ -383,7 +398,10 @@ func RunManagerStage(ctx context.Context, host Host, invoker Invoker, root strin
 			return ManagerStageResult{}, err
 		}
 	}
-	budget := frozenManagerStageBudget(report.ManagerStageBinding.Budget, spec.Limits)
+	budget, err := tightenManagerStageBudget(store, &report, spec.Limits)
+	if err != nil {
+		return ManagerStageResult{}, err
+	}
 	limits := spec.RuntimeLimits
 	limits.MaxStarts = budget.MaxStarts
 	journal, err := newManagerStageJournal(store, &report, limits)
@@ -428,11 +446,7 @@ func RunManagerStage(ctx context.Context, host Host, invoker Invoker, root strin
 	if err := host.ValidateManagerStage(spec.Validation); err != nil {
 		return out, err
 	}
-	_, _, elapsed, cost, unknown := managerStageUsage(report)
-	if unknown || cost > budget.MaxCostMicros || elapsed > budget.MaxDuration {
-		return out, errors.New("Manager terminal exceeds bounded session accounting")
-	}
-	return out, nil
+	return out, managerStageAttachability(report, budget)
 }
 
 func validateManagerStageEnvelope(result agentexec.RunResult, request agentexec.Request, fingerprint string) error {
@@ -458,7 +472,7 @@ func validateManagerStageEnvelope(result agentexec.RunResult, request agentexec.
 
 func recoverManagerStage(ctx context.Context, host Host, invoker Invoker, j *managerStageJournal, spec ManagerStageSpec, preview ManagerStagePreview, log InvocationLog) (ManagerStageResult, error) {
 	a := log.Attempt
-	if a.SessionDigest != spec.Validation.SessionDigest || a.ContextDigest != spec.Validation.ContextDigest || a.RequestContractDigest != spec.Validation.RequestContractDigest || a.ConfigFingerprint != spec.Validation.ConfigFingerprint || a.RuntimeFileDigest != spec.Validation.RuntimeFileDigest || a.LimitsDigest != preview.LimitsDigest || a.Bounds != preview.Bounds || a.ReviewPolicyDigest != preview.Review.PolicyDigest || a.AcceptedTargetHead != spec.Validation.AcceptedTargetHead {
+	if a.SessionDigest != spec.Validation.SessionDigest || a.ContextDigest != spec.Validation.ContextDigest || a.RequestContractDigest != spec.Validation.RequestContractDigest || a.ConfigFingerprint != spec.Validation.ConfigFingerprint || a.RuntimeFileDigest != spec.Validation.RuntimeFileDigest || a.LimitsDigest != preview.LimitsDigest || a.Bounds != preview.Bounds || a.ReviewPolicyDigest != preview.Review.PolicyDigest || a.AcceptedTargetHead != spec.Validation.AcceptedTargetHead || a.AcceptedModelDigest != spec.Validation.AcceptedModelDigest {
 		return ManagerStageResult{}, errors.New("original Manager attempt bindings are stale; replay prohibited")
 	}
 	if a.Status == "rejected" || a.Status == "transport-failed" {
@@ -509,7 +523,11 @@ func recoverManagerStage(ctx context.Context, host Host, invoker Invoker, j *man
 	if err := host.ValidateManagerStage(spec.Validation); err != nil {
 		return ManagerStageResult{}, err
 	}
-	return j.result(log, result)
+	if err := j.reconcileTerminalReservation(log); err != nil {
+		return ManagerStageResult{}, err
+	}
+	out, err := j.result(log, result)
+	return out, errors.Join(err, managerStageAttachability(*j.report, frozenManagerStageBudget(effectiveManagerStageBudget(*j.report), spec.Limits)))
 }
 
 func CompleteManagerStage(root, runID, attemptID, expectedStateDigest string, validation ManagerStageValidation) (ManagerStageResult, error) {
@@ -545,6 +563,15 @@ func CompleteManagerStage(root, runID, attemptID, expectedStateDigest string, va
 		return ManagerStageResult{}, err
 	}
 	if validation.Accepted {
+		if err := managerStageAttachability(report, effectiveManagerStageBudget(report)); err != nil {
+			return ManagerStageResult{}, err
+		}
+		if log.Attempt.Status == "accepted" {
+			if log.Attempt.ValidationDigest != validation.TypedResultDigest {
+				return ManagerStageResult{}, errors.New("accepted typed Manager result is immutable")
+			}
+			return ManagerStageResult{RunID: runID, AttemptID: attemptID, StateDigest: report.Digest, Status: log.Attempt.Status, Invocation: log, Result: result}, nil
+		}
 		if log.Attempt.Status != "transport-succeeded" && log.Attempt.Status != "accepted" || !log.CostKnown || log.CostOverflow || validation.TypedResultDigest == "" || log.Attempt.ReportRef == nil {
 			return ManagerStageResult{}, errors.New("Manager report has no attachable terminal evidence")
 		}
@@ -573,4 +600,56 @@ func CompleteManagerStage(root, runID, attemptID, expectedStateDigest string, va
 		return ManagerStageResult{}, err
 	}
 	return ManagerStageResult{RunID: runID, AttemptID: attemptID, StateDigest: current.Digest, Status: log.Attempt.Status, Invocation: log, Result: result}, nil
+}
+
+func canonicalManagerStageRoot(root string) (string, error) {
+	if root == "" {
+		return "", errors.New("Manager audit root is empty")
+	}
+	resolved, err := filepath.EvalSymlinks(root)
+	if err != nil {
+		return "", err
+	}
+	resolved, err = filepath.Abs(resolved)
+	if err != nil {
+		return "", err
+	}
+	info, err := os.Stat(resolved)
+	if err != nil {
+		return "", err
+	}
+	if !info.IsDir() {
+		return "", errors.New("Manager audit root is not a directory")
+	}
+	return resolved, nil
+}
+
+func effectiveManagerStageBudget(report RunReport) ManagerStageBudget {
+	if report.ManagerStageLimits == nil {
+		return report.ManagerStageBinding.Budget
+	}
+	return frozenManagerStageBudget(report.ManagerStageBinding.Budget, *report.ManagerStageLimits)
+}
+
+func tightenManagerStageBudget(store *runStore, report *RunReport, current ManagerStageBudget) (ManagerStageBudget, error) {
+	if err := validateManagerStageBudget(current); err != nil {
+		return current, err
+	}
+	previous := effectiveManagerStageBudget(*report)
+	next := frozenManagerStageBudget(previous, current)
+	if report.ManagerStageLimits == nil || next != previous {
+		report.ManagerStageLimits = &next
+		if err := persistState(store, report); err != nil {
+			return next, err
+		}
+	}
+	return next, nil
+}
+
+func managerStageAttachability(report RunReport, budget ManagerStageBudget) error {
+	starts, retries, elapsed, cost, unknown := managerStageUsage(report)
+	if unknown || starts > budget.MaxStarts || retries > budget.MaxRetries || cost > budget.MaxCostMicros || elapsed > budget.MaxDuration {
+		return errors.New("Manager terminal exceeds bounded session accounting")
+	}
+	return nil
 }

@@ -285,7 +285,30 @@ func recoverReadOnlyManagerStage(ctx context.Context, host Host, invoker Invoker
 	if err != nil {
 		return agentexec.RunResult{}, err
 	}
-	binding := nativeRecoveryBinding{OwnerRunID: owner, RunID: receipt.RunID, InputDigest: input}
+	journals, err := readTaskWorkspaceJournals(filepath.Join(root, ".markitect", "runs", "private"), attempt)
+	if err != nil {
+		return agentexec.RunResult{}, err
+	}
+	var original []byte
+	var originalReceipt agentexec.Receipt
+	for _, candidate := range journals {
+		j := candidate.journal
+		if j.OwnerRunID != owner || j.Receipt.InputDigest != input || receipt.RunID != "" && j.Receipt.RunID != receipt.RunID {
+			continue
+		}
+		if j.Receipt.RunID == "" || len(j.ReportJSONBytes) == 0 || rawContentDigest(j.ReportJSONBytes) != j.ReportJSONDigest {
+			return agentexec.RunResult{}, errors.New("original native report bytes are missing or changed; replay prohibited")
+		}
+		if original != nil {
+			return agentexec.RunResult{}, errors.New("original native report evidence is ambiguous")
+		}
+		original = append([]byte(nil), j.ReportJSONBytes...)
+		originalReceipt = j.Receipt
+	}
+	if original == nil {
+		return agentexec.RunResult{}, errors.New("original native report byte evidence is missing; replay prohibited")
+	}
+	binding := nativeRecoveryBinding{OwnerRunID: owner, RunID: originalReceipt.RunID, InputDigest: input}
 	result, found, err := RecoverProjectAgent(ctx, host, invoker, root, attempt, config, limits, binding, request)
 	if !found {
 		return result, errors.New("original read-only native workspace/turn is missing; replay prohibited")
@@ -293,28 +316,10 @@ func recoverReadOnlyManagerStage(ctx context.Context, host Host, invoker Invoker
 	if err != nil {
 		return result, err
 	}
-	if result.Delta != nil && len(result.Delta.Changes) > 0 {
-		return result, errors.New("original read-only native turn changed source files")
+	if result.Receipt.RunID != originalReceipt.RunID || result.Receipt.InputDigest != input || result.Delta != nil && len(result.Delta.Changes) > 0 {
+		return result, errors.New("original read-only native turn bindings or source files changed")
 	}
-	journals, err := readTaskWorkspaceJournals(filepath.Join(root, ".markitect", "runs", "private"), attempt)
-	if err != nil {
-		return result, err
-	}
-	var original []byte
-	for _, candidate := range journals {
-		j := candidate.journal
-		if j.OwnerRunID != owner || j.Receipt.RunID != result.Receipt.RunID || j.Receipt.InputDigest != input || len(j.ReportJSONBytes) == 0 {
-			continue
-		}
-		if rawContentDigest(j.ReportJSONBytes) != j.ReportJSONDigest {
-			return result, errors.New("original native report bytes changed")
-		}
-		if original != nil {
-			return result, errors.New("original native report evidence is ambiguous")
-		}
-		original = append([]byte(nil), j.ReportJSONBytes...)
-	}
-	if original != nil {
+	{
 		// Compare opaque JSON values without reconstructing or normalizing the saved bytes.
 		var before, after any
 		a := json.NewDecoder(strings.NewReader(string(original)))

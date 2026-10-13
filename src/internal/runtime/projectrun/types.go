@@ -171,6 +171,7 @@ type CheckPlan struct {
 
 type RunReport struct {
 	ManagerStageBinding     *ManagerStageBinding   `json:"managerStageBinding,omitempty"`
+	ManagerStageLimits      *ManagerStageBudget    `json:"managerStageLimits,omitempty"`
 	ExternalExecution       bool                   `json:"externalExecution,omitempty"`
 	Operation               string                 `json:"operation,omitempty"`
 	APIVersion              string                 `json:"apiVersion"`
@@ -468,6 +469,8 @@ type ManagerStageBinding struct {
 	InitialTargetRevision string             `json:"initialTargetRevision"`
 	TargetContextDigest   string             `json:"targetContextDigest"`
 	Budget                ManagerStageBudget `json:"budget"`
+	SourceRootDigest      string             `json:"sourceRootDigest"`
+	TargetRootDigest      string             `json:"targetRootDigest"`
 }
 
 type ManagerStageValidationBinding struct {
@@ -482,6 +485,9 @@ type ManagerStageValidationBinding struct {
 	RequestContractDigest string
 	ConfigFingerprint     string
 	RuntimeFileDigest     string
+	AcceptedModelDigest   string
+	SourceRoot            string `json:"-"`
+	TargetRoot            string `json:"-"`
 }
 
 // ManagerStageSpec is transient prepared invocation input. In particular no
@@ -533,6 +539,7 @@ type ManagerStageAttempt struct {
 	RuntimeFileDigest     string                   `json:"runtimeFileDigest,omitempty"`
 	LimitsDigest          string                   `json:"limitsDigest,omitempty"`
 	AcceptedTargetHead    string                   `json:"acceptedTargetHead,omitempty"`
+	AcceptedModelDigest   string                   `json:"acceptedModelDigest,omitempty"`
 	Bounds                ManagerStageBounds       `json:"bounds"`
 	StartedAt             time.Time                `json:"startedAt"`
 	FinishedAt            time.Time                `json:"finishedAt,omitempty"`

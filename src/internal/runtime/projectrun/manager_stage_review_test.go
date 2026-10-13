@@ -8,6 +8,7 @@ import (
 	"os"
 	"path/filepath"
 	"testing"
+	"time"
 
 	"github.com/Glacius-Labs/Markitect/src/internal/core/projectmodel"
 	"github.com/Glacius-Labs/Markitect/src/internal/runtime/agentexec"
@@ -26,7 +27,8 @@ func stageReviewFixture(t *testing.T) (string, ManagerStageSpec, ManagerStageRev
 		t.Fatal(err)
 	}
 	accepted := projectmodel.ManagerContext{Manager: projectmodel.Manager{ID: "accepted-ancestor"}}
-	reviewSpec := ManagerStageReviewSpec{Validation: spec.Validation, Agent: reviewer, Config: config, AcceptedModel: accepted, Purpose: "Assess this explicitly selected proposal and its evidence", ProposedContext: json.RawMessage(`{"classification":"proposed-by-parent","managerId":"root"}`), Evidence: []agentexec.Artifact{{Path: "README.md", Mode: "0644", Digest: rawContentDigest([]byte("selected source evidence")), Content: []byte("selected source evidence")}}, Grounding: map[string][]string{"README.md": {"evidence:selected"}}, ChildBindings: json.RawMessage(`{"children":[]}`), SourceRoot: root, TargetRoot: spec.TargetRoot, Limits: spec.Limits, RuntimeLimits: spec.RuntimeLimits, Review: review}
+	acceptedDigest, _ := digest(accepted)
+	reviewSpec := ManagerStageReviewSpec{AcceptedModelDigest: acceptedDigest, Validation: spec.Validation, Agent: reviewer, Config: config, AcceptedModel: accepted, Purpose: "Assess this explicitly selected proposal and its evidence", ProposedContext: json.RawMessage(`{"classification":"proposed-by-parent","managerId":"root"}`), Evidence: []agentexec.Artifact{{Path: "README.md", Mode: "0644", Digest: rawContentDigest([]byte("selected source evidence")), Content: []byte("selected source evidence")}}, Grounding: map[string][]string{"README.md": {"evidence:selected"}}, ChildBindings: json.RawMessage(`{"children":[]}`), SourceRoot: root, TargetRoot: spec.TargetRoot, Limits: spec.Limits, RuntimeLimits: spec.RuntimeLimits, Review: review}
 	invoker.reviewRaw = []byte("{ \"status\" : \"pass\", \"summary\":\"exact selected report assessed\", \"findings\" : [] }")
 	return root, spec, reviewSpec, invoker, host
 }
@@ -69,6 +71,9 @@ func TestManagerStageConfiguredReviewSharesAuthorityAndCompletionToken(t *testin
 	state, err := store.readLatestState(manager.RunID)
 	if err != nil {
 		t.Fatal(err)
+	}
+	if state.RoleStartReservations[1].Request.Role != "reviewer" || state.RoleStartReservations[1].Request.State != "completed" {
+		t.Fatal("reviewer reservation role/lifecycle was mislabeled")
 	}
 	if len(state.Invocations) != 2 || len(state.Reviews) != 1 || state.CostMicros != 4 {
 		t.Fatal("manager/reviewer were not charged once under one session budget")
@@ -237,5 +242,89 @@ func TestManagerStageReviewVerdictTamperRejectedByEvidenceReadback(t *testing.T)
 	}
 	if _, err := CompleteManagerStage(root, manager.RunID, manager.AttemptID, review.StateDigest, ManagerStageValidation{Accepted: true, TypedResultDigest: "typed"}); err == nil {
 		t.Fatal("rehashed forged review verdict was accepted")
+	}
+}
+
+func TestManagerStageReviewRejectsChangedTrustedTargetFacts(t *testing.T) {
+	for _, change := range []string{"empty-target", "wrong-target", "target-head", "context", "accepted-model", "trusted-root"} {
+		t.Run(change, func(t *testing.T) {
+			root, spec, reviewSpec, invoker, host := stageReviewFixture(t)
+			preview, err := PreviewManagerStage(invoker, root, spec)
+			if err != nil {
+				t.Fatal(err)
+			}
+			manager, err := RunManagerStage(context.Background(), host, invoker, root, spec, preview.PreviewDigest)
+			if err != nil {
+				t.Fatal(err)
+			}
+			switch change {
+			case "empty-target":
+				reviewSpec.TargetRoot = ""
+			case "wrong-target":
+				reviewSpec.TargetRoot = t.TempDir()
+			case "target-head":
+				reviewSpec.Validation.AcceptedTargetHead = "other-head"
+			case "context":
+				reviewSpec.Validation.ContextDigest = "other-context"
+			case "accepted-model":
+				reviewSpec.AcceptedModel.Manager.ID = "unaccepted"
+				reviewSpec.AcceptedModelDigest, _ = digest(reviewSpec.AcceptedModel)
+			case "trusted-root":
+				reviewSpec.Validation.TargetRoot = t.TempDir()
+			}
+			if _, err := ReviewManagerStage(context.Background(), host, invoker, root, manager.RunID, manager.AttemptID, reviewSpec, manager.StateDigest); err == nil {
+				t.Fatal("review admitted changed trusted facts")
+			}
+			if invoker.calls != 1 {
+				t.Fatal("changed review dispatched")
+			}
+		})
+	}
+}
+
+func TestManagerStageReviewOverrunCannotRecoverOrAttach(t *testing.T) {
+	for _, kind := range []string{"cost", "duration"} {
+		t.Run(kind, func(t *testing.T) {
+			root, spec, reviewSpec, invoker, host := stageReviewFixture(t)
+			if kind == "cost" {
+				spec.Binding.Budget.MaxCostMicros = 3
+				spec.Limits.MaxCostMicros = 3
+				reviewSpec.Limits = spec.Limits
+			}
+			preview, err := PreviewManagerStage(invoker, root, spec)
+			if err != nil {
+				t.Fatal(err)
+			}
+			manager, err := RunManagerStage(context.Background(), host, invoker, root, spec, preview.PreviewDigest)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if kind == "duration" {
+				reviewSpec.Config.Timeout = time.Millisecond
+				reviewSpec.Limits.MaxDuration = 5 * time.Millisecond
+				invoker.observe = func() { time.Sleep(10 * time.Millisecond) }
+			}
+			if _, err := ReviewManagerStage(context.Background(), host, invoker, root, manager.RunID, manager.AttemptID, reviewSpec, manager.StateDigest); err == nil {
+				t.Fatal("review overrun accepted")
+			}
+			store, _ := newManagerStageStore(root)
+			state, err := store.readLatestState(manager.RunID)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if _, err := ReviewManagerStage(context.Background(), host, invoker, root, manager.RunID, manager.AttemptID, reviewSpec, state.Digest); err == nil {
+				t.Fatal("review overrun recovered")
+			}
+			state, err = store.readLatestState(manager.RunID)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if _, err := CompleteManagerStage(root, manager.RunID, manager.AttemptID, state.Digest, ManagerStageValidation{Accepted: true, TypedResultDigest: "typed"}); err == nil {
+				t.Fatal("review overrun attached")
+			}
+			if invoker.calls > 2 {
+				t.Fatal("review overrun replayed")
+			}
+		})
 	}
 }

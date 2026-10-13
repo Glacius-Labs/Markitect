@@ -278,7 +278,13 @@ func validateManagerStageState(store *runStore, state, prior RunReport) error {
 		if err := validateManagerStageBudget(binding.Budget); err != nil {
 			return err
 		}
+		if state.ManagerStageLimits == nil || validateManagerStageBudget(*state.ManagerStageLimits) != nil || frozenManagerStageBudget(binding.Budget, *state.ManagerStageLimits) != *state.ManagerStageLimits {
+			return errors.New("Manager effective ceilings are invalid")
+		}
 		if prior.ManagerStageBinding != nil {
+			if frozenManagerStageBudget(effectiveManagerStageBudget(prior), *state.ManagerStageLimits) != *state.ManagerStageLimits {
+				return errors.New("Manager effective ceilings were refilled")
+			}
 			a, _ := digest(prior.ManagerStageBinding)
 			b, _ := digest(binding)
 			if a != b {
@@ -331,7 +337,7 @@ func validateManagerStageState(store *runStore, state, prior RunReport) error {
 			if previous.Receipt.RunID != "" && previous.Receipt.RunID != log.Receipt.RunID {
 				return errors.New("Manager receipt changed")
 			}
-			if previous.Attempt.Status == "accepted" && a.Status != "accepted" {
+			if previous.Attempt.Status == "accepted" && (a.Status != "accepted" || a.ValidationDigest != previous.Attempt.ValidationDigest) {
 				return errors.New("accepted Manager attempt was rewritten")
 			}
 			delete(old, a.ID)
@@ -377,7 +383,7 @@ func invokeManagerAttempt(ctx context.Context, j *managerStageJournal, log Invoc
 	if _, _, err := agentexec.PrepareInvocation(request); err != nil {
 		return agentexec.RunResult{}, log, errors.New("Manager request violates the bounded protocol")
 	}
-	roleRequest := agentexec.RoleStartRequest{RequestID: log.Attempt.ID, ParentSessionID: j.report.ID, Role: agentexec.RoleExecutor, State: "requested"}
+	roleRequest := agentexec.RoleStartRequest{RequestID: log.Attempt.ID, ParentSessionID: j.report.ID, Role: log.Role, State: "requested"}
 	var permit *RoleStartPermit
 	var err error
 	if j.report.ManagerStageBinding == nil && log.Role == agentexec.RoleExecutor && (log.Phase == "work" || log.Phase == "integrate") {
@@ -463,4 +469,41 @@ func newManagerStageStore(root string) (*runStore, error) {
 		return nil, err
 	}
 	return &runStore{root: abs, base: base}, nil
+}
+
+// A terminal row may have been flushed just before its reservation update.
+// Reconcile the SAME permit idempotently; never reserve or dispatch a new role.
+func (j *managerStageJournal) reconcileTerminalReservation(log InvocationLog) error {
+	if log.Attempt == nil {
+		return errors.New("terminal reservation lacks its attempt")
+	}
+	snapshot := j.snapshot()
+	request := agentexec.RoleStartRequest{RequestID: log.Attempt.ID, ParentSessionID: snapshot.ID, Role: log.Role}
+	key := rootReservationKey(log.TaskID, log.Phase, request)
+	found := false
+	for _, r := range snapshot.RoleStartReservations {
+		if r.Key == key {
+			found = true
+			request = r.Request
+			break
+		}
+	}
+	if !found {
+		return errors.New("original role reservation is absent; no replacement permitted")
+	}
+	request.Role = log.Role
+	request.State = "completed"
+	if log.Attempt.Status == "started" || log.Attempt.Status == "uncertain" {
+		request.State = "unknown"
+	}
+	if log.Attempt.Status == "transport-failed" || log.Attempt.Status == "rejected" {
+		request.State = "failed"
+	}
+	for _, r := range snapshot.RoleStartReservations {
+		if r.Key == key && r.Request.State == request.State && r.Request.Role == request.Role {
+			return nil
+		}
+	}
+	permit := RoleStartPermit{budget: j.budget, key: key}
+	return permit.Update(context.Background(), request)
 }
