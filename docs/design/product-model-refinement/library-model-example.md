@@ -87,15 +87,6 @@ metadata:
   description: |
     Unterstützt eine Bibliothek bei der nachvollziehbaren
     Ausleihe und Rückgabe ihrer vorhandenen Exemplare.
-
-    Umfasst die Anwendung und die zugehörigen Implementierungs-,
-    Konfigurations-, Dokumentations- und Prüfbeiträge.
-    Bestand, Mitgliedschaft und Ausleihzustand sind die
-    dafür benötigten fachlichen Bereiche.
-
-    Die fachlichen Details sind in den Definitionen der
-    Bibliotheksanwendung beschrieben. Beschaffung, Gebühren
-    und Mahnungen liegen zunächst außerhalb des Umfangs.
 spec:
   contains:
     - kind: System

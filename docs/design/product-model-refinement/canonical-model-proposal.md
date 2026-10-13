@@ -42,6 +42,8 @@ Für einen festen Repositorystand wird die gefundene Eingabemenge vollständig e
 
 Am 14. Oktober 2026 auf Nutzerwunsch festgehalten: Das kanonische Modell wird als deklarative Beschreibungssprache betrachtet. Der Kind ist ein Sprachkonstrukt; die verbindliche Prosa in metadata.description ist dessen Inhalt. Ihre Interpretation und der erwartete Realisierungsbeitrag hängen vom Kind ab. Die Kind-Definition erklärt deshalb nicht nur erlaubte YAML-Felder, sondern auch Aussageart, Referenzbedeutung, erwartete Realisierung und geeignete Prüfaufträge.
 
+Die Beschreibung einer konkreten Definition enthält ihre individuellen Aussagen. Sie wiederholt weder die Bedeutung des Kinds noch dessen allgemeine Realisierungsbeiträge und erklärt nicht formelhaft, dass Details in anderen Definitionen stehen. Diese Sprachbedeutung gehört einmal in die Kind-Definition. Konkrete Festlegungen werden nicht als Fülltext ergänzt; notwendige Verbindungen und ableitbare Zugehörigkeiten sind gesondert anhand der minimalen Sprachbasis zu prüfen.
+
 | Kind | Was seine Prosa deklariert | Erwarteter Beitrag |
 | --- | --- | --- |
 | Project | Zweck, Umfang, Grenzen und Gesamtrahmen des Projekts. | Ein Repository, dessen Beiträge dem beschriebenen Projekt dienen. |
