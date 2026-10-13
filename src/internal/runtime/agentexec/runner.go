@@ -998,6 +998,11 @@ func snapshotRoots(roots []string) (workspaceSnapshot, error) {
 			if err != nil {
 				return err
 			}
+			// Windows Lstat lazily acquires the file ID used by SameFile. Pin it
+			// before opening so a replacement cannot impersonate this observation.
+			if info.Mode().IsRegular() && info.Size() == 0 && !os.SameFile(info, info) {
+				return errors.New("empty input identity could not be captured")
+			}
 			rel, err := filepath.Rel(root, name)
 			if err != nil {
 				return err
@@ -1022,12 +1027,19 @@ func snapshotRoots(roots []string) (workspaceSnapshot, error) {
 				if info.Size() < 0 || snapshot.totalBytes+info.Size() > maxSnapshotBytes {
 					return errors.New("audited input exceeds the 1 GiB snapshot bound")
 				}
-				content, err := readBoundedFile(name, maxSnapshotBytes)
-				if err != nil {
-					return err
+				if info.Size() == 0 {
+					fact.digest, err = snapshotEmptyInputFile(name, info)
+					if err != nil {
+						return err
+					}
+				} else {
+					content, err := readBoundedFile(name, maxSnapshotBytes)
+					if err != nil {
+						return err
+					}
+					fact.digest = digest(content)
+					snapshot.totalBytes += int64(len(content))
 				}
-				fact.digest = digest(content)
-				snapshot.totalBytes += int64(len(content))
 			default:
 				fact.kind = "special"
 			}
@@ -1195,4 +1207,43 @@ func isShellExecutable(path string) bool {
 	default:
 		return false
 	}
+}
+
+// Empty inputs still require read access and stable handle/path metadata.
+// No DATA read is needed for the exact empty digest, including an empty file
+// whose byte range is locked by the caller's existing session lease.
+func snapshotEmptyInputFile(name string, original os.FileInfo) (contentDigest string, err error) {
+	if !original.Mode().IsRegular() || original.Mode()&os.ModeSymlink != 0 || original.Size() != 0 {
+		return "", errors.New("empty input metadata is invalid")
+	}
+	file, err := os.Open(name)
+	if err != nil {
+		return "", err
+	}
+	defer func() { err = errors.Join(err, file.Close()) }()
+	matches := func(info os.FileInfo) bool {
+		return info != nil && info.Mode().IsRegular() && info.Mode()&os.ModeSymlink == 0 && info.Size() == 0 && info.Mode() == original.Mode() && info.ModTime().Equal(original.ModTime()) && os.SameFile(original, info)
+	}
+	opened, err := file.Stat()
+	if err != nil {
+		return "", err
+	}
+	if !matches(opened) {
+		return "", errors.New("empty input identity or metadata changed while opening")
+	}
+	confirmed, err := file.Stat()
+	if err != nil {
+		return "", err
+	}
+	if !matches(confirmed) {
+		return "", errors.New("empty input handle metadata changed")
+	}
+	current, err := os.Lstat(name)
+	if err != nil {
+		return "", err
+	}
+	if !matches(current) {
+		return "", errors.New("empty input path changed")
+	}
+	return digest(nil), nil
 }

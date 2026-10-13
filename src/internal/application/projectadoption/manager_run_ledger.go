@@ -1,8 +1,6 @@
 package projectadoption
 
 import (
-	"crypto/rand"
-	"encoding/hex"
 	"errors"
 	"fmt"
 	"math"
@@ -173,35 +171,6 @@ func managerRunAttemptResult(session BrownfieldSession, ledger ManagerRunLedger,
 		Proposal: event.Proposal, Integration: event.Integration}
 }
 
-func recoverManagerRunStage(sourceRoot, targetRoot string, session BrownfieldSession, ledger ManagerRunLedger, event ManagerRunEvent, preview ManagerRunPreview, invoker ManagerRunInvoker, config agentexec.Config) (ManagerRunResult, error) {
-	result := managerRunAttemptResult(session, ledger, event, "stage-recovery")
-	if event.Status != "succeeded" || event.SessionDigest != session.Digest || event.ContextDigest != preview.ContextDigest || event.RequestContractDigest != preview.RequestContractDigest || event.ConfigFingerprint != preview.ConfigFingerprint ||
-		event.RuntimeFileDigest != preview.RuntimeFileDigest || event.LimitsDigest != preview.LimitsDigest || event.Execution == nil || event.ExecutionDigest != digestValue(*event.Execution) {
-		return result, errors.New("prior successful Manager receipt cannot be recovered against the current session")
-	}
-	var next BrownfieldSession
-	var err error
-	if event.Phase == ManagerRunPhasePropose && event.Proposal != nil {
-		next, err = RecordManagerProposal(session, event.IterationID, *event.Proposal)
-	} else if event.Phase == ManagerRunPhaseIntegrate && event.Integration != nil {
-		next, err = IntegrateManagerProposal(session, event.IterationID, event.ManagerID, *event.Integration)
-	} else {
-		return result, errors.New("prior Manager receipt has no recoverable typed stage report")
-	}
-	if err != nil {
-		return result, fmt.Errorf("recover validated Manager stage: %w", err)
-	}
-	if err := revalidateManagerRunBases(sourceRoot, targetRoot, session.ID, session.Digest, preview.RuntimeFileDigest, invoker, config, preview.ConfigFingerprint); err != nil {
-		return result, fmt.Errorf("revalidate Manager bases before receipt recovery: %w", err)
-	}
-	if _, err := WriteBrownfieldSession(sourceRoot, next, session.Digest); err != nil {
-		return result, fmt.Errorf("persist recovered Manager stage: %w", err)
-	}
-	result.Status, result.SessionDigest = "recovered", next.Digest
-	result.Proposal, result.Integration = event.Proposal, event.Integration
-	return result, nil
-}
-
 func latestManagerAttempt(ledger ManagerRunLedger, iterationID, phase string) (ManagerRunEvent, bool) {
 	var latest ManagerRunEvent
 	found := false
@@ -272,38 +241,6 @@ func loadManagerRunLedger(dir, sessionID string) (ManagerRunLedger, error) {
 	return ledger, nil
 }
 
-func writeManagerRunLedger(dir string, ledger ManagerRunLedger) error {
-	if err := ensureNoIncompleteAtomicWrite(dir, managerRunLedgerName); err != nil {
-		return err
-	}
-	data, err := encodeClosedJSON(ledger)
-	if err != nil {
-		return err
-	}
-	temp := filepath.Join(dir, ".manager-runs.json.tmp")
-	file, err := os.OpenFile(temp, os.O_WRONLY|os.O_CREATE|os.O_EXCL, 0o600)
-	if err != nil {
-		return err
-	}
-	if _, err = file.Write(data); err == nil {
-		err = file.Sync()
-	}
-	closeErr := file.Close()
-	if err == nil {
-		err = closeErr
-	}
-	if err != nil {
-		_ = os.Remove(temp)
-		return err
-	}
-	path := filepath.Join(dir, managerRunLedgerName)
-	if err := atomicReplaceFile(temp, path); err != nil {
-		_ = os.Remove(temp)
-		return err
-	}
-	return nil
-}
-
 func acquireNamedLock(dir, name string) (func(), error) {
 	dirInfo, err := os.Lstat(dir)
 	if err != nil {
@@ -330,15 +267,29 @@ func sealManagerRunLedger(ledger *ManagerRunLedger) {
 	ledger.Digest = digestValue(copy)
 }
 
-func newSessionRunID() (string, error) {
-	var raw [16]byte
-	if _, err := rand.Read(raw[:]); err != nil {
-		return "", err
-	}
-	return hex.EncodeToString(raw[:]), nil
-}
-
 func reflectTypeOfManagerProposalDraft() reflect.Type { return reflect.TypeOf(ManagerProposalDraft{}) }
 func reflectTypeOfManagerIntegrationDraft() reflect.Type {
 	return reflect.TypeOf(ManagerIntegrationDraft{})
+}
+
+// AcquireManagerStageLease holds the established per-session process-file
+// lock through Runtime work, typed review and the existing Session CAS.
+func AcquireManagerStageLease(sourceRoot, sessionID string) (func(), error) {
+	dir, err := sessionDirectory(sourceRoot, sessionID, false)
+	if err != nil {
+		return nil, err
+	}
+	unlock, err := acquireNamedLock(dir, managerRunLockName)
+	if err != nil {
+		return nil, err
+	}
+	ledger, err := loadManagerRunLedger(dir, sessionID)
+	if err == nil && (ledger.Budget != nil || len(ledger.Events) != 0) {
+		err = errors.New("legacy Manager execution ledger blocks Runtime stage admission; historical bytes remain untouched")
+	}
+	if err != nil {
+		unlock()
+		return nil, err
+	}
+	return unlock, nil
 }

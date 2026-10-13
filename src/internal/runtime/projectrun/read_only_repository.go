@@ -267,9 +267,13 @@ func dispatchReadOnlyManagerStage(ctx context.Context, host Host, invoker Invoke
 	if err := ctx.Err(); err != nil {
 		return agentexec.RunResult{}, err
 	}
-	private, err := os.MkdirTemp(temp, "markitect-manager-private-")
+	container, err := os.MkdirTemp(temp, "markitect-manager-private-")
 	if err != nil {
 		return agentexec.RunResult{}, errors.New("could not prepare Brownfield private logs")
+	}
+	private := filepath.Join(container, "private")
+	if _, err := agentexec.PreparePrivateLogDirectory(private); err != nil {
+		return agentexec.RunResult{}, err
 	}
 	// Retain private execution evidence; the audited trees are never used for logs.
 	return invoker.Run(ctx, config, request, agentexec.RunOptions{InputRoots: roots, TempParent: temp, PrivateLogDirectory: private})

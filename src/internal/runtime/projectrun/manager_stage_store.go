@@ -570,7 +570,7 @@ func recoverOrdinaryManagerAttempt(journal *managerStageJournal, attemptID strin
 	if journal == nil {
 		return InvocationLog{}, errors.New("recovery requires the original Runtime journal")
 	}
-	index := invocationAttemptIndex(journal.report.Invocations, InvocationLog{Attempt: &ManagerStageAttempt{ID: ordinaryRunAttemptID(*journal.report, attemptID)}})
+	index := invocationAttemptIndex(journal.report.Invocations, InvocationLog{Attempt: &ManagerStageAttempt{ID: attemptID}})
 	if index < 0 {
 		return InvocationLog{}, errors.New("original durable Manager attempt is absent; no replay")
 	}

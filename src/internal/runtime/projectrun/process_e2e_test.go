@@ -769,7 +769,7 @@ func TestProjectRunPropagatesRootResolutionThroughForwardedObligationChain(t *te
 		}
 	}
 	if len(run.Escalations) != 2 {
-		t.Fatalf("expected the retained Commerceâ†’Ordersâ†’root escalation chain: %+v", run.Escalations)
+		t.Fatalf("expected the retained Commerce→Orders→root escalation chain: %+v", run.Escalations)
 	}
 	for _, escalation := range run.Escalations {
 		if escalation.Status != "resolved" || len(escalation.ObligationIDs) != 2 {

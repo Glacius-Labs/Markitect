@@ -420,7 +420,7 @@ func nativeResumeRuntimeHost(t *testing.T, root, phase string) Host {
 	}
 	return processRuntimeHost(root, project)
 }
-func seedNativeRun(t *testing.T, phase string, reviewRework, reviewed bool) nativeResumeRunFixture {
+func seedNativeRun(t *testing.T, phase string, reviewRework, reviewed bool, repairNumber ...int) nativeResumeRunFixture {
 	t.Helper()
 	root := makeProjectRunFixture(t)
 	writeE2E(t, root, "AGENTS.md", "native manager instructions\n")
@@ -572,6 +572,14 @@ func seedNativeRun(t *testing.T, phase string, reviewRework, reviewed bool) nati
 		}
 		child.State, child.WorkAttempts, child.Attempts, child.CandidateID, child.ReportStatus = "worked", 1, 1, childWork.ID, "complete"
 	}
+	if len(repairNumber) > 0 {
+		prior := cloneTasks(report.Tasks)
+		for i := range prior {
+			prior[i].State = "worked"
+		}
+		report.RepairRounds = []RepairRound{{Number: repairNumber[0], Status: "running", StartedAt: time.Now().UTC(), PriorCandidateID: initial.ID, SeedCandidateID: initial.ID, PriorTasks: prior}}
+		report.ActiveRepairCandidateID = initial.ID
+	}
 	if err := store.appendState(report); err != nil {
 		t.Fatal(err)
 	}
@@ -655,7 +663,7 @@ func seedNativeRun(t *testing.T, phase string, reviewRework, reviewed bool) nati
 		t.Fatal(err)
 	}
 	workspaceRequest := projectworkspace.Request{RepositoryRoot: filepath.Clean(absoluteRoot), RepositoryIdentity: identity.Digest,
-		BaseSHA: input.Revision, OverlayDigest: binding.OverlayDigest, TaskID: nativeTaskAttemptID(*task, phase),
+		BaseSHA: input.Revision, OverlayDigest: binding.OverlayDigest, TaskID: originalLog.Attempt.ID,
 		AllowedPaths: allowed, ExcludedPaths: excluded}
 	handle, err := preparationService.PrepareCandidate(context.Background(), workspaceRequest, overlay, overlayDigest)
 	if err != nil {
@@ -786,4 +794,41 @@ func mustLoadRuntime(t *testing.T, root string) projectconfig.Runtime {
 		t.Fatal(err)
 	}
 	return runtime
+}
+
+func TestNativeRepairRoundUsesSameDurableDispatchAndRecoveryIdentity(t *testing.T) {
+	fixture := seedNativeRun(t, "work", false, false, 1)
+	before, err := fixture.store.readLatestState(fixture.plan.ID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	task := findTask(before.Tasks, fixture.managerID)
+	baseID := nativeTaskAttemptID(*task, "work")
+	exactID := ordinaryRunAttemptID(before, baseID)
+	if exactID == baseID || len(before.Invocations) != 1 || before.Invocations[0].Attempt.ID != exactID || before.RoleStartReservations[0].Request.RequestID != exactID || fixture.handle.TaskID != exactID {
+		t.Fatal("repair round reset collided with old dispatch/reservation identity")
+	}
+	lifecycle := *fixture.invoker.result.Receipt.Lifecycle
+	lifecycle.StartRequests = append([]agentexec.RoleStartRequest(nil), lifecycle.StartRequests...)
+	lifecycle.State = "inProgress"
+	lifecycle.StartRequests[0].State = "inProgress"
+	fixture.invoker.result.Receipt.Lifecycle = &lifecycle
+	blocked, err := Resume(context.Background(), fixture.host, fixture.invoker, fixture.root, fixture.plan.ID)
+	if err == nil || blocked.Status != StatusBlocked || fixture.invoker.runCalls != 0 || fixture.invoker.recoverCalls != 1 {
+		t.Fatal("unfinished repair turn replayed or lost its original inspection")
+	}
+	lifecycle.State = "completed"
+	lifecycle.StartRequests[0].State = "completed"
+	resumed, err := Resume(context.Background(), fixture.host, fixture.invoker, fixture.root, fixture.plan.ID)
+	if err != nil || resumed.Status != StatusIntegrated || fixture.invoker.runCalls != 0 || fixture.invoker.recoverCalls != 2 {
+		t.Fatalf("same repair turn recovery failed: %s %v", resumed.Status, err)
+	}
+	if len(resumed.Invocations) != 1 || resumed.Invocations[0].Attempt.ID != exactID || len(resumed.RoleStartReservations) != 1 || resumed.RoleStartReservations[0].Key != before.RoleStartReservations[0].Key {
+		t.Fatal("repair recovery replaced or recharged durable authority")
+	}
+	for _, id := range fixture.invoker.workspaceIDs {
+		if id != exactID {
+			t.Fatal("native inspection selected an older reset-ordinal workspace")
+		}
+	}
 }

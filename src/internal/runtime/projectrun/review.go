@@ -181,6 +181,7 @@ func invokeReviewer(ctx context.Context, host Host, invoker Invoker, root string
 		return record, log, err
 	}
 	log.Role = "reviewer"
+	attemptID = log.Attempt.ID
 	var recoveryBinding nativeRecoveryBinding
 	required, _ := ctx.Value(nativeRecoveryRequiredKey{}).(bool)
 	if required {

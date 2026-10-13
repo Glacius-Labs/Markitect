@@ -185,7 +185,7 @@ func resetTaskForRepair(task *ManagerTask) {
 }
 
 func boundedFeedbackText(value string, maximum int) string {
-	value = strings.ToValidUTF8(value, "ÃƒÂ¯Ã‚Â¿Ã‚Â½")
+	value = strings.ToValidUTF8(value, "ï¿½")
 	if maximum < 0 || len(value) <= maximum {
 		return value
 	}
@@ -310,6 +310,9 @@ func invokeManager(ctx context.Context, host Host, invoker Invoker, root string,
 	log, err = ordinaryManagerAttemptLog(journal, invoker, config, configAgent, task, phase, nativeTaskAttemptID(task, phase), request)
 	if err != nil {
 		return result, log, err
+	}
+	if config.Transport == projectconfig.TransportCodexAppServer || externalExecutionEnabled(ctx) {
+		attemptID = log.Attempt.ID
 	}
 	result, log, err = invokeManagerAttempt(ctx, journal, log, request, configAgent, func(call context.Context) (agentexec.RunResult, error) {
 		return invokeProjectAgent(call, host, invoker, root, project, configAgent, plan.ID, attemptID, writePaths, ignoredPaths, runtime.Limits, config, request)
@@ -536,7 +539,7 @@ func boundedRepairDiagnostic(err error) string {
 	if err == nil {
 		return ""
 	}
-	message := strings.ToValidUTF8(strings.TrimSpace(err.Error()), "ÃƒÂ¯Ã‚Â¿Ã‚Â½")
+	message := strings.ToValidUTF8(strings.TrimSpace(err.Error()), "ï¿½")
 	runes := []rune(message)
 	for len(message) > 2048 && len(runes) > 0 {
 		runes = runes[:len(runes)-1]
