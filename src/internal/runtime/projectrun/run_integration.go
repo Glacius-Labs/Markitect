@@ -185,7 +185,7 @@ func (e *runExecution) invokeIntegration(task *ManagerTask, children []string, m
 			return proposal, invocation, parsed, resolved, remainingQ, remainingR, resolvedObligations, remainingObligations, report, err
 		}
 		if !fromRecovery {
-			e.report.Invocations = append(e.report.Invocations, invocation)
+			appendInvocationReceipt(&e.report, invocation)
 		}
 		e.spent = totalCost(e.report.Invocations)
 		if costExceedsLimit(e.report.Invocations, e.runtime.Limits.MaxCostMicros) {
@@ -281,12 +281,9 @@ func (e *runExecution) reviewIntegration(task *ManagerTask, candidateProject *pr
 		return blockRun(e.store, e.report, fmt.Errorf("review for %s exceeds the cumulative run budget", task.ManagerID))
 	}
 	startedIndex := -1
-	review, reviewLog, reviewErr := invokeReviewer(e.ctx, e.host, e.invoker, e.root, e.plan, e.runtime, candidateProject, *task, "integrate", reviewRound, candidate, func(started InvocationLog) error {
-		e.report.Invocations = append(e.report.Invocations, started)
-		startedIndex = len(e.report.Invocations) - 1
-		return persistState(e.store, &e.report)
-	}, e.report)
-	e.starts++
+	review, reviewLog, reviewErr := invokeReviewer(e.ctx, e.host, e.invoker, e.root, e.plan, e.runtime, candidateProject, *task, "integrate", reviewRound, candidate, e.report)
+	startedIndex = invocationAttemptIndex(e.report.Invocations, reviewLog)
+	e.refreshStarts()
 	if startedIndex >= 0 {
 		e.report.Invocations[startedIndex] = reviewLog
 		if reviewErr == nil {

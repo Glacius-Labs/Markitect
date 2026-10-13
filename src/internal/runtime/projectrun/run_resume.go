@@ -32,6 +32,9 @@ func (e *runExecution) resumeExisting() (bool, RunReport, error) {
 		}
 		return false, e.report, fmt.Errorf("unfinished manager-directed rework round %d requires a new plan", round.Number)
 	}
+	if report, err := e.bindRuntimeBudget(); err != nil {
+		return false, report, err
+	}
 	pendingReviewRecovered := false
 	for _, task := range e.report.Tasks {
 		if task.ReviewStatus == "invoking" || task.ReviewStatus == "uncertain" || task.ReviewStatus == StatusAwaitingExternal {

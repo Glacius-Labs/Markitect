@@ -104,8 +104,10 @@ func TestPendingNativeReviewRequiresExactJournalWithoutReservingOrRunning(t *tes
 		t.Fatal(err)
 	}
 	invoker := &resumeReviewInvoker{}
-	_, originalLog, err := invokeReviewer(context.Background(), host, invoker, root, plan, runtime, candidateProject, task,
-		"work", 1, candidate, nil, RunReport{})
+	journalReport := ordinaryJournalReport(plan)
+	ctx := ordinaryJournalFixture(t, root, plan, runtime.Limits, &journalReport)
+	_, originalLog, err := invokeReviewer(ctx, host, invoker, root, plan, runtime, candidateProject, task,
+		"work", 1, candidate, RunReport{})
 	if err == nil || invoker.runCalls != 1 || invoker.request.Role != agentexec.RoleExecutor {
 		t.Fatalf("dry request capture did not reach the scripted invoker: err=%v calls=%d", err, invoker.runCalls)
 	}
@@ -129,7 +131,8 @@ func TestPendingNativeReviewRequiresExactJournalWithoutReservingOrRunning(t *tes
 		Candidate: CandidateRef{ID: candidate.ID}, Invocations: []InvocationLog{originalLog}}
 	current := findTask(report.Tasks, task.ManagerID)
 	*current = task
-	_, err = recoverPendingNativeReview(context.Background(), host, invoker, root, store, dir, plan, runtime, base, &report, task.ManagerID)
+	ctx = withManagerStageJournal(context.Background(), &managerStageJournal{store: store, report: &report, budget: journalFromContext(ctx).budget})
+	_, err = recoverPendingNativeReview(ctx, host, invoker, root, store, dir, plan, runtime, base, &report, task.ManagerID)
 	if err == nil || !strings.Contains(strings.ToLower(err.Error()), "journal is missing") {
 		t.Fatalf("missing native review journal was not preserved as blocking: %v", err)
 	}
@@ -500,13 +503,11 @@ func resumePendingReview(t *testing.T, seed pendingReviewSeed) resumedReview {
 		dispatch = &reworkDispatchInvoker{inner: nativeNoEditManager{}, store: store, runID: plan.ID, managerID: reviewed.ManagerID, phase: phase}
 		invoker.managers = dispatch
 	}
-	if _, _, err := invokeReviewer(context.Background(), host, invoker, root, plan, runtime, finalProject, *reviewed, phase, 1, integrated, func(started InvocationLog) error {
-		report.Invocations = append(report.Invocations, started)
-		return nil
-	}, report); err == nil || len(report.Invocations) != 1 || len(invoker.reviewContext) == 0 {
+	ctx := ordinaryJournalFixture(t, root, plan, runtime.Limits, &report)
+	if _, _, err := invokeReviewer(ctx, host, invoker, root, plan, runtime, finalProject, *reviewed, phase, 1, integrated, report); err == nil || len(report.Invocations) != 1 || len(invoker.reviewContext) == 0 {
 		t.Fatalf("fixture did not leave one dispatched review: err=%v invocations=%d", err, len(report.Invocations))
 	}
-	if err := store.appendState(report); err != nil {
+	if err := persistState(store, &report); err != nil {
 		t.Fatal(err)
 	}
 	// A new Host process reopens the preserved workspace from its storage.

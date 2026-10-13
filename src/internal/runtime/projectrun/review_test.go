@@ -54,7 +54,9 @@ func TestReviewerNormalizesEmptyArtifactForReceiptBoundReport(t *testing.T) {
 		t.Fatal("review fixture did not plan the selected Manager")
 	}
 	invoker := &normalizedReviewInvoker{}
-	review, log, err := invokeReviewer(context.Background(), host, invoker, root, plan, runtime, candidateProject, *task, "work", 1, candidate, nil, RunReport{})
+	report := ordinaryJournalReport(plan)
+	ctx := ordinaryJournalFixture(t, root, plan, runtime.Limits, &report)
+	review, log, err := invokeReviewer(ctx, host, invoker, root, plan, runtime, candidateProject, *task, "work", 1, candidate, RunReport{})
 	if err != nil {
 		t.Fatalf("valid response for empty candidate artifact was rejected: %v", err)
 	}
@@ -864,4 +866,33 @@ func TestResumeFailsClosedAtPersistedManagerReworkMarker(t *testing.T) {
 	if len(resumed.Findings) == 0 || !strings.Contains(resumed.Findings[len(resumed.Findings)-1], "manager-directed rework round") {
 		t.Fatalf("blocked rework boundary was not explained: %v", resumed.Findings)
 	}
+}
+
+func ordinaryJournalReport(plan PlanRecord) RunReport {
+	return RunReport{APIVersion: APIVersion, ID: plan.ID, PlanID: plan.ID, Operation: plan.Operation, Status: StatusRunning, Mode: projectconfig.ModeControlledLocal, StartedAt: time.Now().UTC(), UpdatedAt: time.Now().UTC(), BaseRevision: plan.BaseRevision, BaseSnapshot: plan.BaseSnapshot, ModelDigest: plan.ModelDigest, RuntimeDigest: plan.RuntimeDigest, Tasks: cloneTasks(plan.Managers), Revision: 1}
+}
+
+func ordinaryJournalFixture(t *testing.T, root string, plan PlanRecord, limits projectconfig.Limits, report *RunReport) context.Context {
+	t.Helper()
+	store, err := newRunStore(root)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := store.appendState(*report); err != nil {
+		t.Fatal(err)
+	}
+	journal, err := newManagerStageJournal(store, report, limits)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return withManagerStageJournal(context.Background(), journal)
+}
+
+func ordinaryLoadedJournalFixture(t *testing.T, store *runStore, limits projectconfig.Limits, report *RunReport) context.Context {
+	t.Helper()
+	journal, err := newManagerStageJournal(store, report, limits)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return withManagerStageJournal(context.Background(), journal)
 }

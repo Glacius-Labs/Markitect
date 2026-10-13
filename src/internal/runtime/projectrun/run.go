@@ -185,7 +185,7 @@ func resetTaskForRepair(task *ManagerTask) {
 }
 
 func boundedFeedbackText(value string, maximum int) string {
-	value = strings.ToValidUTF8(value, "ï¿½")
+	value = strings.ToValidUTF8(value, "ÃƒÂ¯Ã‚Â¿Ã‚Â½")
 	if maximum < 0 || len(value) <= maximum {
 		return value
 	}
@@ -204,18 +204,6 @@ func invokeManager(ctx context.Context, host Host, invoker Invoker, root string,
 	if !ok {
 		return result, log, fmt.Errorf("no configured agent for manager %s", task.ManagerID)
 	}
-	defer func() {
-		if result.Receipt.RunID == "" {
-			return
-		}
-		cost, known, overflow := estimateAgentCost(result.Receipt.Usage, configAgent)
-		if !known {
-			cost = 0
-		}
-		log = InvocationLog{TaskID: task.ID, Role: agentexec.RoleExecutor, Phase: phase,
-			InputDigest: result.Receipt.InputDigest, Receipt: result.Receipt, ReportID: result.Receipt.RunID,
-			Outcome: result.Receipt.Outcome, CostMicros: cost, CostKnown: known, CostOverflow: overflow}
-	}()
 	config, err := configAgent.AgentConfig()
 	if err != nil {
 		return result, log, err
@@ -318,7 +306,14 @@ func invokeManager(ctx context.Context, host Host, invoker Invoker, root string,
 	if config.Transport == projectconfig.TransportCodexAppServer || externalExecutionEnabled(ctx) {
 		attemptID = nativeTaskAttemptID(task, phase)
 	}
-	result, err = invokeProjectAgent(ctx, host, invoker, root, project, configAgent, plan.ID, attemptID, writePaths, ignoredPaths, runtime.Limits, config, request)
+	journal := journalFromContext(ctx)
+	log, err = ordinaryManagerAttemptLog(journal, invoker, config, configAgent, task, phase, nativeTaskAttemptID(task, phase), request)
+	if err != nil {
+		return result, log, err
+	}
+	result, log, err = invokeManagerAttempt(ctx, journal, log, request, configAgent, func(call context.Context) (agentexec.RunResult, error) {
+		return invokeProjectAgent(call, host, invoker, root, project, configAgent, plan.ID, attemptID, writePaths, ignoredPaths, runtime.Limits, config, request)
+	})
 	if err != nil {
 		return result, log, err
 	}
@@ -455,6 +450,14 @@ func appendInvocationReceipt(report *RunReport, invocation InvocationLog) bool {
 	if report == nil || invocation.Receipt.RunID == "" {
 		return false
 	}
+	if invocation.Attempt != nil {
+		for i, prior := range report.Invocations {
+			if prior.Attempt != nil && prior.Attempt.ID == invocation.Attempt.ID {
+				report.Invocations[i] = invocation
+				return true
+			}
+		}
+	}
 	report.Invocations = append(report.Invocations, invocation)
 	return true
 }
@@ -533,7 +536,7 @@ func boundedRepairDiagnostic(err error) string {
 	if err == nil {
 		return ""
 	}
-	message := strings.ToValidUTF8(strings.TrimSpace(err.Error()), "ï¿½")
+	message := strings.ToValidUTF8(strings.TrimSpace(err.Error()), "ÃƒÂ¯Ã‚Â¿Ã‚Â½")
 	runes := []rune(message)
 	for len(message) > 2048 && len(runes) > 0 {
 		runes = runes[:len(runes)-1]

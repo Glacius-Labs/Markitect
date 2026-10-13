@@ -208,6 +208,16 @@ func (j *managerStageJournal) terminal(log InvocationLog, result agentexec.RunRe
 		attempt.SafeFailure = "invocation-failed"
 	}
 	if len(result.Response.ReportJSON) > 0 {
+		if prior.Attempt.ReportRef != nil {
+			original, err := readStageEvidence(j.store, j.report.ID, prior.Attempt.ReportRef)
+			if err != nil {
+				return log, err
+			}
+			if !sameOpaqueManagerReport(original, result.Response.ReportJSON) {
+				return log, errors.New("original Manager report differs on recovery")
+			}
+			result.Response.ReportJSON = append(json.RawMessage(nil), original...)
+		}
 		ref, err := writeStageEvidence(j.store, j.report.ID, attempt.ID, ".report.json", append([]byte(nil), result.Response.ReportJSON...))
 		if err != nil {
 			return log, err
@@ -222,7 +232,7 @@ func (j *managerStageJournal) terminal(log InvocationLog, result agentexec.RunRe
 	if err != nil {
 		return log, err
 	}
-	ref, err := writeStageEvidence(j.store, j.report.ID, attempt.ID, ".response.json", encoded)
+	ref, err := writeStageEvidence(j.store, j.report.ID, attempt.ID, ".response-"+strings.TrimPrefix(rawContentDigest(encoded), "sha256:")+".json", encoded)
 	if err != nil {
 		return log, err
 	}
@@ -506,4 +516,74 @@ func (j *managerStageJournal) reconcileTerminalReservation(log InvocationLog) er
 	}
 	permit := RoleStartPermit{budget: j.budget, key: key}
 	return permit.Update(context.Background(), request)
+}
+
+// Ordinary adapters retain their request builders, transport options and
+// combined-floor pricing. Only attempt authority and role admission are shared.
+func ordinaryManagerAttemptLog(journal *managerStageJournal, invoker Invoker, config agentexec.Config, agent projectconfig.Agent, task ManagerTask, phase, id string, request agentexec.Request) (InvocationLog, error) {
+	if journal == nil || journal.report.ManagerStageBinding != nil {
+		return InvocationLog{}, errors.New("ordinary Manager requires its bound Runtime journal")
+	}
+	id = ordinaryRunAttemptID(*journal.report, id)
+	requestDigest, err := digest(request)
+	if err != nil {
+		return InvocationLog{}, err
+	}
+	fingerprint, err := fingerprintForRequest(invoker, config, request)
+	if err != nil {
+		return InvocationLog{}, err
+	}
+	return InvocationLog{TaskID: task.ID, Role: agentexec.RoleExecutor, Phase: phase, InputDigest: requestDigest, Outcome: "started", Attempt: &ManagerStageAttempt{ID: id, StageKey: journal.report.ID + "/" + id, IterationID: task.ID, ManagerID: task.ManagerID, Phase: phase, ContextDigest: rawContentDigest(request.Context), RequestDigest: requestDigest, ConfigFingerprint: fingerprint, Bounds: managerStageBounds(agent, config), StartedAt: time.Now().UTC(), Status: "started"}}, nil
+}
+
+func invocationAttemptIndex(rows []InvocationLog, log InvocationLog) int {
+	if log.Attempt == nil {
+		return -1
+	}
+	for i, row := range rows {
+		if row.Attempt != nil && row.Attempt.ID == log.Attempt.ID {
+			return i
+		}
+	}
+	return -1
+}
+
+func sameOpaqueManagerReport(first, second []byte) bool {
+	decode := func(data []byte) ([]byte, error) {
+		decoder := json.NewDecoder(strings.NewReader(string(data)))
+		decoder.UseNumber()
+		var value any
+		if err := decoder.Decode(&value); err != nil {
+			return nil, err
+		}
+		return json.Marshal(value)
+	}
+	a, err := decode(first)
+	if err != nil {
+		return false
+	}
+	b, err := decode(second)
+	return err == nil && string(a) == string(b)
+}
+
+func recoverOrdinaryManagerAttempt(journal *managerStageJournal, attemptID string, request agentexec.Request, result agentexec.RunResult, agent projectconfig.Agent, recoverErr error) (InvocationLog, error) {
+	if journal == nil {
+		return InvocationLog{}, errors.New("recovery requires the original Runtime journal")
+	}
+	index := invocationAttemptIndex(journal.report.Invocations, InvocationLog{Attempt: &ManagerStageAttempt{ID: ordinaryRunAttemptID(*journal.report, attemptID)}})
+	if index < 0 {
+		return InvocationLog{}, errors.New("original durable Manager attempt is absent; no replay")
+	}
+	log := journal.report.Invocations[index]
+	requestDigest, err := digest(request)
+	if err != nil || log.Attempt.RequestDigest != requestDigest {
+		return log, errors.New("original Manager request changed; no replay")
+	}
+	cost, known, overflow := estimateAgentCost(result.Receipt.Usage, agent)
+	log.CostMicros, log.CostKnown, log.CostOverflow = cost, known, overflow
+	log, err = journal.terminal(log, result, recoverErr)
+	if err != nil {
+		return log, err
+	}
+	return log, journal.reconcileTerminalReservation(log)
 }

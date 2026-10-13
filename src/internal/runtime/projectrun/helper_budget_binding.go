@@ -8,26 +8,18 @@ import (
 // bindRunHelperBudget clones the native executor with this run's durable
 // helper reservation policy while leaving its stable fingerprint options intact.
 func bindRunHelperBudget(invoker Invoker, host Host, limits projectconfig.Limits, store *runStore, report *RunReport) (Invoker, *RoleStartBudget, error) {
-	budget, err := NewRoleStartBudget(limits.MaxStarts, func() RunReport { return *report }, func(record RoleStartReservation) error {
-		found := false
-		for index, prior := range report.RoleStartReservations {
-			if prior.Key == record.Key {
-				report.RoleStartReservations[index] = record
-				found = true
-				break
-			}
-		}
-		if !found {
-			report.RoleStartReservations = append(report.RoleStartReservations, record)
-		}
-		return persistState(store, report)
-	})
+	journal, err := newManagerStageJournal(store, report, limits)
 	if err != nil {
 		return invoker, nil, err
 	}
+	return bindManagerJournalHelpers(invoker, host, limits, journal), journal.budget, nil
+}
+
+func bindManagerJournalHelpers(invoker Invoker, host Host, limits projectconfig.Limits, journal *managerStageJournal) Invoker {
+	budget := journal.budget
 	if binder, ok := invoker.(projectexecutor.HelperBinder); ok {
 		invoker = binder.WithHelperPolicy(NativeHelperPolicy{Workspaces: host.Workspaces, Limits: limits,
 			MaxStartRequests: limits.MaxStarts, Reserve: budget.ReserveHelper})
 	}
-	return invoker, budget, nil
+	return invoker
 }

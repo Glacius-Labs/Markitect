@@ -78,7 +78,7 @@ func NewRoleStartBudget(limit int, snapshot func() RunReport, persist func(RoleS
 			phase = "integrate"
 		}
 		if phase != "" {
-			request := agentexec.RoleStartRequest{RequestID: nativeTaskAttemptID(task, phase)}
+			request := agentexec.RoleStartRequest{RequestID: ordinaryRunAttemptID(initial, nativeTaskAttemptID(task, phase))}
 			rootKeys[rootReservationKey(task.ID, phase, request)] = true
 		}
 	}
@@ -143,7 +143,7 @@ func (b *RoleStartBudget) reserveRootOrHelper(ctx context.Context, record RoleSt
 				count = task.IntegrationAttempts
 			}
 			pending := task.State == "invoking" && record.Phase == "work" || task.State == "integrating" && record.Phase == "integrate"
-			valid = report.ManagerStageBinding == nil && pending && task.RepairPhase == record.Phase && count > 0 && record.Request.RequestID == nativeTaskAttemptID(task, record.Phase) && record.Request.ParentSessionID == report.ID
+			valid = report.ManagerStageBinding == nil && pending && task.RepairPhase == record.Phase && count > 0 && record.Request.RequestID == ordinaryRunAttemptID(report, nativeTaskAttemptID(task, record.Phase)) && record.Request.ParentSessionID == report.ID
 		}
 		if !valid {
 			return nil, errors.New("root reservation is not bound to its charged task attempt")
@@ -325,3 +325,13 @@ func helperReservationKey(request agentexec.RoleStartRequest) string {
 }
 
 var _ HelperReservation = (*RoleStartPermit)(nil)
+
+// A check-driven repair resets current task ordinals. Its existing durable
+// repair round distinguishes the new run iteration without changing workspace
+// task IDs or granting another start for a previous ticket.
+func ordinaryRunAttemptID(report RunReport, taskAttemptID string) string {
+	if len(report.RepairRounds) == 0 {
+		return taskAttemptID
+	}
+	return fmt.Sprintf("%s-repair-%d", taskAttemptID, report.RepairRounds[len(report.RepairRounds)-1].Number)
+}

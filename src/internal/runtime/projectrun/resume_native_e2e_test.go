@@ -250,7 +250,7 @@ func TestTargetedReworkAppliesNativeWorkspaceDelta(t *testing.T) {
 	report, base, runtime := loadNativeReworkState(t, fixture)
 	starts, spent := 1, int64(0)
 	invoker := &nativeDeltaOnlyInvoker{inner: fixture.invoker}
-	reworkErr := executeReworkSubtree(context.Background(), fixture.host, invoker, fixture.root, fixture.store, fixture.dir, fixture.plan, runtime, base, &report,
+	reworkErr := executeReworkSubtree(ordinaryLoadedJournalFixture(t, fixture.store, runtime.Limits, &report), fixture.host, invoker, fixture.root, fixture.store, fixture.dir, fixture.plan, runtime, base, &report,
 		fixture.managerID, "Correct the project owner artifact.", "Independent review requested a correction.", &starts, &spent)
 	if reworkErr != nil {
 		t.Fatalf("targeted native rework and its review: %v", reworkErr)
@@ -282,7 +282,7 @@ func TestTargetedReworkRejectsNativeNoOpWithWorkspaceChanges(t *testing.T) {
 	noOp := TaskResponse{Status: "no-op", Summary: "Nothing to change.", Delegations: []Delegation{}, ReworkRequests: []ReworkRequest{},
 		Questions: []string{}, Risks: []string{}, ResolvedQuestions: []string{}, ResolvedRisks: []string{}}
 	starts, spent := 1, int64(0)
-	reworkErr := executeReworkSubtree(context.Background(), fixture.host, &nativeDeltaOnlyInvoker{inner: fixture.invoker, report: &noOp}, fixture.root, fixture.store, fixture.dir, fixture.plan, runtime, base, &report,
+	reworkErr := executeReworkSubtree(ordinaryLoadedJournalFixture(t, fixture.store, runtime.Limits, &report), fixture.host, &nativeDeltaOnlyInvoker{inner: fixture.invoker, report: &noOp}, fixture.root, fixture.store, fixture.dir, fixture.plan, runtime, base, &report,
 		fixture.managerID, "Correct the project owner artifact.", "Independent review requested a correction.", &starts, &spent)
 	if reworkErr == nil || !strings.Contains(reworkErr.Error(), "claimed no-op while proposing files") {
 		t.Fatalf("native no-op with harvested workspace changes was accepted: %v", reworkErr)
@@ -320,7 +320,7 @@ func TestReintegrationAfterReworkAppliesNativeWorkspaceDelta(t *testing.T) {
 				ReworkRequests: []ReworkRequest{}, Integrated: true, Questions: []string{}, Risks: []string{}, ResolvedQuestions: []string{}, ResolvedRisks: []string{}}
 			invoker := &nativeDeltaOnlyInvoker{inner: fixture.invoker, report: &integrated, writes: test.writes}
 			starts, spent := 2, int64(0)
-			_, reintegrateErr := reintegrateAfterRework(context.Background(), fixture.host, invoker, fixture.root, fixture.store, fixture.dir, fixture.plan, runtime, base, &report, task, &starts, &spent)
+			_, reintegrateErr := reintegrateAfterRework(ordinaryLoadedJournalFixture(t, fixture.store, runtime.Limits, &report), fixture.host, invoker, fixture.root, fixture.store, fixture.dir, fixture.plan, runtime, base, &report, task, &starts, &spent)
 			if test.wantErr != "" {
 				if reintegrateErr == nil || !strings.Contains(reintegrateErr.Error(), test.wantErr) {
 					t.Fatalf("reintegration error = %v, want %q", reintegrateErr, test.wantErr)
@@ -603,6 +603,22 @@ func seedNativeRun(t *testing.T, phase string, reviewRework, reviewed bool) nati
 	configAgent := mustLoadRuntime(t, root).Agents[managerID]
 	config, err := configAgent.AgentConfig()
 	if err != nil {
+		t.Fatal(err)
+	}
+	// Persist the exact original task admission before native workspace evidence.
+	runtime := mustLoadRuntime(t, root)
+	journalAuthority, err := newManagerStageJournal(store, &report, runtime.Limits)
+	if err != nil {
+		t.Fatal(err)
+	}
+	originalLog, err := ordinaryManagerAttemptLog(journalAuthority, projectexecutor.New(codexappserver.Options{}, NativeHelperPolicy{}), config, configAgent, *task, phase, nativeTaskAttemptID(*task, phase), request)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := journalAuthority.budget.ReserveRecordedTaskRoot(context.Background(), task.ID, phase, agentexec.RoleStartRequest{RequestID: originalLog.Attempt.ID, ParentSessionID: report.ID, Role: agentexec.RoleExecutor, State: "requested"}); err != nil {
+		t.Fatal(err)
+	}
+	if err := journalAuthority.start(originalLog, request); err != nil {
 		t.Fatal(err)
 	}
 	invocation, _, err := agentexec.PrepareInvocation(request)

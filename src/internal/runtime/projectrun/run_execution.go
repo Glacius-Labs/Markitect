@@ -67,11 +67,16 @@ func (e *runExecution) execute() (RunReport, error) {
 }
 
 func (e *runExecution) bindRuntimeBudget() (RunReport, error) {
-	invoker, roleBudget, err := bindRunHelperBudget(e.invoker, e.host, e.runtime.Limits, e.store, &e.report)
-	if err != nil {
-		return failRun(e.store, e.report, fmt.Errorf("bind runtime helper budget: %w", err))
+	journal := journalFromContext(e.ctx)
+	if journal == nil || journal.report != &e.report {
+		var err error
+		journal, err = newManagerStageJournal(e.store, &e.report, e.runtime.Limits)
+		if err != nil {
+			return failRun(e.store, e.report, fmt.Errorf("bind runtime manager budget: %w", err))
+		}
+		e.ctx = withManagerStageJournal(e.ctx, journal)
 	}
-	e.invoker, e.roleBudget = invoker, roleBudget
+	e.invoker, e.roleBudget = bindManagerJournalHelpers(e.invoker, e.host, e.runtime.Limits, journal), journal.budget
 	e.refreshStarts()
 	e.spent = totalCost(e.report.Invocations)
 	return RunReport{}, nil
@@ -137,18 +142,17 @@ func (e *runExecution) recoverNativeInvocations() (RunReport, error) {
 			return blockRun(e.store, e.report, fmt.Errorf("native recovery for %s is blocked: %w", task.ManagerID, bindingErr))
 		}
 		result, found, recoverErr := RecoverProjectAgent(e.ctx, e.host, e.invoker, e.root, pending.taskID, config, e.runtime.Limits, binding, request)
+		invocation, retainErr := recoverOrdinaryManagerAttempt(journalFromContext(e.ctx), pending.taskID, request, result, agent, recoverErr)
+		recoverErr = errors.Join(recoverErr, retainErr)
 		if recoverErr != nil || !found {
-			if result.Receipt.RunID != "" {
-				upsertRecoveredInvocation(&e.report, invocationLogForResult(*task, pending.phase, result, agent))
-			}
+
 			if current := findTask(e.report.Tasks, task.ManagerID); current != nil {
 				current.State = "uncertain"
 			}
 			cause := fmt.Errorf("native invocation for %s could not be safely recovered", task.ManagerID)
 			return blockRun(e.store, e.report, errors.Join(cause, recoverErr))
 		}
-		invocation := invocationLogForResult(*task, pending.phase, result, agent)
-		upsertRecoveredInvocation(&e.report, invocation)
+
 		e.recoveredResults[taskActionKey(task.ManagerID, pending.phase)] = managerInvocationResult{managerID: task.ManagerID, result: result, log: invocation}
 		if pending.phase == "integrate" {
 			task.State = "integration-retry-ready"

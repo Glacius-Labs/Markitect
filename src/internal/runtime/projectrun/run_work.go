@@ -190,7 +190,7 @@ func (e *runExecution) runWorkAction(action managerAction, preparedAction prepar
 				return failRun(e.store, e.report, fmt.Errorf("manager %s work: %w", task.ManagerID, invokeErr))
 			}
 			if !fromBatch {
-				e.report.Invocations = append(e.report.Invocations, invocation)
+				appendInvocationReceipt(&e.report, invocation)
 				e.spent = totalCost(e.report.Invocations)
 				if err := persistState(e.store, &e.report); err != nil {
 					return RunReport{}, err
@@ -278,12 +278,9 @@ func (e *runExecution) runWorkAction(action managerAction, preparedAction prepar
 			return blockRun(e.store, e.report, fmt.Errorf("review for %s exceeds the cumulative run budget", task.ManagerID))
 		}
 		startedIndex := -1
-		review, reviewLog, reviewErr := invokeReviewer(e.ctx, e.host, e.invoker, e.root, e.plan, e.runtime, candidateProject, *task, "work", reviewRound, candidate, func(started InvocationLog) error {
-			e.report.Invocations = append(e.report.Invocations, started)
-			startedIndex = len(e.report.Invocations) - 1
-			return persistState(e.store, &e.report)
-		}, e.report)
-		e.starts++
+		review, reviewLog, reviewErr := invokeReviewer(e.ctx, e.host, e.invoker, e.root, e.plan, e.runtime, candidateProject, *task, "work", reviewRound, candidate, e.report)
+		startedIndex = invocationAttemptIndex(e.report.Invocations, reviewLog)
+		e.refreshStarts()
 		if startedIndex >= 0 {
 			e.report.Invocations[startedIndex] = reviewLog
 			if reviewErr == nil {
