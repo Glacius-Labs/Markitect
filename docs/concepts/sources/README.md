@@ -4,6 +4,7 @@ Sources preserve where the [register](../register.md) entries come from. Owner s
 
 | Source | Origin | Content |
 |---|---|---|
+| [Owner origin account](owner-origin-20261015.md) | Direct retrospective account and documentation request, 15 October 2026 | Originating Core/Module/Product rules, documentation and Claude/Codex skill drift, repeated consolidation, compiler and Manager rationale, and Government as delegated model maintenance |
 | [Owner product description](owner-product-description-20261009.md) | Captured by the Concepts chat on 9 October 2026; copied on 10 October 2026 | The owner's original description of the idea |
 | [Idea review](idea-review-20261010.md) | Claude Code review session, 10 October 2026 | Owner correction, the confirmed message and owner dispositions |
 | [Concepts chat collection](concepts-chat-20261009/README.md) | Snapshot of the Concepts chat's notes, 9 October 2026 | Owner contributions `USER-20261009-01` to `-07` as the product chat handed them over, plus the Concepts chat's structured notes C01 to C34. Most handed-over blocks end with the product chat's own classification (Einordnung, Konzeptbezug, Status). `-05` and `-07` are written in the product chat's voice. |

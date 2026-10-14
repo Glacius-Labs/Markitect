@@ -5,7 +5,8 @@ This is the home of Markitect's long-term vision, product-level decisions, clari
 | Document | Content |
 |---|---|
 | [Register](register.md) | All entries with ID, status, origin and links, and the mapping of earlier collections |
-| [Sources](sources/README.md) | Owner statements kept verbatim, with their provenance: the owner product description (9 October 2026), the idea review (10 October 2026), and snapshots of the Concepts and Ideas chats' collections (9 October 2026) |
+| [Origin and rationale](origin-and-rationale.md) | The owner's originating project, causal sequence, problems, concepts and assumptions, connected to the existing register |
+| [Sources](sources/README.md) | Owner statements kept verbatim with provenance, including the origin account, product description, idea review and snapshots of the Concepts and Ideas chats' collections |
 
 ## Before assessing or redirecting Markitect
 
