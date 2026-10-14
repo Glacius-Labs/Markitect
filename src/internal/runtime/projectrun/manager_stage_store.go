@@ -11,6 +11,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/Glacius-Labs/Markitect/src/internal/infrastructure/recordstore"
 	"github.com/Glacius-Labs/Markitect/src/internal/runtime/agentexec"
 	"github.com/Glacius-Labs/Markitect/src/internal/runtime/projectconfig"
 )
@@ -81,22 +82,58 @@ func stageEvidencePath(store *runStore, id string, ref ManagerStageEvidenceRef) 
 	if err != nil {
 		return "", err
 	}
-	reports, err := requireRealSubdirectory(dir, "reports")
+	reports, err := requireRealSubdirectory(dir, "reports", store)
 	if err != nil {
 		return "", err
 	}
 	path := filepath.Join(reports, parts[1])
-	if err := rejectReparsePath(store.root, filepath.ToSlash(filepath.Join(RunsPath, id, "reports"))); err != nil {
-		return "", err
-	}
-	if _, err := os.Lstat(path); err == nil {
-		if err := rejectReparsePath(store.root, filepath.ToSlash(filepath.Join(RunsPath, id, ref.Path))); err != nil {
-			return "", err
-		}
-	} else if !os.IsNotExist(err) {
-		return "", err
-	}
 	return path, nil
+}
+
+// stageEvidenceDirectoryParts preserves recordDirectoryOwner's lexical
+// canonical-path checks while allowing the unheld read to keep its one
+// ephemeral physical Store across the ordered List/List/Read operations.
+func stageEvidenceDirectoryParts(absolute string, owner *runStore) (recordstore.Kind, string, string, bool, error) {
+	slash := filepath.ToSlash(filepath.Clean(absolute))
+	marker := "/" + recordstore.RootPath + "/"
+	pos := strings.LastIndex(slash, marker)
+	if pos < 0 {
+		return "", "", "", false, nil
+	}
+	parts := strings.Split(slash[pos+len(marker):], "/")
+	kind := recordstore.Kind(parts[0])
+	id, role := "", ""
+	if len(parts) > 1 {
+		id = parts[1]
+	}
+	if len(parts) > 2 {
+		role = strings.Join(parts[2:], "/")
+	}
+	root := filepath.FromSlash(slash[:pos])
+	if !sameRecoveryPath(root, owner.root) {
+		return kind, id, role, true, errors.New("runtime directory differs from owning root")
+	}
+	return kind, id, role, true, nil
+}
+
+// stageEvidenceRecordName preserves recordPathOwner's parse-before-owner
+// ordering without opening a replacement physical Store.
+func stageEvidenceRecordName(absolute string, owner *runStore) (recordstore.Name, error) {
+	slash := filepath.ToSlash(filepath.Clean(absolute))
+	marker := "/" + recordstore.RootPath + "/"
+	pos := strings.LastIndex(slash, marker)
+	if pos < 0 {
+		return recordstore.Name{}, errors.New("runtime record outside canonical store")
+	}
+	root := filepath.FromSlash(slash[:pos])
+	name, err := recordstore.Parse(slash[pos+1:])
+	if err != nil {
+		return name, err
+	}
+	if !sameRecoveryPath(root, owner.root) {
+		return name, errors.New("runtime record differs from owning root")
+	}
+	return name, nil
 }
 
 func writeStageEvidence(store *runStore, id, attempt, suffix string, data []byte) (*ManagerStageEvidenceRef, error) {
@@ -106,15 +143,15 @@ func writeStageEvidence(store *runStore, id, attempt, suffix string, data []byte
 	if err != nil {
 		return nil, err
 	}
-	if old, readErr := os.ReadFile(path); readErr == nil {
+	if old, readErr := readRecordBytes(path, store); readErr == nil {
 		if rawContentDigest(old) != ref.Digest {
 			return nil, errors.New("immutable Manager evidence changed")
 		}
 		return &ref, nil
-	} else if !os.IsNotExist(readErr) {
+	} else if !errors.Is(readErr, errRuntimeRecordMissing) {
 		return nil, readErr
 	}
-	if err := writeImmutable(path, data); err != nil {
+	if err := writeImmutable(path, data, store); err != nil {
 		return nil, err
 	}
 	return &ref, nil
@@ -124,21 +161,109 @@ func readStageEvidence(store *runStore, id string, ref *ManagerStageEvidenceRef)
 	if ref == nil || !strings.HasPrefix(ref.Digest, "sha256:") {
 		return nil, errors.New("Manager evidence reference is missing")
 	}
-	path, err := stageEvidencePath(store, id, *ref)
+	if store.storage == nil {
+		parts := strings.Split(ref.Path, "/")
+		if len(parts) != 2 || parts[0] != "reports" || parts[1] == "" || filepath.Base(parts[1]) != parts[1] || strings.ContainsAny(parts[1], "\\:") {
+			return nil, errors.New("invalid Manager evidence reference")
+		}
+		if !validID(id) {
+			return nil, fmt.Errorf("invalid run ID %q", id)
+		}
+		data, err := func() ([]byte, error) {
+			physical, done, err := store.physical()
+			if err != nil {
+				return nil, err
+			}
+			defer done()
+			if _, err := physical.List(recordstore.Run, id, ""); err != nil {
+				return nil, err
+			}
+
+			directoryName := "reports"
+			if directoryName == "" || filepath.Base(directoryName) != directoryName {
+				return nil, fmt.Errorf("invalid runtime state directory %q", directoryName)
+			}
+			runPath := filepath.Join(store.base, id)
+			reportsPath := filepath.Join(runPath, directoryName)
+			kind, directoryID, role, canonical, err := stageEvidenceDirectoryParts(reportsPath, store)
+			if err != nil {
+				return nil, err
+			}
+			if canonical {
+				if err := physical.CheckRootBinding(store.root); err != nil {
+					return nil, err
+				}
+				if _, err := physical.List(kind, directoryID, role); err != nil {
+					return nil, err
+				}
+			} else {
+				info, err := os.Lstat(reportsPath)
+				if err != nil {
+					return nil, err
+				}
+				if !info.IsDir() || info.Mode()&os.ModeSymlink != 0 {
+					return nil, fmt.Errorf("runtime state directory %s must be real", reportsPath)
+				}
+			}
+
+			path := filepath.Join(reportsPath, parts[1])
+			if !canonical {
+				// recordPathOwner rejects this same outside path before opening a
+				// replacement Store; retain that terminal error after the old Lstat.
+				return nil, errors.New("runtime record outside canonical store")
+			}
+			name, err := stageEvidenceRecordName(path, store)
+			if err != nil {
+				return nil, err
+			}
+			if err := physical.CheckRootBinding(store.root); err != nil {
+				return nil, err
+			}
+			file, err := physical.Read(name, 0)
+			if err != nil {
+				return nil, err
+			}
+			if !file.Exists {
+				return nil, errRuntimeRecordMissing
+			}
+			return file.Bytes, nil
+		}()
+		if err != nil {
+			return nil, err
+		}
+		if rawContentDigest(data) != ref.Digest {
+			return nil, errors.New("Manager evidence byte digest differs")
+		}
+		return data, nil
+	}
+	parts := strings.Split(ref.Path, "/")
+	if len(parts) != 2 || parts[0] != "reports" || parts[1] == "" || filepath.Base(parts[1]) != parts[1] || strings.ContainsAny(parts[1], "\\:") {
+		return nil, errors.New("invalid Manager evidence reference")
+	}
+	if !validID(id) {
+		return nil, fmt.Errorf("invalid run ID %q", id)
+	}
+	baseRelativeToRoot, err := filepath.Rel(store.root, store.base)
+	if err != nil || filepath.ToSlash(baseRelativeToRoot) != RunsPath {
+		return nil, errors.New("runtime directory differs from owning root")
+	}
+	name := recordstore.Name{Kind: recordstore.Run, ID: id, Role: ref.Path}
+	if _, err := name.Path(); err != nil {
+		return nil, err
+	}
+	physical, done, err := store.physical()
 	if err != nil {
 		return nil, err
 	}
-	info, err := os.Lstat(path)
+	defer done()
+	file, err := physical.ReadWithDirectoryInspection(name, 0)
 	if err != nil {
 		return nil, err
 	}
-	if !info.Mode().IsRegular() {
-		return nil, errors.New("Manager evidence is not a regular file")
+	if !file.Exists {
+		return nil, errRuntimeRecordMissing
 	}
-	data, err := os.ReadFile(path)
-	if err != nil {
-		return nil, err
-	}
+	data := file.Bytes
 	if rawContentDigest(data) != ref.Digest {
 		return nil, errors.New("Manager evidence byte digest differs")
 	}
@@ -454,31 +579,15 @@ func newManagerStageStore(root string) (*runStore, error) {
 	if err != nil {
 		return nil, err
 	}
-	info, err := os.Lstat(abs)
+	physical, err := recordstore.Open(abs)
 	if err != nil {
 		return nil, err
 	}
-	if !info.IsDir() || info.Mode()&os.ModeSymlink != 0 {
-		return nil, errors.New("Manager stage root must be a real directory")
-	}
-	for _, relative := range []string{".markitect", RunsPath} {
-		if _, err := os.Lstat(filepath.Join(abs, filepath.FromSlash(relative))); err == nil {
-			if err := rejectReparsePath(abs, relative); err != nil {
-				return nil, err
-			}
-		} else if !os.IsNotExist(err) {
-			return nil, err
-		}
-	}
-	base := filepath.Join(abs, filepath.FromSlash(RunsPath))
-	if info, err := os.Lstat(base); err == nil {
-		if !info.IsDir() || info.Mode()&os.ModeSymlink != 0 {
-			return nil, errors.New("Manager stage store must be a real directory")
-		}
-	} else if !os.IsNotExist(err) {
+	defer physical.Close()
+	if err := physical.CheckCutover(recordstore.Run); err != nil {
 		return nil, err
 	}
-	return &runStore{root: abs, base: base}, nil
+	return &runStore{root: abs, base: filepath.Join(abs, filepath.FromSlash(RunsPath)), identity: physical.Identity()}, nil
 }
 
 // A terminal row may have been flushed just before its reservation update.

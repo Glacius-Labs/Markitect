@@ -5,10 +5,10 @@ import "github.com/Glacius-Labs/Markitect/src/internal/core/projectmodel/project
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"github.com/Glacius-Labs/Markitect/src/internal/runtime/projectconfig"
 	"io/fs"
-	"os"
 	"path/filepath"
 	"runtime"
 	"sort"
@@ -78,7 +78,7 @@ func PreflightApply(host Host, root, runID, candidateID string) (ApplyPreflight,
 	if err != nil {
 		return out, err
 	}
-	verification, err := latestVerification(dir, candidateID)
+	verification, err := latestVerification(dir, candidateID, store)
 	if err != nil {
 		return out, err
 	}
@@ -181,7 +181,7 @@ func TargetDigest(capture *guardedwrite.Capture) (string, error) {
 // Apply writes a previously verified candidate after exact target, branch,
 // HEAD, source, runtime and candidate checks. Partial Host writes are returned
 // and durably journaled; this is not presented as a multi-file transaction.
-func Apply(host Host, invoker Invoker, root string, request ApplyRequest) (ApplyReport, error) {
+func Apply(host Host, invoker Invoker, root string, request ApplyRequest) (returnedReport ApplyReport, resultErr error) {
 	out := ApplyReport{APIVersion: APIVersion, RunID: request.RunID, CandidateID: request.CandidateID, Status: "rejected", Written: []string{}, Journal: []string{}}
 	if host.Load == nil || host.FromSnapshot == nil || invoker == nil {
 		return out, fmt.Errorf("apply requires Host and runtime invoker")
@@ -194,7 +194,7 @@ func Apply(host Host, invoker Invoker, root string, request ApplyRequest) (Apply
 	if err != nil {
 		return out, err
 	}
-	defer unlock()
+	defer func() { resultErr = errors.Join(resultErr, unlock()) }()
 	plan, err := s.readPlan(request.PlanID)
 	if err != nil {
 		return out, err
@@ -260,7 +260,7 @@ func Apply(host Host, invoker Invoker, root string, request ApplyRequest) (Apply
 	if err != nil {
 		return out, err
 	}
-	verify, err := latestVerification(dir, candidate.ID)
+	verify, err := latestVerification(dir, candidate.ID, s)
 	if err != nil {
 		return out, err
 	}
@@ -386,7 +386,7 @@ func Apply(host Host, invoker Invoker, root string, request ApplyRequest) (Apply
 		if err := validateReportClosure(latest); err != nil {
 			return err
 		}
-		latestVerify, loadErr := latestVerification(dir, request.CandidateID)
+		latestVerify, loadErr := latestVerification(dir, request.CandidateID, s)
 		if loadErr != nil {
 			return loadErr
 		}
@@ -736,9 +736,9 @@ func guardedChanges(c candidateData, paths []string) ([]guardedwrite.Change, err
 	return changes, nil
 }
 
-func latestVerification(dir, candidateID string) (VerifyReport, error) {
+func latestVerification(dir, candidateID string, owners ...*runStore) (VerifyReport, error) {
 	var best VerifyReport
-	entries, err := os.ReadDir(filepath.Join(dir, "verification"))
+	entries, err := listRecordDirectory(filepath.Join(dir, "verification"), owners...)
 	if err != nil {
 		return best, err
 	}
@@ -752,7 +752,7 @@ func latestVerification(dir, candidateID string) (VerifyReport, error) {
 	sort.Strings(names)
 	for _, name := range names {
 		var current VerifyReport
-		if err := readJSON(filepath.Join(dir, "verification", name), &current); err != nil {
+		if err := readJSON(filepath.Join(dir, "verification", name), &current, owners...); err != nil {
 			return best, err
 		}
 		if current.APIVersion != APIVersion {
@@ -787,12 +787,12 @@ func verificationDigest(report VerifyReport) (string, error) {
 	}{report.RunID, report.CandidateID, report.CandidateHash, report.Status, report.VerificationScope, report.ManagerVerification, report.Checks, report.Verifier})
 }
 func persistApply(s *runStore, dir string, report ApplyReport) error {
-	if err := ensureDirectory(filepath.Join(dir, "apply")); err != nil {
+	if err := ensureDirectory(filepath.Join(dir, "apply"), s); err != nil {
 		return err
 	}
 	id, err := newID()
 	if err != nil {
 		return err
 	}
-	return writeImmutableJSON(filepath.Join(dir, "apply", id+".json"), report)
+	return writeImmutableJSON(filepath.Join(dir, "apply", id+".json"), report, s)
 }

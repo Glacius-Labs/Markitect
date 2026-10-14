@@ -4,6 +4,8 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
+	"io/fs"
 	"os"
 	"path/filepath"
 	"strings"
@@ -204,6 +206,416 @@ func TestManagerStageEvidenceTamperBlocksRecovery(t *testing.T) {
 	}
 	if invoker.calls != 1 {
 		t.Fatal("tamper triggered a provider call")
+	}
+}
+
+func TestReadStageEvidenceFreshStoreRetainsDerivedRootBinding(t *testing.T) {
+	root := testkit.TempDir(t)
+	foreignRoot := testkit.TempDir(t)
+	store, err := newManagerStageStore(root)
+	if err != nil {
+		t.Fatal(err)
+	}
+	foreignStore, err := newManagerStageStore(foreignRoot)
+	if err != nil {
+		t.Fatal(err)
+	}
+	const id = "0123456789abcdef0123456789abcdef"
+	if err := ensureDirectory(filepath.Join(store.base, id), store); err != nil {
+		t.Fatal(err)
+	}
+	if err := ensureDirectory(filepath.Join(store.base, id, "reports"), store); err != nil {
+		t.Fatal(err)
+	}
+	if err := ensureDirectory(filepath.Join(foreignStore.base, id), foreignStore); err != nil {
+		t.Fatal(err)
+	}
+	if err := ensureDirectory(filepath.Join(foreignStore.base, id, "reports"), foreignStore); err != nil {
+		t.Fatal(err)
+	}
+	payload := []byte("foreign-root evidence")
+	ref, err := writeStageEvidence(foreignStore, id, "attempt", ".report.json", payload)
+	if err != nil {
+		t.Fatal(err)
+	}
+	misbound := *store
+	misbound.base = foreignStore.base
+	if got, err := readStageEvidence(&misbound, id, ref); err == nil || strings.Contains(string(got), string(payload)) || !strings.Contains(err.Error(), "runtime directory differs from owning root") {
+		t.Fatalf("fresh read crossed its owning root: bytes=%q err=%v", got, err)
+	}
+}
+
+func TestReadStageEvidenceHeldStoreReadsCurrentGuardedBytes(t *testing.T) {
+	root := testkit.TempDir(t)
+	store, err := newManagerStageStore(root)
+	if err != nil {
+		t.Fatal(err)
+	}
+	const id = "fedcba9876543210fedcba9876543210"
+	if err := ensureDirectory(filepath.Join(store.base, id), store); err != nil {
+		t.Fatal(err)
+	}
+	if err := ensureDirectory(filepath.Join(store.base, id, "reports"), store); err != nil {
+		t.Fatal(err)
+	}
+	payload := []byte("current held-store evidence")
+	ref, err := writeStageEvidence(store, id, "attempt", ".report.json", payload)
+	if err != nil {
+		t.Fatal(err)
+	}
+	unlock, err := store.lock()
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer func() {
+		if err := unlock(); err != nil {
+			t.Errorf("release held Runtime store: %v", err)
+		}
+	}()
+	misbound := *store
+	misbound.base = filepath.Join(root, ".MARKITECT", "records", "run")
+	if got, err := readStageEvidence(&misbound, id, ref); err == nil || bytes.Equal(got, payload) || !strings.Contains(err.Error(), "runtime directory differs from owning root") {
+		t.Fatalf("held read accepted a noncanonical base spelling: bytes=%q err=%v", got, err)
+	}
+	got, err := readStageEvidence(store, id, ref)
+	if err != nil || !bytes.Equal(got, payload) || ref.Digest != rawContentDigest(payload) {
+		t.Fatalf("held read changed accepted bytes/digest: bytes=%q err=%v", got, err)
+	}
+	path, err := stageEvidencePath(store, id, *ref)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(path, []byte("tampered held-store evidence"), 0600); err != nil {
+		t.Fatal(err)
+	}
+	for attempt := 0; attempt < 2; attempt++ {
+		if got, err := readStageEvidence(store, id, ref); err == nil || bytes.Equal(got, payload) {
+			t.Fatalf("held read reused prior evidence after tamper (attempt %d): bytes=%q err=%v", attempt+1, got, err)
+		}
+	}
+	if err := os.Remove(path); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := readStageEvidence(store, id, ref); !errors.Is(err, errRuntimeRecordMissing) || errors.Is(err, fs.ErrNotExist) {
+		t.Fatalf("held validated absence lost its private Runtime classification: %v", err)
+	}
+}
+
+func readStageEvidenceOriginalSequence(store *runStore, id string, ref *ManagerStageEvidenceRef) ([]byte, error) {
+	if ref == nil || !strings.HasPrefix(ref.Digest, "sha256:") {
+		return nil, errors.New("Manager evidence reference is missing")
+	}
+	path, err := stageEvidencePath(store, id, *ref)
+	if err != nil {
+		return nil, err
+	}
+	data, err := readRecordBytes(path, store)
+	if err != nil {
+		return nil, err
+	}
+	if rawContentDigest(data) != ref.Digest {
+		return nil, errors.New("Manager evidence byte digest differs")
+	}
+	return data, nil
+}
+
+func BenchmarkManagerStageEvidenceReadHeld(b *testing.B) {
+	root := testkit.TempDir(b)
+	store, err := newManagerStageStore(root)
+	if err != nil {
+		b.Fatal(err)
+	}
+	const id = "1234567890abcdef1234567890abcdef"
+	if err := ensureDirectory(filepath.Join(store.base, id), store); err != nil {
+		b.Fatal(err)
+	}
+	if err := ensureDirectory(filepath.Join(store.base, id, "reports"), store); err != nil {
+		b.Fatal(err)
+	}
+	payload := []byte("paired held-store benchmark evidence")
+	ref, err := writeStageEvidence(store, id, "attempt", ".report.json", payload)
+	if err != nil {
+		b.Fatal(err)
+	}
+	unlock, err := store.lock()
+	if err != nil {
+		b.Fatal(err)
+	}
+	defer func() {
+		if err := unlock(); err != nil {
+			b.Errorf("release held Runtime store: %v", err)
+		}
+	}()
+	if got, err := readStageEvidenceOriginalSequence(store, id, ref); err != nil || !bytes.Equal(got, payload) {
+		b.Fatalf("original-sequence fixture is invalid: bytes=%q err=%v", got, err)
+	}
+	if got, err := readStageEvidence(store, id, ref); err != nil || !bytes.Equal(got, payload) {
+		b.Fatalf("combined-read fixture is invalid: bytes=%q err=%v", got, err)
+	}
+	benchmarks := []struct {
+		name string
+		read func(*runStore, string, *ManagerStageEvidenceRef) ([]byte, error)
+	}{
+		{name: "baseline-first", read: readStageEvidenceOriginalSequence},
+		{name: "candidate-first", read: readStageEvidence},
+		{name: "candidate-second", read: readStageEvidence},
+		{name: "baseline-second", read: readStageEvidenceOriginalSequence},
+	}
+	for _, benchmark := range benchmarks {
+		benchmark := benchmark
+		b.Run(benchmark.name, func(b *testing.B) {
+			b.ReportAllocs()
+			b.ResetTimer()
+			var last []byte
+			for i := 0; i < b.N; i++ {
+				var err error
+				last, err = benchmark.read(store, id, ref)
+				if err != nil {
+					b.Fatal(err)
+				}
+			}
+			b.StopTimer()
+			if !bytes.Equal(last, payload) {
+				b.Fatal("held evidence read returned changed bytes")
+			}
+		})
+	}
+}
+
+func unheldStageEvidenceFixture(t testing.TB) (*runStore, string, *ManagerStageEvidenceRef, []byte) {
+	t.Helper()
+	root := testkit.TempDir(t)
+	store, err := newManagerStageStore(root)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if store.storage != nil {
+		t.Fatal("unheld fixture unexpectedly owns a persistent Store")
+	}
+	const id = "1234567890abcdef1234567890abcdef"
+	if err := ensureDirectory(filepath.Join(store.base, id), store); err != nil {
+		t.Fatal(err)
+	}
+	if err := ensureDirectory(filepath.Join(store.base, id, "reports"), store); err != nil {
+		t.Fatal(err)
+	}
+	payload := []byte("same unheld Manager evidence bytes")
+	ref, err := writeStageEvidence(store, id, "attempt", ".report.json", payload)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return store, id, ref, payload
+}
+
+func TestReadStageEvidenceUnheldValidatesDigestAndAbsence(t *testing.T) {
+	store, id, ref, payload := unheldStageEvidenceFixture(t)
+	got, err := readStageEvidence(store, id, ref)
+	if err != nil || !bytes.Equal(got, payload) {
+		t.Fatalf("unheld read changed accepted bytes: got=%q err=%v", got, err)
+	}
+
+	badDigest := *ref
+	badDigest.Digest = rawContentDigest([]byte("different evidence"))
+	if got, err := readStageEvidence(store, id, &badDigest); err == nil || len(got) != 0 || !strings.Contains(err.Error(), "Manager evidence byte digest differs") {
+		t.Fatalf("unheld read accepted a mismatched digest: bytes=%q err=%v", got, err)
+	}
+	badPath := *ref
+	badPath.Path = "reports/../invalid.json"
+	if got, err := readStageEvidence(store, "", &badPath); err == nil || len(got) != 0 || !strings.Contains(err.Error(), "invalid Manager evidence reference") {
+		t.Fatalf("reference validation did not precede ID/open checks: bytes=%q err=%v", got, err)
+	}
+	if got, err := readStageEvidence(store, "invalid", ref); err == nil || len(got) != 0 || !strings.Contains(err.Error(), "invalid run ID") {
+		t.Fatalf("unheld read accepted an invalid run ID: bytes=%q err=%v", got, err)
+	}
+
+	path, err := stageEvidencePath(store, id, *ref)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := os.Remove(path); err != nil {
+		t.Fatal(err)
+	}
+	if got, err := readStageEvidence(store, id, ref); !errors.Is(err, errRuntimeRecordMissing) || errors.Is(err, fs.ErrNotExist) || len(got) != 0 {
+		t.Fatalf("validated missing leaf lost its private Runtime classification: bytes=%q err=%v", got, err)
+	}
+	if err := os.Remove(filepath.Dir(path)); err != nil {
+		t.Fatal(err)
+	}
+	if got, err := readStageEvidence(store, id, ref); !errors.Is(err, errRuntimeRecordMissing) || errors.Is(err, fs.ErrNotExist) || len(got) != 0 {
+		t.Fatalf("missing reports directory was not mapped after guarded absence: bytes=%q err=%v", got, err)
+	}
+	if err := os.Remove(filepath.Join(store.base, id)); err != nil {
+		t.Fatal(err)
+	}
+	if got, err := readStageEvidence(store, id, ref); !errors.Is(err, errRuntimeRecordMissing) || errors.Is(err, fs.ErrNotExist) || len(got) != 0 {
+		t.Fatalf("missing run directory was not mapped after guarded absence: bytes=%q err=%v", got, err)
+	}
+	if store.storage != nil {
+		t.Fatal("unheld read changed runStore storage ownership")
+	}
+}
+
+func TestReadStageEvidenceUnheldPreservesNoncanonicalDirectoryErrors(t *testing.T) {
+	store, id, ref, _ := unheldStageEvidenceFixture(t)
+	misbound := *store
+	misbound.base = filepath.Join(store.root, "legacy-record-base")
+	reports := filepath.Join(misbound.base, id, "reports")
+
+	assertSameFailure := func(label string) {
+		t.Helper()
+		baselineBytes, baselineErr := readStageEvidenceUnheldBaseline(&misbound, id, ref)
+		candidateBytes, candidateErr := readStageEvidence(&misbound, id, ref)
+		if len(baselineBytes) != 0 || len(candidateBytes) != 0 || baselineErr == nil || candidateErr == nil || baselineErr.Error() != candidateErr.Error() {
+			t.Fatalf("%s changed old path/error precedence: baseline=(%q,%v) candidate=(%q,%v)", label, baselineBytes, baselineErr, candidateBytes, candidateErr)
+		}
+	}
+
+	assertSameFailure("missing noncanonical reports path")
+	if err := os.MkdirAll(reports, 0700); err != nil {
+		t.Fatal(err)
+	}
+	assertSameFailure("existing noncanonical reports directory")
+	if err := os.Remove(reports); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(reports, []byte("not a directory"), 0600); err != nil {
+		t.Fatal(err)
+	}
+	assertSameFailure("non-directory reports path")
+	if err := os.Remove(reports); err != nil {
+		t.Fatal(err)
+	}
+	target := filepath.Join(testkit.TempDir(t), "target-directory")
+	if err := os.Mkdir(target, 0700); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.Symlink(target, reports); err != nil {
+		t.Skipf("noncanonical reports symlink creation unavailable: %v", err)
+	}
+	assertSameFailure("symlinked noncanonical reports path")
+}
+
+func TestReadStageEvidenceUnheldRejectsReportsReparseEntry(t *testing.T) {
+	store, id, ref, _ := unheldStageEvidenceFixture(t)
+	target := filepath.Join(testkit.TempDir(t), "target")
+	if err := os.WriteFile(target, []byte("target"), 0600); err != nil {
+		t.Fatal(err)
+	}
+	link := filepath.Join(store.base, id, "reports", "unexpected.json")
+	if err := os.Symlink(target, link); err != nil {
+		t.Skipf("symlink creation unavailable: %v", err)
+	}
+	if got, err := readStageEvidence(store, id, ref); err == nil || len(got) != 0 || !strings.Contains(err.Error(), "record list contains reparse entry") {
+		t.Fatalf("unheld read ignored a reports-directory reparse entry: bytes=%q err=%v", got, err)
+	}
+}
+
+func TestReadStageEvidenceUnheldRejectsReparseAncestor(t *testing.T) {
+	store, id, ref, payload := unheldStageEvidenceFixture(t)
+	marker := filepath.Join(store.root, ".markitect")
+	moved := marker + "-original"
+	if err := os.Rename(marker, moved); err != nil {
+		t.Skipf("record-root ancestor replacement unavailable: %v", err)
+	}
+	if err := os.Symlink(moved, marker); err != nil {
+		_ = os.Rename(moved, marker)
+		t.Skipf("directory symlink creation unavailable: %v", err)
+	}
+	if got, err := readStageEvidence(store, id, ref); err == nil || bytes.Equal(got, payload) || !strings.Contains(err.Error(), "unsafe record parent directory") {
+		t.Fatalf("unheld read accepted a reparse ancestor: bytes=%q err=%v", got, err)
+	}
+}
+
+func TestReadStageEvidenceUnheldRejectsRootReplacement(t *testing.T) {
+	store, id, ref, payload := unheldStageEvidenceFixture(t)
+	moved := store.root + "-original"
+	if err := os.Rename(store.root, moved); err != nil {
+		t.Skipf("root directory replacement unavailable: %v", err)
+	}
+	// TempDir cleanup only knows store.root; remove the moved original explicitly.
+	t.Cleanup(func() { _ = os.RemoveAll(moved) })
+	if err := os.Mkdir(store.root, 0700); err != nil {
+		t.Fatal(err)
+	}
+	if got, err := readStageEvidence(store, id, ref); err == nil || bytes.Equal(got, payload) || !strings.Contains(err.Error(), "Runtime record root identity changed") {
+		t.Fatalf("unheld read crossed a replaced repository root: bytes=%q err=%v", got, err)
+	}
+	if store.storage != nil {
+		t.Fatal("root replacement path changed runStore storage ownership")
+	}
+}
+
+// This is the byte-for-byte old unheld read sequence, kept test-only as the
+// benchmark baseline: stageEvidencePath -> readRecordBytes -> digest check.
+func readStageEvidenceUnheldBaseline(store *runStore, id string, ref *ManagerStageEvidenceRef) ([]byte, error) {
+	if ref == nil || !strings.HasPrefix(ref.Digest, "sha256:") {
+		return nil, errors.New("Manager evidence reference is missing")
+	}
+	path, err := stageEvidencePath(store, id, *ref)
+	if err != nil {
+		return nil, err
+	}
+	data, err := readRecordBytes(path, store)
+	if err != nil {
+		return nil, err
+	}
+	if rawContentDigest(data) != ref.Digest {
+		return nil, errors.New("Manager evidence byte digest differs")
+	}
+	return data, nil
+}
+
+func BenchmarkManagerStageEvidenceReadUnheld(b *testing.B) {
+	store, id, ref, payload := unheldStageEvidenceFixture(b)
+	if store.storage != nil {
+		b.Fatal("unheld benchmark fixture unexpectedly owns a persistent Store")
+	}
+	if got, err := readStageEvidenceUnheldBaseline(store, id, ref); err != nil || !bytes.Equal(got, payload) {
+		b.Fatalf("copied pre-candidate baseline is invalid: bytes=%q err=%v", got, err)
+	}
+	if got, err := readStageEvidence(store, id, ref); err != nil || !bytes.Equal(got, payload) {
+		b.Fatalf("candidate fixture is invalid: bytes=%q err=%v", got, err)
+	}
+	benchmarks := []struct {
+		name              string
+		read              func(*runStore, string, *ManagerStageEvidenceRef) ([]byte, error)
+		physicalOpen      float64
+		rootBinding       float64
+		pathComponentOpen float64
+		cutoverCheck      float64
+	}{
+		{name: "baseline-first", read: readStageEvidenceUnheldBaseline, physicalOpen: 3, rootBinding: 0, pathComponentOpen: 14, cutoverCheck: 3},
+		{name: "candidate-first", read: readStageEvidence, physicalOpen: 1, rootBinding: 2, pathComponentOpen: 14, cutoverCheck: 3},
+		{name: "candidate-second", read: readStageEvidence, physicalOpen: 1, rootBinding: 2, pathComponentOpen: 14, cutoverCheck: 3},
+		{name: "baseline-second", read: readStageEvidenceUnheldBaseline, physicalOpen: 3, rootBinding: 0, pathComponentOpen: 14, cutoverCheck: 3},
+	}
+	for _, benchmark := range benchmarks {
+		benchmark := benchmark
+		b.Run(benchmark.name, func(b *testing.B) {
+			b.ReportAllocs()
+			b.SetBytes(int64(len(payload)))
+			b.ResetTimer()
+			var last []byte
+			for i := 0; i < b.N; i++ {
+				var err error
+				last, err = benchmark.read(store, id, ref)
+				if err != nil {
+					b.Fatal(err)
+				}
+			}
+			b.StopTimer()
+			if !bytes.Equal(last, payload) {
+				b.Fatal("unheld evidence read returned changed bytes")
+			}
+			if store.storage != nil {
+				b.Fatal("unheld benchmark read changed runStore storage ownership")
+			}
+			b.ReportMetric(1, "read/op")
+			b.ReportMetric(benchmark.physicalOpen, "physical-open/op")
+			b.ReportMetric(benchmark.rootBinding, "root-binding/op")
+			b.ReportMetric(benchmark.pathComponentOpen, "path-component-open/op")
+			b.ReportMetric(benchmark.cutoverCheck, "cutover-check/op")
+		})
 	}
 }
 

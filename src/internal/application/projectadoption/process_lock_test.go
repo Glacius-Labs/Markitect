@@ -3,6 +3,7 @@ package projectadoption
 import (
 	"bufio"
 	"fmt"
+	"github.com/Glacius-Labs/Markitect/src/internal/infrastructure/recordstore"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -15,9 +16,22 @@ import (
 const processLockHelperEnv = "MARKITECT_PROCESS_LOCK_HELPER"
 
 func TestProcessFileLockReleasesAfterProcessKill(t *testing.T) {
-	path := filepath.Join(t.TempDir(), "session.lock")
+	root := t.TempDir()
+	store, err := recordstore.Open(root)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer store.Close()
+	for _, leaf := range []string{"session.lock", "manager-runs.lock"} {
+		if err := store.EstablishKernelLeaf("process-test", leaf); err != nil {
+			t.Fatal(err)
+		}
+	}
+	path := filepath.Join(root, filepath.FromSlash(recordstore.RootPath), "brownfield", "process-test", "session.lock")
 	command := exec.Command(os.Args[0], "-test.run=^TestProcessFileLockHelper$")
 	command.Env = append(os.Environ(), processLockHelperEnv+"="+path)
+	var helperErrors strings.Builder
+	command.Stderr = &helperErrors
 	stdout, err := command.StdoutPipe()
 	if err != nil {
 		t.Fatal(err)
@@ -42,10 +56,11 @@ func TestProcessFileLockReleasesAfterProcessKill(t *testing.T) {
 		_ = command.Wait()
 		t.Fatal("timed out waiting for lock subprocess")
 	}
-	if _, err := acquireProcessFileLock(path); err == nil {
+	if unexpectedUnlock, err := acquireTestRecordLease(path); err == nil {
+		unexpectedUnlock()
 		_ = command.Process.Kill()
 		_ = command.Wait()
-		t.Fatal("competing process acquired a held lock")
+		t.Fatalf("competing process acquired a held lock; helper: %s", helperErrors.String())
 	}
 	if err := command.Process.Kill(); err != nil {
 		t.Fatal(err)
@@ -53,7 +68,7 @@ func TestProcessFileLockReleasesAfterProcessKill(t *testing.T) {
 	if err := command.Wait(); err == nil {
 		t.Fatal("killed lock subprocess unexpectedly exited successfully")
 	}
-	unlock, err := acquireProcessFileLock(path)
+	unlock, err := acquireTestRecordLease(path)
 	if err != nil {
 		t.Fatalf("OS lock was not released after process death: %v", err)
 	}
@@ -69,25 +84,48 @@ func TestProcessFileLockHelper(t *testing.T) {
 	if path == "" {
 		return
 	}
-	unlock, err := acquireProcessFileLock(path)
+	unlock, err := acquireTestRecordLease(path)
 	if err != nil {
 		t.Fatal(err)
 	}
 	defer unlock()
 	_, _ = fmt.Fprintln(os.Stdout, "LOCKED")
 	_ = os.Stdout.Sync()
-	select {}
+	_, _ = fmt.Fprintf(os.Stderr, "locked helper pid=%d path=%s\n", os.Getpid(), path)
+	// Keep a timed wait alive: a bare select{} can make this standalone
+	// helper die from Go's deadlock detector before the parent kills it.
+	for {
+		time.Sleep(time.Minute)
+	}
 }
 
 func TestIncompleteLedgerPublicationFailsClosed(t *testing.T) {
-	dir := t.TempDir()
-	for _, name := range []string{".session.json.tmp", ".session.json.previous"} {
+	root := t.TempDir()
+	store, err := recordstore.Open(root)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer store.Close()
+	if err := store.Ensure(recordstore.Brownfield, "markers", ""); err != nil {
+		t.Fatal(err)
+	}
+	dir := filepath.Join(root, filepath.FromSlash(recordstore.RootPath), "brownfield", "markers")
+	for _, name := range []string{".record.json.tmp", ".record.json.previous", ".manager-runs.json.tmp", ".manager-runs.json.previous"} {
 		path := filepath.Join(dir, name)
 		if err := os.WriteFile(path, []byte("uncertain"), 0o600); err != nil {
 			t.Fatal(err)
 		}
-		if err := ensureNoIncompleteAtomicWrite(dir, "session.json"); err == nil {
+		var checkErr error
+		if strings.HasPrefix(name, ".manager-runs") {
+			_, checkErr = store.ReadLegacyBrownfieldManagerLedger("markers", 1024)
+		} else {
+			checkErr = store.Incomplete(recordstore.Name{Kind: recordstore.Brownfield, ID: "markers", Role: "record.json"})
+		}
+		if checkErr == nil {
 			t.Fatalf("publication uncertainty at %s must fail closed", name)
+		}
+		if data, err := os.ReadFile(path); err != nil || string(data) != "uncertain" {
+			t.Fatalf("uncertain marker was changed: %q %v", data, err)
 		}
 		if err := os.Remove(path); err != nil {
 			t.Fatal(err)
@@ -117,7 +155,7 @@ func TestFailedLedgerReplaceLeavesNoBlockingTemp(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		holder, err := os.Open(filepath.Join(dir, "session.json"))
+		holder, err := os.Open(filepath.Join(dir, "record.json"))
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -126,18 +164,31 @@ func TestFailedLedgerReplaceLeavesNoBlockingTemp(t *testing.T) {
 		if writeErr == nil {
 			t.Skip("replace succeeded despite an open reader; failure could not be provoked")
 		}
-		if _, err := os.Lstat(filepath.Join(dir, ".session.json.tmp")); err == nil {
-			t.Errorf("failed replace left %s behind", filepath.Join(dir, ".session.json.tmp"))
+		if recordstore.OutcomeUnknown(writeErr) || recordstore.WasPublished(writeErr) {
+			if _, err := LoadBrownfieldSession(root, session.ID); err == nil {
+				t.Error("uncertain publication did not fail closed")
+			}
+			return // Never replay or retry an ambiguous publication.
 		}
-		if _, err := LoadBrownfieldSession(root, session.ID); err != nil {
-			t.Errorf("unchanged session can no longer be loaded after a reported write failure: %v", err)
+		if _, err := os.Lstat(filepath.Join(dir, ".record.json.tmp")); err == nil {
+			t.Error("definitely unpublished failure retained an owned temp")
 		}
-		if _, err := WriteBrownfieldSession(root, next, session.Digest); err != nil {
-			t.Errorf("retrying the same write after the handle closed still fails: %v", err)
+		loaded, err := LoadBrownfieldSession(root, session.ID)
+		if err != nil || loaded.Digest != session.Digest {
+			t.Errorf("unpublished failure changed original domain state: %v", err)
 		}
 	})
 	t.Run("manager-run-ledger", func(t *testing.T) {
-		dir := t.TempDir()
+		root := t.TempDir()
+		store, err := recordstore.Open(root)
+		if err != nil {
+			t.Fatal(err)
+		}
+		defer store.Close()
+		if err := store.Ensure(recordstore.Brownfield, "failed-replace", ""); err != nil {
+			t.Fatal(err)
+		}
+		dir := filepath.Join(root, filepath.FromSlash(recordstore.RootPath), "brownfield", "failed-replace")
 		ledger := ManagerRunLedger{APIVersion: managerRunVersion, SessionID: "failed-replace", Events: []ManagerRunEvent{}}
 		sealManagerRunLedger(&ledger)
 		if err := writeManagerRunLedger(dir, ledger); err != nil {
@@ -152,11 +203,26 @@ func TestFailedLedgerReplaceLeavesNoBlockingTemp(t *testing.T) {
 		if writeErr == nil {
 			t.Skip("replace succeeded despite an open reader; failure could not be provoked")
 		}
-		if _, err := loadManagerRunLedger(dir, "failed-replace"); err != nil {
+		if _, err := loadManagerRunLedger(root, "failed-replace"); err != nil {
 			t.Errorf("unchanged manager-run ledger can no longer be loaded after a reported write failure: %v", err)
 		}
 		if err := writeManagerRunLedger(dir, ledger); err != nil {
 			t.Errorf("retrying the same ledger write after the handle closed still fails: %v", err)
 		}
 	})
+}
+
+func acquireTestRecordLease(lockPath string) (func(), error) {
+	marker := filepath.FromSlash(recordstore.RootPath + "/brownfield/process-test/session.lock")
+	root := strings.TrimSuffix(lockPath, string(filepath.Separator)+marker)
+	store, err := recordstore.Open(root)
+	if err != nil {
+		return nil, err
+	}
+	lease, err := store.Kernel("process-test", "session.lock")
+	if err != nil {
+		store.Close()
+		return nil, err
+	}
+	return func() { lease.Close(); store.Close() }, nil
 }

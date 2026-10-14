@@ -13,15 +13,16 @@ import (
 	"strings"
 
 	"github.com/Glacius-Labs/Markitect/src/internal/infrastructure/guardedwrite"
+	"github.com/Glacius-Labs/Markitect/src/internal/infrastructure/recordstore"
 )
 
-const recordsDirectory = ".markitect/state/explorations"
+const recordsDirectory = ".markitect/records/exploration"
 
 func RecordPath(id string) (string, error) {
 	if !safeID.MatchString(id) {
 		return "", fmt.Errorf("invalid exploration ID %q", id)
 	}
-	return recordsDirectory + "/" + id + ".json", nil
+	return (recordstore.Name{Kind: recordstore.Exploration, ID: id, Role: "record.json"}).Path()
 }
 
 // CreatePreview prepares a new one-scope exploration record without writing.
@@ -201,7 +202,7 @@ func Write(root string, plan WritePlan, expectPlanDigest string, currentBinding 
 	if err != nil {
 		return Record{}, err
 	}
-	_, err = guardedwrite.ApplyChecked(capture.Root, capture, []guardedwrite.Change{{Path: plan.Path, Bytes: encoded, Mode: 0o600}}, func() error {
+	_, err = guardedwrite.ApplyRecordChecked(capture.Root, capture, recordstore.Name{Kind: recordstore.Exploration, ID: plan.Next.ID, Role: "record.json"}, encoded, func() error {
 		if digest, bindErr := projectvalue.BindingDigest(currentBinding); bindErr != nil || digest != plan.BindingDigest {
 			return errors.New("current exploration binding changed during guarded write")
 		}
@@ -267,55 +268,53 @@ func validateWriteTransition(plan WritePlan, priorBytes []byte) error {
 }
 
 func Load(root, id string) (Record, error) {
-	var empty Record
-	path, err := RecordPath(id)
+	store, err := recordstore.Open(root)
 	if err != nil {
-		return empty, err
+		return Record{}, err
 	}
-	capture, err := guardedwrite.CaptureFiles(root, []string{path})
+	defer store.Close()
+	file, err := store.Read(recordstore.Name{Kind: recordstore.Exploration, ID: id, Role: "record.json"}, 0)
 	if err != nil {
-		return empty, err
+		return Record{}, err
 	}
-	file := capture.Files[path]
 	if !file.Exists {
-		return empty, fmt.Errorf("exploration %q does not exist", id)
+		return Record{}, fmt.Errorf("exploration %q does not exist", id)
 	}
 	return DecodeRecord(file.Bytes)
 }
-
 func List(root string) ([]Record, error) {
-	abs, err := filepath.Abs(root)
+	store, err := recordstore.Open(root)
 	if err != nil {
 		return nil, err
 	}
-	directory := filepath.Join(abs, filepath.FromSlash(recordsDirectory))
-	if err := verifyDirectoryChain(abs, directory); err != nil {
-		return nil, err
-	}
-	entries, err := os.ReadDir(directory)
-	if os.IsNotExist(err) {
-		return []Record{}, nil
-	}
+	defer store.Close()
+	entries, err := store.List(recordstore.Exploration, "", "")
 	if err != nil {
-		return nil, fmt.Errorf("list exploration records: %w", err)
+		return nil, err
 	}
 	records := make([]Record, 0, len(entries))
 	for _, entry := range entries {
-		if entry.IsDir() || !strings.HasSuffix(entry.Name(), ".json") {
-			continue
+		if !entry.IsDir() {
+			return nil, fmt.Errorf("unknown exploration container entry %q", entry.Name())
 		}
-		id := strings.TrimSuffix(entry.Name(), ".json")
-		record, err := Load(root, id)
+		record, err := Load(root, entry.Name())
 		if err != nil {
-			return nil, fmt.Errorf("load exploration %s: %w", id, err)
+			return nil, fmt.Errorf("load exploration %s: %w", entry.Name(), err)
 		}
 		records = append(records, record)
 	}
 	sort.Slice(records, func(i, j int) bool { return records[i].ID < records[j].ID })
 	return records, nil
 }
-
 func captureBinding(root string, binding projectvalue.Binding, targetPath string, verifyBasis bool) (*guardedwrite.Capture, error) {
+	store, err := recordstore.Open(root)
+	if err != nil {
+		return nil, err
+	}
+	defer store.Close()
+	if err = store.CheckCutover(recordstore.Exploration); err != nil {
+		return nil, err
+	}
 	paths := make([]string, 0, len(binding.BasisFiles)+1)
 	for _, basis := range binding.BasisFiles {
 		if basis.Path == targetPath {

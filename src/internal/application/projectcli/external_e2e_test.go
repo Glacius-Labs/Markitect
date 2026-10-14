@@ -6,6 +6,7 @@ import "github.com/Glacius-Labs/Markitect/src/internal/core/projectmodel/project
 
 import (
 	"context"
+	"crypto/sha256"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -376,11 +377,9 @@ func preserveExternalGitCLIRun(t *testing.T, root, runID string) {
 		t.Errorf("MARKITECT_RUN02_EVIDENCE_DIR must be outside selected repository: %q", dir)
 		return
 	}
-	sourceDir := filepath.Join(root, ".markitect", "runs", runID)
-	if _, err := os.Stat(sourceDir); err != nil {
-		if !errors.Is(err, os.ErrNotExist) {
-			t.Errorf("inspect runtime evidence: %v", err)
-		}
+	sourceDir := filepath.Join(root, ".markitect", "records", "run", runID)
+	if _, err := os.Stat(filepath.Join(sourceDir, "plan.json")); err != nil {
+		t.Errorf("required canonical plan evidence missing: %v", err)
 		return
 	}
 	destination := filepath.Join(dir, "run-"+runID)
@@ -421,7 +420,14 @@ func preserveExternalGitCLIRun(t *testing.T, root, runID string) {
 		if err != nil {
 			return err
 		}
-		return os.WriteFile(target, data, 0o600)
+		if err := os.WriteFile(target, data, 0o600); err != nil {
+			return err
+		}
+		copied, err := os.ReadFile(target)
+		if err != nil || sha256.Sum256(copied) != sha256.Sum256(data) {
+			return fmt.Errorf("copied evidence bytes differ at %s: %v", relative, err)
+		}
+		return nil
 	}); err != nil {
 		t.Errorf("preserve runtime evidence at %s: %v", destination, err)
 	}

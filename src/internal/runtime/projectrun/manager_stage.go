@@ -10,6 +10,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/Glacius-Labs/Markitect/src/internal/infrastructure/recordstore"
 	"github.com/Glacius-Labs/Markitect/src/internal/runtime/agentexec"
 	"github.com/Glacius-Labs/Markitect/src/internal/runtime/projectconfig"
 )
@@ -197,11 +198,13 @@ func readManagerStageState(store *runStore, b ManagerStageBinding) (RunReport, b
 	if err != nil {
 		return RunReport{}, false, err
 	}
-	if _, err := os.Lstat(filepath.Join(dir, "plan.json")); err == nil {
+	if _, err := readRecordBytes(filepath.Join(dir, "plan.json"), store); err == nil {
 		return RunReport{}, false, errors.New("Manager session identity collides with an ordinary plan")
+	} else if !errors.Is(err, errRuntimeRecordMissing) {
+		return RunReport{}, false, err
 	}
 	state, err := store.readLatestState(id)
-	if errors.Is(err, ErrNotFound) || os.IsNotExist(err) {
+	if errors.Is(err, ErrNotFound) {
 		return RunReport{}, false, nil
 	}
 	if err != nil {
@@ -333,15 +336,31 @@ func initializeManagerStage(store *runStore, b ManagerStageBinding) (RunReport, 
 	if err != nil {
 		return RunReport{}, err
 	}
-	if _, err := os.Lstat(dir); os.IsNotExist(err) {
+	physical, done, err := store.physical()
+	if err != nil {
+		return RunReport{}, err
+	}
+	defer done()
+	entries, err := physical.List(recordstore.Run, "", "")
+	if err != nil {
+		return RunReport{}, err
+	}
+	present := false
+	for _, entry := range entries {
+		if entry.Name() == id {
+			if !entry.IsDir() {
+				return RunReport{}, errors.New("Manager run container is not a directory")
+			}
+			present = true
+		}
+	}
+	if !present {
 		if _, err := store.createRun(id); err != nil {
 			return RunReport{}, err
 		}
-	} else if err != nil {
-		return RunReport{}, err
 	}
 	for _, name := range []string{"states", "reports", "candidates"} {
-		if err := ensureDirectory(filepath.Join(dir, name)); err != nil {
+		if err := ensureDirectory(filepath.Join(dir, name), store); err != nil {
 			return RunReport{}, err
 		}
 	}
@@ -358,7 +377,7 @@ func newStageInvocation(spec ManagerStageSpec, preview ManagerStagePreview, id s
 	return InvocationLog{TaskID: spec.Validation.IterationID, Role: agentexec.RoleExecutor, Phase: spec.Validation.Phase, InputDigest: preview.RequestDigest, Outcome: "started", Attempt: a}
 }
 
-func RunManagerStage(ctx context.Context, host Host, invoker Invoker, root string, spec ManagerStageSpec, expectedPreviewDigest string) (ManagerStageResult, error) {
+func RunManagerStage(ctx context.Context, host Host, invoker Invoker, root string, spec ManagerStageSpec, expectedPreviewDigest string) (returnedReport ManagerStageResult, resultErr error) {
 	if ctx == nil || host.ValidateManagerStage == nil {
 		return ManagerStageResult{}, errors.New("Manager stage requires context and Application fact validation")
 	}
@@ -377,7 +396,7 @@ func RunManagerStage(ctx context.Context, host Host, invoker Invoker, root strin
 	if err != nil {
 		return ManagerStageResult{}, err
 	}
-	defer unlock()
+	defer func() { resultErr = errors.Join(resultErr, unlock()) }()
 	preview, err := PreviewManagerStage(invoker, root, spec)
 	if err != nil {
 		return ManagerStageResult{}, err
@@ -530,7 +549,7 @@ func recoverManagerStage(ctx context.Context, host Host, invoker Invoker, j *man
 	return out, errors.Join(err, managerStageAttachability(*j.report, frozenManagerStageBudget(effectiveManagerStageBudget(*j.report), spec.Limits)))
 }
 
-func CompleteManagerStage(root, runID, attemptID, expectedStateDigest string, validation ManagerStageValidation) (ManagerStageResult, error) {
+func CompleteManagerStage(root, runID, attemptID, expectedStateDigest string, validation ManagerStageValidation) (returnedReport ManagerStageResult, resultErr error) {
 	store, err := newManagerStageStore(root)
 	if err != nil {
 		return ManagerStageResult{}, err
@@ -539,7 +558,7 @@ func CompleteManagerStage(root, runID, attemptID, expectedStateDigest string, va
 	if err != nil {
 		return ManagerStageResult{}, err
 	}
-	defer unlock()
+	defer func() { resultErr = errors.Join(resultErr, unlock()) }()
 	report, err := store.readLatestState(runID)
 	if err != nil {
 		return ManagerStageResult{}, err

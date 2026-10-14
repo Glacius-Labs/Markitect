@@ -219,7 +219,7 @@ func readInventoryCapture(ctx context.Context, root string, baseline inventory, 
 		rel = filepath.ToSlash(rel)
 		// Host operational records are not task inputs. Only source capture skips
 		// this exact tool subtree; candidate writes here remain observable/forbidden.
-		if source && (strings.EqualFold(rel, ".markitect/runs") || strings.HasPrefix(strings.ToLower(rel), ".markitect/runs/")) {
+		if source && (strings.EqualFold(rel, ".markitect/runs") || strings.HasPrefix(strings.ToLower(rel), ".markitect/runs/") || strings.EqualFold(rel, ".markitect/records") || strings.HasPrefix(strings.ToLower(rel), ".markitect/records/")) {
 			if d.IsDir() {
 				return filepath.SkipDir
 			}

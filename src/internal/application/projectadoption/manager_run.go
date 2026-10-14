@@ -197,6 +197,10 @@ func buildManagerRunPreview(sourceRoot, targetRoot, sessionID, iterationID, phas
 }
 
 func buildManagerRunPreviewInternal(sourceRoot, targetRoot, sessionID, iterationID, phase, agentManagerID, expectedSessionDigest, retryOfAttemptID string, config agentexec.Config, limits ManagerRunLimits, invoker projectrun.Invoker, runtimeStage ...bool) (ManagerRunPreview, BrownfieldSession, agentexec.Request, managerRunRequestContext, error) {
+	return buildManagerRunPreviewOwned(sourceRoot, targetRoot, sessionID, iterationID, phase, agentManagerID, expectedSessionDigest, retryOfAttemptID, config, limits, invoker, len(runtimeStage) > 0 && runtimeStage[0])
+}
+
+func buildManagerRunPreviewOwned(sourceRoot, targetRoot, sessionID, iterationID, phase, agentManagerID, expectedSessionDigest, retryOfAttemptID string, config agentexec.Config, limits ManagerRunLimits, invoker projectrun.Invoker, runtimeStage bool, owners ...*ManagerStageLease) (ManagerRunPreview, BrownfieldSession, agentexec.Request, managerRunRequestContext, error) {
 	var empty ManagerRunPreview
 	var emptySession BrownfieldSession
 	var emptyRequest agentexec.Request
@@ -207,7 +211,7 @@ func buildManagerRunPreviewInternal(sourceRoot, targetRoot, sessionID, iteration
 	if invoker == nil || sourceRoot == "" || targetRoot == "" || sessionID == "" || iterationID == "" || agentManagerID == "" {
 		return empty, emptySession, emptyRequest, emptyContext, errors.New("manager stage requires source/target, session, iteration, phase, agent mapping, and invoker")
 	}
-	session, readiness, err := ResumeBrownfieldSession(sourceRoot, targetRoot, sessionID)
+	session, readiness, err := ResumeBrownfieldSession(sourceRoot, targetRoot, sessionID, owners...)
 	if err != nil {
 		return empty, emptySession, emptyRequest, emptyContext, err
 	}
@@ -256,15 +260,11 @@ func buildManagerRunPreviewInternal(sourceRoot, targetRoot, sessionID, iteration
 	if err != nil {
 		return empty, emptySession, emptyRequest, emptyContext, err
 	}
-	ledgerDir, err := sessionDirectory(sourceRoot, sessionID, false)
+	ledger, err := loadManagerRunLedger(sourceRoot, sessionID, owners...)
 	if err != nil {
 		return empty, emptySession, emptyRequest, emptyContext, err
 	}
-	ledger, err := loadManagerRunLedger(ledgerDir, sessionID)
-	if err != nil {
-		return empty, emptySession, emptyRequest, emptyContext, err
-	}
-	if len(runtimeStage) > 0 && runtimeStage[0] && (ledger.Budget != nil || len(ledger.Events) != 0) {
+	if runtimeStage && (ledger.Budget != nil || len(ledger.Events) != 0) {
 		return empty, emptySession, emptyRequest, emptyContext, errors.New("legacy Manager execution ledger cannot be imported or refilled")
 	}
 	limits, err = frozenManagerRunLimits(ledger, limits)
@@ -333,7 +333,7 @@ func buildManagerRunPreviewInternal(sourceRoot, targetRoot, sessionID, iteration
 		preview.RemainingCostMicros = 0
 	}
 	preview.Completed = completedManagerStage(session, iterationID, phase)
-	if retryOfAttemptID != "" && (len(runtimeStage) == 0 || !runtimeStage[0]) {
+	if retryOfAttemptID != "" && !runtimeStage {
 		latest, exists := latestManagerAttempt(ledger, iterationID, phase)
 		if !exists || latest.AttemptID != retryOfAttemptID || latest.Status != "failed" || latest.Execution == nil || !latest.CostKnown {
 			return empty, emptySession, emptyRequest, emptyContext, errors.New("retry must name the latest failed attempt with a known receipt and cost")
@@ -614,8 +614,11 @@ type PreparedManagerStage struct {
 	built       managerRunRequestContext
 }
 
-func PrepareManagerStage(sourceRoot, targetRoot, sessionID, iterationID, phase, agentManagerID, expectedSessionDigest, retryOfAttemptID string, config agentexec.Config, limits ManagerRunLimits, invoker projectrun.Invoker) (PreparedManagerStage, error) {
-	preview, session, request, built, err := buildManagerRunPreviewInternal(sourceRoot, targetRoot, sessionID, iterationID, phase, agentManagerID, expectedSessionDigest, retryOfAttemptID, config, limits, invoker, true)
+func PrepareManagerStage(sourceRoot, targetRoot, sessionID, iterationID, phase, agentManagerID, expectedSessionDigest, retryOfAttemptID string, config agentexec.Config, limits ManagerRunLimits, invoker projectrun.Invoker, owners ...*ManagerStageLease) (PreparedManagerStage, error) {
+	preview, session, request, built, err := buildManagerRunPreviewOwned(sourceRoot, targetRoot, sessionID, iterationID, phase, agentManagerID, expectedSessionDigest, retryOfAttemptID, config, limits, invoker, true, owners...)
+	if err == nil && len(owners) == 1 && owners[0] != nil {
+		err = owners[0].Check()
+	}
 	return PreparedManagerStage{Preview: preview, Session: session, Request: request, Context: built.ManagerContext, Purpose: built.Purpose, Integration: built.Integration, built: built}, err
 }
 

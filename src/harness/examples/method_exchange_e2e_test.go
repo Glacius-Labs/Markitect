@@ -3,6 +3,7 @@ package examples
 import (
 	"bytes"
 	"context"
+	"crypto/sha256"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -210,13 +211,18 @@ func (d *methodCLIDriver) preserveEvidence(f *methodExchangeFixture, mode string
 	}
 	d.logDir, f.ledgerPath = filepath.Join(dir, "cli"), filepath.Join(dir, "exchange-ledger.jsonl")
 	d.t.Cleanup(func() {
-		for name, source := range map[string]string{"durable-runs": filepath.Join(f.root, ".markitect", "runs"), "unaccepted-exchange": f.exchangeDir, "literal-expectations": f.expectedDir} {
+		for name, source := range map[string]string{"durable-runs": filepath.Join(f.root, ".markitect", "records", "run"), "private-and-transport": filepath.Join(f.root, ".markitect", "runs"), "unaccepted-exchange": f.exchangeDir, "literal-expectations": f.expectedDir} {
 			if _, err := os.Stat(source); os.IsNotExist(err) {
+				if name == "durable-runs" {
+					d.t.Errorf("required canonical run evidence missing: %v", err)
+				}
 				continue
 			}
 			if err := os.CopyFS(filepath.Join(dir, name), os.DirFS(source)); err != nil {
 				d.t.Errorf("preserve %s: %v", name, err)
+				continue
 			}
+			verifyMethodEvidenceBytes(d.t, source, filepath.Join(dir, name))
 		}
 		baseline, err := json.MarshalIndent(f.baseline, "", "  ")
 		if err != nil {
@@ -780,4 +786,47 @@ func methodMarshal(t *testing.T, value any) []byte {
 		t.Fatal(err)
 	}
 	return data
+}
+
+func verifyMethodEvidenceBytes(t *testing.T, source, destination string) {
+	t.Helper()
+	count := 0
+	err := filepath.WalkDir(source, func(p string, e os.DirEntry, walkErr error) error {
+		if walkErr != nil {
+			return walkErr
+		}
+		if e.IsDir() {
+			return nil
+		}
+		info, err := e.Info()
+		if err != nil {
+			return err
+		}
+		if !info.Mode().IsRegular() {
+			return fmt.Errorf("nonregular evidence %s", p)
+		}
+		rel, err := filepath.Rel(source, p)
+		if err != nil {
+			return err
+		}
+		original, err := os.ReadFile(p)
+		if err != nil {
+			return err
+		}
+		copied, err := os.ReadFile(filepath.Join(destination, rel))
+		if err != nil {
+			return err
+		}
+		if sha256.Sum256(original) != sha256.Sum256(copied) {
+			return fmt.Errorf("copied evidence hash differs: %s", rel)
+		}
+		count++
+		return nil
+	})
+	if err != nil {
+		t.Errorf("exact evidence copy: %v", err)
+	}
+	if filepath.Base(destination) == "durable-runs" && count == 0 {
+		t.Error("canonical durable evidence copy was empty")
+	}
 }

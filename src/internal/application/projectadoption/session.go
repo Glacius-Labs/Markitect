@@ -7,19 +7,19 @@ import (
 	"errors"
 	"fmt"
 	"io/fs"
-	"os"
 	"path/filepath"
 	"sort"
 	"strings"
 
 	"github.com/Glacius-Labs/Markitect/src/internal/application/projectwork"
+	"github.com/Glacius-Labs/Markitect/src/internal/infrastructure/recordstore"
 	"github.com/Glacius-Labs/Markitect/src/internal/infrastructure/source"
 	"github.com/Glacius-Labs/Markitect/src/internal/runtime/projectrun"
 )
 
 const (
 	BrownfieldSessionVersion = "markitect.example.org/brownfield-session/v1alpha1"
-	BrownfieldSessionPath    = ".markitect/drafts/brownfield"
+	BrownfieldSessionPath    = ".markitect/records/brownfield"
 )
 
 // BrownfieldSession is the durable ledger for iterative reverse modeling.
@@ -356,42 +356,66 @@ func DecodeBrownfieldSession(data []byte) (BrownfieldSession, error) {
 	return value, nil
 }
 
-// WriteBrownfieldSession persists an immutable ledger by compare-and-swap.
-// expectedDigest is empty only when creating a previously absent session.
-func WriteBrownfieldSession(sourceRoot string, session BrownfieldSession, expectedDigest string) (BrownfieldSession, error) {
+func sessionName(id string) recordstore.Name {
+	return recordstore.Name{Kind: recordstore.Brownfield, ID: id, Role: "record.json"}
+}
+
+// WriteBrownfieldSession uses the sealed preview token for creation and the
+// prior domain digest for later CAS. Storage byte tokens are separate.
+func WriteBrownfieldSession(sourceRoot string, session BrownfieldSession, expectedDigest string, owners ...*ManagerStageLease) (returnedSession BrownfieldSession, resultErr error) {
 	if err := ValidateBrownfieldSession(session); err != nil {
 		return BrownfieldSession{}, err
 	}
-	dir, err := sessionDirectory(sourceRoot, session.ID, true)
+	store, release, err := borrowBrownfieldStore(sourceRoot, session.ID, owners...)
 	if err != nil {
 		return BrownfieldSession{}, err
 	}
-	unlock, err := acquireSessionLock(dir)
+	defer release()
+	if err = store.CheckWrite(recordstore.Brownfield); err != nil {
+		return BrownfieldSession{}, err
+	}
+	creating := expectedDigest == session.Digest
+	if creating {
+		for _, leaf := range []string{"session.lock", "manager-runs.lock"} {
+			if err = store.EstablishKernelLeaf(session.ID, leaf); err != nil {
+				return BrownfieldSession{}, err
+			}
+		}
+	}
+	lease, err := store.Kernel(session.ID, "session.lock")
 	if err != nil {
 		return BrownfieldSession{}, err
 	}
-	defer unlock()
-	if err := ensureNoIncompleteAtomicWrite(dir, "session.json"); err != nil {
+	defer func() {
+		if closeErr := lease.Close(); closeErr != nil {
+			if returnedSession.ID != "" {
+				p, _ := sessionName(session.ID).Path()
+				closeErr = &recordstore.PublicationError{Path: p, Outcome: recordstore.Published, Cause: closeErr}
+			}
+			resultErr = errors.Join(resultErr, closeErr)
+		}
+	}()
+	name := sessionName(session.ID)
+	if err = store.Incomplete(name); err != nil {
 		return BrownfieldSession{}, err
 	}
-	file := filepath.Join(dir, "session.json")
-	old, readErr := readRegularLedger(file)
-	if expectedDigest == session.Digest {
-		if readErr == nil {
+	prior, err := store.Read(name, maxRecordBytes)
+	if err != nil {
+		return BrownfieldSession{}, err
+	}
+	if creating {
+		if prior.Exists {
 			return BrownfieldSession{}, errors.New("Brownfield session already exists")
 		}
-		if !errors.Is(readErr, fs.ErrNotExist) {
-			return BrownfieldSession{}, readErr
-		}
 	} else {
-		if readErr != nil {
-			return BrownfieldSession{}, fmt.Errorf("read prior Brownfield session: %w", readErr)
+		if !prior.Exists {
+			return BrownfieldSession{}, errors.New("prior Brownfield session is missing")
 		}
-		prior, err := DecodeBrownfieldSession(old)
+		value, err := DecodeBrownfieldSession(prior.Bytes)
 		if err != nil {
 			return BrownfieldSession{}, err
 		}
-		if prior.Digest != expectedDigest {
+		if value.Digest != expectedDigest {
 			return BrownfieldSession{}, errors.New("Brownfield session changed; reload before writing")
 		}
 	}
@@ -399,79 +423,66 @@ func WriteBrownfieldSession(sourceRoot string, session BrownfieldSession, expect
 	if err != nil {
 		return BrownfieldSession{}, err
 	}
-	temp := filepath.Join(dir, ".session.json.tmp")
-	tempFile, err := os.OpenFile(temp, os.O_WRONLY|os.O_CREATE|os.O_EXCL, 0o600)
+	guard := func() error {
+		err := lease.Check()
+		if len(owners) == 1 && owners[0] != nil {
+			err = errors.Join(err, owners[0].Check())
+		}
+		return err
+	}
+	if err = store.Replace(name, prior, data, guard); err != nil {
+		return BrownfieldSession{}, err
+	}
+	observed, err := store.Read(name, maxRecordBytes)
+	if err == nil && (!observed.Exists || !bytes.Equal(observed.Bytes, data)) {
+		err = errors.New("published Session bytes differ")
+	}
+	if err == nil {
+		var decoded BrownfieldSession
+		decoded, err = DecodeBrownfieldSession(observed.Bytes)
+		if err == nil && decoded.Digest != session.Digest {
+			err = errors.New("published Session digest differs")
+		}
+	}
 	if err != nil {
-		return BrownfieldSession{}, err
-	}
-	if _, err := tempFile.Write(data); err != nil {
-		_ = tempFile.Close()
-		_ = os.Remove(temp)
-		return BrownfieldSession{}, err
-	}
-	if err := tempFile.Sync(); err != nil {
-		_ = tempFile.Close()
-		_ = os.Remove(temp)
-		return BrownfieldSession{}, err
-	}
-	if err := tempFile.Close(); err != nil {
-		_ = os.Remove(temp)
-		return BrownfieldSession{}, err
-	}
-	if err := atomicReplaceFile(temp, file); err != nil {
-		_ = os.Remove(temp)
-		return BrownfieldSession{}, err
+		p, _ := name.Path()
+		return BrownfieldSession{}, &recordstore.PublicationError{Path: p, Outcome: recordstore.Published, Cause: err}
 	}
 	return session, nil
 }
-
-func LoadBrownfieldSession(sourceRoot, id string) (BrownfieldSession, error) {
+func LoadBrownfieldSession(sourceRoot, id string, owners ...*ManagerStageLease) (returnedSession BrownfieldSession, resultErr error) {
 	if !validID(id) {
 		return BrownfieldSession{}, errors.New("invalid Brownfield session ID")
 	}
-	dir, err := sessionDirectory(sourceRoot, id, false)
+	store, release, err := borrowBrownfieldStore(sourceRoot, id, owners...)
 	if err != nil {
 		return BrownfieldSession{}, err
 	}
-	unlock, err := acquireSessionLock(dir)
+	defer release()
+	lease, err := store.Kernel(id, "session.lock")
 	if err != nil {
 		return BrownfieldSession{}, err
 	}
-	defer unlock()
-	if err := ensureNoIncompleteAtomicWrite(dir, "session.json"); err != nil {
+	defer func() { resultErr = errors.Join(resultErr, lease.Close()) }()
+	name := sessionName(id)
+	if err = store.Incomplete(name); err != nil {
 		return BrownfieldSession{}, err
 	}
-	data, err := readRegularLedger(filepath.Join(dir, "session.json"))
+	file, err := store.Read(name, maxRecordBytes)
 	if err != nil {
 		return BrownfieldSession{}, err
 	}
-	return DecodeBrownfieldSession(data)
-}
-
-func readRegularLedger(path string) ([]byte, error) {
-	info, err := os.Lstat(path)
-	if err != nil {
-		return nil, err
+	if !file.Exists {
+		return BrownfieldSession{}, errors.New("Brownfield session record is missing")
 	}
-	if !info.Mode().IsRegular() || info.Mode()&os.ModeSymlink != 0 {
-		return nil, fmt.Errorf("unsafe Brownfield ledger file %q", path)
-	}
-	return os.ReadFile(path)
-}
-
-func acquireSessionLock(dir string) (func(), error) {
-	unlock, err := acquireProcessFileLock(filepath.Join(dir, "session.lock"))
-	if err != nil {
-		return nil, fmt.Errorf("Brownfield session is being updated: %w", err)
-	}
-	return unlock, nil
+	return DecodeBrownfieldSession(file.Bytes)
 }
 
 // ResumeBrownfieldSession verifies both original fixed bases and returns
 // readiness against the current accepted project model; it never replays an
 // iteration or invokes a Manager.
-func ResumeBrownfieldSession(sourceRoot, targetRoot, id string) (BrownfieldSession, Readiness, error) {
-	session, err := LoadBrownfieldSession(sourceRoot, id)
+func ResumeBrownfieldSession(sourceRoot, targetRoot, id string, owners ...*ManagerStageLease) (BrownfieldSession, Readiness, error) {
+	session, err := LoadBrownfieldSession(sourceRoot, id, owners...)
 	if err != nil {
 		return BrownfieldSession{}, Readiness{}, err
 	}
@@ -540,29 +551,39 @@ func sessionDirectory(root, id string, create bool) (string, error) {
 	if !validID(id) {
 		return "", errors.New("invalid Brownfield session ID")
 	}
+	store, err := recordstore.Open(root)
+	if err != nil {
+		return "", err
+	}
+	defer store.Close()
+	if err = store.CheckCutover(recordstore.Brownfield); err != nil {
+		return "", err
+	}
+	if create {
+		if err = store.Ensure(recordstore.Brownfield, id, ""); err != nil {
+			return "", err
+		}
+	} else {
+		entries, err := store.List(recordstore.Brownfield, "", "")
+		if err != nil {
+			return "", err
+		}
+		found := false
+		for _, entry := range entries {
+			if entry.IsDir() && entry.Name() == id {
+				found = true
+			}
+		}
+		if !found {
+			return "", fs.ErrNotExist
+		}
+	}
 	abs, err := filepath.Abs(root)
 	if err != nil {
 		return "", err
 	}
-	for _, relative := range []string{".markitect", filepath.Join(".markitect", "drafts"), filepath.Join(".markitect", "drafts", "brownfield"), filepath.Join(BrownfieldSessionPath, id)} {
-		current := filepath.Join(abs, relative)
-		info, statErr := os.Lstat(current)
-		if errors.Is(statErr, fs.ErrNotExist) && create {
-			if err := os.Mkdir(current, 0o700); err != nil && !errors.Is(err, fs.ErrExist) {
-				return "", err
-			}
-			info, statErr = os.Lstat(current)
-		}
-		if statErr != nil {
-			return "", statErr
-		}
-		if !info.IsDir() || info.Mode()&os.ModeSymlink != 0 {
-			return "", fmt.Errorf("unsafe Brownfield ledger directory %q", relative)
-		}
-	}
 	return filepath.Join(abs, filepath.FromSlash(BrownfieldSessionPath), id), nil
 }
-
 func validateScopeStatuses(scopes []ScopeStatus, discovery Discovery) error {
 	_ = discovery
 	seen := map[string]bool{}

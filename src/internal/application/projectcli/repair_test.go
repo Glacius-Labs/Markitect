@@ -15,14 +15,14 @@ func TestRepairWithoutExecuteIsAUsageErrorAndWritesNothing(t *testing.T) {
 	if code != 2 || out != "" || !strings.Contains(errout, "markitect repair: repair starts agents or configured checks and requires --execute; inspect first with `markitect status`") {
 		t.Fatalf("repair without --execute exit=%d stderr=%s stdout=%s", code, errout, out)
 	}
-	if _, err := os.Stat(filepath.Join(repo, filepath.FromSlash(".markitect/runs"))); !os.IsNotExist(err) {
+	if _, err := os.Stat(filepath.Join(repo, filepath.FromSlash(".markitect/records/run"))); !os.IsNotExist(err) {
 		t.Fatalf("rejected repair created runtime state: %v", err)
 	}
 	code, out, errout = runCLI(t, "status", "missing-run", "--repo", repo)
 	if code != 2 || out != "" || !strings.Contains(errout, "markitect status:") {
 		t.Fatalf("status for a missing run exit=%d stderr=%s stdout=%s", code, errout, out)
 	}
-	if _, err := os.Stat(filepath.Join(repo, filepath.FromSlash(".markitect/runs"))); !os.IsNotExist(err) {
+	if _, err := os.Stat(filepath.Join(repo, filepath.FromSlash(".markitect/records/run"))); !os.IsNotExist(err) {
 		t.Fatalf("read-only status created runtime state: %v", err)
 	}
 }

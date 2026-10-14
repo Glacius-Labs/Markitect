@@ -25,7 +25,7 @@ import (
 
 // Run executes an authorized, persisted plan. It makes one work invocation per
 // manager followed by one actual integration invocation per manager with
-// children. Candidate bytes are staged under .markitect/runs and never written
+// children. Candidate bytes are staged under .markitect/records/run and never written
 // into the project working tree by this function.
 func Run(ctx context.Context, host Host, invoker Invoker, root, planID string) (RunReport, error) {
 	return runOrResume(ctx, host, invoker, root, planID, false, false)
@@ -45,7 +45,7 @@ func Repair(ctx context.Context, host Host, invoker Invoker, root, runID string)
 	return runOrResume(ctx, host, invoker, root, runID, true, true)
 }
 
-func runOrResume(ctx context.Context, host Host, invoker Invoker, root, id string, resume, repair bool) (RunReport, error) {
+func runOrResume(ctx context.Context, host Host, invoker Invoker, root, id string, resume, repair bool) (returnedReport RunReport, resultErr error) {
 	var empty RunReport
 	if host.Load == nil || host.FromSnapshot == nil || invoker == nil {
 		return empty, fmt.Errorf("project runtime requires Host load/snapshot and an agent invoker")
@@ -58,7 +58,7 @@ func runOrResume(ctx context.Context, host Host, invoker Invoker, root, id strin
 	if err != nil {
 		return empty, err
 	}
-	defer unlock()
+	defer func() { resultErr = errors.Join(resultErr, unlock()) }()
 
 	execution, completed, err := prepareRunExecution(ctx, host, invoker, root, id, resume, repair, store)
 	if err != nil || execution == nil {
@@ -88,7 +88,7 @@ func beginRepair(store *runStore, dir string, host Host, root string, plan PlanR
 	if err := validateCheckExecutables(plan); err != nil {
 		return report, err
 	}
-	verification, err := latestVerification(dir, report.Candidate.ID)
+	verification, err := latestVerification(dir, report.Candidate.ID, store)
 	if err != nil {
 		return report, err
 	}
@@ -185,7 +185,7 @@ func resetTaskForRepair(task *ManagerTask) {
 }
 
 func boundedFeedbackText(value string, maximum int) string {
-	value = strings.ToValidUTF8(value, "ï¿½")
+	value = strings.ToValidUTF8(value, "Ã¯Â¿Â½")
 	if maximum < 0 || len(value) <= maximum {
 		return value
 	}
@@ -539,7 +539,7 @@ func boundedRepairDiagnostic(err error) string {
 	if err == nil {
 		return ""
 	}
-	message := strings.ToValidUTF8(strings.TrimSpace(err.Error()), "ï¿½")
+	message := strings.ToValidUTF8(strings.TrimSpace(err.Error()), "Ã¯Â¿Â½")
 	runes := []rune(message)
 	for len(message) > 2048 && len(runes) > 0 {
 		runes = runes[:len(runes)-1]

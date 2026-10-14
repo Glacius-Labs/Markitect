@@ -354,7 +354,7 @@ func TestProjectPlanRejectsUncommittedSelectedInputs(t *testing.T) {
 	if code != 2 || !strings.Contains(errout, "selected project inputs differ from fixed base revision; commit accepted selected changes before planning") {
 		t.Fatalf("dirty plan exit=%d stderr=%s", code, errout)
 	}
-	if _, err := os.Stat(filepath.Join(repo, ".markitect", "runs")); !os.IsNotExist(err) {
+	if _, err := os.Stat(filepath.Join(repo, ".markitect", "records", "run")); !os.IsNotExist(err) {
 		t.Fatalf("rejected read-only plan created persisted run state: %v", err)
 	}
 }

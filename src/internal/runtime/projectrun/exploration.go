@@ -9,7 +9,6 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
-	"os"
 	"path/filepath"
 	"sort"
 	"strings"
@@ -280,11 +279,11 @@ func RecoverExplorationCompletion(host Host, root, runID string) error {
 	if err != nil {
 		return err
 	}
-	verification, err := latestVerification(dir, candidate.ID)
+	verification, err := latestVerification(dir, candidate.ID, store)
 	if err != nil {
 		return err
 	}
-	entries, err := os.ReadDir(filepath.Join(dir, "apply"))
+	entries, err := listRecordDirectory(filepath.Join(dir, "apply"), store)
 	if err != nil {
 		return err
 	}
@@ -295,7 +294,7 @@ func RecoverExplorationCompletion(host Host, root, runID string) error {
 			continue
 		}
 		var value ApplyReport
-		if err := readJSON(filepath.Join(dir, "apply", entry.Name()), &value); err != nil {
+		if err := readJSON(filepath.Join(dir, "apply", entry.Name()), &value, store); err != nil {
 			return err
 		}
 		if value.Status == StatusApplied && value.RunID == runID && value.CandidateID == candidate.ID {

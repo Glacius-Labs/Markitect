@@ -3,9 +3,8 @@ package projectadoption
 import (
 	"errors"
 	"fmt"
+	"github.com/Glacius-Labs/Markitect/src/internal/infrastructure/recordstore"
 	"math"
-	"os"
-	"path/filepath"
 	"reflect"
 	"time"
 
@@ -202,20 +201,22 @@ func latestManagerAttempt(ledger ManagerRunLedger, iterationID, phase string) (M
 	return latest, found
 }
 
-func loadManagerRunLedger(dir, sessionID string) (ManagerRunLedger, error) {
-	if err := ensureNoIncompleteAtomicWrite(dir, managerRunLedgerName); err != nil {
+func loadManagerRunLedger(sourceRoot, sessionID string, owners ...*ManagerStageLease) (ManagerRunLedger, error) {
+	store, release, err := borrowBrownfieldStore(sourceRoot, sessionID, owners...)
+	if err != nil {
 		return ManagerRunLedger{}, err
 	}
-	path := filepath.Join(dir, managerRunLedgerName)
-	data, err := readRegularLedger(path)
-	if errors.Is(err, os.ErrNotExist) {
+	defer release()
+	file, err := store.ReadLegacyBrownfieldManagerLedger(sessionID, managerRunMaxLedger)
+	if err != nil {
+		return ManagerRunLedger{}, err
+	}
+	if !file.Exists {
 		empty := ManagerRunLedger{APIVersion: managerRunVersion, SessionID: sessionID, Events: []ManagerRunEvent{}}
 		sealManagerRunLedger(&empty)
 		return empty, nil
 	}
-	if err != nil {
-		return ManagerRunLedger{}, err
-	}
+	data := file.Bytes
 	if len(data) > managerRunMaxLedger {
 		return ManagerRunLedger{}, errors.New("manager run ledger exceeds the bounded size")
 	}
@@ -241,21 +242,6 @@ func loadManagerRunLedger(dir, sessionID string) (ManagerRunLedger, error) {
 	return ledger, nil
 }
 
-func acquireNamedLock(dir, name string) (func(), error) {
-	dirInfo, err := os.Lstat(dir)
-	if err != nil {
-		return nil, err
-	}
-	if !dirInfo.IsDir() || dirInfo.Mode()&os.ModeSymlink != 0 {
-		return nil, errors.New("manager run lock directory must be a regular nonsymlink directory")
-	}
-	unlock, err := acquireProcessFileLock(filepath.Join(dir, name))
-	if err != nil {
-		return nil, fmt.Errorf("manager execution is already active: %w", err)
-	}
-	return unlock, nil
-}
-
 func sealManagerRunEvent(event *ManagerRunEvent) {
 	copy := *event
 	copy.Digest = ""
@@ -274,22 +260,69 @@ func reflectTypeOfManagerIntegrationDraft() reflect.Type {
 
 // AcquireManagerStageLease holds the established per-session process-file
 // lock through Runtime work, typed review and the existing Session CAS.
-func AcquireManagerStageLease(sourceRoot, sessionID string) (func(), error) {
-	dir, err := sessionDirectory(sourceRoot, sessionID, false)
+func AcquireManagerStageLease(sourceRoot, sessionID string) (*ManagerStageLease, error) {
+	store, err := recordstore.Open(sourceRoot)
 	if err != nil {
 		return nil, err
 	}
-	unlock, err := acquireNamedLock(dir, managerRunLockName)
-	if err != nil {
+	if err = store.CheckWrite(recordstore.Brownfield); err != nil {
+		store.Close()
 		return nil, err
 	}
-	ledger, err := loadManagerRunLedger(dir, sessionID)
+	lease, err := store.Kernel(sessionID, managerRunLockName)
+	if err != nil {
+		store.Close()
+		return nil, err
+	}
+	owner := &ManagerStageLease{store: store, lease: lease, sessionID: sessionID}
+	ledger, err := loadManagerRunLedger(sourceRoot, sessionID, owner)
 	if err == nil && (ledger.Budget != nil || len(ledger.Events) != 0) {
 		err = errors.New("legacy Manager execution ledger blocks Runtime stage admission; historical bytes remain untouched")
 	}
 	if err != nil {
-		unlock()
-		return nil, err
+		return nil, errors.Join(err, lease.Close(), store.Close())
 	}
-	return unlock, nil
+	return owner, nil
+}
+
+// ManagerStageLease carries the same physical Store through Runtime work and
+// Session CAS; a path check followed by a fresh Store open is not borrowing.
+type ManagerStageLease struct {
+	store     *recordstore.Store
+	lease     *recordstore.Lease
+	sessionID string
+}
+
+func (o *ManagerStageLease) Check() error {
+	if o == nil || o.store == nil || o.lease == nil {
+		return errors.New("Manager stage owner is missing")
+	}
+	return errors.Join(o.store.CheckIdentity(), o.lease.Check())
+}
+func (o *ManagerStageLease) Close() error {
+	return errors.Join(o.lease.Close(), o.store.Close())
+}
+
+func borrowBrownfieldStore(sourceRoot, sessionID string, owners ...*ManagerStageLease) (*recordstore.Store, func() error, error) {
+	if len(owners) > 1 {
+		return nil, nil, errors.New("one Manager stage owner required")
+	}
+	if len(owners) == 1 && owners[0] != nil {
+		owner := owners[0]
+		if err := owner.Check(); err != nil {
+			return nil, nil, err
+		}
+		if sessionID != owner.sessionID {
+			return nil, nil, errors.New("Manager stage owner does not match source root and Session")
+		}
+		if err := owner.store.CheckRootBinding(sourceRoot); err != nil {
+			return nil, nil, err
+		}
+		return owner.store, func() error { return nil }, nil
+	}
+	store, err := recordstore.Open(sourceRoot)
+	if err != nil {
+		return nil, nil, err
+	}
+	return store, store.Close, nil
 }

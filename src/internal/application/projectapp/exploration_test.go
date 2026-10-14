@@ -74,7 +74,7 @@ func TestExploreOperationPreviewsAndWritesWithExpectedDigest(t *testing.T) {
 	if err != nil || read.Record == nil || read.Record.Digest != loaded.Digest {
 		t.Fatalf("read result = %#v err=%v", read, err)
 	}
-	if _, err := os.Stat(filepath.Join(root, ".markitect", "state", "explorations", record.ID+".json")); err != nil {
+	if _, err := os.Stat(filepath.Join(root, ".markitect", "records", "exploration", record.ID, "record.json")); err != nil {
 		t.Fatalf("expected durable exploration file: %v", err)
 	}
 }

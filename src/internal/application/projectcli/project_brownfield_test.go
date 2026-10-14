@@ -74,7 +74,7 @@ func TestAdoptStartPreviewAndCASWrite(t *testing.T) {
 		t.Fatal(err)
 	}
 	input := writeAdoptInput(t, repo, "start", projectapp.BrownfieldStartInput{Request: request, ScopeStatuses: []projectadoption.ScopeStatus{}})
-	ledgerPath := filepath.Join(repo, ".markitect", "drafts", "brownfield", discovery.ID, "session.json")
+	ledgerPath := filepath.Join(repo, ".markitect", "records", "brownfield", discovery.ID, "record.json")
 	args := []string{"adopt", "start", "--repo", repo, "--revision", commit, "--input", input}
 	code, previewOut, previewErr := runCLI(t, args...)
 	if code != 0 {

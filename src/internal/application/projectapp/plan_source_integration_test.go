@@ -39,7 +39,7 @@ func TestGuidedPlanPreviewReadsAcceptedHistoryWithoutStalingSelectedBasis(t *tes
 	if plan.Status != projectrun.StatusPlanned || plan.BaseRevision != revision || plan.WorkingSnapshot == "" {
 		t.Fatalf("guided plan did not retain its fixed and raw working bindings: %+v", plan)
 	}
-	if _, err := os.Stat(filepath.Join(root, ".markitect", "state", "briefings", "history.json")); !os.IsNotExist(err) {
+	if _, err := os.Stat(filepath.Join(root, ".markitect", "records", "briefing", "accepted", "record.json")); !os.IsNotExist(err) {
 		t.Fatalf("guided plan preview wrote accepted history: %v", err)
 	}
 }

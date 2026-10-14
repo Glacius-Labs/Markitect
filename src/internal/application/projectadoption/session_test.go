@@ -5,6 +5,7 @@ import "go.yaml.in/yaml/v3"
 import "github.com/Glacius-Labs/Markitect/src/internal/core/projectmodel/projectvalue"
 
 import (
+	"bytes"
 	"encoding/json"
 	"os"
 	"path/filepath"
@@ -14,6 +15,73 @@ import (
 	"github.com/Glacius-Labs/Markitect/src/internal/application/projectwork"
 	"github.com/Glacius-Labs/Markitect/src/internal/core/projectmodel/projectcoverage"
 )
+
+func TestCapturedManagerOwnerGuardsSessionCASAndRejectsOtherBindings(t *testing.T) {
+	root, discovery, _, target := distillationDiscovery(t)
+	session, err := StartBrownfieldSession(root, target, discovery, []ScopeStatus{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := WriteBrownfieldSession(root, session, session.Digest); err != nil {
+		t.Fatal(err)
+	}
+	next, err := BeginReverseIteration(root, target, session, ReverseIterationRequest{ID: "owner-pass", ManagerID: session.TargetContext.RootManagerID, EvidenceIDs: []string{"implementation"}, DelegationEvidenceIDs: []string{}, Purpose: "Map selected source", Review: "owner-review"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	owner, err := AcquireManagerStageLease(root, session.ID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if loaded, err := LoadBrownfieldSession(root, session.ID, owner); err != nil || loaded.Digest != session.Digest {
+		owner.Close()
+		t.Fatalf("captured owner could not read its Session: %v", err)
+	}
+	otherRoot := t.TempDir()
+	if _, err := LoadBrownfieldSession(otherRoot, session.ID, owner); err == nil {
+		owner.Close()
+		t.Fatal("owner was borrowed for another root")
+	}
+	if _, err := LoadBrownfieldSession(root, session.ID+"-other", owner); err == nil {
+		owner.Close()
+		t.Fatal("owner was borrowed for another Session")
+	}
+	if entries, err := os.ReadDir(otherRoot); err != nil || len(entries) != 0 {
+		owner.Close()
+		t.Fatal("mismatched borrowing created authority")
+	}
+	p := filepath.Join(root, filepath.FromSlash(BrownfieldSessionPath), session.ID)
+	before, err := os.ReadFile(filepath.Join(p, "record.json"))
+	if err != nil {
+		owner.Close()
+		t.Fatal(err)
+	}
+	lock := filepath.Join(p, managerRunLockName)
+	if err := os.Rename(lock, lock+"-original"); err != nil {
+		owner.Close()
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(lock, nil, 0600); err != nil {
+		owner.Close()
+		t.Fatal(err)
+	}
+	if _, err := WriteBrownfieldSession(root, next, session.Digest, owner); err == nil {
+		owner.Close()
+		t.Fatal("outer control replacement passed Session CAS")
+	}
+	if err := owner.Close(); err == nil {
+		t.Fatal("outer control replacement was hidden on release")
+	}
+	after, err := os.ReadFile(filepath.Join(p, "record.json"))
+	if err != nil || !bytes.Equal(before, after) {
+		t.Fatal("owner failure changed Session bytes")
+	}
+	for _, p := range []string{lock, lock + "-original"} {
+		if i, err := os.Stat(p); err != nil || i.Size() != 0 {
+			t.Fatalf("kernel control evidence lost: %v", err)
+		}
+	}
+}
 
 func TestBrownfieldSessionPersistsAndResumesWithoutReplayingStages(t *testing.T) {
 	repo, commit := committedRepository(t, map[string]string{"src/orders.go": "package src\nfunc Order() {}\n"})

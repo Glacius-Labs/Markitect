@@ -98,24 +98,28 @@ func TestMCPSharedExplorePreviewAndCASParity(t *testing.T) {
 	}
 	outcome := result.StructuredContent.(map[string]any)
 	plan := outcome["data"].(map[string]any)["plan"].(map[string]any)
-	if outcome["operation"] != "explore" || plan["digest"] != preview.Plan.Digest {
+	if outcome["operation"] != "explore" || plan["digest"] != preview.Plan.Digest || plan["path"] != preview.Plan.Path || preview.Plan.Path != ".markitect/records/exploration/"+record.ID+"/record.json" {
 		t.Fatalf("transport changed guarded preview: operation=%v got=%v want=%s", outcome["operation"], plan["digest"], preview.Plan.Digest)
 	}
 	// The CLI decodes the same record through the same closed schema.
 	input := writeDraft(t, root, ".markitect/drafts/mcp-work.json", record)
-	if cli := decodeOutput[projectapp.ExploreResult](t, mustCLI(t, "explore", "--repo", root, "--input", input)); cli.Plan == nil || cli.Plan.Digest != preview.Plan.Digest {
+	if cli := decodeOutput[projectapp.ExploreResult](t, mustCLI(t, "explore", "--repo", root, "--input", input)); cli.Plan == nil || cli.Plan.Digest != preview.Plan.Digest || cli.Plan.Path != preview.Plan.Path {
 		t.Fatalf("CLI preview differs from MCP preview: %+v", cli.Plan)
 	}
 	failed, err := server.Call(context.Background(), "explore", mustRaw(t, map[string]any{"input": record, "write": true, "expect": "sha256:stale"}))
 	if err != nil || !failed.IsError {
 		t.Fatalf("wrong digest accepted: %+v %v", failed, err)
 	}
-	if _, err := os.Stat(filepath.Join(root, ".markitect", "state", "explorations", record.ID+".json")); !os.IsNotExist(err) {
+	if _, err := os.Stat(filepath.Join(root, ".markitect", "records", "exploration", record.ID, "record.json")); !os.IsNotExist(err) {
 		t.Fatalf("wrong digest wrote exploration: %v", err)
 	}
 	if failed, err := server.Call(context.Background(), "explore", mustRaw(t, map[string]any{"input": record, "write": true})); err != nil || !failed.IsError ||
 		failed.StructuredContent.(map[string]any)["diagnostic"].(map[string]any)["code"] != "invalid_arguments" {
 		t.Fatalf("MCP write without expect: %+v %v", failed, err)
+	}
+	canonical := filepath.Join(root, filepath.FromSlash(preview.Plan.Path))
+	if _, err := os.Stat(canonical); !os.IsNotExist(err) {
+		t.Fatalf("missing expect created canonical target: %v", err)
 	}
 	written, err := server.Call(context.Background(), "explore", mustRaw(t, map[string]any{"input": record, "write": true, "expect": preview.Plan.Digest}))
 	if err != nil || written.IsError {
@@ -125,6 +129,19 @@ func TestMCPSharedExplorePreviewAndCASParity(t *testing.T) {
 	if err != nil || stored.Digest != preview.Plan.Next.Digest {
 		t.Fatalf("MCP stored different record: %+v %v", stored, err)
 	}
+	before, err := os.ReadFile(canonical)
+	if err != nil {
+		t.Fatal(err)
+	}
+	stale, err := server.Call(context.Background(), "explore", mustRaw(t, map[string]any{"input": record, "write": true, "expect": "sha256:stale"}))
+	if err != nil || !stale.IsError {
+		t.Fatalf("stale existing-record write: %+v %v", stale, err)
+	}
+	after, err := os.ReadFile(canonical)
+	if err != nil || !bytes.Equal(before, after) {
+		t.Fatal("stale write changed existing canonical bytes")
+	}
+
 }
 
 // The minimal record that the onboarding guidance tells agents to pass to

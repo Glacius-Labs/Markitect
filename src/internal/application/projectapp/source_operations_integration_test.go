@@ -674,7 +674,7 @@ func TestCleanupSourceChangeGeneratesAndAppliesExactVerifiedDocument(t *testing.
 	if run.Candidate.Files[document.Path] != sourceOperationsDigest(document.Content) {
 		t.Fatalf("candidate document digest %q does not bind the exact generated document %q", run.Candidate.Files[document.Path], sourceOperationsDigest(document.Content))
 	}
-	candidatePath := fmt.Sprintf(".markitect/runs/%s/candidates/%s.json", run.ID, run.Candidate.ID)
+	candidatePath := fmt.Sprintf(".markitect/records/run/%s/candidates/%s.json", run.ID, run.Candidate.ID)
 	storedBytes, err := operations.ReadRecord(root, candidatePath)
 	if err != nil {
 		t.Fatalf("read persisted candidate through the public Application record path: %v", err)

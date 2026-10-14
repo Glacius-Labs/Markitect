@@ -3,6 +3,7 @@ package projectrun
 import "github.com/Glacius-Labs/Markitect/src/internal/core/projectmodel/projectvalue"
 
 import (
+	"errors"
 	"fmt"
 	"time"
 
@@ -261,7 +262,11 @@ func persistAuthorizedPlan(root, id string, plan PlanRecord, initialCandidate ca
 	if err != nil {
 		return err
 	}
-	defer unlock()
+	return persistPlanWithLease(store, id, plan, initialCandidate, unlock)
+}
+
+func persistPlanWithLease(store *runStore, id string, plan PlanRecord, initialCandidate candidateData, release func() error) (resultErr error) {
+	defer func() { resultErr = errors.Join(resultErr, release()) }()
 	dir, err := store.createRun(id)
 	if err != nil {
 		return err

@@ -25,3 +25,21 @@ func TestNativeSkillPathsHaveExactToolOwnership(t *testing.T) {
 		}
 	}
 }
+
+func TestRecordSelectorsRetainSemanticOperationalOwners(t *testing.T) {
+	wanted := map[string]string{".markitect/records/run/": "projectrun", ".markitect/records/exploration/": "projectexplore", ".markitect/records/briefing/": "projecthistory", ".markitect/records/brownfield/": "projectadoption"}
+	for _, tool := range ToolPaths(Config{}) {
+		if owner, ok := wanted[tool.Selector]; ok {
+			if tool.Owner != owner || !tool.Operational {
+				t.Fatalf("record selector semantics: %+v", tool)
+			}
+			delete(wanted, tool.Selector)
+		}
+	}
+	if len(wanted) != 0 {
+		t.Fatalf("missing record selectors: %v", wanted)
+	}
+	if IsToolPath(Config{}, ".markitect/records/unknown/record.json") {
+		t.Fatal("arbitrary record kind claimed")
+	}
+}

@@ -2,6 +2,7 @@ package projectexplore
 
 import (
 	"encoding/json"
+	"fmt"
 	"github.com/Glacius-Labs/Markitect/src/internal/core/projectmodel/projectvalue"
 	"os"
 	"os/exec"
@@ -285,7 +286,7 @@ func TestCompleteRequiresSuccessfulVerifiedApplyAndIsIdempotent(t *testing.T) {
 	if _, err := Complete(root, record.ID, binding.ScopeID, binding, failed); err == nil {
 		t.Fatal("completion accepted failed Apply receipt")
 	}
-	if _, err := os.Stat(filepath.Join(root, filepath.FromSlash(recordsDirectory), record.ID+".json")); err != nil {
+	if _, err := os.Stat(filepath.Join(root, filepath.FromSlash(recordsDirectory), record.ID, "record.json")); err != nil {
 		t.Fatal(err)
 	}
 	if err := os.WriteFile(filepath.Join(root, filepath.FromSlash(basis)), []byte("work: applied candidate\n"), 0644); err != nil {
@@ -515,5 +516,67 @@ func TestBindingDigestPreservesExplicitEmptyScopeArrays(t *testing.T) {
 	}
 	if canonical.ManagerIDs == nil || canonical.ResponsibleManagerIDs == nil || canonical.RequiredArtifacts == nil || canonical.Checks == nil || canonical.BasisFiles == nil {
 		t.Fatalf("canonical binding lost explicit empty arrays: %+v", canonical)
+	}
+}
+
+func TestListRejectsUnknownRootLeafWithoutMutatingBytes(t *testing.T) {
+	root, _, _ := testRepository(t, true)
+	dir := filepath.Join(root, filepath.FromSlash(recordsDirectory))
+	if err := os.MkdirAll(dir, 0700); err != nil {
+		t.Fatal(err)
+	}
+	p := filepath.Join(dir, "unknown.json")
+	if err := os.WriteFile(p, []byte("preserved unknown"), 0600); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := List(root); err == nil {
+		t.Fatal("unknown leaf silently omitted")
+	}
+	wire, err := os.ReadFile(p)
+	if err != nil || string(wire) != "preserved unknown" {
+		t.Fatal("unknown bytes changed")
+	}
+	entries, err := os.ReadDir(dir)
+	if err != nil || len(entries) != 1 {
+		t.Fatal("list created authority")
+	}
+}
+
+func TestConcurrentUpdatesHaveOneCASWinner(t *testing.T) {
+	root, head, basis := testRepository(t, true)
+	binding := testBinding(root, head, basis, true)
+	initial := createRecord(t, root, binding, testRecord(binding, []Decision{}))
+	plans := make([]WritePlan, 2)
+	for i := range plans {
+		next := initial
+		next.Drafts = []DraftProposal{{ID: fmt.Sprintf("draft-%d", i), Goal: "bounded proposal", Files: []DraftFile{{Path: ".markitect/model/proposed.yaml", Content: fmt.Sprintf("winner: %d\n", i)}}}}
+		next.Digest = ""
+		if err := SealRecord(&next); err != nil {
+			t.Fatal(err)
+		}
+		var err error
+		plans[i], err = UpdatePreview(root, next, initial.Digest, binding)
+		if err != nil {
+			t.Fatal(err)
+		}
+	}
+	start := make(chan struct{})
+	results := make(chan error, 2)
+	for _, plan := range plans {
+		go func(p WritePlan) { <-start; _, err := Write(root, p, p.Digest, binding); results <- err }(plan)
+	}
+	close(start)
+	success := 0
+	for range plans {
+		if err := <-results; err == nil {
+			success++
+		}
+	}
+	if success != 1 {
+		t.Fatalf("CAS winners=%d", success)
+	}
+	loaded, err := Load(root, initial.ID)
+	if err != nil || len(loaded.Drafts) != 1 || (loaded.Digest != plans[0].Next.Digest && loaded.Digest != plans[1].Next.Digest) {
+		t.Fatalf("winner state: %+v %v", loaded, err)
 	}
 }

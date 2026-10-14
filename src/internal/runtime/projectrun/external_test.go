@@ -3,7 +3,6 @@ package projectrun
 import (
 	"context"
 	"encoding/json"
-	"os"
 	"path/filepath"
 	"testing"
 
@@ -22,13 +21,12 @@ func TestExternalExecutionRequiresExplicitContext(t *testing.T) {
 }
 
 func TestExternalPacketReexportPreservesExactInvocationBytes(t *testing.T) {
-	dir := t.TempDir()
+	store, dir := canonicalRunFixture(t)
 	request := externalTestRequest(t)
-	plan := PlanRecord{ID: "plan", Digest: "sha256:plan", BaseRevision: "revision", BaseSnapshot: "sha256:base"}
-	report := RunReport{ID: "plan"}
+	plan := PlanRecord{ID: filepath.Base(dir), Digest: "sha256:plan", BaseRevision: "revision", BaseSnapshot: "sha256:base"}
+	report := RunReport{ID: plan.ID}
 	task := ManagerTask{ID: "task-id", ManagerID: "orders", WorkAttempts: 1}
 	meta := externalRequestContext{Kind: "projectrun-task/v1", Phase: "work", ManagerID: "orders"}
-	store := &runStore{}
 	first, err := createOrReadExternalPacket(store, dir, plan, report, task, "orders-work", request, meta)
 	if err != nil {
 		t.Fatal(err)
@@ -57,15 +55,15 @@ func TestExternalPacketReexportPreservesExactInvocationBytes(t *testing.T) {
 }
 
 func TestExternalSubmissionDigestBindsResponseBytes(t *testing.T) {
-	dir := t.TempDir()
-	if err := os.MkdirAll(filepath.Join(dir, "external", "responses"), 0o700); err != nil {
+	store, dir := canonicalRunFixture(t)
+	if err := ensureDirectory(filepath.Join(dir, "external", "responses"), store); err != nil {
 		t.Fatal(err)
 	}
 	packetID := "0123456789abcdef0123456789abcdef"
 	response := []byte(`{"outcome":"proposed"}`)
 	submission := externalSubmission{APIVersion: externalPacketVersion, PacketID: packetID,
 		PacketDigest: "sha256:packet", ResponseHash: externalResponseDigest(response, nil, nil), Response: response}
-	if err := writeImmutableJSON(externalSubmissionPath(dir, packetID), submission); err != nil {
+	if err := writeImmutableJSON(externalSubmissionPath(dir, packetID), submission, store); err != nil {
 		t.Fatal(err)
 	}
 	loaded, err := readExternalSubmission(dir, packetID)
@@ -73,7 +71,7 @@ func TestExternalSubmissionDigestBindsResponseBytes(t *testing.T) {
 		t.Fatalf("read submitted response = %+v, %v", loaded, err)
 	}
 	loaded.Response = []byte(`{"outcome":"failed"}`)
-	if err := writeImmutableJSON(externalSubmissionPath(dir, packetID), loaded); err == nil {
+	if err := writeImmutableJSON(externalSubmissionPath(dir, packetID), loaded, store); err == nil {
 		t.Fatal("immutable response file accepted replacement bytes")
 	}
 }

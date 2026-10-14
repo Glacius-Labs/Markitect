@@ -55,7 +55,7 @@ func Init(root, name string, write bool) (InitPlan, error) {
 		{Path: projectvalue.ManifestPath, Content: string(configBytes)},
 		{Path: projectvalue.RuntimePath, Content: "{}\n"},
 		{Path: initManagerPath, Content: string(managerBytes)},
-		{Path: ".markitect/.gitignore", Content: "/cache/\n/runs/\n/state/\n/views/\n"},
+		{Path: ".markitect/.gitignore", Content: "/cache/\n/runs/\n/records/\n/state/\n/views/\n"},
 	}
 	previewSnapshot := &snapshot.Snapshot{Provisional: true, Files: map[string][]byte{}, Modes: map[string]string{}}
 	for _, file := range files {

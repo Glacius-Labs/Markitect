@@ -273,7 +273,7 @@ func sortedUnique(values []string) []string {
 // Prepared facts are rebuilt from the current Session, accepted target and
 // target Runtime at each finite Runtime boundary. Supplied paths/context are
 // never treated as Application authority.
-func (o Operations) brownfieldStageHost(sourceRoot string, operation BrownfieldRunOperation, invoker projectrun.Invoker) projectrun.Host {
+func (o Operations) brownfieldStageHost(sourceRoot string, operation BrownfieldRunOperation, invoker projectrun.Invoker, owners ...*projectadoption.ManagerStageLease) projectrun.Host {
 	host := o.Host
 	host.ValidateManagerStage = func(binding projectrun.ManagerStageValidationBinding) error {
 		runtime, err := projectconfig.LoadRuntime(operation.Root)
@@ -289,7 +289,7 @@ func (o Operations) brownfieldStageHost(sourceRoot string, operation BrownfieldR
 			return err
 		}
 		limits := projectadoption.ManagerRunLimits{MaxStarts: runtime.Limits.MaxStarts, MaxRetries: runtime.Limits.MaxRetries, MaxDuration: time.Duration(runtime.Limits.MaxDuration), MaxCostMicros: runtime.Limits.MaxCostMicros, InputPriceMicrosPerMillion: agent.Pricing.InputMicrosPerMillion, OutputPriceMicrosPerMillion: agent.Pricing.OutputMicrosPerMillion, MaxTimeout: config.Timeout, MaxStdoutBytes: config.MaxStdoutBytes, MaxStderrBytes: config.MaxStderrBytes}
-		_, spec, _, _, err := o.prepareBrownfieldRuntimeStage(sourceRoot, operation, runtime, agent, config, limits, binding.SessionDigest, invoker)
+		_, spec, _, _, err := o.prepareBrownfieldRuntimeStage(sourceRoot, operation, runtime, agent, config, limits, binding.SessionDigest, invoker, owners...)
 		if err != nil {
 			return err
 		}
