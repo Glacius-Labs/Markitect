@@ -1,7 +1,7 @@
 schema: markitect-roadmap-backlog/v1
-updated: '2026-10-12'
+updated: '2026-10-14'
 roadmap: docs/implementation-plan.md
-main_basis: c996de0931908db99a42766df794029eb15c77c2
+main_basis: ab142fad19b90a445b885e5bf429f044b9c681a5
 
 # Single owner of work-package status. The roadmap explains streams, waves,
 # zones and rules; this file records each package's current state.
@@ -1033,14 +1033,26 @@ packages:
     title: One record store
     stream: ARCH
     wave: 3
-    status: blocked
+    status: done
     owner: cleaner
     depends_on: [ARCH-06]
     note: >-
-      ARCH-06 and ARCH-15 source closure now precede a fresh bounded plan checkpoint
-      against current Main. Runs, explorations, briefings and adoption sessions need
-      one layout/write primitive while retaining distinct domain validation and CAS.
-      No implementation writer or path reservation is assigned by this checkpoint.
+      PR261 merged reviewed source 603a82f09b7ad26ef8ce22015ce0f6116606b6ff
+      to actual Main ab142fad19b90a445b885e5bf429f044b9c681a5, tree ee93e0ea0110091893c03443d25a7602af85e82d.
+      Complete push CI 38639248471 passed Quality, Race and source publication. Both full
+      reports have 48 packages (40 pass, eight skip), 2435 test passes, 19 skips,
+      zero failures/incomplete tests, all six public cases and 48 fine/102 coarse
+      leaves. Required PR CI38628773093 and fake38628773120 passed. Six independent
+      source reviews and 19 local prerequisites cover 87 of 111 reserved paths.
+      Positive six-payload proof e0844e4adb0f70225c66388cb458e763b9e03248886aa6ae8afc1f3d82ef5f73 records 895 files, 18091423 bytes and
+      91 directories with complete bytes and independent semantic approval.
+      Passing harness assertions support target checks; no independent post-target
+      readback is claimed. Canonical Main source bytes, bootstrap and flat lock match.
+      Four domains share guarded publication and leases while validation, CAS and
+      readiness remain explicit. Original Windows/Linux/setup negatives remain;
+      no Windows correction, provider study, release or human acceptance inferred.
+      Writer released. Current ARCH-14 closes and stops; no next wave is assigned.
+      Other owner gates remain unchanged.
     zone: runtime
     inputs:
       - pull request 162 (ARCH-10 known problems)
