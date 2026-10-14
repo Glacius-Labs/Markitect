@@ -23,11 +23,15 @@ import (
 )
 
 type runStore struct {
-	root     string
-	base     string
-	storage  *recordstore.Store
-	identity os.FileInfo
+	root            string
+	base            string
+	storage         *recordstore.Store
+	identity        os.FileInfo
+	beforeStateRead func() error
 }
+
+// Only a successful common read with no named record creates this signal.
+var errRuntimeRecordMissing = errors.New("validated Runtime record is missing")
 
 type candidateData struct {
 	APIVersion string          `json:"apiVersion"`
@@ -127,19 +131,15 @@ func newRunStore(root string) (*runStore, error) {
 		return nil, err
 	}
 	base := filepath.Join(abs, filepath.FromSlash(RunsPath))
-	if info, statErr := os.Lstat(base); statErr == nil {
-		if !info.IsDir() || info.Mode()&os.ModeSymlink != 0 {
-			return nil, fmt.Errorf("runtime state path %s must be a real directory", base)
-		}
-	} else if !os.IsNotExist(statErr) {
-		return nil, fmt.Errorf("inspect runtime state path %s: %w", base, statErr)
-	}
 	physical, err := recordstore.Open(abs)
 	if err != nil {
 		return nil, err
 	}
 	defer physical.Close()
 	if err = physical.CheckCutover(recordstore.Run); err != nil {
+		return nil, err
+	}
+	if _, err = physical.List(recordstore.Run, "", ""); err != nil {
 		return nil, err
 	}
 	return &runStore{root: abs, base: base, identity: physical.Identity()}, nil
@@ -245,11 +245,12 @@ func (s *runStore) runDir(id string) (string, error) {
 		return "", fmt.Errorf("invalid run ID %q", id)
 	}
 	dir := filepath.Join(s.base, id)
-	if info, err := os.Lstat(dir); err == nil {
-		if !info.IsDir() || info.Mode()&os.ModeSymlink != 0 {
-			return "", fmt.Errorf("runtime run path %s must be a real directory", dir)
-		}
-	} else if !os.IsNotExist(err) {
+	physical, done, err := s.physical()
+	if err != nil {
+		return "", err
+	}
+	defer done()
+	if _, err := physical.List(recordstore.Run, id, ""); err != nil {
 		return "", err
 	}
 	return dir, nil
@@ -466,7 +467,7 @@ func readRecordBytes(absolute string, owners ...*runStore) ([]byte, error) {
 		return nil, err
 	}
 	if !file.Exists {
-		return nil, os.ErrNotExist
+		return nil, errRuntimeRecordMissing
 	}
 	return file.Bytes, nil
 }
@@ -496,7 +497,7 @@ func readJSON(path string, dest any, owners ...*runStore) error {
 		return err
 	}
 	if !file.Exists {
-		return os.ErrNotExist
+		return errRuntimeRecordMissing
 	}
 	return decodeRuntimeJSON(file.Bytes, dest)
 }
@@ -589,7 +590,7 @@ func (s *runStore) readPlan(id string) (PlanRecord, error) {
 		return plan, err
 	}
 	if err := readJSON(filepath.Join(dir, "plan.json"), &plan, s); err != nil {
-		if os.IsNotExist(err) {
+		if errors.Is(err, errRuntimeRecordMissing) {
 			return plan, ErrNotFound
 		}
 		return plan, err
@@ -634,9 +635,6 @@ func (s *runStore) readLatestState(id string) (RunReport, error) {
 	}
 	entries, err := listRecordDirectory(statesDir, s)
 	if err != nil {
-		if os.IsNotExist(err) {
-			return latest, ErrNotFound
-		}
 		return latest, err
 	}
 	paths := make([]string, 0, len(entries))
@@ -656,6 +654,11 @@ func (s *runStore) readLatestState(id string) (RunReport, error) {
 	}
 	for _, name := range paths {
 		var state RunReport
+		if s.beforeStateRead != nil {
+			if err := s.beforeStateRead(); err != nil {
+				return latest, err
+			}
+		}
 		if err := readJSON(filepath.Join(statesDir, name), &state, s); err != nil {
 			return latest, err
 		}

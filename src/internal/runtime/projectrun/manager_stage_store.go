@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"os"
 	"path/filepath"
 	"strings"
 	"sync"
@@ -102,7 +101,7 @@ func writeStageEvidence(store *runStore, id, attempt, suffix string, data []byte
 			return nil, errors.New("immutable Manager evidence changed")
 		}
 		return &ref, nil
-	} else if !os.IsNotExist(readErr) {
+	} else if !errors.Is(readErr, errRuntimeRecordMissing) {
 		return nil, readErr
 	}
 	if err := writeImmutable(path, data, store); err != nil {

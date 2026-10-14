@@ -8,7 +8,6 @@ import (
 	"errors"
 	"fmt"
 	"github.com/Glacius-Labs/Markitect/src/internal/runtime/projectconfig"
-	"os"
 	"path/filepath"
 	"sort"
 	"strings"
@@ -158,7 +157,7 @@ func externalInvocation(ctx context.Context, host Host, root, planID, attemptID 
 		return agentexec.RunResult{}, true, err
 	}
 	submission, err := readExternalSubmission(dir, packet.ID, store)
-	if os.IsNotExist(err) {
+	if errors.Is(err, errRuntimeRecordMissing) {
 		return agentexec.RunResult{}, true, fmt.Errorf("%w: %s", ErrAwaitingExternal, packet.ID)
 	}
 	if err != nil {
@@ -229,7 +228,7 @@ func ExternalPackets(host Host, root, runID string) ([]ExternalPacket, error) {
 	for _, packet := range packets {
 		if _, err := readExternalSubmission(dir, packet.ID, store); err == nil {
 			continue
-		} else if !os.IsNotExist(err) {
+		} else if !errors.Is(err, errRuntimeRecordMissing) {
 			return nil, err
 		}
 		if err := validateExternalPacketFresh(store, dir, plan, report, taskForPacket(report, packet), packet); err != nil {
@@ -306,7 +305,7 @@ func SubmitExternalResponse(host Host, root, runID, packetID, expectedDigest str
 			return ExternalPacket{}, false, errors.New("external packet already has a different submitted response")
 		}
 		return packet, false, nil
-	} else if !os.IsNotExist(readErr) {
+	} else if !errors.Is(readErr, errRuntimeRecordMissing) {
 		return ExternalPacket{}, false, readErr
 	}
 	if err := validateExternalSubmissionBinding(host, root, plan); err != nil {
@@ -525,7 +524,7 @@ func createOrReadExternalPacket(store *runStore, dir string, plan PlanRecord, re
 			return ExternalPacket{}, ErrStale
 		}
 		return packet, nil
-	} else if !os.IsNotExist(err) {
+	} else if !errors.Is(err, errRuntimeRecordMissing) {
 		return ExternalPacket{}, err
 	}
 	invocation, wire, err := agentexec.PrepareInvocation(request)
@@ -645,9 +644,6 @@ func taskForPacket(report RunReport, packet ExternalPacket) ManagerTask {
 
 func readExternalPackets(dir string, owners ...*runStore) ([]ExternalPacket, error) {
 	externalDir, err := requireRealSubdirectory(dir, "external", owners...)
-	if os.IsNotExist(err) {
-		return []ExternalPacket{}, nil
-	}
 	if err != nil {
 		return nil, err
 	}

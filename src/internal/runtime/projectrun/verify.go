@@ -881,9 +881,6 @@ func persistVerify(s *runStore, dir string, report VerifyReport) error {
 func persistedVerificationAttempt(dir, runID, candidateID string, owners ...*runStore) (bool, error) {
 	verificationDir := filepath.Join(dir, "verification")
 	entries, err := listRecordDirectory(verificationDir, owners...)
-	if os.IsNotExist(err) {
-		return false, nil
-	}
 	if err != nil {
 		return false, fmt.Errorf("inspect prior verification records: %w", err)
 	}
