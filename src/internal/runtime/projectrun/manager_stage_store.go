@@ -114,14 +114,48 @@ func readStageEvidence(store *runStore, id string, ref *ManagerStageEvidenceRef)
 	if ref == nil || !strings.HasPrefix(ref.Digest, "sha256:") {
 		return nil, errors.New("Manager evidence reference is missing")
 	}
-	path, err := stageEvidencePath(store, id, *ref)
+	if store.storage == nil {
+		path, err := stageEvidencePath(store, id, *ref)
+		if err != nil {
+			return nil, err
+		}
+		data, err := readRecordBytes(path, store)
+		if err != nil {
+			return nil, err
+		}
+		if rawContentDigest(data) != ref.Digest {
+			return nil, errors.New("Manager evidence byte digest differs")
+		}
+		return data, nil
+	}
+	parts := strings.Split(ref.Path, "/")
+	if len(parts) != 2 || parts[0] != "reports" || parts[1] == "" || filepath.Base(parts[1]) != parts[1] || strings.ContainsAny(parts[1], "\\:") {
+		return nil, errors.New("invalid Manager evidence reference")
+	}
+	if !validID(id) {
+		return nil, fmt.Errorf("invalid run ID %q", id)
+	}
+	baseRelativeToRoot, err := filepath.Rel(store.root, store.base)
+	if err != nil || filepath.ToSlash(baseRelativeToRoot) != RunsPath {
+		return nil, errors.New("runtime directory differs from owning root")
+	}
+	name := recordstore.Name{Kind: recordstore.Run, ID: id, Role: ref.Path}
+	if _, err := name.Path(); err != nil {
+		return nil, err
+	}
+	physical, done, err := store.physical()
 	if err != nil {
 		return nil, err
 	}
-	data, err := readRecordBytes(path, store)
+	defer done()
+	file, err := physical.ReadWithDirectoryInspection(name, 0)
 	if err != nil {
 		return nil, err
 	}
+	if !file.Exists {
+		return nil, errRuntimeRecordMissing
+	}
+	data := file.Bytes
 	if rawContentDigest(data) != ref.Digest {
 		return nil, errors.New("Manager evidence byte digest differs")
 	}

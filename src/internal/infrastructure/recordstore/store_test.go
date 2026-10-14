@@ -531,3 +531,296 @@ func TestClosedNames(t *testing.T) {
 		}
 	}
 }
+
+func TestReadWithDirectoryInspectionMatchesListListRead(t *testing.T) {
+	s, _ := openFixture(t)
+	n := Name{Kind: Run, ID: fixtureName().ID, Role: "reports/evidence.json"}
+	wire := []byte("stage evidence bytes")
+	if err := s.Create(n, wire); err != nil {
+		t.Fatal(err)
+	}
+	top, err := s.List(Run, n.ID, "")
+	if err != nil || len(top) != 1 || top[0].Name() != "reports" {
+		t.Fatalf("old top-level scan: %#v %v", top, err)
+	}
+	reports, err := s.List(Run, n.ID, "reports")
+	if err != nil || len(reports) != 1 || reports[0].Name() != "evidence.json" {
+		t.Fatalf("old reports scan: %#v %v", reports, err)
+	}
+	want, err := s.Read(n, int64(len(wire)))
+	if err != nil || !want.Exists {
+		t.Fatalf("old read: %+v %v", want, err)
+	}
+	openCalls := 0
+	s.hooks.beforeOpen = func() error { openCalls++; return nil }
+	got, err := s.ReadWithDirectoryInspection(n, int64(len(wire)))
+	if err != nil || !got.Exists {
+		t.Fatalf("fused read: %+v %v", got, err)
+	}
+	// The three CheckCutover calls each open the existing .markitect prefix
+	// once; the fused record path contributes its original 14 checkpoints.
+	if openCalls != 17 {
+		t.Fatalf("beforeOpen calls: got %d, want 14 record + 3 cutover-prefix calls", openCalls)
+	}
+	if !bytes.Equal(got.Bytes, want.Bytes) || got.Mode != want.Mode || got.identity == nil || want.identity == nil || !os.SameFile(got.identity, want.identity) {
+		t.Fatalf("fused preimage differs: got=%+v old=%+v", got, want)
+	}
+}
+
+func TestReadWithDirectoryInspectionRejectsParentReplacement(t *testing.T) {
+	s, root := openFixture(t)
+	n := Name{Kind: Run, ID: fixtureName().ID, Role: "reports/evidence.json"}
+	if err := s.Create(n, []byte("original evidence")); err != nil {
+		t.Fatal(err)
+	}
+	relative, _ := n.Path()
+	reports := filepath.Join(root, filepath.Dir(filepath.FromSlash(relative)))
+	leaf := filepath.Join(root, filepath.FromSlash(relative))
+	calls, moved := 0, false
+	s.hooks.beforeOpen = func() error {
+		calls++
+		// Two cutover checks precede this replacement boundary;
+		// the third read check follows reports inspection.
+		if calls != 11 {
+			return nil
+		}
+		if err := moveRecordParentFixture(reports, reports+"-observed"); err != nil {
+			if runtime.GOOS == "windows" {
+				t.Skipf("reports replacement while parent handle is retained unavailable: %v", err)
+			}
+			return err
+		}
+		if err := os.Mkdir(reports, 0700); err != nil {
+			return err
+		}
+		if err := os.WriteFile(leaf, []byte("replacement evidence"), 0600); err != nil {
+			return err
+		}
+		moved = true
+		return nil
+	}
+	file, err := s.ReadWithDirectoryInspection(n, 64)
+	if !moved || err == nil || isDirectoryAbsent(err) || errors.Is(err, ErrReadConflict) || file.Exists {
+		t.Fatalf("parent substitution admitted or softened: moved=%t file=%+v err=%v calls=%d", moved, file, err, calls)
+	}
+	for dir, want := range map[string]string{reports + "-observed": "original evidence", reports: "replacement evidence"} {
+		data, readErr := os.ReadFile(filepath.Join(dir, "evidence.json"))
+		if readErr != nil || string(data) != want {
+			t.Fatalf("parent evidence at %s: %q %v", dir, data, readErr)
+		}
+	}
+}
+
+func TestReadWithDirectoryInspectionRejectsRootSubstitution(t *testing.T) {
+	container := filepath.Join(t.TempDir(), "container")
+	root := filepath.Join(container, "repo")
+	if err := os.MkdirAll(root, 0700); err != nil {
+		t.Fatal(err)
+	}
+	s, err := Open(root)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer s.Close()
+	n := Name{Kind: Run, ID: fixtureName().ID, Role: "reports/evidence.json"}
+	if err := s.Create(n, []byte("old root")); err != nil {
+		t.Fatal(err)
+	}
+	relative, _ := n.Path()
+	mutated := false
+	s.hooks.beforeLeafOpen = func() error {
+		if err := moveRecordParentFixture(container, container+"-original"); err != nil {
+			if runtime.GOOS == "windows" {
+				t.Skipf("root substitution with retained root handle unavailable: %v", err)
+			}
+			return err
+		}
+		if err := os.MkdirAll(filepath.Join(root, filepath.Dir(filepath.FromSlash(relative))), 0700); err != nil {
+			return err
+		}
+		if err := os.WriteFile(filepath.Join(root, filepath.FromSlash(relative)), []byte("new root"), 0600); err != nil {
+			return err
+		}
+		mutated = true
+		return nil
+	}
+	file, err := s.ReadWithDirectoryInspection(n, 32)
+	if !mutated || err == nil || errors.Is(err, ErrReadConflict) || file.Exists {
+		t.Fatalf("root substitution admitted or became a leaf conflict: mutated=%t file=%+v err=%v", mutated, file, err)
+	}
+	for dir, want := range map[string]string{root: "new root", filepath.Join(container+"-original", "repo"): "old root"} {
+		data, readErr := os.ReadFile(filepath.Join(dir, filepath.FromSlash(relative)))
+		if readErr != nil || string(data) != want {
+			t.Fatalf("root evidence at %s: %q %v", dir, data, readErr)
+		}
+	}
+}
+
+func TestReadWithDirectoryInspectionRejectsReparseAndCaseAlias(t *testing.T) {
+	for _, scope := range []string{"run-id", "reports"} {
+		t.Run("reparse-"+scope, func(t *testing.T) {
+			s, root := openFixture(t)
+			n := Name{Kind: Run, ID: fixtureName().ID, Role: "reports/evidence.json"}
+			if err := s.Create(n, []byte("evidence")); err != nil {
+				t.Fatal(err)
+			}
+			relative, _ := n.Path()
+			reports := filepath.Join(root, filepath.Dir(filepath.FromSlash(relative)))
+			runID := filepath.Dir(reports)
+			scanDir := reports
+			if scope == "run-id" {
+				scanDir = runID
+			}
+			outside := filepath.Join(root, "outside.txt")
+			if err := os.WriteFile(outside, []byte("outside"), 0600); err != nil {
+				t.Fatal(err)
+			}
+			link := filepath.Join(scanDir, "linked.txt")
+			if err := os.Symlink(outside, link); err != nil {
+				t.Skipf("%s symlink fixture unavailable: %v", scope, err)
+			}
+			file, err := s.ReadWithDirectoryInspection(n, 64)
+			if err == nil || file.Exists {
+				t.Fatalf("%s reparse entry admitted: %+v %v", scope, file, err)
+			}
+		})
+	}
+	t.Run("case-alias", func(t *testing.T) {
+		s, root := openFixture(t)
+		n := Name{Kind: Run, ID: fixtureName().ID, Role: "reports/evidence.json"}
+		if err := s.Create(n, []byte("evidence")); err != nil {
+			t.Fatal(err)
+		}
+		relative, _ := n.Path()
+		leaf := filepath.Join(root, filepath.FromSlash(relative))
+		original := leaf + "-original"
+		alias := filepath.Join(filepath.Dir(leaf), "EVIDENCE.json")
+		if err := os.Rename(leaf, original); err != nil {
+			t.Fatal(err)
+		}
+		if err := os.WriteFile(alias, []byte("case alias"), 0600); err != nil {
+			t.Skipf("case-alias file fixture unavailable: %v", err)
+		}
+		file, err := s.ReadWithDirectoryInspection(n, 64)
+		if err == nil || file.Exists {
+			t.Fatalf("case alias admitted: %+v %v", file, err)
+		}
+		data, readErr := os.ReadFile(original)
+		if readErr != nil || string(data) != "evidence" {
+			t.Fatalf("original evidence changed: %q %v", data, readErr)
+		}
+		aliasData, aliasErr := os.ReadFile(alias)
+		if aliasErr != nil || string(aliasData) != "case alias" {
+			t.Fatalf("uppercase on-disk alias missing: %q %v", aliasData, aliasErr)
+		}
+	})
+}
+func TestReadWithDirectoryInspectionAbsenceFallbackIsFreshAndDoesNotHeal(t *testing.T) {
+	t.Run("safe-absence", func(t *testing.T) {
+		s, root := openFixture(t)
+		n := Name{Kind: Run, ID: fixtureName().ID, Role: "reports/evidence.json"}
+		file, err := s.ReadWithDirectoryInspection(n, 64)
+		if err != nil || file.Exists {
+			t.Fatalf("absent read: %+v %v", file, err)
+		}
+		entries, err := os.ReadDir(root)
+		if err != nil || len(entries) != 0 {
+			t.Fatalf("absent read created state: %v %v", entries, err)
+		}
+	})
+	t.Run("parent-appears-during-fresh-fallback", func(t *testing.T) {
+		s, root := openFixture(t)
+		id := fixtureName().ID
+		if err := s.Ensure(Run, id, ""); err != nil {
+			t.Fatal(err)
+		}
+		n := Name{Kind: Run, ID: id, Role: "reports/evidence.json"}
+		relative, _ := n.Path()
+		created, calls := false, 0
+		s.hooks.beforeOpen = func() error {
+			calls++
+			// The first fallback List performs one cutover-prefix hook before
+			// its first directory-open hook. Create the reports parent there.
+			if calls == 12 {
+				reports := filepath.Join(root, filepath.Dir(filepath.FromSlash(relative)))
+				if err := os.Mkdir(reports, 0700); err != nil {
+					return err
+				}
+				if err := os.WriteFile(filepath.Join(root, filepath.FromSlash(relative)), []byte("fresh"), 0600); err != nil {
+					return err
+				}
+				created = true
+			}
+			return nil
+		}
+		file, err := s.ReadWithDirectoryInspection(n, 64)
+		if err != nil || !created || !file.Exists || string(file.Bytes) != "fresh" {
+			t.Fatalf("fresh fallback did not see new parent: created=%t file=%+v err=%v calls=%d", created, file, err, calls)
+		}
+	})
+	t.Run("fallback-guard-error-does-not-heal", func(t *testing.T) {
+		s, root := openFixture(t)
+		id := fixtureName().ID
+		if err := s.Ensure(Run, id, ""); err != nil {
+			t.Fatal(err)
+		}
+		n := Name{Kind: Run, ID: id, Role: "reports/evidence.json"}
+		calls := 0
+		s.hooks.beforeOpen = func() error {
+			calls++
+			if calls == 12 {
+				return fs.ErrNotExist
+			}
+			return nil
+		}
+		file, err := s.ReadWithDirectoryInspection(n, 64)
+		if !errors.Is(err, fs.ErrNotExist) || isDirectoryAbsent(err) || file.Exists {
+			t.Fatalf("fallback guard error softened: file=%+v err=%v calls=%d", file, err, calls)
+		}
+		reports := filepath.Join(root, filepath.Dir(filepath.FromSlash(mustNamePath(t, n))))
+		if _, statErr := os.Lstat(reports); !errors.Is(statErr, fs.ErrNotExist) {
+			t.Fatalf("guard error created reports parent: %v", statErr)
+		}
+	})
+}
+
+func TestReadWithDirectoryInspectionSameContentLeafReplacementIsConflict(t *testing.T) {
+	s, root := openFixture(t)
+	n := Name{Kind: Run, ID: fixtureName().ID, Role: "reports/evidence.json"}
+	wire := []byte("same bytes")
+	if err := s.Create(n, wire); err != nil {
+		t.Fatal(err)
+	}
+	relative, _ := n.Path()
+	target := filepath.Join(root, filepath.FromSlash(relative))
+	mutated := false
+	s.hooks.beforeLeafOpen = func() error {
+		if err := os.Rename(target, target+"-original"); err != nil {
+			return err
+		}
+		if err := os.WriteFile(target, wire, 0600); err != nil {
+			return err
+		}
+		mutated = true
+		return nil
+	}
+	file, err := s.ReadWithDirectoryInspection(n, 64)
+	if !mutated || !errors.Is(err, ErrReadConflict) || file.Exists || len(file.Bytes) != 0 {
+		t.Fatalf("same-content replacement hid leaf identity change: mutated=%t file=%+v err=%v", mutated, file, err)
+	}
+	for path, want := range map[string]string{target: string(wire), target + "-original": string(wire)} {
+		data, readErr := os.ReadFile(path)
+		if readErr != nil || string(data) != want {
+			t.Fatalf("leaf evidence at %s: %q %v", path, data, readErr)
+		}
+	}
+}
+
+func mustNamePath(t *testing.T, n Name) string {
+	t.Helper()
+	p, err := n.Path()
+	if err != nil {
+		t.Fatal(err)
+	}
+	return p
+}

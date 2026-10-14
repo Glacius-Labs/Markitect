@@ -4,6 +4,8 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
+	"io/fs"
 	"os"
 	"path/filepath"
 	"strings"
@@ -204,6 +206,179 @@ func TestManagerStageEvidenceTamperBlocksRecovery(t *testing.T) {
 	}
 	if invoker.calls != 1 {
 		t.Fatal("tamper triggered a provider call")
+	}
+}
+
+func TestReadStageEvidenceFreshStoreRetainsDerivedRootBinding(t *testing.T) {
+	root := testkit.TempDir(t)
+	foreignRoot := testkit.TempDir(t)
+	store, err := newManagerStageStore(root)
+	if err != nil {
+		t.Fatal(err)
+	}
+	foreignStore, err := newManagerStageStore(foreignRoot)
+	if err != nil {
+		t.Fatal(err)
+	}
+	const id = "0123456789abcdef0123456789abcdef"
+	if err := ensureDirectory(filepath.Join(store.base, id), store); err != nil {
+		t.Fatal(err)
+	}
+	if err := ensureDirectory(filepath.Join(store.base, id, "reports"), store); err != nil {
+		t.Fatal(err)
+	}
+	if err := ensureDirectory(filepath.Join(foreignStore.base, id), foreignStore); err != nil {
+		t.Fatal(err)
+	}
+	if err := ensureDirectory(filepath.Join(foreignStore.base, id, "reports"), foreignStore); err != nil {
+		t.Fatal(err)
+	}
+	payload := []byte("foreign-root evidence")
+	ref, err := writeStageEvidence(foreignStore, id, "attempt", ".report.json", payload)
+	if err != nil {
+		t.Fatal(err)
+	}
+	misbound := *store
+	misbound.base = foreignStore.base
+	if got, err := readStageEvidence(&misbound, id, ref); err == nil || strings.Contains(string(got), string(payload)) || !strings.Contains(err.Error(), "runtime directory differs from owning root") {
+		t.Fatalf("fresh read crossed its owning root: bytes=%q err=%v", got, err)
+	}
+}
+
+func TestReadStageEvidenceHeldStoreReadsCurrentGuardedBytes(t *testing.T) {
+	root := testkit.TempDir(t)
+	store, err := newManagerStageStore(root)
+	if err != nil {
+		t.Fatal(err)
+	}
+	const id = "fedcba9876543210fedcba9876543210"
+	if err := ensureDirectory(filepath.Join(store.base, id), store); err != nil {
+		t.Fatal(err)
+	}
+	if err := ensureDirectory(filepath.Join(store.base, id, "reports"), store); err != nil {
+		t.Fatal(err)
+	}
+	payload := []byte("current held-store evidence")
+	ref, err := writeStageEvidence(store, id, "attempt", ".report.json", payload)
+	if err != nil {
+		t.Fatal(err)
+	}
+	unlock, err := store.lock()
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer func() {
+		if err := unlock(); err != nil {
+			t.Errorf("release held Runtime store: %v", err)
+		}
+	}()
+	misbound := *store
+	misbound.base = filepath.Join(root, ".MARKITECT", "records", "run")
+	if got, err := readStageEvidence(&misbound, id, ref); err == nil || bytes.Equal(got, payload) || !strings.Contains(err.Error(), "runtime directory differs from owning root") {
+		t.Fatalf("held read accepted a noncanonical base spelling: bytes=%q err=%v", got, err)
+	}
+	got, err := readStageEvidence(store, id, ref)
+	if err != nil || !bytes.Equal(got, payload) || ref.Digest != rawContentDigest(payload) {
+		t.Fatalf("held read changed accepted bytes/digest: bytes=%q err=%v", got, err)
+	}
+	path, err := stageEvidencePath(store, id, *ref)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(path, []byte("tampered held-store evidence"), 0600); err != nil {
+		t.Fatal(err)
+	}
+	for attempt := 0; attempt < 2; attempt++ {
+		if got, err := readStageEvidence(store, id, ref); err == nil || bytes.Equal(got, payload) {
+			t.Fatalf("held read reused prior evidence after tamper (attempt %d): bytes=%q err=%v", attempt+1, got, err)
+		}
+	}
+	if err := os.Remove(path); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := readStageEvidence(store, id, ref); !errors.Is(err, errRuntimeRecordMissing) || errors.Is(err, fs.ErrNotExist) {
+		t.Fatalf("held validated absence lost its private Runtime classification: %v", err)
+	}
+}
+
+func readStageEvidenceOriginalSequence(store *runStore, id string, ref *ManagerStageEvidenceRef) ([]byte, error) {
+	if ref == nil || !strings.HasPrefix(ref.Digest, "sha256:") {
+		return nil, errors.New("Manager evidence reference is missing")
+	}
+	path, err := stageEvidencePath(store, id, *ref)
+	if err != nil {
+		return nil, err
+	}
+	data, err := readRecordBytes(path, store)
+	if err != nil {
+		return nil, err
+	}
+	if rawContentDigest(data) != ref.Digest {
+		return nil, errors.New("Manager evidence byte digest differs")
+	}
+	return data, nil
+}
+
+func BenchmarkManagerStageEvidenceReadHeld(b *testing.B) {
+	root := testkit.TempDir(b)
+	store, err := newManagerStageStore(root)
+	if err != nil {
+		b.Fatal(err)
+	}
+	const id = "1234567890abcdef1234567890abcdef"
+	if err := ensureDirectory(filepath.Join(store.base, id), store); err != nil {
+		b.Fatal(err)
+	}
+	if err := ensureDirectory(filepath.Join(store.base, id, "reports"), store); err != nil {
+		b.Fatal(err)
+	}
+	payload := []byte("paired held-store benchmark evidence")
+	ref, err := writeStageEvidence(store, id, "attempt", ".report.json", payload)
+	if err != nil {
+		b.Fatal(err)
+	}
+	unlock, err := store.lock()
+	if err != nil {
+		b.Fatal(err)
+	}
+	defer func() {
+		if err := unlock(); err != nil {
+			b.Errorf("release held Runtime store: %v", err)
+		}
+	}()
+	if got, err := readStageEvidenceOriginalSequence(store, id, ref); err != nil || !bytes.Equal(got, payload) {
+		b.Fatalf("original-sequence fixture is invalid: bytes=%q err=%v", got, err)
+	}
+	if got, err := readStageEvidence(store, id, ref); err != nil || !bytes.Equal(got, payload) {
+		b.Fatalf("combined-read fixture is invalid: bytes=%q err=%v", got, err)
+	}
+	benchmarks := []struct {
+		name string
+		read func(*runStore, string, *ManagerStageEvidenceRef) ([]byte, error)
+	}{
+		{name: "baseline-first", read: readStageEvidenceOriginalSequence},
+		{name: "candidate-first", read: readStageEvidence},
+		{name: "candidate-second", read: readStageEvidence},
+		{name: "baseline-second", read: readStageEvidenceOriginalSequence},
+	}
+	for _, benchmark := range benchmarks {
+		benchmark := benchmark
+		b.Run(benchmark.name, func(b *testing.B) {
+			b.ReportAllocs()
+			b.ResetTimer()
+			var last []byte
+			for i := 0; i < b.N; i++ {
+				var err error
+				last, err = benchmark.read(store, id, ref)
+				if err != nil {
+					b.Fatal(err)
+				}
+			}
+			b.StopTimer()
+			if !bytes.Equal(last, payload) {
+				b.Fatal("held evidence read returned changed bytes")
+			}
+		})
 	}
 }
 
