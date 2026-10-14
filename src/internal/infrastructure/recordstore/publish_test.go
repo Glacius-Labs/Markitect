@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"testing"
 )
@@ -103,27 +104,38 @@ func TestEveryCreatedAncestorFailureRetainsQualifiedOutcome(t *testing.T) {
 func TestNamedParentReplacementNeverTargetsReplacement(t *testing.T) {
 	s, root := openFixture(t)
 	n := fixtureName()
-	if err := s.Ensure(Run, n.ID, ""); err != nil {
+	if err := s.Create(n, []byte("old")); err != nil {
+		t.Fatal(err)
+	}
+	prior, err := s.Read(n, 32)
+	if err != nil {
 		t.Fatal(err)
 	}
 	p := filepath.Join(root, filepath.FromSlash(RootPath), "run", n.ID)
 	moved := p + "-moved"
-	s.hooks.beforePublish = func() error {
-		if err := os.Rename(p, moved); err != nil {
-			t.Skipf("actual parent substitution unavailable: %v", err)
-		}
+	s.hooks.beforeTempCreate = func() error {
+		movePublishingParentFixture(t, s, p, moved)
 		if err := os.Mkdir(p, 0700); err != nil {
 			return err
 		}
+		assertPublishingParentReplacementFixture(t, s, p, moved)
 		return os.WriteFile(filepath.Join(p, "plan.json"), []byte("attacker"), 0600)
 	}
-	err := s.Create(n, []byte("safe"))
-	if err == nil {
+	err = s.Replace(n, prior, []byte("safe"), nil)
+	if err == nil || WasPublished(err) || OutcomeUnknown(err) {
 		t.Fatal("substitution succeeded as ordinary publication")
 	}
 	actual, e := os.ReadFile(filepath.Join(p, "plan.json"))
 	if e != nil || !bytes.Equal(actual, []byte("attacker")) {
 		t.Fatalf("replacement was targeted: %q %v", actual, e)
+	}
+	entries, e := os.ReadDir(moved)
+	if e != nil || len(entries) != 1 || entries[0].Name() != "plan.json" {
+		t.Fatalf("refusal created a temp or lost prior authority: %v %v", entries, e)
+	}
+	original, e := os.ReadFile(filepath.Join(moved, "plan.json"))
+	if e != nil || string(original) != "old" {
+		t.Fatalf("original bytes lost: %q %v", original, e)
 	}
 }
 func TestDomainGuardUnderPublicationKeepsPriorBytes(t *testing.T) {
@@ -147,17 +159,17 @@ func TestParentMoveAfterPublicationRetainsBothObjects(t *testing.T) {
 	s, root := openFixture(t)
 	n := fixtureName()
 	p := filepath.Join(root, filepath.FromSlash(RootPath), "run", n.ID)
-	s.hooks.afterPublish = func() error {
-		if err := os.Rename(p, p+"-published"); err != nil {
-			t.Skipf("actual post-publication parent replacement unavailable: %v", err)
-		}
+	s.hooks.afterPublicationClose = func() error {
+		movePublishingParentFixture(t, s, p, p+"-published")
 		if err := os.Mkdir(p, 0700); err != nil {
 			return err
 		}
+		assertPublishingParentReplacementFixture(t, s, p, p+"-published")
 		return os.WriteFile(filepath.Join(p, "plan.json"), []byte("replacement"), 0600)
 	}
 	err := s.Create(n, []byte("published"))
-	if !WasPublished(err) {
+	relative, _ := n.Path()
+	if !WasPublishedAt(err, relative) {
 		t.Fatalf("lost published outcome: %v", err)
 	}
 	for dir, want := range map[string]string{p: "replacement", p + "-published": "published"} {
@@ -166,6 +178,18 @@ func TestParentMoveAfterPublicationRetainsBothObjects(t *testing.T) {
 			t.Fatalf("object lost at %s: %q %v", dir, wire, err)
 		}
 	}
+}
+
+func moveRecordParentFixture(from, to string) error {
+	if runtime.GOOS != "windows" {
+		return os.Rename(from, to)
+	}
+	container, err := os.OpenRoot(filepath.Dir(from))
+	if err != nil {
+		return err
+	}
+	defer container.Close()
+	return container.Rename(filepath.Base(from), filepath.Base(to))
 }
 
 func TestSameByteLeafReplacementAfterPublicationRetainsBothIdentities(t *testing.T) {

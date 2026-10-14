@@ -100,14 +100,32 @@ func TestProcessFileLockHelper(t *testing.T) {
 }
 
 func TestIncompleteLedgerPublicationFailsClosed(t *testing.T) {
-	dir := t.TempDir()
-	for _, name := range []string{".session.json.tmp", ".session.json.previous"} {
+	root := t.TempDir()
+	store, err := recordstore.Open(root)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer store.Close()
+	if err := store.Ensure(recordstore.Brownfield, "markers", ""); err != nil {
+		t.Fatal(err)
+	}
+	dir := filepath.Join(root, filepath.FromSlash(recordstore.RootPath), "brownfield", "markers")
+	for _, name := range []string{".record.json.tmp", ".record.json.previous", ".manager-runs.json.tmp", ".manager-runs.json.previous"} {
 		path := filepath.Join(dir, name)
 		if err := os.WriteFile(path, []byte("uncertain"), 0o600); err != nil {
 			t.Fatal(err)
 		}
-		if err := ensureNoIncompleteAtomicWrite(dir, "session.json"); err == nil {
+		var checkErr error
+		if strings.HasPrefix(name, ".manager-runs") {
+			_, checkErr = store.ReadLegacyBrownfieldManagerLedger("markers", 1024)
+		} else {
+			checkErr = store.Incomplete(recordstore.Name{Kind: recordstore.Brownfield, ID: "markers", Role: "record.json"})
+		}
+		if checkErr == nil {
 			t.Fatalf("publication uncertainty at %s must fail closed", name)
+		}
+		if data, err := os.ReadFile(path); err != nil || string(data) != "uncertain" {
+			t.Fatalf("uncertain marker was changed: %q %v", data, err)
 		}
 		if err := os.Remove(path); err != nil {
 			t.Fatal(err)
@@ -161,7 +179,16 @@ func TestFailedLedgerReplaceLeavesNoBlockingTemp(t *testing.T) {
 		}
 	})
 	t.Run("manager-run-ledger", func(t *testing.T) {
-		dir := t.TempDir()
+		root := t.TempDir()
+		store, err := recordstore.Open(root)
+		if err != nil {
+			t.Fatal(err)
+		}
+		defer store.Close()
+		if err := store.Ensure(recordstore.Brownfield, "failed-replace", ""); err != nil {
+			t.Fatal(err)
+		}
+		dir := filepath.Join(root, filepath.FromSlash(recordstore.RootPath), "brownfield", "failed-replace")
 		ledger := ManagerRunLedger{APIVersion: managerRunVersion, SessionID: "failed-replace", Events: []ManagerRunEvent{}}
 		sealManagerRunLedger(&ledger)
 		if err := writeManagerRunLedger(dir, ledger); err != nil {
@@ -176,7 +203,7 @@ func TestFailedLedgerReplaceLeavesNoBlockingTemp(t *testing.T) {
 		if writeErr == nil {
 			t.Skip("replace succeeded despite an open reader; failure could not be provoked")
 		}
-		if _, err := loadManagerRunLedger(dir, "failed-replace"); err != nil {
+		if _, err := loadManagerRunLedger(root, "failed-replace"); err != nil {
 			t.Errorf("unchanged manager-run ledger can no longer be loaded after a reported write failure: %v", err)
 		}
 		if err := writeManagerRunLedger(dir, ledger); err != nil {

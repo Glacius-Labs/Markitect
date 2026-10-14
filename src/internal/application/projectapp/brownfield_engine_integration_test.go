@@ -1,6 +1,7 @@
 package projectapp
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"os"
@@ -136,8 +137,9 @@ func TestBrownfieldEngineExecutorHelper(t *testing.T) {
 }
 
 type brownfieldLeaseReplacementInvoker struct {
-	inner projectrun.Invoker
-	lock  string
+	inner    projectrun.Invoker
+	lock     string
+	observed *agentexec.RunResult
 }
 
 func (i brownfieldLeaseReplacementInvoker) Fingerprint(config agentexec.Config) (string, error) {
@@ -148,6 +150,12 @@ func (i brownfieldLeaseReplacementInvoker) Run(ctx context.Context, config agent
 	if err != nil {
 		return result, err
 	}
+	if i.observed != nil {
+		*i.observed = result
+	}
+	if i.lock == "" {
+		return result, nil
+	}
 	if err := os.Rename(i.lock, i.lock+"-original"); err != nil {
 		return result, err
 	}
@@ -156,24 +164,174 @@ func (i brownfieldLeaseReplacementInvoker) Run(ctx context.Context, config agent
 	}
 	return result, nil
 }
-func TestBrownfieldOuterReleaseFailureReturnsPersistedSessionAndPreservesEvidence(t *testing.T) {
+func TestBrownfieldOuterReplacementBeforeSessionCASRetainsEvidenceWithoutAttach(t *testing.T) {
 	f := newBrownfieldEngineFixture(t, false)
 	lock := filepath.Join(f.sourceRoot, filepath.FromSlash(projectadoption.BrownfieldSessionPath), f.session.ID, "manager-runs.lock")
-	f.operations.Invoker = brownfieldLeaseReplacementInvoker{inner: f.operations.Invoker, lock: lock}
+	var original agentexec.RunResult
+	f.operations.Invoker = brownfieldLeaseReplacementInvoker{inner: f.operations.Invoker, lock: lock, observed: &original}
+	before, err := os.ReadFile(filepath.Join(filepath.Dir(lock), "record.json"))
+	if err != nil {
+		t.Fatal(err)
+	}
 	output, err := previewAndRunBrownfield(t, f, f.operation)
-	if !recordstore.WasPublished(err) || output.Status != "recorded" || output.Proposal == nil || output.SessionDigest == f.session.Digest {
-		t.Fatalf("persisted output/release outcome: %+v %v", output, err)
+	if err == nil || output.Status != "failed" || output.Proposal != nil || output.Attempt == nil || output.Attempt.Execution == nil {
+		t.Fatalf("pre-CAS replacement attached/lost evidence: %+v %v", output, err)
 	}
 	stored, loadErr := projectadoption.LoadBrownfieldSession(f.sourceRoot, f.session.ID)
-	if loadErr != nil || stored.Digest != output.SessionDigest {
-		t.Fatalf("persisted Session lost: %+v %v", stored, loadErr)
+	if loadErr != nil || stored.Digest != f.session.Digest {
+		t.Fatalf("pre-CAS failure changed Session: %+v %v", stored, loadErr)
 	}
+	after, readErr := os.ReadFile(filepath.Join(filepath.Dir(lock), "record.json"))
+	if readErr != nil || !bytes.Equal(before, after) {
+		t.Fatalf("pre-CAS Session bytes changed: %v", readErr)
+	}
+	assertBrownfieldOriginalRuntimeEvidence(t, f, output, original)
 	if info, err := os.Stat(lock); err != nil || info.Size() != 0 {
 		t.Fatal("replacement kernel control deleted")
 	}
 	calls, err := os.ReadFile(f.counter)
 	if err != nil || string(calls) != "x" {
 		t.Fatalf("Manager replayed: %q %v", calls, err)
+	}
+}
+
+func TestBrownfieldOuterReleaseFailureAfterRealSessionCASPreservesPublication(t *testing.T) {
+	f := newBrownfieldEngineFixture(t, false)
+	lock := filepath.Join(f.sourceRoot, filepath.FromSlash(projectadoption.BrownfieldSessionPath), f.session.ID, "manager-runs.lock")
+	var original agentexec.RunResult
+	f.operations.Invoker = brownfieldLeaseReplacementInvoker{inner: f.operations.Invoker, observed: &original}
+	realWrite := writeBrownfieldManagerSession
+	t.Cleanup(func() { writeBrownfieldManagerSession = realWrite })
+	casCalls := 0
+	writeBrownfieldManagerSession = func(root string, session projectadoption.BrownfieldSession, expected string, owners ...*projectadoption.ManagerStageLease) (projectadoption.BrownfieldSession, error) {
+		casCalls++
+		stored, err := realWrite(root, session, expected, owners...)
+		if err != nil {
+			return stored, err
+		}
+		observed, err := projectadoption.LoadBrownfieldSession(root, session.ID, owners...)
+		if err != nil || observed.Digest != session.Digest {
+			t.Fatalf("fixture replacement preceded real durable CAS: %+v %v", observed, err)
+		}
+		if err := os.Rename(lock, lock+"-original"); err != nil {
+			return stored, err
+		}
+		if err := os.WriteFile(lock, nil, 0600); err != nil {
+			return stored, err
+		}
+		return stored, nil
+	}
+	output, err := previewAndRunBrownfield(t, f, f.operation)
+	p := projectadoption.BrownfieldSessionPath + "/" + f.session.ID + "/record.json"
+	if !recordstore.WasPublishedAt(err, p) || output.Status != "recorded" || output.Proposal == nil || output.SessionDigest == f.session.Digest || casCalls != 1 {
+		t.Fatalf("real post-CAS release qualification: %+v calls=%d err=%v", output, casCalls, err)
+	}
+	stored, loadErr := projectadoption.LoadBrownfieldSession(f.sourceRoot, f.session.ID)
+	if loadErr != nil || stored.Digest != output.SessionDigest {
+		t.Fatalf("published Session lost: %+v %v", stored, loadErr)
+	}
+	assertBrownfieldOriginalRuntimeEvidence(t, f, output, original)
+	if calls, err := os.ReadFile(f.counter); err != nil || string(calls) != "x" {
+		t.Fatalf("publication failure replayed Manager: %q %v", calls, err)
+	}
+	for _, p := range []string{lock, lock + "-original"} {
+		if info, err := os.Stat(p); err != nil || info.Size() != 0 {
+			t.Fatalf("outer control evidence lost: %s %v", p, err)
+		}
+	}
+}
+
+func assertBrownfieldOriginalRuntimeEvidence(t *testing.T, f brownfieldEngineFixture, output BrownfieldManagerRunOutput, original agentexec.RunResult) {
+	t.Helper()
+	if output.Attempt == nil || output.Attempt.Execution == nil || original.Receipt.RunID == "" {
+		t.Fatal("actual original attempt/receipt missing")
+	}
+	wantReceipt, err := json.Marshal(original.Receipt)
+	if err != nil {
+		t.Fatal(err)
+	}
+	returnedReceipt, err := json.Marshal(output.Attempt.Execution)
+	if err != nil || !bytes.Equal(wantReceipt, returnedReceipt) {
+		t.Fatal("returned original receipt changed")
+	}
+	states, err := filepath.Glob(filepath.Join(f.sourceRoot, filepath.FromSlash(projectrun.RunsPath), "*", "states", "*.json"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	found := false
+	for _, p := range states {
+		data, err := os.ReadFile(p)
+		if err != nil {
+			t.Fatal(err)
+		}
+		var report projectrun.RunReport
+		if err := json.Unmarshal(data, &report); err != nil {
+			t.Fatal(err)
+		}
+		for _, log := range report.Invocations {
+			if log.Attempt == nil || log.Attempt.ID != output.Attempt.ID || log.Receipt.RunID == "" {
+				continue
+			}
+			actual, err := json.Marshal(log.Receipt)
+			if err != nil || !bytes.Equal(actual, wantReceipt) || log.Attempt.ReportRef == nil {
+				t.Fatal("persisted original receipt/report reference changed")
+			}
+			raw, err := os.ReadFile(filepath.Join(filepath.Dir(filepath.Dir(p)), filepath.FromSlash(log.Attempt.ReportRef.Path)))
+			if err != nil || !bytes.Equal(raw, original.Response.ReportJSON) {
+				t.Fatalf("persisted original result changed: %v", err)
+			}
+			found = true
+		}
+	}
+	if !found {
+		t.Fatal("Runtime did not retain original terminal receipt/result")
+	}
+}
+
+type brownfieldBeforeDispatchReplacementInvoker struct {
+	inner   projectrun.Invoker
+	lock    string
+	mutated *bool
+}
+
+func (i brownfieldBeforeDispatchReplacementInvoker) Fingerprint(config agentexec.Config) (string, error) {
+	fingerprint, err := i.inner.Fingerprint(config)
+	if err == nil && !*i.mutated {
+		if err = os.Rename(i.lock, i.lock+"-original"); err == nil {
+			err = os.WriteFile(i.lock, nil, 0600)
+		}
+		*i.mutated = err == nil
+	}
+	return fingerprint, err
+}
+func (i brownfieldBeforeDispatchReplacementInvoker) Run(ctx context.Context, config agentexec.Config, request agentexec.Request, options agentexec.RunOptions) (agentexec.RunResult, error) {
+	return i.inner.Run(ctx, config, request, options)
+}
+func TestBrownfieldOwnerReplacementBeforeDispatchStartsNoInvocation(t *testing.T) {
+	f := newBrownfieldEngineFixture(t, false)
+	preview, err := f.operations.BrownfieldRun(context.Background(), f.operation, f.operations.Invoker)
+	if err != nil {
+		t.Fatal(err)
+	}
+	lock := filepath.Join(f.sourceRoot, filepath.FromSlash(projectadoption.BrownfieldSessionPath), f.session.ID, "manager-runs.lock")
+	before, err := os.ReadFile(filepath.Join(filepath.Dir(lock), "record.json"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	mutated := false
+	invoker := brownfieldBeforeDispatchReplacementInvoker{inner: f.operations.Invoker, lock: lock, mutated: &mutated}
+	operation := f.operation
+	operation.Write, operation.ExpectedDigest = true, preview.PreviewDigest
+	_, err = f.operations.BrownfieldRun(context.Background(), operation, invoker)
+	if err == nil || !mutated {
+		t.Fatalf("actual pre-dispatch substitution was not refused: %v", err)
+	}
+	after, readErr := os.ReadFile(filepath.Join(filepath.Dir(lock), "record.json"))
+	if readErr != nil || !bytes.Equal(before, after) {
+		t.Fatal("pre-dispatch substitution changed Session")
+	}
+	if calls, err := os.ReadFile(f.counter); err != nil && !os.IsNotExist(err) || len(calls) != 0 {
+		t.Fatalf("pre-dispatch substitution invoked Manager: %q %v", calls, err)
 	}
 }
 
@@ -362,7 +520,9 @@ func TestBrownfieldEngineRecoversCompletionBeforeSessionCAS(t *testing.T) {
 	if err != nil || completed.Status != "accepted" {
 		t.Fatal(err)
 	}
-	unlock() // Simulated crash: Runtime terminal accepted, Session CAS did not happen.
+	if err := unlock.Close(); err != nil {
+		t.Fatal(err)
+	} // Simulated crash: Runtime terminal accepted, Session CAS did not happen.
 	session, err := projectadoption.LoadBrownfieldSession(f.sourceRoot, f.session.ID)
 	if err != nil || session.Digest != f.session.Digest {
 		t.Fatal("fixture unexpectedly attached Session")

@@ -9,6 +9,30 @@ import (
 	"time"
 )
 
+func TestLeaseBusyOnlyWrapsTerminalLeaseLeafCollision(t *testing.T) {
+	s, _ := openFixture(t)
+	lease, err := s.Exclusive(Briefing, "accepted", ".briefings.lock", nil, 0, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer lease.Close()
+	for _, wait := range []time.Duration{0, 20 * time.Millisecond} {
+		start := time.Now()
+		_, err := s.Exclusive(Briefing, "accepted", ".briefings.lock", nil, wait, nil)
+		var busy *LeaseBusy
+		if !errors.As(err, &busy) || !errors.Is(err, fs.ErrExist) || time.Since(start) < wait {
+			t.Fatalf("actual terminal lease collision: %v wait=%s", err, wait)
+		}
+	}
+	other, _ := openFixture(t)
+	other.hooks.beforeMkdir = func() error { return fs.ErrExist }
+	_, err = other.Exclusive(Briefing, "accepted", ".briefings.lock", nil, 0, nil)
+	var busy *LeaseBusy
+	if !errors.Is(err, fs.ErrExist) || errors.As(err, &busy) {
+		t.Fatalf("ancestor error mislabeled as held leaf: %v", err)
+	}
+}
+
 func TestKindWideExclusiveLeaseAndReplacementRelease(t *testing.T) {
 	s, root := openFixture(t)
 	lease, err := s.Exclusive(Run, "", ".write.lock", []byte("owner"), 0, nil)

@@ -10,10 +10,8 @@ import (
 	"io"
 	"os"
 	"path/filepath"
-	"runtime"
 	"sort"
 	"strings"
-	"syscall"
 	"time"
 
 	"github.com/Glacius-Labs/Markitect/src/internal/application/projectwork"
@@ -88,7 +86,7 @@ func readStore(root string) (projectbriefing.Store, string, error) {
 	err = waitWhileBusy(func() (bool, error) {
 		var e error
 		file, e = store.Read(historyName(), 64<<20)
-		return windowsBusy(e), e
+		return errors.Is(e, recordstore.ErrReadConflict), e
 	})
 	if err != nil {
 		return projectbriefing.Store{}, "", err
@@ -1368,7 +1366,8 @@ func update(root, expected string, mutate func(*projectbriefing.Store) error) (r
 	defer store.Close()
 	lease, err := store.Exclusive(recordstore.Briefing, "accepted", ".briefings.lock", nil, storeLockWait, nil)
 	if err != nil {
-		if errors.Is(err, os.ErrExist) {
+		var busy *recordstore.LeaseBusy
+		if errors.As(err, &busy) {
 			return "", fmt.Errorf("acquire briefing store lock: %s is still held after %s; if no Markitect process is running, delete that file: %w", filepath.Join(root, filepath.Dir(filepath.FromSlash(storePath)), ".briefings.lock"), storeLockWait, err)
 		}
 		return "", err
@@ -1447,20 +1446,6 @@ func waitWhileBusy(attempt func() (busy bool, err error)) error {
 			delay *= 2
 		}
 	}
-}
-
-// Windows reports these transiently while another process opens, replaces or
-// deletes the same store or lock file.
-const (
-	windowsAccessDenied     = syscall.Errno(5)
-	windowsSharingViolation = syscall.Errno(32)
-)
-
-// windowsBusy reports a transient Windows file-sharing conflict with another
-// reader or writer of the store.
-func windowsBusy(err error) bool {
-	var errno syscall.Errno
-	return runtime.GOOS == "windows" && errors.As(err, &errno) && (errno == windowsAccessDenied || errno == windowsSharingViolation)
 }
 
 func stateFile(root string, create bool) (string, error) {

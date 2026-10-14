@@ -20,6 +20,8 @@ type Store struct {
 }
 type hooks struct {
 	beforeOpen, beforePublish, afterPublish func() error
+	beforeMkdir, beforeLeafOpen             func() error
+	beforeTempCreate, afterPublicationClose func() error
 	fileSync, directorySync                 func() error
 	directoryCreated                        func() error
 }
@@ -34,6 +36,28 @@ type level struct {
 	leaf     string
 	root     *os.Root
 	identity os.FileInfo
+	private  bool
+}
+
+// Only a negative child Lstat beneath an unchanged safe chain is absence.
+// Guard failures and disappearing positively observed directories are errors.
+type directoryAbsent struct{ cause error }
+
+func (e *directoryAbsent) Error() string { return "record directory absent: " + e.cause.Error() }
+func (e *directoryAbsent) Unwrap() error { return e.cause }
+func isDirectoryAbsent(err error) bool {
+	var absent *directoryAbsent
+	return errors.As(err, &absent)
+}
+
+func (d *directory) confirmMissingName(leaf string) error {
+	if err := d.check(); err != nil {
+		return err
+	}
+	if err := storedName(d.root, leaf); err != nil {
+		return err
+	}
+	return d.check()
 }
 
 func Open(root string) (*Store, error) {
@@ -73,12 +97,40 @@ func (s *Store) Identity() os.FileInfo { return s.identity }
 func (s *Store) CheckIdentity() error {
 	i, err := os.Lstat(s.absolute)
 	if err != nil {
-		return err
+		return fmt.Errorf("observe record repository root: %w", err)
 	}
 	if !i.IsDir() || platformIsReparse(i) || !os.SameFile(s.identity, i) {
 		return errors.New("record repository root identity changed")
 	}
 	return nil
+}
+
+// CheckRootBinding validates another spelling of the same physical root. It
+// does not open or substitute a fresh Store; borrowed IO keeps this owner.
+func (s *Store) CheckRootBinding(root string) error {
+	if err := s.CheckIdentity(); err != nil {
+		return err
+	}
+	absolute, err := filepath.Abs(root)
+	if err != nil || strings.TrimSpace(root) == "" {
+		return errors.New("record repository root required")
+	}
+	for p := absolute; ; p = filepath.Dir(p) {
+		info, err := os.Lstat(p)
+		if err != nil {
+			return err
+		}
+		if !info.IsDir() || platformIsReparse(info) {
+			return errors.New("borrowed record root ancestor is not a real directory")
+		}
+		if p == absolute && !os.SameFile(s.identity, info) {
+			return errors.New("borrowed record root physical identity differs")
+		}
+		if filepath.Dir(p) == p {
+			break
+		}
+	}
+	return s.CheckIdentity()
 }
 func (d *directory) close() {
 	if d.file != nil {
@@ -95,10 +147,15 @@ func (d *directory) check() error {
 	for _, l := range d.levels {
 		info, err := l.parent.Lstat(l.leaf)
 		if err != nil {
-			return err
+			return fmt.Errorf("observe record parent %q: %w", l.leaf, err)
 		}
 		if platformIsReparse(info) || !info.IsDir() || !os.SameFile(l.identity, info) {
 			return errors.New("record parent name identity changed")
+		}
+		if l.private {
+			if err := platformMode(info, 0700); err != nil {
+				return err
+			}
 		}
 	}
 	return nil
@@ -106,12 +163,12 @@ func (d *directory) check() error {
 func storedName(r *os.Root, leaf string) error {
 	f, err := r.Open(".")
 	if err != nil {
-		return err
+		return fmt.Errorf("open stored-name parent for %q: %w", leaf, err)
 	}
 	defer f.Close()
 	entries, err := f.ReadDir(-1)
 	if err != nil {
-		return err
+		return fmt.Errorf("read stored-name parent for %q: %w", leaf, err)
 	}
 	for _, e := range entries {
 		if strings.EqualFold(e.Name(), leaf) && e.Name() != leaf {
@@ -125,6 +182,9 @@ func (s *Store) openDirectory(relative string, create, private bool) (result *di
 	success := false
 	created := false
 	defer func() {
+		if resultErr != nil {
+			resultErr = fmt.Errorf("open record directory %q: %w", relative, resultErr)
+		}
 		if created && resultErr != nil && !WasPublished(resultErr) && !OutcomeUnknown(resultErr) {
 			resultErr = &PublicationError{Path: relative, Outcome: Published, Cause: resultErr}
 		}
@@ -140,30 +200,60 @@ func (s *Store) openDirectory(relative string, create, private bool) (result *di
 			if !safeComponent(leaf) && leaf != ".markitect" {
 				return nil, errors.New("unsafe record directory component")
 			}
+			if err := d.check(); err != nil {
+				return nil, err
+			}
 			if err := storedName(d.root, leaf); err != nil {
 				return nil, err
 			}
 			info, err := d.root.Lstat(leaf)
+			if errors.Is(err, fs.ErrNotExist) && !create {
+				if checkErr := d.confirmMissingName(leaf); checkErr != nil {
+					return nil, checkErr
+				}
+				return nil, &directoryAbsent{cause: err}
+			}
+			collided := false
 			if errors.Is(err, fs.ErrNotExist) && create {
 				if err := d.check(); err != nil {
 					return nil, err
 				}
 				parent, openErr := d.root.Open(".")
 				if openErr != nil {
-					return nil, openErr
+					return nil, fmt.Errorf("open creation parent for %q: %w", leaf, openErr)
 				}
 				writer, writerErr := platformWritableParent(parent)
 				parent.Close()
 				if writerErr != nil {
 					return nil, writerErr
 				}
-				err = platformMkdir(d.root, writer, leaf)
-				writer.Close()
-				if err != nil {
+				if s.hooks.beforeMkdir != nil {
+					if err = s.hooks.beforeMkdir(); err != nil {
+						writer.Close()
+						return nil, err
+					}
+				}
+				if err = d.check(); err != nil {
+					writer.Close()
 					return nil, err
 				}
-				created = true
-				if s.hooks.directoryCreated != nil {
+				err = platformMkdir(d.root, writer, leaf)
+				writer.Close()
+				collided = errors.Is(err, fs.ErrExist) && !WasPublished(err) && !OutcomeUnknown(err)
+				if err != nil && !collided {
+					return nil, err
+				}
+				if collided {
+					if err = d.check(); err != nil {
+						return nil, err
+					}
+					if err = storedName(d.root, leaf); err != nil {
+						return nil, err
+					}
+				} else {
+					created = true
+				}
+				if !collided && s.hooks.directoryCreated != nil {
 					if err = s.hooks.directoryCreated(); err != nil {
 						return nil, err
 					}
@@ -171,7 +261,7 @@ func (s *Store) openDirectory(relative string, create, private bool) (result *di
 				info, err = d.root.Lstat(leaf)
 			}
 			if err != nil {
-				return nil, err
+				return nil, fmt.Errorf("observe directory child %q: %w", leaf, err)
 			}
 			if !info.IsDir() || platformIsReparse(info) {
 				return nil, errors.New("unsafe record parent directory")
@@ -188,27 +278,69 @@ func (s *Store) openDirectory(relative string, create, private bool) (result *di
 			}
 			child, err := d.root.OpenRoot(leaf)
 			if err != nil {
-				return nil, err
+				return nil, fmt.Errorf("open directory child %q: %w", leaf, err)
 			}
 			actual, err := child.Stat(".")
 			if err != nil || !os.SameFile(info, actual) {
 				child.Close()
 				return nil, errors.New("record directory changed while opening")
 			}
-			d.levels = append(d.levels, level{parent: d.root, leaf: leaf, root: child, identity: actual})
+			if private && idx >= 1 {
+				if err := platformMode(actual, 0700); err != nil {
+					child.Close()
+					return nil, err
+				}
+			}
+			d.levels = append(d.levels, level{parent: d.root, leaf: leaf, root: child, identity: actual, private: private && idx >= 1})
 			d.root = child
+			if collided {
+				if err = syncObservedAncestor(d); err != nil {
+					return nil, err
+				}
+			}
 		}
 	}
 	var err error
 	d.file, err = d.root.Open(".")
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("open held record directory: %w", err)
 	}
 	if err = d.check(); err != nil {
 		return nil, err
 	}
 	success = true
 	return d, nil
+}
+
+// A concurrent creator owns the creation outcome. A writer admitting its
+// already-created ancestor still validates and flushes child then parent.
+func syncObservedAncestor(d *directory) error {
+	if err := d.check(); err != nil {
+		return err
+	}
+	last := d.levels[len(d.levels)-1]
+	for _, root := range []*os.Root{last.root, last.parent} {
+		observed, err := root.Open(".")
+		if err != nil {
+			return err
+		}
+		writer, err := platformWritableParent(observed)
+		observed.Close()
+		if err != nil {
+			return err
+		}
+		if err = d.check(); err == nil && d.store.hooks.directorySync != nil {
+			err = d.store.hooks.directorySync()
+		}
+		if err == nil {
+			err = platformSyncDir(writer)
+		}
+		err = errors.Join(err, writer.Close())
+		if err != nil {
+			return err
+		}
+	}
+	return d.check()
 }
 func (s *Store) CheckWrite(kind Kind) error {
 	if !validKind(kind) {
@@ -301,7 +433,7 @@ func (s *Store) CheckCutover(kind Kind) error {
 		return errors.New("unknown record kind")
 	}
 	d, err := s.openDirectory(old, false, false)
-	if errors.Is(err, fs.ErrNotExist) {
+	if isDirectoryAbsent(err) {
 		return nil
 	}
 	if err != nil {

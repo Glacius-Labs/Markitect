@@ -102,7 +102,7 @@ func openNative(parent *os.File, leaf string, access, options uint32) (*os.File,
 	runtime.KeepAlive(a.ObjectName)
 	runtime.KeepAlive(u)
 	if uint32(status) != 0 {
-		return nil, nativeError(uint32(status))
+		return nil, fmt.Errorf("native open %q: %w", leaf, nativeError(uint32(status)))
 	}
 	return os.NewFile(uintptr(handle), parent.Name()+"/"+leaf), nil
 }
@@ -120,7 +120,7 @@ func createNative(parent *os.File, leaf string, options, attrs, access uint32) (
 	runtime.KeepAlive(a.ObjectName)
 	runtime.KeepAlive(u)
 	if uint32(status) != 0 {
-		return nil, nativeError(uint32(status))
+		return nil, fmt.Errorf("native create %q: %w", leaf, nativeError(uint32(status)))
 	}
 	return os.NewFile(uintptr(handle), parent.Name()+"/"+leaf), nil
 }
@@ -296,7 +296,7 @@ func platformRemoveOwned(d *directory, leaf string, identity os.FileInfo) error 
 	var iosb [2]uintptr
 	status, _, _ := ntRename.Call(f.Fd(), uintptr(unsafe.Pointer(&iosb)), uintptr(unsafe.Pointer(&flags)), 4, 64)
 	if uint32(status) != 0 {
-		return nativeError(uint32(status))
+		return fmt.Errorf("native remove owned %q: %w", leaf, nativeError(uint32(status)))
 	}
 	if err := f.Close(); err != nil {
 		return err
@@ -314,7 +314,9 @@ func platformPublish(_ *os.Root, parent, f *os.File, _, leaf string, replace boo
 	}
 	data := make([]byte, 20+len(u)*2)
 	if replace {
-		binary.LittleEndian.PutUint32(data[:4], 1)
+		// REPLACE_IF_EXISTS | POSIX_SEMANTICS permits existing rooted
+		// share-delete readers to retain the old object after replacement.
+		binary.LittleEndian.PutUint32(data[:4], 3)
 	}
 	binary.LittleEndian.PutUint64(data[8:16], uint64(parent.Fd()))
 	binary.LittleEndian.PutUint32(data[16:20], uint32(len(u)*2))
@@ -326,9 +328,9 @@ func platformPublish(_ *os.Root, parent, f *os.File, _, leaf string, replace boo
 	runtime.KeepAlive(data)
 	if uint32(status) != 0 {
 		if !replace && uint32(status) == statusCollision {
-			return false, nativeError(uint32(status))
+			return false, fmt.Errorf("native publish create %q: %w", leaf, nativeError(uint32(status)))
 		}
-		return false, errors.Join(errAmbiguous, nativeError(uint32(status)))
+		return false, errors.Join(errAmbiguous, fmt.Errorf("native publish replace=%t %q: %w", replace, leaf, nativeError(uint32(status))))
 	}
 	if err := f.Sync(); err != nil {
 		return true, err

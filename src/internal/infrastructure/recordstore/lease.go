@@ -20,6 +20,13 @@ type Lease struct {
 	data      []byte
 }
 
+// LeaseBusy identifies only an actual terminal lease-leaf create collision.
+// Ancestor creation collisions and other IO failures are not held leases.
+type LeaseBusy struct{ Cause error }
+
+func (e *LeaseBusy) Error() string { return "record lease is held: " + e.Cause.Error() }
+func (e *LeaseBusy) Unwrap() error { return e.Cause }
+
 func (l *Lease) Close() error {
 	err := l.Check()
 	if l.unlock != nil {
@@ -132,6 +139,9 @@ func (s *Store) Exclusive(kind Kind, id, leaf string, data []byte, wait time.Dur
 			continue
 		}
 		if err != nil {
+			if errors.Is(err, fs.ErrExist) {
+				return nil, &LeaseBusy{Cause: err}
+			}
 			return nil, err
 		}
 		info, err := f.Stat()

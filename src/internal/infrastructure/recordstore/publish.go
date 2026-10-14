@@ -59,7 +59,7 @@ func removeOwned(d *directory, name string, identity os.FileInfo, expected ...[]
 	}
 	current, err := d.root.Lstat(name)
 	if errors.Is(err, fs.ErrNotExist) {
-		return nil
+		return d.confirmMissingName(name)
 	}
 	if err != nil {
 		return err
@@ -123,6 +123,14 @@ func (s *Store) publish(n Name, expected *File, data []byte, validate func() err
 	if n.Kind == Brownfield {
 		tmp = ".record.json.tmp"
 	}
+	if s.hooks.beforeTempCreate != nil {
+		if err := s.hooks.beforeTempCreate(); err != nil {
+			return err
+		}
+	}
+	if err := d.check(); err != nil {
+		return err
+	}
 	f, err := platformCreate(d.root, parent, tmp)
 	if err != nil {
 		return err
@@ -133,8 +141,10 @@ func (s *Store) publish(n Name, expected *File, data []byte, validate func() err
 	}
 	published := false
 	ambiguous := false
+	observedSuccess := false
 	defer func() {
-		if closeErr := f.Close(); closeErr != nil {
+		closeErr := f.Close()
+		if closeErr != nil {
 			if published {
 				result = errors.Join(result, &PublicationError{p, Published, closeErr})
 			} else {
@@ -143,6 +153,16 @@ func (s *Store) publish(n Name, expected *File, data []byte, validate func() err
 		}
 		if !published && !ambiguous {
 			result = errors.Join(result, removeOwned(d, tmp, identity, data))
+		}
+		if observedSuccess && closeErr == nil {
+			var finalErr error
+			if s.hooks.afterPublicationClose != nil {
+				finalErr = s.hooks.afterPublicationClose()
+			}
+			finalErr = errors.Join(finalErr, d.check())
+			if finalErr != nil {
+				result = errors.Join(result, &PublicationError{p, Published, finalErr})
+			}
 		}
 	}()
 	if err = f.Chmod(0600); err != nil {
@@ -230,6 +250,7 @@ func (s *Store) publish(n Name, expected *File, data []byte, validate func() err
 		}
 		return &PublicationError{p, Published, err}
 	}
+	observedSuccess = true
 	return nil
 }
 
@@ -240,7 +261,7 @@ func (s *Store) Incomplete(n Name) error {
 		return err
 	}
 	d, err := s.openDirectory(path.Dir(p), false, true)
-	if errors.Is(err, fs.ErrNotExist) {
+	if isDirectoryAbsent(err) {
 		return nil
 	}
 	if err != nil {

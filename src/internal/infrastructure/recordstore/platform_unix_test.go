@@ -8,6 +8,37 @@ import (
 	"testing"
 )
 
+func movePublishingParentFixture(t *testing.T, _ *Store, from, to string) {
+	t.Helper()
+	before, err := os.Stat(from)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := os.Lstat(to); !os.IsNotExist(err) {
+		t.Fatalf("parent setup destination is not definitely absent: %v", err)
+	}
+	if err := os.Rename(from, to); err != nil {
+		t.Fatalf("actual parent setup failed with production handles held: %v", err)
+	}
+	after, err := os.Stat(to)
+	if err != nil || !os.SameFile(before, after) {
+		t.Fatalf("actual moved parent identity differs: %v", err)
+	}
+	if _, err := os.Lstat(from); !os.IsNotExist(err) {
+		t.Fatalf("old parent name still present after setup: %v", err)
+	}
+}
+
+func assertPublishingParentReplacementFixture(t *testing.T, _ *Store, replacement, moved string) {
+	t.Helper()
+	old, oldErr := os.Stat(moved)
+	current, currentErr := os.Stat(replacement)
+	if oldErr != nil || currentErr != nil || !old.IsDir() || !current.IsDir() || os.SameFile(old, current) {
+		t.Fatalf("actual parent replacement not established: %v %v", oldErr, currentErr)
+	}
+	t.Logf("actual parent replacement original=%v replacement=%v", old.Sys(), current.Sys())
+}
+
 func TestPrivateModesReplaceAndBroadExistingRefusal(t *testing.T) {
 	s, root := openFixture(t)
 	n := fixtureName()

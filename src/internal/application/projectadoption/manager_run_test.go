@@ -4,6 +4,8 @@ import "github.com/Glacius-Labs/Markitect/src/internal/core/projectmodel/project
 
 import (
 	"encoding/json"
+	"errors"
+	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
@@ -122,7 +124,7 @@ func TestManagerRunLedgerChangeInvalidatesPreview(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	ledger, err := loadManagerRunLedger(ledgerDir, session.ID)
+	ledger, err := loadManagerRunLedger(root, session.ID)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -147,7 +149,7 @@ func TestManagerRunLedgerChangeInvalidatesPreview(t *testing.T) {
 	}
 	_, err = PrepareManagerStage(root, targetRoot, session.ID, iterationID, ManagerRunPhasePropose, session.TargetContext.RootManagerID, "", "", config, limits, projectexecutor.ProcessInvoker{})
 	if unlock, leaseErr := AcquireManagerStageLease(root, session.ID); leaseErr == nil {
-		unlock()
+		unlock.Close()
 		t.Fatal("nonempty legacy ledger admitted Runtime lease")
 	}
 	after, readErr := os.ReadFile(filepath.Join(ledgerDir, managerRunLedgerName))
@@ -170,7 +172,7 @@ func TestManagerRunPendingAttemptIsFailClosedAndNotReplayed(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	ledger, err := loadManagerRunLedger(ledgerDir, session.ID)
+	ledger, err := loadManagerRunLedger(root, session.ID)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -194,7 +196,7 @@ func TestManagerRunPendingAttemptIsFailClosedAndNotReplayed(t *testing.T) {
 		t.Fatal(err)
 	}
 	if unlock, err := AcquireManagerStageLease(root, session.ID); err == nil {
-		unlock()
+		unlock.Close()
 		t.Fatal("pending legacy attempt acquired Runtime lease")
 	}
 	if _, err := PrepareManagerStage(root, targetRoot, session.ID, iterationID, ManagerRunPhasePropose, session.TargetContext.RootManagerID, "", "", config, limits, projectexecutor.ProcessInvoker{}); err == nil {
@@ -217,7 +219,7 @@ func TestLegacyManagerRunSealedBudgetCannotStartRuntimeAuthority(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	ledger, err := loadManagerRunLedger(dir, session.ID)
+	ledger, err := loadManagerRunLedger(root, session.ID)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -235,7 +237,7 @@ func TestLegacyManagerRunSealedBudgetCannotStartRuntimeAuthority(t *testing.T) {
 		t.Fatal("sealed empty legacy budget was refilled/imported")
 	}
 	if unlock, err := AcquireManagerStageLease(root, session.ID); err == nil {
-		unlock()
+		unlock.Close()
 		t.Fatal("sealed empty legacy budget acquired Runtime lease")
 	}
 	after, err := os.ReadFile(filepath.Join(dir, managerRunLedgerName))
@@ -499,6 +501,19 @@ func writeManagerRunLedger(dir string, ledger ManagerRunLedger) error {
 	if err := os.Rename(temp, path); err != nil {
 		_ = os.Remove(temp)
 		return err
+	}
+	return nil
+}
+
+// Only historical test fixtures use absolute-path marker setup. Production
+// legacy admission observes its fixed markers through the pinned Store.
+func ensureNoIncompleteAtomicWrite(dir, basename string) error {
+	for _, suffix := range []string{".tmp", ".previous"} {
+		if _, err := os.Lstat(filepath.Join(dir, "."+basename+suffix)); err == nil {
+			return fmt.Errorf("ledger publication has an unreconciled %s file", suffix)
+		} else if !errors.Is(err, os.ErrNotExist) {
+			return err
+		}
 	}
 	return nil
 }

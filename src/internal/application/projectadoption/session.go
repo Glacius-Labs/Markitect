@@ -7,7 +7,6 @@ import (
 	"errors"
 	"fmt"
 	"io/fs"
-	"os"
 	"path/filepath"
 	"sort"
 	"strings"
@@ -363,15 +362,15 @@ func sessionName(id string) recordstore.Name {
 
 // WriteBrownfieldSession uses the sealed preview token for creation and the
 // prior domain digest for later CAS. Storage byte tokens are separate.
-func WriteBrownfieldSession(sourceRoot string, session BrownfieldSession, expectedDigest string) (returnedSession BrownfieldSession, resultErr error) {
+func WriteBrownfieldSession(sourceRoot string, session BrownfieldSession, expectedDigest string, owners ...*ManagerStageLease) (returnedSession BrownfieldSession, resultErr error) {
 	if err := ValidateBrownfieldSession(session); err != nil {
 		return BrownfieldSession{}, err
 	}
-	store, err := recordstore.Open(sourceRoot)
+	store, release, err := borrowBrownfieldStore(sourceRoot, session.ID, owners...)
 	if err != nil {
 		return BrownfieldSession{}, err
 	}
-	defer store.Close()
+	defer release()
 	if err = store.CheckWrite(recordstore.Brownfield); err != nil {
 		return BrownfieldSession{}, err
 	}
@@ -424,7 +423,14 @@ func WriteBrownfieldSession(sourceRoot string, session BrownfieldSession, expect
 	if err != nil {
 		return BrownfieldSession{}, err
 	}
-	if err = store.Replace(name, prior, data, lease.Check); err != nil {
+	guard := func() error {
+		err := lease.Check()
+		if len(owners) == 1 && owners[0] != nil {
+			err = errors.Join(err, owners[0].Check())
+		}
+		return err
+	}
+	if err = store.Replace(name, prior, data, guard); err != nil {
 		return BrownfieldSession{}, err
 	}
 	observed, err := store.Read(name, maxRecordBytes)
@@ -444,15 +450,15 @@ func WriteBrownfieldSession(sourceRoot string, session BrownfieldSession, expect
 	}
 	return session, nil
 }
-func LoadBrownfieldSession(sourceRoot, id string) (returnedSession BrownfieldSession, resultErr error) {
+func LoadBrownfieldSession(sourceRoot, id string, owners ...*ManagerStageLease) (returnedSession BrownfieldSession, resultErr error) {
 	if !validID(id) {
 		return BrownfieldSession{}, errors.New("invalid Brownfield session ID")
 	}
-	store, err := recordstore.Open(sourceRoot)
+	store, release, err := borrowBrownfieldStore(sourceRoot, id, owners...)
 	if err != nil {
 		return BrownfieldSession{}, err
 	}
-	defer store.Close()
+	defer release()
 	lease, err := store.Kernel(id, "session.lock")
 	if err != nil {
 		return BrownfieldSession{}, err
@@ -471,22 +477,12 @@ func LoadBrownfieldSession(sourceRoot, id string) (returnedSession BrownfieldSes
 	}
 	return DecodeBrownfieldSession(file.Bytes)
 }
-func readRegularLedger(path string) ([]byte, error) {
-	info, err := os.Lstat(path)
-	if err != nil {
-		return nil, err
-	}
-	if !info.Mode().IsRegular() || info.Mode()&os.ModeSymlink != 0 {
-		return nil, fmt.Errorf("unsafe Brownfield ledger file %q", path)
-	}
-	return os.ReadFile(path)
-}
 
 // ResumeBrownfieldSession verifies both original fixed bases and returns
 // readiness against the current accepted project model; it never replays an
 // iteration or invokes a Manager.
-func ResumeBrownfieldSession(sourceRoot, targetRoot, id string) (BrownfieldSession, Readiness, error) {
-	session, err := LoadBrownfieldSession(sourceRoot, id)
+func ResumeBrownfieldSession(sourceRoot, targetRoot, id string, owners ...*ManagerStageLease) (BrownfieldSession, Readiness, error) {
+	session, err := LoadBrownfieldSession(sourceRoot, id, owners...)
 	if err != nil {
 		return BrownfieldSession{}, Readiness{}, err
 	}

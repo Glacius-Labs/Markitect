@@ -53,6 +53,10 @@ type BrownfieldManagerAttempt struct {
 	LedgerDigest    string             `json:"ledgerDigest,omitempty"`
 }
 
+// The finite publication call remains the real owner-bound Session CAS.
+// Tests may observe its actual completion before the outer lease is released.
+var writeBrownfieldManagerSession = projectadoption.WriteBrownfieldSession
+
 // BrownfieldRun shares the provider-free preview and one-shot execution
 // path across transports. The service owns per-session lock,
 // durable invocation events, budget accounting, validation, and CAS attach.
@@ -113,13 +117,14 @@ func (o Operations) BrownfieldRun(ctx context.Context, operation BrownfieldRunOp
 		// On a preview, --expect is an optional current-session precondition.
 		expectedSessionDigest = operation.ExpectedDigest
 	}
+	var owner *projectadoption.ManagerStageLease
 	if operation.Write {
-		unlock, err := projectadoption.AcquireManagerStageLease(sourceRoot, operation.SessionID)
+		owner, err = projectadoption.AcquireManagerStageLease(sourceRoot, operation.SessionID)
 		if err != nil {
 			return BrownfieldManagerRunOutput{}, err
 		}
 		defer func() {
-			if releaseErr := unlock(); releaseErr != nil {
+			if releaseErr := owner.Close(); releaseErr != nil {
 				if returnedOutput.Status == "recorded" || returnedOutput.Status == "recovered" {
 					releaseErr = &recordstore.PublicationError{Path: projectadoption.BrownfieldSessionPath + "/" + operation.SessionID + "/record.json", Outcome: recordstore.Published, Cause: releaseErr}
 				}
@@ -127,7 +132,7 @@ func (o Operations) BrownfieldRun(ctx context.Context, operation BrownfieldRunOp
 			}
 		}()
 	}
-	prepared, spec, accepted, runtimePreview, err := o.prepareBrownfieldRuntimeStage(sourceRoot, operation, runtime, selectedAgent, config, limits, expectedSessionDigest, invoker)
+	prepared, spec, accepted, runtimePreview, err := o.prepareBrownfieldRuntimeStage(sourceRoot, operation, runtime, selectedAgent, config, limits, expectedSessionDigest, invoker, owner)
 	if err != nil {
 		return BrownfieldManagerRunOutput{}, err
 	}
@@ -156,7 +161,10 @@ func (o Operations) BrownfieldRun(ctx context.Context, operation BrownfieldRunOp
 		}
 		return output, nil
 	}
-	host := o.brownfieldStageHost(sourceRoot, operation, invoker)
+	host := o.brownfieldStageHost(sourceRoot, operation, invoker, owner)
+	if err := owner.Check(); err != nil {
+		return output, err
+	}
 	result, err := projectrun.RunManagerStage(ctx, host, invoker, spec.SelectedSourceRoot, spec, runtimePreview.PreviewDigest)
 	projectBrownfieldAttempt(&output, result)
 	if err != nil {
@@ -165,6 +173,10 @@ func (o Operations) BrownfieldRun(ctx context.Context, operation BrownfieldRunOp
 	}
 	proposal, integration, err := projectadoption.AcceptManagerStageDraft(prepared.Session, request.IterationID, request.Phase, preview.ManagerID, result.Result.Response.ReportJSON, config, result.Result.Receipt)
 	if err != nil {
+		if checkErr := owner.Check(); checkErr != nil {
+			output.Status = "failed"
+			return output, errors.Join(err, checkErr)
+		}
 		completion, completionErr := projectrun.CompleteManagerStage(spec.SelectedSourceRoot, result.RunID, result.AttemptID, result.StateDigest, projectrun.ManagerStageValidation{SafeFailure: "invalid-manager-report"})
 		if completionErr == nil {
 			projectBrownfieldAttempt(&output, completion)
@@ -177,6 +189,10 @@ func (o Operations) BrownfieldRun(ctx context.Context, operation BrownfieldRunOp
 		if err != nil {
 			return output, err
 		}
+		if err := owner.Check(); err != nil {
+			output.Status = "review-failed"
+			return output, err
+		}
 		review, err := projectrun.ReviewManagerStage(ctx, host, invoker, spec.SelectedSourceRoot, result.RunID, result.AttemptID, reviewSpec, result.StateDigest)
 		if err != nil {
 			output.Status = "review-failed"
@@ -184,6 +200,10 @@ func (o Operations) BrownfieldRun(ctx context.Context, operation BrownfieldRunOp
 		}
 		result.StateDigest = review.StateDigest
 		if review.Status != "pass" {
+			if err := owner.Check(); err != nil {
+				output.Status = "review-failed"
+				return output, err
+			}
 			completion, err := projectrun.CompleteManagerStage(spec.SelectedSourceRoot, result.RunID, result.AttemptID, result.StateDigest, projectrun.ManagerStageValidation{SafeFailure: "configured-review-failed"})
 			if err == nil {
 				projectBrownfieldAttempt(&output, completion)
@@ -196,6 +216,10 @@ func (o Operations) BrownfieldRun(ctx context.Context, operation BrownfieldRunOp
 		Proposal    *projectadoption.ManagerProposal
 		Integration *projectadoption.ManagerIntegration
 	}{proposal, integration})
+	if err := owner.Check(); err != nil {
+		output.Status = "stage-not-recorded"
+		return output, err
+	}
 	completed, err := projectrun.CompleteManagerStage(spec.SelectedSourceRoot, result.RunID, result.AttemptID, result.StateDigest, projectrun.ManagerStageValidation{Accepted: true, TypedResultDigest: typedDigest})
 	projectBrownfieldAttempt(&output, completed)
 	if err != nil {
@@ -216,7 +240,7 @@ func (o Operations) BrownfieldRun(ctx context.Context, operation BrownfieldRunOp
 		output.Status = "stage-not-recorded"
 		return output, err
 	}
-	if _, err := projectadoption.WriteBrownfieldSession(spec.SelectedSourceRoot, next, prepared.Session.Digest); err != nil {
+	if _, err := writeBrownfieldManagerSession(spec.SelectedSourceRoot, next, prepared.Session.Digest, owner); err != nil {
 		output.Status = "stage-not-recorded"
 		return output, err
 	}
@@ -251,11 +275,16 @@ func brownfieldStageCanonicalRoot(root string) (string, error) {
 	return filepath.Abs(resolved)
 }
 
-func (o Operations) prepareBrownfieldRuntimeStage(sourceRoot string, operation BrownfieldRunOperation, runtime projectconfig.Runtime, agent projectconfig.Agent, config agentexec.Config, limits projectadoption.ManagerRunLimits, expectedSession string, invoker projectrun.Invoker) (projectadoption.PreparedManagerStage, projectrun.ManagerStageSpec, projectmodel.ManagerContext, projectrun.ManagerStagePreview, error) {
+func (o Operations) prepareBrownfieldRuntimeStage(sourceRoot string, operation BrownfieldRunOperation, runtime projectconfig.Runtime, agent projectconfig.Agent, config agentexec.Config, limits projectadoption.ManagerRunLimits, expectedSession string, invoker projectrun.Invoker, owners ...*projectadoption.ManagerStageLease) (projectadoption.PreparedManagerStage, projectrun.ManagerStageSpec, projectmodel.ManagerContext, projectrun.ManagerStagePreview, error) {
 	var emptySpec projectrun.ManagerStageSpec
 	var emptyModel projectmodel.ManagerContext
 	var emptyPreview projectrun.ManagerStagePreview
-	prepared, err := projectadoption.PrepareManagerStage(sourceRoot, operation.Root, operation.SessionID, operation.Request.IterationID, operation.Request.Phase, operation.Request.AgentManagerID, expectedSession, operation.Request.RetryOfAttemptID, config, limits, invoker)
+	if len(owners) == 1 && owners[0] != nil {
+		if err := owners[0].Check(); err != nil {
+			return projectadoption.PreparedManagerStage{}, emptySpec, emptyModel, emptyPreview, err
+		}
+	}
+	prepared, err := projectadoption.PrepareManagerStage(sourceRoot, operation.Root, operation.SessionID, operation.Request.IterationID, operation.Request.Phase, operation.Request.AgentManagerID, expectedSession, operation.Request.RetryOfAttemptID, config, limits, invoker, owners...)
 	if err != nil {
 		return prepared, emptySpec, emptyModel, emptyPreview, err
 	}
@@ -291,6 +320,11 @@ func (o Operations) prepareBrownfieldRuntimeStage(sourceRoot string, operation B
 	validation := projectrun.ManagerStageValidationBinding{SessionID: prepared.Session.ID, SessionDigest: prepared.Session.Digest, IterationID: operation.Request.IterationID, ManagerID: prepared.Preview.ManagerID, AgentManagerID: operation.Request.AgentManagerID, Phase: operation.Request.Phase, AcceptedTargetHead: prepared.Session.Target.Revision, ContextDigest: prepared.Preview.ContextDigest, RequestContractDigest: prepared.Preview.RequestContractDigest, ConfigFingerprint: fingerprint, RuntimeFileDigest: prepared.Preview.RuntimeFileDigest, AcceptedModelDigest: brownfieldStageValueDigest(accepted), SourceRoot: sourceRoot, TargetRoot: targetRoot}
 	binding := projectrun.ManagerStageBinding{SessionID: prepared.Session.ID, SourceIdentity: prepared.Session.Source.Identity.Digest, TargetIdentity: brownfieldStageRawDigest([]byte(targetRoot)), SourceRevision: prepared.Session.Source.Commit, DiscoveryDigest: prepared.Session.Source.Digest, InitialTargetRevision: prepared.Session.Target.Revision, TargetContextDigest: prepared.Session.TargetContext.Digest, Budget: budget, SourceRootDigest: brownfieldStageRawDigest([]byte(sourceRoot)), TargetRootDigest: brownfieldStageRawDigest([]byte(targetRoot))}
 	spec := projectrun.ManagerStageSpec{SelectedSourceRoot: sourceRoot, TargetRoot: targetRoot, Binding: binding, Validation: validation, RetryOfAttemptID: operation.Request.RetryOfAttemptID, Agent: agent, Config: config, Request: prepared.Request, Limits: budget, RuntimeLimits: runtime.Limits, Review: runtime.Review}
+	if len(owners) == 1 && owners[0] != nil {
+		if err := owners[0].Check(); err != nil {
+			return prepared, spec, accepted, emptyPreview, err
+		}
+	}
 	preview, err := projectrun.PreviewManagerStage(invoker, sourceRoot, spec)
 	if err != nil {
 		return prepared, spec, accepted, preview, err
@@ -301,6 +335,9 @@ func (o Operations) prepareBrownfieldRuntimeStage(sourceRoot string, operation B
 	spec.Request = prepared.Request
 	prepared.Preview.ConfigFingerprint = fingerprint
 	preview, err = projectrun.PreviewManagerStage(invoker, sourceRoot, spec)
+	if len(owners) == 1 && owners[0] != nil {
+		err = errors.Join(err, owners[0].Check())
+	}
 	return prepared, spec, accepted, preview, err
 }
 

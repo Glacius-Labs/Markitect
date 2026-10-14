@@ -13,10 +13,39 @@ import (
 	"strings"
 	"sync"
 	"testing"
+	"time"
 
 	"github.com/Glacius-Labs/Markitect/src/internal/application/projectwork"
 	"github.com/Glacius-Labs/Markitect/src/internal/core/projectmodel"
 )
+
+func TestHistoryReadConflictBackoffKeepsExistingBoundAndLastError(t *testing.T) {
+	calls := 0
+	if err := waitWhileBusy(func() (bool, error) {
+		calls++
+		if calls < 3 {
+			return true, recordstore.ErrReadConflict
+		}
+		return false, nil
+	}); err != nil || calls != 3 {
+		t.Fatalf("complete fresh observation was not retried: %d %v", calls, err)
+	}
+	for _, failure := range []error{os.ErrPermission, errors.New("codec or generic IO failure")} {
+		calls = 0
+		err := waitWhileBusy(func() (bool, error) {
+			calls++
+			return errors.Is(failure, recordstore.ErrReadConflict), failure
+		})
+		if !errors.Is(err, failure) || calls != 1 {
+			t.Fatalf("generic failure retried: %d %v", calls, err)
+		}
+	}
+	start := time.Now()
+	err := waitWhileBusy(func() (bool, error) { return true, recordstore.ErrReadConflict })
+	if !errors.Is(err, recordstore.ErrReadConflict) || time.Since(start) < storeLockWait {
+		t.Fatalf("permanent conflict escaped the unchanged bound/last error: %v", err)
+	}
+}
 
 func TestEnsureAcceptedHistoryBootstrapsAndAutomaticallyRecordsCommittedChanges(t *testing.T) {
 	root, baseline, changed := committedModelFixture(t)
