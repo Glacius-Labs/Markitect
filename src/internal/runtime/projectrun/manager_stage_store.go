@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"os"
 	"path/filepath"
 	"strings"
 	"sync"
@@ -89,6 +90,52 @@ func stageEvidencePath(store *runStore, id string, ref ManagerStageEvidenceRef) 
 	return path, nil
 }
 
+// stageEvidenceDirectoryParts preserves recordDirectoryOwner's lexical
+// canonical-path checks while allowing the unheld read to keep its one
+// ephemeral physical Store across the ordered List/List/Read operations.
+func stageEvidenceDirectoryParts(absolute string, owner *runStore) (recordstore.Kind, string, string, bool, error) {
+	slash := filepath.ToSlash(filepath.Clean(absolute))
+	marker := "/" + recordstore.RootPath + "/"
+	pos := strings.LastIndex(slash, marker)
+	if pos < 0 {
+		return "", "", "", false, nil
+	}
+	parts := strings.Split(slash[pos+len(marker):], "/")
+	kind := recordstore.Kind(parts[0])
+	id, role := "", ""
+	if len(parts) > 1 {
+		id = parts[1]
+	}
+	if len(parts) > 2 {
+		role = strings.Join(parts[2:], "/")
+	}
+	root := filepath.FromSlash(slash[:pos])
+	if !sameRecoveryPath(root, owner.root) {
+		return kind, id, role, true, errors.New("runtime directory differs from owning root")
+	}
+	return kind, id, role, true, nil
+}
+
+// stageEvidenceRecordName preserves recordPathOwner's parse-before-owner
+// ordering without opening a replacement physical Store.
+func stageEvidenceRecordName(absolute string, owner *runStore) (recordstore.Name, error) {
+	slash := filepath.ToSlash(filepath.Clean(absolute))
+	marker := "/" + recordstore.RootPath + "/"
+	pos := strings.LastIndex(slash, marker)
+	if pos < 0 {
+		return recordstore.Name{}, errors.New("runtime record outside canonical store")
+	}
+	root := filepath.FromSlash(slash[:pos])
+	name, err := recordstore.Parse(slash[pos+1:])
+	if err != nil {
+		return name, err
+	}
+	if !sameRecoveryPath(root, owner.root) {
+		return name, errors.New("runtime record differs from owning root")
+	}
+	return name, nil
+}
+
 func writeStageEvidence(store *runStore, id, attempt, suffix string, data []byte) (*ManagerStageEvidenceRef, error) {
 	name := strings.TrimPrefix(rawContentDigest([]byte(attempt)), "sha256:") + suffix
 	ref := ManagerStageEvidenceRef{Path: "reports/" + name, Digest: rawContentDigest(data)}
@@ -115,11 +162,72 @@ func readStageEvidence(store *runStore, id string, ref *ManagerStageEvidenceRef)
 		return nil, errors.New("Manager evidence reference is missing")
 	}
 	if store.storage == nil {
-		path, err := stageEvidencePath(store, id, *ref)
-		if err != nil {
-			return nil, err
+		parts := strings.Split(ref.Path, "/")
+		if len(parts) != 2 || parts[0] != "reports" || parts[1] == "" || filepath.Base(parts[1]) != parts[1] || strings.ContainsAny(parts[1], "\\:") {
+			return nil, errors.New("invalid Manager evidence reference")
 		}
-		data, err := readRecordBytes(path, store)
+		if !validID(id) {
+			return nil, fmt.Errorf("invalid run ID %q", id)
+		}
+		data, err := func() ([]byte, error) {
+			physical, done, err := store.physical()
+			if err != nil {
+				return nil, err
+			}
+			defer done()
+			if _, err := physical.List(recordstore.Run, id, ""); err != nil {
+				return nil, err
+			}
+
+			directoryName := "reports"
+			if directoryName == "" || filepath.Base(directoryName) != directoryName {
+				return nil, fmt.Errorf("invalid runtime state directory %q", directoryName)
+			}
+			runPath := filepath.Join(store.base, id)
+			reportsPath := filepath.Join(runPath, directoryName)
+			kind, directoryID, role, canonical, err := stageEvidenceDirectoryParts(reportsPath, store)
+			if err != nil {
+				return nil, err
+			}
+			if canonical {
+				if err := physical.CheckRootBinding(store.root); err != nil {
+					return nil, err
+				}
+				if _, err := physical.List(kind, directoryID, role); err != nil {
+					return nil, err
+				}
+			} else {
+				info, err := os.Lstat(reportsPath)
+				if err != nil {
+					return nil, err
+				}
+				if !info.IsDir() || info.Mode()&os.ModeSymlink != 0 {
+					return nil, fmt.Errorf("runtime state directory %s must be real", reportsPath)
+				}
+			}
+
+			path := filepath.Join(reportsPath, parts[1])
+			if !canonical {
+				// recordPathOwner rejects this same outside path before opening a
+				// replacement Store; retain that terminal error after the old Lstat.
+				return nil, errors.New("runtime record outside canonical store")
+			}
+			name, err := stageEvidenceRecordName(path, store)
+			if err != nil {
+				return nil, err
+			}
+			if err := physical.CheckRootBinding(store.root); err != nil {
+				return nil, err
+			}
+			file, err := physical.Read(name, 0)
+			if err != nil {
+				return nil, err
+			}
+			if !file.Exists {
+				return nil, errRuntimeRecordMissing
+			}
+			return file.Bytes, nil
+		}()
 		if err != nil {
 			return nil, err
 		}
