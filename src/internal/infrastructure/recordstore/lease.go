@@ -118,6 +118,16 @@ func (s *Store) Exclusive(kind Kind, id, leaf string, data []byte, wait time.Dur
 			return nil, err
 		}
 		f, err := platformCreate(d.root, parent, leaf)
+		if observe := s.hooks.afterLeaseCreateResult; observe != nil {
+			observe(err)
+		}
+		if platformLeaseCreatePending(err) {
+			if wait > 0 && time.Now().Before(deadline) {
+				time.Sleep(10 * time.Millisecond)
+				continue
+			}
+			return nil, err
+		}
 		if errors.Is(err, fs.ErrExist) && dead != nil {
 			prior, e := readLeaf(d, leaf, 1<<20)
 			if e != nil {

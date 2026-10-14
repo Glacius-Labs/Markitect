@@ -10,7 +10,8 @@ import (
 	"syscall"
 )
 
-func platformIsReparse(i os.FileInfo) bool { return i.Mode()&os.ModeSymlink != 0 }
+func platformIsReparse(i os.FileInfo) bool  { return i.Mode()&os.ModeSymlink != 0 }
+func platformLeaseCreatePending(error) bool { return false }
 func platformMode(i os.FileInfo, mode os.FileMode) error {
 	if i.Mode().Perm() != mode {
 		return fmt.Errorf("record object requires mode %04o, observed %04o", mode, i.Mode().Perm())

@@ -3,10 +3,17 @@
 package recordstore
 
 import (
+	"errors"
 	"os"
 	"path/filepath"
 	"testing"
 )
+
+func TestPlatformLeaseCreatePendingIsFalse(t *testing.T) {
+	if platformLeaseCreatePending(errors.New("NTSTATUS 0xc0000056")) {
+		t.Fatal("Unix classified a Windows-only NTSTATUS as delete-pending")
+	}
+}
 
 func movePublishingParentFixture(t *testing.T, _ *Store, from, to string) {
 	t.Helper()

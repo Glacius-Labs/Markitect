@@ -26,17 +26,18 @@ var lockFile = winDLL.NewProc("LockFileEx")
 var unlockFile = winDLL.NewProc("UnlockFileEx")
 
 const (
-	shareAll        = 7
-	synchronize     = 0x00100000
-	deleteAccess    = 0x00010000
-	readWriteAccess = 0xC0000000
-	parentRights    = readWriteAccess | synchronize | 0x00000001 | 0x00000002 | 0x00000004 | 0x00000080
-	writeThrough    = 0x00000002
-	synchronousIO   = 0x00000020
-	openReparse     = 0x00200000
-	nonDirectory    = 0x00000040
-	directoryFile   = 0x00000001
-	statusCollision = 0xC0000035
+	shareAll            = 7
+	synchronize         = 0x00100000
+	deleteAccess        = 0x00010000
+	readWriteAccess     = 0xC0000000
+	parentRights        = readWriteAccess | synchronize | 0x00000001 | 0x00000002 | 0x00000004 | 0x00000080
+	writeThrough        = 0x00000002
+	synchronousIO       = 0x00000020
+	openReparse         = 0x00200000
+	nonDirectory        = 0x00000040
+	directoryFile       = 0x00000001
+	statusCollision     = 0xC0000035
+	statusDeletePending = 0xC0000056
 )
 
 type unicodeName struct {
@@ -57,15 +58,37 @@ type versionInfo struct {
 	ServicePack                         [128]uint16
 }
 
+type nativeStatusError struct {
+	status  uint32
+	cause   error
+	message string
+}
+
+func (e *nativeStatusError) Error() string { return e.message }
+func (e *nativeStatusError) Unwrap() error { return e.cause }
+
+func platformLeaseCreatePending(err error) bool {
+	var native *nativeStatusError
+	return errors.As(err, &native) && native.status == statusDeletePending
+}
+
 func nativeError(status uint32) error {
 	if status == statusCollision {
 		return fmt.Errorf("NTSTATUS 0x%08x: %w", status, fs.ErrExist)
 	}
 	if err := ntDOS.Find(); err != nil {
+		message := fmt.Sprintf("NTSTATUS 0x%08x; status conversion unavailable: %v", status, err)
+		if status == statusDeletePending {
+			return &nativeStatusError{status: status, cause: err, message: message}
+		}
 		return fmt.Errorf("NTSTATUS 0x%08x; status conversion unavailable: %w", status, err)
 	}
 	dos, _, _ := ntDOS.Call(uintptr(status))
-	return fmt.Errorf("NTSTATUS 0x%08x: %w", status, syscall.Errno(dos))
+	cause := syscall.Errno(dos)
+	if status == statusDeletePending {
+		return &nativeStatusError{status: status, cause: cause, message: fmt.Sprintf("NTSTATUS 0x%08x: %v", status, cause)}
+	}
+	return fmt.Errorf("NTSTATUS 0x%08x: %w", status, cause)
 }
 func attributes(parent *os.File, leaf string) (objectAttributes, []uint16, error) {
 	if leaf == "" || leaf == ".." {
@@ -297,6 +320,9 @@ func platformRemoveOwned(d *directory, leaf string, identity os.FileInfo) error 
 	status, _, _ := ntRename.Call(f.Fd(), uintptr(unsafe.Pointer(&iosb)), uintptr(unsafe.Pointer(&flags)), 4, 64)
 	if uint32(status) != 0 {
 		return fmt.Errorf("native remove owned %q: %w", leaf, nativeError(uint32(status)))
+	}
+	if observe := d.store.hooks.afterDeleteMark; observe != nil {
+		observe()
 	}
 	if err := f.Close(); err != nil {
 		return err

@@ -24,6 +24,8 @@ type hooks struct {
 	beforeTempCreate, afterPublicationClose func() error
 	fileSync, directorySync                 func() error
 	directoryCreated                        func() error
+	afterDeleteMark                         func()
+	afterLeaseCreateResult                  func(error)
 }
 type directory struct {
 	root   *os.Root

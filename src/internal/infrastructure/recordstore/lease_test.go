@@ -20,7 +20,7 @@ func TestLeaseBusyOnlyWrapsTerminalLeaseLeafCollision(t *testing.T) {
 		start := time.Now()
 		_, err := s.Exclusive(Briefing, "accepted", ".briefings.lock", nil, wait, nil)
 		var busy *LeaseBusy
-		if !errors.As(err, &busy) || !errors.Is(err, fs.ErrExist) || time.Since(start) < wait {
+		if !errors.As(err, &busy) || !errors.Is(err, fs.ErrExist) || platformLeaseCreatePending(err) || time.Since(start) < wait {
 			t.Fatalf("actual terminal lease collision: %v wait=%s", err, wait)
 		}
 	}
@@ -39,6 +39,8 @@ func TestKindWideExclusiveLeaseAndReplacementRelease(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	deleteMarked := false
+	s.hooks.afterDeleteMark = func() { deleteMarked = true }
 	if _, err = s.Exclusive(Run, "", ".write.lock", nil, 0, nil); !errors.Is(err, fs.ErrExist) {
 		t.Fatalf("second writer not excluded: %v", err)
 	}
@@ -51,6 +53,9 @@ func TestKindWideExclusiveLeaseAndReplacementRelease(t *testing.T) {
 	}
 	if err = lease.Close(); err == nil {
 		t.Fatal("lease replacement not reported")
+	}
+	if deleteMarked {
+		t.Fatal("substituted lease reached the delete-mark checkpoint")
 	}
 	wire, _ := os.ReadFile(p)
 	if string(wire) != "replacement" {

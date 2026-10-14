@@ -13,8 +13,10 @@ import (
 	"path/filepath"
 	"runtime"
 	"strings"
+	"sync"
 	"syscall"
 	"testing"
+	"time"
 	"unsafe"
 )
 
@@ -480,5 +482,271 @@ func TestWrongWindowsCapabilityRefusesBeforeControlCreation(t *testing.T) {
 				t.Fatalf("read-only route changed: %v %v", entries, err)
 			}
 		})
+	}
+}
+
+func TestNativeStatusErrorPreservesExactDeletePendingIdentity(t *testing.T) {
+	if err := ntDOS.Find(); err != nil {
+		t.Fatal(err)
+	}
+	dos, _, _ := ntDOS.Call(uintptr(statusDeletePending))
+	cause := syscall.Errno(dos)
+	err := nativeError(statusDeletePending)
+	var native *nativeStatusError
+	if !errors.As(err, &native) || native.status != statusDeletePending {
+		t.Fatalf("raw delete-pending identity lost: %#v", err)
+	}
+	want := fmt.Sprintf("NTSTATUS 0x%08x: %v", statusDeletePending, cause)
+	if err.Error() != want || !errors.Is(err, cause) {
+		t.Fatalf("status rendering or mapped cause changed: %q want %q cause=%v", err, want, cause)
+	}
+	if !platformLeaseCreatePending(err) {
+		t.Fatal("exact native delete-pending status was not classified")
+	}
+	collision := nativeError(statusCollision)
+	if !errors.Is(collision, fs.ErrExist) || platformLeaseCreatePending(collision) {
+		t.Fatalf("ordinary native collision mapping changed: %v", collision)
+	}
+	for _, unrelated := range []error{cause, syscall.Errno(5), errors.New("NTSTATUS 0xc0000056: Access is denied."), nativeError(0xC0000022), nativeError(0xC0000043)} {
+		if platformLeaseCreatePending(unrelated) {
+			t.Fatalf("mapped errno, text, access denial, sharing violation, or unrelated status was retried: %v", unrelated)
+		}
+	}
+}
+
+type pendingAttempt struct {
+	lease *Lease
+	err   error
+}
+
+func startDeletePendingLease(t *testing.T, kind Kind, id, leaf string) (*Store, string, func(), func() error) {
+	t.Helper()
+	owner, root := openFixture(t)
+	contender, err := Open(root)
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { _ = contender.Close() })
+	marked := make(chan struct{})
+	releaseChannel := make(chan struct{})
+	var releaseOnce sync.Once
+	release := func() { releaseOnce.Do(func() { close(releaseChannel) }) }
+	owner.hooks.afterDeleteMark = func() {
+		close(marked)
+		<-releaseChannel
+	}
+	lease, err := owner.Exclusive(kind, id, leaf, []byte("native-pending-owner"), 0, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	closeDone := make(chan error, 1)
+	closeStarted := false
+	joined := false
+	var closeErr error
+	join := func() error {
+		if !closeStarted {
+			return errors.New("normal owner Close was not started")
+		}
+		if joined {
+			return closeErr
+		}
+		closeErr = <-closeDone
+		joined = true
+		return closeErr
+	}
+	// This cleanup is installed before starting the owner goroutine. It always
+	// releases the mark barrier and performs a real receive before store cleanup.
+	t.Cleanup(func() {
+		release()
+		if closeStarted {
+			if err := join(); err != nil {
+				t.Errorf("owner cleanup/join failed: %v", err)
+			}
+			return
+		}
+		owner.hooks.afterDeleteMark = nil
+		if err := lease.Close(); err != nil {
+			t.Errorf("owner lease setup cleanup: %v", err)
+		}
+	})
+	originalID := nativeTestObjectID(t, lease.file)
+	closeStarted = true
+	go func() { closeDone <- lease.Close() }()
+	select {
+	case <-marked:
+	case <-time.After(5 * time.Second):
+		t.Fatal("normal owner release did not reach successful delete-mark checkpoint")
+	}
+	return contender, originalID, release, join
+}
+
+func startLeaseAttempt(t *testing.T, contender *Store, kind Kind, id, leaf string, data []byte, wait time.Duration, dead func([]byte) (bool, error), release func(), join func() error) (<-chan pendingAttempt, *bool, **Lease) {
+	t.Helper()
+	result := make(chan pendingAttempt, 1)
+	taken := new(bool)
+	var owned *Lease
+	// Register cleanup before starting the contender. Watchdog failures in the
+	// test body still release and join the real goroutine before stores close.
+	t.Cleanup(func() {
+		release()
+		if err := join(); err != nil {
+			t.Errorf("owner cleanup/join failed: %v", err)
+		}
+		if !*taken {
+			attempt := <-result
+			if attempt.lease != nil {
+				if err := attempt.lease.Close(); err != nil {
+					t.Errorf("unexpected lease cleanup: %v", err)
+				}
+			}
+		}
+		if owned != nil {
+			if err := owned.Close(); err != nil {
+				t.Errorf("contender lease cleanup: %v", err)
+			}
+		}
+	})
+	go func() {
+		lease, err := contender.Exclusive(kind, id, leaf, data, wait, dead)
+		result <- pendingAttempt{lease: lease, err: err}
+	}()
+	return result, taken, &owned
+}
+
+func captureCreateResult(channel chan<- error, err error) {
+	select {
+	case channel <- err:
+	default:
+	}
+}
+
+func receiveCreateResult(t *testing.T, result <-chan error) error {
+	t.Helper()
+	select {
+	case err := <-result:
+		return err
+	case <-time.After(5 * time.Second):
+		t.Fatal("contender did not report an actual native create result")
+		return nil
+	}
+}
+
+func receiveLeaseAttempt(t *testing.T, result <-chan pendingAttempt) pendingAttempt {
+	t.Helper()
+	select {
+	case attempt := <-result:
+		return attempt
+	case <-time.After(5 * time.Second):
+		t.Fatal("contender attempt did not return")
+		return pendingAttempt{}
+	}
+}
+
+func TestExclusiveDeletePendingZeroWaitReturnsActualStatus(t *testing.T) {
+	contender, _, release, join := startDeletePendingLease(t, Briefing, "accepted", ".briefings.lock")
+	actual := make(chan error, 8)
+	contender.hooks.afterLeaseCreateResult = func(err error) { captureCreateResult(actual, err) }
+	result, taken, owned := startLeaseAttempt(t, contender, Briefing, "accepted", ".briefings.lock", []byte("contender"), 0, nil, release, join)
+	got := receiveLeaseAttempt(t, result)
+	*taken = true
+	*owned = got.lease
+	observed := receiveCreateResult(t, actual)
+	var busy *LeaseBusy
+	if !platformLeaseCreatePending(observed) || !platformLeaseCreatePending(got.err) || errors.Is(got.err, fs.ErrExist) || errors.As(got.err, &busy) {
+		t.Fatalf("zero wait did not preserve actual typed status: observed=%v returned=%v", observed, got.err)
+	}
+	release()
+	if err := join(); err != nil {
+		t.Fatalf("normal owner Close: %v", err)
+	}
+}
+
+func TestExclusiveDeletePendingPositiveWaitRetriesAfterJoinedRelease(t *testing.T) {
+	contender, originalID, release, join := startDeletePendingLease(t, Briefing, "accepted", ".briefings.lock")
+	pending := make(chan error, 1)
+	created := make(chan struct{}, 1)
+	contender.hooks.afterLeaseCreateResult = func(err error) {
+		if err == nil {
+			select {
+			case created <- struct{}{}:
+			default:
+			}
+			return
+		}
+		captureCreateResult(pending, err)
+	}
+	result, taken, owned := startLeaseAttempt(t, contender, Briefing, "accepted", ".briefings.lock", []byte("contender-after-release"), 2*time.Second, nil, release, join)
+	first := receiveCreateResult(t, pending)
+	var busy *LeaseBusy
+	if !platformLeaseCreatePending(first) || errors.Is(first, fs.ErrExist) || errors.As(first, &busy) {
+		t.Fatalf("expected distinct real delete-pending before owner release, got %v", first)
+	}
+	release()
+	if err := join(); err != nil {
+		t.Fatalf("normal owner Close: %v", err)
+	}
+	select {
+	case <-created:
+	case <-time.After(5 * time.Second):
+		t.Fatal("waiter did not observe successful create after joined release")
+	}
+	got := receiveLeaseAttempt(t, result)
+	*taken = true
+	*owned = got.lease
+	if got.err != nil || got.lease == nil {
+		t.Fatalf("positive waiter failed after owner release: lease=%v err=%v", got.lease, got.err)
+	}
+	if err := got.lease.Check(); err != nil {
+		t.Fatalf("returned lease check: %v", err)
+	}
+	if nextID := nativeTestObjectID(t, got.lease.file); nextID == originalID {
+		t.Fatalf("fresh successful lease reused released physical identity %s", nextID)
+	}
+}
+
+func TestExclusiveDeletePendingExpiresAsOriginalStatus(t *testing.T) {
+	contender, _, release, join := startDeletePendingLease(t, Briefing, "accepted", ".briefings.lock")
+	actual := make(chan error, 32)
+	observedCount := 0
+	contender.hooks.afterLeaseCreateResult = func(err error) {
+		observedCount++
+		captureCreateResult(actual, err)
+	}
+	wait := 80 * time.Millisecond
+	started := time.Now()
+	result, taken, owned := startLeaseAttempt(t, contender, Briefing, "accepted", ".briefings.lock", []byte("expired-contender"), wait, nil, release, join)
+	got := receiveLeaseAttempt(t, result)
+	*taken = true
+	*owned = got.lease
+	first := receiveCreateResult(t, actual)
+	var busy *LeaseBusy
+	if !platformLeaseCreatePending(first) || !platformLeaseCreatePending(got.err) || errors.Is(got.err, fs.ErrExist) || errors.As(got.err, &busy) || observedCount < 1 || time.Since(started) < wait {
+		t.Fatalf("expired waiter did not preserve retried native status: first=%v returned=%v attempts=%d elapsed=%s", first, got.err, observedCount, time.Since(started))
+	}
+	release()
+	if err := join(); err != nil {
+		t.Fatalf("normal owner Close: %v", err)
+	}
+}
+
+func TestExclusiveDeletePendingDoesNotInvokeRunDeadOwner(t *testing.T) {
+	contender, _, release, join := startDeletePendingLease(t, Run, "", ".write.lock")
+	actual := make(chan error, 8)
+	contender.hooks.afterLeaseCreateResult = func(err error) { captureCreateResult(actual, err) }
+	deadCalled := false
+	result, taken, owned := startLeaseAttempt(t, contender, Run, "", ".write.lock", []byte("contender"), 0, func([]byte) (bool, error) {
+		deadCalled = true
+		return true, nil
+	}, release, join)
+	got := receiveLeaseAttempt(t, result)
+	*taken = true
+	*owned = got.lease
+	observed := receiveCreateResult(t, actual)
+	if deadCalled || !platformLeaseCreatePending(observed) || !platformLeaseCreatePending(got.err) {
+		t.Fatalf("pending status entered dead-owner recovery: observed=%v err=%v deadCalled=%t", observed, got.err, deadCalled)
+	}
+	release()
+	if err := join(); err != nil {
+		t.Fatalf("normal owner Close: %v", err)
 	}
 }
