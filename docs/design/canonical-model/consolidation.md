@@ -15,7 +15,7 @@ Die beiden eigentlichen Modellkonzepte sind `product-model-concepts` und `canoni
 
 Die Arbeitsbranch `docs/design-consolidation` beginnt auf dem oben genannten Main. Aus den drei Dokumentationsbranches werden ausschließlich ihre neuen Designordner übernommen. Ihre Änderungen außerhalb dieser Ordner betreffen nur die gemeinsam neu aufgebaute Designnavigation. Der alte Produktcode des Bibliotheksbranches wird nicht übernommen: Sein gemeinsamer Vorfahr liegt 505 Main-Commits zurück. Das neue Vokabular und der Tasks-Branch haben diesen Main bereits als Vorfahren.
 
-Die Quellen bleiben mit ihrer Herkunft erhalten. Diese Seite führt ihre Aussagen zusammen, ohne die verschiedenen Entwurfsstände nachträglich gleichzuschreiben. [Der Main-Abgleich](current-main-comparison.md) nennt die heute tatsächlich untersuchten Implementierungsgrenzen. Der [Vergleich vom 11. Oktober](../product-model-refinement/canonical-model-main-comparison.md) bleibt historische Evidenz für seinen damaligen Stand.
+Die Quellen bleiben mit ihrer Herkunft erhalten. Diese Seite führt ihre Aussagen zusammen; neue Nutzerentscheidungen werden ausdrücklich datiert in Definitionen und betroffenen Entwürfen nachgeführt. [Der Main-Abgleich](current-main-comparison.md) nennt die heute tatsächlich untersuchten Implementierungsgrenzen. Der [Vergleich vom 11. Oktober](../product-model-refinement/canonical-model-main-comparison.md) bleibt historische Evidenz für seinen damaligen Stand.
 
 ## Gemeinsame Grundlage
 
@@ -33,13 +33,13 @@ Wir führen drei Status getrennt:
 
 ### 1. Component: allgemeiner Systemteil oder Laufzeitbaustein?
 
-**Bibliothek:** Ein `Component` ist ein Laufzeitbaustein. Ein `System` enthält Components; ein Component enthält logische Modules. Der erste Beispielvertrag erlaubt keine direkte Component-zu-Component-Zusammensetzung. Siehe [Architekturbegriffe im Proposal](../product-model-refinement/canonical-model-proposal.md#4-beziehungen-gliederung-und-verantwortung).
+**Bisherige Bibliotheksfassung:** Ein `Component` war auf Laufzeit-/Bereitstellungsbausteine begrenzt. Ein `System` enthielt Components; ein Component enthielt logische Modules. Der erste Beispielvertrag erlaubte keine direkte Component-zu-Component-Zusammensetzung. Siehe [Architekturbegriffe im Proposal](../product-model-refinement/canonical-model-proposal.md#4-beziehungen-gliederung-und-verantwortung).
 
 **Neues Vokabular:** [Component](component.md) bedeutet allgemein einen Systemteil. Die [Beziehungen](relationships.md#structure-and-files) erlauben verschachtelte Components. Task Logic, Application, Command Line und Local Storage sind dabei logische Verantwortungsbereiche, keine zugesagten getrennten Laufzeiteinheiten.
 
-**Entscheidung:** Entweder bleibt die enge Bedeutung und das Tasks-Modell verwendet Modules, oder Component wird zum allgemeinen Baustein und die bisherige System-/Component-/Module-Abgrenzung wird überarbeitet. Beide Darstellungen lassen sich nicht unverändert zum selben Kind-Vertrag erklären.
+**Nutzerentscheidung vom 15. Oktober 2026:** „Allgemeiner Systembaustein, auch logisch und verschachtelbar.“ Die [Component-Definition](component.md) gilt damit auch für Task Logic und für ineinander gegliederte logische Teile. Ein eigener Prozess oder eine eigene Bereitstellung ist keine Voraussetzung. Die frühere enge Bedeutung ist abgelöst.
 
-**Empfehlung zur Diskussion:** Component zunächst allgemein verstehen. Eine gesonderte Laufzeit- oder Modulunterscheidung erst dann verbindlich machen, wenn sie am Bibliotheksbeispiel eine zusätzliche Aussage oder Ableitung ermöglicht. Die frühere Wahl von System und Module bleibt bis zur ausdrücklichen Entscheidung bestehen.
+**Folgen:** Die Bibliotheksbausteine Frontend, Backend und Datenbank bleiben gültige Beispiele für Components. Sie begrenzen den Begriff nicht mehr auf Laufzeitarchitektur. Component-zu-Component-Zusammensetzung wird zulässig; die bereits vereinbarte Ableitung des `realizes`-Umfangs folgt auch diesen `contains`-Nachfahren. Eigenständiger Nutzen und Abgrenzung von System und Module sowie vollständige Parent- und Zielmengenregeln bleiben zu entscheiden. Die beiden Kinds werden nicht allein durch diese Component-Entscheidung entfernt.
 
 ### 2. Interface: Actor-Zugang oder technischer Vertrag?
 
@@ -97,7 +97,7 @@ Das [Begriffsbeispiel](task-management-example.md) verwendet Title/Identifier un
 
 ## Nächster Designschritt
 
-Der Nutzer hat am 15. Oktober als nächsten Schwerpunkt die Entscheidung der Widersprüche gewählt. Wir beginnen mit **Component**, weil seine Bedeutung sowohl die Beispiele als auch `contains` und den abgeleiteten Realisierungsumfang beeinflusst. Danach folgen Interface, Verantwortung/Actor und die Prüfbindung. Coverage wird vor einem ausführbaren Sprachvertrag ausdrücklich geschlossen.
+Der Nutzer hat am 15. Oktober als nächsten Schwerpunkt die Entscheidung der Widersprüche gewählt und **Component** als allgemeinen, verschachtelbaren Baustein entschieden. Als Nächstes prüfen wir die verbleibende System-/Module-Abgrenzung und Interface, danach Verantwortung/Actor und die Prüfbindung. Coverage wird vor einem ausführbaren Sprachvertrag ausdrücklich geschlossen.
 
 Für jede Entscheidung halten wir die gewählte Aussage, ein kleines Tasks-Beispiel, eine Gegenprobe an der Bibliothek, Auswirkungen auf bestehende Entscheidungen und verbleibende Fragen fest. Erst nach der Einigung ändern wir die betroffenen Begriffsdefinitionen und Beispiele. Syntax und Implementierung folgen den geklärten Bedeutungen.
 

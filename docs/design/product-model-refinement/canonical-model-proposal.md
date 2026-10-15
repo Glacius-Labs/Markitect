@@ -119,16 +119,18 @@ Ein kleiner Bibliotheksausschnitt kann ein Wurzelmandat besitzen. Untergeordnete
 
 ### 4.0 Architekturbegriffe und ihre Abgrenzung
 
+Aktualisierung vom 15. Oktober 2026: Der Nutzer hat [Component als allgemeinen, auch logischen und verschachtelbaren Systembaustein](../canonical-model/consolidation.md#1-component-allgemeiner-systemteil-oder-laufzeitbaustein) gewählt. Die frühere Beschränkung auf Laufzeit-/Bereitstellungsrollen entfällt. Component darf Components enthalten. Der folgende ältere Detailvertrag für erlaubte Kinder und Parents ist deshalb kein abschließend geltender neuer Sprachvertrag; die zusätzliche Rolle von System und Module wird gesondert geklärt.
+
 Am 13. Oktober 2026 beauftragt: System, Component, Module und Interface samt Beziehungen werden als eigenständige Projektvokabular-Kinds festgehalten. Sie sind keine neuen universellen Core-Primitiven.
 
 | Kind | Bedeutung | Bibliothek |
 | --- | --- | --- |
 | `System` | Zweck, Nutzer und erklärte Grenze einer zusammengehörigen Lösung zur Umgebung. | Bibliotheksanwendung. |
-| `Component` | Technischer Baustein mit Laufzeit-/Bereitstellungsrolle. | Webfrontend, Backenddienst, Datenbankdienst. |
+| `Component` | Allgemeiner Systembaustein mit Zweck und Verantwortung; auch logisch und verschachtelbar, ohne notwendige eigene Laufzeit. | Webfrontend, Backenddienst, Datenbankdienst; im Tasks-Gegenbeispiel auch Task Logic. |
 | `Module` | Kohäsive logische Gliederung, ohne notwendige eigene Laufzeit. | Bestand, Mitgliedschaft, Ausleihe, Adapter. |
 | `Interface` | Benannter Vertrag der Zusammenarbeit, getrennt von seinem Anbieter. | Bibliotheks-API und Speicherverträge. |
 
-Ein System kann im Projektumfang realisiert oder extern beschrieben sein. Für externe Systeme werden relevante Grenzen/Verträge deklariert, ohne ihre Interna als eigene Realisierungspflicht zu erfinden. Die Component-Definition ist eine bewusste Laufzeitbedeutung dieses Entwurfs.
+Ein System kann im Projektumfang realisiert oder extern beschrieben sein. Für externe Systeme werden relevante Grenzen/Verträge deklariert, ohne ihre Interna als eigene Realisierungspflicht zu erfinden. Die ursprüngliche Laufzeitbedeutung von Component ist durch die oben datierte Entscheidung erweitert.
 
 Nutzerentscheidung vom 13. Oktober 2026: `ownership` entfällt vorerst. Der beschriebene Realisierungsumfang bleibt Prosa und Artefaktzuordnung: Der Datenbankserver kann wiederverwendete Fremdsoftware sein, während Konfiguration, Schema und Migrationen Projektbeiträge sind. Ein strukturiertes Feld zur Unterscheidung eigener und externer Systeme oder feinerer Zuständigkeiten ist nicht festgelegt.
 
@@ -290,7 +292,7 @@ Der Körper bleibt Teil der kanonischen Beschreibung, des Digests, des Agentenko
 | `Rule` | `public`, `uses`, `appliesTo` | Beschreibung erforderlich; Kontext und Geltungsziele explizit. Keine formale Bedingung vorausgesetzt. |
 | `UseCase` | `public`, `uses`, `requires` | Beschreibung erforderlich; Kontextbezüge optional, Verpflichtungen als Rule-Referenzen. Keine Kategorie use-case. |
 | `System` | `public`, `contains`, `uses`, bei externer Grenze `provides`/`consumes` | Zweck, Grenze und Realisierungsumfang in Prosa; contains mit ausdrücklichem Component-Kind, externe Interna optional. Kein ownership-Feld. |
-| `Component` | `public`, `contains`, `provides`, `consumes`, `realizes`, `uses` | Laufzeitrolle erklären; contains mit ausdrücklichem Module-Kind, Verträge passend zuordnen. |
+| `Component` | `public`, `contains`, `provides`, `consumes`, `realizes`, `uses` | Zweck und Verantwortung erklären; Components dürfen Components enthalten. Die vollständige Zielmenge einschließlich der bisherigen Module-Kandidaten wird nach der Entscheidung vom 15. Oktober erneut geprüft. |
 | `Module` | `public`, `contains`, `provides`, `consumes`, `dependsOn`, `realizes`, `uses` | Logische Aufgabe/Beitrag; optionale untergeordnete Modules mit ausdrücklichem Kind, genau ein struktureller Parent im vollständigen Beispiel. |
 | `Interface` | `public`, `useCases`, `uses`, `requires` | Vertrag erklären; Verpflichtungen als Rules; Provider/Consumer stehen an Bausteinen. |
 | `Mandate` | `parent`, `owns`, `instructions` | Auftrag mit höchstens einem übergeordneten Mandat, optionaler Pfadliste und lesbaren Anweisungen. Bisherige Felder sind Prüfkandidaten; Benennung eines Mandats ist keine Agentenbindung oder authentifizierte Autorisierung. |

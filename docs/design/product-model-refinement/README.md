@@ -1,6 +1,6 @@
 # Markitect: Grundmodell und aktueller Konzeptentwurf
 
-Konsolidierung vom 15. Oktober 2026: Der gemeinsame Einstieg ist jetzt der [Designstand mit Konflikten und Entscheidungsreihenfolge](../canonical-model/consolidation.md). Er verbindet diese Quelle mit dem neueren Begriffsvokabular und enthält einen [gezielten Abgleich mit Main](../canonical-model/current-main-comparison.md). Der nachfolgende Stand bewahrt das Bibliotheksgespräch vom 14. Oktober; seine aktuelle Lesereihenfolge gilt innerhalb dieser Designlinie. Insbesondere Component, Interface und die Coverage-Frage sind zwischen den Linien noch nicht entschieden.
+Konsolidierung vom 15. Oktober 2026: Der gemeinsame Einstieg ist jetzt der [Designstand mit Konflikten und Entscheidungsreihenfolge](../canonical-model/consolidation.md). Er verbindet diese Quelle mit dem neueren Begriffsvokabular und enthält einen [gezielten Abgleich mit Main](../canonical-model/current-main-comparison.md). Die neue Nutzerentscheidung zu [Component](../canonical-model/component.md) löst dessen enge Laufzeitbedeutung ab: Components sind allgemeine, auch logische und verschachtelbare Systembausteine. System-/Module-Abgrenzung, Interface und die Coverage-Frage bleiben offen. Die datierten Feld- und Parentregeln des Bibliotheksbeispiels sind insoweit erneut zu prüfen.
 
 Aktualisiert am 14. Oktober 2026. Diese Map trennt vereinbarte Produktgrundlagen, bestätigte Entwurfsrichtung, offene Detailvorschläge und datierte Vorarbeiten. Sie ist kein Implementierungs- oder Testnachweis.
 

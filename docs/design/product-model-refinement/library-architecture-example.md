@@ -1,5 +1,7 @@
 # Bibliothek: Architektur als System, Components, Modules und Interfaces
 
+Designaktualisierung vom 15. Oktober 2026: [Component ist jetzt allgemein und verschachtelbar](../canonical-model/component.md). Frontend, Backend und Datenbank bleiben passende Beispiele; eine eigene Laufzeit ist keine notwendige Kind-Eigenschaft mehr. Die bisherige System-/Component-/Module-Struktur unten illustriert die Bibliothek, beschränkt aber nicht mehr alle zulässigen Component-Bäume. Die Rolle von System und Module und die vollständigen Zusammensetzungsregeln sind noch zu prüfen.
+
 Datum: 13. Oktober 2026. Status: auf Nutzerwunsch ergänzter Architekturentwurf zum [Konzept](canonical-model-proposal.md). Die vier Kinds und ihre Beziehungsrollen werden festgehalten; konkrete Feld-, Referenz-, Provider- und Versionsregeln sind Vertragskandidaten für die Implementierung. Alle YAML-Blöcke sind Dokumentation mit `vNext` als Platzhalter, keine kompilierte oder ausgeführte Projektfixture.
 
 Das [Bibliotheksmodell](library-model-example.md) zeigt den Project-Kandidaten, den Modellordner, die Fachdefinitionen, das Mandat und die Artefakte/Checks. Die Quellen werden im Modellordner gefunden; eine Manifestliste wird nicht gepflegt. Dieses Dokument ist die einzige aktuelle YAML-Darstellung der hier aufgeführten Architekturdefinitionen; die Modelldateien sind als spätere Eingaben benannt, heute nicht angelegt.
@@ -11,7 +13,7 @@ YAML-Schreibweise aktualisiert am 14. Oktober 2026: Jede Definition besitzt eine
 | Kind | Bedeutung | Beispiel |
 | --- | --- | --- |
 | System | Zweck und Grenze einer zusammengehörigen Lösung. | Bibliotheksanwendung. |
-| Component | Laufzeit-/Bereitstellungsbaustein mit eigener technischer Rolle. | Frontend, Backend, Datenbankdienst. |
+| Component | Allgemeiner Systembaustein mit Zweck und Verantwortung; in diesem Beispiel mit Laufzeit-/Bereitstellungsrolle. | Frontend, Backend, Datenbankdienst. |
 | Module | Kohäsive logische Gliederung, ohne notwendige eigene Laufzeit. | Bestand, Mitgliedschaft, Ausleihe, Adapter. |
 | Interface | Benannter Vertrag der Zusammenarbeit, getrennt von seinem Anbieter. | Bibliotheks-API und Speicherverträge. |
 
