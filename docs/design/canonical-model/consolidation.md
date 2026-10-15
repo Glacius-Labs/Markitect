@@ -23,6 +23,34 @@ Markitect beschreibt die beabsichtigte Projektwelt und lässt deren Repositoryre
 
 Beide Designlinien lassen sich darin zusammenführen: Die Begriffe erklären, **welche Art von Aussage** beschrieben wird. Ein Definitionskörper enthält die individuellen Aussagen. Explizite Beziehungen verbinden Definitionen. Daraus sollen Kontext, Realisierungsaufträge und Prüfaufträge entstehen. Wie genau diese Ableitung funktioniert, ist pro Beziehung zu bestimmen. Ein Wort, ein Link, eine Zusammensetzung und eine Realisierungspflicht sind verschiedene Dinge.
 
+## Arbeitsziel und Wackelkandidaten
+
+Präzisierung des Nutzers vom 15. Oktober 2026: Ausgangspunkt des jüngeren Branches ist eine ausführliche, typisierte Projektdokumentation. Das kanonische Modell soll alles Relevante über das beabsichtigte Projekt ausdrücken können: was sein soll und welche Festlegungen gelten. Das Vokabular wird aus diesem Beschreibungsbedarf entwickelt. Die vorhandene Implementierung und ihr bisheriger Koordinationsablauf bestimmen nicht vorab, welche Begriffe dieses neue Modell enthalten muss.
+
+Das Ziel bleibt, die beabsichtigte Projektwelt zu beschreiben und durch Apply realisieren zu lassen. Zu unterscheiden sind dabei:
+
+| Ebene | Inhalt |
+| --- | --- |
+| Kanonische Projektbeschreibung | Zweck, Umfang, Fachlichkeit, Verhalten, Regeln, gewünschte Architektur sowie relevante technische und betriebliche Festlegungen. |
+| Apply-Verfahren | Interpretation der Beschreibung, Aufteilung der Agentenarbeit, Umsetzung, Prüfung und Integration. Die genaue neue Arbeitsweise ist noch zu entwerfen. |
+| Realisierung und Nachweise | Durch die Umsetzung entstandene Artefakte, ihre ermittelte Zuordnung zum Modell sowie ausgeführte Prüfungen und beobachtete Ergebnisse. |
+
+Konkrete entstandene Dateien sind Realisierung. Eine beabsichtigte Verpflichtung wie „eine Bedienungsanleitung muss vorhanden sein“ kann dennoch für die Projektbeschreibung relevant sein. Ob solche Verpflichtungen einen eigenen Artifact-Typ benötigen, bleibt eine eigenständige Designfrage. Entsprechend werden Anforderungen an die Softwarearchitektur von der tatsächlich erzeugten Datei- oder Paketstruktur unterschieden.
+
+Der Nutzer benennt die folgenden Begriffe ausdrücklich als **Wackelkandidaten**. Das bedeutet: Bedarf, Platz im Modell und Abgrenzung sind zu prüfen; keiner dieser Begriffe ist durch diese Einordnung bereits gestrichen. Die nachfolgenden Begründungen halten den Gesprächsstand fest, nicht neue abschließende Typentscheidungen.
+
+| Wackelkandidat | Begründung und offene Frage |
+| --- | --- |
+| **System** | Project beschreibt bereits den Gesamtzusammenhang, Component kann ein allgemeiner Baustein sein. Zu klären ist, welchen zusätzlichen Ausdruck System ermöglicht: etwa eine eigenständige Lösung mit Außengrenze, mehrere Lösungen in einem Projekt oder relevante externe Systeme. Diese möglichen Aufgaben sind Prüfbeispiele, noch keine bestätigte Rechtfertigung für einen eigenen Typ. |
+| **Component gegenüber Module** | Nach der Erweiterung von Component auf logische und verschachtelbare Bausteine überschneiden sich die bisherigen Bedeutungen. Gewünschte Architektur kann zum Soll des Projekts gehören; offen ist, ob dafür zwei Typen nötig sind und welche unterschiedliche Aussage beziehungsweise Relation sie ermöglichen. Die Wahl der allgemeinen Component-Bedeutung entscheidet noch nicht über den endgültigen Bedarf beider Typen. |
+| **Artifact** | Das Modell beschreibt, was sein soll; erst die Umsetzung führt zu konkreten Artefakten. Ein Modelltyp für entstandene Dateien würde diese Ebenen vermischen. Zu prüfen bleibt, wie notwendige Realisierungsbeiträge oder Ausgabevorgaben beschrieben werden und ob dafür ein eigener Typ erforderlich ist. |
+| **Mandate** | Die bisherige Bedeutung beschreibt Auftrag, Zuständigkeit und Grenzen der ausführenden Agents und liegt damit zunächst bei der Arbeitsweise für Apply. Ein Platz im kanonischen Projektvokabular ist dadurch nicht begründet. Für das Projekt selbst relevante fachliche oder betriebliche Verantwortlichkeiten müssten davon unterschieden werden. |
+| **Decision** | Die geltende Festlegung und gegebenenfalls ihre Begründung können zur Projektbeschreibung gehören. Der Entscheidungsverlauf und seine historische Herkunft erfüllen einen anderen Informationszweck. Offen ist, welchen notwendigen Ausdruck eine eigene Decision-Definition zusätzlich zur Beschreibung am Gegenstand der Festlegung ermöglicht. |
+
+Zusätzlich ist **der Bedarf an Prozessbeschreibungen und damit die Rolle von Workflow und Procedure offen**. Fachliche Abläufe oder vorgeschriebene Betriebsverfahren können zum beabsichtigten Projekt gehören. Klassische Entwicklungsabläufe mit Pull Requests, Reviews und ähnlichen Stationen sind kein vorausgesetzter Bestandteil des neuen kanonischen Modells. Die neue Apply-Variante soll solche bisherigen Abläufe mehr oder weniger umgehen beziehungsweise entblockieren können; ihr konkreter Ersatz und ihre Prüf- und Integrationsmechanismen sind hier noch nicht festgelegt. Die Entwicklungsprozesse im Tasks-Begriffsbeispiel bleiben Anschauungsmaterial, keine Anforderung an dieses neue Modell.
+
+**Aktuelle Priorität des Nutzers:** System, Component und Module gemeinsam klären. Ausgangspunkt sind konkrete Aussagen einer ausreichenden Projektbeschreibung. Wir prüfen, welchen eigenständigen Ausdruck und welche Beziehungen jeder Begriff ermöglicht, wo Überschneidungen liegen und was eine Zusammenlegung verlieren würde. Die Klärung von Artifact, Mandate und Decision folgt danach. Es ist noch keine Auswahl der zu behaltenden Typen getroffen.
+
 Wir führen drei Status getrennt:
 
 - **Main-Vertrag:** Verhalten und Format, das der feste aktuelle Produktstand tatsächlich unterstützt.
@@ -52,6 +80,8 @@ Wir führen drei Status getrennt:
 ### 3. Vierzehn Begriffe sind noch keine vollständige Kind-Liste
 
 Das neue Vokabular ergänzt Actor, Scenario, Workflow, Procedure und Condition. Es definiert Mandate, System und Module nicht. Ihr Fehlen widerruft die älteren Entscheidungen nicht. Umgekehrt begründet eine verständliche Begriffsdefinition noch keinen eigenen maschinenlesbaren Kind.
+
+Der gemeinsam zu prüfende Bestand umfasst damit siebzehn benannte Begriffe. Die neue [Einordnung der Wackelkandidaten](#arbeitsziel-und-wackelkandidaten) stellt Bedarf und Abgrenzung von System, Component/Module, Artifact, Mandate und Decision ausdrücklich zur Diskussion. Ihre frühere Aufnahme in einen Entwurf nimmt das Ergebnis dieser Prüfung nicht vorweg.
 
 **Entscheidung:** Für jeden Begriff prüfen wir getrennt, ob er eigene Identität und Referenzierbarkeit benötigt, welche individuellen Aussagen er trägt und was sein Vorhandensein für Realisierung oder Prüfung bewirkt. Eine feste Zahl von Kinds ist kein Ziel.
 
@@ -87,6 +117,8 @@ Hier liegt zunächst eine Präzisierung statt eines belegten Widerspruchs vor: R
 
 **Offen:** Ob Bedingungen eigene Definitionen brauchen, wie sie ausgewertet werden und welche Workflow-Übergänge maschinell erfolgen. Die Beschreibungen begründen noch keinen Ausdrucksevaluator und keine ausführbare Workflowengine. Auch ein imperativ formulierter Procedure-Text erteilt einem Agenten nicht selbst die Befugnis, die Schritte auszuführen.
 
+Nach der jüngsten [Zielpräzisierung](#arbeitsziel-und-wackelkandidaten) ist bereits der Bedarf eigener Prozessbeschreibungen offen. Wir prüfen zunächst den Gegenstand des Ablaufs und seinen Beitrag zur Sollbeschreibung, bevor wir Workflow und Procedure als benötigte Typen behandeln.
+
 ### 8. Zwei Tasks-Darstellungen mit unterschiedlicher Genauigkeit
 
 Das [Begriffsbeispiel](task-management-example.md) verwendet Title/Identifier und beispielhafte `src/...`-Pfade. Die [eigenständige Projektdokumentation](../task-management/README.md) verwendet Text/Reference, Python 3.13, `python -m tasks` und einen genaueren Speichervertrag. Ein fehlendes Bestätigungssignal nach dem Commit beweist dort ausdrücklich keinen fehlgeschlagenen Speichervorgang.
@@ -97,7 +129,7 @@ Das [Begriffsbeispiel](task-management-example.md) verwendet Title/Identifier un
 
 ## Nächster Designschritt
 
-Der Nutzer hat am 15. Oktober als nächsten Schwerpunkt die Entscheidung der Widersprüche gewählt und **Component** als allgemeinen, verschachtelbaren Baustein entschieden. Als Nächstes prüfen wir die verbleibende System-/Module-Abgrenzung und Interface, danach Verantwortung/Actor und die Prüfbindung. Coverage wird vor einem ausführbaren Sprachvertrag ausdrücklich geschlossen.
+Der Nutzer hat am 15. Oktober **Component** als allgemeinen, verschachtelbaren Baustein beschrieben und anschließend System, Component/Module, Artifact, Mandate und Decision ausdrücklich als Wackelkandidaten benannt. Vorrang hat jetzt die gemeinsame Klärung von **System, Component und Module** am Maßstab der typisierten Sollbeschreibung. Die bisherige Component-Bedeutung ist dafür Gesprächsgrundlage; der endgültige Bedarf der Architekturtypen ist offen. Anschließend folgen die weiteren Wackelkandidaten und offenen Beziehungen. Die konkrete Apply-Arbeitsweise wird getrennt betrachtet; der Umgang mit Dateirechenschaft ist vor einer ausführbaren neuen Variante zu klären.
 
 Für jede Entscheidung halten wir die gewählte Aussage, ein kleines Tasks-Beispiel, eine Gegenprobe an der Bibliothek, Auswirkungen auf bestehende Entscheidungen und verbleibende Fragen fest. Erst nach der Einigung ändern wir die betroffenen Begriffsdefinitionen und Beispiele. Syntax und Implementierung folgen den geklärten Bedeutungen.
 

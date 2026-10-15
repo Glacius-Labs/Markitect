@@ -4,6 +4,8 @@ Konsolidierung vom 15. Oktober 2026: Der gemeinsame Einstieg ist jetzt der [Desi
 
 Aktualisiert am 14. Oktober 2026. Diese Map trennt vereinbarte Produktgrundlagen, bestätigte Entwurfsrichtung, offene Detailvorschläge und datierte Vorarbeiten. Sie ist kein Implementierungs- oder Testnachweis.
 
+Weitere Zielpräzisierung vom 15. Oktober: Der Nutzer betrachtet das neue kanonische Modell als ausführliche typisierte Sollbeschreibung des Projekts und hat [System, Component/Module, Artifact, Mandate und Decision mit Begründungen als Wackelkandidaten festgehalten](../canonical-model/consolidation.md#arbeitsziel-und-wackelkandidaten). Agentensteuerung für Apply und entstandene Artefakte werden davon getrennt betrachtet; der Bedarf eigener Prozessbeschreibungen ist offen. System, Component und Module haben bei der nächsten Klärung Vorrang. Die folgenden älteren Typ- und Feldentscheidungen bleiben nachvollziehbare Gesprächsgrundlage und nehmen diese erneute Bedarfsprüfung nicht vorweg.
+
 ## Grundmodell
 
 | Hauptblock | Funktion |

@@ -6,6 +6,8 @@ For the combined design discussion, start with the [consolidated design baseline
 
 This area collects the terms used to describe the canonical model. Each term has its own Markdown document explaining its meaning and purpose. The vocabulary grows one term at a time as the project-description needs become clear.
 
+The owner's current starting point is detailed, typed documentation of the intended project. The [working goal and provisional terms](consolidation.md#arbeitsziel-und-wackelkandidaten) distinguish that description from Apply's agent coordination and the resulting artifacts. System, Component versus Module, Artifact, Mandate and Decision are explicitly under reconsideration, with System/Component/Module taking priority. The need for process descriptions is also open. Their presence in this area or an example does not settle their inclusion in the new model.
+
 ## Terms
 
 - [Project](project.md) — the project's name, purpose and associated definitions.
@@ -22,6 +24,8 @@ This area collects the terms used to describe the canonical model. Each term has
 - [Check](check.md) — how an expectation is verified and what counts as success.
 - [Procedure](procedure.md) — how to carry out an activity, including its steps and expected result.
 - [Condition](condition.md) — a statement that can be true or false.
+
+The library proposal also introduces **System**, **Module** and **Mandate**; see its [architecture terms](../product-model-refinement/canonical-model-proposal.md#40-architekturbegriffe-und-ihre-abgrenzung) and [Mandate direction](../product-model-refinement/canonical-model-proposal.md#66-gewählter-dateiname-und-bevorzugte-kind-richtung). Together, the two lines name seventeen terms whose need and boundaries are being reviewed.
 
 ## Relationships and example
 
