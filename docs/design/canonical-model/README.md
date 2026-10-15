@@ -11,10 +11,12 @@ This area collects the terms used to describe the canonical model. Each term has
 - [UseCase](use-case.md) — an action available to an Actor and its outcome, accessed through an Interface.
 - [Interface](interface.md) — an interaction point through which an Actor uses UseCases.
 - [Concept](concept.md) — something meaningful in the project's domain, its meaning and relevant characteristics.
-- [Rule](rule.md) — a condition that must hold for one or more Concepts or UseCases.
+- [Rule](rule.md) — a condition that must hold within the project.
 - [Component](component.md) — a part of the system, its purpose and responsibilities.
 - [Artifact](artifact.md) — a project file or group of files and their purpose.
 - [Scenario](scenario.md) — a concrete situation, the actions taken and the expected outcome.
 - [Decision](decision.md) — a choice made for the project and the reasons for that choice.
+- [Workflow](workflow.md) — a repeatable sequence of activities, their participants and their intended outcome.
+- [Check](check.md) — how an expectation is verified and what counts as success.
 
 Return to the [design map](../README.md).
