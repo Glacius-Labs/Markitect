@@ -38,6 +38,8 @@ Start with a missing file. List without creating it, add a task, exit, list in a
 
 This is ordinary-restart evidence, not power-loss or parallel-writer evidence.
 
+Also prepare a valid collection through the real storage adapter with reference `18446744073709551616`. Through the real CLI, list and complete that task, then add another and require reference `18446744073709551617`. Restart and verify both references, texts and states round-trip without truncation. This spans parsing, allocation, formatting, storage and reload rather than relying on a domain-only large-integer test.
+
 <a id="check-storage-errors"></a>
 ## CHECK-STORAGE-ERRORS — Storage failure preserves data
 
