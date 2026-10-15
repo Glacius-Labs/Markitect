@@ -18,5 +18,7 @@ This area collects the terms used to describe the canonical model. Each term has
 - [Decision](decision.md) — a choice made for the project and the reasons for that choice.
 - [Workflow](workflow.md) — a repeatable sequence of activities, their participants and their intended outcome.
 - [Check](check.md) — how an expectation is verified and what counts as success.
+- [Procedure](procedure.md) — how to carry out an activity, including its steps and expected result.
+- [Condition](condition.md) — a statement that can be true or false.
 
 Return to the [design map](../README.md).
