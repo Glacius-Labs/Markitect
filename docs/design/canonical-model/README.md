@@ -6,6 +6,7 @@ This area collects the terms used to describe the canonical model. Each term has
 
 ## Terms
 
-- [Project](project.md) — the common entry point that brings a software project's definitions together.
+- [Project](project.md) — the project's name, purpose and associated definitions.
+- [Actor](actor.md) — a role through which a person or another system interacts with the system.
 
 Return to the [design map](../README.md).
