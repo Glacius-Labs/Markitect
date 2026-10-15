@@ -6,6 +6,8 @@ The [Project World package](project-world/README.md) has its own reading order a
 
 ## Product direction and work shape
 
+- [Tasks project documentation](task-management/README.md) — ordinary standalone documentation of a small local application, covering product, usage, architecture, development, data care and quality; implementation pending
+- [Earlier task-management modeling sketch](task-management-model/README.md) — historical type-led exercise, superseded as the application specification
 - [Domain-language pressure test](domain-language-pressure.md)
 - [Goal-led modeling proposal](goal-led-modeling.md)
 - [Product-vision alignment assessment](product-vision-alignment.md)
