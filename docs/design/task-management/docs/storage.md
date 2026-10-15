@@ -14,7 +14,7 @@ The selected task file is UTF-8 JSON without a BOM. It contains exactly the top-
 }
 ```
 
-`id` is a JSON integer in the [domain reference range](domain.md). Booleans and floating-point values do not qualify as integers. `text` and `state` are strings that already satisfy the domain rules; loading does not trim or repair them. References are unique across the whole array. An empty array is valid. Array order is not significant; writes order tasks numerically by reference for predictable inspection.
+`id` is a JSON integer in the [domain reference range](domain.md). For both `version` and `id`, booleans and floating-point values do not qualify as integers. `text` and `state` are strings that already satisfy the domain rules; loading does not trim or repair them. References are unique across the whole array. An empty array is valid. Array order is not significant; writes order tasks numerically by reference for predictable inspection.
 
 Reject missing/unknown members, duplicate object keys, duplicate references, invalid task properties, invalid UTF-8, a BOM, trailing non-whitespace data and nonstandard JSON constants such as NaN/Infinity. Validate root/object shapes and required fields before inspecting version compatibility; a structurally valid integer version other than 1 is unsupported. No partially valid collection is returned. An empty zero-byte file is invalid, not an empty list.
 

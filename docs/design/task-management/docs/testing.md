@@ -26,7 +26,7 @@ The planned entrypoint is `python -m unittest discover -s tests -p "test_*.py" -
 | Listing | Missing/empty file, all tasks, completed tasks, numeric ordering, exact tab-separated fields and no write. |
 | Completion | Open task, already completed task, unknown valid reference, missing/empty file. No write for repeated completion or refusal. |
 | Reference boundaries | Noncanonical syntax, zero/negative/overflow; allocate after the highest ID. With the maximum ID stored, adding is refused while list/complete still work. |
-| CLI | Missing/extra arguments, unknown command/option, repeated/misplaced `--file`, empty path and quoted spaces; exact output channels, messages and exit statuses. |
+| CLI | Missing/extra arguments, unknown command/option, repeated/misplaced `--file`, empty path and quoted spaces; `add --` with dash-prefixed text and a literal `--`, refusal without the delimiter, dash-prefixed filenames through `./`; exact output channels, messages and exit statuses. |
 | File selection | Stable default under a controlled test home, relative/absolute overrides, independent lists, absent home resolution and parent-directory behavior. Never use the developer's real default file. |
 | Strict data | Invalid UTF-8/BOM, invalid JSON, duplicate/unknown/missing keys, booleans/floats as integers, unsupported version, duplicate IDs, invalid text/state and trailing data. Whole-file refusal without mutation. |
 | Safe save | Failure during preparation, serialization, writing, flush/synchronization and replacement. Before commit, existing bytes stay identical; an absent selected file stays absent. Default directory may remain empty. |
@@ -60,6 +60,7 @@ Before a release:
 - The implementation matches the documented scope, CLI, data format and safety boundaries; no unresolved data-loss or contract issue remains.
 - Syntax/import checking and the complete automated suite pass on Python 3.13.x on Windows 11 and Ubuntu 24.04. Record each platform result separately.
 - The source archive is unpacked and the documented setup/run/test/example procedures succeed from that clean package.
+- Commands are measured with the reproducible 1,000-task fixture from Product; record the environment/results and resolve any unacceptable interaction delay before release. No numerical latency guarantee is implied by the measurement.
 - The data/recovery and user walkthroughs have recorded outcomes; architecture and changed-document reviews are complete.
 - Version, changelog, archive filename and checksum agree. No user data or caches are included.
 - The project owner explicitly decides release readiness from the evidence. A passing suite alone is not that decision.

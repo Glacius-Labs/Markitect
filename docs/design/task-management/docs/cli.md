@@ -5,12 +5,12 @@ This is the intended interface of version 0.1. It is specified before applicatio
 ## Invocation and common rules
 
 ```text
-python -m tasks [--file PATH] add TEXT
+python -m tasks [--file PATH] add [--] TEXT
 python -m tasks [--file PATH] list
 python -m tasks [--file PATH] complete ID
 ```
 
-`--file` is optional, appears at most once and only before the action, and takes one nonempty path argument. Paths with spaces must be shell-quoted. A relative path is interpreted against the process working directory. Default location and directory behavior are specified in [Operations](operations.md#selecting-the-task-file). There are no environment-variable settings, interactive prompts, stdin data input or additional actions in this version.
+`--file` is optional, appears at most once and only before the action, and takes one nonempty path argument. Paths with spaces must be shell-quoted. A path beginning with a dash must be expressed as an absolute path or prefixed with `./` (for example `./-work.json`). A relative path is interpreted against the process working directory. Default location and directory behavior are specified in [Operations](operations.md#selecting-the-task-file). There are no environment-variable settings, interactive prompts, stdin data input or additional actions in this version.
 
 Unknown options/actions, missing or extra arguments, repeated options, an empty path and an invalid reference spelling are invocation errors. Reference syntax is the [domain's canonical decimal syntax](domain.md); it is validated before opening a file. Validate invocation first, then action-specific text, then read/validate the complete selected file, then resolve a valid reference. Thus invalid input wins over an unrelated unreadable file, while a read failure wins over a possible unknown-reference result.
 
@@ -18,14 +18,14 @@ Public text is UTF-8. Each line ends in the platform's normal newline; compariso
 
 ## Add
 
-Input is exactly one text argument. Normalize and validate it using [Domain](domain.md), then read the collection and allocate the next reference. Create an open task, commit the complete new collection and only then confirm.
+Input is exactly one text argument, optionally preceded by the `--` delimiter. The delimiter is supported only immediately after `add`; it makes the following single argument text even when that argument begins with a dash. Without the delimiter, a text argument beginning with a dash is an invocation error. Shell quoting alone does not change that rule. For example, `python -m tasks add -- "--urgent"` records `--urgent`, and `python -m tasks add -- --` records `--`. Normalize and validate text using [Domain](domain.md), then read the collection and allocate the next reference. Create an open task, commit the complete new collection and only then confirm.
 
 ```text
 python -m tasks add "Buy milk"
 Created task 1.
 ```
 
-Success leaves existing tasks unchanged. Adding identical text again creates a different reference. Invalid text produces `Task text must be nonblank and single-line.` An exhausted reference range produces `No task identifiers are available.` Neither changes data or consumes a reference.
+Success leaves existing tasks unchanged. Adding identical text again creates a different reference. Forbidden characters produce `Task text must be single-line Unicode without control characters.` If the character check passes but trimming leaves no text, return `Task text must not be blank.` An exhausted reference range produces `No task identifiers are available.` None changes data or consumes a reference.
 
 Add is not idempotent: repeating a successful add creates another task. After a missing confirmation, check the list before repeating it.
 
@@ -60,7 +60,8 @@ Repeating the command for a completed task returns `Task 1 is already completed.
 |---|---|---|
 | 0 | Successful action, including an empty list or repeated completion | Empty |
 | 1 | Invalid invocation | `Invalid command or arguments.` |
-| 1 | Invalid task text | `Task text must be nonblank and single-line.` |
+| 1 | Forbidden text characters | `Task text must be single-line Unicode without control characters.` |
+| 1 | Blank normalized task text | `Task text must not be blank.` |
 | 1 | Unknown valid reference | `Task N does not exist.` |
 | 1 | Reference capacity reached while adding | `No task identifiers are available.` |
 | 2 | File cannot be read or selected path is not supported | `Cannot read task file.` |

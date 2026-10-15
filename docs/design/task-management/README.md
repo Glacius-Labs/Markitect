@@ -2,7 +2,7 @@
 
 Tasks is a small, local command-line application for keeping track of personal work. Add a task, see the whole list and mark work completed. Data stays on your computer and remains available between runs.
 
-**Project status:** version 0.1 is a pre-implementation design. This repository contains its documentation; application source, executable tests and release packages have not been supplied yet. Commands below specify the intended interface and become runnable when the implementation is delivered. No supported release or successful application test run is claimed.
+**Project status:** version 0.1 is a pre-implementation design. This design package contains documentation only; no Tasks application source, executable test suite or release package is included. Commands below specify the intended interface and become runnable when the implementation is delivered. No supported release or successful application test run is claimed.
 
 ## What the first version does
 
