@@ -10,6 +10,6 @@ This area collects the terms used to describe the canonical model. Each term has
 - [Actor](actor.md) — a role through which a person or another system interacts with the system.
 - [UseCase](use-case.md) — an action available to an Actor and its outcome, accessed through an Interface.
 - [Interface](interface.md) — an interaction point through which an Actor uses UseCases.
-- [Entity](entity.md) — a thing in the project's domain with its own identity, properties and behavior.
+- [Concept](concept.md) — something meaningful in the project's domain, its meaning and relevant characteristics.
 
 Return to the [design map](../README.md).
