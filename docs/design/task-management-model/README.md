@@ -1,4 +1,6 @@
-# Task management: a complete documentation model
+# Historical task-management modeling sketch
+
+This earlier type-led sketch is no longer the active task application's specification. The owner clarified that ordinary professional project documentation must come first, without assuming knowledge of Markitect. Start with the [standalone Tasks documentation](../task-management/README.md). The material below is retained only as an earlier design exercise; it does not govern the new documentation and may describe different provisional choices.
 
 Status: proposed design example, prepared 15 October 2026. The owner requested a complete specification first. No task application is implemented here, and no application Check has been executed. The seven kinds are a modeling proposal, not the current Markitect schema.
 
