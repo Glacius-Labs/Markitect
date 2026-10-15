@@ -6,6 +6,7 @@ The [Project World package](project-world/README.md) has its own reading order a
 
 ## Product direction and work shape
 
+- [Task-management documentation model](task-management-model/README.md) — a complete proposed specification using seven candidate kinds; no application implementation
 - [Domain-language pressure test](domain-language-pressure.md)
 - [Goal-led modeling proposal](goal-led-modeling.md)
 - [Product-vision alignment assessment](product-vision-alignment.md)
