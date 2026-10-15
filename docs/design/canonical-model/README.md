@@ -11,5 +11,6 @@ This area collects the terms used to describe the canonical model. Each term has
 - [UseCase](use-case.md) — an action available to an Actor and its outcome, accessed through an Interface.
 - [Interface](interface.md) — an interaction point through which an Actor uses UseCases.
 - [Concept](concept.md) — something meaningful in the project's domain, its meaning and relevant characteristics.
+- [Rule](rule.md) — a condition that must hold for one or more Concepts or UseCases.
 
 Return to the [design map](../README.md).
