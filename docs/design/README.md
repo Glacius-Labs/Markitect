@@ -6,6 +6,7 @@ The [Project World package](project-world/README.md) has its own reading order a
 
 ## Product direction and work shape
 
+- [Canonical model terminology](canonical-model/README.md) — working Markdown definitions, starting with Project
 - [Domain-language pressure test](domain-language-pressure.md)
 - [Goal-led modeling proposal](goal-led-modeling.md)
 - [Product-vision alignment assessment](product-vision-alignment.md)
