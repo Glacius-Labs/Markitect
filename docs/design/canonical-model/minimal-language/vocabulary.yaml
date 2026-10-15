@@ -1,0 +1,191 @@
+# Proposed author format; not an input supported by the current project CLI.
+# Counts use the existing Core convention: maxCount 1 = singleton, otherwise list.
+apiVersion: connector.example.org/v1alpha1
+definition: >-
+  Vokabular fuer die Sollbeschreibung einer Connector-Plattform. Die Typen und
+  ihre Beziehungen sind Projektentscheidungen dieses Beispiels. Sie sind keine
+  fest eingebauten Markitect-Kinds.
+kinds:
+  System:
+    definition: >-
+      Beschreibt eine zusammengehoerige Softwareloesung, ihren Zweck und ihre
+      Grenze zur Umgebung. containers benennt Anwendungen dieser Loesung.
+      exchanges ordnet ihr beschriebene Kommunikationsvertraege zu. Ein extern
+      verwendetes System darf ohne seine interne Architektur beschrieben sein.
+    properties:
+      containers:
+        definition: Die Laufzeitanwendungen, die zur beschriebenen Loesung gehoeren.
+        type: reference
+        target: {apiVersion: connector.example.org/v1alpha1, kind: Container}
+        minCount: 0
+        maxCount: -1
+      exchanges:
+        definition: Die Kommunikationsvertraege, welche die Loesung festlegt.
+        type: reference
+        target: {apiVersion: connector.example.org/v1alpha1, kind: Exchange}
+        minCount: 0
+        maxCount: -1
+      provides:
+        definition: Die an der Systemgrenze angebotenen Vertraege.
+        type: reference
+        target: {apiVersion: connector.example.org/v1alpha1, kind: Interface}
+        minCount: 0
+        maxCount: -1
+  Container:
+    definition: >-
+      Beschreibt eine Anwendung mit eigener Laufzeitgrenze. components benennt
+      ihre funktionalen Teile. Dies ist eine Sollbeschreibung und keine konkrete
+      laufende Prozessinstanz. Die vollstaendige Infrastrukturmodellierung ist
+      nicht Gegenstand dieses kleinen Durchstichs.
+    properties:
+      location:
+        definition: Die im Beispiel vorgesehene Umgebung dieser Anwendung.
+        type: enum
+        values: [cloud, onprem]
+        minCount: 1
+        maxCount: 1
+      components:
+        definition: Die innerhalb dieser Anwendung zu realisierenden Funktionseinheiten.
+        type: reference
+        target: {apiVersion: connector.example.org/v1alpha1, kind: Component}
+        minCount: 0
+        maxCount: -1
+  Component:
+    definition: >-
+      Beschreibt eine funktionale Verantwortung innerhalb einer Anwendung und
+      die Vertraege, die sie bereitstellt oder verwendet. Sie legt keine eigene
+      Prozess-, Quellcodedatei- oder Paketgrenze fest. emits benennt die von ihr
+      erzeugten Operationsauftraege; handles benennt die von ihr ausgefuehrten.
+    properties:
+      provides:
+        definition: Von diesem Baustein angebotene Vertraege.
+        type: reference
+        target: {apiVersion: connector.example.org/v1alpha1, kind: Interface}
+        minCount: 0
+        maxCount: -1
+      consumes:
+        definition: Von diesem Baustein benoetigte Vertraege.
+        type: reference
+        target: {apiVersion: connector.example.org/v1alpha1, kind: Interface}
+        minCount: 0
+        maxCount: -1
+      emits:
+        definition: Die Operationsauftraege, die dieser Baustein aus externen Eingaben bildet.
+        type: reference
+        target: {apiVersion: connector.example.org/v1alpha1, kind: Command}
+        minCount: 0
+        maxCount: -1
+      handles:
+        definition: Die Operationsauftraege, deren fachliche Ausfuehrung dieser Baustein uebernimmt.
+        type: reference
+        target: {apiVersion: connector.example.org/v1alpha1, kind: Command}
+        minCount: 0
+        maxCount: -1
+  Interface:
+    definition: >-
+      Beschreibt einen Vertrag der Zusammenarbeit mit angebotenen Operationen,
+      benoetigten Eingaben, Ergebnissen und Fehlern. Die Definition darf sowohl
+      den aeusseren Zugang als auch einen internen Integrationsvertrag ausdruecken.
+    properties: {}
+  MqttService:
+    definition: >-
+      Beschreibt die benoetigte MQTT-Laufzeitinfrastruktur. Sie vermittelt nach
+      Topics und Abonnements und interpretiert keine fachliche Command-Bedeutung.
+      Ihre Bereitstellung ist von den logischen Channel-Vertraegen zu unterscheiden.
+      Dieser projektspezifische Typ behauptet keine neue C4-Abstraktion.
+    properties: {}
+  Channel:
+    definition: >-
+      Beschreibt eine parametrisierte Familie logischer MQTT-Adressen. topicPattern
+      bindet Platzhalter an die im Koerper erklaerten Laufzeitwerte; es ist kein
+      vom Core auszufuehrendes Programm. broker benennt den benoetigten MQTT-Dienst.
+      delivery beschreibt die gewuenschte Transportzustellung, nicht die Zahl der
+      fachlichen Ausfuehrungen. In diesem Beispiel sind die Platzhalter tenantId
+      und senderInstanceId zulaessig und ihre Werte duerfen keine Topicseparatoren
+      oder Wildcards enthalten. Der Koerper legt fest, welche Werte erforderlich sind.
+    properties:
+      topicPattern:
+        definition: Die in diesem Projekt geltende Adressschablone mit erklaerten Parametern.
+        type: string
+        minCount: 1
+        maxCount: 1
+      delivery:
+        definition: Gewuenschte Zustellsemantik des Nachrichtentransports.
+        type: enum
+        values: [at-most-once, at-least-once]
+        minCount: 1
+        maxCount: 1
+      broker:
+        definition: Der MQTT-Dienst, ueber den diese Channel-Familie verfuegbar ist.
+        type: reference
+        target: {apiVersion: connector.example.org/v1alpha1, kind: MqttService}
+        minCount: 1
+        maxCount: 1
+  Command:
+    definition: >-
+      Beschreibt eine versionierte Operationsanforderung, deren Eingaben und
+      erwartetes Resultat. Die Definition ist der Vertrag eines Auftragstyps;
+      konkrete versendete Commands sind Laufzeitdaten. operationId ist die
+      eindeutige Operationskennung in diesem Projekt. Der Koerper beschreibt
+      Eingaben, Ergebnisse und fachliche Fehler.
+    properties:
+      operationId:
+        definition: Stabile Kennung der versionierten Operation.
+        type: string
+        minCount: 1
+        maxCount: 1
+  Exchange:
+    definition: >-
+      Beschreibt den Request-/Reply-Vertrag einer Operation zwischen sender und
+      receiver. Der Sender veroeffentlicht den Command auf requestChannel und
+      abonniert seine instanzbezogene Antwortadresse auf replyChannel. Der
+      Empfaenger verarbeitet Requests und veroeffentlicht das Resultat an die
+      mitgesendete Antwortadresse. Antworten behalten die MessageId des Requests;
+      MessageId ordnet sie dem wartenden Austausch zu. CorrelationId dient der
+      uebergreifenden Nachverfolgung. Der Koerper legt Fehler, Wiederholungswirkung
+      und Abbruchgrenzen fest. timeoutSeconds gilt pro Versuch und maxAttempts
+      zaehlt den ersten Versuch mit. Positive Werte sind eine semantische
+      Verpflichtung dieses Typs; eine allgemeine Integer-Property erzwingt diese
+      Bereichsregel noch nicht. Das Objekt beschreibt den Vertrag, keinen
+      einzelnen laufenden Nachrichtenaustausch.
+    properties:
+      sender:
+        definition: Anwendung in der Rolle des ausstellenden Auftraggebers.
+        type: reference
+        target: {apiVersion: connector.example.org/v1alpha1, kind: Container}
+        minCount: 1
+        maxCount: 1
+      receiver:
+        definition: Anwendung in der Rolle des empfangenden Auftragsbearbeiters.
+        type: reference
+        target: {apiVersion: connector.example.org/v1alpha1, kind: Container}
+        minCount: 1
+        maxCount: 1
+      command:
+        definition: Operationsvertrag des ueber diesen Austausch ausgefuehrten Commands.
+        type: reference
+        target: {apiVersion: connector.example.org/v1alpha1, kind: Command}
+        minCount: 1
+        maxCount: 1
+      requestChannel:
+        definition: Kanal fuer Auftraege vom Sender zum Empfaenger.
+        type: reference
+        target: {apiVersion: connector.example.org/v1alpha1, kind: Channel}
+        minCount: 1
+        maxCount: 1
+      replyChannel:
+        definition: Kanal fuer Antworten an die ausstellende Senderinstanz.
+        type: reference
+        target: {apiVersion: connector.example.org/v1alpha1, kind: Channel}
+        minCount: 1
+        maxCount: 1
+      timeoutSeconds:
+        definition: Positive maximale Wartezeit eines einzelnen Versuchs in Sekunden.
+        type: integer
+        minCount: 1
+        maxCount: 1
+      maxAttempts:
+        definition: Positive maximale Versuchszahl einschliesslich des ersten Versuchs.
+        type: integer
+        minCount: 1
+        maxCount: 1

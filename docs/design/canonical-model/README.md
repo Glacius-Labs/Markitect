@@ -2,11 +2,15 @@
 
 Status: working definitions, developed from the product discussion on 15 October 2026.
 
-For the combined design discussion, start with the [consolidated design baseline](consolidation.md): it connects this vocabulary to the library proposal, identifies their unresolved differences and records the current Main boundary. The [source comparison](current-main-comparison.md) explains which parts Main implements. The terms below are working definitions, not a supported schema or a complete list of chosen Kinds.
+For continuation in a new session, read the [design handoff](HANDOFF.md) first. It distinguishes selected language rules, proposed index procedures, evidence and the next work.
+
+For the selected language foundation, start with the [consolidated Core language contract](minimal-language/language-contract.md): the common Definition form, Kind and Property, binding body text, compact Properties, stable identities, imports, versions and references. The owner has selected these design rules; the new language is not yet implemented in the product compiler. The [consolidated design baseline](consolidation.md) records their origin and the other open product questions. The [source comparison](current-main-comparison.md) explains the fixed Main boundary.
 
 This area collects the terms used to describe the canonical model. Each term has its own Markdown document explaining its meaning and purpose. The vocabulary grows one term at a time as the project-description needs become clear.
 
 The owner's current starting point is detailed, typed documentation of the intended project. The [working goal and provisional terms](consolidation.md#arbeitsziel-und-wackelkandidaten) distinguish that description from Apply's agent coordination and the resulting artifacts. System, Component versus Module, Artifact, Mandate and Decision are explicitly under reconsideration, with System/Component/Module taking priority. The need for process descriptions is also open. Their presence in this area or an example does not settle their inclusion in the new model.
+
+The [language discussion and bounded Connector probes](minimal-language/README.md) preserve the earlier alternatives and their evidence. They are the derivation of the current contract. The terms below are possible vocabulary contents; they do not predetermine a universal built-in Kind catalogue. Special requirements and roles fields remain outside the selected Core.
 
 ## Terms
 
@@ -31,5 +35,6 @@ The library proposal also introduces **System**, **Module** and **Mandate**; see
 
 - [Relationships](relationships.md) — how the terms connect, with simple examples and explanations of their different purposes.
 - [Tasks example](task-management-example.md) — a small task-management project described using all fourteen terms and their relationships.
+- [Connector architecture and request/reply example](connector-example.md) — local source-informed pressure test of System/Container/Component, topic selection, response matching and remaining vocabulary gaps; proposed design, not a compiled model or accepted new schema.
 
 Return to the [design map](../README.md).

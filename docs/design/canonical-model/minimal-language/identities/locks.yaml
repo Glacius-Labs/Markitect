@@ -1,0 +1,25 @@
+# Local content bindings for the three synthetic model snapshots.
+a:
+  packages:
+  - package: markitect/core
+    version: 1.0.0
+    sha256: e4365016227e5de36dbf42e8dc0adda890e9d342080f01ece4a54cf7ee1554f0
+  - package: example/connector-vocabulary
+    version: 1.0.0
+    sha256: 961ee3ce1c2f10fda156543e3e7438cae73a3294f2acbb94a5889bdbe4df8c52
+b:
+  packages:
+  - package: markitect/core
+    version: 1.0.0
+    sha256: e4365016227e5de36dbf42e8dc0adda890e9d342080f01ece4a54cf7ee1554f0
+  - package: example/connector-vocabulary
+    version: 1.1.0
+    sha256: 55fc6436d1ff6c3d6c1506725f08e010ae82e0a051aae97f3cdc9f11f8e5b4bf
+c:
+  packages:
+  - package: markitect/core
+    version: 1.0.0
+    sha256: e4365016227e5de36dbf42e8dc0adda890e9d342080f01ece4a54cf7ee1554f0
+  - package: example/connector-vocabulary
+    version: 2.0.0
+    sha256: bdb0dff6010d72f4016c783a68322811a0199159bcaf6d3e240c8d1930f78f7e
