@@ -8,6 +8,7 @@ This area collects the terms used to describe the canonical model. Each term has
 
 - [Project](project.md) — the project's name, purpose and associated definitions.
 - [Actor](actor.md) — a role through which a person or another system interacts with the system.
-- [UseCase](use-case.md) — an action available to an Actor and its outcome, accessed through an interaction point.
+- [UseCase](use-case.md) — an action available to an Actor and its outcome, accessed through an Interface.
+- [Interface](interface.md) — an interaction point through which an Actor uses UseCases.
 
 Return to the [design map](../README.md).
