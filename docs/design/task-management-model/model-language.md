@@ -55,7 +55,7 @@ No automatic inverse edges are additional facts. `uses` and `explains` do not im
 - Every edge resolves to declared records of allowed kinds; identities and identical edges are unique.
 - `COMP-APP` is the sole root. Every other Component has one parent. Containment and dependency graphs are acyclic; a component does not depend on itself.
 - Every UseCase has exactly one `provided-by` target and at least one directly targeting Check.
-- Every Artifact has exactly one `owned-by` target. Planned output paths do not overlap between Artifact owners. Implementation-selected manifests must be added to the tooling Artifact's concrete path list before a realization coverage claim.
+- Every Artifact has exactly one `owned-by` target. Distinct Artifacts may not claim the same output file, even when they have the same Component owner; planned path scopes must not overlap. Implementation-selected manifests must be added to the tooling Artifact's concrete path list before a realization coverage claim.
 - Every Requirement has at least one scope and at least one Check, including human inspection for the goal. A Check must state expected observation and limitations; no requirement is considered proven by the presence of an edge.
 - Every Component has a planned realizing Artifact. Every record participates in the edge list; the application root is intentionally structural.
 

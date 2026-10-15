@@ -7,7 +7,7 @@ Each Check defines a method and expected observations. None has run against a ta
 
 Type: Check. Method: automated domain/contract tests.
 
-Test normalized text, whitespace-only text, tabs and line breaks; accept Unicode and duplicate wording. Test reference and state validation, including invalid states and duplicate references in a decoded collection. This examines valid records, not usability or filesystem safety.
+Test normalized text, whitespace-only text and rejection before normalization of tabs, CR/LF, terminal escapes and Unicode U+0085/U+2028/U+2029. Accept ordinary Unicode and duplicate wording. Test reference and state validation, including reference allocation/order beyond a machine-sized integer, invalid states and duplicate references in a decoded collection. This examines valid records, not usability or filesystem safety.
 
 <a id="check-actions"></a>
 ## CHECK-ACTIONS — Offered actions
@@ -25,7 +25,7 @@ Observe the UseCase results and storage calls independently. This does not prove
 
 Type: Check. Method: invoke the built executable as a real child process.
 
-Exercise every command and its expected stdout/stderr/exit code, quoted text, unknown command, missing/extra arguments, invalid reference syntax and invalid text. Verify the default file and explicit absolute/relative file selection, including syntax failures for repeated options and empty paths. Confirm stdout remains empty on failures and stderr on success. Normalize only newline conventions, not wording, tabs or ordering.
+Exercise every command and its expected stdout/stderr/exit code, quoted text, unknown command, missing/extra arguments, invalid reference syntax and invalid text, including the forbidden control/separator characters. Verify the default file and explicit absolute/relative file selection, including syntax failures for repeated options and empty paths. Confirm stdout remains empty on failures and stderr on success. Normalize only newline conventions, not wording, tabs or ordering.
 
 Use a temporary working directory and known selected files. This proves observed interface cases, not every shell's quoting behavior or human understandability.
 
