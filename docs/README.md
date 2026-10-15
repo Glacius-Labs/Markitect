@@ -14,6 +14,7 @@ Use this map to find the product guide or the document that owns a decision or s
 | Use the current model-first CLI | [Project operations](project-operations.md) and [Usage](usage.md); earlier Project/Domain contracts are preserved at the [v0.14.1 tag](https://github.com/Glacius-Labs/Markitect/tree/v0.14.1) |
 | Check source plans, work-item status, or fixed evidence | [Implementation roadmap](implementation-plan.md), the [work-items map](work-items/README.md), and the [validation map](validation/README.md) |
 | Find a design proposal, research input, or historical record | [Design map](design/README.md), [Research map](research/README.md), [Strategy map](strategy/README.md), and [History map](history/README.md) |
+| Continue the consolidated canonical-model design discussion | [Combined design baseline and open conflicts](design/canonical-model/consolidation.md), [working terminology](design/canonical-model/README.md), and [current Main comparison](design/canonical-model/current-main-comparison.md) |
 
 ## Canonical status and evidence owners
 

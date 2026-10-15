@@ -6,6 +6,11 @@ The [Project World package](project-world/README.md) has its own reading order a
 
 ## Product direction and work shape
 
+- [Gemeinsamer Modell-Designstand](canonical-model/consolidation.md) — Konsolidierung auf Main vom 15. Oktober 2026, Quellen, Widersprüche und nächste Entscheidungen.
+- [Canonical model terminology](canonical-model/README.md) — Arbeitsbegriffe, Beziehungen und vereinfachtes Tasks-Beispiel.
+- [Grundmodell und Bibliotheksentwurf](product-model-refinement/README.md) — typisierte Prosa, dokumentierte Designentscheidungen und Sprachkandidaten.
+- [Standalone Tasks project documentation](task-management/README.md) — fachliche Gegenprobe als eigenständige Projektspezifikation; Anwendung noch nicht implementiert.
+- [Historical Tasks modeling sketch](task-management-model/README.md) — früherer, abgelöster Modellierungsversuch.
 - [Domain-language pressure test](domain-language-pressure.md)
 - [Goal-led modeling proposal](goal-led-modeling.md)
 - [Product-vision alignment assessment](product-vision-alignment.md)
