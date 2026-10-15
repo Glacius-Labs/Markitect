@@ -4,6 +4,8 @@ This register records Markitect's long-term vision, product-level decisions, cla
 
 ## Index
 
+The owner's [origin account of 15 October 2026](sources/owner-origin-20261015.md) adds the concrete adopting-project experience behind these entries. [Origin and rationale](origin-and-rationale.md) connects its problems, mechanisms and assumptions to the existing IDs without changing their status. The example Core/Module/Product rules belong to that adopting project.
+
 | ID | Type | Title | Status |
 |---|---|---|---|
 | [VIS-001](#vis-001-cockpit-personal-ai-and-autonomous-project-organization) | Vision | Cockpit, personal AI and autonomous project organization | Owner statement; planning deferred |

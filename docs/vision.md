@@ -171,6 +171,8 @@ Markitect's product owner describes a longer-term picture beyond this thesis: a 
 
 ## Origin of the name
 
+The [origin and rationale](concepts/origin-and-rationale.md) records the owner's concrete project experience and the progression from conflicting code, documentation and agent skills to a canonical model, structural compilation, delegated Managers and the later Government idea. It preserves the [owner's retrospective account of 15 October 2026](concepts/sources/owner-origin-20261015.md) and separates experience, mechanisms and hoped-for effects; it is not an implementation or benefit claim.
+
 **Markitect = Markdown + Architect.** The project began with architecture and process knowledge in readable documentation, Rules, Skills, Workflows and agent instructions. Its direction is to turn informal engineering knowledge into structured, versioned architecture and policy, then into an executable engineering system. The name records that origin; it does not require Markdown as canonical syntax. Current typed definitions use YAML, while human-readable prose and explicitly selected projections remain useful. The origin explains the name; it does not limit the product to agent instructions.
 
 ## Common misreadings
