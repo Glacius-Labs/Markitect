@@ -7,7 +7,7 @@ This area collects the terms used to describe the canonical model. Each term has
 ## Terms
 
 - [Project](project.md) — the project's name, purpose and associated definitions.
-- [Actor](actor.md) — a role through which a person or another system interacts with the system.
+- [Actor](actor.md) — a role through which a person or another system interacts with the system or participates in project work.
 - [UseCase](use-case.md) — an action available to an Actor and its outcome, accessed through an Interface.
 - [Interface](interface.md) — an interaction point through which an Actor uses UseCases.
 - [Concept](concept.md) — something meaningful in the project's domain, its meaning and relevant characteristics.
@@ -20,5 +20,10 @@ This area collects the terms used to describe the canonical model. Each term has
 - [Check](check.md) — how an expectation is verified and what counts as success.
 - [Procedure](procedure.md) — how to carry out an activity, including its steps and expected result.
 - [Condition](condition.md) — a statement that can be true or false.
+
+## Relationships and example
+
+- [Relationships](relationships.md) — how the terms connect, with simple examples and explanations of their different purposes.
+- [Tasks example](task-management-example.md) — a small task-management project described using all fourteen terms and their relationships.
 
 Return to the [design map](../README.md).
