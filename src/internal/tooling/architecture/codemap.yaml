@@ -21,6 +21,12 @@ packages:
     purpose: Fixes supplied file trees with exact paths, modes, content identities and deterministic differences.
     doc: docs/design/canonical-model/manager-apply-go-architecture.md#organize-by-responsibility
 
+  # --- apply-organization -------------------------------------------------
+  - path: internal/organization
+    layer: apply-organization
+    purpose: Derives the complete local Manager topology from accepted compiled model and Package facts.
+    doc: docs/design/canonical-model/manager-apply-go-architecture.md#organize-by-responsibility
+
   # --- apply-realization --------------------------------------------------
   - path: internal/realization
     layer: apply-realization
