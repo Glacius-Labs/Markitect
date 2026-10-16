@@ -27,7 +27,9 @@ func (p *bodyHTMLParser) Parse(parent ast.Node, reader text.Reader, context pars
 	if isHTMLAnchorOpen(raw.Segments.Value(p.context.source)) {
 		p.context.linkDepth++
 	} else if isHTMLAnchorClose(raw.Segments.Value(p.context.source)) {
-		p.context.linkDepth--
+		if p.context.linkDepth > 0 {
+			p.context.linkDepth--
+		}
 	}
 	return node
 }

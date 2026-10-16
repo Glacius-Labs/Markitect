@@ -18,8 +18,19 @@ func TestBodyHTMLAnchorProtection(t *testing.T) {
 			wantLinks: []string{"field"},
 		},
 		{
+			name:      "orphan close does not cancel following anchor",
+			body:      "x </a> <a href='/x'>[[api]]</a> [[field]]",
+			wantLinks: []string{"field"},
+		},
+		{
 			name:       "malformed link in anchor is protected",
 			body:       "x <a href='/x'>[[api|]]</a> [[field]]",
+			wantLinks:  []string{"field"},
+			wantSyntax: false,
+		},
+		{
+			name:       "orphan close does not expose malformed notation in following anchor",
+			body:       "x </a> <a href='/x'>[[api|]]</a> [[field]]",
 			wantLinks:  []string{"field"},
 			wantSyntax: false,
 		},
