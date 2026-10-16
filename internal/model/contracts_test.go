@@ -11,16 +11,16 @@ func contractDefinition(path, id, kind, spec string) Entry {
 	return Entry{Path: "model/" + path, Kind: Regular, Bytes: []byte("id: " + id + "\nkind: " + kind + "\nbody: Contract fixture.\nimports: [{package: markitect/core, as: Core}]\nspec: " + spec)}
 }
 
-func TestFullPrescribedCoreCompletesOnlyImplementedPhases(t *testing.T) {
+func TestFullPrescribedCoreCompletesEveryPhase(t *testing.T) {
 	input := Input{Root: completeCoreSource()}
 	got := Compile(input)
-	if got.Status != NotCompleted || len(got.Diagnostics) != 0 || len(got.Models) != 1 {
+	if got.Status != Passed || len(got.Diagnostics) != 0 || len(got.Models) != 1 {
 		t.Fatalf("prescribed nine-file Core rejected: %+v", got)
 	}
 	model := got.Models[0]
 	for _, phase := range model.Phases {
 		switch phase.Name {
-		case "source_structure", "yaml_and_envelopes", "names_and_unicode", "dependencies", "imports_and_kinds", "core_and_contracts", "values_and_references":
+		case "source_structure", "yaml_and_envelopes", "names_and_unicode", "dependencies", "imports_and_kinds", "core_and_contracts", "values_and_references", "body_links", "lock", "canonical":
 			if phase.Status != Passed {
 				t.Fatalf("implemented phase incomplete: %+v", phase)
 			}
@@ -30,7 +30,7 @@ func TestFullPrescribedCoreCompletesOnlyImplementedPhases(t *testing.T) {
 			}
 		}
 	}
-	if model.Status != NotCompleted || len(model.Definitions) != 0 || len(model.Canonical) != 0 || model.Digest != "" {
+	if model.Status != Passed || len(model.Definitions) != 9 || len(model.Canonical) == 0 || model.Digest == "" {
 		t.Fatal("contract check produced full IR or canonical evidence")
 	}
 	slices.Reverse(input.Root.Entries)
@@ -67,7 +67,7 @@ func TestCoreComparesEffectiveContent(t *testing.T) {
 		}
 		entry.Bytes = []byte(text)
 	}
-	if got := Compile(input); got.Status != NotCompleted || len(got.Diagnostics) != 0 {
+	if got := Compile(input); got.Status != Passed || len(got.Diagnostics) != 0 {
 		t.Fatalf("equivalent effective Core rejected: %+v", got)
 	}
 }
@@ -112,7 +112,7 @@ func TestDerivedContractsAndOrdinaryPropertiesField(t *testing.T) {
 		contractDefinition("vocabulary/item.yaml", "item", "Catalog", "{properties: [Core.name, Core.name]}"),
 	)
 	got := Compile(input)
-	if got.Status != NotCompleted || len(got.Diagnostics) != 0 || phaseStatus(got.Models[0], "core_and_contracts") != Passed || phaseStatus(got.Models[0], "values_and_references") != Passed {
+	if got.Status != Passed || len(got.Diagnostics) != 0 || phaseStatus(got.Models[0], "core_and_contracts") != Passed || phaseStatus(got.Models[0], "values_and_references") != Passed {
 		t.Fatalf("contracts or ordinary data field misinterpreted: %+v", got)
 	}
 }
@@ -165,7 +165,7 @@ func TestContractFieldNameCollisionsAndFullDefaultIDs(t *testing.T) {
 		t.Fatalf("effective field collision not detected: %+v", got)
 	}
 	input.Root.Entries[3] = contractDefinition("feature/other.yaml", "other", "Core.Property", "{name: different, type: string, minCount: 0, maxCount: 1}")
-	if got := Compile(input); got.Status != NotCompleted || len(got.Diagnostics) != 0 {
+	if got := Compile(input); got.Status != Passed || len(got.Diagnostics) != 0 {
 		t.Fatalf("full local default ID was shortened or otherwise changed: %+v", got)
 	}
 }
@@ -191,7 +191,7 @@ func TestMandatoryObjectCyclesAndOptionalTermination(t *testing.T) {
 				if got.Status != Failed || !hasDiagnostic(got, "contract.object_cycle") {
 					t.Fatalf("unused impossible object contract accepted: %+v", got)
 				}
-			} else if got.Status != NotCompleted || len(got.Diagnostics) != 0 {
+			} else if got.Status != Passed || len(got.Diagnostics) != 0 {
 				t.Fatalf("terminating optional contract cycle rejected: %+v", got)
 			}
 		})
@@ -234,7 +234,7 @@ func TestCoreDefinitionSetAndUnusedImports(t *testing.T) {
 			}
 		}
 		input.Root.Entries = append(input.Root.Entries, contractDefinition("unused/aux.yaml", "Aux", "Core.Kind", "{}"))
-		if got := Compile(input); got.Status != NotCompleted || len(got.Diagnostics) != 0 {
+		if got := Compile(input); got.Status != Passed || len(got.Diagnostics) != 0 {
 			t.Fatalf("valid unused import changed effective Core content: %+v", got)
 		}
 	})
@@ -246,7 +246,7 @@ func TestLocalKindAndPropertyNamesDoNotInstallMetaOperators(t *testing.T) {
 		contractDefinition("feature/property.yaml", "Property", "Core.Kind", "{}"),
 		contractDefinition("feature/item.yaml", "item", "feature/Property", "{}"),
 	)
-	if got := Compile(input); got.Status != NotCompleted || len(got.Diagnostics) != 0 {
+	if got := Compile(input); got.Status != Passed || len(got.Diagnostics) != 0 {
 		t.Fatalf("local Property name granted meta semantics: %+v", got)
 	}
 	input.Root.Entries[3] = contractDefinition("feature/item.yaml", "camelName", "feature/Kind", "{properties: [Missing]}")
@@ -261,7 +261,7 @@ func TestLargeCountsAndExactEnumStrings(t *testing.T) {
 		contractDefinition("feature/large.yaml", "large", "Core.Property", "{type: string, minCount: 999999999999999999999999999999999999999999, maxCount: -1}"),
 		contractDefinition("feature/values.yaml", "choices", "Core.Property", "{type: enum, minCount: 0, maxCount: 0, values: ['', a, A, 'ü', ü]}"),
 	)
-	if got := Compile(input); got.Status != NotCompleted || len(got.Diagnostics) != 0 {
+	if got := Compile(input); got.Status != Passed || len(got.Diagnostics) != 0 {
 		t.Fatalf("counts were bounded or enum text was normalized/casefolded: %+v", got)
 	}
 }
@@ -294,7 +294,7 @@ func TestResolvedUnicodeCategoriesAndEffectiveFieldCollisions(t *testing.T) {
 		contractDefinition("feature/größe.yaml", "größe", "Core.Property", "{type: integer, minCount: 0, maxCount: 1}"),
 		contractDefinition("feature/größe-٢.yaml", "größe-٢", "文档", "{größe: 2}"),
 	)
-	if got := Compile(input); got.Status != NotCompleted || len(got.Diagnostics) != 0 || phaseStatus(got.Models[0], "names_and_unicode") != Passed {
+	if got := Compile(input); got.Status != Passed || len(got.Diagnostics) != 0 || phaseStatus(got.Models[0], "names_and_unicode") != Passed {
 		t.Fatalf("resolved Unicode categories were rejected: %+v", got)
 	}
 	input = coreModelInput(

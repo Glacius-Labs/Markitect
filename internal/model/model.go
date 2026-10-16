@@ -1,10 +1,8 @@
 // Package model compiles explicitly supplied canonical model sources.
 // It performs no filesystem, repository, process or provider operations.
 //
-// Compile currently implements source/YAML acquisition and lexical Unicode
-// names/identities, explicit bindings, Core/field contracts and typed values.
-// Valid partial input remains not_completed until every normative v1 content
-// phase exists. It does not expose a partial Definition IR or canonical bytes.
+// Compile validates canonical v1 content, the entry lock, and model-digest/1
+// bytes. Exact body-link coordinate coverage is a separate tool profile.
 package model
 
 // Identity is a canonical Definition address. Model IDs and source filenames
@@ -37,6 +35,13 @@ type Entry struct {
 // Definition files. Origin is an opaque provenance label. ManifestPath names
 // the explicitly selected model.yaml within Entries. Entries remain a slice so
 // duplicate paths cannot disappear before validation.
+// Each SourceModel is a separate acquired boundary. Before Definition capture,
+// the caller must establish physically distinct, non-nested model roots and
+// complete, exactly spelled directories/files. Forbidden redirects in the
+// relative root path, model tree, manifest and lock must be reported without
+// following them. Compile checks the supplied relative paths/entries;
+// opaque origins are not physical-root evidence and are never interpreted as
+// filesystem paths.
 type SourceModel struct {
 	Origin       string
 	ManifestPath string
@@ -55,18 +60,23 @@ type Input struct {
 // default. Negative values are invalid configuration. A limit refusal is
 // not_completed, never evidence that a model violates the language.
 type Limits struct {
-	SourceBytes int64
-	Entries     int
-	YAMLDepth   int
-	Models      int
+	SourceBytes     int64
+	Entries         int
+	YAMLDepth       int
+	Models          int
+	BodyBytes       int
+	MarkdownNesting int
 }
 
 // DefaultLimits returns the finite budgets used for zero-valued limit fields.
 // SourceBytes and Entries cover the entire supplied input, including metadata
 // and files outside a declared model root. Models includes the local model.
-// YAMLDepth counts the root as one.
+// YAMLDepth counts the root as one. BodyBytes bounds each decoded original
+// UTF-8 body before Markdown preprocessing. MarkdownNesting bounds actual block
+// depth (Document excluded), pending Goldmark bracket opener calls per inline
+// block, and constructed AST depth. These are tool refusals, not language maxima.
 func DefaultLimits() Limits {
-	return Limits{SourceBytes: 64 << 20, Entries: 100000, YAMLDepth: 128, Models: 1024}
+	return Limits{SourceBytes: 64 << 20, Entries: 100000, YAMLDepth: 128, Models: 1024, BodyBytes: 2_000_000, MarkdownNesting: 128}
 }
 
 type Status string
@@ -115,9 +125,13 @@ type Result struct {
 	Coordinates Status
 }
 
-// ModelResult scopes validation to a supplied model. Canonical and Digest are
-// absent unless all content checks for the model and its dependencies passed.
-// Definitions likewise contains only fully resolved and checked IR.
+// ModelResult validates a supplied model in its complete requirement closure.
+// Canonical, Digest and Definitions are absent unless this scope fully passed.
+// Only Input.Root has an entry-lock obligation. For a supplied dependency,
+// lock=passed means no separate sidecar is required in this Compile; its own
+// content may pass independently beside an invalid consumer or entry lock.
+// Provided sidecars never replace the entry lock; their known loader errors
+// remain diagnostics. Result.Status aggregates the complete supplied input.
 type ModelResult struct {
 	Origin      string
 	Manifest    Source

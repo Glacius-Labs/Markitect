@@ -116,13 +116,17 @@ spec:
 	return SourceModel{
 		Origin:       "core",
 		ManifestPath: "model.yaml",
-		Entries:      append([]Entry{{Path: "model.yaml", Kind: Regular, Bytes: []byte("formatVersion: 1\nid: markitect-core\nversion: '1.0'\nroot: model\ndependencies: {}\n")}}, entries...),
+		Entries:      append(append([]Entry{{Path: "model.yaml", Kind: Regular, Bytes: []byte("formatVersion: 1\nid: markitect-core\nversion: '1.0'\nroot: model\ndependencies: {}\n")}}, entries...), emptyLockEntry()),
 	}
 }
 
 func coreModelInput(definitions ...Entry) Input {
-	return Input{
+	input := Input{
 		Root:         bindingSource("project", "", "{markitect-core: '1.0'}", definitions...),
 		Dependencies: []SourceModel{completeCoreSource()},
 	}
+	// Independently fixed by replacing only version in the normative Core JSON
+	// vector, rather than asking the implementation to generate its own lock.
+	input.Root.Entries[len(input.Root.Entries)-1].Bytes = []byte("formatVersion: 1\nmodels:\n  markitect-core:\n    version: '1.0'\n    digest: sha256:b912d62b4e7ecdb181291f1dafa712e8a0f407ad35d336ac2c3420a523ec3de4\n")
+	return input
 }

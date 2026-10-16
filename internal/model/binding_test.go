@@ -3,6 +3,7 @@ package model
 import (
 	"reflect"
 	"slices"
+	"strings"
 	"testing"
 )
 
@@ -11,7 +12,9 @@ func bindingSource(id, version, dependencies string, definitions ...Entry) Sourc
 	if version != "" {
 		manifest += "version: '" + version + "'\n"
 	}
-	return SourceModel{Origin: id, ManifestPath: "model.yaml", Entries: append([]Entry{{Path: "model.yaml", Kind: Regular, Bytes: []byte(manifest)}}, definitions...)}
+	entries := append([]Entry{{Path: "model.yaml", Kind: Regular, Bytes: []byte(manifest)}}, definitions...)
+	entries = append(entries, emptyLockEntry())
+	return SourceModel{Origin: id, ManifestPath: "model.yaml", Entries: entries}
 }
 
 func bindingDefinition(path, id, kind, imports string) Entry {
@@ -54,7 +57,7 @@ func privateBindings(input Input) ([]sourceScope, dependencyGraph, authorBinding
 func TestExplicitModelGraphAndFileLocalKindBinding(t *testing.T) {
 	input := bindingInput()
 	got := Compile(input)
-	if !onlyContractStageFailures(got) {
+	if !onlyLaterStageFailures(got) {
 		t.Fatalf("valid model/author binding rejected: %+v", got)
 	}
 	for _, model := range got.Models {
@@ -111,7 +114,7 @@ func TestParsedDependencyManifestBindings(t *testing.T) {
 func TestAliasImportAlsoOpensShortIDs(t *testing.T) {
 	input := bindingInput()
 	input.Root.Entries[1] = bindingDefinition("app/item.yaml", "item", "Thing", "[{package: vocabulary, as: Vocabulary}]")
-	if got := Compile(input); !onlyContractStageFailures(got) {
+	if got := Compile(input); !onlyLaterStageFailures(got) {
 		t.Fatalf("alias unexpectedly hid the imported short ID: %+v", got)
 	}
 }
@@ -188,7 +191,7 @@ func TestSameModelPackagesNeedImportsAndOwnFullAddressNeedsNone(t *testing.T) {
 	input := Input{Root: bindingSource("local", "", "{}",
 		bindingDefinition("app/item.yaml", "item", "other/Thing", "[{package: other}]"),
 		bindingDefinition("other/thing.yaml", "Thing", "other/Thing", ""))}
-	if got := Compile(input); !onlyContractStageFailures(got) {
+	if got := Compile(input); !onlyLaterStageFailures(got) {
 		t.Fatalf("same-model import or own full address rejected: %+v", got)
 	}
 	input.Root.Entries[1] = bindingDefinition("app/item.yaml", "item", "other/Thing", "")
@@ -206,11 +209,11 @@ func TestNoLocalPriorityAndNoErrorForUnusedCompetingShortNames(t *testing.T) {
 		t.Fatalf("local candidate took priority over imported short ID: %+v", got)
 	}
 	input.Root.Entries[1] = bindingDefinition("app/item.yaml", "item", "Vocabulary.Thing", "[{package: vocabulary, as: Vocabulary}]")
-	if got := Compile(input); !onlyContractStageFailures(got) {
+	if got := Compile(input); !onlyLaterStageFailures(got) {
 		t.Fatalf("unused competing short IDs invalidated imports: %+v", got)
 	}
 	input.Root.Entries[1] = bindingDefinition("app/item.yaml", "item", "vocabulary/Thing", "[{package: vocabulary, as: Vocabulary}]")
-	if got := Compile(input); !onlyContractStageFailures(got) {
+	if got := Compile(input); !onlyLaterStageFailures(got) {
 		t.Fatalf("alias disabled full Package qualification: %+v", got)
 	}
 }
@@ -225,7 +228,7 @@ func TestDirectRequirementCannotBeReplacedByTransitiveVisibility(t *testing.T) {
 	}
 	input.Root.Entries[0].Bytes = []byte("formatVersion: 1\nid: project\nroot: model\ndependencies: {middle: '1.0', types: '1.x'}")
 	got := Compile(input)
-	if !onlyContractStageFailures(got) {
+	if !onlyLaterStageFailures(got) {
 		t.Fatalf("explicit direct requirement was not honored: %+v", got)
 	}
 	slices.Reverse(input.Dependencies)
@@ -240,7 +243,7 @@ func TestPackageReferenceCyclesDoNotBecomeModelDependencyCycles(t *testing.T) {
 		bindingDefinition("a/thing.yaml", "Thing", "b/Other", "[{package: b}]"),
 		bindingDefinition("b/other.yaml", "Other", "a/Thing", "[{package: a}]"))}
 	got := Compile(input)
-	if !onlyContractStageFailures(got) {
+	if !onlyLaterStageFailures(got) {
 		t.Fatalf("ordinary cross-Package cycle rejected: %+v", got)
 	}
 }
@@ -263,6 +266,7 @@ func TestUnicodeBindingNeverChoosesAnExactSubset(t *testing.T) {
 
 func TestResourceIncompleteMetadataIsNotMissingModelEvidence(t *testing.T) {
 	input := bindingInput()
+	input.Root = withLock(input.Root, "formatVersion: 1\nmodels: {types: {version: '1.x', digest: 'sha256:"+strings.Repeat("1", 64)+"'}}", true)
 	input.Limits.YAMLDepth = 3
 	input.Dependencies[0].Entries[0].Bytes = []byte("formatVersion: 1\nid: types\nroot: model\nversion: '1.x'\ndependencies: {}\nextra: {nested: {deep: value}}")
 	got := Compile(input)
@@ -273,6 +277,7 @@ func TestResourceIncompleteMetadataIsNotMissingModelEvidence(t *testing.T) {
 
 func TestResourceIncompleteInventoryCannotProveMissingReference(t *testing.T) {
 	input := bindingInput()
+	input.Root = withLock(input.Root, "formatVersion: 1\nmodels: {types: {version: '1.x', digest: 'sha256:"+strings.Repeat("1", 64)+"'}}", true)
 	input.Limits.YAMLDepth = 4
 	input.Dependencies[0].Entries = append(input.Dependencies[0].Entries, Entry{
 		Path: "model/vocabulary/partial.yaml", Kind: Regular,
@@ -325,11 +330,11 @@ func TestKnownDependencyCycleSurvivesAnIndependentResourceRefusal(t *testing.T) 
 	}
 }
 
-func TestUnclassifiedSpecStringsDoNotInstallOperatorsOrBodyLinks(t *testing.T) {
+func TestUnclassifiedSpecStringsDoNotInstallOperators(t *testing.T) {
 	input := sourceInput()
 	input.Root.Entries[1].Bytes = []byte("id: item\nkind: item\nbody: '[[Missing]]'\nspec: {target: Missing, properties: [Missing]}")
 	got := Compile(input)
-	if !onlyContractStageFailures(got) || phaseStatus(got.Models[0], "values_and_references") == Passed || phaseStatus(got.Models[0], "body_links") != NotCompleted {
+	if got.Status != Failed || !hasDiagnostic(got, "binding.reference_missing") || phaseStatus(got.Models[0], "values_and_references") == Passed || phaseStatus(got.Models[0], "body_links") != Failed {
 		t.Fatalf("ordinary strings were treated as Core operators or body links prematurely: %+v", got)
 	}
 }

@@ -19,6 +19,14 @@ type sourceScope struct {
 	manifestReady     bool
 	inventoryComplete bool
 	definitions       []sourceDefinition
+	lock              sourceLock
+}
+
+type sourceLock struct {
+	entry            Entry
+	present, decoded bool
+	value            Value
+	status           Status
 }
 
 type modelRequirement struct {
