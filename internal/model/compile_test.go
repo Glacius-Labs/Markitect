@@ -15,28 +15,64 @@ func sourceInput() Input {
 		ManifestPath: "model.yaml",
 		Entries: []Entry{
 			{Path: "model.yaml", Kind: Regular, Bytes: []byte("formatVersion: 1\nid: example\nroot: model\ndependencies: {}\n")},
-			{Path: "model/feature/item.yaml", Kind: Regular, Bytes: []byte("id: item\nkind: Example\nbody: Binding prose.\nspec: {}\n")},
+			// A self-address isolates earlier binding checks. The Core stage
+			// rejects it; this is not a positive full-v1 fixture.
+			{Path: "model/feature/item.yaml", Kind: Regular, Bytes: []byte("id: item\nkind: item\nbody: Binding prose.\nspec: {}\n")},
 		},
 	}}
+}
+
+// Earlier acquisition/binding fixtures intentionally omit the prescribed Core
+// and include self-addresses. Their completed early phases must still succeed;
+// the public compiler now correctly rejects these as incomplete v1 sources.
+func onlyContractStageFailures(result Result) bool {
+	if result.Status != Failed || len(result.Diagnostics) == 0 {
+		return false
+	}
+	for _, diagnostic := range result.Diagnostics {
+		if !strings.HasPrefix(diagnostic.Code, "core.") && !strings.HasPrefix(diagnostic.Code, "contract.") {
+			return false
+		}
+	}
+	for _, model := range result.Models {
+		for _, phase := range model.Phases {
+			if phase.Name != "core_and_contracts" && phase.Status == Failed {
+				return false
+			}
+		}
+	}
+	return true
 }
 
 func TestPartialCompilerNeverClaimsConformance(t *testing.T) {
 	input := sourceInput()
 	got := Compile(input)
-	if got.Status != NotCompleted || len(got.Diagnostics) != 0 || got.Coordinates != NotCompleted {
+	if !onlyContractStageFailures(got) || got.Coordinates != NotCompleted {
 		t.Fatalf("unexpected partial result: %+v", got)
 	}
 	if got.Limits != DefaultLimits() || len(got.Models) != 1 || got.Models[0].ID != "example" {
 		t.Fatalf("missing scope/budget report: %+v", got)
 	}
 	m := got.Models[0]
-	if m.Status != NotCompleted || len(m.Canonical) != 0 || m.Digest != "" || len(m.Definitions) != 0 {
+	if m.Status != Failed || len(m.Canonical) != 0 || m.Digest != "" || len(m.Definitions) != 0 {
 		t.Fatalf("partial scope exposed validated IR or canonical evidence: %+v", m)
 	}
 	if m.Phases[0].Status != Passed || m.Phases[1].Status != Passed {
 		t.Fatalf("implemented acquisition did not complete: %+v", m.Phases)
 	}
 	for _, p := range m.Phases[2:] {
+		if p.Name == "core_and_contracts" {
+			if p.Status != Failed {
+				t.Fatal("missing Core and invalid self-typing were not rejected")
+			}
+			continue
+		}
+		if p.Name == "dependencies" || p.Name == "imports_and_kinds" {
+			if p.Status != Passed {
+				t.Fatalf("completed binding phase was not reported: %+v", p)
+			}
+			continue
+		}
 		if p.Status != NotCompleted {
 			t.Fatalf("unimplemented phase claimed completion: %+v", p)
 		}
@@ -146,14 +182,14 @@ func TestRootDotAndEmptyDirectories(t *testing.T) {
 	input.Root.Entries[0].Bytes = []byte("formatVersion: 1\nid: example\nroot: .\ndependencies: {}")
 	input.Root.Entries = append(input.Root.Entries, Entry{Path: "empty", Kind: Directory})
 	got := Compile(input)
-	if got.Status != NotCompleted || len(got.Diagnostics) != 0 {
+	if !onlyContractStageFailures(got) {
 		t.Fatalf("selected metadata must not create a root Package: %+v", got)
 	}
 	input.Root.Entries = []Entry{
 		{Path: "model.yaml", Kind: Regular, Bytes: []byte("formatVersion: 1\nid: example\nroot: model\ndependencies: {}")},
 		{Path: "model", Kind: Directory},
 	}
-	if got := Compile(input); got.Status != NotCompleted || len(got.Diagnostics) != 0 {
+	if got := Compile(input); !onlyContractStageFailures(got) {
 		t.Fatalf("explicit empty root rejected: %+v", got)
 	}
 }

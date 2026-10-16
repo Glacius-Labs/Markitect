@@ -10,10 +10,20 @@ import (
 // several definitions at the same address. Invalid/incomplete scopes are never
 // exposed as compiled Definitions.
 type sourceScope struct {
-	origin      string
-	modelID     string
-	manifest    Entry
-	definitions []sourceDefinition
+	origin            string
+	modelID           string
+	manifest          Entry
+	version           Value
+	versionDeclared   bool
+	requirements      []modelRequirement
+	manifestReady     bool
+	inventoryComplete bool
+	definitions       []sourceDefinition
+}
+
+type modelRequirement struct {
+	id      string
+	version Value
 }
 
 type identityFinding struct {
@@ -103,9 +113,11 @@ func checkScopeIdentities(scopes []sourceScope) []identityFinding {
 }
 
 type sourceDefinition struct {
-	identity Identity
-	file     Entry
-	envelope Value
+	identity   Identity
+	file       Entry
+	envelope   Value
+	kindTarget *Identity
+	references referenceContext
 }
 
 func (c *sourceCompiler) collectDefinition(value Value, file Entry, root string) {

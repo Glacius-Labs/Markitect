@@ -15,17 +15,19 @@ func TestUnicodeSourceNamesKeepTextAndPartialBoundary(t *testing.T) {
 	input := sourceInput()
 	input.Root.Entries[0].Bytes = []byte("formatVersion: 1\nid: ٢٠٢٦.١\nversion: '1.x'\nroot: model\ndependencies: {}")
 	input.Root.Entries[1] = Entry{Path: "model/überweisung/文档/größe-٢.yaml", Kind: Regular,
-		Bytes: []byte("id: größe-٢\nkind: 文档\nbody: \" u\\u0308 [[still-unchecked]] A\\0B \"\ntitle: \"u\\u0308\"\nspec: {文档: \"u\\u0308\"}\nimports: [{package: 文档, as: 文档}]")}
+		Bytes: []byte("id: größe-٢\nkind: größe-٢\nbody: \" u\\u0308 [[still-unchecked]] A\\0B \"\ntitle: \"u\\u0308\"\nspec: {文档: \"u\\u0308\"}\nimports: [{package: 文档, as: 文档}]")}
+	input.Root.Entries = append(input.Root.Entries, Entry{Path: "model/文档/item.yaml", Kind: Regular,
+		Bytes: []byte("id: 文档\nkind: 文档\nbody: text\nspec: {}")})
 	original := bytes.Clone(input.Root.Entries[1].Bytes)
 	got := Compile(input)
-	if got.Status != NotCompleted || len(got.Diagnostics) != 0 {
+	if !onlyContractStageFailures(got) {
 		t.Fatalf("valid Unicode source spellings rejected: %+v", got)
 	}
 	if !bytes.Equal(original, input.Root.Entries[1].Bytes) {
 		t.Fatal("compiler rewrote author bytes")
 	}
 	for _, model := range got.Models {
-		if model.Status != NotCompleted || len(model.Definitions) != 0 || len(model.Canonical) != 0 || model.Digest != "" {
+		if model.Status != Failed || len(model.Definitions) != 0 || len(model.Canonical) != 0 || model.Digest != "" {
 			t.Fatalf("name checks claimed a completed model: %+v", model)
 		}
 	}
@@ -149,7 +151,7 @@ func TestGlobalUnicodePackagePrefixesExcludeEmptyTrees(t *testing.T) {
 	dependency := dependencySource("vocabulary", "dependency", "vocabulary", "item")
 	dependency.Entries = append(dependency.Entries, Entry{Path: "model/strasse/empty", Kind: Directory})
 	input.Dependencies = []SourceModel{dependency}
-	if got := Compile(input); got.Status != NotCompleted || len(got.Diagnostics) != 0 {
+	if got := Compile(input); !onlyContractStageFailures(got) {
 		t.Fatalf("empty foreign tree bound a global Package name: %+v", got)
 	}
 	input.Dependencies[0].Entries = append(input.Dependencies[0].Entries, Entry{
@@ -179,8 +181,10 @@ func TestKeyNFCAndCasefoldDoNotSilentlySelectAnExactSubset(t *testing.T) {
 func TestKindSpellingDoesNotGrantMetaCategoryPrivileges(t *testing.T) {
 	input := sourceInput()
 	input.Root.Entries[1].Bytes = []byte("id: camelName\nkind: Kind\nbody: Category must follow resolution.\nspec: {}")
+	input.Root.Entries = append(input.Root.Entries, Entry{Path: "model/feature/kind.yaml", Kind: Regular,
+		Bytes: []byte("id: Kind\nkind: Kind\nbody: Ordinary local name, not the fixed Core.\nspec: {}")})
 	got := Compile(input)
-	if got.Status != NotCompleted || len(got.Diagnostics) != 0 || got.Models[0].Phases[2].Status != NotCompleted {
+	if !onlyContractStageFailures(got) || got.Models[0].Phases[2].Status != NotCompleted {
 		t.Fatalf("written kind was used as a resolved meta-identity: %+v", got)
 	}
 }
