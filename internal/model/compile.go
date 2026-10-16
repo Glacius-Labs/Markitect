@@ -10,8 +10,9 @@ import (
 // Compile examines only the supplied bytes. The current acquisition slice
 // validates source structure, YAML scalar forms, manifests and Definition
 // envelopes and version-bound lexical names/identities. Category-dependent
-// names, dependency binding, Core/contracts, resolved values, body links and
-// locks remain incomplete: no model can pass or receive canonical bytes.
+// names, Core/contracts, typed reference values, body links and locks remain
+// incomplete: no model can pass or receive canonical bytes. The explicit model
+// dependency graph and file-local imports/kind addresses are checked separately.
 func Compile(input Input) Result {
 	r := Result{Status: NotCompleted, Coordinates: NotCompleted}
 	r.Limits = effectiveLimits(input.Limits)
@@ -58,6 +59,25 @@ func Compile(input Input) Result {
 		r.Models[finding.scope].Status = Failed
 		r.Models[finding.scope].Phases[2].Status = Failed
 		r.Status = Failed
+	}
+	graph := bindDependencies(scopes)
+	for index, status := range graph.status {
+		setPhaseStatus(&r.Models[index], "dependencies", status)
+		if status == Failed {
+			r.Models[index].Status = Failed
+			r.Status = Failed
+		}
+	}
+	bindings := bindAuthorReferences(scopes, graph)
+	for index, status := range bindings.status {
+		setPhaseStatus(&r.Models[index], "imports_and_kinds", status)
+		if status == Failed {
+			r.Models[index].Status = Failed
+			r.Status = Failed
+		}
+	}
+	for _, finding := range append(graph.findings, bindings.findings...) {
+		r.Diagnostics = append(r.Diagnostics, finding.diagnostic)
 	}
 	sort.Slice(r.Models, func(i, j int) bool {
 		a, b := r.Models[i], r.Models[j]
@@ -133,6 +153,7 @@ func compileSource(m SourceModel, limits Limits) (ModelResult, []Diagnostic, sou
 		{Name: "yaml_and_envelopes", Status: NotCompleted},
 		{Name: "names_and_unicode", Status: NotCompleted},
 		{Name: "dependencies", Status: NotCompleted},
+		{Name: "imports_and_kinds", Status: NotCompleted},
 		{Name: "core_and_contracts", Status: NotCompleted},
 		{Name: "values_and_references", Status: NotCompleted},
 		{Name: "body_links", Status: NotCompleted},
@@ -141,6 +162,7 @@ func compileSource(m SourceModel, limits Limits) (ModelResult, []Diagnostic, sou
 	}
 	entries := c.indexEntries()
 	manifest, ok := entries[m.ManifestPath]
+	c.scope.manifest = manifest
 	r.Manifest = source(m.Origin, manifest)
 	r.Manifest.Path = m.ManifestPath
 	if !validPath(m.ManifestPath) || basename(m.ManifestPath) != "model.yaml" {
@@ -160,6 +182,12 @@ func compileSource(m SourceModel, limits Limits) (ModelResult, []Diagnostic, sou
 			}
 			root, rootOK := c.requiredText(v, "root", manifest)
 			c.dependencies(v, manifest)
+			c.scope.version, c.scope.versionDeclared = lookup(v, "version")
+			dependencies, _ := lookup(v, "dependencies")
+			for _, dependency := range dependencies.fields {
+				c.scope.requirements = append(c.scope.requirements, modelRequirement{id: dependency.Name, version: dependency.Value})
+			}
+			c.scope.manifestReady = !c.failed && !c.limited
 			if rootOK {
 				if root != "." && !validPath(root) {
 					c.problem("manifest.root_path", "root must be '.' or an exact relative directory path without dot components.", manifest, nil)
@@ -191,7 +219,17 @@ func compileSource(m SourceModel, limits Limits) (ModelResult, []Diagnostic, sou
 	} else if c.rootScanned && !c.limited && !c.sourceFailed {
 		r.Phases[1].Status = Passed
 	}
+	c.scope.inventoryComplete = c.rootScanned && !c.limited && !c.sourceFailed && !c.yamlFailed && !c.namesFailed
 	return r, c.diagnostics, c.scope
+}
+
+func setPhaseStatus(model *ModelResult, name string, status Status) {
+	for index := range model.Phases {
+		if model.Phases[index].Name == name {
+			model.Phases[index].Status = status
+			return
+		}
+	}
 }
 
 func (c *sourceCompiler) indexEntries() map[string]Entry {
