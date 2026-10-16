@@ -9,9 +9,9 @@ import (
 
 // Compile examines only the supplied bytes. The current acquisition slice
 // validates source structure, YAML scalar forms, manifests and Definition
-// envelopes. Names/Unicode, dependency binding, Core/contracts, resolved values,
-// body links and locks are not yet implemented, so no model can pass or receive
-// canonical bytes. Known violations remain failed even with incomplete phases.
+// envelopes and version-bound lexical names/identities. Category-dependent
+// names, dependency binding, Core/contracts, resolved values, body links and
+// locks remain incomplete: no model can pass or receive canonical bytes.
 func Compile(input Input) Result {
 	r := Result{Status: NotCompleted, Coordinates: NotCompleted}
 	r.Limits = effectiveLimits(input.Limits)
@@ -42,14 +42,22 @@ func Compile(input Input) Result {
 			remainingBytes -= int64(len(e.Bytes))
 		}
 	}
+	var scopes []sourceScope
 	for index, m := range models {
-		modelResult, diagnostics := compileSource(m, r.Limits)
+		modelResult, diagnostics, scope := compileSource(m, r.Limits)
+		scopes = append(scopes, scope)
 		modelResult.Local = index == 0
 		r.Models = append(r.Models, modelResult)
 		r.Diagnostics = append(r.Diagnostics, diagnostics...)
 		if modelResult.Status == Failed {
 			r.Status = Failed
 		}
+	}
+	for _, finding := range checkScopeIdentities(scopes) {
+		r.Diagnostics = append(r.Diagnostics, finding.diagnostic)
+		r.Models[finding.scope].Status = Failed
+		r.Models[finding.scope].Phases[2].Status = Failed
+		r.Status = Failed
 	}
 	sort.Slice(r.Models, func(i, j int) bool {
 		a, b := r.Models[i], r.Models[j]
@@ -68,7 +76,20 @@ func Compile(input Input) Result {
 		if a.Manifest.Digest != b.Manifest.Digest {
 			return a.Manifest.Digest < b.Manifest.Digest
 		}
-		return a.Status < b.Status
+		if a.Status != b.Status {
+			return a.Status < b.Status
+		}
+		// Duplicate candidates can share a provenance label and manifest while
+		// differing in other files. Their phase reports still need a total order.
+		for index := 0; index < len(a.Phases) && index < len(b.Phases); index++ {
+			if a.Phases[index].Name != b.Phases[index].Name {
+				return a.Phases[index].Name < b.Phases[index].Name
+			}
+			if a.Phases[index].Status != b.Phases[index].Status {
+				return a.Phases[index].Status < b.Phases[index].Status
+			}
+		}
+		return len(a.Phases) < len(b.Phases)
 	})
 	sortDiagnostics(r.Diagnostics)
 	return r
@@ -99,11 +120,13 @@ type sourceCompiler struct {
 	limited      bool
 	sourceFailed bool
 	yamlFailed   bool
+	namesFailed  bool
 	rootScanned  bool
+	scope        sourceScope
 }
 
-func compileSource(m SourceModel, limits Limits) (ModelResult, []Diagnostic) {
-	c := sourceCompiler{model: m, limits: limits}
+func compileSource(m SourceModel, limits Limits) (ModelResult, []Diagnostic, sourceScope) {
+	c := sourceCompiler{model: m, limits: limits, scope: sourceScope{origin: m.Origin}}
 	r := ModelResult{Origin: m.Origin, Status: NotCompleted}
 	r.Phases = []Phase{
 		{Name: "source_structure", Status: NotCompleted},
@@ -128,8 +151,10 @@ func compileSource(m SourceModel, limits Limits) (ModelResult, []Diagnostic) {
 		v, valid := c.decode(manifest)
 		if valid {
 			c.closed(v, []string{"formatVersion", "id", "version", "root", "dependencies"}, manifest)
+			c.manifestNames(v, manifest)
 			c.formatVersion(v, manifest)
 			r.ID, _ = c.requiredText(v, "id", manifest)
+			c.scope.modelID, c.scope.manifest = r.ID, manifest
 			if version, present := lookup(v, "version"); present {
 				c.nonemptyText(version, "version", manifest)
 			}
@@ -153,6 +178,9 @@ func compileSource(m SourceModel, limits Limits) (ModelResult, []Diagnostic) {
 	if c.failed {
 		r.Status = Failed
 	}
+	if c.namesFailed {
+		r.Phases[2].Status = Failed
+	}
 	if c.sourceFailed {
 		r.Phases[0].Status = Failed
 	} else if c.rootScanned {
@@ -163,7 +191,7 @@ func compileSource(m SourceModel, limits Limits) (ModelResult, []Diagnostic) {
 	} else if c.rootScanned && !c.limited && !c.sourceFailed {
 		r.Phases[1].Status = Passed
 	}
-	return r, c.diagnostics
+	return r, c.diagnostics, c.scope
 }
 
 func (c *sourceCompiler) indexEntries() map[string]Entry {
@@ -208,6 +236,7 @@ func (c *sourceCompiler) indexEntries() map[string]Entry {
 }
 
 func (c *sourceCompiler) definitions(entries map[string]Entry, root string) {
+	c.treeNames(entries, root)
 	paths := make([]string, 0, len(entries))
 	for p := range entries {
 		paths = append(paths, p)
@@ -248,18 +277,25 @@ func (c *sourceCompiler) definitions(entries map[string]Entry, root string) {
 		v, valid := c.decode(e)
 		if valid {
 			c.envelope(v, e)
+			c.definitionNames(v, e)
+			c.collectDefinition(v, e, root)
 		}
 	}
+	c.checkDefinitionIdentities()
 }
 
 func (c *sourceCompiler) decode(e Entry) (Value, bool) {
 	v, problems, completed := parseYAML(e.Bytes, c.limits.YAMLDepth)
-	valid := completed && len(problems) == 0
+	valid := completed
 	for _, p := range problems {
 		if strings.HasPrefix(p.code, "limit.") {
 			c.limited = true
+			valid = false
 			c.diagnostics = append(c.diagnostics, Diagnostic{Code: p.code, Message: p.message, Source: source(c.model.Origin, e), Position: positionPointer(p.position)})
 		} else {
+			if !strings.HasPrefix(p.code, "name.") {
+				valid = false
+			}
 			c.problem(p.code, p.message, e, positionPointer(p.position))
 		}
 	}
@@ -350,7 +386,9 @@ func (c *sourceCompiler) nonemptyText(v Value, field string, e Entry) (string, b
 
 func (c *sourceCompiler) problem(code, message string, e Entry, pos *Position) {
 	c.failed = true
-	if strings.HasPrefix(code, "input.") || strings.HasPrefix(code, "source.") || strings.HasPrefix(code, "manifest.root") || code == "manifest.missing" || code == "definition.extension" || code == "definition.root_package" || code == "lock.not_regular" {
+	if strings.HasPrefix(code, "name.") {
+		c.namesFailed = true
+	} else if strings.HasPrefix(code, "input.") || strings.HasPrefix(code, "source.") || strings.HasPrefix(code, "manifest.root") || code == "manifest.missing" || code == "definition.extension" || code == "definition.root_package" || code == "lock.not_regular" {
 		c.sourceFailed = true
 	} else {
 		c.yamlFailed = true
