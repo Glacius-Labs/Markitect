@@ -13,7 +13,7 @@ id: callable-interface
 kind: Software.Rule
 body: |-
   The [[library]] is delivered as a local Go program that speaks JSON Lines and
-  offers every operation of the model under [[inputs]].
+  offers every operation of the model; [[inputs]] governs all of them.
 
   ## Program and build boundary
 

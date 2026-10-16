@@ -141,7 +141,7 @@ The continuation's binding, the retained-work reference and the shared budget co
 
 | Value | Library meaning |
 | --- | --- |
-| Captured repository source | The actual checkout and registry, such as published A1. It supplies the publication guard. |
+| Captured repository source | The actual checkout and registry, such as committed A1. It supplies the publication guard. |
 | Retained work | An unpublished predecessor candidate and registry selected as starting material. It may be incomplete. |
 | Current candidate | The continuation's assessed result after adapting that material. Reviews, checks and publication concern this. |
 
@@ -178,4 +178,4 @@ The continuation repeats all required reviews, checks and integration and the fi
 
 `run` owns assignment, question and budget transitions and event meaning. `organization` renders configuration, context and mandates. `realization` owns artifact, registry and composition values. `apply` owns capture, continuation preparation and guarded publication. The journal adapter owns SQL, byte storage and atomic append and makes no semantic decision. CLI and MCP expose the same services and projections.
 
-Gates: atomic batch and head updates, exact duplicates, conflicting and stale revisions, unknown-commit reconciliation, blob corruption, process failure around dispatch, refusal of answers to an old proposal version, context-only continuation, refusal of a finished run's unused publication permit, budget continuity across continuations and separation of retained work from captured source. Exercise the pinned driver on the supported filesystems; a format probe does not establish durability.
+Gates: atomic batch and head updates, exact duplicates, conflicting and stale revisions, unknown-commit reconciliation, blob corruption, process failure around dispatch, refusal of answers to an old proposal version, a context-only answer resuming the same run, resuming an interrupted run, refusal of a finished run's unused publication permit, budget continuity across continuations and separation of retained work from captured source. Exercise the pinned driver on the supported filesystems; a format probe does not establish durability.

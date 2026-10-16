@@ -94,3 +94,5 @@ Recorder's note: The owner extended the adoption to every item of the assistant'
 ## Polish and integrate
 
 > Wenn du fertig bist, poliere alles nochmal auf und sorge dafür dass das Konzept sauber ist. Dann bringe es auf main
+
+Recorder's note: The independent reviews before integration led to two alignments. B1's clause on the root was aligned with DEC-006 and DEC-025: every owned artifact needs a Definition, and the common parent of the requiring Packages, possibly the root, owns an artifact several of them require. C2 replaces the successor runs mentioned in the first recorder's note; runs after a basis change are continuations.

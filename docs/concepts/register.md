@@ -48,7 +48,7 @@ The owner's [origin account of 15 October 2026](sources/owner-origin-20261015.md
 | [DEC-035](#dec-035-committed-model-in-owner-commit-accepts-the-result) | Decision | Committed model in, owner commit accepts the result | Accepted |
 | [DEC-036](#dec-036-adopted-design-refinements-for-the-first-apply) | Decision | Adopted design refinements for the first Apply | Accepted |
 | [PRM-001 to PRM-007](#promises) | Promise | Target outcomes | Target |
-| [ASM-001 to ASM-005](#assumptions-and-hypotheses) | Assumption | Assumptions and hypotheses | See entries |
+| [ASM-001 to ASM-006](#assumptions-and-hypotheses) | Assumption | Assumptions and hypotheses | See entries |
 | [CPT-001](#cpt-001-federalism) | Concept | Federalism | Accepted |
 | [CPT-002](#cpt-002-tests-are-realizations-too) | Concept | Tests are realizations too | Accepted |
 | [CPT-003](#cpt-003-two-parts-of-the-promise) | Concept | Two parts of the promise | Clarified |
@@ -89,6 +89,7 @@ The owner's [origin account of 15 October 2026](sources/owner-origin-20261015.md
   - the Government axis ([IDEA-002](#idea-002-government-delegated-model-maintenance), [DEC-004](#dec-004-the-manager-hierarchy-is-core-government-belongs-to-a-later-axis));
   - the cockpit ([IDEA-015](#idea-015-cockpit-with-a-conversational-personal-agent));
   - briefings, monitoring and visualization ([IDEA-009](#idea-009-regular-briefings) to [IDEA-014](#idea-014-shared-evidence-bound-events)).
+- **Planned extensions:** cockpit, Government and approval reuse are recorded in the [north star](../design/canonical-model/manager-realization-north-star.md#later-operations-and-extensions).
 
 ## Decisions, clarifications and endorsed directions
 
@@ -418,7 +419,7 @@ The owner's [origin account of 15 October 2026](sources/owner-origin-20261015.md
 - **Status:** Accepted, owner, 16 October 2026, adopting the assistant's recommendations A1 to A3 ([source](sources/consolidation-discussion-20261016.md#adopt-the-recommendations)).
 - **Statement:**
   - If violating something makes an artifact wrong, it is model content. This includes realization constraints such as a public interface, the programming language and required build and test commands. The library's callable interface therefore moved into M1.
-  - Configuration and custom instructions hold only execution choices and operational guidance. A project rule found there is a review finding and moves into the model.
+  - Configuration and custom instructions hold only execution choices and operational guidance. A project rule found there is a review finding and moves into the model. The one accepted repetition is an executable check command the model requires: configuration repeats it literally, names the Definition in `requiredBy`, and review keeps both in step.
   - A shared rule's scope is stated in the model. Configuration may only name the Kind and Property that carry scope; it never lists individual Definitions.
 - **Owning document:** the [Apply concept](../design/canonical-model/manager-apply-concept.md#four-kinds-of-input-and-record). It applies the vision's rule of one canonical owner per fact to realization constraints.
 
@@ -431,7 +432,7 @@ The owner's [origin account of 15 October 2026](sources/owner-origin-20261015.md
 ### DEC-035 Committed model in, owner commit accepts the result
 
 - **Status:** Accepted, owner, 16 October 2026, adopting recommendations B8 and A7 ([source](sources/consolidation-discussion-20261016.md#adopt-the-recommendations), [all recommendations](sources/consolidation-discussion-20261016.md#adopt-all-recommendations)).
-- **Statement:** Apply reads the model, configuration, registry and ignore policy from the committed state and refuses to start with uncommitted changes outside ignored paths. It writes its verified result only into the working tree and never commits, merges or pushes. The owner's commit of the published result is the acceptance, just as a committed model revision is the accepted specification. A project can also require the owner's approval before publication for selected Packages.
+- **Statement:** Apply reads the model, configuration, registry and ignore policy from the committed state and refuses to start with uncommitted changes to tracked files or untracked files outside Git-ignored paths. It writes its verified result only into the working tree and never commits, merges or pushes. The owner's commit of the published result is the acceptance, just as a committed model revision is the accepted specification. A project can also require the owner's approval before publication for selected Packages.
 - **Owning documents:** the [Apply concept](../design/canonical-model/manager-apply-concept.md#apply-lifecycle) and the [port contracts](../design/canonical-model/manager-apply-port-contracts.md#guarded-publication-port).
 
 ### DEC-036 Adopted design refinements for the first Apply
@@ -445,7 +446,7 @@ The owner's [origin account of 15 October 2026](sources/owner-origin-20261015.md
   - the Host's final evidence check instead of a separate verifier Agent;
   - continuation runs instead of a Superseded handoff.
 
-  The source lists every item with its owning document.
+  The source lists every item; the [design map](../design/canonical-model/README.md#apply-design) names the document that owns each subject.
 - **Consequence:** Changing an adopted item needs the owner. Implementation can refine details within an item's intent, such as exact schemas or default numbers, through ordinary review.
 - **Owning documents:** the [Apply design map](../design/canonical-model/README.md#apply-design) and the documents it lists.
 
@@ -471,7 +472,7 @@ These are the target outcomes Markitect is built to deliver. Each has the status
 | ASM-002 | A reviewer with fresh context is more critical than self-review in the same thread, even with the same model. | Owner observation, backed by an Anthropic talk and papers the owner cited without recording references ([point 4](sources/idea-review-20261010.md#owner-response-to-the-five-points)) |
 | ASM-003 | Bounded scope and compiled context let capable mid-tier models do most implementation and review work. Total cost can then fall even after coordination and review. | Hypothesis; untested |
 | ASM-004 | Abstraction and management structures proven in human organizations transfer to agents. Pairing an implementer with a reviewer at the lowest level mirrors how teams already work today. | Owner hypothesis ([point 4](sources/idea-review-20261010.md#owner-response-to-the-five-points)); not yet properly evaluated for agents |
-| ASM-005 | Reviewers that differ from the implementer in model, not only in context, find more defects, because reviewers on the same model share blind spots. | Review proposal, endorsed for evaluation ("Modelle variieren und kombinieren und evaluieren"); to be tested with [ENH-004](#enh-004-per-role-agent-configuration-and-model-mixing) |
+| ASM-005 | Reviewers that differ from the implementer in model, not only in context, find more defects, because reviewers on the same model share blind spots. | Review proposal, endorsed for evaluation ("Modelle variieren und kombinieren und evaluieren"); to be tested with [ENH-004](#enh-004-per-role-agent-configuration-and-model-mixing); a second session adapter for reviewers from another model family is planned in the [north star](../design/canonical-model/manager-realization-north-star.md#later-operations-and-extensions) |
 | ASM-006 | Forgetting (coverage), rather than misunderstanding, is the main problem. | Independent-assessment hypothesis (claim 17), not an owner comparison; untested ([source note](sources/dashboard-delegation-20261011.md#idea-01-assumption-source-check)) |
 
 ## Concepts
@@ -563,6 +564,7 @@ These entries record agreed or endorsed direction. Recording an enhancement does
   - Allow mixing, for example one model implements and another reviews.
   - Evaluate combinations as an experimental factor ([ASM-005](#assumptions-and-hypotheses), [OQ-003](#open-questions)).
 - **Historical work items:** RUN-01 (merged as pull request #104) and PLAY-06 (merged as pull request #241) in the [backlog](https://github.com/Glacius-Labs/Markitect/blob/bc4b49e76f9b9e4b3ec98033a0b8c73d5013b310/docs/work-items/backlog.yaml).
+- **Rebuild note (16 October 2026):** the rebuilt first strategy has two Agent roles, Manager and reviewer, configured per Manager; there is no separate verifier Agent, because the Host performs the final evidence check ([DEC-036](#dec-036-adopted-design-refinements-for-the-first-apply)).
 
 ### ENH-005 Exchangeable executor for the delegated method
 
@@ -603,9 +605,9 @@ These entries record agreed or endorsed direction. Recording an enhancement does
 | OQ-003 | Which model tiers suffice for which roles, and does total cost actually fall? | [ASM-003](#assumptions-and-hypotheses), [ENH-004](#enh-004-per-role-agent-configuration-and-model-mixing) |
 | OQ-004 | How much independence does a different reviewer model add beyond fresh context? | [ASM-005](#assumptions-and-hypotheses) |
 | OQ-005 | Should evaluation focus on a series of changes on a long-lived project? If so, what ground truth makes "nothing forgotten" measurable there, for example predeclared affected sets, seeded cross-cutting rules and hidden holdout checks? | [DEC-009](#dec-009-the-central-evaluation-question), [PRM-001](#promises) |
-| OQ-007 | How reliable is the native delivery path? The combined A01 native smoke passed once (Actual28, on a Windows host) after 27 failed attempts, was not repeated, and never ran on Linux ([A01 record](../validation/a01-native-smoke-20261010.md)). | [DEC-013](#dec-013-linux-first-for-tests-and-the-playground), [ENH-005](#enh-005-exchangeable-executor-for-the-delegated-method) |
 | OQ-006 | How much current-state context does a bounded Manager need, so that limited responsibility does not become artificial blindness? The original product chat's hypothesis: shared contracts, plus current-state context on demand (Concepts note C19). Design: context packages plus recorded targeted reads ([Apply concept](../design/canonical-model/manager-apply-concept.md#context-packages)); evidence from real runs is pending. | [CPT-001](#cpt-001-federalism), [CPT-004](#cpt-004-the-specification-stays-effective) |
-| OQ-008 | Should the Manager organization become the application's entry point, with the canonical model as its foundation, and would that better support a later Government axis? Owner framing, 16 October 2026: „Eventuell wäre das sogar die bessere Betrachtungsweise“ ([source](../design/canonical-model/sources/manager-realization-20261016.md#apply-first-and-delegation-from-the-root)). | [DEC-004](#dec-004-the-manager-hierarchy-is-core-government-belongs-to-a-later-axis), [DEC-026](#dec-026-apply-comes-first-and-changes-only-artifacts) |
+| OQ-007 | How reliable is the native delivery path? The combined A01 native smoke passed once (Actual28, on a Windows host) after 27 failed attempts, was not repeated, and never ran on Linux ([A01 record](../validation/a01-native-smoke-20261010.md)). | [DEC-013](#dec-013-linux-first-for-tests-and-the-playground), [ENH-005](#enh-005-exchangeable-executor-for-the-delegated-method) |
+| OQ-008 | Should the Manager organization become the application's entry point, with the canonical model as its foundation, and would that better support a later Government axis? Owner framing, 16 October 2026: „Eventuell wäre das sogar die bessere Betrachtungsweise“ ([source](../design/canonical-model/sources/manager-realization-20261016.md#apply-first-and-delegation-from-the-root)). The north star keeps it with the [later extensions](../design/canonical-model/manager-realization-north-star.md#later-operations-and-extensions). | [DEC-004](#dec-004-the-manager-hierarchy-is-core-government-belongs-to-a-later-axis), [DEC-026](#dec-026-apply-comes-first-and-changes-only-artifacts) |
 | OQ-009 | How do DEC-018 and DEC-021 to DEC-023, written for the earlier Project model, map to language v1 and the registry once computed scope is built? | [DEC-018](#dec-018-the-knowledge-graph-explains-impact), [computed scope](../design/canonical-model/manager-apply-concept.md#toward-computed-scope) |
 
 ## Ideas
@@ -616,6 +618,7 @@ These entries record agreed or endorsed direction. Recording an enhancement does
 - **Idea:** In human organizations, management structures work partly because people remember and keep responsibility over time. Agents keep neither. The canonical model can supply this institutional memory and lasting responsibility. That would make a management hierarchy workable for stateless agents and would support [ASM-004](#assumptions-and-hypotheses).
 
 The ideas below come from the owner's contributions of 9 October 2026. The product chat handed them to the Concepts and Ideas chats, which recorded them. They are parked under [DEC-011](#dec-011-detailed-planning-of-future-ideas-waits): recorded for later examination, not planned. Quoted German is the owner's wording unless marked otherwise. "Open" items are questions raised by the Concepts or Ideas chat, not by the owner, unless marked as the owner's. The [sources](sources/README.md) keep the full text and the chats' analysis. In these ideas, "user" means the person who uses Markitect to run a project.
+- **Planned extension:** experience notes are recorded in the [north star](../design/canonical-model/manager-realization-north-star.md#later-operations-and-extensions).
 
 ### IDEA-002 Government: delegated model maintenance
 
@@ -755,7 +758,7 @@ The ideas below come from the owner's contributions of 9 October 2026. The produ
 - **Status:** Owner idea and clarification, 16 October 2026 ([idea](sources/experience-discussion-20261016.md#experience-selection-and-runtime-observations), [clarification](sources/experience-discussion-20261016.md#clarification-logs-support-a-check-or-doctor)). Deferred by the [delivery plan](../implementation-plan.md).
 - **Idea (owner):** „Was wäre wenn man Logging entsprechend aufbaut, sodass Logs aus laufenden Systemen ebenso durch die Manager geprüft werden können, sodass dort auch diskrepanzen aufgedeckt werden können?“
 - **Clarification (owner):** „Die Logs meinte ich eher als eine Art check oder doctor oder sowas über die Manager. Nicht Erfahrungsbezogen“.
-- **Developed in:** the [experience reflection](reflections/experience-without-implicit-rules-20261016.md#operational-check-through-the-managers). It extends [IDEA-010](#idea-010-monitoring-logs-and-data-collection).
+- **Developed in:** the [experience reflection](reflections/experience-without-implicit-rules-20261016.md#operational-check-through-the-managers), and planned in the [north star](../design/canonical-model/manager-realization-north-star.md#later-operations-and-extensions). It extends [IDEA-010](#idea-010-monitoring-logs-and-data-collection).
 
 ## Imported collections
 

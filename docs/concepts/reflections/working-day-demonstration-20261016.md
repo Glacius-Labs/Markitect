@@ -36,7 +36,7 @@ The renewal case is a new extension: M1 excludes renewals and must not be portra
 >
 > **Work impact:** The eligibility condition waits for this decision. Completed independent work is retained.
 
-The actual question also names its source basis and exact patch. The owner answers "Accept the recommendation." Each step is observed separately: the answer is bound to the right question version; the patch actually changes the model; the run finishes Incomplete awaiting the change, and a continuation captures the new model with the same assignment and consumption; retained work gets a Keep, Adapt, Replace or Unresolved judgment; required reviews and checks assess the current candidate; guarded publication and read-back establish what was applied. In the first version the owner or calling agent applies the patch outside artifact Apply.
+The actual question also names its source basis and exact patch. The owner answers "Accept the recommendation." Each step is observed separately: the answer is bound to the right question version; the run finishes Incomplete awaiting the change; the patch actually changes the model and is committed; a continuation captures the new model with the same assignment and consumption; retained work gets a Keep, Adapt, Replace or Unresolved judgment; required reviews and checks assess the current candidate; guarded publication and read-back establish what was applied. In the first version the owner or calling agent applies the patch outside artifact Apply.
 
 ## Allowed human intervention
 

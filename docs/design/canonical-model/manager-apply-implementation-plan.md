@@ -53,7 +53,7 @@ The [Go architecture](manager-apply-go-architecture.md), [port contracts](manage
 
 ### P02 Library Playground
 
-The [Playground contract](manager-apply-playground.md), the interface and the evaluation contract define the external runner, the two-run sequence, the ten operations, the case families, the source bindings and the comparison report. The independent oracle runs without the product and can be built in parallel with the compiler. The runner's scripted dry run needs the new product entry point.
+The [Playground contract](manager-apply-playground.md), M1's [callable interface](library-example/m1/model/library/callable-interface.yaml) and the [evaluation contract](library-example/evaluation-contract.md) define the external runner, the two-run sequence, the ten operations, the case families, the source bindings and the comparison report. The independent oracle runs without the product and can be built in parallel with the compiler. The runner's scripted dry run needs the new product entry point.
 
 **Gate:** the oracle discriminates wrong results, including state mutation on refusal and the opposite-profile mismatch on the fourth-loan witness. A scripted dry run proves scenario preparation, artifact capture, expectation invocation, M1 and M2 bookkeeping and preservation of failures; it is labeled synthetic and never counts as real Apply. The runner fabricates no Agent reports, contains no Manager or review orchestration and never repairs generated code between R1 and R2.
 
@@ -79,7 +79,7 @@ The session port, effective role profiles, Host-mediated task and message transp
 
 Local workspaces, exclusive path reservations, Host-owned registry changes and fresh independent review for one Package's implementation, tests and documentation, with finite rework. Manager and reviewer ask which local statements need another area's behavior and whether the model connects them. Every positive Definition disposition has a reason and concrete realization or use.
 
-**Gate:** controlled tests reject model, configuration and ignore edits, direct registry changes and overlapping ownership. A bad candidate is rejected, revised and reviewed as a new exact candidate. A vocabulary-only claim that ignores obligations on concrete uses fails review. An artifact whose only Definition was removed must be deleted or rejustified, and a project rule found in configuration or custom instructions becomes a finding. Missing evidence, an unresolved required assessment or exhausted rounds cannot return completion. Nothing is published in this gate.
+**Gate:** controlled tests reject model, configuration and ignore edits, direct registry changes and overlapping ownership. A bad candidate is rejected, revised and reviewed as a new exact candidate. A `vocabulary` disposition that ignores obligations on concrete uses fails review. An artifact whose only Definition was removed must be deleted or rejustified, and a project rule found in configuration or custom instructions becomes a finding. Missing evidence, an unresolved required assessment or exhausted rounds cannot return completion. Nothing is published in this gate.
 
 ### P07 Recursive delegation and integration
 
@@ -107,7 +107,7 @@ Freeze one Markitect build and role configuration. Real Agents realize M1 from t
 
 ### P11 Failure cases in composition
 
-Negative tests belong to the gate that implements each contract. This gate checks their composition: stale target, missing link surfaced as a model issue, vocabulary-only used to evade obligations, complete file coverage with missing realization, a local pass offered for another purpose, ownership conflict, invalid child report, exceeded review rounds, communication interruption, event-storage failure, rejected aggregate, partial publication, an orphaned artifact after a removed Definition, a dangling registry link after a moved Definition, uncommitted model changes and a project rule hidden in custom instructions.
+Negative tests belong to the gate that implements each contract. This gate checks their composition: stale target, missing link surfaced as a model issue, a `vocabulary` disposition used to evade obligations, complete file coverage with missing realization, a local pass offered for another purpose, ownership conflict, invalid child report, exceeded review rounds, communication interruption, event-storage failure, rejected aggregate, partial publication, an orphaned artifact after a removed Definition, a dangling registry link after a moved Definition, uncommitted model changes and a project rule hidden in custom instructions.
 
 **Gate:** each case has a reproducible input, an honest expected outcome and an inspectable trace, and the real two-Apply cycle still works on the current candidate. No failure can hide behind an ignore, a rewritten model, an invented review or a summary claiming completion.
 

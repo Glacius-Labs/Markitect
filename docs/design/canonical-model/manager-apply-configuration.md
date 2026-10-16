@@ -7,7 +7,7 @@ This contract owns the execution input fields and their deterministic resolution
 | Source | Maintained content | Library example |
 | --- | --- | --- |
 | Canonical model | Intended behavior, required outputs, architecture and binding interfaces. | `loan-policy.spec.maxOpenLoans` is five in M1 and three in M2; existing loans remain returnable. |
-| `.markitect/execution.yaml` | Manager profiles and instructions, creation areas, finite ceilings, Package overrides, scope selection, check selection, owner approval and notification preferences. | Lending uses the selected Manager profile and at most three review rounds. |
+| `.markitect/execution.yaml` | Manager profiles and instructions, creation areas, finite ceilings, Package overrides, scope selection, check selection and owner approval. | Lending uses the selected Manager profile and at most three review rounds. |
 | Explicit host profile file | Literal executables, pinned protocol and tool identities, model and effort, controlled environment and instruction inputs. Supplied by the operator; no implicit discovery. | The selected Codex build and the local test executable. Credentials are resolved locally and never copied into model or journal payloads. |
 | Assignment record | The owner's goal, constraints, granted caps and recorded extensions. | Apply the current library model. |
 | Registry | Versioned artifact ownership and Definition links in `.markitect/registry/`. | Lending owns a particular source file; a parent cannot acquire it through a prompt. |
@@ -60,21 +60,19 @@ checks:
     profile: library-tests
     directory: realization
     args: [test, ./...]
+    requiredBy: library/callable-interface
     timeout: 2m
 acceptance:
   ownerApproval: []
-notifications:
-  questions: grouped
-  incidents: immediate
 ```
 
-Everything under `limits` is a hard project ceiling. `assignment` sets the default caps of a new assignment; an owner extension can raise them up to `maxRuns`, `maxSessionStarts`, `maxSteps` and `maxExecutionTime`. `maxStepTimeout`, `maxReviewRounds` and `creationRoots` are ceilings, not consumable counters. `hostOperationTimeout` bounds each Host control operation outside the budget. `completionReserve` is part of the caps, not extra allowance; a reserve that the execution contract's preparation check rejects stops the run before dispatch.
+Everything under `limits` is a hard project ceiling. `assignment` sets the default caps of a new assignment; an owner extension can raise them up to `maxRuns`, `maxSessionStarts`, `maxSteps` and `maxExecutionTime`. `maxStepTimeout`, `maxReviewRounds` and `creationRoots` are ceilings, not consumable counters. `hostOperationTimeout` bounds each Host control operation outside the budget. `completionReserve` is part of the caps, not extra allowance; a reserve that the execution contract's preparation check rejects is a preparation failure, and no run is prepared.
 
-`maxContextBytes` bounds a rendered context package; exceeding it stops preparation with a finding to split the Package. `maxSessionSteps` bounds one Manager session before a replacement session starts from the journal summary. `maxTransientRetries` bounds automatic retries of calls that provably sent nothing. `batchNoChangeReviews` lets one reviewer session assess several no-change deliveries, each with its own verdict. `acceptance.ownerApproval` lists Packages whose changes wait for the owner's approval before publication; it is empty by default, because the owner's commit already accepts the result.
+`maxContextBytes` bounds a rendered context package ([concept](manager-apply-concept.md#context-packages)). `maxSessionSteps` and `maxTransientRetries` bound one Manager session and automatic retries ([execution](manager-apply-execution.md#admission-amendments-and-finite-correction)). `batchNoChangeReviews` enables batched no-change reviews ([concept](manager-apply-concept.md#distinct-review-responsibilities)). `acceptance.ownerApproval` lists Packages whose changes need the owner's approval before publication, asked as an ordinary question; it is empty by default, because the owner's commit already accepts the result.
 
 `scope` optionally names the Kinds and Properties through which the model states a Definition's scope, for example `scope: [{kind: software/Rule, property: software/appliesTo}]`. The Property's values are local Package paths; `.` stands for the whole model, and the organization rejects unknown paths before dispatch. A Definition whose scope lists a Package or one of its ancestors enters the context of that Package's Managers. The configuration never lists individual Definitions; M1 needs no `scope`, because its shared rules reach every area through explicit links.
 
-A check runs the commands the model requires; here `go test ./...` comes from `library/callable-interface`, and review confirms that configuration and model agree.
+A check that executes a command the model requires names that Definition in `requiredBy`, and `check` verifies that the Definition exists. Prose cannot be executed, so the command itself is repeated literally and review keeps both in step; this is the one accepted repetition of model content in configuration ([DEC-033](../../concepts/register.md#dec-033-binding-intent-lives-only-in-the-model)).
 
 `limits.creationRoots` bounds the permitted creation areas; defaults and Package settings select within it. Here the code, tests and documentation live below `realization/`. Existing artifacts still need registry ownership, and a directory permission grants no other Manager's files or protected model and configuration paths. A check's `directory` is confined to its captured candidate, and its arguments are literal, never a shell command.
 
@@ -123,7 +121,7 @@ For lending it states:
 - Responsibility: reconcile all local lending Definitions and coordinate reminders through its child.
 - Binding basis: the current policy, member eligibility, copy availability, returns and required outputs, with the original passages available.
 - Freedom: the internal implementation within the model's architecture and interfaces; no additional business restrictions.
-- Artifact authority: its owned files plus new paths claimed through the Host; changes to other owners' files go to those owners.
+- Artifact authority: its owned files plus new paths claimed through the Host; changes to other owners' files are requested through the common parent.
 - Reserved choices: changed business rules, authority or protected inputs need a decision outside artifact Apply.
 - Limits: the remaining assignment capacity, local step and round limits and the mandatory gates.
 
@@ -133,8 +131,6 @@ The section may display the bound loan limit but cites `loan-policy` as its auth
 
 A Manager first retrieves existing knowledge, then decides within its freedom or coordinates through its common parent. It escalates only a necessary decision beyond its mandate. The root has a broader coordination scope, not more authority over business meaning.
 
-A question records the decision needed, its source-grounded reason, a recommendation and alternatives, the exact proposed model edit when one is needed, and the waiting and continuing work. Notification settings control only grouping and timing. A blocked assignment or a serious execution uncertainty needs timely visibility; routine findings and local decisions stay inspectable without an answer. CLI status and question inspection suffice for the first version.
-
-Owner answers enter through the application boundary, bound to the question version and its source basis. An Agent cannot answer as the owner by filling a field. Accepting the exact displayed edit needs no second confirmation. Changed proposals, deferral and stale bases follow the [journal contract](manager-apply-journal.md#questions-answers-and-model-changes).
+The [journal contract](manager-apply-journal.md#questions-answers-and-model-changes) owns the content of questions, how owner answers are bound and what they trigger. A blocked assignment or a serious execution uncertainty shows in the status at once; routine findings and local decisions stay inspectable without an answer. CLI status and question inspection suffice for the first version.
 
 Configuration needs negative cases for exact overrides versus task restrictions, ceilings, unknown Packages and profiles, invalid reserves, protected inputs, conflicting instructions, oversized contexts and unknown approval Packages. Experience hints and an operational doctor are later extensions ([north star](manager-realization-north-star.md#later-operations-and-extensions)).

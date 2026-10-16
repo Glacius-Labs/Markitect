@@ -80,7 +80,7 @@
     "library-example/m1/model/lending/max-open-loans.yaml": "18fd715adc0ad09bfb92be05020280b79cfb6e71ab185dd245afdbb626dc53e2",
     "library-example/m1/model/lending/reminders/assess-overdue.yaml": "557ff2f91d3f59bf309b63f70ab3565bedae57a2948edb1185c9593fbd26adc3",
     "library-example/m1/model/lending/return.yaml": "09ad182ae3fbf369531c796a0dac75d0cff8c289c2635a6c8e8712a5f40c6135",
-    "library-example/m1/model/library/callable-interface.yaml": "a6e0eb8126f4c1d504a3eb9d3b0bcc5745c6a78e799be788bbc890040669f0cc",
+    "library-example/m1/model/library/callable-interface.yaml": "9f9fd1b241718f71a0e48cd4e3b9e084b437761f84f8d9d04edffd0b2154981e",
     "library-example/m1/model/library/inputs.yaml": "d27b83be442bd2ac8901bd6a67ed8fd10efcbf78bd41a04fe3a6a3f542e7f33e",
     "library-example/m1/model/library/library.yaml": "ba864c03d0601ae57fee84eb296a4bea4b0ff9d9f57015ab277092fbc1e3946e",
     "library-example/m1/model/library/realization.yaml": "66924a78dc0cf6ce52f0d8950bfb6a6e5c9d67ff2dc2320921ff065236a65353",
@@ -146,7 +146,7 @@
   "markdownItVersion": "4.0.0",
   "modelDigests": {
     "markitect-core": "sha256:562a20613c64fb9cd3425ff39b5f9fb826b75deb153cdfac48b00fce6f5c19f1",
-    "small-library": "sha256:7d8a5a93b4310391da1d64d113b7b7ea572ffe8dbe3ff11aa3aca3e481cd5161",
+    "small-library": "sha256:ccb97556a0f3036665e07c50d93cea959c86c8fdd69a9724310f7186114de18a",
     "software-basics": "sha256:d380a8edf06ac1525dcf57dbb5921087374abc8adb34595d98c0313b49c806b0"
   },
   "pyYamlVersion": "6.0.3",

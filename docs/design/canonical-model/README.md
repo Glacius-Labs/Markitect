@@ -43,9 +43,10 @@ An implementation that deviates from a contract changes that contract in the sam
 | --- | --- |
 | Host | Markitect's deterministic orchestration: preparation, scheduling, validation, records and guarded writes. |
 | Manager | The logical owner of one Package's realization; the root Manager owns the whole local model. |
-| Assignment | One owner request with its budget; it links its runs. |
+| Assignment | One owner request with its caps; it links its runs. |
 | Run | One Apply over fixed inputs, from Prepared to one Finished outcome. |
-| Continuation | A further run of the same assignment after a run finished Incomplete. |
+| Continuation | A further run of the same assignment after a run finished without completing it. |
+| Resume | Reopening the same unfinished run after an interruption; it reconciles first and keeps the run's basis. |
 | Task | One Manager responsibility within a run. |
 | Attempt | One submission within a task. |
 | Round | A counted submission per Manager and review purpose; the limit on rework. |

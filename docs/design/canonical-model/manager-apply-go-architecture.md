@@ -47,7 +47,8 @@ The first command surface keeps the verb-table principles of [DEC-017](../../con
 | --- | --- |
 | `check` | Compile the model and check coverage and the registry. |
 | `context <package>` | Preview a Manager's context package with inclusion reasons. |
-| `apply [--continue <assignment>]` | Start or continue an Apply. |
+| `apply [--continue <assignment>]` | Start an Apply, or continue an assignment after a run that did not complete it. |
+| `resume <run>` | Reopen an interrupted run: reconcile its effects, then go on with the same basis. |
 | `status [run]` | Show the assignment and run overview, or one run. |
 | `inspect <run> [task]` | Show the task tree, timeline and per-step input, report, difference and evidence. |
 | `answer <question>` | Bind an owner answer to a question version. |

@@ -58,7 +58,6 @@ Configuration has project defaults plus exact Manager overrides and separate har
 | Team | Manager plus independent reviewer. Implementer roles, reviewer per Definition and separate artifact hierarchies are later strategies. |
 | Execution profiles | Provider, model, runtime arguments and instruction files per role, with exact Manager overrides. |
 | Scope of shared rules | The model states a rule's scope through a Property whose values are local Package paths, for example `appliesTo: [lending]`, or `[.]` for the whole model. Configuration only names which Kind and Property carry scope; it never lists individual Definitions. |
-| Kind guidance | Later: operational task and review recipes keyed by resolved Kind identity, adding no project rules and granting no execution rights. The first version has none. |
 | Owner approval | Optional list of Packages whose changes wait for the owner's approval before publication. |
 | Review batching | Optional: one reviewer session may assess several no-change deliveries, each with its own bound verdict. |
 | Artifact creation | Permitted creation areas and exclusive reservation of new paths. Artifact paths need not mirror Package paths. |
@@ -105,9 +104,9 @@ The initial Manager package contains:
 5. A compact local Package directory for routing questions, and a child index with identities, purposes, task states and latest validated reports. It does not load foreign Definitions, artifacts or transcripts.
 6. The Manager's artifact inventory and relevant candidate files for local work. A Manager that integrates children first receives their delivery summaries, agreements and evidence references.
 
-A rendered package larger than `limits.maxContextBytes` stops preparation with a finding to split the Package; a package is never truncated silently. The role prompts for root, Manager and reviewer are product-owned, versioned templates. Their identity is recorded with every invocation, changes to them go through review, and custom instructions are only appended.
+A rendered package larger than the configured limit stops preparation with a finding to split the Package; a package is never truncated silently. The role prompts for root, Manager and reviewer are product-owned, versioned templates. Their identity is recorded with every invocation, changes to them go through review, and custom instructions are only appended.
 
-An implementer receives the local task and candidate inputs. A reviewer receives the actual candidate, the relevant model contracts and evidence, in fresh context without the implementer's conversation. The Host checks that a reviewer's rendered package contains what its role requires; the reviewer judges whether that context suffices.
+An implementer receives the local task and candidate inputs. A reviewer works in fresh context without the implementer's conversation: its first step receives the task and the relevant model contracts only and records the expected behavior and discriminating cases; the second step supplies the actual candidate and evidence. The Host checks that a reviewer's rendered package contains what its role requires; the reviewer judges whether that context suffices.
 
 Managers can request further Definitions, reports, transcripts or artifact files by identity; the request and the returned content are recorded. A coordinating parent is not loaded with descendant source files initially but can inspect them to resolve a conflict or judge integration. Need to know keeps Agents focused; it is not an operating-system isolation boundary.
 
@@ -151,7 +150,7 @@ An unchanged Package can deliver a reviewed no-change result that still explains
 | Integration | Does the composed candidate satisfy the connected behavior and contracts across areas, such as a suspension preventing a new loan? At the root it also asks whether all areas follow the model's project-wide conventions uniformly. |
 | Final evidence check | Deterministic, by the Host: does the exact aggregate have every required local and integration review bound to its current subject, passing required checks, conforming coverage and a complete Definition census, with no open blocking finding? |
 
-The root's integration review is the semantic review of the whole system; no separate verifier Agent repeats it. Every review works in two phases within one fresh session: it first derives the expected behavior and a few discriminating cases from the model alone, then inspects the candidate and its evidence; the recorded order shows that the model came first. Project-wide conventions, such as how errors are reported, are model Rules with project scope, so the root's integration review can check them across areas. Where the configuration allows it, one reviewer session assesses several no-change deliveries, each with its own verdict bound to its subject.
+The root's integration review is the semantic review of the whole system; no separate verifier Agent repeats it. Every review works in these two steps, so the model is read before the solution, and the recorded expectations show it. Project-wide conventions, such as how errors are reported, are model Rules with project scope, so the root's integration review can check them across areas. Where the configuration allows it, one reviewer session assesses several no-change deliveries, each with its own verdict bound to its subject.
 
 Each result is bound to its purpose and candidate. A local pass never replaces an integration review. Later stages can cite an earlier finding and its recorded resolution instead of repeating the discussion; a changed candidate, scope or assumption requires renewed assessment.
 
@@ -174,13 +173,13 @@ Only guarded publication writes registry files. An edit made outside Apply is dr
 
 Registry paths are independent of Package paths; lending can own source, test and documentation files in three directories. Other Managers can read or cite those files but cannot claim them. Managers propose registration through Host tools; the Host validates them and builds the registry delta. Editing the registry file directly is not a way around ownership.
 
-Before writing a new path, a Manager reserves it through the Host, which checks the operation target, permitted creation areas, exact spelling and exclusive ownership. Model and configuration paths cannot be obtained through an artifact reservation. A shared file has one owner; others request changes from it. A rename needs a new reservation and keeps provenance. A deletion removes the current registration only with a justified candidate deletion; history keeps the old registration. Moving responsibility between Packages is an explicit, recorded transfer reviewed with the affected delivery.
+Before writing a new path, a Manager reserves it through the Host, which checks the operation target, permitted creation areas, exact spelling and exclusive ownership. Model and configuration paths cannot be obtained through an artifact reservation. A shared file has one owner; others request changes through their common parent. A rename needs a new reservation and keeps provenance. A deletion removes the current registration only with a justified candidate deletion; history keeps the old registration. Moving responsibility between Packages is an explicit, recorded transfer reviewed with the affected delivery.
 
 Coverage classifies every repository file as a canonical or Markitect input, a registered artifact or an explicitly ignored file ([DEC-006](../../concepts/register.md#dec-006-every-file-is-covered-or-explicitly-ignored)). Registrations need a valid owner and a resolvable model basis. Overlapping ownership, missing files, stale registrations and unexplained files are findings. A blanket ignore cannot turn missing realization into success. Ignore configuration is project-owned, fixed for the run and read-only during Apply; Managers cannot hide a file by adding an ignore. Coverage ignores never change the language loader's complete scan of Definitions.
 
 ### Markitect state
 
-The journal lives in a state directory outside the governed repository; the repository holds only its small control metadata in `.markitect/state/`, which Git ignores and coverage classifies as Markitect state ([journal](manager-apply-journal.md#physical-store-and-commit-contract)). It is excluded from source staleness and from the clean-working-tree check. Recording a message or renewing the controller lock therefore never makes the run's inputs stale. Repository classification and ownership belong to the Host's coverage stage, which keeps the language compiler free of I/O.
+Markitect's own state stays out of the realization: the journal lives outside the repository, and the small control metadata in `.markitect/state/` is ignored by Git and excluded from source staleness ([journal](manager-apply-journal.md#physical-store-and-commit-contract)). Repository classification and ownership belong to the Host's coverage stage, which keeps the language compiler free of I/O.
 
 ### Removed and moved intent
 
@@ -196,14 +195,14 @@ Logical Apply is the whole reconciliation below; guarded publication is its last
 
 | Stage | Work and exit condition |
 | --- | --- |
-| Prepare | Read the model, configuration, registry and ignore policy from the committed state. Uncommitted changes there, or anywhere in the working tree outside ignored paths, stop the run before preparation. Acquire the repository snapshot and tool identities, compile v1 and bind the organization. Invalid model inputs stop the run. |
+| Prepare | Read the model, configuration, registry and ignore policy from the committed state. Uncommitted changes to tracked files, or untracked files outside Git-ignored paths, stop the run before preparation. Acquire the repository snapshot and tool identities, compile v1 and bind the organization. Invalid model inputs stop the run. |
 | Start root | Give the instruction and a bounded project overview to the root. Fix the artifact-only target and settle unresolved ownership through intake before write tasks begin. |
 | Assess and delegate | Every local Package with Definitions is considered. Managers assess local realization and issue outcome-based child tasks. |
 | Work and review | Local changes happen in an owned candidate workspace. The Host harvests the actual delta; a fresh reviewer assesses it. A failed review returns grounded rework; an unresolved model question pauses that task without editing the model. |
 | Integrate upward | The parent composes deliveries on an exact base and checks interface and cross-area consistency. A fresh integration reviewer examines the aggregate and relevant child evidence. |
 | Verify aggregate | At the root candidate: required project checks, then the Host's final evidence check over the whole Manager tree. The root's fresh integration review has already assessed the aggregate semantically. |
 | Preflight | Recheck the captured repository, model, configuration, registry and ignore inputs. Drift makes the run stale; earlier checks cannot authorize changed bytes. |
-| Publish | If the configuration requires the owner's approval for an affected Package, the run waits for it. The guarded writer then applies the accepted candidate and registry revision to the working tree. Apply never commits, merges, releases or deploys. |
+| Publish | If the configuration requires the owner's approval for an affected Package, the Host raises an approval question with the result summary, and the run waits for the answer. The guarded writer then applies the accepted candidate and registry revision to the working tree. Apply never commits, merges, releases or deploys. |
 | Read back | Confirm actual paths, bytes, modes and registry against the verified candidate. A partial write or failed read-back is not a successful Apply. |
 
 Full reconciliation of the selected local model is the default; it does not claim coverage of intent outside the model. Do not implement incremental reuse first; [computed scope](#toward-computed-scope) follows later. The graph and registry can explain possible impact; unknown semantic impact broadens examination.
@@ -212,7 +211,7 @@ Later tasks build on the current accepted integration base, and every delivery c
 
 The owner's commit of the published result is the acceptance, exactly as a committed model revision is the accepted specification ([DEC-035](../../concepts/register.md#dec-035-committed-model-in-owner-commit-accepts-the-result)). The run report proposes a commit message with the trailers `Markitect-Run` and `Markitect-Model`. After a partial publication or a result the owner does not accept, the owner commits or reverts the working tree before the next run.
 
-Each logical responsibility and review purpose gets three candidate submissions by default; after two rejections the parent must assess the plan before the third. The [execution contract](manager-apply-execution.md#admission-amendments-and-finite-correction) owns counting, budgets and exhaustion. A parent cannot turn an unresolved child delivery into a complete one by summarizing it.
+Review rounds are finite, and after repeated rejections the parent assesses the plan; the [execution contract](manager-apply-execution.md#admission-amendments-and-finite-correction) owns counting, budgets and exhaustion. A parent cannot turn an unresolved child delivery into a complete one by summarizing it.
 
 The [execution contract](manager-apply-execution.md#one-run-state-machine) owns the single run state machine and its [terminal outcomes](manager-apply-execution.md#terminal-outcomes-and-displayed-status). History survives interruption: reopening a run first reconciles recorded invocations, child lifecycle and publication outcomes. Completed provider work is not replayed automatically, and unknown side effects stay visible.
 

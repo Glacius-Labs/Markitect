@@ -19,7 +19,7 @@ This contract owns the Go interfaces between the Apply core and its adapters, th
 | Accepted delivery | `run`: Host-issued ID, exact subject, delivered scope, Definition assessments, child delivery IDs, review and check evidence, report. Agents cannot create one. |
 | Task dependency | `run`: the producer task and the accepted delivery selected for composition. No mutable "latest" alias. |
 
-The journal and scratch storage are excluded from source staleness only through the fixed storage policy; adding or deleting an ordinary repository file always changes the captured census.
+Markitect's state in `.markitect/state/` is excluded from source staleness; adding or deleting any other repository file always changes the captured census.
 
 ```go
 // Package run. Referenced domain values belong to their defining packages.
@@ -43,7 +43,7 @@ type TaskSpec struct {
 	Outcome        string
 	ModelBasis     []model.DefinitionRef
 	Inputs         InputBinding
-	Mandate        organization.MandateRef
+	Context        organization.ContextRef
 	Base           realization.CandidateRef
 	Dependencies   []TaskDependency
 	Budget         BudgetView
@@ -70,7 +70,7 @@ type ReviewProposal struct {
 
 The sender of a delegation is the bound session; it cannot choose its own authority, base, attempt or source binding. The Host allows only a direct child and keeps the child's full Package responsibility, inherited restrictions and unresolved obligations. A cited subset of Definitions never narrows reconciliation.
 
-Work proposals are explanations, not trusted diffs. Definition assessments cover every local Definition with a disposition, grounds and evidence references; vocabulary-only must show where concrete uses meet their obligations. Registry proposals refer to Host-authorized path claims. A no-change proposal needs the same assessment as a changed candidate.
+Work proposals are explanations, not trusted diffs. Definition assessments cover every local Definition with a disposition, grounds and evidence references; a `vocabulary` disposition must show where concrete uses meet their obligations. Registry proposals refer to Host-authorized path claims. A no-change proposal needs the same assessment as a changed candidate.
 
 A `Finding` has a Host-recorded ID, a severity (blocking or advisory), the affected responsibility, its model and input basis, the requested evidence and the originating reviewer; a candidate reference is optional for concerns raised before a candidate exists. A `FindingStateChange` moves an existing finding to resolved (with current evidence) or not applicable (with grounds), as defined in the [execution contract](manager-apply-execution.md#evidence-need-survives-budget-pressure). Only a bound independent reviewer can issue one. Verdicts distinguish pass, changes requested, needs decision and failed assessment. The Host derives the open findings from task, child and predecessor history and validates provenance and bindings; whether evidence suffices remains the reviewer's judgment.
 
@@ -80,7 +80,7 @@ A dependent task starts only from an accepted producer delivery composed into it
 
 ## Application boundary and source acquisition
 
-CLI and MCP call a concrete `apply.Service.Apply(ctx, request)` and receive a result plus an ordinary error. The request names the repository and either starts a new assignment or continues an open one by its ID; a repository with an unfinished run accepts only the continuation of that run's assignment ([execution contract](manager-apply-execution.md#assignments-and-runs)). Apply depends on one consumer-owned acquisition port:
+CLI and MCP call a concrete `apply.Service.Apply(ctx, request)` and receive a result plus an ordinary error. The request names the repository and either starts a new assignment or continues an open one by its ID; a repository with an unfinished run refuses a new Apply until that run is resumed to its end or stopped ([execution contract](manager-apply-execution.md#assignments-and-runs)). Apply depends on one consumer-owned acquisition port:
 
 ```go
 // Package apply.
@@ -89,7 +89,7 @@ type Source interface {
 }
 ```
 
-`CaptureRequest` names the repository, canonical root, explicit dependencies and configuration. The model, configuration, registry and ignore inputs are read from the committed state; uncommitted changes there, or anywhere in the working tree outside ignored paths, refuse the capture before preparation. `CapturedInputs` supplies fixed bytes and trees, the repository census, configuration, registry and ignore inputs and an opaque publication guard, with the identities needed to reproduce them. It never guesses dependencies from prose.
+`CaptureRequest` names the repository, canonical root, explicit dependencies and configuration. The model, configuration, registry and ignore inputs are read from the committed state; uncommitted changes to tracked files, or untracked files outside Git-ignored paths, refuse the capture before preparation. `CapturedInputs` supplies fixed bytes and trees, the repository census, configuration, registry and ignore inputs and an opaque publication guard, with the identities needed to reproduce them. It never guesses dependencies from prose.
 
 Apply compiles those bytes with `model`, derives organization and context and validates initial file accounting. Unknown files need a classification before they can change. Model, configuration and independent expectations stay outside Agent write authority. Invalid inputs stop work before dispatch, and the bound inputs are stored durably before any session starts. `apply.Control` supplies the controller lock and journal ([journal](manager-apply-journal.md#physical-store-and-commit-contract)); CLI and MCP never acquire execution authority themselves.
 
@@ -131,11 +131,13 @@ The tools form one closed catalogue; each role sees only its own:
 | `delegate(to, outcome, basis, constraints, depends_on)` | Manager | Records a task for a direct child, with the producer tasks whose accepted deliveries it needs, and returns its ID. |
 | `read(ref)` | Manager, reviewer | Returns a Definition, artifact, delivery report or transcript by identity and records what was supplied. |
 | `reserve_path(path, form)` | Manager | Reserves a new artifact path within the creation areas and exclusive ownership. |
-| `register(path, realizes, why)` | Manager | Proposes a registry change for an owned or reserved path. |
+| `register(path, realizes, why)` | Manager | Proposes a registry change for an owned, reserved or intake-assigned path. |
+| `assign_owner(path, manager, reason)` | Manager | As the common parent, decides the owner of an artifact that several descendants' Definitions require, assigns an unexplained file during intake, or transfers a record between its descendants. |
 | `ask(question)` | Manager | Raises a question or a sibling request to the parent. |
 | `answer(question, response)` | Manager | Answers a child's question within the mandate, or routes it to a sibling or upward; owner answers arrive only through the application. |
 | `request_check(check)` | Manager, reviewer | Runs an allowed project check on the current candidate and returns its receipt. |
 | `submit_work(proposal)` | Manager | Submits a work proposal, a no-change delivery or a yield while children or answers are pending. |
+| `record_expectations(cases)` | Reviewer | Records the expected behavior and discriminating cases derived from the model before the candidate is supplied. |
 | `submit_review(proposal)` | Reviewer | Submits a review verdict with findings and evidence. |
 
 The Host deduplicates a repeated correlation ID with identical content and returns the recorded reply; different content under the same ID is an error. Duplicate observations create no tasks or attempts. Cancellation propagates through `context.Context`. A timeout or error after possible dispatch returns the known receipt with an uncertain state; inspect the known session and step before retrying, and never resend work just because a reply was lost. `Stop` reports observed termination, not only a cancellation request. An uncertain writer blocks workspace handoff. A `SessionIO` callback error prevents further dispatch; external activity that may already have started stays uncertain until reconciled.

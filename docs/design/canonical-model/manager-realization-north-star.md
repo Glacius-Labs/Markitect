@@ -70,6 +70,7 @@ Further extensions recorded for after the two-Apply demonstration:
 | Second session adapter | A Claude Code adapter on the same port, for reviewers from a different model family. | [ENH-005](../../concepts/register.md#enh-005-exchangeable-executor-for-the-delegated-method), [ASM-005](../../concepts/register.md#assumptions-and-hypotheses) |
 | Richer teams | The team variants above, perspectives and four eyes. | [ENH-006](../../concepts/register.md#enh-006-configurable-teams-for-perspectives-and-four-eyes) |
 | Parallel writers | Bounded concurrency on the same ownership and reservation rules. | |
+| Kind guidance | Operational task and review recipes keyed by resolved Kind identity, adding no project rules and granting no execution rights. | |
 | Model operations | Optimizer, cleanup, bughunt and custom commands as listed above. | [DEC-026](../../concepts/register.md#dec-026-apply-comes-first-and-changes-only-artifacts) |
 | Existing-project adoption | An operation that drafts a model and a registry proposal from existing code; the owner reviews and commits them. | |
 | Sandbox profiles | Role sessions inside containers with declared mounts. | |
