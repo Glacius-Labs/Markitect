@@ -2,7 +2,7 @@
 
 Three finite, read-only research chats ran during the Product Readiness program and completed on 9 October 2026 against Designer commit `18eabf96ece65825d8cd9a72c7c03692caf59157`. Root spot-checked their central source and primary-documentation findings. No product edits, builds, provider model calls, installations, Case Studies, runtime-discovery proof or productivity measurements were performed.
 
-**Status.** These are AI research results, not owner decisions. The words "decision", "use", "defer" and "reject" below are the researchers' recommendations. Owner decisions live in the [concept register](../concepts/register.md). The knowledge graph is decided there by [DEC-018](../concepts/register.md#dec-018-the-knowledge-graph-explains-impact), so R02 is background for KG-01 to KG-03. R03's follow-up became AGENT-03 in the [backlog](../work-items/backlog.yaml). R01 has no backlog package.
+**Status.** These are AI research results, not owner decisions. The words "decision", "use", "defer" and "reject" below are the researchers' recommendations. Owner decisions live in the [concept register](../concepts/register.md). The knowledge graph is decided there by [DEC-018](../concepts/register.md#dec-018-the-knowledge-graph-explains-impact), so R02 is background for KG-01 to KG-03. R03's follow-up became AGENT-03 in the [backlog](https://github.com/Glacius-Labs/Markitect/blob/bc4b49e76f9b9e4b3ec98033a0b8c73d5013b310/docs/work-items/backlog.yaml). R01 has no backlog package.
 
 **Sources.** This page combines three sets of records, moved here on 10 October 2026 when the Product Readiness records were retired:
 

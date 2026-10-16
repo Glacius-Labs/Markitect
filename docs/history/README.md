@@ -11,4 +11,4 @@ This directory preserves dated roadmap context and its original references. Thes
 
 Records may link to files that were removed later; read them at release v0.14.1 or in git history.
 
-For current source scope and planned work, use the [implementation roadmap](../implementation-plan.md). For current work-item states use the [backlog](../work-items/backlog.yaml). The retired Product Readiness records are distilled in the [lessons survey](../work-items/surveys/product-readiness-lessons-20261010.md) and the [A01 validation record](../validation/a01-native-smoke-20261010.md).
+For current source scope and planned work, use the [implementation roadmap](../implementation-plan.md). Current assignments follow that plan; chats/PRs hold execution evidence. The retired Product Readiness records are distilled in the [lessons survey](../work-items/surveys/product-readiness-lessons-20261010.md) and the [A01 validation record](../validation/a01-native-smoke-20261010.md).

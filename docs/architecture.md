@@ -1,5 +1,7 @@
 # Architecture
 
+This describes the executable source before the Apply rebuild. The [delivery plan](implementation-plan.md) and [target Go architecture](design/canonical-model/manager-apply-go-architecture.md) own the replacement. Current source is not already the complete v1/Manager implementation.
+
 Markitect is model-first development with delegated realization ([Markitect in brief](vision.md#markitect-in-brief)). This page describes how current source implements it: the product flow, the layers, what each layer does and its known problems. The [code map](development/code-map.md) lists every package. [Modules and static composition](development/modules.md) owns the dependency rules.
 
 ## Product flow
@@ -46,7 +48,7 @@ Current source has four product layers:
 - **Application** holds the use cases and their CLI and MCP surfaces.
 - **Runtime** runs the inner roles and records what they did.
 
-Executables under `src/cmd`, maintainer tooling, harnesses and fixtures have their own layers in the code map. The import gate checks each package against its layer ([mechanical dependency gate](development/modules.md#mechanical-dependency-gate)). Package IDs below refer to the [backlog](work-items/backlog.yaml), which owns their status.
+Executables under `src/cmd`, maintainer tooling, harnesses and fixtures have their own layers in the code map. The import gate checks each package against its layer ([mechanical dependency gate](development/modules.md#mechanical-dependency-gate)). Package IDs below identify historical work in the retired backlog; the [delivery plan](implementation-plan.md) owns the new rebuild.
 
 The import gate enforces direction between all four product layers and validates code-map completeness before relying on layer labels (ARCH-12). [Dependency direction](development/modules.md#dependency-direction) defines the permitted imports; ARCH-13 separates the Core I/O and Runtime/Application responsibilities.
 

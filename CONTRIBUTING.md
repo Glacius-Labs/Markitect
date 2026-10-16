@@ -31,14 +31,14 @@ Keep source and test files focused on one coherent responsibility. When new func
 
 ## Pull requests and parallel work
 
-Several sessions change this repository at the same time, each in its own worktree. The [roadmap](docs/implementation-plan.md#how-we-work) owns sessions, work packages, [zones](docs/implementation-plan.md#zones) and the [backlog](docs/work-items/backlog.yaml). These rules keep the work from colliding.
+Several sessions work in isolated worktrees. The [delivery plan](docs/implementation-plan.md#how-we-work) owns packages, dependencies and [path reservations](docs/implementation-plan.md#zones). Concrete dispatches, candidate evidence and checks live in chats/PRs; the old backlog and dashboard are retired.
 
 **Branches and pull requests**
 
-- Start every branch from current `origin/main`. Give it a meaningful lower-case name with a prefix: `dev/`, `fix/`, `docs/` or `exp/`. No tool name, date, version or number ([branch names](docs/implementation-plan.md#branch-names)).
-- Open one pull request per work package. Its title starts with the package ID, for example `ARCH-04: Remove the canonical projection alpha`.
+- Start from the integrated base assigned by the coordinator, normally current `origin/main`, using an isolated worktree and `codex/apply-<scope>` branch ([branch names](docs/implementation-plan.md#branch-names)).
+- Open one focused pull request per package/API slice. Its title starts with the assigned ID, for example `APPLY-MODEL: Compile canonical v1`.
 - Change only files in your package's zone. An edit outside it needs the integrator's approval; say so in the pull request.
-- Put status, acceptance evidence, findings and open owner decisions in the pull-request description. Sessions do not edit the backlog, the roadmap or the concept register; the integrator does.
+- Put actual progress, exact-source evidence, findings and owner questions in the PR. Only the coordinator updates shared delivery policy and the concept register.
 
 **Before every push**
 

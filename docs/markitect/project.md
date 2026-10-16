@@ -2,7 +2,7 @@
 
 # markitect
 
-Model digest: sha256:33fc84e3927a19d81b99c34465ede398690a8d1848900e443b17b930efa925fb
+Model digest: sha256:546193264a8af226a3f7505518db5c67098db15679824b1d6f02a2a0c70c2fa4
 
 Report status: succeeded
 
@@ -90,7 +90,7 @@ The repository root keeps the guides, the Go module, the Git configuration and t
 - Responsible Manager: ["project.markitect.example.org/v1alpha1","Manager","documentation","documentation"]
 - Source: [.markitect/model/documentation/purpose.yaml](../../.markitect/model/documentation/purpose.yaml)
 
-The documentation explains the product, its architecture and operations, the roadmap, the backlog, the concept register and the evidence; dated reports keep their recorded scope.
+The documentation explains the product, architecture and operations, the single delivery plan, the concept register and the evidence; retired planning and dated reports keep their historical scope.
 
 ### examples
 

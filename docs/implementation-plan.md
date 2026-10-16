@@ -1,232 +1,111 @@
-# Roadmap
+# Delivery plan: the first reliable Apply
 
-Updated 14 October 2026 against Main `ab142fad19b90a445b885e5bf429f044b9c681a5`, with complete [Main CI](https://github.com/Glacius-Labs/Markitect/actions/runs/38639248471). The [role-round record](validation/integration-round-20261012.md#arch-14-shared-record-store-closure) closes ARCH-14 with exact source, hosted checks, positive six-method payloads and actual Main/source proof. Cleaner's implementation reservation is released; Root owns this final status integration. The owner bounded this work to ARCH-14 closure, then stop; no next package or wave is assigned. The [Claude-to-Codex handoff](development/session-handoff.md) preserves the earlier interrupted snapshot.
+Date: 16 October 2026. This is the single current delivery and coordination plan, commissioned by the [owner](design/canonical-model/sources/manager-realization-20261016.md#polish-the-concept-and-start-the-coordinated-rebuild). It replaces the old waves, role queues, backlog and local dashboard. Old assignments do not carry execution authority into this rebuild.
 
-This page owns the current direction: how parallel work is organized, the streams and waves, the code zones, and the open owner decisions. The [backlog](work-items/backlog.yaml) is the single owner of each work package's status. The [concept register](concepts/register.md) records the decisions this roadmap relies on. Source changes do not change a published release.
+## Target and baseline
 
-## Where we stand
+Real Managers realize the small library M1 as A1; independent assessment examines actual code, tests, documentation and history. Change only the model's loan limit from five to three, then Apply M2 against actual A1 to produce and assess A2. Use one frozen product/profile for the final demonstration. No manual code repair between the Applies.
 
-**On main:**
-- The model-first product: canonical model and compiler, coverage, impact, Manager execution with independent review, verification and guarded Apply.
-- The [concept record](concepts/README.md).
-- Exchangeable process execution and per-role configuration (RUN-01, #104), the top-level verb table (CLI-02, #161), and the reduced knowledge core and explain/trace surface (KG-02, #184).
-- The case playground, provider-free container smoke, shared source/bundle smoke driver, hermetic test kit and Linux race gate.
-- Markitect's own recursive Manager model and generated project view (ARCH-07, #203), stable view (#216) and verified short-name contributor entrypoint (#222).
-- Read-only accepted briefing history (#205), guided previews (#221), structured private child assessment filtering (#223), smaller typed MCP schemas (#218), and the reviewed pinned-image inventory (#219).
-- Historical-context projection of private briefing event details (#225), read-only Context/list callers with atomic accepted-history dismissal (#229), LF-stable Windows playground fixtures (#228), delegated DEC-023/hypothesis provenance (#226) and the prepared KG-04 protocol (#227). KG-04 measurement remains NOT RUN.
-- TEST-03's shared isolated process fixtures and parallel E2E selection (#232) retain all default-suite assertions; CLI-03's application composition/read facade and CLI boundary/size check (#231) preserve the briefing semantics above.
-- CLI-04's Doctor Git-version prerequisite (#235) reports unsupported Git before model or provider inspection and retains CLI/MCP diagnostics without project writes.
-- TEST-02's complete outer CLI/MCP contract matrix (#237) covers help/schema, rejected arguments, successful operations and missing-write authorization, with explicit surface completeness and target isolation before Apply.
+The [canonical language v1](design/canonical-model/minimal-language/language-contract.md) is the language baseline. The [Apply design map](design/canonical-model/README.md) routes technical contracts. The [detailed acceptance slices](design/canonical-model/manager-apply-implementation-plan.md) and [removal map](design/canonical-model/manager-apply-rebuild-plan.md) are specifications, not separate live backlogs.
 
-**Retired older product line:** The canonical projection alpha (ARCH-04), release-tooling separation (ARCH-08) and Project/Domain removal (ARCH-09) are integrated. Current contributor instructions, CI and hooks use the self-hosted project model, full Artifact coverage and retained module/architecture gates. Immutable published releases and benchmark history keep their own source-bound contracts. Do not reuse the old survey's code-size estimate as a current measurement.
-
-**CI:**
-- Linux quality and race jobs are the required PR gates. The ordinary suite runs once per quality job; structural project coverage and view checks do not execute it again. Source smoke exercises the model-first flows and scripted fixed-revision Verify separately.
-- Windows is nightly, manual and release validation; it does not block ordinary merges (DEC-013).
-- The original six PR heads and their scoped follow-ups passed required Linux Quality/Race and relevant provider-free smoke. Main CI is tracked separately for each merge; exact candidate results and local Windows failures are recorded in the integration record. They do not establish provider or method-study acceptance.
-- Freeze each PR head while its required Linux checks run. Recheck the current head and compile its merge onto current main before integration.
-
-**Open work outside main:**
-- bounded investigation of the recorded Windows Git timeout and workspace alias failure, retaining their original source and diagnostic limits;
-- KG-04 measurement after its prepared Shop/Markitect protocol: independent expected lists remain unfrozen and execution needs separate authority;
-- historical Government and research candidates, preserved as references. They are not combined with current main or scheduled ahead of the backlog's gates.
-
-**Product Readiness program:** closed. P01 to P10 are complete. Its records were distilled into the [Product Readiness lessons survey](work-items/surveys/product-readiness-lessons-20261010.md) and the [A01 validation record](validation/a01-native-smoke-20261010.md); git history keeps the originals. Its open follow-ups now live in the backlog: RUN-04 replaces P11, AGENT-03 replaces R03-F01, and the KG packages replace KG01 to KG03.
+Starting product: Main `bc4b49e76f9b9e4b3ec98033a0b8c73d5013b310`. Its existing CLI/self-model remain executable until a coherent replacement cutover. The new design is not already implemented. Published releases and historical evidence keep their original identity.
 
 ## Guiding decisions
 
-- **A clean, stable and testable main comes first.**
-- **Compatibility is not a driver.** Nobody else uses Markitect yet ([DEC-014](concepts/register.md#dec-014-compatibility-does-not-drive-decisions)).
-- **Linux first for tests and the playground.** Windows support is revisited later ([DEC-013](concepts/register.md#dec-013-linux-first-for-tests-and-the-playground)).
-- **The method is evaluated separately from any single runtime, and the product supplies the method** ([DEC-010](concepts/register.md#dec-010-evaluate-the-method-separately-from-its-execution-runtime)).
-- **Earlier plans and branches are inputs, not the plan.** Their ideas are checked against current main and the vision first (IDEA-01).
+- Implement completed v1 and the Manager concept directly. Compatibility is not required; delete obsolete product paths, formats and tests together.
+- One ordinary root and one Manager per local Package, shared across code, tests and docs. Default teams are Manager plus fresh independent reviewer, with sequential writing.
+- Separate pure model/snapshot/organization/realization values from execution, repository I/O and provider protocols. Use consumer-owned Ports and Adapters and one Go module.
+- Reuse work with current assessment, not old approval. Keep exact bindings, recorded questions and actual effect observations.
+- Budget shortage and uncertainty produce visible retained incomplete work. They cannot waive evidence or authorize blind replay.
+- Build the technical core first. The four [working-day scenarios](concepts/reflections/working-day-demonstration-20261016.md) remain separate follow-up evidence. Government, experience, doctor, cockpit, parallel writers and extra providers/commands are deferred.
 
 ## How we work
 
 ### Sessions
 
-A session is a long-running chat for one role. The backlog's `owner` field names the role, and any fresh session can take a role over. After the previous queue closed, the owner requested fresh sessions on 12 October. QA delivered TEST-03 and preserved its separate failed Windows diagnostic run; Interface delivered CLI-03, CLI-04 and TEST-02; its assigned implementation round is complete. Bughunter completed its first bounded read-only round. The existing integrator owns canonical status and integration. The interrupted Claude sessions' snapshot is in [Session continuation](development/session-handoff.md); the [branch survey](work-items/surveys/branches-and-worktrees-20261010.md) preserves the earlier archive inventory. A package's `active` state is not evidence that its old chat is still running.
+The coordinating chat acts as integrator. Separate implementation chats receive one bounded package, isolated worktree, exact base, owned paths, dependencies and acceptance criteria. They may use subagents inside their assignment. Start at most four implementation writers in the first wave.
 
-On 12 October the owner instructed: **“Beginne die Wellen selbstständig neu.”** The integrator continuously selects dependency-ready work within accepted roadmap intent, explicitly assigns its scope and zone, coordinates independent review and normal integration, and verifies complete Main CI at the actual full merge SHA. After a package or group closes, it rechecks the DAG and starts the next eligible assignment through existing role chats, or a new role chat when needed. A green intermediate Main is a checkpoint, not a reason to wait for another owner session-start request. `proposed` alone means written scope not yet started; it neither bans assignment nor grants product approval. Intent, `needs_owner`, parked work, credentials/cost, provider/study execution, publication and cleanup retain their actual gates. Unaccepted helper recovery remains a proposal. Prior reviews are reused only for unchanged exact sources; fresh changed candidates get their own review.
+Package scopes and dependencies live here. Actual running state, candidate SHAs, reviews and CI results live in each chat/PR; do not create a status file, backlog or dashboard mirror. Integration requires exact-head required CI, independent review, merge and Main read-back.
 
-| Role | Streams | Starts |
-|---|---|---|
-| integrator | OPS, register decisions, review and merge order, IDEA-01, LEARN-01 | Coordinate current reservations, independent reviews and normal PR integration; verify final Main |
-| interface | CLI, MCP-01, TEST-02, AGENT-02, AGENT-03 | CLI-03, CLI-04 and TEST-02 integrated; no current implementation reservation, later packages require their own assignment |
-| scientist | PLAY | PLAY-06 integrated with complete actual-Main CI; writer released, no protocol-writing or study scope while PLAY-07/CI-04 owner gates remain |
-| kg | KG | KG-04 protocol is prepared; measurement waits for separate authority |
-| bughunter | BUG | Both bounded read-only episodes complete; new Windows lock cause unisolated, P2 test cleanup issue recorded, no fixwriter; helper recovery remains unaccepted |
-| qa | CI, TEST | TEST-05 closed as PR255 with full actual-Main proof; original086d Windows once ended with exit1 and retained raw diagnostics. Runtime implementation slot released; no next QA writer assigned |
-| cleaner | ARCH, AGENT-01 | ARCH-12/16/15/14 closed with complete actual-Main proof; implementation reservation released. No next package or wave. Original sources, refs and failed evidence remain preserved |
-| runtime | RUN, MCP-02, ARCH-06 | ARCH-06 integrated as PR250/current4c260 with complete actual-Main CI; writer released, no next Runtime package; original source refs and Windows/selected evidence preserved |
-| government | GOV | After Wave 2 and the explicit GOV-01 dependencies (DEC-019) |
-
-No more than six sessions change code at the same time. Each session uses subagents and workflows inside its own packages as it sees fit.
-
-The first autonomous group is integrated: ARCH-08 as `4b41d29a219836472e17a50fb17fa5d5e98ce2cd`, TEST-04 as `f7827e4ff7708bedfbfe872a94f6c519829323c8`, and PLAY-06 as then-current Main `d083c8f37b6bb1e09a9c5a7947c421651a7e755b`. Each actual merge has complete successful push Quality/Race/source-artifact CI. The [integration record](validation/integration-round-20261012.md#autonomous-wave-and-next-reservations) keeps literal heads, compositions, tested hosted checkouts and actual Main results distinct. The separate scheduled Windows run on F782 failed a process-lock test; independent read-only diagnosis leaves its primary cause unisolated and confirms a test failure-cleanup issue. It does not change the successful push-run verdict or establish Windows acceptance.
-
-RUN-02, ARCH-05/06/13 and TEST-05 retain their complete source-bound integration records. ARCH-16 [PR257](https://github.com/Glacius-Labs/Markitect/pull/257) closed at actual Main `658fd1988958a34efc10be7f73e6a43ece533ca7`; [CI38323287449](https://github.com/Glacius-Labs/Markitect/actions/runs/38323287449) passed all three jobs. Both full Quality/Race reports have 2227 passes, 19 skips, zero failures/incomplete tests, all six public method cases and 48 fine plus 102 coarse matrix leaves. All 460 packaged source files, bootstrap and lock match canonical Main bytes. Original Windows failures remain separate. ARCH-15 [PR259](https://github.com/Glacius-Labs/Markitect/pull/259) now closes at actual Main `daa30ec130e148414f7fb6462b55a51d04b8198d`; [CI38351438193](https://github.com/Glacius-Labs/Markitect/actions/runs/38351438193) passed all three jobs. Both full reports have 2327 passes/19 skips, no failures/incomplete tests, all six public cases and both matrices; complete packaged Git bytes/bootstrap/lock match. All 44 changed paths fit the reviewed finite64 scope. Original required failures and Windows diagnostic qualifications remain distinct. ARCH-14 [PR261](https://github.com/Glacius-Labs/Markitect/pull/261) closes at actual Main `ab142fad19b90a445b885e5bf429f044b9c681a5` with [CI38639248471](https://github.com/Glacius-Labs/Markitect/actions/runs/38639248471), complete positive six-method evidence and canonical source-artifact bytes. No next wave is assigned. RUN-05/06, provider/method studies, KG-04 measurement, Government, releases and resource/ref cleanup retain their gates.
-
-### Starting a session
-
-Start every session with the same prompt; only the role changes:
-
-For this restart, also read the [role handoff and initial queue](development/session-handoff.md#role-starts). Reuse an existing candidate worktree only after verifying its branch, full SHA, local changes and ownership; use a fresh branch from current main for new packages. No new chat is dispatched by this document itself.
-
-```text
-You are the <role> session for Markitect. Read current AGENTS.md, docs/implementation-plan.md, docs/work-items/backlog.yaml and docs/development/session-handoff.md, including your role's initial queue. Fetch origin and identify the checkout path, branch, full SHA and local changes before writing. Resume an existing candidate only after confirming ownership; start new packages from current origin/main. Read the owning Manager's context and each package's inputs and survey. Work in dependency order inside the integrator-assigned zone, with one PR per package or slice and its ID in the title. Freeze a pushed head while required Linux CI runs; fixes may be pushed when only non-required Windows CI remains. The integrator alone updates the backlog, roadmap and concept register; other roles report evidence and decisions in their PRs. Use subagents for independent workstreams. Preserve uncommitted work, never stash or force-push a reviewed branch, and distinguish source checks, provider runs, method studies and human acceptance. Ask the owner only for decisions outside existing authority.
-```
-
-The integrator merges pull requests in dependency order, updates the backlog and the register, and assigns zones.
-
-### Work packages
-
-Each package has:
-- an ID made of its stream and a number;
-- one owner session and one branch;
-- a zone;
-- dependencies and acceptance criteria.
-
-The [backlog](work-items/backlog.yaml) holds all of them. A package is done when it is merged to main and its documentation and register links are updated.
+The coordinator owns shared policy, this plan, the concept register, root module dependencies and cross-package contracts. A bootstrap/cutover package can receive explicit shared-file ownership. Other chats submit a bounded request instead of changing shared files opportunistically.
 
 ### Branch names
 
-New branches start from current `origin/main`. Each has a meaningful lower-case name and a prefix that says what kind of work it holds:
-
-| Prefix | Use | Example |
-|---|---|---|
-| `dev/` | Development: features, refactoring, tests, CI | `dev/linux-ci-gate`, `dev/verb-table` |
-| `fix/` | A bug fix | `fix/impact-order-independence` |
-| `docs/` | Documentation only | `docs/roadmap` |
-| `exp/` | A throwaway experiment | `exp/graph-explain-spike` |
-| `archive/` | A preserved old branch or a snapshot of work in progress | `archive/codex/knowledge-graph` |
-
-- The name says what the work is.
-- It contains no tool name (`codex/`, `claude/`), no date, no version suffix and no number.
-- The package ID goes into the pull-request title and into the backlog's `branch` field, which links the two.
-- Branches with the old `codex/` and `claude/` prefixes are earlier work. They are archived step by step (OPS-03).
+Use an isolated managed worktree and a non-protected branch from the integrated baseline. New branches use `codex/apply-<scope>` by default. Never stash, reset unrelated work, force-push reviewed branches or implement on Main. Verify path, branch, full SHA and dirty state before writing.
 
 ### Zones
 
-A zone is a code area in which only one active package changes code at a time. The integrator assigns zones; a package that waits for its zone is blocked.
+| Package | Exclusive write scope | Dependency and boundary |
+| --- | --- | --- |
+| APPLY-BOOT | `src/internal/tooling/architecture/`, `docs/development/modules.md`, generated `docs/development/code-map.md`, `.markitect/model/product/core-layer.yaml`, generated `docs/markitect/project.md` | First wave. Prepare strict target import/map checks and ownership of pure `internal/model/`, `snapshot/`, `organization/` and `realization/` paths. Preserve existing gates until cutover. No producer implementation; root module/CI edits require coordinator agreement. |
+| APPLY-MODEL | `internal/model/`, including conformance fixtures/tests | First wave. Own compiler API and complete v1 values. No filesystem/provider calls or legacy imports. Integration waits for BOOT; freeze a reviewed API before dependent packages start. |
+| APPLY-SNAPSHOT | `internal/snapshot/`, including tests | First wave. Own fixed generic tree/path/entry/digest values. No Git/process/model dependency. Integration waits for BOOT. |
+| APPLY-PLAY | `experiments/library-playground/` | First wave. Independent Python standard-library oracle and bounded harness checks. No library implementation, Manager engine or real provider invocation. |
+| APPLY-ORG | `internal/organization/` | After MODEL/SNAPSHOT APIs: topology, exact settings, context and mandates from explicit facts. No runtime or registry import. |
+| APPLY-REALIZATION | `internal/realization/` | After MODEL/SNAPSHOT APIs: ownership, census, registry, claims, candidates and composition. No scheduler. |
+| APPLY-CUTOVER | CLI/bootstrap, self-model, source/coverage/import gates, packaging/smoke, root module and current guidance | After deterministic foundation. One owner switches the active product and deletes old compiler/project/runtime/API consumers. Apply stays explicitly unavailable until implemented. |
+| APPLY-RUN | `internal/run/` and consumer-owned Session/Workspace/Check/Journal ports | After foundation/cutover. One owner for task/review/finding/budget/lifecycle semantics. Establish executable ports before adapters. |
+| APPLY-JOURNAL | `internal/adapters/journal/` | After RUN/Apply control contracts. SQLite append/control/recovery; coordinator owns dependency pin. |
+| APPLY-AGENT | `internal/adapters/codexappserver/`, `internal/adapters/process/` | After Session/process contracts. Pin executable/schema, implement direct stdio; real smoke needs finite authority. |
+| APPLY-REPOSITORY | `internal/adapters/gitrepo/`, `internal/adapters/checks/` | After snapshot/workspace/check/publication contracts. Capture, checks, guarded effects and read-back. |
+| APPLY-INTEGRATE | `internal/apply/`, bootstrap/wiring and composed evidence | After RUN/adapters. One Package, then recursive integration, verification/publication and real M1/M2 proof. |
 
-| Zone | Paths | Packages |
-|---|---|---|
-| runtime | `src/internal/host/{projectrun,projectconfig,projectexecutor,projectsetup,agentexec,codexappserver,projectworkspace}` and the exchange executor | RUN, TEST-03 to TEST-05, ARCH-05, ARCH-06 |
-| interface | `src/internal/host/{cli,projectcli,mcp,projectapp,projectonboarding}` | CLI, MCP-01, TEST-02, AGENT-02, AGENT-03, ARCH-08 |
-| model | `src/internal/core`, `src/internal/modules/projectmodel`, `src/internal/host/{projectwork,projectcoverage,projecthistory}` | KG, GOV-01, IDEA-02 to IDEA-04; ARCH-13 completed, no active model writer |
-| legacy (retired) | historical sources only; the earlier host root, compatibility and authoring packages are removed | ARCH-02, ARCH-04, ARCH-09 completed |
-| ci | `.github/workflows`, `markitect.yaml`, `scripts`, `.githooks` | CI, ARCH-07 |
-| docs-entry | `AGENTS.md`, `README.md`, `docs/README.md`, this page, the backlog | OPS, AGENT-01 |
-| free | everything else, including new packages, `experiments/case-playground` and new documents | the rest |
+A scope is reserved only when dispatched; it is not permission to start every later row. Parent scope grants no sibling files. Shared outputs have one current writer; reservation changes are explicit.
+
+### Work packages
+
+Every dispatch states: package ID, full integrated base, exact paths, contracts, first deliverable, checks, forbidden shared edits and integration dependencies. Producers own exported values; consumers start after the producer's reviewed API slice. No global types library or duplicated ports.
+
+MODEL first supplies an I/O-free compilation entrypoint over explicit source/dependency bytes, typed identities/values/provenance and a result that cannot claim success with partial v1. SNAPSHOT supplies immutable tree/path/mode/content identities and deterministic comparison, distinct from canonical model digests. Exact Go names are producer-owned choices reviewed before consumers start.
+
+New foundation packages may develop in isolation while BOOT is reviewed. They cannot integrate with unclassified paths or disabled import checks. BOOT coordinates ownership and package-map handling without writing producer implementations. The public CLI must not consume the partial foundation before CUTOVER.
 
 ### Integration
 
-1. **One pull request per package or slice.** Its title starts with the package ID.
-2. **The PR head is frozen while the required Linux CI runs.** Nobody pushes to it during that run, and evidence goes into the PR description. Fixes may be pushed while a run that is not required (Windows) is still in progress, because only Linux is required ([DEC-013](concepts/register.md#dec-013-linux-first-for-tests-and-the-playground)).
-3. **Linux CI is the required gate** (DEC-013). The integrator merges in dependency order, one pull request at a time, with merge commits.
-4. **The backlog stays current.** After each merge, the package's status is updated in the same or the next integrator pull request.
-5. **Decisions come first.** A decision that changes direction is recorded in the register before code relies on it.
-6. **Compile before merge.** The integrator first compiles each pull request merged onto current main (`go vet ./...`); two pull requests that pass alone can still break main together.
-7. **Stacked pull requests target main.** A pull request whose base is another branch is retargeted to `main` before it merges.
-8. **Worktree hygiene.** Never use `git stash`, because it is shared across worktrees; use patch files. Check `git show --stat` before every push. [CONTRIBUTING](../CONTRIBUTING.md#pull-requests-and-parallel-work) has the full rules.
+1. One focused PR per package/API slice, with its ID and fixed-base evidence.
+2. Independent complete-diff review; resolve findings, shared seams and composition conflicts.
+3. Freeze the pushed head while required Linux Quality/Race run. Preserve failed attempts; Windows remains separate diagnostic evidence.
+4. Compose with current Main and merge one dependency-ready exact head at a time using merge commits. Never bypass checks or protection.
+5. Fetch/read back Main SHA/tree and hosted CI. Downstream dispatch uses the integrated base. Source integration is not release, real-provider proof or owner acceptance.
 
-## Waves
+[CONTRIBUTING](../CONTRIBUTING.md) owns commands. Run focused checks while developing and complete integration gates against the actual target. Delete obsolete checks with their feature; no skip or allowlist may make an unimplemented replacement look complete.
 
-### Wave 0: secure and unblock
+## Implementation sequence
 
-- OPS-01: this roadmap.
-- OPS-02: secure work that exists only on this machine.
-- OPS-04: contribution rules.
-- RUN-01: executor increment 1 (pull request #92).
-- PLAY-01: bring the playground onto main.
-- CI-01: quick fixes.
-- Owner decisions CLI-01, KG-00 and GOV-00.
-
-### Wave 1: foundations, in parallel
-
-- CI-02: Linux-first pipeline.
-- TEST-01: hermetic test kit.
-- Architecture:
-  - ARCH-01: code map.
-  - ARCH-02 and ARCH-03: separate the product from the legacy package.
-  - ARCH-04: remove the canonical alpha.
-  - ARCH-10: documentation per module.
-- AGENT-01: slim agent entry files.
-- PLAY-02 to PLAY-05: ground truth, architecture page, parameters, hardening.
-- BUG-01: bug hunt.
-- IDEA-01 and LEARN-01: research inputs.
-- MCP-02: App Server path review.
-- KG-01: only if KG-00 says go.
-- OPS-03: archive branches.
-
-### Wave 2: one interface, a clean runtime
-
-- **Interface and retired Legacy zones:** CLI-02/03/04, MCP-01, TEST-02, AGENT-02 and ARCH-05/06/08/09/12/13/16 are integrated with source-bound proof. Retired Legacy has no writer. All 28 product-package directories now show their layers; nonproduct CLI/tooling/bootstrap/harness conventions and existing import rules remain accounted.
-- **Runtime zone:** TEST-03/04/05, RUN-02 and ARCH-05/06/13/14/15/16 are integrated with complete actual-Main gates. ARCH-14 shares physical record storage and leases while callers retain domain validation, CAS, readiness and recovery authority. Execution budgets, evidence isolation, no automatic replay and guarded model-only Apply remain. Implementation reservations are released; the owner bounded this closure to ARCH-14 and stop. RUN-05/06, KG-04, CI-04, GOV-01 and PLAY-07 keep their existing gates.
-- **Also in this wave:**
-  - CI-03: one smoke driver.
-  - CI-04: container runtime tier.
-  - PLAY-06: per-role models in studies.
-  - KG-02.
-
-### Wave 3: Markitect on Markitect, legacy removed
-
-- ARCH-07: Markitect uses its own model and current verbs.
-- ARCH-08: release tooling separated.
-- ARCH-09: the Project/Domain line removed.
-- RUN-03: Claude Code as an inner executor.
-- GOV-01: Government code after the interface/runtime conditions in [DEC-019](concepts/register.md#dec-019-government-code-starts-after-wave-2) and its actual backlog dependencies; the old evaluation and dirty v1 basis remain unaccepted inputs.
-- AGENT-03 remains parked in the backlog; wave placement does not activate it.
-- CI-05 remains parked for the owner's Windows-support decision.
-
-### Wave 4: evidence and extensions
-
-These wait for the conditions in [DEC-011](concepts/register.md#dec-011-detailed-planning-of-future-ideas-waits), a stable version and case-study numbers, unless the owner decides otherwise:
-- PLAY-07: first method study over a change series.
-- KG-03: the knowledge graph as a variant.
-- GOV-02; GOV-01's code-start conditions are separately governed by DEC-019.
-- IDEA-02 to IDEA-04: the register's enhancements ENH-001 to ENH-003.
-- Follow-ups selected from LEARN-01.
+1. **Baseline and measurement:** integrate this concept/coordination reset, then dispatch BOOT, MODEL, SNAPSHOT and PLAY separately. The oracle needs no finished CLI; synthetic Apply bookkeeping is not a prerequisite for the pure compiler.
+2. **Deterministic foundation:** integrate BOOT, producer API slices and complete v1 conformance; then parallel ORG and REALIZATION. Implement all language constructs, not only M1. Bounded probe evidence remains separate.
+3. **Product cutover:** switch CLI, self-model and build/coverage/import gates together; remove obsolete source/commands/tests. Keep Main buildable and explicit about unavailable execution.
+4. **Execution/adapters:** RUN establishes ports/reducer. JOURNAL, AGENT and REPOSITORY then work independently against them, without a second scheduler or ledger.
+5. **Realization:** one Package through work/review/rework, then root recursion, integration, complete evidence and guarded publication.
+6. **Demonstration:** freeze product/profile; real M1/R1 and independent A1 inspection; exact model-only M2 edit; real R2 on A1 and independent A2 inspection. Preserve all attempts.
 
 ## Owner decisions
 
-Markitect's product owner approved the roadmap and its recommendations on 10 October 2026:
-- [DEC-017](concepts/register.md#dec-017-command-model-top-level-verbs-from-one-verb-table): commands.
-  - Top-level verbs come from one verb table, and the `project` noun is dropped.
-  - One brownfield path remains, as `adopt` stages.
-  - `--write` and `--execute` are separate.
-  - `status` shows a project overview.
-  - MCP gets a read-only mode.
-  - Release tooling lives in its own binary.
-- [DEC-014](concepts/register.md#dec-014-compatibility-does-not-drive-decisions): the legacy tree is removed, tools may be renamed, and no aliases are kept.
-- [DEC-018](concepts/register.md#dec-018-the-knowledge-graph-explains-impact): the knowledge graph explains impact. A reduced core is ported, and the existing MCP surface is used.
-- [DEC-019](concepts/register.md#dec-019-government-code-starts-after-wave-2): Government code starts after Wave 2; design work may continue.
-- OPS-02 and OPS-03: earlier work is preserved as archive references, and the archive list is approved.
+The architecture is ready for implementation. Concrete producer APIs, driver versions and capability identities are bounded implementation deliverables, not reasons to keep expanding the concept. Ask only for genuinely new intent, authority or an exceptional tradeoff.
 
-Decisions still to come are listed per package as `needs_owner` in the backlog, for example the protocol of the first method study (PLAY-07).
+A supported Codex executable/schema and bounded real session smoke remain mandatory before R1. Credentials and runtime grants must be explicit. This plan does not authorize unlimited provider spending, studies, release/deployment or Government. Existing unrelated PRs/worktrees remain separate unless assigned.
 
 ## Releases and historical evidence
 
-The latest published release is v0.14.1. It preserves the earlier Project/Domain CLI and an experimental canonical Projection alpha; it does not include the current model-first project workflow. Source changes do not change a pinned release. See the [production assessment](production-assessment.md) for exact release assets and evidence.
+The retired backlog/roadmap remain in [Git at previous Main](https://github.com/Glacius-Labs/Markitect/tree/bc4b49e76f9b9e4b3ec98033a0b8c73d5013b310/docs). Old [handoffs](development/session-handoff.md) and [surveys](work-items/surveys/README.md) preserve their scope and cannot restart queues. The local dashboard is retired without a replacement monitor.
 
-The prior roadmap, including dated release summaries, proof dispositions, architecture assessments, and their original pinned references, is preserved in the [dated historical roadmap](history/implementation-plan-before-product-integration-20261009.md). Use its linked validation reports for evidence details; those records are not current work status.
+Published assets, original PRs and failed diagnostics retain their identities. [Operations](operations.md) owns separate release work.
 
 ## Historical roadmap links
 
-These retained anchors route existing references to the corresponding dated historical sections.
+These anchors route old references to immutable records without reviving queues.
 
 <a id="astra-assessment-disposition-and-next-method-checkpoint"></a>
-The [Astra disposition](history/implementation-plan-before-product-integration-20261009.md#astra-assessment-disposition-and-next-method-checkpoint) is historical; current work lives in the [backlog](work-items/backlog.yaml).
+[Astra disposition](history/implementation-plan-before-product-integration-20261009.md#astra-assessment-disposition-and-next-method-checkpoint).
 
 <a id="standard-operating-model-checkpoint"></a>
-The [operating-model checkpoint](history/implementation-plan-before-product-integration-20261009.md#standard-operating-model-checkpoint) is historical; current work lives in the [backlog](work-items/backlog.yaml).
+[Earlier operating-model checkpoint](history/implementation-plan-before-product-integration-20261009.md#standard-operating-model-checkpoint).
 
 <a id="read-only-policy-failure-analysis-unreleased-source"></a>
-The [policy-failure analysis](history/implementation-plan-before-product-integration-20261009.md#read-only-policy-failure-analysis-unreleased-source) is historical.
+[Earlier policy-failure assessment](history/implementation-plan-before-product-integration-20261009.md#read-only-policy-failure-analysis-unreleased-source).
 
 <a id="v0100--canonical-engineering-model-published"></a>
-The [v0.10.0 release record](history/implementation-plan-before-product-integration-20261009.md#v0100--canonical-engineering-model-published) is historical.
+[v0.10.0 historical release](history/implementation-plan-before-product-integration-20261009.md#v0100--canonical-engineering-model-published).
 
 <a id="knowledge-graph-assessment-and-authoring-decision"></a>
-The [knowledge-graph assessment](history/implementation-plan-before-product-integration-20261009.md#knowledge-graph-assessment-and-authoring-decision) is historical; current knowledge-graph work is KG-00 to KG-03 in the [backlog](work-items/backlog.yaml).
+[Earlier knowledge-graph assessment](history/implementation-plan-before-product-integration-20261009.md#knowledge-graph-assessment-and-authoring-decision).

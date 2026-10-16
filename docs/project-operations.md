@@ -1,5 +1,7 @@
 # Project operations
 
+This reference describes current source before the [Apply rebuild](implementation-plan.md). New package work follows the [target contracts](design/canonical-model/README.md); proposed new operations are not advertised as supported here.
+
 This page is the current operational reference for the model-first `markitect <verb>` source workflow. It is not in the published v0.14.1 CLI. Build/use a candidate from the matching Markitect source checkout; commands and MCP tools below do not change that release pin.
 
 ## MCP server and tool groups
@@ -50,7 +52,7 @@ The CLI exposes matching operations for shell use. Read the candidate's `markite
 
 Native App Server roles inherit the caller's environment through `appServer.environmentMode: inherit`. Markitect binds the effective values into the role fingerprint and receipt digest without exposing them. `Agent.Environment` remains the selected-name policy for declared-check executable resolution, not a filter on the inherited App Server environment. Ordinary process adapters retain explicit allowlists.
 
-Within Manager work and integration turns, `markitect_start_helper` delegates scoped file authoring and returns Host-validated file changes after delivery and cleanup. Its current contract has no report-only result for standalone read-only inspection or analysis. Use normal parent tools and the parent's typed report for that work, or the existing independent Review roles for candidate assessment. Authoring helpers may still inspect context and run checks for their edits. Safe read-only and analysis-helper returns are backlog package RUN-04 in the [backlog](work-items/backlog.yaml); this capability is not implemented.
+Within Manager work and integration turns, `markitect_start_helper` delegates scoped file authoring and returns Host-validated file changes after delivery and cleanup. Its current contract has no report-only result for standalone read-only inspection or analysis. Use normal parent tools and the parent's typed report for that work, or the existing independent Review roles for candidate assessment. Authoring helpers may still inspect context and run checks for their edits. Safe read-only and analysis-helper returns are historical package RUN-04 in the retired plan in the [backlog](https://github.com/Glacius-Labs/Markitect/blob/bc4b49e76f9b9e4b3ec98033a0b8c73d5013b310/docs/work-items/backlog.yaml); this capability is not implemented.
 
 ## Candidate workspaces and recovery
 
@@ -78,4 +80,4 @@ The [architecture contract](architecture.md#operational-record-storage) defines 
 
 Agent logs and run journals live in `.markitect/runs/private`, which Markitect creates owner-only: a protected owner-only access list on Windows, mode 0700 elsewhere. It refuses an existing directory that is not owner-only. Known limit for Windows users whose native runs in earlier releases created that directory: those releases gave it the parent folder's access list, so after upgrading every run stops with "existing private log directory … is not owner-only". Delete `.markitect/runs/private` once to continue. The native journals of runs interrupted before that cannot be recovered afterwards; resume such a run with the release that started it before you upgrade.
 
-The [backlog](work-items/backlog.yaml) owns current status, and the [A01 validation record](validation/a01-native-smoke-20261010.md) summarizes the native smoke, its exercise limits and its attempt accounting. Those exercise limits are separate from configured runtime defaults and do not guarantee cost or acceptance. Source-level tests, the recorded native A01 result and post-merge gates retain their own source identities and evidence limits. See the [Product Readiness lessons survey](work-items/surveys/product-readiness-lessons-20261010.md) for known runtime limits and the [documentation map](README.md) for dated validation.
+The [delivery plan](implementation-plan.md) owns current rebuild scope, and the [A01 validation record](validation/a01-native-smoke-20261010.md) summarizes the native smoke, its exercise limits and its attempt accounting. Those exercise limits are separate from configured runtime defaults and do not guarantee cost or acceptance. Source-level tests, the recorded native A01 result and post-merge gates retain their own source identities and evidence limits. See the [Product Readiness lessons survey](work-items/surveys/product-readiness-lessons-20261010.md) for known runtime limits and the [documentation map](README.md) for dated validation.

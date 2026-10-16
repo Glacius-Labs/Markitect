@@ -1,0 +1,81 @@
+Ich würde das bestehende Konzept an fünf Stellen präzisieren. **Dafür braucht es weder zusätzliche Agentenrollen noch eine neue Modellierungsschicht.** Vieles ist bereits angelegt; entscheidend sind klarere Arbeitsaufträge und verständliche Ergebnisse.
+
+1. **Fehlende Verbindungen: eine gezielte Prüfung an Bereichsgrenzen**
+
+   Jeder Manager und sein Reviewer sollten ausdrücklich prüfen:
+
+   > Welche Aussagen meines Bereichs verlangen Verhalten von einem anderen Bereich – und ist diese Verbindung im Modell sichtbar?
+
+   Beim Mitglieder-Manager wäre das beispielsweise: „Gesperrte Mitglieder dürfen nicht ausleihen.“ Er muss dafür nicht die gesamte Ausleihimplementierung kennen. Er muss erkennen, dass seine Aussage eine fremde Verantwortung berührt.
+
+   Eine vermutete fehlende Verbindung wird als bestehende Frage beziehungsweise Konflikt an den gemeinsamen Eltern-Manager gemeldet: Aussage, betroffener Bereich, vermutete Wirkung. **Apply ergänzt dabei keine Modelllinks.** Lässt sich die Realisierung ohne die fehlende Festlegung nicht belastbar beurteilen, bleibt diese Frage offen.
+
+   Das ergänzt die gewählte strenge Linkstrategie um eine konkrete Prüfung ihrer Voraussetzungen. Es braucht dafür weder semantischen Index noch einen obligatorischen Optimizer. Unentdeckte Zusammenhänge bleiben möglich; vollständige semantische Abdeckung wird dadurch nicht garantiert.
+
+2. **Package und Organisation: die einfache Zuordnung behalten, schlechte Zuschnitte sichtbar machen**
+
+   Einen Manager pro lokalem Package würde ich zunächst beibehalten. Ausnahmen, zusammengelegte Manager oder eine zweite Organisationsstruktur wären verfrüht.
+
+   Stattdessen sollte der vorhandene Abschlussbericht drei ohnehin beobachtbare Größen pro Manager zeigen:
+
+   - Wie viel lokale Arbeit fiel an?
+   - Wie viele Abstimmungen mit anderen Bereichen waren nötig?
+   - Welcher Zeit- und Agentenaufwand entstand?
+
+   Daraus lassen sich später konkrete Probleme erkennen: Ein Manager reicht fast nur Nachrichten weiter; ein anderer benötigt ständig fast das gesamte Modell; mehrere Bereiche müssen dieselbe Datei ändern.
+
+   **Keine automatischen Umbauten und zunächst keine Schwellenwerte.** Die Daten dienen als begründeter Hinweis an den Autor, den Zuschnitt zu prüfen. Der Vorteil ist, dass wir organisatorische Flexibilität erst dort hinzufügen, wo die einfache Regel nachweislich schlecht funktioniert.
+
+3. **Registry und Vollständigkeit: jede Definition mit einer konkreten Begründung abschließen**
+
+   Die vorgesehene Definitionsbewertung würde ich verbindlicher formulieren. Eine positive Bewertung muss beantworten:
+
+   > Woran lässt sich erkennen, dass diese Definition angemessen berücksichtigt wurde?
+
+   Für die Ausleihregel könnte das so aussehen:
+
+   | Definition | Bewertung | Begründung und Beleg |
+   |---|---|---|
+   | Höchstens fünf Ausleihen | Realisiert | Ausleihfunktion begrenzt die Anzahl; Grenzfalltest prüft die sechste Ausleihe |
+   | Begriff „Mitglied“ | Vokabular | Beschreibt die gemeinsame Bedeutung; konkrete Anforderungen werden bei den verwendenden Definitionen geprüft |
+   | Gesperrte Mitglieder | Ungeklärt | Zuständigkeit für die Durchsetzung noch nicht ausreichend verbunden |
+
+   Der Host prüft, dass jede Definition eine Bewertung und erforderliche Belegverweise hat. Der Reviewer prüft deren inhaltliche Tragfähigkeit.
+
+   **„Vokabular“ darf enthaltene Verpflichtungen nicht verschwinden lassen.** Ein Kind kann beispielsweise gemeinsame Anforderungen an seine Instanzen formulieren. Dann muss die Begründung zeigen, wo diese berücksichtigt werden.
+
+   Dafür reicht die bereits vorgesehene Tabelle. Ich würde keine zusätzliche Datenbank atomarer Anforderungen einführen.
+
+4. **Mehrere Reviews: jedem Review eine andere Leitfrage geben**
+
+   Die vorhandenen Prüfungen sollten sich klar unterscheiden:
+
+   | Prüfung | Leitfrage |
+   |---|---|
+   | Lokales Review | Erfüllt dieser Bereich seine Definitionen, einschließlich Tests und Dokumentation? |
+   | Integrationsreview | Passen die verbundenen Bereiche zusammen, und bleiben ihre gemeinsamen Zusagen erhalten? |
+   | Abschlussverifikation | Liegen die erforderlichen Ergebnisse und Belege für genau diesen Gesamtkandidaten vor, und bestehen die übergreifenden Prüfungen? |
+
+   Im Bibliotheksbeispiel prüft das lokale Review die Fünf-Bücher-Grenze. Das Integrationsreview betrachtet unter anderem, ob eine Mitgliedersperre tatsächlich die Ausleihe verhindert. Die Abschlussverifikation führt die erforderlichen Prüfungen am zusammengesetzten Kandidaten aus und kontrolliert offene Punkte sowie die Gültigkeit der Belege.
+
+   Ein bereits geklärter Befund wird referenziert. Er wird neu geprüft, wenn sich sein Gegenstand oder seine Voraussetzungen ändern. Die Pflicht zum unabhängigen Review bleibt bestehen.
+
+   Den geschützten Erwartungssatz des Bibliotheksplans würde ich unbedingt behalten. **Er ist zunächst eine unabhängige Bewertungsgrundlage für diesen Nachweis**, keine zusätzliche, von jedem Nutzer dauerhaft parallel zu pflegende Produktspezifikation.
+
+5. **Aufwand für Autoren: ein gutes Startvokabular und eine lesbare Vorschau**
+
+   Die fertige Sprache würde ich unverändert lassen. Darüber würde ich zunächst genau ein kleines, gewöhnliches Software-Vokabular samt vollständigem Bibliotheksbeispiel anbieten.
+
+   Nutzer können damit beginnen und eigene Begriffe ergänzen, wenn ein konkreter Bedarf entsteht. Sie müssen nicht zuerst selbst eine vollständige Taxonomie entwerfen.
+
+   Zusätzlich sollte die ohnehin vorgesehene Kontextinspektion drei Fragen gut lesbar beantworten:
+
+   - Welche Aussagen bekommt dieser Manager?
+   - Warum bekommt er sie?
+   - Welche Zuständigkeiten und Verbindungen ergeben sich daraus?
+
+   Damit werden Modellierungsfehler vor einem Agentenlauf greifbar. Auch Vorlagen sollten reguläre Definitionsdateien erzeugen und deren Inhalte sichtbar lassen. Es braucht keine zweite Autorensprache.
+
+**Als gemeinsame Leitlinie würde ich ergänzen: Jede zusätzliche Struktur muss entweder eine konkrete Fehlermöglichkeit sichtbar machen oder eine wiederkehrende menschliche Tätigkeit ersparen.**
+
+Diese fünf Änderungen erfüllen das überwiegend durch bessere Prüfaufträge, vorhandene Berichte und verständlichere Ansichten. Neue Managerstrategien, automatische Package-Umbauten und feinere Anforderungsverwaltung würde ich erst aus den Erfahrungen mit dem Bibliotheksablauf ableiten.

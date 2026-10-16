@@ -11,7 +11,7 @@ Start at the [documentation map](../README.md) and the nearest local map. Search
 | Product thesis and human/agent responsibilities | [Vision](../vision.md) |
 | Technical behavior and boundaries | [Architecture](../architecture.md) and the relevant current workflow or operations guide |
 | Current source scope and future implementation | [Implementation roadmap](../implementation-plan.md) |
-| Work-package status | [Backlog](../work-items/backlog.yaml) |
+| Delivery scopes, dependencies and reservations | [Delivery plan](../implementation-plan.md); chats/PRs own candidate evidence |
 | Contribution and validation commands | [CONTRIBUTING.md](../../CONTRIBUTING.md) |
 | Product-specific future design records | [Design map](../design/README.md) |
 | Fixed source, adoption, or method evidence | [Validation map](../validation/README.md) and the individual report |

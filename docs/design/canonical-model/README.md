@@ -12,6 +12,19 @@ The linked histories preserve the derivation and superseded choices. Project voc
 | [Diagnostic contract](minimal-language/diagnostic-contract.md) | Separate tool profile for exact coordinates; independent of model validity and canonical bytes. |
 | [Language history](minimal-language/language-history.md) and [earlier Core explorations](minimal-language/README.md) | Historical choices, superseded variants and evidence of their recorded scope. |
 | [Procedure proposals](minimal-language/procedure-proposals.md) | Unselected, nonnormative context, impact and semantic-index procedures. |
+| [Manager realization north star](manager-realization-north-star.md) | Working direction and open variants for one Manager per Package, configurable teams, artifact registration and simple context delivery. |
+| [Manager organization and reliable Apply](manager-apply-concept.md) | Developed proposal resolving those variants into organization, context, ownership, integration, verification and reporting, with a library walkthrough. |
+| [Implementation plan for reliable Apply](manager-apply-implementation-plan.md) | Two real library Applies around a model change, Go and Playground design, Agent communication and a clean rebuild without compatibility obligations. |
+| [Supplied Apply review and resolution](review-resolution-20261016.md) | Preserved assessment sources, five refinements, superseded migration advice and the next concrete design work. |
+| [Small library model M1](library-example/README.md) | Canonical YAML from the confirmed business rules, a small ordinary vocabulary, explicit Package links and bounded structural evidence. |
+| [Go architecture outline for reliable Apply](manager-apply-go-architecture.md) | Ports and Adapters responsibilities, idiomatic Go package proposal and treatment of current source. |
+| [Library delegation walkthrough](manager-apply-library-flow.md) | Root, lending, fresh review, rework and integration traced against M1, with concrete refusal cases; design rather than an executed run. |
+| [Apply port contracts](manager-apply-port-contracts.md) | Proposed Go interfaces, value ownership and behavioral contracts for acquisition, sessions, workspaces, checks, journal and publication. |
+| [Agent adapter selection and rebuild plan](manager-apply-rebuild-plan.md) | First stdio App Server adapter, session lifetime, source replacement/deletion map and coherent implementation cuts, including self-model and gates. |
+| [Configuration assignments and mandates](manager-apply-configuration.md) | Proposed execution YAML, exact Package overrides, hard ceilings, explicit profiles and source-bound mandates. |
+| [Budgets run states and completion](manager-apply-execution.md) | Consolidated first-Apply proposal: one assignment ledger, protected completion capacity, execution time/deadline separation and one run lifecycle/status mapping. |
+| [Journal and continuation contracts](manager-apply-journal.md) | Proposed SQLite assignment streams, repository control lifetime, questions/answers, retained work, budget continuity and publication guards. |
+| [Library Playground contract](manager-apply-playground.md) | Proposed JSON Lines interface, independent M1/M2 expectations, frozen two-Apply sequence, source/history capture and honest evidence boundaries. |
 | [Executable Exchange example](minimal-language/exchange-example/README.md) | Current input files, bounded probe and reports; includes the explicitly rejected Command/command vocabulary collision. |
 | [Consolidated design history](consolidation.md) and [fixed Main comparison](current-main-comparison.md) | Origin of the design and product boundaries. |
 

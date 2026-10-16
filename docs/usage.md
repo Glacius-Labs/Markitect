@@ -1,5 +1,7 @@
 # Usage
 
+This reference describes current executable behavior before the [Apply rebuild](implementation-plan.md). The [target design](design/canonical-model/README.md) will be implemented in bounded packages; its proposed interfaces are not already CLI features.
+
 Current source uses the model-first command surface documented in [Project operations](project-operations.md), with workflow and ownership explained in [Project workflow](project-workflow.md). Release preparation commands are documented in the repository [distribution guide](../integration/README.md).
 
 This page formerly documented the Project/Domain CLI, its schemas and examples, and the experimental canonical Projection alpha. Those source interfaces and guides are retired. The immutable [v0.14.1 usage guide](https://github.com/Glacius-Labs/Markitect/blob/v0.14.1/docs/usage.md) preserves the complete historical contracts and command syntax. Existing repositories are not converted implicitly; migration requires explicit project-owner decisions.
