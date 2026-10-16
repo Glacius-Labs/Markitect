@@ -1,0 +1,21 @@
+apiVersion: project.markitect.example.org/v1alpha1
+kind: Check
+metadata:
+  name: library-playground-tests
+  namespace: examples
+purpose: Checks the independent library oracle and bounded JSONL transport.
+spec:
+  command:
+    - python
+    - -B
+    - -m
+    - unittest
+    - discover
+    - -s
+    - experiments/library-playground
+  uses:
+    - namespace: examples
+      name: examples
+    - namespace: product
+      name: evidence-not-acceptance
+  limitation: Controlled transcripts and protocol fixtures test the evaluator itself. They do not run a generated library or establish Apply, source review, upgrade behavior or human acceptance.

@@ -12,6 +12,7 @@ modelFiles:
     - .markitect/model/documentation/purpose.yaml
     - .markitect/model/examples/executable-examples.yaml
     - .markitect/model/examples/experiments.yaml
+    - .markitect/model/examples/library-playground-tests.yaml
     - .markitect/model/examples/manager.yaml
     - .markitect/model/examples/purpose.yaml
     - .markitect/model/go-tests.yaml
