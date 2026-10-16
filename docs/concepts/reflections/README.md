@@ -4,7 +4,7 @@ This collection keeps discussions about Markitect's purpose, future use and orga
 
 | Reflection | Subject |
 | --- | --- |
-| [A working day with delegated realization](desired-working-day-20261016.md) | Model change, delegation, owner questions, review, completion and steering; existing concept foundations and remaining interaction contracts |
+| [A working day with delegated realization](desired-working-day-20261016.md) | Model change, delegation, owner questions, review and steering; continuing assignments across Apply runs, retained work without inherited approval, and remaining interaction contracts |
 | [Trust through organized agent work](organization-and-trust-20261016.md) | [Extracted ideas with origin and status](organization-and-trust-20261016.md#extracted-ideas-and-their-status), desired working life, delegation, experience, configurable teams, review and process oversight |
 | [Experience without implicit rules](experience-without-implicit-rules-20261016.md) | Observation, explanation, experience and binding rules; a small learning loop, explicit authority and a hypothetical library walkthrough |
 | [Experience selection and runtime feedback](experience-selection-and-runtime-feedback-20261016.md) | Two separate subjects: selective experience context and a Manager-based operational check or doctor; library diagnosis with optional later learning |

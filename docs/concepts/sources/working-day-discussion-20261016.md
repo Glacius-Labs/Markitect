@@ -17,3 +17,15 @@ Recorder's note: The assistant illustrated a five-to-three library loan limit ch
 > Halte diesen gewünschten Arbeitsalltag bitte auch in unseren Docs fest. Welche Voraussetzungen fehlen im neuen Konzept noch, damit Markitect tatsächlich so arbeiten kann?
 
 The [working-day reflection](../reflections/desired-working-day-20261016.md) preserves the scenario and the assistant's assessment against the current written concept.
+
+## Continue after an owner answer
+
+> Lass uns den Ablauf Rückfrage → Entscheidung → Modelländerung → Weiterarbeiten konkret ausarbeiten. Wie bekommen wir das möglichst einfach hin, ohne bei jeder Antwort die gesamte Arbeit neu starten zu müssen?
+
+Recorder's note: The assistant proposed a continuing assignment containing successive Apply runs, with fixed input bindings per run. Existing candidates can supply starting material for a successor, while prior approval remains bound to the old subject. Context-only answers can continue the existing run; changed intent requires an authorized model edit and a new run. Full assessment remains the initial policy rather than speculative reuse of review verdicts.
+
+## Preserve the continuation distinction
+
+> Halte diesen Ablauf bitte auch in unseren Docs fest, insbesondere die Trennung zwischen fortbestehendem Auftrag, neuem Apply-Lauf und der Übernahme vorhandener Arbeit ohne automatische Übernahme ihrer Freigabe.
+
+The reflection's [continuation section](../reflections/desired-working-day-20261016.md#continue-the-assignment-across-model-changes) records the requested distinction. Safe handoff, publication-base separation and retained assignment limits are assistant-proposed safeguards, not additional owner decisions.
