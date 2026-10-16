@@ -451,6 +451,46 @@ Some parent work is unavoidable: many genuinely coupled changes create real coor
 
 Extend the existing multi-contribution routing case with ordinary delivery notifications and a contested handoff: recorded dependency progress should not require a new parent semantic decision for each update, while repeated unsupported forwarding must remain unresolved and trigger bounded coordination rather than silent closure. Required integration evidence, ownership and budgets stay enforced. These are proposed observations/checks, not demonstrated throughput improvements.
 
+### Release a dependency from an accepted delivery
+
+The [owner asked how the Host recognizes a fulfilled delivery dependency](../sources/working-day-discussion-20261016.md#recognize-a-delivery-that-enables-continuation) without deciding domain meaning. Use the existing Host-issued `DeliveryID` and its exact subject, scope and evidence from the [port contract](../../design/canonical-model/manager-apply-port-contracts.md). An Agent's completion message, a file appearing or a successful command is not an accepted delivery. This proposal makes the dependency's references explicit; it does not add a general predicate language or another acceptance role.
+
+The parent records the agreement in existing tasks and dependency records: the consumer task/step, the designated producer task, the versioned requested outcome/constraints and their model basis, and the required delivery/review boundary. The outcome and constraints have one owner in that recorded task/coordination decision; the dependency points there instead of copying a separate specification. When the producer delivers, the dependency binds the actual accepted delivery reference, not an alias such as "latest Catalog output".
+
+The producer's normal independent review assesses whether the candidate meets that recorded outcome and its full applicable responsibility. Required checks, Definition assessments and finding-specific resolutions support the judgment. The Host then issues an accepted delivery only when its ordinary structural/evidence guards pass. If the existing verdict does not explicitly cover the requested contribution, a generic pass cannot supply that missing semantic assessment. A clarification or changed outcome returns to the existing coordination path.
+
+To make the dependent step ready, the Host can check these facts mechanically:
+
+1. The dependency still refers to the current authorized task/coordination revision and the designated producer, with no unresolved prerequisite or blocking question for that step.
+2. A Host-issued accepted delivery exists for that producer and recorded scope, backed by the required authorized reviews, real check receipts and dispositions of required findings. Its input/contract bindings match the dependency's expected basis. Partial, failed or unknown execution does not qualify.
+3. The actual immutable candidate and registry referenced by that delivery are available and consistent. The recorded consumer starting candidate can compose/use them under the existing ownership and base rules. Conflicts are returned for coordination; the Host does not choose a semantic merge.
+4. The consumer's actual materialized inputs/context reference that exact delivery and the resulting composition, including relevant constraints/findings. Merely delivering a notification or the delivery ID in prose is insufficient if the consumer still works against older bytes.
+5. Normal dispatch guards still hold: current run/controller authority, budget, execution limits, exclusive writing and no unresolved external effect. "Dependency satisfied" makes work eligible; it does not bypass scheduling or automatically start another writer.
+
+Persist the accepted delivery and dependency/consumer binding through the existing journal transitions before dependent dispatch, and make repeated notifications idempotent through existing IDs/replay. Recovery derives the same readiness from those records and reconciles actual workspace/session state before effects. It does not blindly repeat a dispatch because the producer notification arrived twice.
+
+An illustrative library sequence is:
+
+```text
+Parent decision P6: Lending task L waits for the reviewed contribution of
+Catalog task C under the recorded availability contract and model basis.
+
+Catalog proposes candidate C8; its required review/checks cover that outcome.
+Host accepts delivery D12 for task C, referring to C8 and its evidence.
+Host binds L's dependency to D12 and prepares the compatible consumer inputs.
+If all ordinary dispatch guards hold, L may continue with those exact inputs.
+
+Later integration still checks return -> loan closed -> copy available.
+```
+
+These labels are illustrative references, not new API names. Catalog contributes only if actual responsibility requires it; the example does not mandate a particular implementation of availability. The producer boundary should describe a useful contribution that can be independently assessed before the consumer uses it. If its supposed acceptance already depends on the unfinished consumer result, the parent must resolve that dependency cycle or revise the legitimate work order. It must not mark the producer done merely to unblock the cycle.
+
+Readiness is not proof that the complete consumer flow works. The consumer can still discover a contract mismatch, and the existing parent/integration review then handles it with current findings. An accepted component delivery does not automatically resolve the overall cross-area finding, pass aggregate verification or authorize publication. The Host checks the existence and consistency of the semantic judgment; it does not independently prove that judgment correct.
+
+The chosen delivery remains immutable. A new producer candidate, revised coordination decision or successor basis must not silently replace it in an already prepared consumer context. If the selected input/contract changes, explicitly rebind/reconcile the consumer and obtain the current assessments required by the initial policy. Earlier deliveries and consumer results remain historical, not automatically current approval.
+
+Bounded dependency cases should reject a producer's self-reported completion, a receipt for the wrong subject, a delivery from the wrong task/contract revision and a consumer workspace still containing older input. A valid accepted delivery with compatible actual inputs should enable eligibility; duplicate notification/replay should not create duplicate execution. Keep these checks within the existing delivery, context, composition and dispatch contracts rather than building another workflow engine. These are proposed checks, not executed results.
+
 ## Overall acceptance and repeatability
 
 The proposed initial threshold is three complete series of all four scenarios, using a fresh execution state for each case and the same fixed product/profile basis. Each case starts from its specified recorded baseline; within the recovery case, the interrupted state must survive the restart. Do not replace recovery with a new clean assignment.

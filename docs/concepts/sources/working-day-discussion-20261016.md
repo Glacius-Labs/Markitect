@@ -229,3 +229,9 @@ Recorder's note: The assistant proposed a local ownership/dependency assessment 
 > Wie verhindern wir, dass der gemeinsame Parent bei bereichsübergreifenden Findings zum Flaschenhals wird oder Aufgaben zwischen Managern hin- und hergeschoben werden, ohne zusätzliche Koordinationsstrukturen einzuführen?
 
 Recorder's note: The assistant proposed [bounded parent coordination](../reflections/working-day-demonstration-20261016.md#keep-parent-coordination-bounded-and-prevent-forwarding-loops): one decision-ready request, an explicit allocation of contributions/dependencies, Host routing of already authorized progress, evidence-based objections and bounded handling of repeated forwarding. Existing parent integration remains required; no new coordinator, peer authority, retry count or parallel writer is introduced. Journal observations reveal coordination overhead without claiming that genuine cross-area coupling can be removed automatically.
+
+## Recognize a delivery that enables continuation
+
+> Wie erkennt der Host konkret, dass eine Lieferung die vereinbarte Abhängigkeit erfüllt und der nächste Manager weiterarbeiten darf, ohne dafür selbst fachliche Entscheidungen zu treffen?
+
+Recorder's note: The assistant proposed [dependency release through accepted delivery references](../reflections/working-day-demonstration-20261016.md#release-a-dependency-from-an-accepted-delivery): the parent records the producer/outcome/basis, the existing reviewer judges the contribution, and the Host validates accepted delivery identity, current evidence, compatible composition, actual consumer inputs and ordinary dispatch guards. Readiness remains separate from aggregate correctness and publication. The proposal uses existing task, delivery, journal and execution records rather than a new rule language or workflow engine.
