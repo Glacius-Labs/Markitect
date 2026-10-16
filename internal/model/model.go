@@ -129,8 +129,8 @@ type Result struct {
 
 // ModelResult validates a supplied model in its complete requirement closure.
 // Packages, Definitions, Canonical and Digest are absent unless this scope fully
-// passed. A passed scope's Packages is its complete own directory inventory;
-// an empty list is authoritative only alongside Status == Passed.
+// passed. A passed scope's Packages is its complete own directory inventory in
+// exact UTF-8 name order; an empty list is authoritative only with Status == Passed.
 // Only Input.Root has an entry-lock obligation. For a supplied dependency,
 // lock=passed means no separate sidecar is required in this Compile; its own
 // content may pass independently beside an invalid consumer or entry lock.
