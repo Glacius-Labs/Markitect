@@ -42,14 +42,22 @@ func Compile(input Input) Result {
 			remainingBytes -= int64(len(e.Bytes))
 		}
 	}
+	var scopes []sourceScope
 	for index, m := range models {
-		modelResult, diagnostics := compileSource(m, r.Limits)
+		modelResult, diagnostics, scope := compileSource(m, r.Limits)
+		scopes = append(scopes, scope)
 		modelResult.Local = index == 0
 		r.Models = append(r.Models, modelResult)
 		r.Diagnostics = append(r.Diagnostics, diagnostics...)
 		if modelResult.Status == Failed {
 			r.Status = Failed
 		}
+	}
+	for _, finding := range checkExactScopeIdentities(scopes) {
+		r.Diagnostics = append(r.Diagnostics, finding.diagnostic)
+		r.Models[finding.scope].Status = Failed
+		r.Models[finding.scope].Phases[2].Status = Failed
+		r.Status = Failed
 	}
 	sort.Slice(r.Models, func(i, j int) bool {
 		a, b := r.Models[i], r.Models[j]
@@ -99,11 +107,13 @@ type sourceCompiler struct {
 	limited      bool
 	sourceFailed bool
 	yamlFailed   bool
+	namesFailed  bool
 	rootScanned  bool
+	scope        sourceScope
 }
 
-func compileSource(m SourceModel, limits Limits) (ModelResult, []Diagnostic) {
-	c := sourceCompiler{model: m, limits: limits}
+func compileSource(m SourceModel, limits Limits) (ModelResult, []Diagnostic, sourceScope) {
+	c := sourceCompiler{model: m, limits: limits, scope: sourceScope{origin: m.Origin}}
 	r := ModelResult{Origin: m.Origin, Status: NotCompleted}
 	r.Phases = []Phase{
 		{Name: "source_structure", Status: NotCompleted},
@@ -130,6 +140,7 @@ func compileSource(m SourceModel, limits Limits) (ModelResult, []Diagnostic) {
 			c.closed(v, []string{"formatVersion", "id", "version", "root", "dependencies"}, manifest)
 			c.formatVersion(v, manifest)
 			r.ID, _ = c.requiredText(v, "id", manifest)
+			c.scope.modelID, c.scope.manifest = r.ID, manifest
 			if version, present := lookup(v, "version"); present {
 				c.nonemptyText(version, "version", manifest)
 			}
@@ -153,6 +164,9 @@ func compileSource(m SourceModel, limits Limits) (ModelResult, []Diagnostic) {
 	if c.failed {
 		r.Status = Failed
 	}
+	if c.namesFailed {
+		r.Phases[2].Status = Failed
+	}
 	if c.sourceFailed {
 		r.Phases[0].Status = Failed
 	} else if c.rootScanned {
@@ -163,7 +177,7 @@ func compileSource(m SourceModel, limits Limits) (ModelResult, []Diagnostic) {
 	} else if c.rootScanned && !c.limited && !c.sourceFailed {
 		r.Phases[1].Status = Passed
 	}
-	return r, c.diagnostics
+	return r, c.diagnostics, c.scope
 }
 
 func (c *sourceCompiler) indexEntries() map[string]Entry {
@@ -248,8 +262,10 @@ func (c *sourceCompiler) definitions(entries map[string]Entry, root string) {
 		v, valid := c.decode(e)
 		if valid {
 			c.envelope(v, e)
+			c.collectDefinition(v, e, root)
 		}
 	}
+	c.checkExactIdentities()
 }
 
 func (c *sourceCompiler) decode(e Entry) (Value, bool) {
@@ -350,7 +366,9 @@ func (c *sourceCompiler) nonemptyText(v Value, field string, e Entry) (string, b
 
 func (c *sourceCompiler) problem(code, message string, e Entry, pos *Position) {
 	c.failed = true
-	if strings.HasPrefix(code, "input.") || strings.HasPrefix(code, "source.") || strings.HasPrefix(code, "manifest.root") || code == "manifest.missing" || code == "definition.extension" || code == "definition.root_package" || code == "lock.not_regular" {
+	if strings.HasPrefix(code, "name.") {
+		c.namesFailed = true
+	} else if strings.HasPrefix(code, "input.") || strings.HasPrefix(code, "source.") || strings.HasPrefix(code, "manifest.root") || code == "manifest.missing" || code == "definition.extension" || code == "definition.root_package" || code == "lock.not_regular" {
 		c.sourceFailed = true
 	} else {
 		c.yamlFailed = true
