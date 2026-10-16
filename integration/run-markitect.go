@@ -530,9 +530,11 @@ func validateModuleLayout(a *sourceArchive) error {
 	for _, f := range a.files {
 		files[f.name] = true
 	}
-	newLayout := a.dirs["src/cmd"] || a.dirs["src/internal"] || files["src/cmd/markitect/main.go"]
-	if newLayout {
-		if a.dirs["cmd"] || a.dirs["internal"] || files["cmd/markitect/main.go"] {
+	// Select the command tree, not the set of internal packages. Release
+	// tooling owns that source policy; additional root internal files do not
+	// introduce a second command while src/cmd is still active.
+	if a.dirs["src/cmd"] {
+		if a.dirs["cmd"] {
 			return errors.New("source archive mixes legacy and src/ module layouts")
 		}
 		a.sourcePrefix = "src/"
