@@ -1,6 +1,6 @@
 # Configuration assignments and Manager mandates
 
-Date: 16 October 2026. Proposed P01 configuration contract for the first reliable Apply, incorporating the [working-day discussion](../../concepts/reflections/desired-working-day-20261016.md). The [journal contract](manager-apply-journal.md) owns recorded transitions and storage. This design extends the [ports](manager-apply-port-contracts.md) and [rebuild plan](manager-apply-rebuild-plan.md); the formats below are proposed, not supported by the current CLI.
+Date: 16 October 2026. Proposed P01 configuration contract for the first reliable Apply, incorporating the [working-day discussion](../../concepts/reflections/desired-working-day-20261016.md). This document owns input fields and deterministic resolution. The consolidated [execution contract](manager-apply-execution.md) owns budget admission, time, run transitions and status meanings; the [journal](manager-apply-journal.md) owns their durable records and storage. These formats are proposed, not supported by the current CLI.
 
 ## Give each source one responsibility
 
@@ -18,7 +18,7 @@ The model remains language v1. None of these runtime records introduces a canoni
 
 ## Project execution file
 
-Use one versioned YAML file outside Definition roots. This illustrative configuration assumes P02 supplies the named profiles and selects a Go evaluation contract; it does not select that interface for M1 by itself. Profile references must resolve before the product can execute it.
+Use one versioned YAML file outside Definition roots. This illustrative configuration follows the proposed [Go library interface](library-example/interface-contract.md). Profile references must resolve before execution. The figures are an example to validate against the actual organization and assignment, not measured sufficient capacity for both Applies.
 
 ```yaml
 apiVersion: markitect.execution/v1
@@ -27,7 +27,14 @@ limits:
   maxRuns: 3
   maxSessionStarts: 80
   maxSteps: 160
-  assignmentTimeout: 2h
+  maxExecutionTime: 8h
+  maxStepTimeout: 10m
+  maxReviewRounds: 3
+  creationRoots: [realization]
+initialCompletionReserve:
+  sessionStarts: 24
+  steps: 40
+  executionTime: 2h
 defaults:
   profiles:
     manager: library-agent
@@ -35,13 +42,14 @@ defaults:
     verifier: library-agent
   reviewRounds: 3
   stepTimeout: 10m
-  creationRoots: [src, tests, docs]
+  creationRoots: [realization]
 packages:
   lending:
     stepTimeout: 8m
 checks:
   - id: project-tests
     profile: library-tests
+    directory: realization
     args: [test, ./...]
     timeout: 2m
 notifications:
@@ -49,9 +57,11 @@ notifications:
   incidents: immediate
 ```
 
-The numeric limits are example ceilings, not permission to launch Agents in this design session. `creationRoots` are repository-relative directories for new artifact claims, not a required file layout. P02 must account for any root build files and protected assessment inputs explicitly. Existing artifacts still require current registry ownership. A directory permission does not grant another Manager's files or protected model/configuration paths.
+The numeric limits are example ceilings, not permission to launch Agents in this design session. `limits.creationRoots` bounds permitted creation areas; defaults/exact Package settings select within it. Here the public contract places the module, code, tests and docs below `realization/`. Existing artifacts still require current registry ownership. A directory permission does not grant another Manager's files or protected model/configuration paths. A check's `directory` is confined to its captured candidate; arguments are literal, not a shell command.
 
-`limits` applies across the assignment's runs. Count run creation, session starts and steps separately: a persistent session can execute several turns. Unknown dispatch remains charged. `assignmentTimeout` becomes an absolute recorded deadline when the assignment starts; waiting and successor runs do not reset it. Each step/check also has a finite timeout. Budgets control declared execution, not a guaranteed provider invoice.
+The run/start/step/execution-time caps apply across the assignment's runs. `maxStepTimeout`, `maxReviewRounds` and allowed creation areas are project ceilings, not shared consumable counters. `initialCompletionReserve` seeds protected capacity within the grant; it is not additional allowance and may be released/replanned only under the execution contract. Reject a grant that cannot accommodate its initial reserve, rather than silently clamping or inventing capacity. Allocation and unknown-effect rules are owned by [budget admission](manager-apply-execution.md#one-ledger-with-protected-completion-capacity).
+
+`maxExecutionTime` is the defined sum of charged execution durations, excluding owner waiting. A separate optional absolute UTC `deadline` belongs to the assignment request and keeps running during waits. The former ambiguous `assignmentTimeout` field is removed, with no compatibility alias. Each start/step/check has its own finite timeout. These controls do not establish a provider invoice ceiling.
 
 `defaults` applies to every local Package Manager, including the ordinary root. `packages` keys are exact local Package paths; `.` identifies the root in this configuration syntax. An unknown or imported Package key is an error, not a request to create a Manager. Integration review uses the reviewer profile in a fresh session; final verification uses the verifier profile. The first strategy fixes Manager-plus-reviewer and sequential writing; other teams remain later supported strategies.
 
@@ -59,9 +69,11 @@ Custom instructions are optional file lists under `defaults.instructions` or `pa
 
 ## Resolve settings deterministically
 
-Resolve defaults, then Package overrides along the root-to-current-Package path. Profile references replace the corresponding role value. Instruction lists append in declared order, from broad to local. The remaining supported overrides may narrow `stepTimeout`, `reviewRounds` and `creationRoots`; an attempted expansion of an inherited ceiling is an error. New creation directories must be equal to or descendants of an allowed directory. There is no generic deep merge, wildcard Package override or hidden environment interpolation.
+Resolve project defaults, then only the exact Manager override. There is no ancestor-override inheritance. Profile references replace the corresponding role value; instructions append project defaults followed by the exact override in declared order. `stepTimeout`, `reviewRounds` and `creationRoots` replace the corresponding default within explicit project ceilings. A default is not itself a ceiling: a project default of two review rounds can be overridden to three where `maxReviewRounds` permits it. Creation directories must be equal to or descendants of an allowed project root. There is no generic deep merge, wildcard override or hidden environment interpolation.
 
-The effective grant is bounded by the project ceilings, the assignment's explicit grant and any parent-task restrictions. Shared assignment counters are not copied into independent per-Manager allowances. Review rounds count submitted candidates for each local/integration task; a successor receives fresh assessment tasks but consumes the existing assignment's run/start/step allowance.
+In the example, Lending receives eight minutes per step; `lending/reminders` still receives the ten-minute default. A `.` override configures root only. Explicit restrictions on a delegated task are a separate runtime narrowing and still constrain a child. Root's own smaller step timeout is not implicitly such a restriction. Store the origin of both configuration and task restrictions so the effective bound is explainable.
+
+The effective grant is bounded by project ceilings, the assignment's explicit grant and parent-task restrictions. Shared counters are not copied into per-Manager allowances. The execution contract owns [review-round accounting and progress assessment](manager-apply-execution.md#admission-amendments-and-finite-correction), including task recreation, successor consumption and the three-total-submissions default.
 
 Store effective values with the file/content/field origins that supplied them. Reject duplicate or unknown keys, unresolved profiles/instruction files, invalid Package paths, unbounded/nonpositive limits and unsupported strategy/role values before dispatch. Use bounded restricted YAML without aliases, custom tags or implicit null values. Durations are explicit positive duration strings. Configuration formats have their own schema; they are not canonical-model Definitions.
 
@@ -91,7 +103,7 @@ The [adapter plan](manager-apply-rebuild-plan.md#bind-the-executable-before-real
 | Attempt | Bounded rework of a task against that run's fixed basis. It does not reset assignment budgets. |
 | Session and step | Actual role conversation and one dispatch, independently identified and recorded. They never supply assignment authority. |
 
-The initial assignment stores owner input, goal, constraints, authorized operation target, project identity, explicit ceilings and deadline, plus the source of that authority. Omitted grant limits use the selected project ceilings. Renewing an exhausted limit requires an explicit recorded amendment; starting another run grants nothing by itself. The initial product has one local operator as decision owner; it does not invent an identity/authorization service from Agent-reported names.
+The initial assignment stores owner input, goal and commissioned stages, constraints, authorized operation target, project identity, explicit caps, optional absolute deadline and authority source. Omitted grant caps use the selected project ceilings. Renewing an exhausted limit requires an explicit recorded amendment; starting another run grants nothing by itself. The initial product has one local operator as decision owner; it does not invent an identity/authorization service from Agent-reported names.
 
 An amendment cannot bypass project ceilings. If those need expansion, an authorized configuration edit and a new bound run are required as well. Changes to effective execution grants/deadlines are recorded in the successor basis, preserving consumption. An answer that only supplies existing-rule context can continue the same run.
 
@@ -126,6 +138,6 @@ Actual owner answers enter through the application boundary and are bound to the
 
 Experience hints and a future operational doctor remain separate extensions. Explicit optional context can later include selected experience revisions; this does not require provider-native memory. Operational diagnosis has its own evidence/target and does not silently repair artifacts or promote experience into model rules.
 
-P02 still chooses the exact library interface and independent executable expectations. Implementing these configuration contracts requires negative cases for inherited limits, unknown Packages/profiles, protected inputs, conflicting instructions and budget continuity. Format examples and design review are not evidence of a functioning product parser or real Agent run.
+The proposed [Playground](manager-apply-playground.md) and [independent expectations](library-example/evaluation-contract.md) now select the interface and assessment boundary. Implementing configuration requires negative cases for exact overrides versus task restrictions, hard ceilings, unknown Packages/profiles, invalid reserves, protected inputs, conflicting instructions and budget continuity. Format examples and design review are not evidence of a functioning parser or real Agent run.
 
 Return to the [journal](manager-apply-journal.md), [ports](manager-apply-port-contracts.md) or [Apply plan](manager-apply-implementation-plan.md).

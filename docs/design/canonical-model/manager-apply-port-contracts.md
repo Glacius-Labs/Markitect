@@ -57,7 +57,7 @@ type TaskSpec struct {
 	Inputs         InputBinding
 	Mandate        organization.MandateRef
 	Base           realization.CandidateRef
-	Budget         Budget
+	Budget         BudgetView
 }
 
 type WorkProposal struct {
@@ -69,18 +69,27 @@ type WorkProposal struct {
 }
 
 type ReviewProposal struct {
-	Subject  ReviewSubject
-	Verdict  ReviewVerdict
-	Findings []Finding
-	Evidence []EvidenceRef
+	Subject            ReviewSubject
+	Verdict            ReviewVerdict
+	Findings           []Finding
+	FindingAssessments []FindingAssessment
+	Evidence           []EvidenceRef
 }
 ```
 
-Delegation's actual sender is taken from the bound session. It cannot choose its own authority, base, attempt or source binding. Host allows only a direct child and preserves the operation's full Package responsibility, inherited restrictions and unresolved obligations. A cited subset of Definitions does not narrow reconciliation.
+`BudgetView` is a read-only snapshot of grant/ledger revision and relevant allocation references, not a copied allowance. Every start/step/check binds a current allocation/reservation and its purpose; Host admission uses current ledger state rather than trusting that snapshot. The [execution contract](manager-apply-execution.md) owns accounting and transition guards.
+
+Delegation's actual sender is taken from the bound session. It cannot choose its own authority, base, attempt or source binding. Host allows only a direct child and preserves the operation's full Package responsibility, delegated restrictions and unresolved obligations. Configuration uses defaults plus the exact Manager override; it does not inherit ancestor overrides. A cited subset of Definitions does not narrow reconciliation.
 
 Work proposals are explanations, not trusted diffs. Definition assessments cover every local Definition with a disposition, grounds and observable artifact/evidence references. Vocabulary-only requires explaining where concrete uses satisfy any obligations; it cannot conceal the policy limit. Registry proposals are Host-mediated and refer to authorized path claims. A no-change proposal needs the same assessment as a changed candidate.
 
-A finding carries its affected scope, model grounds, candidate evidence and requested outcome. Review verdicts distinguish pass, changes requested, needs decision and failed assessment. Host validates structure, subject and evidence references; it cannot deterministically prove the reviewer's semantic judgment. A required unresolved model question blocks completion and cannot be repaired by artifact-only Apply.
+A finding has a stable Host-recorded reference, affected responsibility, model/input basis, requested outcome/evidence and originating reviewer provenance. Candidate evidence is optional for a concern raised during model-first preparation; its absence must be explicit. Review verdicts distinguish pass, changes requested, needs decision and failed assessment.
+
+`FindingAssessment` references the original finding, current input/subject, applicability judgment, current requested evidence and any explicit resolution/evidence. The judgments are still applies, applies with adjustment, no longer applies and unclear. The bound independent reviewer validates them; an Agent-supplied role name or Manager approval does not. Host derives outstanding requirements from recorded task/child/predecessor history, even if candidate files were discarded. A justified current inapplicability does not retroactively approve the old result; an adjusted requirement still needs its current evidence. A linked replacement cannot erase both requirements.
+
+Omission is not resolution. Required receipts must exist, have successful known execution and fit their own subject/purpose. Child composition provenance and aggregate assessment remain distinct. A command-level pass alone does not prove a required case ran or expresses the right meaning. See [evidence under budget pressure](manager-apply-execution.md#evidence-need-survives-budget-pressure).
+
+Host validates recorded completeness, provenance and bindings; semantic sufficiency/applicability remain reviewable Agent judgments. No new finding/task system or universal test language is introduced. Current required gaps block acceptance even when the budget is low. A required unresolved model question likewise blocks completion and cannot be repaired by artifact-only Apply.
 
 `QuestionRef` binds identity and version. The application records actual owner answers against that exact proposal and basis; the Agent cannot self-assert owner authority. A context-only answer may continue the same run. Changed intent requires an authorized model operation and a new bound run, with shared allowance and selected retained work. See [questions and model changes](manager-apply-journal.md#questions-answers-and-model-changes).
 
@@ -214,7 +223,9 @@ Multi-file publication is not promised atomic. Partial writes remain visible and
 
 ## Host lifecycle and completion
 
-The initial coordinator schedules one writer at a time, with recorded ready/waiting tasks. A task progresses through prepared, working, proposed, checking, reviewing and reviewed-local states; changes requested return to working with the next bounded attempt. A Manager with children additionally waits, composes and obtains integration review before Host accepts its subtree. A leaf still needs its complete local assessment. Needs-decision, exhausted budget, failed and uncertain states cannot be treated as completed work.
+The initial coordinator schedules one writer at a time, with recorded ready/waiting tasks. A task progresses through local work/check/review phases; changes requested create the next bounded submission. A Manager with children additionally composes and obtains integration review before Host accepts its subtree. A leaf still needs its complete local assessment. Task recreation preserves logical review counters. The [execution contract](manager-apply-execution.md#one-run-state-machine) owns run states, terminal outcomes, budget admission and derived status; this port does not define another lifecycle.
+
+One waiting task can coexist with a Running run. Only quiescent external waiting is Waiting; unknown execution/publication requires Reconciling and blocks new effects. Stop acknowledgements and role reports are not terminal evidence. Finished/Incomplete does not silently close an assignment or increase its budget. Typed results retain current state, any actual terminal outcome, reasons and observation limits even when an ordinary Go error is returned.
 
 The root is ordinary in this protocol. `apply` adds final aggregate verification and publication after the root delivery. Local review, subtree integration review and final verification are separate purposes. Evidence remains bound to its original subject; changed content or assumptions require current assessment. Full reconciliation is the initial policy, without speculative semantic reuse. Source staleness prevents publication even if every Agent reported success.
 

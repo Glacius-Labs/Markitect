@@ -54,7 +54,7 @@ Every local Package has a Manager slot. An empty leaf has no reconciliation work
 
 Imported models supply read-only vocabulary and context. They do not automatically create executable Managers. Editing a library is a task in that library's own project. One local model is the first supported organization; combining several independently authored local organizations is a later extension.
 
-Configuration has one project default and exact Manager overrides. The root has an explicit override entry like any Manager. Runtime default resolution is deliberate configuration behavior; it is not Package inheritance in the canonical language.
+Configuration has project defaults plus exact Manager overrides, with separate hard ceilings. Root can have an exact `.` entry like any Manager. Lending's override does not configure Reminders; explicit delegated-task restrictions are a separate narrowing. The [configuration contract](manager-apply-configuration.md#resolve-settings-deterministically) owns resolution. It is not Package inheritance in the canonical language.
 
 | Configurable part | First design |
 | --- | --- |
@@ -63,7 +63,7 @@ Configuration has one project default and exact Manager overrides. The root has 
 | Shared context | Explicit Definition references to include for every Manager, plus per-Manager additions. Inclusion provides context; it does not itself grant a statement global applicability. |
 | Kind guidance | Optional task and review recipes keyed by resolved Kind identity. They use the bound Kind's contract, do not change it and grant no special Core execution rights. |
 | Artifact creation | Permitted creation areas and exclusive reservation of new paths, without assuming that artifact paths mirror Package paths. |
-| Limits | Finite run and invocation budgets; three candidate review rounds per work or integration task by default. |
+| Limits | One shared assignment ledger, finite execution/round limits and protected completion capacity under the [execution contract](manager-apply-execution.md). |
 | Concurrency | One active writing task by default. Later bounded parallelism must use the same reservation and integration rules. |
 
 The first implementation supports the default team and explicit profiles. Reviewer-per-Definition and multiple artifact-specific hierarchies remain later team strategies. Configuration cannot disable required independent delivery review, aggregate integration review, final verification, coverage or source-drift guards.
@@ -196,20 +196,13 @@ Default child writing is sequential. Later tasks use the current accepted integr
 
 The [distinct review responsibilities](#distinct-review-responsibilities) apply at every level. Work review also checks delegation readiness; the root has the same integration obligation as other Managers. The final verifier is a fresh role, independent of the Managers that authored the result; it receives the complete required evidence set and must report omissions.
 
-Three candidate review attempts is the proposed default per work or integration task. Configuration can select another finite limit, always within the global time, cost and invocation ceilings. Exhaustion returns incomplete work. A parent cannot turn an unresolved child delivery into a complete one merely by summarizing it.
+Three total candidate submissions per logical responsibility/review purpose is the proposed default, including the initial candidate. After two rejections, parent planning is required before candidate three; it grants no extra attempt. Repair and renewed assessment must both fit the same assignment budget. The [execution contract](manager-apply-execution.md#admission-amendments-and-finite-correction) owns counting, protection and exhaustion. A parent cannot turn an unresolved child delivery into a complete one merely by summarizing it.
 
 ## Outcomes and interrupted runs
 
-| Outcome | Meaning |
-| --- | --- |
-| Applied | Required reconciliation, review, verification, guards and read-back completed for the declared scope. |
-| No change | The assessed realization required no publication; its current scope and successful evidence are recorded. |
-| Needs decision | A model ambiguity, incompatible requirement or unresolved ownership/coordination question needs action outside the current task. |
-| Failed | An execution, validation, review or check failure prevents success. |
-| Stale | Bound inputs changed; a new current run must prepare and reassess. |
-| Interrupted or uncertain | The history cannot yet establish a completed lifecycle or publication outcome. |
+The [execution contract](manager-apply-execution.md#one-run-state-machine) owns one run state machine and its [terminal outcomes/status mapping](manager-apply-execution.md#terminal-outcomes-and-displayed-status). Needs decision is an attention projection over a question and continuing/waiting work. Interrupted or uncertain requires Reconciling until actual effects are established. Neither is a second terminal outcome enumeration.
 
-These are semantic outcome names for the proposed protocol, not current CLI exit codes. Task-level rework and partial reports remain intermediate states. No-change is successful only after its required assessments and checks, not because no Agent happened to edit a file.
+Applied and NoChange require current required assessment and source/read-back evidence. Finished outcomes are immutable; exhaustion can end a run Incomplete while its open assignment awaits an authorized extension. A later R2 links to already Applied R1 without superseding that completed result. These are proposed protocol meanings, not current CLI exit codes.
 
 History survives interruption. Reopening a run first reconciles recorded invocations, child lifecycle and publication outcomes. Completed provider work is not automatically replayed. A new attempt binds its current inputs and is recorded as such. Unknown side effects or incomplete publication remain explicit. Recovery must retain the existing Runtime guards rather than introducing a second automatic retry loop.
 

@@ -51,7 +51,7 @@ internal/
 
 `codexappserver` is the first concrete session adapter. The small concrete `process` package supplies shared process-lifetime mechanics to that adapter and project checks; it is not another execution protocol or a general utility catalogue. Repository maintenance/release tooling stays separate from these product responsibilities.
 
-Inside `run`, start with coherent files such as `task.go`, `coordinator.go`, `review.go`, `history.go` and `ports.go`. State transitions and record meaning belong there; physical files and provider protocols belong in adapters. Split further only when a distinct responsibility or consumer makes the boundary useful. Avoid another shared Project DTO, global interface catalogue or untyped property bag spanning all packages.
+Inside `run`, start with coherent files such as `task.go`, `coordinator.go`, `review.go`, `budget.go`, `lifecycle.go`, `history.go` and `ports.go`. The [execution contract](manager-apply-execution.md) owns the proposed assignment ledger, admission and run-state rules implemented there. Physical files/provider protocols belong in adapters. Split further only for a distinct responsibility or consumer. Avoid another shared Project DTO, global interface catalogue or untyped property bag spanning all packages.
 
 The proposed top-level `cmd` and `internal` directories remove the current `src` prefix. This shortens paths, but requires deliberate updates to imports, build/release tooling, canonical source ownership and architecture checks. It is a layout choice, not a Go language requirement. The responsibility boundaries matter before the move.
 
@@ -73,7 +73,7 @@ The main external capabilities are:
 
 The [port contracts](manager-apply-port-contracts.md) propose small consumer-owned interfaces, request/result content, journal sequencing and capability lifetimes for these responsibilities. The same concrete adapter may satisfy several narrow interfaces. Ordinary calls between pure packages use concrete functions and values; no universal Repository interface is needed.
 
-The journal now uses assignment streams with run-scoped events, allowing questions and budget-preserving successors between runs. `adapters/journal` implements both `run.Journal` and `apply.Control` using SQLite plus repository control metadata. It owns SQL and lease mechanics, while `run` owns event meaning. The journal contract replaces the initial unselected physical-store proposal.
+The journal uses assignment streams with run-scoped events, allowing questions and budget-preserving successors between runs. `adapters/journal` implements both `run.Journal` and `apply.Control` using SQLite plus repository control metadata. It owns SQL and lease mechanics; `run` owns budget purpose, settlement and lifecycle meaning. `apply` requests transitions under those guards, while CLI/MCP derive status from their results. The journal contract replaces the initial unselected physical-store proposal.
 
 The Host owns the task/message protocol, effective authority and history. An Agent adapter translates provider transport into those records; it cannot accept a child delivery, grant a path or mark a review passed by itself. Manager, reviewer and verifier use the same session boundary with distinct roles and fresh review inputs. Provider wire objects and provider session IDs do not become canonical model types.
 

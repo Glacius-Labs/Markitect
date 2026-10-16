@@ -6,6 +6,8 @@ The person changes and approves intent. The organization realizes it, handles or
 
 This develops the [organization and trust reflection](organization-and-trust-20261016.md). The [Apply concept](../../design/canonical-model/manager-apply-concept.md) owns realization behavior. The [concept register](../register.md) remains the owner of decisions and status.
 
+Technical consolidation on the same date gives [configuration](../../design/canonical-model/manager-apply-configuration.md) ownership of exact overrides and the [execution contract](../../design/canonical-model/manager-apply-execution.md) ownership of budget, time, retry and lifecycle rules. The examples below preserve the working-day rationale, not a parallel runtime specification. The dated prerequisite assessment remains historical; proposed technical contracts are not implementation evidence.
+
 ## Morning model change
 
 The owner changes the library's admission limit from five open loans to three. Existing loans remain intact and returnable. Draft editing does not itself start realization. An explicit instruction starts Apply against a selected model revision and the existing realization.
@@ -306,7 +308,7 @@ Progress can mean resolving a finding, reproducing a cause or ruling out a hypot
 | An execution deadline passes without a usable outcome | Execution is stuck, failed or uncertain; inspect its actual state. |
 | Further attempts repeat the same assumption without new evidence | The approach may be cycling rather than progressing. |
 
-As an initial experimental trigger, the second unsuccessful correction of the same finding could request a parent assessment. This is neither proof of stagnation nor an automatic owner interruption. Do not wait for that threshold when a hard limit, unknown writer or missing authority already requires stopping. The Host observes counts, task dependencies and deadlines; Managers and reviewers judge whether differently worded findings share a cause. These signals use existing records rather than a new scoring subsystem.
+The consolidated first-Apply trigger is the second rejected candidate submission, before a third submission under the default three-total-round limit. This replaces the earlier tentative “second correction of the same finding,” which could leave no round for the course correction. It requests parent planning, not an extra attempt or automatic owner interruption. Do not wait for it when a hard limit, unknown writer or missing authority already requires stopping. The Host observes counts; Managers/reviewers judge causes and useful changes of approach. No semantic scoring subsystem is required.
 
 The parent receives a compact account and may choose a bounded course correction within its mandate: retrieve specific missing context, isolate a small reproduction, settle an existing interface contract with the affected Managers, or test a different solution hypothesis. For execution uncertainty, first inspect the known session and side effects. Do not dispatch a duplicate writer merely because a response timed out.
 
@@ -369,13 +371,13 @@ The root can move genuinely freed capacity from Catalog to Lending within the ex
 
 An illustrative request is:
 
-> Budget decision needed: the borrowing change is implemented, but one integration defect remains. We propose up to four additional steps for the isolated correction and renewed checks. There is insufficient capacity within the current budget. Without an extension, the assignment will end with retained work and no publication.
+> Budget decision needed: the borrowing change is implemented, but one integration defect remains. We propose up to four additional steps for the isolated correction and renewed checks. There is insufficient capacity within the current budget. Without an extension, this run remains incomplete, with retained work and no publication.
 
 The request states what the extra capacity is for, why the proposed attempt is justified, what remains uncertain and what happens without approval. No extension is assumed. Existing execution uncertainty must still be reconciled before another writer starts.
 
 A compact budget report shows consumed capacity, already allocated but unconsumed capacity, protected capacity awaiting allocation, and freely available capacity. These are non-overlapping amounts in the same ledger; review allocations retain their protected purpose without being counted twice. Reservations are not incurred cost. Parent summaries must likewise distinguish own consumption from descendant consumption.
 
-One shared budget, protected completion capacity and bounded allocations reduce the risk of spending everything on implementation. They do not guarantee success or a precise completion estimate. Concrete encodings and enforcement remain design work in the execution configuration and runtime, not new canonical business rules.
+One shared budget, protected completion capacity and bounded allocations reduce the risk of spending everything on implementation. They do not guarantee success or a precise completion estimate. The [execution contract](../../design/canonical-model/manager-apply-execution.md) now owns the proposed ledger/admission encoding, including ordinary versus protected work and active time versus an optional delivery deadline. Implementation remains future work; these are not new canonical business rules. A run can finish Incomplete while its open assignment awaits an extension; continuation preserves that historical result.
 
 ## Result and further steering
 
@@ -433,7 +435,7 @@ This blocks Lending and completion of the assignment. Independent checks can con
 
 - Resolved locally: review found an unintended restriction on returns. The correction was checked locally; aggregate integration is still pending.
 - Open: the model conflict identified in the decision above. This is the same question, not another request.
-- Budget: 18 of 60 authorized Agent invocations used. No reliable completion estimate is available.
+- Budget: 18 of 60 authorized Agent steps used. No reliable completion estimate is available.
 
 **Next:** after the decision, establish the model basis and continue from retained work under the continuation rules above.
 

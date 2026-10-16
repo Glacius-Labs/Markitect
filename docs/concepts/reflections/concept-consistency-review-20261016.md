@@ -93,9 +93,22 @@ The new drafts largely express the working-day ideas through existing tasks, que
 
 ## Recommended sequence
 
+### Subsequent technical consolidation
+
+At the owner's subsequent request, the proposed [execution contract](../../design/canonical-model/manager-apply-execution.md), revised [configuration](../../design/canonical-model/manager-apply-configuration.md) and [journal](../../design/canonical-model/manager-apply-journal.md) now resolve the draft discrepancies below. This records follow-up design disposition; the assessment basis and observations above remain historical. It does not establish accepted release gates or implemented conformance.
+
+| Finding | Current proposed resolution |
+| --- | --- |
+| Configuration | Defaults plus exact Manager overrides; no ancestor effects. Hard project ceilings are separate from replaceable defaults. Delegated task restrictions remain explicit runtime narrowing. |
+| Budget | One assignment ledger, purpose-bound allocations/reservations, protected completion and repair plus renewed assessment admission. No per-Manager duplication or successor reset. |
+| Time | Defined charged execution time, local timeouts and an independent optional absolute deadline. Quiescent owner waiting consumes no execution allowance. |
+| Authorized model edit | The initial owner/caller performs the approved patch outside artifact Apply; pending/failed effect remains visible. Automated exact-edit convenience remains deferred. |
+| Lifecycle/status | One run state machine and immutable Finished outcome. Questions/verification/assignment activity are projections or distinct facts; unknown effects require reconciliation. |
+| Ownership | Configuration owns inputs, execution owns transition/accounting meaning, journal owns durable records; concept, ports, architecture and plans link to these owners. |
+
 The follow-up [first usable version recommendation](first-usable-version-20261016.md) separates essential working-day capabilities from deferred extensions and distinguishes the technical-core demonstration from usable interaction evidence.
 
-First reconcile configuration resolution, budget protection and lifecycle mappings. Keep the authorized-model-edit boundary visible. Then complete the already planned two real library Applies: M1 to A1, followed by a model-only M2 change and Apply to A2. Inspect actual behavior and evidence using the planned independent expectations.
+Review this bounded consolidation and implement its focused checks alongside the new runtime. Keep the authorized-model-edit boundary visible. Then complete the already planned two real library Applies: M1 to A1, followed by a model-only M2 change and Apply to A2. Inspect actual behavior and evidence using the planned independent expectations.
 
 A focused continuation case with an owner question, authorized model correction and successor run can follow as the next interaction proof. Experience selection, operational doctor, richer teams, automatic review reuse and a full cockpit need not become prerequisites for the first demonstration.
 

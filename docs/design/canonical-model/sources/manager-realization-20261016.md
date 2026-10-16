@@ -128,3 +128,7 @@ The [working-day reflection](../../../concepts/reflections/desired-working-day-2
 ## Specify the Playground and independent two-Apply assessment
 
 > Ja, lass uns den Playground-Vertrag konkretisieren: Welche aufrufbare Schnittstelle soll das Bibliotheksbeispiel anbieten, und wie prüfen wir die Ergebnisse der beiden Applies gegen M1 und M2 unabhängig?
+
+## Consolidate budgets lifecycle and current developments
+
+> Ja, lass uns die offenen Budget- und Laufzustandsregeln konsolidieren. Kläre die Widersprüche in den Docs und entwickle eine einfache, konsistente Lösung für das erste Apply. Bleiben wir beim Bibliotheksbeispiel. Ausserdem schaue noch mal in die docs nach den aktuellen Entwicklungen

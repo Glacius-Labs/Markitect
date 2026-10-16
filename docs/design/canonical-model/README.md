@@ -21,7 +21,8 @@ The linked histories preserve the derivation and superseded choices. Project voc
 | [Library delegation walkthrough](manager-apply-library-flow.md) | Root, lending, fresh review, rework and integration traced against M1, with concrete refusal cases; design rather than an executed run. |
 | [Apply port contracts](manager-apply-port-contracts.md) | Proposed Go interfaces, value ownership and behavioral contracts for acquisition, sessions, workspaces, checks, journal and publication. |
 | [Agent adapter selection and rebuild plan](manager-apply-rebuild-plan.md) | First stdio App Server adapter, session lifetime, source replacement/deletion map and coherent implementation cuts, including self-model and gates. |
-| [Configuration assignments and mandates](manager-apply-configuration.md) | Proposed execution YAML, explicit host profiles, inherited limits, continuing assignments and source-bound mandate views. |
+| [Configuration assignments and mandates](manager-apply-configuration.md) | Proposed execution YAML, exact Package overrides, hard ceilings, explicit profiles and source-bound mandates. |
+| [Budgets run states and completion](manager-apply-execution.md) | Consolidated first-Apply proposal: one assignment ledger, protected completion capacity, execution time/deadline separation and one run lifecycle/status mapping. |
 | [Journal and continuation contracts](manager-apply-journal.md) | Proposed SQLite assignment streams, repository control lifetime, questions/answers, retained work, budget continuity and publication guards. |
 | [Library Playground contract](manager-apply-playground.md) | Proposed JSON Lines interface, independent M1/M2 expectations, frozen two-Apply sequence, source/history capture and honest evidence boundaries. |
 | [Executable Exchange example](minimal-language/exchange-example/README.md) | Current input files, bounded probe and reports; includes the explicitly rejected Command/command vocabulary collision. |

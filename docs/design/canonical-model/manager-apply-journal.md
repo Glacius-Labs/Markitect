@@ -1,6 +1,6 @@
 # Journal and continuation contracts for Apply
 
-Date: 16 October 2026. Proposed P01 runtime records and persistence for the [configuration and mandate contract](manager-apply-configuration.md). This incorporates [continuing assignments, questions and work reuse](../../concepts/reflections/desired-working-day-20261016.md). The [ports](manager-apply-port-contracts.md) remain the capability boundaries. This is a replacement design, not a current storage format, executed library run or historical-record migration.
+Date: 16 October 2026. Proposed P01 runtime records and persistence for [configuration and mandates](manager-apply-configuration.md) and [execution budgets/lifecycle](manager-apply-execution.md). This incorporates [continuing assignments, questions and work reuse](../../concepts/reflections/desired-working-day-20261016.md). The execution contract owns transition meaning; this document owns recorded facts, storage and atomic append. This is a replacement design, not a current storage format, executed library run or historical-record migration.
 
 ## One authoritative history
 
@@ -88,7 +88,7 @@ Optional identities use explicit absence in the storage codec. `EventBody` is a 
 
 | Record | Required data |
 | --- | --- |
-| Assignment | Owner input reference, goal, constraints, authority source, repository identity, deadline, authorized caps, consumed/reserved allowance, amendments and linked runs. |
+| Assignment | Owner input reference, goal/commissioned remaining stages, constraints, authority source, repository identity, optional absolute deadline, cap/grant revisions, ledger and completion-plan references, amendments, linked runs and closure fact. |
 | Run binding | Model closure/lock, captured repository tree/census and publication guard, config/prepared profiles, instructions, initial registry, operation contract identity and product build. |
 | Retained work | Exact predecessor run/candidate, original artifact base, matching registry, selected composition, open findings and carry-forward reason. Old approval is never promoted. |
 | Task | Current run/Manager, parent task, attempt, outcome, complete responsibility, candidate base, effective mandate reference, remaining constraints and any predecessor-task link. |
@@ -96,33 +96,40 @@ Optional identities use explicit absence in the storage codec. `EventBody` is a 
 | Question/proposal | Stable question ID, version, originating task/run, affected work, model passages/basis, decision/reason, alternatives, exact proposed before/after source edits and effect on work. |
 | Answer | Question/version/proposal identity, exact owner input, actual ingress/actor authority, selected disposition and any interpreted answer, with unresolved ambiguity explicit. |
 | Candidate/review/check | Existing exact input/tree/registry/subject bindings, assessments, actual findings and observed results. Carry-forward judgment uses keep/adapt/replace/unresolved within existing assessments. |
+| Required finding/assessment | Stable finding reference, issuing role/session, task/scope and original model/input basis, requested evidence and optional original candidate; current reviewer applicability judgment, adjusted requirement/replacement references where needed, exact subject and resolution/evidence grounds. Open/resolved is a history projection, not an editable flag. |
 | Publication | Known publication ID, current run and captured source guard, verified candidate/registry, prepared request, actual completed paths and read-back/uncertainty. |
+| Budget | Allocation/plan/reservation ID, assignment/grant revision, purpose, responsible scope, resource quantities, effect identity, finite execution duration, actual settlement or unresolved hold, and release/reallocation grounds. |
 
 Before/after model edits are exact captured file bytes or exact identified source fragments with matching prior content identities. A changed proposal gets a new version. An explanation of desired behavior alone is not a concrete edit authorization. Original bytes and the owner's response stay retrievable.
 
 ## Budget dispatch and lifecycle
 
-`run` validates a proposed transition against current reduced state before appending it. The expected revision prevents two controllers from committing from the same state. Budget reservation and dispatch preparation are one committed batch before an external call. Sessions and steps have separate reservations, so resuming a conversation is still bounded. A prepared run consumes its run allowance when committed.
+`run` validates transitions against the authoritative [execution contract](manager-apply-execution.md). The expected revision prevents two controllers from committing from the same state. Budget reservation and dispatch preparation are one committed batch before an external call. A reservation belongs to an existing allocation and its ordinary/protected purpose; it is not another copy of its allowance. A prepared run consumes its run unit when committed.
 
-An uncertain start or step retains its reservation. If inspection proves no dispatch occurred, an explicit release can restore that reservation; an error alone cannot. Provider usage and estimates are separate observations, not silently substituted for each other. Owner-authorized cap/deadline amendments preserve prior consumption and their source. Successor creation does not duplicate a grant.
+An uncertain invocation retains its full hold. If inspection proves no dispatch occurred, an explicit release restores unconsumed capacity; settled consumption never decreases. Known completion settles actual execution and releases only unused held capacity to its proper pool. Provider usage and estimates are separate observations. Cap/deadline amendments preserve consumption, hold identities and their authority source; their changed effective basis requires a successor. No amendment or new run resets the ledger.
 
-| Level | Initial states and relevant transitions |
+| Level | Authoritative interpretation |
 | --- | --- |
-| Assignment | Open, active, waiting, completed, stopped or incomplete. A current run can finish while a specifically commissioned later stage remains pending. A required question or unknown effect prevents overall completion. |
-| Run | Prepared, active, needs decision, verified, publishing, applied, superseded, stopped or incomplete. Known partial/unknown effects remain attached and block a successful result. |
-| Task | Existing prepared/work/check/review/integration states plus waiting for a question/child. Ordinary rework creates the next attempt under the same run. |
+| Assignment | Open/closed fact, linked runs, remaining commissioned work and amendments. Activity labels derive from these facts; closure is distinct from an individual run finishing. |
+| Run | Exactly the states and Finished outcomes in the execution contract. Needs decision is question attention; aggregate verified is evidence; unknown execution/publication requires Reconciling. No second state enumeration is defined here. |
+| Task | Existing local work/check/review/integration phases plus question/child waits. Logical responsibility and review-purpose counters survive task recreation. Ordinary rework stays in the same fixed run. |
 | Question | Open, answered pending binding/action, resolved, deferred, stale or replaced by a new version. Recording an answer does not imply its model effect succeeded. |
 
 The initial event catalogue has these version-1 tags. Each has a closed payload codec; state-change payloads identify prior/resulting state and grounds, validated against the current transition. Do not infer state solely from a human message saying “done.”
 
 | Family | Event tags |
 | --- | --- |
-| Assignment and run | `assignment.created`, `assignment.amended`, `assignment.finished`, `run.prepared`, `run.state-changed`, `run.superseded`, `run.finished` |
+| Assignment and run | `assignment.created`, `assignment.amended`, `assignment.finished`, `run.prepared`, `run.state-changed`, `run.finished` |
 | Task and delivery | `task.created`, `task.state-changed`, `attempt.started`, `delivery.accepted` |
-| Execution and transport | `execution.reserved`, `execution.released`, `session.prepared`, `session.observed`, `step.prepared`, `transport.prepared`, `transport.observed`, `tool.requested`, `tool.replied` |
+| Budget | `budget.plan-recorded`, `budget.allocated`, `budget.reallocated`, `budget.reserved`, `budget.settled`, `budget.released` |
+| Execution and transport | `session.prepared`, `session.observed`, `step.prepared`, `transport.prepared`, `transport.observed`, `tool.requested`, `tool.replied` |
 | Realization and evidence | `candidate.captured`, `assessment.recorded`, `review.recorded`, `check.prepared`, `check.observed`, `composition.recorded` |
 | Questions and intent | `question.proposed`, `question.state-changed`, `answer.received`, `answer.bound`, `model-change.observed` |
 | Publication | `publication.prepared`, `publication.observed` |
+
+`run.finished` records the single immutable Finished outcome and grounds. Supersession uses that event with outcome Superseded, not a competing finish/state tag. Assignment closure is recorded separately. Typed budget events enforce identity/idempotency, pool conservation and purpose; reducers do not infer a grant or completed effect from a narrative report. A completion plan references outstanding required review/check obligations and recorded release reasons.
+
+Use `assessment.recorded`/`review.recorded` for early model-first concerns, findings and explicit resolutions; no extra finding stream or task lifecycle is needed. Parent/predecessor references preserve outstanding requirements rather than copying another mutable list. An old resolution remains historical when the new subject/basis requires current assessment. Retain selected case output/assertion references where execution of that case is required; a generic check pass cannot stand in for missing evidence. The execution contract owns the acceptance guard and its semantic limits.
 
 ## Questions answers and model changes
 
@@ -141,7 +148,7 @@ Use the repository execution lease to serialize supersession and publication. St
 
 Capture the new model/configuration and actual repository source. Validate selected retained work for exact bases, valid ownership/registry, protected inputs and conflicts. Incomplete work may be admitted with its missing evidence and findings. Conflicts return to their accountable Manager; there is no semantic automatic merge.
 
-For an unfinished predecessor, commit its superseded state, successor binding, selected retained-work reference and shared budget reservation together. Only then dispatch the successor's root. A previously completed Applied run retains that outcome; a later run links to it without rewriting its successful publication as an incomplete run. A crash leaves either the old committed state or the new one; unresolved external effects still require inspection. Tasks and sessions in the successor receive new identities with provenance links.
+For an unfinished predecessor, commit its Finished/Superseded result, successor binding, selected retained-work reference and shared budget reservation together. Only then dispatch the successor's root. Every previously Finished run retains its outcome; a later run links to it without rewriting it. In particular, Applied R1 is not Superseded by R2. A crash leaves either the old committed state or the new one; unresolved external effects still require inspection. Tasks and sessions in the successor receive new identities with provenance links.
 
 Keep these three values distinct:
 
@@ -159,7 +166,7 @@ Initially repeat required reviews/checks, integration and final verification for
 
 ### Two actual model versions as the first planned experiment
 
-The owner can commission one assignment covering both planned stages. Run R1 binds M1, produces reviewed A1 and publishes it. The owner/caller changes only `loan-policy.spec.maxOpenLoans` from five to three. Run R2 binds M2 and captures actual A1 as its source, under the remaining assignment allowance. Lending adapts admission; other areas can propose justified no-change results. All required current assessments and checks run before A2 is published. The interface and expectations still come from P02; no question is invented for a rule M1 already resolves.
+The owner can commission one assignment covering both planned stages. Run R1 binds M1, produces reviewed A1 and finishes Applied. The open assignment awaits its commissioned M2 stage. The owner/caller changes only `loan-policy.spec.maxOpenLoans` from five to three. Run R2 binds M2 and actual A1, preserves the assignment ledger and replans its completion reserve. Lending adapts admission; other areas can propose justified no-change results. All required current assessments and checks run before A2 is published. The proposed [Playground](manager-apply-playground.md) owns the interface/independent evidence; no question is invented for a rule M1 already resolves.
 
 ### A hypothetical missing decision during work
 

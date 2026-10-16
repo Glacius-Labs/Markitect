@@ -112,7 +112,7 @@ Derive a small optional starter vocabulary from this example and keep it an ordi
 
 ### P01 Design the Go product architecture and removal map
 
-The [Go architecture outline](manager-apply-go-architecture.md), [library walkthrough](manager-apply-library-flow.md) and [ports](manager-apply-port-contracts.md) specify packages, handoffs and lifecycle. The [rebuild plan](manager-apply-rebuild-plan.md) selects direct stdio App Server sessions and maps replacement/deletion cuts. The [configuration](manager-apply-configuration.md) and [journal](manager-apply-journal.md) now specify settings, mandates, assignment continuity, question/answer binding and SQLite-backed records/control. The exact executable/schema capability profile and implementation conformance remain to be established. These are design proposals, not implementation evidence.
+The [Go architecture outline](manager-apply-go-architecture.md), [library walkthrough](manager-apply-library-flow.md) and [ports](manager-apply-port-contracts.md) specify packages and handoffs. The [rebuild plan](manager-apply-rebuild-plan.md) selects direct stdio App Server sessions and maps replacement/deletion cuts. [Configuration](manager-apply-configuration.md), the consolidated [execution contract](manager-apply-execution.md) and [journal](manager-apply-journal.md) now have distinct owners for settings/mandates, shared budgets/lifecycle and durable records/control. The exact executable/schema capability profile and implementation conformance remain to be established. These are design proposals, not implementation evidence.
 
 Specify target responsibilities, packages, allowed imports, runtime data contracts and lifecycle ownership. Identify what will be copied, adapted, rewritten or deleted. Include a decision on the first executor transport, configuration ownership, source binding, registry writes, communication and record formats. Design from the completed model language and Manager concept; preserving the old Project/Report DTO is not a goal.
 
@@ -142,7 +142,7 @@ Plan the repository's own bootstrap at this checkpoint: the new compiler/check/c
 
 Implement the selected executor interface, effective role profiles, Host-mediated task/message transport, session identity, cancellation and the minimum durable prompt/event history. Start with a root and one child role; add fresh reviewers using the same mechanism. Test ordinary completion, process/transport failure and uncertain termination.
 
-**Gate:** a controlled adapter test verifies exact prompts, context, messages, causal links and lifecycle states. A separately identified bounded real-adapter smoke proves actual Agent start, response and termination. Scripted success is not substituted for that smoke. The Host refuses further unrecorded dispatch if required event storage fails.
+**Gate:** a controlled adapter test verifies exact prompts, context, messages, causal links and lifecycle states. Exercise shared-ledger reservations/settlement, protected-purpose admission, overnight waiting versus deadline, immutable run outcomes and safe reconciliation under the execution contract. A separately identified bounded real-adapter smoke proves actual Agent start, response and termination. Scripted success is not substituted for that smoke. The Host refuses further unrecorded dispatch if required event storage fails.
 
 ### P06 Produce and review one Package candidate
 
@@ -200,6 +200,6 @@ Each implementation slice binds its source SHA, task scope, retained/removed con
 
 Small source changes can be developed and reviewed independently, and obsolete functionality may disappear as part of a deliberate cut. Before integration, required checks must describe and validate the new target. Remove or replace superseded checks with their owners; do not keep compatibility machinery just to make old assumptions pass, and do not weaken still-required target invariants. Follow the currently applicable repository contribution process until it is deliberately revised with the architecture work.
 
-This plan updates design and scope. It does not execute providers, alter the production Go architecture or delete existing product source by itself. The next concrete work is P00's complete library model and P01/P02's Go and Playground designs, with their boundaries agreed before substantial runtime implementation.
+This plan updates design and scope. It does not execute providers, alter the production Go architecture or delete existing product source. The library model and P01/P02 now have proposed design contracts, including consolidated execution rules. The immediate prerequisites are their bounded review, the independent evaluator/scripted P02 gate and the pinned provider capability binding; the implementation cuts then establish complete v1 and the new product. Later working-day scenarios remain separate evidence after the technical-core demonstration.
 
 Return to the [concept](manager-apply-concept.md), [north star](manager-realization-north-star.md) or [canonical-model overview](README.md).

@@ -16,7 +16,8 @@ The [Project World package](project-world/README.md) has its own reading order a
 - [Go architecture outline for reliable Apply](canonical-model/manager-apply-go-architecture.md) — initial Ports and Adapters responsibilities, package direction and source reuse/replacement proposal.
 - [Library delegation and Apply ports](canonical-model/manager-apply-library-flow.md) — root-to-lending walkthrough, fresh review and integration, with linked concrete Go port proposals and lifecycle contracts.
 - [Agent adapter selection and rebuild plan](canonical-model/manager-apply-rebuild-plan.md) — first stdio App Server adapter, clear session lifetimes and concrete source/contract deletions, with architecture quality taking priority over minimizing effort.
-- [Apply configuration and mandates](canonical-model/manager-apply-configuration.md) — execution settings, explicit profiles, inherited limits and source-bound Manager authority.
+- [Apply configuration and mandates](canonical-model/manager-apply-configuration.md) — execution settings, exact Package overrides, hard ceilings, explicit profiles and source-bound Manager authority.
+- [Apply budgets and lifecycle](canonical-model/manager-apply-execution.md) — one shared account, protected completion capacity, waiting/deadline rules and one run-state/outcome/status contract.
 - [Apply journal and continuation](canonical-model/manager-apply-journal.md) — SQLite-backed assignment history, versioned questions/answers, carried work and controlled successor/publication lifetimes.
 - [Library Playground contract](canonical-model/manager-apply-playground.md) — callable JSON Lines program, independent M1/M2 expectations and a continuous two-Apply scenario with fixed artifacts and execution history.
 - [Earlier model-design consolidation](canonical-model/consolidation.md) — chronology from 15 October 2026 and remaining product questions outside the completed language scope.
