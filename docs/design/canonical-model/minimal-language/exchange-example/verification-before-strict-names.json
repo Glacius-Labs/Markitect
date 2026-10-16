@@ -1,0 +1,96 @@
+{
+  "body_links": 0,
+  "counterprobe_counts": {
+    "negative": 15,
+    "positive": 3
+  },
+  "counterprobes": {
+    "duplicate_effective_field": true,
+    "duplicate_yaml_key": true,
+    "empty_object_schema_positive": true,
+    "invalid_cardinality": true,
+    "invalid_enum": true,
+    "missing_direct_import": true,
+    "missing_file_local_import": true,
+    "missing_required": true,
+    "object_on_string": true,
+    "object_schema_cycle": true,
+    "object_schema_positive": true,
+    "object_unknown_field": true,
+    "qualified_and_dotted_ids_resolve": true,
+    "qualified_vs_dotted_ambiguity": true,
+    "unknown_reference": true,
+    "unknown_spec": true,
+    "wrong_kind": true,
+    "wrong_target": true
+  },
+  "definitions": 33,
+  "packages": {
+    "example.connector.project": {
+      "definitions": 7,
+      "version": null
+    },
+    "example.connector.vocabulary": {
+      "definitions": 17,
+      "version": "2.0.0"
+    },
+    "markitect.core": {
+      "definitions": 9,
+      "version": "1.0.0"
+    }
+  },
+  "resolution_calls": 565,
+  "runtime": {
+    "python": "3.13.3",
+    "pyyaml": "6.0.3"
+  },
+  "scope_limits": [
+    "fixture-only package loading",
+    "no production compiler/runtime proof",
+    "no body-link parsing (zero body links claimed)",
+    "no package networking or lock verification",
+    "no short-alias declaration syntax",
+    "local PyYAML profile, not a complete YAML or numeric language specification"
+  ],
+  "sha256": {
+    "exchange-example/core/Kind.yaml": "b8694323468d4d8c90e64740b39a10045fd21ae759066c4d99c9bc1d82003ebe",
+    "exchange-example/core/Property.yaml": "be6149acf2d5ebcca9e18bad13932ca3be9bb6d838ac5a142dd83d7bc6143590",
+    "exchange-example/core/maxCount.yaml": "206aa732af928dafc01b6949eca98db1fb5f9e3a001046d7adf889a1a1303789",
+    "exchange-example/core/minCount.yaml": "d2f2c064071c75f3f4b41cef16bd94cc7a3a7ef036f9eb7e8226559425a38744",
+    "exchange-example/core/name.yaml": "ec8abd72a1f308f00f905dacf2d8959054961f55e84b6c894aa3214a5da30d10",
+    "exchange-example/core/package.yaml": "aabd5090e7a80695ef61d7211567d3c350af5535741f7299abe5b4b20e00cb29",
+    "exchange-example/core/properties.yaml": "e3f430b729a355704ba208bcfb95bd206b66e91307f43a6af1af263f3c9879b8",
+    "exchange-example/core/target.yaml": "06dc15e8673124553bd2b71a73e1b7bb75a237d2b0a01e690da3230a467a0a63",
+    "exchange-example/core/type.yaml": "acbcb268f34a4aedfcde704af97648dbda499c6a8d22522c3e4b93f2802d9579",
+    "exchange-example/core/values.yaml": "e69f9a0d9720055274bf0854072e2cce495e94630359599bd73d4f5a2589fffd",
+    "exchange-example/project/api.yaml": "50583bb7f844f27a6d6a9e11bebb3b22be975a81843656fad070098da64ed4df",
+    "exchange-example/project/list-documents-command.yaml": "2808ef394591381f15b6517fc72ec16f5e6f1997fdcd5ea37777083f97eef905",
+    "exchange-example/project/list-documents.yaml": "b13be42e4002ef884638c42182f6760f8587145064e6eed45565c53aead954ed",
+    "exchange-example/project/messaging.yaml": "74e1ddf4e53086901044c454732c412fc30b069efbbba4794a99e62b2a8f845c",
+    "exchange-example/project/onprem.yaml": "a550d7fde51b4c870ec515558219cd8a12aa79e878fd91ec25330d730c72a068",
+    "exchange-example/project/package.yaml": "e07c64f8ea81bcd443a2b5e5946f1212e770b571ee688889ea37a32e7fde46f5",
+    "exchange-example/project/replies.yaml": "c04a926dfedba498068c183ed49a72e98ed17741616941c7be0f8b11b3b38fec",
+    "exchange-example/project/requests.yaml": "c33cb44215ca2091c1f908b912915c42b1277e876f2c650d1708dfca7d4f8c71",
+    "exchange-example/verify.py": "ff8356a26b409b1cdb487bb07ed0e06dfa45876ef9c5adf0e88d2543e6fb6403",
+    "exchange-example/vocabulary/Channel.yaml": "708d1e7f2d393cc40120f156368a76d9b6686a99fc2c5a8464cea6d932d461b8",
+    "exchange-example/vocabulary/Container.yaml": "b52fdf0831f555b9e13b7dbbc6ad7e954f78a80ec3c8f6efdd72dc9220661fbd",
+    "exchange-example/vocabulary/Exchange.yaml": "906c79c95378db9aa6cceb5f154f959154ba848d223de50b12cefae2a0366369",
+    "exchange-example/vocabulary/MqttService.yaml": "ba1566381f07af78a037a88c6be861d4104fee1591c18c572e7c1b4d570a29f5",
+    "exchange-example/vocabulary/broker.yaml": "317a31ef3fecb2d6aed531bc4ada7e869b3377385630107cd3131528328c111e",
+    "exchange-example/vocabulary/command-kind.yaml": "c156e3ada3574f20bc77ab67495731ec1080782d8bf4fd7c2a65e650f85f8bae",
+    "exchange-example/vocabulary/command-property.yaml": "f659abe54c9f8504804efb4307b258fa596ca8be0c2d4959a788ffbc2cc3b980",
+    "exchange-example/vocabulary/delivery.yaml": "c70a1f4b914f8a4c46cc6c32935414912acd5d73aeba869bbef71f211b9944c5",
+    "exchange-example/vocabulary/location.yaml": "0cc8a2a5997171c049b9c4b1b19034b006d199b52699886b2ecae8abf80fd050",
+    "exchange-example/vocabulary/maxAttempts.yaml": "94a81e39cc27b7d959c51832240685bed439d8087fd624eaf9d220e5a40a4fce",
+    "exchange-example/vocabulary/operationId.yaml": "9905176704ee4c303e38f63c59a4cf6b43cfa792353343d44f323dea0704be5e",
+    "exchange-example/vocabulary/package.yaml": "dac66704c2d5b1e4d1f0c54e4511e4280193f25d839090c350c65471465c70a7",
+    "exchange-example/vocabulary/receiver.yaml": "7e1d5d664a39161c31dab27b6db9717544a71714eee99807994a75a769245d69",
+    "exchange-example/vocabulary/replyChannel.yaml": "29d52e4e66cc3cbd1391d31e3e1017b5bdebb6e206d022213d82cf06108d443b",
+    "exchange-example/vocabulary/requestChannel.yaml": "5d8faf690a6f5dff8876c4895ffa31714bc7c1d31243633d7fdfe6c8ff7e25b0",
+    "exchange-example/vocabulary/requester.yaml": "5f4716f59c9c15327d8e89f8e6064d28ccb6fe81b4f17170df3ba415190f614d",
+    "exchange-example/vocabulary/timeoutSeconds.yaml": "7023344b413a841c7ae0d8dda35b09fb5ddb78123b81bb24599c23b89dc558e9",
+    "exchange-example/vocabulary/topicPattern.yaml": "29dcf94ee33e70535567efcb57f3b2d542fb6d996ba2ab03b0b581e8bcb5bcb6",
+    "language-contract.md": "88c7f88dcdfe1182417d1be9b4acc2962a15e1bd25e51b23d458b713d151445c"
+  },
+  "status": "passed"
+}

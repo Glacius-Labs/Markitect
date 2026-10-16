@@ -1,0 +1,11 @@
+imports:
+  - package: markitect/core
+    as: Core
+id: timeoutSeconds
+kind: Property
+body: >-
+  Positive maximale Wartefrist pro Versuch in Sekunden.
+spec:
+  type: integer
+  minCount: 1
+  maxCount: 1

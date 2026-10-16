@@ -1,18 +1,18 @@
 # Herleitung des minimalen Cores und Connector-Gegenproben
 
-Stand: 15. Oktober 2026. **Status: Gesprächsherleitung, frühere Varianten und begrenzte Prüfberichte.** Der aktuelle, zusammenhängende Stand steht im [konsolidierten Sprachvertrag](language-contract.md). Der Nutzer hat inzwischen auch den Identitätsvertrag gewählt und die Konsolidierung beauftragt. Frühere Vorschlags- und Statusangaben auf dieser Seite dokumentieren ihren jeweiligen Gesprächszeitpunkt; sie setzen die späteren Entscheidungen nicht außer Kraft. Produktunterstützung des neuen Gesamtvertrags wird nicht behauptet.
+**Historisch und nicht normativ.** Die nachfolgenden Gesprächsstände, Varianten und Berichte behalten ihren ursprünglichen Geltungsbereich. Spätere Entscheidungen setzen sie nicht rückwirkend um.
 
-**Aktuell gewaehlte Richtung:** Der Nutzer entscheidet sich fuer **eine einheitliche Definitionenform mit den fest verstandenen Kinds Kind und Property**. body bleibt der verbindliche Koerper; requirements und roles entfallen vorerst als besondere Sprachmittel. [Abschnitt 14](#14-gewaehlte-grundform-und-kompakte-properties) haelt die Entscheidung und die kompakte Autorenform fest. Deren genaue Syntax und Normalisierungsdetails sind der ausgearbeitete Vorschlag zum Auftrag; eine neue Produktimplementierung ist damit nicht behauptet.
+Die [Sprachspezifikation v1](language-contract.md) ist seit dem 16. Oktober 2026 die vom Nutzer bestätigte abgeschlossene Designbaseline. Die historische Herleitung auf dieser Seite enthält keine offenen v1-Sprachentscheidungen. Produktive Go-Implementierung und ein breiter Konformitätskorpus bleiben gesonderte Arbeit.
 
-Der [Identitaets- und Referenzvertrag](#15-identitaeten-imports-versionen-und-umbenennungen) unterscheidet stabile Identitaet, optionale Anzeigenamen und die Bindung importierter Versionen. Nach dem Durchgang in Abschnitt 16 hat der Nutzer diesen Vertrag gewaehlt; die verbindlichen Designregeln und die noch offenen Formatdetails sind im konsolidierten Sprachvertrag getrennt festgehalten.
+| Einstieg | Rolle |
+| --- | --- |
+| [Sprachspezifikation v1](language-contract.md) | Alleinige normative Quelle der gewählten kanonischen Form. |
+| [Diagnosevertrag](diagnostic-contract.md) | Separates Werkzeugprofil für exakte Koordinaten; keine Voraussetzung des Modelldigests. |
+| [Sprachgeschichte](language-history.md) | Frühere zusammenhängende Herleitung, Änderungen und damalige Abschlussabgleiche. |
+| [Verfahrensvorschläge](procedure-proposals.md) | Noch nicht gewählte Ausarbeitungen zu Kontext, Auswirkungen und semantischem Index. |
+| [Exchange-Beispiel](exchange-example/README.md) | Aktuelle ausführbare Eingaben und begrenzte Prüfevidenz. |
 
-Der [vollstaendige Identitaetsdurchgang](#16-identitaetsdurchgang-mit-import-update-und-feldumbenennung) prueft diesen Vorschlag inzwischen begrenzt mit importiertem Vokabular, drei gebundenen Staenden und sender/requester. Er implementiert keinen Produktloader.
-
-Die [Untersuchung einer gemeinsamen Grundform](#11-gemeinsame-grundform-und-body) ist die Grundlage der inzwischen gewaehlten Richtung. Die bisherigen YAML-Dateien und ihre hashgebundenen Berichte bleiben unveraenderte Nachweise des vorherigen Durchstichs mit definition. Der aktuelle Implementierungsname purpose bleibt davon unberuehrt.
-
-Der anschliessend beauftragte [feste Anfang und die vollstaendige Typaufloesung](#12-fester-anfang-und-typaufloesung-am-exchange) sind als eigene, begrenzte Entwurfsprobe mit body ausgearbeitet. Die Probe verwendet eine gemeinsame Definitionenform und ersetzt den Produktcompiler nicht.
-
-Der [Vergleich beider Core-Varianten](#13-vergleich-und-empfehlung-fuer-markitect) dokumentiert auch die damalige Empfehlung des Assistenten fuer die explizite Variante. Diese Empfehlung ist durch die anschliessende Nutzerwahl zugunsten der einheitlichen Form abgeloest. Fruehere Abschnitte bleiben als Herleitung und Vergleich erhalten.
+Die historischen Bootstrap-, Kompakt- und Identitätsproben weiter unten sind keine v1-Konformitätsnachweise. Der [gemeinsame Designstand](../consolidation.md) führt zu den übrigen Produktfragen; die [Sessionübergabe](../HANDOFF.md) bleibt eine historische Kontextübergabe.
 
 ## 1. Kind war bereits der Ansatzpunkt
 
@@ -987,7 +987,7 @@ Der [kompakte Pruefbericht](bootstrap/compact-probe.json) bindet die drei Eingab
 
 ## 15. Identitaeten, Imports, Versionen und Umbenennungen
 
-**Nachfolgende Nutzerentscheidung:** Der hier entworfene und in Abschnitt 16 durchgespielte Identitätsvertrag wird gewählt. Seine aktuelle konsolidierte Fassung steht im [Sprachvertrag](language-contract.md#7-identitäten-und-referenzen). Dieser Abschnitt bleibt die frühere Ausarbeitung; noch offene lexikalische und produktive Details werden durch die Auswahl nicht als implementiert behandelt.
+**Nachfolgende Nutzerentscheidung:** Der hier entworfene und in Abschnitt 16 durchgespielte Identitätsvertrag wird gewählt. Seine aktuelle konsolidierte Fassung steht im [Sprachvertrag](language-contract.md#names). Dieser Abschnitt bleibt die frühere Ausarbeitung; noch offene lexikalische und produktive Details werden durch die Auswahl nicht als implementiert behandelt.
 
 Auftrag des Nutzers: Kinds, konkrete Definitionen und eingebettete Properties auch mit Imports, Versionen und Umbenennungen eindeutig adressieren. Der folgende Identitaetsvertrag ist ein zusammenhaengender Vorschlag. Gewaehlt bleiben die einheitliche Grundform, Kind und Property, body sowie die kompakte Darstellung; die neue Identitaetsnotation, ein optionales title und die nachfolgende Importpolitik werden durch diesen Entwurf nicht als bereits angenommen behandelt.
 

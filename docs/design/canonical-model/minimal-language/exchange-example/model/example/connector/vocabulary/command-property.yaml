@@ -1,0 +1,12 @@
+imports:
+  - package: markitect/core
+    as: Core
+
+id: command
+kind: Property
+body: Vertrag der angeforderten Operation.
+spec:
+  type: reference
+  target: Command
+  minCount: 1
+  maxCount: 1

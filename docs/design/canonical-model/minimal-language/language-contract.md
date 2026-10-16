@@ -1,8 +1,24 @@
-# Markitect Core: konsolidierter Sprachvertrag
+# Markitect: normative Sprachspezifikation v1
 
-Stand: 15. Oktober 2026. **Status: im Designgespräch gewählte Sprachgrundlage.** Der Nutzer hat die einheitliche Grundform mit Kind und Property, body, kompakte Properties, den am Exchange durchgespielten Identitätsvertrag und anschließend die Körperlinks aus Abschnitt 4 gewählt. Dieser Vertrag beschreibt den angestrebten Core. Er ist keine Behauptung, dass der heutige Produktcompiler diese Sprache bereits unterstützt. Abschnitt 11 enthält die anschließende, noch nicht gewählte Verfahrensausarbeitung zu Kontext, Auswirkungen und semantischem Index.
+**Status:** Abgeschlossene v1-Designbaseline, vom Nutzer am 16. Oktober 2026 bestätigt. Diese Datei ist die alleinige normative Quelle für die kanonische Form. Der gewählte v1-Sprachumfang ist fertig designt; es bestehen keine offenen Sprachentscheidungen innerhalb dieses Umfangs.
 
-Diese Seite besitzt den aktuellen Sprachvertrag. Die [Herleitung und Varianten](README.md), früheren Beispieldateien und gebundenen Prüfberichte bleiben als historische Begründung und begrenzte Evidenz erhalten. Bei abweichenden früheren Vorschlägen gilt die hier festgehaltene neuere Auswahl. Noch offene Ausarbeitungen stehen ausdrücklich am Ende.
+Der Abschluss betrifft das Sprachdesign. Produktive Go-Implementierung und ein breiter Konformitätskorpus stehen noch aus. Die ausführbaren Entwurfsproben belegen ihren jeweiligen Prüfungsumfang, keine vollständige Unterstützung durch den Produktcompiler. Projektvokabulare und die gesonderten Verfahrensvorschläge gehören nicht zum Abschluss dieser Sprachbaseline.
+
+**Verbindlichkeit:** MUSS und DARF NICHT bezeichnen verpflichtende Regeln beziehungsweise Verbote. DARF bezeichnet eine erlaubte Möglichkeit. Auch die deklarativen Regeln, Tabellen, Grammatiken und die neun Core-Definitionen dieser Spezifikation sind normativ. Es gibt keine implizite Fehlerkorrektur. Beispiele und Prüfberichte außerhalb dieser Datei sind informativ und können diese Regeln nicht ergänzen oder überschreiben.
+
+[Sprachgeschichte](language-history.md), [noch nicht gewählte Verfahrensvorschläge](procedure-proposals.md) und [ausführbares Exchange-Beispiel mit begrenzter Prüfevidenz](exchange-example/README.md) sind getrennte Dokumente. Sie sind keine alternativen Sprachverträge.
+
+| Gegenstand | Normativer Abschnitt |
+| --- | --- |
+| Einheitliche Datei und fester Core | [Definition](#definition), [Core](#core-definitions), [Feldverträge](#property-contracts) |
+| Verbindliche Prosa und Links | [body](#body), [Markdown-/Linkprofil](#body-links) |
+| Werte, Listen und endliche Verarbeitung | [Werte](#values), [YAML](#yaml-values), [Listen](#lists), [Zyklen und Ressourcen](#cycles-resources) |
+| Namen und Packages | [Auflösung](#names), [Schreibweise](#spelling), [Unicode](#unicode), [Ordner](#packages) |
+| Gebundene Modelle | [Imports](#imports), [Manifest und Wurzel](#models), [Lock](#lock) |
+| Kanonischer Inhalt und Gültigkeit | [Bytes](#canonical-bytes), [Änderungen](#changes), [Verarbeitung](#processing), [Konformität](#conformance) |
+
+
+<a id="scope"></a>
 
 ## 1. Zweck und Umfang
 
@@ -12,37 +28,32 @@ Der Core stellt die allgemeinen Sprachmittel vollständig bereit. Projekte könn
 
 System, Container, Component, Command, Exchange, Rule oder andere Fachbegriffe sind mögliche Inhalte eines Vokabulars. Sie sind keine privilegierten Core-Kinds. Das Modell benötigt weder ein eingebautes Project noch eine vorgegebene Softwarearchitektur-Taxonomie.
 
+<a id="definition"></a>
+
 ## 2. Eine Grundform: Definition
 
 Typverträge, Propertyverträge und konkrete Projektgegenstände sind Definitionen mit derselben Grundform:
 
 | Feld | Inhalt |
 | --- | --- |
+| imports, optional | In dieser Definitionsdatei sichtbare fremde Pakete; ohne Angabe keine fremden Namen. |
 | id | Stabile lokale Identität innerhalb des Pakets. |
 | kind | Referenz auf die Typdefinition, deren Vertrag diese Definition erfüllt. |
 | body | Verbindliche Beschreibung ihrer Bedeutung und Festlegungen. |
 | spec | Objekt mit den laut Kind erlaubten strukturierten Werten und Beziehungen. |
 | title, optional | Lesbare Bezeichnung; kein Referenzziel und kein Ersatz für body. |
 
-id, kind und body sind nichtleere Angaben. spec kann leer sein, muss aber dem Typvertrag entsprechen. Unbekannte Felder sind Fehler; für zusätzliche Projektangaben werden Properties am jeweiligen Kind deklariert. Die Beispiele verwenden YAML als Autorenform.
+`id`, `kind` und `body` MÜSSEN nichtleere Strings sein. `body` MUSS außerdem mindestens ein Zeichen außerhalb der Unicode-Eigenschaft White_Space in Version 15.1.0 enthalten (Abschnitt 4). `spec` MUSS ein Mapping sein; es darf leer sein, wenn der Kind-Vertrag dies erlaubt. Ein vorhandenes `title` MUSS ein String sein. Unbekannte Hüllenfelder sind Fehler; zusätzliche Projektangaben werden als Properties am jeweiligen Kind deklariert.
 
-```yaml
-id: list-documents
-kind: connector:Exchange
-body: Die API fordert Dokumentmetadaten beim Connector an.
-spec:
-  requester: api
-  receiver: onprem
-  command: list-documents-command
-  requestChannel: requests
-  replyChannel: replies
-  timeoutSeconds: 30
-  maxAttempts: 2
-```
+Jede Definition steht vollständig in genau einer eigenen YAML-Datei. Das gilt gleichermaßen für Kinds, Properties und konkrete Gegenstände sowie für die Definitionen des festen Core-Pakets. Jede Definitionsdatei enthält dieselbe Hülle mit id, kind, body, spec und optional imports sowie title. Mehrere Definitionen in einer Datei, eingebettete Definitionen und kompakte Propertydeklarationen sind nicht zulässig. Die Felder innerhalb von spec richten sich nach dem jeweiligen Kind; strukturierte object-Werte bleiben gewöhnliche Werte und sind keine eingebetteten Definitionen.
 
-Dieses Beispiel verwendet das unten erklärte importierte Vokabular. Laufzeit-Requests erzeugen keine neuen kanonischen Exchange-Definitionen. list-documents beschreibt den gewünschten Vertrag dieser Operation.
+Der Dateiname ist keine Identität. Der enthaltende Ordner bestimmt dagegen das Package und damit einen Teil der Identität. Eine ausdrücklich bestimmte Modellwurzel begrenzt die Ordnerstruktur. Die Bindung externer Modelle und ihrer genauen Inhalte wird getrennt von den Packages festgelegt; Modell ist die gemeinsame Versionierungs- und Verteilungseinheit. Jede Definitionsdatei wählt daraus mit imports selbst ihre sichtbaren fremden Pakete; eigene Paketdefinitionen sind ohne Import sichtbar. Versionen und Digests werden nicht in jeder Definitionsdatei wiederholt. Abschnitt 8 trennt diese beiden Aufgaben.
+
+<a id="core"></a>
 
 ## 3. Der feste Anfang: Kind und Property
+
+Der feste Core im Package `markitect/core` besteht aus genau neun Definitionen: den Kinds `Kind` und `Property` sowie den sieben Properties `name`, `type`, `minCount`, `maxCount`, `values`, `target` und `properties`. Abschnitt 3.1 definiert ihre vollständigen Inhalte.
 
 Der Core versteht zwei feste Meta-Kinds:
 
@@ -51,95 +62,220 @@ Der Core versteht zwei feste Meta-Kinds:
 | Kind | Deklarieren Typverträge für weitere Definitionen. |
 | Property | Deklarieren benannte Eigenschaften oder Beziehungen eines solchen Vertrags. |
 
-Im festen Core-Paket ist Kind selbst eine Definition von Kind; Property ist eine Definition von Kind. Eine Projektdefinition wie Exchange hat den Kind core:Kind. Eine konkrete Exchange-Definition hat den Kind connector:Exchange. Nicht jeder vorhandene Gegenstand ist deshalb als kind-Ziel zulässig: Ein solches Ziel muss selbst eine gültige Definition des festen Meta-Kinds Kind sein.
+Im festen Core-Paket ist Kind selbst eine Definition von Kind; Property ist eine Definition von Kind. Eine Projektdefinition wie Exchange hat den Kind Kind. Eine konkrete Exchange-Definition hat den Kind Exchange. Ein kind-Ziel muss selbst eine gültige Definition des festen Meta-Kinds Kind sein.
 
-Der bekannte, versionierte Anfang enthält außerdem die Propertydefinitionen seiner eigenen Felder:
-
-| Meta-Property | Vertrag |
+| Meta-Property-ID | Vertrag |
 | --- | --- |
-| Kind.properties | Optionale Liste von Referenzen auf Propertydefinitionen. |
-| Property.name | Erforderlicher Feldname; innerhalb eines verwendenden Kinds eindeutig. |
-| Property.type | Erforderliche Auswahl eines bekannten Werttyps. |
-| Property.minCount | Erforderliche nichtnegative Mindestanzahl. |
-| Property.maxCount | Erforderliche Höchstanzahl beziehungsweise -1. |
-| Property.values | Erlaubte Stringwerte eines enum. |
-| Property.target | Referenz auf den Ziel-Kind einer reference. |
-| Property.properties | Feldverträge eines object. |
+| name | Optionaler ausdrücklich abweichender Feldname; ohne Angabe gilt die vollständige lokale Property-ID. |
+| type | Erforderliche Auswahl eines bekannten Werttyps. |
+| minCount | Erforderliche nichtnegative Mindestanzahl. |
+| maxCount | Erforderliche Höchstanzahl beziehungsweise -1. |
+| values | Bei enum erforderliche nichtleere Liste eindeutiger erlaubter Stringwerte; sonst nicht zulässig. |
+| target | Bei reference erforderliche Referenz auf den Ziel-Kind; sonst nicht zulässig. |
+| properties | Optionale Liste von Referenzen auf Propertydefinitionen: Feldvertrag einer Kind-spec oder eines object-Werts gemäß Abschnitt 3.2. |
 
-Für diesen Werteumfang sind das zehn feste Definitionen: zwei Kinds und acht Properties. Der Compiler kennt die Bedeutung dieser Felder und kontrolliert die bereitgestellte Selbstbeschreibung gegen diesen festen Anfang. Die Selbstbeschreibung erzeugt ihre eigene Gültigkeit nicht aus Prosa.
+Der Compiler kennt die Bedeutung dieser Felder und kontrolliert die bereitgestellte Selbstbeschreibung gegen den festen Anfang. Die Selbstbeschreibung erzeugt ihre eigene Gültigkeit nicht aus Prosa. Die Core-Identitäten und der gebundene Core-Inhalt können durch Projektdefinitionen nicht ersetzt werden. Ein lokaler Kind namens Kind oder ein beliebiger Importalias erzeugen keine Sonderrechte. Beliebige benutzerdefinierte Metaklassen sind für diesen Vertrag nicht vorgesehen.
 
-Die Core-Identitäten und der gebundene Core-Inhalt können durch Projektdefinitionen nicht ersetzt werden. Ein lokaler Kind namens Kind und ein Importkürzel core erzeugen keine Sonderrechte. Beliebige benutzerdefinierte Metaklassen sind für diesen Vertrag nicht vorgesehen.
+<a id="core-definitions"></a>
+
+### 3.1 Vollständiger Core in neun Definitionsdateien
+
+Alle neun Dateien gehören zum Paket markitect/core. Sie benötigen keine Imports, weil ihre Referenzziele im eigenen Paket liegen. Jede Datei hat dieselbe vollständige Hülle. Der effektive Feldname jeder Meta-Property entspricht ihrer kurzen lokalen ID; spec.name entfällt deshalb durchgängig.
+
+Auch beim Vergleich mit dieser festen Selbstbeschreibung sind fehlende imports und ausdrücklich gesetzte `imports: []` gemäß Abschnitt 5.2 gleichwertig. Die Autorenform bleibt erhalten; eine fehlerhafte Angabe oder eine nichtleere Importliste wird nicht als leere Liste behandelt.
+
+Der Vergleich prüft den wirksamen Inhalt nach den allgemeinen Sprachregeln: Referenzen in kind, target und properties werden anhand ihrer aufgelösten Package-/ID-Ziele verglichen; wirksame Standardwerte und ungeordnete Deklarationen folgen Abschnitt 5.2 und 8.3. Kurze, vollständig qualifizierte und mit gültigem Importalias qualifizierte Referenzen sind auch im Core gleichwertig. Imports werden vollständig geprüft, sind nach erfolgreicher Auflösung aber kein zusätzliches Inhaltsfeld. Ein weiterhin gültiger unbenutzter Import verändert die Selbstbeschreibung nicht. Schreibfehler, Mehrdeutigkeiten, ungültige Imports, Duplikate und verbotene Felder bleiben Fehler. Die vollständigen bodies und alle sonstigen Inhaltswerte müssen weiterhin dem festen Core entsprechen; die Quelldateien werden nicht umgeschrieben.
+
+**kind.yaml**
+
+```yaml
+id: Kind
+kind: Kind
+body: >-
+  Deklariert einen Typ. properties benennt die erlaubten Felder
+  der spec seiner Definitionen. Der body einer Typdefinition beschreibt
+  deren gemeinsame Bedeutung und geltende Festlegungen.
+spec:
+  properties:
+    - properties
+```
+
+**property.yaml**
+
+```yaml
+id: Property
+kind: Kind
+body: >-
+  Deklariert einen Feldvertrag mit Werttyp und Kardinalität.
+  Der body beschreibt die Bedeutung seiner Werte oder Beziehungen.
+  Bei type object benennt properties die erlaubten Felder des Objektwerts.
+spec:
+  properties:
+    - name
+    - type
+    - minCount
+    - maxCount
+    - values
+    - target
+    - properties
+```
+
+**name.yaml**
+
+```yaml
+id: name
+kind: Property
+body: >-
+  Optionaler ausdrücklich abweichender nichtleerer Feldname.
+  Ohne Angabe gilt die vollständige lokale ID der Property als Feldname.
+  Der effektive Feldname muss innerhalb jedes verwendenden Vertrags
+  eindeutig sein.
+spec:
+  type: string
+  minCount: 0
+  maxCount: 1
+```
+
+**type.yaml**
+
+```yaml
+id: type
+kind: Property
+body: Der vom Core verstandene Werttyp dieser Property.
+spec:
+  type: enum
+  minCount: 1
+  maxCount: 1
+  values:
+    - string
+    - boolean
+    - integer
+    - number
+    - enum
+    - object
+    - reference
+```
+
+**min-count.yaml**
+
+```yaml
+id: minCount
+kind: Property
+body: Nichtnegative Mindestanzahl vorhandener Werte.
+spec:
+  type: integer
+  minCount: 1
+  maxCount: 1
+```
+
+**max-count.yaml**
+
+```yaml
+id: maxCount
+kind: Property
+body: >-
+  Höchstanzahl vorhandener Werte. Der Wert -1 erlaubt beliebig viele Werte
+  innerhalb der Werkzeuggrenzen. Andere Werte müssen mindestens minCount
+  entsprechen. Genau 1 bezeichnet einen Einzelwert; andere Höchstwerte
+  eine Liste.
+spec:
+  type: integer
+  minCount: 1
+  maxCount: 1
+```
+
+**values.yaml**
+
+```yaml
+id: values
+kind: Property
+body: >-
+  Erlaubte Stringwerte einer enum-Property.
+  Bei type enum ist eine nichtleere Liste eindeutiger Werte erforderlich.
+  Bei anderen Werttypen ist diese Angabe nicht zulässig.
+spec:
+  type: string
+  minCount: 0
+  maxCount: -1
+```
+
+**target.yaml**
+
+```yaml
+id: target
+kind: Property
+body: >-
+  Der verlangte Kind der referenzierten Definitionen.
+  Bei type reference ist diese Angabe erforderlich.
+  Bei anderen Werttypen ist sie nicht zulässig.
+spec:
+  type: reference
+  target: Kind
+  minCount: 0
+  maxCount: 1
+```
+
+**properties.yaml**
+
+```yaml
+id: properties
+kind: Property
+body: >-
+  Referenziert die erlaubten Feldverträge des hier beschriebenen Objekts.
+  Die effektiven Feldnamen müssen innerhalb dieses Vertrags eindeutig sein.
+spec:
+  type: reference
+  target: Property
+  minCount: 0
+  maxCount: -1
+```
+
+<a id="property-contracts"></a>
+
+### 3.2 Gemeinsame Property am Kind und am Objekt
+
+Die feste Core-Property `properties` deklariert eine Liste eigenständiger Propertydefinitionen. Am Kind bestimmt sie die erlaubten Felder der `spec` seiner Definitionen; an einer object-Property bestimmt sie die erlaubten Felder ihres Objektwerts. Diese Bedeutung folgt ausschließlich aus den gebundenen Meta-Identitäten.
+
+| Betrachtete Definition | Bedeutung der gemeinsamen Property |
+| --- | --- |
+| kind ist der feste Meta-Kind Kind | properties deklariert die erlaubten Felder der spec der Definitionen dieses Kinds. Das gilt auch für kind.yaml und property.yaml selbst. |
+| kind ist der feste Meta-Kind Property und spec.type ist object | properties deklariert die erlaubten Felder des jeweiligen Objektwerts. |
+| kind ist der feste Meta-Kind Property mit anderem spec.type | properties ist als Vertragsangabe nicht zulässig, auch nicht als leere Liste. Die bereits bestehende Werttypbedingung bleibt erhalten. |
+| kind ist ein gewöhnlicher Projekt-Kind | Dessen eigener Feldvertrag gilt. Ein dort erlaubtes Feld namens properties, auch bei Wiederverwendung der gemeinsamen Property, ist gewöhnlicher Dateninhalt und erzeugt keinen zusätzlichen Typ- oder Objektvertragsoperator. |
+
+Die letzte Zeile verhindert eine unzulässige globale Reservierung des Feldnamens. Ein Projekt-Kind SchemaCatalog könnte properties als Liste von Propertyreferenzen deklarieren und konkrete Katalogeinträge damit beschreiben. Ein solcher Katalogeintrag wird dadurch nicht zum Kind; nur eine Definition des festen Meta-Kinds Kind deklariert einen neuen Typvertrag. Die feste Sprachbedeutung hängt an genau gebundenen Meta-Identitäten, nicht an geschriebenen Namen oder einem beliebigen Importalias.
+
+<a id="body"></a>
 
 ## 4. Verbindliche Prosa und Geltungsbereich
 
 body ist Teil des geltenden Modellvertrags und wird im gebundenen Inhalt erhalten.
+
+**Nichtleerer Inhalt:** Der nach YAML dekodierte body MUSS mindestens ein Zeichen enthalten, das nicht zur Unicode-Eigenschaft White_Space in der gebundenen Version 15.1.0 gehört. Ein leerer String und ein ausschließlich aus solchen Leerraumzeichen bestehender String sind Fehler. Es gilt dieselbe Zeichenmenge wie für Link-Anzeigetexte in Abschnitt 4.5, keine sprach- oder laufzeitspezifische strip-/isspace-Definition. Die Prüfung trimmt, ersetzt oder normalisiert den Text nicht. Führender, innerer und abschließender Leerraum bleiben vollständig erhalten und gehen unverändert in den kanonischen body-Wert ein. Diese Inhaltsbedingung erweitert keine Markdown- oder Körperlinkgrammatik und gilt nicht allgemein für gewöhnliche Stringwerte oder das optionale title.
 
 - Der body eines Kinds beschreibt die gemeinsame Bedeutung und geltenden Festlegungen seiner Definitionen.
 - Der body einer Property beschreibt die Bedeutung ihrer Werte und Beziehungen im verwendenden Vertrag.
 - Der individuelle body ergänzt die Festlegungen des konkreten Gegenstands.
 - Individuelle Angaben heben allgemeine Pflichten nicht still auf. Widersprüche werden als zu klärende Befunde behandelt.
 
-Der Text kann Modellbedingungen, gewünschtes Laufzeitverhalten, Grenzen und Bedingungen seiner Anwendbarkeit beschreiben. Eine nicht formal prüfbare Aussage bleibt verbindlich. Der Core besitzt vorerst keine besonderen requirements-, roles- oder subject-Abschnitte und keine allgemeine formale Regelsprache. Ein Projekt kann solche Wörter als eigene Begriffe verwenden, ohne dadurch besondere Compilersemantik zu erhalten.
+Der Text kann Modellbedingungen, gewünschtes Laufzeitverhalten, Grenzen und Bedingungen seiner Anwendbarkeit beschreiben. Eine nicht formal prüfbare Aussage bleibt verbindlich. Der Core besitzt keine besonderen requirements-, roles- oder subject-Abschnitte und keine allgemeine formale Regelsprache. Ein Projekt kann solche Wörter als eigene Begriffe verwenden, ohne dadurch besondere Compilersemantik zu erhalten.
 
 Beziehungen erhalten ihre fachliche Bedeutung aus dem Typ- und Propertyvertrag. Eine Aussage über requester betrifft die dort referenzierte Anwendung im beschriebenen Austausch. Aus einem Relationsnamen folgen weder globale Regelgeltung noch transitive Zusammensetzung, Agentenaufteilung oder Schreibrechte.
 
-Ein bloßes Wort im body erzeugt keine Referenzkante. Explizite Körperlinks verwenden denselben Zieladressmechanismus. Der folgende Abschnitt konkretisiert die bereits im [früheren Prosaentwurf](../../product-model-refinement/canonical-model-proposal.md#25-definitionskörper-explizite-links-und-linkvorschläge) vereinbarte Richtung. Der Nutzer hat diesen Körperlinkvertrag im anschließenden Designgespräch gewählt. Vollständige lexikalische Formatdetails bleiben ausdrücklich offen; eine Produktimplementierung wird nicht behauptet.
-
 ### 4.1 Ein Linkformat für alle Definitionen
 
-Die Autorenform lautet `[[Ziel]]` oder `[[Ziel|Anzeigetext]]`. Das Ziel ist eine lokale id oder alias:id. Die Auflösung erfolgt im Paket der Definition, deren body den Link enthält. Sie benutzt dieselben festen Paketbindungen wie kind und die Referenzwerte in spec. Der Anzeigetext beeinflusst die Auflösung nicht. Ohne ausdrücklichen Anzeigetext wird die geschriebene Zieladresse angezeigt.
+Die Autorenform lautet `[[Ziel]]` oder `[[Ziel|Anzeigetext]]`. Das Ziel ist eine im eigenen Package oder durch direkte Imports verfügbare id, eine vollständige Referenz package/id oder eine ausdrücklich aliasqualifizierte Referenz Alias.id. Die Auflösung erfolgt im eigenen Paket und den dateilokalen Imports der Definition, deren body den Link enthält. Sie benutzt dieselben festen Paketbindungen wie kind und die Referenzwerte in spec. Der Anzeigetext beeinflusst die Auflösung nicht. Ohne ausdrücklichen Anzeigetext wird die geschriebene Zieladresse angezeigt.
 
-| Körperlink im Projektpaket | Ziel im Beispiel |
-| --- | --- |
-| `[[connector:Exchange|Austausch]]` | Die Kind-Definition Exchange im importierten Vokabular. |
-| `[[list-documents|Dokumentabfrage]]` | Der konkrete beschriebene Austausch im eigenen Paket. |
-| `[[api|Cloud-API]]` | Die konkrete API-Definition im eigenen Paket. |
-| `[[connector:Exchange/sender|requester]]` | Die Propertydefinition mit stabiler id Exchange/sender und aktuellem Feldnamen requester. |
+Jede Property ist über ihre ausdrücklich deklarierte lokale id adressierbar. Es gibt weder eine eigene Propertylink-Syntax noch automatische Suche nach einem Feldnamen. Eine Feldbezeichnung wird nicht automatisch zu einer zusätzlichen Property-ID.
 
-Eine eingebettete Property ist nach ihrer Normalisierung über ihre vollständige lokale id adressierbar. Es gibt weder eine eigene Propertylink-Syntax noch automatische Suche nach einem Feldnamen. Die sichtbare Bezeichnung requester ist kein Alias für Exchange/sender.
+### 4.2 Deklaration und konkreter Wert
 
-### 4.2 Exchange: Vertrag, Feld und konkreter Wert
+Ein Körperlink auf eine Property bezeichnet deren eigenständige Definition, keinen konkreten Feldwert und keinen Zugriffsausdruck. Ein konkreter Referenzwert wird in `spec` gesetzt. Fachliche Zusammenhänge trägt der umgebende Satz; stimmen Prosa und `spec` nicht überein, bleibt dies ein semantischer Widerspruch. Es gibt keine automatische Vorrangregel.
 
-Im Vokabularpaket kann der Kind-Körper seine eigene Property adressieren:
-
-```yaml
-id: Exchange
-kind: core:Kind
-body: >-
-  Beschreibt einen Request-/Reply-Vertrag.
-  Die durch [[Exchange/sender|requester]] bestimmte Anwendung muss
-  Antworten anhand der MessageId dem ursprünglichen Request zuordnen.
-```
-
-Dieser Ausschnitt ergänzt den vollständigen Exchange-Vertrag aus Abschnitt 6; seine Propertydeklarationen bleiben dort bestehen. Der Link bezeichnet die Propertydeklaration. Der Satz beschreibt die Pflicht der Anwendung, die in jeder Exchange-Definition als requester eingetragen ist. Diese Aussage kommt aus der Prosa, nicht aus einem vom Core ausgeführten Zugriffsausdruck.
-
-Im Projektpaket sieht der konkrete Ausschnitt so aus:
-
-```yaml
-id: list-documents
-kind: connector:Exchange
-body: >-
-  Dieser [[connector:Exchange|Austausch]] dient der Dokumentabfrage.
-  [[api|Die Cloud-API]] fordert die Daten bei [[onprem|dem Connector]] an.
-  Die durch [[connector:Exchange/sender|requester]] bestimmte Anwendung
-  muss verspätete Antworten nach Ablauf der Wartefrist verwerfen.
-spec:
-  requester: api
-  receiver: onprem
-  command: list-documents-command
-  requestChannel: requests
-  replyChannel: replies
-  timeoutSeconds: 30
-  maxAttempts: 2
-```
-
-Hier entstehen Körperbezüge auf den Kind, zwei konkrete Definitionen und eine Propertydefinition. spec.requester setzt dagegen ausdrücklich die typisierte Auftraggeberbeziehung zu api. Der Körperlink setzt diesen Wert nicht. Stimmen Satz und spec nicht überein, ist das ein semantischer Widerspruch; eine erfolgreiche Zielauflösung beweist ihre Übereinstimmung nicht.
-
-Ein Link auf Exchange/sender bezeichnet keinen einzelnen Propertywert von list-documents. Der erste Umfang benötigt keine zusätzliche Ausdruckssprache für Dereferenzierung, Filter, Feldpfade oder berechnete Links. Ein Satz kann den Zusammenhang über den benannten Propertyvertrag ausdrücken; muss ein konkretes Ziel explizit im Graph erscheinen, wird auch dieses Ziel ausdrücklich referenziert.
 
 ### 4.3 Die feste Bedeutung des Links
 
-Der Core kennt genau eine zusätzliche Beziehung aus diesem Markup: **Die Quelldefinition nimmt an dieser Körperstelle ausdrücklich auf die Zieldefinition Bezug.** Er hält je Vorkommen Quelle, kanonisches Paket-/ID-Ziel, optionalen Anzeigetext und Fundstelle fest. Wiederholte Links bleiben nachvollziehbare Vorkommen; eine zusammengefasste Graphsicht darf sie als einen Bezug mit mehreren Fundstellen darstellen. Dafür gibt es keine zweite manuelle uses-/references-Liste und keinen neuen eingebauten fachlichen Kind.
+Der Core kennt genau eine zusätzliche Beziehung aus diesem Markup: **Die Quelldefinition nimmt an dieser Körperstelle ausdrücklich auf die Zieldefinition Bezug.** Er erhält die geordneten Vorkommen mit Quelldefinition, kanonischem Paket-/ID-Ziel und optionalem Anzeigetext. Wiederholte Links bleiben einzelne Vorkommen; eine zusammengefasste Graphsicht darf sie als einen Bezug mit mehreren Vorkommen darstellen. Dafür gibt es keine zweite manuelle uses-/references-Liste und keinen neuen eingebauten fachlichen Kind. Exakte Diagnosekoordinaten sind keine Voraussetzung dieser Beziehung.
 
 Die fachliche Aussage entsteht aus Satz, Kind- und Propertyvertrag. Daraus folgen diese Grenzen:
 
@@ -149,23 +285,46 @@ Die fachliche Aussage entsteht aus Satz, Kind- und Propertyvertrag. Daraus folge
 - Das Referenzieren einer Regel aktiviert sie nicht automatisch für den ganzen verlinkten Gegenstand. Der geltende Umfang muss aus ihrem Vertrag und der Aussage hervorgehen.
 - Verbindliche unmarkierte Prosa bleibt Teil des Modells. Links helfen beim eindeutigen Bezeichnen, ersetzen aber weder die Aussage noch eine Vollständigkeitsbeurteilung.
 
-Der Bezug ist damit für Navigation, Kontext und Änderungsprüfung maschinell nutzbar. Eine Änderung am Ziel macht die Quellen zu Kandidaten für eine erneute Beurteilung. Sie beweist keine nötige Codeänderung und erzeugt keinen Ausführungsauftrag. Beim semantischen Lesen gehört die gebundene Bedeutung des Ziels zum Verständnis des Satzes; bloße Erreichbarkeit im Graph importiert nicht transitiv sämtliche Pflichten aller erreichbaren Definitionen.
+Die gebundene Bedeutung des Linkziels gehört zum Verständnis des Satzes. Bloße Erreichbarkeit im Graph importiert nicht transitiv sämtliche Pflichten aller erreichbaren Definitionen.
 
 ### 4.4 Prüfung, Umbenennung und Modellstand
 
-Der Compiler kann aktive Links erkennen, ihre Ziele nach vollständiger Propertynormalisierung eindeutig auflösen und Herkunft erhalten. Fehlendes Ziel oder unbekannter Import ist ein Fehler; Titel, Anzeigetext und erwartete Bedeutung dienen nicht als Ausweichsuche. Anders als bei einer typisierten reference-Property ist im Körperlink zunächst jede Definition als Ziel zulässig. Ob der Satz den richtigen Kind, die richtige Property oder die richtige konkrete Definition meint, bleibt Gegenstand des semantischen Reviews.
+Der Compiler kann aktive Links erkennen, ihre Ziele nach vollständigem Laden der Definitionen eindeutig auflösen und Herkunft erhalten. Fehlendes Ziel oder unbekannter Import ist ein Fehler; Titel, Anzeigetext und erwartete Bedeutung dienen nicht als Ausweichsuche. Anders als bei einer typisierten reference-Property ist im Körperlink zunächst jede Definition als Ziel zulässig. Ob der Satz den richtigen Kind, die richtige Property oder die richtige konkrete Definition meint, bleibt Gegenstand des semantischen Reviews.
 
-Beim Wechsel des Importkürzels connector zu wire muss die Autorenadresse angepasst werden; das kanonische Ziel bleibt gleich. Bei sender zu requester bleibt `[[connector:Exchange/sender|requester]]` durch die ausdrücklich erhaltene Property-id gültig. Ein veralteter Anzeigetext sender kann weiterhin strukturell gültig sein und dennoch sprachlich irreführen. Eine echte Änderung der Property-ID erfordert die Migration ihrer Links; ohne Migration sind alte Ziele nicht mehr auflösbar. Ein Versionsupdate bindet dieselbe Zielidentität an deren ausdrücklich gewählte neue Fassung.
-
-Der feste Modellstand enthält den vollständigen Körper und die aufgelösten Zielidentitäten. Änderungen an Prosa oder Anzeigetext werden erhalten, auch wenn die Zielmenge gleich bleibt. Quellpositionen gehören zur Diagnoseherkunft, nicht zur logischen Zielidentität. Aliaswechsel ändern das kanonische Linkziel nicht; eine Änderung des gespeicherten Körpers kann trotzdem im Inhaltsvergleich sichtbar sein. Die genaue Digestkodierung bleibt Teil der noch offenen kanonischen Datenkodierung.
+Der feste Modellstand enthält den vollständigen Körper und die aufgelösten Zielidentitäten. Änderungen an Prosa oder Anzeigetext werden erhalten, auch wenn die Zielmenge gleich bleibt. Quellpositionen gehören zur Diagnoseherkunft, nicht zur logischen Zielidentität. Aliaswechsel ändern das kanonische Linkziel nicht; eine Änderung des gespeicherten Körpers kann trotzdem im Inhaltsvergleich sichtbar sein. Die Digestkodierung steht in Abschnitt 8.3.
 
 Der Compiler prüft die Existenz der Bezüge, nicht die Wahrheit, Vollständigkeit oder korrekte Auslegung der Aussagen. Agenten können fehlende oder falsche Links vorschlagen; erst eine in der Quelle übernommene Änderung verändert den kanonischen Bezug. Linkvorschläge aus Wortähnlichkeit sind keine Modellkanten.
 
-### 4.5 Markupregeln und offene Formatdetails
+<a id="body-links"></a>
 
-Die Linknotation ist eine Erweiterung des body-Textformats. In gewöhnlichem Text ist ein vollständig geschriebener Doppelklammer-Link aktiv. Inline-Code und eingerückte beziehungsweise eingezäunte Codeblöcke sind Literale; ein vor der öffnenden Klammer gesetzter Backslash macht die Schreibweise ebenfalls wörtlich. Gewöhnliche Markdown- oder Weblinks werden nicht zu Modelldefinitionsbezügen.
+### 4.5 Verbindliches Körperlink- und Markdownprofil
 
-Ein aktiver Link hat ein nichtleeres Ziel, höchstens einen Trenner und gegebenenfalls einen nichtleeren Anzeigetext. Zeilenumbrüche und verschachtelte Links sind darin zunächst nicht vorgesehen. Eine begonnene aktive Linknotation ohne gültigen Abschluss ist ein Markupfehler. Die endgültige Grammatik muss das zugrunde gelegte Markdown-Profil, reservierte Zeichen, Escapes und die Abbildung von Positionen im gelesenen YAML-body zur Quelle vollständig festlegen. Diese Formatdetails sind offen; die Beispiele legen keine vollständige Parserimplementierung nahe.
+body verwendet [CommonMark 0.31.2](https://spec.commonmark.org/0.31.2/) mit der ausdrücklichen Erweiterung um Körperlinks. Diese Regeln gelten ausschließlich für body. title und andere Stringwerte werden nicht auf Modelllinks untersucht.
+
+Die Verarbeitung beginnt mit der YAML-Dekodierung gemäß Abschnitt 5.1. Danach wird der dekodierte body als Markdown mit Körperlink-Erweiterung gelesen. YAML-Escapes können daher bereits vor der Markdown-Verarbeitung Zeichen der Linknotation ergeben. Aus späteren Markdown-Zeichenreferenzen wie &#91; oder gerendertem Text werden dagegen keine neuen Modelllinks erzeugt. Der ursprüngliche body bleibt erhalten; Normalisierung für die Markdown-Verarbeitung ist keine automatische Änderung der Quelle.
+
+| Kontext | Verhalten |
+| --- | --- |
+| Gewöhnlicher Text, Überschrift, Liste, Zitat oder Formatierung außerhalb eines Links | Die ungeschützte Doppelklammernotation ist aktiv. |
+| Inline-Code und eingerückter oder eingezäunter Codeblock | Wörtlicher Inhalt, keine Modelllinks oder Linksyntaxfehler daraus. |
+| Gewöhnlicher Markdownlink oder Bild, einschließlich Text, Ziel und Referenzdefinition | Keine Körperlink-Auswertung innerhalb dieses Konstrukts. |
+| Autolink, HTML-Tag, HTML-Kommentar oder HTML-Rohblock | Keine Körperlink-Auswertung darin. Normaler Markdowntext zwischen Inline-HTML-Tags folgt weiter seinen normalen Regeln; Linkelemente bilden keinen verschachtelten Modelllink. |
+
+Die aktive Doppelklammernotation hat im gewöhnlichen Text Vorrang vor der gewöhnlichen Markdown-Linkerkennung: `[[api]](Text)` enthält den Modelllink api mit folgendem normalem Text. Ein bereits mit gewöhnlicher Markdownsyntax begonnener Link oder ein Bild schützt dagegen seinen Inhalt. Es gibt keine zusätzliche Bild-/Einbettungsform für Modelldefinitionen.
+
+**Grammatik:** Ein aktiver Link hat genau die Form `[[Ziel]]` oder `[[Ziel|Anzeigetext]]`. Das Ziel ist eine vollständige Autorenreferenz nach Abschnitt 7 und 8. Es darf nicht leer sein und enthält keine umgebenden Leerzeichen; es wird weder getrimmt noch umgeschrieben. NFC, deklarierte Schreibweise, Importgrenzen, Kollisions- und Mehrdeutigkeitsregeln gelten unverändert. Der Link kann jede Definitionskategorie adressieren. Feldpfade, URL-Ziele, Titel- oder Ähnlichkeitssuche werden nicht ergänzt.
+
+Der optionale Anzeigetext ist reiner Unicode-Text. Er wird nach den nachstehenden Escapes erhalten und nicht nochmals als Markdown, Zeichenreferenz, Modelllink oder Ausdruck ausgewertet. Er darf nicht leer sein oder ausschließlich aus Unicode-White_Space-Zeichen der gebundenen Unicode-Version bestehen. Formatierung steht außerhalb, beispielsweise `**[[api|Cloud-API]]**`. Innerhalb eines aktiven Links sind LF, CR, NEL, LINE SEPARATOR und PARAGRAPH SEPARATOR sowie verschachtelte ungeschützte Klammern ausgeschlossen.
+
+Das Erhaltungsgebot umfasst ausdrücklich U+0000 (NUL), wenn es nach der YAML-Dekodierung im Anzeigetext vorliegt. Dort DARF es NICHT durch U+FFFD oder ein anderes Zeichen ersetzt werden. Die CommonMark-Normalisierung zur Erkennung des umgebenden Markdownkontexts ändert diesen literalen Wert der Körperlink-Erweiterung nicht. Ein tatsächlich geschriebener U+FFFD bleibt von NUL verschieden. Beispielsweise dekodiert `body: "[[api|A\0B]]"` zu einem Link mit den Anzeigetextzeichen U+0041, U+0000 und U+0042. Dies führt keinen zusätzlichen Körperlink-Escape ein; `\0` innerhalb eines bereits YAML-dekodierten Links bleibt gemäß der folgenden Escaperegel unzulässig.
+
+**Escapes:** Außerhalb des Links gelten die CommonMark-Regeln. `\[[api]]` macht die Notation wörtlich; ein durch einen weiteren Backslash geschützter Backslash verhindert einen danach normal beginnenden Link nicht. Im Anzeigetext sind genau `\|`, `\[`, `\]` und `\\` für die entsprechenden literalen Zeichen erlaubt. Andere Backslashsequenzen im Linkinneren sind Fehler. Im Ziel sind keine Escapes nötig oder zulässig; seine Zeichen folgen der Namensgrammatik. Ein zusätzliches ungeschütztes |, eine ungeschützte einzelne Klammer oder ein aktives [[ ohne passenden Abschluss ist ein Markupfehler. Ein isoliertes ]] außerhalb eines aktiven Links bleibt gewöhnlicher Text.
+
+Ein Link muss im dekodierten body einzeilig sein. YAML kann den Autorenquelltext über mehrere Dateizeilen falten, solange dabei im dekodierten Link kein verbotenes Zeilenumbruchzeichen entsteht. Ungültige aktive Notation ist ein Strukturfehler und wird nicht still zu Text zurückgestuft. Gleichartige Zeichenfolgen in den geschützten Kontexten bleiben dagegen wörtlich.
+
+**Vorkommen und Diagnose:** Für die Sprache sind die vollständige Linkerkennung, eindeutige Zielauflösung sowie Reihenfolge und Wiederholung der Vorkommen verbindlich. Die Sprache schreibt weder UTF-8-Bytebereiche noch Zeilen-/Spaltenkoordinaten vor. Der separate [Diagnosevertrag für Werkzeuge](diagnostic-contract.md) bestimmt die exakte Koordinatenform für Werkzeuge, die dieses Profil anbieten. Diese Koordinaten sind Herkunft, keine Zielidentität und kein kanonischer Modellinhalt. Fehlende oder nicht belegbare Diagnosekoordinaten allein DÜRFEN eine erfolgreich abgeschlossene Inhaltsprüfung und ihren Digest NICHT verhindern. Eine unvollständige Linkerkennung, Zielauflösung oder sonstige Inhaltsprüfung verhindert weiterhin die kanonische Ausgabe für den betroffenen Modellumfang.
+
+<a id="values"></a>
 
 ## 5. Werte und Propertyverträge
 
@@ -173,783 +332,425 @@ Ein aktiver Link hat ein nichtleeres Ziel, höchstens einen Trenner und gegebene
 | --- | --- |
 | string | Textwert. |
 | boolean | Wahrheitswert. |
-| integer | Ganzzahl. |
-| number | Zahlenwert. |
+| integer | Beliebig genaue Ganzzahl. |
+| number | Endlicher, exakt dargestellter Dezimalzahlenwert; Ganzzahlen sind ebenfalls zulässig. |
 | enum | Einer der ausdrücklich deklarierten Stringwerte. |
 | object | Objekt mit deklarierten, geschlossenen Feldverträgen. |
 | reference | Referenz auf eine vorhandene Definition des ausdrücklich verlangten Kinds. |
 
 Für Properties gelten folgende feste Sprachregeln:
 
+- spec.name ist optional. Ohne Angabe ist der effektive Feldname exakt die vollständige lokale id der Propertydefinition. Paketname, Importalias und Referenzschreibweise gehören nicht zu diesem Feldnamen; Präfixe der lokalen ID werden nicht abgeschnitten. Punkte sind in lokalen IDs und Feldnamen ausgeschlossen.
+- Ein ausdrücklich gesetztes spec.name muss ein nichtleerer String sein; null oder eine leere Angabe lösen keinen Fallback aus. Die effektiven Feldnamen müssen innerhalb jedes Kind- oder object-Vertrags eindeutig sein.
 - minCount ist mindestens 0. maxCount ist -1 oder mindestens minCount.
-- maxCount=1 bezeichnet einen Einzelwert; andere Höchstwerte bezeichnen eine Liste. -1 erlaubt beliebig viele Werte innerhalb endlicher Werkzeuggrenzen.
+- maxCount=1 bezeichnet einen Einzelwert; andere Höchstwerte bezeichnen eine Liste. -1 setzt keine sprachliche Höchstanzahl; Ressourcenregeln stehen in Abschnitt 5.3.
 - Eine ausgelassene Angabe zählt als null vorhandene Werte. Der Datenwert null ist nicht zulässig.
 - reference benötigt target. Das Ziel von target ist eine gültige Typdefinition.
 - enum benötigt eine nichtleere Liste eindeutiger erlaubter Werte.
-- object verwendet seine deklarierten Propertyverträge. Nicht deklarierte Objektfelder sind Fehler.
+- object verwendet die unter properties referenzierten eigenständigen Propertydefinitionen. Nicht deklarierte Objektfelder sind Fehler. Ein konkreter Objektwert enthält Werte dieser Felder, keine neuen Propertydefinitionen.
 - values, target und properties sind nur bei den dafür vorgesehenen Werttypen zulässig. Ein neuer Typname installiert keinen Parser oder Operator.
 
-Ein separater Werttyp kindReference ist im neuen Vertrag nicht nötig. Ein Typbezug kann durch reference mit Ziel-Kind core:Kind beschrieben werden. Die Typbezüge im gemeinsamen Feld kind bleiben ausdrücklich als solche prüfbar.
+Ein Typbezug wird durch reference mit Ziel-Kind Kind beschrieben; kindReference gehört nicht zu den Werttypen. Die Typbezüge im gemeinsamen Feld kind bleiben ausdrücklich als solche prüfbar.
 
 Die Kardinalität begrenzt die Zahl der Werte, nicht deren numerischen Wertebereich. Eine fachliche Aussage wie „maxAttempts muss positiv sein“ benötigt weiterhin semantische Beurteilung, solange keine zusätzliche formale Wertebedingung eingeführt ist.
 
-## 6. Kompakte Properties direkt beim Kind
+<a id="yaml-values"></a>
 
-Unter spec.properties können Properties kompakt über ihren Feldnamen deklariert werden. Die folgende Exchange-Deklaration zeigt den vollständigen Satz seiner sieben Properties in der Fassung mit requester. Container, Command und Channel werden im selben Vokabular als weitere Kinds definiert.
+### 5.1 YAML- und Werteprofil
 
-```yaml
-id: Exchange
-kind: core:Kind
-body: >-
-  Beschreibt einen Request-/Reply-Vertrag zwischen requester und receiver.
-  Antworten behalten die MessageId des Requests.
-  timeoutSeconds gilt pro Versuch; maxAttempts zählt den ersten Versuch mit.
-spec:
-  properties:
-    requester:
-      id: sender
-      body: Anwendung in der Auftraggeberrolle dieses Austauschs.
-      type: reference
-      target: Container
-      minCount: 1
-      maxCount: 1
-    receiver:
-      body: Anwendung in der Bearbeiterrolle dieses Austauschs.
-      type: reference
-      target: Container
-      minCount: 1
-      maxCount: 1
-    command:
-      body: Vertrag der angeforderten Operation.
-      type: reference
-      target: Command
-      minCount: 1
-      maxCount: 1
-    requestChannel:
-      body: Kommunikationsweg für Aufträge.
-      type: reference
-      target: Channel
-      minCount: 1
-      maxCount: 1
-    replyChannel:
-      body: Kommunikationsweg für Antworten an die ausstellende Instanz.
-      type: reference
-      target: Channel
-      minCount: 1
-      maxCount: 1
-    timeoutSeconds:
-      body: Positive maximale Wartefrist pro Versuch in Sekunden.
-      type: integer
-      minCount: 1
-      maxCount: 1
-    maxAttempts:
-      body: Positives Versuchsbudget einschließlich des ersten Versuchs.
-      type: integer
-      minCount: 1
-      maxCount: 1
-```
+Die Autorenform verwendet das nachfolgende eingeschränkte Profil von [YAML 1.2.2](https://yaml.org/spec/1.2.2/). Dieses Profil bestimmt die Leseform unabhängig von Bibliothek und Implementierungssprache.
 
-Eine eingebettete Property ist eine Kurzform einer Definition, kein zusätzlicher Sprachgegenstand. Vor der Typprüfung wird sie ausgeschrieben:
+| Bereich | Verbindliche Regel |
+| --- | --- |
+| Datei und Dokument | UTF-8, genau ein YAML-Dokument und ein Mapping als Wurzel. Ein einzelner Dokumentmarker und eine ausdrückliche YAML-1.2-Direktive sind zulässig. Andere Versionsdirektiven und Dokumentfolgen sind Fehler. |
+| Schlüssel | Ausschließlich Strings, exakt und in NFC geschrieben. Doppelte sowie nach Abschnitt 7.2 kollidierende Schlüssel sind Fehler. Nichttextuelle Schlüssel werden nicht in Strings umgewandelt. |
+| Explizite Inhalte | Anchors, YAML-Aliase, Merge-Keys und eigene Tags sind ausgeschlossen. Zur einheitlichen Autorenform sind auch explizite Standardtags wie !!str ausgeschlossen; gewöhnliche und zitierte Werte reichen aus. |
+| Darstellung | Kommentare, Einrückung, Block-/Flowdarstellung und die Reihenfolge von Mapping-Schlüsseln erzeugen für sich keinen anderen Modellinhalt. Die YAML-Dekodierung muss dabei denselben Wert ergeben. |
+| Strings | Einfache, zitierte und mehrzeilige Strings sind erlaubt. Zitierte und Blockskalare bleiben Strings, einschließlich leerer Strings. Escapezeichen, Zeilenfaltung und Abschlusszeilen werden nach YAML dekodiert; dieser dekodierte Text bleibt erhalten. Pflichtfelder können zusätzlich nichtleeren Inhalt verlangen. Ungepaarte Unicode-Surrogate sind keine zulässigen Textwerte. |
+| Booleans | Ausschließlich die unzitierten Tokens true und false werden als Wahrheitswerte gelesen. yes, no, on, off, True oder FALSE bleiben Strings. |
+| Datum und sonstiger Text | Datumsähnliche Tokens wie 2026-10-15 bleiben Strings. Es gibt keinen automatisch erzeugten Datumstyp. Andere unzitierte Tokens, die keine der unten definierten Formen treffen, bleiben Text. |
+| Fehlende Angaben und null | Optionale Felder können fehlen. Der Datenwert null ist ausgeschlossen; auch eine leere YAML-Wertangabe sowie die unzitierten Nullformen Null, NULL und ~ sind Fehler. Ein literaler Text wie "null" muss zitiert sein. |
+| Typprüfung | Keine nachträgliche Typumwandlung anhand der Property: "42" erfüllt keine integer-Property, 42 erfüllt keine string-Property und "true" erfüllt keine boolean-Property. |
 
-1. Der Zuordnungsschlüssel bestimmt den Feldnamen, hier requester.
-2. Eine optionale inline id bestimmt den stabilen lokalen Identitätsbaustein; ohne id wird der Feldname verwendet.
-3. Die Property-ID wird aus der lokalen Besitzer-ID, / und diesem Baustein gebildet, hier Exchange/sender.
-4. kind wird auf den festen Property-Kind gesetzt. body wird erhalten; name und die Vertragsangaben bilden die spec.
-5. Der Kind referenziert danach die erzeugte Propertydefinition.
+Die dateilokalen Importaliase mit as bleiben zulässig. Das Verbot betrifft YAML-Anker und deren Aliasverweise, nicht unsere Importnamen.
 
-Der normalisierte Ausschnitt lautet im Vokabularpaket:
+**Zahlenlexik und Genauigkeit:** Zahlen verwenden ASCII-Dezimalziffern, optional ein vorangestelltes Minus und bei Dezimalzahlen einen ASCII-Punkt beziehungsweise einen Exponenten. Unicode in Namen und Texten führt keine weiteren Zahlenschreibweisen ein.
 
-```yaml
-id: Exchange/sender
-kind: core:Property
-body: Anwendung in der Auftraggeberrolle dieses Austauschs.
-spec:
-  name: requester
-  type: reference
-  target: Container
-  minCount: 1
-  maxCount: 1
-```
+- Ein Integerliteral hat die Form `-?(0|[1-9][0-9]*)`, etwa 0, -42 oder eine beliebig lange Ziffernfolge ohne führende Nullen.
+- Ein Dezimalliteral besitzt denselben Ganzzahlteil und entweder einen Dezimalpunkt mit mindestens einer folgenden Ziffer, einen Exponenten oder beides. Ein Exponent beginnt mit e oder E, erlaubt optional + oder - und enthält mindestens eine ASCII-Ziffer. Beispiele: 0.1, -42.0, 1e300, 1.25e-3. Ein führendes +, .5 und 1. sind keine Zahlenliterale dieses Profils.
+- Integerwerte sind beliebig genau, Dezimalwerte werden ohne binäre Gleitkommarundung erhalten. Eine number-Property akzeptiert beide Literalarten. Eine integer-Property akzeptiert ausschließlich Integerwerte; ein Dezimalliteral wie 42.0 wird nicht nachträglich in einen Integer verwandelt.
+- Hexadezimale, oktale und sonstige zusätzliche Zahlenschreibweisen werden nicht numerisch gelesen. Beispielsweise bleiben 0x10 und 012 Text und erfüllen keine number-Property. Zitierte Zahlen bleiben ebenfalls Text.
+- Nichtendliche numerische Tokens sind ausgeschlossen. Dazu zählen .nan, .inf, +.inf, -.inf, NaN, Inf und Infinity mit optionalem Vorzeichen bei Inf/Infinity und unabhängig von Groß-/Kleinschreibung. Als ausdrücklich zitierter Text bleiben diese Zeichenfolgen zulässig.
 
-Die Kurzform schreibt kind und name nicht zusätzlich frei aus. inline id ist ein lokaler Identitätsbaustein, keine Möglichkeit zur Auswahl eines fremden Pakets oder Besitzers. Kollisionen erzeugter und ausgeschriebener IDs sowie doppelte Autoren-Schlüssel sind Fehler; es wird nichts still überschrieben.
+Es gibt keinen sprachlichen 64-Bit-Bereich oder festgelegten Rundungskontext. Endliche Werkzeuglimits folgen Abschnitt 5.3; sie dürfen keine gerundete oder abgeschnittene Zahl als erfolgreiche Auswertung liefern.
 
-Geschachtelte object-Felder können dieselbe Kurzform relativ zu ihrer Property verwenden. Eine ausgeschriebene Property kann ohne Kopie wiederverwendet werden. In der kompakten Zuordnung muss ihr name zum Feldschlüssel passen; alternativ bleibt die ausgeschriebene Propertyreferenzliste möglich. Beispiel:
 
-```yaml
-spec:
-  properties:
-    requester: Exchange/sender
-```
+<a id="lists"></a>
 
-Die Normalisierung erfolgt nur in den bekannten Kind-/Propertykontexten. Ein fachliches Datenfeld namens properties aktiviert sie nicht. Es wird nur eine Autorenquelle gepflegt; ausgeschriebene Definitionen sind deren abgeleitete Sicht. Diagnoseherkunft muss auf die eingebettete Angabe zurückführen.
+### 5.2 Listenreihenfolge und fehlende gegenüber leeren Listen
+
+Gewöhnliche Wertlisten sind geordnet. Deklarative Aufzählungen des festen Cores und die Importliste sind ungeordnet. Eine fehlende optionale Liste und eine ausdrücklich leere Liste haben denselben kanonischen Wert. Die originale Autorenform bleibt als Quelleninformation erhalten.
+
+| Verwendung | Bedeutung der Reihenfolge |
+| --- | --- |
+| Gewöhnliche mehrwertige Property, einschließlich reference- und object-Werten | Die Reihenfolge zählt: [a, b] ist verschieden von [b, a]. Wiederholungen bleiben erhalten, soweit kein zusätzlicher Vertrag sie ausschließt. |
+| properties einer Definition des festen Meta-Kinds Kind | Ungeordnete Deklaration der erlaubten Felder. Referenzen werden anhand der kanonischen Zielidentität verglichen. |
+| properties einer object-Property des festen Meta-Kinds Property | Ungeordnete Deklaration des Objektfeldvertrags; dieselbe Zielauflösung gilt. |
+| values einer enum-Property des festen Meta-Kinds Property | Ungeordnete Menge erlaubter Stringwerte. Die Werte bleiben exakt und werden nicht normalisiert oder ohne Beachtung der Groß-/Kleinschreibung verglichen. |
+| Dateilokale imports | Ungeordnete Auswahl sichtbarer Pakete und deklarierter Aliase. Die Reihenfolge erzeugt keinen Vorrang bei der Auflösung. |
+
+Die besondere Bedeutung folgt ausschließlich aus dem festen Meta-Vertrag, nicht aus einem geschriebenen Feldnamen. Ein gewöhnlicher Kind mit einem Datenfeld properties oder values besitzt dort eine geordnete Wertliste. Das gilt auch bei Wiederverwendung der gemeinsamen Core-Property properties als gewöhnlichem Datenfeld. Es werden keine zusätzlichen Collection-Typen, Sortierfelder oder kompakten Autorenformen eingeführt.
+
+Ungeordnet bedeutet nicht, dass Fehler entfernt werden: Doppelte Felddeklarationen, doppelte Enumwerte und doppelte Paketimports bleiben gemäß ihren bestehenden Verträgen unzulässig. Der Prüfer validiert diese Regeln vor dem Vergleich und darf ungültige Eingaben nicht durch Sortieren oder Deduplizieren gültig machen. Zugefügte oder entfernte Mitglieder bleiben inhaltliche Änderungen. Nur das Umordnen einer zulässigen deklarativen Aufzählung ändert ihren Vertrag nicht. Dies gilt auch für die deklarativen Listen der festen Core-Selbstbeschreibung.
+
+**Fehlend und leer:** Bei einer zulässigen optionalen Listen-Property, also minCount 0 und maxCount ungleich 1, bedeuten ein fehlendes Feld und [] jeweils dieselbe leere Folge. Das gilt rekursiv in object-Werten, bei einem leeren Kind-/Objektfeldvertrag und für fehlende gegenüber leeren imports. Bei minCount größer 0 sind beide Formen ungültig. Zusätzliche Meta-Regeln bleiben wirksam: Die values einer enum-Property müssen beispielsweise weiterhin nichtleer sein. An einem Werttyp verbotene Felder werden nicht durch eine angenommene leere Liste ergänzt.
+
+Die Regel betrifft weder optionale Einzelwerte noch leere Strings oder leere Objekte. Ein fehlender object-Einzelwert bleibt von einem ausdrücklich vorhandenen {} verschieden; optionale Listen innerhalb des vorhandenen Objekts werden trotzdem auf dieselbe leere Folge verglichen. null bleibt ausgeschlossen. Eine fehlende Liste bedeutet damit keine zusätzliche Information wie unbekannt, automatisch bestimmen oder übernehmen; ein benötigter Unterschied muss ausdrücklich im Projektvokabular ausgedrückt werden.
+
+Für den Vergleich gewöhnlicher Listen bleiben Reihenfolge und Wiederholungen erhalten. Deklarative Referenzen werden nach eindeutiger Auflösung ohne Reihenfolge verglichen, Enumwerte als exakte Strings und Imports anhand ihrer aufgelösten Bindungen. Quelltext, Prosa, ursprüngliche Reihenfolge und Feldanwesenheit bleiben für Darstellung und Herkunft verfügbar; die Quelldateien werden nicht automatisch ergänzt oder sortiert.
+
+<a id="cycles-resources"></a>
+
+### 5.3 Objektvertragszyklen und Ressourcengrenzen
+
+Gewöhnliche Definitionsreferenzen dürfen Zyklen bilden, einschließlich des festen Core-Anfangs. Referenzziele werden als Identitäten aufgelöst und nicht durch textuelle oder wertseitige Entfaltung ersetzt. Für Objektverträge gilt die folgende eigene Bedingung.
+
+Ein Objektvertragsgraph hat die object-Propertydefinitionen als Knoten. Eine Kante führt vom Objektvertrag zu jeder darin als Feld deklarierten object-Property. Eine Kante ist verpflichtend, wenn die Ziel-Property minCount>0 hat; das gilt für Einzelwerte und nichtleere Listen gleichermaßen. Der Teilgraph ausschließlich verpflichtender Kanten muss azyklisch sein. Damit enthält jeder erlaubte Objektzyklus mindestens eine optionale Kante mit minCount=0. Auch nicht verwendete Objektverträge werden auf verpflichtende Zyklen geprüft; ein unmöglich zu erfüllender Vertrag wird nicht durch fehlende konkrete Instanzen gültig.
+
+| Fall | Sprachregel |
+| --- | --- |
+| Optionale object-Property verwendet sich selbst | Erlaubt; der Wert kann ohne dieses Feld beziehungsweise mit leerer optionaler Liste enden. |
+| Wechselseitige Objektverträge mit mindestens einer optionalen Kante je Zyklus | Erlaubt; endliche konkrete Werte sind möglich. |
+| Objektzyklus ausschließlich über verpflichtende Felder | Fehler; ein endlicher Wert kann diese Pflicht nicht erfüllen. |
+| Gewöhnliche reference-Property führt auf einen bereits referenzierten Gegenstand | Erlaubter Definitionsbezug; keine Objektentfaltung. |
+| Leere Liste bei minCount=0 und maxCount=0 | Zulässig; keine Objektwerte werden erzeugt oder besucht. |
+
+Objektwerte bleiben endliche, geschlossene YAML-Werte gemäß Abschnitt 5.1. Die Werteprüfung und kanonische Projektion folgen ausschließlich tatsächlich vorhandenen Werten; sie entfalten den Vertragsgraphen nicht vorab und erzeugen keine fehlenden optionalen Objekte. Die bisherigen Regeln für fehlende optionale Listen gelten innerhalb vorhandener Objekte unverändert. Das Verbot von YAML-Anchors und -Aliasen bleibt bestehen.
+
+**Ressourcenpolitik:** Die Sprache setzt keine zusätzlichen festen Größen-, Mengen- oder Tiefenmaxima. Werkzeuge dürfen endliche Verarbeitungsbudgets verwenden, müssen deren Umfang und Werte aber ausdrücklich ausweisen und im Prüfbericht nennen. Eine reine Limitüberschreitung ist kein Nachweis einer Modellverletzung: Die betroffene Inhaltsprüfung meldet not_completed und erzeugt für diesen Modellumfang weder kanonische Bytes noch Digest oder Vollständigkeitsnachweis. Ein bereits nachgewiesener Sprachfehler bleibt ein Fehler, auch wenn eine weitere Prüfung abbricht; der Abbruch wird zusätzlich ausgewiesen. Ein unabhängiger vollständig geprüfter Modellumfang kann weiterhin ein Ergebnis erhalten.
+
+Vollständig abgeschlossene Läufe über dieselben gebundenen Eingaben müssen bei ausreichend großen Budgets dieselben kanonischen Bytes und Digests liefern. Budgets und Laufzeitkapazitäten gehören zu Werkzeugkonfiguration und Prüfprovenienz, nicht zur kanonischen Modellprojektion. Es gibt kein stilles Abschneiden, Überspringen oder Runden als erfolgreiche Auswertung. Laufzeitbedingte Rekursions- oder Speicherabbrüche bei der Inhaltsprüfung werden ebenfalls als unvollständige Auswertung ausgewiesen. Reine Koordinatenabbrüche betreffen ausschließlich das separate Diagnoseergebnis.
+
+Die Regeln dieses Abschnitts betreffen Definitionsreferenzen und Objektverträge. Für den gesonderten model.yaml-Abhängigkeitsgraphen gilt die Azyklizitätsregel aus Abschnitt 8.1; eine zyklische Definitionsreferenz ist keine Selbstabhängigkeit des Modells.
+
+<a id="property-names"></a>
+
+## 6. Eigenständige Properties und eine Datei pro Definition
+
+Jede Property ist eine vollständige Definition nach Abschnitt 2. Pflichtpräfixe für ihre ID gibt es nicht. Propertydefinitionen werden aus dem jeweiligen Kind- oder Objektvertrag ausdrücklich referenziert; Feldschlüssel konkreter Werte sind keine zusätzlichen Definitionen.
+
+### 6.1 Kurze Property-ID mit Standardfeldname
+
+`spec.name` ist optional. Ohne Angabe gilt exakt die lokale Property-ID als Feldname; `requester` ergibt `requester`. Präfixe werden nicht abgeschnitten. Ein gesetztes `spec.name` bestimmt einen abweichenden Feldnamen und muss dessen Schreibkonvention erfüllen. Weder die ID noch der Feldname darf Punkte enthalten. Beide Formen unterliegen derselben Eindeutigkeitsprüfung je Feldvertrag. Identität und Feldname bleiben verschiedene Größen; Migrationen folgen Abschnitt 9.
+
+
+<a id="names"></a>
 
 ## 7. Identitäten und Referenzen
 
-Die logische Identität lautet **Paket-ID plus stabile lokale id**. Sie enthält weder Kind noch Anzeigename, Dateipfad oder Versionsnummer. Eine bestimmte Fassung wird zusätzlich durch ihren Modellstand und dessen Paketbindungen bestimmt.
+Package ist ausschließlich Namensraum. Jeder Ordner unter der ausdrücklichen Modellwurzel bildet ein Package; sein relativer Pfad bestimmt den Namen. Es gibt keine zusätzlichen Namespaces. Packages werden mit `/` gegliedert. Lokale IDs sind ungegliederte Namen; Punktnotation dient in Definitionsreferenzen ausschließlich der Aliasqualifizierung. Vollständige lokale IDs importierter Packages sind unmittelbar verfügbar.
+
+Die logische Identität bleibt **Paket-ID plus stabile lokale id**. Sie enthält weder Kind noch Anzeigename, Dateiname oder Versionsnummer. Der Ordnerpfad bestimmt jedoch die Paket-ID; ein anderer Packageordner ändert deshalb die Identität. Eine bestimmte Fassung wird zusätzlich durch ihren Modellstand und dessen Inhaltsbindungen bestimmt. Die Autorenreferenz package/id beziehungsweise Alias.id wird auf dieses kanonische Paar aufgelöst.
 
 | Gegenstand | Paket | Lokale id |
 | --- | --- | --- |
-| Exchange-Kind | example/connector-vocabulary | Exchange |
-| Auftraggeber-Property | example/connector-vocabulary | Exchange/sender |
-| Konkreter Austausch | example/connector-project | list-documents |
-| Konkrete API | example/connector-project | api |
+| Exchange-Kind | example/connector/vocabulary | Exchange |
+| Auftraggeber-Property | example/connector/vocabulary | requester |
+| Konkreter Austausch | example/connector/project | list-documents |
+| Konkrete API | example/connector/project | api |
 
-IDs werden exakt und groß-/kleinschreibungssensitiv verglichen. Innerhalb eines Pakets dürfen sie nicht doppelt vorkommen. Lesbare IDs sind möglich; sie werden nicht bei jedem Wechsel der bevorzugten Bezeichnung geändert oder absichtlich für andere Gegenstände wiederverwendet. Ein optionales title ist keine alternative Adresse.
+Eine lokale ID ist ein einzelner Name nach der Konvention ihrer Definitionskategorie. Sie enthält weder Punkt noch `/`. Die fachliche Gliederung übernimmt das Package. Ein Import macht lokale IDs direkt verfügbar. In Definitionsreferenzen trennt `/` das Package von der lokalen ID; ein Punkt trennt einen ausdrücklich deklarierten Importalias von der lokalen ID. Beispielsweise bezeichnet `Core.Kind` die ID `Kind` aus dem unter `Core` importierten Package, keine lokale ID namens `Core.Kind`.
 
-Die Autorenauflösung verwendet zwei Formen:
+Für Identität und Kollisionsprüfung macht Groß-/Kleinschreibung keinen Unterschied. Innerhalb eines Pakets dürfen daher auch IDs unterschiedlicher Kinds nicht allein durch Groß-/Kleinschreibung unterscheidbar sein. Die erlaubte Autorenform ist trotzdem streng und muss exakt eingehalten werden: Eine abweichende Schreibweise ist ein Fehler, keine akzeptierte alternative Referenz. Der Prüfer korrigiert oder normalisiert keine Quelldatei automatisch. Lesbare IDs werden nicht bei jedem Wechsel der bevorzugten Bezeichnung geändert oder absichtlich für andere Gegenstände wiederverwendet. Ein optionales title ist keine alternative Adresse.
 
-- id sucht ausschließlich im eigenen Paket, etwa api oder Exchange/sender.
-- alias:id sucht ausschließlich im benannten Import, etwa connector:Exchange oder core:Kind.
+Die Autorenauflösung verwendet direkt verfügbare Namen und bei Bedarf ausdrücklich qualifizierte Namen. Sichtbar sind ausschließlich das eigene Paket und die in der jeweiligen Definitionsdatei deklarierten Imports; die Bereitstellung eines Modells allein öffnet keine fremden Namen:
 
-Alle Referenzstellen verwenden diese Zielauflösung. kind und Property.target müssen Typdefinitionen bezeichnen; ein konkreter requester-Wert muss beispielsweise eine Container-Definition bezeichnen. Der erwartete Zieltyp wird nach der eindeutigen Auflösung geprüft und nicht als Suchheuristik verwendet.
+- Eine vollständige id wird gegen die Definitionen des eigenen Pakets und aller in dieser Definitionsdatei direkt importierten Pakete aufgelöst. Genau ein kanonisches Ziel muss passen. Beispiel: Kind stammt aus dem importierten Core-Paket, Exchange aus dem importierten Vokabular, api aus dem eigenen Projektpaket.
+- Mehrere unterschiedliche Ziele mit derselben sichtbaren id sind auch bei bloßem Unterschied der Groß-/Kleinschreibung mehrdeutig. Es gibt weder einen stillen Vorrang lokaler Definitionen noch eine Auswahl nach dem erwarteten Kind oder der Reihenfolge der Imports. Die Referenz muss ausdrücklich qualifiziert oder die Namenskollision aufgelöst werden.
+- Vollständige Qualifizierung verwendet `package/id`, etwa `markitect/core/Kind` oder `example/connector/vocabulary/requester`. Das letzte `/` trennt Package und lokale ID. Das eigene Package ist immer auch vollständig qualifiziert verfügbar, ohne eigenen Import. Ein fremdes Package ist nur nach ausdrücklichem Import vollständig qualifiziert verfügbar. Aliasqualifizierung hat genau die Form `Alias.id`, etwa `Core.Kind` oder `Connector.requester`, mit genau einem Punkt. Weder Alias noch lokale ID enthält selbst Punkte. Es gibt keine schrittweise Namespace- oder Dateipfadsuche und keine Feld-Dereferenzierung.
+- Gleiche sichtbare Kurz-IDs machen die Importauswahl für sich genommen nicht ungültig. Erst die Verwendung einer Referenzschreibweise mit mehreren unterschiedlichen Zielidentitäten ist ein Fehler. Eine eindeutige Alias- oder vollständige Qualifizierung bezeichnet das gewünschte eigene oder importierte Ziel. Eine lokale ID kann syntaktisch nicht mit einer Aliasqualifizierung zusammenfallen.
+- Nur direkte Imports machen Namen verfügbar. Weitere bereitgestellte Packages und die Inhalte transitiver Modellabhängigkeiten werden nicht automatisch in den sichtbaren Namensraum einer Datei aufgenommen. Ein Zugriff darauf verlangt einen eigenen ausdrücklichen Import in der verwendenden Definitionsdatei.
 
-Unbekannte Aliase, fehlende Ziele und widersprüchliche Importangaben sind Fehler. Es gibt keine globale Namenssuche, automatische Versionswahl, Dateipfadinterpretation oder Auflösung über ähnliche Namen. Nach der Auflösung werden kanonische Paket-/ID-Ziele verwendet, nicht die lokalen Importkürzel.
+Alle Referenzstellen verwenden diese Zielauflösung: kind, Property.target, Referenzwerte in spec und Körperlinks. kind und Property.target müssen Typdefinitionen bezeichnen; ein konkreter requester-Wert muss beispielsweise eine Container-Definition bezeichnen. Der erwartete Zieltyp wird erst nach der eindeutigen Auflösung geprüft und nicht als Suchheuristik verwendet.
 
-## 8. Pakete, Imports und feste Versionen
+Fehlende oder mehrdeutige Namen, unbekannte Importaliases und widersprüchliche Importangaben sind Fehler. Es gibt keine Suche außerhalb des eigenen Pakets und der direkten Imports dieser Datei, automatische Versionswahl, Dateipfadinterpretation oder Auflösung über ähnliche Namen. Nach der Auflösung werden kanonische Paket-/ID-Ziele verwendet. Kurze und qualifizierte Referenzen dürfen dasselbe Ziel bezeichnen, erzeugen aber keine verschiedenen Identitäten.
 
-Eine Paket-/Importhülle wählt die Definitionen und ihre Abhängigkeiten. Sie ist kein zusätzlicher fachlicher Kind. Bibliotheken und lokale Vokabulare verwenden dieselben Sprachmittel.
+<a id="spelling"></a>
 
-```yaml
-package: example/connector-project
-imports:
-  core:
-    package: markitect/core
-    version: "1.0.0"
-  connector:
-    package: example/connector-vocabulary
-    version: "2.0.0"
+### 7.1 Verbindliche Schreibkonventionen und Kollisionsprüfung
+
+Groß-/Kleinschreibung erzeugt keine verschiedene Identität. Die Schreibkonventionen werden als Sprachregeln erzwungen. Verstöße werden abgewiesen; ein Hinweis auf die erwartete Form ist erlaubt, eine stille Korrektur oder Weiterverarbeitung der abweichenden Form nicht.
+
+| Sprachbezeichner | Vorgeschriebene Form | Beispiele |
+| --- | --- | --- |
+| Paketname | Aus Ordnerpfad abgeleitete kleingeschriebene Komponenten, mit / als Trenner | markitect/core, example/connector/vocabulary |
+| ID einer Kind-Definition | PascalCase | Kind, Property, Exchange, MqttService |
+| ID einer Propertydefinition | camelCase | requester, maxAttempts, messageId |
+| Effektiver Feldname, einschließlich ausdrücklichem spec.name | Einzelner camelCase-Name ohne Punkte | requester, timeoutSeconds |
+| ID eines konkreten Gegenstands | kleingeschriebenes kebab-case | api, list-documents |
+| Importalias | PascalCase | Core, Connector |
+| YAML-Dateiname | kleingeschriebenes kebab-case mit .yaml | exchange.yaml, max-attempts.yaml |
+| Modell-ID | Kleingeschriebene Unicode-Abschnitte, durch . oder - getrennt; Ziffernstart erlaubt, siehe Abschnitt 8.1 | markitect-core, markitect.core, 2026-modell |
+| Versionslabel | Dieselbe Zeichengrammatik wie Modell-ID; zusätzlich keine Bereichsschreibweisen oder latest | 1.0, 1.0.0-rc.1, 2026.10 |
+
+Die Kategorie einer Definition folgt aus ihrer aufgelösten Typisierung, nicht aus der Groß-/Kleinschreibung eines geschriebenen kind-Werts. Eine Kind-Definition ist eine Definition des festen Meta-Kinds Kind; eine Propertydefinition ist eine Definition des festen Meta-Kinds Property. Akronyme folgen derselben Wortschreibweise: MqttService und messageId, nicht MQTTService oder messageID. Eine Referenz muss exakt die deklarierte Schreibweise des eindeutigen Ziels verwenden. kind: exchange statt kind: Exchange ist somit ein Fehler, auch wenn die Diagnose das gemeinte Ziel finden kann. Ebenso sind unpassend geschriebene Paketnamen, Aliase, Feldschlüssel und Dateinamen Fehler. Sprachschlüssel wie id, imports, package, as und minCount müssen exakt geschrieben werden.
+
+Lokale IDs aller Definitionskategorien und effektive Feldnamen DÜRFEN KEINE Punkte enthalten. Das gilt für Kinds, Properties und konkrete Gegenstände ebenso wie für ausdrücklich gesetztes `spec.name` und Objektfeldverträge. Eine abweichende Namensangabe kann eine unzulässige ID nicht gültig machen. Die bestehenden PascalCase-, camelCase- und kebab-case-Konventionen gelten weiterhin. Eine fachliche Unterteilung wird im Package ausgedrückt, nicht durch gegliederte IDs. Verstöße werden abgewiesen; Punkte werden weder entfernt noch durch andere Zeichen ersetzt.
+
+Paket-/Aliasqualifier und lokale ID werden anhand der deklarierten Imports und tatsächlichen Ziele aufgelöst, nicht anhand ihrer Groß-/Kleinschreibung oder des erwarteten Zieltyps. Es gibt keine Auswahl durch längsten Prefix oder zufällige Reihenfolge.
+
+Kollisionen werden unabhängig von Groß-/Kleinschreibung geprüft: Paket-IDs, Definitions-IDs innerhalb eines Pakets, Aliase innerhalb einer Definitionsdatei, effektive Feldnamen innerhalb eines Kind-/Objektvertrags sowie Dateinamen im jeweiligen Paket. Kind und Property bekommen dabei keine getrennten ID-Namensräume. Insbesondere sind Command und command im selben Paket ein Konflikt, selbst wenn beide einzeln die Konvention ihrer Kategorie erfüllen. Unterschiedliche Dateinamen lösen diesen Definitionskonflikt nicht.
+
+Der Vergleich dient ausschließlich Identität, Konflikterkennung und Diagnose. Quelltext, gespeicherte kanonische Schreibweise und Referenzen werden nicht automatisch umgeschrieben. Eine falsche Referenz ist bei eindeutigem Ziel ein Schreibfehler; mehrere normalisiert passende Zielidentitäten bleiben mehrdeutig und werden nicht durch die erwartete Kategorie oder eine exakt geschriebene Teilmenge ausgewählt. Datenwerte, Enumwerte, body, title, Topicmuster und Operationskennungen werden nicht allgemein ohne Beachtung der Groß-/Kleinschreibung verglichen; dafür gilt der jeweilige Datenvertrag.
+
+Die Unicode-Grundlage und der genaue Namensvergleich stehen in Abschnitt 7.2. Das zuvor begrenzte ASCII-Profil ist abgelöst. Die zulässigen Zeichen folgen dem dort gebundenen Unicode-Profil; Körperlink-Escapes sind in Abschnitt 4.5 festgelegt; exakte Quellenpositionen folgen dem separaten [Diagnosevertrag](diagnostic-contract.md). Das YAML-/Werteprofil steht in Abschnitt 5.1.
+
+<a id="unicode"></a>
+
+### 7.2 Unicode, Normalform und Namensvergleich
+
+Unicode ist die durchgängige Textgrundlage. Alle Dateien verwenden UTF-8. Unicode ist in body, title und String-/Enumwerten ebenso zulässig wie in Paketnamen, lokalen IDs, Aliasen, effektiven Feldnamen und YAML-Dateinamen. Die festen Sprachschlüssel und Strukturzeichen wie /, Punkt, Bindestrich, .yaml und Körperlinkbegrenzer behalten ihre genaue Schreibweise und Bedeutung.
+
+Die Zeichentabellen sind auf Unicode 15.1.0 festgelegt, entsprechend [UAX #31, Revision 39](https://www.unicode.org/reports/tr31/tr31-39.html). Ein Tabellenwechsel ist eine ausdrückliche Änderung des Sprachprofils. Betriebssystem-, Laufzeit- oder Ländereinstellungen dürfen diese Bindung nicht ersetzen.
+
+Für Bezeichner gilt folgendes Profil:
+
+- Ein Namenswort beginnt mit XID_Start und wird mit XID_Continue fortgesetzt. Connector_Punctuation, einschließlich Unterstrich, ist ausgeschlossen; dies erhält die bereits gewählten Schreibkonventionen. Leerzeichen, Emoji und beliebige Symbole werden dadurch nicht zu Namenszeichen. In normalen Textwerten bleiben sie gemäß dem YAML-Profil aus Abschnitt 5.1 verwendbar.
+- `/` gliedert Package-Namen; jede Packagekomponente ist nichtleer. Ein einzelner Ordnername, eine lokale ID, ein Alias und ein effektiver Feldname enthält keine Punkte. Package-Namen sind relative logische Pfade ohne führendes oder abschließendes `/`, leere Komponenten, `.` oder `..`, Backslash, Laufwerkspräfix oder URL-Dekodierung. Es findet keine Dateisystem-Pfadnormalisierung statt. Aliase sind einzelne PascalCase-Namen. Bei konkreten IDs und Dateinamen trennt der ASCII-Bindestrich nichtleere kleingeschriebene Wörter; nach einem Bindestrich darf ein Teil auch mit einer Unicode-Dezimalziffer beginnen, etwa `größe-2`. Das erste Wort beginnt weiterhin mit XID_Start. Die Punktnotation `Alias.id` ist eine Referenzform; Punkte in Modell-IDs, Versionslabels, Dezimalzahlen und gewöhnlichen Textwerten folgen ihren eigenen Regeln.
+- PascalCase und camelCase werden anhand des ersten Buchstabens mit Groß-/Kleinschreibung des Namens geprüft. Titlecase-Zeichen gelten dabei als große Initiale. Ohne solche Buchstaben entfällt diese Initialenvorgabe, etwa bei 文档. Für kleingeschriebene Namen müssen alle Buchstaben mit Groß-/Kleinschreibung klein sein. In PascalCase-/camelCase-Wörtern sind aufeinanderfolgende Großbuchstaben weiterhin ausgeschlossen; kombinierende Marken werden bei dieser Prüfung übersprungen. Somit bleiben Überweisung, gültigBis und MqttService passende Beispiele. Diese Kategorien folgen weiter aus der Typisierung.
+
+**Strenge Autorenform:** Namen, Dateinamen und geschriebene Referenzen müssen bereits in [Unicode-Normalform NFC](https://www.unicode.org/reports/tr15/) vorliegen. Eine zerlegte Schreibweise, etwa U+0075 U+0308 anstelle von U+00FC für ü, wird mit Diagnose abgewiesen. Weder eine Quelldatei noch ihr dekodierter Name wird still korrigiert. Eine Referenz muss außerdem exakt die deklarierte Schreibweise des eindeutigen Ziels verwenden. Gleichwertigkeit im Kollisionsvergleich macht eine abweichende Autorenreferenz nicht gültig.
+
+**Kollisionsschlüssel:** Für Namen verwenden wir Unicode Canonical Caseless Matching mit vollständigem Default Case Folding, kulturunabhängig und ohne türkische Sonderbehandlung. Präzise gilt K(s) = NFD(toCasefold(NFD(s))) gemäß Definition D145 des Unicode-Standards. Zwei Namen kollidieren genau dann, wenn ihre Schlüssel gleich sind, jeweils im bereits festgelegten Geltungsbereich: Paket, Definition, dateilokaler Alias, Feldvertrag oder Dateiauswahl. Der Vergleichsschlüssel ist ein internes Prüfmittel, keine neue gespeicherte Autorenform. Insbesondere kollidieren straße und strasse sowie Straße und Strasse. Auch eine entsprechende Referenzabweichung wird abgewiesen; der Prüfer wählt nicht eine exakt geschriebene Teilmenge aus mehreren kollidierenden Zielen.
+
+NFC und dieser Vergleich bewirken keine allgemeine Umschrift: ä und ae bleiben verschieden. Eine zusätzliche NFKC-Kompatibilitätsfaltung ist nicht gewählt. body, title, String- und Enumwerte werden weder normalisiert noch ohne Beachtung der Groß-/Kleinschreibung verglichen; dort bleibt der dekodierte Text erhalten und es gilt der jeweilige Datenvertrag. Die NFC-Anforderung betrifft auch Feldschlüssel, aber nicht deren gewöhnliche Textwerte. Herkunft und ursprüngliche Dateibytes bleiben für Diagnosen verfügbar.
+
+Die gemeinsame Grammatik für Modell-IDs und Versionslabels steht in Abschnitt 8.1. Sie verwendet dieselben Unicode-Tabellen, NFC-Autorenform und Kollisionsschlüssel, erlaubt jedoch am Beginn jedes Abschnitts zusätzlich Unicode-Dezimalziffern. Diese Erweiterung gilt nicht automatisch für Packageordner, Definitions-IDs, Importaliase oder Dateinamen.
+
+<a id="packages"></a>
+
+### 7.3 Ordner und Packages
+
+Das kanonische Modell wird wie Dokumentation in Ordnern strukturiert. Die ausdrücklich bestimmte Modellwurzel ist selbst kein Package und darf keine Definitionsdateien unmittelbar enthalten. Unterhalb dieser Wurzel ist jeder Ordner ein Package, auch ein Zwischenordner ohne eigene Definitionen. Jede Definition liegt somit in einem benannten Unterordner und gehört genau zum Package ihres unmittelbar enthaltenden Ordners. Unterordner gehören zu eigenen Packages; eine rekursive Erfassung macht deren Definitionen nicht zu Mitgliedern des Elternpackages. Das Package des Elternordners wird nicht geerbt.
+
+**Autorenkonvention:** Packages werden nach fachlichem Zusammenhang beziehungsweise Feature geschnitten (package by feature / vertical slices). Zusammengehörige Kinds, Properties und konkrete Gegenstände stehen gemeinsam beim jeweiligen Feature. Ihre Definitionsart ist kein Grund für getrennte Ordner wie kinds/, properties/ oder instances/. Ein weiterer Unterordner entspricht einem fachlichen Teilbereich; jede Definition behält ihre eigene Datei. Diese Konvention ist eine Entscheidung zur Modellorganisation, kein zusätzliches Core-Konzept und kein syntaktisches Verbot bestimmter Ordnernamen. Der Strukturprüfer leitet aus einem Ordnernamen keine fachliche Angemessenheit ab.
+
+Der Package-Name entspricht dem nicht leeren Pfad des unmittelbar enthaltenden Ordners relativ zur Modellwurzel und wird nicht zusätzlich in einer package.yaml oder in jeder Definition gepflegt. Es gibt weder einen leeren Package-Namen noch ein Package namens . oder einen Ersatznamen aus der Modell-ID. Die Ordnerkomponenten werden mit `/` verbunden; dies ist unmittelbar der relative Ordnerpfad.
+
+Ein Ordnername entspricht genau einer bisherigen kleingeschriebenen Package-Komponente aus Abschnitt 7.2; ein Punkt im einzelnen Ordnernamen erzeugt keine zusätzlichen Komponenten und ist in dieser Form unzulässig. Groß-/Kleinschreibung und Unicode-Kollisionen werden unabhängig vom Verhalten des Dateisystems geprüft, einschließlich straße/strasse. Namen müssen bereits in NFC und in der vorgeschriebenen Form vorliegen; keine automatische Korrektur.
+
+**Dateierfassung:** Die Erfassung MUSS den vollständigen Modellbaum einschließlich aller Unterordner durchlaufen; es gibt keine impliziten Ignore-Regeln. Jeder Unterordner bleibt ein Package gemäß diesem Abschnitt. Für reguläre Dateien gelten abschließend folgende Regeln:
+
+- Jede Datei mit der exakten Endung `.yaml` ist eine Definitionsdatei und MUSS die vollständige Definitionshülle erfüllen. Eine zusätzliche YAML-Datendatei ohne Definitionshülle ist ein Fehler und wird nicht still übersprungen.
+- Ausgenommen sind ausschließlich das ausdrücklich gebundene `model.yaml`-Manifest und seine unmittelbar danebenliegende `model-lock.yaml`, sofern sie im Modellbaum liegen. Die Ausnahme gilt für genau diese Pfade mit exakt geschriebenen Dateinamen, nicht pauschal für gleichnamige Dateien in Packages.
+- `.yml` sowie Groß-/Kleinschreibungsvarianten der Endungen `.yaml` und `.yml` sind Fehler. Sie werden weder ignoriert noch umbenannt oder als alternative Autorenform akzeptiert. Für gültige Definitionsdateien gelten zusätzlich die strengen Dateinamensregeln aus Abschnitt 7.1.
+- Andere reguläre Dateien, etwa Markdown, Bilder oder JSON, werden nicht als Definitionen gelesen und gehen nicht in den kanonischen Modellinhalt ein. Das Umleitungsverbot aus Abschnitt 8.1 gilt weiterhin für den gesamten erfassten Modellbaum.
+
+Die Definitionen werden aus ihren jeweiligen Ordnern erfasst. Es gibt keine gesonderte definitionFiles-Liste pro Package und keinen zusätzlichen definitions/-Pflichtordner. Die lokale id steht weiterhin ausdrücklich in jeder Definitionsdatei; sie wird nicht aus dem Dateinamen abgeleitet. Umbenennen einer Datei im selben Ordner erhält ihre Identität. Verschieben einer Datei in einen anderen Packageordner oder Umbenennen/Verschieben eines Packageordners ändert die betroffenen qualifizierten Identitäten und verlangt angepasste Referenzen. Ein anderer physischer Speicherort der gesamten Modellwurzel erhält die relativen Package-Namen.
+
+Die Ordnerhierarchie erzeugt keine impliziten Imports, Vererbung, Enthaltenheitsbeziehungen zwischen Definitionen oder fachlichen Beziehungen. Eltern-, Kind- und Geschwisterpackages müssen in jeder verwendenden Datei ausdrücklich importiert werden. Ein Package hat keine eigene Version, Abhängigkeitsliste oder Veröffentlichungsdatei. Modell bezeichnet die gemeinsame Versionierungs- und Verteilungseinheit und kann mehrere Packages enthalten. Abschnitt 8.1 bestimmt Modellidentität, Wurzel und Manifestform. Die Modellidentität erzeugt keinen automatischen Package-Präfix und keinen zusätzlichen Teil der Definitionsidentität. Abschnitt 8.2 bestimmt das Lockformat; Abschnitt 8.3 bestimmt die kanonischen Digestbytes.
+
+Das ausdrücklich gebundene `model.yaml` und die danebenliegende `model-lock.yaml` sind Modellmetadaten und keine Definitionsdateien; auch bei `root: .` erzeugen sie kein Wurzel-Package. Definitionen unmittelbar in der Modellwurzel sind Fehler.
+
+
+<a id="imports"></a>
+
+## 8. Dateilokale Imports und gebundene Modelle
+
+Importierbar sind ausschließlich Packages mit mindestens einer eigenen Definition. Ein leerer Ordner oder ein Package mit ausschließlich belegten Unterpackages ist nicht importierbar; seine Unterpackages müssen jeweils selbst importiert werden. Die physische Anwesenheit leerer Ordner öffnet daher keine Namen und begründet keine Importbindung.
+
+Das optionale Hüllenfeld imports enthält die ausdrücklich in dieser Datei sichtbaren fremden Packages. Ohne imports oder bei imports: [] sind ausschließlich Definitionen des eigenen Packages sichtbar. Ein unbekanntes oder im gebundenen Eingabesatz nicht bereitgestelltes Package ist ein Fehler. Ein fremdes Package muss aus dem eigenen Modell oder einer ausdrücklich deklarierten direkten Modellabhängigkeit stammen. Transitive Modelle werden zur Vertragsprüfung geladen; ein direkter Zugriff auf deren Packages verlangt eine eigene direkte Abhängigkeit im verwendenden Modellmanifest. Imports wählen weder eine neue Version noch einen physischen Dateisystempfad. Die Bereitstellung eines externen Modells und seine Version öffnen allein keine Namen; umgekehrt ist ein Import keine Installationsanweisung.
+
+**Importform:** Jeder Import ist ein geschlossenes Objekt mit erforderlichem `package` und optionalem `as`; weitere Felder sind Fehler. Beide Angaben sind Strings. Falls `as` vorhanden ist, muss es einen nichtleeren gültigen Alias enthalten. Eine String-Kurzform wird nicht parallel geführt. as deklariert einen dateilokalen Namen in PascalCase und verändert weder Package-Identität noch verfügbare Definitionenmenge.
+
+Ohne as ist ein Package nur unter seinem vollständigen Package-Namen qualifizierbar. Mit as sind sowohl vollständiger Name als auch kurzer Alias zulässig. Die vollständigen lokalen IDs des importierten Packages werden in beiden Fällen unmittelbar verfügbar: Kind, Core.Kind und markitect/core/Kind können dasselbe Ziel bezeichnen. Ein Alias macht den Import nicht zu einem nur qualifiziert sichtbaren Import.
+
+Aliase gelten nur in der deklarierenden Definitionsdatei. Imports anderer Dateien, die Imports einer referenzierten Kind-/Propertydefinition, Elternpackages und transitive Modellabhängigkeiten erweitern diese Sicht nicht. Referenzwerte und Körperlinks werden immer im Dateikontext aufgelöst, in dem sie geschrieben sind. Auch mehrere Packages derselben Verteilungseinheit brauchen ihre eigenen dateilokalen Imports.
+
+Doppelte Aliase und doppelte Imports desselben Packages werden unabhängig von Groß-/Kleinschreibung bereits als Deklarationsfehler abgewiesen. Gleichnamige Definitionen aus unterschiedlichen sichtbaren Packages sind dagegen zulässig. Jede tatsächlich verwendete Referenz muss genau ein Ziel ergeben; konkurrierende Kurz-, Alias- oder vollständige Schreibweisen erhalten keinen Vorrang nach exakter Schreibweise, Ziel-Kind oder Prefixlänge. `Core.Kind` und `core.Kind` sind keine verschiedenen Adressen; bei deklariertem `Core` ist `core.Kind` ein Schreibfehler. Abschnitt 7.2 besitzt das Unicode-Profil.
+
+**Inhaltsbindung bleibt erforderlich:** Externe wiederverwendbare Modelle werden mit genauer Version und konkretem Inhaltsdigest gebunden. Versionsbereiche, latest und stiller Inhaltsaustausch unter einer gebundenen Version sind nicht vorgesehen. Der gebundene Eingabesatz muss jede kanonische Package-/ID-Identität eindeutig bereitstellen; mehrere Imports oder Aliase umgehen keinen Konflikt. Das lokale Modell wird durch seinen festen Quell-/Modellstand gebunden; jede lokale Änderung verlangt keine neue Veröffentlichungsnummer.
+
+<a id="models"></a>
+
+### 8.1 model.yaml: Identität, Wurzel und Abhängigkeiten
+
+Jedes zusammengehörige Modell besitzt ein Manifest mit dem festen Dateinamen model.yaml. Manifest bezeichnet die Aufgabe dieser Datei; Modell ist die gemeinsame Versionierungs- und Verteilungseinheit für mehrere Packages. model.yaml ist Bereitstellungsmetadatum, keine zusätzliche Definition und kein neuer privilegierter Core-Kind. Jede eigentliche Definition behält ihre einheitliche Hülle.
+
+| Feld | Gewählter Vertrag |
+| --- | --- |
+| formatVersion | Erforderliche Ganzzahl; bindet Manifestformat und Sprachvertrag. v1 verwendet 1. Unbekannte Fassungen werden nicht still als 1 interpretiert. |
+| id | Erforderliche stabile, nichtleere Modellidentität; unabhängig von Checkout-/Installationsordner, Speicherort, Modellwurzel, Package-Namen und Version. |
+| version | Genaue textuelle Veröffentlichungsfassung aller enthaltenen Packages. Bei lokaler unveröffentlichter Arbeit optional; für Veröffentlichung und als bereitgestellte Abhängigkeit erforderlich. |
+| root | Erforderlicher nichtleerer relativer Verzeichnispfad, bezogen auf den Ordner der jeweiligen model.yaml. Es gibt keinen geratenen Standardordner. |
+| dependencies | Erforderliches Mapping von direkt benötigter Modell-ID auf genaue textuelle Version; ohne Abhängigkeiten {}. Keine Packages, Importaliase, Versionsbereiche oder latest. |
+
+Die Hülle ist geschlossen: unbekannte oder falsch geschriebene Felder sind Fehler. Eine Abhängigkeit muss exakt die deklarierte Modell-ID verwenden. Modell-IDs und Versionslabels sind YAML-Strings; numerische Werte werden nicht konvertiert. Die physische root-Pfadschreibweise steht weiter unten in diesem Abschnitt.
+
+**Gemeinsame Zeichengrammatik für Modell-IDs und Versionslabels:**
+
+```text
+Label               = Abschnitt (("." | "-") Abschnitt)*
+Abschnitt           = Startzeichen Fortsetzungszeichen*
+Startzeichen        = XID_Start | Unicode-Dezimalziffer (General_Category=Nd)
+Fortsetzungszeichen = XID_Continue
 ```
 
-Dies sind synthetische Paketnamen und Versionsbezeichnungen des Beispiels, keine Behauptung veröffentlichter Bibliotheken. Die konkreten Definitionen können wie in den [vollständigen Beispieldateien](identities/project-c.yaml) unter definitions folgen.
+Das Unicode-Profil aus Abschnitt 7.2 gilt mit folgenden Präzisierungen:
 
-Für den ersten Sprachumfang gilt:
+- Connector_Punctuation, einschließlich _, ist überall ausgeschlossen. Zeichen mit Groß-/Kleinschreibung müssen klein sein; Schriften ohne Groß-/Kleinschreibung bleiben zulässig. Alle Labels müssen bereits NFC sein. Verstöße werden abgewiesen, nicht korrigiert.
+- ASCII-Punkt und ASCII-Bindestrich trennen nichtleere Abschnitte. Es gibt keine führenden, abschließenden oder unmittelbar aufeinanderfolgenden Trennzeichen, auch nicht gemischt wie in 1.-0. Leerraum, /, Backslash, Emoji und sonstige nicht zum Profil gehörende Zeichen sind unzulässig.
+- Dieselbe Grammatik gilt für Modellidentität, Abhängigkeitsschlüssel, veröffentlichte Version, Versionsanforderung und Lockbindung. Auch Modell-IDs dürfen mit Ziffern beginnen oder Punkte enthalten. Punkte erzeugen in diesen Labels weder Packages noch Namespaces; Bindestriche tragen ebenfalls keine zusätzliche Semantik.
+- Gültig sind beispielsweise markitect-core, überweisungen, 文档, markitect.core, 2026-modell, 1.0, 1.0.0-rc.1 und ٢٠٢٦.١. Ungültig sind beispielsweise Markitect-Core, über_weisungen, modell/name, 1..0 und 1.0.0-.
+- `x` ist in Versionslabels nicht reserviert und hat keine Platzhalterbedeutung. `"x"`, `"1.x"` und `"release.x"` sind gewöhnliche exakte Textlabels. Eine Anforderung auf `"1.x"` verlangt genau diese Fassung und erfüllt sich nicht durch `"1.0"` oder `"1.7"`. `latest` bleibt als Versionslabel verboten; `*`, `^`, `~`, Vergleichs- und Bereichsoperatoren gehören weiterhin nicht zur Labelgrammatik. Die gemeinsame Grammatik für Modell-IDs bleibt unverändert.
 
-- Jeder Bibliotheksimport benennt eine genaue Version. Versionsbereiche und latest sind nicht vorgesehen.
-- Pro Paket-ID ist in einem gebundenen Modell genau eine Version zulässig. Ein Konflikt zwischen direkten oder transitiven Anforderungen wird gemeldet; zwei Importkürzel umgehen ihn nicht.
-- Eine Bindung hält Paket-ID, genaue Version und konkreten Inhaltsdigest fest. Abweichende Inhalte unter derselben gebundenen Version werden nicht still ersetzt.
-- Importkürzel sind lokal zum deklarierenden Paket. Eine Bibliothek verwendet ihre eigenen Imports, nicht die ihres Aufrufers.
-- Transitive Verträge werden geladen, verleihen Autoren aber keine globale Suche über alle Pakete. Eigene qualifizierte Autorenbezüge benötigen den entsprechenden ausdrücklichen Import.
-- Das lokale Projekt wird durch seinen festen Quell-/Modellstand gebunden; jede lokale Änderung verlangt keine neue Veröffentlichungsnummer.
+Der vollständige Unicode-Kollisionsvergleich aus Abschnitt 7.2 gilt für Modell-IDs innerhalb der bereitgestellten Modellmenge und für Versionslabels innerhalb desselben Modells. straße und strasse dürfen dort keine verschiedenen Identitäten bezeichnen. Unterschiedliche Modelle dürfen dasselbe Versionslabel verwenden. Anforderungen und Lockeinträge müssen trotzdem exakt die deklarierte Autorenform verwenden; eine kollidierende Schreibweise ist keine gültige alternative Referenz. Der erste Sprachumfang bindet weiterhin nur eine Fassung je Modell-ID; die Kollisionsprüfung eröffnet keine Mehrversionsauswahl.
 
-Der Loader stellt den vollständigen gebundenen Eingabesatz bereit. Der strukturelle Core benötigt dafür keine Netzwerk-, Installations- oder Provideroperationen. Paketinhalt und Auswahl müssen eindeutig sein, bevor nachgelagerte Arbeit gegen den Modellstand beurteilt wird.
+Eine Version ist ein exaktes Textlabel. Manifest, direkte Abhängigkeitsanforderung und Lock verwenden denselben dekodierten Text. Komponenten werden nicht als Zahlen verglichen, nicht ergänzt und begründen weder Reihenfolge noch Kompatibilität. `"1.0"` und `"1.0.0"` sind unterschiedliche Fassungen. Versionsbereiche und `latest` sind verboten; der genaue Inhalt ist zusätzlich durch den Digest gebunden.
+
+Eine Abhängigkeit verlangt die exakt deklarierte Identität und Version der bereitgestellten Fassung. Fehlende Modelle, abweichende Schreibweisen, widersprüchliche direkte oder transitive Versionsanforderungen und mehrere Kandidaten derselben Modell-ID sind Fehler. v1 bindet genau eine Fassung pro Modell-ID. Externe Inhalte werden zusätzlich durch das Lock gemäß Abschnitt 8.2 gebunden.
+
+Ein mit Definitionen belegtes Package gehört im gebundenen Eingabesatz genau einem Modell. Zwei Modelle dürfen dasselbe Package auch bei unterschiedlichen lokalen IDs nicht aufteilen. Gemeinsame Zwischenordner bleiben möglich: getrennte Modelle mit markitect/core und markitect/http können beide den definitionslosen Zwischenordner markitect enthalten. Sobald ein Package Definitionen enthält, stammen diese aus genau einem Modell; ein anderswo lediglich als leerer Zwischenordner vorkommender gleicher Name liefert keine weiteren Definitionen. Keine Lade- oder Importreihenfolge entscheidet über die Zugehörigkeit.
+
+**Modellübergreifende Namensbindung:** In den gemeinsamen Package-Namensraum gehen ausschließlich belegte Packagepfade und alle daraus ableitbaren nichtleeren Zwischenpfade ein. Unterschiedlich geschriebene Namen dieser Menge, die im Unicode-Vergleich kollidieren, sind Fehler. Rein leere Teilbäume binden modellübergreifend keine Namen. Beispielsweise kollidiert ein belegtes straße/feature in einem Modell nicht mit einem leeren strasse/empty in einem anderen Modell. Enthält strasse/empty dagegen eine Definition, kollidieren die ableitbaren Zwischenpfade straße und strasse. Innerhalb jedes einzelnen Modellbaums werden weiterhin sämtliche Ordnernamen einschließlich leerer Teilbäume auf gültige Schreibweise, NFC und Unicode-Kollisionen geprüft. Jeder Ordner bleibt lokal ein Package; leere Packages bleiben nicht importierbar.
+
+Imports bleiben dateilokal. Sie machen ausschließlich die tatsächlich importierten Packages sichtbar. Ein Package aus demselben Modell benötigt einen Import, sobald es nicht das eigene Package der Datei ist. Die Verfügbarkeit eines transitiven Modells eröffnet keinen direkten Import ohne eigene direkte Modellabhängigkeit. model.yaml wird weder aus Imports noch aus Prosa ergänzt; es ist keine Installations- oder Ausführungsanweisung.
+
+Ein anderer physischer Speicherort des gesamten Modells, ein anderer Installationsordner oder eine identitätserhaltende Verlagerung seiner Wurzel ändern seine Modell-ID und die relativen Package-Namen nicht. Eine ausdrückliche Änderung der Modell-ID ändert die Adresse der Modellabhängigkeit, aber erzeugt nicht automatisch neue Package-/Definitionsidentitäten. root bestimmt, welche Dateien unter welchen relativen Package-Namen geladen werden; eine Änderung ist anhand dieses neuen Bestands zu prüfen.
+
+**Modellabhängigkeiten:** Der gerichtete Graph der model.yaml-dependencies muss azyklisch sein. Knoten sind die eindeutig gebundenen Modell-IDs, Kanten die ausdrücklich deklarierten direkten Anforderungen. Im vollständigen erreichbaren Modellumfang darf kein Abhängigkeitsweg zum Ausgangsmodell zurückführen. Das verbietet Selbstabhängigkeiten als Zyklen der Länge eins ebenso wie wechselseitige oder längere Zyklen. Auch exakt passende Versionen oder Digests machen einen solchen Zyklus nicht gültig. Mehrere Modelle dürfen dieselbe Abhängigkeit verwenden, sofern die gemeinsame genaue Versions- und Inhaltsbindung passt.
+
+Ein Modellzyklus ist ein Sprachfehler und liefert failed, keine bloß unvollständige Prüfung. Für den betroffenen ungültigen Modellumfang gibt es weder kanonische Bytes noch Digest. Die Regel benötigt keine Sonderbehandlung für Selbstabhängigkeiten. Fachlich untrennbar wechselseitig abhängige Teile können zu einem gemeinsamen Modell mit mehreren fachlichen Packages gehören. Gewöhnliche Definitionsreferenzen und Package-Imports innerhalb desselben Modells dürfen weiterhin Zyklen bilden; die Objektvertragsregeln aus Abschnitt 5.3 gelten zusätzlich. Aus Prosa oder bloßen Dateilinks werden keine dependencies ergänzt.
+
+**Physische Wurzelpfadregeln:**
+
+- root ist entweder . oder ein nichtleerer relativer Ordnerpfad, bezogen auf den Ordner der jeweiligen model.yaml. Das Ziel muss bereits als Verzeichnis existieren; fehlende Ziele und Dateien statt Verzeichnissen sind Fehler. . bezeichnet ausschließlich den Manifestordner selbst.
+- ASCII-/ ist auch unter Windows der einzige Trenner. Jede relative Komponente folgt der bestehenden kleingeschriebenen Unicode-Packageordnergrammatik aus Abschnitt 7.2: XID_Start am Beginn, danach XID_Continue, keine Connector_Punctuation. Die neue Modell-ID-/Versionslabelgrammatik erweitert diese Ordnergrammatik nicht. Insbesondere sind Punkte, Bindestriche und Ziffernstarts in einzelnen root-Ordnerkomponenten nicht zusätzlich erlaubt.
+- Es gibt keine führenden oder abschließenden /, leeren Komponenten, eingebetteten . oder .., Backslashes, Laufwerkspräfixe oder absoluten Pfade. Die Autorenform wird vor einer Pfadinterpretation geprüft; ./model, docs//model und model/ werden nicht still normalisiert. Es gibt keine Variablen-, Home-, URL- oder sonstige Ersetzung.
+- Die geschriebenen Komponenten müssen bereits NFC sein und exakt den tatsächlichen Verzeichnisnamen entsprechen, einschließlich Groß-/Kleinschreibung und Unicode-Schreibweise. Ein auf einem toleranten Dateisystem auffindbares Model ersetzt ein geschriebenes model nicht. Mehrere im Unicode-Kollisionsvergleich passende Verzeichnisse bleiben ein Fehler; die exakt geschriebene Teilmenge erhält keinen Vorrang.
+- Symlinks, Junctions und vergleichbare Reparse-Umleitungen im relativen Wurzelpfad oder im erfassten Modellbaum sind verboten und werden nicht verfolgt. Auch die ausdrücklich geladenen Manifest- und Lockdateien werden nicht über solche Umleitungen gelesen. Der physische Manifestordner bildet den Bezugspunkt; der absolute Ablagepfad darüber erhält keine Package-Namenskonvention.
+- Geladene Modellwurzeln dürfen weder dasselbe physische Verzeichnis bezeichnen noch ineinander liegen. Die Prüfung erfolgt für die gebundene Modellmenge vor der Definitionserfassung. Bei root: . müssen weitere gebundene Modelle deshalb außerhalb dieses Modellbaums liegen. Gemeinsame logische, leere Packagepräfixe aus getrennten physischen Wurzeln bleiben möglich.
+
+Gültige Formen sind ., model, docs/model und überweisung/文档, sofern die exakt geschriebenen Verzeichnisse vorhanden sind. Ungültig sind beispielsweise ./model, model/, docs//model, ../shared/model, Model und C:\\models\\connector. Die absoluten Speicherorte der Modelle bleiben frei; eine identitätserhaltende physische Verlagerung verändert weder Package-Namen noch kanonische Digestbytes. Die Wurzel selbst bildet weiterhin kein Package und darf keine Definitionsdateien unmittelbar enthalten (Abschnitt 7.3).
+
+<a id="lock"></a>
+
+### 8.2 model-lock.yaml: vollständige externe Inhaltsbindung
+
+Das generierte Lock wird als model-lock.yaml neben dem Einstiegsmanifest gespeichert und zusammen mit dem Modell versioniert. Es bindet sämtliche direkten und transitiven externen Modellabhängigkeiten genau einmal. Die eigene lokale Modellfassung wird durch den aktuellen Quell-/Modellstand gebunden und nicht als eigener externer Eintrag im Lock wiederholt.
+
+Die geschlossene Form besteht aus genau formatVersion und models. Die aktuelle formatVersion ist die Ganzzahl 1. models ist ein Mapping von Modell-ID auf ein Objekt mit genau version und digest. Ohne externe Abhängigkeiten ist models: {} die vollständige Tabelle. Jeder Schlüssel ist die exakt geschriebene NFC-Modell-ID; der Unicode-Kollisionsvergleich aus Abschnitt 7.2 gilt auch hier. version ist die genaue textuelle Fassung. digest hat die Form sha256: mit genau 64 nachfolgenden kleingeschriebenen Hexadezimalziffern. Unbekannte Felder, Schreibabweichungen, fehlende Angaben und Kollisionen sind Fehler.
+
+**Vollständigkeit:** Aus den direkten Anforderungen des Einstiegsmanifests und den gebundenen model.yaml-Manifesten der Abhängigkeiten muss genau die externe Locktabelle entstehen. Fehlende, überzählige oder widersprüchliche Einträge sind Fehler. Es gibt keine zusätzliche manuelle Liste der direkten Abhängigkeiten und keine zweite Beschreibung der Graphkanten im Lock. Pro Modell-ID gilt eine Fassung; weder Importaliase noch Lade- oder Tabellenreihenfolge lösen Versions- oder Inhaltskonflikte auf.
+
+**Prüfung:** Modell-ID, genaue Version und berechneter Inhaltsdigest müssen gleichzeitig passen. Der Prüfer kontrolliert alle erreichbaren Manifestanforderungen und anschließend jede Inhaltsbindung. Andere Inhalte unter derselben gebundenen Version werden abgewiesen. Ein Prüflauf schreibt, ergänzt oder aktualisiert das Lock nicht automatisch. Ein fehlendes Lock wird nicht durch eine still erzeugte neue Bindung ersetzt. Änderungen der Abhängigkeiten verlangen eine erneute Prüfung der vollständigen Bindung; lokale Definitionsänderungen allein verlangen kein neues Lock. Die Root-Locktabelle bestimmt die gemeinsame externe Bindung des ausgewerteten Modellstands; eine etwa mitgelieferte weitere Lockdatei eines Abhängigkeitsmodells ersetzt oder erweitert diese Tabelle nicht still.
+
+**Digestumfang:** Ein Modelldigest bindet ausschließlich den eigenen Modellinhalt einschließlich eigener Modellmetadaten, deklarierter direkter Abhängigkeitsanforderungen, Packages und Definitionen. Er enthält keine rekursiv eingebetteten Digests fremder Modellinhalte. Die vollständige konkrete Bindung der transitiven Inhalte trägt die Locktabelle. Das vermeidet rekursive Digestdefinitionen; gewöhnliche Definitionsreferenzen bleiben Referenzen auf kanonische Identitäten und werden nicht unendlich textuell entfaltet. Die genaue Projektion, Defaults, Reihenfolgen und Bytekodierung stehen in Abschnitt 8.3.
+
+**Bereitstellung:** Installationspfade, Ablageorte und Downloadadressen sind Bereitstellungs-/Provenienzeingaben und keine Lockfelder. Die bereits gewählte Modell-ID wird nicht um einen Speicherort ergänzt. Die Bereitstellung liefert Inhalte, deren Identität, Version und Digest geprüft werden müssen; der Lockeintrag allein ist keine Installationsanweisung.
+
+<a id="canonical-bytes"></a>
+
+### 8.3 Kanonische Bytes und SHA-256: model-digest/1
+
+Jeder Modelldigest ist SHA-256 über die nachfolgenden kanonischen Bytes. Die Kodierung beschreibt den ausgewerteten eigenen Modellinhalt. Vor jeder Projektion werden das ausgewählte Modell und seine vollständige Abhängigkeitshülle validiert: Manifeste, Schreibweisen/Kollisionen, feste Core-Selbstbeschreibung, Typverträge, Werte, Kardinalitäten und Körperlinks. Auch beim Laden festgestellte Fehler dürfen nicht durch eine spätere Map-Darstellung verloren gehen. Eine ungültige Fassung erhält keinen Digest; eine nicht abgeschlossene Inhaltsprüfung ist kein gültiger Digestnachweis. Ein gültiges Abhängigkeitsmodell kann unabhängig von einem fehlerhaften, es verwendenden lokalen Modell geprüft und gehasht werden.
+
+**Projektion.** Der kodierte Baum hat genau drei Felder:
+
+| Feld | Inhalt |
+| --- | --- |
+| format | Der feste String markitect-model-digest/1 als Kennung dieser Projektion/Kodierung. |
+| model | Eigenes formatVersion, id, optional version und die vollständigen direkten dependencies aus dem eigenen Manifest; root ist ausgeschlossen. |
+| packages | Mapping eigener belegter Package-Namen auf ein Mapping ihrer lokalen Definitions-IDs auf die nachfolgenden Definitionsdatensätze. |
+
+Ein Definitionsdatensatz enthält genau kind, body, bodyLinks, spec und bei gesetzter Autorenangabe title. Package und id werden durch die beiden Mappingschlüssel getragen und nicht nochmals im Datensatz wiederholt. kind ist die aufgelöste Referenzform aus der nachfolgenden Tabelle. body und title sind die dekodierten unveränderten Unicode-Strings. bodyLinks ist immer eine Liste kanonischer Zielreferenzen in der Reihenfolge der aktiven Vorkommen im body; Wiederholungen bleiben erhalten. Ein Ziel wird als ["reference", package, id] kodiert. Anzeigetexte und die geschriebene Linknotation bleiben bereits im unveränderten body enthalten. Byte-/Zeilenfundstellen werden nicht aufgenommen. spec ist ein Mapping effektiver Feldnamen auf die typisierten kanonischen Werte.
+
+| Werttyp | Exakte Baumform |
+| --- | --- |
+| string | ["string", unveränderterString] |
+| enum | ["enum", unveränderterErlaubterString] |
+| boolean | ["boolean", true] beziehungsweise ["boolean", false] |
+| integer | ["integer", dezimaleGanzzahlAlsString] |
+| number | ["number", dezimalerKoeffizientAlsString, dezimalerExponentAlsString] |
+| reference | ["reference", exaktGeschriebenesPackage, vollständigeLokaleID] |
+| object | ["object", MappingDerEffektivenFelderAufTypisierteWerte] |
+| Mehrfachwert | ["list", ListeDerEinzelwertformen] |
+
+Die Typform folgt aus dem aufgelösten Feldvertrag, nicht aus YAML-Schreibweise oder Feldnamensähnlichkeit. Ganzzahlstrings verwenden 0 oder eine optionale negative Vorzeichenangabe gefolgt von Ziffern ohne führende Nullen; -0 wird zu 0. number bedeutet Koeffizient × 10 hoch Exponent. Der Koeffizient hat weder führende noch abschließende Nullen; entfernte abschließende Nullen werden dem Exponenten zugeschlagen. Das Vorzeichen steht nur bei einem negativen, von null verschiedenen Koeffizienten. Null ist stets ["number", "0", "0"]. Der Exponent ist ein Ganzzahlstring derselben Form. Dadurch ergeben 42, 42.0 und 4.2e1 bei einer number-Property dieselbe Form ["number", "42", "0"]. Bei integer bleibt ein Dezimalwert unzulässig. Es gibt keine binäre Gleitkommazahl oder kontextabhängige Dezimalrundung; große Exponenten werden nicht textuell als riesige Ziffernfolgen entfaltet.
+
+**Defaults und Listen.** Fehlende optionale Listen werden gemäß Abschnitt 5.2 als leere Listen dargestellt, auch innerhalb von object-Werten. Die für einen konkreten Meta-Typ verbotenen Felder werden nicht durch Defaults eingefügt. Fehlendes spec.name einer Propertydefinition wird als vollständige lokale Property-ID eingesetzt; ein ausdrücklich gleicher Wert erzeugt dieselben Bytes. Andere fehlende optionale Einzelwerte werden nicht erfunden. Fehlendes title oder version bleibt von einem vorhandenen Wert unterscheidbar. Gewöhnliche Wertlisten behalten ihre Reihenfolge und Wiederholungen. Die festen Core-Deklarationslisten aus Abschnitt 5.2 werden nach den kanonischen JSON-Bytes ihrer einzelnen Elemente sortiert. Ein gewöhnliches Datenfeld mit gleichem Namen erhält diese Sortierung nicht. Die feste Core-Selbstbeschreibung vergleicht ausdrücklich gesetzte ID-Standardnamen ebenfalls anhand ihres wirksamen Werts.
+
+**Referenzen und Text.** Strukturelle Referenzen werden auf das kanonische Package-/ID-Paar aufgelöst. Ihre kurze, voll qualifizierte oder aliasqualifizierte Autorenform verändert die Bytes nicht. imports und Aliase werden nach erfolgreicher Auflösung nicht als eigene Inhaltsfelder gespeichert; ein unbenutzter, weiterhin gültiger Import beeinflusst den Digest nicht. Entfernte Imports, Mehrdeutigkeiten oder Schreibfehler werden trotzdem vor der Projektion abgewiesen. Im body bleibt die geschriebene Linknotation dagegen Teil des Texts: Eine Aliasänderung im body ändert die Bytes, auch bei gleichem Ziel. Umgekehrt binden die zusätzlichen bodyLinks-Ziele eine durch andere Imports veränderte Auflösung bei unverändertem body. Körpertexte werden nicht gerendert, neu formatiert, getrimmt, casegefaltet oder nachträglich Unicode-normalisiert. Dasselbe gilt für title und gewöhnliche String-/Enumwerte. YAML-Kommentare, Einrückung, Quote-Auswahl und die Quellreihenfolge von Mappings beeinflussen nur die Autorenbytes, nicht den dekodierten Baum.
+
+**JSON-/UTF-8-Kodierung.** Die folgenden Regeln gelten rekursiv für den gesamten Baum:
+
+- JSON-Objektschlüssel werden aufsteigend lexikographisch nach ihren UTF-8-Bytes als vorzeichenlosen Bytes sortiert, unabhängig von Spracheinstellung oder Dateisystem. Schreibweisen bleiben exakt erhalten; der Kollisionsschlüssel ist kein gespeicherter Name.
+- Zwischen Tokens steht kein Formatierungsleerraum. Objekt-/Arraytrenner sind exakt die ASCII-Zeichen {}, [], : und Komma. true und false sind kleingeschrieben. Die Manifestzahl formatVersion wird als normale JSON-Ganzzahl kodiert; typisierte Nutzwerte folgen ausschließlich der obigen Tabelle.
+- Strings stehen in doppelten ASCII-Anführungszeichen. Anführungszeichen und Backslash werden mit Backslash geschützt. Backspace, Tab, LF, Form Feed und CR verwenden die kurzen JSON-Escapes b, t, n, f und r jeweils nach einem Backslash. Alle übrigen Zeichen U+0000 bis U+001F werden als Backslash-u und genau vier kleingeschriebene Hexadezimalziffern kodiert. Alle übrigen zulässigen Unicode-Skalarwerte werden direkt als UTF-8 kodiert, einschließlich /, <, >, &, U+2028 und U+2029. Es gibt keine zusätzliche HTML-Escapierung, ASCII-Umschrift oder Escape-Auswahl nach Laufzeitbibliothek.
+- Die Ausgabe enthält weder BOM noch abschließenden Zeilenumbruch. Ungepaarte Surrogate und nicht endliche Zahlen sind keine gültigen Eingaben. Die Projektion verwendet kein null und keine untypisierten Nutzwerte oder binären Gleitkommazahlen.
+
+**Ausgeschlossene Daten.** Dateinamen, root, Installations-/Downloadpfade, Quellbytes, Kommentare, Fundstellen, Prüfberichte, Lockdateien und fremde Modellinhalte sind keine Felder dieser Projektion. Ein eigener Digest enthält insbesondere keine rekursiven fremden Inhaltsdigests; die konkrete externe Bindung bleibt im Lock. Leere Packages werden nicht aufgenommen; Zwischenpackages ergeben sich aus den vollständigen Packagepfaden der enthaltenen Definitionen. Dieselben belegten Pfade und ihre ableitbaren Zwischenpfade bestimmen auch die modellübergreifende Namensbindung nach Abschnitt 8.1. Leere Packages sind nicht importierbar; das Hinzufügen oder Entfernen lokal gültiger leerer Teilbäume verändert daher weder eine zulässige Importbindung noch die modellübergreifende Kollisionsprüfung. Das verändert nicht die Autorenregel, dass jeder Ordner ein Package ist, und es erlaubt keine Umgehung lokaler Schreib- oder Kollisionsfehler bei der vorherigen Validierung. Git muss keine leeren Verzeichnisse erhalten, um dieselben kanonischen Inhaltsbytes zu erzeugen.
+
+<a id="changes"></a>
 
 ## 9. Umbenennungen und Migrationen
 
 | Änderung | Vertrag |
 | --- | --- |
 | title ändern | Identität bleibt; geänderte Darstellung kann im neuen Stand erfasst werden. |
-| Datei innerhalb desselben Pakets verschieben | Identität bleibt, wenn Paket und id bestehen und die Datei weiter geladen wird. |
-| Importkürzel ändern | Autorenbezüge dieses Pakets anpassen; kanonische Zielidentität bleibt. |
+| Datei innerhalb desselben Packageordners umbenennen | Identität bleibt, wenn id bestehen bleibt und die Datei weiter geladen wird. |
+| Datei in einen anderen Ordner verschieben oder Packageordner umbenennen/verschieben | Package-Name und damit Identität ändern sich; Referenzen ausdrücklich migrieren. |
+| Importalias einer Datei ändern | Nur damit qualifizierte Autorenreferenzen dieser Datei anpassen; andere Dateien, eindeutige direkt verfügbare Namen und kanonische Zielidentitäten bleiben. |
 | Propertyfeld sender zu requester ändern | Neuer Feldschlüssel gilt im Typvertrag; konkrete specs müssen migriert werden. |
-| Dabei Propertyidentität erhalten | Inline id: sender setzt den bisherigen Identitätsbaustein ausdrücklich fort. |
-| Eingebettete Property ausschreiben | Dieselbe vollständige lokale id beibehalten; keine zweite Autorenwahrheit anlegen. |
-| Property unter anderem Kind verwenden | Bisherige ausgeschriebene Definition ausdrücklich referenzieren, wenn dieselbe Identität gewünscht ist. |
+| Dabei Propertyidentität erhalten | id in der Propertydatei beibehalten und spec.name auf den gewünschten neuen Feldnamen setzen; etwa requester bei stabiler ID sender. |
+| spec.name auslassen | Die vollständige lokale Property-ID ist der effektive Feldname. |
+| Abweichendes spec.name entfernen | Der Feldname fällt auf die vollständige lokale ID zurück; betroffene konkrete specs müssen gegebenenfalls migriert werden. |
+| ID bei fehlendem spec.name ändern | Identitätsmigration und Änderung des Standardfeldnamens; ein ausdrücklich gesetzter bisheriger Name kann den Feldschlüssel erhalten. |
+| Property unter anderem Kind verwenden | Dieselbe eigenständige Propertydefinition ausdrücklich referenzieren, wenn derselbe Feldvertrag gewünscht ist. |
 | Lokale id oder Paketzugehörigkeit ändern | Ausdrückliche Identitätsmigration und Anpassung bekannter Referenzen. |
 
-Eine stabile Property-ID bewahrt Verweise auf den Feldvertrag, macht den alten Feldnamen aber nicht weiter gültig. Ohne ausdrückliche stabile id entsteht bei einer Feldumbenennung standardmäßig eine neue Property-ID. Das kann ohne alte Referenzen strukturell gültig sein; der Compiler errät keine Umbenennungsabsicht.
+Eine stabile Property-ID bewahrt Verweise auf den Feldvertrag, macht den alten Feldnamen aber nicht weiter gültig. id ist immer ausdrücklich erforderlich. Ein ausdrücklich gesetztes spec.name trennt den Feldnamen von dieser ID; ohne name gilt die ID als Standardfeldname. Ändert ein Autor zusätzlich die ID, ist das eine eigene Identitätsmigration; der Compiler errät keine Umbenennungsabsicht und erzeugt bei einer Feldumbenennung keine neue Property-ID.
 
-Ein neues Paketversionsergebnis kann dieselben logischen Identitäten mit geänderten Verträgen enthalten. Die neue Bindung wird ausdrücklich gewählt und betroffene Modelle beziehungsweise Realisierungen werden gegen sie betrachtet. Weder eine stabile ID noch eine Versionsnummer beweist semantische Kompatibilität.
+Eine neue gemeinsam versionierte Modellfassung kann dieselben logischen Identitäten mit geänderten Verträgen enthalten. Die neue Bindung wird ausdrücklich gewählt und betroffene Modelle beziehungsweise Realisierungen werden gegen sie betrachtet. Weder eine stabile ID noch eine Versionsnummer beweist semantische Kompatibilität.
 
-Veröffentlichte alte Fassungen und darauf bezogene Nachweise werden nicht rückwirkend geändert. Automatische Weiterleitungen, versteckte Namenshistorien und Zuordnung über ähnliche Namen sind nicht Bestandteil des minimalen Cores. Bei echter Identitätsänderung müssen bekannte kind-, target-, Wertreferenzen und später explizite Körperlinks migriert werden. Freie Prosa benötigt zusätzlich Review.
+Veröffentlichte alte Fassungen und darauf bezogene Nachweise werden nicht rückwirkend geändert. Automatische Weiterleitungen, versteckte Namenshistorien und Zuordnung über ähnliche Namen sind nicht Bestandteil des minimalen Cores. Bei echter Identitätsänderung müssen bekannte kind-, target-, Wertreferenzen und explizite Körperlinks migriert werden. Freie Prosa benötigt zusätzlich Review.
+
+<a id="processing"></a>
 
 ## 10. Verarbeitung und feste Core-Regeln
 
 Die Verarbeitung erfolgt unabhängig von der Dokumentreihenfolge:
 
 1. Den bekannten Core-Vertrag und die ausdrücklich gebundenen Pakete bereitstellen.
-2. Definitionen erfassen und kompakte Properties normalisieren; Herkunft erhalten und Identitätskollisionen abweisen.
-3. Referenzen im jeweiligen Paket-/Importkontext eindeutig auflösen.
+2. Aus jeder Definitionsdatei genau eine vollständige Definition erfassen; die einheitliche Hülle prüfen, Herkunft erhalten und Identitätskollisionen abweisen. Eingebettete Propertydeklarationen und Definitionssammlungen sind Fehler.
+3. Referenzen im eigenen Paket und den Imports der jeweiligen Definitionsdatei eindeutig auflösen.
 4. Meta-Kinds und Propertyverträge gegen den festen Anfang und seine Sprachinvarianten prüfen.
-5. Aus den gültigen Kind-/Propertydefinitionen geschlossene Typverträge bilden.
+5. Aus den gültigen Kind-/Propertydefinitionen geschlossene Typverträge bilden; den effektiven Feldnamen aus spec.name oder der vollständigen lokalen Property-ID bestimmen und Namenskollisionen abweisen.
 6. Alle Definitionen gegen ihren Kind, Werttypen, Kardinalitäten und Referenzziele prüfen.
 7. Einen festen Modellstand mit vollständigen bodies, Typverträgen, Paketbindungen und aufgelösten Bezügen bilden.
 
-Der Compiler muss dafür die Dokumenthülle, die beiden Meta-Kinds, deren Feldinterpretation, Werttypen, Kardinalitäten, Referenz- und Normalisierungsregeln fest verstehen. Diese Bedeutung entsteht nicht dadurch, dass sie im body des festen Anfangs nochmals beschrieben ist.
+Der Compiler muss dafür die Dokumenthülle, die Ein-Datei-Regel, die beiden Meta-Kinds, deren Feldinterpretation, Werttypen, Kardinalitäten und Referenzregeln fest verstehen. Diese Bedeutung entsteht nicht dadurch, dass sie im body des festen Anfangs nochmals beschrieben ist.
 
-Der selbsttypisierte Kind und gewöhnliche Referenzzyklen sind endliche Graphbeziehungen. Sie verlangen keine unendliche Typentfaltung. Unendlich zu entfaltende Objektfeldverträge sind nicht zulässig; endliche Größen-/Tiefengrenzen müssen die Verarbeitung absichern.
+Der selbsttypisierte Kind und gewöhnliche Referenzzyklen sind endliche Graphbeziehungen. Sie verlangen keine unendliche Typentfaltung. Objektvertragszyklen und Werkzeugbudgets folgen Abschnitt 5.3: Nur verpflichtende Objektzyklen sind unzulässig; tatsächlich vorhandene endliche Werte werden ohne Vorabentfaltung geprüft. Ressourcenabbrüche sind keine Sprachmaxima und dürfen keine erfolgreiche Prüfung ergeben.
 
-Das Ergebnis macht Kind-, Property- und konkrete Definitionen gemeinsam adressierbar. Ein Inhaltsdigest bindet den Modellinhalt und die gewählten Verträge; Quellherkunft bleibt nachvollziehbar. Die genaue kanonische Datenkodierung und produktive Fehlerdarstellung sind noch auszuarbeiten.
+Das Ergebnis macht Kind-, Property- und konkrete Definitionen gemeinsam adressierbar. Ein Inhaltsdigest bindet den Modellinhalt und die gewählten Verträge; Quellherkunft bleibt nachvollziehbar. Die kanonische Datenkodierung steht in Abschnitt 8.3. Produktive Fehlercodes und Berichtsformate bleiben getrennte Werkzeugausarbeitung.
 
-## 11. Prüfung und Realisierung
+<a id="conformance"></a>
 
-| Aufgabe | Aussagegrenze |
-| --- | --- |
-| Strukturprüfung | Identitäten, geschlossene Felder, Werttypen, Kardinalitäten, Meta-Verträge und Referenzziele. |
-| Semantisches Modellreview | Verständlichkeit, fachliche Eignung, Widersprüche, Geltungsbereich und fehlende Festlegungen. |
-| Realisierungsprüfung | Fester Umsetzungskandidat gegen den geltenden Modellstand; geeignete Tests, Analysen und unabhängige Bewertung. |
+## 11. Konformität und Abgrenzung
 
-Ein gültiger Graph beweist keine korrekte MessageId-Zuordnung, monotone Zeitmessung oder Mandantentrennung. Eine neue Pflicht im Kind-body gilt auch bei unveränderten konkreten Definitionsdateien. Nicht untersuchte Pflichten bleiben offen. Abgeleitete Prüflisten sind Arbeitsergebnisse und keine zweite kanonische Wahrheit.
+Ein vollständiges Ergebnis MUSS Hülle, Ein-Datei-Regel, feste Core-Selbstbeschreibung, Namen und Kollisionen, Manifeste und Wurzeln, Modellabhängigkeitsgraph, Imports, Typ-/Objektverträge, Werte, Kardinalitäten, Referenzen, Körperlinks sowie die externe Lockbindung prüfen. Ungültige Eingaben sind `failed`; reine Ressourcenabbrüche sind `not_completed` gemäß Abschnitt 5.3. Eine Teilprüfung DARF NICHT als vollständig gültiges Modell ausgegeben werden. Für ungültige oder inhaltlich unvollständig geprüfte Modellumfänge gibt es weder kanonische Bytes noch Digest. Das gesonderte Diagnosekoordinatenprofil ist keine zusätzliche Inhaltsprüfung; sein unvollständiger Status ändert weder das Ergebnis vollständig geprüfter Inhalte noch deren Digest. Ein Digest beweist nur den gemäß Abschnitt 8.3 geprüften Inhalt seines Modellumfangs.
 
-Kontextbildung, fachliche Änderungsbewertung, Delegation, Integration und Apply bleiben notwendige Markitect-Aufgaben. Dieser Sprachvertrag legt deren neue generische Anbindung nicht bereits vollständig fest und führt ihre Ausführungsdaten nicht als vorgeschriebenes Projektvokabular ein. Bestehende Produktpflichten werden durch diese Sprachkonsolidierung nicht nebenbei aufgehoben.
+Strukturelle Gültigkeit beweist weder die Wahrheit oder Vollständigkeit verbindlicher Prosa noch eine geeignete Modellierung, korrekte Realisierung, ausgeführte Laufzeitnachweise oder menschliche Akzeptanz. Fachliche Widersprüche bleiben semantische Befunde. Abgeleitete Prüflisten sind keine zweite kanonische Wahrheit.
 
-### 11.1 Vorschlag: Kontext als begründete Zusammenstellung
+Nicht Teil von v1 sind kompakte oder eingebettete Definitionen, zusätzliche Namespaces, benutzerdefinierte Metaklassen, automatische Namenskorrekturen oder Weiterleitungen, Versionsbereiche, Mehrversionsimporte und eine allgemeine formale Wertebedingungs- oder Ausführungssprache. Zusätzliche Fach-Kinds aus Bibliotheken erhalten keine privilegierte Compilersemantik.
 
-**Status von Abschnitt 11 ab hier: beauftragte Ausarbeitung, noch keine gewählte Verfahrensentscheidung oder implementierte generische Kontext-/Impactberechnung.** Der Vorschlag nutzt die gewählte Sprache, ohne neue Pflichtbegriffe wie Requirement, Rule oder Manager in ihr einzubauen. Er konkretisiert für das neue Modell die Aufgaben, die das bestehende Produkt mit seinem festen Projektvokabular bereits bearbeitet. Er ersetzt dessen akzeptierte Routing- und Prüfpflichten nicht durch eine Dokumentänderung.
+Kontextbildung, semantischer Index, Änderungsbewertung, Realisierungszuordnung, Prüfplanung, Delegation, Integration und Apply sind keine durch diese Spezifikation festgelegten Verfahren. Die [separaten Verfahrensvorschläge](procedure-proposals.md) sind nicht gewählt. Produktive Go-Implementierung, Konformitätskorpus, Fehlercodes, Ausgabeformate, Bereitstellung und Migration sind gesonderte Implementierungsarbeit; daraus folgen keine weiteren Pflicht-Kinds und keine Änderung der v1-Regeln.
 
-Kontext beantwortet: Welche Festlegungen und Zusammenhänge muss man für die betrachtete Aufgabe verstehen? Auswirkung beantwortet: Welche Gegenstände und Realisierungen müssen wegen dieser Änderung erneut beurteilt werden? Kontextrelevanz ist weder eine Änderungsanweisung noch der Nachweis, dass etwas unverändert bleiben kann.
+<a id="121-stand-der-definition-des-kanonischen-modells"></a>
 
-Für eine betrachtete Definition stellt Markitect zunächst bereit:
+Der gewählte minimale Sprachumfang ist als v1-Designbaseline abgeschlossen. Grundform, fester Core, Werte und Listen, Unicode und Schreibkonventionen, Identitäten und Imports, Packages, Modelle und Wurzeln, Abhängigkeiten und Lockbindung sowie kanonische Bytes sind festgelegt. Die bekannte Command/command-Kollision im informativen Exchange-Beispiel ist ein Vokabularkonflikt und keine offene Sprachentscheidung. Spätere Implementierungsbefunde können ausdrücklich dokumentierte Präzisierungen oder Korrekturen erfordern; weitere Sprachmittel verlangen eine ausdrückliche Erweiterungsentscheidung. Der frühere Abschlussabgleich bleibt in der [Sprachgeschichte](language-history.md#121-stand-der-definition-des-kanonischen-modells) erhalten.
 
-1. Die Definition mit vollständigem body und spec sowie ihrer festen Identität und Bindung.
-2. Ihren Kind und dessen vollständige verwendete Propertyverträge, einschließlich geschachtelter object-Verträge und der bodies. Diese Festlegungen gelten auch ohne Wiederholung in der konkreten Definition.
-3. Die referenzierten Gegenstände aus spec und die expliziten Körperlinkziele mit ihren benötigten Verträgen. Dabei bleibt erkennbar, ob etwa api ein konkreter Teilnehmer oder Container dessen Kind ist.
-4. Eingehende Bezüge und weitere Aussagen als zu beurteilende Kontextkandidaten. Eine anderswo beschriebene Pflicht kann den betrachteten Gegenstand betreffen.
+<a id="1114-vollständiges-datensatzprotokoll-für-m3--m4"></a>
 
-Die Zusammenstellung nennt für jeden Eintrag den Grund und die Quelle: beispielsweise „Exchange ist der Kind von list-documents“, „Exchange/sender ist dessen Auftraggeber-Property“ oder „list-documents referenziert api als requester“. Gemeinsame Verträge werden einmal bereitgestellt und aus allen betroffenen Stellen referenziert. Der feste Meta-Vertrag kann gemeinsam vorliegen, statt bei jedem Gegenstand rekursiv nochmals ausgeschrieben zu werden.
-
-Das Modell bleibt vollständig adressierbar. Weiterführende Verträge können bei Bedarf nachgeladen werden. Eine begrenzte erste Kontextlieferung ist keine abgeschlossene Vollständigkeitsprüfung: noch zu beurteilende Kandidaten und fehlender Kontext müssen sichtbar bleiben. Zusammenfassungen dienen der Orientierung; sie ersetzen die verbindlichen Originalaussagen nicht.
-
-### 11.2 Strukturell ableitbare Kandidaten einer Änderung
-
-Die Auswirkungsanalyse vergleicht zwei feste Modellstände. Sie erfasst hinzugefügte, entfernte und geänderte Definitionen, bodies, Propertyverträge, Werte, Referenzvorkommen und Paketbindungen. Unveränderte konkrete Quelldateien bedeuten keine unveränderten geltenden Verträge. Ein Paketupdate wird anhand seiner gebundenen Inhalte betrachtet, nicht nur anhand seiner Versionszeichenfolge.
-
-Der strukturelle Teil kann folgende Gründe berechnen:
-
-| Ausgangspunkt | Sicher auffindbare Kandidaten beziehungsweise Prüfaufgaben |
-| --- | --- |
-| Geänderte Definition | Die Definition selbst und ihre ein- und ausgehenden Bezüge. Die Bezüge allein beweisen noch keine fachliche Auswirkung auf jedes Nachbarziel. |
-| Geänderter Kind-Vertrag, auch nur im body | Seine Definitionen und deren nun geltende Verträge. |
-| Geänderte Property, auch eingebettet oder wiederverwendet | Alle Kinds beziehungsweise object-Verträge, die sie verwenden, und die davon betroffenen Definitionen. Auch ein fehlender optionaler Wert kann bei verändertem Vertrag erneut prüfbedürftig sein. |
-| Geänderter reference-Wert | Quellfeld, Feldvertrag sowie bisheriges und neues Ziel als Kandidaten. |
-| Geändertes Ziel eines Körperlinks oder gelöschtes Ziel | Die bisherigen und neuen Linkvorkommen beziehungsweise Quellen; fehlende Ziele werden als Strukturfehler diagnostiziert. |
-
-Für gelöschte oder umgehängte Bezüge wird auch der alte Graph verwendet. Sonst könnte etwa die bisherige API aus dem betrachteten Bereich verschwinden, gerade weil requester auf eine andere Anwendung umgestellt wurde. Ein neuer strukturell ungültiger Stand liefert zunächst Diagnosen, keinen gültigen Realisierungsauftrag.
-
-Die Kantenarten bleiben unterscheidbar: Typisierung, Vertragsverwendung, typisierte Wertreferenz und Körperbezug. Eine vollständige ungerichtete Erreichbarkeit würde bei gemeinsamen Kinds oder dem Core fast das ganze Modell erfassen. Deshalb ist sie kein Beweis fachlicher Auswirkung. Das Verfahren erweitert und beurteilt Kandidaten anhand ihrer Gründe; es behandelt nicht jeden Graphpfad als fachliche Abhängigkeit.
-
-### 11.3 Semantische Geltung aus Prosa beurteilen
-
-Ein body kann schreiben: „Die durch requester bestimmte Anwendung muss verspätete Antworten verwerfen.“ Der Core kennt requester als deklarierte Property und kann die zugehörigen Anwendungen finden. Er kennt die Bedeutung dieser Pflicht aber nicht allein aus dem Namen oder Link. Die Anwendung des Satzes auf api erfordert eine semantische Beurteilung des gesamten Vertrags und der konkreten Belegung.
-
-Eine solche Beurteilung liefert abgeleitete Ergebnisse mit Herkunft: welche Aussage welchen Gegenstand unter welchen Bedingungen betrifft, welche weitere Definition dafür benötigt wird und welche Frage offen bleibt. Das sind Arbeits- und Prüfergebnisse gegen einen festen Modellstand, keine zweite manuell gepflegte Spezifikation und keine zusätzlich verlangten Core-Definitionen. Sie dürfen die akzeptierte Prosa nicht umdeuten oder neue Architekturentscheidungen still einführen. Widersprüche oder Entscheidungen außerhalb der eingeräumten Freiheit gehen an den Nutzer.
-
-Es gibt eine unvermeidliche Grenze: In freier Prosa kann auch ohne Link stehen, dass alle externen Zugriffe eine bestimmte Authentifizierung benötigen. Eine Suche nur entlang expliziter Kanten kann diesen Geltungsbereich nicht vollständig ermitteln. Für einen belastbaren begrenzten Kontext muss Markitect daher die Aussagen des gesamten relevanten Modellumfangs auf solche Geltungsbereiche untersuchen oder bereits geprüfte, passend gebundene Ableitungen verwenden. Wortsuche kann dabei helfen; ein fehlender Suchtreffer beweist keine Nichtbetroffenheit.
-
-Ein daraus erzeugter Index kann Kontext wiederholt bereitstellen, ohne jedem Agenten das gesamte Modell zu senden. Er muss Aussagen und Fundstellen, betrachtete Reichweite, Begründungen und Unsicherheiten erhalten. Neue oder geänderte bodies, Verträge, Belegungen und Definitionen können die Zuordnung verändern. Insbesondere darf eine neue passende Definition nicht aus einer zuvor bewerteten Aussage über „alle“ herausfallen. Wiederverwendung braucht daher nachgewiesen passende Eingaben und Reichweite; die vollständige Invalidierungsregel ist noch auszuarbeiten.
-
-Diese semantische Erschließung ist fehlbar und benötigt unabhängiges Review. Kann sie einen Bereich nicht begründet eingrenzen, bleibt der größere Bereich zur Prüfung offen; erforderlichenfalls ist das der gesamte modellierte Umfang. Eine Begrenzung durch ein Kontextbudget darf nicht als fachlicher Ausschluss erscheinen. Die minimale Sprache ermöglicht die Beschreibung; sie macht deren vollständiges Verständnis nicht deterministisch.
-
-### 11.4 Exchange-Gegenproben
-
-Für list-documents aus Abschnitt 4 gehören dessen sieben Propertyverträge, der Exchange-body und die konkret referenzierten Teilnehmer, Command- und Channelverträge zum Ausgangskontext. Eingehende Aussagen und die Erschließung aus Abschnitt 11.3 ergänzen ihn. Am Beispiel ergeben sich diese unterschiedlichen Fälle:
-
-| Änderung | Struktureller Grund | Inhaltlich zu klärende Folge |
-| --- | --- | --- |
-| timeoutSeconds von 30 auf 60 | Geänderter Wert samt Propertyvertrag und Exchange. | Die API verwendet als requester die Wartefrist; ihre Realisierung und passende Prüfungen sind zu untersuchen. Eine Codeänderung am Broker folgt daraus nicht automatisch. |
-| Exchange.body verlangt nun monotone Zeitmessung | Geänderter Kind-Vertrag betrifft alle Exchange-Definitionen. | Für jede Exchange-Belegung die Auftraggeberpflicht bestimmen; bei list-documents betrifft sie api, obwohl dessen Definitionsdatei unverändert ist. |
-| sender wird bei gleicher Property-ID zu requester | Geänderter Feldvertrag betrifft seine Verwender; konkrete alte Schlüssel sind Strukturfehler. | Modellangaben migrieren. Ob Softwarefeldnamen mitgeändert werden müssen, hängt von den beabsichtigten Schnittstellen und der bisherigen Realisierung ab. |
-| Topicbildung im body von requests ändert sich | Geänderter Channel und seine Verbraucherbezüge, darunter list-documents. | Auftragspublikation und passende Subscriptions auf API- und Connectorseite gemeinsam beurteilen; Brokerkonfiguration nur soweit sie davon abhängt. |
-| Linkanzeige oder title ändert sich | Änderung wird erhalten, Identitäten und referenzierte Werte bleiben gleich. | Darstellungsänderung oder Bedeutungsänderung prüfen; daraus folgt keine pauschale Softwareänderung. |
-
-Der nachvollziehbare Grundpfad der Zeitmessung lautet: geänderte Pflicht im Exchange-body → list-documents hat diesen Kind → requester ist durch Exchange/sender deklariert → spec.requester verweist auf api. Die ersten und letzten Zuordnungen sind strukturell prüfbar; dass die konkrete Zeitmessung eine Pflicht dieser Anwendung ist, stammt aus der semantischen Auslegung des Satzes.
-
-### 11.5 Von Modellbetroffenheit zu Arbeit und Nachweisen
-
-Die Ergebnisse unterscheiden mindestens einen festgestellten Strukturfehler, eine noch zu beurteilende mögliche Folge, einen benötigten Kontext und eine begründete Realisierungs-/Prüfaufgabe. Ein Ergebnis „keine Umsetzung nötig“ benötigt ebenfalls einen zum Fall passenden Grund; es darf nicht aus einer fehlenden direkten Kante abgeleitet werden. Diese Unterscheidung ist kein neuer Pflichtenkatalog im kanonischen Modell und keine Erlaubnis, bisher verlangte Kontextprüfungen wegzulassen.
-
-Aus dem Modell allein folgen noch keine konkreten Dateipfade oder vollständigen ausgeführten Tests. Dafür braucht Markitect die gebundene Zuordnung der vorhandenen Realisierung zu den Modellgegenständen, den tatsächlichen Umsetzungskandidaten und geeignete Nachweise. Diese Daten gehören zur Realisierungs-/Apply-Ebene. Manuell oder maschinell ermittelte Zuordnungen benötigen eine ausgewiesene Grundlage und Abdeckung. Für eine neue Pflicht können Realisierung und Nachweise bisher fehlen.
-
-Unbekannte Zuordnungen bleiben Untersuchungsaufgaben; ein Pfad darf nicht nur aus einem ähnlichen Namen erraten werden. Beobachtete Codeabhängigkeiten können den betrachteten Bereich erweitern und Modelllücken aufdecken, ändern aber nicht still die beabsichtigte Welt. Der [akzeptierte Problemstand zu Codeabhängigkeiten](../../../concepts/register.md#enh-001-observed-code-dependencies-widen-impact) bleibt relevant.
-
-### 11.6 Bindung, Nachvollziehbarkeit und noch nötige Gegenproben
-
-Ein abgeleiteter Kontext oder Auswirkungsbericht nennt seine Modellstände, Paketbindungen, betrachteten Umfang, Gründe mit Fundstellen, semantischen Beurteilungen, offenen Bereiche und gegebenenfalls die verwendete Realisierung. Bei geänderten Eingaben wird seine Gültigkeit erneut geprüft. Zyklen dürfen keine endlose Verarbeitung erzeugen; eine Begrenzung meldet offene Arbeit. Eine spätere Zusammenstellung muss zusätzliche Erkenntnisse zur Prüfung aufnehmen können, ohne bestehende ungeklärte Gründe still zu verlieren.
-
-Das sind Verfahrensanforderungen für einen nächsten Entwurf. Noch festzulegen und zu erproben sind insbesondere Umfang und unabhängige Prüfung der semantischen Erschließung, sichere Wiederverwendung, Erweiterung des Kontexts und die Bindung zur Realisierung. Die Tabellen sind gedankliche Gegenproben, kein Testbericht eines neuen generischen Impactverfahrens. Ein Implementierungsversuch müsste unter anderem neue globale Pflichten ohne Links, neue Instanzen unter alten Pflichten, entfernte Referenzen, wiederverwendete Properties, widersprüchliche Aussagen und fehlende Realisierungszuordnungen abdecken.
-
-### 11.7 Semantischer Index: Quelle, Auslegung und konkrete Geltung
-
-Der nächste Nutzerauftrag konkretisiert, was im Index steht, wie seine Geltungsableitungen geprüft werden und wann sie erneut zu beurteilen sind. Auch diese Ausarbeitung ist ein Verfahrensvorschlag. Der Index ist ein wiederherstellbares Arbeitsergebnis zu gebundenen Modellständen, kein zusätzlicher kanonischer Modellteil und keine im Core eingebaute Ontologie von Pflichten.
-
-Am Beispiel der monotonen Zeitmessung sind drei getrennte Ergebnisse nötig:
-
-| Ergebnis | Konkreter Inhalt |
-| --- | --- |
-| Quellenbefund | Der Satz im body von `(example/connector-vocabulary, Exchange)`, seine genaue Fundstelle und der unveränderte umgebende Vertrag. |
-| Geprüfte Auslegung | Die Zeitmessungspflicht betrifft die durch die Property `(example/connector-vocabulary, Exchange/sender)` bestimmte Anwendung bei jedem Exchange und pro Versuch. |
-| Konkrete Geltung | Bei `(example/connector-project, list-documents)` ist diese Anwendung `(example/connector-project, api)`. Die Pflicht betrifft api in diesem Austausch; sie ist damit nicht pauschal eine Pflicht sämtlicher Vorgänge dieser Anwendung. |
-
-Im [gebundenen Vokabularbeispiel](identities/vocabulary-2.0.0.yaml) lautet der Quellsatz tatsächlich: „Der Sender muss die Wartefrist jedes Versuchs anhand monotoner Zeitmessung bestimmen.“ Dass Sender hier der heute requester genannten Property entspricht, ist eine zu prüfende Auslegung anhand des Vertrags. Die stabile Property-ID Exchange/sender oder Wortähnlichkeit beweist diese Bedeutung nicht. Die historische Beispieldatei wird für diese Untersuchung nicht umgeschrieben.
-
-Ein Auslegungseintrag hält mindestens Folgendes fest:
-
-- **Quelle:** kanonische Definitionsidentität, gebundener Inhalt, body-Fundstelle und Originalaussage. Die Fundstelle ist eine Herkunftsangabe gegen diesen Inhalt, keine neue dauerhafte Sprach-ID für jeden Satz. Bei nicht eindeutig wiederauffindbarer Passage wird die Zuordnung neu geprüft.
-- **Auslegung und Grenzen:** die Bedeutung in eigenen Worten, die gemeinten Begriffe und Rollen, Bedingungen, Ausnahmen und der betrachtete Geltungsbereich. Bei dieser Aussage gehören „pro Versuch“ und „Auftraggeber dieses Austauschs“ ausdrücklich dazu.
-- **Grundlage:** verwendete Kind-/Propertyverträge, individuelle Festlegungen, Referenzwerte und sonstiger gelesener Kontext; strukturelle Tatsachen bleiben von semantischen Schlussfolgerungen unterscheidbar.
-- **Prüfung:** vorgeschlagen, unabhängig bestätigt, beanstandet oder offen; mit Begründung und gebundenem Prüfgegenstand. Die Feststellung, dass ein Satz eine verbindliche Pflicht und keine bloße Erläuterung ist, gehört ebenfalls zur Auslegung.
-
-Für jede konkrete Anwendung werden zusätzlich der betrachtete Austausch, das Rollen-Ziel, die Bedingungsbelegung, der strukturelle Grundpfad und das Ergebnis festgehalten. Geltung und Prüfzustand sind verschiedene Angaben: „gilt“ ist zunächst eine Behauptung; sie kann noch ungeprüft sein. Ein negatives Ergebnis lautet beispielsweise „aus dieser Aussage keine Zeitmessungspflicht allein aufgrund der receiver-Rolle“, nicht „onprem hat keine Pflichten“.
-
-Für den Beispielstand lautet ein lesbarer Anwendungseintrag:
-
-| Angabe | Wert |
-| --- | --- |
-| Aussage | Monotone Zeitmessung der Wartefrist jedes Versuchs. |
-| Herkunft | Exchange.body im gebundenen Vokabularpaket. |
-| Betrachteter Austausch | list-documents im Projektpaket. |
-| Rolle | Property Exchange/sender, Feldname requester. |
-| Betroffener Gegenstand | api im Projektpaket. |
-| Grundpfad | list-documents.kind → Exchange; Exchange verwendet Exchange/sender; list-documents.spec.requester → api. |
-| Geltungsbehauptung | api muss für diesen Austausch die Wartefrist jedes Versuchs monoton bestimmen. |
-| Prüfzustand dieses Beispiels | Vorschlag im Designgespräch; keine bereits ausgeführte unabhängige semantische Prüfung. |
-| Realisierungsnachweis | Nicht Bestandteil dieses Geltungsbefunds; noch nicht geführt. |
-
-Eine allgemeine Auslegung darf eine wiederverwendbare Auswahl wie „alle Definitionen dieses Kinds, jeweils ihre durch diese Property bestimmte Anwendung“ beschreiben. Nur wenn diese Auswahl ausdrücklich gegen die Quelle geprüft und mit festgelegten Operationen ausführbar ist, darf Markitect ihre konkreten Treffer anschließend deterministisch bestimmen. Ein vom Agenten frei erzeugter Ausdruck wird nicht allein durch seine Existenz zu vertrauenswürdiger Compilersemantik. Der Core interpretiert weder das Wort requester noch diesen Satz als fest eingebaute Operation. Für komplexere Prosa bleibt die Auswahl selbst semantische Arbeit.
-
-### 11.8 Die abgeleitete Geltung unabhängig prüfen
-
-Die Prüfung hat drei Aufgaben mit unterschiedlichen Aussagegrenzen:
-
-1. **Strukturelle Prüfung:** Die Quellfassung ist gebunden und die Fundstelle passt; Exchange ist ein Kind; list-documents hat diesen Kind; Exchange/sender ist dessen gültiger Propertyvertrag; der aktuelle Feldname ist requester; der Referenzwert bezeichnet api. Das lässt sich gegen den kompilierten Stand prüfen.
-2. **Semantische Prüfung:** Ein unabhängiger Reviewer erhält Originalaussage, vollständige benötigte Verträge, konkrete Belegung und relevante weitere Aussagen. Er prüft selbst, ob Sender hier requester meint, die Pflicht je Versuch gilt, Bedingungen oder Ausnahmen fehlen und die Anwendung auf api korrekt ist. Er erhält nicht nur die Zusammenfassung des ersten Agenten. Nicht auflösbare Mehrdeutigkeit bleibt offen; ein echter Widerspruch wird nicht durch eine Indexentscheidung überstimmt.
-3. **Abdeckungsprüfung:** Betrachtet wurden auch mögliche ausgelassene Aussagen und Fälle. Nur vorgeschlagene positive Treffer zu bestätigen, reicht nicht. Gegenproben müssen eine Vertauschung von requester und receiver, einen weiteren Exchange, dieselbe Anwendung in anderer Rolle und zusätzliche Einschränkungen im individuellen body unterscheiden. Das prüft die Auslegung; es führt die Zeitmessung der Software noch nicht aus.
-
-Zur Abdeckung gehört ein eigener Nachweis des untersuchten Umfangs: Welche Quell-bodies wurden erschlossen, welche Aussagen wurden noch nicht geklärt, welche Definitionen beziehungsweise Kandidatengruppen wurden betrachtet, und welche Ausschlüsse sind mit welchem Grund geprüft? Gleich begründete Fälle dürfen gruppiert werden; die Gruppe muss am festen Stand eindeutig bestimmt sein. Im Beispiel kann die Auswahl aller Exchange-Definitionen gebunden werden, statt zu behaupten, die heutige Trefferliste sei für immer vollständig. Bei der anfänglichen Erschließung muss auch Prosa außerhalb dieser ausgewählten Gruppe auf weiter reichende Geltung untersucht werden.
-
-Ein offener Kandidat ist keine negative Feststellung. Auch ein Review des falschen oder unvollständigen Kandidatenraums beweist keine Vollständigkeit. Die Abdeckungsangabe bezeichnet daher den tatsächlich untersuchten Raum und verbleibende Unsicherheit. Die unabhängige Prüfung verringert Fehlerrisiken; sie beweist nicht die vollständige Erfassung beliebiger Prosa.
-
-### 11.9 Änderungen: Auslegung, Anwendung und Abdeckung getrennt erneuern
-
-Für einen neuen Modellstand gelten bisherige Ergebnisse zunächst nicht ungeprüft als aktuell. Markitect vergleicht die Eingaben und unterscheidet, welche Auslegung, konkrete Anwendung oder Abdeckung neu zu beurteilen ist. Alte Ergebnisse bleiben als Ergebnisse des alten Stands erhalten. Eine Neuauswertung kann dasselbe Resultat liefern; ihre aktuelle Gültigkeit benötigt trotzdem einen nachvollziehbaren Grund.
-
-| Änderung | Erforderliche Neubetrachtung im Beispiel |
-| --- | --- |
-| Der Quellsatz oder sein Bedeutungsumfeld ändert sich | Auslegung semantisch erneut prüfen; ihre Anwendungen und betroffene Abdeckung anschließend erneuern. Ein unveränderter Satz kann durch eine neue Ausnahme im selben Vertrag eine andere Bedeutung erhalten. |
-| Property.body, Typ oder Rollenbedeutung ändern sich | Die Zuordnung der Aussage zu Exchange/sender erneut beurteilen; gegebenenfalls alle davon abhängigen Anwendungen. Stabile Identität beweist keine stabile Bedeutung. |
-| requester wechselt von api zu einer anderen Anwendung | Anwendung für diesen Exchange erneuern; bisheriges und neues Ziel berücksichtigen. Die geprüfte allgemeine Auslegung kann bestehen bleiben, wenn ihre vollständigen Grundlagen weiterhin passen. |
-| Ein neuer Exchange wird hinzugefügt oder eine Definition erhält diesen Kind | Auswahl und Abdeckung erneut auswerten, die neue Rollenbelegung prüfen und eine neue Anwendung bilden. Eine unveränderte Liste bisheriger Treffer genügt nicht. |
-| Ein Exchange oder dessen Rollenbezug entfällt | Bisherige Anwendung am neuen Stand entfernen beziehungsweise als nicht mehr geltend kennzeichnen. Andere Anwendungen derselben Pflicht auf api bleiben separat bestehen. |
-| timeoutSeconds ändert sich von 30 auf 60 | Die Aussage „monotone Zeitmessung pro Versuch“ kann unverändert gelten, sofern ihre Auslegung wertunabhängig ist. Die neue konkrete Festlegung und die Realisierung sind trotzdem zu prüfen; ein unveränderter Geltungsbefund ist kein unveränderter Prüfnachweis. |
-| sender wird bei gleicher Property-ID zu requester | Strukturelle Zuordnung unter dem neuen Feldnamen erneut prüfen; terminologische Auslegung und Fundstellen bei Bedarf semantisch erneuern. Keine bloße Zeichenersetzung als Bedeutungsbeweis verwenden. |
-| Eine andere Aussage führt eine Ausnahme oder globale Pflicht ein | Betroffene Auslegungen, Anwendungen und die Abdeckung auch ohne direkte Links neu beurteilen. Ist die Reichweite unklar, den weiteren modellierten Umfang einbeziehen. |
-| Ein Import wird aktualisiert | Gebundene Inhalte und die betrachteten Definitionsmengen vergleichen. Gleiche Paket-/Definitionsidentitäten reichen für Wiederverwendung nicht aus. |
-| Nur ein Dateipfad oder Importkürzel ändert sich | Kanonische Identitäten können bestehen bleiben; Herkunft und gegebenenfalls body-Quelltext neu abbilden. Eine belegte reine Darstellungsänderung benötigt keine neue fachliche Schlussfolgerung. |
-| Nur die Software ändert sich | Modellgeltung kann bestehen bleiben; der Realisierungsnachweis muss zum neuen Kandidaten passen. |
-
-Zur sicheren Wiederverwendung gehören damit nicht nur tatsächlich gelesene Definitionen. Festzuhalten sind auch die Auswahlräume und negative Voraussetzungen, auf denen ein Ergebnis beruht: etwa „alle Exchange-Definitionen dieses Modellumfangs“ oder das geprüfte Fehlen einer relevanten Ausnahme. Sonst bleibt ein alter Index scheinbar gültig, wenn eine neue passende Definition oder entgegenstehende Aussage hinzukommt. Ein Agentenbericht mit einer Liste gelesener IDs ist dafür allein unzureichend.
-
-Als erste konservative Verfahrensregel wird vorgeschlagen: Jede Modelländerung löst eine Aktualitätsprüfung des Index aus; Wiederverwendung erfolgt nur mit belegbar unveränderter Grundlage und Abdeckung. Ist diese Abhängigkeit noch nicht belastbar abgegrenzt, wird der größere semantische Prüfbereich erneut beurteilt. Das bedeutet nicht, bei jedem geänderten Wert jeden Satz neu auszulegen. Es verhindert aber, dass eine unbewiesene lokale Begrenzung als sicherer Cachetreffer behandelt wird. Die genaue Datenkodierung, Auswahlausführung und der Nachweis vollständiger Wiederverwendungsgrundlagen bleiben Implementierungsfragen.
-
-### 11.10 Durchgang: zweiter Exchange und Wechsel seines requester
-
-Auf Nutzerauftrag wird der vorgeschlagene Index nun über drei feste Modellstände aktualisiert. Dies ist ein vollständiger gedanklicher Durchgang für die betrachtete Zeitmessungspflicht, kein ausgeführter semantischer Prüflauf und keine Behauptung über die gesamte Software. Für den Ablauf wird eine zuvor unabhängig bestätigte allgemeine Auslegung angenommen; die bisherigen Berichte enthalten eine solche Bestätigung nicht.
-
-**Abgegrenztes Beispiel.** E1 bezeichnet im Folgenden list-documents mit requester api und receiver onprem. E2 ist ein neuer Exchange check-status. Benötigte Unterstützungsdefinitionen werden für den Ausgangsstand vorausgesetzt: status-service als zulässiger Container, check-status-command als lesender Statusvertrag sowie status-requests und status-replies als zulässige Channel-Definitionen. Deren Verträge erlauben autorisierte Auftraggeber beider Standorte, instanzbezogene Antworten an den jeweiligen requester und die passende MessageId-Zuordnung. Sie schreiben weder api als einzigen Auftraggeber noch eine Ausnahme von der Zeitmessungspflicht vor. Wenn diese Definitionen erst neu angelegt werden müssten, gehörten auch sie mit ihren eigenen Aussagen zur zu prüfenden Änderung.
-
-Diese eigenen Kanäle vermeiden eine versteckte Annahme: Die bisherigen Kanäle requests und replies enthalten unter anderem Aussagen über die API als Sender. Der spätere Rollenwechsel ist deshalb nicht einfach als bereits kompatibel mit diesen älteren Kanalverträgen zu behandeln.
-
-Die vollständige E2-Definition im Stand M1 lautet unter diesen Voraussetzungen:
-
-```yaml
-id: check-status
-kind: connector:Exchange
-body: >-
-  Der requester fragt den Betriebsstatus beim receiver ab.
-  Die Operation ist lesend. Antworten behalten die MessageId des Requests.
-  Verspaetete Antworten ohne Wartezustand werden verworfen.
-spec:
-  requester: api
-  receiver: status-service
-  command: check-status-command
-  requestChannel: status-requests
-  replyChannel: status-replies
-  timeoutSeconds: 10
-  maxAttempts: 2
-```
-
-M2 ändert ausschließlich E2.spec.requester von api zu onprem. Der rollenbezogene body bleibt stehen. Die Propertyidentität bleibt `(example/connector-vocabulary, Exchange/sender)`; api, onprem und beide Exchanges liegen im Projektpaket. E1, die Paketbindungen und die allgemeinen Kind-/Propertyverträge sind in allen drei Ständen unverändert. M0, M1 und M2 sind Bezeichnungen dieses Durchgangs, keine neuen Core-Gegenstände.
-
-**M0: gebundener Ausgangspunkt.** Der Index enthält die angenommene geprüfte Auslegung „requester jedes Exchange bestimmt die Wartefrist pro Versuch monoton“. Für den ausgewählten Exchange-Bereich wurde die Menge `{E1}` betrachtet. Die konkrete Anwendung lautet „api für E1“. Quellen, Auslegung, Auswahlumfang, individuelle Aussagen und geprüfte Einschränkungen sind an M0 gebunden. Es gibt keine negative Feststellung, dass onprem niemals Auftraggeber sein könnte.
-
-**M0 → M1: E2 hinzufügen.** Die Aktualisierung durchläuft diese Schritte:
-
-1. **Änderung und Struktur prüfen.** E2 ist hinzugekommen. Seine Identität ist frei, sein Kind ist Exchange; alle sieben Felder, Kardinalitäten und Zieltypen sind gültig zu prüfen. Die Angabe requester wird über den aktuellen Propertyvertrag auf api aufgelöst. Aus einer lediglich gültigen Container-Referenz folgt noch keine fachliche Zulässigkeit als Auftraggeber.
-2. **Neue Aussagen erschließen.** E2.body wird erstmals vollständig beurteilt. Der Prüfer untersucht zusammen mit den benötigten Verträgen, ob der neue Text eine Ausnahme, einen Widerspruch oder eine Aussage mit Wirkung über E2 hinaus enthält. Erst nach dieser Untersuchung kann die Änderung semantisch lokal eingegrenzt werden. In diesem gewählten Beispiel soll sie keine weitere globale Festlegung einführen; dies ist eine zu prüfende Voraussetzung, kein Schluss aus dem kleinen Textdiff.
-3. **Auslegung wiederverwenden, Auswahl erneuern.** Die allgemeine Zeitmessungsauslegung kann erhalten bleiben, wenn ihre Quellen und Bedeutungsgrundlagen unverändert sind und die neue Aussage sie nicht verändert. Die Auswahl ist dagegen jetzt `{E1, E2}`. Ihr alter Abdeckungsbefund passt nicht unverändert auf M1. Eine geprüfte ausführbare Auswahl darf die Menge neu ermitteln; andernfalls ist diese Auswahl erneut semantisch zu beurteilen.
-4. **Neue Anwendung prüfen.** Für E2 entsteht der Vorschlag „api für E2“. Der strukturelle Grundpfad ist neu zu prüfen; die semantische Prüfung betrachtet die individuelle Beschreibung, Teilnehmer-, Command- und Channelverträge sowie weitere einschlägige Aussagen. Bei bestätigter Anwendbarkeit erhält dieser Fall seinen eigenen aktuellen Prüfzustand. Eine bloße Kopie des alten Eintrags „api für E1“ genügt nicht.
-5. **Bestehende Ergebnisse übernehmen.** Die Anwendung „api für E1“ kann nach der Aktualitätsprüfung an M1 übernommen werden: unveränderte Grundlagen und keine neu ermittelte entgegenstehende Aussage. Ihre frühere Prüfung bleibt Herkunft; ein neuer Übernahmebefund erklärt ihre Gültigkeit am neuen Stand. Unveränderte Bytes allein wären bei einer neuen globalen Ausnahme unzureichend.
-6. **Kontext und Arbeit bilden.** Der API-Kontext enthält nun zwei an verschiedene Exchanges gebundene Anwendungen. Für E2 entstehen Realisierungs-/Prüfaufgaben; bisherige Nachweise für E1 decken E2 nicht automatisch ab. Ob gemeinsame Implementierung oder Integration weitere Prüfungen für E1 verlangt, ist anhand der tatsächlichen Realisierung zu beurteilen.
-
-**M1 → M2: E2.requester von api auf onprem ändern.** Wieder sind mehrere Teile getrennt zu behandeln:
-
-1. **Alten und neuen Bezug vergleichen.** Es gibt keine neue Exchange-Definition und keine Änderung der Auswahlmenge `{E1, E2}`. Geändert ist die Rollenbelegung von E2. Markitect behält das alte Ziel api für die Änderungsbewertung und prüft das neue Ziel onprem gegen den Container-Vertrag. Ein ungültiger neuer Bezug blockiert einen gültigen neuen Modellstand.
-2. **Allgemeine Auslegung auf Aktualität prüfen.** Die Aussage betrifft weiterhin den jeweiligen requester, unabhängig von dessen Identität oder Standort. Unter den genannten unveränderten Grundlagen kann die allgemeine Auslegung wiederverwendet werden. Das ist keine neue Deutung des Wortes requester aus seinem Namen.
-3. **Konkrete Anwendung neu bestimmen und prüfen.** „api für E2“ gilt in M2 nicht mehr. Dafür entsteht „onprem für E2“. Die Auftraggeber-Eignung, Autorisierung, Antwortadresse, Wartezustandsverwaltung und etwaige Einschränkungen durch andere Verträge werden für die neue Belegung beurteilt. Bei Widersprüchen bleibt der Fall beanstandet oder offen; der Index erteilt keine Ausnahme von der Architektur. Unter den gewählten kompatiblen Verträgen wird die Zeitmessungspflicht für onprem in E2 bestätigt angenommen.
-4. **Abdeckung aktualisieren.** Der Mengenbefund für die Exchange-Mitglieder kann nach Gleichheitsprüfung erhalten bleiben. Der Befund zu ihren Rollenbelegungen muss erneuert werden. Abdeckung bedeutet hier sowohl „beide Exchanges betrachtet“ als auch „ihre aktuellen Belegungen beurteilt“. Nur die erste Aussage ist unverändert.
-5. **Andere Anwendung erhalten und Kontexte erneuern.** „api für E1“ bleibt nach Aktualitätsprüfung gültig. Der API-Kontext verliert ausschließlich die Anwendung für E2; der onprem-Kontext erhält sie. Historische M1-Ergebnisse werden nicht überschrieben. Referenzen auf api als Teilnehmer anderer Vorgänge bleiben erhalten.
-6. **Realisierungsfolgen getrennt untersuchen.** Die bisherige Auftraggeberrealisierung für E2 auf API-Seite muss gegebenenfalls entfallen oder umgestellt werden; auf onprem-Seite sind Auftragserzeugung, monotone Zeitmessung und Antwortzuordnung zu realisieren und zu prüfen. Auch receiver, Kanalberechtigungen und Integration können betroffen sein. Aus der Änderung der Modellgeltung folgt noch keine vollständige Dateiliste und kein bestandener Test.
-
-Der erwartete Index nach jeweils erfolgreicher Beurteilung lautet für diese eine Pflicht:
-
-| Stand | Exchange-Auswahl | Anwendung auf api | Anwendung auf onprem |
-| --- | --- | --- | --- |
-| M0 | E1 | Für E1. | Keine Anwendung aus dieser Pflicht im betrachteten Stand. |
-| M1 | E1, E2 | Für E1 und separat für E2. | Keine Anwendung aus dieser Pflicht im betrachteten Stand. |
-| M2 | E1, E2 | Weiter für E1. | Neu für E2. |
-
-Die Wiederverwendung ergibt sich damit nicht nur aus der Gleichheit von Ziel-IDs:
-
-| Teil des Index | M0 → M1 | M1 → M2 |
-| --- | --- | --- |
-| Originalaussage und allgemeine Auslegung | Nach Aktualitäts- und Gegenprüfungen wiederverwendbar. | Unter denselben Voraussetzungen wiederverwendbar. |
-| Anwendung auf api für E1 | Nach Prüfung möglicher neuer Einflüsse übernehmbar. | Nach Prüfung möglicher Auswirkungen des Rollenwechsels übernehmbar. |
-| Anwendung für E2 | Neu erschließen und prüfen. | Neue Rollenbelegung prüfen; bisherige Anwendung nur historisch behalten. |
-| Vollständigkeit der Exchange-Auswahl | Neue Menge ermitteln und Abdeckung erneuern. | Gleiche Menge strukturell bestätigen; aktuelle Rollenabdeckung erneuern. |
-| Konkrete Teilnehmer-/Channelprüfung für E2 | Neu. | Nicht pauschal wiederverwendbar; neuer Auftraggeber verändert relevante Voraussetzungen. |
-| Nachweis der Softwarekonformität | Für E2 noch zu führen. | Zum neuen Umsetzungskandidaten erneut zu führen; Modellreview ersetzt ihn nicht. |
-
-Dieser Durchgang schlägt außerdem eine wichtige Berichtseigenschaft vor: Auch die Übernahme eines alten Befunds ist ein Ergebnis mit Grund und neuer Standbindung. Ein vorheriger Status „bestätigt“ wird nicht ohne Aktualitätsprüfung auf M1 oder M2 kopiert. Weder ein offener neuer Fall noch seine Priorisierung als Kontext darf als erledigte Prüfung erscheinen. Die konkrete Automatisierung dieser Schritte ist noch zu entwerfen und zu erproben.
-
-### 11.11 Wiederverwendbarkeit: gelesene Inhalte, Auswahlräume und neue Einflüsse
-
-Der weitere Nutzerauftrag konkretisiert die Abhängigkeiten, mit denen ein bestehender Indexeintrag auf Wiederverwendbarkeit geprüft wird. Der folgende Vorschlag ergänzt den Durchgang, ohne eine neue Core-Sprache für Regeln oder Geltungsprädikate festzulegen. Die Erfassung von Abhängigkeiten ist Teil der Indexverarbeitung. Eine Liste der beim ersten Lesen besuchten IDs reicht dafür nicht: Ein bisher unbekannter Satz kann eine globale Festlegung beanspruchen, eine andere Aussage einschränken oder eine neue Pflicht hinzufügen.
-
-**Zwei getrennte Grundlagen.** Jeder Eintrag hängt einerseits von seinen konkreten Quellen und Auslegungsschritten ab. Andererseits hängt seine Verwendbarkeit im aktuellen Kontext davon ab, dass Änderungen im gesamten gebundenen Modellumfang auf mögliche zusätzliche oder entgegenstehende Aussagen untersucht wurden. Der Inhalt eines alten Befunds kann weiterhin stimmen, während der daraus erzeugte Kontext noch unvollständig ist. „Unveränderte Grundlage“ und „keine ungeklärten neuen Einflüsse“ sind deshalb getrennte Prüfungen.
-
-Zu erfassen sind mindestens diese Abhängigkeiten:
-
-| Abhängigkeit | Zu bindender Inhalt | Welche Änderung damit sichtbar wird |
-| --- | --- | --- |
-| Quellaussage und Bedeutungsumfeld | Kanonische Identität, vollständiger maßgeblicher body, Fundstelle, verwendete Kind-/Propertyverträge und weiterer interpretierter Kontext. Für den Einstieg werden eher ganze Definitionen als nur einzelne Satzfragmente gebunden. | Neue Ausnahme neben einem unveränderten Satz; geänderte Bedeutung der Auftraggeber-Property; weggefallene Begründung. |
-| Konkrete Struktur und Werte | Verwendete Typisierung, stabile Property-IDs mit aktuellem Feldnamen, Referenzziele, Bedingungen und relevante Werte beziehungsweise deren Fehlen. Nicht ausreichend abgegrenzte Ausschnitte werden konservativ als vollständiger Definitionsinhalt gebunden. | requester-Wechsel, veränderte Bedingungswerte, neu gesetzte optionale Angaben oder gelöschte Beziehungen. |
-| Auswahlraum und Auswahlverfahren | Fester betrachteter Modellumfang, geprüfte Bedeutung der Auswahl, verwendete Operationen, Mitglieder des Ausgangsraums und alle für die Auswahl nötigen Eingaben. | Neue Exchange-Definition oder ein bisher ausgeschlossener Gegenstand, der durch eine Änderung nun passt. |
-| Negative Voraussetzungen und Ausschlüsse | Welcher Bereich auf welche Einschränkung geprüft wurde, zugehörige Quellen, geprüfte Ausschlussgründe und offene Fälle. Auch ein leeres Ergebnis benötigt eine Grundlage. | Eine neue mögliche Ausnahme oder die Löschung eines bisherigen Ausschlussgrunds. |
-| Andere abgeleitete Befunde | Die genauen Fassungen verwendeter Auslegungen, ihrer Prüfungen und Abdeckung sowie Voraussetzungen für deren Wiederverwendung. | Eine beanstandete Rolleninterpretation oder ein ungültig gewordener Abdeckungsbefund wirkt auf seine abhängigen Anwendungen. |
-| Modellbindung und Verarbeitungsvertrag | Paket-/Inhaltsbindungen, vollständiges Eingabeverzeichnis, Auflösungs-/Normalisierungsregeln und verwendete Index-/Prüfverfahren. | Neu eingebundener Bibliotheksinhalt, geänderte Auflösung oder eine Änderung des Verfahrens, auf dessen Ergebnis man sich stützt. |
-
-IDs und Digests belegen Identität und Inhaltsgleichheit; sie belegen weder die ausreichende Auswahl der Grundlagen noch deren richtige Auslegung. Eine Inhaltsbindung muss den tatsächlich geprüften Umfang treffen. Ein geänderter Gesamtmodell-Digest allein sagt noch nicht, welcher Befund fachlich neu auszulegen ist, stellt aber sicher, dass der alte Stand nicht einfach als aktueller ausgegeben wird.
-
-**Auswahlabhängigkeiten gehen über bisherige Treffer hinaus.** Für „alle Exchanges“ wird die Mitgliedschaft im vollständigen ausgewählten Definitionsraum überwacht, nicht nur die Liste bereits bewerteter Anwendungen. Bei einer bedingten Auswahl wie „alle Exchanges mit requester am Standort cloud“ gehören auch die requester-Bezüge und Standortwerte der bisher nicht passenden Kandidaten zur Auswahlgrundlage. Sonst könnte ein Standortwechsel unbemerkt einen neuen Treffer erzeugen. Für ein geprüft ausführbares Auswahlverfahren können diese Abhängigkeiten technisch vorgegeben werden; für freie semantische Auswahlen bleibt die vollständige Reichweite selbst prüfbedürftig. Ein Reverse-Index auf gelesene Treffer allein löst dieses Problem nicht.
-
-**Neue globale Aussagen benötigen eine vollständige Änderungsprüfung.** Für einen Übergang zwischen zwei festen Ständen wird unabhängig von vorhandenen Eintragsabhängigkeiten eine vollständige Änderungsmenge aus dem gesamten gebundenen Eingabeumfang ermittelt. Dazu gehören Hinzufügungen, Änderungen und Löschungen von Definitionen und importierten Inhalten sowie geänderte Typen, Werte und aufgelöste Beziehungen. Eine unveränderte Prosa kann durch eine andere Belegung oder Bindung eine andere Reichweite erhalten. Daher werden nicht ausschließlich bearbeitete body-Zeichenfolgen betrachtet.
-
-Diese Änderungsprüfung hält für jeden Änderungsbereich fest: Untersuchung noch offen, mögliche Wirkung auf benannte Bereiche oder begründet keine zusätzliche Wirkung auf den betrachteten Befund. Ihre Grundlage enthält den vorherigen und neuen Inhalt und den zum Verständnis nötigen Kontext. Bei semantischen Reichweitenfeststellungen ist unabhängige Prüfung erforderlich. Die Änderungsmenge vollständig abzuarbeiten ist strukturell kontrollierbar; ihre Bedeutung zuverlässig einzugrenzen bleibt eine semantische Aufgabe.
-
-Insbesondere gilt:
-
-- Eine neue oder geänderte Aussage wird nicht allein wegen fehlender Links, eines lokalen Dateipfads, ihres Kinds oder fehlender Schlüsselwörter als lokal behandelt. Im gewählten Core darf ihr body einen weiteren Geltungsbereich beschreiben.
-- Bei Löschungen wird die frühere Aussage berücksichtigt: Eine weggefallene Einschränkung kann bestehende Pflichten erweitern. Bei einer geänderten Aussage zählen frühere und neue Reichweite.
-- Eine Aussage wie „keine relevante Ausnahme gefunden“ ist ein geprüfter Befund gegen einen bestimmten Umfang. Sie wird nicht als strukturell bewiesene Abwesenheit von beliebiger semantischer Ausnahme gespeichert. Ein neu hinzugekommener Text ist zunächst ungeprüft und kein weiterer negativer Treffer.
-- Eine bereits ausgeschlossene Quelle wird bei maßgeblicher Änderung erneut betrachtet. Neue Definitionen und neue Importinhalte dürfen nicht dadurch ausgeschlossen werden, dass sie im alten Auswahlraum fehlen.
-- Ein unklarer möglicher Einfluss hält die betroffenen Befunde für den neuen Stand offen. Kann sein Bereich nicht begründet eingegrenzt werden, ist der größere gebundene Modellumfang zu beurteilen. Es gibt keine automatische Entlastung durch niedrige Priorität oder ein Kontextbudget.
-
-Das vollständige Eingabeverzeichnis und seine Bindung bilden dafür eine konservative äußere Abhängigkeit. Jede Modelländerung verlangt einen aktuellen Befund zur möglichen Reichweite ihrer Änderungen. Im Einstieg wird dieser Bereich nicht aufgrund von automatisch vergebenen Themenetiketten partitioniert. Ein Wortfilter oder eine Vektorsuche kann Kandidaten liefern, aber keine neue Aussage von der Änderungsprüfung ausnehmen. Ein vom gleichen alten Index behauptetes „hier kann nichts Relevantes stehen“ darf nicht selbst die einzige Grundlage dafür sein, neue Texte ungelesen auszuschließen.
-
-**Ablauf für einen Wiederverwendungsversuch.** Markitect geht für den betrachteten Eintrag in dieser Reihenfolge vor:
-
-1. Neuen Modellstand kompilieren und gegenüber dem gebundenen Ausgangsstand die vollständigen Änderungen feststellen. Bei ungültiger Struktur entsteht kein gültiger neuer Indexstand.
-2. Direkte Grundlagen, vorausgesetzte Auslegungen und Auswahlräume vergleichen beziehungsweise neu auswerten. Ist etwa requester geändert, wird die konkrete Anwendung neu gebildet. Eine unveränderte Auswahlmenge beweist noch keine unveränderten Rollenbelegungen.
-3. Die Änderungen im gebundenen Modellumfang auf neue, geänderte oder weggefallene Einflüsse untersuchen. Ein alter globaler Prüfstand allein genügt dafür nicht. Bleiben hierbei relevante Fragen offen, darf der Eintrag noch nicht als vollständig aktueller Kontext verwendet werden.
-4. Mögliche neue Einflüsse zuordnen und betroffene Auslegungen, Anwendungen oder Abdeckung erneut beurteilen. Eine zusätzliche unabhängige Pflicht kann einen neuen Eintrag erfordern, ohne die alte Zeitmessungsauslegung zu ändern. Eine beanspruchte Ausnahme kann dagegen einen Konflikt erzeugen; sie setzt bestehende Pflichten nicht still außer Kraft.
-5. Nur ausreichend belegte Wiederverwendung an den neuen Stand binden. Der Übernahmebefund nennt unveränderte beziehungsweise neu bestätigte Grundlagen, aktuelle Auswahl-/Abdeckungsbefunde und die abgeschlossene Prüfung neuer Einflüsse. Historische Ergebnisse bleiben erhalten.
-
-Das Ergebnis lautet entweder „für diesen Stand wiederverwendbar“, „aufgrund benannter Änderungen neu abzuleiten“ oder „Aktualität noch offen“. Die ursprünglichen Prüfbelege bleiben von diesem aktuellen Übernahmebefund unterscheidbar. Auch ein wiederverwendeter Eintrag kann zusätzliche neue Kontextnachbarn bekommen. Ein zusammengesetzter Kontext gilt erst dann als aktuell, wenn seine benötigten Einträge und die Prüfung weiterer Einflüsse zum selben Zielstand passen. Noch offene Arbeit wird nicht durch eine Mischung alter und neuer positiver Zustände verdeckt.
-
-Für die Zeitmessungspflicht aus dem bisherigen M2 ergeben sich diese Gegenproben:
-
-| Neue Änderung | Auslösende Abhängigkeit | Folge |
-| --- | --- | --- |
-| In einer bisher unbeteiligten Definition steht nun „Alle Auftraggeber müssen zusätzlich die verwendete Uhrquelle protokollieren.“ | Vollständige Änderungsprüfung, auch ohne Verweis auf Exchange oder api. | Geltungsbereich prüfen und gegebenenfalls neue Anwendungen ergänzen. Der alte Zeitmessungsbefund kann bestehen bleiben; der frühere Kontext ist nicht allein deshalb vollständig. |
-| Eine andere Definition beansprucht „Für Statusabfragen genügt die Wanduhr.“ | Prüfung neuer Einflüsse sowie bisher geprüfte negative Voraussetzung zu Ausnahmen. | Möglichen Konflikt mit dem Exchange-Vertrag für check-status beurteilen. Keine automatische Ausnahme nach dem Prinzip „spezifischer gewinnt“. |
-| Ein dritter Exchange entsteht | Auswahlraum aller Exchanges und neue Aussagen im Modellumfang. | Neue Anwendung und Abdeckung prüfen; vorhandene Auslegung kann bei unveränderten Grundlagen erhalten bleiben. |
-| check-status.requester wechselt wieder von onprem zu api | Konkrete Rollenbelegung und davon abhängige Auswahl-/Anwendungsbefunde. | Beide Ziele berücksichtigen und die Anwendung erneuern; list-documents bleibt ein separater Fall. |
-| Eine bereits erfasste Einschränkung wird gelöscht | Alte Quellfassung, Voraussetzungen und vollständiger Löschungsbefund. | Bisher ausgeschlossene Fälle erneut beurteilen. Ein nur aus dem neuen Graph abgeleiteter Blick wäre unzureichend. |
-
-Der Vorschlag stellt damit sicher, dass neue Eingaben nicht allein wegen einer zu engen Cache-Abhängigkeit ungeprüft bleiben. Er verspricht nicht, dass ein Agent jede semantische Verbindung fehlerfrei erkennt. Anfangs sind die größeren Inhaltsbindungen und die vollständige Änderungsprüfung vorzuziehen; feinere Wiederverwendung darf erst auf geprüft ausreichender Abhängigkeits- und Abdeckungserfassung beruhen. Weder ein genauer Datenvertrag noch ein ausführbarer Wiederverwendungsprüfer sind mit dieser Designgegenprobe bereits implementiert.
-
-### 11.12 Durchgang: globale Zusatzpflicht und ausdrückliche Ausnahme
-
-Der nächste Nutzerauftrag spielt eine neue globale Pflicht und anschließend eine Ausnahme für check-status durch. Ausgangspunkt ist M2 aus Abschnitt 11.10: list-documents hat requester api, check-status hat requester onprem. Die betrachteten Definitionen, Rollenbelegungen und Paketbindungen bleiben danach gleich. Alle folgenden Bestätigungen beschreiben erwartete Ergebnisse nach erfolgreicher unabhängiger Prüfung im Gedankenbeispiel; eine solche semantische Prüfung wurde hier nicht ausgeführt.
-
-Für die Fallabgrenzung betrifft die neue Pflicht die zusätzliche Protokollierung der Uhrquelle. Die spätere Ausnahme begrenzt ausschließlich diese neue Pflicht. Sie hebt die bisherige Pflicht zur monotonen Zeitmessung nicht auf. Die Quellaussage wird im Beispiel im body der vorhandenen Projektdefinition platform ergänzt. Ihre globale Reichweite entsteht aus ihrem Satz, nicht aus dem Kind System, ihrer Ablage oder einer automatischen Enthaltenheitsregel.
-
-Als lesbare Kürzel für Indexbefunde verwenden wir T für die allgemeine Auslegung der Zeitmessungspflicht, T1 für ihre Anwendung auf api bei list-documents und T2 für ihre Anwendung auf onprem bei check-status. Diese Kürzel sind keine zusätzlichen kanonischen Definitionen oder zugesagten dauerhaften Satz-IDs.
-
-**M2 → M3: eine globale Pflicht ergänzen.** Die neue Aussage lautet:
-
-> Zusätzlich muss für jeden Exchange die durch requester bestimmte Anwendung bei jedem Versuch die verwendete Uhrquelle protokollieren.
-
-Der Compiler kann den geänderten body und seinen gebundenen neuen Inhalt erfassen. Der Satz benötigt keine Links, um verbindlich zu sein. Dass er beide Exchanges und deren Auftraggeber meint, ist semantisch zu erschließen und unabhängig zu prüfen.
-
-1. **Aktualität öffnen:** Der alte Befund zur vollständigen Erschließung möglicher neuer Einflüsse passt nicht auf M3. Bisherige Kontexte dürfen bis zur Untersuchung der Ergänzung nicht als vollständig aktuell gelten. T, T1 und T2 sind deshalb nicht automatisch fachlich falsch; ihre Verwendung am neuen Stand benötigt eine aktuelle Prüfung. Falls platform selbst zu ihren konkret gebundenen Bedeutungsgrundlagen gehörte, ist außerdem diese Inhaltsabhängigkeit geändert.
-2. **Neue Auslegung bilden:** Es entsteht L3: Die Auftraggeber aller Exchanges protokollieren pro Versuch die verwendete Uhrquelle. Zu prüfen sind insbesondere Rollenbezug, Pflichtcharakter, Auswahlumfang, Verhältnis zur monotonen Zeitmessung und mögliche andere Einschränkungen. Die Pflicht gilt je Austausch und Versuch, nicht beliebig für jeden Vorgang der referenzierten Anwendung.
-3. **Neue Anwendungen prüfen:** L3-1 betrifft api für list-documents; L3-2 betrifft onprem für check-status. Die Typ-/Propertyzuordnungen und Referenzwerte können aus aktuellen strukturellen Befunden übernommen werden. Die Anwendung dieser neuen Pflicht und ihre Vereinbarkeit mit den konkreten Verträgen sind neu zu beurteilen.
-4. **Bisherige Pflicht bestätigen:** Nach Prüfung des Verhältnisses beider Aussagen können T, T1 und T2 für M3 übernommen beziehungsweise erneut bestätigt werden. Die neue Pflicht ergänzt die Zeitmessung; sie setzt sie nicht außer Kraft. Ein ganzer alter Definitionshash darf nicht als unverändert ausgegeben werden, wenn der betrachtete Bedeutungsinhalt tatsächlich geändert ist.
-5. **Abdeckung und Kontexte erneuern:** Die Exchange-Grundmenge bleibt {list-documents, check-status}; ihre unveränderte Mitgliedschaft kann strukturell bestätigt werden. Die neue Protokollierungspflicht, beide Anwendungen und ihre möglichen Einschränkungen waren bisher nicht abgedeckt. Erst ihre Prüfung begründet einen neuen vollständigen Befund für diesen betrachteten Bereich. API- und onprem-Kontext erhalten jeweils eine zusätzliche Pflicht.
-
-Nach erfolgreicher Beurteilung enthält der betrachtete Ausschnitt des M3-Index T, T1, T2 und zusätzlich L3, L3-1, L3-2 samt neuer Abdeckung. Historische M2-Ergebnisse bleiben unverändert. Die Softwarekonformität hinsichtlich der zusätzlichen Protokollierung ist damit noch nicht nachgewiesen.
-
-**M3 → M4: die globale Aussage ausdrücklich begrenzen.** Für den widerspruchsfreien Hauptfall wird die zuvor ergänzte Aussage im selben Vertrag ersetzt durch:
-
-> Zusätzlich muss für jeden Exchange außer [[check-status]] die durch requester bestimmte Anwendung bei jedem Versuch die verwendete Uhrquelle protokollieren.
-
-Das ausdrückliche Ziel des Körperlinks wird im Projektpaket aufgelöst. Die Ausnahme entsteht aus dem Satz; der Link allein kennt keine Ausnahmeoperation. Die neue Quellfassung bleibt unter derselben Definitionsidentität platform, besitzt aber einen anderen body und damit eine andere gebundene Inhaltsgrundlage.
-
-1. **Geänderte Quelle und abhängige Befunde markieren:** L3 ist keine aktuelle Auslegung der neuen Quellfassung. Seine Anwendungen L3-1 und L3-2 sowie der Befund „diese Pflicht gilt für beide Exchanges“ sind deshalb nicht unverändert nach M4 übernehmbar. Ein früherer Befund „keine einschlägige Ausnahme gefunden“ für die Protokollierung ist ebenfalls nicht mehr aktuell. Sie bleiben gültige historische Ergebnisse zu M3.
-2. **Neue Auslegung prüfen:** L4 lautet nun „Protokollierung für alle Exchanges außer dem ausdrücklich bezeichneten check-status“. Der Reviewer prüft Quellvergleich, eindeutiges Ausnahmeziel, begrenzten Umfang der Ausnahme und Widersprüche im weiteren Kontext. Insbesondere muss klar bleiben, dass die Zeitmessungspflicht davon unberührt ist. Eine passende Ausnahme darf weder aus einem ähnlich benannten Status-Command erraten noch auf sämtliche Statusabfragen ausgedehnt werden.
-3. **Beide bisherigen Anwendungen erneut einordnen:** Für list-documents entsteht beziehungsweise bestätigt sich der aktuelle positive Befund L4-1 auf api. Die unveränderte Rollenbelegung und strukturelle Zuordnung können wiederverwendet werden; die Anwendung unter dem geänderten Vertrag benötigt einen neuen Geltungs-/Übernahmebefund. Für check-status gilt L3-2 in M4 nicht mehr. Die Abdeckung hält stattdessen ausdrücklich fest: aus L4 keine Protokollierungspflicht für onprem in diesem Exchange, aufgrund der geprüften Ausnahme.
-4. **Mengen und negative Ergebnisse unterscheiden:** Die betrachtete Exchange-Grundmenge hat weiter zwei Mitglieder. Die positive Auswahl der Protokollierungspflicht schrumpft von zwei auf eines. check-status verschwindet nicht aus der Abdeckung, sondern bleibt als geprüfter ausgeschlossener Fall enthalten. Das verhindert, dass ein fehlender positiver Eintrag mit einer übersehenen Prüfung verwechselt wird.
-5. **Zeitmessung und weitere Pflichten auf Wechselwirkungen prüfen:** T1 und T2 bleiben nach passender Aktualitäts-/Verträglichkeitsprüfung bestehen. Eine Ausnahme von L4 ist kein Beleg für eine Ausnahme von T oder einer anderen Protokollierungsvorgabe. Reicht die Formulierung über die betrachtete Pflicht hinaus oder ist sie mehrdeutig, bleibt der weitere Bereich offen.
-6. **Aktuelle Kontexte und Realisierungsfolgen bilden:** Die API bleibt für list-documents zur Zeitmessung und zur Protokollierung verpflichtet. onprem bleibt für check-status zur monotonen Zeitmessung verpflichtet; die zusätzliche Protokollierung ist durch diese Aussage nicht mehr verlangt. Ihr Wegfall ist kein Verbot, weiterhin zu protokollieren. Umsetzung und Tests müssen gegen die neue Pflichtmenge beurteilt werden, statt vorhandene Logs oder Tests automatisch zu entfernen.
-
-Die erwarteten aktuellen Geltungsbefunde nach jeweils erfolgreicher Prüfung lauten:
-
-| Pflicht und Anwendung | M2 | M3 | M4 |
-| --- | --- | --- | --- |
-| Zeitmessung: api für list-documents | Gilt. | Nach Aktualitätsprüfung weiter gültig. | Nach Aktualitätsprüfung weiter gültig. |
-| Zeitmessung: onprem für check-status | Gilt. | Nach Aktualitätsprüfung weiter gültig. | Nach Prüfung der begrenzten Ausnahme weiter gültig. |
-| Zusätzliche Protokollierung: api für list-documents | Noch nicht aus dieser Quelle verlangt. | Neuer positiver Befund L3-1. | Neuer beziehungsweise erneut bestätigter positiver Befund L4-1. |
-| Zusätzliche Protokollierung: onprem für check-status | Noch nicht aus dieser Quelle verlangt. | Neuer positiver Befund L3-2. | Alter positiver Befund nicht mehr aktuell; ausdrücklich geprüfter Ausschluss aus L4. |
-
-Für „ungültig“ muss der Bericht daher unterscheiden: Quelle oder Herleitung sind für den neuen Stand überholt; ein konkreter Geltungsanspruch trifft nicht mehr zu; oder lediglich die Aktualitäts-/Vollständigkeitsprüfung ist noch offen. Diese verschiedenen Befunde verlangen unterschiedliche Arbeit. Eine globale Ergänzung macht nicht jede bestehende Einzelpflicht falsch; eine geänderte Quellauslegung lässt sich aber auch nicht ohne erneuten Übernahmegrund an ihre alten Anwendungen hängen.
-
-**Alternativfall: eine lokale Ausnahme behaupten, ohne die globale Pflicht anzupassen.** Stünde in check-status.body lediglich „Diese Protokollierung ist hier nicht erforderlich“, während die unbeschränkte globale Pflicht bestehen bleibt, wäre ihre Verträglichkeit offen beziehungsweise widersprüchlich. Es gibt weiterhin keine Core-Regel „lokal oder spezifisch gewinnt“. Der Index muss die Gegenbehauptung und den betroffenen Geltungsbefund für check-status zur Klärung markieren, statt L3-2 still zu entfernen oder eine bestätigte Befreiung zu behaupten. list-documents kann nur nach begründeter Eingrenzung des Konflikts als unberührt bestätigt werden. Ob die beabsichtigte Ausnahme durch Präzisierung der globalen Aussage oder eine andere ausdrücklich vereinbarte Regel aufgelöst wird, ist eine Modellentscheidung; der Index darf sie nicht selbst erfinden.
-
-### 11.13 Vorschlag eines Datenvertrags für den semantischen Index
-
-Der Nutzer beauftragt nun einen konkreten Datenvertrag aus den Durchgängen. Der folgende Vertrag beschreibt abgeleitete Indexdaten, nicht weitere Definitionen oder Meta-Kinds der kanonischen Sprache. Er ist ein Entwurf des Datenmodells; seine Serialisierung, Digestkodierung und produktive Implementierung sind nicht bereits festgelegt. Fachliche Geltung, unabhängige Prüfung und Aktualität bleiben getrennte Angaben.
-
-#### Hülle, Identitäten und Modellbindung
-
-Ein Indexpaket enthält formatVersion, targetSnapshot, procedures, records, reviews, bindings und requiredCoverage. formatVersion ist im Vorschlag semantic-index/v1. Die drei Sammlungen records, reviews und bindings sind Listen mit eindeutigen Inhalts-IDs; sie enthalten oder referenzieren unveränderliche Datensätze. requiredCoverage ist eine Liste genauer BindingRefs. Alle genannten Felder sind erforderlich; Sammlungen können leer sein, ergeben dann aber gegebenenfalls nur einen unvollständigen Index. Jeder fremde Datensatz und jedes Inhaltsmanifest muss mit seiner genauen Fassung verfügbar sein; ein Digest ohne auflösbaren Inhalt genügt nicht zur Nachprüfung. procedures bezeichnet die genaue Procedures-Struktur oder eine auflösbare Inhaltsreferenz auf sie; dieselbe Regel gilt in Einträgen und Prüfdatensätzen.
-
-| Typ | Erforderliche Felder und Bedeutung |
-| --- | --- |
-| ModelRef | package und id, beide nichtleere Strings. Bezeichnet eine kanonische Definition ohne Alias oder eingebaute Versionsnummer. |
-| SnapshotRef | modelDigest, packageBindingsDigest, inventoryDigest und compilerContractDigest. Die referenzierten Manifeste binden alle geladenen Definitionen, Paketfassungen/Inhalte und die verwendete Auflösung/Normalisierung. |
-| Procedures | indexContractDigest, derivationProcedureDigest und reviewPolicyDigest. Binden Daten-/Ableitungsregeln und Anforderungen an die Prüfung; ein Modellimport installiert diese Verfahren nicht. |
-| RecordRef, ReviewRef, BindingRef | Jeweils die exakte unveränderliche Datensatzfassung über ihre Inhalts-ID. Eine lesbare Bezeichnung kann angezeigt werden, ersetzt diese Identität aber nicht. |
-| InventoryRef | scope, snapshot und digest. Der auflösbare Inhalt enthält die vollständigen eindeutig identifizierten Elemente dieses Umfangs, einschließlich Definitionen, Kandidaten oder Änderungen und ihrer nötigen Werte. |
-
-targetSnapshot bezeichnet den Stand, für den die Hülle zusammengestellt wird. Das gesamte gebundene Modell ist der feste äußere Umfang bound-model; kleinere Auswahlräume müssen auf ihn zurückführen. Bei einer Importänderung gehören auch die dadurch geänderten geladenen Inhalte zur Bestandsdifferenz. Snapshot- und Verfahrensreferenzen sind exakt zu vergleichen; abweichende Fassungen verlangen eine Aktualitätsprüfung und gegebenenfalls ausdrücklich nachgewiesene Kompatibilität, keine Annahme anhand ähnlicher Versionsnamen.
-
-Datensatz-IDs sind technische Inhaltsidentitäten des Index. Sie sind keine stabilen fachlichen IDs des kanonischen Modells. Bei ihrer Inhaltsberechnung wird das eigene ID-Feld ausgelassen, damit kein Selbsthash verlangt wird. Eine Änderung an Behauptung, Abhängigkeiten oder Herkunft erzeugt eine neue Datensatzfassung. Optionales replaces verweist ausschließlich auf die historische Vorgängerfassung; es ist keine fortgeltende fachliche Voraussetzung und keine Berechtigung zur Übernahme ihrer Reviews.
-
-#### Gemeinsame Eintragsform und vier Eintragsarten
-
-Jeder Eintrag besitzt die erforderlichen Felder recordId, recordType, originSnapshot, procedures, producer, sources, dependencies und claim. producer enthält runId und die genaue erzeugende Verfahrensfassung. sources und dependencies sind Listen; für Auslegungen ist mindestens eine Quellstelle erforderlich, für Anwendungen mindestens die geprüfte Auslegung und die konkrete Fallgrundlage. In anderen Fällen muss die erforderliche Grundlage durch Quell-, Inventar- oder Vorbefundreferenzen vorhanden sein. Unbekannte Felder oder recordType-Werte sind Fehler; optionale Felder werden ausgelassen, statt mit null belegt.
-
-sources enthalten jeweils definition als ModelRef, definitionDigest, pointer, startByte, endByte und quote. Ein Pointer verwendet die JSON-Pointer-Schreibweise; für Prosa ist pointer zunächst /body. Der Bereich [startByte, endByte) zählt UTF-8-Bytes im dekodierten Feldwert, ohne Unicode-Normalisierung, nicht Positionen in der YAML-Datei. Die Grenzen müssen auf Zeichenränder fallen und der Ausschnitt muss exakt quote ergeben. Die Quelldatei-/Zeilenabbildung ist zusätzliche Herkunft. Der vollständige gebundene Vertrag bleibt verfügbar; eine korrekte Quellstelle beweist keine ausreichende Kontextauswahl.
-
-| recordType | Erforderlicher claim-Inhalt |
-| --- | --- |
-| interpretation | meaning als verbindlichkeitsgetreue Auslegung in Prosa, force als obligation, permission, prohibition, information oder unresolved, sowie scope mit description und inventory. Die Auswahl muss zur konkreten Fassung eines betrachteten Umfangs passen. |
-| application | interpretation als RecordRef, subject als ModelRef, context als nichtleere Liste von ModelRefs, result als applies, excluded, uncertain oder conflict, statement und reason als nichtleere Texte. Optional property als ModelRef bezeichnet die betrachtete Rolle. |
-| coverage | purpose als sources, cases oder changes, inventory als InventoryRef und results als Liste der unten definierten Einzelergebnisse. Ein optionales baseSnapshot ist bei changes erforderlich. |
-| influence | baseSnapshot, targetSnapshot, changes als InventoryRef, considered als Liste genauer RecordRefs oder als bound-model, result als affects, no-additional-influence oder uncertain, affected als Liste von ModelRefs/RecordRefs oder bound-model, sowie reason. Das Ergebnis bezieht sich auf den angegebenen Vergleich und betrachteten Bereich. |
-
-scope.inventory einer Auslegung bindet den bei ihrer Erstellung betrachteten Ausgangsraum, nicht eine für immer abgeschlossene Trefferliste. Die allgemeine Bedeutung „alle Exchanges“ kann unverändert bleiben, während ihre aktuelle Fallmenge neu ausgewertet wird. Nur diese mengenbezogene Beobachtung darf eine erfolgreiche Neuauswertung ersetzen; Aussagen und sonstige direkte Bedeutungsgrundlagen bleiben unverändert zu prüfen.
-
-Ein application-Eintrag mit subject onprem, context [check-status], property Exchange/sender und result excluded besagt ausschließlich: Die referenzierte Auslegung erzeugt für diesen Teilnehmer in diesem Austausch keine solche Pflicht. Er enthält weder eine globale Befreiung von onprem noch ein Verbot der beschriebenen Handlung. uncertain und conflict sind tatsächliche Ergebnisse mit Klärungsbedarf und keine negativen Geltungsnachweise. force bezeichnet eine abgeleitete Interpretation, kein neues Sprachmittel für Anforderungen im Modell.
-
-#### Abhängigkeiten als geschlossene Varianten
-
-Jede Abhängigkeit hat eine im Eintrag eindeutige key und einen type. Die übrigen erforderlichen Felder hängen vom type ab. Für den Einstieg gelten vollständige normalisierte Definitionen als Inhaltsgranularität; beliebige agentisch ausgesuchte Feldfragmente sind keine belastbare automatische Optimierung.
-
-| type | Erforderliche weitere Felder | Gültigkeitsbedingung bei Wiederverwendung |
-| --- | --- | --- |
-| content | definition als ModelRef, expectedDigest | Die vollständige Definition hat dieselbe normalisierte Inhaltsfassung. Das erfasst auch Werte und deren Fehlen. |
-| record | record als RecordRef | Der genaue vorausgesetzte Befund ist selbst für den Zielstand verwendbar. Eine neue Auslegung mit gleicher Formulierung ist nicht automatisch dieselbe Voraussetzung. |
-| selection | basis als RecordRef der geprüften Auswahlbedeutung, input als InventoryRef, result als InventoryRef, evaluation als geprüfte Verfahrensreferenz | Die Auswahl wird gegen den vollständigen aktuellen Eingaberaum neu ausgewertet. Die relevante beobachtete Ergebnismenge bleibt gleich. Veränderte Kandidaten-/Belegungsabdeckung ist trotzdem neu zu prüfen. |
-| absence | statement, scope als InventoryRef, coverage als RecordRef | Die genau bezeichnete negative Voraussetzung wird für den aktuellen Umfang erneut bestätigt; ein vormals leeres Ergebnis wird nicht einfach übernommen. |
-| watch | scope mit Wert bound-model | Eine aktuelle vollständige Prüfung der neuen Einflüsse ist für den Eintrag vorhanden. Ungleiche Modellinventare verlangen diese Prüfung, nicht zwingend eine neue Auslegung des Eintrags. |
-
-evaluation einer selection darf nur ein festgelegtes geprüftes Verfahren bezeichnen. Kann die Auswahl nicht strukturell ausgeführt werden, muss die Neuauswertung ein entsprechend geprüftes semantisches Ergebnis liefern. Ein frei erzeugtes Programm oder eine Beschreibung wird nicht als vertrauenswürdige Abfrage ausgeführt. input enthält auch Nichttreffer und relevante Auswahlwerte; result enthält nicht nur eine Trefferzahl, sondern die vollständigen beobachteten Zuordnungen. Bei Anwendungen gehören requester-Zuordnungen zur Beobachtung, nicht nur Exchange-IDs.
-
-Jeder fachlich für den aktuellen Kontext zu verwendende Eintrag wird durch watch oder die gleichwertige verpflichtende Prüfung in seiner Binding erfasst. Diese Prüfung ist niemals optional, nur weil dependencies keine neue Quelle enthält. Wenn sich eine content-Grundlage oder eine genaue vorausgesetzte record-Fassung ändert, kann der alte Eintrag nicht als unverändert übernommen werden. Auch bei gleicher Schlussfolgerung entsteht dann ein neuer Befund mit aktuellen Grundlagen. Eine erfolgreiche erneute Auswahl- oder Abwesenheitsprüfung darf dagegen die dafür ausdrücklich vorgesehene Beobachtung bestätigen; das ist ein protokollierter Prüfschritt, kein Vergleich allein der alten Digests.
-
-#### Abdeckung und vollständige Änderungserfassung
-
-Ein coverage.results-Element enthält itemId aus seinem Inventar, outcome, reason und records als Liste präziser Befundreferenzen. Für purpose sources sind die outcomes interpreted, no-semantic-claim oder unresolved; für cases assessed, excluded oder unresolved; für changes assessed oder unresolved. reason ist auch bei Ausschlüssen erforderlich. assessed oder interpreted benötigen passende zugehörige Befunde. Ein negativer no-semantic-claim-Befund muss semantisch begründet und geprüft sein. Es gibt genau ein Ergebnis je Inventarelement; fehlende Ergebnisse werden als offen behandelt, fremde oder doppelte itemIds sind Fehler.
-
-Für sources muss das verpflichtende äußere Inventar sämtliche geladenen Definitions-bodies und ihre Bedeutungsgrundlagen erfassen. Für cases muss die Eingabemenge samt relevanten Belegungen eindeutig feststehen. Für changes wird das vollständige Inventar aus dem Vergleich zweier fester Modellstände erzeugt. Entfernte Einträge erhalten ebenfalls eine itemId und Vorherherkunft. Weder Suchtreffer noch eine alte Auswahl bestimmen, welche Änderungen in dieses Inventar aufgenommen werden.
-
-requiredCoverage der Hülle nennt genaue bindings für die Quellenerschließung des äußeren Modellumfangs, die benötigten Fallbereiche und bei einer Übernahme die vollständige Änderungsprüfung. Ein neuer Stand darf alternativ vollständig neu erschlossen werden; ein ungebundener alter Abdeckungsbefund ersetzt diese Arbeit nicht. Für coverage und influence werden im Einstieg aktuelle Fassungen mit den Zielinventaren beziehungsweise dem genauen Standvergleich erstellt. Ihre Inhalte und unabhängigen Prüfungen bilden eine vorgelagerte Grundlage: Sie werden direkt gegen den festen Eingabestand validiert, ohne wiederum ihre eigene vollständige Einflussfreigabe vorauszusetzen. Die nachgelagerten interpretation-/application-Bindings konsumieren diese Grundlage. Reine records-Verweise aus Abdeckung und Einfluss auf betrachtete Behauptungen dienen der Nachvollziehbarkeit und sind keine wechselseitige Verwendbarkeitsvoraussetzung. So wird verhindert, dass Eintrag und Änderungsfreigabe ihre Gültigkeit gegenseitig ohne unabhängige Grundlage bestätigen.
-
-#### Prüfberichte, Aktualitätsbindungen und abgeleiteter Status
-
-Ein Review ist ein unveränderlicher Datensatz mit reviewId, subject als genauer RecordRef oder BindingRef, snapshot, procedures, check als structural, semantic oder coverage, verdict als pass, fail oder open, reviewer mit runId und Rolle, contextManifest als Inhaltsreferenz, evidence als Liste gebundener Belege und reason. Die Begründung ist immer erforderlich. Die Anforderungen an unabhängige semantische Prüfung stehen in der gebundenen reviewPolicy. Verschiedene runIds oder ein vom Erzeuger behauptetes independent: true genügen als Nachweis nicht; die Prüfumgebung und der gelieferte Originalkontext müssen die geforderte Trennung nachvollziehbar machen.
-
-Die Binding ist die eigentliche Verwendbarkeitsaussage für einen bestimmten Stand. Erforderlich sind bindingId, record als RecordRef, targetSnapshot, procedures, mode als original oder reuse, dependencyChecks, coverageBindings und reason. Bei original muss targetSnapshot zum originSnapshot des Eintrags passen. Bei reuse ist previousBinding für genau denselben recordId erforderlich. dependencyChecks ist eine Liste von Objekten mit key, result als equal, reassessed, changed oder unresolved, evidence als Liste genauer Belegreferenzen und reason. Jede dependency.key erhält genau einen Befund; unbekannte oder doppelte Schlüssel sind Fehler. reassessed benötigt aktuelle konkrete Belege. coverageBindings referenziert die für den Eintrag nötige Quellen-, Fall- und Einflussprüfung; für deren vorgelagerte Validierung gilt die soeben beschriebene Reihenfolge. Die Binding erhält eigene strukturelle Prüfberichte und bei semantischen Übernahmeentscheidungen die nach Policy nötigen Reviews. Ein vollständig mechanischer Übernahmeschritt kann sich auf vorhandene passende semantische Prüfbelege stützen, statt die gleiche Auslegung nochmals beurteilen zu lassen.
-
-Auch bei mode original müssen Abhängigkeiten und Abdeckung geprüft werden. previousBinding und replaces dokumentieren nur Herkunft; sie erfüllen keine einzige aktuelle Prüfpflicht automatisch. Exakte Referenzen und Validierungsabhängigkeiten sind endlich aufzulösen; zirkuläre Rechtfertigung ist ungültig. Historische und diagnostische Verweise dürfen Zyklen zeigen, erzeugen aber keinen Gültigkeitsbeweis.
-
-Der Status wird aus Befunden und Bindungen berechnet und nicht als frei setzbares approved-Feld gespeichert:
-
-| Achse | Werte und Ableitung |
-| --- | --- |
-| reviewState | unreviewed: nötige Belege fehlen; confirmed: alle erforderlichen Prüfungen erfolgreich; disputed: ein maßgeblicher fail-Befund liegt vor; open: eine erforderliche Prüfung bleibt ausdrücklich ungeklärt. disputed hat Vorrang vor open, open vor unreviewed. |
-| freshness | current: Abhängigkeiten und erforderliche Abdeckung passen zum Zielstand; stale: eine maßgebliche Grundlage hat sich nachweislich geändert; pending: die Aktualitätsprüfung ist unvollständig. stale hat Vorrang vor pending. |
-| usability | usable nur bei reviewState confirmed und freshness current sowie ohne ungeklärte Behauptung oder benötigten Kontext. uncertain, unresolved oder eine ungeklärte force erlauben keine verwendbare Geltung. Sonst blocked bei fail, conflict oder stale; andernfalls pending. |
-
-Ein Reviewer darf eine Behauptung mit result conflict zutreffend bestätigen: Der Befund ist dann geprüft, der Konflikt aber weiterhin ungelöst. Er wird als Diagnose bereitgestellt, nicht als verwendbare positive oder negative Pflicht. Ebenso können einzelne Einträge usable sein, während die gesamte Hülle wegen unvollständiger requiredCoverage nur einen partiellen Kontext liefert. Eine spätere positive Review-Zeile überschreibt einen alten fail-Befund derselben Fassung nicht nach dem Prinzip „letzter gewinnt“. Der Entwurf verlangt in diesem Fall eine neue nachvollziehbare Befund-/Bindingfassung mit eigener Prüfung; alte Fassungen bleiben unverändert.
-
-#### Exchange: lesbare Datensatzansicht und Übernahme
-
-Die folgenden Referenznamen sind ausdrücklich symbolische Kurzformen exakter Inhalts-/Snapshotreferenzen, keine behaupteten realen Digests oder bereits gültigen Produktdateien. M4 bezeichnet den Stand mit Protokollierungsausnahme aus Abschnitt 11.12; T die allgemeine Zeitmessungsauslegung. D-CHECK, D-ROLE und D-ONPREM bezeichnen die jeweils vollständigen Definitionsdigests. Diese Ansicht zeigt einen application-Datensatz vollständig in seiner vorgeschlagenen Form; referenzierte Datensätze und Manifeste sind in der Ansicht ausgelagert.
-
-```yaml
-recordId: A-TIME-CHECK
-recordType: application
-originSnapshot: M4
-procedures: INDEX-PROCEDURES-1
-producer:
-  runId: derive-time-check
-  procedure: DERIVATION-1
-sources: []
-dependencies:
-  - key: meaning
-    type: record
-    record: T
-  - key: exchange
-    type: content
-    definition: {package: example/connector-project, id: check-status}
-    expectedDigest: D-CHECK
-  - key: role
-    type: content
-    definition: {package: example/connector-vocabulary, id: Exchange/sender}
-    expectedDigest: D-ROLE
-  - key: participant
-    type: content
-    definition: {package: example/connector-project, id: onprem}
-    expectedDigest: D-ONPREM
-  - key: new-influences
-    type: watch
-    scope: bound-model
-claim:
-  interpretation: T
-  subject: {package: example/connector-project, id: onprem}
-  context:
-    - {package: example/connector-project, id: check-status}
-  property: {package: example/connector-vocabulary, id: Exchange/sender}
-  result: applies
-  statement: onprem bestimmt die Wartefrist jedes Versuchs von check-status monoton.
-  reason: check-status ist ein Exchange und sein requester ist onprem.
-```
-
-Die Quellen der Pflicht sind hier über T gebunden, statt als manuelle zweite Kopie gepflegt zu werden. Die konkret aufgeführten Grundlagen sind die wesentlichen direkten Quellen dieses Beispiels, keine pauschale Behauptung einer vollständigen Kontextliste. Weitere vom Reviewer benötigte Grundlagen müssen ebenfalls als dependencies erfasst werden; für die vollständige Validierung sind die aufgelösten Quellen von T, Prüfberichte und Abdeckungsbindungen erforderlich.
-
-Für einen hypothetischen Folgestand M5 kann derselbe recordId übernommen werden, wenn seine direkten Grundlagen unverändert bleiben und die vollständige Änderungsprüfung keine ungeklärten Einflüsse auf diese Geltung lässt. Die Binding enthält dann targetSnapshot M5, mode reuse, previousBinding als genaue M4-Binding, equal-Befunde für unveränderte Grundlagen, einen reassessed-Befund mit aktueller Einflussprüfung für new-influences und die M5-Abdeckungsbindungen. Die ursprüngliche semantische Prüfung bleibt eine Prüfung ihres ursprünglichen Gegenstands; die neue Binding erklärt ihre zulässige Wiederverwendung.
-
-Wechselt dagegen check-status.requester, ändert sich mindestens D-CHECK. Ein Übernahmeversuch für A-TIME-CHECK liefert für diesen Stand freshness stale; die historische M4-Binding wird nicht nachträglich geändert. Eine neue Anwendung mit geändertem subject und aktuellen Inhaltsabhängigkeiten braucht einen neuen recordId; sie kann T als Bedeutungsvoraussetzung weiterverwenden, falls dessen eigene Binding current bleibt. Ändert sich die globale Protokollierungsauslegung L3 zu L4, ist dasselbe Prinzip auf die davon abhängigen Anwendungen anzuwenden. Eine übernommene Zeitmessungsanwendung ersetzt keine neu erforderliche Protokollierungsanwendung oder deren geprüften Ausschluss.
-
-#### Mindestvalidierung und verbleibende Arbeit
-
-Ein späterer Validator muss geschlossene Formen, Enums, eindeutige Schlüssel, referenzierte Inhalte, Quellenbereiche, Inventarvollständigkeit, genaue Prüfgegenstände, Abhängigkeits-/Bindingbezüge und Statusableitung prüfen. Es gibt keine stillen Namenssuchen oder Fallbacks auf ältere bestätigte Fassungen. Eine alte oder unvollständige Binding kann als Diagnose gelesen werden, aber nicht als Bestätigung für den aktuellen Stand.
-
-Der Vertrag legt noch keine JSON-Schema-Datei, ausführbare Abfragesprache oder unabhängige Review-Implementierung vor. Insbesondere bleiben Digestkodierung, die vollständig maschinenlesbaren Manifestformen, Kriterien geprüfter Auswahlausführung und die konkrete Durchsetzung der Reviewtrennung auszuarbeiten. Die strukturierte Prüfung eines späteren Transportformats wird keine semantische Garantie der gewählten Abhängigkeiten oder Geltungsurteile schaffen. Das YAML-Beispiel wurde auf Lesbarkeit geprüft, nicht gegen einen produktiven Indexvalidator oder einen ausgeführten semantischen Review.
-
-### 11.14 Vollständiges Datensatzprotokoll für M3 → M4
-
-Der Nutzer beauftragt die vollständige Instanziierung des Datenvertrags für die Ausnahme von check-status und eine Einordnung des Sprachstands. Der folgende Katalog füllt alle im betrachteten Übergang benötigten Befunde, Prüfungen und Bindings in einer symbolischen Lesedarstellung aus. Die Referenznamen vertreten genaue Inhaltsreferenzen; sie sind keine erfundenen echten SHA-Werte. Das Protokoll nimmt einen bereits geprüften M3-Ausgangsindex und die unten beschriebenen erfolgreichen neuen Reviews an. Diese Reviews wurden nicht ausgeführt. Das ist kein selbständig ladbares Transportpaket des ganzen Projektindex; unveränderte Hintergrunddaten des angenommenen Ausgangsindex und die vollständigen Inventarmanifeste werden als verfügbare Voraussetzungen benannt, statt sie als neue Erkenntnisse auszugeben.
-
-#### Fest gebundene Eingaben und Ausgangszustand
-
-| Referenz | Ausgefüllter Inhalt dieses Beispiels |
-| --- | --- |
-| M3 | Snapshot mit beiden Exchanges, requester api für list-documents und onprem für check-status; uneingeschränkte zusätzliche Protokollierungspflicht. |
-| M4 | Derselbe Definitionsbestand, dieselben Paketbindungen und Rollenbelegungen; ausschließlich die globale Protokollierungsaussage im platform.body nimmt nun check-status aus. |
-| P1 | Unveränderte indexContract-, derivationProcedure- und reviewPolicy-Fassungen. Die Beispielpolicy verlangt strukturelle Prüfung jeder neuen Record-/Bindingfassung und unabhängige semantische beziehungsweise Abdeckungsprüfung der entsprechenden neuen Befunde. |
-| D-EXCHANGE, D-ROLE, D-LIST, D-CHECK, D-API, D-ONPREM | In beiden Ständen gleiche vollständige Inhaltsfassungen der jeweils benannten Definitionen; D-ROLE bezeichnet Exchange/sender im Vokabularpaket. Weitere gelesene Teilnehmer-/Command-/Channelverträge sind im unveränderten Kontextmanifest gebunden. |
-| D-PLATFORM-3, D-PLATFORM-4 | Unterschiedliche vollständige Inhaltsfassungen derselben Projektdefinition platform. Keine Inhaltsgleichheit behaupten. |
-| SOURCES-3, SOURCES-4 | Vollständige Inventare der Quell-bodies und Bedeutungsgrundlagen am jeweiligen Stand; genau ein geänderter Quellbereich. Die Eingabe-/Paketmanifeste und Originaltexte sind verfügbar. |
-| CASES-3, CASES-4 | Dieselben zwei betrachteten Fälle mit den aktuellen Rollenbelegungen: list-documents → api, check-status → onprem. Die positive Auswahl der Logpflicht ist davon zu unterscheiden. |
-| DELTA-34 | Vollständiges Vergleichsinventar M3 → M4 mit dem einen body-Änderungsbereich und dessen beiden Quellfassungen. |
-
-Die sechs fachlichen Ausgangseinträge sind T, T1, T2, L3, L3-1 und L3-2 aus Abschnitt 11.12. T interpretiert die monotone Zeitmessung, T1 und T2 wenden sie auf die zwei Fälle an. L3 interpretiert die Protokollierung ohne Ausnahme, L3-1 und L3-2 wenden sie an. Alle haben genaue M3-Bindings B3-T, B3-T1, B3-T2, B3-L3, B3-L3-1 und B3-L3-2 sowie vorhandene bestandene Record- und Bindingprüfungen. Die vollständige Hintergrunderschließung und ihre M3-Abdeckung sind weitere angenommene Voraussetzungen.
-
-Für die Zeitmessungsbefunde sind die direkten Bedeutungsgrundlagen im Beispiel Exchange, dessen Auftraggeber-Property und die benötigten konkreten Fallverträge; die globale Protokollierungsquelle ist keine unverändert zu vergleichende direkte content-Abhängigkeit von T. Ihre möglichen Einflüsse werden über watch und die aktuelle Einflussprüfung beurteilt. Hätte ein tatsächlicher Befund D-PLATFORM-3 direkt als Grundlage gebunden, könnte genau diese alte Datensatzfassung nicht unverändert übernommen werden: Dann wäre ein neu begründeter Befund erforderlich, auch bei gleicher Schlussfolgerung. Die folgende Wiederverwendung gilt ausdrücklich für die hier festgelegten Abhängigkeiten.
-
-#### Acht neue Records und drei wiederverwendete fachliche Records
-
-Für jeden neuen Record sind originSnapshot M4, procedures P1 und producer {runId: scenario-derive-M4, procedure: P1.derivationProcedure} gesetzt. sources nennen die genaue neue Fundstelle in D-PLATFORM-4, soweit die Auslegung betroffen ist; die Anwendungen binden diese Herkunft über L4. dependencies enthalten die nachstehend genannten vollständigen Grundlagen und gegebenenfalls watch. Die Kürzel bezeichnen echte ModelRefs beziehungsweise RecordRefs nach Abschnitt 11.13; die Eintragsart bestimmt den dort vollständig definierten claim-Aufbau.
-
-| recordId / recordType | claim und konkrete Grundlage |
-| --- | --- |
-| L4 / interpretation | meaning: requester protokolliert pro Versuch die Uhrquelle für alle Exchanges außer check-status; force: obligation; scope.description: alle Exchange-Fälle außer dem ausdrücklich bezeichneten Austausch; scope.inventory: CASES-4. Quelle: neuer globaler Satz in D-PLATFORM-4. dependencies: content platform=D-PLATFORM-4, content Exchange=D-EXCHANGE, content Exchange/sender=D-ROLE, content check-status=D-CHECK für das aufgelöste Ausnahmeziel, watch bound-model. replaces: L3. |
-| L4-1 / application | interpretation L4; subject api; context [list-documents]; property Exchange/sender; result applies; statement: api protokolliert je Versuch von list-documents die Uhrquelle; reason: dieser Exchange fällt nicht unter die ausdrücklich benannte Ausnahme. dependencies: record L4, content list-documents=D-LIST, api=D-API, Auftraggeber-Property und weitere benötigte unveränderte Fallverträge, watch. replaces: L3-1. |
-| L4-2 / application | interpretation L4; subject onprem; context [check-status]; property Exchange/sender; result excluded; statement: Aus L4 folgt für onprem bei check-status keine Protokollierungspflicht; reason: das exakt aufgelöste Ausnahmeziel ist dieser Exchange. dependencies: record L4, content check-status=D-CHECK, onprem=D-ONPREM, Auftraggeber-Property und benötigte Fallverträge, watch. replaces: L3-2. |
-| I34 / influence | baseSnapshot M3; targetSnapshot M4; changes DELTA-34; considered [T,T1,T2,L3,L3-1,L3-2]; result affects; affected [L3,L3-1,L3-2]; reason: die neue Einschränkung ändert die Logauslegung und ihre Anwendungen, betrifft aber nicht die Zeitmessung. Quelle: beide globalen Quellfassungen. dependencies: beide festen Vergleichsmanifeste und die geprüften Bedeutungsgrundlagen. Keine Voraussetzung einer bereits aktuellen T-/L4-Binding. |
-| CS4 / coverage | purpose sources; inventory SOURCES-4. Jede Quelle besitzt einen Befund: der geänderte globale Satz verweist auf L4; unveränderte Quellbereiche verweisen nach Aktualitätsprüfung auf vorhandene oder nötigenfalls neu gebundene Hintergrundbefunde. Keine Quelle wird wegen fehlender Links übersprungen. Diese vorausgesetzte vollständige Quellabdeckung ist mitzuliefern, nicht durch die acht Vordergrundrecords allein bewiesen. |
-| CT4 / coverage | purpose cases; inventory CASES-4; results: list-documents → assessed mit [T1], check-status → assessed mit [T2]. reason jeweils: die Protokollierungsausnahme ändert die monotone Zeitmessung nicht. |
-| CL4 / coverage | purpose cases; inventory CASES-4; results: list-documents → assessed mit [L4-1], check-status → excluded mit [L4-2]. reason: explizite Ausnahme betrifft genau den zweiten Fall und ausschließlich L4. Beide Fälle bleiben in der Abdeckung. |
-| CD34 / coverage | purpose changes; baseSnapshot M3; inventory DELTA-34; results: der eine Änderungsbereich → assessed mit [I34]. reason: frühere und neue Reichweite samt Wechselwirkungen beurteilt; keine weiteren Änderungsbereiche im vollständigen Inventar. |
-
-Bei allen vier Coverage-Records bilden die vollständigen jeweiligen Inventare die direkte Eingabegrundlage. Ihre related RecordRefs beschreiben betrachtete Behauptungen und sind keine gegenseitigen Aktualitätsvoraussetzungen. Die genau gebundenen Quell-/Inventarbelege stehen jeweils in sources beziehungsweise dependencies. watch wird für diese vorgelagerten Zertifikate nicht durch eine Forderung nach ihrer eigenen bereits fertigen Freigabe ersetzt: Es gilt die direkte unabhängige Prüfung am festen Stand aus Abschnitt 11.13.
-
-T, T1 und T2 erhalten keine neuen recordIds und keine geänderten originSnapshots. Ihre Inhaltsobjekte und ursprünglichen Reviews bleiben unverändert erhalten. L3, L3-1 und L3-2 bleiben historische M3-Befunde. Sie erhalten keine erfolgreiche M4-Übernahmebindung. Insbesondere wird L3-2 nicht in place von applies zu excluded geändert.
-
-#### Die neuen Reviews vollständig zuordnen
-
-Alle folgenden Sollberichte haben snapshot M4 und procedures P1. reviewer.runId unterscheidet den strukturellen Validatorlauf scenario-validate-M4 vom unabhängigen semantischen Prüflauf scenario-review-M4. Die Namen sind ausdrücklich Szenariobezeichnungen und kein Beleg tatsächlicher Unabhängigkeit. contextManifest enthält die jeweils genannten Originalquellen, beide festen Modellstände soweit nötig und die konkret betrachteten Befunde. evidence bindet die Quellvergleiche, Strukturbelege oder unabhängig beurteilten Geltungsgründe. verdict pass ist hier jeweils die angenommene erfolgreiche Beurteilung, kein ausgeführtes Ergebnis.
-
-| Review-IDs und genauer subject | check | Ausgefüllter Prüfgrund und Kontext |
-| --- | --- | --- |
-| RS-L4, RS-L4-1, RS-L4-2, RS-I34, RS-CS4, RS-CT4, RS-CL4, RS-CD34; jeweils gleichnamiger Record | structural | Geschlossene Datensatzform, exakte Quell-/Zielreferenzen, Inventare, Abhängigkeitsbezüge und Herkunft sind für die genaue neue Fassung gültig. |
-| RM-L4 → L4 | semantic | Der vollständige Quellvergleich begrenzt nur die zusätzliche Protokollierung. check-status ist eindeutig identifiziert; die Zeitmessungspflicht wird nicht verändert. |
-| RM-L4-1 → L4-1 | semantic | list-documents liegt außerhalb der Ausnahme; api ist dort weiterhin requester. Die positive Anwendung passt zu den konkreten Verträgen. |
-| RM-L4-2 → L4-2 | semantic | Der Ausschluss gilt für onprem nur bei check-status und nur aus L4; er behauptet weder ein Protokollierungsverbot noch eine Zeitmessungsausnahme. |
-| RM-I34 → I34 | semantic | Die Änderung beansprucht keine weitere Ausnahme. Alte und neue Reichweite wurden anhand der Quellen und relevanten Gegenregeln geprüft. Die Wiederverwendbarkeit von T/T1/T2 bleibt auf deren unveränderte direkte Grundlagen beschränkt. |
-| RC-CS4 → CS4 | coverage | Sämtliche Elemente von SOURCES-4 haben passende Befunde; ungeklärte Hintergrundbereiche würden diesen pass-Bericht verhindern. Die vorhandene M3-Abdeckung allein genügt nicht. |
-| RC-CT4 → CT4 | coverage | Beide aktuellen Exchange-/requester-Fälle sind für T betrachtet; keiner fällt durch einen Rollen- oder Mengenwechsel aus der Auswahl. |
-| RC-CL4 → CL4 | coverage | Die Grundmenge enthält beide Fälle; positive Anwendung und expliziter Ausschluss sind vollständig und korrekt unterschieden. |
-| RC-CD34 → CD34 | coverage | DELTA-34 stammt aus dem vollständigen Standvergleich und ist vollständig beurteilt. |
-
-Die ursprünglichen T-/T1-/T2-Reviews bleiben Belege ihrer ursprünglichen Recordfassungen. Es entstehen keine fingierten neuen semantischen T-Reviews allein durch Änderung des Snapshotnamens. Für die Übernahme werden die neuen Einfluss-/Abdeckungsberichte und die mechanisch geprüften unveränderten Grundlagen hinzugezogen. Jeder fail oder open an einer benötigten Stelle würde den beschriebenen erfolgreichen Endzustand verhindern.
-
-#### Elf neue Bindings und ihre Abhängigkeitsprüfungen
-
-Jede neue Binding hat targetSnapshot M4, procedures P1 und einen nichtleeren reason aus der folgenden Tabelle. Für jede dependency.key des gebundenen Records wird genau ein dependencyChecks-Ergebnis eingetragen, mit Beleg auf den vollständigen Inhaltsvergleich, den aktuellen Vorgängerbefund oder die benannte neue Beurteilung. Die aktuelle Gleichheit der direkten Grundlagen wird nicht aus einer unveränderten Dateibezeichnung gefolgert.
-
-| bindingId → record | mode / previousBinding | dependencyChecks und coverageBindings |
-| --- | --- | --- |
-| B4-I34 → I34 | original | Vergleichsmanifeste und genaue Quellfassungen geprüft; direkte Belege aus M3/M4. coverageBindings leer: vorgelagerte Einflussprüfung benötigt nicht ihre eigene Freigabe. |
-| B4-CS4 → CS4 | original | Quelleninventar M4 vollständig geprüft. coverageBindings leer; direkte eigenständige Abdeckungsprüfung. |
-| B4-CT4 → CT4 | original | Beide Fallzuordnungen geprüft. coverageBindings leer; die zugehörigen semantischen Belege stehen in den Quellen-/Einflussprüfungen und Recordprüfungen. |
-| B4-CL4 → CL4 | original | Beide Fälle einschließlich des Ausschlusses geprüft. coverageBindings leer; Originalquelle L4 und konkrete Belegung stehen im Reviewkontext. |
-| B4-CD34 → CD34 | original | Vollständiges Delta und I34 geprüft. coverageBindings [B4-I34]; keine Rückkante auf B4-CD34. |
-| B4-T → T | reuse / B3-T | Direkte Inhalte und genaue Vorbefunde equal; new-influences reassessed mit I34 und CD34. coverageBindings [B4-CS4,B4-CD34]. Grund: dieselbe Zeitmessungsauslegung, begründet unberührt von der Änderung. |
-| B4-T1 → T1 | reuse / B3-T1 | Genaue Auslegung T über B4-T verwendbar; direkte Fall-/Property-/Teilnehmergrundlagen equal; watch reassessed. coverageBindings [B4-CS4,B4-CD34,B4-CT4]. Grund: api bleibt für list-documents verpflichtet. |
-| B4-T2 → T2 | reuse / B3-T2 | Genaue Auslegung T über B4-T verwendbar; direkte Fall-/Property-/Teilnehmergrundlagen equal; watch reassessed. coverageBindings [B4-CS4,B4-CD34,B4-CT4]. Grund: onprem bleibt für check-status zur Zeitmessung verpflichtet. |
-| B4-L4 → L4 | original | Neue Quellfassung und alle direkten Inhaltsgrundlagen gegen ihre originSnapshot-M4-Werte equal; watch reassessed mit I34. coverageBindings [B4-CS4,B4-CD34]. Grund: geprüfte neue Auslegung mit begrenztem Geltungsbereich. |
-| B4-L4-1 → L4-1 | original | Auslegung L4 über B4-L4 verwendbar; konkrete neue Recordgrundlagen equal; watch reassessed. coverageBindings [B4-CS4,B4-CD34,B4-CL4]. Grund: positive Protokollierungspflicht für api bei list-documents. |
-| B4-L4-2 → L4-2 | original | Auslegung L4 über B4-L4 verwendbar; konkrete neue Recordgrundlagen equal; watch reassessed. coverageBindings [B4-CS4,B4-CD34,B4-CL4]. Grund: geprüfter Ausschluss von onprem bei check-status aus dieser Pflicht. |
-
-Für jede dieser elf Bindings entsteht ein struktureller Sollbericht RB-<bindingId> mit dem exakten BindingRef als subject, snapshot M4, procedures P1, check structural und angenommenem verdict pass. Sein contextManifest enthält Record, genaue alte Binding bei reuse, dependencyChecks, aktuelle Abdeckungs-/Einflussbindungen und die benötigten unabhängigen semantischen Belege. reason lautet jeweils: vollständige Abhängigkeiten und zulässige Belegübernahme am Zielstand geprüft. Ein equal-Befund auf einen vorausgesetzten Record setzt dessen aktuelle zulässige Binding voraus; es wird nicht nur seine Zeichenfolge verglichen.
-
-Damit enthält der betrachtete Vordergrund **acht neue Records, elf neue Bindings und 27 neue Soll-Reviews**: acht Record-Strukturprüfungen, vier semantische Reviews, vier Abdeckungsreviews und elf Binding-Strukturprüfungen. Hinzu kommen die als vorhanden vorausgesetzten unveränderten beziehungsweise eigenständig zu aktualisierenden Hintergrundbefunde. Das ist eine konkrete einfache Aufteilung der Beispielpolicy, keine Pflicht zu 27 getrennten Agentenläufen oder eine allgemeine Kostenangabe. Berichte können aus denselben passenden unabhängigen Läufen stammen, ihre exakten Prüfgegenstände bleiben getrennt.
-
-Die M4-Hülle referenziert als requiredCoverage [B4-CS4,B4-CT4,B4-CL4,B4-CD34]. Die drei aktuellen Zeitmessungsbindungen und drei aktuellen Logbindungen bilden den betrachteten fachlichen Ausschnitt. Erst bei tatsächlich bestätigten Prüfungen und vollständiger Hintergrundabdeckung wäre daraus confirmed/current/usable abzuleiten. Hier sind die erfolgreichen Reviews angenommen, daher ist dieses Protokoll kein aktueller Produktnachweis. Die M3-Bindings bleiben historische gültige Bindings für M3. Ein Übernahmeversuch von L3/L3-1/L3-2 nach M4 wäre wegen geänderter Quell-/Auslegungsvoraussetzungen stale; diese Diagnose verändert die alten Bindings nicht.
-
-## 12. Evidenz und noch offene Ausarbeitungen
-
-Die [Probenübersicht in der Herleitung](README.md) und die verlinkten Berichte dokumentieren getrennte Umfänge:
-
-- Der bestehende Go-Core wurde mit ausdrücklich von definition auf purpose adaptierten älteren Beispielen geprüft. Das belegt keine neue Autorenform.
-- Die [Bootstrap-Probe](bootstrap/probe.json) prüft den endlichen Anfang und das gemeinsame Definitionenmodell in einem separaten Entwurfsprototyp.
-- Die [Kompaktprobe](bootstrap/compact-probe.json) bestätigt für den früheren Stand die Gleichheit von ausgeschriebenen und eingebetteten Properties.
-- Der [Identitätsdurchgang](identities/probe.json) prüft separat importierte Versionen, Paketkontexte und die später ergänzte stabile inline id. Seine drei gültigen Stände besitzen dieselben 51 logischen Identitäten mit unterschiedlichen Modellbindungen.
-
-Keiner dieser Berichte ist ein Nachweis bereits produktiver Unterstützung des gesamten neuen Vertrags. Insbesondere wurde die neue Laufzeitpflicht des Versionsbeispiels nicht durch einen ausgeführten Connector bestätigt.
-
-Vor einer produktiven Implementierung sind noch auszuarbeiten:
-
-1. Vollständige lexikalische Grammatik für IDs, Segmente, Aliase, Escape-/Unicodefälle und die genaue YAML-Leseform.
-2. Paket-/Lockdateiform, Bereitstellung und Provenienz; die Regeln für eindeutige Inhaltsbindung stehen bereits fest.
-3. Für die gewählten Körperlinks das vollständige Markup-/Escapeprofil sowie die Normalisierung und Herkunftsabbildung spezifizieren. Die bestehenden Prüfberichte enthalten noch keinen Körperlinkparser.
-4. Kanonische Kodierung, Herkunftsabbildung, produktive Diagnosen, Grenzen und Migration vom heutigen Produktformat.
-5. Den Vorschlag in Abschnitt 11 zu generischen Kontexten, Auswirkungen, semantischem Index und Realisierungs-/Prüfverfahren über benutzerdefinierte Kinds entscheiden und seine offenen Verfahrensregeln erproben. Die Indexeinträge und Änderungstabellen sind Designgegenproben, kein ausgeführter Nachweis semantischer Erschließung oder Invalidierung.
-
-Weitere formale Wertebedingungen, Mehrversionsimporte und zusätzliche Sprachmittel bleiben Erweiterungskandidaten. Sie gehören nicht stillschweigend zum hier konsolidierten Umfang.
-
-### 12.1 Stand der Definition des kanonischen Modells
-
-Die fachliche Sprachgrundlage ist weitgehend gewählt: einheitliche Definitionen, die festen Meta-Kinds Kind und Property, verbindlicher body mit typisierten spec-Angaben, kompakte Properties, stabile Paket-/lokale Identitäten, genaue Importbindungen und explizite Körperlinks. Anforderungen und Rollen benötigen vorerst keine eigenen Sprachmittel; Projektbegriffe kommen aus selbst definierten oder importierten Vokabularen. Das sind Designentscheidungen, keine Behauptung allgemeiner Vollständigkeit für jedes denkbare Projekt.
-
-Offen für eine präzise Sprachspezifikation sind insbesondere die vollständige Lexik und YAML-Leseform, das Markup-/Escapeprofil der Körperlinks, Paket-/Lockformate, kanonische Kodierung, Herkunft und genaue Fehlerfälle. Bootstrap, kompakte Properties und Identitäten besitzen begrenzte separate Strukturproben; die neue Gesamtform ist noch nicht im Produktcompiler implementiert. Weitere unterschiedliche Projektbeispiele sollen zeigen, ob relevante Ausdrucksbedarfe tatsächlich fehlen, bevor weitere Core-Konzepte ergänzt werden.
-
-Kontext, semantischer Index, Aktualisierung und Wiederverwendung aus Abschnitt 11 sind inzwischen ausgearbeitete Vorschläge für abgeleitete Markitect-Daten und Verfahren. Der Nutzer hat ihre Ausarbeitung beauftragt; eine ausdrückliche Annahme aller Details oder ein unabhängiger Funktionsnachweis wird nicht unterstellt. Ihre Berichtstypen sind keine zusätzlichen Begriffe des kanonischen Modells. Die Zuordnung zur realen Umsetzung, konkrete Prüfplanung, Ausführung und Integration bleiben darüber hinaus zu entwerfen beziehungsweise an die neue Sprache anzubinden.
-
-Die nächste sinnvolle Sprachaufgabe ist daher ein begrenzter vollständiger Spezifikationsdurchgang der bereits gewählten Form mit gültigen und ungültigen Beispielen und anschließend ein durchgängiger Compilerprototyp. Die Semantik-/Apply-Verfahren können daneben konkretisiert werden; ihre wachsenden Datenverträge sollten nicht als fehlende Core-Begriffe missverstanden werden. Eine Prozentzahl würde die unterschiedlichen Reifegrade von Fachentscheidung, exakter Spezifikation und Implementierung verdecken.
-
-Zurück zum [gemeinsamen Designstand](../consolidation.md) oder zur [Begriffsübersicht](../README.md).
+**Historischer Verweis, nicht normativ:** Das vollständige M3→M4-Datensatzprotokoll befindet sich bei den [Verfahrensvorschlägen](procedure-proposals.md#1114-vollständiges-datensatzprotokoll-für-m3--m4). Dieser Anker erhält die Navigation aus der unveränderten Sessionübergabe.

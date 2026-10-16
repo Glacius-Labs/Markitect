@@ -1,14 +1,23 @@
-# Canonical model terminology
+# Canonical model: completed v1 design baseline
 
-Status: working definitions, developed from the product discussion on 15 October 2026.
+Status: v1 language design completed and confirmed by the owner on 16 October 2026.
 
-For continuation in a new session, read the [design handoff](HANDOFF.md) first. It distinguishes selected language rules, proposed index procedures, evidence and the next work.
+The [normative language specification v1](minimal-language/language-contract.md) is the sole owner of the completed canonical form. There are no open language decisions within its selected scope. Production implementation in Go and a broader conformance corpus remain separate work; bounded design probes do not establish full product support.
 
-For the selected language foundation, start with the [consolidated Core language contract](minimal-language/language-contract.md): the common Definition form, Kind and Property, binding body text, compact Properties, stable identities, imports, versions and references. The owner has selected these design rules; the new language is not yet implemented in the product compiler. The [consolidated design baseline](consolidation.md) records their origin and the other open product questions. The [source comparison](current-main-comparison.md) explains the fixed Main boundary.
+The [design handoff](HANDOFF.md) records the earlier transfer between sessions and machines. The chronology below preserves the derivation and superseded choices. Project vocabulary and the unselected procedure proposals remain outside the completed language baseline.
 
-This area collects the terms used to describe the canonical model. Each term has its own Markdown document explaining its meaning and purpose. The vocabulary grows one term at a time as the project-description needs become clear.
+| Document | Role |
+| --- | --- |
+| [Language specification v1](minimal-language/language-contract.md) | Completed normative v1 design baseline: syntax, semantics, Core, models, locks and canonical bytes. |
+| [Diagnostic contract](minimal-language/diagnostic-contract.md) | Separate tool profile for exact coordinates; independent of model validity and canonical bytes. |
+| [Language history](minimal-language/language-history.md) and [earlier Core explorations](minimal-language/README.md) | Historical choices, superseded variants and evidence of their recorded scope. |
+| [Procedure proposals](minimal-language/procedure-proposals.md) | Unselected, nonnormative context, impact and semantic-index procedures. |
+| [Executable Exchange example](minimal-language/exchange-example/README.md) | Current input files, bounded probe and reports; includes the explicitly rejected Command/command vocabulary collision. |
+| [Consolidated design history](consolidation.md) and [fixed Main comparison](current-main-comparison.md) | Origin of the design and product boundaries. |
 
-The owner's current starting point is detailed, typed documentation of the intended project. The [working goal and provisional terms](consolidation.md#arbeitsziel-und-wackelkandidaten) distinguish that description from Apply's agent coordination and the resulting artifacts. System, Component versus Module, Artifact, Mandate and Decision are explicitly under reconsideration, with System/Component/Module taking priority. The need for process descriptions is also open. Their presence in this area or an example does not settle their inclusion in the new model.
+The language baseline fixes the uniform definition form, nine Core definitions, values and lists, Unicode and naming rules, identities and imports, folder-based Packages, models and dependencies, locks and canonical bytes. It does not prescribe a universal project vocabulary.
+
+The term documents below retain their status as working vocabulary definitions developed from the earlier product discussion. The [working goal and provisional terms](consolidation.md#arbeitsziel-und-wackelkandidaten) record those vocabulary questions and distinguish intended project descriptions from Apply's agent coordination and resulting artifacts. Their presence here does not make them built-in Core Kinds or open decisions in the completed language design.
 
 The [language discussion and bounded Connector probes](minimal-language/README.md) preserve the earlier alternatives and their evidence. They are the derivation of the current contract. The terms below are possible vocabulary contents; they do not predetermine a universal built-in Kind catalogue. Special requirements and roles fields remain outside the selected Core.
 

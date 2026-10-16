@@ -1,0 +1,14 @@
+imports:
+  - package: example/connector/vocabulary
+    as: Connector
+id: replies
+kind: Channel
+body: >-
+  senderInstanceId bezeichnet die ausstellende API-Prozessinstanz. Die API übergibt ihre konkrete
+  Antwortadresse im Auftrag. Antworten behalten die MessageId des Requests und werden innerhalb
+  dieser Instanz dem wartenden Austausch zugeordnet. Für die Antwortadresse wird keine konkurrierende
+  Shared Subscription verwendet. Zugriffe sind auf die autorisierten Teilnehmer begrenzt.
+spec:
+  topicPattern: bridge/replies/{senderInstanceId}
+  delivery: at-least-once
+  broker: messaging

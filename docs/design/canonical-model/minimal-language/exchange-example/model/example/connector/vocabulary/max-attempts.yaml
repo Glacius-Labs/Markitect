@@ -1,0 +1,11 @@
+imports:
+  - package: markitect/core
+    as: Core
+id: maxAttempts
+kind: Property
+body: >-
+  Positives Versuchsbudget einschließlich des ersten Versuchs.
+spec:
+  type: integer
+  minCount: 1
+  maxCount: 1

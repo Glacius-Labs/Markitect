@@ -1,0 +1,12 @@
+imports:
+  - package: markitect/core
+    as: Core
+id: Command
+kind: Kind
+body: >-
+  Beschreibt den Vertrag einer versionierten Operationsanforderung. Der body legt Eingaben,
+  Ergebnisse und fachliche Fehler fest. operationId identifiziert die Operation innerhalb
+  des Projekts eindeutig. Einzelne versendete Aufträge sind Laufzeitdaten.
+spec:
+  properties:
+  - operationId
