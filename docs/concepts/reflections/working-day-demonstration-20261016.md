@@ -259,6 +259,53 @@ A small extension to the planned insufficient-budget scenario can exercise this 
 
 Residual risk remains when Manager and reviewer both omit the need or accept the same false applicability argument. Without a separate semantic authority, runtime guards cannot prove that judgment correct. The earlier discriminating cases, current evidence and visible revisions reduce this risk; the claim remains bounded rather than promising that pressure can never affect judgment.
 
+### Record required evidence through existing findings
+
+The [owner asked for a concrete record](../sources/working-day-discussion-20261016.md#record-required-evidence-and-its-resolution) that lets the Host detect missing proof without another task or rule system. Reuse the proposed [review and check contracts](../../design/canonical-model/manager-apply-port-contracts.md): `Finding`, `ReviewSubject`, `EvidenceRef`, `CheckReceipt`, accepted deliveries and the existing assignment journal. This is a proposed refinement of finding identity and resolution, not a new API already implemented. The Architect's current uncommitted journal/execution drafts were also consulted; their lifecycle details remain owned there.
+
+A necessary countercheck is an ordinary blocking review finding whose requested outcome is evidence of an existing obligation. It is not a new model rule or a second work item. Implementation, adding a test and running it remain work within the responsible task, delegated through the normal Manager tree where needed. Nonblocking observations must not silently replace an already identified necessary finding.
+
+The finding needs only the information already present or naturally referenced in ordinary review:
+
+| Information | Reuse and meaning |
+| --- | --- |
+| Stable finding reference | Host-recorded identity, derived from the existing event identity plus item index if sufficient. Repeated submissions reference it rather than creating an unrelated replacement. |
+| Responsibility and original basis | Existing assignment/task, issuing reviewer, model Definition references, input binding and affected scope; original review subject/candidate when available. An early model-first concern may precede a candidate, so record that fact rather than inventing candidate evidence. |
+| Missing evidence | A short concrete requested outcome: the distinction to demonstrate, with its canonical basis. This explains assessment of a rule; it has no independent business authority. |
+| Resolution reference | A later recorded review resolves that finding for an exact current subject, with the relevant evidence references or a justified applicability decision. |
+
+Open/resolved status is a projection of these records, not a separately editable checkbox or another task lifecycle. Use existing journal storage and actor/session provenance. The Manager may propose that the concern is satisfied; the authorized independent reviewer assesses that proposal. The Host accepts a structurally valid resolution from the bound reviewer session, not an Agent-supplied claim to be the reviewer.
+
+For example, an illustrative record can read:
+
+```text
+Finding F17, owned by the existing Lending task
+Basis: current model's lending/return; observed on candidate C7
+Need: return L1, lend the same copy as L2, repeat L1's return;
+      demonstrate that L2 remains open and the copy unavailable.
+
+Later review R12, subject C8 with its current input binding:
+  resolves F17 using Host check receipt K9 and its L1/L2 case result;
+  reviewer confirms that the observed assertions establish the requested distinction.
+```
+
+These labels illustrate references, not prescribed schema or new command names. The initial finding stays tied to C7; the later resolution explicitly concerns C8. `K9` must refer to execution on C8's immutable materialization under the allowed check specification, with actual termination/output evidence. A command-level pass alone does not establish that the L1/L2 case ran instead of being skipped. The reviewer cites the actual case output/assertions; if that evidence is unavailable, the requirement remains unproven. Reuse the existing check report format where available rather than creating a universal test language.
+
+### Host acceptance rules for finding resolution
+
+At delivery acceptance and final publication readiness, the Host uses its recorded history and required delivery tree, not only the latest Agent's list of findings:
+
+1. **No disappearance by omission.** Every required finding in the task, relevant child deliveries and predecessor lineage has a current disposition. Missing from a subsequent report does not mean resolved. Task recreation, restart and successor runs cannot hide unresolved requirements. Parent views reference child records rather than copying their text into another tracker.
+2. **References must resolve to real records.** Required receipts, immutable evidence payloads, review records and their authorized actor/session provenance exist and are consistent. A prose assertion that tests passed does not create a check receipt. Unknown, failed, cancelled or skipped required execution cannot satisfy a successful-execution requirement.
+3. **Evidence must fit its subject.** Check the full input binding, candidate/registry, task/scope and review purpose required at that assessment boundary. Child deliveries retain their exact subjects and composition provenance; the aggregate has its own required integration/final evidence. Do not require every child receipt to share the aggregate hash, and do not use a child pass as aggregate approval. A new candidate or changed basis needs current required assessment, even if an earlier finding has a historical resolution.
+4. **Resolution must be explicit.** The ordinary review either establishes the requested evidence or explains why the obligation is genuinely inapplicable to the current authorized scope/basis, with relevant references. Existing adequate checks are evidence of satisfaction, not an exemption. A changed model/scope must cite the actual authorized transition. Neither budget exhaustion nor a generic final pass is a resolution. Initial policy still repeats required checks/reviews; no approval-reuse shortcut is introduced.
+
+One current check can support several findings and one finding can cite several receipts. Reference the same evidence rather than duplicate execution or storage merely to achieve one-to-one bookkeeping. This does not waive check requirements attached to different subjects or review purposes.
+
+The deterministic guard can establish that declared requirements have authorized, current, well-formed dispositions and evidence. It cannot prove that a natural-language finding was complete, that an assertion expresses the intended business meaning, or that a reviewer's inapplicability argument is true. Those remain the existing review's semantic responsibility. Reports should not describe this guard as proof that no necessary check was ever missed.
+
+For the first implementation, refine the existing finding/review payloads and their replay projection only as needed for these references. Do not create a separate verification backlog, per-rule workflow, policy interpreter or UI status store. Focused contract checks can exercise omission of F17, an invented receipt, a C7 receipt offered for C8 and an unrelated final pass; none may discharge F17. A valid current receipt plus the authorized finding-specific review should resolve it, and replay/restart must preserve the same result. These are proposed checks, not executed evidence.
+
 ## Overall acceptance and repeatability
 
 The proposed initial threshold is three complete series of all four scenarios, using a fresh execution state for each case and the same fixed product/profile basis. Each case starts from its specified recorded baseline; within the recovery case, the interrupted state must survive the restart. Do not replace recovery with a new clean assignment.
