@@ -1,0 +1,16 @@
+imports:
+  - package: example/connector/vocabulary
+    as: Connector
+id: list-documents
+kind: Exchange
+body: >-
+  Die [[api|API]] fordert Dokumentmetadaten bei [[onprem|dem Connector]] an. Sie registriert
+  den wartenden Austausch vor der Publikation und verwirft verspätete Antworten nach Ablauf der Wartefrist.
+spec:
+  requester: api
+  receiver: onprem
+  command: list-documents-command
+  requestChannel: requests
+  replyChannel: replies
+  timeoutSeconds: 30
+  maxAttempts: 2

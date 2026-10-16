@@ -1,0 +1,11 @@
+imports:
+  - package: markitect/core
+    as: Core
+id: Container
+kind: Kind
+body: >-
+  Beschreibt eine Anwendung mit eigener Laufzeitgrenze und ihrer vorgesehenen Umgebung. Die
+  Definition beschreibt die beabsichtigte Anwendung, keine einzelne laufende Prozessinstanz.
+spec:
+  properties:
+  - location

@@ -1,0 +1,11 @@
+imports:
+  - package: example/connector/vocabulary
+    as: Connector
+id: api
+kind: Connector.Container
+body: >-
+  Die Cloud-Anwendung stellt den HTTP-Zugang bereit. Sie bestimmt den Mandanten aus dem authentifizierten
+  Kontext und wartet auf das Resultat des Auftrags. Jede Prozessinstanz besitzt eine eigene
+  Antwortadresse. Ein Neustart übernimmt keinen vorherigen Wartezustand.
+spec:
+  location: cloud

@@ -1,0 +1,12 @@
+imports:
+  - package: markitect/core
+    as: Core
+id: replyChannel
+kind: Property
+body: >-
+  Kommunikationsweg für Antworten an die ausstellende Instanz.
+spec:
+  type: reference
+  target: Channel
+  minCount: 1
+  maxCount: 1

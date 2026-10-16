@@ -1,0 +1,15 @@
+imports:
+  - package: markitect/core
+    as: Core
+id: Channel
+kind: Kind
+body: >-
+  Beschreibt eine Familie logischer MQTT-Adressen. topicPattern enthält Platzhalter für die
+  im body erklärten Laufzeitwerte. Platzhalterwerte dürfen keine Topicseparatoren oder Wildcards
+  enthalten. delivery beschreibt die Transportzustellung und garantiert keine einmalige fachliche
+  Ausführung. broker bezeichnet den verwendeten MQTT-Dienst.
+spec:
+  properties:
+  - topicPattern
+  - delivery
+  - broker

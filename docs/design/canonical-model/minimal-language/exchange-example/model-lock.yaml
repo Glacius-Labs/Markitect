@@ -1,0 +1,5 @@
+formatVersion: 1
+models:
+  markitect-core:
+    version: "1.0.0"
+    digest: "sha256:562a20613c64fb9cd3425ff39b5f9fb826b75deb153cdfac48b00fce6f5c19f1"

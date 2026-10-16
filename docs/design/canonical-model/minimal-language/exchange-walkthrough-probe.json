@@ -1,0 +1,111 @@
+{
+  "baseline": "passed",
+  "body-kind-relation-meaning-in-digest": "passed",
+  "definitions": 13,
+  "edges": 17,
+  "exchangeIdentity": {
+    "apiVersion": "connector.example.org/v1alpha1",
+    "kind": "Exchange",
+    "namespace": "connector",
+    "name": "list-documents"
+  },
+  "exchangeOutgoingEdges": [
+    {
+      "from": "[\"connector.example.org/v1alpha1\",\"Exchange\",\"connector\",\"list-documents\"]",
+      "to": "[\"connector.example.org/v1alpha1\",\"Command\",\"connector\",\"list-documents-command\"]",
+      "property": "command",
+      "source": {}
+    },
+    {
+      "from": "[\"connector.example.org/v1alpha1\",\"Exchange\",\"connector\",\"list-documents\"]",
+      "to": "[\"connector.example.org/v1alpha1\",\"Container\",\"connector\",\"onprem\"]",
+      "property": "receiver",
+      "source": {}
+    },
+    {
+      "from": "[\"connector.example.org/v1alpha1\",\"Exchange\",\"connector\",\"list-documents\"]",
+      "to": "[\"connector.example.org/v1alpha1\",\"Channel\",\"connector\",\"replies\"]",
+      "property": "replyChannel",
+      "source": {}
+    },
+    {
+      "from": "[\"connector.example.org/v1alpha1\",\"Exchange\",\"connector\",\"list-documents\"]",
+      "to": "[\"connector.example.org/v1alpha1\",\"Channel\",\"connector\",\"requests\"]",
+      "property": "requestChannel",
+      "source": {}
+    },
+    {
+      "from": "[\"connector.example.org/v1alpha1\",\"Exchange\",\"connector\",\"list-documents\"]",
+      "to": "[\"connector.example.org/v1alpha1\",\"Container\",\"connector\",\"api\"]",
+      "property": "sender",
+      "source": {}
+    }
+  ],
+  "kinds": 8,
+  "no-special-requirement-fields": true,
+  "rejected-counterexamples": {
+    "duplicate-identity": [
+      "definition.duplicate",
+      "definition.duplicate"
+    ],
+    "missing-required-relation": [
+      "property.required"
+    ],
+    "unknown-definition-kind": [
+      "definition.kind"
+    ],
+    "unknown-spec-field": [
+      "spec.unknown-property"
+    ],
+    "unresolvable-target": [
+      "reference.unresolved"
+    ],
+    "wrong-target-kind": [
+      "reference.target-kind"
+    ]
+  },
+  "resolvedExchangeValues": {
+    "command": {
+      "apiVersion": "connector.example.org/v1alpha1",
+      "kind": "Command",
+      "name": "list-documents-command",
+      "namespace": "connector"
+    },
+    "maxAttempts": 2,
+    "receiver": {
+      "apiVersion": "connector.example.org/v1alpha1",
+      "kind": "Container",
+      "name": "onprem",
+      "namespace": "connector"
+    },
+    "replyChannel": {
+      "apiVersion": "connector.example.org/v1alpha1",
+      "kind": "Channel",
+      "name": "replies",
+      "namespace": "connector"
+    },
+    "requestChannel": {
+      "apiVersion": "connector.example.org/v1alpha1",
+      "kind": "Channel",
+      "name": "requests",
+      "namespace": "connector"
+    },
+    "sender": {
+      "apiVersion": "connector.example.org/v1alpha1",
+      "kind": "Container",
+      "name": "api",
+      "namespace": "connector"
+    },
+    "timeoutSeconds": 30
+  },
+  "same-kind-semantic-counterexample": "replyChannel=requests passes structural target validation; compatibility with the instance-bound reply contract requires semantic review",
+  "semantic-limit-counterexample": "maxAttempts=0 passes structural integer validation; positivity is not proved",
+  "scope": "Existing unchanged Core after explicit author-format adaptation; structural language example, not a current project-CLI input, generic Context/Impact/Apply implementation or executed Connector integration.",
+  "sourceRevision": "e6b4fc67675d70e63b08bf09844d770d155874a8",
+  "inputSha256": {
+    "vocabulary.yaml": "a350804c8494ed88ade16d871b1cd6b49cc7922c2ac69e343b1c1ffc60c27d27",
+    "connector.yaml": "0e3da4928d5ac9cd5bf56dadca2d28fb665d8ab2f2d595ea9bab7b8bcb0eb1b3"
+  },
+  "adaptation": "Map definition to purpose on Schema, Kind, Property and Definition; preserve all other values; preserve integer tokens with json.Number.",
+  "executedAtUtc": "2026-10-15T09:29:33.030853+00:00"
+}

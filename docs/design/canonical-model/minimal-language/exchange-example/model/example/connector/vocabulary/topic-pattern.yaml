@@ -1,0 +1,11 @@
+imports:
+  - package: markitect/core
+    as: Core
+id: topicPattern
+kind: Property
+body: >-
+  Adressschablone mit den im Channel-Vertrag erklärten Platzhaltern.
+spec:
+  type: string
+  minCount: 1
+  maxCount: 1

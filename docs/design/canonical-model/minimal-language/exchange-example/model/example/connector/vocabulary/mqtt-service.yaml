@@ -1,0 +1,9 @@
+imports:
+  - package: markitect/core
+    as: Core
+id: MqttService
+kind: Kind
+body: >-
+  Beschreibt die benötigte MQTT-Infrastruktur. Sie vermittelt Nachrichten anhand von Topics
+  und Abonnements. Bereitstellung und Zugriffsvorgaben werden im konkreten body beschrieben.
+spec: {}

@@ -1,0 +1,130 @@
+{
+  "scope": "Bounded standalone design prototype; NOT the current Markitect compiler or Context/Impact/Apply; no Connector runtime executed.",
+  "sourceRevision": "e6b4fc67675d70e63b08bf09844d770d155874a8",
+  "inputSha256": {
+    "core.yaml": "91abb4af47f1ed59bf602562f83072551103cfaee5091cf312d1451bb8f2de18",
+    "connector.yaml": "5041106806343ac7d6af1732b00b2a59e74a5a9a2dc00db48414924b74d41eab"
+  },
+  "prototypeSha256": "297d0c3c27f22efc96c1c154c2a44612ebcff77b723126edb5690af616a5097e",
+  "trustedSeedCanonicalDigest": "82ec16ad3b3701cc9af96bce60bc06d7bdb43dbbe673cb291ae91e9ef8acfb2d",
+  "baseline": "passed",
+  "trustedCoreDefinitions": 10,
+  "projectDefinitions": 41,
+  "definitions": 51,
+  "kinds": 10,
+  "properties": 28,
+  "edges": 113,
+  "modelDigest": "5b32ed494f03cd0143aceba55f7c4649e6985425931d55e0b09efcc56c16e0e0",
+  "negativeCounterexamples": {
+    "duplicate-identity": "definition.duplicate",
+    "replace-fixed-core": "core.reserved",
+    "unknown-kind": "kind.unresolved",
+    "kind-points-to-instance": "kind.not-kind",
+    "property-list-points-to-instance": "reference.target-kind",
+    "duplicate-property-name": "property.duplicate-name",
+    "property-target-is-instance": "reference.target-kind",
+    "property-target-missing": "property.target-required",
+    "invalid-cardinality-contract": "property.cardinality-contract",
+    "unknown-type-operator": "value.enum",
+    "unknown-formal-constraint": "spec.unknown-property",
+    "missing-required-property": "property.required",
+    "wrong-reference-kind": "reference.target-kind",
+    "missing-exact-version-target": "reference.unresolved",
+    "unknown-instance-field": "spec.unknown-property",
+    "arbitrary-self-typed-node": "kind.not-kind"
+  },
+  "selfTypedKindAndSeedSelfValidation": "passed",
+  "inputOrderIndependence": "passed",
+  "kindPropertyAndInstanceBodyInDigest": "passed",
+  "projectKindNamedKindHasNoSpecialMeaning": "passed",
+  "semanticLimits": [
+    "maxAttempts=0 is structurally accepted",
+    "replyChannel=requests is structurally accepted"
+  ],
+  "exchangeEdges": [
+    {
+      "from": "project/v1/list-documents",
+      "path": "kind",
+      "to": "connector/v1/Exchange"
+    },
+    {
+      "from": "project/v1/list-documents",
+      "path": "spec.command",
+      "to": "project/v1/list-documents-command"
+    },
+    {
+      "from": "project/v1/list-documents",
+      "path": "spec.receiver",
+      "to": "project/v1/onprem"
+    },
+    {
+      "from": "project/v1/list-documents",
+      "path": "spec.replyChannel",
+      "to": "project/v1/replies"
+    },
+    {
+      "from": "project/v1/list-documents",
+      "path": "spec.requestChannel",
+      "to": "project/v1/requests"
+    },
+    {
+      "from": "project/v1/list-documents",
+      "path": "spec.sender",
+      "to": "project/v1/api"
+    }
+  ],
+  "kindEdges": [
+    {
+      "from": "connector/v1/Exchange",
+      "path": "kind",
+      "to": "core/v1/Kind"
+    },
+    {
+      "from": "connector/v1/Exchange",
+      "path": "spec.properties[0]",
+      "to": "connector/v1/Exchange/sender"
+    },
+    {
+      "from": "connector/v1/Exchange",
+      "path": "spec.properties[1]",
+      "to": "connector/v1/Exchange/receiver"
+    },
+    {
+      "from": "connector/v1/Exchange",
+      "path": "spec.properties[2]",
+      "to": "connector/v1/Exchange/command"
+    },
+    {
+      "from": "connector/v1/Exchange",
+      "path": "spec.properties[3]",
+      "to": "connector/v1/Exchange/requestChannel"
+    },
+    {
+      "from": "connector/v1/Exchange",
+      "path": "spec.properties[4]",
+      "to": "connector/v1/Exchange/replyChannel"
+    },
+    {
+      "from": "connector/v1/Exchange",
+      "path": "spec.properties[5]",
+      "to": "connector/v1/Exchange/timeoutSeconds"
+    },
+    {
+      "from": "connector/v1/Exchange",
+      "path": "spec.properties[6]",
+      "to": "connector/v1/Exchange/maxAttempts"
+    }
+  ],
+  "senderPropertyEdges": [
+    {
+      "from": "connector/v1/Exchange/sender",
+      "path": "kind",
+      "to": "core/v1/Property"
+    },
+    {
+      "from": "connector/v1/Exchange/sender",
+      "path": "spec.target",
+      "to": "connector/v1/Container"
+    }
+  ]
+}

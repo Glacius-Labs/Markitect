@@ -6,6 +6,12 @@ The [Project World package](project-world/README.md) has its own reading order a
 
 ## Product direction and work shape
 
+- [Canonical model v1](canonical-model/minimal-language/language-contract.md) — completed language design baseline, confirmed on 16 October 2026; production Go implementation and broader conformance evidence remain separate work.
+- [Canonical model overview](canonical-model/README.md) — the completed baseline, evidence boundaries, working vocabulary and historical sources.
+- [Earlier model-design consolidation](canonical-model/consolidation.md) — chronology from 15 October 2026 and remaining product questions outside the completed language scope.
+- [Grundmodell und Bibliotheksentwurf](product-model-refinement/README.md) — typisierte Prosa, dokumentierte Designentscheidungen und Sprachkandidaten.
+- [Standalone Tasks project documentation](task-management/README.md) — fachliche Gegenprobe als eigenständige Projektspezifikation; Anwendung noch nicht implementiert.
+- [Historical Tasks modeling sketch](task-management-model/README.md) — früherer, abgelöster Modellierungsversuch.
 - [Domain-language pressure test](domain-language-pressure.md)
 - [Goal-led modeling proposal](goal-led-modeling.md)
 - [Product-vision alignment assessment](product-vision-alignment.md)
