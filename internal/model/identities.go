@@ -21,16 +21,17 @@ type identityFinding struct {
 	diagnostic Diagnostic
 }
 
-// checkExactScopeIdentities rejects shared ownership without choosing a
-// winning input model. Intermediate folders may be shared; only Packages with
-// actual declarations claim ownership. Unicode-equivalent but differently
-// spelled paths are intentionally left to the version-bound name phase.
-func checkExactScopeIdentities(scopes []sourceScope) []identityFinding {
+// checkScopeIdentities rejects colliding names and shared ownership without
+// choosing a winning model. Global names include only populated Packages and
+// their prefixes; empty trees still receive each model's local name checks.
+func checkScopeIdentities(scopes []sourceScope) []identityFinding {
 	models := map[string][]int{}
 	packages := map[string][]int{}
+	globalNames := map[string]map[string]map[int]bool{}
 	for index, scope := range scopes {
 		if scope.modelID != "" {
-			models[scope.modelID] = append(models[scope.modelID], index)
+			key := nameKey(scope.modelID)
+			models[key] = append(models[key], index)
 		}
 		seen := map[string]bool{}
 		for _, definition := range scope.definitions {
@@ -38,19 +39,53 @@ func checkExactScopeIdentities(scopes []sourceScope) []identityFinding {
 			if !seen[pkg] {
 				packages[pkg] = append(packages[pkg], index)
 				seen[pkg] = true
+				for prefix := pkg; prefix != ""; prefix = parent(prefix) {
+					key := nameKey(prefix)
+					if globalNames[key] == nil {
+						globalNames[key] = map[string]map[int]bool{}
+					}
+					if globalNames[key][prefix] == nil {
+						globalNames[key][prefix] = map[int]bool{}
+					}
+					globalNames[key][prefix][index] = true
+				}
 			}
 		}
 	}
 	var findings []identityFinding
-	for id, owners := range models {
+	for _, owners := range models {
 		if len(owners) > 1 {
 			for _, index := range owners {
 				scope := scopes[index]
 				findings = append(findings, identityFinding{scope: index, diagnostic: Diagnostic{
-					Code: "name.model_collision", Message: fmt.Sprintf("Model ID %q is supplied more than once.", id),
+					Code: "name.model_collision", Message: fmt.Sprintf("Model ID %q collides with another supplied model ID.", scope.modelID),
 					Source: source(scope.origin, scope.manifest),
 				}})
 			}
+		}
+	}
+	for _, spellings := range globalNames {
+		if len(spellings) < 2 {
+			continue
+		}
+		owners := map[int]bool{}
+		var paths []string
+		for path, indices := range spellings {
+			paths = append(paths, path)
+			for index := range indices {
+				owners[index] = true
+			}
+		}
+		if len(owners) < 2 {
+			continue // Already diagnosed by this model's local tree checks.
+		}
+		sort.Strings(paths)
+		for index := range owners {
+			scope := scopes[index]
+			findings = append(findings, identityFinding{scope: index, diagnostic: Diagnostic{
+				Code: "name.package_collision", Message: fmt.Sprintf("Package spellings %q collide across supplied models.", paths),
+				Source: source(scope.origin, scope.manifest),
+			}})
 		}
 	}
 	for pkg, owners := range packages {
@@ -83,32 +118,35 @@ func (c *sourceCompiler) collectDefinition(value Value, file Entry, root string)
 		return // A root-level file has no Definition identity.
 	}
 	if root != "" {
-		pkg = pkg[len(root)+1:]
+		pkg = relativePackage(pkg, root)
 	}
 	c.scope.definitions = append(c.scope.definitions, sourceDefinition{
 		identity: Identity{Package: pkg, ID: id.text}, file: file, envelope: value,
 	})
 }
 
-// checkExactIdentities establishes the first, data-independent identity rule.
-// Unicode-equivalent spellings and category-dependent names are checked by the
-// separate version-bound name phase; this exact check never claims that phase
-// complete. Keeping all declarations also preserves the later ambiguity facts.
-func (c *sourceCompiler) checkExactIdentities() {
+// Keep all declarations, including colliding spellings: neither an exact
+// spelling nor a presumed category may select a winning subset for resolution.
+func (c *sourceCompiler) checkDefinitionIdentities() {
 	declarations := append([]sourceDefinition(nil), c.scope.definitions...)
 	sort.Slice(declarations, func(i, j int) bool {
 		a, b := declarations[i], declarations[j]
-		if a.identity.Package != b.identity.Package {
-			return a.identity.Package < b.identity.Package
+		ak, bk := identityKey(a.identity), identityKey(b.identity)
+		if ak.Package != bk.Package {
+			return ak.Package < bk.Package
 		}
-		if a.identity.ID != b.identity.ID {
-			return a.identity.ID < b.identity.ID
+		if ak.ID != bk.ID {
+			return ak.ID < bk.ID
 		}
 		return a.file.Path < b.file.Path
 	})
 	for i, declaration := range declarations {
-		if i > 0 && declaration.identity == declarations[i-1].identity {
+		if i > 0 && identityKey(declaration.identity) == identityKey(declarations[i-1].identity) {
 			c.problem("name.definition_collision", "Definition identity is declared in more than one source file.", declaration.file, nil)
 		}
 	}
+}
+
+func identityKey(id Identity) Identity {
+	return Identity{Package: nameKey(id.Package), ID: nameKey(id.ID)}
 }

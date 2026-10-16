@@ -36,8 +36,10 @@ Run `python internal/model/generate_unicode.py` from the repository root to
 regenerate `unicode_tables.go` and `unicode_corpus_test.go`. Run the same
 command with `--check` to verify byte-for-byte reproducibility. The generator
 checks every decompressed input and license SHA-256 before producing output.
-It uses only these checked-in files and Python's standard library; it does not
-consult host Unicode tables, locale settings, or the network.
+The test corpus constants reuse the validated checked-in gzip bytes directly;
+generation does not recompress them. It uses only these checked-in files and
+Python's standard library; it does not consult host Unicode tables, locale
+settings, or the network.
 
 The generated tables include Unicode 15.1.0 XID and category ranges, canonical
 decomposition and composition mappings, canonical combining classes, and full

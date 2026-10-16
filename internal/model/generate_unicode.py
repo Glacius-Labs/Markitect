@@ -27,7 +27,7 @@ SOURCES = {
 LICENSE_SHA256 = "e7a93b009565cfce55919a381437ac4db883e9da2126fa28b91d12732bc53d96"
 
 
-def read_pinned(name: str) -> bytes:
+def read_pinned(name: str) -> tuple[bytes, bytes]:
     path = DATA / (name + ".gz")
     compressed = path.read_bytes()
     if len(compressed) < 10 or compressed[:3] != b"\x1f\x8b\x08":
@@ -38,7 +38,7 @@ def read_pinned(name: str) -> bytes:
     digest = hashlib.sha256(data).hexdigest()
     if digest != SOURCES[name]:
         raise ValueError(f"{path}: SHA-256 {digest}, expected {SOURCES[name]}")
-    return data
+    return data, compressed
 
 
 def license_notice() -> str:
@@ -243,12 +243,7 @@ def generate_tables(inputs: dict[str, bytes]) -> bytes:
     return ("\n\n".join(lines) + "\n").encode("utf-8")
 
 
-def gzip_b64(data: bytes) -> str:
-    compressed = gzip.compress(data, compresslevel=9, mtime=0)
-    return base64.b64encode(compressed).decode("ascii")
-
-
-def generate_corpus(inputs: dict[str, bytes]) -> bytes:
+def generate_corpus(compressed_inputs: dict[str, bytes]) -> bytes:
     names = [
         ("unicodeNormalizationTestGzipBase64", "NormalizationTest.txt"),
         ("unicodeCaseFoldingTestGzipBase64", "CaseFolding.txt"),
@@ -270,7 +265,7 @@ def generate_corpus(inputs: dict[str, bytes]) -> bytes:
         "",
     ]
     for const, name in names:
-        payload = gzip_b64(inputs[name])
+        payload = base64.b64encode(compressed_inputs[name]).decode("ascii")
         lines.append(f"const {const} =")
         chunks = [payload[index : index + 100] for index in range(0, len(payload), 100)]
         lines.extend(f'\t"{chunk}"' + (" +" if index + 1 < len(chunks) else "") for index, chunk in enumerate(chunks))
@@ -302,9 +297,14 @@ def main() -> int:
     parser.add_argument("--check", action="store_true", help="fail if generated files differ")
     args = parser.parse_args()
     try:
-        inputs = {name: read_pinned(name) for name in SOURCES}
+        pinned = {name: read_pinned(name) for name in SOURCES}
+        inputs = {name: pair[0] for name, pair in pinned.items()}
+        compressed_inputs = {name: pair[1] for name, pair in pinned.items()}
         license_notice()  # Validate the vendored license even though it is already in output.
-        expected = {TABLES: generate_tables(inputs), CORPUS: generate_corpus(inputs)}
+        expected = {
+            TABLES: generate_tables(inputs),
+            CORPUS: generate_corpus(compressed_inputs),
+        }
         changed = []
         for path, data in expected.items():
             formatted = subprocess.run(
