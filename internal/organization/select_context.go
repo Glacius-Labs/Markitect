@@ -90,6 +90,9 @@ func SelectContext(compiled model.Result, packagePath string, scope []Setting[Sc
 	}
 	result := ContextSelection{packagePath: packagePath, modelID: topology.ModelID(), modelDigest: topology.ModelDigest(), index: make(map[model.Identity]int)}
 	for _, definition := range b.selected {
+		if definition.Definition.Source.Path == "" || definition.Definition.Source.Digest == "" {
+			return ContextSelection{}, fmt.Errorf("missing original source binding for %+v", definition.Definition.Identity)
+		}
 		slices.SortFunc(definition.Reasons, compareContextReasons)
 		result.definitions = append(result.definitions, cloneContextDefinition(definition))
 	}

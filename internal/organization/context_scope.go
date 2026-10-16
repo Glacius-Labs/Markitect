@@ -20,7 +20,7 @@ func (b *contextBuilder) scoped(topology Topology, local []model.Definition, pat
 			return fmt.Errorf("duplicate modeled scope selector %+v", selector.Value)
 		}
 		seen[selector.Value] = true
-		name, err := b.scopeField(selector.Value)
+		name, expectList, err := b.scopeField(selector.Value)
 		if err != nil {
 			return err
 		}
@@ -36,6 +36,9 @@ func (b *contextBuilder) scoped(topology Topology, local []model.Definition, pat
 				continue
 			}
 			values, list := value.Items()
+			if list != expectList {
+				return fmt.Errorf("scope field %q contradicts its bound cardinality", name)
+			}
 			if !list {
 				values = []model.Value{value}
 			}
@@ -59,14 +62,14 @@ func (b *contextBuilder) scoped(topology Topology, local []model.Definition, pat
 	return nil
 }
 
-func (b *contextBuilder) scopeField(rule ScopeRule) (string, error) {
+func (b *contextBuilder) scopeField(rule ScopeRule) (string, bool, error) {
 	kind, found := b.index[rule.Kind]
 	if !found || kind.Definition.Kind != contextCoreKind {
-		return "", fmt.Errorf("scope selector has no bound Kind %+v", rule.Kind)
+		return "", false, fmt.Errorf("scope selector has no bound Kind %+v", rule.Kind)
 	}
 	properties, err := contextProperties(kind.Definition)
 	if err != nil {
-		return "", err
+		return "", false, err
 	}
 	declared := false
 	for _, id := range properties {
@@ -74,23 +77,29 @@ func (b *contextBuilder) scopeField(rule ScopeRule) (string, error) {
 	}
 	property, found := b.index[rule.Property]
 	if !declared || !found || property.Definition.Kind != contextCoreProperty {
-		return "", fmt.Errorf("scope Property %+v is not declared by Kind %+v", rule.Property, rule.Kind)
+		return "", false, fmt.Errorf("scope Property %+v is not declared by Kind %+v", rule.Property, rule.Kind)
 	}
 	typeValue, _, err := contextField(property.Definition, "type")
 	typeName, text := typeValue.Text()
 	if err != nil || !text || typeName != "string" && typeName != "enum" {
-		return "", fmt.Errorf("scope Property requires textual Package values")
+		return "", false, fmt.Errorf("scope Property requires textual Package values")
 	}
+	count, present, err := contextField(property.Definition, "maxCount")
+	maximum, integer := count.Integer()
+	if err != nil || !present || !integer {
+		return "", false, fmt.Errorf("scope Property requires bound cardinality")
+	}
+	list := maximum != "1"
 	nameValue, present, err := contextField(property.Definition, "name")
 	if err != nil {
-		return "", err
+		return "", false, err
 	}
 	if present {
 		name, text := nameValue.Text()
 		if !text || name == "" {
-			return "", fmt.Errorf("invalid bound scope field name")
+			return "", false, fmt.Errorf("invalid bound scope field name")
 		}
-		return name, nil
+		return name, list, nil
 	}
-	return rule.Property.ID, nil
+	return rule.Property.ID, list, nil
 }
