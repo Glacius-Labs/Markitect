@@ -29,7 +29,7 @@ Hierarchy alone grants no authority over intended behavior; the root cannot inve
 
 ### Derive the Lending mandate from its sources
 
-The mandate is a readable view assembled from existing sources, not another authored policy ([configuration](../../design/canonical-model/manager-apply-configuration.md#compile-the-effective-mandate)). For lending:
+The mandate is a readable view assembled from existing sources, not another authored policy ([configuration](../../design/canonical-model/manager-apply-configuration.md#the-mandate-section)). For lending:
 
 > **Assignment:** Realize lending as code, tests and documentation, including reminders through its child Manager.
 >

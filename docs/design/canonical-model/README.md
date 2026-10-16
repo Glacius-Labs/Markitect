@@ -37,6 +37,25 @@ Read in this order:
 | [Library M1](library-example/README.md) | The example model, including its [callable interface](library-example/m1/model/library/callable-interface.yaml), and the [independent expectations](library-example/evaluation-contract.md). |
 | [North star](manager-realization-north-star.md) | Ideas and variants that were not selected, later operations and open questions. |
 
+An implementation that deviates from a contract changes that contract in the same pull request; the documents and the code never drift apart.
+
+| Term | Meaning |
+| --- | --- |
+| Host | Markitect's deterministic orchestration: preparation, scheduling, validation, records and guarded writes. |
+| Manager | The logical owner of one Package's realization; the root Manager owns the whole local model. |
+| Assignment | One owner request with its budget; it links its runs. |
+| Run | One Apply over fixed inputs, from Prepared to one Finished outcome. |
+| Continuation | A further run of the same assignment after a run finished Incomplete. |
+| Task | One Manager responsibility within a run. |
+| Attempt | One submission within a task. |
+| Round | A counted submission per Manager and review purpose; the limit on rework. |
+| Candidate | An immutable artifact tree with its registry revision. |
+| Delivery | A Host-accepted candidate of a task with its reviews, checks and assessments. |
+| Finding | A recorded concern, blocking or advisory, that only an independent review resolves. |
+| Registry | The record of which Manager owns each artifact and which Definitions it realizes. |
+| Mandate | The section of a context package that states responsibility, freedom, authority and limits. |
+| Final evidence check | The Host's deterministic check that all required evidence is current before publication. |
+
 The [delivery plan](../../implementation-plan.md) owns packages, order and dispatch. The [owner discussion](sources/manager-realization-20261016.md) and the supplied [concept assessment](sources/concept-assessment-20261016.txt) and [refinements](sources/concept-refinements-20261016.txt) are the sources; the refinements are part of the concept. The [working-day reflections](../../concepts/reflections/README.md) describe the intended use and later acceptance scenarios.
 
 ## Working vocabulary

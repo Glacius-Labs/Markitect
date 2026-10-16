@@ -41,6 +41,18 @@ internal/
 
 `bootstrap` constructs the concrete adapters and passes them to their consumers through constructors; `cmd/markitect` only calls it. CLI and MCP call the same application operations and own no review, retry or publication policy. `codexappserver` is the first session adapter. `process` is the small shared process-lifetime helper for that adapter and for project checks, not another execution protocol. Repository maintenance and release tooling stay outside these product packages.
 
+The first command surface keeps the verb-table principles of [DEC-017](../../concepts/register.md#dec-017-command-model-top-level-verbs-from-one-verb-table): top-level verbs from one table that drives CLI help, dispatch and the MCP tools, with the same arguments.
+
+| Verb | Purpose |
+| --- | --- |
+| `check` | Compile the model and check coverage and the registry. |
+| `context <package>` | Preview a Manager's context package with inclusion reasons. |
+| `apply [--continue <assignment>]` | Start or continue an Apply. |
+| `status [run]` | Show the assignment and run overview, or one run. |
+| `inspect <run> [task]` | Show the task tree, timeline and per-step input, report, difference and evidence. |
+| `answer <question>` | Bind an owner answer to a question version. |
+| `stop <run>` | Request a stop and report the observed result. |
+
 Inside `run`, start with coherent files such as `task.go`, `coordinator.go`, `review.go`, `budget.go`, `lifecycle.go`, `history.go` and `ports.go`, and split only for a distinct responsibility. Avoid shared Project DTOs, global interface catalogues and untyped property bags. The root `cmd` and `internal` layout replaces the current `src` prefix ([Go module layout](https://go.dev/doc/modules/layout)).
 
 ## Dependency direction and ports

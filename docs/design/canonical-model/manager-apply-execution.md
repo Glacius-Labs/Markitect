@@ -48,6 +48,8 @@ A necessary missing check is a blocking **finding**: a Host-recorded identity, t
 | Resolved | A later independent review cites actual current evidence for the current subject. |
 | Not applicable | A later independent review records grounds on the authorized basis, for example a changed model. |
 
+A finding is **blocking** or **advisory**. Only blocking findings prevent acceptance and count toward review rounds. Advisory findings, such as a suggested simplification, are recorded for the owning Manager and never block.
+
 A Manager may propose a resolution but cannot record one. Budget or round exhaustion cannot resolve a finding. A generic pass, an invented receipt, a failed or unknown check, or an old resolution on a changed subject cannot close it. When a specific case is required, its evidence must show that the case ran; an exit code of zero alone is not enough. If a requirement changes in substance, the old finding becomes not applicable and a new, linked finding carries the changed requirement. Open findings carry into a continuation run even when their candidate files are discarded.
 
 Role context carries the complete set of open findings for the task's responsibility and its recorded dependencies, with their grounds and evidence references. Paging the set is allowed; an unread page cannot discharge an obligation. A receiving Manager that is not responsible for a finding reports that through the common parent, which records the corrected accountability; "not mine" cannot orphan it.
@@ -61,6 +63,8 @@ Accepted deliveries are immutable. If a later blocking finding concerns an accep
 ## Admission, amendments and finite correction
 
 Before any external execution, the Host checks the current run and controller, the allowed action, the source and candidate binding, the admission rule above, the remaining caps and the maximum duration. The reservation and the dispatch record commit together before the call. No call follows a failed or uncertain commit. Settlement is another recorded transition; recovery inspects the known effect instead of replaying it.
+
+A failed call is retried automatically only when the adapter proves that nothing was sent, at most `limits.maxTransientRetries` times, and each attempt is charged; otherwise the invocation is uncertain and is reconciled. A Manager session ends after `limits.maxSessionSteps` steps; the next step starts a recorded replacement session from the journal's summary of the task.
 
 `reviewRounds` is the number of candidate submissions per run, Manager and review purpose (local or integration), including the first; the default is three. The counter is keyed by `(run, Manager, review purpose)`, so recreating a task or session does not reset it. An attempt number identifies one submission within a task; the round counter is the limit. A repeat with the same submission ID and the same bytes returns the existing receipt. A new submission ID is a new round, even with unchanged bytes. A candidate that fails a required check still consumes its round.
 
@@ -76,8 +80,8 @@ Only `run` owns these lifecycle meanings. `apply` requests transitions for verif
 | --- | --- |
 | Prepared | Fixed inputs and a run unit are committed. Start work (Running) or finish without dispatch. |
 | Running | Work, checks, reviews or integration are being coordinated; some tasks may wait while others continue. Move to Waiting only when all remaining useful work depends on external input and no effect is active or uncertain. Move to Verifying when the required deliveries are accepted. |
-| Waiting | Quiescent, with a named next actor and reason: an owner decision, an authorized model edit or another external prerequisite. A context-only answer resumes Running; an answer that changes the basis finishes the run Incomplete once quiescent. |
-| Verifying | Required aggregate checks, the Host's final evidence check and source preflight. A correctable finding returns to Running only if rounds and budget remain. Current passing evidence permits Publishing. |
+| Waiting | Quiescent, with a named next actor and reason: an owner decision, the owner's approval of publication, an authorized model edit or another external prerequisite. A context-only answer resumes Running; an answer that changes the basis finishes the run Incomplete once quiescent. |
+| Verifying | Required aggregate checks, the Host's final evidence check and source preflight. A correctable finding returns to Running only if rounds and budget remain. Current passing evidence permits Publishing, after the owner's approval where the configuration requires it; a declined approval finishes the run Incomplete with its retained candidate. |
 | Publishing | The guarded write and read-back are being observed. No new implementation or competing publication is dispatched. Complete to Finished, or enter Reconciling on partial or unknown observations. |
 | Reconciling | A stop, interruption, controller loss, partial or unknown publication or uncertain execution needs inspection. New work and publication are blocked; only bounded inspection and termination run. Once effects are known, resume the eligible phase on the same basis or finish with the observed result. |
 | Finished | Exactly one immutable outcome below. No further dispatch or publication. Later runs link to it without changing it. |
@@ -94,7 +98,7 @@ Stop requests, input drift and exhaustion first stop admission and reconcile act
 | NoChange | The same assessment and current source and read-back establish that nothing needs publication. Absence of edits alone is not enough. |
 | Stale | Inputs drifted; the run is quiescent and cannot publish. |
 | Stopped | An explicit owner stop reached known quiescence. Work and evidence are retained. |
-| Incomplete | Budget or round exhaustion, an unanswered question or the lack of a viable authorized correction prevents completion. The reason, retained work and open questions are recorded. |
+| Incomplete | Budget or round exhaustion, an unanswered question, a needed model change, a declined publication approval or the lack of a viable authorized correction prevents completion. The reason, retained work and open questions are recorded. |
 | Failed | A definitive acquisition, execution, validation or publication failure. Actual effects are preserved; a known partial publication is Failed, not rolled back. |
 
 An acquisition rejected before Prepared is a preparation failure, not a run. Unknown effects never become Failed just to clear a blocker; they stay Reconciling until established. Later discoveries add findings instead of rewriting results.

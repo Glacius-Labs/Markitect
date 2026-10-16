@@ -58,7 +58,7 @@ The owner's [origin account of 15 October 2026](sources/owner-origin-20261015.md
 | [ENH-004](#enh-004-per-role-agent-configuration-and-model-mixing) | Enhancement | Per-role agent configuration and model mixing | Accepted direction |
 | [ENH-005](#enh-005-exchangeable-executor-for-the-delegated-method) | Enhancement | Exchangeable executor for the delegated method | Endorsed; increment 1 merged |
 | [ENH-006](#enh-006-configurable-teams-for-perspectives-and-four-eyes) | Enhancement | Configurable teams for perspectives and four eyes | Endorsed; design after the first strategy |
-| [OQ-001 to OQ-008](#open-questions) | Open question | Open questions | Open |
+| [OQ-001 to OQ-009](#open-questions) | Open question | Open questions | Open |
 | [IDEA-001](#idea-001-the-model-as-institutional-memory-for-stateless-agents) | Idea | The model as institutional memory for stateless agents | Proposed |
 | [IDEA-002](#idea-002-government-delegated-model-maintenance) | Idea | Government: delegated model maintenance | Owner idea; parked |
 | [IDEA-003](#idea-003-degree-of-freedom-per-manager-and-rule-strictness) | Idea | Degree of freedom per Manager and rule strictness | Owner idea; parked |
@@ -282,6 +282,7 @@ The owner's [origin account of 15 October 2026](sources/owner-origin-20261015.md
   - which convenience verbs exist.
 
   The specification records these choices; anything that changes this decision's direction returns to the owner.
+- **Rebuild note (16 October 2026):** the rebuilt command surface keeps these principles; its first verbs are listed in the [Go architecture](../design/canonical-model/manager-apply-go-architecture.md#source-layout).
 
 ### DEC-018 The knowledge graph explains impact
 
@@ -293,6 +294,7 @@ The owner's [origin account of 15 October 2026](sources/owner-origin-20261015.md
   - The YAML model stays canonical.
   - Whether Decisions become first-class model entries was proposed in KG-02 and is decided in [DEC-022](#dec-022-decisions-are-visible-and-route-through-their-subject).
 - **Historical work items:** KG-01 to KG-03 in the [backlog](https://github.com/Glacius-Labs/Markitect/blob/bc4b49e76f9b9e4b3ec98033a0b8c73d5013b310/docs/work-items/backlog.yaml). The earlier research item R02 is summarized on the [research page](../research/optional-research-r01-r03-20261009.md).
+- **Rebuild note (16 October 2026):** written for the earlier Project model of Statements, Artifacts, Checks and Decisions. How it maps to language v1 and the registry is open ([OQ-009](#open-questions)).
 
 ### DEC-019 Government code starts after Wave 2
 
@@ -323,6 +325,7 @@ The owner's [origin account of 15 October 2026](sources/owner-origin-20261015.md
   - Combining changes never shrinks impact; the monotonicity test covers the narrowed routing.
 - **Consequences:** impact and plans for these edits become much smaller, and impact digests change once, so `--since` plans must be replanned. An obligation written only in a purpose routes narrowly, as one written in a description already does.
 - **Historical work items:** KG-02 in the [backlog](https://github.com/Glacius-Labs/Markitect/blob/bc4b49e76f9b9e4b3ec98033a0b8c73d5013b310/docs/work-items/backlog.yaml).
+- **Rebuild note (16 October 2026):** written for the earlier Project model of Statements, Artifacts, Checks and Decisions. How it maps to language v1 and the registry is open ([OQ-009](#open-questions)).
 
 ### DEC-022 Decisions are visible and route through their subject
 
@@ -333,6 +336,7 @@ The owner's [origin account of 15 October 2026](sources/owner-origin-20261015.md
   - The actor is provenance, never authority.
 - **Consequences:** ManagerContext digests change for Managers that own Decisions; plans for Decision edits select fewer Managers.
 - **Historical work items:** KG-02 in the [backlog](https://github.com/Glacius-Labs/Markitect/blob/bc4b49e76f9b9e4b3ec98033a0b8c73d5013b310/docs/work-items/backlog.yaml).
+- **Rebuild note (16 October 2026):** written for the earlier Project model of Statements, Artifacts, Checks and Decisions. How it maps to language v1 and the registry is open ([OQ-009](#open-questions)).
 
 ### DEC-023 Impact marks change and context without dropping either
 
@@ -344,6 +348,7 @@ The owner's [origin account of 15 October 2026](sources/owner-origin-20261015.md
   - Dropping context-only Managers from plans or briefings waits for measured evidence from the playground (KG-03).
 - **Consequences:** the impact result gains fields, so its digest changes once; invalidation and plans do not change.
 - **Historical work items:** KG-02 and KG-03 in the [backlog](https://github.com/Glacius-Labs/Markitect/blob/bc4b49e76f9b9e4b3ec98033a0b8c73d5013b310/docs/work-items/backlog.yaml).
+- **Rebuild note (16 October 2026):** written for the earlier Project model of Statements, Artifacts, Checks and Decisions. How it maps to language v1 and the registry is open ([OQ-009](#open-questions)).
 
 ### DEC-024 First reliable Apply rebuild and coordinated start
 
@@ -424,8 +429,8 @@ The owner's [origin account of 15 October 2026](sources/owner-origin-20261015.md
 
 ### DEC-035 Committed model in, owner commit accepts the result
 
-- **Status:** Accepted, owner, 16 October 2026, adopting recommendation B8 ([source](sources/consolidation-discussion-20261016.md#adopt-the-recommendations)).
-- **Statement:** Apply reads the model, configuration, registry and ignore policy from the committed state and refuses to start with uncommitted changes outside ignored paths. It writes its verified result only into the working tree and never commits, merges or pushes. The owner's commit of the published result is the acceptance, just as a committed model revision is the accepted specification.
+- **Status:** Accepted, owner, 16 October 2026, adopting recommendations B8 and A7 ([source](sources/consolidation-discussion-20261016.md#adopt-the-recommendations), [all recommendations](sources/consolidation-discussion-20261016.md#adopt-all-recommendations)).
+- **Statement:** Apply reads the model, configuration, registry and ignore policy from the committed state and refuses to start with uncommitted changes outside ignored paths. It writes its verified result only into the working tree and never commits, merges or pushes. The owner's commit of the published result is the acceptance, just as a committed model revision is the accepted specification. A project can also require the owner's approval before publication for selected Packages.
 - **Owning documents:** the [Apply concept](../design/canonical-model/manager-apply-concept.md#apply-lifecycle) and the [port contracts](../design/canonical-model/manager-apply-port-contracts.md#guarded-publication-port).
 
 ## Promises
@@ -484,6 +489,7 @@ These are the target outcomes Markitect is built to deliver. Each has the status
 - **Statement:** The specification is not a one-off feature document. Every change has to cover the new intent and also keep all obligations that still apply in view.
 - **Proposed mechanism:** Each affected modeled obligation gets a responsible party and an explicit verification or fulfillment state, so that no work silently drops out of consideration.
 - **Related:** [PRM-001](#promises), [CPT-003](#cpt-003-two-parts-of-the-promise), [OQ-006](#open-questions).
+- **Design (16 October 2026):** the Definition census of every delivery gives each local Definition a responsible Manager and an explicit disposition ([Apply concept](../design/canonical-model/manager-apply-concept.md#deliveries-and-evidence)).
 
 ## Future enhancements
 
@@ -500,6 +506,7 @@ These entries record agreed or endorsed direction. Recording an enhancement does
   - Core stays free of inferred source-code semantics ([AGENTS.md](../../AGENTS.md), [architecture](../architecture.md)).
 - **Constraint (owner):** These dependencies are specific to each programming language. They cannot be checked the same deterministic way for every kind of file.
 - **Historical work item:** IDEA-02 in the [backlog](https://github.com/Glacius-Labs/Markitect/blob/bc4b49e76f9b9e4b3ec98033a0b8c73d5013b310/docs/work-items/backlog.yaml).
+- **Design link (16 October 2026):** observed code dependencies are planned as input to the Optimizer, which proposes missing model links ([north star](../design/canonical-model/manager-realization-north-star.md#later-operations-and-extensions)).
 
 ### ENH-002 Model-quality linter and metrics
 
@@ -514,6 +521,7 @@ These entries record agreed or endorsed direction. Recording an enhancement does
 
   Output is findings and recommendations, including AI-assisted ones. They are not hard gates by default ([DEC-005](#dec-005-model-granularity-is-the-authors-responsibility)).
 - **Historical work item:** IDEA-03 in the [backlog](https://github.com/Glacius-Labs/Markitect/blob/bc4b49e76f9b9e4b3ec98033a0b8c73d5013b310/docs/work-items/backlog.yaml).
+- **Design link (16 October 2026):** model lint is planned on registry signals ([north star](../design/canonical-model/manager-realization-north-star.md#later-operations-and-extensions)).
 
 ### ENH-003 Test-to-statement binding and test review
 
@@ -523,6 +531,7 @@ These entries record agreed or endorsed direction. Recording an enhancement does
   - Add a review that asks whether a test actually verifies its statement.
   - Report statements whose only evidence is a test that has not been reviewed ([CPT-002](#cpt-002-tests-are-realizations-too)).
 - **Historical work item:** IDEA-04 in the [backlog](https://github.com/Glacius-Labs/Markitect/blob/bc4b49e76f9b9e4b3ec98033a0b8c73d5013b310/docs/work-items/backlog.yaml).
+- **Design (16 October 2026):** Definition assessments name the tests that would fail if the Definition were violated, and reviewers judge whether they discriminate ([Apply concept](../design/canonical-model/manager-apply-concept.md#deliveries-and-evidence)). Scenario Definitions in the model are a planned extension ([north star](../design/canonical-model/manager-realization-north-star.md#later-operations-and-extensions)).
 
 ### ENH-004 Per-role agent configuration and model mixing
 
@@ -560,6 +569,7 @@ These entries record agreed or endorsed direction. Recording an enhancement does
   - Authority does not change. Scope checks, fixed snapshots and guarded Apply apply to every executor, and submitted reviews remain AI evidence, not human acceptance.
 - **Rebuild consequence (design, under [DEC-024](#dec-024-first-reliable-apply-rebuild-and-coordinated-start) and [DEC-032](#dec-032-quality-simplicity-and-stability-over-effort-and-compatibility)):** the rebuild replaces the current executor boundary with the provider-neutral session port `run.Sessions`. Its first adapter is the Codex App Server. The process executor, exchange packets and Claude wrapper are deleted at the cutover, and further executors such as Claude Code implement the same port ([rebuild plan](../design/canonical-model/manager-apply-rebuild-plan.md#first-adapter)). The direction of this entry stays.
 - **Historical work items:** RUN-01 (merged as pull request #104), RUN-02, RUN-03 and RUN-05 in the [backlog](https://github.com/Glacius-Labs/Markitect/blob/bc4b49e76f9b9e4b3ec98033a0b8c73d5013b310/docs/work-items/backlog.yaml).
+- **Design link (16 October 2026):** a Claude Code session adapter is planned as a later extension, so that reviewers can come from a different model family ([north star](../design/canonical-model/manager-realization-north-star.md#later-operations-and-extensions)).
 
 ### ENH-006 Configurable teams for perspectives and four eyes
 
@@ -578,8 +588,9 @@ These entries record agreed or endorsed direction. Recording an enhancement does
 | OQ-004 | How much independence does a different reviewer model add beyond fresh context? | [ASM-005](#assumptions-and-hypotheses) |
 | OQ-005 | Should evaluation focus on a series of changes on a long-lived project? If so, what ground truth makes "nothing forgotten" measurable there, for example predeclared affected sets, seeded cross-cutting rules and hidden holdout checks? | [DEC-009](#dec-009-the-central-evaluation-question), [PRM-001](#promises) |
 | OQ-007 | How reliable is the native delivery path? The combined A01 native smoke passed once (Actual28, on a Windows host) after 27 failed attempts, was not repeated, and never ran on Linux ([A01 record](../validation/a01-native-smoke-20261010.md)). | [DEC-013](#dec-013-linux-first-for-tests-and-the-playground), [ENH-005](#enh-005-exchangeable-executor-for-the-delegated-method) |
-| OQ-006 | How much current-state context does a bounded Manager need, so that limited responsibility does not become artificial blindness? The original product chat's hypothesis: shared contracts, plus current-state context on demand (Concepts note C19). | [CPT-001](#cpt-001-federalism), [CPT-004](#cpt-004-the-specification-stays-effective) |
+| OQ-006 | How much current-state context does a bounded Manager need, so that limited responsibility does not become artificial blindness? The original product chat's hypothesis: shared contracts, plus current-state context on demand (Concepts note C19). Design: context packages plus recorded targeted reads ([Apply concept](../design/canonical-model/manager-apply-concept.md#context-packages)); evidence from real runs is pending. | [CPT-001](#cpt-001-federalism), [CPT-004](#cpt-004-the-specification-stays-effective) |
 | OQ-008 | Should the Manager organization become the application's entry point, with the canonical model as its foundation, and would that better support a later Government axis? Owner framing, 16 October 2026: „Eventuell wäre das sogar die bessere Betrachtungsweise“ ([source](../design/canonical-model/sources/manager-realization-20261016.md#apply-first-and-delegation-from-the-root)). | [DEC-004](#dec-004-the-manager-hierarchy-is-core-government-belongs-to-a-later-axis), [DEC-026](#dec-026-apply-comes-first-and-changes-only-artifacts) |
+| OQ-009 | How do DEC-018 and DEC-021 to DEC-023, written for the earlier Project model, map to language v1 and the registry once computed scope is built? | [DEC-018](#dec-018-the-knowledge-graph-explains-impact), [computed scope](../design/canonical-model/manager-apply-concept.md#toward-computed-scope) |
 
 ## Ideas
 

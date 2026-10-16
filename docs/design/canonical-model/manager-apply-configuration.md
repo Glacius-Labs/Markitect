@@ -31,6 +31,9 @@ limits:
   maxStepTimeout: 10m
   hostOperationTimeout: 2m
   maxReviewRounds: 3
+  maxContextBytes: 400000
+  maxSessionSteps: 40
+  maxTransientRetries: 2
   creationRoots: [realization]
 assignment:
   runs: 3
@@ -46,6 +49,7 @@ defaults:
     manager: library-agent
     reviewer: library-agent
   reviewRounds: 3
+  batchNoChangeReviews: false
   stepTimeout: 10m
   creationRoots: [realization]
 packages:
@@ -57,6 +61,8 @@ checks:
     directory: realization
     args: [test, ./...]
     timeout: 2m
+acceptance:
+  ownerApproval: []
 notifications:
   questions: grouped
   incidents: immediate
@@ -64,11 +70,13 @@ notifications:
 
 Everything under `limits` is a hard project ceiling. `assignment` sets the default caps of a new assignment; an owner extension can raise them up to `maxRuns`, `maxSessionStarts`, `maxSteps` and `maxExecutionTime`. `maxStepTimeout`, `maxReviewRounds` and `creationRoots` are ceilings, not consumable counters. `hostOperationTimeout` bounds each Host control operation outside the budget. `completionReserve` is part of the caps, not extra allowance; a reserve that the execution contract's preparation check rejects stops the run before dispatch.
 
+`maxContextBytes` bounds a rendered context package; exceeding it stops preparation with a finding to split the Package. `maxSessionSteps` bounds one Manager session before a replacement session starts from the journal summary. `maxTransientRetries` bounds automatic retries of calls that provably sent nothing. `batchNoChangeReviews` lets one reviewer session assess several no-change deliveries, each with its own verdict. `acceptance.ownerApproval` lists Packages whose changes wait for the owner's approval before publication; it is empty by default, because the owner's commit already accepts the result.
+
 `scope` optionally names the Kinds and reference Properties through which the model states a Definition's scope, for example `scope: [{kind: software/Rule, property: software/appliesTo}]`. A Definition whose scope covers a Package enters the context of that Package's Managers. The configuration never lists individual Definitions; M1 needs no `scope`, because its shared rules reach every area through explicit links.
 
 `limits.creationRoots` bounds the permitted creation areas; defaults and Package settings select within it. Here the code, tests and documentation live below `realization/`. Existing artifacts still need registry ownership, and a directory permission grants no other Manager's files or protected model and configuration paths. A check's `directory` is confined to its captured candidate, and its arguments are literal, never a shell command.
 
-`defaults` applies to every local Package Manager, including the root. `packages` keys are exact local Package paths, and `.` is the root. An unknown or imported Package key is an error, not a request to create a Manager. Local and integration reviews use the reviewer profile in fresh sessions; the final evidence check is deterministic Host work. The first strategy is Manager plus reviewer with sequential writing.
+`defaults` applies to every local Package Manager, including the root. `packages` keys are exact local Package paths, and `.` is the root. An unknown or imported Package key is an error, not a request to create a Manager. Local and integration reviews use the reviewer profile in fresh sessions. Once a second session adapter exists, the default reviewer profile uses a different model family than the Manager profile ([ASM-005](../../concepts/register.md#assumptions-and-hypotheses)); the final evidence check is deterministic Host work. The first strategy is Manager plus reviewer with sequential writing.
 
 Custom instructions are optional file lists under `defaults.instructions` or `packages.<path>.instructions`, keyed by `manager` or `reviewer`, captured with their original bytes. Instructions carry operational guidance only, such as reporting style or tool usage; a project rule in them is a review finding and belongs in the model ([concept](manager-apply-concept.md#four-kinds-of-input-and-record)). The parent still supplies each task's outcome prompt, and the user's instruction goes to the root only.
 
@@ -104,9 +112,9 @@ The selected bytes and identities enter the run's input binding and are rechecke
 
 The assignment stores the owner input and goal, constraints, operation target, project identity, caps and authority source. Omitted caps use the `assignment` defaults. Renewing an exhausted cap needs a recorded extension within the project ceilings; raising a ceiling needs an authorized configuration edit. Starting another run grants nothing. The first product has one local operator as decision owner and no identity service based on Agent-reported names. An accepted decision can authorize a continuation run within the assignment; it never authorizes merge, release, deployment or production-data edits.
 
-## Compile the effective mandate
+## The mandate section
 
-`organization` renders an inspectable `MandateView` from supplied facts; `run` passes task and assignment facts as plain inputs, so organization does not import run. The view carries its content identity and source references and is bound to the task record. The Manager and its reviewer both receive it; the reviewer uses it as evidence under its own read-only grant, never as write authority.
+`organization` renders the mandate as a section of the context package, not as a separate record; `run` passes task and assignment facts as plain inputs, so organization does not import run. The section carries its source references and is bound to the task record with the rest of the package. The Manager and its reviewer both receive it; the reviewer uses it as evidence under its own read-only grant, never as write authority.
 
 For lending it states:
 
@@ -117,7 +125,7 @@ For lending it states:
 - Reserved choices: changed business rules, authority or protected inputs need a decision outside artifact Apply.
 - Limits: the remaining assignment capacity, local step and round limits and the mandatory gates.
 
-The view may display the bound loan limit but cites `loan-policy` as its authority, so M2 changes one canonical value and no mandate text. The reviewer checks material decisions against their source-bound authority as well as their behavior. The Host validates the typed boundaries; judging semantic authority remains reviewable Agent work.
+The section may display the bound loan limit but cites `loan-policy` as its authority, so M2 changes one canonical value and no mandate text. The reviewer checks material decisions against their source-bound authority as well as their behavior. The Host validates the typed boundaries; judging semantic authority remains reviewable Agent work.
 
 ## Questions and owner attention
 
@@ -127,4 +135,4 @@ A question records the decision needed, its source-grounded reason, a recommenda
 
 Owner answers enter through the application boundary, bound to the question version and its source basis. An Agent cannot answer as the owner by filling a field. Accepting the exact displayed edit needs no second confirmation. Changed proposals, deferral and stale bases follow the [journal contract](manager-apply-journal.md#questions-answers-and-model-changes).
 
-Configuration needs negative cases for exact overrides versus task restrictions, ceilings, unknown Packages and profiles, invalid reserves, protected inputs and conflicting instructions. Experience hints and an operational doctor are later extensions ([north star](manager-realization-north-star.md#later-operations-and-extensions)).
+Configuration needs negative cases for exact overrides versus task restrictions, ceilings, unknown Packages and profiles, invalid reserves, protected inputs, conflicting instructions, oversized contexts and unknown approval Packages. Experience hints and an operational doctor are later extensions ([north star](manager-realization-north-star.md#later-operations-and-extensions)).

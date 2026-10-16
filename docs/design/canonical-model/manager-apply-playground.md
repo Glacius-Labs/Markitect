@@ -71,7 +71,7 @@ Agent/provider processes receive only the inputs and candidate workspaces their 
 7. **Freeze and assess A2.** Require confirmed publication and capture as for A1. Run generated tests and all independent M2 cases, plus the dedicated M1 discrimination witness. Review the actual A1-to-A2 diff and current source/registry against M2. Execute unchanged families against both artifacts; investigate collateral changes. A large rewrite is reviewable evidence, not automatically an error or automatically good reconciliation.
 8. **Compare.** Produce the final bound report, with separate behavioral, source-review, product-execution and human-acceptance results. Recheck protected inputs/hashes, preserve every failed attempt and ensure no live Agent remains. Retain A1 and A2 and their build recipes so assessments can be repeated without launching Agents.
 
-Each Apply has its own frozen caps, and the report shows the consumption of both. No review approval carries over from R1 to R2. A budget failure is an incomplete experiment with recorded evidence. Owner questions and authorized model edits follow the product's journal contract; the runner pauses for real owner interaction instead of inventing answers. That interaction is not required to occur in this unambiguous baseline case.
+If a run asks a question during the baseline sequence, the runner records it as an owner intervention. A question about a rule M1 already resolves counts as a defect, an unnecessary escalation. Each Apply has its own frozen caps, and the report shows the consumption of both. No review approval carries over from R1 to R2. A budget failure is an incomplete experiment with recorded evidence. Owner questions and authorized model edits follow the product's journal contract; the runner pauses for real owner interaction instead of inventing answers. That interaction is not required to occur in this unambiguous baseline case.
 
 ## Independent assessment boundary
 
@@ -89,6 +89,7 @@ The readable report answers:
 
 - What did A1 and A2 actually implement, and did each match its selected model?
 - Did the fourth-loan witness change exactly as expected, while common rules still held?
+- Was every cross-Package obligation of M1 realized? The report lists them, such as suspension enforced by lending, availability released by returns and documentation for every area, with the evidence for each. This makes "nothing forgotten" ([PRM-001](../../concepts/register.md#promises)) visible for this model.
 - Which files/Definition assessments changed, and did the model-only patch precede R2?
 - Which real sessions, child prompts, messages, rework rounds and integration steps produced the result? Was the final evidence check bound to the published aggregate?
 - Were original inputs and protected expectations intact, and were cleanup and publication confirmed?

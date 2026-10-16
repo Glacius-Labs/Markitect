@@ -53,3 +53,40 @@ Recorder's note: The assistant's list ended with a recommendation to decide twel
 - C2: no Superseded handoff; a run that needs a changed basis finishes Incomplete, and a continuation follows.
 
 The other items of the list remain proposals.
+
+## Adopt all recommendations
+
+> Stelle sicher, dass du deine Empfehlungen alle in das Konzept einarbeitest und nichts vergisst
+
+Recorder's note: The owner extended the adoption to every item of the assistant's list. The items beyond the first twelve were incorporated as follows:
+
+- A5: a path toward computed scope, with the data recorded from the first run on (concept, "Toward computed scope").
+- A6: DEC-018 and DEC-021 to DEC-023 are marked as written for the earlier Project model; their mapping is OQ-009.
+- A7: optional owner approval before publication for selected Packages (configuration, execution, DEC-035).
+- A8: project-wide conventions are model Rules with project scope, checked by the root's integration review.
+- A9: Definition assessments name the tests that would fail on violation; reviewers judge their discrimination.
+- B3: each area owns its internal API; consumers use only it.
+- B6: a fixed Definition-assessment schema; every Definition needs a disposition other than unresolved.
+- B7: a context size limit that stops preparation instead of truncating.
+- B9: blocking and advisory findings; only blocking ones count.
+- B11: product-owned, versioned role prompts whose identity is recorded.
+- B12: the observed model edit is compared with the approved patch; deviations are shown, not blocked.
+- B13: automatic retries only for calls that provably sent nothing, each charged.
+- B14: questions in the baseline demonstration count as interventions; questions about rules M1 resolves count as defects.
+- B15: a session step limit with a replacement session from the journal summary.
+- B16: the first command surface keeps DEC-017's verb-table principles.
+- C3: composition is a disjoint union; overlap is a Host error.
+- C4: one journal stream per repository.
+- C5: the mandate is a section of the context package.
+- C6: four question states.
+- C7: pass-through intermediate Packages start no Agent.
+- C8: no Kind guidance in the first version.
+- D1: two-phase, model-first reviews.
+- D2: optional batching of no-change reviews.
+- D3: reviewers from a different model family once a second adapter exists.
+- D4: a fixed set of run measures.
+- D5: the Playground report lists every cross-Package obligation of M1 with its evidence.
+- D6: a glossary in the design map.
+- D7: an implementation that deviates from a contract changes it in the same pull request.
+- D8: register notes on CPT-004, OQ-006 and ENH-003.
+- E1 to E10: recorded as later extensions in the north star and linked from the register entries they serve.

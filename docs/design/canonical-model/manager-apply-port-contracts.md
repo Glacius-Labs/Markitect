@@ -13,7 +13,7 @@ This contract owns the Go interfaces between the Apply core and its adapters, th
 | Candidate reference | `realization`: an immutable artifact tree with its matching registry revision and base provenance. Not a workspace path. |
 | Task and attempt | `run`: task ID, parent, Manager, operation, complete responsibility, outcome, model basis, input binding, base candidate and budget view. Rework adds an attempt; it never invents a new responsibility. |
 | Assignment and continuation | `run`: one owner request with its caps and linked fixed-basis runs. Continuation runs get new task and session identities with provenance links; retained work inherits no approval. |
-| Effective mandate | `organization` renders the source-bound view; `run` binds it to the task. The reviewer assesses that authority under its own read-only grant. |
+| Context package | `organization` renders it, including the mandate section; `run` binds it to the task. The reviewer assesses the mandate's authority under its own read-only grant. |
 | Actor, session and step | `run`: role and scope, logical session ID and unique dispatch step ID, assigned before any effect. Provider handles stay adapter data. |
 | Review subject | `run`: input binding, exact candidate with registry, task scope and purpose (local or integration). |
 | Accepted delivery | `run`: Host-issued ID, exact subject, delivered scope, Definition assessments, child delivery IDs, review and check evidence, report. Agents cannot create one. |
@@ -71,7 +71,7 @@ The sender of a delegation is the bound session; it cannot choose its own author
 
 Work proposals are explanations, not trusted diffs. Definition assessments cover every local Definition with a disposition, grounds and evidence references; vocabulary-only must show where concrete uses meet their obligations. Registry proposals refer to Host-authorized path claims. A no-change proposal needs the same assessment as a changed candidate.
 
-A `Finding` has a Host-recorded ID, the affected responsibility, its model and input basis, the requested evidence and the originating reviewer; a candidate reference is optional for concerns raised before a candidate exists. A `FindingStateChange` moves an existing finding to resolved (with current evidence) or not applicable (with grounds), as defined in the [execution contract](manager-apply-execution.md#evidence-need-survives-budget-pressure). Only a bound independent reviewer can issue one. Verdicts distinguish pass, changes requested, needs decision and failed assessment. The Host derives the open findings from task, child and predecessor history and validates provenance and bindings; whether evidence suffices remains the reviewer's judgment.
+A `Finding` has a Host-recorded ID, a severity (blocking or advisory), the affected responsibility, its model and input basis, the requested evidence and the originating reviewer; a candidate reference is optional for concerns raised before a candidate exists. A `FindingStateChange` moves an existing finding to resolved (with current evidence) or not applicable (with grounds), as defined in the [execution contract](manager-apply-execution.md#evidence-need-survives-budget-pressure). Only a bound independent reviewer can issue one. Verdicts distinguish pass, changes requested, needs decision and failed assessment. The Host derives the open findings from task, child and predecessor history and validates provenance and bindings; whether evidence suffices remains the reviewer's judgment.
 
 A dependent task starts only from an accepted producer delivery composed into its base ([execution contract](manager-apply-execution.md#accepted-deliveries-and-dependent-work)). Step and workspace records bind what was actually supplied: prompts, context, composed deliveries, continued-session history and later replies.
 
@@ -160,7 +160,7 @@ type Workspaces interface {
 
 The Host owns claims and decisions; the adapter observes files. New paths need a reservation before writing, and a later claim never authorizes an earlier unauthorized write. Freeze observes all relevant paths, including deletions and protected model and configuration inputs; read-only review access is checked the same way. These checks do not claim isolation from other same-user processes.
 
-A frozen candidate is immutable; checks and reviews use it, never a mutable path with the same name. Before another writing attempt, the workspace must match its expected start or be rematerialized. Rejected candidates are stored with their evidence. Composition rules are pure functions in `realization` that compare exact bases, owned changes and registry changes and return a fixed plan or conflicts. `Materialize` applies the plan and reports what it observed; it never merges competing semantics or picks an owner.
+A frozen candidate is immutable; checks and reviews use it, never a mutable path with the same name. Before another writing attempt, the workspace must match its expected start or be rematerialized. Rejected candidates are stored with their evidence. Composition rules are pure functions in `realization` that compare exact bases, owned changes and registry changes and return a fixed plan. With one owner per file and one writer at a time, composition is a disjoint union; an overlap is returned as a Host error. `Materialize` applies the plan and reports what it observed; it never merges competing semantics or picks an owner.
 
 ## Check execution port
 
@@ -187,7 +187,7 @@ type Journal interface {
 }
 ```
 
-Payloads are immutable content-addressed bytes whose references keep media and encoding information; reads verify identity. A batch names the assignment, a unique batch ID, the expected stream revision and typed events, each bound to its run, task, actor, session, step, attempt, candidate and causal predecessors. Referenced payloads are durable before acknowledgement. Append is one logical commit under one coordinated writer; identical repeats return the original receipt, different bytes are rejected, and a stale revision stops dispatch. The [journal contract](manager-apply-journal.md) owns the physical store. A required journaling failure prevents further work but never erases an effect that may already have happened.
+Payloads are immutable content-addressed bytes whose references keep media and encoding information; reads verify identity. A batch names a unique batch ID, the expected revision of the repository's stream and typed events, each bound to its assignment, run, task, actor, session, step, attempt, candidate and causal predecessors. Referenced payloads are durable before acknowledgement. Append is one logical commit under one coordinated writer; identical repeats return the original receipt, different bytes are rejected, and a stale revision stops dispatch. The [journal contract](manager-apply-journal.md) owns the physical store. A required journaling failure prevents further work but never erases an effect that may already have happened.
 
 ## Guarded publication port
 
