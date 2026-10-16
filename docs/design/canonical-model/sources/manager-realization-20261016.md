@@ -68,3 +68,7 @@ Recorder's note: These are verbatim owner messages from the design discussion in
 ## Reporting and communication history
 
 > Ausserdem brauchen wir Reporting, bzw irgendwas um später nachvollziehen zu können welcher Agent welchen Prompt bekommen hat und was reportet hat und wie generell die Kommunikation lief und was wie in welchem Step geflossen und geändert wurde.
+
+## Develop and present the concept
+
+> Ich denke damit habe ich soziemlich alles an Input geliefert was mir dazu einfällt und was mir wichtig ist. Kannst du daraus jetzt ein Konzept entwickeln und die Details klären und mir dann deine Lösung oder dein Konzept vorstellen?

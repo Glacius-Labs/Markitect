@@ -2,6 +2,8 @@
 
 Date: 16 October 2026. Working design direction and open variants from the [owner discussion](sources/manager-realization-20261016.md). The owner selected strict authored links with an optional Optimizer as the context baseline. Other alternatives retain their stated status; recording them does not schedule implementation. The [language specification v1](minimal-language/language-contract.md) remains the owner of the canonical language. The [concept register](../../concepts/register.md) owns accepted product decisions.
 
+The [developed Apply concept](manager-apply-concept.md) proposes concrete answers to the open questions below and walks through a library system. It is a proposal for owner review; this north star preserves the original direction and alternative ideas.
+
 ## Purpose and direction
 
 The canonical model describes the intended project world. Managers organize its realization as code, tests, documentation and other required artifacts. The intended management structure follows the model's Packages: one Manager per Package, with each Manager responsible for integrating its area. The root Manager is an ordinary Manager at the top of the hierarchy. Project Manager was a descriptive name for that position, not a separate role or Kind. Manager remains the working name.
