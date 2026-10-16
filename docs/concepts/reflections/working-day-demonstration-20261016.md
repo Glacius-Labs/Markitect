@@ -646,6 +646,31 @@ The existing reviewer starts from the canonical obligation and asks which foreig
 
 Small preparation/workflow cases can omit a declared required context item, leave a concrete implementation premise unavailable, or supply contradictory bound evidence. The expected observations differ: structural preparation failure, targeted retrieval before the dependent action, or an explicit unresolved discrepancy. Include a normal in-mandate choice that proceeds without needless retrieval to avoid rewarding perpetual hesitation. These are proposed cases, not a guarantee that an Agent recognizes every missing dependency.
 
+### Prefer authorized action over exhaustive certainty
+
+The [owner asked how to prevent endless context loading and questions](../sources/working-day-discussion-20261016.md#avoid-endless-context-loading-and-questions). Make deciding within the mandate the default duty. An implementation choice does not need a uniquely best answer before work can proceed. Apply the existing [decision-authority rules](desired-working-day-20261016.md#decision-authority-and-escalation); this clarification adds no permission gate or separate research workflow.
+
+The earlier question "would another fact change my action?" needs a materiality boundary. More information might always suggest a different implementation. Additional context is necessary when it could change compliance with intent, authority, an applicable nonfunctional requirement or a consequential interaction with another area, not merely because it might reveal a more elegant option. Mandatory context and checks remain mandatory irrespective of this judgment.
+
+| Situation | Default response |
+| --- | --- |
+| Several local implementations satisfy known obligations and remain inside the mandate. | Choose a simple maintainable option consistent with the observed project conventions, implement it and use normal review/checks. Do not ask the owner to choose helper layout, local names or another routine preference. |
+| A concrete missing fact could alter correctness, ownership or a relevant contract. | Perform the smallest targeted read or bounded diagnostic check that can resolve it. A harmless diagnostic experiment can establish implementation behavior; it cannot invent business policy. |
+| An existing cross-area contract or technical disagreement needs coordination. | Use the nearest authorized parent and existing tasks. Technical difficulty does not automatically become an owner policy question. |
+| A material business decision or additional authority is genuinely absent. | Escalate that exact decision with the existing concrete question format. If only execution capacity is missing, request bounded additional capacity where justified or stop incomplete; do not fabricate a business decision. |
+
+Before discretionary context expansion, the Manager should be able to state briefly: "I need fact X to distinguish consequence Y from Z; source/check A is the next useful observation." Record this in the ordinary request/task explanation where material, not in another form requiring approval. "I want to understand the whole project better" is not a sufficient reason to delay an otherwise actionable task. A broad exploratory assignment can explicitly grant broader investigation; this default concerns bounded realization work.
+
+After a targeted read/check, decide the next action: proceed within the mandate, inspect a newly evidenced concrete dependency, coordinate a conflict, or record a remaining blocker. Do not repeat substantially the same search or collect unrelated files without new evidence or an identified remaining distinction. Use existing step/time/tool limits, protected completion reserves and stagnation handling to bound investigation. No universal fixed number of reads is proposed: it would be either wasteful for simple cases or unsafe for necessary deeper investigation.
+
+For a permissible local design choice, prefer an existing pattern where it meets the current obligations; otherwise use a simple reversible implementation within the granted scope. Reversibility helps select among authorized options but does not authorize a new business rule, a foreign-file write or an unverified external side effect. Material design choices can be explained in the normal work proposal; no owner approval is required merely because alternatives exist.
+
+In the library example, extracting a private helper for the borrowing-limit check is ordinary implementation freedom unless an applicable project rule says otherwise. Whether the current Catalog already derives availability from loan state is a concrete implementation fact worth reading before adding another update path. Whether an extra loan should be allowed above the modeled limit is not a local optimization. The existing limit rule must be followed; a requested exception would require authorized new intent. Whether suspended members may return is already settled by M1 and should not be asked again.
+
+The existing reviewer assesses both sides: unsupported consequential assumptions are findings, but so are unnecessary escalations that offload an already delegated decision or repeated investigation without progress. Do not reward a raw minimum question/read count; that would encourage hiding genuine uncertainty. Record whether additional context resolved a relevant premise and whether owner intervention was actually required, using existing evidence. These are bounded observations, not new agent-ranking metrics or automatic sanctions.
+
+Include both a routine in-mandate choice that completes without an owner question and a genuinely missing contract fact that triggers a targeted read in the existing working-day assessment. Also preserve the true reserved-decision case. Passing means appropriate autonomy, not either zero questions or maximal investigation. This is a proposed behavior to validate, not a claim that prompting alone reliably prevents hesitation.
+
 ## Overall acceptance and repeatability
 
 The proposed initial threshold is three complete series of all four scenarios, using a fresh execution state for each case and the same fixed product/profile basis. Each case starts from its specified recorded baseline; within the recovery case, the interrupted state must survive the restart. Do not replace recovery with a new clean assignment.

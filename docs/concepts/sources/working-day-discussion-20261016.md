@@ -265,3 +265,9 @@ Recorder's note: The assistant proposed [four input parts](../reflections/workin
 > Wie erkennt ein Manager konkret, dass ihm entscheidender Kontext fehlt, statt auf Basis seines begrenzten Eingabepakets eine plausible, aber falsche Entscheidung zu treffen?
 
 Recorder's note: The assistant proposed [checking consequential premises](../reflections/working-day-demonstration-20261016.md#detect-consequential-context-gaps-during-ordinary-work) during normal task interpretation: identify the decision's basis, the foreign fact it relies on and the smallest observation that distinguishes a relevant alternative. Structural omissions, unknown implementation facts, contradictory evidence and missing business authority have different responses. The proposal preserves ordinary implementation freedom, uses existing task/finding records and review, and explicitly acknowledges unknown unknowns and shared reasoning errors.
+
+## Avoid endless context loading and questions
+
+> Wie verhindern wir, dass Manager bei jeder Unsicherheit immer mehr Kontext nachladen oder Rückfragen stellen, statt innerhalb ihres Mandats selbstständig weiterzuarbeiten?
+
+Recorder's note: The assistant proposed [authorized action as the default](../reflections/working-day-demonstration-20261016.md#prefer-authorized-action-over-exhaustive-certainty), distinguishing routine implementation freedom from missing consequential facts and reserved business authority. Context expansion needs a concrete decision-relevant purpose and stays within existing budgets/progress rules; it does not receive another approval workflow or universal read quota. Review checks both unsupported assumptions and unnecessary escalation, without rewarding silence or minimizing question counts at the expense of necessary clarification.
