@@ -170,6 +170,46 @@ Independence comes from deriving and reviewing checks against intent before usin
 
 For the working-day scenarios, stable process obligations such as continued assignment identity and no budget reset belong to Markitect's own contracts. Library loan-policy changes do not normally change those checks. Actual limits and expected authorized model patches are scenario inputs. This keeps the small process suite separate from changing library business values without maintaining another library specification.
 
+## Reduce shared misunderstandings without more reviewers
+
+This proposal answers the [owner's concern about correlated interpretation errors](../sources/working-day-discussion-20261016.md#reduce-shared-model-misunderstandings). Implementation, tests and a fresh reviewer can all misread the same rule. Their agreement is not independent proof of the intended meaning. No finite review chain eliminates that risk; improve the evidence produced by the existing Manager/reviewer team instead of adding permanent approval layers.
+
+### Derive a discriminating case before reading the solution
+
+For an affected rule with consequential ambiguity or a plausible common mistake, have the existing reviewer first read the canonical rule, its relevant relationships and authorized delta. Before reading the implementer's rationale or solution, record a short assessment note: the obligation, one plausible wrong interpretation and an observable case that distinguishes them. Then inspect the candidate, tests and their evidence. This is one review with an initial intent-reading phase, not another reviewer or a separate policy authority.
+
+Keep the note small and tied to existing assessment records; do not request another prose specification for every Definition. Do not hide relevant model context to manufacture independence. If both phases share a session, the first must genuinely precede exposure to the solution. This reduces anchoring on the implementer's explanation but does not establish statistical independence or eliminate shared model biases.
+
+The current library already provides useful cases without inventing new intent:
+
+| Canonical meaning | Plausible wrong interpretation | Distinguishing observation |
+| --- | --- | --- |
+| [Suspension](../../design/canonical-model/library-example/m1/model/members/eligibility.yaml) prevents new borrowing and preserves return rights. | A suspended member cannot perform any lending operation. | Borrow while active, suspend, then attempt a new loan and return the existing loan. New borrowing refuses without changes; the return succeeds, closes exactly that loan and releases its copy. |
+| The [loan limit](../../design/canonical-model/library-example/m1/model/lending/loan-policy.yaml) counts current open loans, excludes closed loans and is inclusive of the permitted resulting count. | Count all historical loans, or refuse the loan that would exactly reach the limit. | Reach N open loans, observe that request N succeeded, return one, then borrow another available copy. That request succeeds; the next over-limit request refuses unchanged. |
+| A repeated [return](../../design/canonical-model/library-example/m1/model/lending/return.yaml) refers to a loan transaction. | Returning an old loan releases its copy even after that copy was lent again. | Return loan L1, lend the same copy as L2, then repeat L1's return. L2 stays open, its copy stays unavailable and L1's original return date is preserved. |
+
+These cases challenge different meanings using normal public operations and actual state. A happy-path success, a refusal string or high code coverage does not establish that the check distinguishes the wrong meaning.
+
+### Show that a check rejects the chosen mistake
+
+For selected consequential rules, use a small controlled counterexample to the checker: for instance, a transcript/program stub that refuses a suspended member's return, or a disposable candidate copy that closes L2 when returning L1. The relevant check must fail for that semantic difference, not because the stub crashed, failed to build or violated an unrelated protocol detail. Correct behavior must also pass, so an always-failing checker is not useful evidence.
+
+Reuse the existing proposed evaluator self-checks and seeded review scenario. Do not add a generic mutation-testing platform or a target mutation score. A few representative mistakes at authorization boundaries, state transitions, limits and previously troublesome rules are more useful for this first version than a required artificial mutation of every rule. Disposable variants stay outside the actual applied artifacts; retain their identities and outcomes separately.
+
+The seeded-review experiment and checker self-check answer different questions: the former asks whether the reviewer discovers an undisclosed defect, while the latter asks whether a check rejects a declared wrong behavior. Supplying the seed's diagnosis to the reviewer cannot count as independent discovery. If a chosen wrong variant survives, inspect the test and its model basis; do not simply add another approval. This demonstrates sensitivity to those selected mistakes only.
+
+### Put genuine clarification in the canonical rule
+
+If the relevant model statements already decide the case, the organization must resolve it from that context without asking the owner again. If two materially different behaviors remain permitted by genuinely unclear intent, use the existing decision route. The owner chooses business meaning; the authorized clarification or useful example belongs with the canonical rule. Ordinary v1 body text is sufficient; no mandatory example language, duplicated rule catalogue or new Core construct is needed.
+
+An Agent-proposed example is still an interpretation until checked against existing authority or explicitly authorized as new meaning. Recording it beside a rule does not make it independent owner evidence. Examples should clarify discriminating boundaries and reference structured policy values where possible, rather than duplicate every value or enumerate a complete implementation.
+
+### A bounded review result
+
+For the selected rule, the existing review should be able to cite: canonical basis, distinguishing input/state, expected outcome, observed candidate behavior and the selected wrong-behavior check where used. These are evidence fields in an ordinary assessment, not new universal gates. Routine checks can remain simple; deeper challenge is concentrated where a wrong interpretation would matter or has previously escaped.
+
+If implementation and assessment both infer the same wrong meaning and no authoritative example or discriminating observation challenges it, the result can still be wrong. Changing model vendors or adding votes does not remove that limitation. Honest evidence states which interpretations were challenged and which uncertainty remains. Repeated runs establish repeatability of the selected evidence, not immunity to a systematic misunderstanding. The library working-day acceptance remains bounded by its chosen cases.
+
 ## Overall acceptance and repeatability
 
 The proposed initial threshold is three complete series of all four scenarios, using a fresh execution state for each case and the same fixed product/profile basis. Each case starts from its specified recorded baseline; within the recovery case, the interrupted state must survive the restart. Do not replace recovery with a new clean assignment.

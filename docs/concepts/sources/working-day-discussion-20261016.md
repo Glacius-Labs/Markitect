@@ -175,3 +175,9 @@ Recorder's note: The assistant proposed reusing the Architect's external Playgro
 > Wie verhindern wir, dass die unabhängigen Erwartungen zu einer zweiten Spezifikation werden, die wir bei jeder Modelländerung zusätzlich pflegen müssen?
 
 Recorder's note: The assistant distinguished canonical intent from tests as reviewed realizations, parameterized routine checks from frozen experiment controls, and numeric changes from semantic changes. The proposed [maintenance rule](../reflections/working-day-demonstration-20261016.md#keep-expectations-subordinate-to-the-model) delegates affected test updates and requires review against the model delta, preserving failed evidence and prohibiting changes merely to make a failing run pass. It acknowledges shared-input blind spots and unavoidable assessment maintenance without requiring another owner-maintained specification or a second model interpreter.
+
+## Reduce shared model misunderstandings
+
+> Wie verhindern wir konkret, dass Implementierung und Tests dieselbe Modellregel falsch verstehen und der Reviewer das ebenfalls übersieht, ohne dafür immer mehr Prüfinstanzen einzuführen?
+
+Recorder's note: The assistant proposed improving the existing review's evidence: derive a discriminating case from canonical intent before reading the solution, challenge a few plausible wrong interpretations through concrete behavior and bounded checker self-checks, and clarify genuine ambiguity in the canonical rule through the existing authority route. The [shared-misunderstanding section](../reflections/working-day-demonstration-20261016.md#reduce-shared-misunderstandings-without-more-reviewers) uses suspension/return, open-loan limits and repeated old returns as examples. It explicitly retains residual correlated-error risk and does not add another approval layer or claim that repeated success proves semantic correctness.
