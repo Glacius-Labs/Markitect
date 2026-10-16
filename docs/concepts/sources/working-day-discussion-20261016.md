@@ -217,3 +217,9 @@ Recorder's note: The assistant proposed keeping full journal history, deriving o
 > Wie entscheidet der Host konkret, welche Findings ein Manager für den nächsten Arbeitsschritt braucht, ohne dabei selbst fachliche Zusammenhänge verstehen zu müssen oder relevante Punkte aus dem Kontext zu verlieren?
 
 Recorder's note: The assistant proposed a conservative first-version default: the complete compact current finding set for the task responsibility plus recorded inherited/dependency concerns, rather than semantic minimization per action. The [routing proposal](../reflections/working-day-demonstration-20261016.md#select-finding-context-from-recorded-responsibility) separates Manager/reviewer identification of affected scope from Host reference matching, pins supplied context to history/input revisions, and sends unresolved mappings to the existing parent. It explicitly limits completeness guarantees to recorded relationships and preserves current full assessment and integration review.
+
+## Detect incorrect or incomplete finding ownership
+
+> Wie würden wir konkret erkennen, dass ein Finding der falschen Verantwortung zugeordnet wurde oder weitere Manager betrifft, ohne dass jeder Manager dafür wieder das gesamte Projekt prüfen muss?
+
+Recorder's note: The assistant proposed a local ownership/dependency assessment during ordinary task interpretation and existing integration review, using direct model neighbors, registry ownership and targeted artifact evidence. The [ownership section](../reflections/working-day-demonstration-20261016.md#detect-incorrect-or-incomplete-finding-ownership-locally) distinguishes rule location from repair ownership, preserves one finding through parent-mediated reassignment/contributions, and avoids automatic work for every cited neighbor. It explicitly retains uncertainty about unrecorded semantic dependencies and introduces no new routing or approval role.

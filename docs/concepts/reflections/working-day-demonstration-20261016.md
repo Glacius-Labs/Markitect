@@ -400,6 +400,37 @@ Keep routing evidence in existing context and journal records: task identity, cu
 
 Bounded contract cases can verify that a step naming only one file still receives its task's other open findings, a recorded cross-Package finding reaches the receiving responsibility, an unresolved owner mapping is surfaced rather than dropped, and an old context revision cannot silently authorize work against newly changed required evidence. These are proposed extensions to existing context/replay checks, not claims of implemented routing.
 
+### Detect incorrect or incomplete finding ownership locally
+
+The [owner asked how to detect misrouting and additional affected Managers](../sources/working-day-discussion-20261016.md#detect-incorrect-or-incomplete-finding-ownership) without repeated whole-project inspection. Check ownership while the existing receiving Manager interprets the task and while the existing reviewer/parent assesses the result. The [Apply concept](../../design/canonical-model/manager-apply-concept.md) already supplies direct incoming/outgoing model references, registry ownership, targeted additional reads and sibling coordination through the nearest common parent. These are sufficient starting points; another routing reviewer is not proposed.
+
+Distinguish the source of a rule, the owner of an artifact and the responsibilities affected by a behavior. A Membership rule can constrain Lending code; the rule's Package does not automatically own the repair. Finding scope and requested outcome must be considered alongside actual artifact ownership, not inferred from where the rule or error message was found.
+
+During normal task interpretation, the receiving Manager asks three short questions:
+
+1. Can my current responsibility and mandate produce the requested outcome, using the owned artifacts and contracts I actually have?
+2. Does the case depend on another responsibility's output, state transition or contract? Check the cited Definitions, their direct relevant neighbors and concrete artifact/call evidence encountered in the work.
+3. Would a local correction and local passing check establish the requested behavior, or could a known consumer/producer boundary still violate it?
+
+Use only the actual context and targeted supporting reads needed to answer these questions. If a concrete dependency points further away, follow that dependency with an explicit reason; direct neighbors are a starting scope, not a claim that impact can never extend further. No arbitrary one-hop cutoff establishes semantic safety, and no transitive graph scan is required for every finding.
+
+| Signal | Response within existing responsibilities |
+| --- | --- |
+| The cited artifact belongs to another Manager or the proposed write crosses an ownership boundary. | Host exposes/enforces the recorded ownership. The receiving Manager requests coordination instead of editing foreign files. This is a structural mismatch, not proof of which semantic fix is correct. |
+| The required result depends on a neighbor's contract or behavior. | Record the concrete dependency and request the necessary contribution through the nearest common parent. Merely referencing a neighbor does not automatically require work or approval from it. |
+| A local test passes but the composed behavior fails. | Keep the finding open at the coordinating scope, inspect the failing boundary and involve the specific responsibility indicated by the evidence. Do not require every Manager to reread the project. |
+| Model links, registry links or responsibility mapping are insufficient or contradictory. | Expose the gap and perform bounded investigation through the parent. Missing links do not prove absence of impact. Any actual change of canonical intent follows the existing authority path. |
+
+For example, a finding about returns by suspended members may initially reach Membership because its eligibility rule is cited. Membership checks that the status it supplies is correct and points to the Lending return operation where status is consumed. If Lending wrongly rejects the return, Lending owns that repair; Membership need not receive an unnecessary implementation task. If the return succeeds but Catalog still reports the copy unavailable, the concrete availability contract and registry identify a possible additional contribution. Whether Catalog needs changing depends on the actual realization: a shared observation alone is not permission to assume a second faulty component.
+
+Keep one finding reference. The parent records corrected accountability and any needed child contributions using the existing task/dependency/delivery records. A consumer may request an outcome but receives no write authority over the producer. A receiving Manager's "not mine" response cannot close or orphan the finding: unresolved routing remains accountable to the existing parent until a recorded valid assignment exists. Changed task identity or a rejected handoff does not remove it from Host acceptance checks. Recurring disagreement uses the existing bounded stagnation/coordination path rather than endless forwarding.
+
+When several responsibilities must contribute, retain the finding at their coordinating scope with references to their ordinary tasks and local evidence. Each existing reviewer assesses its own subject; the existing integration review assesses the composed requested outcome. For the library case, that can be the actual suspend/return/availability sequence. A local pass alone cannot discharge the cross-responsibility concern. There is no requirement for every neighboring Manager to co-sign, and no separate duplicate finding queue per participant.
+
+The first proposal can be corrected as new evidence arrives. Record the reason and affected references in the current finding assessment; do not require a permanent dependency map to be complete before any useful work begins. Host validation covers valid scope references, ownership, recorded dependencies and absence of orphaned unresolved findings. Semantic completeness remains fallible: a missing relation which neither local reasoning nor integration evidence exposes may still be missed. The proposal reduces repeated project-wide reading; it does not prove perfect impact discovery.
+
+Extend the existing routing checks with a deliberately misassigned finding and a case needing two contributions: the first receiver must expose the mismatch, the same finding remains traceable through parent coordination, and acceptance requires the resulting current local/integration evidence. Include a valid case where a cited neighbor needs no change, to avoid turning every relationship into compulsory delegation. These are proposed checks, not executed evidence.
+
 ## Overall acceptance and repeatability
 
 The proposed initial threshold is three complete series of all four scenarios, using a fresh execution state for each case and the same fixed product/profile basis. Each case starts from its specified recorded baseline; within the recovery case, the interrupted state must survive the restart. Do not replace recovery with a new clean assignment.
