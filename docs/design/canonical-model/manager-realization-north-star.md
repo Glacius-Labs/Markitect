@@ -12,6 +12,10 @@ The realization strategy should be customizable. A Manager's responsibility can 
 
 **Current priority:** Concentrate first on making Apply reliably reconcile artifacts with the model. Optimize, cleanup, refactoring, bug hunting and custom commands are extensions of that working foundation. Preserve their ideas without expanding the immediate design or implementation scope to all of them.
 
+**Owner's implementation clarification:** Fully model the library as M1, perform a real initial Apply, inspect the resulting code/tests/documentation, then change the model to M2 and Apply again to the existing realization. Inspect the second result and its changes. Agent startup and communication are part of this demonstration. Repairing drift against unchanged intent remains useful additional coverage, not a substitute for this two-Apply sequence.
+
+Compatibility does not constrain the rebuild. The owner permits radical deletion and replacement of obsolete source, models, commands and tests to realize the new concept cleanly. Do not introduce legacy adapters or preserve the old workflow merely to reduce the apparent size of the change. The Go source architecture and Playground need their own concrete designs before substantial implementation. Existing code is reusable material to judge against those designs, not the target architecture.
+
 The owner raises an organizational perspective for further consideration: the Manager hierarchy could be the application's entry point, with the canonical model as its shared foundation. This perspective may also support a later Government extension. It is an open product framing, not a replacement of the model or authorization to implement Government. [DEC-004](../../concepts/register.md#dec-004-the-manager-hierarchy-is-core-government-belongs-to-a-later-axis) retains the distinction between realizing a model and delegated decisions about model changes.
 
 Use a simple library management system as the running example. The following tree illustrates responsibility; it is not an executable model or a prescribed vocabulary:

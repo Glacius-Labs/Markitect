@@ -2,6 +2,8 @@
 
 Date: 16 October 2026. **Developed design proposal for owner review.** This concept resolves the working alternatives in the [north star](manager-realization-north-star.md) into a first design for reliable Apply. It uses the [completed language v1](minimal-language/language-contract.md) without adding Core Kinds or changing its semantics. Proposed choices here are not additional owner decisions or implemented features.
 
+The owner's later [implementation clarification](sources/manager-realization-20261016.md#two-apply-cycle-and-freedom-to-redesign) sets the demonstration and rebuild policy: fully author M1, generate and inspect its realization, change to M2, Apply to the existing result and inspect again. Compatibility is not required; obsolete source and workflows may be deleted. The [implementation plan](manager-apply-implementation-plan.md) puts the Go architecture, Playground and actual Agent communication ahead of substantial execution work. Existing implementation suggestions below are reuse candidates, not requirements to preserve old code or APIs.
+
 The product is an organization that realizes an explicitly described project world. The canonical model supplies that world's intended meaning and constraints. A deterministic Host organizes work, supplies context, validates deliveries and records the process. AI Managers make bounded judgments, delegate work and integrate results. The initial operation is Apply: reconcile the existing artifacts with the current model, including when the model has not changed.
 
 ## Recommended choices
@@ -247,17 +249,18 @@ The fixed source baseline for this assessment is Main `bc4b49e76f9b9e4b3ec98033a
 | Domain records, receipts and record storage | Reuse the storage boundary while specifying the richer task/event/blob records. Existing partial telemetry is not full recording of every proposed detail. |
 | Guarded publication | Preserve exact-source checks and lifecycle outcomes; add explicit final read-back of the accepted aggregate and registry in this design. |
 
-This is a substantial integration of a new language and authoring model with an existing method, not a claim that Package-based Apply already works or only needs a CLI rename. Preserve original negative runtime evidence and current authorization/recovery rules during implementation.
+This is a clean realization of the new language and organizational concept, not a claim that Package-based Apply already works or only needs a CLI rename. Reuse an existing component when it fits; rewrite or delete it when that yields a cleaner target. Preserve original evidence and verify the required source-binding, ownership, publication and recovery properties in the new implementation without retaining old workflow compatibility.
 
 ## First delivery sequence
 
-The [implementation plan](manager-apply-implementation-plan.md) expands this outline into small dependency-ordered slices, current-source treatment and explicit library acceptance gates. It also separates the first demonstrated library Apply from completion of the product's source-model cutover.
+The [implementation plan](manager-apply-implementation-plan.md) is the current delivery owner for this concept. Its small slices replace the earlier compatibility-oriented adapter/cutover sequence.
 
-1. Implement and validate v1 loading, structural compilation and fixed model bindings. Prepare the library's small canonical model and independently stated expected behaviors.
-2. Derive the local organization, resolve profiles, compile simple context and validate artifact registry/ownership and source classifications. These stages can be exercised without a provider.
-3. Run a root and one Package through bounded local work, fresh review, candidate integration and required reporting using the existing executor boundary.
-4. Add the members/catalog/lending/reminders tree and parent integration. Verify no-change, cross-area coordination, rework and targeted detail access.
-5. Complete aggregate verification, guarded publication, read-back and interruption/stale/partial-failure handling. Inspect the full event trail for the library case before claiming reliable Apply.
+1. Fully describe and encode library M1, select the M2 change and review independent expectations for both.
+2. Design the Go product architecture and the Playground, including what to keep, rewrite or delete. The Playground uses the real product and does not implement a second Manager system.
+3. Implement complete v1 compilation, organization/context preparation and actual role-session startup with durable communication.
+4. Implement local realization/review, recursive integration, registry/coverage, aggregate verification and guarded publication/read-back.
+5. Use real Agents to generate A1 from M1 and inspect the code, tests, documentation and trace. Change only the model to M2, Apply to A1 and inspect A2 and its differences. Keep model, product build, profile and artifact evidence distinct.
+6. Consolidate concrete negative cases and remove remaining obsolete implementation and documentation. Add further commands only after this core cycle is demonstrated.
 
 Each step needs its own concrete tests and evidence. This sequence is an implementation proposal, not a backlog assignment, provider-run authority, release plan or acceptance claim. Only after the Apply path is demonstrated should additional commands, richer team strategies, concurrency optimizations and incremental context/impact reuse be selected.
 

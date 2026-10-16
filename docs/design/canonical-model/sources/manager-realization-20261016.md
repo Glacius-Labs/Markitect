@@ -76,3 +76,13 @@ Recorder's note: These are verbatim owner messages from the design discussion in
 ## Derive the implementation plan
 
 > Lass uns daraus einen konkreten Umsetzungsplan für das erste zuverlässige Apply ableiten, mit kleinen aufeinander aufbauenden Schritten und klaren Prüfkriterien am Bibliotheksbeispiel. Ausserdem sollten wir schauen, wie wir mit dem aktuellen Implementierungsstand vs dem neuen Konzept umgehen sollen
+
+## Two Apply cycle and freedom to redesign
+
+> Unser Ziel ist es, das Bibliotheksbeispiel einmal durchzumodellieren und in ein kanonisches Modell zu schreiben. Dann ein Apply durchzuführen und den Code zu untersuchen. Anschließend ändern wir etwas am Modell und führen ein weiteres Apply durch. Dann prüfen wir das Ergebnis nochmal.
+>
+> Dieser Ablauf sollte einigermaßen zeigen ob das so funktioniert. Ausserdem müssen wir irgendwie hinkriegen die verschiedenen Agents entsprechend zu starten und sie kommunizieren zu lassen.
+>
+> Ausserdem müssen wir beim Umbauen nicht auf Kompatibilität achten und können frei löschen. Wir sollten uns dabei nicht zu stark am alten Modell orientieren und stattdessen unser Konzept durchsetzen. Diese ganze Aktion soll Markitect sauberer designen und strukturieren. Wir wollen dann auch noch die Architektur des Go Source Codes durchdesignen und den Playground.
+>
+> Bei der Umsetzung können wir ruhig radikal vorgehen und einfach löschen was wir nicht mehr brauchen oder ersetzen wollen. Es muss nicht vorsichtig zurechtgerückt werden. Gerade da sich vermutlich die Architektur noch ändern kann macht uns das sonst vllt mehr arbeit und bringt uns nichts
