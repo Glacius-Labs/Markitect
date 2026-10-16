@@ -36,7 +36,7 @@ func onlyContractStageFailures(result Result) bool {
 	}
 	for _, model := range result.Models {
 		for _, phase := range model.Phases {
-			if phase.Name != "core_and_contracts" && phase.Status == Failed {
+			if phase.Name != "core_and_contracts" && phase.Name != "values_and_references" && phase.Status == Failed {
 				return false
 			}
 		}
@@ -61,7 +61,7 @@ func TestPartialCompilerNeverClaimsConformance(t *testing.T) {
 		t.Fatalf("implemented acquisition did not complete: %+v", m.Phases)
 	}
 	for _, p := range m.Phases[2:] {
-		if p.Name == "core_and_contracts" {
+		if p.Name == "core_and_contracts" || p.Name == "values_and_references" {
 			if p.Status != Failed {
 				t.Fatal("missing Core and invalid self-typing were not rejected")
 			}

@@ -2,7 +2,7 @@
 // It performs no filesystem, repository, process or provider operations.
 //
 // Compile currently implements source/YAML acquisition and lexical Unicode
-// names/identities, explicit bindings and the fixed Core/field contracts.
+// names/identities, explicit bindings, Core/field contracts and typed values.
 // Valid partial input remains not_completed until every normative v1 content
 // phase exists. It does not expose a partial Definition IR or canonical bytes.
 package model
