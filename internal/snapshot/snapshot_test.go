@@ -37,16 +37,18 @@ func tree(t *testing.T, entries ...snapshot.Entry) snapshot.Tree {
 }
 
 func TestPathValidationPreservesSpelling(t *testing.T) {
-	for _, value := range []string{"README.md", "Src/Hello World.go", "模型/Änderung.txt", ".config/é", "a/e\u0301"} {
+	for _, value := range []string{
+		"README.md", "Src/Hello World.go", "模型/Änderung.txt", ".config/é", "a/e\u0301",
+		"dir/a:b", "a?b", "a*b", `a"b`, "a<b", "a>b", "a|b", "a.", "a ", "a./b", "a /b",
+		"CON", "con.txt", "dir/NUL", "aux.go", "PRN", "COM1", "LPT².txt",
+	} {
 		if got := path(t, value).String(); got != value {
 			t.Fatalf("path changed from %q to %q", value, got)
 		}
 	}
 	for _, value := range []string{
 		"", ".", "..", "./a", "a/../b", "a/./b", "/a", "//server/share", "a/", "a//b",
-		`a\b`, `C:/a`, `a:b`, "a\x00b", "a\nb", "a\u007fb", "a\u0085b", "a\xffb",
-		"a?b", "a*b", `a"b`, "a<b", "a>b", "a|b", "a.", "a ", "a./b", "a /b",
-		"CON", "con.txt", "dir/NUL", "aux.go", "PRN", "COM1", "com9.txt", "LPT1", "lpt9.log", "COM¹", "LPT².txt",
+		`a\b`, `C:/a`, `C:relative`, `a:b`, "a\x00b", "a\nb", "a\u007fb", "a\u0085b", "a\xffb",
 	} {
 		t.Run(value, func(t *testing.T) {
 			if _, err := snapshot.NewPath(value); !errors.Is(err, snapshot.ErrInvalidPath) {
@@ -123,8 +125,7 @@ func TestTreeOrderingAndIdentity(t *testing.T) {
 
 func TestTreeRejectsCollisionsDeterministically(t *testing.T) {
 	for _, names := range [][]string{
-		{"a", "a"}, {"A", "a"}, {"a", "a/b"}, {"a", "a-else", "a/b"},
-		{"A/b", "a/c"}, {"a/B", "a/b/c"}, {"a/b", "a/B"}, {"Σ/x", "ς/y"}, {"K/x", "K/y"},
+		{"a", "a"}, {"a", "a/b"}, {"a", "a-else", "a/b"}, {"a/b", "a/b/c"},
 	} {
 		t.Run(names[0]+":"+names[len(names)-1], func(t *testing.T) {
 			var entries []snapshot.Entry
@@ -141,6 +142,25 @@ func TestTreeRejectsCollisionsDeterministically(t *testing.T) {
 				t.Fatal("failed construction returned a partial tree")
 			}
 		})
+	}
+}
+
+func TestGenericTreeKeepsCaseAndUnicodeAliasesDistinct(t *testing.T) {
+	// These names can conflict on particular filesystems. The generic producer
+	// preserves them; an adapter must refuse incompatible physical materialization.
+	names := []string{"A", "a", "Dir/file", "dir/file", "Σ/x", "ς/y", "K/x", "K/y", "é", "e\u0301"}
+	var entries []snapshot.Entry
+	for _, name := range names {
+		entries = append(entries, entry(t, name, snapshot.Regular, name))
+	}
+	fixed := tree(t, entries...)
+	if len(fixed.Entries()) != len(names) {
+		t.Fatal("tree collapsed distinct spellings")
+	}
+	for _, e := range entries {
+		if got, found := fixed.Lookup(e.Path()); !found || got != e {
+			t.Fatalf("exact path %q changed", e.Path())
+		}
 	}
 }
 

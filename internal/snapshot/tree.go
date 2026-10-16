@@ -13,7 +13,7 @@ import (
 // ErrInvalidEntry identifies a zero Entry supplied to NewTree.
 var ErrInvalidEntry = errors.New("invalid snapshot entry")
 
-// ErrPathCollision identifies duplicate paths, case aliases and file/directory
+// ErrPathCollision identifies exact duplicate paths and file/directory
 // conflicts. NewTree sorts first, so the selected error is input-order independent.
 var ErrPathCollision = errors.New("snapshot path collision")
 
@@ -26,12 +26,12 @@ func (id TreeID) String() string { return hex.EncodeToString(id[:]) }
 type Tree struct{ entries []Entry }
 
 // NewTree fixes entries in exact-path byte order and checks the complete tree.
-// Directory spelling must agree across entries, even on case-sensitive hosts.
+// Case and Unicode normalization forms are distinct, including directory names.
 // No partial Tree is returned on failure.
 func NewTree(entries []Entry) (Tree, error) {
 	entries = slices.Clone(entries)
 	slices.SortFunc(entries, func(a, b Entry) int { return strings.Compare(a.path.value, b.path.value) })
-	spellings := make(map[string]string)
+	paths := make(map[string]bool)
 	files := make(map[string]bool)
 	for _, entry := range entries {
 		if entry.path.value == "" {
@@ -40,15 +40,14 @@ func NewTree(entries []Entry) (Tree, error) {
 		parts := strings.Split(entry.path.value, "/")
 		for i := range parts {
 			prefix := strings.Join(parts[:i+1], "/")
-			key := foldPath(prefix)
-			if previous, exists := spellings[key]; exists {
-				if previous != prefix || files[key] || i == len(parts)-1 {
-					return Tree{}, fmt.Errorf("%w: %q conflicts with %q", ErrPathCollision, prefix, previous)
+			if paths[prefix] {
+				if files[prefix] || i == len(parts)-1 {
+					return Tree{}, fmt.Errorf("%w: %q", ErrPathCollision, prefix)
 				}
 			}
-			spellings[key] = prefix
+			paths[prefix] = true
 			if i == len(parts)-1 {
-				files[key] = true
+				files[prefix] = true
 			}
 		}
 	}

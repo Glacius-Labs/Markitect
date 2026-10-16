@@ -2,12 +2,13 @@
 // values. It performs no acquisition, storage, repository or workspace operations.
 // A Tree describes only those values; it makes no claim about a live repository.
 //
-// Paths retain their exact UTF-8 spelling. NewPath validates a portable,
+// Paths retain their exact UTF-8 spelling. NewPath validates an explicit,
 // slash-separated repository-relative representation without cleaning, folding or
-// rewriting it. Trees reject duplicate paths, file/directory conflicts and Unicode
-// simple-case-fold aliases, including inconsistent directory spelling. Unicode
-// normalization is not performed: distinct normalization forms remain distinct.
-// Adapters must separately check target filesystem representability and aliases.
+// rewriting it. Trees reject exact duplicates and file/directory conflicts.
+// Case differences and Unicode normalization forms remain distinct. These generic
+// values impose no canonical-Package or target-filesystem case policy. Adapters
+// must check target filesystem representability and aliases before materializing;
+// they must reject incompatible trees rather than merge or rewrite their paths.
 //
 // Only regular files, with or without the executable flag, are supported.
 // Directories are implicit; empty directories, symlinks, submodules, ownership,
