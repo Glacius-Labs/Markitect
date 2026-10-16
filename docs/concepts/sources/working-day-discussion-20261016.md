@@ -41,3 +41,15 @@ Recorder's note: The assistant proposed Host checks for a safe technical handoff
 > Halte diese einfache Übernahmeregel bitte auch in unseren Docs fest, inklusive Beibehalten, Anpassen, Ersetzen und Ungeklärt sowie der erneuten Prüfung ohne automatische Übernahme alter Freigaben.
 
 The reflection's [simple reuse rule](../reflections/desired-working-day-20261016.md#a-simple-rule-for-carrying-work-forward) records this discussion as a proposed extension of the continuation workflow.
+
+## Make questions directly actionable
+
+> Wie sollte eine Rückfrage an mich konkret aussehen, damit ich schnell entscheiden kann und meine Antwort eindeutig ins Modell und in die weitere Arbeit einfließt?
+
+Recorder's note: The assistant proposed a question with decision, reason, recommendation and alternatives, exact model edit, and work impact. The example used an intentionally contradictory library draft. Answers refer to a particular question/proposal version and model basis; adopting a concrete proposal differs from requesting elaboration or deferring. A subsequent acknowledgement reports the model update and actual continuation.
+
+## Preserve the question format
+
+> Halte dieses Format für Rückfragen bitte auch in unseren Docs fest, inklusive konkreter Modelländerung, eindeutiger Zuordnung meiner Antwort und dem anschließenden Weiterarbeiten.
+
+The reflection's [question format](../reflections/desired-working-day-20261016.md#a-question-the-owner-can-answer-directly) records the proposed interaction, answer binding and continuation acknowledgement.

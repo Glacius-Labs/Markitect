@@ -32,6 +32,58 @@ The question includes the source of the ambiguity, recommendation, alternatives 
 
 An answer changing intended behavior is recorded in the canonical model through a separate authorized model operation. Apply cannot edit its read-only model. A new Apply binds the updated model and reassesses; old candidates and evidence remain inspectable but do not automatically count as current approval. An answer that only points to an existing rule can instead supply recorded context without changing intent.
 
+### A question the owner can answer directly
+
+The [question-format discussion](../sources/working-day-discussion-20261016.md#make-questions-directly-actionable) proposes five parts. The owner should be able to decide without reconstructing Agent history or drafting the resulting model change.
+
+| Part | Required content |
+| --- | --- |
+| Decision | One concrete question that needs the owner's judgment. |
+| Reason | The missing or conflicting model passages and why the existing mandate cannot resolve them. |
+| Recommendation and alternatives | A recommended answer, its consequences and meaningful alternatives. Identify alternatives that still need elaboration. |
+| Exact model change | The proposed wording and the identified passages or structured values it replaces or adds. Show the complete intended edit, not merely a paraphrase of its effect. |
+| Effect on work | Which tasks wait, which can continue, and what accepting the proposal will trigger. |
+
+For a context-only question, explicitly state that no model edit is proposed. A recommendation is not a selected answer, and silence grants no approval.
+
+### Example decision request
+
+Assume an intentionally inconsistent future library draft says both that existing loans remain intact and that members may never have more than three open loans. The authored library example already resolves this case; this illustration does not change it.
+
+**Decision needed: existing loans above the new limit**
+
+The draft lowers the limit from five to three but contains the two conflicting statements above. Lending needs to know what happens to a member who already has four loans.
+
+**Recommendation A: apply the limit when admitting new loans.** Existing loans remain intact. Additional borrowing is refused until the resulting count would fit the limit; returns remain possible.
+
+**Proposed replacement for the conflicting admission passage:**
+
+> A new loan is allowed only if the resulting number of open loans is at most three. Lowering the limit leaves existing loans unchanged. Returns remain permitted regardless of the current loan limit.
+
+Other borrowing restrictions remain in force. In an actual request, identify the exact Definition and prior passage and include any accompanying structured-value edit. Where the policy already stores the limit as a structured value, show that value change and retain the model's reference to it rather than introducing a duplicate numeric authority in prose.
+
+**Alternative B: require existing loans to be reduced as well.** This still needs decisions about deadlines, which books must be returned and enforcement. Selecting elaboration of B does not approve those unspecified consequences.
+
+**Work impact:** Lending waits for this decision; independent ready work may continue. Accepting A authorizes the displayed model edit within the existing mandate. Once the authorized model operation completes, a successor Apply uses the retained work and assesses it against the new basis.
+
+**Responses:** Accept A; elaborate B; decide differently; defer.
+
+### Bind the answer and report the continuation
+
+Record the question identity and version, assignment and affected tasks, exact model basis and locations, proposed edit, and the owner's answer with its source and authority. Existing question and history records can carry these references; this does not require a separate decision system.
+
+Accepting A authorizes the exact displayed proposal within the existing mandate. Do not request the same confirmation again. A free-text answer can authorize a different edit when its meaning and scope are clear; otherwise return only the remaining material ambiguity for resolution. Elaborating an alternative authorizes preparation, not adoption. Deferral leaves the question open.
+
+A changed proposal gets a new version. An answer to an older version must not approve a revised proposal implicitly. Before applying the edit, recheck its model basis and targets. If intervening changes make the proposal stale, preserve the answer and assess applicability; present any materially changed choice again rather than silently rewriting its meaning.
+
+Distinguish answer received, authorized model edit recorded, and successor work actually started. Link the decision to the resulting model revision and successor run. Failure to record the edit or start the run must remain visible; an accepted answer alone does not prove either happened.
+
+After those steps have succeeded, a concise acknowledgement can read:
+
+> Decision adopted and the model updated as shown. The previous Apply has been superseded. Its successor uses the retained work and assesses it against the new model. Lending has resumed. No further decision is required.
+
+The continuation below governs retained work and renewed approval. The acknowledgement reports observed state; it does not grant new merge, release or deployment authority.
+
 ## Continue the assignment across model changes
 
 The [follow-up discussion](../sources/working-day-discussion-20261016.md#continue-after-an-owner-answer) proposes keeping the user's assignment stable while recording each Apply against its own fixed inputs. A new model basis requires a new Apply run, not recreating all existing work. This is a proposed interaction contract; it does not change the current Apply contract or establish implemented reuse.
