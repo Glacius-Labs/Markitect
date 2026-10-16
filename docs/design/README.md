@@ -18,6 +18,7 @@ The [Project World package](project-world/README.md) has its own reading order a
 - [Agent adapter selection and rebuild plan](canonical-model/manager-apply-rebuild-plan.md) — first stdio App Server adapter, clear session lifetimes and concrete source/contract deletions, with architecture quality taking priority over minimizing effort.
 - [Apply configuration and mandates](canonical-model/manager-apply-configuration.md) — execution settings, explicit profiles, inherited limits and source-bound Manager authority.
 - [Apply journal and continuation](canonical-model/manager-apply-journal.md) — SQLite-backed assignment history, versioned questions/answers, carried work and controlled successor/publication lifetimes.
+- [Library Playground contract](canonical-model/manager-apply-playground.md) — callable JSON Lines program, independent M1/M2 expectations and a continuous two-Apply scenario with fixed artifacts and execution history.
 - [Earlier model-design consolidation](canonical-model/consolidation.md) — chronology from 15 October 2026 and remaining product questions outside the completed language scope.
 - [Grundmodell und Bibliotheksentwurf](product-model-refinement/README.md) — typisierte Prosa, dokumentierte Designentscheidungen und Sprachkandidaten.
 - [Standalone Tasks project documentation](task-management/README.md) — fachliche Gegenprobe als eigenständige Projektspezifikation; Anwendung noch nicht implementiert.

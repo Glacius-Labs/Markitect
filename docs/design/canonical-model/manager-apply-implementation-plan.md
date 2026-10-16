@@ -46,9 +46,9 @@ Before coding the replacement, make a keep/rewrite/delete map at responsibility 
 
 ## Library scenario and independent expectations
 
-First model the library in readable prose, then encode all selected statements with ordinary v1 Kinds, Properties and concrete Definitions. The [small library M1](library-example/README.md) encodes the [confirmed business rules](library-example/business-rules.md) and has bounded structural evidence; the evaluation interface and independent executable expectations remain P00 work. Its Packages are library for shared scope/rules, catalog, members, lending and lending/reminders. Cross-Package relationships, returns, a loan limit and simple overdue reminders are explicit. Review the model for meaning and internal consistency before using it to generate implementation.
+First model the library in readable prose, then encode all selected statements with ordinary v1 Kinds, Properties and concrete Definitions. The [small library M1](library-example/README.md) encodes the [confirmed business rules](library-example/business-rules.md) and has bounded structural evidence. The proposed [callable interface](library-example/interface-contract.md) and [independent expectations](library-example/evaluation-contract.md) now specify its assessment; implementing those expectations remains work. Its Packages are library for shared scope/rules, catalog, members, lending and lending/reminders. Cross-Package relationships, returns, a loan limit and simple overdue reminders are explicit. Review the model for meaning and internal consistency before using it to generate implementation.
 
-Keep the first domain example small: a local callable service or CLI with no UI, deployment or production database. Select the precise fixture interface in P00, rather than freeze an existing product example's design. A small Go service is a possible implementation choice. Explicit assessment dates avoid reliance on the machine clock. The first scenario processes domain operations sequentially; concurrent borrowing correctness is a separate future case.
+Keep the first domain example small. The proposed P00 interface selects a Go JSON Lines program with ten operations, one initially empty in-memory library per process, explicit dates and a fixed minimal build entrypoint. No UI, deployment or production database is required. Internal domain/source design remains a realization choice. The first scenario processes domain operations sequentially; concurrent borrowing correctness is a separate future case.
 
 M1 permits a new loan only when the resulting current count for a registered, active member is at most five. M2 changes that admission limit to three. Existing loans remain returnable; lowering the limit does not delete them or force a return. In the authored M1, the policy body refers to its structured value without duplicating the numeral, so M2 changes only `spec.maxOpenLoans` in `lending/loan-policy`. Prose and spec must still agree; no precedence rule hides a contradiction. Apply is still artifact-only: the scenario author makes the M1-to-M2 model edit between runs, and each Apply treats its selected model as read-only.
 
@@ -63,7 +63,7 @@ M1 permits a new loan only when the resulting current count for a registered, ac
 | A currently borrowed copy is returned | Reduce loan count and make the copy available. | Same behavior. |
 | Reminder assessment at an explicit date | Include open overdue loans; exclude returned and not-yet-overdue loans. | Same behavior. |
 
-The three-loan request is an especially useful witness: exactly the same input changes from allowed under M1 to rejected under M2. This demonstrates that the second Apply followed changed intent.
+The three-loan request is an especially useful witness: exactly the same input changes from allowed under M1 to rejected under M2. This demonstrates that the second Apply followed changed intent. Four/five existing loans under M2 are semantic expectations in the table, not reachable arrangements through a fresh M2 process. The [process-boundary evidence limit](library-example/evaluation-contract.md#existing-loans-and-the-process-boundary) requires separate source-review findings and forbids claiming live-upgrade proof from this scenario.
 
 Author and review the expectation sets independently of the generated library implementation. Keep their bytes outside Agent write scope and recheck them before/after evaluation. Agents may write normal tests as artifacts, but those tests cannot replace the independent assessment. Read-only scope is validated by Markitect; it is not a claim of OS isolation from same-user processes.
 
@@ -86,7 +86,7 @@ The Go source architecture and Playground need deliberate designs. Their target 
 
 The Go design must choose concrete packages, dependency direction, data ownership and lifecycle contracts, then map current source to keep/rewrite/delete. It may replace the current layer/package structure deliberately. Keep model providers and repository I/O out of deterministic language semantics.
 
-The Playground design must define how it creates the library repository, supplies M1/M2, launches the real product, captures outputs and evaluates them. It owns scenario inputs and expected results. It must not implement its own Manager hierarchy, prompt delegation, review loop or alternate Apply. Comparative arms, cost studies and a broad benchmark program are outside this first demonstration.
+The [Playground contract](manager-apply-playground.md) now proposes repository preparation, frozen inputs, actual product invocation, immutable A1/A2 capture, independent evaluation and reporting. It owns scenario inputs and expected results. It must not implement its own Manager hierarchy, prompt delegation, review loop or alternate Apply. Comparative arms, cost studies and a broad benchmark program are outside this first demonstration.
 
 ## Starting Agents and carrying communication
 
@@ -120,9 +120,9 @@ Specify target responsibilities, packages, allowed imports, runtime data contrac
 
 ### P02 Design the library Playground scenario
 
-Specify an external runner that prepares the repository, selects a fixed Markitect build/profile, executes the actual product, inspects A1, makes the model-only M2 change and executes R2 against A1. Define source snapshots, result locations, independent checks and readable comparison reports. Reuse existing Playground infrastructure selectively.
+The proposed [Playground contract](manager-apply-playground.md), [callable interface](library-example/interface-contract.md) and [evaluation contract](library-example/evaluation-contract.md) define the external runner, exact two-run sequence, ten operations, case families, source bindings and readable comparison report. Review these contracts, then implement scenario preparation, capture and the independent oracle. Select a fixed Markitect build/profile, inspect A1, make the model-only M2 change and execute R2 against actual A1. Reuse existing Playground infrastructure selectively.
 
-**Gate:** a dry scripted run proves scenario preparation, artifact capture, expectation invocation and M1/M2 bookkeeping. It does not count as real Apply. The runner never fabricates Agent reports, contains no duplicate Manager/review orchestration and never repairs generated code between R1 and R2.
+**Gate:** a dry scripted run proves scenario preparation, artifact capture, expectation invocation and M1/M2 bookkeeping, including controlled wrong-result detection and preservation of failures. It does not count as real Apply. The runner never fabricates Agent reports, contains no duplicate Manager/review orchestration and never repairs generated code between R1 and R2. Primary evidence requires all applicable cases against each model and opposite-profile mismatches for the fourth-loan witness. Runtime migration and source-review evidence remain explicitly distinguished.
 
 ### P03 Implement complete production v1 compilation
 

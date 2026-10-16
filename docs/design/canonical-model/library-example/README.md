@@ -2,7 +2,7 @@
 
 Date: 16 October 2026. The [M1 manifest](m1/model.yaml) and its YAML Definitions encode the [business rules confirmed by the owner](business-rules.md). M1 now owns the example's intended behavior. The readable rules remain its recorded derivation source; future changes belong in the canonical model.
 
-M1 describes one library's members, physical book copies, loans, returns and calculated overdue notices. It requires code, tests and usage documentation, while leaving programming language, source layout and the callable evaluation interface open for the next design step. No implementation or Agent execution has been produced by authoring this model.
+M1 describes one library's members, physical book copies, loans, returns and calculated overdue notices. It requires code, tests and usage documentation. The proposed [callable contract](interface-contract.md) now selects a local Go JSON Lines program and a minimal build boundary; internal source design remains a realization choice. The [independent evaluation](evaluation-contract.md) and [Playground contract](../manager-apply-playground.md) specify the two-run assessment. These technical choices leave M1's YAML and business rules unchanged. No implementation or Agent execution has been produced by authoring this model or its evaluation design.
 
 ## Small vocabulary
 
@@ -88,12 +88,12 @@ $libraryProbePython = Join-Path $libraryProbeEnvironment 'Scripts/python.exe'
 
 An existing correctly prepared environment can run the final command directly. Normal checking does not rewrite sources or locks. `--report <path>` explicitly writes JSON evidence; `--write-lock` explicitly regenerates M1's external binding after an intentional dependency update. No other fixture's lock or evidence is rewritten.
 
-This is a bounded design-probe result, not full production Go compiler support, an executed Apply or evidence that generated code meets the model. Independent executable expectations, the evaluation interface, Go architecture, Playground and actual Agent communication remain implementation-plan work.
+This is a bounded design-probe result, not full production Go compiler support, an executed Apply or evidence that generated code meets the model. The interface, independent expectations, Go architecture and Playground now have proposed design contracts. Executable evaluation, production support and actual Agent communication remain implementation-plan work.
 
 ## Keep the second Apply focused
 
 For the planned M2 change, edit only `spec.maxOpenLoans` in [loan-policy.yaml](m1/model/lending/loan-policy.yaml) from five to three. Its body already explains how to use the field and preserves existing loans and return rights. The local content digest changes; the external lock stays unchanged because the imported models have not changed.
 
-A member with three open loans can borrow one more under M1 and must be refused under M2, with unchanged state on refusal. All other rules remain the same. The [implementation plan](../manager-apply-implementation-plan.md) owns the two real Applies and independent inspection of A1 and A2. Authoring M1 completes its domain encoding; it does not complete all of P00 or demonstrate Apply.
+A member with three open loans can borrow one more under M1 and must be refused under M2, with unchanged state on refusal. All other rules remain the same. The [implementation plan](../manager-apply-implementation-plan.md) owns the two real Applies and independent inspection of A1 and A2. A2 inherits A1's repository realization, not a running process's records; [evaluation](evaluation-contract.md#existing-loans-and-the-process-boundary) states the limit on runtime upgrade evidence. Authoring these contracts does not complete their executable gates or demonstrate Apply.
 
 Return to the [canonical-model overview](../README.md).

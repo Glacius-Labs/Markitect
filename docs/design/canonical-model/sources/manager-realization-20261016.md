@@ -124,3 +124,7 @@ The [working-day reflection](../../../concepts/reflections/desired-working-day-2
 ## Specify configuration and journal
 
 > Ja, lass uns Konfiguration und Journal konkretisieren und dabei die offenen Punkte zu Auftrag, Apply-Läufen, Rückfragen und Mandaten einarbeiten. Bleiben wir beim Bibliotheksbeispiel.
+
+## Specify the Playground and independent two-Apply assessment
+
+> Ja, lass uns den Playground-Vertrag konkretisieren: Welche aufrufbare Schnittstelle soll das Bibliotheksbeispiel anbieten, und wie prüfen wir die Ergebnisse der beiden Applies gegen M1 und M2 unabhängig?
