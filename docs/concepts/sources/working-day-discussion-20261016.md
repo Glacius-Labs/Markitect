@@ -289,3 +289,9 @@ Recorder's note: The assistant proposed [small, evidence-bound improvements](../
 > Wie erkennen wir, ob solche Änderungen an Kontextpaketen und Mandaten tatsächlich helfen, ohne dass weniger Rückfragen nur bedeuten, dass die Manager häufiger ungeprüfte Annahmen treffen?
 
 Recorder's note: The assistant proposed [evaluating consequential decisions, including silent ones](../reflections/working-day-demonstration-20261016.md#evaluate-better-decisions-including-decisions-made-without-questions), through existing independent review of requirements, candidate behavior, actual context and authority. Bounded comparisons preserve legitimate escalation, targeted fact retrieval and delegated autonomy; they distinguish justified outcomes from lucky guesses and missing evidence. Reports retain scope, failed attempts, uncertainty and later corrections without rewarding lower question counts, introducing a combined score, or claiming broad reliability from a small sample.
+
+## Select consequential silent decisions
+
+> Wie wählt der Reviewer konkret die wesentlichen stillschweigenden Entscheidungen aus, ohne jede Implementierungsentscheidung prüfen zu müssen oder dieselben blinden Flecken wie der Manager zu haben?
+
+Recorder's note: The assistant proposed [selecting through obligations, actual changes and evidence gaps](../reflections/working-day-demonstration-20261016.md#select-consequential-silent-decisions-from-obligations-and-observable-effects), starting from authoritative intent before the implementer's explanation. Selection reuses the existing consequential-error and distinguishing-evidence questions, includes omissions and relevant unchanged paths, and leaves equivalent local implementation choices delegated. Concrete behavioral challenges reduce shared blind spots without guaranteeing their elimination or adding another control layer. Existing mandatory checks, budget handling and aggregate review remain applicable.
