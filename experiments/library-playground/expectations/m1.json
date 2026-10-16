@@ -1,0 +1,15 @@
+{
+  "profile": "m1",
+  "modelBinding": "canonical M1 digest is recorded by the experiment manifest",
+  "maxOpenLoans": 5,
+  "loanPeriodDays": 14,
+  "existingLoansAboveLowerLimit": {
+    "evidenceClass": "source-review-only",
+    "reviewQuestions": [
+      "Does the lower M2 admission limit affect only new borrowing?",
+      "Can existing open loans still be inspected and returned?",
+      "Does initialization avoid forced returns or deletion based on the new limit?"
+    ],
+    "liveUpgradeEvidence": "unavailable through the public process-local interface"
+  }
+}

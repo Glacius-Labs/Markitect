@@ -102,6 +102,8 @@ validation repeats some release-side rules without importing the code it has
 not yet built. When changing those rules, check both the release package and
 bootstrap tests.
 
+The bootstrap selects the sole command tree, `src/cmd/` or `cmd/`, and requires that layout's internal directory, command entry point and root `go.mod`. Additional root `internal/` files do not change a `src/cmd/` selection; release tooling owns the allowed source package set. To test the two standalone files from the source repository, run `go test ./integration/run-markitect.go ./integration/run-markitect_test.go -count=1`.
+
 The installer writes the complete pin as five individual atomic file replacements; it is not a filesystem transaction. If a later write fails, inspect the returned `written` paths. Do not treat a partial set as resumable. For a fresh install, remove only the listed files known to have been created by that attempt before retrying. For an upgrade, restore the previous complete committed set or use a normal Git revert. Keep a baseline commit so the whole pin can be rolled back together. Do not move or recreate an immutable release tag.
 
 A pin installs the CLI distribution; it does not create project content or choose project policy. Project configuration must match the installed release. Check the selected release's version and available commands before relying on source-only functionality. Existing content import scripts belong beside the content they transform. Markitect does not ship an implicit migration adapter.
