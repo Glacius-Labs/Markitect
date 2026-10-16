@@ -44,7 +44,7 @@ experiment/
   protected/                    evaluator and independent case/expectation files
   workspace/library/            real target repository, preserved between Applies
     <canonical model inputs>    M1, then only the declared M2 patch
-    <execution inputs>          unchanged approved profile and public constraint
+    <execution inputs>          unchanged approved profile
     realization/                Agent-produced Go code, tests and usage docs
   state/                        product-owned journal, outside governed source
   evidence/
@@ -62,9 +62,9 @@ Agent/provider processes receive only the inputs and candidate workspaces their 
 
 ## Continuous two-Apply sequence
 
-1. **Prepare.** Create an empty temporary target from the frozen bootstrap, with M1, dependencies, execution inputs and public constraint. Compile both M1 and the planned M2 with the production compiler, confirm the single-field delta, then leave M1 selected. Verify oracle integrity, tool identities and finite authorized budgets. Record preparation/context without making semantic decisions for Managers.
+1. **Prepare.** Create an empty temporary target from the frozen bootstrap, with M1, dependencies and execution inputs. Compile both M1 and the planned M2 with the production compiler, confirm the single-field delta, then leave M1 selected. Verify oracle integrity, tool identities and finite authorized budgets. Record preparation/context without making semantic decisions for Managers.
 2. **Apply R1.** Invoke the real product with the approved assignment and M1. Markitect starts the root, delegates to Package Managers and fresh reviewers, integrates and publishes by its own contracts. Record actual invocation, process output/exit, observed run identity and terminal outcome. A process exit alone is not a successful Apply.
-3. **Freeze A1.** Require a confirmed Applied outcome and exact publication read-back of artifacts plus registry. Capture an immutable source snapshot and a consistent product-supported history export. Bind model/config/source/candidate/registry identities. Do not copy a live SQLite file without a consistent export/backup. Establish that all sessions are terminal before external assessment. The runner then commits the published A1 as the experiment's acceptance, with the run's proposed `Markitect-Run` and `Markitect-Model` trailers.
+3. **Freeze A1.** Require a confirmed Applied outcome and exact publication read-back of artifacts plus registry. Capture an immutable source snapshot and a consistent product-supported history export. Bind model/config/source/candidate/registry identities. Do not copy a live SQLite file without a consistent export/backup. Establish that all sessions are terminal before external assessment. The runner then commits the published A1 as a checkpoint that the manifest authorizes, with the run's proposed `Markitect-Run` and `Markitect-Model` trailers. This is experiment bookkeeping; human acceptance stays `not-recorded` unless the owner records it.
 4. **Assess A1.** Build from the frozen realization copy, run its generated tests, execute all independent M1 cases and the dedicated M2 discrimination witness, then inspect code, usage docs, registry and communication evidence. Store raw results and an A1 review record. If required checks fail or are unassessed, stop the principal sequence; do not apply M2 to conceal the failure.
 5. **Change intent only.** Against the actual A1 repository, edit only `spec.maxOpenLoans` from five to three in `lending/loan-policy`. Do not change code, generated tests or docs, the registry, profiles or instructions. Verify their byte identity, commit the model patch on top of the A1 commit and record the resulting source snapshot and M2 digest. R2 requires this clean, committed state.
 6. **Apply R2.** Invoke the same product build/profile against this source as a new Apply, with fresh assignment, run, task and review identities. R1 remains Applied in history. Markitect may inspect/reuse/rewrite A1 artifacts under the ordinary reconciliation rules; the runner does not choose the files or supply a replacement implementation.

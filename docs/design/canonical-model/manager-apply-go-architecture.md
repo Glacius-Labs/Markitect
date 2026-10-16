@@ -77,7 +77,7 @@ Organization and realization never import each other, and the compiler depends o
 | `apply.Publisher` | `apply` | Recheck the captured source, publish the verified artifacts and registry together, report actual writes and read-back. |
 | `run.Sessions` | `run` | Start a configured role, supply tasks and context, observe messages and tool requests, resume, cancel and establish termination. |
 | `run.Workspaces` | `run` | Materialize an owned candidate, observe actual changes, close or retain it. |
-| `run.Checks` | `run`, final evidence check | Execute explicit project checks on the exact candidate. |
+| `run.Checks` | `run`, `apply` | Execute explicit project checks on the exact candidate, for reviews and for the aggregate. |
 | `run.Journal` | `run`, `apply` | Durably append events and exact payloads under one writer. |
 
 Interfaces live with their consumers, and adapters return concrete types ([Go code review comments](https://go.dev/wiki/CodeReviewComments#interfaces)); one adapter may satisfy several narrow ports. `adapters/journal` implements both `run.Journal` and `apply.Control`, and `adapters/gitrepo` implements `apply.Source`, `apply.Publisher` and `run.Workspaces`. Effectful calls take `context.Context`; pure computations need no interface to be testable. Avoid generic `common`, `types` or `interfaces` packages ([package names](https://go.dev/blog/package-names)).

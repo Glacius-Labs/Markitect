@@ -18,7 +18,8 @@ body: |-
   ## Program and build boundary
 
   The program reads one request per line on standard input and writes exactly
-  one response per request on standard output, in request order. One process
+  one response per request on standard output, in request order. It writes and
+  flushes each response before it reads the next request. One process
   holds one initially empty library; operations run sequentially on that
   process's state. Closing the input ends the process with exit code zero.
   There is no network service, machine-clock input, database or persistence
@@ -29,8 +30,9 @@ body: |-
   builds the program and `go test ./...` runs its tests. Only the Go standard
   library is used. Internal packages, domain design and test layout are
   realization choices. The program needs no files outside `realization/` and
-  offers no reset, state-injection or policy-override operation; its policy
-  comes only from its realization of [[Lending.loan-policy]].
+  offers no reset, state-injection, policy-override or other test-only
+  operation; its policy comes only from its realization of
+  [[Lending.loan-policy]].
 
   ## Wire format
 
@@ -62,7 +64,8 @@ body: |-
 
   A malformed JSON line, an invalid request envelope or an unknown operation
   returns `status: invalidRequest` with a nonempty `reason`, echoing the
-  request `id` when it can be read and `null` otherwise. Processing continues
+  request `id` when the line parses as an envelope with a string `id`, and
+  `null` otherwise. Processing continues
   with the next line without changing state. A crash, hang, extra response or
   success-shaped error violates this interface.
 
@@ -78,7 +81,7 @@ body: |-
   | --- | --- |
   | [[Members.member]] | `memberId`, `name`, `status` |
   | [[Catalog.copy]] | `copyId`, `title`, `available` (boolean) |
-  | [[Lending.loan]] | `loanId`, `memberId`, `copyId`, `borrowDate`, `dueDate`, `status` (`open` or `closed`), `returnDate` (`null` while open) |
+  | [[Lending.loan]] | `loanId`, `memberId`, `copyId`, `borrowDate`, `dueDate`, `status` (`open` or `closed`), `returnDate` (`null` while open, the return date once closed) |
   | Overdue notice | `loanId`, `memberId`, `copyId`, `dueDate` |
 
   Identifiers and dates are strings and counts are integers. Lists may come in

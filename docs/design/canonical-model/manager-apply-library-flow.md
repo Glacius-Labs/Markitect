@@ -6,7 +6,7 @@ This walkthrough traces one Apply of [M1](library-example/README.md) through the
 
 The Host has captured and compiled M1, bound configuration and repository inputs, and derived the ordinary root plus the library, members, catalog, lending and lending/reminders Managers. The root receives the user's Apply instruction. All tasks inherit artifact-only reconciliation and a read-only canonical model.
 
-The root's recorded order put library first: its Manager owns the Go module, entry point and callable interface that `library/callable-interface` requires. Members and catalog followed, then lending. For this focused trace, B0 denotes the current unpublished candidate, which already contains the accepted library, member and catalog deliveries from earlier tasks in the same run. This does not imply that shared library obligations or the whole project have passed. All other required Package deliveries remain part of the root's completion criteria. C1, C2, I1 and I2 below are illustrative candidate labels, not recorded content digests.
+The root's recorded order put library first: its Manager owns the Go module, entry point and callable interface that `library/callable-interface` requires. Members and catalog followed, then lending; library's final task wires the operations into the entry point. For this focused trace, B0 denotes the current unpublished candidate, which already contains the accepted library, member and catalog deliveries from earlier tasks in the same run. This does not imply that shared library obligations or the whole project have passed. All other required Package deliveries remain part of the root's completion criteria. C1, C2, I1 and I2 below are illustrative candidate labels, not recorded content digests.
 
 ## Root to lending and back
 
@@ -44,7 +44,7 @@ Root and lending are ordinary Managers with different responsibilities. Their lo
 
 If a session or workspace binding cannot be safely continued, use an explicit new session with compiled prior reports and a recorded relationship to the earlier attempt. Do not claim the new session has inherited an unknown provider conversation. An uncertain writer must be reconciled or stopped before another writer receives that workspace.
 
-The exact initial context, custom instructions, supplied additions, actual outgoing request, observed responses, tool exchanges and candidate differences enter the same run history. Summaries sent upward reference those records. This gives the root a useful overview without requiring the whole descendant transcript in its initial prompt.
+The exact initial context, custom instructions, later supplied replies, actual outgoing request, observed responses, tool exchanges and candidate differences enter the same run history. Summaries sent upward reference those records. This gives the root a useful overview without requiring the whole descendant transcript in its initial prompt.
 
 ## Integration rules
 

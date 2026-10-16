@@ -28,6 +28,7 @@ type DelegateProposal struct {
 	Outcome     string
 	ModelBasis  []model.DefinitionRef
 	Constraints []string
+	DependsOn   []TaskID
 }
 
 type TaskSpec struct {
@@ -126,11 +127,13 @@ The tools form one closed catalogue; each role sees only its own:
 
 | Tool | Roles | Effect |
 | --- | --- | --- |
-| `delegate(to, outcome, basis, constraints)` | Manager | Records a task for a direct child and returns its ID. |
+| `plan(order, reasons)` | Manager | Records or revises the planned order of its child tasks, with reasons. |
+| `delegate(to, outcome, basis, constraints, depends_on)` | Manager | Records a task for a direct child, with the producer tasks whose accepted deliveries it needs, and returns its ID. |
 | `read(ref)` | Manager, reviewer | Returns a Definition, artifact, delivery report or transcript by identity and records what was supplied. |
 | `reserve_path(path, form)` | Manager | Reserves a new artifact path within the creation areas and exclusive ownership. |
 | `register(path, realizes, why)` | Manager | Proposes a registry change for an owned or reserved path. |
-| `ask(question)` | Manager | Raises a question or a sibling request to the parent, which may route it to the owner. |
+| `ask(question)` | Manager | Raises a question or a sibling request to the parent. |
+| `answer(question, response)` | Manager | Answers a child's question within the mandate, or routes it to a sibling or upward; owner answers arrive only through the application. |
 | `request_check(check)` | Manager, reviewer | Runs an allowed project check on the current candidate and returns its receipt. |
 | `submit_work(proposal)` | Manager | Submits a work proposal, a no-change delivery or a yield while children or answers are pending. |
 | `submit_review(proposal)` | Reviewer | Submits a review verdict with findings and evidence. |
@@ -202,7 +205,7 @@ type Publisher interface {
 
 `PublicationRequest` holds a publication ID, the original acquisition guard and input binding, the exact verified candidate with its registry, the final evidence references and the artifact-only target. It also carries the controller check, a run-scoped Host authorization and the run and epoch binding; a live controller alone cannot authorize an obsolete run, and a finished run's unused permits are void. Preflight checks readiness and source state; its permit is bound to that request.
 
-Publish writes into the working tree and never commits, merges or pushes; the owner's commit accepts the result. It revalidates the source guard at the write boundary, including additions, deletions and input changes, writes only the verified artifact and registry change and reads the result back. Its receipt distinguishes applied, verified no change, stale, partial, unknown and failed, with the completed paths, observed tree and registry identities and observation limits, also when an error is returned; callers keep such receipts. Multi-file publication is not atomic. Partial writes stay visible and recorded, and a later run captures the actual state. Even Applied is machine evidence, not human acceptance.
+Publish writes into the working tree and never commits, merges or pushes; the owner's commit accepts the result. It revalidates the source guard at the write boundary, including additions, deletions and input changes, writes only the verified artifact and registry change and reads the result back. Its receipt distinguishes applied, verified no change, stale, partial, unknown and failed, with the completed paths, observed tree and registry identities and observation limits, also when an error is returned; callers keep such receipts. Multi-file publication is not atomic. Partial writes stay visible and recorded; the owner commits or reverts them before a later run captures the state. Even Applied is machine evidence, not human acceptance.
 
 ## Host lifecycle and completion
 

@@ -46,6 +46,7 @@ The owner's [origin account of 15 October 2026](sources/owner-origin-20261015.md
 | [DEC-033](#dec-033-binding-intent-lives-only-in-the-model) | Decision | Binding intent lives only in the model | Accepted |
 | [DEC-034](#dec-034-removed-intent-removes-its-realization) | Decision | Removed intent removes its realization | Accepted |
 | [DEC-035](#dec-035-committed-model-in-owner-commit-accepts-the-result) | Decision | Committed model in, owner commit accepts the result | Accepted |
+| [DEC-036](#dec-036-adopted-design-refinements-for-the-first-apply) | Decision | Adopted design refinements for the first Apply | Accepted |
 | [PRM-001 to PRM-007](#promises) | Promise | Target outcomes | Target |
 | [ASM-001 to ASM-005](#assumptions-and-hypotheses) | Assumption | Assumptions and hypotheses | See entries |
 | [CPT-001](#cpt-001-federalism) | Concept | Federalism | Accepted |
@@ -419,12 +420,12 @@ The owner's [origin account of 15 October 2026](sources/owner-origin-20261015.md
   - If violating something makes an artifact wrong, it is model content. This includes realization constraints such as a public interface, the programming language and required build and test commands. The library's callable interface therefore moved into M1.
   - Configuration and custom instructions hold only execution choices and operational guidance. A project rule found there is a review finding and moves into the model.
   - A shared rule's scope is stated in the model. Configuration may only name the Kind and Property that carry scope; it never lists individual Definitions.
-- **Owning document:** the [Apply concept](../design/canonical-model/manager-apply-concept.md#four-kinds-of-input-and-record). It applies [DEC-006](#dec-006-every-file-is-covered-or-explicitly-ignored)'s single-owner idea to intent.
+- **Owning document:** the [Apply concept](../design/canonical-model/manager-apply-concept.md#four-kinds-of-input-and-record). It applies the vision's rule of one canonical owner per fact to realization constraints.
 
 ### DEC-034 Removed intent removes its realization
 
 - **Status:** Accepted, owner, 16 October 2026, adopting recommendation A4 ([source](sources/consolidation-discussion-20261016.md#adopt-the-recommendations)).
-- **Statement:** When a Definition disappears, Apply deletes every artifact whose only basis it was, or the owner Manager records a new justified basis that review accepts. When a Definition moves or is renamed, registry links migrate to the new identity; a link to a missing Definition is a blocking finding. Leftover realization of removed intent fails the reconciliation.
+- **Statement:** When a Definition disappears, Apply deletes every artifact whose only basis it was, or the owner Manager records a new justified basis that review accepts. A moved or renamed Definition counts as a removal plus an addition: the link to the old identity is a blocking finding until the owner re-registers the artifact against the new identity with review. Leftover realization of removed intent fails the reconciliation.
 - **Owning document:** the [Apply concept](../design/canonical-model/manager-apply-concept.md#removed-and-moved-intent). It serves [PRM-003](#promises).
 
 ### DEC-035 Committed model in, owner commit accepts the result
@@ -432,6 +433,21 @@ The owner's [origin account of 15 October 2026](sources/owner-origin-20261015.md
 - **Status:** Accepted, owner, 16 October 2026, adopting recommendations B8 and A7 ([source](sources/consolidation-discussion-20261016.md#adopt-the-recommendations), [all recommendations](sources/consolidation-discussion-20261016.md#adopt-all-recommendations)).
 - **Statement:** Apply reads the model, configuration, registry and ignore policy from the committed state and refuses to start with uncommitted changes outside ignored paths. It writes its verified result only into the working tree and never commits, merges or pushes. The owner's commit of the published result is the acceptance, just as a committed model revision is the accepted specification. A project can also require the owner's approval before publication for selected Packages.
 - **Owning documents:** the [Apply concept](../design/canonical-model/manager-apply-concept.md#apply-lifecycle) and the [port contracts](../design/canonical-model/manager-apply-port-contracts.md#guarded-publication-port).
+
+### DEC-036 Adopted design refinements for the first Apply
+
+- **Status:** Accepted, owner, 16 October 2026 ([recommendations](sources/consolidation-discussion-20261016.md#adopt-the-recommendations), [all recommendations](sources/consolidation-discussion-20261016.md#adopt-all-recommendations)).
+- **Statement:** The owner adopted every item of the assistant's list of 16 October. Besides DEC-033 to DEC-035 these include:
+  - the ownership of project-level artifacts, the skeleton and the wiring task;
+  - the root's recorded delivery order;
+  - the registry layout and Markitect's own initial registry at the cutover;
+  - the closed Host tool catalogue;
+  - the Host's final evidence check instead of a separate verifier Agent;
+  - continuation runs instead of a Superseded handoff.
+
+  The source lists every item with its owning document.
+- **Consequence:** Changing an adopted item needs the owner. Implementation can refine details within an item's intent, such as exact schemas or default numbers, through ordinary review.
+- **Owning documents:** the [Apply design map](../design/canonical-model/README.md#apply-design) and the documents it lists.
 
 ## Promises
 

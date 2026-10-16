@@ -90,7 +90,7 @@ $libraryProbePython = Join-Path $libraryProbeEnvironment 'Scripts/python.exe'
 
 An existing correctly prepared environment can run the final command directly. Normal checking does not rewrite sources or locks. `--report <path>` explicitly writes JSON evidence; `--write-lock` explicitly regenerates M1's external binding after an intentional dependency update. No other fixture's lock or evidence is rewritten.
 
-This is a bounded design-probe result, not full production Go compiler support, an executed Apply or evidence that generated code meets the model. The interface, independent expectations, Go architecture and Playground now have proposed design contracts. Executable evaluation, production support and actual Agent communication remain implementation-plan work.
+This is a bounded design-probe result, not full production Go compiler support, an executed Apply or evidence that generated code meets the model. The independent expectations, Go architecture and Playground have design contracts. Executable evaluation, production support and actual Agent communication remain implementation-plan work.
 
 ## Keep the second Apply focused
 

@@ -90,3 +90,7 @@ Recorder's note: The owner extended the adoption to every item of the assistant'
 - D7: an implementation that deviates from a contract changes it in the same pull request.
 - D8: register notes on CPT-004, OQ-006 and ENH-003.
 - E1 to E10: recorded as later extensions in the north star and linked from the register entries they serve.
+
+## Polish and integrate
+
+> Wenn du fertig bist, poliere alles nochmal auf und sorge dafür dass das Konzept sauber ist. Dann bringe es auf main
