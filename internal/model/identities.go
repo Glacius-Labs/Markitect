@@ -117,6 +117,7 @@ type sourceDefinition struct {
 	file       Entry
 	envelope   Value
 	kindTarget *Identity
+	references referenceContext
 }
 
 func (c *sourceCompiler) collectDefinition(value Value, file Entry, root string) {

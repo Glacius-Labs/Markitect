@@ -7,8 +7,8 @@ import (
 )
 
 // The checks here do not infer a Definition's category from the spelling of
-// kind or id. Category-specific ID/Property rules require resolved Core types
-// and remain in the incomplete contract phase. The lexical union still rules
+// kind or id. Category-specific ID/Property rules use resolved Core types in
+// the contract phase. The lexical union here already rules
 // out punctuation, non-NFC names and invalid XID spellings for every category.
 func (c *sourceCompiler) definitionNames(v Value, e Entry) {
 	if id, present := lookup(v, "id"); present && id.kind == StringValue && !validLocalName(id.text) {
