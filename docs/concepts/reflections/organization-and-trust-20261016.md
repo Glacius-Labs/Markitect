@@ -2,6 +2,25 @@
 
 Date: 16 October 2026. Owner vision, observations and hypotheses from the Markitect outlook discussion. [Original owner statements](../sources/organization-and-trust-20261016.md) preserve the wording. Assistant interpretations are identified below; recording the discussion does not adopt them or establish a measured benefit.
 
+The owner also supplied the [assistant response](../sources/organization-and-trust-assistant-20261016.md) for extraction. Its suggestions remain attributed to the assistant. The topic map below brings both contributions together; the existing concept register retains decision ownership.
+
+## Extracted ideas and their status
+
+| Idea | Origin and status | Detail |
+| --- | --- | --- |
+| Spend human attention on modeling, direction and important questions | Owner goal | [Desired working life](#the-working-life-the-owner-wants) |
+| Compare with the actual story, implementation, AI review and merge workflow | Owner experience; assistant comparison framing | [Current workflow](#the-workflow-being-improved) |
+| Distribute responsibility through delegation and escalation | Owner organizational analogy and hypothesis | [Trust mechanism](#organization-as-the-trust-mechanism) |
+| Establish perspectives from enduring responsibilities and model obligations | Assistant interpretation of the owner's observation about focused attention | [Attention beyond the current task](#attention-beyond-the-story-and-diff) |
+| Use configurable teams for focused work and different review perspectives | Owner follow-up idea; concrete assignments remain proposals | [Team configuration](#different-perspectives-through-configurable-teams) |
+| Give an independent reviewer the actual requirements and result, with effective rework | Owner four-eyes direction; assistant operational interpretation | [Independent review](#four-eyes-and-correlated-mistakes) |
+| Select capable models per role and evaluate total effort | Owner efficiency hypothesis; assistant evaluation proposal | [Whole-process evaluation](#model-capability-and-the-cost-of-the-whole-process) |
+| Delegate local decisions with sufficient context and bounded authority | Owner observation and hypothesis; assistant boundary proposal | [Local decisions](#local-decisions-and-context), [decision boundaries](#local-authority-and-escalation-boundaries) |
+| Preserve experience across runs | Assistant proposal, explicitly requested by the owner as an issue to retain | [Institutional memory](#experience-and-institutional-memory) |
+| Treat justified no-change, objections and escalation as useful outcomes | Owner incentive analogy; assistant interpretation of success criteria | [Incentives and limits](#limits-of-the-analogy-and-future-autonomy) |
+| Use reports for steering and review the process itself | Owner reporting direction; assistant oversight proposal | [Leadership and process oversight](#leadership-reports-and-process-oversight) |
+| Earn enough trust to avoid routine human PR review | Owner goal; sufficient evidence remains open | [Autonomy and its limits](#limits-of-the-analogy-and-future-autonomy) |
+
 ## The working life the owner wants
 
 The owner wants to spend time modeling, developing ideas and concepts, and setting rules. The organization should turn that intent into clean, consistent and considered implementation, develop features, find and fix bugs, and maintain project hygiene. The owner wants to watch ideas become reality, answer important questions and steer the work without continuously supervising implementation.
@@ -47,6 +66,32 @@ The discussion suggests the following questions for later design and evaluation.
 
 Follow-up on 16 October 2026: the owner explicitly asked to retain these objections, especially experience, different perspectives and the four-eyes principle, and identified configurable teams as a way to realize the latter. The [follow-up source](../sources/organization-and-trust-20261016.md#retain-objections-and-team-design-questions) records that request. The elaborations below preserve design questions for the architect; they do not select a new team layout.
 
+### Attention beyond the story and diff
+
+The supplied response proposes a concrete mechanism for the owner's observation about concentration: an implementation prompt directs attention toward the requested feature, while a PR review directs attention toward the existing diff. An obligation absent from both may receive little attention.
+
+An enduring responsibility can supply a different starting question. Review assignments would come from the relevant model and responsibilities, including obligations that the story did not repeat. A narrow assignment can still demand substantial reasoning: checking whether suspended members can borrow through any supported entry point is bounded but not trivial.
+
+This is a hypothesis about organizing attention, not a guarantee that every required perspective is known. Missing model connections and incomplete context can still leave gaps. The intended improvement is to make perspective selection explicit and inspectable rather than relying on one agent to invent every useful angle during the task.
+
+### Local authority and escalation boundaries
+
+The assistant proposes four inputs for delegated local judgment: relevant context, goals and binding constraints, authority to choose within the area, and criteria for involving other areas or escalating. For example, choosing between equivalent internal implementations could stay local. Changing public behavior or imposing an obligation on another area requires coordination under the applicable model and authority.
+
+The architect still needs to determine how these boundaries are expressed and checked, how an agent obtains missing context and how uncertainty reaches an empowered recipient. The owner's observation that AI recommendations are commonly followed motivates this delegation; it does not establish that every local recommendation is correct.
+
+### Leadership reports and process oversight
+
+The owner wants to issue direction, receive regular reports and react to material questions or signs that work is going wrong. Upward information should therefore help steering: outcomes, unresolved decisions, relevant failures and reasons to intervene. Detailed evidence remains available for investigation.
+
+The assistant proposes that reduced routine code review can be accompanied by occasional targeted inspection of the process and its rules. This would examine whether responsibilities, review questions and escalation boundaries still work. No reporting frequency, audit schedule or autonomous merge permission was selected in this discussion.
+
+### Model capability and the cost of the whole process
+
+The owner's efficiency hypothesis concerns focused roles that may need less general capability than a single agent handling the whole project. The supplied response proposes evaluating model suitability separately for each role while judging the complete workflow: outcome quality, missed obligations, context preparation, coordination, review, rework and human intervention.
+
+A cheaper invocation does not establish a cheaper or more trustworthy outcome if it causes additional review or repair. Conversely, a capable focused role need not use the most expensive model merely because the overall project is difficult. Which configurations achieve the intended tradeoff remains an evaluation question, connected to [per-role configuration](../register.md#enh-004-per-role-agent-configuration-and-model-mixing).
+
 ### Experience and institutional memory
 
 The organizational analogy needs an account of accumulated experience. Human workers can remember why a decision was made, recognize recurring failures and develop judgment about their area. An agent invocation must not be assumed to possess the organization's earlier experience merely because it has the same Manager name.
@@ -64,11 +109,13 @@ Illustrative review questions for the library are:
 | Perspective | Question |
 | --- | --- |
 | Domain behavior | Can a suspended member or a member with five loans borrow through any supported entry point? |
+| Existing consumers | Does the changed behavior preserve the contracts relied on by other areas? |
 | Tests | Would these tests reject a plausible implementation that permits a sixth loan, and where do their expectations come from? |
 | Integration | Does a membership-state change affect lending and reminders consistently? |
+| Documentation | Do the usage instructions still describe the realized behavior and its limits? |
 | Maintainability | Does the change follow the project's agreed patterns without adding unnecessary mechanisms? |
 
-These are possible assignments within existing team and integration responsibilities, not four mandatory new agents. The architect should consider which perspectives a task needs, which can share a role and when specialization earns its coordination cost. Selecting different models is another configurable option to evaluate; it does not establish independent judgment by itself. The [existing team variants](../../design/canonical-model/manager-realization-north-star.md#team-variants) and [configuration proposal](../../design/canonical-model/manager-apply-concept.md#organization-and-configuration) remain the design owners.
+These are possible assignments within existing team and integration responsibilities, not a mandatory agent per perspective. The architect should consider which perspectives a task needs, which can share a role and when specialization earns its coordination cost. Selecting different models is another configurable option to evaluate; it does not establish independent judgment by itself. The [existing team variants](../../design/canonical-model/manager-realization-north-star.md#team-variants) and [configuration proposal](../../design/canonical-model/manager-apply-concept.md#organization-and-configuration) remain the design owners.
 
 ### Four eyes and correlated mistakes
 
