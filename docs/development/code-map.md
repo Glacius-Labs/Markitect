@@ -61,7 +61,7 @@ The target `cmd/` and `internal/` responsibilities use separate `apply-*` layers
 
 | Package | Purpose | Owning document |
 |---|---|---|
-| `internal/realization` | Validates artifact registry ownership and file accounting over supplied model and snapshot values. | [docs/design/canonical-model/manager-apply-go-architecture.md](../design/canonical-model/manager-apply-go-architecture.md#organize-by-responsibility) |
+| `internal/realization` | Validates registry ownership, file accounting and exact-path claims over supplied model and snapshot values. | [docs/design/canonical-model/manager-apply-go-architecture.md](../design/canonical-model/manager-apply-go-architecture.md#organize-by-responsibility) |
 
 ## Deterministic core
 
