@@ -94,6 +94,8 @@ A cheaper invocation does not establish a cheaper or more trustworthy outcome if
 
 ### Experience and institutional memory
 
+The [experience reflection](experience-without-implicit-rules-20261016.md) develops this question into observation, explanation, experience and binding rules, with a small learning loop and an illustrative library case.
+
 The organizational analogy needs an account of accumulated experience. Human workers can remember why a decision was made, recognize recurring failures and develop judgment about their area. An agent invocation must not be assumed to possess the organization's earlier experience merely because it has the same Manager name.
 
 The model, reasoned decisions, incident findings, rejected approaches and unresolved obligations could supply that continuity. A useful retained lesson would identify what happened, why it mattered, the evidence and the circumstances in which it applies. For example, a previous lending defect might show that checking membership only at one entry point left another path open.

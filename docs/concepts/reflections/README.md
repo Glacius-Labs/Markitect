@@ -5,6 +5,7 @@ This collection keeps discussions about Markitect's purpose, future use and orga
 | Reflection | Subject |
 | --- | --- |
 | [Trust through organized agent work](organization-and-trust-20261016.md) | [Extracted ideas with origin and status](organization-and-trust-20261016.md#extracted-ideas-and-their-status), desired working life, delegation, experience, configurable teams, review and process oversight |
+| [Experience without implicit rules](experience-without-implicit-rules-20261016.md) | Observation, explanation, experience and binding rules; a small learning loop, explicit authority and a hypothetical library walkthrough |
 
 ## Continuing the discussion
 

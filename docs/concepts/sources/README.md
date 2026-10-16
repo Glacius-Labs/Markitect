@@ -4,6 +4,7 @@ Sources preserve where the [register](../register.md) entries come from. Owner s
 
 | Source | Origin | Content |
 |---|---|---|
+| [Experience discussion](experience-discussion-20261016.md) | Direct owner questions and documentation request, 16 October 2026 | Learn from decisions and failures without automatically granting assumptions rule authority; preserve the four distinctions and explore a library case |
 | [Organization and trust](organization-and-trust-20261016.md) | Direct owner statements and documentation request, 16 October 2026 | Desired working life, current story-to-PR practice, management analogy, focused perspectives, incentives and local decisions |
 | [Assistant response on organization and trust](organization-and-trust-assistant-20261016.md) | Earlier assistant response supplied by the owner as an attachment for extraction, 16 October 2026 | Responsibility-derived perspectives, independent review, local authority, institutional memory, incentives and process oversight; assistant interpretation |
 | [Owner origin account](owner-origin-20261015.md) | Direct retrospective account and documentation request, 15 October 2026 | Originating Core/Module/Product rules, documentation and Claude/Codex skill drift, repeated consolidation, compiler and Manager rationale, and Government as delegated model maintenance |
