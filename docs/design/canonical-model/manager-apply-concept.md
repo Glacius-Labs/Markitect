@@ -251,6 +251,8 @@ This is a substantial integration of a new language and authoring model with an 
 
 ## First delivery sequence
 
+The [implementation plan](manager-apply-implementation-plan.md) expands this outline into small dependency-ordered slices, current-source treatment and explicit library acceptance gates. It also separates the first demonstrated library Apply from completion of the product's source-model cutover.
+
 1. Implement and validate v1 loading, structural compilation and fixed model bindings. Prepare the library's small canonical model and independently stated expected behaviors.
 2. Derive the local organization, resolve profiles, compile simple context and validate artifact registry/ownership and source classifications. These stages can be exercised without a provider.
 3. Run a root and one Package through bounded local work, fresh review, candidate integration and required reporting using the existing executor boundary.

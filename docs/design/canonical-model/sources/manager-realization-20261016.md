@@ -72,3 +72,7 @@ Recorder's note: These are verbatim owner messages from the design discussion in
 ## Develop and present the concept
 
 > Ich denke damit habe ich soziemlich alles an Input geliefert was mir dazu einfällt und was mir wichtig ist. Kannst du daraus jetzt ein Konzept entwickeln und die Details klären und mir dann deine Lösung oder dein Konzept vorstellen?
+
+## Derive the implementation plan
+
+> Lass uns daraus einen konkreten Umsetzungsplan für das erste zuverlässige Apply ableiten, mit kleinen aufeinander aufbauenden Schritten und klaren Prüfkriterien am Bibliotheksbeispiel. Ausserdem sollten wir schauen, wie wir mit dem aktuellen Implementierungsstand vs dem neuen Konzept umgehen sollen

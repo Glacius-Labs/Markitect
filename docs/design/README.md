@@ -10,6 +10,7 @@ The [Project World package](project-world/README.md) has its own reading order a
 - [Canonical model overview](canonical-model/README.md) — the completed baseline, evidence boundaries, working vocabulary and historical sources.
 - [Manager realization north star](canonical-model/manager-realization-north-star.md) — Package Managers, configurable teams, artifact registration and context variants from the owner discussion of 16 October 2026.
 - [Manager organization and reliable Apply](canonical-model/manager-apply-concept.md) — developed proposal with concrete responsibilities, context, registry, execution and reporting contracts, and a library walkthrough.
+- [Implementation plan for reliable Apply](canonical-model/manager-apply-implementation-plan.md) — source-bound reuse assessment, small delivery slices, library acceptance gates and the product cutover.
 - [Earlier model-design consolidation](canonical-model/consolidation.md) — chronology from 15 October 2026 and remaining product questions outside the completed language scope.
 - [Grundmodell und Bibliotheksentwurf](product-model-refinement/README.md) — typisierte Prosa, dokumentierte Designentscheidungen und Sprachkandidaten.
 - [Standalone Tasks project documentation](task-management/README.md) — fachliche Gegenprobe als eigenständige Projektspezifikation; Anwendung noch nicht implementiert.
