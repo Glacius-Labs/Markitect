@@ -6,7 +6,7 @@ This collection keeps discussions about Markitect's purpose, future use and orga
 | --- | --- |
 | [Trust through organized agent work](organization-and-trust-20261016.md) | [Extracted ideas with origin and status](organization-and-trust-20261016.md#extracted-ideas-and-their-status), desired working life, delegation, experience, configurable teams, review and process oversight |
 | [Experience without implicit rules](experience-without-implicit-rules-20261016.md) | Observation, explanation, experience and binding rules; a small learning loop, explicit authority and a hypothetical library walkthrough |
-| [Experience selection and runtime feedback](experience-selection-and-runtime-feedback-20261016.md) | Short lesson records, selective Manager context, operational log investigations and a library incident followed through to a reusable lesson |
+| [Experience selection and runtime feedback](experience-selection-and-runtime-feedback-20261016.md) | Two separate subjects: selective experience context and a Manager-based operational check or doctor; library diagnosis with optional later learning |
 
 ## Continuing the discussion
 

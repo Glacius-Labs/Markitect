@@ -22,3 +22,9 @@ Recorder's note: Later messages on the same date extend the discussion to select
 ## Preserve storage selection and operational feedback
 
 > Halte diese Gedanken zur Speicherung und Auswahl von Erfahrungen sowie zur Auswertung von Betriebslogs bitte auch in unseren Docs fest. Danach lass uns den Ablauf vom Betriebsfehler bis zur neuen Erfahrung am Bibliotheksbeispiel durchspielen.
+
+## Clarification: logs support a check or doctor
+
+> Die Logs meinte ich eher als eine Art check oder doctor oder sowas über die Manager. Nicht Erfahrungsbezogen
+
+Recorder's note: This corrects the assistant's framing of operational logs as an experience flow. The operational assessment is an independent use case through the Managers. The reflection now separates its diagnostic result from optional later learning.
