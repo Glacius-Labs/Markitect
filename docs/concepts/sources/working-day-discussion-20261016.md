@@ -253,3 +253,9 @@ Recorder's note: The assistant proposed [conservative exposure-based dispatch ga
 > Wie erfassen wir zuverlässig, auf welchen Lieferungen und zusätzlichen Informationen eine Arbeit tatsächlich basiert, ohne jede Dateioperation überwachen oder einen komplizierten Abhängigkeitsgraphen pflegen zu müssen?
 
 Recorder's note: The assistant proposed [recording supplied input boundaries](../reflections/working-day-demonstration-20261016.md#record-supplied-inputs-rather-than-every-file-read) through existing step, workspace, delivery, context and tool-reply references, retaining resumed-session provenance and deriving consumer relations from execution records. The proposal distinguishes conservative exposure from mental causal reliance and requires honest limits for broad or unobserved access. It does not add a manually maintained graph, eliminate actual output/ownership checks or claim that scoped instructions alone enforce isolation.
+
+## Shape Manager input packages
+
+> Wie schneiden wir diese Eingabepakete konkret zu, damit ein Manager genug Kontext für gute Entscheidungen hat, ohne durch zu breite Snapshots unnötig von allen anderen Lieferungen abhängig zu werden?
+
+Recorder's note: The assistant proposed [four input parts](../reflections/working-day-demonstration-20261016.md#shape-useful-input-packages-without-unnecessary-artifact-exposure): complete own responsibility, direct neighbor contracts, necessary realization/build inputs and compact orientation. The proposal distinguishes the Host's aggregate base from actual role exposure, canonical neighbor knowledge from consuming delivered implementation, and a shorter prompt from real access isolation. It preserves required reviews/builds, delivery provenance and conservative defect gating without requiring separately buildable Packages, new contract-only deliveries or semantic context ranking.
