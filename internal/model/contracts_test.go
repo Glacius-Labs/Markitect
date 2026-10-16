@@ -20,7 +20,7 @@ func TestFullPrescribedCoreCompletesOnlyImplementedPhases(t *testing.T) {
 	model := got.Models[0]
 	for _, phase := range model.Phases {
 		switch phase.Name {
-		case "source_structure", "yaml_and_envelopes", "names_and_unicode", "dependencies", "imports_and_kinds", "core_and_contracts", "values_and_references":
+		case "source_structure", "yaml_and_envelopes", "names_and_unicode", "dependencies", "imports_and_kinds", "core_and_contracts", "values_and_references", "body_links":
 			if phase.Status != Passed {
 				t.Fatalf("implemented phase incomplete: %+v", phase)
 			}

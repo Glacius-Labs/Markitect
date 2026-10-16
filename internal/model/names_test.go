@@ -15,7 +15,7 @@ func TestUnicodeSourceNamesKeepTextAndPartialBoundary(t *testing.T) {
 	input := sourceInput()
 	input.Root.Entries[0].Bytes = []byte("formatVersion: 1\nid: ٢٠٢٦.١\nversion: '1.x'\nroot: model\ndependencies: {}")
 	input.Root.Entries[1] = Entry{Path: "model/überweisung/文档/größe-٢.yaml", Kind: Regular,
-		Bytes: []byte("id: größe-٢\nkind: größe-٢\nbody: \" u\\u0308 [[still-unchecked]] A\\0B \"\ntitle: \"u\\u0308\"\nspec: {文档: \"u\\u0308\"}\nimports: [{package: 文档, as: 文档}]")}
+		Bytes: []byte("id: größe-٢\nkind: größe-٢\nbody: \" u\\u0308 `[[still-unchecked]]` A\\0B \"\ntitle: \"u\\u0308\"\nspec: {文档: \"u\\u0308\"}\nimports: [{package: 文档, as: 文档}]")}
 	input.Root.Entries = append(input.Root.Entries, Entry{Path: "model/文档/item.yaml", Kind: Regular,
 		Bytes: []byte("id: 文档\nkind: 文档\nbody: text\nspec: {}")})
 	original := bytes.Clone(input.Root.Entries[1].Bytes)
@@ -39,7 +39,7 @@ func TestUnicodeSourceNamesKeepTextAndPartialBoundary(t *testing.T) {
 	title, _ := lookup(v, "title")
 	spec, _ := lookup(v, "spec")
 	text, _ := lookup(spec, "文档")
-	if body.text != " u\u0308 [[still-unchecked]] A\x00B " || title.text != "u\u0308" || text.text != "u\u0308" {
+	if body.text != " u\u0308 `[[still-unchecked]]` A\x00B " || title.text != "u\u0308" || text.text != "u\u0308" {
 		t.Fatal("ordinary text was normalized or rewritten by name checks")
 	}
 }

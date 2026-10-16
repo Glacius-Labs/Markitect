@@ -10,13 +10,13 @@ import (
 // Compile examines only the supplied bytes. The current acquisition slice
 // validates source structure, YAML scalar forms, manifests and Definition
 // envelopes, pinned Unicode names, explicit bindings and Core/field contracts.
-// It applies checked contracts to concrete values and data references. Body
-// links, locks and canonical projection remain incomplete: no model can pass
-// or receive canonical bytes.
+// It applies checked contracts to concrete values, data references and active
+// body links. Locks and canonical projection remain incomplete: no model can
+// pass or receive canonical bytes. Coordinate coverage is reported separately.
 func Compile(input Input) Result {
 	r := Result{Status: NotCompleted, Coordinates: NotCompleted}
 	r.Limits = effectiveLimits(input.Limits)
-	if input.Limits.SourceBytes < 0 || input.Limits.Entries < 0 || input.Limits.YAMLDepth < 0 || input.Limits.Models < 0 {
+	if input.Limits.SourceBytes < 0 || input.Limits.Entries < 0 || input.Limits.YAMLDepth < 0 || input.Limits.Models < 0 || input.Limits.BodyBytes < 0 || input.Limits.MarkdownNesting < 0 {
 		r.Diagnostics = []Diagnostic{{Code: "config.invalid_limit", Message: "Limits must be nonnegative; zero selects the default."}}
 		return r
 	}
@@ -95,7 +95,16 @@ func Compile(input Input) Result {
 			r.Status = Failed
 		}
 	}
-	for _, finding := range append(append(append(graph.findings, bindings.findings...), contracts.findings...), values.findings...) {
+	bodies := checkBodyLinks(scopes, graph, values, r.Limits)
+	r.Coordinates = bodies.coordinates
+	for index, status := range bodies.status {
+		setPhaseStatus(&r.Models[index], "body_links", status)
+		if status == Failed {
+			r.Models[index].Status = Failed
+			r.Status = Failed
+		}
+	}
+	for _, finding := range append(append(append(append(graph.findings, bindings.findings...), contracts.findings...), values.findings...), bodies.findings...) {
 		r.Diagnostics = append(r.Diagnostics, finding.diagnostic)
 	}
 	sort.Slice(r.Models, func(i, j int) bool {
@@ -147,6 +156,12 @@ func effectiveLimits(l Limits) Limits {
 	}
 	if l.Models != 0 {
 		d.Models = l.Models
+	}
+	if l.BodyBytes != 0 {
+		d.BodyBytes = l.BodyBytes
+	}
+	if l.MarkdownNesting != 0 {
+		d.MarkdownNesting = l.MarkdownNesting
 	}
 	return d
 }
