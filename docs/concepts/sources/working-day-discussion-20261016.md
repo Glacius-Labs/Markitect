@@ -223,3 +223,9 @@ Recorder's note: The assistant proposed a conservative first-version default: th
 > Wie würden wir konkret erkennen, dass ein Finding der falschen Verantwortung zugeordnet wurde oder weitere Manager betrifft, ohne dass jeder Manager dafür wieder das gesamte Projekt prüfen muss?
 
 Recorder's note: The assistant proposed a local ownership/dependency assessment during ordinary task interpretation and existing integration review, using direct model neighbors, registry ownership and targeted artifact evidence. The [ownership section](../reflections/working-day-demonstration-20261016.md#detect-incorrect-or-incomplete-finding-ownership-locally) distinguishes rule location from repair ownership, preserves one finding through parent-mediated reassignment/contributions, and avoids automatic work for every cited neighbor. It explicitly retains uncertainty about unrecorded semantic dependencies and introduces no new routing or approval role.
+
+## Bound parent coordination without new structures
+
+> Wie verhindern wir, dass der gemeinsame Parent bei bereichsübergreifenden Findings zum Flaschenhals wird oder Aufgaben zwischen Managern hin- und hergeschoben werden, ohne zusätzliche Koordinationsstrukturen einzuführen?
+
+Recorder's note: The assistant proposed [bounded parent coordination](../reflections/working-day-demonstration-20261016.md#keep-parent-coordination-bounded-and-prevent-forwarding-loops): one decision-ready request, an explicit allocation of contributions/dependencies, Host routing of already authorized progress, evidence-based objections and bounded handling of repeated forwarding. Existing parent integration remains required; no new coordinator, peer authority, retry count or parallel writer is introduced. Journal observations reveal coordination overhead without claiming that genuine cross-area coupling can be removed automatically.
