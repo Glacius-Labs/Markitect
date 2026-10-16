@@ -250,3 +250,36 @@ func TestContradictoryPublicModelFactsCannotPass(t *testing.T) {
 		t.Fatal("zero classification accepted")
 	}
 }
+
+func TestGenericAccountingAndAuthoritativeEmptyInventory(t *testing.T) {
+	id := model.Identity{Package: "engine/api", ID: "Endpoint"}
+	compiled := model.Result{Status: model.Passed, Models: []model.ModelResult{{
+		ID: "generic-project", Local: true, Status: model.Passed,
+		Packages:    []model.Package{{Name: "engine"}, {Name: "engine/api"}, {Name: "empty"}},
+		Definitions: []model.Definition{{Identity: id, ModelID: "generic-project"}},
+	}}}
+	reg := registry(t, registration(t, owner(t, "engine"), artifact(t, "source/Endpoint.go", id)))
+	files := fileTree(t, "source/Endpoint.go")
+	first := realization.AccountFiles(compiled, files, reg, nil)
+	slices.Reverse(compiled.Models[0].Packages)
+	second := realization.AccountFiles(compiled, files, reg, nil)
+	if first.Status() != realization.Accounted || !reflect.DeepEqual(first.Files(), second.Files()) || len(first.Artifacts(id)) != 1 {
+		t.Fatal("generic project accounting depends on library names or inventory order")
+	}
+	compiled.Models[0].Packages = nil
+	compiled.Models[0].Definitions = nil
+	if report := realization.AccountFiles(compiled, snapshot.Tree{}, realization.Registry{}, nil); report.Status() != realization.Accounted {
+		t.Fatal("a Passed empty inventory was not authoritative")
+	}
+	compiled.Models[0].Status = model.NotCompleted
+	if report := realization.AccountFiles(compiled, snapshot.Tree{}, realization.Registry{}, nil); report.Status() != realization.AccountingIncomplete {
+		t.Fatal("an unavailable inventory was treated as an authoritative empty set")
+	}
+}
+
+func TestOperationalStateExclusionHasAnExactBoundary(t *testing.T) {
+	report := realization.AccountFiles(compiledFacts(), fileTree(t, ".markitect/statex/control"), realization.Registry{}, nil)
+	if report.Status() != realization.AccountingInvalid || !reflect.DeepEqual(findingCodes(report), []string{"file.unexplained"}) {
+		t.Fatal("a neighboring ordinary path was silently excluded as operational state")
+	}
+}
