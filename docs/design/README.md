@@ -13,6 +13,7 @@ The [Project World package](project-world/README.md) has its own reading order a
 - [Implementation plan for reliable Apply](canonical-model/manager-apply-implementation-plan.md) — two real library Applies around a model change, source/Playground design and a clean rebuild with small delivery slices.
 - [Supplied Apply review and resolution](canonical-model/review-resolution-20261016.md) — treatment of five conceptual gaps, preserved review sources and the next design steps.
 - [Small library model M1](canonical-model/library-example/README.md) — canonical YAML, explicit Package connections and bounded validation derived from the confirmed simple business rules.
+- [Go architecture outline for reliable Apply](canonical-model/manager-apply-go-architecture.md) — initial Ports and Adapters responsibilities, package direction and source reuse/replacement proposal.
 - [Earlier model-design consolidation](canonical-model/consolidation.md) — chronology from 15 October 2026 and remaining product questions outside the completed language scope.
 - [Grundmodell und Bibliotheksentwurf](product-model-refinement/README.md) — typisierte Prosa, dokumentierte Designentscheidungen und Sprachkandidaten.
 - [Standalone Tasks project documentation](task-management/README.md) — fachliche Gegenprobe als eigenständige Projektspezifikation; Anwendung noch nicht implementiert.

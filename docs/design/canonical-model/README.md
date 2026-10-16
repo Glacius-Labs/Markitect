@@ -17,6 +17,7 @@ The linked histories preserve the derivation and superseded choices. Project voc
 | [Implementation plan for reliable Apply](manager-apply-implementation-plan.md) | Two real library Applies around a model change, Go and Playground design, Agent communication and a clean rebuild without compatibility obligations. |
 | [Supplied Apply review and resolution](review-resolution-20261016.md) | Preserved assessment sources, five refinements, superseded migration advice and the next concrete design work. |
 | [Small library model M1](library-example/README.md) | Canonical YAML from the confirmed business rules, a small ordinary vocabulary, explicit Package links and bounded structural evidence. |
+| [Go architecture outline for reliable Apply](manager-apply-go-architecture.md) | Initial Ports and Adapters responsibilities, idiomatic Go package proposal and treatment of current source; concrete P01 contracts remain next. |
 | [Executable Exchange example](minimal-language/exchange-example/README.md) | Current input files, bounded probe and reports; includes the explicitly rejected Command/command vocabulary collision. |
 | [Consolidated design history](consolidation.md) and [fixed Main comparison](current-main-comparison.md) | Origin of the design and product boundaries. |
 

@@ -100,3 +100,9 @@ The owner supplied an [assessment](concept-assessment-20261016.txt) and [propose
 ## Confirm the rules and encode M1
 
 > Ja, das passt. Lass uns daraus jetzt das kanonische Modell M1 ableiten und als YAML-Dateien festhalten. Halten wir das Vokabular klein und machen die Verknüpfungen zwischen den Packages explizit.
+
+## Sketch the Go architecture with Ports and Adapters
+
+> Lass uns als Nächstes die Go-Architektur für das erste zuverlässige Apply entwerfen. Zunächst grob: Welche Bausteine brauchen wir, und was vom aktuellen Stand übernehmen, ersetzen oder löschen wir?
+>
+> Oder generell wollen wir ja in Go über Ports und Adapters gehen mit idiomatic Go. Wie würdest du das ganze strukturieren?
