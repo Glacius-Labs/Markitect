@@ -26,6 +26,10 @@ type referenceContext struct {
 	aliases  []importAlias
 	declared []string
 	complete bool
+	// Local declarations may be fully bound while a separate inventory is
+	// incomplete. Later checks can prove errors from those known candidates,
+	// without treating the globally incomplete binding as complete output.
+	declarationsBound bool
 }
 
 type authorBindings struct {
@@ -59,7 +63,7 @@ func bindAuthorReferences(scopes []sourceScope, graph dependencyGraph) authorBin
 		for index := range scopes[model].definitions {
 			definition := &scopes[model].definitions[index]
 			definition.kindTarget = nil
-			context := referenceContext{complete: catalogComplete && scopes[model].inventoryComplete}
+			context := referenceContext{complete: catalogComplete && scopes[model].inventoryComplete, declarationsBound: true}
 			// The authored own-Package/import declarations are known even when an
 			// unrelated inventory is incomplete. Keep them separate from candidates.
 			context.declared = append(context.declared, definition.identity.Package)
@@ -72,6 +76,7 @@ func bindAuthorReferences(scopes []sourceScope, graph dependencyGraph) authorBin
 			own := packages[nameKey(definition.identity.Package)]
 			if len(own) != 1 {
 				context.complete = false
+				context.declarationsBound = false
 				if len(own) > 1 {
 					finding("binding.package_ambiguous", "The Definition's own Package has more than one supplied owner or spelling.", nil)
 				}
@@ -81,6 +86,7 @@ func bindAuthorReferences(scopes []sourceScope, graph dependencyGraph) authorBin
 			imports, present := lookup(definition.envelope, "imports")
 			if present && imports.kind != ListValue {
 				context.complete = false
+				context.declarationsBound = false
 				status = combineStatus(status, NotCompleted)
 			}
 			for _, item := range imports.items {
@@ -89,6 +95,7 @@ func bindAuthorReferences(scopes []sourceScope, graph dependencyGraph) authorBin
 				var bound *packageBinding
 				if item.kind != ObjectValue || !hasPackage || written.kind != StringValue || !validPackageName(written.text) {
 					context.complete = false
+					context.declarationsBound = false
 					status = combineStatus(status, NotCompleted)
 				} else {
 					context.declared = append(context.declared, written.text)
@@ -96,6 +103,7 @@ func bindAuthorReferences(scopes []sourceScope, graph dependencyGraph) authorBin
 					switch len(candidates) {
 					case 0:
 						context.complete = false
+						context.declarationsBound = false
 						if catalogComplete {
 							finding("binding.package_missing", fmt.Sprintf("Imported Package %q has no supplied Definitions.", written.text), positionPointer(written.position))
 						} else {
@@ -105,9 +113,11 @@ func bindAuthorReferences(scopes []sourceScope, graph dependencyGraph) authorBin
 						candidate := candidates[0]
 						if candidate.name != written.text {
 							context.complete = false
+							context.declarationsBound = false
 							finding("binding.package_spelling", fmt.Sprintf("Package %q must use declared spelling %q.", written.text, candidate.name), positionPointer(written.position))
 						} else if candidate.owner != model && !containsModel(graph.direct[model], candidate.owner) {
 							context.complete = false
+							context.declarationsBound = false
 							owner := scopes[candidate.owner]
 							if !scopes[model].manifestReady || owner.modelID == "" || declaresModel(scopes[model], owner.modelID) {
 								status = combineStatus(status, NotCompleted)
@@ -120,6 +130,7 @@ func bindAuthorReferences(scopes []sourceScope, graph dependencyGraph) authorBin
 						}
 					default:
 						context.complete = false
+						context.declarationsBound = false
 						finding("binding.package_ambiguous", fmt.Sprintf("Imported Package %q has colliding supplied owners or spellings.", written.text), positionPointer(written.position))
 					}
 				}
@@ -127,6 +138,7 @@ func bindAuthorReferences(scopes []sourceScope, graph dependencyGraph) authorBin
 					context.aliases = append(context.aliases, importAlias{name: alias.text, pkg: bound})
 				}
 			}
+			definition.references = context
 			kind, present := lookup(definition.envelope, "kind")
 			if !present || kind.kind != StringValue {
 				status = combineStatus(status, NotCompleted)
