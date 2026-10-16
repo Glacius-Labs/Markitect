@@ -284,6 +284,118 @@ func TestReadArchiveAcceptsPinnedLegacyLayoutButRejectsMixedLayouts(t *testing.T
 	}
 }
 
+func TestSrcArchiveWithRootInternalBuildsSrcCommand(t *testing.T) {
+	for _, test := range []struct {
+		name  string
+		paths []string
+	}{
+		{"snapshot", []string{"internal/snapshot/tree.go"}},
+		{"foundations", []string{"internal/model/model.go", "internal/snapshot/tree.go", "internal/organization/manager.go", "internal/realization/registry.go"}},
+		{"other internal files", []string{"internal/other/value.go"}},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			entries := validZipEntries()
+			for _, name := range test.paths {
+				entries = append(entries, zipFixtureEntry{name: name, data: []byte("package value\n"), mode: 0644})
+			}
+			data := makeZip(t, entries)
+			archivePath := filepath.Join(t.TempDir(), "source.zip")
+			if err := os.WriteFile(archivePath, data, 0644); err != nil {
+				t.Fatal(err)
+			}
+			archive, err := readArchive(archivePath, hexDigest(data), defaultLimits)
+			if err != nil {
+				t.Fatalf("src command with additional root internal files was rejected: %v", err)
+			}
+			var buildArgs []string
+			_, err = buildOrReuse(t.TempDir(), fixtureManifest(data), archive, "fake-go", os.Environ(), func(_ string, args []string, _ string, _ []string) error {
+				buildArgs = append([]string(nil), args...)
+				output := indexOf(args, "-o")
+				if output < 0 || output+1 >= len(args) {
+					return errors.New("missing output argument")
+				}
+				return os.WriteFile(args[output+1], []byte("mock executable"), 0755)
+			}, func(_, _ string, _ []string) (string, error) { return "go1.27.1", nil })
+			if err != nil {
+				t.Fatal(err)
+			}
+			if archive.sourcePrefix != "src/" || !contains(buildArgs, "./src/cmd/markitect") || contains(buildArgs, "./cmd/markitect") {
+				t.Fatalf("additional internal files changed command selection: prefix=%q args=%v", archive.sourcePrefix, buildArgs)
+			}
+		})
+	}
+}
+
+func TestReadArchiveRejectsAdditionalCommandTrees(t *testing.T) {
+	for _, entry := range []zipFixtureEntry{
+		{name: "cmd/", mode: os.ModeDir | 0755},
+		{name: "cmd/other/main.go", data: []byte("package main\n"), mode: 0644},
+		{name: "cmd/markitect/main.go", data: []byte("package main\n"), mode: 0644},
+	} {
+		t.Run(entry.name, func(t *testing.T) {
+			data := makeZip(t, append(validZipEntries(), entry))
+			archivePath := filepath.Join(t.TempDir(), "source.zip")
+			if err := os.WriteFile(archivePath, data, 0644); err != nil {
+				t.Fatal(err)
+			}
+			if _, err := readArchive(archivePath, hexDigest(data), defaultLimits); err == nil || !strings.Contains(err.Error(), "mixes") {
+				t.Fatalf("additional command tree was not rejected: %v", err)
+			}
+		})
+	}
+}
+
+func TestReadArchiveRequiresCompleteSelectedLayout(t *testing.T) {
+	for _, prefix := range []string{"src/", ""} {
+		for _, missing := range []string{"go.mod", "command tree", "command entry", "internal tree"} {
+			t.Run(prefix+missing, func(t *testing.T) {
+				original := validZipEntries()
+				if prefix == "" {
+					original = legacyZipEntries()
+				}
+				var entries []zipFixtureEntry
+				for _, entry := range original {
+					if missing == "go.mod" && entry.name == "go.mod" ||
+						missing == "command tree" && strings.HasPrefix(entry.name, prefix+"cmd/") ||
+						missing == "command entry" && entry.name == prefix+"cmd/markitect/main.go" ||
+						missing == "internal tree" && strings.HasPrefix(entry.name, prefix+"internal/") {
+						continue
+					}
+					entries = append(entries, entry)
+				}
+				if missing == "command entry" {
+					entries = append(entries, zipFixtureEntry{name: prefix + "cmd/markitect/other.go", data: []byte("package main\n"), mode: 0644})
+				}
+				if prefix == "src/" {
+					// Root internal cannot replace the selected src/internal tree.
+					entries = append(entries, zipFixtureEntry{name: "internal/snapshot/tree.go", data: []byte("package snapshot\n"), mode: 0644})
+				}
+				data := makeZip(t, entries)
+				archivePath := filepath.Join(t.TempDir(), "source.zip")
+				if err := os.WriteFile(archivePath, data, 0644); err != nil {
+					t.Fatal(err)
+				}
+				if _, err := readArchive(archivePath, hexDigest(data), defaultLimits); err == nil || !strings.Contains(err.Error(), "not a canonical Markitect Go module") {
+					t.Fatalf("incomplete %q layout without %s was not rejected: %v", prefix, missing, err)
+				}
+			})
+		}
+	}
+}
+
+func TestFlatCommandIsNotChangedBySrcInternalFiles(t *testing.T) {
+	entries := append(legacyZipEntries(), zipFixtureEntry{name: "src/internal/other/value.go", data: []byte("package value\n"), mode: 0644})
+	data := makeZip(t, entries)
+	archivePath := filepath.Join(t.TempDir(), "source.zip")
+	if err := os.WriteFile(archivePath, data, 0644); err != nil {
+		t.Fatal(err)
+	}
+	archive, err := readArchive(archivePath, hexDigest(data), defaultLimits)
+	if err != nil || archive.sourcePrefix != "" {
+		t.Fatalf("internal files changed the flat command selection: archive=%v err=%v", archive, err)
+	}
+}
+
 func TestExtractedSourceIsVerifiedAndTamperingInvalidatesIt(t *testing.T) {
 	data := makeZip(t, validZipEntries())
 	archivePath := filepath.Join(t.TempDir(), "source.zip")
