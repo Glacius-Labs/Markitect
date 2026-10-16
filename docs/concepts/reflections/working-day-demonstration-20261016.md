@@ -900,6 +900,40 @@ Stop adding cases when the identified composed obligations and concrete failure 
 
 This governs evidence design and maintenance, not automatic selective execution or reuse of old approvals. Existing required full reconciliation, aggregate checks and fixed experiment controls remain applicable. Bounded selection can miss an unknown interaction; report which outcomes and failure mechanisms were examined rather than claiming that a test count, code-coverage percentage or all known graph edges proves complete integration correctness.
 
+### Derive integration coverage from check references and current review evidence
+
+The [owner asked how to record which cross-area obligations integration checks cover without another obligation catalogue](../sources/working-day-discussion-20261016.md#record-integration-coverage-without-another-obligation-catalogue). Store references with the existing checks and evidence, then derive a read-only view. Keep business authority in canonical Definitions, check behavior in executable tests and adequacy decisions in existing reviews. The view has no independently editable requirement text or completion state.
+
+For an existing integration case or check family, retain its normal stable test identity and a small source annotation: the canonical Definition references and the specific observable distinction the assertions claim to establish. Use existing test/check metadata or a nearby annotation where sufficient; do not prescribe a new manifest format, model Kind or coverage database. A Definition can contain several obligations, so a link alone is too broad. Refer to the relevant assertion or briefly name its aspect, such as "repeating L1's return preserves L2 and its copy's unavailability." This describes the scope of evidence, not an additional rule. Several Definitions may support one case, and several cases may cover different aspects of one Definition.
+
+For example, a hypothetical existing test identity `return_reborrow_repeat` would reference the library's `lending/return` and `catalog/availability` Definitions and its assertions about the new loan and copy. Its related setup uses membership and borrowing operations, but merely calling those operations does not claim full coverage of their rules. Its executable assertions remain the detailed description of what it checks. Authoritative values and meanings are not copied into a second prose requirements table.
+
+Execution and review add separate facts through the existing receipts and assessment records: exact case/check revision, bound model and composed candidate, actual executed case results, and the review accepting or rejecting the claimed distinction for its scope. Reuse current provenance contracts rather than introduce duplicate identifiers for the same evidence. A passing command that skipped the case is not proof; a passing case whose assertions miss the relevant distinction is not adequate coverage. The reviewer inspects that semantic connection, while the Host validates identities, binding and outstanding required findings.
+
+The derived view can therefore answer four different questions without conflating them:
+
+| Question | Existing source of the answer |
+| --- | --- |
+| Which current obligation/aspect is being assessed? | Canonical source plus the scoped integration assessment or required finding |
+| Which case claims to demonstrate it? | Check identity, source references and assertion/aspect annotation |
+| Did that case actually run on this subject, and what happened? | Current bound case evidence and check receipt |
+| Does the evidence establish the required composed behavior? | Current independent integration review, including unresolved findings |
+
+Do not derive the obligation side only from annotated tests: that would hide every obligation for which no test exists. The review begins from the applicable canonical outcomes, intent delta and actual change, using the earlier selection rule. It compares those recognized necessary distinctions with the available case/evidence view. A recognized missing case or insufficient assertion becomes an ordinary finding and appears as unproven. No separate permanent list of duties is authored. This remains semantic selection by review; the Host cannot infer every implicit cross-area obligation from YAML or certify that none was overlooked.
+
+On a model or candidate change, use this sequence inside ordinary realization/review:
+
+1. Compare the old and selected new canonical basis, including changed meaning under unchanged Definition identities. Source references locate candidate checks for reassessment; actual code/interface changes and new findings can widen the set. A reference index is not a complete impact oracle.
+2. Reassess the relevant assertion logic and linkage. Keep adequate logic, adapt changed semantics, add a missing distinction or explicitly explain why an old expectation no longer applies. Renamed, split or deleted sources require an explicit remapping or disposition; a broken link must not silently remove its old obligation from view.
+3. Inspect changes to tests and their annotations as well. Deleting a case or removing its source reference does not discharge an existing required finding or prove that coverage is no longer needed. Require the existing reviewer to establish replacement evidence or justified nonapplicability on the authorized basis.
+4. Run the required current checks and obtain the applicable current reviews. Preserve earlier results as historical evidence. Reusing test logic or a source-to-test relation does not transfer old approval to a successor candidate or changed model. Fixed M1/M2 experiment controls remain bound to their original models.
+
+If a source's meaning changes but its identity does not, the index can still find the old case, while the changed source revision signals reassessment. Neither an unchanged test name nor an automatic update of the recorded model hash establishes continued semantic adequacy. Conversely, a changed source need not require rewriting a still-correct test merely to show activity.
+
+For the first version, a small report built from check annotations, current receipts and existing review/findings is sufficient. Show missing, failed, skipped, stale and not-yet-assessed evidence distinctly from current accepted support; avoid a percentage based on how many Definitions have links. Do not label a local pass as proof of aggregate behavior. Required full reconciliation and checks remain applicable: this is traceability and gap visibility, not a new selective-execution optimization.
+
+Validate the mechanism with a removed case reference, an unresolved renamed source, a same-identity semantic change, an old receipt offered for a new candidate and a command that skipped the named case. None should silently become current accepted evidence. A valid current case and review may support multiple obligations without duplicated execution. These are proposed focused checks, not implementation or execution evidence. The scheme preserves recognized gaps and makes reassessment traceable; unknown semantic omissions remain a limit of the existing reviewer and model.
+
 ## Overall acceptance and repeatability
 
 The proposed initial threshold is three complete series of all four scenarios, using a fresh execution state for each case and the same fixed product/profile basis. Each case starts from its specified recorded baseline; within the recovery case, the interrupted state must survive the restart. Do not replace recovery with a new clean assignment.

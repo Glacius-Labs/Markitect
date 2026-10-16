@@ -319,3 +319,11 @@ Recorder's note: The assistant proposed [deriving public sequences from authorit
 > Wie wählen wir konkret aus, welche gewünschten Abläufe solche Integrationsprüfungen brauchen, ohne jede mögliche Kombination zu testen oder wichtige bereichsübergreifende Fälle zu übersehen?
 
 Recorder's note: The assistant proposed [selecting evidence for distinct composed obligations](../reflections/working-day-demonstration-20261016.md#select-integration-cases-by-distinct-composed-obligations), reusing the existing consequential-failure and distinguishing-evidence rule. Start with real user outcomes, actual changes and relevant findings, reuse adequate current cases, and add only named missing distinctions. The examples distinguish state/identity, suspension, capacity and reminders without requiring their full cross-product or replacing the working-day scenarios. Known gaps stay visible under budget pressure; selection remains bounded and fallible, with no new scenario authority, mandatory scoring process or automatic selective execution.
+
+## Record integration coverage without another obligation catalogue
+
+> Wie halten wir konkret fest, welche bereichsübergreifenden Pflichten durch welche Integrationsprüfungen abgedeckt sind, damit bei Änderungen keine Lücken entstehen, ohne einen zweiten Pflichtenkatalog zu pflegen?
+>
+> Ausserdem pushe jedes mal nach remote
+
+Recorder's note: The assistant proposed [deriving coverage from source annotations on existing checks and current review evidence](../reflections/working-day-demonstration-20261016.md#derive-integration-coverage-from-check-references-and-current-review-evidence). Canonical sources remain authoritative; case/assertion references describe evidence scope, and execution receipts and reviews establish current support. The obligation side also comes from scoped model-first assessment so absent tests remain visible. Semantic changes, removed checks and broken references require reassessment without inheriting old approval. No second editable requirements catalogue or automatic semantic coverage claim is introduced. The owner also instructed that subsequent documentation changes be pushed to the remote after committing.
