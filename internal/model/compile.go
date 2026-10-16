@@ -315,12 +315,14 @@ func (c *sourceCompiler) definitions(entries map[string]Entry, root string) {
 	}
 	sort.Strings(paths)
 	lockPath := joinPath(parent(c.model.ManifestPath), "model-lock.yaml")
-	// An explicitly supplied lock is YAML-checked but not yet semantically bound.
+	// Every explicitly supplied sidecar retains its acquisition/YAML failures.
+	// Only the entry model's lock is later used as the common binding source.
 	if lock, present := entries[lockPath]; present {
+		c.scope.lock = sourceLock{entry: lock, present: true}
 		if lock.Kind != Regular {
 			c.problem("lock.not_regular", "The selected lock must be a regular file.", lock, nil)
 		} else {
-			c.decode(lock)
+			c.scope.lock.value, c.scope.lock.decoded = c.decode(lock)
 		}
 	}
 	for _, p := range paths {
