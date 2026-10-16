@@ -113,3 +113,15 @@ Recorder's note: The assistant proposed hard limits plus a short progress assess
 > Halte diesen Umgang mit Stillstand bitte auch in unseren Docs fest, inklusive Fortschrittsprüfung, begrenzter interner Kurskorrektur, Budgetgrenzen und gezielter Eskalation statt endloser Wiederholungen.
 
 The reflection's [stagnation section](../reflections/desired-working-day-20261016.md#detect-stalled-work-and-bound-internal-correction) records these proposals, including retained assignment budgets and a library example.
+
+## Budget the assignment and its Managers
+
+> Wie könnte ein konkretes Budget für einen Auftrag aussehen, und wie verteilen wir es auf die Manager, damit genug für Review, Integration und mögliche Korrekturen übrig bleibt?
+
+Recorder's note: The assistant proposed one shared assignment budget, bounded Manager allocations, protected review/integration capacity, corrections including reassessment, and an unallocated reserve. A 60-step split of 24/18/12/6 was illustrative, not measured or an accepted default. Internal redistribution stays within the mandate; additional capacity requires a targeted request. Step, time, cost-observation and tool-execution limits remain distinct.
+
+## Preserve the shared budget model
+
+> Halte dieses Budgetmodell bitte auch in unseren Docs fest, inklusive gemeinsamem Auftragsbudget, geschützten Reserven für Review und Integration, begrenzten Zuteilungen und gezielter Eskalation bei Mehrbedarf.
+
+The reflection's [shared budget section](../reflections/desired-working-day-20261016.md#share-an-assignment-budget-and-protect-completion-work) records this proposal, allocation example and reporting rules.

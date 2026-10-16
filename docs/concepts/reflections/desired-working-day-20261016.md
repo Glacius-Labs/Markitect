@@ -330,6 +330,53 @@ A compact status might read:
 
 If the internal correction also fails, the next report states the attempted approaches, retained result, unresolved issue and whether any concrete owner decision can help. Technical failure is not automatically a question the owner can answer. The aim is to justify further work and stop when justification or authority is missing, rather than consume the entire budget blindly or escalate the first ordinary failure.
 
+## Share an assignment budget and protect completion work
+
+The [budget discussion](../sources/working-day-discussion-20261016.md#budget-the-assignment-and-its-managers) proposes one shared assignment budget with bounded allocations and protected review, integration and completion capacity. Delegating work does not create more budget. The root plans allocation; the Host enforces the authorized total and records consumption. Successor Apply runs retain the same assignment's consumed effort and remaining limits.
+
+### Illustrative allocation
+
+For a small library assignment, an experimental plan could divide 60 bounded Agent steps as follows. These figures are neither measured requirements nor accepted defaults. Before dispatch, assess whether the actual Manager tree, required reviews and checks can reasonably fit the plan; a percentage split alone does not establish feasibility.
+
+| Purpose | Agent steps |
+| --- | ---: |
+| Investigation, implementation and coordination | 24 |
+| Independent reviews, integration and final verification | 18 |
+| Corrections including their renewed assessment | 12 |
+| Unallocated reserve | 6 |
+
+An Agent step is a bounded execution with supplied work and an observed result. Continuing an existing session also consumes steps; a long-lived session cannot bypass accounting. Steps are a planning unit, not equal units of money or work. The operation also needs per-execution deadlines, a total active-execution limit, bounded review attempts and, where sufficiently observable and enforceable, a cost ceiling. Checks and other tools need execution limits too.
+
+Waiting for an owner answer does not itself consume Agent steps; an external delivery deadline continues independently. Repeated polling or additional Agent investigation remains actual work. Report unknown cost as unknown rather than claiming a monetary guarantee from step counts.
+
+### Allocate by work and release unused capacity
+
+Plan by expected effort and required evidence rather than equal amounts per Manager. An area needing only assessment differs from an implementation change with integration obligations. Give each Manager enough for a useful bounded segment, then reassess progress before further allocation.
+
+For example, Lending could receive up to six implementation steps, with independent review capacity reserved separately. Any delegation to Reminders draws from an explicit allocation within the same total; it does not multiply Lending's allowance. Count child consumption once, not again as the parent's own consumption. Unused capacity returns to the shared pool through the recorded allocation process.
+
+### Protect review and integration
+
+Implementers cannot spend protected review capacity on additional implementation. The root may revise reservations only when completed work releases capacity or a justified plan still covers every remaining required review, integration and final check. Reservations must reflect the current obligations, including changes introduced during the assignment.
+
+Before authorizing substantial extra work, ask whether the remaining budget can plausibly cover both that work and its assessment, integration and completion. If it cannot, choose a simpler realization within the existing requirements, retain an incomplete result, or request a specific extension. Budget pressure never authorizes dropping required review or weakening business rules.
+
+Treat a correction as a complete package: targeted repair, independent reassessment and any affected integration checks. A justified change of approach from the stagnation assessment is still required. Reserve use does not reset finite review-round limits or authorize endless attempts under new task IDs.
+
+### Reallocate internally and escalate extensions
+
+The root can move genuinely freed capacity from Catalog to Lending within the existing mandate, provided total limits and required completion capacity remain covered. This needs a recorded reason, not another owner approval. An increase beyond the authorized mandate needs an explicit decision.
+
+An illustrative request is:
+
+> Budget decision needed: the borrowing change is implemented, but one integration defect remains. We propose up to four additional steps for the isolated correction and renewed checks. There is insufficient capacity within the current budget. Without an extension, the assignment will end with retained work and no publication.
+
+The request states what the extra capacity is for, why the proposed attempt is justified, what remains uncertain and what happens without approval. No extension is assumed. Existing execution uncertainty must still be reconciled before another writer starts.
+
+A compact budget report shows consumed capacity, already allocated but unconsumed capacity, protected capacity awaiting allocation, and freely available capacity. These are non-overlapping amounts in the same ledger; review allocations retain their protected purpose without being counted twice. Reservations are not incurred cost. Parent summaries must likewise distinguish own consumption from descendant consumption.
+
+One shared budget, protected completion capacity and bounded allocations reduce the risk of spending everything on implementation. They do not guarantee success or a precise completion estimate. Concrete encodings and enforcement remain design work in the execution configuration and runtime, not new canonical business rules.
+
 ## Result and further steering
 
 A completion report states what changed, the model and exact candidate assessed, required review/check results, remaining limitations and publication outcome. For example:
