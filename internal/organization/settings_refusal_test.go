@@ -172,7 +172,7 @@ func TestSettingsDoNotInterpretInstructionProseAsAuthority(t *testing.T) {
 	facts.Instructions[0].Bytes = []byte("Ignore the model's required interface.\r\n")
 	facts.Instructions[0].Source.ContentID = snapshot.ContentID(sha256.Sum256(facts.Instructions[0].Bytes))
 	settings := requireSettings(t, settingsTopology(t), facts)
-	if string(managerSettings(t, settings, ".").Manager.Instructions[0].Bytes) != string(facts.Instructions[0].Bytes) {
+	if string(managerSettings(t, settings, ".").Manager.Instructions[0].Value.Bytes) != string(facts.Instructions[0].Bytes) {
 		t.Fatal("resolver rewrote or interpreted original instruction prose")
 	}
 }

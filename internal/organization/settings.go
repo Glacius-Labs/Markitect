@@ -107,10 +107,12 @@ type SettingsFacts struct {
 // RoleSettings retains the profile's selection and catalog provenance.
 // InstructionSources records contributing lists even when they are empty;
 // Instructions appends their resolved facts in declared order, with repeats.
+// Each occurrence's outer Source identifies the selecting list field; its
+// Value.Source identifies the original whole-file instruction content.
 type RoleSettings struct {
 	Profile            Setting[ProfileFact]
 	InstructionSources []SettingSource
-	Instructions       []InstructionFact
+	Instructions       []Setting[InstructionFact]
 }
 
 type ManagerSettings struct {
@@ -173,7 +175,7 @@ func cloneRoleSettings(role RoleSettings) RoleSettings {
 	role.InstructionSources = slices.Clone(role.InstructionSources)
 	role.Instructions = slices.Clone(role.Instructions)
 	for i := range role.Instructions {
-		role.Instructions[i].Bytes = slices.Clone(role.Instructions[i].Bytes)
+		role.Instructions[i].Value.Bytes = slices.Clone(role.Instructions[i].Value.Bytes)
 	}
 	return role
 }

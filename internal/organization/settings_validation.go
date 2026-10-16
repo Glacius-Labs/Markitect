@@ -153,7 +153,7 @@ func (v settingsValidation) role(defaults RoleDefaults, override RoleOverride, p
 			if !found {
 				return RoleSettings{}, fmt.Errorf("unresolved instruction %q", id)
 			}
-			result.Instructions = append(result.Instructions, instruction)
+			result.Instructions = append(result.Instructions, Setting[InstructionFact]{Value: instruction, Source: list.Source})
 		}
 	}
 	return result, nil
