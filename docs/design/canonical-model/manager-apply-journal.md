@@ -92,6 +92,7 @@ Optional identities use explicit absence in the storage codec. `EventBody` is a 
 | Run binding | Model closure/lock, captured repository tree/census and publication guard, config/prepared profiles, instructions, initial registry, operation contract identity and product build. |
 | Retained work | Exact predecessor run/candidate, original artifact base, matching registry, selected composition, open findings and carry-forward reason. Old approval is never promoted. |
 | Task | Current run/Manager, parent task, attempt, outcome, complete responsibility, candidate base, effective mandate reference, remaining constraints and any predecessor-task link. |
+| Dependency and supplied inputs | Recorded producer/outcome/basis agreement, selected Host delivery and actual consumer composition/readable scope; exact prompt/context, session lineage and later supplied reply references. Derive possible exposure from these facts, not an Agent's claimed file usage. |
 | Mandate | Immutable rendered view, original source references/revisions, effective configuration and registry/task basis. Reviewer receives the corresponding authority basis. |
 | Question/proposal | Stable question ID, version, originating task/run, affected work, model passages/basis, decision/reason, alternatives, exact proposed before/after source edits and effect on work. |
 | Answer | Question/version/proposal identity, exact owner input, actual ingress/actor authority, selected disposition and any interpreted answer, with unresolved ambiguity explicit. |
@@ -130,6 +131,8 @@ The initial event catalogue has these version-1 tags. Each has a closed payload 
 `run.finished` records the single immutable Finished outcome and grounds. Supersession uses that event with outcome Superseded, not a competing finish/state tag. Assignment closure is recorded separately. Typed budget events enforce identity/idempotency, pool conservation and purpose; reducers do not infer a grant or completed effect from a narrative report. A completion plan references outstanding required review/check obligations and recorded release reasons.
 
 Use `assessment.recorded`/`review.recorded` for early model-first concerns, findings and explicit resolutions; no extra finding stream or task lifecycle is needed. Parent/predecessor references preserve outstanding requirements rather than copying another mutable list. An old resolution remains historical when the new subject/basis requires current assessment. Retain selected case output/assertion references where execution of that case is required; a generic check pass cannot stand in for missing evidence. The execution contract owns the acceptance guard and its semantic limits.
+
+Existing task payloads record dependency agreements and selections; composition and step/transport records bind actual supplied inputs before use. A blocking assessment commits before further dependent admission and is rechecked at acceptance/publication. A replacement selection is explicit, leaving the earlier delivery and consumer candidate intact. Duplicate notification/replay derives the same readiness without another external dispatch. Reverse exposure is a rebuildable projection of these references, not another authoritative graph or event stream.
 
 ## Questions answers and model changes
 

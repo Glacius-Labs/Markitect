@@ -4,7 +4,7 @@ Date: 16 October 2026. Consolidated proposal requested in the [owner discussion]
 
 The [consistency review](../../concepts/reflections/concept-consistency-review-20261016.md) identified the conflicting drafts. The newer [working-day assessment](../../concepts/reflections/working-day-demonstration-20261016.md) adds independent observations, model-owned intent, targeted counterchecks and finding-specific evidence under budget pressure. The rules below incorporate those refinements using existing review/history. Its four scenarios and repeatability proposal remain follow-up evidence after the separate M1/M2 Playground, without more roles, schedulers or library business requirements.
 
-Reflection input inspected through commit `d13732a3ee113e18e8f6cd8570f71c5f4cc0c1ca`, including successor applicability, complete task context and correction of finding accountability through local/integration review. The completed language and M1 remain unchanged. The [delivery plan](../../implementation-plan.md) owns assignments; this document owns the technical contract.
+Reflection input inspected through commit `7144ade9eeb5f87664ed04f2c0b217012624229b`, including finding accountability, accepted-delivery dependencies, correction of exposed work and supplied-input provenance. The completed language and M1 remain unchanged. The [delivery plan](../../implementation-plan.md) owns assignments; this document owns the technical contract.
 
 ## One owner for each rule
 
@@ -83,6 +83,14 @@ Build the current finding view from typed judgments and causal links at a pinned
 Role context carries current grounds and evidence references, not every old conversation or recursively rewritten summary. The Host retains the complete required set even when delivery is paged; a token cutoff, unread page or fetched-but-unresolved entry cannot discharge an obligation. Required context must actually be available before its dependent action. Record supplied references/revision and refresh changed relevant facts before acceptance. This uses the existing journal projection and context builder, with no second finding database or summarizing Agent.
 
 Rule location, artifact ownership and affected responsibility are distinct. A receiving Manager exposes a mismatch through the common parent; “not mine” cannot close or orphan the finding. The parent records corrected accountability and ordinary child contributions. Cross-area concerns require composed integration evidence, not every neighbor's co-signature or a local pass alone. The Host checks recorded scope/ownership; local reasoning and integration review remain responsible for discovering missing semantic impact.
+
+## Accepted deliveries and dependent work
+
+The nearest common parent records required contributions, outcome/basis and order in existing tasks. The Host routes ordinary progress and releases recorded dependencies mechanically; new scope or conflicting evidence returns for a parent decision. An Agent's completion message is insufficient. Readiness requires the selected Host-issued delivery, current required assessment, compatible composition and actual consumer inputs, plus ordinary admission guards. It does not authorize another writer or aggregate publication.
+
+Accepted deliveries remain immutable historical facts. A blocking concern about a selected delivery prevents that delivery and potentially exposed results from supporting new dependent dispatch, acceptance or publication until current assessment resolves it. Reconcile an active step before replacing its inputs; retain its candidate and reservations while effects remain uncertain. Explicitly commissioned diagnosis/repair can inspect the defective basis without treating it as valid. Separately established independent work may remain eligible, subject to the same one-writer rule.
+
+An accepted replacement must be explicitly selected, composed and supplied to affected consumers. Keep useful work, with current applicability/review/integration; a newer delivery alone neither invalidates nor silently upgrades the old selection. Same-basis correction is bounded rework; changed run inputs require the existing successor path. No reassignment resets budgets or correction limits. Derive potential exposure conservatively from supplied snapshots, delivery composition, session history and recorded additions. Unknown ambient access cannot justify selective independence. This uses existing tasks, findings and journal projections, without per-file read surveillance or a second dependency engine.
 
 ## Admission, amendments and finite correction
 

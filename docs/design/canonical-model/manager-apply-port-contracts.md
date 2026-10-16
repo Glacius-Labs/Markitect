@@ -29,6 +29,7 @@ After the reminders child has delivered, Host composes the lending subtree and r
 | Actor, session and step | `run`: actor role/scope, logical session ID and unique dispatch step ID. Host assigns IDs before effects. Provider handles remain adapter data, associated with those IDs. A Manager can have several sessions. |
 | Review subject | `run`: input binding, exact candidate including registry, task/scope and purpose: local, integration or final verification. |
 | Accepted delivery | `run`: Host-issued ID, exact subject, complete delivered scope, Definition assessments, child delivery IDs, review/check evidence and report. Agents cannot create accepted deliveries. |
+| Task dependency | `run`: producer task, reference to its recorded outcome/constraints and model/coordination revision, plus an explicitly selected accepted delivery when available. No mutable “latest” alias or copied specification. |
 
 Operational journal and scratch paths are excluded from source staleness only by an explicit fixed storage policy. Adding or deleting an ordinary file must affect the captured census. Do not silently exclude the whole repository or rely only on a Git commit while ignoring relevant working bytes.
 
@@ -57,6 +58,7 @@ type TaskSpec struct {
 	Inputs         InputBinding
 	Mandate        organization.MandateRef
 	Base           realization.CandidateRef
+	Dependencies   []TaskDependency
 	Budget         BudgetView
 }
 
@@ -90,6 +92,10 @@ A finding has a stable Host-recorded reference, affected responsibility, model/i
 Omission is not resolution. Required receipts must exist, have successful known execution and fit their own subject/purpose. Child composition provenance and aggregate assessment remain distinct. A command-level pass alone does not prove a required case ran or expresses the right meaning. See [evidence under budget pressure](manager-apply-execution.md#evidence-need-survives-budget-pressure).
 
 Host validates recorded completeness, provenance and bindings; semantic sufficiency/applicability remain reviewable Agent judgments. No new finding/task system or universal test language is introduced. Current required gaps block acceptance even when the budget is low. A required unresolved model question likewise blocks completion and cannot be repaired by artifact-only Apply.
+
+Dependency readiness uses a selected accepted delivery and its reviewed requested outcome, exact basis, compatible composition and actual supplied consumer inputs. The Host records that binding before dispatch; notifications are idempotent and cannot substitute for materialized inputs. Later blocking findings alter current eligibility, not historical delivery bytes or acceptance. Current assessment and normal dispatch guards remain required; the [execution contract](manager-apply-execution.md#accepted-deliveries-and-dependent-work) owns correction behavior.
+
+Step/workspace records bind the readable snapshot scope actually supplied, prompts/context, selected deliveries, continued-session history and later Host-mediated replies before use. They record conservative possible exposure, not mental reliance or every file open. A broadly readable workspace implies broad potential input; uncontrolled provider/tool access is an evidence gap, not proof of absence. Keep these facts in existing input/session/composition records rather than adding a user-maintained manifest.
 
 `QuestionRef` binds identity and version. The application records actual owner answers against that exact proposal and basis; the Agent cannot self-assert owner authority. A context-only answer may continue the same run. Changed intent requires an authorized model operation and a new bound run, with shared allowance and selected retained work. See [questions and model changes](manager-apply-journal.md#questions-answers-and-model-changes).
 
