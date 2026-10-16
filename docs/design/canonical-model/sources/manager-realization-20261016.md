@@ -96,3 +96,7 @@ The owner supplied an [assessment](concept-assessment-20261016.txt) and [propose
 ## Start with complete and simple library rules
 
 > Ja, lass uns mit dem Bibliotheksbeispiel anfangen und zunächst die fachlichen Regeln vollständig beschreiben. Halten wir das System bewusst einfach. Anschließend leiten wir daraus das kanonische Modell M1 ab.
+
+## Confirm the rules and encode M1
+
+> Ja, das passt. Lass uns daraus jetzt das kanonische Modell M1 ableiten und als YAML-Dateien festhalten. Halten wir das Vokabular klein und machen die Verknüpfungen zwischen den Packages explizit.

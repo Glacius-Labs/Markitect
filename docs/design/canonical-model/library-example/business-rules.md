@@ -1,6 +1,6 @@
 # Business rules for the small library
 
-Date: 16 October 2026. Draft of the domain behavior to encode in M1. The library records members, lends physical book copies, accepts returns and identifies overdue loans. The rules below define the first example; they do not select a programming language, framework or source layout.
+Date: 16 October 2026. Domain description confirmed by the owner and used to derive [M1](m1/model.yaml). The YAML Definitions now own intended behavior; this text preserves the agreed derivation source. The library records members, lends physical book copies, accepts returns and identifies overdue loans. These rules select no programming language, framework or source layout.
 
 ## Scope
 
