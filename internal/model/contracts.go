@@ -20,6 +20,7 @@ type propertyContract struct {
 
 type definitionContract struct {
 	category string
+	kind     *Identity
 	property *propertyContract
 	fields   []Identity
 	status   Status
@@ -144,6 +145,7 @@ func (c *contractCompiler) classify(a definitionAddress) *definitionContract {
 	d := c.definition(a)
 	contract := &definitionContract{status: Passed}
 	kindID := c.kinds[a]
+	contract.kind = kindID
 	if kindID == nil {
 		contract.status = NotCompleted
 		c.result.names[a.model] = combineStatus(c.result.names[a.model], NotCompleted)

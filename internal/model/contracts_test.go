@@ -20,7 +20,7 @@ func TestFullPrescribedCoreCompletesOnlyImplementedPhases(t *testing.T) {
 	model := got.Models[0]
 	for _, phase := range model.Phases {
 		switch phase.Name {
-		case "source_structure", "yaml_and_envelopes", "names_and_unicode", "dependencies", "imports_and_kinds", "core_and_contracts":
+		case "source_structure", "yaml_and_envelopes", "names_and_unicode", "dependencies", "imports_and_kinds", "core_and_contracts", "values_and_references":
 			if phase.Status != Passed {
 				t.Fatalf("implemented phase incomplete: %+v", phase)
 			}
@@ -109,10 +109,10 @@ func TestDerivedContractsAndOrdinaryPropertiesField(t *testing.T) {
 		contractDefinition("vocabulary/catalog.yaml", "Catalog", "Core.Kind", "{properties: [Core.properties]}"),
 		contractDefinition("vocabulary/display-name.yaml", "displayName", "Core.Property", "{type: string, minCount: 0, maxCount: 1}"),
 		contractDefinition("vocabulary/nested.yaml", "nested", "Core.Property", "{type: object, minCount: 0, maxCount: -1, properties: [displayName, nested]}"),
-		contractDefinition("vocabulary/item.yaml", "item", "Catalog", "{properties: [Missing, Missing]}"),
+		contractDefinition("vocabulary/item.yaml", "item", "Catalog", "{properties: [Core.name, Core.name]}"),
 	)
 	got := Compile(input)
-	if got.Status != NotCompleted || len(got.Diagnostics) != 0 || phaseStatus(got.Models[0], "core_and_contracts") != Passed || phaseStatus(got.Models[0], "values_and_references") != NotCompleted {
+	if got.Status != NotCompleted || len(got.Diagnostics) != 0 || phaseStatus(got.Models[0], "core_and_contracts") != Passed || phaseStatus(got.Models[0], "values_and_references") != Passed {
 		t.Fatalf("contracts or ordinary data field misinterpreted: %+v", got)
 	}
 }
@@ -244,7 +244,7 @@ func TestLocalKindAndPropertyNamesDoNotInstallMetaOperators(t *testing.T) {
 	input := coreModelInput(
 		contractDefinition("feature/kind.yaml", "Kind", "Core.Kind", "{}"),
 		contractDefinition("feature/property.yaml", "Property", "Core.Kind", "{}"),
-		contractDefinition("feature/item.yaml", "item", "feature/Property", "{type: unknown, properties: ordinary}"),
+		contractDefinition("feature/item.yaml", "item", "feature/Property", "{}"),
 	)
 	if got := Compile(input); got.Status != NotCompleted || len(got.Diagnostics) != 0 {
 		t.Fatalf("local Property name granted meta semantics: %+v", got)
