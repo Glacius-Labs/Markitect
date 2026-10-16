@@ -8,6 +8,10 @@ The canonical model describes the intended project world. Managers organize its 
 
 The realization strategy should be customizable. A Manager's responsibility can stay consistent while its team, tools and way of working vary. The exact configuration format and extension mechanism remain open.
 
+**Current priority:** Concentrate first on making Apply reliably reconcile artifacts with the model. Optimize, cleanup, refactoring, bug hunting and custom commands are extensions of that working foundation. Preserve their ideas without expanding the immediate design or implementation scope to all of them.
+
+The owner raises an organizational perspective for further consideration: the Manager hierarchy could be the application's entry point, with the canonical model as its shared foundation. This perspective may also support a later Government extension. It is an open product framing, not a replacement of the model or authorization to implement Government. [DEC-004](../../concepts/register.md#dec-004-the-manager-hierarchy-is-core-government-belongs-to-a-later-axis) retains the distinction between realizing a model and delegated decisions about model changes.
+
 Use a simple library management system as the running example. The following tree illustrates responsibility; it is not an executable model or a prescribed vocabulary:
 
 ```text
@@ -18,7 +22,7 @@ Library root Manager
     └── reminders
 ```
 
-The root Manager coordinates the overall result. The lending Manager integrates lending and reminders. Each level has a broader view and normally works with fewer details than the level below it. Results and open questions travel upward; decisions, requests and additional information can travel downward. Details remain available when needed.
+The root Manager coordinates the overall result. The lending Manager integrates lending and reminders. Each level has a broader view and normally works with fewer details than the level below it. Results and open questions travel upward; decisions, requests and additional information can travel downward. Details can be supplied when needed; the policy for direct file access at higher levels remains open.
 
 The language already provides Package paths, identified Definitions, Kind and Property contracts, binding bodies, structured values, resolved references and fixed model content. These are inputs for a realization strategy. [Packages are namespaces](minimal-language/language-contract.md#packages); management responsibility would be assigned by the strategy. It does not follow automatically from the Core language. The model root itself is not a Package; how the root Manager is bound to it remains to be specified. The treatment of imported library Packages also remains open.
 
@@ -28,11 +32,19 @@ The following is the initial conceptual contract developed in the discussion. It
 
 | Part | Contents | Lending example |
 | --- | --- | --- |
-| Receives | A task, its Package definitions and relevant contracts, the current realization, runtime configuration, and results or questions from child Managers. | Implement borrowing a book; consider registered membership and a maximum of five simultaneous loans. |
+| Receives | A task, its Package definitions and relevant contracts, realization context appropriate to its role, runtime configuration, and results or questions from child Managers. | Implement borrowing a book; consider registered membership and a maximum of five simultaneous loans. |
 | Owns | Organizing the work and its checks, coordinating dependencies, integrating child results, and exposing missing decisions or conflicts. | Coordinate with members and catalog; combine lending and reminder work into a coherent result. |
 | Returns | The integrated candidate, artifact registrations and their Definition links, review and check results, and a readable account of completed work and open issues. | Implementation, tests and usage documentation for borrowing, with their model basis and recorded checks. |
 
 A Manager may return an incomplete result with a clear reason. The root Manager follows the same contract and integrates the whole library system. A Manager's own Package responsibility does not imply that all relevant knowledge lies inside that Package.
+
+## Instructions enter through the root Manager
+
+The user gives the operation's instruction to the root Manager. The root delegates to its child Managers, and each parent creates an appropriate task prompt for its children. Delegation is recursive; the original instruction is not independently sent to every Manager.
+
+Delegated tasks should state the intended outcome, applicable model basis, scope and relevant constraints, while leaving local implementation decisions with the responsible Manager. In the library example, the root could ask lending to reconcile borrowing with the membership and loan-limit requirements. Lending decides which local artifacts need work. The root should not turn that task into a detailed list of descendant files to edit.
+
+How to avoid excessive direction remains to be refined. The owner suggests that higher Managers might not initially know or read descendant artifact files, receiving concrete file details when another Manager supplies them. This is an open option, not an adopted prohibition on file access. It may preserve local autonomy and reduce context, but integration or investigation may require specific details. Reports, targeted requests and direct inspection are alternatives to compare before fixing the policy. A Manager's own local work must also be distinguished from its coordination of descendants.
 
 ## Team variants
 
@@ -125,7 +137,7 @@ In the library example, the members and lending Managers could examine the suspe
 
 ## Shared preparation and custom commands
 
-Most substantive commands can use the same broad sequence: check and load the model, assemble context, add the task prompt and configured custom instructions, run the Manager hierarchy, then integrate and check its results. Custom instructions guide work within the applicable model and task boundaries.
+Most substantive commands can use the same broad sequence: check and load the model, assemble context, give the operation's instruction and configured custom instructions to the root Manager, recursively delegate tasks, then integrate and check the results. Each child receives its parent's task prompt and its own appropriate context and configuration. Custom instructions guide work within the applicable model and task boundaries. Apply is the first operation to make reliable; the other commands remain extensions.
 
 Stable Package context and instruction templates could be prepared in advance for Managers and operations. The concrete task, current artifacts and newly produced review candidates still supply information at execution time. Automatic preparation as the first step of each command and an additional optional compile or prepare command remain variants. There is no selected requirement to precompute every Manager's complete prompt for every possible task.
 
@@ -135,6 +147,10 @@ Custom commands are an owner-proposed extension of this idea. A custom command c
 
 ## Questions for further design
 
+- What constitutes a reliable end-to-end Apply for the library example before adding command extensions?
+- How should a parent express outcomes and constraints without taking over a child's implementation decisions?
+- Which artifact details should a higher Manager receive initially, which should it request, and when should it inspect files directly?
+- How can an organizational entry point support later Government while preserving the distinct model and artifact change targets?
 - What does Manager configuration contain, and which review and integration requirements remain common to all strategies?
 - How is one Manager per Package applied to the model root, intermediate Packages and imported vocabularies?
 - Which team variants should be tried first, and how is a review loop concluded or escalated?
