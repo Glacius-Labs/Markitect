@@ -187,3 +187,9 @@ Recorder's note: The assistant proposed improving the existing review's evidence
 > Wie entscheiden wir konkret, welche Regeln solche gezielten Gegenprüfungen brauchen und wo ein normales Review reicht, ohne daraus wieder einen komplizierten Prozess zu machen?
 
 Recorder's note: The assistant proposed [two selection questions](../reflections/working-day-demonstration-20261016.md#select-deeper-checks-with-two-questions) within the existing review: whether a concrete consequence, plausible alternative meaning or relevant failure warrants a challenge, and whether applicable checks already distinguish it. Reuse current checks where sufficient; otherwise add the smallest discriminating case. Deliberately wrong variants remain selective. The recommendation adds no permanent risk taxonomy or approval layer, and retains required checks, current evidence and existing authority/budget escalation boundaries.
+
+## Prevent budget-driven underassessment
+
+> Wie verhindern wir, dass Manager und Reviewer notwendige Gegenprüfungen aus Zeit- oder Budgetdruck zu großzügig als unnötig einstufen, ohne dafür wieder eine zusätzliche Kontrollinstanz einzubauen?
+
+Recorder's note: The assistant proposed separating evidence need from affordability, identifying consequential concerns early, retaining recognized requirements until evidence or a justified reviewed applicability change resolves them, and allowing honest incompletion within protected budgets. The [budget-pressure section](../reflections/working-day-demonstration-20261016.md#keep-budget-pressure-from-weakening-assessment) relies on existing review/history and Host evidence guards, and extends the planned insufficient-budget case. It explicitly distinguishes mechanically enforceable completeness from fallible semantic selection and does not claim to eliminate shared omissions.
