@@ -45,7 +45,7 @@ An implementation prompt directs attention to the requested feature, and a PR re
 
 ### Local authority and escalation boundaries
 
-Delegated judgment needs relevant context, goals and binding constraints, authority within the area and criteria for involving others or escalating. The [mandate view](../../design/canonical-model/manager-apply-configuration.md#compile-the-effective-mandate) and the [escalation rules](desired-working-day-20261016.md#decision-authority-and-escalation) express them.
+Delegated judgment needs relevant context, goals and binding constraints, authority within the area and criteria for involving others or escalating. The [mandate section](../../design/canonical-model/manager-apply-configuration.md#the-mandate-section) and the [escalation rules](desired-working-day-20261016.md#decision-authority-and-escalation) express them.
 
 ### Leadership reports and process oversight
 
@@ -76,7 +76,7 @@ The [north star's team variants](../../design/canonical-model/manager-realizatio
 
 ### Four eyes and correlated mistakes
 
-The reviewer forms a separate judgment from the requirements and the actual candidate, with fresh context and the power to require rework. Fresh context does not remove shared blind spots: both can receive the same incomplete context or agree on a wrong expectation. Distinct questions, source access, concrete counterexamples and independently stated expectations challenge that. Local review, integration review and final verification keep different purposes. Trust is judged by useful findings and remaining defects, not by the number of reviewers.
+The reviewer forms a separate judgment from the requirements and the actual candidate, with fresh context and the power to require rework. Fresh context does not remove shared blind spots: both can receive the same incomplete context or agree on a wrong expectation. Distinct questions, source access, concrete counterexamples and independently stated expectations challenge that. Local review and integration review keep different purposes, and the Host's final evidence check makes sure both happened on the current result. Trust is judged by useful findings and remaining defects, not by the number of reviewers.
 
 ### Limits of the analogy and future autonomy
 

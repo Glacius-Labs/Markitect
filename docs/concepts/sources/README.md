@@ -4,7 +4,7 @@ Sources preserve where the [register](../register.md) entries come from. Owner s
 
 | Source | Origin | Content |
 |---|---|---|
-| [Concept consolidation](consolidation-discussion-20261016.md) | Direct owner instructions, 16 October 2026 | Consolidate, simplify and integrate the Apply concept; quality, simplicity and stability over effort and compatibility |
+| [Concept consolidation](consolidation-discussion-20261016.md) | Direct owner instructions, 16 October 2026 | Consolidate, simplify and integrate the Apply concept; quality, simplicity and stability over effort and compatibility; adopt the recommended refinements |
 | [Desired working day](working-day-discussion-20261016.md) | Direct owner requests, 16 October 2026 | Walk through model change, delegated work and owner intervention; preserve the scenario and assess missing prerequisites |
 | [Experience discussion](experience-discussion-20261016.md) | Direct owner questions and documentation requests, 16 October 2026 | Learn without implicit rule authority; store and select experience, investigate operational logs and follow library cases through to lessons |
 | [Organization and trust](organization-and-trust-20261016.md) | Direct owner statements and documentation request, 16 October 2026 | Desired working life, current story-to-PR practice, management analogy, focused perspectives, incentives and local decisions |

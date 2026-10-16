@@ -22,7 +22,7 @@ The choice rests on the session boundary and Host interaction, rather than the a
 
 ## Session lifetime and protocol mapping
 
-One Host session owns one App Server process, connection and provider thread. A process survives several known `Step` calls and can sit idle while its Manager waits. Fresh local reviews, integration reviews and final verification receive fresh sessions and threads. There is no shared process pool or provider-native Manager hierarchy in the first implementation. This spends more process resources in exchange for clear role configuration, lifetime and failure boundaries.
+One Host session owns one App Server process, connection and provider thread. A process survives several known `Step` calls and can sit idle while its Manager waits. Local and integration reviews receive fresh sessions and threads. There is no shared process pool or provider-native Manager hierarchy in the first implementation. This spends more process resources in exchange for clear role configuration, lifetime and failure boundaries.
 
 | Host port operation | Adapter mapping |
 | --- | --- |
@@ -72,7 +72,7 @@ Recovery retains the existing valuable rule: inspect the exact known turn and ne
 | `src/internal/core/snapshot` | **Retain the small fixed-tree idea and suitable comparisons** in `internal/snapshot`. Review identity/mode rules against the new source and candidate bindings; keep I/O out. |
 | `src/internal/infrastructure/source` | **Retain suitable hardened acquisition mechanisms** in `adapters/gitrepo`. New `apply.Source` returns fixed new-model inputs, explicit dependencies and a complete census instead of loading the old Project. |
 | `src/internal/infrastructure/guardedwrite` | **Retain suitable checked-write mechanisms** behind `apply.Publisher` in `adapters/gitrepo`. Add exact registry/tree binding, final read-back and inspectable partial/unknown publication. Preserve stale and path-substitution counterexamples. |
-| `src/internal/infrastructure/recordstore` | **Replace as the journal backend** with `adapters/journal`, a SQLite assignment-stream store. Retain suitable private-directory/identity/lease ideas and failure cases; verify the new driver's actual guarantees. Delete the closed four-record layout/codecs and old lifecycle coupling. |
+| `src/internal/infrastructure/recordstore` | **Replace as the journal backend** with `adapters/journal`, a SQLite store with one stream per repository. Retain suitable private-directory/identity/lease ideas and failure cases; verify the new driver's actual guarantees. Delete the closed four-record layout/codecs and old lifecycle coupling. |
 | `src/internal/runtime/codexappserver` | **Rebuild** as `adapters/codexappserver`. Candidate reuse: bounded framing, event observation, literal process launch, configuration fingerprinting, approval refusal and exact-turn recovery. Replace session orchestration, prompt/report codecs, outgoing recording order, duplicate handling and old subject-alias machinery. |
 | `src/internal/runtime/agentexec` | **Delete the old public execution protocol and runner.** Take only useful process/environment/fingerprinting mechanics and failure cases. A narrow concrete `adapters/process` package can serve the two actual consumers, Codex and project checks; it knows no tasks, models or reports and introduces no new generic port catalogue. |
 | `src/internal/runtime/projectexecutor` | **Delete.** Its transport router, helper bridge and separate native journal are replaced by bootstrap wiring, `run.Sessions`, Host tools and one authoritative run journal. |
@@ -97,7 +97,7 @@ The source replacement also owns these non-Go changes. Omitting them would leave
 
 | Area | Required change |
 | --- | --- |
-| `.markitect/project.yaml`, old schema inputs and `.markitect/model` | Author Markitect's own canonical v1 model with explicit ownership/dependencies. Delete the old manifest and fixed-schema authoring contract. Keep operational configuration and registry outside Definition roots. Do not automatically translate obsolete Manager Definitions into v1 language requirements. |
+| `.markitect/project.yaml`, old schema inputs and `.markitect/model` | Author Markitect's own canonical v1 model with explicit ownership/dependencies, and an initial registry under `.markitect/registry/` that covers every repository file. Until Apply exists, registry changes are reviewed edits to these files, validated by the new `check`; the first real Apply then takes over through its ordinary intake. Delete the old manifest and fixed-schema authoring contract. Keep operational configuration and registry outside Definition roots. Do not automatically translate obsolete Manager Definitions into v1 language requirements. |
 | `.markitect/runtime.yaml` and current ignore/record configuration | Replace their schemas with the new execution/registry/storage policy where needed. No legacy decoder, ambiguous fallback or automatic historical run migration. Preserve old run evidence as fixed historical data, outside the new active store. |
 | Generated project views, schemas and code map | Regenerate from their new canonical owners. Delete outputs whose owner/feature disappears. Do not hand-edit generated pages to hide a mismatch. |
 | `AGENTS.md`, `CONTRIBUTING.md`, current architecture/usage/provider/operation guides and maps | Update to the implemented cut in the same reviewed change. Keep completed v1, the new design and dated historical evidence distinct. Removed paths referenced by historical records can point to their immutable source revision. |
@@ -121,4 +121,4 @@ After CUTOVER, Main builds, has one active model and command path, no old DTO im
 
 A removal is complete when production/test imports, bootstrap registrations, command/tool schemas, configuration fields, canonical owners, generated views, active documentation, fixtures and CI pins have all been accounted for. Use reference searches and the package inventory to identify residual consumers. Retain a historical observation's original identity; never reclassify an old native smoke as proof of the new adapter.
 
-The result is one compiler, one Host organization protocol, one assignment journal, one session adapter and one guarded publication route.
+The result is one compiler, one Host organization protocol, one run journal, one session adapter and one guarded publication route.

@@ -1,6 +1,6 @@
 # Independent library evaluation
 
-Date: 16 October 2026. Proposed behavioral assessment for the [callable library contract](interface-contract.md) and [two-Apply Playground](../manager-apply-playground.md). These are reviewed expectations to implement in an external evaluator, not recorded test results. M1 remains the source of business intent; this bounded experiment does not create a second specification required of every Markitect project.
+Date: 16 October 2026. Proposed behavioral assessment for the [callable interface](m1/model/library/callable-interface.yaml) of M1 and [two-Apply Playground](../manager-apply-playground.md). These are reviewed expectations to implement in an external evaluator, not recorded test results. M1 remains the source of business intent; this bounded experiment does not create a second specification required of every Markitect project.
 
 ## Independent inputs and oracle
 
@@ -39,7 +39,7 @@ Each row expands to executable cases before real Apply. The canonical references
 | E09 Loan inspection | Known loan reports exact current data, including a closed loan; member open list excludes closed loans and gives zero/empty for a new member. Unknown loan/member refuses. All reads preserve state. | [inspect-loans](m1/model/lending/inspect-loans.yaml) |
 | E10 Overdue assessment | Due on assessment date is excluded; due the previous day is included; exactly one notice per current open overdue loan, with correct fields; suspended member included; closed loans excluded even at an assessment date earlier than their return date; repeated assessment is read-only and equivalent. | [assess-overdue](m1/model/lending/reminders/assess-overdue.yaml) |
 | E11 Invalid domain input | Required argument missing, wrong JSON type, empty ID, whitespace-only name/title, invalid date, unknown requested record. Include invalid leap date `2026-02-29`. Each refuses understandably, preserves state and permits the next valid request. Differently spelled valid IDs remain distinct. | [inputs](m1/model/library/inputs.yaml) and each affected operation |
-| E12 Callable transport | Exact correlation, one response per line, no banners, continued handling after malformed input/unknown operation, normal EOF exit; use only the documented operations and record shapes. | [interface contract](interface-contract.md#wire-format), selected under [realization](m1/model/library/realization.yaml) |
+| E12 Callable transport | Exact correlation, one response per line, no banners, continued handling after malformed input/unknown operation, normal EOF exit; use only the documented operations and record shapes. | [callable-interface](m1/model/library/callable-interface.yaml), required by [realization](m1/model/library/realization.yaml) |
 
 Exercise E11 across each operation's required inputs, rather than testing validation only on registration. Isolate the reason being tested where possible; on intentionally combined failures, any actual failing condition is sufficient. Include a return while suspended, an overdue return and a return at the admission limit. Do not silently substitute an unmodeled renewal, fee, historical assessment or current-date rule.
 
@@ -82,4 +82,4 @@ Before trusting an evaluator, exercise it against controlled wrong transcripts/p
 
 The [Playground report](../manager-apply-playground.md#report-and-failure-contract) must state every unexecuted family and the process-boundary limitation. Passing requires all applicable assertions to execute; skipped or unreachable cases are not silently counted as passed. A failure is preserved with its exact inputs, trace and source identity.
 
-Return to [M1](README.md) or the [callable interface](interface-contract.md).
+Return to [M1](README.md) or the [callable interface](m1/model/library/callable-interface.yaml).
