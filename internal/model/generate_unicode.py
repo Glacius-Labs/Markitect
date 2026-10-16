@@ -28,8 +28,13 @@ LICENSE_SHA256 = "e7a93b009565cfce55919a381437ac4db883e9da2126fa28b91d12732bc53d
 
 
 def read_pinned(name: str) -> bytes:
-    path = DATA / name
-    data = path.read_bytes()
+    path = DATA / (name + ".gz")
+    compressed = path.read_bytes()
+    if len(compressed) < 10 or compressed[:3] != b"\x1f\x8b\x08":
+        raise ValueError(f"{path}: not a gzip stream")
+    if compressed[3] & 0x08 or compressed[4:8] != b"\0\0\0\0":
+        raise ValueError(f"{path}: gzip must have an empty filename and mtime zero")
+    data = gzip.decompress(compressed)
     digest = hashlib.sha256(data).hexdigest()
     if digest != SOURCES[name]:
         raise ValueError(f"{path}: SHA-256 {digest}, expected {SOURCES[name]}")
