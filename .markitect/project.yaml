@@ -24,6 +24,7 @@ modelFiles:
     - .markitect/model/product/distinct-state.yaml
     - .markitect/model/product/evidence-not-acceptance.yaml
     - .markitect/model/product/explicit-relationships.yaml
+    - .markitect/model/product/foundation-layer.yaml
     - .markitect/model/product/infrastructure-layer.yaml
     - .markitect/model/product/legacy-removal.yaml
     - .markitect/model/product/manager.yaml

@@ -10,10 +10,22 @@ go test ./src/internal/tooling/architecture -run TestCodeMapPage -update
 
 Tests in `src/internal/tooling/architecture` fail when a Go package is missing from the map, when an entry names a directory that is no longer a package, when an owning document is missing, or when this page is stale. Each layer must agree with the coarse layer of the [import gate](modules.md#mechanical-dependency-gate). The gate also enforces two rules of the finer layers: `core`, `infrastructure`, `application` and `runtime` packages may not import `legacy` packages, and they may use only the guarded API of `src/internal/infrastructure/guardedwrite`.
 
+The target `cmd/` and `internal/` responsibilities use separate `apply-*` layers and the [Apply import rules](modules.md#apply-target-dependencies). Only existing packages appear here; absent target packages require no stubs. Imports between target and current packages are forbidden in both directions.
+
 ## Layers
 
 | Layer | Meaning | Import gate layers | Packages |
 |---|---|---|---|
+| `apply-model` | Pure canonical v1 compiler over supplied bytes. | `apply-model` | 0 |
+| `apply-snapshot` | Pure fixed file-tree values and comparisons. | `apply-snapshot` | 0 |
+| `apply-organization` | Pure Manager topology, settings, context and mandates. | `apply-organization` | 0 |
+| `apply-realization` | Pure registry, ownership, claims and candidate rules. | `apply-realization` | 0 |
+| `apply-run` | Tasks, sessions, review, budgets and lifecycle with consumer-owned ports. | `apply-run` | 0 |
+| `apply-usecase` | Aggregate reconciliation, verification and guarded publication. | `apply-usecase` | 0 |
+| `apply-adapter` | Concrete protocols and effects implementing inward consumer ports. | `apply-adapter` | 0 |
+| `apply-process` | Process lifetime mechanics for Codex sessions and project checks. | `apply-process` | 0 |
+| `apply-bootstrap` | Constructs concrete adapters and wires their consumers. | `apply-bootstrap` | 0 |
+| `apply-command` | Thin command entrypoint delegating to composition. | `apply-command` | 0 |
 | `core` | Structural compiler, snapshots and project-model views. No providers, Git processes or writes. | `core`, `host`, `module` | 6 |
 | `infrastructure` | Git and working-tree access: fixed snapshots and guarded writes. | `infrastructure`, `host` | 3 |
 | `application` | Current product use cases and their command and MCP surfaces. | `host` | 15 |
