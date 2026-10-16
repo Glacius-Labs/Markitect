@@ -6,6 +6,7 @@ This is the home of Markitect's long-term vision, product-level decisions, clari
 |---|---|
 | [Register](register.md) | All entries with ID, status, origin and links, and the mapping of earlier collections |
 | [Origin and rationale](origin-and-rationale.md) | The owner's originating project, causal sequence, problems, concepts and assumptions, connected to the existing register |
+| [Product reflections](reflections/README.md) | Dated discussions of future use, organizational ideas and trust, with owner wording and assistant interpretation kept distinct |
 | [Sources](sources/README.md) | Owner statements kept verbatim with provenance, including the origin account, product description, idea review and snapshots of the Concepts and Ideas chats' collections |
 
 ## Before assessing or redirecting Markitect

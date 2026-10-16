@@ -8,6 +8,8 @@ The [supplied review resolution](review-resolution-20261016.md) refines that pro
 
 ## Purpose and direction
 
+The [organization and trust reflection](../../concepts/reflections/organization-and-trust-20261016.md) records the owner's intended working life and management analogy: focused responsibilities, independent perspectives, local decisions, escalation and reports. It develops the rationale for this direction without changing the Apply contract.
+
 The canonical model describes the intended project world. Managers organize its realization as code, tests, documentation and other required artifacts. The intended management structure follows the model's Packages: one Manager per Package, with each Manager responsible for integrating its area. The root Manager is an ordinary Manager at the top of the hierarchy. Project Manager was a descriptive name for that position, not a separate role or Kind. Manager remains the working name.
 
 The realization strategy should be customizable. A Manager's responsibility can stay consistent while its team, tools and way of working vary. The exact configuration format and extension mechanism remain open.
