@@ -9,10 +9,9 @@ import (
 
 // Compile examines only the supplied bytes. The current acquisition slice
 // validates source structure, YAML scalar forms, manifests and Definition
-// envelopes and version-bound lexical names/identities. Category-dependent
-// names, Core/contracts, typed reference values, body links and locks remain
-// incomplete: no model can pass or receive canonical bytes. The explicit model
-// dependency graph and file-local imports/kind addresses are checked separately.
+// envelopes, pinned Unicode names, explicit bindings and Core/field contracts.
+// Concrete typed values, body links, locks and canonical projection remain
+// incomplete: no model can pass or receive canonical bytes.
 func Compile(input Input) Result {
 	r := Result{Status: NotCompleted, Coordinates: NotCompleted}
 	r.Limits = effectiveLimits(input.Limits)
@@ -76,7 +75,18 @@ func Compile(input Input) Result {
 			r.Status = Failed
 		}
 	}
-	for _, finding := range append(graph.findings, bindings.findings...) {
+	contracts := checkContracts(scopes, graph, bindings)
+	for index, status := range contracts.status {
+		setPhaseStatus(&r.Models[index], "core_and_contracts", status)
+		if status == Failed {
+			r.Models[index].Status = Failed
+			r.Status = Failed
+		}
+		if r.Models[index].Phases[2].Status != Failed {
+			setPhaseStatus(&r.Models[index], "names_and_unicode", contracts.names[index])
+		}
+	}
+	for _, finding := range append(append(graph.findings, bindings.findings...), contracts.findings...) {
 		r.Diagnostics = append(r.Diagnostics, finding.diagnostic)
 	}
 	sort.Slice(r.Models, func(i, j int) bool {
