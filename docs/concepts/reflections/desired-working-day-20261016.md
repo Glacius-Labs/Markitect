@@ -20,6 +20,58 @@ The owner sees a compact status such as:
 
 The task tree, actual prompts, candidate differences and evidence remain available on demand. The overview derives from the same history and must distinguish observed progress from an Agent's prediction.
 
+## Decision authority and escalation
+
+The [authority discussion](../sources/working-day-discussion-20261016.md#decide-within-authority-and-escalate) proposes two separate decisions: who may resolve an issue, and when the owner needs notification. A question can require owner authority without requiring an immediate interruption. A serious execution failure can require prompt notification even when the business rule is clear.
+
+### Route the decision by mandate
+
+| Situation | Responsible action | Library example |
+| --- | --- | --- |
+| The answer already exists | Retrieve the relevant model or applicable decision and follow it. | The model already allows a suspended member to return a book. |
+| The choice is within implementation freedom | The Manager decides, explains material choices and submits the result to review. | Structure the borrowing check within the required architecture and behavior. |
+| Several areas must coordinate | The nearest common parent coordinates within its own mandate. | Lending and Members agree how the existing membership-status contract is supplied. |
+| The choice exceeds the mandate | Escalate to the authorized decision owner, ultimately the human owner. | Introduce an exception allowing another loan after the limit has been reached. |
+
+Hierarchy alone does not grant more authority over intended behavior. The root cannot invent a missing business rule because its children disagree. Coordination does not transfer artifact ownership or authorize a model edit during Apply.
+
+Before escalating, a Manager asks:
+
+1. Is knowledge missing, or is a decision missing? Use bounded reading, checks and organizational questions to obtain existing information first.
+2. Which rule or explicit implementation freedom permits the choice? Ground material decisions in that basis.
+3. Does the choice preserve binding meaning, obligations and agreed limits? Technical convenience does not authorize weakening promised behavior.
+
+Several valid implementations do not require an owner decision. Several materially different business policies without an authorized selection rule may require one. Confidence in an answer never supplies missing authority. Uncertain authority should be clarified through the organization before taking the dependent action.
+
+### Keep the mandate small and explicit
+
+Use common project rules with few Manager-specific exceptions. Derive the effective mandate from the existing model and execution configuration rather than maintaining a parallel policy document. Four parts suffice for this proposal:
+
+- Responsibility: the outcomes and artifacts owned by the Manager.
+- Decision freedom: implementation choices it may make locally.
+- Reserved decisions: choices requiring another authorized actor.
+- Limits: budgets, permitted actions and escalation conditions.
+
+An illustrative Lending mandate is: “Realize the existing borrowing rules. Choose internal implementation within the architecture constraints. Coordinate interfaces through the common parent. Changes to business rules, public commitments or this mandate require a decision outside this Apply.” Configuration cannot weaken binding model obligations or required review gates.
+
+### Choose notification timing separately
+
+| Situation | Owner attention |
+| --- | --- |
+| A decision blocks the whole assignment, or waiting has significant consequences | Send a timely, focused decision request. |
+| A decision blocks part of the work while other useful work remains | Keep it visibly pending and group it with other questions at an appropriate time. |
+| The Manager decided within its mandate | Preserve the reasoning for inspection and the result report; no answer is required. |
+
+State when an answer is needed, if there is a real deadline, and what happens without it. Do not invent urgency. Grouping notifications does not permit dependent work to proceed on an assumed answer. Silence is not consent, and a required unresolved question still blocks aggregate completion. Significant execution incidents can need prompt notification independently of whether an owner decision is needed.
+
+### Review the authority as well as the result
+
+The independent reviewer examines material decisions against both the current obligations and the effective mandate: did the Manager have authority to make this choice, and does the result still satisfy the binding requirements? Relevant explanations and mandate references belong in existing reports and evidence, not a new approval system for every implementation detail.
+
+An unauthorized assumption becomes a finding and prevents acceptance of the affected result until resolved. A reviewer cannot grant missing authority by approving the code. The Host enforces structural limits such as write ownership, budgets and operation targets; semantic judgments about authority remain reviewable but fallible Agent work.
+
+The intended balance is symmetrical: Managers explain why they may decide locally, and an escalation explains why the organization cannot resolve the issue within its mandate. Neither constant questioning nor silent expansion of authority is a successful outcome.
+
 ## A question requiring the owner
 
 Suppose a broader library also supports renewals and the model does not say whether a member already above the new limit may renew. This is a hypothetical extension: the authored M1 explicitly excludes renewals. The five-to-three change in the existing example does not require inventing this ambiguity.

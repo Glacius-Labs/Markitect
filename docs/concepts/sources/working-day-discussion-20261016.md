@@ -53,3 +53,15 @@ Recorder's note: The assistant proposed a question with decision, reason, recomm
 > Halte dieses Format für Rückfragen bitte auch in unseren Docs fest, inklusive konkreter Modelländerung, eindeutiger Zuordnung meiner Antwort und dem anschließenden Weiterarbeiten.
 
 The reflection's [question format](../reflections/desired-working-day-20261016.md#a-question-the-owner-can-answer-directly) records the proposed interaction, answer binding and continuation acknowledgement.
+
+## Decide within authority and escalate
+
+> Wie entscheiden die Manager konkret, welche Fragen sie selbst klären dürfen und welche zu mir eskaliert werden müssen, ohne mich ständig zu unterbrechen oder wichtige Entscheidungen an mir vorbei zu treffen?
+
+Recorder's note: The assistant proposed separating decision authority from notification timing. Managers retrieve existing answers, decide within implementation freedom, coordinate through a common parent, or escalate beyond their mandate. A small mandate states responsibility, freedom, reserved decisions and limits. Independent review examines authority as well as correctness; hierarchy and confidence do not create authority.
+
+## Preserve authority and notification rules
+
+> Halte diese Regeln für Entscheidungsbefugnisse und Eskalation bitte auch in unseren Docs fest, insbesondere die Trennung zwischen Mandat und Benachrichtigung sowie die Prüfung der Befugnis durch den Reviewer.
+
+The reflection's [authority and escalation section](../reflections/desired-working-day-20261016.md#decision-authority-and-escalation) records these proposed rules and their limits.
