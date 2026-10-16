@@ -96,10 +96,17 @@ func TestSettingsExactOverridesReplaceAndAppendWithoutInheritance(t *testing.T) 
 	}
 	var ids []string
 	for _, fact := range lending.Manager.Instructions {
-		ids = append(ids, fact.ID)
+		ids = append(ids, fact.Value.ID)
 	}
 	if want := []string{"style", "local", "style", "empty"}; !reflect.DeepEqual(ids, want) {
 		t.Fatalf("instruction order/repeats changed: %q, want %q", ids, want)
+	}
+	// The repeated style ID has the same original-file source but distinct
+	// selecting fields. A list of contributing sources alone cannot establish
+	// which occurrence came from which input list.
+	first, repeated := lending.Manager.Instructions[0], lending.Manager.Instructions[2]
+	if first.Source != facts.Defaults.Manager.Instructions.Source || repeated.Source != facts.Overrides[1].Manager.Instructions.Source || first.Value.Source != facts.Instructions[0].Source || repeated.Value.Source != first.Value.Source || !bytes.Equal(first.Value.Bytes, repeated.Value.Bytes) {
+		t.Fatal("repeated instruction occurrences lost their distinct selection sources or shared original content binding")
 	}
 	if want := []organization.SettingSource{facts.Defaults.Manager.Instructions.Source, facts.Overrides[1].Manager.Instructions.Source}; !reflect.DeepEqual(lending.Manager.InstructionSources, want) {
 		t.Fatal("instruction selection provenance lost")
@@ -131,7 +138,7 @@ func TestSettingsPreserveOriginalInstructionBytesAndOwnAllViews(t *testing.T) {
 	settings := requireSettings(t, settingsTopology(t), facts)
 	want := settings.Managers()
 	wantCeilings := settings.Ceilings()
-	if got := managerSettings(t, settings, "lending").Manager.Instructions[0].Bytes; !bytes.Equal(got, []byte("\xef\xbb\xbfUse concise reports.\r\nKeep source references.")) {
+	if got := managerSettings(t, settings, "lending").Manager.Instructions[0].Value.Bytes; !bytes.Equal(got, []byte("\xef\xbb\xbfUse concise reports.\r\nKeep source references.")) {
 		t.Fatalf("original BOM, CRLF or final bytes rewritten: %q", got)
 	}
 	facts.Instructions[0].Bytes[0] = '!'
@@ -143,15 +150,16 @@ func TestSettingsPreserveOriginalInstructionBytesAndOwnAllViews(t *testing.T) {
 	facts.Overrides[0].CreationRoots.Value[0] = directory(t, "changed")
 	facts.Overrides[0].CreationRoots.Source.Field = "changed"
 	all := settings.Managers()
-	all[0].Manager.Instructions[0].Bytes[0] = '?'
+	all[0].Manager.Instructions[0].Value.Bytes[0] = '?'
+	all[0].Manager.Instructions[0].Source.Field = "changed"
 	all[0].Manager.InstructionSources[0].Field = "changed"
 	all[0].CreationRoots.Value[0] = directory(t, "changed")
 	manager := managerSettings(t, settings, "lending")
-	manager.Manager.Instructions[0].Bytes[0] = '?'
-	if bytes.Equal(manager.Manager.Instructions[0].Bytes, manager.Manager.Instructions[1].Bytes) {
+	manager.Manager.Instructions[0].Value.Bytes[0] = '?'
+	if bytes.Equal(manager.Manager.Instructions[0].Value.Bytes, manager.Manager.Instructions[1].Value.Bytes) {
 		t.Fatal("repeated instruction output entries alias each other's bytes")
 	}
-	manager.Reviewer.Instructions[0].Bytes[0] = '?'
+	manager.Reviewer.Instructions[0].Value.Bytes[0] = '?'
 	manager.CreationRoots.Value[0] = directory(t, "changed")
 	ceilings := settings.Ceilings()
 	ceilings.CreationRoots.Value[0] = directory(t, "changed")
