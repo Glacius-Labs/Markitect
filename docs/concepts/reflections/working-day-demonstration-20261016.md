@@ -708,6 +708,34 @@ Use repeated comparable evidence to improve the mechanism, with observation, exp
 
 For bounded evaluation, compare otherwise similar cases with different initial authority/context: an explicitly delegated choice, a supplied settled rule, a genuinely reserved decision and a failed required information retrieval. The reviewer should distinguish them even when the eventual answer is identical. Record missing basis as unknown and assess notification timing separately. These are proposed evidence cases, not a guarantee against all hindsight bias.
 
+### Improve context and mandates without turning feedback into policy
+
+This proposal answers the [follow-up about learning from question assessments](../sources/working-day-discussion-20261016.md#improve-context-and-mandates-from-question-assessments). It applies the existing [distinction between observation, explanation, experience and binding rule](experience-without-implicit-rules-20261016.md#four-distinct-kinds-of-knowledge). These are different meanings, not automatic promotion stages. An avoidable question is evidence about one situation, not authority to prohibit similar questions or widen a Manager's mandate.
+
+Start from the contemporaneous assessment above. Record the observed question and supplied basis, then the proposed cause separately: an omitted source, poor presentation, unclear rendering of existing authority, a genuine missing decision, or an unsupported diagnosis. If several explanations remain plausible, retain that uncertainty. A later successful answer does not establish the cause of the earlier question.
+
+Choose the smallest improvement that addresses the supported cause:
+
+| Supported cause | Small improvement | Authority boundary |
+| --- | --- | --- |
+| A source required by the existing context contract was missing | Correct preparation or routing for the affected responsibility and check the omission | This realizes an existing obligation; it does not create a business rule |
+| The right source was supplied but difficult to locate among unrelated material | Make its reference and purpose easier to find; remove demonstrated redundancy | Preserve applicable content and provenance; avoid copying another authoritative rule into prompt prose |
+| Existing implementation freedom was unclear in the derived mandate | Show the relevant delegation and its limits more clearly, with its authoritative source | Clarification preserves the set of permitted decisions; it cannot create a new default, exception or permission |
+| Authority or intended behavior was actually missing | Propose the concrete change at the owning model or configuration source | Use existing decision authority; reserved decisions still require the owner |
+| No context or mandate defect is established | Retain scoped feedback or an optional experience hint for relevant future work | Do not force a configuration change to make every assessment produce an action |
+
+The practical test for a claimed clarification is: would a previously unauthorized decision become authorized, or a previously allowed choice become forbidden? If so, this is a substantive change, even if presented as better wording. A mandatory default can also narrow discretion without using the word "must". Review it through the existing authority path. The derived mandate continues to refer to its model, configuration, registry and assignment sources; it is not a second place to maintain those rules.
+
+Use existing assessment and task records for a short improvement proposal: evidence, suspected cause, affected scope, the exact proposed change and how to tell whether it helped. No new improvement backlog, learning Agent, scoring service or approval round is needed. An authorized preparation defect can be fixed after one clear example. Uncertain diagnoses justify a bounded, reversible trial or further observation, not an arbitrary requirement for several incidents. Repetition can support a broader proposal, but never supplies authority by itself.
+
+Review the change in the normal workflow, checking both the problem case and a nearby case where asking remains necessary. For example, clearer access to the existing suspension/return rule should let Lending proceed with a return without another business decision. A later extension with a genuinely undecided renewal policy must still lead to a question. These are hypothetical examples, not claims of completed runs. For a small presentation change, a focused comparison of the prepared inputs and ordinary reviewer assessment can suffice; a repeatable evaluator case is useful when a deterministic omission was fixed. Do not build a new test suite for every rewording.
+
+Success means that the relevant source is available and discoverable, an authorized decision can proceed, and legitimate escalation still works. Also inspect whether the change unnecessarily broadens input exposure or burden. Fewer questions alone are not success: silence may hide guessing. If later use does not support the diagnosis, narrow, revise or withdraw the improvement while preserving the original observation. Do not make a permanent checklist or mandatory check out of every useful example.
+
+For the library, suppose review establishes that Lending's prepared context omitted the already applicable rule allowing returns for suspended members. Correct that selection and retain a source reference. If the source was already present but buried, improve orientation instead of adding all Members implementation files. If it was clear and available, use individual feedback rather than automatically expanding every future package. None of these observations authorizes a new instruction such as "Never ask about member status" or "Lending may decide all membership policy."
+
+An experience hint can suggest inspecting the relevant contract before escalating a similar issue, with its scope and evidence. A reviewer cannot reject a different valid approach merely for not following that hint. Only an explicitly authorized change to the owning source becomes binding. Apply source changes through the existing version and successor-run rules; do not silently replace the basis of running work or carry old approval to the changed basis. This proposal can begin with ordinary records and focused corrections; the deferred experience storage and selection mechanism is not a first-version prerequisite.
+
 ## Overall acceptance and repeatability
 
 The proposed initial threshold is three complete series of all four scenarios, using a fresh execution state for each case and the same fixed product/profile basis. Each case starts from its specified recorded baseline; within the recovery case, the interrupted state must survive the restart. Do not replace recovery with a new clean assignment.
