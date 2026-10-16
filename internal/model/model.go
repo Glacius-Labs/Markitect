@@ -2,8 +2,9 @@
 // It performs no filesystem, repository, process or provider operations.
 //
 // Compile currently implements source/YAML acquisition and lexical Unicode
-// names/identities. Its result remains not_completed until every normative v1
-// content phase exists; category-specific names require resolved Core types.
+// names/identities, explicit model dependencies and file-local kind address
+// binding. Its result remains not_completed until every normative v1 content
+// phase exists; category-specific names require resolved, validated Core types.
 package model
 
 // Identity is a canonical Definition address. Model IDs and source filenames

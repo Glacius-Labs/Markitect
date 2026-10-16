@@ -15,7 +15,9 @@ func sourceInput() Input {
 		ManifestPath: "model.yaml",
 		Entries: []Entry{
 			{Path: "model.yaml", Kind: Regular, Bytes: []byte("formatVersion: 1\nid: example\nroot: model\ndependencies: {}\n")},
-			{Path: "model/feature/item.yaml", Kind: Regular, Bytes: []byte("id: item\nkind: Example\nbody: Binding prose.\nspec: {}\n")},
+			// A self-address isolates binding from the still-unimplemented Core
+			// target-category check; this is not a positive full-v1 fixture.
+			{Path: "model/feature/item.yaml", Kind: Regular, Bytes: []byte("id: item\nkind: item\nbody: Binding prose.\nspec: {}\n")},
 		},
 	}}
 }
@@ -37,6 +39,12 @@ func TestPartialCompilerNeverClaimsConformance(t *testing.T) {
 		t.Fatalf("implemented acquisition did not complete: %+v", m.Phases)
 	}
 	for _, p := range m.Phases[2:] {
+		if p.Name == "dependencies" || p.Name == "imports_and_kinds" {
+			if p.Status != Passed {
+				t.Fatalf("completed binding phase was not reported: %+v", p)
+			}
+			continue
+		}
 		if p.Status != NotCompleted {
 			t.Fatalf("unimplemented phase claimed completion: %+v", p)
 		}

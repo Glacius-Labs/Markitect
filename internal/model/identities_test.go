@@ -33,8 +33,8 @@ func TestExactDefinitionIdentityDoesNotIncludeFilename(t *testing.T) {
 func TestLocalIdentityBelongsOnlyToImmediatePackage(t *testing.T) {
 	input := sourceInput()
 	input.Root.Entries = append(input.Root.Entries,
-		Entry{Path: "model/feature/child/item.yaml", Kind: Regular, Bytes: []byte("id: item\nkind: Example\nbody: Child package.\nspec: {}")},
-		Entry{Path: "model/other/item.yaml", Kind: Regular, Bytes: []byte("id: item\nkind: Example\nbody: Other package.\nspec: {}")},
+		Entry{Path: "model/feature/child/item.yaml", Kind: Regular, Bytes: []byte("id: item\nkind: item\nbody: Child package.\nspec: {}")},
+		Entry{Path: "model/other/item.yaml", Kind: Regular, Bytes: []byte("id: item\nkind: item\nbody: Other package.\nspec: {}")},
 	)
 	got := Compile(input)
 	if got.Status != NotCompleted || len(got.Diagnostics) != 0 {
@@ -63,7 +63,7 @@ func TestRootDefinitionsCannotAcquireAnEmptyPackageIdentity(t *testing.T) {
 func dependencySource(id, origin, pkg, definitionID string) SourceModel {
 	return SourceModel{Origin: origin, ManifestPath: "model.yaml", Entries: []Entry{
 		{Path: "model.yaml", Kind: Regular, Bytes: []byte("formatVersion: 1\nid: " + id + "\nversion: '1.0'\nroot: model\ndependencies: {}")},
-		{Path: "model/" + pkg + "/item.yaml", Kind: Regular, Bytes: []byte("id: " + definitionID + "\nkind: Example\nbody: text\nspec: {}")},
+		{Path: "model/" + pkg + "/item.yaml", Kind: Regular, Bytes: []byte("id: " + definitionID + "\nkind: " + definitionID + "\nbody: text\nspec: {}")},
 	}}
 }
 
@@ -105,7 +105,7 @@ func TestSuppliedModelIdentityIsUniqueAndOrderIndependent(t *testing.T) {
 		dependencySource("same-model", "dependency-b", "b", "other"),
 	}
 	got := Compile(input)
-	if got.Status != Failed || len(got.Diagnostics) != 2 || got.Diagnostics[0].Code != "name.model_collision" {
+	if got.Status != Failed || !hasDiagnostic(got, "name.model_collision") {
 		t.Fatalf("duplicate model ID disappeared: %+v", got)
 	}
 	slices.Reverse(input.Dependencies)
