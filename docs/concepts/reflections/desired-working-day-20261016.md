@@ -286,6 +286,50 @@ The owner can see â€œreview found a return regression; correction in progress,â€
 
 Interruption is warranted when a decision exceeds authority, a required model ambiguity remains, work cannot converge, or a limit prevents further progress. The request should explain what would unblock the work. An ordinary failed attempt that the organization can resolve within its mandate is visible history rather than a demand for owner attention.
 
+### Detect stalled work and bound internal correction
+
+The [stagnation discussion](../sources/working-day-discussion-20261016.md#recognize-stagnation-without-endless-retries) proposes combining hard limits with a short progress assessment. The Apply concept already provides finite budgets and proposes three review attempts per work or integration task. The additional question is whether another attempt has a concrete reason to succeed or produce useful evidence. This proposal does not add another retry allowance outside those limits.
+
+After an unsuccessful attempt, the Manager records three points in its existing report:
+
+1. What remains unresolved?
+2. What was demonstrably improved or learned since the previous attempt?
+3. What will the next attempt do differently, and what observable result should it produce?
+
+Progress can mean resolving a finding, reproducing a cause or ruling out a hypothesis. A new prompt, more changed files or a promise to try again does not establish progress by itself. Diagnostic findings must be relevant to resolving the task, not a justification for indefinite exploration.
+
+| Signal | Possible explanation |
+| --- | --- |
+| The same finding survives repeated corrections | The cause or affected execution path is not understood. |
+| Fixing A reintroduces B, then fixing B reintroduces A | Local solutions conflict or shared assumptions are wrong. |
+| Managers wait on each other | A dependency cycle or unresolved interface agreement prevents progress. |
+| An execution deadline passes without a usable outcome | Execution is stuck, failed or uncertain; inspect its actual state. |
+| Further attempts repeat the same assumption without new evidence | The approach may be cycling rather than progressing. |
+
+As an initial experimental trigger, the second unsuccessful correction of the same finding could request a parent assessment. This is neither proof of stagnation nor an automatic owner interruption. Do not wait for that threshold when a hard limit, unknown writer or missing authority already requires stopping. The Host observes counts, task dependencies and deadlines; Managers and reviewers judge whether differently worded findings share a cause. These signals use existing records rather than a new scoring subsystem.
+
+The parent receives a compact account and may choose a bounded course correction within its mandate: retrieve specific missing context, isolate a small reproduction, settle an existing interface contract with the affected Managers, or test a different solution hypothesis. For execution uncertainty, first inspect the known session and side effects. Do not dispatch a duplicate writer merely because a response timed out.
+
+Another attempt requires a concrete change of approach and a checkable target, within the remaining task and assignment limits. Parent investigation and alternative attempts also consume budget. New task IDs, Agent changes or successor Apply runs must not reset consumed assignment effort. Exhausted limits cannot be bypassed by relabeling the same work. If no justified attempt fits the remaining mandate, stop the affected work and retain its candidates and evidence.
+
+Three outcomes remain distinct:
+
+| Outcome | Treatment |
+| --- | --- |
+| Internally resolvable | Continue with the identified, authorized next step within remaining limits. Report progress without requesting an owner decision. |
+| Decision required | Ask for the specific missing business decision, authority or necessary budget extension, with consequences and a proposed next step. No extension is assumed. |
+| Not successfully completed | End the affected work in a controlled way when no viable route is found within the limits. Report the result honestly; do not invent a business question or mark the assignment complete. |
+
+Independent ready work can continue only where it remains useful and authorized. Unresolved required work still prevents aggregate success. Controlled termination records whether execution actually stopped; uncertain side effects remain explicit.
+
+For example, Lending fixes borrowing by suspended members but accidentally blocks their returns. The next correction restores returns and reopens the borrowing defect. The parent requests a reproduction covering both behaviors against the already explicit rules. This needs no new owner decision. If the model genuinely lacked a required rule, that specific gap would instead be escalated.
+
+A compact status might read:
+
+> Lending is not making progress. Two corrections have reproduced the same conflict. The parent is checking both operation sequences together within the remaining budget. No owner decision is currently needed.
+
+If the internal correction also fails, the next report states the attempted approaches, retained result, unresolved issue and whether any concrete owner decision can help. Technical failure is not automatically a question the owner can answer. The aim is to justify further work and stop when justification or authority is missing, rather than consume the entire budget blindly or escalate the first ordinary failure.
+
 ## Result and further steering
 
 A completion report states what changed, the model and exact candidate assessed, required review/check results, remaining limitations and publication outcome. For example:

@@ -101,3 +101,15 @@ Recorder's note: The assistant proposed four report blocks: overall state, requi
 > Halte dieses Format für Statusberichte bitte auch in unseren Docs fest, inklusive offener Entscheidungen, Fortschritt, Problemen und der klaren Trennung zwischen lokal geprüft, insgesamt geprüft, übernommen und ausgerollt.
 
 The reflection's [compact status report](../reflections/desired-working-day-20261016.md#a-compact-organization-status-report) preserves the example, state meanings and reporting rules as proposals.
+
+## Recognize stagnation without endless retries
+
+> Wie sollte die Organisation erkennen, dass sie feststeckt oder sich im Kreis dreht, und wie würde sie damit umgehen, ohne endlos Budget zu verbrauchen oder zu früh an mich zu eskalieren?
+
+Recorder's note: The assistant proposed hard limits plus a short progress assessment, signals for repeated findings, alternating regressions, dependency cycles and uncertain execution, and a bounded parent-led course correction. A second unsuccessful correction of the same finding was an experimental trigger, not a fixed accepted threshold. Internal continuation, a specific owner decision and unsuccessful controlled termination remain distinct outcomes.
+
+## Preserve bounded stagnation handling
+
+> Halte diesen Umgang mit Stillstand bitte auch in unseren Docs fest, inklusive Fortschrittsprüfung, begrenzter interner Kurskorrektur, Budgetgrenzen und gezielter Eskalation statt endloser Wiederholungen.
+
+The reflection's [stagnation section](../reflections/desired-working-day-20261016.md#detect-stalled-work-and-bound-internal-correction) records these proposals, including retained assignment budgets and a library example.
