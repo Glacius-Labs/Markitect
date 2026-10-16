@@ -46,6 +46,32 @@ Delegated tasks should state the intended outcome, applicable model basis, scope
 
 How to avoid excessive direction remains to be refined. The owner suggests that higher Managers might not initially know or read descendant artifact files, receiving concrete file details when another Manager supplies them. This is an open option, not an adopted prohibition on file access. It may preserve local autonomy and reduce context, but integration or investigation may require specific details. Reports, targeted requests and direct inspection are alternatives to compare before fixing the policy. A Manager's own local work must also be distinguished from its coordination of descendants.
 
+## Reporting and communication history
+
+Traceability belongs to reliable Apply from the start. The owner wants to reconstruct which Agent received which prompt, what it reported, how communication proceeded, and what information and changes flowed through each step. A final success message alone is insufficient for that investigation.
+
+Readable reporting and detailed history serve different needs. Managers return concise progress, outcomes, evidence and open issues to their parents. A linked execution history preserves the underlying inputs, communications and changes for later inspection. Higher Managers need not receive every transcript in their normal context; reporting and need to know can coexist.
+
+At a conceptual level, the history should connect:
+
+| Record | What a reader should be able to establish |
+| --- | --- |
+| Run and step | Which operation, model stand and realization candidate the work belongs to, and which earlier event caused it. |
+| Agent identity and role | Which Manager or team Agent acted, who assigned it, and which effective configuration and model profile were used. |
+| Actual inputs | The task prompt, context package, applicable custom instructions and prior messages actually supplied for that step. Template names alone are insufficient when their content changes. |
+| Additional information | Observed file reads, tool requests and results, context additions and questions or replies supplied after the initial prompt. |
+| Communication and reports | Sender, recipient, content, order and relation to the task, including child reports, review findings, clarification and further delegation. |
+| Changes and integration | The proposed artifact changes or model edits, their prior and resulting states, registry updates, review revisions, rejected candidates, integrations and actual application. |
+| Outcome and evidence | What completed, failed, remained open or was interrupted, with the associated checks and evidence. |
+
+Reports of changes and observed changes remain distinguishable. For example, an Agent's claim that it fixed the loan limit should link to the actual candidate difference and its review or test results. A rejected change remains part of the history even though it was never applied. The record should preserve earlier events when new findings or corrections arrive.
+
+In the library example, a reader should be able to follow the root's lending task, lending's delegation to an implementer, the implementer's candidate and report, a review finding about the five-book limit, the revised candidate, and the parent's integration and application. Parallel work needs identifiable branches and causal links so that its history does not imply a false serial sequence.
+
+Exact replay is a separate question from knowing the recorded inputs and outputs. The trace describes what Markitect actually supplied and observed; missing or unavailable events must remain visible. The current [architecture](../../architecture.md#authority-and-evidence) and [operational records](../../project-operations.md#record-layout-and-cutover) retain their own implemented scope. This design does not claim that all of the proposed detail is already recorded.
+
+The storage format, event granularity, inspection interface and reporting views remain open. An initial view could offer a readable run timeline with drill-down to each Agent's task, context, report and changes.
+
 ## Team variants
 
 Each Manager should be configurable and may have a team of AI Agents. Preserve these alternatives until they can be compared:
@@ -148,6 +174,8 @@ Custom commands are an owner-proposed extension of this idea. A custom command c
 ## Questions for further design
 
 - What constitutes a reliable end-to-end Apply for the library example before adding command extensions?
+- Which events and exact inputs must be recorded for the first Apply, and how can a reader follow prompts, reports and changes through delegation and integration?
+- What should each Manager report upward, and which details stay in the linked execution history until requested?
 - How should a parent express outcomes and constraints without taking over a child's implementation decisions?
 - Which artifact details should a higher Manager receive initially, which should it request, and when should it inspect files directly?
 - How can an organizational entry point support later Government while preserving the distinct model and artifact change targets?

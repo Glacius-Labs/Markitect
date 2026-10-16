@@ -64,3 +64,7 @@ Recorder's note: These are verbatim owner messages from the design discussion in
 > Generell sollten wir uns aber vermutlich zunächst darauf konzentrieren, dass apply zuverlässig funktioniert und die anderen commands als Erweiterungen behandeln. Das shiftet nämlich unsere Anwendung mehr in Richtung Organisation und Managementhierarchie als Entrypoint und kanonisches Modell als Grundlage. Eventuell wäre das sogar die bessere Betrachtungsweise gerade wenn wir später noch um Government erweitern wollen. Jedenfalls sollten wir uns das alles merken und als Kontext im Hinterkopf behalten.
 >
 > Ausserdem fällt mir noch ein, dass die Anweisungen natürlich nur an den Root Manager gegeben werden würden und dieser delegiert dann anschließend runter und gibt dann einen eigenen Prompt, welcher aber nicht zu spezifisch sein darf. Also nicht dass der Root Manager den unteren Managern direkt sagt welche Dateien anzufassen sind. Deshalb wäre es besser er kennt die Dateien gar nicht und ließt sie auch nicht und ließt nur wenn jemand ihm das gibt. Vielleicht wäre das aber auch nicht der richtige Weg. Das gilt es zu refinen.
+
+## Reporting and communication history
+
+> Ausserdem brauchen wir Reporting, bzw irgendwas um später nachvollziehen zu können welcher Agent welchen Prompt bekommen hat und was reportet hat und wie generell die Kommunikation lief und was wie in welchem Step geflossen und geändert wurde.
