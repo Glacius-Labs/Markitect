@@ -24,7 +24,13 @@ packages:
   # --- apply-organization -------------------------------------------------
   - path: internal/organization
     layer: apply-organization
-    purpose: Derives the complete local Manager topology from accepted compiled model and Package facts.
+    purpose: Derives local Manager topology and resolves exact settings from supplied model and source facts.
+    doc: docs/design/canonical-model/manager-apply-go-architecture.md#organize-by-responsibility
+
+  # --- apply-realization --------------------------------------------------
+  - path: internal/realization
+    layer: apply-realization
+    purpose: Validates artifact registry ownership and file accounting over supplied model and snapshot values.
     doc: docs/design/canonical-model/manager-apply-go-architecture.md#organize-by-responsibility
 
   # --- core ---------------------------------------------------------------

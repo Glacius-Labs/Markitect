@@ -19,7 +19,7 @@ The target `cmd/` and `internal/` responsibilities use separate `apply-*` layers
 | `apply-model` | Pure canonical v1 compiler over supplied bytes. | `apply-model` | 1 |
 | `apply-snapshot` | Pure fixed file-tree values and comparisons. | `apply-snapshot` | 1 |
 | `apply-organization` | Pure Manager topology, settings, context and mandates. | `apply-organization` | 1 |
-| `apply-realization` | Pure registry, ownership, claims and candidate rules. | `apply-realization` | 0 |
+| `apply-realization` | Pure registry, ownership, claims and candidate rules. | `apply-realization` | 1 |
 | `apply-run` | Tasks, sessions, review, budgets and lifecycle with consumer-owned ports. | `apply-run` | 0 |
 | `apply-usecase` | Aggregate reconciliation, verification and guarded publication. | `apply-usecase` | 0 |
 | `apply-adapter` | Concrete protocols and effects implementing inward consumer ports. | `apply-adapter` | 0 |
@@ -55,7 +55,13 @@ The target `cmd/` and `internal/` responsibilities use separate `apply-*` layers
 
 | Package | Purpose | Owning document |
 |---|---|---|
-| `internal/organization` | Derives the complete local Manager topology from accepted compiled model and Package facts. | [docs/design/canonical-model/manager-apply-go-architecture.md](../design/canonical-model/manager-apply-go-architecture.md#organize-by-responsibility) |
+| `internal/organization` | Derives local Manager topology and resolves exact settings from supplied model and source facts. | [docs/design/canonical-model/manager-apply-go-architecture.md](../design/canonical-model/manager-apply-go-architecture.md#organize-by-responsibility) |
+
+## Apply realization
+
+| Package | Purpose | Owning document |
+|---|---|---|
+| `internal/realization` | Validates artifact registry ownership and file accounting over supplied model and snapshot values. | [docs/design/canonical-model/manager-apply-go-architecture.md](../design/canonical-model/manager-apply-go-architecture.md#organize-by-responsibility) |
 
 ## Deterministic core
 
