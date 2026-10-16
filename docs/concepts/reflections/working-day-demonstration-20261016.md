@@ -306,6 +306,33 @@ The deterministic guard can establish that declared requirements have authorized
 
 For the first implementation, refine the existing finding/review payloads and their replay projection only as needed for these references. Do not create a separate verification backlog, per-rule workflow, policy interpreter or UI status store. Focused contract checks can exercise omission of F17, an invented receipt, a C7 receipt offered for C8 and an unrelated final pass; none may discharge F17. A valid current receipt plus the authorized finding-specific review should resolve it, and replay/restart must preserve the same result. These are proposed checks, not executed evidence.
 
+### Reassess open findings in a successor Apply
+
+The [owner asked how to retain open findings without preserving obsolete blockers](../sources/working-day-discussion-20261016.md#reassess-open-findings-after-model-changes). Carry forward the original finding reference and history, then assess its applicability against the successor's actual authorized model/configuration and retained work. The finding is evidence of a concern on its original basis, not a rule that outranks later intent. Old failure and new applicability are separate facts.
+
+At the existing safe successor handoff, derive the predecessor's unresolved findings from the assignment history, including relevant children. Carry them independently of whether their candidate files are retained; discarding a candidate does not prove its underlying obligation disappeared. New tasks reference these findings and their predecessor provenance. If an old responsibility no longer exists, route the applicability question through the existing parent/root rather than dropping it. No semantic migration is done by the journal adapter.
+
+Use four ordinary applicability judgments in the current review, not a new finding workflow:
+
+| Judgment | Current action | Example |
+| --- | --- | --- |
+| Still applies | Retain the required outcome; obtain current evidence before resolving it. | Changing the loan limit does not remove the requirement that a repeated L1 return leave L2 open. |
+| Applies with adjustment | Preserve the original finding, append the current basis and revised required outcome, then verify it. | A loan-limit finding from the five-loan model now needs the corresponding three-loan boundary case. Do not require the obsolete expectation that a fourth loan succeeds. |
+| No longer applies | Record a reviewed, source-bound reason why the old requested outcome is not an obligation of the new authorized scope. It stops blocking that scope without becoming a claim that the old candidate was correct. | An authorized withdrawal of the proposed renewal feature removes a pending requirement about allowing timely renewal. Check the remaining model obligations and removal of unintended renewal behavior separately. |
+| Unclear | Keep the unresolved scope visible and investigate using existing context, ownership and authority. Ask the owner only for genuinely missing intent or authority. | A change removes a Definition but leaves a conflicting obligation in another applicable rule. Deletion alone does not establish that the requirement disappeared. |
+
+The responsible Manager can propose the mapping; the existing independent reviewer validates its semantic grounds. A short entry is sufficient: original finding, successor input binding, applicability judgment, reason/model delta, current requested evidence where needed, and the review reference. The current subject/candidate is included when assessment reaches that stage. Do not edit the historical finding in place, and do not require the owner to approve routine applicability decisions.
+
+For the same underlying concern, keep the finding identity and append the revised applicability/evidence requirement. If the new obligation is materially different, record an explicitly linked replacement finding in the same review mechanism. The old concern must have a reviewed disposition and the replacement must remain required until resolved; a "replaced" label alone cannot close both. Existing adequate checks can satisfy the current requirement but still need the current evidence and review required by the first-version policy.
+
+For example, R1/M1 has F21: "The borrowing boundary is not verified; a sixth loan may be admitted." R2/M2 changes the limit from five to three. The current assessment links F21 to M2 and asks for three successful loans, a refused fourth, unchanged state on refusal and the applicable existing-loan checks. F21 remains open until those current requirements are supported. The original M1 result is preserved; changing intent does not retroactively pass it.
+
+The Host checks that every inherited required finding has an explicit current disposition, references the actual successor basis, and has authorized review/evidence records appropriate to that disposition. It does not infer obsolescence from a changed model digest, renamed/deleted file, absent task or omitted report entry. An applicability judgment is bound to its reviewed basis; it is not a permanent exemption for later runs. Ordinary full reconciliation of the current model remains necessary to discover new obligations as well as handle inherited concerns.
+
+Unclear or still-open required findings block acceptance of the affected delivery and any aggregate success that requires it. They need not freeze unrelated permitted work. Findings reviewed as no longer applicable do not require executing obsolete behavioral tests merely to achieve a green report. Their historical records remain visible, and the successor still needs its required local/integration/final assessment. No previous approval transfers automatically.
+
+Extend the existing question/model-change scenario with a small representative set: one unchanged finding, one adjusted boundary finding and one genuinely withdrawn obligation. Assert that all original identities remain traceable, required current checks cannot be omitted, the obsolete expectation no longer blocks after valid review, and an unexplained disappearance still blocks. A deleted definition or discarded candidate alone must not close a finding. This is a proposed extension of existing acceptance coverage, not another test platform or an observed outcome.
+
 ## Overall acceptance and repeatability
 
 The proposed initial threshold is three complete series of all four scenarios, using a fresh execution state for each case and the same fixed product/profile basis. Each case starts from its specified recorded baseline; within the recovery case, the interrupted state must survive the restart. Do not replace recovery with a new clean assignment.
