@@ -1,8 +1,9 @@
 // Package model compiles explicitly supplied canonical model sources.
 // It performs no filesystem, repository, process or provider operations.
 //
-// Compile currently implements the input and YAML acquisition slice only. Its
-// result remains not_completed until every normative v1 content phase exists.
+// Compile currently implements source/YAML acquisition and lexical Unicode
+// names/identities. Its result remains not_completed until every normative v1
+// content phase exists; category-specific names require resolved Core types.
 package model
 
 // Identity is a canonical Definition address. Model IDs and source filenames

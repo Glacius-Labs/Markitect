@@ -14,9 +14,8 @@ import (
 )
 
 // yamlProblem is a source-local failure discovered while reading one YAML
-// value tree. Unicode NFC and full caseless key collisions are deliberately
-// deferred to the compiler's Unicode-name phase; this decoder checks exact
-// decoded key equality only and must not approximate those Unicode rules.
+// value tree. Key normal form and collisions use the pinned Unicode profile;
+// key lexical roles are checked separately in the manifest/Definition context.
 type yamlProblem struct {
 	code, message string
 	position      Position
@@ -178,6 +177,7 @@ func decodeYAMLNode(node *yaml.Node, depth, limit int, problems *[]yamlProblem) 
 	case yaml.MappingNode:
 		fields := make([]Field, 0, len(node.Content)/2)
 		seen := map[string]Position{}
+		seenNames := map[string]string{}
 		complete := true
 		for i := 0; i+1 < len(node.Content); i += 2 {
 			keyNode, valueNode := node.Content[i], node.Content[i+1]
@@ -213,6 +213,15 @@ func decodeYAMLNode(node *yaml.Node, depth, limit int, problems *[]yamlProblem) 
 				*problems = append(*problems, yamlProblem{code: "yaml.duplicate_key", message: fmt.Sprintf("duplicate mapping key %q (first at %d:%d)", key.text, first.Line, first.Column), position: nodePosition(keyNode)})
 			} else {
 				seen[key.text] = nodePosition(keyNode)
+			}
+			if !isNFC(key.text) {
+				*problems = append(*problems, yamlProblem{code: "name.key_nfc", message: "mapping keys must already be NFC", position: nodePosition(keyNode)})
+			}
+			keyName := nameKey(key.text)
+			if first, exists := seenNames[keyName]; exists && first != key.text {
+				*problems = append(*problems, yamlProblem{code: "name.key_collision", message: fmt.Sprintf("mapping key %q collides with %q", key.text, first), position: nodePosition(keyNode)})
+			} else {
+				seenNames[keyName] = key.text
 			}
 			value, ok := decodeYAMLNode(valueNode, depth+1, limit, problems)
 			fields = append(fields, Field{Name: key.text, Value: value})
