@@ -211,3 +211,9 @@ Recorder's note: The assistant proposed carrying finding identity/history indepe
 > Wie verhindern wir, dass bei mehreren Apply-Läufen immer mehr alte Findings und Bewertungen den Kontext überladen, ohne relevante offene Punkte oder ihre Begründung zu verlieren?
 
 Recorder's note: The assistant proposed keeping full journal history, deriving one current entry per finding and providing scoped role context with on-demand source/evidence reads. The [context proposal](../reflections/working-day-demonstration-20261016.md#keep-current-finding-context-small-without-losing-history) avoids recursive summary drift, preserves current reason and provenance, and prevents top-N truncation from removing required obligations. Large active sets use explicit bounded pages/steps while Host acceptance retains the complete required set; historical approval never becomes current approval. This reuses existing projections and context construction rather than adding a memory service or another task system.
+
+## Select finding context without domain reasoning
+
+> Wie entscheidet der Host konkret, welche Findings ein Manager für den nächsten Arbeitsschritt braucht, ohne dabei selbst fachliche Zusammenhänge verstehen zu müssen oder relevante Punkte aus dem Kontext zu verlieren?
+
+Recorder's note: The assistant proposed a conservative first-version default: the complete compact current finding set for the task responsibility plus recorded inherited/dependency concerns, rather than semantic minimization per action. The [routing proposal](../reflections/working-day-demonstration-20261016.md#select-finding-context-from-recorded-responsibility) separates Manager/reviewer identification of affected scope from Host reference matching, pins supplied context to history/input revisions, and sends unresolved mappings to the existing parent. It explicitly limits completeness guarantees to recorded relationships and preserves current full assessment and integration review.
