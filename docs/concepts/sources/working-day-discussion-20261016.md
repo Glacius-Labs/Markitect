@@ -235,3 +235,9 @@ Recorder's note: The assistant proposed [bounded parent coordination](../reflect
 > Wie erkennt der Host konkret, dass eine Lieferung die vereinbarte Abhängigkeit erfüllt und der nächste Manager weiterarbeiten darf, ohne dafür selbst fachliche Entscheidungen zu treffen?
 
 Recorder's note: The assistant proposed [dependency release through accepted delivery references](../reflections/working-day-demonstration-20261016.md#release-a-dependency-from-an-accepted-delivery): the parent records the producer/outcome/basis, the existing reviewer judges the contribution, and the Host validates accepted delivery identity, current evidence, compatible composition, actual consumer inputs and ordinary dispatch guards. Readiness remains separate from aggregate correctness and publication. The proposal uses existing task, delivery, journal and execution records rather than a new rule language or workflow engine.
+
+## Correct an accepted delivery with active consumers
+
+> Wie gehen wir damit um, wenn eine bereits akzeptierte Lieferung später geändert oder als fehlerhaft erkannt wird, während andere Manager schon darauf aufbauen, ohne sämtliche Arbeit neu starten zu müssen?
+
+Recorder's note: The assistant proposed preserving immutable deliveries and consumer candidates, distinguishing a merely newer version from a blocking defect or selected replacement, and following actual consumption/composition references to identify potential impact. The [correction section](../reflections/working-day-demonstration-20261016.md#correct-an-accepted-delivery-without-discarding-downstream-work) reuses existing findings, safe execution reconciliation, producer repair and consumer Keep/Adapt/Replace/Unresolved assessment. It retains current review/integration requirements and shared budgets, distinguishes same-basis rework from successor Apply, and makes no claim of selective semantic proof reuse.
