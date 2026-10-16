@@ -12,7 +12,7 @@ Die [Sprachspezifikation v1](language-contract.md) ist seit dem 16. Oktober 2026
 | [Verfahrensvorschläge](procedure-proposals.md) | Noch nicht gewählte Ausarbeitungen zu Kontext, Auswirkungen und semantischem Index. |
 | [Exchange-Beispiel](exchange-example/README.md) | Aktuelle ausführbare Eingaben und begrenzte Prüfevidenz. |
 
-Die historischen Bootstrap-, Kompakt- und Identitätsproben weiter unten sind keine v1-Konformitätsnachweise. Der [gemeinsame Designstand](../consolidation.md) führt zu den übrigen Produktfragen; die [Sessionübergabe](../HANDOFF.md) bleibt eine historische Kontextübergabe.
+Die historischen Bootstrap-, Kompakt- und Identitätsproben weiter unten sind keine v1-Konformitätsnachweise. Der [gemeinsame Designstand](../consolidation.md) führt zu den übrigen Produktfragen.
 
 ## 1. Kind war bereits der Ansatzpunkt
 

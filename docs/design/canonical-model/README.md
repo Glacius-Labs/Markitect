@@ -4,7 +4,7 @@ Status: v1 language design completed and confirmed by the owner on 16 October 20
 
 The [normative language specification v1](minimal-language/language-contract.md) is the sole owner of the completed canonical form. There are no open language decisions within its selected scope. Production implementation in Go and a broader conformance corpus remain separate work; bounded design probes do not establish full product support.
 
-The [design handoff](HANDOFF.md) records the earlier transfer between sessions and machines. The chronology below preserves the derivation and superseded choices. Project vocabulary and the unselected procedure proposals remain outside the completed language baseline.
+The linked histories preserve the derivation and superseded choices. Project vocabulary and the unselected procedure proposals remain outside the completed language baseline.
 
 | Document | Role |
 | --- | --- |
