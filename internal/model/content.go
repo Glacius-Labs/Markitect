@@ -64,15 +64,19 @@ func contentFindings(state contentState) []identityFinding {
 // independent content proof. DFS order is irrelevant to canonical ordering.
 func selectedContentScope(selected int, scopes []sourceScope, sources []ModelResult) ([]sourceScope, []ModelResult) {
 	byKey := map[string][]int{}
+	var unknownIdentities []int
 	for index, scope := range scopes {
 		if scope.modelID != "" {
 			byKey[nameKey(scope.modelID)] = append(byKey[nameKey(scope.modelID)], index)
+		} else {
+			unknownIdentities = append(unknownIdentities, index)
 		}
 	}
 	var chosenScopes []sourceScope
 	var chosenSources []ModelResult
 	seen := map[int]bool{}
-	pending := []int{selected}
+	pending := append([]int(nil), byKey[nameKey(scopes[selected].modelID)]...)
+	pending = append(pending, selected)
 	for len(pending) > 0 {
 		index := pending[len(pending)-1]
 		pending = pending[:len(pending)-1]
@@ -87,7 +91,11 @@ func selectedContentScope(selected int, scopes []sourceScope, sources []ModelRes
 		result.Phases = append([]Phase(nil), result.Phases...)
 		chosenSources = append(chosenSources, result)
 		for _, requirement := range scope.requirements {
-			pending = append(pending, byKey[nameKey(requirement.id)]...)
+			matches := byKey[nameKey(requirement.id)]
+			pending = append(pending, matches...)
+			if len(matches) == 0 {
+				pending = append(pending, unknownIdentities...)
+			}
 		}
 	}
 	return chosenScopes, chosenSources

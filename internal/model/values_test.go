@@ -24,11 +24,11 @@ func privateValues(input Input) valueResult {
 func requireValuesPassed(t *testing.T, input Input) Value {
 	t.Helper()
 	got := Compile(input)
-	if got.Status != NotCompleted || len(got.Diagnostics) != 0 {
+	if got.Status != Passed || len(got.Diagnostics) != 0 {
 		t.Fatalf("valid concrete values rejected: %+v", got)
 	}
 	for _, model := range got.Models {
-		if phaseStatus(model, "values_and_references") != Passed || phaseStatus(model, "body_links") != Passed || phaseStatus(model, "lock") != NotCompleted || phaseStatus(model, "canonical") != NotCompleted || len(model.Definitions) != 0 || len(model.Canonical) != 0 || model.Digest != "" {
+		if phaseStatus(model, "values_and_references") != Passed || phaseStatus(model, "body_links") != Passed || phaseStatus(model, "lock") != Passed || phaseStatus(model, "canonical") != Passed || len(model.Definitions) == 0 || len(model.Canonical) == 0 || model.Digest == "" {
 			t.Fatalf("typed private values claimed later/public content: %+v", model)
 		}
 	}

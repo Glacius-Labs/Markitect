@@ -7,12 +7,12 @@ import (
 	"strings"
 )
 
-// Compile examines only the supplied bytes. The current acquisition slice
-// validates source structure, YAML scalar forms, manifests and Definition
-// envelopes, pinned Unicode names, explicit bindings and Core/field contracts.
-// It applies checked contracts to concrete values, data references and active
-// body links. Locks and canonical projection remain incomplete: no model can
-// pass or receive canonical bytes. Coordinate coverage is reported separately.
+// Compile examines only the supplied bytes: source/YAML structure, pinned
+// Unicode names, explicit model/author bindings, fixed Core/field contracts,
+// typed values, body links, the entry lock and exact model-digest/1 projection.
+// Each model result describes its own complete requirement closure; overall
+// status retains failures/unknowns across the supplied input. Coordinate
+// coverage remains separate from content validity and canonical bytes.
 func Compile(input Input) Result {
 	r := Result{Status: NotCompleted, Coordinates: NotCompleted}
 	r.Limits = effectiveLimits(input.Limits)
@@ -54,59 +54,12 @@ func Compile(input Input) Result {
 			r.Status = Failed
 		}
 	}
-	for _, finding := range checkScopeIdentities(scopes) {
-		r.Diagnostics = append(r.Diagnostics, finding.diagnostic)
-		r.Models[finding.scope].Status = Failed
-		r.Models[finding.scope].Phases[2].Status = Failed
-		r.Status = Failed
+	sources := make([]ModelResult, len(r.Models))
+	for index, model := range r.Models {
+		sources[index] = model
+		sources[index].Phases = append([]Phase(nil), model.Phases...)
 	}
-	graph := bindDependencies(scopes)
-	for index, status := range graph.status {
-		setPhaseStatus(&r.Models[index], "dependencies", status)
-		if status == Failed {
-			r.Models[index].Status = Failed
-			r.Status = Failed
-		}
-	}
-	bindings := bindAuthorReferences(scopes, graph)
-	for index, status := range bindings.status {
-		setPhaseStatus(&r.Models[index], "imports_and_kinds", status)
-		if status == Failed {
-			r.Models[index].Status = Failed
-			r.Status = Failed
-		}
-	}
-	contracts := checkContracts(scopes, graph, bindings)
-	for index, status := range contracts.status {
-		setPhaseStatus(&r.Models[index], "core_and_contracts", status)
-		if status == Failed {
-			r.Models[index].Status = Failed
-			r.Status = Failed
-		}
-		if r.Models[index].Phases[2].Status != Failed {
-			setPhaseStatus(&r.Models[index], "names_and_unicode", contracts.names[index])
-		}
-	}
-	values := checkValues(scopes, graph, contracts)
-	for index, status := range values.status {
-		setPhaseStatus(&r.Models[index], "values_and_references", status)
-		if status == Failed {
-			r.Models[index].Status = Failed
-			r.Status = Failed
-		}
-	}
-	bodies := checkBodyLinks(scopes, graph, values, r.Limits)
-	r.Coordinates = bodies.coordinates
-	for index, status := range bodies.status {
-		setPhaseStatus(&r.Models[index], "body_links", status)
-		if status == Failed {
-			r.Models[index].Status = Failed
-			r.Status = Failed
-		}
-	}
-	for _, finding := range append(append(append(append(graph.findings, bindings.findings...), contracts.findings...), values.findings...), bodies.findings...) {
-		r.Diagnostics = append(r.Diagnostics, finding.diagnostic)
-	}
+	finalizeModels(&r, scopes, sources)
 	sort.Slice(r.Models, func(i, j int) bool {
 		a, b := r.Models[i], r.Models[j]
 		if a.Local != b.Local {
@@ -140,7 +93,23 @@ func Compile(input Input) Result {
 		return len(a.Phases) < len(b.Phases)
 	})
 	sortDiagnostics(r.Diagnostics)
+	r.Diagnostics = uniqueDiagnostics(r.Diagnostics)
 	return r
+}
+
+func uniqueDiagnostics(diagnostics []Diagnostic) []Diagnostic {
+	var result []Diagnostic
+	for _, diagnostic := range diagnostics {
+		if len(result) > 0 {
+			last := result[len(result)-1]
+			samePosition := last.Position == nil && diagnostic.Position == nil || last.Position != nil && diagnostic.Position != nil && *last.Position == *diagnostic.Position
+			if last.Code == diagnostic.Code && last.Message == diagnostic.Message && last.Source == diagnostic.Source && samePosition {
+				continue
+			}
+		}
+		result = append(result, diagnostic)
+	}
+	return result
 }
 
 func effectiveLimits(l Limits) Limits {
@@ -237,6 +206,9 @@ func compileSource(m SourceModel, limits Limits) (ModelResult, []Diagnostic, sou
 			}
 		}
 	}
+	if validPath(m.ManifestPath) && basename(m.ManifestPath) == "model.yaml" {
+		c.acquireLock(entries)
+	}
 	if c.failed {
 		r.Status = Failed
 	}
@@ -315,16 +287,6 @@ func (c *sourceCompiler) definitions(entries map[string]Entry, root string) {
 	}
 	sort.Strings(paths)
 	lockPath := joinPath(parent(c.model.ManifestPath), "model-lock.yaml")
-	// Every explicitly supplied sidecar retains its acquisition/YAML failures.
-	// Only the entry model's lock is later used as the common binding source.
-	if lock, present := entries[lockPath]; present {
-		c.scope.lock = sourceLock{entry: lock, present: true}
-		if lock.Kind != Regular {
-			c.problem("lock.not_regular", "The selected lock must be a regular file.", lock, nil)
-		} else {
-			c.scope.lock.value, c.scope.lock.decoded = c.decode(lock)
-		}
-	}
 	for _, p := range paths {
 		e := entries[p]
 		if !within(p, root) {

@@ -26,6 +26,7 @@ type sourceLock struct {
 	entry            Entry
 	present, decoded bool
 	value            Value
+	status           Status
 }
 
 type modelRequirement struct {

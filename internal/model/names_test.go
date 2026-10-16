@@ -20,7 +20,7 @@ func TestUnicodeSourceNamesKeepTextAndPartialBoundary(t *testing.T) {
 		Bytes: []byte("id: 文档\nkind: 文档\nbody: text\nspec: {}")})
 	original := bytes.Clone(input.Root.Entries[1].Bytes)
 	got := Compile(input)
-	if !onlyContractStageFailures(got) {
+	if !onlyLaterStageFailures(got) {
 		t.Fatalf("valid Unicode source spellings rejected: %+v", got)
 	}
 	if !bytes.Equal(original, input.Root.Entries[1].Bytes) {
@@ -151,7 +151,7 @@ func TestGlobalUnicodePackagePrefixesExcludeEmptyTrees(t *testing.T) {
 	dependency := dependencySource("vocabulary", "dependency", "vocabulary", "item")
 	dependency.Entries = append(dependency.Entries, Entry{Path: "model/strasse/empty", Kind: Directory})
 	input.Dependencies = []SourceModel{dependency}
-	if got := Compile(input); !onlyContractStageFailures(got) {
+	if got := Compile(input); !onlyLaterStageFailures(got) {
 		t.Fatalf("empty foreign tree bound a global Package name: %+v", got)
 	}
 	input.Dependencies[0].Entries = append(input.Dependencies[0].Entries, Entry{
@@ -184,7 +184,7 @@ func TestKindSpellingDoesNotGrantMetaCategoryPrivileges(t *testing.T) {
 	input.Root.Entries = append(input.Root.Entries, Entry{Path: "model/feature/kind.yaml", Kind: Regular,
 		Bytes: []byte("id: Kind\nkind: Kind\nbody: Ordinary local name, not the fixed Core.\nspec: {}")})
 	got := Compile(input)
-	if !onlyContractStageFailures(got) || got.Models[0].Phases[2].Status != NotCompleted {
+	if !onlyLaterStageFailures(got) || got.Models[0].Phases[2].Status != NotCompleted {
 		t.Fatalf("written kind was used as a resolved meta-identity: %+v", got)
 	}
 }

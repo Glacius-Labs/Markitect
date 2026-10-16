@@ -77,3 +77,18 @@ func TestCanonicalExactNumbersAndDeclarationByteOrder(t *testing.T) {
 		t.Fatal("declaration list sorted by raw strings instead of encoded JSON element bytes")
 	}
 }
+
+func TestCanonicalDeepTypedProjectionUsesExplicitStacks(t *testing.T) {
+	value := Value{kind: StringValue, text: "leaf"}
+	for range 5000 {
+		value = Value{kind: ObjectValue, fields: []Field{{Name: "child", Value: value}}}
+	}
+	node, ok := canonicalTypedValue(value)
+	if !ok {
+		t.Fatal("deep finite typed value refused")
+	}
+	encoded := encodeCanonical(node)
+	if bytes.Count(encoded, []byte(`["object",`)) != 5000 || !bytes.Contains(encoded, []byte(`["string","leaf"]`)) {
+		t.Fatal("deep finite object projection was truncated")
+	}
+}
