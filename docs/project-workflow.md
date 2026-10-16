@@ -1,5 +1,7 @@
 # Project workflow
 
+This guide describes current executable behavior before the [Apply rebuild](implementation-plan.md). Use the [target contracts](design/canonical-model/README.md) for new implementation work; current commands do not establish completed v1/Manager support.
+
 Markitect manages an adopting repository through one canonical project model under `.markitect/`. The outer coding agent uses typed Markitect MCP operations for project decisions and lifecycle. The Host schedules the model's Managers and reviewers; by default those inner roles run through Codex CLI 0.162.0 App Server with the `gpt-6-luna` model at `high` reasoning effort, and setup can select another profile per role (see [Provider adapters](provider-adapters.md#role-profiles)). The published v0.14.1 binary does not include this `markitect <verb>` workflow; use a matching source build.
 
 ## Connect and inspect
@@ -44,4 +46,4 @@ Domain records use `.markitect/records/<kind>/<id>/`; they are operational evide
 
 A successful compiler check establishes structural conformity; declared checks and scoped Manager/reviewer reports establish only their stated evidence. A successful Apply records technical materialization, not semantic correctness, owner acceptance, or human approval. The adopting repository owns its approval, merge, and release policy.
 
-The [backlog](work-items/backlog.yaml) owns work status. Actual28 passed the combined A01 native smoke on source `cdd30b0efc540f151404dabe86b022275dc40d83`, including Verify, guarded Apply and original-turn recovery; the [A01 validation record](validation/a01-native-smoke-20261010.md) states what it does and does not establish. That result is source-bound; later CI and Main integration are separate evidence. Acceptance grants are exercise authority, not universal runtime defaults. Historical validation remains bound to its recorded source SHAs.
+The [delivery plan](implementation-plan.md) owns current scope; chats/PRs record candidate evidence. Actual28 passed the combined A01 native smoke on source `cdd30b0efc540f151404dabe86b022275dc40d83`, including Verify, guarded Apply and original-turn recovery; the [A01 validation record](validation/a01-native-smoke-20261010.md) states what it does and does not establish. That result is source-bound; later CI and Main integration are separate evidence. Acceptance grants are exercise authority, not universal runtime defaults. Historical validation remains bound to its recorded source SHAs.

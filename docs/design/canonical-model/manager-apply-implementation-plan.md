@@ -2,6 +2,8 @@
 
 Date: 16 October 2026. Revised after the [owner's two-Apply and clean-redesign clarification](sources/manager-realization-20261016.md#two-apply-cycle-and-freedom-to-redesign). This is the proposed delivery plan for the [Manager Apply concept](manager-apply-concept.md). P00 to P12 are local plan identifiers, not active backlog assignments. Acceptance criteria below describe future evidence; writing the plan does not establish that they passed.
 
+The coordinated [delivery plan](../../implementation-plan.md) now owns active package scopes, dependencies and dispatch. P00-P12 below are detailed acceptance slices. Independent foundation/oracle work can proceed in parallel; full runner bookkeeping and real adapter proof are gates at their actual consumers, not blockers for the pure compiler.
+
 The [supplied concept review and its resolution](review-resolution-20261016.md) add concrete criteria to these slices: boundary questions, grounded Definition dispositions, distinct review purposes, inspectable preparation and observed coordination effort. No new role, language layer or separate optimization subsystem is needed for these refinements.
 
 ## The actual target

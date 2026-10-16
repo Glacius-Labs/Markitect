@@ -25,8 +25,8 @@ Use this map to find the product guide or the document that owns a decision or s
 | Product decisions, promises, assumptions, long-term vision, agreed but unscheduled directions, ideas, and open questions, with their origin | [Concept record](concepts/README.md) |
 | Technical behavior and product boundaries | [Architecture](architecture.md) and the task-specific current guides above |
 | Current source scope and future implementation | [Implementation roadmap](implementation-plan.md) |
-| Work-package states, dependencies, owners, and zones | [Backlog](work-items/backlog.yaml), routed through the [work-items map](work-items/README.md) |
-| Interrupted Claude sessions and the Codex restart queue | [Session continuation](development/session-handoff.md); refresh its dated PR and worktree snapshot before resuming |
+| Work-package scope, dependencies and reservations | [Delivery plan](implementation-plan.md); actual candidates/checks live in chats and PRs. [Earlier records](work-items/README.md) are historical. |
+| Earlier interrupted sessions and restart records | [Historical session handoff](development/session-handoff.md); its retired queue grants no current assignment |
 | Native A01 result, attempt accounting and acceptance limits | [A01 validation record](validation/a01-native-smoke-20261010.md) |
 | Known technical limits and lessons from Product Readiness | [Product Readiness lessons survey](work-items/surveys/product-readiness-lessons-20261010.md) |
 | Source/release evidence for a dated validation | The linked report in the [validation map](validation/README.md), read at its recorded scope and source |
@@ -52,4 +52,4 @@ The generated [project view](markitect/project.md) is a readable output of the c
 
 [Measurement](measurement.md) owns evaluation procedure. The [core authoring exercise](authoring-assessment.md) is dated 30 September 2026; the [documentation authoring pilot](authoring-pilot.md) and [MCP evaluation](mcp-evaluation.md) are dated 1 October 2026. The [Windows CLI onboarding exercise](onboarding.md) reproduces a v0.5.0 machine-run path. Their outcomes belong to their original inputs and do not update the roadmap.
 
-Use the [design map](design/README.md) for design records, the [research map](research/README.md) for research direction and research results, the [strategy map](strategy/README.md) for original strategy sources, the [validation map](validation/README.md) for fixed reports, and the [history map](history/README.md) for the preserved pre-integration roadmap snapshot. The [work-items map](work-items/README.md) routes the backlog and its surveys.
+Use the [design map](design/README.md) for design records, the [research map](research/README.md) for research direction and research results, the [strategy map](strategy/README.md) for original strategy sources, the [validation map](validation/README.md) for fixed reports, and the [history map](history/README.md) for the preserved pre-integration roadmap snapshot. The [work-items map](work-items/README.md) routes earlier records and surveys.

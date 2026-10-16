@@ -4,7 +4,7 @@ Markitect is model-first development with delegated realization. People maintain
 
 ## Every task
 
-1. Work on a branch from current `origin/main`. Its name starts with a prefix that says what it holds, such as `dev/`, `fix/` or `docs/` ([branch names](docs/implementation-plan.md#branch-names)).
+1. Read the current [delivery plan](docs/implementation-plan.md) and your bounded assignment. Use an isolated worktree from its integrated base and a non-protected `codex/apply-<scope>` branch. Verify path, full SHA and local changes before writing. Preserve other sessions' work.
 2. Check this repository's [project model](.markitect/project.yaml) and read the context of the Manager that owns your change:
 
    ```text
@@ -18,7 +18,6 @@ Markitect is model-first development with delegated realization. People maintain
 
 ## Where things are
 
-- [Roadmap](docs/implementation-plan.md): direction, streams, zones and the rules for parallel work.
-- [Backlog](docs/work-items/backlog.yaml): the status of each work package.
+- [Delivery plan](docs/implementation-plan.md): current scopes, dependencies, path reservations and integration rules. Progress and checks live in the assigned chat/PR; the old backlog/dashboard are retired.
 - [Concept register](docs/concepts/register.md): accepted decisions and open questions.
 - [Documentation map](docs/README.md): every other document.

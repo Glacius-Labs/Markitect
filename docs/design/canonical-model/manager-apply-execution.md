@@ -4,7 +4,7 @@ Date: 16 October 2026. Consolidated proposal requested in the [owner discussion]
 
 The [consistency review](../../concepts/reflections/concept-consistency-review-20261016.md) identified the conflicting drafts. The newer [working-day assessment](../../concepts/reflections/working-day-demonstration-20261016.md) adds independent observations, model-owned intent, targeted counterchecks and finding-specific evidence under budget pressure. The rules below incorporate those refinements using existing review/history. Its four scenarios and repeatability proposal remain follow-up evidence after the separate M1/M2 Playground, without more roles, schedulers or library business requirements.
 
-Reflection input inspected through commit `252dbbd0975e76c18aaa99a6034fa06a597fdeb8`, including successor applicability and finding context selected from recorded task responsibility. The completed canonical language and authored M1 remain unchanged.
+Reflection input inspected through commit `d13732a3ee113e18e8f6cd8570f71c5f4cc0c1ca`, including successor applicability, complete task context and correction of finding accountability through local/integration review. The completed language and M1 remain unchanged. The [delivery plan](../../implementation-plan.md) owns assignments; this document owns the technical contract.
 
 ## One owner for each rule
 
@@ -24,11 +24,11 @@ The assignment grant has four independent caps: prepared runs, possible session 
 - A run consumes one run unit when its fixed binding is committed as Prepared. A rejected acquisition creates no prepared run and grants no execution.
 - A session start reserves one start unit before attempting creation. Resuming an already established session does not consume another start; a replacement session does.
 - A step is one Host-dispatched Agent turn, including a continued conversation. Tool callbacks are part of that turn, not fresh Agent steps. Their actual external processes still have bounded execution time and tool/output limits.
-- Active execution time is the sum of charged invocation wall durations: session startup, Agent turns and project checks/tool processes. It excludes idle resident sessions, parent waiting, owner waiting and time between runs. Distinct overlapping invocations contribute separately; never add a descendant's already counted duration again as parent work. This is neither CPU time nor an end-to-end delivery clock.
+- Active execution time is the sum of charged invocation wall durations: session startup, Agent turns, project checks and Agent-requested external tool work. It excludes bounded Host control, idle sessions, parent/owner waiting and time between runs. Distinct overlapping invocations contribute separately; never count descendant work again as parent effort. This is neither CPU time nor an end-to-end delivery clock.
 
 Every charged invocation has a recorded finite maximum duration before dispatch. The Host reserves that maximum, then settles the observed duration and releases unused allowance. If dispatch or termination remains uncertain, its full reservation stays unavailable until reconciliation. An error or elapsed timeout cannot release it. Unknown provider usage remains unknown; these units do not establish a monetary spending ceiling.
 
-Local bookkeeping, source acquisition and emergency reconciliation/termination have bounded Host/adapter resource limits. They do not require another Agent allowance merely to record failure or stop a process. This control path cannot start semantic investigation, correction or new realization under the name of cleanup. If actual execution overruns its declared duration, record the overrun and block further work; do not clamp observations or claim that accounting guaranteed physical termination.
+Deterministic composition, source acquisition/preflight, journal/control, publication/read-back and emergency reconciliation/termination are Host control operations outside the assignment ledger. Each has finite `hostOperationTimeout` plus operation-specific size/output bounds captured in preparation. They can record failure or stop an effect after Agent capacity is exhausted; they cannot investigate semantics, author a repair or launch a review under the name of cleanup. Record overruns and block work; accounting cannot establish physical termination.
 
 ## One ledger with protected completion capacity
 
@@ -47,7 +47,7 @@ The configuration supplies an initial completion reserve. Before the first Agent
 
 For the explicitly commissioned M2 stage, hold its required future run unit in a named stage allocation. It is part of Allocated in the same ledger, not an extra run or review pool. R1 cannot consume it through unrelated retries. This is a small recorded two-stage assignment plan, not a general workflow language.
 
-Protected capacity can pay for independent assessment, checks, deterministic composition and final preflight/publication work. It cannot pay for source authoring or defect repair. Parent-authored integration code is ordinary work; calling a repair “integration” does not change its purpose. Code-writing capabilities are not granted to a completion-funded Agent step.
+Protected capacity pays for independent Agent assessment, integration/final review and project checks. Deterministic composition and guarded publication are separately bounded Host control, not another budget dimension. Source authoring, including parent integration code and repair, remains ordinary work. Code-writing capabilities are not granted to completion-funded Agent steps.
 
 Root can move Free to an ordinary allocation, move Protected to a completion allocation, or revise/release unspent capacity with a recorded reason and a still-covered completion plan. Settled consumption and in-flight/uncertain holds cannot be reallocated. Unused ordinary allocations return to Free. Unused completion allocations return to Protected until the plan explicitly releases them. No owner decision is needed for valid internal reallocation within the grant. No step or session can silently draw from the other purpose after exhausting its own allocation.
 
@@ -81,6 +81,8 @@ At a successor, carry unresolved finding identities even when their candidate fi
 Build the current finding view from typed judgments and causal links at a pinned journal revision. For the first Apply, supply the compact complete open/unclear/reassessment set for the task's full responsibility plus recorded dependencies and inherited concerns. Do not minimize it from a Manager's free-text next action. Parent integration receives child blockers/delivery references; unknown routing returns to the common parent/root. The Host carries recorded scope/Definition/provenance relationships, without claiming to discover missing semantic dependencies.
 
 Role context carries current grounds and evidence references, not every old conversation or recursively rewritten summary. The Host retains the complete required set even when delivery is paged; a token cutoff, unread page or fetched-but-unresolved entry cannot discharge an obligation. Required context must actually be available before its dependent action. Record supplied references/revision and refresh changed relevant facts before acceptance. This uses the existing journal projection and context builder, with no second finding database or summarizing Agent.
+
+Rule location, artifact ownership and affected responsibility are distinct. A receiving Manager exposes a mismatch through the common parent; “not mine” cannot close or orphan the finding. The parent records corrected accountability and ordinary child contributions. Cross-area concerns require composed integration evidence, not every neighbor's co-signature or a local pass alone. The Host checks recorded scope/ownership; local reasoning and integration review remain responsible for discovering missing semantic impact.
 
 ## Admission, amendments and finite correction
 

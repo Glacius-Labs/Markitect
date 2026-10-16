@@ -1,6 +1,6 @@
 # Experiments and preserved evaluations
 
-This directory holds bounded exercise harnesses and their evidence. Each exercise defines its own source, runtime, input, authority and result limits. Use the [validation map](../docs/validation/README.md) to locate recorded outcomes and the [backlog](../docs/work-items/backlog.yaml) for current work status.
+This directory holds bounded exercise harnesses and their evidence. Each exercise defines its own source, runtime, input, authority and result limits. Use the [validation map](../docs/validation/README.md) to locate recorded outcomes and the [backlog](https://github.com/Glacius-Labs/Markitect/blob/bc4b49e76f9b9e4b3ec98033a0b8c73d5013b310/docs/work-items/backlog.yaml) for current work status.
 
 The deterministic [Shop example](../examples/project-world/README.md) and [Project workflow](../docs/project-workflow.md) are the starting points for ordinary use. An exercise description or retained runtime configuration does not start a new provider run.
 

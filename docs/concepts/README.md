@@ -21,7 +21,7 @@ Accepted and clarified entries are the current basis. Do not reopen them without
 |---|---|
 | [Vision](../vision.md) | The accepted thesis as readable prose. It links here for individual entries. |
 | This record | Individual decisions, promises, assumptions, concepts, enhancements, ideas and open questions, with status and origin |
-| [Roadmap](../implementation-plan.md) and [backlog](../work-items/backlog.yaml) | Scheduling and status of implementation work. A scheduled enhancement's work item links back to its entry here. |
+| [Delivery plan](../implementation-plan.md) | Current delivery scope and coordination. Chats/PRs record candidate progress and exact evidence. |
 | [Architecture](../architecture.md) and the workflow guides | Implemented behavior |
 | [Measurement](../measurement.md) | Evaluation procedure |
 | [Strategy sources](../strategy/README.md) | Original strategy bundles from earlier phases, kept with their provenance |
@@ -61,7 +61,7 @@ Summaries in the vision and other documents may restate entries. If a summary di
 | Superseded | Replaced by a newer entry; it links to its successor |
 | Rejected | Declined, with the reason |
 
-This record does not track whether work is scheduled or implemented. When an enhancement is scheduled or delivered, add a link to its work item or to the document that now owns the behavior. The roadmap, backlog and architecture own that state.
+This record does not track whether work is scheduled or implemented. When an enhancement is scheduled or delivered, add a link to its work item or to the document that now owns the behavior. The delivery plan, candidate PRs and architecture own their respective scopes.
 
 ## Adding and changing entries
 
@@ -69,7 +69,7 @@ This record does not track whether work is scheduled or implemented. When an enh
 2. **One entry per fact.** Link to the owning document instead of copying its content. The register gives the decision and its origin; the vision, architecture, roadmap and measurement keep their own subjects.
 3. **Never overwrite silently.** A change of meaning gets a new entry, or the old entry is marked Superseded with a link to its successor. Keep the old entry.
 4. **Only the owner decides.** An agent proposal enters as an `IDEA`, an `OQ` or a part of an entry that is explicitly labeled as a proposal. It stays that way until the owner decides. An agent's agreement, review or report is not acceptance.
-5. **Recording is not scheduling.** An entry does not authorize implementation. The roadmap and backlog own scheduling and status.
+5. **Recording is not scheduling.** An entry does not authorize implementation. The delivery plan and explicit package dispatches own scheduling; candidate evidence lives in PRs.
 6. **Keep summaries in step.** When an entry changes, also correct any summary of it, for example in the vision's brief or its table of misreadings.
 7. **Ideas move on.** When an idea is evaluated, it becomes a decision, an enhancement or a rejected entry. Its ID stays in the cross-references.
 

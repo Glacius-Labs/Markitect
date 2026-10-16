@@ -1,36 +1,26 @@
-## Package
+## Change
 
-- **Package ID:** <!-- for example ARCH-04; the title starts with it -->
-- **Zone:** <!-- from the roadmap's zone table; name any out-of-zone edit and who approved it -->
-- **Branch:** <!-- dev/…, fix/…, docs/… or exp/…, started from current origin/main -->
+<!-- Concrete problem and resulting behavior. -->
 
-## Summary
+## Assignment and scope
 
-<!-- Describe the user-visible behavior or product documentation change. -->
+- Package/slice ID:
+- Fixed base SHA:
+- Owned paths and required contracts:
+- Integration dependencies / shared-file agreement:
 
-## Acceptance
-
-<!-- Copy each acceptance line of the package from docs/work-items/backlog.yaml and give its evidence. -->
-
-- [ ] <!-- acceptance line: evidence -->
+<!-- docs/implementation-plan.md owns the current delivery split. -->
 
 ## Validation
 
-- [ ] The changed-file review uses `git show --stat` or `git diff --name-only origin/main HEAD` and lists only the intended files.
-- [ ] I ran the checks relevant to this change and list the results below.
-- [ ] I updated canonical sources and regenerated derived schemas or views when needed.
-- [ ] Examples remain executable when affected.
-- [ ] Documentation reflects the current behavior and distinguishes source changes from released distributions.
-- [ ] The change preserves explicit ownership and inputs, deterministic diagnostics, and fixed-snapshot evidence where applicable.
+<!-- Give exact source/head and actual results. Preserve failures and limits. -->
 
-Checks run:
+- Focused checks:
+- Required integration checks:
+- Independent review:
+- Canonical sources/generated outputs updated when affected:
+- Remaining evidence gaps:
 
-```text
-<!-- e.g. go test ./..., go vet ./..., go run ./src/cmd/markitect check --repo ., go run ./src/cmd/markitect-check-modules --repo . --hooks .markitect/modules/githooks.config --pipelines .markitect/modules/pipelines.config -->
-```
+## Decisions and remaining work
 
-## Findings and owner decisions
-
-<!-- Anything the integrator or owner should know or decide. Write "none" if there is nothing. -->
-
-See [CONTRIBUTING.md](https://github.com/Glacius-Labs/Markitect/blob/main/CONTRIBUTING.md#pull-requests-and-parallel-work) for the pull-request rules and the full development checks.
+<!-- Questions outside existing authority, or none. Source checks are not release/provider/method acceptance. -->

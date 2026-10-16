@@ -1,10 +1,7 @@
-# Work-item records
+# Earlier work-item records
 
-This directory holds the one valid backlog and the surveys that feed it. The map points to each owner; it does not duplicate statuses.
+The old backlog and queues were retired for the 16 October Apply rebuild. The [delivery plan](../implementation-plan.md) owns current scope, dependencies and reservations. Progress/checks live in chats and PRs, without a status mirror.
 
-- [Backlog](backlog.yaml): the single owner of work-package status, owners, branches, zones, dependencies and acceptance criteria.
-- [Roadmap](../implementation-plan.md): streams, waves, zones, branch names and the integration rules the backlog follows.
-- [Surveys](surveys/README.md): read-only, AI-generated surveys that list facts, earlier work, collision zones and lessons per area, so that sessions do not repeat the analysis.
-- [Session continuation](../development/session-handoff.md): the 11 October Claude-to-Codex transfer, candidate inventory and role starts. It records a fixed handoff; this backlog remains the owner of later status changes.
+The removed backlog remains in [the previous Main tree](https://github.com/Glacius-Labs/Markitect/blob/bc4b49e76f9b9e4b3ec98033a0b8c73d5013b310/docs/work-items/backlog.yaml). Historical IDs do not authorize new work.
 
-The Product Readiness program (P01 to P10) closed with pull request #89 on 10 October 2026. Its lessons are in the [Product Readiness lessons survey](surveys/product-readiness-lessons-20261010.md), its A01 result is in the [A01 validation record](../validation/a01-native-smoke-20261010.md), and git history keeps its original records.
+[Surveys](surveys/README.md) and the [older handoff](../development/session-handoff.md) keep their recorded scope. Neither is the new work queue.

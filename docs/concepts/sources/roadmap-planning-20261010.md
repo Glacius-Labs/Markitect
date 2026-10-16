@@ -1,7 +1,7 @@
 # Roadmap planning with the owner, 10 October 2026
 
 - **Source type:** owner statements, preserved verbatim (German). Terminal line wrapping is removed; the wording is unchanged.
-- **Setting:** after pull requests #89 to #91 were merged, the owner and the integrator session planned the next phase. The [roadmap](../../implementation-plan.md) and the [backlog](../../work-items/backlog.yaml) are the result.
+- **Setting:** after pull requests #89 to #91 were merged, the owner and the integrator session planned the next phase. The [roadmap](../../implementation-plan.md) and the [backlog](https://github.com/Glacius-Labs/Markitect/blob/bc4b49e76f9b9e4b3ec98033a0b8c73d5013b310/docs/work-items/backlog.yaml) are the result.
 - **Use:** the [register](../register.md) records the decisions taken from these statements. Do not edit the quoted text.
 
 ## Priority: a clean, stable and testable main

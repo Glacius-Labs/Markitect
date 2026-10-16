@@ -1,40 +1,27 @@
 # Parallel work guide
 
-The [roadmap](../implementation-plan.md#how-we-work) owns how parallel work is organized: sessions, work packages, [branch names](../implementation-plan.md#branch-names), [zones](../implementation-plan.md#zones) and the [integration rules](../implementation-plan.md#integration). The [backlog](../work-items/backlog.yaml) owns each package's status. This guide adds the engineering rules that apply inside a package. Consult [shared contracts](shared-contracts.md) for relevant version-bound seams.
-
-The coordinator (the roadmap's integrator) owns semantic decisions, cross-package compatibility, shared-file changes, integration and release readiness. A session owns its package's bounded scope inside its zone, its tests and its evidence. Adapters should evolve without editing another adapter; adoption and authoring work uses explicit shared handoffs; compiler semantics require joint review. An avoidable central switch is an audit finding, not permission for each agent to refactor it.
+The [delivery plan](../implementation-plan.md) owns current scopes, dependencies, path reservations and integration order. This guide owns execution inside a package. Candidate progress and checks live in its chat/PR; there is no separate backlog/dashboard.
 
 ## Assignment and execution
 
-Tie the assignment to the [product vision](../vision.md): state which human execution/supervision activity it targets and which canonical decisions remain owner-controlled. Report technical evidence separately from any measured adopter benefit, including new upkeep. Routine implementation may proceed within the assigned authority; genuine architectural ambiguity, shared policy conflict, exception decisions and exceptional risk go to the designated owner. This does not bypass the integration review or mutation gates below.
+Use an isolated worktree and the integrated base named by the coordinator. Read [AGENTS.md](../../AGENTS.md), the plan, technical contract and [CONTRIBUTING](../../CONTRIBUTING.md). Verify checkout, branch, full SHA and dirty state. Preserve other work; never stash or reset another checkout.
 
-Each package records its objective, zone, dependencies and acceptance criteria in the backlog; its pull request records the full verified base commit, owned paths, required contracts, agreed new files, tests and evidence. Use an isolated worktree and a branch from current `origin/main` named as the roadmap's [branch names](../implementation-plan.md#branch-names) require. Do not implement in protected `main`, another session's checkout or the consumer's parent directory. Verify working directory before writes. Inventory existing edits and preserve them; never clean another agent's work. Two sessions cannot own the same mutable contract, output or test helper. Disjoint research may proceed while a shared contract is unresolved; dependent durable implementation waits for its decision.
-
-Implement only the assigned slice. Report source-selection/privacy/permissions gaps before reading or moving consumer evidence beyond its reviewed scope. Existing-project adoption keeps ADRs, root instructions, tests and provider configurations authoritative until an explicit owner-reviewed cutover. Frequency, AI confidence, a candidate decision field and green CI are not owner approval. Do not use another adapter's output as canonical input.
-
-## Module assignments
-
-A Module assignment owns one `src/internal/modules/<name>` subtree, including its private tests and bounded design/evidence files. It may consume Core IR and explicit Host-supplied configuration or artifact bytes, but must not edit Core, Host, Infrastructure, Tooling, a sibling Module or shared wiring. Host composition, shared DTOs, `go.mod`, CI workflows, and the import gate remain coordinator-owned. The [Module guide](modules.md) defines when to add or remove a Module and the exact static dependency law.
-
-A request to change Core must describe a generic invariant with concrete cases from at least two distinct vocabularies, the current expression and its failure, a finite normalization/check/adapter alternative, consumers, exact input/version behavior, diagnostics, digest/context/impact consequences, and deterministic tests. Submit the request to the coordinator before editing Core. A Module is never its own authority to add a Core primitive.
+One chat owns one bounded package/API slice and tests. Dispatch lists paths, inputs, acceptance and dependency gates. Subagents are permitted within scope. Unresolved shared semantics block dependent implementation; independent work can proceed. No model/provider claim replaces actual verification.
 
 ## Shared-file requests
 
-README, architecture, roadmap, CLI dispatch, format/schema generation, model types, adapter DTOs, package/state/digest semantics and shared helpers stay with the coordinator or with the zone that holds them. An implementer supplies a small proposed patch or design request rather than editing them opportunistically. Tests local to an owned package/new file are independent; renderer entrypoints/provider configuration and shared ownership helpers are integration hotspots. Coordinator review decides whether a needed edit is legitimate shared semantics or removable coupling.
+The coordinator owns root dependencies, cross-package contracts, the plan and concept register. BOOT/CUTOVER may receive explicit bounded ownership of gates, canonical sources, generated views and wiring. Others request a concrete change with intended behavior, consumer and cases rather than editing shared files.
 
-Shared `go.mod`, `go.sum` and CI workflows are also integration files; CI workflows belong to the `ci` zone. Provider library/tool dependencies require a bounded request with scope, version, licensing and validation effects; parallel implementers must not each change the root dependency contract independently.
+Producers own value types; consumers own ports. No global types/interface package, old Project DTO bridge or duplicate definitions to unblock an adapter. Follow the [target Go boundaries](../design/canonical-model/manager-apply-go-architecture.md), not obsolete Module/Host rules in historical guides. Until cutover, current source retains its gates and the public CLI does not import partial replacement packages.
 
-Escalation includes the desired engineering statement, two concrete cases if requesting Core expansion, current expression, normalization/check/adapter alternatives, affected consumers, exact input/version behavior, diagnostics, context/impact/digest effects and a finite deterministic test. Do not introduce Pattern/Trait/inheritance, fan-out, arbitrary selectors/queries, provider semantics, source analysis or background execution through an unrelated package.
+Two chats cannot own the same contract, generated output or helper. Tests/fixtures live with their package. External dependencies need coordinator agreement and an exact pin; root module changes have one writer. New paths require project-model coverage before integration.
 
 ## Integration and evidence
 
-1. Implement and run focused Module tests, then the normal contribution gates. The architecture import gate at `src/internal/tooling/architecture` statically checks supported-platform files and tests and exercises negative dependency fixtures. It is included in `go test ./...`, runs as a named import-boundary CI step, and is included in the release quality job through reusable CI. The `markitect-check-architecture` command delegates to the same checker. These routes do not imply an exact-head pass; the coordinator reports evidence separately.
-2. Commit a complete candidate. Open one focused PR per package, with the package ID at the start of its title, stating before/after behavior, owned scope, non-goals, evidence, limitations and any shared-contract request.
-3. Run [CI](../../.github/workflows/ci.yaml) on that exact head. Linux is the required gate ([DEC-013](../concepts/register.md#dec-013-linux-first-for-tests-and-the-playground)). Do not push to the head while its required Linux run is in progress; fixes may be pushed while only the Windows job is still running. A changed head invalidates the earlier integration evidence.
-4. Obtain independent complete-diff review. The coordinator checks shared contract compatibility, target ownership, conflicts with parallel candidates and the consumer authority boundary.
-5. The integrator merges one reviewed candidate at a time, in dependency order, against the current main. Rebase/adapt later candidates, rerun affected tests and current-head CI. Keep preserved historical evidence immutable.
-6. Record merged commit and main gates. A source artifact or successful merge is not a release or human acceptance of adopter policy.
+1. Run focused checks and inspect actual changed files. Preserve failures/unknowns with exact source identity.
+2. Open a focused PR with package ID, scope, contracts, base/head and validation. Distinguish implemented behavior from scaffolding/proposed APIs.
+3. Obtain independent complete-diff review and exact-head required Linux CI. Freeze the head during those checks.
+4. The coordinator composes with Main, merges in dependency order and verifies actual Main before dependent dispatch.
+5. Regenerate views from sources. Retire obsolete tests/gates with their feature; never exempt a required invariant for green CI.
 
-Every completion report states what changed and why, owned scope, what remains outside it, tests and exact SHA, evidence limitations, remaining gaps, integration dependencies and requested Core changes (or none). Mark incomplete evidence explicitly. Never infer tokens from bytes or make productivity, defect, runtime-safety or market claims from fixture success.
-
-Release is a separate owner decision using [Operations](../operations.md) and immutable publication gates. Agents do not publish individual package releases, update installed tools, edit release-managed README values or overwrite published assets. Published releases remain immutable; source changes do not alter them or claim a new release.
+A source package is not a real Agent run, successful library Apply, release or human acceptance. Provider studies and delivery need separate scope and finite authority.

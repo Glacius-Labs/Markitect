@@ -29,6 +29,7 @@ limits:
   maxSteps: 160
   maxExecutionTime: 8h
   maxStepTimeout: 10m
+  hostOperationTimeout: 2m
   maxReviewRounds: 3
   creationRoots: [realization]
 initialCompletionReserve:
@@ -59,7 +60,7 @@ notifications:
 
 The numeric limits are example ceilings, not permission to launch Agents in this design session. `limits.creationRoots` bounds permitted creation areas; defaults/exact Package settings select within it. Here the public contract places the module, code, tests and docs below `realization/`. Existing artifacts still require current registry ownership. A directory permission does not grant another Manager's files or protected model/configuration paths. A check's `directory` is confined to its captured candidate; arguments are literal, not a shell command.
 
-The run/start/step/execution-time caps apply across the assignment's runs. `maxStepTimeout`, `maxReviewRounds` and allowed creation areas are project ceilings, not shared consumable counters. `initialCompletionReserve` seeds protected capacity within the grant; it is not additional allowance and may be released/replanned only under the execution contract. Reject a grant that cannot accommodate its initial reserve, rather than silently clamping or inventing capacity. Allocation and unknown-effect rules are owned by [budget admission](manager-apply-execution.md#one-ledger-with-protected-completion-capacity).
+The run/start/step/execution-time caps apply across the assignment's runs. `maxStepTimeout`, `maxReviewRounds` and creation areas are ceilings, not consumable counters. `hostOperationTimeout` bounds each Host control operation outside that ledger; preparation also binds its size/output limits. `initialCompletionReserve` is protected capacity within the grant, not extra allowance. Reject grants that cannot accommodate it. The [execution contract](manager-apply-execution.md#one-ledger-with-protected-completion-capacity) owns allocation and reconciliation.
 
 `maxExecutionTime` is the defined sum of charged execution durations, excluding owner waiting. A separate optional absolute UTC `deadline` belongs to the assignment request and keeps running during waits. The former ambiguous `assignmentTimeout` field is removed, with no compatibility alias. Each start/step/check has its own finite timeout. These controls do not establish a provider invoice ceiling.
 

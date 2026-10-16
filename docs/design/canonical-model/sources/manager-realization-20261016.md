@@ -132,3 +132,9 @@ The [working-day reflection](../../../concepts/reflections/desired-working-day-2
 ## Consolidate budgets lifecycle and current developments
 
 > Ja, lass uns die offenen Budget- und Laufzustandsregeln konsolidieren. Kläre die Widersprüche in den Docs und entwickle eine einfache, konsistente Lösung für das erste Apply. Bleiben wir beim Bibliotheksbeispiel. Ausserdem schaue noch mal in die docs nach den aktuellen Entwicklungen
+
+## Polish the concept and start the coordinated rebuild
+
+> Mache nochmal einen aktualisierten konsolidierungsrun und polishe das Konzept. Schaue nach Vereinfachungen und sorge dafür dass alles stimmig und sauber ist.
+>
+> Dann lass uns so langsam den Umbau planen und parallelisieren und orchestrieren. Das Konzept müsste jetzt so langsam reif genug sein. Das alte Backlog mit dem Dashboard können wir dafür löschen und dann main neu herrichten. Anschließend verteilen wir die Arbeit an verschiedene Chats und starten mit der Entwicklung. Es sei denn, es fehlt noch was im Konzept deiner Meinung nach
