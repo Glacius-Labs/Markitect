@@ -4,7 +4,7 @@ Date: 16 October 2026. Consolidated proposal requested in the [owner discussion]
 
 The [consistency review](../../concepts/reflections/concept-consistency-review-20261016.md) identified the conflicting drafts. The newer [working-day assessment](../../concepts/reflections/working-day-demonstration-20261016.md) adds independent observations, model-owned intent, targeted counterchecks and finding-specific evidence under budget pressure. The rules below incorporate those refinements using existing review/history. Its four scenarios and repeatability proposal remain follow-up evidence after the separate M1/M2 Playground, without more roles, schedulers or library business requirements.
 
-Reflection input inspected through commit `7144ade9eeb5f87664ed04f2c0b217012624229b`, including finding accountability, accepted-delivery dependencies, correction of exposed work and supplied-input provenance. The completed language and M1 remain unchanged. The [delivery plan](../../implementation-plan.md) owns assignments; this document owns the technical contract.
+Reflection input incorporated through commit `1158ee18d47d581e5db4efc89baa22c9708bf9d8`, including finding accountability, accepted-delivery dependencies, correction of exposed work and supplied-input provenance. The completed language and M1 remain unchanged. The [delivery plan](../../implementation-plan.md) owns assignments; this document owns the technical contract.
 
 ## One owner for each rule
 
