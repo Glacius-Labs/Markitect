@@ -9,6 +9,8 @@
 // values impose no canonical-Package or target-filesystem case policy. Adapters
 // must check target filesystem representability and aliases before materializing;
 // they must reject incompatible trees rather than merge or rewrite their paths.
+// DirectoryBoundary adds exact lexical area comparisons and an explicit root
+// without weakening Path, adding directory Tree entries or granting authority.
 //
 // Only regular files, with or without the executable flag, are supported.
 // Directories are implicit; empty directories, symlinks, submodules, ownership,
