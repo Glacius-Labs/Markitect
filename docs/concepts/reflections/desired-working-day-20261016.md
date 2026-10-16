@@ -304,6 +304,70 @@ The owner should eventually be able to stop work, change priority or submit revi
 
 The product should allow the owner to be available for judgment without requiring continuous availability for routine coordination. Wall-clock examples in the discussion were illustrative, not a completion-time promise.
 
+## A compact organization status report
+
+The [status-report discussion](../sources/working-day-discussion-20261016.md#see-progress-without-reading-agent-history) proposes one screen with four stable blocks: overall state, required decisions, progress, and problems or limits. Link to changes, evidence, the task tree and history for inspection. The owner should quickly see whether action is needed, what changed, what blocks progress and what happens next.
+
+The heading identifies the assignment, model revision, Apply run and observation time. Reports are projections of recorded work, not a second manually maintained status system. They expose missing or stale observations rather than presenting them as current progress.
+
+### Illustrative intermediate report
+
+The example below uses an intentionally inconsistent future draft. The authored library model already specifies that lowering the limit preserves existing loans. Times, counts and outcomes are illustrative, not execution evidence.
+
+**Library: lower the admission limit to three**
+
+**In progress: one owner decision needed**
+
+Model M2; Apply R2; updated at 10:40.
+
+The existing realization is being adapted. Catalog and membership have local assessment results. Lending awaits a business decision. No artifacts have been applied or deployed.
+
+**Required decision**
+
+Should existing loans above the new limit remain intact? Two draft passages conflict. Recommendation: preserve existing loans and restrict additional borrowing. The decision entry links to the exact proposed model edit and response controls.
+
+This blocks Lending and completion of the assignment. Independent checks can continue. No external deadline is known.
+
+**Progress**
+
+| Area | State | Result or next step |
+| --- | --- | --- |
+| Catalog | Locally verified, unchanged | Retained realization fits the current assessed obligations; aggregate integration remains pending. |
+| Members | Locally verified | Suspension behavior remains intact; aggregate integration remains pending. |
+| Lending | Waiting for decision | Candidate work exists; the model conflict remains open. |
+| Reminders | Assessment in progress | Check interaction with existing loans. |
+| Aggregate | Not yet verified | Integrate after the required area deliveries are complete. |
+
+**Problems and limits**
+
+- Resolved locally: review found an unintended restriction on returns. The correction was checked locally; aggregate integration is still pending.
+- Open: the model conflict identified in the decision above. This is the same question, not another request.
+- Budget: 18 of 60 authorized Agent invocations used. No reliable completion estimate is available.
+
+**Next:** after the decision, establish the model basis and continue from retained work under the continuation rules above.
+
+The report offers drill-down access to actual changes, check/review results, the task tree and execution history. It does not require the owner to read those details to understand the current state.
+
+### Keep verification and delivery states distinct
+
+| Displayed state | Evidence required and scope |
+| --- | --- |
+| Locally verified (lokal geprüft) | Required local assessment, independent review and checks support the exact area candidate and current inputs. This does not establish subtree integration or whole-system verification. |
+| Aggregate verified (insgesamt geprüft) | Required deliveries, integration reviews, checks and final verification support the exact aggregate and selected scope, with no unresolved required findings. Publication has not necessarily occurred. |
+| Applied (übernommen) | Guarded publication and read-back confirm the verified artifact and registry result. This is not a Git merge, release or deployment. Carrying work into a successor as starting material is not this state. |
+| Deployed (ausgerollt) | A separate authorized deployment has an observed outcome bound to the version and target environment. Operational verification and its limits are reported separately; an Apply result cannot establish deployment. |
+
+These are proposed display meanings, not a new state-machine schema or an automatic progression guaranteed to succeed. Source changes can make earlier evidence historical. Partial publication, failed deployment or unknown outcomes must remain explicit rather than being rounded up to a successful state.
+
+### Reporting rules
+
+- Derive status from observed events and matching evidence. An implementer's success claim alone cannot produce “verified.”
+- Reference one question identity from decision, area and problem entries. Do not multiply a single blocker into several apparent owner requests.
+- Highlight meaningful changes since the previous report. Unchanged non-actionable states do not trigger repeated notifications.
+- Report counts with their actual scope, such as “four of five areas locally verified.” Do not translate them into “80 percent complete”; integration may dominate the remaining work.
+- Distinguish a corrected local finding from a verified overall result. State who acts next and what is needed to unblock work.
+- Show only observed usage and justified deadlines or estimates. Unknown cost, progress or completion time stays unknown.
+
 ## Prerequisites against the current concept
 
 Assessment basis: committed design at `bc53b58b2319d91581ea98457acb4a9534d95bfe`, especially the [Apply concept](../../design/canonical-model/manager-apply-concept.md), [Go architecture outline](../../design/canonical-model/manager-apply-go-architecture.md) and [implementation plan](../../design/canonical-model/manager-apply-implementation-plan.md). Architecture work is ongoing. This assessment concerns the written contracts, not a fresh audit of product code or a claim about implementation progress.

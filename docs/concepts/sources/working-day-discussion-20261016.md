@@ -89,3 +89,15 @@ Recorder's note: The assistant proposed checking scope, applicability and compat
 > Halte diesen Umgang mit Widersprüchen bitte auch in unseren Docs fest, insbesondere die Prüfung von Geltung und Vereinbarkeit, die Nutzung bestehender Befugnisse und die Eskalation nur bei fehlenden Entscheidungen.
 
 The reflection's [conflict-handling section](../reflections/desired-working-day-20261016.md#resolve-conflicts-through-applicability-and-authority) records the proposed workflow, examples and review requirements.
+
+## See progress without reading Agent history
+
+> Wie könnte ein kompakter Statusbericht der Organisation aussehen, damit ich Fortschritt, offene Entscheidungen und Probleme erkenne, ohne mich durch die gesamte Agentenhistorie arbeiten zu müssen?
+
+Recorder's note: The assistant proposed four report blocks: overall state, required decisions, progress, and problems/limits, with linked details. The hypothetical library example separates local review from aggregate verification, artifact publication and deployment. Status derives from observed evidence; repeated questions and artificial completion percentages should be avoided.
+
+## Preserve the status report format
+
+> Halte dieses Format für Statusberichte bitte auch in unseren Docs fest, inklusive offener Entscheidungen, Fortschritt, Problemen und der klaren Trennung zwischen lokal geprüft, insgesamt geprüft, übernommen und ausgerollt.
+
+The reflection's [compact status report](../reflections/desired-working-day-20261016.md#a-compact-organization-status-report) preserves the example, state meanings and reporting rules as proposals.
