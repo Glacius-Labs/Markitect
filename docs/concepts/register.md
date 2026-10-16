@@ -35,6 +35,14 @@ The owner's [origin account of 15 October 2026](sources/owner-origin-20261015.md
 | [DEC-022](#dec-022-decisions-are-visible-and-route-through-their-subject) | Decision | Decisions are visible and route through their subject | Accepted |
 | [DEC-023](#dec-023-impact-marks-change-and-context-without-dropping-either) | Decision | Impact marks change and context without dropping either | Accepted |
 | [DEC-024](#dec-024-first-reliable-apply-rebuild-and-coordinated-start) | Endorsed direction | First reliable Apply rebuild and coordinated start | Endorsed; implementation commissioned |
+| [DEC-025](#dec-025-package-managers-organize-realization) | Decision | Package Managers organize realization | Accepted |
+| [DEC-026](#dec-026-apply-comes-first-and-changes-only-artifacts) | Decision | Apply comes first and changes only artifacts | Accepted |
+| [DEC-027](#dec-027-strict-links-with-an-optional-optimizer) | Decision | Strict links with an optional Optimizer | Accepted |
+| [DEC-028](#dec-028-context-follows-need-to-know-and-starts-simple) | Decision | Context follows need to know and starts simple | Accepted |
+| [DEC-029](#dec-029-instructions-enter-through-the-root) | Decision | Instructions enter through the root | Accepted |
+| [DEC-030](#dec-030-agent-communication-is-traceable) | Decision | Agent communication is traceable | Accepted |
+| [DEC-031](#dec-031-the-first-target-is-two-applies-of-the-library-example) | Decision | The first target is two Applies of the library example | Accepted |
+| [DEC-032](#dec-032-quality-simplicity-and-stability-over-effort-and-compatibility) | Decision | Quality, simplicity and stability over effort and compatibility | Accepted |
 | [PRM-001 to PRM-007](#promises) | Promise | Target outcomes | Target |
 | [ASM-001 to ASM-005](#assumptions-and-hypotheses) | Assumption | Assumptions and hypotheses | See entries |
 | [CPT-001](#cpt-001-federalism) | Concept | Federalism | Accepted |
@@ -46,7 +54,8 @@ The owner's [origin account of 15 October 2026](sources/owner-origin-20261015.md
 | [ENH-003](#enh-003-test-to-statement-binding-and-test-review) | Enhancement | Test-to-statement binding and test review | Accepted direction |
 | [ENH-004](#enh-004-per-role-agent-configuration-and-model-mixing) | Enhancement | Per-role agent configuration and model mixing | Accepted direction |
 | [ENH-005](#enh-005-exchangeable-executor-for-the-delegated-method) | Enhancement | Exchangeable executor for the delegated method | Endorsed; increment 1 merged |
-| [OQ-001 to OQ-007](#open-questions) | Open question | Open questions | Open |
+| [ENH-006](#enh-006-configurable-teams-for-perspectives-and-four-eyes) | Enhancement | Configurable teams for perspectives and four eyes | Endorsed; design after the first strategy |
+| [OQ-001 to OQ-008](#open-questions) | Open question | Open questions | Open |
 | [IDEA-001](#idea-001-the-model-as-institutional-memory-for-stateless-agents) | Idea | The model as institutional memory for stateless agents | Proposed |
 | [IDEA-002](#idea-002-government-delegated-model-maintenance) | Idea | Government: delegated model maintenance | Owner idea; parked |
 | [IDEA-003](#idea-003-degree-of-freedom-per-manager-and-rule-strictness) | Idea | Degree of freedom per Manager and rule strictness | Owner idea; parked |
@@ -63,6 +72,7 @@ The owner's [origin account of 15 October 2026](sources/owner-origin-20261015.md
 | [IDEA-014](#idea-014-shared-evidence-bound-events) | Idea | Shared evidence-bound events | Proposed by the product chat; parked |
 | [IDEA-015](#idea-015-cockpit-with-a-conversational-personal-agent) | Idea | Cockpit with a conversational personal agent | Owner idea; parked |
 | [IDEA-016](#idea-016-optional-offline-claim-and-evidence-classifier) | Idea | Optional offline claim and evidence classifier | Proposed (research R01) |
+| [IDEA-017](#idea-017-operational-check-through-the-managers) | Idea | Operational check through the Managers | Owner idea; deferred |
 
 ## Long-term vision
 
@@ -70,6 +80,7 @@ The owner's [origin account of 15 October 2026](sources/owner-origin-20261015.md
 
 - **Status:** Owner statement of 9 October 2026, relayed by the product chat together with the owner's commission of the Government evaluation ([source](sources/concepts-chat-20261009/government-evaluation-mandate-20261009.md)). Detailed planning is deferred ([DEC-011](#dec-011-detailed-planning-of-future-ideas-waits)).
 - **Statement:** The big vision includes a cockpit plus a personal AI, and an autonomous project organization („Cockpit plus persönliche AI und autonome Projektorganisation“).
+- **Owner, 16 October 2026:** the desired working life is to model, develop ideas and concepts and set rules, and to know reliably that the organization realizes them cleanly and consistently, develops features, finds and fixes bugs and keeps the project tidy („Ich möchte meine Zeit damit verbringen, zu modellieren, Ideen und Konzepte auszuarbeiten, Regeln aufzustellen.“; [source](sources/organization-and-trust-20261016.md#desired-working-life)). The [working-day reflection](reflections/desired-working-day-20261016.md) develops it.
 - **Related:**
   - the Government axis ([IDEA-002](#idea-002-government-delegated-model-maintenance), [DEC-004](#dec-004-the-manager-hierarchy-is-core-government-belongs-to-a-later-axis));
   - the cockpit ([IDEA-015](#idea-015-cockpit-with-a-conversational-personal-agent));
@@ -338,6 +349,61 @@ The owner's [origin account of 15 October 2026](sources/owner-origin-20261015.md
 - **Consequences:** The [delivery plan](../implementation-plan.md) is the single current scope/dependency plan. Earlier package IDs/queues remain historical. The [technical contracts](../design/canonical-model/README.md) guide a clean rebuild without compatibility obligations. Implement the deterministic foundation and independent oracle in parallel; downstream runtime work waits for reviewed consumer contracts.
 - **Boundary:** This commissions development and ordinary reviewed integration, not claims that Apply works. Exact provider identity, finite execution grants, real M1/M2 proof, release/deployment, studies and Government retain their stated gates. Detailed schema choices remain reviewable implementation contracts.
 
+### DEC-025 Package Managers organize realization
+
+- **Status:** Accepted, owner, 16 October 2026 ([strategy](../design/canonical-model/sources/manager-realization-20261016.md#management-and-a-customizable-strategy), [teams and registry](../design/canonical-model/sources/manager-realization-20261016.md#teams-integration-and-artifact-registration), [root Manager](../design/canonical-model/sources/manager-realization-20261016.md#root-manager-and-naming)).
+- **Statement:**
+  - One Manager per Package forms the hierarchy that realizes the model. Each level is an integration layer with less detail and more overview than the one below.
+  - The root is an ordinary Manager („Er sollte jedoch auch einfach nur ein normaler Manager sein“); "project manager" only named its position.
+  - The realization strategy is customizable („Generell sollte die Umsetzungsstrategie aber customizable sein“), and every Manager is configurable with its own team of AI Agents.
+  - Every Manager registers its artifacts and justifies each with a Definition; every other file is a Markitect input or explicitly ignored. This refines [DEC-006](#dec-006-every-file-is-covered-or-explicitly-ignored).
+- **Owning documents:** the [Apply concept](../design/canonical-model/manager-apply-concept.md). Its first strategy is Manager plus independent reviewer; the other team variants stay in the [north star](../design/canonical-model/manager-realization-north-star.md#team-variants).
+
+### DEC-026 Apply comes first and changes only artifacts
+
+- **Status:** Accepted, owner, 16 October 2026 ([change targets](../design/canonical-model/sources/manager-realization-20261016.md#common-preparation-and-change-targets), [separate operations](../design/canonical-model/sources/manager-realization-20261016.md#separate-operations-reconciliation-and-custom-commands), [Apply first](../design/canonical-model/sources/manager-realization-20261016.md#apply-first-and-delegation-from-the-root)).
+- **Statement:**
+  - Apply reconciles the artifacts with the model („Ausserdem soltle Apply generell die Artifacts gegen das Modell reconcilen“), whether or not the model changed.
+  - Apply must work reliably first; other commands are extensions („zunächst darauf konzentrieren, dass apply zuverlässig funktioniert und die anderen commands als Erweiterungen behandeln“).
+  - No command changes both the model and the artifacts („Ich würde ungerne Commands machen, die sowohl Model als auch Artifacts anfassen“).
+- **Owning documents:** the Apply concept; later operations are kept in the [north star](../design/canonical-model/manager-realization-north-star.md#later-operations-and-extensions).
+
+### DEC-027 Strict links with an optional Optimizer
+
+- **Status:** Accepted, owner, 16 October 2026 ([source](../design/canonical-model/sources/manager-realization-20261016.md#strict-links-and-an-optional-optimizer)).
+- **Statement:** Authored connections between Packages are the baseline for compiling context („Lass uns die strenge Variante als Grundlage nehmen“). An optional Optimizer proposes missing connections („einen optionalen Optimizer vorsehen, der fehlende Verknüpfungen vorschlägt“). Apply reports a missing connection but never adds it.
+
+### DEC-028 Context follows need to know and starts simple
+
+- **Status:** Accepted, owner, 16 October 2026 ([need to know](../design/canonical-model/sources/manager-realization-20261016.md#need-to-know), [simple context](../design/canonical-model/sources/manager-realization-20261016.md#preserve-the-variants-and-start-with-simple-context)).
+- **Statement:** Need to know keeps Agents free of unnecessary context; it is not a protection against information leaks. Context compilation starts simple and is not optimized early („aufpassen nicht zu sehr zu optimieren“): the own Package's bodies, a See also section with linked Definitions, and files to read.
+
+### DEC-029 Instructions enter through the root
+
+- **Status:** Accepted, owner, 16 October 2026 ([source](../design/canonical-model/sources/manager-realization-20261016.md#apply-first-and-delegation-from-the-root)). The file-access part was left to refine.
+- **Statement:** The operation's instruction goes to the root Manager only. Each parent writes its own prompt for its children, which must not be too specific: it does not tell them which files to touch. Whether higher Managers read descendant files only when someone supplies them „gilt es zu refinen“; the Apply concept chose summaries first plus recorded targeted reads.
+
+### DEC-030 Agent communication is traceable
+
+- **Status:** Accepted, owner, 16 October 2026 ([source](../design/canonical-model/sources/manager-realization-20261016.md#reporting-and-communication-history)).
+- **Statement:** It must be possible to trace which Agent received which prompt, what it reported, how the communication went and what flowed and changed in each step.
+- **Owning documents:** the Apply concept's reports and the [journal](../design/canonical-model/manager-apply-journal.md).
+
+### DEC-031 The first target is two Applies of the library example
+
+- **Status:** Accepted, owner, 16 October 2026 ([target](../design/canonical-model/sources/manager-realization-20261016.md#two-apply-cycle-and-freedom-to-redesign), [architecture style](../design/canonical-model/sources/manager-realization-20261016.md#sketch-the-go-architecture-with-ports-and-adapters)).
+- **Statement:**
+  - Model the library completely as a canonical model, run Apply and examine the code; then change the model, run Apply again and examine the result.
+  - The Agents must actually be started and communicate.
+  - The Go source follows Ports and Adapters in idiomatic Go.
+- **Owning documents:** the [acceptance gates](../design/canonical-model/manager-apply-implementation-plan.md) and the [delivery plan](../implementation-plan.md).
+
+### DEC-032 Quality, simplicity and stability over effort and compatibility
+
+- **Status:** Accepted, owner, 16 October 2026 ([rebuild](../design/canonical-model/sources/manager-realization-20261016.md#two-apply-cycle-and-freedom-to-redesign), [adapter and rebuild plan](../design/canonical-model/sources/manager-realization-20261016.md#choose-the-first-real-adapter-and-plan-a-clean-rebuild), [consolidation](sources/consolidation-discussion-20261016.md#quality-over-effort-and-compatibility)). It extends [DEC-014](#dec-014-compatibility-does-not-drive-decisions).
+- **Statement:** Cleanliness, architectural quality, quality in general, simplicity and stability have high priority. Effort is not a criterion („Aufwand sollte keine Rolle spielen“), and neither is compatibility with old versions. The rebuild may proceed radically and delete what is no longer needed („Bei der Umsetzung können wir ruhig radikal vorgehen und einfach löschen“).
+- **Consequences:** Choose the clean design even when it is more work. Add no adapters, aliases or legacy paths to save effort. Delete obsolete source, tests and documents together.
+
 ## Promises
 
 These are the target outcomes Markitect is built to deliver. Each has the status **Target**: it is to be validated under [DEC-009](#dec-009-the-central-evaluation-question), and none is an established result. Sources are the [owner description](sources/owner-product-description-20261009.md) and the [confirmed summary](sources/idea-review-20261010.md#summary-confirmed-by-the-owner).
@@ -468,7 +534,15 @@ These entries record agreed or endorsed direction. Recording an enhancement does
   - Expose a stable executor boundary. Through it, Markitect hands each role a deterministic work packet: scope, context, obligations, required checks and required reviews. It then accepts the resulting candidate and review verdict and validates them with the same rules as today.
   - The native Codex adapter becomes one executor among others. Further executors, for example Claude Code, can be added without changing the method.
   - Authority does not change. Scope checks, fixed snapshots and guarded Apply apply to every executor, and submitted reviews remain AI evidence, not human acceptance.
+- **Rebuild consequence (design, under [DEC-024](#dec-024-first-reliable-apply-rebuild-and-coordinated-start) and [DEC-032](#dec-032-quality-simplicity-and-stability-over-effort-and-compatibility)):** the rebuild replaces the current executor boundary with the provider-neutral session port `run.Sessions`. Its first adapter is the Codex App Server. The process executor, exchange packets and Claude wrapper are deleted at the cutover, and further executors such as Claude Code implement the same port ([rebuild plan](../design/canonical-model/manager-apply-rebuild-plan.md#first-adapter)). The direction of this entry stays.
 - **Historical work items:** RUN-01 (merged as pull request #104), RUN-02, RUN-03 and RUN-05 in the [backlog](https://github.com/Glacius-Labs/Markitect/blob/bc4b49e76f9b9e4b3ec98033a0b8c73d5013b310/docs/work-items/backlog.yaml).
+
+### ENH-006 Configurable teams for perspectives and four eyes
+
+- **Status:** Endorsed, owner, 16 October 2026 ([source](sources/organization-and-trust-20261016.md#retain-objections-and-team-design-questions)). The first strategy is Manager plus independent reviewer; richer teams follow after the two-Apply demonstration.
+- **Statement (owner):** „Gerade Dinge wie die Erfahrung, verschiedene Blickwinkel bzw Vier Augen Prinzip (realisierbar durch konfigurierbare Teams) etc finde ich sehr wichtig und diese sollten nicht vergessen werden“.
+- **Direction:** Configurable teams carry distinct perspectives and the four-eyes principle without a Manager hierarchy per perspective. Roles differ in their question, context, tools and model profile ([organization and trust](reflections/organization-and-trust-20261016.md#different-perspectives-through-configurable-teams), [team variants](../design/canonical-model/manager-realization-north-star.md#team-variants)).
+- **Related:** [ENH-004](#enh-004-per-role-agent-configuration-and-model-mixing), [IDEA-001](#idea-001-the-model-as-institutional-memory-for-stateless-agents).
 
 ## Open questions
 
@@ -481,12 +555,13 @@ These entries record agreed or endorsed direction. Recording an enhancement does
 | OQ-005 | Should evaluation focus on a series of changes on a long-lived project? If so, what ground truth makes "nothing forgotten" measurable there, for example predeclared affected sets, seeded cross-cutting rules and hidden holdout checks? | [DEC-009](#dec-009-the-central-evaluation-question), [PRM-001](#promises) |
 | OQ-007 | How reliable is the native delivery path? The combined A01 native smoke passed once (Actual28, on a Windows host) after 27 failed attempts, was not repeated, and never ran on Linux ([A01 record](../validation/a01-native-smoke-20261010.md)). | [DEC-013](#dec-013-linux-first-for-tests-and-the-playground), [ENH-005](#enh-005-exchangeable-executor-for-the-delegated-method) |
 | OQ-006 | How much current-state context does a bounded Manager need, so that limited responsibility does not become artificial blindness? The original product chat's hypothesis: shared contracts, plus current-state context on demand (Concepts note C19). | [CPT-001](#cpt-001-federalism), [CPT-004](#cpt-004-the-specification-stays-effective) |
+| OQ-008 | Should the Manager organization become the application's entry point, with the canonical model as its foundation, and would that better support a later Government axis? Owner framing, 16 October 2026: „Eventuell wäre das sogar die bessere Betrachtungsweise“ ([source](../design/canonical-model/sources/manager-realization-20261016.md#apply-first-and-delegation-from-the-root)). | [DEC-004](#dec-004-the-manager-hierarchy-is-core-government-belongs-to-a-later-axis), [DEC-026](#dec-026-apply-comes-first-and-changes-only-artifacts) |
 
 ## Ideas
 
 ### IDEA-001 The model as institutional memory for stateless agents
 
-- **Status:** Proposed by the 10 October review; not yet evaluated by the owner.
+- **Status:** Proposed by the 10 October review. On 16 October 2026 the owner called experience very important and asked that it not be forgotten ([ENH-006](#enh-006-configurable-teams-for-perspectives-and-four-eyes)); the [experience reflection](reflections/experience-without-implicit-rules-20261016.md) develops it. Not yet decided.
 - **Idea:** In human organizations, management structures work partly because people remember and keep responsibility over time. Agents keep neither. The canonical model can supply this institutional memory and lasting responsibility. That would make a management hierarchy workable for stateless agents and would support [ASM-004](#assumptions-and-hypotheses).
 
 The ideas below come from the owner's contributions of 9 October 2026. The product chat handed them to the Concepts and Ideas chats, which recorded them. They are parked under [DEC-011](#dec-011-detailed-planning-of-future-ideas-waits): recorded for later examination, not planned. Quoted German is the owner's wording unless marked otherwise. "Open" items are questions raised by the Concepts or Ideas chat, not by the owner, unless marked as the owner's. The [sources](sources/README.md) keep the full text and the chats' analysis. In these ideas, "user" means the person who uses Markitect to run a project.
@@ -623,6 +698,13 @@ The ideas below come from the owner's contributions of 9 October 2026. The produ
 - **Status:** Proposed by the research item R01 (9 October 2026); not evaluated by the owner.
 - **Idea:** The R01 research assessed a strongly typed AI tool for Markitect. It recommended against using it to replace the compiler or Manager gates. An optional, offline classifier of claims and evidence could be examined later.
 - **Source:** [optional research R01 to R03](../research/optional-research-r01-r03-20261009.md).
+
+### IDEA-017 Operational check through the Managers
+
+- **Status:** Owner idea and clarification, 16 October 2026 ([idea](sources/experience-discussion-20261016.md#experience-selection-and-runtime-observations), [clarification](sources/experience-discussion-20261016.md#clarification-logs-support-a-check-or-doctor)). Deferred by the [delivery plan](../implementation-plan.md).
+- **Idea (owner):** „Was wäre wenn man Logging entsprechend aufbaut, sodass Logs aus laufenden Systemen ebenso durch die Manager geprüft werden können, sodass dort auch diskrepanzen aufgedeckt werden können?“
+- **Clarification (owner):** „Die Logs meinte ich eher als eine Art check oder doctor oder sowas über die Manager. Nicht Erfahrungsbezogen“.
+- **Developed in:** the [experience reflection](reflections/experience-without-implicit-rules-20261016.md#operational-check-through-the-managers). It extends [IDEA-010](#idea-010-monitoring-logs-and-data-collection).
 
 ## Imported collections
 

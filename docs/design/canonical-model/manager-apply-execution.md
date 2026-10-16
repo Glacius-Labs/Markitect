@@ -1,185 +1,120 @@
 # Budget and lifecycle contract for the first Apply
 
-Date: 16 October 2026. Consolidated proposal requested in the [owner discussion](sources/manager-realization-20261016.md#consolidate-budgets-lifecycle-and-current-developments). This document owns budget accounting, execution admission, run transitions and their status meaning for the first Apply. The [configuration contract](manager-apply-configuration.md) owns the input schema and exact Package overrides; the [journal](manager-apply-journal.md) owns durable encoding, append and recovery storage. These are design contracts, not implemented behavior or completed acceptance evidence.
+This contract owns budget accounting, execution admission, findings that block completion, run transitions and their displayed meaning. The [configuration](manager-apply-configuration.md) owns the input fields and Package overrides; the [journal](manager-apply-journal.md) owns durable records and storage. The `run` package implements these rules.
 
-The [consistency review](../../concepts/reflections/concept-consistency-review-20261016.md) identified the conflicting drafts. The newer [working-day assessment](../../concepts/reflections/working-day-demonstration-20261016.md) adds independent observations, model-owned intent, targeted counterchecks and finding-specific evidence under budget pressure. The rules below incorporate those refinements using existing review/history. Its four scenarios and repeatability proposal remain follow-up evidence after the separate M1/M2 Playground, without more roles, schedulers or library business requirements.
+## Assignments and runs
 
-Reflection input incorporated through commit `1158ee18d47d581e5db4efc89baa22c9708bf9d8`, including finding accountability, accepted-delivery dependencies, correction of exposed work and supplied-input provenance. The completed language and M1 remain unchanged. The [delivery plan](../../implementation-plan.md) owns assignments; this document owns the technical contract.
+An assignment is one owner request, such as "Apply the current library model". Each Apply invocation creates one assignment by default. An assignment holds the budget and links its runs. A run binds one fixed set of inputs: model, configuration, repository source and profiles. Ordinary rework stays inside the run. A successor run in the same assignment arises only when the basis changes while work is unfinished, for example after an owner answer leads to a model edit.
 
-## One owner for each rule
-
-| Question | Governing contract |
-| --- | --- |
-| Which settings apply to Lending? | Project defaults plus the exact `lending` override, in configuration. An override for Lending does not configure Reminders. |
-| What can the assignment afford and admit next? | One assignment ledger and the admission rules below, enforced by `run`. |
-| Is a run working, waiting, uncertain or finished? | The run transitions below, reduced from committed Host events. |
-| Where are events and exact payloads stored? | The journal; its adapter does not choose execution policy. |
-| How are inputs captured, successors handed over and outputs published? | `apply`, using the same run state and current controller binding. |
-| What does the owner see? | A projection of these facts and current evidence, without another UI state machine. |
+The two-Apply demonstration therefore uses two ordinary invocations: R1 on M1 and, after the model edit, R2 on M2 against the published A1. Each is its own assignment, and both are reported. No budget carries over between them, and no approval does either.
 
 ## A shared assignment budget
 
-The assignment grant has four independent caps: prepared runs, possible session starts, Agent steps and active execution time. Project limits bound the grant; task restrictions may narrow it. There are no independent copies of the shared balance per Manager. Root proposes allocations and reallocation; the Host validates and commits them. Reviewer and child consumption is attributed once to the actual execution, with references for parent summaries.
+The assignment has four caps: prepared runs, session starts, Agent steps and active execution time. Project ceilings bound them. There are no per-Manager copies of the balance, and Managers do not manage budgets; the Host accounts for every invocation once, against the assignment.
 
-- A run consumes one run unit when its fixed binding is committed as Prepared. A rejected acquisition creates no prepared run and grants no execution.
-- A session start reserves one start unit before attempting creation. Resuming an already established session does not consume another start; a replacement session does.
-- A step is one Host-dispatched Agent turn, including a continued conversation. Tool callbacks are part of that turn, not fresh Agent steps. Their actual external processes still have bounded execution time and tool/output limits.
-- Active execution time is the sum of charged invocation wall durations: session startup, Agent turns, project checks and Agent-requested external tool work. It excludes bounded Host control, idle sessions, parent/owner waiting and time between runs. Distinct overlapping invocations contribute separately; never count descendant work again as parent effort. This is neither CPU time nor an end-to-end delivery clock.
+- A run consumes one run unit when its fixed binding is committed as Prepared. A rejected acquisition prepares no run.
+- A session start consumes one start unit. Resuming an established session does not; a replacement session does.
+- A step is one Host-dispatched Agent turn, including a continued conversation. Tool callbacks belong to their turn.
+- Active execution time is the sum of charged invocation durations: session startup, Agent turns, project checks and Agent-requested tool processes. It excludes Host control work, idle sessions and waiting for the owner or for other tasks. It is neither CPU time nor a delivery clock.
 
-Every charged invocation has a recorded finite maximum duration before dispatch. The Host reserves that maximum, then settles the observed duration and releases unused allowance. If dispatch or termination remains uncertain, its full reservation stays unavailable until reconciliation. An error or elapsed timeout cannot release it. Unknown provider usage remains unknown; these units do not establish a monetary spending ceiling.
+Every charged invocation has a finite maximum duration recorded before dispatch. The Host reserves that maximum, then settles the observed duration and releases the rest. If dispatch or termination is uncertain, the full reservation stays held until reconciliation; an error or timeout cannot release it. Unknown provider usage stays unknown. These units do not establish a monetary ceiling.
 
-Deterministic composition, source acquisition/preflight, journal/control, publication/read-back and emergency reconciliation/termination are Host control operations outside the assignment ledger. Each has finite `hostOperationTimeout` plus operation-specific size/output bounds captured in preparation. They can record failure or stop an effect after Agent capacity is exhausted; they cannot investigate semantics, author a repair or launch a review under the name of cleanup. Record overruns and block work; accounting cannot establish physical termination.
+Composition, source acquisition and preflight, journal control, publication with read-back and emergency termination are Host control operations outside the budget. Each has a finite `hostOperationTimeout` and size limits fixed at preparation. They can record failures and stop effects after Agent capacity is exhausted; they cannot investigate, repair or review.
 
 ## One ledger with protected completion capacity
 
-For each budget dimension, track four non-overlapping amounts:
+The configuration sets a completion reserve for session starts, steps and execution time. The rule is one admission check:
 
-| Amount | Meaning |
-| --- | --- |
-| Consumed | Settled effort, or committed prepared runs. It never decreases. |
-| Allocated | Unconsumed capacity assigned to named bounded work, including in-flight/uncertain dispatch reservations. It retains its ordinary-work or protected-completion purpose. |
-| Protected | Completion capacity not yet allocated to an execution. |
-| Free | Unconsumed, unallocated capacity available for ordinary work or additional protection. |
+- **Writing work** (implementation, rework and parent integration authoring) is admitted only if the capacity left after its reservation still covers the completion reserve.
+- **Assessment work** (local, integration and final reviews and required checks) may use any remaining capacity, including the reserve.
 
-Within the admitted grant, `consumed + allocated + protected + free = grant`, dimension by dimension. A dispatch reservation is held inside its allocation, not counted once more. Reports show uncertain holds separately within Allocated. Admission preserves that accounting; settlement must still record an actual overrun rather than reject the observation. An overrun sets available capacity to zero and blocks work, with the excess explicitly reported. It is not an invented grant increase or a positive free balance.
+At preparation the Host rejects a reserve that cannot cover at least one session start and one step for every required local review, integration review and final verification of the organization. That check is structural; whether the reserve is generous enough remains a judgment that a run can prove wrong.
 
-The configuration supplies an initial completion reserve. Before the first Agent dispatch, the Host creates an initial plan from the organization, fixed strategy and required checks; bootstrap cannot depend on an unbudgeted root turn. The plan identifies remaining mandatory reviews, integration assessments, final verification and executable checks and their bounded allocations/reserves. Include a specifically commissioned later stage when planning the two-Apply assignment. Root may refine the plan, but the Host cannot admit extra implementation without capacity for its required assessment. Structural coverage of obligations is checked; estimating enough effort remains fallible and reviewable.
+Settled consumption never decreases. Settlement records an actual overrun instead of rejecting it; an overrun sets the remaining capacity to zero, blocks further work and is reported. Waiting consumes nothing: while all work is quiescent and waiting for an answer, no step or execution time is charged. Status inspection starts no Agent.
 
-For the explicitly commissioned M2 stage, hold its required future run unit in a named stage allocation. It is part of Allocated in the same ledger, not an extra run or review pool. R1 cannot consume it through unrelated retries. This is a small recorded two-stage assignment plan, not a general workflow language.
-
-Protected capacity pays for independent Agent assessment, integration/final review and project checks. Deterministic composition and guarded publication are separately bounded Host control, not another budget dimension. Source authoring, including parent integration code and repair, remains ordinary work. Code-writing capabilities are not granted to completion-funded Agent steps.
-
-Root can move Free to an ordinary allocation, move Protected to a completion allocation, or revise/release unspent capacity with a recorded reason and a still-covered completion plan. Settled consumption and in-flight/uncertain holds cannot be reallocated. Unused ordinary allocations return to Free. Unused completion allocations return to Protected until the plan explicitly releases them. No owner decision is needed for valid internal reallocation within the grant. No step or session can silently draw from the other purpose after exhausting its own allocation.
-
-For illustration, one dimension of a 60-step grant could evolve as follows. This demonstrates accounting only; it is not a claim that 60 steps suffice for the entire library or both Applies.
-
-| Observation | Consumed | Allocated | Protected | Free |
-| --- | ---: | ---: | ---: | ---: |
-| Initial plan | 0 | 0 | 18 | 42 |
-| Allocate six Lending work steps | 0 | 6 | 18 | 36 |
-| Four steps settle | 4 | 2 | 18 | 36 |
-| Release the unused two | 4 | 0 | 18 | 38 |
-| Allocate two review steps from Protected | 4 | 2 | 16 | 38 |
-| One review step settles; release its unused step to Protected | 5 | 0 | 17 | 38 |
-
-The earlier 24/18/12/6 split was a planning illustration, not four accounts. A correction now reserves ordinary repair effort and the necessary renewed assessment together in this one ledger. If both do not fit, retain the candidate and report incomplete or request a concrete extension. Required checks and business rules are never reduced to fit the budget.
+Budget pressure never waives evidence. When writing work no longer fits, the Host retains the candidate and the run finishes Incomplete with its open work. The owner can extend the assignment's caps within the project ceilings; the extension is recorded and takes effect for the next run. A run that ended Incomplete stays Incomplete.
 
 ## Evidence need survives budget pressure
 
-Decide what evidence the current obligation needs separately from whether the assignment can afford it. The existing reviewer selects a small distinguishing case when a named plausible error could violate a consequential boundary, change existing state incorrectly or escape ordinary checks. Start with the canonical basis before reading the implementer's solution; the fresh review can use an initial model-only turn followed by candidate inspection in the same session. Record the actual order and include both turns in the completion plan. This is targeted review work, not another reviewer or a mandatory mutation of every Definition.
+What evidence an obligation needs is decided separately from whether the budget can afford it. A reviewer who sees a plausible error that could violate a consequential boundary selects a small distinguishing case, starting from the model before reading the implementer's solution. A current case that already distinguishes the concern is reused. For lending, useful cases are a suspended member who can still return a book, and a repeated return of loan L1 after the copy has been lent again as L2.
 
-Reuse a current adequate case when it already distinguishes the concern. For Lending, useful examples are suspension preserving return rights and repeating return L1 after the copy has been lent as L2. Additional checker counterexamples are selective; all mandatory assessment still applies. Neither low remaining budget nor simple-looking code establishes that a recognized concern is unnecessary.
+A necessary missing check is a blocking **finding**: a Host-recorded identity, the affected responsibility, its model and input basis, the requested evidence and the originating reviewer. A finding can exist before any candidate. It has three states:
 
-A necessary missing check is an ordinary blocking `Finding`, with stable identity, model/input/scope basis, requested evidence and originating reviewer. It can precede a candidate; do not invent a candidate reference then. Later independent review explicitly resolves it for the current subject using actual evidence, or supplies a grounded applicability decision referring to the authorized basis. A Manager may propose resolution but cannot remove it. Budget/deadline exhaustion cannot resolve it, and omission from the latest report cannot erase it.
+| State | How it is reached |
+| --- | --- |
+| Open | Recorded by a reviewer. Omission from a later report does not change it. |
+| Resolved | A later independent review cites actual current evidence for the current subject. |
+| Not applicable | A later independent review records grounds on the authorized basis, for example a changed model. |
 
-Host acceptance reads findings and resolutions from the relevant task/child/predecessor history. It validates authorized reviewer provenance, actual receipt existence and current input/subject/scope/purpose bindings. A child receipt retains its own candidate plus composition provenance; it does not acquire the aggregate's hash or replace root integration evidence. A generic pass, invented receipt, failed/unknown required check or historical resolution on a changed subject cannot close a current gap. When a specific case is required, the evidence must establish that it ran rather than being skipped; command exit zero alone is insufficient. The reviewer judges the case's semantic adequacy.
+A Manager may propose a resolution but cannot record one. Budget or round exhaustion cannot resolve a finding. A generic pass, an invented receipt, a failed or unknown check, or an old resolution on a changed subject cannot close it. When a specific case is required, its evidence must show that the case ran; an exit code of zero alone is not enough. If a requirement changes in substance, the old finding becomes not applicable and a new, linked finding carries the changed requirement. Open findings carry into a successor run even when their candidate files are discarded.
 
-Use existing finding/review/check records and their projection, not a verification backlog or editable resolved flag. One receipt can support several findings. A genuine reviewed applicability change is recorded with grounds and preserves the original finding; a scope/model change still needs its authorized transition and fresh required assessment. Initial full reconciliation does not permit narrowing the operation merely to claim success. If evidence cannot be obtained, the run remains incomplete. The Host can enforce declared completeness and bindings, but cannot prove that reviewers never omit or misinterpret a necessary concern.
-
-At a successor, carry unresolved finding identities even when their candidate files are discarded. The current independent review records one applicability judgment: still applies, applies with adjustment, no longer applies or unclear. This is an assessment on the new basis, not another lifecycle. For a limit finding, M2 replaces the six-loan countercase with three successful loans and refusal of the fourth; it does not preserve five as binding intent. A valid no-longer-applies judgment stops blocking the current scope without retroactively passing the old candidate. An unclear judgment remains open. If responsibility disappeared, route assessment through the current parent/root. A materially different replacement finding must be linked and remain required; a replaced label cannot close both concerns. Full reconciliation still assesses new current obligations and transfers no old approval.
-
-Build the current finding view from typed judgments and causal links at a pinned journal revision. For the first Apply, supply the compact complete open/unclear/reassessment set for the task's full responsibility plus recorded dependencies and inherited concerns. Do not minimize it from a Manager's free-text next action. Parent integration receives child blockers/delivery references; unknown routing returns to the common parent/root. The Host carries recorded scope/Definition/provenance relationships, without claiming to discover missing semantic dependencies.
-
-Role context carries current grounds and evidence references, not every old conversation or recursively rewritten summary. The Host retains the complete required set even when delivery is paged; a token cutoff, unread page or fetched-but-unresolved entry cannot discharge an obligation. Required context must actually be available before its dependent action. Record supplied references/revision and refresh changed relevant facts before acceptance. This uses the existing journal projection and context builder, with no second finding database or summarizing Agent.
-
-Rule location, artifact ownership and affected responsibility are distinct. A receiving Manager exposes a mismatch through the common parent; “not mine” cannot close or orphan the finding. The parent records corrected accountability and ordinary child contributions. Cross-area concerns require composed integration evidence, not every neighbor's co-signature or a local pass alone. The Host checks recorded scope/ownership; local reasoning and integration review remain responsible for discovering missing semantic impact.
+Role context carries the complete set of open findings for the task's responsibility and its recorded dependencies, with their grounds and evidence references. Paging the set is allowed; an unread page cannot discharge an obligation. A receiving Manager that is not responsible for a finding reports that through the common parent; "not mine" cannot orphan it.
 
 ## Accepted deliveries and dependent work
 
-The nearest common parent records required contributions, outcome/basis and order in existing tasks. The Host routes ordinary progress and releases recorded dependencies mechanically; new scope or conflicting evidence returns for a parent decision. An Agent's completion message is insufficient. Readiness requires the selected Host-issued delivery, current required assessment, compatible composition and actual consumer inputs, plus ordinary admission guards. It does not authorize another writer or aggregate publication.
+Only the Host issues an accepted delivery: the exact candidate, registry revision, completed reviews and checks, and the child deliveries it contains. A task that depends on another area starts only when the producer's accepted delivery has been composed into its base. An Agent's completion message is not enough.
 
-Accepted deliveries remain immutable historical facts. A blocking concern about a selected delivery prevents that delivery and potentially exposed results from supporting new dependent dispatch, acceptance or publication until current assessment resolves it. Reconcile an active step before replacing its inputs; retain its candidate and reservations while effects remain uncertain. Explicitly commissioned diagnosis/repair can inspect the defective basis without treating it as valid. Separately established independent work may remain eligible, subject to the same one-writer rule.
-
-An accepted replacement must be explicitly selected, composed and supplied to affected consumers. Keep useful work, with current applicability/review/integration; a newer delivery alone neither invalidates nor silently upgrades the old selection. Same-basis correction is bounded rework; changed run inputs require the existing successor path. No reassignment resets budgets or correction limits. Derive potential exposure conservatively from supplied snapshots, delivery composition, session history and recorded additions. Unknown ambient access cannot justify selective independence. This uses existing tasks, findings and journal projections, without per-file read surveillance or a second dependency engine.
+Accepted deliveries are immutable. If a later blocking finding concerns an accepted delivery, neither that delivery nor dependent work built on it can be accepted or published until the finding is resolved. A replacement delivery must be selected explicitly and composed into the affected consumers; correcting it is ordinary bounded rework and resets no budget or round counter.
 
 ## Admission, amendments and finite correction
 
-Before any external execution, the Host validates the current run/controller, allowed action and source/candidate binding, allocation purpose, remaining counters, timeout and deadline. The selected maximum duration must fit its remaining allocation and any deadline; reduce it explicitly before preparation or refuse admission. Reservation and dispatch preparation commit together before the call. Recheck time/authority at the actual effect boundary. No call follows a failed or uncertain commit. Settlement is another recorded transition; recovery inspects the known effect instead of replaying the preparation.
+Before any external execution, the Host checks the current run and controller, the allowed action, the source and candidate binding, the admission rule above, the remaining caps and the maximum duration. The reservation and the dispatch record commit together before the call. No call follows a failed or uncertain commit. Settlement is another recorded transition; recovery inspects the known effect instead of replaying it.
 
-Assignment consumption and unresolved reservations survive restart and successors. An allocation is not a fresh grant. An owner amendment can increase the grant within project ceilings, with its source and exact changed values recorded. Changing the effective grant, deadline, configuration or profile requires a successor binding. Internal reallocation does not. Raising a project ceiling requires an authorized configuration edit as well. A new task ID, Manager session or same-goal run cannot bypass an exhausted limit.
+`reviewRounds` is the number of candidate submissions per run, Manager and review purpose (local, integration or final), including the first; the default is three. The counter is keyed by `(run, Manager, review purpose)`, so recreating a task or session does not reset it. An attempt number identifies one submission within a task; the round counter is the limit. An exact duplicate submission returns the existing receipt. A candidate that fails a required check still consumes its round.
 
-`reviewRounds` means total submitted candidate rounds per logical responsibility and review purpose (local, integration or final) within one fixed run; the default is three, including the initial candidate. It does not mean three corrections after an initial attempt. Recreating a task/session preserves that counter. An idempotent repeat of the same submission is not a new round; submitting another candidate for rework is. Retrying a known transport failure against the same submission consumes actual execution allowance, without inventing another semantic candidate or blindly replaying an uncertain call.
+After each rejection, the Manager records the unresolved finding, the progress made and a different next action with an observable target. After the second rejection, the parent assesses that plan before a third submission; at the root, the root does. This grants no extra round. Missing authority or uncertain effects stop dependent work at once.
 
-For full reconciliation, the counter key is `(run, Manager, review purpose)`, not a replaceable task/session ID. A submitted candidate that fails a required check still consumes its round. A new submission ID with unchanged failing bytes is another round; an exact duplicate ingress returns the existing receipt.
-
-After each rejected candidate, record the unresolved finding, actual progress/evidence and the different next action with its observable target. After the second rejection, the parent must assess that plan before a third submission. At root, root performs the same bounded planning step. This count-based trigger replaces the ambiguous “second correction of the same finding”; the Host need not infer whether differently worded findings share a cause. It grants no extra round. Missing authority or uncertain effects stop dependent work immediately, without waiting for a threshold.
-
-A real successor requires a changed basis or explicit renewed authority, not merely the wish to reset review attempts. Its fresh assessments have current-run counters but use the same remaining assignment budget and carry the unresolved findings. First-version successors repeat all required reviews/checks; previous approvals remain historical.
-
-## Execution allowance and delivery deadline
-
-Use `maxExecutionTime` for the active-execution allowance above. Remove the ambiguous `assignmentTimeout` field. The owner can separately supply an optional absolute UTC `deadline` on the assignment. It continues while waiting and is never silently extended. Step/check/startup timeouts remain local limits; reserve their actual selected maximum before invoking them. A maximum such as ten minutes is a ceiling, not permission to spend that much without an allocation.
-
-When all work is quiescent and waiting for the owner, no Agent step or active execution time is consumed. Status inspection alone starts no Agent. Further analysis, polling through an Agent or running checks is charged work. One waiting Lending task does not stop accounting for useful Catalog work that is still executing.
-
-For example, the organization asks a question at 16:00 after consuming 18 steps and twelve minutes of execution time. An answer at 09:00 the next day leaves those consumed amounts unchanged if nothing executed overnight. With no delivery deadline, it may continue within the existing grant after resolving the question. With a deadline at 18:00 the previous day, the next controller observes expiry and finishes the quiescent run Incomplete before any new work; an authorized extension and successor are required. A context-only answer would otherwise continue the same fixed run; a changed model still needs a successor.
-
-No background timer service is required. While the controller is absent, read-only status can show the last recorded Waiting state plus an expired deadline; only a committed control transition records Finished. Admission/recovery checks time before effects. A later amendment never retroactively authorizes expired or overrun work.
-
-A local timeout requests stop and records the observation. Confirmed termination can permit a justified attempt within remaining limits. Unknown termination enters reconciliation and blocks new work. On assignment exhaustion/deadline, stop new work and perform bounded control cleanup. Completion reserves do not bypass an expired deadline, exhausted global cap or unresolved writer.
-
-The Host supplies explicit clock/elapsed observations to transition logic; the reducer does not read an ambient clock. Within an observed execution use elapsed duration, not subtraction of arbitrary report timestamps. Recovery cannot erase an unobserved execution interval: retain the hold until a justified settlement exists. These execution clocks are unrelated to the library's explicitly supplied business dates.
+A successor run needs a changed basis or renewed authority, never just the wish to reset rounds. Its reviews and checks run again in full; earlier approvals remain history.
 
 ## One run state machine
 
-Only `run` owns these persisted lifecycle meanings. `apply` requests validated transitions for verification/publication/handoff. The journal stores their committed facts; adapters and status views do not run alternative state machines.
+Only `run` owns these lifecycle meanings. `apply` requests transitions for verification, publication and handoff. The journal stores the committed facts, and views derive from them.
 
 | State | Meaning and permitted next transition |
 | --- | --- |
-| Prepared | Fixed inputs and a run unit are committed; no Agent work is yet implied. Start authorized work to Running, or finish safely without dispatch. |
-| Running | Ready work, checks, local review or upward integration are being coordinated. Some tasks may wait while other work continues. Move to Waiting only when all remaining useful work depends on external input and no effect remains active/uncertain; move to Verifying when required deliveries are accepted. |
-| Waiting | Quiescent, with a named next actor and reason: owner decision, authorized model edit or other explicit external prerequisite. Resume Running on an applicable context-only answer; use safe successor handoff when the basis changes. A deadline still applies. |
-| Verifying | Required aggregate checks, independent final verification and source preflight. A known correctable finding can return to Running only with a valid correction/assessment allocation and remaining rounds. Exact current passing evidence permits Publishing. |
-| Publishing | The guarded candidate/registry effect and read-back are being observed. No new implementation or competing publication is dispatched. Complete to Finished, or enter Reconciling for partial/unknown observations. |
-| Reconciling | Stop, interruption, controller loss, partial/unknown publication or uncertain execution requires inspection. Block new work/publication. Use bounded control inspection/stop only. Once effects and authority are established, resume the eligible phase on the same basis or finish with the observed result. |
-| Finished | Exactly one immutable outcome below. No further dispatch or publication by this run. Later runs link to it without rewriting its result. |
+| Prepared | Fixed inputs and a run unit are committed. Start work (Running) or finish without dispatch. |
+| Running | Work, checks, reviews or integration are being coordinated; some tasks may wait while others continue. Move to Waiting only when all remaining useful work depends on external input and no effect is active or uncertain. Move to Verifying when the required deliveries are accepted. |
+| Waiting | Quiescent, with a named next actor and reason: an owner decision, an authorized model edit or another external prerequisite. A context-only answer resumes Running; a changed basis needs a successor run. |
+| Verifying | Required aggregate checks, independent final verification and source preflight. A correctable finding returns to Running only if rounds and budget remain. Current passing evidence permits Publishing. |
+| Publishing | The guarded write and read-back are being observed. No new implementation or competing publication is dispatched. Complete to Finished, or enter Reconciling on partial or unknown observations. |
+| Reconciling | A stop, interruption, controller loss, partial or unknown publication or uncertain execution needs inspection. New work and publication are blocked; only bounded inspection and termination run. Once effects are known, resume the eligible phase on the same basis or finish with the observed result. |
+| Finished | Exactly one immutable outcome below. No further dispatch or publication. Later runs link to it without changing it. |
 
-`Waiting` is not permission to leave a background writer unaccounted for. `Reconciling` is an actionable blocked condition, not a successful terminal outcome. A bounded reconciliation that cannot establish the effect returns that visible blocker; it does not enter a free polling loop. If the process/store is unavailable, inspection labels the last committed state and its observation limit; it cannot invent a completed transition. Same-run recovery requires a still-valid basis, known prior effects and a current controller. New input bindings require a successor. Applied/NoChange can finish only through the publication/read-back boundary, including its established recovery result.
+Reconciling is a blocked condition, not a successful end. An inspection that cannot establish the effect leaves the blocker visible. If the store is unavailable, inspection shows the last committed state and its observation limit. An internal dependency cycle is not Waiting: the common parent or the root assesses it within its mandate, or the run ends Incomplete.
 
-An internal dependency cycle is not external Waiting. The existing parent/root performs a bounded coordination/progress assessment within its mandate, or ends incomplete when no viable authorized step fits. Do not wait indefinitely for Managers to unblock each other or invent an owner decision to label a technical deadlock.
-
-Stop requests, input drift and exhaustion first stop admission and reconcile any active effects. Once quiescent, they can finish. A proven partial publication is retained as actual source for a later operation; the old request is not silently repeated. Complete recovery may establish Applied only when the original required evidence and exact publication/read-back are actually established. A cancellation acknowledgement, process exit or Agent report alone cannot do that.
-
-Cleanup may record an already completed authorized effect after a deadline; it cannot launch missing verification or resume writing under expired authority. If on-time required completion is not established, finish Incomplete with the actual publication facts rather than assume success. An already Finished result remains historical when its old deadline later passes. A grant overrun is likewise retained as a violation, not converted to a successful bounded run merely because the artifact is correct.
+Stop requests, input drift and exhaustion first stop admission and reconcile active effects; then the run can finish. A proven partial publication becomes the actual source for a later run; the old request is not repeated. Applied requires the original required evidence plus exact publication and read-back. A cancellation acknowledgement, process exit or Agent report never establishes it.
 
 ## Terminal outcomes and displayed status
 
-| Outcome on Finished | Grounds and next action |
+| Outcome on Finished | Grounds |
 | --- | --- |
-| Applied | Current required local/integration/final evidence, guards and read-back establish the exact changed artifact/registry result. |
-| NoChange | The same required assessment and current source/read-back establish that neither artifacts nor registry need publication. No edits alone is insufficient. |
-| Superseded | An unfinished predecessor is safely replaced by an authorized successor in one committed handoff. No unresolved external effect may be handed off. |
-| Stale | Bound inputs drifted; the run is quiescent and cannot publish. Acquire a current successor basis if authorized. |
-| Stopped | An explicit owner stop has reached known quiescence. Retain work and evidence. |
-| Incomplete | Budget, deadline, review-round exhaustion or absence of a viable authorized correction prevents completing the scope. Record the reason, retained work and any actionable question. |
-| Failed | A definitive acquisition/execution/validation/publication failure ends this run. Preserve actual effects and grounds; a known partial publication is a failed result, not an implicit rollback. |
+| Applied | Current local, integration and final evidence, guards and read-back establish the exact changed artifacts and registry. |
+| NoChange | The same assessment and current source and read-back establish that nothing needs publication. Absence of edits alone is not enough. |
+| Superseded | An unfinished run is replaced by an authorized successor in one committed handoff. No unresolved effect is handed over. |
+| Stale | Inputs drifted; the run is quiescent and cannot publish. |
+| Stopped | An explicit owner stop reached known quiescence. Work and evidence are retained. |
+| Incomplete | Budget or round exhaustion, an unanswered question or the lack of a viable authorized correction prevents completion. The reason, retained work and open questions are recorded. |
+| Failed | A definitive acquisition, execution, validation or publication failure. Actual effects are preserved; a known partial publication is Failed, not rolled back. |
 
-An acquisition rejected before Prepared is an application preparation failure with its available evidence, not a fabricated successful or prepared run. Unknown effects never become Failed merely to remove a blocker: they remain Reconciling until established. Each terminal result records the source/subject and reason; later discovery adds a correction/finding instead of erasing history.
+An acquisition rejected before Prepared is a preparation failure, not a run. Unknown effects never become Failed just to clear a blocker; they stay Reconciling until established. Later discoveries add findings instead of rewriting results.
 
-“Needs decision” is a question/attention projection, not a second run outcome. It can appear while the run is Running because other tasks remain useful, or alongside Waiting. “Interrupted/uncertain” projects Reconciling and the actual observation gaps. “Locally checked” and “aggregate verified” describe evidence for exact subjects, not new lifecycle states. Publishing is not Applied. Deployed requires a separate authorized operation outside Apply.
+"Needs decision" is attention on an open question, not an outcome; it can appear while the run is Running or Waiting. "Locally verified" and "aggregate verified" describe evidence for exact subjects, not states. Publishing is not Applied, and Applied is not deployed; deployment is a separate operation outside Apply.
 
-An assignment has an open/closed fact, its commissioned remaining goal/stages, linked runs and amendments. While open, activity is projected as active, waiting, blocked or idle from those facts. Closure requires established quiescence/effects. It closes with Completed only when all commissioned work has successful bound results and no required unresolved obligation. It may instead be explicitly closed Stopped, Incomplete or Failed, retaining unanswered questions/findings. Closed assignments are not silently reopened.
+An assignment stays open while it has an unfinished run or an open question. It closes Completed when its last run finished Applied or NoChange with no required obligation open; otherwise the owner closes it with the last run's outcome. A closed assignment is not reopened; new work is a new assignment.
 
-Thus an exhausted run can be Finished/Incomplete while the open assignment waits for a grant decision. An authorized amendment starts a successor without changing that old outcome. If the owner closes the assignment, report that separate fact. A completed R1 remains Applied while the two-stage assignment awaits the M2 edit; R2 does not change R1 to Superseded. The same preservation rule applies to every already Finished outcome.
-
-## Library traces and focused implementation gates
+## Library traces and focused gates
 
 | Library situation | Budget and lifecycle result |
 | --- | --- |
-| M1 initial realization | Reserve completion capacity, run root/Package work through fresh reviews, close required findings with current evidence, verify and publish/read back A1: R1 Finished/Applied. The commissioned M2 stage remains pending. |
-| Model-only five-to-three change | Capture M2 and actual A1, prepare R2 under the same remaining grant, replan completion capacity and repeat current assessment. R1 remains Applied. A2 can finish Applied only after its own gates. |
-| An unfinished predecessor had a loan-limit finding | Retain its identity and assess the changed requirement on M2. Obtain current three/four-loan evidence; preserve the old failed result without requiring obsolete five/six-loan behavior in A2. |
-| Lending asks; Catalog can continue | Lending waits; the run remains Running. Actual Catalog work is charged. No overall Waiting label hides continuing execution. |
-| All work awaits an owner answer | Finish/quiesce effects, then Waiting with the exact question and next actor. No step/time consumption solely from the wait. |
-| Review rejects suspension/return behavior twice | Parent examines a concrete repair plan before candidate three. Repair and renewed assessment must both fit. A third rejection yields Incomplete/review limit; renaming the task grants no fourth candidate. |
-| Only protected assessment capacity remains | Do not spend it fixing borrowing. Preserve the candidate and finish Incomplete if required authoring cannot proceed; ask for an extension only when there is a concrete justified plan. |
-| Required L1/L2 case is unaffordable | Preserve its finding and retained candidate. Ordinary-return success does not discharge it; omit no requirement and publish no unsupported result. |
-| Step times out; writer state unknown | Reconciling, reservation held, no replacement writer or publication. Confirm termination/effects before a permitted resume or successor. |
-| No-change reconciliation | Full current assessment plus source/read-back, then Finished/NoChange, with no inferred approval reuse. |
-| Source drift or partial publish | Stop admission and reconcile. Known drift can finish Stale; known partial publication finishes Failed with exact paths. Unknown effects remain blocked. |
+| M1 initial realization | Root and Package work run through fresh reviews; required findings close with current evidence; verification and read-back publish A1. R1 finishes Applied. |
+| Model-only five-to-three change | A new Apply invocation captures M2 and the actual A1 and reassesses everything. R2 can finish Applied only after its own gates. R1 stays Applied. |
+| An unfinished run had a loan-limit finding when M2 arrived | The successor carries the finding; the reviewer marks it not applicable on M2 and records the new three-loan requirement as a linked finding with current evidence. |
+| Lending asks; catalog can continue | Lending waits; the run stays Running, and catalog's work is charged. |
+| All work awaits an owner answer | Effects quiesce; the run is Waiting with the exact question. Nothing is charged for the wait. |
+| Review rejects suspension or return behavior twice | The parent assesses a concrete repair plan before candidate three. A third rejection ends Incomplete; renaming the task grants no fourth candidate. |
+| Only the completion reserve remains | No further writing is admitted. The candidate is retained and the run ends Incomplete with its open work. |
+| A required L1/L2 case cannot be afforded | The finding stays open; a passing ordinary return does not discharge it, and nothing unsupported is published. |
+| A step times out; writer state unknown | Reconciling with the reservation held; no replacement writer or publication until termination and effects are known. |
+| Source drift or partial publication | Admission stops and the run reconciles. Known drift finishes Stale; a known partial write finishes Failed with exact paths. Unknown effects stay blocked. |
 
-Implement focused deterministic transition/accounting checks for these cases, duplicate reservation/settlement, refusal of wrong-purpose spending, unused-capacity release, no inherited Package override, active-time versus overnight waiting, deadline expiry, round counters surviving task recreation, terminal-result immutability and same-goal successor consumption. Finding checks reject disappearance by omission, old/invented receipts and a generic pass without finding-specific resolution; replay preserves valid current resolution. Check real adapter termination separately; fake events cannot establish physical quiescence.
-
-The external working-day evaluator can compare captured invocations and observations against this contract without importing the product's reducer/accounting implementation. Its controlled negative evidence includes a reset balance, implementation funded from protection, an old approval on new inputs, and a second writer admitted before reconciliation. None is added as a secret library business rule or an extra primary M1/M2 requirement.
-
-Return to [configuration](manager-apply-configuration.md), [journal](manager-apply-journal.md), the [Playground](manager-apply-playground.md) or the [Apply plan](manager-apply-implementation-plan.md).
+Implement deterministic transition and accounting checks for these cases, plus duplicate reservation and settlement, refusal of writing work that would use the reserve, release of unused time, no inherited Package override, no charge while waiting, round counters surviving task recreation, immutable outcomes and finding resolution only through independent current evidence. Real adapter termination is tested separately; fake events cannot establish that a process stopped.

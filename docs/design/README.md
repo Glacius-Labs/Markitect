@@ -7,19 +7,12 @@ The [Project World package](project-world/README.md) has its own reading order a
 ## Product direction and work shape
 
 - [Canonical model v1](canonical-model/minimal-language/language-contract.md) — completed language design baseline, confirmed on 16 October 2026; production Go implementation and broader conformance evidence remain separate work.
-- [Canonical model overview](canonical-model/README.md) — the completed baseline, evidence boundaries, working vocabulary and historical sources.
-- [Manager realization north star](canonical-model/manager-realization-north-star.md) — Package Managers, configurable teams, artifact registration and context variants from the owner discussion of 16 October 2026.
-- [Manager organization and reliable Apply](canonical-model/manager-apply-concept.md) — developed proposal with concrete responsibilities, context, registry, execution and reporting contracts, and a library walkthrough.
-- [Implementation plan for reliable Apply](canonical-model/manager-apply-implementation-plan.md) — two real library Applies around a model change, source/Playground design and a clean rebuild with small delivery slices.
-- [Supplied Apply review and resolution](canonical-model/review-resolution-20261016.md) — treatment of five conceptual gaps, preserved review sources and the next design steps.
-- [Small library model M1](canonical-model/library-example/README.md) — canonical YAML, explicit Package connections and bounded validation derived from the confirmed simple business rules.
-- [Go architecture outline for reliable Apply](canonical-model/manager-apply-go-architecture.md) — initial Ports and Adapters responsibilities, package direction and source reuse/replacement proposal.
-- [Library delegation and Apply ports](canonical-model/manager-apply-library-flow.md) — root-to-lending walkthrough, fresh review and integration, with linked concrete Go port proposals and lifecycle contracts.
-- [Agent adapter selection and rebuild plan](canonical-model/manager-apply-rebuild-plan.md) — first stdio App Server adapter, clear session lifetimes and concrete source/contract deletions, with architecture quality taking priority over minimizing effort.
-- [Apply configuration and mandates](canonical-model/manager-apply-configuration.md) — execution settings, exact Package overrides, hard ceilings, explicit profiles and source-bound Manager authority.
-- [Apply budgets and lifecycle](canonical-model/manager-apply-execution.md) — one shared account, protected completion capacity, waiting/deadline rules and one run-state/outcome/status contract.
-- [Apply journal and continuation](canonical-model/manager-apply-journal.md) — SQLite-backed assignment history, versioned questions/answers, carried work and controlled successor/publication lifetimes.
-- [Library Playground contract](canonical-model/manager-apply-playground.md) — callable JSON Lines program, independent M1/M2 expectations and a continuous two-Apply scenario with fixed artifacts and execution history.
+- [Canonical model and Apply design](canonical-model/README.md) — the completed language, the Apply design map with its reading order and ownership, and the working vocabulary.
+- [Manager organization and reliable Apply](canonical-model/manager-apply-concept.md) — organization, context, delegation, deliveries, review purposes, artifact ownership, lifecycle and reporting.
+- [Go architecture](canonical-model/manager-apply-go-architecture.md), [port contracts](canonical-model/manager-apply-port-contracts.md), [configuration](canonical-model/manager-apply-configuration.md), [execution](canonical-model/manager-apply-execution.md), [journal](canonical-model/manager-apply-journal.md), [rebuild plan](canonical-model/manager-apply-rebuild-plan.md) and [Playground](canonical-model/manager-apply-playground.md) — the technical contracts of the rebuild.
+- [Library delegation walkthrough](canonical-model/manager-apply-library-flow.md) and [acceptance gates](canonical-model/manager-apply-implementation-plan.md) — one Apply traced step by step, and what each delivery step must prove.
+- [Small library model M1](canonical-model/library-example/README.md) — canonical YAML, explicit Package connections, callable interface and independent expectations.
+- [Manager realization north star](canonical-model/manager-realization-north-star.md) — ideas and variants that were not selected, later operations and open questions.
 - [Earlier model-design consolidation](canonical-model/consolidation.md) — chronology from 15 October 2026 and remaining product questions outside the completed language scope.
 - [Grundmodell und Bibliotheksentwurf](product-model-refinement/README.md) — typisierte Prosa, dokumentierte Designentscheidungen und Sprachkandidaten.
 - [Standalone Tasks project documentation](task-management/README.md) — fachliche Gegenprobe als eigenständige Projektspezifikation; Anwendung noch nicht implementiert.

@@ -6,7 +6,7 @@ Date: 16 October 2026. This is the single current delivery and coordination plan
 
 Real Managers realize the small library M1 as A1; independent assessment examines actual code, tests, documentation and history. Change only the model's loan limit from five to three, then Apply M2 against actual A1 to produce and assess A2. Use one frozen product/profile for the final demonstration. No manual code repair between the Applies.
 
-The [canonical language v1](design/canonical-model/minimal-language/language-contract.md) is the language baseline. The [Apply design map](design/canonical-model/README.md) routes technical contracts. The [detailed acceptance slices](design/canonical-model/manager-apply-implementation-plan.md) and [removal map](design/canonical-model/manager-apply-rebuild-plan.md) are specifications, not separate live backlogs.
+The [canonical language v1](design/canonical-model/minimal-language/language-contract.md) is the language baseline. The [Apply design map](design/canonical-model/README.md) routes technical contracts. The [acceptance gates](design/canonical-model/manager-apply-implementation-plan.md) and [removal map](design/canonical-model/manager-apply-rebuild-plan.md) are specifications, not separate live backlogs.
 
 Starting product: Main `bc4b49e76f9b9e4b3ec98033a0b8c73d5013b310`. Its existing CLI/self-model remain executable until a coherent replacement cutover. The new design is not already implemented. Published releases and historical evidence keep their original identity.
 
@@ -48,7 +48,7 @@ Use an isolated managed worktree and a non-protected branch from the integrated 
 | APPLY-JOURNAL | `internal/adapters/journal/` | After RUN/Apply control contracts. SQLite append/control/recovery; coordinator owns dependency pin. |
 | APPLY-AGENT | `internal/adapters/codexappserver/`, `internal/adapters/process/` | After Session/process contracts. Pin executable/schema, implement direct stdio; real smoke needs finite authority. |
 | APPLY-REPOSITORY | `internal/adapters/gitrepo/`, `internal/adapters/checks/` | After snapshot/workspace/check/publication contracts. Capture, checks, guarded effects and read-back. |
-| APPLY-INTEGRATE | `internal/apply/`, bootstrap/wiring and composed evidence | After RUN/adapters. One Package, then recursive integration, verification/publication and real M1/M2 proof. |
+| APPLY-INTEGRATE | `internal/apply/`, bootstrap/wiring and composed evidence | A first slice after RUN declares the consumer-owned `apply` ports (Source, Control, Publisher) that JOURNAL and REPOSITORY implement. The use case and wiring follow the adapters: one Package, then recursive integration, verification/publication and real M1/M2 proof. |
 
 A scope is reserved only when dispatched; it is not permission to start every later row. Parent scope grants no sibling files. Shared outputs have one current writer; reservation changes are explicit.
 

@@ -1,23 +1,22 @@
 # Product reflections
 
-This collection keeps discussions about Markitect's purpose, future use and organizational ideas. Each dated note separates owner statements, hypotheses and assistant interpretations, with links to the original wording and the relevant concept entries.
+Dated discussions about Markitect's purpose, future use and organizational ideas. Each note keeps owner statements, hypotheses and assistant interpretations apart and links to the original wording in the [sources](../sources/README.md).
 
 | Reflection | Subject |
 | --- | --- |
-| [Demonstrating a usable working day](working-day-demonstration-20261016.md) | Four library acceptance scenarios, passing criteria, allowed owner interventions, independent assessment without a second specification, and repeatability |
-| [Scope of the first usable organization](first-usable-version-20261016.md) | Essential capabilities, deliberate deferrals, non-negotiable reliability boundaries, and separate technical-core and working-day demonstrations |
-| [Concept consistency and consolidation review](concept-consistency-review-20261016.md) | Dated assessment for the Architect: configuration resolution, protected budgets, time limits, model-edit handoff, lifecycle mapping and document ownership |
-| [A working day with delegated realization](desired-working-day-20261016.md) | Model change, delegation, owner questions, review and steering; continuing assignments across Apply runs, retained work without inherited approval, and remaining interaction contracts |
-| [Trust through organized agent work](organization-and-trust-20261016.md) | [Extracted ideas with origin and status](organization-and-trust-20261016.md#extracted-ideas-and-their-status), desired working life, delegation, experience, configurable teams, review and process oversight |
-| [Experience without implicit rules](experience-without-implicit-rules-20261016.md) | Observation, explanation, experience and binding rules; a small learning loop, explicit authority and a hypothetical library walkthrough |
-| [Experience selection and runtime feedback](experience-selection-and-runtime-feedback-20261016.md) | Two separate subjects: selective experience context and a Manager-based operational check or doctor; library diagnosis with optional later learning |
+| [Trust through organized agent work](organization-and-trust-20261016.md) | The owner's desired working life, the management analogy, configurable teams, independent review and the limits of the analogy |
+| [A working day with delegated realization](desired-working-day-20261016.md) | Model change, delegation, authority and escalation, owner questions, continuation, budget, status, and the scope of the first usable version |
+| [Demonstrating a usable working day](working-day-demonstration-20261016.md) | Four later acceptance scenarios, allowed interventions, independent assessment and repeatability |
+| [Experience without implicit rules](experience-without-implicit-rules-20261016.md) | Observation, explanation, experience and binding rules; a small learning loop and the operational check through the Managers |
 
-## Continuing the discussion
+## How reflections relate to other records
 
-Add a dated note for a new subject or a substantial change of view. Preserve the owner's original wording in [sources](../sources/README.md), and distinguish it from analysis. Link to an existing reflection when continuing its subject; do not silently replace an earlier position.
+The [concept register](../register.md) owns decisions and their status. The [Apply design](../../design/canonical-model/README.md#apply-design) owns the rules. Reflections keep the picture and the reasons; they create no second decision register, schedule nothing and hold no runtime rules of their own. A new outcome of a discussion becomes a register entry or an edit to the contract that owns its subject; a reflection grows only when the picture itself changes.
 
-At the [owner's request](../sources/working-day-discussion-20261016.md#preserve-the-working-day-demonstration), record developed Markitect discussion outcomes directly as the discussion proceeds, without requiring a separate request to save each one. This authorizes documentation, not automatic acceptance of proposals, implementation, publication or messages to other chats. Keep proposals, owner decisions and observed evidence distinct.
+At the [owner's request](../sources/working-day-discussion-20261016.md#preserve-the-working-day-demonstration), developed discussion outcomes are recorded directly, without asking each time. That authorizes documentation, not acceptance of proposals, implementation or publication.
 
-The [concept register](../register.md) remains the owner of decisions and their status. These reflections develop their rationale and questions; they do not create a second decision register or schedule work. Concrete design belongs in the [design records](../../design/README.md).
+## Consolidation of 16 October 2026
+
+The evening's reflections were consolidated so that each rule has one owner. The first usable version was merged into the working day; the consistency review, whose findings the configuration, execution and journal contracts resolve, and the separate note on experience selection and runtime feedback were folded into their owners. Runtime rules from the demonstration moved into the Apply contracts; its [map of moved topics](working-day-demonstration-20261016.md#where-the-detailed-rules-went) keeps every earlier anchor. The texts before consolidation remain in Git at [`3ebe3c6e`](https://github.com/Glacius-Labs/Markitect/tree/3ebe3c6e6d283b998020350334e24a7303b089b7/docs/concepts/reflections). The verbatim sources are unchanged apart from three retargeted recorder's notes.
 
 Return to the [concept record](../README.md).
