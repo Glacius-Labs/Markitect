@@ -57,6 +57,8 @@ This establishes bounded evidence for initial realization and a subsequent model
 
 ### Usable working day
 
+The [concrete library acceptance procedure](working-day-demonstration-20261016.md) develops the four scenarios below, their passing criteria, allowed human interventions and proposed repeatability threshold.
+
 After the base works, demonstrate the interaction and failure paths in small separate scenarios:
 
 - A necessary question receives an authorized answer; the recorded model change leads to the correct continuation or successor without losing existing work or carrying old approval forward.

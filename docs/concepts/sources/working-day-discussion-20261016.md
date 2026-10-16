@@ -149,3 +149,17 @@ Recorder's note: The assistant recommended a small usable organization preservin
 > Halte diese Abgrenzung der ersten Version bitte auch in unseren Docs fest, inklusive der unverzichtbaren Fähigkeiten, bewusst verschobenen Erweiterungen und der beiden Nachweise für technischen Kern und nutzbaren Arbeitsalltag.
 
 The [first usable version reflection](../reflections/first-usable-version-20261016.md) records the recommended scope, initial manual model-edit boundary and separate demonstrations.
+
+## Make the working-day demonstration concrete
+
+> Wie würden wir den Nachweis für den nutzbaren Arbeitsalltag am Bibliotheksbeispiel konkret aufbauen, und woran erkennen wir, dass Markitect ihn tatsächlich bestanden hat?
+
+Recorder's note: The assistant proposed four separate library scenarios after the technical-core demonstration: a reserved renewal decision followed by a model change and successor Apply, internal correction of a controlled borrowing-limit defect, recovery after interruption, and bounded incomplete work when budget is insufficient. Acceptance includes independent behavior checks, recorded owner interventions, compact status and retained evidence. Three complete series on the same product/profile basis were proposed as an initial repeatability threshold, not a measured reliability guarantee.
+
+## Preserve the working-day demonstration
+
+> Halte diesen konkreten Nachweis für den nutzbaren Arbeitsalltag bitte auch in unseren Docs fest, inklusive der vier Szenarien, Bestehenskriterien, zulässigen menschlichen Eingriffe und der Wiederholbarkeit.
+>
+> Halte generell direkt fest statt danach immer zu fragen
+
+The [working-day demonstration](../reflections/working-day-demonstration-20261016.md) records the proposed acceptance procedure. The owner also requested direct documentation of developed discussion outcomes without a separate save request; this documentation preference does not automatically accept the proposals themselves.
