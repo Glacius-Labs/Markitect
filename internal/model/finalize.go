@@ -71,6 +71,7 @@ func finalizeModels(result *Result, scopes []sourceScope, sources []ModelResult)
 		model := &result.Models[index]
 		if model.Status == Passed {
 			candidate := byIndex[index]
+			model.Packages = append([]Package(nil), scopes[index].packages...)
 			model.Definitions, model.Canonical, model.Digest = candidate.definitions, candidate.bytes, candidate.digest
 		}
 		result.Status = combineStatus(result.Status, model.Status)

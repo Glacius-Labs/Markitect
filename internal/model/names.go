@@ -127,6 +127,7 @@ func (c *sourceCompiler) treeNames(entries map[string]Entry, root string) {
 	seenPackages := map[string]string{}
 	for _, p := range paths {
 		pkg := relativePackage(p, root)
+		c.scope.packages = append(c.scope.packages, Package{Name: pkg, Source: source(c.model.Origin, directories[p])})
 		if !validPackageName(pkg) {
 			c.problem("name.package", "Package folders must use NFC lowercase XID names.", directories[p], nil)
 		}
