@@ -3,6 +3,7 @@ package organization
 import (
 	"crypto/sha256"
 	"fmt"
+	"reflect"
 	"time"
 
 	"github.com/Glacius-Labs/Markitect/internal/snapshot"
@@ -10,6 +11,9 @@ import (
 
 type settingsValidation struct {
 	files map[string]snapshot.ContentID
+	// Used only to reject contradictory supplied assertions about one field.
+	// This is not a parsed document or an execution configuration property bag.
+	fields map[SettingSource]any
 }
 
 func (v settingsValidation) source(source SettingSource, field bool) error {
@@ -23,6 +27,17 @@ func (v settingsValidation) source(source SettingSource, field bool) error {
 	return nil
 }
 
+func (v settingsValidation) field(source SettingSource, value any) error {
+	if err := v.source(source, true); err != nil {
+		return err
+	}
+	if previous, found := v.fields[source]; found && !reflect.DeepEqual(previous, value) {
+		return fmt.Errorf("conflicting supplied values for configuration field %q in %q", source.Field, source.File)
+	}
+	v.fields[source] = value
+	return nil
+}
+
 func (v settingsValidation) catalogs(facts SettingsFacts) (map[string]ProfileFact, map[string]InstructionFact, error) {
 	profiles := make(map[string]ProfileFact, len(facts.Profiles))
 	for _, profile := range facts.Profiles {
@@ -32,7 +47,7 @@ func (v settingsValidation) catalogs(facts SettingsFacts) (map[string]ProfileFac
 		if _, found := profiles[profile.Name]; found {
 			return nil, nil, fmt.Errorf("duplicate profile %q", profile.Name)
 		}
-		if err := v.source(profile.Source, true); err != nil {
+		if err := v.field(profile.Source, profile); err != nil {
 			return nil, nil, err
 		}
 		profiles[profile.Name] = profile
@@ -57,10 +72,10 @@ func (v settingsValidation) catalogs(facts SettingsFacts) (map[string]ProfileFac
 }
 
 func (v settingsValidation) ceilingFacts(ceilings SettingsCeilings) error {
-	if err := v.source(ceilings.StepTimeout.Source, true); err != nil {
+	if err := v.field(ceilings.StepTimeout.Source, ceilings.StepTimeout.Value); err != nil {
 		return err
 	}
-	if err := v.source(ceilings.ReviewRounds.Source, true); err != nil {
+	if err := v.field(ceilings.ReviewRounds.Source, ceilings.ReviewRounds.Value); err != nil {
 		return err
 	}
 	if ceilings.StepTimeout.Value <= 0 || ceilings.ReviewRounds.Value <= 0 {
@@ -70,7 +85,7 @@ func (v settingsValidation) ceilingFacts(ceilings SettingsCeilings) error {
 }
 
 func (v settingsValidation) roots(roots Setting[[]snapshot.DirectoryBoundary]) error {
-	if err := v.source(roots.Source, true); err != nil {
+	if err := v.field(roots.Source, append([]snapshot.DirectoryBoundary{}, roots.Value...)); err != nil {
 		return err
 	}
 	seen := make(map[snapshot.DirectoryBoundary]bool, len(roots.Value))
@@ -87,10 +102,10 @@ func (v settingsValidation) roots(roots Setting[[]snapshot.DirectoryBoundary]) e
 }
 
 func (v settingsValidation) selection(timeout Setting[time.Duration], rounds Setting[int], roots Setting[[]snapshot.DirectoryBoundary], ceilings SettingsCeilings) error {
-	if err := v.source(timeout.Source, true); err != nil {
+	if err := v.field(timeout.Source, timeout.Value); err != nil {
 		return err
 	}
-	if err := v.source(rounds.Source, true); err != nil {
+	if err := v.field(rounds.Source, rounds.Value); err != nil {
 		return err
 	}
 	if timeout.Value <= 0 || timeout.Value > ceilings.StepTimeout.Value || rounds.Value <= 0 || rounds.Value > ceilings.ReviewRounds.Value {
@@ -116,7 +131,7 @@ func (v settingsValidation) selection(timeout Setting[time.Duration], rounds Set
 
 func (v settingsValidation) role(defaults RoleDefaults, override RoleOverride, profiles map[string]ProfileFact, instructions map[string]InstructionFact) (RoleSettings, error) {
 	profile := replaceSetting(defaults.Profile, override.Profile)
-	if err := v.source(profile.Source, true); err != nil {
+	if err := v.field(profile.Source, profile.Value); err != nil {
 		return RoleSettings{}, err
 	}
 	fact, found := profiles[profile.Value]
@@ -129,7 +144,7 @@ func (v settingsValidation) role(defaults RoleDefaults, override RoleOverride, p
 		lists = append(lists, *override.Instructions)
 	}
 	for _, list := range lists {
-		if err := v.source(list.Source, true); err != nil {
+		if err := v.field(list.Source, append([]string{}, list.Value...)); err != nil {
 			return RoleSettings{}, err
 		}
 		result.InstructionSources = append(result.InstructionSources, list.Source)

@@ -17,7 +17,7 @@ func ResolveSettings(topology Topology, facts SettingsFacts) (Settings, error) {
 	if topology.modelID == "" || topology.modelDigest == "" || len(topology.managers) == 0 {
 		return Settings{}, fmt.Errorf("settings require a successful local topology")
 	}
-	validation := settingsValidation{files: make(map[string]snapshot.ContentID)}
+	validation := settingsValidation{files: make(map[string]snapshot.ContentID), fields: make(map[SettingSource]any)}
 	profiles, instructions, err := validation.catalogs(facts)
 	if err != nil {
 		return Settings{}, err
@@ -29,7 +29,7 @@ func ResolveSettings(topology Topology, facts SettingsFacts) (Settings, error) {
 	if err := validation.selection(defaults.StepTimeout, defaults.ReviewRounds, defaults.CreationRoots, facts.Ceilings); err != nil {
 		return Settings{}, fmt.Errorf("defaults: %w", err)
 	}
-	if err := validation.source(defaults.BatchNoChangeReviews.Source, true); err != nil {
+	if err := validation.field(defaults.BatchNoChangeReviews.Source, defaults.BatchNoChangeReviews.Value); err != nil {
 		return Settings{}, err
 	}
 	// Defaults must be valid even when every Manager overrides a role.

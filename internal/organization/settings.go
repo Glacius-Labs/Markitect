@@ -94,6 +94,8 @@ type SettingsCeilings struct {
 // Lists preserve duplicate keys for rejection. All facts are validated, even
 // unused profiles, instructions and defaults. Acquisition/restricted-YAML
 // validation and semantic review of instruction prose remain caller work.
+// Conflicting content identities for one File, or conflicting typed values
+// attributed to the same file/content/field, are rejected as inconsistent facts.
 type SettingsFacts struct {
 	Defaults     SettingsDefaults
 	Overrides    []PackageOverride
