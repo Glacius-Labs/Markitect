@@ -125,3 +125,15 @@ Recorder's note: The assistant proposed one shared assignment budget, bounded Ma
 > Halte dieses Budgetmodell bitte auch in unseren Docs fest, inklusive gemeinsamem Auftragsbudget, geschützten Reserven für Review und Integration, begrenzten Zuteilungen und gezielter Eskalation bei Mehrbedarf.
 
 The reflection's [shared budget section](../reflections/desired-working-day-20261016.md#share-an-assignment-budget-and-protect-completion-work) records this proposal, allocation example and reporting rules.
+
+## Review the concept as a whole
+
+> Mache nochmal eine Runde übers Konzept und schaue das alles stimmig ist und zusammenpasst und ob es potential zur Verbesserung oder Vereinfachung gibt
+
+Recorder's note: The assistant assessed the committed concept plus two uncommitted Architect drafts. It found the core coherent and recommended consolidation in six areas, distinguishing actual document differences, missing interaction contracts and intentionally later scope. The assessment did not change code or run product tests.
+
+## Preserve the consolidation assessment
+
+> Halte diese Einschätzung und die konkreten Verbesserungsvorschläge bitte auch in unseren Docs fest, damit der Architect sie bei der Konsolidierung berücksichtigen kann.
+
+The [dated consistency review](../reflections/concept-consistency-review-20261016.md) records the assessment basis, recommendations, tradeoffs and expected consolidation results. The recommendations are review input, not automatically accepted design changes.
