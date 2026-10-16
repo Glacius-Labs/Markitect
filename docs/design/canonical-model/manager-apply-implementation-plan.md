@@ -1,207 +1,118 @@
-# Implementation plan for the first reliable Apply
+# Acceptance gates for the first reliable Apply
 
-Date: 16 October 2026. Revised after the [owner's two-Apply and clean-redesign clarification](sources/manager-realization-20261016.md#two-apply-cycle-and-freedom-to-redesign). This is the proposed delivery plan for the [Manager Apply concept](manager-apply-concept.md). P00 to P12 are local plan identifiers, not active backlog assignments. Acceptance criteria below describe future evidence; writing the plan does not establish that they passed.
+This document owns what each step of the rebuild must prove. The [delivery plan](../../implementation-plan.md) owns the packages, their order and dispatch; the [rebuild plan](manager-apply-rebuild-plan.md) owns what each package replaces. The gate identifiers P00 to P12 are stable names for acceptance criteria, not work assignments.
 
-The coordinated [delivery plan](../../implementation-plan.md) now owns active package scopes, dependencies and dispatch. P00-P12 below are detailed acceptance slices. Independent foundation/oracle work can proceed in parallel; full runner bookkeeping and real adapter proof are gates at their actual consumers, not blockers for the pure compiler.
+## The target
 
-The [supplied concept review and its resolution](review-resolution-20261016.md) add concrete criteria to these slices: boundary questions, grounded Definition dispositions, distinct review purposes, inspectable preparation and observed coordination effort. No new role, language layer or separate optimization subsystem is needed for these refinements.
+The principal demonstration is one development sequence on the small library:
 
-## The actual target
+1. Write the intended world as the canonical model [M1](library-example/README.md).
+2. Real Managers and their Agents run Apply R1 and produce implementation, tests and documentation A1.
+3. Examine A1's code, behavior, tests, documentation and execution history against M1.
+4. Change only the model: M2 lowers the loan limit from five to three (`spec.maxOpenLoans` in `lending/loan-policy`). A1 stays the starting realization.
+5. Run Apply R2 to reconcile A1 with M2, producing A2.
+6. Examine A2 again, including changed and unchanged areas, integration and traceability.
 
-The principal demonstration is one continuous development sequence:
+The decisive witness is the fourth-loan request: after three successful loans, M1 accepts a fourth and M2 refuses it without changing state. Existing loans stay returnable. The [evaluation contract](library-example/evaluation-contract.md) owns the full case families. Repairing artificially damaged artifacts and a third no-change Apply are useful additional cases, not substitutes.
 
-1. Describe the small library system fully and write its intended world as canonical model M1.
-2. Run real Managers and their Agents through Apply R1 to produce implementation, tests and documentation A1.
-3. Examine A1's actual code, behavior, tests, documentation and execution history against M1.
-4. Change the model to M2 while keeping A1 as the starting realization.
-5. Run Apply R2 to reconcile that existing realization with M2, producing A2.
-6. Examine A2 again, including behavior, changed and unchanged areas, integration and traceability.
+## Evidence discipline
 
-This demonstrates initial realization and subsequent model-driven development. Repairing artificially damaged artifacts against unchanged intent remains a useful additional test, not the primary scenario. A third, no-change Apply can check idempotent reconciliation, but does not replace the required model-change cycle.
+Each implementation slice records its source SHA, scope, retained and removed contracts, checks, observed result and evidence class. Source tests, scripted executor tests, real Agent starts, R1 and R2 behavior and source inspection, post-write read-back, hosted CI and human acceptance stay distinct. A fake executor is a diagnostic tool, never the demonstration.
 
-Use one local model, one ordinary root Manager, one Manager per Package and a shared hierarchy for code, tests and documentation. The initial strategy uses a Manager and fresh independent reviewer per active area, configurable profiles and sequential writing. Other team strategies and commands remain extensions. The completed canonical language v1 remains the language contract.
+Obsolete behavior disappears together with its tests; tests for still-required invariants (target isolation, stale-input refusal, bounded review, actual-delta validation, honest partial failure) are kept or rewritten for the new target. Superseded checks are removed with their owners. No skip, allowlist or compatibility machinery makes an unimplemented replacement look complete.
 
-## Clean redesign policy
+## Gates and packages
 
-The owner explicitly authorizes a direct, potentially radical rebuild around the new concept. There is no requirement to keep current commands, schemas, record codecs, package layout, tests or workflows compatible. Delete obsolete source and replace inappropriate abstractions instead of building adapters merely to preserve them. The old model is evidence of prior work, not the design template.
-
-There will be one target product architecture and one target canonical model path. No compatibility frontend, mandatory legacy adapter, dual-format selection or permanent parallel product route is planned. Existing primitives are candidates for reuse only when they fit the new responsibilities and make the result simpler. Their interfaces and implementations may change.
-
-Historical source and evidence remain in Git or their original artifacts; they do not require a live compatibility interpreter in the rebuilt product. Old verified records cannot authorize new work. Published assets remain historical immutable files. This policy concerns product restructuring, not deletion of unrelated local work or external project data.
-
-Small steps mean bounded, reviewable changes with tests for the target contract. They do not mean keeping every obsolete command working between intermediate commits. Remove obsolete tests together with the behavior they specify; preserve or rewrite tests for still-required invariants such as target isolation, stale-input refusal, bounded review, actual-delta validation and honest partial failure. Update checks, canonical sources and guidance as part of each deliberate architectural replacement rather than adding exemptions to old gates.
-
-## What the current source tells us
-
-Source inspected: Main `bc4b49e76f9b9e4b3ec98033a0b8c73d5013b310`. These are code-reading findings and reuse candidates, not a fresh runtime or CI verdict.
-
-| Current area | Finding and proposed treatment |
-| --- | --- |
-| [Structural Core](../../../src/internal/core/types.go) and [compiler](../../../src/internal/core/compile.go) | The Schema/Definition envelope and namespace identities differ from completed v1. Implement the v1 contract directly; retain individual useful algorithms only where they fit. |
-| [Fixed project Schema](../../../src/internal/core/projectmodel/projectmodel.go) | Manager, Statement, Artifact, Check and Decision are currently predefined authoring types. Remove this as the architectural center; derive organization from Packages and keep execution/realization records outside canonical language semantics. |
-| [Project acquisition](../../../src/internal/application/projectwork/project.go) and [Runtime Host](../../../src/internal/runtime/projectrun/types.go) | Current planning and execution are tightly coupled to old Project/Report DTOs. Replace that coupling using the new architecture; a temporary old-model adapter is not a milestone. Rewrite a coupled unit if that is clearer than adapting it. |
-| [Executor protocol](../../../src/internal/runtime/agentexec/README.md), native/process transports and profiles | Useful implementation material for starting role sessions and receiving results. Select the first real transport during architecture design; no obligation to preserve every current adapter or response schema. |
-| Snapshots, [guarded publication](../../../src/internal/runtime/projectrun/apply.go), candidates and [record storage](../../../src/internal/infrastructure/recordstore/store.go) | Evaluate the primitives against the new contracts. Preserve required properties through tests, not necessarily existing type names or call graphs. Add explicit read-back after final writing. |
-| [Current playground](../../../experiments/case-playground/README.md) | Its existing purpose is a comparative multi-wave experiment. Design a simple library scenario runner first. Reuse capture/container tools if useful; do not carry its old onboarding or command sequence into the new product as requirements. |
-
-Before coding the replacement, make a keep/rewrite/delete map at responsibility level. It should identify concrete useful components, obsolete consumers and the tests that move with the target responsibilities. It is not a commitment to retain every accepted historical interface. The owner's instruction to simplify and delete supersedes the earlier compatibility-oriented delivery sequence retained in Git history.
-
-## Library scenario and independent expectations
-
-First model the library in readable prose, then encode all selected statements with ordinary v1 Kinds, Properties and concrete Definitions. The [small library M1](library-example/README.md) encodes the [confirmed business rules](library-example/business-rules.md) and has bounded structural evidence. The proposed [callable interface](library-example/interface-contract.md) and [independent expectations](library-example/evaluation-contract.md) now specify its assessment; implementing those expectations remains work. Its Packages are library for shared scope/rules, catalog, members, lending and lending/reminders. Cross-Package relationships, returns, a loan limit and simple overdue reminders are explicit. Review the model for meaning and internal consistency before using it to generate implementation.
-
-Keep the first domain example small. The proposed P00 interface selects a Go JSON Lines program with ten operations, one initially empty in-memory library per process, explicit dates and a fixed minimal build entrypoint. No UI, deployment or production database is required. Internal domain/source design remains a realization choice. The first scenario processes domain operations sequentially; concurrent borrowing correctness is a separate future case.
-
-M1 permits a new loan only when the resulting current count for a registered, active member is at most five. M2 changes that admission limit to three. Existing loans remain returnable; lowering the limit does not delete them or force a return. In the authored M1, the policy body refers to its structured value without duplicating the numeral, so M2 changes only `spec.maxOpenLoans` in `lending/loan-policy`. Prose and spec must still agree; no precedence rule hides a contradiction. Apply is still artifact-only: the scenario author makes the M1-to-M2 model edit between runs, and each Apply treats its selected model as read-only.
-
-| Case | M1 expectation | M2 expectation |
+| Gate | Subject | Delivery packages |
 | --- | --- | --- |
-| Active registered member with two loans requests an available copy | Accept; count becomes three. | Accept; count becomes three. |
-| Active registered member with three loans requests an available copy | Accept; count becomes four. | Reject; count and copy state remain unchanged. |
-| Active registered member with four loans requests an available copy | Accept; count becomes five. | Reject further borrowing. |
-| Active registered member already at five requests a copy | Reject; state remains unchanged. | Reject further borrowing. |
-| Unregistered or suspended member requests a copy | Reject. | Reject. |
-| An unavailable copy is requested | Reject. | Reject. |
-| A currently borrowed copy is returned | Reduce loan count and make the copy available. | Same behavior. |
-| Reminder assessment at an explicit date | Include open overdue loans; exclude returned and not-yet-overdue loans. | Same behavior. |
+| P00 | Library model and the two-run change | Design (done as documents) |
+| P01 | Go architecture and removal map | Design; APPLY-BOOT enforces the target graph |
+| P02 | Library Playground | APPLY-PLAY |
+| P03 | Complete v1 compilation | APPLY-MODEL; APPLY-SNAPSHOT supplies tree values |
+| P04 | Product skeleton and preparation | APPLY-ORG, APPLY-REALIZATION, APPLY-CUTOVER |
+| P05 | Real role sessions and durable communication | APPLY-RUN, APPLY-JOURNAL, APPLY-AGENT |
+| P06 | One Package candidate | APPLY-RUN, APPLY-REALIZATION, APPLY-REPOSITORY, APPLY-INTEGRATE |
+| P07 | Recursive delegation and integration | APPLY-RUN, APPLY-INTEGRATE |
+| P08 | Aggregate verification and reports | APPLY-INTEGRATE |
+| P09 | Guarded publication, read-back and interruption | APPLY-REPOSITORY, APPLY-INTEGRATE |
+| P10 | Real two-Apply cycle | APPLY-INTEGRATE |
+| P11 | Failure cases in composition | Every package for its own cases; APPLY-INTEGRATE composes them |
+| P12 | Clean product | APPLY-INTEGRATE, with the coordinator |
 
-The three-loan request is an especially useful witness: exactly the same input changes from allowed under M1 to rejected under M2. This demonstrates that the second Apply followed changed intent. Four/five existing loans under M2 are semantic expectations in the table, not reachable arrangements through a fresh M2 process. The [process-boundary evidence limit](library-example/evaluation-contract.md#existing-loans-and-the-process-boundary) requires separate source-review findings and forbids claiming live-upgrade proof from this scenario.
+### P00 Library model and the two-run change
 
-Author and review the expectation sets independently of the generated library implementation. Keep their bytes outside Agent write scope and recheck them before/after evaluation. Agents may write normal tests as artifacts, but those tests cannot replace the independent assessment. Read-only scope is validated by Markitect; it is not a claim of OS isolation from same-user processes.
+A readable description, complete M1 sources, the exact M2 edit, a minimal [callable interface](library-example/interface-contract.md) and independently reviewed expectations. A small optional starter vocabulary derived from the example stays an ordinary, visible model. The model review lists statements whose behavior crosses Package boundaries, including obligations carried by Kind and Property bodies, and checks their explicit connections.
 
-This independent expectation set evaluates the library experiment. It does not introduce a permanent second specification that every adopting project must maintain. Generated project tests remain ordinary artifacts reviewed against the canonical model.
+**Gate:** every expectation has a clear basis in M1 or M2. Cross-Package connections are explicit, including the membership suspension that lending must enforce. Vocabulary declarations cannot hide required behavior. The change is an intentional five-to-three edit with consistent body and `spec`. The expectations contain no implementation solution or file-edit plan.
 
-R1 starts with the model, project configuration and only the minimal fixture/build contract needed to evaluate the result. It does not start with a handwritten complete library implementation. R2 starts from the actual reviewed A1 tree and registry; do not regenerate from a fresh empty directory or manually patch its code first. Save all failed attempts, rather than replacing them with an unexplained successful snapshot.
+### P01 Go architecture and removal map
 
-## Two design packages before implementation
+The [Go architecture](manager-apply-go-architecture.md), [port contracts](manager-apply-port-contracts.md), [configuration](manager-apply-configuration.md), [execution](manager-apply-execution.md), [journal](manager-apply-journal.md) and [rebuild plan](manager-apply-rebuild-plan.md) specify packages, imports, runtime records, lifecycle ownership, the first transport and the keep, rewrite and delete map.
 
-The Go source architecture and Playground need deliberate designs. Their target responsibilities follow the concept, not the old package tree. The following boundaries are starting questions, not prescribed package names:
+**Gate:** a root task and one child walk through the boundaries from model input to candidate, review, publication and report, as in the [library walkthrough](manager-apply-library-flow.md). Every state and output has one owner. No dependency exists only for backward compatibility. The removal map covers obsolete commands, tests, model sources and generated views, not only Go files.
 
-- Model acquisition and pure language compilation.
-- Organization, context preparation and explicit operation targets.
-- Agent sessions, task delegation, communication and finite execution.
-- Candidate ownership, realization registry, review and integration.
-- Project checks, aggregate verification and guarded publication/read-back.
-- Durable records and report/inspection projections.
-- Application entry points and transport adapters.
-- External scenario preparation and independent assessment in the Playground.
+### P02 Library Playground
 
-The Go design must choose concrete packages, dependency direction, data ownership and lifecycle contracts, then map current source to keep/rewrite/delete. It may replace the current layer/package structure deliberately. Keep model providers and repository I/O out of deterministic language semantics.
+The [Playground contract](manager-apply-playground.md), the interface and the evaluation contract define the external runner, the two-run sequence, the ten operations, the case families, the source bindings and the comparison report. The independent oracle runs without the product and can be built in parallel with the compiler. The runner's scripted dry run needs the new product entry point.
 
-The [Playground contract](manager-apply-playground.md) now proposes repository preparation, frozen inputs, actual product invocation, immutable A1/A2 capture, independent evaluation and reporting. It owns scenario inputs and expected results. It must not implement its own Manager hierarchy, prompt delegation, review loop or alternate Apply. Comparative arms, cost studies and a broad benchmark program are outside this first demonstration.
+**Gate:** the oracle discriminates wrong results, including state mutation on refusal and the opposite-profile mismatch on the fourth-loan witness. A scripted dry run proves scenario preparation, artifact capture, expectation invocation, M1 and M2 bookkeeping and preservation of failures; it is labeled synthetic and never counts as real Apply. The runner fabricates no Agent reports, contains no Manager or review orchestration and never repairs generated code between R1 and R2.
 
-## Starting Agents and carrying communication
+### P03 Complete v1 compilation
 
-The product needs an actual execution subsystem, not only compiled prompts. The [first adapter proposal](manager-apply-rebuild-plan.md#first-adapter) selects direct Go-to-Codex-App-Server stdio sessions. Exercise it through the narrow session interface: start, submit task/context, receive events/results, stop/cancel and establish the observed terminal state. Rebuild its orchestration around the new contracts; existing native mechanisms are reuse candidates, and a scripted executor remains useful for tests only.
+Bounded slices: restricted YAML values and envelopes with exact numbers and provenance; model roots, Packages, manifests, dependency acquisition and strict Unicode and path rules; fixed Core, Kind and Property contracts, references, objects and finite recursion; body links and their Markdown profile; canonical bytes, locks and full conformance results. Acquisition supplies explicit inputs to the pure compiler.
 
-The Host starts the root's session. When a Manager delegates, it emits a structured child task through the Host. The Host validates the receiving Package and operation scope, builds its context, starts the configured role session and records its identity. Each parent supplies the child's outcome-oriented task prompt. The initial user instruction is not independently broadcast to all Managers.
+**Gate:** M1 and M2 compile with different, correct content digests. Independent conformance cases cover more than the library's constructs. Invalid or incomplete input gets no canonical bytes or digest, and resource exhaustion is distinct from invalid language. Core byte fixtures, large numbers, body content, names and imports and dependency-lock counterexamples have independent expected results. No partial compiler is advertised as full v1.
 
-Route delegation, clarification requests, detail reads, reports, review findings and rework through durable Host-mediated messages. Messages identify the run, task, sender, recipient, attempt and causal predecessor. Child results return to the parent; sibling coordination uses the nearest common parent. A waiting task has an explicit state and finite budget. Reviewer invocations start with fresh context and the actual candidate, not the implementer's full conversation.
+### P04 Product skeleton and preparation
 
-Keep one clear relationship between logical Manager identity and concrete session/attempt identities. A continued work session and a newly started reviewer session must be distinguishable. Record actual sent prompts, supplied history, tool/context results, returned content and observation limits. Session launch, communication and cleanup are acceptance criteria of the first real scenario, not a later adapter project.
+The new application composition, model input, Manager topology, profiles and context packages, plus the registry, classification and target contracts the later gates need. The author can preview the statements, contracts, responsibilities and explicit connections each Manager receives, with inclusion reasons, before any Agent starts. The repository's own model, source ownership and gates move to the new compiler and check in the same reviewed cutover.
 
-## Small dependency-ordered steps
+**Gate:** root and Package identities and contexts are correct, imports spawn no library Managers, and complete values and bodies survive preparation. Inclusion reasons and the Package directory are inspectable and distinguish source facts from explanations; a targeted detail read works. The rebuilt tree has one active model and check route even though Apply is not available yet. Obsolete behavior tests are removed, not skipped.
 
-P00 through P12 are planning slices. Split the larger design or compiler slices into the listed substeps, each with its own focused review and gate. Implementation starts after the architecture and Playground contracts are concrete enough to avoid coding an accidental second design.
+### P05 Real role sessions and durable communication
 
-### P00 Model the library and choose the two-run change
+The session port, effective role profiles, Host-mediated task and message transport, session identity, cancellation, the assignment budget and the journal. Start with a root and one child role, then add fresh reviewers through the same mechanism.
 
-Write the readable project description, complete M1 canonical sources, the exact M2 edit, a minimal evaluation interface and independently reviewed expectations. The model can initially be checked by the bounded design tools where supported, with their actual limitations recorded; production-v1 validity is established in P03. Do not copy the intentionally invalid Command/command Exchange fixture as a positive model.
+**Gate:** a controlled adapter test verifies exact prompts, context, messages, causal links and lifecycle states, including ordinary completion, process or transport failure and uncertain termination. Reservations and settlement, the completion-reserve admission rule, no charge while waiting, immutable outcomes and reconciliation follow the [execution contract](manager-apply-execution.md). A separately labeled bounded smoke with the real adapter proves actual Agent start, response and termination; scripted success never substitutes for it. The Host refuses further dispatch when required event storage fails.
 
-Derive a small optional starter vocabulary from this example and keep it an ordinary, visible model. Use domain terms where useful. During model review, list statements whose behavior crosses Package boundaries and check the explicit connections. Include obligations carried by Kind and Property bodies and their concrete uses. This is a readable review of the example, not a new requirements database or semantic index.
+### P06 One Package candidate
 
-**Gate:** every scenario expectation has a clear basis in M1 or M2. Cross-Package connections are explicit, including the membership suspension that lending must enforce. Vocabulary declarations cannot hide required behavior behind a vocabulary-only label. The model change is an intentional five-to-three change with no contradictory body/spec values. No implementation solution or file-edit plan is embedded in the expected-result set.
+Local workspaces, exclusive path reservations, Host-owned registry changes and fresh independent review for one Package's implementation, tests and documentation, with finite rework. Manager and reviewer ask which local statements need another area's behavior and whether the model connects them. Every positive Definition disposition has a reason and concrete realization or use.
 
-### P01 Design the Go product architecture and removal map
+**Gate:** controlled tests reject model, configuration and ignore edits, direct registry changes and overlapping ownership. A bad candidate is rejected, revised and reviewed as a new exact candidate. A vocabulary-only claim that ignores obligations on concrete uses fails review. Missing evidence, an unresolved required assessment or exhausted rounds cannot return completion. Nothing is published in this gate.
 
-The [Go architecture outline](manager-apply-go-architecture.md), [library walkthrough](manager-apply-library-flow.md) and [ports](manager-apply-port-contracts.md) specify packages and handoffs. The [rebuild plan](manager-apply-rebuild-plan.md) selects direct stdio App Server sessions and maps replacement/deletion cuts. [Configuration](manager-apply-configuration.md), the consolidated [execution contract](manager-apply-execution.md) and [journal](manager-apply-journal.md) now have distinct owners for settings/mandates, shared budgets/lifecycle and durable records/control. The exact executable/schema capability profile and implementation conformance remain to be established. These are design proposals, not implementation evidence.
+### P07 Recursive delegation and integration
 
-Specify target responsibilities, packages, allowed imports, runtime data contracts and lifecycle ownership. Identify what will be copied, adapted, rewritten or deleted. Include a decision on the first executor transport, configuration ownership, source binding, registry writes, communication and record formats. Design from the completed model language and Manager concept; preserving the old Project/Report DTO is not a goal.
+The library's ordinary root, the library, catalog, members and lending Managers and lending's reminders child. The library Package owns shared scope and rules; it is not a special root. Parents issue their own task prompts, compose child results and send corrections to the accountable child. Suspected missing connections travel through the common parent; Apply adds no links. Initially unexplained artifacts go through read-only intake.
 
-**Gate:** walk a root task and one child through the proposed boundaries from model input to candidate, review, publication and reporting. Every state/output has one owner. No architectural dependency exists solely for backward compatibility. The removal map covers obsolete commands, tests, model sources and generated views, not just Go files.
+**Gate:** only the root receives the user instruction, and the trace shows the actual child prompts and responses. A parent integrates deliveries but cannot author child-owned files. Sibling requests and boundary questions reach the affected area through the parent. A missing connection needed for a sound assessment yields an open model issue and prevents aggregate completion. A broken aggregate fails integration review even when every local delivery passed.
 
-### P02 Design the library Playground scenario
+### P08 Aggregate verification and reports
 
-The proposed [Playground contract](manager-apply-playground.md), [callable interface](library-example/interface-contract.md) and [evaluation contract](library-example/evaluation-contract.md) define the external runner, exact two-run sequence, ten operations, case families, source bindings and readable comparison report. Review these contracts, then implement scenario preparation, capture and the independent oracle. Select a fixed Markitect build/profile, inspect A1, make the model-only M2 change and execute R2 against actual A1. Reuse existing Playground infrastructure selectively.
+Project checks, full file accounting, the Definition census and fresh final verification on the assembled candidate, in both directions: artifacts have justified model links, and required Definitions have justified realization. Independent Playground expectations run outside worker write scope. The run tree and timeline expose prompts, reads, reports, reviews and deltas; the concise user result and coordination account derive from the same events.
 
-**Gate:** a dry scripted run proves scenario preparation, artifact capture, expectation invocation and M1/M2 bookkeeping, including controlled wrong-result detection and preservation of failures. It does not count as real Apply. The runner never fabricates Agent reports, contains no duplicate Manager/review orchestration and never repairs generated code between R1 and R2. Primary evidence requires all applicable cases against each model and opposite-profile mismatches for the fourth-loan witness. Runtime migration and source-review evidence remain explicitly distinguished.
+**Gate:** candidate bytes, registry and evidence bindings agree. Missing child reviews, stale evidence, unsupported dispositions and tampered assessment inputs invalidate success. Complete file ownership cannot compensate for missing required realization. A local pass cannot stand in for integration or final verification. Reports distinguish Agent claims from observed changes and unknown usage from zero, and add no automatic restructuring, scores or thresholds.
 
-### P03 Implement complete production v1 compilation
+### P09 Guarded publication, read-back and interruption
 
-Deliver bounded slices: **P03a** restricted YAML values/envelopes with exact numbers and provenance; **P03b** model roots, Packages, manifests, dependency acquisition and strict Unicode/path rules; **P03c** fixed Core, Kind/Property contracts, references, objects and finite recursion; **P03d** body links and their Markdown profile; **P03e** canonical bytes, locks and full conformance results. Acquisition supplies explicit inputs to the pure compiler.
+Source guards, candidate and registry publication, post-write read-back and recovery records, tested on owned temporary repositories.
 
-**Gate:** M1 and M2 compile with different correct content digests. Independent conformance cases cover more than the library's constructs. Invalid and incomplete input gets no successful canonical bytes/digest; resource exhaustion is distinct from invalid language. Core byte fixtures, exact large numbers, body content, names/imports and dependency-lock counterexamples have independent expected results. No partial compiler is advertised as full v1.
+**Gate:** resulting paths, bytes, modes, deletions and registry match the verified candidate. Changed model, source or configuration inputs make the run stale. Incomplete writing or failed read-back never reports success. Recovery inspects recorded outcomes and never replays a completed Agent invocation. No-change still requires a justified assessment.
 
-### P04 Establish the new product skeleton and simple preparation
+### P10 Real two-Apply cycle
 
-Implement the agreed architecture's application composition, model input, Manager topology, profiles and own-Package/See-also context. Add the registry/classification and target contracts needed by subsequent slices. Preview the actual statements, contracts, responsibilities and explicit connections with inclusion reasons before starting Agents. Add a compact Package directory for routing questions without loading all foreign content or extending imports. Select one new product path; delete obsolete loader/entry-point dependencies as they are replaced.
+Freeze one Markitect build and role configuration. Real Agents realize M1 from the minimal starting project; the model, configuration, messages, A1 and reports are saved, and A1's code structure, error paths, tests and documentation are inspected independently, including excess scaffolding, unused code or test-specific shortcuts. Then only the M2 edit is made, and R2 runs against the actual A1 and registry with the same build and profile. No hand-written code change is allowed between the Applies.
 
-Plan the repository's own bootstrap at this checkpoint: the new compiler/check/context can validate a freshly authored Markitect model and source ownership before the full Apply exists. Update active CI/contributor checks and generated-source owners to the implemented target in the same reviewed source cut. Do not keep a legacy compiler merely to validate an obsolete self-model. If a larger cut is needed, prepare it in an isolated feature branch and integrate when its new required checks are meaningful and passing.
+**Gate:** both runs have recorded Agent lifecycle and communication, independent review, aggregate checks and exact read-back. The fourth-loan witness changes from accepted to refused, and unchanged membership, catalog, return and reminder behavior stays correct. Source inspection supports the claimed realization; passing tests alone are insufficient. A2 visibly derives from A1 plus M2, not from a reset or a reference implementation. If a product defect forces a new build, the failed evidence is kept and the whole cycle restarts. One successful cycle is a bounded feasibility result, not a general proof or a cost claim.
 
-**Gate:** root and local Package identities/contexts are correct, imports do not spawn library Managers, and complete values/bodies survive preparation. Inclusion reasons and the Package directory are inspectable and distinguish source facts from explanations. A targeted detail read is available. The rebuilt tree has one active source model/check route, even though Apply is not yet complete. Relevant new architecture and coverage checks pass; obsolete behavior tests are removed rather than silently skipped.
+### P11 Failure cases in composition
 
-### P05 Start real role sessions and persist communication
+Negative tests belong to the gate that implements each contract. This gate checks their composition: stale target, missing link surfaced as a model issue, vocabulary-only used to evade obligations, complete file coverage with missing realization, a local pass offered for another purpose, ownership conflict, invalid child report, exceeded review rounds, communication interruption, event-storage failure, rejected aggregate and partial publication.
 
-Implement the selected executor interface, effective role profiles, Host-mediated task/message transport, session identity, cancellation and the minimum durable prompt/event history. Start with a root and one child role; add fresh reviewers using the same mechanism. Test ordinary completion, process/transport failure and uncertain termination.
+**Gate:** each case has a reproducible input, an honest expected outcome and an inspectable trace, and the real two-Apply cycle still works on the current candidate. No failure can hide behind an ignore, a rewritten model, an invented review or a summary claiming completion.
 
-**Gate:** a controlled adapter test verifies exact prompts, context, messages, causal links and lifecycle states. Exercise shared-ledger reservations/settlement, protected-purpose admission, overnight waiting versus deadline, immutable run outcomes and safe reconciliation under the execution contract. A separately identified bounded real-adapter smoke proves actual Agent start, response and termination. Scripted success is not substituted for that smoke. The Host refuses further unrecorded dispatch if required event storage fails.
+### P12 Clean product
 
-### P06 Produce and review one Package candidate
+Remove the remaining unused source, adapters, old-format examples and obsolete command and documentation claims. Review the architecture against the implemented ownership and dependency map, and refine Markitect's own canonical model from the new architecture.
 
-Add local artifact workspaces, exclusive path reservations, Host-owned registry changes and fresh independent review. Permit implementation, normal tests and documentation for one Package. Enforce artifact-only changes and finite rework.
-
-Manager and reviewer explicitly assess which local statements need another area's behavior and whether the needed model connection is present. Use ordinary open questions containing the source passage, suspected effect and affected area when known. Each positive Definition disposition needs a reason and concrete realization or use with supporting evidence; the Host validates report structure and bindings, the reviewer validates substance.
-
-**Gate:** controlled tests reject attempted model/config/ignore edits, direct registry modification and overlapping ownership. A bad candidate is rejected, revised and reviewed as a new exact candidate. A vocabulary-only claim that ignores obligations on concrete uses fails review. Missing evidence, an unresolved required assessment or review exhaustion cannot return completion. No target checkout is published in this slice.
-
-### P07 Delegate recursively and integrate upward
-
-Add the library's ordinary root Manager, the library, catalog, members and lending Package Managers, lending's reminders child and parent coordination. The library Package owns shared scope and rules; it is not a special root role. Parents issue their own task prompts, compose child results and request corrections from the accountable child. Route suspected missing connections through the common parent without adding links during Apply. Add read-only intake for initially unexplained artifact ownership. Integration review focuses on connected behavior across the composed areas, beyond their local deliveries.
-
-**Gate:** only root receives the user instruction; the trace shows actual child prompts and responses. A parent can integrate deliveries but cannot casually author arbitrary child-owned files. A sibling contract request or boundary question reaches the affected area through the parent. A missing connection needed for sound assessment yields an open model issue and prevents aggregate completion. A broken aggregate fails integration review even if individual deliveries passed; blocked children prevent a complete result.
-
-### P08 Verify candidates and expose the full report
-
-Run project-owned checks, full file accounting, Definition assessments and fresh aggregate verification on the assembled candidate. Check both directions: artifacts have justified model links, and required Definitions have justified realization. Add independent Playground expectation evaluation without putting those assessment sources inside worker write scope. Expose the run tree/timeline with prompts, additional reads, reports, reviews and deltas. Derive a concise user result and coordination account from the same events, separating local work, cross-area requests, observed usage and waiting from descendant effort.
-
-**Gate:** actual candidate bytes, registry and evidence bindings agree. Missing child reviews, stale evidence, unsupported Definition dispositions and tampered assessment inputs invalidate success. All files being owned cannot compensate for missing required realization. A local pass cannot stand in for integration or final verification. Resolved findings can be referenced, but changed subjects or assumptions require renewed assessment. Reports distinguish Agent claims from observed changes and unknown usage from zero; they add no automatic restructuring, scoring or thresholds. The normal tests generated with the code do not replace independent behavior or source inspection.
-
-### P09 Guard publication read back and handle interruption
-
-Implement or reuse the agreed source guards, candidate/registry publication, post-write read-back and recovery records. Test these mechanics on owned temporary repositories. Reuse a suitable primitive directly or rewrite it if old workflow dependencies dominate it; no old command/API compatibility is required.
-
-**Gate:** resulting paths, bytes, modes, deletions and registry match the verified candidate. Changed model/source/configuration inputs cause stale; incomplete writing or read-back failure never reports successful Apply. Recovery inspects recorded outcomes and does not blindly replay a completed Agent invocation. No-change still requires a justified assessment.
-
-### P10 Run and inspect the real two-Apply library cycle
-
-Freeze one Markitect source/build S and effective role configuration for the experiment. Use the real selected Agents to realize M1 from the minimal initial project. Save model, configuration, messages, A1 and reports. Independently inspect the actual code structure, error paths, tests and documentation, and run M1 expectations. Record findings, including excessive scaffolding, unused code or test-specific shortcuts.
-
-Then make only the agreed model edit to M2. Keep A1's implementation and registry as the starting point and use the same product build/profile. Execute Apply R2, save A2 and inspect again. Run M2 expectations and unchanged behavior cases; examine the code/documentation difference and the model basis of each change. No hand-written code patch is allowed between the two Applies in the acceptance scenario.
-
-Inspect the existing reports for local work versus coordination, observed Agent effort and required human intervention. Use concrete problems to suggest later Package or team changes; do not infer a generally superior organization or a cost result from this one case.
-
-**Gate:** both real runs have recorded Agent lifecycle/communication, independent review, aggregate checks and exact applied read-back. The identical three-loan borrowing input is allowed under M1 and rejected under M2. Unchanged membership/catalog/return/reminder behavior stays correct. Source inspection supports the claimed realization; passing tests alone is insufficient. A2 clearly derives from A1 plus M2, not a hidden reset or reference implementation.
-
-If a product defect requires changing S, retain the failed evidence and restart the complete cycle against the new build for a comparable final result. A further no-change run is useful supporting evidence. One successful cycle is a bounded feasibility result, not a global proof, comparative study or general cost claim.
-
-### P11 Consolidate reliability against concrete failure cases
-
-Negative tests belong to P03-P09 as each contract is implemented. This checkpoint checks their composition: stale target, missing link surfaced as a model issue, vocabulary-only used to evade obligations on concrete uses, complete file coverage with missing required realization, a local pass offered for another review purpose, ownership conflict, invalid child report, exceeded review limit, communication interruption, event-storage failure, rejected aggregate and partial publication. A controlled missing-link case proves the question/coordination/failure contract when a gap is reported; it cannot prove that Agents discover every semantic gap.
-
-**Gate:** each case has a reproducible input, expected honest outcome and inspectable trace. The real two-Apply cycle still works on the current candidate. A failure cannot be hidden by an ignore, a rewritten model, an invented review or a final summary claiming completion.
-
-### P12 Finish the clean product and evaluate the next direction
-
-Remove remaining unused source, adapters, old-format examples and obsolete command/documentation claims. Review the architecture against the implemented ownership/dependency map. Refine Markitect's own canonical model from the new architecture and intended product obligations; no obligation to mechanically migrate the old taxonomy or expose historical runtimes remains.
-
-**Gate:** one target execution path, current source model and maintained Playground case remain. Source, architecture, coverage, generated-view, CLI/MCP and packaging checks match the new product and pass before integration. Historical releases/evidence retain their original identities. Record what the two-Apply case actually establishes and use its findings to select further work, rather than immediately adding all proposed commands or Government.
-
-## Evidence and implementation discipline
-
-Each implementation slice binds its source SHA, task scope, retained/removed contracts, checks, observed result and evidence class. Keep source tests, scripted executor tests, real Agent starts, R1/R2 behavior/source inspection, post-write read-back, hosted CI and human acceptance distinct. A fake executor is a diagnostic tool, not a replacement for the requested demonstration.
-
-Small source changes can be developed and reviewed independently, and obsolete functionality may disappear as part of a deliberate cut. Before integration, required checks must describe and validate the new target. Remove or replace superseded checks with their owners; do not keep compatibility machinery just to make old assumptions pass, and do not weaken still-required target invariants. Follow the currently applicable repository contribution process until it is deliberately revised with the architecture work.
-
-This plan updates design and scope. It does not execute providers, alter the production Go architecture or delete existing product source. The library model and P01/P02 now have proposed design contracts, including consolidated execution rules. The immediate prerequisites are their bounded review, the independent evaluator/scripted P02 gate and the pinned provider capability binding; the implementation cuts then establish complete v1 and the new product. Later working-day scenarios remain separate evidence after the technical-core demonstration.
-
-Return to the [concept](manager-apply-concept.md), [north star](manager-realization-north-star.md) or [canonical-model overview](README.md).
+**Gate:** one execution path, one current source model and one maintained Playground case remain. Source, architecture, coverage, generated-view, CLI and MCP and packaging checks match the new product and pass. Historical releases and evidence keep their identities. What the two-Apply case established is recorded and used to choose further work, instead of adding every proposed command or Government at once.
