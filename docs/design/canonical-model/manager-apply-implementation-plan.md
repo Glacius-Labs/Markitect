@@ -90,7 +90,7 @@ The Playground design must define how it creates the library repository, supplie
 
 ## Starting Agents and carrying communication
 
-The product needs an actual execution subsystem, not only compiled prompts. Choose one real executor first and exercise it through a narrow session interface: start, submit task/context, receive events/results, stop/cancel and establish the observed terminal state. Existing native App Server code is a reuse candidate; a scripted executor remains useful for tests only.
+The product needs an actual execution subsystem, not only compiled prompts. The [first adapter proposal](manager-apply-rebuild-plan.md#first-adapter) selects direct Go-to-Codex-App-Server stdio sessions. Exercise it through the narrow session interface: start, submit task/context, receive events/results, stop/cancel and establish the observed terminal state. Rebuild its orchestration around the new contracts; existing native mechanisms are reuse candidates, and a scripted executor remains useful for tests only.
 
 The Host starts the root's session. When a Manager delegates, it emits a structured child task through the Host. The Host validates the receiving Package and operation scope, builds its context, starts the configured role session and records its identity. Each parent supplies the child's outcome-oriented task prompt. The initial user instruction is not independently broadcast to all Managers.
 
@@ -112,7 +112,7 @@ Derive a small optional starter vocabulary from this example and keep it an ordi
 
 ### P01 Design the Go product architecture and removal map
 
-The [Go architecture outline](manager-apply-go-architecture.md) proposes responsibility-based packages, consumer-owned ports and concrete adapters, with a source treatment table. The [library delegation walkthrough](manager-apply-library-flow.md) and [port contracts](manager-apply-port-contracts.md) now specify handoffs, proposed Go interfaces, data ownership, review binding, waiting and uncertain effects. These are design proposals; the first executor choice, configuration/record encodings and complete removal map remain P01 work.
+The [Go architecture outline](manager-apply-go-architecture.md) proposes responsibility-based packages, consumer-owned ports and concrete adapters. The [library delegation walkthrough](manager-apply-library-flow.md) and [port contracts](manager-apply-port-contracts.md) specify handoffs, proposed Go interfaces, data ownership, review binding, waiting and uncertain effects. The [adapter selection and rebuild plan](manager-apply-rebuild-plan.md) selects direct stdio App Server sessions and maps source families, commands, tests, canonical sources and generated views to replacement/deletion cuts. Configuration/record encodings and the exact executable/schema capability profile still need completion. These are design proposals, not implementation evidence.
 
 Specify target responsibilities, packages, allowed imports, runtime data contracts and lifecycle ownership. Identify what will be copied, adapted, rewritten or deleted. Include a decision on the first executor transport, configuration ownership, source binding, registry writes, communication and record formats. Design from the completed model language and Manager concept; preserving the old Project/Report DTO is not a goal.
 

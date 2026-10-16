@@ -2,6 +2,8 @@
 
 Date: 16 October 2026. Proposed responsibilities and dependency direction for P01 of the [implementation plan](manager-apply-implementation-plan.md), requested after [library M1](library-example/README.md). The companion [library delegation walkthrough](manager-apply-library-flow.md) and [port contracts](manager-apply-port-contracts.md) develop its exchanges and lifecycle. This design does not change current source architecture or complete all of P01. The [Apply concept](manager-apply-concept.md) owns product behavior and the clean redesign policy.
 
+The [adapter selection and rebuild plan](manager-apply-rebuild-plan.md) selects direct Go-to-Codex-App-Server sessions for the proposed first implementation and owns the concrete replacement/deletion map. Correct boundaries take priority over minimizing implementation effort.
+
 ## Organize by responsibility
 
 Use Ports and Adapters with ordinary Go packages. Keep deterministic model and realization rules independent of external systems. Coordinate the workflow through small capabilities implemented by concrete adapters. Packages describe what they do; an interface is not required for every internal function or struct.
@@ -37,12 +39,15 @@ internal/
     mcp/
     gitrepo/
     filestore/
-    agent/
+    codexappserver/
     checks/
+    process/
   bootstrap/
 ```
 
 `bootstrap` constructs concrete adapters and passes them to their consumers through constructors. The CLI and MCP adapters call the same application operations. Their protocol handling and error presentation do not own review, retry or publication policy. `cmd/markitect` delegates startup to that composition root.
+
+`codexappserver` is the first concrete session adapter. The small concrete `process` package supplies shared process-lifetime mechanics to that adapter and project checks; it is not another execution protocol or a general utility catalogue. Repository maintenance/release tooling stays separate from these product responsibilities.
 
 Inside `run`, start with coherent files such as `task.go`, `coordinator.go`, `review.go`, `history.go` and `ports.go`. State transitions and record meaning belong there; physical files and provider protocols belong in adapters. Split further only when a distinct responsibility or consumer makes the boundary useful. Avoid another shared Project DTO, global interface catalogue or untyped property bag spanning all packages.
 
@@ -77,6 +82,8 @@ These choices follow the Go guidance to place interfaces with their consumers an
 
 Product source inspected at Main `bc4b49e76f9b9e4b3ec98033a0b8c73d5013b310`; the design branch at `2b82ba5a7b7b3f28073857c7e7a8a36e06619c87` has the same product source. The current implementation already has ports, explicit composition and protected I/O boundaries. The redesign changes their ownership and old-model coupling, rather than assuming none exist. These are code-reading findings and reuse candidates, not new execution evidence.
 
+The table below gives the initial treatment. The later [concrete rebuild map](manager-apply-rebuild-plan.md#source-replacement-map) specifies package-family dispositions, removed execution paths, non-Go owners and dependency-ordered cuts.
+
 | Current area | Treatment |
 | --- | --- |
 | [Compiler identities and envelopes](../../../src/internal/core/types.go), fixed [project Schema](../../../src/internal/core/projectmodel/projectmodel.go) and its old project views | Replace with complete v1 and Package-derived organization plus the separate registry. Remove fixed Manager/Statement/Artifact authoring contracts and their obsolete consumers. Reuse individual algorithms only after checking them against v1; preserve no old DTO shape for compatibility. |
@@ -85,7 +92,7 @@ Product source inspected at Main `bc4b49e76f9b9e4b3ec98033a0b8c73d5013b310`; the
 | [Record storage](../../../src/internal/infrastructure/recordstore/store.go) and [runtime store](../../../src/internal/runtime/projectrun/store.go) | Reuse confined file access, publication and lease mechanics where suitable. Replace old run codecs, closed historical record layouts and domain lifecycle coupling when they do not fit. The journal must support the actual prompt/message/candidate history; keeping historical formats readable is not a target. Original evidence retains its identity. |
 | [Runtime Host and Invoker](../../../src/internal/runtime/projectrun/types.go), coordinator, review, verify and Apply | Reuse method rules and meaningful counterexamples: bounded rework, fresh review, candidate binding, stale refusal and recovery. Restructure into `run`, `apply` and realization responsibilities. Remove the broad old Host callbacks and Plan/Report coupling rather than wrapping the whole old runtime. The current [Reconcile guidance](../../../src/internal/runtime/projectrun/operation.go) already expresses full responsibility against unchanged intent. |
 | [Workspace boundary](../../../src/internal/runtime/projectworkspace/contracts.go) and Git workspace implementation | Reuse materialization, delta harvesting and lifecycle mechanics where they fit. Bind new ownership, path reservations and artifact-only scope to the new registry. A workspace is not an OS sandbox. |
-| [Native Agent adapter](../../../src/internal/runtime/codexappserver/session.go) and process execution | Reuse bounded process/session handling and observation/recovery mechanisms selectively. Replace old request/response coupling with the new task and session contracts. Select one real executor first; preserve no adapter merely for compatibility. This outline does not choose a provider API contract. |
+| [Native Agent adapter](../../../src/internal/runtime/codexappserver/session.go) and process execution | Rebuild a direct stdio App Server adapter for the new session contracts, using selected process/observation/recovery mechanisms. Remove the old invocation/prompt/report coupling, process proposal wrappers and helper bridge. The [adapter plan](manager-apply-rebuild-plan.md) specifies lifecycle, protocol-profile gates and source treatment. |
 | [Application composition](../../../src/internal/application/projectapp/composition.go), CLI and MCP | Keep the shared thin-entrypoint principle, rebuild composition around the new packages and make both surfaces call the same operations. Remove obsolete command wiring together with the behavior and tests it specified; later extensions need a concrete consumer. |
 
 There is no old/new compatibility frontend or permanent second Apply. Reusable code is material for the new architecture, not a constraint on it. Update the repository's own canonical model, generated maps, checks and packaging with each deliberate source replacement. Current contribution rules still govern until that reviewed replacement changes them; an allowlist must not conceal obsolete architecture assumptions.
@@ -102,6 +109,6 @@ The Playground stays outside the product packages. It prepares scenarios, invoke
 
 ## Next design step
 
-Review the companion walkthrough and contracts, then choose the first real executor and specify its tool/observation capabilities, configuration and record encodings. Finish the concrete keep/rewrite/delete map and implementation slices. P01 remains incomplete until those adapter decisions and source-removal boundaries are reviewable; the Playground gets its own P02 design before substantial runtime implementation.
+Review the selected adapter and rebuild map, then finish the configuration/journal encodings and small Playground evaluation contract. Bind an exact executable/schema profile and demonstrate its required capabilities before real work. P01/P02 precede substantial runtime implementation; the completed language and M1 do not yet establish runtime readiness.
 
 Return to the [Apply concept](manager-apply-concept.md), [implementation plan](manager-apply-implementation-plan.md) or [canonical-model overview](README.md).

@@ -110,3 +110,7 @@ The owner supplied an [assessment](concept-assessment-20261016.txt) and [propose
 ## Derive ports from the library delegation flow
 
 > Ja, lass uns den Ablauf Root Manager → Ausleihmanager → Reviewer → Integration am Bibliotheksbeispiel durchgehen und daraus die konkreten Port-Verträge ableiten.
+
+## Choose the first real adapter and plan a clean rebuild
+
+> Ja, lass uns den ersten echten Agent-Adapter auswählen und daraus den konkreten Umbau- und Löschplan ableiten. Was können wir vom aktuellen Stand übernehmen und was sollten wir ersetzen? Aufwandsminimierung ist hierbei keine Priorität. Priorität ist dass wir es richtig, sauber und architektonisch elegant umsetzen

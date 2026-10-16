@@ -2,6 +2,8 @@
 
 Date: 16 October 2026. Proposed P01 contracts derived from the [library delegation walkthrough](manager-apply-library-flow.md). The [Apply concept](manager-apply-concept.md) owns product behavior; the [Go architecture](manager-apply-go-architecture.md) owns package boundaries. These are proposed Go interfaces and behavioral contracts, not implemented APIs, provider wire formats or evidence of a successful Apply.
 
+The [adapter selection and rebuild plan](manager-apply-rebuild-plan.md) now selects direct stdio App Server sessions and maps the old source to the replacement. These contracts remain provider-neutral.
+
 ## The exchanges before the interfaces
 
 The root asks lending: “Reconcile lending and its reminders against M1, including code, tests and documentation. Coordinate the membership and copy-availability contracts.” It does not prescribe descendant file edits. Host validates the route and supplies complete responsibility, fixed inputs and the candidate base. Delegation returns a task ID immediately; the root yields and resumes later with a result.
@@ -207,7 +209,7 @@ The root is ordinary in this protocol. `apply` adds final aggregate verification
 
 The [walkthrough's refusal cases](manager-apply-library-flow.md#concrete-refusal-cases) are the first controlled-adapter contract checks. Add journal durability-before-dispatch, unknown dispatch/publication recovery, registry/tree mismatch, protected-input drift, exact duplicate handling and immutable review subject cases. Then prove session startup, Host calls, yielding, resumed input, fresh review and termination with the selected real executor. Neither those tests nor this design substitutes for M1-to-A1 and M2-to-A2 with real Agents.
 
-Before runtime implementation, finish the first executor choice and its exact tool/observation capabilities, configuration and record codecs, and the responsibility-level keep/rewrite/delete map covering source, commands, tests, canonical sources and generated views. The Playground evaluation interface and protected expectations remain P00/P02 work. These contracts do not mark all of P01 complete.
+The [rebuild plan](manager-apply-rebuild-plan.md) supplies the first executor choice, required tool/observation capabilities and responsibility-level source removal map. Before runtime implementation, finish configuration and record codecs and the Playground evaluation interface/protected expectations. Bind and test the exact selected executable/schema profile before real Agent work. These contracts do not mark all of P01 complete.
 
 Interfaces are owned by their consumers; adapters return concrete implementations. This follows [Go's interface guidance](https://go.dev/wiki/CodeReviewComments#interfaces). Effectful calls take `context.Context` first and propagate cancellation while reporting what actually happened ([Go context](https://go.dev/blog/context)). Pure model, organization and realization functions need no port solely for testing.
 
