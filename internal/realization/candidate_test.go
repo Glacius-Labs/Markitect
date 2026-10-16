@@ -139,6 +139,13 @@ func TestCaptureRejectsFullObservedScopeViolations(t *testing.T) {
 			captureRefused(t, realization.CaptureCandidate(base, who, realization.PathClaims{}, contentTree(t, tc.name, "changed"), tc.reg), tc.code)
 		})
 	}
+	storageBase := candidateBase(t, compiledFacts(), realization.Registry{}, fileTree(t, ".markitect/registry/registry.yaml"), nil)
+	r := realization.CaptureCandidate(storageBase, owner(t, "foreign"), realization.PathClaims{}, snapshot.Tree{}, realization.Registry{})
+	captureRefused(t, r, "candidate.registry_storage_changed")
+	r.Findings()[0].Code = "mutated"
+	if r.Findings()[0].Code != "candidate.registry_storage_changed" {
+		t.Fatal("mutable candidate finding")
+	}
 	f := facts(t, compiledFacts(), realization.Registry{}, snapshot.Tree{}, []realization.CreationArea{area(t, who, "out")})
 	base, err := realization.NewCandidateBase(compiledFacts(), f)
 	if err != nil {
@@ -183,5 +190,45 @@ func TestComposeRefusesSharedOrPrefixTouchesEvenWithIdenticalBytes(t *testing.T)
 	r := realization.ComposeCandidates(base, []realization.Candidate{regPart, filePart})
 	if r.Status() != realization.CandidateRefused || r.Findings()[0].Code != "composition.overlap" {
 		t.Fatalf("metadata overlap: %+v", r.Findings())
+	}
+}
+
+func TestCompositionUsesDeltasInsteadOfOverwritingOtherPartsWithObservedOldFiles(t *testing.T) {
+	a, b := owner(t, "empty"), owner(t, "lending")
+	reg := registry(t, registration(t, a, artifact(t, "a", borrow)), registration(t, b, artifact(t, "b", policy)))
+	base := candidateBase(t, compiledFacts(), reg, fileTree(t, "a", "b"), nil)
+	changedA, err := snapshot.NewEntry(path(t, "a"), snapshot.Regular, []byte("changed"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	changedB, err := snapshot.NewEntry(path(t, "b"), snapshot.Executable, []byte("b"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	oldA, _ := base.Tree().Lookup(path(t, "a"))
+	oldB, _ := base.Tree().Lookup(path(t, "b"))
+	makeTree := func(entries ...snapshot.Entry) snapshot.Tree {
+		tree, err := snapshot.NewTree(entries)
+		if err != nil {
+			t.Fatal(err)
+		}
+		return tree
+	}
+	ca := capture(t, base, a, realization.PathClaims{}, makeTree(changedA, oldB), reg)
+	cb := capture(t, base, b, realization.PathClaims{}, makeTree(oldA, changedB), reg)
+	if len(cb.Changes()) != 1 || cb.Changes()[0].Kind() != snapshot.Modify {
+		t.Fatal("mode-only change was not observed")
+	}
+	before, _ := cb.Changes()[0].Before()
+	after, _ := cb.Changes()[0].After()
+	if before.Mode() != snapshot.Regular || after.Mode() != snapshot.Executable {
+		t.Fatal("mode evidence lost")
+	}
+	for _, parts := range [][]realization.Candidate{{ca, cb}, {cb, ca}} {
+		result := realization.ComposeCandidates(base, parts)
+		plan, ok := result.Plan()
+		if !ok || !plan.Tree().Equal(makeTree(changedA, changedB)) {
+			t.Fatalf("composed old observations over another owner's change: %+v", result.Findings())
+		}
 	}
 }

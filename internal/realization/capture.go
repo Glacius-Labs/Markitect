@@ -33,13 +33,13 @@ func CaptureCandidate(base CandidateBase, owner Owner, claims PathClaims, observ
 	facts := base.value.facts
 	var used []PathClaim
 	for _, path := range touched {
-		guard := checkPath(facts, owner, path)
-		if guard.status != PathAdmissible {
-			return CandidateResult{status: CandidateRefused, findings: guard.Findings()}
-		}
 		storage, _ := snapshot.NewPath(".markitect/registry")
 		if pathsOverlap(storage, path) {
 			return candidateRefusal("candidate.registry_storage_changed", owner, path, "Registry storage is protected; only logical Host registry proposals may change.")
+		}
+		guard := checkPath(facts, owner, path)
+		if guard.status != PathAdmissible {
+			return CandidateResult{status: CandidateRefused, findings: guard.Findings()}
 		}
 		before, registered := base.Registry().Lookup(path)
 		after, retained := proposed.Lookup(path)
