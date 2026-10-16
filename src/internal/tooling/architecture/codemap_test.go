@@ -53,6 +53,9 @@ func TestCodeMapPage(t *testing.T) {
 // except "unknown" is reachable, so the finer layers can drive the gate.
 func TestCodeMapLayersMatchGateLayers(t *testing.T) {
 	gate := map[string]bool{"core": true, "host": true, "module": true, "infrastructure": true, "tooling": true, "cli": true, "fixture": true, "bootstrap": true, "harness-tests": true, "harness-runtime": true, "testkit": true}
+	for _, root := range targetRoots {
+		gate[root.layer] = true
+	}
 	reached := map[string]bool{}
 	names := map[string]bool{}
 	for _, l := range Layers {

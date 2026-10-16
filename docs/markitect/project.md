@@ -2,7 +2,7 @@
 
 # markitect
 
-Model digest: sha256:546193264a8af226a3f7505518db5c67098db15679824b1d6f02a2a0c70c2fa4
+Model digest: sha256:fe8c27fda5a7cbd5c884bd2aa64659482faee616e3ca15ee10da1013552f21a8
 
 Report status: succeeded
 
@@ -282,6 +282,17 @@ Maintainer tooling enforces the import gate and the code map, builds and publish
 - Expected paths: [src/internal/core/](../../src/internal/core)
 - Related checks: ["project.markitect.example.org/v1alpha1","Check","","go-tests"], ["project.markitect.example.org/v1alpha1","Check","","go-vet"], ["project.markitect.example.org/v1alpha1","Check","tooling","architecture-gate"] (declared; execution not observed)
 - Applicability: The core compiles the model, reads snapshots and derives coverage, impact and briefings without providers or writes.
+
+### foundation-layer
+
+- Identity: ["project.markitect.example.org/v1alpha1","Artifact","product","foundation-layer"]
+- Requirement: optional
+- Role: implementation
+- Responsible Manager: ["project.markitect.example.org/v1alpha1","Manager","product","product"]
+- Realizes: ["project.markitect.example.org/v1alpha1","Statement","","canonical-sources"], ["project.markitect.example.org/v1alpha1","Statement","","project-local-policy"], ["project.markitect.example.org/v1alpha1","Statement","product","core-stays-generic"], ["project.markitect.example.org/v1alpha1","Statement","product","declared-inputs"], ["project.markitect.example.org/v1alpha1","Statement","product","explicit-relationships"], ["project.markitect.example.org/v1alpha1","Statement","product","legacy-removal"], ["project.markitect.example.org/v1alpha1","Statement","product","product"]
+- Expected paths: [internal/model/](../../internal/model), [internal/organization/](../../internal/organization), [internal/realization/](../../internal/realization), [internal/snapshot/](../../internal/snapshot)
+- Related checks: ["project.markitect.example.org/v1alpha1","Check","","go-tests"], ["project.markitect.example.org/v1alpha1","Check","","go-vet"], ["project.markitect.example.org/v1alpha1","Check","tooling","architecture-gate"] (declared; execution not observed)
+- Applicability: These pure foundation paths own actual files as packages arrive; empty reserved paths do not require producer stubs before cutover.
 
 ### infrastructure-layer
 

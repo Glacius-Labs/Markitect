@@ -33,6 +33,9 @@ func (v Violation) String() string {
 // layer classifies every product package by its concrete owner. Removed
 // legacy paths receive no permanent exemption.
 func layer(p string) (string, string) {
+	if name, owner := targetLayer(p); name != "" {
+		return name, owner
+	}
 	switch {
 	// Preserve the project-model family's capability boundary at its Core
 	// location; structural Core and sibling capabilities cannot import it.
@@ -87,6 +90,8 @@ func Check(edges []Edge) []Violation {
 		to, target := layer(e.To)
 		rule := ""
 		switch {
+		case strings.HasPrefix(from, "apply-") || strings.HasPrefix(to, "apply-"):
+			rule = targetRule(e)
 		case from == "bootstrap":
 			rule = "standalone bootstrap tooling may not import Markitect packages"
 		case e.From == e.To:
@@ -146,7 +151,7 @@ func Inspect(root string) ([]Edge, error) {
 		}
 		rel = filepath.ToSlash(rel)
 		// Only product source and explicitly classified test/tool harnesses.
-		if !strings.HasPrefix(rel, "src/") && !strings.HasPrefix(rel, "tools/") && !strings.HasPrefix(rel, "examples/") && !strings.HasPrefix(rel, "integration/") && !strings.HasPrefix(rel, "experiments/") && !strings.HasPrefix(rel, "benchmark/") {
+		if !strings.HasPrefix(rel, "cmd/") && !strings.HasPrefix(rel, "internal/") && !strings.HasPrefix(rel, "src/") && !strings.HasPrefix(rel, "tools/") && !strings.HasPrefix(rel, "examples/") && !strings.HasPrefix(rel, "integration/") && !strings.HasPrefix(rel, "experiments/") && !strings.HasPrefix(rel, "benchmark/") {
 			return nil
 		}
 		packagePath := filepath.ToSlash(filepath.Dir(rel))
