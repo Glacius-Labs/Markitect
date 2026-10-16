@@ -24,7 +24,7 @@ packages:
   # --- apply-organization -------------------------------------------------
   - path: internal/organization
     layer: apply-organization
-    purpose: Derives local Manager topology and resolves exact settings from supplied model and source facts.
+    purpose: Derives local Manager topology, resolves exact settings and selects model context with inclusion reasons.
     doc: docs/design/canonical-model/manager-apply-go-architecture.md#organize-by-responsibility
 
   # --- apply-realization --------------------------------------------------
