@@ -39,3 +39,22 @@ Recorder's note: These are verbatim owner messages from the design discussion in
 > Lass uns die strenge Variante als Grundlage nehmen und einen optionalen Optimizer vorsehen, der fehlende Verknüpfungen vorschlägt. Halte das bitte im North Star fest.
 >
 > Dann sage mir ob du das in etwa so meintest: Wir bieten in markitect eine Art optimize oder check oder verify command an, welcher dann durchgeht und im Modell nach fehlenden verknüpfungen schaut und diese Anlegt. Wie für die meisten commands ausser "compile" (könnte anders heißen und prüft nur dass es kompilierbar ist) würde ich das über die Manager Hierarchie machen. Also quasi auch bei Cleanup oder Refactor oder Bughunt oder so
+
+## Common preparation and change targets
+
+> Hierzu fallen mir mehr Dinge in. Im Prinzip ist für jeden der Commands ja der Ablauf relativ gleich:
+>
+> - Kontext zusammenstellen
+> - Aufgabe bzw Anweisungsprompt
+> - Custom Instructions oder ähnliches
+>
+> Also ganz grob gesagt. Dann könnte compile doch theoretisch für alle Manager und alle Commands den Kontext vorkompilieren oder? Oder wir nehmen kein Compile als extra Command oder machen das optional und das ist immer der erste Schritt für jeden Command.
+>
+> Ausserdem sollten wir hier unterscheiden zwischen:
+>
+> - Ändert das Modell
+> - Ändert Artefakte
+
+## Separate operations reconciliation and custom commands
+
+> Das heißt in der CLI beispielsweise würde ich das vielleicht sogar unterteilen, möglicherweise so: markitect model optimize. Oder wir belassen es einfach so. Jedenfalls wäre Bughunt nur eine precompiled Anweisung an die Manager. Findet Bugs und fixed sie. Ich würde ungerne Commands machen, die sowohl Model als auch Artifacts anfassen. Ausserdem soltle Apply generell die Artifacts gegen das Modell reconcilen. Eventuell könnte man aber die Manager auch für verschiedene custom commands verwenden.

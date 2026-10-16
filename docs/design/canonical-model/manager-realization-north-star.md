@@ -106,18 +106,32 @@ The earlier [context and semantic-index proposals](minimal-language/procedure-pr
 
 The owner proposes using the same Manager hierarchy for most substantive operations, including optimization, cleanup, refactoring and bug hunting. Managers receive an operation-specific task, organize their configured teams and integrate the findings or candidates from their area. The root Manager remains an ordinary Manager. Different operations may use different teams and context while sharing the organizational structure.
 
-The following names describe conceptual tasks, not changes to the current CLI. Final command names and mutation modes remain open.
+The owner wants model changes and artifact changes kept in separate operations. A task can read both to understand its work, but its change target is explicit. A model operation updates intended project content; an artifact operation realizes or repairs artifacts against that content. If a model change requires artifact work, the latter is a separate operation against the resulting model. Read-only inspection is also possible.
 
-| Task | Intended work |
-| --- | --- |
-| Compile | Deterministically check language compilability and resolve the model. This task needs no AI Manager traversal and does not judge semantic completeness. |
-| Optimize | Managers inspect model content for missing connections and return justified link proposals or candidate edits for review and integration. |
-| Check or verify meaning | Managers and reviewers assess selected model or realization obligations and report their evidence and unresolved findings. Exact scope remains to be defined. |
-| Cleanup or refactor | Managers improve the realization within the model's existing requirements and permitted freedom, integrating changes across affected Packages. |
-| Bughunt | Managers investigate defects against the intended behavior. Whether a task returns findings alone or includes repairs must be explicit. |
-| Realize a model change | Managers implement and integrate the changed intent with the required review, verification and guarded application. |
+The following names describe conceptual tasks, not changes to the current CLI. Grouping commands by target, such as `markitect model optimize`, and keeping a flat command surface remain alternatives. Final names are open.
+
+| Task | Change target | Intended work |
+| --- | --- | --- |
+| Compile | None | Deterministically check language compilability and resolve the model. This task needs no AI Manager traversal and does not judge semantic completeness. |
+| Model optimize | Model | Managers inspect model content for missing connections and return justified link proposals or candidate edits for review and integration. |
+| Check or verify meaning | None for inspection | Managers and reviewers assess selected model or realization obligations and report their evidence and unresolved findings. Exact scope remains to be defined. |
+| Cleanup or refactor | One declared target | Improve either model organization or artifacts in a separately scoped operation. Artifact work stays within the existing model's requirements and permitted freedom. |
+| Bughunt | Artifacts | A prepared instruction asks Managers to find and fix bugs against the model, with review and integration. It does not rewrite the model to fit the faulty artifacts. |
+| Apply | Artifacts | Reconcile artifacts with the current model, including code, tests and documentation. A preceding model edit is not required. |
+
+Apply's general purpose is reconciliation: assess the existing artifacts against the model and bring them into alignment. Realizing newly changed intent is one case; repairing drift or missing realization against unchanged intent is another. The relevant areas are coordinated through the hierarchy, with review, verification and guarded application.
 
 In the library example, the members and lending Managers could examine the suspended-member rule and prepare a missing connection together; their parent integrates the result. The same hierarchy could later investigate why a suspended member was able to borrow, with a different task and team configuration. This is a shared organizational mechanism, not a requirement that every operation make edits or inspect every Package.
+
+## Shared preparation and custom commands
+
+Most substantive commands can use the same broad sequence: check and load the model, assemble context, add the task prompt and configured custom instructions, run the Manager hierarchy, then integrate and check its results. Custom instructions guide work within the applicable model and task boundaries.
+
+Stable Package context and instruction templates could be prepared in advance for Managers and operations. The concrete task, current artifacts and newly produced review candidates still supply information at execution time. Automatic preparation as the first step of each command and an additional optional compile or prepare command remain variants. There is no selected requirement to precompute every Manager's complete prompt for every possible task.
+
+Bughunt can therefore be a prepared task instruction using the shared mechanism: find bugs and fix them. It does not need a separate management structure. Other commands can supply different instructions and teams through the same structure.
+
+Custom commands are an owner-proposed extension of this idea. A custom command could describe its task prompt, relevant context, configuration and one change target, then use the existing Managers and integration process. The registration format and how custom commands select teams remain open. The declared target should be checked against the returned edits so that separation between model and artifact operations is more than prompt wording.
 
 ## Questions for further design
 
@@ -130,5 +144,8 @@ In the library example, the members and lending Managers could examine the suspe
 - Which explicit connections does the strict baseline require, and which reference classes and directions supply context?
 - How does the optional Optimizer present, review and integrate link suggestions, and how is its investigation scoped?
 - Which operations use the hierarchy, what does each return, and how are findings, candidate edits and model updates distinguished?
+- How are model and artifact commands named, and how are their change targets checked?
+- Should preparation also have its own command, and which parts of context are useful to prepare in advance?
+- How are custom commands registered and configured without creating another execution mechanism?
 
 Return to the [canonical-model overview](README.md).
