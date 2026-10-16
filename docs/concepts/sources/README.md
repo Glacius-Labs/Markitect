@@ -4,6 +4,7 @@ Sources preserve where the [register](../register.md) entries come from. Owner s
 
 | Source | Origin | Content |
 |---|---|---|
+| [Desired working day](working-day-discussion-20261016.md) | Direct owner requests, 16 October 2026 | Walk through model change, delegated work and owner intervention; preserve the scenario and assess missing prerequisites |
 | [Experience discussion](experience-discussion-20261016.md) | Direct owner questions and documentation requests, 16 October 2026 | Learn without implicit rule authority; store and select experience, investigate operational logs and follow library cases through to lessons |
 | [Organization and trust](organization-and-trust-20261016.md) | Direct owner statements and documentation request, 16 October 2026 | Desired working life, current story-to-PR practice, management analogy, focused perspectives, incentives and local decisions |
 | [Assistant response on organization and trust](organization-and-trust-assistant-20261016.md) | Earlier assistant response supplied by the owner as an attachment for extraction, 16 October 2026 | Responsibility-derived perspectives, independent review, local authority, institutional memory, incentives and process oversight; assistant interpretation |
