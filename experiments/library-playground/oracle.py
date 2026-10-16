@@ -254,6 +254,21 @@ def build_cases(profile: str) -> list[dict[str, Any]]:
     s += [_step(c, 1, "registerMember", {"memberId": "Case", "name": "Exact"}, _ok(_member("Case", "Exact")))]
     s += [_step(c, 2, "registerMember", {"memberId": "case", "name": "Different"}, _ok(_member("case", "Different")))]
     s += [_step(c, 3, "inspectMember", {"memberId": "Case"}, _ok(_member("Case", "Exact")))]
+    # Opaque identifiers and display values preserve all supplied characters.
+    # Padded/unpadded and composed/decomposed identifiers denote distinct records.
+    for index, member_id, name in ((20, " padded-member ", " \tAda \t"),
+                                    (21, "padded-member", " Plain Ada "),
+                                    (22, "caf\u00e9", "Composed"),
+                                    (23, "cafe\u0301", "Decomposed")):
+        s += [_step(c, index, "registerMember", {"memberId": member_id, "name": name}, _ok(_member(member_id, name)))]
+    for index, copy_id, title in ((24, " padded-copy ", " \tExact title \t"),
+                                  (25, "padded-copy", "Plain title")):
+        s += [_step(c, index, "registerCopy", {"copyId": copy_id, "title": title}, _ok(_copy(copy_id, title)))]
+    s += [_step(c, 26, "borrow", {"memberId": " padded-member ", "copyId": " padded-copy ", "borrowDate": "2026-10-01"}, _ok(_new_loan("padded-loan", " padded-member ", " padded-copy ", "2026-10-01", due)), {"padded-loan": "result.loan.loanId"})]
+    s += [_step(c, 27, "inspectMember", {"memberId": " padded-member "}, _ok(_member(" padded-member ", " \tAda \t")))]
+    s += [_step(c, 28, "inspectMember", {"memberId": "padded-member"}, _ok(_member("padded-member", " Plain Ada ")))]
+    s += [_step(c, 29, "inspectCopy", {"copyId": "padded-copy"}, _ok(_copy("padded-copy", "Plain title")))]
+    s += [_step(c, 30, "inspectOpenLoans", {"memberId": "padded-member"}, _ok({"memberId": "padded-member", "count": 0, "loans": []}))]
     s += [{"raw": "{malformed json", "expect": {"id": None, "status": "invalidRequest", "reason": {"$nonempty": True}}}]
     s += [{"raw": "{\"id\":\"bad-op\",\"op\":\"invented\",\"args\":{}}", "expect": {"id": "bad-op", "status": "invalidRequest", "reason": {"$nonempty": True}}}]
     s += [{"raw": "{\"id\":\"same-id\",\"op\":\"registerMember\",\"args\":{\"memberId\":\"transport-a\",\"name\":\"Transport A\"}}", "expect": {"id": "same-id", "status": "ok", "result": _member("transport-a", "Transport A")}}]

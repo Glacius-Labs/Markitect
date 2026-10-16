@@ -65,6 +65,12 @@ class TransportTests(unittest.TestCase):
     def test_unterminated_line(self):
         self.run_fixture('import sys\nsys.stdin.readline()\nprint("{}",end="",flush=True)\n', 'unterminated|missing')
 
+    def test_parser_depth_failure_retains_transport_trace(self):
+        payload = b'{"nested":' + b'[' * 5000 + b'0' + b']' * 5000 + b'}\n'
+        trace = self.run_fixture('import sys\nsys.stdin.readline()\nsys.stdout.buffer.write(' + repr(payload) + ')\nsys.stdout.flush()\n',
+                                 'malformed response', limits=Limits(request_seconds=1, process_seconds=4, output_bytes=65536))
+        self.assertEqual(base64.b64decode(trace["pairs"][0]["response_base64"]), payload)
+
     def test_stdout_and_stderr_flood(self):
         for stream in ('stdout', 'stderr'):
             with self.subTest(stream=stream):

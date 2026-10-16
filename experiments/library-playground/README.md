@@ -13,6 +13,8 @@ profiles: the fourth loan succeeds under M1 and refuses without mutation under
 M2. A separate opposite-profile witness must disagree at admission, count and
 copy availability, while its setup and the first three loans remain correct.
 A crash or unrelated failure cannot count as that discrimination.
+Positive wire cases preserve padded identifiers, names and titles exactly and
+distinguish padded/unpadded and Unicode composed/decomposed identifiers.
 
 `oracle.py` authors cases and assertions independently of generated code and
 tests. `expectations/m1.json` and `m2.json` hold the explicit policy controls.

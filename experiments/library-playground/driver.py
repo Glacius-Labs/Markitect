@@ -142,7 +142,7 @@ class Process:
         pair["response_base64"] = base64.b64encode(line + b"\n").decode()
         try:
             response = strict_json(line.decode("utf-8"))
-        except (ValueError, UnicodeError) as exc:
+        except (ValueError, UnicodeError, RecursionError) as exc:
             raise TransportFailure("malformed response: " + str(exc)) from exc
         if not isinstance(response, dict):
             raise TransportFailure("response must be a JSON object")

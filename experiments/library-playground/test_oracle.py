@@ -72,6 +72,21 @@ class OracleTests(unittest.TestCase):
             response["result"][record][field] = value
             self.assertTrue(oracle.evaluate_step(case["steps"][index], response, captures)["errors"])
 
+    def test_trimmed_identifiers_names_and_titles_fail(self):
+        for profile in ("m1", "m2"):
+            case = next(case for case in oracle.build_cases(profile) if case["id"] == "E12-callable")
+            for op, record, field, identifier in (("registerMember", "member", "memberId", " padded-member "),
+                                                 ("registerMember", "member", "name", " padded-member "),
+                                                 ("registerCopy", "copy", "copyId", " padded-copy "),
+                                                 ("registerCopy", "copy", "title", " padded-copy ")):
+                with self.subTest(profile=profile, field=field):
+                    key = "memberId" if record == "member" else "copyId"
+                    index = next(i for i, step in enumerate(case["steps"]) if step["request"]["op"] == op
+                                 and step["request"]["args"].get(key) == identifier)
+                    response, captures = fixture_at(case, index)
+                    response["result"][record][field] = response["result"][record][field].strip()
+                    self.assertTrue(oracle.evaluate_step(case["steps"][index], response, captures)["errors"])
+
     def test_profiles_and_required_families_are_explicit(self):
         m1 = oracle.expectation_profile("m1")
         m2 = oracle.expectation_profile("m2")
