@@ -247,3 +247,9 @@ Recorder's note: The assistant proposed preserving immutable deliveries and cons
 > Wie entscheidet der Host konkret, welche laufenden Arbeiten bei einer fehlerhaften Lieferung pausieren müssen und welche weiterlaufen dürfen, ohne fachliche Auswirkungen selbst beurteilen zu müssen?
 
 Recorder's note: The assistant proposed [conservative exposure-based dispatch gating](../reflections/working-day-demonstration-20261016.md#gate-active-work-by-recorded-delivery-dependencies) using actual delivery/input/composition references, recorded reads and uncertainty. Ordinary dependent work stops progressing, separately established work remains eligible, and explicit bounded diagnosis/repair is allowed without treating the defective premise as valid. The proposal distinguishes eligibility from the initial single-writer scheduling constraint, preserves late results as old-basis evidence and reuses existing reconciliation rather than adding a lifecycle or claiming perfect semantic independence.
+
+## Record work inputs without file-operation surveillance
+
+> Wie erfassen wir zuverlässig, auf welchen Lieferungen und zusätzlichen Informationen eine Arbeit tatsächlich basiert, ohne jede Dateioperation überwachen oder einen komplizierten Abhängigkeitsgraphen pflegen zu müssen?
+
+Recorder's note: The assistant proposed [recording supplied input boundaries](../reflections/working-day-demonstration-20261016.md#record-supplied-inputs-rather-than-every-file-read) through existing step, workspace, delivery, context and tool-reply references, retaining resumed-session provenance and deriving consumer relations from execution records. The proposal distinguishes conservative exposure from mental causal reliance and requires honest limits for broad or unobserved access. It does not add a manually maintained graph, eliminate actual output/ownership checks or claim that scoped instructions alone enforce isolation.

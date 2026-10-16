@@ -543,6 +543,49 @@ Limit selective exceptions in the first version. Coarse exposure-based blocking 
 
 Extend existing dispatch/recovery checks with direct and downstream exposure, a demonstrably separate task, a commissioned producer repair, uncertain exposure, and a finding arriving during a live step. Verify no new dependent dispatch or stale acceptance, preservation of candidate work, bounded reconciliation, and no second writer while the first remains uncertain. These are proposed bounded checks, not an implemented guarantee of semantic impact detection.
 
+### Record supplied inputs rather than every file read
+
+The [owner asked for reliable provenance without file-operation surveillance](../sources/working-day-discussion-20261016.md#record-work-inputs-without-file-operation-surveillance). Record the bounded information made available to execution and its actual additions, not an unverifiable claim about which facts the Agent mentally relied on. This produces a conservative exposure set: an available input may never have influenced the result, but it cannot be excluded merely because the Agent says it did not use it. Precise causal reliance is not established.
+
+Use the existing `InputBinding`, `StepRequest`, `WorkspaceSpec`, session/history references, tool replies and immutable candidate composition. A compact input record for a step references:
+
+- The fixed model/configuration/mandate basis and actual prompt/context/messages.
+- The exact starting candidate and registry, its contributing delivery references and the actual readable artifact scope made available to the session.
+- The selected tools/profile and relevant declared environment/dependency inputs already bound by execution contracts.
+- Any continued session or supplied prior history, rather than pretending a resumed Agent starts with only the latest prompt.
+- Later information replies with their actual content/source revision and the session/step to which they were supplied.
+
+These are references in existing records, not another user-maintained manifest or dependency specification. The Host creates them from what it prepares and actually sends. One snapshot can cover thousands of files; individual opens within that fixed readable snapshot do not need separate causal tracking. Relevant additional information outside it goes through the existing Host-mediated reads/messages/tools, with the actual reply durably recorded before it becomes an execution input. A path, URL or label such as "latest Catalog" is not sufficient provenance without the observed version/content.
+
+For example:
+
+```text
+Step S18 / Lending
+Fixed inputs: I4
+Workspace base: C10, composed from deliveries D12 and D5
+Context: K7; continued session/history: H3
+Additional input: R31, exact returned source content and basis recorded
+Result: candidate C11, linked to S18 and its recorded additions
+```
+
+If the whole repository snapshot was readable, its relevant represented deliveries are potential inputs, even when only one Package was assigned. Do not infer a narrower dependency set from the task title. Smaller actually enforced input/workspace boundaries can reduce conservative pauses later; they need not be introduced as a fine-grained tracing platform in the first version. Host-mediated requests provide targeted expansion when needed.
+
+A continued session retains provenance from previous supplied inputs and observed additions. Keep a reference to that lineage rather than repeatedly placing its full text in the next prompt. Provider context compaction does not prove that an old dependency stopped influencing the session. Fresh reviewers still start with independently prepared context as required by the existing protocol; citing a fresh role name cannot erase reused session history.
+
+Each result links to its producing step and exact input references; each composition links to its selected deliveries. Reverse lookup of consumers can be derived from those existing records, or cached rebuildably if needed. This is a small provenance relation that follows actual execution, not a manually curated domain dependency graph. Multiple uses of the same immutable input reference need not duplicate its bytes. No separate Agent report of "files I used" is authoritative.
+
+### State the limits of the execution boundary
+
+Reliable exclusion requires a real observable/enforced boundary. If a shell or provider can silently read arbitrary local files, browse external sources or insert unobserved context, an otherwise complete Host manifest cannot prove that those inputs were absent. Ordinary scoped instructions and snapshot hashes are not enforcement. Use the executor's supported controls and recorded tool/transport results where available; otherwise report broader possible exposure or unknown input provenance and do not grant selective-independence claims from missing records.
+
+The first version can prefer frozen workspace inputs plus recorded explicit additions, with supported tool access and bounded execution. It need not monitor every file read. Conversely, it cannot promise unrestricted ambient access, no observation of that access and exact dependency isolation at the same time. Actual changed-artifact capture, ownership checks and protected-input verification at freeze remain required; avoiding read surveillance does not remove those write/result checks.
+
+Additional context does not silently change the run's canonical model/configuration. A recorded clarification can inform same-basis work; changed intent or execution authority follows the existing authorized model/amendment and successor rules. Exact bytes establish what was supplied, not whether those bytes are true, authoritative or a correct interpretation.
+
+For defect handling, a supplied D12, an explicitly read D12-derived artifact or continued history containing it remains potential exposure. If an input reply is missing or its basis cannot be established, record an evidence gap rather than assume independence. A known broad snapshot can support conservative assessment without claiming per-file usage; unknown uncontrolled exposure cannot justify a precise unaffected verdict.
+
+Bounded contract checks can verify snapshot-to-step-to-result links, recording of an additional reply before delivery, preserved exposure across session continuation, and conservative handling of a broad or unobserved input scope. They should not assert deterministic reproduction of Agent reasoning or complete semantic influence. This is proposed execution bookkeeping using existing records, not an implemented tracing system.
+
 ## Overall acceptance and repeatability
 
 The proposed initial threshold is three complete series of all four scenarios, using a fresh execution state for each case and the same fixed product/profile basis. Each case starts from its specified recorded baseline; within the recovery case, the interrupted state must survive the restart. Do not replace recovery with a new clean assignment.
