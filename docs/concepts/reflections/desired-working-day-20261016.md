@@ -52,7 +52,44 @@ Use common project rules with few Manager-specific exceptions. Derive the effect
 - Reserved decisions: choices requiring another authorized actor.
 - Limits: budgets, permitted actions and escalation conditions.
 
-An illustrative Lending mandate is: “Realize the existing borrowing rules. Choose internal implementation within the architecture constraints. Coordinate interfaces through the common parent. Changes to business rules, public commitments or this mandate require a decision outside this Apply.” Configuration cannot weaken binding model obligations or required review gates.
+### Derive the Lending mandate from its sources
+
+The [concrete mandate discussion](../sources/working-day-discussion-20261016.md#derive-a-concrete-lending-mandate) proposes a readable view assembled from existing sources. Each displayed obligation or permission identifies its source and bound revision. The view is not another authored policy or a selected configuration schema.
+
+An illustrative view for Lending reads:
+
+> **Assignment:** Realize lending as code, tests and documentation, including integration of lending/reminders through its responsible child Manager.
+>
+> **Binding basis:** Apply your local Definitions and connected obligations, including borrowing policy, membership eligibility, copy availability and returns. Their original passages are supplied in context.
+>
+> **Decision freedom:** Choose internal implementation and tests within the applicable architecture and interface constraints. Do not introduce additional business restrictions.
+>
+> **Write authority:** Change artifacts assigned to you. Reserve new paths through the Host. Request changes to another Manager's artifacts through the common parent.
+>
+> **Limits:** This Apply changes artifacts only. The model, execution configuration and your authority remain unchanged. Effective budgets and required independent reviews apply.
+>
+> **Escalation:** Retrieve missing context first and coordinate dependencies internally. Present missing business decisions, contradictory obligations or necessary mandate changes with a concrete proposal to the authorized decision owner.
+
+The maintained sources are:
+
+| Information | Single source to maintain |
+| --- | --- |
+| Loan limits, due dates, membership eligibility and return behavior | Canonical model Definitions. |
+| Required outputs, architecture and binding interfaces | Canonical model Definitions. |
+| Package Managers and parent relationships | Organization derived from the acquired Package structure under the realization strategy. |
+| Actual artifact ownership | Versioned realization registry. |
+| Teams, execution profiles, budgets and permitted creation areas | Project execution configuration outside canonical Definition roots. |
+| Artifact-only Apply, mandatory review and publication guards | Shared operation contract enforced by the Host, not repeated per-Manager configuration. |
+| This assignment's goal and additional constraints | Assignment/task records bound to the effective inputs and existing authority. |
+| Timing and grouping of notifications | Notification settings, separate from decision permissions. Their exact format remains open. |
+
+For example, [loan-policy](../../design/canonical-model/library-example/m1/model/lending/loan-policy.yaml) owns `spec.maxOpenLoans`, currently five in M1. The mandate refers to that policy; it does not independently prescribe five. A context view can display the bound value. Changing the canonical value to three gives the successor Apply its new basis without editing a second mandate rule. Existing original model text remains available; a summary does not replace it.
+
+Likewise, the operation contract establishes that a Manager writes only its own artifacts, and the registry identifies those artifacts. Instructions can explain this boundary but cannot expand it. Notification preferences never expand decision authority. The reviewer receives the same source-bound mandate, current model, actual candidate and relevant explanations; an implementer's self-authored permission is not evidence of authority.
+
+If the project later defines durable rights to change business rules, those rights belong to its intended governance in the canonical model. Executor choice and budgets remain execution configuration. This does not add delegated model-change rights to artifact Apply or require a general permission language for the first implementation.
+
+Configuration and assignment constraints cannot silently weaken binding model obligations or mandatory operation gates. Conflicting inputs must be exposed for resolution. A displayed mandate preserves the sources and their distinct roles rather than introducing a precedence rule that lets one input erase another.
 
 ### Choose notification timing separately
 

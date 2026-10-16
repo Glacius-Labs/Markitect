@@ -65,3 +65,15 @@ Recorder's note: The assistant proposed separating decision authority from notif
 > Halte diese Regeln für Entscheidungsbefugnisse und Eskalation bitte auch in unseren Docs fest, insbesondere die Trennung zwischen Mandat und Benachrichtigung sowie die Prüfung der Befugnis durch den Reviewer.
 
 The reflection's [authority and escalation section](../reflections/desired-working-day-20261016.md#decision-authority-and-escalation) records these proposed rules and their limits.
+
+## Derive a concrete Lending mandate
+
+> Wie könnte ein konkretes Mandat für einen Manager im Bibliotheksbeispiel aussehen, und wo würden wir es im Modell oder in der Konfiguration festhalten, ohne Regeln doppelt zu pflegen?
+
+Recorder's note: The assistant proposed a readable mandate derived from the canonical model, execution configuration, organization, realization registry, operation contract and assignment. Business rules remain in their original Definitions, while runtime choices remain outside model roots. The Lending example illustrates a view with source references rather than another authored policy or implemented configuration schema.
+
+## Preserve the derived mandate
+
+> Halte dieses konkrete Mandat bitte auch in unseren Docs fest, insbesondere die Ableitung aus Modell, Konfiguration, Registry und Auftrag, ohne Regeln doppelt zu pflegen.
+
+The reflection's [derived Lending mandate](../reflections/desired-working-day-20261016.md#derive-the-lending-mandate-from-its-sources) records the concrete example, source ownership, conflict handling and reviewer basis.
