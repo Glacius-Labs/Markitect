@@ -20,6 +20,9 @@
 // Existing owners may repair dangling artifacts without complete accounting;
 // new exact-file claims cannot acquire registered or unexplained existing files.
 // A claim records conditional admissibility, not live workspace authority. Host
-// admission, transfers, candidate composition, assessments and run states remain
-// separate responsibilities.
+// admission, transfers, assessments and run states remain separate responsibilities.
+// Candidate capture derives actual tree and logical registry differences. Every
+// changed/restored artifact needs current ownership and model basis; unchanged old
+// problems do not imply completion. Composition is a disjoint union over one exact
+// base and returns a fixed plan without accepting deliveries or causing effects.
 package realization
