@@ -58,6 +58,39 @@ Carried work stays unpublished until the successor completes. Its candidate base
 
 A successor also retains the assignment's consumed effort and remaining authorized limits. Starting another run must not silently reset a finite mandate or create an unlimited retry loop. Exact budgeting and record encodings remain design work.
 
+### A simple rule for carrying work forward
+
+The [follow-up on reuse](../sources/working-day-discussion-20261016.md#choose-what-to-carry-forward) separates technical admission from semantic assessment: retain traceable work as starting material, then have the responsible Manager and independent reviewer assess it through the normal workflow. No separate mechanism needs to prove semantic independence before useful work can be retained.
+
+The Host checks that the exact source and candidate base are known, no uncontrolled writer remains, artifacts and registry agree, ownership is valid, and composition neither overwrites newer changes nor hides conflicts. Incomplete work can satisfy these conditions; its open findings and missing evidence remain attached. Conflicts return to the accountable Manager, with both versions preserved. The Host does not choose their business meaning.
+
+The Manager receives the retained candidate, current model, model difference and decision, and open findings. It records one of four judgments for the relevant work in its existing assessment, with a short reason and references to the affected Definitions and artifacts:
+
+| Judgment | Meaning |
+| --- | --- |
+| Keep (Beibehalten) | The existing realization still meets the current obligations; explain why it can remain unchanged. |
+| Adapt (Anpassen) | Useful parts remain; identify the changes needed for the current obligations. |
+| Replace (Ersetzen) | The old solution relies on a discarded assumption or is no longer a useful basis; explain what must replace it. Preserve its historical candidate. |
+| Unresolved (Ungeklärt) | Information or a decision is missing; state what is needed and which work cannot complete. |
+
+These are judgments about retained work, not new canonical Kinds or replacements for the Definition-assessment census. They can be recorded in existing reports. A judgment can change when review or integration reveals new evidence.
+
+A fresh independent reviewer assesses the judgment against the current model, actual candidate and relevant connected obligations. Keep is a positive, reviewable claim, not a shortcut to acceptance. Previous findings help the assessment; a previous pass does not discharge it. A required unresolved judgment prevents completion of the affected scope and aggregate.
+
+Initially, perform all required reviews and executable checks for the new run, including integration and final verification. Each result binds to the current subject and inputs. Historical evidence remains available but is not relabeled as current approval. An unchanged file can still have changed obligations or assumptions through another area.
+
+For the library's five-to-three change, the following are illustrative judgments, not preapproved outcomes:
+
+| Retained work | Likely judgment | Current assessment |
+| --- | --- | --- |
+| Catalog and copy identities | Keep | Confirm current requirements and the interfaces used by lending still fit. |
+| Borrowing admission | Adapt | Check the new limit, preserved existing loans and refusal without side effects. |
+| Return behavior | Keep | Confirm returns remain allowed above the new limit and for suspended members. |
+| Documentation stating the old limit | Adapt | Align the description with the current model. |
+| Composed application | Integrate the area results | Verify connected behavior and run the required checks on the current aggregate. |
+
+This policy saves reconstruction and implementation effort while accepting renewed assessment cost. Consider skipping specific checks only after real runs expose expensive redundancy and a justified reuse policy exists. The initial rule is: reuse the work, justify its current suitability, and establish approval anew.
+
 ### Library illustration
 
 Suppose a future draft says both that existing loans remain intact and that no member may have more than three open loans. Lending identifies the contradiction and asks whether a member with four existing loans may keep them while further borrowing is refused. This is an intentionally inconsistent hypothetical draft; the authored library model already resolves this case and should not generate that question.

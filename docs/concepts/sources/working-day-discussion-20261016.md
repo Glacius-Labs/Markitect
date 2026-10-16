@@ -29,3 +29,15 @@ Recorder's note: The assistant proposed a continuing assignment containing succe
 > Halte diesen Ablauf bitte auch in unseren Docs fest, insbesondere die Trennung zwischen fortbestehendem Auftrag, neuem Apply-Lauf und der Übernahme vorhandener Arbeit ohne automatische Übernahme ihrer Freigabe.
 
 The reflection's [continuation section](../reflections/desired-working-day-20261016.md#continue-the-assignment-across-model-changes) records the requested distinction. Safe handoff, publication-base separation and retained assignment limits are assistant-proposed safeguards, not additional owner decisions.
+
+## Choose what to carry forward
+
+> Wie würden wir konkret entscheiden, welche Arbeit ein neuer Apply-Lauf übernehmen kann und was erneut geprüft werden muss, ohne daraus einen komplizierten Mechanismus zu machen?
+
+Recorder's note: The assistant proposed Host checks for a safe technical handoff, followed by Manager judgments of Keep, Adapt, Replace or Unresolved within existing assessments. Independent review and required checks establish current approval; previous passes remain historical evidence.
+
+## Preserve the simple reuse rule
+
+> Halte diese einfache Übernahmeregel bitte auch in unseren Docs fest, inklusive Beibehalten, Anpassen, Ersetzen und Ungeklärt sowie der erneuten Prüfung ohne automatische Übernahme alter Freigaben.
+
+The reflection's [simple reuse rule](../reflections/desired-working-day-20261016.md#a-simple-rule-for-carrying-work-forward) records this discussion as a proposed extension of the continuation workflow.
