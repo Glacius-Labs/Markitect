@@ -51,6 +51,23 @@ def fixture_at(case, index):
 
 
 class OracleTests(unittest.TestCase):
+    def test_repeated_correlation_id_does_not_replay_registration_success(self):
+        case = next(case for case in oracle.build_cases("m1") if case["id"] == "E12-callable")
+        exact = '{"id":"same-id","op":"registerMember","args":{"memberId":"transport-a","name":"Transport A"}}'
+        duplicates = [i for i, step in enumerate(case["steps"]) if step.get("raw") == exact]
+        self.assertEqual(len(duplicates), 2)
+        first, repeated = (case["steps"][index] for index in duplicates)
+        self.assertEqual(first["expect"]["status"], "ok")
+        self.assertEqual(repeated["expect"]["status"], "refused")
+        cached_success, captures = fixture_at(case, duplicates[0])
+        self.assertTrue(oracle.evaluate_step(repeated, cached_success, captures)["errors"])
+        post_snapshot = next(step for step in case["steps"][duplicates[1] + 1:]
+                             if step.get("snapshot") and step.get("request", {}).get("op") == "inspectMember"
+                             and step["request"]["args"].get("memberId") == "transport-a")
+        response, captures = fixture_at(case, case["steps"].index(post_snapshot))
+        self.assertEqual(response["result"]["member"]["name"], "Transport A")
+        self.assertFalse(oracle.evaluate_step(post_snapshot, response, captures)["errors"])
+
     def test_unknown_loan_probes_do_not_assume_generated_id_format(self):
         step = {"request": {"id": "probe", "op": "inspectLoan", "args": {"loanId": {"$unusedLoan": "unknown"}}}}
         captures = {"a": "unknown", "b": "unknown_", "c": "opaque space / ü"}

@@ -1,6 +1,8 @@
 """Assessment plumbing against tiny transcript fixtures, never a library."""
 
 import copy
+import base64
+import hashlib
 import json
 from pathlib import Path
 import sys
@@ -45,7 +47,9 @@ class AssessmentTests(unittest.TestCase):
             self.assertEqual(report["missing_steps"], 0)
             self.assertGreater(report["assertions"], 0)
             self.assertEqual(report["cases"][0]["trace"]["exit_code"], 0)
-            self.assertEqual(report["manifest_sha256"], assess.data_hash(manifest))
+            self.assertEqual(report["manifest_semantic_sha256"], assess.data_hash(manifest))
+            self.assertIsNone(report["manifest_sha256"])
+            self.assertIsNone(report["manifest_bytes_base64"])
             self.assertEqual(report["apply_evidence"], "not-run")
 
     def test_wrong_response_and_skipped_steps_fail(self):
@@ -139,6 +143,95 @@ class AssessmentTests(unittest.TestCase):
                     assess.main()
                 self.assertEqual(stopped.exception.code, 2)
             self.assertFalse(output.exists())
+
+    def test_cli_binds_and_retains_literal_manifest_bytes(self):
+        with tempfile.TemporaryDirectory() as directory:
+            workspace = Path(directory) / "target"
+            workspace.mkdir()
+            command = self.fixture(str(workspace), {"id": "q", "status": "refused", "reason": "Unknown"})
+            manifest = self.manifest(str(workspace), command)
+            variants = (json.dumps(manifest, separators=(",", ":")).encode(),
+                        json.dumps(manifest, indent=2).encode() + b"\r\n")
+            reports = []
+            for index, raw in enumerate(variants):
+                source = Path(directory) / (str(index) + "-manifest.json")
+                source.write_bytes(raw)
+                output = Path(directory) / (str(index) + "-report.json")
+                with patch.object(sys, "argv", ["assess.py", "--manifest", str(source), "--output", str(output)]), patch.object(
+                        assess, "build_cases", return_value=[CASE]), patch.object(
+                        assess, "discrimination", return_value={"expected_mismatch_confirmed": True}):
+                    self.assertEqual(assess.main(), 0)
+                report = json.loads(output.read_text(encoding="utf-8"))
+                self.assertTrue(report["passed"])
+                self.assertEqual(base64.b64decode(report["manifest_bytes_base64"]), raw)
+                self.assertEqual(report["manifest_sha256"], hashlib.sha256(raw).hexdigest())
+                reports.append(report)
+            self.assertNotEqual(reports[0]["manifest_sha256"], reports[1]["manifest_sha256"])
+            self.assertEqual(reports[0]["manifest_semantic_sha256"], reports[1]["manifest_semantic_sha256"])
+
+    def test_cli_rejects_bad_program_bindings_with_report_before_launch(self):
+        with tempfile.TemporaryDirectory() as directory:
+            workspace = Path(directory) / "target"
+            workspace.mkdir()
+            command = self.fixture(str(workspace), {})
+            manifest = self.manifest(str(workspace), command)
+            variants = ([command[0]], None, command[0], {"relative": "a" * 64},
+                        {command[0]: None}, {command[0]: 17}, {command[0]: "a" * 63}, {command[0]: "g" * 64})
+            for index, bindings in enumerate(variants):
+                with self.subTest(bindings=bindings):
+                    manifest["program_sha256"] = bindings
+                    raw = json.dumps(manifest).encode()
+                    source = Path(directory) / "manifest.json"
+                    source.write_bytes(raw)
+                    output = Path(directory) / (str(index) + "-failure.json")
+                    with patch.object(sys, "argv", ["assess.py", "--manifest", str(source), "--output", str(output)]), patch.object(
+                            assess, "Process") as process:
+                        self.assertEqual(assess.main(), 1)
+                        process.assert_not_called()
+                    report = json.loads(output.read_text(encoding="utf-8"))
+                    self.assertFalse(report["passed"])
+                    self.assertIn("program_sha256", report["errors"][0])
+                    self.assertEqual(report["executed_cases"], 0)
+                    self.assertEqual(base64.b64decode(report["manifest_bytes_base64"]), raw)
+
+    def test_cli_manifest_parser_recursion_retains_failed_input(self):
+        with tempfile.TemporaryDirectory() as directory:
+            source = Path(directory) / "manifest.json"
+            raw = b'{"controlled":"parser-depth-fixture"}\r\n'
+            source.write_bytes(raw)
+            output = Path(directory) / "failure.json"
+            with patch.object(sys, "argv", ["assess.py", "--manifest", str(source), "--output", str(output)]), patch.object(
+                    assess, "strict_json", side_effect=RecursionError("controlled manifest parser depth")), patch.object(
+                    assess, "Process") as process:
+                self.assertEqual(assess.main(), 1)
+                process.assert_not_called()
+            report = json.loads(output.read_text(encoding="utf-8"))
+            self.assertFalse(report["passed"])
+            self.assertIn("controlled manifest parser depth", report["errors"][0])
+            self.assertEqual(report["manifest_sha256"], hashlib.sha256(raw).hexdigest())
+            self.assertEqual(base64.b64decode(report["manifest_bytes_base64"]), raw)
+
+    def test_mismatched_literal_and_parsed_manifest_fails_before_launch(self):
+        with patch.object(assess, "Process") as process:
+            report = assess.assess({"profile": "m1"}, b'{"profile":"m2"}')
+            self.assertFalse(report["passed"])
+            self.assertIn("literal manifest bytes do not match", report["errors"][0])
+            process.assert_not_called()
+
+    def test_cli_deep_invalid_manifest_still_has_serializable_failure_report(self):
+        with tempfile.TemporaryDirectory() as directory:
+            source = Path(directory) / "manifest.json"
+            raw = b'{"program_sha256":' + b'[' * 5000 + b'0' + b']' * 5000 + b'}'
+            source.write_bytes(raw)
+            output = Path(directory) / "failure.json"
+            with patch.object(sys, "argv", ["assess.py", "--manifest", str(source), "--output", str(output)]), patch.object(
+                    assess, "Process") as process:
+                self.assertEqual(assess.main(), 1)
+                process.assert_not_called()
+            report = json.loads(output.read_text(encoding="utf-8"))
+            self.assertFalse(report["passed"])
+            self.assertTrue(report["errors"])
+            self.assertEqual(base64.b64decode(report["manifest_bytes_base64"]), raw)
 
 
 if __name__ == "__main__":

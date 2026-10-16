@@ -1,6 +1,7 @@
 """External behavior assessment only. No build, Agent start, repair or Apply."""
 
 import argparse
+import base64
 import copy
 import hashlib
 import json
@@ -86,6 +87,14 @@ def validate_manifest(manifest):
     if manifest.get("protected_sha256") != actual:
         raise ValueError("protected evaluator/expectation binding mismatch")
     inputs = manifest.get("program_sha256", {})
+    if not isinstance(inputs, dict):
+        raise ValueError("program_sha256 must be a mapping of absolute paths to SHA-256 hex strings")
+    for name, expected in inputs.items():
+        if not isinstance(name, str) or not name or not Path(name).is_absolute():
+            raise ValueError("program_sha256 keys must be absolute path strings")
+        if (not isinstance(expected, str) or len(expected) != 64
+                or any(char not in "0123456789abcdefABCDEF" for char in expected)):
+            raise ValueError("program_sha256 values must be 64-character SHA-256 hex strings")
     bound_paths = {Path(name).resolve() for name in inputs}
     if executable.resolve() not in bound_paths:
         raise ValueError("executable bytes must be bound in program_sha256")
@@ -97,7 +106,7 @@ def validate_manifest(manifest):
             raise ValueError("argv file must be bound: " + str(candidate.resolve()))
     for name, expected in inputs.items():
         path = Path(name)
-        if not path.is_absolute() or sha256(path) != expected:
+        if sha256(path) != expected.lower():
             raise ValueError("program input hash mismatch: " + name)
     return Limits(**manifest["limits"])
 
@@ -129,9 +138,16 @@ def discrimination(profile, command, cwd, limits):
     return result
 
 
-def assess(manifest):
+def manifest_byte_binding(raw):
+    """Literal input evidence, distinct from the normalized JSON value digest."""
+    return {"manifest_sha256": hashlib.sha256(raw).hexdigest() if raw is not None else None,
+            "manifest_bytes_base64": base64.b64encode(raw).decode() if raw is not None else None}
+
+
+def assess(manifest, manifest_bytes=None):
     report = {"schema": "markitect.library-assessment/v1", "kind": "behavior-only",
-              "manifest": manifest, "manifest_sha256": data_hash(manifest), "passed": False,
+              "manifest": manifest, **manifest_byte_binding(manifest_bytes),
+              "manifest_semantic_sha256": None, "passed": False,
               "environment": {"python": sys.version, "platform": platform.platform()},
               "isolation": {"credentials": "filtered environment", "network": "not-enforced",
                             "filesystem": "not-sandboxed", "process_cleanup": "direct child only"},
@@ -141,6 +157,11 @@ def assess(manifest):
               "apply_evidence": "not-run", "human_acceptance": "not-recorded",
               "cases": [], "errors": []}
     try:
+        report["manifest_semantic_sha256"] = data_hash(manifest)
+        if manifest_bytes is not None:
+            parsed = strict_json(manifest_bytes.decode("utf-8"))
+            if data_hash(parsed) != report["manifest_semantic_sha256"]:
+                raise ValueError("literal manifest bytes do not match the supplied parsed value")
         limits = validate_manifest(manifest)
         cases = build_cases(manifest["profile"])
         report["cases_sha256"] = data_hash(cases)
@@ -152,7 +173,11 @@ def assess(manifest):
                             and report["discrimination"]["expected_mismatch_confirmed"])
         if not report["passed"]:
             report["errors"].append("realization/behavior: required cases failed")
-    except (OSError, ValueError, KeyError, TypeError) as exc:
+    except (OSError, ValueError, KeyError, TypeError, RecursionError) as exc:
+        if isinstance(exc, RecursionError):
+            # A parsed value too deep to serialize must not break the failed
+            # report itself; the exact input bytes remain available above.
+            report["manifest"] = None
         report["errors"].append("assessment/integrity or preparation/environment: " + str(exc))
     report["planned_cases"] = len(report["cases"])
     report["executed_cases"] = sum(case["executed_steps"] > 0 for case in report["cases"])
@@ -175,11 +200,14 @@ def main():
         parser.error("--manifest and --output are required")
     # Refuse overwrites so a failed attempt cannot disappear behind a later run.
     result = None
+    raw = None
     try:
-        manifest = strict_json(args.manifest.read_text(encoding="utf-8"))
-    except (OSError, ValueError) as exc:
+        raw = args.manifest.read_bytes()
+        manifest = strict_json(raw.decode("utf-8"))
+    except (OSError, ValueError, RecursionError) as exc:
         manifest = None
-        result = {"passed": False, "errors": ["preparation/environment: " + str(exc)]}
+        result = {"passed": False, **manifest_byte_binding(raw),
+                  "errors": ["preparation/environment: " + str(exc)]}
     destination = args.output.resolve()
     if destination.is_relative_to(ROOT) or destination == args.manifest.resolve():
         parser.error("output must be outside protected evaluator and cannot replace the manifest")
@@ -188,9 +216,15 @@ def main():
             parser.error("output must be outside target working directory")
     with args.output.open("x", encoding="utf-8") as output:
         if result is None:
-            result = assess(manifest)
-        json.dump(result, output, indent=2, ensure_ascii=False)
-        output.write("\n")
+            result = assess(manifest, raw)
+        try:
+            rendered = json.dumps(result, indent=2)
+        except RecursionError:
+            result["passed"] = False
+            result["manifest"] = None
+            result["errors"].append("assessment/integrity: parsed manifest exceeds report serialization depth")
+            rendered = json.dumps(result, indent=2)
+        output.write(rendered + "\n")
     return 0 if result["passed"] else 1
 
 
