@@ -137,3 +137,15 @@ Recorder's note: The assistant assessed the committed concept plus two uncommitt
 > Halte diese Einschätzung und die konkreten Verbesserungsvorschläge bitte auch in unseren Docs fest, damit der Architect sie bei der Konsolidierung berücksichtigen kann.
 
 The [dated consistency review](../reflections/concept-consistency-review-20261016.md) records the assessment basis, recommendations, tradeoffs and expected consolidation results. The recommendations are review input, not automatically accepted design changes.
+
+## Scope the first usable version
+
+> Welche Teile unseres gewünschten Arbeitsalltags sollten wir für die erste Version unbedingt umsetzen, und was können wir bewusst auf später verschieben, ohne das Konzept zu verwässern?
+
+Recorder's note: The assistant recommended a small usable organization preserving authority, independent assessment and honest outcomes, with simpler operation and deferred optimization. It distinguished the planned two-Apply technical demonstration from subsequent question/continuation, correction, interruption and budget-exhaustion scenarios. This recommendation was not presented as an already accepted delivery requirement.
+
+## Preserve the first version boundary
+
+> Halte diese Abgrenzung der ersten Version bitte auch in unseren Docs fest, inklusive der unverzichtbaren Fähigkeiten, bewusst verschobenen Erweiterungen und der beiden Nachweise für technischen Kern und nutzbaren Arbeitsalltag.
+
+The [first usable version reflection](../reflections/first-usable-version-20261016.md) records the recommended scope, initial manual model-edit boundary and separate demonstrations.

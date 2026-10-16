@@ -93,6 +93,8 @@ The new drafts largely express the working-day ideas through existing tasks, que
 
 ## Recommended sequence
 
+The follow-up [first usable version recommendation](first-usable-version-20261016.md) separates essential working-day capabilities from deferred extensions and distinguishes the technical-core demonstration from usable interaction evidence.
+
 First reconcile configuration resolution, budget protection and lifecycle mappings. Keep the authorized-model-edit boundary visible. Then complete the already planned two real library Applies: M1 to A1, followed by a model-only M2 change and Apply to A2. Inspect actual behavior and evidence using the planned independent expectations.
 
 A focused continuation case with an owner question, authorized model correction and successor run can follow as the next interaction proof. Experience selection, operational doctor, richer teams, automatic review reuse and a full cockpit need not become prerequisites for the first demonstration.
