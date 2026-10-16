@@ -66,9 +66,12 @@ class TransportTests(unittest.TestCase):
         self.run_fixture('import sys\nsys.stdin.readline()\nprint("{}",end="",flush=True)\n', 'unterminated|missing')
 
     def test_parser_depth_failure_retains_transport_trace(self):
-        payload = b'{"nested":' + b'[' * 5000 + b'0' + b']' * 5000 + b'}\n'
-        trace = self.run_fixture('import sys\nsys.stdin.readline()\nsys.stdout.buffer.write(' + repr(payload) + ')\nsys.stdout.flush()\n',
-                                 'malformed response', limits=Limits(request_seconds=1, process_seconds=4, output_bytes=65536))
+        payload = b'{"nested":[]}\n'
+        # Native parser depth depends on Python/platform stack limits. Inject
+        # that parser outcome after real transport, rather than assume a depth.
+        with patch('driver.strict_json', side_effect=RecursionError('controlled parser depth')):
+            trace = self.run_fixture('import sys\nsys.stdin.readline()\nsys.stdout.buffer.write(' + repr(payload) + ')\nsys.stdout.flush()\n',
+                                     'malformed response.*controlled parser depth')
         self.assertEqual(base64.b64decode(trace["pairs"][0]["response_base64"]), payload)
 
     def test_stdout_and_stderr_flood(self):
