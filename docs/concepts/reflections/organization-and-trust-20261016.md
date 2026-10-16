@@ -45,6 +45,47 @@ The intended result is local discretion with useful escalation. The owner should
 
 The discussion suggests the following questions for later design and evaluation. These are assistant interpretations, not additional owner decisions.
 
+Follow-up on 16 October 2026: the owner explicitly asked to retain these objections, especially experience, different perspectives and the four-eyes principle, and identified configurable teams as a way to realize the latter. The [follow-up source](../sources/organization-and-trust-20261016.md#retain-objections-and-team-design-questions) records that request. The elaborations below preserve design questions for the architect; they do not select a new team layout.
+
+### Experience and institutional memory
+
+The organizational analogy needs an account of accumulated experience. Human workers can remember why a decision was made, recognize recurring failures and develop judgment about their area. An agent invocation must not be assumed to possess the organization's earlier experience merely because it has the same Manager name.
+
+The model, reasoned decisions, incident findings, rejected approaches and unresolved obligations could supply that continuity. A useful retained lesson would identify what happened, why it mattered, the evidence and the circumstances in which it applies. For example, a previous lending defect might show that checking membership only at one entry point left another path open.
+
+An execution transcript preserves events; it does not by itself turn them into usable experience. The open questions are how lessons are selected, supplied to the right roles, revised when circumstances change and retired when obsolete. Earlier agent judgments must remain distinguishable from binding model rules. Learning from a run must not silently change accepted intent. This connects to [institutional memory](../register.md#idea-001-the-model-as-institutional-memory-for-stateless-agents) and [reasoned precedents](../register.md#idea-005-reasoned-user-decisions-as-project-precedents).
+
+### Different perspectives through configurable teams
+
+Configurable teams provide a place to assign distinct responsibilities without introducing a separate Manager hierarchy for every perspective. A team's roles could differ in their questions, relevant context, tools and model profiles. A named role alone does not establish a different perspective; its actual assignment and findings should show the difference.
+
+Illustrative review questions for the library are:
+
+| Perspective | Question |
+| --- | --- |
+| Domain behavior | Can a suspended member or a member with five loans borrow through any supported entry point? |
+| Tests | Would these tests reject a plausible implementation that permits a sixth loan, and where do their expectations come from? |
+| Integration | Does a membership-state change affect lending and reminders consistently? |
+| Maintainability | Does the change follow the project's agreed patterns without adding unnecessary mechanisms? |
+
+These are possible assignments within existing team and integration responsibilities, not four mandatory new agents. The architect should consider which perspectives a task needs, which can share a role and when specialization earns its coordination cost. Selecting different models is another configurable option to evaluate; it does not establish independent judgment by itself. The [existing team variants](../../design/canonical-model/manager-realization-north-star.md#team-variants) and [configuration proposal](../../design/canonical-model/manager-apply-concept.md#organization-and-configuration) remain the design owners.
+
+### Four eyes and correlated mistakes
+
+The four-eyes principle needs a reviewer who can form a separate judgment from the requirements and actual candidate, with fresh context and the ability to require rework. The implementer's explanation can be evidence to examine, but must not substitute for examining the result. A reviewer also needs access to relevant detail rather than being limited to a reassuring summary.
+
+Fresh context does not remove every shared blind spot. Implementer and reviewer can receive the same incomplete context, adopt the same mistaken reading, or agree on an incorrect test expectation. More reviews can repeat that error. Distinct questions, appropriate source access, concrete counterexamples and independently stated expectations are ways to challenge it. The library's protected expectations are an evaluation instrument, not a second specification every adopter must maintain.
+
+Local review, parent integration review and final verification should retain different purposes: assess the local realization, assess interactions, and establish the required current evidence for the aggregate. Count useful findings, remaining defects and rework effort; a count of reviewers or passing verdicts is insufficient to establish trust.
+
+### Limits of the analogy and future autonomy
+
+The management analogy supplies useful questions about responsibility and escalation. It does not establish that a particular human organizational structure will work equally well for agents. Its benefit needs to survive context preparation, handoffs, repeated reviews and recovery work.
+
+Likewise, incentives need an explicit operational meaning. A justified no-change result, a grounded objection and a timely escalation should be compatible with success. A system that rewards only completion or activity could encourage unsupported closure or unnecessary maintenance. The discussion selects no reward algorithm or assumption that agents have human motivations.
+
+Routine human PR review becoming unnecessary remains the owner's goal. Evidence for that working style must include what the organization misses, the quality of its escalations and the owner's total attention over repeated changes. The question is whether the whole process earns trust while preserving quality, not whether every individual role reports success.
+
 | Topic | Question or implication |
 | --- | --- |
 | Different perspectives | Assign distinct questions and relevant inputs. Repeating the same broad review many times may repeat the same blind spot. Judge findings and missed obligations rather than review count alone. |

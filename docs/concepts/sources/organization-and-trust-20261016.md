@@ -29,3 +29,9 @@ Recorder's note: Direct owner messages from the Markitect chat comparing the Man
 > Ich möchte also die Vorzüge von Struktur und Systematik nutzen und Erkenntnisse aus Management um AI Agents effizienter zu nutzen und mehr Vertrauen in ihre Arbeit zu bekommen. Nicht weil das Modell stark ist sondern weil es quasi 20 mal aus verschiedenen Blickwinkeln darauf geschaut hat. Dann brauche ich PRs tatsächlich nicht zu reviewen.
 >
 > Auch wenn es um relativ lokale Entscheidungen geht, würde ein klassischer Mitarbeiter die Thematik einer AI erklären und sich Vorschläge geben lassen und in den meisten fällen ist die Empfehlung korrekt, ausser es fehlt Kontext.
+
+## Retain objections and team design questions
+
+Recorder's note: Follow-up on the same date after the first documentation commit. The owner explicitly asks to preserve the objections and names configurable teams as a way to realize different perspectives and the four-eyes principle. This request does not adopt every assistant elaboration.
+
+> Hast du auch deine Einwände dort abgelegt? Gerade Dinge wie die Erfahrung, verschiedene Blickwinkel bzw Vier Augen Prinzip (realisierbar durch konfigurierbare Teams) etc finde ich sehr wichtig und diese sollten nicht vergessen werden

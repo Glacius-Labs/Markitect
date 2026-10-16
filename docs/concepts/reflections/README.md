@@ -4,7 +4,7 @@ This collection keeps discussions about Markitect's purpose, future use and orga
 
 | Reflection | Subject |
 | --- | --- |
-| [Trust through organized agent work](organization-and-trust-20261016.md) | The owner's desired working day, the current story-to-PR workflow, management by delegation and escalation, focused perspectives and local decisions |
+| [Trust through organized agent work](organization-and-trust-20261016.md) | Desired working life, current story-to-PR practice, delegation and escalation; objections about experience, distinct perspectives, configurable teams and independent review |
 
 ## Continuing the discussion
 
