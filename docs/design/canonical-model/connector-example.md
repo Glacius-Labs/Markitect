@@ -10,7 +10,7 @@ Untersuchte lokale Referenz: `C:\Users\EduardMarkgraf\STP\STP.Dms.Cloud.Api`, HE
 
 Die Referenz bezeichnet sich als POC. Der aktuelle Host registriert DMS-Funktionen. UserManagement und Winsolvenz stammen aus dem gewünschten Gesamtbeispiel des Nutzers; ihre Anbindung wird in diesem Repository nicht als umgesetzt behauptet. Auch ein erfolgreicher echter DMS-Betrieb ist hier nicht nachgewiesen: Die Registrierung kann ohne DMS-Konfiguration eine Fake-Verbindung verwenden.
 
-Die Quellenbelege stehen am Ende dieser Seite. Das Beispiel entstand zunächst als lokale Analyse. Mit dem anschließenden Nutzerauftrag, den vollständigen Designstand für einen Remote-Handoff zu sichern, wird auch dieser Designversuch in die Dokumentationsbranch aufgenommen. Die referenzierte Anwendung selbst und ihre Konfiguration werden nicht mitgeliefert.
+Die Quellenbelege stehen am Ende dieser Seite. Das Beispiel entstand zunächst als lokale Analyse und wurde auf Nutzerauftrag mit dem vollständigen Designstand in die Dokumentation aufgenommen. Die referenzierte Anwendung selbst und ihre Konfiguration werden nicht mitgeliefert.
 
 ## Projektzweck und Umfang
 

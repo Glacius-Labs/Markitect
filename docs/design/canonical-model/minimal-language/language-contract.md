@@ -750,7 +750,3 @@ Kontextbildung, semantischer Index, Änderungsbewertung, Realisierungszuordnung,
 <a id="121-stand-der-definition-des-kanonischen-modells"></a>
 
 Der gewählte minimale Sprachumfang ist als v1-Designbaseline abgeschlossen. Grundform, fester Core, Werte und Listen, Unicode und Schreibkonventionen, Identitäten und Imports, Packages, Modelle und Wurzeln, Abhängigkeiten und Lockbindung sowie kanonische Bytes sind festgelegt. Die bekannte Command/command-Kollision im informativen Exchange-Beispiel ist ein Vokabularkonflikt und keine offene Sprachentscheidung. Spätere Implementierungsbefunde können ausdrücklich dokumentierte Präzisierungen oder Korrekturen erfordern; weitere Sprachmittel verlangen eine ausdrückliche Erweiterungsentscheidung. Der frühere Abschlussabgleich bleibt in der [Sprachgeschichte](language-history.md#121-stand-der-definition-des-kanonischen-modells) erhalten.
-
-<a id="1114-vollständiges-datensatzprotokoll-für-m3--m4"></a>
-
-**Historischer Verweis, nicht normativ:** Das vollständige M3→M4-Datensatzprotokoll befindet sich bei den [Verfahrensvorschlägen](procedure-proposals.md#1114-vollständiges-datensatzprotokoll-für-m3--m4). Dieser Anker erhält die Navigation aus der unveränderten Sessionübergabe.
