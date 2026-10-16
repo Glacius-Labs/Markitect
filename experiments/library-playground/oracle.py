@@ -273,6 +273,7 @@ def build_cases(profile: str) -> list[dict[str, Any]]:
     s += [{"raw": "{\"id\":\"bad-op\",\"op\":\"invented\",\"args\":{}}", "expect": {"id": "bad-op", "status": "invalidRequest", "reason": {"$nonempty": True}}}]
     s += [{"raw": "{\"id\":\"same-id\",\"op\":\"registerMember\",\"args\":{\"memberId\":\"transport-a\",\"name\":\"Transport A\"}}", "expect": {"id": "same-id", "status": "ok", "result": _member("transport-a", "Transport A")}}]
     s += [{"raw": "{\"id\":\"same-id\",\"op\":\"inspectMember\",\"args\":{\"memberId\":\"transport-a\"}}", "expect": {"id": "same-id", "status": "ok", "result": _member("transport-a", "Transport A")}}]
+    s += [{"raw": "{\"id\":\"same-id\",\"op\":\"registerMember\",\"args\":{\"memberId\":\"transport-a\",\"name\":\"Transport A\"}}", "expect": {"id": "same-id", "status": "refused", "reason": {"$nonempty": True}}}]
     s += [{"raw": "{\"id\":\"unknown-field\",\"op\":\"inspectMember\",\"args\":{\"memberId\":\"Case\",\"extra\":true}}", "expect": {"id": "unknown-field", "status": "invalidRequest", "reason": {"$nonempty": True}}}]
     s += [{"raw": "{\"id\":\"bad-envelope\",\"op\":\"inspectMember\",\"args\":[]}", "expect": {"id": "bad-envelope", "status": "invalidRequest", "reason": {"$nonempty": True}}}]
     s += [{"raw": "{\"id\":\"extra-envelope\",\"op\":\"inspectMember\",\"args\":{\"memberId\":\"Case\"},\"extra\":true}", "expect": {"id": "extra-envelope", "status": "invalidRequest", "reason": {"$nonempty": True}}}]

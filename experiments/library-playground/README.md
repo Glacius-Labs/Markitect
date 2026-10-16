@@ -89,9 +89,15 @@ replace the illustrative paths, identities and hashes with actual values:
 ```
 
 Use platform-native absolute paths, with JSON escaping on Windows. Literal
-argument files must also appear in `program_sha256`. Inputs are rehashed before
-and after assessment. The report also hashes the literal manifest and generated
-case data. Model/source identity strings are caller-supplied bindings; this
+argument files must also appear in `program_sha256`, a mapping from absolute path
+strings to 64-character SHA-256 hex strings. Inputs are rehashed before and after
+assessment. The CLI reads and retains exact manifest bytes as Base64 and binds
+them with `manifest_sha256`; formatting and line endings remain part of that
+identity. `manifest_semantic_sha256` separately hashes normalized parsed JSON.
+Calling `assess()` with only a parsed object leaves the literal byte fields null;
+it does not claim a literal input binding. Generated case data has its own digest.
+Malformed manifest input retains its bytes and a failed report. Model/source
+identity strings are caller-supplied bindings; this
 slice cannot verify production compiler, registry or history identities.
 
 ```text
