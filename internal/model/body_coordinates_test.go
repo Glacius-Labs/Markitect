@@ -99,6 +99,10 @@ func TestBodySourceSpansMapLiteralAndFoldedScalars(t *testing.T) {
 	}{
 		{"literal", "body: |\n  before\n  [[api]]\n  after\nother: x\n", "[[api]]"},
 		{"folded", "body: >-\n  before\n  [[api]]\n  after\nother: x\n", "[[api]]"},
+		{"literal-comment-digit", "body: | # indentation 9\n  [[api]]\nother: x\n", "[[api]]"},
+		{"folded-comment-digit", "body: >- # indentation 9\r\n  before\r\n  [[api]]\r\nother: x\r\n", "[[api]]"},
+		{"explicit-indent-before-chomp", "body: |2- # indentation 9\n  [[api]]\nother: x\n", "[[api]]"},
+		{"explicit-indent-after-chomp", "body: >+2 # indentation 9\n  [[api]]\nother: x\n", "[[api]]"},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
