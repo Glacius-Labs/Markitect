@@ -278,6 +278,9 @@ func blockAtoms(source []byte, start int, node, root *yaml.Node) ([]sourceAtom, 
 
 func explicitBlockIndent(header string, base int) int {
 	for _, char := range header {
+		if char == '#' {
+			break
+		}
 		if char >= '1' && char <= '9' {
 			return base + int(char-'0')
 		}
