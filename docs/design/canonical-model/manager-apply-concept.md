@@ -2,7 +2,7 @@
 
 This is the product concept for realizing a canonical model through Managers. It owns organization, context, delegation, deliveries, review purposes, artifact ownership, the Apply lifecycle and reporting. The [design map](README.md#apply-design) lists the technical contracts that refine it and states the status of the whole set. The [north star](manager-realization-north-star.md) keeps the ideas and variants that this concept did not select.
 
-The concept uses the [completed language v1](minimal-language/language-contract.md) without new Core Kinds or semantics. The owner decisions behind it are [DEC-025 to DEC-031](../../concepts/register.md#dec-025-package-managers-organize-realization).
+The concept uses the [completed language v1](minimal-language/language-contract.md) without new Core Kinds or semantics. The owner decisions behind it are [DEC-025 to DEC-035](../../concepts/register.md#dec-025-package-managers-organize-realization).
 
 The product is an organization that realizes an explicitly described project world. The canonical model supplies intended meaning and constraints. A deterministic Host organizes work, supplies context, validates deliveries and records the process. AI Managers make bounded judgments, delegate work and integrate results. The first operation is Apply: reconcile the existing artifacts with the current model, including when the model has not changed.
 
@@ -14,7 +14,9 @@ The product is an organization that realizes an explicitly described project wor
 | Code, tests and documentation | One hierarchy responsible for all artifact forms. | A feature's implementation, tests and documentation stay coordinated. |
 | Default team | The Manager does its local work; a fresh independent reviewer assesses each delivery and integration. | The smallest team that keeps independent review. |
 | Parent knowledge | Summaries first; targeted, recorded source inspection when needed. | Local responsibility without depending entirely on child claims. |
-| Context | Own Definitions and contracts, explicit neighbors, configured shared context and task facts. | Simple, inspectable compilation without semantic retrieval. |
+| Context | Own Definitions and contracts, explicit neighbors, Definitions whose modeled scope covers the Package, and task facts. | Simple, inspectable compilation without semantic retrieval. |
+| Order | The root plans the delivery order from the cross-Package references: producers before consumers, the skeleton first. | Consumers build on accepted producer deliveries. |
+| Acceptance | Apply starts from the committed model and writes its verified result into the working tree; the owner's commit accepts it. | Acceptance stays with the owner, as for the model. |
 | First reconciliation | Assess the full selected local model; reviewed no-change deliveries are allowed. | Reliability does not depend on an unproven incremental invalidation scheme. |
 | Execution | One writing task at a time, in owned candidate workspaces. | Reliable integration before concurrency. |
 | File ownership | One accountable Manager per artifact; many-to-many links between artifacts and Definitions. | Write responsibility is separate from what an output realizes. |
@@ -29,6 +31,8 @@ The product is an organization that realizes an explicitly described project wor
 | Organization configuration | Project-owned execution choices: teams, profiles, limits, instructions and context presentation. It cannot redefine canonical meaning ([configuration](manager-apply-configuration.md)). |
 | Realization registry | Tool-maintained, versioned metadata on artifact ownership and justified links to Definitions. It describes the actual realization, not a second intended world. |
 | Execution history | Immutable records of inputs, communication, candidates, reviews and outcomes ([journal](manager-apply-journal.md)). |
+
+Binding intent lives only in the model ([DEC-033](../../concepts/register.md#dec-033-binding-intent-lives-only-in-the-model)). The test is simple: if violating something makes an artifact wrong, it is model content. That includes realization constraints such as a public interface, the programming language or required build and test commands; the library's [callable interface](library-example/m1/model/library/callable-interface.yaml) is an example. Configuration and instructions hold only execution choices and operational guidance, such as profiles, limits, reporting style or tool usage. A reviewer who finds a project rule in configuration or custom instructions records a finding, and the rule moves into the model.
 
 Configuration and registry stay outside the canonical Definition roots; v1 would otherwise require a Definition envelope. The compiler produces a bound structural model and diagnostics and does not interpret prose as rules. The Host applies deterministic workflow rules to explicit snapshots. Agents interpret meaning and produce reviewable work. No prompt or report can change the operation target or authorize a model edit during Apply.
 
@@ -46,14 +50,20 @@ The root Manager follows the same protocol as every other Manager. It has its ow
 
 Imported models supply read-only vocabulary and context and create no Managers. Editing a library is a task in that library's own project. One local model is the first supported organization.
 
-Configuration has project defaults plus exact Manager overrides and separate hard ceilings. An override for lending does not configure lending/reminders; restrictions in a delegated task are a separate runtime narrowing. The [configuration contract](manager-apply-configuration.md#resolve-settings-deterministically) owns resolution. Configuration cannot disable required delivery review, integration review, final verification, coverage or source-drift guards.
+### Project-level artifacts and the skeleton
+
+An artifact belongs to the Manager whose Package holds the Definition that requires it. In the library, `library/callable-interface` requires the Go module, the entry point and the build and test commands, so the `library` Manager owns them. Only artifacts that no Definition requires, such as CI configuration that the model does not mention, belong to the root.
+
+When a required skeleton is missing, its owner delivers it first: module, entry point and the conventions the model requires. The other areas then add their parts within their own paths and expose the internal APIs that the entry point integrates. The skeleton is an ordinary reviewed delivery, not a special phase.
+
+Configuration has project defaults plus exact Manager overrides and separate hard ceilings. An override for lending does not configure lending/reminders; restrictions in a delegated task are a separate runtime narrowing. The [configuration contract](manager-apply-configuration.md#resolve-settings-deterministically) owns resolution. Configuration cannot disable required delivery or integration review, the final evidence check, coverage or source-drift guards.
 
 | Configurable part | First design |
 | --- | --- |
 | Team | Manager plus independent reviewer. Implementer roles, reviewer per Definition and separate artifact hierarchies are later strategies. |
 | Execution profiles | Provider, model, runtime arguments and instruction files per role, with exact Manager overrides. |
-| Shared context | Explicit Definition references for every Manager, plus per-Manager additions. Inclusion supplies context; it does not make a statement globally applicable. |
-| Kind guidance | Optional task and review recipes keyed by resolved Kind identity. They use the Kind's contract and grant no special execution rights. |
+| Scope of shared rules | The model states a rule's scope, for example through a reference Property such as `appliesTo` on a Rule Kind. Configuration only names which Kind and Property carry scope; it never lists individual Definitions. |
+| Kind guidance | Optional operational task and review recipes keyed by resolved Kind identity. They use the Kind's contract, add no project rules and grant no special execution rights. |
 | Artifact creation | Permitted creation areas and exclusive reservation of new paths. Artifact paths need not mirror Package paths. |
 | Limits | One shared assignment ledger and finite rounds, owned by the [execution contract](manager-apply-execution.md). |
 | Concurrency | One active writing task. Later parallelism must use the same reservation and integration rules. |
@@ -73,6 +83,8 @@ Only the root receives the operation's user instruction. For Apply, the Host add
 
 Delegation states outcomes and model obligations, not a file-edit plan. Existing write ownership comes from the registry; new paths are reserved through the Host. The root may state an interface constraint the model already requires, but it does not choose the child's files. A reviewer judges whether a prompt takes over the child's implementation decisions; no syntax check can prove that.
 
+The root plans the delivery order. The Host supplies the cross-Package reference graph with its directions as planning input, and the root records an order with reasons: the owner of the skeleton first, then producers before their consumers. In the library that is library, then members and catalog, then lending with reminders. References often point both ways, so the order is a recorded judgment, not a computed sort. The Host enforces only that a consumer task starts from accepted producer deliveries ([execution](manager-apply-execution.md#accepted-deliveries-and-dependent-work)); the root may revise the order with a recorded reason.
+
 Sibling requests go through the nearest common parent. A consumer can request a contract or service change but cannot edit the producer's files. Requests, conflicts and agreements are recorded. If an agreed change invalidates another area's completed assessment, that Manager gets a new task against the updated candidate. Unknown consequences broaden review. A conflict or dependency cycle that cannot be resolved within the run is returned as an open decision, not an endless exchange.
 
 ## Context packages
@@ -84,7 +96,7 @@ The initial Manager package contains:
 1. Its task, role, effective configuration, operation target and review requirements.
 2. Every local Definition in its Package, in stable path order: the filename as heading, then identity, Kind, complete body and structured `spec`, plus the bound Kind and Property contracts.
 3. A See also section: direct outgoing references and body links, and direct incoming references to the Package, each with reason and direction. It includes the directly connected Definitions and their type contracts; further references stay available to inspect.
-4. Configured shared context and per-Manager additions, as read-only views of already bound Definitions. They do not extend import resolution.
+4. Every Definition whose modeled scope covers this Package, as a read-only view of the bound Definition with its reason for inclusion. It does not extend import resolution.
 5. A compact local Package directory for routing questions, and a child index with identities, purposes, task states and latest validated reports. It does not load foreign Definitions, artifacts or transcripts.
 6. The Manager's artifact inventory and relevant candidate files for local work. A Manager that integrates children first receives their delivery summaries, agreements and evidence references.
 
@@ -130,21 +142,38 @@ An unchanged Package can deliver a reviewed no-change result that still explains
 | --- | --- |
 | Local delivery | Do this area's code, tests and documentation fulfill its Definitions and relevant connected obligations? Are effects on other areas accounted for? |
 | Integration | Does the composed candidate satisfy the connected behavior and contracts across areas, such as a suspension preventing a new loan? |
-| Final verification | Does the exact aggregate have complete current evidence, required checks and cross-area verification, with no unresolved required findings? |
+| Final evidence check | Deterministic, by the Host: does the exact aggregate have every required local and integration review bound to its current subject, passing required checks, conforming coverage and a complete Definition census, with no open blocking finding? |
 
-Each result is bound to its purpose and candidate. A local pass never replaces integration or final verification. Later stages can cite an earlier finding and its recorded resolution instead of repeating the discussion; a changed candidate, scope or assumption requires renewed assessment.
+The root's integration review is the semantic review of the whole system; no separate verifier Agent repeats it. Each result is bound to its purpose and candidate. A local pass never replaces an integration review. Later stages can cite an earlier finding and its recorded resolution instead of repeating the discussion; a changed candidate, scope or assumption requires renewed assessment.
 
 For the library demonstration, independent M1 and M2 expectations are frozen outside Agent write scope, so generated code and tests cannot redefine success together ([evaluation contract](library-example/evaluation-contract.md)). This evaluates the experiment; adopting projects do not maintain a second specification.
 
 ## Artifact registry and ownership
 
-One registry record per artifact names its path, accountable Manager, artifact form, Definition references and a short realization explanation. A registry revision is bound to the candidate tree. Review and check observations refer to that revision instead of being copied into mutable verdict fields.
+The registry lives in `.markitect/registry/`, one file per Manager that mirrors the Package folders: `.markitect/registry/lending/registry.yaml` for lending, `.markitect/registry/registry.yaml` for the root. The file determines the accountable Manager. Each record names its path, artifact form (`code`, `test`, `doc`, `build` or `config`), the Definitions it realizes and a short explanation:
+
+```yaml
+apiVersion: markitect.registry/v1
+artifacts:
+  - path: realization/internal/lending/borrow.go
+    form: code
+    realizes: [lending/borrow, lending/loan-policy]
+    why: Admits a new loan only within the open-loan limit.
+```
+
+Only guarded publication writes registry files. An edit made outside Apply is drift: `check` validates it, and the next Apply's intake reassesses it. A registry revision is bound to the candidate tree. Review and check observations refer to that revision instead of being copied into mutable verdict fields.
 
 Registry paths are independent of Package paths; lending can own source, test and documentation files in three directories. Other Managers can read or cite those files but cannot claim them. Managers propose registration through Host tools; the Host validates them and builds the registry delta. Editing the registry file directly is not a way around ownership.
 
 Before writing a new path, a Manager reserves it through the Host, which checks the operation target, permitted creation areas, exact spelling and exclusive ownership. Model and configuration paths cannot be obtained through an artifact reservation. A shared file has one owner; others request changes from it. A rename needs a new reservation and keeps provenance. A deletion removes the current registration only with a justified candidate deletion; history keeps the old registration. Moving responsibility between Packages is an explicit, recorded transfer reviewed with the affected delivery.
 
 Coverage classifies every repository file as a canonical or Markitect input, a registered artifact or an explicitly ignored file ([DEC-006](../../concepts/register.md#dec-006-every-file-is-covered-or-explicitly-ignored)). Registrations need a valid owner and a resolvable model basis. Overlapping ownership, missing files, stale registrations and unexplained files are findings. A blanket ignore cannot turn missing realization into success. Ignore configuration is project-owned, fixed for the run and read-only during Apply; Managers cannot hide a file by adding an ignore. Coverage ignores never change the language loader's complete scan of Definitions.
+
+### Removed and moved intent
+
+Apply also removes realization whose intent is gone ([DEC-034](../../concepts/register.md#dec-034-removed-intent-removes-its-realization)). When a Definition disappears, every artifact whose only basis it was is orphaned. Its owner deletes it in the same Apply, or records a new justified basis that review accepts. An artifact that keeps other bases loses only the removed link. When a Definition's identity changes through a move or rename (language v1, section 9), registry links are migrated to the new identity together with the model's own references; a link to a missing Definition is a blocking finding, never silently dropped. Stale code from removed intent is not a matter of style; leaving it fails the reconciliation.
+
+### Intake of unexplained files
 
 Initially unexplained files go through read-only intake coordinated by the root: candidate registrations are justified against Definitions and independently reviewed before write tasks use them. The root may delegate that investigation. Ambiguous responsibility remains a decision, not an automatic claim. Final publication requires conforming coverage of the aggregate candidate.
 
@@ -156,21 +185,21 @@ Logical Apply is the whole reconciliation below; guarded publication is its last
 
 | Stage | Work and exit condition |
 | --- | --- |
-| Prepare | Acquire the model closure, repository snapshot, configuration, registry, ignore policy and tool identities. Compile v1 and bind the organization. Invalid model inputs stop the run. |
+| Prepare | Read the model, configuration, registry and ignore policy from the committed state. Uncommitted changes there, or anywhere in the working tree outside ignored paths, stop the run before preparation. Acquire the repository snapshot and tool identities, compile v1 and bind the organization. Invalid model inputs stop the run. |
 | Start root | Give the instruction and a bounded project overview to the root. Fix the artifact-only target and settle unresolved ownership through intake before write tasks begin. |
 | Assess and delegate | Every local Package with Definitions is considered. Managers assess local realization and issue outcome-based child tasks. |
 | Work and review | Local changes happen in an owned candidate workspace. The Host harvests the actual delta; a fresh reviewer assesses it. A failed review returns grounded rework; an unresolved model question pauses that task without editing the model. |
 | Integrate upward | The parent composes deliveries on an exact base and checks interface and cross-area consistency. A fresh integration reviewer examines the aggregate and relevant child evidence. |
-| Verify aggregate | At the root candidate: required project checks, complete file coverage and the Definition census, then independent final verification against the model and required Manager results. |
+| Verify aggregate | At the root candidate: required project checks, then the Host's final evidence check over the whole Manager tree. The root's fresh integration review has already assessed the aggregate semantically. |
 | Preflight | Recheck the captured repository, model, configuration, registry and ignore inputs. Drift makes the run stale; earlier checks cannot authorize changed bytes. |
-| Publish | The guarded writer applies the accepted candidate and registry revision. No implicit merge, release or deployment. |
+| Publish | The guarded writer applies the accepted candidate and registry revision to the working tree. Apply never commits, merges, releases or deploys. |
 | Read back | Confirm actual paths, bytes, modes and registry against the verified candidate. A partial write or failed read-back is not a successful Apply. |
 
 Full reconciliation of the selected local model is the default; it does not claim coverage of intent outside the model. Do not implement incremental reuse first. The graph and registry can explain possible impact; unknown semantic impact broadens examination.
 
 Later tasks build on the current accepted integration base, and every delivery carries its exact base. A composition conflict returns to the accountable owner. Parents compose validated child deltas but cannot author child-owned files; a correction to child content returns to that child as a task. Parent-owned integration artifacts can be changed by the parent. When composition changes a reviewed subject or its assumptions, the affected reviews and checks are renewed. No last-writer-wins merge or silent reassignment resolves a conflict.
 
-The final verifier is a fresh role, independent of the Managers that authored the result; it receives the complete required evidence and reports omissions. Each logical responsibility and review purpose gets three candidate submissions by default; after two rejections the parent must assess the plan before the third. The [execution contract](manager-apply-execution.md#admission-amendments-and-finite-correction) owns counting, budgets and exhaustion. A parent cannot turn an unresolved child delivery into a complete one by summarizing it.
+The owner's commit of the published result is the acceptance, exactly as a committed model revision is the accepted specification ([DEC-035](../../concepts/register.md#dec-035-committed-model-in-owner-commit-accepts-the-result)). The run report proposes a commit message with the trailers `Markitect-Run` and `Markitect-Model`. Each logical responsibility and review purpose gets three candidate submissions by default; after two rejections the parent must assess the plan before the third. The [execution contract](manager-apply-execution.md#admission-amendments-and-finite-correction) owns counting, budgets and exhaustion. A parent cannot turn an unresolved child delivery into a complete one by summarizing it.
 
 The [execution contract](manager-apply-execution.md#one-run-state-machine) owns the single run state machine and its [terminal outcomes](manager-apply-execution.md#terminal-outcomes-and-displayed-status). History survives interruption: reopening a run first reconciles recorded invocations, child lifecycle and publication outcomes. Completed provider work is not replayed automatically, and unknown side effects stay visible.
 
@@ -210,6 +239,10 @@ These counterexamples check the contracts; each becomes a test in the package th
 | A parent needs a child's file to judge integration | Supply a recorded targeted read. There is no file-blindness rule. |
 | An external edit changes the checkout or model during work | Preflight reports stale and preserves the candidates. |
 | Review cannot converge or a model contradiction remains | Finish Incomplete within the bounded rounds, with the open question and retained evidence. |
+| A Definition was removed, but its artifacts remain | Their owner deletes them or records a new basis that review accepts; otherwise the run cannot complete. |
+| A Definition moved to another Package | Registry links migrate to the new identity; a dangling link is a blocking finding. |
+| The model or another file has uncommitted changes when Apply starts | Refuse before preparation. |
+| Configuration or custom instructions state a project rule | The reviewer records a finding; the rule moves into the model. |
 | Publication writes some files and then fails | The run reconciles until the actual writes are known. A known partial result finishes Failed with its exact paths. |
 | An Agent reports success without a recorded delta or evidence | The Host refuses completion. |
 | A required event cannot be stored durably | Stop before further dispatch or publication. |

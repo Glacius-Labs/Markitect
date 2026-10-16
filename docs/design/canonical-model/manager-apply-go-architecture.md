@@ -65,11 +65,11 @@ Organization and realization never import each other, and the compiler depends o
 | `apply.Publisher` | `apply` | Recheck the captured source, publish the verified artifacts and registry together, report actual writes and read-back. |
 | `run.Sessions` | `run` | Start a configured role, supply tasks and context, observe messages and tool requests, resume, cancel and establish termination. |
 | `run.Workspaces` | `run` | Materialize an owned candidate, observe actual changes, close or retain it. |
-| `run.Checks` | `run`, final verification | Execute explicit project checks on the exact candidate. |
+| `run.Checks` | `run`, final evidence check | Execute explicit project checks on the exact candidate. |
 | `run.Journal` | `run`, `apply` | Durably append events and exact payloads under one writer. |
 
 Interfaces live with their consumers, and adapters return concrete types ([Go code review comments](https://go.dev/wiki/CodeReviewComments#interfaces)); one adapter may satisfy several narrow ports. `adapters/journal` implements both `run.Journal` and `apply.Control`, and `adapters/gitrepo` implements `apply.Source`, `apply.Publisher` and `run.Workspaces`. Effectful calls take `context.Context`; pure computations need no interface to be testable. Avoid generic `common`, `types` or `interfaces` packages ([package names](https://go.dev/blog/package-names)).
 
-The Host owns the task and message protocol, effective authority and history. An Agent adapter translates provider transport into those records; it cannot accept a delivery, grant a path or pass a review. Manager, reviewer and verifier use the same session port with different roles. Provider wire objects and session IDs never become model types. The registry belongs to `realization`, outside the Definition roots, and is published together with its artifact tree.
+The Host owns the task and message protocol, effective authority and history. An Agent adapter translates provider transport into those records; it cannot accept a delivery, grant a path or pass a review. Manager and reviewer use the same session port with different roles. Provider wire objects and session IDs never become model types. The registry belongs to `realization`, outside the Definition roots, and is published together with its artifact tree.
 
 The [library walkthrough](manager-apply-library-flow.md) follows a root task and its lending child through these boundaries, from model input to publication.

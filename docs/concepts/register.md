@@ -43,6 +43,9 @@ The owner's [origin account of 15 October 2026](sources/owner-origin-20261015.md
 | [DEC-030](#dec-030-agent-communication-is-traceable) | Decision | Agent communication is traceable | Accepted |
 | [DEC-031](#dec-031-the-first-target-is-two-applies-of-the-library-example) | Decision | The first target is two Applies of the library example | Accepted |
 | [DEC-032](#dec-032-quality-simplicity-and-stability-over-effort-and-compatibility) | Decision | Quality, simplicity and stability over effort and compatibility | Accepted |
+| [DEC-033](#dec-033-binding-intent-lives-only-in-the-model) | Decision | Binding intent lives only in the model | Accepted |
+| [DEC-034](#dec-034-removed-intent-removes-its-realization) | Decision | Removed intent removes its realization | Accepted |
+| [DEC-035](#dec-035-committed-model-in-owner-commit-accepts-the-result) | Decision | Committed model in, owner commit accepts the result | Accepted |
 | [PRM-001 to PRM-007](#promises) | Promise | Target outcomes | Target |
 | [ASM-001 to ASM-005](#assumptions-and-hypotheses) | Assumption | Assumptions and hypotheses | See entries |
 | [CPT-001](#cpt-001-federalism) | Concept | Federalism | Accepted |
@@ -403,6 +406,27 @@ The owner's [origin account of 15 October 2026](sources/owner-origin-20261015.md
 - **Status:** Accepted, owner, 16 October 2026 ([rebuild](../design/canonical-model/sources/manager-realization-20261016.md#two-apply-cycle-and-freedom-to-redesign), [adapter and rebuild plan](../design/canonical-model/sources/manager-realization-20261016.md#choose-the-first-real-adapter-and-plan-a-clean-rebuild), [consolidation](sources/consolidation-discussion-20261016.md#quality-over-effort-and-compatibility)). It extends [DEC-014](#dec-014-compatibility-does-not-drive-decisions).
 - **Statement:** Cleanliness, architectural quality, quality in general, simplicity and stability have high priority. Effort is not a criterion („Aufwand sollte keine Rolle spielen“), and neither is compatibility with old versions. The rebuild may proceed radically and delete what is no longer needed („Bei der Umsetzung können wir ruhig radikal vorgehen und einfach löschen“).
 - **Consequences:** Choose the clean design even when it is more work. Add no adapters, aliases or legacy paths to save effort. Delete obsolete source, tests and documents together.
+
+### DEC-033 Binding intent lives only in the model
+
+- **Status:** Accepted, owner, 16 October 2026, adopting the assistant's recommendations A1 to A3 ([source](sources/consolidation-discussion-20261016.md#adopt-the-recommendations)).
+- **Statement:**
+  - If violating something makes an artifact wrong, it is model content. This includes realization constraints such as a public interface, the programming language and required build and test commands. The library's callable interface therefore moved into M1.
+  - Configuration and custom instructions hold only execution choices and operational guidance. A project rule found there is a review finding and moves into the model.
+  - A shared rule's scope is stated in the model. Configuration may only name the Kind and Property that carry scope; it never lists individual Definitions.
+- **Owning document:** the [Apply concept](../design/canonical-model/manager-apply-concept.md#four-kinds-of-input-and-record). It applies [DEC-006](#dec-006-every-file-is-covered-or-explicitly-ignored)'s single-owner idea to intent.
+
+### DEC-034 Removed intent removes its realization
+
+- **Status:** Accepted, owner, 16 October 2026, adopting recommendation A4 ([source](sources/consolidation-discussion-20261016.md#adopt-the-recommendations)).
+- **Statement:** When a Definition disappears, Apply deletes every artifact whose only basis it was, or the owner Manager records a new justified basis that review accepts. When a Definition moves or is renamed, registry links migrate to the new identity; a link to a missing Definition is a blocking finding. Leftover realization of removed intent fails the reconciliation.
+- **Owning document:** the [Apply concept](../design/canonical-model/manager-apply-concept.md#removed-and-moved-intent). It serves [PRM-003](#promises).
+
+### DEC-035 Committed model in, owner commit accepts the result
+
+- **Status:** Accepted, owner, 16 October 2026, adopting recommendation B8 ([source](sources/consolidation-discussion-20261016.md#adopt-the-recommendations)).
+- **Statement:** Apply reads the model, configuration, registry and ignore policy from the committed state and refuses to start with uncommitted changes outside ignored paths. It writes its verified result only into the working tree and never commits, merges or pushes. The owner's commit of the published result is the acceptance, just as a committed model revision is the accepted specification.
+- **Owning documents:** the [Apply concept](../design/canonical-model/manager-apply-concept.md#apply-lifecycle) and the [port contracts](../design/canonical-model/manager-apply-port-contracts.md#guarded-publication-port).
 
 ## Promises
 

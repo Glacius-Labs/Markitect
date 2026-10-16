@@ -19,7 +19,7 @@ Each scenario starts from a recorded baseline and uses real Manager and reviewer
 
 | Scenario | Setup | Passing behavior |
 | --- | --- | --- |
-| Question and continuation | A new, explicitly scoped one-time loan-renewal extension. Its other rules are fixed in advance; whether overdue loans may be renewed is reserved for the owner. Useful independent work exists before the answer. | The organization recognizes the missing authority, asks a concrete question with a proposed model edit, binds the answer to it, observes the actual model change and continues the same assignment in a successor run. Suitable work survives; earlier approval does not. |
+| Question and continuation | A new, explicitly scoped one-time loan-renewal extension. Its other rules are fixed in advance; whether overdue loans may be renewed is reserved for the owner. Useful independent work exists before the answer. | The organization recognizes the missing authority, asks a concrete question with a proposed model edit, binds the answer to it, observes the actual model change and continues the same assignment in a continuation run. Suitable work survives; earlier approval does not. |
 | Internal correction | A controlled candidate defect that permits another loan at the current limit, inserted before independent review. | The reviewer finds the violation independently, the responsible Manager corrects it, and renewed assessment verifies the correction and existing behavior. The owner neither explains the defect nor schedules review or repair. |
 | Interruption and recovery | Execution stops after candidate work exists but before its completion is confirmed. | On resumption Markitect reconciles execution and artifact state before another writer starts, keeps useful work and consumption, avoids duplicate effects and finishes through required assessment. A safe block alone does not pass. |
 | Insufficient budget | Deliberately insufficient capacity for writing work, with an explicit completion reserve. | Markitect stops within its caps, keeps candidates and findings and reports the unfinished work and any concrete extension request. It neither spends the reserve on implementation nor waives checks or resets consumption. |
@@ -36,7 +36,7 @@ The renewal case is a new extension: M1 excludes renewals and must not be portra
 >
 > **Work impact:** The eligibility condition waits for this decision. Completed independent work is retained.
 
-The actual question also names its source basis and exact patch. The owner answers "Accept the recommendation." Each step is observed separately: the answer is bound to the right question version; the patch actually changes the model; a successor run captures the new model with the same assignment and consumption; retained work gets a Keep, Adapt, Replace or Unresolved judgment; required reviews and checks assess the current candidate; guarded publication and read-back establish what was applied. In the first version the owner or calling agent applies the patch outside artifact Apply.
+The actual question also names its source basis and exact patch. The owner answers "Accept the recommendation." Each step is observed separately: the answer is bound to the right question version; the patch actually changes the model; the run finishes Incomplete awaiting the change, and a continuation captures the new model with the same assignment and consumption; retained work gets a Keep, Adapt, Replace or Unresolved judgment; required reviews and checks assess the current candidate; guarded publication and read-back establish what was applied. In the first version the owner or calling agent applies the patch outside artifact Apply.
 
 ## Allowed human intervention
 
@@ -60,12 +60,12 @@ The [Playground](../../design/canonical-model/manager-apply-playground.md) and t
 
 | Scenario | Independent observations |
 | --- | --- |
-| Question and continuation | The real question and answer, the actual model patch, the same assignment with a new run, preserved consumption, retained work in the successor's inputs and current assessments; timely, overdue and second renewal cases plus unchanged library cases. |
+| Question and continuation | The real question and answer, the actual model patch, the same assignment with a new run, preserved consumption, retained work in the continuation's inputs and current assessments; timely, overdue and second renewal cases plus unchanged library cases. |
 | Internal correction | The defective candidate fails the external limit case for the intended reason; the corrected artifact refuses the fourth loan after three with unchanged state. The review finding is independent of the evaluator's pre-check. |
 | Interruption and recovery | The recorded stop point and process identities, evidence that the previous writer ended or lost write authority before another started, retained candidate bytes and monotonic consumption. If the environment cannot show this, the criterion is not proven. |
 | Insufficient budget | Actual invocations against the declared reservations, refusal of writing work at the reserve boundary, no reset across restart, retained work and an honest Incomplete result. |
 
-Process checks assert a few relationships rather than a fixed timeline: the answer precedes the model transition, assessments bind current inputs, no new writer starts while earlier authority is unresolved, and consumption is never reset. Before relying on them, a few negative evidence copies (a mismatched binding, an old approval on a successor, missing writer termination, a reset ledger) must each prevent a pass. Every criterion reports passed, failed or not proven with its evidence.
+Process checks assert a few relationships rather than a fixed timeline: the answer precedes the model transition, assessments bind current inputs, no new writer starts while earlier authority is unresolved, and consumption is never reset. Before relying on them, a few negative evidence copies (a mismatched binding, an old approval on a continuation, missing writer termination, a reset ledger) must each prevent a pass. Every criterion reports passed, failed or not proven with its evidence.
 
 ## Keep expectations subordinate to the model
 

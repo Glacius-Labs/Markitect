@@ -45,7 +45,6 @@ defaults:
   profiles:
     manager: library-agent
     reviewer: library-agent
-    verifier: library-agent
   reviewRounds: 3
   stepTimeout: 10m
   creationRoots: [realization]
@@ -65,11 +64,13 @@ notifications:
 
 Everything under `limits` is a hard project ceiling. `assignment` sets the default caps of a new assignment; an owner extension can raise them up to `maxRuns`, `maxSessionStarts`, `maxSteps` and `maxExecutionTime`. `maxStepTimeout`, `maxReviewRounds` and `creationRoots` are ceilings, not consumable counters. `hostOperationTimeout` bounds each Host control operation outside the budget. `completionReserve` is part of the caps, not extra allowance; a reserve that the execution contract's preparation check rejects stops the run before dispatch.
 
+`scope` optionally names the Kinds and reference Properties through which the model states a Definition's scope, for example `scope: [{kind: software/Rule, property: software/appliesTo}]`. A Definition whose scope covers a Package enters the context of that Package's Managers. The configuration never lists individual Definitions; M1 needs no `scope`, because its shared rules reach every area through explicit links.
+
 `limits.creationRoots` bounds the permitted creation areas; defaults and Package settings select within it. Here the code, tests and documentation live below `realization/`. Existing artifacts still need registry ownership, and a directory permission grants no other Manager's files or protected model and configuration paths. A check's `directory` is confined to its captured candidate, and its arguments are literal, never a shell command.
 
-`defaults` applies to every local Package Manager, including the root. `packages` keys are exact local Package paths, and `.` is the root. An unknown or imported Package key is an error, not a request to create a Manager. Integration reviews use the reviewer profile in a fresh session; final verification uses the verifier profile. The first strategy is Manager plus reviewer with sequential writing.
+`defaults` applies to every local Package Manager, including the root. `packages` keys are exact local Package paths, and `.` is the root. An unknown or imported Package key is an error, not a request to create a Manager. Local and integration reviews use the reviewer profile in fresh sessions; the final evidence check is deterministic Host work. The first strategy is Manager plus reviewer with sequential writing.
 
-Custom instructions are optional file lists under `defaults.instructions` or `packages.<path>.instructions`, keyed by `manager`, `reviewer` or `verifier`, captured with their original bytes. The parent still supplies each task's outcome prompt, and the user's instruction goes to the root only.
+Custom instructions are optional file lists under `defaults.instructions` or `packages.<path>.instructions`, keyed by `manager` or `reviewer`, captured with their original bytes. Instructions carry operational guidance only, such as reporting style or tool usage; a project rule in them is a review finding and belongs in the model ([concept](manager-apply-concept.md#four-kinds-of-input-and-record)). The parent still supplies each task's outcome prompt, and the user's instruction goes to the root only.
 
 ## Resolve settings deterministically
 
@@ -96,12 +97,12 @@ The selected bytes and identities enter the run's input binding and are rechecke
 | Identity | Meaning and lifetime |
 | --- | --- |
 | Assignment | One owner request with its caps. It links its runs, questions, consumption and extensions and owns no scheduler. |
-| Apply run | One immutable model, configuration and source binding and its reconciliation. A changed basis or execution policy needs a successor run. |
-| Task | One Manager responsibility within a run. Tasks in a successor get new IDs with predecessor links where work carries forward. |
+| Apply run | One immutable model, configuration and source binding and its reconciliation. A changed basis or execution policy needs a continuation run after this one finished. |
+| Task | One Manager responsibility within a run. Tasks in a continuation get new IDs with predecessor links where work carries forward. |
 | Attempt | One submission within a task against the run's fixed basis. It resets no budget or round counter. |
 | Session and step | An actual role conversation and one dispatch. They never supply authority. |
 
-The assignment stores the owner input and goal, constraints, operation target, project identity, caps and authority source. Omitted caps use the `assignment` defaults. Renewing an exhausted cap needs a recorded extension within the project ceilings; raising a ceiling needs an authorized configuration edit. Starting another run grants nothing. The first product has one local operator as decision owner and no identity service based on Agent-reported names. An accepted decision can authorize a successor run within the assignment; it never authorizes merge, release, deployment or production-data edits.
+The assignment stores the owner input and goal, constraints, operation target, project identity, caps and authority source. Omitted caps use the `assignment` defaults. Renewing an exhausted cap needs a recorded extension within the project ceilings; raising a ceiling needs an authorized configuration edit. Starting another run grants nothing. The first product has one local operator as decision owner and no identity service based on Agent-reported names. An accepted decision can authorize a continuation run within the assignment; it never authorizes merge, release, deployment or production-data edits.
 
 ## Compile the effective mandate
 

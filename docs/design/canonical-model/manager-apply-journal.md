@@ -1,6 +1,6 @@
 # Journal and continuation contracts for Apply
 
-This contract owns the recorded facts, their storage and atomic append, questions and answers, and the handoff to a successor run. The [execution contract](manager-apply-execution.md) owns what transitions mean; the [configuration](manager-apply-configuration.md) owns the inputs.
+This contract owns the recorded facts, their storage and atomic append, questions and answers, and continuation runs. The [execution contract](manager-apply-execution.md) owns what transitions mean; the [configuration](manager-apply-configuration.md) owns the inputs.
 
 ## One authoritative history
 
@@ -34,7 +34,7 @@ type ControlSession interface {
 
 The lock and the active store registration live in small repository control metadata, classified as a Markitect file and excluded from source staleness, so an alternate `--state-dir` cannot bypass the lock or hide unresolved work. The first store binding uses checked creation; a missing or replaced registered database needs explicit reconciliation, not a fresh empty history.
 
-Append requires the current controller binding. Publication permits carry that binding plus a run-scoped Host check, and the publisher verifies both at the write boundary; a live controller alone cannot authorize a superseded run. CLI and MCP handlers never own this lifecycle.
+Append requires the current controller binding. Publication permits carry that binding plus a run-scoped Host check, and the publisher verifies both at the write boundary; a live controller alone cannot authorize a finished run. CLI and MCP handlers never own this lifecycle.
 
 | Stored relation | Essential columns and constraints |
 | --- | --- |
@@ -54,7 +54,7 @@ The first version retains every referenced payload, including rejected candidate
 
 ## Stream and value contracts
 
-Each assignment has one stream, so a successor run, its inherited budget and questions answered between runs commit atomically. Run IDs remain mandatory on run-scoped events.
+Each assignment has one stream, so a continuation run, its inherited budget and questions answered between runs commit atomically. Run IDs remain mandatory on run-scoped events.
 
 ```go
 // Package run. Bodies are closed, versioned event values, not arbitrary maps.
@@ -120,7 +120,7 @@ Version-1 event tags, each with a closed payload codec:
 | Questions and intent | `question.proposed`, `question.state-changed`, `answer.received`, `answer.bound`, `model-change.observed` |
 | Publication | `publication.prepared`, `publication.observed` |
 
-`run.finished` records the single immutable outcome, including Superseded. A finding state changes only through `finding.state-changed` issued from an independent review with its evidence or grounds. No state is inferred from a message saying "done".
+`run.finished` records the single immutable outcome. A finding state changes only through `finding.state-changed` issued from an independent review with its evidence or grounds. No state is inferred from a message saying "done".
 
 ## Questions answers and model changes
 
@@ -128,26 +128,26 @@ Version-1 event tags, each with a closed payload codec:
 2. The application receives the owner's answer, records it raw and binds it to the displayed question version. Repeated ingress is deduplicated. An Agent-supplied actor name carries no owner authority.
 3. The answer's effect is classified with a reason. Context about an existing rule can be supplied in a later step of the same run. Asking for an alternative to be elaborated authorizes preparation only. Deferral leaves dependent work waiting. A new obligation or authority change needs a new basis.
 4. Accepting authorizes the exact displayed edit; the same permission is not asked again. A clear free-text answer can authorize a different edit; remaining material ambiguity gets a revised proposal. If the source drifted, the edit is withheld and revalidated, and the owner is asked again only if the choice materially changed.
-5. Artifact Apply never edits its model or configuration. In the first version the owner or the calling agent applies the exact approved edit; Markitect records the actual result and new model identity separately from the answer. A pending or failed edit stays visible.
-6. When the new model exists, the safe handoff below starts a successor run. "Model updated", "previous run superseded" and "work resumed" are each reported only after it is observed.
+5. Artifact Apply never edits its model or configuration. If the answer changes the basis, the run quiesces and finishes Incomplete with the reason "awaiting model change". In the first version the owner or the calling agent applies and commits the exact approved edit; Markitect records the actual result and new model identity separately from the answer. A pending or failed edit stays visible.
+6. Once the edit is committed, the owner continues the assignment and the continuation below starts. "Model updated" and "work resumed" are each reported only after it is observed.
 
 Notifications are projections of these facts, not a source of permission. Approved code cannot authorize an unauthorized business-policy change.
 
-## Safe successor and publication basis
+## Continuation and publication basis
 
-The controller lock serializes supersession and publication. Stop new dispatch from the predecessor, quiesce or reconcile active writers and finish or inspect any publication in progress. Then capture the new model, configuration and actual repository source. Validate the selected retained work for exact bases, ownership and registry, protected inputs and conflicts; incomplete work may be retained with its findings. Conflicts return to their accountable Manager; there is no semantic automatic merge.
+A continuation starts only after its predecessor has finished; the controller lock serializes runs and publication. The continuation captures the new model, configuration and actual repository source. Validate the selected retained work for exact bases, ownership and registry, protected inputs and conflicts; incomplete work may be retained with its findings. Conflicts return to their accountable Manager; there is no semantic automatic merge.
 
-The predecessor's Superseded outcome, the successor binding, the retained-work reference and the shared budget commit together; only then is the successor's root dispatched. A crash leaves either the old or the new committed state. A run that already finished keeps its outcome; a later run links to it.
+The continuation's binding, the retained-work reference and the shared budget commit together; only then is its root dispatched. A crash leaves either no continuation or a complete one. The finished predecessor keeps its outcome; the continuation links to it.
 
 | Value | Library meaning |
 | --- | --- |
 | Captured repository source | The actual checkout and registry, such as published A1. It supplies the publication guard. |
 | Retained work | An unpublished predecessor candidate and registry selected as starting material. It may be incomplete. |
-| Current candidate | The successor's assessed result after adapting that material. Reviews, checks and publication concern this. |
+| Current candidate | The continuation's assessed result after adapting that material. Reviews, checks and publication concern this. |
 
-A private candidate never becomes the presumed content of the real checkout. Final publication compares against the successor's acquired source, writes the verified difference and reads it back. Database transactions do not make multi-file publication atomic.
+A private candidate never becomes the presumed content of the real checkout. Final publication compares against the continuation's acquired source, writes the verified difference and reads it back. Database transactions do not make multi-file publication atomic.
 
-The successor repeats all required reviews, checks, integration and final verification. For retained work, the Manager records one judgment per affected area, reviewed like any other assessment:
+The continuation repeats all required reviews, checks and integration and the final evidence check. For retained work, the Manager records one judgment per affected area, reviewed like any other assessment:
 
 | Judgment | Meaning |
 | --- | --- |
@@ -160,7 +160,7 @@ The successor repeats all required reviews, checks, integration and final verifi
 
 **Two model versions.** R1 binds M1, produces reviewed A1 and finishes Applied. The owner changes only `loan-policy.spec.maxOpenLoans` from five to three and starts a new Apply. R2 binds M2 and the actual A1; lending adapts admission, other areas can deliver justified no-change results, and all required assessments run before A2 is published. The [Playground](manager-apply-playground.md) owns the independent evidence.
 
-**A missing decision during work.** A deliberately inconsistent future draft both preserves existing loans and requires all holdings to fit a lowered limit; this is not M1 or M2. Lending raises question Q1 version 1 with the conflicting passages and an exact correction that keeps the structured policy as the numeric authority. The root routes it to the owner, who accepts. The journal separates answer received, edit applied, model revision observed, predecessor superseded and successor started. Lending's unfinished candidate is retained and assessed again; if no meaningful evidence fits the remaining budget, the run ends Incomplete.
+**A missing decision during work.** A deliberately inconsistent future draft both preserves existing loans and requires all holdings to fit a lowered limit; this is not M1 or M2. Lending raises question Q1 version 1 with the conflicting passages and an exact correction that keeps the structured policy as the numeric authority. The root routes it to the owner, who accepts. The journal separates answer received, run finished Incomplete awaiting the model change, edit committed, model revision observed and continuation started. Lending's unfinished candidate is retained and assessed again; if no meaningful evidence fits the remaining budget, the run ends Incomplete.
 
 **An inspectable timeline.**
 
@@ -171,11 +171,11 @@ The successor repeats all required reviews, checks, integration and final verifi
 | Candidate C1 captured; reviewer requests changes | Actual bytes and the grounded issue, such as a sixth loan being allowed. |
 | C2 captured and locally reviewed; reminders integrated | Current local and child evidence, still short of final approval. |
 | Q1 answered; model edit pending | An answer exists; intent has not changed yet. |
-| Successor prepared with retained C2 and current source | What was reused, which basis changed and what capacity remains. |
+| Continuation prepared with retained C2 and current source | What was reused, which basis changed and what capacity remains. |
 | Aggregate verified; publication and read-back observed | The exact machine-assessed result and the actual checkout. |
 
 ## Ownership and focused gates
 
-`run` owns assignment, question and budget transitions and event meaning. `organization` renders configuration, context and mandates. `realization` owns artifact, registry and composition values. `apply` owns capture, successor preparation and guarded publication. The journal adapter owns SQL, byte storage and atomic append and makes no semantic decision. CLI and MCP expose the same services and projections.
+`run` owns assignment, question and budget transitions and event meaning. `organization` renders configuration, context and mandates. `realization` owns artifact, registry and composition values. `apply` owns capture, continuation preparation and guarded publication. The journal adapter owns SQL, byte storage and atomic append and makes no semantic decision. CLI and MCP expose the same services and projections.
 
-Gates: atomic batch and head updates, exact duplicates, conflicting and stale revisions, unknown-commit reconciliation, blob corruption, process failure around dispatch, refusal of answers to an old proposal version, context-only continuation, refusal of a superseded run's publication, budget continuity across successors and separation of retained work from captured source. Exercise the pinned driver on the supported filesystems; a format probe does not establish durability.
+Gates: atomic batch and head updates, exact duplicates, conflicting and stale revisions, unknown-commit reconciliation, blob corruption, process failure around dispatch, refusal of answers to an old proposal version, context-only continuation, refusal of a finished run's unused publication permit, budget continuity across continuations and separation of retained work from captured source. Exercise the pinned driver on the supported filesystems; a format probe does not establish durability.

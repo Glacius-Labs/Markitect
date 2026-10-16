@@ -22,7 +22,7 @@ The choice rests on the session boundary and Host interaction, rather than the a
 
 ## Session lifetime and protocol mapping
 
-One Host session owns one App Server process, connection and provider thread. A process survives several known `Step` calls and can sit idle while its Manager waits. Fresh local reviews, integration reviews and final verification receive fresh sessions and threads. There is no shared process pool or provider-native Manager hierarchy in the first implementation. This spends more process resources in exchange for clear role configuration, lifetime and failure boundaries.
+One Host session owns one App Server process, connection and provider thread. A process survives several known `Step` calls and can sit idle while its Manager waits. Local and integration reviews receive fresh sessions and threads. There is no shared process pool or provider-native Manager hierarchy in the first implementation. This spends more process resources in exchange for clear role configuration, lifetime and failure boundaries.
 
 | Host port operation | Adapter mapping |
 | --- | --- |
@@ -97,7 +97,7 @@ The source replacement also owns these non-Go changes. Omitting them would leave
 
 | Area | Required change |
 | --- | --- |
-| `.markitect/project.yaml`, old schema inputs and `.markitect/model` | Author Markitect's own canonical v1 model with explicit ownership/dependencies. Delete the old manifest and fixed-schema authoring contract. Keep operational configuration and registry outside Definition roots. Do not automatically translate obsolete Manager Definitions into v1 language requirements. |
+| `.markitect/project.yaml`, old schema inputs and `.markitect/model` | Author Markitect's own canonical v1 model with explicit ownership/dependencies, and an initial registry under `.markitect/registry/` that covers every repository file. Until Apply exists, registry changes are reviewed edits to these files, validated by the new `check`; the first real Apply then takes over through its ordinary intake. Delete the old manifest and fixed-schema authoring contract. Keep operational configuration and registry outside Definition roots. Do not automatically translate obsolete Manager Definitions into v1 language requirements. |
 | `.markitect/runtime.yaml` and current ignore/record configuration | Replace their schemas with the new execution/registry/storage policy where needed. No legacy decoder, ambiguous fallback or automatic historical run migration. Preserve old run evidence as fixed historical data, outside the new active store. |
 | Generated project views, schemas and code map | Regenerate from their new canonical owners. Delete outputs whose owner/feature disappears. Do not hand-edit generated pages to hide a mismatch. |
 | `AGENTS.md`, `CONTRIBUTING.md`, current architecture/usage/provider/operation guides and maps | Update to the implemented cut in the same reviewed change. Keep completed v1, the new design and dated historical evidence distinct. Removed paths referenced by historical records can point to their immutable source revision. |

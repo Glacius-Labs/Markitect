@@ -6,7 +6,7 @@ This walkthrough traces one Apply of [M1](library-example/README.md) through the
 
 The Host has captured and compiled M1, bound configuration and repository inputs, and derived the ordinary root plus the library, members, catalog, lending and lending/reminders Managers. The root receives the user's Apply instruction. All tasks inherit artifact-only reconciliation and a read-only canonical model.
 
-For this focused trace, B0 denotes the current unpublished candidate, which can already contain locally reviewed member/catalog work from earlier tasks in the same run. This does not imply that shared library obligations or the whole project have passed. All other required Package deliveries remain part of the root's completion criteria. C1, C2, I1 and I2 below are illustrative candidate labels, not recorded content digests.
+The root's recorded order put library first: its Manager owns the Go module, entry point and callable interface that `library/callable-interface` requires. Members and catalog followed, then lending. For this focused trace, B0 denotes the current unpublished candidate, which already contains the accepted library, member and catalog deliveries from earlier tasks in the same run. This does not imply that shared library obligations or the whole project have passed. All other required Package deliveries remain part of the root's completion criteria. C1, C2, I1 and I2 below are illustrative candidate labels, not recorded content digests.
 
 ## Root to lending and back
 
@@ -24,7 +24,7 @@ For this focused trace, B0 denotes the current unpublished candidate, which can 
 | 10 Lending integrates | Host composes the accepted local and reminders deltas with explicit bases into I1. Lending assesses their combined behavior. A fresh integration reviewer examines I1, including whether reminders consume the current loan/due-date contract and exclude returned loans. | Host checks composition; lending and its integration reviewer judge the aggregate. |
 | 11 Host accepts the subtree | Only when local work, descendants, required reviews/checks, assessments and questions are complete does Host issue an accepted lending delivery. It carries I1, registry revision, evidence and a concise report. | Host issues the delivery; the Agent cannot self-issue acceptance. |
 | 12 Root resumes and integrates | Root receives the accepted delivery and can inspect details by identity. Host composes it with other required deliveries into I2. Root assesses system integration; a fresh integration reviewer checks the aggregate, including suspension preventing borrowing. | Root coordinates and judges integration; Host validates composition and evidence. |
-| 13 Verify and publish | The complete current aggregate receives required checks, coverage, Definition census and fresh final verification. Apply rechecks source inputs, requests guarded publication of artifacts and registry, and records actual read-back. | Apply owns this final lifecycle; the publisher observes physical writes. |
+| 13 Verify and publish | The complete current aggregate receives required checks and the Host's final evidence check over coverage, the Definition census and all review bindings. Apply rechecks source inputs, requests guarded publication of artifacts and registry, and records actual read-back. | Apply owns this final lifecycle; the publisher observes physical writes. |
 
 The real order is chosen through recorded tasks and ready work. A Manager waiting for another area does not prevent the Host from running other ready tasks. Shared library obligations can require a later assessment against the assembled result; the root cannot mark that Manager complete merely because the other areas worked locally.
 
@@ -36,7 +36,7 @@ The real order is chosen through recorded tasks and ready work. A Manager waitin
 
 **Review proposal:** exact subject and purpose, verdict, findings, model grounds and references to observed evidence. It does not contain accepted delivery authority. Changes requested lead to another work attempt, a model issue stays open, and exhausted attempts terminate incomplete.
 
-**Accepted delivery:** Host-issued identity, exact model/candidate/registry bindings, complete reviewed scope, assessments, child delivery IDs, checks/reviews and report. A local pass supports local scope; an accepted lending subtree also requires reminders and integration. Neither replaces root integration or final verification.
+**Accepted delivery:** Host-issued identity, exact model/candidate/registry bindings, complete reviewed scope, assessments, child delivery IDs, checks/reviews and report. A local pass supports local scope; an accepted lending subtree also requires reminders and integration. Neither replaces root integration or the final evidence check.
 
 ## Context and session continuity
 

@@ -68,7 +68,9 @@ The consolidation of 16 October 2026 replaced these earlier proposals with simpl
 | --- | --- |
 | Bounded budget allocations per Manager, reallocated by the root, with an illustrative 60-step split. The owner asked to keep the budget model including bounded allocations ([source](../../concepts/sources/working-day-discussion-20261016.md#preserve-the-shared-budget-model)). | The Host accounts once per assignment; one completion-reserve rule protects reviews and checks ([execution](manager-apply-execution.md#one-ledger-with-protected-completion-capacity)). Allocations can return if real runs show the need. |
 | An optional absolute delivery deadline that keeps running while work waits. | No deadline; caps on active execution time remain. |
-| One assignment commissioned for both stages of the two-Apply demonstration. | Each Apply invocation is its own assignment; runs within an assignment arise only as successors or continuations. |
+| One assignment commissioned for both stages of the two-Apply demonstration. | Each Apply invocation is its own assignment; further runs within an assignment are continuations. |
+| A separate final verifier Agent. | The Host's deterministic final evidence check; the root's fresh integration review is the semantic review of the whole. |
+| Successor runs replacing an unfinished run in one Superseded handoff. | A run that needs a changed basis finishes Incomplete; a continuation starts after the committed model edit. |
 | Four applicability judgments for inherited findings. | Three finding states: open, resolved, not applicable; a changed requirement becomes a new linked finding. |
 | Gating active work by derived delivery exposure. | Dependent work starts only from an accepted, composed delivery; a blocked delivery blocks its consumers. |
 | Three numbering schemes (P00 to P12, R0 to R6, delivery packages). | Gates P00 to P12 keyed to the delivery packages. |

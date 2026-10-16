@@ -75,12 +75,12 @@ Accepting A authorizes exactly the displayed edit, without a second confirmation
 
 | Level | What persists or changes |
 | --- | --- |
-| Assignment | The owner's request stays the same across questions and successor runs. It grants no extra authority. |
-| Apply run | Each run binds its own model, configuration and source. New intent starts a successor run linked to the previous one. |
+| Assignment | The owner's request stays the same across questions and continuation runs. It grants no extra authority. |
+| Apply run | Each run binds its own model, configuration and source. New intent ends the run and starts a continuation linked to it. |
 | Existing work | Exact candidates and their registry can become starting material, with their findings visible. That is not approval. |
 | Approval and evidence | Reviews and checks keep their original subjects. Required assessment runs again on the new basis. |
 
-The answer is bound to the question version; the model edit happens through the model operation; the predecessor run stops safely and is superseded; the successor captures the new model and selects retained work; Managers reassess; guarded publication follows. Each step is reported only when observed ([journal](../../design/canonical-model/manager-apply-journal.md#questions-answers-and-model-changes)).
+The answer is bound to the question version; the run quiesces and finishes Incomplete, awaiting the model change; the owner commits the edit; the continuation captures the new model and selects retained work; Managers reassess; guarded publication follows. Each step is reported only when observed ([journal](../../design/canonical-model/manager-apply-journal.md#questions-answers-and-model-changes)).
 
 ### A simple rule for carrying work forward
 
@@ -105,7 +105,7 @@ One screen with four stable blocks: overall state, required decisions, progress,
 | Displayed state | Evidence and scope |
 | --- | --- |
 | Locally verified (lokal geprüft) | Local assessment, independent review and checks support the exact area candidate. |
-| Aggregate verified (insgesamt geprüft) | Deliveries, integration reviews, checks and final verification support the exact aggregate, with no required finding open. |
+| Aggregate verified (insgesamt geprüft) | Deliveries, integration reviews, checks and the final evidence check support the exact aggregate, with no required finding open. |
 | Applied (übernommen) | Guarded publication and read-back confirm the result. Not a merge, release or deployment. |
 | Deployed (ausgerollt) | A separate authorized deployment with an observed outcome. Apply cannot establish it. |
 
@@ -119,8 +119,8 @@ The first version is a small organization that does delegated work reliably with
 | --- | --- |
 | A clear assignment | One local project, a fixed basis, explicit authority and a shared budget, started from the CLI. |
 | Autonomous delegation | Package Managers, Manager plus independent reviewer, sequential writing and internal coordination. |
-| Complete assessment and publication | Local and integration reviews, required checks, final verification, guarded publication and read-back. |
-| Questions and continuation | A source-bound question with a proposed edit, a bound answer and a successor run on the changed model. The owner or calling agent applies the approved edit in the first version. |
+| Complete assessment and publication | Local and integration reviews, required checks, the final evidence check, guarded publication into the working tree and read-back; the owner's commit accepts the result. |
+| Questions and continuation | A source-bound question with a proposed edit, a bound answer and a continuation run on the changed model. The owner or calling agent applies the approved edit in the first version. |
 | Bounded consumption and honest failure | Finite rounds and execution time, the completion reserve, progress assessment after repeated failure and controlled stopping. |
 | Inspectability and recovery | Compact status, open decisions, retained candidates and evidence, reconciliation before resuming. |
 

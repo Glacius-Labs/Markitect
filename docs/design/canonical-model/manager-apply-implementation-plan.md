@@ -41,7 +41,7 @@ Obsolete behavior disappears together with its tests; tests for still-required i
 
 ### P00 Library model and the two-run change
 
-A readable description, complete M1 sources, the exact M2 edit, a minimal [callable interface](library-example/interface-contract.md) and independently reviewed expectations. A small optional starter vocabulary derived from the example stays an ordinary, visible model. The model review lists statements whose behavior crosses Package boundaries, including obligations carried by Kind and Property bodies, and checks their explicit connections.
+A readable description, complete M1 sources including the [callable interface](library-example/m1/model/library/callable-interface.yaml), the exact M2 edit and independently reviewed expectations. A small optional starter vocabulary derived from the example stays an ordinary, visible model. The model review lists statements whose behavior crosses Package boundaries, including obligations carried by Kind and Property bodies, and checks their explicit connections.
 
 **Gate:** every expectation has a clear basis in M1 or M2. Cross-Package connections are explicit, including the membership suspension that lending must enforce. Vocabulary declarations cannot hide required behavior. The change is an intentional five-to-three edit with consistent body and `spec`. The expectations contain no implementation solution or file-edit plan.
 
@@ -65,9 +65,9 @@ Bounded slices: restricted YAML values and envelopes with exact numbers and prov
 
 ### P04 Product skeleton and preparation
 
-The new application composition, model input, Manager topology, profiles and context packages, plus the registry, classification and target contracts the later gates need. The author can preview the statements, contracts, responsibilities and explicit connections each Manager receives, with inclusion reasons, before any Agent starts. The repository's own model, source ownership and gates move to the new compiler and check in the same reviewed cutover.
+The new application composition, model input, Manager topology, profiles and context packages, plus the registry in its `.markitect/registry/` layout, coverage classification, scope selection from the model and the target contracts the later gates need. The author can preview the statements, contracts, responsibilities and explicit connections each Manager receives, with inclusion reasons, before any Agent starts. The repository's own model, its initial registry, source ownership and gates move to the new compiler and check in the same reviewed cutover.
 
-**Gate:** root and Package identities and contexts are correct, imports spawn no library Managers, and complete values and bodies survive preparation. Inclusion reasons and the Package directory are inspectable and distinguish source facts from explanations; a targeted detail read works. The rebuilt tree has one active model and check route even though Apply is not available yet. Obsolete behavior tests are removed, not skipped.
+**Gate:** root and Package identities and contexts are correct, imports spawn no library Managers, and complete values and bodies survive preparation. Inclusion reasons and the Package directory are inspectable and distinguish source facts from explanations; a targeted detail read works. A Definition reaches another Package's context only through an explicit link or its modeled scope, never through a configured list. `check` validates Markitect's own registry, so every repository file is covered before Apply exists. The rebuilt tree has one active model and check route even though Apply is not available yet. Obsolete behavior tests are removed, not skipped.
 
 ### P05 Real role sessions and durable communication
 
@@ -79,25 +79,25 @@ The session port, effective role profiles, Host-mediated task and message transp
 
 Local workspaces, exclusive path reservations, Host-owned registry changes and fresh independent review for one Package's implementation, tests and documentation, with finite rework. Manager and reviewer ask which local statements need another area's behavior and whether the model connects them. Every positive Definition disposition has a reason and concrete realization or use.
 
-**Gate:** controlled tests reject model, configuration and ignore edits, direct registry changes and overlapping ownership. A bad candidate is rejected, revised and reviewed as a new exact candidate. A vocabulary-only claim that ignores obligations on concrete uses fails review. Missing evidence, an unresolved required assessment or exhausted rounds cannot return completion. Nothing is published in this gate.
+**Gate:** controlled tests reject model, configuration and ignore edits, direct registry changes and overlapping ownership. A bad candidate is rejected, revised and reviewed as a new exact candidate. A vocabulary-only claim that ignores obligations on concrete uses fails review. An artifact whose only Definition was removed must be deleted or rejustified, and a project rule found in configuration or custom instructions becomes a finding. Missing evidence, an unresolved required assessment or exhausted rounds cannot return completion. Nothing is published in this gate.
 
 ### P07 Recursive delegation and integration
 
-The library's ordinary root, the library, catalog, members and lending Managers and lending's reminders child. The library Package owns shared scope and rules; it is not a special root. Parents issue their own task prompts, compose child results and send corrections to the accountable child. Suspected missing connections travel through the common parent; Apply adds no links. Initially unexplained artifacts go through read-only intake.
+The library's ordinary root, the library, catalog, members and lending Managers and lending's reminders child. The library Package owns shared scope and rules; it is not a special root. The root records the delivery order with reasons, and the owner of the skeleton delivers first. Parents issue their own task prompts, compose child results and send corrections to the accountable child. Suspected missing connections travel through the common parent; Apply adds no links. Initially unexplained artifacts go through read-only intake.
 
-**Gate:** only the root receives the user instruction, and the trace shows the actual child prompts and responses. A parent integrates deliveries but cannot author child-owned files. Sibling requests and boundary questions reach the affected area through the parent. A missing connection needed for a sound assessment yields an open model issue and prevents aggregate completion. A broken aggregate fails integration review even when every local delivery passed.
+**Gate:** only the root receives the user instruction, and the trace shows the actual child prompts and responses. The recorded order is followed or revised with a reason, and no consumer starts before its producer's accepted delivery. A parent integrates deliveries but cannot author child-owned files. Sibling requests and boundary questions reach the affected area through the parent. A missing connection needed for a sound assessment yields an open model issue and prevents aggregate completion. A broken aggregate fails integration review even when every local delivery passed.
 
 ### P08 Aggregate verification and reports
 
-Project checks, full file accounting, the Definition census and fresh final verification on the assembled candidate, in both directions: artifacts have justified model links, and required Definitions have justified realization. Independent Playground expectations run outside worker write scope. The run tree and timeline expose prompts, reads, reports, reviews and deltas; the concise user result and coordination account derive from the same events.
+Project checks and the Host's final evidence check (file accounting, the Definition census and review bindings) on the assembled candidate, in both directions: artifacts have justified model links, and required Definitions have justified realization. Independent Playground expectations run outside worker write scope. The run tree and timeline expose prompts, reads, reports, reviews and deltas; the concise user result and coordination account derive from the same events.
 
-**Gate:** candidate bytes, registry and evidence bindings agree. Missing child reviews, stale evidence, unsupported dispositions and tampered assessment inputs invalidate success. Complete file ownership cannot compensate for missing required realization. A local pass cannot stand in for integration or final verification. Reports distinguish Agent claims from observed changes and unknown usage from zero, and add no automatic restructuring, scores or thresholds.
+**Gate:** candidate bytes, registry and evidence bindings agree. Missing child reviews, stale evidence, unsupported dispositions and tampered assessment inputs invalidate success. Complete file ownership cannot compensate for missing required realization. A local pass cannot stand in for an integration review or the final evidence check. Reports distinguish Agent claims from observed changes and unknown usage from zero, and add no automatic restructuring, scores or thresholds.
 
 ### P09 Guarded publication, read-back and interruption
 
 Source guards, candidate and registry publication, post-write read-back and recovery records, tested on owned temporary repositories.
 
-**Gate:** resulting paths, bytes, modes, deletions and registry match the verified candidate. Changed model, source or configuration inputs make the run stale. Incomplete writing or failed read-back never reports success. Recovery inspects recorded outcomes and never replays a completed Agent invocation. No-change still requires a justified assessment.
+**Gate:** uncommitted model or working-tree changes refuse the run before preparation. Publication writes only the working tree and never commits. Resulting paths, bytes, modes, deletions and registry match the verified candidate. Changed model, source or configuration inputs make the run stale. Incomplete writing or failed read-back never reports success. Recovery inspects recorded outcomes and never replays a completed Agent invocation. No-change still requires a justified assessment.
 
 ### P10 Real two-Apply cycle
 
@@ -107,7 +107,7 @@ Freeze one Markitect build and role configuration. Real Agents realize M1 from t
 
 ### P11 Failure cases in composition
 
-Negative tests belong to the gate that implements each contract. This gate checks their composition: stale target, missing link surfaced as a model issue, vocabulary-only used to evade obligations, complete file coverage with missing realization, a local pass offered for another purpose, ownership conflict, invalid child report, exceeded review rounds, communication interruption, event-storage failure, rejected aggregate and partial publication.
+Negative tests belong to the gate that implements each contract. This gate checks their composition: stale target, missing link surfaced as a model issue, vocabulary-only used to evade obligations, complete file coverage with missing realization, a local pass offered for another purpose, ownership conflict, invalid child report, exceeded review rounds, communication interruption, event-storage failure, rejected aggregate, partial publication, an orphaned artifact after a removed Definition, a dangling registry link after a moved Definition, uncommitted model changes and a project rule hidden in custom instructions.
 
 **Gate:** each case has a reproducible input, an honest expected outcome and an inspectable trace, and the real two-Apply cycle still works on the current candidate. No failure can hide behind an ignore, a rewritten model, an invented review or a summary claiming completion.
 
