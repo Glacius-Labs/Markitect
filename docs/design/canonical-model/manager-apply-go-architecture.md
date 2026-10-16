@@ -112,8 +112,8 @@ Local review, integration review and final verification retain their distinct qu
 
 The Playground stays outside the product packages. It prepares scenarios, invokes the real product and independently inspects the outcome. It owns neither a Manager engine nor another review/publication loop. A passing fake-port workflow test, a real Agent session test and the two real Applies remain different evidence classes.
 
-## Next design step
+## Next implementation gates
 
-Review the configuration/journal contracts and selected adapter, then finish the small Playground evaluation contract. Bind an exact executable/schema profile and demonstrate its required capabilities before real work. The proposed Go interfaces and storage/configuration design do not yet establish runtime readiness.
+The configuration, journal and Playground contracts are now specified. The [delivery plan](../../implementation-plan.md) dispatches the deterministic foundation and independent oracle first. Bind an exact executable/schema profile and demonstrate its required capabilities before real R1. Proposed interfaces and storage/configuration design do not yet establish runtime readiness.
 
 Return to the [Apply concept](manager-apply-concept.md), [implementation plan](manager-apply-implementation-plan.md) or [canonical-model overview](README.md).

@@ -37,7 +37,7 @@ Use an isolated managed worktree and a non-protected branch from the integrated 
 
 | Package | Exclusive write scope | Dependency and boundary |
 | --- | --- | --- |
-| APPLY-BOOT | Target import gate/code-map handling under `src/internal/tooling/architecture/`; explicitly delegated source-ownership model and generated view | First wave. Prepare strict checks/ownership for root `internal/` components. Preserve existing gates until cutover. No compiler/domain implementation; root module/CI edits require coordinator agreement. |
+| APPLY-BOOT | `src/internal/tooling/architecture/`, `docs/development/modules.md`, generated `docs/development/code-map.md`, `.markitect/model/product/core-layer.yaml`, generated `docs/markitect/project.md` | First wave. Prepare strict target import/map checks and ownership of pure `internal/model/`, `snapshot/`, `organization/` and `realization/` paths. Preserve existing gates until cutover. No producer implementation; root module/CI edits require coordinator agreement. |
 | APPLY-MODEL | `internal/model/`, including conformance fixtures/tests | First wave. Own compiler API and complete v1 values. No filesystem/provider calls or legacy imports. Integration waits for BOOT; freeze a reviewed API before dependent packages start. |
 | APPLY-SNAPSHOT | `internal/snapshot/`, including tests | First wave. Own fixed generic tree/path/entry/digest values. No Git/process/model dependency. Integration waits for BOOT. |
 | APPLY-PLAY | `experiments/library-playground/` | First wave. Independent Python standard-library oracle and bounded harness checks. No library implementation, Manager engine or real provider invocation. |

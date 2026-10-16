@@ -4,6 +4,8 @@ This register records Markitect's long-term vision, product-level decisions, cla
 
 ## Index
 
+Earlier work-item IDs and wave names in this register are historical references. Their recorded decisions retain their status; the [current delivery plan](../implementation-plan.md) alone assigns rebuild scope and dependencies.
+
 The owner's [origin account of 15 October 2026](sources/owner-origin-20261015.md) adds the concrete adopting-project experience behind these entries. [Origin and rationale](origin-and-rationale.md) connects its problems, mechanisms and assumptions to the existing IDs without changing their status. The example Core/Module/Product rules belong to that adopting project.
 
 | ID | Type | Title | Status |

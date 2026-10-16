@@ -1,5 +1,7 @@
 # Provider adapters
 
+This guide describes current executable behavior before the [Apply rebuild](implementation-plan.md). The [selected replacement adapter](design/canonical-model/manager-apply-rebuild-plan.md) needs its own protocol/profile evidence; existing adapter checks do not establish that replacement.
+
 The current project workflow has two provider boundaries. The outer coding client (Codex or Claude Code) connects to Markitect's repository-local MCP server and coordinates the Work Item conversation. Markitect Host schedules inner Manager, reviewer and verifier roles. By default they run through Codex CLI 0.162.0 App Server using the `gpt-6-luna` model and `high` reasoning effort. `config` can give each role class its own provider, model, effort and cost mode, including a [bring-your-own process executor](#bring-your-own-executor). Claude Code 2.1.295 is supported as an outer MCP client, not yet as an inner worker runtime.
 
 ## Connect the outer client

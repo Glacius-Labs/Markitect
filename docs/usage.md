@@ -1,6 +1,6 @@
 # Usage
 
-This reference describes current executable behavior before the [Apply rebuild](implementation-plan.md). The [target design](design/canonical-model/README.md) is implemented in bounded packages; its proposed interfaces are not already CLI features.
+This reference describes current executable behavior before the [Apply rebuild](implementation-plan.md). The [target design](design/canonical-model/README.md) will be implemented in bounded packages; its proposed interfaces are not already CLI features.
 
 Current source uses the model-first command surface documented in [Project operations](project-operations.md), with workflow and ownership explained in [Project workflow](project-workflow.md). Release preparation commands are documented in the repository [distribution guide](../integration/README.md).
 

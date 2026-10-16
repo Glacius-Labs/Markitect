@@ -13,7 +13,7 @@ Use this map to find the product guide or the document that owns a decision or s
 | Understand the product goal, method, or technical boundaries | [Vision](vision.md), its [delegated method](vision.md#the-delegated-method), [Architecture](architecture.md), and [Measurement](measurement.md) |
 | Contribute source or authoring guidance | [Contribution checks](../CONTRIBUTING.md), [Development coordination](development/README.md), [Project workflow](project-workflow.md), and [Documentation maintenance](development/documentation.md) |
 | Use the current model-first CLI | [Project operations](project-operations.md) and [Usage](usage.md); earlier Project/Domain contracts are preserved at the [v0.14.1 tag](https://github.com/Glacius-Labs/Markitect/tree/v0.14.1) |
-| Check source plans, work-item status, or fixed evidence | [Implementation roadmap](implementation-plan.md), the [work-items map](work-items/README.md), and the [validation map](validation/README.md) |
+| Check source plans, earlier work records, or fixed evidence | [Delivery plan](implementation-plan.md), the [work-items map](work-items/README.md), and the [validation map](validation/README.md) |
 | Find a design proposal, research input, or historical record | [Design map](design/README.md), [Research map](research/README.md), [Strategy map](strategy/README.md), and [History map](history/README.md) |
 | Read the completed canonical-model v1 design baseline | [Normative language specification v1](design/canonical-model/minimal-language/language-contract.md), [overview and evidence boundaries](design/canonical-model/README.md), and [earlier consolidation history](design/canonical-model/consolidation.md) |
 
@@ -24,7 +24,7 @@ Use this map to find the product guide or the document that owns a decision or s
 | Product thesis and human/agent responsibilities | [Vision](vision.md) |
 | Product decisions, promises, assumptions, long-term vision, agreed but unscheduled directions, ideas, and open questions, with their origin | [Concept record](concepts/README.md) |
 | Technical behavior and product boundaries | [Architecture](architecture.md) and the task-specific current guides above |
-| Current source scope and future implementation | [Implementation roadmap](implementation-plan.md) |
+| Current rebuild scope and dependencies | [Delivery plan](implementation-plan.md) |
 | Work-package scope, dependencies and reservations | [Delivery plan](implementation-plan.md); actual candidates/checks live in chats and PRs. [Earlier records](work-items/README.md) are historical. |
 | Earlier interrupted sessions and restart records | [Historical session handoff](development/session-handoff.md); its retired queue grants no current assignment |
 | Native A01 result, attempt accounting and acceptance limits | [A01 validation record](validation/a01-native-smoke-20261010.md) |

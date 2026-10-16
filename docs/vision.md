@@ -93,7 +93,7 @@ The target human role is specification and engineering judgment. Being a permane
 
 ## Where trust comes from
 
-Markitect does not try to make agents infallible. It changes the structure they work in, which Markitect's product owner calls federalism ([CPT-001](concepts/register.md#cpt-001-federalism)). Each mechanism below replaces something that today's common practice leaves to chance. These are the method's mechanisms. The [roadmap](implementation-plan.md) and backlog record which of them current source implements.
+Markitect does not try to make agents infallible. It changes the structure they work in, which Markitect's product owner calls federalism ([CPT-001](concepts/register.md#cpt-001-federalism)). Each mechanism below replaces something that today's common practice leaves to chance. These are the method's mechanisms. [Architecture](architecture.md) and current executable guides describe implemented behavior; the [delivery plan](implementation-plan.md) owns the rebuild toward the new design. Actual checks remain bound to their source and scope.
 
 | Markitect mechanism | What it replaces in today's practice |
 |---|---|
