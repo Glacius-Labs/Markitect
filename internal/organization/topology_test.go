@@ -159,6 +159,26 @@ func TestTopologyOwnsItsCollections(t *testing.T) {
 	}
 }
 
+func TestEmptyPackageChangesTopologyWithoutChangingCanonicalDigest(t *testing.T) {
+	input := localFixture(t, map[string][]string{"feature": {"item"}})
+	before := requireTopology(t, compileFixture(t, input))
+	input.Root.Entries = append(slices.Clone(input.Root.Entries), model.Entry{Path: "model/empty", Kind: model.Directory})
+	after := requireTopology(t, compileFixture(t, input))
+	if before.ModelDigest() != after.ModelDigest() {
+		t.Fatal("an empty Package changed the canonical model digest")
+	}
+	if reflect.DeepEqual(before.Managers(), after.Managers()) {
+		t.Fatal("the authoritative empty Package was lost from topology")
+	}
+	if _, found := before.Manager("empty"); found {
+		t.Fatal("the original topology unexpectedly contained the empty Package")
+	}
+	manager, found := after.Manager("empty")
+	if !found || manager.Parent != organization.Root || manager.HasLocalWork() || manager.PassThrough() {
+		t.Fatalf("the added empty Package is not an empty leaf: %+v", manager)
+	}
+}
+
 func TestExactUnicodePathsAndLocallyEmptyImportedSpelling(t *testing.T) {
 	compiled := compileFixture(t, localFixture(t, map[string][]string{
 		"é/子": {"ö"}, "z": {"item"},
