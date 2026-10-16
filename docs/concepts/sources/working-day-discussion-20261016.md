@@ -241,3 +241,9 @@ Recorder's note: The assistant proposed [dependency release through accepted del
 > Wie gehen wir damit um, wenn eine bereits akzeptierte Lieferung später geändert oder als fehlerhaft erkannt wird, während andere Manager schon darauf aufbauen, ohne sämtliche Arbeit neu starten zu müssen?
 
 Recorder's note: The assistant proposed preserving immutable deliveries and consumer candidates, distinguishing a merely newer version from a blocking defect or selected replacement, and following actual consumption/composition references to identify potential impact. The [correction section](../reflections/working-day-demonstration-20261016.md#correct-an-accepted-delivery-without-discarding-downstream-work) reuses existing findings, safe execution reconciliation, producer repair and consumer Keep/Adapt/Replace/Unresolved assessment. It retains current review/integration requirements and shared budgets, distinguishes same-basis rework from successor Apply, and makes no claim of selective semantic proof reuse.
+
+## Pause dependent work without domain reasoning
+
+> Wie entscheidet der Host konkret, welche laufenden Arbeiten bei einer fehlerhaften Lieferung pausieren müssen und welche weiterlaufen dürfen, ohne fachliche Auswirkungen selbst beurteilen zu müssen?
+
+Recorder's note: The assistant proposed [conservative exposure-based dispatch gating](../reflections/working-day-demonstration-20261016.md#gate-active-work-by-recorded-delivery-dependencies) using actual delivery/input/composition references, recorded reads and uncertainty. Ordinary dependent work stops progressing, separately established work remains eligible, and explicit bounded diagnosis/repair is allowed without treating the defective premise as valid. The proposal distinguishes eligibility from the initial single-writer scheduling constraint, preserves late results as old-basis evidence and reuses existing reconciliation rather than adding a lifecycle or claiming perfect semantic independence.
