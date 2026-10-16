@@ -27,7 +27,7 @@ func TestBodyLinksBindEveryCategoryInOccurrenceOrder(t *testing.T) {
 	input.Root.Entries[6].Bytes = bytes.ReplaceAll(input.Root.Entries[6].Bytes, []byte(`\\0`), []byte(`\0`))
 	original := bytes.Clone(input.Root.Entries[6].Bytes)
 	got := Compile(input)
-	if got.Status != NotCompleted || got.Coordinates != Passed || len(got.Diagnostics) != 0 || phaseStatus(got.Models[0], "body_links") != Passed {
+	if got.Status != Passed || got.Coordinates != Passed || len(got.Diagnostics) != 0 || phaseStatus(got.Models[0], "body_links") != Passed {
 		t.Fatalf("valid body links rejected: %+v", got)
 	}
 	links := privateBodies(input).links[Identity{"feature", "item"}]
@@ -43,8 +43,8 @@ func TestBodyLinksBindEveryCategoryInOccurrenceOrder(t *testing.T) {
 		t.Fatalf("identity/order/repetition/literal display/source changed: %+v", links)
 	}
 	for _, model := range got.Models {
-		if len(model.Definitions) != 0 || len(model.Canonical) != 0 || model.Digest != "" || phaseStatus(model, "lock") != NotCompleted || phaseStatus(model, "canonical") != NotCompleted {
-			t.Fatal("body stage exposed incomplete public IR or canonical evidence")
+		if len(model.Definitions) == 0 || len(model.Canonical) == 0 || model.Digest == "" || phaseStatus(model, "lock") != Passed || phaseStatus(model, "canonical") != Passed {
+			t.Fatal("complete body/lock/canonical stages withheld checked public content")
 		}
 	}
 	slices.Reverse(input.Root.Entries)
@@ -59,7 +59,7 @@ func TestBodyLinksUseOnlyTheirFileImports(t *testing.T) {
 	foreign := addFileImport(contractDefinition("foreign/peer.yaml", "peer", "feature/Record", "{}"), "feature", "Feature")
 	input.Root.Entries = append(input.Root.Entries, foreign)
 	input.Root.Entries[6] = withBody(addFileImport(input.Root.Entries[6], "foreign", "Refs"), "'[[Refs.peer]] [[foreign/peer]]'")
-	if got := Compile(input); got.Status != NotCompleted || len(got.Diagnostics) != 0 {
+	if got := Compile(input); got.Status != Passed || len(got.Diagnostics) != 0 {
 		t.Fatalf("explicit direct import not bound: %+v", got)
 	}
 	input.Root.Entries[7] = withBody(input.Root.Entries[7], "'[[Refs.peer]]'")

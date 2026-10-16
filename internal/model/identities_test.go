@@ -37,7 +37,7 @@ func TestLocalIdentityBelongsOnlyToImmediatePackage(t *testing.T) {
 		Entry{Path: "model/other/item.yaml", Kind: Regular, Bytes: []byte("id: item\nkind: item\nbody: Other package.\nspec: {}")},
 	)
 	got := Compile(input)
-	if !onlyContractStageFailures(got) {
+	if !onlyLaterStageFailures(got) {
 		t.Fatalf("separate Package identities were conflated: %+v", got)
 	}
 	if got.Models[0].Phases[2].Status != NotCompleted {
@@ -93,7 +93,7 @@ func TestSharedIntermediateAndEmptyPackagesDoNotClaimGlobalOwnership(t *testing.
 	}
 	input.Dependencies[1].Entries = append(input.Dependencies[1].Entries, Entry{Path: "model/feature/child", Kind: Directory})
 	got := Compile(input)
-	if !onlyContractStageFailures(got) {
+	if !onlyLaterStageFailures(got) {
 		t.Fatalf("empty/intermediate Package claimed foreign Definitions: %+v", got)
 	}
 }
