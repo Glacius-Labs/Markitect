@@ -87,8 +87,10 @@ const (
 	NotCompleted Status = "not_completed"
 )
 
-// Source binds diagnostics and IR to an exact supplied file. Digest hashes the
-// original bytes; it is not a canonical model content digest.
+// Source binds diagnostics and IR to an exact acquired path and opaque Origin.
+// For regular files, Digest hashes the original bytes; it is not a canonical
+// model content digest. Directory provenance has an empty Digest. A directory
+// path may be implicit in a supplied descendant; it is not physical-root proof.
 type Source struct {
 	Origin string
 	Path   string
@@ -126,7 +128,9 @@ type Result struct {
 }
 
 // ModelResult validates a supplied model in its complete requirement closure.
-// Canonical, Digest and Definitions are absent unless this scope fully passed.
+// Packages, Definitions, Canonical and Digest are absent unless this scope fully
+// passed. A passed scope's Packages is its complete own directory inventory;
+// an empty list is authoritative only alongside Status == Passed.
 // Only Input.Root has an entry-lock obligation. For a supplied dependency,
 // lock=passed means no separate sidecar is required in this Compile; its own
 // content may pass independently beside an invalid consumer or entry lock.
@@ -139,9 +143,21 @@ type ModelResult struct {
 	ID          string
 	Status      Status
 	Phases      []Phase
+	Packages    []Package
 	Definitions []Definition
 	Canonical   []byte
 	Digest      string
+}
+
+// Package is an exact, nonempty directory name relative to the selected model
+// root. Source.Path is relative to the SourceModel acquisition boundary, with
+// its opaque Origin and no directory Digest. Implicit parents, intermediate
+// Packages and empty leaves are included; the model root itself is excluded.
+// This inventory does not make empty Packages importable or include them in
+// canonical bytes. Each ModelResult contains only its own Packages.
+type Package struct {
+	Name   string
+	Source Source
 }
 
 // Definition is the compiled, resolved language value, independent of paths,

@@ -18,6 +18,7 @@ type sourceScope struct {
 	requirements      []modelRequirement
 	manifestReady     bool
 	inventoryComplete bool
+	packages          []Package
 	definitions       []sourceDefinition
 	lock              sourceLock
 }
