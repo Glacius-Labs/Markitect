@@ -51,6 +51,7 @@ type ContextDefinition struct {
 // ContextSelection is fixed inspectable input selection, not a rendered context,
 // mandate, role prompt or proof of semantic completeness. Zero exposes nothing.
 type ContextSelection struct {
+	topology    Topology
 	packagePath string
 	modelID     string
 	modelDigest string
