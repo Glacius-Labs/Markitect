@@ -15,6 +15,11 @@
 // acquired registry records and exact protected/ignored input classifications;
 // this package neither reads a registry file nor interprets source provenance as
 // a physical repository path. Operational .markitect/state is never realization.
-// Fixed values expose no mutable input or output slice aliases. Claims, transfers,
-// candidate composition, Definition assessments and run states are separate cuts.
+// Fixed values expose no mutable input or output slice aliases. Path checks use
+// explicit protected areas, creation selections and current ownership facts.
+// Existing owners may repair dangling artifacts without complete accounting;
+// new exact-file claims cannot acquire registered or unexplained existing files.
+// A claim records conditional admissibility, not live workspace authority. Host
+// admission, transfers, candidate composition, assessments and run states remain
+// separate responsibilities.
 package realization
