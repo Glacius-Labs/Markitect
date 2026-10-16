@@ -1,5 +1,6 @@
 // Package organization derives local Manager organization from compiled model
-// values. It performs no acquisition, configuration or execution.
+// values and resolves explicitly supplied execution settings. It performs no
+// acquisition or execution.
 package organization
 
 import (
