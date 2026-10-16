@@ -181,3 +181,9 @@ Recorder's note: The assistant distinguished canonical intent from tests as revi
 > Wie verhindern wir konkret, dass Implementierung und Tests dieselbe Modellregel falsch verstehen und der Reviewer das ebenfalls übersieht, ohne dafür immer mehr Prüfinstanzen einzuführen?
 
 Recorder's note: The assistant proposed improving the existing review's evidence: derive a discriminating case from canonical intent before reading the solution, challenge a few plausible wrong interpretations through concrete behavior and bounded checker self-checks, and clarify genuine ambiguity in the canonical rule through the existing authority route. The [shared-misunderstanding section](../reflections/working-day-demonstration-20261016.md#reduce-shared-misunderstandings-without-more-reviewers) uses suspension/return, open-loan limits and repeated old returns as examples. It explicitly retains residual correlated-error risk and does not add another approval layer or claim that repeated success proves semantic correctness.
+
+## Select rules for targeted counterchecks
+
+> Wie entscheiden wir konkret, welche Regeln solche gezielten Gegenprüfungen brauchen und wo ein normales Review reicht, ohne daraus wieder einen komplizierten Prozess zu machen?
+
+Recorder's note: The assistant proposed [two selection questions](../reflections/working-day-demonstration-20261016.md#select-deeper-checks-with-two-questions) within the existing review: whether a concrete consequence, plausible alternative meaning or relevant failure warrants a challenge, and whether applicable checks already distinguish it. Reuse current checks where sufficient; otherwise add the smallest discriminating case. Deliberately wrong variants remain selective. The recommendation adds no permanent risk taxonomy or approval layer, and retains required checks, current evidence and existing authority/budget escalation boundaries.

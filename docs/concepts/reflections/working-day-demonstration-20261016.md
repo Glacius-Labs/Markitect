@@ -210,6 +210,34 @@ For the selected rule, the existing review should be able to cite: canonical bas
 
 If implementation and assessment both infer the same wrong meaning and no authoritative example or discriminating observation challenges it, the result can still be wrong. Changing model vendors or adding votes does not remove that limitation. Honest evidence states which interpretations were challenged and which uncertainty remains. Repeated runs establish repeatability of the selected evidence, not immunity to a systematic misunderstanding. The library working-day acceptance remains bounded by its chosen cases.
 
+### Select deeper checks with two questions
+
+The [owner asked how to choose rules](../sources/working-day-discussion-20261016.md#select-rules-for-targeted-counterchecks) without adding a complex process. Use a short judgment within the existing review of affected obligations, not a risk score, another approval or a permanent classification of every model Definition. All mandatory checks and ordinary independent review still apply.
+
+**First: is there a concrete reason to challenge this rule's interpretation?** One of the following is enough:
+
+- A plausible error would cross an authority boundary, damage or incorrectly change existing state, or violate a central business constraint while an ordinary successful example could still look correct.
+- The actual change exposes a plausible alternative meaning with different behavior: an exception, a limit boundary, identity across repeated operations or an interaction between responsibilities. Complexity or novelty alone is not the reason; name the potential mistake.
+- A relevant previous failure or current contradiction shows that the existing checks may miss this behavior. This is a reason to inspect the present rule, not an automatic new business rule or permanent escalation requirement.
+
+Start from the model before reading the solution, as described above. Update the judgment if candidate inspection exposes a new concrete concern. Do not invent arbitrary mistakes merely to fill a checklist; for a consequential boundary, identify at least the forbidden outcome that the assessment needs to exclude. If intent itself is unclear, use the existing clarification route rather than silently choosing an interpretation.
+
+**Second: do the applicable checks already distinguish the relevant wrong behavior?** If yes, reuse the check and execute it against the current candidate, with current assessment bindings. If no, add the smallest discriminating case to the ordinary test/review work. Several rules may share a single case. A previous green run or test name is not enough to establish present sensitivity; inspect its assertions and applicability. Reuse of check logic is not reuse of old approval.
+
+| Library change | Proportionate action |
+| --- | --- |
+| Correct a spelling mistake in usage documentation, with no change of meaning or executable interface. | Ordinary content review and applicable document checks. No fabricated behavioral counterexample. |
+| Change the numeric loan limit while keeping its meaning. | Run the existing inclusive-boundary/open-loan/refusal-state cases with the new selected value. Add no new countercase if they already distinguish the relevant mistakes. Frozen M1/M2 experiment controls retain their original bindings. |
+| Change member-status behavior affecting borrowing and return. | Exercise the suspension case across membership and lending; a successful active-member loan alone does not cover this boundary. |
+| Change repeated-return handling or loan/copy identity. | Exercise L1 return, L2 borrowing of the same copy and repeated L1 return, checking L2 and availability. |
+| Change which records count toward the loan limit. | Reassess the meaning of the existing limit cases; add a case for the newly relevant distinction if it is not covered. |
+
+Testing the checker with a deliberately wrong variant remains a further bounded technique, not a requirement for every selected rule. Use it when the chosen check's ability to catch an important mistake is uncertain, a relevant defect previously escaped, or the frozen acceptance experiment expressly requires it. Otherwise an applicable, reviewed discriminating case with actual current results can be sufficient. Do not require fresh artificial mutations after every numeric or documentation change.
+
+The existing reviewer owns this adequacy judgment; the responsible Manager arranges any missing case within the assignment. For selected cases, one short entry in the existing assessment is enough: reason, distinguishing case/evidence, and remaining gap. Example: "Repeated return could close the newer loan; existing L1/L2 case exercises that distinction and passes on the current candidate." Ordinary cases need no separate risk form beyond their normal review result.
+
+Begin with one case per distinct concern and add another only when it addresses a named remaining gap. This is a starting heuristic, not a limit that permits uncovered obligations. Stop expanding when the selected wrong behavior is distinguished and applicable required checks are satisfied. If necessary evidence cannot be obtained within authority or budget, retain the unresolved obligation and use the existing parent/budget/decision path. Do not relabel the rule low-risk merely to finish, and do not ask the owner to make routine test-selection decisions.
+
 ## Overall acceptance and repeatability
 
 The proposed initial threshold is three complete series of all four scenarios, using a fresh execution state for each case and the same fixed product/profile basis. Each case starts from its specified recorded baseline; within the recovery case, the interrupted state must survive the restart. Do not replace recovery with a new clean assignment.
