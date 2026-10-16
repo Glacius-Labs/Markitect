@@ -106,3 +106,7 @@ The owner supplied an [assessment](concept-assessment-20261016.txt) and [propose
 > Lass uns als Nächstes die Go-Architektur für das erste zuverlässige Apply entwerfen. Zunächst grob: Welche Bausteine brauchen wir, und was vom aktuellen Stand übernehmen, ersetzen oder löschen wir?
 >
 > Oder generell wollen wir ja in Go über Ports und Adapters gehen mit idiomatic Go. Wie würdest du das ganze strukturieren?
+
+## Derive ports from the library delegation flow
+
+> Ja, lass uns den Ablauf Root Manager → Ausleihmanager → Reviewer → Integration am Bibliotheksbeispiel durchgehen und daraus die konkreten Port-Verträge ableiten.

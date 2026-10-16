@@ -112,7 +112,7 @@ Derive a small optional starter vocabulary from this example and keep it an ordi
 
 ### P01 Design the Go product architecture and removal map
 
-The [initial Go architecture outline](manager-apply-go-architecture.md) proposes responsibility-based packages, consumer-owned ports and concrete adapters, with a source treatment table. It is the starting proposal; exact contracts and the complete removal map remain to be designed.
+The [Go architecture outline](manager-apply-go-architecture.md) proposes responsibility-based packages, consumer-owned ports and concrete adapters, with a source treatment table. The [library delegation walkthrough](manager-apply-library-flow.md) and [port contracts](manager-apply-port-contracts.md) now specify handoffs, proposed Go interfaces, data ownership, review binding, waiting and uncertain effects. These are design proposals; the first executor choice, configuration/record encodings and complete removal map remain P01 work.
 
 Specify target responsibilities, packages, allowed imports, runtime data contracts and lifecycle ownership. Identify what will be copied, adapted, rewritten or deleted. Include a decision on the first executor transport, configuration ownership, source binding, registry writes, communication and record formats. Design from the completed model language and Manager concept; preserving the old Project/Report DTO is not a goal.
 

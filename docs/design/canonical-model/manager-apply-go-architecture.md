@@ -1,6 +1,6 @@
 # Go architecture for reliable Apply
 
-Date: 16 October 2026. Initial outline for discussion, requested after [library M1](library-example/README.md). This proposes responsibilities and dependency direction for P01 of the [implementation plan](manager-apply-implementation-plan.md); it does not complete P01's concrete contracts or change current source architecture. The [Apply concept](manager-apply-concept.md) owns product behavior and the clean redesign policy.
+Date: 16 October 2026. Proposed responsibilities and dependency direction for P01 of the [implementation plan](manager-apply-implementation-plan.md), requested after [library M1](library-example/README.md). The companion [library delegation walkthrough](manager-apply-library-flow.md) and [port contracts](manager-apply-port-contracts.md) develop its exchanges and lifecycle. This design does not change current source architecture or complete all of P01. The [Apply concept](manager-apply-concept.md) owns product behavior and the clean redesign policy.
 
 ## Organize by responsibility
 
@@ -63,7 +63,7 @@ The main external capabilities are:
 | Check execution | `run` and final verification | Execute explicit project checks on the exact candidate and return observed results. |
 | Guarded publication | `apply` | Recheck the captured source, publish the verified artifact/registry candidate together, and report actual writes and read-back. |
 
-These are responsibilities for small consumer-owned interfaces, not final signatures or a large universal Repository interface. Exact request/result types, journal sequencing and capability lifetimes are the next P01 design step. The same concrete adapter may satisfy several narrow interfaces. Ordinary calls between pure packages use concrete functions and values.
+The [port contracts](manager-apply-port-contracts.md) propose small consumer-owned interfaces, request/result content, journal sequencing and capability lifetimes for these responsibilities. The same concrete adapter may satisfy several narrow interfaces. Ordinary calls between pure packages use concrete functions and values; no universal Repository interface is needed.
 
 The Host owns the task/message protocol, effective authority and history. An Agent adapter translates provider transport into those records; it cannot accept a child delivery, grant a path or mark a review passed by itself. Manager, reviewer and verifier use the same session boundary with distinct roles and fresh review inputs. Provider wire objects and provider session IDs do not become canonical model types.
 
@@ -94,12 +94,14 @@ There is no old/new compatibility frontend or permanent second Apply. Reusable c
 
 Apply acquires M1 and the current realization, compiles through `model`, derives Managers/context through `organization` and obtains registry/coverage facts through `realization`. It starts `run` with the artifact reconciliation instruction for the root only. The root delegates to the local Package Managers; lending can delegate reminders. Host-mediated tasks and results cross the session port and enter the journal. Actual workspace deltas and registry proposals are validated before review and integration.
 
+The [detailed walkthrough](manager-apply-library-flow.md) follows delegation, parent yielding, an incorrect six-loan candidate, fresh review, rework, reminders integration and the accepted return to root. The [contracts](manager-apply-port-contracts.md) distinguish Agent proposals from Host-issued deliveries and bind each review to exact inputs, candidate and registry.
+
 Local review, integration review and final verification retain their distinct questions and exact candidate bindings. Only a complete verified aggregate reaches guarded publication. The publisher reports actual artifact and registry writes and read-back; the run summary refers to that evidence. M2 follows the same path from existing A1, with only the model's admission limit changed.
 
 The Playground stays outside the product packages. It prepares scenarios, invokes the real product and independently inspects the outcome. It owns neither a Manager engine nor another review/publication loop. A passing fake-port workflow test, a real Agent session test and the two real Applies remain different evidence classes.
 
 ## Next design step
 
-Agree on these responsibilities, then specify one root-to-lending task with the smallest useful port contracts: prepared inputs, session exchange, candidate/registry delivery, journal events and publication result. Assign each state and output one owner. Only then finish the concrete keep/rewrite/delete map and implementation slices. P01 remains incomplete until those contracts and the source-removal boundaries are reviewable; the Playground gets its own P02 design before substantial runtime implementation.
+Review the companion walkthrough and contracts, then choose the first real executor and specify its tool/observation capabilities, configuration and record encodings. Finish the concrete keep/rewrite/delete map and implementation slices. P01 remains incomplete until those adapter decisions and source-removal boundaries are reviewable; the Playground gets its own P02 design before substantial runtime implementation.
 
 Return to the [Apply concept](manager-apply-concept.md), [implementation plan](manager-apply-implementation-plan.md) or [canonical-model overview](README.md).
