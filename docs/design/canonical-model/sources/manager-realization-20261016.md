@@ -86,3 +86,9 @@ Recorder's note: These are verbatim owner messages from the design discussion in
 > Ausserdem müssen wir beim Umbauen nicht auf Kompatibilität achten und können frei löschen. Wir sollten uns dabei nicht zu stark am alten Modell orientieren und stattdessen unser Konzept durchsetzen. Diese ganze Aktion soll Markitect sauberer designen und strukturieren. Wir wollen dann auch noch die Architektur des Go Source Codes durchdesignen und den Playground.
 >
 > Bei der Umsetzung können wir ruhig radikal vorgehen und einfach löschen was wir nicht mehr brauchen oder ersetzen wollen. Es muss nicht vorsichtig zurechtgerückt werden. Gerade da sich vermutlich die Architektur noch ändern kann macht uns das sonst vllt mehr arbeit und bringt uns nichts
+
+## Incorporate the supplied concept review
+
+The owner supplied an [assessment](concept-assessment-20261016.txt) and [proposed refinements](concept-refinements-20261016.txt) from a separate session. Their findings are advisory source material; their treatment is recorded in the [review resolution](../review-resolution-20261016.md).
+
+> Ich habe eine separate Session unser neues Konzept gegen den aktuellen Stand prüfen lassen. Hier ist seine Antwort. Wir sollten entsprechend anpassen und Dinge lösen die wir evtl übersehen haben. Dann wenn das Konzept steht, sage mir was du vorschlägst was wir als nächstes tun

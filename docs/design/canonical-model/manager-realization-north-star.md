@@ -4,6 +4,8 @@ Date: 16 October 2026. Working design direction and open variants from the [owne
 
 The [developed Apply concept](manager-apply-concept.md) proposes concrete answers to the open questions below and walks through a library system. It is a proposal for owner review; this north star preserves the original direction and alternative ideas.
 
+The [supplied review resolution](review-resolution-20261016.md) refines that proposal with boundary questions, justified Definition assessments, distinct review purposes, an ordinary starter vocabulary and a readable context preview. One Manager per local Package remains the starting organization; reports should expose concrete coordination problems before adding alternatives. These refinements use existing roles and records. The independent expectation set remains a library evaluation tool, not a second specification every adopter must maintain.
+
 ## Purpose and direction
 
 The canonical model describes the intended project world. Managers organize its realization as code, tests, documentation and other required artifacts. The intended management structure follows the model's Packages: one Manager per Package, with each Manager responsible for integrating its area. The root Manager is an ordinary Manager at the top of the hierarchy. Project Manager was a descriptive name for that position, not a separate role or Kind. Manager remains the working name.

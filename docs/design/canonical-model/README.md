@@ -15,6 +15,7 @@ The linked histories preserve the derivation and superseded choices. Project voc
 | [Manager realization north star](manager-realization-north-star.md) | Working direction and open variants for one Manager per Package, configurable teams, artifact registration and simple context delivery. |
 | [Manager organization and reliable Apply](manager-apply-concept.md) | Developed proposal resolving those variants into organization, context, ownership, integration, verification and reporting, with a library walkthrough. |
 | [Implementation plan for reliable Apply](manager-apply-implementation-plan.md) | Two real library Applies around a model change, Go and Playground design, Agent communication and a clean rebuild without compatibility obligations. |
+| [Supplied Apply review and resolution](review-resolution-20261016.md) | Preserved assessment sources, five refinements, superseded migration advice and the next concrete design work. |
 | [Executable Exchange example](minimal-language/exchange-example/README.md) | Current input files, bounded probe and reports; includes the explicitly rejected Command/command vocabulary collision. |
 | [Consolidated design history](consolidation.md) and [fixed Main comparison](current-main-comparison.md) | Origin of the design and product boundaries. |
 

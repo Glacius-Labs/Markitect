@@ -2,6 +2,8 @@
 
 Date: 16 October 2026. Revised after the [owner's two-Apply and clean-redesign clarification](sources/manager-realization-20261016.md#two-apply-cycle-and-freedom-to-redesign). This is the proposed delivery plan for the [Manager Apply concept](manager-apply-concept.md). P00 to P12 are local plan identifiers, not active backlog assignments. Acceptance criteria below describe future evidence; writing the plan does not establish that they passed.
 
+The [supplied concept review and its resolution](review-resolution-20261016.md) add concrete criteria to these slices: boundary questions, grounded Definition dispositions, distinct review purposes, inspectable preparation and observed coordination effort. No new role, language layer or separate optimization subsystem is needed for these refinements.
+
 ## The actual target
 
 The principal demonstration is one continuous development sequence:
@@ -65,6 +67,8 @@ The three-loan request is an especially useful witness: exactly the same input c
 
 Author and review the expectation sets independently of the generated library implementation. Keep their bytes outside Agent write scope and recheck them before/after evaluation. Agents may write normal tests as artifacts, but those tests cannot replace the independent assessment. Read-only scope is validated by Markitect; it is not a claim of OS isolation from same-user processes.
 
+This independent expectation set evaluates the library experiment. It does not introduce a permanent second specification that every adopting project must maintain. Generated project tests remain ordinary artifacts reviewed against the canonical model.
+
 R1 starts with the model, project configuration and only the minimal fixture/build contract needed to evaluate the result. It does not start with a handwritten complete library implementation. R2 starts from the actual reviewed A1 tree and registry; do not regenerate from a fresh empty directory or manually patch its code first. Save all failed attempts, rather than replacing them with an unexplained successful snapshot.
 
 ## Two design packages before implementation
@@ -102,7 +106,9 @@ P00 through P12 are planning slices. Split the larger design or compiler slices 
 
 Write the readable project description, complete M1 canonical sources, the exact M2 edit, a minimal evaluation interface and independently reviewed expectations. The model can initially be checked by the bounded design tools where supported, with their actual limitations recorded; production-v1 validity is established in P03. Do not copy the intentionally invalid Command/command Exchange fixture as a positive model.
 
-**Gate:** every scenario expectation has a clear basis in M1 or M2. Cross-Package connections are explicit. The model change is an intentional five-to-three change with no contradictory body/spec values. No implementation solution or file-edit plan is embedded in the expected-result set.
+Derive a small optional starter vocabulary from this example and keep it an ordinary, visible model. Use domain terms where useful. During model review, list statements whose behavior crosses Package boundaries and check the explicit connections. Include obligations carried by Kind and Property bodies and their concrete uses. This is a readable review of the example, not a new requirements database or semantic index.
+
+**Gate:** every scenario expectation has a clear basis in M1 or M2. Cross-Package connections are explicit, including the membership suspension that lending must enforce. Vocabulary declarations cannot hide required behavior behind a vocabulary-only label. The model change is an intentional five-to-three change with no contradictory body/spec values. No implementation solution or file-edit plan is embedded in the expected-result set.
 
 ### P01 Design the Go product architecture and removal map
 
@@ -124,11 +130,11 @@ Deliver bounded slices: **P03a** restricted YAML values/envelopes with exact num
 
 ### P04 Establish the new product skeleton and simple preparation
 
-Implement the agreed architecture's application composition, model input, Manager topology, profiles and own-Package/See-also context. Add the registry/classification and target contracts needed by subsequent slices. Produce a simple inspectable preparation result. Select one new product path; delete obsolete loader/entry-point dependencies as they are replaced.
+Implement the agreed architecture's application composition, model input, Manager topology, profiles and own-Package/See-also context. Add the registry/classification and target contracts needed by subsequent slices. Preview the actual statements, contracts, responsibilities and explicit connections with inclusion reasons before starting Agents. Add a compact Package directory for routing questions without loading all foreign content or extending imports. Select one new product path; delete obsolete loader/entry-point dependencies as they are replaced.
 
 Plan the repository's own bootstrap at this checkpoint: the new compiler/check/context can validate a freshly authored Markitect model and source ownership before the full Apply exists. Update active CI/contributor checks and generated-source owners to the implemented target in the same reviewed source cut. Do not keep a legacy compiler merely to validate an obsolete self-model. If a larger cut is needed, prepare it in an isolated feature branch and integrate when its new required checks are meaningful and passing.
 
-**Gate:** root and local Package identities/contexts are correct, imports do not spawn library Managers, and complete values/bodies survive preparation. A targeted detail read is available. The rebuilt tree has one active source model/check route, even though Apply is not yet complete. Relevant new architecture and coverage checks pass; obsolete behavior tests are removed rather than silently skipped.
+**Gate:** root and local Package identities/contexts are correct, imports do not spawn library Managers, and complete values/bodies survive preparation. Inclusion reasons and the Package directory are inspectable and distinguish source facts from explanations. A targeted detail read is available. The rebuilt tree has one active source model/check route, even though Apply is not yet complete. Relevant new architecture and coverage checks pass; obsolete behavior tests are removed rather than silently skipped.
 
 ### P05 Start real role sessions and persist communication
 
@@ -140,19 +146,21 @@ Implement the selected executor interface, effective role profiles, Host-mediate
 
 Add local artifact workspaces, exclusive path reservations, Host-owned registry changes and fresh independent review. Permit implementation, normal tests and documentation for one Package. Enforce artifact-only changes and finite rework.
 
-**Gate:** controlled tests reject attempted model/config/ignore edits, direct registry modification and overlapping ownership. A bad candidate is rejected, revised and reviewed as a new exact candidate. Missing evidence or review exhaustion cannot return completion. No target checkout is published in this slice.
+Manager and reviewer explicitly assess which local statements need another area's behavior and whether the needed model connection is present. Use ordinary open questions containing the source passage, suspected effect and affected area when known. Each positive Definition disposition needs a reason and concrete realization or use with supporting evidence; the Host validates report structure and bindings, the reviewer validates substance.
+
+**Gate:** controlled tests reject attempted model/config/ignore edits, direct registry modification and overlapping ownership. A bad candidate is rejected, revised and reviewed as a new exact candidate. A vocabulary-only claim that ignores obligations on concrete uses fails review. Missing evidence, an unresolved required assessment or review exhaustion cannot return completion. No target checkout is published in this slice.
 
 ### P07 Delegate recursively and integrate upward
 
-Add the library's root/catalog/members/lending/reminders tree and parent coordination. Parents issue their own task prompts, compose child results and request corrections from the accountable child. Add read-only intake for initially unexplained artifact ownership.
+Add the library's root/catalog/members/lending/reminders tree and parent coordination. Parents issue their own task prompts, compose child results and request corrections from the accountable child. Route suspected missing connections through the common parent without adding links during Apply. Add read-only intake for initially unexplained artifact ownership. Integration review focuses on connected behavior across the composed areas, beyond their local deliveries.
 
-**Gate:** only root receives the user instruction; the trace shows actual child prompts and responses. A parent can integrate deliveries but cannot casually author arbitrary child-owned files. A sibling contract request reaches its owner through the parent. A broken aggregate fails integration review even if individual deliveries passed; blocked children prevent a complete result.
+**Gate:** only root receives the user instruction; the trace shows actual child prompts and responses. A parent can integrate deliveries but cannot casually author arbitrary child-owned files. A sibling contract request or boundary question reaches the affected area through the parent. A missing connection needed for sound assessment yields an open model issue and prevents aggregate completion. A broken aggregate fails integration review even if individual deliveries passed; blocked children prevent a complete result.
 
 ### P08 Verify candidates and expose the full report
 
-Run project-owned checks, full file accounting, Definition assessments and fresh aggregate verification on the assembled candidate. Add independent Playground expectation evaluation without putting those assessment sources inside worker write scope. Expose the run tree/timeline with prompts, additional reads, reports, reviews and deltas.
+Run project-owned checks, full file accounting, Definition assessments and fresh aggregate verification on the assembled candidate. Check both directions: artifacts have justified model links, and required Definitions have justified realization. Add independent Playground expectation evaluation without putting those assessment sources inside worker write scope. Expose the run tree/timeline with prompts, additional reads, reports, reviews and deltas. Derive a concise user result and coordination account from the same events, separating local work, cross-area requests, observed usage and waiting from descendant effort.
 
-**Gate:** actual candidate bytes, registry and evidence bindings agree. Missing child reviews, stale evidence, unsupported Definition dispositions and tampered assessment inputs invalidate success. Reports distinguish Agent claims from observed changes. The normal tests generated with the code do not replace independent behavior or source inspection.
+**Gate:** actual candidate bytes, registry and evidence bindings agree. Missing child reviews, stale evidence, unsupported Definition dispositions and tampered assessment inputs invalidate success. All files being owned cannot compensate for missing required realization. A local pass cannot stand in for integration or final verification. Resolved findings can be referenced, but changed subjects or assumptions require renewed assessment. Reports distinguish Agent claims from observed changes and unknown usage from zero; they add no automatic restructuring, scoring or thresholds. The normal tests generated with the code do not replace independent behavior or source inspection.
 
 ### P09 Guard publication read back and handle interruption
 
@@ -166,13 +174,15 @@ Freeze one Markitect source/build S and effective role configuration for the exp
 
 Then make only the agreed model edit to M2. Keep A1's implementation and registry as the starting point and use the same product build/profile. Execute Apply R2, save A2 and inspect again. Run M2 expectations and unchanged behavior cases; examine the code/documentation difference and the model basis of each change. No hand-written code patch is allowed between the two Applies in the acceptance scenario.
 
+Inspect the existing reports for local work versus coordination, observed Agent effort and required human intervention. Use concrete problems to suggest later Package or team changes; do not infer a generally superior organization or a cost result from this one case.
+
 **Gate:** both real runs have recorded Agent lifecycle/communication, independent review, aggregate checks and exact applied read-back. The identical three-loan borrowing input is allowed under M1 and rejected under M2. Unchanged membership/catalog/return/reminder behavior stays correct. Source inspection supports the claimed realization; passing tests alone is insufficient. A2 clearly derives from A1 plus M2, not a hidden reset or reference implementation.
 
 If a product defect requires changing S, retain the failed evidence and restart the complete cycle against the new build for a comparable final result. A further no-change run is useful supporting evidence. One successful cycle is a bounded feasibility result, not a global proof, comparative study or general cost claim.
 
 ### P11 Consolidate reliability against concrete failure cases
 
-Negative tests belong to P03-P09 as each contract is implemented. This checkpoint checks their composition: stale target, missing link surfaced as a model issue, ownership conflict, invalid child report, exceeded review limit, communication interruption, event-storage failure, rejected aggregate and partial publication.
+Negative tests belong to P03-P09 as each contract is implemented. This checkpoint checks their composition: stale target, missing link surfaced as a model issue, vocabulary-only used to evade obligations on concrete uses, complete file coverage with missing required realization, a local pass offered for another review purpose, ownership conflict, invalid child report, exceeded review limit, communication interruption, event-storage failure, rejected aggregate and partial publication. A controlled missing-link case proves the question/coordination/failure contract when a gap is reported; it cannot prove that Agents discover every semantic gap.
 
 **Gate:** each case has a reproducible input, expected honest outcome and inspectable trace. The real two-Apply cycle still works on the current candidate. A failure cannot be hidden by an ignore, a rewritten model, an invented review or a final summary claiming completion.
 

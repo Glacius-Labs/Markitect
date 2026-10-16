@@ -4,6 +4,8 @@ Date: 16 October 2026. **Developed design proposal for owner review.** This conc
 
 The owner's later [implementation clarification](sources/manager-realization-20261016.md#two-apply-cycle-and-freedom-to-redesign) sets the demonstration and rebuild policy: fully author M1, generate and inspect its realization, change to M2, Apply to the existing result and inspect again. Compatibility is not required; obsolete source and workflows may be deleted. The [implementation plan](manager-apply-implementation-plan.md) puts the Go architecture, Playground and actual Agent communication ahead of substantial execution work. Existing implementation suggestions below are reuse candidates, not requirements to preserve old code or APIs.
 
+The [supplied independent review and its resolution](review-resolution-20261016.md) refine authoring, missing connections, Definition assessments, review responsibilities and observable coordination effort. These refinements use the existing roles and records; they do not add language constructs or a second organization.
+
 The product is an organization that realizes an explicitly described project world. The canonical model supplies that world's intended meaning and constraints. A deterministic Host organizes work, supplies context, validates deliveries and records the process. AI Managers make bounded judgments, delegate work and integrate results. The initial operation is Apply: reconcile the existing artifacts with the current model, including when the model has not changed.
 
 ## Recommended choices
@@ -33,6 +35,14 @@ The product is an organization that realizes an explicitly described project wor
 Configuration and registry data remain outside the canonical Definition roots. They must not be disguised as extra YAML files under those roots, where v1 would require a Definition envelope. Exact serialized schemas should be designed with the implementation; they are ordinary runtime contracts, not new language constructs.
 
 The compiler produces a bound structural model and diagnostics. It does not interpret arbitrary prose as a formal rule system. The Host reads explicit snapshots and applies deterministic workflow rules. Agents interpret meaning against those sources and produce reviewable work. Neither a prompt nor a Manager report can change the Host's declared operation target or authorize a model edit during Apply.
+
+## Authoring and inspectable preparation
+
+Provide a small optional software vocabulary and a complete library example as an ordinary, versioned model. Derive the initial Kinds and Properties from the example's actual needs rather than creating a universal catalogue in advance. The vocabulary has no privileged compiler behavior. Authors can use their own domain terms, replace the starter vocabulary or extend it through the same language rules.
+
+Templates produce visible, editable Definitions in the uniform YAML form; they are not a second authoring language. Before starting Agents, preparation should let an author inspect which original statements, contracts, responsibilities and explicit connections each Manager will receive, with the reason for each inclusion. Keep original model content, deterministic context explanations and later Agent judgments distinguishable. This preview helps expose mistaken context and missing connections; it cannot establish semantic completeness.
+
+Add structure only when it exposes a concrete failure possibility or saves recurring human work. Prefer clearer work instructions and views over new roles or parallel records.
 
 ## Organization and configuration
 
@@ -87,7 +97,7 @@ The initial Manager package contains:
 2. Every local Definition in its own Package, in stable path order. Use the source filename as a heading, followed by identity, Kind, complete body and structured `spec`. Supply the bound Kind and Property contracts needed to understand the values.
 3. A See also section for direct outgoing references and body links, and direct incoming references whose targets are in the Package. Label each reason and direction. Include the direct source or target Definition and its needed type contracts; further references remain available to inspect rather than being expanded without limit.
 4. The explicitly configured shared context and per-Manager additions. These are read-only views of already bound Definitions and do not extend file-local import resolution.
-5. A child index with identities, purposes from available model content, current task states and latest validated reports. It does not contain every descendant artifact or transcript.
+5. A compact local Package directory for routing questions, plus a child index with identities, purposes from available model content, current task states and latest validated reports. The directory identifies possible other areas without loading all foreign Definitions, artifacts or transcripts. It does not extend import visibility.
 6. The Manager's current artifact inventory and relevant existing candidate files for local work. A Manager that is integrating children initially receives their delivery summaries, public agreements and review/check references.
 
 An implementer receives the local task and candidate inputs. A reviewer receives the actual candidate, full relevant model contracts and evidence, with fresh context rather than the implementer's conversation. Role-specific packages can share source blobs without repeatedly storing duplicate text.
@@ -97,6 +107,16 @@ Full source files are available for targeted reading. Managers can request addit
 Use explicit references for normal context discovery. A body link marks an explicit reference, not proof that every obligation at its target applies to the source. The surrounding statement and contracts determine applicability. Configured shared context can deliberately expose a project-wide rule; adding that reference is not a hidden new Core rule operator. Missing necessary author connections are modeling defects to surface, not permission to disregard a known obligation. Apply does not invent canonical links to compensate.
 
 The optional Optimizer can later investigate beyond these connections and propose model edits in a separate model-targeted operation. The first Apply does not require a semantic index, embeddings, context ranking or precompilation of every possible task. A separate preparation command can be added later; each Apply prepares its own current inputs.
+
+## Checking effects across Package boundaries
+
+During local assessment, both the Manager and its fresh reviewer ask: which statements in this area require behavior from another area, and is that connection visible in the model? For example, members may state that suspended members cannot borrow, while the borrowing behavior belongs to lending. Reading that local statement is enough to raise a possible missing connection; no automatic semantic search is required.
+
+Use an ordinary open question, identifying the source Definition and passage, the possibly affected Package and the suspected effect. Send it through the nearest common parent for assessment with the affected area. The Package directory supports routing; it does not prove which obligations apply. If no target is known, report the question to the parent without inventing one.
+
+Apply can inspect and report the issue, but cannot add the canonical link. A needed model correction belongs to a separate model operation, followed by a new Apply against that model. An unresolved question that prevents a sound assessment blocks completion of the affected work and therefore of the aggregate; other bounded investigation can still finish. Do not treat absence from compiled context as permission to ignore a binding statement.
+
+This is a review duty over the statements actually assessed, not a guarantee that every missing connection will be discovered. The strict authored-link baseline remains; the optional Optimizer provides wider investigation later.
 
 ## Deliveries and evidence
 
@@ -116,9 +136,25 @@ The Host validates the shape, scope, candidate bytes and lifecycle. An Agent's r
 
 Definition assessments use a small report table, not a second semantic model. Each Definition is recorded as realized by named artifacts, constraining other identified realization, vocabulary-only, or unresolved. A reason and supporting references accompany each entry. Conditional non-applicability needs its model basis. A reviewer assesses these judgments; a vocabulary-only label is not an automatic escape from implementing behavior.
 
+Every positive disposition explains the observable realization or concrete use and why the cited evidence is sufficient. The Host checks the census, status, reason, model/candidate binding and evidence references; the reviewer assesses their substance. An assertion such as "done" or a list of files is insufficient. A required Definition with unresolved realization prevents completion even if every existing file is registered.
+
+Vocabulary-only means that a declaration needs no standalone artifact. It does not remove obligations that its body or contracts impose on concrete uses. Cite those uses and their realization assessments; explain an unused declaration when appropriate. Broader behavioral statements still need assessment. This avoids both a vocabulary escape hatch and a separate database of atomized requirements.
+
 The table provides a checkable census of what was examined, not a proof that every natural-language obligation was understood. It also avoids demanding one artifact per Definition. Kind and Property declarations can supply vocabulary, while their instance obligations are assessed in the concrete realization. All artifact forms, including tests, are reviewed against their claimed model basis.
 
 An unchanged Package can deliver a reviewed no-change result. The report still explains its realization and evidence. An old successful report remains evidence for its old inputs; it is not silently treated as current approval.
+
+## Distinct review responsibilities
+
+| Review | Question it must answer |
+| --- | --- |
+| Local delivery | Does this area's code, tests and documentation fulfill its own Definitions and relevant connected obligations? Are possible effects on other areas accounted for? |
+| Integration | Does the composed candidate satisfy the connected behavior and contracts across areas, such as a membership suspension preventing a new loan? |
+| Final verification | Does the exact aggregate have complete current evidence, required checks and cross-area verification, with no unresolved required findings? |
+
+Bind each result to its review purpose and candidate. A local pass does not replace integration or final verification. Later stages can cite an earlier finding and its recorded resolution instead of repeating the same discussion. Reassess when the candidate, scope or assumptions change; a reference does not waive required independent review of the current aggregate.
+
+For the library demonstration, freeze independent M1 and M2 expectations outside Agent write scope so that generated code and tests cannot silently redefine success together. This is a bounded evaluation arrangement for the experiment, not a requirement for every adopting project to maintain a permanent second specification. Ordinary project tests and their model basis still need independent review.
 
 ## Artifact registry and ownership
 
@@ -156,7 +192,7 @@ The first default is full reconciliation of the selected local model, not a clai
 
 Default child writing is sequential. Later tasks use the current accepted integration base, and delivered candidates carry their exact bases. A composition conflict goes back to the accountable owner. Parents may compose validated child deltas, but their own authoring scope does not expand to all descendant files. A corrective edit to child-owned content returns as a task to that child; parent-owned integration artifacts can be changed by the parent. Whenever composition changes a previously reviewed subject or its relevant assumptions, renew the affected review and checks. The parent still reviews its complete aggregate. No last-writer-wins merge or reassignment of ownership resolves a conflict implicitly.
 
-Work review covers the Manager's local slice and delegation readiness. Integration review covers the returned child work and assembled result. The root has the same integration obligation. The final verifier is a fresh role, independent of the Managers that authored the result; it receives the complete required evidence set and must report omissions.
+The [distinct review responsibilities](#distinct-review-responsibilities) apply at every level. Work review also checks delegation readiness; the root has the same integration obligation as other Managers. The final verifier is a fresh role, independent of the Managers that authored the result; it receives the complete required evidence set and must report omissions.
 
 Three candidate review attempts is the proposed default per work or integration task. Configuration can select another finite limit, always within the global time, cost and invocation ceilings. Exhaustion returns incomplete work. A parent cannot turn an unresolved child delivery into a complete one merely by summarizing it.
 
@@ -180,6 +216,10 @@ History survives interruption. Reopening a run first reconciles recorded invocat
 Use two views over one underlying run history: concise upward reports for coordination, and a drill-down execution record for investigation. Reports reference evidence; they do not replace it. The parent can request underlying source, candidate differences and conversations as needed.
 
 At minimum, record run/task/attempt/Agent identities, parent and causal event links, effective role/provider configuration, model and candidate bindings, prepared context, actual rendered prompts and custom instructions, observable sent requests, returned messages and reports, context/tool reads, delegation, registry reservations, candidate deltas, review rounds, check invocations/results, integration, publication and read-back. Preserve original event content and add later corrections as new events.
+
+The normal user report presents the result, model basis, evidence, limitations and decisions needing attention. Detailed Agent coordination remains available through the history; users should not have to manage every exchange to obtain a result.
+
+Derive a small coordination account from these same records: local work or no-change outcomes, requests across areas, observed invocations, available usage and elapsed time. Distinguish a Manager's own effort from descendant work and waiting; do not add overlapping durations as though they were independent. Unknown usage stays unknown. This helps assess whether one Manager per Package is useful in practice without introducing scores, automatic reorganization, thresholds or another telemetry subsystem. Suggest a model or organization change only from a concrete observed problem, for the author to consider.
 
 Every candidate transition identifies its prior and resulting tree and a retrievable difference. Records distinguish a proposed change, an Agent claim, a Host-observed change, a reviewed aggregate and an applied result. A failed or rejected candidate stays inspectable. The log supports parallel causal branches without fabricating a total execution order from timestamps alone.
 
@@ -223,11 +263,15 @@ The following are conceptual counterexamples used to check the proposed contract
 | --- | --- |
 | Existing artifacts drift while the model is unchanged | Apply still assesses and reconciles them. No artificial model change is needed. |
 | A binding suspension rule has no needed context link | If noticed, report the modeling gap; do not silently edit the model or pretend absence of a link cancels the rule. Undiscovered gaps remain a known semantic limit, addressed later by model review and the optional Optimizer. |
+| A local statement appears to require another area's behavior | Manager and reviewer raise a source-grounded boundary question through the common parent. A required unresolved assessment blocks completion. |
 | Two Managers claim the same file | Reject the overlapping claim and coordinate one owner. Do not let output order select a winner. |
 | A worker changes a canonical Definition during Apply | Reject that candidate as outside the artifact operation target. |
 | A Manager assigns a vocabulary-only label to avoid a required feature | Independent review must reject the unsupported assessment. |
+| A Kind needs no standalone artifact but imposes behavior on its uses | Assess the concrete uses and their realization; vocabulary-only does not discharge those obligations. |
 | Every file is registered but the sixth loan is still allowed | Structural coverage can pass; semantic review and domain checks must examine the behavior. Registration is not correctness evidence. |
+| Every file is owned but a required Definition has no justified realization | Refuse completion even though structural file coverage passes. |
 | Child review passed, but parent composition breaks the shared contract | Aggregate integration review fails; repair the owning area and revalidate the new candidate. |
+| A local pass is offered as integration or final evidence | Reject the substitution of review purpose; assess the exact aggregate with the required stage. |
 | A parent needs a child's file to evaluate integration | Supply a recorded targeted read. There is no absolute file-blindness rule. |
 | An external edit changes the checkout or model during work | Preflight reports stale and preserves candidates. Do not apply old verification to new bytes. |
 | Review cannot converge or a model contradiction remains | Return incomplete/needs decision with bounded attempts and retained evidence. |
@@ -243,6 +287,7 @@ The fixed source baseline for this assessment is Main `bc4b49e76f9b9e4b3ec98033a
 | --- | --- |
 | Pure structural Core and fixed snapshots | Preserve deterministic compilation and explicit inputs. The completed v1 authoring language still needs a production compiler and conformance corpus; the current fixed project Schema is not that implementation. |
 | Recursive work, independent review and integration | Reuse the method contracts. Derive the organization from v1 Packages instead of requiring canonical Manager Definitions; adapt context and task transport. |
+| [Existing Reconcile operation](../../../src/internal/runtime/projectrun/operation.go) | Already asks for the complete responsibility against unchanged model intent, missing realization and reasoned no-change results. The new Apply makes that reconciliation the main artifact operation; it does not invent the capability. |
 | Role profiles and finite budgets | Extend the existing runtime composition for the selected team and per-Manager configuration rather than create a second execution launcher. |
 | Candidate workspaces and delta validation | Reuse guarded ownership and actual-delta validation. New registry/path reservation and v1 target classification need concrete implementation. |
 | Coverage, check and verification stages | Preserve whole-repository accounting and conservative unknown handling. Replace fixed-vocabulary realization inputs with the proposed registry and Definition assessments. |
