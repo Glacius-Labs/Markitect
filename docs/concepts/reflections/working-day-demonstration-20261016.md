@@ -85,6 +85,55 @@ Applied artifacts do not establish merge, release, deployment or correct product
 
 A small result record per scenario is sufficient: fixed starting basis, injection details, observed events and candidate references, owner interactions, budget/time consumption, independent behavior results and a pass/fail judgment against each criterion. Evidence must distinguish what was actually observed from an Agent's claim. A convenient status report cannot replace the underlying evidence.
 
+## A small independent assessment
+
+This proposal answers the [owner's follow-up](../sources/working-day-discussion-20261016.md#keep-independent-assessment-small). Reuse the proposed [external Playground](../../design/canonical-model/manager-apply-playground.md) and [independent library evaluator](../../design/canonical-model/library-example/evaluation-contract.md). Those documents own the runner, interface, isolation, frozen inputs and business-case families. Extend them with the four working-day cases when implementing this proposal; do not build a second orchestration system or duplicate their specifications here. These designs do not yet establish an implemented evaluator or a passed experiment.
+
+### Three complementary evidence sources
+
+| Evidence | Smallest useful check | Boundary |
+| --- | --- | --- |
+| Actual library behavior | Build the captured artifact tree and call its public JSON Lines interface from the existing proposed external Python standard-library evaluator. Assert returned values and observable state before/after operations against independently authored expectations. | Generated tests and self-reports are not the oracle. An API trace establishes only the behavior exercised; retain the existing source inspection for obligations it cannot observe. |
+| Actual artifact and execution history | Compare model patches, candidate/source identities and consistent Host history exports. Cross-check important transitions against the runner's actual invocations, provider/session lifecycle observations and publication read-back. | A Host event is stronger than an Agent's narrative but is still produced by the system under test. A history entry saying "verified" or "reconciled" is not sufficient by itself. Hashes bind bytes, not correctness. |
+| A short independent judgment | Inspect the question, its authority/model effect, the review finding and the compact final status using a fixed checklist. Record reasons and links. | Semantic clarity and usefulness cannot be established by checking that fields are nonempty. A separate Agent may assist, but its approval alone does not establish acceptance. |
+
+Use one frozen evidence bundle per scenario: source/model snapshots, relevant history export, external observations, behavior traces, owner-intervention record and verdict. Build from captured artifacts after writers are quiescent. Keep evaluator inputs outside worker write scope and use the Playground's declared enforcement; hashes alone are not isolation. Reuse its consistent history-export mechanism rather than copying a live database or adding another event store.
+
+The independent evaluator is an experiment role, not another Manager. It can invoke the public assignment/answer/resume operations and the declared injection, but cannot route internal work, fabricate review findings, edit the result or rescue execution. Requirements and the public interface are visible to workers; assessment data must introduce no hidden business obligations.
+
+### Concrete checks for the four scenarios
+
+| Scenario | Independent observations and assertions |
+| --- | --- |
+| Question and continuation | Check the real question/answer association and the actual before/after model patch against the approved edit. Require the same assignment, a new run bound to the new model, preserved consumption and a retained candidate present in the successor's starting inputs. Check new required assessments against the actual current subject. Run timely/overdue/second-renewal cases and unchanged library cases. The renewal operation and remaining semantics require a separately frozen extension to the public contract; do not pretend M1's ten-operation interface already supports them. |
+| Internal correction | Capture the defective candidate and show that the external limit case fails for the intended reason before correction. On the corrected artifact, the same case must pass: after three open loans, a fourth request is refused, the count remains three and the requested copy stays available. Inspect the independently produced review finding, its candidate binding, actual correction delta and renewed review. The external evaluator's pre-check remains outside the reviewer's input; otherwise it demonstrates following a supplied finding, not independent detection. If another check finds the defect before the reviewer, record that useful result but do not count it as evidence of reviewer detection. |
+| Interruption and recovery | Record the controlled stop point and actual process/session identities outside the product history. Retain the interrupted workspace and state. Before another writer starts, require evidence of the previous writer's terminal state or effective loss of write authority, plus reconciliation of candidate/publication state. Check observed dispatch/write-authority intervals, retained candidate bytes and monotonically accounted consumption across resumption; then assess the final result. A finished artifact alone cannot reveal overlapping writers. If the chosen environment cannot establish these observations, mark the recovery criterion unproven. Evidence is limited to the injected interruption point, not every possible crash window. |
+| Insufficient budget | Compare actual captured invocations with the frozen accounting unit and declared reservations/settlements. Check that new work stops at the applicable admission boundary, protected completion capacity is not allocated to ordinary implementation, and restart/successor does not reset consumption. Read back retained work and verify incomplete status and remaining need. Observe through confirmed quiescence, not merely a short quiet interval. Session/step accounting is not proof of a monetary spending ceiling unless actual cost accounting supports that claim. |
+
+Reuse all applicable baseline business cases; only add cases for the new extension. For example, the borrowing-limit witness uses normal member/copy registration and three successful loans, records observable state, attempts the fourth loan and compares state again. A refusal message without unchanged state fails. This is a small concrete trace, not a reference implementation of the library.
+
+For process checks, assert a few required relationships rather than a complete prescribed timeline: answer before the authorized model transition, current input/candidate bindings for assessment, no new writer while prior authority is unresolved, and no reset of shared consumption. Do not require a particular delegation order when several valid orders exist. Reuse product exports as data without importing product scheduling, approval or accounting code as the independent expected-result implementation.
+
+### Keep human judgment bounded
+
+Use three short questions for the evaluator's inspection:
+
+1. Did the owner question identify a genuinely reserved decision, offer a concrete authorized change and describe its effect on ongoing work?
+2. Did the independent review finding identify the seeded violation and require an actual correction, with evidence tied to the relevant candidate?
+3. Does the compact status accurately convey decisions, blockers, budget and the distinction between local checks, aggregate verification and applied artifacts?
+
+Confirm fresh reviewer execution from actual session/context preparation and candidate bindings. A different role label or session ID alone does not prove relevant context or fresh execution; even fresh execution cannot prove absence of correlated reasoning errors. The seeded defect provides a bounded demonstration of detection.
+
+Record this evaluation after capture, without coaching the active organization. A one-time independent inspection of the acceptance procedure, its expectations and resulting evidence is compatible with removing routine owner code review. It does not require another continuing team, scoring model or full transcript reading for every run. A contradiction discovered during inspection remains a finding; it cannot be dismissed because mechanical checks passed.
+
+### Small implementation and checks of the checker
+
+The proposed addition is four explicit scenario drivers plus a few assertion functions and data files in the planned Playground, reusing its existing proposed manifest, capture and report shapes. Each driver contains preparation, public invocations, the declared injection and assertions. No scenario DSL, generic fault-injection platform, dashboard, duplicate Manager loop or new approval authority is needed. Select one concrete recovery interruption point first and disclose the untested windows.
+
+Before relying on the added assertions, exercise a handful of controlled negative evidence copies outside real execution: a mismatched model/candidate binding, an old approval presented for the successor, missing writer-termination/fencing evidence and reset budget consumption. Each must prevent a pass for its intended reason. Reuse the library evaluator's existing proposed wrong-result checks, including mutation on refusal. These checks establish that the checker discriminates selected failures; they are not real working-day runs.
+
+For every criterion report `passed`, `failed` or `not proven`, with its evidence reference. Missing or inconsistent evidence prevents overall acceptance, but distinguish a deficient capture/evaluator from an observed product defect. Re-evaluating a frozen bundle should require no new Agent execution. Bind the evaluator and case hashes for the repeatability series as well as the product/profile; preserve earlier results if the evaluator itself is corrected.
+
 ## Overall acceptance and repeatability
 
 The proposed initial threshold is three complete series of all four scenarios, using a fresh execution state for each case and the same fixed product/profile basis. Each case starts from its specified recorded baseline; within the recovery case, the interrupted state must survive the restart. Do not replace recovery with a new clean assignment.

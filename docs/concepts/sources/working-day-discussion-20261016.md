@@ -163,3 +163,9 @@ Recorder's note: The assistant proposed four separate library scenarios after th
 > Halte generell direkt fest statt danach immer zu fragen
 
 The [working-day demonstration](../reflections/working-day-demonstration-20261016.md) records the proposed acceptance procedure. The owner also requested direct documentation of developed discussion outcomes without a separate save request; this documentation preference does not automatically accept the proposals themselves.
+
+## Keep independent assessment small
+
+> Wie würden wir die unabhängige Prüfung für diese vier Szenarien konkret aufbauen, damit wir nicht nur den Aussagen der Agenten vertrauen und trotzdem keinen riesigen Testapparat entwickeln?
+
+Recorder's note: The assistant proposed reusing the Architect's external Playground and library evaluator, adding four explicit scenario drivers and a few evidence assertions rather than another orchestration system. Actual behavior, artifact/Host evidence cross-checked against external observations, and short independent semantic inspection serve different purposes. The [independent assessment section](../reflections/working-day-demonstration-20261016.md#a-small-independent-assessment) records concrete observations, negative checks of the checker, evidence gaps and limits. This is a proposal, documented directly under the owner's standing instruction, not an implemented assessment or acceptance result.
