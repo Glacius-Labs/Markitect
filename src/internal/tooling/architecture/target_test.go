@@ -183,3 +183,47 @@ func TestTargetSelfImportRequiresExternalTestPackage(t *testing.T) {
 		})
 	}
 }
+
+func TestTargetNestedModuleCannotHidePackage(t *testing.T) {
+	for _, dir := range []string{"internal/model/hidden", "cmd/markitect/hidden", "internal/unclassified"} {
+		t.Run(dir, func(t *testing.T) {
+			root := t.TempDir()
+			writeLayerDirectionFixture(t, root, map[string]string{
+				"go.mod":           "module github.com/Glacius-Labs/Markitect\n",
+				CodeMapSource:      "packages: []\n",
+				dir + "/go.mod":    "module example.org/hidden\n",
+				dir + "/hidden.go": "package hidden\n",
+			})
+			got, err := CheckRepository(root)
+			if len(got) != 0 || err == nil || !strings.Contains(err.Error(), "nested Go module "+dir+"/go.mod") {
+				t.Fatalf("nested product module escaped inventory: %v %v", got, err)
+			}
+		})
+	}
+}
+
+func TestTargetNestedModuleRulePreservesFixtureBoundaries(t *testing.T) {
+	root := t.TempDir()
+	files := map[string]string{"go.mod": "module github.com/Glacius-Labs/Markitect\n", CodeMapSource: "packages: []\n"}
+	for _, dir := range []string{"internal/model/testdata/fixture", "cmd/markitect/testdata/fixture", "internal/model/_fixtures", "internal/model/.hidden", "internal/model/vendor/fixture", "internal/model/node_modules/fixture"} {
+		files[dir+"/go.mod"] = "module example.org/fixture\n"
+		files[dir+"/fixture.go"] = "package fixture\n"
+	}
+	writeLayerDirectionFixture(t, root, files)
+	// Inventory follows Go's hidden-directory rules. Repository inspection
+	// separately retains its existing rules for hidden source and fixtures.
+	got, err := Packages(root)
+	if err != nil || len(got) != 0 {
+		t.Fatalf("excluded fixture inventory: %v %v", got, err)
+	}
+	fixtureRoot := t.TempDir()
+	writeLayerDirectionFixture(t, fixtureRoot, map[string]string{
+		CodeMapSource:                                "packages: []\n",
+		"internal/model/testdata/fixture/go.mod":     "module example.org/fixture\n",
+		"internal/model/testdata/fixture/fixture.go": "package fixture\n",
+	})
+	violations, err := CheckRepository(fixtureRoot)
+	if err != nil || len(violations) != 0 {
+		t.Fatalf("testdata boundary: %v %v", violations, err)
+	}
+}

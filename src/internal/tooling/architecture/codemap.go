@@ -96,6 +96,8 @@ func LoadCodeMap(root string) (CodeMap, error) {
 // root, following `go list ./...`: a directory with at least one .go file,
 // including test-only and platform-specific packages. It skips .git, vendor,
 // testdata, node_modules, names starting with "." or "_", and nested modules.
+// Nested modules under product cmd/ and internal/ are errors: the product
+// uses the root module and must not disappear from this inventory.
 func Packages(root string) ([]string, error) {
 	found := map[string]bool{}
 	var modules []string
@@ -117,6 +119,9 @@ func Packages(root string) ([]string, error) {
 		}
 		switch {
 		case base == "go.mod" && rel != "go.mod":
+			if strings.HasPrefix(rel, "cmd/") || strings.HasPrefix(rel, "internal/") {
+				return fmt.Errorf("nested Go module %s is forbidden: cmd/ and internal/ use the root Go module", rel)
+			}
 			modules = append(modules, path.Dir(rel))
 		case strings.HasSuffix(base, ".go") && !strings.HasPrefix(base, ".") && !strings.HasPrefix(base, "_"):
 			found[path.Dir(rel)] = true
