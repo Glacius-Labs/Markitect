@@ -41,6 +41,29 @@ Application may import Runtime and Core directly. Product packages may not impor
 
 Physical product directories name those four layers. The coarse import gate retains the existing composition roles: Application and Runtime are Host, the nested `core/projectmodel` family is one Module owner, and `infrastructure/guardedwrite` retains its Host boundary. Structural Core cannot import the project-model family; that family and the capability modules cannot import each other. Ordinary source Infrastructure and Tooling cannot import guardedwrite. Its Infrastructure fine label and guarded-selector rules still govern product callers. These classifications preserve the import graph through the directory moves; they grant no alias or edge exemption.
 
+## Apply target dependencies
+
+The [Apply architecture](../design/canonical-model/manager-apply-go-architecture.md) defines the replacement under root `cmd/` and `internal/`. The gate prepares that graph now; the current `src/` rules above remain active until the coordinated cutover. No target package may import a current package, and no current package may import a target package, including in tests. This also prevents reuse through old test helpers or maintenance composition.
+
+| Target responsibility | Allowed other target responsibilities |
+| --- | --- |
+| `internal/model/` | None |
+| `internal/snapshot/` | None |
+| `internal/organization/` | Model, Snapshot |
+| `internal/realization/` | Model, Snapshot |
+| `internal/run/` | Model, Snapshot, Organization, Realization |
+| `internal/apply/` | Model, Snapshot, Organization, Realization, Run |
+| `internal/adapters/{cli,mcp,gitrepo,journal,codexappserver,checks}/` | Model, Snapshot, Organization, Realization, Run, Apply |
+| `internal/adapters/process/` | None |
+| `internal/bootstrap/` | All target responsibilities except command entrypoints |
+| `cmd/markitect/` | Bootstrap |
+
+The Codex App Server and Checks adapters may also import `internal/adapters/process/`, the concrete process lifetime helper selected in the [rebuild plan](../design/canonical-model/manager-apply-rebuild-plan.md). Other adapters may not import each other. Each responsibility may use its own subpackages; external tests may import their own package. The gate does not restrict third-party libraries (DEC-020).
+
+Each target responsibility has a distinct `apply-*` code-map layer. The classifier uses complete path segments, including the named adapter families and command, so unknown areas such as `internal/common/`, `internal/adapters/other/` or `cmd/other/` fail. Every actual Go package, including a test-only or platform-only package, still needs its own exact code-map entry, purpose and owning document. A target package cannot borrow a current layer label. Missing entries and entries without actual packages fail. Product source under `cmd/` and `internal/` uses the root Go module; nested `go.mod` files fail instead of hiding packages from inventory. Existing inventory exclusions such as `testdata/` still apply. Empty target areas require no entries or producer stubs; this gate does not assert that any replacement behavior is implemented.
+
+The coordinator updates the map and regenerates its page when reviewed producer packages integrate. The optional `foundation-layer` Artifact owns `internal/model/`, `internal/snapshot/`, `internal/organization/` and `internal/realization/`. The required `core-layer` Artifact still owns `src/internal/core/`; its required paths remain unchanged. Execution, adapter and command ownership is assigned with their later delivery cuts. Import classification does not grant implementation scope or artifact ownership.
+
 ## Responsibility map
 
 The [code map](code-map.md) owns the package list. In short:

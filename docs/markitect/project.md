@@ -2,7 +2,7 @@
 
 # markitect
 
-Model digest: sha256:546193264a8af226a3f7505518db5c67098db15679824b1d6f02a2a0c70c2fa4
+Model digest: sha256:08387417596c4b940e78921f37c8e3424b496f14a15157073387305c7328619c
 
 Report status: succeeded
 
@@ -258,7 +258,7 @@ Maintainer tooling enforces the import gate and the code map, builds and publish
 - Responsible Manager: ["project.markitect.example.org/v1alpha1","Manager","examples","examples"]
 - Realizes: ["project.markitect.example.org/v1alpha1","Statement","examples","examples"], ["project.markitect.example.org/v1alpha1","Statement","product","evidence-not-acceptance"], ["project.markitect.example.org/v1alpha1","Statement","tooling","published-releases"]
 - Expected paths: [experiments/](../../experiments)
-- Related checks: ["project.markitect.example.org/v1alpha1","Check","","go-tests"] (declared; execution not observed)
+- Related checks: ["project.markitect.example.org/v1alpha1","Check","","go-tests"], ["project.markitect.example.org/v1alpha1","Check","examples","library-playground-tests"] (declared; execution not observed)
 - Applicability: Experiments keep their inputs next to their evaluation so the recorded result stays reproducible.
 
 ### application-layer
@@ -282,6 +282,17 @@ Maintainer tooling enforces the import gate and the code map, builds and publish
 - Expected paths: [src/internal/core/](../../src/internal/core)
 - Related checks: ["project.markitect.example.org/v1alpha1","Check","","go-tests"], ["project.markitect.example.org/v1alpha1","Check","","go-vet"], ["project.markitect.example.org/v1alpha1","Check","tooling","architecture-gate"] (declared; execution not observed)
 - Applicability: The core compiles the model, reads snapshots and derives coverage, impact and briefings without providers or writes.
+
+### foundation-layer
+
+- Identity: ["project.markitect.example.org/v1alpha1","Artifact","product","foundation-layer"]
+- Requirement: optional
+- Role: implementation
+- Responsible Manager: ["project.markitect.example.org/v1alpha1","Manager","product","product"]
+- Realizes: ["project.markitect.example.org/v1alpha1","Statement","","canonical-sources"], ["project.markitect.example.org/v1alpha1","Statement","","project-local-policy"], ["project.markitect.example.org/v1alpha1","Statement","product","core-stays-generic"], ["project.markitect.example.org/v1alpha1","Statement","product","declared-inputs"], ["project.markitect.example.org/v1alpha1","Statement","product","explicit-relationships"], ["project.markitect.example.org/v1alpha1","Statement","product","legacy-removal"], ["project.markitect.example.org/v1alpha1","Statement","product","product"]
+- Expected paths: [internal/model/](../../internal/model), [internal/organization/](../../internal/organization), [internal/realization/](../../internal/realization), [internal/snapshot/](../../internal/snapshot)
+- Related checks: ["project.markitect.example.org/v1alpha1","Check","","go-tests"], ["project.markitect.example.org/v1alpha1","Check","","go-vet"], ["project.markitect.example.org/v1alpha1","Check","tooling","architecture-gate"] (declared; execution not observed)
+- Applicability: These pure foundation paths own actual files as packages arrive; empty reserved paths do not require producer stubs before cutover.
 
 ### infrastructure-layer
 
@@ -350,6 +361,8 @@ Maintainer tooling enforces the import gate and the code map, builds and publish
   - Limit: It runs only the documentation checker's tests; CI also runs the tests of the other repository scripts.
 - docs-links (["project.markitect.example.org/v1alpha1","Check","documentation","docs-links"]), owned by ["project.markitect.example.org/v1alpha1","Manager","documentation","documentation"]: python -B scripts/check-docs.py — declared only; no run result is bound to this report.
   - Limit: The default corpus is the maintained entry documents; it checks local targets and anchors, not prose or dependencies.
+- library-playground-tests (["project.markitect.example.org/v1alpha1","Check","examples","library-playground-tests"]), owned by ["project.markitect.example.org/v1alpha1","Manager","examples","examples"]: python -B -m unittest discover -s experiments/library-playground — declared only; no run result is bound to this report.
+  - Limit: Controlled transcripts and protocol fixtures test the evaluator itself. They do not run a generated library or establish Apply, source review, upgrade behavior or human acceptance.
 - architecture-gate (["project.markitect.example.org/v1alpha1","Check","tooling","architecture-gate"]), owned by ["project.markitect.example.org/v1alpha1","Manager","tooling","tooling"]: go test ./src/internal/tooling/architecture — declared only; no run result is bound to this report.
   - Limit: The gate checks Go imports and the code map; it does not check behavior or documentation.
 - claude-protocol (["project.markitect.example.org/v1alpha1","Check","tooling","claude-protocol"]), owned by ["project.markitect.example.org/v1alpha1","Manager","tooling","tooling"]: python -B -m unittest discover -s src/internal/tooling/clauderunner — declared only; no run result is bound to this report.

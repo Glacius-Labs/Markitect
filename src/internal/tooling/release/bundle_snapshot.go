@@ -22,6 +22,9 @@ func snapshotModuleFiles(snapshot *snapshot.Snapshot) (map[string][]byte, error)
 			return nil, errors.New("fixed source snapshot is missing go.mod")
 		}
 	}
+	if err := validateTransitionalSnapshotInputs(snapshot.Files, snapshot.Modes, prefix); err != nil {
+		return nil, err
+	}
 	module := make(map[string][]byte)
 	for name, data := range snapshot.Files {
 		if !strings.HasPrefix(name, prefix) {
@@ -36,8 +39,7 @@ func snapshotModuleFiles(snapshot *snapshot.Snapshot) (map[string][]byte, error)
 		}
 		include := relative == "go.mod" || relative == "go.sum" || relative == "README.md" || relative == "LICENSE"
 		if sourceTreePath(relative) {
-			ext := strings.ToLower(path.Ext(relative))
-			include = ext == ".go" || embeddedNotices(relative) || relative == "internal/licenses/notices.md" || relative == "src/internal/licenses/notices.md"
+			include = includeSourceTreeFile(relative)
 		}
 		if strings.HasPrefix(relative, "schema/") {
 			ext := strings.ToLower(path.Ext(relative))
@@ -73,7 +75,7 @@ func collectModuleSnapshot(files map[string][]byte) ([]sourceFile, error) {
 		ext := strings.ToLower(path.Ext(name))
 		include := name == "README.md" || name == "LICENSE"
 		if sourceTreePath(name) {
-			include = ext == ".go" || embeddedNotices(name) || name == "internal/licenses/notices.md" || name == "src/internal/licenses/notices.md"
+			include = includeSourceTreeFile(name)
 		}
 		if strings.HasPrefix(name, "schema/") {
 			include = ext == ".json" || ext == ".yaml" || ext == ".yml" || ext == ".md"
@@ -104,6 +106,17 @@ func sourceTreePath(name string) bool {
 	return strings.HasPrefix(name, "cmd/") || strings.HasPrefix(name, "internal/") || strings.HasPrefix(name, "src/cmd/") || strings.HasPrefix(name, "src/internal/")
 }
 
+// includeSourceTreeFile mirrors live source-tree selection for fixed
+// snapshots. Excluded directories apply only to the four transitional root
+// foundations; the historical src and flat selection rules stay unchanged.
+func includeSourceTreeFile(name string) bool {
+	if isTransitionalFoundationPath(name) && hasExcludedSourceDirectory(name) {
+		return false
+	}
+	ext := strings.ToLower(path.Ext(name))
+	return ext == ".go" || embeddedNotices(name) || name == "internal/licenses/notices.md" || name == "src/internal/licenses/notices.md"
+}
+
 func validateSnapshotModuleLayout(files []sourceFile) error {
 	present := make(map[string]bool, len(files))
 	for _, file := range files {
@@ -120,7 +133,7 @@ func validateSnapshotModuleLayout(files []sourceFile) error {
 	}
 	internalFound := false
 	for name := range present {
-		if strings.HasPrefix(name, internalPrefix) {
+		if strings.HasPrefix(name, internalPrefix) && strings.EqualFold(path.Ext(name), ".go") {
 			internalFound = true
 			break
 		}
@@ -156,22 +169,30 @@ func validateSnapshotModuleLayout(files []sourceFile) error {
 }
 
 func moduleLayoutFiles(present map[string]bool) (commandEntry, internalPrefix string, err error) {
-	newCommand := present["src/cmd/markitect/main.go"]
-	newInternal := false
-	oldCommand := present["cmd/markitect/main.go"]
-	oldInternal := false
+	presence := sourceLayoutPresence{}
+	var rootInternalFiles []string
 	for name := range present {
-		newInternal = newInternal || strings.HasPrefix(name, "src/internal/")
-		oldInternal = oldInternal || strings.HasPrefix(name, "internal/")
+		switch {
+		case strings.HasPrefix(name, "src/cmd/"):
+			presence.srcCommand = true
+		case strings.HasPrefix(name, "src/internal/"):
+			presence.srcInternal = true
+		case strings.HasPrefix(name, "cmd/"):
+			presence.rootCommand = true
+		case strings.HasPrefix(name, "internal/"):
+			presence.rootInternal = true
+			rootInternalFiles = append(rootInternalFiles, name)
+		}
 	}
-	if newCommand || newInternal {
-		if !newCommand || !newInternal || oldCommand || oldInternal {
-			return "", "", errors.New("fixed source snapshot must contain exactly one complete cmd/internal layout")
+	prefix, err := classifySourceLayout(presence)
+	if err != nil {
+		return "", "", fmt.Errorf("fixed source snapshot: %w", err)
+	}
+	if prefix == "src/" {
+		if err := validateTransitionalFoundationFiles(rootInternalFiles); err != nil {
+			return "", "", err
 		}
 		return "src/cmd/markitect/main.go", "src/internal/", nil
-	}
-	if !oldCommand || !oldInternal {
-		return "", "", errors.New("fixed source snapshot is missing a complete cmd/internal source tree")
 	}
 	return "cmd/markitect/main.go", "internal/", nil
 }

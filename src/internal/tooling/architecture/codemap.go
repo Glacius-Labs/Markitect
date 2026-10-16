@@ -34,6 +34,16 @@ type MapLayer struct {
 
 // Layers is ordered; code-map entries follow this order, then their path.
 var Layers = []MapLayer{
+	{"apply-model", "Apply model", "Pure canonical v1 compiler over supplied bytes.", []string{"apply-model"}},
+	{"apply-snapshot", "Apply snapshots", "Pure fixed file-tree values and comparisons.", []string{"apply-snapshot"}},
+	{"apply-organization", "Apply organization", "Pure Manager topology, settings, context and mandates.", []string{"apply-organization"}},
+	{"apply-realization", "Apply realization", "Pure registry, ownership, claims and candidate rules.", []string{"apply-realization"}},
+	{"apply-run", "Apply execution", "Tasks, sessions, review, budgets and lifecycle with consumer-owned ports.", []string{"apply-run"}},
+	{"apply-usecase", "Apply use case", "Aggregate reconciliation, verification and guarded publication.", []string{"apply-usecase"}},
+	{"apply-adapter", "Apply adapters", "Concrete protocols and effects implementing inward consumer ports.", []string{"apply-adapter"}},
+	{"apply-process", "Apply process mechanics", "Process lifetime mechanics for Codex sessions and project checks.", []string{"apply-process"}},
+	{"apply-bootstrap", "Apply composition", "Constructs concrete adapters and wires their consumers.", []string{"apply-bootstrap"}},
+	{"apply-command", "Apply command", "Thin command entrypoint delegating to composition.", []string{"apply-command"}},
 	{"core", "Deterministic core", "Structural compiler, snapshots and project-model views. No providers, Git processes or writes.", []string{"core", "host", "module"}},
 	{"infrastructure", "Infrastructure", "Git and working-tree access: fixed snapshots and guarded writes.", []string{"infrastructure", "host"}},
 	{"application", "Product application", "Current product use cases and their command and MCP surfaces.", []string{"host"}},
@@ -86,6 +96,8 @@ func LoadCodeMap(root string) (CodeMap, error) {
 // root, following `go list ./...`: a directory with at least one .go file,
 // including test-only and platform-specific packages. It skips .git, vendor,
 // testdata, node_modules, names starting with "." or "_", and nested modules.
+// Nested modules under product cmd/ and internal/ are errors: the product
+// uses the root module and must not disappear from this inventory.
 func Packages(root string) ([]string, error) {
 	found := map[string]bool{}
 	var modules []string
@@ -107,6 +119,9 @@ func Packages(root string) ([]string, error) {
 		}
 		switch {
 		case base == "go.mod" && rel != "go.mod":
+			if strings.HasPrefix(rel, "cmd/") || strings.HasPrefix(rel, "internal/") {
+				return fmt.Errorf("nested Go module %s is forbidden: cmd/ and internal/ use the root Go module", rel)
+			}
 			modules = append(modules, path.Dir(rel))
 		case strings.HasSuffix(base, ".go") && !strings.HasPrefix(base, ".") && !strings.HasPrefix(base, "_"):
 			found[path.Dir(rel)] = true
@@ -291,6 +306,7 @@ func RenderCodeMap(m CodeMap) []byte {
 	fmt.Fprintf(&b, "The page is generated from [codemap.yaml](%s). Do not edit it by hand. Change the YAML, then regenerate the page from the repository root:\n\n", relativeLink(pageDir, CodeMapSource))
 	fmt.Fprintf(&b, "```powershell\n%s\n```\n\n", CodeMapUpdate)
 	fmt.Fprintf(&b, "Tests in `src/internal/tooling/architecture` fail when a Go package is missing from the map, when an entry names a directory that is no longer a package, when an owning document is missing, or when this page is stale. Each layer must agree with the coarse layer of the [import gate](modules.md#mechanical-dependency-gate). The gate also enforces two rules of the finer layers: `core`, `infrastructure`, `application` and `runtime` packages may not import `legacy` packages, and they may use only the guarded API of `%s`.\n\n", GuardedWritePackage)
+	fmt.Fprintf(&b, "The target `cmd/` and `internal/` responsibilities use separate `apply-*` layers and the [Apply import rules](modules.md#apply-target-dependencies). Only existing packages appear here; absent target packages require no stubs. Imports between target and current packages are forbidden in both directions.\n\n")
 	counts := map[string]int{}
 	for _, p := range m.Packages {
 		counts[p.Layer]++
