@@ -333,6 +333,47 @@ Unclear or still-open required findings block acceptance of the affected deliver
 
 Extend the existing question/model-change scenario with a small representative set: one unchanged finding, one adjusted boundary finding and one genuinely withdrawn obligation. Assert that all original identities remain traceable, required current checks cannot be omitted, the obsolete expectation no longer blocks after valid review, and an unexplained disappearance still blocks. A deleted definition or discarded candidate alone must not close a finding. This is a proposed extension of existing acceptance coverage, not another test platform or an observed outcome.
 
+### Keep current finding context small without losing history
+
+The [owner asked how successive runs avoid context growth](../sources/working-day-discussion-20261016.md#bound-finding-context-across-apply-runs). Keep the full recorded history in the existing journal; supply the current relevant view to each role. The proposed [journal contract](../../design/canonical-model/manager-apply-journal.md#one-authoritative-history) already derives state from committed events and loads large payloads on demand. Extend that existing projection and context construction rather than adding a finding database, summarizing Agent or semantic-search service.
+
+There are three distinct representations:
+
+| Representation | Purpose |
+| --- | --- |
+| Original events, assessments and evidence | Preserve the original finding, every reviewed applicability/resolution decision and exact supporting records. Historical failures and replaced interpretations remain inspectable. |
+| Current derived finding view | One effective entry per finding identity for the selected assignment/run basis: responsible scope, open/currently resolved/no-longer-applicable or requiring reassessment, current requested evidence, latest applicable reason and source references. These are readable projections of existing judgments, not another editable lifecycle. |
+| Role context | The current entries relevant to the actual responsibility, dependencies and review purpose, with a bounded account of recent relevant changes and links for deeper inspection. No complete chronology by default. |
+
+Build the view from original typed records and explicit causal/supersession links at a pinned journal revision. Do not choose a disposition merely because it has the newest timestamp. Do not recursively summarize earlier summaries: that can lose the qualification which made a finding important. The concise required outcome and grounds should be the recorded assessment text or a faithful excerpt with a direct link, not a new unreviewed interpretation that becomes authoritative. Any optional generated prose is a presentation aid; the records remain the authority for finding state.
+
+A compact current entry could be:
+
+```text
+F21 | Lending | R4 / current input binding | still open
+Need: after three open loans, refuse a fourth without changing state.
+Reason: admission must enforce the current open-loan limit.
+Latest change: adapted from the five-loan case by assessment A18.
+Evidence still missing: current boundary-case execution and review.
+Sources: model rule; original F21; A18; relevant candidate/check records.
+```
+
+R4 does not receive the complete R1/R2/R3 discussion merely because F21 originated there. A Manager receives current obligations and blockers it must act on. A parent receives a compact account of relevant child blockers and delivery references, loading child detail when integration or coordination requires it. The reviewer receives the canonical grounds and current required outcome for its model-first phase; implementation rationale and earlier approval prose do not replace that independent reading.
+
+Do not send resolved or genuinely inapplicable historical findings by default. Retrieve their reason/evidence when a new change affects the grounds of that disposition, when a regression or contradiction appears, or when the role requests the detail. Selection uses recorded scope, model references, dependency/provenance links and actual changes, not recency or wording similarity alone. Unknown ownership or impact routes to the existing parent/root for clarification rather than disappearing. Old resolved status supplies neither current approval nor an exemption: the first-version full current assessments/checks still run, and a disposition whose applicability is unsettled is shown as requiring reassessment.
+
+### Bound the prompt, not the set of obligations
+
+The Host keeps the complete required set in its projection and acceptance guards even when a particular prompt contains only a bounded portion. Necessary open or unclear findings cannot be dropped by a top-N cutoff, token threshold, low relevance score or age. If the current scoped set is too large, use explicit pages or bounded work steps under the same task/responsibility, exposing total counts, remaining entries and continuation references at the pinned revision. Delivery cannot be accepted merely because the Agent handled the first page. A fetched entry counts as seen, not resolved.
+
+All findings needed for a particular implementation or review step must be available before that dependent action; merely offering an unread link is not sufficient context for an affected decision. If adequate context cannot fit, split the work through existing delegation/steps or stop with a visible context/coordination gap. This does not narrow the task's full reconciliation responsibility or create a second scheduler. New relevant records after the pinned view require refreshed context before dependent acceptance, rather than mixing pages from different states.
+
+Use one entry per stable finding, and follow explicit reviewed replacement links rather than repeating every historical wording. Do not merge apparently similar findings solely by text similarity; differences in scope or required evidence may matter. Refer to shared receipts instead of copying their outputs into every entry. A changed-since-last-view digest is useful as an addition to the current view, never as the only basis for a fresh session.
+
+For the first implementation, a query/render over the existing journal projection and on-demand evidence reads are enough. A rebuildable performance cache may be added if needed; it cannot authorize work or become another source of status. Stored history can grow without occupying the prompt, but genuinely growing unresolved work cannot be made safe by compression alone: Managers must resolve it, distribute it or expose the resulting limit.
+
+Extend the existing successor/replay checks with an old unresolved finding among many resolved entries, a current applicability change, explicit replacement links and a page boundary. Verify that the old blocker remains in the Host's required set, current context links to its actual reason, old approval is not promoted, and omitted/unread pages cannot turn incomplete work into an accepted delivery. Rebuilding the view must preserve the same state and source references. These remain proposed bounded checks, not an executed scale or context-quality result.
+
 ## Overall acceptance and repeatability
 
 The proposed initial threshold is three complete series of all four scenarios, using a fresh execution state for each case and the same fixed product/profile basis. Each case starts from its specified recorded baseline; within the recovery case, the interrupted state must survive the restart. Do not replace recovery with a new clean assignment.

@@ -205,3 +205,9 @@ Recorder's note: The assistant proposed refining existing review findings with s
 > Wie behandeln wir offene Findings bei einer Modelländerung und einem neuen Apply-Lauf, damit nichts verloren geht, aber überholte Prüfbedarfe die Arbeit auch nicht unnötig blockieren?
 
 Recorder's note: The assistant proposed carrying finding identity/history independently of retained candidate files and reassessing applicability in the existing successor review: still applies, applies with adjustment, no longer applies or unclear. The [successor finding section](../reflections/working-day-demonstration-20261016.md#reassess-open-findings-in-a-successor-apply) distinguishes historical failure from current obligation, allows justified retirement without obsolete tests, and preserves current evidence, affected-scope blocking and explicit replacement links. These are ordinary assessment judgments rather than a second lifecycle or automatic approval transfer.
+
+## Bound finding context across Apply runs
+
+> Wie verhindern wir, dass bei mehreren Apply-Läufen immer mehr alte Findings und Bewertungen den Kontext überladen, ohne relevante offene Punkte oder ihre Begründung zu verlieren?
+
+Recorder's note: The assistant proposed keeping full journal history, deriving one current entry per finding and providing scoped role context with on-demand source/evidence reads. The [context proposal](../reflections/working-day-demonstration-20261016.md#keep-current-finding-context-small-without-losing-history) avoids recursive summary drift, preserves current reason and provenance, and prevents top-N truncation from removing required obligations. Large active sets use explicit bounded pages/steps while Host acceptance retains the complete required set; historical approval never becomes current approval. This reuses existing projections and context construction rather than adding a memory service or another task system.
