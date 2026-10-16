@@ -31,7 +31,7 @@ func coreLockText() string {
 
 func requireNoPublicContent(t *testing.T, model ModelResult) {
 	t.Helper()
-	if model.Status == Passed || len(model.Definitions) != 0 || len(model.Canonical) != 0 || model.Digest != "" {
+	if model.Status == Passed || model.Packages != nil || len(model.Definitions) != 0 || len(model.Canonical) != 0 || model.Digest != "" {
 		t.Fatalf("invalid/incomplete scope exposed public content: id=%s status=%s digest=%s", model.ID, model.Status, model.Digest)
 	}
 }
