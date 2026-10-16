@@ -615,6 +615,37 @@ The safe first optimization is removing unrelated history and avoiding unsolicit
 
 Test the package construction with a Lending example: required eligibility/return and incoming reminder context remains present, a task-specific Catalog input is exactly bound, unrelated foreign artifact bodies are absent when access really is restricted, and a targeted read expands the recorded basis. Include a broad-build case whose exposure is honestly broader. These are proposed preparation/context checks, not proof that minimal context or isolated builds have already been implemented.
 
+### Detect consequential context gaps during ordinary work
+
+The [owner asked how a Manager notices missing context](../sources/working-day-discussion-20261016.md#notice-missing-decision-context) before making a plausible wrong decision. Self-confidence cannot establish context sufficiency. A Manager can recognize an unsupported premise or contradictory evidence, but may fail to notice a missing concept entirely. Use a short premise check in existing task interpretation and review, backed by structural context checks and the earlier discriminating cases; do not promise complete detection or add another review role.
+
+Before a consequential decision about business behavior, an ownership boundary or another area's contract, ask:
+
+1. What supports this decision: an actual canonical statement, an observed current artifact/contract, or explicit implementation freedom in the mandate?
+2. What must be true outside my own changes for the result to be correct, and is that premise established on the selected basis?
+3. If a plausible alternative were true, would my action differ? What is the smallest source read or observation that distinguishes the alternatives?
+
+The third question bounds investigation: retrieve information that could change the decision rather than asking for the whole project "to be safe". This is not a requirement to justify every local variable or algorithm choice with a model citation. Ordinary local choices within the mandate can proceed. Consequential assumptions about business meaning, authority or foreign behavior cannot become facts merely because they seem conventional.
+
+| Observable signal | Appropriate next action |
+| --- | --- |
+| A required own rule, declared shared rule or direct referenced contract should be in the prepared context but is missing/unresolvable. | Host context construction should detect the structural omission against its bound inclusion recipe. Repair/refuse the deficient preparation rather than asking the Agent to guess. Presence checks cannot prove that the model itself has every necessary relationship. |
+| The Manager's intended action relies on an unobserved foreign behavior, side effect, error case or ownership claim. | Name that premise and request the exact relevant contract, source or current evidence through the existing recorded read tools. |
+| Model, implementation, test output or supplied reports disagree. | Preserve the discrepancy and investigate its concrete basis. Do not resolve it by selecting the most convenient statement or by automatically treating current code as desired intent. |
+| The alternative interpretations would change authorized business behavior and available sources do not decide between them. | Use the existing parent/owner decision route for genuinely missing authority; do not invent a new rule in code or tests. |
+
+For a library example, suppose a Manager is changing return handling in an existing realization and is about to add a second stored availability flag. The model already requires availability to reflect open loans. The missing fact may be how the selected Catalog implementation currently realizes that contract: does its query derive availability from loan state, or does a maintained representation need updating? Read that specific contract/source and exercise the return/availability observation before assuming a second state update is needed. This hypothetical implementation question does not reopen M1's settled business rule or imply that the modeled library already has a particular storage design.
+
+Conversely, whether suspended members may return loans is already explicitly decided by M1. The Manager should use the supplied eligibility/return rules, not escalate that question again. If those required sources were omitted from its package, that is a context-preparation defect. If it read them but misunderstood them, the suspension/return countercase and existing independent review address a reasoning error rather than an absence of context.
+
+Resolve a recognized material gap before the dependent write, commitment or acceptance. Bounded reads and diagnostic checks may continue under existing authority; unrelated work remains possible. A technical information request is not automatically a question for the owner. New context is recorded against the actual fixed source basis; discovering changed intent still follows the authorized successor route.
+
+Only material unresolved premises need a short entry in the existing task/finding record: "To do X I need to establish Y; current evidence is Z; request/read A will distinguish the alternatives." Once resolved, cite the actual source or observation. Do not create a separate assumption register, confidence score or per-step checklist ceremony. If the gap cannot be resolved within current authority/budget, retain it as an incomplete obligation rather than filling it with a plausible default.
+
+The existing reviewer starts from the canonical obligation and asks which foreign premise the actual candidate relies on, then checks its evidence and a discriminating case where warranted. Integration examines the resulting boundary behavior. This gives a second opportunity to expose an unstated assumption without requiring another full project read or additional review layer. Agreement still does not prove the absence of shared blind spots.
+
+Small preparation/workflow cases can omit a declared required context item, leave a concrete implementation premise unavailable, or supply contradictory bound evidence. The expected observations differ: structural preparation failure, targeted retrieval before the dependent action, or an explicit unresolved discrepancy. Include a normal in-mandate choice that proceeds without needless retrieval to avoid rewarding perpetual hesitation. These are proposed cases, not a guarantee that an Agent recognizes every missing dependency.
+
 ## Overall acceptance and repeatability
 
 The proposed initial threshold is three complete series of all four scenarios, using a fresh execution state for each case and the same fixed product/profile basis. Each case starts from its specified recorded baseline; within the recovery case, the interrupted state must survive the restart. Do not replace recovery with a new clean assignment.

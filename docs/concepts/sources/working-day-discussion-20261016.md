@@ -259,3 +259,9 @@ Recorder's note: The assistant proposed [recording supplied input boundaries](..
 > Wie schneiden wir diese Eingabepakete konkret zu, damit ein Manager genug Kontext für gute Entscheidungen hat, ohne durch zu breite Snapshots unnötig von allen anderen Lieferungen abhängig zu werden?
 
 Recorder's note: The assistant proposed [four input parts](../reflections/working-day-demonstration-20261016.md#shape-useful-input-packages-without-unnecessary-artifact-exposure): complete own responsibility, direct neighbor contracts, necessary realization/build inputs and compact orientation. The proposal distinguishes the Host's aggregate base from actual role exposure, canonical neighbor knowledge from consuming delivered implementation, and a shorter prompt from real access isolation. It preserves required reviews/builds, delivery provenance and conservative defect gating without requiring separately buildable Packages, new contract-only deliveries or semantic context ranking.
+
+## Notice missing decision context
+
+> Wie erkennt ein Manager konkret, dass ihm entscheidender Kontext fehlt, statt auf Basis seines begrenzten Eingabepakets eine plausible, aber falsche Entscheidung zu treffen?
+
+Recorder's note: The assistant proposed [checking consequential premises](../reflections/working-day-demonstration-20261016.md#detect-consequential-context-gaps-during-ordinary-work) during normal task interpretation: identify the decision's basis, the foreign fact it relies on and the smallest observation that distinguishes a relevant alternative. Structural omissions, unknown implementation facts, contradictory evidence and missing business authority have different responses. The proposal preserves ordinary implementation freedom, uses existing task/finding records and review, and explicitly acknowledges unknown unknowns and shared reasoning errors.
