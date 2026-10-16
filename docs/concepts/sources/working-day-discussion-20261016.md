@@ -169,3 +169,9 @@ The [working-day demonstration](../reflections/working-day-demonstration-2026101
 > Wie würden wir die unabhängige Prüfung für diese vier Szenarien konkret aufbauen, damit wir nicht nur den Aussagen der Agenten vertrauen und trotzdem keinen riesigen Testapparat entwickeln?
 
 Recorder's note: The assistant proposed reusing the Architect's external Playground and library evaluator, adding four explicit scenario drivers and a few evidence assertions rather than another orchestration system. Actual behavior, artifact/Host evidence cross-checked against external observations, and short independent semantic inspection serve different purposes. The [independent assessment section](../reflections/working-day-demonstration-20261016.md#a-small-independent-assessment) records concrete observations, negative checks of the checker, evidence gaps and limits. This is a proposal, documented directly under the owner's standing instruction, not an implemented assessment or acceptance result.
+
+## Avoid a second specification
+
+> Wie verhindern wir, dass die unabhängigen Erwartungen zu einer zweiten Spezifikation werden, die wir bei jeder Modelländerung zusätzlich pflegen müssen?
+
+Recorder's note: The assistant distinguished canonical intent from tests as reviewed realizations, parameterized routine checks from frozen experiment controls, and numeric changes from semantic changes. The proposed [maintenance rule](../reflections/working-day-demonstration-20261016.md#keep-expectations-subordinate-to-the-model) delegates affected test updates and requires review against the model delta, preserving failed evidence and prohibiting changes merely to make a failing run pass. It acknowledges shared-input blind spots and unavoidable assessment maintenance without requiring another owner-maintained specification or a second model interpreter.

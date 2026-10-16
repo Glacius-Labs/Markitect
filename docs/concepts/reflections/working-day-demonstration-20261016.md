@@ -134,6 +134,42 @@ Before relying on the added assertions, exercise a handful of controlled negativ
 
 For every criterion report `passed`, `failed` or `not proven`, with its evidence reference. Missing or inconsistent evidence prevents overall acceptance, but distinguish a deficient capture/evaluator from an observed product defect. Re-evaluating a frozen bundle should require no new Agent execution. Bind the evaluator and case hashes for the repeatability series as well as the product/profile; preserve earlier results if the evaluator itself is corrected.
 
+## Keep expectations subordinate to the model
+
+This clarification answers the [owner's concern about a second specification](../sources/working-day-discussion-20261016.md#avoid-a-second-specification). The canonical model owns business intent. Tests and expectation sets are realizations of that intent, with provenance and revision bindings. Their maintenance is part of delegated work, not another requirements document the owner must keep synchronized. A failing test is evidence to investigate, not authority to override a newer authorized model.
+
+Independent assessment still has a cost: a check must express enough of an obligation to distinguish correct and incorrect behavior. Eliminating every repeated expression would also remove much of its ability to detect mistakes. The aim is one source of authority and bounded, reviewed derivation, not zero test maintenance or a claim that model-to-test generation is infallible.
+
+### Distinguish routine checks from frozen experiments
+
+| Situation | Treatment |
+| --- | --- |
+| An explicit structured value changes | For routine project checks, read the value from the exact selected model snapshot and supply it as test data to a separately reviewed check. Do not read the generated implementation's constant, ask the program for its intended policy, or use a mutable "latest model". |
+| The business meaning stays the same | Reuse the applicable check logic and test arrangements. A loan-limit check can attempt N successful loans and one refusal, then verify unchanged state on refusal. Its semantics still require independent review against the model. |
+| The business meaning changes | Have the responsible realization work update affected tests and expectations, with fresh review from the changed model obligations. For example, a per-member limit becoming a per-household limit changes the check logic, not just a number. |
+| Markitect itself is being evaluated | Keep the bounded experiment's independently authored M1/M2 expectations frozen and bound to those exact models. The five/three witnesses in the existing evaluator remain deliberate controls. They must not silently follow whichever model or implementation a failed run produced. |
+
+The proposal to parameterize routine checks does not change the [existing library evaluation contract](../../design/canonical-model/library-example/evaluation-contract.md#independent-inputs-and-oracle). Its fixed profiles establish a particular historical result and are not a second living specification for every future library version. A later deliberate experiment has new bindings; old evidence is preserved rather than updated to appear current.
+
+Reading a structured limit from the selected canonical model shares that input and its interpretation with the realization path; it is less independent evidence of model loading than the frozen M1/M2 witness. It can still independently test whether the resulting program enforces the selected limit. Keep these claims separate. Do not build a second generic model compiler or semantic interpreter into the evaluator to eliminate this tradeoff.
+
+### A small maintenance rule
+
+Each check or check family needs a reference to the model obligation it assesses and a binding to the model used for the result. Reuse existing assessment/registry metadata where possible; do not add another manually maintained requirements catalogue or a new Core construct for this purpose.
+
+When intent changes:
+
+1. Identify potentially affected checks from the changed obligations, their relevant relationships and the actual change. References help selection but are not proof of complete impact discovery; uncertain impact remains visible and requires broader assessment.
+2. Reuse applicable logic and update structured parameters from the fixed new basis. If semantics changed, explicitly adapt or replace the affected checks; an obsolete expectation is retired with a reason and history.
+3. Review the test change against the authorized model delta, separately from the implementation's explanation. A failed assertion alone is never permission to weaken or remove it. Required current assessments still run; this is not an approval-reuse or check-skipping policy.
+4. Freeze the reviewed expectations for the next assessed attempt. If a defect in the evaluator is discovered, preserve the failed attempt and record a new assessment revision instead of rewriting the original result.
+
+The owner resolves missing business meaning or authority, not routine expected-value updates. If a test introduces a new business rule with no model basis, either remove that unsupported requirement or propose an explicit model change for authorization. Useful owner-authored business examples may live with their canonical rule; they should not become a mandatory parallel catalogue of executable specifications.
+
+Independence comes from deriving and reviewing checks against intent before using implementation output as evidence, protecting their accepted basis during an attempt, and executing them externally. It does not require different business rules. For plain-language obligations, automatic interpretation remains fallible: a fresh reviewer, a few deliberately chosen counterexamples and visible uncertainty provide bounded assurance without promising a universal semantic oracle.
+
+For the working-day scenarios, stable process obligations such as continued assignment identity and no budget reset belong to Markitect's own contracts. Library loan-policy changes do not normally change those checks. Actual limits and expected authorized model patches are scenario inputs. This keeps the small process suite separate from changing library business values without maintaining another library specification.
+
 ## Overall acceptance and repeatability
 
 The proposed initial threshold is three complete series of all four scenarios, using a fresh execution state for each case and the same fixed product/profile basis. Each case starts from its specified recorded baseline; within the recovery case, the interrupted state must survive the restart. Do not replace recovery with a new clean assignment.
