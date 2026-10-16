@@ -77,3 +77,15 @@ Recorder's note: The assistant proposed a readable mandate derived from the cano
 > Halte dieses konkrete Mandat bitte auch in unseren Docs fest, insbesondere die Ableitung aus Modell, Konfiguration, Registry und Auftrag, ohne Regeln doppelt zu pflegen.
 
 The reflection's [derived Lending mandate](../reflections/desired-working-day-20261016.md#derive-the-lending-mandate-from-its-sources) records the concrete example, source ownership, conflict handling and reviewer basis.
+
+## Handle conflicting inputs
+
+> Wie würden wir konkret mit Widersprüchen zwischen Modell, Konfiguration und Auftrag umgehen, ohne dass die Manager sie stillschweigend auflösen oder mich bei jeder Kleinigkeit fragen?
+
+Recorder's note: The assistant proposed checking scope, applicability and compatibility before treating differences as conflicts; applying existing resolution rules and authority; recording real conflicts in existing questions/findings; and escalating only missing decisions or permissions. Review checks the authority and source of the resolution. A blanket input hierarchy must not silently erase a model-change request.
+
+## Preserve conflict handling
+
+> Halte diesen Umgang mit Widersprüchen bitte auch in unseren Docs fest, insbesondere die Prüfung von Geltung und Vereinbarkeit, die Nutzung bestehender Befugnisse und die Eskalation nur bei fehlenden Entscheidungen.
+
+The reflection's [conflict-handling section](../reflections/desired-working-day-20261016.md#resolve-conflicts-through-applicability-and-authority) records the proposed workflow, examples and review requirements.

@@ -91,6 +91,40 @@ If the project later defines durable rights to change business rules, those righ
 
 Configuration and assignment constraints cannot silently weaken binding model obligations or mandatory operation gates. Conflicting inputs must be exposed for resolution. A displayed mandate preserves the sources and their distinct roles rather than introducing a precedence rule that lets one input erase another.
 
+### Resolve conflicts through applicability and authority
+
+The [conflict discussion](../sources/working-day-discussion-20261016.md#handle-conflicting-inputs) proposes checking applicability and compatibility before escalating. Do not introduce a blanket ordering such as model over assignment over configuration: it could silently discard an authorized request to change the model. Each source has its own responsibility. The model describes intended behavior, configuration supplies permitted execution choices, the assignment specifies the requested outcome, and the operation contract fixes boundaries such as a read-only model during Apply.
+
+A conflict exists when applicable requirements cannot be satisfied together in the same case. First check their scope, conditions and bound revisions. Different statements about different situations need not conflict. A default and an explicit override can coexist under the documented configuration rules; that is not permission to invent precedence for arbitrary prose.
+
+| Situation | Treatment |
+| --- | --- |
+| A project default selects profile A; an exact Manager override selects B | Apply the defined override rule and record the effective configuration. |
+| The model leaves an implementation choice open; the assignment adds a permitted constraint | Apply the compatible constraint within the existing mandate. |
+| The budget may not cover the requested work | Assess feasibility and authorized alternatives. Do not weaken business behavior or expand the budget silently. |
+| The model allows five loans; the assignment requests three | Determine whether this authorizes a model change or conflicts with the fixed basis of an artifact-only Apply. |
+| Configuration requests skipping a mandatory review | The Host rejects the invalid setting; it does not silently choose a substitute configuration. |
+
+Use existing authority for determinate cases: retrieve missing context, distinguish a stale report from the bound model, apply declared configuration resolution, or perform an already authorized change at its proper source. Record the treatment briefly without asking the owner to approve the same decision again. An apparent wording correction that changes meaning is not merely cleanup.
+
+For a real unresolved conflict, use the existing question or finding record with five items:
+
+1. The exact conflicting source passages or values and their revisions.
+2. The concrete case in which they cannot both hold.
+3. The dependent work and scope that cannot complete.
+4. A proposed correction at the proper source.
+5. The actor authorized to decide that correction.
+
+The responsible Manager investigates; a common parent coordinates cross-area cases. Dependent work waits while other ready work can continue within its mandate. An unresolved required conflict blocks aggregate success. No separate conflict database or Manager hierarchy is needed.
+
+For example, “Change the model to three loans and realize it” already states the owner's decision. Within the existing mandate, prepare or perform the model change through the separate model operation and start Apply on the new basis. Do not ask again whether three was intended. By contrast, “Just limit the code to three” during an Apply bound to five is not local implementation freedom. Clarify whether a model change is authorized rather than silently changing behavior or discarding the instruction. Artifact Apply itself remains model-read-only in both cases.
+
+A rejected invalid configuration needs a precise diagnostic, not necessarily a new business decision. Correct it autonomously only when the replacement is determinate and authorized. Otherwise identify the missing choice or authority. Record a new effective input binding where required; do not mutate fixed run inputs under the label of conflict resolution.
+
+Independent review checks that the resolution considered all applicable obligations, came from an authorized actor and changed the correct source. Removing one conflicting statement from a prompt does not resolve the underlying conflict. Deterministic validation handles structural cases; semantic compatibility remains a reasoned, reviewed judgment.
+
+Internally resolved cases appear in the report with their basis. Questions needing owner judgment use the concrete question format below and the separate notification policy. The intended sequence is: establish applicability and compatibility, use existing authority, and escalate only the missing decision or permission.
+
 ### Choose notification timing separately
 
 | Situation | Owner attention |
