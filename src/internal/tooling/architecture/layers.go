@@ -56,12 +56,25 @@ func CheckRepository(root string) ([]Violation, error) {
 	if len(problems) != 0 {
 		return nil, fmt.Errorf("invalid code map:\n%s", strings.Join(problems, "\n"))
 	}
+	// A classified target name is not proof that its producer exists. Do not
+	// admit edges to absent packages merely because their prefix is known.
+	mapped := mapLayers(m)
+	for _, e := range edges {
+		if target, _ := targetLayer(e.To); target != "" && mapped[e.To] == "" {
+			return nil, fmt.Errorf("%s:%d: target import %s has no actual package in %s", e.File, e.Line, e.To, CodeMapSource)
+		}
+	}
 	guarded, err := CheckGuardedWriteUse(root, edges, m)
 	if err != nil {
 		return nil, err
 	}
 	out := append(Check(edges), CheckMapLayers(edges, m)...)
 	out = append(out, guarded...)
+	selfImports, err := checkTargetSelfImports(root, edges)
+	if err != nil {
+		return nil, err
+	}
+	out = append(out, selfImports...)
 	sortViolations(out)
 	return out, nil
 }
