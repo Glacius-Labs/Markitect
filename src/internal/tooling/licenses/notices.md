@@ -303,3 +303,46 @@ Source: https://www.apache.org/licenses/LICENSE-2.0.txt
    See the License for the specific language governing permissions and
    limitations under the License.
 ```
+
+## github.com/yuin/goldmark
+
+Version: v1.8.5. Source: https://github.com/yuin/goldmark/blob/v1.8.5/LICENSE
+
+```text
+MIT License
+
+Copyright (c) 2019 Yusuke Inuzuka
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+```
+
+## CommonMark 0.31.2 test corpus
+
+The unmodified CommonMark 0.31.2 example corpus is by John MacFarlane.
+Source: https://spec.commonmark.org/0.31.2/spec.json
+SHA-256: d431b29d97b6f73e69d547109cf5081578fac931e72afe95639ebe766c1b2a20.
+
+This test-only data is licensed under Creative Commons Attribution-ShareAlike
+4.0 International (CC BY-SA 4.0), separately from Goldmark's MIT license.
+License: https://creativecommons.org/licenses/by-sa/4.0/
+Full official legal code: https://creativecommons.org/licenses/by-sa/4.0/legalcode.txt
+The complete license and attribution also accompany the corpus in
+internal/model/commonmark_corpus_test.go and
+internal/model/testdata/commonmark-0.31.2/LICENSE.txt. No changes were made to the
+corpus. The corpus is not embedded into the product runtime.

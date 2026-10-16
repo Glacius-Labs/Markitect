@@ -2,7 +2,7 @@
 // It performs no filesystem, repository, process or provider operations.
 //
 // Compile currently implements source/YAML acquisition and lexical Unicode
-// names/identities, explicit bindings, Core/field contracts and typed values.
+// names/identities, explicit bindings, contracts, typed values and body links.
 // Valid partial input remains not_completed until every normative v1 content
 // phase exists. It does not expose a partial Definition IR or canonical bytes.
 package model
@@ -55,18 +55,23 @@ type Input struct {
 // default. Negative values are invalid configuration. A limit refusal is
 // not_completed, never evidence that a model violates the language.
 type Limits struct {
-	SourceBytes int64
-	Entries     int
-	YAMLDepth   int
-	Models      int
+	SourceBytes     int64
+	Entries         int
+	YAMLDepth       int
+	Models          int
+	BodyBytes       int
+	MarkdownNesting int
 }
 
 // DefaultLimits returns the finite budgets used for zero-valued limit fields.
 // SourceBytes and Entries cover the entire supplied input, including metadata
 // and files outside a declared model root. Models includes the local model.
-// YAMLDepth counts the root as one.
+// YAMLDepth counts the root as one. BodyBytes bounds each decoded original
+// UTF-8 body before Markdown preprocessing. MarkdownNesting bounds actual block
+// depth (Document excluded), pending Goldmark bracket opener calls per inline
+// block, and constructed AST depth. These are tool refusals, not language maxima.
 func DefaultLimits() Limits {
-	return Limits{SourceBytes: 64 << 20, Entries: 100000, YAMLDepth: 128, Models: 1024}
+	return Limits{SourceBytes: 64 << 20, Entries: 100000, YAMLDepth: 128, Models: 1024, BodyBytes: 2_000_000, MarkdownNesting: 128}
 }
 
 type Status string
