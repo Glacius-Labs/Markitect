@@ -2,7 +2,7 @@
 
 Date: 16 October 2026.
 
-Recorder's note: These are verbatim owner messages from the design discussion in the Markitect chat. Their order is preserved. They are brainstorming, clarifications and requests to continue or record the design; they do not approve every alternative. The [north star](../manager-realization-north-star.md) is the English synthesis, including assistant proposals kept as conceptual work or open questions. The final message below corrects the earlier emphasis on optimizing context selection.
+Recorder's note: These are verbatim owner messages from the design discussion in the Markitect chat. Their order is preserved. They include brainstorming, clarifications, requests to record the design, and the later explicit choice of strict links with an optional Optimizer. They do not approve every alternative. The [north star](../manager-realization-north-star.md) is the English synthesis, including assistant proposals kept as conceptual work or open questions. The simple-context message corrects the earlier emphasis on optimizing context selection.
 
 ## Management and a customizable strategy
 
@@ -29,3 +29,13 @@ Recorder's note: These are verbatim owner messages from the design discussion in
 > Zunächst sollten wir die ganzen Ideen und Varianten festhalten damit wir sie nicht vergessen, quasi als North Star.
 >
 > Dann wenn es um die Beschaffung von Kontext geht, würde ich aufpassen nicht zu sehr zu optimieren. Beispielsweise kann ein Manager einfach die Bodies mit dem Dateinamen als Überschrift nacheinander aus seinem eigenen package bekommen. Dann könnte man ein "See also" oder ähnlich mit den damit verlinkten package-fremden Definitionen kompilieren. Oder man zeigt ihm einfach direkt die Dateien die er lesen kann. Was das Thema "nicht verlinkt" angeht, sehe ich hier entweder eine optimierende oder kopensierende Lösung oder eine strenge Lösung, die das einfach verlangt.
+
+## Compare missing link approaches
+
+> Lass uns die strenge und die kompensierende Variante für fehlende Verknüpfungen grob vergleichen. Welche Vor- und Nachteile hätten sie beim Bibliotheksverwaltungssystem? Eventuell wäre hier auch ein optionaler Optimizer oder ähnlich eine Idee
+
+## Strict links and an optional Optimizer
+
+> Lass uns die strenge Variante als Grundlage nehmen und einen optionalen Optimizer vorsehen, der fehlende Verknüpfungen vorschlägt. Halte das bitte im North Star fest.
+>
+> Dann sage mir ob du das in etwa so meintest: Wir bieten in markitect eine Art optimize oder check oder verify command an, welcher dann durchgeht und im Modell nach fehlenden verknüpfungen schaut und diese Anlegt. Wie für die meisten commands ausser "compile" (könnte anders heißen und prüft nur dass es kompilierbar ist) würde ich das über die Manager Hierarchie machen. Also quasi auch bei Cleanup oder Refactor oder Bughunt oder so

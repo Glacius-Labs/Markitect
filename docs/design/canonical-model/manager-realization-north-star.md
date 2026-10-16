@@ -1,6 +1,6 @@
 # Manager realization north star
 
-Date: 16 October 2026. Working design direction and open variants from the [owner discussion](sources/manager-realization-20261016.md). This record preserves the ideas for further design; it does not select every variant or schedule implementation. The [language specification v1](minimal-language/language-contract.md) remains the owner of the canonical language. The [concept register](../../concepts/register.md) owns accepted product decisions.
+Date: 16 October 2026. Working design direction and open variants from the [owner discussion](sources/manager-realization-20261016.md). The owner selected strict authored links with an optional Optimizer as the context baseline. Other alternatives retain their stated status; recording them does not schedule implementation. The [language specification v1](minimal-language/language-contract.md) remains the owner of the canonical language. The [concept register](../../concepts/register.md) owns accepted product decisions.
 
 ## Purpose and direction
 
@@ -87,18 +87,37 @@ Bodies alone are a useful presentation option, but `spec`, Kind and Property con
 
 ## Missing links between Packages
 
-The owner identified two possible approaches. Neither has been selected:
+**Selected direction, 16 October 2026:** Use the strict variant as the baseline and provide an optional Optimizer that proposes missing links. The [owner's selection](sources/manager-realization-20261016.md#strict-links-and-an-optional-optimizer) replaces the earlier open choice between these approaches:
 
 | Approach | Idea | Tradeoff |
 | --- | --- | --- |
 | Compensating or optimizing | Discovery, broader reading or review looks for relevant statements that explicit links did not expose. | Less reliance on complete authored links, with more interpretation, context and review work. |
 | Strict | Require authors to express the cross-Package connections needed for context compilation. | Simpler explicit compilation, with additional authoring and maintenance obligations. |
 
-For example, a members Definition might say that suspended members cannot borrow. The strict approach requires the needed connection to lending to be authored. The compensating approach tries to discover that relevance even without the link.
+For example, a members Definition might say that suspended members cannot borrow. The chosen baseline requires the needed connection to lending to be authored. Ordinary context compilation follows explicit connections. The optional Optimizer can discover the missing connection and propose a concrete model edit. It helps improve the model for later tasks; compensating discovery during every ordinary realization is not required by this direction.
 
-Structural validation can check a required link when the strategy defines its form. It cannot generally prove that all relevant prose has been linked. The strict variant still needs a clear authoring rule and a way to assess missing connections. Compensating discovery must keep its suggestions and interpretations distinguishable from authored model facts.
+The Optimizer's proposed links include their source, target and reason. It may prepare actual edits as a candidate. Review and integration under the project's delegated authority determine which edits become model content. This can follow delegated review without manual confirmation of each link. Finding a possible connection and adopting it are distinct steps; the exact command modes remain open. The Optimizer's task context can include relevant material beyond existing links, since those links are the subject of its investigation. How Managers organize that wider investigation remains to be designed.
+
+Structural validation can check a required link when the strategy defines its form. It cannot generally prove that all relevant prose has been linked. The strict variant still needs a clear authoring rule and a way to assess missing connections. A missing link does not cancel a binding statement. Optimizer suggestions remain distinguishable from authored model facts until incorporated.
 
 The earlier [context and semantic-index proposals](minimal-language/procedure-proposals.md) remain possible material for later work. This north star does not require adopting that machinery before trying simple context delivery.
+
+## Operations through the Manager hierarchy
+
+The owner proposes using the same Manager hierarchy for most substantive operations, including optimization, cleanup, refactoring and bug hunting. Managers receive an operation-specific task, organize their configured teams and integrate the findings or candidates from their area. The root Manager remains an ordinary Manager. Different operations may use different teams and context while sharing the organizational structure.
+
+The following names describe conceptual tasks, not changes to the current CLI. Final command names and mutation modes remain open.
+
+| Task | Intended work |
+| --- | --- |
+| Compile | Deterministically check language compilability and resolve the model. This task needs no AI Manager traversal and does not judge semantic completeness. |
+| Optimize | Managers inspect model content for missing connections and return justified link proposals or candidate edits for review and integration. |
+| Check or verify meaning | Managers and reviewers assess selected model or realization obligations and report their evidence and unresolved findings. Exact scope remains to be defined. |
+| Cleanup or refactor | Managers improve the realization within the model's existing requirements and permitted freedom, integrating changes across affected Packages. |
+| Bughunt | Managers investigate defects against the intended behavior. Whether a task returns findings alone or includes repairs must be explicit. |
+| Realize a model change | Managers implement and integrate the changed intent with the required review, verification and guarded application. |
+
+In the library example, the members and lending Managers could examine the suspended-member rule and prepare a missing connection together; their parent integrates the result. The same hierarchy could later investigate why a suspended member was able to borrow, with a different task and team configuration. This is a shared organizational mechanism, not a requirement that every operation make edits or inspect every Package.
 
 ## Questions for further design
 
@@ -108,6 +127,8 @@ The earlier [context and semantic-index proposals](minimal-language/procedure-pr
 - Should code, tests and documentation share a hierarchy or have separate ones?
 - What is the smallest useful artifact registration, including one accountable owner per output?
 - Which simple context presentation should be tried first, including access to structured contracts?
-- Should missing cross-Package links be handled by a strict rule, compensating discovery, or an explicitly defined combination?
+- Which explicit connections does the strict baseline require, and which reference classes and directions supply context?
+- How does the optional Optimizer present, review and integrate link suggestions, and how is its investigation scoped?
+- Which operations use the hierarchy, what does each return, and how are findings, candidate edits and model updates distinguished?
 
 Return to the [canonical-model overview](README.md).
