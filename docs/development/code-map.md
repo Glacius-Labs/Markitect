@@ -17,7 +17,7 @@ The target `cmd/` and `internal/` responsibilities use separate `apply-*` layers
 | Layer | Meaning | Import gate layers | Packages |
 |---|---|---|---|
 | `apply-model` | Pure canonical v1 compiler over supplied bytes. | `apply-model` | 0 |
-| `apply-snapshot` | Pure fixed file-tree values and comparisons. | `apply-snapshot` | 0 |
+| `apply-snapshot` | Pure fixed file-tree values and comparisons. | `apply-snapshot` | 1 |
 | `apply-organization` | Pure Manager topology, settings, context and mandates. | `apply-organization` | 0 |
 | `apply-realization` | Pure registry, ownership, claims and candidate rules. | `apply-realization` | 0 |
 | `apply-run` | Tasks, sessions, review, budgets and lifecycle with consumer-owned ports. | `apply-run` | 0 |
@@ -38,6 +38,12 @@ The target `cmd/` and `internal/` responsibilities use separate `apply-*` layers
 | `harness` | Executable tests, test support and example programs; not product code. | `harness-tests`, `harness-runtime`, `testkit` | 2 |
 | `experiment` | Bounded pilots kept with their evaluation. | `harness-runtime` | 1 |
 | `fixture` | Adopting-project code used as test input; it may not import Markitect. | `fixture` | 0 |
+
+## Apply snapshots
+
+| Package | Purpose | Owning document |
+|---|---|---|
+| `internal/snapshot` | Fixes supplied file trees with exact paths, modes, content identities and deterministic differences. | [docs/design/canonical-model/manager-apply-go-architecture.md](../design/canonical-model/manager-apply-go-architecture.md#organize-by-responsibility) |
 
 ## Deterministic core
 
