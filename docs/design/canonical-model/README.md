@@ -12,6 +12,7 @@ The linked histories preserve the derivation and superseded choices. Project voc
 | [Diagnostic contract](minimal-language/diagnostic-contract.md) | Separate tool profile for exact coordinates; independent of model validity and canonical bytes. |
 | [Language history](minimal-language/language-history.md) and [earlier Core explorations](minimal-language/README.md) | Historical choices, superseded variants and evidence of their recorded scope. |
 | [Procedure proposals](minimal-language/procedure-proposals.md) | Unselected, nonnormative context, impact and semantic-index procedures. |
+| [Manager realization north star](manager-realization-north-star.md) | Working direction and open variants for one Manager per Package, configurable teams, artifact registration and simple context delivery. |
 | [Executable Exchange example](minimal-language/exchange-example/README.md) | Current input files, bounded probe and reports; includes the explicitly rejected Command/command vocabulary collision. |
 | [Consolidated design history](consolidation.md) and [fixed Main comparison](current-main-comparison.md) | Origin of the design and product boundaries. |
 

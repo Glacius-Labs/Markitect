@@ -1,0 +1,31 @@
+# Owner discussion on Manager realization
+
+Date: 16 October 2026.
+
+Recorder's note: These are verbatim owner messages from the design discussion in the Markitect chat. Their order is preserved. They are brainstorming, clarifications and requests to continue or record the design; they do not approve every alternative. The [north star](../manager-realization-north-star.md) is the English synthesis, including assistant proposals kept as conceptual work or open questions. The final message below corrects the earlier emphasis on optimizing context selection.
+
+## Management and a customizable strategy
+
+> Okay, hierzu würde ich eigentlich auf die Management Hierarchie zurückgreifen. Generell sollte die Umsetzungsstrategie aber customizable sein finde ich. Daher ist die Frage ja, was aus dem Core des kanonischen Modells haben wir und was davon können wir wie berücksichtigen? Bei der Managementfrage könnten wir Packages nutzen und pro Package einen Manager haben. Damit hätten wir eine Hierarchie.
+
+## Teams integration and artifact registration
+
+> Ich dachte hier an einen Manager pro Package. Jeder Manager könnte dann sein eigenes Team haben. Das Team besteht aus AI Agents. So könnte man beispielsweise Implementer und Reviewer haben, welche dann hin und her implementieren und reviewen, bis der Reviewer fertig ist. Man könnte aber auch für jede Definition einen Reviewer haben, der prüft. Man könnte auch den Manager selbst implementieren lassen. Oder das Team nur unter dem unterstem Manager verorten und es geht dann nach oben und Infos können dann wieder runtergegeben werden. Jeder Manager ist eine eigene Integrationsschicht, die quasi weniger Details kennt und dafür mehr Überblick hat. So wie in Unternehmen eben auch. Ganz oben kommt dann der Projektmanager. Für das benötigte Wissen könnten wir ein Kontextpaket pro Agent "kompilieren" das dann mehr oder weniger den Prompt abbildet. Jeder Manager sollte zusätzlich konfigurierbar sein. Ausserdem brauchen wir das dann auch für jede Ausprägung, also quasi einen für Doku, einen für Tests, einen für Code. Also für jeden Zweig dieselbe Hierarchie oder man macht eine übergreifende. Das sind alles Varianten die ich sehe. Jeder Manager trägt dann jeweils seine Artefakte in eine Art Registry und begründet sie mit einer Definition. Der Compiler prüft dann dass bis auf .markitectignore files alle Dateien entsprechend verknüpft sind. Ausserdem könnten wir zwischen Kinds unterscheiden was getan werden soll.
+
+## Common Manager contract
+
+> Ja, lass uns grob beschreiben, was jeder Manager entgegennehmen, verantworten und zurückliefern muss. Bleiben wir beim Bibliotheksverwaltungssystem als Beispiel.
+
+## Root Manager and naming
+
+> Lass uns als Nächstes grob überlegen, wie das Kontextpaket eines Managers zusammengestellt wird. Bleiben wir beim Manager für die Ausleihe. Ausserdem war der Projectmanager nur eine Bezeichnung von mir um den Root Manager zu bennenen. Er sollte jedoch auch einfach nur ein normaler Manager sein. Und wir sollten uns überlegen ob Manager der richtige Name ist, wobei ich das schon passend finde
+
+## Need to know
+
+> Lass uns Schritt zwei genauer betrachten: Wie erkennt Markitect, welche Festlegungen aus anderen Packages der Ausleihmanager braucht? Bleiben wir erstmal grob und beim Bibliotheksbeispiel. Ausserdem würde ich hier das Need to know Prinzip erwähnen, auf welches wir zurückgreifen wollen. Nicht um Information Leaks zu verhindern sonder um die Agents nicht mit unnötigem Kontext zu belasten
+
+## Preserve the variants and start with simple context
+
+> Zunächst sollten wir die ganzen Ideen und Varianten festhalten damit wir sie nicht vergessen, quasi als North Star.
+>
+> Dann wenn es um die Beschaffung von Kontext geht, würde ich aufpassen nicht zu sehr zu optimieren. Beispielsweise kann ein Manager einfach die Bodies mit dem Dateinamen als Überschrift nacheinander aus seinem eigenen package bekommen. Dann könnte man ein "See also" oder ähnlich mit den damit verlinkten package-fremden Definitionen kompilieren. Oder man zeigt ihm einfach direkt die Dateien die er lesen kann. Was das Thema "nicht verlinkt" angeht, sehe ich hier entweder eine optimierende oder kopensierende Lösung oder eine strenge Lösung, die das einfach verlangt.
