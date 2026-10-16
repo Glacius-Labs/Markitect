@@ -356,7 +356,7 @@ The owner's [origin account of 15 October 2026](sources/owner-origin-20261015.md
   - One Manager per Package forms the hierarchy that realizes the model. Each level is an integration layer with less detail and more overview than the one below.
   - The root is an ordinary Manager („Er sollte jedoch auch einfach nur ein normaler Manager sein“); "project manager" only named its position.
   - The realization strategy is customizable („Generell sollte die Umsetzungsstrategie aber customizable sein“), and every Manager is configurable with its own team of AI Agents.
-  - Every Manager registers its artifacts and justifies each with a Definition; every other file is a Markitect input or explicitly ignored. This refines [DEC-006](#dec-006-every-file-is-covered-or-explicitly-ignored).
+  - Every Manager registers its artifacts and justifies each with a Definition („Jeder Manager trägt dann jeweils seine Artefakte in eine Art Registry und begründet sie mit einer Definition“); every other file is a Markitect input or explicitly ignored. This refines [DEC-006](#dec-006-every-file-is-covered-or-explicitly-ignored).
 - **Owning documents:** the [Apply concept](../design/canonical-model/manager-apply-concept.md). Its first strategy is Manager plus independent reviewer; the other team variants stay in the [north star](../design/canonical-model/manager-realization-north-star.md#team-variants).
 
 ### DEC-026 Apply comes first and changes only artifacts
@@ -365,7 +365,7 @@ The owner's [origin account of 15 October 2026](sources/owner-origin-20261015.md
 - **Statement:**
   - Apply reconciles the artifacts with the model („Ausserdem soltle Apply generell die Artifacts gegen das Modell reconcilen“), whether or not the model changed.
   - Apply must work reliably first; other commands are extensions („zunächst darauf konzentrieren, dass apply zuverlässig funktioniert und die anderen commands als Erweiterungen behandeln“).
-  - No command changes both the model and the artifacts („Ich würde ungerne Commands machen, die sowohl Model als auch Artifacts anfassen“).
+  - The owner prefers that no command changes both the model and the artifacts („Ich würde ungerne Commands machen, die sowohl Model als auch Artifacts anfassen“). Apply therefore changes only artifacts.
 - **Owning documents:** the Apply concept; later operations are kept in the [north star](../design/canonical-model/manager-realization-north-star.md#later-operations-and-extensions).
 
 ### DEC-027 Strict links with an optional Optimizer

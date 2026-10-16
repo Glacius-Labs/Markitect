@@ -136,7 +136,7 @@ Recorder's note: The assistant assessed the committed concept plus two uncommitt
 
 > Halte diese Einschätzung und die konkreten Verbesserungsvorschläge bitte auch in unseren Docs fest, damit der Architect sie bei der Konsolidierung berücksichtigen kann.
 
-The [dated consistency review](https://github.com/Glacius-Labs/Markitect/blob/3ebe3c6e6d283b998020350334e24a7303b089b7/docs/concepts/reflections/concept-consistency-review-20261016.md), later folded into the Apply contracts, records the assessment basis, recommendations, tradeoffs and expected consolidation results. The recommendations are review input, not automatically accepted design changes.
+Recorder's note: The [dated consistency review](https://github.com/Glacius-Labs/Markitect/blob/3ebe3c6e6d283b998020350334e24a7303b089b7/docs/concepts/reflections/concept-consistency-review-20261016.md), later folded into the Apply contracts, records the assessment basis, recommendations, tradeoffs and expected consolidation results. The recommendations are review input, not automatically accepted design changes.
 
 ## Scope the first usable version
 
@@ -148,7 +148,7 @@ Recorder's note: The assistant recommended a small usable organization preservin
 
 > Halte diese Abgrenzung der ersten Version bitte auch in unseren Docs fest, inklusive der unverzichtbaren Fähigkeiten, bewusst verschobenen Erweiterungen und der beiden Nachweise für technischen Kern und nutzbaren Arbeitsalltag.
 
-The [first usable version](../reflections/desired-working-day-20261016.md#the-first-usable-version) records the recommended scope, initial manual model-edit boundary and separate demonstrations.
+Recorder's note: The [first usable version](../reflections/desired-working-day-20261016.md#the-first-usable-version) records the recommended scope, initial manual model-edit boundary and separate demonstrations.
 
 ## Make the working-day demonstration concrete
 

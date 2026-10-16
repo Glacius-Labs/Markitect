@@ -37,7 +37,7 @@ Obsolete behavior disappears together with its tests; tests for still-required i
 | P09 | Guarded publication, read-back and interruption | APPLY-REPOSITORY, APPLY-INTEGRATE |
 | P10 | Real two-Apply cycle | APPLY-INTEGRATE |
 | P11 | Failure cases in composition | Every package for its own cases; APPLY-INTEGRATE composes them |
-| P12 | Clean product | APPLY-CUTOVER and APPLY-INTEGRATE |
+| P12 | Clean product | APPLY-INTEGRATE, with the coordinator |
 
 ### P00 Library model and the two-run change
 

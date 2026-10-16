@@ -32,7 +32,7 @@ type ControlSession interface {
 
 `ControlRequest` names the captured repository identity and the state directory. Acquisition takes an exclusive process-lifetime lock and binds a validated store with a new controller epoch; the binding is a lifecycle capability, not decision authority. `apply` revalidates captured inputs under the lock, creates `run` with the returned journal and closes control on exit. A failed acquisition grants no dispatch; a partial handle returned with an error is still closed. `Close` releases controller resources only; it does not assert that launched processes terminated.
 
-The lock and the active store registration live in small repository control metadata, classified as a Markitect file, so an alternate `--state-dir` cannot bypass the lock or hide unresolved work. The first store binding uses checked creation; a missing or replaced registered database needs explicit reconciliation, not a fresh empty history.
+The lock and the active store registration live in small repository control metadata, classified as a Markitect file and excluded from source staleness, so an alternate `--state-dir` cannot bypass the lock or hide unresolved work. The first store binding uses checked creation; a missing or replaced registered database needs explicit reconciliation, not a fresh empty history.
 
 Append requires the current controller binding. Publication permits carry that binding plus a run-scoped Host check, and the publisher verifies both at the write boundary; a live controller alone cannot authorize a superseded run. CLI and MCP handlers never own this lifecycle.
 

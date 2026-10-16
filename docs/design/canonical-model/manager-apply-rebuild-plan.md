@@ -106,18 +106,16 @@ The source replacement also owns these non-Go changes. Omitting them would leave
 
 ## Deletions by delivery package
 
+The old product is removed in one coherent cut, so that Main never holds half of the old runtime without its compiler or a replacement that is only partly wired.
+
 | Delivery package | Replaces or deletes |
 | --- | --- |
-| APPLY-MODEL, APPLY-SNAPSHOT | Nothing yet; the new pure packages grow beside the current source. Python probes never stand in for production conformance. |
-| APPLY-ORG, APPLY-REALIZATION | Nothing yet; they take over the rules of `projectmodel`, `projectbriefing` and `projectcoverage` in new form. |
-| APPLY-CUTOVER | Switches bootstrap, CLI preparation, self-model, generated views and source gates together. Deletes `src/internal/core` apart from the reused snapshot ideas, the `projectmodel` family, `projectwork`, `projectcoverage`, `projectapp`, `projectadoption`, `projectexplore`, `projectonboarding`, `projecthistory`, `exchangecli`, `markitect-exchange-executor`, `codexrunner`, `clauderunner` and their tests and fixtures. Apply stays explicitly unavailable until INTEGRATE. |
-| APPLY-RUN | Replaces `projectrun`, `projectexecutor`, `projectconfig` and `projectsetup` with `run` and its ports. |
-| APPLY-JOURNAL | Replaces `recordstore` and the runtime store with the SQLite journal. |
-| APPLY-AGENT | Rebuilds `codexappserver` as `adapters/codexappserver` and deletes `agentexec` after moving its process mechanics into `adapters/process`. |
-| APPLY-REPOSITORY | Moves the useful parts of `infrastructure/source`, `guardedwrite` and `projectworkspace` into `adapters/gitrepo` and `adapters/checks`. |
-| APPLY-INTEGRATE | Wires `apply`, CLI and MCP to the new services, removes the last old consumers and runs the library cycle. |
+| APPLY-MODEL, APPLY-SNAPSHOT, APPLY-ORG, APPLY-REALIZATION | Nothing; the new pure packages grow beside the current source. They take over the rules of `core`, `projectmodel`, `projectbriefing` and `projectcoverage` in new form. Python probes never stand in for production conformance. |
+| APPLY-CUTOVER | Switches bootstrap, CLI preparation, the self-model, generated views and source gates to the new foundation in one change. Deletes the whole old product under `src/`: the old compiler and `projectmodel` family, every `application/project*` package, `mcp`, the old runtime (`projectrun`, `projectexecutor`, `projectworkspace`, `projectconfig`, `projectsetup`, `agentexec`, `codexappserver`, `exchangecli`), the old infrastructure (`source`, `guardedwrite`, `recordstore`), `markitect-exchange-executor`, `codexrunner`, `clauderunner`, and their tests and fixtures. It replaces the old `testkit`, `harness/examples` and `tools/smoke` assumptions, rewrites `tooling/architecture` for the target graph, retires `experiments/mcp-pilot` and the old Playground scripts, and keeps the independent release, licensing and packaging tools. Apply is explicitly unavailable until INTEGRATE. |
+| APPLY-RUN, APPLY-JOURNAL, APPLY-AGENT, APPLY-REPOSITORY | Build `run`, `adapters/journal`, `adapters/codexappserver` with `adapters/process`, and `adapters/gitrepo` with `adapters/checks`. They transplant the mechanisms the source map names, with their failure tests, from the pre-cutover source at a recorded commit. |
+| APPLY-INTEGRATE | Declares the `apply` ports first, then wires `apply`, CLI and MCP to the new services and runs the library cycle. |
 
-The cutover is prepared on its feature branch and integrated when the new foundation and replacement gates are real. Intermediate feature commits need not support the old product, but Main never holds deleted checks next to an unimplemented replacement. After CUTOVER, Main has one active model and command path, no old DTO imports and current architecture, coverage and packaging checks.
+After CUTOVER, Main builds, has one active model and command path, no old DTO imports and current architecture, coverage and packaging checks. The cut is prepared on its feature branch and integrated only when the new foundation and its replacement gates are real and passing.
 
 ## Deletion and completion criteria
 

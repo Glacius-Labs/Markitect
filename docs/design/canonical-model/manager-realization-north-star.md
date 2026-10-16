@@ -60,6 +60,19 @@ Most operations share one sequence: check and load the model, assemble context, 
 
 Other extensions recorded for later: experience notes and an operational doctor ([experience reflection](../../concepts/reflections/experience-without-implicit-rules-20261016.md)), parallel writers, automatic reuse of earlier approvals, a cockpit and Government.
 
+## Simplified for the first version
+
+The consolidation of 16 October 2026 replaced these earlier proposals with simpler first-version rules. They remain possible later refinements; the [earlier texts](https://github.com/Glacius-Labs/Markitect/tree/3ebe3c6e6d283b998020350334e24a7303b089b7/docs/design/canonical-model) stay in Git history.
+
+| Earlier proposal | First-version rule |
+| --- | --- |
+| Bounded budget allocations per Manager, reallocated by the root, with an illustrative 60-step split. The owner asked to keep the budget model including bounded allocations ([source](../../concepts/sources/working-day-discussion-20261016.md#preserve-the-shared-budget-model)). | The Host accounts once per assignment; one completion-reserve rule protects reviews and checks ([execution](manager-apply-execution.md#one-ledger-with-protected-completion-capacity)). Allocations can return if real runs show the need. |
+| An optional absolute delivery deadline that keeps running while work waits. | No deadline; caps on active execution time remain. |
+| One assignment commissioned for both stages of the two-Apply demonstration. | Each Apply invocation is its own assignment; runs within an assignment arise only as successors or continuations. |
+| Four applicability judgments for inherited findings. | Three finding states: open, resolved, not applicable; a changed requirement becomes a new linked finding. |
+| Gating active work by derived delivery exposure. | Dependent work starts only from an accepted, composed delivery; a blocked delivery blocks its consumers. |
+| Three numbering schemes (P00 to P12, R0 to R6, delivery packages). | Gates P00 to P12 keyed to the delivery packages. |
+
 ## Open questions
 
 - Which explicit connections does the strict baseline require, and which reference classes and directions feed context?

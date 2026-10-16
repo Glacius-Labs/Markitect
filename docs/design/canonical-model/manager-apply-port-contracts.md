@@ -79,7 +79,7 @@ A dependent task starts only from an accepted producer delivery composed into it
 
 ## Application boundary and source acquisition
 
-CLI and MCP call a concrete `apply.Service.Apply(ctx, request)` and receive a result plus an ordinary error. Apply depends on one consumer-owned acquisition port:
+CLI and MCP call a concrete `apply.Service.Apply(ctx, request)` and receive a result plus an ordinary error. The request names the repository and either starts a new assignment or continues an open one by its ID; a repository with an unfinished run accepts only the continuation of that run's assignment ([execution contract](manager-apply-execution.md#assignments-and-runs)). Apply depends on one consumer-owned acquisition port:
 
 ```go
 // Package apply.
@@ -122,7 +122,7 @@ The Host implements `SessionIO`. The adapter calls `Observe` with the actual out
 
 `Call` validates role and task state. A delegate call records a child task and returns its ID; the parent then yields, and the child is scheduled outside the callback. A callback never runs a session recursively or waits for a child workflow. Reviewer tools can read, request allowed checks and report; they cannot claim paths, change ownership or delegate.
 
-The Host deduplicates a repeated correlation ID with identical content and returns the recorded reply; different content under the same ID is an error. Duplicate observations create no tasks or attempts. Cancellation propagates through `context.Context`. A timeout or error after possible dispatch returns the known receipt with an uncertain state; inspect the known session and step before retrying, and never resend work just because a reply was lost. `Stop` reports observed termination, not only a cancellation request. An uncertain writer blocks workspace handoff.
+The Host deduplicates a repeated correlation ID with identical content and returns the recorded reply; different content under the same ID is an error. Duplicate observations create no tasks or attempts. Cancellation propagates through `context.Context`. A timeout or error after possible dispatch returns the known receipt with an uncertain state; inspect the known session and step before retrying, and never resend work just because a reply was lost. `Stop` reports observed termination, not only a cancellation request. An uncertain writer blocks workspace handoff. A `SessionIO` callback error prevents further dispatch; external activity that may already have started stays uncertain until reconciled.
 
 ## Candidate workspace port
 

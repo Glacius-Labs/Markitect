@@ -96,7 +96,7 @@ After an unsuccessful attempt, the Manager records what remains unresolved, what
 
 ## Share an assignment budget and protect completion work
 
-The assignment has one budget; delegation creates no extra capacity. A completion reserve keeps room for the required reviews and checks: writing work is admitted only while the reserve stays covered ([execution](../../design/canonical-model/manager-apply-execution.md#one-ledger-with-protected-completion-capacity)). Waiting for the owner costs nothing. When capacity runs out, the run ends Incomplete with retained work, and a concrete extension request states what the capacity is for and what happens without it. Budget pressure never weakens a rule or drops a review.
+The assignment has one budget; delegation creates no extra capacity. A completion reserve keeps room for the required reviews and checks: writing work is admitted only while the reserve stays covered ([execution](../../design/canonical-model/manager-apply-execution.md#one-ledger-with-protected-completion-capacity)). Waiting for the owner costs nothing. When capacity runs out, the run ends Incomplete with retained work, and a concrete extension request states what the capacity is for and what happens without it. Budget pressure never weakens a rule or drops a review. The earlier proposal of bounded allocations per Manager is kept in the [north star](../../design/canonical-model/manager-realization-north-star.md#simplified-for-the-first-version) as a later option.
 
 ## A compact organization status report
 

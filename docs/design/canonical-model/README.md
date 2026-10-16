@@ -18,7 +18,7 @@ The baseline fixes the uniform definition form, nine Core definitions, values an
 
 ## Apply design
 
-Status: the accepted basis for the rebuild under [DEC-024](../../concepts/register.md#dec-024-first-reliable-apply-rebuild-and-coordinated-start), with the owner decisions [DEC-025 to DEC-032](../../concepts/register.md#dec-025-package-managers-organize-realization). These documents describe target behavior, not implemented behavior; implementation pull requests establish the evidence, and producer packages refine exact Go names and schemas in review. A change of intent goes to the document that owns the subject, not into a new parallel note.
+Status: the design basis for the rebuild commissioned in [DEC-024](../../concepts/register.md#dec-024-first-reliable-apply-rebuild-and-coordinated-start). The owner decisions are [DEC-025 to DEC-032](../../concepts/register.md#dec-025-package-managers-organize-realization); every other choice in these documents, such as sequential writing, three review rounds or the completion reserve, is a design decision under DEC-024 that review may improve. These documents describe target behavior, not implemented behavior; implementation pull requests establish the evidence, and producer packages refine exact Go names and schemas in review. A change of intent goes to the document that owns the subject, not into a new parallel note.
 
 Read in this order:
 

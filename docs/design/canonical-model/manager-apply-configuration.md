@@ -24,14 +24,19 @@ One versioned YAML file outside the Definition roots. The figures below are illu
 apiVersion: markitect.execution/v1
 strategy: recursive-apply-v1
 limits:
-  maxRuns: 3
-  maxSessionStarts: 80
-  maxSteps: 160
-  maxExecutionTime: 8h
+  maxRuns: 5
+  maxSessionStarts: 160
+  maxSteps: 320
+  maxExecutionTime: 16h
   maxStepTimeout: 10m
   hostOperationTimeout: 2m
   maxReviewRounds: 3
   creationRoots: [realization]
+assignment:
+  runs: 3
+  sessionStarts: 80
+  steps: 160
+  executionTime: 8h
 completionReserve:
   sessionStarts: 24
   steps: 40
@@ -58,7 +63,7 @@ notifications:
   incidents: immediate
 ```
 
-`maxRuns`, `maxSessionStarts`, `maxSteps` and `maxExecutionTime` are the default caps of each assignment. `maxStepTimeout`, `maxReviewRounds` and `creationRoots` are ceilings, not consumable counters. `hostOperationTimeout` bounds each Host control operation outside the budget. `completionReserve` is part of the caps, not extra allowance; a reserve that the execution contract's preparation check rejects stops the run before dispatch.
+Everything under `limits` is a hard project ceiling. `assignment` sets the default caps of a new assignment; an owner extension can raise them up to `maxRuns`, `maxSessionStarts`, `maxSteps` and `maxExecutionTime`. `maxStepTimeout`, `maxReviewRounds` and `creationRoots` are ceilings, not consumable counters. `hostOperationTimeout` bounds each Host control operation outside the budget. `completionReserve` is part of the caps, not extra allowance; a reserve that the execution contract's preparation check rejects stops the run before dispatch.
 
 `limits.creationRoots` bounds the permitted creation areas; defaults and Package settings select within it. Here the code, tests and documentation live below `realization/`. Existing artifacts still need registry ownership, and a directory permission grants no other Manager's files or protected model and configuration paths. A check's `directory` is confined to its captured candidate, and its arguments are literal, never a shell command.
 
@@ -96,7 +101,7 @@ The selected bytes and identities enter the run's input binding and are rechecke
 | Attempt | One submission within a task against the run's fixed basis. It resets no budget or round counter. |
 | Session and step | An actual role conversation and one dispatch. They never supply authority. |
 
-The assignment stores the owner input and goal, constraints, operation target, project identity, caps and authority source. Omitted caps use the project defaults. Renewing an exhausted cap needs a recorded extension within the project ceilings; raising a ceiling needs an authorized configuration edit. Starting another run grants nothing. The first product has one local operator as decision owner and no identity service based on Agent-reported names. An accepted decision can authorize a successor run within the assignment; it never authorizes merge, release, deployment or production-data edits.
+The assignment stores the owner input and goal, constraints, operation target, project identity, caps and authority source. Omitted caps use the `assignment` defaults. Renewing an exhausted cap needs a recorded extension within the project ceilings; raising a ceiling needs an authorized configuration edit. Starting another run grants nothing. The first product has one local operator as decision owner and no identity service based on Agent-reported names. An accepted decision can authorize a successor run within the assignment; it never authorizes merge, release, deployment or production-data edits.
 
 ## Compile the effective mandate
 
