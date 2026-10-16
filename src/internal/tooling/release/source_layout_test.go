@@ -102,6 +102,8 @@ func TestTransitionalSnapshotRejectsNonGoFoundationSymlinks(t *testing.T) {
 	if _, err := snapshotModuleFiles(source); err == nil || !strings.Contains(err.Error(), "not regular") {
 		t.Fatalf("non-Go foundation symlink was not rejected: %v", err)
 	}
+	delete(source.Files, name)
+	delete(source.Modes, name)
 
 	// The excluded name is an entry, not a directory component. It must also
 	// remain subject to the regular-file check instead of bypassing it.
