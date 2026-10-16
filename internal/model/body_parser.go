@@ -75,6 +75,7 @@ func (*bodyCandidate) Dump([]byte, int)   {}
 
 type bodyInlineParser struct {
 	source        markdownView
+	html          *bodyHTMLContext
 	malformed     []bodyProblem
 	pending       bool
 	result        bodySyntax
@@ -86,6 +87,9 @@ func (*bodyInlineParser) Trigger() []byte { return []byte{'['} }
 func (p *bodyInlineParser) Parse(_ ast.Node, reader text.Reader, _ parser.Context) ast.Node {
 	line, segment := reader.PeekLine()
 	if segment.Padding != 0 || !bytes.HasPrefix(line, []byte("[[")) {
+		return nil
+	}
+	if p.html != nil && p.html.linkDepth > 0 {
 		return nil
 	}
 	p.pending = true
@@ -201,7 +205,8 @@ func parseBodySyntax(body string, limits Limits) (result bodySyntax) {
 		return bodySyntax{problems: []bodyProblem{{code: "limit.body_bytes", message: "Decoded body exceeds the original UTF-8 byte budget.", incomplete: true}}}
 	}
 	source := newMarkdownView(body)
-	modelParser := &bodyInlineParser{source: source}
+	html := &bodyHTMLContext{source: source.view}
+	modelParser := &bodyInlineParser{source: source, html: html}
 	defer func() {
 		if caught := recover(); caught != nil {
 			if limit, ok := caught.(markdownLimit); ok {
@@ -223,8 +228,11 @@ func parseBodySyntax(body string, limits Limits) (result bodySyntax) {
 	}
 	inlines := parser.DefaultInlineParsers()
 	for index, inline := range inlines {
-		if inline.Priority == 200 {
+		switch inline.Priority {
+		case 200:
 			inlines[index].Value = &boundedBracketParser{InlineParser: inline.Value.(parser.InlineParser), limit: limits.MarkdownNesting, onClose: modelParser.finishBlock}
+		case 400:
+			inlines[index].Value = &bodyHTMLParser{InlineParser: inline.Value.(parser.InlineParser), context: html}
 		}
 	}
 	inlines = append(inlines, util.Prioritized(modelParser, 150))
