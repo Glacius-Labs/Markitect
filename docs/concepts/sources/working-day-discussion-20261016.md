@@ -271,3 +271,9 @@ Recorder's note: The assistant proposed [checking consequential premises](../ref
 > Wie verhindern wir, dass Manager bei jeder Unsicherheit immer mehr Kontext nachladen oder Rückfragen stellen, statt innerhalb ihres Mandats selbstständig weiterzuarbeiten?
 
 Recorder's note: The assistant proposed [authorized action as the default](../reflections/working-day-demonstration-20261016.md#prefer-authorized-action-over-exhaustive-certainty), distinguishing routine implementation freedom from missing consequential facts and reserved business authority. Context expansion needs a concrete decision-relevant purpose and stays within existing budgets/progress rules; it does not receive another approval workflow or universal read quota. Review checks both unsupported assumptions and unnecessary escalation, without rewarding silence or minimizing question counts at the expense of necessary clarification.
+
+## Review questions without hindsight
+
+> Wie beurteilt der Reviewer konkret, ob eine Rückfrage notwendig war oder der Manager selbst hätte entscheiden sollen, ohne dabei nur im Nachhinein klüger zu sein oder berechtigte Vorsicht zu bestrafen?
+
+Recorder's note: The assistant proposed [judging escalation on its contemporaneous basis](../reflections/working-day-demonstration-20261016.md#assess-questions-using-the-information-available-at-the-time): actual context, authority, known consequences and reasonably accessible alternatives. A finding of avoidability must cite a concrete then-available path; later answers do not supply earlier authority. The proposal distinguishes required decisions, reasonable clarification, avoidable/misrouted questions and insufficient historical evidence, separates question necessity from notification timing, and treats ordinary over-escalation as process feedback rather than automatic delivery failure or a new approval gate.
