@@ -92,3 +92,7 @@ Recorder's note: These are verbatim owner messages from the design discussion in
 The owner supplied an [assessment](concept-assessment-20261016.txt) and [proposed refinements](concept-refinements-20261016.txt) from a separate session. Their findings are advisory source material; their treatment is recorded in the [review resolution](../review-resolution-20261016.md).
 
 > Ich habe eine separate Session unser neues Konzept gegen den aktuellen Stand prüfen lassen. Hier ist seine Antwort. Wir sollten entsprechend anpassen und Dinge lösen die wir evtl übersehen haben. Dann wenn das Konzept steht, sage mir was du vorschlägst was wir als nächstes tun
+
+## Start with complete and simple library rules
+
+> Ja, lass uns mit dem Bibliotheksbeispiel anfangen und zunächst die fachlichen Regeln vollständig beschreiben. Halten wir das System bewusst einfach. Anschließend leiten wir daraus das kanonische Modell M1 ab.

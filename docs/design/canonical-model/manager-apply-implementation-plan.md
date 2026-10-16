@@ -46,7 +46,7 @@ Before coding the replacement, make a keep/rewrite/delete map at responsibility 
 
 ## Library scenario and independent expectations
 
-First model the library in readable prose, then encode all selected statements with ordinary v1 Kinds, Properties and concrete Definitions. Include catalog, members, lending and lending/reminders, explicit cross-Package relationships, returns, a loan limit and simple overdue reminders. Review the model for meaning and internal consistency before using it to generate implementation.
+First model the library in readable prose, then encode all selected statements with ordinary v1 Kinds, Properties and concrete Definitions. The [small library draft](library-example/README.md) starts with its [business rules](library-example/business-rules.md); M1 and executable expectations remain subsequent P00 work. Include catalog, members, lending and lending/reminders, explicit cross-Package relationships, returns, a loan limit and simple overdue reminders. Review the model for meaning and internal consistency before using it to generate implementation.
 
 Keep the first domain example small: a local callable service or CLI with no UI, deployment or production database. Select the precise fixture interface in P00, rather than freeze an existing product example's design. A small Go service is a possible implementation choice. Explicit assessment dates avoid reliance on the machine clock. The first scenario processes domain operations sequentially; concurrent borrowing correctness is a separate future case.
 
