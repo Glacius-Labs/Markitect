@@ -136,7 +136,7 @@ Recorder's note: The assistant assessed the committed concept plus two uncommitt
 
 > Halte diese Einschätzung und die konkreten Verbesserungsvorschläge bitte auch in unseren Docs fest, damit der Architect sie bei der Konsolidierung berücksichtigen kann.
 
-The [dated consistency review](../reflections/concept-consistency-review-20261016.md) records the assessment basis, recommendations, tradeoffs and expected consolidation results. The recommendations are review input, not automatically accepted design changes.
+Recorder's note: The [dated consistency review](https://github.com/Glacius-Labs/Markitect/blob/3ebe3c6e6d283b998020350334e24a7303b089b7/docs/concepts/reflections/concept-consistency-review-20261016.md), later folded into the Apply contracts, records the assessment basis, recommendations, tradeoffs and expected consolidation results. The recommendations are review input, not automatically accepted design changes.
 
 ## Scope the first usable version
 
@@ -148,7 +148,7 @@ Recorder's note: The assistant recommended a small usable organization preservin
 
 > Halte diese Abgrenzung der ersten Version bitte auch in unseren Docs fest, inklusive der unverzichtbaren Fähigkeiten, bewusst verschobenen Erweiterungen und der beiden Nachweise für technischen Kern und nutzbaren Arbeitsalltag.
 
-The [first usable version reflection](../reflections/first-usable-version-20261016.md) records the recommended scope, initial manual model-edit boundary and separate demonstrations.
+Recorder's note: The [first usable version](../reflections/desired-working-day-20261016.md#the-first-usable-version) records the recommended scope, initial manual model-edit boundary and separate demonstrations.
 
 ## Make the working-day demonstration concrete
 
@@ -253,3 +253,83 @@ Recorder's note: The assistant proposed [conservative exposure-based dispatch ga
 > Wie erfassen wir zuverlässig, auf welchen Lieferungen und zusätzlichen Informationen eine Arbeit tatsächlich basiert, ohne jede Dateioperation überwachen oder einen komplizierten Abhängigkeitsgraphen pflegen zu müssen?
 
 Recorder's note: The assistant proposed [recording supplied input boundaries](../reflections/working-day-demonstration-20261016.md#record-supplied-inputs-rather-than-every-file-read) through existing step, workspace, delivery, context and tool-reply references, retaining resumed-session provenance and deriving consumer relations from execution records. The proposal distinguishes conservative exposure from mental causal reliance and requires honest limits for broad or unobserved access. It does not add a manually maintained graph, eliminate actual output/ownership checks or claim that scoped instructions alone enforce isolation.
+
+## Shape Manager input packages
+
+> Wie schneiden wir diese Eingabepakete konkret zu, damit ein Manager genug Kontext für gute Entscheidungen hat, ohne durch zu breite Snapshots unnötig von allen anderen Lieferungen abhängig zu werden?
+
+Recorder's note: The assistant proposed [four input parts](../reflections/working-day-demonstration-20261016.md#shape-useful-input-packages-without-unnecessary-artifact-exposure): complete own responsibility, direct neighbor contracts, necessary realization/build inputs and compact orientation. The proposal distinguishes the Host's aggregate base from actual role exposure, canonical neighbor knowledge from consuming delivered implementation, and a shorter prompt from real access isolation. It preserves required reviews/builds, delivery provenance and conservative defect gating without requiring separately buildable Packages, new contract-only deliveries or semantic context ranking.
+
+## Notice missing decision context
+
+> Wie erkennt ein Manager konkret, dass ihm entscheidender Kontext fehlt, statt auf Basis seines begrenzten Eingabepakets eine plausible, aber falsche Entscheidung zu treffen?
+
+Recorder's note: The assistant proposed [checking consequential premises](../reflections/working-day-demonstration-20261016.md#detect-consequential-context-gaps-during-ordinary-work) during normal task interpretation: identify the decision's basis, the foreign fact it relies on and the smallest observation that distinguishes a relevant alternative. Structural omissions, unknown implementation facts, contradictory evidence and missing business authority have different responses. The proposal preserves ordinary implementation freedom, uses existing task/finding records and review, and explicitly acknowledges unknown unknowns and shared reasoning errors.
+
+## Avoid endless context loading and questions
+
+> Wie verhindern wir, dass Manager bei jeder Unsicherheit immer mehr Kontext nachladen oder Rückfragen stellen, statt innerhalb ihres Mandats selbstständig weiterzuarbeiten?
+
+Recorder's note: The assistant proposed [authorized action as the default](../reflections/working-day-demonstration-20261016.md#prefer-authorized-action-over-exhaustive-certainty), distinguishing routine implementation freedom from missing consequential facts and reserved business authority. Context expansion needs a concrete decision-relevant purpose and stays within existing budgets/progress rules; it does not receive another approval workflow or universal read quota. Review checks both unsupported assumptions and unnecessary escalation, without rewarding silence or minimizing question counts at the expense of necessary clarification.
+
+## Review questions without hindsight
+
+> Wie beurteilt der Reviewer konkret, ob eine Rückfrage notwendig war oder der Manager selbst hätte entscheiden sollen, ohne dabei nur im Nachhinein klüger zu sein oder berechtigte Vorsicht zu bestrafen?
+
+Recorder's note: The assistant proposed [judging escalation on its contemporaneous basis](../reflections/working-day-demonstration-20261016.md#assess-questions-using-the-information-available-at-the-time): actual context, authority, known consequences and reasonably accessible alternatives. A finding of avoidability must cite a concrete then-available path; later answers do not supply earlier authority. The proposal distinguishes required decisions, reasonable clarification, avoidable/misrouted questions and insufficient historical evidence, separates question necessity from notification timing, and treats ordinary over-escalation as process feedback rather than automatic delivery failure or a new approval gate.
+
+## Improve context and mandates from question assessments
+
+> Wie würden wir aus solchen Bewertungen konkrete Verbesserungen an Kontextpaketen und Mandaten ableiten, ohne aus einzelnen vermeidbaren Rückfragen gleich neue verbindliche Regeln zu machen?
+
+Recorder's note: The assistant proposed [small, evidence-bound improvements](../reflections/working-day-demonstration-20261016.md#improve-context-and-mandates-without-turning-feedback-into-policy) that distinguish preparation defects, presentation problems, unclear rendering of existing authority and genuinely missing decisions. Observation, diagnosis, experience and binding authority remain separate. Existing review checks the exact change and a nearby case where clarification remains necessary; fewer questions alone are not success. Mandate clarification preserves permission boundaries, substantive changes use the owning source and existing authority, and neither repeated feedback nor a useful experience hint automatically becomes policy. No additional learning service or control layer is required.
+
+## Evaluate context and mandate improvements
+
+> Wie erkennen wir, ob solche Änderungen an Kontextpaketen und Mandaten tatsächlich helfen, ohne dass weniger Rückfragen nur bedeuten, dass die Manager häufiger ungeprüfte Annahmen treffen?
+
+Recorder's note: The assistant proposed [evaluating consequential decisions, including silent ones](../reflections/working-day-demonstration-20261016.md#evaluate-better-decisions-including-decisions-made-without-questions), through existing independent review of requirements, candidate behavior, actual context and authority. Bounded comparisons preserve legitimate escalation, targeted fact retrieval and delegated autonomy; they distinguish justified outcomes from lucky guesses and missing evidence. Reports retain scope, failed attempts, uncertainty and later corrections without rewarding lower question counts, introducing a combined score, or claiming broad reliability from a small sample.
+
+## Select consequential silent decisions
+
+> Wie wählt der Reviewer konkret die wesentlichen stillschweigenden Entscheidungen aus, ohne jede Implementierungsentscheidung prüfen zu müssen oder dieselben blinden Flecken wie der Manager zu haben?
+
+Recorder's note: The assistant proposed [selecting through obligations, actual changes and evidence gaps](../reflections/working-day-demonstration-20261016.md#select-consequential-silent-decisions-from-obligations-and-observable-effects), starting from authoritative intent before the implementer's explanation. Selection reuses the existing consequential-error and distinguishing-evidence questions, includes omissions and relevant unchanged paths, and leaves equivalent local implementation choices delegated. Concrete behavioral challenges reduce shared blind spots without guaranteeing their elimination or adding another control layer. Existing mandatory checks, budget handling and aggregate review remain applicable.
+
+## Provide sufficient reviewer obligation context
+
+> Wie stellen wir konkret sicher, dass der Reviewer die betroffenen Pflichten vollständig genug kennt, ohne ihm wieder das gesamte Modell und die ganze Codebasis mitgeben zu müssen?
+
+Recorder's note: The assistant proposed [a reproducible responsibility-based obligation view](../reflections/working-day-demonstration-20261016.md#give-reviewers-a-reproducible-obligation-context-with-explicit-limits), independently prepared from canonical sources and known relations rather than selected by the implementer. The existing recipe includes complete own obligations, applicable shared rules, incoming/outgoing contracts, mandate and current findings; candidate code exposure and targeted expansion remain separate. Host checks establish required content delivery and version consistency, not semantic completeness or comprehension. Local and integration review retain distinct scopes, and missing model relations remain an explicit limit rather than a reason to create another rule catalogue.
+
+## Detect missing or incorrect responsibility relationships
+
+> Wie erkennen wir fehlende oder falsch modellierte Beziehungen zwischen Verantwortungen, ohne dafür regelmäßig das gesamte Modell prüfen zu müssen oder die Manager immer mehr Kontext sammeln zu lassen?
+
+Recorder's note: The assistant proposed [investigating concrete boundary discrepancies](../reflections/working-day-demonstration-20261016.md#detect-relationship-gaps-from-concrete-boundary-discrepancies) found in ordinary changes, source reads, dependencies and composed behavior, rather than relying solely on traversal of declared links. Bounded investigation distinguishes context/routing defects, incorrect implementation, missing representation of authorized intent and genuinely new decisions. Existing parent coordination, findings, model authority and verification suffice; no automatic link inference, separate relationship ledger or continuous project-wide audit is proposed. Dormant unknown relationships remain an explicit limit.
+
+## Derive integration checks from desired workflows
+
+> Wie leiten wir solche bereichsübergreifenden Integrationsprüfungen konkret aus den gewünschten Abläufen ab, ohne damit eine zweite Spezifikation zu pflegen oder dieselben Lücken wie im Modell zu übernehmen?
+
+Recorder's note: The assistant proposed [deriving public sequences from authoritative outcomes before mapping responsibilities](../reflections/working-day-demonstration-20261016.md#derive-integration-cases-from-intended-outcomes-before-mapping-responsibilities). Checks remain delegated realizations with source references and fixed model bindings; no separate workflow language or owner-maintained expectation catalogue is needed. The library return/reborrow/repeated-return example observes actual consumer behavior and explicit existing rules. Missing relationships may be exposed despite the declared graph; genuinely absent business intent requires authorized canonical clarification, not an invented test requirement. Existing review, targeted counterchecks and frozen-experiment distinctions remain applicable.
+
+## Select workflows for integration checks
+
+> Wie wählen wir konkret aus, welche gewünschten Abläufe solche Integrationsprüfungen brauchen, ohne jede mögliche Kombination zu testen oder wichtige bereichsübergreifende Fälle zu übersehen?
+
+Recorder's note: The assistant proposed [selecting evidence for distinct composed obligations](../reflections/working-day-demonstration-20261016.md#select-integration-cases-by-distinct-composed-obligations), reusing the existing consequential-failure and distinguishing-evidence rule. Start with real user outcomes, actual changes and relevant findings, reuse adequate current cases, and add only named missing distinctions. The examples distinguish state/identity, suspension, capacity and reminders without requiring their full cross-product or replacing the working-day scenarios. Known gaps stay visible under budget pressure; selection remains bounded and fallible, with no new scenario authority, mandatory scoring process or automatic selective execution.
+
+## Record integration coverage without another obligation catalogue
+
+> Wie halten wir konkret fest, welche bereichsübergreifenden Pflichten durch welche Integrationsprüfungen abgedeckt sind, damit bei Änderungen keine Lücken entstehen, ohne einen zweiten Pflichtenkatalog zu pflegen?
+>
+> Ausserdem pushe jedes mal nach remote
+
+Recorder's note: The assistant proposed [deriving coverage from source annotations on existing checks and current review evidence](../reflections/working-day-demonstration-20261016.md#derive-integration-coverage-from-check-references-and-current-review-evidence). Canonical sources remain authoritative; case/assertion references describe evidence scope, and execution receipts and reviews establish current support. The obligation side also comes from scoped model-first assessment so absent tests remain visible. Semantic changes, removed checks and broken references require reassessment without inheriting old approval. No second editable requirements catalogue or automatic semantic coverage claim is introduced. The owner also instructed that subsequent documentation changes be pushed to the remote after committing.
+
+## Select checks for semantic reassessment
+
+> Wie erkennen wir bei einer Modelländerung konkret, welche bestehenden Prüfungen fachlich neu bewertet werden müssen, ohne jede Prüfung erneut zu analysieren oder uns nur auf ihre Quellenverweise zu verlassen?
+
+Recorder's note: The assistant proposed [selecting reassessment through changed effects and actual usage](../reflections/working-day-demonstration-20261016.md#select-semantic-check-reassessment-from-changed-effects-and-actual-use), combining source provenance, behavioral consumers and implementation/test-helper dependencies. Review examines expectations, setup validity and discriminating assertions, including unannotated cases and unchanged identities. The library limit change illustrates invalid shared setup despite unchanged return/reminder semantics. Family-level analysis bounds work, unresolved coupling widens scope, and semantic reassessment remains distinct from mandatory execution and current approval. No complete impact oracle or second coverage catalogue is claimed.

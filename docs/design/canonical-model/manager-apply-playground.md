@@ -1,6 +1,6 @@
 # Playground contract for two real library Applies
 
-Date: 16 October 2026. Proposed P00/P02 contract in the [Apply implementation plan](manager-apply-implementation-plan.md), following the [configuration](manager-apply-configuration.md), [journal](manager-apply-journal.md) and [rebuild plan](manager-apply-rebuild-plan.md). This record specifies the experiment to implement. No new runner, evaluator, Agent execution or successful Apply is established by this document.
+This contract owns the external experiment for gates P02 and P10 of the [acceptance gates](manager-apply-implementation-plan.md): frozen inputs, the actual product invocation, immutable capture of A1 and A2, independent evaluation and the report.
 
 ## Three responsibilities
 
@@ -10,7 +10,7 @@ Date: 16 October 2026. Proposed P00/P02 contract in the [Apply implementation pl
 | Generated library | Implement the [public callable contract](library-example/interface-contract.md), automated tests and concise usage documentation in its owned realization tree. |
 | External Playground | Prepare frozen inputs, invoke the actual product, capture fixed outputs and history, build/run the library and apply the [independent expectations](library-example/evaluation-contract.md). |
 
-The Playground never schedules Managers, writes their prompts/reports, performs their review loop or supplies a replacement Apply. It supplies one initial outcome instruction to the ordinary root through the product. It cannot silently edit generated code, repair the registry or classify a failed run as successful. Keep the later [working-day demonstrations](../../concepts/reflections/first-usable-version-20261016.md) separate: the primary library case does not need artificial owner questions, crash injection or budget exhaustion.
+The Playground never schedules Managers, writes their prompts/reports, performs their review loop or supplies a replacement Apply. It supplies one initial outcome instruction to the ordinary root through the product. It cannot silently edit generated code, repair the registry or classify a failed run as successful. The later [working-day scenarios](../../concepts/reflections/working-day-demonstration-20261016.md) stay separate: the primary library case needs no artificial owner questions, crash injection or budget exhaustion.
 
 ## Frozen experiment inputs
 
@@ -22,7 +22,7 @@ Before any real session, create a manifest with exact file hashes and literal co
 | Model | Complete [M1](library-example/README.md), dependency sources and lock; deterministic M2 patch and its expected compiled digest. Production compilation validates both before dispatch. |
 | Realization constraint | Public JSON Lines contract, Go entrypoint/build/test boundary and shared-constraint delivery to the root/affected Managers. |
 | Execution | Effective project/host profiles, provider executable/schema capability identity, literal model/effort, custom instructions, check definitions and declared environment/tool inputs, all as required by the configuration contract. Secrets are supplied separately, never copied into reports. |
-| Authority and budgets | Explicit authorization for this two-run assignment, mandatory review/integration policy, finite assignment/run/session/output limits and protected completion capacity. Values are reviewed and frozen before launch; examples in design documents are not authorization. |
+| Authority and budgets | Explicit authorization for both Applies, mandatory review and integration policy, finite caps and completion reserve per Apply, and output limits. Values are reviewed and frozen before launch; examples in design documents are not authorization. |
 | Assessment | Evaluator source, independent M1/M2 expectation sets, case data/seed, oracle self-checks and external request/build/output limits. |
 | Environment | Linux reference environment/image identity, exact Go/Git/Python and provider versions, dependency/cache provenance and enforced mounts/process permissions. A Windows diagnostic run is separate evidence. |
 | Bootstrap | Exact initial repository bytes/commit, ignore/classification inputs, public contract and approved root instruction. No domain implementation, prewritten complete tests or hidden registry entries. |
@@ -68,11 +68,11 @@ Agent/provider processes receive only the inputs and candidate workspaces their 
 3. **Freeze A1.** Require a confirmed Applied outcome and exact publication read-back of artifacts plus registry. Capture an immutable source snapshot and a consistent product-supported history export. Bind model/config/source/candidate/registry identities. Do not copy a live SQLite file without a consistent export/backup. Establish that all sessions are terminal before external assessment.
 4. **Assess A1.** Build from the frozen realization copy, run its generated tests, execute all independent M1 cases and the dedicated M2 discrimination witness, then inspect code, usage docs, registry and communication evidence. Store raw results and an A1 review record. If required checks fail or are unassessed, stop the principal sequence; do not apply M2 to conceal the failure.
 5. **Change intent only.** Against the actual A1 repository, edit only `spec.maxOpenLoans` from five to three in `lending/loan-policy`. Do not change code, generated tests/docs, registry, profiles, instructions or the public contract. Verify their byte identity, preserve the explicit model patch and record the resulting source snapshot/M2 digest. An experiment-owned checkpoint commit may record the unchanged A1 realization plus that model patch; its exact mechanics are frozen beforehand.
-6. **Apply R2.** Invoke the same product build/profile against this source. Bind the next run to the same authorized assignment and its consumed allowance, with fresh run/task/review identities. A completed R1 remains Applied in history. Markitect may inspect/reuse/rewrite A1 artifacts under the ordinary reconciliation rules; the runner does not choose the files or supply a replacement implementation.
+6. **Apply R2.** Invoke the same product build/profile against this source as a new Apply, with fresh assignment, run, task and review identities. R1 remains Applied in history. Markitect may inspect/reuse/rewrite A1 artifacts under the ordinary reconciliation rules; the runner does not choose the files or supply a replacement implementation.
 7. **Freeze and assess A2.** Require confirmed publication and capture as for A1. Run generated tests and all independent M2 cases, plus the dedicated M1 discrimination witness. Review the actual A1-to-A2 diff and current source/registry against M2. Execute unchanged families against both artifacts; investigate collateral changes. A large rewrite is reviewable evidence, not automatically an error or automatically good reconciliation.
 8. **Compare.** Produce the final bound report, with separate behavioral, source-review, product-execution and human-acceptance results. Recheck protected inputs/hashes, preserve every failed attempt and ensure no live Agent remains. Retain A1 and A2 and their build recipes so assessments can be repeated without launching Agents.
 
-The same assignment must have sufficient remaining authorized allowance for R2. Do not reset budgets, allocate a new assignment to hide consumption or reuse old review approvals. A budget failure is an incomplete experiment with recorded evidence. Owner questions and authorized model edits follow the product's journal contract; the runner pauses for real owner interaction instead of inventing answers. That interaction is not required to occur in this unambiguous baseline case.
+Each Apply has its own frozen caps, and the report shows the consumption of both. No review approval carries over from R1 to R2. A budget failure is an incomplete experiment with recorded evidence. Owner questions and authorized model edits follow the product's journal contract; the runner pauses for real owner interaction instead of inventing answers. That interaction is not required to occur in this unambiguous baseline case.
 
 ## Independent assessment boundary
 
@@ -99,10 +99,6 @@ Use separate failure categories: `preparation/environment`, `apply/execution`, `
 
 The runner performs no automatic repair/retry to improve a reported outcome. A further Apply against unchanged M1, an oracle correction or a fresh authorized run is recorded explicitly with its own identities and prior failure. It does not replace the original attempt or silently restore the two-successful-Apply claim.
 
-## Delivery gate and next implementation step
+## Delivery gate
 
-P00's model and interface/expectation design can now be reviewed together. P02's executable gate remains future work: implement preparation/capture, transport driver and oracle cases, then run a clearly labeled scripted dry demonstration. It must prove hashes, exact M2 patch, immutable A1/A2 bookkeeping, wrong-result detection and failure preservation. Synthetic outputs are marked as such and do not count as actual Agent communication or Apply.
-
-Before the real demonstration, review the consolidated [execution rules](manager-apply-execution.md) resolving the [consistency findings](../../concepts/reflections/concept-consistency-review-20261016.md), implement complete v1 and the rebuilt product cuts, and freeze an actually supported provider capability profile. The [rebuild plan](manager-apply-rebuild-plan.md#dependency-ordered-implementation-cuts) owns those cuts. The design does not waive prerequisites or authorize provider spending.
-
-Return to [M1](library-example/README.md), the [Apply plan](manager-apply-implementation-plan.md) or the [canonical-model overview](README.md).
+The oracle and its self-checks exist before the product. The runner's preparation, capture, transport driver and oracle cases are then proven by a clearly labeled scripted dry run: hashes, the exact M2 patch, immutable A1 and A2 bookkeeping, wrong-result detection and failure preservation. Synthetic outputs never count as Agent communication or Apply. The real demonstration additionally needs complete v1, the rebuilt product and a frozen, actually supported provider profile ([rebuild plan](manager-apply-rebuild-plan.md#bind-the-executable-before-real-work)).

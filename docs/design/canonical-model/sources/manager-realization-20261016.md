@@ -2,7 +2,7 @@
 
 Date: 16 October 2026.
 
-Recorder's note: These are verbatim owner messages from the design discussion in the Markitect chat. Their order is preserved. They include brainstorming, clarifications, requests to record the design, and the later explicit choice of strict links with an optional Optimizer. They do not approve every alternative. The [north star](../manager-realization-north-star.md) is the English synthesis, including assistant proposals kept as conceptual work or open questions. The simple-context message corrects the earlier emphasis on optimizing context selection.
+Recorder's note: These are verbatim owner messages from the design discussion in the Markitect chat. Their order is preserved. They include brainstorming, clarifications, requests to record the design, and the later explicit choice of strict links with an optional Optimizer. They do not approve every alternative. The [Apply concept](../manager-apply-concept.md) is the English synthesis of the selected design; the [north star](../manager-realization-north-star.md) keeps the variants that were not selected. The simple-context message corrects the earlier emphasis on optimizing context selection.
 
 ## Management and a customizable strategy
 
@@ -89,7 +89,7 @@ Recorder's note: These are verbatim owner messages from the design discussion in
 
 ## Incorporate the supplied concept review
 
-The owner supplied an [assessment](concept-assessment-20261016.txt) and [proposed refinements](concept-refinements-20261016.txt) from a separate session. Their findings are advisory source material; their treatment is recorded in the [review resolution](../review-resolution-20261016.md).
+Recorder's note: The owner supplied an [assessment](concept-assessment-20261016.txt) and [proposed refinements](concept-refinements-20261016.txt) from a separate session. Their findings are advisory source material. Their five refinements (boundary questions, grounded Definition dispositions, distinct review purposes, an ordinary starter vocabulary with a context preview, and an observable coordination account) are part of the [Apply concept](../manager-apply-concept.md); the proposed temporary compatibility bridge was not adopted. The copies keep the supplied text, with line endings subject to Git's normal text rules; the SHA-256 digests of the original attachment bytes are `6e3701ae31d3673b9abf9e21c49d2495379518dfb958ff88204315c4b5592c65` (assessment) and `1ffd77cec4f78d71d44739ac57c1c860230526f834fcc683ef186ff89d217ed6` (refinements).
 
 > Ich habe eine separate Session unser neues Konzept gegen den aktuellen Stand prüfen lassen. Hier ist seine Antwort. Wir sollten entsprechend anpassen und Dinge lösen die wir evtl übersehen haben. Dann wenn das Konzept steht, sage mir was du vorschlägst was wir als nächstes tun
 

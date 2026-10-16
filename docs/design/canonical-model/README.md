@@ -1,40 +1,47 @@
-# Canonical model: completed v1 design baseline
+# Canonical model and Apply design
 
-Status: v1 language design completed and confirmed by the owner on 16 October 2026.
+This folder holds the completed canonical language v1 and the design of the Manager organization that realizes a model through Apply.
 
-The [normative language specification v1](minimal-language/language-contract.md) is the sole owner of the completed canonical form. There are no open language decisions within its selected scope. Production implementation in Go and a broader conformance corpus remain separate work; bounded design probes do not establish full product support.
+## Language v1
 
-The linked histories preserve the derivation and superseded choices. Project vocabulary and the unselected procedure proposals remain outside the completed language baseline.
+Status: completed and confirmed by the owner on 16 October 2026. The [normative language specification v1](minimal-language/language-contract.md) is the sole owner of the canonical form. There are no open language decisions within its scope. The Go production compiler and a broader conformance corpus are implementation work.
 
 | Document | Role |
 | --- | --- |
-| [Language specification v1](minimal-language/language-contract.md) | Completed normative v1 design baseline: syntax, semantics, Core, models, locks and canonical bytes. |
+| [Language specification v1](minimal-language/language-contract.md) | Normative baseline: syntax, semantics, Core, models, locks and canonical bytes. |
 | [Diagnostic contract](minimal-language/diagnostic-contract.md) | Separate tool profile for exact coordinates; independent of model validity and canonical bytes. |
-| [Language history](minimal-language/language-history.md) and [earlier Core explorations](minimal-language/README.md) | Historical choices, superseded variants and evidence of their recorded scope. |
+| [Language history](minimal-language/language-history.md) and [earlier Core explorations](minimal-language/README.md) | Historical choices, superseded variants and their evidence. |
 | [Procedure proposals](minimal-language/procedure-proposals.md) | Unselected, nonnormative context, impact and semantic-index procedures. |
-| [Manager realization north star](manager-realization-north-star.md) | Working direction and open variants for one Manager per Package, configurable teams, artifact registration and simple context delivery. |
-| [Manager organization and reliable Apply](manager-apply-concept.md) | Developed proposal resolving those variants into organization, context, ownership, integration, verification and reporting, with a library walkthrough. |
-| [Implementation plan for reliable Apply](manager-apply-implementation-plan.md) | Two real library Applies around a model change, Go and Playground design, Agent communication and a clean rebuild without compatibility obligations. |
-| [Supplied Apply review and resolution](review-resolution-20261016.md) | Preserved assessment sources, five refinements, superseded migration advice and the next concrete design work. |
-| [Small library model M1](library-example/README.md) | Canonical YAML from the confirmed business rules, a small ordinary vocabulary, explicit Package links and bounded structural evidence. |
-| [Go architecture outline for reliable Apply](manager-apply-go-architecture.md) | Ports and Adapters responsibilities, idiomatic Go package proposal and treatment of current source. |
-| [Library delegation walkthrough](manager-apply-library-flow.md) | Root, lending, fresh review, rework and integration traced against M1, with concrete refusal cases; design rather than an executed run. |
-| [Apply port contracts](manager-apply-port-contracts.md) | Proposed Go interfaces, value ownership and behavioral contracts for acquisition, sessions, workspaces, checks, journal and publication. |
-| [Agent adapter selection and rebuild plan](manager-apply-rebuild-plan.md) | First stdio App Server adapter, session lifetime, source replacement/deletion map and coherent implementation cuts, including self-model and gates. |
-| [Configuration assignments and mandates](manager-apply-configuration.md) | Proposed execution YAML, exact Package overrides, hard ceilings, explicit profiles and source-bound mandates. |
-| [Budgets run states and completion](manager-apply-execution.md) | Consolidated first-Apply proposal: one assignment ledger, protected completion capacity, execution time/deadline separation and one run lifecycle/status mapping. |
-| [Journal and continuation contracts](manager-apply-journal.md) | Proposed SQLite assignment streams, repository control lifetime, questions/answers, retained work, budget continuity and publication guards. |
-| [Library Playground contract](manager-apply-playground.md) | Proposed JSON Lines interface, independent M1/M2 expectations, frozen two-Apply sequence, source/history capture and honest evidence boundaries. |
-| [Executable Exchange example](minimal-language/exchange-example/README.md) | Current input files, bounded probe and reports; includes the explicitly rejected Command/command vocabulary collision. |
-| [Consolidated design history](consolidation.md) and [fixed Main comparison](current-main-comparison.md) | Origin of the design and product boundaries. |
+| [Executable Exchange example](minimal-language/exchange-example/README.md) | Input files, bounded probe and reports, including the rejected Command/command vocabulary collision. |
 
-The language baseline fixes the uniform definition form, nine Core definitions, values and lists, Unicode and naming rules, identities and imports, folder-based Packages, models and dependencies, locks and canonical bytes. It does not prescribe a universal project vocabulary.
+The baseline fixes the uniform definition form, nine Core definitions, values and lists, Unicode and naming rules, identities and imports, folder-based Packages, models and dependencies, locks and canonical bytes. It prescribes no universal project vocabulary.
 
-The term documents below retain their status as working vocabulary definitions developed from the earlier product discussion. The [working goal and provisional terms](consolidation.md#arbeitsziel-und-wackelkandidaten) record those vocabulary questions and distinguish intended project descriptions from Apply's agent coordination and resulting artifacts. Their presence here does not make them built-in Core Kinds or open decisions in the completed language design.
+## Apply design
 
-The [language discussion and bounded Connector probes](minimal-language/README.md) preserve the earlier alternatives and their evidence. They are the derivation of the current contract. The terms below are possible vocabulary contents; they do not predetermine a universal built-in Kind catalogue. Special requirements and roles fields remain outside the selected Core.
+Status: the design basis for the rebuild commissioned in [DEC-024](../../concepts/register.md#dec-024-first-reliable-apply-rebuild-and-coordinated-start). The owner decisions are [DEC-025 to DEC-032](../../concepts/register.md#dec-025-package-managers-organize-realization); every other choice in these documents, such as sequential writing, three review rounds or the completion reserve, is a design decision under DEC-024 that review may improve. These documents describe target behavior, not implemented behavior; implementation pull requests establish the evidence, and producer packages refine exact Go names and schemas in review. A change of intent goes to the document that owns the subject, not into a new parallel note.
 
-## Terms
+Read in this order:
+
+| Document | Owns |
+| --- | --- |
+| [Apply concept](manager-apply-concept.md) | Organization, context, delegation, deliveries, review purposes, artifact ownership, Apply lifecycle and reporting. |
+| [Library delegation walkthrough](manager-apply-library-flow.md) | The order of exchanges in one Apply of M1 and the first refusal cases. |
+| [Go architecture](manager-apply-go-architecture.md) | Target packages, responsibilities and dependency direction. |
+| [Port contracts](manager-apply-port-contracts.md) | Interfaces between the core and its adapters and the values they exchange. |
+| [Configuration](manager-apply-configuration.md) | Execution inputs, override resolution, host profiles, identities, mandates and questions. |
+| [Execution](manager-apply-execution.md) | Budget and admission, blocking findings, dependencies, review rounds, run states and outcomes. |
+| [Journal](manager-apply-journal.md) | Durable records and storage, the controller lock, answers and successor runs. |
+| [Rebuild plan](manager-apply-rebuild-plan.md) | The first Agent adapter and what happens to the current source. |
+| [Playground](manager-apply-playground.md) | The external two-Apply experiment and its independent assessment. |
+| [Acceptance gates](manager-apply-implementation-plan.md) | What each delivery step must prove. |
+| [Library M1](library-example/README.md) | The example model, its [interface](library-example/interface-contract.md) and [independent expectations](library-example/evaluation-contract.md). |
+| [North star](manager-realization-north-star.md) | Ideas and variants that were not selected, later operations and open questions. |
+
+The [delivery plan](../../implementation-plan.md) owns packages, order and dispatch. The [owner discussion](sources/manager-realization-20261016.md) and the supplied [concept assessment](sources/concept-assessment-20261016.txt) and [refinements](sources/concept-refinements-20261016.txt) are the sources; the refinements are part of the concept. The [working-day reflections](../../concepts/reflections/README.md) describe the intended use and later acceptance scenarios.
+
+## Working vocabulary
+
+The term documents below are working vocabulary definitions from the earlier product discussion. The [working goal and provisional terms](consolidation.md#arbeitsziel-und-wackelkandidaten) record their open questions. They are possible vocabulary contents, not built-in Core Kinds or open decisions of the language.
 
 - [Project](project.md) — the project's name, purpose and associated definitions.
 - [Actor](actor.md) — a role through which a person or another system interacts with the system or participates in project work.
@@ -51,12 +58,11 @@ The [language discussion and bounded Connector probes](minimal-language/README.m
 - [Procedure](procedure.md) — how to carry out an activity, including its steps and expected result.
 - [Condition](condition.md) — a statement that can be true or false.
 
-The library proposal also introduces **System**, **Module** and **Mandate**; see its [architecture terms](../product-model-refinement/canonical-model-proposal.md#40-architekturbegriffe-und-ihre-abgrenzung) and [Mandate direction](../product-model-refinement/canonical-model-proposal.md#66-gewählter-dateiname-und-bevorzugte-kind-richtung). Together, the two lines name seventeen terms whose need and boundaries are being reviewed.
+The library proposal also introduces **System**, **Module** and **Mandate**; see its [architecture terms](../product-model-refinement/canonical-model-proposal.md#40-architekturbegriffe-und-ihre-abgrenzung) and [Mandate direction](../product-model-refinement/canonical-model-proposal.md#66-gewählter-dateiname-und-bevorzugte-kind-richtung).
 
-## Relationships and example
-
-- [Relationships](relationships.md) — how the terms connect, with simple examples and explanations of their different purposes.
-- [Tasks example](task-management-example.md) — a small task-management project described using all fourteen terms and their relationships.
-- [Connector architecture and request/reply example](connector-example.md) — local source-informed pressure test of System/Container/Component, topic selection, response matching and remaining vocabulary gaps; proposed design, not a compiled model or accepted new schema.
+- [Relationships](relationships.md) — how the terms connect, with simple examples.
+- [Tasks example](task-management-example.md) — a small task-management project described with all fourteen terms.
+- [Connector example](connector-example.md) — a source-informed pressure test of System, Container and Component; a proposed design, not a compiled model.
+- [Consolidated design history](consolidation.md) and [fixed Main comparison](current-main-comparison.md) — origin of the design and product boundaries.
 
 Return to the [design map](../README.md).

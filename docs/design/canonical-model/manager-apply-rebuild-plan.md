@@ -1,10 +1,8 @@
 # Agent adapter selection and Apply rebuild plan
 
-Date: 16 October 2026. Proposed implementation direction for P01 of the [Apply plan](manager-apply-implementation-plan.md), following the [Go architecture](manager-apply-go-architecture.md), [library walkthrough](manager-apply-library-flow.md) and [port contracts](manager-apply-port-contracts.md). Architectural correctness and clear responsibilities take priority over reducing implementation work. This selects a first adapter and maps replacement work; it does not implement or validate the new runtime.
+This plan owns the choice of the first Agent adapter, its session mapping and the map of what happens to the current source. The [Go architecture](manager-apply-go-architecture.md) and [port contracts](manager-apply-port-contracts.md) define the target; the [delivery plan](../../implementation-plan.md) owns the order of work. Architectural correctness and clear responsibilities take priority over saving implementation effort.
 
-Source inspected: Main `bc4b49e76f9b9e4b3ec98033a0b8c73d5013b310` and design head `b20603f9472de38e6ff0a1ab081a8ad3253c165a`. Their product source and Go module files agree. Paths below name that source; target paths describe the proposed replacement.
-
-The later [configuration contract](manager-apply-configuration.md) specifies assignment/Manager settings and mandate provenance. The [journal contract](manager-apply-journal.md) selects SQLite assignment streams, question/answer records, carried work and `apply.Control`; it replaces the initial generic file-store direction below.
+Source inspected: Main `bc4b49e76f9b9e4b3ec98033a0b8c73d5013b310`. Paths below name that source; target paths name the replacement.
 
 ## First adapter
 
@@ -26,7 +24,7 @@ The choice rests on the session boundary and Host interaction, rather than the a
 
 One Host session owns one App Server process, connection and provider thread. A process survives several known `Step` calls and can sit idle while its Manager waits. Fresh local reviews, integration reviews and final verification receive fresh sessions and threads. There is no shared process pool or provider-native Manager hierarchy in the first implementation. This spends more process resources in exchange for clear role configuration, lifetime and failure boundaries.
 
-| Host port operation | Proposed adapter mapping |
+| Host port operation | Adapter mapping |
 | --- | --- |
 | `Open` | Start the selected executable, initialize the connection, create a fresh thread and durably bind provider handles to the preallocated Host session ID. |
 | `Step` | Send one turn with the exact compiled input and output contract; route bounded tool calls/events to `SessionIO`; return the observed terminal turn and proposed result. |
@@ -43,7 +41,7 @@ Known Manager sessions may continue only with matching inputs, profile and an ex
 
 ## Bind the executable before real work
 
-Keep a single explicitly supported protocol profile for the first adapter. It binds the literal executable path and bytes, exact version, generated stable/experimental schema identities, selected model/effort, effective configuration and tool schemas. Model selection remains configuration; this design introduces no new default model. R1 and R2 use the same frozen product build and profile.
+Keep a single explicitly supported protocol profile for the first adapter. It binds the literal executable path and bytes, exact version, generated stable/experimental schema identities, selected model/effort, effective configuration and tool schemas. Model selection remains configuration; this design introduces no new default model. Both demonstration Applies use the same frozen product build and profile.
 
 The current source accepts exactly `codex-cli 0.162.0` and embeds schema digests in [its protocol identity](../../../src/internal/runtime/codexappserver/process.go). A read-only `--version` probe of the locally found desktop executable returned `codex-cli 0.162.0-alpha.17.2`. These are different builds. Do not relax the old comparison, infer alpha compatibility or choose whichever executable PATH finds first.
 
@@ -106,26 +104,21 @@ The source replacement also owns these non-Go changes. Omitting them would leave
 | `.github/workflows`, `.markitect/modules`, hooks and command scripts | Remove deleted wrapper/old command gates, update paths and regenerate pins. Add meaningful new compiler, port, ownership and architecture checks. A green gate must exercise the actual replacement rather than silently skip old failures. |
 | Active examples and packaged smoke | Replace old-schema examples with supported v1 fixtures; use the library for the Apply proof. Source packaging must contain the new executable path and required runtime assets. Historical examples need no compatibility implementation. |
 
-## Dependency ordered implementation cuts
+## Deletions by delivery package
 
-| Cut | Work and deletions | Required result |
-| --- | --- | --- |
-| R0 Design and bootstrap | Review the existing interface/expectations/execution contracts and freeze module paths, producer ownership and source-gate cutover responsibilities. Start the independent oracle beside the deterministic foundation. Actual provider binding is required before its real smoke, not before pure compiler work. | Each contract has one owner. No second organization engine, reference library implementation or live-upgrade claim is introduced. |
-| R1 New deterministic foundation | Implement complete v1, fixed snapshot values, explicit acquisition and pure organization/realization preparation. Extract only selected independent primitives. | Complete compiler conformance plus M1/M2 success, explicit-link failures, stable context and ownership/census counterexamples. Bounded Python probes are not substituted for production conformance. |
-| R2 Coherent product cutover | Switch bootstrap, CLI preparation, self-model, generated views and source gates together. Delete the old compiler/project-model family, coupled runtime/application paths, wrappers and obsolete commands/tests. Independent tooling moves with its real consumers. | One active model/command path, no old DTO imports or compatibility frontend, current architecture/coverage/packaging checks. Apply is explicitly unavailable until implemented; preparation is not presented as successful Apply. |
-| R3 Journal and real sessions | Implement SQLite append/control, the execution reducer/assignment ledger and Codex sessions against the exact supported profile. Include completion protection, active-time/deadline admission, durable preparation, yield/resume, fresh review and cleanup. | Controlled reservation/settlement, failure, waiting/reconciliation and binding checks, plus a separate bounded real-adapter smoke. Lost replies cause no blind dispatch; successors preserve consumption and Finished outcomes. |
-| R4 One Package delivery | Add claims, registry, immutable candidates, actual checks and work/review/rework for lending. Replace any remaining old workspace/check bridges. | Six-loan counterexample is rejected through grounded assessment; revised exact candidate is reviewed. Model/config/registry bypass, stale review and unsupported no-change claims fail. No checkout publication yet. |
-| R5 Recursive integration | Add ordinary root, local Managers, reminders, common-parent questions and integration review. | Recorded child prompts and returns, finite waiting/rework, no direct descendant bypass, unresolved children/model issues block completion, and broken aggregate behavior fails review. |
-| R6 Aggregate and publication | Add complete verification, guarded matching artifact/registry publication, read-back, partial/unknown recovery and readable journal projections. Run the library scenario through the real product. | Inspect A1 from real M1 Apply; change only the model to M2; Apply to actual A1; inspect A2 with the same frozen build/profile. No manual code fixes or hidden reset. |
+The old product is removed in one coherent cut, so that Main never holds half of the old runtime without its compiler or a replacement that is only partly wired.
 
-R0 refines P00/P01/P02, R1 corresponds to P03, R2 to P04, R3 to P05, R4 to P06, R5 to P07 and R6 to P08 onward. These describe technical cuts and acceptance. The root [delivery plan](../../implementation-plan.md) alone assigns current work/dependencies; the [detailed slices](manager-apply-implementation-plan.md) retain their acceptance criteria.
+| Delivery package | Replaces or deletes |
+| --- | --- |
+| APPLY-MODEL, APPLY-SNAPSHOT, APPLY-ORG, APPLY-REALIZATION | Nothing; the new pure packages grow beside the current source. They take over the rules of `core`, `projectmodel`, `projectbriefing` and `projectcoverage` in new form. Python probes never stand in for production conformance. |
+| APPLY-CUTOVER | Switches bootstrap, CLI preparation, the self-model, generated views and source gates to the new foundation in one change. Deletes the whole old product under `src/`: the old compiler and `projectmodel` family, every `application/project*` package, `mcp`, the old runtime (`projectrun`, `projectexecutor`, `projectworkspace`, `projectconfig`, `projectsetup`, `agentexec`, `codexappserver`, `exchangecli`), the old infrastructure (`source`, `guardedwrite`, `recordstore`), `markitect-exchange-executor`, `codexrunner`, `clauderunner`, and their tests and fixtures. It replaces the old `testkit`, `harness/examples` and `tools/smoke` assumptions, rewrites `tooling/architecture` for the target graph, retires `experiments/mcp-pilot` and the old Playground scripts, and keeps the independent release, licensing and packaging tools. Apply is explicitly unavailable until INTEGRATE. |
+| APPLY-RUN, APPLY-JOURNAL, APPLY-AGENT, APPLY-REPOSITORY | Build `run`, `adapters/journal`, `adapters/codexappserver` with `adapters/process`, and `adapters/gitrepo` with `adapters/checks`. They transplant the mechanisms the source map names, with their failure tests, from the pre-cutover source at a recorded commit. |
+| APPLY-INTEGRATE | Declares the `apply` ports first, then wires `apply`, CLI and MCP to the new services and runs the library cycle. |
 
-Prepare the coherent cutover on the feature branch and integrate when the new foundation and replacement gates are real. There is no requirement for every intermediate feature commit to support the old product. Main should not be left with deleted checks and an unimplemented replacement. This preserves a usable integration point without making backward compatibility an architectural constraint.
+After CUTOVER, Main builds, has one active model and command path, no old DTO imports and current architecture, coverage and packaging checks. The cut is prepared on its feature branch and integrated only when the new foundation and its replacement gates are real and passing.
 
 ## Deletion and completion criteria
 
 A removal is complete when production/test imports, bootstrap registrations, command/tool schemas, configuration fields, canonical owners, generated views, active documentation, fixtures and CI pins have all been accounted for. Use reference searches and the package inventory to identify residual consumers. Retain a historical observation's original identity; never reclassify an old native smoke as proof of the new adapter.
 
-The result is one compiler, Host organization protocol, assignment journal, initial session adapter and guarded publication route. Configuration, execution, journal and Playground have distinct contract owners. Foundation and oracle can start now. Full runner bookkeeping follows the new CLI; real provider binding/smoke precede real Agent acceptance. No source deletion is performed by this design record.
-
-Return to the [Go architecture](manager-apply-go-architecture.md), [port contracts](manager-apply-port-contracts.md), [Apply plan](manager-apply-implementation-plan.md) or [canonical-model overview](README.md).
+The result is one compiler, one Host organization protocol, one assignment journal, one session adapter and one guarded publication route.
