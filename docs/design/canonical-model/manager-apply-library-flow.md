@@ -6,6 +6,8 @@ Date: 16 October 2026. Proposed walkthrough derived from [M1](library-example/RE
 
 The Host has captured and compiled M1, bound configuration and repository inputs, and derived the ordinary root plus the library, members, catalog, lending and lending/reminders Managers. The root receives the user's Apply instruction. All tasks inherit artifact-only reconciliation and a read-only canonical model.
 
+This run belongs to an owner assignment with an effective grant and source-bound Manager mandates. The [configuration](manager-apply-configuration.md) and [journal](manager-apply-journal.md) specify questions, successor runs and retained work. A successor receives a new binding and current review without resetting the assignment's consumed allowance.
+
 For this focused trace, B0 denotes the current unpublished candidate, which can already contain locally reviewed member/catalog work from earlier tasks in the same run. This does not imply that shared library obligations or the whole project have passed. All other required Package deliveries remain part of the root's completion criteria. C1, C2, I1 and I2 below are illustrative candidate labels, not recorded content digests.
 
 ## Root to lending and back

@@ -4,6 +4,8 @@ Date: 16 October 2026. Proposed P01 contracts derived from the [library delegati
 
 The [adapter selection and rebuild plan](manager-apply-rebuild-plan.md) now selects direct stdio App Server sessions and maps the old source to the replacement. These contracts remain provider-neutral.
 
+The [configuration and mandate contract](manager-apply-configuration.md) and [journal/continuation contract](manager-apply-journal.md) extend this proposal with continuing assignments, source-bound mandates, versioned questions/answers and one SQLite-backed assignment stream. They also make the repository controller lifetime explicit through `apply.Control`.
+
 ## The exchanges before the interfaces
 
 The root asks lending: “Reconcile lending and its reminders against M1, including code, tests and documentation. Coordinate the membership and copy-availability contracts.” It does not prescribe descendant file edits. Host validates the route and supplies complete responsibility, fixed inputs and the candidate base. Delegation returns a task ID immediately; the root yields and resumes later with a result.
@@ -22,13 +24,15 @@ After the reminders child has delivered, Host composes the lending subtree and r
 | Input binding | `run`: the fixed model closure and lock, Package inventory, configuration/custom instructions, ignore rules, initial registry, repository census and artifact source, plus selected executor/check profiles. `apply` constructs it from captured inputs. A model digest alone is insufficient. |
 | Candidate reference | `realization`: immutable artifact tree and matching registry revision, with base provenance. It is not a workspace path. |
 | Task and attempt | `run`: stable task ID, parent, Manager, operation, complete responsibility, outcome, model basis, input binding, base candidate and finite budget. Rework increments the attempt; it does not invent a new delegated responsibility. |
+| Assignment and successor | `run`: a stable owner goal/grant, shared consumed allowance and linked fixed-basis runs. Successors have new task/session identities with explicit provenance; retained work does not inherit approval. |
+| Effective mandate | `organization` renders source-bound facts; `run` binds the view to the current task/input. Reviewer assesses that authority basis under its own read-only grant. |
 | Actor, session and step | `run`: actor role/scope, logical session ID and unique dispatch step ID. Host assigns IDs before effects. Provider handles remain adapter data, associated with those IDs. A Manager can have several sessions. |
 | Review subject | `run`: input binding, exact candidate including registry, task/scope and purpose: local, integration or final verification. |
 | Accepted delivery | `run`: Host-issued ID, exact subject, complete delivered scope, Definition assessments, child delivery IDs, review/check evidence and report. Agents cannot create accepted deliveries. |
 
 Operational journal and scratch paths are excluded from source staleness only by an explicit fixed storage policy. Adding or deleting an ordinary file must affect the captured census. Do not silently exclude the whole repository or rely only on a Git commit while ignoring relevant working bytes.
 
-The following names describe the central records. Field encodings and persistence codecs are a later P01 decision; identifiers are typed values, not arbitrary maps.
+The following names describe the central records. The [journal contract](manager-apply-journal.md) proposes versioned record codecs and assignment-scoped persistence. Identifiers are typed values, not arbitrary maps.
 
 ```go
 // Package run. Referenced domain values belong to their defining packages.
@@ -41,7 +45,9 @@ type DelegateProposal struct {
 
 type TaskSpec struct {
 	ID             TaskID
+	Assignment     AssignmentID
 	Parent         TaskID
+	Predecessor    *TaskRef
 	Manager        organization.ManagerID
 	Attempt        uint32
 	Operation      Operation
@@ -49,6 +55,7 @@ type TaskSpec struct {
 	Outcome        string
 	ModelBasis     []model.DefinitionRef
 	Inputs         InputBinding
+	Mandate        organization.MandateRef
 	Base           realization.CandidateRef
 	Budget         Budget
 }
@@ -58,7 +65,7 @@ type WorkProposal struct {
 	Assessments []realization.DefinitionAssessment
 	Registry    []RegistryProposalID
 	Children    []DeliveryID
-	Questions   []QuestionID
+	Questions   []QuestionRef
 }
 
 type ReviewProposal struct {
@@ -75,6 +82,8 @@ Work proposals are explanations, not trusted diffs. Definition assessments cover
 
 A finding carries its affected scope, model grounds, candidate evidence and requested outcome. Review verdicts distinguish pass, changes requested, needs decision and failed assessment. Host validates structure, subject and evidence references; it cannot deterministically prove the reviewer's semantic judgment. A required unresolved model question blocks completion and cannot be repaired by artifact-only Apply.
 
+`QuestionRef` binds identity and version. The application records actual owner answers against that exact proposal and basis; the Agent cannot self-assert owner authority. A context-only answer may continue the same run. Changed intent requires an authorized model operation and a new bound run, with shared allowance and selected retained work. See [questions and model changes](manager-apply-journal.md#questions-answers-and-model-changes).
+
 ## Application boundary and source acquisition
 
 CLI and MCP call a concrete `apply.Service.Apply(ctx, request)` and receive a result plus an ordinary error. No additional service interface is needed for those callers. Apply depends on this consumer-owned acquisition port:
@@ -89,6 +98,8 @@ type Source interface {
 `CaptureRequest` selects the repository, canonical root, explicitly supplied dependencies and operation configuration. `CapturedInputs` supplies fixed bytes/trees, the repository census, configuration, registry and ignore inputs, and an opaque publication guard. It includes the identities needed to reproduce those inputs; it does not guess missing dependencies from prose or fetch unspecified vocabulary.
 
 Apply compiles those bytes with `model`, derives organization/context and validates initial file accounting. Unknown files need an explicit classification before they may be changed. Model, configuration and independent scenario expectations stay outside Agent write authority. Invalid required inputs stop work before dispatch. Store the bound inputs durably before launching a session.
+
+`apply.Control` acquires the repository controller/store binding and supplies the run journal; its exact interface and lease lifetime are specified by the [journal contract](manager-apply-journal.md#physical-store-and-commit-contract). Apply revalidates captured inputs under that lease. CLI and MCP do not acquire execution authority or coordinate successor publication themselves.
 
 ## Session and communication port
 
@@ -176,9 +187,9 @@ type Journal interface {
 }
 ```
 
-Payloads are immutable content-addressed bytes with media/encoding information; reads verify their identity. An append batch supplies run ID, unique batch ID, expected journal revision and typed events. Each event binds applicable task, actor, session, step, attempt, candidate and causal predecessor. Referenced payloads must be durable before append acknowledgement.
+Payloads are immutable content-addressed bytes whose typed references retain media/encoding information; reads verify their identity. An append batch supplies assignment ID, unique batch ID, expected stream revision and typed events. Each event binds applicable run, task, actor, session, step, attempt, candidate and causal predecessor. Referenced payloads must be durable before append acknowledgement. Assignment scope permits questions, inherited budget and successor creation between runs without rewriting earlier inputs.
 
-Append is one logical commit under a single coordinated Host writer. A repeated batch ID with identical bytes returns the original receipt; different bytes are rejected. A stale expected revision is a conflict and stops dispatch. An uncertain append is reconciled by reading the known batch before an external effect. Read returns an ordered committed prefix with a stable revision and pagination. A database or event bus is not required; the physical storage/lease implementation is an adapter decision.
+Append is one logical commit under a single coordinated Host writer. A repeated batch ID with identical bytes returns the original receipt; different bytes are rejected. A stale expected revision is a conflict and stops dispatch. An uncertain append is reconciled by reading the known batch before an external effect. Read returns an ordered committed prefix with a stable revision and pagination. The [SQLite journal adapter](manager-apply-journal.md) now specifies physical storage and the explicit controller lease; no event bus is required.
 
 Record task creation, exact input construction, dispatch, observed tools and extra reads, questions/replies, candidates/deltas, assessments, review findings, rework, composition, checks and publication. Reports are compact projections referencing those records. Required journaling failure prevents further work; it does not erase a previously possible external effect. Append/dispatch are not a distributed transaction.
 
@@ -195,6 +206,8 @@ type Publisher interface {
 
 `PublicationRequest` contains a Host publication ID, original acquisition guard/input binding, the exact verified candidate with matching registry, final evidence references and the artifact-only write target. Preflight checks readiness and source state; its permit is bound to that request and does not grant indefinite permission.
 
+It also carries the live repository control check, a run-scoped Host authorization check and the run/epoch binding. A live controller alone does not authorize an obsolete run. Serialized history records the binding value, not a restorable live capability. Supersession invalidates a predecessor's unused permit. Retained private work remains distinct from the actual captured repository source used by the publication guard.
+
 Publish revalidates the original source guard at the actual write boundary, including relevant additions/deletions and input changes. It writes only the verified artifact/registry change and reads back the result. Its receipt distinguishes applied, verified no change, stale, partial, unknown and failed. It includes actual completed paths, observed tree/registry identities and read-back/observation limits, including when an error is also returned. Callers must preserve such receipts rather than discard them on non-nil error.
 
 Multi-file publication is not promised atomic. Partial writes remain visible and recorded; Apply does not announce success or rerun blindly. Inspect the known publication ID to establish recovery state. A subsequent operation must capture the actual state. No-change publication also requires current source/evidence and read-back. Even a complete Applied result is machine evidence, not human acceptance.
@@ -209,7 +222,7 @@ The root is ordinary in this protocol. `apply` adds final aggregate verification
 
 The [walkthrough's refusal cases](manager-apply-library-flow.md#concrete-refusal-cases) are the first controlled-adapter contract checks. Add journal durability-before-dispatch, unknown dispatch/publication recovery, registry/tree mismatch, protected-input drift, exact duplicate handling and immutable review subject cases. Then prove session startup, Host calls, yielding, resumed input, fresh review and termination with the selected real executor. Neither those tests nor this design substitutes for M1-to-A1 and M2-to-A2 with real Agents.
 
-The [rebuild plan](manager-apply-rebuild-plan.md) supplies the first executor choice, required tool/observation capabilities and responsibility-level source removal map. Before runtime implementation, finish configuration and record codecs and the Playground evaluation interface/protected expectations. Bind and test the exact selected executable/schema profile before real Agent work. These contracts do not mark all of P01 complete.
+The [rebuild plan](manager-apply-rebuild-plan.md) supplies the first executor choice and source removal map; the [configuration](manager-apply-configuration.md) and [journal](manager-apply-journal.md) supply the proposed settings, records and lifecycle. P02's evaluation interface/protected expectations and the exact executable/schema capability gate remain before real Agent work. Implementations still need complete codec validation and focused conformance evidence; these proposals do not mark runtime readiness.
 
 Interfaces are owned by their consumers; adapters return concrete implementations. This follows [Go's interface guidance](https://go.dev/wiki/CodeReviewComments#interfaces). Effectful calls take `context.Context` first and propagate cancellation while reporting what actually happened ([Go context](https://go.dev/blog/context)). Pure model, organization and realization functions need no port solely for testing.
 

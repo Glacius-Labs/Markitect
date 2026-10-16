@@ -114,3 +114,13 @@ The owner supplied an [assessment](concept-assessment-20261016.txt) and [propose
 ## Choose the first real adapter and plan a clean rebuild
 
 > Ja, lass uns den ersten echten Agent-Adapter auswählen und daraus den konkreten Umbau- und Löschplan ableiten. Was können wir vom aktuellen Stand übernehmen und was sollten wir ersetzen? Aufwandsminimierung ist hierbei keine Priorität. Priorität ist dass wir es richtig, sauber und architektonisch elegant umsetzen
+
+## Incorporate the parallel product discussion
+
+> Prüfe auch nochmal die docs. Ich habe in einer anderen Session ein paar weitere Dinge ausgearbeitet, die wir im Hinterkopf behalten sollten
+
+The [working-day reflection](../../../concepts/reflections/desired-working-day-20261016.md) and its original owner messages supply the continuing-assignment, question and mandate context.
+
+## Specify configuration and journal
+
+> Ja, lass uns Konfiguration und Journal konkretisieren und dabei die offenen Punkte zu Auftrag, Apply-Läufen, Rückfragen und Mandaten einarbeiten. Bleiben wir beim Bibliotheksbeispiel.

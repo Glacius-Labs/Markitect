@@ -4,6 +4,8 @@ Date: 16 October 2026. Proposed responsibilities and dependency direction for P0
 
 The [adapter selection and rebuild plan](manager-apply-rebuild-plan.md) selects direct Go-to-Codex-App-Server sessions for the proposed first implementation and owns the concrete replacement/deletion map. Correct boundaries take priority over minimizing implementation effort.
 
+The [configuration/mandate contract](manager-apply-configuration.md) and [journal/continuation contract](manager-apply-journal.md) now specify assignment continuity, source-bound mandates, owner questions and the SQLite-backed journal with explicit repository control lifetime.
+
 ## Organize by responsibility
 
 Use Ports and Adapters with ordinary Go packages. Keep deterministic model and realization rules independent of external systems. Coordinate the workflow through small capabilities implemented by concrete adapters. Packages describe what they do; an interface is not required for every internal function or struct.
@@ -11,9 +13,9 @@ Use Ports and Adapters with ordinary Go packages. Keep deterministic model and r
 | Package | Responsibility |
 | --- | --- |
 | `model` | Parse explicitly supplied bytes, compile complete v1, resolve contracts and links, and calculate canonical content and diagnostics. No repository reads, provider calls or prose interpretation. |
-| `organization` | Derive the ordinary root and local Package Managers, resolve project defaults and Manager overrides, and render inspectable context from supplied model/task facts. No Agent startup or workflow execution. |
+| `organization` | Derive the ordinary root and local Package Managers, resolve project defaults and Manager overrides, and render inspectable context/mandates from supplied facts. No Agent startup, run-type imports or workflow execution. |
 | `realization` | Registry, artifact ownership, path-claim rules, candidate differences, Definition assessments and file accounting over supplied values. A registered file is not proof of correct behavior. |
-| `run` | Bounded tasks, delegation, messages, role sessions, review rounds, upward integration, evidence bindings and run history. It enforces the workflow and validates Agent requests; Managers choose their delegated outcomes and task prompts. |
+| `run` | Assignments and fixed-basis runs, bounded tasks, questions/answers, delegation, role sessions, review, integration and history. It validates transitions, grants and Agent requests; Managers choose their delegated outcomes and task prompts. |
 | `apply` | The artifact reconciliation use case: bind inputs, prepare the organization, invoke `run`, require aggregate verification, then request guarded publication and read-back. The model remains read-only. |
 | `snapshot` | Small fixed file-tree values and comparisons shared by the above responsibilities and adapters. No Git commands or storage policy. |
 
@@ -38,7 +40,7 @@ internal/
     cli/
     mcp/
     gitrepo/
-    filestore/
+    journal/
     codexappserver/
     checks/
     process/
@@ -64,11 +66,14 @@ The main external capabilities are:
 | Source acquisition | `apply` | Capture model bytes and explicitly supplied dependencies, configuration, registry, repository census and the source binding for the run. |
 | Agent sessions | `run` | Start a configured role, supply tasks/context, observe messages and tool requests, resume and cancel, and establish known or uncertain termination. |
 | Candidate workspaces | `run` | Materialize an owned candidate, observe actual changes, and close or retain it for investigation. |
-| Run journal | `run` and the Apply lifecycle | Durably append bound events and store exact payloads under one run identity and writer discipline. |
+| Assignment journal | `run` and the Apply lifecycle | Durably append assignment/run events and exact payloads under one writer discipline, retaining successor and budget history. |
+| Repository control | `apply` | Acquire the bound repository/store controller, supply the scoped journal, check its live lease and release it. Required for successor/publication serialization. |
 | Check execution | `run` and final verification | Execute explicit project checks on the exact candidate and return observed results. |
 | Guarded publication | `apply` | Recheck the captured source, publish the verified artifact/registry candidate together, and report actual writes and read-back. |
 
 The [port contracts](manager-apply-port-contracts.md) propose small consumer-owned interfaces, request/result content, journal sequencing and capability lifetimes for these responsibilities. The same concrete adapter may satisfy several narrow interfaces. Ordinary calls between pure packages use concrete functions and values; no universal Repository interface is needed.
+
+The journal now uses assignment streams with run-scoped events, allowing questions and budget-preserving successors between runs. `adapters/journal` implements both `run.Journal` and `apply.Control` using SQLite plus repository control metadata. It owns SQL and lease mechanics, while `run` owns event meaning. The journal contract replaces the initial unselected physical-store proposal.
 
 The Host owns the task/message protocol, effective authority and history. An Agent adapter translates provider transport into those records; it cannot accept a child delivery, grant a path or mark a review passed by itself. Manager, reviewer and verifier use the same session boundary with distinct roles and fresh review inputs. Provider wire objects and provider session IDs do not become canonical model types.
 
@@ -89,7 +94,7 @@ The table below gives the initial treatment. The later [concrete rebuild map](ma
 | [Compiler identities and envelopes](../../../src/internal/core/types.go), fixed [project Schema](../../../src/internal/core/projectmodel/projectmodel.go) and its old project views | Replace with complete v1 and Package-derived organization plus the separate registry. Remove fixed Manager/Statement/Artifact authoring contracts and their obsolete consumers. Reuse individual algorithms only after checking them against v1; preserve no old DTO shape for compatibility. |
 | [Snapshot values](../../../src/internal/core/snapshot/snapshot.go) and [source acquisition](../../../src/internal/application/projectwork/project.go) | Reuse useful deterministic comparisons and hardened acquisition mechanics. Replace the old project loader, manifest assumptions and `projectvalue.Project` result with explicit new inputs. Acquisition already has a shared source session; do not recreate separate unbound reads. |
 | [Guarded writing](../../../src/internal/infrastructure/guardedwrite/guardedwrite.go) | Retain or directly reuse source/identity checks and honest partial-write behavior behind the publication adapter. Add the accepted registry binding and final read-back required by the concept. Tests must establish these properties in the new path. |
-| [Record storage](../../../src/internal/infrastructure/recordstore/store.go) and [runtime store](../../../src/internal/runtime/projectrun/store.go) | Reuse confined file access, publication and lease mechanics where suitable. Replace old run codecs, closed historical record layouts and domain lifecycle coupling when they do not fit. The journal must support the actual prompt/message/candidate history; keeping historical formats readable is not a target. Original evidence retains its identity. |
+| [Record storage](../../../src/internal/infrastructure/recordstore/store.go) and [runtime store](../../../src/internal/runtime/projectrun/store.go) | Replace with the [SQLite assignment journal](manager-apply-journal.md). Retain suitable private-directory/identity/lease mechanisms and failure cases, without claiming the SQL driver inherits the old file-store guarantees. Remove old codecs/layout and lifecycle coupling; original evidence retains its identity. |
 | [Runtime Host and Invoker](../../../src/internal/runtime/projectrun/types.go), coordinator, review, verify and Apply | Reuse method rules and meaningful counterexamples: bounded rework, fresh review, candidate binding, stale refusal and recovery. Restructure into `run`, `apply` and realization responsibilities. Remove the broad old Host callbacks and Plan/Report coupling rather than wrapping the whole old runtime. The current [Reconcile guidance](../../../src/internal/runtime/projectrun/operation.go) already expresses full responsibility against unchanged intent. |
 | [Workspace boundary](../../../src/internal/runtime/projectworkspace/contracts.go) and Git workspace implementation | Reuse materialization, delta harvesting and lifecycle mechanics where they fit. Bind new ownership, path reservations and artifact-only scope to the new registry. A workspace is not an OS sandbox. |
 | [Native Agent adapter](../../../src/internal/runtime/codexappserver/session.go) and process execution | Rebuild a direct stdio App Server adapter for the new session contracts, using selected process/observation/recovery mechanisms. Remove the old invocation/prompt/report coupling, process proposal wrappers and helper bridge. The [adapter plan](manager-apply-rebuild-plan.md) specifies lifecycle, protocol-profile gates and source treatment. |
@@ -109,6 +114,6 @@ The Playground stays outside the product packages. It prepares scenarios, invoke
 
 ## Next design step
 
-Review the selected adapter and rebuild map, then finish the configuration/journal encodings and small Playground evaluation contract. Bind an exact executable/schema profile and demonstrate its required capabilities before real work. P01/P02 precede substantial runtime implementation; the completed language and M1 do not yet establish runtime readiness.
+Review the configuration/journal contracts and selected adapter, then finish the small Playground evaluation contract. Bind an exact executable/schema profile and demonstrate its required capabilities before real work. The proposed Go interfaces and storage/configuration design do not yet establish runtime readiness.
 
 Return to the [Apply concept](manager-apply-concept.md), [implementation plan](manager-apply-implementation-plan.md) or [canonical-model overview](README.md).

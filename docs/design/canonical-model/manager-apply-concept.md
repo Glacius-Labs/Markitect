@@ -6,6 +6,8 @@ The owner's later [implementation clarification](sources/manager-realization-202
 
 The [supplied independent review and its resolution](review-resolution-20261016.md) refine authoring, missing connections, Definition assessments, review responsibilities and observable coordination effort. These refinements use the existing roles and records; they do not add language constructs or a second organization.
 
+The later [configuration/mandate contract](manager-apply-configuration.md) and [journal/continuation contract](manager-apply-journal.md) develop continuing assignments, fixed-basis successor runs, versioned owner questions and source-bound decision authority. They preserve work and consumed allowance across runs while requiring current assessment. Model edits remain outside artifact Apply; mandate views do not create a second authored policy.
+
 The product is an organization that realizes an explicitly described project world. The canonical model supplies that world's intended meaning and constraints. A deterministic Host organizes work, supplies context, validates deliveries and records the process. AI Managers make bounded judgments, delegate work and integrate results. The initial operation is Apply: reconcile the existing artifacts with the current model, including when the model has not changed.
 
 ## Recommended choices

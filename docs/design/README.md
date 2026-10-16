@@ -16,6 +16,8 @@ The [Project World package](project-world/README.md) has its own reading order a
 - [Go architecture outline for reliable Apply](canonical-model/manager-apply-go-architecture.md) — initial Ports and Adapters responsibilities, package direction and source reuse/replacement proposal.
 - [Library delegation and Apply ports](canonical-model/manager-apply-library-flow.md) — root-to-lending walkthrough, fresh review and integration, with linked concrete Go port proposals and lifecycle contracts.
 - [Agent adapter selection and rebuild plan](canonical-model/manager-apply-rebuild-plan.md) — first stdio App Server adapter, clear session lifetimes and concrete source/contract deletions, with architecture quality taking priority over minimizing effort.
+- [Apply configuration and mandates](canonical-model/manager-apply-configuration.md) — execution settings, explicit profiles, inherited limits and source-bound Manager authority.
+- [Apply journal and continuation](canonical-model/manager-apply-journal.md) — SQLite-backed assignment history, versioned questions/answers, carried work and controlled successor/publication lifetimes.
 - [Earlier model-design consolidation](canonical-model/consolidation.md) — chronology from 15 October 2026 and remaining product questions outside the completed language scope.
 - [Grundmodell und Bibliotheksentwurf](product-model-refinement/README.md) — typisierte Prosa, dokumentierte Designentscheidungen und Sprachkandidaten.
 - [Standalone Tasks project documentation](task-management/README.md) — fachliche Gegenprobe als eigenständige Projektspezifikation; Anwendung noch nicht implementiert.
