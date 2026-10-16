@@ -9,10 +9,13 @@ import (
 	"testing"
 
 	"github.com/Glacius-Labs/Markitect/src/internal/core/snapshot"
+	"github.com/Glacius-Labs/Markitect/src/internal/testkit"
 )
 
 func TestTransitionalFoundationsMatchLiveAndFixedSourceArchives(t *testing.T) {
 	root := transitionalSourceFixture(t)
+	writeLayoutFile(t, root, "internal/model/vendor/ignored.go", "package ignored\n")
+	writeLayoutFile(t, root, "internal/model/vendor.go", "package model\n")
 	live, err := collect(root)
 	if err != nil {
 		t.Fatal(err)
@@ -47,10 +50,14 @@ func TestTransitionalFoundationsMatchLiveAndFixedSourceArchives(t *testing.T) {
 		"internal/organization/organization.go",
 		"internal/realization/realization.go",
 		"internal/model/testdata/fixture.go",
+		"internal/model/vendor.go",
 	} {
 		if _, ok := contents[name]; !ok {
 			t.Errorf("archive omitted %s", name)
 		}
+	}
+	if _, ok := contents["internal/model/vendor/ignored.go"]; ok {
+		t.Fatal("source under excluded vendor directory was included")
 	}
 	if _, ok := contents["src/internal/model/model.go"]; ok {
 		t.Fatal("root foundation was rewritten under the legacy source prefix")
@@ -69,6 +76,79 @@ func TestTransitionalFoundationsMatchLiveAndFixedSourceArchives(t *testing.T) {
 	after := sha256.Sum256(changedArchive)
 	if before == after {
 		t.Fatal("root foundation source change did not change the source archive digest")
+	}
+}
+
+func TestTransitionalRawPathsAreValidatedBeforeSnapshotFiltering(t *testing.T) {
+	for _, name := range []string{"cmd/README.md", "internal/adapters/README.md"} {
+		t.Run(strings.ReplaceAll(name, "/", "_"), func(t *testing.T) {
+			root := transitionalSourceFixture(t)
+			writeLayoutFile(t, root, name, "not Go source\n")
+			if _, err := collect(root); err == nil {
+				t.Fatal("live packaging accepted an unsupported raw path")
+			}
+			if _, err := snapshotModuleFiles(fixedSourceSnapshot(t, root)); err == nil {
+				t.Fatal("fixed packaging accepted an unsupported raw path")
+			}
+		})
+	}
+}
+
+func TestTransitionalSnapshotRejectsNonGoFoundationSymlinks(t *testing.T) {
+	source := fixedSourceSnapshot(t, transitionalSourceFixture(t))
+	name := "internal/model/notes.txt"
+	source.Files[name] = []byte("target\n")
+	source.Modes[name] = "120000"
+	if _, err := snapshotModuleFiles(source); err == nil || !strings.Contains(err.Error(), "not regular") {
+		t.Fatalf("non-Go foundation symlink was not rejected: %v", err)
+	}
+
+	// The excluded name is an entry, not a directory component. It must also
+	// remain subject to the regular-file check instead of bypassing it.
+	name = "internal/model/vendor"
+	source.Files[name] = []byte("target\n")
+	source.Modes[name] = "120000"
+	if _, err := snapshotModuleFiles(source); err == nil || !strings.Contains(err.Error(), "not regular") {
+		t.Fatalf("symlink named vendor bypassed validation: %v", err)
+	}
+}
+
+func TestTransitionalNestedModuleSnapshotUsesModuleRelativeLayout(t *testing.T) {
+	root := transitionalSourceFixture(t)
+	live, err := collect(root)
+	if err != nil {
+		t.Fatal(err)
+	}
+	liveArchive, err := makeArchive(live)
+	if err != nil {
+		t.Fatal(err)
+	}
+	inner := fixedSourceSnapshot(t, root)
+	source := &snapshot.Snapshot{Files: map[string][]byte{}, Modes: map[string]string{}}
+	for name, data := range inner.Files {
+		source.Files["tools/markitect/"+name] = data
+		source.Modes["tools/markitect/"+name] = inner.Modes[name]
+	}
+	// Repository-root paths outside tools/markitect are not part of the
+	// embedded module and must not affect its active source layout.
+	source.Files["cmd/README.md"] = []byte("outside module\n")
+	source.Modes["cmd/README.md"] = snapshot.RegularMode
+	source.Files["internal/adapters/README.md"] = []byte("outside module\n")
+	source.Modes["internal/adapters/README.md"] = snapshot.RegularMode
+	files, err := snapshotModuleFiles(source)
+	if err != nil {
+		t.Fatal(err)
+	}
+	selected, err := collectModuleSnapshot(files)
+	if err != nil {
+		t.Fatal(err)
+	}
+	archive, err := makeArchive(selected)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !bytes.Equal(liveArchive, archive) {
+		t.Fatal("nested fixed-source packaging differed from live module packaging")
 	}
 }
 
@@ -98,10 +178,10 @@ func TestTransitionalSourceLayoutRejectsMixedIncompleteAndUnknownTrees(t *testin
 				t.Fatal("live source layout was accepted")
 			}
 			fixedFiles, err := snapshotModuleFiles(fixedSourceSnapshot(t, root))
-			if err != nil {
-				t.Fatal(err)
+			if err == nil {
+				_, err = collectModuleSnapshot(fixedFiles)
 			}
-			if _, err := collectModuleSnapshot(fixedFiles); err == nil {
+			if err == nil {
 				t.Fatal("fixed source layout was accepted")
 			}
 		})
@@ -117,10 +197,10 @@ func TestTransitionalSourceLayoutRequiresBothActiveTrees(t *testing.T) {
 		t.Fatal("live source layout without src/internal was accepted")
 	}
 	fixedFiles, err := snapshotModuleFiles(fixedSourceSnapshot(t, root))
-	if err != nil {
-		t.Fatal(err)
+	if err == nil {
+		_, err = collectModuleSnapshot(fixedFiles)
 	}
-	if _, err := collectModuleSnapshot(fixedFiles); err == nil {
+	if err == nil {
 		t.Fatal("fixed source layout without src/internal was accepted")
 	}
 }
@@ -142,10 +222,10 @@ func TestTransitionalSourceLayoutRequiresEntrypointAndInternalGoFiles(t *testing
 				t.Fatal("live source without the required file was accepted")
 			}
 			fixedFiles, err := snapshotModuleFiles(fixedSourceSnapshot(t, root))
-			if err != nil {
-				t.Fatal(err)
+			if err == nil {
+				_, err = collectModuleSnapshot(fixedFiles)
 			}
-			if _, err := collectModuleSnapshot(fixedFiles); err == nil {
+			if err == nil {
 				t.Fatal("fixed source without the required file was accepted")
 			}
 		})
@@ -153,7 +233,7 @@ func TestTransitionalSourceLayoutRequiresEntrypointAndInternalGoFiles(t *testing
 }
 
 func TestFlatHistoricalSourceLayoutRemainsReadable(t *testing.T) {
-	root := t.TempDir()
+	root := testkit.TempDir(t)
 	for name, content := range map[string]string{
 		"go.mod":                "module " + sourceRepository + "\n\ngo 1.27.1\n",
 		"go.sum":                "example checksum\n",
@@ -196,7 +276,7 @@ func TestFlatHistoricalSourceLayoutRemainsReadable(t *testing.T) {
 
 func transitionalSourceFixture(t *testing.T) string {
 	t.Helper()
-	root := t.TempDir()
+	root := testkit.TempDir(t)
 	for name, body := range map[string]string{
 		"go.mod":                                        "module " + sourceRepository + "\n\ngo 1.27.1\n",
 		"go.sum":                                        "example checksum\n",

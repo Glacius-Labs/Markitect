@@ -22,6 +22,9 @@ func snapshotModuleFiles(snapshot *snapshot.Snapshot) (map[string][]byte, error)
 			return nil, errors.New("fixed source snapshot is missing go.mod")
 		}
 	}
+	if err := validateTransitionalSnapshotInputs(snapshot.Files, snapshot.Modes, prefix); err != nil {
+		return nil, err
+	}
 	module := make(map[string][]byte)
 	for name, data := range snapshot.Files {
 		if !strings.HasPrefix(name, prefix) {
@@ -36,8 +39,7 @@ func snapshotModuleFiles(snapshot *snapshot.Snapshot) (map[string][]byte, error)
 		}
 		include := relative == "go.mod" || relative == "go.sum" || relative == "README.md" || relative == "LICENSE"
 		if sourceTreePath(relative) {
-			ext := strings.ToLower(path.Ext(relative))
-			include = ext == ".go" || embeddedNotices(relative) || relative == "internal/licenses/notices.md" || relative == "src/internal/licenses/notices.md"
+			include = includeSourceTreeFile(relative)
 		}
 		if strings.HasPrefix(relative, "schema/") {
 			ext := strings.ToLower(path.Ext(relative))
@@ -73,7 +75,7 @@ func collectModuleSnapshot(files map[string][]byte) ([]sourceFile, error) {
 		ext := strings.ToLower(path.Ext(name))
 		include := name == "README.md" || name == "LICENSE"
 		if sourceTreePath(name) {
-			include = ext == ".go" || embeddedNotices(name) || name == "internal/licenses/notices.md" || name == "src/internal/licenses/notices.md"
+			include = includeSourceTreeFile(name)
 		}
 		if strings.HasPrefix(name, "schema/") {
 			include = ext == ".json" || ext == ".yaml" || ext == ".yml" || ext == ".md"
@@ -102,6 +104,17 @@ func collectModuleSnapshot(files map[string][]byte) ([]sourceFile, error) {
 
 func sourceTreePath(name string) bool {
 	return strings.HasPrefix(name, "cmd/") || strings.HasPrefix(name, "internal/") || strings.HasPrefix(name, "src/cmd/") || strings.HasPrefix(name, "src/internal/")
+}
+
+// includeSourceTreeFile mirrors live source-tree selection for fixed
+// snapshots. Excluded directories apply only to the four transitional root
+// foundations; the historical src and flat selection rules stay unchanged.
+func includeSourceTreeFile(name string) bool {
+	if isTransitionalFoundationPath(name) && hasExcludedSourceDirectory(name) {
+		return false
+	}
+	ext := strings.ToLower(path.Ext(name))
+	return ext == ".go" || embeddedNotices(name) || name == "internal/licenses/notices.md" || name == "src/internal/licenses/notices.md"
 }
 
 func validateSnapshotModuleLayout(files []sourceFile) error {

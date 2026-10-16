@@ -71,6 +71,79 @@ func validateTransitionalFoundationFiles(names []string) error {
 	return nil
 }
 
+// validateTransitionalSnapshotInputs checks the raw module-relative paths and
+// modes before extension filtering. Only the transitional src layout receives
+// this additional check; historical flat-layout snapshot behavior is unchanged.
+func validateTransitionalSnapshotInputs(files map[string][]byte, modes map[string]string, modulePrefix string) error {
+	presence := sourceLayoutPresence{}
+	var rootInternalFiles []string
+	for name := range files {
+		if !strings.HasPrefix(name, modulePrefix) {
+			continue
+		}
+		relative := strings.TrimPrefix(name, modulePrefix)
+		switch {
+		case strings.HasPrefix(relative, "src/cmd/"):
+			presence.srcCommand = true
+		case strings.HasPrefix(relative, "src/internal/"):
+			presence.srcInternal = true
+		case strings.HasPrefix(relative, "cmd/"):
+			presence.rootCommand = true
+		case strings.HasPrefix(relative, "internal/"):
+			presence.rootInternal = true
+			rootInternalFiles = append(rootInternalFiles, relative)
+		}
+	}
+	if !presence.srcCommand && !presence.srcInternal {
+		return nil
+	}
+	prefix, err := classifySourceLayout(presence)
+	if err != nil {
+		return fmt.Errorf("fixed source snapshot: %w", err)
+	}
+	if prefix != "src/" {
+		return nil
+	}
+	if err := validateTransitionalFoundationFiles(rootInternalFiles); err != nil {
+		return err
+	}
+	var sourcePaths []string
+	for name := range files {
+		if !strings.HasPrefix(name, modulePrefix) {
+			continue
+		}
+		relative := strings.TrimPrefix(name, modulePrefix)
+		if strings.HasPrefix(relative, "src/cmd/") || strings.HasPrefix(relative, "src/internal/") || strings.HasPrefix(relative, "internal/") {
+			sourcePaths = append(sourcePaths, relative)
+		}
+	}
+	ordered := append([]string(nil), sourcePaths...)
+	sort.Strings(ordered)
+	for _, name := range ordered {
+		if hasExcludedSourceDirectory(name) {
+			continue
+		}
+		mode := modes[modulePrefix+name]
+		if mode != "100644" && mode != "100755" {
+			return fmt.Errorf("fixed source snapshot source path %q is not regular", modulePrefix+name)
+		}
+	}
+	return nil
+}
+
+// hasExcludedSourceDirectory checks directory components only. A filename
+// that happens to match an excluded directory name is still a file; an entry
+// whose own name is vendor remains visible so a symlink at that path is refused.
+func hasExcludedSourceDirectory(name string) bool {
+	parts := strings.Split(name, "/")
+	for _, component := range parts[:len(parts)-1] {
+		if excludedDirs[strings.ToLower(component)] {
+			return true
+		}
+	}
+	return false
+}
+
 // validateCollectedSourceLayout requires the same active command and internal
 // Go source files from both live collection and fixed-snapshot selection.
 func validateCollectedSourceLayout(files []sourceFile, expectedPrefix string) error {
