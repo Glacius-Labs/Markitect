@@ -22,7 +22,19 @@ func collect(moduleDir string) ([]sourceFile, error) {
 	if err != nil {
 		return nil, err
 	}
-	for _, tree := range []string{prefix + "cmd", prefix + "internal"} {
+	trees := []string{prefix + "cmd", prefix + "internal"}
+	if prefix == "src/" {
+		for _, tree := range transitionalFoundationRoots() {
+			root := filepath.Join(moduleDir, filepath.FromSlash(tree))
+			if _, err := os.Lstat(root); os.IsNotExist(err) {
+				continue
+			} else if err != nil {
+				return nil, fmt.Errorf("inspect optional source tree %s: %w", tree, err)
+			}
+			trees = append(trees, tree)
+		}
+	}
+	for _, tree := range trees {
 		root := filepath.Join(moduleDir, filepath.FromSlash(tree))
 		if err := requireRealDirectory(root); err != nil {
 			return nil, fmt.Errorf("required source tree %s: %w", tree, err)
@@ -46,6 +58,9 @@ func collect(moduleDir string) ([]sourceFile, error) {
 		}
 	} else if !os.IsNotExist(err) {
 		return nil, fmt.Errorf("inspect optional schema directory: %w", err)
+	}
+	if err := validateCollectedSourceLayout(files, prefix); err != nil {
+		return nil, err
 	}
 	sort.Slice(files, func(i, j int) bool { return files[i].name < files[j].name })
 	if len(files) < 4 {
@@ -81,30 +96,32 @@ func walkSourceTree(moduleDir, start string, files *[]sourceFile) error {
 	})
 }
 
-// sourceLayoutPrefix selects the one supported source tree layout. The flat
-// layout remains readable for previously pinned source packages; new source
-// packages preserve the repository's src/ directory in the archive.
+// sourceLayoutPrefix selects the active source tree. The flat layout remains
+// readable for previously pinned source packages; during the transition, the
+// product engine stays under src/ and only the four pure root foundations may
+// accompany it.
 func sourceLayoutPrefix(moduleDir string) (string, error) {
-	newCommand := pathExists(filepath.Join(moduleDir, "src", "cmd"))
-	newInternal := pathExists(filepath.Join(moduleDir, "src", "internal"))
-	oldCommand := pathExists(filepath.Join(moduleDir, "cmd"))
-	oldInternal := pathExists(filepath.Join(moduleDir, "internal"))
-	if newCommand || newInternal {
-		if !newCommand || !newInternal || oldCommand || oldInternal {
-			return "", fmt.Errorf("Markitect source must use exactly one complete cmd/internal layout")
-		}
-		if err := requireRealDirectory(filepath.Join(moduleDir, "src", "cmd")); err != nil {
-			return "", fmt.Errorf("required source tree src/cmd: %w", err)
-		}
-		if err := requireRealDirectory(filepath.Join(moduleDir, "src", "internal")); err != nil {
-			return "", fmt.Errorf("required source tree src/internal: %w", err)
-		}
-		return "src/", nil
+	presence := sourceLayoutPresence{
+		srcCommand:   pathExists(filepath.Join(moduleDir, "src", "cmd")),
+		srcInternal:  pathExists(filepath.Join(moduleDir, "src", "internal")),
+		rootCommand:  pathExists(filepath.Join(moduleDir, "cmd")),
+		rootInternal: pathExists(filepath.Join(moduleDir, "internal")),
 	}
-	if !oldCommand || !oldInternal {
-		return "", fmt.Errorf("Markitect source is missing a complete cmd/internal layout")
+	prefix, err := classifySourceLayout(presence)
+	if err != nil {
+		return "", err
 	}
-	return "", nil
+	if prefix == "src/" {
+		for _, tree := range []string{"src/cmd", "src/internal"} {
+			if err := requireRealDirectory(filepath.Join(moduleDir, filepath.FromSlash(tree))); err != nil {
+				return "", fmt.Errorf("required source tree %s: %w", tree, err)
+			}
+		}
+		if err := validateTransitionalFoundationDirectories(moduleDir); err != nil {
+			return "", err
+		}
+	}
+	return prefix, nil
 }
 
 func pathExists(name string) bool {

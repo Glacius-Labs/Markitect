@@ -120,7 +120,7 @@ func validateSnapshotModuleLayout(files []sourceFile) error {
 	}
 	internalFound := false
 	for name := range present {
-		if strings.HasPrefix(name, internalPrefix) {
+		if strings.HasPrefix(name, internalPrefix) && strings.EqualFold(path.Ext(name), ".go") {
 			internalFound = true
 			break
 		}
@@ -156,22 +156,30 @@ func validateSnapshotModuleLayout(files []sourceFile) error {
 }
 
 func moduleLayoutFiles(present map[string]bool) (commandEntry, internalPrefix string, err error) {
-	newCommand := present["src/cmd/markitect/main.go"]
-	newInternal := false
-	oldCommand := present["cmd/markitect/main.go"]
-	oldInternal := false
+	presence := sourceLayoutPresence{}
+	var rootInternalFiles []string
 	for name := range present {
-		newInternal = newInternal || strings.HasPrefix(name, "src/internal/")
-		oldInternal = oldInternal || strings.HasPrefix(name, "internal/")
+		switch {
+		case strings.HasPrefix(name, "src/cmd/"):
+			presence.srcCommand = true
+		case strings.HasPrefix(name, "src/internal/"):
+			presence.srcInternal = true
+		case strings.HasPrefix(name, "cmd/"):
+			presence.rootCommand = true
+		case strings.HasPrefix(name, "internal/"):
+			presence.rootInternal = true
+			rootInternalFiles = append(rootInternalFiles, name)
+		}
 	}
-	if newCommand || newInternal {
-		if !newCommand || !newInternal || oldCommand || oldInternal {
-			return "", "", errors.New("fixed source snapshot must contain exactly one complete cmd/internal layout")
+	prefix, err := classifySourceLayout(presence)
+	if err != nil {
+		return "", "", fmt.Errorf("fixed source snapshot: %w", err)
+	}
+	if prefix == "src/" {
+		if err := validateTransitionalFoundationFiles(rootInternalFiles); err != nil {
+			return "", "", err
 		}
 		return "src/cmd/markitect/main.go", "src/internal/", nil
-	}
-	if !oldCommand || !oldInternal {
-		return "", "", errors.New("fixed source snapshot is missing a complete cmd/internal source tree")
 	}
 	return "cmd/markitect/main.go", "internal/", nil
 }
