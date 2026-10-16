@@ -86,11 +86,8 @@ func checkPath(facts PathFacts, owner Owner, path snapshot.Path) PathDecision {
 	if facts.basis == nil {
 		return PathDecision{status: PathIncomplete, findings: []Finding{{Code: "claim.facts_unavailable", Message: "Complete fixed claim facts are required."}}}
 	}
-	if !owner.valid() || path.String() == "" {
-		return refused("claim.invalid_request", owner, path, "An explicit owner and exact file path are required.")
-	}
-	if !owner.root && !facts.basis.owners[owner.packageName] {
-		return refused("claim.unknown_owner", owner, path, "The owner is not a current local Package; any takeover must be explicit Host-supplied ownership facts.")
+	if path.String() == "" {
+		return refused("claim.invalid_request", owner, path, "An exact file path is required.")
 	}
 	state, _ := snapshot.NewPath(".markitect/state")
 	if pathsOverlap(state, path) {
@@ -100,6 +97,12 @@ func checkPath(facts PathFacts, owner Owner, path snapshot.Path) PathDecision {
 		if p.covers(path) {
 			return refused("claim.protected", owner, path, p.why)
 		}
+	}
+	if !owner.valid() {
+		return refused("claim.invalid_request", owner, path, "An explicit owner is required.")
+	}
+	if !owner.root && !facts.basis.owners[owner.packageName] {
+		return refused("claim.unknown_owner", owner, path, "The owner is not a current local Package; any takeover must be explicit Host-supplied ownership facts.")
 	}
 	return PathDecision{status: PathAdmissible}
 }

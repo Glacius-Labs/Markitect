@@ -129,6 +129,12 @@ func TestProtectionWinsOverOwnershipAndNewSelections(t *testing.T) {
 		})
 	}
 	f := facts(t, compiledFacts(), realization.Registry{}, snapshot.Tree{}, []realization.CreationArea{area(t, who, ".")}, file, protected)
+	for _, unknown := range []realization.Owner{{}, owner(t, "foreign")} {
+		decision(t, realization.CheckOwnedPath(f, unknown, path(t, "private/config")), realization.PathRefused, "claim.protected")
+		decision(t, realization.CheckOwnedPath(f, unknown, path(t, ".markitect/state/future")), realization.PathRefused, "claim.protected")
+	}
+	_, denied := realization.ReserveNewPath(f, realization.PathClaims{}, request(t, "foreign-protected", "private/config", owner(t, "foreign")))
+	decision(t, denied, realization.PathRefused, "claim.protected")
 	for _, name := range []string{"private/configuration", "secrets/child", ".markitect/statex"} {
 		_, d := realization.ReserveNewPath(f, realization.PathClaims{}, request(t, name, name, who))
 		decision(t, d, realization.PathAdmissible, "")
