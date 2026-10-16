@@ -9,6 +9,12 @@
 # path. docs/development/code-map.md is generated from this file; regenerate it
 # with: go test ./src/internal/tooling/architecture -run TestCodeMapPage -update
 packages:
+  # --- apply-model --------------------------------------------------------
+  - path: internal/model
+    layer: apply-model
+    purpose: Validates supplied canonical-model bytes and defines typed compiler results and source provenance.
+    doc: docs/design/canonical-model/manager-apply-go-architecture.md#organize-by-responsibility
+
   # --- apply-snapshot -----------------------------------------------------
   - path: internal/snapshot
     layer: apply-snapshot
