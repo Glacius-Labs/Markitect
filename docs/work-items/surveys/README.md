@@ -1,6 +1,6 @@
 # Surveys
 
-These read-only surveys were made on 10 October 2026 against main `02c7e529` to plan the [roadmap](../../implementation-plan.md). They give a new session the facts, the earlier work and the collision zones for its packages, so that it does not have to repeat the analysis.
+These read-only surveys were made on 10 October 2026 against main `02c7e529` to plan the [roadmap](https://github.com/Glacius-Labs/Markitect/blob/bc4b49e76f9b9e4b3ec98033a0b8c73d5013b310/docs/implementation-plan.md). They give a new session the facts, the earlier work and the collision zones for its packages, so that it does not have to repeat the analysis.
 
 They are AI-generated inputs, not decisions. Decisions are in the [concept register](../../concepts/register.md), and later historical package status is preserved in the [backlog](https://github.com/Glacius-Labs/Markitect/blob/bc4b49e76f9b9e4b3ec98033a0b8c73d5013b310/docs/work-items/backlog.yaml). Line numbers and sizes describe main at `02c7e529`; check them against current main before relying on them.
 

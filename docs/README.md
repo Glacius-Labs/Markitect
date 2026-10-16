@@ -24,7 +24,6 @@ Use this map to find the product guide or the document that owns a decision or s
 | Product thesis and human/agent responsibilities | [Vision](vision.md) |
 | Product decisions, promises, assumptions, long-term vision, agreed but unscheduled directions, ideas, and open questions, with their origin | [Concept record](concepts/README.md) |
 | Technical behavior and product boundaries | [Architecture](architecture.md) and the task-specific current guides above |
-| Current rebuild scope and dependencies | [Delivery plan](implementation-plan.md) |
 | Work-package scope, dependencies and reservations | [Delivery plan](implementation-plan.md); actual candidates/checks live in chats and PRs. [Earlier records](work-items/README.md) are historical. |
 | Earlier interrupted sessions and restart records | [Historical session handoff](development/session-handoff.md); its retired queue grants no current assignment |
 | Native A01 result, attempt accounting and acceptance limits | [A01 validation record](validation/a01-native-smoke-20261010.md) |
