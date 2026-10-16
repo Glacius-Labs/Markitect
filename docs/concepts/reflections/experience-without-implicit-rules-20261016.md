@@ -29,6 +29,8 @@ No new learning Agent is required for the first version. Existing Managers, revi
 
 ## Contents and use of an experience note
 
+The follow-up [storage, selection and runtime feedback reflection](experience-selection-and-runtime-feedback-20261016.md) develops note indexing, bounded context delivery and investigations of observations from running systems. It includes a library incident traced through to a reusable lesson.
+
 A note should answer five questions:
 
 - What happened, and what evidence establishes it?
