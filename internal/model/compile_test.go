@@ -36,7 +36,7 @@ func onlyContractStageFailures(result Result) bool {
 	}
 	for _, model := range result.Models {
 		for _, phase := range model.Phases {
-			if phase.Name != "core_and_contracts" && phase.Name != "values_and_references" && phase.Status == Failed {
+			if phase.Name != "core_and_contracts" && phase.Name != "values_and_references" && phase.Name != "body_links" && phase.Status == Failed {
 				return false
 			}
 		}
@@ -47,7 +47,7 @@ func onlyContractStageFailures(result Result) bool {
 func TestPartialCompilerNeverClaimsConformance(t *testing.T) {
 	input := sourceInput()
 	got := Compile(input)
-	if !onlyContractStageFailures(got) || got.Coordinates != NotCompleted {
+	if !onlyContractStageFailures(got) || got.Coordinates != Passed {
 		t.Fatalf("unexpected partial result: %+v", got)
 	}
 	if got.Limits != DefaultLimits() || len(got.Models) != 1 || got.Models[0].ID != "example" {
@@ -61,7 +61,7 @@ func TestPartialCompilerNeverClaimsConformance(t *testing.T) {
 		t.Fatalf("implemented acquisition did not complete: %+v", m.Phases)
 	}
 	for _, p := range m.Phases[2:] {
-		if p.Name == "core_and_contracts" || p.Name == "values_and_references" {
+		if p.Name == "core_and_contracts" || p.Name == "values_and_references" || p.Name == "body_links" {
 			if p.Status != Failed {
 				t.Fatal("missing Core and invalid self-typing were not rejected")
 			}

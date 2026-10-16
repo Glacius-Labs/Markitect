@@ -325,11 +325,11 @@ func TestKnownDependencyCycleSurvivesAnIndependentResourceRefusal(t *testing.T) 
 	}
 }
 
-func TestUnclassifiedSpecStringsDoNotInstallOperatorsOrBodyLinks(t *testing.T) {
+func TestUnclassifiedSpecStringsDoNotInstallOperators(t *testing.T) {
 	input := sourceInput()
 	input.Root.Entries[1].Bytes = []byte("id: item\nkind: item\nbody: '[[Missing]]'\nspec: {target: Missing, properties: [Missing]}")
 	got := Compile(input)
-	if !onlyContractStageFailures(got) || phaseStatus(got.Models[0], "values_and_references") == Passed || phaseStatus(got.Models[0], "body_links") != NotCompleted {
+	if got.Status != Failed || !hasDiagnostic(got, "binding.reference_missing") || phaseStatus(got.Models[0], "values_and_references") == Passed || phaseStatus(got.Models[0], "body_links") != Failed {
 		t.Fatalf("ordinary strings were treated as Core operators or body links prematurely: %+v", got)
 	}
 }
