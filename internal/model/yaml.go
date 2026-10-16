@@ -45,7 +45,7 @@ func parseYAML(data []byte, depthLimit int) (Value, []yamlProblem, bool) {
 	var doc yaml.Node
 	if err := decoder.Decode(&doc); err != nil {
 		if isYAMLParserDepthLimit(err) {
-			return Value{}, []yamlProblem{{code: "limit.yaml_depth", message: "YAML parser depth limit exceeded"}}, false
+			return Value{}, []yamlProblem{{code: "limit.yaml_depth", message: err.Error()}}, false
 		}
 		return Value{}, []yamlProblem{{code: "yaml.syntax", message: err.Error(), position: yamlErrorPosition(err)}}, true
 	}
@@ -57,7 +57,7 @@ func parseYAML(data []byte, depthLimit int) (Value, []yamlProblem, bool) {
 		return Value{}, []yamlProblem{{code: "yaml.documents", message: "exactly one YAML document is allowed", position: nodePosition(&extra)}}, true
 	} else if err != nil && err != io.EOF {
 		if isYAMLParserDepthLimit(err) {
-			return Value{}, []yamlProblem{{code: "limit.yaml_depth", message: "YAML parser depth limit exceeded"}}, false
+			return Value{}, []yamlProblem{{code: "limit.yaml_depth", message: err.Error()}}, false
 		}
 		return Value{}, []yamlProblem{{code: "yaml.syntax", message: err.Error(), position: yamlErrorPosition(err)}}, true
 	}
