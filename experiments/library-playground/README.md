@@ -3,7 +3,8 @@
 This first delivery implements the independent behavior oracle from the
 [evaluation contract](../../docs/design/canonical-model/library-example/evaluation-contract.md)
 and a bounded driver for the ten operations in the
-[public JSONL interface](../../docs/design/canonical-model/library-example/interface-contract.md).
+[callable interface](../../docs/design/canonical-model/library-example/m1/model/library/callable-interface.yaml)
+of the library model M1.
 It uses Python 3.10 or later and the standard library only.
 
 The twelve independent cases cover E01 through E12 and the paired fourth-loan

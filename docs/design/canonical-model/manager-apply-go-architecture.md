@@ -41,6 +41,19 @@ internal/
 
 `bootstrap` constructs the concrete adapters and passes them to their consumers through constructors; `cmd/markitect` only calls it. CLI and MCP call the same application operations and own no review, retry or publication policy. `codexappserver` is the first session adapter. `process` is the small shared process-lifetime helper for that adapter and for project checks, not another execution protocol. Repository maintenance and release tooling stay outside these product packages.
 
+The first command surface keeps the verb-table principles of [DEC-017](../../concepts/register.md#dec-017-command-model-top-level-verbs-from-one-verb-table): top-level verbs from one table that drives CLI help, dispatch and the MCP tools, with the same arguments.
+
+| Verb | Purpose |
+| --- | --- |
+| `check` | Compile the model and check coverage and the registry. |
+| `context <package>` | Preview a Manager's context package with inclusion reasons. |
+| `apply [--continue <assignment>]` | Start an Apply, or continue an assignment after a run that did not complete it. |
+| `resume <run>` | Reopen an interrupted run: reconcile its effects, then go on with the same basis. |
+| `status [run]` | Show the assignment and run overview, or one run. |
+| `inspect <run> [task]` | Show the task tree, timeline and per-step input, report, difference and evidence. |
+| `answer <question>` | Bind an owner answer to a question version. |
+| `stop <run>` | Request a stop and report the observed result. |
+
 Inside `run`, start with coherent files such as `task.go`, `coordinator.go`, `review.go`, `budget.go`, `lifecycle.go`, `history.go` and `ports.go`, and split only for a distinct responsibility. Avoid shared Project DTOs, global interface catalogues and untyped property bags. The root `cmd` and `internal` layout replaces the current `src` prefix ([Go module layout](https://go.dev/doc/modules/layout)).
 
 ## Dependency direction and ports
@@ -65,11 +78,11 @@ Organization and realization never import each other, and the compiler depends o
 | `apply.Publisher` | `apply` | Recheck the captured source, publish the verified artifacts and registry together, report actual writes and read-back. |
 | `run.Sessions` | `run` | Start a configured role, supply tasks and context, observe messages and tool requests, resume, cancel and establish termination. |
 | `run.Workspaces` | `run` | Materialize an owned candidate, observe actual changes, close or retain it. |
-| `run.Checks` | `run`, final verification | Execute explicit project checks on the exact candidate. |
+| `run.Checks` | `run`, `apply` | Execute explicit project checks on the exact candidate, for reviews and for the aggregate. |
 | `run.Journal` | `run`, `apply` | Durably append events and exact payloads under one writer. |
 
 Interfaces live with their consumers, and adapters return concrete types ([Go code review comments](https://go.dev/wiki/CodeReviewComments#interfaces)); one adapter may satisfy several narrow ports. `adapters/journal` implements both `run.Journal` and `apply.Control`, and `adapters/gitrepo` implements `apply.Source`, `apply.Publisher` and `run.Workspaces`. Effectful calls take `context.Context`; pure computations need no interface to be testable. Avoid generic `common`, `types` or `interfaces` packages ([package names](https://go.dev/blog/package-names)).
 
-The Host owns the task and message protocol, effective authority and history. An Agent adapter translates provider transport into those records; it cannot accept a delivery, grant a path or pass a review. Manager, reviewer and verifier use the same session port with different roles. Provider wire objects and session IDs never become model types. The registry belongs to `realization`, outside the Definition roots, and is published together with its artifact tree.
+The Host owns the task and message protocol, effective authority and history. An Agent adapter translates provider transport into those records; it cannot accept a delivery, grant a path or pass a review. Manager and reviewer use the same session port with different roles. Provider wire objects and session IDs never become model types. The registry belongs to `realization`, outside the Definition roots, and is published together with its artifact tree.
 
 The [library walkthrough](manager-apply-library-flow.md) follows a root task and its lending child through these boundaries, from model input to publication.

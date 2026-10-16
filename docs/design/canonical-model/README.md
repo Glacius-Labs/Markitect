@@ -18,7 +18,7 @@ The baseline fixes the uniform definition form, nine Core definitions, values an
 
 ## Apply design
 
-Status: the design basis for the rebuild commissioned in [DEC-024](../../concepts/register.md#dec-024-first-reliable-apply-rebuild-and-coordinated-start). The owner decisions are [DEC-025 to DEC-032](../../concepts/register.md#dec-025-package-managers-organize-realization); every other choice in these documents, such as sequential writing, three review rounds or the completion reserve, is a design decision under DEC-024 that review may improve. These documents describe target behavior, not implemented behavior; implementation pull requests establish the evidence, and producer packages refine exact Go names and schemas in review. A change of intent goes to the document that owns the subject, not into a new parallel note.
+Status: the design basis for the rebuild commissioned in [DEC-024](../../concepts/register.md#dec-024-first-reliable-apply-rebuild-and-coordinated-start). The owner decisions are [DEC-025 to DEC-036](../../concepts/register.md#dec-025-package-managers-organize-realization); DEC-036 covers the refinements the owner adopted for the design itself. Details below that level, such as exact schemas or default numbers like three review rounds, are design decisions under DEC-024 that review may improve. These documents describe target behavior, not implemented behavior; implementation pull requests establish the evidence, and producer packages refine exact Go names and schemas in review. A change of intent goes to the document that owns the subject, not into a new parallel note.
 
 Read in this order:
 
@@ -30,12 +30,32 @@ Read in this order:
 | [Port contracts](manager-apply-port-contracts.md) | Interfaces between the core and its adapters and the values they exchange. |
 | [Configuration](manager-apply-configuration.md) | Execution inputs, override resolution, host profiles, identities, mandates and questions. |
 | [Execution](manager-apply-execution.md) | Budget and admission, blocking findings, dependencies, review rounds, run states and outcomes. |
-| [Journal](manager-apply-journal.md) | Durable records and storage, the controller lock, answers and successor runs. |
+| [Journal](manager-apply-journal.md) | Durable records and storage, the controller lock, answers and continuation runs. |
 | [Rebuild plan](manager-apply-rebuild-plan.md) | The first Agent adapter and what happens to the current source. |
 | [Playground](manager-apply-playground.md) | The external two-Apply experiment and its independent assessment. |
 | [Acceptance gates](manager-apply-implementation-plan.md) | What each delivery step must prove. |
-| [Library M1](library-example/README.md) | The example model, its [interface](library-example/interface-contract.md) and [independent expectations](library-example/evaluation-contract.md). |
+| [Library M1](library-example/README.md) | The example model, including its [callable interface](library-example/m1/model/library/callable-interface.yaml), and the [independent expectations](library-example/evaluation-contract.md). |
 | [North star](manager-realization-north-star.md) | Ideas and variants that were not selected, later operations and open questions. |
+
+An implementation that deviates from a contract changes that contract in the same pull request; the documents and the code never drift apart.
+
+| Term | Meaning |
+| --- | --- |
+| Host | Markitect's deterministic orchestration: preparation, scheduling, validation, records and guarded writes. |
+| Manager | The logical owner of one Package's realization; the root Manager owns the whole local model. |
+| Assignment | One owner request with its caps; it links its runs. |
+| Run | One Apply over fixed inputs, from Prepared to one Finished outcome. |
+| Continuation | A further run of the same assignment after a run finished without completing it. |
+| Resume | Reopening the same unfinished run after an interruption; it reconciles first and keeps the run's basis. |
+| Task | One Manager responsibility within a run. |
+| Attempt | One submission within a task. |
+| Round | A counted submission per Manager and review purpose; the limit on rework. |
+| Candidate | An immutable artifact tree with its registry revision. |
+| Delivery | A Host-accepted candidate of a task with its reviews, checks and assessments. |
+| Finding | A recorded concern, blocking or advisory, that only an independent review resolves. |
+| Registry | The record of which Manager owns each artifact and which Definitions it realizes. |
+| Mandate | The section of a context package that states responsibility, freedom, authority and limits. |
+| Final evidence check | The Host's deterministic check that all required evidence is current before publication. |
 
 The [delivery plan](../../implementation-plan.md) owns packages, order and dispatch. The [owner discussion](sources/manager-realization-20261016.md) and the supplied [concept assessment](sources/concept-assessment-20261016.txt) and [refinements](sources/concept-refinements-20261016.txt) are the sources; the refinements are part of the concept. The [working-day reflections](../../concepts/reflections/README.md) describe the intended use and later acceptance scenarios.
 
