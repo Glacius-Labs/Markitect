@@ -24,7 +24,7 @@ Tests in `internal/tooling/architecture` require every actual Go package to have
 | `apply-adapter` | Concrete repository, journal, container engine, profile metadata and document I/O. | `apply-adapter` | 8 |
 | `apply-bootstrap` | Constructs actual services and their adapters. | `apply-bootstrap` | 1 |
 | `apply-command` | Thin entrypoint to product composition. | `apply-command` | 1 |
-| `agent-protocol` | Frame protocol between the Host and the session helper. | `agent-protocol` | 1 |
+| `agent-protocol` | Frame protocol between the Orchestrator and the session helper. | `agent-protocol` | 1 |
 | `agent-runtime` | Runs inside each Agent container: provider process, MCP bridge and stdio framing. | `agent-runtime` | 1 |
 | `runtime-command` | Thin entrypoint of the session helper. | `runtime-command` | 1 |
 | `build-data` | Version identity and embedded license notices. | `build-data` | 2 |
@@ -83,7 +83,7 @@ Tests in `internal/tooling/architecture` require every actual Go package to have
 | `internal/adapters/claudecode` | Claude Code stream protocol and step session adaptation through the container runtime. | [internal/adapters/claudecode/README.md](../../internal/adapters/claudecode/README.md) |
 | `internal/adapters/cli` | Concrete repository, profile metadata and document I/O. | [docs/development/modules.md](modules.md) |
 | `internal/adapters/codexappserver` | Prepares Codex image metadata and implements step sessions through the container runtime. | [internal/adapters/codexappserver/README.md](../../internal/adapters/codexappserver/README.md) |
-| `internal/adapters/container` | Container engine client and the Host side of the agentd connection. | [docs/development/modules.md](modules.md) |
+| `internal/adapters/container` | Container engine client and the Orchestrator side of the agentd connection. | [docs/development/modules.md](modules.md) |
 | `internal/adapters/documents` | Concrete repository, profile metadata and document I/O. | [docs/development/modules.md](modules.md) |
 | `internal/adapters/gitrepo` | Repository capture, workspace volumes and guarded publication. | [docs/development/modules.md](modules.md) |
 | `internal/adapters/journal` | Repository control and fenced durable SQLite journal storage. | [internal/adapters/journal/README.md](../../internal/adapters/journal/README.md) |
@@ -104,7 +104,7 @@ Tests in `internal/tooling/architecture` require every actual Go package to have
 
 | Package | Purpose | Owning document |
 |---|---|---|
-| `internal/agentd/frame` | Frame protocol between the Host and the session helper. | [docs/development/modules.md](modules.md) |
+| `internal/agentd/frame` | Frame protocol between the Orchestrator and the session helper. | [docs/development/modules.md](modules.md) |
 
 ## Session helper
 

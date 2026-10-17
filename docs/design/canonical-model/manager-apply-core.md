@@ -3,7 +3,7 @@
 This contract owns the core of Apply:
 - the step lifecycle;
 - the Manager task machine and its step outcomes;
-- the Host tools;
+- the Orchestrator tools;
 - messages and routing;
 - issues;
 - deliveries and composition;
@@ -15,20 +15,20 @@ Status: target for the first Apply. The owner decisions behind S6, T3, T10, M2, 
 
 ## Steps
 
-- **S1** A step is one Agent turn in its own container. The Host does these things in order:
+- **S1** A step is one Agent turn in its own container. The Orchestrator does these things in order:
   1. Materialize the step's workspace version (D3).
   2. Start the container with the role's mounts.
-  3. Dispatch the turn and serve its Host tools.
+  3. Dispatch the turn and serve its Orchestrator tools.
   4. Stop the container when the turn ends.
-- **S2** A confirmed stop ends all activity inside the container. If termination is not observed, the step stays uncertain, and its workspace admits no further step until the uncertainty is reconciled. A confirmed stop does not settle Host-side or external effects; those are reconciled as the [execution contract](manager-apply-execution.md#admission-amendments-and-finite-correction) requires.
-- **S3** A Manager's conversation continues across steps: the next step resumes the provider conversation from the retained provider home. Both pinned CLIs support this ([runtime capabilities](../../validation/runtime-capabilities-20261017.md)). If resume fails, the step starts a fresh conversation with a Host-built handoff. The handoff contains the task state, the open issues addressed to the Manager, its last report and its own unaccepted changes. Reviews always start fresh.
-- **S4** After a writing step, the Host compares the workspace with the step's start version and checks ownership, reservations and protected inputs. It records the result as the Manager's new working version. Own unaccepted changes survive between steps only in these records.
+- **S2** A confirmed stop ends all activity inside the container. If termination is not observed, the step stays uncertain, and its workspace admits no further step until the uncertainty is reconciled. A confirmed stop does not settle Orchestrator-side or external effects; those are reconciled as the [execution contract](manager-apply-execution.md#admission-amendments-and-finite-correction) requires.
+- **S3** A Manager's conversation continues across steps: the next step resumes the provider conversation from the retained provider home. Both pinned CLIs support this ([runtime capabilities](../../validation/runtime-capabilities-20261017.md)). If resume fails, the step starts a fresh conversation with an Orchestrator-built handoff. The handoff contains the task state, the open issues addressed to the Manager, its last report and its own unaccepted changes. Reviews always start fresh.
+- **S4** After a writing step, the Orchestrator compares the workspace with the step's start version and checks ownership, reservations and protected inputs. It records the result as the Manager's new working version. Own unaccepted changes survive between steps only in these records.
 - **S5** Steps run one at a time. Concurrency is a later optimization within the same rules.
 - **S6** The first Apply stops every container when its step ends, and keeps no container warm between steps. It therefore needs no pause barrier and no basis change inside a running container, and every step is a charged session start. The owner chose this for the first version and kept warm retention for later, once measurements show a need (DEC-041).
 
 ## Manager tasks
 
-Each Manager of the topology has exactly one task per run. The Host creates every task when the run starts Running. No message, report or Agent output can create, merge or remove a task.
+Each Manager of the topology has exactly one task per run. The Orchestrator creates every task when the run starts Running. No message, report or Agent output can create, merge or remove a task.
 
 | State | Meaning |
 | --- | --- |
@@ -39,25 +39,25 @@ Each Manager of the topology has exactly one task per run. The Host creates ever
 | `running` | A work step of this task is running. |
 | `blocked` | The task waits for something named: a reply, a delivery, its children or an owner answer. |
 | `reviewing` | A submitted candidate is under local, integration or intake review. |
-| `done` | The Host accepted the task's complete responsibility. |
+| `done` | The Orchestrator accepted the task's complete responsibility. |
 | `incomplete` | The task cannot finish in this run. |
 
 **Explore and the write barrier**
 - **T1** Explore runs children before parents. Each Manager has one read-only Explore step. A parent's Explore becomes admissible once all its direct children's Explore results are confirmed, and its input contains their reports.
-- **T2** The Host admits no writing step until every task is explored. A task counts as explored once its Explore result is confirmed, including a T3 no-change submission, whatever its later state. If the captured source has unexplained files, the root's Explore proposes their owners, and an independent intake review assesses those proposals before the barrier opens. Accepted assignments are recorded as D6 describes. A rejected proposal leaves its file unexplained and becomes an issue addressed to the root. The root can propose again in a later work step through `assign_owner`, under a new intake review. Intake rejections count against the root's rejection limit under their own review purpose. Publication still requires conforming coverage.
+- **T2** The Orchestrator admits no writing step until every task is explored. A task counts as explored once its Explore result is confirmed, including a T3 no-change submission, whatever its later state. If the captured source has unexplained files, the root's Explore proposes their owners, and an independent intake review assesses those proposals before the barrier opens. Accepted assignments are recorded as D6 describes. A rejected proposal leaves its file unexplained and becomes an issue addressed to the root. The root can propose again in a later work step through `assign_owner`, under a new intake review. Intake rejections count against the root's rejection limit under their own review purpose. Publication still requires conforming coverage.
 - **T3** An Explore step ends with `report`, or with a `complete` no-change `submit` when the Manager finds nothing to change. A no-change submission is reviewed like any other. Its review may run before the write barrier, because nothing is written.
 
 **Admission and step outcomes**
-- **T4** One admission queue holds all admissible steps: Explore steps, review steps and work steps. The Host admits the item that became admissible first. Ties break by Manager-path order, then by kind: Explore, review, work. Agents cannot set priorities.
+- **T4** One admission queue holds all admissible steps: Explore steps, review steps and work steps. The Orchestrator admits the item that became admissible first. Ties break by Manager-path order, then by kind: Explore, review, work. Agents cannot set priorities.
 - **T5** A work step ends with exactly one outcome:
   - `submit`, with a purpose (`local` or `integration`) and a scope (`limited` or `complete`). A no-change result is a `complete` submission without changes.
   - `wait`, naming what the task waits for.
 - **T6** A step without a valid outcome is recorded as failed and stays charged. The task returns to the state before the step: `queued` for Explore, `ready` for work. An uncertain step goes through S2 first.
 
 **Review**
-- **T7** On a submission, the Host freezes the candidate and moves the task to `reviewing`. A fresh reviewer conversation assesses it in two steps: first expectations from the model, then the candidate and its evidence. Where the configuration enables review batching, one such review covers several pending no-change submissions in the same two steps, each with its own verdict bound to its subject. Batching never removes a subject or lowers the protected review floor.
+- **T7** On a submission, the Orchestrator freezes the candidate and moves the task to `reviewing`. A fresh reviewer conversation assesses it in two steps: first expectations from the model, then the candidate and its evidence. Where the configuration enables review batching, one such review covers several pending no-change submissions in the same two steps, each with its own verdict bound to its subject. Batching never removes a subject or lowers the protected review floor.
 - **T8** A review ends in one of four ways:
-  - **Pass:** the Host accepts the delivery (D1). A pass must resolve, or mark not applicable, every open blocking finding addressed to the task for this review purpose, including those raised on its earlier candidates; a pass that leaves one open is an invalid verdict. If another open blocking issue covers the subject (I3), the Host withholds acceptance instead, and the task returns to `ready` with no rejection counted.
+  - **Pass:** the Orchestrator accepts the delivery (D1). A pass must resolve, or mark not applicable, every open blocking finding addressed to the task for this review purpose, including those raised on its earlier candidates; a pass that leaves one open is an invalid verdict. If another open blocking issue covers the subject (I3), the Orchestrator withholds acceptance instead, and the task returns to `ready` with no rejection counted.
     - After a `limited` delivery, the task returns to `ready`.
     - After a `complete` local delivery, a Manager without children is `done`. A Manager with children becomes `ready` for integration if all its children are `done`, and otherwise `blocked` on them.
     - After a `complete` integration delivery, the task is `done`.
@@ -79,7 +79,7 @@ Each Manager of the topology has exactly one task per run. The Host creates ever
   - counters carry on.
 
   The same applies during Verifying, when a correctable finding returns the run to Running.
-- **T12** If no step is admissible, none is running and no task waits for the owner, the Host dispatches the lowest common parent of the blocked tasks once for that set of recorded waits. If the same waits recur after that step, those tasks become `incomplete`.
+- **T12** If no step is admissible, none is running and no task waits for the owner, the Orchestrator dispatches the lowest common parent of the blocked tasks once for that set of recorded waits. If the same waits recur after that step, those tasks become `incomplete`.
 
 **Completion and incomplete work**
 - **T13** Completion:
@@ -91,11 +91,13 @@ Each Manager of the topology has exactly one task per run. The Host creates ever
   - through an unresolvable wait (T12);
   - when required work no longer fits the budget, as the execution contract defines.
 
-  When any task becomes `incomplete`, the Host admits no new work, lets running steps end or reconciles them, and finishes the run Incomplete with all work retained. An answer that requires a model change also finishes the run Incomplete (W3).
+  When any task becomes `incomplete`, the Orchestrator admits no new work, lets running steps end or reconciles them, and finishes the run Incomplete with all work retained. An answer that requires a model change also finishes the run Incomplete (W3).
 
-## Host tools
+<a id="host-tools"></a>
 
-Each role sees only its own closed catalogue. The [port contracts](manager-apply-port-contracts.md#session-and-communication-port) own how a tool call reaches the Host and how its answer returns.
+## Orchestrator tools
+
+Each role sees only its own closed catalogue. The [port contracts](manager-apply-port-contracts.md#session-and-communication-port) own how a tool call reaches the Orchestrator and how its answer returns.
 
 | Tool | Roles | Effect |
 | --- | --- | --- |
@@ -121,15 +123,15 @@ A message has one of three kinds:
 | `reply` | Answers one question by its ID. |
 | `hint` | A parent advises a direct child, separately from the operation and the model. |
 
-- **M1** Messages travel along tree edges, and the Host records every hop. A message cannot change the operation, a task's scope or any authority.
-- **M2** When a question names a Manager, the Host forwards it along the tree path without dispatching the Managers in between. Each of them sees the forwarded message in its next step's context. The reply returns to the asker the same way. The common parent is dispatched only when it is the addressee, or under T12.
+- **M1** Messages travel along tree edges, and the Orchestrator records every hop. A message cannot change the operation, a task's scope or any authority.
+- **M2** When a question names a Manager, the Orchestrator forwards it along the tree path without dispatching the Managers in between. Each of them sees the forwarded message in its next step's context. The reply returns to the asker the same way. The common parent is dispatched only when it is the addressee, or under T12.
 - **M3** A question addressed to `parent` goes to the direct parent. The parent then does one of four things:
   - it replies;
   - it names a better addressee anywhere in the tree, and M2 forwards the question;
   - it passes the question to its own parent;
   - it sends the question to all its relevant direct branches, or to all of them if no sound narrowing exists.
 
-  The Host records every recipient and outstanding reply, so silence is never agreement.
+  The Orchestrator records every recipient and outstanding reply, so silence is never agreement.
 - **M4** A question addressed to `owner` travels up the tree to the root as M2 forwards, and from there to the owner through the application. Other admissible work continues.
 - **M5** If the asker's next work depends on a question, the asker's task is `blocked` until the reply arrives (T10).
 
@@ -146,32 +148,32 @@ Findings and questions share one issue shape:
 The [journal](manager-apply-journal.md) stores findings and questions as records of this shape.
 
 - **I1** A reviewer raises a finding. Only an independent review with current evidence resolves it or marks it not applicable, as the [execution contract](manager-apply-execution.md#evidence-need-survives-budget-pressure) defines.
-- **I2** A Manager or a reviewer raises a question. It is resolved by a reply from its addressee: a Manager acting within its mandate, or the owner through the application. The Host binds every reply to the question's version.
+- **I2** A Manager or a reviewer raises a question. It is resolved by a reply from its addressee: a Manager acting within its mandate, or the owner through the application. The Orchestrator binds every reply to the question's version.
 - **I3** An open blocking issue blocks acceptance of its subject and of every aggregate that contains it.
 - **I4** A Definition disposition `unresolved` needs a linked open issue.
 - **I5** Open issues carry into a continuation run.
 
 ## Deliveries and composition
 
-- **D1** A delivery is a Host-accepted candidate. It consists of:
+- **D1** A delivery is an Orchestrator-accepted candidate. It consists of:
   - the owned file delta and the registry delta;
   - the aggregate version it was made on;
   - its purpose and scope;
   - its review and check evidence.
-- **D2** The Host keeps one accepted aggregate tree per run, which starts as the captured source (version zero). To accept a delivery, the Host composes the delivery's owned delta onto the current aggregate. Two conditions apply:
+- **D2** The Orchestrator keeps one accepted aggregate tree per run, which starts as the captured source (version zero). To accept a delivery, the Orchestrator composes the delivery's owned delta onto the current aggregate. Two conditions apply:
   - every changed path is owned or reserved by the delivering Manager;
   - each such path still has, in the aggregate, the content the delivery was made on.
 
-  Registry records follow the same rule. Exclusive ownership makes this replay safe without a common base. A failed condition is a Host error that stops the run. Composition never merges content or chooses between owners.
+  Registry records follow the same rule. Exclusive ownership makes this replay safe without a common base. A failed condition is an Orchestrator error that stops the run. Composition never merges content or chooses between owners.
 - **D3** Each step starts from the aggregate current at its admission, plus the Manager's own unaccepted changes replayed by the D2 rule. The step records the aggregate version it saw. A dependent task can implement against a producer's result once that result is accepted, because every later step sees it.
 - **D4** A local review is renewed only when a delivery that its candidate used has changed (DEC-041). The candidate used the producers its task waited on (T5) and those its submission names as dependencies. The captured source counts as version zero of every producer. A producer has changed when it has a delivery accepted after the aggregate version that the candidate's last step saw. Any other later change leaves the local review valid, because interactions between areas are the integration review's question. An integration review always assesses the exact composed aggregate of its subtree, and it is renewed whenever that aggregate changes.
 - **D5** A parent never writes child-owned paths. A correction to child content is an issue addressed to the owning child, which reopens it if it is `done` (T11).
-- **D6** Ownership decisions are recorded by the Host as registry changes outside D2. These are `assign_owner` decisions, accepted intake assignments, transfers, and records passing to an ancestor. A transfer of a path is refused while another Manager has unaccepted changes on it. A decision takes effect in the aggregate when it is recorded, and later deliveries are composed under the new ownership. Each decision also becomes a blocking issue addressed to the new owner, which must register and assess the path; a `done` owner reopens under T11.
+- **D6** Ownership decisions are recorded by the Orchestrator as registry changes outside D2. These are `assign_owner` decisions, accepted intake assignments, transfers, and records passing to an ancestor. A transfer of a path is refused while another Manager has unaccepted changes on it. A decision takes effect in the aggregate when it is recorded, and later deliveries are composed under the new ownership. Each decision also becomes a blocking issue addressed to the new owner, which must register and assess the path; a `done` owner reopens under T11.
 
 ## While a run waits
 
 - **W1** When nothing is admissible, no effect is active or uncertain, and the run waits for the owner (a question or the approval of publication), the run is Waiting. No container runs and nothing is charged.
-- **W2** While a run waits, the Host process may exit (DEC-041). The [verbs](manager-apply-go-architecture.md#source-layout) `answer` and `resume` continue the run: `answer` records the owner's answer under a short exclusive control session, and `resume` reopens the run, reconciles first and continues. Recovery after a Host crash needs its own evidence before this is relied on.
+- **W2** While a run waits, the Orchestrator process may exit (DEC-041). The [verbs](manager-apply-go-architecture.md#source-layout) `answer` and `resume` continue the run: `answer` records the owner's answer under a short exclusive control session, and `resume` reopens the run, reconciles first and continues. Recovery after an Orchestrator crash needs its own evidence before this is relied on.
 - **W3** An answer that requires a model change finishes the run Incomplete, as the [execution contract](manager-apply-execution.md#assignments-and-runs) requires.
 
 ## Minimum cost
@@ -189,5 +191,5 @@ That is about 4N + 3P steps. For library M1 (N = 6, P = 2) it is 30. For 15 Pack
 
 ## Not settled here
 
-- **Computed scope:** the concept's [computed scope](manager-apply-concept.md#toward-computed-scope) gives Managers outside the scope no task. That conflicts with DEC-039's complete participation. The [architecture review](apply-architecture-review-20261017.md#f4-complete-participation-costs-a-lot-and-does-not-scale-yet) proposes reuse verified by the Host instead. It is a later extension and needs an owner decision.
+- **Computed scope:** the concept's [computed scope](manager-apply-concept.md#toward-computed-scope) gives Managers outside the scope no task. That conflicts with DEC-039's complete participation. The [architecture review](apply-architecture-review-20261017.md#f4-complete-participation-costs-a-lot-and-does-not-scale-yet) proposes reuse verified by the Orchestrator instead. It is a later extension and needs an owner decision.
 - **Integration census:** a disposition for every explicit cross-Package reference in the integration review of its lowest common ancestor ([review F5](apply-architecture-review-20261017.md#f5-the-validation-cannot-yet-show-the-promised-benefit)). This is a proposal for after the first Package runs.

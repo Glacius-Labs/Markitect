@@ -22,7 +22,7 @@ The owner selected this editorial direction after clarifying the reversal as hum
 
 **Product goal:** Model-first development with a clean, uniform and clear repository, without drift, forgotten rules, inconsistencies or contradictions. The combination of AI, deterministic structure and systematic organization should make realization trustworthy enough that people can model intent and trust the result without routine implementation/diff review. Markitect's internal independent reviews and verification are mechanisms toward that goal. These are target outcomes, not measured results. The [owner clarification](../concepts/sources/product-goals-clarification-20261017.md) explicitly excludes lower cost as a product goal; earlier model-price examples describe influences, not the product's purpose.
 
-Lead with the user's problem, then explain the mechanism with one concrete change. Introduce Packages, Managers and the Host only as needed to explain that change. The model is the continuing specification; a completed feature does not retire its existing obligations.
+Lead with the user's problem, then explain the mechanism with one concrete change. Introduce Packages, Managers and the Orchestrator only as needed to explain that change. The model is the continuing specification; a completed feature does not retire its existing obligations.
 
 ### Organizing idea behind the story
 
@@ -88,7 +88,7 @@ When coding agents change a growing project, a feature can work while an archite
 
 Markitect starts with the intended world: your project's concepts, behavior, architecture and rules. They live in one canonical model. Code, tests, configuration and documentation are realizations of that model, and every change must preserve the obligations that still apply.
 
-The design combines AI with determinism. A typed model makes explicit structure checkable before realization. A deterministic Host supplies context and propagates the same instruction unchanged to every local Manager. Agents interpret and realize their responsibilities, delegate within the fixed process and integrate results. Fresh reviewers assess both local work and integration; checks and current evidence support guarded publication.
+The design combines AI with determinism. A typed model makes explicit structure checkable before realization. A deterministic Orchestrator supplies context and propagates the same instruction unchanged to every local Manager. Agents interpret and realize their responsibilities, delegate within the fixed process and integrate results. Fresh reviewers assess both local work and integration; checks and current evidence support guarded publication.
 
 Consider a library whose borrowing limit changes from five books to three. You change the rule in the model. The code, tests and usage guide should follow together, while the remaining rules continue to hold.
 

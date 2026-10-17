@@ -18,13 +18,13 @@ Current source uses canonical language v1, explicit input selection and exact ar
 docs/markitect/project.md    official generated readable view
 ```
 
-Model granularity and artifact locations remain the author's choice. Canonical dependency manifests are explicitly selected; they are not discovered under an assumed directory. The operator supplies an explicit Host profile document for requested metadata preparation. No automatic scaffold, configuration migration or execution is implied.
+Model granularity and artifact locations remain the author's choice. Canonical dependency manifests are explicitly selected; they are not discovered under an assumed directory. The operator supplies an explicit Orchestrator profile document for requested metadata preparation. No automatic scaffold, configuration migration or execution is implied.
 
 The future private SQLite journal lives outside the repository; `.markitect/state/` holds only its registration and writer lock. See the [journal contract](design/canonical-model/manager-apply-journal.md#physical-store-and-commit-contract). Current read-only preparation creates no journal.
 
 ## Ownership and boundaries
 
-The canonical model owns intended behavior. Registry shards assign exact artifact paths to one responsibility and existing Definitions. Execution declarations own operational selections and ceilings. Embedded product defaults have their own versioned source. Host metadata owns literal executable/protocol observations. Captured canonical and control inputs are protected separately; an exact ignore cannot override input protection or satisfy missing realization.
+The canonical model owns intended behavior. Registry shards assign exact artifact paths to one responsibility and existing Definitions. Execution declarations own operational selections and ceilings. Embedded product defaults have their own versioned source. Orchestrator metadata owns literal executable/protocol observations. Captured canonical and control inputs are protected separately; an exact ignore cannot override input protection or satisfy missing realization.
 
 ## Source repository layout
 

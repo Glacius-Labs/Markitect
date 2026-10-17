@@ -25,11 +25,11 @@ Read in this order:
 | Document | Owns |
 | --- | --- |
 | [Apply concept](manager-apply-concept.md) | Organization, fixed Manager cycle, semantic review responsibilities, ownership and reporting. |
-| [Core protocol](manager-apply-core.md) | Steps, the Manager task machine, Host tools, messages, issues, deliveries and composition, by rule ID. |
+| [Core protocol](manager-apply-core.md) | Steps, the Manager task machine, Orchestrator tools, messages, issues, deliveries and composition, by rule ID. |
 | [Library delegation walkthrough](manager-apply-library-flow.md) | The order of exchanges in one Apply of M1 and the first refusal cases. |
 | [Go architecture](manager-apply-go-architecture.md) | Target packages, responsibilities and dependency direction. |
 | [Port contracts](manager-apply-port-contracts.md) | Interfaces between the core and its adapters and the values they exchange. |
-| [Configuration](manager-apply-configuration.md) | Execution inputs, override resolution, host profiles, identities, mandates and questions. |
+| [Configuration](manager-apply-configuration.md) | Execution inputs, override resolution, Orchestrator profiles, identities, mandates and questions. |
 | [Execution](manager-apply-execution.md) | Budget and admission, blocking findings, dependencies, rejection limits, idle policy, run states and outcomes. |
 | [Journal](manager-apply-journal.md) | Durable records and storage, the controller lock, answers and continuation runs. |
 | [Rebuild plan](manager-apply-rebuild-plan.md) | The container runtime, the Codex and Claude Code session adapters, and what happens to the current source. |
@@ -44,7 +44,7 @@ Implementations identify the supported part of this target and its evidence. An 
 
 | Term | Meaning |
 | --- | --- |
-| Host | Markitect's deterministic orchestration: preparation, scheduling, validation, records and guarded writes. |
+| Orchestrator | Markitect's deterministic orchestration: preparation, scheduling, validation, records and guarded writes. |
 | Manager | The logical owner of one local Package's realization. The root is also an ordinary Manager, with a runtime identity but no canonical root Package. It coordinates the whole model and its aggregate integration, and may write only its owned artifacts and authorized new paths. |
 | Assignment | One owner request with its caps; it links its runs. |
 | Run | One Apply over fixed inputs, from Prepared to one Finished outcome. |
@@ -58,11 +58,13 @@ Implementations identify the supported part of this target and its evidence. An 
 | Step | One admitted Agent turn bound to an exact workspace version, supplied inputs and permitted effects. |
 | Working basis | The accepted aggregate current at a step's admission, plus the Manager's own unaccepted changes ([D3](manager-apply-core.md#deliveries-and-composition)). Each step records the aggregate version it saw. |
 | Candidate | An immutable artifact tree with its registry revision. |
-| Delivery | A Host-accepted candidate with reviewed scope and exact evidence. It can supply a prerequisite while its producer's remaining responsibility stays open. |
+| Delivery | An Orchestrator-accepted candidate with reviewed scope and exact evidence. It can supply a prerequisite while its producer's remaining responsibility stays open. |
 | Finding | A recorded concern, blocking or advisory, that only an independent review resolves. |
 | Registry | The record of which Manager owns each artifact and which Definitions it realizes. |
 | Mandate | The section of a context package that states responsibility, freedom, authority and limits. |
-| Final evidence check | The Host's deterministic check that all required evidence is current before publication. |
+| Final evidence check | The Orchestrator's deterministic check that all required evidence is current before publication. |
+
+**Terminology:** Orchestrator is the current name for the deterministic component previously called Host ([DEC-042](../../concepts/register.md#dec-042-orchestrator-names-the-deterministic-coordination-component)). Managers retain their existing responsibilities. This is a naming change only. Historical records and literal quotations keep their original wording. Existing API identifiers, wire/configuration fields and CLI options such as `--host-profile` are unchanged; ordinary host machines are still called hosts.
 
 The [delivery plan](../../implementation-plan.md) owns packages, order and dispatch. The [owner discussion](sources/manager-realization-20261016.md) and the supplied [concept assessment](sources/concept-assessment-20261016.txt) and [refinements](sources/concept-refinements-20261016.txt) are the sources; the refinements are part of the concept. The [working-day reflections](../../concepts/reflections/README.md) describe the intended use and later acceptance scenarios.
 
