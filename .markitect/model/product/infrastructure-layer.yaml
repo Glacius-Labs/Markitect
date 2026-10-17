@@ -22,6 +22,7 @@ spec:
     - namespace: product
       name: distinct-state
   paths:
+    - internal/adapters/gitrepo/
     - src/internal/infrastructure/
   checks:
     - namespace: ""
@@ -31,4 +32,4 @@ spec:
     - namespace: tooling
       name: architecture-gate
   required: true
-  reason: Fixed snapshots and guarded writes are the only Git and working-tree access of the product.
+  reason: Repository inputs and guarded effects belong to infrastructure adapters.

@@ -50,6 +50,7 @@ func TestTransitionalFoundationsMatchLiveAndFixedSourceArchives(t *testing.T) {
 		"internal/organization/organization.go",
 		"internal/realization/realization.go",
 		"internal/apply/model.go",
+		"internal/adapters/gitrepo/repository.go",
 		"internal/testkit/testkit.go",
 		"internal/testkit/testdata/hostile.gitconfig",
 		"internal/model/testdata/fixture.go",
@@ -67,6 +68,13 @@ func TestTransitionalFoundationsMatchLiveAndFixedSourceArchives(t *testing.T) {
 	}
 	if got := string(contents["internal/testkit/testdata/hostile.gitconfig"]); got != "[core]\n\thooksPath = blocked\n" {
 		t.Fatalf("archived testkit fixture = %q; want exact input bytes", got)
+	}
+	if got := string(contents["internal/adapters/gitrepo/repository.go"]); got != "package gitrepo\n// fixture source\n" {
+		t.Fatalf("archived nested adapter source = %q; want exact input bytes", got)
+	}
+	fixedSnapshot := fixedSourceSnapshot(t, root)
+	if got := fixedSnapshot.Modes["internal/adapters/gitrepo/repository.go"]; got != "100644" {
+		t.Fatalf("fixed nested adapter mode = %q; want regular-file mode", got)
 	}
 
 	before := sha256.Sum256(liveArchive)
@@ -136,6 +144,107 @@ func TestTransitionalTestkitPathsStayBoundedAndRegular(t *testing.T) {
 	source.Modes[fixture] = "120000"
 	if _, err := snapshotModuleFiles(source); err == nil || !strings.Contains(err.Error(), "not regular") {
 		t.Fatalf("testkit fixture redirect was not rejected: %v", err)
+	}
+}
+
+func TestTransitionalGitRepoPackageIsTheOnlyNestedAdaptersRoot(t *testing.T) {
+	tests := []struct {
+		name   string
+		change func(string)
+	}{
+		{"file directly in adapters", func(root string) {
+			writeLayoutFile(t, root, "internal/adapters/direct.go", "package adapters\n")
+		}},
+		{"unknown adapter sibling", func(root string) {
+			writeLayoutFile(t, root, "internal/adapters/other/repository.go", "package other\n")
+		}},
+		{"similarly named adapter package", func(root string) {
+			writeLayoutFile(t, root, "internal/adapters/gitrepo-extra/repository.go", "package gitrepoextra\n")
+		}},
+		{"similarly named top-level package", func(root string) {
+			writeLayoutFile(t, root, "internal/adapters-extra/gitrepo/repository.go", "package gitrepo\n")
+		}},
+		{"adapters container is a file", func(root string) {
+			if err := os.RemoveAll(filepath.Join(root, "internal", "adapters")); err != nil {
+				t.Fatal(err)
+			}
+			if err := os.WriteFile(filepath.Join(root, "internal", "adapters"), []byte("not a directory\n"), 0o644); err != nil {
+				t.Fatal(err)
+			}
+		}},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			root := transitionalSourceFixture(t)
+			test.change(root)
+			if _, err := collect(root); err == nil {
+				t.Fatal("live packaging accepted an unsupported adapter path")
+			}
+			if _, err := snapshotModuleFiles(fixedSourceSnapshot(t, root)); err == nil {
+				t.Fatal("fixed packaging accepted an unsupported adapter path")
+			}
+		})
+	}
+}
+
+func TestLiveRejectsEmptyAdaptersContainer(t *testing.T) {
+	root := transitionalSourceFixture(t)
+	if err := os.RemoveAll(filepath.Join(root, "internal", "adapters", "gitrepo")); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := collect(root); err == nil || !strings.Contains(err.Error(), "incomplete") {
+		t.Fatalf("live packaging accepted an incomplete adapters container: %v", err)
+	}
+	// Fixed snapshots contain files, not empty directory entries. With the
+	// empty untracked container absent from that representation, its module
+	// archive correctly contains no adapters path.
+	files, err := snapshotModuleFiles(fixedSourceSnapshot(t, root))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, ok := files["internal/adapters/gitrepo/repository.go"]; ok {
+		t.Fatal("fixed snapshot invented source beneath the empty adapters container")
+	}
+}
+
+func TestTransitionalGitRepoRejectsNestedModulesAndRedirects(t *testing.T) {
+	root := transitionalSourceFixture(t)
+	writeLayoutFile(t, root, "internal/adapters/gitrepo/go.mod", "module nested\n")
+	if _, err := collect(root); err == nil || !strings.Contains(err.Error(), "nested Go module") {
+		t.Fatalf("live packaging did not reject nested module: %v", err)
+	}
+	if _, err := snapshotModuleFiles(fixedSourceSnapshot(t, root)); err == nil || !strings.Contains(err.Error(), "nested Go module") {
+		t.Fatalf("fixed packaging did not reject nested module: %v", err)
+	}
+
+	root = transitionalSourceFixture(t)
+	writeLayoutFile(t, root, "internal/adapters/gitrepo/vendor/nested/go.mod", "module ignored nested fixture\n")
+	if _, err := collect(root); err != nil {
+		t.Fatalf("live packaging changed excluded-directory handling: %v", err)
+	}
+	if _, err := snapshotModuleFiles(fixedSourceSnapshot(t, root)); err != nil {
+		t.Fatalf("fixed packaging changed excluded-directory handling: %v", err)
+	}
+
+	source := fixedSourceSnapshot(t, transitionalSourceFixture(t))
+	redirect := "internal/adapters/gitrepo/redirect.txt"
+	source.Files[redirect] = []byte("target\n")
+	source.Modes[redirect] = "120000"
+	if _, err := snapshotModuleFiles(source); err == nil || !strings.Contains(err.Error(), "not regular") {
+		t.Fatalf("fixed packaging accepted adapter redirect: %v", err)
+	}
+
+	root = transitionalSourceFixture(t)
+	external := filepath.Join(testkit.TempDir(t), "outside.go")
+	if err := os.WriteFile(external, []byte("package outside\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	link := filepath.Join(root, "internal", "adapters", "gitrepo", "redirect.go")
+	if err := os.Symlink(external, link); err != nil {
+		t.Skipf("symlink creation unavailable: %v", err)
+	}
+	if _, err := collect(root); err == nil || !strings.Contains(err.Error(), "symlink") {
+		t.Fatalf("live packaging accepted adapter symlink: %v", err)
 	}
 }
 
@@ -319,6 +428,7 @@ func transitionalSourceFixture(t *testing.T) string {
 		"internal/organization/organization.go":         "package organization\n",
 		"internal/realization/realization.go":           "package realization\n",
 		"internal/apply/model.go":                       "package apply\n",
+		"internal/adapters/gitrepo/repository.go":       "package gitrepo\n// fixture source\n",
 		"internal/testkit/testkit.go":                   "package testkit\n",
 		"internal/testkit/testdata/hostile.gitconfig":   "[core]\n\thooksPath = blocked\n",
 		"internal/model/testdata/fixture.go":            "package fixture\n",
@@ -371,12 +481,12 @@ func writeLayoutFile(t *testing.T, root, relative, content string) {
 }
 
 func TestTransitionalFoundationPathIsExact(t *testing.T) {
-	for _, name := range []string{"internal/model/model.go", "internal/snapshot/tree.go", "internal/organization/x.go", "internal/realization/x.go", "internal/apply/model.go", "internal/testkit/testkit.go", "internal/testkit/testdata/hostile.gitconfig"} {
+	for _, name := range []string{"internal/model/model.go", "internal/snapshot/tree.go", "internal/organization/x.go", "internal/realization/x.go", "internal/apply/model.go", "internal/adapters/gitrepo/repository.go", "internal/testkit/testkit.go", "internal/testkit/testdata/hostile.gitconfig"} {
 		if !isTransitionalFoundationPath(name) {
 			t.Errorf("foundation path %q was rejected", name)
 		}
 	}
-	for _, name := range []string{"internal/modeling/x.go", "internal/apply-extra/x.go", "internal/adapters/x.go", "src/internal/model/model.go"} {
+	for _, name := range []string{"internal/modeling/x.go", "internal/apply-extra/x.go", "internal/adapters/x.go", "internal/adapters/gitrepo-extra/repository.go", "src/internal/model/model.go"} {
 		if isTransitionalFoundationPath(name) {
 			t.Errorf("unsupported foundation path %q was accepted", name)
 		}

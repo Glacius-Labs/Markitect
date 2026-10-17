@@ -39,6 +39,12 @@ packages:
     purpose: Captures or previews selected source inputs and compiles their original model bytes through consumer-owned ports.
     doc: docs/design/canonical-model/manager-apply-go-architecture.md#organize-by-responsibility
 
+  # --- apply-adapter ------------------------------------------------------
+  - path: internal/adapters/gitrepo
+    layer: apply-adapter
+    purpose: Acquires explicit committed or preview source inputs with manifest preflight, repository census and comparison guards.
+    doc: docs/design/canonical-model/manager-apply-go-architecture.md#organize-by-responsibility
+
   # --- core ---------------------------------------------------------------
   - path: src/internal/core
     layer: core
