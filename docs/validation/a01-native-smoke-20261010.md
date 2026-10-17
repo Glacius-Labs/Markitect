@@ -68,4 +68,4 @@ Across the series, cumulative partial accounting was 184 combined requests, 180 
 | Rework order | 26 | Parent integration review re-ran before queued child rework, until the review limit was exhausted | Queued child rework runs first |
 | CRLF bytes | 25, 27 | LF Git bytes against CRLF worktree bytes in helper assertions and Apply preflight | Comparison through the Git clean filter; exercised by attempt 28 |
 
-The [Product Readiness lessons survey](../work-items/surveys/product-readiness-lessons-20261010.md) turns these causes into known limits per area and names the backlog packages they inform.
+The [Product Readiness lessons survey](../history/surveys/product-readiness-lessons-20261010.md) turns these causes into known limits per area and names the backlog packages they inform.

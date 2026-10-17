@@ -1,6 +1,6 @@
 # Operations
 
-Current source provides canonical v1 read-only preparation and a guarded generated model view. [Project operations](project-operations.md) is the command reference; [distribution](../integration/README.md) owns separate maintenance packaging and publication. Dated evidence retains its original source/environment scope in the [production assessment](production-assessment.md).
+Current source provides canonical v1 read-only preparation and a guarded generated model view. [Project operations](project-operations.md) is the command reference; [distribution](../integration/README.md) owns separate maintenance packaging and publication. Dated evidence retains its original source/environment scope in the [production assessment](history/distribution/production-assessment.md).
 
 ## Authoring and checking
 

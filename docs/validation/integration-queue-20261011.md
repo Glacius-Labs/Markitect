@@ -1,6 +1,6 @@
 # Integration queue — 11–12 October 2026
 
-This record continues the dated [session handoff](../development/session-handoff.md). The owner delegated review, repairs and normal integration of its six open PRs to the integrator. Source checks, independent scoped review, provider runs, method measurements and human acceptance remain distinct. Historical and dirty worktrees were preserved; no release or provider run was performed.
+This record continues the dated [session handoff](../history/handoffs/session-handoff.md). The owner delegated review, repairs and normal integration of its six open PRs to the integrator. Source checks, independent scoped review, provider runs, method measurements and human acceptance remain distinct. Historical and dirty worktrees were preserved; no release or provider run was performed.
 
 ## Original queue
 

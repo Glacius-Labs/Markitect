@@ -1,6 +1,6 @@
 # Verb table
 
-Specification for backlog CLI-01, 10 October 2026, against main `a98921cc`. It implements register [DEC-017](../concepts/register.md#dec-017-command-model-top-level-verbs-from-one-verb-table) and the command consequences of [DEC-014](../concepts/register.md#dec-014-compatibility-does-not-drive-decisions). Its input is the [CLI, MCP and App Server survey](../work-items/surveys/cli-mcp-app-server-20261010.md).
+Specification for backlog CLI-01, 10 October 2026, against main `a98921cc`. It implements register [DEC-017](../concepts/register.md#dec-017-command-model-top-level-verbs-from-one-verb-table) and the command consequences of [DEC-014](../concepts/register.md#dec-014-compatibility-does-not-drive-decisions). Its input is the [CLI, MCP and App Server survey](../history/surveys/cli-mcp-app-server-20261010.md).
 
 This is the historical design for the command transition. The temporary `markitect-legacy` split used during implementation is retired with ARCH-09; release preparation uses `markitect-release`. The tables below preserve the staged design rather than establish current implementation or acceptance. [Project operations](../project-operations.md) and [Project workflow](../project-workflow.md) own the current command contract; the [backlog](https://github.com/Glacius-Labs/Markitect/blob/bc4b49e76f9b9e4b3ec98033a0b8c73d5013b310/docs/work-items/backlog.yaml) owns package status and evidence.
 

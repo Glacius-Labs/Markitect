@@ -749,7 +749,7 @@ The ideas below come from the owner's contributions of 9 October 2026. The produ
 
 - **Status:** Owner idea (Ideas `IDEA-20261009-011`; Concepts C26).
 - **Idea:** While implementing, a Manager can bring a case to court, escalate it or report it.
-- **Related:** The [operating methodology](../operating-methodology.md#the-change-and-reconciliation-cycle) already returns unresolved intent, ownership or authority to its owner. This idea adds a case procedure.
+- **Related:** The [operating methodology](../vision.md#the-delegated-method) already returns unresolved intent, ownership or authority to its owner. This idea adds a case procedure.
 - **Source:** [decision-framework ideas](sources/concepts-chat-20261009/decision-framework-ideas-20261009.md)
 
 ### IDEA-008 Configurable local priorities at every level

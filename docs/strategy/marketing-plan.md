@@ -101,7 +101,7 @@ The destination is a clean, uniform and understandable repository without drift,
 | Product purpose | [Vision](../vision.md#markitect-in-brief) and [origin](../concepts/origin-and-rationale.md) | What Markitect is being built to do. |
 | Current executable behavior | [Workflow](../project-workflow.md), [Architecture](../architecture.md) and the exact source being shown | What the demonstrated revision actually does. |
 | Manager and Apply behavior | [Apply concept](../design/canonical-model/manager-apply-concept.md) and implementation evidence | Target behavior until demonstrated by the actual product. |
-| Published installation | [Production assessment](../production-assessment.md) and the fixed release | Name the release and its product generation. |
+| Published installation | [Production assessment](../history/distribution/production-assessment.md) and the fixed release | Name the release and its product generation. |
 | Model fidelity, repository quality and freedom from routine human implementation review | [Measurement](../measurement.md) and the relevant source-bound result | Target until demonstrated; examine realization quality, omissions and human intervention over repeated changes. |
 
 At the preparation baseline, Apply returns unavailable. Container and session foundations or a provider handshake do not establish recursive product execution. A generated project view is a readable model, not proof that the repository fulfills it.
