@@ -21,7 +21,7 @@ func (r *registryPreparation) invalid(source snapshot.Path, node *yaml.Node, cod
 }
 
 func (r *registryPreparation) registryYAML(source snapshot.Path, node *yaml.Node) {
-	if node.Kind == yaml.AliasNode || node.Alias != nil || node.Anchor != "" || strings.HasPrefix(node.Tag, "!") && !strings.HasPrefix(node.Tag, "!!") {
+	if node.Kind == yaml.AliasNode || node.Alias != nil || node.Anchor != "" || node.Tag != "" && !strings.HasPrefix(node.Tag, "!!") {
 		r.invalid(source, node, "registry.yaml_feature", "Registry YAML cannot use aliases, anchors or custom tags.")
 		return
 	}
