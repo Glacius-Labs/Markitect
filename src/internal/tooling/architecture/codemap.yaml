@@ -40,6 +40,14 @@ packages:
     doc: docs/design/canonical-model/manager-apply-go-architecture.md#organize-by-responsibility
 
   # --- apply-adapter ------------------------------------------------------
+  - path: internal/adapters/checks
+    layer: apply-adapter
+    purpose: Observes pinned Check process-profile file metadata without executing checks.
+    doc: docs/design/canonical-model/manager-apply-go-architecture.md#organize-by-responsibility
+  - path: internal/adapters/codexappserver
+    layer: apply-adapter
+    purpose: Observes pinned Codex executable and schema file metadata without starting a process.
+    doc: docs/design/canonical-model/manager-apply-go-architecture.md#organize-by-responsibility
   - path: internal/adapters/gitrepo
     layer: apply-adapter
     purpose: Acquires explicit committed or preview source inputs with manifest preflight, repository census and comparison guards.

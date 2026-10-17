@@ -50,6 +50,8 @@ func TestTransitionalFoundationsMatchLiveAndFixedSourceArchives(t *testing.T) {
 		"internal/organization/organization.go",
 		"internal/realization/realization.go",
 		"internal/apply/model.go",
+		"internal/adapters/checks/profile.go",
+		"internal/adapters/codexappserver/metadata.go",
 		"internal/adapters/gitrepo/repository.go",
 		"internal/testkit/testkit.go",
 		"internal/testkit/testdata/hostile.gitconfig",
@@ -72,7 +74,19 @@ func TestTransitionalFoundationsMatchLiveAndFixedSourceArchives(t *testing.T) {
 	if got := string(contents["internal/adapters/gitrepo/repository.go"]); got != "package gitrepo\n// fixture source\n" {
 		t.Fatalf("archived nested adapter source = %q; want exact input bytes", got)
 	}
+	if got := string(contents["internal/adapters/checks/profile.go"]); got != "package checks\n// fixture source\n" {
+		t.Fatalf("archived Check adapter source = %q; want exact input bytes", got)
+	}
+	if got := string(contents["internal/adapters/codexappserver/metadata.go"]); got != "package codexappserver\n// fixture source\n" {
+		t.Fatalf("archived Codex metadata source = %q; want exact input bytes", got)
+	}
 	fixedSnapshot := fixedSourceSnapshot(t, root)
+	if got := fixedSnapshot.Modes["internal/adapters/codexappserver/metadata.go"]; got != "100644" {
+		t.Fatalf("fixed Codex metadata mode = %q; want regular-file mode", got)
+	}
+	if got := fixedSnapshot.Modes["internal/adapters/checks/profile.go"]; got != "100644" {
+		t.Fatalf("fixed Check adapter mode = %q; want regular-file mode", got)
+	}
 	if got := fixedSnapshot.Modes["internal/adapters/gitrepo/repository.go"]; got != "100644" {
 		t.Fatalf("fixed nested adapter mode = %q; want regular-file mode", got)
 	}
@@ -147,7 +161,7 @@ func TestTransitionalTestkitPathsStayBoundedAndRegular(t *testing.T) {
 	}
 }
 
-func TestTransitionalGitRepoPackageIsTheOnlyNestedAdaptersRoot(t *testing.T) {
+func TestTransitionalAdaptersPackagesAreTheOnlyNestedAdaptersRoots(t *testing.T) {
 	tests := []struct {
 		name   string
 		change func(string)
@@ -157,6 +171,12 @@ func TestTransitionalGitRepoPackageIsTheOnlyNestedAdaptersRoot(t *testing.T) {
 		}},
 		{"unknown adapter sibling", func(root string) {
 			writeLayoutFile(t, root, "internal/adapters/other/repository.go", "package other\n")
+		}},
+		{"similarly named checks package", func(root string) {
+			writeLayoutFile(t, root, "internal/adapters/checks-extra/profile.go", "package checksextra\n")
+		}},
+		{"similarly named Codex package", func(root string) {
+			writeLayoutFile(t, root, "internal/adapters/codexappserver-extra/metadata.go", "package codexextra\n")
 		}},
 		{"similarly named adapter package", func(root string) {
 			writeLayoutFile(t, root, "internal/adapters/gitrepo-extra/repository.go", "package gitrepoextra\n")
@@ -189,8 +209,10 @@ func TestTransitionalGitRepoPackageIsTheOnlyNestedAdaptersRoot(t *testing.T) {
 
 func TestLiveRejectsEmptyAdaptersContainer(t *testing.T) {
 	root := transitionalSourceFixture(t)
-	if err := os.RemoveAll(filepath.Join(root, "internal", "adapters", "gitrepo")); err != nil {
-		t.Fatal(err)
+	for _, packageName := range []string{"checks", "codexappserver", "gitrepo"} {
+		if err := os.RemoveAll(filepath.Join(root, "internal", "adapters", packageName)); err != nil {
+			t.Fatal(err)
+		}
 	}
 	if _, err := collect(root); err == nil || !strings.Contains(err.Error(), "incomplete") {
 		t.Fatalf("live packaging accepted an incomplete adapters container: %v", err)
@@ -202,8 +224,10 @@ func TestLiveRejectsEmptyAdaptersContainer(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if _, ok := files["internal/adapters/gitrepo/repository.go"]; ok {
-		t.Fatal("fixed snapshot invented source beneath the empty adapters container")
+	for name := range files {
+		if strings.HasPrefix(name, "internal/adapters/") {
+			t.Fatalf("fixed snapshot invented source beneath the empty adapters container: %s", name)
+		}
 	}
 }
 
@@ -428,6 +452,8 @@ func transitionalSourceFixture(t *testing.T) string {
 		"internal/organization/organization.go":         "package organization\n",
 		"internal/realization/realization.go":           "package realization\n",
 		"internal/apply/model.go":                       "package apply\n",
+		"internal/adapters/checks/profile.go":           "package checks\n// fixture source\n",
+		"internal/adapters/codexappserver/metadata.go":  "package codexappserver\n// fixture source\n",
 		"internal/adapters/gitrepo/repository.go":       "package gitrepo\n// fixture source\n",
 		"internal/testkit/testkit.go":                   "package testkit\n",
 		"internal/testkit/testdata/hostile.gitconfig":   "[core]\n\thooksPath = blocked\n",
@@ -481,12 +507,12 @@ func writeLayoutFile(t *testing.T, root, relative, content string) {
 }
 
 func TestTransitionalFoundationPathIsExact(t *testing.T) {
-	for _, name := range []string{"internal/model/model.go", "internal/snapshot/tree.go", "internal/organization/x.go", "internal/realization/x.go", "internal/apply/model.go", "internal/adapters/gitrepo/repository.go", "internal/testkit/testkit.go", "internal/testkit/testdata/hostile.gitconfig"} {
+	for _, name := range []string{"internal/model/model.go", "internal/snapshot/tree.go", "internal/organization/x.go", "internal/realization/realization.go", "internal/apply/model.go", "internal/adapters/checks/profile.go", "internal/adapters/codexappserver/metadata.go", "internal/adapters/gitrepo/repository.go", "internal/testkit/testkit.go", "internal/testkit/testdata/hostile.gitconfig"} {
 		if !isTransitionalFoundationPath(name) {
 			t.Errorf("foundation path %q was rejected", name)
 		}
 	}
-	for _, name := range []string{"internal/modeling/x.go", "internal/apply-extra/x.go", "internal/adapters/x.go", "internal/adapters/gitrepo-extra/repository.go", "src/internal/model/model.go"} {
+	for _, name := range []string{"internal/modeling/x.go", "internal/apply-extra/x.go", "internal/adapters/x.go", "internal/adapters/checks-extra/profile.go", "internal/adapters/codexappserver-extra/metadata.go", "internal/adapters/gitrepo-extra/repository.go", "src/internal/model/model.go"} {
 		if isTransitionalFoundationPath(name) {
 			t.Errorf("unsupported foundation path %q was accepted", name)
 		}
