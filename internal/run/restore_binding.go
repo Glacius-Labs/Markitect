@@ -53,6 +53,9 @@ func decodeBindingRecord(p Payload) (bindingWire, int64, error) {
 	if err := strictJSON(p.Bytes(), &w); err != nil || w.Version != 1 || !w.Source.valid() || !w.OwnerRequest.Valid() {
 		return bindingWire{}, 0, ErrInvalid
 	}
+	if _, err := matchRawClosure(w.ModelInput, w.Compilation); err != nil {
+		return bindingWire{}, 0, err
+	}
 	// Rebuild topology through its producer from the stored compiled inventory
 	// and local identities. This validates ancestry/order and gives the same
 	// structural review floor without interpreting the original model anew.

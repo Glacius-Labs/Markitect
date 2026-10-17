@@ -2,6 +2,11 @@ package run_test
 
 import (
 	"bytes"
+	"context"
+	"crypto/sha256"
+	"encoding/json"
+	"errors"
+	"fmt"
 	"reflect"
 	"testing"
 	"time"
@@ -92,6 +97,230 @@ func TestBindingFixesCompleteInputsAndOwnsOriginalBytes(t *testing.T) {
 	if !bytes.Equal(original, b.Payload().Bytes()) || !b.Valid() {
 		t.Fatal("binding aliases caller/view data")
 	}
+}
+
+// Only the fields under test are decoded. RawMessage preserves every other
+// closed field verbatim and in its original order; the round-trip control below
+// proves malformed probes are not rejected merely for a different JSON shape.
+type closureRecord struct {
+	Version                                                                                                                 uint32
+	Source, OwnerRequest                                                                                                    json.RawMessage
+	ModelInput                                                                                                              model.Input
+	Compilation                                                                                                             []closureScope
+	Managers, Settings, Ceilings, Profiles, Documents, Census, Registry, Classifications, Protections, Policy, PolicySource json.RawMessage
+}
+type closureScope struct {
+	ID, Digest string
+	Local      bool
+	Manifest   model.Source
+	Canonical  []byte
+	Packages   []model.Package
+}
+
+func rewrittenPreparation(t *testing.T, batch run.AppendBatch, basis run.BlobRef) run.AppendBatch {
+	t.Helper()
+	return alteredBatch(t, batch, func(w *struct {
+		Version          uint32
+		ID               string
+		ExpectedRevision uint64
+		Events           []run.Event
+	}) {
+		w.ID = "new-prepare"
+		for n := range w.Events {
+			e := &w.Events[n]
+			e.Body.ID = w.ID
+			e.Body.Basis = basis
+			data, err := json.Marshal(e.Body)
+			if err != nil {
+				t.Fatal(err)
+			}
+			suffix := byte(1)
+			if e.Kind == "assignment.created" {
+				suffix = 0
+			}
+			// Offer a newly identified v1 record, including fresh event identities.
+			// The test does not preserve or try to bypass any old content hash.
+			e.ID = fmt.Sprintf("%x", sha256.Sum256(append(data, suffix)))
+		}
+	})
+}
+
+func TestRecordedRawClosureMustMatchCompiledManifestReferences(t *testing.T) {
+	i := fixture(t)
+	basis, err := run.Bind(i)
+	if err != nil {
+		t.Fatal(err)
+	}
+	c, _ := run.NewCoordinator("repo")
+	proposal, err := c.Propose(run.PrepareCommand("prepare", "a", "r", "", observed, basis))
+	if err != nil {
+		t.Fatal(err)
+	}
+	manifestEntry := func(t *testing.T, raw *model.SourceModel) *model.Entry {
+		t.Helper()
+		for n := range raw.Entries {
+			if raw.Entries[n].Path == raw.ManifestPath {
+				return &raw.Entries[n]
+			}
+		}
+		t.Fatal("fixture lacks selected manifest")
+		return nil
+	}
+	cases := map[string]func(*closureRecord){
+		"unchanged":                  func(*closureRecord) {},
+		"zero input":                 func(w *closureRecord) { w.ModelInput = model.Input{} },
+		"missing root":               func(w *closureRecord) { w.ModelInput.Root = model.SourceModel{} },
+		"missing dependency":         func(w *closureRecord) { w.ModelInput.Dependencies = w.ModelInput.Dependencies[:1] },
+		"duplicate raw source":       func(w *closureRecord) { w.ModelInput.Dependencies[1] = w.ModelInput.Dependencies[0] },
+		"duplicate compiled mapping": func(w *closureRecord) { w.Compilation[2].Manifest = w.Compilation[1].Manifest },
+		"root selection mismatch": func(w *closureRecord) {
+			w.ModelInput.Root, w.ModelInput.Dependencies[0] = w.ModelInput.Dependencies[0], w.ModelInput.Root
+		},
+		"local flag mismatch":             func(w *closureRecord) { w.Compilation[0].Local = false },
+		"manifest origin mismatch":        func(w *closureRecord) { w.Compilation[0].Manifest.Origin = "other-origin" },
+		"manifest path mismatch":          func(w *closureRecord) { w.Compilation[0].Manifest.Path = "other/model.yaml" },
+		"selected manifest path mismatch": func(w *closureRecord) { w.ModelInput.Root.ManifestPath = "other/model.yaml" },
+		"manifest digest mismatch":        func(w *closureRecord) { w.Compilation[0].Manifest.Digest = "sha256:wrong" },
+		"missing manifest original": func(w *closureRecord) {
+			var entries []model.Entry
+			for _, e := range w.ModelInput.Root.Entries {
+				if e.Path != w.ModelInput.Root.ManifestPath {
+					entries = append(entries, e)
+				}
+			}
+			w.ModelInput.Root.Entries = entries
+		},
+		"changed manifest original": func(w *closureRecord) {
+			e := manifestEntry(t, &w.ModelInput.Root)
+			e.Bytes = append([]byte("# changed original\n"), e.Bytes...)
+		},
+		"nonregular manifest original": func(w *closureRecord) { manifestEntry(t, &w.ModelInput.Root).Kind = model.Directory },
+		"duplicate manifest original": func(w *closureRecord) {
+			e := *manifestEntry(t, &w.ModelInput.Root)
+			w.ModelInput.Root.Entries = append(w.ModelInput.Root.Entries, e)
+		},
+	}
+	for name, change := range cases {
+		t.Run(name, func(t *testing.T) {
+			var w closureRecord
+			if err := json.Unmarshal(basis.Payload().Bytes(), &w); err != nil {
+				t.Fatal(err)
+			}
+			original, err := json.Marshal(w)
+			if err != nil || !bytes.Equal(original, basis.Payload().Bytes()) {
+				t.Fatal("test codec changed closed record shape", err)
+			}
+			change(&w)
+			data, err := json.Marshal(w)
+			if err != nil {
+				t.Fatal(err)
+			}
+			payload, err := run.NewPayload(basis.Ref().MediaType, basis.Ref().Encoding, data)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if !payload.Valid() {
+				t.Fatal("probe lacks a correct new byte identity")
+			}
+			batch := rewrittenPreparation(t, proposal.Batch(), payload.Ref())
+			t.Run("BindingOwnerRef", func(t *testing.T) {
+				ref, err := run.BindingOwnerRef(payload)
+				if name == "unchanged" {
+					if err != nil || ref != i.OwnerRequest.Ref() {
+						t.Fatal("valid historical record changed", err)
+					}
+				} else if !errors.Is(err, run.ErrInvalid) {
+					t.Fatal("inconsistent raw closure accepted", err)
+				}
+			})
+			t.Run("Restore", func(t *testing.T) {
+				// Persist the newly identified offered record directly, independently
+				// of Bind/Append admission, as an adversarial physical read can do.
+				store := journal()
+				store.blobs[payload.Ref()] = payload
+				store.blobs[i.OwnerRequest.Ref()] = i.OwnerRequest
+				store.batches = []run.AppendBatch{batch}
+				store.head = batch.Revision()
+				reads := &readJournal{store: store}
+				out, err := run.Restore(context.Background(), reads, "repo", restoreLimits)
+				if reads.writes != 0 {
+					t.Fatal("reconstruction wrote history")
+				}
+				if name == "unchanged" {
+					if err != nil || out == nil || out.Current().State != run.Prepared || out.Budget().Consumed.Runs != 1 {
+						t.Fatal("valid historical preparation not reconstructed", err)
+					}
+				} else if !errors.Is(err, run.ErrInvalid) || out != nil {
+					t.Fatal("inconsistent raw closure became executable", err)
+				}
+			})
+		})
+	}
+}
+
+func TestBindUsesTheSameRawClosureReferenceChecks(t *testing.T) {
+	for name, change := range map[string]func(*run.BindingInput){
+		"zero input":       func(i *run.BindingInput) { i.ModelInput = model.Input{} },
+		"duplicate source": func(i *run.BindingInput) { i.ModelInput.Dependencies[1] = i.ModelInput.Dependencies[0] },
+		"duplicate mapping": func(i *run.BindingInput) {
+			i.Compilation.Models[2].Manifest = i.Compilation.Models[1].Manifest
+			i.Compilation.Models[2].Origin = i.Compilation.Models[1].Origin
+		},
+		"wrong root": func(i *run.BindingInput) {
+			i.ModelInput.Root, i.ModelInput.Dependencies[0] = i.ModelInput.Dependencies[0], i.ModelInput.Root
+		},
+		"missing original": func(i *run.BindingInput) {
+			var entries []model.Entry
+			for _, e := range i.ModelInput.Root.Entries {
+				if e.Path != i.ModelInput.Root.ManifestPath {
+					entries = append(entries, e)
+				}
+			}
+			i.ModelInput.Root.Entries = entries
+		},
+		"duplicate original": func(i *run.BindingInput) {
+			for _, e := range i.ModelInput.Root.Entries {
+				if e.Path == i.ModelInput.Root.ManifestPath {
+					i.ModelInput.Root.Entries = append(i.ModelInput.Root.Entries, e)
+					return
+				}
+			}
+		},
+	} {
+		t.Run(name, func(t *testing.T) {
+			i := fixture(t)
+			change(&i)
+			b, err := run.Bind(i)
+			if !errors.Is(err, run.ErrInvalid) || b.Valid() {
+				t.Fatal("inconsistent source references prepared", err)
+			}
+		})
+	}
+}
+
+func TestRawClosureMatchesExactOriginAndManifestPair(t *testing.T) {
+	i := fixtureWith(t, func(input *model.Input) {
+		rename := func(source *model.SourceModel, prefix string) {
+			source.Origin = "shared-opaque-origin"
+			source.ManifestPath = prefix + "/" + source.ManifestPath
+			for n := range source.Entries {
+				source.Entries[n].Path = prefix + "/" + source.Entries[n].Path
+			}
+		}
+		rename(&input.Root, "root")
+		for n := range input.Dependencies {
+			rename(&input.Dependencies[n], fmt.Sprintf("dependency-%d", n))
+		}
+	}, nil)
+	b, err := run.Bind(i)
+	if err != nil {
+		t.Fatal("distinct manifest paths under one opaque Origin refused", err)
+	}
+	c, _ := run.NewCoordinator("repo")
+	j := journal()
+	commit(t, c, j, run.PrepareCommand("prepare", "a", "r", "", observed, b))
+	c2 := restored(t, &readJournal{store: j})
+	sameProjection(t, c, c2)
 }
 
 func TestBindingRequiresCompleteProducerAccounting(t *testing.T) {
