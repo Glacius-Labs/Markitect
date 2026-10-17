@@ -18,8 +18,9 @@ type ExecutionPorts struct {
 	Workspaces run.Workspaces
 	Checks     run.Checks
 	Publisher  Publisher
-	// Profile returns the session profile of a Manager's role.
-	Profile func(manager, role string) (run.SessionProfile, error)
+	// Profile returns the session profile of one step; RoleProfile names the
+	// prepared profile it is built from.
+	Profile func(run.ProfileRequest) (run.SessionProfile, error)
 	// CheckRequest builds the request of one configured check from its check
 	// profile; the tree is filled in by run.
 	CheckRequest func(CheckSelection) (run.CheckRequest, error)

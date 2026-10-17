@@ -35,6 +35,15 @@ type EngineLimits struct {
 	Record                    realization.CandidateRecordLimits
 }
 
+// ProfileRequest asks for the session profile of one step: the Manager, the
+// role, the phase and whether its workspace is read-only, so that an adapter
+// offers only the tools the step may use.
+type ProfileRequest struct {
+	Manager, Role string
+	Phase         Phase
+	ReadOnly      bool
+}
+
 // EngineConfig supplies everything the engine needs from the application.
 type EngineConfig struct {
 	Coordinator *Coordinator
@@ -46,7 +55,7 @@ type EngineConfig struct {
 	// by name; their trees are filled in by the engine.
 	ReviewChecks map[string]CheckRequest
 	Preparation  StepPreparation
-	Profile      func(manager, role string) (SessionProfile, error)
+	Profile      func(ProfileRequest) (SessionProfile, error)
 	Clock        func() time.Time
 	Limits       EngineLimits
 }
@@ -359,7 +368,7 @@ func (e *Engine) Advance(ctx context.Context) (bool, error) {
 		return true, errors.Join(errStep, err)
 	}
 	role, purpose := stepRole(item.Phase)
-	profile, err := e.cfg.Profile(item.Manager, role)
+	profile, err := e.cfg.Profile(ProfileRequest{Manager: item.Manager, Role: role, Phase: item.Phase, ReadOnly: !item.Phase.writing()})
 	if err != nil {
 		return true, err
 	}

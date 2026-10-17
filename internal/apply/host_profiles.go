@@ -26,12 +26,14 @@ type CheckProfilePreparer interface {
 }
 
 // ProfileInput can only be produced from an acquired Host document by Apply.
-// Inline returns the selected adapter section, never a whole catalog to parse.
+// Section names the selected adapter section (codexAppServer or claudeCode
+// for an Agent, process or container for a check); Inline returns that
+// section, never a whole catalog to parse.
 type ProfileInput struct {
-	document               SourceFile
-	namespace, name, field string
-	inline                 *yaml.Node
-	instructions           []SourceFile
+	document                        SourceFile
+	namespace, name, section, field string
+	inline                          *yaml.Node
+	instructions                    []SourceFile
 }
 
 // ProfileBinding is an opaque comparison value for the exact supplied request.
@@ -43,6 +45,7 @@ func (p ProfileInput) Document() SourceFile       { return p.document }
 func (p ProfileInput) Location() SourceLocation   { return p.document.Location }
 func (p ProfileInput) Namespace() string          { return p.namespace }
 func (p ProfileInput) Name() string               { return p.name }
+func (p ProfileInput) Section() string            { return p.section }
 func (p ProfileInput) Field() string              { return p.field }
 func (p ProfileInput) Inline() *yaml.Node         { return cloneHostNode(p.inline) }
 func (p ProfileInput) Instructions() []SourceFile { return slices.Clone(p.instructions) }
@@ -114,13 +117,24 @@ type AgentImageObservation struct {
 	RecordedCodexSchemaDigest string
 }
 
+// CheckImageObservation binds a container check to its immutable engine image
+// ID and to the executable it runs: Executable identifies the actual whole
+// bytes of that regular file inside the image, by its canonical absolute POSIX
+// path. It is observed from the image, never from a Host file, and grants no
+// process or execution authority.
+type CheckImageObservation struct {
+	ImageID    string
+	Executable AgentImageMetadataFile
+}
+
 // ProfileObservation is static evidence supplied by a port, not a runtime
 // capability or a provider DTO. InputBinding echoes ProfileInput.Binding();
 // Passed without that exact echo is rejected. Contract identifies the concrete
 // validation contract and its version. Passed requires exactly one evidence
-// mode: AgentImage for an Agent, or historical executable Files and complete
-// agent schema Inventories. Checks retain their file metadata contract and
-// cannot supply AgentImage. Instructions select only captured inputs;
+// mode: AgentImage for an Agent, whose provider matches its section, or
+// historical executable Files and complete agent schema Inventories for a
+// codexAppServer section; CheckImage for a container check, or executable
+// Files for a process check. Instructions select only captured inputs;
 // RequiredInstructions requests a NEW complete acquisition. Apply computes the
 // identity itself; callers cannot supply an arbitrary profile identity.
 type ProfileObservation struct {
@@ -128,6 +142,7 @@ type ProfileObservation struct {
 	Status               model.Status
 	Contract             ProfileContract
 	AgentImage           *AgentImageObservation `json:",omitempty"`
+	CheckImage           *CheckImageObservation `json:",omitempty"`
 	Files                []ProfileMetadataFile
 	Inventories          []ProfileMetadataInventory
 	Instructions         []SourceLocation

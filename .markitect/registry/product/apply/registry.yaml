@@ -44,6 +44,10 @@ artifacts:
     form: test
     realizes: [product/ports-and-adapters]
     why: Checks a whole first Apply through controlled ports, up to publication and a stale source.
+  - path: "internal/apply/host_profiles_sections_test.go"
+    form: test
+    realizes: [product/apply/read-only-preparation]
+    why: Checks that each profile selects one adapter section and binds the image evidence of that section.
   - path: "internal/apply/registry_encode.go"
     form: code
     realizes: [product/ports-and-adapters]

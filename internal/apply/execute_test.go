@@ -177,7 +177,7 @@ func executionPorts(t *testing.T, publisher *executionPublisher, checks *executi
 	clock := time.Date(2026, 10, 17, 9, 0, 0, 0, time.UTC)
 	return apply.ExecutionPorts{
 		Sessions: &executionSessions{t: t}, Workspaces: &executionWorkspaces{trees: map[run.WorkspaceID]snapshot.Tree{}}, Checks: checks, Publisher: publisher,
-		Profile: func(string, string) (run.SessionProfile, error) {
+		Profile: func(run.ProfileRequest) (run.SessionProfile, error) {
 			return run.SessionProfile{ImageID: "sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef", CredentialRef: "credential-ref", Profile: profile, MaxWireBytes: 1 << 20}, nil
 		},
 		CheckRequest: func(s apply.CheckSelection) (run.CheckRequest, error) {
