@@ -1,7 +1,62 @@
 # Check adapter
 
-`MetadataPreparer` observes the existing closed static Check profile format. It
-does not run the executable or establish runtime capability.
+`MetadataPreparer` observes closed static Check profiles. Its zero value retains
+the existing `process/v1` Host executable metadata format. Compose
+`NewMetadataPreparer(NewEngineImageReader)` for `container/v1`; the selected
+`ProfileInput.Section()` dispatches the adapter. Preparation does not run the
+executable or establish runtime capability.
+
+## Container Host profile
+
+The selected Host check profile uses exactly one `container` section. Every
+field below is required; empty prefix and environment lists must be explicit.
+The example engine path is a literal Windows path; other Hosts supply their
+literal native absolute engine path.
+
+```yaml
+checkProfiles:
+  library-tests:
+    container:
+      profileVersion: 1
+      engineExecutable: 'C:\Program Files\Docker\Docker\resources\bin\docker.exe'
+      imageID: sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+      executable: /usr/local/bin/python3
+      argumentPrefix: ["-m", "unittest"]
+      env: ["PYTHONDONTWRITEBYTECODE=1"]
+      limits:
+        milliCPUs: 1000
+        memoryBytes: 268435456
+        processes: 64
+      maxOutputBytes: 1048576
+```
+
+The image ID must be an immutable lowercase engine SHA-256 ID, never a tag.
+The executable must be a clean absolute POSIX path inside that image. Arguments
+and environment values remain literal; environment keys must be unique portable
+variable names. Resource limits must be positive; output is bounded to at most
+64 MiB. Unknown fields, missing fields and wrong types refuse preparation before
+acquisition. No engine, image, argument, environment or bound is inferred.
+
+The explicit reader factory receives only the captured `engineExecutable`.
+The production reader inspects the exact image ID, then streams the entire
+regular executable file through `Engine.ObserveImageFile` from a temporary
+container that never starts. Observation is bounded to 512 MiB and retains the
+actual SHA-256 and positive size. Failed observation, cancellation or failed
+cleanup cannot produce passing evidence. The executable is never read from a
+Host path, and the separate 1 MiB metadata reader is not used for it.
+
+Passing preparation returns contract `markitect.container-check` version `1`,
+the exact input binding, and `CheckImage` evidence with image ID and executable
+path, actual whole-file digest and size. It supplies no Host file evidence.
+The source-bound configuration and this evidence participate in Apply's profile
+identity; they establish static metadata only.
+
+`ContainerProfileFromPrepared(prepared)` requires complete preparation and
+rechecks its namespace, `container` section, input binding, exact contract,
+captured configuration, image ID and executable evidence. It projects the
+captured prefix, environment and bounds into `ContainerProfile` without another
+observation. The application checks its engine composition against the captured
+`engineExecutable` and selects this profile for the declared check.
 
 `ContainerProfile.Request(check, tree)` projects explicit Host-supplied container
 values and an `apply.ExecutionCheck` into the existing `run.CheckRequest`. The
@@ -12,12 +67,14 @@ The helper copies argument/environment slices and refuses incomplete or invalid
 requests before effects, using the request and runner's existing conditions.
 It supplies no defaults and does not inspect the Host environment.
 
-This pure value is not a Host document format or an acquired profile binding.
-It does not translate the existing host-executable `process/v1` metadata or
-certify an image. A future source-bound Host decoder must select and validate
-the explicit configuration before calling this helper. Source tests connect the
-projected request to the existing runner with controlled runtime/workspace peers;
-they establish no actual container or Apply execution.
+The pure value can also be supplied explicitly by an application; that alone
+does not establish an acquired profile binding. `process/v1` metadata does not
+translate to container execution. Source tests cover actual Apply acquisition
+and preparation with controlled image readers and connect projected requests to
+the existing runner with controlled runtime/workspace peers. They establish no
+actual container or Apply execution.
+
+## Check execution
 
 `NewRunner(engine, workspaces)` implements `run.Checks` with the container engine
 and a separately configured `run.Workspaces` adapter. The application supplies
