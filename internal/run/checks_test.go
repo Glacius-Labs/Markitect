@@ -63,8 +63,10 @@ func TestOnlyAnObservedZeroExitOfTheSameRequestPasses(t *testing.T) {
 		"no exit":     func(r *run.CheckReceipt) { r.Exited = false },
 		"no start":    func(r *run.CheckReceipt) { r.Started = false },
 		"other check": func(r *run.CheckReceipt) { r.ID = "other" },
-		"other image": func(r *run.CheckReceipt) { r.ImageID = "sha256:ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff" },
-		"other tree":  func(r *run.CheckReceipt) { r.Tree = snapshot.TreeID{1} },
+		"other image": func(r *run.CheckReceipt) {
+			r.ImageID = "sha256:ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+		},
+		"other tree": func(r *run.CheckReceipt) { r.Tree = snapshot.TreeID{1} },
 	} {
 		r := pass
 		edit(&r)
