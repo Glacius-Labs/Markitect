@@ -88,8 +88,15 @@ func (p *PreparedProfile) validateObservation() {
 	if o.AgentImage != nil {
 		p.validateAgentImage()
 	}
-	if o.Status == model.Passed && o.AgentImage == nil && (len(o.Files) == 0 || p.input.namespace == "agentProfiles" && len(o.Inventories) == 0) {
+	if o.CheckImage != nil {
+		p.validateCheckImage()
+	}
+	image := o.AgentImage != nil || o.CheckImage != nil
+	if o.Status == model.Passed && !image && (len(o.Files) == 0 || p.input.namespace == "agentProfiles" && len(o.Inventories) == 0) {
 		p.problem(model.Failed, "metadata_missing", "Passed requires executable metadata and agent schema inventories.")
+	}
+	if o.Status == model.Passed && !image && (p.input.section == "claudeCode" || p.input.section == "container") {
+		p.problem(model.Failed, "image_missing", "A claudeCode or container profile is bound to its image, not to Host files.")
 	}
 	count := len(o.Files)
 	for _, inventory := range o.Inventories {
@@ -160,6 +167,9 @@ func (p *PreparedProfile) validateAgentImage() {
 		if image.Provider != AgentImageCodexAppServer && image.Provider != AgentImageClaudeCode {
 			p.problem(model.Failed, "image_provider", "Unknown agent image provider discriminator.")
 		}
+		if want := map[string]AgentImageProvider{"codexAppServer": AgentImageCodexAppServer, "claudeCode": AgentImageClaudeCode}[p.input.section]; image.Provider != want {
+			p.problem(model.Failed, "image_provider", "The agent image provider does not match the profile's adapter section.")
+		}
 	}
 	if complete || image.ImageID != "" {
 		if !profileSHA256(image.ImageID) {
@@ -195,6 +205,27 @@ func (p *PreparedProfile) validateAgentImage() {
 		if image.RecordedCodexSchemaDigest != "" {
 			p.problem(model.Failed, "image_recorded_schema", "Claude image evidence cannot claim Codex-specific schema evidence.")
 		}
+	}
+}
+
+func (p *PreparedProfile) validateCheckImage() {
+	o := &p.observation
+	image := o.CheckImage
+	complete := o.Status == model.Passed
+	if p.input.namespace != "checkProfiles" || p.input.section != "container" || o.AgentImage != nil || len(o.Files) != 0 || len(o.Inventories) != 0 {
+		p.problem(model.Failed, "image_evidence", "Check image evidence belongs to a container check and cannot mix with other evidence.")
+	}
+	if (complete || image.ImageID != "") && !profileSHA256(image.ImageID) {
+		p.problem(model.Failed, "image_identity", "A container check must name an immutable engine sha256 image ID.")
+	}
+	file := image.Executable
+	if complete || file.Path != "" {
+		if !agentImageLiteral(file.Path) || !strings.HasPrefix(file.Path, "/") || file.Path == "/" || strings.Contains(file.Path, "\\") || path.Clean(file.Path) != file.Path {
+			p.problem(model.Failed, "image_executable_path", "The check executable requires an exact canonical absolute POSIX path inside the image.")
+		}
+	}
+	if complete && (file.ContentID == (snapshot.ContentID{}) || file.Size <= 0) || file.Size < 0 {
+		p.problem(model.Failed, "image_executable_file", "The check executable requires its actual whole-file digest and positive size.")
 	}
 }
 
@@ -285,10 +316,13 @@ func (p PreparedProfile) comparisonIdentity() string {
 		text(value.File.ContentID().String())
 		text(fmt.Sprint(value.File.Mode()))
 	}
-	if p.observation.AgentImage == nil {
+	switch {
+	case p.observation.CheckImage != nil:
+		text("markitect.host-profile/static-check-image-v1")
+	case p.observation.AgentImage == nil:
 		// Historical file/inventory identities retain their exact hash sequence.
 		text("markitect.host-profile/static-v1")
-	} else {
+	default:
 		text("markitect.host-profile/static-image-v1")
 	}
 	text(p.input.Binding().content.String())
@@ -307,6 +341,12 @@ func (p PreparedProfile) comparisonIdentity() string {
 		text(image.CLIVersion)
 		text(image.AgentdVersion)
 		text(image.RecordedCodexSchemaDigest)
+	}
+	if image := p.observation.CheckImage; image != nil {
+		text(image.ImageID)
+		text(image.Executable.Path)
+		text(image.Executable.ContentID.String())
+		text(fmt.Sprint(image.Executable.Size))
 	}
 	text(fmt.Sprint(len(p.observation.Files)))
 	for _, file := range p.observation.Files {

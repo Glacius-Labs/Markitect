@@ -99,13 +99,14 @@ func prepareHostSettings(ctx context.Context, fileStatus model.Status, defaults 
 			resolveErr = instructionErr
 		}
 		var settings organization.Settings
+		settingsFacts := organization.SettingsFacts{Defaults: declarations.Defaults, Overrides: declarations.Overrides, Ceilings: declarations.Ceilings, Profiles: profileFacts, Instructions: facts}
 		if resolveErr == nil {
-			settings, resolveErr = organization.ResolveSettings(topology, organization.SettingsFacts{Defaults: declarations.Defaults, Overrides: declarations.Overrides, Ceilings: declarations.Ceilings, Profiles: profileFacts, Instructions: facts})
+			settings, resolveErr = organization.ResolveSettings(topology, settingsFacts)
 		}
 		if resolveErr != nil {
 			r.issue(model.Failed, "resolution", organization.SettingSource{}, resolveErr.Error())
 		} else {
-			r.settings = &settings
+			r.settings, r.facts = &settings, &settingsFacts
 		}
 	}
 	// Check declarations are retained exactly, with no second inheritance,

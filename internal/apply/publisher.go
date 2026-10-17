@@ -2,9 +2,17 @@ package apply
 
 import (
 	"context"
+	"errors"
 
 	"github.com/Glacius-Labs/Markitect/internal/snapshot"
 )
+
+// ErrUnpublishable reports a change set that the target cannot represent, such
+// as case aliases or modes the repository does not track. Preflight reports a
+// source that changed since its capture with an error that wraps
+// ErrCaptureChanged. Any other error is not a definite refusal; apply retries
+// the publication later.
+var ErrUnpublishable = errors.New("the change set cannot be published to the target")
 
 // PublicationID is the Host identity of one publication.
 type PublicationID string

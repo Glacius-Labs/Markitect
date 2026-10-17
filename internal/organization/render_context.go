@@ -40,6 +40,10 @@ func RenderContext(selection ContextSelection, settings Settings, input RenderIn
 		w.json("asserted-direct-parent-hint-sender", hint.Package, hostRender(hint.Advice.Source))
 		w.host("parent-hint-not-authority", hint.Advice)
 	}
+	for _, m := range input.Messages {
+		w.json("message-identity", struct{ ID, Kind, From, To, About string }{m.ID, m.Kind, m.From, m.To, m.About}, hostRender(m.Body.Source))
+		w.host("message-body-not-authority", m.Body)
+	}
 	if input.OwnerInput != nil {
 		w.host("root-owner-input", *input.OwnerInput)
 	}

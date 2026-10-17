@@ -317,7 +317,8 @@ func TestManagerPolicyRejectsForgedOperationAndLegacyNewFields(t *testing.T) {
 	doc, _ := NewPayload("text/plain", "utf-8", []byte("original producer document"))
 	source := organization.SettingSource{File: "execution", Field: "/limits/maxContextBytes", ContentID: doc.Ref().ContentID}
 	limit := organization.Setting[int64]{Value: 4096, Source: source}
-	w := bindingWire{Version: 3, ManagerPolicy: liveManagerPolicy(), MaxContextBytes: &limit, Documents: []documentBinding{{Source: organization.SettingSource{File: "execution", ContentID: source.ContentID}, Bytes: doc.Bytes()}}}
+	required := []string{}
+	w := bindingWire{Version: 3, ManagerPolicy: liveManagerPolicy(), MaxContextBytes: &limit, RequiredChecks: &required, Documents: []documentBinding{{Source: organization.SettingSource{File: "execution", ContentID: source.ContentID}, Bytes: doc.Bytes()}}}
 	if err := validateManagerPolicy(w); err != nil {
 		t.Fatal(err)
 	}

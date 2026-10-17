@@ -48,6 +48,10 @@ type ToolView struct {
 	Requested, Replied AppendReceipt
 	Reply              WireRecord
 	OK                 bool
+	// Send is the decoded input of a send call, Claim that of a reserve_path
+	// or register call.
+	Send  *sendInput
+	Claim *Claim
 }
 
 func imageIdentity(s string) bool {
@@ -394,7 +398,8 @@ func (s *stateValue) applySession(c Command) error {
 		if _, exists := s.tools[key]; exists {
 			return ErrConflict
 		}
-		s.tools[key] = ToolView{Record: r}
+		input, _ := payloadFor(c, r.Wire.Journal)
+		s.tools[key] = ToolView{Record: r, Send: decodeSend(r, input), Claim: decodeClaim(r, input)}
 	case ReplyTool:
 		key := toolKey{r.Session, r.Call}
 		tool, ok := s.tools[key]
@@ -478,7 +483,8 @@ func (s *stateValue) sessionReceipt(c Command, receipt AppendReceipt) {
 }
 
 func (s *stateValue) reserve(r Reservation) error {
-	if s.current.State != Running {
+	// Verifying admits only the aggregate's required checks.
+	if s.current.State != Running && (s.current.State != Verifying || r.Kind != ProjectCheck) {
 		return ErrState
 	}
 	if _, exists := s.invocations[r.ID]; exists {
