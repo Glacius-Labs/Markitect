@@ -93,3 +93,25 @@ The official published [TypeScript SDK `0.3.301` package metadata](https://unpkg
 The official TypeScript source tag `v0.3.301` points to `b0fc766997199a49f90c37f5ec056936c80c9491`. The published declarations are not proven bound to that Git tree and are identified here as published static declarations. That tree's [LICENSE.md](https://github.com/anthropics/claude-agent-sdk-typescript/blob/b0fc766997199a49f90c37f5ec056936c80c9491/LICENSE.md), SHA-256 `728158fd1037143fad6907e8fa34804177e598b7326519503fe83cafdef849e6`, states all rights reserved and Commercial Terms. Its [README](https://github.com/anthropics/claude-agent-sdk-typescript/blob/b0fc766997199a49f90c37f5ec056936c80c9491/README.md), SHA-256 `d7f8965afea6198e0448bb8a3f3e0806d4dd6cfb3696cab21b1ee36faaef2065`, confirms those terms. No open-source license is inferred for the TypeScript SDK or proprietary CLI.
 
 No upstream SDK source, schema or protocol catalogue is vendored. Tests contain independently authored synthetic messages, not copied fixtures or captured provider traffic. This package adds no runtime dependency or SDK wrapper. The codec tests establish encoding, framing and selected projections; the Session tests establish controlled fake lifecycle behavior. Neither establishes a real provider handshake, runtime resume identity, recovery, runtime image support, Apply or release acceptance.
+
+## Opt-in actual Session adapter smoke
+
+Status: **UNEXECUTED**. The source in `session_smoke_test.go` prepares a bounded real adapter smoke. Compilation and skipped tests establish no runtime or provider result. Existing container CLI probes bypass this adapter and cannot supply this evidence.
+
+The test calls actual `NewSessions(engine, resolver)` with explicit `run.SessionAdmission` and `run.StepAdmission` values, the current `run.ToolCatalog` and `run.NewStepContract`. Its `controlledSessionIO` is explicitly in-memory smoke scaffolding: its synthetic receipts acknowledge that observer only. It establishes no durable journal, Coordinator admission, Core integration, task acceptance, recovery or Apply authority.
+
+A separately authorized execution admits at most three read-only steps under one five-minute context: manager Explore, manager resume in a new container using the same provider home, then a fresh reviewer Candidate step using a different home. Every step must make the expected Host outcome call with the observed artifact content; final text cannot satisfy it. Resume must retain the actual provider session ID and recall a random token supplied only in the first Host answer. A fresh reviewer must have a different observed provider ID. Reviewer resume remains forbidden by the current contract. Each step requires exact acknowledged wire permits, observed sends, terminal observation, actual Stop and readback of the unchanged one-file candidate. Initial materialization refuses image-populated workspace entries; all subsequent workspace mounts use `NoCopy` and are read-only.
+
+Ordinary CI leaves the boolean command-line activation flag false. Runtime environment variables cannot enable it. The activation check precedes profile, engine or credential access. A future operator must supply all of these explicit flags after a finite runtime grant; no command below is an execution record:
+
+| Flag | Explicit input |
+| --- | --- |
+| `-markitect-claude-session-smoke` | Boolean opt-in, default false. |
+| `-markitect-claude-smoke-engine` | Absolute engine executable path. |
+| `-markitect-claude-smoke-image` | Immutable `sha256:` image ID, checked against the engine observation. |
+| `-markitect-claude-smoke-profile` | Absolute closed SessionProfile JSON source path. |
+| `-markitect-claude-smoke-profile-sha256` | Expected whole source bytes SHA-256, lowercase hex without prefix. |
+| `-markitect-claude-smoke-metadata-sha256` | Expected whole image `/opt/markitect/runtime.env` SHA-256, same format; the pinned provider version must also match. |
+| `-markitect-claude-smoke-token-env` | Name of the environment variable holding a dedicated long-lived runtime token; no ambient token fallback. Only the explicit resolver reads its value after activation. |
+
+The profile selects Claude Haiku (`claude-haiku-5-5`) with high effort and exactly `builtinTools:["Read"]`. These inputs bind this smoke only; profile provenance and the finite runtime grant remain Host obligations. Run this package's `TestAdmittedSessionAdapterSmoke` alone with `-count=1`, an external test timeout greater than the five-minute runtime bound plus cleanup, and the explicit flags through `go test ... -args`. Never place credential values in flags, output or committed files. Diagnostic output reports stage failures and source digests without logging credential values or raw provider transcripts. Created smoke volumes are removed with bounded cleanup; incomplete Stop or cleanup fails the test and retains uncertainty.
