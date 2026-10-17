@@ -4,6 +4,7 @@ Sources preserve where the [register](../register.md) entries come from. Owner s
 
 | Source | Origin | Content |
 |---|---|---|
+| [Technical risk derivation](technical-risk-derivation-20261017.md) | Direct owner messages, 17 October 2026 | Require Managers and reviewers to derive technical risks independently and clarify existing concept and role templates without new mechanisms |
 | [Commands, Extract and Optimize](commands-extract-optimize-20261017.md) | Direct owner messages in the Commands chat, 17 October 2026 | Static operation instructions, read-only Verify, Extract of existing behavior through reused Manager review and integration, model optimization and explicit Main publication |
 | [Attention and comparison baseline](attention-and-comparison-20261017.md) | Owner clarification in the marketing chat, 17 October 2026; English translation | Human attention as bottleneck, relative model expenditure, time and parallelization, and ordinary documentation with the same content as the comparison baseline |
 | [Product goals clarification](product-goals-clarification-20261017.md) | Owner clarification in the marketing chat, 17 October 2026; English translation | Model-first, a clean and consistent repository, trustworthy realization through AI and determinism, and the goal of no routine human implementation review; lower cost is not a product goal |

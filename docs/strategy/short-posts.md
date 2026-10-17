@@ -18,7 +18,7 @@ We're building Markitect around a different division of work: you describe the i
 
 The goal is a coherent repository you can trust without routinely reviewing the implementation yourself.
 
-Markitect is under development; full Apply is not available yet.
+Markitect is in development. Today, you can define and check a project model. The complete workflow from that model to implemented and independently reviewed changes is still being built.
 
 [Explore the approach.](https://github.com/Glacius-Labs/Markitect#readme)
 
@@ -38,7 +38,7 @@ That's the workflow we're building with Markitect: programming through documenta
 
 You keep developing the idea. Markitect organizes the work that brings the project into alignment.
 
-The two-Apply library demonstration is our first complete target. Full Apply is still under development.
+Markitect is in development. Our first complete demonstration will build the library from its model, then update that result after changing only the borrowing rule. This workflow is still being built.
 
 [Inspect the library model.](https://github.com/Glacius-Labs/Markitect/tree/main/docs/design/canonical-model/library-example)
 
@@ -56,6 +56,6 @@ Markitect's approach draws on practices human teams already use: clear responsib
 
 AI interprets and realizes intent. Deterministic structure organizes the process and makes obligations checkable. The intended result is a project that stays consistent with its canonical model through change.
 
-The ambition is to remove routine human implementation review. Whether this organization earns that trust must be demonstrated in use. Markitect is under development; full Apply is not available yet.
+The ambition is to remove routine human implementation review. Whether this organization earns that trust must be demonstrated in use. Markitect is in development; the complete process for implementing, independently reviewing and checking changes is not yet available.
 
 Which obligation do coding agents most often miss in your repository? We'd welcome concrete examples in [a GitHub issue](https://github.com/Glacius-Labs/Markitect/issues).
