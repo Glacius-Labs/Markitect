@@ -48,6 +48,7 @@ The owner's [origin account of 15 October 2026](sources/owner-origin-20261015.md
 | [DEC-035](#dec-035-committed-model-in-owner-commit-accepts-the-result) | Decision | Committed model in, owner commit accepts the result | Accepted |
 | [DEC-036](#dec-036-adopted-design-refinements-for-the-first-apply) | Decision | Adopted design refinements for the first Apply | Accepted |
 | [DEC-037](#dec-037-agent-sessions-and-checks-run-in-linux-containers) | Decision | Agent sessions and checks run in Linux containers | Accepted |
+| [DEC-038](#dec-038-learn-through-complete-workflows) | Decision | Learn through complete workflows | Accepted |
 | [PRM-001 to PRM-007](#promises) | Promise | Target outcomes | Target |
 | [ASM-001 to ASM-006](#assumptions-and-hypotheses) | Assumption | Assumptions and hypotheses | See entries |
 | [CPT-001](#cpt-001-federalism) | Concept | Federalism | Accepted |
@@ -461,6 +462,13 @@ The owner's [origin account of 15 October 2026](sources/owner-origin-20261015.md
   - The read-only metadata adapter that pins a Windows desktop binary is replaced by metadata the image records at build time.
   - The second session adapter and sandbox profiles move from the later extensions into the first version.
 - **Owning document:** the [rebuild plan](../design/canonical-model/manager-apply-rebuild-plan.md#container-runtime). It serves [DEC-013](#dec-013-linux-first-for-tests-and-the-playground) and [ENH-005](#enh-005-exchangeable-executor-for-the-delegated-method).
+
+### DEC-038 Learn through complete workflows
+
+- **Status:** Accepted, owner, 17 October 2026 ([original adoption](sources/project-history-working-method-20261017.md#owner-adoption-and-publication-request)), after the [project-history reflection](../history/project-history-20261017.md#follow-up-reflection-and-owner-adoption).
+- **Decision:** Adopt the proposed working method for future Markitect development: explain substantial redesign through new observations and a visible improvement criterion; give the accepted foundation coherent actual use against a complete workflow; investigate consequential uncertain boundaries early; review the need and simpler alternatives for mechanisms; and give short workflow-oriented owner updates at milestones. Keep current knowledge at existing owners.
+- **Canonical owner:** [repository/learning-driven-workflow](../../.markitect/model/repository/learning-driven-workflow.yaml). The [working-method guide](../development/working-method.md) is its operational realization. The delivery plan retains scopes, sequence and integration; chats/PRs retain candidate evidence.
+- **Boundary:** Adoption does not make the assistant's historical assessments measured facts, prove product benefit, waive review/CI/safeguards, create routine approval gates or authorize provider runs, studies or releases. This governs Markitect's own development; it does not impose a new product contract on adopting projects. It preserves DEC-031's two-Apply target and DEC-032's quality priorities.
 
 ## Promises
 

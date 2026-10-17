@@ -1,6 +1,6 @@
 # Parallel work guide
 
-The [delivery plan](../implementation-plan.md) owns current scopes, dependencies, path reservations and integration order. This guide owns execution inside a package. Candidate progress and checks live in its chat/PR; there is no separate backlog/dashboard.
+The [delivery plan](../implementation-plan.md) owns current scopes, dependencies, path reservations and integration order. The [working method](working-method.md) governs design learning and owner orientation. This guide owns execution inside a package. Candidate progress and checks live in its chat/PR; there is no separate backlog/dashboard.
 
 ## Assignment and execution
 
@@ -21,7 +21,7 @@ Two chats cannot own the same contract, generated output or helper. Tests/fixtur
 1. Run focused checks and inspect actual changed files. Preserve failures/unknowns with exact source identity.
 2. Open a focused PR with package ID, scope, contracts, base/head and validation. Distinguish implemented behavior from scaffolding/proposed APIs.
 3. Obtain independent complete-diff review and exact-head required Linux CI. Freeze the head during those checks.
-4. The coordinator composes with Main, merges in dependency order and verifies actual Main before dependent dispatch.
+4. Follow the [delivery plan's integration rules](../implementation-plan.md#integration): the delivery merges its approved exact head after required CI; recompose for conflicts or substantive overlap. The coordinator owns dependencies and shared reservations.
 5. Regenerate views from sources. Retire obsolete tests/gates with their feature; never exempt a required invariant for green CI.
 
 A source package is not a real Agent run, successful library Apply, release or human acceptance. Provider studies and delivery need separate scope and finite authority.

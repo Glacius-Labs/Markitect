@@ -4,7 +4,7 @@ Markitect is model-first development with delegated realization. People maintain
 
 ## Every task
 
-1. Read the current [delivery plan](docs/implementation-plan.md) and bounded assignment. Use an isolated worktree from its integrated base and a non-protected branch with a scope prefix such as `dev/`, `fix/` or `docs/`. Verify path, branch, full SHA and local changes before writing. Preserve other sessions' work.
+1. Read the [working method](docs/development/working-method.md), current [delivery plan](docs/implementation-plan.md) and bounded assignment. Use an isolated worktree from its integrated base and a non-protected branch with a scope prefix such as `dev/`, `fix/` or `docs/`. Verify path, branch, full SHA and local changes before writing. Preserve other sessions' work.
 2. Read [.markitect/model.yaml](.markitect/model.yaml), then run actual structural preparation and select the Package that owns the change:
 
    ```text

@@ -8,6 +8,8 @@ The historical cutoff is Main [`3b3cbdd843315b4b7d0adaec8f66e02f2dfcff15`](https
 
 The sources are the reachable Git history, selected changes, owner statements preserved in the repository, and dated validation records. This is not a complete reconstruction of every chat or a new source audit, experiment or acceptance. Source links in the account use fixed revisions so later documentation corrections cannot silently change its evidence.
 
+The separately dated [follow-up reflection](#follow-up-reflection-and-owner-adoption) records the later discussion and owner adoption of a working method. It does not extend the original implementation cutoff or retroactively change the earlier findings.
+
 The earliest reachable repository commit is [`f5fdf7bd`](https://github.com/Glacius-Labs/Markitect/commit/f5fdf7bd540c87acb299f92bc5e06cf51c0cf142), dated 30 September 2026. Earlier conceptual stages come from the owner's retrospective account of 15 October; their individual dates are not established. Git at the cutoff contains 1,795 reachable commits and 290 merge commits on the first-parent line. These counts describe activity and integration, not productivity or benefit.
 
 For subsequent status, use the [delivery plan](../implementation-plan.md), [current workflow](../project-workflow.md) and [concept register](../concepts/register.md). The [origin and rationale](../concepts/origin-and-rationale.md) owns the causal explanation of the idea. This page owns this dated historical synthesis and assessment.
@@ -111,3 +113,49 @@ Four later working-day scenarios test whether the organization can continue whil
 The assessment recommends keeping this sequence stable. Further architecture work should name an observed failure, a missing accepted obligation or a blocked necessary step. This delays some generalization in exchange for earlier feedback from a real complete workflow. Similarly, consolidate knowledge at existing owners rather than creating another status layer, and retain the exact-head review/CI discipline while letting deliveries own routine integration. These recommendations do not reopen accepted language or product decisions.
 
 The outcome still to establish is the original practical hope: the owner changes the model, and the organization realizes that change cleanly, visibly and with substantially less routine intervention. The history supplies reasons to pursue that test and reasons to keep its result open.
+
+## Follow-up reflection and owner adoption
+
+Date: 17 October 2026, after publication of the original history through [merge ec7a0f33](https://github.com/Glacius-Labs/Markitect/commit/ec7a0f3381492b01b1dcab2627b8e1e92c23966a). This addendum records the subsequent owner/assistant discussion and publication request. It adds interpretation and an accepted working-method decision, not a new implementation assessment. [Owner statements and discussion context](../concepts/sources/project-history-working-method-20261017.md)
+
+### Observations and reported experience
+
+- **Owner report:** The owner temporarily lost overview as extensive implementation was followed by redesign. This is reported experience, not a measurement of general development efficiency.
+- **Recorded observations:** The timeline above shows a continuing motivation across changing technical forms, multiple substantial replacements and bounded successes alongside failures. The 6 October assessment and the later Apply reset both focus attention on completing the working cycle. Those source-bound observations remain at their original cutoff.
+- **Owner expectation:** The owner hopes each design incorporates learning and refines Markitect. Reaching a similar design again without detailed knowledge of current implementation increases the owner's confidence. This describes a reasoning strategy and expectation, not an independently measured outcome.
+
+### Assistant assessment and its limits
+
+The assistant considers the conceptual development productive. The core idea remains recognizable while distinctions become clearer: intent and realization, structural validity and semantic correctness, responsibility and execution, Managers and Government. Willingness to revise assumptions and remove existing implementation, concrete examples, independent review and candid preservation of failed attempts are strengths.
+
+The weaker areas are prioritization, overview and completion of a repeatable whole workflow. Capabilities, technical safeguards and state management repeatedly advanced while the complete process still needed expert coordination. Redesign also limits how earlier proofs can transfer: their subjects and assumptions must be checked at the new boundaries. Even when implementation effort is not a deciding criterion, repeated replacement can prolong uncertainty about whether the intended working day is achievable.
+
+The owner's loss of overview is treated as a process finding. The owner should be able to assess direction without reconstructing every architecture and source change. Helping preserve that overview is part of the collaborating Agents' responsibility. These are assistant judgments about the recorded development, not measured causal claims.
+
+A fresh derivation that reaches similar structures supports a stable understanding of the problem. The same person still brings related experiences and preferred mental models, so the derivations are not fully independent. The assistant distinguishes three kinds of support:
+
+| Observation | What it supports | What remains open |
+|---|---|---|
+| Similar structures recur in another derivation. | Conceptual stability. | Whether the structure is necessary, sufficient or effective in use. |
+| The revised design explains concrete earlier failures better. | A reasoned claim that experience entered the design. | Whether the selected change actually prevents the failure. |
+| A real complete workflow handles those difficulties. | Bounded practical improvement at the observed inputs. | Repeatability, broader reliability and reduced routine human attention. |
+
+The assistant sees stronger support for the first two kinds than for the third. The two-Apply demonstration and subsequent working-day scenarios remain the existing route to practical evidence. The assessment favors continuing that route, without asserting that the current implementation already delivers its hoped-for benefits.
+
+### Recommendations made in the discussion
+
+These were assistant recommendations at the time of the response. The following owner decision changes their status as a working method; it does not turn their motivating assessments into proven results.
+
+| Recommendation | Intended benefit | Tradeoff or boundary |
+|---|---|---|
+| Explain a substantial redesign through a new observation, the challenged assumption, the resulting change and an observable improvement criterion, in its existing owning document. | Makes learning visible and distinguishes necessary changes from preference or reformulation. | A short explanation takes attention; it must not become a second specification. |
+| Give an accepted foundation a coherent period of use, protecting the current complete-workflow target while fixing actual failures and necessary gaps. | Produces feedback about whether the design works before unrelated expansion. | Some generalization waits; new evidence can still justify correction or an owner decision. |
+| Probe the most consequential uncertain technical boundary early. | Reduces the chance of building extensive design on an untested assumption. | A real probe needs bounded scope and existing authority; it is not a new study or spending grant. |
+| Review whether each mechanism addresses an observed failure or accepted obligation and whether a simpler approach could serve it. | Keeps complexity and coordination purposeful while retaining quality. | Requires explicit reasoning; it does not weaken safeguards or create another review institution. |
+| Give a short workflow-oriented owner account at milestones, derived from existing evidence. | Restores overview without making the owner the routine technical Coordinator. | Some communication is required; another status database, periodic automation or approval round would add avoidable upkeep. |
+
+Knowledge consolidation at existing owners complements these practices: date historical status, retain its evidence and link to the current owner. The original source links and conclusions above are not rewritten to claim that later cleanup or implementation had already happened.
+
+### Owner decision and future use
+
+The owner explicitly preferred the proposed working method and asked for it to guide future work. [DEC-038](../concepts/register.md#dec-038-learn-through-complete-workflows) records that adoption. The canonical [repository Rule](../../.markitect/model/repository/learning-driven-workflow.yaml) holds its binding intent; the [working-method guide](../development/working-method.md) explains how to apply it. This is an accepted development practice, not product acceptance, a new feature wave or proof that the recommendations have already improved outcomes.

@@ -4,6 +4,7 @@ Start engineering work through the root [AGENTS.md](../../AGENTS.md) and [Markit
 
 | Document | Owns |
 |---|---|
+| [Working method](working-method.md) | Apply the owner-adopted practice of explicit learning, complete workflows, focused design review and short milestone accounts; canonical intent lives in the linked repository Rule |
 | [Documentation maintenance](documentation.md) | Placement, navigation, canonical owners and evidence preservation |
 | [Session continuation](session-handoff.md) | Retired dated Claude-to-Codex snapshot; it cannot restart old queues |
 | [Shared contracts](shared-contracts.md) | Version-bound seams and coordinator-owned changes; distinguish historical contracts from current project operations |
