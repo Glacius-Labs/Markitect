@@ -73,7 +73,10 @@ func (r SessionRecord) validate(kind string) error {
 	switch kind {
 	case PrepareSession:
 		p := r.Plan
-		if p.ID != r.Session || (p.Role != "manager" && p.Role != "reviewer") || !identifier(p.Workspace) || !imageIdentity(p.ImageID) || !identifier(p.CredentialRef) || p.Candidate == (snapshot.TreeID{}) || p.MaxWireBytes <= 0 || p.MaxWireBytes > maxRecordBytes || !p.Profile.Valid() || !p.Tools.Valid() || p.Role == "reviewer" && !p.ReadOnly {
+		if p.ID != r.Session || (p.Role != "manager" && p.Role != "reviewer") || !identifier(p.Workspace) || !identifier(p.ProviderHome) || p.ProviderHome == p.Workspace || !imageIdentity(p.ImageID) || !identifier(p.CredentialRef) || p.Candidate == (snapshot.TreeID{}) || p.MaxWireBytes <= 0 || p.MaxWireBytes > maxRecordBytes || !p.Profile.Valid() || !p.Tools.Valid() {
+			return ErrInvalid
+		}
+		if p.Resume != "" && !identifier(string(p.Resume)) || p.Role == "reviewer" && (!p.ReadOnly || p.Resume != "") {
 			return ErrInvalid
 		}
 		a.Plan = p
@@ -298,6 +301,11 @@ func (s *stateValue) applySession(c Command) error {
 			return ErrState
 		}
 		if !r.Uncertain && s.transportOpen(r.Session) {
+			return ErrState
+		}
+		// A resumed conversation binds only under the identity it was asked to
+		// continue; a different provider identity is an uncertain observation.
+		if !r.Uncertain && v.Plan.Resume != "" && r.ProviderSession != v.Plan.Resume {
 			return ErrState
 		}
 		if r.ProviderSession != "" {

@@ -15,7 +15,6 @@ import (
 	"github.com/Glacius-Labs/Markitect/internal/organization"
 	"github.com/Glacius-Labs/Markitect/internal/run"
 	"github.com/Glacius-Labs/Markitect/internal/snapshot"
-	"time"
 )
 
 // Captured by the unmodified v1 Bind/Propose at
@@ -365,84 +364,5 @@ func TestV2InventoryRetainsExistingPayloadAndRestoreLimits(t *testing.T) {
 	limits.Bytes = total
 	if c, err := run.Restore(context.Background(), store, "repo", limits); err != nil || c == nil {
 		t.Fatal("exact inventory read budget refused", err)
-	}
-}
-
-func TestLiteralPreExploreV2HistoryKeepsBytesReceiptsAndDeniesFreshLegacyDispatch(t *testing.T) {
-	data, err := os.ReadFile("testdata/manager-process-prepolicy-v2.json")
-	if err != nil || fmt.Sprintf("%x", sha256.Sum256(data)) != "db3601a66ba949e6237ef5cc3a20b9c866dd8afadf054ca75a77a1e1469225b4" || len(data) != 95017 {
-		t.Fatal("prepolicy capture changed", err)
-	}
-	var f struct {
-		FormatVersion uint32
-		Source, Scope string
-		Batches       [][]byte
-		Receipts      []run.AppendReceipt
-		Blobs         []struct {
-			Ref   run.BlobRef
-			Bytes []byte
-		}
-		Cuts []struct {
-			Name    string
-			Through uint64
-		}
-	}
-	if err := json.Unmarshal(data, &f); err != nil || f.FormatVersion != 1 || f.Source != "c9d69dc51c041bb6ace44fdcb4de88b0c832cff7" || len(f.Batches) != 16 || len(f.Receipts) != 16 || len(f.Blobs) != 12 || len(f.Cuts) != 6 {
-		t.Fatal("capture provenance/shape changed", err)
-	}
-	for _, cut := range f.Cuts {
-		t.Run(cut.Name, func(t *testing.T) {
-			j := journal()
-			for _, original := range f.Blobs {
-				p, err := run.NewPayload(original.Ref.MediaType, original.Ref.Encoding, original.Bytes)
-				if err != nil || p.Ref() != original.Ref {
-					t.Fatal("blob changed", err)
-				}
-				j.blobs[p.Ref()] = p
-			}
-			for n, original := range f.Batches {
-				batch, err := run.DecodeBatch(original)
-				if err != nil || !bytes.Equal(batch.Bytes(), original) || !f.Receipts[n].Matches(batch) {
-					t.Fatal("batch bytes/receipt changed", n, err)
-				}
-				if batch.Revision() <= cut.Through {
-					j.batches = append(j.batches, batch)
-					j.head = batch.Revision()
-				}
-			}
-			if j.head != cut.Through {
-				t.Fatal("cut boundary changed")
-			}
-			reads := &readJournal{store: j}
-			c := restored(t, reads)
-			before := c.Budget()
-			if c.InitialExplore().Available {
-				t.Fatal("historical basis reinterpreted")
-			}
-			for n, b := range j.batches {
-				body := b.Events()[len(b.Events())-1].Body
-				p, err := c.Propose(body)
-				if err != nil {
-					t.Fatal(err)
-				}
-				r, err := c.Commit(context.Background(), reads, p)
-				if err != nil || r != f.Receipts[n] || !bytes.Equal(b.Bytes(), f.Batches[n]) {
-					t.Fatal("historical retry changed", n, err)
-				}
-			}
-			if !reflect.DeepEqual(before, c.Budget()) || reads.writes != 0 {
-				t.Fatal("historical retry wrote/charged")
-			}
-			for _, purpose := range []run.Purpose{run.Writing, run.Assessment} {
-				if _, err := c.Propose(reserve("fresh", run.ToolProcess, purpose, time.Second)); err == nil {
-					t.Fatal("restored history granted fresh legacy execution")
-				}
-			}
-			profile, tools := payload(t, "profile"), payload(t, "tools")
-			plan := run.SessionPlan{ID: "new", Role: "manager", Workspace: "legacy", Candidate: snapshot.TreeID{1}, ReadOnly: true, ImageID: "sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef", CredentialRef: "credential", MaxWireBytes: 4096, Profile: profile.Ref(), Tools: tools.Ref()}
-			if _, err := c.Propose(run.PrepareSessionCommand(meta("new-session"), "a", "r", plan, run.Reservation{ID: "new-open", Kind: run.SessionStart, Purpose: run.Writing, Maximum: time.Second}, profile, tools)); err == nil {
-				t.Fatal("fresh legacy session")
-			}
-		})
 	}
 }

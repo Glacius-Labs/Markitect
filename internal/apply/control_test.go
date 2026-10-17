@@ -246,7 +246,7 @@ func controlExploreStartup(t *testing.T, c *run.Coordinator, candidate snapshot.
 	if err != nil {
 		t.Fatal(err)
 	}
-	plan := run.SessionPlan{ID: "session", Role: "manager", Workspace: "controlled-linux-workspace", Candidate: candidate, ReadOnly: true, ImageID: "sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef", CredentialRef: "credential-ref", MaxWireBytes: 1 << 20, Profile: profile.Ref(), Tools: tools.Ref()}
+	plan := run.SessionPlan{ID: "session", Role: "manager", Workspace: "controlled-linux-workspace", ProviderHome: "provider-home", Candidate: candidate, ReadOnly: true, ImageID: "sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef", CredentialRef: "credential-ref", MaxWireBytes: 1 << 20, Profile: profile.Ref(), Tools: tools.Ref()}
 	command, err := c.PrepareExploreSessionCommand(run.RecordMeta{ID: "reserve", ObservedAt: at}, ".", plan, run.Reservation{ID: "invocation", Kind: run.SessionStart, Purpose: run.Writing, Maximum: time.Minute}, profile, tools)
 	if err != nil {
 		t.Fatal(err)

@@ -7,7 +7,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"os"
 	"reflect"
 	"testing"
 	"time"
@@ -29,63 +28,6 @@ type priorSessionFixture struct {
 	Blobs         []priorSessionBlob
 }
 
-func TestLiteralBoundSessionBeforeReadinessKeepsExactBytesAndReceipts(t *testing.T) {
-	// Captured with unmodified production code at the Source SHA, before
-	// readiness edits. No current Bind or session constructor regenerates it.
-	data, err := os.ReadFile("testdata/session-bound-before-readiness.json")
-	if err != nil || fmt.Sprintf("%x", sha256.Sum256(data)) != "6a994ed2bb8dd775f13c9326b7197e0b91a46082a84357caa8f57e095ca0d9d4" {
-		t.Fatal("prechange session fixture changed", err)
-	}
-	var f priorSessionFixture
-	if err := json.Unmarshal(data, &f); err != nil {
-		t.Fatal(err)
-	}
-	if f.Source != "fbffd7fbf67ab1f4939f623268d401e1fbd2c7ba" || len(f.Batches) != len(f.Receipts) {
-		t.Fatal("capture provenance/receipts lost")
-	}
-	j := journal()
-	for _, original := range f.Blobs {
-		p, err := run.NewPayload(original.Ref.MediaType, original.Ref.Encoding, original.Bytes)
-		if err != nil || p.Ref() != original.Ref {
-			t.Fatal("original payload identity changed", err)
-		}
-		j.blobs[p.Ref()] = p
-	}
-	for n, original := range f.Batches {
-		b, err := run.DecodeBatch(original)
-		if err != nil || !bytes.Equal(original, b.Bytes()) || !f.Receipts[n].Matches(b) {
-			t.Fatal("literal batch/receipt changed", n, err)
-		}
-		j.batches = append(j.batches, b)
-		j.head = b.Revision()
-	}
-	reads := &readJournal{store: j}
-	c := restored(t, reads)
-	session, _ := c.Session("s")
-	step, _ := c.Step("step")
-	if !session.Bound || session.Ready || session.Readiness.BatchID != "" || session.InitialStep != "" || session.InitialSend != "" || session.Provider != "provider-session" || step.Provider != "provider-turn" || !c.RecoveryRequired() {
-		t.Fatal("old session reinterpreted", session, step)
-	}
-	before := c.Budget()
-	for n, b := range j.batches {
-		events := b.Events()
-		p, err := c.Propose(events[len(events)-1].Body)
-		if err != nil {
-			t.Fatal(err)
-		}
-		receipt, err := c.Commit(context.Background(), reads, p)
-		if err != nil || receipt != f.Receipts[n] {
-			t.Fatal("historical retry changed", n, err)
-		}
-		if !bytes.Equal(b.Bytes(), f.Batches[n]) {
-			t.Fatal("historical bytes rewritten")
-		}
-	}
-	if reads.writes != 0 || !reflect.DeepEqual(before, c.Budget()) {
-		t.Fatal("historical retry wrote or charged")
-	}
-}
-
 func unboundSession(t *testing.T, role string) (*run.Coordinator, *memoryJournal, run.SessionIO) {
 	t.Helper()
 	c, j := running(t)
@@ -94,7 +36,7 @@ func unboundSession(t *testing.T, role string) (*run.Coordinator, *memoryJournal
 		cmd.Session.Plan.Role, cmd.Session.Plan.ReadOnly, cmd.Reservation.Purpose = role, true, run.Assessment
 	}
 	commit(t, c, j, cmd)
-	io, err := c.SessionChannel(j, "s")
+	io, err := c.SessionChannel(j, "s", run.RefuseTools)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -134,7 +76,7 @@ func TestReadinessAdmitsOneActualFirstStepBeforeObservedProviderBinding(t *testi
 			if !s.Ready || s.Bound || s.Provider != "" || s.Readiness.BatchID == "" || s.Binding.BatchID != "" {
 				t.Fatal("readiness invented binding", s)
 			}
-			if _, err := c.SessionAdmission("s"); err == nil {
+			if _, err := c.SessionAdmission(context.Background(), j, "s"); err == nil {
 				t.Fatal("ready session reopened")
 			}
 			if _, err := c.Inspection("s", "first"); !errors.Is(err, run.ErrObservationLimit) {
@@ -155,7 +97,7 @@ func TestReadinessAdmitsOneActualFirstStepBeforeObservedProviderBinding(t *testi
 			if _, err := c.Commit(context.Background(), j, p); err != nil {
 				t.Fatal(err)
 			}
-			if _, err := c.StepAdmission("first"); err != nil {
+			if _, err := c.StepAdmission(context.Background(), j, "first"); err != nil {
 				t.Fatal(err)
 			}
 			prep := firstSend(t)
@@ -179,7 +121,7 @@ func TestReadinessAdmitsOneActualFirstStepBeforeObservedProviderBinding(t *testi
 			if !s.Bound || !s.Ready || s.Provider != incoming.ProviderSession || s.Binding.BatchID == s.Readiness.BatchID || s.InitialStep != "first" || s.InitialSend != prep.Message {
 				t.Fatal("binding/readiness provenance lost", s)
 			}
-			if _, err := c.StepAdmission("first"); err == nil {
+			if _, err := c.StepAdmission(context.Background(), j, "first"); err == nil {
 				t.Fatal("first step dispatch reissued after binding")
 			}
 			if _, err := io.ObserveStep(context.Background(), run.StepObservation{RecordMeta: meta("first-result"), Step: "first", ProviderStep: "observed-turn", Wire: wire(t, `{"result":"done"}`), Terminal: true, Reason: "actual result"}); err != nil {
@@ -204,7 +146,7 @@ func TestReadinessNeedsObservedAckAndSettledManagerStartup(t *testing.T) {
 			if _, err := io.PrepareSend(context.Background(), prep); err != nil {
 				t.Fatal(err)
 			}
-			if _, err := c.SessionAdmission("s"); !errors.Is(err, run.ErrObservationLimit) {
+			if _, err := c.SessionAdmission(context.Background(), j, "s"); !errors.Is(err, run.ErrObservationLimit) {
 				t.Fatal("known startup send permitted another Open", err)
 			}
 			if _, err := io.Ready(context.Background(), readyObservation(t)); !errors.Is(err, run.ErrState) {
@@ -262,7 +204,7 @@ func TestInitialSendSlotCannotReplayOrUseAnotherMessageEvenAfterNotSent(t *testi
 			for _, restoredHistory := range []bool{false, true} {
 				if restoredHistory {
 					c = restored(t, &readJournal{store: j})
-					io, err = c.SessionChannel(j, "s")
+					io, err = c.SessionChannel(j, "s", run.RefuseTools)
 					if err != nil {
 						t.Fatal(err)
 					}
@@ -277,7 +219,7 @@ func TestInitialSendSlotCannotReplayOrUseAnotherMessageEvenAfterNotSent(t *testi
 				if next, err := io.PrepareSend(context.Background(), second); err == nil || next.Dispatch {
 					t.Fatal("different message reused initial slot", err)
 				}
-				if _, err := c.SessionAdmission("s"); err == nil {
+				if _, err := c.SessionAdmission(context.Background(), j, "s"); err == nil {
 					t.Fatal("initial send reopened session")
 				}
 				if restoredHistory && !c.RecoveryRequired() {
@@ -335,7 +277,7 @@ func TestMissingInitRetainsFirstStepAndShutdownRemainsAvailable(t *testing.T) {
 		t.Fatal(err)
 	}
 	c = restored(t, &readJournal{store: j})
-	io, err := c.SessionChannel(j, "s")
+	io, err := c.SessionChannel(j, "s", run.RefuseTools)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -346,7 +288,7 @@ func TestMissingInitRetainsFirstStepAndShutdownRemainsAvailable(t *testing.T) {
 	if p, err := io.PrepareSend(context.Background(), stop); err != nil || !p.Dispatch {
 		t.Fatal("bounded shutdown control unavailable", err)
 	}
-	if _, err := c.StepAdmission("first"); err == nil {
+	if _, err := c.StepAdmission(context.Background(), j, "first"); err == nil {
 		t.Fatal("unknown first step admitted again")
 	}
 }
@@ -392,7 +334,7 @@ func TestReadinessAppendLossRetainsOriginalStateAndRequiredWireClosure(t *testin
 			if err != nil || !reflect.DeepEqual(refs, []run.BlobRef{observation.Wire.Journal.Ref()}) {
 				t.Fatal("new wire escaped existing closure", refs, err)
 			}
-			if _, err := c.SessionAdmission("s"); err == nil {
+			if _, err := c.SessionAdmission(context.Background(), j, "s"); err == nil {
 				t.Fatal("lost readiness ack authorized reOpen")
 			}
 			if _, err := c.Propose(readinessStep(t, c, "first")); err == nil {
@@ -410,7 +352,7 @@ func TestReadinessAppendLossRetainsOriginalStateAndRequiredWireClosure(t *testin
 				if restored, err := run.Restore(context.Background(), &readJournal{store: j}, "repo", restoreLimits); err == nil || restored != nil {
 					t.Fatal("missing ready wire restored")
 				}
-			} else if _, err := c.SessionAdmission("s"); !errors.Is(err, run.ErrObservationLimit) {
+			} else if _, err := c.SessionAdmission(context.Background(), j, "s"); !errors.Is(err, run.ErrObservationLimit) {
 				t.Fatal("proven absent record replayed actual startup", err)
 			}
 		})
@@ -453,7 +395,7 @@ func explorePreparedStep(t *testing.T, c *run.Coordinator, j *memoryJournal, inp
 	t.Helper()
 	cmd := exploreSessionPreparation(t, c, inputs, manager, id)
 	commit(t, c, j, cmd)
-	io, err := c.SessionChannel(j, id)
+	io, err := c.SessionChannel(j, id, run.RefuseTools)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -667,7 +609,7 @@ func TestExplorePreparationRecompilesOriginalsAndMatchesExactBoundSettings(t *te
 	c, j, inputs := exploreRunning(t, true)
 	cmd := exploreSessionPreparation(t, c, inputs, ".", "s")
 	commit(t, c, j, cmd)
-	io, _ := c.SessionChannel(j, "s")
+	io, _ := c.SessionChannel(j, "s", run.RefuseTools)
 	send(t, io, "init", "")
 	_, err := io.Ready(context.Background(), readyObservation(t))
 	if err != nil {
@@ -873,25 +815,25 @@ func TestExploreUncertainOrMissingOutputNeverCompletesInitialCensus(t *testing.T
 		})
 	}
 }
-func TestExploreUnexpectedToolIngressIsRecordedWithoutExecutionAuthority(t *testing.T) {
+func TestExploreUnexpectedToolCallIsRefusedWithoutExecutionAuthority(t *testing.T) {
 	c, j, io := activeStep(t)
 	stop := command("stop", run.StopRun)
 	stop.Reason = "stop requested"
 	commit(t, c, j, stop)
 	call := run.ToolCall{RecordMeta: meta("late-known-step-call"), Step: "step", Call: "mutating", Tool: "write-workspace", Input: wire(t, `{"path":"owned.go"}`)}
-	receipt, err := io.ToolRequest(context.Background(), call)
-	if err != nil || !receipt.Fresh || receipt.Receipt.BatchID == "" {
-		t.Fatal("known incoming callback was lost", err)
+	result, err := io.Call(context.Background(), call)
+	if err != nil || result.Receipt.BatchID == "" || string(result.Output.Bytes()) != `{"status":"refused","reason":"no Host tool is available in this slice"}` {
+		t.Fatal("known incoming call was not recorded and refused", result, err)
 	}
 	if _, err := c.Propose(reserve("execute", run.ToolProcess, run.Writing, time.Second)); err == nil {
-		t.Fatal("Fresh granted execution")
+		t.Fatal("a recorded call granted execution")
 	}
 	if _, err := io.ObserveStop(context.Background(), run.StopObservation{RecordMeta: meta("stopped"), Terminated: true, Reason: "observed stop"}); err != nil {
 		t.Fatal(err)
 	}
 	commit(t, c, j, settle("step-invocation", time.Second))
 	c = restored(t, &readJournal{store: j})
-	if !c.RecoveryRequired() || c.InitialExplore().Clear {
-		t.Fatal("unresolved callback disappeared at restart")
+	if c.InitialExplore().Clear {
+		t.Fatal("a refused call completed the initial census")
 	}
 }

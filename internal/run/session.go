@@ -16,10 +16,14 @@ type ProviderSessionID string
 type ProviderStepID string
 type ProviderCallID string
 
-// Sessions is implemented by the two container-based provider adapters. Open
-// starts one container and establishes either control readiness or the actual
-// provider session identity; Step sends one compiled turn. A ready-but-unbound
-// Open permits only the first admitted Step; it supplies no provider identity.
+// Sessions is implemented by the two container-based provider adapters. In the
+// first strategy one Session is one container serving exactly one Step; the
+// Host prepares a new Session for every Step. Open starts the container with
+// the plan's workspace and provider home and establishes either control
+// readiness or the actual provider session identity. When the plan names
+// Resume, Open continues that provider conversation from the provider home and
+// binds it only if the provider reports the same identity. Step sends the one
+// compiled turn. A ready-but-unbound Open permits only the first admitted Step.
 // Inspect reads only the exact journal-bound handles; it never creates or sends.
 // Stop reports actual termination or uncertainty, never cancellation as success.
 // Useful partial observations survive errors. The Host records uncertainty and
@@ -33,17 +37,18 @@ type Sessions interface {
 }
 
 // SessionIO is bound by the Host to one confirmed session channel. Every send
-// (including responses/notifications) requires a fresh acknowledged SendPermit
-// matching its real wire identity BEFORE writing. A recorded preparation is not
-// delivery or replay authority. Known secrets must be redacted by the Host before
-// supplying journal payloads; RUN receives no secret value or credential bytes.
+// (including tool replies and notifications) requires a fresh acknowledged
+// SendPermit matching its real wire identity BEFORE writing. A recorded
+// preparation is not delivery or replay authority. Call records a tool call,
+// lets the Host answer it and records the answer; the adapter returns that
+// answer unchanged. Known secrets must be redacted by the Host before supplying
+// journal payloads; RUN receives no secret value or credential bytes.
 type SessionIO interface {
 	Ready(context.Context, SessionReadiness) (AppendReceipt, error)
 	Bind(context.Context, SessionObservation) (AppendReceipt, error)
 	PrepareSend(context.Context, TransportPreparation) (SendPermit, error)
 	ObserveSend(context.Context, TransportObservation) (AppendReceipt, error)
-	ToolRequest(context.Context, ToolCall) (ToolReceipt, error)
-	ToolReply(context.Context, ToolReply) (AppendReceipt, error)
+	Call(context.Context, ToolCall) (ToolResult, error)
 	ObserveStep(context.Context, StepObservation) (AppendReceipt, error)
 	ObserveStop(context.Context, StopObservation) (AppendReceipt, error)
 }
@@ -53,16 +58,21 @@ type RecordMeta struct {
 	ObservedAt time.Time
 }
 
-// Workspace is an opaque runtime-owned Linux workspace identity, not a Host
-// path. Reviewer plans must be read-only. The profile payload is permitted Host
-// configuration/metadata with credential references only, never secret values.
+// Workspace and ProviderHome are opaque runtime-owned Linux volume identities,
+// not Host paths. The workspace holds the step's materialized version; the
+// provider home holds the provider's conversation state and survives the
+// container. Resume names the provider conversation to continue; empty starts
+// a fresh one. Reviewer plans are read-only and never resume. The profile
+// payload is permitted Host configuration/metadata with credential references
+// only, never secret values; the adapter resolves CredentialRef at Open.
 type SessionPlan struct {
-	ID                                      SessionID
-	Role, Workspace, ImageID, CredentialRef string
-	Candidate                               snapshot.TreeID
-	ReadOnly                                bool
-	MaxWireBytes                            int64
-	Profile, Tools                          BlobRef
+	ID                                                    SessionID
+	Role, Workspace, ProviderHome, ImageID, CredentialRef string
+	Resume                                                ProviderSessionID
+	Candidate                                             snapshot.TreeID
+	ReadOnly                                              bool
+	MaxWireBytes                                          int64
+	Profile, Tools                                        BlobRef
 }
 type StepPlan struct {
 	Session               SessionID
@@ -79,16 +89,21 @@ func (p SessionPlan) Binding() snapshot.ContentID {
 	return snapshot.ContentID(sha256.Sum256(data))
 }
 
+// SessionAdmission and StepAdmission carry the verified bytes of every payload
+// their plans reference. An adapter uses exactly these bytes and resolves only
+// the references the plans name; it chooses nothing itself.
 type SessionAdmission struct {
-	Plan       SessionPlan
-	Receipt    AppendReceipt
-	Invocation string
+	Plan           SessionPlan
+	Profile, Tools Payload
+	Receipt        AppendReceipt
+	Invocation     string
 }
 type StepAdmission struct {
-	Plan       StepPlan
-	Session    SessionPlan
-	Receipt    AppendReceipt
-	Invocation string
+	Plan                  StepPlan
+	Session               SessionPlan
+	Input, OutputContract Payload
+	Receipt               AppendReceipt
+	Invocation            string
 }
 type InspectionRequest struct {
 	Session                     SessionID
@@ -203,9 +218,10 @@ type SendPermit struct {
 	Dispatch bool
 }
 
-// Tools are recorded ingress/reply exchanges only. Tool identifies one supplied
-// Host schema; no tool is executed here and Fresh does not authorize an effect.
-// A duplicate unresolved call remains pending, never executed again implicitly.
+// ToolCall is one provider tool call as the adapter observed it. Tool names one
+// entry of the plan's tool catalogue. A duplicate call with identical content
+// returns the recorded answer; an unanswered duplicate stays pending and is
+// never executed again implicitly.
 type ToolCall struct {
 	RecordMeta
 	Step  StepID
@@ -213,16 +229,51 @@ type ToolCall struct {
 	Tool  string
 	Input WirePayload
 }
-type ToolReply struct {
-	RecordMeta
-	Call   ProviderCallID
-	Output WirePayload
+
+// ToolOutcome is the Host's closed answer to one tool call. A refusal is an
+// answer that the adapter reports to the provider as a tool error, not a
+// transport failure.
+type ToolOutcome struct {
+	Status string          `json:"status"`
+	Result json.RawMessage `json:"result,omitempty"`
+	Reason string          `json:"reason,omitempty"`
 }
-type ToolReceipt struct {
-	Receipt        AppendReceipt
-	Fresh, Replied bool
-	Reply          WireRecord
-	Payload        Payload
+
+const (
+	ToolOK      = "ok"
+	ToolRefused = "refused"
+
+	toolOutcomeMedia = "application/vnd.markitect.tool-outcome+json"
+)
+
+// ToolHandler authorizes and executes one Host tool call. The session channel
+// records the call before and the outcome after the handler; the handler does
+// no recording of its own. An error leaves the call pending until reconciled.
+type ToolHandler func(context.Context, ToolCall) (ToolOutcome, error)
+
+// RefuseTools answers every call with a refusal, for slices without Host tools.
+func RefuseTools(context.Context, ToolCall) (ToolOutcome, error) {
+	return ToolOutcome{Status: ToolRefused, Reason: "no Host tool is available in this slice"}, nil
+}
+
+func (o ToolOutcome) payload() (Payload, error) {
+	ok := o.Status == ToolOK && o.Reason == "" && (o.Result == nil || json.Valid(o.Result))
+	refused := o.Status == ToolRefused && o.Result == nil && o.Reason != "" && boundedInput(o.Reason)
+	if !ok && !refused {
+		return Payload{}, ErrInvalid
+	}
+	data, err := json.Marshal(o)
+	if err != nil {
+		return Payload{}, ErrInvalid
+	}
+	return NewPayload(toolOutcomeMedia, "utf-8", data)
+}
+
+// ToolResult is the recorded answer to one call. Output holds the encoded
+// ToolOutcome that the adapter returns to the provider unchanged.
+type ToolResult struct {
+	Receipt AppendReceipt
+	Output  Payload
 }
 
 const (

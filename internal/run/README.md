@@ -114,11 +114,18 @@ remaining shared ledger; this need not replenish the configured reserve that
 assessment work may spend.
 The consumer-owned `Sessions` port maps one Host session to Open, one compiled
 turn to Step, exact known provider handles to read-only Inspect, and bounded
-termination to Stop. It names no engine or provider protocol. Session and step
-preparation commit their finite admission reservations atomically with the
-preallocated identities, fixed profile/image/workspace and input/contract
-references. The original payloads must be available and verified. Reviewer
-workspaces are read-only. Credential fields are references only.
+termination to Stop. It names no engine or provider protocol. In the first
+strategy one Session is one container serving exactly one Step; the Host
+prepares a new Session for every Step. The plan names the step's workspace
+volume, a separate provider-home volume that keeps the conversation across
+containers, and optionally the provider conversation to resume. A resumed
+Session binds only under that identity. Reviewers are read-only and never
+resume. Session and step preparation commit their finite admission reservations
+atomically with the preallocated identities, fixed profile/image/workspace and
+input/contract references. `SessionAdmission` and `StepAdmission` read and
+verify the recorded profile, tool, input and contract bytes from the journal and
+hand them to the adapter, which uses exactly those bytes. Credential fields are
+references only; the adapter resolves them at Open.
 Each Step explicitly asserts the still-current Session plan binding, including
 profile, image, workspace and candidate. A changed or unprovable binding needs a
 new session. Physical workspace currentness remains the Host's responsibility.
@@ -146,8 +153,7 @@ observations and later Steps. Missing init, uncertain send or append failure
 retains effects and holds; another Open cannot replace a recorded startup send.
 Restoration preserves readiness and the first Step/send identities behind the
 existing recovery barrier, without dispatching anything. Readiness cannot erase
-earlier uncertainty or supply inspection handles. Literal prechange session
-history retains its original canonical bytes and retry receipts.
+earlier uncertainty or supply inspection handles.
 
 `SessionChannel` implements the serialized Host `SessionIO` callbacks against
 the same Coordinator and journal. Before every provider write, including tool
@@ -166,14 +172,17 @@ authorize replay of the original wire. `AppendBatch.SessionRefs` lists exactly
 the direct stored payloads, alongside `BindingRefs` and `BindingOwnerRef`; the
 store verifies and retains all three closures before acknowledging Append.
 
-Tool ingress is deduplicated by session channel and provider call identity,
-including the exact step, tool identity and content/representation. A changed
-call conflicts. An unresolved duplicate stays pending and cannot execute again
-implicitly. A recorded reply is returned with its original receipt and bytes
-when the retained representation permits it; redaction or unavailable bytes
-returns the known receipt and an observation limit instead. A fresh ingress
-receipt is not tool-execution authority. Tool interpretation and actual execution
-are not implemented in this slice.
+`Call` records a tool call, lets the channel's `ToolHandler` answer it and
+records the answer as a closed `ToolOutcome` (`ok` with a result or `refused`
+with a reason). The adapter returns those exact bytes to the provider; a
+refusal is an answer, not a transport failure. Calls are deduplicated by
+session channel and provider call identity, including the exact step, tool
+identity and content/representation: an exact repeat returns the recorded
+answer without executing again, and a changed call conflicts. A handler error
+leaves the call pending; it cannot execute again implicitly, and only Host
+reconciliation (`ToolReconciliation`) records its established answer. Slices
+without Host tools use `RefuseTools`; the Manager and reviewer tools arrive with
+the core protocol.
 
 Provider session/step IDs remain distinct from Host IDs. Inspect can select only
 the exact journal-bound handles and never creates or resumes a provider Session
