@@ -13,15 +13,17 @@ The names below express user goals, not a new CLI schema. Reuse the process with
 | Operation | Change target | Instruction and result |
 | --- | --- | --- |
 | Apply | Artifacts | Reconcile the complete responsibility with the current canonical model, including unchanged intent. Correct deviations or return a justified reviewed no-change result. Valid realization can stay as it is. |
-| Cleanup | Artifacts, or model when explicitly selected | Look for useful cleanup in each area while preserving the applicable meaning, requirements and permitted freedom. Deliver a reviewed improvement or justified no-op. Select one target per invocation. |
+| Cleanup | Artifacts | Look for useful cleanup in each area while preserving the applicable requirements and permitted freedom. Deliver a reviewed improvement or justified no-op. |
 | Bughunt | Artifacts | Search for bugs against the model and fix them through review and integration. Never change the model to excuse faulty artifacts. |
-| Refactor | Artifacts, or model when explicitly selected | Look through the tree for better structure within the existing obligations. Preserve behavior and contracts for artifact work, and meaning for model work. Select one target per invocation. |
+| Refactor | Artifacts | Look through the tree for better structure within the existing obligations. Preserve behavior and contracts. |
 | Verify | None | Assess whether the existing stand conforms to the bound canonical model, and explain why it does not or cannot yet be judged. Produce findings and evidence; make no repairs. |
 | Custom | Explicitly none, artifacts or model | Propagate the supplied prompt through the tree and perform it in each responsibility. The target and authority are explicit before work; free text cannot broaden them. |
 | Extract | Model candidate and proposed artifact accounting | Describe the existing repository, review and integrate the model, then use read-only Verify findings to refine it. Existing realizations stay unchanged. See the workflow below. |
 | Optimize | Model | Examine existing Definitions and connections for missing links and justified improvements. Preserve intended meaning and avoid unsupported additions. See the boundaries below. |
 
 Cleanup and Refactor explicitly seek improvements in an already conforming stand. Apply need not rewrite that stand to an Agent's taste. Bughunt puts more attention on error cases. These different search objectives do not require different review or integration institutions. An improvement preference is not a Verify failure unless a binding requirement is violated.
+
+The earlier north-star description also allowed an explicitly model-only Cleanup or Refactor. Whether those names remain available for model work, as aliases of Optimize or as explicit Custom commands, is open naming design. The table above describes the owner's current artifact-work examples; Optimize owns model improvement. No variant combines model and artifact changes.
 
 ## Verify only assesses conformity
 
