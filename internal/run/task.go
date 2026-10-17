@@ -460,13 +460,10 @@ func (s *stateValue) beforeTaskSession(c Command) error {
 		}
 		session := s.sessions[r.Session]
 		if r.Step == "" {
+			// The adapter's protocol handshake, one message at a time, until
+			// the session is ready or bound; a Codex App Server sends three.
 			if session.Ready || session.Bound {
 				return ErrState
-			}
-			for key, m := range s.transports {
-				if key.Session == r.Session && !m.Record.Control {
-					return ErrState
-				}
 			}
 			return nil
 		}
