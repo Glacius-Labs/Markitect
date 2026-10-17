@@ -4,6 +4,26 @@ artifacts:
     form: code
     realizes: [product/runtime/container-runtime]
     why: Implements the stated responsibility within its declared boundary.
+  - path: "experiments/runtime-baseline/README.md"
+    form: doc
+    realizes: [product/runtime/container-runtime]
+    why: Documents the stated responsibility or preserves its historical evidence.
+  - path: "experiments/runtime-baseline/assess.py"
+    form: code
+    realizes: [product/runtime/container-runtime]
+    why: Exercises the container runtime with real provider sessions and assesses realizations with the independent oracle.
+  - path: "experiments/runtime-baseline/baseline.py"
+    form: code
+    realizes: [product/runtime/container-runtime]
+    why: Exercises the container runtime with real provider sessions and assesses realizations with the independent oracle.
+  - path: "experiments/runtime-baseline/codex_login.py"
+    form: code
+    realizes: [product/runtime/container-runtime]
+    why: Exercises the container runtime with real provider sessions and assesses realizations with the independent oracle.
+  - path: "experiments/runtime-baseline/run_oracle.py"
+    form: code
+    realizes: [product/runtime/container-runtime]
+    why: Exercises the container runtime with real provider sessions and assesses realizations with the independent oracle.
   - path: "internal/adapters/container/README.md"
     form: doc
     realizes: [product/runtime/container-runtime]
