@@ -2,6 +2,7 @@ package gitrepo
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"os"
 	"reflect"
@@ -75,6 +76,14 @@ func (r *Repository) publicationSource(ctx context.Context, request apply.Public
 	}
 	a, err := r.acquire(ctx, capture.selection, "", true)
 	if err != nil {
+		if errors.Is(err, ErrDirty) && publicationOnlyDrift(err) {
+			// Git can report an untracked redirect as dirty before disk safety
+			// checks run. Confirm a complete safe observation before treating
+			// this previously clean capture as changed.
+			if _, observationErr := r.acquire(ctx, capture.selection, "", false); observationErr != nil {
+				return capture, a, errors.Join(err, observationErr)
+			}
+		}
 		return capture, a, publicationCaptureError(err)
 	}
 	if a.guard() != request.Guard {

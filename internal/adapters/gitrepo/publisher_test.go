@@ -291,6 +291,32 @@ func TestPublisherPreflightKeepsUnknownFailuresDistinctFromCaptureChange(t *test
 	}
 }
 
+func TestPublisherBeforeWriteDriftRetainsFailedReceipt(t *testing.T) {
+	for _, p := range []string{"new/deep/add.txt", "real/change.txt"} {
+		t.Run(p, func(t *testing.T) {
+			r, repo, req := publicationFixture(t)
+			req.Changes = slices.DeleteFunc(req.Changes, func(c snapshot.Change) bool { return c.Path().String() != p })
+			permit, err := r.Preflight(context.Background(), req, &publicationControl{})
+			if err != nil {
+				t.Fatal(err)
+			}
+			r.observe = func(event, path string) {
+				if event == "publication-before-write" {
+					repo.Write(path, "other writer\n")
+				}
+			}
+			receipt, err := r.Publish(context.Background(), permit, &publicationControl{})
+			if !errors.Is(err, apply.ErrCaptureChanged) || !errors.Is(err, ErrChanged) || receipt.Outcome != apply.PublicationFailed || len(receipt.Paths) != 1 || receipt.Paths[0].State != apply.PathOther {
+				t.Fatalf("before-write capture drift lost classification or receipt: %+v %v", receipt, err)
+			}
+			data, readErr := os.ReadFile(filepath.Join(repo.Dir, filepath.FromSlash(p)))
+			if readErr != nil || string(data) != "other writer\n" {
+				t.Fatalf("refused publication changed other writer's file: %q %v", data, readErr)
+			}
+		})
+	}
+}
+
 func TestPublisherDoesNotUseCallerChangeSlicesAfterBinding(t *testing.T) {
 	r, _, req := publicationFixture(t)
 	control := &publicationControl{onCheck: func(n int) {

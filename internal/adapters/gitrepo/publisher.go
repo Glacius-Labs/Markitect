@@ -202,6 +202,9 @@ func (r *Repository) Publish(ctx context.Context, permit apply.PublicationPermit
 			writes++
 		}
 		if err != nil {
+			if !wrote {
+				err = publicationCaptureError(err)
+			}
 			receipt, inspectErr := r.Inspect(ctx, request)
 			receipt.Outcome = apply.PublicationFailed
 			if writes > 0 {

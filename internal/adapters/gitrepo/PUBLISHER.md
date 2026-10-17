@@ -10,7 +10,10 @@ or review state. Empty changes are valid.
 
 Observed capture drift also wraps `apply.ErrCaptureChanged`, retaining the
 adapter's `ErrChanged` or `ErrDirty` cause for `errors.Is`. This classification
-covers source rechecks, repository identity, index and checkout-policy changes.
+covers source rechecks, repository identity, index and checkout-policy changes,
+and a requested path that changes before its write. A dirty recapture requires
+a complete safe draft acquisition before receiving this classification, because
+Git's early dirty check can encounter an untracked redirected directory.
 Invalid requests or guards, mismatched before tuples, controller failures,
 unsafe paths, limits and unknown acquisition errors retain their own errors.
 An acquisition error that combines drift with another failure is not classified
