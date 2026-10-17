@@ -44,7 +44,7 @@ Each Manager of the topology has exactly one task per run. The Host creates ever
 
 **Explore and the write barrier**
 - **T1** Explore runs children before parents. Each Manager has one read-only Explore step. A parent's Explore becomes admissible once all its direct children's Explore results are confirmed, and its input contains their reports.
-- **T2** The Host admits no writing step until every task is `explored` or later. If the root's Explore proposes owners for unexplained files, an independent intake review assesses those proposals before the barrier opens, and accepted assignments are recorded as D6 describes.
+- **T2** The Host admits no writing step until every task is `explored` or later. If the captured source has unexplained files, the root's Explore proposes their owners, and an independent intake review assesses those proposals before the barrier opens. Accepted assignments are recorded as D6 describes. A rejected proposal leaves its file unexplained and becomes an issue addressed to the root. The root can propose again in a later work step through `assign_owner`, under a new intake review. Publication still requires conforming coverage.
 - **T3** An Explore step ends with `report`, or with a `complete` no-change `submit` when the Manager finds nothing to change. A no-change submission is reviewed like any other. Its review may run before the write barrier, because nothing is written.
 
 **Admission and step outcomes**
@@ -72,9 +72,14 @@ Each Manager of the topology has exactly one task per run. The Host creates ever
   That step may change only the parent's own artifacts.
 
 **Waking and reopening**
-- **T10** A `blocked` task becomes `ready` when what it named arrives: the reply to its question, an accepted delivery of the named producer, the completion of its children, or the owner's answer. A message addressed to a `blocked` task also makes it `ready`, so that a waiting Manager can still answer.
-- **T11** A blocking issue or a question addressed to a `done` task returns it to `ready`. Every ancestor whose accepted integration contains that task's delivery returns to `blocked` on it, and its integration needs a fresh integration review once the task is `done` again. Counters carry on. The same applies during Verifying when a correctable finding returns the run to Running.
-- **T12** If no step is admissible, none is running and no task waits for the owner, the Host dispatches the lowest common parent of the blocked tasks once, with the recorded waits. If nothing is admissible after that step, those blocked tasks become `incomplete`.
+- **T10** A `blocked` task becomes `ready` when what it named arrives: the reply to its question, an accepted delivery of the named producer, the completion of its children, or the owner's answer. The exception is the answer to a needs-decision verdict, which starts a fresh review instead (T8). A message addressed to a `blocked` task also makes it `ready`, so that a waiting Manager can still answer.
+- **T11** A question addressed to a `done` task admits one reply step, and the task stays `done`. If that step changes no file (S4) and raises no blocking issue, nothing else happens. A blocking issue addressed to a `done` task, or a reply step that changes files, returns the task to `ready`. In that case:
+  - every ancestor whose accepted integration contains that task's delivery returns to `blocked` on it;
+  - its integration needs a fresh integration review once the task is `done` again;
+  - counters carry on.
+
+  The same applies during Verifying, when a correctable finding returns the run to Running.
+- **T12** If no step is admissible, none is running and no task waits for the owner, the Host dispatches the lowest common parent of the blocked tasks once for that set of recorded waits. If the same waits recur after that step, those tasks become `incomplete`.
 
 **Completion and incomplete work**
 - **T13** Completion:
@@ -159,7 +164,7 @@ The [journal](manager-apply-journal.md) stores findings and questions as records
 
   Registry records follow the same rule. Exclusive ownership makes this replay safe without a common base. A failed condition is a Host error that stops the run. Composition never merges content or chooses between owners.
 - **D3** Each step starts from the aggregate current at its admission, plus the Manager's own unaccepted changes replayed by the D2 rule. The step records the aggregate version it saw. A dependent task can implement against a producer's result once that result is accepted, because every later step sees it.
-- **D4** A local review judges its subject's own obligations, so it stays valid when its delivery is composed onto a newer aggregate. Interactions between areas are the integration review's question. An integration review always assesses the exact composed aggregate of its subtree, and it is renewed whenever that aggregate changes.
+- **D4** A local review is renewed only when a delivery that its candidate used has changed (DEC-041). The candidate used the producers its task waited on (T5) and those its submission names as dependencies. The captured source counts as version zero of every producer. A producer has changed when it has a delivery accepted after the aggregate version that the candidate's last step saw. Any other later change leaves the local review valid, because interactions between areas are the integration review's question. An integration review always assesses the exact composed aggregate of its subtree, and it is renewed whenever that aggregate changes.
 - **D5** A parent never writes child-owned paths. A correction to child content is an issue addressed to the owning child, which reopens it if it is `done` (T11).
 - **D6** Ownership decisions are recorded by the Host as registry changes outside D2. These are `assign_owner` decisions, accepted intake assignments, transfers, and records passing to an ancestor. A transfer of a path is refused while another Manager has unaccepted changes on it. A decision takes effect in the aggregate when it is recorded, and later deliveries are composed under the new ownership.
 
