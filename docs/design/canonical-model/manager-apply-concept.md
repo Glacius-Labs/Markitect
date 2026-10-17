@@ -195,6 +195,18 @@ Raise an ordinary open question naming the source Definition and passage, the po
 
 This is a review duty over the statements actually assessed, not a guarantee that every missing connection is found.
 
+## Technical risk derivation
+
+Managers and independent reviewers must derive relevant technical failure modes from the applicable model obligations, available operating conditions and actual realization. The owner need not enumerate every implementation risk or author a separate Definition for every technical consequence of an existing obligation. Managers perform this investigation during Explore and continue it during implementation, rework and integration; each reviewer independently examines the local or composed subject. A no-change result has the same duty.
+
+Ask how the realization could violate an obligation under the conditions in which it is intended to operate. Relevant concerns can include concurrent updates, the interval between checking a precondition and committing, partial failure, retries, lifecycle transitions and external effects. These are examples to select against the actual responsibility, not an exhaustive checklist or an instruction to invent operating conditions. For example, when concurrent use is in scope, an obligation that publication freezes content requires examining a write that read editable state before another operation published it. A green sequential test alone does not settle that concern.
+
+Deriving a necessary technical consequence of existing intent is realization judgment within the mandate. Managers investigate, choose a conforming implementation and repair deviations; reviewers judge the reasoning and evidence. A different business policy, an exceptional tradeoff outside the mandate or a necessary missing model relationship still follows the existing question and separate model-change route. Technical inference does not authorize invented canonical links, new business restrictions, unsupported runtime assumptions or additional execution rights.
+
+The two review stages remain unchanged. Before candidate access, reviewers derive expectations and distinguishing cases from the task and model. After candidate access, they must inspect the actual implementation and integration for additional risks and reassess whether the original cases suffice. The first-stage expectations remain recorded; additional concerns and needed cases use the existing findings and evidence path in the [execution contract](manager-apply-execution.md#evidence-need-survives-budget-pressure). Managers retain the grounds, investigation and unresolved concerns in their existing reports and Definition assessments. No separate risk register, role, workflow stage or schema is introduced.
+
+The [owner clarification of 17 October 2026](../../concepts/register.md#dec-045-managers-and-reviewers-derive-technical-risks) addresses the gap between handling a recognized concern and actively discovering it. The observable improvement is a Manager or reviewer deriving a consequential implementation risk and obtaining a distinguishing check without owner coaching or an enumerated defect in the model. This remains a capability to demonstrate; the sequential, process-local library example does not establish concurrency or database-risk discovery.
+
 ## Deliveries and evidence
 
 Every Manager, including the root, returns the same delivery shape:

@@ -54,3 +54,19 @@ The owner accepted this and requested the remaining questions:
 > Klingt gut, halte das so fest und schaue was es sonst noch zu klären gibt
 
 Recorder's note: this accepts the preceding Optimize workflow and authorizes its documentation under the existing Main publication request. The remaining command questions and recommendations in the owning design are assistant analysis, not further accepted decisions. No implementation or runtime authority is added.
+
+## Model adoption with known realization deviations
+
+Recorder's note: a subsequent direct owner discussion on 17 October 2026 in **Usage, Skills, UX**, thread `01a14ac0-f40a-73a0-b401-e7e9d24ee4fc`. The earlier Commands statements above retain their history. This continuation explicitly changes the Extract completion criterion; it does not supply implementation or runtime evidence.
+
+The owner asked:
+
+> Lass uns jetzt die Modellübernahme konkret durchspielen: Wie erstellt der Coding-Agent aus Code, Tests und Doku einen Modellvorschlag, ohne vorhandene Fehler zu Regeln zu machen? Weiterhin keine Implementierung.
+
+Recorder's summary of the assistant proposal: bind the source revision and scope, distinguish authoritative intent from observed behavior, inspect discriminating cases and actual assertions, and independently review the model for source support, omissions and unnecessary implementation constraints. In a hypothetical library, an authoritative five-loan rule and code admitting a sixth justify a correct five-loan model plus a retained realization deviation. They do not justify changing the rule to six. Unclear authority between conflicting 14-day and 21-day sources remains an owner question. The assistant identified that the existing all-conforming Verify completion condition would block adoption of a sound model in the presence of a known implementation defect, and proposed separating model readiness from realization conformity. These examples are reasoning about the design, not observed repository defects or test results.
+
+The owner accepted the workflow and changed the criterion:
+
+> Das klingt gut. Halte den Ablauf in unseren Docs fest und passe das Extract-Abschlusskriterium an: Ein geprüfter Modellvorschlag darf mit bekannten Realisierungsabweichungen übernommen werden. Weiterhin keine Implementierung.
+
+Recorder's interpretation: the current [Extract contract](../../design/canonical-model/commands.md#completion-and-adoption-with-known-deviations) now allows adoption of a structurally valid, reviewed and integrated candidate with adequately supported known realization deviations. Material unresolved intent, inadequate model coverage and evidence gaps still prevent adoption readiness. Verify keeps its actual result, and deviations remain visible for later separately authorized artifact work. This is a documentation-only change to the later-operation design; it grants no runtime, model-writing implementation or artifact repair authority.
