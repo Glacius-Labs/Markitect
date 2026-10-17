@@ -2868,3 +2868,19 @@ artifacts:
     form: config
     realizes: [examples/independent-oracles]
     why: Binds every copied Library r2 input to its upstream path, full source revision and original blob digest, with explicit derivations.
+  - path: "experiments/test-projects/comparison/README.md"
+    form: doc
+    realizes: [examples/independent-oracles]
+    why: Explains preparation of matched ordinary-documentation and canonical-model inputs while keeping independent assessment outside both writer contexts.
+  - path: "experiments/test-projects/comparison/library/requirements.md"
+    form: doc
+    realizes: [examples/independent-oracles]
+    why: Supplies ordinary Library requirements with the same intended meaning as the source-bound integrated Library r2 model.
+  - path: "experiments/test-projects/comparison/library/implementation-prompt.md"
+    form: doc
+    realizes: [examples/independent-oracles]
+    why: Instructs one coding Agent to realize the ordinary Library requirements with their implementation freedom and delivery obligations.
+  - path: "experiments/test-projects/comparison/library/matched-arms.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Binds the comparison to exact integrated Library r2 model and illustrative execution sources while retaining unbound runtime and independent-assessment inputs.

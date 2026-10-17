@@ -7,6 +7,7 @@ Versioned project sources for preparing complete Markitect workflows and indepen
 | Project | Requirement sequence | Sources |
 | --- | --- | --- |
 | [Library r2](library-r2/README.md) | Realize the library with a five-loan limit, then change only the limit to three against the actual prior realization. | [Canonical model](library-r2/project/.markitect/model.yaml), [source provenance](library-r2/sources.yaml) |
+| [Ordinary documentation comparison](comparison/README.md) | Prepare the same intended requirements for one coding Agent and Markitect, with independent assessment outside both writer contexts. | [Library requirements](comparison/library/requirements.md), [writer instruction](comparison/library/implementation-prompt.md), [matched source bindings](comparison/library/matched-arms.yaml) |
 
 ## Prepare a project
 
