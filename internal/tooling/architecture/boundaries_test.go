@@ -65,6 +65,12 @@ func TestConcreteResponsibilityBoundaries(t *testing.T) {
 		{"internal/adapters/documents", "internal/tooling/guardedwrite", true},
 		{"internal/adapters/documents", "internal/tooling/source", false},
 		{"internal/adapters/checks", "internal/adapters/codexappserver", false},
+		// The Claude wire codec has no session, runtime, sibling or tooling edges.
+		{"internal/adapters/claudecode", "internal/run", false},
+		{"internal/adapters/claudecode", "internal/adapters/container", false},
+		{"internal/adapters/claudecode", "internal/agentd/frame", false},
+		{"internal/adapters/claudecode", "internal/adapters/codexappserver", false},
+		{"internal/adapters/claudecode", "internal/tooling/source", false},
 		// Codex's concrete metadata factory uses only image inspection/copy.
 		// Session and agentd-frame consumption require a separate delivery.
 		{"internal/adapters/codexappserver", "internal/adapters/container", true},

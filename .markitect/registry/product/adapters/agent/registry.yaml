@@ -1,5 +1,21 @@
 apiVersion: markitect.registry/v1
 artifacts:
+  - path: "internal/adapters/claudecode/README.md"
+    form: doc
+    realizes: [product/ports-and-adapters]
+    why: Documents the selected pinned Claude wire shapes, provenance and source-only evidence limits.
+  - path: "internal/adapters/claudecode/codec.go"
+    form: code
+    realizes: [product/ports-and-adapters]
+    why: Encodes selected caller inputs and retains bounded immutable Claude protocol observations without I/O.
+  - path: "internal/adapters/claudecode/codec_fixture_test.go"
+    form: test
+    realizes: [product/ports-and-adapters]
+    why: Supplies independently authored synthetic stream fixtures without provider captures or copied schemas.
+  - path: "internal/adapters/claudecode/codec_test.go"
+    form: test
+    realizes: [product/ports-and-adapters]
+    why: Distinguishes framing limits, identity preservation, control acknowledgments and independent result statuses.
   - path: "internal/adapters/codexappserver/README.md"
     form: doc
     realizes: [product/adapters/agent/closed-agent-metadata, product/ports-and-adapters]
