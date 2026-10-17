@@ -1,5 +1,33 @@
 apiVersion: markitect.registry/v1
 artifacts:
+  - path: "internal/bootstrap/runtime_credentials.go"
+    form: code
+    realizes: [product/cli/honest-read-only-interface]
+    why: Binds exact explicit credential references to dedicated runtime files and defers bounded safe reads until a provider resolver is invoked.
+  - path: "internal/bootstrap/runtime_credentials_test.go"
+    form: test
+    realizes: [product/cli/honest-read-only-interface]
+    why: Tests deferred credential reads, exact mapping, literal fake login bytes, finite bounds and safe failure diagnostics without real credentials.
+  - path: "internal/bootstrap/runtime_credentials_unix.go"
+    form: code
+    realizes: [product/cli/honest-read-only-interface]
+    why: Refuses redirected Unix credential paths and uses a nonblocking no-follow file open.
+  - path: "internal/bootstrap/runtime_credentials_unix_test.go"
+    form: test
+    realizes: [product/cli/honest-read-only-interface]
+    why: Tests refusal of fake credential symlinks and nonregular FIFOs on Unix.
+  - path: "internal/bootstrap/runtime_credentials_windows.go"
+    form: code
+    realizes: [product/cli/honest-read-only-interface]
+    why: Refuses Windows reparse points while reading an explicitly selected runtime credential file.
+  - path: "internal/bootstrap/runtime_credentials_windows_test.go"
+    form: test
+    realizes: [product/cli/honest-read-only-interface]
+    why: Tests refusal of a temporary credential junction, device paths, alternate streams and case aliases on Windows.
+  - path: "internal/bootstrap/runtime_credentials_other.go"
+    form: code
+    realizes: [product/cli/honest-read-only-interface]
+    why: Refuses credential reads on platforms without the supported native file safety guarantees.
   - path: "cmd/markitect/main.go"
     form: code
     realizes: [product/cli/honest-read-only-interface]
