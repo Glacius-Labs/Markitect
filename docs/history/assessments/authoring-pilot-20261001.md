@@ -2,7 +2,7 @@
 
 Recorded 2026-10-01. The first exercise was **incomplete**: one check-only run and one full-query run completed. The third actor stopped at a provider usage limit before making changes; three remaining runs were not started. The planned three runs per arm and blind semantic review did not complete. A separate repeat with a corrected task card is recorded below. Neither exercise establishes a comparative productivity, token, or cost conclusion.
 
-[Measurement](measurement.md) owns the procedure. The earlier [core authoring exercise](authoring-assessment.md) is separate historical evidence.
+[Measurement](../../measurement.md) owns the procedure. The earlier [core authoring exercise](authoring-assessment-20260930.md) is separate historical evidence.
 
 The recorded actor outcomes below belong to the dated source, tool and fixture identified here. The current example contract uses canonical `.markitect/areas/` resources and explicitly selected Markdown views under `docs/markitect/`; this change does not reinterpret those pilot outcomes as a replay.
 

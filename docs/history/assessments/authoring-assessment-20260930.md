@@ -1,6 +1,6 @@
 # Core authoring exercise
 
-Date: 2026-09-30. This bounded usability assessment used the repository's isolated minimal example. It is not an A/B performance study or an external acceptance decision. [Measurement](measurement.md) owns the protocol; the [roadmap](implementation-plan.md) owns remaining product work.
+Date: 2026-09-30. This bounded usability assessment used the repository's isolated minimal example. It is not an A/B performance study or an external acceptance decision. [Measurement](../../measurement.md) owns the protocol; the [roadmap](../../implementation-plan.md) owns remaining product work.
 
 ## Task and independent expectation
 

@@ -1,6 +1,6 @@
 # MCP evaluation (2026-10-01)
 
-**Status:** historical read-only MCP pilot, recorded against its original source. Its experimental server and harness are retired from Main. Current source has no public MCP command; [Project operations](project-operations.md) owns the active CLI. Original observations below remain dated evidence, not current instructions.
+**Status:** historical read-only MCP pilot, recorded against its original source. Its experimental server and harness are retired from Main. Current source has no public MCP command; [Project operations](../../project-operations.md) owns the active CLI. Original observations below remain dated evidence, not current instructions.
 
 ## Decision
 
@@ -35,7 +35,7 @@ as blocked; the present assessment does not depend on repairing authentication.
   find, explain, and context against the onboarding fixture and compares
   CLI/MCP payloads, rejecting unknown tools and extra arguments. It is a direct
   protocol test, not a model task or a second-client comparison.
-- [Onboarding](onboarding.md) is a separate scripted CLI workflow replay that
+- [Onboarding](windows-onboarding.md) is a separate scripted CLI workflow replay that
   includes writes and verification. MCP exposes no write or verify operation.
 
 Integrated source preserves protocol negotiation for 2025-06-18 and 2025-11-25,
@@ -59,7 +59,7 @@ possible follow-up; they do not change the decision to conclude the present
 assessment and keep MCP experimental. Historical identities and failures are
 preserved as observed.
 
-**Status:** Partial. One real Codex MCP task completed against the fixed snapshot, and the direct published-CLI/MCP stdio checks confirmed exact payload parity. The Codex response covered the requested identity, relationships, and context paths, but did not fully explain the policy-change destination; no same-prompt Codex CLI run completed, and Claude remains blocked. This is limited feasibility evidence, not a productivity comparison or trend. The [roadmap](implementation-plan.md) remains the owner of product direction.
+**Status:** Partial. One real Codex MCP task completed against the fixed snapshot, and the direct published-CLI/MCP stdio checks confirmed exact payload parity. The Codex response covered the requested identity, relationships, and context paths, but did not fully explain the policy-change destination; no same-prompt Codex CLI run completed, and Claude remains blocked. This is limited feasibility evidence, not a productivity comparison or trend. The [roadmap](../../implementation-plan.md) remains the owner of product direction.
 
 ### Question and task
 
@@ -119,4 +119,4 @@ The same stdio transport returned JSON-RPC `-32601` for an unknown tool. Extra `
 
 One bounded real Codex MCP task completed with the expected three calls and returned the expected identity, relationships, and context paths; it is scored partial because it did not fully explain the policy-change destination. The earlier invalid CLI actor invocation and failed Codex startup are preserved. Direct CLI and MCP tool texts match exactly on the fixed baseline, and direct protocol checks reject unknown tools and unsupported path/package/repository/revision properties. Claude remains blocked under the existing OAuth/trust conditions. There is no matched CLI authoring-client result, so no productivity or comparative benefit claim is supported.
 
-The completed CLI-only verification and fixed-SHA impact result are recorded in the [onboarding report](onboarding.md). The remaining evidence for a matched authoring-client comparison is a valid same-prompt CLI condition; follow-up is tracked in [issue #34](https://github.com/Glacius-Labs/Markitect/issues/34). Do not infer a productivity trend from one partial MCP task.
+The completed CLI-only verification and fixed-SHA impact result are recorded in the [onboarding report](windows-onboarding.md). The remaining evidence for a matched authoring-client comparison is a valid same-prompt CLI condition; follow-up is tracked in [issue #34](https://github.com/Glacius-Labs/Markitect/issues/34). Do not infer a productivity trend from one partial MCP task.

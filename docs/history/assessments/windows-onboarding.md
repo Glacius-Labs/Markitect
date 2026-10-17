@@ -1,6 +1,6 @@
 # Windows CLI onboarding exercise
 
-**Retired walkthrough:** the old release downloads and their installation paths were removed on 17 October 2026. This page preserves the original Windows exercise and observations only. Use [current source](../README.md#run-the-current-source); original binaries are identified by the [retained release evidence](history/distribution-retirement-20261017.md).
+**Retired walkthrough:** the old release downloads and their installation paths were removed on 17 October 2026. This page preserves the original Windows exercise and observations only. Use [current source](../../../README.md#run-the-current-source); original binaries are identified by the [retained release evidence](../distribution-retirement-20261017.md).
 
 This dated exercise measures a machine-run path through a published Windows CLI. It is a reproducible adoption smoke exercise, not novice-user research: one maintainer/agent runs a fixed synthetic task, and the timer does not represent a population or a human learning curve.
 
@@ -20,7 +20,7 @@ The release binary is already installed when the measurement script receives `-M
 
 The synthetic [parcel-support fixture](https://github.com/Glacius-Labs/Markitect/blob/d083c8f37b6bb1e09a9c5a7947c421651a7e755b/examples/onboarding/delivery-service/README.md) contains shared customer-data guidance, a policy, workflow, contract, agent, and Skill entrypoint. `tasks/query-only-prompt.md` with `tasks/query-only-expected.yaml` is the shared read-only task for MCP/CLI find, explain, and context parity. `tasks/policy-edit-prompt.md` with `tasks/expected.yaml` is a separate CLI-only mutation task that also exercises verification and fixed-SHA impact. Oracle and prompt files are excluded from the measured project's Git snapshots.
 
-The original scripted replay and its later Project/Domain smoke were retired. Their source and procedure remain in [the pre-retirement record](https://github.com/Glacius-Labs/Markitect/blob/1f4a1ede214d05fd2fee615b3905207df7702426/docs/onboarding.md). The current [source smoke](../tools/smoke/main.go) exercises canonical Library M1/M2 read-only preparation and refusals; it does not run this historical onboarding or prove Apply.
+The original scripted replay and its later Project/Domain smoke were retired. Their source and procedure remain in [the pre-retirement record](https://github.com/Glacius-Labs/Markitect/blob/1f4a1ede214d05fd2fee615b3905207df7702426/docs/onboarding.md). The current [source smoke](../../../tools/smoke/main.go) exercises canonical Library M1/M2 read-only preparation and refusals; it does not run this historical onboarding or prove Apply.
 
 The dated result below is the record of the retired script.
 

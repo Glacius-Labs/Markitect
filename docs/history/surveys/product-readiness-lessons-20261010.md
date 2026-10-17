@@ -156,4 +156,4 @@ Each observed provider error deserves a regression case:
   - handling of partial failure.
 
   A command runs with caller authority and can have side effects even in observe, plan or verify. An executable digest is not publisher provenance. [IDEA-01, ARCH-09]
-- **Core change bar.** The bar for Core changes is kept in the [parallel-work guide](../../development/parallel-work.md#module-assignments): two distinct vocabularies, a finite alternative and deterministic tests.
+- **Core change bar.** The bar for Core changes is kept in the [parallel-work guide](https://github.com/Glacius-Labs/Markitect/blob/bc4b49e76f9b9e4b3ec98033a0b8c73d5013b310/docs/development/parallel-work.md#module-assignments): two distinct vocabularies, a finite alternative and deterministic tests.
