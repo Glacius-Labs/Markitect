@@ -189,6 +189,7 @@ The owner's [origin account of 15 October 2026](sources/owner-origin-20261015.md
   - are rules followed better instead of being overlooked?
   - can people move their attention to deciding and modeling while the code reliably reflects the model?
 - **Consequence:** [Measurement](../measurement.md#human-attention-and-delegated-work) already requires repeated, realistic change sequences. The review added an emphasis: the benefit is expected over a series of changes on a long-lived project, not on a single greenfield task. That emphasis is a proposal, not yet an owner decision ([OQ-005](#open-questions)).
+- **Owner clarification, 17 October 2026:** Human attention is the bottleneck. Additional lower-cost Agents are useful when they reduce overlooked obligations and the developer's inspection and correction prompts; Agent count alone is not the problem. Elapsed time is separate, with parallelism as a later implementation lever. The primary comparison is ordinary documentation with the same content as the canonical model, given to one Agent to read and implement. The [source](sources/human-attention-and-baseline-20261017.md) preserves the wording; [Measurement](../measurement.md#quality-first-comparative-evaluation) owns the procedure. This clarification changes neither the sequential first Apply nor the feasibility gates.
 
 ### DEC-010 Evaluate the method separately from its execution runtime
 
