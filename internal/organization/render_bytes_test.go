@@ -13,7 +13,8 @@ import (
 
 func TestRenderExactUTF8ByteCapAndCompleteDiagnostics(t *testing.T) {
 	selection, settings, input := renderFixture(t, "a", organization.ManagerView)
-	input.Task.Outcome.Text = "\xef\xbb\xbfOriginal é子\x00\r\nRepeated é子\r\n"
+	input.RemainingLimits = []organization.HostText{hostFact("limit-text", "\xef\xbb\xbfOriginal é子\x00\r\nRepeated é子\r\n")}
+	input.ParentHints = []organization.ParentHint{{Package: organization.Root, Advice: hostFact("hint", "A source-attributed hint, not a new obligation.")}}
 	var exact organization.ContextPackage
 	// The cap is itself rendered. Reach its byte-length fixed point, rather
 	// than assuming an external token estimate or ignoring its own digits.
@@ -29,7 +30,7 @@ func TestRenderExactUTF8ByteCapAndCompleteDiagnostics(t *testing.T) {
 	if length != input.MaxContextBytes.Value || !utf8.Valid(exact.Bytes()) || int64(utf8.RuneCount(exact.Bytes())) >= length {
 		t.Fatal("not an exact UTF8 byte boundary")
 	}
-	if !bytes.Equal(sectionTexts(t, exact, "task-outcome")[0], []byte(input.Task.Outcome.Text)) {
+	if !bytes.Equal(sectionTexts(t, exact, "remaining-limit-view-not-accounting")[0], []byte(input.RemainingLimits[0].Text)) {
 		t.Fatal("Host text bytes were normalized")
 	}
 	input.MaxContextBytes.Value--
