@@ -46,11 +46,23 @@ the image.
 
 The explicit reader factory receives only the captured `engineExecutable`.
 The production reader inspects the exact image ID, then streams the entire
-regular executable file through `Engine.ObserveImageFile` from a temporary
-container that never starts. Observation is bounded to 512 MiB and retains the
-actual SHA-256 and positive size. Failed observation, cancellation or failed
-cleanup cannot produce passing evidence. The executable is never read from a
-Host path, and the separate 1 MiB metadata reader is not used for it.
+regular executable file through `Engine.ObserveImageFileWithRequiredPaths` from
+a temporary container that never starts. Before hashing, that reader verifies
+the executable's ancestors as actual directories. The check adapter also
+requires actual directories at `/work`, `/home`, `/home/agent`, `/tmp`, `/dev`,
+`/proc`, `/sys` and `/etc`, and regular files at `/etc/hosts`, `/etc/hostname`
+and `/etc/resolv.conf`, with actual directory ancestors. These observations use
+the same never-started container; redirected, missing or unknown paths refuse
+preparation. They prevent an accepted executable alias into a runtime mount or
+a mount-target alias onto the executable tree. Symlinked layouts are refused;
+the configured executable is never rewritten.
+
+Complete executable observation is bounded to 512 MiB and retains the actual
+SHA-256 and positive size. Path-header observations establish presence and type;
+only the entire executable supplies file-content evidence. Failed observation,
+cancellation or failed cleanup cannot produce passing evidence. The executable
+is never read from a Host path, and the separate 1 MiB metadata reader is not
+used for it.
 
 Passing preparation returns contract `markitect.container-check` version `1`,
 the exact input binding, and `CheckImage` evidence with image ID and executable
