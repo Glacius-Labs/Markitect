@@ -92,6 +92,54 @@ policy stay fixed; recorded cap targets change the shared ledger only. Each Prep
 needs an available run unit and the new basis's structural review floor in the
 remaining shared ledger; this need not replenish the configured reserve that
 assessment work may spend.
-Review and task execution, final evidence, Verifying/Publishing transitions and Applied/NoChange
-are not implemented yet. There is no Session, Workspace, Check, SQLite, provider
-or Apply adapter here. The full contracts remain in the design documents.
+The consumer-owned `Sessions` port maps one Host session to Open, one compiled
+turn to Step, exact known provider handles to read-only Inspect, and bounded
+termination to Stop. It names no engine or provider protocol. Session and step
+preparation commit their finite admission reservations atomically with the
+preallocated identities, fixed profile/image/workspace and input/contract
+references. The original payloads must be available and verified. Reviewer
+workspaces are read-only. Credential fields are references only.
+Each Step explicitly asserts the still-current Session plan binding, including
+profile, image, workspace and candidate. A changed or unprovable binding needs a
+new session. Physical workspace currentness remains the Host's responsibility.
+
+`SessionChannel` implements the serialized Host `SessionIO` callbacks against
+the same Coordinator and journal. Before every provider write, including tool
+responses and notifications, `PrepareSend` must return a fresh acknowledged
+`SendPermit` whose identity matches the actual bytes. Failed or uncertain
+acknowledgement never grants dispatch. Re-observing a preparation never grants
+another send, even after restart. Actual sent/not-sent/uncertain observations
+remain separate. Shutdown control sends stay available during reconciliation
+without clearing earlier unknown activity or charging new Agent work.
+
+Wire records separate the actual byte digest/length from the permitted journal
+representation. The Host redacts known secrets **before** supplying any payload
+for append; RUN receives no secret value and cannot perform that redaction.
+Redacted records retain their explicit observation limit and cannot reproduce or
+authorize replay of the original wire. `AppendBatch.SessionRefs` lists exactly
+the direct stored payloads, alongside `BindingRefs` and `BindingOwnerRef`; the
+store verifies and retains all three closures before acknowledging Append.
+
+Tool ingress is deduplicated by session channel and provider call identity,
+including the exact step, tool identity and content/representation. A changed
+call conflicts. An unresolved duplicate stays pending and cannot execute again
+implicitly. A recorded reply is returned with its original receipt and bytes
+when the retained representation permits it; redaction or unavailable bytes
+returns the known receipt and an observation limit instead. A fresh ingress
+receipt is not tool-execution authority. Tool interpretation and actual execution
+are not implemented in this slice.
+
+Provider session/step IDs remain distinct from Host IDs. Inspect can select only
+the exact journal-bound handles and never starts a container or resends. Stop
+records actual termination or uncertainty, preserving partial observations on
+error. Settled startup time does not mean a provider stopped: live sessions,
+active steps and unresolved Host tool activity prevent run completion and
+assignment closure. A stop request or callback cancellation does not clear them.
+Restoration retains the recovery barrier until explicit reconciliation and
+elapsed settlement; no port is executed during Restore. Proposed terminal output
+is retained evidence, not an accepted delivery.
+
+Review and task execution, final evidence, Verifying/Publishing transitions and
+Applied/NoChange are not implemented yet. There is no concrete Session,
+Workspace, Check, SQLite, provider or Apply execution adapter here. The full
+contracts remain in the design documents.

@@ -1,5 +1,9 @@
 apiVersion: markitect.registry/v1
 artifacts:
+  - path: "docs/history/project-history-20261017.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Preserves the source-bound project history, timeline and dated process assessment.
   - path: "docs/README.md"
     form: doc
     realizes: [documentation/current-guidance]

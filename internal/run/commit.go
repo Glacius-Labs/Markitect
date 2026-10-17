@@ -51,7 +51,7 @@ func (c *Coordinator) Commit(ctx context.Context, journal Journal, p Proposal) (
 		return receipt, fmt.Errorf("%w: append: %v", ErrUncertain, err)
 	}
 	c.state = p.next
-	c.recovering = c.recovering && c.state.hasOpen()
+	c.recovering = c.recovering && (c.state.hasOpen() || c.state.hasLiveSessions())
 	c.pending = nil
 	return receipt, nil
 }
@@ -94,7 +94,7 @@ func (c *Coordinator) ReconcilePending(ctx context.Context, journal Journal) err
 		}
 	}
 	c.state = p.next
-	c.recovering = c.recovering && c.state.hasOpen()
+	c.recovering = c.recovering && (c.state.hasOpen() || c.state.hasLiveSessions())
 	c.pending = nil
 	return nil
 }

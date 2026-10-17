@@ -143,9 +143,9 @@ func (b AppendBatch) Events() []Event {
 
 // BindingRefs returns the distinct direct basis references in this closed
 // batch. For each original basis payload, BindingOwnerRef derives its required
-// owner input. These are all payload references in the current RUN-1 event set;
-// source documents and other basis data are inline. The store must verify and
-// retain every referenced payload before acknowledging Append.
+// owner input. Source documents and other basis data are inline. SessionRefs
+// supplies the additional direct session payloads. The store must verify and
+// retain both closures before acknowledging Append.
 func (b AppendBatch) BindingRefs() ([]BlobRef, error) {
 	validated, err := DecodeBatch(b.Bytes())
 	if err != nil {
@@ -157,6 +157,28 @@ func (b AppendBatch) BindingRefs() ([]BlobRef, error) {
 		if event.Body.Kind == PrepareRun && !seen[event.Body.Basis] {
 			refs = append(refs, event.Body.Basis)
 			seen[event.Body.Basis] = true
+		}
+	}
+	return refs, nil
+}
+
+// SessionRefs validates the complete closed batch, then lists every distinct
+// direct session payload reference. Actual wire identities are never stored-blob
+// references; only permitted journal representation bytes belong in this list.
+// No partial result is returned on invalid records. The caller owns the slice.
+func (b AppendBatch) SessionRefs() ([]BlobRef, error) {
+	validated, err := DecodeBatch(b.Bytes())
+	if err != nil {
+		return nil, err
+	}
+	var refs []BlobRef
+	seen := map[BlobRef]bool{}
+	for _, event := range validated.Events() {
+		for _, ref := range event.Body.Session.payloadRefs() {
+			if !seen[ref] {
+				refs = append(refs, ref)
+				seen[ref] = true
+			}
 		}
 	}
 	return refs, nil
@@ -210,7 +232,7 @@ type EventPage struct {
 }
 
 func eventKind(event, command string) bool {
-	return event == eventTag(command) || command == PrepareRun && event == "assignment.created"
+	return event == eventTag(command) || command == PrepareRun && event == "assignment.created" || (command == PrepareSession || command == PrepareStep) && event == ReserveInvocation
 }
 
 func eventTag(command string) string {

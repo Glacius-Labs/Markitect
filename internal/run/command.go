@@ -57,10 +57,12 @@ type Command struct {
 	Elapsed                   time.Duration
 	Reason, NextActor         string
 	Outcome                   Outcome
-	Caps                      Capacity `json:",omitzero"`
-	OwnerInput                string   `json:",omitempty"`
-	Quiescence                string   `json:",omitempty"`
+	Caps                      Capacity      `json:",omitzero"`
+	OwnerInput                string        `json:",omitempty"`
+	Quiescence                string        `json:",omitempty"`
+	Session                   SessionRecord `json:",omitzero"`
 	binding                   Binding
+	sessionPayloads           []Payload
 }
 
 func PrepareCommand(id, assignment, run, predecessor string, at time.Time, basis Binding) Command {
@@ -127,6 +129,17 @@ func (c Command) validate() error {
 		}
 		allowed.OwnerInput = c.OwnerInput
 		allowed.Quiescence = c.Quiescence
+	case PrepareSession, BindSession, PrepareStep, ObserveStep, PrepareTransport, ObserveTransport, RequestTool, ReplyTool, ObserveSessionStop:
+		if err := c.Session.validate(c.Kind); err != nil {
+			return err
+		}
+		allowed.Session = c.Session
+		if c.Kind == PrepareSession || c.Kind == PrepareStep {
+			if !c.Reservation.valid() || c.Kind == PrepareSession && c.Reservation.Kind != SessionStart || c.Kind == PrepareStep && c.Reservation.Kind != AgentStep {
+				return ErrInvalid
+			}
+			allowed.Reservation = c.Reservation
+		}
 	default:
 		return ErrInvalid
 	}
