@@ -7,8 +7,10 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"os"
 	"os/exec"
 	"path"
+	"path/filepath"
 	"strings"
 	"time"
 )
@@ -40,25 +42,48 @@ func (e *Engine) ObserveImageFile(ctx context.Context, imageID, file string, max
 	if err := ctx.Err(); err != nil {
 		return observation, err
 	}
-	out, err := e.output(ctx, "create", "--entrypoint", "/markitect-never-started", imageID)
+	cidDir, err := os.MkdirTemp("", "markitect-image-observation-")
 	if err != nil {
 		return observation, err
 	}
-	id := strings.TrimSpace(string(out))
-	if !containerIDPattern.MatchString(id) {
-		return observation, fmt.Errorf("engine reported invalid full container ID %q", id)
-	}
+	cidPath := filepath.Join(cidDir, "cid")
 	defer func() {
-		cleanup, cancel := context.WithTimeout(context.WithoutCancel(ctx), 15*time.Second)
-		defer cancel()
-		if _, removeErr := e.output(cleanup, "rm", "--force", id); removeErr != nil {
-			err = errors.Join(err, fmt.Errorf("image observation cleanup: %w", removeErr))
+		// Only the private engine-written handle supplies deletion authority,
+		// including when creation failed after the daemon created its container.
+		raw, readErr := os.ReadFile(cidPath)
+		if readErr == nil {
+			id := strings.TrimSpace(string(raw))
+			if !containerIDPattern.MatchString(id) {
+				err = errors.Join(err, fmt.Errorf("invalid image observation cidfile"))
+			} else {
+				cleanup, cancel := context.WithTimeout(context.WithoutCancel(ctx), 15*time.Second)
+				_, removeErr := e.imageObservationOutput(cleanup, "rm", "--force", "--volumes", id)
+				cancel()
+				if removeErr != nil {
+					err = errors.Join(err, fmt.Errorf("image observation cleanup: %w", removeErr))
+				}
+			}
+		} else if !errors.Is(readErr, os.ErrNotExist) {
+			err = errors.Join(err, fmt.Errorf("read image observation cidfile: %w", readErr))
 		}
+		err = errors.Join(err, os.RemoveAll(cidDir))
 		err = errors.Join(err, ctx.Err())
 		if err != nil {
 			observation = ImageFileObservation{}
 		}
 	}()
+	out, err := e.imageObservationOutput(ctx, "create", "--cidfile", cidPath, "--entrypoint", "/markitect-never-started", imageID)
+	if err != nil {
+		return observation, err
+	}
+	raw, err := os.ReadFile(cidPath)
+	if err != nil {
+		return observation, fmt.Errorf("read created image container identity: %w", err)
+	}
+	id := strings.TrimSpace(string(raw))
+	if !containerIDPattern.MatchString(id) || id != strings.TrimSpace(string(out)) {
+		return observation, fmt.Errorf("engine reported inconsistent image observation container identity")
+	}
 	cmd := exec.CommandContext(ctx, e.path, "cp", id+":"+file, "-")
 	stderr := &boundedBuffer{max: maxCommandOutput}
 	cmd.Stderr = stderr
@@ -72,6 +97,8 @@ func (e *Engine) ObserveImageFile(ctx context.Context, imageID, file string, max
 		_ = stdout.Close()
 		return observation, err
 	}
+	stopRead := context.AfterFunc(ctx, func() { _ = stdout.Close() })
+	defer stopRead()
 	observation, err = observeImageArchive(stdout, path.Base(file), maxBytes)
 	if err != nil {
 		// Stop a producer that could otherwise block writing an invalid archive.
@@ -84,12 +111,29 @@ func (e *Engine) ObserveImageFile(ctx context.Context, imageID, file string, max
 	return observation, err
 }
 
+// Unlike metadata output, observation lifecycle commands also bound inherited
+// pipe handles after process exit or cancellation. This includes cleanup.
+func (e *Engine) imageObservationOutput(ctx context.Context, args ...string) ([]byte, error) {
+	cmd := exec.CommandContext(ctx, e.path, args...)
+	stdout, stderr := &boundedBuffer{max: maxCommandOutput}, &boundedBuffer{max: maxCommandOutput}
+	cmd.Stdout, cmd.Stderr, cmd.WaitDelay = stdout, stderr, 15*time.Second
+	if err := cmd.Run(); err != nil {
+		return nil, errors.Join(ctx.Err(), fmt.Errorf("container engine %s: %w: %s", args[0], err, strings.TrimSpace(stderr.String())))
+	}
+	if stdout.overflow {
+		return nil, fmt.Errorf("container engine %s: output exceeds %d bytes", args[0], maxCommandOutput)
+	}
+	return stdout.Bytes(), ctx.Err()
+}
+
 // observeImageArchive permits one file and a complete tar terminator. A small
 // fixed allowance bounds headers, PAX metadata and zero padding independently of
 // the file bound. No unbounded trailer is drained from a faulty engine.
 func observeImageArchive(source io.Reader, name string, maxBytes int64) (ImageFileObservation, error) {
 	const archiveAllowance = 1 << 20
-	limited := &io.LimitedReader{R: source, N: maxBytes + archiveAllowance + 1}
+	// Next can itself read/allocate sparse metadata; it must never receive the
+	// file-size budget until the regular header has been validated.
+	limited := &io.LimitedReader{R: source, N: archiveAllowance}
 	tr := tar.NewReader(limited)
 	h, err := tr.Next()
 	if err != nil {
@@ -103,11 +147,14 @@ func observeImageArchive(source io.Reader, name string, maxBytes int64) (ImageFi
 			return ImageFileObservation{}, fmt.Errorf("sparse image file is not supported")
 		}
 	}
+	limited.N += maxBytes + 1
 	hash := sha256.New()
 	n, err := io.CopyN(hash, tr, h.Size)
 	if err != nil {
 		return ImageFileObservation{}, fmt.Errorf("read complete image file: %w", err)
 	}
+	// Revoke unused payload budget before another Next can parse metadata.
+	limited.N = min(limited.N, int64(archiveAllowance))
 	beforeEnd := limited.N
 	if _, err := tr.Next(); err != io.EOF {
 		return ImageFileObservation{}, fmt.Errorf("image archive has an additional entry or invalid ending: %v", err)

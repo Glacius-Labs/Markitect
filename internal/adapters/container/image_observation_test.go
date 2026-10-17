@@ -10,6 +10,7 @@ import (
 	"os"
 	"path/filepath"
 	"reflect"
+	"strconv"
 	"strings"
 	"testing"
 	"time"
@@ -44,9 +45,14 @@ func TestObserveImageFileStreamsBeyondMetadataLimits(t *testing.T) {
 	if err != nil || got.Size != int64(len(body)) || got.SHA256 != sha256.Sum256([]byte(body)) {
 		t.Fatalf("observation=%+v err=%v", got, err)
 	}
-	want := [][]string{{"create", "--entrypoint", "/markitect-never-started", commandImage}, {"cp", commandID + ":/opt/check", "-"}, {"rm", "--force", commandID}}
-	if !reflect.DeepEqual(calls(), want) {
-		t.Fatalf("engine calls=%q", calls())
+	all := calls()
+	if len(all) != 3 || len(all[0]) != 6 || all[0][1] != "--cidfile" || !filepath.IsAbs(all[0][2]) {
+		t.Fatalf("engine calls=%q", all)
+	}
+	all[0][2] = "PRIVATE_CIDFILE"
+	want := [][]string{{"create", "--cidfile", "PRIVATE_CIDFILE", "--entrypoint", "/markitect-never-started", commandImage}, {"cp", commandID + ":/opt/check", "-"}, {"rm", "--force", "--volumes", commandID}}
+	if !reflect.DeepEqual(all, want) {
+		t.Fatalf("engine calls=%q", all)
 	}
 }
 
@@ -105,10 +111,118 @@ func TestObserveImageFileRejectsIncompleteObservationsAndCleans(t *testing.T) {
 				t.Fatalf("observation=%+v err=%v", got, err)
 			}
 			all := calls()
-			if len(all) != 3 || !reflect.DeepEqual(all[2], []string{"rm", "--force", commandID}) {
+			if len(all) != 3 || !reflect.DeepEqual(all[2], []string{"rm", "--force", "--volumes", commandID}) {
 				t.Fatalf("cleanup calls=%q", all)
 			}
 		})
+	}
+}
+
+func TestObserveImageFileCleansObservedCIDOnCreateFailure(t *testing.T) {
+	e, calls := fakeCommandEngine(t, engineStep{Out: commandID, Code: 1, Err: "create transport failed"}, engineStep{})
+	got, err := e.ObserveImageFile(context.Background(), commandImage, "/check", 100)
+	if err == nil || got != (ImageFileObservation{}) {
+		t.Fatalf("observation=%+v err=%v", got, err)
+	}
+	all := calls()
+	if len(all) != 2 || !reflect.DeepEqual(all[1], []string{"rm", "--force", "--volumes", commandID}) {
+		t.Fatalf("calls=%q", all)
+	}
+}
+
+func TestObserveImageFileCleansObservedCIDOnCreateCancellation(t *testing.T) {
+	e, calls := fakeCommandEngine(t, engineStep{Out: commandID, SleepMillis: 10000}, engineStep{})
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	done := make(chan error, 1)
+	go func() { _, err := e.ObserveImageFile(ctx, commandImage, "/check", 100); done <- err }()
+	deadline := time.Now().Add(5 * time.Second)
+	observed := false
+	for time.Now().Before(deadline) {
+		if raw, err := os.ReadFile(filepath.Join(os.Getenv("MARKITECT_FAKE_COMMAND_ENGINE"), "create-ready")); err == nil && string(raw) == commandID {
+			observed = true
+			break
+		}
+		time.Sleep(5 * time.Millisecond)
+	}
+	if !observed {
+		t.Fatal("fake create did not report CID before cancellation")
+	}
+	cancel()
+	select {
+	case err := <-done:
+		all := calls()
+		if !errors.Is(err, context.Canceled) || len(all) != 2 || !reflect.DeepEqual(all[1], []string{"rm", "--force", "--volumes", commandID}) {
+			t.Fatalf("err=%v calls=%q", err, all)
+		}
+	case <-time.After(2 * time.Second):
+		t.Fatal("create cancellation did not clean observed CID")
+	}
+}
+
+func TestObserveImageFileRefusesInvalidCreatedCID(t *testing.T) {
+	e, calls := fakeCommandEngine(t, engineStep{Out: "foreign-name"})
+	got, err := e.ObserveImageFile(context.Background(), commandImage, "/check", 100)
+	if err == nil || got != (ImageFileObservation{}) || len(calls()) != 1 {
+		t.Fatalf("observation=%+v err=%v calls=%q", got, err, calls())
+	}
+}
+
+func TestObserveImageFileCancelsInheritedStdout(t *testing.T) {
+	e, calls := fakeCommandEngine(t, engineStep{Out: commandID}, engineStep{HoldStdoutMillis: 10000}, engineStep{})
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	done := make(chan error, 1)
+	go func() { _, err := e.ObserveImageFile(ctx, commandImage, "/check", 100); done <- err }()
+	pidPath := filepath.Join(os.Getenv("MARKITECT_FAKE_COMMAND_ENGINE"), "stdout-holder")
+	deadline := time.Now().Add(5 * time.Second)
+	var holder *os.Process
+	for time.Now().Before(deadline) {
+		if raw, err := os.ReadFile(pidPath); err == nil {
+			pid, _ := strconv.Atoi(string(raw))
+			holder, _ = os.FindProcess(pid)
+			break
+		}
+		time.Sleep(5 * time.Millisecond)
+	}
+	if holder == nil {
+		t.Fatal("fake engine did not start stdout holder")
+	}
+	defer holder.Kill()
+	// The cp CLI exits with no inherited stderr handle; only its child keeps
+	// stdout open. Cancellation must unblock the reader before cmd.Wait.
+	cancel()
+	select {
+	case err := <-done:
+		if !errors.Is(err, context.Canceled) || len(calls()) != 3 {
+			t.Fatalf("err=%v calls=%q", err, calls())
+		}
+	case <-time.After(2 * time.Second):
+		t.Fatal("inherited stdout blocked cancellation")
+	}
+}
+
+type countedImageReader struct {
+	io.Reader
+	n int
+}
+
+func (r *countedImageReader) Read(p []byte) (int, error) {
+	n, err := r.Reader.Read(p)
+	r.n += n
+	return n, err
+}
+
+func TestImageArchiveBoundsMetadataBeforeFileBudget(t *testing.T) {
+	withMetadata := imageArchive(t, tar.Header{Name: "check", Typeflag: tar.TypeReg, PAXRecords: map[string]string{"comment": strings.Repeat("x", 4096)}, Format: tar.FormatPAX}, "", false)
+	// Remove the empty regular header and terminator, leaving a PAX metadata
+	// record generated by archive/tar. Repeat it before one actual file.
+	metadata := withMetadata[:len(withMetadata)-512-1024]
+	archive := append(bytes.Repeat(metadata, 256), imageArchive(t, tar.Header{Name: "check", Typeflag: tar.TypeReg}, "", false)...)
+	reader := &countedImageReader{Reader: bytes.NewReader(archive)}
+	got, err := observeImageArchive(reader, "check", MaxImageFileObservationBytes)
+	if err == nil || got != (ImageFileObservation{}) || reader.n > 1<<20 {
+		t.Fatalf("observation=%+v err=%v bytes=%d", got, err, reader.n)
 	}
 }
 
