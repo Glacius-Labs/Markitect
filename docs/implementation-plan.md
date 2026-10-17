@@ -13,7 +13,7 @@ Starting product: Main `bc4b49e76f9b9e4b3ec98033a0b8c73d5013b310`. Its existing 
 ## Guiding decisions
 
 - Implement completed v1 and the Manager concept directly. Compatibility is not required; delete obsolete product paths, formats and tests together.
-- One ordinary root and one Manager per local Package, shared across code, tests and docs. Default teams are Manager plus fresh independent reviewer, with sequential writing.
+- One ordinary root and one Manager per local Package, shared across code, tests and docs. Default teams are Manager plus fresh independent reviewer, with sequential writing. [DEC-039](concepts/register.md#dec-039-deterministic-manager-process) requires unchanged Host-guaranteed operation propagation to every Manager, adjacent-only communication and fixed review/integration; AI-planned participation and rewritten child operations are superseded.
 - Separate pure model/snapshot/organization/realization values from execution, repository I/O and provider protocols. Use consumer-owned Ports and Adapters and one Go module.
 - Reuse work with current assessment, not old approval. Keep exact bindings, recorded questions and actual effect observations.
 - Budget shortage and uncertainty produce visible retained incomplete work. They cannot waive evidence or authorize blind replay.
@@ -104,7 +104,7 @@ APPLY-RUNTIME builds the container runtime below the session port; APPLY-AGENT b
 
 ## Owner decisions
 
-The architecture is ready for implementation. Concrete producer APIs, driver versions and capability identities are bounded implementation deliverables, not reasons to keep expanding the concept. Ask only for genuinely new intent, authority or an exceptional tradeoff.
+The foundations remain ready for implementation. Before recursive orchestration, align it with [the clarified Manager process](design/canonical-model/manager-apply-concept.md#tasks-and-delegation) and settle its explicitly listed process details. Compatible runtime, storage, candidate and session work can continue; this is not a general rebuild restart. Concrete producer APIs, driver versions and capability identities are bounded implementation deliverables, not reasons to keep expanding the concept. Ask only for genuinely new intent, authority or an exceptional tradeoff.
 
 A pinned runtime image and a bounded real handshake smoke for each session adapter remain mandatory before R1. Credentials and runtime grants must be explicit. This plan does not authorize unlimited provider spending, studies, release/deployment or Government. Existing unrelated PRs/worktrees remain separate unless assigned.
 

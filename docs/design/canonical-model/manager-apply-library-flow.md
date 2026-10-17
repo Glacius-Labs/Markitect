@@ -1,71 +1,80 @@
-# Library Apply delegation and integration
+# Library Apply propagation and integration
 
-This walkthrough traces one Apply of [M1](library-example/README.md) through the [Apply concept](manager-apply-concept.md) and the [port contracts](manager-apply-port-contracts.md). It shows the order of exchanges and who decides each step.
+This walkthrough applies the [fixed Manager process](manager-apply-concept.md#tasks-and-delegation) to [M1](library-example/README.md). It replaces the earlier root-planned order and parent-authored prompts under [DEC-039](../../concepts/register.md#dec-039-deterministic-manager-process). The exchanges explain the process, not an implemented scheduler or a real successful Apply. Exact queue policy, prerequisite-scope acceptance and invalidation rules remain the explicitly listed process details.
 
 ## Starting point
 
-The Host has captured and compiled M1, bound configuration and repository inputs, and derived the ordinary root plus the library, members, catalog, lending and lending/reminders Managers. The root receives the user's Apply instruction. All tasks inherit artifact-only reconciliation and a read-only canonical model.
+The Host captures the committed model, configuration, registry and repository, compiles the model and derives its complete local Manager tree. In M1, library, members, catalog and lending are top-level Packages; reminders belongs to lending. The library Package is not the root and is not the parent of members or catalog.
 
-The root's recorded order put library first: its Manager owns the Go module, entry point and callable interface that `library/callable-interface` requires. Members and catalog followed, then lending; library's final task wires the operations into the entry point. For this focused trace, B0 denotes the current unpublished candidate, which already contains the accepted library, member and catalog deliveries from earlier tasks in the same run. This does not imply that shared library obligations or the whole project have passed. All other required Package deliveries remain part of the root's completion criteria. C1, C2, I1 and I2 below are illustrative candidate labels, not recorded content digests.
+```text
+root
+  library
+  members
+  catalog
+  lending
+    reminders
+```
 
-## Root to lending and back
+The versioned Apply instruction is identical for every Manager: reconcile the artifacts of your responsibility with the bound model, assess existing realization, correct deviations and explain the result. Context, role instructions, exact scope and current messages are rendered separately. The model stays read-only. All local Managers participate; imported vocabulary supplies context without spawning Managers.
 
-| Step | Exchange and result | Decision owner |
+## Messages down, reviewed results up
+
+| Step | Exchange | Decision owner |
 | --- | --- | --- |
-| 1 Root receives context | Its task includes the operation goal, bound M1, Package directory, shared rules, current candidate and available child summaries. It receives no required descendant file-edit list. | Host prepares and records the actual input; root decides how to delegate. |
-| 2 Root delegates | Root asks lending to reconcile its area, including reminders, as code, tests and documentation against M1. It can cite `lending/borrow`, `lending/loan-policy`, `members/eligibility` and `catalog/availability`. The Host still includes every local lending Definition and required descendant responsibility. | Root supplies outcome and basis; Host checks the direct parent/child relation and fixes scope, identity and candidate base B0. |
-| 3 Root yields | Delegation immediately returns a recorded child task ID. Root finishes its current step with the child pending. The Host schedules the child; no provider tool call waits synchronously for an entire subtree to finish. | Host owns queue and waiting state. |
-| 4 Lending receives context | Its eight local Definitions include the LendingPolicy Kind and Properties, policy, loan, borrowing, return and inspection. See also exposes membership, availability and shared delivery rules, with reasons. Reminders is a child responsibility, not inherited local content. | Organization renders supplied facts; Host records the packet and starts the Manager session. |
-| 5 Lending works | It reads its existing realization and reserves new paths through Host tools before writing. Existing file ownership comes from the registry. It implements in a private workspace and proposes its Definition assessments and realization explanation. | Lending chooses local implementation; Host validates reservations and scope. |
-| 6 Host seals C1 | After the writing step ends, Host captures actual bytes and the registry delta, checks protected inputs and ownership, and creates immutable candidate C1. Required checks run against that exact candidate. | Host validates observed changes, not the Agent's claimed diff. |
-| 7 Fresh local review | A fresh reviewer receives C1, M1, assessments and actual check evidence. Suppose code, tests and guide all permit six loans. The reviewer reports the conflict with `loan-policy.spec.maxOpenLoans`, whose M1 value is five. Passing generated tests cannot discharge that finding. | Reviewer judges meaning; Host validates the result's identity, purpose, subject and evidence references. |
-| 8 Rework and review | Lending receives that finding and revises from the recorded C1 state. Host seals C2, runs current checks and starts another fresh review. A pass belongs to C2 and local delivery scope. Rounds remain bounded. | Lending repairs; reviewer reassesses; Host controls transitions and budgets. |
-| 9 Reminders delivery | Lending delegates to its reminders child through the same protocol, using a current base and an outcome about open overdue loans at an explicit date. The child supplies its own reviewed result. | Lending issues the prompt; Host dispatches and validates; the child owns its work. |
-| 10 Lending integrates | Host composes the accepted local and reminders deltas with explicit bases into I1. Lending assesses their combined behavior. A fresh integration reviewer examines I1, including whether reminders consume the current loan/due-date contract and exclude returned loans. | Host checks composition; lending and its integration reviewer judge the aggregate. |
-| 11 Host accepts the subtree | Only when local work, descendants, required reviews/checks, assessments and questions are complete does Host issue an accepted lending delivery. It carries I1, registry revision, evidence and a concise report. | Host issues the delivery; the Agent cannot self-issue acceptance. |
-| 12 Root resumes and integrates | Root receives the accepted delivery and can inspect details by identity. Host composes it with other required deliveries into I2. Root assesses system integration; a fresh integration reviewer checks the aggregate, including suspension preventing borrowing. | Root coordinates and judges integration; Host validates composition and evidence. |
-| 13 Verify and publish | The complete current aggregate receives required checks and the Host's final evidence check over coverage, the Definition census and all review bindings. Apply rechecks source inputs, requests guarded publication of artifacts and registry, and records actual read-back. | Apply owns this final lifecycle; the publisher observes physical writes. |
+| 1 Receive at root | Host records the operation and supplies root context. Root starts no work before a message arrives. | Host derives identity, context and mandatory participation. Root judges its own integration responsibility. |
+| 2 Propagate to every branch | Host records and delivers the unchanged operation on root-to-library, root-to-members, root-to-catalog and root-to-lending edges. Delivery failure remains visible; root output cannot remove a branch. | Host applies the fixed propagation rule. |
+| 3 Propagate at lending | The same instruction goes from lending to reminders, independently of whether lending asks to delegate. Each Manager receives its own complete compiled context; reminders is not folded into lending's local Definitions. | Host preserves adjacent routing and scope. |
+| 4 Assess and report dependencies | Each Manager assesses its area. Leaves normally start local work; a Manager may identify a missing prerequisite, model question or justified no-change result. | Agent interprets local obligations; Host records concrete messages and waits. |
+| 5 Resolve prerequisites | For a missing project skeleton, lending can send a request to root, which routes it to library. Library owns the callable interface and required project files. Its reviewed contribution can unblock dependent work while its final wiring remains incomplete. | Host enforces edges and exact reviewed scope. Library chooses its owned implementation; no root-authored global work plan is needed. |
+| 6 Work and seal | Lending works on an allowed current base, reserves new paths and proposes registrations. Host observes the full actual delta and protected inputs and seals candidate C1. | Lending implements; Host observes and checks authority. |
+| 7 Review and correct | Fresh reviewer first records expectations from M1, then sees C1 and actual checks. Suppose code, tests and docs all permit six loans. The five-loan model rule produces a finding. Lending corrects it; candidate C2 receives current independent review. | Reviewer judges meaning; Host enforces exact subjects, finite rounds and evidence. |
+| 8 Integrate reminders | Reminders supplies its independently reviewed result or no-change result. Lending receives a summary and evidence, may request targeted detail, and integrates it with local work. A fresh integration review checks due dates and exclusion of returned loans. | Lending judges composition; Host refuses completion with missing children or stale evidence. |
+| 9 Integrate at root | Root receives current reviewed results from all four direct branches. Library finishes required wiring using current interfaces. Root's fresh integration review checks cross-area behavior, including suspension preventing borrowing while return remains possible. | Root and reviewer judge the aggregate; Host requires all areas and evidence. |
+| 10 Final verification and publication | Required aggregate checks, Host evidence check, source preflight, any configured owner approval, guarded write and actual read-back complete the operation. | Host establishes procedural completeness and actual effects. The owner's later commit accepts the result. |
 
-The real order is chosen through recorded tasks and ready work. A Manager waiting for another area does not prevent the Host from running other ready tasks. Shared library obligations can require a later assessment against the assembled result; the root cannot mark that Manager complete merely because the other areas worked locally.
+This is an illustrative successful exchange sequence, not a prescribed AI plan. A dependency can change which work is ready. The fixed product policy chooses among ready work within one-writer and budget limits. A waiting child cannot prevent its parent from doing owned prerequisite work; in this particular model the skeleton owner is a sibling reached through root. No Manager can be declared complete merely because its prerequisite was useful or its files did not change.
+
+## Questions across areas
+
+If lending needs a catalog API correction, the route is lending to root to catalog, with the reply returning catalog to root to lending. Lending cannot call catalog directly. A reminder question to members travels reminders to lending to root to members and back along those edges. Explicit model references provide context, not communication or write privileges.
+
+If the responsible area is unknown, the receiving parent uses explicit facts or a bounded inquiry through its direct branches. Recipients and pending replies stay visible; the request cannot disappear because a Manager guesses it is irrelevant. A missing necessary model relationship remains a modeling error. Inquiry does not manufacture that relationship or silently augment Apply context to compensate for it.
 
 ## What each handoff carries
 
-**Delegation proposal:** receiving Manager, intended outcome, model basis and relevant constraints. Sender identity comes from the actual session. Host adds run/task/parent identities, attempt, complete responsibility, inherited restrictions and the current candidate. A task's cited basis is a starting point, not permission to omit its other Definitions.
+**Operation handoff:** unchanged operation identity and bytes, Host-bound run and Manager responsibility, direct parent-child route, separately compiled context, resolved settings and current candidate basis. A later message cannot narrow the original obligation.
 
-**Work proposal:** summary, Definition assessments, registry proposal references, child results and open questions. Host adds the observed delta and sealed candidate. A no-change proposal has the same obligations; empty file changes alone are insufficient.
+**Question or dependency:** originating Manager, concrete question, relevant model facts and current basis, direct recipient, outstanding replies and the result needed to resume. Exact record schemas follow process clarification, not this example.
 
-**Review proposal:** exact subject and purpose, verdict, findings, model grounds and references to observed evidence. It does not contain accepted delivery authority. Changes requested lead to another work attempt, a model issue stays open, and exhausted rounds end the task incomplete.
+**Work proposal:** summary, Definition assessments, proposed registry changes and open work. Host supplies the observed delta and sealed candidate. No-change has the same assessment and independent review duties. A prerequisite contribution names only its supported reviewed scope and keeps final obligations open.
 
-**Accepted delivery:** Host-issued identity, exact model/candidate/registry bindings, complete reviewed scope, assessments, child delivery IDs, checks/reviews and report. A local pass supports local scope; an accepted lending subtree also requires reminders and integration. Neither replaces root integration or the final evidence check.
+**Review proposal:** exact subject and purpose, verdict, findings, model grounds and observed evidence references. A pass cannot accept changed bytes or an incomplete subtree.
 
-## Context and session continuity
+**Accepted delivery:** Host-issued exact model/candidate/registry bindings, complete reviewed scope, child delivery references and evidence. Local success does not replace integration or final verification.
 
-Root and lending are ordinary Managers with different responsibilities. Their logical identities survive steps and attempts. Provider session identities are separate. A Manager can continue a known session with recorded supplied history; a reviewer starts fresh, without the implementation conversation. Rework adds the grounded finding and candidate basis rather than silently replaying the previous step.
+## Sessions, integration and observation
 
-If a session or workspace binding cannot be safely continued, use an explicit new session with compiled prior reports and a recorded relationship to the earlier attempt. Do not claim the new session has inherited an unknown provider conversation. An uncertain writer must be reconciled or stopped before another writer receives that workspace.
+Managers are message-driven sessions. Known sessions can continue only on current bound inputs and workspace; otherwise an explicitly related replacement receives recorded context. Independent reviewers start fresh. Eager or lazy physical startup does not change mandatory participation. Uncertain activity blocks handoff; no automatic resend repairs a lost response.
 
-The exact initial context, custom instructions, later supplied replies, actual outgoing request, observed responses, tool exchanges and candidate differences enter the same run history. Summaries sent upward reference those records. This gives the root a useful overview without requiring the whole descendant transcript in its initial prompt.
+Parents begin with direct-child summaries and evidence. Targeted reads remain possible when necessary; they do not receive every descendant transcript by default. The Host records supplied messages, context, observed effects and exact candidate transitions. Metrics derive from those records: waits, requests between areas, correction rounds and integration findings can reveal recurring coordination costs. Metrics do not automatically reorganize Packages or prove benefit.
 
-## Integration rules
-
-Host composition applies validated child changes to an exact base and binds the registry to the resulting artifact tree. It does not choose a semantic conflict resolution. A conflicting or outdated delivery returns to its owner for a current candidate and review. A parent does not repair a conflict by editing child-owned files.
-
-If integration needs an authored change, perform an ordinary owned work/review step and then review the new aggregate. Local reviews and resolved findings remain evidence for their original subjects. Renew affected assessments when their content or assumptions change; unknown consequences broaden review. There is no automatic assertion that an unchanged file makes all earlier semantic evidence current.
+Host composition preserves exact bases and ownership. A parent can edit its own integration artifacts, never a child's files. Corrections return through the tree to the owner. Changed assumptions or content require renewed affected assessment, and unknown consequences broaden review. An unresolved circular wait or model decision becomes visible incomplete work rather than an endless message loop.
 
 ## Concrete refusal cases
 
 | Case | Required result |
 | --- | --- |
-| Root tries to delegate directly to lending/reminders | Refuse the invalid parent/child route; lending coordinates its child. |
-| Root narrows the task to borrowing and omits returns | Host retains lending's complete reconciliation responsibility; omission prevents completion. |
-| Lending writes an unreserved new file or a model/config/ignore input | Refuse the candidate. A later claim cannot silently authorize an already observed unauthorized write. |
-| A Kind or Property gets the `vocabulary` disposition | Require a reason and concrete uses where its obligations are assessed; the numeric policy cannot disappear behind that label. |
-| Reviewer passes C1 but the delivered bytes are C2 | Refuse the mismatched subject; assess C2. |
-| Reminders remains unresolved while lending's local code passes | Do not accept the lending subtree. |
-| A member rule needs a missing link to lending | Record a source-grounded question through the common parent. Apply cannot add the link; unresolved required assessment prevents completion. |
-| A tool request or provider response is observed twice | Use recorded correlation IDs; do not create another child or another work attempt for a duplicate. |
-| A step times out after possibly being sent | Record uncertainty and inspect the known session/step; do not automatically send the work again. |
-| Final evidence is complete but repository inputs changed | Return stale before publication. |
-| Publication writes only part of the candidate | Preserve actual writes, report partial failure and inspect recovery state; do not return Applied. |
+| Root omits lending in its output | Host still propagates to lending and reminders; a missing observed receipt cannot count as completion. |
+| Parent rewrites Apply to cover borrowing but not returns | Refuse narrowed operation; the full compiled local responsibility remains binding. |
+| Empty or one-child Package is optimized out | Refuse completion without that Manager's explicit assessed result and required review. |
+| Root sends directly to reminders, or lending sends to catalog | Refuse the non-adjacent call and use the required tree route. |
+| A child waits for a parent-owned prerequisite | Permit ready owned parent work; do not require child completion first. |
+| A useful skeleton contribution is reported as final completion | Refuse until the owner's remaining duties and current review/integration are complete. |
+| Lending writes unreserved or protected inputs | Refuse the candidate; later registration cannot authorize the earlier write. |
+| C1 passed but C2 is delivered | Refuse the mismatched subject and require current assessment. |
+| Reminders or an outstanding dependency reply is unresolved | Do not accept the lending subtree or root aggregate. |
+| A necessary relationship is absent from the model | Record the modeling error; do not infer context or edit the model during Apply. |
+| All Agents say done but checks or integration evidence are missing | Refuse success. |
+| Source inputs drift or publication is partial | Preserve observations; do not return Applied. |
 
-These cases are the first controlled-adapter tests of the [port contracts](manager-apply-port-contracts.md); real role sessions and the two real Applies follow separately.
+These are controlled process cases for later implementation. They neither authorize real provider runs nor replace the two real library Applies.

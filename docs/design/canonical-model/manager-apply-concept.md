@@ -2,9 +2,9 @@
 
 This is the product concept for realizing a canonical model through Managers. It owns organization, context, delegation, deliveries, review purposes, artifact ownership, the Apply lifecycle and reporting. The [design map](README.md#apply-design) lists the technical contracts that refine it and states the status of the whole set. The [north star](manager-realization-north-star.md) keeps the ideas and variants that this concept did not select.
 
-The concept uses the [completed language v1](minimal-language/language-contract.md) without new Core Kinds or semantics. The owner decisions behind it are [DEC-025 to DEC-036](../../concepts/register.md#dec-025-package-managers-organize-realization).
+The concept uses the [completed language v1](minimal-language/language-contract.md) without new Core Kinds or semantics. The owner decisions include [DEC-025 to DEC-036](../../concepts/register.md#dec-025-package-managers-organize-realization) and the superseding [DEC-039 process clarification](../../concepts/register.md#dec-039-deterministic-manager-process).
 
-The product is an organization that realizes an explicitly described project world. The canonical model supplies intended meaning and constraints. A deterministic Host organizes work, supplies context, validates deliveries and records the process. AI Managers make bounded judgments, delegate work and integrate results. The first operation is Apply: reconcile the existing artifacts with the current model, including when the model has not changed.
+The product is an organization that realizes an explicitly described project world. The canonical model supplies intended meaning and constraints. A deterministic Host organizes work, supplies context, validates deliveries and records the process. AI Managers make bounded realization judgments and integrate results. The Host propagates the operation and enforces the process; an Agent does not choose who participates or rewrite another Manager's operation. The first operation is Apply: reconcile the existing artifacts with the current model, including when the model has not changed.
 
 ## Selected choices
 
@@ -16,9 +16,9 @@ The product is an organization that realizes an explicitly described project wor
 | Final check | The Host's deterministic evidence check after the root's integration review; no separate verifier Agent. | The root's integration review already judges the whole; the Host makes sure all evidence is current. |
 | Parent knowledge | Summaries first; targeted, recorded source inspection when needed. | Local responsibility without depending entirely on child claims. |
 | Context | Own Definitions and contracts, explicit neighbors, Definitions whose modeled scope covers the Package, and task facts. | Simple, inspectable compilation without semantic retrieval. |
-| Order | The root plans the delivery order from the cross-Package references: producers before consumers, the skeleton first. | Consumers build on accepted producer deliveries. |
+| Order | The Host propagates the fixed operation down every branch, then runs ready work, dependency responses and upward integration under a fixed protocol. | No Agent can omit a responsibility or bypass its review. |
 | Acceptance | Apply starts from the committed model and writes its verified result into the working tree; the owner's commit accepts it. | Acceptance stays with the owner, as for the model. |
-| First reconciliation | Assess the full selected local model; reviewed no-change deliveries are allowed. | Reliability does not depend on an unproven incremental invalidation scheme. |
+| First reconciliation | Every local Manager receives the operation and assesses its area; no-change results receive review too. | Participation never depends on root relevance judgment or incremental invalidation. |
 | Execution | One writing task at a time, in owned candidate workspaces. | Reliable integration before concurrency. |
 | File ownership | One accountable Manager per artifact; many-to-many links between artifacts and Definitions. | Write responsibility is separate from what an output realizes. |
 | Prompts and history | Record the actual inputs and observed events; derive readable reports from them. | Work is inspectable without sending every transcript to every Agent. |
@@ -47,7 +47,7 @@ Add structure only when it exposes a concrete failure possibility or saves recur
 
 ## Organization and configuration
 
-The root Manager follows the same protocol as every other Manager. It has its own runtime identity for the whole selected local model; v1 forbids a root Package, so none is invented. Top-level Package Managers are its children, and parents follow folder ancestry. Intermediate Packages have ordinary Managers even without local Definitions. The one exception is a pass-through: an intermediate Package without local Definitions and with exactly one child starts no Agent. The Host hands the task down and the child's delivery up, because there is nothing to integrate. Every local Package has a Manager slot; an empty leaf has no reconciliation work and starts no Agent. The run binds the derived topology as execution metadata; empty folders stay out of the canonical model digest as v1 specifies.
+The root Manager follows the same protocol as every other Manager. It has its own runtime identity for the whole selected local model; v1 forbids a root Package, so none is invented. Top-level Package Managers are its children, and parents follow folder ancestry. Every Manager receives the operation, including an empty leaf or an intermediate Package with one child; there is no pass-through startup exception in this strategy. An empty local Definition set is an explicit assessment result, not permission to skip that Manager or its existing ownership and child responsibilities. Insufficient capacity leaves the run incomplete rather than silently omitting a Manager. The run binds the derived topology as execution metadata; empty folders stay out of the canonical model digest as v1 specifies.
 
 Imported models supply read-only vocabulary and context and create no Managers. Editing a library is a task in that library's own project. One local model is the first supported organization.
 
@@ -68,32 +68,68 @@ Configuration has project defaults plus exact Manager overrides and separate har
 
 Ownership follows creation: the Manager that reserves a new path owns it. For a project-level artifact, the requiring Definition decides who creates it. In the library, `library/callable-interface` requires the Go module, the entry point and the build and test commands, so the `library` Manager creates and owns them. When Definitions in several Packages require the same artifact, their nearest common parent decides the owner and records the decision; that can be the root. A file that no Definition justifies is never owned: it is a Markitect input or explicitly ignored, so CI configuration, for example, needs a Definition before Apply manages it.
 
-When a required skeleton is missing, its owner delivers it first: module, entry point and the conventions the model requires. The other areas then add their parts within their own paths and expose internal APIs. A Manager whose artifact integrates other areas, such as the entry point that dispatches every operation, receives a second task after those areas have delivered, to wire them in. The skeleton and the wiring are ordinary reviewed deliveries, not special phases.
+When a required skeleton is missing, its owner can supply a reviewed prerequisite contribution while children wait: module, entry point and the conventions the model requires. Its exact usable scope and outstanding work remain explicit; a prerequisite contribution is not completion of that Manager or subtree. The same owner later integrates the completed operations into its entry point. These use ordinary owned work and review; the root does not invent a global delivery plan, and the Host does not infer an execution order from arbitrary references.
 
 ## Tasks and delegation
 
-Only the root receives the operation's user instruction. For Apply, the Host adds the invariant that artifacts must conform to the selected model and that model content is read-only. Each parent creates tasks for its child Packages. The Host validates the parent-child route and schedules invocations; Managers do not launch unrecorded tasks.
+Apply is one static, versioned operation instruction: reconcile the artifacts of your responsibility with the bound model, assess existing realization, correct deviations and explain the result. It is combined with each Manager's separately compiled context, resolved configuration, role template and current Host facts. The instruction enters through the root and reaches every local Manager unchanged. Questions, findings and delivery messages carry current work facts; they cannot replace, narrow or rewrite that instruction. The model remains read-only.
 
-| Task field | Meaning |
+The Host records every parent-child handoff and guarantees recursive propagation to all direct children. It does not depend on an Agent calling a delegation tool, returning a participant list or remembering a child. Logical receipt and physical session dispatch stay distinct: a stored prompt is not proof the Agent received it. Each Manager has a role session and acts only on a delivered message. Sessions may wait without autonomous work; eager or lazy provider-process startup is a technical choice that cannot skip a Manager.
+
+The organization metaphor has a precise boundary: Managers own local realization and the integration of their direct children's results; the Host owns mandatory participation, permitted routes, required reviews and completion. The root is an ordinary integration Manager, not an AI workflow planner. A parent retains its own artifacts and can resolve local prerequisites before its children finish.
+
+| Fixed process responsibility | Agent judgment |
 | --- | --- |
-| Identity and parent | Run, task, parent task, issuing and receiving Manager, attempt. |
-| Outcome | What the receiving area is expected to accomplish. |
-| Scope and basis | Responsible Package or subtree, bound model references, candidate base and operation target. |
-| Constraints | Relevant restrictions and agreements from the model and the enclosing task. |
-| Completion | Required result, reviews, checks and open questions to resolve. |
-| Inputs | Context package, prior reports and explicitly supplied additional information. |
+| Compiler pipeline derives hierarchy, explicit context and inclusion reasons. | Interpret the supplied obligations in the local realization. |
+| Host propagates the same operation to every local Manager. | Return a justified change or no-change result. |
+| Host admits ready work and enforces finite budgets and one writer. | Report concrete prerequisites, questions and corrective work. |
+| Host permits communication only with direct parent or children. | Explain a question or proposed agreement with its model basis. |
+| Host requires local and integration review and current evidence. | Independent reviewer judges whether realization and evidence suffice. |
 
-Delegation states outcomes and model obligations, not a file-edit plan. Existing write ownership comes from the registry; new paths are reserved through the Host. The root may state an interface constraint the model already requires, but it does not choose the child's files. A reviewer judges whether a prompt takes over the child's implementation decisions; no syntax check can prove that.
+### Fixed Manager cycle
 
-The root plans the delivery order. The Host supplies the cross-Package reference graph with its directions as planning input, and the root records an order with reasons: the owner of the skeleton first, then producers before their consumers. A Manager may receive several tasks in one run. In the library the order is library for the skeleton, then members and catalog, then lending with reminders, and finally library again to wire the operations into the entry point. References often point both ways, so the order is a recorded judgment, not a computed sort. The Host enforces only that a consumer task starts from accepted producer deliveries ([execution](manager-apply-execution.md#accepted-deliveries-and-dependent-work)); the root may revise the order with a recorded reason.
+1. **Receive and propagate.** The Host binds the operation and per-Manager context, records receipt and propagates the unchanged instruction to every direct child. Each Manager remains in the completion census. A failed or uncertain delivery cannot count as completed participation.
+2. **Assess local readiness.** Leaves normally begin local reconciliation. Other Managers can assess their own area, answer messages or supply an owned prerequisite. They do not wait for children before receiving the operation. A dependency wait names the missing result or decision; it never becomes implicit success.
+3. **Work and review.** The active owner writes only its allowed artifacts. The Host observes and seals the candidate. Independent local review judges changes or a no-change proposal with the existing checks and finite correction rules. A usable prerequisite contribution states its exact reviewed scope and remaining obligations; it is not a complete Manager delivery.
+4. **Integrate upward.** Once required direct-child results and local work are current, the parent receives summaries and evidence, composes them through the Host and judges their interaction. Parent-owned integration changes receive ordinary review. A fresh integration review judges the aggregate; one-child parents still participate.
+5. **Correct through the tree.** A finding returns along adjacent edges to its responsible owner. Dependent work waits for the required reviewed result. Changed content or assumptions require renewed affected assessment; old acceptance does not carry to a different subject. Unknown affected scope broadens inquiry and review, never narrows participation.
+6. **Complete and publish.** A Manager's 'done' is a proposal. The Host accepts a subtree only after its local and descendant obligations, current required reviews/checks and blocking questions are complete. At the root, final evidence, source preflight, any required owner approval, guarded publication and read-back remain mandatory. All Agents agreeing does not establish success by itself.
 
-Each area owns its internal API. A consumer uses only the producer's API and never reaches into its files or data; it requests a missing or changed API through the common parent. The integration review checks that consumers use only producer APIs and that those APIs satisfy the connected Definitions.
+These are steps within the existing run lifecycle, not another run state machine. Independent work may progress while another branch waits, within the one-writer policy. The product uses a fixed, recorded ready-work policy with finite correction and inquiry; an Agent never supplies the queue order. Specific tie-breaking and message schemas are technical choices to settle after this process, not reasons to restore AI planning.
 
-Sibling requests go through the nearest common parent. A consumer can request a contract or service change but cannot edit the producer's files. Requests, conflicts and agreements are recorded. If an agreed change invalidates another area's completed assessment, that Manager gets a new task against the updated candidate. Unknown consequences broaden review. A conflict or dependency cycle that cannot be resolved within the run is returned as an open decision, not an endless exchange.
+### Communication and dependencies
+
+A Manager sends only to its direct parent or direct children. Siblings and non-adjacent ancestors or descendants are not direct recipients. Cross-area questions travel up to the common parent and down the appropriate branch, one edge at a time; the Host validates every hop. A model link can add compiled context but never grants a communication shortcut or write ownership.
+
+Route from explicit responsibility and model facts when possible. When the target is unknown, use a bounded inquiry to all relevant direct branches, recursively if needed; if no sound narrowing is available, all branches participate in that inquiry. Record the question, recipients and outstanding replies, so silence is not agreement. Inquiry seeks responsibility or an implementation fact, not an inferred missing model relationship. Apply cannot add a missing link or compensate by inventing context; a necessary missing relationship requires a separate model correction and blocks the affected assessment.
+
+A reference is not automatically an execution dependency. A concrete dependency states the needed reviewed result and its basis. Its owner may work while dependents wait, including a parent supplying a skeleton. Managers retain local API ownership; consumers request changes through the tree and never edit producer files. Unresolvable ownership, circular waits or conflicting requirements remain visible decisions or incomplete work, not an endless exchange. Inquiry and correction consume the existing finite budget and cannot reset review counters.
+
+### Remaining process detail and technical boundary
+
+The mandatory flow above is selected. Before implementing recursive scheduling, settle three details against the library walkthrough: deterministic choice among ready messages/work; how a reviewed prerequisite contribution exposes only its supported scope without completing a Manager; and when a changed result reopens dependent integration. Preserve exact-subject review, budgets and unknown-effect barriers. These details must not add a second planner, reviewer hierarchy, semantic index or parallel workflow ledger.
+
+The compiler pipeline here means deterministic preparation over compiled model facts. The existing `model`/`organization` separation can provide it; no new Core Kind or model-language change is implied. Managers and reviewers still interpret prose. The compiler can reject unresolved references but cannot prove that every necessary semantic relationship was authored.
+
+### Fixed-source comparison and improvement criterion
+
+Comparison basis: Main [`0392cd2f`](https://github.com/Glacius-Labs/Markitect/tree/0392cd2fd724d98b3fc715cb5fd3db22e2d5d224), 17 October 2026. This is an assessment snapshot, not a live backlog. The owner observed that AI-created child prompts and root planning reintroduced discretion over already explicit structure ([source](../../concepts/sources/manager-process-clarification-20261017.md)).
+
+| Surface at that source | Assessment and required follow-through |
+| --- | --- |
+| `internal/organization/select_context.go`, `topology.go` | Explicit selection and direct parent/child inventory fit. The `PassThrough` startup assumption and empty-leaf omission must not become scheduling policy. |
+| `internal/organization/render_templates.go`, `render_context.go` | Bounded deterministic rendering fits; prompts to 'delegate outcomes' and arbitrary supplied task outcomes must become the static operation plus separately identified current messages. |
+| `internal/run/binding.go` review-floor calculation | It excludes empty local work and pass-through integration. Reassess the reserve against mandatory participation and the corrected required reviews. |
+| `internal/run/session*.go`, `state.go`, `restore*.go` | Durable sessions, sends, budgets and uncertainty are useful foundations. They do not yet implement the Manager message protocol or recursive completion. Preserve their effect observations. |
+| PR329, despite its branch name `dev/run-local-review-ledger` | Its integrated change records complete versioned basis inventories. It is not a local-review or delegation engine. |
+| `internal/apply/control*.go`, snapshot/realization and container/agentd foundations | Control, exact candidates, ownership and physical isolation remain applicable. This decision requests no runtime rewrite. |
+| Earlier design `plan` / `delegate` tools and parent-created prompts | Superseded by this process. Exact new message tool schemas remain to be designed; old illustrative APIs are not implementation authority. |
+
+Observable improvement: a controlled trace delivers the identical operation instruction to every Manager with separately compiled context even when the root omits a child in its output; refuses non-adjacent messages; records reviewed no-change results; services a parent prerequisite without deadlock; and refuses subtree success while a child, review, dependency response or changed-subject assessment remains open. Real provider execution and the two real Applies remain separate evidence.
 
 ## Context packages
 
-Each context package is an immutable rendered input plus source references. Its bytes and the actual outgoing invocation are recorded. Preparation is deterministic for its inputs; later semantic conclusions are attributed Agent judgments.
+Each context package is an immutable rendered input plus source references. Its bytes and the actual outgoing invocation are recorded. Context compilation is deterministic for its explicit inputs; later semantic conclusions are attributed Agent judgments. No Agent selects initial relevance or repairs missing model relationships by adding inferred context.
 
 The initial Manager package contains:
 
@@ -110,7 +146,7 @@ An implementer receives the local task and candidate inputs. A reviewer works in
 
 Managers can request further Definitions, reports, transcripts or artifact files by identity; the request and the returned content are recorded. A coordinating parent is not loaded with descendant source files initially but can inspect them to resolve a conflict or judge integration. Need to know keeps Agents focused; it is not an operating-system isolation boundary.
 
-Normal context discovery follows explicit references. A body link marks a connection, not proof that every obligation at its target applies. A missing necessary connection is a modeling defect to surface, not permission to ignore a known obligation. Apply never invents canonical links. The optional Optimizer belongs to a separate model operation ([north star](manager-realization-north-star.md#missing-links-and-the-optimizer)).
+Normal context discovery follows explicit references. A body link marks a connection, not proof that every obligation at its target applies. A missing necessary connection is a modeling defect to surface, not permission to ignore a known obligation. Apply never invents canonical links. A necessary missing link blocks the affected assessment rather than being compensated with inferred Apply context. The optional Optimizer belongs to a separate model operation ([north star](manager-realization-north-star.md#missing-links-and-the-optimizer)).
 
 ## Checking effects across Package boundaries
 
@@ -196,8 +232,8 @@ Logical Apply is the whole reconciliation below; guarded publication is its last
 | Stage | Work and exit condition |
 | --- | --- |
 | Prepare | Read the model, configuration, registry and ignore policy from the committed state. Uncommitted changes to tracked files, or untracked files outside Git-ignored paths, stop the run before preparation. Acquire the repository snapshot and tool identities, compile v1 and bind the organization. Invalid model inputs stop the run. |
-| Start root | Give the instruction and a bounded project overview to the root. Fix the artifact-only target and settle unresolved ownership through intake before write tasks begin. |
-| Assess and delegate | Every local Package with Definitions is considered. Managers assess local realization and issue outcome-based child tasks. |
+| Start root | Deliver the static instruction at the root and guarantee unchanged propagation to every local Manager with separately compiled context. Fix the artifact-only target and settle unresolved ownership through intake before write tasks begin. |
+| Assess and delegate | Every local Manager receives the operation, including empty and intermediate Packages. Managers assess local realization and exchange dependency messages along direct edges; the Host controls readiness and propagation. |
 | Work and review | Local changes happen in an owned candidate workspace. The Host harvests the actual delta; a fresh reviewer assesses it. A failed review returns grounded rework; an unresolved model question pauses that task without editing the model. |
 | Integrate upward | The parent composes deliveries on an exact base and checks interface and cross-area consistency. A fresh integration reviewer examines the aggregate and relevant child evidence. |
 | Verify aggregate | At the root candidate: required project checks, then the Host's final evidence check over the whole Manager tree. The root's fresh integration review has already assessed the aggregate semantically. |

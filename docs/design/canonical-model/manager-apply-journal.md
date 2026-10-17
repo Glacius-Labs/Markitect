@@ -166,7 +166,7 @@ The continuation repeats all required reviews, checks and integration and the fi
 
 | Observation | What it establishes |
 | --- | --- |
-| Task delegated; exact lending prompt and mandate stored | Who was commissioned, with which inputs and authority. |
+| Unchanged operation propagated; exact lending context and message observations stored | Which direct edge supplied the operation, which Manager actually received it, and what remains pending. |
 | Step prepared; send outcome observed or unknown | What may have executed; preparation is not delivery. |
 | Candidate C1 captured; reviewer requests changes | Actual bytes and the grounded issue, such as a sixth loan being allowed. |
 | C2 captured and locally reviewed; reminders integrated | Current local and child evidence, still short of final approval. |
