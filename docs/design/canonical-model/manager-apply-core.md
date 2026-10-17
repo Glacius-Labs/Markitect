@@ -50,7 +50,7 @@ Each Manager of the topology has exactly one task per run. The Host creates ever
   - `wait`, naming what the task waits for.
 
   A step without a valid outcome is recorded as failed. The task returns to `ready`, and the step stays charged.
-- **T6** On a submission, the Host freezes the candidate and moves the task to `reviewing`. A fresh reviewer conversation assesses it in two steps: first expectations from the model, then the candidate and its evidence.
+- **T6** On a submission, the Host freezes the candidate and moves the task to `reviewing`. A fresh reviewer conversation assesses it in two steps: first expectations from the model, then the candidate and its evidence. Where the configuration enables review batching, one such review covers several pending no-change submissions in the same two steps, each with its own verdict bound to its subject. Batching never removes a subject or lowers the protected review floor.
 - **T7** A review ends in one of three ways:
   - **Pass:** the Host accepts the delivery (D2). After a `limited` delivery, the task returns to `ready` or `blocked`.
   - **Changes requested:** the rejection counts as the execution contract defines, and the task returns to `ready` with the new findings. At the rejection limit, the task becomes `incomplete`.
