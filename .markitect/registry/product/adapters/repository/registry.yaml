@@ -120,3 +120,7 @@ artifacts:
     form: test
     realizes: [product/adapters/repository/repository-boundaries]
     why: Tests the stated responsibility and retains negative boundaries.
+  - path: "internal/adapters/gitrepo/repository_alias_windows_test.go"
+    form: test
+    realizes: [product/adapters/repository/repository-boundaries]
+    why: Verifies confirmed native-root aliases without weakening exact spelling or historical external-source refusal.
