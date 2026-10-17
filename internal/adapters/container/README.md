@@ -9,6 +9,8 @@ This package is the Host's client of the container engine ([DEC-037](../../../do
 | `NewEngine(path)` | Binds the absolute engine executable. The Host never searches PATH. |
 | `Engine.Start(ctx, spec)` | Runs one session container with agentd and returns its `Session` after agentd's hello. |
 | `Engine.RunHelper(ctx, spec, argv, stdin, stdout)` | Runs one command in a fresh container under the same hardening, for example `git`, `/usr/bin/tee`, `/bin/cat` or a project check. |
+| `Engine.RunCommand(ctx, spec, argv, env, maxOutputBytes)` | Runs a literal command with fixed environment additions, observes actual container start, terminal state and image, and retains bounded combined output with truncation. A known target nonzero exit is a result. |
+| `Engine.InspectVolume`, `VolumeMounts`, `CreateVolumeExclusive` | Observes volume labels and every container mounting the exact volume, and refuses adoption of preexisting volumes. Exclusive creation verifies a private random label after Docker's idempotent create; Docker provides no atomic exclusive-create primitive. |
 | `Engine.Pause` / `Engine.Unpause` | Freezes and resumes every process in a container; the write barrier for a workspace-basis transition. |
 | `Engine.CreateVolume`, `RemoveVolume`, `Containers`, `RemoveContainer` | Named, labeled volumes, and the label sweep for containers the Host no longer controls. |
 | `Engine.ImageID`, `ReadImageFile` | Image identity and the image's recorded metadata, read without running the image. |
@@ -46,3 +48,5 @@ These rules come from real runs, recorded in the [handshake record](../../../doc
 ## Tests
 
 Unit tests run everywhere. Real-engine tests run with `MARKITECT_TEST_ENGINE` set to the engine's absolute path. Image smokes and provider probes also need `MARKITECT_TEST_RUNTIME_IMAGE`, `MARKITECT_TEST_GO_IMAGE` and a runtime credential; the [base image README](../../../packaging/runtime/README.md#smoke) shows the command.
+
+`RunCommand` retains the container for a bounded independent state readback before removing its observed full ID. A CLI exit does not supply the target exit code. Missing terminal state, interrupted execution and failed cleanup retain uncertainty; callers must preserve it. The output limit is between one byte and 4 MiB. Image environment defaults remain in force; `env` supplies literal additions without host environment inheritance. Volume inspection and census failures never count as absence or an unused volume. A failed exclusive creation may leave a volume behind and never authorizes its deletion.
