@@ -7,6 +7,21 @@ import (
 
 type ucdRange struct{ lo, hi rune }
 
+// NameCollisionKey returns the Unicode 15.1.0 canonical caseless comparison key:
+// NFD(toCasefold(NFD(name))), using full default case folding. It returns
+// ("", false) for invalid UTF-8; every valid UTF-8 string, including empty, has
+// a key. Callers must check ok before comparing keys.
+//
+// The key is only for collision checks, not an authored or stored name. This
+// function does not validate name grammar, require NFC, establish physical
+// existence, or change the original name.
+func NameCollisionKey(name string) (key string, ok bool) {
+	if !utf8.ValidString(name) {
+		return "", false
+	}
+	return nameKey(name), true
+}
+
 // nameKey returns the Unicode 15.1 canonical caseless key (D145). Invalid
 // UTF-8 has no name key; callers must reject it before comparing identities.
 func nameKey(s string) string {
