@@ -24,15 +24,7 @@ artifacts:
     form: build
     realizes: [tooling/gates/source-checks]
     why: Wires the required source checks or reproducible build.
-  - path: ".github/workflows/release-benchmark.yaml"
-    form: build
-    realizes: [tooling/gates/source-checks]
-    why: Wires the required source checks or reproducible build.
   - path: ".github/workflows/release.yaml"
-    form: build
-    realizes: [tooling/gates/source-checks]
-    why: Wires the required source checks or reproducible build.
-  - path: ".github/workflows/winget-validation.yaml"
     form: build
     realizes: [tooling/gates/source-checks]
     why: Wires the required source checks or reproducible build.
@@ -148,18 +140,6 @@ artifacts:
     form: code
     realizes: [tooling/gates/source-checks]
     why: Implements the stated responsibility within its declared boundary.
-  - path: "scripts/mcp-evaluation/probe-stdio.ps1"
-    form: code
-    realizes: [tooling/gates/source-checks]
-    why: Implements the stated responsibility within its declared boundary.
-  - path: "scripts/mcp-evaluation/run-transport.ps1"
-    form: code
-    realizes: [tooling/gates/source-checks]
-    why: Implements the stated responsibility within its declared boundary.
-  - path: "scripts/mcp-evaluation/task.md"
-    form: doc
-    realizes: [tooling/gates/source-checks]
-    why: Documents the stated responsibility or preserves its historical evidence.
   - path: "scripts/test_check_docs.py"
     form: test
     realizes: [tooling/gates/source-checks]

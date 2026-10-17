@@ -113,99 +113,27 @@ These commands inspect and prepare the model. They do not start a realization. T
 
 Start with [CONTRIBUTING](CONTRIBUTING.md), the [delivery plan](docs/implementation-plan.md) and the [documentation map](docs/README.md). Concrete feedback about the model, workflow and missing obligations is useful alongside implementation contributions.
 
-## Earlier published release
+## Distribution status
 
-Published v0.14.1 belongs to the earlier product generation. Its commands and model formats differ from the current source. Use its versioned guides when trying that release.
-
-<details>
-<summary>Install and try the published v0.14.1 release</summary>
+The previous Project/Domain releases and their binary downloads were retired by the owner on 17 October 2026. There is currently no supported binary release of the new model-first product. Build the current source as described above; an old version tag is a historical source reference.
 
 <!-- markitect-release:install:start -->
 
 ## Install Markitect
 
-The current [v0.14.1 release](https://github.com/Glacius-Labs/Markitect/releases/tag/v0.14.1) provides Windows and Linux amd64 binaries. The commands below download a fixed version from the public release, check its published SHA-256 digest, and install it for your user. No Go installation or GitHub login is needed. Git is needed for Markitect commands that read Git revisions.
-
-**Windows (PowerShell):**
-
-```powershell
-if (-not [Runtime.InteropServices.RuntimeInformation]::IsOSPlatform([Runtime.InteropServices.OSPlatform]::Windows) -or [Runtime.InteropServices.RuntimeInformation]::OSArchitecture -ne [Runtime.InteropServices.Architecture]::X64) { throw 'Only Windows amd64 is released.' }
-$tag = 'v0.14.1'
-$asset = "markitect-$tag-windows-amd64.exe"
-$sha256 = '2cad55efad64f15d7f57638bea78312918fbf7d181c730f188b9921504da71c4'
-$download = Join-Path $env:TEMP ("markitect-" + [guid]::NewGuid().ToString('N'))
-New-Item -ItemType Directory -Path $download -ErrorAction Stop | Out-Null
-$source = Join-Path $download $asset
-Invoke-WebRequest "https://github.com/Glacius-Labs/Markitect/releases/download/$tag/$asset" -OutFile $source -UseBasicParsing -ErrorAction Stop
-if ((Get-FileHash -LiteralPath $source -Algorithm SHA256).Hash -ne $sha256) { throw 'Release binary SHA-256 mismatch.' }
-$bin = Join-Path $env:LOCALAPPDATA 'Programs\Markitect'
-New-Item -ItemType Directory -Path $bin -Force -ErrorAction Stop | Out-Null
-Copy-Item -LiteralPath $source -Destination (Join-Path $bin 'markitect.exe') -Force -ErrorAction Stop
-$userPath = [Environment]::GetEnvironmentVariable('Path', 'User')
-if ($bin -notin ($userPath -split ';')) {
-    [Environment]::SetEnvironmentVariable('Path', ((@($userPath, $bin) | Where-Object { $_ }) -join ';'), 'User')
-}
-$env:Path = "$bin;$env:Path"
-$installed = & (Join-Path $bin 'markitect.exe') version
-if ($LASTEXITCODE -ne 0 -or $installed -ne 'Markitect 0.14.1 (windows/amd64)') { throw 'Installed CLI version check failed.' }
-$installed
-Remove-Item -LiteralPath $source, $download
-```
-
-**Linux (bash):**
-
-```bash
-(
-  set -e
-  [ "$(uname -s)" = Linux ] && [ "$(uname -m)" = x86_64 ] || { echo 'Only Linux amd64 is released.' >&2; exit 1; }
-  tag=v0.14.1
-  asset="markitect-$tag-linux-amd64"
-  sha256=f515f8fb37335ff5bd36f77cbbd0af227c3558d0d5aa8ba80503bae40314fbdc
-  download="$(mktemp -d)"
-  trap 'rm -rf "$download"' EXIT
-  curl -fLsS "https://github.com/Glacius-Labs/Markitect/releases/download/$tag/$asset" -o "$download/$asset"
-  printf '%s  %s\n' "$sha256" "$download/$asset" | sha256sum -c -
-  install -D -m 0755 "$download/$asset" "$HOME/.local/bin/markitect"
-  "$HOME/.local/bin/markitect" version
-)
-export PATH="$HOME/.local/bin:$PATH"
-```
-
-Add `~/.local/bin` to your shell startup file if it is not already on `PATH`. For developers who already use Go 1.27.1 or later, `go install github.com/Glacius-Labs/Markitect/cmd/markitect@v0.14.1` is a shorter source-build option. macOS and arm64 binaries are not currently released. For signed release and asset attestation verification, project pinning, and upgrades, follow the [distribution guide](integration/README.md). The CLI's `install` command installs a **project pin**, not the CLI on your computer.
+Build from current reviewed source. A future published release needs its own source-bound verification before installation instructions are added here.
 
 <!-- markitect-release:install:end -->
 
 <!-- markitect-release:try:start -->
 
-## Try the published v0.14.1 compatibility CLI
+## Examples
 
-Clone the v0.14.1 synthetic example and run a structural check with the installed binary. This reads the example without modifying an adopting repository.
-
-Windows PowerShell:
-
-~~~powershell
-git clone --depth 1 --branch v0.14.1 https://github.com/Glacius-Labs/Markitect.git markitect-sample-v0.14.1
-if ($LASTEXITCODE -ne 0) { throw 'Could not get the v0.14.1 synthetic example.' }
-markitect version
-if ($LASTEXITCODE -ne 0) { throw 'Version check failed.' }
-markitect check --repo .\markitect-sample-v0.14.1\examples\minimal
-if ($LASTEXITCODE -ne 0) { throw 'Example check failed.' }
-~~~
-
-Linux amd64:
-
-~~~sh
-set -e
-git clone --depth 1 --branch v0.14.1 https://github.com/Glacius-Labs/Markitect.git markitect-sample-v0.14.1
-markitect version
-markitect check --repo ./markitect-sample-v0.14.1/examples/minimal
-~~~
-
-The [minimal example from v0.14.1](https://github.com/Glacius-Labs/Markitect/tree/v0.14.1/examples/minimal) is a synthetic, executable fixture. To use Markitect in your own repository, follow the [release installation and verification guide](integration/README.md) to preview and install a project pin.
+Use the [canonical Library model](docs/design/canonical-model/library-example/README.md), current [source workflow](docs/project-workflow.md) and [independent Playground](experiments/library-playground/README.md). A complete Apply remains the delivery target.
 
 <!-- markitect-release:try:end -->
 
-</details>
+Historical Git tags remain unchanged. The [retirement record](docs/history/distribution-retirement-20261017.md) preserves release identities, asset digests and attestations. The [distribution guide](integration/README.md) describes local packaging and future publication.
 
 ## Documentation
 

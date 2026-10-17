@@ -1,5 +1,13 @@
 apiVersion: markitect.registry/v1
 artifacts:
+  - path: "docs/history/distribution-retirement-20261017.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Records owner-authorized retirement, preserved evidence and immutable source pointers.
+  - path: "docs/history/retired-releases-20261017.json"
+    form: config
+    realizes: [documentation/current-guidance]
+    why: Preserves original release and asset identities, tag objects and verified GitHub attestation observations before download removal.
   - path: "assets/markitect-wordmark-light.svg"
     form: doc
     realizes: [documentation/current-guidance]
@@ -81,10 +89,6 @@ artifacts:
     realizes: [documentation/current-guidance]
     why: Documents the stated responsibility or preserves its historical evidence.
   - path: "docs/authoring-pilot.md"
-    form: doc
-    realizes: [documentation/current-guidance]
-    why: Documents the stated responsibility or preserves its historical evidence.
-  - path: "docs/canonical-engineering-plan.md"
     form: doc
     realizes: [documentation/current-guidance]
     why: Documents the stated responsibility or preserves its historical evidence.
@@ -224,14 +228,6 @@ artifacts:
     form: doc
     realizes: [documentation/current-guidance]
     why: Preserves the owner-authored language, Apply or concept contract as a reference.
-  - path: "docs/consistency.md"
-    form: doc
-    realizes: [documentation/current-guidance]
-    why: Documents the stated responsibility or preserves its historical evidence.
-  - path: "docs/content-packages.md"
-    form: doc
-    realizes: [documentation/current-guidance]
-    why: Documents the stated responsibility or preserves its historical evidence.
   - path: "docs/design/README.md"
     form: doc
     realizes: [documentation/current-guidance]
@@ -1336,18 +1332,6 @@ artifacts:
     form: doc
     realizes: [documentation/current-guidance]
     why: Documents the stated responsibility or preserves its historical evidence.
-  - path: "docs/documentation-routers.md"
-    form: doc
-    realizes: [documentation/current-guidance]
-    why: Documents the stated responsibility or preserves its historical evidence.
-  - path: "docs/documentation.md"
-    form: doc
-    realizes: [documentation/current-guidance]
-    why: Documents the stated responsibility or preserves its historical evidence.
-  - path: "docs/engineering-constitution.md"
-    form: doc
-    realizes: [documentation/current-guidance]
-    why: Documents the stated responsibility or preserves its historical evidence.
   - path: "docs/history/README.md"
     form: doc
     realizes: [documentation/current-guidance]
@@ -1377,10 +1361,6 @@ artifacts:
     realizes: [documentation/current-guidance]
     why: Documents the stated responsibility or preserves its historical evidence.
   - path: "docs/implementation-plan.md"
-    form: doc
-    realizes: [documentation/current-guidance]
-    why: Documents the stated responsibility or preserves its historical evidence.
-  - path: "docs/markitect-first.md"
     form: doc
     realizes: [documentation/current-guidance]
     why: Documents the stated responsibility or preserves its historical evidence.
@@ -1420,15 +1400,7 @@ artifacts:
     form: doc
     realizes: [documentation/current-guidance]
     why: Documents the stated responsibility or preserves its historical evidence.
-  - path: "docs/projections.md"
-    form: doc
-    realizes: [documentation/current-guidance]
-    why: Documents the stated responsibility or preserves its historical evidence.
   - path: "docs/provider-adapters.md"
-    form: doc
-    realizes: [documentation/current-guidance]
-    why: Documents the stated responsibility or preserves its historical evidence.
-  - path: "docs/refinement.md"
     form: doc
     realizes: [documentation/current-guidance]
     why: Documents the stated responsibility or preserves its historical evidence.
@@ -1581,10 +1553,6 @@ artifacts:
     realizes: [documentation/current-guidance]
     why: Supplies exact configuration, fixtures or retained evidence for this responsibility.
   - path: "docs/strategy/sources/parallel-development/start-wave-prompt.md"
-    form: doc
-    realizes: [documentation/current-guidance]
-    why: Documents the stated responsibility or preserves its historical evidence.
-  - path: "docs/usage.md"
     form: doc
     realizes: [documentation/current-guidance]
     why: Documents the stated responsibility or preserves its historical evidence.

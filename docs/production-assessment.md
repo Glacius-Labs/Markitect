@@ -1,10 +1,12 @@
 # Markitect production assessment
 
+**Retired distribution:** the owner removed the old release pages and binary downloads on 17 October 2026. Git tags remain unchanged. This document preserves the original release evidence and its historical claims; it is not an installation guide. [Captured metadata and attestations](history/distribution-retirement-20261017.md) retain the published identities and asset digests.
+
 **Recorded:** 2026-10-02; v0.12.0 evidence added 2026-10-03; v0.13.0 evidence added 2026-10-04; v0.14.1 evidence added 2026-10-07. This dated assessment records release evidence and distinguishes it from source behavior. It reports only the Markitect source, its distributions, and source-owned gates; project adoption and acceptance are outside its scope.
 
 ## v0.14.1 published release
 
-The immutable [v0.14.1 release](https://github.com/Glacius-Labs/Markitect/releases/tag/v0.14.1), release ID `405781964`, binds source [`7dbd599c81540c8203a1b7f83afbc335174f4f1f`](https://github.com/Glacius-Labs/Markitect/commit/7dbd599c81540c8203a1b7f83afbc335174f4f1f). Its tracked tree matches reviewed candidate `e2fd633d8983eb4a9e24bb55bc81d1467d487d12`, integrated by [PR 84](https://github.com/Glacius-Labs/Markitect/pull/84) after [PR 83](https://github.com/Glacius-Labs/Markitect/pull/83) integrated the additive projection work. The annotated tag is unsigned; immutable-release and asset attestations were verified separately.
+The immutable [v0.14.1 release](https://github.com/Glacius-Labs/Markitect/tree/v0.14.1), release ID `405781964`, binds source [`7dbd599c81540c8203a1b7f83afbc335174f4f1f`](https://github.com/Glacius-Labs/Markitect/commit/7dbd599c81540c8203a1b7f83afbc335174f4f1f). Its tracked tree matches reviewed candidate `e2fd633d8983eb4a9e24bb55bc81d1467d487d12`, integrated by [PR 84](https://github.com/Glacius-Labs/Markitect/pull/84) after [PR 83](https://github.com/Glacius-Labs/Markitect/pull/83) integrated the additive projection work. The annotated tag is unsigned; immutable-release and asset attestations were verified separately.
 
 The release preserves the published Project/Domain CLI contract and bundles canonical Schema/Definition, Schema/Projection Modules and the bounded controller as an **experimental alpha preview**. Its saved Apply-result handoff supports fresh Verify without manually copying revision pairs; declared-scope Audit reports bounded completion. These alpha capabilities do not establish stable support for an autonomous operator, continuous runtime or whole-repository semantic assurance. [Alpha usage](https://github.com/Glacius-Labs/Markitect/blob/v0.14.1/docs/canonical-projections.md) owns the command boundaries. Current source has removed the alpha; this release record is unchanged.
 
@@ -38,7 +40,7 @@ The [standard operating model pilots](validation/standard-operating-model.md) re
 
 ## v0.13.0 published release
 
-The immutable [v0.13.0 release](https://github.com/Glacius-Labs/Markitect/releases/tag/v0.13.0), release ID `402873994`, binds source [`ec312e35c15012c07acb6838c03e9316c5373dde`](https://github.com/Glacius-Labs/Markitect/commit/ec312e35c15012c07acb6838c03e9316c5373dde). [PR 74](https://github.com/Glacius-Labs/Markitect/pull/74) integrated the portable Markitect-first protocol, root dogfood and explicit managed-artifact check; [PR 75](https://github.com/Glacius-Labs/Markitect/pull/75) corrected schema-generator ownership accounting before tagging. This additive pre-1.0 minor also supports the earlier explicit read-only policy-failure analysis and selective preparation/Copy Me byte-reference contracts. The finite Domain kernel and Core/SPI semantics do not expand. [Release readiness](validation/markitect-first-release-readiness.md) owns the supported/experimental scope and completion answers; [dogfood](validation/markitect-first-dogfood.md) preserves friction and negative findings.
+The immutable [v0.13.0 release](https://github.com/Glacius-Labs/Markitect/tree/v0.13.0), release ID `402873994`, binds source [`ec312e35c15012c07acb6838c03e9316c5373dde`](https://github.com/Glacius-Labs/Markitect/commit/ec312e35c15012c07acb6838c03e9316c5373dde). [PR 74](https://github.com/Glacius-Labs/Markitect/pull/74) integrated the portable Markitect-first protocol, root dogfood and explicit managed-artifact check; [PR 75](https://github.com/Glacius-Labs/Markitect/pull/75) corrected schema-generator ownership accounting before tagging. This additive pre-1.0 minor also supports the earlier explicit read-only policy-failure analysis and selective preparation/Copy Me byte-reference contracts. The finite Domain kernel and Core/SPI semantics do not expand. [Release readiness](validation/markitect-first-release-readiness.md) owns the supported/experimental scope and completion answers; [dogfood](validation/markitect-first-dogfood.md) preserves friction and negative findings.
 
 | Evidence | Exact basis | Result |
 |---|---|---|
@@ -65,7 +67,7 @@ The first local upgrade fixture was incorrectly nested and was retained as a fai
 The standalone artifact helper is shipped as source in the exact pin, not as a fifth native asset. Project owners build and explicitly configure the reviewed helper/check; no generic source-code analysis or automatic architecture adoption is added. Offline GitHub/Azure consumers and MCP remain experimental. Earlier immutable releases and historical package versions remain untouched. Release verification establishes this bounded workflow and distribution contract; it proves no productivity, token, defect, autonomy or human-attention benefit. Owner acceptance and the next real task/upkeep comparison remain separate.
 ## v0.12.0 published release
 
-The immutable [v0.12.0 release](https://github.com/Glacius-Labs/Markitect/releases/tag/v0.12.0), release ID `402288212`, binds source commit [`83b715c`](https://github.com/Glacius-Labs/Markitect/commit/83b715c415e39af79715cd8a40b3c79237a4c850), following integration of [PR 54](https://github.com/Glacius-Labs/Markitect/pull/54). It ships the bounded `same-target` Domain assertion: two statically named paths, each one or two singleton relation steps, compared by canonical resource identity. The v0.11.0 release remains immutable historical evidence.
+The immutable [v0.12.0 release](https://github.com/Glacius-Labs/Markitect/tree/v0.12.0), release ID `402288212`, binds source commit [`83b715c`](https://github.com/Glacius-Labs/Markitect/commit/83b715c415e39af79715cd8a40b3c79237a4c850), following integration of [PR 54](https://github.com/Glacius-Labs/Markitect/pull/54). It ships the bounded `same-target` Domain assertion: two statically named paths, each one or two singleton relation steps, compared by canonical resource identity. The v0.11.0 release remains immutable historical evidence.
 
 | Evidence | Exact basis | Result |
 |---|---|---|
@@ -86,7 +88,7 @@ These release checks establish the shipped assertion and its declared fixture be
 
 ## v0.11.0 published release
 
-The immutable [v0.11.0 release](https://github.com/Glacius-Labs/Markitect/releases/tag/v0.11.0), release ID `402071906`, binds source commit [`a86903f`](https://github.com/Glacius-Labs/Markitect/commit/a86903f1e94cada583a225800fa42b2273755fbd), merged from [PR 51](https://github.com/Glacius-Labs/Markitect/pull/51). It adds resource-scoped relation counts, deterministic per-subject PolicyResults, narrowly scoped source-bound exceptions, generated Domain contracts, and provider-independent discovery and constitution-change authoring workflows. Architecture contracts remain explicit versioned Domain packages. The annotated tag is unsigned; immutable-release and asset attestations were verified separately.
+The immutable [v0.11.0 release](https://github.com/Glacius-Labs/Markitect/tree/v0.11.0), release ID `402071906`, binds source commit [`a86903f`](https://github.com/Glacius-Labs/Markitect/commit/a86903f1e94cada583a225800fa42b2273755fbd), merged from [PR 51](https://github.com/Glacius-Labs/Markitect/pull/51). It adds resource-scoped relation counts, deterministic per-subject PolicyResults, narrowly scoped source-bound exceptions, generated Domain contracts, and provider-independent discovery and constitution-change authoring workflows. Architecture contracts remain explicit versioned Domain packages. The annotated tag is unsigned; immutable-release and asset attestations were verified separately.
 
 | Evidence | Exact basis | Result |
 |---|---|---|
@@ -111,7 +113,7 @@ The discovery fixture is synthetic. It demonstrates fixed Git-source and selecte
 
 ## v0.10.0 published release
 
-The immutable [v0.10.0 release](https://github.com/Glacius-Labs/Markitect/releases/tag/v0.10.0), release ID `401991913`, binds source commit [`8882d8f`](https://github.com/Glacius-Labs/Markitect/commit/8882d8f8b9eee184036c1dec4b4c51422608d1b1), merged from [PR 49](https://github.com/Glacius-Labs/Markitect/pull/49). The release extends the bundled resource vocabulary with project-owned, versioned domain definitions and a validated semantic model; it adds conservative reconciliation plans and an explicit external command-adapter protocol with optional configured apply capability. The separate .NET reference adapter is read-only. This is a deliberate pre-1.0 language and model change, and no compatibility guarantee is claimed. The annotated tag is unsigned; immutable-release and asset attestations were verified separately.
+The immutable [v0.10.0 release](https://github.com/Glacius-Labs/Markitect/tree/v0.10.0), release ID `401991913`, binds source commit [`8882d8f`](https://github.com/Glacius-Labs/Markitect/commit/8882d8f8b9eee184036c1dec4b4c51422608d1b1), merged from [PR 49](https://github.com/Glacius-Labs/Markitect/pull/49). The release extends the bundled resource vocabulary with project-owned, versioned domain definitions and a validated semantic model; it adds conservative reconciliation plans and an explicit external command-adapter protocol with optional configured apply capability. The separate .NET reference adapter is read-only. This is a deliberate pre-1.0 language and model change, and no compatibility guarantee is claimed. The annotated tag is unsigned; immutable-release and asset attestations were verified separately.
 
 | Evidence | Exact basis | Result |
 |---|---|---|
@@ -133,7 +135,7 @@ The public Windows binary downloaded separately matched the verified Windows ass
 
 ## v0.9.1 published release
 
-The immutable [v0.9.1 release](https://github.com/Glacius-Labs/Markitect/releases/tag/v0.9.1), release ID `401496097`, binds [source commit `eb1b978`](https://github.com/Glacius-Labs/Markitect/commit/eb1b9781da6459d796c4e8fe108b6a8260c75b8e), merged from [PR 46](https://github.com/Glacius-Labs/Markitect/pull/46). It corrects source-relative prose navigation after v0.9.0 relocated Markdown views. Known local typed YAML destinations and unambiguous former companion aliases point to the selected Markdown view; ordinary documents/images retain their actual source target, and provider inline prose keeps canonical YAML destinations. Existing unmarked Markdown files take precedence over companion aliases. The projection consumes fixed snapshot files and infers no dependencies or artifact declarations. The annotated tag is unsigned; immutable release and asset attestations were verified separately.
+The immutable [v0.9.1 release](https://github.com/Glacius-Labs/Markitect/tree/v0.9.1), release ID `401496097`, binds [source commit `eb1b978`](https://github.com/Glacius-Labs/Markitect/commit/eb1b9781da6459d796c4e8fe108b6a8260c75b8e), merged from [PR 46](https://github.com/Glacius-Labs/Markitect/pull/46). It corrects source-relative prose navigation after v0.9.0 relocated Markdown views. Known local typed YAML destinations and unambiguous former companion aliases point to the selected Markdown view; ordinary documents/images retain their actual source target, and provider inline prose keeps canonical YAML destinations. Existing unmarked Markdown files take precedence over companion aliases. The projection consumes fixed snapshot files and infers no dependencies or artifact declarations. The annotated tag is unsigned; immutable release and asset attestations were verified separately.
 
 | Evidence | Exact basis | Result |
 |---|---|---|
@@ -156,7 +158,7 @@ Both binaries use identical fixture v2 bytes, digest `37387124b579687fc250caf6e9
 
 ## v0.9.0 published release
 
-The immutable [v0.9.0 release](https://github.com/Glacius-Labs/Markitect/releases/tag/v0.9.0), release ID `401463997`, binds [source commit `ff5ffd5`](https://github.com/Glacius-Labs/Markitect/commit/ff5ffd5e3b538be58341fdb7983490895201d2b1), merged from [PR 43](https://github.com/Glacius-Labs/Markitect/pull/43). It makes generic Markdown views an explicit target under `docs/markitect/<area>/`, routes provider outputs directly to canonical inputs, and separates consumer bootstrap files from the complete `.markitect/tool/` pin set. Bundle schema v2 deliberately replaces the earlier layout contract. The annotated tag is unsigned; the immutable release and every asset attestation were verified separately.
+The immutable [v0.9.0 release](https://github.com/Glacius-Labs/Markitect/tree/v0.9.0), release ID `401463997`, binds [source commit `ff5ffd5`](https://github.com/Glacius-Labs/Markitect/commit/ff5ffd5e3b538be58341fdb7983490895201d2b1), merged from [PR 43](https://github.com/Glacius-Labs/Markitect/pull/43). It makes generic Markdown views an explicit target under `docs/markitect/<area>/`, routes provider outputs directly to canonical inputs, and separates consumer bootstrap files from the complete `.markitect/tool/` pin set. Bundle schema v2 deliberately replaces the earlier layout contract. The annotated tag is unsigned; the immutable release and every asset attestation were verified separately.
 
 | Evidence | Exact basis | Result |
 |---|---|---|
@@ -179,7 +181,7 @@ Benchmark fixture v1 remains byte-identical. The transition uses fixture digests
 
 ## v0.8.1 published release
 
-The immutable [v0.8.1 release](https://github.com/Glacius-Labs/Markitect/releases/tag/v0.8.1), release ID `401377439`, binds [source commit `a8f4eb2`](https://github.com/Glacius-Labs/Markitect/commit/a8f4eb2b4257cb877f891d51f582c6f08ce25389), merged from [PR 39](https://github.com/Glacius-Labs/Markitect/pull/39). It separates resolved snapshot values, content digests and deterministic comparison from Git acquisition. In-memory snapshots with opaque IDs exercise parsing, context, review and conservative impact behavior; the public Git CLI, YAML revision fields, digest algorithm and Git safety guards retain their contracts. The annotated tag is unsigned; the immutable release and every asset attestation were verified separately.
+The immutable [v0.8.1 release](https://github.com/Glacius-Labs/Markitect/tree/v0.8.1), release ID `401377439`, binds [source commit `a8f4eb2`](https://github.com/Glacius-Labs/Markitect/commit/a8f4eb2b4257cb877f891d51f582c6f08ce25389), merged from [PR 39](https://github.com/Glacius-Labs/Markitect/pull/39). It separates resolved snapshot values, content digests and deterministic comparison from Git acquisition. In-memory snapshots with opaque IDs exercise parsing, context, review and conservative impact behavior; the public Git CLI, YAML revision fields, digest algorithm and Git safety guards retain their contracts. The annotated tag is unsigned; the immutable release and every asset attestation were verified separately.
 
 | Evidence | Exact basis | Result |
 |---|---|---|
@@ -201,7 +203,7 @@ The generated WinGet manifests are versioned metadata; they do not establish Mic
 
 ## v0.8.0 published release
 
-The immutable [v0.8.0 release](https://github.com/Glacius-Labs/Markitect/releases/tag/v0.8.0), release ID `401351835`, binds [source commit `b8b81f0`](https://github.com/Glacius-Labs/Markitect/commit/b8b81f0739d23894592ba5b76ee91a25e7dea6d4), merged from [PR 36](https://github.com/Glacius-Labs/Markitect/pull/36). It recommends responsibility-owned canonical resources under `.markitect/areas/` and makes `.markitect/areas/<namespace>` the default for new `init` plans that omit `--path`. Existing Projects, explicit paths, generated companions, provider outputs and pinned distribution paths retain their contracts. The annotated tag is unsigned; the immutable release and every asset attestation were verified separately.
+The immutable [v0.8.0 release](https://github.com/Glacius-Labs/Markitect/tree/v0.8.0), release ID `401351835`, binds [source commit `b8b81f0`](https://github.com/Glacius-Labs/Markitect/commit/b8b81f0739d23894592ba5b76ee91a25e7dea6d4), merged from [PR 36](https://github.com/Glacius-Labs/Markitect/pull/36). It recommends responsibility-owned canonical resources under `.markitect/areas/` and makes `.markitect/areas/<namespace>` the default for new `init` plans that omit `--path`. Existing Projects, explicit paths, generated companions, provider outputs and pinned distribution paths retain their contracts. The annotated tag is unsigned; the immutable release and every asset attestation were verified separately.
 
 | Evidence | Exact basis | Result |
 |---|---|---|
@@ -223,7 +225,7 @@ The generated WinGet manifests are versioned metadata; they do not establish Mic
 
 ## v0.7.0 published release
 
-The immutable [v0.7.0 release](https://github.com/Glacius-Labs/Markitect/releases/tag/v0.7.0), release ID `401286207`, binds [source commit `857a77f`](https://github.com/Glacius-Labs/Markitect/commit/857a77f86b3a4056c7973fed49d12ce2e6bf9b28), merged from [PR 31](https://github.com/Glacius-Labs/Markitect/pull/31). Its fixed-run context request binds a committed task snapshot and explicitly selected source paths to one full Git revision, reporting selected hashes and missing inputs. This records product capability only; no adopting-project implementation effectiveness or time/cost savings are claimed here. The annotated tag is unsigned; the immutable release and its asset attestations were verified separately.
+The immutable [v0.7.0 release](https://github.com/Glacius-Labs/Markitect/tree/v0.7.0), release ID `401286207`, binds [source commit `857a77f`](https://github.com/Glacius-Labs/Markitect/commit/857a77f86b3a4056c7973fed49d12ce2e6bf9b28), merged from [PR 31](https://github.com/Glacius-Labs/Markitect/pull/31). Its fixed-run context request binds a committed task snapshot and explicitly selected source paths to one full Git revision, reporting selected hashes and missing inputs. This records product capability only; no adopting-project implementation effectiveness or time/cost savings are claimed here. The annotated tag is unsigned; the immutable release and its asset attestations were verified separately.
 
 | Evidence | Exact basis | Result |
 |---|---|---|
@@ -244,7 +246,7 @@ The generated WinGet manifests are local versioned metadata; no community catalo
 
 ## v0.6.0 published release
 
-The immutable [v0.6.0 release](https://github.com/Glacius-Labs/Markitect/releases/tag/v0.6.0), release ID `401237667`, binds [source commit 810a86f](https://github.com/Glacius-Labs/Markitect/commit/810a86ffe13aef065f38e70ae49d40911f447af2) from [PR 27](https://github.com/Glacius-Labs/Markitect/pull/27). It ships canonical-owner authoring guidance, optional snapshot router validation and the provider diagnostic/shared-agent-link corrections integrated after v0.5.0. The tag is annotated and unsigned; GitHub release and all asset attestations were verified separately.
+The immutable [v0.6.0 release](https://github.com/Glacius-Labs/Markitect/tree/v0.6.0), release ID `401237667`, binds [source commit 810a86f](https://github.com/Glacius-Labs/Markitect/commit/810a86ffe13aef065f38e70ae49d40911f447af2) from [PR 27](https://github.com/Glacius-Labs/Markitect/pull/27). It ships canonical-owner authoring guidance, optional snapshot router validation and the provider diagnostic/shared-agent-link corrections integrated after v0.5.0. The tag is annotated and unsigned; GitHub release and all asset attestations were verified separately.
 
 | Evidence | Exact basis | Result |
 |---|---|---|
@@ -267,7 +269,7 @@ Benchmark timings remain diagnostic and do not establish a speed gain or an adop
 
 ## v0.5.0 published release
 
-The immutable [v0.5.0 release](https://github.com/Glacius-Labs/Markitect/releases/tag/v0.5.0), release ID 401138862, points to [source commit 7883734](https://github.com/Glacius-Labs/Markitect/commit/78837346d0cb27c95b3a10f0a469b2709b757a83) from [PR 17](https://github.com/Glacius-Labs/Markitect/pull/17). It adds explicitly selected provider adapters and opt-in sourced consistency checks. The tag object itself is unsigned; the immutable-release attestation was verified separately.
+The immutable [v0.5.0 release](https://github.com/Glacius-Labs/Markitect/tree/v0.5.0), release ID 401138862, points to [source commit 7883734](https://github.com/Glacius-Labs/Markitect/commit/78837346d0cb27c95b3a10f0a469b2709b757a83) from [PR 17](https://github.com/Glacius-Labs/Markitect/pull/17). It adds explicitly selected provider adapters and opt-in sourced consistency checks. The tag object itself is unsigned; the immutable-release attestation was verified separately.
 
 | Gate | Evidence | Result |
 |---|---|---|
@@ -289,7 +291,7 @@ The verified provenance names source commit 78837346d0cb27c95b3a10f0a469b2709b75
 
 ## v0.4.1 published release
 
-The immutable [`v0.4.1` release](https://github.com/Glacius-Labs/Markitect/releases/tag/v0.4.1), release ID `401051061`, points to source commit [`f424432`](https://github.com/Glacius-Labs/Markitect/commit/f4244324b04d4dd748ae13cea43e2455b251a5de) from [PR 12](https://github.com/Glacius-Labs/Markitect/pull/12). The release adds Apache-2.0 licensing and repository guidance; product behavior remains that of v0.4.0.
+The immutable [`v0.4.1` release](https://github.com/Glacius-Labs/Markitect/tree/v0.4.1), release ID `401051061`, points to source commit [`f424432`](https://github.com/Glacius-Labs/Markitect/commit/f4244324b04d4dd748ae13cea43e2455b251a5de) from [PR 12](https://github.com/Glacius-Labs/Markitect/pull/12). The release adds Apache-2.0 licensing and repository guidance; product behavior remains that of v0.4.0.
 
 | Gate | Evidence | Result |
 |---|---|---|
@@ -309,7 +311,7 @@ The publisher's immediate post-publication attestation request returned an error
 
 ## v0.4.0 published release
 
-The immutable [`v0.4.0` release](https://github.com/Glacius-Labs/Markitect/releases/tag/v0.4.0) was verified against source commit [`1f0d17b`](https://github.com/Glacius-Labs/Markitect/commit/1f0d17bff22143afc6b2b63b4ea8f17486c818e6), release ID `400944013`. Its tree matches reviewed candidate `d7bb86434559bce52a9f7d8078d656c04ecdb024` from [PR 9](https://github.com/Glacius-Labs/Markitect/pull/9).
+The immutable [`v0.4.0` release](https://github.com/Glacius-Labs/Markitect/tree/v0.4.0) was verified against source commit [`1f0d17b`](https://github.com/Glacius-Labs/Markitect/commit/1f0d17bff22143afc6b2b63b4ea8f17486c818e6), release ID `400944013`. Its tree matches reviewed candidate `d7bb86434559bce52a9f7d8078d656c04ecdb024` from [PR 9](https://github.com/Glacius-Labs/Markitect/pull/9).
 
 | Gate | Evidence | Result |
 |---|---|---|
@@ -332,7 +334,7 @@ An independent review found and confirmed the Windows short-path repair at `070f
 
 ## v0.3.1 published release
 
-At the time this assessment was recorded, the immutable [`v0.3.1` release](https://github.com/Glacius-Labs/Markitect/releases/tag/v0.3.1) was verified against source commit [`52f0bd6`](https://github.com/Glacius-Labs/Markitect/commit/52f0bd64ce64759be10ffdee180c2cf7c939d49b), release ID `400495147`. Main CI [run 36787681871](https://github.com/Glacius-Labs/Markitect/actions/runs/36787681871) and Release CI [run 36787725843](https://github.com/Glacius-Labs/Markitect/actions/runs/36787725843) passed for that release source. This release predates the minimal initialization behavior described in the current source.
+At the time this assessment was recorded, the immutable [`v0.3.1` release](https://github.com/Glacius-Labs/Markitect/tree/v0.3.1) was verified against source commit [`52f0bd6`](https://github.com/Glacius-Labs/Markitect/commit/52f0bd64ce64759be10ffdee180c2cf7c939d49b), release ID `400495147`. Main CI [run 36787681871](https://github.com/Glacius-Labs/Markitect/actions/runs/36787681871) and Release CI [run 36787725843](https://github.com/Glacius-Labs/Markitect/actions/runs/36787725843) passed for that release source. This release predates the minimal initialization behavior described in the current source.
 
 ## Project initialization behavior
 
@@ -340,13 +342,13 @@ Version 0.4.0 adds minimal project initialization. Preview is read-only; write r
 
 ## v0.2.0 release
 
-The immutable [`v0.2.0` release](https://github.com/Glacius-Labs/Markitect/releases/tag/v0.2.0) is verified against source commit [`8ff0af4`](https://github.com/Glacius-Labs/Markitect/commit/8ff0af4). GitHub Actions [run 36777150514](https://github.com/Glacius-Labs/Markitect/actions/runs/36777150514) passed for that exact release source. This confirms distribution availability; it does not establish acceptance by an adopting project.
+The immutable [`v0.2.0` release](https://github.com/Glacius-Labs/Markitect/tree/v0.2.0) is verified against source commit [`8ff0af4`](https://github.com/Glacius-Labs/Markitect/commit/8ff0af4). GitHub Actions [run 36777150514](https://github.com/Glacius-Labs/Markitect/actions/runs/36777150514) passed for that exact release source. This confirms distribution availability; it does not establish acceptance by an adopting project.
 
 ## v0.3.0 source scope
 
 This version adds deterministic offline content archives, exact Project pins, explicit exports, origin-aware dependencies and context, and read-only imported resources. It also recognizes orphaned aggregate rule-adapter outputs during drift checks. The package source and consumer examples exercise the public CLI; the archive, graph, context, impact and review tests cover integrity failures and boundary isolation.
 
-The release requires a reviewed fixed commit, the complete Windows/Linux CI matrix, deterministic bundle and installation smoke tests, and verified immutable release assets. The release's provenance asset records the exact source and hosted run; use that record for publication status rather than treating this source assessment as a release receipt. See [Content packages](content-packages.md) for supported behavior and [Operations](operations.md) for the publication procedure.
+The release requires a reviewed fixed commit, the complete Windows/Linux CI matrix, deterministic bundle and installation smoke tests, and verified immutable release assets. The release's provenance asset records the exact source and hosted run; use that record for publication status rather than treating this source assessment as a release receipt. See [Content packages](https://github.com/Glacius-Labs/Markitect/blob/1f4a1ede214d05fd2fee615b3905207df7702426/docs/content-packages.md) for supported behavior and [Operations](operations.md) for the publication procedure.
 
 ### v0.3.1 correction
 
@@ -361,7 +363,7 @@ The release is bound to merge commit [`45e0017a3d25d2abd464de934b5ef3a802732d0a`
 | Pull request CI | [Run 36762498178](https://github.com/Glacius-Labs/Markitect/actions/runs/36762498178) | Windows and Linux passed |
 | Main CI | [Run 36762893903](https://github.com/Glacius-Labs/Markitect/actions/runs/36762893903) | Passed for the merge commit |
 | Release build and smoke tests | [Run 36762948855](https://github.com/Glacius-Labs/Markitect/actions/runs/36762948855) | Source gates and bundle/bootstrap checks passed on both platforms |
-| Immutable release | [`v0.1.0`](https://github.com/Glacius-Labs/Markitect/releases/tag/v0.1.0), release ID `400355906` | Published 2026-09-30; tag resolves to the merge commit; release and all four asset attestations verified |
+| Immutable release | [`v0.1.0`](https://github.com/Glacius-Labs/Markitect/tree/v0.1.0), release ID `400355906` | Published 2026-09-30; tag resolves to the merge commit; release and all four asset attestations verified |
 
 The immutable release contains the complete v0.1.0 distribution. Its outer bundle digest is `9bb4d2badedf806faa9bf2150a0bcd78551b1f69238d53e7b58f49282a4fd6b6` and the nested source archive digest is `c9bc71b0939982e58d2edfe14e18fb5221c0d947dcac4e672e90f2ae612a2628`.
 

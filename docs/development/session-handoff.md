@@ -26,7 +26,7 @@ Hosted results for the main basis:
 
 - [CI run 38106745252](https://github.com/Glacius-Labs/Markitect/actions/runs/38106745252) and [CI run 38127020298](https://github.com/Glacius-Labs/Markitect/actions/runs/38127020298): completed successfully on the exact main SHA.
 - [Playground smoke 38127880194](https://github.com/Glacius-Labs/Markitect/actions/runs/38127880194): completed successfully on that SHA, provider-free.
-- The latest published release is still [v0.14.1](https://github.com/Glacius-Labs/Markitect/releases/tag/v0.14.1). These source results do not update its installed binaries, establish a real-provider journey or validate the method's benefit claims.
+- The latest published release is still [v0.14.1](https://github.com/Glacius-Labs/Markitect/tree/v0.14.1). These source results do not update its installed binaries, establish a real-provider journey or validate the method's benefit claims.
 
 ## What is integrated
 

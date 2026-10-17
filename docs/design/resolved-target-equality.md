@@ -1,6 +1,6 @@
 # Resolved-target equality: design assessment
 
-**Decision:** Implement one finite, generic `same-target` Domain assertion. It is included in the immutable [v0.12.0 release](https://github.com/Glacius-Labs/Markitect/releases/tag/v0.12.0); the [production assessment](../production-assessment.md#v0120-published-release) records the source, gates, assets and verification boundaries. v0.11.0 remains the prior immutable baseline. Existing package versions remain immutable; adding the assertion used new exact-pinned package versions. The [pressure report](domain-language-pressure.md) and [experiment notes](software-architecture-experiment.md) preserve design evidence and limits.
+**Decision:** Implement one finite, generic `same-target` Domain assertion. It is included in the immutable [v0.12.0 release](https://github.com/Glacius-Labs/Markitect/tree/v0.12.0); the [production assessment](../production-assessment.md#v0120-published-release) records the source, gates, assets and verification boundaries. v0.11.0 remains the prior immutable baseline. Existing package versions remain immutable; adding the assertion used new exact-pinned package versions. The [pressure report](domain-language-pressure.md) and [experiment notes](software-architecture-experiment.md) preserve design evidence and limits.
 
 ## Question and current-language boundary
 

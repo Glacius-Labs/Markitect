@@ -4,7 +4,7 @@ Generated from acquired canonical v1 source bytes. This view is not execution or
 
 ## markitect
 
-Canonical model digest: `sha256:9db6cfdc15b1a7c1a3543efd3ccc62d2a0cb8455c312ecdb42a3c51b31f8a887`.
+Canonical model digest: `sha256:a94e69ed4c10b2928355f812ba8996f7e7576b8f57d3435734058c4172bd99c3`.
 
 Manifest: `.markitect/model.yaml` (original bytes `sha256:d40feb9e02db275aed89d53b0a88849e463acaca076c8fa70fad38b367a68559`).
 
@@ -233,9 +233,9 @@ At design and delivery milestones, the responsible chat gives the owner a short 
 
 ### tooling/maintenance-boundaries
 
-Kind: `vocabulary/Rule`. Source: `.markitect/model/tooling/maintenance-boundaries.yaml` (original bytes `sha256:3e976bd1c6390cf61fe45785bd15f4e3ad1883732d40a2c2350bc2f42dc90512`).
+Kind: `vocabulary/Rule`. Source: `.markitect/model/tooling/maintenance-boundaries.yaml` (original bytes `sha256:633fbc919470ea2717d400147e6f27c8349365cca9032c81b17e4414ae9c0615`).
 
-Maintain strict root-layout source packaging, deterministic release archives, licenses, distribution and guarded installation as independent maintenance services. Reject unsupported files, redirection, nested modules and archive collisions. Preserve published bytes and historical release evidence. A source smoke is not release, installation, provider or Apply acceptance.
+Maintain strict root-layout source packaging, deterministic release archives, licenses, distribution and guarded installation as independent maintenance services. Reject unsupported files, redirection, nested modules and archive collisions. Preserve Git tag identities and required historical release evidence. Retire public release pages and downloads only on explicit owner instruction; retain their source/asset identities and attestations without implying current availability. A source smoke is not release, installation, provider or Apply acceptance.
 
 ### tooling/gates/architecture
 

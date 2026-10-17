@@ -1,6 +1,6 @@
 # Existing-project preparation: earlier Init design proposal
 
-**Status:** Historical first-proof proposal. The current source now has a separate `prepare` command and adoption handoff; the canonical contract is [Selective adoption handoff](selective-adoption-handoff.md), with CLI invocation documented in [Usage](../usage.md). The implementation is under source verification; this note makes no CI or release claim. Published v0.12.0 is unchanged, and the existing new-Project `init` behavior remains separate.
+**Status:** Historical first-proof proposal. The current source now has a separate `prepare` command and adoption handoff; the canonical contract is [Selective adoption handoff](selective-adoption-handoff.md), with CLI invocation documented in [Usage](https://github.com/Glacius-Labs/Markitect/blob/1f4a1ede214d05fd2fee615b3905207df7702426/docs/usage.md). The implementation is under source verification; this note makes no CI or release claim. Published v0.12.0 is unchanged, and the existing new-Project `init` behavior remains separate.
 
 ## Goal and boundary
 

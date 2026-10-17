@@ -1,6 +1,6 @@
 # Standard operating model: executable closure contract
 
-This checkpoint adds a read-only completion audit to the existing source-only canonical controller. The [design](../design/standard-operating-model.md) owns its contract; [Usage](../usage.md#declared-scope-completion-audit-source-only-alpha) owns the command; the [roadmap](../implementation-plan.md#standard-operating-model-checkpoint) owns current status. The implementation starts from source candidate `5808ea586979cb48e20f94157b6ccfa9ed318c60`; it does not change the published release.
+This checkpoint adds a read-only completion audit to the existing source-only canonical controller. The [design](../design/standard-operating-model.md) owns its contract; [Usage](https://github.com/Glacius-Labs/Markitect/blob/1f4a1ede214d05fd2fee615b3905207df7702426/docs/usage.md#declared-scope-completion-audit-source-only-alpha) owns the command; the [roadmap](../implementation-plan.md#standard-operating-model-checkpoint) owns current status. The implementation starts from source candidate `5808ea586979cb48e20f94157b6ccfa9ed318c60`; it does not change the published release.
 
 ## What the executable coverage establishes
 
