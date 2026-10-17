@@ -300,6 +300,44 @@ func sessionsForTest(t *testing.T, f *fakeRuntime) *Sessions {
 	return s
 }
 
+func TestCodexVerifiedEmptyWorkspaceDisablesImageCopyUp(t *testing.T) {
+	empty, err := snapshot.NewTree(nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, readOnly := range []bool{false, true} {
+		t.Run(map[bool]string{false: "manager", true: "reviewer"}[readOnly], func(t *testing.T) {
+			channel := &fakeChannel{}
+			runtime := peer(channel)
+			t.Cleanup(func() { _ = runtime.Close() })
+			a, _ := sessionAdmissions(t)
+			a.Plan.Candidate = empty.Digest()
+			a.Plan.ReadOnly = readOnly
+			if readOnly {
+				a.Plan.Role = "reviewer"
+			}
+			started := false
+			s, err := NewSessionsWithRuntime(func(_ context.Context, spec container.ContainerSpec) (RuntimeSession, error) {
+				started = true
+				// A provider image can contain /work files absent from the verified
+				// empty tree. Its mount must suppress Docker's default population.
+				if len(spec.Mounts) != 2 || spec.Mounts[0] != (container.Mount{Volume: a.Plan.Workspace, Target: "/work", ReadOnly: readOnly, NoCopy: true}) || spec.Mounts[1] != (container.Mount{Volume: a.Plan.ProviderHome, Target: "/home/agent"}) {
+					t.Fatalf("verified workspace or initial provider-home copy-up changed: %+v", spec.Mounts)
+				}
+				return runtime, nil
+			}, nil, func(context.Context, string) (RuntimeCredential, error) {
+				return RuntimeCredential{Mode: "api-key", APIKey: "secret-key-for-runtime"}, nil
+			})
+			if err != nil {
+				t.Fatal(err)
+			}
+			if _, err := s.Open(context.Background(), a, channel); err != nil || !started {
+				t.Fatalf("empty verified workspace did not open: %v", err)
+			}
+		})
+	}
+}
+
 func TestAdmittedCodexSessionOneStepHostToolsAndObservedExit(t *testing.T) {
 	for _, refuse := range []bool{false, true} {
 		t.Run(map[bool]string{false: "answer", true: "refusal"}[refuse], func(t *testing.T) {
