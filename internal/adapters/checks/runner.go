@@ -142,7 +142,7 @@ func (r *Runner) Run(ctx context.Context, req run.CheckRequest) (receipt run.Che
 	}
 	spec := container.ContainerSpec{
 		Name: name, Image: req.ImageID, Labels: map[string]string{"markitect.check": string(req.ID)}, User: "1000:1000",
-		Mounts: []container.Mount{{Volume: copy.Volume, Target: "/work"}, {Volume: home.Volume, Target: "/home/agent"}}, Workdir: workdir,
+		Mounts: []container.Mount{{Volume: copy.Volume, Target: "/work", NoCopy: true}, {Volume: home.Volume, Target: "/home/agent", NoCopy: true}}, Workdir: workdir,
 		CPUs: float64(req.Limits.MilliCPUs) / 1000, MemoryBytes: req.Limits.MemoryBytes, Pids: int(req.Limits.Processes),
 		TmpBytes: 64 << 20, Network: "none",
 	}

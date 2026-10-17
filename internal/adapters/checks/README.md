@@ -20,6 +20,10 @@ and a 64 MiB temporary directory. Image mount-point ownership follows the
 change its copy; those changes are discarded and never harvested into a
 candidate.
 
+Both verified volumes disable image copy-up on the check container's mounts.
+This preserves an empty input tree even when the check image contains files at
+`/work`; [Docker otherwise copies them into an empty volume](https://docs.docker.com/engine/storage/volumes/#mounting-a-volume-over-existing-data).
+
 The request timeout bounds materialization and command execution. Runtime
 observations supply the actual image, start, exit and combined bounded output.
 Nonzero exit remains a known failed check. Lost observation, cancellation or an

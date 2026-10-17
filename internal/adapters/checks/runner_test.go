@@ -98,7 +98,7 @@ func TestRunnerBindsExactCopyLiteralCommandAndResources(t *testing.T) {
 		if len(w.requests) != 2 || w.requests[1].Tree.EntryCount() != 0 || w.requests[0].ID == w.requests[1].ID {
 			t.Fatal("home is not independently empty")
 		}
-		if !reflect.DeepEqual(s.Mounts, []container.Mount{{Volume: "private-copy", Target: "/work"}, {Volume: "private-home", Target: "/home/agent"}}) {
+		if !reflect.DeepEqual(s.Mounts, []container.Mount{{Volume: "private-copy", Target: "/work", NoCopy: true}, {Volume: "private-home", Target: "/home/agent", NoCopy: true}}) {
 			t.Fatalf("mounts: %+v", s.Mounts)
 		}
 		if !reflect.DeepEqual(a, append([]string{req.Executable}, req.Args...)) || !reflect.DeepEqual(e, req.Env) || max != req.MaxOutputBytes {
@@ -115,6 +115,26 @@ func TestRunnerBindsExactCopyLiteralCommandAndResources(t *testing.T) {
 	got, err := r.Run(context.Background(), req)
 	if err != nil || !got.Passed(req) || called != 1 || w.closed != 2 {
 		t.Fatalf("receipt=%+v err=%v calls=%d close=%d", got, err, called, w.closed)
+	}
+}
+
+func TestRunnerKeepsVerifiedEmptyVolumesFreeOfImageCopyUp(t *testing.T) {
+	req := checkRequest(t)
+	req.Tree = snapshot.Tree{}
+	req.Directory = snapshot.RootDirectory()
+	w := &workspacePeer{}
+	r, _ := NewRunnerWithRuntime(commandPeer{func(_ context.Context, s container.ContainerSpec, _ []string, _ []string, _ int64) (container.CommandResult, error) {
+		if s.Workdir != "/work" || len(s.Mounts) != 2 || !s.Mounts[0].NoCopy || !s.Mounts[1].NoCopy {
+			t.Fatalf("empty volume copy-up not disabled: %+v", s)
+		}
+		if w.requests[0].Tree.EntryCount() != 0 || w.requests[1].Tree.EntryCount() != 0 {
+			t.Fatal("unexpected input tree")
+		}
+		return passedCommand(req), nil
+	}}, w)
+	got, err := r.Run(context.Background(), req)
+	if err != nil || !got.Passed(req) || w.closed != 2 {
+		t.Fatalf("receipt=%+v err=%v", got, err)
 	}
 }
 func TestRunnerRefusesUnverifiedMaterializationAndClosesPartialCopy(t *testing.T) {
