@@ -16,6 +16,7 @@ Records may link to files that were removed later; read them at release v0.14.1 
 - [Native Codex checkpoint and shared contracts — 9 October 2026](project-native-work-2026-10-09.md)
 - [A01 native smoke — 10 October 2026](a01-native-smoke-20261010.md)
 - [Agent runtime handshake — 17 October 2026](runtime-handshake-20261017.md)
+- [Runtime capability probes — 17 October 2026](runtime-capabilities-20261017.md)
 - [Public Classic Commerce entrypoint validation](classic-commerce-entrypoint.md)
 - [Standard operating model validation](standard-operating-model.md)
 

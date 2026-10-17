@@ -104,9 +104,11 @@ func (s *server) handle(f frame.Frame) error {
 		}
 		switch c.Type {
 		case frame.TypeStart:
-			return s.start(*c.Start)
+			return s.start(c.Request, *c.Start)
 		case frame.TypeStop:
 			return s.stop(time.Duration(c.Stop.GraceMillis) * time.Millisecond)
+		case frame.TypeCensus:
+			return s.census(c.Request)
 		default:
 			return fmt.Errorf("the Host may not send a %q message", c.Type)
 		}
@@ -127,7 +129,7 @@ func (s *server) handle(f frame.Frame) error {
 	}
 }
 
-func (s *server) start(req frame.Start) error {
+func (s *server) start(request uint64, req frame.Start) error {
 	s.mu.Lock()
 	if s.provider != nil {
 		s.mu.Unlock()
@@ -171,9 +173,9 @@ func (s *server) start(req frame.Start) error {
 		s.out.mu.Unlock()
 		// A refused start is reported to the Host as an observation, not a
 		// protocol violation; the session stays open for inspection.
-		return s.sendControl(frame.ControlMessage{Type: frame.TypeFailure, Failure: &frame.Failure{Message: "start provider: " + err.Error()}})
+		return s.sendControl(frame.ControlMessage{Type: frame.TypeFailure, Request: request, Failure: &frame.Failure{Message: "start provider: " + err.Error()}})
 	}
-	payload, err := frame.EncodeControl(frame.ControlMessage{Type: frame.TypeStarted, Started: &frame.Started{PID: p.pid()}})
+	payload, err := frame.EncodeControl(frame.ControlMessage{Type: frame.TypeStarted, Request: request, Started: &frame.Started{PID: p.pid()}})
 	if err == nil {
 		err = frame.Write(s.out.w, frame.Frame{Channel: frame.Control, Payload: payload})
 	}

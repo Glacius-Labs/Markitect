@@ -5,7 +5,9 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"os"
+	"strings"
 	"testing"
 	"time"
 
@@ -58,27 +60,60 @@ func newRuntimeSmoke(t *testing.T) *runtimeSmoke {
 	return &runtimeSmoke{t: t, ctx: ctx, engine: engine, image: image, store: fmt.Sprintf("smoke-%d", time.Now().UnixNano())}
 }
 
-// session starts a container with fresh provider-home and workspace volumes.
-func (r *runtimeSmoke) session(name string) *container.Session {
-	labels := map[string]string{"io.markitect.store": r.store}
+// volumes creates fresh provider-home and workspace volumes for one session.
+func (r *runtimeSmoke) volumes(name string) []container.Mount {
 	var mounts []container.Mount
 	for _, m := range []struct{ suffix, target string }{{"home", "/home/agent"}, {"work", "/work"}} {
 		volume := "mk-" + r.store + "-" + name + "-" + m.suffix
-		if err := r.engine.CreateVolume(r.ctx, volume, labels); err != nil {
+		if err := r.engine.CreateVolume(r.ctx, volume, r.labels()); err != nil {
 			r.t.Fatal(err)
 		}
 		r.t.Cleanup(func() { _ = r.engine.RemoveVolume(context.Background(), volume) })
 		mounts = append(mounts, container.Mount{Volume: volume, Target: m.target})
 	}
-	s, err := r.engine.Start(r.ctx, container.SessionSpec{
-		Name: "mk-" + r.store + "-" + name, Image: r.image, Labels: labels, User: "1000:1000",
+	return mounts
+}
+
+func (r *runtimeSmoke) labels() map[string]string {
+	return map[string]string{"io.markitect.store": r.store}
+}
+
+func (r *runtimeSmoke) spec(name string, mounts []container.Mount) container.ContainerSpec {
+	return container.ContainerSpec{
+		Name: "mk-" + r.store + "-" + name, Image: r.image, Labels: r.labels(), User: "1000:1000",
 		Mounts: mounts, Workdir: "/work", CPUs: 2, MemoryBytes: 2 << 30, Pids: 256, TmpBytes: 256 << 20,
-	})
+	}
+}
+
+// start runs a session container on the given volumes.
+func (r *runtimeSmoke) start(name string, mounts []container.Mount) *container.Session {
+	s, err := r.engine.Start(r.ctx, r.spec(name, mounts))
 	if err != nil {
 		r.t.Fatal(err)
 	}
 	r.t.Cleanup(func() { _ = s.Close() })
 	return s
+}
+
+// session starts a container with fresh provider-home and workspace volumes.
+func (r *runtimeSmoke) session(name string) *container.Session {
+	return r.start(name, r.volumes(name))
+}
+
+// readFile reads a workspace file through a helper container.
+func (r *runtimeSmoke) readFile(name string, mounts []container.Mount, file string) string {
+	var out strings.Builder
+	if err := r.engine.RunHelper(r.ctx, r.spec(name, mounts), []string{"/bin/cat", file}, nil, &out); err != nil {
+		r.t.Fatalf("read %s: %v", file, err)
+	}
+	return out.String()
+}
+
+// writeFile replaces a workspace file through a helper container.
+func (r *runtimeSmoke) writeFile(name string, mounts []container.Mount, file, content string) {
+	if err := r.engine.RunHelper(r.ctx, r.spec(name, mounts), []string{"/usr/bin/tee", file}, strings.NewReader(content), io.Discard); err != nil {
+		r.t.Fatalf("write %s: %v", file, err)
+	}
 }
 
 // answerTools replies to every Host tool call and counts them.
@@ -101,7 +136,8 @@ func credentialEnv(names ...string) []string {
 
 func TestRuntimeImageCodexReachesHostTools(t *testing.T) {
 	r := newRuntimeSmoke(t)
-	s := r.session("codex")
+	mounts := r.volumes("codex")
+	s := r.start("codex", mounts)
 	credentials := credentialEnv("OPENAI_API_KEY")
 	if _, err := s.StartProvider(r.ctx, frame.Start{
 		Argv: []string{"codex", "app-server",
@@ -140,11 +176,15 @@ func TestRuntimeImageCodexReachesHostTools(t *testing.T) {
 	rpc.call("turn/start", map[string]any{"threadId": threadID, "effort": "low", "input": []any{map[string]any{"type": "text", "text": submitPrompt}}})
 	rpc.until(func(m map[string]any) bool { return m["method"] == "turn/completed" })
 	expectToolCall(t, calls)
+	if got := r.readFile("codex-check", mounts, "/work/hello.txt"); strings.TrimSpace(got) != "hello from markitect" {
+		t.Fatalf("hello.txt = %q", got)
+	}
 }
 
 func TestRuntimeImageClaudeCodeReachesHostTools(t *testing.T) {
 	r := newRuntimeSmoke(t)
-	s := r.session("claude")
+	mounts := r.volumes("claude")
+	s := r.start("claude", mounts)
 	credentials := credentialEnv("ANTHROPIC_API_KEY", "CLAUDE_CODE_OAUTH_TOKEN")
 	mcp := `{"mcpServers":{"markitect":{"type":"stdio","command":"` + container.AgentdPath + `","args":["mcp"]}}}`
 	if _, err := s.StartProvider(r.ctx, frame.Start{
@@ -194,6 +234,9 @@ func TestRuntimeImageClaudeCodeReachesHostTools(t *testing.T) {
 		t.Fatalf("no init event; diagnostics %q", s.Diagnostics())
 	}
 	expectToolCall(t, calls)
+	if got := r.readFile("claude-check", mounts, "/work/hello.txt"); strings.TrimSpace(got) != "hello from markitect" {
+		t.Fatalf("hello.txt = %q", got)
+	}
 }
 
 func expectToolCall(t *testing.T, calls <-chan frame.ToolCall) {
