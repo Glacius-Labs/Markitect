@@ -70,7 +70,7 @@ func (r *Repository) Preflight(ctx context.Context, request apply.PublicationReq
 	}
 	index, err := publicationIndex(a.git, r.limits)
 	if err != nil {
-		return apply.PublicationPermit{}, err
+		return apply.PublicationPermit{}, publicationCaptureError(err)
 	}
 	if err := control.Check(ctx); err != nil {
 		return apply.PublicationPermit{}, err
@@ -157,7 +157,7 @@ func (r *Repository) Publish(ctx context.Context, permit apply.PublicationPermit
 		return fail(apply.PublicationStale, err)
 	}
 	if !reflect.DeepEqual(plan.policies, current) {
-		return fail(apply.PublicationStale, ErrChanged)
+		return fail(apply.PublicationStale, publicationCaptureError(ErrChanged))
 	}
 	converter, err := newPublicationConverter(ctx, r.limits)
 	if err != nil {
@@ -184,10 +184,10 @@ func (r *Repository) Publish(ctx context.Context, permit apply.PublicationPermit
 	}
 	index, indexErr := publicationIndex(a.git, r.limits)
 	if indexErr != nil {
-		return fail(apply.PublicationStale, indexErr)
+		return fail(apply.PublicationStale, publicationCaptureError(indexErr))
 	}
 	if index != plan.index {
-		return fail(apply.PublicationStale, ErrChanged)
+		return fail(apply.PublicationStale, publicationCaptureError(ErrChanged))
 	}
 	if err := control.Check(ctx); err != nil {
 		return fail(apply.PublicationStale, err)
@@ -202,6 +202,9 @@ func (r *Repository) Publish(ctx context.Context, permit apply.PublicationPermit
 			writes++
 		}
 		if err != nil {
+			if !wrote {
+				err = publicationCaptureError(err)
+			}
 			receipt, inspectErr := r.Inspect(ctx, request)
 			receipt.Outcome = apply.PublicationFailed
 			if writes > 0 {
