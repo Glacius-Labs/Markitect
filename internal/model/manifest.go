@@ -39,14 +39,18 @@ func InspectManifest(input ManifestInput) ManifestResult {
 		return r
 	}
 	limits := effectiveLimits(input.Limits)
-	if int64(len(input.Bytes)) > limits.SourceBytes {
-		r.Diagnostics = []Diagnostic{{Code: "limit.source_bytes", Message: "The supplied manifest exceeds the source-byte budget.", Source: r.Source}}
-		return r
-	}
-	entry := Entry{Path: input.ManifestPath, Kind: Regular, Bytes: input.Bytes}
-	r.Source = source(input.Origin, entry)
 	c := sourceCompiler{model: SourceModel{Origin: input.Origin, ManifestPath: input.ManifestPath}, limits: limits}
-	if c.manifestPathValid() {
+	entry := Entry{Path: input.ManifestPath}
+	admitted := int64(len(input.Bytes)) <= limits.SourceBytes
+	if admitted {
+		entry.Kind, entry.Bytes = Regular, input.Bytes
+		r.Source = source(input.Origin, entry)
+	}
+	pathValid := c.manifestPathValid(entry)
+	if !admitted {
+		c.limited = true
+		c.diagnostics = append(c.diagnostics, Diagnostic{Code: "limit.source_bytes", Message: "The supplied manifest exceeds the source-byte budget.", Source: r.Source})
+	} else if pathValid {
 		root, rootOK := c.readManifest(entry)
 		if !c.failed && !c.limited && rootOK {
 			r.Status, r.Root = Passed, root
@@ -60,9 +64,9 @@ func InspectManifest(input ManifestInput) ManifestResult {
 	return r
 }
 
-func (c *sourceCompiler) manifestPathValid() bool {
+func (c *sourceCompiler) manifestPathValid(selected Entry) bool {
 	if !validPath(c.model.ManifestPath) || basename(c.model.ManifestPath) != "model.yaml" {
-		c.problem("input.manifest_path", "ManifestPath must explicitly select a relative model.yaml path.", Entry{Path: c.model.ManifestPath}, nil)
+		c.problem("input.manifest_path", "ManifestPath must explicitly select a relative model.yaml path.", selected, nil)
 		return false
 	}
 	return true

@@ -172,7 +172,7 @@ func compileSource(m SourceModel, limits Limits) (ModelResult, []Diagnostic, sou
 	c.scope.manifest = manifest
 	r.Manifest = source(m.Origin, manifest)
 	r.Manifest.Path = m.ManifestPath
-	if !c.manifestPathValid() {
+	if !c.manifestPathValid(Entry{Path: m.ManifestPath}) {
 		// The selection diagnostic is shared with standalone inspection.
 	} else if !ok || manifest.Kind != Regular {
 		c.problem("manifest.missing", "The selected manifest must be a supplied regular file.", Entry{Path: m.ManifestPath}, nil)
