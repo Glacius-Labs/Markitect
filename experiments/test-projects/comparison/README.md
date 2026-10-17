@@ -21,7 +21,7 @@ writers' packets and evaluates both against the same hidden expectations.
 Library is greenfield and begins with an empty application. The Readinglog
 baseline packet preserves its genuine existing add/list application and public
 test. Its model is the actual integrated `readinglog@0.1.0` snapshot at
-`7908e69bc3b73cf8689eba9a30c9f4865cdb8934`. Later Readinglog stages and Roombook
+`962f17468ae1b3558e042a0429888ece59106545`. Later Readinglog stages and Roombook
 packets follow their own integrated requirements; this packet adds none of them.
 The [small source playground](playground/README.md) previews four selected
 cases and one identical, byte-bound Readinglog defect without running them.
