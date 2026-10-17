@@ -35,7 +35,7 @@ func connect(t *testing.T, protocol int) (*Session, *fakeAgentd, error) {
 	s, err := newSession(context.Background(), hostW, agentR, func() error {
 		_ = agentW.Close()
 		return wait()
-	})
+	}, func() { _ = agentW.Close() })
 	return s, a, err
 }
 
@@ -167,4 +167,33 @@ func TestEndedConnectionIsNotAnExit(t *testing.T) {
 		t.Fatalf("stop on a lost connection = %v, want an uncertain end", err)
 	}
 	_ = s.Close()
+}
+
+func TestCloseRemovesAContainerThatDoesNotEnd(t *testing.T) {
+	hostR, hostW := io.Pipe()
+	agentR, agentW := io.Pipe()
+	a := &fakeAgentd{t: t, in: hostR, out: agentW}
+	go a.control(frame.ControlMessage{Type: frame.TypeHello, Hello: &frame.Hello{Protocol: frame.ProtocolVersion}})
+	go func() { _, _ = io.Copy(io.Discard, hostR) }() // ignores the Host closing
+	killed := make(chan struct{})
+	s, err := newSession(context.Background(), hostW, agentR, func() error { return nil }, func() {
+		close(killed)
+		_ = agentW.Close()
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	s.closeTimeout = 50 * time.Millisecond
+	done := make(chan error, 1)
+	go func() { done <- s.Close() }()
+	select {
+	case <-done:
+	case <-time.After(5 * time.Second):
+		t.Fatal("Close waited for a container that never ended")
+	}
+	select {
+	case <-killed:
+	default:
+		t.Fatal("the container was not removed by force")
+	}
 }

@@ -50,6 +50,16 @@ func fakeProvider(mode string) int {
 			tool = "delete_everything"
 		}
 		return mcpClient(tool)
+	case "abandon":
+		return abandonCall()
+	case "deaf":
+		time.Sleep(time.Hour)
+		return 0
+	case "chatty":
+		for i := 0; i < 200; i++ {
+			fmt.Printf("line %d\n", i)
+		}
+		return 0
 	case "reject":
 		fmt.Fprintln(os.Stderr, "error: unexpected argument '--bogus' found")
 		return 2
@@ -114,6 +124,25 @@ func shortSocketPath(t *testing.T) string {
 	}
 	t.Cleanup(func() { _ = os.RemoveAll(dir) })
 	return filepath.Join(dir, "s")
+}
+
+// abandonCall starts a tool call through a bridge and kills the bridge
+// before the Host answers, as a CLI does when it cancels a turn.
+func abandonCall() int {
+	bridge := exec.Command(os.Args[0])
+	bridge.Env = append(os.Environ(), "AGENTD_TEST_PROVIDER=bridge")
+	in, _ := bridge.StdinPipe()
+	out, _ := bridge.StdoutPipe()
+	if err := bridge.Start(); err != nil {
+		return 1
+	}
+	_, _ = in.Write([]byte(`{"jsonrpc":"2.0","id":1,"method":"tools/call","params":{"name":"submit_work","arguments":{}}}` + "\n"))
+	time.Sleep(300 * time.Millisecond)
+	_ = bridge.Process.Kill()
+	_ = bridge.Wait()
+	_, _ = io.Copy(io.Discard, out)
+	fmt.Println("abandoned")
+	return 0
 }
 
 type harness struct {
@@ -392,4 +421,72 @@ func TestHostDisconnectStopsTheProvider(t *testing.T) {
 	case <-time.After(10 * time.Second):
 		t.Fatal("agentd kept running after the Host disconnected")
 	}
+}
+
+func TestLateReplyAfterTheBridgeLeftKeepsTheSession(t *testing.T) {
+	h := newHarness(t)
+	h.start("abandon", submitWork)
+	var call frame.ToolCall
+	for call.ID == 0 {
+		if f := h.next(); f.Channel == frame.Tool {
+			call, _ = frame.DecodeToolCall(f.Payload)
+		}
+	}
+	h.output(frame.ProviderOut, "abandoned")
+	payload, _ := frame.EncodeToolReply(frame.ToolReply{ID: call.ID, Result: json.RawMessage(`{"content":[]}`)})
+	h.send(frame.Frame{Channel: frame.Tool, Payload: payload})
+	h.control(frame.TypeExited)
+	_ = h.toAgnt.Close()
+	select {
+	case err := <-h.served:
+		if err != nil {
+			t.Fatalf("a late reply ended the session: %v", err)
+		}
+		h.served <- err
+	case <-time.After(10 * time.Second):
+		t.Fatal("agentd did not end")
+	}
+}
+
+func TestProviderNotReadingInputCannotBlockStop(t *testing.T) {
+	h := newHarness(t)
+	h.start("deaf")
+	chunk := make([]byte, frame.MaxPayload)
+	for i := 0; i < 4; i++ {
+		h.send(frame.Frame{Channel: frame.ProviderIn, Payload: chunk})
+	}
+	h.sendControl(frame.ControlMessage{Type: frame.TypeStop, Stop: &frame.Stop{GraceMillis: 100}})
+	h.control(frame.TypeExited)
+}
+
+func TestProviderNotReadingInputCannotBlockTheHostLeaving(t *testing.T) {
+	h := newHarness(t)
+	h.start("deaf")
+	chunk := make([]byte, frame.MaxPayload)
+	for i := 0; i < 4; i++ {
+		h.send(frame.Frame{Channel: frame.ProviderIn, Payload: chunk})
+	}
+	_ = h.toAgnt.Close()
+	select {
+	case err := <-h.served:
+		if err != nil {
+			t.Fatalf("serve = %v", err)
+		}
+		h.served <- err
+	case <-time.After(10 * time.Second):
+		t.Fatal("agentd kept running after the Host left")
+	}
+}
+
+func TestStartedPrecedesProviderOutput(t *testing.T) {
+	h := newHarness(t)
+	h.sendControl(frame.ControlMessage{Type: frame.TypeStart, Start: &frame.Start{
+		Argv: []string{os.Args[0]}, Dir: t.TempDir(), Env: []string{"AGENTD_TEST_PROVIDER=chatty"},
+	}})
+	f := h.next()
+	c, err := frame.DecodeControl(f.Payload)
+	if f.Channel != frame.Control || err != nil || c.Type != frame.TypeStarted {
+		t.Fatalf("first frame after start = %s %q", f.Channel, f.Payload)
+	}
+	h.control(frame.TypeExited)
 }

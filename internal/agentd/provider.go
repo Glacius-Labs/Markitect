@@ -2,6 +2,7 @@ package agentd
 
 import (
 	"errors"
+	"fmt"
 	"io"
 	"os/exec"
 	"sync"
@@ -10,24 +11,35 @@ import (
 	"github.com/Glacius-Labs/Markitect/internal/agentd/frame"
 )
 
-// waitDelay bounds how long agentd waits for the provider's output streams
-// after the provider itself exited, for example when a grandchild still holds
-// them open. The process group is killed right afterwards.
-const waitDelay = time.Second
+const (
+	// waitDelay bounds how long agentd waits for the provider's output
+	// streams after the provider itself exited, for example when a grandchild
+	// still holds them open. The process group is killed right afterwards.
+	waitDelay = time.Second
+	// maxInputBacklog bounds Host input waiting for a provider that is not
+	// reading, so the Host connection is never blocked by provider input.
+	maxInputBacklog = 64 << 20
+)
 
-// provider is the running provider CLI.
+// provider is the running provider CLI. Its standard input is fed by its own
+// goroutine, so a provider that stops reading never holds back stop
+// requests, tool replies or the end of the Host connection.
 type provider struct {
 	cmd   *exec.Cmd
 	stdin io.WriteCloser
 
 	inMu     sync.Mutex
+	inReady  *sync.Cond
+	queue    [][]byte
+	queued   int
 	inClosed bool
 
-	stopOnce sync.Once
-	done     chan struct{}
-	exit     frame.Exited
+	done chan struct{}
+	exit frame.Exited
 }
 
+// startProvider starts cmd. The caller holds out's lock, so no provider
+// output can reach the Host before the caller's started report.
 func startProvider(cmd *exec.Cmd, out *frameWriter) (*provider, error) {
 	stdin, err := cmd.StdinPipe()
 	if err != nil {
@@ -41,19 +53,25 @@ func startProvider(cmd *exec.Cmd, out *frameWriter) (*provider, error) {
 		return nil, err
 	}
 	p := &provider{cmd: cmd, stdin: stdin, done: make(chan struct{})}
+	p.inReady = sync.NewCond(&p.inMu)
+	go p.pumpInput()
 	go func() {
 		err := cmd.Wait()
 		reapProcessGroup(cmd.Process.Pid)
 		p.exit = exitOf(cmd, err)
 		close(p.done)
+		p.inMu.Lock()
+		p.inReady.Broadcast()
+		p.inMu.Unlock()
 	}()
 	return p, nil
 }
 
 func (p *provider) pid() int { return p.cmd.Process.Pid }
 
-// write forwards Host bytes to the provider's standard input. An empty
-// payload closes the input, which is how the Host signals the end of input.
+// write queues Host bytes for the provider's standard input. An empty
+// payload ends the input once everything queued before it was written.
+// Input after the provider exited is dropped; its exit report follows.
 func (p *provider) write(b []byte) error {
 	p.inMu.Lock()
 	defer p.inMu.Unlock()
@@ -61,34 +79,64 @@ func (p *provider) write(b []byte) error {
 		if len(b) == 0 {
 			return nil
 		}
-		return errors.New("provider input is already closed")
+		return errors.New("provider input arrived after the Host ended it")
 	}
 	if len(b) == 0 {
 		p.inClosed = true
-		return p.stdin.Close()
-	}
-	_, err := p.stdin.Write(b)
-	if err != nil && p.exited() {
-		// Writing to a provider that already ended is not a Host protocol
-		// error; its exit report follows on the control channel.
+		p.inReady.Signal()
 		return nil
 	}
-	return err
+	if p.exited() {
+		return nil
+	}
+	if p.queued+len(b) > maxInputBacklog {
+		return fmt.Errorf("provider input backlog exceeds %d bytes", maxInputBacklog)
+	}
+	p.queue = append(p.queue, append([]byte(nil), b...))
+	p.queued += len(b)
+	p.inReady.Signal()
+	return nil
 }
 
-// stop asks the provider's process group to end, then kills it after grace.
-func (p *provider) stop(grace time.Duration) {
-	p.stopOnce.Do(func() {
-		if p.exited() {
+// pumpInput writes queued input in order. A write error means the provider
+// stopped reading or exited; that is an observation, never a Host error.
+func (p *provider) pumpInput() {
+	defer p.stdin.Close()
+	for {
+		p.inMu.Lock()
+		for len(p.queue) == 0 && !p.inClosed && !p.exited() {
+			p.inReady.Wait()
+		}
+		if len(p.queue) == 0 || p.exited() {
+			p.queue, p.queued = nil, 0
+			p.inMu.Unlock()
 			return
 		}
-		terminate(p.cmd)
-		select {
-		case <-p.done:
-		case <-time.After(grace):
-			kill(p.cmd)
+		b := p.queue[0]
+		p.queue = p.queue[1:]
+		p.queued -= len(b)
+		p.inMu.Unlock()
+		if _, err := p.stdin.Write(b); err != nil {
+			p.inMu.Lock()
+			p.queue, p.queued = nil, 0
+			p.inMu.Unlock()
+			return
 		}
-	})
+	}
+}
+
+// stop asks the provider's process group to end and kills it after grace.
+// Every call applies its own grace, so a shorter later grace still wins.
+func (p *provider) stop(grace time.Duration) {
+	if p.exited() {
+		return
+	}
+	terminate(p.cmd)
+	select {
+	case <-p.done:
+	case <-time.After(grace):
+		kill(p.cmd)
+	}
 }
 
 func (p *provider) exited() bool {

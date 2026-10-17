@@ -16,7 +16,7 @@ var (
 	namePattern    = regexp.MustCompile(`^[a-zA-Z0-9][a-zA-Z0-9_.-]{0,127}$`)
 	imageIDPattern = regexp.MustCompile(`^sha256:[0-9a-f]{64}$`)
 	labelPattern   = regexp.MustCompile(`^[a-z0-9][a-z0-9.-]{0,127}$`)
-	userPattern    = regexp.MustCompile(`^([1-9][0-9]{0,9}):([0-9]{1,10})$`)
+	userPattern    = regexp.MustCompile(`^([1-9][0-9]{0,9}):([1-9][0-9]{0,9})$`)
 )
 
 // Mount gives a container one named volume.
@@ -36,7 +36,7 @@ type SessionSpec struct {
 	Image string
 	// Labels mark the container, at least with its Host store.
 	Labels map[string]string
-	// User is the numeric "uid:gid"; uid 0 is refused.
+	// User is the numeric "uid:gid"; uid 0 and gid 0 are refused.
 	User string
 	// Mounts are the only volumes the container receives.
 	Mounts []Mount
@@ -49,6 +49,7 @@ type SessionSpec struct {
 	// TmpBytes bounds the writable temporary directory.
 	TmpBytes int64
 	// Network names the engine network; empty selects the engine default.
+	// The host network is refused.
 	Network string
 }
 
@@ -61,7 +62,7 @@ func (s SessionSpec) runArgs() ([]string, error) {
 		return nil, fmt.Errorf("image %q is not an engine image ID (sha256:<64 hex>)", s.Image)
 	}
 	if !userPattern.MatchString(s.User) {
-		return nil, fmt.Errorf("user %q is not a numeric non-root uid:gid", s.User)
+		return nil, fmt.Errorf("user %q is not a numeric uid:gid outside the root user and group", s.User)
 	}
 	if !absolute(s.Workdir) {
 		return nil, fmt.Errorf("working directory %q is not an absolute container path", s.Workdir)
@@ -72,11 +73,11 @@ func (s SessionSpec) runArgs() ([]string, error) {
 	if len(s.Labels) == 0 {
 		return nil, fmt.Errorf("container %s needs at least its Host store label", s.Name)
 	}
-	if s.Network != "" && !namePattern.MatchString(s.Network) {
-		return nil, fmt.Errorf("network %q is not a plain engine name", s.Network)
+	if s.Network != "" && (!namePattern.MatchString(s.Network) || s.Network == "host") {
+		return nil, fmt.Errorf("network %q is not a plain isolated engine network", s.Network)
 	}
 	args := []string{
-		"run", "--interactive", "--rm",
+		"run", "--interactive", "--rm", "--init",
 		"--name", s.Name,
 		"--read-only",
 		"--cap-drop", "ALL",

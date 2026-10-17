@@ -44,7 +44,7 @@ func Serve(ctx context.Context, host io.Reader, out io.Writer, cfg Config) error
 	if cfg.StopGrace <= 0 {
 		cfg.StopGrace = 5 * time.Second
 	}
-	s := &server{cfg: cfg, out: &frameWriter{w: out}, pending: map[uint64]chan frame.ToolReply{}}
+	s := &server{cfg: cfg, out: &frameWriter{w: out}, pending: map[uint64]chan frame.ToolReply{}, stopping: make(chan struct{})}
 	defer s.shutdown()
 	if err := s.sendControl(frame.ControlMessage{Type: frame.TypeHello, Hello: &frame.Hello{Protocol: frame.ProtocolVersion, Version: cfg.Version}}); err != nil {
 		return err
@@ -91,6 +91,8 @@ type server struct {
 	pending  map[uint64]chan frame.ToolReply
 	nextID   uint64
 	closed   bool
+	stopping chan struct{}
+	reports  sync.WaitGroup
 }
 
 func (s *server) handle(f frame.Frame) error {
@@ -161,23 +163,31 @@ func (s *server) start(req frame.Start) error {
 	cmd := exec.Command(req.Argv[0], req.Argv[1:]...)
 	cmd.Dir = req.Dir
 	cmd.Env = append(os.Environ(), req.Env...)
+	// Hold the frame writer while starting, so the started report precedes
+	// any provider output on the connection.
+	s.out.mu.Lock()
 	p, err := startProvider(cmd, s.out)
 	if err != nil {
+		s.out.mu.Unlock()
 		// A refused start is reported to the Host as an observation, not a
 		// protocol violation; the session stays open for inspection.
 		return s.sendControl(frame.ControlMessage{Type: frame.TypeFailure, Failure: &frame.Failure{Message: "start provider: " + err.Error()}})
 	}
+	payload, err := frame.EncodeControl(frame.ControlMessage{Type: frame.TypeStarted, Started: &frame.Started{PID: p.pid()}})
+	if err == nil {
+		err = frame.Write(s.out.w, frame.Frame{Channel: frame.Control, Payload: payload})
+	}
+	s.out.mu.Unlock()
 	s.mu.Lock()
 	s.provider = p
 	s.mu.Unlock()
-	if err := s.sendControl(frame.ControlMessage{Type: frame.TypeStarted, Started: &frame.Started{PID: p.pid()}}); err != nil {
-		return err
-	}
+	s.reports.Add(1)
 	go func() {
+		defer s.reports.Done()
 		exit := p.wait()
 		_ = s.sendControl(frame.ControlMessage{Type: frame.TypeExited, Exited: &exit})
 	}()
-	return nil
+	return err
 }
 
 func (s *server) stop(grace time.Duration) error {
@@ -201,14 +211,22 @@ func (s *server) deliver(r frame.ToolReply) error {
 	delete(s.pending, r.ID)
 	s.mu.Unlock()
 	if !ok {
-		return fmt.Errorf("reply to unknown tool call %d", r.ID)
+		s.mu.Lock()
+		issued := r.ID != 0 && r.ID <= s.nextID
+		s.mu.Unlock()
+		if issued {
+			// The call's bridge already left; the protocol has no cancel
+			// message, so a late reply is expected and dropped.
+			return nil
+		}
+		return fmt.Errorf("reply to tool call %d, which agentd never issued", r.ID)
 	}
 	ch <- r
 	return nil
 }
 
 // call forwards one tool call to the Host and waits for its reply, the
-// session's end or the bridge's departure.
+// bridge's departure (done) or the session's end.
 func (s *server) call(done <-chan struct{}, name string, args, meta []byte) (frame.ToolReply, error) {
 	s.mu.Lock()
 	if s.closed {
@@ -232,6 +250,9 @@ func (s *server) call(done <-chan struct{}, name string, args, meta []byte) (fra
 	case r := <-ch:
 		return r, nil
 	case <-done:
+		s.forget(id)
+		return frame.ToolReply{}, errors.New("the MCP bridge left")
+	case <-s.stopping:
 		s.forget(id)
 		return frame.ToolReply{}, errors.New("session is closing")
 	}
@@ -257,9 +278,12 @@ func (s *server) sendControl(c frame.ControlMessage) error {
 	return s.out.write(frame.Frame{Channel: frame.Control, Payload: payload})
 }
 
+// shutdown fails pending tool calls, stops the provider within the stop
+// grace and sends its exit report before Serve returns.
 func (s *server) shutdown() {
 	s.mu.Lock()
 	s.closed = true
+	close(s.stopping)
 	p, l := s.provider, s.listener
 	s.mu.Unlock()
 	if l != nil {
@@ -269,6 +293,7 @@ func (s *server) shutdown() {
 		p.stop(s.cfg.StopGrace)
 		p.wait()
 	}
+	s.reports.Wait()
 	if l != nil {
 		_ = os.Remove(s.cfg.SocketPath)
 	}

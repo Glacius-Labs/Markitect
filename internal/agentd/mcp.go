@@ -53,7 +53,6 @@ func (s *server) serveBridge(conn net.Conn) {
 	done := make(chan struct{})
 	var once sync.Once
 	closeConn := func() { once.Do(func() { close(done); _ = conn.Close() }) }
-	defer closeConn()
 	var wmu sync.Mutex
 	reply := func(r rpcResponse) {
 		r.JSONRPC = "2.0"
@@ -70,7 +69,11 @@ func (s *server) serveBridge(conn net.Conn) {
 	scanner := bufio.NewScanner(conn)
 	scanner.Buffer(make([]byte, 64<<10), maxMCPMessage)
 	var calls sync.WaitGroup
-	defer calls.Wait()
+	defer func() {
+		// The bridge left: release its waiting calls before waiting for them.
+		closeConn()
+		calls.Wait()
+	}()
 	for scanner.Scan() {
 		var m rpcMessage
 		if err := json.Unmarshal(scanner.Bytes(), &m); err != nil {

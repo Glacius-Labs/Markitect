@@ -6,12 +6,18 @@ import (
 	"fmt"
 	"io"
 	"sync"
+	"time"
 
 	"github.com/Glacius-Labs/Markitect/internal/agentd/frame"
 )
 
-// maxDiagnostics bounds the retained tail of the provider's standard error.
-const maxDiagnostics = 64 << 10
+const (
+	// maxDiagnostics bounds the retained tail of the provider's standard error.
+	maxDiagnostics = 64 << 10
+	// closeTimeout bounds how long Close waits for agentd to stop the
+	// provider and end before the container is removed by force.
+	closeTimeout = 30 * time.Second
+)
 
 // Session is the Host side of one agentd connection. A consumer must read
 // Stdout and ToolCalls concurrently: the provider may wait for a tool reply
@@ -21,6 +27,9 @@ type Session struct {
 	wmu   sync.Mutex
 	hello frame.Hello
 	wait  func() error
+	kill  func()
+
+	closeTimeout time.Duration
 
 	stdoutR *io.PipeReader
 	stdoutW *io.PipeWriter
@@ -39,8 +48,9 @@ type Session struct {
 }
 
 // newSession reads agentd's hello and starts demultiplexing. wait reports
-// the end of the engine process that carries the connection.
-func newSession(ctx context.Context, in io.WriteCloser, out io.Reader, wait func() error) (*Session, error) {
+// the end of the engine process that carries the connection; kill ends that
+// process and removes the container by force.
+func newSession(ctx context.Context, in io.WriteCloser, out io.Reader, wait func() error, kill func()) (*Session, error) {
 	type helloResult struct {
 		hello frame.Hello
 		err   error
@@ -63,24 +73,26 @@ func newSession(ctx context.Context, in io.WriteCloser, out io.Reader, wait func
 		first <- helloResult{hello: *c.Hello}
 	}()
 	var hello frame.Hello
+	abandon := func(err error) error {
+		_ = in.Close()
+		kill()
+		return errors.Join(err, wait())
+	}
 	select {
 	case r := <-first:
 		if r.err != nil {
-			_ = in.Close()
-			return nil, errors.Join(r.err, wait())
+			return nil, abandon(r.err)
 		}
 		hello = r.hello
 	case <-ctx.Done():
-		_ = in.Close()
-		return nil, errors.Join(ctx.Err(), wait())
+		return nil, abandon(ctx.Err())
 	}
 	if hello.Protocol != frame.ProtocolVersion {
-		_ = in.Close()
-		return nil, errors.Join(fmt.Errorf("agentd speaks frame protocol %d, the Host %d", hello.Protocol, frame.ProtocolVersion), wait())
+		return nil, abandon(fmt.Errorf("agentd speaks frame protocol %d, the Host %d", hello.Protocol, frame.ProtocolVersion))
 	}
 	r, w := io.Pipe()
 	s := &Session{
-		in: in, hello: hello, wait: wait,
+		in: in, hello: hello, wait: wait, kill: kill, closeTimeout: closeTimeout,
 		stdoutR: r, stdoutW: w,
 		tools:   make(chan frame.ToolCall, 16),
 		control: make(chan frame.ControlMessage, 4),
@@ -247,16 +259,21 @@ func (s *Session) Err() error {
 }
 
 // Close ends the connection. agentd then stops the provider and exits, which
-// ends the container. Close returns the engine process's result; it does not
-// depend on the consumer still reading Stdout or ToolCalls.
+// ends the container. If that does not happen within the close timeout, the
+// container is removed by force. Close returns the engine process's result;
+// it depends neither on the consumer reading Stdout or ToolCalls nor on a
+// writer that is blocked.
 func (s *Session) Close() error {
 	s.closeOnce.Do(func() {
 		close(s.closing)
 		_ = s.stdoutR.Close()
-		s.wmu.Lock()
 		_ = s.in.Close()
-		s.wmu.Unlock()
-		<-s.ended
+		select {
+		case <-s.ended:
+		case <-time.After(s.closeTimeout):
+			s.kill()
+			<-s.ended
+		}
 		s.closeErr = s.wait()
 	})
 	return s.closeErr

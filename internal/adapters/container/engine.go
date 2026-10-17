@@ -77,7 +77,13 @@ func (e *Engine) Start(ctx context.Context, spec SessionSpec) (*Session, error) 
 		})
 		return waitErr
 	}
-	return newSession(ctx, stdin, stdout, wait)
+	kill := func() {
+		_ = cmd.Process.Kill()
+		rmCtx, cancel := context.WithTimeout(context.Background(), closeTimeout)
+		defer cancel()
+		_, _ = e.output(rmCtx, "rm", "--force", spec.Name)
+	}
+	return newSession(ctx, stdin, stdout, wait, kill)
 }
 
 // CreateVolume creates a labeled named volume.

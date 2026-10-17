@@ -29,7 +29,7 @@ func TestRunArgsHardenEveryContainer(t *testing.T) {
 		t.Fatal(err)
 	}
 	want := []string{
-		"run", "--interactive", "--rm",
+		"run", "--interactive", "--rm", "--init",
 		"--name", "markitect-s1",
 		"--read-only",
 		"--cap-drop", "ALL",
@@ -55,6 +55,8 @@ func TestRunArgsHardenEveryContainer(t *testing.T) {
 func TestRunArgsRefuseUnsafeSpecs(t *testing.T) {
 	cases := map[string]func(*SessionSpec){
 		"root user":           func(s *SessionSpec) { s.User = "0:0" },
+		"root group":          func(s *SessionSpec) { s.User = "1000:0" },
+		"host network":        func(s *SessionSpec) { s.Network = "host" },
 		"named user":          func(s *SessionSpec) { s.User = "agent" },
 		"image tag":           func(s *SessionSpec) { s.Image = "markitect-runtime:latest" },
 		"short digest":        func(s *SessionSpec) { s.Image = "sha256:0123" },
