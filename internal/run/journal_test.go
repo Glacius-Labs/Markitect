@@ -344,7 +344,7 @@ func TestBindingReferenceCodecRejectsChangedRecordedFormats(t *testing.T) {
 		t.Fatal(err)
 	}
 	for name, change := range map[string]func([]byte) []byte{
-		"unknown binding version": func(data []byte) []byte { return bytes.Replace(data, []byte(`"Version":1`), []byte(`"Version":2`), 1) },
+		"unknown binding version": func(data []byte) []byte { return bytes.Replace(data, []byte(`"Version":2`), []byte(`"Version":3`), 1) },
 		"wrong compiled digest": func(data []byte) []byte {
 			return bytes.Replace(data, []byte(i.Compilation.Models[0].Digest), []byte("sha256:"+strings.Repeat("0", 64)), 1)
 		},

@@ -47,6 +47,23 @@ The historical versioned binding, compiled digests, inventory and original owner
 payload are verified without reinterpreting old input with today's compiler or
 resolving settings again. Store/controller identity remains the Host's duty.
 
+New preparations record basis v2. Each passed compiled model contributes its
+complete own Package inventory and every Definition's identity and owning model
+ID, including imported models and explicitly empty inventories. `BindingInventory`
+returns a basis-bound recorded view with copied model IDs, digests, manifest
+references, Packages and Definition identities. It supplies no `model.Result`,
+Definition bodies or semantic compilation claim. Validation checks recorded
+shape, owning-model and Package membership, unique ordered inventories, raw
+source relationships and agreement with the local Manager inventory. Original
+compiler completeness and semantics remain producer assertions.
+
+Literal v1 basis and batch bytes still restore and retain their original
+references and retry receipts. Their imported Definition inventories are absent;
+`RecordedInventory.Models` returns `ErrInventoryUnavailable` rather than an
+invented complete empty inventory. These versions add no blob references or
+Journal methods. The existing 64 MiB payload ceiling and explicit Restore byte
+budget include the inventory. Task readiness and execution remain unavailable.
+
 Restoration never calls Put or Append and never replays an external effect. Open
 reservations keep their complete holds. `RecoveryRequired` is a separate Host
 barrier, while `Current` still reports the actual committed run state. Only
