@@ -34,6 +34,7 @@ type gitEntry struct {
 type gitRepository struct {
 	ctx                             context.Context
 	path, gitDir, commonDir, format string
+	selectedPath                    string
 	rootInfo, gitInfo, commonInfo   os.FileInfo
 	tree                            map[string]gitEntry
 	blobs                           *blobStream
@@ -80,7 +81,7 @@ func identifyGit(ctx context.Context, root string) (*gitRepository, error) {
 	if err != nil {
 		return nil, err
 	}
-	g := &gitRepository{ctx: ctx, path: abs, rootInfo: info}
+	g := &gitRepository{ctx: ctx, path: abs, selectedPath: abs, rootInfo: info}
 	out, err := g.run("rev-parse", "--show-toplevel")
 	if err != nil {
 		return nil, err
