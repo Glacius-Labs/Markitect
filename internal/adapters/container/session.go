@@ -19,20 +19,21 @@ const (
 	closeTimeout = 30 * time.Second
 )
 
-// Session is the Host side of one agentd connection. A consumer must read
-// Stdout and ToolCalls concurrently: the provider may wait for a tool reply
-// while it writes output, and an unread stream holds back the other.
+// Session is the Host side of one agentd connection. Provider output is
+// buffered up to a bound, so control replies such as a census or the exit
+// never wait for the consumer. Tool calls arrive on a short queue; the
+// provider waits for their replies.
 type Session struct {
 	in    io.WriteCloser
 	wmu   sync.Mutex
+	reqMu sync.Mutex // one outstanding control request at a time
 	hello frame.Hello
 	wait  func() error
 	kill  func()
 
 	closeTimeout time.Duration
 
-	stdoutR *io.PipeReader
-	stdoutW *io.PipeWriter
+	stdout  *outputBuffer
 	tools   chan frame.ToolCall
 	control chan frame.ControlMessage
 	exited  chan frame.Exited
@@ -90,10 +91,9 @@ func newSession(ctx context.Context, in io.WriteCloser, out io.Reader, wait func
 	if hello.Protocol != frame.ProtocolVersion {
 		return nil, abandon(fmt.Errorf("agentd speaks frame protocol %d, the Host %d", hello.Protocol, frame.ProtocolVersion))
 	}
-	r, w := io.Pipe()
 	s := &Session{
 		in: in, hello: hello, wait: wait, kill: kill, closeTimeout: closeTimeout,
-		stdoutR: r, stdoutW: w,
+		stdout:  newOutputBuffer(),
 		tools:   make(chan frame.ToolCall, 16),
 		control: make(chan frame.ControlMessage, 4),
 		exited:  make(chan frame.Exited, 1),
@@ -116,13 +116,12 @@ func (s *Session) demux(out io.Reader) {
 			if !errors.Is(err, io.EOF) {
 				s.fail(fmt.Errorf("read agentd frame: %w", err))
 			}
-			_ = s.stdoutW.CloseWithError(io.EOF)
+			s.stdout.close()
 			return
 		}
 		switch f.Channel {
 		case frame.ProviderOut:
-			// After Close the reader is gone; keep draining without delivery.
-			if _, err := s.stdoutW.Write(f.Payload); err != nil && !errors.Is(err, io.ErrClosedPipe) {
+			if _, err := s.stdout.Write(f.Payload); err != nil {
 				s.fail(fmt.Errorf("deliver provider output: %w", err))
 			}
 		case frame.ProviderErr:
@@ -146,13 +145,13 @@ func (s *Session) demux(out io.Reader) {
 			switch c.Type {
 			case frame.TypeExited:
 				s.exited <- *c.Exited
-				_ = s.stdoutW.Close()
+				s.stdout.close()
 			case frame.TypeFailure:
 				s.mu.Lock()
 				s.failure = c.Failure.Message
 				s.mu.Unlock()
 				s.deliverControl(c)
-			case frame.TypeStarted:
+			case frame.TypeStarted, frame.TypeCensus:
 				s.deliverControl(c)
 			default:
 				s.fail(fmt.Errorf("agentd sent an unexpected %q message", c.Type))
@@ -173,6 +172,8 @@ func (s *Session) deliverControl(c frame.ControlMessage) {
 // StartProvider asks agentd to start the provider and returns its process ID.
 // A refused start returns the provider's reported reason.
 func (s *Session) StartProvider(ctx context.Context, req frame.Start) (frame.Started, error) {
+	s.reqMu.Lock()
+	defer s.reqMu.Unlock()
 	if err := s.sendControl(frame.ControlMessage{Type: frame.TypeStart, Start: &req}); err != nil {
 		return frame.Started{}, err
 	}
@@ -189,9 +190,34 @@ func (s *Session) StartProvider(ctx context.Context, req frame.Start) (frame.Sta
 	}
 }
 
+// Census returns the processes running in the container besides agentd and
+// its init. It is a snapshot for a quiescence judgment: the Host decides
+// which of the listed processes, if any, may remain.
+func (s *Session) Census(ctx context.Context) ([]frame.Process, error) {
+	s.reqMu.Lock()
+	defer s.reqMu.Unlock()
+	if err := s.sendControl(frame.ControlMessage{Type: frame.TypeCensus, Census: &frame.Census{}}); err != nil {
+		return nil, err
+	}
+	select {
+	case c := <-s.control:
+		if c.Type == frame.TypeCensus {
+			return c.Census.Processes, nil
+		}
+		if c.Failure != nil {
+			return nil, fmt.Errorf("agentd refused the census: %s", c.Failure.Message)
+		}
+		return nil, fmt.Errorf("agentd answered the census with %q", c.Type)
+	case <-s.ended:
+		return nil, s.endError("before the census arrived")
+	case <-ctx.Done():
+		return nil, ctx.Err()
+	}
+}
+
 // Stdout is the provider's standard output. It ends when the provider exits
 // or the connection ends.
-func (s *Session) Stdout() io.Reader { return s.stdoutR }
+func (s *Session) Stdout() io.Reader { return s.stdout }
 
 // WriteInput sends bytes to the provider's standard input.
 func (s *Session) WriteInput(b []byte) error {
@@ -266,7 +292,7 @@ func (s *Session) Err() error {
 func (s *Session) Close() error {
 	s.closeOnce.Do(func() {
 		close(s.closing)
-		_ = s.stdoutR.Close()
+		s.stdout.detach()
 		_ = s.in.Close()
 		select {
 		case <-s.ended:

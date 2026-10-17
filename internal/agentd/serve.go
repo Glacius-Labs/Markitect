@@ -107,6 +107,8 @@ func (s *server) handle(f frame.Frame) error {
 			return s.start(*c.Start)
 		case frame.TypeStop:
 			return s.stop(time.Duration(c.Stop.GraceMillis) * time.Millisecond)
+		case frame.TypeCensus:
+			return s.census()
 		default:
 			return fmt.Errorf("the Host may not send a %q message", c.Type)
 		}

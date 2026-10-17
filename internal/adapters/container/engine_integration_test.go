@@ -42,7 +42,7 @@ func TestRealEngineRunsAHardenedSession(t *testing.T) {
 	}
 	t.Cleanup(func() { _ = engine.RemoveVolume(context.Background(), work) })
 
-	spec := container.SessionSpec{
+	spec := container.ContainerSpec{
 		Name: "mk-" + store, Image: image, Labels: labels, User: "1000:1000",
 		Mounts:  []container.Mount{{Volume: work, Target: "/work", ReadOnly: true}},
 		Workdir: "/work", CPUs: 1, MemoryBytes: 256 << 20, Pids: 64, TmpBytes: 16 << 20,
@@ -114,7 +114,7 @@ func TestRealEngineStopsAWritingSessionWhenTheHostLeaves(t *testing.T) {
 	defer cancel()
 	image := buildTestImage(ctx, t, enginePath)
 	store := fmt.Sprintf("test-%d", time.Now().UnixNano())
-	spec := container.SessionSpec{
+	spec := container.ContainerSpec{
 		Name: "mk-" + store, Image: image, Labels: map[string]string{"io.markitect.store": store}, User: "1000:1000",
 		Workdir: "/tmp", CPUs: 1, MemoryBytes: 256 << 20, Pids: 64, TmpBytes: 16 << 20, Network: "none",
 	}
@@ -194,7 +194,7 @@ func TestRealEngineNameConflictLeavesTheOtherContainer(t *testing.T) {
 	defer cancel()
 	image := buildTestImage(ctx, t, enginePath)
 	store := fmt.Sprintf("test-%d", time.Now().UnixNano())
-	spec := container.SessionSpec{
+	spec := container.ContainerSpec{
 		Name: "mk-" + store, Image: image, Labels: map[string]string{"io.markitect.store": store}, User: "1000:1000",
 		Workdir: "/tmp", CPUs: 1, MemoryBytes: 256 << 20, Pids: 64, TmpBytes: 16 << 20, Network: "none",
 	}
@@ -209,5 +209,53 @@ func TestRealEngineNameConflictLeavesTheOtherContainer(t *testing.T) {
 	}
 	if names, err := engine.Containers(ctx, "io.markitect.store", store); err != nil || len(names) != 1 {
 		t.Fatalf("containers after the conflict = %v, %v; the first must survive", names, err)
+	}
+}
+
+// TestRealEngineCensusSeesOnlyTheSession shows that the census inside a
+// session container lists the provider and its tool processes, and neither
+// agentd nor the container's init.
+func TestRealEngineCensusSeesOnlyTheSession(t *testing.T) {
+	enginePath := os.Getenv("MARKITECT_TEST_ENGINE")
+	if enginePath == "" {
+		t.Skip("set MARKITECT_TEST_ENGINE to an absolute container engine path")
+	}
+	engine, err := container.NewEngine(enginePath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
+	defer cancel()
+	image := buildTestImage(ctx, t, enginePath)
+	store := fmt.Sprintf("test-%d", time.Now().UnixNano())
+	s, err := engine.Start(ctx, container.ContainerSpec{
+		Name: "mk-" + store, Image: image, Labels: map[string]string{"io.markitect.store": store}, User: "1000:1000",
+		Workdir: "/tmp", CPUs: 1, MemoryBytes: 256 << 20, Pids: 64, TmpBytes: 16 << 20, Network: "none",
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer s.Close()
+	started, err := s.StartProvider(ctx, frame.Start{Argv: []string{"/usr/local/bin/agentd.test"}, Dir: "/tmp", Env: []string{"AGENTD_TEST_PROVIDER=background"}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	processes, err := s.Census(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var provider, child bool
+	for _, p := range processes {
+		switch {
+		case p.PID == started.PID:
+			provider = true
+		case p.PPID == started.PID:
+			child = true
+		case p.PID == 1 || strings.Contains(p.Command, "markitect-agent"):
+			t.Fatalf("census lists the container's init or agentd: %+v", p)
+		}
+	}
+	if !provider || !child || len(processes) != 2 {
+		t.Fatalf("census = %+v, want exactly the provider and its child", processes)
 	}
 }

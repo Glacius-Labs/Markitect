@@ -48,58 +48,115 @@ func NewEngine(path string) (*Engine, error) {
 
 // Start runs one session container and returns its agentd connection after
 // agentd's hello. Closing the session ends the container.
-func (e *Engine) Start(ctx context.Context, spec SessionSpec) (*Session, error) {
-	args, err := spec.runArgs()
+func (e *Engine) Start(ctx context.Context, spec ContainerSpec) (*Session, error) {
+	l, err := e.prepare(spec, []string{AgentdPath, "serve"})
 	if err != nil {
 		return nil, err
 	}
-	// The engine writes the created container's ID here. Forced removal uses
-	// that ID, never the name, so a name conflict cannot remove another
-	// container.
+	stdin, err := l.cmd.StdinPipe()
+	if err != nil {
+		return nil, err
+	}
+	stdout, err := l.cmd.StdoutPipe()
+	if err != nil {
+		return nil, err
+	}
+	if err := l.start(); err != nil {
+		return nil, err
+	}
+	return newSession(ctx, stdin, stdout, l.wait, l.kill)
+}
+
+// RunHelper runs one command in a fresh container under the same hardening as
+// a session, for example to fill or read a workspace volume. argv[0] is an
+// absolute path inside the image. stdin feeds the command and its standard
+// output goes to stdout. A nonzero exit is an error with the command's
+// diagnostics. Cancelling ctx removes the container.
+func (e *Engine) RunHelper(ctx context.Context, spec ContainerSpec, argv []string, stdin io.Reader, stdout io.Writer) error {
+	if len(argv) == 0 || !absolute(argv[0]) {
+		return fmt.Errorf("helper command %q does not start with an absolute path", argv)
+	}
+	l, err := e.prepare(spec, argv)
+	if err != nil {
+		return err
+	}
+	l.cmd.Stdin, l.cmd.Stdout = stdin, stdout
+	if err := l.start(); err != nil {
+		return err
+	}
+	done := make(chan error, 1)
+	go func() { done <- l.wait() }()
+	select {
+	case err := <-done:
+		return err
+	case <-ctx.Done():
+		l.kill()
+		<-done
+		return ctx.Err()
+	}
+}
+
+// launch is one engine run process and the container it creates.
+type launch struct {
+	e       *Engine
+	name    string
+	cmd     *exec.Cmd
+	stderr  *boundedBuffer
+	cidDir  string
+	cidPath string
+	once    sync.Once
+	waitErr error
+}
+
+// prepare validates the spec and builds the run command. The engine writes
+// the created container's ID to a cidfile; forced removal uses that ID,
+// never the name, so a name conflict cannot remove another container.
+func (e *Engine) prepare(spec ContainerSpec, entry []string) (*launch, error) {
+	args, err := spec.runArgs(entry)
+	if err != nil {
+		return nil, err
+	}
 	cidDir, err := os.MkdirTemp("", "markitect-cid")
 	if err != nil {
 		return nil, err
 	}
 	cidPath := filepath.Join(cidDir, "cid")
 	args = append([]string{args[0], "--cidfile", cidPath}, args[1:]...)
-	cmd := exec.Command(e.path, args...)
-	stdin, err := cmd.StdinPipe()
-	if err != nil {
-		return nil, err
+	l := &launch{e: e, name: spec.Name, cmd: exec.Command(e.path, args...), stderr: &boundedBuffer{max: maxCommandOutput}, cidDir: cidDir, cidPath: cidPath}
+	l.cmd.Stderr = l.stderr
+	return l, nil
+}
+
+func (l *launch) start() error {
+	if err := l.cmd.Start(); err != nil {
+		_ = os.RemoveAll(l.cidDir)
+		return fmt.Errorf("start container %s: %w", l.name, err)
 	}
-	stdout, err := cmd.StdoutPipe()
-	if err != nil {
-		return nil, err
-	}
-	stderr := &boundedBuffer{max: maxCommandOutput}
-	cmd.Stderr = stderr
-	if err := cmd.Start(); err != nil {
-		_ = os.RemoveAll(cidDir)
-		return nil, fmt.Errorf("start container %s: %w", spec.Name, err)
-	}
-	var once sync.Once
-	var waitErr error
-	wait := func() error {
-		once.Do(func() {
-			if err := cmd.Wait(); err != nil {
-				waitErr = fmt.Errorf("container %s: %w: %s", spec.Name, err, strings.TrimSpace(stderr.String()))
-			}
-			_ = os.RemoveAll(cidDir)
-		})
-		return waitErr
-	}
-	kill := func() {
-		_ = cmd.Process.Kill()
-		raw, err := os.ReadFile(cidPath)
-		id := bytes.TrimSpace(raw)
-		if err != nil || !containerIDPattern.Match(id) {
-			return // the engine created no container
+	return nil
+}
+
+// wait reports the end of the engine run process once.
+func (l *launch) wait() error {
+	l.once.Do(func() {
+		if err := l.cmd.Wait(); err != nil {
+			l.waitErr = fmt.Errorf("container %s: %w: %s", l.name, err, strings.TrimSpace(l.stderr.String()))
 		}
-		rmCtx, cancel := context.WithTimeout(context.Background(), closeTimeout)
-		defer cancel()
-		_, _ = e.output(rmCtx, "rm", "--force", string(id))
+		_ = os.RemoveAll(l.cidDir)
+	})
+	return l.waitErr
+}
+
+// kill ends the engine run process and removes the container it created.
+func (l *launch) kill() {
+	_ = l.cmd.Process.Kill()
+	raw, err := os.ReadFile(l.cidPath)
+	id := bytes.TrimSpace(raw)
+	if err != nil || !containerIDPattern.Match(id) {
+		return // the engine created no container
 	}
-	return newSession(ctx, stdin, stdout, wait, kill)
+	rmCtx, cancel := context.WithTimeout(context.Background(), closeTimeout)
+	defer cancel()
+	_, _ = l.e.output(rmCtx, "rm", "--force", string(id))
 }
 
 // CreateVolume creates a labeled named volume.
