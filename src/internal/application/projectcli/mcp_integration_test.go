@@ -25,7 +25,7 @@ import (
 	"github.com/Glacius-Labs/Markitect/src/internal/runtime/agentexec"
 	"github.com/Glacius-Labs/Markitect/src/internal/runtime/projectrun"
 	"github.com/Glacius-Labs/Markitect/src/internal/runtime/projectsetup"
-	"github.com/Glacius-Labs/Markitect/src/internal/testkit"
+	"github.com/Glacius-Labs/Markitect/internal/testkit"
 )
 
 // Exercise the actual Git subprocess, facade and transport result mappings.

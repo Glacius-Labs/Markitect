@@ -2,7 +2,7 @@
 
 # markitect
 
-Model digest: sha256:1b55bd8247a802f6f32c058f9e2b6aeee6f73c459e114918ef13f86a2cba4549
+Model digest: sha256:c0b6fdf2eb538be8660dab2678fcd5dad8edce7839cab10c1c2fc6a620d6b3fc
 
 Report status: succeeded
 
@@ -33,7 +33,7 @@ The structural model compiled from the explicitly selected Definition files. Thi
 - Namespace: examples
 - Purpose: Owns the executable examples, the benchmark fixtures, the experiments, the harnesses that test them and the test kit.
 - Parent Manager: ["project.markitect.example.org/v1alpha1","Manager","","markitect"]
-- Delegated paths: benchmark/, examples/, experiments/, src/harness/, src/internal/testkit/
+- Delegated paths: benchmark/, examples/, experiments/, internal/testkit/, src/harness/
 - Instructions: Keep examples executable and keep each example's own policy inside it.
 
 ### product
@@ -246,7 +246,7 @@ Maintainer tooling enforces the import gate and the code map, builds and publish
 - Role: verification
 - Responsible Manager: ["project.markitect.example.org/v1alpha1","Manager","examples","examples"]
 - Realizes: ["project.markitect.example.org/v1alpha1","Statement","","canonical-sources"], ["project.markitect.example.org/v1alpha1","Statement","","project-local-policy"], ["project.markitect.example.org/v1alpha1","Statement","examples","examples"], ["project.markitect.example.org/v1alpha1","Statement","product","declared-inputs"], ["project.markitect.example.org/v1alpha1","Statement","tooling","published-releases"]
-- Expected paths: [benchmark/](../../benchmark), [examples/](../../examples), [src/harness/](../../src/harness), [src/internal/testkit/](../../src/internal/testkit)
+- Expected paths: [benchmark/](../../benchmark), [examples/](../../examples), [internal/testkit/](../../internal/testkit), [src/harness/](../../src/harness)
 - Related checks: ["project.markitect.example.org/v1alpha1","Check","","go-tests"] (declared; execution not observed)
 - Applicability: The examples and fixtures show the documented workflows and must stay executable.
 

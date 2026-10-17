@@ -17,7 +17,7 @@ import (
 	"github.com/Glacius-Labs/Markitect/src/internal/application/mcp"
 	"github.com/Glacius-Labs/Markitect/src/internal/application/projectapp"
 
-	"github.com/Glacius-Labs/Markitect/src/internal/testkit"
+	"github.com/Glacius-Labs/Markitect/internal/testkit"
 )
 
 // These lists are deliberately independent of verbTable and schema generation.

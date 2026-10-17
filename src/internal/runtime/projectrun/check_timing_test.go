@@ -10,7 +10,7 @@ import (
 	"time"
 
 	"github.com/Glacius-Labs/Markitect/src/internal/runtime/projectconfig"
-	"github.com/Glacius-Labs/Markitect/src/internal/testkit"
+	"github.com/Glacius-Labs/Markitect/internal/testkit"
 )
 
 const (

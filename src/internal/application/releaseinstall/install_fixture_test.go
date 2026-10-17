@@ -11,7 +11,7 @@ import (
 	"testing"
 
 	"github.com/Glacius-Labs/Markitect/src/internal/infrastructure/source"
-	"github.com/Glacius-Labs/Markitect/src/internal/testkit"
+	"github.com/Glacius-Labs/Markitect/internal/testkit"
 	"github.com/Glacius-Labs/Markitect/src/internal/tooling/release"
 	"go.yaml.in/yaml/v3"
 )

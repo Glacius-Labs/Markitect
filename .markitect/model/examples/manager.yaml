@@ -13,5 +13,5 @@ spec:
     - examples/
     - experiments/
     - src/harness/
-    - src/internal/testkit/
+    - internal/testkit/
   instructions: Keep examples executable and keep each example's own policy inside it.
