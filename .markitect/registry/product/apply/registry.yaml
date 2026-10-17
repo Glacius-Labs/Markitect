@@ -156,6 +156,10 @@ artifacts:
     form: test
     realizes: [product/apply/read-only-preparation]
     why: Tests the stated responsibility and retains negative boundaries.
+  - path: "internal/apply/host_profile_image_test.go"
+    form: test
+    realizes: [product/apply/read-only-preparation]
+    why: Checks truthful image metadata evidence, literal identity binding and existing RUN reconstruction without runtime readiness claims.
   - path: "internal/apply/host_profiles.go"
     form: code
     realizes: [product/apply/read-only-preparation]

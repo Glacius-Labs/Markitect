@@ -11,9 +11,10 @@ import (
 	"go.yaml.in/yaml/v3"
 )
 
-// AgentProfilePreparer validates one closed, versioned Codex App Server section
-// and observes its actual executable/schema metadata. It must not start a
-// process, authenticate, negotiate tools, or read uncaptured instructions.
+// AgentProfilePreparer validates one closed, versioned adapter section and
+// observes static metadata. Image observation never starts the image or provider.
+// Supported CLI versions and metadata parsing belong to the adapter. Preparation
+// must not authenticate, negotiate tools, or read uncaptured instructions.
 type AgentProfilePreparer interface {
 	PrepareAgentProfile(context.Context, ProfileInput) (ProfileObservation, error)
 }
@@ -80,17 +81,53 @@ type ProfileContract struct {
 	Version uint32
 }
 
+type AgentImageProvider string
+
+const (
+	AgentImageCodexAppServer AgentImageProvider = "codex-app-server"
+	AgentImageClaudeCode     AgentImageProvider = "claude-code"
+)
+
+// AgentImageMetadataFile identifies actual whole bytes read from a regular file
+// inside ImageID. Path is an exact canonical absolute POSIX image path, not a
+// Host location or an instruction for Apply to read. It is independent of a
+// schema digest merely recorded in those bytes. Size is bounded to 1 MiB.
+type AgentImageMetadataFile struct {
+	Path      string
+	ContentID snapshot.ContentID
+	Size      int64
+}
+
+// AgentImageObservation is an adapter's static validation assertion, bound to an
+// immutable engine image ID (sha256:<64 lowercase hex digits>). CLIVersion and
+// AgentdVersion retain literal recorded values, not observed process handshakes.
+// RecordedCodexSchemaDigest is required for Codex and absent for Claude; it is a
+// build-recorded sha256 digest, never a complete observed schema inventory.
+// Metadata binds the entire actual file, including other recorded values.
+// This evidence grants no process, credential, Session or execution authority.
+type AgentImageObservation struct {
+	Provider                  AgentImageProvider
+	ImageID                   string
+	Metadata                  AgentImageMetadataFile
+	CLIVersion                string
+	AgentdVersion             string
+	RecordedCodexSchemaDigest string
+}
+
 // ProfileObservation is static evidence supplied by a port, not a runtime
 // capability or a provider DTO. InputBinding echoes ProfileInput.Binding();
 // Passed without that exact echo is rejected. Contract identifies the concrete
-// validation contract and its version. Passed requires actual executable metadata and, for
-// agents, a complete schema inventory. Instructions select only captured inputs;
+// validation contract and its version. Passed requires exactly one evidence
+// mode: AgentImage for an Agent, or historical executable Files and complete
+// agent schema Inventories. Checks retain their file metadata contract and
+// cannot supply AgentImage. Instructions select only captured inputs;
 // RequiredInstructions requests a NEW complete acquisition. Apply computes the
 // identity itself; callers cannot supply an arbitrary profile identity.
 type ProfileObservation struct {
 	InputBinding         ProfileBinding
 	Status               model.Status
 	Contract             ProfileContract
+	AgentImage           *AgentImageObservation `json:",omitempty"`
 	Files                []ProfileMetadataFile
 	Inventories          []ProfileMetadataInventory
 	Instructions         []SourceLocation
@@ -156,6 +193,10 @@ func cloneHostDiagnostics(in []HostProfileDiagnostic) []HostProfileDiagnostic {
 }
 
 func cloneProfileObservation(o ProfileObservation) ProfileObservation {
+	if o.AgentImage != nil {
+		image := *o.AgentImage
+		o.AgentImage = &image
+	}
 	o.Files = slices.Clone(o.Files)
 	o.Inventories = slices.Clone(o.Inventories)
 	for i := range o.Inventories {
