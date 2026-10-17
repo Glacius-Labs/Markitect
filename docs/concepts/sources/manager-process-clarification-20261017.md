@@ -108,3 +108,19 @@ The owner confirmed:
 > Dann machen wir es so. Nimm deine Vorschläge mit auf und schaue dann ob uns noch was fehlt
 
 The linked concept and contracts refine these accepted directions. Exact transition formats, composition across different bases, runtime quiescence and provider continuation remain implementation/proof obligations; this confirmation does not establish those capabilities or authorize real provider experiments. Current source at `8db25faff149f8ba0102c95951301e11d4600997` includes corrected organization prompts, but retains whole-session candidate binding and the old configuration names.
+
+## Bounded coordination and idle execution
+
+The owner supplied five suggestions from a Claude session: reuse unchanged assessments, bound upward reports, stop idle containers, use process inspection to establish quiescence, and use coordination traffic as a modeling signal. The assistant compared them with the integrated concept from PR #342 and recommended:
+
+- Specify versioned child reports with status, interfaces, prerequisites, findings, uncertainty and evidence. Distinguish limited delivery from completion; bound both each report and the assembled parent input. Split visibly and retrieve detail without silently dropping obligations.
+- Separate the logical Manager, retained conversation and running container. Use a finite deterministic warm-retention and stop policy instead of stopping after every message; actual new execution starts consume budget. Retained provider-home data alone is not proven resume.
+- Treat process inspection as supporting evidence, not a sufficient quiescence test. The provider itself, delayed tools and Host-side actions may still act. Close admission, reconcile effects and enforce a write barrier through basis changes; unknown effects remain blocked.
+- Record assessment/result reuse as a later extension with complete input bindings, separate local/integration validity and explicit invalidation by new findings or messages. It would require a deliberate extension of active participation, not a reinterpretation of the first Apply's Explore rule.
+- Record later modeling hints from recurring cross-branch questions, waits, corrections and integration cost. Show evidence and routes; do not infer that traffic alone proves a bad model or automatically reorganize it.
+
+The owner confirmed the timing and requested documentation and coordination:
+
+> Ja, halte das so im Konzept fest und stimme es mit dem Coordinator ab. Wiederverwendung und Modellierungshinweise nehmen wir als spätere Erweiterungen auf, die anderen Punkte konkretisieren wir jetzt.
+
+The current message, idle and quiescence requirements belong to the existing Apply contracts; future extensions belong to the North Star. This is an accepted design refinement, not evidence of provider/runtime capability or authority to skip a Manager, reduce required review capacity, change current executable configuration formats or run real providers.

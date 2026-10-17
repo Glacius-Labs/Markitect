@@ -38,6 +38,16 @@ Settled consumption never decreases. Settlement records an actual overrun instea
 
 Budget pressure never waives evidence. When writing work no longer fits, the Host retains the candidate and the run finishes Incomplete with its open work. The owner can extend the assignment's caps within the project ceilings; the extension is recorded and used by the continuation run. A run that ended Incomplete stays Incomplete.
 
+## Idle execution and resumption
+
+An idle Manager is a logical responsibility without eligible delivered work and without active or uncertain effects. An empty message queue or a terminal provider turn alone does not establish this state. Preserve its task, conversation identity, workspace basis, findings and counters in the existing records; it holds no active write grant. Queuing a message does not itself start a container: ordinary readiness and budget admission select its next step.
+
+Use one recorded finite warm-retention policy: a maximum idle duration and a maximum number of warm idle environments. Start the idle timer only after confirmed quiescence. Stop at the deadline; when the warm limit is exceeded, stop the oldest idle environment first, breaking ties by stable execution-session identity. A zero warm limit means immediate stop. Selection is deterministic relative to recorded events and Host time, not provider timing. The policy's concrete field names and numeric defaults require coordinated producer implementation; this text does not add accepted YAML keys. Known effects must finish or be stopped and reconciled before idle retention; unknown effects remain blocked, never reclassified as idle to release a hold.
+
+Warm retention requires demonstrated prevention of autonomous artifact effects between steps. If that boundary cannot be enforced while the provider stays alive, stop and reconcile its execution environment. Record actual termination, retaining the exact provider state and workspace evidence needed for supported resume. A new environment consumes a session-start unit and startup time even if it resumes the same conversation. Otherwise use a visibly new conversation with the bounded evidence-linked handoff. No idle eviction, new container or handoff replenishes assignment capacity or clears findings or rejection counts.
+
+Idle waiting has no Agent-step or active-execution-time charge; storage and future startup are still real resource costs. There is no cost-free-resume claim. Stopping an environment does not by itself settle outstanding Host-side or external effects. The [runtime boundary](manager-apply-rebuild-plan.md#session-lifetime-and-protocol-mapping) must prove quiescence and termination separately from dialogue retention.
+
 ## Evidence need survives budget pressure
 
 What evidence an obligation needs is decided separately from whether the budget can afford it. A reviewer who sees a plausible error that could violate a consequential boundary selects a small distinguishing case, starting from the model before reading the implementer's solution. A current case that already distinguishes the concern is reused. For lending, useful cases are a suspended member who can still return a book, and a repeated return of loan L1 after the copy has been lent again as L2.
