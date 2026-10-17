@@ -12,10 +12,7 @@ import (
 	"go.yaml.in/yaml/v3"
 )
 
-type executionField struct {
-	node    *yaml.Node
-	pointer string
-}
+type executionField = configField
 type executionDecoder struct {
 	result      *executionDecoding
 	source      SourceFile
@@ -39,79 +36,33 @@ func (d *executionDecoder) issue(status model.Status, code string, field executi
 }
 
 func executionChild(parent executionField, name string, node *yaml.Node) executionField {
-	name = strings.ReplaceAll(strings.ReplaceAll(name, "~", "~0"), "/", "~1")
-	return executionField{node: node, pointer: parent.pointer + "/" + name}
+	return configChild(parent, name, node)
+}
+
+func (d *executionDecoder) yaml() configYAML {
+	return configYAML{name: "execution", title: "Execution", issue: func(code string, field configField, message string) {
+		d.issue(model.Failed, "execution."+code, field, message)
+	}}
 }
 
 func (d *executionDecoder) restricted(field executionField) {
-	node := field.node
-	if node.Kind == yaml.AliasNode || node.Alias != nil || node.Anchor != "" || node.Tag == "!!null" || node.Tag != "" && !strings.HasPrefix(node.Tag, "!!") {
-		d.issue(model.Failed, "execution.yaml_feature", field, "Execution YAML cannot use aliases, anchors, nulls or custom tags.")
-		return
-	}
-	if node.Kind == yaml.MappingNode {
-		for i := 0; i+1 < len(node.Content); i += 2 {
-			child := executionChild(field, node.Content[i].Value, node.Content[i])
-			d.restricted(child)
-			child.node = node.Content[i+1]
-			d.restricted(child)
-		}
-	} else {
-		for i, child := range node.Content {
-			d.restricted(executionChild(field, fmt.Sprint(i), child))
-		}
-	}
+	d.yaml().restricted(field)
 }
 
 func (d *executionDecoder) object(field executionField, allowed ...string) map[string]executionField {
-	result := make(map[string]executionField)
-	if field.node == nil || field.node.Kind != yaml.MappingNode {
-		d.issue(model.Failed, "execution.mapping", field, "Expected an execution mapping.")
-		return result
-	}
-	for i := 0; i+1 < len(field.node.Content); i += 2 {
-		key, value := field.node.Content[i], field.node.Content[i+1]
-		child := executionChild(field, key.Value, value)
-		if key.Kind != yaml.ScalarNode || key.Tag != "!!str" {
-			d.issue(model.Failed, "execution.key", child, "Execution keys must be strings.")
-			continue
-		}
-		if _, found := result[key.Value]; found {
-			d.issue(model.Failed, "execution.duplicate_key", child, fmt.Sprintf("Duplicate execution key %q.", key.Value))
-			continue
-		}
-		result[key.Value] = child
-		if allowed != nil {
-			known := false
-			for _, name := range allowed {
-				known = known || key.Value == name
-			}
-			if !known {
-				d.issue(model.Failed, "execution.unknown_key", child, fmt.Sprintf("Unknown execution key %q.", key.Value))
-			}
-		}
-	}
-	return result
+	return d.yaml().object(field, allowed...)
 }
 
 func (d *executionDecoder) required(fields map[string]executionField, parent executionField, name string) executionField {
-	if field, found := fields[name]; found {
-		return field
-	}
-	field := executionChild(parent, name, nil)
-	d.issue(model.Failed, "execution.field_missing", field, fmt.Sprintf("Required execution field %q is missing.", name))
-	return field
+	return d.yaml().required(fields, parent, name)
 }
 
 func (d *executionDecoder) text(field executionField, empty bool) (organization.Setting[string], bool) {
-	if field.node == nil {
+	value, ok := d.yaml().text(field, empty)
+	if !ok {
 		return organization.Setting[string]{}, false
 	}
-	if field.node.Kind != yaml.ScalarNode || field.node.Tag != "!!str" || !empty && strings.TrimSpace(field.node.Value) == "" {
-		d.issue(model.Failed, "execution.string", field, "Expected a literal string (nonempty unless explicitly allowed).")
-		return organization.Setting[string]{}, false
-	}
-	return organization.Setting[string]{Value: field.node.Value, Source: d.provenance(field)}, true
+	return organization.Setting[string]{Value: value, Source: d.provenance(field)}, true
 }
 
 func (d *executionDecoder) integer(field executionField) (organization.Setting[int64], bool) {
