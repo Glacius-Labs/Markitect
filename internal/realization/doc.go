@@ -33,5 +33,5 @@
 // Candidate records retain closed bounded immutable historical subjects. Decode
 // reuses the same capture/accounting/census core without reconstructing compiler
 // success. A record hash binds bytes; acquisition and live applicability remain
-// external obligations. The initial codec deliberately supports empty claims only.
+// external obligations. A record carries the path claims its new files used.
 package realization

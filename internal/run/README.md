@@ -257,14 +257,14 @@ S4 check failed, is failed and returns its task to the state before the step
 unaccepted work.
 
 Reviews follow T7 and T8. A pass must resolve every open blocking finding of
-its purpose; it is withheld while another open blocking issue covers the task
-(I3) or while a producer the candidate used delivered again after the
+its purpose; it is withheld while another open blocking issue covers the task,
+for an integration also one of a descendant (I3), or while a producer the candidate used delivered again after the
 candidate's step (D4). Changes requested count one rejection per purpose; at
 the bound rejection limit the task becomes incomplete. A needs-decision verdict
 blocks the task on an owner question, and a failed assessment starts a fresh
 review. An integration review may address a finding to a descendant that owns
-the affected artifacts (D5); rejecting with such a blocking finding returns a
-done descendant to work, blocks its ancestors below the reviewed Manager on
+the affected artifacts (D5), with changes requested; such a blocking finding
+returns the done descendant to work, blocks its ancestors below the reviewed Manager on
 their children, and the reviewed Manager integrates again once they are done
 (T11). Accepted deliveries advance the aggregate version when they carry
 changes. Blocked tasks wake when what they named arrives (T10), and the root's
@@ -300,7 +300,8 @@ A question becomes an issue addressed to its addressee; a reply from that
 addressee resolves it and wakes an asker waiting for it (I2, T10). A Manager
 that cannot otherwise act, because it is done, blocked or explored, answers in
 a read-only reply step and keeps its state (T10, T11). Each open question
-admits one reply step, oldest first; a reply step the Host could not finish
+admits one reply step: a reply step takes the question it answers, or the
+oldest one when it sends no reply; a reply step the Host could not finish
 drops its reply and is admitted again. A question to the owner
 travels up to the root; when nothing else is admissible the run waits for the
 owner (M4, W1). `AnswerCommand` records the owner's answer: it wakes the asker,

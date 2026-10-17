@@ -290,3 +290,31 @@ func TestFailureRetainsBoundedEvidenceAndLatches(t *testing.T) {
 		t.Fatal("large fragment not bounded before retention")
 	}
 }
+
+func TestRateLimitEventRetainsKnownInformationalEnvelopeAndFrameBound(t *testing.T) {
+	raw := []byte(fixtureRateLimit + "\n")
+	messages, err := newTestCodec(t, len(raw)).Feed(raw)
+	if err != nil || len(messages) != 1 || messages[0].Kind() != RateLimitEventMessage || !bytes.Equal(messages[0].Raw(), raw) || messages[0].Digest() != sha256.Sum256(raw) {
+		t.Fatalf("informational observation lost raw identity: %+v %v", messages, err)
+	}
+	if _, err := messages[0].Result(); !errors.Is(err, ErrUnsupported) {
+		t.Fatal("rate event became an outcome", err)
+	}
+	if _, err := newTestCodec(t, len(raw)-1).Feed(raw); !errors.Is(err, ErrLimit) {
+		t.Fatal("rate event escaped frame bound", err)
+	}
+	for _, mutation := range []struct{ from, to string }{
+		{`"rate_limit_info":{"status":"allowed","future":{"visible":true}}`, `"rate_limit_info":null`},
+		{`"rate_limit_info":{"status":"allowed","future":{"visible":true}}`, `"rate_limit_info":[]`},
+		{`"uuid":"` + fixtureUUID + `"`, `"uuid":""`},
+		{`"session_id":"` + fixtureSession + `"`, `"session_id":1`},
+		{`,"uuid":"` + fixtureUUID + `"`, ""},
+		{`"rate_limit_event",`, `"rate_limit_event","extra":true,`},
+	} {
+		raw := strings.Replace(fixtureRateLimit, mutation.from, mutation.to, 1)
+		messages, err := newTestCodec(t, maxLineBytes).Feed([]byte(raw + "\n"))
+		if !errors.Is(err, ErrProtocol) || len(messages) != 1 || messages[0].Kind() != RejectedMessage {
+			t.Fatalf("invalid rate envelope accepted: %s %v", raw, err)
+		}
+	}
+}
