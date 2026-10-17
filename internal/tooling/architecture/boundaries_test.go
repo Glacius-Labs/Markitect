@@ -52,6 +52,7 @@ func TestConcreteResponsibilityBoundaries(t *testing.T) {
 		{"internal/run", "internal/realization", true},
 		{"internal/run", "internal/apply", false},
 		{"internal/run", "internal/adapters/gitrepo", false},
+		{"internal/run", "internal/adapters/claudecode", false},
 		{"internal/model", "internal/run", false},
 		{"internal/apply", "internal/organization", true},
 		{"internal/apply", "internal/run", true},
@@ -65,11 +66,14 @@ func TestConcreteResponsibilityBoundaries(t *testing.T) {
 		{"internal/adapters/documents", "internal/tooling/guardedwrite", true},
 		{"internal/adapters/documents", "internal/tooling/source", false},
 		{"internal/adapters/checks", "internal/adapters/codexappserver", false},
-		// The Claude wire codec has no session, runtime, sibling or tooling edges.
-		{"internal/adapters/claudecode", "internal/run", false},
-		{"internal/adapters/claudecode", "internal/adapters/container", false},
-		{"internal/adapters/claudecode", "internal/agentd/frame", false},
+		// Claude uses the Run session port and the frame DTOs exposed by the
+		// container API; agentd execution and other adapters remain separate.
+		{"internal/adapters/claudecode", "internal/run", true},
+		{"internal/adapters/claudecode", "internal/adapters/container", true},
+		{"internal/adapters/claudecode", "internal/agentd/frame", true},
+		{"internal/adapters/claudecode", "internal/agentd", false},
 		{"internal/adapters/claudecode", "internal/adapters/codexappserver", false},
+		{"internal/adapters/claudecode", "internal/adapters/gitrepo", false},
 		{"internal/adapters/claudecode", "internal/tooling/source", false},
 		// Codex uses the Run session port and the frame DTOs exposed by the
 		// container API; agentd execution and other adapters remain separate.
