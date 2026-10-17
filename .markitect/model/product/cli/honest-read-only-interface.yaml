@@ -3,5 +3,5 @@ imports:
     as: Vocab
 id: honest-read-only-interface
 kind: Vocab.Rule
-body: "Expose check and context over actual PreparationService reports, with structural preparation as the default requested stage and explicitly selected Host metadata as an additional stage. Preserve actual statuses, sources and inclusion reasons. The apply command returns unavailable before acquisition or effects until execution exists. Usage, known failure and incomplete work have distinct exit statuses."
+body: "Expose check and context over actual PreparationService reports, with structural preparation as the default requested stage and explicitly selected Orchestrator metadata as an additional stage. Preserve actual statuses, sources and inclusion reasons. The apply command returns unavailable before acquisition or effects until execution exists. Usage, known failure and incomplete work have distinct exit statuses."
 spec: {}

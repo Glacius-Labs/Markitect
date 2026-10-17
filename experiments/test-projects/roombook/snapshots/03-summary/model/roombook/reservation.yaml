@@ -1,0 +1,15 @@
+imports:
+  - package: software
+    as: Software
+id: reservation
+kind: Software.Concept
+body: |-
+  A [[system]] reservation has an integer id, room, start, end, title and status.
+  [[book]] creates active records. Status is active or canceled; canceled history
+  remains readable through [[list]] and does not block [[availability]]. IDs start
+  at 1, increase for subsequent successful creations and are never reused,
+  including after cancellation and across processes using the same database.
+  The normalized room/title and exact UTC-minute start/end values follow [[inputs]].
+  End is later than start. The interval is half-open. No live reservations are
+  pre-created by this Definition.
+spec: {}

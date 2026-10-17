@@ -6,8 +6,10 @@ import (
 	"encoding/json"
 	"errors"
 	"io"
+	"math"
 	"regexp"
 	"strings"
+	"unicode/utf8"
 
 	"github.com/Glacius-Labs/Markitect/internal/adapters/container"
 	"github.com/Glacius-Labs/Markitect/internal/agentd/frame"
@@ -30,6 +32,33 @@ type SessionProfile struct {
 	Pids         int      `json:"pids"`
 	TmpBytes     int64    `json:"tmpBytes"`
 	Network      string   `json:"network"`
+}
+
+// NewSessionProfile validates explicit execution settings and records their
+// closed v1 JSON bytes. Admission still checks the plan, role and tool catalogue.
+func NewSessionProfile(profile SessionProfile) (run.Payload, error) {
+	if err := validateSessionProfile(profile); err != nil {
+		return run.Payload{}, err
+	}
+	data, err := json.Marshal(profile)
+	if err != nil {
+		return run.Payload{}, ErrSession
+	}
+	return run.NewPayload("application/vnd.markitect.claude-session-profile+json", "utf-8", data)
+}
+
+func validateSessionProfile(profile SessionProfile) error {
+	if profile.Version != 1 || !utf8.ValidString(profile.Model) || strings.TrimSpace(profile.Model) == "" || profile.Effort != "high" || !utf8.ValidString(profile.SystemPrompt) || strings.TrimSpace(profile.SystemPrompt) == "" || profile.BuiltinTools == nil || !volumeName.MatchString(profile.Store) || profile.CPUs <= 0 || math.IsNaN(profile.CPUs) || math.IsInf(profile.CPUs, 0) || profile.MemoryBytes <= 0 || profile.Pids <= 0 || profile.TmpBytes <= 0 || profile.Network == "host" || profile.Network != "" && !volumeName.MatchString(profile.Network) {
+		return ErrSession
+	}
+	builtin := map[string]bool{}
+	for _, name := range profile.BuiltinTools {
+		if (name != "Read" && name != "Write") || builtin[name] {
+			return ErrSession
+		}
+		builtin[name] = true
+	}
+	return nil
 }
 
 // RuntimeCredential is resolved by the Host from exactly CredentialRef.
@@ -73,7 +102,7 @@ func readSessionProfile(a run.SessionAdmission) (SessionProfile, []frame.ToolSpe
 		return SessionProfile{}, nil, ErrSession
 	}
 	var profile SessionProfile
-	if strictValue(a.Profile.Bytes(), &profile) != nil || profile.Version != 1 || strings.TrimSpace(profile.Model) == "" || profile.Effort != "high" || !volumeName.MatchString(profile.Store) || profile.CPUs <= 0 || profile.MemoryBytes <= 0 || profile.Pids <= 0 || profile.TmpBytes <= 0 || profile.Network == "host" || profile.Network != "" && !volumeName.MatchString(profile.Network) {
+	if strictValue(a.Profile.Bytes(), &profile) != nil || validateSessionProfile(profile) != nil {
 		return SessionProfile{}, nil, ErrSession
 	}
 	var catalogue struct {
@@ -83,15 +112,13 @@ func readSessionProfile(a run.SessionAdmission) (SessionProfile, []frame.ToolSpe
 	if strictValue(a.Tools.Bytes(), &catalogue) != nil || catalogue.Version != 1 || catalogue.Tools == nil {
 		return SessionProfile{}, nil, ErrSession
 	}
-	if a.Profile.Ref().MediaType != "application/vnd.markitect.claude-session-profile+json" || a.Profile.Ref().Encoding != "utf-8" || a.Tools.Ref().MediaType != "application/vnd.markitect.tools+json" || a.Tools.Ref().Encoding != "utf-8" || strings.TrimSpace(profile.SystemPrompt) == "" || profile.BuiltinTools == nil {
+	if a.Profile.Ref().MediaType != "application/vnd.markitect.claude-session-profile+json" || a.Profile.Ref().Encoding != "utf-8" || a.Tools.Ref().MediaType != "application/vnd.markitect.tools+json" || a.Tools.Ref().Encoding != "utf-8" {
 		return SessionProfile{}, nil, ErrSession
 	}
-	builtin := map[string]bool{}
 	for _, name := range profile.BuiltinTools {
-		if (name != "Read" && name != "Write") || builtin[name] || p.ReadOnly && name != "Read" {
+		if p.ReadOnly && name != "Read" {
 			return SessionProfile{}, nil, ErrSession
 		}
-		builtin[name] = true
 	}
 	seen := map[string]bool{}
 	for _, t := range catalogue.Tools {

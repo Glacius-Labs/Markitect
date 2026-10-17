@@ -8,6 +8,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"math"
 	"reflect"
 	"strings"
 	"sync"
@@ -239,8 +240,10 @@ func payloadForSession(t *testing.T, media string, data []byte) run.Payload {
 }
 func sessionAdmissions(t *testing.T) (run.SessionAdmission, run.StepAdmission) {
 	t.Helper()
-	profile, _ := json.Marshal(SessionProfile{Version: 1, Model: "admitted-model", Effort: "high", SystemPrompt: "Use the exact Host instruction.", BuiltinTools: []string{"Read", "Write"}, Store: "store", CPUs: 1, MemoryBytes: 1 << 30, Pids: 128, TmpBytes: 1 << 20})
-	p := payloadForSession(t, "application/vnd.markitect.claude-session-profile+json", profile)
+	p, err := NewSessionProfile(SessionProfile{Version: 1, Model: "admitted-model", Effort: "high", SystemPrompt: "Use the exact Host instruction.", BuiltinTools: []string{"Read", "Write"}, Store: "store", CPUs: 1, MemoryBytes: 1 << 30, Pids: 128, TmpBytes: 1 << 20})
+	if err != nil {
+		t.Fatal(err)
+	}
 	tools := payloadForSession(t, "application/vnd.markitect.tools+json", []byte(`{"version":1,"tools":[{"name":"submit","description":"Submit to Host","inputSchema":{"type":"object"}}]}`))
 	plan := run.SessionPlan{ID: "session", Role: "manager", Workspace: "workspace", ProviderHome: "provider-home", ImageID: "sha256:" + strings.Repeat("a", 64), CredentialRef: "exact-credential", MaxWireBytes: 1 << 20, Profile: p.Ref(), Tools: tools.Ref()}
 	plan.Candidate[0] = 1
@@ -253,6 +256,109 @@ func sessionAdmissions(t *testing.T) (run.SessionAdmission, run.StepAdmission) {
 	b := run.StepAdmission{Session: plan, Plan: run.StepPlan{Session: plan.ID, ID: "step", SessionBinding: plan.Binding(), Input: input.Ref(), OutputContract: contract.Ref()}, Input: input, OutputContract: contract, Receipt: receipt(), Invocation: "step"}
 	return a, b
 }
+
+func TestClaudeSessionProfileFactoryRoundTrip(t *testing.T) {
+	for _, tc := range []struct {
+		name, role string
+		readOnly   bool
+		tools      []string
+	}{
+		{"read-only-manager", "manager", true, []string{"Read"}},
+		{"fresh-reviewer", "reviewer", true, []string{"Read"}},
+		{"writing-manager", "manager", false, []string{"Read", "Write"}},
+		{"explicit-no-builtins", "manager", true, []string{}},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			a, _ := sessionAdmissions(t)
+			var profile SessionProfile
+			if err := json.Unmarshal(a.Profile.Bytes(), &profile); err != nil {
+				t.Fatal(err)
+			}
+			profile.BuiltinTools = tc.tools
+			profile.Network = "recorded-network"
+			payload, err := NewSessionProfile(profile)
+			if err != nil {
+				t.Fatal(err)
+			}
+			want, err := json.Marshal(profile)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if !payload.Valid() || payload.Ref().MediaType != "application/vnd.markitect.claude-session-profile+json" || payload.Ref().Encoding != "utf-8" || !bytes.Equal(payload.Bytes(), want) {
+				t.Fatal("factory changed explicit profile bytes or interpretation")
+			}
+			a.Profile, a.Plan.Profile = payload, payload.Ref()
+			a.Plan.Role, a.Plan.ReadOnly = tc.role, tc.readOnly
+			got, tools, err := readSessionProfile(a)
+			if err != nil || !reflect.DeepEqual(got, profile) || len(tools) != 1 || tools[0].Name != "submit" {
+				t.Fatalf("profile did not round-trip: %+v %v", got, err)
+			}
+		})
+	}
+}
+
+func TestClaudeSessionProfileFactoryAndReaderRejectInvalidSettings(t *testing.T) {
+	for _, tc := range []struct {
+		name   string
+		mutate func(*SessionProfile)
+	}{
+		{"version", func(p *SessionProfile) { p.Version = 0 }},
+		{"model", func(p *SessionProfile) { p.Model = " " }},
+		{"model-utf8", func(p *SessionProfile) { p.Model = string([]byte{0xff}) }},
+		{"effort", func(p *SessionProfile) { p.Effort = "medium" }},
+		{"system-prompt", func(p *SessionProfile) { p.SystemPrompt = "\t" }},
+		{"system-prompt-utf8", func(p *SessionProfile) { p.SystemPrompt = string([]byte{0xff}) }},
+		{"absent-builtins", func(p *SessionProfile) { p.BuiltinTools = nil }},
+		{"unknown-builtin", func(p *SessionProfile) { p.BuiltinTools = []string{"Bash"} }},
+		{"duplicate-builtin", func(p *SessionProfile) { p.BuiltinTools = []string{"Read", "Read"} }},
+		{"store", func(p *SessionProfile) { p.Store = "" }},
+		{"cpus", func(p *SessionProfile) { p.CPUs = 0 }},
+		{"cpus-nan", func(p *SessionProfile) { p.CPUs = math.NaN() }},
+		{"cpus-infinity", func(p *SessionProfile) { p.CPUs = math.Inf(1) }},
+		{"memory", func(p *SessionProfile) { p.MemoryBytes = 0 }},
+		{"pids", func(p *SessionProfile) { p.Pids = 0 }},
+		{"tmp", func(p *SessionProfile) { p.TmpBytes = 0 }},
+		{"host-network", func(p *SessionProfile) { p.Network = "host" }},
+		{"network-name", func(p *SessionProfile) { p.Network = "bad/network" }},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			a, _ := sessionAdmissions(t)
+			var profile SessionProfile
+			if err := json.Unmarshal(a.Profile.Bytes(), &profile); err != nil {
+				t.Fatal(err)
+			}
+			tc.mutate(&profile)
+			payload, err := NewSessionProfile(profile)
+			if !errors.Is(err, ErrSession) || payload.Valid() {
+				t.Fatalf("invalid settings received a payload: %+v %v", payload.Ref(), err)
+			}
+			// Go's encoder replaces invalid UTF-8 and cannot encode nonfinite
+			// numbers. Only exact encodable settings can reach this reader check.
+			if strings.HasSuffix(tc.name, "-utf8") || tc.name == "cpus-nan" || tc.name == "cpus-infinity" {
+				return
+			}
+			raw, err := json.Marshal(profile)
+			if err != nil {
+				t.Fatal(err)
+			}
+			a.Profile = payloadForSession(t, "application/vnd.markitect.claude-session-profile+json", raw)
+			a.Plan.Profile = a.Profile.Ref()
+			if _, _, err := readSessionProfile(a); !errors.Is(err, ErrSession) {
+				t.Fatal("admission accepted invalid settings")
+			}
+		})
+	}
+}
+
+func TestClaudeSessionProfileFactoryDoesNotAuthorizeWritingInReadOnlyPlan(t *testing.T) {
+	a, _ := sessionAdmissions(t)
+	// The factory admits explicit Write globally; the plan still refuses it.
+	a.Plan.ReadOnly = true
+	if _, _, err := readSessionProfile(a); !errors.Is(err, ErrSession) {
+		t.Fatal("factory bypassed the read-only plan")
+	}
+}
+
 func sessionsForTest(t *testing.T, f *fakeRuntime) *Sessions {
 	t.Helper()
 	s, err := NewSessionsWithRuntime(func(_ context.Context, spec container.ContainerSpec) (RuntimeSession, error) {

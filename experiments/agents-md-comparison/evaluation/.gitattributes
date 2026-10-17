@@ -1,3 +1,0 @@
-# Preserve the exact frozen upstream-derived input bytes, including CRLF.
-LICENSE whitespace=cr-at-eol
-Original-TestBase.cs.txt whitespace=cr-at-eol

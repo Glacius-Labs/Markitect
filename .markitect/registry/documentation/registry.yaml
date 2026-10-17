@@ -1,5 +1,49 @@
 apiVersion: markitect.registry/v1
 artifacts:
+  - path: "docs/strategy/explainer.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Explains the intended product workflow and present stage in a concise marketing draft.
+  - path: "docs/strategy/short-posts.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Supplies three English publication drafts with distinct openings and explicit current-stage boundaries.
+  - path: "docs/strategy/assets/model-realization.svg"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Illustrates the planned model-first relationship and organized realization for the explainer and future material.
+  - path: "docs/history/distribution-retirement-20261017.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Records owner-authorized retirement, preserved evidence and immutable source pointers.
+  - path: "docs/history/retired-releases-20261017.json"
+    form: config
+    realizes: [documentation/current-guidance]
+    why: Preserves original release and asset identities, tag objects and verified GitHub attestation observations before download removal.
+  - path: "assets/markitect-wordmark-light.svg"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Provides the original Markitect wordmark for the README in light themes.
+  - path: "assets/markitect-wordmark-dark.svg"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Provides the original Markitect wordmark for the README in dark themes.
+  - path: "docs/concepts/sources/attention-and-comparison-20261017.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Records the owner clarification of human attention and the equivalent-documentation comparison as an English translation.
+  - path: "docs/concepts/sources/product-goals-clarification-20261017.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Preserves the owner clarification of product goals and trustworthy model-first realization.
+  - path: "docs/concepts/sources/conceptual-influences-20261017.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Preserves the owner account of conceptual influences and naming origin.
+  - path: "docs/strategy/marketing-plan.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Prepares product messaging, pitches and marketing recommendations with explicit evidence boundaries.
   - path: "docs/concepts/sources/human-attention-and-baseline-20261017.md"
     form: doc
     realizes: [documentation/current-guidance]
@@ -52,15 +96,11 @@ artifacts:
     form: doc
     realizes: [documentation/current-guidance]
     why: Documents the stated responsibility or preserves its historical evidence.
-  - path: "docs/authoring-assessment.md"
+  - path: "docs/history/assessments/authoring-assessment-20260930.md"
     form: doc
     realizes: [documentation/current-guidance]
     why: Documents the stated responsibility or preserves its historical evidence.
-  - path: "docs/authoring-pilot.md"
-    form: doc
-    realizes: [documentation/current-guidance]
-    why: Documents the stated responsibility or preserves its historical evidence.
-  - path: "docs/canonical-engineering-plan.md"
+  - path: "docs/history/assessments/authoring-pilot-20261001.md"
     form: doc
     realizes: [documentation/current-guidance]
     why: Documents the stated responsibility or preserves its historical evidence.
@@ -200,14 +240,6 @@ artifacts:
     form: doc
     realizes: [documentation/current-guidance]
     why: Preserves the owner-authored language, Apply or concept contract as a reference.
-  - path: "docs/consistency.md"
-    form: doc
-    realizes: [documentation/current-guidance]
-    why: Documents the stated responsibility or preserves its historical evidence.
-  - path: "docs/content-packages.md"
-    form: doc
-    realizes: [documentation/current-guidance]
-    why: Documents the stated responsibility or preserves its historical evidence.
   - path: "docs/design/README.md"
     form: doc
     realizes: [documentation/current-guidance]
@@ -1276,19 +1308,15 @@ artifacts:
     form: doc
     realizes: [documentation/current-guidance]
     why: Documents the stated responsibility or preserves its historical evidence.
-  - path: "docs/development/adoption-boundaries.md"
-    form: doc
-    realizes: [documentation/current-guidance]
-    why: Documents the stated responsibility or preserves its historical evidence.
   - path: "docs/development/code-map.md"
     form: doc
     realizes: [documentation/current-guidance]
     why: Documents the stated responsibility or preserves its historical evidence.
-  - path: "docs/development/coordinator-handoff-20261017.md"
+  - path: "docs/history/handoffs/coordinator-handoff-20261017.md"
     form: doc
     realizes: [documentation/current-guidance]
     why: Preserves the explicitly requested Coordinator transition, fixed delivery sources and next scoped tasks.
-  - path: "docs/development/coordinator-handoff-20261017-1505.md"
+  - path: "docs/history/handoffs/coordinator-handoff-20261017-1505.md"
     form: doc
     realizes: [documentation/current-guidance]
     why: Preserves the owner-requested five-hour Coordinator checkpoint, fixed deliveries and evidence recovery limits.
@@ -1304,23 +1332,11 @@ artifacts:
     form: doc
     realizes: [documentation/current-guidance]
     why: Documents the stated responsibility or preserves its historical evidence.
-  - path: "docs/development/session-handoff.md"
+  - path: "docs/history/handoffs/session-handoff.md"
     form: doc
     realizes: [documentation/current-guidance]
     why: Documents the stated responsibility or preserves its historical evidence.
   - path: "docs/development/shared-contracts.md"
-    form: doc
-    realizes: [documentation/current-guidance]
-    why: Documents the stated responsibility or preserves its historical evidence.
-  - path: "docs/documentation-routers.md"
-    form: doc
-    realizes: [documentation/current-guidance]
-    why: Documents the stated responsibility or preserves its historical evidence.
-  - path: "docs/documentation.md"
-    form: doc
-    realizes: [documentation/current-guidance]
-    why: Documents the stated responsibility or preserves its historical evidence.
-  - path: "docs/engineering-constitution.md"
     form: doc
     realizes: [documentation/current-guidance]
     why: Documents the stated responsibility or preserves its historical evidence.
@@ -1356,15 +1372,11 @@ artifacts:
     form: doc
     realizes: [documentation/current-guidance]
     why: Documents the stated responsibility or preserves its historical evidence.
-  - path: "docs/markitect-first.md"
-    form: doc
-    realizes: [documentation/current-guidance]
-    why: Documents the stated responsibility or preserves its historical evidence.
   - path: "docs/markitect/project.md"
     form: doc
     realizes: [documentation/current-guidance]
     why: Documents the stated responsibility or preserves its historical evidence.
-  - path: "docs/mcp-evaluation.md"
+  - path: "docs/history/assessments/mcp-evaluation-20261001.md"
     form: doc
     realizes: [documentation/current-guidance]
     why: Documents the stated responsibility or preserves its historical evidence.
@@ -1372,11 +1384,7 @@ artifacts:
     form: doc
     realizes: [documentation/current-guidance]
     why: Documents the stated responsibility or preserves its historical evidence.
-  - path: "docs/onboarding.md"
-    form: doc
-    realizes: [documentation/current-guidance]
-    why: Documents the stated responsibility or preserves its historical evidence.
-  - path: "docs/operating-methodology.md"
+  - path: "docs/history/assessments/windows-onboarding.md"
     form: doc
     realizes: [documentation/current-guidance]
     why: Documents the stated responsibility or preserves its historical evidence.
@@ -1384,7 +1392,7 @@ artifacts:
     form: doc
     realizes: [documentation/current-guidance]
     why: Documents the stated responsibility or preserves its historical evidence.
-  - path: "docs/production-assessment.md"
+  - path: "docs/history/distribution/production-assessment.md"
     form: doc
     realizes: [documentation/current-guidance]
     why: Documents the stated responsibility or preserves its historical evidence.
@@ -1396,19 +1404,11 @@ artifacts:
     form: doc
     realizes: [documentation/current-guidance]
     why: Documents the stated responsibility or preserves its historical evidence.
-  - path: "docs/projections.md"
-    form: doc
-    realizes: [documentation/current-guidance]
-    why: Documents the stated responsibility or preserves its historical evidence.
   - path: "docs/provider-adapters.md"
     form: doc
     realizes: [documentation/current-guidance]
     why: Documents the stated responsibility or preserves its historical evidence.
-  - path: "docs/refinement.md"
-    form: doc
-    realizes: [documentation/current-guidance]
-    why: Documents the stated responsibility or preserves its historical evidence.
-  - path: "docs/release-assessment.md"
+  - path: "docs/history/distribution/source-release-assessment-20260930.md"
     form: doc
     realizes: [documentation/current-guidance]
     why: Documents the stated responsibility or preserves its historical evidence.
@@ -1560,10 +1560,6 @@ artifacts:
     form: doc
     realizes: [documentation/current-guidance]
     why: Documents the stated responsibility or preserves its historical evidence.
-  - path: "docs/usage.md"
-    form: doc
-    realizes: [documentation/current-guidance]
-    why: Documents the stated responsibility or preserves its historical evidence.
   - path: "docs/validation/README.md"
     form: doc
     realizes: [documentation/current-guidance]
@@ -1712,51 +1708,59 @@ artifacts:
     form: doc
     realizes: [documentation/current-guidance]
     why: Documents the stated responsibility or preserves its historical evidence.
-  - path: "docs/winget.md"
+  - path: "docs/history/distribution/winget.md"
     form: doc
     realizes: [documentation/current-guidance]
     why: Documents the stated responsibility or preserves its historical evidence.
-  - path: "docs/work-items/README.md"
+  - path: "docs/history/surveys/README.md"
     form: doc
     realizes: [documentation/current-guidance]
     why: Documents the stated responsibility or preserves its historical evidence.
+  - path: "docs/history/surveys/agent-files-20261010.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Documents the stated responsibility or preserves its historical evidence.
+  - path: "docs/history/surveys/branches-and-worktrees-20261010.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Documents the stated responsibility or preserves its historical evidence.
+  - path: "docs/history/surveys/case-playground-20261010.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Documents the stated responsibility or preserves its historical evidence.
+  - path: "docs/history/surveys/cli-mcp-app-server-20261010.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Documents the stated responsibility or preserves its historical evidence.
+  - path: "docs/history/surveys/code-architecture-20261010.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Documents the stated responsibility or preserves its historical evidence.
+  - path: "docs/history/surveys/earlier-plans-20261011.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Documents the stated responsibility or preserves its historical evidence.
+  - path: "docs/history/surveys/knowledge-graph-and-government-20261010.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Documents the stated responsibility or preserves its historical evidence.
+  - path: "docs/history/surveys/product-readiness-lessons-20261010.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Documents the stated responsibility or preserves its historical evidence.
+  - path: "docs/history/surveys/tests-and-ci-20261010.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Documents the stated responsibility or preserves its historical evidence.
+  - path: "docs/development/session-handoff.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Preserves a historical evidence route referenced by the unchanged Apply specification.
   - path: "docs/work-items/surveys/README.md"
     form: doc
     realizes: [documentation/current-guidance]
-    why: Documents the stated responsibility or preserves its historical evidence.
-  - path: "docs/work-items/surveys/agent-files-20261010.md"
+    why: Preserves a historical evidence route referenced by the unchanged Apply specification.
+  - path: "docs/concepts/sources/orchestrator-terminology-20261017.md"
     form: doc
     realizes: [documentation/current-guidance]
-    why: Documents the stated responsibility or preserves its historical evidence.
-  - path: "docs/work-items/surveys/branches-and-worktrees-20261010.md"
-    form: doc
-    realizes: [documentation/current-guidance]
-    why: Documents the stated responsibility or preserves its historical evidence.
-  - path: "docs/work-items/surveys/case-playground-20261010.md"
-    form: doc
-    realizes: [documentation/current-guidance]
-    why: Documents the stated responsibility or preserves its historical evidence.
-  - path: "docs/work-items/surveys/cli-mcp-app-server-20261010.md"
-    form: doc
-    realizes: [documentation/current-guidance]
-    why: Documents the stated responsibility or preserves its historical evidence.
-  - path: "docs/work-items/surveys/code-architecture-20261010.md"
-    form: doc
-    realizes: [documentation/current-guidance]
-    why: Documents the stated responsibility or preserves its historical evidence.
-  - path: "docs/work-items/surveys/earlier-plans-20261011.md"
-    form: doc
-    realizes: [documentation/current-guidance]
-    why: Documents the stated responsibility or preserves its historical evidence.
-  - path: "docs/work-items/surveys/knowledge-graph-and-government-20261010.md"
-    form: doc
-    realizes: [documentation/current-guidance]
-    why: Documents the stated responsibility or preserves its historical evidence.
-  - path: "docs/work-items/surveys/product-readiness-lessons-20261010.md"
-    form: doc
-    realizes: [documentation/current-guidance]
-    why: Documents the stated responsibility or preserves its historical evidence.
-  - path: "docs/work-items/surveys/tests-and-ci-20261010.md"
-    form: doc
-    realizes: [documentation/current-guidance]
-    why: Documents the stated responsibility or preserves its historical evidence.
+    why: Preserves the owner-selected Orchestrator name and the documentation-only scope.

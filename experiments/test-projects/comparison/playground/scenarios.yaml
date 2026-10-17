@@ -1,0 +1,775 @@
+{
+  "formatVersion": 1,
+  "encoding": "JSON subset of YAML 1.2",
+  "operatorOnly": true,
+  "sourceSets": {
+    "library-initial": {
+      "files": [
+        {
+          "source": "experiments/test-projects/library-r2/project/.markitect/dependencies/core/model.yaml",
+          "target": ".markitect/dependencies/core/model.yaml",
+          "sha256": "998be5061baadb3de9bec2a988a5fae7b449236f296e70a2be153b521fc8049a",
+          "revision": "dc4910b9810c5aaa4deecf1ff74734ee97badc13",
+          "arms": [
+            "markitect"
+          ]
+        },
+        {
+          "source": "experiments/test-projects/library-r2/project/.markitect/dependencies/core/model/markitect/core/kind.yaml",
+          "target": ".markitect/dependencies/core/model/markitect/core/kind.yaml",
+          "sha256": "b8694323468d4d8c90e64740b39a10045fd21ae759066c4d99c9bc1d82003ebe",
+          "revision": "dc4910b9810c5aaa4deecf1ff74734ee97badc13",
+          "arms": [
+            "markitect"
+          ]
+        },
+        {
+          "source": "experiments/test-projects/library-r2/project/.markitect/dependencies/core/model/markitect/core/max-count.yaml",
+          "target": ".markitect/dependencies/core/model/markitect/core/max-count.yaml",
+          "sha256": "206aa732af928dafc01b6949eca98db1fb5f9e3a001046d7adf889a1a1303789",
+          "revision": "dc4910b9810c5aaa4deecf1ff74734ee97badc13",
+          "arms": [
+            "markitect"
+          ]
+        },
+        {
+          "source": "experiments/test-projects/library-r2/project/.markitect/dependencies/core/model/markitect/core/min-count.yaml",
+          "target": ".markitect/dependencies/core/model/markitect/core/min-count.yaml",
+          "sha256": "d2f2c064071c75f3f4b41cef16bd94cc7a3a7ef036f9eb7e8226559425a38744",
+          "revision": "dc4910b9810c5aaa4deecf1ff74734ee97badc13",
+          "arms": [
+            "markitect"
+          ]
+        },
+        {
+          "source": "experiments/test-projects/library-r2/project/.markitect/dependencies/core/model/markitect/core/name.yaml",
+          "target": ".markitect/dependencies/core/model/markitect/core/name.yaml",
+          "sha256": "ec8abd72a1f308f00f905dacf2d8959054961f55e84b6c894aa3214a5da30d10",
+          "revision": "dc4910b9810c5aaa4deecf1ff74734ee97badc13",
+          "arms": [
+            "markitect"
+          ]
+        },
+        {
+          "source": "experiments/test-projects/library-r2/project/.markitect/dependencies/core/model/markitect/core/properties.yaml",
+          "target": ".markitect/dependencies/core/model/markitect/core/properties.yaml",
+          "sha256": "e3f430b729a355704ba208bcfb95bd206b66e91307f43a6af1af263f3c9879b8",
+          "revision": "dc4910b9810c5aaa4deecf1ff74734ee97badc13",
+          "arms": [
+            "markitect"
+          ]
+        },
+        {
+          "source": "experiments/test-projects/library-r2/project/.markitect/dependencies/core/model/markitect/core/property.yaml",
+          "target": ".markitect/dependencies/core/model/markitect/core/property.yaml",
+          "sha256": "be6149acf2d5ebcca9e18bad13932ca3be9bb6d838ac5a142dd83d7bc6143590",
+          "revision": "dc4910b9810c5aaa4deecf1ff74734ee97badc13",
+          "arms": [
+            "markitect"
+          ]
+        },
+        {
+          "source": "experiments/test-projects/library-r2/project/.markitect/dependencies/core/model/markitect/core/target.yaml",
+          "target": ".markitect/dependencies/core/model/markitect/core/target.yaml",
+          "sha256": "06dc15e8673124553bd2b71a73e1b7bb75a237d2b0a01e690da3230a467a0a63",
+          "revision": "dc4910b9810c5aaa4deecf1ff74734ee97badc13",
+          "arms": [
+            "markitect"
+          ]
+        },
+        {
+          "source": "experiments/test-projects/library-r2/project/.markitect/dependencies/core/model/markitect/core/type.yaml",
+          "target": ".markitect/dependencies/core/model/markitect/core/type.yaml",
+          "sha256": "acbcb268f34a4aedfcde704af97648dbda499c6a8d22522c3e4b93f2802d9579",
+          "revision": "dc4910b9810c5aaa4deecf1ff74734ee97badc13",
+          "arms": [
+            "markitect"
+          ]
+        },
+        {
+          "source": "experiments/test-projects/library-r2/project/.markitect/dependencies/core/model/markitect/core/values.yaml",
+          "target": ".markitect/dependencies/core/model/markitect/core/values.yaml",
+          "sha256": "e69f9a0d9720055274bf0854072e2cce495e94630359599bd73d4f5a2589fffd",
+          "revision": "dc4910b9810c5aaa4deecf1ff74734ee97badc13",
+          "arms": [
+            "markitect"
+          ]
+        },
+        {
+          "source": "experiments/test-projects/library-r2/project/.markitect/dependencies/software/model.yaml",
+          "target": ".markitect/dependencies/software/model.yaml",
+          "sha256": "88aca2d29c354ceeb1d24e402e5124dd7916a279a6cd229a3917e1cdc29f3a2b",
+          "revision": "dc4910b9810c5aaa4deecf1ff74734ee97badc13",
+          "arms": [
+            "markitect"
+          ]
+        },
+        {
+          "source": "experiments/test-projects/library-r2/project/.markitect/dependencies/software/model/software/concept.yaml",
+          "target": ".markitect/dependencies/software/model/software/concept.yaml",
+          "sha256": "ecef70eefceb61c7f34c1c35340b46b89bbd91615d8b0c71152f4709248b7065",
+          "revision": "dc4910b9810c5aaa4deecf1ff74734ee97badc13",
+          "arms": [
+            "markitect"
+          ]
+        },
+        {
+          "source": "experiments/test-projects/library-r2/project/.markitect/dependencies/software/model/software/rule.yaml",
+          "target": ".markitect/dependencies/software/model/software/rule.yaml",
+          "sha256": "38dbdb11d1398174ba509ec445be7d3122e3653206df967b01904a4d24433cbf",
+          "revision": "dc4910b9810c5aaa4deecf1ff74734ee97badc13",
+          "arms": [
+            "markitect"
+          ]
+        },
+        {
+          "source": "experiments/test-projects/library-r2/project/.markitect/dependencies/software/model/software/use-case.yaml",
+          "target": ".markitect/dependencies/software/model/software/use-case.yaml",
+          "sha256": "7c85f07c989483c6a262d9c513e71929c03e04c278f95e8d42623f02079fcbb6",
+          "revision": "dc4910b9810c5aaa4deecf1ff74734ee97badc13",
+          "arms": [
+            "markitect"
+          ]
+        },
+        {
+          "source": "experiments/test-projects/library-r2/project/.markitect/model-lock.yaml",
+          "target": ".markitect/model-lock.yaml",
+          "sha256": "924f3427a89a17703e0c7a402178df1c94221cf39dd362170c7a39f16b375ee5",
+          "revision": "dc4910b9810c5aaa4deecf1ff74734ee97badc13",
+          "arms": [
+            "markitect"
+          ]
+        },
+        {
+          "source": "experiments/test-projects/library-r2/project/.markitect/model.yaml",
+          "target": ".markitect/model.yaml",
+          "sha256": "8fa62934c7a33189255923547bb3d6d7e8377d29cccd51ead78db59581ee12d1",
+          "revision": "dc4910b9810c5aaa4deecf1ff74734ee97badc13",
+          "arms": [
+            "markitect"
+          ]
+        },
+        {
+          "source": "experiments/test-projects/library-r2/project/.markitect/model/catalog/availability.yaml",
+          "target": ".markitect/model/catalog/availability.yaml",
+          "sha256": "f607798cd61b06757edbe28f0036c215a04ec380429062fa7c5f19870a4551cd",
+          "revision": "dc4910b9810c5aaa4deecf1ff74734ee97badc13",
+          "arms": [
+            "markitect"
+          ]
+        },
+        {
+          "source": "experiments/test-projects/library-r2/project/.markitect/model/catalog/copy.yaml",
+          "target": ".markitect/model/catalog/copy.yaml",
+          "sha256": "4cc9b2977c373e62a0cb8c3e2647922787c5781ac8a8a4c622eafcb8f8de2c9f",
+          "revision": "dc4910b9810c5aaa4deecf1ff74734ee97badc13",
+          "arms": [
+            "markitect"
+          ]
+        },
+        {
+          "source": "experiments/test-projects/library-r2/project/.markitect/model/catalog/inspect-copy.yaml",
+          "target": ".markitect/model/catalog/inspect-copy.yaml",
+          "sha256": "61d6e997d219273f8d0cb5ed9fd2311cbfeef19f3ee8401d3cef6c6278148e94",
+          "revision": "dc4910b9810c5aaa4deecf1ff74734ee97badc13",
+          "arms": [
+            "markitect"
+          ]
+        },
+        {
+          "source": "experiments/test-projects/library-r2/project/.markitect/model/catalog/register-copy.yaml",
+          "target": ".markitect/model/catalog/register-copy.yaml",
+          "sha256": "18853c15d22a48c819d537c84014add5cd450ed6b87ac4c305b8cfb9135a736a",
+          "revision": "dc4910b9810c5aaa4deecf1ff74734ee97badc13",
+          "arms": [
+            "markitect"
+          ]
+        },
+        {
+          "source": "experiments/test-projects/library-r2/project/.markitect/model/lending/borrow.yaml",
+          "target": ".markitect/model/lending/borrow.yaml",
+          "sha256": "7fe348aee0bc32f05848c3641c866f41a9b5dcb94cca8b170fb9dacbc6005ce1",
+          "revision": "dc4910b9810c5aaa4deecf1ff74734ee97badc13",
+          "arms": [
+            "markitect"
+          ]
+        },
+        {
+          "source": "experiments/test-projects/library-r2/project/.markitect/model/lending/inspect-loans.yaml",
+          "target": ".markitect/model/lending/inspect-loans.yaml",
+          "sha256": "786e9e7bc60adc3169e3188d3743a557cdb4d5d8d05288678dd2f0341069c279",
+          "revision": "dc4910b9810c5aaa4deecf1ff74734ee97badc13",
+          "arms": [
+            "markitect"
+          ]
+        },
+        {
+          "source": "experiments/test-projects/library-r2/project/.markitect/model/lending/lending-policy.yaml",
+          "target": ".markitect/model/lending/lending-policy.yaml",
+          "sha256": "49658acf774af44d50ecf16d0f340cd72f530e091f4c91a41a4983332c012abf",
+          "revision": "dc4910b9810c5aaa4deecf1ff74734ee97badc13",
+          "arms": [
+            "markitect"
+          ]
+        },
+        {
+          "source": "experiments/test-projects/library-r2/project/.markitect/model/lending/loan-period-days.yaml",
+          "target": ".markitect/model/lending/loan-period-days.yaml",
+          "sha256": "ce544e4365a46297d5ca7148becb26b9e837092945eac22642053685b7f1a1ea",
+          "revision": "dc4910b9810c5aaa4deecf1ff74734ee97badc13",
+          "arms": [
+            "markitect"
+          ]
+        },
+        {
+          "source": "experiments/test-projects/library-r2/project/.markitect/model/lending/loan-policy.yaml",
+          "target": ".markitect/model/lending/loan-policy.yaml",
+          "sha256": "6bb5418a91beeb9d96e31b0fed049da5ec1c7d8e67d10ba1b828714632cbe3f6",
+          "revision": "dc4910b9810c5aaa4deecf1ff74734ee97badc13",
+          "arms": [
+            "markitect"
+          ]
+        },
+        {
+          "source": "experiments/test-projects/library-r2/project/.markitect/model/lending/loan.yaml",
+          "target": ".markitect/model/lending/loan.yaml",
+          "sha256": "fcb7748e5ff5d0d9657bf54ce5f736cc98a8109e1518de2c200c3938a981ea98",
+          "revision": "dc4910b9810c5aaa4deecf1ff74734ee97badc13",
+          "arms": [
+            "markitect"
+          ]
+        },
+        {
+          "source": "experiments/test-projects/library-r2/project/.markitect/model/lending/max-open-loans.yaml",
+          "target": ".markitect/model/lending/max-open-loans.yaml",
+          "sha256": "18fd715adc0ad09bfb92be05020280b79cfb6e71ab185dd245afdbb626dc53e2",
+          "revision": "dc4910b9810c5aaa4deecf1ff74734ee97badc13",
+          "arms": [
+            "markitect"
+          ]
+        },
+        {
+          "source": "experiments/test-projects/library-r2/project/.markitect/model/lending/reminders/assess-overdue.yaml",
+          "target": ".markitect/model/lending/reminders/assess-overdue.yaml",
+          "sha256": "557ff2f91d3f59bf309b63f70ab3565bedae57a2948edb1185c9593fbd26adc3",
+          "revision": "dc4910b9810c5aaa4deecf1ff74734ee97badc13",
+          "arms": [
+            "markitect"
+          ]
+        },
+        {
+          "source": "experiments/test-projects/library-r2/project/.markitect/model/lending/return.yaml",
+          "target": ".markitect/model/lending/return.yaml",
+          "sha256": "09ad182ae3fbf369531c796a0dac75d0cff8c289c2635a6c8e8712a5f40c6135",
+          "revision": "dc4910b9810c5aaa4deecf1ff74734ee97badc13",
+          "arms": [
+            "markitect"
+          ]
+        },
+        {
+          "source": "experiments/test-projects/library-r2/project/.markitect/model/library/callable-interface.yaml",
+          "target": ".markitect/model/library/callable-interface.yaml",
+          "sha256": "9f9fd1b241718f71a0e48cd4e3b9e084b437761f84f8d9d04edffd0b2154981e",
+          "revision": "dc4910b9810c5aaa4deecf1ff74734ee97badc13",
+          "arms": [
+            "markitect"
+          ]
+        },
+        {
+          "source": "experiments/test-projects/library-r2/project/.markitect/model/library/inputs.yaml",
+          "target": ".markitect/model/library/inputs.yaml",
+          "sha256": "c1908f3d5cf41106994638e3890c0a94fdf9748540ab1dbbee8429aa137f95ed",
+          "revision": "dc4910b9810c5aaa4deecf1ff74734ee97badc13",
+          "arms": [
+            "markitect"
+          ]
+        },
+        {
+          "source": "experiments/test-projects/library-r2/project/.markitect/model/library/library.yaml",
+          "target": ".markitect/model/library/library.yaml",
+          "sha256": "ba864c03d0601ae57fee84eb296a4bea4b0ff9d9f57015ab277092fbc1e3946e",
+          "revision": "dc4910b9810c5aaa4deecf1ff74734ee97badc13",
+          "arms": [
+            "markitect"
+          ]
+        },
+        {
+          "source": "experiments/test-projects/library-r2/project/.markitect/model/library/realization.yaml",
+          "target": ".markitect/model/library/realization.yaml",
+          "sha256": "4d40da614c2f283c4bece37deebba75684d6be1ecbc5de7a41ef2e5da8ac7a91",
+          "revision": "dc4910b9810c5aaa4deecf1ff74734ee97badc13",
+          "arms": [
+            "markitect"
+          ]
+        },
+        {
+          "source": "experiments/test-projects/library-r2/project/.markitect/model/members/eligibility.yaml",
+          "target": ".markitect/model/members/eligibility.yaml",
+          "sha256": "dfe714cbf75df2c50e102ef5e4a8d885b3e92f3b9ce5f11b0bdecff7fdc748f1",
+          "revision": "dc4910b9810c5aaa4deecf1ff74734ee97badc13",
+          "arms": [
+            "markitect"
+          ]
+        },
+        {
+          "source": "experiments/test-projects/library-r2/project/.markitect/model/members/inspect-member.yaml",
+          "target": ".markitect/model/members/inspect-member.yaml",
+          "sha256": "3272ba88cbc6185d91112a9c6b0f0108174be600a4668292981a323aada7d4c8",
+          "revision": "dc4910b9810c5aaa4deecf1ff74734ee97badc13",
+          "arms": [
+            "markitect"
+          ]
+        },
+        {
+          "source": "experiments/test-projects/library-r2/project/.markitect/model/members/member.yaml",
+          "target": ".markitect/model/members/member.yaml",
+          "sha256": "cad2fe0241600918077c09de348743ab3ec7f91d33ee2c67d6da4dbc12b23018",
+          "revision": "dc4910b9810c5aaa4deecf1ff74734ee97badc13",
+          "arms": [
+            "markitect"
+          ]
+        },
+        {
+          "source": "experiments/test-projects/library-r2/project/.markitect/model/members/register-member.yaml",
+          "target": ".markitect/model/members/register-member.yaml",
+          "sha256": "366ca93a7290b47bb57586b90dc8887478a8b9d3327c2d62beda0a356d03caa9",
+          "revision": "dc4910b9810c5aaa4deecf1ff74734ee97badc13",
+          "arms": [
+            "markitect"
+          ]
+        },
+        {
+          "source": "experiments/test-projects/library-r2/project/.markitect/model/members/set-member-status.yaml",
+          "target": ".markitect/model/members/set-member-status.yaml",
+          "sha256": "fcb76e58441dcdd546169a7a424ce6273eff2d6f2ad25944cd375b5c8d70155b",
+          "revision": "dc4910b9810c5aaa4deecf1ff74734ee97badc13",
+          "arms": [
+            "markitect"
+          ]
+        },
+        {
+          "source": "experiments/test-projects/library-r2/project/.markitect/execution.yaml",
+          "target": ".markitect/execution.yaml",
+          "sha256": "d6fb58a6e25770e1f172a11d002e65813e524960706f4dadd96f0afaf6007db3",
+          "revision": "dc4910b9810c5aaa4deecf1ff74734ee97badc13",
+          "arms": [
+            "markitect"
+          ]
+        },
+        {
+          "source": "experiments/test-projects/comparison/library/requirements.md",
+          "target": "requirements.md",
+          "sha256": "4b8ca92d04fd3a75b48f7667575594980ecc6e34625772d5426b21511b52ecb0",
+          "revision": "edb6a07f8a6c75e85a31870b635533dcac15b42d",
+          "arms": [
+            "ordinary"
+          ]
+        },
+        {
+          "source": "experiments/test-projects/comparison/library/implementation-prompt.md",
+          "target": "implementation-prompt.md",
+          "sha256": "f6e1f919647929c933bd2fdbad087536ca8b557ec7527c767c668579a615bc4a",
+          "revision": "edb6a07f8a6c75e85a31870b635533dcac15b42d",
+          "arms": [
+            "ordinary"
+          ]
+        }
+      ],
+      "initialState": "Empty process-local application; no initial realization files."
+    },
+    "library-three": {
+      "base": "library-initial",
+      "patches": [
+        {
+          "target": ".markitect/model/lending/loan-policy.yaml",
+          "arms": [
+            "markitect"
+          ],
+          "before": "  maxOpenLoans: 5\n",
+          "after": "  maxOpenLoans: 3\n",
+          "beforeSha256": "6bb5418a91beeb9d96e31b0fed049da5ec1c7d8e67d10ba1b828714632cbe3f6",
+          "afterSha256": "7cd1dd288072ce0fcb4a44ebc9e146f3aafe978e0a6a6b007a07f1eeec1f9641"
+        },
+        {
+          "target": "requirements.md",
+          "arms": [
+            "ordinary"
+          ],
+          "before": "| Maximum open loans per member | 5 |",
+          "after": "| Maximum open loans per member | 3 |",
+          "beforeSha256": "4b8ca92d04fd3a75b48f7667575594980ecc6e34625772d5426b21511b52ecb0",
+          "afterSha256": "2be8a620af4d20e791942d6f0a639e21f7cbb4fc4722f8e313422ba7063f8063"
+        }
+      ],
+      "sourceBlockers": [
+        "UNBOUND actual prior Library application results. Longitudinal arms must continue their own first frozen results; isolated pairs require the same independently fixed application snapshot."
+      ]
+    },
+    "readinglog-baseline": {
+      "files": [
+        {
+          "source": "experiments/test-projects/readinglog/snapshots/00-baseline/model-lock.yaml",
+          "target": ".markitect/model-lock.yaml",
+          "revision": "962f17468ae1b3558e042a0429888ece59106545",
+          "sha256": "924f3427a89a17703e0c7a402178df1c94221cf39dd362170c7a39f16b375ee5",
+          "arms": [
+            "markitect"
+          ]
+        },
+        {
+          "source": "experiments/test-projects/readinglog/snapshots/00-baseline/model.yaml",
+          "target": ".markitect/model.yaml",
+          "revision": "962f17468ae1b3558e042a0429888ece59106545",
+          "sha256": "7f720c12fecfa70c4036c6ed51ab795f3374ba953cdef55f9349cc132b9a7116",
+          "arms": [
+            "markitect"
+          ]
+        },
+        {
+          "source": "experiments/test-projects/readinglog/snapshots/00-baseline/model/readinglog/add.yaml",
+          "target": ".markitect/model/readinglog/add.yaml",
+          "revision": "962f17468ae1b3558e042a0429888ece59106545",
+          "sha256": "85f9358ee9903c987124c833e1b270be8bb9b51460e5196eeb8b3ccbfa825dca",
+          "arms": [
+            "markitect"
+          ]
+        },
+        {
+          "source": "experiments/test-projects/readinglog/snapshots/00-baseline/model/readinglog/book.yaml",
+          "target": ".markitect/model/readinglog/book.yaml",
+          "revision": "962f17468ae1b3558e042a0429888ece59106545",
+          "sha256": "8c965549c03ab2280d74d8c844524ac9203e90dd8496058a58c8e2dd96d2a654",
+          "arms": [
+            "markitect"
+          ]
+        },
+        {
+          "source": "experiments/test-projects/readinglog/snapshots/00-baseline/model/readinglog/inputs.yaml",
+          "target": ".markitect/model/readinglog/inputs.yaml",
+          "revision": "962f17468ae1b3558e042a0429888ece59106545",
+          "sha256": "ce35064bb54b455b9d55493e9a10c62a764ae7df3b0d33df18fddcd0b25cc5ca",
+          "arms": [
+            "markitect"
+          ]
+        },
+        {
+          "source": "experiments/test-projects/readinglog/snapshots/00-baseline/model/readinglog/interface.yaml",
+          "target": ".markitect/model/readinglog/interface.yaml",
+          "revision": "962f17468ae1b3558e042a0429888ece59106545",
+          "sha256": "93fa873e86c254bafd8e99ab7dd668ab391dd03f66e7022283504fed0295b3ee",
+          "arms": [
+            "markitect"
+          ]
+        },
+        {
+          "source": "experiments/test-projects/readinglog/snapshots/00-baseline/model/readinglog/list.yaml",
+          "target": ".markitect/model/readinglog/list.yaml",
+          "revision": "962f17468ae1b3558e042a0429888ece59106545",
+          "sha256": "c943ce6871db833bc7f7c30f541640423e343f7397b1b7aa8eab1ccfeca7cb15",
+          "arms": [
+            "markitect"
+          ]
+        },
+        {
+          "source": "experiments/test-projects/readinglog/snapshots/00-baseline/model/readinglog/realization.yaml",
+          "target": ".markitect/model/readinglog/realization.yaml",
+          "revision": "962f17468ae1b3558e042a0429888ece59106545",
+          "sha256": "805a81819f2723b7c61dac9e2852d98ace94422ddf1d767c0d01a756b9295c01",
+          "arms": [
+            "markitect"
+          ]
+        },
+        {
+          "source": "experiments/test-projects/readinglog/snapshots/00-baseline/model/readinglog/storage.yaml",
+          "target": ".markitect/model/readinglog/storage.yaml",
+          "revision": "962f17468ae1b3558e042a0429888ece59106545",
+          "sha256": "b9d5836273bc9a78751651c3e64e266b38eb31f4653b807b203bea0d2113f9d5",
+          "arms": [
+            "markitect"
+          ]
+        },
+        {
+          "source": "experiments/test-projects/readinglog/snapshots/00-baseline/model/readinglog/system.yaml",
+          "target": ".markitect/model/readinglog/system.yaml",
+          "revision": "962f17468ae1b3558e042a0429888ece59106545",
+          "sha256": "17b96d59df860cd10c78f35b6adffbb1d7719d91e2efa1d99c634fcceb6211b0",
+          "arms": [
+            "markitect"
+          ]
+        },
+        {
+          "source": "experiments/test-projects/readinglog/template/.markitect/dependencies/core/model.yaml",
+          "target": ".markitect/dependencies/core/model.yaml",
+          "revision": "962f17468ae1b3558e042a0429888ece59106545",
+          "sha256": "998be5061baadb3de9bec2a988a5fae7b449236f296e70a2be153b521fc8049a",
+          "arms": [
+            "markitect"
+          ]
+        },
+        {
+          "source": "experiments/test-projects/readinglog/template/.markitect/dependencies/core/model/markitect/core/kind.yaml",
+          "target": ".markitect/dependencies/core/model/markitect/core/kind.yaml",
+          "revision": "962f17468ae1b3558e042a0429888ece59106545",
+          "sha256": "b8694323468d4d8c90e64740b39a10045fd21ae759066c4d99c9bc1d82003ebe",
+          "arms": [
+            "markitect"
+          ]
+        },
+        {
+          "source": "experiments/test-projects/readinglog/template/.markitect/dependencies/core/model/markitect/core/max-count.yaml",
+          "target": ".markitect/dependencies/core/model/markitect/core/max-count.yaml",
+          "revision": "962f17468ae1b3558e042a0429888ece59106545",
+          "sha256": "206aa732af928dafc01b6949eca98db1fb5f9e3a001046d7adf889a1a1303789",
+          "arms": [
+            "markitect"
+          ]
+        },
+        {
+          "source": "experiments/test-projects/readinglog/template/.markitect/dependencies/core/model/markitect/core/min-count.yaml",
+          "target": ".markitect/dependencies/core/model/markitect/core/min-count.yaml",
+          "revision": "962f17468ae1b3558e042a0429888ece59106545",
+          "sha256": "d2f2c064071c75f3f4b41cef16bd94cc7a3a7ef036f9eb7e8226559425a38744",
+          "arms": [
+            "markitect"
+          ]
+        },
+        {
+          "source": "experiments/test-projects/readinglog/template/.markitect/dependencies/core/model/markitect/core/name.yaml",
+          "target": ".markitect/dependencies/core/model/markitect/core/name.yaml",
+          "revision": "962f17468ae1b3558e042a0429888ece59106545",
+          "sha256": "ec8abd72a1f308f00f905dacf2d8959054961f55e84b6c894aa3214a5da30d10",
+          "arms": [
+            "markitect"
+          ]
+        },
+        {
+          "source": "experiments/test-projects/readinglog/template/.markitect/dependencies/core/model/markitect/core/properties.yaml",
+          "target": ".markitect/dependencies/core/model/markitect/core/properties.yaml",
+          "revision": "962f17468ae1b3558e042a0429888ece59106545",
+          "sha256": "e3f430b729a355704ba208bcfb95bd206b66e91307f43a6af1af263f3c9879b8",
+          "arms": [
+            "markitect"
+          ]
+        },
+        {
+          "source": "experiments/test-projects/readinglog/template/.markitect/dependencies/core/model/markitect/core/property.yaml",
+          "target": ".markitect/dependencies/core/model/markitect/core/property.yaml",
+          "revision": "962f17468ae1b3558e042a0429888ece59106545",
+          "sha256": "be6149acf2d5ebcca9e18bad13932ca3be9bb6d838ac5a142dd83d7bc6143590",
+          "arms": [
+            "markitect"
+          ]
+        },
+        {
+          "source": "experiments/test-projects/readinglog/template/.markitect/dependencies/core/model/markitect/core/target.yaml",
+          "target": ".markitect/dependencies/core/model/markitect/core/target.yaml",
+          "revision": "962f17468ae1b3558e042a0429888ece59106545",
+          "sha256": "06dc15e8673124553bd2b71a73e1b7bb75a237d2b0a01e690da3230a467a0a63",
+          "arms": [
+            "markitect"
+          ]
+        },
+        {
+          "source": "experiments/test-projects/readinglog/template/.markitect/dependencies/core/model/markitect/core/type.yaml",
+          "target": ".markitect/dependencies/core/model/markitect/core/type.yaml",
+          "revision": "962f17468ae1b3558e042a0429888ece59106545",
+          "sha256": "acbcb268f34a4aedfcde704af97648dbda499c6a8d22522c3e4b93f2802d9579",
+          "arms": [
+            "markitect"
+          ]
+        },
+        {
+          "source": "experiments/test-projects/readinglog/template/.markitect/dependencies/core/model/markitect/core/values.yaml",
+          "target": ".markitect/dependencies/core/model/markitect/core/values.yaml",
+          "revision": "962f17468ae1b3558e042a0429888ece59106545",
+          "sha256": "e69f9a0d9720055274bf0854072e2cce495e94630359599bd73d4f5a2589fffd",
+          "arms": [
+            "markitect"
+          ]
+        },
+        {
+          "source": "experiments/test-projects/readinglog/template/.markitect/dependencies/software/model.yaml",
+          "target": ".markitect/dependencies/software/model.yaml",
+          "revision": "962f17468ae1b3558e042a0429888ece59106545",
+          "sha256": "88aca2d29c354ceeb1d24e402e5124dd7916a279a6cd229a3917e1cdc29f3a2b",
+          "arms": [
+            "markitect"
+          ]
+        },
+        {
+          "source": "experiments/test-projects/readinglog/template/.markitect/dependencies/software/model/software/concept.yaml",
+          "target": ".markitect/dependencies/software/model/software/concept.yaml",
+          "revision": "962f17468ae1b3558e042a0429888ece59106545",
+          "sha256": "ecef70eefceb61c7f34c1c35340b46b89bbd91615d8b0c71152f4709248b7065",
+          "arms": [
+            "markitect"
+          ]
+        },
+        {
+          "source": "experiments/test-projects/readinglog/template/.markitect/dependencies/software/model/software/rule.yaml",
+          "target": ".markitect/dependencies/software/model/software/rule.yaml",
+          "revision": "962f17468ae1b3558e042a0429888ece59106545",
+          "sha256": "38dbdb11d1398174ba509ec445be7d3122e3653206df967b01904a4d24433cbf",
+          "arms": [
+            "markitect"
+          ]
+        },
+        {
+          "source": "experiments/test-projects/readinglog/template/.markitect/dependencies/software/model/software/use-case.yaml",
+          "target": ".markitect/dependencies/software/model/software/use-case.yaml",
+          "revision": "962f17468ae1b3558e042a0429888ece59106545",
+          "sha256": "7c85f07c989483c6a262d9c513e71929c03e04c278f95e8d42623f02079fcbb6",
+          "arms": [
+            "markitect"
+          ]
+        },
+        {
+          "source": "experiments/test-projects/readinglog/template/.markitect/execution.yaml",
+          "target": ".markitect/execution.yaml",
+          "revision": "962f17468ae1b3558e042a0429888ece59106545",
+          "sha256": "6a320758cc508f000dfe49c0abab4e782f274caba4003938609d4dc3fc4a1117",
+          "arms": [
+            "markitect"
+          ]
+        },
+        {
+          "source": "experiments/test-projects/readinglog/template/.markitect/registry/readinglog/registry.yaml",
+          "target": ".markitect/registry/readinglog/registry.yaml",
+          "revision": "962f17468ae1b3558e042a0429888ece59106545",
+          "sha256": "4747fb1b8e93ac3d033eafeea2d086a83746197f3270a2c28234c1e0f20d8d79",
+          "arms": [
+            "markitect"
+          ]
+        },
+        {
+          "source": "experiments/test-projects/readinglog/template/realization/app.py",
+          "target": "realization/app.py",
+          "revision": "962f17468ae1b3558e042a0429888ece59106545",
+          "sha256": "b66a2417b532e993710e5436864c3d58c3ebeb1d3dfab05fa1ef13f76c00dfd4",
+          "arms": [
+            "ordinary",
+            "markitect"
+          ]
+        },
+        {
+          "source": "experiments/test-projects/readinglog/template/realization/tests/test_baseline.py",
+          "target": "realization/tests/test_baseline.py",
+          "revision": "962f17468ae1b3558e042a0429888ece59106545",
+          "sha256": "6a10ef1af13cc01f7e040796aacb8ecfbd5a619522fbfcebe81f40c646b4e6ab",
+          "arms": [
+            "ordinary",
+            "markitect"
+          ]
+        },
+        {
+          "source": "experiments/test-projects/comparison/readinglog/00-baseline/requirements.md",
+          "target": "requirements.md",
+          "revision": "packet",
+          "sha256": "4bb7ebb87bba0a0403fa74ac08367ef9685a76d66b8c13c231e926f9e3f37a76",
+          "arms": [
+            "ordinary"
+          ]
+        },
+        {
+          "source": "experiments/test-projects/comparison/readinglog/00-baseline/implementation-prompt.md",
+          "target": "implementation-prompt.md",
+          "revision": "packet",
+          "sha256": "097e4806d176317084b998d174b624a5b8e1a994e6451cf2f67f517e95599c82",
+          "arms": [
+            "ordinary"
+          ]
+        }
+      ],
+      "initialState": "Existing add/list application and public tests, no data file; missing data file represents empty state.",
+      "canonicalSnapshot": {
+        "revision": "962f17468ae1b3558e042a0429888ece59106545",
+        "identity": "readinglog",
+        "version": "0.1.0",
+        "path": "experiments/test-projects/readinglog/snapshots/00-baseline/",
+        "localDefinitions": 8
+      }
+    },
+    "readinglog-seed": {
+      "base": "readinglog-baseline",
+      "patches": [
+        {
+          "target": "realization/app.py",
+          "arms": [
+            "ordinary",
+            "markitect"
+          ],
+          "before": "any(book[\"id\"] == text[\"id\"] for book in books)",
+          "after": "any(book[\"id\"] == args.id for book in books)",
+          "beforeSha256": "b66a2417b532e993710e5436864c3d58c3ebeb1d3dfab05fa1ef13f76c00dfd4",
+          "afterSha256": "49683a5f3bc70d6ea7eed7e9c7c2e80d7b281cc48de80056b6d7d9e07e593ec8"
+        }
+      ]
+    }
+  },
+  "scenarios": [
+    {
+      "id": "library-build",
+      "sourceSet": "library-initial",
+      "profile": "primary-matched",
+      "writerTask": "Implement the current requirements.",
+      "applicationTargets": [],
+      "startingState": "greenfield",
+      "seedCount": 0,
+      "size": "No initial application files; members, physical copies and loans.",
+      "ruleComplexity": "Membership eligibility, copy availability and loan policy interact across five local Packages; descriptive metadata only.",
+      "changeScope": "initial complete realization"
+    },
+    {
+      "id": "library-limit-three",
+      "sourceSet": "library-three",
+      "profile": "primary-matched",
+      "writerTask": "Update the existing application to the current requirements.",
+      "applicationTargets": [],
+      "startingState": "actual prior result",
+      "seedCount": 0,
+      "size": "Same Library requirement scope; actual prior application size is not yet observed.",
+      "ruleComplexity": "One policy value affects lending admission and preservation of existing loans/return rights.",
+      "changeScope": "cross-responsibility rule",
+      "sequence": "longitudinal own-result continuation by default; an isolated pair needs its own equal fixed application start"
+    },
+    {
+      "id": "readinglog-existing",
+      "sourceSet": "readinglog-baseline",
+      "profile": "primary-matched",
+      "writerTask": "Restore conformance to the current requirements.",
+      "applicationTargets": [
+        "realization/app.py",
+        "realization/tests/test_baseline.py"
+      ],
+      "startingState": "existing application",
+      "seedCount": 0,
+      "size": "One existing Python application file and one public baseline test file.",
+      "ruleComplexity": "Normalization, exact identity, positive pages, atomic persistence and unchanged data on refusal within one Package; descriptive metadata only.",
+      "changeScope": "baseline conformance repair",
+      "knownBaselineGaps": [
+        "The original argparse usage errors differ from the visible JSON input-error contract; identical baseline gap in both arms, distinct from the added seed."
+      ]
+    },
+    {
+      "id": "readinglog-seeded",
+      "sourceSet": "readinglog-seed",
+      "profile": "primary-matched",
+      "writerTask": "Restore conformance to the current requirements.",
+      "applicationTargets": [
+        "realization/app.py",
+        "realization/tests/test_baseline.py"
+      ],
+      "startingState": "existing application",
+      "seedCount": 1,
+      "seedSubtlety": "Normalization/identity interaction; operator metadata excluded from writers.",
+      "size": "Identical initial files and state to readinglog-existing, except the one byte-bound application seed.",
+      "ruleComplexity": "Same declared obligations and Package as readinglog-existing.",
+      "changeScope": "baseline conformance repair",
+      "knownBaselineGaps": [
+        "The original argparse usage errors differ from the visible JSON input-error contract; identical baseline gap in both arms, distinct from the added seed."
+      ]
+    }
+  ],
+  "independentAssessment": "No evaluator or expected answers here. Bind privately to visible requirements and validate the known seed as a positive control; permit valid alternative implementations.",
+  "historicalOracleLimit": "The unchanged Library M1/M2 oracle does not cover the successor r2 overflow refusal as a complete evaluator."
+}

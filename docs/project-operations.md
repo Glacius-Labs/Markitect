@@ -6,7 +6,7 @@ The current commands are `check`, `context`, `docs`, `version`, `licenses` and `
 
 `check --repo PATH` calls actual PreparationService with an explicit canonical v1 manifest and dependencies. Reports retain each acquisition attempt and actual compiler, execution, registry, file-accounting and context-selection statuses. Failed or incomplete acquisition cannot become an empty passing model.
 
-Metadata and settings are unrequested unless `--metadata` is selected. `--host-profile` names an explicit absolute Host document; no environment or provider discovery substitutes for it. Agent and Check adapters parse selected executable/schema/profile bytes only. Product defaults come from their embedded versioned source, and effective settings retain provenance. Reports neither start a process nor establish execution readiness.
+Metadata and settings are unrequested unless `--metadata` is selected. `--host-profile` names an explicit absolute Orchestrator document; no environment or provider discovery substitutes for it. Agent and Check adapters parse selected executable/schema/profile bytes only. Product defaults come from their embedded versioned source, and effective settings retain provenance. Reports neither start a process nor establish execution readiness.
 
 ## Why a Definition is in context
 
@@ -14,7 +14,7 @@ Metadata and settings are unrequested unless `--metadata` is selected. `--host-p
 
 ## CLI, setup and current roots
 
-The default manifest is `.markitect/model.yaml`. Repeated `--dependency` flags select required manifests. Repository-relative coordinates remain relative to the selected repository; absolute manifests establish explicit acquisition boundaries. `--revision` resolves a ref once through the repository port and preserves its full commit. Fixed acquisition never falls back to current external Host or dependency bytes.
+The default manifest is `.markitect/model.yaml`. Repeated `--dependency` flags select required manifests. Repository-relative coordinates remain relative to the selected repository; absolute manifests establish explicit acquisition boundaries. `--revision` resolves a ref once through the repository port and preserves its full commit. Fixed acquisition never falls back to current external Orchestrator or dependency bytes.
 
 This increment has no MCP, automatic setup, provider session, workspace creation, executable check runner or artifact publication command. The old generation remains in [Git](https://github.com/Glacius-Labs/Markitect/tree/5ff3206917fa3b7482d9daedb903d57a919f56b8). [Provider adapters](provider-adapters.md) describes the metadata boundary.
 

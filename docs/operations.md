@@ -1,6 +1,6 @@
 # Operations
 
-Current source provides canonical v1 read-only preparation and a guarded generated model view. [Project operations](project-operations.md) is the command reference; [distribution](../integration/README.md) owns separate maintenance packaging and publication. Dated evidence retains its original source/environment scope in the [production assessment](production-assessment.md).
+Current source provides canonical v1 read-only preparation and a guarded generated model view. [Project operations](project-operations.md) is the command reference; [distribution](../integration/README.md) owns separate maintenance packaging and publication. Dated evidence retains its original source/environment scope in the [production assessment](history/distribution/production-assessment.md).
 
 ## Authoring and checking
 
@@ -29,24 +29,10 @@ Documentation previews may include explicitly selected external sources. For thi
 
 ## Release operations
 
-The manually selected historical [benchmark workflow](../benchmark/README.md) consumes attested binaries from immutable releases using a fixture that matches each release's Project and output contract. It compares only shared scenarios, uploads raw data and summary artifacts, and never modifies a published release. Its timing variation is diagnostic, not a publication gate. The published-release trigger is retired because the v1/v2 workload requires historical Project/Domain commands and cannot measure a model-first release; existing records remain evidence for their original inputs.
+The owner retired the old releases and binary downloads on 17 October 2026 while preserving Git tags and required evidence. The [retirement record](history/distribution-retirement-20261017.md) holds captured release identities and attestations. No binary release of the current product is offered; use [current source](../README.md#run-the-current-source).
 
-Current source distribution preparation uses the independent `markitect-release package`, `bundle` and `install` commands described in [integration](../integration/README.md#current-source-release-tooling). These local operations do not publish a release; installation writes require `--write`.
+Local `markitect-release package`, `bundle` and `install` remain independent maintenance tools; see [distribution](../integration/README.md#current-source-release-tooling). Local packaging does not publish. The old download-based benchmark and WinGet validation workflow are retired with their fixtures and manifests.
 
-A source version string does not prove a release exists. Release only a clean reviewed full commit after standalone tests, vet, build, module and architecture checks, documentation validation, and Windows/Linux gates pass. Bundle contents, provenance, tag, source commit, workflow run, and asset digests must agree. The immutable GitHub release is the durable distribution; a workflow artifact is only temporary transport.
+A future publication needs explicit owner authority, a fresh version tag, a clean reviewed full commit, passing source and Windows/Linux gates, exact workflow/run/attempt identity and matching bundle/provenance/asset digests. Review the read-only plan, publish through the guarded tool, and verify the immutable release and every attached asset. Never overwrite or reuse a historical tag. Update README download blocks only after that release exists and is verified.
 
-Publication uses the authenticated release owner's local GitHub CLI session and a fail-closed tool. CI does not store a personal access token or publish with a token that lacks permission to read the immutable-release setting. The owner reviews the read-only plan before choosing publication. Verify the resulting immutable release and every attached asset. Never overwrite a tag or release. Recovery from a failed draft publication is an explicit owner decision after checking the tag target, run artifact, asset set, and digests.
-
-After a new release is published and verified, update the README's pinned CLI installation examples to its exact tag and attested Windows/Linux SHA-256 digests. Check the public downloads and platform-specific version output before calling that version the current quick-install choice. Never put an unpublished tag or guessed digest in the README.
-
-Use the read-only distribution check to confirm that the marked README installation and example blocks, plus the versioned canonical WinGet manifests, match a selected public release:
-
-```powershell
-go run ./cmd/markitect-release distribution --tag vX.Y.Z --repo .
-```
-
-The command loads only a stable, published immutable release. It verifies the release and each asset attestation, downloads the exact four assets, checks the provenance against the successful release workflow attempt and tag commit, and matches every asset digest. It then checks the README markers and generated WinGet manifest files. `--write` applies those local files after validation; `--export-winget PATH` writes just the three manifests into `PATH/manifests/g/GlaciusLabs/Markitect/VERSION` for review and submission in a separate WinGet community PR. The modes are mutually exclusive. The command does not submit a package or publish a release.
-
-Before a WinGet submission, run `winget validate --manifest` against the exported version directory and review the diff. Verify the package install, upgrade, and uninstall from the public catalog after the community PR is merged.
-
-The release gate proves only the Markitect source and packaged product checks that ran. It does not assert that a project has correct policy, complete prose, a safe runtime, or a human decision. Those are owned where the project operates.
+CI transport is bounded: Go test artifacts remain for 14 days to support the flake report; commit-scoped source archives remain for 7 days. Named evidence, failed diagnostics and artifacts needed by current work are excluded from manual historical cleanup. Durable summaries, public attestations and source references belong in Git; temporary artifact URLs are not a permanent evidence store. [CONTRIBUTING](../CONTRIBUTING.md#verify-a-change) owns source gates.

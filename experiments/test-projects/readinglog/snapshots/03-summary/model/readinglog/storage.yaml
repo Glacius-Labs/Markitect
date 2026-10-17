@@ -1,0 +1,17 @@
+imports:
+  - package: software
+    as: Software
+id: storage
+kind: Software.Rule
+body: |-
+  [[system]] uses the UTF-8 JSON array stored at the explicit --db path. A missing
+  file is empty state. Validate existing data before using or mutating it: the root
+  is an array, each [[book]] has exactly its stated keys, stored id/title/author
+  are strings containing non-whitespace text, pages is a positive integer rather
+  than a boolean, status is unread or finished, and stored IDs are unique by
+  exact comparison. Malformed data fails clearly through [[interface]] without
+  being overwritten. Preserve existing records and insertion order. Reads do not
+  rewrite stored records or create a missing data file. Successful mutations use
+  atomic replacement; a later process observes committed results. Errors preserve
+  the data already stored. No concurrent independent-writer guarantee is required.
+spec: {}

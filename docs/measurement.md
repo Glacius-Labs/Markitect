@@ -32,6 +32,16 @@ Assess completed behavior and defects, model-to-representation consistency, rule
 
 Keep initial setup, model maintenance, recovery and review effort visible. Record elapsed execution and actual token/cost data as secondary observations; a slower run may still improve quality, and a faster run with missed obligations is not a success. Report uncertainty, unavailable evidence and failures alongside advantages. Synthetic checks, one controlled failure or one real task cannot establish comparative superiority. The existing controlled-comparison procedure below supplies experimental controls; a longer backlog evaluates sustained coherence and usable autonomy.
 
+## Comparison factors and first results
+
+The [comparison source playground](../experiments/test-projects/comparison/playground/README.md) supplies a small curated set of fixed packets, not a study runner. Record exact model, effort and profile bindings. The primary paired comparison uses the same model and effort for the ordinary coding Agent and every Markitect role; mixed role profiles are a separately labeled secondary condition. Give each pair the same maximal resources, timeouts, permissions, implementation freedom and human-help allowance. Measure actual resource use, human attention, money and elapsed time separately; equal ceilings do not imply equal cost.
+
+Declare project size separately from dependency and rule complexity, and distinguish greenfield implementation from existing-system changes, local changes from rules spanning responsibilities, and no added seed from an ordinary or subtle deliberately seeded defect. Use a small selected set before a full factor combination. The first Library/Readinglog set changes domain, language and organization together; its project differences are descriptive and do not isolate a causal size or complexity effect. Compare methods within each identical scenario/profile, including each model-profile condition, before drawing a broader conclusion.
+
+Bind baseline bytes, state and any deterministic seed's exact before/after hashes identically in both arms. Preserve known baseline gaps separately; no added seed does not mean a conforming application. Every assessed obligation, including an easy-to-miss rule, must occur in both visible requirement representations. Independently owned hidden checks must exercise the known seeded defect as a positive control and permit alternative correct implementations. Seed descriptions, mutation locations, future requirement stages and expected answers stay outside writer packets. The unchanged historical Library M1/M2 oracle does not establish full Library r2 coverage, including its newly explicit due-date overflow refusal.
+
+For isolated tasks, each pair starts from the same fixed application. For a longitudinal sequence, only the first step shares that snapshot; subsequent steps continue each arm's own frozen prior result without a supplied correct reset. Bind the actual continuation inputs. Predeclare repetitions and counterbalanced order under the controlled-comparison procedure. Use fresh sessions for each independent replication or pair start; within a longitudinal sequence, allow the method's normal continuation instead of forcing a new session at every change. Freeze the first delivered result before human review, correction or reassurance requests, and analyze it separately from later assisted results. Include authoring and maintaining both requirement representations from the same predeclared attention start, as well as review, intervention and recovery. Source preparation supplies no runtime/profile readiness, independent assessment, execution grant or measured benefit.
+
 ## Human attention and delegated work
 
 The future product question is whether people can govern more autonomous engineering work without losing architectural intent. No current value for that outcome is established. Fewer interventions count as improvement only when task quality, required escalation, authority and independently checked architecture outcomes are preserved. Silent violations or skipped review requirements are failures, not autonomy.
@@ -75,27 +85,13 @@ The object of evaluation is the delegated method: computed scope, bounded Manage
 
 ## Correctness first
 
-Use a synthetic project with explicit shared policy and two separately scoped areas. Record expected effects before running the tool. Cover local and shared Rule changes, removed dependencies, Contract-binding changes, and an unmodelled input change. Unknown inputs must remain conservative until they are declared.
+Current component and oracle tests establish only their actual assertions and source. [CONTRIBUTING](../CONTRIBUTING.md#verify-a-change) owns executable gates; the [Library Playground](../experiments/library-playground/README.md) owns independent behavior expectations. A successful source check does not establish semantic realization or attention savings.
 
-Go scenario tests compare exact expected context and impact sets. Go benchmarks measure deterministic operations after fixture construction. They can report allocations, context bytes, and affected-resource count; they do not measure human authoring speed or model savings. Keep the source revision, command, platform, and raw output together in excluded development artifacts.
-
-```powershell
-go test ./internal/app -run AuthoringScenario -count=1
-go test ./internal/app -run DocumentationScenario -count=1
-go test ./internal/app -run '^$' -bench Authoring -benchmem -count=3
-```
-
-The [code and documentation example](documentation.md) exercises exact source-file inputs with a predeclared affected set and an unrelated area. Its source-only change intentionally leaves stale prose structurally valid: the scenario verifies routing to review, not semantic correction by the compiler.
-
-CI executes one iteration of each authoring benchmark to keep the measurement fixtures valid as the resource model evolves. This is a correctness smoke check, with no timing threshold. For timing reports, run the repeated command above on a fixed source commit and record the host; the measured section excludes Git reads, parsing, agent interaction, and provider calls.
-
-The historical `.github/workflows/release-benchmark.yaml` runs only when a maintainer manually selects an exact immutable Project/Domain release tag from v0.9.0 through v0.14.1. It compares the selected and immediately previous attested platform binaries on Windows and Linux; new publications do not trigger it. These historical releases use `benchmark/fixtures/v2`; the previous binary uses v1 when its release predates 0.9.0 and v2 otherwise. The immutable v1 fixture preserves the pre-0.9 layout, while v2 exercises the selected Markdown output with canonical resources beneath `.markitect/areas/sample/` and an ordinary input beneath `docs/`. The harness gives both binaries one shared prepared repository when fixture version and bytes match. Across a version transition it prepares each compatible fixture independently, records the version, root, digest, base commit, and candidate commit for each release, and suppresses performance-change percentages because workloads differ. The model-first product does not support this workload; any replacement requires a separately accepted protocol and cannot reuse its timing comparisons as equivalent work. See the [benchmark contract](../benchmark/README.md) for invocation and metric definitions.
-
-Each command (`check`, `render`, `context`, `impact`, and `verify`) runs once as the first fresh process and three more times as fresh processes, with release order alternating. Records include wall time, sampled peak working set, exit status, status text, and bounded output. JSON and Markdown summaries are workflow artifacts; no asset is added to the immutable release. Each manual invocation selects a supported historical stable tag; it verifies the same immutable release and assets without changing them. The first run does not clear operating-system caches, and a short process can exit before memory sampling, which is recorded as null. There is no performance threshold or release-blocking benchmark gate.
+The old authoring scenarios, `internal/app` examples and published-binary timing workload are retired. Their protocols and dated observations remain at [the pre-retirement measurement record](https://github.com/Glacius-Labs/Markitect/blob/1f4a1ede214d05fd2fee615b3905207df7702426/docs/measurement.md) and [benchmark source](https://github.com/Glacius-Labs/Markitect/tree/1f4a1ede214d05fd2fee615b3905207df7702426/benchmark). Removing obsolete commands does not rescore their results or establish a replacement benchmark. A new comparative study follows the current primary baseline above and requires its own authorization.
 
 ## Authoring exercise
 
-Copy the complete minimal example into an isolated Git repository and commit a baseline. Give an agent a normal requirement, access to the CLI, and the bundled `authoring` context. An independent reviewer checks the changed owner, required relationships, unaffected scopes, generated outputs, and fixed impact. Retain failures and corrections. This is a product usability exercise, not an A/B benchmark or provider-runtime certification.
+Use the canonical Library model and the [staged readiness gates](#staged-method-readiness) for current authoring and realization work. The earlier Project/Domain authoring exercise remains in [its source-bound record](https://github.com/Glacius-Labs/Markitect/blob/1f4a1ede214d05fd2fee615b3905207df7702426/docs/authoring-pilot.md).
 
 ## Controlled model comparison
 
@@ -107,7 +103,7 @@ Capture only observed data: model-reported token usage, calls, tool calls, searc
 
 Review reuse should be exercised for identical inputs, relevant changes, removed edges, tool/config changes, and unknown files. Reuse makes no model call. Compare the full repeated task before claiming sustained savings.
 
-The [2026-10-01 documentation pilot](authoring-pilot.md) records an incomplete first exercise and a six-run repeat with the mutation boundary stated in the task card. All six repeated candidates passed fixed structural and output checks and the four-path boundary. The blind semantic review found a further wording difference between task and rubric, while token and cost measures remained unavailable. State every scored requirement in both task card and review rubric before running another comparison; keep structural validity, requested semantics, and a narrow mutation boundary as separate results.
+The [2026-10-01 documentation pilot](history/assessments/authoring-pilot-20261001.md) records an incomplete first exercise and a six-run repeat with the mutation boundary stated in the task card. All six repeated candidates passed fixed structural and output checks and the four-path boundary. The blind semantic review found a further wording difference between task and rubric, while token and cost measures remained unavailable. State every scored requirement in both task card and review rubric before running another comparison; keep structural validity, requested semantics, and a narrow mutation boundary as separate results.
 
 ## Optional local records
 
