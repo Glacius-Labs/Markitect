@@ -198,3 +198,32 @@ func TestRenderStatesTheTreePosition(t *testing.T) {
 		t.Fatal("the reviewer view lacks the tree position or the reviewed purpose")
 	}
 }
+
+// Every view states the task's complete local inventory, so that a reviewer
+// of a no-change submission sees empty sets as empty rather than as missing.
+func TestRenderStatesTheLocalResponsibility(t *testing.T) {
+	inventory := func(input organization.RenderInput, selection organization.ContextSelection, settings organization.Settings) string {
+		t.Helper()
+		texts := sectionTexts(t, requireRendered(t, selection, settings, input), "local-responsibility")
+		if len(texts) != 1 {
+			t.Fatal("the local responsibility is not stated once")
+		}
+		return string(texts[0])
+	}
+	selection, settings, input := renderFixture(t, ".", organization.ReviewerCandidate)
+	input.Task.Purpose, input.Task.Scope = "local", "complete"
+	input.Task.Findings = organization.OpenFindings{Source: hostRef("open-findings", ""), IDs: []string{}}
+	input.Review = &organization.ReviewFacts{Package: ".", Subject: hostRef("subject", ""), Candidate: hostRef("candidate", ""), Expectations: hostRef("expectations", ""), Files: []organization.ArtifactFact{renderArtifact(t, "a")}}
+	if got := inventory(input, selection, settings); got != `{"LocalDefinitions":[],"OwnArtifacts":[],"OpenFindings":[]}` {
+		t.Fatalf("root no-change review inventory: %s", got)
+	}
+	selection, settings, input = renderFixture(t, "a", organization.ManagerView)
+	input.OwnArtifacts = []organization.ArtifactFact{renderArtifact(t, "a")}
+	if got := inventory(input, selection, settings); !strings.HasPrefix(got, `{"LocalDefinitions":["a/`) || !strings.HasSuffix(got, `"OwnArtifacts":["real/owned.go"],"OpenFindings":["finding-1"]}`) {
+		t.Fatalf("Manager inventory: %s", got)
+	}
+	selection, settings, input = renderFixture(t, "a", organization.ReviewerExpectations)
+	if got := inventory(input, selection, settings); strings.Contains(got, "OwnArtifacts") || !strings.HasSuffix(got, `"OpenFindings":["finding-1"]}`) {
+		t.Fatalf("expectations inventory names files: %s", got)
+	}
+}

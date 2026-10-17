@@ -67,12 +67,12 @@ func TestToolCatalogOffersValidSchemasPerPhase(t *testing.T) {
 // golden pins the recorded bytes of every contract and catalogue. A change must
 // be deliberate: recorded steps keep their original identities.
 var golden = map[run.Phase][2]string{
-	run.PhaseExplore:              {"4da24a336165e89d8073fc7c1c53606646abd459b479659c8f8f5940f246fafb", "e42ac307001bc8ff189da4e97b27869585a3659d3831d2224c4be90722e685ff"},
-	run.PhaseWork:                 {"e219a08a176d67e7afdfa58c1c3cc8cc4ca14b974fcb5d259293bfcd28d07afe", "2d5300db8987d866f5f65db31c6f648522cbfd2d891abfa4b04242d38d739fb2"},
-	run.PhaseIntegrate:            {"f5c4e1ef3fbd27e54ecca2c1d703f0e2c8260629ba97f7f97f87bd30d10f1efc", "2d5300db8987d866f5f65db31c6f648522cbfd2d891abfa4b04242d38d739fb2"},
-	run.PhaseReply:                {"97bc6117362b920e19b10bba44f4c7d11f95ba1930e03a8d9cdbc15b3b77b3f6", "e46bc6e7a0f6e3d9e65e10eaef176bc414b25c00d52ddc1324483397f5474d73"},
+	run.PhaseExplore:              {"4da24a336165e89d8073fc7c1c53606646abd459b479659c8f8f5940f246fafb", "1f0b174a025fb959c71ff1d14a6271f349dfc68647c9c673f1ea2367b2325377"},
+	run.PhaseWork:                 {"e219a08a176d67e7afdfa58c1c3cc8cc4ca14b974fcb5d259293bfcd28d07afe", "b0de462d61e80cc2600af31c9e20b4f25407747261d22b7bc96c23c3fea831a4"},
+	run.PhaseIntegrate:            {"f5c4e1ef3fbd27e54ecca2c1d703f0e2c8260629ba97f7f97f87bd30d10f1efc", "b0de462d61e80cc2600af31c9e20b4f25407747261d22b7bc96c23c3fea831a4"},
+	run.PhaseReply:                {"97bc6117362b920e19b10bba44f4c7d11f95ba1930e03a8d9cdbc15b3b77b3f6", "3b201b87d143889b9e6824c0b34a1eb101417d65d4d063a76334842d9fad41e7"},
 	run.PhaseReviewerExpectations: {"260fcac91c1b7d66fe258ce24fa1216efd4f708a688bcb654eec88973404f109", "b40682f0daa353aee0f581964c4ba9d685ad8041719ca42006950883a97c79b8"},
-	run.PhaseReviewerCandidate:    {"731fe1b7da9210298c7b774e0eddc50fb08b979f922d4bd31c4eb44dc2457de4", "43dfe4ab6373e326d375295bbee940c1fcc0b185fc77f2915c315cb42ab168b9"},
+	run.PhaseReviewerCandidate:    {"731fe1b7da9210298c7b774e0eddc50fb08b979f922d4bd31c4eb44dc2457de4", "8cf5171603cb8ba82ef78db60361a83e52719c76f334dd83b69aa83d9a6540b0"},
 }
 
 func TestContractAndCatalogBytesArePinned(t *testing.T) {

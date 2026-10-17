@@ -30,6 +30,42 @@ func (c ContextSelection) treePosition() (string, []string) {
 	return parent, children
 }
 
+// localResponsibility is the complete inventory of a task's own work as the
+// Host supplies it; an empty list states that there is none, so that a
+// reviewer need not read an empty set from a record reference. OwnArtifacts
+// is absent from the expectations review, which sees no files.
+type localResponsibility struct {
+	LocalDefinitions []string
+	OwnArtifacts     *[]string `json:",omitempty"`
+	OpenFindings     []string
+}
+
+func localResponsibilityOf(c ContextSelection, input RenderInput) localResponsibility {
+	r := localResponsibility{LocalDefinitions: []string{}, OpenFindings: append([]string{}, input.Task.Findings.IDs...)}
+	slices.Sort(r.OpenFindings)
+	for _, entry := range c.Definitions() {
+		if slices.ContainsFunc(entry.Reasons, func(reason ContextReason) bool { return reason.Kind == OwnDefinition }) {
+			r.LocalDefinitions = append(r.LocalDefinitions, entry.Definition.Identity.Package+"/"+entry.Definition.Identity.ID)
+		}
+	}
+	files := input.OwnArtifacts
+	switch {
+	case input.Review != nil:
+		files = input.Review.Files
+	case input.View == ReviewerExpectations:
+		return r
+	}
+	paths := []string{}
+	for _, artifact := range files {
+		if artifact.Package == c.Package() {
+			paths = append(paths, artifact.Path.String())
+		}
+	}
+	slices.Sort(paths)
+	r.OwnArtifacts = &paths
+	return r
+}
+
 func renderDirectory(w *contextWriter, c ContextSelection, input RenderInput) {
 	purposes := make(map[string]*HostText)
 	for _, fact := range input.Packages {
