@@ -16,6 +16,52 @@ import (
 
 const dedicatedLogin = `{"auth_mode":"chatgpt","OPENAI_API_KEY":null,"tokens":{"id_token":"dedicated-id-token","access_token":"dedicated-access-token","refresh_token":"dedicated-refresh-token","account_id":"runtime-account"},"last_refresh":"2026-10-17T12:00:00Z"}`
 
+func TestOpenCredentialFailureBeforeRuntimeIsCertainlyStopped(t *testing.T) {
+	for _, mode := range []string{"resolver-error", "invalid-credential", "container-start-error"} {
+		t.Run(mode, func(t *testing.T) {
+			channel := &fakeChannel{}
+			starts, helpers := 0, 0
+			s, err := NewSessionsWithRuntime(func(context.Context, container.ContainerSpec) (RuntimeSession, error) {
+				starts++
+				return nil, errors.New("container creation/start result unknown")
+			}, func(context.Context, container.ContainerSpec, []string, io.Reader, io.Writer) error {
+				helpers++
+				return errors.New("unexpected helper")
+			}, func(context.Context, string) (RuntimeCredential, error) {
+				if mode == "resolver-error" {
+					return RuntimeCredential{}, errors.New("credential resolver failed")
+				}
+				if mode == "invalid-credential" {
+					return RuntimeCredential{Mode: "api-key"}, nil
+				}
+				return RuntimeCredential{Mode: "api-key", APIKey: "synthetic-key"}, nil
+			})
+			if err != nil {
+				t.Fatal(err)
+			}
+			a, _ := sessionAdmissions(t)
+			opened, openErr := s.Open(context.Background(), a, channel)
+			if openErr == nil || opened.ProviderSession != "" || opened.Ready || opened.Wire.Identity != (run.WireIdentity{}) || opened.Wire.Journal.Valid() || helpers != 0 || len(channel.sends) != 0 || len(channel.preparations) != 0 {
+				t.Fatalf("unexpected start evidence: %+v %v starts=%d helpers=%d", opened, openErr, starts, helpers)
+			}
+			uncertain := mode == "container-start-error"
+			if opened.Uncertain != uncertain || uncertain && (starts != 1 || len(channel.bindings) != 1 || !channel.bindings[0].Valid()) || !uncertain && (starts != 0 || len(channel.bindings) != 0) {
+				t.Fatalf("wrong certainty/binding: %+v starts=%d bindings=%+v", opened, starts, channel.bindings)
+			}
+			if _, retryErr := s.Open(context.Background(), a, channel); retryErr == nil {
+				t.Fatal("failed Open could be retried")
+			}
+			stopped, stopErr := s.Stop(context.Background(), run.StopRequest{Session: a.Plan.ID, Timeout: time.Second}, channel)
+			if stopped.Terminated == uncertain || (stopErr != nil) != uncertain || len(channel.stops) != 1 || channel.stops[0] != stopped {
+				t.Fatalf("wrong stop observation: %+v %v callbacks=%+v", stopped, stopErr, channel.stops)
+			}
+			if len(channel.steps) != 0 || len(channel.calls) != 0 || helpers != 0 {
+				t.Fatal("failed Open dispatched work or credential helper")
+			}
+		})
+	}
+}
+
 func TestDedicatedRuntimeLoginCopyCleanupAndUncertainty(t *testing.T) {
 	for _, mode := range []string{"observed-exit", "uncertain-stop", "cleanup-failure", "install-failure"} {
 		t.Run(mode, func(t *testing.T) {

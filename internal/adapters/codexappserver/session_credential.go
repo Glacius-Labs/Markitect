@@ -49,6 +49,7 @@ func (e *sessionEntry) credential(ctx context.Context, c RuntimeCredential, help
 	}
 	// Mark a possible installation before the helper runs: a partial helper
 	// failure may still leave an access token in the retained provider home.
+	e.runtimeAttempted = true
 	e.loginInstalled = true
 	write := []string{"/bin/sh", "-c", "mkdir -p /home/agent/.codex && umask 077 && rm -f /home/agent/.codex/auth.json && cat > /home/agent/.codex/auth.json"}
 	if err = helper(ctx, e.credentialSpec("issue"), write, bytes.NewReader(data), io.Discard); err != nil {

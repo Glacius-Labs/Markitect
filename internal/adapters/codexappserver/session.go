@@ -41,6 +41,7 @@ type sessionEntry struct {
 	decodeErr         error
 	secrets           [][]byte
 	loginInstalled    bool
+	runtimeAttempted  bool
 	providerAttempted bool
 	thread            ThreadID
 	turn              TurnID
@@ -287,6 +288,13 @@ func (s *Sessions) Open(ctx context.Context, a run.SessionAdmission, channel run
 	var transcript []byte
 	defer func() {
 		if err != nil {
+			if !e.runtimeAttempted {
+				// No helper or container operation was invoked. There is no
+				// provider identity or wire to bind; Stop can certify no activity.
+				out = run.SessionObservation{RecordMeta: e.meta(), Reason: "Open failed before any runtime operation"}
+				err = e.safe(err)
+				return
+			}
 			out = run.SessionObservation{RecordMeta: e.meta(), ProviderSession: run.ProviderSessionID(e.thread), Uncertain: true, Reason: "Open did not establish acknowledged provider identity"}
 			if len(transcript) > 0 {
 				out.Wire = e.wire(transcript)
@@ -307,6 +315,8 @@ func (s *Sessions) Open(ctx context.Context, a run.SessionAdmission, channel run
 	if err != nil {
 		return out, err
 	}
+	// Even a failed container creation/start can leave runtime effects.
+	e.runtimeAttempted = true
 	e.peer, err = s.start(ctx, sessionSpec(a.Plan, profile))
 	if err != nil {
 		return out, err
@@ -411,6 +421,10 @@ func (s *Sessions) Stop(ctx context.Context, request run.StopRequest, channel ru
 		return out, run.ErrObservationLimit
 	}
 	out = run.StopObservation{RecordMeta: e.meta(), Reason: "provider exit not established"}
+	if !e.runtimeAttempted {
+		out.Terminated = true
+		out.Reason = "no helper, container or provider operation was invoked"
+	}
 	if e.peer != nil {
 		stopCtx, cancel := context.WithTimeout(ctx, request.Timeout)
 		defer cancel()
