@@ -49,6 +49,21 @@ class DocumentationCheckerTests(unittest.TestCase):
             {"space%20name.md", "folder_(one).md", "target.md", "other.md"},
         )
 
+    def test_inline_links_require_adjacent_open_parenthesis(self) -> None:
+        generated_check = '- Related checks: ["project.markitect.example.org/v1alpha1","Check","","go-tests"] (declared; execution not observed)'
+        self.assertEqual(check_docs.extract_destinations(generated_check), [])
+
+        markdown = "[missing](missing.md)\n[space after opener](   other.md)\n"
+        self.assertEqual(
+            check_docs.extract_destinations(markdown),
+            [("missing.md", 1), ("other.md", 2)],
+        )
+        source = self.write("docs/index.md", markdown)
+        errors = self.check(source)
+        self.assertEqual(len(errors), 2, errors)
+        self.assertTrue(any("missing local target 'missing.md'" in error for error in errors), errors)
+        self.assertTrue(any("missing local target 'other.md'" in error for error in errors), errors)
+
     def test_code_comments_and_external_links_are_ignored(self) -> None:
         markdown = """`[inline](missing-inline.md)`
 
