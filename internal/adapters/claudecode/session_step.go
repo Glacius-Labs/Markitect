@@ -9,7 +9,6 @@ import (
 	"fmt"
 	"github.com/Glacius-Labs/Markitect/internal/agentd/frame"
 	"github.com/Glacius-Labs/Markitect/internal/run"
-	"strings"
 )
 
 type stepEvent struct {
@@ -29,7 +28,7 @@ func (s *Sessions) Step(ctx context.Context, a run.StepAdmission, channel run.Se
 	if e.stopped || e.peer == nil || !e.ready || e.step != "" || a.Session != e.plan || a.Plan.SessionBinding != e.plan.Binding() || a.Plan.ID == "" || a.Receipt.BatchID == "" || a.Invocation == "" || !a.Input.Valid() || a.Input.Ref() != a.Plan.Input || !a.OutputContract.Valid() || a.OutputContract.Ref() != a.Plan.OutputContract {
 		return out, ErrSession
 	}
-	if err = exploreContract(a.OutputContract); err != nil {
+	if _, err = run.DecodeStepContract(a.OutputContract); err != nil {
 		return out, err
 	}
 	e.step = a.Plan.ID
@@ -44,7 +43,7 @@ func (s *Sessions) Step(ctx context.Context, a run.StepAdmission, channel run.Se
 			err = errors.Join(e.safe(err), recordErr)
 		}
 	}()
-	prompt := "Perform exactly one admitted Markitect step. Return the requested report as one JSON object in your final answer. The Host will assess it separately.\nExact input bytes:\n" + string(a.Input.Bytes()) + "\nExact output contract bytes (a field catalogue, not JSON Schema):\n" + string(a.OutputContract.Bytes())
+	prompt := "Perform exactly one admitted Markitect step. Submit the step outcome only through the admitted Host tools. Your final answer carries no outcome.\nExact input bytes:\n" + string(a.Input.Bytes()) + "\nExact output contract bytes (Host tool outcomes, not JSON Schema):\n" + string(a.OutputContract.Bytes())
 	raw, err := e.codec.EncodeUser(UserInput{Text: prompt})
 	if err != nil {
 		return out, err
@@ -159,16 +158,12 @@ func (s *Sessions) Step(ctx context.Context, a run.StepAdmission, channel run.Se
 				if len(waiting) > 0 {
 					return out, ErrIncomplete
 				}
-				out = run.StepObservation{RecordMeta: e.meta(), Step: e.step, ProviderStep: e.turn, Wire: e.wire(pending), Terminal: true, Reason: "Claude terminal result; adapter handle, no native turn ID; proposal requires Host assessment"}
-				var projectionErr error
-				if result.Subtype == ResultSuccess && !result.IsError {
-					out.Proposed, projectionErr = projectExplore(result.Text, e)
-				}
+				out = run.StepObservation{RecordMeta: e.meta(), Step: e.step, ProviderStep: e.turn, Wire: e.wire(pending), Terminal: true, Reason: "Claude terminal result; adapter handle, no native turn ID; outcomes only through Host tools"}
 				e.observed, err = channel.ObserveStep(ctx, out)
 				if err == nil && e.observed.BatchID == "" {
 					err = run.ErrObservationLimit
 				}
-				return out, errors.Join(err, projectionErr)
+				return out, err
 			default:
 				return out, ErrUnsupported
 			}
@@ -192,6 +187,9 @@ func (e *sessionEntry) answerTool(ctx context.Context, channel run.SessionIO, ca
 	if err != nil {
 		return err
 	}
+	if !bytes.Equal(e.redact(input), input) {
+		return ErrSession
+	}
 	if int64(len(input)) > e.plan.MaxWireBytes {
 		return ErrLimit
 	}
@@ -202,7 +200,7 @@ func (e *sessionEntry) answerTool(ctx context.Context, channel run.SessionIO, ca
 	// Validate the Host's closed recorded representation before returning its
 	// exact bytes in MCP text. A refusal is a tool error, never an accepted reply.
 	encoded, err := json.Marshal(result.Outcome)
-	if err != nil || !bytes.Equal(encoded, result.Output.Bytes()) {
+	if err != nil || !bytes.Equal(encoded, result.Output.Bytes()) || !bytes.Equal(e.redact(encoded), encoded) {
 		return ErrProtocol
 	}
 	var mcp struct {
@@ -230,44 +228,4 @@ func (e *sessionEntry) answerTool(ctx context.Context, channel run.SessionIO, ca
 		return err
 	}
 	return e.send(ctx, channel, e.step, providerID, wire, func() error { return e.peer.Reply(reply) })
-}
-
-func exploreContract(p run.Payload) error {
-	if p.Ref().MediaType != "application/vnd.markitect.explore-contract+json" || p.Ref().Encoding != "utf-8" {
-		return fmt.Errorf("%w: unsupported output contract", ErrSession)
-	}
-	var contract struct {
-		Format           string
-		Fields           map[string]string
-		AdditionalFields bool
-	}
-	if strictValue(p.Bytes(), &contract) != nil || contract.Format != "markitect.explore-report/v1" || contract.AdditionalFields {
-		return ErrSession
-	}
-	// Require the supported catalogue's field types, without interpreting it as
-	// provider JSON Schema or accepting a future changed contract silently.
-	expected := map[string]string{"Version": "integer=1", "Assignment": "string", "Run": "string", "RunBasis": "ContentID", "Manager": "string", "Parent": "string|null", "HandoffID": "string", "Session": "SessionID", "SessionBinding": "ContentID", "Step": "StepID", "InputContentID": "ContentID", "OperationContentID": "ContentID", "ContextContentID": "ContentID", "Summary": "nonblank-string", "ProposedChanges": "string[]", "Prerequisites": "string[]", "Uncertainties": "string[]", "Questions": "string[]"}
-	if len(contract.Fields) != len(expected) {
-		return ErrSession
-	}
-	for k, v := range expected {
-		if contract.Fields[k] != v {
-			return ErrSession
-		}
-	}
-	return nil
-}
-func projectExplore(text string, e *sessionEntry) (run.Payload, error) {
-	if strings.TrimSpace(text) == "" || int64(len(text)) > e.plan.MaxWireBytes || !bytes.Equal(e.redact([]byte(text)), []byte(text)) {
-		return run.Payload{}, ErrSession
-	}
-	var report run.ExploreReport
-	if strictValue([]byte(text), &report) != nil {
-		return run.Payload{}, ErrSession
-	}
-	proposal, err := run.NewExploreReportPayload(report)
-	if err != nil || !bytes.Equal(e.redact(proposal.Bytes()), proposal.Bytes()) {
-		return run.Payload{}, ErrSession
-	}
-	return proposal, nil
 }
