@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"maps"
 	"slices"
+	"time"
 
 	"github.com/Glacius-Labs/Markitect/internal/snapshot"
 )
@@ -204,6 +205,17 @@ func (c *Coordinator) ReviewVerdict(manager string, input Payload) (ReviewVerdic
 		return "", ErrInvalid
 	}
 	return c.state.verdictOf(t, in), nil
+}
+
+// StepTimeout is the bound step timeout of a Manager's steps; reviews of its
+// task use it too.
+func (c *Coordinator) StepTimeout(manager string) time.Duration {
+	for _, m := range c.state.managerBasis.Settings {
+		if m.Package == manager {
+			return time.Duration(m.StepTimeout.Value)
+		}
+	}
+	return 0
 }
 
 func (s stateValue) rejectionLimit(manager string) int {

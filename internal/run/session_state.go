@@ -478,7 +478,8 @@ func (s *stateValue) sessionReceipt(c Command, receipt AppendReceipt) {
 }
 
 func (s *stateValue) reserve(r Reservation) error {
-	if s.current.State != Running {
+	// Verifying admits only the aggregate's required checks.
+	if s.current.State != Running && (s.current.State != Verifying || r.Kind != ProjectCheck) {
 		return ErrState
 	}
 	if _, exists := s.invocations[r.ID]; exists {

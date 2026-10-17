@@ -218,9 +218,8 @@ harvest the complete observed tree, close it, and run one fixed check on a
 disposable copy. They carry no ownership or review semantics; a check passes
 only on an observed zero exit that neither timed out nor is uncertain.
 
-Final evidence, the work after Verifying, Publishing and Applied/NoChange are
-not implemented yet. The concrete Session, Workspace, Check, journal and
-publication adapters live outside this package. The full contracts remain in
+The concrete Session, Workspace, Check, journal and publication adapters live
+outside this package. The full contracts remain in
 the design documents.
 
 ## Manager tasks
@@ -293,3 +292,22 @@ satisfies (T12, the run finishes Incomplete instead), reopening done tasks
 issues carried into a continuation run (I5), a fresh conversation with a
 handoff when resume fails (S3), session rotation at `maxSessionSteps`, and the
 parent's assessment after two rejections.
+
+## Verification and publication
+
+While the run is Verifying, `PrepareCheckCommand` admits one required check on
+the exact aggregate as assessment work, and `ObserveCheckCommand` records its
+receipt and settles its reservation; an uncertain receipt moves the run to
+Reconciling. A check passes on an observed zero exit of the same image and tree.
+`Engine.Verify` runs the required checks and finishes the run Incomplete when
+one fails. `VerifyRunCommand` is the final evidence check: every task is done,
+no blocking issue is open, nothing is running and the named checks passed on
+the aggregate; it moves the run to Publishing.
+
+`PreparePublicationCommand` records the change set before the first write, and
+`PublishRunCommand` records the publisher's receipt. Applied requires a
+non-empty change set and NoChange an empty one; stale and failed finish the run
+as such, and a partial or unknown publication moves it to Reconciling. These
+are the only commands that finish a run Applied or NoChange. The reducer tracks
+the aggregate's tree identity, so each check and the verification are bound to
+the exact aggregate.

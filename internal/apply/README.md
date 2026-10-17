@@ -34,6 +34,34 @@ explicit Host assertion until a physical adapter grounds it against the selected
 acquisition location. Store identity is durably assigned and registered by that
 adapter; paths and source hashes cannot invent it.
 
-This package supplies the executable consumer contract and controlled tests. A
-physical Control/Journal adapter, SQL durability, execution and guarded publication
-are still absent. Passing source checks establishes none of those capabilities.
+This package supplies the executable consumer contract and controlled tests.
+The physical Control/Journal, session, workspace, check and publication adapters
+live outside it. Passing source checks establishes none of their capabilities.
+
+## Execution
+
+`ControlledRun.Execute` runs the bound basis through the core with the
+adapters in `ExecutionPorts`, which the Host composes: one `run.Sessions` for
+both roles, `run.Workspaces`, `run.Checks`, a `Publisher`, the session profile
+of each Manager's role, the request of each configured check, a clock and the
+engine limits. `RoleProfile` returns the prepared Agent profile a role runs
+with, from which the Host builds its adapter's session profile. Apply chooses no
+provider, credential or image.
+
+When no run is active, Execute prepares and starts one: the first run opens a
+new assignment, and a later run continues it only on a changed basis or a
+recorded extension. The Managers then work until the root is done
+(`run.Engine.Run`). In Verifying, every configured check with `requiredBy` runs
+on the aggregate; a failing check finishes the run Incomplete. The publisher
+then preflights the publication: the aggregate's file changes against the
+captured source, plus every registry shard whose records changed, regenerated
+from the aggregate's registry. A regenerated shard keeps the captured order of
+its remaining records and lists new ones after them. A stale source finishes
+the run Stale. The final evidence check moves the run to Publishing; the change
+set is journaled before the first write, and the publication receipt finishes
+the run Applied, NoChange, Stale or Failed, or leaves it to reconciliation when
+the write was partial or its result is unknown.
+
+Execute returns when the run finished, waits for the owner or needs
+reconciliation. Resuming an interrupted publication and the owner's answers are
+not implemented yet.

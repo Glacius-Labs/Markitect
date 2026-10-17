@@ -63,6 +63,8 @@ type ControlSession interface {
 // Journal checks control before each operation; its adapter remains responsible
 // for atomic fencing. Do not retain/use an alternate unfenced journal.
 type ControlledRun struct {
+	prepared    CapturedSettingsResult
+	facts       RunBindingFacts
 	session     ControlSession
 	binding     ControlBinding
 	basis       run.Binding

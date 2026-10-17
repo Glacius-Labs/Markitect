@@ -310,17 +310,22 @@ func newHarnessWith(t *testing.T, inputs run.StepPreparation, script agentScript
 
 func (h *harness) newEngine(c *run.Coordinator) *run.Engine {
 	h.t.Helper()
+	return h.newEngineWith(c, nil)
+}
+
+func (h *harness) newEngineWith(c *run.Coordinator, checks run.Checks) *run.Engine {
+	h.t.Helper()
 	profile := payload(h.t, `{"profile":"synthetic recorded metadata"}`)
 	var journal run.Journal = h.j
 	if h.journal != nil {
 		journal = h.journal
 	}
-	e, err := run.NewEngine(context.Background(), run.EngineConfig{Coordinator: c, Journal: journal, Sessions: h.sessions, Workspaces: h.ws, Preparation: h.inputs,
+	e, err := run.NewEngine(context.Background(), run.EngineConfig{Coordinator: c, Journal: journal, Sessions: h.sessions, Workspaces: h.ws, Checks: checks, Preparation: h.inputs,
 		Profile: func(string, string) (run.SessionProfile, error) {
 			return run.SessionProfile{ImageID: testImage, CredentialRef: "credential-ref", Profile: profile, MaxWireBytes: 1 << 20}, nil
 		},
 		Clock: func() time.Time { h.clock = h.clock.Add(time.Millisecond); return h.clock },
-		Limits: run.EngineLimits{StartTimeout: time.Second, StepTimeout: time.Minute, StopTimeout: time.Second, HarvestEntries: 1000, HarvestBytes: 1 << 20,
+		Limits: run.EngineLimits{StartTimeout: time.Second, StopTimeout: time.Second, HarvestEntries: 1000, HarvestBytes: 1 << 20,
 			Record: realization.CandidateRecordLimits{EncodedBytes: 1 << 20, FileBytes: 1 << 20, ManifestEntries: 1000, MetadataRows: 10000}}})
 	if err != nil {
 		h.t.Fatal(err)

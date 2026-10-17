@@ -54,8 +54,14 @@ type stateValue struct {
 	issueOrder     []string
 	// aggregateVersion counts the deliveries composed into the run's
 	// aggregate (core rule D2); aggregateTree is its tree identity.
-	aggregateVersion uint64
-	aggregateTree    snapshot.TreeID
+	aggregateVersion   uint64
+	aggregateTree      snapshot.TreeID
+	checks             map[CheckID]checkValue
+	checkOrder         []CheckID
+	checkInvocations   map[CheckID]string
+	verification       VerificationRecord
+	publication        PublicationRecord
+	publicationChanges int
 }
 
 // Coordinator owns one repository's confirmed projection and at most one
@@ -160,6 +166,9 @@ func (c *Coordinator) Propose(command Command) (Proposal, error) {
 	next.tasks = maps.Clone(c.state.tasks)
 	next.issues = maps.Clone(c.state.issues)
 	next.issueOrder = slices.Clone(c.state.issueOrder)
+	next.checks = maps.Clone(c.state.checks)
+	next.checkOrder = slices.Clone(c.state.checkOrder)
+	next.checkInvocations = maps.Clone(c.state.checkInvocations)
 	if err := next.apply(command); err != nil {
 		return Proposal{}, err
 	}
@@ -167,7 +176,7 @@ func (c *Coordinator) Propose(command Command) (Proposal, error) {
 	if command.Kind == PrepareRun && (c.state.assignment == "" || c.state.closure.CommandID != "") {
 		events = append(events, Event{ID: fmt.Sprintf("%x", sha256.Sum256(append(data, byte(0)))), Kind: "assignment.created", Body: command})
 	}
-	if command.Kind == PrepareSession || command.Kind == PrepareStep {
+	if command.Kind == PrepareSession || command.Kind == PrepareStep || command.Kind == PrepareCheck {
 		events = append(events, Event{ID: fmt.Sprintf("%x", sha256.Sum256(append(data, byte(2)))), Kind: ReserveInvocation, Body: command})
 	}
 	events = append(events, Event{ID: fmt.Sprintf("%x", sha256.Sum256(append(data, byte(1)))), Kind: eventTag(command.Kind), Body: command})
@@ -266,6 +275,10 @@ func (s *stateValue) apply(c Command) error {
 			return ErrState
 		}
 		return s.concludeStep(c)
+	}
+	switch c.Kind {
+	case PrepareCheck, ObserveCheck, VerifyRun, PreparePublication, PublishRun:
+		return s.applyVerification(c)
 	}
 	r := s.current
 	switch c.Kind {

@@ -160,6 +160,14 @@ artifacts:
     form: test
     realizes: [product/run/confirmed-run-history]
     why: Checks that steps the Host cannot finish are stopped, settled or released and concluded as failed.
+  - path: "internal/run/verify.go"
+    form: code
+    realizes: [product/run/confirmed-run-history]
+    why: Reduces required checks, the final evidence check and the recorded publication of a run.
+  - path: "internal/run/verify_test.go"
+    form: test
+    realizes: [product/run/confirmed-run-history]
+    why: Checks verification on the exact aggregate and every publication outcome.
   - path: "internal/run/task_test.go"
     form: test
     realizes: [product/run/confirmed-run-history]

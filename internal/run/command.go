@@ -2,7 +2,10 @@ package run
 
 import (
 	"encoding/json"
+	"slices"
 	"time"
+
+	"github.com/Glacius-Labs/Markitect/internal/snapshot"
 )
 
 type State string
@@ -57,12 +60,15 @@ type Command struct {
 	Elapsed                   time.Duration
 	Reason, NextActor         string
 	Outcome                   Outcome
-	Caps                      Capacity         `json:",omitzero"`
-	OwnerInput                string           `json:",omitempty"`
-	Quiescence                string           `json:",omitempty"`
-	Session                   SessionRecord    `json:",omitzero"`
-	Manager                   ManagerRecord    `json:",omitzero"`
-	Conclusion                ConclusionRecord `json:",omitzero"`
+	Caps                      Capacity           `json:",omitzero"`
+	OwnerInput                string             `json:",omitempty"`
+	Quiescence                string             `json:",omitempty"`
+	Session                   SessionRecord      `json:",omitzero"`
+	Manager                   ManagerRecord      `json:",omitzero"`
+	Conclusion                ConclusionRecord   `json:",omitzero"`
+	Check                     CheckRecord        `json:",omitzero"`
+	Verification              VerificationRecord `json:",omitzero"`
+	Publication               PublicationRecord  `json:",omitzero"`
 	managerProof              [32]byte
 	replaying                 bool
 	binding                   Binding
@@ -155,6 +161,39 @@ func (c Command) validate() error {
 			return err
 		}
 		allowed.Conclusion = c.Conclusion
+	case PrepareCheck:
+		k := c.Check
+		if !identifier(string(k.ID)) || !identifier(k.Name) || !k.Request.Valid() || k.Tree == (snapshot.TreeID{}) || k.Receipt != (BlobRef{}) || !c.Reservation.valid() || c.Reservation.Kind != ProjectCheck {
+			return ErrInvalid
+		}
+		allowed.Check = k
+		allowed.Reservation = c.Reservation
+	case ObserveCheck:
+		k := c.Check
+		if !identifier(string(k.ID)) || !k.Receipt.Valid() || k.Name != "" || k.Request != (BlobRef{}) || k.Tree != (snapshot.TreeID{}) || c.Elapsed < 0 || !text(c.Reason) {
+			return ErrInvalid
+		}
+		allowed.Check = k
+		allowed.Elapsed = c.Elapsed
+		allowed.Reason = c.Reason
+	case VerifyRun:
+		if c.Verification.Tree == (snapshot.TreeID{}) || slices.ContainsFunc(c.Verification.Checks, func(id CheckID) bool { return !identifier(string(id)) }) {
+			return ErrInvalid
+		}
+		allowed.Verification = c.Verification
+	case PreparePublication:
+		p := c.Publication
+		if !identifier(p.ID) || !p.Changes.Valid() || p.Receipt != (BlobRef{}) {
+			return ErrInvalid
+		}
+		allowed.Publication = p
+	case PublishRun:
+		p := c.Publication
+		if !identifier(p.ID) || !p.Receipt.Valid() || p.Changes != (BlobRef{}) || p.Aggregate != 0 || !boundedInput(c.Reason) {
+			return ErrInvalid
+		}
+		allowed.Publication = p
+		allowed.Reason = c.Reason
 	default:
 		return ErrInvalid
 	}
@@ -169,5 +208,7 @@ func (c Command) validate() error {
 // payloadRefs lists every payload a command references, which the journal
 // retains before acknowledging its batch.
 func (c Command) payloadRefs() []BlobRef {
-	return append(c.Session.payloadRefs(), c.Conclusion.payloadRefs()...)
+	refs := append(c.Session.payloadRefs(), c.Conclusion.payloadRefs()...)
+	refs = append(refs, c.Check.payloadRefs()...)
+	return append(refs, c.Publication.payloadRefs()...)
 }

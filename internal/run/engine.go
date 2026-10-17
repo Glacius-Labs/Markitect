@@ -26,12 +26,13 @@ type SessionProfile struct {
 	MaxWireBytes           int64
 }
 
-// EngineLimits bound one step's invocations and observations.
+// EngineLimits bound one step's invocations and observations. A step's own
+// timeout is its Manager's bound stepTimeout.
 type EngineLimits struct {
-	StartTimeout, StepTimeout, StopTimeout time.Duration
-	HarvestEntries                         int
-	HarvestBytes                           int64
-	Record                                 realization.CandidateRecordLimits
+	StartTimeout, StopTimeout time.Duration
+	HarvestEntries            int
+	HarvestBytes              int64
+	Record                    realization.CandidateRecordLimits
 }
 
 // EngineConfig supplies everything the engine needs from the application.
@@ -40,6 +41,7 @@ type EngineConfig struct {
 	Journal     Journal
 	Sessions    Sessions
 	Workspaces  Workspaces
+	Checks      Checks
 	Preparation StepPreparation
 	Profile     func(manager, role string) (SessionProfile, error)
 	Clock       func() time.Time
@@ -197,6 +199,59 @@ func (e *Engine) Run(ctx context.Context) error {
 	return e.finish(ctx, "no step is admissible and the remaining waits cannot be satisfied")
 }
 
+// RequiredCheck is one configured check that the aggregate must pass before
+// publication. Its request's tree is the aggregate's.
+type RequiredCheck struct {
+	Name    string
+	Request CheckRequest
+}
+
+// Verify runs the required checks on the verified aggregate and returns the
+// passing ones, which the final evidence check names. A failing check finishes
+// the run Incomplete with its receipt retained; correcting it through the
+// Managers is not supported yet.
+func (e *Engine) Verify(ctx context.Context, required []RequiredCheck) ([]CheckID, error) {
+	c := e.cfg.Coordinator
+	if c.Current().State != Verifying || len(required) > 0 && e.cfg.Checks == nil {
+		return nil, ErrState
+	}
+	var passed []CheckID
+	for _, check := range required {
+		req := check.Request
+		req.Tree = e.aggregate().Tree()
+		cmd, err := c.PrepareCheckCommand(e.meta("prepare-check"), check.Name, req, Reservation{ID: "check-" + string(req.ID), Kind: ProjectCheck, Purpose: Assessment, Maximum: req.Timeout})
+		if err != nil {
+			return nil, err
+		}
+		if err := e.commit(ctx, cmd); err != nil {
+			return nil, err
+		}
+		began := e.cfg.Clock()
+		receipt, runErr := e.cfg.Checks.Run(ctx, req)
+		if receipt.ID == "" {
+			receipt.ID = req.ID
+		}
+		if runErr != nil && receipt.Reason == "" {
+			receipt.Reason = runErr.Error()
+		}
+		observed, err := c.ObserveCheckCommand(e.meta("observe-check"), receipt, e.cfg.Clock().Sub(began))
+		if err != nil {
+			return nil, err
+		}
+		if err := e.commit(ctx, observed); err != nil {
+			return nil, err
+		}
+		if receipt.Uncertain {
+			return nil, errors.Join(errStep, runErr)
+		}
+		if !receipt.Passed(req) {
+			return nil, e.finish(ctx, "the required check "+check.Name+" did not pass on the aggregate")
+		}
+		passed = append(passed, req.ID)
+	}
+	return passed, nil
+}
+
 func (e *Engine) finish(ctx context.Context, reason string) error {
 	c := e.cfg.Coordinator
 	return e.commit(ctx, Command{ID: e.meta("finish").ID, ObservedAt: e.cfg.Clock().UTC(), Kind: FinishRun, Assignment: c.Current().Assignment, Run: c.Current().ID, Outcome: Incomplete, Reason: reason})
@@ -329,7 +384,7 @@ func (e *Engine) drive(ctx context.Context, s *stepRun, purpose Purpose, workspa
 	}
 	s.stepID = StepID(e.id("step", s.task))
 	s.stepInvoke = "step-" + string(s.stepID)
-	prepStep, err := c.PrepareTaskStepCommand(e.meta("prepare-step"), StepPlan{Session: s.session, ID: s.stepID, SessionBinding: s.plan.Binding()}, Reservation{ID: s.stepInvoke, Kind: AgentStep, Purpose: purpose, Maximum: e.cfg.Limits.StepTimeout},
+	prepStep, err := c.PrepareTaskStepCommand(e.meta("prepare-step"), StepPlan{Session: s.session, ID: s.stepID, SessionBinding: s.plan.Binding()}, Reservation{ID: s.stepInvoke, Kind: AgentStep, Purpose: purpose, Maximum: c.StepTimeout(s.manager)},
 		e.cfg.Preparation, StepFacts{Tree: s.version.tree, Registry: s.version.registry, Quoted: quoted})
 	if err != nil {
 		return err
@@ -344,7 +399,16 @@ func (e *Engine) drive(ctx context.Context, s *stepRun, purpose Purpose, workspa
 	}
 	s.stepBegan = e.cfg.Clock()
 	s.dispatched = true
-	observed, err := e.cfg.Sessions.Step(ctx, stepAdmission, channel)
+	// The Host ends the step before its reservation runs out, so that the
+	// adapter's cleanup stays inside it; the step's records are written even
+	// after its deadline (core rule S2).
+	deadline := c.StepTimeout(s.manager) - e.cfg.Limits.StopTimeout
+	if deadline <= 0 {
+		deadline = c.StepTimeout(s.manager) / 2
+	}
+	stepCtx, cancel := context.WithTimeout(ctx, deadline)
+	observed, err := e.cfg.Sessions.Step(stepCtx, stepAdmission, detached{channel})
+	cancel()
 	s.stepEnded = e.cfg.Clock()
 	if err != nil || observed.Uncertain || !observed.Terminal {
 		return errors.Join(errStep, err)
@@ -362,6 +426,32 @@ func (e *Engine) drive(ctx context.Context, s *stepRun, purpose Purpose, workspa
 		return errors.Join(errStep, err)
 	}
 	return e.conclude(ctx, s, harvest.Tree)
+}
+
+// detached records an adapter's observations even after the step's deadline
+// cancelled its provider work.
+type detached struct{ io SessionIO }
+
+func (d detached) Ready(ctx context.Context, r SessionReadiness) (AppendReceipt, error) {
+	return d.io.Ready(context.WithoutCancel(ctx), r)
+}
+func (d detached) Bind(ctx context.Context, o SessionObservation) (AppendReceipt, error) {
+	return d.io.Bind(context.WithoutCancel(ctx), o)
+}
+func (d detached) PrepareSend(ctx context.Context, p TransportPreparation) (SendPermit, error) {
+	return d.io.PrepareSend(context.WithoutCancel(ctx), p)
+}
+func (d detached) ObserveSend(ctx context.Context, o TransportObservation) (AppendReceipt, error) {
+	return d.io.ObserveSend(context.WithoutCancel(ctx), o)
+}
+func (d detached) Call(ctx context.Context, call ToolCall) (ToolResult, error) {
+	return d.io.Call(context.WithoutCancel(ctx), call)
+}
+func (d detached) ObserveStep(ctx context.Context, o StepObservation) (AppendReceipt, error) {
+	return d.io.ObserveStep(context.WithoutCancel(ctx), o)
+}
+func (d detached) ObserveStop(ctx context.Context, o StopObservation) (AppendReceipt, error) {
+	return d.io.ObserveStop(context.WithoutCancel(ctx), o)
 }
 
 func (e *Engine) stop(ctx context.Context, sid SessionID, channel SessionIO, reason string) error {

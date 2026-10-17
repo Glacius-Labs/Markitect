@@ -141,6 +141,8 @@ func (s *stateValue) prepareTasks(b Binding, runID string) error {
 	s.issues = nil
 	s.issueOrder = nil
 	s.aggregateVersion, s.aggregateTree = 0, snapshot.TreeID{}
+	s.checks, s.checkOrder, s.checkInvocations = nil, nil, nil
+	s.verification, s.publication, s.publicationChanges = VerificationRecord{}, PublicationRecord{}, 0
 	s.managerBasis = bindingWire{}
 	if b.version != 3 {
 		return nil
@@ -157,6 +159,7 @@ func (s *stateValue) prepareTasks(b Binding, runID string) error {
 	s.aggregateTree = tree
 	s.tasks = map[string]taskValue{}
 	s.issues = map[string]Issue{}
+	s.checks, s.checkInvocations = map[CheckID]checkValue{}, map[CheckID]string{}
 	for _, m := range w.Managers {
 		id := fmt.Sprintf("task-%x", sha256.Sum256([]byte(runID+":"+b.Ref().ContentID.String()+":"+m.Package)))
 		s.tasks[m.Package] = taskValue{Slot: m, ID: id, State: TaskQueued, Since: s.revision}
@@ -890,8 +893,8 @@ func (c *Coordinator) freshTaskAdmission(cmd Command, digest snapshot.ContentID)
 	switch cmd.Kind {
 	case ReserveInvocation:
 		return ErrState // No unscoped executable consumer exists.
-	case PrepareSession, PrepareStep, TaskConclude:
-		if c.state.basisVersion != 3 || cmd.Kind != TaskConclude && cmd.Manager == (ManagerRecord{}) || cmd.managerProof != digest {
+	case PrepareSession, PrepareStep, TaskConclude, PrepareCheck:
+		if c.state.basisVersion != 3 || (cmd.Kind == PrepareSession || cmd.Kind == PrepareStep) && cmd.Manager == (ManagerRecord{}) || cmd.managerProof != digest {
 			return ErrState
 		}
 	case PrepareTransport:
