@@ -88,7 +88,7 @@ func TestRenderThreeViewsAndOriginalInstructionFrames(t *testing.T) {
 	selection, settings, input := renderFixture(t, "a", organization.ManagerView)
 	input.OwnArtifacts = []organization.ArtifactFact{renderArtifact(t, "a")}
 	result := requireRendered(t, selection, settings, input)
-	if result.Package() != "a" || result.View() != organization.ManagerView || result.Template().ID != "markitect/context/manager" || result.Template().Version != "2" {
+	if result.Package() != "a" || result.View() != organization.ManagerView || result.Template().ID != "markitect/context/manager" || result.Template().Version != "3" {
 		t.Fatal("missing product template/view identity")
 	}
 	if !strings.Contains(string(result.Bytes()), `"RejectionLimit"`) || strings.Contains(string(result.Bytes()), `"ReviewRounds"`) {
