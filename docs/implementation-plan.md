@@ -78,18 +78,18 @@ These rules implement the owner's 17 October 2026 handoff instruction and replac
 
 ### Session and process contracts
 
-Keep the RUN Session protocol provisional. A separately commissioned real Codex handshake is testing experimental `dynamicTools`; assess its result before fixing that protocol or starting a duplicate experiment. Static metadata does not establish runtime support.
+The real handshake ran on 17 October 2026 ([record](validation/runtime-handshake-20261017.md)). Since [DEC-037](concepts/register.md#dec-037-agent-sessions-and-checks-run-in-linux-containers), every Agent session and project check runs in its own Linux container, and the [rebuild plan](design/canonical-model/manager-apply-rebuild-plan.md#container-runtime) owns the runtime and the session mapping. RUN fixes the Session port against that mapping: Host tools reach the provider over MCP through `markitect-agentd`, and Codex App Server and Claude Code are the two adapters. Codex dynamic tools are not used.
 
-Carry these existing runtime lessons and their failure tests into the new Process/Host boundaries, without restoring the old runtime:
+The earlier runtime lessons move into the container runtime:
 
-| Lesson | Existing source |
+| Lesson | Treatment |
 | --- | --- |
-| Terminate the whole process tree on timeout/cancellation, using a Windows Job Object | [caeb57c5](https://github.com/Glacius-Labs/Markitect/commit/caeb57c5cca4ff0e27b0f821590a82d5d26dbd94) |
-| Require the exact configured Codex CLI version | [cbe21140](https://github.com/Glacius-Labs/Markitect/commit/cbe211404df4455d7fa26897857757cf38ec1a15) |
-| Preserve a visible CLI-rejection diagnostic, including for a large prompt | [c1d4ba6c](https://github.com/Glacius-Labs/Markitect/commit/c1d4ba6c30aeeeee7f3489476aa40684d67add56) |
-| Preserve Windows short-name/alias guards at the actual file-approval and guarded-write boundaries | [a726fce4](https://github.com/Glacius-Labs/Markitect/commit/a726fce45e3565513a6f9e13b7a14ec4314af1a8), [837f137e](https://github.com/Glacius-Labs/Markitect/commit/837f137e4f445428a9707aa90d7d9770983f5cd7) |
+| Terminate the whole process tree on timeout or cancellation ([caeb57c5](https://github.com/Glacius-Labs/Markitect/commit/caeb57c5cca4ff0e27b0f821590a82d5d26dbd94)) | agentd signals the provider's process group, and stopping the container ends every remaining process. Keep a child and grandchild termination test at agentd. No Windows Job Object. |
+| Require the exact configured CLI version ([cbe21140](https://github.com/Glacius-Labs/Markitect/commit/cbe211404df4455d7fa26897857757cf38ec1a15)) | The image pins the CLI versions; the profile binds the image ID and the versions it records, and a mismatch refuses the profile. |
+| Keep a CLI rejection visible, including for a large prompt ([c1d4ba6c](https://github.com/Glacius-Labs/Markitect/commit/c1d4ba6c30aeeeee7f3489476aa40684d67add56)) | agentd forwards the provider's standard error and exit status, so a refused start reaches the Host with its diagnostic. |
+| Guard Windows short names and aliases ([a726fce4](https://github.com/Glacius-Labs/Markitect/commit/a726fce45e3565513a6f9e13b7a14ec4314af1a8), [837f137e](https://github.com/Glacius-Labs/Markitect/commit/837f137e4f445428a9707aa90d7d9770983f5cd7)) | Sessions never see host paths. The guards stay where the Host touches the owner's repository: acquisition and guarded publication in `gitrepo`. |
 
-The Process adapter owns process lifetime and observations; it does not acquire file-write authority. Port the concrete failure cases to their current owners and use owned helper processes for tests. Real provider/Apply execution still needs its separate finite authority.
+APPLY-RUNTIME builds the container runtime below the session port; APPLY-AGENT builds the two adapters on top of it. Real provider and Apply execution still needs separate finite authority.
 
 ## Implementation sequence
 
