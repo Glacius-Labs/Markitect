@@ -58,11 +58,19 @@ If the responsible area is unknown, the receiving parent uses explicit facts or 
 
 ## Sessions, integration and observation
 
-Managers are message-driven sessions. Known sessions can continue only on current bound inputs and workspace; otherwise an explicitly related replacement receives recorded context. Independent reviewers start fresh. Eager or lazy physical startup does not change mandatory participation. Uncertain activity blocks handoff; no automatic resend repairs a lost response.
+Managers act through message-driven execution sessions and explicitly identified conversations. Steps bind current workspace versions; a supported, quiescent basis advance preserves the conversation instead of automatically replacing it. A changed access plan needs a new execution environment, with proven conversation continuation or a recorded fresh-conversation handoff. Independent reviewers start fresh. Eager or lazy physical startup does not change mandatory participation. Uncertain activity blocks handoff; no automatic resend repairs a lost response.
 
 Parents begin with direct-child summaries and evidence. Targeted reads remain possible when necessary; they do not receive every descendant transcript by default. The Host records supplied messages, context, observed effects and exact candidate transitions. Metrics derive from those records: waits, requests between areas, correction rounds and integration findings can reveal recurring coordination costs. Metrics do not automatically reorganize Packages or prove benefit.
 
 Host composition preserves exact bases and ownership. A parent can edit its own integration artifacts, never a child's files. Corrections return through the tree to the owner. Changed assumptions or content require renewed affected assessment, and unknown consequences broaden review. An unresolved circular wait or model decision becomes visible incomplete work rather than an endless message loop.
+
+## Consuming a delivery without losing local work
+
+Suppose lending has working basis B0 and its own unfinished changes D when a Host-accepted catalog delivery becomes available. Availability records an input; it does not edit lending's workspace during its current step. At an observed quiescent boundary the Host retains B0 and D, establishes the exact composition with the catalog delivery, and records the resulting basis B1 and preserved own work. If inputs do not share a proven composable base or an effect overlaps, retain D and request owned correction; never silently rebase, discard or accept it.
+
+Lending then receives the current version, the changed catalog interface, its preserved changes and the required reassessment in its continuing conversation. The next step binds that version; an old delayed tool request cannot write to it. The resulting review candidate is frozen separately. Catalog's later completion work likewise uses an explicitly admitted basis before its candidate can compose with lending's; neither conversation continuity nor filename separation establishes base equality.
+
+A replacement catalog version is not automatically inserted everywhere. Known blocking findings against a consumed version block the affected work immediately; a deliberate adoption of a new version changes the bound inputs and requires current assessment. A retained old approval cannot authorize the changed aggregate. If materialization is interrupted, no further lending step starts until journal and physical workspace observations establish the actual before/after state. Unknown state remains blocked, without replaying the update blindly.
 
 ## Concrete refusal cases
 

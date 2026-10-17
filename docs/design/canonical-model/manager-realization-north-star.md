@@ -69,6 +69,7 @@ Further extensions recorded for after the two-Apply demonstration:
 | Scenario Definitions | Owner-authored examples with structured inputs and outputs in the model, which tests must demonstrably cover. | [ENH-003](../../concepts/register.md#enh-003-test-to-statement-binding-and-test-review) |
 | Richer teams | The team variants above, perspectives and four eyes. | [ENH-006](../../concepts/register.md#enh-006-configurable-teams-for-perspectives-and-four-eyes) |
 | Parallel writers | Bounded concurrency on the same ownership and reservation rules. | |
+| Coordination hot paths | A later view of recurring waits, cross-area requests and correction/integration costs, derived from the already required [coordination account](manager-apply-concept.md#reports-and-execution-history). This does not defer basic metrics, add a second ledger or automatically reorganize Managers. | [Owner confirmation](../../concepts/sources/manager-process-clarification-20261017.md#working-bases-and-session-continuity) |
 | Kind guidance | Operational task and review recipes keyed by resolved Kind identity, adding no project rules and granting no execution rights. | |
 | Model operations | Optimizer, cleanup, bughunt and custom commands as listed above. | [DEC-026](../../concepts/register.md#dec-026-apply-comes-first-and-changes-only-artifacts) |
 | Existing-project adoption | An operation that drafts a model and a registry proposal from existing code; the owner reviews and commits them. | |

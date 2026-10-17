@@ -17,6 +17,8 @@ Ports and Adapters with ordinary, idiomatic Go packages. Deterministic model and
 
 `run` is the common execution mechanism, first used only by Apply; later operations reuse it instead of bringing their own Manager engine. A Manager is a logical identity with tasks, configuration and session references, not a generated Go package or a permanently running goroutine. One writer is active at a time. A parent yields with recorded child tasks pending; the Host runs them and resumes the parent with their results.
 
+Manager responsibility, provider conversation, execution container and workspace version have different lifetimes. `run` binds each step to current inputs, permitted effects and budget class, and records quiescent basis transitions without resetting the Manager. `realization` establishes exact composition and preserved own changes over supplied values; it does not operate a live workspace. Workspace/runtime adapters establish actual materialization and quiescence; provider adapters establish conversation continuation or an explicit handoff. `organization` renders the unchanged operation, current step facts and separate parent hints. A read-only Manager step still preserves the completion reserve while requiring no writer exclusion. The [continuity contract](manager-apply-concept.md#working-bases-and-conversation-continuity) introduces no separate scheduler or workflow ledger.
+
 ## Source layout
 
 ```text

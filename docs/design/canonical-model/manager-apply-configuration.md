@@ -34,7 +34,7 @@ limits:
   maxExecutionTime: 16h
   maxStepTimeout: 10m
   hostOperationTimeout: 2m
-  maxReviewRounds: 3
+  maxRejectionLimit: 3
   maxContextBytes: 400000
   maxSessionSteps: 40
   maxTransientRetries: 2
@@ -52,7 +52,7 @@ defaults:
   profiles:
     manager: library-agent
     reviewer: library-agent
-  reviewRounds: 3
+  rejectionLimit: 3
   batchNoChangeReviews: false
   stepTimeout: 10m
   creationRoots: [realization]
@@ -70,7 +70,7 @@ acceptance:
   ownerApproval: []
 ```
 
-Everything under `limits` is a hard project ceiling. `assignment` sets the default caps of a new assignment; an owner extension can raise them up to `maxRuns`, `maxSessionStarts`, `maxSteps` and `maxExecutionTime`. `maxStepTimeout`, `maxReviewRounds` and `creationRoots` are ceilings, not consumable counters. `hostOperationTimeout` bounds each Host control operation outside the budget. `completionReserve` is part of the caps, not extra allowance; a reserve that the execution contract's preparation check rejects is a preparation failure, and no run is prepared.
+Everything under `limits` is a hard project ceiling. `assignment` sets the default caps of a new assignment; an owner extension can raise them up to `maxRuns`, `maxSessionStarts`, `maxSteps` and `maxExecutionTime`. `maxStepTimeout`, `maxRejectionLimit` and `creationRoots` are ceilings, not consumable counters. `hostOperationTimeout` bounds each Host control operation outside the budget. `completionReserve` is part of the caps, not extra allowance; a reserve that the execution contract's preparation check rejects is a preparation failure, and no run is prepared.
 
 `maxContextBytes` bounds a rendered context package ([concept](manager-apply-concept.md#context-packages)). `maxSessionSteps` and `maxTransientRetries` bound one Manager session and automatic retries ([execution](manager-apply-execution.md#admission-amendments-and-finite-correction)). `batchNoChangeReviews` enables batched no-change reviews ([concept](manager-apply-concept.md#distinct-review-responsibilities)). `acceptance.ownerApproval` lists Packages whose changes need the owner's approval before publication, asked as an ordinary question; it is empty by default, because the owner's commit already accepts the result.
 
@@ -90,20 +90,20 @@ For `recursive-apply-v1`, these accepted effects apply when the corresponding pr
 
 | Effective setting | Default |
 | --- | --- |
-| `reviewRounds` | `3` |
+| `rejectionLimit` | `3` |
 | Manager and reviewer instruction lists | `[]` each |
 | `batchNoChangeReviews` | `false` |
 | `acceptance.ownerApproval` | `[]` |
 
-The existing field name `reviewRounds` is retained, but the owner-confirmed design now counts rejected submissions, not all submissions. Successful limited or complete deliveries neither use nor reset this allowance. `maxReviewRounds` caps that configured rejection limit. All work still consumes the shared assignment budget; [execution](manager-apply-execution.md#admission-amendments-and-finite-correction) defines stable counter identity, parent assessment after two rejections and exhaustion. This is an explicit change from the earlier submission-count design. Existing source preparation of the numeric setting is not proof of runtime counting; technical realization must bind the selected policy without reinterpreting historical runs.
+The selected field names are `rejectionLimit` and its ceiling `maxRejectionLimit`, replacing `reviewRounds` and `maxReviewRounds`. They count rejected submissions, not all submissions. Successful limited or complete deliveries neither use nor reset this allowance. All work still consumes the shared assignment budget; [execution](manager-apply-execution.md#admission-amendments-and-finite-correction) defines stable counter identity, parent assessment after two rejections and exhaustion. The example describes the target schema. Current source preparation still uses the old names until its parser, defaults, rendering and binding producers migrate together; do not claim it accepts this target example yet. Historical records retain their original names and semantics under their recorded version.
 
 These values must come from one real, versioned product-owned defaults document shipped with the product. Preparation retains its original bytes and digest, using `product:recursive-apply-v1/defaults.yaml` and the actual field pointer in that document as the source. A missing document leaves preparation `NotCompleted`; it cannot be replaced with invented provenance. This contract does not create that document or prescribe an implementation package.
 
-`AuthoredExecution` retains absence. Resolution obtains an absent effective value from the captured strategy document; an explicitly configured value keeps its authored source. Effective defaults must satisfy the project ceilings: an absent rejection-limit setting with `maxReviewRounds: 2` fails because the effective default is three. Never clamp the value or cite a nonexistent execution field as its source.
+`AuthoredExecution` retains absence. Resolution obtains an absent effective value from the captured strategy document; an explicitly configured value keeps its authored source. Effective defaults must satisfy the project ceilings: an absent rejection-limit setting with `maxRejectionLimit: 2` fails because the effective default is three. Never clamp the value or cite a nonexistent execution field as its source.
 
 ## Resolve settings deterministically
 
-Resolve project defaults, then the exact Manager override only; there is no inheritance from ancestor overrides. Profile references replace the role's value. Instructions append the project defaults, then the exact override, in declared order. `stepTimeout`, `reviewRounds` and `creationRoots` replace the default within the project ceilings; a default is not a ceiling, so a rejection limit of two can be overridden to three where `maxReviewRounds` allows it. Creation directories must equal or descend from an allowed root. There is no deep merge, wildcard override or environment interpolation.
+Resolve project defaults, then the exact Manager override only; there is no inheritance from ancestor overrides. Profile references replace the role's value. Instructions append the project defaults, then the exact override, in declared order. `stepTimeout`, `rejectionLimit` and `creationRoots` replace the default within the project ceilings; a default is not a ceiling, so a rejection limit of two can be overridden to three where `maxRejectionLimit` allows it. Creation directories must equal or descend from an allowed root. There is no deep merge, wildcard override or environment interpolation.
 
 In the example, lending gets eight minutes per step while lending/reminders keeps the ten-minute default, and a `.` override configures the root only. The Host enforces model obligations, resolved configuration and fixed process constraints; a parent message supplies advice or prerequisite information, not extra task restrictions. Effective values are stored with the file and field that supplied them, so every bound is explainable.
 
@@ -149,7 +149,7 @@ The selected bytes and identities enter the run's input binding and are rechecke
 | Assignment | One owner request with its caps. It links its runs, questions, consumption and extensions and owns no scheduler. |
 | Apply run | One immutable model, configuration and source binding and its reconciliation. A changed basis or execution policy needs a continuation run after this one finished. |
 | Task | One Manager responsibility within a run. Tasks in a continuation get new IDs with predecessor links where work carries forward. |
-| Attempt | One submission within a task against the run's fixed basis. It resets no budget or round counter. |
+| Attempt | One submission within a task against the run's fixed basis. It resets no budget or rejection counter. |
 | Session and step | An actual role conversation and one dispatch. They never supply authority. |
 
 The assignment stores the owner input and goal, constraints, operation target, project identity, caps and authority source. Omitted caps use the `assignment` defaults. Renewing an exhausted cap needs a recorded extension within the project ceilings; raising a ceiling needs an authorized configuration edit. Starting another run grants nothing. The first product has one local operator as decision owner and no identity service based on Agent-reported names. An accepted decision can authorize a continuation run within the assignment; it never authorizes merge, release, deployment or production-data edits.
@@ -165,7 +165,7 @@ For lending it states:
 - Freedom: the internal implementation within the model's architecture and interfaces; no additional business restrictions.
 - Artifact authority: its owned files plus new paths claimed through the Host; changes to other owners' files are requested through the common parent.
 - Reserved choices: changed business rules, authority or protected inputs need a decision outside artifact Apply.
-- Limits: the remaining assignment capacity, local step and round limits and the mandatory gates.
+- Limits: the remaining assignment capacity, local step and rejection limits and the mandatory gates.
 
 The section may display the bound loan limit but cites `loan-policy` as its authority, so M2 changes one canonical value and no mandate text. The reviewer checks material decisions against their source-bound authority as well as their behavior. The Host validates the typed boundaries; judging semantic authority remains reviewable Agent work.
 

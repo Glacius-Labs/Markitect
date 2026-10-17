@@ -85,3 +85,26 @@ The owner selected:
 > Ja, Zurückweisungen separat begrenzen
 
 The [execution contract](../../design/canonical-model/manager-apply-execution.md#admission-amendments-and-finite-correction) records this selected rule. Successful limited deliveries do not consume or replenish the rejection allowance; local and integration review remain distinct purposes. This supersedes the earlier submission-count design, not the finite assignment budget or mandatory evidence. Technical implementation and real Apply proof remain separate work.
+
+## Working bases and session continuity
+
+The owner raised the cost of replacing conversations after limited deliveries:
+
+> Lass uns die gebundene Ausgangsbasis und die laufenden Änderungen genauer klären. Ich möchte vermeiden, dass Manager bei jeder neuen Teillieferung eine neue Session brauchen und dabei unnötig Kontext verlieren.
+
+The owner also supplied Claude's suggestions about remaining delegation/PassThrough code, renaming `reviewRounds`, read-only Explore mounts and later hot-path metrics. The assistant checked current source and proposed:
+
+- Separate immutable run inputs, explicitly consumed accepted deliveries, own unaccepted working changes and immutable review candidates.
+- Retain Manager/conversation identity where supported, while each admitted step binds an exact workspace version, inputs and permitted actions. Record basis changes only between observed quiescent steps; preserve own work and do not silently overwrite, rebase or assume that a turn ending stopped background effects.
+- Send the changed basis, relevant interfaces, preserved work and reassessment needs into the continuing conversation. Old conversational claims do not become current evidence.
+- Keep execution profile, runtime and authority ceiling fixed. Changed mounts/rights require a newly bound environment; provider conversation resume needs actual capability evidence, otherwise use an explicit fresh-conversation handoff. Independent reviewers start fresh.
+- Separate role, effect authority and budget treatment so read-only Explore/Plan can proceed without a writer grant while preserving required completion capacity.
+- Rename the target rejection setting to `rejectionLimit`, consistently including its ceiling, examples and displayed meaning. Historical records keep their original meaning; actual source migration is separate work.
+- Enforce read-only access to every artifact volume before the initial Explore barrier and also deny Host-side mutation tools/workspace effects. Temporary writable space grants no artifact authority.
+- Keep the already specified metrics in the Apply concept and record a later hot-path visualization in the North Star, without a second ledger or automatic reorganization.
+
+The owner confirmed:
+
+> Dann machen wir es so. Nimm deine Vorschläge mit auf und schaue dann ob uns noch was fehlt
+
+The linked concept and contracts refine these accepted directions. Exact transition formats, composition across different bases, runtime quiescence and provider continuation remain implementation/proof obligations; this confirmation does not establish those capabilities or authorize real provider experiments. Current source at `8db25faff149f8ba0102c95951301e11d4600997` includes corrected organization prompts, but retains whole-session candidate binding and the old configuration names.
