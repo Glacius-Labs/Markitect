@@ -320,6 +320,9 @@ func (s stateValue) renderInput(t taskValue, facts StepFacts, basis snapshot.Con
 	}
 	in := organization.RenderInput{View: phaseView(t.Phase), InputBinding: source,
 		Task: organization.TaskFacts{ID: t.ID, Package: t.Slot.Package, Outcome: organization.HostText{Text: operation, Source: source}, Findings: findings, Constraints: s.ownerDecisions(t)}}
+	if t.Phase.reviewer() {
+		in.Task.Purpose, in.Task.Scope = t.Submission.Purpose, t.Submission.Scope
+	}
 	artifacts, err := ownedArtifacts(t.Slot.Package, facts)
 	if err != nil {
 		return in, err

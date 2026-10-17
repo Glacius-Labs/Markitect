@@ -88,7 +88,7 @@ func TestRenderThreeViewsAndOriginalInstructionFrames(t *testing.T) {
 	selection, settings, input := renderFixture(t, "a", organization.ManagerView)
 	input.OwnArtifacts = []organization.ArtifactFact{renderArtifact(t, "a")}
 	result := requireRendered(t, selection, settings, input)
-	if result.Package() != "a" || result.View() != organization.ManagerView || result.Template().ID != "markitect/context/manager" || result.Template().Version != "3" {
+	if result.Package() != "a" || result.View() != organization.ManagerView || result.Template().ID != "markitect/context/manager" || result.Template().Version != "4" {
 		t.Fatal("missing product template/view identity")
 	}
 	if !strings.Contains(string(result.Bytes()), `"RejectionLimit"`) || strings.Contains(string(result.Bytes()), `"ReviewRounds"`) {
@@ -170,5 +170,31 @@ func TestOnePackageNoChangeAndOrdinaryRootIntegrationContext(t *testing.T) {
 	}
 	if !strings.Contains(string(root.Bytes()), "One-child parents still require integration review") {
 		t.Fatal("root's single no-change child removed the integration obligation")
+	}
+}
+
+// Every view states the task's place in the tree: its parent and its direct
+// children, an empty list for a leaf; reviewer views also state the reviewed
+// submission's purpose.
+func TestRenderStatesTheTreePosition(t *testing.T) {
+	for pkg, want := range map[string]string{
+		".":       `{"Manager":".","Parent":"","DirectChildren":["a","b","c","empty","incoming","software"]}`,
+		"a":       `{"Manager":"a","Parent":".","DirectChildren":["a/child"]}`,
+		"a/child": `{"Manager":"a/child","Parent":"a","DirectChildren":[]}`,
+	} {
+		selection, settings, input := renderFixture(t, pkg, organization.ManagerView)
+		text := string(requireRendered(t, selection, settings, input).Bytes())
+		if !strings.Contains(text, `[section "tree-position"`) || !strings.Contains(text, want) || !strings.Contains(text, "Its integration step composes only the deliveries of the direct children") {
+			t.Fatalf("%s: tree position missing or wrong", pkg)
+		}
+		if strings.Contains(text, "reviewed-submission") {
+			t.Fatalf("%s: a Manager view states a review purpose", pkg)
+		}
+	}
+	selection, settings, input := renderFixture(t, "a", organization.ReviewerExpectations)
+	input.Task.Purpose, input.Task.Scope = "local", "limited"
+	text := string(requireRendered(t, selection, settings, input).Bytes())
+	if !strings.Contains(text, `{"Manager":"a","Parent":".","DirectChildren":["a/child"]}`) || !strings.Contains(text, `{"Purpose":"local","Scope":"limited"}`) {
+		t.Fatal("the reviewer view lacks the tree position or the reviewed purpose")
 	}
 }

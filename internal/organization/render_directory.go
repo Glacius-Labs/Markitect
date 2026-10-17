@@ -15,6 +15,21 @@ func directoryStrings(roots []snapshot.DirectoryBoundary) []string {
 	return result
 }
 
+// treePosition returns the Manager's parent and its direct children in
+// topology order.
+func (c ContextSelection) treePosition() (string, []string) {
+	parent, children := "", []string{}
+	for _, slot := range c.topology.managers {
+		switch {
+		case slot.Package == c.Package():
+			parent = slot.Parent
+		case slot.Parent == c.Package():
+			children = append(children, slot.Package)
+		}
+	}
+	return parent, children
+}
+
 func renderDirectory(w *contextWriter, c ContextSelection, input RenderInput) {
 	purposes := make(map[string]*HostText)
 	for _, fact := range input.Packages {
