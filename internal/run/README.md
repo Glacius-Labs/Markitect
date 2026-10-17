@@ -12,8 +12,8 @@ protections, source guard, configuration with selected ceilings and provenance,
 ordered instructions and static profiles. It requires the existing realization
 accounting to accept the complete initial census. Source-bound configuration
 resolution and source acquisition remain their producers' duties. The caller
-must supply every input document, including
-strategy, registry and ignore inputs; run does not discover files or decode YAML.
+must supply every input document, including strategy, registry and ignore inputs;
+run does not discover files or decode YAML.
 
 `Propose` is pure. `Commit` writes original payloads, then appends an atomic batch
 using its expected stream revision. Only the exact successful acknowledgement
@@ -28,6 +28,34 @@ The test journal demonstrates only process-local contract behavior. A physical
 adapter must establish durable atomic visibility, blob retention and controller
 fencing separately.
 
+`AppendBatch.BindingRefs` lists its direct basis references;
+`BindingOwnerRef` validates each original basis and derives the required owner
+input reference through the same recorded codec as restoration. A store verifies
+and retains both sets of bytes before Append acknowledgement, using these pure
+APIs and `Payload` identity checks. No adapter-owned binding decoder or reducer
+is needed. The v1 stream range is zero through `MaxRevision` (2^63-1), and both
+interval endpoints must be exact batch boundaries. Exact batch lookup reports
+the current observed head, which may be later than the matched batch's receipt.
+
+`Restore` opens existing or genuinely empty history through bounded `Read` and
+`ReadBlob` calls. Its explicit limits bound pages, batches, events and bytes,
+including required blobs. Exhaustion returns `ErrRestoreLimit`, separately from
+invalid history. Every page keeps the first committed head. The same
+transition rules regenerate each complete batch; gaps, partial batches, changed
+heads, invalid records and missing or changed blobs return no Coordinator.
+The historical versioned binding, compiled digests, inventory and original owner
+payload are verified without reinterpreting old input with today's compiler or
+resolving settings again. Store/controller identity remains the Host's duty.
+
+Restoration never calls Put or Append and never replays an external effect. Open
+reservations keep their complete holds. `RecoveryRequired` is a separate Host
+barrier, while `Current` still reports the actual committed run state. Only
+explicit reconciliation observations or a stop request can proceed through that
+barrier; every hold needs a confirmed settlement or proven non-dispatch release.
+An identical recorded command or batch returns its original receipt without
+another append or charge. An absent old proposal at an advanced revision cannot
+be treated as an automatic retry; new decisions and commits remain explicit.
+
 The current first slice handles Prepared, Running, quiescent Waiting,
 Reconciling, and immutable non-successful Finished outcomes. Reservations are
 recorded invocation intent; this package dispatches nothing. Unknown effects keep
@@ -41,7 +69,7 @@ The original owner request remains fixed for that assignment. Each Prepared run
 needs an available run unit and the new basis's structural review floor in the
 remaining shared ledger; this need not replenish the configured reserve that
 assessment work may spend.
-Full restart reconstruction, assignment extensions/closure, review and task
+Assignment extensions/closure, multiple ordinary assignments, review and task
 execution, final evidence, Verifying/Publishing transitions and Applied/NoChange
 are not implemented yet. There is no Session, Workspace, Check, SQLite, provider
 or Apply adapter here. The full contracts remain in the design documents.
