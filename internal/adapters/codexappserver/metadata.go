@@ -1,13 +1,13 @@
-// Package codexappserver prepares explicitly selected offline file metadata.
-// It starts no process and establishes no runtime or provider capability.
+// Package codexappserver prepares static metadata from an explicitly selected
+// runtime image. Preparation never starts that image, a Session or a provider.
 package codexappserver
 
 import (
 	"context"
+	"crypto/sha256"
 	"encoding/json"
 	"errors"
-	"fmt"
-	"path/filepath"
+	"strings"
 
 	"github.com/Glacius-Labs/Markitect/internal/apply"
 	"github.com/Glacius-Labs/Markitect/internal/model"
@@ -15,20 +15,21 @@ import (
 	"github.com/Glacius-Labs/Markitect/internal/snapshot"
 )
 
-const metadataPinName = "codex-cli-0.162.0-alpha.17.2-offline-v1"
+const (
+	runtimeMetadataPath   = "/opt/markitect/runtime.env"
+	maxMetadataBytes      = 1 << 20
+	supportedCodexVersion = "codex-cli 0.162.0"
+)
 
-// MetadataPreparer implements Apply's process-free AgentProfilePreparer.
-// Its only admitted pin is historical offline evidence, not runtime support.
-// The zero value is usable and has the same fixed pin as the constructor.
-type MetadataPreparer struct{}
+// MetadataPreparer requires an explicitly composed image-reader factory. Its
+// zero value reports incomplete acquisition; it has no ambient engine fallback.
+type MetadataPreparer struct{ factory ImageReaderFactory }
 
-func NewMetadataPreparer() *MetadataPreparer { return &MetadataPreparer{} }
+func NewMetadataPreparer(factory ImageReaderFactory) *MetadataPreparer {
+	return &MetadataPreparer{factory: factory}
+}
 
 var _ apply.AgentProfilePreparer = (*MetadataPreparer)(nil)
-
-func (*MetadataPreparer) PrepareAgentProfile(ctx context.Context, input apply.ProfileInput) (apply.ProfileObservation, error) {
-	return prepareMetadata(ctx, input, historicalPin())
-}
 
 type preparation struct {
 	input apply.ProfileInput
@@ -43,41 +44,39 @@ func (p *preparation) issue(status model.Status, code, field, message string) {
 	doc := p.input.Document()
 	locator, _ := json.Marshal([2]string{doc.Location.Boundary, doc.Location.Path.String()})
 	p.out.Diagnostics = append(p.out.Diagnostics, apply.HostProfileDiagnostic{
-		Code:    "codex_metadata." + code,
+		Code:    "codex_image." + code,
 		Source:  organization.SettingSource{File: "source:" + string(locator), ContentID: doc.File.ContentID(), Field: p.input.Field() + field},
 		Message: message,
 	})
 }
 
-func (p *preparation) acquisition(err error, field string) {
-	if err == nil {
-		return
-	}
-	p.err = errors.Join(p.err, err)
-	var invalid *invalidMetadata
-	if errors.As(err, &invalid) {
-		p.issue(model.Failed, "invalid_file", field, err.Error())
-	} else {
-		p.issue(model.NotCompleted, "acquisition", field, err.Error())
+func (p *preparation) acquisition(err error) {
+	if err != nil {
+		p.err = errors.Join(p.err, err)
+		p.issue(model.NotCompleted, "acquisition", "/imageID", err.Error())
 	}
 }
 
-func prepareMetadata(ctx context.Context, input apply.ProfileInput, pin offlinePin) (apply.ProfileObservation, error) {
+func (m *MetadataPreparer) PrepareAgentProfile(ctx context.Context, input apply.ProfileInput) (apply.ProfileObservation, error) {
 	p := preparation{input: input, out: apply.ProfileObservation{
 		InputBinding: input.Binding(), Status: model.Passed,
-		Contract: apply.ProfileContract{Name: "markitect.codex-app-server.offline-metadata", Version: 1},
+		Contract: apply.ProfileContract{Name: "markitect.codex-app-server.image-metadata", Version: 1},
 	}}
 	if ctx == nil {
-		p.acquisition(fmt.Errorf("nil preparation context"), "")
+		p.acquisition(errors.New("nil metadata preparation context"))
 		return p.out, p.err
 	}
 	if err := ctx.Err(); err != nil {
-		p.acquisition(err, "")
+		p.acquisition(err)
 		return p.out, p.err
 	}
-	config, ok := p.decode()
+	if input.Namespace() != "agentProfiles" || input.Binding() == (apply.ProfileBinding{}) {
+		p.issue(model.Failed, "input", "", "A bound Agent profile input is required.")
+		return p.out, nil
+	}
+	config, ok := p.decode(input.Inline())
 	if !ok {
-		return p.out, p.err
+		return p.out, nil
 	}
 	for _, location := range config.instructions {
 		found := false
@@ -91,52 +90,106 @@ func prepareMetadata(ctx context.Context, input apply.ProfileInput, pin offlineP
 			p.out.Instructions = append(p.out.Instructions, location)
 		} else {
 			p.out.RequiredInstructions = append(p.out.RequiredInstructions, location)
-			p.issue(model.NotCompleted, "instruction_uncaptured", "/instructions", "Selected instruction needs a new complete acquisition; no instruction file was read.")
+			p.issue(model.NotCompleted, "instruction_uncaptured", "/instructions", "Selected instruction requires a new complete acquisition; no instruction file was read.")
 		}
 	}
-	disk := newMetadataDisk(ctx)
-	defer disk.close()
-	executable, _, err := disk.readAbsolute(config.executable, maxExecutableBytes, false)
-	if err == nil {
-		p.out.Files = append(p.out.Files, executable)
-		if executable.ContentID != pin.executable {
-			p.issue(model.Failed, "executable_pin", "/executable", "Actual executable bytes do not match the fixed historical offline pin.")
-		}
+	if m == nil || m.factory == nil {
+		p.acquisition(errors.New("an explicit image-reader factory is required"))
+		return p.out, p.err
 	}
-	p.acquisition(err, "/executable")
-	for i, boundary := range []string{config.stable, config.experimental} {
-		field := []string{"/schemas/stable", "/schemas/experimental"}[i]
-		inventory, complete, inventoryErr := disk.inventory(boundary, pin.selected)
-		p.out.Inventories = append(p.out.Inventories, inventory)
-		p.acquisition(inventoryErr, field)
-		if complete && inventoryDigest(inventory.Files) != pin.inventories[i] {
-			p.issue(model.Failed, "inventory_pin", field, "Complete observed schema inventory does not match the fixed historical offline pin.")
-		}
+	reader, err := m.factory(EngineConfig{Executable: config.engine})
+	if err != nil {
+		p.acquisition(err)
+		return p.out, p.err
 	}
-	p.acquisition(disk.verify(), "")
+	if reader == nil {
+		p.acquisition(errors.New("image-reader factory returned no reader"))
+		return p.out, p.err
+	}
+	if err := ctx.Err(); err != nil {
+		p.acquisition(err)
+		return p.out, p.err
+	}
+	imageID, err := reader.ImageID(ctx, config.imageID)
+	if err != nil {
+		p.acquisition(err)
+		return p.out, p.err
+	}
+	if !sha256Literal(imageID) {
+		p.issue(model.Failed, "image_identity", "/imageID", "Engine did not report an immutable sha256 image ID.")
+		return p.out, nil
+	}
+	p.out.AgentImage = &apply.AgentImageObservation{Provider: apply.AgentImageCodexAppServer, ImageID: imageID}
+	if imageID != config.imageID {
+		p.issue(model.Failed, "image_mismatch", "/imageID", "Observed engine image ID differs from the selected immutable image ID.")
+		return p.out, nil
+	}
+	if err := ctx.Err(); err != nil {
+		p.acquisition(err)
+		return p.out, p.err
+	}
+	data, err := reader.ReadImageFile(ctx, imageID, runtimeMetadataPath)
+	if err != nil {
+		p.acquisition(err)
+		return p.out, p.err
+	}
+	image := p.out.AgentImage
+	image.Metadata = apply.AgentImageMetadataFile{Path: runtimeMetadataPath, ContentID: snapshot.ContentID(sha256.Sum256(data)), Size: int64(len(data))}
+	if err := ctx.Err(); err != nil {
+		p.acquisition(err)
+		return p.out, p.err
+	}
+	if len(data) > maxMetadataBytes {
+		p.issue(model.NotCompleted, "metadata_limit", "/imageID", "Image metadata exceeds the 1 MiB observation limit.")
+		return p.out, nil
+	}
+	p.parseMetadata(data, config)
+	if err := ctx.Err(); err != nil {
+		p.acquisition(err)
+		return p.out, p.err
+	}
+	observed, err := reader.ImageID(ctx, config.imageID)
+	if err != nil {
+		p.acquisition(err)
+	} else if observed != imageID {
+		p.issue(model.Failed, "image_changed", "/imageID", "Image identity changed across metadata acquisition.")
+	}
+	p.acquisition(ctx.Err())
 	return p.out, p.err
 }
 
-type offlinePin struct {
-	executable  snapshot.ContentID
-	inventories [2]snapshot.ContentID
-	selected    []string
-}
-
-// These identities were reviewed from the 2026-10-17 offline inventory. Version
-// is bound ONLY by the known executable hash. No fresh export/version is claimed.
-func historicalPin() offlinePin {
-	return offlinePin{
-		executable: digestLiteral("e98c516f1c8935789aabe9122ee7e05ec4c3efd1ba6acf179242e031c495b99e"),
-		inventories: [2]snapshot.ContentID{
-			digestLiteral("77e83bf79a8aa71a8747e3d3744f38ab4d82fb33ba619cc04b05716a85c31fca"),
-			digestLiteral("6e8dd84c70d64c848a8e11fd7a61e2ed9dbdbda7a45ef65a1f1a295007288a27"),
-		},
-		selected: []string{"v1/InitializeParams.json", "v1/InitializeResponse.json", "v2/ThreadStartParams.json", "v2/ThreadStartResponse.json", "v2/TurnStartParams.json", "ServerRequest.json", "DynamicToolCallParams.json", "DynamicToolCallResponse.json"},
+func (p *preparation) parseMetadata(data []byte, config metadataConfig) {
+	values, err := runtimeMetadata(data)
+	if err != nil {
+		p.issue(model.Failed, "metadata_format", "/imageID", err.Error())
+		return
+	}
+	image := p.out.AgentImage
+	image.CLIVersion, image.AgentdVersion, image.RecordedCodexSchemaDigest = values["codex"], values["agentd"], values["codexSchema"]
+	if image.CLIVersion != supportedCodexVersion {
+		p.issue(model.Failed, "cli_version", "/imageID", "Image must record exactly "+supportedCodexVersion+".")
+	}
+	if image.AgentdVersion != config.agentd {
+		p.issue(model.Failed, "agentd_version", "/agentdVersion", "Recorded agentd build differs from the selected literal version.")
+	}
+	if !sha256Literal(image.RecordedCodexSchemaDigest) || image.RecordedCodexSchemaDigest != config.schema {
+		p.issue(model.Failed, "recorded_schema", "/recordedCodexSchemaDigest", "Build-recorded Codex schema digest differs from the selected sha256 digest.")
 	}
 }
 
-func overlaps(a, b string) bool {
-	rel, err := filepath.Rel(a, b)
-	return err == nil && (rel == "." || rel != ".." && !filepath.IsAbs(rel) && len(rel) > 0 && rel[:min(len(rel), 3)] != ".."+string(filepath.Separator))
+func runtimeMetadata(data []byte) (map[string]string, error) {
+	// This is the four-key LF format emitted by packaging/runtime/Dockerfile,
+	// not a shell environment to source or a generated schema inventory.
+	values := make(map[string]string)
+	for _, line := range strings.Split(strings.TrimSuffix(string(data), "\n"), "\n") {
+		key, value, ok := strings.Cut(line, "=")
+		if !ok || values[key] != "" || (key != "codex" && key != "claude" && key != "codexSchema" && key != "agentd") || !literal(value) {
+			return nil, errors.New("runtime.env requires exactly four unique codex, claude, codexSchema and agentd literal records")
+		}
+		values[key] = value
+	}
+	if len(values) != 4 {
+		return nil, errors.New("runtime.env is missing a required metadata record")
+	}
+	return values, nil
 }

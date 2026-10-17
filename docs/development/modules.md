@@ -14,6 +14,8 @@ Existing history is reconstructed through bounded, revision-pinned reads and the
 
 The [SQLite journal adapter](../../internal/adapters/journal/README.md) implements Apply control and Run recording. Production imports only Apply and Run; its owned integration fixtures may import model and snapshot values from test files. Repository-local lifetime control remains independent of the external store directory. SQL commits validate the live epoch and required byte references; reopening never implies that previous processes stopped.
 
+The [Codex metadata preparer](../../internal/adapters/codexappserver/README.md) uses a narrow image reader backed by the container adapter. Bootstrap injects its factory; only a selected source-bound profile supplies the engine executable and immutable image ID. Preparation inspects the image and copies its build metadata from a created, never started container. It starts no Session or provider and observes no schema inventory.
+
 ## Dependency direction
 
 | Consumer | Allowed responsibility |
@@ -25,7 +27,8 @@ The [SQLite journal adapter](../../internal/adapters/journal/README.md) implemen
 | Model view | Apply, model, snapshot |
 | Repository adapter | Apply and required pure values |
 | Journal adapter | Apply and Run; model and snapshot only in tests |
-| Codex/Check metadata adapters | Apply, model, organization, snapshot |
+| Codex metadata adapter | Apply, model, organization, snapshot, container image reader |
+| Check metadata adapter | Apply, model, organization, snapshot |
 | Container adapter | Agent frame protocol |
 | Session helper (agentd) | Agent frame protocol |
 | Agent frame protocol | No other Markitect responsibility |

@@ -12,10 +12,83 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/Glacius-Labs/Markitect/internal/adapters/codexappserver"
 	"github.com/Glacius-Labs/Markitect/internal/testkit"
 )
 
 func TestMain(m *testing.M) { testkit.Main(m) }
+
+type bootstrapImageReader struct{ calls []string }
+
+const bootstrapImageID = "sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+const bootstrapSchema = "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+
+func (r *bootstrapImageReader) ImageID(_ context.Context, id string) (string, error) {
+	r.calls = append(r.calls, "inspect:"+id)
+	return bootstrapImageID, nil
+}
+func (r *bootstrapImageReader) ReadImageFile(_ context.Context, id, path string) ([]byte, error) {
+	r.calls = append(r.calls, "read:"+id+":"+path)
+	return []byte("codex=codex-cli 0.162.0\nclaude=2.1.301 (Claude Code)\ncodexSchema=" + bootstrapSchema + "\nagentd=development\n"), nil
+}
+
+func TestBootstrapImageFactoryUsesOnlySelectedSourceBoundConfiguration(t *testing.T) {
+	repo := productFixture(t)
+	execution, err := os.ReadFile(filepath.Join(repo.Dir, ".markitect", "execution.yaml"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	text := strings.ReplaceAll(string(execution), "\r\n", "\n")
+	start, end := strings.Index(text, "\nchecks:\n"), strings.Index(text, "\nacceptance:\n")
+	if start < 0 || end <= start {
+		t.Fatal("fixture execution sections missing")
+	}
+	repo.Write(".markitect/execution.yaml", text[:start]+"\nchecks: []"+text[end:])
+	engine := filepath.Join(t.TempDir(), "explicit-engine-not-executed")
+	host := filepath.Join(t.TempDir(), "host.yaml")
+	profile := fmt.Sprintf("apiVersion: markitect.host/v1\nagentProfiles:\n  markitect-agent:\n    codexAppServer:\n      profileVersion: 2\n      engineExecutable: %q\n      imageID: %s\n      agentdVersion: development\n      recordedCodexSchemaDigest: %s\n      instructions: []\ncheckProfiles: {}\n", engine, bootstrapImageID, bootstrapSchema)
+	if err := os.WriteFile(host, []byte(profile), 0600); err != nil {
+		t.Fatal(err)
+	}
+	reader := &bootstrapImageReader{}
+	var received []codexappserver.EngineConfig
+	factory := func(config codexappserver.EngineConfig) (codexappserver.ImageReader, error) {
+		received = append(received, config)
+		return reader, nil
+	}
+	var out, errout bytes.Buffer
+	code := run(context.Background(), []string{"check", "--repo", repo.Dir}, &out, &errout, factory)
+	if code != 0 || len(received) != 0 {
+		t.Fatalf("structural preparation used engine: exit=%d factories=%v stderr=%s", code, received, errout.String())
+	}
+	out.Reset()
+	errout.Reset()
+	code = run(context.Background(), []string{"check", "--repo", repo.Dir, "--metadata", "--host-profile", host}, &out, &errout, factory)
+	if code != 0 {
+		t.Fatalf("metadata exit=%d stderr=%s output=%s", code, errout.String(), out.String())
+	}
+	// A complete source reacquisition may prepare the same selected profile
+	// again. Every actual attempt must use only the supplied configuration.
+	if len(received) == 0 || len(reader.calls) != 3*len(received) {
+		t.Fatalf("actual selected factory/config or bounded read lost: %v %v", received, reader.calls)
+	}
+	for i, config := range received {
+		if config.Executable != engine || reader.calls[3*i] != "inspect:"+bootstrapImageID || reader.calls[3*i+1] != "read:"+bootstrapImageID+":/opt/markitect/runtime.env" || reader.calls[3*i+2] != "inspect:"+bootstrapImageID {
+			t.Fatalf("unbound attempt: %v %v", config, reader.calls)
+		}
+	}
+	if !strings.Contains(out.String(), `"AgentImage"`) || !strings.Contains(out.String(), `"ImageID": "`+bootstrapImageID+`"`) || strings.Contains(out.String(), "offline-metadata") {
+		t.Fatal("image evidence missing from actual metadata report")
+	}
+	// Production's concrete factory rejects this missing explicitly selected
+	// engine path. There is no ambient executable or old metadata fallback.
+	out.Reset()
+	errout.Reset()
+	code = Run(context.Background(), []string{"check", "--repo", repo.Dir, "--metadata", "--host-profile", host}, &out, &errout)
+	if code != 3 || !strings.Contains(out.String(), "codex_image.acquisition") {
+		t.Fatalf("production factory fallback: exit=%d stderr=%s", code, errout.String())
+	}
+}
 
 func productFixture(t *testing.T) *testkit.Repo {
 	t.Helper()

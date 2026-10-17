@@ -1,62 +1,30 @@
 apiVersion: markitect.registry/v1
 artifacts:
+  - path: "internal/adapters/codexappserver/README.md"
+    form: doc
+    realizes: [product/adapters/agent/closed-agent-metadata]
+    why: Documents the closed image profile, build metadata assertion and observation limits.
   - path: "internal/adapters/codexappserver/metadata.go"
     form: code
     realizes: [product/adapters/agent/closed-agent-metadata]
-    why: Implements the stated responsibility within its declared boundary.
+    why: Observes selected immutable image metadata and preserves failures and partial acquisition.
   - path: "internal/adapters/codexappserver/metadata_decode.go"
     form: code
     realizes: [product/adapters/agent/closed-agent-metadata]
-    why: Implements the stated responsibility within its declared boundary.
-  - path: "internal/adapters/codexappserver/metadata_disk.go"
-    form: code
-    realizes: [product/adapters/agent/closed-agent-metadata]
-    why: Implements the stated responsibility within its declared boundary.
-  - path: "internal/adapters/codexappserver/metadata_failures_test.go"
+    why: Validates the closed source-bound image profile and captured instruction references.
+  - path: "internal/adapters/codexappserver/metadata_decode_test.go"
     form: test
     realizes: [product/adapters/agent/closed-agent-metadata]
-    why: Tests the stated responsibility and retains negative boundaries.
+    why: Checks closed metadata parsing, instruction acquisition and unsupported profile or version refusal.
+  - path: "internal/adapters/codexappserver/metadata_engine.go"
+    form: code
+    realizes: [product/adapters/agent/closed-agent-metadata]
+    why: Exposes only image inspection and copying through the explicitly configured engine factory.
   - path: "internal/adapters/codexappserver/metadata_fixture_test.go"
     form: test
     realizes: [product/adapters/agent/closed-agent-metadata]
-    why: Tests the stated responsibility and retains negative boundaries.
-  - path: "internal/adapters/codexappserver/metadata_observations_test.go"
-    form: test
-    realizes: [product/adapters/agent/closed-agent-metadata]
-    why: Tests the stated responsibility and retains negative boundaries.
-  - path: "internal/adapters/codexappserver/metadata_open_linux.go"
-    form: code
-    realizes: [product/adapters/agent/closed-agent-metadata]
-    why: Implements the stated responsibility within its declared boundary.
-  - path: "internal/adapters/codexappserver/metadata_open_linux_test.go"
-    form: test
-    realizes: [product/adapters/agent/closed-agent-metadata]
-    why: Tests the stated responsibility and retains negative boundaries.
-  - path: "internal/adapters/codexappserver/metadata_open_other.go"
-    form: code
-    realizes: [product/adapters/agent/closed-agent-metadata]
-    why: Implements the stated responsibility within its declared boundary.
-  - path: "internal/adapters/codexappserver/metadata_open_test.go"
-    form: test
-    realizes: [product/adapters/agent/closed-agent-metadata]
-    why: Tests the stated responsibility and retains negative boundaries.
-  - path: "internal/adapters/codexappserver/metadata_open_windows.go"
-    form: code
-    realizes: [product/adapters/agent/closed-agent-metadata]
-    why: Implements the stated responsibility within its declared boundary.
-  - path: "internal/adapters/codexappserver/metadata_redirect_other.go"
-    form: code
-    realizes: [product/adapters/agent/closed-agent-metadata]
-    why: Implements the stated responsibility within its declared boundary.
-  - path: "internal/adapters/codexappserver/metadata_redirect_windows.go"
-    form: code
-    realizes: [product/adapters/agent/closed-agent-metadata]
-    why: Implements the stated responsibility within its declared boundary.
-  - path: "internal/adapters/codexappserver/metadata_symlink_test.go"
-    form: test
-    realizes: [product/adapters/agent/closed-agent-metadata]
-    why: Tests the stated responsibility and retains negative boundaries.
+    why: Supplies real Apply profile inputs from bounded model and source fixtures.
   - path: "internal/adapters/codexappserver/metadata_test.go"
     form: test
     realizes: [product/adapters/agent/closed-agent-metadata]
-    why: Tests the stated responsibility and retains negative boundaries.
+    why: Checks actual Apply image evidence, immutable identity, acquisition failures and factory boundaries with fake readers.

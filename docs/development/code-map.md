@@ -81,7 +81,7 @@ Tests in `internal/tooling/architecture` require every actual Go package to have
 |---|---|---|
 | `internal/adapters/checks` | Concrete repository, profile metadata and document I/O. | [docs/development/modules.md](modules.md) |
 | `internal/adapters/cli` | Concrete repository, profile metadata and document I/O. | [docs/development/modules.md](modules.md) |
-| `internal/adapters/codexappserver` | Concrete repository, profile metadata and document I/O. | [docs/development/modules.md](modules.md) |
+| `internal/adapters/codexappserver` | Prepares Codex build metadata from an explicitly selected immutable runtime image without starting it. | [internal/adapters/codexappserver/README.md](../../internal/adapters/codexappserver/README.md) |
 | `internal/adapters/container` | Container engine client and the Host side of the agentd connection. | [docs/development/modules.md](modules.md) |
 | `internal/adapters/documents` | Concrete repository, profile metadata and document I/O. | [docs/development/modules.md](modules.md) |
 | `internal/adapters/gitrepo` | Concrete repository, profile metadata and document I/O. | [docs/development/modules.md](modules.md) |
