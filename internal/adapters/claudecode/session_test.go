@@ -243,7 +243,7 @@ func sessionAdmissions(t *testing.T) (run.SessionAdmission, run.StepAdmission) {
 func sessionsForTest(t *testing.T, f *fakeRuntime) *Sessions {
 	t.Helper()
 	s, err := NewSessionsWithRuntime(func(_ context.Context, spec container.ContainerSpec) (RuntimeSession, error) {
-		expected := container.ContainerSpec{Name: "markitect-session", Image: "sha256:" + strings.Repeat("a", 64), Labels: map[string]string{"markitect.store": "store"}, User: "1000:1000", Workdir: "/work", Mounts: []container.Mount{{Volume: "workspace", Target: "/work"}, {Volume: "provider-home", Target: "/home/agent"}}, CPUs: 1, MemoryBytes: 1 << 30, Pids: 128, TmpBytes: 1 << 20}
+		expected := container.ContainerSpec{Name: "markitect-session", Image: "sha256:" + strings.Repeat("a", 64), Labels: map[string]string{"markitect.store": "store"}, User: "1000:1000", Workdir: "/work", Mounts: []container.Mount{{Volume: "workspace", Target: "/work", NoCopy: true}, {Volume: "provider-home", Target: "/home/agent"}}, CPUs: 1, MemoryBytes: 1 << 30, Pids: 128, TmpBytes: 1 << 20}
 		if !reflect.DeepEqual(spec, expected) {
 			t.Errorf("unbound runtime spec %+v", spec)
 		}
@@ -557,7 +557,7 @@ func TestClaudeFreshReviewerMountAndReadOnlyTools(t *testing.T) {
 	}
 	spec := sessionSpec(a.Plan, parsed)
 	argv := sessionArgv(a.Plan, parsed, tools)
-	if !spec.Mounts[0].ReadOnly || spec.Mounts[1].ReadOnly || strings.Contains(strings.Join(argv, " "), "--resume") || strings.Contains(strings.Join(argv, " "), "Write") {
+	if !spec.Mounts[0].ReadOnly || !spec.Mounts[0].NoCopy || spec.Mounts[1].ReadOnly || spec.Mounts[1].NoCopy || strings.Contains(strings.Join(argv, " "), "--resume") || strings.Contains(strings.Join(argv, " "), "Write") {
 		t.Fatalf("reviewer inherited writing or conversation state: %+v %v", spec, argv)
 	}
 }
