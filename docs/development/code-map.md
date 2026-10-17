@@ -80,9 +80,9 @@ Tests in `internal/tooling/architecture` require every actual Go package to have
 | Package | Purpose | Owning document |
 |---|---|---|
 | `internal/adapters/checks` | Concrete repository, profile metadata and document I/O. | [docs/development/modules.md](modules.md) |
-| `internal/adapters/claudecode` | Pure selected Claude Code 2.1.301 stream protocol codec. | [internal/adapters/claudecode/README.md](../../internal/adapters/claudecode/README.md) |
+| `internal/adapters/claudecode` | Claude Code stream protocol and step session adaptation through the container runtime. | [internal/adapters/claudecode/README.md](../../internal/adapters/claudecode/README.md) |
 | `internal/adapters/cli` | Concrete repository, profile metadata and document I/O. | [docs/development/modules.md](modules.md) |
-| `internal/adapters/codexappserver` | Prepares Codex build metadata from an explicitly selected immutable runtime image without starting it. | [internal/adapters/codexappserver/README.md](../../internal/adapters/codexappserver/README.md) |
+| `internal/adapters/codexappserver` | Prepares Codex image metadata and implements step sessions through the container runtime. | [internal/adapters/codexappserver/README.md](../../internal/adapters/codexappserver/README.md) |
 | `internal/adapters/container` | Container engine client and the Host side of the agentd connection. | [docs/development/modules.md](modules.md) |
 | `internal/adapters/documents` | Concrete repository, profile metadata and document I/O. | [docs/development/modules.md](modules.md) |
 | `internal/adapters/gitrepo` | Concrete repository, profile metadata and document I/O. | [docs/development/modules.md](modules.md) |
