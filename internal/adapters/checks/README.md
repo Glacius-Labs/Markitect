@@ -20,9 +20,9 @@ checkProfiles:
       profileVersion: 1
       engineExecutable: 'C:\Program Files\Docker\Docker\resources\bin\docker.exe'
       imageID: sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
-      executable: /usr/local/bin/python3
-      argumentPrefix: ["-m", "unittest"]
-      env: ["PYTHONDONTWRITEBYTECODE=1"]
+      executable: /usr/local/go/bin/go
+      argumentPrefix: []
+      env: ["GOTOOLCHAIN=local", "GOCACHE=/home/agent/.cache/go-build"]
       limits:
         milliCPUs: 1000
         memoryBytes: 268435456
