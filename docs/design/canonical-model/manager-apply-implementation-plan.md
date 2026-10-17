@@ -30,8 +30,8 @@ Obsolete behavior disappears together with its tests; tests for still-required i
 | P02 | Library Playground | APPLY-PLAY |
 | P03 | Complete v1 compilation | APPLY-MODEL; APPLY-SNAPSHOT supplies tree values |
 | P04 | Product skeleton and preparation | APPLY-ORG, APPLY-REALIZATION, APPLY-CUTOVER |
-| P05 | Real role sessions and durable communication | APPLY-RUN, APPLY-JOURNAL, APPLY-AGENT |
-| P06 | One Package candidate | APPLY-RUN, APPLY-REALIZATION, APPLY-REPOSITORY, APPLY-INTEGRATE |
+| P05 | Real role sessions and durable communication | APPLY-RUN, APPLY-JOURNAL, APPLY-RUNTIME, APPLY-AGENT |
+| P06 | One Package candidate | APPLY-RUN, APPLY-REALIZATION, APPLY-RUNTIME, APPLY-REPOSITORY, APPLY-INTEGRATE |
 | P07 | Recursive delegation and integration | APPLY-RUN, APPLY-INTEGRATE |
 | P08 | Aggregate verification and reports | APPLY-INTEGRATE |
 | P09 | Guarded publication, read-back and interruption | APPLY-REPOSITORY, APPLY-INTEGRATE |

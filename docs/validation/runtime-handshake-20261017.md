@@ -4,7 +4,7 @@ Validation record, 17 October 2026. The assistant made these throwaway probes wi
 
 ## Setup
 
-- Host: Windows 11 with Docker Desktop 29.4.1 on WSL 2 (Linux 5.15).
+- Host: Windows 11 with Docker Desktop on WSL 2; Docker Engine 29.4.1, Linux kernel 5.15.
 - Codex: `codex-cli 0.162.0`, the npm native binary on the host and in the container.
   - The App Server ran over stdio and the client opted in with `capabilities.experimentalApi`.
   - The schemas came from `codex app-server generate-json-schema`, with and without `--experimental`. They have 447 and 317 files; `dynamicTools` appears only in the experimental `ThreadStartParams`.
@@ -25,14 +25,14 @@ Validation record, 17 October 2026. The assistant made these throwaway probes wi
 | 3 | Codex in the container, dynamic tool, sandbox `workspace-write` | The command failed: `bwrap: No permissions to create new namespace`. The agent still submitted "Created hello.txt", and the file did not exist. | 6.9 s | 29,164 tokens |
 | 4 | Codex in the container, dynamic tool, sandbox `danger-full-access` | Completed, file written, no MCP server started. | 9.6 s | about 29,000 tokens |
 | 5 | Claude in the container, MCP tool | Completed, file written, tool call received. | 11.4 s | $0.053 |
-| 6 | Codex in the container, MCP tool instead of the dynamic tool | Completed, file written. The MCP call carried the thread, turn and call IDs in `_meta`. | 10.2 s | not recorded |
+| 6 | Codex in the container, MCP tool instead of the dynamic tool, sandbox `danger-full-access` | Completed, file written. The MCP call carried the thread, turn and call IDs in `_meta`. | 10.2 s | not recorded |
 
 ## Findings
 
 - **Both CLIs can be driven over stdio, and a Host tool reaches both through MCP.** Codex also accepts the experimental dynamic tool.
 - **Runs on the host inherit the user's environment.**
   - Codex loaded and used user-level MCP servers that the probe had tried to remove.
-  - Claude kept user-level paths unless started in a clean home.
+  - Claude listed user-level skills and its auto-memory path.
   - A clean Linux home inside a container removed all of this without enumerating features.
 - **Codex's own sandbox does not start in an unprivileged container.** The container itself has to be the boundary.
 - **An Agent's report is not evidence.** Run 3 claimed a file that did not exist. The Host must observe files and run checks itself.
@@ -42,6 +42,6 @@ Validation record, 17 October 2026. The assistant made these throwaway probes wi
 ## Limits
 
 - **One task per path, run once.** There was no interruption, resume, concurrent session or long task.
-- **Provider costs are lower bounds.** Codex ran on a subscription login, which reports tokens but no price.
+- **Costs are CLI-reported estimates.** Claude's dollar figures come from the CLI on a copied subscription login; Codex ran on a subscription login and reports tokens only.
 - **The container image was not pinned by digest,** and the Claude versions differed between host and container.
 - **No egress restriction, resource limit or Markitect session helper was tested.**

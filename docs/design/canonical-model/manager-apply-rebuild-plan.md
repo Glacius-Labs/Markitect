@@ -6,7 +6,7 @@ Source inspected: Main `bc4b49e76f9b9e4b3ec98033a0b8c73d5013b310`. Paths below n
 
 ## Container runtime
 
-Every Agent session and every project check runs in its own Linux container ([DEC-037](../../concepts/register.md#dec-037-agent-sessions-and-checks-run-in-linux-containers)). The Host profile names the runtime image by digest. The image contains:
+Every Agent session and every project check runs in its own Linux container ([DEC-037](../../concepts/register.md#dec-037-agent-sessions-and-checks-run-in-linux-containers)). The Host profile names the runtime image by its engine image ID, the content digest of the image (`sha256:...`), which also exists for locally built images. The image contains:
 
 - the session helper `markitect-agentd`;
 - the pinned Codex and Claude Code CLIs;
@@ -16,20 +16,21 @@ A project builds its image on the product's base image, so sessions and checks s
 
 | Concern | Rule |
 | --- | --- |
-| Authority | A container receives exactly what its role may use. A writer gets its workspace volume writable, a reviewer gets the frozen candidate read-only, and a check gets a disposable copy of it. Model, configuration, registry and independent expectations are never writable. No container receives the owner's working tree, the engine socket or another host path. Path claims still apply inside a workspace and are checked at Freeze. |
-| Isolation | The provider's own sandbox is off, because the container is the boundary: Codex runs with `danger-full-access`, Claude Code with an explicit tool allowlist. Every container starts with a clean home. User configuration, skills, plugins, memories and MCP servers reach a session only when the profile supplies them. |
-| Process lifetime | Stopping a session stops its container, which ends its whole process tree. The profile bounds CPU, memory, process count and output size. |
-| Files | Workspaces live on Linux volumes that the runtime owns. Inputs enter as Git objects of the captured commit, and candidates leave as Git objects. Only guarded publication writes to the owner's working tree. Windows short names, case aliases, reparse points, line endings and file modes therefore never occur inside a session. |
-| Credentials | A runtime credential is an API key or a long-lived token that the Host profile references, never a copied desktop login. Providers rotate refresh tokens, so a copy can sign the desktop out. The Host passes the value into the container's environment at start; it never enters prompts, the journal, logs or command arguments, and the journal records only its reference and kind. Subscription logins shared by concurrent sessions are [OQ-010](../../concepts/register.md#open-questions). |
+| Authority | A container receives exactly what its role may use. A writer gets its workspace volume writable, a reviewer gets the frozen candidate read-only, and a check gets a disposable copy of it. Independent expectations never enter a writer's container. Model, configuration and registry are protected inputs inside the workspace: a writer's change to them fails at Freeze, like any write outside its claims. No container receives the owner's working tree, the engine socket or another host path. |
+| Isolation | The provider's own sandbox is off, because the container is the boundary: Codex runs with `danger-full-access`, Claude Code with an explicit tool allowlist. Every container runs as a non-root user with all capabilities dropped, `no-new-privileges` and a read-only root filesystem; only the workspace, the provider home and a temporary directory are writable. Every session starts with an empty provider home. User configuration, skills, plugins, memories and MCP servers reach a session only when the profile supplies them. |
+| Process lifetime | Stopping a session stops its container, which ends its whole process tree. agentd stops the provider when its connection to the Host closes, so a crashed Host leaves no writer running. The profile bounds CPU, memory, process count and output size. |
+| Volumes and recovery | Each session has its own provider-home volume, which outlives its container; `Inspect` and a resumed session mount it in a new container. Every container and volume carries the label of its Host store. On start the Host reconciles labeled containers it does not control: it stops them and records the observed termination before an unfinished run continues. A run's volumes are kept while the run is unfinished and deleted when it finishes, after their evidence is in the journal and the state store. |
+| Files | Workspaces live on Linux volumes that the runtime owns. Inputs enter as Git objects of the captured commit. Candidates leave as Git objects into the Host's private state store, never into the owner's `.git`. Only guarded publication writes to the owner's working tree, and it writes each file the way Git checks it out in that repository, applying its attributes, line-ending settings and executable bits. Windows short names, case aliases, reparse points, line-ending conversion and lost file modes therefore never occur inside a session. |
+| Credentials | A runtime credential is an API key or a long-lived token that the Host profile references, never a copied desktop login. Providers rotate refresh tokens, so a copy can sign the desktop out. The Host sends the value to agentd in the start control message, never as container environment or command argument, and agentd gives it only to the provider process. The journal records that message with the credential's reference and kind instead of its value, and the Host redacts known secret values from every payload before appending it. Where the CLI allows, as with Codex's shell environment policy, the provider's tool processes do not inherit the credential. The Agent can still reach it, so a runtime credential should be scoped and spend-capped. Codex subscription logins for concurrent sessions are [OQ-010](../../concepts/register.md#open-questions). |
 | Network | Sessions need egress to their provider. The first version does not restrict other egress; an allowlist is a later extension. |
 
 `markitect-agentd` is the container's entrypoint and the only program the Host talks to. It has three jobs:
 
 - run the provider CLI as its child;
-- serve the Host tool catalogue to that CLI as a stdio MCP server;
+- serve the Host tool catalogue to that CLI: the CLI starts `markitect-agentd mcp` as its stdio MCP server, and that bridge connects back to the main agentd over a Unix socket inside the container;
 - carry three channels over the container's single stdio connection: the provider's own protocol, Host tool calls, and control (start, stop and exit status).
 
-There is no network port and no host path, so the same transport works on every host operating system. agentd adds no policy. It relays bytes, reports exits and observation limits, and refuses to start when its version differs from the Host's.
+There is no network port and no host path, so the same transport works on every host operating system. agentd adds no policy. It relays bytes, reports exits and observation limits, and refuses a Host whose frame-protocol version differs from its own; a product release therefore needs a new image only when that protocol changes.
 
 ## Session adapters
 
@@ -38,7 +39,7 @@ Two adapters implement `run.Sessions`:
 - Codex App Server in `internal/adapters/codexappserver`;
 - Claude Code in stream-JSON mode in `internal/adapters/claudecode`.
 
-Each role profile selects one, and the default reviewer profile uses a different model family than the Manager profile ([ASM-005](../../concepts/register.md#assumptions-and-hypotheses)). Markitect owns the organization, scheduling, context, authority, review policy and accepted results; the CLI supplies the coding workflow inside one session.
+Each role profile selects one; the [configuration](manager-apply-configuration.md#project-execution-file) states how reviewer and Manager profiles relate. Markitect owns the organization, scheduling, context, authority, review policy and accepted results; the CLI supplies the coding workflow inside one session.
 
 Host tools reach both CLIs through MCP. Claude Code has no other client-handled tool mechanism, and Codex's dynamic tools are experimental. One protocol keeps one tool implementation, and a further CLI with MCP support can become an adapter without new tool code.
 
@@ -61,7 +62,7 @@ One Host session owns one container, its agentd and the provider session inside 
 | --- | --- | --- |
 | `Open` | Start the container with the role's mounts. agentd starts `codex app-server`; the adapter initializes, starts a fresh thread with the profile's settings and the Host MCP server, and durably binds the thread ID to the preallocated Host session ID. | Start the container with the role's mounts. agentd starts `claude -p --input-format stream-json --output-format stream-json` with the profile's tool allowlist and only the Host MCP server; the adapter durably binds the provider session ID from the init event. |
 | `Step` | Send one turn with the exact compiled input and output contract, route tool calls and events to `SessionIO`, and return the terminal turn and proposed result. | Send one user message, route tool calls and events to `SessionIO`, and return the `result` event and proposed result. |
-| `Inspect` | Read only the journal-bound thread and exact turn through the pinned version's history methods. | Read the session transcript on the session volume for the exact step. |
+| `Inspect` | Read only the journal-bound thread and exact turn through the pinned version's history methods. | Read the session transcript in the provider-home volume for the exact step. |
 | `Stop` | Interrupt the turn where possible, then stop the container and report observed termination or uncertainty. | The same. |
 
 Exact request shapes come from the pinned CLI version: the generated App Server schemas for Codex and the stream-JSON events for Claude Code. Provider request, thread, turn and session IDs are not interchangeable with Host identities. A Host tool call is bound through the session's channel; the provider's call identifiers are recorded as observations.
@@ -82,7 +83,7 @@ An executor profile binds:
 - model and effort, effective provider settings and tool schemas;
 - the credential reference.
 
-The image records its CLI versions and schema digests when it is built, and preparation reads them from the image, not from a host executable. Model selection remains configuration. Both demonstration Applies use the same frozen product build, image and profiles.
+The image records its CLI versions and schema digests in a metadata file when it is built. Preparation reads the image ID and that file through the engine without running the image: an image inspection plus copying the file out of a created, never started container. It never reads a host executable. Model selection remains configuration. Both demonstration Applies use the same frozen product build, image and profiles.
 
 Earlier pins are candidates, not obligations. Those are `codex-cli 0.162.0`, which the deleted source required, and the desktop build `0.162.0-alpha.17.2`, which the offline metadata adapter recorded. Before real work, each adapter passes a bounded handshake smoke with the chosen image: start, one Host tool call, one file change observed by the Host, termination. The smoke repeats for every new image, and metadata never stands in for it.
 

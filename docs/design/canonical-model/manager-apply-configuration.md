@@ -50,8 +50,8 @@ completionReserve:
   executionTime: 2h
 defaults:
   profiles:
-    manager: library-codex
-    reviewer: library-claude
+    manager: library-agent
+    reviewer: library-agent
   reviewRounds: 3
   batchNoChangeReviews: false
   stepTimeout: 10m
@@ -80,7 +80,7 @@ A check that executes a command the model requires names that Definition in `req
 
 `limits.creationRoots` bounds the permitted creation areas; defaults and Package settings select within it. Here the code, tests and documentation live below `realization/`. Existing artifacts still need registry ownership, and a directory permission grants no other Manager's files or protected model and configuration paths. A check's `directory` is confined to its captured candidate, and its arguments are literal, never a shell command.
 
-`defaults` applies to every local Package Manager, including the root. `packages` keys are exact local Package paths, and `.` is the root. An unknown or imported Package key is an error, not a request to create a Manager. Local and integration reviews use the reviewer profile in fresh sessions; the final evidence check is deterministic Host work. The reviewer profile should come from a different model family than the Manager profile, as in the example, where Claude Code reviews Codex ([ASM-005](../../concepts/register.md#assumptions-and-hypotheses)). The first strategy is Manager plus reviewer with sequential writing.
+`defaults` applies to every local Package Manager, including the root. `packages` keys are exact local Package paths, and `.` is the root. An unknown or imported Package key is an error, not a request to create a Manager. Local and integration reviews use the reviewer profile in fresh sessions; the final evidence check is deterministic Host work. Reviewer profiles should use a different model family than Manager profiles, for example Claude Code reviewing Codex ([ASM-005](../../concepts/register.md#assumptions-and-hypotheses)). The same family is allowed, and the run report states each role's profile; the example keeps one profile for brevity. The first strategy is Manager plus reviewer with sequential writing.
 
 Custom instructions are optional file lists under `defaults.instructions` or `packages.<path>.instructions`, keyed by `manager` or `reviewer`. Each entry identifies an exact repository-relative regular file. Preserve list order, repeated entries and original captured bytes; do not expand directories or globs, normalize paths or deduplicate the list. An existing instruction file without captured bytes leaves preparation `NotCompleted` and requires a new complete capture; preparation cannot extend an old capture or its guard. Instructions carry operational guidance only, such as reporting style or tool usage; a project rule in them is a review finding and belongs in the model ([concept](manager-apply-concept.md#four-kinds-of-input-and-record)). The parent still supplies each task's outcome prompt, and the user's instruction goes to the root only.
 
@@ -134,11 +134,11 @@ Host instruction inputs outside the repository remain explicit locations in adap
 
 | Profile | Required preparation |
 | --- | --- |
-| Agent | Adapter kind (Codex App Server or Claude Code), runtime image by digest, the CLI version and protocol-schema identity the image records, model and effort, credential reference, container and transport limits, effective provider settings and tool schemas, explicit environment and instruction policy. |
-| Check | Runtime image by digest, executable inside the image, fixed environment policy, argument prefix, container, output and termination limits. Project arguments are appended literally. |
+| Agent | Adapter kind (Codex App Server or Claude Code), runtime image ID, the CLI version and protocol-schema identity the image records, model and effort, credential reference, container and transport limits, effective provider settings and tool schemas, explicit environment and instruction policy. |
+| Check | Runtime image ID, executable inside the image, fixed environment policy, argument prefix, container, output and termination limits. Project arguments are appended literally. |
 | State location | Repository and store identity, a confined private directory, the SQLite journal configuration, and the container engine executable with the runtime's volume prefix. Its identity is validated before an assignment resumes. |
 
-The selected bytes and identities enter the run's input binding and are rechecked at effect boundaries. Secrets are never persisted; capture safe configuration and instruction bytes, secret references and identity bindings, and report the observation boundary. A credential reference names an environment variable or a private file on the Host, and its value goes only into the container's environment ([rebuild plan](manager-apply-rebuild-plan.md#container-runtime)). The [rebuild plan](manager-apply-rebuild-plan.md#bind-the-runtime-image-before-real-work) also owns the image and handshake gate.
+The selected bytes and identities enter the run's input binding and are rechecked at effect boundaries. Secrets are never persisted; capture safe configuration and instruction bytes, secret references and identity bindings, and report the observation boundary. A credential reference names an environment variable or a private file on the Host; its value goes only to the provider process inside the container ([rebuild plan](manager-apply-rebuild-plan.md#container-runtime)). The [rebuild plan](manager-apply-rebuild-plan.md#bind-the-runtime-image-before-real-work) also owns the image and handshake gate.
 
 ## Assignment run task and attempt
 
