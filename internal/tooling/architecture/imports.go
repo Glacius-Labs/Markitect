@@ -30,103 +30,43 @@ func (v Violation) String() string {
 	return fmt.Sprintf("%s:%d: %s imports %s: %s", v.Edge.File, v.Edge.Line, v.Edge.From, v.Edge.To, v.Rule)
 }
 
-// layer classifies every product package by its concrete owner. Removed
-// legacy paths receive no permanent exemption.
+// layer names an explicit current responsibility. Unknown and removed packages
+// have no import privilege, including test-only and platform-specific packages.
 func layer(p string) (string, string) {
 	if name, owner := targetLayer(p); name != "" {
 		return name, owner
 	}
-	switch {
-	// Preserve the project-model family's capability boundary at its Core
-	// location; structural Core and sibling capabilities cannot import it.
-	case p == "src/internal/core/projectmodel" || strings.HasPrefix(p, "src/internal/core/projectmodel/"):
-		return "module", "src/internal/core/projectmodel"
-	case p == "src/internal/core" || strings.HasPrefix(p, "src/internal/core/"):
-		return "core", "core"
-	case p == "src/internal/application" || strings.HasPrefix(p, "src/internal/application/") || p == "src/internal/runtime" || strings.HasPrefix(p, "src/internal/runtime/"):
-		return "host", "host"
-	case p == "src/internal/host" || strings.HasPrefix(p, "src/internal/host/"):
-		return "host", "host"
-	case p == "src/internal/modules" || strings.HasPrefix(p, "src/internal/modules/"):
-		parts := strings.Split(p, "/")
-		if len(parts) >= 4 {
-			return "module", strings.Join(parts[:4], "/")
-		}
-		return "unknown", p
-	// The moved writer keeps its existing composition boundary. Its finer
-	// Infrastructure direction and guarded selectors are checked separately.
-	case p == GuardedWritePackage || strings.HasPrefix(p, GuardedWritePackage+"/"):
-		return "host", "host"
-	case p == "src/internal/infrastructure" || strings.HasPrefix(p, "src/internal/infrastructure/"):
-		return "infrastructure", "infrastructure"
-	case p == "src/internal/tooling" || strings.HasPrefix(p, "src/internal/tooling/") || p == "tools" || strings.HasPrefix(p, "tools/"):
-		return "tooling", "tooling"
-	// Hermetic test fixtures shared by the tests of every layer.
-	case p == "internal/testkit" || strings.HasPrefix(p, "internal/testkit/"):
-		return "testkit", p
-	case p == "src/cmd" || strings.HasPrefix(p, "src/cmd/"):
-		return "cli", p
-	case p == "integration":
-		return "bootstrap", "bootstrap"
-	case p == "src/harness/examples" || p == "benchmark":
-		return "harness-tests", p
-	case p == "src/harness/engineering-discovery" || p == "examples/selective-adoption" || p == "examples/selective-adoption/pathspell" || p == "experiments/mcp-pilot":
-		return "harness-runtime", p
-	default:
-		return "unknown", p
-	}
+	return "unknown", p
 }
 
 func Check(edges []Edge) []Violation {
 	var out []Violation
 	for _, e := range edges {
 		from, owner := layer(e.From)
-		if e.To == "" {
-			if from == "unknown" || from == "harness-tests" && !e.Test {
-				out = append(out, Violation{e, "unclassified product package"})
-			}
-			continue
-		}
 		to, target := layer(e.To)
 		rule := ""
 		switch {
-		case from == "testkit":
-			rule = "testkit may not import Markitect packages"
-		case from == "bootstrap":
-			rule = "standalone bootstrap tooling may not import Markitect packages"
-		case to == "testkit" && !e.Test:
-			rule = "only test files may import testkit"
-		case to == "testkit":
-		case strings.HasPrefix(from, "apply-") || strings.HasPrefix(to, "apply-"):
-			rule = targetRule(e)
-		case e.From == e.To:
-			rule = "self-import is forbidden"
-		case strings.HasPrefix(to, "harness") && !strings.HasPrefix(from, "harness"):
-			rule = "product may not import test/example Harness"
-		case from == "harness-tests" && !e.Test:
-			rule = "Harness root may contain only test code"
-		case from == "harness-runtime" && to != "host" && !(strings.HasPrefix(to, "harness") && strings.HasPrefix(e.To, strings.TrimSuffix(e.From, "/pathspell"))):
-			rule = "example/experiment runtime may import only Host and its own demonstration subtree"
-		case from == "unknown" || to == "unknown":
+		case from == "unknown":
+			rule = "unclassified product package"
+		case e.To == "":
+		case from == "standalone" || from == "test-support":
+			rule = "standalone tooling and test support may not import Markitect packages"
+		case to == "unknown":
 			rule = "unclassified internal package"
-		case from == "core" && to != "core":
-			rule = "Core may import only Core"
-		case from == "module" && to != "core" && !(to == "module" && owner == target):
-			rule = "Module may import only Core and its own subtree"
-		case from == "cli" && to != "host":
-			rule = "CLI must delegate to Host"
-		case from == "host" && to == "cli":
-			rule = "Host may not import CLI entrypoints"
-		case from == "infrastructure" && (to == "module" || to == "host" || to == "cli" || to == "tooling"):
-			rule = "Infrastructure may not import product composition"
-		case from == "tooling" && (to == "module" || to == "host" || to == "cli"):
-			rule = "Tooling may not import runtime composition"
+		case e.From == e.To && !e.Test:
+			rule = "self-import is forbidden"
+		case to == "test-support" && !e.Test:
+			rule = "only test files may import testkit"
+		case to == "test-support":
+		case owner == target:
+		case !contains(responsibilityImports[owner], target):
+			rule = "responsibility direction forbids " + owner + " -> " + target
 		}
 		if rule != "" {
 			out = append(out, Violation{e, rule})
 		}
 	}
-	sort.Slice(out, func(i, j int) bool { return out[i].String() < out[j].String() })
+	sortViolations(out)
 	return out
 }
 

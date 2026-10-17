@@ -18,11 +18,11 @@ import (
 )
 
 // The code map is read from the inspected repository, like the import gate.
-// It is not embedded: release source archives carry only Go files below src/.
+// It is not embedded: release source archives do not require this maintenance input at runtime.
 const (
-	CodeMapSource = "src/internal/tooling/architecture/codemap.yaml"
+	CodeMapSource = "internal/tooling/architecture/codemap.yaml"
 	CodeMapPage   = "docs/development/code-map.md"
-	CodeMapUpdate = "go test ./src/internal/tooling/architecture -run TestCodeMapPage -update"
+	CodeMapUpdate = "go test ./internal/tooling/architecture -run TestCodeMapPage -update"
 )
 
 // MapLayer is one code-map layer. Gate lists the coarse import-gate layers,
@@ -34,28 +34,20 @@ type MapLayer struct {
 
 // Layers is ordered; code-map entries follow this order, then their path.
 var Layers = []MapLayer{
-	{"apply-model", "Apply model", "Pure canonical v1 compiler over supplied bytes.", []string{"apply-model"}},
-	{"apply-snapshot", "Apply snapshots", "Pure fixed file-tree values and comparisons.", []string{"apply-snapshot"}},
-	{"apply-organization", "Apply organization", "Pure Manager topology, settings, context and mandates.", []string{"apply-organization"}},
-	{"apply-realization", "Apply realization", "Pure registry, ownership, claims and candidate rules.", []string{"apply-realization"}},
-	{"apply-run", "Apply execution", "Tasks, sessions, review, budgets and lifecycle with consumer-owned ports.", []string{"apply-run"}},
-	{"apply-usecase", "Apply use case", "Aggregate reconciliation, verification and guarded publication.", []string{"apply-usecase"}},
-	{"apply-adapter", "Apply adapters", "Concrete protocols and effects implementing inward consumer ports.", []string{"apply-adapter"}},
-	{"apply-process", "Apply process mechanics", "Process lifetime mechanics for Codex sessions and project checks.", []string{"apply-process"}},
-	{"apply-bootstrap", "Apply composition", "Constructs concrete adapters and wires their consumers.", []string{"apply-bootstrap"}},
-	{"apply-command", "Apply command", "Thin command entrypoint delegating to composition.", []string{"apply-command"}},
-	{"core", "Deterministic core", "Structural compiler, snapshots and project-model views. No providers, Git processes or writes.", []string{"core", "host", "module"}},
-	{"infrastructure", "Infrastructure", "Git and working-tree access: fixed snapshots and guarded writes.", []string{"infrastructure", "host"}},
-	{"application", "Product application", "Current product use cases and their command and MCP surfaces.", []string{"host"}},
-	{"runtime", "Execution runtime", "Runs Manager, review and verify roles in owned workspaces.", []string{"host"}},
-	{"legacy", "Legacy and compatibility", "The published v0.13 Project/Domain surfaces. DEC-014 allows removing them.", []string{"host", "module"}},
-	{"module", "Modules", "Independent capability packages that import only Core.", []string{"module"}},
-	{"cli", "Executables", "Thin entrypoints that delegate to Host.", []string{"cli"}},
-	{"tooling", "Tooling", "Maintainer tooling: import gate, release, publication and notices.", []string{"tooling"}},
-	{"bootstrap", "Bootstrap", "Standalone public bootstrap without Markitect imports.", []string{"bootstrap"}},
-	{"harness", "Harnesses", "Executable tests, test support and example programs; not product code.", []string{"harness-tests", "harness-runtime", "testkit"}},
-	{"experiment", "Experiments", "Bounded pilots kept with their evaluation.", []string{"harness-runtime"}},
-	{"fixture", "Fixtures", "Adopting-project code used as test input; it may not import Markitect.", []string{"fixture"}},
+	{"apply-model", "Canonical model", "Pure canonical v1 compiler over explicit bytes.", []string{"apply-model"}},
+	{"apply-snapshot", "Snapshots", "Pure immutable repository tree values.", []string{"apply-snapshot"}},
+	{"apply-organization", "Organization", "Pure Manager topology, context selection and settings.", []string{"apply-organization"}},
+	{"apply-realization", "Realization", "Pure ownership, accounting and candidate rules.", []string{"apply-realization"}},
+	{"apply-usecase", "Preparation", "Read-only preparation through consumer-owned ports.", []string{"apply-usecase"}},
+	{"model-view", "Model view", "Deterministic readable view and reviewed source-bound write plan.", []string{"model-view"}},
+	{"apply-adapter", "Adapters", "Concrete repository, profile metadata and document I/O.", []string{"apply-adapter"}},
+	{"apply-bootstrap", "Composition", "Constructs actual services and their adapters.", []string{"apply-bootstrap"}},
+	{"apply-command", "Product command", "Thin entrypoint to product composition.", []string{"apply-command"}},
+	{"build-data", "Build data", "Version identity and embedded license notices.", []string{"build-data"}},
+	{"maintenance", "Maintenance", "Explicitly separated release and repository tooling.", []string{"maintenance"}},
+	{"maintenance-command", "Maintenance commands", "Thin entrypoints to maintenance services.", []string{"maintenance-command"}},
+	{"test-support", "Test support", "Hermetic fixture support available only to tests.", []string{"test-support"}},
+	{"standalone", "Standalone tools", "Public bootstrap and source smoke with no product imports.", []string{"standalone"}},
 }
 
 type CodeMap struct {
@@ -305,8 +297,8 @@ func RenderCodeMap(m CodeMap) []byte {
 	fmt.Fprintf(&b, "This page lists every Go package in the repository with its layer, purpose and owning document. Read the owning document before you change a package, and update it when the package's behavior changes.\n\n")
 	fmt.Fprintf(&b, "The page is generated from [codemap.yaml](%s). Do not edit it by hand. Change the YAML, then regenerate the page from the repository root:\n\n", relativeLink(pageDir, CodeMapSource))
 	fmt.Fprintf(&b, "```powershell\n%s\n```\n\n", CodeMapUpdate)
-	fmt.Fprintf(&b, "Tests in `src/internal/tooling/architecture` fail when a Go package is missing from the map, when an entry names a directory that is no longer a package, when an owning document is missing, or when this page is stale. Each layer must agree with the coarse layer of the [import gate](modules.md#mechanical-dependency-gate). The gate also enforces two rules of the finer layers: `core`, `infrastructure`, `application` and `runtime` packages may not import `legacy` packages, and they may use only the guarded API of `%s`.\n\n", GuardedWritePackage)
-	fmt.Fprintf(&b, "The target `cmd/` and `internal/` responsibilities use separate `apply-*` layers and the [Apply import rules](modules.md#apply-target-dependencies). Only existing packages appear here; absent target packages require no stubs. Imports between target and current packages are forbidden in both directions.\n\n")
+	fmt.Fprintf(&b, "Tests in `internal/tooling/architecture` require every actual Go package to have one compatible map entry and an existing owning document. The [import gate](modules.md#mechanical-dependency-gate) checks all production, test and platform files against explicit responsibility edges; there is no broad maintenance or adapter exemption. The document writer additionally uses only the reviewed guarded API of `%s`.\n\n", GuardedWritePackage)
+
 	counts := map[string]int{}
 	for _, p := range m.Packages {
 		counts[p.Layer]++

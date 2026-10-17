@@ -48,8 +48,8 @@ type ExpectedCheck struct {
 }
 
 // ModelFacts contains the small, source-independent part of the current
-// project model that this check needs. Host compiles Core and derives these
-// facts from the current projectmodel report.
+// project model that this check needs. The consumer derives these
+// facts from actual canonical v1 preparation and the bound census.
 type ModelFacts struct {
 	StructuralStatus string
 	SnapshotID       string
@@ -176,7 +176,7 @@ func Check(input Input) (Report, error) {
 			report.Findings = append(report.Findings, pipelineFinding(pipeline, "pipelines.digest.mismatch", "", "", "pipeline bytes do not match the configured SHA-256 digest"))
 		}
 		if !owners[pipeline.Owner] {
-			report.Findings = append(report.Findings, pipelineFinding(pipeline, "pipelines.owner.resource-missing", "", "", "configured owner is not a resource identity in the supplied semantic model"))
+			report.Findings = append(report.Findings, pipelineFinding(pipeline, "pipelines.owner.resource-missing", "", "", "configured owner is not a responsibility in the supplied canonical model"))
 		}
 		if !hasOwnership(input.Ownership, pipeline.Path, pipeline.Owner) {
 			report.Findings = append(report.Findings, pipelineFinding(pipeline, "pipelines.owner.link-missing", "", "", "supplied ownership facts do not link this path to the configured owner"))

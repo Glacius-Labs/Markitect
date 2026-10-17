@@ -50,10 +50,10 @@ func TestRunPassesCleanRepository(t *testing.T) {
 		}
 	}
 	write("README.md", "# Fixture\n")
-	write("src/internal/core/core.go", "package core\n")
-	write("src/internal/tooling/architecture/codemap.yaml", `packages:
-  - path: src/internal/core
-    layer: core
+	write("internal/model/core.go", "package core\n")
+	write("internal/tooling/architecture/codemap.yaml", `packages:
+  - path: internal/model
+    layer: apply-model
     purpose: Core fixture.
     doc: README.md
 `)
@@ -80,15 +80,15 @@ func TestRunReportsArchitectureViolations(t *testing.T) {
 		}
 	}
 	write("README.md", "# Fixture\n")
-	write("src/internal/core/core.go", "package core\nimport _ \"github.com/Glacius-Labs/Markitect/src/internal/host\"\n")
-	write("src/internal/host/host.go", "package host\n")
-	write("src/internal/tooling/architecture/codemap.yaml", `packages:
-  - path: src/internal/core
-    layer: core
+	write("internal/model/core.go", "package core\nimport _ \"github.com/Glacius-Labs/Markitect/internal/apply\"\n")
+	write("internal/apply/host.go", "package host\n")
+	write("internal/tooling/architecture/codemap.yaml", `packages:
+  - path: internal/model
+    layer: apply-model
     purpose: Core fixture.
     doc: README.md
-  - path: src/internal/host
-    layer: legacy
+  - path: internal/apply
+    layer: apply-usecase
     purpose: Host fixture.
     doc: README.md
 `)
@@ -97,7 +97,7 @@ func TestRunReportsArchitectureViolations(t *testing.T) {
 	if got := Run([]string{"--repo", root}, &out, &errout); got != 1 {
 		t.Fatalf("exit = %d, want 1; stderr = %q", got, errout.String())
 	}
-	if errout.Len() != 0 || !strings.Contains(out.String(), "Core may import only Core") {
+	if errout.Len() != 0 || !strings.Contains(out.String(), "responsibility direction forbids") {
 		t.Fatalf("stdout = %q, stderr = %q; want architecture violation", out.String(), errout.String())
 	}
 }

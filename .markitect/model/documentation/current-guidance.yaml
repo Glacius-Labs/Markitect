@@ -1,0 +1,7 @@
+imports:
+  - package: vocabulary
+    as: Vocab
+id: current-guidance
+kind: Vocab.Rule
+body: "Current guides describe the implemented command surface, requested stages, exact source inputs and incomplete execution honestly. Preserve accepted concepts, user source documents and historical evidence in their original scope. Check links and generated views separately from semantic assessment."
+spec: {}

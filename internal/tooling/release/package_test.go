@@ -26,7 +26,7 @@ func TestPackageIsDeterministicAndContainsOnlyReleaseSources(t *testing.T) {
 		t.Fatal("packaging the same source twice changed output")
 	}
 	entries := archiveEntries(t, first)
-	want := []string{"LICENSE", "README.md", "go.mod", "go.sum", "schema/manifest.yaml", "src/cmd/markitect/main.go", "src/internal/core/model.go", "src/internal/host/authoring/format/schema.go", "src/internal/tooling/release/package.go", "src/internal/tooling/release/package_test.go"}
+	want := []string{"LICENSE", "README.md", "go.mod", "go.sum", "schema/manifest.yaml", "cmd/markitect/main.go", "internal/model/model.go", "internal/model/format/schema.go", "internal/tooling/release/package.go", "internal/tooling/release/package_test.go"}
 	sort.Strings(want)
 	if strings.Join(entries, "\n") != strings.Join(want, "\n") {
 		t.Fatalf("unexpected package contents:\n%v\nwant:\n%v", entries, want)
@@ -67,7 +67,7 @@ func TestPackageOmitsRetiredEmbeddedAuthoringSource(t *testing.T) {
 		t.Fatal("source archive omitted or changed the root license")
 	}
 	for name := range contents {
-		if strings.HasPrefix(name, prefix+"internal/host/embedded/") {
+		if strings.HasPrefix(name, prefix+"internal/apply/embedded/") {
 			t.Errorf("retired embedded authoring source was packaged: %s", name)
 		}
 	}
@@ -79,8 +79,8 @@ func sourceModuleRoot(t *testing.T) string {
 	if !ok {
 		t.Fatal("cannot locate release test source")
 	}
-	// This package lives at src/internal/tooling/release under the root Go module.
-	root := filepath.Clean(filepath.Join(filepath.Dir(testFile), "..", "..", "..", ".."))
+	// This package lives at internal/tooling/release under the root Go module.
+	root := filepath.Clean(filepath.Join(filepath.Dir(testFile), "..", "..", ".."))
 	if _, err := os.Stat(filepath.Join(root, "go.mod")); err != nil {
 		t.Fatalf("resolved source module root %q has no go.mod: %v", root, err)
 	}
@@ -93,7 +93,7 @@ func TestPackageChangesWhenIncludedSourceChanges(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	path := filepath.Join(root, "tools", "markitect", "src", "internal", "core", "model.go")
+	path := filepath.Join(root, "internal", "model", "model.go")
 	if err := os.WriteFile(path, []byte("package core\n// changed\n"), 0644); err != nil {
 		t.Fatal(err)
 	}
@@ -112,17 +112,17 @@ func TestPackageNormalizesTextLineEndingsForReproducibleArchive(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	moduleDir := filepath.Join(root, "tools", "markitect")
+	moduleDir := root
 	for _, relative := range []string{
 		"go.mod",
 		"go.sum",
 		"LICENSE",
 		"README.md",
-		"src/cmd/markitect/main.go",
-		"src/internal/core/model.go",
-		"src/internal/host/authoring/format/schema.go",
-		"src/internal/tooling/release/package.go",
-		"src/internal/tooling/release/package_test.go",
+		"cmd/markitect/main.go",
+		"internal/model/model.go",
+		"internal/model/format/schema.go",
+		"internal/tooling/release/package.go",
+		"internal/tooling/release/package_test.go",
 		"schema/manifest.yaml",
 	} {
 		full := filepath.Join(moduleDir, filepath.FromSlash(relative))
@@ -144,7 +144,7 @@ func TestPackageNormalizesTextLineEndingsForReproducibleArchive(t *testing.T) {
 		t.Fatal("CRLF checkout changed the canonical source archive or lock")
 	}
 	entries := archiveContents(t, crlfArchive)
-	if got, want := string(entries["src/internal/core/model.go"]), "package core\n"; got != want {
+	if got, want := string(entries["internal/model/model.go"]), "package core\n"; got != want {
 		t.Fatalf("normalized source = %q, want %q", got, want)
 	}
 }
@@ -155,7 +155,7 @@ func TestPackageRejectsSymlinksInSourceTree(t *testing.T) {
 	if err := os.WriteFile(external, []byte("package outside\n"), 0644); err != nil {
 		t.Fatal(err)
 	}
-	link := filepath.Join(root, "tools", "markitect", "src", "cmd", "markitect", "linked.go")
+	link := filepath.Join(root, "cmd", "markitect", "linked.go")
 	if err := os.Symlink(external, link); err != nil {
 		t.Skipf("symlink creation unavailable: %v", err)
 	}

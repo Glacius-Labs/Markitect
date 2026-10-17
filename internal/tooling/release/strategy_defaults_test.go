@@ -6,7 +6,7 @@ import (
 )
 
 func TestStrategyDefaultsAssetIsPreservedInBothSourcePackages(t *testing.T) {
-	root := transitionalSourceFixture(t)
+	root := rootLayoutFixture(t)
 	asset := []byte("\xef\xbb\xbfapiVersion: markitect.strategy-defaults/v1\r\nstrategy: recursive-apply-v1\r\ndefaults:\r\n  reviewRounds: 3\r\n")
 	writeLayoutFile(t, root, embeddedStrategyDefaultsPath, string(asset))
 	writeLayoutFile(t, root, "internal/apply/nearby.yaml", "not a packaged source\n")
@@ -62,7 +62,7 @@ func TestStrategyDefaultsAssetIsPreservedInBothSourcePackages(t *testing.T) {
 }
 
 func TestStrategyDefaultsFixedSnapshotRejectsNonRegularAsset(t *testing.T) {
-	root := transitionalSourceFixture(t)
+	root := rootLayoutFixture(t)
 	writeLayoutFile(t, root, embeddedStrategyDefaultsPath, "strategy: recursive-apply-v1\n")
 	source := fixedSourceSnapshot(t, root)
 	source.Modes[embeddedStrategyDefaultsPath] = "120000"

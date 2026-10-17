@@ -12,28 +12,11 @@ import (
 	"strings"
 )
 
-// GuardedWritePackage owns guarded working-tree writes. Product packages may
-// use only its guarded API; its other exports are primitives for the
-// remaining legacy writers.
-const GuardedWritePackage = "src/internal/infrastructure/guardedwrite"
+// GuardedWritePackage supplies the independently guarded document writer.
+const GuardedWritePackage = "internal/tooling/guardedwrite"
 
-// productLayers are the code-map layers of the current product.
-var productLayers = map[string]bool{"core": true, "infrastructure": true, "application": true, "runtime": true}
-
-// productLayerImports declares direction independently of the code map's
-// display order. Application composes Runtime, Infrastructure and Core.
-var productLayerImports = map[string][]string{
-	"core":           {"core"},
-	"infrastructure": {"core", "infrastructure"},
-	"runtime":        {"core", "infrastructure", "runtime"},
-	"application":    {"core", "infrastructure", "runtime", "application"},
-}
-
-// guardedWriteAPI is an allowlist, so a newly exported guardedwrite
-// identifier is forbidden to product packages until it is listed here.
 var guardedWriteAPI = map[string]bool{
-	"CaptureFiles": true, "Apply": true, "ApplyChecked": true, "ApplyOrderedChecked": true, "ApplyRecordChecked": true, "NewStoredNames": true,
-	"Capture": true, "Change": true, "File": true, "Result": true, "StoredNames": true,
+	"OpenRoot": true, "CaptureFiles": true, "ApplyOrderedChecked": true, "Change": true, "Result": true,
 }
 
 // CheckRepository runs every import rule over the repository at root: the
@@ -68,7 +51,7 @@ func CheckRepository(root string) ([]Violation, error) {
 	if err != nil {
 		return nil, err
 	}
-	out := append(Check(edges), CheckMapLayers(edges, m)...)
+	out := Check(edges)
 	out = append(out, guarded...)
 	selfImports, err := checkTargetSelfImports(root, edges)
 	if err != nil {
@@ -79,38 +62,16 @@ func CheckRepository(root string) ([]Violation, error) {
 	return out, nil
 }
 
-// CheckMapLayers reports every import, in production or test code, from a
-// product package against the four-layer direction and the legacy ban.
-// Legacy packages may import product packages. This helper assumes a valid
-// map; CheckRepository validates completeness and layer labels first.
-func CheckMapLayers(edges []Edge, m CodeMap) []Violation {
-	layers := mapLayers(m)
-	var out []Violation
-	for _, e := range edges {
-		from, to := layers[e.From], layers[e.To]
-		if e.To == "" || !productLayers[from] {
-			continue
-		}
-		if to == "legacy" {
-			out = append(out, Violation{e, "product package may not import a legacy package"})
-		} else if productLayers[to] && !contains(productLayerImports[from], to) {
-			out = append(out, Violation{e, fmt.Sprintf("product-layer direction forbids %s -> %s", from, to)})
-		}
-	}
-	sortViolations(out)
-	return out
-}
-
 // CheckGuardedWriteUse parses every file of a product package, other than
 // GuardedWritePackage itself, that imports GuardedWritePackage. It reports
 // each selector on the import name outside the guarded API, and every dot
 // import, which would hide the identifiers used. A blank import references
 // nothing. A local name that shadows the import name counts as the package.
 func CheckGuardedWriteUse(root string, edges []Edge, m CodeMap) ([]Violation, error) {
-	layers := mapLayers(m)
+	_ = m
 	files := map[string]string{}
 	for _, e := range edges {
-		if e.To == GuardedWritePackage && e.From != GuardedWritePackage && productLayers[layers[e.From]] {
+		if e.To == GuardedWritePackage && e.From != GuardedWritePackage && e.From == "internal/adapters/documents" {
 			files[e.File] = e.From
 		}
 	}

@@ -7,67 +7,77 @@ import (
 	"strings"
 )
 
-// Target responsibilities are separate from the current src/ layers. Each
-// actual package still needs an exact entry in codemap.yaml; these roots do
-// not assert that a package has already been implemented.
+// Current explicit responsibility roots, most specific first. Every actual Go
+// package additionally needs its own checked code-map entry. There is no broad
+// internal/tooling or adapter import exemption and no legacy product allowance.
 var targetRoots = []struct{ path, layer string }{
-	{"internal/model", "apply-model"},
-	{"internal/snapshot", "apply-snapshot"},
+	{"internal/tooling/modules/pipelines", "maintenance"},
+	{"internal/tooling/modules/githooks", "maintenance"},
+	{"cmd/markitect-check-architecture", "maintenance-command"},
+	{"internal/adapters/codexappserver", "apply-adapter"},
+	{"internal/tooling/architecturecli", "maintenance"},
+	{"internal/tooling/release/install", "maintenance"},
+	{"internal/tooling/architecture", "maintenance"},
+	{"internal/tooling/guardedwrite", "maintenance"},
+	{"internal/tooling/modulechecks", "maintenance"},
+	{"cmd/markitect-check-modules", "maintenance-command"},
+	{"internal/adapters/documents", "apply-adapter"},
+	{"internal/tooling/releasecli", "maintenance"},
+	{"internal/tooling/modulecli", "maintenance"},
+	{"internal/adapters/gitrepo", "apply-adapter"},
+	{"internal/tooling/licenses", "build-data"},
+	{"internal/adapters/checks", "apply-adapter"},
+	{"internal/tooling/publish", "maintenance"},
+	{"internal/tooling/release", "maintenance"},
+	{"internal/tooling/source", "maintenance"},
+	{"cmd/markitect-release", "maintenance-command"},
+	{"internal/adapters/cli", "apply-adapter"},
 	{"internal/organization", "apply-organization"},
 	{"internal/realization", "apply-realization"},
-	{"internal/run", "apply-run"},
-	{"internal/apply", "apply-usecase"},
-	{"internal/adapters/cli", "apply-adapter"},
-	{"internal/adapters/mcp", "apply-adapter"},
-	{"internal/adapters/gitrepo", "apply-adapter"},
-	{"internal/adapters/journal", "apply-adapter"},
-	{"internal/adapters/codexappserver", "apply-adapter"},
-	{"internal/adapters/checks", "apply-adapter"},
-	{"internal/adapters/process", "apply-process"},
 	{"internal/bootstrap", "apply-bootstrap"},
+	{"internal/buildinfo", "build-data"},
+	{"internal/modeldocs", "model-view"},
+	{"internal/snapshot", "apply-snapshot"},
+	{"internal/testkit", "test-support"},
+	{"internal/apply", "apply-usecase"},
+	{"internal/model", "apply-model"},
 	{"cmd/markitect", "apply-command"},
+	{"integration", "standalone"},
+	{"tools/smoke", "standalone"},
 }
 
 func targetLayer(p string) (string, string) {
-	for _, root := range targetRoots {
-		if p == root.path || strings.HasPrefix(p, root.path+"/") {
-			return root.layer, root.path
+	for _, r := range targetRoots {
+		if p == r.path || strings.HasPrefix(p, r.path+"/") {
+			return r.layer, r.path
 		}
 	}
 	return "", ""
 }
 
-// Cross-responsibility edges only. Packages within one responsibility may
-// use its private subpackages. Process mechanics have only two consumers.
-var targetImports = map[string][]string{
-	"apply-model":        {},
-	"apply-snapshot":     {},
-	"apply-organization": {"apply-model", "apply-snapshot"},
-	"apply-realization":  {"apply-model", "apply-snapshot"},
-	"apply-run":          {"apply-model", "apply-snapshot", "apply-organization", "apply-realization"},
-	"apply-usecase":      {"apply-model", "apply-snapshot", "apply-organization", "apply-realization", "apply-run"},
-	"apply-adapter":      {"apply-model", "apply-snapshot", "apply-organization", "apply-realization", "apply-run", "apply-usecase"},
-	"apply-process":      {},
-	"apply-bootstrap":    {"apply-model", "apply-snapshot", "apply-organization", "apply-realization", "apply-run", "apply-usecase", "apply-adapter", "apply-process"},
-	"apply-command":      {"apply-bootstrap"},
-}
-
-func targetRule(e Edge) string {
-	from, owner := targetLayer(e.From)
-	to, target := targetLayer(e.To)
-	if from == "" || to == "" {
-		return "target and current packages may not import each other"
-	}
-	if e.From == e.To && !e.Test {
-		return "self-import is forbidden"
-	}
-	if owner == target || contains(targetImports[from], to) {
-		return ""
-	}
-	if to == "apply-process" && (owner == "internal/adapters/codexappserver" || owner == "internal/adapters/checks") {
-		return ""
-	}
-	return "Apply responsibility direction forbids " + from + " -> " + to
+var responsibilityImports = map[string][]string{
+	"cmd/markitect":                    {"internal/bootstrap"},
+	"cmd/markitect-check-architecture": {"internal/tooling/architecturecli"},
+	"cmd/markitect-check-modules":      {"internal/tooling/modulecli"},
+	"cmd/markitect-release":            {"internal/tooling/releasecli"},
+	"internal/adapters/checks":         {"internal/apply", "internal/model", "internal/organization", "internal/snapshot"},
+	"internal/adapters/cli":            {"internal/apply", "internal/model", "internal/organization", "internal/snapshot", "internal/modeldocs", "internal/buildinfo", "internal/tooling/licenses"},
+	"internal/adapters/codexappserver": {"internal/apply", "internal/model", "internal/organization", "internal/snapshot"},
+	"internal/adapters/documents":      {"internal/modeldocs", "internal/tooling/guardedwrite"},
+	"internal/adapters/gitrepo":        {"internal/apply", "internal/model", "internal/organization", "internal/realization", "internal/snapshot"},
+	"internal/apply":                   {"internal/model", "internal/snapshot", "internal/organization", "internal/realization"},
+	"internal/bootstrap":               {"internal/adapters/checks", "internal/adapters/cli", "internal/adapters/codexappserver", "internal/adapters/documents", "internal/adapters/gitrepo", "internal/apply", "internal/modeldocs"},
+	"internal/modeldocs":               {"internal/apply", "internal/model", "internal/snapshot"},
+	"internal/organization":            {"internal/model", "internal/snapshot"},
+	"internal/realization":             {"internal/model", "internal/snapshot"},
+	"internal/tooling/architecturecli": {"internal/tooling/architecture"},
+	"internal/tooling/guardedwrite":    {"internal/tooling/source"},
+	"internal/tooling/modulechecks":    {"internal/adapters/gitrepo", "internal/apply", "internal/model", "internal/snapshot", "internal/tooling/modules/githooks", "internal/tooling/modules/pipelines"},
+	"internal/tooling/modulecli":       {"internal/tooling/modulechecks"},
+	"internal/tooling/publish":         {"internal/tooling/source", "internal/tooling/release"},
+	"internal/tooling/release":         {"internal/tooling/source", "internal/tooling/licenses"},
+	"internal/tooling/release/install": {"internal/tooling/source", "internal/tooling/release", "internal/tooling/guardedwrite"},
+	"internal/tooling/releasecli":      {"internal/buildinfo", "internal/tooling/source", "internal/tooling/licenses", "internal/tooling/release", "internal/tooling/release/install", "internal/tooling/publish"},
 }
 
 // Edge.Test alone cannot distinguish internal from external Go tests.

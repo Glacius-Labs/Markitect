@@ -1,0 +1,10 @@
+imports:
+  - package: markitect/core
+    as: Core
+id: command
+kind: Core.Property
+body: The exact literal maintenance command required by this Check.
+spec:
+  type: string
+  minCount: 1
+  maxCount: 1

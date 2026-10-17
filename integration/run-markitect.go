@@ -54,10 +54,9 @@ type archiveFile struct {
 }
 
 type sourceArchive struct {
-	data         []byte
-	files        []archiveFile
-	dirs         map[string]bool
-	sourcePrefix string
+	data  []byte
+	files []archiveFile
+	dirs  map[string]bool
 }
 
 type builderFunc func(goPath string, args []string, dir string, env []string) error
@@ -530,25 +529,16 @@ func validateModuleLayout(a *sourceArchive) error {
 	for _, f := range a.files {
 		files[f.name] = true
 	}
-	// Select the command tree, not the set of internal packages. Release
-	// tooling owns that source policy; additional root internal files do not
-	// introduce a second command while src/cmd is still active.
-	if a.dirs["src/cmd"] {
-		if a.dirs["cmd"] {
-			return errors.New("source archive mixes legacy and src/ module layouts")
-		}
-		a.sourcePrefix = "src/"
+	if a.dirs["src"] {
+		return errors.New("legacy src source layout is unsupported")
 	}
 	requiredDirs := []string{"cmd", "cmd/markitect", "internal"}
-	if a.sourcePrefix != "" {
-		requiredDirs = []string{"src", "src/cmd", "src/cmd/markitect", "src/internal"}
-	}
 	for _, d := range requiredDirs {
 		if !a.dirs[d] {
 			return fmt.Errorf("source archive is not a canonical Markitect Go module: missing directory %s", d)
 		}
 	}
-	commandEntry := a.sourcePrefix + "cmd/markitect/main.go"
+	commandEntry := "cmd/markitect/main.go"
 	if !files["go.mod"] || !files[commandEntry] {
 		return errors.New("source archive is not a canonical Markitect Go module: missing go.mod or command entry point")
 	}
@@ -1063,13 +1053,8 @@ func buildOrReuse(root string, m manifest, archive *sourceArchive, goPath string
 	if err := os.Remove(tempName); err != nil {
 		return "", err
 	}
-	versionPackage := archive.sourcePrefix + "internal/host/cli"
-	if _, err := os.Stat(filepath.Join(sourceDir, filepath.FromSlash(archive.sourcePrefix+"internal/application/buildinfo/version.go"))); err == nil {
-		versionPackage = archive.sourcePrefix + "internal/application/buildinfo"
-	} else if _, err := os.Stat(filepath.Join(sourceDir, filepath.FromSlash(archive.sourcePrefix+"internal/host/buildinfo/version.go"))); err == nil {
-		versionPackage = archive.sourcePrefix + "internal/host/buildinfo"
-	}
-	args := []string{"build", "-buildvcs=false", "-trimpath", "-ldflags", "-X main.version=" + m.version + " -X github.com/Glacius-Labs/Markitect/" + versionPackage + ".version=" + m.version, "-o", tempName, "./" + archive.sourcePrefix + "cmd/markitect"}
+	args := []string{"build", "-buildvcs=false", "-trimpath", "-ldflags", "-X github.com/Glacius-Labs/Markitect/internal/buildinfo.version=" + m.version, "-o", tempName, "./cmd/markitect"}
+
 	if err := builder(goPath, args, sourceDir, buildEnv); err != nil {
 		return "", fmt.Errorf("build pinned Markitect source: %w", err)
 	}

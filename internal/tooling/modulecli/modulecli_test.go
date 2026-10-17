@@ -1,27 +1,17 @@
 package modulecli
 
-import "go.yaml.in/yaml/v3"
-
-import "github.com/Glacius-Labs/Markitect/src/internal/core/projectmodel/projectvalue"
-
 import (
 	"bytes"
 	"crypto/sha256"
 	"encoding/hex"
+	"fmt"
+	"io/fs"
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 
-	"github.com/Glacius-Labs/Markitect/src/internal/core"
-
 	"github.com/Glacius-Labs/Markitect/internal/testkit"
-	"github.com/Glacius-Labs/Markitect/src/internal/core/projectmodel"
-	"github.com/Glacius-Labs/Markitect/internal/tooling/modules/githooks"
-)
-
-const (
-	cliHooksConfig = ".markitect/modules/hooks.config"
-	cliHookPath    = ".githooks/pre-commit"
-	cliArtifactID  = `["project.markitect.example.org/v1alpha1","Artifact","tooling","module-verification"]`
 )
 
 func TestMain(m *testing.M) { testkit.Main(m) }
@@ -39,74 +29,61 @@ func TestRunRequiresExplicitModuleConfigAndRejectsUnknownArguments(t *testing.T)
 	}
 }
 
-func TestRunReportsPassFindingsAndInvalidInputExitCodes(t *testing.T) {
+// This uses the real v1 compiler, repository capture and complete accounting.
+// A changed hook remains structurally accounted but fails its explicit byte pin.
+func TestRunChecksActualV1RegistryAndHistoricalCensus(t *testing.T) {
 	repo := testkit.NewRepo(t)
-	hookBytes := []byte("#!/bin/sh\nexit 0\n")
-	configBytes := encodeHooksConfig(t, hookBytes)
-	for file, data := range map[string][]byte{
-		projectvalue.ManifestPath:                           projectManifest(t),
-		".markitect/model/manager.yaml":                     definitionBytes(t, core.Definition{APIVersion: projectmodel.APIVersion, Kind: "Manager", Metadata: core.Metadata{Name: "root"}, Purpose: "Own the fixture repository.", Spec: map[string]any{"owns": []any{"."}}}),
-		".markitect/model/tooling/module-verification.yaml": definitionBytes(t, core.Definition{APIVersion: projectmodel.APIVersion, Kind: "Artifact", Metadata: core.Metadata{Name: "module-verification", Namespace: "tooling"}, Purpose: "Maps exact module inputs.", Spec: map[string]any{"role": "verification", "paths": []any{cliHooksConfig, cliHookPath}, "required": true, "reason": "The fixture module checks its exact configured files."}}),
-		".markitect/model/tooling/go-tests.yaml":            definitionBytes(t, core.Definition{APIVersion: projectmodel.APIVersion, Kind: "Check", Metadata: core.Metadata{Name: "go-tests", Namespace: "tooling"}, Purpose: "Runs the Go tests.", Spec: map[string]any{"command": []any{"go", "test", "./..."}, "uses": []any{}, "limitation": "Does not establish provider execution."}}),
-		cliHooksConfig:                                      configBytes,
-		cliHookPath:                                         hookBytes,
-	} {
-		repo.Write(file, string(data))
+	err := filepath.WalkDir("../../../.markitect/model", func(name string, e fs.DirEntry, err error) error {
+		if err != nil {
+			return err
+		}
+		if e.IsDir() {
+			return nil
+		}
+		relative, err := filepath.Rel("../../../.markitect/model", name)
+		if err != nil {
+			return err
+		}
+		data, err := os.ReadFile(name)
+		if err != nil {
+			return err
+		}
+		repo.Write(".markitect/model/"+filepath.ToSlash(relative), string(data))
+		return nil
+	})
+	if err != nil {
+		t.Fatal(err)
 	}
-	revision := repo.Commit("module cli fixture")
-
-	args := []string{"--repo", repo.Dir, "--revision", revision, "--hooks", cliHooksConfig}
-	var out, errout bytes.Buffer
-	if code := Run(args, &out, &errout); code != 0 || !strings.Contains(out.String(), "status: passed") || !strings.Contains(out.String(), "status: not-configured") || errout.Len() != 0 {
-		t.Fatalf("passing configured module: code=%d stdout=%q stderr=%q", code, out.String(), errout.String())
+	for _, name := range []string{"model.yaml", "model-lock.yaml", "execution.yaml"} {
+		data, err := os.ReadFile("../../../.markitect/" + name)
+		if err != nil {
+			t.Fatal(err)
+		}
+		repo.Write(".markitect/"+name, string(data))
 	}
-	out.Reset()
-	errout.Reset()
-	repo.Write(cliHookPath, "changed hook\n")
-	if code := Run([]string{"--repo", repo.Dir, "--hooks", cliHooksConfig}, &out, &errout); code != 1 || !strings.Contains(out.String(), "status: findings") || !strings.Contains(out.String(), "hooks.digest.mismatch") || errout.Len() != 0 {
-		t.Fatalf("stale digest finding: code=%d stdout=%q stderr=%q", code, out.String(), errout.String())
-	}
-	out.Reset()
-	errout.Reset()
-	if code := Run([]string{"--repo", repo.Dir, "--hooks", ".markitect/modules/missing.config"}, &out, &errout); code != 2 || out.Len() != 0 || !strings.Contains(errout.String(), "absent from the selected snapshot") {
-		t.Fatalf("invalid module input: code=%d stdout=%q stderr=%q", code, out.String(), errout.String())
-	}
-}
-
-func encodeHooksConfig(t *testing.T, hook []byte) []byte {
-	t.Helper()
+	const configPath = ".markitect/modules/hooks.config"
+	const hookPath = ".githooks/pre-commit"
+	hook := []byte("#!/bin/sh\nexit 0\n")
 	sum := sha256.Sum256(hook)
-	data, err := yaml.Marshal(githooks.Config{APIVersion: githooks.ConfigVersion, Hooks: []githooks.Hook{{Name: "pre-commit-tests", Stage: "pre-commit", Path: cliHookPath, Digest: hex.EncodeToString(sum[:]), Owner: cliArtifactID}}})
-	if err != nil {
-		t.Fatal(err)
+	config := fmt.Sprintf("apiVersion: markitect.example.org/git-hooks-check/v1alpha1\nhooks:\n  - name: fixture\n    stage: pre-commit\n    path: %s\n    digest: %s\n    owner: tooling/gates\n", hookPath, hex.EncodeToString(sum[:]))
+	repo.Write(configPath, string(config))
+	repo.Write(hookPath, string(hook))
+	repo.Write(".markitect/registry/tooling/gates/registry.yaml", "apiVersion: markitect.registry/v1\nartifacts:\n  - path: "+configPath+"\n    form: config\n    realizes: [tooling/gates/source-checks]\n    why: Exact configured module input.\n  - path: "+hookPath+"\n    form: build\n    realizes: [tooling/gates/source-checks]\n    why: The hook entrypoint under test.\n")
+	revision := repo.Commit("v1 module fixture")
+	run := func(args []string, want int, fragment string) {
+		t.Helper()
+		var out, errout bytes.Buffer
+		code := Run(args, &out, &errout)
+		if code != want || !strings.Contains(out.String()+errout.String(), fragment) {
+			t.Fatalf("code=%d want=%d stdout=%s stderr=%s", code, want, out.String(), errout.String())
+		}
 	}
-	return data
-}
-
-func projectManifest(t *testing.T) []byte {
-	t.Helper()
-	data, err := yaml.Marshal(projectvalue.Config{
-		APIVersion: projectmodel.APIVersion, Name: "module-cli-fixture", CoverageMode: "selected",
-		ModelFiles:     []string{".markitect/model/manager.yaml", ".markitect/model/tooling/module-verification.yaml", ".markitect/model/tooling/go-tests.yaml"},
-		InventoryRoots: []string{}, Exclusions: []projectvalue.Exclusion{},
-	})
-	if err != nil {
-		t.Fatal(err)
-	}
-	return data
-}
-
-func definitionBytes(t *testing.T, value core.Definition) []byte {
-	t.Helper()
-	data, err := yaml.Marshal(map[string]any{
-		"apiVersion": value.APIVersion,
-		"kind":       value.Kind,
-		"metadata":   map[string]any{"name": value.Metadata.Name, "namespace": value.Metadata.Namespace},
-		"purpose":    value.Purpose,
-		"spec":       value.Spec,
-	})
-	if err != nil {
-		t.Fatal(err)
-	}
-	return data
+	base := []string{"--repo", repo.Dir, "--hooks", configPath}
+	run(base, 0, "status: passed")
+	repo.Write(hookPath, "changed hook\n")
+	run(base, 1, "hooks.digest.mismatch")
+	run(append(append([]string{}, base...), "--revision", revision), 0, "status: passed")
+	run([]string{"--repo", repo.Dir, "--hooks", ".markitect/modules/missing.config"}, 2, "not a registered artifact")
+	repo.Write("uncovered.txt", "not silently exempt\n")
+	run(base, 2, "require passed structural preparation")
 }

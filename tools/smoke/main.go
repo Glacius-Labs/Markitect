@@ -24,7 +24,6 @@ import (
 	"path/filepath"
 	"regexp"
 	"runtime"
-	"slices"
 	"strings"
 	"time"
 )
@@ -124,7 +123,7 @@ func (s *smoke) bundle(revision, expectSHA string) error {
 	sum := ""
 	checks := []check{
 		{"bundle the revision", func() error {
-			if _, err := s.run(s.repo, nil, "go", "run", "./src/cmd/markitect-release", "bundle", "--repo", s.repo, "--revision", revision, "--output", bundle); err != nil {
+			if _, err := s.run(s.repo, nil, "go", "run", "./cmd/markitect-release", "bundle", "--repo", s.repo, "--revision", revision, "--output", bundle); err != nil {
 				return err
 			}
 			var err error
@@ -148,35 +147,25 @@ func (s *smoke) bundle(revision, expectSHA string) error {
 // distributionChecks checks the tools built into s.bin and the bootstrap in
 // bootstrapDir: an unpacked package or a repository with an installed bundle.
 func (s *smoke) distributionChecks(bootstrapDir string) []check {
-	checks := []check{
+	return []check{
 		{"bootstrap prints third-party notices", func() error { return s.notices(bootstrapDir) }},
-		{"version names the build platform", s.version},
-		{"init previews, refuses a stale digest and writes", func() error { return s.initProject(bootstrapDir) }},
-		{"onboard previews, writes and is idempotent", s.onboard},
-		{"a policy edit has the expected fixed-revision impact", s.policyEditImpact},
-		{"a fixed revision passes full verification with a scripted auditor", s.verifyFixedRevision},
-		{"the project model accounts for the source tree", func() error {
+		{"packaged CLI reports a build version", s.version},
+		{"real Library M1/M2 read-only preparation and refusals", s.libraryPreparation},
+		{"actual self-model structural accounting", func() error {
 			out, err := s.run(s.repo, nil, s.tool("markitect"), "check", "--repo", s.repo)
 			if err != nil {
 				return err
 			}
-			var report struct {
-				Status   string
-				Coverage struct {
-					Accounted  bool
-					Conforming bool
-				}
-			}
+			var report struct{ Status string }
 			if err := decode(out, &report); err != nil {
 				return err
 			}
-			if report.Status != "succeeded" || !report.Coverage.Accounted || !report.Coverage.Conforming {
-				return fmt.Errorf("project model check did not succeed with full artifact coverage: %s", tail(out))
+			if report.Status != "passed" {
+				return fmt.Errorf("self-model preparation did not pass: %s", tail(out))
 			}
 			return nil
 		}},
 	}
-	return checks
 }
 
 func (s *smoke) testBootstrap(dir string) error {
@@ -197,7 +186,7 @@ func (s *smoke) installBundle(consumer, bundle, sum string) error {
 			return err
 		}
 	}
-	_, err := s.run(s.repo, nil, "go", "run", "./src/cmd/markitect-release", "install", "--repo", consumer, "--bundle", bundle, "--sha256", sum, "--write")
+	_, err := s.run(s.repo, nil, "go", "run", "./cmd/markitect-release", "install", "--repo", consumer, "--bundle", bundle, "--sha256", sum, "--write")
 	return err
 }
 
@@ -211,7 +200,7 @@ func sha256File(path string) (string, error) {
 }
 
 func (s *smoke) packageSource(pkg string) error {
-	if _, err := s.run(s.repo, nil, "go", "run", "./src/cmd/markitect-release", "package", "--repo", s.repo, "--output", pkg); err != nil {
+	if _, err := s.run(s.repo, nil, "go", "run", "./cmd/markitect-release", "package", "--repo", s.repo, "--output", pkg); err != nil {
 		return err
 	}
 	bootstrap := filepath.Join(pkg, ".markitect", "bootstrap")
@@ -237,8 +226,8 @@ func (s *smoke) buildTools(archive string) error {
 	if err := unzip(archive, source); err != nil {
 		return err
 	}
-	for _, name := range []string{"markitect", "markitect-release", "markitect-exchange-executor"} {
-		if _, err := s.run(source, nil, "go", "build", "-trimpath", "-buildvcs=false", "-o", s.tool(name), "./src/cmd/"+name); err != nil {
+	for _, name := range []string{"markitect", "markitect-release", "markitect-check-architecture", "markitect-check-modules"} {
+		if _, err := s.run(source, nil, "go", "build", "-trimpath", "-buildvcs=false", "-o", s.tool(name), "./cmd/"+name); err != nil {
 			return err
 		}
 	}
@@ -251,168 +240,6 @@ func (s *smoke) notices(pkg string) error {
 		return err
 	}
 	return requireContains(out, "Copyright 2009 The Go Authors.", "END OF TERMS AND CONDITIONS")
-}
-
-var initPaths = []string{".markitect/.gitignore", ".markitect/model/manager.yaml", ".markitect/project.yaml", ".markitect/runtime.yaml", "docs/markitect/project.md"}
-
-const projectAPI = "project.markitect.example.org/v1alpha1"
-
-// initProject drives init through the bootstrap, as an adopting repository
-// does: a read-only preview, a refused write with a stale digest, the write
-// with the previewed digest, and a passing check.
-func (s *smoke) initProject(pkg string) error {
-	repo, err := s.gitRepo("init-project", "feature/authoring")
-	if err != nil {
-		return err
-	}
-	bootstrap := func(args ...string) (string, error) {
-		return s.run(pkg, nil, "go", append([]string{"run", ".markitect/bootstrap/run.go"}, args...)...)
-	}
-	out, err := bootstrap("init", "--repo", repo, "--name", "started-project")
-	if err != nil {
-		return err
-	}
-	var preview struct {
-		APIVersion, Name, Digest string
-		Files                    []struct{ Path string }
-	}
-	if err := decode(out, &preview); err != nil {
-		return err
-	}
-	if preview.APIVersion != projectAPI || preview.Name != "started-project" || !isDigest(preview.Digest) || !slices.Equal(paths(preview.Files), initPaths) {
-		return fmt.Errorf("unexpected init preview: %s", out)
-	}
-	if err := requireAbsent(repo, initPaths...); err != nil {
-		return fmt.Errorf("the preview wrote files: %w", err)
-	}
-	if _, err := bootstrap("init", "--repo", repo, "--name", "started-project", "--expect", strings.Repeat("0", 64), "--write"); err == nil {
-		return errors.New("init accepted a stale digest")
-	}
-	if err := requireAbsent(repo, initPaths...); err != nil {
-		return fmt.Errorf("a refused write changed the repository: %w", err)
-	}
-	if out, err = bootstrap("init", "--repo", repo, "--name", "started-project", "--expect", preview.Digest, "--write"); err != nil {
-		return err
-	}
-	var written struct {
-		APIVersion, Name string
-		Written          []string
-	}
-	if err := decode(out, &written); err != nil {
-		return err
-	}
-	if written.APIVersion != projectAPI || written.Name != "started-project" || !slices.Equal(written.Written, initPaths) {
-		return fmt.Errorf("unexpected init write: %s", out)
-	}
-	if err := requirePresent(repo, initPaths...); err != nil {
-		return err
-	}
-	if err := requireAbsent(repo, "markitect.yaml"); err != nil {
-		return fmt.Errorf("init created the retired top-level model: %w", err)
-	}
-	return s.checkConforms(func() (string, error) { return bootstrap("check", "--repo", repo) })
-}
-
-const onboardingAPI = "markitect.example.org/project-onboarding/v1alpha1"
-
-// onboard installs the agent guidance into a new project with the built CLI:
-// preview, digest-checked write, an unchanged second preview and a check.
-func (s *smoke) onboard() error {
-	repo, err := s.gitRepo("onboard-project", "feature/onboarding")
-	if err != nil {
-		return err
-	}
-	cli := func(args ...string) (string, error) { return s.run(repo, nil, s.tool("markitect"), args...) }
-	out, err := cli("init", "--repo", repo, "--name", "onboarded-project")
-	if err != nil {
-		return err
-	}
-	var plan struct {
-		APIVersion, Digest string
-		Files              []struct{ Path, Action string }
-	}
-	if err := decode(out, &plan); err != nil {
-		return err
-	}
-	if _, err := cli("init", "--repo", repo, "--name", "onboarded-project", "--expect", plan.Digest, "--write"); err != nil {
-		return err
-	}
-	if out, err = cli("onboard", "--repo", repo, "--provider", "codex"); err != nil {
-		return err
-	}
-	plan.Files = nil
-	if err := decode(out, &plan); err != nil {
-		return err
-	}
-	planned := []string{}
-	for _, file := range plan.Files {
-		planned = append(planned, file.Path)
-	}
-	if plan.APIVersion != onboardingAPI || !isDigest(plan.Digest) || !slices.Contains(planned, "AGENTS.md") || !slices.Contains(planned, ".markitect/workflows/model-first.md") {
-		return fmt.Errorf("unexpected onboarding preview: %s", out)
-	}
-	if err := requireAbsent(repo, planned...); err != nil {
-		return fmt.Errorf("the preview wrote files: %w", err)
-	}
-	if out, err = cli("onboard", "--repo", repo, "--provider", "codex", "--expect", plan.Digest, "--write"); err != nil {
-		return err
-	}
-	var written struct{ Written []string }
-	if err := decode(out, &written); err != nil {
-		return err
-	}
-	if !slices.Equal(written.Written, planned) {
-		return fmt.Errorf("onboarding wrote %v, planned %v", written.Written, planned)
-	}
-	if err := requirePresent(repo, planned...); err != nil {
-		return err
-	}
-	if out, err = cli("onboard", "--repo", repo, "--provider", "codex"); err != nil {
-		return err
-	}
-	plan.Files = nil
-	if err := decode(out, &plan); err != nil {
-		return err
-	}
-	for _, file := range plan.Files {
-		if file.Action != "unchanged" {
-			return fmt.Errorf("a second onboarding preview plans %s for %s", file.Action, file.Path)
-		}
-	}
-	return s.checkConforms(func() (string, error) { return cli("check", "--repo", repo) })
-}
-
-func (s *smoke) checkSucceeds(check func() (string, error)) error {
-	out, err := check()
-	if err != nil {
-		return err
-	}
-	var report struct{ Status string }
-	if err := decode(out, &report); err != nil {
-		return err
-	}
-	if report.Status != "succeeded" {
-		return fmt.Errorf("check did not succeed: %s", tail(out))
-	}
-	return nil
-}
-
-func (s *smoke) checkConforms(check func() (string, error)) error {
-	out, err := check()
-	if err != nil {
-		return err
-	}
-	var report struct {
-		Status   string
-		Coverage struct{ Conforming bool }
-	}
-	if err := decode(out, &report); err != nil {
-		return err
-	}
-	if report.Status != "succeeded" || !report.Coverage.Conforming {
-		return fmt.Errorf("check did not succeed with conforming coverage: %s", out)
-	}
-	return nil
 }
 
 // gitRepo creates an empty repository on a feature branch, where Markitect
@@ -433,7 +260,11 @@ func (s *smoke) gitRepo(name, branch string) (string, error) {
 			return "", err
 		}
 	}
-	return repo, nil
+	// Use the fixture's actual Git root spelling. The source adapter separately
+	// rejects unsupported or unbound source boundary spellings; the harness does
+	// not exercise native short-name aliases as a hidden alternate source.
+	root, err := s.run(repo, nil, "git", "rev-parse", "--show-toplevel")
+	return strings.TrimSpace(root), err
 }
 
 func (s *smoke) tool(name string) string {
@@ -471,14 +302,6 @@ func decode(out string, value any) error {
 		return fmt.Errorf("output is not the expected JSON: %v\n%s", err, tail(out))
 	}
 	return nil
-}
-
-func paths(files []struct{ Path string }) []string {
-	out := make([]string, 0, len(files))
-	for _, file := range files {
-		out = append(out, file.Path)
-	}
-	return out
 }
 
 var digestPattern = regexp.MustCompile(`^[0-9a-f]{64}$`)

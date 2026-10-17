@@ -11,7 +11,7 @@ import (
 
 func TestSourceDistributionsRetainEmbeddedNotices(t *testing.T) {
 	root := fixtureRoot(t)
-	module := filepath.Join(root, "tools", "markitect")
+	module := root
 	full := filepath.Join(module, filepath.FromSlash(embeddedNoticesPath))
 	if err := os.MkdirAll(filepath.Dir(full), 0755); err != nil {
 		t.Fatal(err)
@@ -32,7 +32,7 @@ func TestSourceDistributionsRetainEmbeddedNotices(t *testing.T) {
 		if !bytes.Equal(contents[embeddedNoticesPath], []byte(licenses.Text)) {
 			t.Fatal("source archive omitted or changed the complete embedded notices")
 		}
-		if _, exists := contents["src/internal/tooling/licenses/unrelated.md"]; exists {
+		if _, exists := contents["internal/tooling/licenses/unrelated.md"]; exists {
 			t.Fatal("notice inclusion broadened to unrelated internal Markdown")
 		}
 	}
@@ -41,8 +41,8 @@ func TestSourceDistributionsRetainEmbeddedNotices(t *testing.T) {
 	fixed := bundleSnapshot()
 	fixed.Files[embeddedNoticesPath] = []byte(licenses.Text)
 	fixed.Modes[embeddedNoticesPath] = "100644"
-	fixed.Files["src/internal/tooling/licenses/unrelated.md"] = []byte("unrelated")
-	fixed.Modes["src/internal/tooling/licenses/unrelated.md"] = "100644"
+	fixed.Files["internal/tooling/licenses/unrelated.md"] = []byte("unrelated")
+	fixed.Modes["internal/tooling/licenses/unrelated.md"] = "100644"
 	bundleBytes, err := BuildBundle(fixed, "1.2.3")
 	if err != nil {
 		t.Fatal(err)

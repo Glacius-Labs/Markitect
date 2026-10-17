@@ -148,7 +148,7 @@ func TestToolLockValidation(t *testing.T) {
 
 func TestBundleManifestRequiresSourceVersionLiteral(t *testing.T) {
 	snapshot := bundleSnapshot()
-	snapshot.Files["src/internal/application/buildinfo/version.go"] = []byte("package buildinfo\nvar version = 1.2.3\n")
+	snapshot.Files["internal/buildinfo/version.go"] = []byte("package buildinfo\nvar version = 1.2.3\n")
 	if _, err := BuildBundle(snapshot, "1.2.3"); err == nil {
 		t.Fatal("non-string source version literal was accepted")
 	}
@@ -162,40 +162,19 @@ func TestBundleVersionErrorIncludesMismatch(t *testing.T) {
 	}
 }
 
-func TestImmutableSourceVersionLocations(t *testing.T) {
-	const current = "src/internal/application/buildinfo/version.go"
-	locations := []string{
-		current,
-		"src/internal/host/buildinfo/version.go",
-		"src/internal/host/cli/version.go",
-		"internal/host/cli/version.go",
-		"src/cmd/markitect/main.go",
-		"cmd/markitect/main.go",
-	}
-	for _, location := range locations {
-		t.Run(location, func(t *testing.T) {
-			snapshot := bundleSnapshot()
-			for _, other := range locations {
-				delete(snapshot.Files, other)
-				delete(snapshot.Modes, other)
-			}
-			snapshot.Files[location] = []byte("package version\nvar version = \"1.2.3\"\n")
-			snapshot.Modes[location] = "100644"
-			if err := validateSourceVersion(snapshot, "1.2.3"); err != nil {
-				t.Fatalf("immutable source version rejected: %v", err)
-			}
-			if err := validateSourceVersion(snapshot, "1.2.4"); err == nil || !strings.Contains(err.Error(), "does not match") {
-				t.Fatalf("immutable source version mismatch accepted: %v", err)
-			}
-		})
-	}
+func TestSourceVersionUsesOnlyCurrentBuildInfo(t *testing.T) {
+	const current = "internal/buildinfo/version.go"
 	snapshot := bundleSnapshot()
-	snapshot.Files["src/internal/host/buildinfo/version.go"] = []byte("package buildinfo\nvar version = \"1.2.4\"\n")
-	snapshot.Modes["src/internal/host/buildinfo/version.go"] = "100644"
 	if err := validateSourceVersion(snapshot, "1.2.3"); err != nil {
-		t.Fatalf("current version did not take precedence over historical version: %v", err)
+		t.Fatal(err)
 	}
-	if err := validateSourceVersion(snapshot, "1.2.4"); err == nil {
-		t.Fatal("historical version bypassed current source mismatch")
+	delete(snapshot.Files, current)
+	delete(snapshot.Modes, current)
+	for _, old := range []string{"src/internal/host/cli/version.go", "cmd/markitect/main.go", "internal/host/buildinfo/version.go"} {
+		snapshot.Files[old] = []byte("package old\nvar version=\"1.2.3\"\n")
+		snapshot.Modes[old] = "100644"
+	}
+	if err := validateSourceVersion(snapshot, "1.2.3"); err == nil {
+		t.Fatal("missing buildinfo fell back to an old version location")
 	}
 }

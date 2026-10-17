@@ -25,7 +25,5 @@ func Run(ctx context.Context, args []string, stdout, stderr io.Writer) int {
 	models := apply.NewModelService(repository, repository)
 	preparation := apply.NewPreparationService(models)
 	views := modeldocs.New(models, preparation, documents.Writer{})
-	// The reviewed Repository resolver is composed here once its separate fixed
-	// producer delivery is available. No command performs a Git process itself.
-	return cli.New(preparation, codexappserver.NewMetadataPreparer(), checks.MetadataPreparer{}, nil, views).Run(ctx, args, stdout, stderr)
+	return cli.New(preparation, codexappserver.NewMetadataPreparer(), checks.MetadataPreparer{}, repository, views).Run(ctx, args, stdout, stderr)
 }

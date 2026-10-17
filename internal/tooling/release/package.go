@@ -5,7 +5,6 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
-	"os"
 	"path/filepath"
 	"strconv"
 	"strings"
@@ -36,12 +35,6 @@ func Package(root, version string) (archive, lock []byte, err error) {
 		return nil, nil, fmt.Errorf("repository root: %w", err)
 	}
 	moduleDir := absRoot
-	if _, err := os.Lstat(filepath.Join(moduleDir, "go.mod")); os.IsNotExist(err) {
-		if err := requireRealDirectory(filepath.Join(absRoot, "tools")); err != nil {
-			return nil, nil, fmt.Errorf("tools directory: %w", err)
-		}
-		moduleDir = filepath.Join(absRoot, "tools", "markitect")
-	}
 	if err := requireRealDirectory(moduleDir); err != nil {
 		return nil, nil, fmt.Errorf("Markitect module: %w", err)
 	}
@@ -65,8 +58,7 @@ type sourceFile struct {
 	data []byte
 }
 
-const embeddedNoticesPath = "src/internal/tooling/licenses/notices.md"
-const legacyEmbeddedNoticesPath = "internal/tooling/licenses/notices.md"
+const embeddedNoticesPath = "internal/tooling/licenses/notices.md"
 
 func validVersion(version string) bool {
 	if strings.HasPrefix(version, "v") {

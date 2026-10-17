@@ -1,0 +1,7 @@
+imports:
+  - package: vocabulary
+    as: Vocab
+id: read-only-preparation
+kind: Vocab.Rule
+body: "Acquire explicitly selected model and control inputs through consumer-owned ports. Prepare compiler, registry, complete file accounting, execution declarations and static context from one complete capture; recapture rather than extend an old guard. Preserve actual product defaults and profile metadata sources. Known failure differs from incomplete acquisition. Preparation never starts a session, executes a check, creates a workspace or publishes artifacts."
+spec: {}

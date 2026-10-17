@@ -18,28 +18,16 @@ func collect(moduleDir string) ([]sourceFile, error) {
 			return nil, err
 		}
 	}
-	prefix, err := sourceLayoutPrefix(moduleDir)
-	if err != nil {
+	if _, err := sourceLayoutPrefix(moduleDir); err != nil {
 		return nil, err
 	}
-	trees := []string{prefix + "cmd", prefix + "internal"}
-	if prefix == "src/" {
-		for _, tree := range transitionalFoundationRoots() {
-			root := filepath.Join(moduleDir, filepath.FromSlash(tree))
-			if _, err := os.Lstat(root); os.IsNotExist(err) {
-				continue
-			} else if err != nil {
-				return nil, fmt.Errorf("inspect optional source tree %s: %w", tree, err)
-			}
-			trees = append(trees, tree)
-		}
-	}
+	trees := []string{"cmd", "internal"}
 	for _, tree := range trees {
 		root := filepath.Join(moduleDir, filepath.FromSlash(tree))
 		if err := requireRealDirectory(root); err != nil {
 			return nil, fmt.Errorf("required source tree %s: %w", tree, err)
 		}
-		if err := walkSourceTree(moduleDir, root, &files, prefix == "src/"); err != nil {
+		if err := walkSourceTree(moduleDir, root, &files); err != nil {
 			return nil, err
 		}
 	}
@@ -59,7 +47,7 @@ func collect(moduleDir string) ([]sourceFile, error) {
 	} else if !os.IsNotExist(err) {
 		return nil, fmt.Errorf("inspect optional schema directory: %w", err)
 	}
-	if err := validateCollectedSourceLayout(files, prefix); err != nil {
+	if err := validateCollectedSourceLayout(files); err != nil {
 		return nil, err
 	}
 	sort.Slice(files, func(i, j int) bool { return files[i].name < files[j].name })
@@ -69,7 +57,7 @@ func collect(moduleDir string) ([]sourceFile, error) {
 	return files, nil
 }
 
-func walkSourceTree(moduleDir, start string, files *[]sourceFile, transitional bool) error {
+func walkSourceTree(moduleDir, start string, files *[]sourceFile) error {
 	return filepath.WalkDir(start, func(current string, entry fs.DirEntry, walkErr error) error {
 		if walkErr != nil {
 			return fmt.Errorf("walk Markitect source %q: %w", current, walkErr)
@@ -89,39 +77,28 @@ func walkSourceTree(moduleDir, start string, files *[]sourceFile, transitional b
 			return fmt.Errorf("refusing symlink in Markitect source tree: %s", rel)
 		}
 		ext := strings.ToLower(filepath.Ext(entry.Name()))
-		if ext != ".go" && !embeddedNotices(rel) && rel != embeddedStrategyDefaultsPath && !(transitional && isTransitionalTestkitDataPath(rel)) {
+		if ext != ".go" && !embeddedNotices(rel) && rel != embeddedStrategyDefaultsPath && !sourceTestData(rel) {
 			return nil
 		}
 		return appendRegularFile(moduleDir, rel, files, true)
 	})
 }
 
-// sourceLayoutPrefix selects the active source tree. The flat layout remains
-// readable for previously pinned source packages; during the transition, the
-// product engine stays under src/ and only the bounded root packages may
-// accompany it.
+// sourceLayoutPrefix rejects every legacy/mixed layout. Published archives keep
+// their original bootstrap; current maintenance does not reinterpret them.
 func sourceLayoutPrefix(moduleDir string) (string, error) {
-	presence := sourceLayoutPresence{
-		srcCommand:   pathExists(filepath.Join(moduleDir, "src", "cmd")),
-		srcInternal:  pathExists(filepath.Join(moduleDir, "src", "internal")),
-		rootCommand:  pathExists(filepath.Join(moduleDir, "cmd")),
-		rootInternal: pathExists(filepath.Join(moduleDir, "internal")),
+	if pathExists(filepath.Join(moduleDir, "src")) {
+		return "", fmt.Errorf("legacy src layout is unsupported")
 	}
-	prefix, err := classifySourceLayout(presence)
-	if err != nil {
+	for _, name := range []string{"cmd", "internal"} {
+		if err := requireRealDirectory(filepath.Join(moduleDir, name)); err != nil {
+			return "", fmt.Errorf("required source tree %s: %w", name, err)
+		}
+	}
+	if err := validateSourceDirectories(moduleDir); err != nil {
 		return "", err
 	}
-	if prefix == "src/" {
-		for _, tree := range []string{"src/cmd", "src/internal"} {
-			if err := requireRealDirectory(filepath.Join(moduleDir, filepath.FromSlash(tree))); err != nil {
-				return "", fmt.Errorf("required source tree %s: %w", tree, err)
-			}
-		}
-		if err := validateTransitionalFoundationDirectories(moduleDir); err != nil {
-			return "", err
-		}
-	}
-	return prefix, nil
+	return "", nil
 }
 
 func pathExists(name string) bool {
@@ -218,5 +195,5 @@ func requireRealDirectory(dir string) error {
 }
 
 func embeddedNotices(name string) bool {
-	return name == embeddedNoticesPath || name == legacyEmbeddedNoticesPath
+	return name == embeddedNoticesPath
 }

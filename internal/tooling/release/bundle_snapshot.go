@@ -15,23 +15,15 @@ import (
 )
 
 func snapshotModuleFiles(snapshot *source.Input) (map[string][]byte, error) {
-	prefix := ""
 	if _, ok := snapshot.Files["go.mod"]; !ok {
-		prefix = "tools/markitect/"
-		if _, exists := snapshot.Files[prefix+"go.mod"]; !exists {
-			return nil, errors.New("fixed source snapshot is missing go.mod")
-		}
+		return nil, errors.New("fixed source snapshot is missing root go.mod")
 	}
-	if err := validateTransitionalSnapshotInputs(snapshot.Files, snapshot.Modes, prefix); err != nil {
+	if err := validateSnapshotInputs(snapshot.Files, snapshot.Modes, ""); err != nil {
 		return nil, err
 	}
-	transitional := hasTransitionalSourceTree(snapshot.Files, prefix)
 	module := make(map[string][]byte)
 	for name, data := range snapshot.Files {
-		if !strings.HasPrefix(name, prefix) {
-			continue
-		}
-		relative := strings.TrimPrefix(name, prefix)
+		relative := name
 		if relative == "" {
 			continue
 		}
@@ -40,7 +32,7 @@ func snapshotModuleFiles(snapshot *source.Input) (map[string][]byte, error) {
 		}
 		include := relative == "go.mod" || relative == "go.sum" || relative == "README.md" || relative == "LICENSE"
 		if sourceTreePath(relative) {
-			include = includeSourceTreeFile(relative, transitional)
+			include = includeSourceTreeFile(relative)
 		}
 		if strings.HasPrefix(relative, "schema/") {
 			ext := strings.ToLower(path.Ext(relative))
@@ -58,7 +50,6 @@ func snapshotModuleFiles(snapshot *source.Input) (map[string][]byte, error) {
 
 func collectModuleSnapshot(files map[string][]byte) ([]sourceFile, error) {
 	selected := make([]sourceFile, 0, len(files))
-	transitional := hasTransitionalSourceTree(files, "")
 	for _, name := range []string{"go.mod", "go.sum"} {
 		data, ok := files[name]
 		if !ok {
@@ -77,7 +68,7 @@ func collectModuleSnapshot(files map[string][]byte) ([]sourceFile, error) {
 		ext := strings.ToLower(path.Ext(name))
 		include := name == "README.md" || name == "LICENSE"
 		if sourceTreePath(name) {
-			include = includeSourceTreeFile(name, transitional)
+			include = includeSourceTreeFile(name)
 		}
 		if strings.HasPrefix(name, "schema/") {
 			include = ext == ".json" || ext == ".yaml" || ext == ".yml" || ext == ".md"
@@ -105,31 +96,14 @@ func collectModuleSnapshot(files map[string][]byte) ([]sourceFile, error) {
 }
 
 func sourceTreePath(name string) bool {
-	return strings.HasPrefix(name, "cmd/") || strings.HasPrefix(name, "internal/") || strings.HasPrefix(name, "src/cmd/") || strings.HasPrefix(name, "src/internal/")
+	return strings.HasPrefix(name, "cmd/") || strings.HasPrefix(name, "internal/")
 }
 
-// includeSourceTreeFile mirrors live source-tree selection for fixed
-// snapshots. Excluded directories apply only to transitional root packages;
-// the historical src and flat selection rules stay unchanged.
-func includeSourceTreeFile(name string, transitional bool) bool {
-	if isTransitionalFoundationPath(name) && hasExcludedSourceDirectory(name) {
+func includeSourceTreeFile(name string) bool {
+	if !sourceRoot(name) || hasExcludedSourceDirectory(name) {
 		return false
 	}
-	ext := strings.ToLower(path.Ext(name))
-	return ext == ".go" || embeddedNotices(name) || name == embeddedStrategyDefaultsPath || (transitional && isTransitionalTestkitDataPath(name)) || name == "internal/licenses/notices.md" || name == "src/internal/licenses/notices.md"
-}
-
-func hasTransitionalSourceTree(files map[string][]byte, modulePrefix string) bool {
-	for name := range files {
-		if !strings.HasPrefix(name, modulePrefix) {
-			continue
-		}
-		relative := strings.TrimPrefix(name, modulePrefix)
-		if strings.HasPrefix(relative, "src/cmd/") || strings.HasPrefix(relative, "src/internal/") {
-			return true
-		}
-	}
-	return false
+	return strings.EqualFold(path.Ext(name), ".go") || embeddedNotices(name) || name == embeddedStrategyDefaultsPath || sourceTestData(name)
 }
 
 func validateSnapshotModuleLayout(files []sourceFile) error {
@@ -183,31 +157,17 @@ func validateSnapshotModuleLayout(files []sourceFile) error {
 	return fmt.Errorf("fixed source snapshot go.mod must declare module %s", sourceRepository)
 }
 
-func moduleLayoutFiles(present map[string]bool) (commandEntry, internalPrefix string, err error) {
-	presence := sourceLayoutPresence{}
-	var rootInternalFiles []string
+func moduleLayoutFiles(present map[string]bool) (string, string, error) {
+	command, internal := false, false
 	for name := range present {
-		switch {
-		case strings.HasPrefix(name, "src/cmd/"):
-			presence.srcCommand = true
-		case strings.HasPrefix(name, "src/internal/"):
-			presence.srcInternal = true
-		case strings.HasPrefix(name, "cmd/"):
-			presence.rootCommand = true
-		case strings.HasPrefix(name, "internal/"):
-			presence.rootInternal = true
-			rootInternalFiles = append(rootInternalFiles, name)
+		if strings.HasPrefix(name, "src/") {
+			return "", "", errors.New("legacy src layout is unsupported")
 		}
+		command = command || strings.HasPrefix(name, "cmd/")
+		internal = internal || strings.HasPrefix(name, "internal/")
 	}
-	prefix, err := classifySourceLayout(presence)
-	if err != nil {
-		return "", "", fmt.Errorf("fixed source snapshot: %w", err)
-	}
-	if prefix == "src/" {
-		if err := validateTransitionalFoundationFiles(rootInternalFiles); err != nil {
-			return "", "", err
-		}
-		return "src/cmd/markitect/main.go", "src/internal/", nil
+	if !command || !internal {
+		return "", "", errors.New("source is missing a complete root cmd/internal layout")
 	}
 	return "cmd/markitect/main.go", "internal/", nil
 }
@@ -232,26 +192,8 @@ func snapshotRegularFile(snapshot *source.Input, name string) bool {
 }
 
 func validateSourceVersion(snapshot *source.Input, version string) error {
-	sourcePath := "src/internal/application/buildinfo/version.go"
+	sourcePath := "internal/buildinfo/version.go"
 	declarationToken := token.VAR
-	// Historical immutable source distributions have their version in the
-	// executable entrypoint. Compatibility is confined to release tooling.
-	if _, exists := snapshot.Files[sourcePath]; !exists {
-		sourcePath = "src/internal/host/buildinfo/version.go"
-	}
-	if _, exists := snapshot.Files[sourcePath]; !exists {
-		sourcePath = "src/internal/host/cli/version.go"
-		if _, exists := snapshot.Files[sourcePath]; !exists {
-			sourcePath = "internal/host/cli/version.go"
-		}
-		if _, exists := snapshot.Files[sourcePath]; !exists {
-			sourcePath = "src/cmd/markitect/main.go"
-			if _, exists := snapshot.Files[sourcePath]; !exists {
-				sourcePath = "cmd/markitect/main.go"
-			}
-		}
-		declarationToken = token.VAR
-	}
 	data, err := snapshotText(snapshot, sourcePath)
 	if err != nil {
 		return err

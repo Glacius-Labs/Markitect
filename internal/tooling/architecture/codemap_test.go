@@ -11,7 +11,7 @@ import (
 
 var updateCodeMap = flag.Bool("update", false, "rewrite "+CodeMapPage+" from "+CodeMapSource)
 
-var repositoryRoot = filepath.Join("..", "..", "..", "..")
+var repositoryRoot = filepath.Join("..", "..", "..")
 
 func TestCodeMapCoversRepository(t *testing.T) {
 	m, err := LoadCodeMap(repositoryRoot)
@@ -49,54 +49,16 @@ func TestCodeMapPage(t *testing.T) {
 	}
 }
 
-// Every map layer names at least one real gate layer, and every gate layer
-// except "unknown" is reachable, so the finer layers can drive the gate.
-func TestCodeMapLayersMatchGateLayers(t *testing.T) {
-	gate := map[string]bool{"core": true, "host": true, "module": true, "infrastructure": true, "tooling": true, "cli": true, "fixture": true, "bootstrap": true, "harness-tests": true, "harness-runtime": true, "testkit": true}
-	for _, root := range targetRoots {
-		gate[root.layer] = true
-	}
-	reached := map[string]bool{}
-	names := map[string]bool{}
-	for _, l := range Layers {
-		if names[l.Name] || l.Title == "" || l.Meaning == "" || len(l.Gate) == 0 {
-			t.Errorf("layer %q must be unique and have a title, meaning and gate layers", l.Name)
-		}
-		names[l.Name] = true
-		for _, g := range l.Gate {
-			if !gate[g] {
-				t.Errorf("layer %q names unknown gate layer %q", l.Name, g)
-			}
-			reached[g] = true
-		}
-	}
-	if !reflect.DeepEqual(reached, gate) {
-		t.Errorf("gate layers without a map layer: reached %v of %v", reached, gate)
-	}
-	for _, c := range []struct {
-		path, layer string
-		ok          bool
-	}{
-		{"src/internal/core/projectmodel/projectcoverage", "core", true},
-		{"src/internal/application/projectcoverage", "application", true},
-		{"src/internal/core/projectmodel", "core", true},
-		{"src/internal/modules/markdown", "legacy", true},
-		{"src/internal/runtime/projectrun", "runtime", true},
-		{"src/internal/modules/markdown", "application", false},
-		{"src/cmd/markitect", "legacy", false},
-		{"src/internal/core", "legacy", false},
-		{"examples/documentation/docs/implementation/src", "fixture", false},
-		{"src/internal/unowned", "legacy", false},
-	} {
-		gateLayer, _ := layer(c.path)
-		var allowed []string
+func TestCodeMapLayersMatchResponsibilities(t *testing.T) {
+	for _, r := range targetRoots {
+		found := false
 		for _, l := range Layers {
-			if l.Name == c.layer {
-				allowed = l.Gate
+			if l.Name == r.layer && contains(l.Gate, r.layer) {
+				found = true
 			}
 		}
-		if contains(allowed, gateLayer) != c.ok {
-			t.Errorf("%s as %s: gate layer %q, want compatible=%v", c.path, c.layer, gateLayer, c.ok)
+		if !found {
+			t.Errorf("missing display layer for %s: %s", r.path, r.layer)
 		}
 	}
 }
@@ -132,11 +94,11 @@ func TestPackagesFollowGoListRules(t *testing.T) {
 func TestCheckCodeMapReportsEveryProblem(t *testing.T) {
 	root := t.TempDir()
 	for name, content := range map[string]string{
-		"go.mod":                         "module example\n",
-		"src/internal/core/c.go":         "package core\n",
-		"src/internal/host/h.go":         "package host\n",
-		"src/internal/host/missing/m.go": "package missing\n",
-		"docs/owner.md":                  "# Owner\n\n## Real section\n\n```text\n# Not a heading\n```\n\n<a id=\"explicit\"></a>\n",
+		"go.mod":                      "module example\n",
+		"internal/model/c.go":         "package core\n",
+		"internal/apply/h.go":         "package host\n",
+		"internal/apply/missing/m.go": "package missing\n",
+		"docs/owner.md":               "# Owner\n\n## Real section\n\n```text\n# Not a heading\n```\n\n<a id=\"explicit\"></a>\n",
 	} {
 		p := filepath.Join(root, filepath.FromSlash(name))
 		if err := os.MkdirAll(filepath.Dir(p), 0o755); err != nil {
@@ -147,18 +109,18 @@ func TestCheckCodeMapReportsEveryProblem(t *testing.T) {
 		}
 	}
 	valid := CodeMap{Packages: []MappedPackage{
-		{Path: "src/internal/core", Layer: "core", Purpose: "Core.", Doc: "docs/owner.md#real-section"},
-		{Path: "src/internal/host", Layer: "legacy", Purpose: "Host.", Doc: "docs/owner.md#explicit"},
-		{Path: "src/internal/host/missing", Layer: "legacy", Purpose: "Missing.", Doc: "docs/owner.md"},
+		{Path: "internal/model", Layer: "apply-model", Purpose: "Core.", Doc: "docs/owner.md#real-section"},
+		{Path: "internal/apply", Layer: "apply-usecase", Purpose: "Host.", Doc: "docs/owner.md#explicit"},
+		{Path: "internal/apply/missing", Layer: "apply-usecase", Purpose: "Missing.", Doc: "docs/owner.md"},
 	}}
 	if problems, err := CheckCodeMap(root, valid); err != nil || len(problems) != 0 {
 		t.Fatalf("valid map: %v %v", problems, err)
 	}
 	bad := CodeMap{Packages: []MappedPackage{
-		{Path: "src/internal/host", Layer: "legacy", Purpose: "Host.", Doc: "docs/owner.md"},
-		{Path: "src/internal/core", Layer: "application", Purpose: "Core.", Doc: "docs/owner.md#not-a-heading"},
-		{Path: "src/internal/gone", Layer: "core", Purpose: "", Doc: "docs/absent.md"},
-		{Path: "src/internal/gone", Layer: "nonsense", Purpose: "a | b", Doc: "../outside.md"},
+		{Path: "internal/apply", Layer: "apply-usecase", Purpose: "Host.", Doc: "docs/owner.md"},
+		{Path: "internal/model", Layer: "apply-adapter", Purpose: "Core.", Doc: "docs/owner.md#not-a-heading"},
+		{Path: "internal/gone", Layer: "apply-model", Purpose: "", Doc: "docs/absent.md"},
+		{Path: "internal/gone", Layer: "nonsense", Purpose: "a | b", Doc: "../outside.md"},
 	}}
 	problems, err := CheckCodeMap(root, bad)
 	if err != nil {
@@ -166,26 +128,25 @@ func TestCheckCodeMapReportsEveryProblem(t *testing.T) {
 	}
 	text := strings.Join(problems, "\n")
 	for _, want := range []string{
-		`entry 2 (src/internal/core): layer "application" does not match import-gate layer "core"`,
-		`entry 2 (src/internal/core): entries must be ordered by layer, then by path`,
-		`entry 2 (src/internal/core): owning document: docs/owner.md has no anchor #not-a-heading`,
-		`entry 3 (src/internal/gone): layer "core" does not match import-gate layer "unknown"`,
-		`entry 3 (src/internal/gone): entries must be ordered by layer, then by path`,
-		`entry 3 (src/internal/gone): purpose must be one non-empty line`,
-		`entry 3 (src/internal/gone): owning document: docs/absent.md does not exist`,
-		`entry 4 (src/internal/gone): duplicate path`,
-		`entry 4 (src/internal/gone): unknown layer "nonsense"`,
-		`entry 4 (src/internal/gone): purpose must be one non-empty line`,
-		`entry 4 (src/internal/gone): owning document: "../outside.md" is not a clean repository-relative path`,
-		"missing package src/internal/host/missing: add an entry to " + CodeMapSource,
-		"extra entry src/internal/gone: no Go package exists there; remove it from " + CodeMapSource,
+		`entry 2 (internal/model): layer "apply-adapter" does not match import-gate layer "apply-model"`,
+		`entry 2 (internal/model): owning document: docs/owner.md has no anchor #not-a-heading`,
+		`entry 3 (internal/gone): layer "apply-model" does not match import-gate layer "unknown"`,
+		`entry 3 (internal/gone): entries must be ordered by layer, then by path`,
+		`entry 3 (internal/gone): purpose must be one non-empty line`,
+		`entry 3 (internal/gone): owning document: docs/absent.md does not exist`,
+		`entry 4 (internal/gone): duplicate path`,
+		`entry 4 (internal/gone): unknown layer "nonsense"`,
+		`entry 4 (internal/gone): purpose must be one non-empty line`,
+		`entry 4 (internal/gone): owning document: "../outside.md" is not a clean repository-relative path`,
+		"missing package internal/apply/missing: add an entry to " + CodeMapSource,
+		"extra entry internal/gone: no Go package exists there; remove it from " + CodeMapSource,
 	} {
 		if !strings.Contains(text, want) {
 			t.Errorf("missing problem %q in:\n%s", want, text)
 		}
 	}
-	if len(problems) != 13 {
-		t.Errorf("got %d problems, want 13:\n%s", len(problems), text)
+	if len(problems) != 12 {
+		t.Errorf("got %d problems, want 12:\n%s", len(problems), text)
 	}
 }
 
@@ -203,15 +164,15 @@ func TestParseCodeMapIsStrict(t *testing.T) {
 
 func TestRenderCodeMapLinksFromPageDirectory(t *testing.T) {
 	page := string(RenderCodeMap(CodeMap{Packages: []MappedPackage{
-		{Path: "src/internal/core", Layer: "core", Purpose: "Compiles.", Doc: "docs/architecture.md#go"},
-		{Path: "src/cmd/markitect", Layer: "cli", Purpose: "Runs.", Doc: "CONTRIBUTING.md"},
-		{Path: "src/internal/tooling/release", Layer: "tooling", Purpose: "Builds.", Doc: "docs/development/modules.md"},
+		{Path: "internal/model", Layer: "apply-model", Purpose: "Compiles.", Doc: "docs/architecture.md#go"},
+		{Path: "cmd/markitect", Layer: "apply-command", Purpose: "Runs.", Doc: "CONTRIBUTING.md"},
+		{Path: "internal/tooling/release", Layer: "maintenance", Purpose: "Builds.", Doc: "docs/development/modules.md"},
 	}}))
 	for _, want := range []string{
-		"| `src/internal/core` | Compiles. | [docs/architecture.md](../architecture.md#go) |",
-		"| `src/cmd/markitect` | Runs. | [CONTRIBUTING.md](../../CONTRIBUTING.md) |",
-		"| `src/internal/tooling/release` | Builds. | [docs/development/modules.md](modules.md) |",
-		"[codemap.yaml](../../src/internal/tooling/architecture/codemap.yaml)",
+		"| `internal/model` | Compiles. | [docs/architecture.md](../architecture.md#go) |",
+		"| `cmd/markitect` | Runs. | [CONTRIBUTING.md](../../CONTRIBUTING.md) |",
+		"| `internal/tooling/release` | Builds. | [docs/development/modules.md](modules.md) |",
+		"[codemap.yaml](../../internal/tooling/architecture/codemap.yaml)",
 		CodeMapUpdate,
 	} {
 		if !strings.Contains(page, want) {

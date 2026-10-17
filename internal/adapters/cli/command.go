@@ -220,7 +220,10 @@ func (c *Command) Run(ctx context.Context, args []string, stdout, stderr io.Writ
 }
 
 func selectManifest(repository, literal string) (apply.ModelSelection, error) {
-	boundary := repository
+	// Relative manifest coordinates belong to the selected repository. Keep
+	// that relationship explicit instead of passing a second absolute spelling
+	// of its directory (for example a Windows short-name alias).
+	boundary := "."
 	if filepath.IsAbs(literal) {
 		if filepath.Clean(literal) != literal {
 			return apply.ModelSelection{}, errors.New("model manifest path cannot require normalization")

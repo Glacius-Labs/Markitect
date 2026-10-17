@@ -1,0 +1,38 @@
+apiVersion: markitect.registry/v1
+artifacts:
+  - path: "internal/adapters/checks/file_other.go"
+    form: code
+    realizes: [product/adapters/checks/closed-check-metadata]
+    why: Implements the stated responsibility within its declared boundary.
+  - path: "internal/adapters/checks/file_unix.go"
+    form: code
+    realizes: [product/adapters/checks/closed-check-metadata]
+    why: Implements the stated responsibility within its declared boundary.
+  - path: "internal/adapters/checks/file_windows.go"
+    form: code
+    realizes: [product/adapters/checks/closed-check-metadata]
+    why: Implements the stated responsibility within its declared boundary.
+  - path: "internal/adapters/checks/fixture_test.go"
+    form: test
+    realizes: [product/adapters/checks/closed-check-metadata]
+    why: Tests the stated responsibility and retains negative boundaries.
+  - path: "internal/adapters/checks/metadata.go"
+    form: code
+    realizes: [product/adapters/checks/closed-check-metadata]
+    why: Implements the stated responsibility within its declared boundary.
+  - path: "internal/adapters/checks/metadata_linux_test.go"
+    form: test
+    realizes: [product/adapters/checks/closed-check-metadata]
+    why: Tests the stated responsibility and retains negative boundaries.
+  - path: "internal/adapters/checks/profile.go"
+    form: code
+    realizes: [product/adapters/checks/closed-check-metadata]
+    why: Implements the stated responsibility within its declared boundary.
+  - path: "internal/adapters/checks/profile_failures_test.go"
+    form: test
+    realizes: [product/adapters/checks/closed-check-metadata]
+    why: Tests the stated responsibility and retains negative boundaries.
+  - path: "internal/adapters/checks/profile_test.go"
+    form: test
+    realizes: [product/adapters/checks/closed-check-metadata]
+    why: Tests the stated responsibility and retains negative boundaries.

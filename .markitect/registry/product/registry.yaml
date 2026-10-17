@@ -1,0 +1,6 @@
+apiVersion: markitect.registry/v1
+artifacts:
+  - path: "internal/buildinfo/version.go"
+    form: code
+    realizes: [product/ports-and-adapters]
+    why: Implements the stated responsibility within its declared boundary.

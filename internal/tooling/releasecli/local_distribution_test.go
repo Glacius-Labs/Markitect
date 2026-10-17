@@ -99,9 +99,9 @@ func newReleaseSource(t *testing.T) *testkit.Repo {
 	repo.Write("go.mod", "module github.com/Glacius-Labs/Markitect\n\ngo 1.27.1\n")
 	repo.Write("go.sum", "")
 	repo.Write("LICENSE", "Apache License\nVersion 2.0\n")
-	repo.Write("src/internal/application/buildinfo/version.go", "package buildinfo\nvar version = \""+buildinfo.Version()+"\"\n")
-	repo.Write("src/cmd/markitect/main.go", "package main\nfunc main() {}\n")
-	repo.Write("src/internal/core/core.go", "package core\n")
+	repo.Write("internal/buildinfo/version.go", "package buildinfo\nvar version = \""+buildinfo.Version()+"\"\n")
+	repo.Write("cmd/markitect/main.go", "package main\nfunc main() {}\n")
+	repo.Write("internal/model/core.go", "package core\n")
 	repo.Write("integration/run-markitect.go", "package main\nfunc main() {}\n")
 	repo.Write("integration/run-markitect_test.go", "package main\n")
 	return repo

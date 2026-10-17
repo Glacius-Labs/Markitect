@@ -7,7 +7,7 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/Glacius-Labs/Markitect/src/internal/application/modulechecks"
+	"github.com/Glacius-Labs/Markitect/internal/tooling/modulechecks"
 	"go.yaml.in/yaml/v3"
 )
 

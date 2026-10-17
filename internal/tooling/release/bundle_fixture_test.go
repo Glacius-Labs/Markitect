@@ -13,17 +13,17 @@ import (
 
 func bundleSnapshot() *source.Input {
 	files := map[string][]byte{
-		"go.mod":                    []byte("module github.com/Glacius-Labs/Markitect\n\ngo 1.27.1\n"),
-		"go.sum":                    []byte("go.yaml.in/yaml/v3 v3.0.5 h1:fixture\n"),
-		"README.md":                 []byte("Markitect\r\n"),
-		"LICENSE":                   []byte("Apache License\r\nVersion 2.0\r\n"),
-		"src/cmd/markitect/main.go": []byte("package main\n"),
-		"src/internal/application/buildinfo/version.go":   []byte("package buildinfo\nvar version = \"1.2.3\"\n"),
-		"src/internal/core/model.go":                      []byte("package core\n"),
-		"src/internal/host/embedded/resources/skill.yaml": []byte("kind: Skill\n"),
-		"integration/run-markitect.go":                    []byte("package main\r\n"),
-		"integration/run-markitect_test.go":               []byte("package main\r\n"),
-		"schema/manifest.yaml":                            []byte("schemaVersion: 1\r\n"),
+		"go.mod":                        []byte("module github.com/Glacius-Labs/Markitect\n\ngo 1.27.1\n"),
+		"go.sum":                        []byte("go.yaml.in/yaml/v3 v3.0.5 h1:fixture\n"),
+		"README.md":                     []byte("Markitect\r\n"),
+		"LICENSE":                       []byte("Apache License\r\nVersion 2.0\r\n"),
+		"cmd/markitect/main.go":         []byte("package main\n"),
+		"internal/buildinfo/version.go": []byte("package buildinfo\nvar version = \"1.2.3\"\n"),
+		"internal/model/model.go":       []byte("package core\n"),
+		"internal/apply/embedded/resources/skill.yaml": []byte("kind: Skill\n"),
+		"integration/run-markitect.go":                 []byte("package main\r\n"),
+		"integration/run-markitect_test.go":            []byte("package main\r\n"),
+		"schema/manifest.yaml":                         []byte("schemaVersion: 1\r\n"),
 	}
 	modes := make(map[string]string, len(files))
 	for name := range files {

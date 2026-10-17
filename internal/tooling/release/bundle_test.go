@@ -65,7 +65,7 @@ func TestBuildBundleRejectsUnfixedOrUnboundSource(t *testing.T) {
 		{name: "version mismatch", change: func(*source.Input) {}, version: "1.2.4"},
 		{name: "version with tag prefix", change: func(*source.Input) {}, version: "v1.2.3"},
 		{name: "nonliteral source version", change: func(s *source.Input) {
-			s.Files["src/internal/application/buildinfo/version.go"] = []byte("package buildinfo\nvar version = currentVersion()\n")
+			s.Files["internal/buildinfo/version.go"] = []byte("package buildinfo\nvar version = currentVersion()\n")
 		}, version: "1.2.3"},
 		{name: "foreign module", change: func(s *source.Input) {
 			s.Files["go.mod"] = []byte("module example.invalid/foreign\n\ngo 1.27.1\n")

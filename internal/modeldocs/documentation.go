@@ -131,6 +131,11 @@ func (s *Service) prepare(ctx context.Context, request apply.PreviewRequest) (Pr
 	p := Preview{Status: model.NotCompleted, Path: ViewPath}
 	m, err := s.models.PreviewModel(ctx, request, model.Limits{})
 	if err != nil {
+		var manifest *apply.ManifestPreflightError
+		if errors.As(err, &manifest) {
+			inspection := manifest.Inspection()
+			p.Status, p.Diagnostics = inspection.Status, inspection.Diagnostics
+		}
 		return p, m, false, err
 	}
 	raw := m.Inputs().Raw
