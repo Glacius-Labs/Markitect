@@ -55,6 +55,7 @@ type RequestMethod string
 const (
 	Initialize    RequestMethod = "initialize"
 	ThreadStart   RequestMethod = "thread/start"
+	ThreadResume  RequestMethod = "thread/resume"
 	TurnStart     RequestMethod = "turn/start"
 	TurnInterrupt RequestMethod = "turn/interrupt"
 )
@@ -124,6 +125,27 @@ func (c *Codec) EncodeThreadStart(id RequestID, p ThreadStartParams) ([]byte, er
 		return nil, err
 	}
 	return c.request(id, ThreadStart, p)
+}
+
+// EncodePersistentThread explicitly retains fresh threads, or resumes only the
+// named thread from the mounted provider home. History/path overrides are absent.
+func (c *Codec) EncodePersistentThread(id RequestID, p ThreadStartParams, resume ThreadID) ([]byte, error) {
+	if _, err := c.EncodeThreadStart(id, p); err != nil {
+		return nil, err
+	}
+	if resume == "" {
+		return c.request(id, ThreadStart, struct {
+			ThreadStartParams
+			Ephemeral bool `json:"ephemeral"`
+		}{p, false})
+	}
+	if err := c.checkText(string(resume)); err != nil {
+		return nil, err
+	}
+	return c.request(id, ThreadResume, struct {
+		ThreadStartParams
+		Thread ThreadID `json:"threadId"`
+	}{p, resume})
 }
 func (c *Codec) EncodeTurnStart(id RequestID, p TurnStartParams) ([]byte, error) {
 	if p.Thread == "" {
@@ -443,7 +465,7 @@ func (m Message) ReadResponse(expected RequestID, method RequestMethod) (Respons
 				return Response{}, err
 			}
 		}
-	case ThreadStart:
+	case ThreadStart, ThreadResume:
 		r.Thread, err = parseThread(o["thread"])
 		if err == nil {
 			err = requireFields(o, "approvalPolicy", "approvalsReviewer", "cwd", "model", "modelProvider", "sandbox")

@@ -56,3 +56,27 @@ artifacts:
     form: test
     realizes: [product/adapters/agent/closed-agent-metadata]
     why: Checks actual Apply image evidence, immutable identity, acquisition failures and factory boundaries with fake readers.
+  - path: "internal/adapters/codexappserver/session.go"
+    form: code
+    realizes: [product/ports-and-adapters]
+    why: Implements admitted one-step session identity, acknowledged transport, read-only inspection limits and observed stop through the existing container runtime.
+  - path: "internal/adapters/codexappserver/session_credential.go"
+    form: code
+    realizes: [product/ports-and-adapters]
+    why: Installs only an explicitly resolved dedicated runtime login without refresh authority and preserves cleanup uncertainty.
+  - path: "internal/adapters/codexappserver/session_credential_test.go"
+    form: test
+    realizes: [product/ports-and-adapters]
+    why: Distinguishes exact provider-home login installation, refresh-token exclusion, actual-exit cleanup and retained credential uncertainty with fake helpers.
+  - path: "internal/adapters/codexappserver/session_profile.go"
+    form: code
+    realizes: [product/ports-and-adapters]
+    why: Binds the closed execution profile, exact tool catalogue and explicit runtime credential resolver to admitted session payloads.
+  - path: "internal/adapters/codexappserver/session_step.go"
+    form: code
+    realizes: [product/ports-and-adapters]
+    why: Runs one admitted Codex turn with exact thread and call correlation, recorded Host outcomes and explicit Explore-report proposal projection.
+  - path: "internal/adapters/codexappserver/session_test.go"
+    form: test
+    realizes: [product/ports-and-adapters]
+    why: Exercises complete fake-runtime session behavior and distinguishes acknowledgement, partial-write, callback, identity, cancellation and inspection failure boundaries.
