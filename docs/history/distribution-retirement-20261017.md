@@ -12,7 +12,7 @@ Recorder's note: direct owner message on 17 October 2026; original wording prese
 
 [The captured release metadata](retired-releases-20261017.json) records all 18 release IDs, source commits, tag objects, asset names, sizes, SHA-256 digests and GitHub attestation verification output before removal. All 18 attestations verified; the first parallel attempt could not initialize Sigstore verifiers for two tags, and the successful serial retries and original observations are both retained. This archive preserves identity and observed verification; it is not a mirror of the binaries.
 
-Git tags are retained without moving or rewriting them. The original [production assessment](../production-assessment.md) keeps the recorded source/platform/publisher evidence and its limits. Current [runtime handshake](../validation/runtime-handshake-20261017.md), [capability probes](../validation/runtime-capabilities-20261017.md), the canonical Library model, independent oracle and runtime baseline remain on Main. Historical diagnostics and Owner sources keep their original conclusions.
+Git tags are retained without moving or rewriting them. The original [production assessment](distribution/production-assessment.md) keeps the recorded source/platform/publisher evidence and its limits. Current [runtime handshake](../validation/runtime-handshake-20261017.md), [capability probes](../validation/runtime-capabilities-20261017.md), the canonical Library model, independent oracle and runtime baseline remain on Main. Historical diagnostics and Owner sources keep their original conclusions.
 
 ## Retired from Main
 

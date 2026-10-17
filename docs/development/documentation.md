@@ -15,7 +15,7 @@ Start at the [documentation map](../README.md) and the nearest local map. Search
 | Contribution and validation commands | [CONTRIBUTING.md](../../CONTRIBUTING.md) |
 | Product-specific future design records | [Design map](../design/README.md) |
 | Fixed source, adoption, or method evidence | [Validation map](../validation/README.md) and the individual report |
-| Release asset claims | [Production assessment](../production-assessment.md) |
+| Release asset claims | [Production assessment](../history/distribution/production-assessment.md) |
 
 Use the [Project World design map](../design/project-world/README.md), [Research map](../research/README.md), and [Strategy map](../strategy/README.md) to keep dated proposals and supplied research in their stated role. A proposal or assessment does not become product behavior merely because it is documented.
 

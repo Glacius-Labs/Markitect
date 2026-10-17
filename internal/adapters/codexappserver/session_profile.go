@@ -6,8 +6,10 @@ import (
 	"encoding/json"
 	"errors"
 	"io"
+	"math"
 	"regexp"
 	"strings"
+	"unicode/utf8"
 
 	"github.com/Glacius-Labs/Markitect/internal/adapters/container"
 	"github.com/Glacius-Labs/Markitect/internal/agentd/frame"
@@ -30,6 +32,27 @@ type SessionProfile struct {
 	Pids                  int     `json:"pids"`
 	TmpBytes              int64   `json:"tmpBytes"`
 	Network               string  `json:"network"`
+}
+
+// NewSessionProfile validates explicit execution settings and binds their closed
+// v1 JSON bytes for SessionAdmission.Profile. It does not prepare image metadata
+// or infer any setting from the Host environment.
+func NewSessionProfile(profile SessionProfile) (run.Payload, error) {
+	if err := validateSessionProfile(profile); err != nil {
+		return run.Payload{}, err
+	}
+	data, err := json.Marshal(profile)
+	if err != nil {
+		return run.Payload{}, ErrSession
+	}
+	return run.NewPayload("application/vnd.markitect.codex-session-profile+json", "utf-8", data)
+}
+
+func validateSessionProfile(profile SessionProfile) error {
+	if profile.Version != 1 || strings.TrimSpace(profile.Model) == "" || !utf8.ValidString(profile.Model) || !utf8.ValidString(profile.BaseInstructions) || !utf8.ValidString(profile.DeveloperInstructions) || !oneOf(profile.Effort, "none", "minimal", "low", "medium", "high", "xhigh") || !volumeName.MatchString(profile.Store) || profile.CPUs <= 0 || math.IsNaN(profile.CPUs) || math.IsInf(profile.CPUs, 0) || profile.MemoryBytes <= 0 || profile.Pids <= 0 || profile.TmpBytes <= 0 || profile.Network == "host" || profile.Network != "" && !volumeName.MatchString(profile.Network) {
+		return ErrSession
+	}
+	return nil
 }
 
 // RuntimeCredential is resolved by the Host from exactly CredentialRef. Mode is
@@ -79,8 +102,11 @@ func readSessionProfile(a run.SessionAdmission) (SessionProfile, []frame.ToolSpe
 	if a.Receipt.BatchID == "" || a.Invocation == "" || !a.Profile.Valid() || a.Profile.Ref() != p.Profile || !a.Tools.Valid() || a.Tools.Ref() != p.Tools || !volumeName.MatchString(string(p.ID)) || !volumeName.MatchString(p.Workspace) || !volumeName.MatchString(p.ProviderHome) || p.Workspace == p.ProviderHome || !imageName.MatchString(p.ImageID) || p.CredentialRef == "" || p.Candidate == ([32]byte{}) || p.MaxWireBytes <= 0 || p.MaxWireBytes > maxProtocolMessage || (p.Role != "manager" && p.Role != "reviewer") || p.Role == "reviewer" && (!p.ReadOnly || p.Resume != "") {
 		return SessionProfile{}, nil, ErrSession
 	}
+	if a.Profile.Ref().MediaType != "application/vnd.markitect.codex-session-profile+json" || a.Profile.Ref().Encoding != "utf-8" || a.Tools.Ref().MediaType != "application/vnd.markitect.tools+json" || a.Tools.Ref().Encoding != "utf-8" {
+		return SessionProfile{}, nil, ErrSession
+	}
 	var profile SessionProfile
-	if strictValue(a.Profile.Bytes(), &profile) != nil || profile.Version != 1 || strings.TrimSpace(profile.Model) == "" || !oneOf(profile.Effort, "none", "minimal", "low", "medium", "high", "xhigh") || !volumeName.MatchString(profile.Store) || profile.CPUs <= 0 || profile.MemoryBytes <= 0 || profile.Pids <= 0 || profile.TmpBytes <= 0 || profile.Network == "host" || profile.Network != "" && !volumeName.MatchString(profile.Network) {
+	if strictValue(a.Profile.Bytes(), &profile) != nil || validateSessionProfile(profile) != nil {
 		return SessionProfile{}, nil, ErrSession
 	}
 	var catalogue struct {

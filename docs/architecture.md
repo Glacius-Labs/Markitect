@@ -41,7 +41,7 @@ There is one ordinary root and one Manager per local canonical Package, includin
 
 `gitrepo` implements Source, PreviewSource and explicit revision resolution. Committed capture requires clean HEAD and returns its comparison guard. Working/fixed previews never return that guard. It checks exact spellings, modes, physical directory identity, manifest roots and the complete census. Native aliases of the already confirmed selected root retain their repository coordinates; redirects and unbound external historical sources remain refused.
 
-Codex and Check adapters parse explicitly selected source-bound metadata. They do not start a process, probe versions, export schemas or execute checks. The document adapter observes and writes one reviewed generated target through the independent guarded-write API.
+Metadata preparers parse explicitly selected source-bound profiles. Codex metadata preparation inspects the selected image and copies its recorded metadata without starting it; Check metadata preparation observes the selected executable without running it. These preparation paths invoke no provider session or project check. Separate session, workspace, check, journal and publication adapters implement the execution ports described below. The document adapter writes a reviewed generated target through the independent guarded-write API.
 
 ## Application layer
 
@@ -53,13 +53,13 @@ Bootstrap alone constructs concrete adapters. CLI code owns parsing/presentation
 
 ## Runtime layer
 
-`internal/run` supplies fixed run bindings, assignment budget admission and confirmed journal transitions. It reconstructs confirmed state from bounded reads pinned to one journal revision, without replaying external effects. Open reservations retain their holds behind a separate recovery barrier. The package has no physical journal adapter or public execution entrypoint.
+`internal/run` supplies fixed run bindings, assignment budget admission and confirmed journal transitions. It reconstructs confirmed state from bounded reads pinned to one journal revision, without replaying external effects. Open reservations retain their holds behind a separate recovery barrier. Physical storage belongs to the separate [journal adapter](../internal/adapters/journal/README.md); the pure run package owns no storage engine.
 
 Recorded cap extensions preserve spent and held capacity; explicit quiescent closure makes an assignment immutable before a fresh ordinary assignment receives its own ledger on the same repository stream. Host-supplied observations do not establish physical termination or authenticated authority.
 
-The container runtime is in place below the future session port ([DEC-037](concepts/register.md#dec-037-agent-sessions-and-checks-run-in-linux-containers)). `internal/adapters/container` starts hardened session containers from an image named by its engine image ID and speaks the frame protocol of `internal/agentd/frame` with `markitect-agentd`, which runs the provider CLI, relays its streams, serves the Host tools over MCP and reports exits. The [base image](../packaging/runtime/README.md) pins Codex and Claude Code. Nothing in the product composes it yet.
+The [container runtime](../internal/adapters/container/README.md) implements the isolation boundary ([DEC-037](concepts/register.md#dec-037-agent-sessions-and-checks-run-in-linux-containers)). It starts hardened session containers from an immutable engine image ID and speaks the frame protocol of `internal/agentd/frame` with `markitect-agentd`, which runs the provider CLI, relays its streams, serves the Host tools over MCP and reports exits. The [base image](../packaging/runtime/README.md) pins Codex and Claude Code.
 
-Recursive Manager execution, session adapters, workspace creation, executable checks, durable journal storage, verification and guarded artifact publication remain later implementation work. There is no active legacy runtime or fallback execution engine. A structural or metadata pass cannot authorize those effects. The current CLI exposes no MCP server.
+The [provider guide](provider-adapters.md#container-runtime) routes to the implemented Codex and Claude session adapters, container workspaces and check runner, SQLite journal and guarded publisher. Their prepared adapter smokes remain unexecuted. The [delivery plan](implementation-plan.md) owns the remaining Manager orchestration and public Apply composition. A structural or metadata pass cannot authorize execution effects or establish a complete Apply. There is no active legacy runtime or fallback execution engine, and the current CLI exposes no MCP server.
 
 ## Operational record storage
 

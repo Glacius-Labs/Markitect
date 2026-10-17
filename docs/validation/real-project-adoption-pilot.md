@@ -2,7 +2,7 @@
 
 Recorded 2026-10-03. This pilot tests one assigned engineering change against an isolated subset of the public MIT-licensed [MyMeetings modular monolith](https://github.com/kgrzybek/modular-monolith-with-ddd), upstream commit `91c8ef24b4cb6ef558c95d8267fa07d68c7059f8`. It is a substantial architecture reference application, not an active customer adoption or production acceptance. The task was chosen for this experiment, not drawn from a demonstrated product backlog.
 
-The pilot uses the public v0.12.0 Windows executable, SHA-256 `b03424560caa460322e3580785d6abc9dfbf2137df878e03ddedcf76b3a8fa47`. [PR 54](https://github.com/Glacius-Labs/Markitect/pull/54) was reviewed and integrated before this work. Its merge is `d12e42516bf17e97e6d8a0dd32c51b39adfb4416`; the separate immutable v0.12.0 release binds `83b715c415e39af79715cd8a40b3c79237a4c850`. See the [release assessment](../production-assessment.md) for commit-bound Windows/Linux gates and publication evidence. Release verification establishes no product benefit.
+The pilot uses the public v0.12.0 Windows executable, SHA-256 `b03424560caa460322e3580785d6abc9dfbf2137df878e03ddedcf76b3a8fa47`. [PR 54](https://github.com/Glacius-Labs/Markitect/pull/54) was reviewed and integrated before this work. Its merge is `d12e42516bf17e97e6d8a0dd32c51b39adfb4416`; the separate immutable v0.12.0 release binds `83b715c415e39af79715cd8a40b3c79237a4c850`. See the [release assessment](../history/distribution/production-assessment.md) for commit-bound Windows/Linux gates and publication evidence. Release verification establishes no product benefit.
 
 ## Method and boundaries
 
