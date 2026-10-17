@@ -25,11 +25,11 @@ The [Codex metadata preparer](../../internal/adapters/codexappserver/README.md) 
 | Run | Model, snapshot, organization, realization |
 | Apply | Model, snapshot, organization, realization, run |
 | Model view | Apply, model, snapshot |
-| Repository adapter | Apply and required pure values |
+| Repository, workspace and publication adapter | Apply, Run, required pure values and container API |
 | Journal adapter | Apply and Run; model and snapshot only in tests |
 | Codex metadata and session adapter | Apply, model, organization, snapshot, Run, container API and its agent frame DTOs |
 | Claude session adapter | Run, container API and its agent frame DTOs |
-| Check metadata adapter | Apply, model, organization, snapshot |
+| Check metadata and execution adapter | Apply, model, organization, snapshot, Run and container API |
 | Container adapter | Agent frame protocol |
 | Session helper (agentd) | Agent frame protocol |
 | Agent frame protocol | No other Markitect responsibility |

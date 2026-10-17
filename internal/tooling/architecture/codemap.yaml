@@ -29,7 +29,7 @@ packages:
     doc: docs/development/modules.md
   - path: internal/adapters/checks
     layer: apply-adapter
-    purpose: Concrete repository, profile metadata and document I/O.
+    purpose: Check profile metadata and bounded container execution.
     doc: docs/development/modules.md
   - path: internal/adapters/claudecode
     layer: apply-adapter
@@ -53,7 +53,7 @@ packages:
     doc: docs/development/modules.md
   - path: internal/adapters/gitrepo
     layer: apply-adapter
-    purpose: Concrete repository, profile metadata and document I/O.
+    purpose: Repository capture, workspace volumes and guarded publication.
     doc: docs/development/modules.md
   - path: internal/adapters/journal
     layer: apply-adapter
