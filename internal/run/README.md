@@ -212,6 +212,12 @@ Restoration retains the recovery barrier until explicit reconciliation and
 elapsed settlement; no port is executed during Restore. Proposed terminal output
 is retained evidence, not an accepted delivery.
 
+The consumer-owned `Workspaces` and `Checks` ports define what the repository
+and check adapters implement: materialize an exact tree on a runtime volume,
+harvest the complete observed tree, close it, and run one fixed check on a
+disposable copy. They carry no ownership or review semantics; a check passes
+only on an observed zero exit that neither timed out nor is uncertain.
+
 Review and task execution, final evidence, Verifying/Publishing transitions and
 Applied/NoChange are not implemented yet. There is no concrete Session,
 Workspace, Check, SQLite, provider or Apply execution adapter here. The full
