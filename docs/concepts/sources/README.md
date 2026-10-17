@@ -4,6 +4,7 @@ Sources preserve where the [register](../register.md) entries come from. Owner s
 
 | Source | Origin | Content |
 |---|---|---|
+| [Agent runtime](runtime-discussion-20261017.md) | Direct owner instructions, 17 October 2026 | Run a real handshake, support Codex and Claude, consider containers, avoid Windows, path and permission problems; adopt and implement the container runtime |
 | [Concept consolidation](consolidation-discussion-20261016.md) | Direct owner instructions, 16 October 2026 | Consolidate, simplify and integrate the Apply concept; quality, simplicity and stability over effort and compatibility; adopt the recommended refinements |
 | [Desired working day](working-day-discussion-20261016.md) | Direct owner requests, 16 October 2026 | Walk through model change, delegated work and owner intervention; preserve the scenario and assess missing prerequisites |
 | [Experience discussion](experience-discussion-20261016.md) | Direct owner questions and documentation requests, 16 October 2026 | Learn without implicit rule authority; store and select experience, investigate operational logs and follow library cases through to lessons |

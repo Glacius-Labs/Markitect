@@ -67,15 +67,16 @@ Further extensions recorded for after the two-Apply demonstration:
 | Observed code dependencies | Compare, for example, the Go import graph with the model's references; a difference becomes an Optimizer proposal for a missing link. | [ENH-001](../../concepts/register.md#enh-001-observed-code-dependencies-widen-impact) |
 | Model lint | Registry-based signals: Definitions without realization, files realizing many Definitions, Packages near the context limit. | [ENH-002](../../concepts/register.md#enh-002-model-quality-linter-and-metrics) |
 | Scenario Definitions | Owner-authored examples with structured inputs and outputs in the model, which tests must demonstrably cover. | [ENH-003](../../concepts/register.md#enh-003-test-to-statement-binding-and-test-review) |
-| Second session adapter | A Claude Code adapter on the same port, for reviewers from a different model family. | [ENH-005](../../concepts/register.md#enh-005-exchangeable-executor-for-the-delegated-method), [ASM-005](../../concepts/register.md#assumptions-and-hypotheses) |
 | Richer teams | The team variants above, perspectives and four eyes. | [ENH-006](../../concepts/register.md#enh-006-configurable-teams-for-perspectives-and-four-eyes) |
 | Parallel writers | Bounded concurrency on the same ownership and reservation rules. | |
 | Kind guidance | Operational task and review recipes keyed by resolved Kind identity, adding no project rules and granting no execution rights. | |
 | Model operations | Optimizer, cleanup, bughunt and custom commands as listed above. | [DEC-026](../../concepts/register.md#dec-026-apply-comes-first-and-changes-only-artifacts) |
 | Existing-project adoption | An operation that drafts a model and a registry proposal from existing code; the owner reviews and commits them. | |
-| Sandbox profiles | Role sessions inside containers with declared mounts. | |
+| Egress allowlist | Restrict a session container's network to its provider and declared hosts. | [DEC-037](../../concepts/register.md#dec-037-agent-sessions-and-checks-run-in-linux-containers) |
 | Experience and doctor | Experience notes and an operational check through the Managers ([experience reflection](../../concepts/reflections/experience-without-implicit-rules-20261016.md)). | [IDEA-001](../../concepts/register.md#idea-001-the-model-as-institutional-memory-for-stateless-agents), [IDEA-017](../../concepts/register.md#idea-017-operational-check-through-the-managers) |
 | Approval reuse, cockpit, Government | Reusing earlier approvals, a richer interface and delegated model authority. | [VIS-001](../../concepts/register.md#vis-001-cockpit-personal-ai-and-autonomous-project-organization), [OQ-008](../../concepts/register.md#open-questions) |
+
+The second session adapter and session containers with declared mounts, once listed here, moved into the first version with [DEC-037](../../concepts/register.md#dec-037-agent-sessions-and-checks-run-in-linux-containers).
 
 ## Simplified for the first version
 

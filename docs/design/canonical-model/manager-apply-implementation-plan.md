@@ -30,8 +30,8 @@ Obsolete behavior disappears together with its tests; tests for still-required i
 | P02 | Library Playground | APPLY-PLAY |
 | P03 | Complete v1 compilation | APPLY-MODEL; APPLY-SNAPSHOT supplies tree values |
 | P04 | Product skeleton and preparation | APPLY-ORG, APPLY-REALIZATION, APPLY-CUTOVER |
-| P05 | Real role sessions and durable communication | APPLY-RUN, APPLY-JOURNAL, APPLY-AGENT |
-| P06 | One Package candidate | APPLY-RUN, APPLY-REALIZATION, APPLY-REPOSITORY, APPLY-INTEGRATE |
+| P05 | Real role sessions and durable communication | APPLY-RUN, APPLY-JOURNAL, APPLY-RUNTIME, APPLY-AGENT |
+| P06 | One Package candidate | APPLY-RUN, APPLY-REALIZATION, APPLY-RUNTIME, APPLY-REPOSITORY, APPLY-INTEGRATE |
 | P07 | Recursive delegation and integration | APPLY-RUN, APPLY-INTEGRATE |
 | P08 | Aggregate verification and reports | APPLY-INTEGRATE |
 | P09 | Guarded publication, read-back and interruption | APPLY-REPOSITORY, APPLY-INTEGRATE |
@@ -73,7 +73,7 @@ The new application composition, model input, Manager topology, profiles and con
 
 The session port, effective role profiles, Host-mediated task and message transport, session identity, cancellation, the assignment budget and the journal. Start with a root and one child role, then add fresh reviewers through the same mechanism.
 
-**Gate:** a controlled adapter test verifies exact prompts, context, messages, causal links and lifecycle states, including ordinary completion, process or transport failure and uncertain termination. Reservations and settlement, the completion-reserve admission rule, no charge while waiting, immutable outcomes and reconciliation follow the [execution contract](manager-apply-execution.md). A separately labeled bounded smoke with the real adapter proves actual Agent start, response and termination; scripted success never substitutes for it. The Host refuses further dispatch when required event storage fails.
+**Gate:** a controlled adapter test verifies exact prompts, context, messages, causal links and lifecycle states, including ordinary completion, process or transport failure and uncertain termination. Reservations and settlement, the completion-reserve admission rule, no charge while waiting, immutable outcomes and reconciliation follow the [execution contract](manager-apply-execution.md). A separately labeled bounded smoke with each real adapter, Codex App Server and Claude Code, in its runtime container proves actual Agent start, one Host tool call over MCP, a file change the Host observes, response and termination; scripted success never substitutes for it ([rebuild plan](manager-apply-rebuild-plan.md#bind-the-runtime-image-before-real-work)). The Host refuses further dispatch when required event storage fails.
 
 ### P06 One Package candidate
 

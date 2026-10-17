@@ -1,6 +1,6 @@
 # Provider adapters
 
-This source increment implements read-only Agent and Check profile metadata preparation. Actual sessions, provider protocols, process execution, executable checks and workspaces are later stages in the [delivery plan](implementation-plan.md). There is no active legacy provider runtime or MCP server.
+This source increment implements read-only Agent and Check profile metadata preparation. Actual sessions, provider protocols, process execution, executable checks and workspaces are later stages in the [delivery plan](implementation-plan.md). There is no active legacy provider runtime or MCP server. The target runtime runs every Agent session and check in its own Linux container, with Codex App Server and Claude Code adapters ([DEC-037](concepts/register.md#dec-037-agent-sessions-and-checks-run-in-linux-containers), [rebuild plan](design/canonical-model/manager-apply-rebuild-plan.md#container-runtime)).
 
 ## Connect the outer client
 

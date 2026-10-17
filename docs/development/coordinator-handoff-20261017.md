@@ -4,6 +4,8 @@ This is the owner's requested transition snapshot. All four delivery chats have 
 
 ## Start here
 
+**Update after this snapshot (17 October 2026):** the real handshake finished and the owner adopted [DEC-037](../concepts/register.md#dec-037-agent-sessions-and-checks-run-in-linux-containers). Agent sessions and checks run in Linux containers, and the Codex and Claude Code adapters receive the Host tools over MCP through `markitect-agentd`. The statements below about a pending `dynamicTools` result and a Process adapter with Windows Job Objects are superseded by the [session and process contracts](../implementation-plan.md#session-and-process-contracts); the suggested first message at the end already reflects this. APPLY-RUNTIME is reserved for the owner's Claude Code session; do not dispatch another session to it.
+
 Read [the current delivery rules](../implementation-plan.md#integration), AGENTS.md, the concept register and relevant accepted Apply contracts on freshly fetched Main. The owner's 17 October rules replace older messages requiring a central merge, unconditional recomposition, Main-CI watches and artifact readbacks.
 
 Create new scoped sessions with small task queues and one writer per shared file. Deliveries merge their own approved exact heads after required CI, using merge commits and `--match-head-commit`. Wait for CI in the background. Recompose only for conflicts or substantive overlap; react to a reported red Main. Use focused contract/error tests and existing evidence rather than repeating completed hardening.
@@ -95,4 +97,4 @@ Complete assignment lifecycle and actual Control/Journal; use the handshake resu
 
 Suggested first message for the new Coordinator:
 
-> Take over Markitect using this handoff and the current delivery plan. Fetch Main, preserve stopped sources, start small scoped delivery sessions with the queued tasks and direct self-merge ownership. First finish the two reviewed deliveries; assess the separately arriving real Codex dynamicTools handshake before fixing the RUN Session protocol. Follow the 17 October integration rules and do not restart the old Coordinator heartbeat.
+> Take over Markitect using this handoff and the current delivery plan. Fetch Main, preserve stopped sources, start small scoped delivery sessions with the queued tasks and direct self-merge ownership. First finish the two reviewed deliveries; define the RUN Session port against the container runtime of DEC-037 and leave APPLY-RUNTIME to the owner's Claude Code session. Follow the 17 October integration rules and do not restart the old Coordinator heartbeat.
