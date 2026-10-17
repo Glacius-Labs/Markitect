@@ -25,6 +25,7 @@ Read in this order:
 | Document | Owns |
 | --- | --- |
 | [Apply concept](manager-apply-concept.md) | Organization, fixed Manager cycle, semantic review responsibilities, ownership and reporting. |
+| [Core protocol](manager-apply-core.md) | Steps, the Manager task machine, Host tools, messages, issues, deliveries and composition, by rule ID. |
 | [Library delegation walkthrough](manager-apply-library-flow.md) | The order of exchanges in one Apply of M1 and the first refusal cases. |
 | [Go architecture](manager-apply-go-architecture.md) | Target packages, responsibilities and dependency direction. |
 | [Port contracts](manager-apply-port-contracts.md) | Interfaces between the core and its adapters and the values they exchange. |
@@ -55,7 +56,7 @@ Implementations identify the supported part of this target and its evidence. An 
 | Execution session | One bound execution environment with fixed profile, mounts and authority ceiling. Starting a replacement consumes budget. |
 | Conversation | Provider dialogue whose identity may survive a proven execution-session replacement; otherwise use an explicit handoff. |
 | Step | One admitted Agent turn bound to an exact workspace version, supplied inputs and permitted effects. |
-| Working basis | Captured source plus explicitly consumed accepted deliveries; own unaccepted changes are retained separately. Its version can advance between proven quiescent steps within the same run. |
+| Working basis | The accepted aggregate current at a step's admission, plus the Manager's own unaccepted changes ([D3](manager-apply-core.md#deliveries-and-composition)). Each step records the aggregate version it saw. |
 | Candidate | An immutable artifact tree with its registry revision. |
 | Delivery | A Host-accepted candidate with reviewed scope and exact evidence. It can supply a prerequisite while its producer's remaining responsibility stays open. |
 | Finding | A recorded concern, blocking or advisory, that only an independent review resolves. |
