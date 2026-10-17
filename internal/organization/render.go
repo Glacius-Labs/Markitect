@@ -63,7 +63,6 @@ type ManagerPhase string
 
 const (
 	ManagerExplore   ManagerPhase = "explore"
-	ManagerPlan      ManagerPhase = "plan"
 	ManagerWork      ManagerPhase = "work"
 	ManagerIntegrate ManagerPhase = "integrate"
 )
