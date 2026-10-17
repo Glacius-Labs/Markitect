@@ -14,6 +14,7 @@ This package is the Host's client of the container engine ([DEC-037](../../../do
 | `Engine.Pause` / `Engine.Unpause` | Freezes and resumes every process in a container; the write barrier for a workspace-basis transition. |
 | `Engine.CreateVolume`, `RemoveVolume`, `Containers`, `RemoveContainer` | Named, labeled volumes, and the label sweep for containers the Host no longer controls. |
 | `Engine.ImageID`, `ReadImageFile` | Image identity and the image's recorded metadata, read without running the image. |
+| `Engine.ObserveImageFile(ctx, imageID, path, maxBytes)` | Streams one complete regular image file into SHA-256 and actual size, up to an explicit bound of 512 MiB, without starting the image. Any archive, process, cancellation or cleanup failure refuses the observation. |
 | `Session.StartProvider`, `WriteInput`, `CloseInput`, `Stdout` | The provider CLI's process and standard streams. Output is buffered up to 32 MiB, so control replies never wait for the reader. |
 | `Session.ToolCalls`, `Reply` | Host tool calls arriving over MCP through `markitect-agentd mcp`. `ToolCall.Meta` carries the provider's own call metadata. |
 | `Session.Census`, `Stop`, `Exited`, `Diagnostics`, `Close` | The container's processes, stop with grace, the observed exit, the tail of standard error, and the end of the connection. |

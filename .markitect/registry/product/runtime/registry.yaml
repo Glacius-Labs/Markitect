@@ -44,6 +44,14 @@ artifacts:
     form: code
     realizes: [product/runtime/container-runtime]
     why: Implements the stated responsibility within its declared boundary.
+  - path: "internal/adapters/container/image_observation.go"
+    form: code
+    realizes: [product/runtime/container-runtime]
+    why: Streams complete regular executable identity from a never-started immutable image with bounded archive and cleanup handling.
+  - path: "internal/adapters/container/image_observation_test.go"
+    form: test
+    realizes: [product/runtime/container-runtime]
+    why: Checks complete image-file hashing and refusal of partial archives, process failures and cancellation using controlled engine subprocesses.
   - path: "internal/adapters/container/command.go"
     form: code
     realizes: [product/runtime/container-runtime]
