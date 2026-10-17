@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/Glacius-Labs/Markitect/src/internal/core/projectmodel/projectbriefing"
-	"github.com/Glacius-Labs/Markitect/src/internal/testkit"
+	"github.com/Glacius-Labs/Markitect/internal/testkit"
 )
 
 // TestMain shields git in these tests from the machine's Git configuration.

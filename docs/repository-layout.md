@@ -49,9 +49,11 @@ The MCP server is fixed to one project root at startup; tool calls cannot redire
 
 ## Source repository layout
 
-Markitect's Go module sits at the repository root, so package paths start with `src/`. Build and test commands run from the root.
+Markitect's Go module sits at the repository root. The current product remains under `src/`; shared test support lives at `internal/testkit/`. Build and test commands run from the root.
 
 ```text
+internal/
+  testkit/                    shared hermetic fixtures for tests
 src/
   cmd/                         executable entrypoints
   internal/
@@ -60,7 +62,6 @@ src/
     host/                      product use cases, runtime and composition
     modules/                   capability packages, including project model
     tooling/                   import gate, release, publication, notices and providers
-    testkit/                   hermetic fixtures for tests
   harness/                     executable scenarios over current project fixtures
 docs/                          guides, design, history, validation and work items
 examples/                      example projects and fixtures
