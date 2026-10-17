@@ -1,0 +1,15 @@
+imports:
+  - package: software
+    as: Software
+  - package: library
+    as: Library
+id: set-member-status
+kind: Software.UseCase
+body: >-
+  The operator supplies a known [[member]] identifier and the requested status,
+  active or suspended, under [[Library.inputs]]. Success sets that status and
+  preserves all other member data and all loans as required by [[eligibility]].
+  Setting the current status again succeeds without another change. An unknown
+  member or a status other than active or suspended is refused without changing
+  state. This operation does not register a missing member.
+spec: {}

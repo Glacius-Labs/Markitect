@@ -2700,3 +2700,171 @@ artifacts:
     form: config
     realizes: [examples/independent-oracles]
     why: Preserves a historical Study or registration input with its original source binding.
+  - path: "experiments/test-projects/README.md"
+    form: doc
+    realizes: [examples/independent-oracles]
+    why: Catalogs versioned test project sources and the boundary between structural preparation and observed realization evidence.
+  - path: "experiments/test-projects/library-r2/project/.markitect/dependencies/core/model.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Preserves the pinned Core vocabulary input at this exact path for portable Library r2 model compilation.
+  - path: "experiments/test-projects/library-r2/project/.markitect/dependencies/core/model/markitect/core/kind.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Preserves the pinned Core vocabulary input at this exact path for portable Library r2 model compilation.
+  - path: "experiments/test-projects/library-r2/project/.markitect/dependencies/core/model/markitect/core/max-count.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Preserves the pinned Core vocabulary input at this exact path for portable Library r2 model compilation.
+  - path: "experiments/test-projects/library-r2/project/.markitect/dependencies/core/model/markitect/core/min-count.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Preserves the pinned Core vocabulary input at this exact path for portable Library r2 model compilation.
+  - path: "experiments/test-projects/library-r2/project/.markitect/dependencies/core/model/markitect/core/name.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Preserves the pinned Core vocabulary input at this exact path for portable Library r2 model compilation.
+  - path: "experiments/test-projects/library-r2/project/.markitect/dependencies/core/model/markitect/core/properties.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Preserves the pinned Core vocabulary input at this exact path for portable Library r2 model compilation.
+  - path: "experiments/test-projects/library-r2/project/.markitect/dependencies/core/model/markitect/core/property.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Preserves the pinned Core vocabulary input at this exact path for portable Library r2 model compilation.
+  - path: "experiments/test-projects/library-r2/project/.markitect/dependencies/core/model/markitect/core/target.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Preserves the pinned Core vocabulary input at this exact path for portable Library r2 model compilation.
+  - path: "experiments/test-projects/library-r2/project/.markitect/dependencies/core/model/markitect/core/type.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Preserves the pinned Core vocabulary input at this exact path for portable Library r2 model compilation.
+  - path: "experiments/test-projects/library-r2/project/.markitect/dependencies/core/model/markitect/core/values.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Preserves the pinned Core vocabulary input at this exact path for portable Library r2 model compilation.
+  - path: "experiments/test-projects/library-r2/project/.markitect/dependencies/software/model.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Preserves the pinned Software vocabulary input at this exact path for portable Library r2 model compilation.
+  - path: "experiments/test-projects/library-r2/project/.markitect/dependencies/software/model/software/concept.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Preserves the pinned Software vocabulary input at this exact path for portable Library r2 model compilation.
+  - path: "experiments/test-projects/library-r2/project/.markitect/dependencies/software/model/software/rule.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Preserves the pinned Software vocabulary input at this exact path for portable Library r2 model compilation.
+  - path: "experiments/test-projects/library-r2/project/.markitect/dependencies/software/model/software/use-case.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Preserves the pinned Software vocabulary input at this exact path for portable Library r2 model compilation.
+  - path: "experiments/test-projects/library-r2/project/.markitect/execution.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Supplies illustrative Library r2 structural preparation settings without runtime or provider execution authority.
+  - path: "experiments/test-projects/library-r2/project/.markitect/model-lock.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Pins the exact external model identities, versions and canonical digests used by Library r2.
+  - path: "experiments/test-projects/library-r2/project/.markitect/model.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Declares the named Library r2 model identity, version and explicit dependency requirements.
+  - path: "experiments/test-projects/library-r2/project/.markitect/model/catalog/availability.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Carries the Library r2 catalog/availability Definition as an exact source fixture for later independent realization.
+  - path: "experiments/test-projects/library-r2/project/.markitect/model/catalog/copy.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Carries the Library r2 catalog/copy Definition as an exact source fixture for later independent realization.
+  - path: "experiments/test-projects/library-r2/project/.markitect/model/catalog/inspect-copy.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Carries the Library r2 catalog/inspect-copy Definition as an exact source fixture for later independent realization.
+  - path: "experiments/test-projects/library-r2/project/.markitect/model/catalog/register-copy.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Carries the Library r2 catalog/register-copy Definition as an exact source fixture for later independent realization.
+  - path: "experiments/test-projects/library-r2/project/.markitect/model/lending/borrow.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Carries the Library r2 lending/borrow Definition as an exact source fixture for later independent realization.
+  - path: "experiments/test-projects/library-r2/project/.markitect/model/lending/inspect-loans.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Carries the Library r2 lending/inspect-loans Definition as an exact source fixture for later independent realization.
+  - path: "experiments/test-projects/library-r2/project/.markitect/model/lending/lending-policy.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Carries the Library r2 lending/lending-policy Definition as an exact source fixture for later independent realization.
+  - path: "experiments/test-projects/library-r2/project/.markitect/model/lending/loan-period-days.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Carries the Library r2 lending/loan-period-days Definition as an exact source fixture for later independent realization.
+  - path: "experiments/test-projects/library-r2/project/.markitect/model/lending/loan-policy.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Carries the Library r2 lending/loan-policy Definition as an exact source fixture for later independent realization.
+  - path: "experiments/test-projects/library-r2/project/.markitect/model/lending/loan.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Carries the Library r2 lending/loan Definition as an exact source fixture for later independent realization.
+  - path: "experiments/test-projects/library-r2/project/.markitect/model/lending/max-open-loans.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Carries the Library r2 lending/max-open-loans Definition as an exact source fixture for later independent realization.
+  - path: "experiments/test-projects/library-r2/project/.markitect/model/lending/reminders/assess-overdue.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Carries the Library r2 lending/reminders/assess-overdue Definition as an exact source fixture for later independent realization.
+  - path: "experiments/test-projects/library-r2/project/.markitect/model/lending/return.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Carries the Library r2 lending/return Definition as an exact source fixture for later independent realization.
+  - path: "experiments/test-projects/library-r2/project/.markitect/model/library/callable-interface.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Carries the Library r2 library/callable-interface Definition as an exact source fixture for later independent realization.
+  - path: "experiments/test-projects/library-r2/project/.markitect/model/library/inputs.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Carries the Library r2 library/inputs Definition as an exact source fixture for later independent realization.
+  - path: "experiments/test-projects/library-r2/project/.markitect/model/library/library.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Carries the Library r2 library/library Definition as an exact source fixture for later independent realization.
+  - path: "experiments/test-projects/library-r2/project/.markitect/model/library/realization.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Carries the Library r2 library/realization Definition as an exact source fixture for later independent realization.
+  - path: "experiments/test-projects/library-r2/project/.markitect/model/members/eligibility.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Carries the Library r2 members/eligibility Definition as an exact source fixture for later independent realization.
+  - path: "experiments/test-projects/library-r2/project/.markitect/model/members/inspect-member.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Carries the Library r2 members/inspect-member Definition as an exact source fixture for later independent realization.
+  - path: "experiments/test-projects/library-r2/project/.markitect/model/members/member.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Carries the Library r2 members/member Definition as an exact source fixture for later independent realization.
+  - path: "experiments/test-projects/library-r2/project/.markitect/model/members/register-member.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Carries the Library r2 members/register-member Definition as an exact source fixture for later independent realization.
+  - path: "experiments/test-projects/library-r2/project/.markitect/model/members/set-member-status.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Carries the Library r2 members/set-member-status Definition as an exact source fixture for later independent realization.
+  - path: "experiments/test-projects/library-r2/README.md"
+    form: doc
+    realizes: [examples/independent-oracles]
+    why: Documents the named Library r2 requirements, historical derivation, initial realization and one-field policy delta.
+  - path: "experiments/test-projects/library-r2/sources.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Binds every copied Library r2 input to its upstream path, full source revision and original blob digest, with explicit derivations.
