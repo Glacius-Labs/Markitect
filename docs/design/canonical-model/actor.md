@@ -2,9 +2,9 @@
 
 An **Actor** describes a role that interacts with the system or participates in work on the project. This role can be fulfilled by a person or another system.
 
-## Standard-library proposal
+## Standard-library contract
 
-Proposal for discussion, 17 October 2026; not an owner-selected contract. The [standard-library discussion](standard-library.md#actor-and-interface-proposal) gives the Library example and rationale. No structured Property is presently justified by that example.
+Owner-selected direction, 17 October 2026: body links and `spec: {}`, as for Concept, Rule and UseCase. Exact Kind wording remains a working formulation. The [standard-library discussion](standard-library.md#actor-and-interface-proposal) gives the Library example and rationale. The package has not been implemented.
 
 This Definition would have its own file in the proposed Package `markitect/software`:
 

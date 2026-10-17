@@ -13,6 +13,8 @@ Source: the owner's standard-library design discussion in this chat on 17 Octobe
 - Next requested subject: "Lass uns als Nächstes Actor und Interface am Bibliotheksbeispiel durchgehen. Welche Properties brauchen die wirklich?" Actor and Interface remain under discussion.
 - Recording instruction: "Denke daran, alles festzuhalten, sodass wir das ins Konzept mit aufnehmen können und nichts vergessen." Keep selected decisions, proposals and unresolved questions distinguishable as the discussion continues.
 - Further owner decision and question: "Interface sollte auch interne technische Verträge abdecken. Wie würde das am Bibliotheksbeispiel aussehen, und wie grenzen wir Interface dabei von Component ab?" Interface includes internal technical contracts. The concrete architecture and exact Property contracts below remain proposals.
+- Further selection: "Okay, dann bleiben Actor, Interface und Component ebenfalls bei Körperlinks und spec: {}." This selects the empty structured contracts and body-link relationships for those three Kinds. It does not select the proposed internal Component split or every sentence of Kind wording.
+- Next requested subject: "Lass uns als Nächstes Scenario und Check am Bibliotheksbeispiel durchgehen. Welche Properties brauchen die wirklich?" Their contracts below remain assistant proposals.
 
 ## Current design state
 
@@ -21,7 +23,8 @@ Source: the owner's standard-library design discussion in this chat on 17 Octobe
 | Concept, Rule, UseCase: body links and empty spec | Owner-selected direction | [Concept](concept.md), [Rule](rule.md), [UseCase](use-case.md) |
 | UseCase.rules and its Property definition | Dropped from the proposal following the owner's challenge and selection | Rationale below |
 | Interface covers internal technical contracts as well as external interaction | Owner-selected direction | [Interface](interface.md), internal example below |
-| Actor and Interface: body links and empty spec | Assistant proposal awaiting discussion | [Actor](actor.md), [Interface](interface.md), example below |
+| Actor, Interface and Component: body links and empty spec | Owner-selected direction | [Actor](actor.md), [Interface](interface.md), [Component](component.md) |
+| Scenario and general-purpose Check: body links and empty spec | Assistant proposal awaiting discussion | [Scenario](scenario.md), [Check](check.md), example below |
 | Standard-library distribution, Package names and remaining Kinds | Assistant proposals; not selected | Initial proposal below |
 | Production library, migration and consumer behavior | Not implemented by this record | Existing fixtures remain unchanged |
 
@@ -40,7 +43,7 @@ The proposed first target was eight Kinds:
 
 Component would retain its earlier general, nestable meaning, including logical parts without a separate process. Scenario would describe an expected concrete situation, actions and result. Check would describe a verification procedure and success criteria; actual results remain execution evidence.
 
-The initial optional structured relations were UseCase.actors, UseCase.rules, Interface.useCases, Component.parts, Component.interfaces, Scenario.useCases and Check.scenarios. UseCase.rules was subsequently dropped. The other fields are unselected candidates to examine individually, not a remaining implementation list. Reverse relationships would be derived rather than maintained twice.
+The initial optional structured relations were UseCase.actors, UseCase.rules, Interface.useCases, Component.parts, Component.interfaces, Scenario.useCases and Check.scenarios. The selection of empty specs for the six software Kinds drops their proposed fields, including UseCase.rules. Scenario.useCases and Check.scenarios remain unselected candidates to assess below, not an implementation list. Reverse relationships would be derived rather than maintained twice.
 
 A single proposed distribution model, `markitect-standard`, would carry both Packages and depend on the existing Core model. Exact manifest dependencies, per-file imports and the complete external lock would bind its contents. Bundled availability with explicit imports is proposed. No registry, automatic update selection or additional language mechanism is required for the first design.
 
@@ -68,7 +71,7 @@ Core v1 has exact nominal Kind targets and no inheritance or union reference tar
 
 The current [Library scope](library-example/m1/model/library/library.yaml) already describes a trusted operator. Member is domain data, not a login account. The [callable interface](library-example/m1/model/library/callable-interface.yaml) already declares a local Go program with a JSON Lines contract; it currently has Kind software/Rule.
 
-Proposal: give the existing role and interaction point their own Actor and Interface Definitions, with empty specs and body links. This makes the role and boundary explicitly addressable. It adds no authentication, self-service, protocol, permissions or runtime behavior.
+The initially proposed empty specs and body links for Actor and Interface have since been selected by the owner. Giving the particular existing role and interaction point their own Definitions remains an illustrative model change. It would make the role and boundary explicitly addressable without adding authentication, self-service, protocol, permissions or runtime behavior.
 
 ### Proposed operator
 
@@ -222,12 +225,99 @@ Only the borrowing/returning slice is expanded here. The adapter still has to sa
 
 The provider/consumer roles follow from explicit sentences, not from the link notation alone. The Core verifies target identity, not a formal provides/consumes relationship, actual code dependency direction or fulfillment. No universal single-provider rule or automatic provider selection is proposed. Component does not imply a source-language class or process; Interface does not imply a Go or C# interface declaration.
 
-This example needs no additional structured Properties. Potential fields such as provides and consumes remain unselected. A later structured consumer could justify them; preserving the same relationship in prose and a second manually maintained list is not currently necessary. A useful future observation would be that a consumer can be reviewed against this contract while its provider's internal representation changes, with no lost domain or external behavior. This discussion supplies no execution proof of that result.
+The owner has selected empty specs and body links for Component as well as Interface. The standard-library contract therefore adds no provides or consumes fields. A later demonstrated structured consumer could motivate a future proposal. A useful future observation would be that a consumer can be reviewed against this contract while its provider's internal representation changes, with no lost domain or external behavior. This discussion supplies no execution proof of that result.
+
+## Scenario and Check proposal
+
+The [worked cases](library-example/business-rules.md#worked-cases), [return UseCase](library-example/m1/model/lending/return.yaml), [availability Rule](library-example/m1/model/catalog/availability.yaml) and [independent evaluation contract](library-example/evaluation-contract.md) already distinguish expected behavior, a method of examination and actual evidence. The evaluation contract includes repeated-old-return case E08. It also states observable-state limits and separates runtime observations from source review.
+
+Proposal: Scenario describes a concrete expected case; Check describes how to examine an expectation and decide whether observations satisfy it. The [Scenario](scenario.md) and [Check](check.md) pages own the proposed Kind wording. Both use empty specs and body links. Neither is an execution result. The new observation is that these existing examples can express the distinction without the initially proposed Scenario.useCases or Check.scenarios fields.
+
+The following two proposed Definition files would live in Package lending. They are design illustrations, not changes to M1 or a compiled fixture. The core domain and interface Definitions remain the source of their meaning.
+
+### Proposed repeated-old-return Scenario
+
+```yaml
+imports:
+  - package: markitect/verification
+    as: Verification
+  - package: members
+    as: Members
+  - package: catalog
+    as: Catalog
+id: repeated-old-return
+kind: Verification.Scenario
+body: >-
+  Start with one registered active [[Members.member]] and one registered
+  available [[Catalog.copy]], with no open loans.
+  [[borrow]] the copy on 2026-10-01 and retain the resulting loan identifier
+  as firstLoan. [[return]] firstLoan on 2026-10-02.
+  Borrow the same copy again on 2026-10-03 and retain its new loan identifier
+  as secondLoan. Both borrowings and the first return succeed.
+  Return firstLoan again with the valid date 2026-10-04.
+  The final operation reports already returned and changes no state.
+  firstLoan remains closed with its original return date 2026-10-02.
+  secondLoan remains open and unchanged, the member has exactly that one
+  open loan, and the copy remains unavailable under [[Catalog.availability]].
+spec: {}
+```
+
+firstLoan and secondLoan are names for captured results, not mandated generated identifier strings. The dates are example inputs; the expected old return date is owned by the case, not another loan policy. The case does not repeat the five/three admission limit and is applicable under both existing policies. It illustrates already accepted return behavior rather than adding a new rule.
+
+### Proposed observation Check
+
+```yaml
+imports:
+  - package: markitect/verification
+    as: Verification
+  - package: library
+    as: Library
+  - package: catalog
+    as: Catalog
+id: check-repeated-old-return
+kind: Verification.Check
+body: >-
+  Examine [[repeated-old-return]] through [[Library.callable-interface]]
+  in a fresh empty program process. Arrange the state using normal
+  registration and loan operations, capturing the actual loan identifiers.
+  Before and after the repeated old return, inspect both loan records,
+  the member's open-loan list and count through [[inspect-loans]],
+  and the copy through [[Catalog.inspect-copy]].
+  Pass only when setup succeeds, the final response reports alreadyReturned,
+  all observations satisfy the Scenario, and the before/after state agrees.
+  A released copy, changed return date, closed second loan, incorrect count,
+  malformed response or missing required observation prevents a pass.
+  Retain the request/response trace and assertions against the exact candidate
+  and model basis. Public observations do not establish absence of changes
+  in inaccessible internal state.
+spec: {}
+```
+
+The Check points to the Scenario for the expected behavior and adds the observation method. It does not copy the domain rule into a second independent catalogue. A concrete test, evaluator or review realizes this procedure. The record of a particular run holds actual candidate/model bindings, results and findings. Such a record belongs to evidence handling; no result file, status or execution timestamp is a Property of the intended Check.
+
+A Check can also directly examine a Rule, Interface, Component or other Definition; a Scenario is not a mandatory intermediate node. A Scenario can receive different suitable Checks, for example public-interface observation and a source review examining a different aspect. These are meaningful distinctions only when their methods and claims actually differ. Linking a Check to a Scenario establishes neither test coverage nor successful execution.
+
+### Property assessment
+
+| Candidate | Assessment for the general-purpose Kinds |
+| --- | --- |
+| Scenario.given, when, then | Useful optional body headings; no structured editor, runner or consumer currently needs separate fields. |
+| Scenario.useCases or Check.scenarios | Body links already identify the targets together with the precise statement about them. Typed lists would restrict targets without proving completeness or coverage. |
+| Check.command | Not every method has a command. A required exact command may be model intent, but no universal command field is justified. See the existing narrower Kind below. |
+| Check.testFiles | Actual realization files and their assignments belong to the registry; a particular required output can still be stated as intent where necessary. |
+| Check.status, lastRun or observed result | These describe a particular execution, not the intended procedure. |
+| Check.execution profile or operational budget | These are execution choices; a behavioral performance requirement would remain canonical intent. |
+
+There is one concrete reason to retain structure in an existing narrower Kind: the repository's [maintenance Check](../../../.markitect/model/vocabulary/check.yaml) has a required command Property, with a [Library-oracle instance](../../../.markitect/model/tooling/gates/library-oracle.yaml). [Module configurations](../../../.markitect/README.md) bind hook/workflow bytes and selected pipeline scalars to literal commands. This is a demonstrated structured consumer. Do not remove that existing contract or assume that its source-maintenance meaning is universal. A specialized command-bearing Kind can coexist with the proposed general Check; v1 supplies no inheritance between them.
+
+Routine Checks can use parameters from an exact selected model, with semantic review when expectations change. The existing independent Library experiment deliberately freezes separate five/three profiles; this proposal does not change those controls or create a second evaluator. Neither new Scenario nor Check Definitions are prerequisites newly added to the two-Apply target.
+
+Recommendation pending owner selection: both general-purpose Kinds use body links and empty specs. Review their proposed meaning before treating the complete eight-Kind set as selected. No scenario execution, new test implementation or behavioral proof is supplied by this documentation.
 
 ## Remaining discussion
 
-- Owner review of Actor/Interface wording and empty specs. Interface's inclusion of internal technical contracts is selected; the exact proposed call contract and Component split are not.
-- Examine Component, Scenario and Check individually before selecting their fields or the complete eight-Kind target.
+- Owner review of Scenario and general-purpose Check meaning and empty specs. The six software Kinds already have selected empty specs and body-link relationships.
+- Exact Kind wording remains a working formulation. Interface's internal/external scope is selected; the particular call contract and Component split remain illustrative architecture proposals.
 - Decide distribution model, Package identities and update policy before publishing them.
 - Preserve the Library's complete intent when proposing a vocabulary migration; do not alter the M1/M2 Apply acceptance target merely to demonstrate the standard library.
 - Examine a small Tasks model after the Library to distinguish shared needs from Library-specific vocabulary. This is a proposed design check, not authorization for a study or proof of benefit.

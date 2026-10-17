@@ -16,4 +16,22 @@ A Component describes an intended part of the system: its purpose, responsibilit
 
 In the proposed example, a JSON Lines adapter Component uses an internal lending Interface. A lending-service Component provides that Interface and realizes the existing borrow and return UseCases. The Interface states the calls and results; the Component states responsibility for fulfilling them. A change to a Component's internal representation can preserve its Interfaces.
 
-Body links with explicit sentences can state these provider/consumer relationships. Empty specs for this illustration remain a proposal, not an owner-selected Component contract. No automatic formal provides/consumes relation or provider uniqueness check is introduced by this documentation.
+Body links with explicit sentences state these provider/consumer relationships. The owner subsequently selected body links and `spec: {}` for Component as well as Actor and Interface on 17 October 2026. No automatic formal provides/consumes relation or provider uniqueness check is introduced by this documentation. The particular Component split remains a proposal.
+
+## Standard-library contract
+
+The following wording describes the selected empty-spec direction. It would occupy one Definition file in the proposed Package `markitect/software`; the package has not been implemented.
+
+```yaml
+imports:
+  - package: markitect/core
+    as: Core
+id: Component
+kind: Core.Kind
+body: >-
+  Describes a part of the system, its purpose, responsibilities,
+  boundaries and collaboration with other parts.
+  It may be a logical part or have a runtime or deployment role,
+  and may contain other Components.
+spec: {}
+```

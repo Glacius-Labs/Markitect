@@ -4,9 +4,9 @@ An **Interface** describes a contract for interaction across an external or inte
 
 Owner decision, 17 October 2026: Interface also covers internal technical contracts. An internal caller can be a [Component](component.md); it need not become an Actor merely to use an Interface. A Component describes a system part and its responsibility, while an Interface describes its interaction contract.
 
-## Standard-library proposal
+## Standard-library contract
 
-The expanded external/internal scope is owner-selected. Exact Kind wording and the empty spec below remain a proposal for discussion. The [standard-library discussion](standard-library.md#internal-contract-and-component-boundary) gives the Library example and separates the selected scope from the proposed architecture.
+The expanded external/internal scope and the use of body links with `spec: {}` are owner-selected on 17 October 2026. Exact Kind wording remains a working formulation. The [standard-library discussion](standard-library.md#internal-contract-and-component-boundary) gives the Library example and separates these selections from the proposed architecture. The package has not been implemented.
 
 This Definition would have its own file in the proposed Package `markitect/software`:
 

@@ -63,7 +63,7 @@ The [delivery plan](../../implementation-plan.md) owns packages, order and dispa
 
 The term documents below are working vocabulary definitions from the earlier product discussion. The [working goal and provisional terms](consolidation.md#arbeitsziel-und-wackelkandidaten) record their open questions. They are possible vocabulary contents, not built-in Core Kinds or open decisions of the language.
 
-The [standard-library discussion](standard-library.md) records the owner's 17 October 2026 selection of body links and empty specs for Concept, Rule and UseCase, the dropped rules Property and the remaining proposals. The term pages distinguish selected directions from the proposed Actor and Interface contracts.
+The [standard-library discussion](standard-library.md) records the owner's 17 October 2026 selection of body links and empty specs for Concept, Rule, UseCase, Actor, Interface and Component. Interface includes internal technical contracts. Scenario and Check remain proposals under discussion. The term pages distinguish these states from implementation.
 
 - [Project](project.md) — the project's name, purpose and associated definitions.
 - [Actor](actor.md) — a role through which a person or another system interacts with the system or participates in project work.
