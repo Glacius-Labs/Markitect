@@ -76,8 +76,9 @@ func TestImageMetadataUsesSelectedConfigurationAndWholeActualBytes(t *testing.T)
 
 func TestApplyRetainsImageEvidenceAndInvalidatesChangedWholeMetadata(t *testing.T) {
 	inline := imageProfile(filepath.Join(t.TempDir(), "engine"))
+	boundary := filepath.Join(t.TempDir(), "same-host")
 	identity := func(data string) string {
-		prepared := consumeProfile(t, inline, nil, imagesPreparer(&fakeImages{data: []byte(data)}))
+		prepared := consumeProfileAt(t, inline, nil, imagesPreparer(&fakeImages{data: []byte(data)}), boundary)
 		profiles := prepared.ProfileObservations()
 		if len(profiles) != 1 || profiles[0].Observation().Status != model.Passed {
 			t.Fatalf("%+v", profiles)
@@ -89,6 +90,9 @@ func TestApplyRetainsImageEvidenceAndInvalidatesChangedWholeMetadata(t *testing.
 		return id
 	}
 	first := identity(fixtureMetadata)
+	if first != identity(fixtureMetadata) {
+		t.Fatal("identical source and metadata did not retain identity")
+	}
 	if first == identity(strings.Replace(fixtureMetadata, "0.162.0", "0.162.1", 1)) {
 		t.Fatal("other actual metadata bytes were omitted from identity")
 	}
