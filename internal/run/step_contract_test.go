@@ -7,7 +7,7 @@ import (
 	"github.com/Glacius-Labs/Markitect/internal/run"
 )
 
-var phases = []string{run.PhaseExplore, run.PhaseWork, run.PhaseIntegration, run.PhaseReply, run.PhaseReviewExpectations, run.PhaseReviewAssessment}
+var phases = []run.Phase{run.PhaseExplore, run.PhaseWork, run.PhaseIntegrate, run.PhaseReply, run.PhaseReviewExpectations, run.PhaseReviewAssessment}
 
 func TestStepContractRoundTripsAndRefusesUnknownPhases(t *testing.T) {
 	for _, phase := range phases {
@@ -61,5 +61,26 @@ func TestToolCatalogOffersValidSchemasPerPhase(t *testing.T) {
 	second, _ := run.ToolCatalog(run.PhaseWork)
 	if first.Ref() != second.Ref() {
 		t.Fatal("catalog bytes are not stable")
+	}
+}
+
+// golden pins the recorded bytes of every contract and catalogue. A change must
+// be deliberate: recorded steps keep their original identities.
+var golden = map[run.Phase][2]string{
+	run.PhaseExplore:            {"4da24a336165e89d8073fc7c1c53606646abd459b479659c8f8f5940f246fafb", "c38172b533b9f1c5500fa6d54892bbb3427701ea8a069b91ec491d88d3105eb3"},
+	run.PhaseWork:               {"e219a08a176d67e7afdfa58c1c3cc8cc4ca14b974fcb5d259293bfcd28d07afe", "ed10e73e26250704bf21ebe0eb12aaed2758c0c0fe76acddb0d311ccc8eda95a"},
+	run.PhaseIntegrate:          {"f5c4e1ef3fbd27e54ecca2c1d703f0e2c8260629ba97f7f97f87bd30d10f1efc", "ed10e73e26250704bf21ebe0eb12aaed2758c0c0fe76acddb0d311ccc8eda95a"},
+	run.PhaseReply:              {"97bc6117362b920e19b10bba44f4c7d11f95ba1930e03a8d9cdbc15b3b77b3f6", "e46bc6e7a0f6e3d9e65e10eaef176bc414b25c00d52ddc1324483397f5474d73"},
+	run.PhaseReviewExpectations: {"d9535598788816067d9e4807f4d8206233b11d1f337451d12b34cf06d1517bf3", "6b4dbc286ecf5a072d06309e96bf05ad333c2468558a4dd02eca5716eeeff331"},
+	run.PhaseReviewAssessment:   {"56a8ec937107d040f76091803a77ebe76755845b0b669c6d028b90b5c7912bf4", "642e3d5d49bef8fac907c9f7d5a267e33fa108b2c72a6c67b83543d9dd33b50f"},
+}
+
+func TestContractAndCatalogBytesArePinned(t *testing.T) {
+	for _, phase := range phases {
+		c, _ := run.NewStepContract(phase)
+		k, _ := run.ToolCatalog(phase)
+		if c.Ref().ContentID.String() != golden[phase][0] || k.Ref().ContentID.String() != golden[phase][1] {
+			t.Fatal(phase, "recorded contract or catalogue bytes changed")
+		}
 	}
 }

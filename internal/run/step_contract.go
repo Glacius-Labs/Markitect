@@ -5,14 +5,17 @@ import (
 	"slices"
 )
 
-// Step phases name what one admitted step does (core protocol, rules T1 to T9).
+// Phase names what one admitted step does (core protocol, rules T1 to T11).
+// Manager phase names match organization.ManagerPhase.
+type Phase string
+
 const (
-	PhaseExplore            = "explore"
-	PhaseWork               = "work"
-	PhaseIntegration        = "integration"
-	PhaseReply              = "reply"
-	PhaseReviewExpectations = "review-expectations"
-	PhaseReviewAssessment   = "review-assessment"
+	PhaseExplore            Phase = "explore"
+	PhaseWork               Phase = "work"
+	PhaseIntegrate          Phase = "integrate"
+	PhaseReply              Phase = "reply"
+	PhaseReviewExpectations Phase = "review-expectations"
+	PhaseReviewAssessment   Phase = "review-assessment"
 )
 
 // Host tool names (core protocol, Host tools).
@@ -38,25 +41,26 @@ const (
 
 // StepContract is a step's output contract. A step's outcome reaches the Host
 // only through its Host tools; the turn's final text carries no outcome.
-// Outcomes lists the tools that end the step. Adapters check the format and
-// do not interpret the turn's final text.
+// Outcomes lists the tools that end the step; in the reply phase only a send
+// of kind reply ends it (core rule T11). Adapters check the format and do not
+// interpret the turn's final text.
 type StepContract struct {
 	Format   string
-	Phase    string
+	Phase    Phase
 	Outcomes []string
 }
 
-var stepOutcomes = map[string][]string{
+var stepOutcomes = map[Phase][]string{
 	PhaseExplore:            {ToolReport, ToolSubmit},
 	PhaseWork:               {ToolSubmit, ToolWait},
-	PhaseIntegration:        {ToolSubmit, ToolWait},
+	PhaseIntegrate:          {ToolSubmit, ToolWait},
 	PhaseReply:              {ToolSend},
 	PhaseReviewExpectations: {ToolRecordExpectations},
 	PhaseReviewAssessment:   {ToolSubmitReview},
 }
 
 // NewStepContract returns the output contract of a phase.
-func NewStepContract(phase string) (Payload, error) {
+func NewStepContract(phase Phase) (Payload, error) {
 	outcomes, ok := stepOutcomes[phase]
 	if !ok {
 		return Payload{}, ErrInvalid
@@ -92,51 +96,56 @@ type toolCatalog struct {
 	Tools   []ToolSpec `json:"tools"`
 }
 
+// Every enum is also spelled out in its description, because a provider may
+// drop schema keywords before the model sees them. The Host validates every
+// argument either way.
 const (
-	stringList = `{"type":"array","items":{"type":"string","minLength":1}}`
-	nonBlank   = `{"type":"string","minLength":1}`
-	pathField  = `{"type":"string","minLength":1,"description":"Repository-relative path with forward slashes."}`
-	formField  = `{"type":"string","enum":["code","test","doc","build","config"]}`
+	textList  = `{"type":"array","items":{"type":"string","minLength":1}}`
+	nonBlank  = `{"type":"string","minLength":1}`
+	pathField = `{"type":"string","minLength":1,"description":"Repository-relative path with forward slashes."}`
+	formField = `{"type":"string","enum":["code","test","doc","build","config"],"description":"One of: code, test, doc, build, config."}`
+	defsField = `{"type":"array","items":{"type":"string","minLength":1},"description":"Definitions as package/id."}`
+	evidence  = `{"type":"array","items":{"type":"object","additionalProperties":false,"required":["ref","relevance"],"properties":{"ref":{"type":"string","minLength":1,"description":"A Host reference, such as a check receipt or an artifact path."},"relevance":{"type":"string","minLength":1,"description":"Why this evidence would fail if the obligation were violated."}}}}`
 )
 
 var toolSpecs = map[string]ToolSpec{
-	ToolReport: {ToolReport, "End your Explore step with your initial read-only assessment of your area.",
-		json.RawMessage(`{"type":"object","additionalProperties":false,"required":["summary","proposedChanges","prerequisites","uncertainties","questions"],"properties":{"summary":` + nonBlank + `,"proposedChanges":` + stringList + `,"prerequisites":` + stringList + `,"uncertainties":` + stringList + `,"questions":` + stringList + `}}`)},
-	ToolSubmit: {ToolSubmit, "End your step by submitting your current workspace for independent review. During Explore, only a complete no-change result can be submitted.",
-		json.RawMessage(`{"type":"object","additionalProperties":false,"required":["purpose","scope","summary","assessments"],"properties":{"purpose":{"type":"string","enum":["local","integration"]},"scope":{"type":"string","enum":["limited","complete"]},"summary":` + nonBlank + `,"assessments":{"type":"array","items":{"type":"object","additionalProperties":false,"required":["definition","disposition","artifacts","evidence","reason"],"properties":{"definition":{"type":"string","minLength":1,"description":"package/id of a local Definition."},"disposition":{"type":"string","enum":["realized","constrains","vocabulary","unresolved"]},"artifacts":` + stringList + `,"evidence":` + stringList + `,"reason":` + nonBlank + `}}}}}`)},
-	ToolWait: {ToolWait, "End your step and name what your task waits for.",
-		json.RawMessage(`{"type":"object","additionalProperties":false,"required":["on","reason"],"properties":{"on":{"type":"array","minItems":1,"items":{"type":"object","additionalProperties":false,"required":["kind","ref"],"properties":{"kind":{"type":"string","enum":["reply","delivery","children","owner"]},"ref":` + nonBlank + `}}},"reason":` + nonBlank + `}}`)},
-	ToolSend: {ToolSend, "Send a question, reply or hint along the Manager tree.",
-		json.RawMessage(`{"type":"object","additionalProperties":false,"required":["kind","to","body"],"properties":{"kind":{"type":"string","enum":["question","reply","hint"]},"to":{"type":"string","minLength":1,"description":"A Manager path, parent, owner, or for a reply the question ID."},"body":` + nonBlank + `}}`)},
+	ToolReport: {ToolReport, "End your Explore step with your initial read-only assessment of your area. Use submit instead when nothing needs to change.",
+		json.RawMessage(`{"type":"object","additionalProperties":false,"required":["summary","proposedChanges","prerequisites","uncertainties","questions"],"properties":{"summary":` + nonBlank + `,"proposedChanges":` + textList + `,"prerequisites":` + textList + `,"uncertainties":` + textList + `,"questions":` + textList + `}}`)},
+	ToolSubmit: {ToolSubmit, "End your step by submitting your current workspace for independent review, with one assessment for every local Definition. During Explore only a complete no-change result can be submitted. purpose is local or integration; scope is limited or complete.",
+		json.RawMessage(`{"type":"object","additionalProperties":false,"required":["purpose","scope","summary","assessments","dependencies"],"properties":{"purpose":{"type":"string","enum":["local","integration"],"description":"One of: local, integration."},"scope":{"type":"string","enum":["limited","complete"],"description":"One of: limited, complete."},"summary":` + nonBlank + `,"dependencies":{"type":"array","items":{"type":"string","minLength":1},"description":"Manager paths whose accepted results this candidate used."},"assessments":{"type":"array","items":{"type":"object","additionalProperties":false,"required":["definition","disposition","artifacts","uses","evidence","reason"],"properties":{"definition":{"type":"string","minLength":1,"description":"A local Definition as package/id."},"disposition":{"type":"string","enum":["realized","constrains","vocabulary","unresolved"],"description":"One of: realized, constrains, vocabulary, unresolved."},"artifacts":` + textList + `,"uses":` + defsField + `,"evidence":` + evidence + `,"reason":` + nonBlank + `,"question":{"type":"string","description":"For unresolved: the ID of the open question that blocks it."}}}}}}`)},
+	ToolWait: {ToolWait, "End your step and name what your task waits for. kind is reply (ref: question ID), delivery (ref: producer Manager path), children (ref unused) or owner (ref: question ID).",
+		json.RawMessage(`{"type":"object","additionalProperties":false,"required":["on","reason"],"properties":{"on":{"type":"array","minItems":1,"items":{"type":"object","additionalProperties":false,"required":["kind"],"properties":{"kind":{"type":"string","enum":["reply","delivery","children","owner"],"description":"One of: reply, delivery, children, owner."},"ref":{"type":"string"}}}},"reason":` + nonBlank + `}}`)},
+	ToolSend: {ToolSend, "Send a message along the Manager tree. kind is question (to: a Manager path, parent or owner), reply (to: the question ID) or hint (to: a direct child).",
+		json.RawMessage(`{"type":"object","additionalProperties":false,"required":["kind","to","body"],"properties":{"kind":{"type":"string","enum":["question","reply","hint"],"description":"One of: question, reply, hint."},"to":` + nonBlank + `,"body":` + nonBlank + `}}`)},
 	ToolRead: {ToolRead, "Read a Definition, artifact, delivery report or transcript by identity.",
 		json.RawMessage(`{"type":"object","additionalProperties":false,"required":["ref"],"properties":{"ref":` + nonBlank + `}}`)},
-	ToolReservePath: {ToolReservePath, "Reserve a new artifact path before writing it.",
+	ToolReservePath: {ToolReservePath, "Reserve a new artifact path before writing it. form is one of: code, test, doc, build, config.",
 		json.RawMessage(`{"type":"object","additionalProperties":false,"required":["path","form"],"properties":{"path":` + pathField + `,"form":` + formField + `}}`)},
-	ToolRegister: {ToolRegister, "Propose the registry record of an owned or reserved artifact.",
-		json.RawMessage(`{"type":"object","additionalProperties":false,"required":["path","form","realizes","why"],"properties":{"path":` + pathField + `,"form":` + formField + `,"realizes":` + stringList + `,"why":` + nonBlank + `}}`)},
-	ToolAssignOwner: {ToolAssignOwner, "As the common parent, decide the owner of an artifact.",
+	ToolRegister: {ToolRegister, "Propose the registry record of an owned or reserved artifact: its form and the Definitions it realizes.",
+		json.RawMessage(`{"type":"object","additionalProperties":false,"required":["path","form","realizes","why"],"properties":{"path":` + pathField + `,"form":` + formField + `,"realizes":` + defsField + `,"why":` + nonBlank + `}}`)},
+	ToolAssignOwner: {ToolAssignOwner, "As the common parent, decide the owner of an artifact that several descendants need, or of an unexplained file.",
 		json.RawMessage(`{"type":"object","additionalProperties":false,"required":["path","manager","reason"],"properties":{"path":` + pathField + `,"manager":` + nonBlank + `,"reason":` + nonBlank + `}}`)},
-	ToolRequestCheck: {ToolRequestCheck, "Run an allowed project check on the current candidate.",
+	ToolRequestCheck: {ToolRequestCheck, "Run an allowed project check on the current candidate and get its receipt.",
 		json.RawMessage(`{"type":"object","additionalProperties":false,"required":["check"],"properties":{"check":` + nonBlank + `}}`)},
-	ToolRecordExpectations: {ToolRecordExpectations, "End your expectations step with the expected behavior and discriminating cases from the model.",
+	ToolRecordExpectations: {ToolRecordExpectations, "End your expectations step with the expected behavior and the discriminating cases you derive from the model, before you see the candidate.",
 		json.RawMessage(`{"type":"object","additionalProperties":false,"required":["cases"],"properties":{"cases":{"type":"array","minItems":1,"items":{"type":"object","additionalProperties":false,"required":["name","expectation","discriminates"],"properties":{"name":` + nonBlank + `,"expectation":` + nonBlank + `,"discriminates":` + nonBlank + `}}}}}`)},
-	ToolSubmitReview: {ToolSubmitReview, "End your assessment step with your verdict, findings and evidence.",
-		json.RawMessage(`{"type":"object","additionalProperties":false,"required":["verdict","summary","findings","resolutions"],"properties":{"verdict":{"type":"string","enum":["pass","changes_requested","needs_decision","failed_assessment"]},"summary":` + nonBlank + `,"findings":{"type":"array","items":{"type":"object","additionalProperties":false,"required":["severity","grounds","requestedEvidence"],"properties":{"severity":{"type":"string","enum":["blocking","advisory"]},"definition":{"type":"string"},"grounds":` + nonBlank + `,"requestedEvidence":` + nonBlank + `}}},"resolutions":{"type":"array","items":{"type":"object","additionalProperties":false,"required":["finding","state","grounds"],"properties":{"finding":` + nonBlank + `,"state":{"type":"string","enum":["resolved","not_applicable"]},"grounds":` + nonBlank + `}}}}}`)},
+	ToolSubmitReview: {ToolSubmitReview, "End your assessment step with your verdict: pass, changes_requested, needs_decision or failed_assessment. A pass must resolve or mark not-applicable every open blocking finding of the task; needs_decision must state the owner question.",
+		json.RawMessage(`{"type":"object","additionalProperties":false,"required":["verdict","summary","findings","resolutions","evidence"],"properties":{"verdict":{"type":"string","enum":["pass","changes_requested","needs_decision","failed_assessment"],"description":"One of: pass, changes_requested, needs_decision, failed_assessment."},"summary":` + nonBlank + `,"question":{"type":"string","description":"For needs_decision: the decision the owner must make."},"evidence":` + evidence + `,"findings":{"type":"array","items":{"type":"object","additionalProperties":false,"required":["severity","definitions","grounds","requestedEvidence"],"properties":{"severity":{"type":"string","enum":["blocking","advisory"],"description":"One of: blocking, advisory."},"definitions":` + defsField + `,"grounds":` + nonBlank + `,"requestedEvidence":` + nonBlank + `}}},"resolutions":{"type":"array","items":{"type":"object","additionalProperties":false,"required":["finding","state","grounds","evidence"],"properties":{"finding":{"type":"string","minLength":1,"description":"The ID of an open finding."},"state":{"type":"string","enum":["resolved","not-applicable"],"description":"One of: resolved, not-applicable."},"grounds":` + nonBlank + `,"evidence":` + evidence + `}}}}}`)},
 }
 
-var phaseTools = map[string][]string{
-	PhaseExplore:            {ToolReport, ToolSubmit},
-	PhaseWork:               {ToolSubmit, ToolWait, ToolReservePath, ToolRegister},
-	PhaseIntegration:        {ToolSubmit, ToolWait, ToolReservePath, ToolRegister},
-	PhaseReply:              {ToolSend},
-	PhaseReviewExpectations: {ToolRecordExpectations},
-	PhaseReviewAssessment:   {ToolSubmitReview},
+var phaseTools = map[Phase][]string{
+	PhaseExplore:            {ToolReport, ToolSubmit, ToolRead, ToolSend},
+	PhaseWork:               {ToolSubmit, ToolWait, ToolSend, ToolRead, ToolReservePath, ToolRegister, ToolAssignOwner, ToolRequestCheck},
+	PhaseIntegrate:          {ToolSubmit, ToolWait, ToolSend, ToolRead, ToolReservePath, ToolRegister, ToolAssignOwner, ToolRequestCheck},
+	PhaseReply:              {ToolSend, ToolRead},
+	PhaseReviewExpectations: {ToolRecordExpectations, ToolRead},
+	PhaseReviewAssessment:   {ToolSubmitReview, ToolRead, ToolRequestCheck},
 }
 
 // ToolCatalog returns the closed Host tool catalogue of a phase, in the format
-// adapters register with the provider. Tools not yet supported by the core are
-// not offered.
-func ToolCatalog(phase string) (Payload, error) {
+// adapters register with the provider. It follows the core protocol's Host
+// tools table; the Host refuses a call it does not support yet with a reason.
+func ToolCatalog(phase Phase) (Payload, error) {
 	names, ok := phaseTools[phase]
 	if !ok {
 		return Payload{}, ErrInvalid
@@ -153,7 +162,8 @@ func ToolCatalog(phase string) (Payload, error) {
 }
 
 // PhaseTool reports whether a phase offers a tool.
-func PhaseTool(phase, tool string) bool { return slices.Contains(phaseTools[phase], tool) }
+func PhaseTool(phase Phase, tool string) bool { return slices.Contains(phaseTools[phase], tool) }
 
-// OutcomeTool reports whether a tool ends a step of the phase.
-func OutcomeTool(phase, tool string) bool { return slices.Contains(stepOutcomes[phase], tool) }
+// OutcomeTool reports whether a tool can end a step of the phase. In the reply
+// phase the Host also requires the send to be of kind reply.
+func OutcomeTool(phase Phase, tool string) bool { return slices.Contains(stepOutcomes[phase], tool) }
