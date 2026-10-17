@@ -116,7 +116,7 @@ func includeSourceTreeFile(name string, transitional bool) bool {
 		return false
 	}
 	ext := strings.ToLower(path.Ext(name))
-	return ext == ".go" || embeddedNotices(name) || (transitional && isTransitionalTestkitDataPath(name)) || name == "internal/licenses/notices.md" || name == "src/internal/licenses/notices.md"
+	return ext == ".go" || embeddedNotices(name) || name == embeddedStrategyDefaultsPath || (transitional && isTransitionalTestkitDataPath(name)) || name == "internal/licenses/notices.md" || name == "src/internal/licenses/notices.md"
 }
 
 func hasTransitionalSourceTree(files map[string][]byte, modulePrefix string) bool {

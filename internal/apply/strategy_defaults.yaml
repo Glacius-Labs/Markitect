@@ -1,0 +1,10 @@
+apiVersion: markitect.strategy-defaults/v1
+strategy: recursive-apply-v1
+defaults:
+  reviewRounds: 3
+  instructions:
+    manager: []
+    reviewer: []
+  batchNoChangeReviews: false
+acceptance:
+  ownerApproval: []
