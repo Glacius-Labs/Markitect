@@ -20,9 +20,9 @@ checkProfiles:
       profileVersion: 1
       engineExecutable: 'C:\Program Files\Docker\Docker\resources\bin\docker.exe'
       imageID: sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
-      executable: /usr/local/bin/python3
-      argumentPrefix: ["-m", "unittest"]
-      env: ["PYTHONDONTWRITEBYTECODE=1"]
+      executable: /usr/local/go/bin/go
+      argumentPrefix: []
+      env: ["GOTOOLCHAIN=local", "GOCACHE=/home/agent/.cache/go-build"]
       limits:
         milliCPUs: 1000
         memoryBytes: 268435456
@@ -37,13 +37,32 @@ variable names. Resource limits must be positive; output is bounded to at most
 64 MiB. Unknown fields, missing fields and wrong types refuse preparation before
 acquisition. No engine, image, argument, environment or bound is inferred.
 
+The executable cannot be under the Runner's `/work`, `/home/agent` or `/tmp`
+mounts, the engine's `/dev`, `/proc` or `/sys` mounts, or name its managed
+`/etc/hosts`, `/etc/hostname` or `/etc/resolv.conf` files. These runtime mounts
+obscure image bytes, so observing an image file there cannot bind the executable
+that the check would actually run. Such paths refuse preparation before reading
+the image.
+
 The explicit reader factory receives only the captured `engineExecutable`.
 The production reader inspects the exact image ID, then streams the entire
-regular executable file through `Engine.ObserveImageFile` from a temporary
-container that never starts. Observation is bounded to 512 MiB and retains the
-actual SHA-256 and positive size. Failed observation, cancellation or failed
-cleanup cannot produce passing evidence. The executable is never read from a
-Host path, and the separate 1 MiB metadata reader is not used for it.
+regular executable file through `Engine.ObserveImageFileWithRequiredPaths` from
+a temporary container that never starts. Before hashing, that reader verifies
+the executable's ancestors as actual directories. The check adapter also
+requires actual directories at `/work`, `/home`, `/home/agent`, `/tmp`, `/dev`,
+`/proc`, `/sys` and `/etc`, and regular files at `/etc/hosts`, `/etc/hostname`
+and `/etc/resolv.conf`, with actual directory ancestors. These observations use
+the same never-started container; redirected, missing or unknown paths refuse
+preparation. They prevent an accepted executable alias into a runtime mount or
+a mount-target alias onto the executable tree. Symlinked layouts are refused;
+the configured executable is never rewritten.
+
+Complete executable observation is bounded to 512 MiB and retains the actual
+SHA-256 and positive size. Path-header observations establish presence and type;
+only the entire executable supplies file-content evidence. Failed observation,
+cancellation or failed cleanup cannot produce passing evidence. The executable
+is never read from a Host path, and the separate 1 MiB metadata reader is not
+used for it.
 
 Passing preparation returns contract `markitect.container-check` version `1`,
 the exact input binding, and `CheckImage` evidence with image ID and executable

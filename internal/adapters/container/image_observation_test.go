@@ -8,6 +8,8 @@ import (
 	"errors"
 	"io"
 	"os"
+	"os/exec"
+	"path"
 	"path/filepath"
 	"reflect"
 	"strconv"
@@ -40,19 +42,143 @@ func imageArchive(t *testing.T, h tar.Header, body string, extra bool) []byte {
 func TestObserveImageFileStreamsBeyondMetadataLimits(t *testing.T) {
 	body := strings.Repeat("whole executable\x00", (5<<20)/17+1)
 	archive := imageArchive(t, tar.Header{Name: "check", Typeflag: tar.TypeReg, Mode: 0755, Size: int64(len(body))}, body, false)
-	e, calls := fakeCommandEngine(t, engineStep{Out: commandID}, engineStep{Out: string(archive)}, engineStep{})
+	e, calls := fakeCommandEngine(t, engineStep{Out: commandID}, engineStep{Out: imagePathHeader(t, "/opt", tar.TypeDir, "")}, engineStep{Out: string(archive)}, engineStep{})
 	got, err := e.ObserveImageFile(context.Background(), commandImage, "/opt/check", int64(len(body)))
 	if err != nil || got.Size != int64(len(body)) || got.SHA256 != sha256.Sum256([]byte(body)) {
 		t.Fatalf("observation=%+v err=%v", got, err)
 	}
 	all := calls()
-	if len(all) != 3 || len(all[0]) != 6 || all[0][1] != "--cidfile" || !filepath.IsAbs(all[0][2]) {
+	if len(all) != 4 || len(all[0]) != 6 || all[0][1] != "--cidfile" || !filepath.IsAbs(all[0][2]) {
 		t.Fatalf("engine calls=%q", all)
 	}
 	all[0][2] = "PRIVATE_CIDFILE"
-	want := [][]string{{"create", "--cidfile", "PRIVATE_CIDFILE", "--entrypoint", "/markitect-never-started", commandImage}, {"cp", commandID + ":/opt/check", "-"}, {"rm", "--force", "--volumes", commandID}}
+	want := [][]string{{"create", "--cidfile", "PRIVATE_CIDFILE", "--entrypoint", "/markitect-never-started", commandImage}, {"cp", commandID + ":/opt", "-"}, {"cp", commandID + ":/opt/check", "-"}, {"rm", "--force", "--volumes", commandID}}
 	if !reflect.DeepEqual(all, want) {
 		t.Fatalf("engine calls=%q", all)
+	}
+}
+
+func imagePathHeader(t *testing.T, file string, kind byte, link string) string {
+	t.Helper()
+	name := path.Base(file)
+	if kind == tar.TypeDir {
+		name += "/"
+	}
+	archive := imageArchive(t, tar.Header{Name: name, Typeflag: kind, Linkname: link, Mode: 0755}, "", false)
+	return string(archive[:512])
+}
+
+func TestObserveImageFileRequiredPathsAreOrderedUniqueAndBounded(t *testing.T) {
+	// /opt and /opt/tools occur in both the executable and required-directory
+	// chain; every resource is observed once, with parents before children.
+	paths := []string{"/etc", "/home", "/opt", "/work", "/etc/hosts", "/home/agent", "/opt/tools"}
+	steps := []engineStep{{Out: commandID}}
+	for _, p := range paths {
+		kind := byte(tar.TypeDir)
+		if p == "/etc/hosts" {
+			kind = tar.TypeReg
+		}
+		header := imagePathHeader(t, p, kind, "")
+		if p == "/work" {
+			header += strings.Repeat("unneeded directory contents", 200000)
+		}
+		steps = append(steps, engineStep{Out: header})
+	}
+	steps = append(steps, engineStep{Out: string(imageArchive(t, tar.Header{Name: "check", Typeflag: tar.TypeReg, Size: 3}, "abc", false))}, engineStep{})
+	e, calls := fakeCommandEngine(t, steps...)
+	got, err := e.ObserveImageFileWithRequiredPaths(context.Background(), commandImage, "/opt/tools/check", 3, []string{"/work", "/home/agent", "/opt/tools", "/work"}, []string{"/etc/hosts", "/etc/hosts"})
+	if err != nil || got.SHA256 != sha256.Sum256([]byte("abc")) || got.Size != 3 {
+		t.Fatalf("observation=%+v err=%v", got, err)
+	}
+	all := calls()
+	if len(all) != len(paths)+3 {
+		t.Fatalf("calls=%q", all)
+	}
+	for i, p := range append(paths, "/opt/tools/check") {
+		if !reflect.DeepEqual(all[i+1], []string{"cp", commandID + ":" + p, "-"}) {
+			t.Fatalf("call %d=%q", i+1, all[i+1])
+		}
+	}
+	if !reflect.DeepEqual(all[len(all)-1], []string{"rm", "--force", "--volumes", commandID}) {
+		t.Fatalf("cleanup=%q", all)
+	}
+}
+
+func TestObserveImageFileRefusesAncestorAndMountAliases(t *testing.T) {
+	for _, tc := range []struct {
+		name, file, alias string
+		dirs, files       []string
+		prefix            []engineStep
+	}{
+		{name: "executable ancestor", file: "/opt/tools/check", alias: "/opt/tools", prefix: []engineStep{{Out: imagePathHeader(t, "/opt", tar.TypeDir, "")}}},
+		{name: "directory mount target", file: "/check", alias: "/work", dirs: []string{"/work"}},
+		{name: "daemon file mount target", file: "/check", alias: "/etc/hosts", files: []string{"/etc/hosts"}, prefix: []engineStep{{Out: imagePathHeader(t, "/etc", tar.TypeDir, "")}}},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			steps := append([]engineStep{{Out: commandID}}, tc.prefix...)
+			steps = append(steps, engineStep{Out: imagePathHeader(t, tc.alias, tar.TypeSymlink, "/work")}, engineStep{})
+			e, calls := fakeCommandEngine(t, steps...)
+			got, err := e.ObserveImageFileWithRequiredPaths(context.Background(), commandImage, tc.file, 100, tc.dirs, tc.files)
+			if err == nil || got != (ImageFileObservation{}) {
+				t.Fatalf("observation=%+v err=%v", got, err)
+			}
+			all := calls()
+			if len(all) != len(steps) || !reflect.DeepEqual(all[len(all)-1], []string{"rm", "--force", "--volumes", commandID}) {
+				t.Fatalf("calls=%q", all)
+			}
+		})
+	}
+}
+
+func TestObserveImageFilePathHeaderRefusalsAndCleanup(t *testing.T) {
+	metadata := imageArchive(t, tar.Header{Name: "work", Typeflag: tar.TypeReg, PAXRecords: map[string]string{"comment": strings.Repeat("x", 4096)}, Format: tar.FormatPAX}, "", false)
+	metadata = metadata[:len(metadata)-512-1024]
+	for _, tc := range []struct {
+		name   string
+		header engineStep
+	}{
+		{"missing", engineStep{Code: 1, Err: "missing"}},
+		{"wrong name", engineStep{Out: imagePathHeader(t, "/wrong", tar.TypeDir, "")}},
+		{"wrong type", engineStep{Out: imagePathHeader(t, "/work", tar.TypeReg, "")}},
+		{"partial header", engineStep{Out: imagePathHeader(t, "/work", tar.TypeDir, "")[:511]}},
+		{"metadata budget", engineStep{Out: string(bytes.Repeat(metadata, 256))}},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			e, calls := fakeCommandEngine(t, engineStep{Out: commandID}, tc.header, engineStep{})
+			got, err := e.ObserveImageFileWithRequiredPaths(context.Background(), commandImage, "/check", 100, []string{"/work"}, nil)
+			if err == nil || got != (ImageFileObservation{}) || len(calls()) != 3 {
+				t.Fatalf("observation=%+v err=%v calls=%q", got, err, calls())
+			}
+		})
+	}
+}
+
+func TestObserveImageFileRequiredPathCleanupFailureDiscardsHash(t *testing.T) {
+	archive := imageArchive(t, tar.Header{Name: "check", Typeflag: tar.TypeReg, Size: 3}, "abc", false)
+	e, calls := fakeCommandEngine(t, engineStep{Out: commandID}, engineStep{Out: imagePathHeader(t, "/work", tar.TypeDir, "")}, engineStep{Out: string(archive)}, engineStep{Code: 1, Err: "cleanup denied"})
+	got, err := e.ObserveImageFileWithRequiredPaths(context.Background(), commandImage, "/check", 3, []string{"/work"}, nil)
+	if err == nil || !strings.Contains(err.Error(), "cleanup") || got != (ImageFileObservation{}) || len(calls()) != 4 {
+		t.Fatalf("observation=%+v err=%v calls=%q", got, err, calls())
+	}
+}
+
+func TestObserveImageFileRequiredPathsRefuseInvalidInputsBeforeEngine(t *testing.T) {
+	e := &Engine{path: "must-not-run"}
+	for _, dirs := range [][]string{{"/tmp/../work"}, {"/"}, {"/check"}, make([]string, maxImagePathObservations+1), {"/" + strings.Repeat("part/", maxImagePathObservations) + "dir"}} {
+		if _, err := e.ObserveImageFileWithRequiredPaths(context.Background(), commandImage, "/check", 100, dirs, nil); err == nil {
+			t.Fatalf("accepted dirs=%q", dirs)
+		}
+	}
+	if _, err := e.ObserveImageFileWithRequiredPaths(context.Background(), commandImage, "/check", 100, []string{"/work"}, []string{"/work"}); err == nil {
+		t.Fatal("accepted conflicting path types")
+	}
+}
+
+func TestImageHeaderStopRejectsUnrelatedWaitFailure(t *testing.T) {
+	e, _ := fakeCommandEngine(t, engineStep{Code: 7})
+	waitErr := exec.Command(e.path, "controlled-exit").Run()
+	if waitErr == nil || confirmedImageHeaderStop(nil, waitErr) || confirmedImageHeaderStop(os.ErrProcessDone, waitErr) || confirmedImageHeaderStop(errors.New("kill failed"), waitErr) || !confirmedImageHeaderStop(errors.New("already exited"), nil) {
+		t.Fatalf("accepted unconfirmed stop or unrelated exit: %v", waitErr)
 	}
 }
 
@@ -227,37 +353,53 @@ func TestImageArchiveBoundsMetadataBeforeFileBudget(t *testing.T) {
 }
 
 func TestObserveImageFileCancellationCleansWithoutCertifyingBytes(t *testing.T) {
-	e, calls := fakeCommandEngine(t, engineStep{Out: commandID}, engineStep{SleepMillis: 10000}, engineStep{})
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
-	type result struct {
-		observation ImageFileObservation
-		err         error
-	}
-	done := make(chan result, 1)
-	go func() {
-		observation, err := e.ObserveImageFile(ctx, commandImage, "/check", 100)
-		done <- result{observation, err}
-	}()
-	deadline := time.NewTimer(10 * time.Second)
-	defer deadline.Stop()
-	tick := time.NewTicker(5 * time.Millisecond)
-	defer tick.Stop()
-	for {
-		select {
-		case <-deadline.C:
-			t.Fatal("observation did not reconcile cancellation")
-		case got := <-done:
-			if !errors.Is(got.err, context.Canceled) || got.observation != (ImageFileObservation{}) || len(calls()) != 3 {
-				t.Fatalf("result=%+v calls=%q", got, calls())
+	for _, requiredDirectory := range []string{"", "/work"} {
+		t.Run("requiredDirectory="+requiredDirectory, func(t *testing.T) {
+			e, calls := fakeCommandEngine(t, engineStep{Out: commandID}, engineStep{SleepMillis: 10000}, engineStep{})
+			ctx, cancel := context.WithCancel(context.Background())
+			defer cancel()
+			type result struct {
+				observation ImageFileObservation
+				err         error
 			}
-			return
-		case <-tick.C:
-			index, _ := os.ReadFile(filepath.Join(os.Getenv("MARKITECT_FAKE_COMMAND_ENGINE"), "index"))
-			if string(index) == "2" {
-				cancel()
+			done := make(chan result, 1)
+			go func() {
+				var observation ImageFileObservation
+				var err error
+				if requiredDirectory == "" {
+					observation, err = e.ObserveImageFile(ctx, commandImage, "/check", 100)
+				} else {
+					observation, err = e.ObserveImageFileWithRequiredPaths(ctx, commandImage, "/check", 100, []string{requiredDirectory}, nil)
+				}
+				done <- result{observation, err}
+			}()
+			deadline := time.NewTimer(10 * time.Second)
+			defer deadline.Stop()
+			tick := time.NewTicker(5 * time.Millisecond)
+			defer tick.Stop()
+			for {
+				select {
+				case <-deadline.C:
+					t.Fatal("observation did not reconcile cancellation")
+				case got := <-done:
+					all := calls()
+					copied := requiredDirectory
+					if copied == "" {
+						copied = "/check"
+					}
+					if !errors.Is(got.err, context.Canceled) || got.observation != (ImageFileObservation{}) || len(all) != 3 ||
+						!reflect.DeepEqual(all[1], []string{"cp", commandID + ":" + copied, "-"}) || !reflect.DeepEqual(all[2], []string{"rm", "--force", "--volumes", commandID}) {
+						t.Fatalf("result=%+v calls=%q", got, all)
+					}
+					return
+				case <-tick.C:
+					index, _ := os.ReadFile(filepath.Join(os.Getenv("MARKITECT_FAKE_COMMAND_ENGINE"), "index"))
+					if string(index) == "2" {
+						cancel()
+					}
+				}
 			}
-		}
+		})
 	}
 }
 

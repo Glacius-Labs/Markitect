@@ -16,11 +16,13 @@ import (
 // EngineConfig is the engine executable selected by the captured Host section.
 type EngineConfig struct{ Executable string }
 
-// ImageReader observes an immutable image without starting it. ObserveImageFile
-// must hash the complete regular file, enforce maxBytes and report cleanup errors.
+// ImageReader observes an immutable image without starting it. The file reader
+// must prove real directory ancestors and the required path types in the same
+// never-started container, hash the complete regular file within maxBytes, and
+// report failed path observations, cancellation and cleanup errors.
 type ImageReader interface {
 	ImageID(context.Context, string) (string, error)
-	ObserveImageFile(context.Context, string, string, int64) (container.ImageFileObservation, error)
+	ObserveImageFileWithRequiredPaths(context.Context, string, string, int64, []string, []string) (container.ImageFileObservation, error)
 }
 
 type ImageReaderFactory func(EngineConfig) (ImageReader, error)
@@ -102,7 +104,11 @@ func (m MetadataPreparer) prepareContainer(ctx context.Context, input apply.Prof
 	if err := ctx.Err(); err != nil {
 		return incomplete(err)
 	}
-	file, err := reader.ObserveImageFile(ctx, imageID, config.profile.Executable, container.MaxImageFileObservationBytes)
+	// Fixed runtime mounts must not redirect onto the executable's image tree.
+	// Fresh lists prevent a reader from changing another preparation's inputs.
+	file, err := reader.ObserveImageFileWithRequiredPaths(ctx, imageID, config.profile.Executable, container.MaxImageFileObservationBytes,
+		[]string{"/work", "/home", "/home/agent", "/tmp", "/dev", "/proc", "/sys", "/etc"},
+		[]string{"/etc/hosts", "/etc/hostname", "/etc/resolv.conf"})
 	if err != nil {
 		return incomplete(err)
 	}

@@ -26,20 +26,20 @@ func containerFields(engine string) string {
 
 type imageReaderPeer struct {
 	image func(context.Context, string) (string, error)
-	file  func(context.Context, string, string, int64) (container.ImageFileObservation, error)
+	file  func(context.Context, string, string, int64, []string, []string) (container.ImageFileObservation, error)
 }
 
 func (p imageReaderPeer) ImageID(ctx context.Context, image string) (string, error) {
 	return p.image(ctx, image)
 }
-func (p imageReaderPeer) ObserveImageFile(ctx context.Context, image, file string, max int64) (container.ImageFileObservation, error) {
-	return p.file(ctx, image, file, max)
+func (p imageReaderPeer) ObserveImageFileWithRequiredPaths(ctx context.Context, image, file string, max int64, directories, files []string) (container.ImageFileObservation, error) {
+	return p.file(ctx, image, file, max, directories, files)
 }
 
 func imageBytesReader(data []byte) imageReaderPeer {
 	return imageReaderPeer{
 		image: func(_ context.Context, image string) (string, error) { return image, nil },
-		file: func(context.Context, string, string, int64) (container.ImageFileObservation, error) {
+		file: func(context.Context, string, string, int64, []string, []string) (container.ImageFileObservation, error) {
 			return container.ImageFileObservation{SHA256: sha256.Sum256(data), Size: int64(len(data))}, nil
 		},
 	}
@@ -77,10 +77,13 @@ func TestContainerMetadataBindsWholeImageExecutableAndProjectsExistingRequest(t 
 		}
 		return image, nil
 	}
-	peer.file = func(_ context.Context, image, file string, max int64) (container.ImageFileObservation, error) {
+	peer.file = func(_ context.Context, image, file string, max int64, directories, files []string) (container.ImageFileObservation, error) {
 		fileCalls++
 		if image != checkImageID || file != "/opt/check" || max != container.MaxImageFileObservationBytes {
 			t.Fatal("image observation changed exact configuration or executable bound")
+		}
+		if !reflect.DeepEqual(directories, []string{"/work", "/home", "/home/agent", "/tmp", "/dev", "/proc", "/sys", "/etc"}) || !reflect.DeepEqual(files, []string{"/etc/hosts", "/etc/hostname", "/etc/resolv.conf"}) {
+			t.Fatal("image observation omitted or changed required runtime mount chains")
 		}
 		return container.ImageFileObservation{SHA256: sha256.Sum256(data), Size: int64(len(data))}, nil
 	}
@@ -134,6 +137,16 @@ func TestContainerMetadataRejectsClosedConfigurationBeforeAcquisition(t *testing
 		{"unclean path", "executable: /opt/check", "executable: /opt/../check"},
 		{"root path", "executable: /opt/check", "executable: /"},
 		{"backslash path", "executable: /opt/check", "executable: '/opt\\check'"},
+		{"candidate mount executable", "executable: /opt/check", "executable: /work/check"},
+		{"exact candidate mount", "executable: /opt/check", "executable: /work"},
+		{"home mount executable", "executable: /opt/check", "executable: /home/agent/check"},
+		{"tmp mount executable", "executable: /opt/check", "executable: /tmp/check"},
+		{"device mount executable", "executable: /opt/check", "executable: /dev/check"},
+		{"proc mount executable", "executable: /opt/check", "executable: /proc/self/exe"},
+		{"sys mount executable", "executable: /opt/check", "executable: /sys/check"},
+		{"engine-managed hosts file", "executable: /opt/check", "executable: /etc/hosts"},
+		{"engine-managed hostname file", "executable: /opt/check", "executable: /etc/hostname"},
+		{"engine-managed resolver file", "executable: /opt/check", "executable: /etc/resolv.conf"},
 		{"engine path search", "engineExecutable: " + strconv.Quote(engine), "engineExecutable: docker"},
 		{"zero cpu", "milliCPUs: 1250", "milliCPUs: 0"},
 		{"fractional cpu", "milliCPUs: 1250", "milliCPUs: 1.5"},
@@ -164,7 +177,7 @@ func TestContainerMetadataRejectsClosedConfigurationBeforeAcquisition(t *testing
 
 func TestContainerMetadataAcquisitionFailuresNeverBecomePassingEvidence(t *testing.T) {
 	fields := containerFields(filepath.Join(testkit.TempDir(t), "engine"))
-	for _, kind := range []string{"no factory", "factory error", "nil reader", "image error", "image mismatch", "file error", "cleanup error with bytes", "empty digest", "empty file", "oversized", "cancelled before", "cancelled during"} {
+	for _, kind := range []string{"no factory", "factory error", "nil reader", "image error", "image mismatch", "file error", "redirected executable ancestor", "redirected mount target", "redirected managed file", "missing required path", "cleanup error with bytes", "empty digest", "empty file", "oversized", "cancelled before", "cancelled during"} {
 		t.Run(kind, func(t *testing.T) {
 			ctx, cancel := context.WithCancel(context.Background())
 			defer cancel()
@@ -182,12 +195,12 @@ func TestContainerMetadataAcquisitionFailuresNeverBecomePassingEvidence(t *testi
 				peer.image = func(context.Context, string) (string, error) { return "", errors.New("inspect failed") }
 			case "image mismatch":
 				peer.image = func(context.Context, string) (string, error) { return "sha256:" + strings.Repeat("b", 64), nil }
-			case "file error", "cleanup error with bytes":
-				peer.file = func(context.Context, string, string, int64) (container.ImageFileObservation, error) {
+			case "file error", "redirected executable ancestor", "redirected mount target", "redirected managed file", "missing required path", "cleanup error with bytes":
+				peer.file = func(context.Context, string, string, int64, []string, []string) (container.ImageFileObservation, error) {
 					return container.ImageFileObservation{SHA256: sha256.Sum256([]byte("unconfirmed")), Size: 11}, errors.New(kind)
 				}
 			case "empty digest", "empty file", "oversized":
-				peer.file = func(context.Context, string, string, int64) (container.ImageFileObservation, error) {
+				peer.file = func(context.Context, string, string, int64, []string, []string) (container.ImageFileObservation, error) {
 					file := container.ImageFileObservation{SHA256: sha256.Sum256([]byte("observed")), Size: 8}
 					switch kind {
 					case "empty digest":
@@ -203,9 +216,9 @@ func TestContainerMetadataAcquisitionFailuresNeverBecomePassingEvidence(t *testi
 				cancel()
 			case "cancelled during":
 				original := peer.file
-				peer.file = func(ctx context.Context, image, file string, max int64) (container.ImageFileObservation, error) {
+				peer.file = func(ctx context.Context, image, file string, max int64, directories, files []string) (container.ImageFileObservation, error) {
 					cancel()
-					return original(ctx, image, file, max)
+					return original(ctx, image, file, max, directories, files)
 				}
 			}
 			// Acquire an actual opaque ProfileInput through Apply, without I/O.

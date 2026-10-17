@@ -11,12 +11,21 @@ import (
 	"os/exec"
 	"path"
 	"path/filepath"
+	"runtime"
+	"sort"
 	"strings"
+	"syscall"
 	"time"
 )
 
 // MaxImageFileObservationBytes bounds a complete image-file observation.
 const MaxImageFileObservationBytes int64 = 512 << 20
+
+const (
+	maxImagePathHeaderBytes     = 1 << 20
+	maxImagePathObservations    = 256
+	imagePathObservationTimeout = 15 * time.Second
+)
 
 // ImageFileObservation identifies every byte of one regular file in an image.
 // An error always returns the zero value, including when cleanup fails.
@@ -30,14 +39,28 @@ type ImageFileObservation struct {
 // MaxImageFileObservationBytes. File bytes are streamed, never retained in memory.
 // ReadImageFile remains the separate, small metadata reader.
 func (e *Engine) ObserveImageFile(ctx context.Context, imageID, file string, maxBytes int64) (observation ImageFileObservation, err error) {
+	return e.ObserveImageFileWithRequiredPaths(ctx, imageID, file, maxBytes, nil, nil)
+}
+
+// ObserveImageFileWithRequiredPaths additionally observes the positive presence
+// and exact type of required directories and regular files, without following
+// symlinks. All file ancestors must be directories. Every observation uses the
+// same never-started container. Required-file headers do not certify their bytes;
+// only file receives complete content hashing. Lists and their unique ancestor
+// paths are bounded to 256 observations. Unknown or absent paths are refused.
+func (e *Engine) ObserveImageFileWithRequiredPaths(ctx context.Context, imageID, file string, maxBytes int64, requiredDirectories, requiredRegularFiles []string) (observation ImageFileObservation, err error) {
 	if !imageIDPattern.MatchString(imageID) {
 		return observation, fmt.Errorf("image %q is not an engine image ID", imageID)
 	}
-	if !absolute(file) || file == "/" || strings.ContainsAny(file, "\\\x00\n\r") {
+	if !imageObservationPath(file) {
 		return observation, fmt.Errorf("image file %q is not a clean absolute POSIX file path", file)
 	}
 	if maxBytes <= 0 || maxBytes > MaxImageFileObservationBytes {
 		return observation, fmt.Errorf("image file limit must be between 1 and %d", MaxImageFileObservationBytes)
+	}
+	paths, expected, err := imageObservationPaths(file, requiredDirectories, requiredRegularFiles)
+	if err != nil {
+		return observation, err
 	}
 	if err := ctx.Err(); err != nil {
 		return observation, err
@@ -84,6 +107,11 @@ func (e *Engine) ObserveImageFile(ctx context.Context, imageID, file string, max
 	if !containerIDPattern.MatchString(id) || id != strings.TrimSpace(string(out)) {
 		return observation, fmt.Errorf("engine reported inconsistent image observation container identity")
 	}
+	for _, p := range paths {
+		if err := e.observeImagePathHeader(ctx, id, p, expected[p]); err != nil {
+			return observation, err
+		}
+	}
 	cmd := exec.CommandContext(ctx, e.path, "cp", id+":"+file, "-")
 	stderr := &boundedBuffer{max: maxCommandOutput}
 	cmd.Stderr = stderr
@@ -109,6 +137,130 @@ func (e *Engine) ObserveImageFile(ctx context.Context, imageID, file string, max
 		err = errors.Join(err, fmt.Errorf("container engine cp: %w: %s", waitErr, strings.TrimSpace(stderr.String())))
 	}
 	return observation, err
+}
+
+func imageObservationPath(p string) bool {
+	return absolute(p) && p != "/" && !strings.ContainsAny(p, "\\\x00\n\r")
+}
+
+// Each chain is checked from root outward. A checked parent cannot redirect a
+// later child's lookup. Directory and file requirements cannot contradict.
+func imageObservationPaths(file string, directories, files []string) ([]string, map[string]byte, error) {
+	if len(directories)+len(files) > maxImagePathObservations {
+		return nil, nil, fmt.Errorf("too many required image paths")
+	}
+	expected := map[string]byte{file: tar.TypeReg}
+	add := func(p string, kind byte) error {
+		if !imageObservationPath(p) {
+			return fmt.Errorf("required image path %q is not a clean absolute POSIX path", p)
+		}
+		for at, current := p, kind; at != "/"; at, current = path.Dir(at), tar.TypeDir {
+			if old, exists := expected[at]; exists && old != current {
+				return fmt.Errorf("conflicting image path requirement at %s", at)
+			}
+			expected[at] = current
+			if len(expected) > maxImagePathObservations {
+				return fmt.Errorf("image path observations exceed %d", maxImagePathObservations)
+			}
+		}
+		return nil
+	}
+	if err := add(file, tar.TypeReg); err != nil {
+		return nil, nil, err
+	}
+	for _, p := range directories {
+		if err := add(p, tar.TypeDir); err != nil {
+			return nil, nil, err
+		}
+	}
+	for _, p := range files {
+		if err := add(p, tar.TypeReg); err != nil {
+			return nil, nil, err
+		}
+	}
+	paths := make([]string, 0, len(expected)-1)
+	for p := range expected {
+		if p != file {
+			paths = append(paths, p)
+		}
+	}
+	sort.Slice(paths, func(i, j int) bool {
+		a, b := strings.Count(paths[i], "/"), strings.Count(paths[j], "/")
+		if a != b {
+			return a < b
+		}
+		return paths[i] < paths[j]
+	})
+	return paths, expected, nil
+}
+
+// observeImagePathHeader observes only the resource's own logical tar header.
+// Docker cp without -L and without a trailing slash preserves a leaf symlink.
+// A directory's contents may be arbitrarily large, so this deliberately stops
+// copying after its header. This is not whole-archive or whole-file evidence.
+func (e *Engine) observeImagePathHeader(ctx context.Context, id, file string, want byte) error {
+	bounded, cancel := context.WithTimeout(ctx, imagePathObservationTimeout)
+	defer cancel()
+	cmd := exec.CommandContext(bounded, e.path, "cp", id+":"+file, "-")
+	stderr := &boundedBuffer{max: maxCommandOutput}
+	cmd.Stderr, cmd.WaitDelay = stderr, imagePathObservationTimeout
+	stdout, err := cmd.StdoutPipe()
+	if err != nil {
+		return err
+	}
+	if err := cmd.Start(); err != nil {
+		_ = stdout.Close()
+		return err
+	}
+	stopRead := context.AfterFunc(bounded, func() { _ = stdout.Close() })
+	defer stopRead()
+	h, headerErr := tar.NewReader(io.LimitReader(stdout, maxImagePathHeaderBytes)).Next()
+	if headerErr == nil {
+		name := path.Base(file)
+		if want == tar.TypeDir {
+			name += "/"
+		}
+		if h.Name != name || h.Typeflag != want || h.Linkname != "" || h.Size < 0 || want == tar.TypeDir && h.Size != 0 {
+			headerErr = fmt.Errorf("expected exact image path %s with tar type %q and no link", file, want)
+		}
+		for key := range h.PAXRecords {
+			if strings.HasPrefix(key, "GNU.sparse.") {
+				headerErr = fmt.Errorf("sparse image path header is unsupported")
+			}
+		}
+	}
+	// Kill before closing the read pipe, avoiding a self-induced broken-pipe
+	// exit that would be indistinguishable from an unrelated CLI failure.
+	stopErr := cmd.Process.Kill()
+	closeErr := stdout.Close()
+	waitErr := cmd.Wait()
+	if err := bounded.Err(); err != nil {
+		return fmt.Errorf("observe image path %s: %w", file, errors.Join(err, headerErr))
+	}
+	if headerErr != nil {
+		return fmt.Errorf("observe image path %s header: %w", file, headerErr)
+	}
+	if closeErr != nil || !confirmedImageHeaderStop(stopErr, waitErr) {
+		return fmt.Errorf("image path %s copy stop was not confirmed: %w: %s", file, errors.Join(closeErr, stopErr, waitErr), strings.TrimSpace(stderr.String()))
+	}
+	return nil
+}
+
+func confirmedImageHeaderStop(stopErr, waitErr error) bool {
+	if waitErr == nil {
+		// A successful reap also covers natural completion before Kill. Windows
+		// may report access denied when terminating that already-exited process.
+		return true
+	}
+	var exited *exec.ExitError
+	if stopErr != nil || !errors.As(waitErr, &exited) {
+		return false
+	}
+	if runtime.GOOS == "windows" {
+		return exited.ExitCode() == 1
+	} // os.Process.Kill uses TerminateProcess(..., 1).
+	status, ok := exited.Sys().(syscall.WaitStatus)
+	return ok && status.Signaled() && status.Signal() == syscall.SIGKILL
 }
 
 // Unlike metadata output, observation lifecycle commands also bound inherited
