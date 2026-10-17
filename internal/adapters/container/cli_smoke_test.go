@@ -17,12 +17,14 @@ import (
 
 // The CLI smoke repeats for every runtime image: both provider CLIs start in
 // the hardened container and connect to the Host tools through
-// `markitect-agentd mcp`. With a runtime credential in the environment the
-// smoke also lets each CLI change a file and call a Host tool.
+// `markitect-agentd mcp`. With a runtime credential the smoke also lets each
+// CLI change a file and call a Host tool.
 //
 //	MARKITECT_TEST_ENGINE         absolute container engine path
 //	MARKITECT_TEST_RUNTIME_IMAGE  runtime image reference, for example markitect-runtime:dev
-//	OPENAI_API_KEY                optional Codex credential
+//	OPENAI_API_KEY or MARKITECT_TEST_CODEX_AUTH_VOLUME  optional Codex credential: an API key,
+//	                              or a dedicated runtime login volume with auth.json at its
+//	                              root, written by uid 1000
 //	ANTHROPIC_API_KEY or CLAUDE_CODE_OAUTH_TOKEN  optional Claude Code credential
 
 const submitPrompt = `Create the file hello.txt containing the single line "hello from markitect". ` +
@@ -199,11 +201,18 @@ func startCodex(t *testing.T, r *runtimeSmoke, s *container.Session, env []strin
 	return rpc
 }
 
-// codexTurn runs one turn and returns the agent's text.
+// codexTurn runs one turn on the owner-selected model and returns the
+// agent's text. A refused start or a turn that does not complete fails the
+// test with the provider's error instead of a later, misleading assertion.
 func codexTurn(rpc *jsonRPC, threadID any, prompt string) string {
-	rpc.call("turn/start", map[string]any{"threadId": threadID, "effort": codexEffort, "input": []any{map[string]any{"type": "text", "text": prompt}}})
+	rpc.t.Helper()
+	started := rpc.call("turn/start", map[string]any{"threadId": threadID, "model": codexModel, "effort": codexEffort,
+		"input": []any{map[string]any{"type": "text", "text": prompt}}})
+	if started["error"] != nil {
+		rpc.t.Fatalf("turn/start: %v; diagnostics %q", started["error"], rpc.s.Diagnostics())
+	}
 	var text strings.Builder
-	rpc.until(func(m map[string]any) bool {
+	done := rpc.until(func(m map[string]any) bool {
 		if m["method"] == "item/completed" {
 			if p, _ := m["params"].(map[string]any); p != nil {
 				if item, _ := p["item"].(map[string]any); item != nil && item["type"] == "agentMessage" {
@@ -214,6 +223,11 @@ func codexTurn(rpc *jsonRPC, threadID any, prompt string) string {
 		}
 		return m["method"] == "turn/completed"
 	})
+	params, _ := done["params"].(map[string]any)
+	turn, _ := params["turn"].(map[string]any)
+	if turn["status"] != "completed" {
+		rpc.t.Fatalf("turn ended %v: %v", turn["status"], turn["error"])
+	}
 	return text.String()
 }
 

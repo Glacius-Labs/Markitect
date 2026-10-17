@@ -32,6 +32,7 @@ These rules come from real runs, recorded in the [handshake record](../../../doc
 - **Credentials:**
   - An API key or Claude Code's long-lived token goes in `frame.Start.Env`, never into container environment or arguments. Record that message with the value redacted.
   - A Codex subscription uses a dedicated runtime login, never the desktop login. Before a session starts, a helper writes a copy of that login into the provider home with the refresh token removed. The session then cannot refresh or rotate the login, and the access token outlives a run.
+  - That access token is a full-account credential that the Agent can read. Remove the copy from the provider home when the session ends.
 - **Provider messages can be large.** A tool result can carry a whole file, so size per-message limits for that.
 - **Quiescence before a basis change:**
   1. Close admission and reconcile admitted actions.

@@ -14,8 +14,8 @@ import (
 )
 
 // These capability probes answer the runtime questions of the step-basis
-// design with a real Claude Code session. They need a Claude credential in
-// addition to the engine and runtime image.
+// design with real Claude Code and Codex sessions. Besides the engine and the
+// runtime image they need the provider's credential (see cli_smoke_test.go).
 
 // claudeConversation drives one stream-JSON Claude Code process.
 type claudeConversation struct {
@@ -195,9 +195,12 @@ func TestCodexConversationContinuesInANewEnvironment(t *testing.T) {
 
 	second := r.start("codex-resume-b", mounts)
 	b := startCodex(t, r, second, env, make(chan frame.ToolCall, 4))
-	resumed := b.call("thread/resume", map[string]any{"threadId": threadID, "cwd": "/work", "approvalPolicy": "never", "sandbox": "danger-full-access"})
+	resumed := b.call("thread/resume", map[string]any{"threadId": threadID, "cwd": "/work", "approvalPolicy": "never", "sandbox": "danger-full-access", "model": codexModel})
 	if resumed["error"] != nil {
 		t.Fatalf("thread/resume: %v; diagnostics %q", resumed["error"], second.Diagnostics())
+	}
+	if model := resumed["result"].(map[string]any)["model"]; model != codexModel {
+		t.Fatalf("resumed thread runs %v, want %s", model, codexModel)
 	}
 	answer := codexTurn(b, threadID, "What was the code word I gave you earlier, and what does the file basis.txt in the working directory contain? Answer in one line.")
 	if !strings.Contains(answer, word) || !strings.Contains(answer, "basis-2") {
