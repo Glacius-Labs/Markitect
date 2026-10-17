@@ -2,12 +2,16 @@
 
 This contract owns the execution input fields and their deterministic resolution. The [execution contract](manager-apply-execution.md) owns budget admission, run transitions and status meaning; the [journal](manager-apply-journal.md) owns their durable records.
 
+This is a target contract, not evidence that preparation or its input decoders are implemented. The strategy defaults below preserve accepted effects; the exact ignore-file format is a new preparation input choice.
+
 ## Give each source one responsibility
 
 | Source | Maintained content | Library example |
 | --- | --- | --- |
 | Canonical model | Intended behavior, required outputs, architecture and binding interfaces. | `loan-policy.spec.maxOpenLoans` is five in M1 and three in M2; existing loans remain returnable. |
 | `.markitect/execution.yaml` | Manager profiles and instructions, creation areas, finite ceilings, Package overrides, scope selection, check selection and owner approval. | Lending uses the selected Manager profile and at most three review rounds. |
+| Product strategy defaults | Versioned defaults shipped with the product, with their original bytes and source fields. | Absent review-round configuration takes three from the strategy document. |
+| `.markitect/ignore.yaml` | Optional exact-file accounting exceptions with reasons. | One observed library editor-state file is ignored. |
 | Explicit host profile file | Literal executables, pinned protocol and tool identities, model and effort, controlled environment and instruction inputs. Supplied by the operator; no implicit discovery. | The selected Codex build and the local test executable. Credentials are resolved locally and never copied into model or journal payloads. |
 | Assignment record | The owner's goal, constraints, granted caps and recorded extensions. | Apply the current library model. |
 | Registry | Versioned artifact ownership and Definition links in `.markitect/registry/`. | Lending owns a particular source file; a parent cannot acquire it through a prompt. |
@@ -78,7 +82,22 @@ A check that executes a command the model requires names that Definition in `req
 
 `defaults` applies to every local Package Manager, including the root. `packages` keys are exact local Package paths, and `.` is the root. An unknown or imported Package key is an error, not a request to create a Manager. Local and integration reviews use the reviewer profile in fresh sessions; the final evidence check is deterministic Host work. Once a second session adapter exists, the default reviewer profile uses a different model family than the Manager profile ([ASM-005](../../concepts/register.md#assumptions-and-hypotheses)). The first strategy is Manager plus reviewer with sequential writing.
 
-Custom instructions are optional file lists under `defaults.instructions` or `packages.<path>.instructions`, keyed by `manager` or `reviewer`, captured with their original bytes. Instructions carry operational guidance only, such as reporting style or tool usage; a project rule in them is a review finding and belongs in the model ([concept](manager-apply-concept.md#four-kinds-of-input-and-record)). The parent still supplies each task's outcome prompt, and the user's instruction goes to the root only.
+Custom instructions are optional file lists under `defaults.instructions` or `packages.<path>.instructions`, keyed by `manager` or `reviewer`. Each entry identifies an exact repository-relative regular file. Preserve list order, repeated entries and original captured bytes; do not expand directories or globs, normalize paths or deduplicate the list. An existing instruction file without captured bytes leaves preparation `NotCompleted` and requires a new complete capture; preparation cannot extend an old capture or its guard. Instructions carry operational guidance only, such as reporting style or tool usage; a project rule in them is a review finding and belongs in the model ([concept](manager-apply-concept.md#four-kinds-of-input-and-record)). The parent still supplies each task's outcome prompt, and the user's instruction goes to the root only.
+
+## Strategy defaults and their sources
+
+For `recursive-apply-v1`, these accepted effects apply when the corresponding project setting is absent:
+
+| Effective setting | Default |
+| --- | --- |
+| `reviewRounds` | `3` |
+| Manager and reviewer instruction lists | `[]` each |
+| `batchNoChangeReviews` | `false` |
+| `acceptance.ownerApproval` | `[]` |
+
+These values must come from one real, versioned product-owned defaults document shipped with the product. Preparation retains its original bytes and digest, using `product:recursive-apply-v1/defaults.yaml` and the actual field pointer in that document as the source. A missing document leaves preparation `NotCompleted`; it cannot be replaced with invented provenance. This contract does not create that document or prescribe an implementation package.
+
+`AuthoredExecution` retains absence. Resolution obtains an absent effective value from the captured strategy document; an explicitly configured value keeps its authored source. Effective defaults must satisfy the project ceilings: an absent review-round setting with `maxReviewRounds: 2` fails because the effective default is three. Never clamp the value or cite a nonexistent execution field as its source.
 
 ## Resolve settings deterministically
 
@@ -88,9 +107,30 @@ In the example, lending gets eight minutes per step while lending/reminders keep
 
 Reject duplicate or unknown keys, unresolved profiles or instruction files, invalid Package paths, unbounded or nonpositive limits and unsupported strategy or role values before dispatch. Use restricted YAML without aliases, custom tags or implicit nulls; durations are explicit positive strings. Structural checks reject forbidden options such as disabling mandatory review. A prose conflict between custom instructions and a model obligation is a question for grounded assessment; no precedence rule lets instructions, configuration or a parent prompt weaken a binding requirement.
 
+## Exact file ignore policy
+
+The optional `.markitect/ignore.yaml` has exactly `apiVersion: markitect.ignore/v1` and a required `files` list. Each item has exactly two string fields, `path` and `reason`; `reason` must contain non-whitespace text and retains its original text. `files: []` is an explicit empty policy. Use the restricted YAML rules above; there is no legacy-format fallback.
+
+For example, when the complete Census contains this library editor-state file:
+
+```yaml
+apiVersion: markitect.ignore/v1
+files:
+  - path: .editor/library-session.json
+    reason: Local editor layout for the library.
+```
+
+Each path names one exact repository-relative regular file in that same Census. There is no glob or directory expansion, path normalization or inference from an acquisition boundary. Wildcard-looking text is never expanded and must itself match one exact observed regular-file path. Reject unknown or duplicate keys, duplicate paths, blank reasons, missing files, directory entries and non-relative or non-exact paths. For example, `.editor/` and `../editor-state.json` are invalid; listing `.editor/library-session.json` after its deletion also fails.
+
+A complete Census proving that `.markitect/ignore.yaml` is absent supplies an empty policy. If the file exists in Census but its input bytes were not captured, retain the observation and return `NotCompleted`; do not assume an empty policy or fetch bytes into an old guard. Exact observed files and their reasons supply the ignore classifications to `AccountFiles`.
+
+An ignore entry overlapping an input or registered artifact fails. Input protection covers model manifests, locks and declared trees, plus exact configuration, registry, instruction and control inputs, including reserved or future input paths; it does not protect every file beneath an acquisition boundary. Gitignore never supplies coverage. Ignoring a file cannot satisfy or waive required realization, independent review or the Definition census.
+
 ## Host profiles and operational state
 
 The operator supplies an explicit profile file and an absolute state directory outside the governed repository; acquisition records both. The profile file defines `agentProfiles` and `checkProfiles` with typed, versioned, adapter-specific sections. The project refers to them by name, and `run` receives prepared profile identities, not provider wire objects.
+
+Host instruction inputs outside the repository remain explicit locations in adapter-owned configuration. Host profiles keep their inline typed, versioned, adapter-specific sections. The concrete driver fields, versions, schema and readiness checks belong to the actual consumer and adapter deliverable.
 
 | Profile | Required preparation |
 | --- | --- |
