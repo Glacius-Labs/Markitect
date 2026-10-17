@@ -13,7 +13,7 @@ Starting product: Main `bc4b49e76f9b9e4b3ec98033a0b8c73d5013b310`. Its existing 
 ## Guiding decisions
 
 - Implement completed v1 and the Manager concept directly. Compatibility is not required; delete obsolete product paths, formats and tests together.
-- One ordinary root and one Manager per local Package, shared across code, tests and docs. Default teams are Manager plus fresh independent reviewer, with sequential writing. [DEC-039](concepts/register.md#dec-039-deterministic-manager-process) requires unchanged Orchestrator-guaranteed operation propagation to every Manager, adjacent-only communication and fixed review/integration; AI-planned participation and rewritten child operations are superseded.
+- One ordinary root and one Manager per local Package, shared across code, tests and docs. The accepted team target now has named independent reviewers and a dispute-only arbiter ([DEC-043](concepts/register.md#dec-043-project-teams-review-arbitration-and-product-defaults)); current single-reviewer execution remains a separate implementation stage. Writing stays sequential. [DEC-039](concepts/register.md#dec-039-deterministic-manager-process) requires unchanged Orchestrator-guaranteed operation propagation to every Manager, adjacent-only communication and fixed review/integration; AI-planned participation and rewritten child operations are superseded.
 - Separate pure model/snapshot/organization/realization values from execution, repository I/O and provider protocols. Use consumer-owned Ports and Adapters and one Go module.
 - Reuse work with current assessment, not old approval. Keep exact bindings, recorded questions and actual effect observations.
 - Budget shortage and uncertainty produce visible retained incomplete work. They cannot waive evidence or authorize blind replay.
@@ -33,7 +33,7 @@ The coordinator owns shared policy, this plan except the [architect section](#ar
 
 ### Architect and Coordinator
 
-On 17 October 2026 the owner proposed a division of the work between an architect session and the Coordinator, and the Coordinator acknowledged it ([source](concepts/sources/architecture-review-20261017.md#division-of-work)). The owner's words are "Konzept und Herzstück" for the architect and "die Dinge aussenrum" for the Coordinator. The concept stays frozen until the core runs, and it is completed first ([DEC-040](concepts/register.md#dec-040-concept-freeze-until-the-core-runs)).
+On 17 October 2026 the owner proposed a division of the work between an architect session and the Coordinator, and the Coordinator acknowledged it ([source](concepts/sources/architecture-review-20261017.md#division-of-work)). The owner's words are "Konzept und Herzstück" for the architect and "die Dinge aussenrum" for the Coordinator. The concept stays frozen until the core runs, with the explicit owner-authorized [DEC-043](concepts/register.md#dec-043-project-teams-review-arbitration-and-product-defaults) exception for team configuration and product defaults, and it is completed first ([DEC-040](concepts/register.md#dec-040-concept-freeze-until-the-core-runs)).
 
 Interpretation of that division (marked):
 - **Architect session:**
@@ -53,6 +53,8 @@ Interpretation of that division (marked):
   - the branch and worktree cleanup the Coordinator planned.
 - **Shared files** stay reserved explicitly through the Coordinator: `go.mod`, `internal/adapters/cli/command.go`, `internal/bootstrap/main.go`, the model and registry shards outside the architect's packages, the architecture and module gates, and the code map.
 - **Port changes** go only through the architect. An adapter that needs one asks the owner, who relays the request.
+
+The owner subsequently instructed the Config chat to integrate DEC-043's concept change on Main so contributors retrieve it there. This documentation-only exception includes its decision/source and exact source registration; it does not transfer Core, adapter or bootstrap implementation ownership. Follow-up implementation must align the versioned config/defaults parser, pure role resolution, instruction capture/rendering, run review roster and arbiter protocol, durable bindings and existing profile producers. Shared-file reservations and actual implementation dispatches remain with their existing owners; no new runtime or study authority follows.
 
 The architect delivers this queue in order, in one or more pull requests each. The Coordinator plans around it. A1 completes the session port contract, in code and in its owning documents, before the rest of the concept. The adapters depend on it, and it adds no core behavior.
 
