@@ -61,16 +61,16 @@ func RenderContext(selection ContextSelection, settings Settings, input RenderIn
 	}
 	w.json("operational-settings-not-grants", struct {
 		StepTimeout          string
-		ReviewRounds         int
+		RejectionLimit       int
 		CreationAreas        []string
 		BatchNoChangeReviews bool
-	}{manager.StepTimeout.Value.String(), manager.ReviewRounds.Value, directoryStrings(manager.CreationRoots.Value), manager.BatchNoChangeReviews.Value}, configRender(manager.StepTimeout.Source), configRender(manager.ReviewRounds.Source), configRender(manager.CreationRoots.Source), configRender(manager.BatchNoChangeReviews.Source))
+	}{manager.StepTimeout.Value.String(), manager.RejectionLimit.Value, directoryStrings(manager.CreationRoots.Value), manager.BatchNoChangeReviews.Value}, configRender(manager.StepTimeout.Source), configRender(manager.RejectionLimit.Source), configRender(manager.CreationRoots.Source), configRender(manager.BatchNoChangeReviews.Source))
 	ceilings := settings.Ceilings()
 	w.json("project-ceilings", struct {
-		StepTimeout   string
-		ReviewRounds  int
-		CreationAreas []string
-	}{ceilings.StepTimeout.Value.String(), ceilings.ReviewRounds.Value, directoryStrings(ceilings.CreationRoots.Value)}, configRender(ceilings.StepTimeout.Source), configRender(ceilings.ReviewRounds.Source), configRender(ceilings.CreationRoots.Source))
+		StepTimeout    string
+		RejectionLimit int
+		CreationAreas  []string
+	}{ceilings.StepTimeout.Value.String(), ceilings.RejectionLimit.Value, directoryStrings(ceilings.CreationRoots.Value)}, configRender(ceilings.StepTimeout.Source), configRender(ceilings.RejectionLimit.Source), configRender(ceilings.CreationRoots.Source))
 	w.json("max-context-bytes", input.MaxContextBytes.Value, configRender(input.MaxContextBytes.Source))
 	for _, text := range input.RemainingLimits {
 		w.host("remaining-limit-view-not-accounting", text)

@@ -56,12 +56,12 @@ func settingsFixture(t *testing.T) organization.SettingsFacts {
 			Reviewer: organization.RoleDefaults{
 				Profile: setting("critic", "/defaults/profiles/reviewer"), Instructions: setting([]string{"review"}, "/defaults/instructions/reviewer"),
 			},
-			StepTimeout: setting(5*time.Minute, "/defaults/stepTimeout"), ReviewRounds: setting(2, "/defaults/reviewRounds"),
+			StepTimeout: setting(5*time.Minute, "/defaults/stepTimeout"), RejectionLimit: setting(2, "/defaults/rejectionLimit"),
 			CreationRoots:        setting([]snapshot.DirectoryBoundary{directory(t, "real")}, "/defaults/creationRoots"),
 			BatchNoChangeReviews: setting(false, "/defaults/batchNoChangeReviews"),
 		},
 		Ceilings: organization.SettingsCeilings{
-			StepTimeout: setting(10*time.Minute, "/limits/maxStepTimeout"), ReviewRounds: setting(3, "/limits/maxReviewRounds"),
+			StepTimeout: setting(10*time.Minute, "/limits/maxStepTimeout"), RejectionLimit: setting(3, "/limits/maxRejectionLimit"),
 			CreationRoots: setting([]snapshot.DirectoryBoundary{directory(t, "real"), directory(t, "docs")}, "/limits/creationRoots"),
 		},
 		Profiles: []organization.ProfileFact{

@@ -23,12 +23,12 @@ func TestValidateSettingsSelectionsDoesNotNeedRoleCatalogs(t *testing.T) {
 func TestValidateSettingsSelectionsChecksDefaultsEvenWhenEveryManagerOverrides(t *testing.T) {
 	topology := settingsTopology(t)
 	facts := settingsFixture(t)
-	facts.Defaults.ReviewRounds.Value = 3
-	facts.Ceilings.ReviewRounds.Value = 2
+	facts.Defaults.RejectionLimit.Value = 3
+	facts.Ceilings.RejectionLimit.Value = 2
 	for _, manager := range topology.Managers() {
 		facts.Overrides = append(facts.Overrides, organization.PackageOverride{
-			Package:      manager.Package,
-			ReviewRounds: settingPointer(2, "/packages/"+manager.Package+"/reviewRounds"),
+			Package:        manager.Package,
+			RejectionLimit: settingPointer(2, "/packages/"+manager.Package+"/rejectionLimit"),
 		})
 	}
 	if err := organization.ValidateSettingsSelections(topology, facts.Defaults, facts.Overrides, facts.Ceilings); err == nil {
@@ -39,11 +39,11 @@ func TestValidateSettingsSelectionsChecksDefaultsEvenWhenEveryManagerOverrides(t
 func TestValidateSettingsSelectionsAcceptsWithinCeilingExactOverride(t *testing.T) {
 	topology := settingsTopology(t)
 	facts := settingsFixture(t)
-	facts.Defaults.ReviewRounds.Value = 2
-	facts.Ceilings.ReviewRounds.Value = 3
+	facts.Defaults.RejectionLimit.Value = 2
+	facts.Ceilings.RejectionLimit.Value = 3
 	facts.Overrides = []organization.PackageOverride{{
-		Package:      "lending",
-		ReviewRounds: settingPointer(3, "/packages/lending/reviewRounds"),
+		Package:        "lending",
+		RejectionLimit: settingPointer(3, "/packages/lending/rejectionLimit"),
 	}}
 	if err := organization.ValidateSettingsSelections(topology, facts.Defaults, facts.Overrides, facts.Ceilings); err != nil {
 		t.Fatalf("valid exact override rejected: %v", err)
@@ -54,10 +54,10 @@ func TestValidateSettingsSelectionsAcceptsWithinCeilingExactOverride(t *testing.
 	resolvedFacts.Profiles = settingsFixture(t).Profiles
 	resolvedFacts.Instructions = settingsFixture(t).Instructions
 	settings := requireSettings(t, topology, resolvedFacts)
-	if got := managerSettings(t, settings, "lending").ReviewRounds.Value; got != 3 {
+	if got := managerSettings(t, settings, "lending").RejectionLimit.Value; got != 3 {
 		t.Fatalf("exact override got %d, want 3", got)
 	}
-	if got := managerSettings(t, settings, "lending/reminders").ReviewRounds.Value; got != 2 {
+	if got := managerSettings(t, settings, "lending/reminders").RejectionLimit.Value; got != 2 {
 		t.Fatalf("descendant inherited parent override: got %d, want default 2", got)
 	}
 }

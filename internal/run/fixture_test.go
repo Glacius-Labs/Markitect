@@ -112,11 +112,11 @@ func fixtureWith(t *testing.T, changeModel func(*model.Input), changeSettings fu
 		Defaults: organization.SettingsDefaults{
 			Manager:     organization.RoleDefaults{Profile: selected(exec, "/defaults/manager", "writer"), Instructions: selected(exec, "/defaults/managerInstructions", []string{"style", "review", "style"})},
 			Reviewer:    organization.RoleDefaults{Profile: selected(exec, "/defaults/reviewer", "critic"), Instructions: selected(exec, "/defaults/reviewerInstructions", []string{"review"})},
-			StepTimeout: selected(exec, "/defaults/stepTimeout", time.Minute), ReviewRounds: selected(exec, "/defaults/reviewRounds", 2),
+			StepTimeout: selected(exec, "/defaults/stepTimeout", time.Minute), RejectionLimit: selected(exec, "/defaults/rejectionLimit", 2),
 			CreationRoots: selected(exec, "/defaults/creationRoots", []snapshot.DirectoryBoundary{}), BatchNoChangeReviews: selected(exec, "/batchNoChangeReviews", false),
 		},
 		Ceilings: organization.SettingsCeilings{
-			StepTimeout: selected(exec, "/limits/stepTimeout", 2*time.Minute), ReviewRounds: selected(exec, "/limits/reviewRounds", 3),
+			StepTimeout: selected(exec, "/limits/stepTimeout", 2*time.Minute), RejectionLimit: selected(exec, "/limits/maxRejectionLimit", 3),
 			CreationRoots: selected(exec, "/limits/creationRoots", []snapshot.DirectoryBoundary{}),
 		}, Profiles: profiles,
 		Instructions: []organization.InstructionFact{

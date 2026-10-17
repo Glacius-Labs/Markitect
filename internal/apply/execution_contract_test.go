@@ -25,6 +25,8 @@ func TestExecutionRejectsClosedContractViolations(t *testing.T) {
 		{"strategy", "recursive-apply-v1", "unreviewed", "execution.strategy"},
 		{"root option", "limits:", "disableReview: true\nlimits:", "execution.unknown_key"},
 		{"nested option", "maxRuns: 5", "maxRuns: 5\n  unlimited: true", "execution.unknown_key"},
+		{"old rejection ceiling key", "maxRejectionLimit: 3", "maxReviewRounds: 3", "execution.unknown_key"},
+		{"old rejection setting key", "rejectionLimit: 3", "reviewRounds: 3", "execution.unknown_key"},
 		{"role", "manager: library-agent", "owner: library-agent", "execution.unknown_key"},
 		{"duplicate", "maxRuns: 5", "maxRuns: 5\n  maxRuns: 6", "execution.duplicate_key"},
 		{"duplicate override", "stepTimeout: 8m", "stepTimeout: 8m\n    stepTimeout: 7m", "execution.duplicate_key"},
@@ -38,7 +40,7 @@ func TestExecutionRejectsClosedContractViolations(t *testing.T) {
 		{"multiple documents", "apiVersion:", "---\n{}\n---\napiVersion:", "execution.documents"},
 		{"numeric key", "maxRuns: 5", "99: 5", "execution.key"},
 		{"missing cap", "  maxRuns: 5\n", "", "execution.field_missing"},
-		{"missing hard round ceiling", "  maxReviewRounds: 3\n", "", "execution.field_missing"},
+		{"missing hard rejection ceiling", "  maxRejectionLimit: 3\n", "", "execution.field_missing"},
 		{"missing assignment", "  runs: 3\n", "", "execution.field_missing"},
 		{"missing reserve", "  sessionStarts: 24\n", "", "execution.field_missing"},
 		{"missing profile", "    manager: library-agent\n", "", "execution.field_missing"},
@@ -78,15 +80,15 @@ func TestExecutionRejectsClosedContractViolations(t *testing.T) {
 
 func TestExecutionOptionalAbsenceAndExplicitEmptySelections(t *testing.T) {
 	base := strings.ReplaceAll(documentedExecution(t), "\r\n", "\n")
-	omitted := strings.Replace(base, "  reviewRounds: 3\n", "", 1)
+	omitted := strings.Replace(base, "  rejectionLimit: 3\n", "", 1)
 	omitted = strings.Replace(omitted, "  batchNoChangeReviews: false\n", "", 1)
 	omitted = omitted[:strings.Index(omitted, "packages:\n")]
 	result := executionResult(t, omitted)
 	document, ok := result.Document()
-	if !ok || document.Defaults.ReviewRounds != nil || document.Defaults.BatchNoChangeReviews != nil || document.Packages != nil || document.Checks != nil || document.Scope != nil || document.OwnerApproval != nil || document.Defaults.Manager.Instructions != nil {
+	if !ok || document.Defaults.RejectionLimit != nil || document.Defaults.BatchNoChangeReviews != nil || document.Packages != nil || document.Checks != nil || document.Scope != nil || document.OwnerApproval != nil || document.Defaults.Manager.Instructions != nil {
 		t.Fatalf("absence lost or invented: %+v %+v", document, result.Diagnostics())
 	}
-	if document.Limits.MaxReviewRounds.Value != 3 {
+	if document.Limits.MaxRejectionLimit.Value != 3 {
 		t.Fatal("hard ceiling lost with optional authored default")
 	}
 	explicit := executionResult(t, omitted+"packages: {}\nscope: []\nchecks: []\nacceptance: {ownerApproval: []}\n")
@@ -94,9 +96,9 @@ func TestExecutionOptionalAbsenceAndExplicitEmptySelections(t *testing.T) {
 	if !ok || document.Packages == nil || document.Scope == nil || document.Checks == nil || document.OwnerApproval == nil {
 		t.Fatal("explicit empty selections lost")
 	}
-	declared := executionResult(t, base).Partial().Defaults.ReviewRounds
-	if declared == nil || declared.Value != 3 || declared.Source.Field != "/defaults/reviewRounds" {
-		t.Fatal("explicit round count lost its source")
+	declared := executionResult(t, base).Partial().Defaults.RejectionLimit
+	if declared == nil || declared.Value != 3 || declared.Source.Field != "/defaults/rejectionLimit" {
+		t.Fatal("explicit rejection limit lost its source")
 	}
 	emptyRoots := executionResult(t, strings.ReplaceAll(base, "creationRoots: [realization]", "creationRoots: []"))
 	if emptyRoots.Status() != model.Passed || emptyRoots.Partial().Limits.CreationRoots.Source.File == "" || emptyRoots.Partial().Defaults.CreationRoots.Source.File == "" {
@@ -107,7 +109,7 @@ func TestExecutionOptionalAbsenceAndExplicitEmptySelections(t *testing.T) {
 func TestExecutionPreservesExactOverridesAndLiteralListOrder(t *testing.T) {
 	base := strings.ReplaceAll(documentedExecution(t), "\r\n", "\n")
 	base = strings.Replace(base, "  profiles:\n", "  instructions:\n    manager: [one.md, two.md, one.md]\n    reviewer: []\n  profiles:\n", 1)
-	base = strings.Replace(base, "packages:\n  lending:\n    stepTimeout: 8m", "packages:\n  lending:\n    profiles: {manager: unobserved-profile}\n    instructions: {manager: [three.md, one.md], reviewer: [review.md]}\n    stepTimeout: 8m\n    reviewRounds: 2\n    creationRoots: [realization/lending]\n  '.':\n    stepTimeout: 9m\n  lending/reminders: {}", 1)
+	base = strings.Replace(base, "packages:\n  lending:\n    stepTimeout: 8m", "packages:\n  lending:\n    profiles: {manager: unobserved-profile}\n    instructions: {manager: [three.md, one.md], reviewer: [review.md]}\n    stepTimeout: 8m\n    rejectionLimit: 2\n    creationRoots: [realization/lending]\n  '.':\n    stepTimeout: 9m\n  lending/reminders: {}", 1)
 	base = strings.Replace(base, "args: [test, ./...]", `args: [test, '$(literal)', ';', '', test]`, 1)
 	base = strings.Replace(base, "directory: realization", "directory: .", 1)
 	base = strings.Replace(base, "ownerApproval: []", "ownerApproval: [lending/reminders, ., lending]", 1)
@@ -123,7 +125,7 @@ func TestExecutionPreservesExactOverridesAndLiteralListOrder(t *testing.T) {
 	if len(packages) != 3 || packages[0].Package != "lending" || packages[1].Package != "." || packages[2].Package != "lending/reminders" || packages[2].StepTimeout != nil || packages[2].Manager.Profile != nil || packages[0].StepTimeout.Value != 8*time.Minute || packages[1].StepTimeout.Value != 9*time.Minute {
 		t.Fatal("exact authored overrides changed or inherited")
 	}
-	if packages[0].Manager.Profile.Value != "unobserved-profile" || packages[0].ReviewRounds.Value != 2 || packages[0].StepTimeout.Source.Field != "/packages/lending/stepTimeout" || !reflect.DeepEqual(packages[0].Manager.Instructions.Value, []string{"three.md", "one.md"}) {
+	if packages[0].Manager.Profile.Value != "unobserved-profile" || packages[0].RejectionLimit.Value != 2 || packages[0].StepTimeout.Source.Field != "/packages/lending/stepTimeout" || !reflect.DeepEqual(packages[0].Manager.Instructions.Value, []string{"three.md", "one.md"}) {
 		t.Fatal("profile declarations or override order/source lost")
 	}
 	if !reflect.DeepEqual(doc.Checks.Value[0].Args.Value, []string{"test", "$(literal)", ";", "", "test"}) || doc.Checks.Value[0].Directory.Value != snapshot.RootDirectory() || !reflect.DeepEqual(doc.OwnerApproval.Value, []string{"lending/reminders", ".", "lending"}) {

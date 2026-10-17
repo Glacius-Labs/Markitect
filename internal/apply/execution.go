@@ -18,7 +18,7 @@ type ExecutionLimits struct {
 	MaxExecutionTime     organization.Setting[time.Duration]
 	MaxStepTimeout       organization.Setting[time.Duration]
 	HostOperationTimeout organization.Setting[time.Duration]
-	MaxReviewRounds      organization.Setting[int]
+	MaxRejectionLimit    organization.Setting[int]
 	MaxContextBytes      organization.Setting[int64]
 	MaxSessionSteps      organization.Setting[int64]
 	MaxTransientRetries  organization.Setting[int64]
@@ -45,7 +45,7 @@ type ExecutionDefaults struct {
 	Manager              organization.RoleOverride
 	Reviewer             organization.RoleOverride
 	StepTimeout          organization.Setting[time.Duration]
-	ReviewRounds         *organization.Setting[int]
+	RejectionLimit       *organization.Setting[int]
 	CreationRoots        organization.Setting[[]snapshot.DirectoryBoundary]
 	BatchNoChangeReviews *organization.Setting[bool]
 }

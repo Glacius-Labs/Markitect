@@ -682,7 +682,7 @@ func TestExplorePreparationRecompilesOriginalsAndMatchesExactBoundSettings(t *te
 				altered.Binding.ModelInput.Root.Entries = append([]model.Entry(nil), inputs.Binding.ModelInput.Root.Entries...)
 				altered.Binding.ModelInput.Root.Entries[1].Bytes = []byte("id: changed\n")
 			case "settings":
-				altered.Settings.Defaults.ReviewRounds.Value = 3
+				altered.Settings.Defaults.RejectionLimit.Value = 3
 			case "basis":
 				altered.Binding.Source.Guard = "other"
 			case "context-limit":

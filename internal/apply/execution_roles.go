@@ -59,12 +59,12 @@ func (d *executionDecoder) defaults(field executionField) ExecutionDefaults {
 	if field.node == nil {
 		return r
 	}
-	f := d.object(field, "profiles", "instructions", "stepTimeout", "reviewRounds", "creationRoots", "batchNoChangeReviews")
+	f := d.object(field, "profiles", "instructions", "stepTimeout", "rejectionLimit", "creationRoots", "batchNoChangeReviews")
 	r.Manager, r.Reviewer = d.roles(f, field, true)
 	r.StepTimeout, _ = d.duration(d.required(f, field, "stepTimeout"))
-	if selected, found := f["reviewRounds"]; found {
+	if selected, found := f["rejectionLimit"]; found {
 		if value, ok := d.count(selected); ok {
-			r.ReviewRounds = &value
+			r.RejectionLimit = &value
 		}
 	}
 	r.CreationRoots, _ = d.directories(d.required(f, field, "creationRoots"))
@@ -101,7 +101,7 @@ func (d *executionDecoder) packages(field executionField) *organization.Setting[
 			continue
 		}
 		d.localPackage(entry, name)
-		f := d.object(entry, "profiles", "instructions", "stepTimeout", "reviewRounds", "creationRoots")
+		f := d.object(entry, "profiles", "instructions", "stepTimeout", "rejectionLimit", "creationRoots")
 		value := organization.PackageOverride{Package: name}
 		value.Manager, value.Reviewer = d.roles(f, entry, false)
 		if field, found := f["stepTimeout"]; found {
@@ -109,9 +109,9 @@ func (d *executionDecoder) packages(field executionField) *organization.Setting[
 				value.StepTimeout = &setting
 			}
 		}
-		if field, found := f["reviewRounds"]; found {
+		if field, found := f["rejectionLimit"]; found {
 			if setting, ok := d.count(field); ok {
-				value.ReviewRounds = &setting
+				value.RejectionLimit = &setting
 			}
 		}
 		if field, found := f["creationRoots"]; found {

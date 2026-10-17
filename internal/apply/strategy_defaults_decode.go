@@ -53,7 +53,7 @@ func decodeStrategyDefaults(input StrategyDefaultsInput) strategyDefaults {
 		return r
 	}
 	defaults := d.required(f, root, "defaults")
-	fields := d.object(defaults, "reviewRounds", "instructions", "batchNoChangeReviews")
+	fields := d.object(defaults, "rejectionLimit", "instructions", "batchNoChangeReviews")
 	// Reuse existing positive-integer/list readers on the actual product bytes.
 	// Their temporary relative file coordinate is replaced by the product locator;
 	// content identity, field pointers and original positions remain unchanged.
@@ -61,9 +61,9 @@ func decodeStrategyDefaults(input StrategyDefaultsInput) strategyDefaults {
 	entry, _ := snapshot.NewEntry(asset, snapshot.Regular, r.input.Bytes)
 	typed := executionDecoding{status: model.Passed}
 	reader := executionDecoder{result: &typed, source: SourceFile{File: entry, RepositoryPath: asset}}
-	if value, ok := reader.count(d.required(fields, defaults, "reviewRounds")); ok {
+	if value, ok := reader.count(d.required(fields, defaults, "rejectionLimit")); ok {
 		value.Source.File = input.Source
-		r.rounds = value
+		r.rejectionLimit = value
 	}
 	instructions := d.required(fields, defaults, "instructions")
 	manager, reviewer := reader.roles(map[string]executionField{"instructions": instructions}, defaults, false)

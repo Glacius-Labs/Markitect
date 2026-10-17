@@ -7,7 +7,7 @@ limits:
   maxExecutionTime: 16h
   maxStepTimeout: 10m
   hostOperationTimeout: 2m
-  maxReviewRounds: 3
+  maxRejectionLimit: 3
   maxContextBytes: 400000
   maxSessionSteps: 40
   maxTransientRetries: 2
@@ -25,7 +25,7 @@ defaults:
   profiles:
     manager: markitect-agent
     reviewer: markitect-agent
-  reviewRounds: 3
+  rejectionLimit: 3
   batchNoChangeReviews: false
   stepTimeout: 10m
   creationRoots: [cmd, internal, docs, integration, tools, experiments, .github, .githooks, .markitect/modules]

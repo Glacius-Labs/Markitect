@@ -11,7 +11,7 @@ import (
 // even when every Manager overrides them. Package overrides apply only to their
 // exact local slot; no ancestor inheritance is performed.
 //
-// Success validates only step timeout, review rounds, creation roots, the
+// Success validates only step timeout, rejection limit, creation roots, the
 // project-wide batch-review flag, their provenance consistency, and exact
 // override ownership. The Manager and Reviewer fields on defaults and overrides
 // are intentionally not inspected: profile and instruction catalog resolution
@@ -48,7 +48,7 @@ func (v settingsValidation) selectionDefaults(defaults SettingsDefaults, ceiling
 	if err := v.ceilingFacts(ceilings); err != nil {
 		return err
 	}
-	if err := v.selection(defaults.StepTimeout, defaults.ReviewRounds, defaults.CreationRoots, ceilings); err != nil {
+	if err := v.selection(defaults.StepTimeout, defaults.RejectionLimit, defaults.CreationRoots, ceilings); err != nil {
 		return fmt.Errorf("defaults: %w", err)
 	}
 	return v.field(defaults.BatchNoChangeReviews.Source, defaults.BatchNoChangeReviews.Value)
@@ -70,9 +70,9 @@ func (v settingsValidation) exactOverrides(topology Topology, overrides []Packag
 
 func (v settingsValidation) managerSelection(packagePath string, defaults SettingsDefaults, override PackageOverride, ceilings SettingsCeilings) error {
 	stepTimeout := replaceSetting(defaults.StepTimeout, override.StepTimeout)
-	reviewRounds := replaceSetting(defaults.ReviewRounds, override.ReviewRounds)
+	rejectionLimit := replaceSetting(defaults.RejectionLimit, override.RejectionLimit)
 	creationRoots := replaceSetting(defaults.CreationRoots, override.CreationRoots)
-	if err := v.selection(stepTimeout, reviewRounds, creationRoots, ceilings); err != nil {
+	if err := v.selection(stepTimeout, rejectionLimit, creationRoots, ceilings); err != nil {
 		return fmt.Errorf("Manager %q: %w", packagePath, err)
 	}
 	return nil

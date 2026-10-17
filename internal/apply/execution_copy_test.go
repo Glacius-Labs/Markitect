@@ -12,7 +12,7 @@ import (
 func TestExecutionAccessorsCopyNestedAuthoredValues(t *testing.T) {
 	content := strings.ReplaceAll(documentedExecution(t), "\r\n", "\n")
 	content = strings.Replace(content, "  profiles:\n", "  instructions: {manager: [one.md], reviewer: [two.md]}\n  profiles:\n", 1)
-	content = strings.Replace(content, "    stepTimeout: 8m", "    profiles: {manager: a, reviewer: b}\n    instructions: {manager: [three.md], reviewer: [four.md]}\n    stepTimeout: 8m\n    reviewRounds: 2\n    creationRoots: [realization/lending]", 1)
+	content = strings.Replace(content, "    stepTimeout: 8m", "    profiles: {manager: a, reviewer: b}\n    instructions: {manager: [three.md], reviewer: [four.md]}\n    stepTimeout: 8m\n    rejectionLimit: 2\n    creationRoots: [realization/lending]", 1)
 	content = strings.Replace(content, "checks:\n", "scope: [{kind: software/Rule, property: lending/maxOpenLoans}]\nchecks:\n", 1)
 	content = strings.Replace(content, "ownerApproval: []", "ownerApproval: [lending]", 1)
 	result := executionResult(t, content)
@@ -29,12 +29,12 @@ func TestExecutionAccessorsCopyNestedAuthoredValues(t *testing.T) {
 	changed.Defaults.Reviewer.Profile.Value = "changed"
 	changed.Defaults.Manager.Instructions.Value[0] = "changed"
 	changed.Defaults.Reviewer.Instructions.Value[0] = "changed"
-	changed.Defaults.ReviewRounds.Value = 99
+	changed.Defaults.RejectionLimit.Value = 99
 	changed.Defaults.BatchNoChangeReviews.Value = true
 	p := &changed.Packages.Value[0]
 	p.Manager.Profile.Value, p.Reviewer.Profile.Value = "changed", "changed"
 	p.Manager.Instructions.Value[0], p.Reviewer.Instructions.Value[0] = "changed", "changed"
-	p.StepTimeout.Value, p.ReviewRounds.Value = 99, 99
+	p.StepTimeout.Value, p.RejectionLimit.Value = 99, 99
 	p.CreationRoots.Value[0] = area(t, "other")
 	changed.Scope.Value[0].Value.Kind = model.Identity{Package: "other", ID: "other"}
 	changed.Checks.Value[0].Args.Value[0] = "changed"

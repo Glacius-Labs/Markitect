@@ -219,14 +219,14 @@ func Bind(input BindingInput) (Binding, error) {
 		return Binding{}, ErrInvalid
 	}
 	ceilings := input.Settings.Ceilings()
-	for _, source := range []organization.SettingSource{ceilings.StepTimeout.Source, ceilings.ReviewRounds.Source, ceilings.CreationRoots.Source} {
+	for _, source := range []organization.SettingSource{ceilings.StepTimeout.Source, ceilings.RejectionLimit.Source, ceilings.CreationRoots.Source} {
 		if !covered(source) {
 			return Binding{}, ErrInvalid
 		}
 	}
 	w.Ceilings = ceilingsBinding{
 		StepTimeout:  organization.Setting[int64]{Value: int64(ceilings.StepTimeout.Value), Source: ceilings.StepTimeout.Source},
-		ReviewRounds: ceilings.ReviewRounds, CreationSource: ceilings.CreationRoots.Source,
+		ReviewRounds: ceilings.RejectionLimit, CreationSource: ceilings.CreationRoots.Source,
 	}
 	for _, directory := range ceilings.CreationRoots.Value {
 		w.Ceilings.CreationRoots = append(w.Ceilings.CreationRoots, directory.String())
@@ -262,7 +262,7 @@ func Bind(input BindingInput) (Binding, error) {
 				}
 			}
 		}
-		for _, source := range []organization.SettingSource{manager.StepTimeout.Source, manager.ReviewRounds.Source, manager.CreationRoots.Source, manager.BatchNoChangeReviews.Source} {
+		for _, source := range []organization.SettingSource{manager.StepTimeout.Source, manager.RejectionLimit.Source, manager.CreationRoots.Source, manager.BatchNoChangeReviews.Source} {
 			if !covered(source) {
 				return Binding{}, ErrInvalid
 			}
@@ -274,7 +274,7 @@ func Bind(input BindingInput) (Binding, error) {
 				return Binding{}, err
 			}
 		}
-		m := managerBinding{Package: manager.Package, Manager: manager.Manager, Reviewer: manager.Reviewer, StepTimeout: organization.Setting[int64]{Value: int64(manager.StepTimeout.Value), Source: manager.StepTimeout.Source}, ReviewRounds: manager.ReviewRounds, CreationSource: manager.CreationRoots.Source, BatchNoChangeReviews: manager.BatchNoChangeReviews}
+		m := managerBinding{Package: manager.Package, Manager: manager.Manager, Reviewer: manager.Reviewer, StepTimeout: organization.Setting[int64]{Value: int64(manager.StepTimeout.Value), Source: manager.StepTimeout.Source}, ReviewRounds: manager.RejectionLimit, CreationSource: manager.CreationRoots.Source, BatchNoChangeReviews: manager.BatchNoChangeReviews}
 		for _, directory := range manager.CreationRoots.Value {
 			m.CreationRoots = append(m.CreationRoots, directory.String())
 			area, e := realization.NewCreationArea(owner, directory)

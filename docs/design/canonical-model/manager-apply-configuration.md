@@ -22,7 +22,7 @@ The model stays language v1. None of these runtime records adds a canonical Assi
 
 ## Project execution file
 
-One versioned YAML file outside the Definition roots. The figures below are illustrative, not measured sufficient capacity. This executable example is also consumed by preparation tests and retains the current parser's `reviewRounds` / `maxReviewRounds` spelling until the coordinated rename. The selected target names are `rejectionLimit` / `maxRejectionLimit`, as specified below.
+One versioned YAML file outside the Definition roots. The figures below are illustrative, not measured sufficient capacity. Preparation tests consume this executable example directly.
 
 ```yaml
 apiVersion: markitect.execution/v1
@@ -34,7 +34,7 @@ limits:
   maxExecutionTime: 16h
   maxStepTimeout: 10m
   hostOperationTimeout: 2m
-  maxReviewRounds: 3
+  maxRejectionLimit: 3
   maxContextBytes: 400000
   maxSessionSteps: 40
   maxTransientRetries: 2
@@ -52,7 +52,7 @@ defaults:
   profiles:
     manager: library-agent
     reviewer: library-agent
-  reviewRounds: 3
+  rejectionLimit: 3
   batchNoChangeReviews: false
   stepTimeout: 10m
   creationRoots: [realization]
@@ -95,7 +95,7 @@ For `recursive-apply-v1`, these accepted effects apply when the corresponding pr
 | `batchNoChangeReviews` | `false` |
 | `acceptance.ownerApproval` | `[]` |
 
-The selected field names are `rejectionLimit` and its ceiling `maxRejectionLimit`, replacing `reviewRounds` and `maxReviewRounds`. They count rejected submissions, not all submissions. Successful limited or complete deliveries neither use nor reset this allowance. All work still consumes the shared assignment budget; [execution](manager-apply-execution.md#admission-amendments-and-finite-correction) defines stable counter identity, parent assessment after two rejections and exhaustion. Current source preparation and the executable example above still use the old names; migrate the parser, defaults, rendering, binding producers and example together. This does not defer the selected naming decision or claim the current parser accepts the target names. Historical records retain their original names and semantics under their recorded version.
+The fields count rejected submissions, not all submissions. Successful limited or complete deliveries neither use nor reset this allowance. All work still consumes the shared assignment budget; [execution](manager-apply-execution.md#admission-amendments-and-finite-correction) defines stable counter identity, parent assessment after two rejections and exhaustion. Source preparation resolves the configured numeric limit; it does not implement a rejection counter or review engine. Historical records retain their original names and semantics under their recorded version.
 
 These values must come from one real, versioned product-owned defaults document shipped with the product. Preparation retains its original bytes and digest, using `product:recursive-apply-v1/defaults.yaml` and the actual field pointer in that document as the source. A missing document leaves preparation `NotCompleted`; it cannot be replaced with invented provenance. This contract does not create that document or prescribe an implementation package.
 
