@@ -4,7 +4,7 @@ Preparation draft for the owner's five-hour Coordinator transition. The final st
 
 ## Resume from current source
 
-The preparation baseline is Main `aa488be121bf50078cb833268b7c1ffa02100966`, freshly fetched after PR346. Fetch Main again before the next assignment. Preserve the [earlier handoff](coordinator-handoff-20261017.md); its two pending deliveries were integrated during this Coordinator run, including the corrected RUN source and its registration.
+The preparation baseline is Main `d60ae93dedb39da112f382a284b33f0ca24c6c08`, freshly fetched after Runtime PR344 and RUN PR346. Fetch Main again before the next assignment. Preserve the [earlier handoff](coordinator-handoff-20261017.md); its two pending deliveries were integrated during this Coordinator run, including the corrected RUN source and its registration.
 
 Read [AGENTS.md](../../AGENTS.md), the [working method](working-method.md), the [delivery plan](../implementation-plan.md), [DEC-037](../concepts/register.md#dec-037-agent-sessions-and-checks-run-in-linux-containers), [DEC-039](../concepts/register.md#dec-039-deterministic-manager-process), and the current [Apply contracts](../design/canonical-model/README.md). Actual entrypoints use `cmd/markitect` and `.markitect/model.yaml`:
 
@@ -25,9 +25,9 @@ Structural preparation, source tests, hosted CI, provider execution, real Apply,
 
 ## What is integrated
 
-The following fixed heads and merge commits are recorded by the deliveries. Their chats/PRs retain complete reviews, exact-head CI and failed observations; do not repeat that evidence routinely.
+The following fixed heads and merge commits are recorded by the deliveries. Controlled deliveries retain complete independent reviews, exact-head CI and failed observations in their chats/PRs; do not repeat that evidence routinely. The owner's independent Runtime deliveries retain their own bounded proof records and are distinguished below.
 
-| PR | Delivery | Approved head | Merge commit |
+| PR | Delivery | Frozen/source head | Merge commit |
 | --- | --- | --- | --- |
 | [320](https://github.com/Glacius-Labs/Markitect/pull/320) | Corrected original handoff | `270d87c3ec7438fa40b42edc9a47bfefe1a52315` | `412409a22a67c4081fa326b04644b93a61dd10dc` |
 | [321](https://github.com/Glacius-Labs/Markitect/pull/321) | Captured Apply input to RUN binding | `b37f14de2630c24cc56f3ff28b1ff8d13629ca5c` | `899538f751287fd70624db99bb15751956a93ad0` |
@@ -49,6 +49,7 @@ The following fixed heads and merge commits are recorded by the deliveries. Thei
 | [341](https://github.com/Glacius-Labs/Markitect/pull/341) | Immutable operation and actual Manager renderer | `4876f3b19e66b45d446b9a2c60632436b64e0d4d` | `8db25faff149f8ba0102c95951301e11d4600997` |
 | [342](https://github.com/Glacius-Labs/Markitect/pull/342) | Conversation continuity and per-Step target basis | `afb83a946244c43686e6b4369110e7ff3db61166` | `91be3071bd2388cd1ab8f4112e0458cfd9454f10` |
 | [343](https://github.com/Glacius-Labs/Markitect/pull/343) | Pure pinned Claude 2.1.301 codec | `620280a53de588523b0a103efadb191e8453e67d` | `20a620b2a77018470cf117c8a9dc1dba920afda6` |
+| [344](https://github.com/Glacius-Labs/Markitect/pull/344) | Owner Runtime census/helpers and bounded capability probes | `9d91449466cb35e42b1408db5135ae7ce8591673` | `d60ae93dedb39da112f382a284b33f0ca24c6c08` |
 | [345](https://github.com/Glacius-Labs/Markitect/pull/345) | Bounded summaries, idle policy and quiescence contract | `05978bb4faa3ab3b6a7034c53ed996a3554e2659` | `f0ce496373504f47fd5623b25c83fa82b927d013` |
 | [346](https://github.com/Glacius-Labs/Markitect/pull/346) | Initial Explore census/gate and live basis v3 | `4f0cdcdea3403fbbf91bf1047a838eecab9a819f` | `aa488be121bf50078cb833268b7c1ffa02100966` |
 
@@ -78,7 +79,7 @@ Bounded versioned child reports must retain mandatory findings and distinguish p
 
 ## Reservations and next controlled proposal
 
-At preparation, every source queue in the table below is closed and its delivery reported a clean pushed checkpoint. Their old task lists are not active grants. The only newly controlled work is the READ-ONLY settings migration proposal; no implementation or shared write grant exists for it.
+At preparation, every controlled source queue in the table below is closed and its delivery reported a clean pushed checkpoint. Their old task lists are not active grants. The READ-ONLY settings migration proposal is also complete and stopped, with no implementation or shared write grant.
 
 | Role / latest delivery | Chat ID |
 | --- | --- |
@@ -93,13 +94,15 @@ At preparation, every source queue in the table below is closed and its delivery
 | ORG operation/context / 341 | `01a1496d-c74b-7943-a6a6-9bf476d32bb9` |
 | RUN initial Explore v3 / 346 | `01a1496d-cbf6-7493-8323-1cf97afae60d` |
 | Claude codec / 343 | `01a14981-51df-7430-8963-7318cf99ca87` |
-| New settings proposal only | `01a149ab-f890-7762-94f1-517ed92675f0` |
+| Completed settings proposal only; no implementation | `01a149ab-f890-7762-94f1-517ed92675f0` |
 
-The proposal must identify the smallest atomic authored parser/defaults/ceilings/public API/consumer/executable-example migration, exact paths and tests, while separating historical wire fields/bytes/Restore/retries. It must not add a rejection engine or role/effect/budget redesign. Its original clean proposal base is `f0ce4963`; it was explicitly told to include integrated `aa488be1` read-only and preserve its existing worktree. Final scope/report/checkpoint remains pending in this preparation draft. A future implementation needs a new explicit bounded grant and actual integrated base.
+The completed eight-part proposal identifies the atomic authored parser/defaults/ceilings/public API/consumer/executable-example migration, with exact production/test paths and source-field expectations in its chat. It does not add a rejection engine or role/effect/budget redesign. The clean preserved worktree is `C:\Users\Consiliari\.codex\worktrees\rejection-limit-contract-proposal\Markitect`, branch `dev/rejection-limit-contract-proposal`, pushed and independently read back at `f0ce496373504f47fd5623b25c83fa82b927d013`. Integrated V3 at `aa488be1` was analyzed with read-only Git reads, not checked out or tested there. The wrong initial unqualified context selector failed; corrected owning contexts and structural preparation passed. No tests, implementation, file edits, empty commit or PR were performed.
 
-The independent owner chat **Consultant**, `01a148ed-f2c8-7f91-85db-76be64df6bfe`, has verified human authority for two-way coordination. Its 334/337/342/345 document reservations are released. It continues the owner's own discussion; do not stop or archive it with controlled chats. New technical paths need coordination. Its own independent review and exact-head delivery records remain in its chat/PRs.
+The smallest proposed RUN production edit is only `internal/run/binding.go`: map modern public settings to unchanged private `managerBinding.ReviewRounds` and `ceilingsBinding.ReviewRounds` wire slots. Do not globally rename historical wire fields or rewrite golden fixtures. Existing versions, strict canonical remarshal, source bytes, context bytes, receipts and review floors stay unchanged. Public Go fields become RejectionLimit and MaxRejectionLimit; authored old/mixed YAML keys are deliberately rejected rather than silently aliased. The producer default remains 3, with actual new source-field provenance; limits, nil/copy semantics and budgets do not change. Source and `configuration.md`'s first executable YAML example must change together. Apply decoding/default/settings files, Organization resolution/rendering, the self execution input, actual consumer test fixtures and a CLI projection assertion are one coherent cut. A future implementation needs a new explicit bounded path grant and actual integrated base; the proposal is not that grant.
 
-The owner relayed Claude's next Runtime plan: process census, hardened one-shot volume import/export helpers and planned `RunHelper`, gated model-turn/container-resume evidence, and `packaging/runtime/examples/go`. These are not inferred deliveries or new experiment authorization. Existing Engine/Session APIs include Start/StartProvider, ImageID/ReadImageFile, provider stdout/input, ToolCalls and Stop; see the actual integrated source and `cli_smoke_test.go`. Route new interface needs through the owner. Do not build competing helpers or assume provider-home persistence proves resume.
+The independent owner chat **Consultant**, `01a148ed-f2c8-7f91-85db-76be64df6bfe`, has verified human authority for two-way coordination. Its 334/337/342/345 reservations are released. The owner subsequently commissioned a final concept polish; the new exclusive Docs-only reservation covers `README.md`, `manager-apply-concept.md`, `manager-apply-execution.md`, `manager-apply-port-contracts.md`, `manager-apply-go-architecture.md`, `manager-apply-journal.md`, `manager-apply-library-flow.md`, `manager-apply-rebuild-plan.md`, `manager-apply-implementation-plan.md` and `manager-realization-north-star.md` under `docs/design/canonical-model/`. `configuration.md`, source, model, generated view, root and historical sources are excluded. No new process decision or execution framework is granted. This independent work is pending in the preparation draft; record its final actual delivery or outstanding head/CI/reservation at the checkpoint. Do not stop or archive this owner discussion with controlled chats.
+
+Runtime PR344 has now delivered process census, hardened one-shot `Engine.RunHelper` on volumes, bounded output buffering, frame protocol 2 and `packaging/runtime/examples/go`. Existing Engine/Session APIs include Start/StartProvider, ImageID/ReadImageFile, provider stdout/input, ToolCalls and Stop; see actual source and `cli_smoke_test.go`. The owner's [bounded capability record](../validation/runtime-capabilities-20261017.md) reports real single-run Claude smoke, new-container conversation resume after a workspace change, one-session workspace continuity, census and a Go-image check. These were the independent Runtime owner's probes, not new Coordinator execution. Codex had no runtime credential: MCP readiness was observed, but a real Codex turn/resume remains unproven. No mid-turn interruption, Host-crash recovery or concurrent-session proof is claimed. The census rule is a test assertion, not an implemented Host quiescence policy. Resume of those exact Claude cases is evidence, not a general adapter/Manager/Apply capability. Runtime remains reserved for the owner; route interface needs through them and do not build competing helpers.
 
 ## Preserve work and failed observations
 
