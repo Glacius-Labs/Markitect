@@ -20,6 +20,8 @@ The baseline fixes the uniform definition form, nine Core definitions, values an
 
 Status: the design basis for the rebuild commissioned in [DEC-024](../../concepts/register.md#dec-024-first-reliable-apply-rebuild-and-coordinated-start). The owner decisions include [DEC-025 to DEC-037](../../concepts/register.md#dec-025-package-managers-organize-realization) and [DEC-039](../../concepts/register.md#dec-039-deterministic-manager-process). DEC-039 owns the fixed Manager process and its confirmed refinements, including rejection counting; DEC-037 owns the container boundary. Producer packages refine exact Go names and versioned schemas in review within those decisions. These documents describe target behavior; implementation pull requests establish which parts work. Historical source comparisons retain their stated revision and are not live status. A change of intent goes to its owning document, not into a parallel note.
 
+[DEC-043](../../concepts/register.md#dec-043-project-teams-review-arbitration-and-product-defaults) adds the owner-accepted project team/defaults target: start at [configuration](manager-apply-configuration.md#project-execution-file), then [conflict arbitration](manager-apply-execution.md#review-conflicts-and-arbitration). It is a bounded later owner change, not evidence that current v1 decoders or execution implement it.
+
 Read in this order:
 
 | Document | Owns |
@@ -38,7 +40,7 @@ Read in this order:
 | [Library M1](library-example/README.md) | The example model, including its [callable interface](library-example/m1/model/library/callable-interface.yaml), and the [independent expectations](library-example/evaluation-contract.md). |
 | [North star](manager-realization-north-star.md) | Ideas and variants that were not selected, later operations and open questions. |
 
-These documents are frozen under [DEC-040](../../concepts/register.md#dec-040-concept-freeze-until-the-core-runs) until one Package runs end to end. Until then, changes only complete them, without adding scope. The [architecture review of 17 October 2026](apply-architecture-review-20261017.md) is a dated assessment of this design and its proposed approach. It does not own any contract.
+These documents are frozen under [DEC-040](../../concepts/register.md#dec-040-concept-freeze-until-the-core-runs) until one Package runs end to end. Until then, changes only complete them, without adding scope, except the explicit owner-authorized team/default extension in DEC-043. The [architecture review of 17 October 2026](apply-architecture-review-20261017.md) is a dated assessment of this design and its proposed approach. It does not own any contract.
 
 Implementations identify the supported part of this target and its evidence. An intentional deviation changes the owning contract in the same pull request; partial implementation does not silently redefine the target. Record shapes, event tags and Go signatures in the design are illustrative unless explicitly identified as executable fixtures; the behavioral requirements remain binding. Exact implemented formats belong to the versioned contracts in source.
 

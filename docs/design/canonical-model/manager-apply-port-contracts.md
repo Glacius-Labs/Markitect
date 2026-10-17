@@ -106,6 +106,14 @@ type Source interface {
 
 Apply compiles those bytes with `model`, derives organization and context and validates initial file accounting. Unknown files need a classification before they can change. Model, configuration and independent expectations stay outside Agent write authority. Invalid inputs stop work before dispatch, and the bound inputs are stored durably before any session starts. `apply.Control` supplies the controller lock and journal ([journal](manager-apply-journal.md#physical-store-and-commit-contract)); CLI and MCP never acquire execution authority themselves.
 
+## Configured review team bindings
+
+The accepted [configuration target](manager-apply-configuration.md#resolve-the-team) changes project role selection, not provider-neutral Session ownership. `organization` resolves the Manager, named reviewer roster and reviewArbiter with effective model/effort, ordered captured instructions and provenance. `apply` composes them with explicitly captured compatible adapter/runtime inputs through the existing profile producers; `run` consumes their prepared identities. Do not add a parallel catalog, provider discovery or new canonical Kind.
+
+A run policy binds the full active roster and its configuration sources. A review subject additionally binds the named reviewer, purpose, exact model/input/candidate/registry basis, its recorded expectations and assessment. The Orchestrator requires all roster entries before deriving the group result, and applies the group rejection once. An arbiter assessment binds the same subject plus disputed finding IDs, both arguments, supplied evidence and its recorded ruling. It has independent fresh context, read-only authority and no path/ownership tools. Its identity is distinct from the Manager and ordinary reviewer invocations even if a model is shared.
+
+These are required semantic bindings for implementation. Exact Go signatures, serialized versions, tool payloads and adapter/CLI/bootstrap migration remain coordinated producer deliverables; the illustrative interfaces below and current single-reviewer source do not already implement this extension. No documentation edit admits an unsupported role or replay.
+
 ## Session and communication port
 
 ```go

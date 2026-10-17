@@ -27,6 +27,8 @@ Sources preserve where the [register](../register.md) entries come from. Owner s
 
 The interpretation inside the two collections belongs to the chats that wrote them; it contains no owner decisions. This applies to the Concepts notes' "Eigene Interpretation", assumptions, limits and open questions, and to the Ideas entries' problem statements and statuses. The register's [imported collections](../register.md#imported-collections) section maps their IDs to register entries.
 
+The [Config discussion of 17 October 2026](configuration-teams-defaults-20261017.md) preserves the owner's team/default requirements, acceptance and explicit instruction to publish the bounded concept change on Main.
+
 ## Snapshot provenance
 
 ### Concepts chat collection

@@ -19,6 +19,8 @@ Markitect is model-first development with delegated AI realization. You describe
 
 Think of it as programming through documentation: the model defines what the project should be, and becomes the starting point for making it so.
 
+![Planned workflow: you define the canonical model; the project aligns to it. Markitect organizes responsibilities, AI work, independent review, integration and checks. Full Apply is under development.](docs/strategy/assets/model-realization.svg)
+
 ## Why Markitect
 
 The difficult question after an AI implementation is:
@@ -43,10 +45,18 @@ Imagine a library where a member may borrow five books. The rule changes: member
 
 You change the rule in the model. The intended result reaches every affected part of the project:
 
-- The implementation enforces the new limit.
-- Tests check the new boundary against the requirement.
-- The usage guide explains the changed behavior.
-- Existing rules, including returning books and handling suspended members, still hold.
+```mermaid
+flowchart TB
+    accTitle: One model change across the project
+    accDescr: Planned realization of a library policy change. Changing the loan limit from five to three in the model updates the implementation, boundary tests and usage guide. Existing rules still apply.
+    model["Model<br/>Loan limit: 5 → 3"] --> code["Code<br/>Enforce the new limit"]
+    model --> tests["Tests<br/>Check the new boundary"]
+    model --> guide["Usage guide<br/>Explain the changed rule"]
+    classDef intent fill:#e2ebe5,stroke:#698173,color:#212b2a
+    class model intent
+```
+
+Existing rules, including returning books and handling suspended members, still hold.
 
 This is the [two-Apply library demonstration](docs/design/canonical-model/manager-apply-playground.md) we are building toward: realize the original model, then apply the changed policy to that actual result.
 

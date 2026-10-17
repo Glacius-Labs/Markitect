@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"reflect"
 	"strconv"
@@ -17,12 +18,18 @@ import (
 // The test executable doubles as a portable fake engine. Every invocation
 // consumes one scripted response and records its literal arguments on disk.
 type engineStep struct {
-	Out, Err    string
-	Code        int
-	SleepMillis int
+	Out, Err         string
+	Code             int
+	SleepMillis      int
+	HoldStdoutMillis int
 }
 
 func TestMain(m *testing.M) {
+	if len(os.Args) == 3 && os.Args[1] == "hold-image-observation-stdout" {
+		millis, _ := strconv.Atoi(os.Args[2])
+		time.Sleep(time.Duration(millis) * time.Millisecond)
+		os.Exit(0)
+	}
 	if dir := os.Getenv("MARKITECT_FAKE_COMMAND_ENGINE"); dir != "" {
 		data, _ := os.ReadFile(filepath.Join(dir, "steps.json"))
 		var steps []engineStep
@@ -39,6 +46,20 @@ func TestMain(m *testing.M) {
 		_, _ = f.Write(append(args, '\n'))
 		_ = f.Close()
 		step := steps[index]
+		for i, arg := range os.Args[1:] {
+			if arg == "--cidfile" && i+2 < len(os.Args) {
+				_ = os.WriteFile(os.Args[i+2], []byte(strings.TrimSpace(step.Out)), 0600)
+				_ = os.WriteFile(filepath.Join(dir, "create-ready"), []byte(strings.TrimSpace(step.Out)), 0600)
+			}
+		}
+		if step.HoldStdoutMillis > 0 {
+			child := exec.Command(os.Args[0], "hold-image-observation-stdout", strconv.Itoa(step.HoldStdoutMillis))
+			child.Stdout = os.Stdout
+			if err := child.Start(); err != nil {
+				os.Exit(98)
+			}
+			_ = os.WriteFile(filepath.Join(dir, "stdout-holder"), []byte(strconv.Itoa(child.Process.Pid)), 0600)
+		}
 		if len(os.Args) > 1 && os.Args[1] == "start" {
 			_ = os.WriteFile(filepath.Join(dir, "attach-ready"), []byte("ready"), 0600)
 		}
