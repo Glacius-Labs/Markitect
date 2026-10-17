@@ -291,7 +291,7 @@ func TestPublisherPreflightKeepsUnknownFailuresDistinctFromCaptureChange(t *test
 	}
 }
 
-func TestPublisherBeforeWriteDriftRetainsFailedReceipt(t *testing.T) {
+func TestPublisherBeforeWriteDriftRetainsUnknownReceipt(t *testing.T) {
 	for _, p := range []string{"new/deep/add.txt", "real/change.txt"} {
 		t.Run(p, func(t *testing.T) {
 			r, repo, req := publicationFixture(t)
@@ -306,7 +306,7 @@ func TestPublisherBeforeWriteDriftRetainsFailedReceipt(t *testing.T) {
 				}
 			}
 			receipt, err := r.Publish(context.Background(), permit, &publicationControl{})
-			if !errors.Is(err, apply.ErrCaptureChanged) || !errors.Is(err, ErrChanged) || receipt.Outcome != apply.PublicationFailed || len(receipt.Paths) != 1 || receipt.Paths[0].State != apply.PathOther {
+			if !errors.Is(err, apply.ErrCaptureChanged) || !errors.Is(err, ErrChanged) || receipt.Outcome != apply.PublicationUnknown || len(receipt.Paths) != 1 || receipt.Paths[0].State != apply.PathOther {
 				t.Fatalf("before-write capture drift lost classification or receipt: %+v %v", receipt, err)
 			}
 			data, readErr := os.ReadFile(filepath.Join(repo.Dir, filepath.FromSlash(p)))
