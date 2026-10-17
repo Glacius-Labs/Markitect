@@ -26,6 +26,7 @@ spec:
     - namespace: tooling
       name: published-releases
   paths:
+    - internal/apply/
     - src/cmd/markitect/
     - src/cmd/markitect-release/
     - src/internal/application/buildinfo/
