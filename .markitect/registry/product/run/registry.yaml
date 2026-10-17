@@ -1,5 +1,13 @@
 apiVersion: markitect.registry/v1
 artifacts:
+  - path: "internal/run/session_readiness_test.go"
+    form: test
+    realizes: [product/run/confirmed-run-history]
+    why: Checks truthful ready-but-unbound startup, one first send, retained holds and literal historical receipts.
+  - path: "internal/run/testdata/session-bound-before-readiness.json"
+    form: config
+    realizes: [product/run/confirmed-run-history]
+    why: Retains literal bound-session and step history captured before readiness changes at fbffd7fb.
   - path: "internal/run/binding_inventory.go"
     form: code
     realizes: [product/run/confirmed-run-history]
