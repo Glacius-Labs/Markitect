@@ -24,13 +24,13 @@ packages:
   # --- apply-organization -------------------------------------------------
   - path: internal/organization
     layer: apply-organization
-    purpose: Derives local Manager topology, resolves exact settings and selects model context with inclusion reasons.
+    purpose: Derives Manager topology, resolves settings, selects model context and renders sourced role packages with mandates.
     doc: docs/design/canonical-model/manager-apply-go-architecture.md#organize-by-responsibility
 
   # --- apply-realization --------------------------------------------------
   - path: internal/realization
     layer: apply-realization
-    purpose: Validates registry ownership, file accounting and claims; captures candidates and composes disjoint changes.
+    purpose: Validates registry ownership, file accounting, claims and Definition census; captures and composes candidates.
     doc: docs/design/canonical-model/manager-apply-go-architecture.md#organize-by-responsibility
 
   # --- core ---------------------------------------------------------------

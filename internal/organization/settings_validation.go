@@ -3,6 +3,7 @@ package organization
 import (
 	"crypto/sha256"
 	"fmt"
+	"maps"
 	"reflect"
 	"time"
 
@@ -14,6 +15,12 @@ type settingsValidation struct {
 	// Used only to reject contradictory supplied assertions about one field.
 	// This is not a parsed document or an execution configuration property bag.
 	fields map[SettingSource]any
+}
+
+// clone keeps later consistency checks from mutating the fixed settings basis.
+// Values retained by field are immutable facts or copied lists.
+func (v settingsValidation) clone() settingsValidation {
+	return settingsValidation{files: maps.Clone(v.files), fields: maps.Clone(v.fields)}
 }
 
 func (v settingsValidation) source(source SettingSource, field bool) error {
