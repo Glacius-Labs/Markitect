@@ -15,10 +15,10 @@ import (
 
 	"github.com/Glacius-Labs/Markitect/src/internal/application/projectwork"
 	"github.com/Glacius-Labs/Markitect/src/internal/core/projectmodel"
-	"github.com/Glacius-Labs/Markitect/src/internal/core/snapshot"
-	"github.com/Glacius-Labs/Markitect/src/internal/infrastructure/source"
-	"github.com/Glacius-Labs/Markitect/src/internal/modules/githooks"
-	"github.com/Glacius-Labs/Markitect/src/internal/modules/pipelines"
+	
+	"github.com/Glacius-Labs/Markitect/internal/tooling/source"
+	"github.com/Glacius-Labs/Markitect/internal/tooling/modules/githooks"
+	"github.com/Glacius-Labs/Markitect/internal/tooling/modules/pipelines"
 )
 
 const (
@@ -112,7 +112,7 @@ func Check(options Options) (Report, error) {
 	return report, nil
 }
 
-func runHooksModule(snap *snapshot.Snapshot, model githooks.ModelFacts, ownership []githooks.OwnershipFact, configPath string) (Result, error) {
+func runHooksModule(snap *source.Input, model githooks.ModelFacts, ownership []githooks.OwnershipFact, configPath string) (Result, error) {
 	configBytes, err := configuredModuleFile(snap, configPath, ownership)
 	if err != nil {
 		return Result{}, fmt.Errorf("git hooks config: %w", err)
@@ -132,7 +132,7 @@ func runHooksModule(snap *snapshot.Snapshot, model githooks.ModelFacts, ownershi
 	return Result{Name: "git-hooks", ConfigPath: configPath, ConfigDigest: native.ConfigDigest, Status: native.Status, GitHooks: &native}, nil
 }
 
-func runPipelinesModule(snap *snapshot.Snapshot, model pipelines.ModelFacts, ownership []githooks.OwnershipFact, checks []projectmodel.Check, configPath string) (Result, error) {
+func runPipelinesModule(snap *source.Input, model pipelines.ModelFacts, ownership []githooks.OwnershipFact, checks []projectmodel.Check, configPath string) (Result, error) {
 	configBytes, err := configuredModuleFile(snap, configPath, ownership)
 	if err != nil {
 		return Result{}, fmt.Errorf("pipelines config: %w", err)
@@ -158,7 +158,7 @@ func runPipelinesModule(snap *snapshot.Snapshot, model pipelines.ModelFacts, own
 	return Result{Name: "pipelines", ConfigPath: configPath, ConfigDigest: native.ConfigDigest, Status: native.Status, Pipelines: &native}, nil
 }
 
-func hookModelFacts(project *projectvalue.Project, snap *snapshot.Snapshot, report projectmodel.Report) githooks.ModelFacts {
+func hookModelFacts(project *projectvalue.Project, snap *source.Input, report projectmodel.Report) githooks.ModelFacts {
 	facts := githooks.ModelFacts{
 		StructuralStatus: "passed", SnapshotID: snap.ID, SnapshotDigest: snap.Digest(),
 		ModelDigest: project.Model.Digest, OwnerIDs: make([]string, 0, len(report.Artifacts)),
@@ -170,7 +170,7 @@ func hookModelFacts(project *projectvalue.Project, snap *snapshot.Snapshot, repo
 	return facts
 }
 
-func pipelineModelFacts(project *projectvalue.Project, snap *snapshot.Snapshot, report projectmodel.Report) pipelines.ModelFacts {
+func pipelineModelFacts(project *projectvalue.Project, snap *source.Input, report projectmodel.Report) pipelines.ModelFacts {
 	facts := pipelines.ModelFacts{
 		StructuralStatus: "passed", SnapshotID: snap.ID, SnapshotDigest: snap.Digest(),
 		ModelDigest: project.Model.Digest, OwnerIDs: make([]string, 0, len(report.Artifacts)),
@@ -210,7 +210,7 @@ func pipelineOwnership(facts []githooks.OwnershipFact) []pipelines.OwnershipFact
 	return result
 }
 
-func configuredModuleFile(snap *snapshot.Snapshot, file string, ownership []githooks.OwnershipFact) ([]byte, error) {
+func configuredModuleFile(snap *source.Input, file string, ownership []githooks.OwnershipFact) ([]byte, error) {
 	if err := validateModuleSourcePath(file); err != nil {
 		return nil, err
 	}
@@ -224,7 +224,7 @@ func configuredModuleFile(snap *snapshot.Snapshot, file string, ownership []gith
 	return append([]byte(nil), data...), nil
 }
 
-func configuredArtifacts[T any](snap *snapshot.Snapshot, entries []T, pathAndName func(T) (string, string), ownership []githooks.OwnershipFact) (map[string][]byte, error) {
+func configuredArtifacts[T any](snap *source.Input, entries []T, pathAndName func(T) (string, string), ownership []githooks.OwnershipFact) (map[string][]byte, error) {
 	artifacts := make(map[string][]byte, len(entries))
 	for _, entry := range entries {
 		file, name := pathAndName(entry)
@@ -289,7 +289,7 @@ func aggregateStatus(current, module string) string {
 	return StatusPassed
 }
 
-func snapshotInventory(snap *snapshot.Snapshot) ([]projectmodel.File, error) {
+func snapshotInventory(snap *source.Input) ([]projectmodel.File, error) {
 	files := make([]projectmodel.File, 0, len(snap.Files))
 	for path, data := range snap.Files {
 		mode := snap.Modes[path]

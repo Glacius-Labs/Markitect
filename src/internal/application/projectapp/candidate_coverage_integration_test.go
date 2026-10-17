@@ -9,7 +9,7 @@ import (
 	"github.com/Glacius-Labs/Markitect/src/internal/application/projectwork"
 	"github.com/Glacius-Labs/Markitect/src/internal/core/projectmodel/projectcoverage"
 	"github.com/Glacius-Labs/Markitect/src/internal/core/projectmodel/projectvalue"
-	"github.com/Glacius-Labs/Markitect/src/internal/core/snapshot"
+	"github.com/Glacius-Labs/Markitect/internal/tooling/source"
 )
 
 func TestFinalCandidateCoverageUsesRepositoryCensus(t *testing.T) {
@@ -214,7 +214,7 @@ func classifyDeliveryCandidate(t *testing.T, root string, base *projectvalue.Pro
 
 func classifyDeliveryCandidateResult(t *testing.T, root string, base *projectvalue.Project, changes map[string][]byte, deleted []string) (*projectvalue.Project, error) {
 	t.Helper()
-	selected := &snapshot.Snapshot{ID: base.Snapshot.ID, Files: map[string][]byte{}, Modes: map[string]string{}}
+	selected := &source.Input{ID: base.Snapshot.ID, Files: map[string][]byte{}, Modes: map[string]string{}}
 	for path, data := range base.Snapshot.Files {
 		selected.Files[path] = append([]byte(nil), data...)
 		selected.Modes[path] = base.Snapshot.Modes[path]
@@ -225,7 +225,7 @@ func classifyDeliveryCandidateResult(t *testing.T, root string, base *projectval
 	}
 	for path, data := range changes {
 		selected.Files[path] = append([]byte(nil), data...)
-		selected.Modes[path] = snapshot.RegularMode
+		selected.Modes[path] = source.RegularMode
 	}
 	compiled, err := projectwork.FromSnapshot(root, selected)
 	if err != nil {
@@ -237,7 +237,7 @@ func classifyDeliveryCandidateResult(t *testing.T, root string, base *projectval
 	}
 	documentPath := projectvalue.DocumentPath(compiled.Config)
 	selected.Files[documentPath] = []byte(document)
-	selected.Modes[documentPath] = snapshot.RegularMode
+	selected.Modes[documentPath] = source.RegularMode
 	compiled, err = projectwork.FromSnapshot(root, selected)
 	if err != nil {
 		return nil, err

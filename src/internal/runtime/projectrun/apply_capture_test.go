@@ -1,6 +1,6 @@
 package projectrun
 
-import "github.com/Glacius-Labs/Markitect/src/internal/core/snapshot"
+import 
 
 import (
 	"bytes"
@@ -12,11 +12,11 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/Glacius-Labs/Markitect/src/internal/infrastructure/guardedwrite"
-	"github.com/Glacius-Labs/Markitect/src/internal/infrastructure/source"
+	"github.com/Glacius-Labs/Markitect/internal/tooling/guardedwrite"
+	"github.com/Glacius-Labs/Markitect/internal/tooling/source"
 )
 
-func applyCaptureFixture(t *testing.T) (string, string, *snapshot.Snapshot, []byte) {
+func applyCaptureFixture(t *testing.T) (string, string, *source.Input, []byte) {
 	t.Helper()
 	root := t.TempDir()
 	gitE2E(t, root, "init", "-b", "codex/apply-capture-test")
@@ -61,8 +61,8 @@ func TestCompareCaptureToBaseAcceptsCleanCRLFCheckout(t *testing.T) {
 		t.Fatalf("clean CRLF checkout was rejected against its LF Git base: %v", err)
 	}
 	if err := requireCleanSelectedBasisAtRevision(root, revision,
-		&snapshot.Snapshot{Files: map[string][]byte{"README.md": fixed.Files["README.md"]}, Modes: map[string]string{"README.md": fixed.Modes["README.md"]}},
-		&snapshot.Snapshot{Files: map[string][]byte{"README.md": crlf}, Modes: map[string]string{"README.md": fixed.Modes["README.md"]}}); err != nil {
+		&source.Input{Files: map[string][]byte{"README.md": fixed.Files["README.md"]}, Modes: map[string]string{"README.md": fixed.Modes["README.md"]}},
+		&source.Input{Files: map[string][]byte{"README.md": crlf}, Modes: map[string]string{"README.md": fixed.Modes["README.md"]}}); err != nil {
 		t.Fatalf("existing plan clean-filter contract rejected the same CRLF checkout: %v", err)
 	}
 }

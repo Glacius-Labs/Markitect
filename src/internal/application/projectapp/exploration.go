@@ -15,7 +15,7 @@ import (
 	"github.com/Glacius-Labs/Markitect/src/internal/application/projectexplore"
 	"github.com/Glacius-Labs/Markitect/src/internal/runtime/projectrun"
 
-	"github.com/Glacius-Labs/Markitect/src/internal/infrastructure/source"
+	"github.com/Glacius-Labs/Markitect/internal/tooling/source"
 )
 
 // ExploreOperation lists, reads, or prepares a guarded one-scope record write.

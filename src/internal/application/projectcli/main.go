@@ -15,7 +15,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/Glacius-Labs/Markitect/src/internal/tooling/licenses"
+	"github.com/Glacius-Labs/Markitect/internal/tooling/licenses"
 )
 
 // Main runs one product CLI invocation from the verb table and returns its exit

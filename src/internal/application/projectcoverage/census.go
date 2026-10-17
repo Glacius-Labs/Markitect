@@ -14,8 +14,8 @@ import (
 	"strings"
 
 	modelcoverage "github.com/Glacius-Labs/Markitect/src/internal/core/projectmodel/projectcoverage"
-	"github.com/Glacius-Labs/Markitect/src/internal/core/snapshot"
-	"github.com/Glacius-Labs/Markitect/src/internal/infrastructure/source"
+	
+	"github.com/Glacius-Labs/Markitect/internal/tooling/source"
 )
 
 // ObserveWorking captures the fixed HEAD, index and current filesystem path
@@ -577,11 +577,11 @@ func validateAcquiredPathNames(files map[string]string) error {
 	return modelcoverage.ValidateRepositoryPaths(names)
 }
 
-func cloneSnapshot(input *snapshot.Snapshot) *snapshot.Snapshot {
+func cloneSnapshot(input *source.Input) *source.Input {
 	if input == nil {
 		return nil
 	}
-	result := &snapshot.Snapshot{ID: input.ID, Provisional: input.Provisional, Files: make(map[string][]byte, len(input.Files)), Modes: make(map[string]string, len(input.Modes))}
+	result := &source.Input{ID: input.ID, Provisional: input.Provisional, Files: make(map[string][]byte, len(input.Files)), Modes: make(map[string]string, len(input.Modes))}
 	for name, data := range input.Files {
 		result.Files[name] = append([]byte(nil), data...)
 	}

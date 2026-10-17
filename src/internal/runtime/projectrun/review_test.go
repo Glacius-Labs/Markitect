@@ -11,7 +11,7 @@ import (
 
 	"github.com/Glacius-Labs/Markitect/src/internal/core/projectmodel"
 	"github.com/Glacius-Labs/Markitect/src/internal/core/projectmodel/projectvalue"
-	"github.com/Glacius-Labs/Markitect/src/internal/core/snapshot"
+	"github.com/Glacius-Labs/Markitect/internal/tooling/source"
 	"github.com/Glacius-Labs/Markitect/src/internal/runtime/agentexec"
 	"github.com/Glacius-Labs/Markitect/src/internal/runtime/projectconfig"
 	"github.com/Glacius-Labs/Markitect/src/internal/runtime/projectexecutor"
@@ -227,9 +227,9 @@ func TestReviewerScopeExcludesForeignArtifactBytesButRetainsInterfaceAndFreshnes
 	)
 	project := &projectvalue.Project{
 		Config: projectvalue.Config{InventoryRoots: []string{"src", "tests"}},
-		Snapshot: &snapshot.Snapshot{
+		Snapshot: &source.Input{
 			Files: map[string][]byte{orderPath: []byte("orders implementation"), engineerPath: []byte("engineering test")},
-			Modes: map[string]string{orderPath: snapshot.RegularMode, engineerPath: snapshot.RegularMode},
+			Modes: map[string]string{orderPath: source.RegularMode, engineerPath: source.RegularMode},
 		},
 		Report: projectmodel.Report{
 			Managers:   []projectmodel.Manager{{ID: ordersID}, {ID: engineeringID}},
@@ -268,7 +268,7 @@ func TestReviewerScopeExcludesForeignArtifactBytesButRetainsInterfaceAndFreshnes
 		t.Fatal(err)
 	}
 	changed := *project
-	changed.Snapshot = &snapshot.Snapshot{ID: project.Snapshot.ID, Provisional: project.Snapshot.Provisional, Files: map[string][]byte{}, Modes: map[string]string{}}
+	changed.Snapshot = &source.Input{ID: project.Snapshot.ID, Provisional: project.Snapshot.Provisional, Files: map[string][]byte{}, Modes: map[string]string{}}
 	for path, content := range project.Snapshot.Files {
 		changed.Snapshot.Files[path] = append([]byte(nil), content...)
 		changed.Snapshot.Modes[path] = project.Snapshot.Modes[path]
@@ -356,9 +356,9 @@ func TestReviewerContextSeparatesWorkDelegationFromIntegrationDelivery(t *testin
 	)
 	project := &projectvalue.Project{
 		Config: projectvalue.Config{CoverageMode: "full", InventoryRoots: []string{"src", "tests", "docs"}},
-		Snapshot: &snapshot.Snapshot{
+		Snapshot: &source.Input{
 			Files: map[string][]byte{readme: []byte("Project README"), source: []byte("def greet(name): return name"), tests: []byte("assert greet('Ada')"), docs: []byte("Use greet(name).")},
-			Modes: map[string]string{readme: snapshot.RegularMode, source: snapshot.RegularMode, tests: snapshot.RegularMode, docs: snapshot.RegularMode},
+			Modes: map[string]string{readme: source.RegularMode, source: source.RegularMode, tests: source.RegularMode, docs: source.RegularMode},
 		},
 		Report: projectmodel.Report{
 			Managers: []projectmodel.Manager{{ID: rootID}, {ID: childID, Parent: rootID}},
@@ -500,9 +500,9 @@ func TestIntegrationReviewBindsChildDeliveredFileOutsideRequiredArtifacts(t *tes
 	newProject := func(notesBytes string) *projectvalue.Project {
 		return &projectvalue.Project{
 			Config: projectvalue.Config{InventoryRoots: []string{"src"}},
-			Snapshot: &snapshot.Snapshot{
+			Snapshot: &source.Input{
 				Files: map[string][]byte{impl: []byte("orders implementation v2\n"), notes: []byte(notesBytes)},
-				Modes: map[string]string{impl: snapshot.RegularMode, notes: snapshot.RegularMode},
+				Modes: map[string]string{impl: source.RegularMode, notes: source.RegularMode},
 			},
 			Report: projectmodel.Report{
 				Managers:  []projectmodel.Manager{{ID: rootID}, {ID: childID, Parent: rootID}},
@@ -558,9 +558,9 @@ func TestIntegrationReviewExpandsRequiredChildDirectoryArtifact(t *testing.T) {
 	)
 	project := &projectvalue.Project{
 		Config: projectvalue.Config{InventoryRoots: []string{"src"}},
-		Snapshot: &snapshot.Snapshot{
+		Snapshot: &source.Input{
 			Files: map[string][]byte{file: []byte("orders api v2\n")},
-			Modes: map[string]string{file: snapshot.RegularMode},
+			Modes: map[string]string{file: source.RegularMode},
 		},
 		Report: projectmodel.Report{
 			Managers:  []projectmodel.Manager{{ID: rootID}, {ID: childID, Parent: rootID}},
@@ -598,9 +598,9 @@ func TestFileLessParentIntegrationReviewRequiredForDeliveringChildren(t *testing
 	)
 	project := &projectvalue.Project{
 		Config: projectvalue.Config{InventoryRoots: []string{"src"}},
-		Snapshot: &snapshot.Snapshot{
+		Snapshot: &source.Input{
 			Files: map[string][]byte{ordersNotes: []byte("orders notes v2\n"), inventory: []byte("inventory implementation v2\n")},
-			Modes: map[string]string{ordersNotes: snapshot.RegularMode, inventory: snapshot.RegularMode},
+			Modes: map[string]string{ordersNotes: source.RegularMode, inventory: source.RegularMode},
 		},
 		Report: projectmodel.Report{
 			Managers: []projectmodel.Manager{{ID: rootID}, {ID: ordersID, Parent: rootID}, {ID: inventoryID, Parent: rootID}},
@@ -660,9 +660,9 @@ func TestFullVerifyReviewedFilesBindChildDeliveredFileOutsideRequiredArtifacts(t
 	newProject := func(notesBytes string) *projectvalue.Project {
 		return &projectvalue.Project{
 			Config: projectvalue.Config{InventoryRoots: []string{"src"}},
-			Snapshot: &snapshot.Snapshot{
+			Snapshot: &source.Input{
 				Files: map[string][]byte{impl: []byte("orders implementation v2\n"), notes: []byte(notesBytes)},
-				Modes: map[string]string{impl: snapshot.RegularMode, notes: snapshot.RegularMode},
+				Modes: map[string]string{impl: source.RegularMode, notes: source.RegularMode},
 			},
 			Report: projectmodel.Report{
 				Managers:  []projectmodel.Manager{{ID: rootID}, {ID: childID, Parent: rootID}},

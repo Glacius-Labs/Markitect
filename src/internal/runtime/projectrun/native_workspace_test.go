@@ -8,7 +8,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/Glacius-Labs/Markitect/src/internal/core/snapshot"
+	"github.com/Glacius-Labs/Markitect/internal/tooling/source"
 	"github.com/Glacius-Labs/Markitect/src/internal/runtime/agentexec"
 )
 
@@ -29,7 +29,7 @@ func nativeWorkspaceFixture(t *testing.T) (string, string, *projectvalue.Project
 	project := &projectvalue.Project{
 		Revision: revision,
 		Config:   projectvalue.Config{},
-		Snapshot: &snapshot.Snapshot{ID: revision, Files: map[string][]byte{path: content}, Modes: map[string]string{path: "100644"}},
+		Snapshot: &source.Input{ID: revision, Files: map[string][]byte{path: content}, Modes: map[string]string{path: "100644"}},
 	}
 	pinnedPath, err := filepath.Abs(filepath.Join(root, filepath.FromSlash(path)))
 	if err != nil {

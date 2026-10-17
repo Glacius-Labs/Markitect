@@ -18,7 +18,7 @@ import (
 	"time"
 
 	"github.com/Glacius-Labs/Markitect/src/internal/core/projectmodel"
-	"github.com/Glacius-Labs/Markitect/src/internal/core/snapshot"
+	"github.com/Glacius-Labs/Markitect/internal/tooling/source"
 	"github.com/Glacius-Labs/Markitect/src/internal/infrastructure/recordstore"
 )
 
@@ -743,11 +743,11 @@ func (s *runStore) readCandidate(dir, id string) (candidateData, error) {
 	return data, nil
 }
 
-func snapshotWithCandidate(base *snapshot.Snapshot, candidate candidateData) (*snapshot.Snapshot, error) {
+func snapshotWithCandidate(base *source.Input, candidate candidateData) (*source.Input, error) {
 	if base == nil {
 		return nil, fmt.Errorf("base snapshot is required")
 	}
-	copy := &snapshot.Snapshot{ID: base.ID, Provisional: base.Provisional, Files: map[string][]byte{}, Modes: map[string]string{}}
+	copy := &source.Input{ID: base.ID, Provisional: base.Provisional, Files: map[string][]byte{}, Modes: map[string]string{}}
 	for path, content := range base.Files {
 		copy.Files[path] = append([]byte(nil), content...)
 		copy.Modes[path] = base.Modes[path]

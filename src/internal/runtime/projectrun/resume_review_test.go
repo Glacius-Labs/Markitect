@@ -11,7 +11,7 @@ import (
 	"time"
 
 	"github.com/Glacius-Labs/Markitect/src/internal/core/projectmodel"
-	"github.com/Glacius-Labs/Markitect/src/internal/core/snapshot"
+	"github.com/Glacius-Labs/Markitect/internal/tooling/source"
 	"github.com/Glacius-Labs/Markitect/src/internal/runtime/agentexec"
 	"github.com/Glacius-Labs/Markitect/src/internal/runtime/codexappserver"
 	"github.com/Glacius-Labs/Markitect/src/internal/runtime/projectconfig"
@@ -634,7 +634,7 @@ func storeReviewFixtureCandidate(t *testing.T, store *runStore, dir string, pare
 	t.Helper()
 	candidate := candidateData{Parents: parents, Files: map[string]File{}}
 	for path, content := range files {
-		candidate.Files[path] = File{Path: path, Mode: snapshot.RegularMode, Content: []byte(content)}
+		candidate.Files[path] = File{Path: path, Mode: source.RegularMode, Content: []byte(content)}
 	}
 	var err error
 	if candidate.ID, err = newID(); err != nil {

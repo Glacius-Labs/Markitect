@@ -11,7 +11,7 @@ import (
 
 	"github.com/Glacius-Labs/Markitect/src/internal/core/projectmodel"
 	"github.com/Glacius-Labs/Markitect/src/internal/core/projectmodel/projectvalue"
-	"github.com/Glacius-Labs/Markitect/src/internal/core/snapshot"
+	"github.com/Glacius-Labs/Markitect/internal/tooling/source"
 	"github.com/Glacius-Labs/Markitect/src/internal/runtime/agentexec"
 	"github.com/Glacius-Labs/Markitect/src/internal/runtime/codexappserver"
 	"github.com/Glacius-Labs/Markitect/src/internal/runtime/projectconfig"
@@ -100,7 +100,7 @@ func runtimeProjectWithFile(project *projectvalue.Project, path string, content 
 	if modes[path] == "" {
 		modes[path] = "100644"
 	}
-	copy.Snapshot = &snapshot.Snapshot{ID: project.Snapshot.ID, Provisional: project.Snapshot.Provisional, Files: files, Modes: modes}
+	copy.Snapshot = &source.Input{ID: project.Snapshot.ID, Provisional: project.Snapshot.Provisional, Files: files, Modes: modes}
 	copy.Digest = project.Digest + ":source-change"
 	return &copy
 }

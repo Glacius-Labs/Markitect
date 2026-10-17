@@ -11,8 +11,8 @@ import (
 
 	coverageacquisition "github.com/Glacius-Labs/Markitect/src/internal/application/projectcoverage"
 	modelcoverage "github.com/Glacius-Labs/Markitect/src/internal/core/projectmodel/projectcoverage"
-	"github.com/Glacius-Labs/Markitect/src/internal/core/snapshot"
-	"github.com/Glacius-Labs/Markitect/src/internal/infrastructure/source"
+	
+	"github.com/Glacius-Labs/Markitect/internal/tooling/source"
 )
 
 // Coverage observes complete repository classification for the requested
@@ -108,8 +108,8 @@ func ClassifyCandidate(base, candidate *projectvalue.Project, deleted ...string)
 		if readErr != nil {
 			return nil, readErr
 		}
-		extended := &snapshot.Snapshot{ID: candidate.Snapshot.ID, Provisional: candidate.Snapshot.Provisional, Files: map[string][]byte{}, Modes: map[string]string{}}
-		for _, input := range []*snapshot.Snapshot{candidate.Snapshot, read} {
+		extended := &source.Input{ID: candidate.Snapshot.ID, Provisional: candidate.Snapshot.Provisional, Files: map[string][]byte{}, Modes: map[string]string{}}
+		for _, input := range []*source.Input{candidate.Snapshot, read} {
 			for file, data := range input.Files {
 				extended.Files[file], extended.Modes[file] = data, input.Modes[file]
 			}
@@ -153,7 +153,7 @@ func refuseCensusOnlyDeletes(base *projectvalue.Project, deleted []string) error
 	return nil
 }
 
-func candidateDelta(base, candidate *snapshot.Snapshot) []modelcoverage.Delta {
+func candidateDelta(base, candidate *source.Input) []modelcoverage.Delta {
 	var delta []modelcoverage.Delta
 	for file, data := range candidate.Files {
 		mode := candidate.Modes[file]
@@ -178,7 +178,7 @@ func candidateDelta(base, candidate *snapshot.Snapshot) []modelcoverage.Delta {
 
 // readCensusFiles reads files the census skipped from the same source it
 // observed: the fixed revision, or the working tree with an unchanged identity.
-func readCensusFiles(base *projectvalue.Project, paths []string) (*snapshot.Snapshot, error) {
+func readCensusFiles(base *projectvalue.Project, paths []string) (*source.Input, error) {
 	if base.Census.FixedRevision {
 		selected, err := source.LoadSelected(base.Root, base.Census.Revision, paths)
 		if err != nil {
@@ -243,7 +243,7 @@ func fullSnapshotPaths(universe *modelcoverage.Universe) []string {
 	return uniqueSorted(paths)
 }
 
-func loadFullCoverageSnapshot(root, revision string, provisional bool, config projectvalue.Config) (*snapshot.Snapshot, error) {
+func loadFullCoverageSnapshot(root, revision string, provisional bool, config projectvalue.Config) (*source.Input, error) {
 	options := coverageOptions(config)
 	var universe *modelcoverage.Universe
 	var err error
@@ -261,8 +261,8 @@ func loadFullCoverageSnapshot(root, revision string, provisional bool, config pr
 	return externalInventorySnapshot(universe.Snapshot), nil
 }
 
-func externalInventorySnapshot(input *snapshot.Snapshot) *snapshot.Snapshot {
-	result := &snapshot.Snapshot{ID: input.ID, Provisional: input.Provisional, Files: map[string][]byte{}, Modes: map[string]string{}}
+func externalInventorySnapshot(input *source.Input) *source.Input {
+	result := &source.Input{ID: input.ID, Provisional: input.Provisional, Files: map[string][]byte{}, Modes: map[string]string{}}
 	for file, data := range input.Files {
 		if strings.HasPrefix(file, ".markitect/") {
 			continue

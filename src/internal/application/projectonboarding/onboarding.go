@@ -16,7 +16,7 @@ import (
 	"strings"
 
 	"github.com/Glacius-Labs/Markitect/src/internal/application/projectwork"
-	"github.com/Glacius-Labs/Markitect/src/internal/infrastructure/guardedwrite"
+	"github.com/Glacius-Labs/Markitect/internal/tooling/guardedwrite"
 )
 
 const APIVersion = "markitect.example.org/project-onboarding/v1alpha1"

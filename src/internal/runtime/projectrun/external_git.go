@@ -7,8 +7,8 @@ import (
 	"path/filepath"
 	"regexp"
 
-	"github.com/Glacius-Labs/Markitect/src/internal/core/snapshot"
-	"github.com/Glacius-Labs/Markitect/src/internal/infrastructure/source"
+	
+	"github.com/Glacius-Labs/Markitect/internal/tooling/source"
 	"github.com/Glacius-Labs/Markitect/src/internal/runtime/projectworkspace"
 )
 
@@ -93,8 +93,8 @@ func ImportExternalGitCandidate(host Host, root, baseCommit, finalCommit, expect
 
 // externalGitChanges intentionally represents renames as a delete and an add.
 // This is a byte-level snapshot comparison, not a heuristic Git rename guess.
-func externalGitChanges(base, final *snapshot.Snapshot) []projectworkspace.Change {
-	comparison := snapshot.Compare(base, final)
+func externalGitChanges(base, final *source.Input) []projectworkspace.Change {
+	comparison := source.Compare(base, final)
 	changes := make([]projectworkspace.Change, 0, len(comparison.Added)+len(comparison.Modified)+len(comparison.Removed))
 	for _, path := range comparison.Added {
 		changes = append(changes, projectworkspace.Change{Kind: projectworkspace.ChangeAdd, Path: path,

@@ -8,7 +8,7 @@ import (
 	"strings"
 
 	"github.com/Glacius-Labs/Markitect/src/internal/infrastructure/recordstore"
-	"github.com/Glacius-Labs/Markitect/src/internal/infrastructure/source"
+	"github.com/Glacius-Labs/Markitect/internal/tooling/source"
 )
 
 func (o Operations) ReadRecord(root, rawPath string) ([]byte, error) {

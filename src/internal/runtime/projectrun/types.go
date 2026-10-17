@@ -13,7 +13,7 @@ import (
 	"time"
 
 	"github.com/Glacius-Labs/Markitect/src/internal/core/projectmodel/projectbriefing"
-	"github.com/Glacius-Labs/Markitect/src/internal/core/snapshot"
+	"github.com/Glacius-Labs/Markitect/internal/tooling/source"
 	"github.com/Glacius-Labs/Markitect/src/internal/runtime/agentexec"
 
 	"github.com/Glacius-Labs/Markitect/src/internal/core/projectmodel"
@@ -427,7 +427,7 @@ type Host struct {
 	// Unknown execution preserves the original workspace for exact-turn recovery.
 	Workspaces               projectworkspace.Service
 	Load                     func(root, revision string) (*projectvalue.Project, error)
-	FromSnapshot             func(root string, source *snapshot.Snapshot) (*projectvalue.Project, error)
+	FromSnapshot             func(root string, source *source.Input) (*projectvalue.Project, error)
 	PlanEdit                 func(project *projectvalue.Project, mutation projectvalue.Mutation) (projectvalue.EditPlan, error)
 	ApplyEdit                func(root string, plan projectvalue.EditPlan, expected string) (projectvalue.EditPlan, error)
 	ClassifyCandidate        func(base, candidate *projectvalue.Project, deleted ...string) (*projectvalue.Project, error)

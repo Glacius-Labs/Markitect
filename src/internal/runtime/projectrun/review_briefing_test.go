@@ -9,7 +9,7 @@ import (
 	"github.com/Glacius-Labs/Markitect/src/internal/core/projectmodel"
 	"github.com/Glacius-Labs/Markitect/src/internal/core/projectmodel/projectbriefing"
 	"github.com/Glacius-Labs/Markitect/src/internal/core/projectmodel/projectvalue"
-	"github.com/Glacius-Labs/Markitect/src/internal/core/snapshot"
+	"github.com/Glacius-Labs/Markitect/internal/tooling/source"
 	"github.com/Glacius-Labs/Markitect/src/internal/runtime/projectconfig"
 )
 
@@ -124,7 +124,7 @@ func reviewBriefingFacts() (*projectvalue.Project, string, BriefingContext) {
 			Artifacts:   []projectmodel.Artifact{{ID: artifactID, Name: "orders-code", Owner: managerID, Role: "implementation", Realizes: []string{statementID}, Paths: []string{"src/orders/implementation.txt"}, Required: true}},
 			Files:       []projectmodel.FileEntry{{Path: "src/orders/implementation.txt", Owner: managerID, Class: "managed", Statements: []string{statementID}, Artifacts: []string{artifactID}}},
 		},
-		Snapshot: &snapshot.Snapshot{ID: "fixed-revision", Files: map[string][]byte{"src/orders/implementation.txt": []byte("orders bytes\n")}, Modes: map[string]string{"src/orders/implementation.txt": "100644"}},
+		Snapshot: &source.Input{ID: "fixed-revision", Files: map[string][]byte{"src/orders/implementation.txt": []byte("orders bytes\n")}, Modes: map[string]string{"src/orders/implementation.txt": "100644"}},
 	}
 	context := BriefingContext{Digest: "briefing-digest-a", Briefings: []projectbriefing.Briefing{{}}, Events: []projectbriefing.Event{{ID: "accepted-event"}}}
 	return project, managerID, context

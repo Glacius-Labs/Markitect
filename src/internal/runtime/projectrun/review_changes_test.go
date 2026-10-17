@@ -7,7 +7,7 @@ import (
 
 	"github.com/Glacius-Labs/Markitect/src/internal/core/projectmodel"
 	"github.com/Glacius-Labs/Markitect/src/internal/core/projectmodel/projectvalue"
-	"github.com/Glacius-Labs/Markitect/src/internal/core/snapshot"
+	"github.com/Glacius-Labs/Markitect/internal/tooling/source"
 )
 
 type freshReviewFixture struct {
@@ -283,12 +283,12 @@ func TestFreshPassedReviewBindsDeletionPreimageAndSource(t *testing.T) {
 }
 
 func TestReviewCandidateChangesGroundsDeletionWithPriorBytes(t *testing.T) {
-	base := &snapshot.Snapshot{Files: map[string][]byte{
+	base := &source.Input{Files: map[string][]byte{
 		"src/deleted.txt": []byte("prior contents"),
 		"src/changed.txt": []byte("before"),
 	}, Modes: map[string]string{
-		"src/deleted.txt": snapshot.RegularMode,
-		"src/changed.txt": snapshot.RegularMode,
+		"src/deleted.txt": source.RegularMode,
+		"src/changed.txt": source.RegularMode,
 	}}
 	candidate := candidateData{Files: map[string]File{
 		"src/added.txt":   {Path: "src/added.txt", Mode: "0644", Content: []byte("new")},
@@ -317,13 +317,13 @@ func TestReviewContextAndScopeBindDeletedPathOperationAndPreimage(t *testing.T) 
 	const managerID = "shop/orders"
 	const path = "src/orders/implementation.txt"
 	prior := []byte("prior implementation")
-	base := &snapshot.Snapshot{Files: map[string][]byte{path: prior}, Modes: map[string]string{path: snapshot.RegularMode}}
+	base := &source.Input{Files: map[string][]byte{path: prior}, Modes: map[string]string{path: source.RegularMode}}
 	candidate := candidateData{ID: "candidate", Files: map[string]File{
 		path: {Path: path, Mode: "0644", Content: append([]byte(nil), prior...), Delete: true},
 	}}
 	project := &projectvalue.Project{
 		Config:   projectvalue.Config{InventoryRoots: []string{"src"}},
-		Snapshot: &snapshot.Snapshot{Files: map[string][]byte{}, Modes: map[string]string{}},
+		Snapshot: &source.Input{Files: map[string][]byte{}, Modes: map[string]string{}},
 		Report: projectmodel.Report{
 			Managers:  []projectmodel.Manager{{ID: managerID}},
 			Artifacts: []projectmodel.Artifact{{ID: "orders-implementation", Owner: managerID, Required: true, Paths: []string{path}}},
@@ -356,7 +356,7 @@ func TestReviewContextAndScopeBindDeletedPathOperationAndPreimage(t *testing.T) 
 	if err != nil {
 		t.Fatal(err)
 	}
-	changedBase := &snapshot.Snapshot{Files: map[string][]byte{path: []byte("different prior bytes")}, Modes: map[string]string{path: snapshot.RegularMode}}
+	changedBase := &source.Input{Files: map[string][]byte{path: []byte("different prior bytes")}, Modes: map[string]string{path: source.RegularMode}}
 	changedScope, err := reviewScopeDigest(plan, project, task, "work", RunReport{}, reviewCandidateState{Base: changedBase, Candidate: candidate})
 	if err != nil {
 		t.Fatal(err)
@@ -370,7 +370,7 @@ func TestReviewCandidateChangesUsesRetainedDeletionPreimageAndRequiresGrounding(
 	candidate := candidateData{Files: map[string]File{
 		"src/empty.txt": {Path: "src/empty.txt", Mode: "0644", Content: []byte{}, Delete: true},
 	}}
-	changes, deleted, err := reviewCandidateChanges(&snapshot.Snapshot{Files: map[string][]byte{}, Modes: map[string]string{}}, candidate, []string{"src/empty.txt"})
+	changes, deleted, err := reviewCandidateChanges(&source.Input{Files: map[string][]byte{}, Modes: map[string]string{}}, candidate, []string{"src/empty.txt"})
 	if err != nil {
 		t.Fatalf("valid empty-file deletion preimage rejected: %v", err)
 	}
@@ -380,7 +380,7 @@ func TestReviewCandidateChangesUsesRetainedDeletionPreimageAndRequiresGrounding(
 	}
 
 	missing := candidateData{Files: map[string]File{"src/missing.txt": {Path: "src/missing.txt", Delete: true}}}
-	if _, _, err := reviewCandidateChanges(&snapshot.Snapshot{Files: map[string][]byte{}, Modes: map[string]string{}}, missing, []string{"src/missing.txt"}); err == nil {
+	if _, _, err := reviewCandidateChanges(&source.Input{Files: map[string][]byte{}, Modes: map[string]string{}}, missing, []string{"src/missing.txt"}); err == nil {
 		t.Fatal("ungrounded deletion without prior bytes or mode was accepted")
 	}
 }

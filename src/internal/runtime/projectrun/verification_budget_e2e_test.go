@@ -17,8 +17,8 @@ import (
 
 	"github.com/Glacius-Labs/Markitect/internal/testkit"
 	"github.com/Glacius-Labs/Markitect/src/internal/core/projectmodel"
-	"github.com/Glacius-Labs/Markitect/src/internal/core/snapshot"
-	"github.com/Glacius-Labs/Markitect/src/internal/infrastructure/source"
+	
+	"github.com/Glacius-Labs/Markitect/internal/tooling/source"
 	"github.com/Glacius-Labs/Markitect/src/internal/runtime/agentexec"
 	yaml "go.yaml.in/yaml/v3"
 )
@@ -83,7 +83,7 @@ func TestFailedVerifierAttemptIsDurableAndCannotReplayBudget(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	snapshotBase := &snapshot.Snapshot{ID: head, Files: map[string][]byte{"fixture.txt": []byte("base")}, Modes: map[string]string{"fixture.txt": "100644"}}
+	snapshotBase := &source.Input{ID: head, Files: map[string][]byte{"fixture.txt": []byte("base")}, Modes: map[string]string{"fixture.txt": "100644"}}
 	modelDigest := "sha256:" + strings.Repeat("a", 64)
 	project := &projectvalue.Project{Root: root, Revision: head, Digest: "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb", Report: projectmodel.Report{
 		ModelDigest: modelDigest, Digest: "sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc", Status: "complete",
@@ -91,7 +91,7 @@ func TestFailedVerifierAttemptIsDurableAndCannotReplayBudget(t *testing.T) {
 	}, Snapshot: snapshotBase}
 	host := Host{
 		Load: func(_, _ string) (*projectvalue.Project, error) { return project, nil },
-		FromSnapshot: func(_ string, snap *snapshot.Snapshot) (*projectvalue.Project, error) {
+		FromSnapshot: func(_ string, snap *source.Input) (*projectvalue.Project, error) {
 			copy := *project
 			copy.Snapshot = snap
 			return &copy, nil

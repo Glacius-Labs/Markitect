@@ -4,7 +4,7 @@ package projectcoverage
 
 import (
 	"github.com/Glacius-Labs/Markitect/src/internal/core/projectmodel"
-	"github.com/Glacius-Labs/Markitect/src/internal/core/snapshot"
+	"github.com/Glacius-Labs/Markitect/internal/tooling/source"
 )
 
 const (
@@ -71,7 +71,7 @@ type Universe struct {
 	// Snapshot contains the exact observed, nonignored bytes used to derive
 	// Worktree digests. It is intentionally in-memory only so Host consumers
 	// can compile the same observation without a second filesystem read.
-	Snapshot          *snapshot.Snapshot `json:"-"`
+	Snapshot          *source.Input `json:"-"`
 	IgnoreBytes       []byte             `json:"-"`
 	IgnoreBytesDigest string             `json:"ignoreBytesDigest"`
 	Digest            string             `json:"digest"`

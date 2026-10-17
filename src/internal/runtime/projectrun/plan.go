@@ -12,8 +12,8 @@ import (
 	"strings"
 
 	"github.com/Glacius-Labs/Markitect/src/internal/core/projectmodel"
-	"github.com/Glacius-Labs/Markitect/src/internal/core/snapshot"
-	"github.com/Glacius-Labs/Markitect/src/internal/infrastructure/source"
+	
+	"github.com/Glacius-Labs/Markitect/internal/tooling/source"
 	projectconfig "github.com/Glacius-Labs/Markitect/src/internal/runtime/projectconfig"
 )
 
@@ -292,7 +292,7 @@ func planManagers(report projectmodel.Report, baseFiles map[string][]byte, reque
 	return tasks, selected, findings, nil
 }
 
-func requireCleanSelectedBasis(fixed, working *snapshot.Snapshot) error {
+func requireCleanSelectedBasis(fixed, working *source.Input) error {
 	if fixed == nil || working == nil {
 		return fmt.Errorf("fixed and working selected snapshots are required")
 	}
@@ -302,14 +302,14 @@ func requireCleanSelectedBasis(fixed, working *snapshot.Snapshot) error {
 	return nil
 }
 
-func requireCleanSelectedBasisAtRevision(root, revision string, fixed, working *snapshot.Snapshot) error {
+func requireCleanSelectedBasisAtRevision(root, revision string, fixed, working *source.Input) error {
 	if fixed == nil || working == nil {
 		return fmt.Errorf("fixed and working selected snapshots are required")
 	}
 	if fixed.Digest() == working.Digest() {
 		return nil
 	}
-	changes := snapshot.Compare(fixed, working)
+	changes := source.Compare(fixed, working)
 	if len(changes.Added) != 0 || len(changes.Removed) != 0 {
 		return selectedBasisChangedError()
 	}
@@ -386,7 +386,7 @@ func requireCleanSelectedBasisAtRevision(root, revision string, fixed, working *
 
 // RequireCleanSelectedBasisAtRevision verifies a captured selected working
 // snapshot against the exact fixed project revision using Git's clean filters.
-func RequireCleanSelectedBasisAtRevision(root, revision string, fixed, working *snapshot.Snapshot) error {
+func RequireCleanSelectedBasisAtRevision(root, revision string, fixed, working *source.Input) error {
 	return requireCleanSelectedBasisAtRevision(root, revision, fixed, working)
 }
 
@@ -570,7 +570,7 @@ func reviewPhaseStarts(project *projectvalue.Project, tasks []ManagerTask) int {
 	return starts
 }
 
-func modelEditCandidate(plan *projectvalue.EditPlan, base *snapshot.Snapshot) (candidateData, error) {
+func modelEditCandidate(plan *projectvalue.EditPlan, base *source.Input) (candidateData, error) {
 	data := candidateData{ID: planDigestID(plan.Digest), Files: map[string]File{}}
 	for _, change := range plan.Mutation.Files {
 		if !safeRepoPath(change.Path) || !strings.HasPrefix(change.Path, ".markitect/model/") {

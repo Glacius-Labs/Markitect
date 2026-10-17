@@ -6,7 +6,7 @@ import (
 	"testing"
 
 	"github.com/Glacius-Labs/Markitect/src/internal/core/projectmodel/projectvalue"
-	"github.com/Glacius-Labs/Markitect/src/internal/core/snapshot"
+	"github.com/Glacius-Labs/Markitect/internal/tooling/source"
 )
 
 // TestFinalProjectCandidateRetainsModelledFileBaseBytes keeps the private
@@ -16,15 +16,15 @@ import (
 func TestFinalProjectCandidateRetainsModelledFileBaseBytes(t *testing.T) {
 	t.Parallel()
 	legacyPath := "src/orders/legacy.txt"
-	baseSnapshot := &snapshot.Snapshot{
+	baseSnapshot := &source.Input{
 		ID:    "base",
 		Files: map[string][]byte{legacyPath: []byte("legacy orders bytes\n"), projectvalue.ManifestPath: []byte("base model\n")},
-		Modes: map[string]string{legacyPath: snapshot.RegularMode, projectvalue.ManifestPath: snapshot.RegularMode},
+		Modes: map[string]string{legacyPath: source.RegularMode, projectvalue.ManifestPath: source.RegularMode},
 	}
 	base := &projectvalue.Project{Snapshot: baseSnapshot}
 	fromSnapshotCalls, classifyCalls := 0, 0
 	host := Host{
-		FromSnapshot: func(root string, candidate *snapshot.Snapshot) (*projectvalue.Project, error) {
+		FromSnapshot: func(root string, candidate *source.Input) (*projectvalue.Project, error) {
 			fromSnapshotCalls++
 			return &projectvalue.Project{Root: root, Snapshot: candidate}, nil
 		},
@@ -36,7 +36,7 @@ func TestFinalProjectCandidateRetainsModelledFileBaseBytes(t *testing.T) {
 			return candidate, nil
 		},
 	}
-	final := candidateData{Files: map[string]File{projectvalue.ManifestPath: {Path: projectvalue.ManifestPath, Mode: snapshot.RegularMode, Content: []byte("candidate model\n")}}}
+	final := candidateData{Files: map[string]File{projectvalue.ManifestPath: {Path: projectvalue.ManifestPath, Mode: source.RegularMode, Content: []byte("candidate model\n")}}}
 	compiled, err := finalProjectForCandidate(host, "fixture", base, final)
 	if err != nil {
 		t.Fatal(err)

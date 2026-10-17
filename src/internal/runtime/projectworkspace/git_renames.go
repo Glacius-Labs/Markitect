@@ -11,7 +11,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/Glacius-Labs/Markitect/src/internal/infrastructure/guardedwrite"
+	"github.com/Glacius-Labs/Markitect/internal/tooling/guardedwrite"
 )
 
 // Git's similarity detection retains rename provenance for ordinary edits and

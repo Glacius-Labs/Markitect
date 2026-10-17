@@ -8,7 +8,7 @@ import (
 	"testing"
 
 	modelcoverage "github.com/Glacius-Labs/Markitect/src/internal/core/projectmodel/projectcoverage"
-	"github.com/Glacius-Labs/Markitect/src/internal/core/snapshot"
+	"github.com/Glacius-Labs/Markitect/internal/tooling/source"
 )
 
 func TestFullCoverageBindsUnknownOutsideLegacyRoots(t *testing.T) {
@@ -93,8 +93,8 @@ func TestCandidateCoverageKeepsExactIgnoreSatisfiedByCensus(t *testing.T) {
 			t.Errorf("revision %q: unchanged candidate conforming=%v, census conforming=%v; findings=%+v",
 				revision, candidate.Coverage != nil && candidate.Coverage.Conforming, base.Coverage.Conforming, candidate.Coverage.Findings)
 		}
-		added := &snapshot.Snapshot{ID: base.Snapshot.ID, Provisional: base.Snapshot.Provisional,
-			Files: map[string][]byte{"notes/unknown.md": []byte("unclassified candidate file\n")}, Modes: map[string]string{"notes/unknown.md": snapshot.RegularMode}}
+		added := &source.Input{ID: base.Snapshot.ID, Provisional: base.Snapshot.Provisional,
+			Files: map[string][]byte{"notes/unknown.md": []byte("unclassified candidate file\n")}, Modes: map[string]string{"notes/unknown.md": source.RegularMode}}
 		for file, data := range base.Snapshot.Files {
 			added.Files[file], added.Modes[file] = data, base.Snapshot.Modes[file]
 		}
@@ -196,7 +196,7 @@ func TestCandidateCoverageDropsRenamedAndDeletedPaths(t *testing.T) {
 		if base.Coverage == nil || !base.Coverage.Conforming {
 			t.Fatalf("precondition (revision %q): census not conforming: %+v", revision, base.Coverage)
 		}
-		cases := map[string]*snapshot.Snapshot{
+		cases := map[string]*source.Input{
 			"rename": changedSnapshot(base.Snapshot, map[string]string{"src/c.txt": "b\n", coverageArtifactPath: coverageArtifact("src/a.txt", "src/c.txt")}, "src/b.txt"),
 			"delete": changedSnapshot(base.Snapshot, map[string]string{coverageArtifactPath: coverageArtifact("src/a.txt")}, "src/b.txt"),
 		}
@@ -493,13 +493,13 @@ func coverageArtifact(paths ...string) string {
 		"\n      kind: Statement\n      namespace: \"\"\n      name: project-goal\n  paths: [" + strings.Join(paths, ", ") + "]\n  required: true\n"
 }
 
-func changedSnapshot(base *snapshot.Snapshot, writes map[string]string, deletes ...string) *snapshot.Snapshot {
-	result := &snapshot.Snapshot{ID: base.ID, Provisional: base.Provisional, Files: map[string][]byte{}, Modes: map[string]string{}}
+func changedSnapshot(base *source.Input, writes map[string]string, deletes ...string) *source.Input {
+	result := &source.Input{ID: base.ID, Provisional: base.Provisional, Files: map[string][]byte{}, Modes: map[string]string{}}
 	for file, data := range base.Files {
 		result.Files[file], result.Modes[file] = append([]byte(nil), data...), base.Modes[file]
 	}
 	for file, content := range writes {
-		result.Files[file], result.Modes[file] = []byte(content), snapshot.RegularMode
+		result.Files[file], result.Modes[file] = []byte(content), source.RegularMode
 	}
 	for _, file := range deletes {
 		delete(result.Files, file)
@@ -508,7 +508,7 @@ func changedSnapshot(base *snapshot.Snapshot, writes map[string]string, deletes 
 	return result
 }
 
-func classifiedCandidate(t *testing.T, base *projectvalue.Project, s *snapshot.Snapshot) *projectvalue.Project {
+func classifiedCandidate(t *testing.T, base *projectvalue.Project, s *source.Input) *projectvalue.Project {
 	t.Helper()
 	compiled, err := FromSnapshot(base.Root, s)
 	if err != nil {

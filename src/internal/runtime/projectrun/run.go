@@ -18,8 +18,8 @@ import (
 	"unicode/utf8"
 
 	"github.com/Glacius-Labs/Markitect/src/internal/core/projectmodel"
-	"github.com/Glacius-Labs/Markitect/src/internal/core/snapshot"
-	"github.com/Glacius-Labs/Markitect/src/internal/infrastructure/source"
+	
+	"github.com/Glacius-Labs/Markitect/internal/tooling/source"
 	"github.com/Glacius-Labs/Markitect/src/internal/runtime/agentexec"
 )
 
@@ -637,8 +637,8 @@ func activeResponsibilities(report projectmodel.Report, tasks []ManagerTask) []a
 	return out
 }
 
-func allowedWritePaths(config projectvalue.Config, report projectmodel.Report, task ManagerTask, phase string, conflicts []string, inputs ...*snapshot.Snapshot) []string {
-	var input *snapshot.Snapshot
+func allowedWritePaths(config projectvalue.Config, report projectmodel.Report, task ManagerTask, phase string, conflicts []string, inputs ...*source.Input) []string {
+	var input *source.Input
 	if len(inputs) > 0 {
 		input = inputs[0]
 	}
@@ -840,8 +840,8 @@ func scopedArtifacts(project *projectvalue.Project, task ManagerTask, agent proj
 	return out, nil
 }
 
-func applyProposal(base candidateData, proposals []agentexec.CandidateFile, config projectvalue.Config, report projectmodel.Report, task ManagerTask, phase string, conflictPaths []string, limits projectconfig.Limits, inputs ...*snapshot.Snapshot) (candidateData, error) {
-	var input *snapshot.Snapshot
+func applyProposal(base candidateData, proposals []agentexec.CandidateFile, config projectvalue.Config, report projectmodel.Report, task ManagerTask, phase string, conflictPaths []string, limits projectconfig.Limits, inputs ...*source.Input) (candidateData, error) {
+	var input *source.Input
 	if len(inputs) > 0 {
 		input = inputs[0]
 	}
@@ -1023,7 +1023,7 @@ func activeChildrenFromContext(c projectmodel.ManagerContext) []string {
 	sort.Strings(out)
 	return out
 }
-func projectForCandidate(host Host, root string, base *snapshot.Snapshot, c candidateData) (*projectvalue.Project, error) {
+func projectForCandidate(host Host, root string, base *source.Input, c candidateData) (*projectvalue.Project, error) {
 	snap, err := snapshotWithCandidate(base, c)
 	if err != nil {
 		return nil, err
@@ -1051,7 +1051,7 @@ func finalProjectForCandidate(host Host, root string, base *projectvalue.Project
 	}
 	return host.ClassifyCandidate(base, compiled, deleted...)
 }
-func candidateSnapshotHash(base *snapshot.Snapshot, c candidateData) string {
+func candidateSnapshotHash(base *source.Input, c candidateData) string {
 	snap, err := snapshotWithCandidate(base, c)
 	if err != nil {
 		return ""
@@ -1239,9 +1239,9 @@ func protocolMode(mode string) string {
 func snapshotMode(mode string) string {
 	switch mode {
 	case "0644":
-		return snapshot.RegularMode
+		return source.RegularMode
 	case "0755":
-		return snapshot.ExecutableMode
+		return source.ExecutableMode
 	default:
 		return ""
 	}

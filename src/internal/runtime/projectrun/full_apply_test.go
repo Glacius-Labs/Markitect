@@ -10,7 +10,7 @@ import (
 	"github.com/Glacius-Labs/Markitect/src/internal/core/projectmodel"
 	"github.com/Glacius-Labs/Markitect/src/internal/core/projectmodel/projectcoverage"
 	"github.com/Glacius-Labs/Markitect/src/internal/core/projectmodel/projectvalue"
-	"github.com/Glacius-Labs/Markitect/src/internal/core/snapshot"
+	"github.com/Glacius-Labs/Markitect/internal/tooling/source"
 	"github.com/Glacius-Labs/Markitect/src/internal/runtime/agentexec"
 	"github.com/Glacius-Labs/Markitect/src/internal/runtime/projectconfig"
 )
@@ -51,10 +51,10 @@ func TestFullApplyAcceptsVerifiedImplementationDigestDifferentFromPlanReport(t *
 	content := []byte("verified candidate implementation update\n")
 	compiled.Snapshot.Files["src/orders/implementation.txt"] = content
 	candidate := candidateData{ID: "candidate-updated-implementation", Files: map[string]File{
-		"src/orders/implementation.txt": {Path: "src/orders/implementation.txt", Mode: snapshot.RegularMode, Content: content},
+		"src/orders/implementation.txt": {Path: "src/orders/implementation.txt", Mode: source.RegularMode, Content: content},
 	}}
 	host := Host{
-		FromSnapshot: func(root string, selected *snapshot.Snapshot) (*projectvalue.Project, error) {
+		FromSnapshot: func(root string, selected *source.Input) (*projectvalue.Project, error) {
 			projected := *base
 			projected.Root, projected.Snapshot = root, selected
 			return &projected, nil
@@ -85,10 +85,10 @@ func TestFullApplyRejectsUnclassifiedCandidatePath(t *testing.T) {
 	compiled := fullApplyProjectFacts()
 	compiled.Coverage.Conforming = false
 	candidate := candidateData{ID: "candidate-unclassified", Files: map[string]File{
-		"unexpected/unowned.txt": {Path: "unexpected/unowned.txt", Mode: snapshot.RegularMode, Content: []byte("unclassified candidate content\n")},
+		"unexpected/unowned.txt": {Path: "unexpected/unowned.txt", Mode: source.RegularMode, Content: []byte("unclassified candidate content\n")},
 	}}
 	host := Host{
-		FromSnapshot: func(root string, selected *snapshot.Snapshot) (*projectvalue.Project, error) {
+		FromSnapshot: func(root string, selected *source.Input) (*projectvalue.Project, error) {
 			projected := *base
 			projected.Root, projected.Snapshot = root, selected
 			return &projected, nil
@@ -121,7 +121,7 @@ func TestFullApplyRejectsDeletionOutsideReviewedSnapshot(t *testing.T) {
 	}
 	classifiedDeletion := false
 	host := Host{
-		FromSnapshot: func(gotRoot string, selected *snapshot.Snapshot) (*projectvalue.Project, error) {
+		FromSnapshot: func(gotRoot string, selected *source.Input) (*projectvalue.Project, error) {
 			candidate := *base
 			candidate.Root, candidate.Snapshot = gotRoot, selected
 			return &candidate, nil
@@ -151,10 +151,10 @@ func fullApplyProjectFacts() *projectvalue.Project {
 	return &projectvalue.Project{
 		Revision: strings.Repeat("a", 40), Digest: strings.Repeat("f", 64),
 		Config: projectvalue.Config{CoverageMode: "full", DocumentPath: "README.md"},
-		Snapshot: &snapshot.Snapshot{Files: map[string][]byte{
+		Snapshot: &source.Input{Files: map[string][]byte{
 			".markitect/repository-ignore.yaml": []byte("apiVersion: " + projectcoverage.IgnoreAPIVersion + "\nkind: RepositoryIgnore\nentries: []\n"),
 			"README.md":                         []byte("fixed generated view\n"), "src/orders/implementation.txt": []byte("orders implementation v1\n"),
-		}, Modes: map[string]string{".markitect/repository-ignore.yaml": snapshot.RegularMode, "README.md": snapshot.RegularMode, "src/orders/implementation.txt": snapshot.RegularMode}},
+		}, Modes: map[string]string{".markitect/repository-ignore.yaml": source.RegularMode, "README.md": source.RegularMode, "src/orders/implementation.txt": source.RegularMode}},
 		Coverage: &projectcoverage.Report{Digest: strings.Repeat("a", 64), Accounted: true, Conforming: true},
 		Report: projectmodel.Report{Digest: "sha256:" + strings.Repeat("b", 64), ModelDigest: "sha256:" + strings.Repeat("c", 64),
 			Managers: []projectmodel.Manager{{ID: managerID, Name: "orders"}},
@@ -178,9 +178,9 @@ func TestVerifyReviewChecksAcceptReviewsOfTheClosureCandidateView(t *testing.T) 
 	closureReport.Artifacts = []projectmodel.Artifact{{ID: "artifact:orders", Owner: "manager:orders", Required: true,
 		Realizes: []string{"statement:orders"}, Paths: []string{"src/orders/implementation.txt", fixtureLegacyOrdersFile, "docs/project.md"}}}
 	closureReport.Files = []projectmodel.FileEntry{
-		{Path: "src/orders/implementation.txt", Mode: snapshot.RegularMode, Owner: "manager:orders", Class: "implementation", Artifacts: []string{"artifact:orders"}, Exists: true},
-		{Path: fixtureLegacyOrdersFile, Mode: snapshot.RegularMode, Owner: "manager:orders", Class: "implementation", Artifacts: []string{"artifact:orders"}, Exists: true},
-		{Path: "docs/project.md", Mode: snapshot.RegularMode, Owner: "manager:orders", Class: "documentation", Artifacts: []string{"artifact:orders"}, Exists: true},
+		{Path: "src/orders/implementation.txt", Mode: source.RegularMode, Owner: "manager:orders", Class: "implementation", Artifacts: []string{"artifact:orders"}, Exists: true},
+		{Path: fixtureLegacyOrdersFile, Mode: source.RegularMode, Owner: "manager:orders", Class: "implementation", Artifacts: []string{"artifact:orders"}, Exists: true},
+		{Path: "docs/project.md", Mode: source.RegularMode, Owner: "manager:orders", Class: "documentation", Artifacts: []string{"artifact:orders"}, Exists: true},
 	}
 	host := Host{
 		Load: func(_ string, revision string) (*projectvalue.Project, error) {
@@ -189,7 +189,7 @@ func TestVerifyReviewChecksAcceptReviewsOfTheClosureCandidateView(t *testing.T) 
 			}
 			return base, nil
 		},
-		FromSnapshot: func(root string, source *snapshot.Snapshot) (*projectvalue.Project, error) {
+		FromSnapshot: func(root string, source *source.Input) (*projectvalue.Project, error) {
 			candidate := *base
 			candidate.Root, candidate.Snapshot = root, source
 			return &candidate, nil
@@ -198,7 +198,7 @@ func TestVerifyReviewChecksAcceptReviewsOfTheClosureCandidateView(t *testing.T) 
 			classified := *candidate
 			classified.Snapshot = cloneReviewSnapshot(candidate.Snapshot)
 			classified.Snapshot.Files[fixtureLegacyOrdersFile] = []byte("fixed transitional source bytes\n")
-			classified.Snapshot.Modes[fixtureLegacyOrdersFile] = snapshot.RegularMode
+			classified.Snapshot.Modes[fixtureLegacyOrdersFile] = source.RegularMode
 			classified.Report = closureReport
 			classified.Report.Digest, classified.Report.ModelDigest = "sha256:"+strings.Repeat("d", 64), "sha256:"+strings.Repeat("e", 64)
 			classified.Digest = strings.Repeat("c", 64)
@@ -286,7 +286,7 @@ func closureReviewProjectFacts(t *testing.T, root string) *projectvalue.Project 
 	return &projectvalue.Project{
 		Root: root, Revision: strings.Repeat("b", 40), Digest: strings.Repeat("b", 64),
 		Config: projectvalue.Config{CoverageMode: "full", DocumentPath: document, InventoryRoots: []string{"src"}},
-		Snapshot: &snapshot.Snapshot{Files: map[string][]byte{
+		Snapshot: &source.Input{Files: map[string][]byte{
 			projectvalue.ManifestPath:       []byte("apiVersion: " + projectvalue.APIVersion + "\nname: Review fixture\ncoverageMode: full\ndocumentPath: docs/project.md\ntransitionalExclusions:\n  - path: src/orders/legacy.txt\n    reason: Awaiting explicit modeling\n"),
 			projectconfig.RuntimePath:       runtimeBytes,
 			fixtureOrdersArtifact:           []byte("artifact: orders owns src/orders/implementation.txt\n"),
@@ -294,9 +294,9 @@ func closureReviewProjectFacts(t *testing.T, root string) *projectvalue.Project 
 			document:                        []byte(projectvalue.GeneratedViewMarker + "\ntransitional legacy path\n"),
 			"src/orders/implementation.txt": []byte("fixed orders implementation\n"),
 		}, Modes: map[string]string{
-			projectvalue.ManifestPath: snapshot.RegularMode, projectconfig.RuntimePath: snapshot.RegularMode, fixtureOrdersArtifact: snapshot.RegularMode,
-			projectcoverage.IgnorePath: snapshot.RegularMode, document: snapshot.RegularMode,
-			"src/orders/implementation.txt": snapshot.RegularMode,
+			projectvalue.ManifestPath: source.RegularMode, projectconfig.RuntimePath: source.RegularMode, fixtureOrdersArtifact: source.RegularMode,
+			projectcoverage.IgnorePath: source.RegularMode, document: source.RegularMode,
+			"src/orders/implementation.txt": source.RegularMode,
 		}},
 		Coverage: &projectcoverage.Report{Digest: strings.Repeat("1", 64), Accounted: true, Conforming: false},
 		Report: projectmodel.Report{Digest: "sha256:" + strings.Repeat("2", 64), ModelDigest: "sha256:" + strings.Repeat("3", 64),
@@ -304,15 +304,15 @@ func closureReviewProjectFacts(t *testing.T, root string) *projectvalue.Project 
 			Statements: []projectmodel.Statement{{ID: "statement:orders", Owner: managerID, Public: true, Description: "Own orders implementation."}},
 			Artifacts:  []projectmodel.Artifact{{ID: "artifact:orders", Owner: managerID, Required: true, Realizes: []string{"statement:orders"}, Paths: []string{"src/orders/implementation.txt", document}}},
 			Files: []projectmodel.FileEntry{
-				{Path: "src/orders/implementation.txt", Mode: snapshot.RegularMode, Owner: managerID, Class: "implementation", Artifacts: []string{"artifact:orders"}, Exists: true},
-				{Path: document, Mode: snapshot.RegularMode, Owner: managerID, Class: "documentation", Artifacts: []string{"artifact:orders"}, Exists: true},
+				{Path: "src/orders/implementation.txt", Mode: source.RegularMode, Owner: managerID, Class: "implementation", Artifacts: []string{"artifact:orders"}, Exists: true},
+				{Path: document, Mode: source.RegularMode, Owner: managerID, Class: "documentation", Artifacts: []string{"artifact:orders"}, Exists: true},
 			},
 		},
 	}
 }
 
-func cloneReviewSnapshot(source *snapshot.Snapshot) *snapshot.Snapshot {
-	clone := &snapshot.Snapshot{ID: source.ID, Files: map[string][]byte{}, Modes: map[string]string{}}
+func cloneReviewSnapshot(source *source.Input) *source.Input {
+	clone := &source.Input{ID: source.ID, Files: map[string][]byte{}, Modes: map[string]string{}}
 	for path, content := range source.Files {
 		clone.Files[path] = append([]byte(nil), content...)
 		clone.Modes[path] = source.Modes[path]

@@ -1,7 +1,7 @@
 package projectrun
 
 import "github.com/Glacius-Labs/Markitect/src/internal/core/projectmodel/projectvalue"
-import "github.com/Glacius-Labs/Markitect/src/internal/core/snapshot"
+import "github.com/Glacius-Labs/Markitect/internal/tooling/source"
 
 import (
 	"bytes"
@@ -15,7 +15,7 @@ import (
 // reviewCandidateState binds a review to the immutable source snapshot and
 // retained candidate that produced the bytes under assessment.
 type reviewCandidateState struct {
-	Base      *snapshot.Snapshot
+	Base      *source.Input
 	Candidate candidateData
 }
 
@@ -173,7 +173,7 @@ func freshPassedReviewForScope(host Host, root string, store *runStore, dir stri
 	return ReviewRecord{}, reviewCandidateState{}, false, nil
 }
 
-func reviewCandidateChanges(base *snapshot.Snapshot, candidate candidateData, selectedPaths []string) ([]candidateChange, []agentexec.Artifact, error) {
+func reviewCandidateChanges(base *source.Input, candidate candidateData, selectedPaths []string) ([]candidateChange, []agentexec.Artifact, error) {
 	selected := map[string]bool{}
 	for _, path := range selectedPaths {
 		selected[path] = true
@@ -230,7 +230,7 @@ func reviewProtocolMode(mode string) string {
 	return protocolMode(mode)
 }
 
-func snapshotFile(base *snapshot.Snapshot, path string) ([]byte, bool) {
+func snapshotFile(base *source.Input, path string) ([]byte, bool) {
 	if base == nil {
 		return nil, false
 	}
@@ -248,7 +248,7 @@ func digestIfPresent(content []byte, present bool) string {
 	return rawContentDigest(content)
 }
 
-func reviewChangeRefs(report projectmodel.Report, accepted projectmodel.ManagerContext, base *snapshot.Snapshot, candidate candidateData, selectedPaths []string) ([]reviewFileRef, []candidateChange, []agentexec.Artifact, error) {
+func reviewChangeRefs(report projectmodel.Report, accepted projectmodel.ManagerContext, base *source.Input, candidate candidateData, selectedPaths []string) ([]reviewFileRef, []candidateChange, []agentexec.Artifact, error) {
 	changes, deleted, err := reviewCandidateChanges(base, candidate, selectedPaths)
 	if err != nil {
 		return nil, nil, nil, err

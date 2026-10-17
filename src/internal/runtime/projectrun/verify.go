@@ -1,6 +1,6 @@
 package projectrun
 
-import "github.com/Glacius-Labs/Markitect/src/internal/core/snapshot"
+import "github.com/Glacius-Labs/Markitect/internal/tooling/source"
 import "github.com/Glacius-Labs/Markitect/src/internal/core/projectmodel/projectvalue"
 
 import (
@@ -19,7 +19,7 @@ import (
 	"time"
 
 	"github.com/Glacius-Labs/Markitect/src/internal/core/projectmodel"
-	"github.com/Glacius-Labs/Markitect/src/internal/infrastructure/guardedwrite"
+	"github.com/Glacius-Labs/Markitect/internal/tooling/guardedwrite"
 	"github.com/Glacius-Labs/Markitect/src/internal/runtime/agentexec"
 )
 
@@ -460,7 +460,7 @@ func requireArtifacts(report projectmodel.Report) error {
 // source on demand, such as a transitional file the candidate models in place.
 // Checks then run on exactly the closure view, using the bytes that compile
 // read and full verification binds, without a second read.
-func checkTreeBase(base *snapshot.Snapshot, candidate candidateData, closure *projectvalue.Project) *snapshot.Snapshot {
+func checkTreeBase(base *source.Input, candidate candidateData, closure *projectvalue.Project) *source.Input {
 	if closure == nil || closure.Snapshot == nil {
 		return base
 	}
@@ -475,7 +475,7 @@ func checkTreeBase(base *snapshot.Snapshot, candidate candidateData, closure *pr
 	if len(read) == 0 {
 		return base
 	}
-	tree := &snapshot.Snapshot{ID: base.ID, Provisional: base.Provisional, Files: make(map[string][]byte, len(base.Files)+len(read)), Modes: make(map[string]string, len(base.Modes)+len(read))}
+	tree := &source.Input{ID: base.ID, Provisional: base.Provisional, Files: make(map[string][]byte, len(base.Files)+len(read)), Modes: make(map[string]string, len(base.Modes)+len(read))}
 	for path, data := range base.Files {
 		tree.Files[path], tree.Modes[path] = data, base.Modes[path]
 	}
@@ -485,7 +485,7 @@ func checkTreeBase(base *snapshot.Snapshot, candidate candidateData, closure *pr
 	return tree
 }
 
-func materializeCandidate(dest string, base *snapshot.Snapshot, candidate candidateData) error {
+func materializeCandidate(dest string, base *source.Input, candidate candidateData) error {
 	if err := ensureDirectory(dest); err != nil {
 		return err
 	}

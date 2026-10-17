@@ -12,7 +12,7 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/Glacius-Labs/Markitect/src/internal/infrastructure/guardedwrite"
+	"github.com/Glacius-Labs/Markitect/internal/tooling/guardedwrite"
 	"github.com/Glacius-Labs/Markitect/src/internal/infrastructure/recordstore"
 )
 

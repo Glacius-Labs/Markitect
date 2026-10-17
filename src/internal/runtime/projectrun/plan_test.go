@@ -7,7 +7,7 @@ import (
 
 	"github.com/Glacius-Labs/Markitect/src/internal/core/projectmodel"
 	"github.com/Glacius-Labs/Markitect/src/internal/core/projectmodel/projectvalue"
-	"github.com/Glacius-Labs/Markitect/src/internal/core/snapshot"
+	"github.com/Glacius-Labs/Markitect/internal/tooling/source"
 	"github.com/Glacius-Labs/Markitect/src/internal/runtime/agentexec"
 	"github.com/Glacius-Labs/Markitect/src/internal/runtime/projectconfig"
 )
@@ -36,8 +36,8 @@ func TestPlanChecksBlockRequiredArtifactsWithMissingChecks(t *testing.T) {
 }
 
 func TestPlanRequiresWorkingSelectedInputsEqualFixedRevision(t *testing.T) {
-	fixed := &snapshot.Snapshot{Files: map[string][]byte{"src/main.go": []byte("committed")}, Modes: map[string]string{"src/main.go": snapshot.RegularMode}}
-	working := &snapshot.Snapshot{Files: map[string][]byte{"src/main.go": []byte("uncommitted")}, Modes: map[string]string{"src/main.go": snapshot.RegularMode}}
+	fixed := &source.Input{Files: map[string][]byte{"src/main.go": []byte("committed")}, Modes: map[string]string{"src/main.go": source.RegularMode}}
+	working := &source.Input{Files: map[string][]byte{"src/main.go": []byte("uncommitted")}, Modes: map[string]string{"src/main.go": source.RegularMode}}
 	err := requireCleanSelectedBasis(fixed, working)
 	if err == nil || !strings.Contains(err.Error(), "commit accepted selected changes") {
 		t.Fatalf("expected dirty selected input to block planning, got %v", err)
@@ -201,9 +201,9 @@ func TestPlanCountsTheIntegrationReviewOfAFileLessParent(t *testing.T) {
 	)
 	project := &projectvalue.Project{
 		Config: projectvalue.Config{InventoryRoots: []string{"src"}},
-		Snapshot: &snapshot.Snapshot{
+		Snapshot: &source.Input{
 			Files: map[string][]byte{orders: []byte("orders\n"), stock: []byte("inventory\n")},
-			Modes: map[string]string{orders: snapshot.RegularMode, stock: snapshot.RegularMode},
+			Modes: map[string]string{orders: source.RegularMode, stock: source.RegularMode},
 		},
 		Report: projectmodel.Report{
 			Managers: []projectmodel.Manager{{ID: rootID}, {ID: ordersID, Parent: rootID}, {ID: stockID, Parent: rootID}},

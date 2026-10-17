@@ -20,7 +20,7 @@ import (
 	"time"
 
 	"github.com/Glacius-Labs/Markitect/src/internal/application/projectwork"
-	"github.com/Glacius-Labs/Markitect/src/internal/infrastructure/source"
+	"github.com/Glacius-Labs/Markitect/internal/tooling/source"
 	"github.com/Glacius-Labs/Markitect/src/internal/runtime/agentexec"
 	"github.com/Glacius-Labs/Markitect/src/internal/runtime/projectrun"
 )

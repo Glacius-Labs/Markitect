@@ -2,7 +2,7 @@ package projectapp
 
 import "go.yaml.in/yaml/v3"
 
-import "github.com/Glacius-Labs/Markitect/src/internal/core/snapshot"
+import "github.com/Glacius-Labs/Markitect/internal/tooling/source"
 import "github.com/Glacius-Labs/Markitect/src/internal/core/projectmodel/projectvalue"
 
 import (
@@ -59,7 +59,7 @@ func TestPlanPassesExplicitSelectionAndUnauthenticatedRequestToExistingService(t
 			loadedRevision = selectedRevision
 			return nil, loadErr
 		},
-		FromSnapshot: func(string, *snapshot.Snapshot) (*projectvalue.Project, error) {
+		FromSnapshot: func(string, *source.Input) (*projectvalue.Project, error) {
 			return nil, errors.New("unexpected snapshot")
 		},
 		PlanEdit: func(*projectvalue.Project, projectvalue.Mutation) (projectvalue.EditPlan, error) {
@@ -92,7 +92,7 @@ func TestPlanRejectsConflictingExplicitRevisionsBeforeHost(t *testing.T) {
 			loads++
 			return nil, errors.New("Host must not be called")
 		},
-		FromSnapshot: func(string, *snapshot.Snapshot) (*projectvalue.Project, error) {
+		FromSnapshot: func(string, *source.Input) (*projectvalue.Project, error) {
 			return nil, errors.New("unexpected snapshot")
 		},
 		PlanEdit: func(*projectvalue.Project, projectvalue.Mutation) (projectvalue.EditPlan, error) {

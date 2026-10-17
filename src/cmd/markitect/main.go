@@ -3,7 +3,7 @@ package main
 import (
 	"os"
 
-	"github.com/Glacius-Labs/Markitect/src/internal/application/buildinfo"
+	"github.com/Glacius-Labs/Markitect/internal/buildinfo"
 	"github.com/Glacius-Labs/Markitect/src/internal/application/projectcli"
 )
 

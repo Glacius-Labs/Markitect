@@ -9,12 +9,12 @@ import (
 	"unicode"
 	"unicode/utf8"
 
-	"github.com/Glacius-Labs/Markitect/src/internal/core/snapshot"
+	"github.com/Glacius-Labs/Markitect/internal/tooling/source"
 )
 
 // FromSnapshot builds a pure in-memory candidate universe from the exact
 // files supplied by a caller. It performs no filesystem or Git I/O.
-func FromSnapshot(s *snapshot.Snapshot, options Options) (*Universe, error) {
+func FromSnapshot(s *source.Input, options Options) (*Universe, error) {
 	if s == nil {
 		return nil, fmt.Errorf("candidate snapshot is required")
 	}
@@ -52,11 +52,11 @@ func pathNames(states []PathState) []string {
 	return paths
 }
 
-func cloneSnapshot(input *snapshot.Snapshot) *snapshot.Snapshot {
+func cloneSnapshot(input *source.Input) *source.Input {
 	if input == nil {
 		return nil
 	}
-	result := &snapshot.Snapshot{ID: input.ID, Provisional: input.Provisional, Files: make(map[string][]byte, len(input.Files)), Modes: make(map[string]string, len(input.Modes))}
+	result := &source.Input{ID: input.ID, Provisional: input.Provisional, Files: make(map[string][]byte, len(input.Files)), Modes: make(map[string]string, len(input.Modes))}
 	for name, data := range input.Files {
 		result.Files[name] = append([]byte(nil), data...)
 	}

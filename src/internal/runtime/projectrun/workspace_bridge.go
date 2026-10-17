@@ -1,6 +1,6 @@
 package projectrun
 
-import "github.com/Glacius-Labs/Markitect/src/internal/core/snapshot"
+import 
 import "github.com/Glacius-Labs/Markitect/src/internal/core/projectmodel/projectvalue"
 
 import (
@@ -16,7 +16,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/Glacius-Labs/Markitect/src/internal/infrastructure/source"
+	"github.com/Glacius-Labs/Markitect/internal/tooling/source"
 	"github.com/Glacius-Labs/Markitect/src/internal/runtime/agentexec"
 	"github.com/Glacius-Labs/Markitect/src/internal/runtime/projectworkspace"
 )
@@ -211,7 +211,7 @@ func persistWorkspaceJournal(path string, journal workspaceJournal) error {
 	return os.Rename(tmp, path)
 }
 
-func workspaceOverlay(before, after *snapshot.Snapshot) ([]projectworkspace.Change, error) {
+func workspaceOverlay(before, after *source.Input) ([]projectworkspace.Change, error) {
 	if before == nil || after == nil {
 		return nil, fmt.Errorf("workspace overlay requires source and candidate snapshots")
 	}

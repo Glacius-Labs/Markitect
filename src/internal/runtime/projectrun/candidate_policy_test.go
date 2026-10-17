@@ -1,6 +1,6 @@
 package projectrun
 
-import "github.com/Glacius-Labs/Markitect/src/internal/core/snapshot"
+import "github.com/Glacius-Labs/Markitect/internal/tooling/source"
 import "github.com/Glacius-Labs/Markitect/src/internal/core/projectmodel/projectvalue"
 
 import (
@@ -16,7 +16,7 @@ import (
 
 func TestFullProposalCannotWriteIgnoredPathWithinOwnedArtifactScope(t *testing.T) {
 	config := projectvalue.Config{CoverageMode: "full", InventoryRoots: []string{"old-root"}}
-	input := &snapshot.Snapshot{Files: map[string][]byte{projectcoverage.IgnorePath: []byte("apiVersion: " + projectcoverage.IgnoreAPIVersion + "\nkind: RepositoryIgnore\nentries:\n  - path: src/cache/\n    reason: Local disposable cache\n")}}
+	input := &source.Input{Files: map[string][]byte{projectcoverage.IgnorePath: []byte("apiVersion: " + projectcoverage.IgnoreAPIVersion + "\nkind: RepositoryIgnore\nentries:\n  - path: src/cache/\n    reason: Local disposable cache\n")}}
 	report := projectmodel.Report{
 		Managers:  []projectmodel.Manager{{ID: "owner", Owns: []string{"src/"}}},
 		Artifacts: []projectmodel.Artifact{{ID: "source", Owner: "owner", Paths: []string{"src/", "src/cache/", "src/cache/data.txt"}}},

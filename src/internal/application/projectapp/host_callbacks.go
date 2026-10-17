@@ -15,7 +15,7 @@ import (
 	"github.com/Glacius-Labs/Markitect/src/internal/application/projecthistory"
 	"github.com/Glacius-Labs/Markitect/src/internal/core/projectmodel/projectbriefing"
 	"github.com/Glacius-Labs/Markitect/src/internal/core/projectmodel/projectvalue"
-	"github.com/Glacius-Labs/Markitect/src/internal/infrastructure/source"
+	"github.com/Glacius-Labs/Markitect/internal/tooling/source"
 	"github.com/Glacius-Labs/Markitect/src/internal/runtime/projectconfig"
 	"github.com/Glacius-Labs/Markitect/src/internal/runtime/projectrun"
 )

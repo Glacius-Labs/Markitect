@@ -10,8 +10,8 @@ import (
 	"testing"
 
 	"github.com/Glacius-Labs/Markitect/src/internal/core/projectmodel/projectvalue"
-	"github.com/Glacius-Labs/Markitect/src/internal/core/snapshot"
-	"github.com/Glacius-Labs/Markitect/src/internal/infrastructure/source"
+	
+	"github.com/Glacius-Labs/Markitect/internal/tooling/source"
 	"github.com/Glacius-Labs/Markitect/src/internal/runtime/projectexecutor"
 )
 
@@ -45,7 +45,7 @@ func TestResumeReconcilesDurableRunningStateAfterCrash(t *testing.T) {
 			}
 			report := persistRunningCrashState(t, root, plan, scenario.inFlight, scenario.retryReady)
 			var originalRequest []byte
-			var originalSource *snapshot.Snapshot
+			var originalSource *source.Input
 			if scenario.inFlight {
 				originalSource, err = source.Load(root, "")
 				if err != nil {
@@ -136,7 +136,7 @@ func TestResumeReconcilesDurableRunningStateAfterCrash(t *testing.T) {
 				if err != nil {
 					t.Fatal(err)
 				}
-				changes := snapshot.Compare(originalSource, snapshotAfter)
+				changes := source.Compare(originalSource, snapshotAfter)
 				if len(changes.Modified) != 0 || len(changes.Removed) != 0 {
 					t.Fatalf("blocked resume modified or removed original source/history: %+v", changes)
 				}

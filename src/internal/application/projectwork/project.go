@@ -16,8 +16,8 @@ import (
 	"github.com/Glacius-Labs/Markitect/src/internal/core"
 	"github.com/Glacius-Labs/Markitect/src/internal/core/projectmodel"
 	modelcoverage "github.com/Glacius-Labs/Markitect/src/internal/core/projectmodel/projectcoverage"
-	"github.com/Glacius-Labs/Markitect/src/internal/core/snapshot"
-	"github.com/Glacius-Labs/Markitect/src/internal/infrastructure/source"
+	
+	"github.com/Glacius-Labs/Markitect/internal/tooling/source"
 )
 
 // Load loads only the Project manifest and exact paths it selects. A working
@@ -36,7 +36,7 @@ func Load(root, revision string) (*projectvalue.Project, error) {
 	var fullUniverse *modelcoverage.Universe
 	var fullOptions modelcoverage.Options
 	var expectedManifest []byte
-	var fixedManifest *snapshot.Snapshot
+	var fixedManifest *source.Input
 	if revision == "" {
 		// The manifest determines exact canonical model paths and optional view
 		// output ownership, so read it before building the full registry.
@@ -78,7 +78,7 @@ func Load(root, revision string) (*projectvalue.Project, error) {
 			}
 		}
 	}
-	var manifest *snapshot.Snapshot
+	var manifest *source.Input
 	var configBytes []byte
 	// err is shared with the optional coverage observation above.
 	if fullUniverse != nil {
@@ -150,7 +150,7 @@ func Load(root, revision string) (*projectvalue.Project, error) {
 		}
 	}
 	paths = uniqueSorted(paths)
-	var selected *snapshot.Snapshot
+	var selected *source.Input
 	if fullUniverse != nil {
 		selected = fullUniverse.Snapshot
 		if selected == nil || !bytes.Equal(selected.Files[projectvalue.ManifestPath], expectedManifest) {
@@ -214,7 +214,7 @@ func Load(root, revision string) (*projectvalue.Project, error) {
 // manifest and derives a report from the inventory bytes present in s and
 // admitted by configured roots. Other snapshot entries are ignored. Its full
 // coverage sees only snapshot paths; closure gates use ClassifyCandidate.
-func FromSnapshot(root string, s *snapshot.Snapshot) (*projectvalue.Project, error) {
+func FromSnapshot(root string, s *source.Input) (*projectvalue.Project, error) {
 	if s == nil {
 		return nil, fmt.Errorf("project snapshot is required")
 	}
@@ -292,7 +292,7 @@ func FromSnapshot(root string, s *snapshot.Snapshot) (*projectvalue.Project, err
 		return nil, fmt.Errorf("compile selected project model: %s", diagnostics[0].Message)
 	}
 	report := projectmodel.Analyze(model, inventory)
-	selected := &snapshot.Snapshot{ID: s.ID, Provisional: s.Provisional, Files: files, Modes: modes}
+	selected := &source.Input{ID: s.ID, Provisional: s.Provisional, Files: files, Modes: modes}
 	project := &projectvalue.Project{Root: rootAbs, Revision: s.ID, Provisional: s.Provisional, Config: config, Model: model, Report: report, Snapshot: selected}
 	if config.CoverageMode == "full" {
 		options := coverageOptions(config)

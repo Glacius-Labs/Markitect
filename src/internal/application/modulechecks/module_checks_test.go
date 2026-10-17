@@ -17,9 +17,9 @@ import (
 
 	"github.com/Glacius-Labs/Markitect/internal/testkit"
 	"github.com/Glacius-Labs/Markitect/src/internal/core/projectmodel"
-	"github.com/Glacius-Labs/Markitect/src/internal/infrastructure/source"
-	"github.com/Glacius-Labs/Markitect/src/internal/modules/githooks"
-	"github.com/Glacius-Labs/Markitect/src/internal/modules/pipelines"
+	"github.com/Glacius-Labs/Markitect/internal/tooling/source"
+	"github.com/Glacius-Labs/Markitect/internal/tooling/modules/githooks"
+	"github.com/Glacius-Labs/Markitect/internal/tooling/modules/pipelines"
 )
 
 const (

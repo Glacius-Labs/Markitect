@@ -4,17 +4,17 @@ import (
 	"fmt"
 	"github.com/Glacius-Labs/Markitect/src/internal/core/projectmodel/projectvalue"
 
-	"github.com/Glacius-Labs/Markitect/src/internal/core/snapshot"
-	"github.com/Glacius-Labs/Markitect/src/internal/infrastructure/source"
+	
+	"github.com/Glacius-Labs/Markitect/internal/tooling/source"
 )
 
 // loadConfiguredInventory reads only regular paths enumerated beneath the
 // manifest's explicit inventory roots, after applying its exclusions.
-func loadConfiguredInventory(root, revision string, provisional bool, config projectvalue.Config) (*snapshot.Snapshot, error) {
+func loadConfiguredInventory(root, revision string, provisional bool, config projectvalue.Config) (*source.Input, error) {
 	if config.CoverageMode == "full" {
 		return loadFullCoverageSnapshot(root, revision, provisional, config)
 	}
-	selected := &snapshot.Snapshot{ID: revision, Provisional: provisional, Files: map[string][]byte{}, Modes: map[string]string{}}
+	selected := &source.Input{ID: revision, Provisional: provisional, Files: map[string][]byte{}, Modes: map[string]string{}}
 	if len(config.InventoryRoots) == 0 {
 		return selected, nil
 	}
@@ -37,7 +37,7 @@ func loadConfiguredInventory(root, revision string, provisional bool, config pro
 	return inventory, nil
 }
 
-func readConfiguredInventory(acquisition *source.Acquisition, revision string, provisional bool, config projectvalue.Config, selected *snapshot.Snapshot) (*snapshot.Snapshot, error) {
+func readConfiguredInventory(acquisition *source.Acquisition, revision string, provisional bool, config projectvalue.Config, selected *source.Input) (*source.Input, error) {
 	var paths []string
 	if provisional {
 		metadata, err := acquisition.InventoryWorkingRoots(config.InventoryRoots)

@@ -1,6 +1,6 @@
 package projectrun
 
-import "github.com/Glacius-Labs/Markitect/src/internal/core/snapshot"
+import "github.com/Glacius-Labs/Markitect/internal/tooling/source"
 import "github.com/Glacius-Labs/Markitect/src/internal/core/projectmodel/projectvalue"
 
 import (
@@ -85,7 +85,7 @@ func validateCandidateDocument(host Host, project *projectvalue.Project) error {
 	return nil
 }
 
-func validateIgnoredCandidatePaths(base *snapshot.Snapshot, candidate candidateData, config projectvalue.Config) error {
+func validateIgnoredCandidatePaths(base *source.Input, candidate candidateData, config projectvalue.Config) error {
 	ignored, err := ignoredWritePaths(config, base)
 	if err != nil {
 		return err
@@ -98,7 +98,7 @@ func validateIgnoredCandidatePaths(base *snapshot.Snapshot, candidate candidateD
 	return nil
 }
 
-func ignoredWritePaths(config projectvalue.Config, input *snapshot.Snapshot) ([]string, error) {
+func ignoredWritePaths(config projectvalue.Config, input *source.Input) ([]string, error) {
 	if config.CoverageMode != "full" {
 		return []string{}, nil
 	}

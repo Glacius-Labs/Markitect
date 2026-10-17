@@ -12,7 +12,7 @@ import (
 	"github.com/Glacius-Labs/Markitect/src/internal/core/projectmodel"
 	"github.com/Glacius-Labs/Markitect/src/internal/core/projectmodel/projectbriefing"
 	"github.com/Glacius-Labs/Markitect/src/internal/core/projectmodel/projectvalue"
-	"github.com/Glacius-Labs/Markitect/src/internal/core/snapshot"
+	"github.com/Glacius-Labs/Markitect/internal/tooling/source"
 	"github.com/Glacius-Labs/Markitect/src/internal/runtime/projectconfig"
 	yaml "go.yaml.in/yaml/v3"
 )
@@ -102,12 +102,12 @@ func resumeCrashHost(root string, project *projectvalue.Project) Host {
 		e2eManagerID("orders", "orders"):       true,
 		e2eManagerID("inventory", "inventory"): true,
 	}
-	cloneProject := func(source *snapshot.Snapshot) *projectvalue.Project {
+	cloneProject := func(source *source.Input) *projectvalue.Project {
 		loaded := *project
 		if source == nil {
 			source = project.Snapshot
 		}
-		copySnapshot := &snapshot.Snapshot{ID: source.ID, Provisional: source.Provisional, Files: make(map[string][]byte, len(source.Files)), Modes: make(map[string]string, len(source.Modes))}
+		copySnapshot := &source.Input{ID: source.ID, Provisional: source.Provisional, Files: make(map[string][]byte, len(source.Files)), Modes: make(map[string]string, len(source.Modes))}
 		for path, content := range source.Files {
 			copySnapshot.Files[path] = append([]byte(nil), content...)
 		}
@@ -124,7 +124,7 @@ func resumeCrashHost(root string, project *projectvalue.Project) Host {
 			}
 			return cloneProject(project.Snapshot), nil
 		},
-		FromSnapshot: func(loadRoot string, source *snapshot.Snapshot) (*projectvalue.Project, error) {
+		FromSnapshot: func(loadRoot string, source *source.Input) (*projectvalue.Project, error) {
 			if loadRoot != root || source == nil {
 				return nil, fmt.Errorf("resume crash fixture received an unbound snapshot")
 			}

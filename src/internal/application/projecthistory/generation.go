@@ -10,7 +10,7 @@ import (
 	"github.com/Glacius-Labs/Markitect/src/internal/application/projectwork"
 	"github.com/Glacius-Labs/Markitect/src/internal/core/projectmodel/projectbriefing"
 	"github.com/Glacius-Labs/Markitect/src/internal/core/projectmodel/projectvalue"
-	"github.com/Glacius-Labs/Markitect/src/internal/infrastructure/source"
+	"github.com/Glacius-Labs/Markitect/internal/tooling/source"
 )
 
 // Generate loads the named committed revisions and derives their briefing.

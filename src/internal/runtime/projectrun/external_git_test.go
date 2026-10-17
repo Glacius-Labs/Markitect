@@ -9,8 +9,8 @@ import (
 	"testing"
 
 	"github.com/Glacius-Labs/Markitect/src/internal/core/projectmodel/projectvalue"
-	"github.com/Glacius-Labs/Markitect/src/internal/core/snapshot"
-	"github.com/Glacius-Labs/Markitect/src/internal/infrastructure/source"
+	
+	"github.com/Glacius-Labs/Markitect/internal/tooling/source"
 	"github.com/Glacius-Labs/Markitect/src/internal/runtime/projectworkspace"
 )
 
@@ -97,7 +97,7 @@ func TestImportExternalGitCandidateBindsBaseDigestAndAllowedScope(t *testing.T) 
 	}
 }
 
-func newExternalGitCandidateRepo(t *testing.T) (root, baseCommit, finalCommit string, baseSnapshot *snapshot.Snapshot) {
+func newExternalGitCandidateRepo(t *testing.T) (root, baseCommit, finalCommit string, baseSnapshot *source.Input) {
 	t.Helper()
 	root = t.TempDir()
 	run := func(args ...string) {
@@ -128,7 +128,7 @@ func newExternalGitCandidateRepo(t *testing.T) (root, baseCommit, finalCommit st
 	write("src/removed.txt", []byte("removed\n"), 0o644)
 	write("src/unchanged.txt", []byte("unchanged\n"), 0o644)
 	write("src/script.sh", []byte("#!/bin/sh\necho base\n"), 0o644)
-	baseSnapshot = &snapshot.Snapshot{Files: map[string][]byte{
+	baseSnapshot = &source.Input{Files: map[string][]byte{
 		"src/changed.bin":   {0x00, 0x11, 0x7f, 0x00, 0x80, 0x42},
 		"src/removed.txt":   []byte("removed\n"),
 		"src/unchanged.txt": []byte("unchanged\n"),
@@ -155,7 +155,7 @@ func newExternalGitCandidateRepo(t *testing.T) (root, baseCommit, finalCommit st
 	return root, baseCommit, finalCommit, baseSnapshot
 }
 
-func externalGitHost(root, revision string, baseSnapshot *snapshot.Snapshot) Host {
+func externalGitHost(root, revision string, baseSnapshot *source.Input) Host {
 	return Host{Load: func(loadRoot, loadRevision string) (*projectvalue.Project, error) {
 		if loadRoot != root || loadRevision != revision {
 			return nil, errors.New("external Git fixture received an unbound project load")

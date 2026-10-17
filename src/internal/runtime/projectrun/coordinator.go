@@ -1,6 +1,6 @@
 package projectrun
 
-import "github.com/Glacius-Labs/Markitect/src/internal/core/snapshot"
+import "github.com/Glacius-Labs/Markitect/internal/tooling/source"
 import "github.com/Glacius-Labs/Markitect/src/internal/core/projectmodel/projectvalue"
 
 import (
@@ -69,7 +69,7 @@ type pendingNativeRecovery struct {
 
 func taskActionKey(managerID, phase string) string { return managerID + "\x00" + phase }
 
-func recoveryManagerInput(store *runStore, dir string, host Host, root string, base *snapshot.Snapshot, model projectmodel.Report, report RunReport, plan PlanRecord, task ManagerTask, phase string, dependencyIDs []string) (*projectvalue.Project, []string, []childReport, []string, error) {
+func recoveryManagerInput(store *runStore, dir string, host Host, root string, base *source.Input, model projectmodel.Report, report RunReport, plan PlanRecord, task ManagerTask, phase string, dependencyIDs []string) (*projectvalue.Project, []string, []childReport, []string, error) {
 	children := activeChildren(report.Tasks, task.ManagerID)
 	var input *projectvalue.Project
 	var conflicts []string

@@ -16,7 +16,7 @@ import (
 	"github.com/Glacius-Labs/Markitect/internal/testkit"
 	"github.com/Glacius-Labs/Markitect/src/internal/core/projectmodel"
 	"github.com/Glacius-Labs/Markitect/src/internal/core/projectmodel/projectvalue"
-	"github.com/Glacius-Labs/Markitect/src/internal/core/snapshot"
+	"github.com/Glacius-Labs/Markitect/internal/tooling/source"
 	"github.com/Glacius-Labs/Markitect/src/internal/runtime/agentexec"
 	"github.com/Glacius-Labs/Markitect/src/internal/runtime/projectconfig"
 	"github.com/Glacius-Labs/Markitect/src/internal/runtime/projectexecutor"
@@ -161,17 +161,17 @@ func TestFreshReviewEvidenceForVerifySelectsCurrentScopeAndRetainsPartialCandida
 	project := &projectvalue.Project{
 		Root: root, Revision: strings.Repeat("a", 40), Digest: strings.Repeat("a", 64),
 		Config: projectvalue.Config{CoverageMode: "selected", InventoryRoots: []string{"src"}},
-		Snapshot: &snapshot.Snapshot{Files: map[string][]byte{
+		Snapshot: &source.Input{Files: map[string][]byte{
 			documentPath: documentContent, implementationPath: []byte("fixed implementation bytes\n"),
 			projectconfig.RuntimePath: runtimeBytes,
-		}, Modes: map[string]string{documentPath: snapshot.RegularMode, implementationPath: snapshot.RegularMode, projectconfig.RuntimePath: snapshot.RegularMode}},
+		}, Modes: map[string]string{documentPath: source.RegularMode, implementationPath: source.RegularMode, projectconfig.RuntimePath: source.RegularMode}},
 		Report: projectmodel.Report{
 			Managers:   []projectmodel.Manager{{ID: targetID, Name: "inventory"}},
 			Statements: []projectmodel.Statement{{ID: "statement:inventory", Owner: targetID, Public: true, Description: "Own the inventory implementation."}},
 			Artifacts:  []projectmodel.Artifact{{ID: artifactID, Owner: targetID, Required: true, Realizes: []string{"statement:inventory"}, Paths: []string{implementationPath, documentPath}}},
 			Files: []projectmodel.FileEntry{
-				{Path: implementationPath, Mode: snapshot.RegularMode, Owner: targetID, Class: "implementation", Artifacts: []string{artifactID}, Exists: true},
-				{Path: documentPath, Mode: snapshot.RegularMode, Owner: targetID, Class: "documentation", Artifacts: []string{artifactID}, Exists: true},
+				{Path: implementationPath, Mode: source.RegularMode, Owner: targetID, Class: "implementation", Artifacts: []string{artifactID}, Exists: true},
+				{Path: documentPath, Mode: source.RegularMode, Owner: targetID, Class: "documentation", Artifacts: []string{artifactID}, Exists: true},
 			},
 		},
 	}
@@ -736,11 +736,11 @@ func fullVerifyProjectFacts(t *testing.T, root, revision string) *projectvalue.P
 		"src/greeting.py":         []byte("def greeting(): return 'hello'\n"),
 		projectconfig.RuntimePath: runtimeBytes,
 	}
-	modes := map[string]string{"docs/greeting.md": snapshot.RegularMode, instructionPath: snapshot.RegularMode, "src/greeting.py": snapshot.RegularMode, projectconfig.RuntimePath: snapshot.RegularMode}
+	modes := map[string]string{"docs/greeting.md": source.RegularMode, instructionPath: source.RegularMode, "src/greeting.py": source.RegularMode, projectconfig.RuntimePath: source.RegularMode}
 	return &projectvalue.Project{
 		Root: root, Revision: revision, Digest: strings.Repeat("f", 64),
 		Config:   projectvalue.Config{CoverageMode: "full", DocumentPath: instructionPath},
-		Snapshot: &snapshot.Snapshot{ID: revision, Files: files, Modes: modes},
+		Snapshot: &source.Input{ID: revision, Files: files, Modes: modes},
 		Report: projectmodel.Report{Digest: "sha256:" + strings.Repeat("a", 64), ModelDigest: "sha256:" + strings.Repeat("b", 64),
 			Managers: []projectmodel.Manager{{ID: rootManager, Name: "root"}, {ID: childManager, Name: "child", Parent: rootManager}},
 			Statements: []projectmodel.Statement{
@@ -751,8 +751,8 @@ func fullVerifyProjectFacts(t *testing.T, root, revision string) *projectvalue.P
 				Realizes: []string{"statement:greeting"}, Paths: []string{"docs/greeting.md", "src/greeting.py"}}},
 			Checks: []projectmodel.Check{{ID: "check:greeting", Owner: rootManager, Command: []string{"python", "-m", "unittest"}}},
 			Files: []projectmodel.FileEntry{
-				{Path: "docs/greeting.md", Mode: snapshot.RegularMode, Owner: rootManager, Class: "documentation", Artifacts: []string{"artifact:greeting"}, Exists: true},
-				{Path: "src/greeting.py", Mode: snapshot.RegularMode, Owner: rootManager, Class: "implementation", Artifacts: []string{"artifact:greeting"}, Exists: true},
+				{Path: "docs/greeting.md", Mode: source.RegularMode, Owner: rootManager, Class: "documentation", Artifacts: []string{"artifact:greeting"}, Exists: true},
+				{Path: "src/greeting.py", Mode: source.RegularMode, Owner: rootManager, Class: "implementation", Artifacts: []string{"artifact:greeting"}, Exists: true},
 			},
 		},
 	}
@@ -768,7 +768,7 @@ func TestFullVerifyKnownCostOverflowSaturatesExplicitly(t *testing.T) {
 func TestFullVerifyProjectRejectsStaleExpectedSnapshotBeforeAudit(t *testing.T) {
 	project := &projectvalue.Project{
 		Revision: strings.Repeat("a", 40),
-		Snapshot: &snapshot.Snapshot{Files: map[string][]byte{"README.md": []byte("fixed bytes\n")}, Modes: map[string]string{"README.md": snapshot.RegularMode}},
+		Snapshot: &source.Input{Files: map[string][]byte{"README.md": []byte("fixed bytes\n")}, Modes: map[string]string{"README.md": source.RegularMode}},
 	}
 	_, err := FullVerifyProject(context.Background(), Host{}, projectexecutor.ProcessInvoker{}, t.TempDir(), project,
 		projectconfig.Runtime{}, FullVerifyBinding{ExpectedSnapshot: strings.Repeat("f", 64)})

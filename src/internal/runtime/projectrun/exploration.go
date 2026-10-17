@@ -1,6 +1,6 @@
 package projectrun
 
-import "github.com/Glacius-Labs/Markitect/src/internal/core/snapshot"
+import 
 import "github.com/Glacius-Labs/Markitect/src/internal/core/projectmodel/projectvalue"
 
 import (
@@ -13,7 +13,7 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/Glacius-Labs/Markitect/src/internal/infrastructure/source"
+	"github.com/Glacius-Labs/Markitect/internal/tooling/source"
 )
 
 // ExplorationBinding computes the exact executable selection without creating
@@ -62,7 +62,7 @@ func loadExplorationReadiness(host Host, root, explorationID, scopeID string) (D
 	return host.LoadExplorationReadiness(root, explorationID, scopeID)
 }
 
-func explorationBindingFromPlan(host Host, root string, project *projectvalue.Project, working *snapshot.Snapshot, request PlanRequest, plan PlanRecord) (projectvalue.Binding, error) {
+func explorationBindingFromPlan(host Host, root string, project *projectvalue.Project, working *source.Input, request PlanRequest, plan PlanRecord) (projectvalue.Binding, error) {
 	var binding projectvalue.Binding
 	if project == nil || project.Snapshot == nil || working == nil {
 		return binding, fmt.Errorf("exploration requires fixed and working project snapshots")
@@ -162,7 +162,7 @@ func explorationBindingFromPlan(host Host, root string, project *projectvalue.Pr
 	return binding, err
 }
 
-func bindExplorationReadiness(host Host, root string, project *projectvalue.Project, working *snapshot.Snapshot, request PlanRequest, plan *PlanRecord) error {
+func bindExplorationReadiness(host Host, root string, project *projectvalue.Project, working *source.Input, request PlanRequest, plan *PlanRecord) error {
 	if !request.ExecuteAuthorized && request.ExplorationID == "" {
 		return nil
 	}

@@ -19,7 +19,7 @@ import (
 	projectbriefing "github.com/Glacius-Labs/Markitect/src/internal/core/projectmodel/projectbriefing"
 	"github.com/Glacius-Labs/Markitect/src/internal/core/projectmodel/projectvalue"
 	"github.com/Glacius-Labs/Markitect/src/internal/infrastructure/recordstore"
-	"github.com/Glacius-Labs/Markitect/src/internal/infrastructure/source"
+	"github.com/Glacius-Labs/Markitect/internal/tooling/source"
 )
 
 const storePath = ".markitect/records/briefing/accepted/record.json"

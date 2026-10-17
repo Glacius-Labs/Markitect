@@ -1,7 +1,7 @@
 package projectrun
 
 import "github.com/Glacius-Labs/Markitect/src/internal/core/projectmodel/projectvalue"
-import "github.com/Glacius-Labs/Markitect/src/internal/core/snapshot"
+import "github.com/Glacius-Labs/Markitect/internal/tooling/source"
 
 import (
 	"fmt"
@@ -19,7 +19,7 @@ import (
 // repository, base SHA, overlay, task ID, and base digest to the exact
 // workspace request and handle. This function rechecks product write policy;
 // it does not treat model proposals as a source of candidate bytes.
-func applyWorkspaceDelta(base candidateData, delta projectworkspace.Delta, proposals []agentexec.CandidateFile, config projectvalue.Config, report projectmodel.Report, task ManagerTask, phase string, conflictPaths []string, limits projectconfig.Limits, input *snapshot.Snapshot) (candidateData, error) {
+func applyWorkspaceDelta(base candidateData, delta projectworkspace.Delta, proposals []agentexec.CandidateFile, config projectvalue.Config, report projectmodel.Report, task ManagerTask, phase string, conflictPaths []string, limits projectconfig.Limits, input *source.Input) (candidateData, error) {
 	ignored, err := ignoredWritePaths(config, input)
 	if err != nil {
 		return candidateData{}, err
@@ -216,7 +216,7 @@ func bytesEqual(left, right []byte) bool {
 }
 
 // applyAgentCandidate selects the explicit byte source returned by the Host.
-func applyAgentCandidate(base candidateData, result agentexec.RunResult, config projectvalue.Config, report projectmodel.Report, task ManagerTask, phase string, conflictPaths []string, limits projectconfig.Limits, input *snapshot.Snapshot) (candidateData, error) {
+func applyAgentCandidate(base candidateData, result agentexec.RunResult, config projectvalue.Config, report projectmodel.Report, task ManagerTask, phase string, conflictPaths []string, limits projectconfig.Limits, input *source.Input) (candidateData, error) {
 	if result.Delta != nil {
 		return applyWorkspaceDelta(base, *result.Delta, result.Response.CandidateFiles, config, report, task, phase, conflictPaths, limits, input)
 	}

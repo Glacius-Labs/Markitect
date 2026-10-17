@@ -1,6 +1,6 @@
 package projectrun
 
-import "github.com/Glacius-Labs/Markitect/src/internal/core/snapshot"
+import "github.com/Glacius-Labs/Markitect/internal/tooling/source"
 import "github.com/Glacius-Labs/Markitect/src/internal/core/projectmodel/projectvalue"
 
 import (
@@ -46,7 +46,7 @@ func TestApplyWorkspaceDeltaRepresentsDeleteAndRename(t *testing.T) {
 	report.Files = []projectmodel.FileEntry{{Path: "src/old.bin", Owner: manager.ManagerID, Exists: true}, {Path: "src/remove.bin", Owner: manager.ManagerID, Exists: true}}
 	base := candidateData{Files: map[string]File{"src/prior.txt": {Path: "src/prior.txt", Mode: "100644", Content: []byte("prior")}}}
 	content := []byte("renamed bytes")
-	input := &snapshot.Snapshot{Files: map[string][]byte{"src/old.bin": []byte("old bytes"), "src/remove.bin": []byte("removed bytes")}, Modes: map[string]string{"src/old.bin": "100644", "src/remove.bin": "100644"}}
+	input := &source.Input{Files: map[string][]byte{"src/old.bin": []byte("old bytes"), "src/remove.bin": []byte("removed bytes")}, Modes: map[string]string{"src/old.bin": "100644", "src/remove.bin": "100644"}}
 	out, err := applyWorkspaceDelta(base, projectworkspace.Delta{Changes: []projectworkspace.Change{
 		{Kind: projectworkspace.ChangeDelete, Path: "src/remove.bin"},
 		{Kind: projectworkspace.ChangeRename, OldPath: "src/old.bin", Path: "src/new.bin", Mode: "100644", Content: content},

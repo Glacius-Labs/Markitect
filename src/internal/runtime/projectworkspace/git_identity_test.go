@@ -11,7 +11,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/Glacius-Labs/Markitect/src/internal/infrastructure/source"
+	"github.com/Glacius-Labs/Markitect/internal/tooling/source"
 )
 
 func TestSameGitReportedPathRejectsDifferentAndMissingPaths(t *testing.T) {

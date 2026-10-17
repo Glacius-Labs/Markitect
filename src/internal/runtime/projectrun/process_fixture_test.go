@@ -19,7 +19,7 @@ import (
 	"github.com/Glacius-Labs/Markitect/src/internal/core/projectmodel"
 	"github.com/Glacius-Labs/Markitect/src/internal/core/projectmodel/projectbriefing"
 	"github.com/Glacius-Labs/Markitect/src/internal/core/projectmodel/projectvalue"
-	"github.com/Glacius-Labs/Markitect/src/internal/core/snapshot"
+	"github.com/Glacius-Labs/Markitect/internal/tooling/source"
 	"github.com/Glacius-Labs/Markitect/src/internal/runtime/agentexec"
 	"github.com/Glacius-Labs/Markitect/src/internal/runtime/projectconfig"
 	"go.yaml.in/yaml/v3"
@@ -579,7 +579,7 @@ func runtimeProjectFixture(revision string, files map[string][]byte, modes map[s
 		Revision: revision,
 		Model:    model,
 		Report:   report,
-		Snapshot: &snapshot.Snapshot{ID: revision, Files: fileCopy, Modes: modeCopy},
+		Snapshot: &source.Input{ID: revision, Files: fileCopy, Modes: modeCopy},
 	}
 }
 

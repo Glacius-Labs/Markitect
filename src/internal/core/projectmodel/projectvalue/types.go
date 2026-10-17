@@ -7,7 +7,7 @@ import (
 	"github.com/Glacius-Labs/Markitect/src/internal/core"
 	"github.com/Glacius-Labs/Markitect/src/internal/core/projectmodel"
 	"github.com/Glacius-Labs/Markitect/src/internal/core/projectmodel/projectcoverage"
-	"github.com/Glacius-Labs/Markitect/src/internal/core/snapshot"
+	"github.com/Glacius-Labs/Markitect/internal/tooling/source"
 )
 
 const (
@@ -57,7 +57,7 @@ type Project struct {
 	Config      Config                  `json:"config"`
 	Model       core.Model              `json:"model"`
 	Report      projectmodel.Report     `json:"report"`
-	Snapshot    *snapshot.Snapshot      `json:"-"`
+	Snapshot    *source.Input      `json:"-"`
 	// Census is the full repository census Load classified. It also holds
 	// ignored, transitional and operational paths that Snapshot omits.
 	Census *projectcoverage.Universe `json:"-"`

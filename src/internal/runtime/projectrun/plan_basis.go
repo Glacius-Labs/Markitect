@@ -8,7 +8,7 @@ import (
 
 	"github.com/Glacius-Labs/Markitect/src/internal/core/projectmodel"
 	"github.com/Glacius-Labs/Markitect/src/internal/core/projectmodel/projectbriefing"
-	"github.com/Glacius-Labs/Markitect/src/internal/infrastructure/source"
+	"github.com/Glacius-Labs/Markitect/internal/tooling/source"
 	projectconfig "github.com/Glacius-Labs/Markitect/src/internal/runtime/projectconfig"
 )
 

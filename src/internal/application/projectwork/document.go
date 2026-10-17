@@ -11,8 +11,8 @@ import (
 
 	"github.com/Glacius-Labs/Markitect/src/internal/core/projectmodel"
 	modelcoverage "github.com/Glacius-Labs/Markitect/src/internal/core/projectmodel/projectcoverage"
-	"github.com/Glacius-Labs/Markitect/src/internal/infrastructure/guardedwrite"
-	"github.com/Glacius-Labs/Markitect/src/internal/infrastructure/source"
+	"github.com/Glacius-Labs/Markitect/internal/tooling/guardedwrite"
+	"github.com/Glacius-Labs/Markitect/internal/tooling/source"
 )
 
 // Document renders a readable view of the model: its Managers, Statements,

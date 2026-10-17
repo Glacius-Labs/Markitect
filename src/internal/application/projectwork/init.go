@@ -11,8 +11,8 @@ import (
 	"strings"
 
 	"github.com/Glacius-Labs/Markitect/src/internal/core/projectmodel"
-	"github.com/Glacius-Labs/Markitect/src/internal/core/snapshot"
-	"github.com/Glacius-Labs/Markitect/src/internal/infrastructure/guardedwrite"
+	"github.com/Glacius-Labs/Markitect/internal/tooling/source"
+	"github.com/Glacius-Labs/Markitect/internal/tooling/guardedwrite"
 	"go.yaml.in/yaml/v3"
 )
 
@@ -57,10 +57,10 @@ func Init(root, name string, write bool) (InitPlan, error) {
 		{Path: initManagerPath, Content: string(managerBytes)},
 		{Path: ".markitect/.gitignore", Content: "/cache/\n/runs/\n/records/\n/state/\n/views/\n"},
 	}
-	previewSnapshot := &snapshot.Snapshot{Provisional: true, Files: map[string][]byte{}, Modes: map[string]string{}}
+	previewSnapshot := &source.Input{Provisional: true, Files: map[string][]byte{}, Modes: map[string]string{}}
 	for _, file := range files {
 		previewSnapshot.Files[file.Path] = []byte(file.Content)
-		previewSnapshot.Modes[file.Path] = snapshot.RegularMode
+		previewSnapshot.Modes[file.Path] = source.RegularMode
 	}
 	project, err := FromSnapshot(root, previewSnapshot)
 	if err != nil {

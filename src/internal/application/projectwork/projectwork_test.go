@@ -16,7 +16,7 @@ import (
 	"github.com/Glacius-Labs/Markitect/src/internal/core"
 	"github.com/Glacius-Labs/Markitect/src/internal/core/projectmodel"
 	modelcoverage "github.com/Glacius-Labs/Markitect/src/internal/core/projectmodel/projectcoverage"
-	"github.com/Glacius-Labs/Markitect/src/internal/core/snapshot"
+	"github.com/Glacius-Labs/Markitect/internal/tooling/source"
 )
 
 func TestInitPreviewAndGuardedWriteCreateControlPlaneAndDocumentation(t *testing.T) {
@@ -373,8 +373,8 @@ func TestUnchangedTrackedExecutableWithoutFileModeDoesNotBlockGuardedWrites(t *t
 		if err != nil {
 			t.Fatal(err)
 		}
-		if p.Snapshot.Modes["tool.sh"] != snapshot.ExecutableMode {
-			t.Fatalf("precondition: snapshot mode for tool.sh = %q, want %s", p.Snapshot.Modes["tool.sh"], snapshot.ExecutableMode)
+		if p.Snapshot.Modes["tool.sh"] != source.ExecutableMode {
+			t.Fatalf("precondition: snapshot mode for tool.sh = %q, want %s", p.Snapshot.Modes["tool.sh"], source.ExecutableMode)
 		}
 		return root, p
 	}
@@ -402,10 +402,10 @@ func TestUnchangedTrackedExecutableWithoutFileModeDoesNotBlockGuardedWrites(t *t
 		}
 	})
 	t.Run("FileModeEnabledStillComparesExecutableBit", func(t *testing.T) {
-		if sameSnapshotMode(0644, snapshot.ExecutableMode, true) || sameSnapshotMode(0755, snapshot.RegularMode, true) {
+		if sameSnapshotMode(0644, source.ExecutableMode, true) || sameSnapshotMode(0755, source.RegularMode, true) {
 			t.Fatal("an executable-bit change must still count when Git tracks file modes")
 		}
-		if sameSnapshotMode(fs.ModeSymlink|0755, snapshot.ExecutableMode, false) {
+		if sameSnapshotMode(fs.ModeSymlink|0755, source.ExecutableMode, false) {
 			t.Fatal("a non-regular file must never match a snapshot mode")
 		}
 	})
@@ -865,11 +865,11 @@ func mutationFor(project *projectvalue.Project, file, description string) projec
 	return projectvalue.Mutation{APIVersion: projectvalue.APIVersion, BaseDigest: project.Digest, Actor: rootManagerID(), Goal: "Edit statement", Files: []projectvalue.FileChange{{Path: file, Content: statementDefinition(description)}}}
 }
 
-func mapSnapshot(files map[string]string) *snapshot.Snapshot {
-	result := &snapshot.Snapshot{Provisional: true, Files: map[string][]byte{}, Modes: map[string]string{}}
+func mapSnapshot(files map[string]string) *source.Input {
+	result := &source.Input{Provisional: true, Files: map[string][]byte{}, Modes: map[string]string{}}
 	for path, content := range files {
 		result.Files[path] = []byte(content)
-		result.Modes[path] = snapshot.RegularMode
+		result.Modes[path] = source.RegularMode
 	}
 	return result
 }

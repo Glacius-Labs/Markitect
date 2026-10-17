@@ -1,6 +1,6 @@
 package projectrun
 
-import "github.com/Glacius-Labs/Markitect/src/internal/core/snapshot"
+import 
 import "github.com/Glacius-Labs/Markitect/src/internal/core/projectmodel/projectvalue"
 
 import (
@@ -15,10 +15,10 @@ import (
 	"strings"
 	"time"
 
-	"github.com/Glacius-Labs/Markitect/src/internal/infrastructure/guardedwrite"
+	"github.com/Glacius-Labs/Markitect/internal/tooling/guardedwrite"
 	"github.com/Glacius-Labs/Markitect/src/internal/runtime/agentexec"
 
-	"github.com/Glacius-Labs/Markitect/src/internal/infrastructure/source"
+	"github.com/Glacius-Labs/Markitect/internal/tooling/source"
 )
 
 // ApplyPaths returns the exact candidate delta paths for CLI preflight and
@@ -569,7 +569,7 @@ func stringMapsEqual(a, b map[string]string) bool {
 	return true
 }
 
-func loadApplyInputs(host Host, root, runID string) (PlanRecord, RunReport, candidateData, *snapshot.Snapshot, error) {
+func loadApplyInputs(host Host, root, runID string) (PlanRecord, RunReport, candidateData, *source.Input, error) {
 	var p PlanRecord
 	var r RunReport
 	var c candidateData
@@ -600,7 +600,7 @@ func loadApplyInputs(host Host, root, runID string) (PlanRecord, RunReport, cand
 	return p, r, c, project.Snapshot, nil
 }
 
-func candidateDeltaPaths(base *snapshot.Snapshot, c candidateData) []string {
+func candidateDeltaPaths(base *source.Input, c candidateData) []string {
 	var paths []string
 	for p, f := range c.Files {
 		old, exists := base.Files[p]
@@ -618,7 +618,7 @@ func candidateDeltaPaths(base *snapshot.Snapshot, c candidateData) []string {
 	sort.Strings(paths)
 	return paths
 }
-func compareCaptureToBase(root, revision string, capture *guardedwrite.Capture, base *snapshot.Snapshot, paths []string) error {
+func compareCaptureToBase(root, revision string, capture *guardedwrite.Capture, base *source.Input, paths []string) error {
 	for _, p := range paths {
 		current, ok := capture.Files[p]
 		if !ok {
@@ -646,8 +646,8 @@ func compareCaptureToBase(root, revision string, capture *guardedwrite.Capture, 
 			if err := compareTargetIndexToBase(root, p, base); err != nil {
 				return err
 			}
-			fixed := &snapshot.Snapshot{Files: map[string][]byte{p: old}, Modes: map[string]string{p: base.Modes[p]}}
-			working := &snapshot.Snapshot{Files: map[string][]byte{p: current.Bytes}, Modes: map[string]string{p: base.Modes[p]}}
+			fixed := &source.Input{Files: map[string][]byte{p: old}, Modes: map[string]string{p: base.Modes[p]}}
+			working := &source.Input{Files: map[string][]byte{p: current.Bytes}, Modes: map[string]string{p: base.Modes[p]}}
 			if err := requireCleanSelectedBasisAtRevision(root, revision, fixed, working); err != nil {
 				return fmt.Errorf("target path %s differs from fixed base bytes or mode: %w", p, err)
 			}
@@ -658,7 +658,7 @@ func compareCaptureToBase(root, revision string, capture *guardedwrite.Capture, 
 	return nil
 }
 
-func compareTargetIndexToBase(root, path string, base *snapshot.Snapshot) error {
+func compareTargetIndexToBase(root, path string, base *source.Input) error {
 	output, err := source.GitOutput(root, "--literal-pathspecs", "ls-files", "--stage", "-z", "--", path)
 	if err != nil {
 		return fmt.Errorf("inspect staged target path %q: %w", path, err)

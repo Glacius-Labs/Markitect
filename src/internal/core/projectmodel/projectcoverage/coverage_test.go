@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/Glacius-Labs/Markitect/src/internal/core/projectmodel"
-	"github.com/Glacius-Labs/Markitect/src/internal/core/snapshot"
+	"github.com/Glacius-Labs/Markitect/internal/tooling/source"
 )
 
 func TestUnknownOutsideLegacyRootsIsNotAccounted(t *testing.T) {
@@ -20,7 +20,7 @@ func TestUnknownOutsideLegacyRootsIsNotAccounted(t *testing.T) {
 }
 
 func TestFromSnapshotAccountsOnlySuppliedCandidatePathsWithoutIO(t *testing.T) {
-	s := &snapshot.Snapshot{ID: "candidate", Provisional: true, Files: map[string][]byte{
+	s := &source.Input{ID: "candidate", Provisional: true, Files: map[string][]byte{
 		"outside/unknown.txt":    []byte("candidate bytes"),
 		".markitect/custom.yaml": []byte("unregistered control data"),
 	}, Modes: map[string]string{"outside/unknown.txt": "100644", ".markitect/custom.yaml": "100644"}}
@@ -38,7 +38,7 @@ func TestFromSnapshotAccountsOnlySuppliedCandidatePathsWithoutIO(t *testing.T) {
 }
 
 func TestFromSnapshotCannotAcceptDeletedRequiredArtifact(t *testing.T) {
-	s := &snapshot.Snapshot{ID: "candidate", Provisional: true, Files: map[string][]byte{
+	s := &source.Input{ID: "candidate", Provisional: true, Files: map[string][]byte{
 		IgnorePath: []byte(emptyIgnoreYAML),
 	}, Modes: map[string]string{IgnorePath: "100644"}}
 	universe, err := FromSnapshot(s, Options{})

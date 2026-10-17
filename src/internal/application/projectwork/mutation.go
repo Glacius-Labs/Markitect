@@ -16,9 +16,9 @@ import (
 	"unicode/utf8"
 
 	"github.com/Glacius-Labs/Markitect/src/internal/core/projectmodel"
-	"github.com/Glacius-Labs/Markitect/src/internal/core/snapshot"
-	"github.com/Glacius-Labs/Markitect/src/internal/infrastructure/guardedwrite"
-	"github.com/Glacius-Labs/Markitect/src/internal/infrastructure/source"
+	
+	"github.com/Glacius-Labs/Markitect/internal/tooling/guardedwrite"
+	"github.com/Glacius-Labs/Markitect/internal/tooling/source"
 	"go.yaml.in/yaml/v3"
 )
 
@@ -195,7 +195,7 @@ func PlanEdit(project *projectvalue.Project, mutation projectvalue.Mutation) (pr
 			}
 			candidateSnapshot.Files[change.Path] = []byte(change.Content)
 			if _, selected := project.Snapshot.Files[change.Path]; !selected {
-				candidateSnapshot.Modes[change.Path] = snapshot.RegularMode
+				candidateSnapshot.Modes[change.Path] = source.RegularMode
 			}
 		}
 	}
@@ -648,8 +648,8 @@ func isManagerAncestor(managers []projectmodel.Manager, possibleAncestor, child 
 	return false
 }
 
-func cloneSnapshot(input *snapshot.Snapshot) *snapshot.Snapshot {
-	result := &snapshot.Snapshot{ID: input.ID, Provisional: input.Provisional, Files: map[string][]byte{}, Modes: map[string]string{}}
+func cloneSnapshot(input *source.Input) *source.Input {
+	result := &source.Input{ID: input.ID, Provisional: input.Provisional, Files: map[string][]byte{}, Modes: map[string]string{}}
 	for path, data := range input.Files {
 		result.Files[path] = append([]byte(nil), data...)
 		result.Modes[path] = input.Modes[path]
@@ -680,9 +680,9 @@ func selectedModelFiles(config projectvalue.Config) map[string]bool {
 // on-disk executable bit is not observable and only the file type is compared.
 func sameSnapshotMode(actual fs.FileMode, expected string, fileModeEnabled bool) bool {
 	switch expected {
-	case snapshot.RegularMode:
+	case source.RegularMode:
 		return actual.Type() == 0 && (!fileModeEnabled || actual.Perm()&0111 == 0)
-	case snapshot.ExecutableMode:
+	case source.ExecutableMode:
 		return actual.Type() == 0 && (!fileModeEnabled || actual.Perm()&0111 != 0)
 	default:
 		return false
@@ -691,7 +691,7 @@ func sameSnapshotMode(actual fs.FileMode, expected string, fileModeEnabled bool)
 
 func sameBytes(left, right []byte) bool { return bytes.Equal(left, right) }
 
-func sameSnapshotFiles(left, right *snapshot.Snapshot) bool {
+func sameSnapshotFiles(left, right *source.Input) bool {
 	if left == nil || right == nil || len(left.Files) != len(right.Files) || len(left.Modes) != len(right.Modes) {
 		return false
 	}
