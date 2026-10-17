@@ -91,7 +91,7 @@ func Check(edges []Edge) []Violation {
 		rule := ""
 		switch {
 		case from == "testkit":
-			rule = "testkit may import only the standard library"
+			rule = "testkit may not import Markitect packages"
 		case from == "bootstrap":
 			rule = "standalone bootstrap tooling may not import Markitect packages"
 		case to == "testkit" && !e.Test:
