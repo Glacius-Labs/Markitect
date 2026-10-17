@@ -33,6 +33,12 @@ packages:
     purpose: Validates registry ownership, file accounting, claims and Definition census; captures and composes candidates.
     doc: docs/design/canonical-model/manager-apply-go-architecture.md#organize-by-responsibility
 
+  # --- apply-usecase ------------------------------------------------------
+  - path: internal/apply
+    layer: apply-usecase
+    purpose: Captures or previews selected source inputs and compiles their original model bytes through consumer-owned ports.
+    doc: docs/design/canonical-model/manager-apply-go-architecture.md#organize-by-responsibility
+
   # --- core ---------------------------------------------------------------
   - path: src/internal/core
     layer: core

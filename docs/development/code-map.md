@@ -21,7 +21,7 @@ The target `cmd/` and `internal/` responsibilities use separate `apply-*` layers
 | `apply-organization` | Pure Manager topology, settings, context and mandates. | `apply-organization` | 1 |
 | `apply-realization` | Pure registry, ownership, claims and candidate rules. | `apply-realization` | 1 |
 | `apply-run` | Tasks, sessions, review, budgets and lifecycle with consumer-owned ports. | `apply-run` | 0 |
-| `apply-usecase` | Aggregate reconciliation, verification and guarded publication. | `apply-usecase` | 0 |
+| `apply-usecase` | Aggregate reconciliation, verification and guarded publication. | `apply-usecase` | 1 |
 | `apply-adapter` | Concrete protocols and effects implementing inward consumer ports. | `apply-adapter` | 0 |
 | `apply-process` | Process lifetime mechanics for Codex sessions and project checks. | `apply-process` | 0 |
 | `apply-bootstrap` | Constructs concrete adapters and wires their consumers. | `apply-bootstrap` | 0 |
@@ -62,6 +62,12 @@ The target `cmd/` and `internal/` responsibilities use separate `apply-*` layers
 | Package | Purpose | Owning document |
 |---|---|---|
 | `internal/realization` | Validates registry ownership, file accounting, claims and Definition census; captures and composes candidates. | [docs/design/canonical-model/manager-apply-go-architecture.md](../design/canonical-model/manager-apply-go-architecture.md#organize-by-responsibility) |
+
+## Apply use case
+
+| Package | Purpose | Owning document |
+|---|---|---|
+| `internal/apply` | Captures or previews selected source inputs and compiles their original model bytes through consumer-owned ports. | [docs/design/canonical-model/manager-apply-go-architecture.md](../design/canonical-model/manager-apply-go-architecture.md#organize-by-responsibility) |
 
 ## Deterministic core
 
