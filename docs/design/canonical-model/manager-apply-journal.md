@@ -2,6 +2,14 @@
 
 This contract owns the recorded facts, their storage and atomic append, questions and answers, and continuation runs. The [execution contract](manager-apply-execution.md) owns what transitions mean; the [configuration](manager-apply-configuration.md) owns the inputs.
 
+## Review team and arbitration records
+
+The [accepted team target](manager-apply-configuration.md#resolve-the-team) extends the existing journal, not its owner or ledger. Retain the captured product-defaults version/bytes/digest, all authored absences and explicit sources, the resolved roles and named active roster, and each composed runtime profile identity in the run basis. Product updates never mutate an existing run.
+
+Each ordinary review records its reviewer name, purpose, frozen subject, expectations, supplied inputs and current verdict. The derived group result identifies all required assessments and its one rejection event, if any. A dispute records its findings, both arguments and current evidence. Append the independent arbiter identity and ruling, each finding disposition/severity correction and grounds, or the owner question. Preserve the original reports; no mutable final-vote field erases them. A reopened closed dispute identifies its new evidence and prior ruling.
+
+Actual starts, steps, checks and durations use the existing assignment journal and accounting. Review completion, authority to accept, effect observation and owner acceptance remain distinct. Restoring an old stream retains its original policy/version; missing team or ruling records cannot be inferred as completed. Exact event/schema migration is implementation work and must preserve the journal's existing durability, control and uncertainty guarantees.
+
 ## One authoritative history
 
 One local SQLite database per governed repository holds one ordered event stream, committed append batches, typed events and immutable byte payloads. The journal is the recorded control history. Reports and current-state views derive from it and cannot authorize execution on their own. Candidate manifests refer to immutable artifact and registry payloads; workspaces remain disposable materializations.

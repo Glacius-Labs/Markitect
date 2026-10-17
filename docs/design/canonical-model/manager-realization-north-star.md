@@ -13,7 +13,8 @@ The owner asked to keep all ideas and variants of the Manager discussion as a no
 
 | Variant | Intended behavior | Status |
 | --- | --- | --- |
-| Manager implements | The Manager implements and organizes review and integration. | Selected as the first strategy, with a fresh reviewer |
+| Manager implements | The Manager implements and organizes review and integration. | Selected; named reviewers and dispute-only arbitration now accepted by [DEC-043](../../concepts/register.md#dec-043-project-teams-review-arbitration-and-product-defaults), implementation pending |
+| Named review team and arbiter | Per-project role model/effort/instructions and exact Package overrides; bounded independent dispute resolution. | Selected target; owned by [configuration](manager-apply-configuration.md) and [execution](manager-apply-execution.md#review-conflicts-and-arbitration) |
 | Implementer and reviewer | Agents alternate implementation and review until the reviewer is satisfied. | Later strategy |
 | Reviewer per Definition | Reviewers examine the realization of individual Definitions. | Later strategy |
 | Teams at the leaves | Only the lowest Managers have executing teams; higher Managers integrate and coordinate. | Later strategy |
@@ -68,7 +69,7 @@ Further extensions recorded for after the two-Apply demonstration:
 | Observed code dependencies | Compare, for example, the Go import graph with the model's references; a difference becomes an Optimizer proposal for a missing link. | [ENH-001](../../concepts/register.md#enh-001-observed-code-dependencies-widen-impact) |
 | Model lint | Registry-based signals: Definitions without realization, files realizing many Definitions, Packages near the context limit. | [ENH-002](../../concepts/register.md#enh-002-model-quality-linter-and-metrics) |
 | Scenario Definitions | Owner-authored examples with structured inputs and outputs in the model, which tests must demonstrably cover. | [ENH-003](../../concepts/register.md#enh-003-test-to-statement-binding-and-test-review) |
-| Richer teams | The team variants above, perspectives and four eyes. | [ENH-006](../../concepts/register.md#enh-006-configurable-teams-for-perspectives-and-four-eyes) |
+| Further team variants | Variants beyond the named reviewers and arbiter selected in DEC-043. | [ENH-006](../../concepts/register.md#enh-006-configurable-teams-for-perspectives-and-four-eyes) |
 | Parallel writers | Bounded concurrency on the same ownership and reservation rules. | |
 | Coordination hot paths | A later view of recurring waits, cross-area requests and correction/integration costs, derived from the already required [coordination account](manager-apply-concept.md#reports-and-execution-history). This does not defer basic metrics, add a second ledger or automatically reorganize Managers. | [Owner confirmation](../../concepts/sources/manager-process-clarification-20261017.md#working-bases-and-session-continuity) |
 | Coordination as a modeling signal | In the later hot-path view, show recurring cross-branch questions together with waiting, rework and integration costs, their routes and evidence. Suggest that the author examine responsibility boundaries; high traffic alone does not prove a bad model. Never reorganize Managers or author model links automatically. | [Owner confirmation](../../concepts/sources/manager-process-clarification-20261017.md#bounded-coordination-and-idle-execution) |
@@ -102,7 +103,7 @@ The consolidation of 16 October 2026 replaced these earlier proposals with simpl
 
 - Which explicit connections does the strict baseline require, and which reference classes and directions feed context?
 - How does the Optimizer present, review and integrate its suggestions, and how is its investigation scoped?
-- Which team variants should be tried after the first strategy, and how are review loops concluded or escalated in them?
+- Which further team variants should be tried after the named-reviewer/arbiter target in DEC-043? Its conflict and finite rejection rules are now selected, not an open question.
 - Should code, tests and documentation ever get separate hierarchies?
 - How are model and artifact commands named, and how are custom commands registered without another execution mechanism?
 - How can an organizational entry point support later Government while keeping model and artifact change targets apart?

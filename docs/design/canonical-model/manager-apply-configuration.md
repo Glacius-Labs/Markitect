@@ -2,17 +2,19 @@
 
 This contract owns the execution input fields and their deterministic resolution. The [execution contract](manager-apply-execution.md) owns budget admission, run transitions and status meaning; the [journal](manager-apply-journal.md) owns their durable records.
 
-This is a target contract, not evidence that preparation or its input decoders are implemented. The strategy defaults below preserve accepted effects; the exact ignore-file format is a new preparation input choice.
+This is a target contract. On 17 October 2026 the owner accepted project team defaults, named reviewers, conflict arbitration and complete product budget defaults ([DEC-043](../../concepts/register.md#dec-043-project-teams-review-arbitration-and-product-defaults), [source](../../concepts/sources/configuration-teams-defaults-20261017.md)). This explicitly extends the earlier single-reviewer contract and the concept freeze for this subject only. It does not claim executable support: the current v1 reference below remains a separate decoder fixture. Production schema/version migration, runtime profile composition and multi-reviewer execution are implementation work.
+
+The observation behind this change is the Library walkthrough: repeating all finite limits and creating a profile for every model/effort combination obscured the few project choices the owner wanted to make. The selected simplification keeps team defaults and exact exceptions in the project, and moves omitted limits to captured product defaults. A distinguishing outcome is a short Library file whose fully resolved team and limits can be explained before dispatch. The extra arbitration role runs only for disputes and consumes the existing budget.
 
 ## Give each source one responsibility
 
 | Source | Maintained content | Library example |
 | --- | --- | --- |
 | Canonical model | Intended behavior, required outputs, architecture and binding interfaces. | `loan-policy.spec.maxOpenLoans` is five in M1 and three in M2; existing loans remain returnable. |
-| `.markitect/execution.yaml` | Manager profiles and instructions, creation areas, finite ceilings, Package overrides, scope selection, check selection and owner approval. | Lending uses the selected Manager profile and a limit of three rejections per review purpose. |
-| Product strategy defaults | Versioned defaults shipped with the product, with their original bytes and source fields. | Absent rejection-limit configuration takes three from the strategy document. |
+| `.markitect/execution.yaml` | Manager model/effort and instructions, named reviewers and reviewArbiter, creation areas, explicit limit overrides, Package overrides, scope selection, check selection and owner approval. | Lending overrides its Manager model and reviewer settings; omitted limits use product defaults. |
+| Product strategy defaults | Complete finite strategy defaults shipped with the product, with their original bytes and source fields. | Absent rejection-limit configuration takes three from the strategy document. |
 | `.markitect/ignore.yaml` | Optional exact-file accounting exceptions with reasons. | One observed library editor-state file is ignored. |
-| Explicit Orchestrator profile file | Literal executables, pinned protocol and tool identities, model and effort, controlled environment and instruction inputs. Supplied by the operator; no implicit discovery. | The selected Codex build and the local test executable. Credentials are resolved locally and never copied into model or journal payloads. |
+| Explicit Orchestrator profile file | Literal executables, pinned image/protocol/tool identities, provider access and capabilities, resources, credential references, controlled environment and instruction inputs. Supplied by the operator; no implicit discovery. | The selected Codex build and the local test executable. Credentials are resolved locally and never copied into model or journal payloads. |
 | Assignment record | The owner's goal, constraints, granted caps and recorded extensions. | Apply the current library model. |
 | Registry | Versioned artifact ownership and Definition links in `.markitect/registry/`. | Lending owns a particular source file; a parent cannot acquire it through a prompt. |
 | Orchestrator operation contract | Artifact-only Apply, required independent review, source and candidate bindings, guarded publication. | Configuration cannot disable review or authorize model edits. |
@@ -22,7 +24,127 @@ The model stays language v1. None of these runtime records adds a canonical Assi
 
 ## Project execution file
 
-One versioned YAML file outside the Definition roots. The figures below are illustrative, not measured sufficient capacity. Preparation tests consume this executable example directly.
+One versioned YAML file outside the Definition roots describes project execution. The accepted target below needs only team choices, exact Manager exceptions and project-specific checks. Model names and instruction paths are illustrative. The `yml` target example is not a current v1 payload; its final format version is a producer deliverable, not an invented supported API version. The existing `recursive-apply-v1` strategy identity remains explicit in the run policy. The [implemented v1 reference](#implemented-v1-reference) retains the currently consumed example.
+
+```yml
+defaults:
+  manager:
+    model: dev-model
+    effort: high
+    instructions: [instructions/development.md]
+  reviewers:
+    correctness:
+      model: review-model-a
+      effort: high
+      instructions: [instructions/review-correctness.md]
+    maintainability:
+      model: review-model-b
+      effort: medium
+      instructions: [instructions/review-maintainability.md]
+  reviewArbiter:
+    model: arbiter-model
+    effort: high
+    instructions: [instructions/review-resolution.md]
+packages:
+  lending:
+    manager:
+      model: strong-dev-model
+      instructions: [instructions/lending-development.md]
+    reviewers:
+      correctness:
+        effort: xhigh
+        instructions: [instructions/lending-correctness.md]
+      maintainability:
+        effort: high
+      security:
+        model: security-model
+        effort: high
+        instructions: [instructions/lending-security.md]
+    reviewArbiter:
+      effort: xhigh
+      instructions: [instructions/lending-resolution.md]
+checks:
+  - id: project-tests
+    profile: library-tests
+    directory: realization
+    args: [test, ./...]
+    requiredBy: library/callable-interface
+    timeout: 2m
+```
+
+### Resolve the team
+
+`defaults` applies to every local Package Manager, including root. `packages` keys are exact local Package paths; `.` is root. Unknown or imported Package keys fail. There is no inheritance from ancestor overrides: `lending/reminders` uses project defaults unless it has its own entry.
+
+| Setting | Resolution |
+| --- | --- |
+| Manager and reviewArbiter | Project `model` and `effort` are required. An exact Package override replaces only supplied scalar fields. |
+| Named reviewers | Stable names identify entries. Missing Package entries retain project reviewers; equal names override only supplied fields. A new name needs its own model and effort. |
+| Reviewer activation | `enabled` defaults to `true`. An exact `enabled: false` disables that reviewer. Every effective Manager team must retain at least one active independent reviewer. |
+| Instructions | Missing lists are empty. Append project instructions for that exact role/name, then the Package additions. An explicit empty addition removes nothing. A new reviewer has no matching project list. |
+| Other Manager settings | `stepTimeout`, `rejectionLimit` and `creationRoots` replace the project value within the effective ceilings, as before. |
+
+These are explicit field rules, not generic deep merge, wildcard overrides or environment interpolation. Duplicate and unknown keys, unresolved model/provider mappings, unsupported model/effort combinations and missing instruction files fail before dispatch. Reviewer names label perspectives; they confer no extra authority and cannot restrict required obligation coverage. Model families may differ; this remains a hypothesis about useful perspectives, not a demonstrated advantage.
+
+Instructions identify exact repository-relative regular files. Preserve order, repeats and captured original bytes; expand no directories or globs and do not normalize or deduplicate paths. Missing captured bytes require new complete acquisition and remain `NotCompleted`. Instructions contain operational guidance only. Binding project rules belong in the model ([DEC-033](../../concepts/register.md#dec-033-binding-intent-lives-only-in-the-model)). Parent messages cannot override configuration or the static operation.
+
+| Effective role | Root and other unchanged Packages | Lending |
+| --- | --- | --- |
+| Manager | dev-model, high, development.md | strong-dev-model, high, development.md then lending-development.md |
+| correctness | review-model-a, high, review-correctness.md | review-model-a, xhigh, review-correctness.md then lending-correctness.md |
+| maintainability | review-model-b, medium, review-maintainability.md | review-model-b, high, review-maintainability.md |
+| security | Absent | security-model, high, lending-security.md |
+| reviewArbiter | arbiter-model, high, review-resolution.md | arbiter-model, xhigh, review-resolution.md then lending-resolution.md |
+
+All instruction filenames in this table are below `instructions/`. The arbiter is configured but starts only for a named dispute. Managers still derive from the canonical topology, not a second authored organization. Sequential writing, guaranteed participation, independent local/integration/intake review and the deterministic final evidence check remain mandatory.
+
+## Strategy defaults and their sources
+
+`limits`, `assignment` and `completionReserve` may be omitted entirely or field by field in the target format. Omitted values come from one complete, versioned product strategy document. The following owner-accepted starting values are not measured sufficient capacity and do not establish a monetary ceiling.
+
+| Capacity | Assignment default | Hard project ceiling | Completion reserve included in the assignment |
+| --- | --- | --- | --- |
+| Prepared runs | 3 | 5 | None |
+| Session starts | 80 | 160 | 24 |
+| Agent steps | 160 | 320 | 40 |
+| Active execution time | 8h | 16h | 2h |
+
+| Effective setting | Product default |
+| --- | --- |
+| `defaults.stepTimeout` / `limits.maxStepTimeout` | `10m` / `20m` |
+| `limits.hostOperationTimeout` | `2m` per Orchestrator control operation |
+| `defaults.rejectionLimit` / `limits.maxRejectionLimit` | `3` / `3` |
+| `limits.maxContextBytes` | `400000` |
+| `limits.maxSessionSteps` | `40` |
+| `limits.maxTransientRetries` | `2`, only after proven non-dispatch |
+| `defaults.creationRoots` / `limits.creationRoots` | `[realization]` / `[realization]` |
+| Instructions for each role/name | `[]` |
+| `defaults.batchNoChangeReviews` | `false` |
+| `acceptance.ownerApproval` | `[]` |
+
+No universal concrete model, provider credential, team perspective or project check command is invented by the product. Models/effort and the review team are explicit project choices; operator access and capabilities remain explicit local inputs. An authorized project override can change a ceiling; it is not extra capacity automatically granted to an existing assignment.
+
+Retain absence in authored input. Resolve product defaults, explicit project values and exact Manager exceptions; a concrete assignment may explicitly select caps within the effective project ceilings. Capture original product bytes and digest, using `product:recursive-apply-v1/defaults.yaml` with the actual field pointer as provenance. Missing required defaults leave preparation `NotCompleted`; explicit project values retain their actual source. There is no silent clamping or fabricated execution-field source. The run binds the strategy version, defaults bytes, every effective value, source and role/profile identity. Product updates cannot change an existing run; preparation for a new run exposes changed effective defaults and their source.
+
+The reserve is part of the caps, not extra allowance. Validate every effective value, ceiling, creation area, reserve and the complete configured review census before preparing a run. A smaller explicit cap conflicting with a product-default reserve fails with both sources identified. For example `maxRejectionLimit: 2` with an omitted rejection limit fails because its effective default is three. Budget extensions are explicit recorded grants, never an automatic increase to the ceiling. The [execution contract](manager-apply-execution.md) owns accounting and finite exhaustion, including arbiter work.
+
+## Resolve settings deterministically
+
+The [team field rules](#resolve-the-team) and [product-default resolution](#strategy-defaults-and-their-sources) are the only configuration precedence rules. Root overrides configure root only. Before dispatch, expose each Manager's effective model/effort, named active reviewers, arbiter, ordered instructions and limits with file/field/digest provenance. A rendered view explains the bound settings; it grants no authority and contains no credential values.
+
+`scope` still optionally selects Kinds/Properties whose local Package paths determine scope; reject unknown paths. Configuration does not enumerate individual Definitions. A project check names its model obligation through `requiredBy`, which must resolve. Literal command repetition is the accepted exception to single intent ownership; review keeps it aligned with the model. Checks still use confined candidate directories and literal arguments, never shell strings.
+
+Creation areas grant neither other Managers' files nor protected inputs. The Library default `realization/` can be explicitly changed in a project's ceilings and selections; ownership, reservation and input guards still apply. No config field can disable required participation, review, final evidence, coverage or guarded publication.
+
+## Implementation boundary
+
+This documentation delivery changes the accepted target, not Go decoders, executable defaults, runtime profiles or fixture inputs. Follow-up implementation must version the execution/defaults formats and migrate preparation, role resolution, rendering, protected instruction acquisition and run bindings together. Use the existing profile composition to turn direct role model/effort into adapter-specific admitted profiles; reject ambiguous or unsupported mappings. Do not add a second profile catalog, implicit provider discovery, user override layer or model-language Kind.
+
+The [core](manager-apply-core.md#manager-tasks) and [execution](manager-apply-execution.md#review-conflicts-and-arbitration) own multi-reviewer acceptance and arbitration; [ports](manager-apply-port-contracts.md#configured-review-team-bindings) and [journal](manager-apply-journal.md#review-team-and-arbitration-records) own the necessary bindings. Producer APIs and adapter/CLI/bootstrap changes remain coordinated implementation deliveries. These contracts do not authorize Docker, providers, credentials, Apply, comparisons or studies.
+
+## Implemented v1 reference
+
+The following older single-reviewer example remains the current decoder/test reference, with its original values. In particular its `maxStepTimeout: 10m` is not the newly accepted target ceiling of `20m`. Current production defaults supply only a subset of the complete target table. Do not interpret passing this fixture as support for named reviewers, arbitration or omitted budget blocks. Retire or migrate the reference together with its actual consumers during implementation.
 
 ```yaml
 apiVersion: markitect.execution/v1
@@ -70,45 +192,6 @@ acceptance:
   ownerApproval: []
 ```
 
-Everything under `limits` is a hard project ceiling. `assignment` sets the default caps of a new assignment; an owner extension can raise them up to `maxRuns`, `maxSessionStarts`, `maxSteps` and `maxExecutionTime`. `maxStepTimeout`, `maxRejectionLimit` and `creationRoots` are ceilings, not consumable counters. `hostOperationTimeout` bounds each Orchestrator control operation outside the budget. `completionReserve` is part of the caps, not extra allowance; a reserve that the execution contract's preparation check rejects is a preparation failure, and no run is prepared.
-
-`maxContextBytes` bounds a rendered context package ([concept](manager-apply-concept.md#context-packages)). `maxSessionSteps` and `maxTransientRetries` bound one Manager conversation and automatic retries ([execution](manager-apply-execution.md#admission-amendments-and-finite-correction)). `batchNoChangeReviews` enables batched no-change reviews ([concept](manager-apply-concept.md#distinct-review-responsibilities)). `acceptance.ownerApproval` lists Packages whose changes need the owner's approval before publication, asked as an ordinary question; it is empty by default, because the owner's commit already accepts the result.
-
-`scope` optionally names the Kinds and Properties through which the model states a Definition's scope, for example `scope: [{kind: software/Rule, property: software/appliesTo}]`. The Property's values are local Package paths; `.` stands for the whole model, and the organization rejects unknown paths before dispatch. A Definition whose scope lists a Package or one of its ancestors enters the context of that Package's Managers. The configuration never lists individual Definitions; M1 needs no `scope`, because its shared rules reach every area through explicit links.
-
-A check that executes a command the model requires names that Definition in `requiredBy`, and `check` verifies that the Definition exists. Prose cannot be executed, so the command itself is repeated literally and review keeps both in step; this is the one accepted repetition of model content in configuration ([DEC-033](../../concepts/register.md#dec-033-binding-intent-lives-only-in-the-model)).
-
-`limits.creationRoots` bounds the permitted creation areas; defaults and Package settings select within it. Here the code, tests and documentation live below `realization/`. Existing artifacts still need registry ownership, and a directory permission grants no other Manager's files or protected model and configuration paths. A check's `directory` is confined to its captured candidate, and its arguments are literal, never a shell command.
-
-`defaults` applies to every local Package Manager, including the root. `packages` keys are exact local Package paths, and `.` is the root. An unknown or imported Package key is an error, not a request to create a Manager. Local and integration reviews use the reviewer profile in fresh sessions; the final evidence check is deterministic Orchestrator work. Reviewer profiles should use a different model family than Manager profiles, for example Claude Code reviewing Codex ([ASM-005](../../concepts/register.md#assumptions-and-hypotheses)). The same family is allowed, and the run report states each role's profile; the example keeps one profile for brevity. The first strategy is Manager plus reviewer with sequential writing.
-
-Custom instructions are optional file lists under `defaults.instructions` or `packages.<path>.instructions`, keyed by `manager` or `reviewer`. Each entry identifies an exact repository-relative regular file. Preserve list order, repeated entries and original captured bytes; do not expand directories or globs, normalize paths or deduplicate the list. An existing instruction file without captured bytes leaves preparation `NotCompleted` and requires a new complete capture; preparation cannot extend an old capture or its guard. Instructions carry operational guidance only, such as reporting style or tool usage; a project rule in them is a review finding and belongs in the model ([concept](manager-apply-concept.md#four-kinds-of-input-and-record)). The static operation instruction enters at the root and is propagated unchanged by the Orchestrator to every local Manager. Each receives separately compiled context and resolved settings. Parent messages supply work facts, questions and separately attributed hints within the model's implementation freedom, never a replacement operation prompt, new binding rule or configuration override ([fixed process](manager-apply-concept.md#tasks-and-delegation)).
-
-## Strategy defaults and their sources
-
-For `recursive-apply-v1`, these accepted effects apply when the corresponding project setting is absent:
-
-| Effective setting | Default |
-| --- | --- |
-| `rejectionLimit` | `3` |
-| Manager and reviewer instruction lists | `[]` each |
-| `batchNoChangeReviews` | `false` |
-| `acceptance.ownerApproval` | `[]` |
-
-The fields count rejected submissions, not all submissions. Successful limited or complete deliveries neither use nor reset this allowance. All work still consumes the shared assignment budget; [execution](manager-apply-execution.md#admission-amendments-and-finite-correction) defines stable counter identity, parent assessment after two rejections and exhaustion. Source preparation resolves the configured numeric limit; it does not implement a rejection counter or review engine. Historical records retain their original names and semantics under their recorded version.
-
-These values must come from one real, versioned product-owned defaults document shipped with the product. Preparation retains its original bytes and digest, using `product:recursive-apply-v1/defaults.yaml` and the actual field pointer in that document as the source. A missing document leaves preparation `NotCompleted`; it cannot be replaced with invented provenance. This contract does not create that document or prescribe an implementation package.
-
-`AuthoredExecution` retains absence. Resolution obtains an absent effective value from the captured strategy document; an explicitly configured value keeps its authored source. Effective defaults must satisfy the project ceilings: an absent rejection-limit setting with `maxRejectionLimit: 2` fails because the effective default is three. Never clamp the value or cite a nonexistent execution field as its source.
-
-## Resolve settings deterministically
-
-Resolve project defaults, then the exact Manager override only; there is no inheritance from ancestor overrides. Profile references replace the role's value. Instructions append the project defaults, then the exact override, in declared order. `stepTimeout`, `rejectionLimit` and `creationRoots` replace the default within the project ceilings; a default is not a ceiling, so a rejection limit of two can be overridden to three where `maxRejectionLimit` allows it. Creation directories must equal or descend from an allowed root. There is no deep merge, wildcard override or environment interpolation.
-
-In the example, lending gets eight minutes per step while lending/reminders keeps the ten-minute default, and a `.` override configures the root only. The Orchestrator enforces model obligations, resolved configuration and fixed process constraints; a parent message supplies advice or prerequisite information, not extra task restrictions. Effective values are stored with the file and field that supplied them, so every bound is explainable.
-
-Reject duplicate or unknown keys, unresolved profiles or instruction files, invalid Package paths, unbounded or nonpositive limits and unsupported strategy or role values before dispatch. Use restricted YAML without aliases, custom tags or implicit nulls; durations are explicit positive strings. Structural checks reject forbidden options such as disabling mandatory review. A prose conflict between custom instructions and a model obligation is a question for grounded assessment; no precedence rule lets instructions, configuration or a parent prompt weaken a binding requirement.
-
 ## Exact file ignore policy
 
 The optional `.markitect/ignore.yaml` has exactly `apiVersion: markitect.ignore/v1` and a required `files` list. Each item has exactly two string fields, `path` and `reason`; `reason` must contain non-whitespace text and retains its original text. `files: []` is an explicit empty policy. Use the restricted YAML rules above; there is no legacy-format fallback.
@@ -132,13 +215,13 @@ An ignore entry overlapping an input or registered artifact fails. Input protect
 
 ## Orchestrator profiles and operational state
 
-The operator supplies an explicit profile file and an absolute state directory outside the governed repository; acquisition records both. The profile file defines `agentProfiles` and `checkProfiles` with typed, versioned, adapter-specific sections. The project refers to them by name, and `run` receives prepared profile identities, not provider wire objects.
+The operator supplies an explicit profile file and an absolute state directory outside the governed repository; acquisition records both. The profile file defines `agentProfiles` and `checkProfiles` with typed, versioned, adapter-specific sections. Current v1 refers to them by name. The accepted target composes project role model/effort and captured instructions with explicitly selected, compatible Orchestrator runtime bindings. `run` receives prepared profile identities, not provider wire objects. Exact format/API migration is implementation work; no provider is selected from ambient configuration.
 
 Orchestrator instruction inputs outside the repository remain explicit locations in adapter-owned configuration. Orchestrator profiles keep their inline typed, versioned, adapter-specific sections. The concrete driver fields, versions, schema and readiness checks belong to the actual consumer and adapter deliverable.
 
 | Profile | Required preparation |
 | --- | --- |
-| Agent | Adapter kind (Codex App Server or Claude Code), runtime image ID, the CLI version and protocol-schema identity the image records, model and effort, credential reference, container and transport limits, effective provider settings and tool schemas, explicit environment and instruction policy. |
+| Agent | Adapter kind (Codex App Server or Claude Code), runtime image ID, the CLI version and protocol-schema identity the image records, effective project-selected model and effort, credential reference, container and transport limits, effective provider settings and tool schemas, explicit environment and instruction policy. |
 | Check | Runtime image ID, executable inside the image, fixed environment policy, argument prefix, container, output and termination limits. Project arguments are appended literally. |
 | State location | Repository and store identity, a confined private directory, the SQLite journal configuration, and the container engine executable with the runtime's volume prefix. Its identity is validated before an assignment resumes. |
 
@@ -158,7 +241,7 @@ The assignment stores the owner input and goal, constraints, operation target, p
 
 ## The mandate section
 
-`organization` renders the mandate as a section of the context package, not as a separate record; `run` passes task and assignment facts as plain inputs, so organization does not import run. The section carries its source references and is bound to the task record with the rest of the package. The Manager and its reviewer both receive it; the reviewer uses it as evidence under its own read-only grant, never as write authority.
+`organization` renders the mandate as a section of the context package, not as a separate record; `run` passes task and assignment facts as plain inputs, so organization does not import run. The section carries its source references and is bound to the task record with the rest of the package. The Manager, each named reviewer and any admitted reviewArbiter receive the applicable mandate; the reviewer uses it as evidence under its own read-only grant, never as write authority.
 
 For lending it states:
 

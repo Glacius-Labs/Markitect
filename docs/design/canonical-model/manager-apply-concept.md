@@ -6,13 +6,15 @@ The concept uses the [completed language v1](minimal-language/language-contract.
 
 The product is an organization that realizes an explicitly described project world. The canonical model supplies intended meaning and constraints. A deterministic Orchestrator organizes work, supplies context, validates deliveries and records the process. AI Managers make bounded realization judgments and integrate results. The Orchestrator propagates the operation and enforces the process; an Agent does not choose who participates or rewrite another Manager's operation. The first operation is Apply: reconcile the existing artifacts with the current model, including when the model has not changed.
 
+The owner accepted [named review teams, conflict arbitration and product defaults](../../concepts/register.md#dec-043-project-teams-review-arbitration-and-product-defaults) on 17 October 2026. This bounded extension replaces the single-reviewer-only target; source implementation remains separately versioned. The [configuration owner](manager-apply-configuration.md) holds the team syntax/defaults; the [execution owner](manager-apply-execution.md#review-conflicts-and-arbitration) holds dispute and rejection semantics.
+
 ## Selected choices
 
 | Question | Choice | Reason |
 | --- | --- | --- |
 | Organization | One ordinary root Manager and one Manager per local Package. | Responsibility follows the structure the author already maintains. |
 | Code, tests and documentation | One hierarchy responsible for all artifact forms. | A feature's implementation, tests and documentation stay coordinated. |
-| Default team | The Manager does its local work; a fresh independent reviewer assesses each delivery and integration. | The smallest team that keeps independent review. |
+| Default team | The Manager does its local work; the configured named independent reviewers assess each delivery and integration. A fresh reviewArbiter settles explicit disputes. | Project defaults and exact Manager exceptions preserve independent review without another Manager hierarchy. |
 | Final check | The Orchestrator's deterministic evidence check after the root's integration review; no separate verifier Agent. | The root's integration review already judges the whole; the Orchestrator makes sure all evidence is current. |
 | Parent knowledge | Summaries first; targeted, recorded source inspection when needed. | Local responsibility without depending entirely on child claims. |
 | Context | Own Definitions and contracts, explicit neighbors, Definitions whose modeled scope covers the Package, and task facts. | Simple, inspectable compilation without semantic retrieval. |
@@ -55,8 +57,8 @@ Configuration has project defaults plus exact Manager overrides and separate har
 
 | Configurable part | First design |
 | --- | --- |
-| Team | Manager plus independent reviewer. Implementer roles, reviewer per Definition and separate artifact hierarchies are later strategies. |
-| Execution profiles | Provider, model, runtime arguments and instruction files per role, with exact Manager overrides. |
+| Team | Manager plus at least one named independent reviewer, and a configured dispute-only reviewArbiter. The earlier single-reviewer source is not multi-reviewer support. Implementer roles, reviewer per Definition and separate artifact hierarchies remain later strategies. |
+| Execution profiles | Project role model/effort and instructions with exact Manager overrides; explicit compatible Orchestrator inputs supply provider/runtime/resources and credential references. |
 | Scope of shared rules | The model states a rule's scope through a Property whose values are local Package paths, for example `appliesTo: [lending]`, or `[.]` for the whole model. Configuration only names which Kind and Property carry scope; it never lists individual Definitions. |
 | Owner approval | Optional list of Packages whose changes wait for the owner's approval before publication. |
 | Review batching | Optional: one reviewer session may assess several no-change deliveries, each with its own bound verdict. |
@@ -216,6 +218,8 @@ The `vocabulary` disposition means a declaration needs no standalone artifact. I
 An unchanged Package can deliver a reviewed no-change result that still explains its realization and evidence. An old successful report is evidence for its old inputs, not current approval.
 
 ## Distinct review responsibilities
+
+Each active named reviewer performs the required review responsibilities independently against the same frozen subject, including expectations before candidate evidence. Names and operational instructions describe perspectives, not permission to omit applicable obligations. Collect the complete roster; a generic individual pass cannot close another reviewer's finding. The [group and arbiter rules](manager-apply-execution.md#review-conflicts-and-arbitration) determine acceptance. All review conversations and arbitration start fresh; neither a repeated provider conversation nor the implementer's transcript supplies independence.
 
 | Review | Question it must answer |
 | --- | --- |

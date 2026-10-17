@@ -53,6 +53,7 @@ The owner's [origin account of 15 October 2026](sources/owner-origin-20261015.md
 | [DEC-040](#dec-040-concept-freeze-until-the-core-runs) | Decision | Concept freeze until the core runs | Accepted |
 | [DEC-041](#dec-041-core-protocol-choices) | Decision | Core protocol choices | Accepted |
 | [DEC-042](#dec-042-orchestrator-names-the-deterministic-coordination-component) | Decision | Orchestrator names the deterministic coordination component | Accepted |
+| [DEC-043](#dec-043-project-teams-review-arbitration-and-product-defaults) | Decision | Project teams, review arbitration and product defaults | Accepted; implementation pending |
 | [PRM-001 to PRM-007](#promises) | Promise | Target outcomes | Target |
 | [ASM-001 to ASM-006](#assumptions-and-hypotheses) | Assumption | Assumptions and hypotheses | See entries |
 | [CPT-001](#cpt-001-federalism) | Concept | Federalism | Accepted |
@@ -64,7 +65,7 @@ The owner's [origin account of 15 October 2026](sources/owner-origin-20261015.md
 | [ENH-003](#enh-003-test-to-statement-binding-and-test-review) | Enhancement | Test-to-statement binding and test review | Accepted direction |
 | [ENH-004](#enh-004-per-role-agent-configuration-and-model-mixing) | Enhancement | Per-role agent configuration and model mixing | Accepted direction |
 | [ENH-005](#enh-005-exchangeable-executor-for-the-delegated-method) | Enhancement | Exchangeable executor for the delegated method | Endorsed; increment 1 merged |
-| [ENH-006](#enh-006-configurable-teams-for-perspectives-and-four-eyes) | Enhancement | Configurable teams for perspectives and four eyes | Endorsed; design after the first strategy |
+| [ENH-006](#enh-006-configurable-teams-for-perspectives-and-four-eyes) | Enhancement | Configurable teams for perspectives and four eyes | Selected DEC-043 slice accepted; other variants deferred |
 | [OQ-001 to OQ-010](#open-questions) | Open question | Open questions | Open |
 | [IDEA-001](#idea-001-the-model-as-institutional-memory-for-stateless-agents) | Idea | The model as institutional memory for stateless agents | Proposed |
 | [IDEA-002](#idea-002-government-delegated-model-maintenance) | Idea | Government: delegated model maintenance | Owner idea; parked |
@@ -494,6 +495,8 @@ The owner's [origin account of 15 October 2026](sources/owner-origin-20261015.md
 
 ### DEC-040 Concept freeze until the core runs
 
+**Bounded exception:** [DEC-043](#dec-043-project-teams-review-arbitration-and-product-defaults) records the owner's later explicit instruction to integrate team configuration and product defaults into the concept on Main. It changes only that subject; the original freeze remains the boundary for unrelated work.
+
 - **Status:** Accepted, owner, 17 October 2026 ([source](sources/architecture-review-20261017.md#concept-freeze-and-order-of-work)), after the [architecture review](../design/canonical-model/apply-architecture-review-20261017.md).
 - **Statement:**
   - The concept is frozen („Das Konzept ist jetzt eingefroren“).
@@ -526,6 +529,15 @@ The owner's [origin account of 15 October 2026](sources/owner-origin-20261015.md
 - **Statement:** Use **Orchestrator** for Markitect's deterministic coordination component previously called Host. The Manager responsibilities and the accepted process are unchanged.
 - **Boundary:** Update current documentation and its generated sources. Keep historical sources and literal quotations unchanged. Existing API identifiers, wire/configuration fields and CLI options keep their implemented names; this decision does not dispatch an implementation rename or alter the ongoing Apply work. A host machine remains a host machine.
 - **Owning document:** the [Apply glossary](../design/canonical-model/README.md#apply-design).
+
+### DEC-043 Project teams review arbitration and product defaults
+
+- **Status:** Accepted, owner, 17 October 2026, in the Config chat ([requirements and explicit Main publication instruction](sources/configuration-teams-defaults-20261017.md)). Implementation pending; the illustrative target syntax is not a supported v1 payload.
+- **Decision:** Project defaults select the Manager's model/effort/instructions, multiple stable named reviewers and a conflict-only reviewArbiter. Exact Package overrides replace supplied fields and append captured instruction lists. New reviewers need complete model/effort; at least one independent reviewer remains active. No ancestor-override inheritance or extra authored Manager hierarchy.
+- **Resolution:** All required independent assessments must be complete. Model-grounded blocking findings prevent acceptance; preferences remain advisory. A configured fresh read-only arbiter settles explicit disputes with current grounds, without changing intent, implementing or requiring personal unanimity. An unchanged closed dispute needs new evidence to reopen. The owner resolves unclear intent; unfinishable work remains Incomplete. One submitted candidate counts at most once as rejected per review purpose, regardless of reviewer count; existing budget and exhaustion rules remain.
+- **Defaults:** Product-owned versioned finite defaults supply omitted limits, assignment caps and reserve fields. The configuration owner records the accepted starting values, including a 10m step default and 20m ceiling. Preserve original bytes, effective-value provenance and immutable run bindings; validate combinations rather than silently clamp. Values are not measured sufficiency or monetary ceilings.
+- **Change boundary:** Supersedes the single-reviewer-only target and the named-team deferral within ENH-006; extends DEC-040 only for this owner-authorized concept delivery. Existing decoded formats, fixtures, source policies and runtime behavior keep their actual version until coordinated implementation. Other team variants remain deferred. Model authority, guaranteed participation, protected inputs, ownership, independent review and guarded publication remain mandatory.
+- **Owners:** [Configuration](../design/canonical-model/manager-apply-configuration.md), [review/execution](../design/canonical-model/manager-apply-execution.md#review-conflicts-and-arbitration), [core](../design/canonical-model/manager-apply-core.md#manager-tasks), [ports](../design/canonical-model/manager-apply-port-contracts.md#configured-review-team-bindings) and [journal](../design/canonical-model/manager-apply-journal.md#review-team-and-arbitration-records). No runtime, comparison or study authority is granted.
 
 ## Promises
 
@@ -670,7 +682,9 @@ These entries record agreed or endorsed direction. Recording an enhancement does
 
 ### ENH-006 Configurable teams for perspectives and four eyes
 
-- **Status:** Endorsed, owner, 16 October 2026 ([source](sources/organization-and-trust-20261016.md#retain-objections-and-team-design-questions)). The first strategy is Manager plus independent reviewer; richer teams follow after the two-Apply demonstration.
+**Selected slice:** [DEC-043](#dec-043-project-teams-review-arbitration-and-product-defaults) now accepts named reviewer teams, an arbiter and project defaults. The earlier deferral below records the 16 October decision; remaining team variants retain their later status.
+
+- **Historical status (16 October 2026):** Endorsed, owner, 16 October 2026 ([source](sources/organization-and-trust-20261016.md#retain-objections-and-team-design-questions)). At that time the first strategy was Manager plus independent reviewer, with richer teams deferred until after the two-Apply demonstration. DEC-043 supersedes that deferral for named reviewers and arbitration; other team variants remain deferred.
 - **Statement (owner):** „Gerade Dinge wie die Erfahrung, verschiedene Blickwinkel bzw Vier Augen Prinzip (realisierbar durch konfigurierbare Teams) etc finde ich sehr wichtig und diese sollten nicht vergessen werden“.
 - **Direction:** Configurable teams carry distinct perspectives and the four-eyes principle without a Manager hierarchy per perspective. Roles differ in their question, context, tools and model profile ([organization and trust](reflections/organization-and-trust-20261016.md#different-perspectives-through-configurable-teams), [team variants](../design/canonical-model/manager-realization-north-star.md#team-variants)).
 - **Related:** [ENH-004](#enh-004-per-role-agent-configuration-and-model-mixing), [IDEA-001](#idea-001-the-model-as-institutional-memory-for-stateless-agents).

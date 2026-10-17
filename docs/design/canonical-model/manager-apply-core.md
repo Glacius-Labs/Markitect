@@ -13,6 +13,8 @@ Other documents cite these rules by ID instead of restating them. The [concept](
 
 Status: target for the first Apply. The owner decisions behind S6, T3, T10, M2, D3 and W2 are recorded in [DEC-041](../../concepts/register.md#dec-041-core-protocol-choices). The other rules complete the frozen concept ([DEC-040](../../concepts/register.md#dec-040-concept-freeze-until-the-core-runs)) within [DEC-039](../../concepts/register.md#dec-039-deterministic-manager-process).
 
+The owner-accepted [team extension](../../concepts/register.md#dec-043-project-teams-review-arbitration-and-product-defaults) updates T7/T8 and finding resolution below. It adds named independent reviewers and a dispute-only reviewArbiter without changing the task topology, sequential admission, artifact authority or publication gates. Current single-reviewer source is not evidence that this extension is implemented.
+
 ## Steps
 
 - **S1** A step is one Agent turn in its own container. The Orchestrator does these things in order:
@@ -55,13 +57,13 @@ Each Manager of the topology has exactly one task per run. The Orchestrator crea
 - **T6** A step without a valid outcome is recorded as failed and stays charged. The task returns to the state before the step: `queued` for Explore, `ready` for work. An uncertain step goes through S2 first.
 
 **Review**
-- **T7** On a submission, the Orchestrator freezes the candidate and moves the task to `reviewing`. A fresh review assesses it in two steps: first a reviewer records expectations from the model, then a reviewer assesses the candidate and its evidence against those recorded expectations. Each step starts a fresh reviewer conversation (S3), so the second step receives the expectations as recorded, not through a resumed conversation. Where the configuration enables review batching, one such review covers several pending no-change submissions in the same two steps, each with its own verdict bound to its subject. Batching never removes a subject or lowers the protected review floor.
-- **T8** A review ends in one of four ways:
-  - **Pass:** the Orchestrator accepts the delivery (D1). A pass must resolve, or mark not applicable, every open blocking finding addressed to the task for this review purpose, including those raised on its earlier candidates; a pass that leaves one open is an invalid verdict. If another open blocking issue covers the subject (I3), the Orchestrator withholds acceptance instead, and the task returns to `ready` with no rejection counted.
+- **T7** On a submission, the Orchestrator freezes one candidate and moves the task to `reviewing`. Every active named reviewer in the bound team assesses that subject in two steps: first a reviewer records expectations from the model, then a reviewer assesses the candidate and its evidence against those recorded expectations. Each step starts a fresh reviewer conversation (S3), so the second step receives the expectations as recorded, not through a resumed conversation. Where the configuration enables review batching, one such review covers several pending no-change submissions in the same two steps, each with its own verdict bound to its subject. Batching never removes a subject or lowers the protected review floor. Every reviewer assesses the same frozen subject independently, with its own recorded expectations and fresh conversations; one reviewer's conversation is not another's input. Collect all required assessments before deriving a submission result. An explicitly disputed blocking finding invokes the configured read-only reviewArbiter under the [execution rules](manager-apply-execution.md#review-conflicts-and-arbitration); the task stays `reviewing` until that assessment completes or an owner decision blocks it. No arbiter creates another Manager task.
+- **T8** The complete review group, including any required conflict clarification, ends in one of four ways:
+  - **Pass:** the Orchestrator accepts the delivery (D1) only when all required named assessments are complete and valid, every blocking finding addressed to the task for this review purpose is resolved or not applicable with current independent evidence, and required checks pass. This includes findings from earlier candidates. Reviewer preference or a missing response supplies no acceptance. The arbiter may settle a disputed finding without the original reviewer personally agreeing; its recorded ruling is part of this group result, not a waiver of a model obligation. If another open blocking issue covers the subject (I3), the Orchestrator withholds acceptance instead, and the task returns to `ready` with no rejection counted.
     - After a `limited` delivery, the task returns to `ready`.
     - After a `complete` local delivery, a Manager without children is `done`. A Manager with children becomes `ready` for integration if all its children are `done`, and otherwise `blocked` on them.
     - After a `complete` integration delivery, the task is `done`.
-  - **Changes requested:** the rejection counts as the execution contract defines, and the task returns to `ready` with the new findings. At the rejection limit, the task becomes `incomplete`.
+  - **Changes requested:** the submission is rejected at most once for this review purpose, regardless of how many reviewers or findings reject it; the rejection counts as the execution contract defines, and the task returns to `ready` with the new findings. At the rejection limit, the task becomes `incomplete`.
   - **Needs decision:** the reviewer raises an owner question, and the task becomes `blocked` on it. The owner's answer starts a fresh review of the same frozen candidate, unless the answer requires a model change (W3).
   - **Failed assessment**, an invalid verdict, or a failed review step: the task stays `reviewing`, and a fresh review of the same frozen candidate is admitted. It is charged, and no rejection counts. An uncertain review step goes through S2 first.
 - **T9** A Manager with children submits its `integration` candidate only when three conditions hold:
@@ -97,7 +99,7 @@ Each Manager of the topology has exactly one task per run. The Orchestrator crea
 
 ## Orchestrator tools
 
-Each role sees only its own closed catalogue. The [port contracts](manager-apply-port-contracts.md#session-and-communication-port) own how a tool call reaches the Orchestrator and how its answer returns.
+Each role sees only its own closed catalogue. Here reviewer includes each named independent reviewer and the conflict-only reviewArbiter, with read-only candidate access. The arbiter uses review capabilities and records a bound resolution; it cannot write artifacts, alter configuration or launch another arbiter. Exact new payload/schema fields are implementation work. The [port contracts](manager-apply-port-contracts.md#session-and-communication-port) own how a tool call reaches the Orchestrator and how its answer returns.
 
 | Tool | Roles | Effect |
 | --- | --- | --- |
@@ -147,7 +149,7 @@ Findings and questions share one issue shape:
 
 The [journal](manager-apply-journal.md) stores findings and questions as records of this shape.
 
-- **I1** A reviewer raises a finding. Only an independent review with current evidence resolves it or marks it not applicable, as the [execution contract](manager-apply-execution.md#evidence-need-survives-budget-pressure) defines.
+- **I1** A reviewer raises a finding. Only an independent review, including a bound arbiter ruling, with current evidence resolves it, marks it not applicable or grounds a severity correction, as the [execution contract](manager-apply-execution.md#evidence-need-survives-budget-pressure) defines. Preserve the original report and append the resolution. An unchanged closed dispute reopens only with new concrete evidence.
 - **I2** A Manager or a reviewer raises a question. It is resolved by a reply from its addressee: a Manager acting within its mandate, or the owner through the application. The Orchestrator binds every reply to the question's version.
 - **I3** An open blocking issue blocks acceptance of its subject and of every aggregate that contains it.
 - **I4** A Definition disposition `unresolved` needs a linked open issue.
