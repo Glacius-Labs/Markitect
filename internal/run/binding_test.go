@@ -2,6 +2,7 @@ package run_test
 
 import (
 	"bytes"
+	"reflect"
 	"testing"
 	"time"
 
@@ -90,6 +91,113 @@ func TestBindingFixesCompleteInputsAndOwnsOriginalBytes(t *testing.T) {
 	b.Payload().Bytes()[0] = 'X'
 	if !bytes.Equal(original, b.Payload().Bytes()) || !b.Valid() {
 		t.Fatal("binding aliases caller/view data")
+	}
+}
+
+func TestBindingRequiresCompleteProducerAccounting(t *testing.T) {
+	for name, change := range map[string]func(*run.BindingInput){
+		"unexplained file": func(i *run.BindingInput) {
+			i.Census = tree(t, append(i.Census.Entries(), file(t, "notes.txt", snapshot.Regular, "unclassified")))
+		},
+		"missing input classification": func(i *run.BindingInput) { i.Classifications = i.Classifications[1:] },
+		"classification without file": func(i *run.BindingInput) {
+			cl, _ := realization.NewClassification(file(t, "absent.txt", snapshot.Regular, "").Path(), realization.IgnoredFile, "Absent file")
+			i.Classifications = append(i.Classifications, cl)
+		},
+		"registered artifact conflict": func(i *run.BindingInput) {
+			cl, _ := realization.NewClassification(i.Registry.Entries()[0].Artifact().Path(), realization.IgnoredFile, "Cannot ignore registered artifact")
+			i.Classifications = append(i.Classifications, cl)
+		},
+	} {
+		t.Run(name, func(t *testing.T) {
+			i := fixture(t)
+			change(&i)
+			if realization.AccountFiles(i.Compilation, i.Census, i.Registry, i.Classifications).Status() == realization.Accounted {
+				t.Fatal("fixture did not distinguish accounting failure")
+			}
+			b, err := run.Bind(i)
+			if err == nil || b.Valid() {
+				t.Fatal("unaccounted source prepared")
+			}
+		})
+	}
+}
+
+func TestBindingIncludesCeilingsValuesAndEverySource(t *testing.T) {
+	base := fixture(t)
+	original, err := run.Bind(base)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for name, change := range map[string]func(*organization.SettingsFacts){
+		"step timeout":  func(f *organization.SettingsFacts) { f.Ceilings.StepTimeout.Value = 3 * time.Minute },
+		"review rounds": func(f *organization.SettingsFacts) { f.Ceilings.ReviewRounds.Value = 4 },
+		"creation roots": func(f *organization.SettingsFacts) {
+			f.Ceilings.CreationRoots.Value = []snapshot.DirectoryBoundary{snapshot.RootDirectory()}
+		},
+	} {
+		t.Run(name+" value", func(t *testing.T) {
+			changed := fixtureWith(t, nil, change)
+			if !reflect.DeepEqual(base.Settings.Managers(), changed.Settings.Managers()) {
+				t.Fatal("fixture changed effective selection")
+			}
+			b, err := run.Bind(changed)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if b.Ref() == original.Ref() {
+				t.Fatal("changed unused ceiling value omitted")
+			}
+		})
+	}
+	for _, field := range []string{"step timeout", "review rounds", "creation roots"} {
+		t.Run(field, func(t *testing.T) {
+			e := file(t, "separate-ceilings.yaml", snapshot.Regular, "Separate ceiling input bytes\r\n")
+			d := run.Document{Source: organization.SettingSource{File: "host/separate-ceilings.yaml", ContentID: e.ContentID()}, File: e}
+			i := fixtureWith(t, nil, func(f *organization.SettingsFacts) {
+				switch field {
+				case "step timeout":
+					f.Ceilings.StepTimeout.Source = source(d, "/stepTimeout")
+				case "review rounds":
+					f.Ceilings.ReviewRounds.Source = source(d, "/reviewRounds")
+				case "creation roots":
+					f.Ceilings.CreationRoots.Source = source(d, "/creationRoots")
+				}
+			})
+			if !reflect.DeepEqual(base.Settings.Managers(), i.Settings.Managers()) {
+				t.Fatal("fixture changed effective selection")
+			}
+			if b, err := run.Bind(i); err == nil || b.Valid() {
+				t.Fatal("missing original ceiling document accepted")
+			}
+			i.Documents = append(i.Documents, d)
+			b, err := run.Bind(i)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if b.Ref() == original.Ref() {
+				t.Fatal("ceiling provenance omitted")
+			}
+			// Same originals and effective values, only the selected field differs.
+			i2 := fixtureWith(t, nil, func(f *organization.SettingsFacts) {
+				switch field {
+				case "step timeout":
+					f.Ceilings.StepTimeout.Source = source(d, "/otherStepTimeout")
+				case "review rounds":
+					f.Ceilings.ReviewRounds.Source = source(d, "/otherReviewRounds")
+				case "creation roots":
+					f.Ceilings.CreationRoots.Source = source(d, "/otherCreationRoots")
+				}
+			})
+			i2.Documents = append(i2.Documents, d)
+			b2, err := run.Bind(i2)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if b2.Ref() == b.Ref() {
+				t.Fatal("ceiling field provenance omitted")
+			}
+		})
 	}
 }
 

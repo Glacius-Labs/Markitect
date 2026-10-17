@@ -8,7 +8,10 @@ import (
 	"testing"
 	"time"
 
+	"github.com/Glacius-Labs/Markitect/internal/model"
+	"github.com/Glacius-Labs/Markitect/internal/realization"
 	"github.com/Glacius-Labs/Markitect/internal/run"
+	"github.com/Glacius-Labs/Markitect/internal/snapshot"
 )
 
 func command(id, kind string) run.Command {
@@ -29,12 +32,179 @@ func commit(t *testing.T, c *run.Coordinator, j *memoryJournal, command run.Comm
 }
 
 func running(t *testing.T) (*run.Coordinator, *memoryJournal) {
+	return runningWith(t, binding(t))
+}
+
+func runningWith(t *testing.T, b run.Binding) (*run.Coordinator, *memoryJournal) {
 	t.Helper()
 	c, _ := run.NewCoordinator("repo")
 	j := journal()
-	commit(t, c, j, run.PrepareCommand("prepare", "a", "r", "", observed, binding(t)))
+	commit(t, c, j, run.PrepareCommand("prepare", "a", "r", "", observed, b))
 	commit(t, c, j, command("start", run.StartRun))
 	return c, j
+}
+
+func finishIncomplete(t *testing.T, c *run.Coordinator, j *memoryJournal) {
+	t.Helper()
+	f := command("finish", run.FinishRun)
+	f.Outcome = run.Incomplete
+	f.Reason = "Retain unfinished work"
+	commit(t, c, j, f)
+}
+
+func spend(t *testing.T, c *run.Coordinator, j *memoryJournal, kind run.InvocationKind, count int) {
+	t.Helper()
+	for n := 0; n < count; n++ {
+		id := fmt.Sprintf("%s-%d", kind, n)
+		commit(t, c, j, reserve(id, kind, run.Assessment, time.Second))
+		commit(t, c, j, settle(id, 0))
+	}
+}
+
+func TestContinuationPreservesAssignmentOwnerRequest(t *testing.T) {
+	c, j := running(t)
+	finishIncomplete(t, c, j)
+	before, rev, calls := c.Budget(), c.Revision(), j.appendCalls
+	i := fixture(t)
+	i.Source.Guard = "changed-source"
+	i.OwnerRequest, _ = run.NewPayload("text/plain", "utf-8", []byte("A materially different owner assignment"))
+	b, err := run.Bind(i)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := c.Propose(run.PrepareCommand("continue", "a", "r2", "r", observed, b)); !errors.Is(err, run.ErrState) {
+		t.Fatal("owner assignment changed without amendment", err)
+	}
+	if c.Revision() != rev || !reflect.DeepEqual(before, c.Budget()) || j.appendCalls != calls {
+		t.Fatal("rejected continuation consumed or appended")
+	}
+	i = fixture(t)
+	i.Source.Guard = "changed-source"
+	b, err = run.Bind(i)
+	if err != nil {
+		t.Fatal(err)
+	}
+	commit(t, c, j, run.PrepareCommand("continue", "a", "r2", "r", observed, b))
+	if c.Budget().Consumed.Runs != 2 {
+		t.Fatal("identical assignment input could not continue")
+	}
+}
+
+func TestContinuationRequiresRemainingStructuralReviewFloor(t *testing.T) {
+	for _, resource := range []string{"starts", "steps", "time", "runs", "overrun"} {
+		t.Run(resource, func(t *testing.T) {
+			i := fixture(t)
+			if resource == "runs" {
+				i.Policy.Assignment.Runs = 1
+			}
+			b, err := run.Bind(i)
+			if err != nil {
+				t.Fatal(err)
+			}
+			c, j := runningWith(t, b)
+			switch resource {
+			case "starts":
+				spend(t, c, j, run.SessionStart, 5) // 3 remain; new basis needs 4.
+			case "steps":
+				spend(t, c, j, run.AgentStep, 7)
+			case "time":
+				commit(t, c, j, reserve("check", run.ProjectCheck, run.Assessment, 10*time.Minute))
+				commit(t, c, j, settle("check", 10*time.Minute))
+			case "overrun":
+				commit(t, c, j, reserve("overrun", run.AgentStep, run.Assessment, time.Second))
+				commit(t, c, j, settle("overrun", 2*time.Second))
+			}
+			finishIncomplete(t, c, j)
+			before, rev, calls := c.Budget(), c.Revision(), j.appendCalls
+			i.Source.Guard = "changed-source"
+			next, err := run.Bind(i)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if _, err := c.Propose(run.PrepareCommand("continue", "a", "r2", "r", observed, next)); !errors.Is(err, run.ErrBudget) {
+				t.Fatal("insufficient structural capacity prepared", err)
+			}
+			if c.Revision() != rev || !reflect.DeepEqual(before, c.Budget()) || j.appendCalls != calls {
+				t.Fatal("rejected continuation consumed or appended")
+			}
+		})
+	}
+}
+
+func TestContinuationCanUseStructuralFloorBelowConfiguredReserve(t *testing.T) {
+	i := fixture(t)
+	i.Policy.Reserve = run.Capacity{SessionStarts: 6, Steps: 6, ExecutionTime: 5 * time.Minute}
+	b, err := run.Bind(i)
+	if err != nil {
+		t.Fatal(err)
+	}
+	c, j := runningWith(t, b)
+	spend(t, c, j, run.SessionStart, 4)
+	spend(t, c, j, run.AgentStep, 6)
+	commit(t, c, j, reserve("check", run.ProjectCheck, run.Assessment, 6*time.Minute))
+	commit(t, c, j, settle("check", 6*time.Minute))
+	finishIncomplete(t, c, j)
+	if c.Budget().Remaining.SessionStarts != 4 || c.Budget().Remaining.Steps != 4 || c.Budget().Remaining.ExecutionTime != 4*time.Minute {
+		t.Fatal("fixture did not distinguish floor from configured reserve", c.Budget())
+	}
+	i.Source.Guard = "changed-source"
+	b, err = run.Bind(i)
+	if err != nil {
+		t.Fatal(err)
+	}
+	commit(t, c, j, run.PrepareCommand("continue", "a", "r2", "r", observed, b))
+	start := command("start-r2", run.StartRun)
+	start.Run = "r2"
+	commit(t, c, j, start)
+	write := reserve("write-r2", run.AgentStep, run.Writing, time.Second)
+	write.Run = "r2"
+	if _, err := c.Propose(write); !errors.Is(err, run.ErrBudget) {
+		t.Fatal("writing crossed configured reserve", err)
+	}
+	review := reserve("review-r2", run.AgentStep, run.Assessment, time.Second)
+	review.Run = "r2"
+	commit(t, c, j, review)
+}
+
+func TestZeroReviewContinuationHasZeroStructuralFloor(t *testing.T) {
+	i := fixtureWith(t, func(input *model.Input) {
+		var entries []model.Entry
+		for _, e := range input.Root.Entries {
+			if e.Path == "model.yaml" || e.Path == "model-lock.yaml" {
+				entries = append(entries, e)
+			}
+		}
+		input.Root.Entries = append(entries, model.Entry{Path: "model", Kind: model.Directory})
+	}, nil)
+	// This model has no artifact responsibilities. Keep only its actual inputs.
+	i.Registry = realization.Registry{}
+	var entries []snapshot.Entry
+	for _, d := range i.Documents {
+		entries = append(entries, d.File)
+	}
+	i.Census = tree(t, entries)
+	b, err := run.Bind(i)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if b.RequiredReviews() != 0 {
+		t.Fatal("fixture still needs reviews")
+	}
+	c, j := runningWith(t, b)
+	spend(t, c, j, run.SessionStart, 8)
+	spend(t, c, j, run.AgentStep, 10)
+	commit(t, c, j, reserve("check", run.ProjectCheck, run.Assessment, 10*time.Minute))
+	commit(t, c, j, settle("check", 10*time.Minute))
+	finishIncomplete(t, c, j)
+	i.Source.Guard = "changed-source"
+	b, err = run.Bind(i)
+	if err != nil {
+		t.Fatal(err)
+	}
+	commit(t, c, j, run.PrepareCommand("continue", "a", "r2", "r", observed, b))
+	if c.Budget().Consumed.Runs != 2 {
+		t.Fatal("zero review floor blocked continuation")
+	}
 }
 
 func reserve(id string, kind run.InvocationKind, purpose run.Purpose, maximum time.Duration) run.Command {

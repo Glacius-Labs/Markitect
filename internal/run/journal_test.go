@@ -3,9 +3,11 @@ package run_test
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"errors"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/Glacius-Labs/Markitect/internal/run"
 )
@@ -19,6 +21,65 @@ type memoryJournal struct {
 	appendCalls             int
 	putFailure, readFailure bool
 	appendMode              string
+}
+
+func TestCodecRejectsCanonicalBytesWithInvalidValueShapes(t *testing.T) {
+	c, _ := run.NewCoordinator("repo")
+	prepared, err := c.Propose(run.PrepareCommand("prepare", "a", "r", "", observed, binding(t)))
+	if err != nil {
+		t.Fatal(err)
+	}
+	runningCoordinator, _ := running(t)
+	reserved, err := runningCoordinator.Propose(reserve("step", run.AgentStep, run.Assessment, time.Second))
+	if err != nil {
+		t.Fatal(err)
+	}
+	cases := map[string]struct {
+		batch  run.AppendBatch
+		change func(*run.Command)
+	}{
+		"empty reservation identity": {reserved.Batch(), func(c *run.Command) { c.Reservation.ID = "" }},
+		"unknown invocation":         {reserved.Batch(), func(c *run.Command) { c.Reservation.Kind = "unknown" }},
+		"unknown purpose":            {reserved.Batch(), func(c *run.Command) { c.Reservation.Purpose = "unknown" }},
+		"zero maximum":               {reserved.Batch(), func(c *run.Command) { c.Reservation.Maximum = 0 }},
+		"negative maximum":           {reserved.Batch(), func(c *run.Command) { c.Reservation.Maximum = -1 }},
+		"writing project check":      {reserved.Batch(), func(c *run.Command) { c.Reservation.Kind = run.ProjectCheck; c.Reservation.Purpose = run.Writing }},
+		"whitespace media":           {prepared.Batch(), func(c *run.Command) { c.Basis.MediaType = " \t" }},
+		"missing encoding":           {prepared.Batch(), func(c *run.Command) { c.Basis.Encoding = "" }},
+		"whitespace encoding":        {prepared.Batch(), func(c *run.Command) { c.Basis.Encoding = " \t" }},
+		"negative size":              {prepared.Batch(), func(c *run.Command) { c.Basis.Size = -1 }},
+		"oversize":                   {prepared.Batch(), func(c *run.Command) { c.Basis.Size = (64 << 20) + 1 }},
+		"absent content identity":    {prepared.Batch(), func(c *run.Command) { c.Basis.ContentID = run.BlobRef{}.ContentID }},
+	}
+	for name, tc := range cases {
+		t.Run(name, func(t *testing.T) {
+			// This has exactly batchWire's field order. Marshal keeps bytes canonical;
+			// rejection must come from the value contract, not JSON formatting.
+			var wire struct {
+				Version          uint32
+				ID               string
+				ExpectedRevision uint64
+				Events           []run.Event
+			}
+			if err := json.Unmarshal(tc.batch.Bytes(), &wire); err != nil {
+				t.Fatal(err)
+			}
+			body := &wire.Events[len(wire.Events)-1].Body
+			tc.change(body)
+			data, err := json.Marshal(wire)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if _, err := run.DecodeBatch(data); !errors.Is(err, run.ErrInvalid) {
+				t.Fatal("intrinsically invalid canonical record accepted", err)
+			}
+			if body.Kind == run.ReserveInvocation {
+				if _, err := runningCoordinator.Propose(*body); !errors.Is(err, run.ErrInvalid) {
+					t.Fatal("normal admission disagrees with codec", err)
+				}
+			}
+		})
+	}
 }
 
 func journal() *memoryJournal { return &memoryJournal{blobs: map[run.BlobRef]run.Payload{}} }
@@ -187,10 +248,8 @@ func TestJournalCodecIdentityCASAndImmutablePayloads(t *testing.T) {
 	if _, err := j.Append(ctx, stale.Batch()); !errors.Is(err, run.ErrConflict) {
 		t.Fatal("stale CAS accepted")
 	}
-	conflict := bytes.Replace(b.Bytes(), []byte(`"ID":"prepare"`), []byte(`"ID":"prepareX"`), 1)
 	// Keep the batch ID while changing a command's bytes.
-	conflict = bytes.Replace(conflict, []byte(`"ID":"prepareX"`), []byte(`"ID":"prepare"`), 1)
-	conflict = bytes.Replace(conflict, []byte(`"Assignment":"a"`), []byte(`"Assignment":"b"`), -1)
+	conflict := bytes.Replace(b.Bytes(), []byte(`"Assignment":"a"`), []byte(`"Assignment":"b"`), -1)
 	changed, err := run.DecodeBatch(conflict)
 	if err != nil {
 		t.Fatal(err)

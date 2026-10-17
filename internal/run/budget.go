@@ -59,6 +59,15 @@ type Reservation struct {
 	Purpose Purpose
 	Maximum time.Duration
 }
+
+// valid checks intrinsic record shape independently of the current balance and
+// selected timeout. The codec and admission use this same closed value contract.
+func (r Reservation) valid() bool {
+	return identifier(r.ID) && (r.Purpose == Writing || r.Purpose == Assessment) && r.Maximum > 0 &&
+		(r.Kind == SessionStart || r.Kind == AgentStep || r.Kind == ProjectCheck || r.Kind == ToolProcess) &&
+		(r.Kind != ProjectCheck || r.Purpose == Assessment)
+}
+
 type InvocationState string
 
 const (
@@ -141,7 +150,7 @@ func cost(r Reservation) Capacity {
 	return c
 }
 func admit(p BudgetPolicy, view BudgetView, r Reservation) error {
-	if !identifier(r.ID) || (r.Purpose != Writing && r.Purpose != Assessment) || r.Maximum <= 0 || (r.Kind != SessionStart && r.Kind != AgentStep && r.Kind != ProjectCheck && r.Kind != ToolProcess) || (r.Kind == ProjectCheck && r.Purpose != Assessment) || r.Kind == AgentStep && r.Maximum > p.MaxStepTimeout {
+	if !r.valid() || r.Kind == AgentStep && r.Maximum > p.MaxStepTimeout {
 		return ErrInvalid
 	}
 	c := cost(r)

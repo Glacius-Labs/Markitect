@@ -60,6 +60,10 @@ func selected[T any](d run.Document, field string, value T) organization.Setting
 }
 
 func fixture(t *testing.T) run.BindingInput {
+	return fixtureWith(t, nil, nil)
+}
+
+func fixtureWith(t *testing.T, changeModel func(*model.Input), changeSettings func(*organization.SettingsFacts)) run.BindingInput {
 	t.Helper()
 	core := coreSource()
 	coreDigest := compiled(t, model.Input{Root: core}).Models[0].Digest
@@ -78,6 +82,9 @@ func fixture(t *testing.T) run.BindingInput {
 	}}
 	// Deliberately reverse producer result ordering: Compile sorts dependencies.
 	input := model.Input{Root: local, Dependencies: []model.SourceModel{extra, core}}
+	if changeModel != nil {
+		changeModel(&input)
+	}
 	c := compiled(t, input)
 	topology, err := organization.BuildTopology(c)
 	if err != nil {
@@ -116,6 +123,9 @@ func fixture(t *testing.T) run.BindingInput {
 			{ID: "style", Source: docs[2].Source, Bytes: docs[2].File.Bytes()},
 			{ID: "review", Source: docs[3].Source, Bytes: docs[3].File.Bytes()},
 		},
+	}
+	if changeSettings != nil {
+		changeSettings(&facts)
 	}
 	settings, err := organization.ResolveSettings(topology, facts)
 	if err != nil {

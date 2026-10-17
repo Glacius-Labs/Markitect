@@ -29,14 +29,15 @@ type operation struct {
 	receipt AppendReceipt
 }
 type stateValue struct {
-	repository  string
-	revision    uint64
-	assignment  string
-	policy      BudgetPolicy
-	current     RunView
-	runs        map[string]RunView
-	invocations map[string]Invocation
-	operations  map[string]operation
+	repository   string
+	revision     uint64
+	assignment   string
+	ownerRequest BlobRef
+	policy       BudgetPolicy
+	current      RunView
+	runs         map[string]RunView
+	invocations  map[string]Invocation
+	operations   map[string]operation
 }
 
 // Coordinator owns one repository's confirmed projection and at most one
@@ -152,13 +153,17 @@ func (s *stateValue) apply(c Command) error {
 				return ErrInvalid
 			}
 			s.assignment = c.Assignment
+			s.ownerRequest = b.owner.Ref()
 			s.policy = b.policy
 		} else {
-			if s.assignment != c.Assignment || s.current.State != Finished || c.Predecessor != s.current.ID || c.Basis == s.current.Basis || s.policy != b.policy {
+			if s.assignment != c.Assignment || s.current.State != Finished || c.Predecessor != s.current.ID || c.Basis == s.current.Basis || s.policy != b.policy || s.ownerRequest != b.owner.Ref() {
 				return ErrState
 			}
 		}
-		if int64(len(s.runs)) >= s.policy.Assignment.Runs || budget(s.policy, int64(len(s.runs)), s.invocations).Overrun {
+		view := budget(s.policy, int64(len(s.runs)), s.invocations)
+		// Assessment may spend the configured reserve. Each new basis still
+		// needs its own structural review floor in the shared remaining ledger.
+		if view.Overrun || view.Remaining.Runs < 1 || view.Remaining.SessionStarts < b.reviews || view.Remaining.Steps < b.reviews || b.reviews > 0 && view.Remaining.ExecutionTime <= 0 {
 			return ErrBudget
 		}
 		s.current = RunView{ID: c.Run, Assignment: c.Assignment, Basis: c.Basis, State: Prepared}

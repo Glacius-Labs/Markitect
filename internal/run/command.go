@@ -69,13 +69,16 @@ func (c Command) validate() error {
 	allowed := Command{ID: c.ID, Kind: c.Kind, Assignment: c.Assignment, Run: c.Run, ObservedAt: c.ObservedAt}
 	switch c.Kind {
 	case PrepareRun:
-		if c.Basis.MediaType == "" || c.Basis.Size <= 0 {
+		if !c.Basis.Valid() || c.Basis.Size <= 0 {
 			return ErrInvalid
 		}
 		allowed.Basis = c.Basis
 		allowed.Predecessor = c.Predecessor
 	case StartRun, ResumeRun:
 	case ReserveInvocation:
+		if !c.Reservation.valid() {
+			return ErrInvalid
+		}
 		allowed.Reservation = c.Reservation
 	case SettleInvocation:
 		if !identifier(c.Invocation) || c.Elapsed < 0 || !text(c.Reason) {

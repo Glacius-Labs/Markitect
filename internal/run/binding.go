@@ -85,6 +85,13 @@ type managerBinding struct {
 	CreationSource       organization.SettingSource
 	BatchNoChangeReviews organization.Setting[bool]
 }
+
+type ceilingsBinding struct {
+	StepTimeout    organization.Setting[int64]
+	ReviewRounds   organization.Setting[int]
+	CreationRoots  []string
+	CreationSource organization.SettingSource
+}
 type bindingWire struct {
 	Version         uint32
 	Source          SourceBasis
@@ -93,6 +100,7 @@ type bindingWire struct {
 	Compilation     []compiledBinding
 	Managers        []organization.Manager
 	Settings        []managerBinding
+	Ceilings        ceilingsBinding
 	Profiles        []organization.ProfileFact
 	Documents       []documentBinding
 	Census          []fileBinding
@@ -182,6 +190,19 @@ func Bind(input BindingInput) (Binding, error) {
 	if !covered(input.PolicySource) {
 		return Binding{}, ErrInvalid
 	}
+	ceilings := input.Settings.Ceilings()
+	for _, source := range []organization.SettingSource{ceilings.StepTimeout.Source, ceilings.ReviewRounds.Source, ceilings.CreationRoots.Source} {
+		if !covered(source) {
+			return Binding{}, ErrInvalid
+		}
+	}
+	w.Ceilings = ceilingsBinding{
+		StepTimeout:  organization.Setting[int64]{Value: int64(ceilings.StepTimeout.Value), Source: ceilings.StepTimeout.Source},
+		ReviewRounds: ceilings.ReviewRounds, CreationSource: ceilings.CreationRoots.Source,
+	}
+	for _, directory := range ceilings.CreationRoots.Value {
+		w.Ceilings.CreationRoots = append(w.Ceilings.CreationRoots, directory.String())
+	}
 	for _, profile := range input.Profiles {
 		if !text(profile.Name) || !text(profile.Identity) || !covered(profile.Source) {
 			return Binding{}, ErrInvalid
@@ -246,6 +267,9 @@ func Bind(input BindingInput) (Binding, error) {
 	}
 	if _, err := realization.NewPathFacts(input.Compilation, input.Registry, input.Census, areas, input.Protections); err != nil {
 		return Binding{}, err
+	}
+	if realization.AccountFiles(input.Compilation, input.Census, input.Registry, input.Classifications).Status() != realization.Accounted {
+		return Binding{}, ErrInvalid
 	}
 	for _, file := range input.Census.Entries() {
 		w.Census = append(w.Census, fileBinding{file.Path().String(), file.Mode(), file.Bytes()})
