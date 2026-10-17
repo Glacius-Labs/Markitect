@@ -28,6 +28,10 @@ artifacts:
     form: test
     realizes: [product/cli/honest-read-only-interface]
     why: Verifies actual consumer stages, source bindings and negative effect boundaries.
+  - path: "internal/bootstrap/control_integration_test.go"
+    form: test
+    realizes: [product/cli/honest-read-only-interface]
+    why: Tests real Git preparation and SQLite control composition while preserving unavailable CLI Apply and effect-free previews.
   - path: "internal/bootstrap/documents_alias_windows_test.go"
     form: test
     realizes: [product/cli/honest-read-only-interface]

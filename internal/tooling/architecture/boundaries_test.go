@@ -65,6 +65,12 @@ func TestConcreteResponsibilityBoundaries(t *testing.T) {
 		{"internal/adapters/documents", "internal/tooling/guardedwrite", true},
 		{"internal/adapters/documents", "internal/tooling/source", false},
 		{"internal/adapters/checks", "internal/adapters/codexappserver", false},
+		// The Claude wire codec has no session, runtime, sibling or tooling edges.
+		{"internal/adapters/claudecode", "internal/run", false},
+		{"internal/adapters/claudecode", "internal/adapters/container", false},
+		{"internal/adapters/claudecode", "internal/agentd/frame", false},
+		{"internal/adapters/claudecode", "internal/adapters/codexappserver", false},
+		{"internal/adapters/claudecode", "internal/tooling/source", false},
 		// Codex's concrete metadata factory uses only image inspection/copy.
 		// Session and agentd-frame consumption require a separate delivery.
 		{"internal/adapters/codexappserver", "internal/adapters/container", true},
@@ -168,6 +174,58 @@ func TestJournalFixtureEdgesStayTestOnly(t *testing.T) {
 				t.Fatal("platform classification bypassed test-only boundary", got)
 			}
 		})
+	}
+}
+
+func TestBootstrapControlFixtureEdgesStayTestOnly(t *testing.T) {
+	for _, tc := range []struct {
+		to               string
+		production, test bool
+	}{
+		{"internal/apply", true, true}, {"internal/adapters/gitrepo", true, true},
+		{"internal/adapters/journal", false, true}, {"internal/model", false, true},
+		{"internal/snapshot", false, true}, {"internal/run", false, true}, {"internal/testkit", false, true},
+		{"internal/organization", false, false}, {"internal/realization", false, false},
+		{"internal/adapters/container", false, false}, {"internal/adapters/unknown", false, false},
+	} {
+		for _, test := range []bool{false, true} {
+			allowed := tc.production
+			if test {
+				allowed = tc.test
+			}
+			if got := Check([]Edge{{From: "internal/bootstrap", To: tc.to, Test: test}}); (len(got) == 0) != allowed {
+				t.Errorf("bootstrap -> %s test=%v: %v", tc.to, test, got)
+			}
+		}
+	}
+	for _, producer := range []struct{ path, layer, pkg string }{
+		{"internal/adapters/journal", "apply-adapter", "journal"},
+		{"internal/model", "apply-model", "model"},
+		{"internal/snapshot", "apply-snapshot", "snapshot"},
+		{"internal/run", "apply-run", "run"},
+	} {
+		for _, file := range []string{"fixture_windows_test.go", "fixture_linux_test.go", "fixture_windows.go", "fixture_linux.go"} {
+			t.Run(producer.pkg+"/"+file, func(t *testing.T) {
+				root := t.TempDir()
+				entries := mapEntry(producer.path, producer.layer) + mapEntry("internal/bootstrap", "apply-bootstrap")
+				writeFixture(t, root, map[string]string{
+					"README.md": "# Owner\n", CodeMapSource: "packages:\n" + entries,
+					producer.path + "/producer.go": "package " + producer.pkg + "\n",
+					"internal/bootstrap/" + file:   "package bootstrap\nimport _ \"" + ModulePath + producer.path + "\"\n",
+				})
+				got, err := CheckRepository(root)
+				if err != nil {
+					t.Fatal(err)
+				}
+				want := 0
+				if !strings.HasSuffix(file, "_test.go") {
+					want = 1
+				}
+				if len(got) != want {
+					t.Fatal("platform classification bypassed bootstrap test-only boundary", got)
+				}
+			})
+		}
 	}
 }
 

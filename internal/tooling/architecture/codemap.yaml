@@ -31,6 +31,10 @@ packages:
     layer: apply-adapter
     purpose: Concrete repository, profile metadata and document I/O.
     doc: docs/development/modules.md
+  - path: internal/adapters/claudecode
+    layer: apply-adapter
+    purpose: Pure selected Claude Code 2.1.301 stream protocol codec.
+    doc: internal/adapters/claudecode/README.md
   - path: internal/adapters/cli
     layer: apply-adapter
     purpose: Concrete repository, profile metadata and document I/O.

@@ -24,13 +24,17 @@ func renderFixture(t *testing.T, pkg string, view organization.ContextView) (org
 	compiled := compileFixture(t, contextInput(t))
 	selection := requireContext(t, compiled, pkg)
 	settings := requireSettings(t, requireTopology(t, compiled), settingsFixture(t))
+	_, operation := organization.ApplyOperation()
 	input := organization.RenderInput{
 		View: view, InputBinding: hostRef("captured-basis", ""),
-		Task: organization.TaskFacts{ID: "task-1", Package: pkg, Outcome: hostFact("task-1", "Realize the selected model responsibility."), Findings: organization.OpenFindings{
+		Task: organization.TaskFacts{ID: "task-1", Package: pkg, Outcome: hostFact("operation-1", operation), Findings: organization.OpenFindings{
 			Source: hostRef("open-findings", ""), IDs: []string{"finding-1"}, Items: []organization.FindingFact{{ID: "finding-1", Grounds: hostFact("finding-1", "The original required interface remains an obligation."), Evidence: []organization.HostSource{hostRef("evidence-1", "")}}},
 		}},
 		MaxContextBytes: setting(int64(1<<20), "/limits/maxContextBytes"),
 		RemainingLimits: []organization.HostText{hostFact("limit-observation", "Remaining steps: 12. This observation grants no extension.")},
+	}
+	if view == organization.ManagerView {
+		input.Process = &organization.ManagerProcess{Phase: organization.ManagerExplore, Source: hostRef("phase-1", "/phase")}
 	}
 	return selection, settings, input
 }
@@ -84,7 +88,7 @@ func TestRenderThreeViewsAndOriginalInstructionFrames(t *testing.T) {
 	selection, settings, input := renderFixture(t, "a", organization.ManagerView)
 	input.OwnArtifacts = []organization.ArtifactFact{renderArtifact(t, "a")}
 	result := requireRendered(t, selection, settings, input)
-	if result.Package() != "a" || result.View() != organization.ManagerView || result.Template().ID != "markitect/context/manager" || result.Template().Version != "1" {
+	if result.Package() != "a" || result.View() != organization.ManagerView || result.Template().ID != "markitect/context/manager" || result.Template().Version != "2" {
 		t.Fatal("missing product template/view identity")
 	}
 	if got := sectionTexts(t, result, "original-custom-instruction"); len(got) != 1 || !bytes.Equal(got[0], []byte("\xef\xbb\xbfUse concise reports.\r\nKeep source references.")) {
@@ -105,6 +109,7 @@ func TestRenderThreeViewsAndOriginalInstructionFrames(t *testing.T) {
 		t.Fatal("rendered payload/manifest views alias fixed output")
 	}
 	input.View = organization.ReviewerExpectations
+	input.Process = nil
 	forbidden, err := organization.RenderContext(selection, settings, input)
 	if err == nil {
 		t.Fatal("review expectation phase received artifact inventory/payload")
@@ -131,4 +136,36 @@ func TestRenderThreeViewsAndOriginalInstructionFrames(t *testing.T) {
 		t.Fatalf("missing explicit byte-cap diagnostic: %v", err)
 	}
 	assertZeroRendered(t, refused)
+}
+
+func TestOnePackageNoChangeAndOrdinaryRootIntegrationContext(t *testing.T) {
+	compiled := compileFixture(t, localFixture(t, map[string][]string{"lending": {"loan-policy"}}))
+	topology := requireTopology(t, compiled)
+	settings := requireSettings(t, topology, settingsFixture(t))
+	if len(topology.Managers()) != 2 {
+		t.Fatal("one local Package requires itself and the ordinary root")
+	}
+	_, _, input := renderFixture(t, organization.Root, organization.ManagerView)
+	input.Task.Package = "lending"
+	input.Process.Phase = organization.ManagerWork
+	local := requireRendered(t, requireContext(t, compiled, "lending"), settings, input)
+	if len(sectionTexts(t, local, "original-body")) == 0 || len(input.OwnArtifacts) != 0 {
+		t.Fatal("full model responsibility must remain renderable for a no-change proposal")
+	}
+	// These are explicit Host projections only, not review/acceptance events.
+	input.Task.Package = organization.Root
+	input.Process.Phase = organization.ManagerIntegrate
+	input.Children = []organization.ChildFact{{Package: "lending", Reports: []organization.HostText{
+		hostFact("reviewed-no-change-summary", "No-change delivery for the complete lending responsibility; see the exact review, acceptance, basis and evidence records. Open work remains explicit."),
+	}}}
+	root := requireRendered(t, requireContext(t, compiled, organization.Root), settings, input)
+	if root.Template().ID != "markitect/context/root" || len(sectionTexts(t, root, "original-body")) != 0 || len(sectionTexts(t, root, "host-asserted-validated-child-summary-not-file-payload")) != 1 {
+		t.Fatal("ordinary root lost its distinct integration context")
+	}
+	if !bytes.Equal(sectionTexts(t, local, "static-apply-operation")[0], sectionTexts(t, root, "static-apply-operation")[0]) {
+		t.Fatal("parent replaced the operation when integrating no-change")
+	}
+	if !strings.Contains(string(root.Bytes()), "One-child parents still require integration review") {
+		t.Fatal("root's single no-change child removed the integration obligation")
+	}
 }

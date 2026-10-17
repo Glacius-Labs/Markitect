@@ -47,7 +47,9 @@ The historical versioned binding, compiled digests, inventory and original owner
 payload are verified without reinterpreting old input with today's compiler or
 resolving settings again. Store/controller identity remains the Host's duty.
 
-New preparations record basis v2. Each passed compiled model contributes its
+New preparations record basis v3. V3 adds the immutable static operation,
+source-bound scope selectors and context limit, and an initial Explore policy.
+V1/v2 retain their original recorded meaning and canonical bytes. Each passed compiled model contributes its
 complete own Package inventory and every Definition's identity and owning model
 ID, including imported models and explicitly empty inventories. `BindingInventory`
 returns a basis-bound recorded view with copied model IDs, digests, manifest
@@ -62,7 +64,8 @@ references and retry receipts. Their imported Definition inventories are absent;
 `RecordedInventory.Models` returns `ErrInventoryUnavailable` rather than an
 invented complete empty inventory. These versions add no blob references or
 Journal methods. The existing 64 MiB payload ceiling and explicit Restore byte
-budget include the inventory. Task readiness and execution remain unavailable.
+budget include the inventory. Work readiness and execution remain unavailable; the initial Explore protocol below
+records participation only.
 
 Restoration never calls Put or Append and never replays an external effect. Open
 reservations keep their complete holds. `RecoveryRequired` is a separate Host
@@ -189,3 +192,56 @@ Review and task execution, final evidence, Verifying/Publishing transitions and
 Applied/NoChange are not implemented yet. There is no concrete Session,
 Workspace, Check, SQLite, provider or Apply execution adapter here. The full
 contracts remain in the design documents.
+
+## Initial Explore policy
+
+Every new live basis uses v3. The complete recorded local topology queues root
+and every direct parent-child edge, including empty and intermediate Packages.
+`PrepareExploreSessionCommand` associates one queued Manager with an initial
+read-only session. `PrepareExploreStepCommand` recompiles supplied original model
+bytes, resolves settings, checks the complete binding against the current run,
+and calls the actual organization selection and renderer. Scope and context
+limits come only from that bound input. The root receives the original owner
+request; registered own artifacts come from the fixed census, with binary
+content identified without claiming it was read as text. No parent-authored
+operation, participant list or inferred relationship selects the roster.
+
+There is one initial step per Manager. Sessions are sequential, physically and
+semantically read-only under the Host's still-unproved isolation obligation.
+Their expense class remains `Writing`, which protects completion capacity; it
+is not a writer grant. This existing cost/access coupling is a bounded slice
+limitation, not the intended final session-continuity contract. There is no
+basis advance, resume capability or working-candidate transition here.
+
+`InitialExplore` distinguishes queued, prepared, sent-observed, attributed step,
+report and quiescence observations. A transport write is not provider acceptance.
+The closed inline input/report identities bind the exact Manager, parent, run,
+operation, context, session, step and input. Reports can include uncertainty and
+questions. They establish neither prerequisite satisfaction nor a reviewed
+no-change result, accepted delivery or completed Manager. Missing or malformed
+terminal output is retained with its observation limit and cannot count; this
+single-step slice supplies no automatic replacement attempt.
+
+The initial gate clears only after every Manager's report is confirmed and all
+effects are stopped/reconciled and charged. A terminal step alone is insufficient.
+Unexpected tool ingress is recorded for denial/reconciliation, never executed;
+`ToolReceipt.Fresh` grants no authority. Unresolved callbacks and transports remain
+visible even after a session stops. All unclassified sessions, later steps,
+standalone invocation reservations and unimplemented work/review/tool phases
+remain denied after the gate clears. Actual Workspace/Check/Apply execution and
+provider-output extraction are absent; source fixtures prove no real dispatch.
+
+V3 protects two session starts and two steps per required review subject: one
+local review for every Manager, plus integration review for every Manager with
+children. Distinct physical phase bindings are conservatively budgeted; no
+unproved session reuse discounts this minimum. The original v1/v2 floors still
+replay exactly, including literal pre-readiness and pre-Explore histories. Exact
+known retries return their original receipts before fresh-admission checks.
+Restored legacy history permits only known-effect observation/reconciliation and
+stop, not fresh legacy execution or replaying a send.
+
+Operation/context/contract/report bytes are inline in the basis or existing
+session payloads. `SessionRefs` retains their complete direct blob closure; no
+additional evidence handles, nested payload references or Journal schema are
+introduced. Historical replay validates stored assertions and associations;
+it never recompiles or rerenders old context as today's truth.

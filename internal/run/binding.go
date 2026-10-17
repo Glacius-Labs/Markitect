@@ -37,6 +37,8 @@ type Document struct {
 // result. Settings and profiles are static facts, never runtime capabilities.
 // Source acquisition and compiler correctness remain their producers' duties.
 type BindingInput struct {
+	Scope           []organization.Setting[organization.ScopeRule]
+	MaxContextBytes organization.Setting[int64]
 	Source          SourceBasis
 	OwnerRequest    Payload
 	ModelInput      model.Input
@@ -121,6 +123,9 @@ type bindingWire struct {
 	Protections     []protectionBinding
 	Policy          BudgetPolicy
 	PolicySource    organization.SettingSource
+	ManagerPolicy   *managerPolicy                                  `json:",omitempty"`
+	Scope           *[]organization.Setting[organization.ScopeRule] `json:",omitempty"`
+	MaxContextBytes *organization.Setting[int64]                    `json:",omitempty"`
 }
 
 // Binding owns its exact serialized basis. Its identity includes empty Package
@@ -131,6 +136,8 @@ type Binding struct {
 	source         SourceBasis
 	policy         BudgetPolicy
 	reviews        int64
+	version        uint32
+	demand         reviewDemand
 }
 
 func (b Binding) Ref() BlobRef           { return b.payload.Ref() }
@@ -147,7 +154,13 @@ func Bind(input BindingInput) (Binding, error) {
 	if err != nil || input.Settings.ModelID() != topology.ModelID() || input.Settings.ModelDigest() != topology.ModelDigest() {
 		return Binding{}, ErrInvalid
 	}
-	w := bindingWire{Version: 2, Source: s, OwnerRequest: input.OwnerRequest.Ref(), ModelInput: input.ModelInput, Managers: topology.Managers(), Profiles: slices.Clone(input.Profiles), Policy: input.Policy, PolicySource: input.PolicySource}
+	w := bindingWire{Version: 3, ManagerPolicy: liveManagerPolicy(), Source: s, OwnerRequest: input.OwnerRequest.Ref(), ModelInput: input.ModelInput, Managers: topology.Managers(), Profiles: slices.Clone(input.Profiles), Policy: input.Policy, PolicySource: input.PolicySource}
+	if input.Scope != nil {
+		scope := slices.Clone(input.Scope)
+		w.Scope = &scope
+	}
+	contextLimit := input.MaxContextBytes
+	w.MaxContextBytes = &contextLimit
 	for _, compiled := range input.Compilation.Models {
 		if compiled.Status != model.Passed || compiled.Origin != compiled.Manifest.Origin || len(compiled.Canonical) == 0 || compiled.Digest != fmt.Sprintf("sha256:%x", sha256.Sum256(compiled.Canonical)) {
 			return Binding{}, ErrInvalid
@@ -189,6 +202,19 @@ func Bind(input BindingInput) (Binding, error) {
 		}
 		return false
 	}
+	if input.MaxContextBytes.Value <= 0 || !text(input.MaxContextBytes.Source.Field) || !covered(input.MaxContextBytes.Source) {
+		return Binding{}, ErrInvalid
+	}
+	for _, scope := range input.Scope {
+		if !text(scope.Source.Field) || !covered(scope.Source) {
+			return Binding{}, ErrInvalid
+		}
+	}
+	for _, manager := range w.Managers {
+		if _, err := organization.SelectContext(input.Compilation, manager.Package, input.Scope); err != nil {
+			return Binding{}, ErrInvalid
+		}
+	}
 	if !covered(input.PolicySource) {
 		return Binding{}, ErrInvalid
 	}
@@ -215,7 +241,8 @@ func Bind(input BindingInput) (Binding, error) {
 		return Binding{}, ErrInvalid
 	}
 	var areas []realization.CreationArea
-	reviews := reviewFloor(w.Managers)
+	demand := managerReviewDemand(w.Managers)
+	reviews := demand.Subjects
 	for i, manager := range managers {
 		if manager.Package != w.Managers[i].Package {
 			return Binding{}, ErrInvalid
@@ -258,7 +285,7 @@ func Bind(input BindingInput) (Binding, error) {
 		}
 		w.Settings = append(w.Settings, m)
 	}
-	if err := input.Policy.validate(reviews); err != nil {
+	if err := input.Policy.validateDemand(demand); err != nil {
 		return Binding{}, err
 	}
 	if _, err := realization.NewPathFacts(input.Compilation, input.Registry, input.Census, areas, input.Protections); err != nil {
@@ -296,7 +323,7 @@ func Bind(input BindingInput) (Binding, error) {
 	if _, _, err := decodeBindingRecord(payload); err != nil {
 		return Binding{}, err
 	}
-	return Binding{payload, input.OwnerRequest, s, input.Policy, reviews}, nil
+	return Binding{payload: payload, owner: input.OwnerRequest, source: s, policy: input.Policy, reviews: reviews, version: w.Version, demand: demand}, nil
 }
 
 // matchRawClosure checks only recorded references, never source semantics. Each

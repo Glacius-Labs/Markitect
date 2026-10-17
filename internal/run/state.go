@@ -47,6 +47,9 @@ type stateValue struct {
 	steps          map[StepID]StepView
 	transports     map[messageKey]TransportView
 	tools          map[toolKey]ToolView
+	basisVersion   uint32
+	managerBasis   bindingWire
+	managers       map[string]managerValue
 }
 
 // Coordinator owns one repository's confirmed projection and at most one
@@ -133,6 +136,11 @@ func (c *Coordinator) Propose(command Command) (Proposal, error) {
 	if c.recovering && command.Kind != SettleInvocation && command.Kind != ReleaseUndispatched && command.Kind != ObserveUncertain && command.Kind != StopRun && !sessionReconciliation(command.Kind) && !(command.Kind == PrepareTransport && command.Session.Control) {
 		return Proposal{}, ErrRecovery
 	}
+	if !command.replaying {
+		if err := c.freshManagerAdmission(command, digest); err != nil {
+			return Proposal{}, err
+		}
+	}
 	next := c.state
 	next.runs = maps.Clone(c.state.runs)
 	next.invocations = maps.Clone(c.state.invocations)
@@ -143,6 +151,7 @@ func (c *Coordinator) Propose(command Command) (Proposal, error) {
 	next.steps = maps.Clone(c.state.steps)
 	next.transports = maps.Clone(c.state.transports)
 	next.tools = maps.Clone(c.state.tools)
+	next.managers = maps.Clone(c.state.managers)
 	if err := next.apply(command); err != nil {
 		return Proposal{}, err
 	}
@@ -161,6 +170,7 @@ func (c *Coordinator) Propose(command Command) (Proposal, error) {
 	next.revision = batch.Revision()
 	next.operations[command.ID] = operation{digest, ReceiptFor(batch)}
 	next.sessionReceipt(command, ReceiptFor(batch))
+	next.managerReceipt(command, ReceiptFor(batch))
 	p := Proposal{batch: batch, next: next, command: command}
 	if command.Kind == PrepareRun {
 		p.payloads = []Payload{command.binding.owner, command.binding.payload}
@@ -214,8 +224,12 @@ func (s *stateValue) apply(c Command) error {
 		view := budget(s.policy, int64(len(s.runs)), s.invocations)
 		// Assessment may spend the configured reserve. Each new basis still
 		// needs its own structural review floor in the shared remaining ledger.
-		if view.Overrun || view.Remaining.Runs < 1 || view.Remaining.SessionStarts < b.reviews || view.Remaining.Steps < b.reviews || b.reviews > 0 && view.Remaining.ExecutionTime <= 0 {
+		if !reviewCapacity(view, b.demand) {
 			return ErrBudget
+		}
+		s.basisVersion = b.version
+		if err := s.prepareManagers(b); err != nil {
+			return err
 		}
 		s.current = RunView{ID: c.Run, Assignment: c.Assignment, Basis: c.Basis, State: Prepared}
 		s.runCapRevision = s.capRevision()
@@ -232,7 +246,13 @@ func (s *stateValue) apply(c Command) error {
 		return ErrState
 	}
 	if c.Session.Session != "" {
-		return s.applySession(c)
+		if err := s.beforeManagerSession(c); err != nil {
+			return err
+		}
+		if err := s.applySession(c); err != nil {
+			return err
+		}
+		return s.afterManagerSession(c)
 	}
 	r := s.current
 	switch c.Kind {
@@ -242,6 +262,9 @@ func (s *stateValue) apply(c Command) error {
 		}
 		r.State = Running
 	case ReserveInvocation:
+		if s.basisVersion == 3 {
+			return ErrState
+		}
 		if err := s.reserve(c.Reservation); err != nil {
 			return err
 		}

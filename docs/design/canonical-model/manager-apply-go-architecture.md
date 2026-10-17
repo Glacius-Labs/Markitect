@@ -15,7 +15,9 @@ Ports and Adapters with ordinary, idiomatic Go packages. Deterministic model and
 | `run` | Assignments and fixed-basis runs, tasks, questions and answers, delegation, role sessions, review, integration, budgets, lifecycle and history. It guarantees unchanged operation propagation and adjacent-only messages, validates transitions and Agent requests, and enforces mandatory review/integration. Managers judge local realization and integration; they do not choose participation or child operation prompts. |
 | `apply` | The artifact reconciliation use case: bind inputs, prepare the organization, invoke `run`, require aggregate verification, then request guarded publication and read-back. |
 
-`run` is the common execution mechanism, first used only by Apply; later operations reuse it instead of bringing their own Manager engine. A Manager is a logical identity with tasks, configuration and session references, not a generated Go package or a permanently running goroutine. One writer is active at a time. A parent yields with recorded child tasks pending; the Host runs them and resumes the parent with their results.
+`run` is the common execution mechanism, first used only by Apply; later operations reuse it instead of bringing their own Manager engine. A Manager is a logical identity with tasks, configuration and session references, not a generated Go package or a permanently running goroutine. The first strategy admits one active artifact writer. A parent may yield while children work, but remains eligible for its own ready work, including prerequisites for those children. Only work with an unmet prerequisite waits; the [execution contract](manager-apply-execution.md) owns admission.
+
+Manager responsibility, provider conversation, execution container and step workspace version have different lifetimes. `run` owns readiness, admission and state transitions against the immutable run inputs. `realization` validates exact composition and preservation of own changes over supplied values; it never operates a live workspace. Workspace/runtime adapters report actual materialization, termination and quiescence evidence; provider adapters report conversation continuation or its limits. `run` decides whether those observations satisfy the transition, and `apply` owns final verification/publication orchestration. `organization` renders the unchanged operation, current step facts and separate parent hints. The [execution contract](manager-apply-execution.md) owns role/effect/budget separation, and the [continuity contract](manager-apply-concept.md#working-bases-and-conversation-continuity) owns the lifetime requirements. No adapter, report view or provider conversation becomes another scheduler or workflow ledger.
 
 ## Source layout
 
@@ -57,7 +59,7 @@ The first command surface keeps the verb-table principles of [DEC-017](../../con
 | `answer <question>` | Bind an owner answer to a question version. |
 | `stop <run>` | Request a stop and report the observed result. |
 
-Inside `run`, start with coherent files such as `task.go`, `coordinator.go`, `review.go`, `budget.go`, `lifecycle.go`, `history.go` and `ports.go`, and split only for a distinct responsibility. Avoid shared Project DTOs, global interface catalogues and untyped property bags. The root `cmd` and `internal` layout replaces the current `src` prefix ([Go module layout](https://go.dev/doc/modules/layout)).
+Inside `run`, group coherent task, review, budget, lifecycle and history responsibilities; split only for a distinct responsibility rather than prescribing a file for each concept. Avoid shared Project DTOs, global interface catalogues and untyped property bags. Use the root `cmd` and `internal` layout ([Go module layout](https://go.dev/doc/modules/layout)); the [rebuild map](manager-apply-rebuild-plan.md#source-replacement-map) retains the historical `src` migration baseline.
 
 ## Dependency direction and ports
 
@@ -74,7 +76,7 @@ Inside `run`, start with coherent files such as `task.go`, `coordinator.go`, `re
 | `internal/bootstrap/` | Every target package except commands |
 | `cmd/markitect/` | Bootstrap |
 
-Organization and realization never import each other, and the compiler depends on neither. Adapters do not import each other except for `container`. Target packages never import current packages and vice versa.
+Organization and realization never import each other, and the compiler depends on neither. Adapters do not import each other except for the stated `container` access. The [current module rules](../../development/modules.md) enforce source dependencies; the historical replacement map is not a second import policy.
 
 | Port | Consumer | Concrete work |
 | --- | --- | --- |

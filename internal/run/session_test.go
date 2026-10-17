@@ -30,16 +30,23 @@ func wire(t *testing.T, data string) run.WirePayload {
 	p := payload(t, data)
 	return run.WirePayload{Identity: run.WireIdentity{ContentID: p.Ref().ContentID, Size: p.Ref().Size}, Journal: p}
 }
-func sessionPreparation(t *testing.T, id run.SessionID) run.Command {
-	profile, tools := payload(t, `{"model":"configured","credentials":"credential-ref"}`), payload(t, `{"host-tool":"supplied-schema"}`)
-	plan := run.SessionPlan{ID: id, Role: "manager", Workspace: "linux-workspace", Candidate: snapshot.TreeID{1}, ImageID: "sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef", CredentialRef: "credential-ref", MaxWireBytes: 4096, Profile: profile.Ref(), Tools: tools.Ref()}
-	r := run.Reservation{ID: "open-" + string(id), Kind: run.SessionStart, Purpose: run.Writing, Maximum: time.Minute}
-	return run.PrepareSessionCommand(meta("prepare-"+string(id)), "a", "r", plan, r, profile, tools)
+func sessionPreparation(t *testing.T, c *run.Coordinator, id run.SessionID) run.Command {
+	return exploreSessionPreparation(t, c, exploreInputs(t, false), ".", id)
 }
+func stepPreparation(t *testing.T, c *run.Coordinator, id run.StepID, invocation string) run.Command {
+	t.Helper()
+	v, _ := c.Session("s")
+	cmd, err := c.PrepareExploreStepCommand(meta("prepare-"+string(id)), run.StepPlan{Session: "s", ID: id, SessionBinding: v.Plan.Binding()}, run.Reservation{ID: invocation, Kind: run.AgentStep, Purpose: run.Writing, Maximum: time.Minute}, exploreInputs(t, false))
+	if err != nil {
+		t.Fatal(err)
+	}
+	return cmd
+}
+
 func preparedSession(t *testing.T) (*run.Coordinator, *memoryJournal, run.SessionIO) {
 	t.Helper()
 	c, j := running(t)
-	commit(t, c, j, sessionPreparation(t, "s"))
+	commit(t, c, j, sessionPreparation(t, c, "s"))
 	io, err := c.SessionChannel(j, "s")
 	if err != nil {
 		t.Fatal(err)
@@ -73,7 +80,7 @@ func activeStep(t *testing.T) (*run.Coordinator, *memoryJournal, run.SessionIO) 
 	c, j, io := boundSession(t)
 	input, contract := payload(t, `{"compiled":"turn"}`), payload(t, `{"result":"proposal-only"}`)
 	plan := run.StepPlan{Session: "s", SessionBinding: currentSessionBinding(c), ID: "step", Input: input.Ref(), OutputContract: contract.Ref()}
-	commit(t, c, j, run.PrepareStepCommand(meta("prepare-step"), "a", "r", plan, run.Reservation{ID: "step-invocation", Kind: run.AgentStep, Purpose: run.Writing, Maximum: time.Minute}, input, contract))
+	commit(t, c, j, stepPreparation(t, c, plan.ID, "step-invocation"))
 	send(t, io, "turn", "step")
 	_, err := io.ObserveStep(context.Background(), run.StepObservation{RecordMeta: meta("step-started"), Step: "step", ProviderStep: "provider-turn", Wire: wire(t, `{"turn":"started"}`), Reason: "known turn"})
 	if err != nil {
@@ -84,7 +91,7 @@ func activeStep(t *testing.T) (*run.Coordinator, *memoryJournal, run.SessionIO) 
 
 func TestSessionAdmissionAndReferencesCommitAtomically(t *testing.T) {
 	c, j := running(t)
-	cmd := sessionPreparation(t, "s")
+	cmd := sessionPreparation(t, c, "s")
 	before := c.Budget()
 	p, err := c.Propose(cmd)
 	if err != nil {
@@ -329,7 +336,7 @@ func TestSessionAdmissionsRefuseAfterStopRequest(t *testing.T) {
 				c, j, _ = boundSession(t)
 				input, contract := payload(t, "input"), payload(t, "contract")
 				plan := run.StepPlan{Session: "s", SessionBinding: currentSessionBinding(c), ID: "unstarted", Input: input.Ref(), OutputContract: contract.Ref()}
-				commit(t, c, j, run.PrepareStepCommand(meta("step-prep"), "a", "r", plan, run.Reservation{ID: "step-hold", Kind: run.AgentStep, Purpose: run.Writing, Maximum: time.Minute}, input, contract))
+				commit(t, c, j, stepPreparation(t, c, plan.ID, "step-hold"))
 			}
 			stop := command("stop", run.StopRun)
 			stop.Reason = "owner stop"
@@ -349,7 +356,14 @@ func TestSessionAdmissionsRefuseAfterStopRequest(t *testing.T) {
 
 func TestRecoveryAllowsBoundedStopSendWithoutClearingUnknownOrdinarySend(t *testing.T) {
 	c, j, io := activeStep(t)
-	p := run.TransportPreparation{RecordMeta: meta("uncertain-send"), Message: "uncertain", Step: "step", Wire: wire(t, "possible outbound notification")}
+	reply := wire(t, "possible outbound denial")
+	if _, err := io.ToolRequest(context.Background(), run.ToolCall{RecordMeta: meta("deny-request"), Step: "step", Call: "deny", Tool: "unsupported", Input: wire(t, "request")}); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := io.ToolReply(context.Background(), run.ToolReply{RecordMeta: meta("deny-reply"), Call: "deny", Output: reply}); err != nil {
+		t.Fatal(err)
+	}
+	p := run.TransportPreparation{RecordMeta: meta("uncertain-send"), Message: "uncertain", Step: "step", Wire: reply}
 	if _, err := io.PrepareSend(context.Background(), p); err != nil {
 		t.Fatal(err)
 	}
@@ -381,6 +395,15 @@ func TestRecoveryAllowsBoundedStopSendWithoutClearingUnknownOrdinarySend(t *test
 		t.Fatal("termination released elapsed hold without observation")
 	}
 	commit(t, c2, j, settle("step-invocation", time.Second))
+	if !c2.RecoveryRequired() {
+		t.Fatal("stop erased unknown send")
+	}
+	if _, err := io2.ObserveSend(context.Background(), run.TransportObservation{RecordMeta: meta("stop-sent"), Message: "stop", Outcome: run.Sent, Reason: "observed stop transport"}); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := io2.ObserveSend(context.Background(), run.TransportObservation{RecordMeta: meta("reply-sent"), Message: "uncertain", Outcome: run.Sent, Reason: "explicitly reconciled denial transport"}); err != nil {
+		t.Fatal(err)
+	}
 	if c2.RecoveryRequired() {
 		t.Fatal("known quiescence did not clear recovery")
 	}
@@ -391,7 +414,7 @@ func TestUncertainStepRejectsMalformedPartialProviderHandle(t *testing.T) {
 	c, j, io := boundSession(t)
 	input, contract := payload(t, "input"), payload(t, "contract")
 	plan := run.StepPlan{Session: "s", SessionBinding: currentSessionBinding(c), ID: "step", Input: input.Ref(), OutputContract: contract.Ref()}
-	commit(t, c, j, run.PrepareStepCommand(meta("prepare-step"), "a", "r", plan, run.Reservation{ID: "step-effect", Kind: run.AgentStep, Purpose: run.Writing, Maximum: time.Minute}, input, contract))
+	commit(t, c, j, stepPreparation(t, c, plan.ID, "step-effect"))
 	before := c.Revision()
 	_, err := io.ObserveStep(context.Background(), run.StepObservation{RecordMeta: meta("unknown"), Step: "step", ProviderStep: "bad\x00handle", Uncertain: true, Reason: "incomplete provider observation"})
 	if !errors.Is(err, run.ErrInvalid) || c.Revision() != before {
@@ -410,12 +433,13 @@ func TestStepRequiresExplicitMatchingSessionPlanBinding(t *testing.T) {
 	changed.Workspace = "different-workspace"
 	plan := run.StepPlan{Session: "s", ID: "step", SessionBinding: changed.Binding(), Input: input.Ref(), OutputContract: contract.Ref()}
 	before := c.Budget()
-	cmd := run.PrepareStepCommand(meta("step-prep"), "a", "r", plan, run.Reservation{ID: "step-hold", Kind: run.AgentStep, Purpose: run.Writing, Maximum: time.Minute}, input, contract)
+	cmd := stepPreparation(t, c, plan.ID, "step-hold")
+	cmd.Session.StepPlan.SessionBinding = changed.Binding()
 	if _, err := c.Propose(cmd); !errors.Is(err, run.ErrState) || c.Budget() != before {
 		t.Fatal("changed session basis continued", err)
 	}
 	plan.SessionBinding = v.Plan.Binding()
-	commit(t, c, j, run.PrepareStepCommand(meta("step-prep"), "a", "r", plan, cmd.Reservation, input, contract))
+	commit(t, c, j, stepPreparation(t, c, plan.ID, "step-hold"))
 	admission, err := c.StepAdmission("step")
 	if err != nil || admission.Session != v.Plan || admission.Plan.SessionBinding != v.Plan.Binding() {
 		t.Fatal("admission lost fixed plan", admission, err)
@@ -424,7 +448,7 @@ func TestStepRequiresExplicitMatchingSessionPlanBinding(t *testing.T) {
 
 func TestSessionLimitsAndRestoreRefuseMissingOrCorruptRequiredBytes(t *testing.T) {
 	c, j, io := preparedSession(t)
-	bad := sessionPreparation(t, "other")
+	bad := sessionPreparation(t, c, "other")
 	bad.Session.Plan.Profile = run.BlobRef{}
 	if _, err := c.Propose(bad); !errors.Is(err, run.ErrInvalid) {
 		t.Fatal("missing mandatory reference accepted", err)
@@ -432,7 +456,7 @@ func TestSessionLimitsAndRestoreRefuseMissingOrCorruptRequiredBytes(t *testing.T
 	if refs, err := (run.AppendBatch{}).SessionRefs(); err == nil || len(refs) != 0 {
 		t.Fatal("invalid batch exposed partial closure", err)
 	}
-	oversize := run.TransportPreparation{RecordMeta: meta("oversize"), Message: "large", Wire: wire(t, string(bytes.Repeat([]byte("x"), 4097)))}
+	oversize := run.TransportPreparation{RecordMeta: meta("oversize"), Message: "large", Wire: wire(t, string(bytes.Repeat([]byte("x"), (1<<20)+1)))}
 	if p, err := io.PrepareSend(context.Background(), oversize); !errors.Is(err, run.ErrInvalid) || p.Dispatch {
 		t.Fatal("profile wire bound ignored", err)
 	}
@@ -509,7 +533,7 @@ func TestProviderNeutralPortMapsOpenStepInspectStopWithoutReplay(t *testing.T) {
 	commit(t, c, j, settle("open-s", time.Second))
 	input, contract := payload(t, "compiled input"), payload(t, "output contract")
 	plan := run.StepPlan{Session: "s", SessionBinding: currentSessionBinding(c), ID: "step", Input: input.Ref(), OutputContract: contract.Ref()}
-	commit(t, c, j, run.PrepareStepCommand(meta("prepare-step"), "a", "r", plan, run.Reservation{ID: "step-effect", Kind: run.AgentStep, Purpose: run.Writing, Maximum: time.Minute}, input, contract))
+	commit(t, c, j, stepPreparation(t, c, plan.ID, "step-effect"))
 	step, err := c.StepAdmission("step")
 	if err != nil {
 		t.Fatal(err)

@@ -23,17 +23,24 @@ const (
 	TypeExited ControlType = "exited"
 	// TypeFailure reports a request agentd could not carry out.
 	TypeFailure ControlType = "failure"
+	// TypeCensus asks for, and answers with, the processes in the container.
+	TypeCensus ControlType = "census"
 )
 
-// ControlMessage is one control message. Exactly the field named by Type is set.
+// ControlMessage is one control message. Exactly the field named by Type is
+// set. Request numbers a Host request; agentd copies it into the reply
+// (started, failure or census), and leaves it zero on messages it sends on
+// its own, such as hello, exited or a failure that ends the session.
 type ControlMessage struct {
 	Type    ControlType `json:"type"`
+	Request uint64      `json:"request,omitempty"`
 	Hello   *Hello      `json:"hello,omitempty"`
 	Start   *Start      `json:"start,omitempty"`
 	Started *Started    `json:"started,omitempty"`
 	Stop    *Stop       `json:"stop,omitempty"`
 	Exited  *Exited     `json:"exited,omitempty"`
 	Failure *Failure    `json:"failure,omitempty"`
+	Census  *Census     `json:"census,omitempty"`
 }
 
 // Hello announces agentd. Version is informational; only Protocol must match.
@@ -74,6 +81,25 @@ type Exited struct {
 // Failure reports why agentd refused or could not complete a request.
 type Failure struct {
 	Message string `json:"message"`
+}
+
+// Census lists the processes in the container other than agentd and the
+// container's init process. The Host sends an empty census as its request;
+// agentd answers with the observed processes. A census is a snapshot: it
+// supports a quiescence judgment but cannot prevent a later process start.
+type Census struct {
+	Processes []Process `json:"processes,omitempty"`
+}
+
+// Process is one observed process inside the container. State is the
+// kernel's one-letter state; "Z" marks a process that ended and awaits its
+// parent's wait.
+type Process struct {
+	PID     int    `json:"pid"`
+	PPID    int    `json:"ppid"`
+	PGID    int    `json:"pgid"`
+	State   string `json:"state"`
+	Command string `json:"command"`
 }
 
 // ToolSpec is one Host tool as offered to the provider through MCP.
@@ -179,7 +205,7 @@ func (r ToolReply) validate() error {
 
 func (c ControlMessage) validate() error {
 	set := 0
-	for _, present := range []bool{c.Hello != nil, c.Start != nil, c.Started != nil, c.Stop != nil, c.Exited != nil, c.Failure != nil} {
+	for _, present := range []bool{c.Hello != nil, c.Start != nil, c.Started != nil, c.Stop != nil, c.Exited != nil, c.Failure != nil, c.Census != nil} {
 		if present {
 			set++
 		}
@@ -198,6 +224,8 @@ func (c ControlMessage) validate() error {
 		matches = c.Exited != nil
 	case TypeFailure:
 		matches = c.Failure != nil
+	case TypeCensus:
+		matches = c.Census != nil
 	default:
 		return fmt.Errorf("control message: unknown type %q", c.Type)
 	}

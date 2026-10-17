@@ -60,7 +60,7 @@ type ReviewProposal struct {
 
 `BudgetView` is a read-only snapshot of the remaining caps for planning. Admission always uses the current ledger, never that snapshot ([execution contract](manager-apply-execution.md)).
 
-The sender of a delegation is the bound session; it cannot choose its own authority, base, attempt or source binding. The Host allows only a direct child and keeps the child's full Package responsibility, inherited restrictions and unresolved obligations. A cited subset of Definitions never narrows reconciliation.
+The sender of an adjacent message is the bound Manager session; it cannot choose its own authority, base, attempt or source binding. The Host permits only its direct parent or children and preserves each recipient's complete responsibility, resolved constraints and unresolved obligations. A message cannot create participation, replace the operation or narrow reconciliation to a cited subset of Definitions.
 
 Work proposals are explanations, not trusted diffs. Definition assessments cover every local Definition with a disposition, grounds and evidence references; a `vocabulary` disposition must show where concrete uses meet their obligations. Registry proposals refer to Host-authorized path claims. A no-change proposal needs the same assessment as a changed candidate.
 
@@ -71,6 +71,25 @@ A dependent task starts only from an accepted producer delivery composed into it
 `QuestionRef` binds identity and version. The application binds owner answers to that exact proposal; an Agent cannot assert owner authority. A context-only answer may continue the same run; changed intent ends the run Incomplete and needs a committed model edit and a continuation ([journal](manager-apply-journal.md#questions-answers-and-model-changes)).
 
 The illustrative `TaskSpec.Outcome` above is the static Host operation instruction, not parent-authored prose. Its model basis and complete scope are compiler-derived. Additional work messages remain separate and cannot redefine that mandate. Exact responsibility and prerequisite records must follow the remaining [process details](manager-apply-concept.md#remaining-process-detail-and-technical-boundary); existing provider Session contracts are not a Manager scheduler.
+
+The confirmed process uses normal deliveries with limited scope while their Manager remains open. The technical representation must bind Host acceptance and the consumer's composed basis, separately from a reviewer pass. Do not invent a parallel receipt lifecycle or a budget reset for each limited delivery. Successful deliveries consume shared execution capacity but neither use nor reset the rejection counter, whose identity is fixed per run, Manager and review purpose by the [execution contract](manager-apply-execution.md#admission-amendments-and-finite-correction). Exact counting, binding and recovery need implementation evidence.
+
+## Bounded child reports
+
+The owner selected this target message structure; it is not an implemented wire schema or a second delivery ledger. Use the existing adjacent-message channel and journal. The Host binds sender, recipient, run, Manager and exact step; a child cannot assert those identities or issue an accepted delivery.
+
+| Part | Required meaning |
+| --- | --- |
+| Identity and basis | Report ID/version, exact originating step and workspace/candidate binding, and any accepted delivery reference. A later report identifies what it supersedes. |
+| Responsibility and status | Covered scope and initial assessment, progress, limited delivery or completion proposal. Remaining responsibility stays explicit; only the Host can confirm completion. |
+| Result and interfaces | Short result, changed interface references and implications for the direct parent. No descendant transcript dump. |
+| Prerequisites and replies | Needed results, exact producer/delivery references when known, outstanding questions and replies required to proceed. |
+| Findings and uncertainty | Open finding references, unresolved assumptions and observation limits. Absence from a summary never resolves an existing finding. |
+| Evidence and detail | Exact immutable evidence/detail references with the scope each supports. An Agent's report remains a proposal until required review and Host acceptance. |
+
+The Host enforces finite report and assembled-input byte limits from a versioned policy. Exact field names and numeric defaults are producer work, not additions to today's execution YAML. Keep the complete direct-child census and outstanding obligations in the existing journal; only bounded views enter a turn. If a report or parent input exceeds its limit, split it visibly into version-bound parts with stable ordering, an inspectable index and an explicit remainder. Existing message and step observations record which parts were supplied; a changed report version requires current coverage. There is no separate paging ledger, and a delivery acknowledgement does not prove semantic understanding. Required findings and prerequisites cannot be silently truncated or disappear behind a successful summary. If required material cannot be supplied within the finite limits, retain incomplete work and report that boundary.
+
+Targeted detail retrieval uses evidence references and existing access rules, never direct sibling communication or a provider-selected participation list. Reading every descendant file is not the default. Summarization may judge significance but cannot waive a child, an outstanding question or a mandatory review. The first Apply still obtains a fresh initial assessment from every Manager; report paging is not assessment reuse.
 
 ## Application boundary and source acquisition
 
@@ -106,8 +125,8 @@ type SessionIO interface {
 
 | Record | Required fields and meaning |
 | --- | --- |
-| `SessionSpec` | Host session ID, role, Manager, task and attempt, executor profile identity including adapter kind and runtime image, workspace access as the container's mounts, and explicitly supplied history. Review sessions start fresh. |
-| `StepRequest` | Unique step ID, session ID, task and subject binding, exact prompt, context and instruction payload references, additional messages and tool grants. Recorded before dispatch. |
+| `SessionSpec` | Host execution-session ID, stable Manager identity, known conversation identity or explicit fresh-conversation handoff, role, executor profile and runtime image, fixed workspace access/authority ceiling and supplied history references. Resume capability is established, not inferred. Review sessions start fresh. |
+| `StepRequest` | Unique step ID, execution session and conversation association, task and exact admitted workspace version, consumed accepted deliveries, own starting changes, subject binding, exact prompt/context/instruction references, additional messages and permitted effects. Recorded before dispatch. |
 | `StepReceipt` | Step and session identity, observed status, proposed result or yield, output references, usage when observable and observation limits. Yield, proposed completion, needs decision, failure and uncertain interruption are distinct; none is an accepted delivery. |
 | `SessionQuery` | Known session ID and, where relevant, step ID. Unavailable information stays unknown. |
 | `SessionEvent` | Session and step, sequence and correlation, kind and exact observed payload, including prepared outbound payloads, transport observations, incoming content and tool exchanges. |
@@ -115,7 +134,11 @@ type SessionIO interface {
 
 Every session runs in its own container through the session helper `markitect-agentd`, which serves the Host tools to the provider CLI over MCP and carries everything over one stdio connection ([rebuild plan](manager-apply-rebuild-plan.md#container-runtime)). The Host implements `SessionIO`. The adapter calls `Observe` with the actual outgoing content and waits for durable acknowledgement before sending it. Hidden provider context and unobservable activity are reported as limits, never reconstructed from templates. An executor that cannot support this protocol and its input observation is not selectable.
 
-`Call` validates role, task state and every adjacent parent-child communication edge. Initial operation propagation is a Host obligation independent of tool calls or Agent output. A Manager can submit a question, dependency response or result and yield; a callback never runs a session recursively or waits for a child workflow. Reviewers can read, request allowed checks and report; they cannot claim paths, change ownership or control Manager participation.
+The records above describe the selected target, not an already implemented Go API. Current `SessionPlan.Candidate` binds the whole execution session to one candidate. Moving evolving workspace identity into each admitted step requires a versioned producer change with exact source, tool and recovery bindings. Retain historical session/step bytes and their original transition rules. Do not weaken the current binding in place or treat a source-only continuation claim as a physical capability.
+
+Conversation continuity does not permit concurrent mutation of its workspace. The Host permits a basis advance only between observed quiescent steps and records the [working-basis transition](manager-apply-concept.md#working-bases-and-conversation-continuity). Every action is checked against the active step and version. A late request from an older step cannot write or create new current evidence; a repeated completed request returns only its old receipt. Independent review uses its frozen subject rather than a Manager's advancing workspace.
+
+`Call` validates role, active step/version, permitted effects, task state and every adjacent parent-child communication edge. Before the complete Explore census, all artifact mounts are read-only and the Host denies artifact-mutating tools and workspace effects; role alone cannot grant them. Read-only analysis and proposed classifications remain distinct from mutation. Initial operation propagation is a Host obligation independent of tool calls or Agent output. A Manager can submit a question, dependency response or result and yield; a callback never runs a session recursively or waits for a child workflow. Reviewers can read, request allowed checks and report; they cannot claim paths, change ownership or control Manager participation.
 
 The tools form one closed catalogue; each role sees only its own. DEC-039 removes the former `plan` and `delegate` controls. The adjacent-message schema must follow the [fixed process](manager-apply-concept.md#tasks-and-delegation) before implementation; the table does not freeze that API:
 
@@ -133,9 +156,11 @@ The tools form one closed catalogue; each role sees only its own. DEC-039 remove
 | `record_expectations(cases)` | Reviewer | Records the expected behavior and discriminating cases derived from the model before the candidate is supplied. |
 | `submit_review(proposal)` | Reviewer | Submits a review verdict with findings and evidence. |
 
-The Host deduplicates a repeated correlation ID with identical content and returns the recorded reply; different content under the same ID is an error. Duplicate observations create no tasks or attempts. Cancellation propagates through `context.Context`. A timeout or error after possible dispatch returns the known receipt with an uncertain state; inspect the known session and step before retrying, and never resend work just because a reply was lost. `Stop` reports observed termination, not only a cancellation request. An uncertain writer blocks workspace handoff. A `SessionIO` callback error prevents further dispatch; external activity that may already have started stays uncertain until reconciled.
+Tool deduplication binds the actual execution session, channel, step and call identity. An exact repeated request with identical content returns its original recorded reply; changed content under that identity is an error. A reused provider call ID in another step or channel is not evidence of the same invocation and must not inherit its receipt or authorize replay of unresolved earlier work. An uncertain original call stays uncertain until reconciled. Duplicate observations create no tasks or attempts. Cancellation propagates through `context.Context`. A timeout or error after possible dispatch returns the known receipt with an uncertain state; inspect the known session and step before retrying, and never resend work just because a reply was lost. `Stop` reports observed termination, not only a cancellation request. An uncertain writer blocks workspace handoff. A `SessionIO` callback error prevents further dispatch; external activity that may already have started stays uncertain until reconciled.
 
 ## Candidate workspace port
+
+Workspace materialization must preserve own unaccepted changes across an explicitly admitted basis advance or refuse the transition with that work retained. The existing pure `ComposeCandidates` requires an exact common base and disjoint effects; it is not an arbitrary-base rebase, a live workspace switch or a delivery-acceptance API. A producer must establish a common base and complete before/after facts or return the conflict for owned correction. The following port shape does not itself establish a safe transition, physical quiescence or restart behavior.
 
 ```go
 // Package run.
@@ -158,7 +183,7 @@ type Workspaces interface {
 
 The Host owns claims and decisions; the adapter observes files. New paths need a reservation before writing, and a later claim never authorizes an earlier unauthorized write. Freeze observes all relevant paths, including deletions and protected model and configuration inputs; read-only review access is checked the same way. Workspaces are volumes of the container runtime; the adapter materializes, observes and harvests them with Git inside a helper container, so observation follows Linux file semantics. A session container mounts only its own workspace. The checks do not claim protection against processes outside the container runtime.
 
-A frozen candidate is immutable; checks and reviews use it, never a mutable path with the same name. Before another writing attempt, the workspace must match its expected start or be rematerialized. Rejected candidates are stored with their evidence. Composition rules are pure functions in `realization` that compare exact bases, owned changes and registry changes and return a fixed plan. With one owner per file and one writer at a time, composition is a disjoint union; an overlap is returned as a Host error. `Materialize` applies the plan and reports what it observed; it never merges competing semantics or picks an owner.
+A frozen candidate is immutable; checks and reviews use it, never a mutable path with the same name. Before another writing attempt, the workspace must match its expected start or be rematerialized. Rejected candidates are stored with their evidence. Composition rules are pure functions in `realization` that compare exact bases, owned changes and registry changes and return a fixed plan. A disjoint union requires a proven common base and disjoint owned deltas; sequential writing alone does not establish either. An overlap or unproven base composition is refused and returned for owned resolution, never silently rebased. `Materialize` applies only a validated plan and reports what it observed; it never merges competing semantics or picks an owner.
 
 ## Check execution port
 
@@ -205,6 +230,8 @@ Publish writes into the working tree and never commits, merges or pushes; the ow
 ## Host lifecycle and completion
 
 The Host guarantees the same operation reaches every local Manager and runs one writer at a time with recorded ready and waiting tasks. The ready-work policy is fixed by the product, not supplied by an Agent. Managers act only on messages; no silent skip or pass-through startup exception is allowed. A task moves through local work, checks and review; a rejection starts the next bounded submission. A Manager with children also composes their deliveries and obtains integration review before the Host accepts its subtree. The [execution contract](manager-apply-execution.md#one-run-state-machine) owns run states, outcomes and admission; this port defines no other lifecycle. Typed results keep the current state, any terminal outcome, reasons and observation limits even when a Go error is returned.
+
+Before any artifact write, the Host requires the initial read-only Explore assessment from every Manager. Local planning thereafter has no global barrier. Dispatch follows [recorded readiness](manager-apply-concept.md#ready-work-and-parent-guidance); dependency waiting cannot retain an active write grant. Separate parent hints preserve the operation, compiled context and authority. These are admission requirements within the existing lifecycle, not additional run states.
 
 The root is ordinary in this protocol. `apply` adds the final evidence check and publication after the root delivery. Evidence stays bound to its subject; changed content or assumptions require current assessment. Source drift prevents publication even when every Agent reported success.
 

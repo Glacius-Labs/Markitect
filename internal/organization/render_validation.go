@@ -48,14 +48,36 @@ func validateRender(c ContextSelection, s Settings, input RenderInput) (ManagerS
 	if input.View != ManagerView && input.View != ReviewerExpectations && input.View != ReviewerCandidate {
 		return ManagerSettings{}, renderInvalid("unsupported context view")
 	}
-	if input.Task.ID == "" || input.Task.Package != c.packagePath || input.Task.Outcome.Text == "" {
-		return ManagerSettings{}, renderInvalid("missing task identity/outcome or mismatched Package")
+	if input.Task.ID == "" || input.Task.Package != c.packagePath {
+		return ManagerSettings{}, renderInvalid("missing task identity or mismatched Package")
 	}
 	if err := hostSource(input.InputBinding); err != nil {
 		return ManagerSettings{}, err
 	}
 	if err := hostText(input.Task.Outcome); err != nil {
 		return ManagerSettings{}, err
+	}
+	if input.Task.Outcome.Text != applyOperationText {
+		return ManagerSettings{}, renderInvalid("task outcome must equal the unchanged static Apply operation")
+	}
+	if input.View == ManagerView {
+		if input.Process == nil || managerPhaseText(input.Process.Phase) == "" {
+			return ManagerSettings{}, renderInvalid("Manager view requires a known explicit process phase")
+		}
+		if err := hostSource(input.Process.Source); err != nil {
+			return ManagerSettings{}, err
+		}
+	} else if input.Process != nil || len(input.ParentHints) != 0 {
+		return ManagerSettings{}, renderInvalid("reviewer views forbid Manager process and parent hints")
+	}
+	slot, _ := c.topology.Manager(c.packagePath)
+	for _, hint := range input.ParentHints {
+		if c.packagePath == Root || hint.Package != slot.Parent || hint.Advice.Text == "" {
+			return ManagerSettings{}, renderInvalid("hint requires the exact direct parent sender and advice; root has no parent")
+		}
+		if err := hostText(hint.Advice); err != nil {
+			return ManagerSettings{}, err
+		}
 	}
 	for _, texts := range [][]HostText{input.Task.Constraints, input.Task.Requirements, input.RemainingLimits} {
 		for _, text := range texts {

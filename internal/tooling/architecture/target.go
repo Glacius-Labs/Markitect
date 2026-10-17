@@ -15,6 +15,7 @@ var targetRoots = []struct{ path, layer string }{
 	{"internal/tooling/modules/githooks", "maintenance"},
 	{"cmd/markitect-check-architecture", "maintenance-command"},
 	{"internal/adapters/codexappserver", "apply-adapter"},
+	{"internal/adapters/claudecode", "apply-adapter"},
 	{"internal/adapters/container", "apply-adapter"},
 	{"internal/tooling/architecturecli", "maintenance"},
 	{"internal/tooling/release/install", "maintenance"},
@@ -70,6 +71,7 @@ var responsibilityImports = map[string][]string{
 	"internal/adapters/checks":         {"internal/apply", "internal/model", "internal/organization", "internal/snapshot"},
 	"internal/adapters/cli":            {"internal/apply", "internal/model", "internal/organization", "internal/realization", "internal/snapshot", "internal/modeldocs", "internal/buildinfo", "internal/tooling/licenses"},
 	"internal/adapters/codexappserver": {"internal/apply", "internal/model", "internal/organization", "internal/snapshot", "internal/adapters/container"},
+	"internal/adapters/claudecode":     {},
 	"internal/adapters/container":      {"internal/agentd/frame"},
 	"internal/adapters/documents":      {"internal/modeldocs", "internal/tooling/guardedwrite"},
 	"internal/adapters/gitrepo":        {"internal/apply", "internal/model", "internal/organization", "internal/realization", "internal/snapshot"},
@@ -95,6 +97,7 @@ var responsibilityImports = map[string][]string{
 // consumer-owned Control and Journal ports as its complete Markitect boundary.
 var responsibilityTestImports = map[string][]string{
 	"internal/adapters/journal": {"internal/model", "internal/snapshot"},
+	"internal/bootstrap":        {"internal/adapters/journal", "internal/model", "internal/snapshot", "internal/run"},
 }
 
 // Edge.Test alone cannot distinguish internal from external Go tests.
