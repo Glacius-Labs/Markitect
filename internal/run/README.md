@@ -48,7 +48,7 @@ payload are verified without reinterpreting old input with today's compiler or
 resolving settings again. Store/controller identity remains the Host's duty.
 
 New preparations record basis v3. V3 adds the immutable static operation,
-source-bound scope selectors and context limit, and an initial Explore policy.
+source-bound scope selectors and context limit, and the Manager task machine.
 V1/v2 retain their original recorded meaning and canonical bytes. Each passed compiled model contributes its
 complete own Package inventory and every Definition's identity and owning model
 ID, including imported models and explicitly empty inventories. `BindingInventory`
@@ -64,8 +64,7 @@ references and retry receipts. Their imported Definition inventories are absent;
 `RecordedInventory.Models` returns `ErrInventoryUnavailable` rather than an
 invented complete empty inventory. These versions add no blob references or
 Journal methods. The existing 64 MiB payload ceiling and explicit Restore byte
-budget include the inventory. Work readiness and execution remain unavailable; the initial Explore protocol below
-records participation only.
+budget include the inventory.
 
 Restoration never calls Put or Append and never replays an external effect. Open
 reservations keep their complete holds. `RecoveryRequired` is a separate Host
@@ -190,9 +189,9 @@ oversize outcome leaves the call pending; it cannot execute again implicitly.
 If recording the answer fails, `Call` returns the error together with the
 outcome, which the adapter must not send; once reconciliation shows the answer
 absent, the Host records it through `ToolReconciliation`. Recorded answers are
-never redacted and always carry the tool-outcome media type. Slices without
-Host tools use `RefuseTools`; the Manager and reviewer tools arrive with the
-core protocol.
+never redacted and always carry the tool-outcome media type. A call's input is
+the observed call, a JSON object that names the tool and carries its arguments
+as the `arguments` member; `CallArguments` extracts them.
 
 Before the Claude Code adapter relies on resume binding, a bounded probe must
 show that a resumed Claude Code session reports the resumed session ID in its
@@ -209,8 +208,9 @@ error. Settled startup time does not mean a provider stopped: live sessions,
 active steps and unresolved Host tool activity prevent run completion and
 assignment closure. A stop request or callback cancellation does not clear them.
 Restoration retains the recovery barrier until explicit reconciliation and
-elapsed settlement; no port is executed during Restore. Proposed terminal output
-is retained evidence, not an accepted delivery.
+elapsed settlement; no port is executed during Restore. Under basis v3 a step
+observation carries no proposed output: outcomes arrive only through answered
+Host tool calls.
 
 The consumer-owned `Workspaces` and `Checks` ports define what the repository
 and check adapters implement: materialize an exact tree on a runtime volume,
@@ -218,61 +218,67 @@ harvest the complete observed tree, close it, and run one fixed check on a
 disposable copy. They carry no ownership or review semantics; a check passes
 only on an observed zero exit that neither timed out nor is uncertain.
 
-Review and task execution, final evidence, Verifying/Publishing transitions and
-Applied/NoChange are not implemented yet. There is no concrete Session,
-Workspace, Check, SQLite, provider or Apply execution adapter here. The full
-contracts remain in the design documents.
+Final evidence, the work after Verifying, Publishing and Applied/NoChange are
+not implemented yet. The concrete Session, Workspace, Check, journal and
+publication adapters live outside this package. The full contracts remain in
+the design documents.
 
-## Initial Explore policy
+## Manager tasks
 
-Every new live basis uses v3. The complete recorded local topology queues root
-and every direct parent-child edge, including empty and intermediate Packages.
-`PrepareExploreSessionCommand` associates one queued Manager with an initial
-read-only session. `PrepareExploreStepCommand` recompiles supplied original model
-bytes, resolves settings, checks the complete binding against the current run,
-and calls the actual organization selection and renderer. Scope and context
-limits come only from that bound input. The root receives the original owner
-request; registered own artifacts come from the fixed census, with binary
-content identified without claiming it was read as text. No parent-authored
-operation, participant list or inferred relationship selects the roster.
+This section implements the [core protocol](../../docs/design/canonical-model/manager-apply-core.md)
+for basis v3. Rule IDs refer to that document.
 
-There is one initial step per Manager. Sessions are sequential, physically and
-semantically read-only under the Host's still-unproved isolation obligation.
-Their expense class remains `Writing`, which protects completion capacity; it
-is not a writer grant. This existing cost/access coupling is a bounded slice
-limitation, not the intended final session-continuity contract. There is no
-basis advance, resume capability or working-candidate transition here.
+When a run is prepared, every Manager of the recorded topology gets one task.
+`Next` returns the one admissible step of the run (T4): Explore children before
+parents (T1), reviews at any time (T3), and work and integration only after
+every task is explored (T2). Ties break by Manager path, then by kind. The
+admission names the phase, the provider home and the conversation to resume:
+a Manager's steps continue its conversation (S3), while both steps of a review
+start fresh conversations, and the candidate step receives the expectations
+that the first step recorded (T7). An incomplete
+task stops all admission (T14).
 
-`InitialExplore` distinguishes queued, prepared, sent-observed, attributed step,
-report and quiescence observations. A transport write is not provider acceptance.
-The closed inline input/report identities bind the exact Manager, parent, run,
-operation, context, session, step and input. Reports can include uncertainty and
-questions. They establish neither prerequisite satisfaction nor a reviewed
-no-change result, accepted delivery or completed Manager. Missing or malformed
-terminal output is retained with its observation limit and cannot count; this
-single-step slice supplies no automatic replacement attempt.
+`PrepareTaskSessionCommand` and `PrepareTaskStepCommand` are the only way to
+start a step. The reducer checks the phase's role, tool catalogue, workspace
+mode, provider home, conversation and reservation purpose, and keeps one step
+at a time (S5). Step preparation compiles the original model again, matches the
+whole binding and renders the phase's view: the Manager sees its own artifacts
+in the step's version, its open findings and its children's states and reports;
+the expectations review sees the model and the open findings; the candidate
+review also sees the frozen candidate, its proposal and the recorded
+expectations. The caller supplies that version and the quoted payloads that
+`StepQuotes` names as `StepFacts`.
 
-The initial gate clears only after every Manager's report is confirmed and all
-effects are stopped/reconciled and charged. A terminal step alone is insufficient.
-An unexpected tool call is recorded and refused; no Host tool runs in this
-slice. Unresolved callbacks and transports remain
-visible even after a session stops. All unclassified sessions, later steps,
-standalone invocation reservations and unimplemented work/review/tool phases
-remain denied after the gate clears. Actual Workspace/Check/Apply execution and
-provider-output extraction are absent; source fixtures prove no real dispatch.
+A step ends with exactly one answered outcome tool call. `CheckOutcome` checks
+its arguments against the phase and the run before the Host answers it, and
+`ConcludeStepCommand` records the conclusion after the container stopped,
+applying the same check again. A step without a valid outcome, or one whose
+S4 check failed, is failed and returns its task to the state before the step
+(T6). Writing steps record their S4 candidate record as the task's own
+unaccepted work.
 
-V3 protects two session starts and two steps per required review subject: one
-local review for every Manager, plus integration review for every Manager with
-children. Distinct physical phase bindings are conservatively budgeted; no
-unproved session reuse discounts this minimum. The original v1/v2 basis floors
-still replay; session histories recorded before the step-bound session port are
-not supported. Exact
-known retries return their original receipts before fresh-admission checks.
-Restored legacy history permits only known-effect observation/reconciliation and
-stop, not fresh legacy execution or replaying a send.
+Reviews follow T7 and T8. A pass must resolve every open blocking finding of
+its purpose; it is withheld while another open blocking issue covers the task
+(I3) or while a producer the candidate used delivered again after the
+candidate's step (D4). Changes requested count one rejection per purpose; at
+the bound rejection limit the task becomes incomplete. A needs-decision verdict
+blocks the task on an owner question, and a failed assessment starts a fresh
+review. Accepted deliveries advance the aggregate version when they carry
+changes. Blocked tasks wake when what they named arrives (T10), and the root's
+completion moves the run to Verifying (T13).
 
-Operation/context/contract/report bytes are inline in the basis or existing
-session payloads. `SessionRefs` retains their complete direct blob closure; no
-additional evidence handles, nested payload references or Journal schema are
-introduced. Historical replay validates stored assertions and associations;
-it never recompiles or rerenders old context as today's truth.
+`Engine` drives admitted steps through the `Sessions` and `Workspaces` ports,
+one at a time. It holds what the reducer does not: the compiled model, every
+aggregate version, path reservations and proposed registry records. It
+materializes each step's version (D3), answers the Host tools, captures the
+candidate after the step (S4) and composes an accepted delivery onto the
+aggregate before it concludes the review (D2). A new engine rebuilds the
+aggregate from the recorded deliveries. `Run` advances until nothing is
+admissible, then leaves the run Verifying, moves it to Waiting for an owner
+question (W1), or finishes it Incomplete.
+
+Not yet implemented: messages (`send`, M1 to M5) and the waits on replies,
+owner answers and the run's resumption (W2), `assign_owner` and intake (T2,
+D6), `request_check`, the dispatch of a common parent for waits nothing
+satisfies (T12, the run finishes Incomplete instead), reopening done tasks
+(T11), review batching, and path reservations surviving an engine restart.

@@ -47,6 +47,7 @@ type ToolView struct {
 	Record             SessionRecord
 	Requested, Replied AppendReceipt
 	Reply              WireRecord
+	OK                 bool
 }
 
 func imageIdentity(s string) bool {
@@ -401,6 +402,10 @@ func (s *stateValue) applySession(c Command) error {
 			return ErrState
 		}
 		tool.Reply = r.Wire
+		if answer, ok := payloadFor(c, r.Wire.Journal); ok {
+			var outcome ToolOutcome
+			tool.OK = strictJSON(answer.Bytes(), &outcome) == nil && outcome.Status == ToolOK
+		}
 		s.tools[key] = tool
 	case ObserveSessionStop:
 		if v.Terminated {

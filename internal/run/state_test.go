@@ -176,7 +176,7 @@ func TestProposalReplayCannotCrossCoordinators(t *testing.T) {
 
 func TestContinuationSharesConsumedBudgetAndCannotRewriteFinishedRun(t *testing.T) {
 	c, j := running(t)
-	completeRootExplore(t, c, j, exploreInputs(t, false))
+	exploreNext(t, c, j, stepInputs(t, false), "root")
 	finish := command("finish", run.FinishRun)
 	finish.Outcome = run.Incomplete
 	finish.Reason = "Awaiting model change"

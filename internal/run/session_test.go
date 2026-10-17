@@ -31,17 +31,52 @@ func wire(t *testing.T, data string) run.WirePayload {
 	p := payload(t, data)
 	return run.WirePayload{Identity: run.WireIdentity{ContentID: p.Ref().ContentID, Size: p.Ref().Size}, Journal: p}
 }
-func sessionPreparation(t *testing.T, c *run.Coordinator, id run.SessionID) run.Command {
-	return exploreSessionPreparation(t, c, exploreInputs(t, false), ".", id)
+
+// built remembers the live commands the helpers prepared per Coordinator, so
+// that a test can retry the exact recorded command after its task moved on.
+var built = map[*run.Coordinator]map[string]run.Command{}
+
+func remember(c *run.Coordinator, cmd run.Command) run.Command {
+	if built[c] == nil {
+		built[c] = map[string]run.Command{}
+	}
+	built[c][cmd.ID] = cmd
+	return cmd
 }
+
+// sessionPreparation prepares a session for the run's next admissible step,
+// the first leaf's Explore in a fresh run.
+func sessionPreparation(t *testing.T, c *run.Coordinator, id run.SessionID) run.Command {
+	t.Helper()
+	if cmd, ok := built[c]["prepare-"+string(id)]; ok {
+		return cmd
+	}
+	return remember(c, taskSession(t, c, id, stepInputs(t, false).Binding.Census.Digest()))
+}
+
+// stepPreparation prepares the step of session s. When the live constructor
+// refuses, it returns the command it built before under the same ID, or an
+// unproven raw command, which the Coordinator refuses as not admitted.
 func stepPreparation(t *testing.T, c *run.Coordinator, id run.StepID, invocation string) run.Command {
 	t.Helper()
 	v, _ := c.Session("s")
-	cmd, err := c.PrepareExploreStepCommand(meta("prepare-"+string(id)), run.StepPlan{Session: "s", ID: id, SessionBinding: v.Plan.Binding()}, run.Reservation{ID: invocation, Kind: run.AgentStep, Purpose: run.Writing, Maximum: time.Minute}, exploreInputs(t, false))
-	if err != nil {
-		t.Fatal(err)
+	inputs := stepInputs(t, false)
+	purpose := run.Writing
+	if v.Plan.Role == "reviewer" {
+		purpose = run.Assessment
 	}
-	return cmd
+	plan := run.StepPlan{Session: "s", ID: id, SessionBinding: v.Plan.Binding()}
+	reservation := run.Reservation{ID: invocation, Kind: run.AgentStep, Purpose: purpose, Maximum: time.Minute}
+	cmd, err := c.PrepareTaskStepCommand(meta("prepare-"+string(id)), plan, reservation, inputs, sourceFacts(inputs))
+	if err == nil {
+		return remember(c, cmd)
+	}
+	if cmd, ok := built[c]["prepare-"+string(id)]; ok {
+		return cmd
+	}
+	input, contract := payload(t, `{"compiled":"turn"}`), payload(t, `{"contract":"unproven"}`)
+	plan.Input, plan.OutputContract = input.Ref(), contract.Ref()
+	return run.PrepareStepCommand(meta("prepare-"+string(id)), c.Current().Assignment, c.Current().ID, plan, reservation, input, contract)
 }
 
 func preparedSession(t *testing.T) (*run.Coordinator, *memoryJournal, run.SessionIO) {
@@ -128,7 +163,7 @@ func TestSessionAdmissionAndReferencesCommitAtomically(t *testing.T) {
 		t.Fatal("startup not held")
 	}
 	a, err := c.SessionAdmission(context.Background(), j, "s")
-	if err != nil || a.Plan.ID != "s" || a.Receipt.BatchID == "" || a.Profile.Ref() != a.Plan.Profile || a.Tools.Ref() != a.Plan.Tools || string(a.Tools.Bytes()) != `{"tools":[]}` {
+	if err != nil || a.Plan.ID != "s" || a.Receipt.BatchID == "" || a.Profile.Ref() != a.Plan.Profile || a.Tools.Ref() != a.Plan.Tools || a.Tools.Ref().MediaType != run.ToolCatalogMedia {
 		t.Fatal(a, err)
 	}
 	if _, err := c.Inspection("s", "missing"); !errors.Is(err, run.ErrObservationLimit) {
@@ -623,7 +658,7 @@ func (f *portFake) Step(ctx context.Context, a run.StepAdmission, io run.Session
 		return run.StepObservation{}, run.ErrInvalid
 	}
 	send(f.t, io, "turn", "step")
-	o := run.StepObservation{RecordMeta: meta("terminal"), Step: "step", ProviderStep: "provider-turn", Wire: wire(f.t, "terminal"), Proposed: payload(f.t, "proposal"), Terminal: true, Reason: "observed terminal turn"}
+	o := run.StepObservation{RecordMeta: meta("terminal"), Step: "step", ProviderStep: "provider-turn", Wire: wire(f.t, "terminal"), Terminal: true, Reason: "observed terminal turn"}
 	_, err := io.ObserveStep(ctx, o)
 	return o, err
 }
@@ -694,40 +729,40 @@ func TestProviderNeutralPortMapsOpenStepInspectStopWithoutReplay(t *testing.T) {
 	c2 := restored(t, &readJournal{store: j})
 	s, _ := c2.Session("s")
 	st, _ := c2.Step("step")
-	if !s.Terminated || !st.Terminal || st.Proposed == (run.BlobRef{}) || c2.RecoveryRequired() {
+	if !s.Terminated || !st.Terminal || st.Proposed != (run.BlobRef{}) || c2.RecoveryRequired() {
 		t.Fatal("port observations not reconstructed", s, st)
 	}
 }
 
-func resumedSession(t *testing.T) run.SessionIO {
+// resumedSession prepares the root's work step, whose plan resumes the root's
+// recorded conversation.
+func resumedSession(t *testing.T) (run.SessionIO, run.ProviderSessionID) {
 	t.Helper()
-	c, j := running(t)
-	inputs := exploreInputs(t, false)
-	profile, tools := payload(t, `{"profile":"synthetic recorded metadata"}`), payload(t, `{"tools":[]}`)
-	plan := run.SessionPlan{ID: "s", Role: "manager", Workspace: "linux-workspace-s", ProviderHome: "provider-home", Resume: "provider-session", Candidate: inputs.Binding.Census.Digest(), ReadOnly: true, ImageID: "sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef", CredentialRef: "credential-ref", MaxWireBytes: 1 << 20, Profile: profile.Ref(), Tools: tools.Ref()}
-	cmd, err := c.PrepareExploreSessionCommand(meta("prepare-s"), ".", plan, run.Reservation{ID: "open-s", Kind: run.SessionStart, Purpose: run.Writing, Maximum: time.Minute}, profile, tools)
-	if err != nil {
-		t.Fatal(err)
+	h := newHarness(t, true, happyAgent)
+	h.advanceUntil(func(a run.Admission) bool { return a.Phase == run.PhaseWork })
+	item, _ := h.c.Next()
+	if item.Resume == "" {
+		t.Fatal("work step does not resume the Explore conversation")
 	}
-	commit(t, c, j, cmd)
-	return channel(t, c, j, run.RefuseTools)
+	commit(t, h.c, h.j, taskSession(t, h.c, "s", h.engine.Aggregate().Tree().Digest()))
+	return channel(t, h.c, h.j, run.RefuseTools), item.Resume
 }
 
 func TestResumedSessionBindsOnlyTheRequestedConversation(t *testing.T) {
-	io := resumedSession(t)
+	io, resume := resumedSession(t)
 	send(t, io, "resume", "")
 	other := run.SessionObservation{RecordMeta: meta("bind-other"), ProviderSession: "other-session", Wire: wire(t, `{"thread":"other-session"}`), Reason: "provider started a new thread"}
 	if _, err := io.Bind(context.Background(), other); !errors.Is(err, run.ErrState) {
 		t.Fatal("a different conversation bound as the resumed one", err)
 	}
-	same := run.SessionObservation{RecordMeta: meta("bind"), ProviderSession: "provider-session", Wire: wire(t, `{"thread":"provider-session"}`), Reason: "provider resumed the thread"}
+	same := run.SessionObservation{RecordMeta: meta("bind"), ProviderSession: resume, Wire: wire(t, `{"thread":"resumed"}`), Reason: "provider resumed the thread"}
 	if _, err := io.Bind(context.Background(), same); err != nil {
 		t.Fatal(err)
 	}
 }
 
 func TestResumedSessionReportsAnotherConversationAsUncertain(t *testing.T) {
-	io := resumedSession(t)
+	io, _ := resumedSession(t)
 	send(t, io, "resume", "")
 	other := run.SessionObservation{RecordMeta: meta("bind-other"), ProviderSession: "other-session", Wire: wire(t, `{"thread":"other-session"}`), Uncertain: true, Reason: "provider reported a different thread"}
 	if _, err := io.Bind(context.Background(), other); err != nil {

@@ -242,12 +242,16 @@ func controlExploreStartup(t *testing.T, c *run.Coordinator, candidate snapshot.
 	if err != nil {
 		t.Fatal(err)
 	}
-	tools, err := run.NewPayload("application/json", "utf-8", []byte(`{"tools":[]}`))
+	item, ok := c.Next()
+	if !ok {
+		t.Fatal("no admissible step")
+	}
+	tools, err := run.ToolCatalog(item.Phase)
 	if err != nil {
 		t.Fatal(err)
 	}
-	plan := run.SessionPlan{ID: "session", Role: "manager", Workspace: "controlled-linux-workspace", ProviderHome: "provider-home", Candidate: candidate, ReadOnly: true, ImageID: "sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef", CredentialRef: "credential-ref", MaxWireBytes: 1 << 20, Profile: profile.Ref(), Tools: tools.Ref()}
-	command, err := c.PrepareExploreSessionCommand(run.RecordMeta{ID: "reserve", ObservedAt: at}, ".", plan, run.Reservation{ID: "invocation", Kind: run.SessionStart, Purpose: run.Writing, Maximum: time.Minute}, profile, tools)
+	plan := run.SessionPlan{ID: "session", Role: "manager", Workspace: "controlled-linux-workspace", ProviderHome: item.Home, Resume: item.Resume, Candidate: candidate, ReadOnly: true, ImageID: "sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef", CredentialRef: "credential-ref", MaxWireBytes: 1 << 20, Profile: profile.Ref(), Tools: tools.Ref()}
+	command, err := c.PrepareTaskSessionCommand(run.RecordMeta{ID: "reserve", ObservedAt: at}, item, plan, run.Reservation{ID: "invocation", Kind: run.SessionStart, Purpose: run.Writing, Maximum: time.Minute}, profile, tools)
 	if err != nil {
 		t.Fatal(err)
 	}

@@ -49,7 +49,12 @@ type stateValue struct {
 	tools          map[toolKey]ToolView
 	basisVersion   uint32
 	managerBasis   bindingWire
-	managers       map[string]managerValue
+	tasks          map[string]taskValue
+	issues         map[string]Issue
+	issueOrder     []string
+	// aggregateVersion counts the deliveries composed into the run's
+	// aggregate (core rule D2).
+	aggregateVersion uint64
 }
 
 // Coordinator owns one repository's confirmed projection and at most one
@@ -137,7 +142,7 @@ func (c *Coordinator) Propose(command Command) (Proposal, error) {
 		return Proposal{}, ErrRecovery
 	}
 	if !command.replaying {
-		if err := c.freshManagerAdmission(command, digest); err != nil {
+		if err := c.freshTaskAdmission(command, digest); err != nil {
 			return Proposal{}, err
 		}
 	}
@@ -151,7 +156,9 @@ func (c *Coordinator) Propose(command Command) (Proposal, error) {
 	next.steps = maps.Clone(c.state.steps)
 	next.transports = maps.Clone(c.state.transports)
 	next.tools = maps.Clone(c.state.tools)
-	next.managers = maps.Clone(c.state.managers)
+	next.tasks = maps.Clone(c.state.tasks)
+	next.issues = maps.Clone(c.state.issues)
+	next.issueOrder = slices.Clone(c.state.issueOrder)
 	if err := next.apply(command); err != nil {
 		return Proposal{}, err
 	}
@@ -170,7 +177,6 @@ func (c *Coordinator) Propose(command Command) (Proposal, error) {
 	next.revision = batch.Revision()
 	next.operations[command.ID] = operation{digest, ReceiptFor(batch)}
 	next.sessionReceipt(command, ReceiptFor(batch))
-	next.managerReceipt(command, ReceiptFor(batch))
 	p := Proposal{batch: batch, next: next, command: command}
 	if command.Kind == PrepareRun {
 		p.payloads = []Payload{command.binding.owner, command.binding.payload}
@@ -228,7 +234,7 @@ func (s *stateValue) apply(c Command) error {
 			return ErrBudget
 		}
 		s.basisVersion = b.version
-		if err := s.prepareManagers(b); err != nil {
+		if err := s.prepareTasks(b); err != nil {
 			return err
 		}
 		s.current = RunView{ID: c.Run, Assignment: c.Assignment, Basis: c.Basis, State: Prepared}
@@ -246,13 +252,19 @@ func (s *stateValue) apply(c Command) error {
 		return ErrState
 	}
 	if c.Session.Session != "" {
-		if err := s.beforeManagerSession(c); err != nil {
+		if err := s.beforeTaskSession(c); err != nil {
 			return err
 		}
 		if err := s.applySession(c); err != nil {
 			return err
 		}
-		return s.afterManagerSession(c)
+		return s.afterTaskSession(c)
+	}
+	if c.Kind == TaskConclude {
+		if s.current.State != Running {
+			return ErrState
+		}
+		return s.concludeStep(c)
 	}
 	r := s.current
 	switch c.Kind {

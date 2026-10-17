@@ -69,7 +69,7 @@ func Restore(ctx context.Context, journal Journal, repository string, limits Res
 					return nil, err
 				}
 			}
-			for _, ref := range command.Session.payloadRefs() {
+			for _, ref := range command.payloadRefs() {
 				payload, readErr := reader.blob(ref)
 				if readErr != nil {
 					return nil, readErr

@@ -3,7 +3,7 @@ artifacts:
   - path: "internal/run/session_readiness_test.go"
     form: test
     realizes: [product/run/confirmed-run-history]
-    why: Checks truthful ready-but-unbound startup, one first send, retained holds and the initial Explore gate.
+    why: Checks truthful ready-but-unbound startup, one first send and retained holds.
   - path: "internal/run/binding_inventory.go"
     form: code
     realizes: [product/run/confirmed-run-history]
@@ -135,11 +135,31 @@ artifacts:
   - path: "internal/run/manager.go"
     form: code
     realizes: [product/run/confirmed-run-history]
-    why: Binds initial Explore inputs to actual compiler and organization preparation and closes inline report records.
-  - path: "internal/run/manager_state.go"
+    why: Binds each task step's input to actual compiler and organization preparation and records its conclusion.
+  - path: "internal/run/task.go"
     form: code
     realizes: [product/run/confirmed-run-history]
-    why: Records every Manager's initial assessment and quiescence in the existing Coordinator without granting work authority.
+    why: Reduces the Manager task machine, its admission queue and the outcomes of Explore, work and integration steps.
+  - path: "internal/run/review.go"
+    form: code
+    realizes: [product/run/confirmed-run-history]
+    why: Reduces review verdicts, findings, rejection counting and accepted deliveries.
+  - path: "internal/run/engine.go"
+    form: code
+    realizes: [product/run/confirmed-run-history]
+    why: Drives admitted steps through the ports, captures candidates and composes accepted deliveries into the aggregate.
+  - path: "internal/run/harness_test.go"
+    form: test
+    realizes: [product/run/confirmed-run-history]
+    why: Supplies scripted session and workspace ports that drive real Coordinator and engine code.
+  - path: "internal/run/engine_test.go"
+    form: test
+    realizes: [product/run/confirmed-run-history]
+    why: Checks whole runs through review, rework, composition, integration, waiting and incomplete outcomes.
+  - path: "internal/run/task_test.go"
+    form: test
+    realizes: [product/run/confirmed-run-history]
+    why: Checks task admission, step preparation, conclusions and review renewal.
   - path: "internal/run/manager_test.go"
     form: test
     realizes: [product/run/confirmed-run-history]

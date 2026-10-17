@@ -223,7 +223,9 @@ type SendPermit struct {
 }
 
 // ToolCall is one provider tool call as the adapter observed it. Tool names one
-// entry of the plan's tool catalogue. A duplicate call with identical content
+// entry of the plan's tool catalogue. Input is a JSON object that names the
+// tool and carries its arguments as the arguments member, as the agentd frame
+// does; CallArguments extracts them. A duplicate call with identical content
 // returns the recorded answer; an unanswered duplicate stays pending and is
 // never executed again implicitly.
 type ToolCall struct {
