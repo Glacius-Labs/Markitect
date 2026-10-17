@@ -59,11 +59,11 @@ type PublicationPermit struct {
 type PublicationOutcome string
 
 const (
-	PublicationApplied  PublicationOutcome = "applied"   // every change was written and read back
+	PublicationApplied  PublicationOutcome = "applied"   // every change was written and read back, and the final check held
 	PublicationNoChange PublicationOutcome = "no_change" // the change set was empty and the guard held
 	PublicationStale    PublicationOutcome = "stale"     // the guard failed before any write
 	PublicationPartial  PublicationOutcome = "partial"   // some, not all, changes were written
-	PublicationUnknown  PublicationOutcome = "unknown"   // the state of some path is not known
+	PublicationUnknown  PublicationOutcome = "unknown"   // the state of some path, or the final check, is not known
 	PublicationFailed   PublicationOutcome = "failed"    // a definite failure without a write
 )
 
@@ -83,8 +83,10 @@ type PublishedPath struct {
 }
 
 // PublicationReceipt is what the adapter observed. Paths classifies every
-// requested path; on any outcome but applied or no-change, Reason says what is
-// known.
+// requested path; on any outcome but applied or no_change, Reason says what is
+// known. After the writes, the guard holds when every path outside the change
+// set is unchanged; if the check after the last write fails, the outcome is
+// unknown.
 type PublicationReceipt struct {
 	ID      PublicationID
 	Outcome PublicationOutcome

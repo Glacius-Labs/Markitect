@@ -246,11 +246,11 @@ Its receipt carries one outcome:
 
 | Outcome | Meaning |
 | --- | --- |
-| applied | Every change was written and read back. |
+| applied | Every change was written and read back, and the check after the last write held. |
 | no_change | The change set was empty and the guard held. |
 | stale | The guard failed before any write. |
 | partial | Some changes were written, not all. |
-| unknown | The state of some path is not known. |
+| unknown | The state of some path, or of the check after the last write, is not known. |
 | failed | A definite failure, with nothing written. |
 
 The receipt also classifies every requested path:
@@ -258,7 +258,7 @@ The receipt also classifies every requested path:
 - it still holds the captured content;
 - it holds something else or could not be read.
 
-It states what else is known, also when an error is returned, and callers keep such receipts. `Inspect` classifies the paths of an earlier request, which `apply` journaled before `Publish`, after an interruption. Multi-file publication is not atomic. Partial writes stay visible and recorded, and the owner commits or reverts them before a later run captures the state. Even an applied result is machine evidence, not human acceptance.
+After the writes, the guard holds when every path outside the change set is unchanged. The receipt states what else is known, also when an error is returned, and callers keep such receipts. `Inspect` classifies the paths of an earlier request, which `apply` journaled before `Publish`, after an interruption. Multi-file publication is not atomic. Partial writes stay visible and recorded, and the owner commits or reverts them before a later run captures the state. Even an applied result is machine evidence, not human acceptance.
 
 ## Host lifecycle and completion
 
