@@ -66,3 +66,23 @@ func TestVolumeMountCensusRefusesMissingMountObservation(t *testing.T) {
 		})
 	}
 }
+
+func TestVolumeMountCensusRequiresCompleteEntries(t *testing.T) {
+	for _, mounts := range []string{`[{}]`, `[null]`, `[{"Type":"volume"}]`} {
+		t.Run(mounts, func(t *testing.T) {
+			e, _ := fakeCommandEngine(t, engineStep{Out: commandID}, engineStep{Out: `[{"Id":"` + commandID + `","Mounts":` + mounts + `}]`})
+			if _, err := e.VolumeMounts(context.Background(), "work"); err == nil {
+				t.Fatal("incomplete mount entry accepted")
+			}
+		})
+	}
+	for _, mounts := range []string{`[]`, `[{"Type":"bind"}]`} {
+		t.Run(mounts, func(t *testing.T) {
+			e, _ := fakeCommandEngine(t, engineStep{Out: commandID}, engineStep{Out: `[{"Id":"` + commandID + `","Mounts":` + mounts + `}]`})
+			ids, err := e.VolumeMounts(context.Background(), "work")
+			if err != nil || len(ids) != 0 {
+				t.Fatalf("mounts=%v err=%v", ids, err)
+			}
+		})
+	}
+}
