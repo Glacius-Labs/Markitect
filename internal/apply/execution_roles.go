@@ -62,7 +62,11 @@ func (d *executionDecoder) defaults(field executionField) ExecutionDefaults {
 	f := d.object(field, "profiles", "instructions", "stepTimeout", "reviewRounds", "creationRoots", "batchNoChangeReviews")
 	r.Manager, r.Reviewer = d.roles(f, field, true)
 	r.StepTimeout, _ = d.duration(d.required(f, field, "stepTimeout"))
-	r.ReviewRounds, _ = d.count(d.required(f, field, "reviewRounds"))
+	if selected, found := f["reviewRounds"]; found {
+		if value, ok := d.count(selected); ok {
+			r.ReviewRounds = &value
+		}
+	}
 	r.CreationRoots, _ = d.directories(d.required(f, field, "creationRoots"))
 	if selected, found := f["batchNoChangeReviews"]; found {
 		if selected.node.Kind != yaml.ScalarNode || selected.node.Tag != "!!bool" {

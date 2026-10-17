@@ -45,7 +45,7 @@ type ExecutionDefaults struct {
 	Manager              organization.RoleOverride
 	Reviewer             organization.RoleOverride
 	StepTimeout          organization.Setting[time.Duration]
-	ReviewRounds         organization.Setting[int]
+	ReviewRounds         *organization.Setting[int]
 	CreationRoots        organization.Setting[[]snapshot.DirectoryBoundary]
 	BatchNoChangeReviews *organization.Setting[bool]
 }

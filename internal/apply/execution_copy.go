@@ -33,6 +33,7 @@ func cloneExecution(value AuthoredExecution) AuthoredExecution {
 	value.Defaults.Manager = executionRoleCopy(value.Defaults.Manager)
 	value.Defaults.Reviewer = executionRoleCopy(value.Defaults.Reviewer)
 	value.Defaults.BatchNoChangeReviews = executionPointer(value.Defaults.BatchNoChangeReviews)
+	value.Defaults.ReviewRounds = executionPointer(value.Defaults.ReviewRounds)
 	value.Defaults.CreationRoots.Value = slices.Clone(value.Defaults.CreationRoots.Value)
 	value.Packages = executionListPointer(value.Packages)
 	if value.Packages != nil {

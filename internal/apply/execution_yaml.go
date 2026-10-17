@@ -2,6 +2,7 @@ package apply
 
 import (
 	"fmt"
+	"math/big"
 	"regexp"
 	"strings"
 	"time"
@@ -45,12 +46,21 @@ func executionChild(parent executionField, name string, node *yaml.Node) executi
 
 func (d *executionDecoder) restricted(field executionField) {
 	node := field.node
-	if node.Kind == yaml.AliasNode || node.Alias != nil || node.Anchor != "" || node.Tag == "!!null" || strings.HasPrefix(node.Tag, "!") && !strings.HasPrefix(node.Tag, "!!") {
+	if node.Kind == yaml.AliasNode || node.Alias != nil || node.Anchor != "" || node.Tag == "!!null" || node.Tag != "" && !strings.HasPrefix(node.Tag, "!!") {
 		d.issue(model.Failed, "execution.yaml_feature", field, "Execution YAML cannot use aliases, anchors, nulls or custom tags.")
 		return
 	}
-	for _, child := range node.Content {
-		d.restricted(executionField{node: child, pointer: field.pointer})
+	if node.Kind == yaml.MappingNode {
+		for i := 0; i+1 < len(node.Content); i += 2 {
+			child := executionChild(field, node.Content[i].Value, node.Content[i])
+			d.restricted(child)
+			child.node = node.Content[i+1]
+			d.restricted(child)
+		}
+	} else {
+		for i, child := range node.Content {
+			d.restricted(executionChild(field, fmt.Sprint(i), child))
+		}
 	}
 }
 
@@ -109,6 +119,25 @@ func (d *executionDecoder) integer(field executionField) (organization.Setting[i
 	if field.node == nil {
 		return organization.Setting[int64]{}, false
 	}
+	// YAML resolves decimal integers beyond its own integer range as floats.
+	// Recognize their literal syntax without accepting floats or quoted numbers
+	// as integer caps. The original source remains the value's authority.
+	if field.node.Kind == yaml.ScalarNode && (field.node.Tag == "!!int" || field.node.Style == 0 && executionDecimal.MatchString(field.node.Value)) {
+		base := 0
+		if field.node.Tag != "!!int" {
+			base = 10
+		}
+		if value, ok := new(big.Int).SetString(strings.ReplaceAll(field.node.Value, "_", ""), base); ok {
+			if value.Sign() <= 0 {
+				d.issue(model.Failed, "execution.positive", field, "Declared caps must be positive.")
+				return organization.Setting[int64]{}, false
+			}
+			if !value.IsInt64() {
+				d.issue(model.NotCompleted, "execution.integer_range", field, "The declared integer exceeds this decoder's integer representation.")
+				return organization.Setting[int64]{}, false
+			}
+		}
+	}
 	if field.node.Kind != yaml.ScalarNode || field.node.Tag != "!!int" {
 		d.issue(model.Failed, "execution.integer", field, "Expected a positive integer cap.")
 		return organization.Setting[int64]{}, false
@@ -137,6 +166,7 @@ func (d *executionDecoder) count(field executionField) (organization.Setting[int
 	return organization.Setting[int]{Value: int(value.Value), Source: value.Source}, true
 }
 
+var executionDecimal = regexp.MustCompile(`^[+-]?[0-9](?:_?[0-9])*$`)
 var executionDuration = regexp.MustCompile(`^\+?(?:([0-9]+(?:\.[0-9]*)?|\.[0-9]+)(ns|us|µs|μs|ms|s|m|h))+$`)
 
 func (d *executionDecoder) duration(field executionField) (organization.Setting[time.Duration], bool) {
