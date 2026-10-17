@@ -1,7 +1,8 @@
-# Historical roadmap snapshots
+# Project history and historical snapshots
 
 This directory preserves dated roadmap context and its original references. These files are historical records; their embedded source, release, and acceptance statements remain bound to the dates and commits they cite. Do not use them as the current product status.
 
+- [Project history, timeline and process assessment — 17 October 2026](project-history-20261017.md): the project's origin, major turns, working method and assessed lessons, fixed to Main `3b3cbdd8`.
 - [Roadmap before product integration — 9 October 2026](implementation-plan-before-product-integration-20261009.md): the preserved pre-integration roadmap and its cited reports.
 - [Canonical intent and reconciliation — v0.14.1 alpha](canonical-projections-v0.14.1.md): the guide to the canonical Projection alpha that v0.14.1 bundled and current source has removed.
 - [Architecture of the earlier Project/Domain line — 10 October 2026](architecture-legacy-sections-20261010.md): the sections moved out of the architecture page when it was rewritten for the current product (ARCH-10).
