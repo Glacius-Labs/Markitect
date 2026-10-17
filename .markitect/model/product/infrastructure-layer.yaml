@@ -23,6 +23,7 @@ spec:
       name: distinct-state
   paths:
     - internal/adapters/checks/
+    - internal/adapters/codexappserver/
     - internal/adapters/gitrepo/
     - src/internal/infrastructure/
   checks:

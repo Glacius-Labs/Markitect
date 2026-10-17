@@ -19,6 +19,7 @@ func transitionalFoundationRoots() []string {
 		"internal/realization",
 		"internal/apply",
 		"internal/adapters/checks",
+		"internal/adapters/codexappserver",
 		"internal/adapters/gitrepo",
 		"internal/testkit",
 	}
