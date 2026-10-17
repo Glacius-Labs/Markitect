@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"slices"
 	"time"
 
 	"github.com/Glacius-Labs/Markitect/internal/run"
@@ -154,24 +155,44 @@ func (c *ControlledRun) meta(kind string, clock func() time.Time) run.RecordMeta
 	return run.RecordMeta{ID: fmt.Sprintf("%s-%d", kind, c.coordinator.Revision()), ObservedAt: clock().UTC()}
 }
 
-// start prepares and starts the bound run when none is active. The first run
-// opens a new assignment; a later run continues it only on a changed basis.
+// start prepares and starts the bound run when none is active. An active run
+// bound to another capture finishes Stale first, because its source changed
+// (execution contract, outcomes). A finished run continues its assignment on
+// a changed basis; after Applied or NoChange, the assignment is closed and a
+// new one opens.
 func (c *ControlledRun) start(ctx context.Context, clock func() time.Time) error {
 	co := c.coordinator
 	current := co.Current()
+	if current.ID != "" && current.State != run.Finished && current.Basis != c.basis.Ref() {
+		if err := c.finish(ctx, run.Stale, "the captured source changed since the run was prepared", clock); err != nil {
+			return fmt.Errorf("the run %s is bound to another capture and cannot finish yet: %w", current.ID, err)
+		}
+		current = co.Current()
+	}
 	switch current.State {
 	case run.Prepared:
 	case "", run.Finished:
-		assignment, predecessor := fmt.Sprintf("assignment-%.12s", c.basis.Ref().ContentID.String()), ""
-		runID := "run-1"
-		if current.ID != "" {
-			assignment, predecessor = current.Assignment, current.ID
-			runID = fmt.Sprintf("run-%d", len(co.Assignments()[len(co.Assignments())-1].Runs)+1)
+		if current.ID != "" && current.Basis == c.basis.Ref() && (current.Outcome == run.Applied || current.Outcome == run.NoChange) {
+			return fmt.Errorf("%w: the run %s already finished %s on this basis", run.ErrState, current.ID, current.Outcome)
 		}
-		prepare := run.PrepareCommand(c.meta("prepare", clock).ID, assignment, runID, predecessor, clock().UTC(), c.basis)
+		assignments := co.Assignments()
+		closed := len(assignments) > 0 && assignments[len(assignments)-1].Closure.CommandID != ""
+		if current.ID != "" && !closed && (current.Outcome == run.Applied || current.Outcome == run.NoChange) {
+			closure := run.Command{ID: c.meta("close", clock).ID, Kind: run.CloseAssignment, Assignment: current.Assignment, Run: current.ID, ObservedAt: clock().UTC(),
+				OwnerInput: "The owner requested a new Apply after the assignment finished " + string(current.Outcome) + ".", Quiescence: "No session, step, check or invocation is open."}
+			if err := c.commit(ctx, closure); err != nil {
+				return err
+			}
+			closed = true
+		}
+		assignment, predecessor := fmt.Sprintf("assignment-%d", co.Revision()), ""
+		if current.ID != "" && !closed {
+			assignment, predecessor = current.Assignment, current.ID
+		}
+		prepare := run.PrepareCommand(c.meta("prepare", clock).ID, assignment, fmt.Sprintf("run-%d", co.Revision()), predecessor, clock().UTC(), c.basis)
 		if err := c.commit(ctx, prepare); err != nil {
-			if current.State == run.Finished {
-				return fmt.Errorf("the run %s already finished %s on this basis: %w", current.ID, current.Outcome, err)
+			if predecessor != "" {
+				return fmt.Errorf("the run %s finished %s and cannot continue on this basis: %w", current.ID, current.Outcome, err)
 			}
 			return err
 		}
@@ -180,6 +201,11 @@ func (c *ControlledRun) start(ctx context.Context, clock func() time.Time) error
 	}
 	current = co.Current()
 	return c.commit(ctx, run.Command{ID: c.meta("start", clock).ID, Kind: run.StartRun, Assignment: current.Assignment, Run: current.ID, ObservedAt: clock().UTC()})
+}
+
+func (c *ControlledRun) finish(ctx context.Context, outcome run.Outcome, reason string, clock func() time.Time) error {
+	r := c.coordinator.Current()
+	return c.commit(ctx, run.Command{ID: c.meta("finish", clock).ID, Kind: run.FinishRun, Assignment: r.Assignment, Run: r.ID, ObservedAt: clock().UTC(), Outcome: outcome, Reason: reason})
 }
 
 // reviewChecks are the configured checks, by name, that candidate reviews may
@@ -201,18 +227,22 @@ func (c *ControlledRun) reviewChecks(ports ExecutionPorts) (map[string]run.Check
 	return out, nil
 }
 
-// verify runs the required checks on the aggregate, preflights the source
-// and records the final evidence check (execution contract, Verifying).
+// verify runs the required checks on the tree that publishing the aggregate
+// writes, preflights its publication and records the final evidence check
+// (execution contract, Verifying). A source that changed finishes the run
+// Stale, and a change set the target cannot represent finishes it Failed;
+// any other preflight error leaves the run Verifying for a later attempt.
 func (c *ControlledRun) verify(ctx context.Context, engine *run.Engine, ports ExecutionPorts) error {
 	a, _ := c.prepared.Prepared()
 	selections, ok := a.Settings().Checks()
 	if !ok {
 		return fmt.Errorf("%w: the check selections are incomplete", run.ErrInvalid)
 	}
+	requiredNames := c.coordinator.RequiredChecks()
 	var required []run.RequiredCheck
 	for _, selection := range selections {
 		declaration := selection.Declaration()
-		if declaration.RequiredBy == nil {
+		if !slices.Contains(requiredNames, declaration.ID.Value) {
 			continue
 		}
 		request, err := ports.CheckRequest(selection)
@@ -221,83 +251,100 @@ func (c *ControlledRun) verify(ctx context.Context, engine *run.Engine, ports Ex
 		}
 		required = append(required, run.RequiredCheck{Name: declaration.ID.Value, Request: request})
 	}
-	passed, err := engine.Verify(ctx, required)
+	target, err := c.publicationTarget(engine)
+	if err != nil {
+		return err
+	}
+	passed, err := engine.Verify(ctx, target, required)
 	if err != nil || c.coordinator.Current().State != run.Verifying {
 		return err
 	}
-	request, err := c.publicationRequest(engine)
-	if err != nil {
+	if _, err := ports.Publisher.Preflight(ctx, c.publicationRequest(target), c); err != nil {
+		switch {
+		case errors.Is(err, ErrCaptureChanged):
+			return errors.Join(err, c.finish(ctx, run.Stale, "the source changed since its capture: "+err.Error(), ports.Clock))
+		case errors.Is(err, ErrUnpublishable):
+			return errors.Join(err, c.finish(ctx, run.Failed, "the target cannot represent the change set: "+err.Error(), ports.Clock))
+		}
 		return err
 	}
-	if _, err := ports.Publisher.Preflight(ctx, request, c); err != nil {
-		outcome := run.Failed
-		if errors.Is(err, ErrCaptureChanged) {
-			outcome = run.Stale
-		}
-		current := c.coordinator.Current()
-		return errors.Join(err, c.commit(ctx, run.Command{ID: c.meta("finish", ports.Clock).ID, Kind: run.FinishRun, Assignment: current.Assignment, Run: current.ID, ObservedAt: ports.Clock().UTC(),
-			Outcome: outcome, Reason: "the source preflight refused the publication: " + err.Error()}))
-	}
-	return c.commit(ctx, c.coordinator.VerifyRunCommand(c.meta("verify", ports.Clock), passed))
+	return c.commit(ctx, c.coordinator.VerifyRunCommand(c.meta("verify", ports.Clock), target.Digest(), passed))
 }
 
-// publicationRequest is the verified aggregate's change set against the
-// captured source, including the regenerated registry shards.
-func (c *ControlledRun) publicationRequest(engine *run.Engine) (PublicationRequest, error) {
+// publicationTarget is the tree that publishing the aggregate writes: its
+// files and every registry shard whose records changed, regenerated.
+func (c *ControlledRun) publicationTarget(engine *run.Engine) (snapshot.Tree, error) {
+	a, _ := c.prepared.Prepared()
+	captured, ok := a.Structural().Registry().Registry()
+	if !ok {
+		return snapshot.Tree{}, fmt.Errorf("%w: the captured registry is incomplete", run.ErrInvalid)
+	}
+	aggregate := engine.Aggregate()
+	return publicationTree(a.Structural().Model().Inputs().Raw.Census, captured, aggregate.Tree(), aggregate.Registry())
+}
+
+// publicationRequest is the change set from the captured source to target.
+func (c *ControlledRun) publicationRequest(target snapshot.Tree) PublicationRequest {
 	a, _ := c.prepared.Prepared()
 	model := a.Structural().Model()
 	inputs, request := model.Inputs(), model.Request()
-	captured, ok := a.Structural().Registry().Registry()
-	if !ok {
-		return PublicationRequest{}, fmt.Errorf("%w: the captured registry is incomplete", run.ErrInvalid)
-	}
-	aggregate := engine.Aggregate()
-	target, err := publicationTree(inputs.Raw.Census, captured, aggregate.Tree(), aggregate.Registry())
-	if err != nil {
-		return PublicationRequest{}, err
-	}
 	current := c.coordinator.Current()
 	return PublicationRequest{ID: PublicationID(fmt.Sprintf("publication-%s", current.ID)), Run: current.ID, Repository: request.Selection.Repository, Guard: inputs.Guard,
-		Changes: snapshot.Compare(inputs.Raw.Census, target)}, nil
+		Changes: snapshot.Compare(inputs.Raw.Census, target)}
 }
 
-// publish records the change set, writes it through the publisher and records
-// the receipt, which finishes the run (execution contract, Publishing).
+// publish writes exactly the verified tree: it records the change set before
+// the first write, publishes it and records the receipt, which finishes the
+// run (execution contract, Publishing). A publication that an earlier process
+// prepared but never recorded is inspected instead of written again.
 func (c *ControlledRun) publish(ctx context.Context, engine *run.Engine, ports ExecutionPorts) (*PublicationReceipt, error) {
-	request, err := c.publicationRequest(engine)
+	co := c.coordinator
+	target, err := c.publicationTarget(engine)
 	if err != nil {
 		return nil, err
 	}
-	prepare, err := c.coordinator.PreparePublicationCommand(c.meta("prepare-publication", ports.Clock), string(request.ID), request.Changes)
-	if err != nil {
-		return nil, err
+	if target.Digest() != co.Verification().Tree {
+		return nil, fmt.Errorf("%w: the publication target differs from the verified tree", run.ErrState)
 	}
-	if err := c.commit(ctx, prepare); err != nil {
-		return nil, err
-	}
-	permit, err := ports.Publisher.Preflight(ctx, request, c)
+	request := c.publicationRequest(target)
 	var receipt PublicationReceipt
-	if err == nil {
-		receipt, err = ports.Publisher.Publish(ctx, permit, c)
-	} else {
-		receipt = PublicationReceipt{ID: request.ID, Outcome: PublicationStale, Reason: err.Error()}
-		if !errors.Is(err, ErrCaptureChanged) {
-			receipt.Outcome = PublicationFailed
+	if prepared := co.Publication(); prepared.ID != "" {
+		if prepared.ID != string(request.ID) {
+			return nil, fmt.Errorf("%w: the prepared publication is another one", run.ErrState)
 		}
-	}
-	if receipt.Outcome == "" {
-		receipt = PublicationReceipt{ID: request.ID, Outcome: PublicationUnknown, Reason: "the publisher returned no outcome"}
+		if receipt, err = ports.Publisher.Inspect(ctx, request); err != nil {
+			return &receipt, err
+		}
+	} else {
+		cmd, err := co.PreparePublicationCommand(c.meta("prepare-publication", ports.Clock), string(request.ID), target.Digest(), request.Changes)
+		if err != nil {
+			return nil, err
+		}
+		if err := c.commit(ctx, cmd); err != nil {
+			return nil, err
+		}
+		permit, err := ports.Publisher.Preflight(ctx, request, c)
+		switch {
+		case err == nil:
+			receipt, err = ports.Publisher.Publish(ctx, permit, c)
+		case errors.Is(err, ErrCaptureChanged):
+			receipt = PublicationReceipt{ID: request.ID, Outcome: PublicationStale, Reason: err.Error()}
+		case errors.Is(err, ErrUnpublishable):
+			receipt = PublicationReceipt{ID: request.ID, Outcome: PublicationFailed, Reason: err.Error()}
+		default:
+			return nil, err // nothing was written; the next Execute publishes again
+		}
+		if receipt.Outcome == "" {
+			receipt = PublicationReceipt{ID: request.ID, Outcome: PublicationUnknown, Reason: errors.Join(errors.New("the publisher returned no outcome"), err).Error()}
+		}
 	}
 	observed := run.PublicationResult{ID: string(request.ID), Outcome: string(receipt.Outcome), Reason: receipt.Reason}
 	for _, p := range receipt.Paths {
 		observed.Paths = append(observed.Paths, run.PublishedPathState{Path: p.Path.String(), State: string(p.State)})
 	}
-	if err != nil && observed.Reason == "" {
-		observed.Reason = err.Error()
+	cmd, err := co.PublishRunCommand(c.meta("published", ports.Clock), observed)
+	if err != nil {
+		return &receipt, err
 	}
-	cmd, cmdErr := c.coordinator.PublishRunCommand(c.meta("published", ports.Clock), observed)
-	if cmdErr != nil {
-		return &receipt, errors.Join(err, cmdErr)
-	}
-	return &receipt, errors.Join(err, c.commit(ctx, cmd))
+	return &receipt, c.commit(ctx, cmd)
 }

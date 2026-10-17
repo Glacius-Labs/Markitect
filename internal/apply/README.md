@@ -48,21 +48,30 @@ engine limits. `RoleProfile` returns the prepared Agent profile a role runs
 with, from which the Host builds its adapter's session profile. Apply chooses no
 provider, credential or image.
 
-When no run is active, Execute prepares and starts one: the first run opens a
-new assignment, and a later run continues it only on a changed basis or a
-recorded extension. The Managers then work until the root is done
-(`run.Engine.Run`). In Verifying, every configured check with `requiredBy` runs
-on the aggregate; a failing check finishes the run Incomplete. The publisher
-then preflights the publication: the aggregate's file changes against the
-captured source, plus every registry shard whose records changed, regenerated
-from the aggregate's registry. A regenerated shard keeps the captured order of
-its remaining records and lists new ones after them. A stale source finishes
-the run Stale. The final evidence check moves the run to Publishing; the change
-set is journaled before the first write, and the publication receipt finishes
-the run Applied, NoChange, Stale or Failed, or leaves it to reconciliation when
-the write was partial or its result is unknown.
+When no run is active, Execute prepares and starts one. An active run bound to
+another capture finishes Stale first. The first run opens an assignment; after
+an incomplete, stale or failed run, a run on a changed basis continues the
+assignment; after Applied or NoChange the assignment is closed and a new one
+opens. A finished basis is not run again. The Managers then work until the root
+is done (`run.Engine.Run`).
+
+In Verifying, Execute builds the publication target: the aggregate's files plus
+every registry shard whose records changed, regenerated from the aggregate's
+registry. A regenerated shard keeps the captured order of its remaining records
+and lists new ones after them. Every configured check with `requiredBy`, which
+the basis binds, runs on that exact target; a failing check finishes the run
+Incomplete. The publisher then preflights the target's change set against the
+captured source: a source that changed finishes the run Stale, a change set
+the target cannot represent (`ErrUnpublishable`) finishes it Failed, and any
+other error leaves the run Verifying for the next Execute. The final evidence
+check binds the target and moves the run to Publishing. The change set is
+journaled with its source and target before the first write, and the
+publication receipt finishes the run Applied, NoChange, Stale or Failed, or
+leaves it to reconciliation when the write was partial or its result is
+unknown. A publication that an earlier process prepared is inspected, not
+written again.
 
 Execute returns when the run finished, waits for the owner or needs
 reconciliation. `ExecutionResult` lists the open questions to the owner among
 its issues; `Answer` records the owner's answer, and the next Execute resumes
-the waiting run. Resuming an interrupted publication is not implemented yet.
+the waiting run.

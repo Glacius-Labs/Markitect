@@ -50,7 +50,9 @@ func (r CheckRecord) payloadRefs() []BlobRef {
 }
 
 // VerificationRecord is the Host's final evidence check (execution contract,
-// Verifying): the exact aggregate and the passing required checks on it.
+// Verifying): the aggregate version, the exact tree that publishing it writes
+// (its files and regenerated registry shards), and the passing required
+// checks on that tree.
 type VerificationRecord struct {
 	Aggregate uint64
 	Tree      snapshot.TreeID
@@ -63,8 +65,11 @@ type VerificationRecord struct {
 type PublicationRecord struct {
 	ID        string
 	Aggregate uint64
-	Changes   BlobRef
-	Receipt   BlobRef
+	// Source is the captured tree the changes apply to, Target the verified
+	// tree they produce.
+	Source, Target snapshot.TreeID
+	Changes        BlobRef
+	Receipt        BlobRef
 }
 
 func (r PublicationRecord) payloadRefs() []BlobRef {
@@ -169,12 +174,33 @@ func (c *Coordinator) ObserveCheckCommand(meta RecordMeta, receipt CheckReceipt,
 		Check: CheckRecord{ID: receipt.ID, Receipt: p.Ref()}, sessionPayloads: []Payload{p}}, nil
 }
 
-// VerifyRunCommand records the final evidence check and moves the run to
-// Publishing.
-func (c *Coordinator) VerifyRunCommand(meta RecordMeta, checks []CheckID) Command {
+// VerifyRunCommand records the final evidence check of the tree that
+// publishing the aggregate writes, and moves the run to Publishing.
+func (c *Coordinator) VerifyRunCommand(meta RecordMeta, target snapshot.TreeID, checks []CheckID) Command {
 	return Command{ID: meta.ID, ObservedAt: meta.ObservedAt, Kind: VerifyRun, Assignment: c.Current().Assignment, Run: c.Current().ID,
-		Verification: VerificationRecord{Aggregate: c.state.aggregateVersion, Tree: c.state.aggregateTree, Checks: slices.Clone(checks)}}
+		Verification: VerificationRecord{Aggregate: c.state.aggregateVersion, Tree: target, Checks: slices.Clone(checks)}}
 }
+
+// RequiredChecks names the checks the basis requires before publication.
+func (c *Coordinator) RequiredChecks() []string {
+	if c.state.managerBasis.RequiredChecks == nil {
+		return nil
+	}
+	return slices.Clone(*c.state.managerBasis.RequiredChecks)
+}
+
+// Verification returns the run's final evidence check, once recorded.
+func (c *Coordinator) Verification() VerificationRecord {
+	v := c.state.verification
+	v.Checks = slices.Clone(v.Checks)
+	return v
+}
+
+// Publication returns the run's recorded publication, once prepared.
+func (c *Coordinator) Publication() PublicationRecord { return c.state.publication }
+
+// SourceTree is the identity of the run's captured source.
+func (c *Coordinator) SourceTree() snapshot.TreeID { return c.state.sourceTree }
 
 // PublishedChange is one recorded publication change: a path and its content
 // identity before and after; an absent side is nil.
@@ -192,7 +218,7 @@ type PublishedEntry struct {
 
 // PreparePublicationCommand records the exact changes to publish before the
 // first write, so that an interrupted publication can be inspected.
-func (c *Coordinator) PreparePublicationCommand(meta RecordMeta, id string, changes []snapshot.Change) (Command, error) {
+func (c *Coordinator) PreparePublicationCommand(meta RecordMeta, id string, target snapshot.TreeID, changes []snapshot.Change) (Command, error) {
 	recorded := []PublishedChange{}
 	for _, ch := range changes {
 		pc := PublishedChange{Path: ch.Path().String()}
@@ -213,7 +239,7 @@ func (c *Coordinator) PreparePublicationCommand(meta RecordMeta, id string, chan
 		return Command{}, err
 	}
 	return Command{ID: meta.ID, ObservedAt: meta.ObservedAt, Kind: PreparePublication, Assignment: c.Current().Assignment, Run: c.Current().ID,
-		Publication: PublicationRecord{ID: id, Aggregate: c.state.aggregateVersion, Changes: p.Ref()}, sessionPayloads: []Payload{p}}, nil
+		Publication: PublicationRecord{ID: id, Aggregate: c.state.aggregateVersion, Source: c.state.sourceTree, Target: target, Changes: p.Ref()}, sessionPayloads: []Payload{p}}, nil
 }
 
 // PublicationResult is the observed result of a publication, as the
@@ -314,7 +340,7 @@ func (s *stateValue) applyVerification(c Command) error {
 		s.checks[c.Check.ID] = check
 	case VerifyRun:
 		v := c.Verification
-		if r.State != Verifying || s.hasOpen() || s.hasLiveSessions() || v.Aggregate != s.aggregateVersion || v.Tree != s.aggregateTree {
+		if r.State != Verifying || s.hasOpen() || s.hasLiveSessions() || v.Aggregate != s.aggregateVersion {
 			return ErrState
 		}
 		for _, t := range s.tasks {
@@ -322,20 +348,29 @@ func (s *stateValue) applyVerification(c Command) error {
 				return ErrState
 			}
 		}
-		seen := map[CheckID]bool{}
+		seen, names := map[CheckID]bool{}, map[string]bool{}
 		for _, id := range v.Checks {
 			check, ok := s.checks[id]
-			if !ok || seen[id] || !check.Passed || check.Record.Tree != s.aggregateTree {
+			if !ok || seen[id] || !check.Passed || check.Record.Task != "" || check.Record.Tree != v.Tree {
 				return ErrState
 			}
-			seen[id] = true
+			seen[id], names[check.Record.Name] = true, true
+		}
+		if s.managerBasis.RequiredChecks == nil {
+			return ErrState
+		}
+		for _, name := range *s.managerBasis.RequiredChecks {
+			if !names[name] {
+				return ErrState // every required check passed on the published tree
+			}
 		}
 		s.verification = v
 		r.State = Publishing
 	case PreparePublication:
 		changes, ok := payloadFor(c, c.Publication.Changes)
 		var recorded []PublishedChange
-		if r.State != Publishing || s.publication.ID != "" || !identifier(c.Publication.ID) || c.Publication.Aggregate != s.aggregateVersion || c.Publication.Receipt != (BlobRef{}) {
+		if r.State != Publishing || s.publication.ID != "" || !identifier(c.Publication.ID) || c.Publication.Aggregate != s.aggregateVersion || c.Publication.Receipt != (BlobRef{}) ||
+			c.Publication.Source != s.sourceTree || c.Publication.Target != s.verification.Tree {
 			return ErrState
 		}
 		if !ok || len(c.sessionPayloads) != 1 || changes.Ref().MediaType != publicationMedia || strictJSON(changes.Bytes(), &recorded) != nil {
@@ -382,7 +417,7 @@ func (s *stateValue) applyVerification(c Command) error {
 // candidate step runs, on its frozen candidate, one check at a time.
 func (s stateValue) checkAdmissible(k CheckRecord) bool {
 	if k.Task == "" {
-		return s.current.State == Verifying && k.Tree == s.aggregateTree && !s.hasOpen()
+		return s.current.State == Verifying && !s.hasOpen()
 	}
 	t, ok := s.tasks[k.Task]
 	if !ok || s.current.State != Running || t.Phase != PhaseReviewerCandidate || t.Step == "" || s.sessions[t.Session].Plan.Candidate != k.Tree {

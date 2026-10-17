@@ -313,19 +313,22 @@ two rejections.
 
 ## Verification and publication
 
-While the run is Verifying, `PrepareCheckCommand` admits one required check on
-the exact aggregate as assessment work, and `ObserveCheckCommand` records its
-receipt and settles its reservation; an uncertain receipt moves the run to
-Reconciling. A check passes on an observed zero exit of the same image and tree.
-`Engine.Verify` runs the required checks and finishes the run Incomplete when
-one fails. `VerifyRunCommand` is the final evidence check: every task is done,
-no blocking issue is open, nothing is running and the named checks passed on
-the aggregate; it moves the run to Publishing.
+The basis binds the names of the required checks. While the run is Verifying,
+`PrepareCheckCommand` admits one check as assessment work, with room for its
+container's start and stop, and `ObserveCheckCommand` records its receipt and
+settles its reservation; an uncertain receipt moves the run to Reconciling. A
+check passes on an observed zero exit of the same image and tree.
+`Engine.Verify` runs the required checks on the tree that publishing the
+aggregate writes, reuses a check that already passed on it, and finishes the
+run Incomplete when one fails. `VerifyRunCommand` is the final evidence check:
+every task is done, no blocking issue is open, nothing is running and every
+required check passed on that tree; it moves the run to Publishing.
 
-`PreparePublicationCommand` records the change set before the first write, and
-`PublishRunCommand` records the publisher's receipt. Applied requires a
+`PreparePublicationCommand` records the change set before the first write,
+bound to the captured source and the verified tree, and `PublishRunCommand`
+records the publisher's receipt; until then the run cannot finish. Applied requires a
 non-empty change set and NoChange an empty one; stale and failed finish the run
 as such, and a partial or unknown publication moves it to Reconciling. These
-are the only commands that finish a run Applied or NoChange. The reducer tracks
-the aggregate's tree identity, so each check and the verification are bound to
-the exact aggregate.
+are the only commands that finish a run Applied or NoChange. A step's deadline
+leaves its container's stop inside the step's reservation, and the adapter's
+records of a step are written even after its deadline.

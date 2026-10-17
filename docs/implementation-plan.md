@@ -71,7 +71,9 @@ The architect delivers this queue in order, in one or more pull requests each. T
 - `Profile`, which builds each adapter's session profile payload from that prepared profile;
 - `CheckRequest`, which builds a `run.CheckRequest` from a configured check and its check profile;
 - the repository's `Workspaces`, the check runner and the GitRepo publisher;
-- a report of `ExecutionResult`: the run, every task and its findings, the checks and the publication receipt.
+- a report of `ExecutionResult`: the run, every task, the issues including the open questions to the owner, the checks and the publication receipt;
+- an `answer` verb that calls `ControlledRun.Answer` and then `Execute` again;
+- in the GitRepo publisher, errors that wrap `apply.ErrCaptureChanged` for a changed source and `apply.ErrUnpublishable` for a change set the target cannot represent, as the Publisher port now names them.
 
 ### Branch names
 

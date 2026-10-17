@@ -94,6 +94,13 @@ func (r CapturedSettingsResult) runInput(facts RunBindingFacts) (run.BindingInpu
 		},
 		PolicySource: execution.APIVersion.Source,
 	}
+	if execution.Checks != nil {
+		for _, check := range execution.Checks.Value {
+			if check.RequiredBy != nil {
+				input.RequiredChecks = append(input.RequiredChecks, check.ID.Value)
+			}
+		}
+	}
 	if execution.Scope != nil {
 		input.Scope = append([]organization.Setting[organization.ScopeRule]{}, execution.Scope.Value...) // Preserve explicit empty versus absent.
 	}

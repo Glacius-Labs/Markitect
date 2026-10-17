@@ -141,7 +141,7 @@ func (s *stateValue) prepareTasks(b Binding, runID string) error {
 	s.issues = nil
 	s.issueOrder = nil
 	s.messages = nil
-	s.aggregateVersion, s.aggregateTree = 0, snapshot.TreeID{}
+	s.aggregateVersion, s.aggregateTree, s.sourceTree = 0, snapshot.TreeID{}, snapshot.TreeID{}
 	s.checks, s.checkOrder, s.checkInvocations = nil, nil, nil
 	s.verification, s.publication, s.publicationChanges = VerificationRecord{}, PublicationRecord{}, 0
 	s.managerBasis = bindingWire{}
@@ -157,7 +157,7 @@ func (s *stateValue) prepareTasks(b Binding, runID string) error {
 	if err != nil {
 		return err
 	}
-	s.aggregateTree = tree
+	s.aggregateTree, s.sourceTree = tree, tree
 	s.tasks = map[string]taskValue{}
 	s.issues = map[string]Issue{}
 	s.checks, s.checkInvocations = map[CheckID]checkValue{}, map[CheckID]string{}

@@ -203,27 +203,31 @@ func (e *Engine) Run(ctx context.Context) error {
 	return e.finish(ctx, "no step is admissible and the remaining waits cannot be satisfied")
 }
 
-// RequiredCheck is one configured check that the aggregate must pass before
-// publication. Its request's tree is the aggregate's.
+// RequiredCheck is one configured check that the published tree must pass.
 type RequiredCheck struct {
 	Name    string
 	Request CheckRequest
 }
 
-// Verify runs the required checks on the verified aggregate and returns the
-// passing ones, which the final evidence check names. A failing check finishes
-// the run Incomplete with its receipt retained; correcting it through the
-// Managers is not supported yet.
-func (e *Engine) Verify(ctx context.Context, required []RequiredCheck) ([]CheckID, error) {
+// Verify runs the required checks on the tree that publishing the aggregate
+// writes and returns the passing ones, which the final evidence check names.
+// A check that already passed on that tree in this run is not run again. A
+// failing check finishes the run Incomplete with its receipt retained;
+// correcting it through the Managers is not supported yet.
+func (e *Engine) Verify(ctx context.Context, target snapshot.Tree, required []RequiredCheck) ([]CheckID, error) {
 	c := e.cfg.Coordinator
 	if c.Current().State != Verifying || len(required) > 0 && e.cfg.Checks == nil {
 		return nil, ErrState
 	}
 	var passed []CheckID
 	for _, check := range required {
+		if id, ok := e.passedOn(check.Name, target.Digest()); ok {
+			passed = append(passed, id)
+			continue
+		}
 		req := check.Request
-		req.Tree, req.ID = e.aggregate().Tree(), CheckID(fmt.Sprintf("%s-%s", req.ID, c.Current().ID))
-		cmd, err := c.PrepareCheckCommand(e.meta("prepare-check"), check.Name, req, Reservation{ID: "check-" + string(req.ID), Kind: ProjectCheck, Purpose: Assessment, Maximum: req.Timeout})
+		req.Tree, req.ID = target, CheckID(fmt.Sprintf("%s-%s-%d", req.ID, c.Current().ID, c.Revision()))
+		cmd, err := c.PrepareCheckCommand(e.meta("prepare-check"), check.Name, req, e.checkReservation(req))
 		if err != nil {
 			return nil, err
 		}
@@ -237,6 +241,21 @@ func (e *Engine) Verify(ctx context.Context, required []RequiredCheck) ([]CheckI
 		passed = append(passed, req.ID)
 	}
 	return passed, nil
+}
+
+// passedOn finds a verification check of the run that already passed on tree.
+func (e *Engine) passedOn(name string, tree snapshot.TreeID) (CheckID, bool) {
+	for _, v := range e.cfg.Coordinator.Checks() {
+		if v.Record.Task == "" && v.Record.Name == name && v.Record.Tree == tree && v.Passed {
+			return v.Record.ID, true
+		}
+	}
+	return "", false
+}
+
+// checkReservation holds a check's timeout plus the container's start and stop.
+func (e *Engine) checkReservation(req CheckRequest) Reservation {
+	return Reservation{ID: "check-" + string(req.ID), Kind: ProjectCheck, Purpose: Assessment, Maximum: req.Timeout + e.cfg.Limits.StartTimeout + e.cfg.Limits.StopTimeout}
 }
 
 // runCheck admits one check, runs it and records its receipt. An uncertain
@@ -971,7 +990,7 @@ func (e *Engine) reviewCheck(ctx context.Context, manager string, phase Phase, v
 		return refuse(fmt.Sprintf("%q is not a configured check; the configured checks are %s", in.Check, strings.Join(names, ", ")))
 	}
 	req.Tree, req.ID = version.tree, CheckID(fmt.Sprintf("%s-%s-%s", req.ID, call.Step, call.Call))
-	admit, err := e.cfg.Coordinator.PrepareReviewCheckCommand(e.meta("prepare-check"), manager, in.Check, req, Reservation{ID: "check-" + string(req.ID), Kind: ProjectCheck, Purpose: Assessment, Maximum: req.Timeout})
+	admit, err := e.cfg.Coordinator.PrepareReviewCheckCommand(e.meta("prepare-check"), manager, in.Check, req, e.checkReservation(req))
 	if err != nil {
 		return refuse(err.Error())
 	}

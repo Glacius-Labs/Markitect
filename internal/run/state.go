@@ -57,6 +57,7 @@ type stateValue struct {
 	// aggregate (core rule D2); aggregateTree is its tree identity.
 	aggregateVersion   uint64
 	aggregateTree      snapshot.TreeID
+	sourceTree         snapshot.TreeID
 	checks             map[CheckID]checkValue
 	checkOrder         []CheckID
 	checkInvocations   map[CheckID]string
@@ -345,7 +346,7 @@ func (s *stateValue) apply(c Command) error {
 		r.Reason = c.Reason
 		r.NextActor = ""
 	case FinishRun:
-		if s.hasOpen() || s.hasLiveSessions() || c.Outcome == Stopped && !r.StopRequested {
+		if s.hasOpen() || s.hasLiveSessions() || c.Outcome == Stopped && !r.StopRequested || s.publication.ID != "" && s.publication.Receipt == (BlobRef{}) {
 			return ErrState
 		}
 		r.State = Finished

@@ -71,10 +71,13 @@ func recordedReviewDemand(w bindingWire) reviewDemand {
 }
 func validateManagerPolicy(w bindingWire) error {
 	if w.Version != 3 {
-		if w.ManagerPolicy != nil || w.Scope != nil || w.MaxContextBytes != nil {
+		if w.ManagerPolicy != nil || w.Scope != nil || w.MaxContextBytes != nil || w.RequiredChecks != nil {
 			return ErrInvalid
 		}
 		return nil
+	}
+	if w.RequiredChecks == nil || !slices.IsSorted(*w.RequiredChecks) || slices.ContainsFunc(*w.RequiredChecks, func(id string) bool { return !identifier(id) }) || len(slices.Compact(slices.Clone(*w.RequiredChecks))) != len(*w.RequiredChecks) {
+		return ErrInvalid
 	}
 	if w.MaxContextBytes == nil || w.MaxContextBytes.Value <= 0 || !recordedSettingSource(w, w.MaxContextBytes.Source) {
 		return ErrInvalid

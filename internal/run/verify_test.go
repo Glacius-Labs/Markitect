@@ -37,12 +37,13 @@ func verifiedHarness(t *testing.T, exit int) (*harness, *fakeChecks) {
 	if h.c.Current().State != run.Verifying {
 		t.Fatal("run did not reach Verifying", h.c.Current())
 	}
-	passed, err := h.engine.Verify(context.Background(), []run.RequiredCheck{requiredCheck(t)})
+	target := h.engine.Aggregate().Tree()
+	passed, err := h.engine.Verify(context.Background(), target, []run.RequiredCheck{requiredCheck(t)})
 	if err != nil {
 		t.Fatal(err)
 	}
 	if h.c.Current().State == run.Verifying {
-		commit(t, h.c, h.j, h.c.VerifyRunCommand(meta("verify"), passed))
+		commit(t, h.c, h.j, h.c.VerifyRunCommand(meta("verify"), target.Digest(), passed))
 	}
 	return h, checks
 }
@@ -103,7 +104,7 @@ func TestPublicationOutcomes(t *testing.T) {
 			if !tc.empty && len(changes) == 0 {
 				t.Fatal("the aggregate has no changes")
 			}
-			prepare, err := h.c.PreparePublicationCommand(meta("prepare-publication"), "publication-1", changes)
+			prepare, err := h.c.PreparePublicationCommand(meta("prepare-publication"), "publication-1", h.engine.Aggregate().Tree().Digest(), changes)
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -139,7 +140,7 @@ func TestVerificationRefusesUnadmittedChecks(t *testing.T) {
 	} else if _, err := h.c.Propose(cmd); err == nil {
 		t.Fatal("a check ran while the run was not Verifying")
 	}
-	if _, err := h.c.Propose(h.c.VerifyRunCommand(meta("early-verify"), nil)); !errors.Is(err, run.ErrState) {
+	if _, err := h.c.Propose(h.c.VerifyRunCommand(meta("early-verify"), h.c.AggregateTree(), nil)); !errors.Is(err, run.ErrState) {
 		t.Fatal("a running run was verified", err)
 	}
 }
@@ -173,5 +174,44 @@ func TestCandidateReviewRequestsChecksOnItsCandidate(t *testing.T) {
 	}
 	if b := h.c.Budget(); b.Held != (run.Capacity{}) {
 		t.Fatal("check hold survived", b.Held)
+	}
+}
+
+// The final evidence check names every check the basis requires; a check
+// that passed on the tree is not run again; a prepared publication cannot be
+// finished over without its receipt.
+func TestVerificationBindsRequiredChecksAndPublication(t *testing.T) {
+	inputs := stepInputs(t, true)
+	inputs.Binding.RequiredChecks = []string{"go-tests"}
+	h := newHarnessWith(t, inputs, happyAgent)
+	checks := &fakeChecks{}
+	h.engine = h.newEngineWith(h.c, checks)
+	runToEnd(t, h)
+	target := h.engine.Aggregate().Tree()
+	if _, err := h.c.Propose(h.c.VerifyRunCommand(meta("unchecked"), target.Digest(), nil)); !errors.Is(err, run.ErrState) {
+		t.Fatal("verified without the required check", err)
+	}
+	first, err := h.engine.Verify(context.Background(), target, []run.RequiredCheck{requiredCheck(t)})
+	if err != nil {
+		t.Fatal(err)
+	}
+	again, err := h.engine.Verify(context.Background(), target, []run.RequiredCheck{requiredCheck(t)})
+	if err != nil || len(checks.runs) != 1 || !reflect.DeepEqual(first, again) {
+		t.Fatal("a passed check ran again", len(checks.runs), err)
+	}
+	commit(t, h.c, h.j, h.c.VerifyRunCommand(meta("verify"), target.Digest(), first))
+	prepare, err := h.c.PreparePublicationCommand(meta("prepare-publication"), "publication-1", target.Digest(), snapshot.Compare(h.inputs.Binding.Census, target))
+	if err != nil {
+		t.Fatal(err)
+	}
+	commit(t, h.c, h.j, prepare)
+	finish := command("finish", run.FinishRun)
+	finish.Run, finish.Outcome, finish.Reason = h.c.Current().ID, run.Failed, "give up"
+	if _, err := h.c.Propose(finish); !errors.Is(err, run.ErrState) {
+		t.Fatal("a prepared publication was finished over without its receipt", err)
+	}
+	other, _ := h.c.PreparePublicationCommand(meta("other-target"), "publication-2", h.inputs.Binding.Census.Digest(), nil)
+	if _, err := h.c.Propose(other); err == nil {
+		t.Fatal("a second publication was prepared")
 	}
 }

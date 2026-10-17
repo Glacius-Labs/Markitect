@@ -184,7 +184,7 @@ func (c Command) validate() error {
 		allowed.Verification = c.Verification
 	case PreparePublication:
 		p := c.Publication
-		if !identifier(p.ID) || !p.Changes.Valid() || p.Receipt != (BlobRef{}) {
+		if !identifier(p.ID) || !p.Changes.Valid() || p.Receipt != (BlobRef{}) || p.Source == (snapshot.TreeID{}) || p.Target == (snapshot.TreeID{}) {
 			return ErrInvalid
 		}
 		allowed.Publication = p
@@ -195,7 +195,7 @@ func (c Command) validate() error {
 		allowed.Answer = c.Answer
 	case PublishRun:
 		p := c.Publication
-		if !identifier(p.ID) || !p.Receipt.Valid() || p.Changes != (BlobRef{}) || p.Aggregate != 0 || !boundedInput(c.Reason) {
+		if !identifier(p.ID) || !p.Receipt.Valid() || p.Changes != (BlobRef{}) || p.Aggregate != 0 || p.Source != (snapshot.TreeID{}) || p.Target != (snapshot.TreeID{}) || !boundedInput(c.Reason) {
 			return ErrInvalid
 		}
 		allowed.Publication = p

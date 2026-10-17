@@ -35,12 +35,15 @@ func (w *executionWorkspaces) Close(_ context.Context, id run.WorkspaceID) (run.
 // report in Explore, submit complete no-change results and pass every review.
 type executionSessions struct {
 	t *testing.T
-	n int
 }
 
+// adapterRecords numbers the fake adapter's records across instances, because
+// record IDs are unique in the whole journal.
+var adapterRecords int
+
 func (f *executionSessions) meta() run.RecordMeta {
-	f.n++
-	return run.RecordMeta{ID: fmt.Sprintf("adapter-%d", f.n), ObservedAt: time.Date(2026, 10, 17, 9, 0, 0, 0, time.UTC)}
+	adapterRecords++
+	return run.RecordMeta{ID: fmt.Sprintf("adapter-%d", adapterRecords), ObservedAt: time.Date(2026, 10, 17, 9, 0, 0, 0, time.UTC)}
 }
 
 func (f *executionSessions) wire(data string) run.WirePayload {
@@ -136,6 +139,7 @@ func (c *executionChecks) Run(_ context.Context, r run.CheckRequest) (run.CheckR
 type executionPublisher struct {
 	requests []apply.PublicationRequest
 	stale    bool
+	failing  error
 }
 
 func (p *executionPublisher) Preflight(_ context.Context, r apply.PublicationRequest, c apply.ControlCheck) (apply.PublicationPermit, error) {
@@ -144,6 +148,9 @@ func (p *executionPublisher) Preflight(_ context.Context, r apply.PublicationReq
 	}
 	if p.stale {
 		return apply.PublicationPermit{}, apply.ErrCaptureChanged
+	}
+	if p.failing != nil {
+		return apply.PublicationPermit{}, p.failing
 	}
 	p.requests = append(p.requests, r)
 	return apply.PublicationPermit{Request: r, Token: "permit"}, nil
@@ -221,5 +228,46 @@ func TestExecuteFinishesStaleWhenTheSourceChanged(t *testing.T) {
 	result, err := c.Execute(context.Background(), executionPorts(t, publisher, &executionChecks{}))
 	if !errors.Is(err, apply.ErrCaptureChanged) || result.Run.State != run.Finished || result.Run.Outcome != run.Stale {
 		t.Fatalf("stale source not finished Stale: %+v %v", result.Run, err)
+	}
+}
+
+// A transient preflight error leaves the run Verifying; the next Execute
+// publishes it.
+func TestExecuteRetriesATransientPreflightError(t *testing.T) {
+	prepared, facts, s, _ := controlFixture(t)
+	c := openControlled(t, prepared, facts, s)
+	publisher, checks := &executionPublisher{failing: errors.New("the repository is busy")}, &executionChecks{}
+	result, err := c.Execute(context.Background(), executionPorts(t, publisher, checks))
+	if err == nil || result.Run.State != run.Verifying {
+		t.Fatalf("a transient refusal changed the run: %+v %v", result.Run, err)
+	}
+	publisher.failing = nil
+	result, err = c.Execute(context.Background(), executionPorts(t, publisher, checks))
+	if err != nil || result.Run.State != run.Finished || result.Run.Outcome != run.NoChange || checks.runs != 1 {
+		t.Fatalf("the retry did not publish once checked: %+v %v checks=%d", result.Run, err, checks.runs)
+	}
+}
+
+// An active run bound to another capture finishes Stale, and a new run
+// starts on the current capture (execution contract, outcomes).
+func TestExecuteFinishesARunOfAnotherCaptureStale(t *testing.T) {
+	prepared, facts, s, j := controlFixture(t)
+	c := openControlled(t, prepared, facts, s)
+	other := facts
+	other.ProductBuild = "another-product-build"
+	basis, err := prepared.BindRun(other)
+	if err != nil {
+		t.Fatal(err)
+	}
+	at := time.Date(2026, 10, 17, 8, 0, 0, 0, time.UTC)
+	controlCommit(t, c.Coordinator(), j, run.PrepareCommand("old-prepare", "old", "old-run", "", at, basis))
+	controlCommit(t, c.Coordinator(), j, run.Command{ID: "old-start", Kind: run.StartRun, Assignment: "old", Run: "old-run", ObservedAt: at})
+	result, err := c.Execute(context.Background(), executionPorts(t, &executionPublisher{}, &executionChecks{}))
+	if err != nil || result.Run.ID == "old-run" || result.Run.Outcome != run.NoChange {
+		t.Fatalf("a new run did not replace the drifted one: %+v %v", result.Run, err)
+	}
+	runs := c.Coordinator().Assignments()[0].Runs
+	if runs[0].ID != "old-run" || runs[0].Outcome != run.Stale {
+		t.Fatalf("the drifted run did not finish Stale: %+v", runs)
 	}
 }
