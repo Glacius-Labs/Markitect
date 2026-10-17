@@ -79,6 +79,7 @@ const (
 
 type Invocation struct {
 	Reservation Reservation
+	CapRevision uint64
 	State       InvocationState
 	Elapsed     time.Duration
 	Observation string

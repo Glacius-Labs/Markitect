@@ -1,7 +1,7 @@
 # Run admission
 
-This package owns pure decisions over a fixed Apply basis and one assignment's
-shared ledger. It consumes the existing model, snapshot, organization and
+This package owns pure decisions over a fixed Apply basis and each assignment's
+shared ledger on one repository stream. It consumes model, snapshot, organization and
 realization values. The caller supplies acquired original bytes, static profile
 facts, clock labels and elapsed durations. None establishes runtime capability or
 owner authority by itself.
@@ -63,13 +63,35 @@ their full holds. Explicit Host observations establish settlement or proven
 non-dispatch. Writing preserves the completion reserve; assessment may use it.
 An actual overrun is retained and blocks further admission.
 
-This early slice starts one assignment on an actually new journal stream and
-supports changed-basis continuation with the same policy and consumed ledger.
-The original owner request remains fixed for that assignment. Each Prepared run
+`ExtendAssignment` records absolute cap targets and exact raw UTF-8 owner input
+(at most 64 KiB). At least one cap must increase, none may decrease, and every
+target stays within the assignment's original project ceilings. Completion
+reserve and timeouts stay fixed. Consumption, invocation holds and observed
+overruns remain unchanged. Each invocation retains the cap revision admitting
+it; extension records retain every prior cap revision and original owner input.
+These Host observations do not authenticate authority.
+
+`CloseAssignment` requires a Finished current run, no open invocation, exact raw
+owner input and a separate bounded Host quiescence observation. An empty hold
+ledger, cancellation acknowledgement or stop request is insufficient. RUN
+records the supplied observation; no physical termination is established here.
+Closure keeps the last run's outcome and cannot reopen the assignment.
+
+`Assignments` returns copied closed ledgers followed by the current assignment,
+with original owner references, initial/current policy, cap revisions, runs,
+invocations, extension inputs and closure observations. A distinct ordinary
+assignment can be Prepared only after prior closure, with no predecessor. It has
+its own budget and owner input; previous consumption, grants, holds and remaining
+capacity never carry over. Run and invocation identities cannot be reused.
+Exact historical command retries return the original receipt, even after a new
+assignment starts. Restore rebuilds all of this history through the same reducer.
+
+An open assignment supports continuation after a changed basis or a recorded
+extension since the last run was Prepared. Its original owner input and bound
+policy stay fixed; recorded cap targets change the shared ledger only. Each Prepared run
 needs an available run unit and the new basis's structural review floor in the
 remaining shared ledger; this need not replenish the configured reserve that
 assessment work may spend.
-Assignment extensions/closure, multiple ordinary assignments, review and task
-execution, final evidence, Verifying/Publishing transitions and Applied/NoChange
+Review and task execution, final evidence, Verifying/Publishing transitions and Applied/NoChange
 are not implemented yet. There is no Session, Workspace, Check, SQLite, provider
 or Apply adapter here. The full contracts remain in the design documents.

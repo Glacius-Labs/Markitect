@@ -1,5 +1,13 @@
 apiVersion: markitect.registry/v1
 artifacts:
+  - path: "internal/run/assignment.go"
+    form: code
+    realizes: [product/run/confirmed-run-history]
+    why: Records bounded cap extensions, quiescent closure and isolated historic assignment ledgers.
+  - path: "internal/run/assignment_test.go"
+    form: test
+    realizes: [product/run/confirmed-run-history]
+    why: Checks cap conservation, immutable closure and ordinary assignments through stored history.
   - path: "internal/run/README.md"
     form: doc
     realizes: [product/run/confirmed-run-history]
