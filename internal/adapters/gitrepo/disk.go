@@ -54,7 +54,21 @@ func realDirectory(abs string) (os.FileInfo, error) {
 			break
 		}
 	}
-	return info, nil
+	// On Windows, pathname Lstat may defer its file ID lookup until SameFile.
+	// Root.Stat captures that identity from a handle now, before a later path
+	// replacement can change what the original observation refers to.
+	root, err := os.OpenRoot(abs)
+	if err != nil {
+		return nil, err
+	}
+	opened, statErr := root.Stat(".")
+	if err := errors.Join(statErr, root.Close()); err != nil {
+		return nil, err
+	}
+	if redirected(opened) || !opened.IsDir() || !os.SameFile(info, opened) {
+		return nil, ErrChanged
+	}
+	return opened, nil
 }
 
 func openDisk(ctx context.Context, abs string, limits Limits, observe func(string, string)) (*diskBoundary, error) {
