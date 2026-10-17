@@ -120,7 +120,7 @@ files:
     reason: Local editor layout for the library.
 ```
 
-Each path names one exact repository-relative regular file in that same Census. There is no glob or directory expansion, path normalization or inference from an acquisition boundary. Reject unknown or duplicate keys, duplicate paths, blank reasons, missing files, directory entries, glob patterns and non-relative or non-exact paths. For example, `*.tmp`, `.editor/` and `../editor-state.json` are invalid; listing `.editor/library-session.json` after its deletion also fails.
+Each path names one exact repository-relative regular file in that same Census. There is no glob or directory expansion, path normalization or inference from an acquisition boundary. Wildcard-looking text is never expanded and must itself match one exact observed regular-file path. Reject unknown or duplicate keys, duplicate paths, blank reasons, missing files, directory entries and non-relative or non-exact paths. For example, `.editor/` and `../editor-state.json` are invalid; listing `.editor/library-session.json` after its deletion also fails.
 
 A complete Census proving that `.markitect/ignore.yaml` is absent supplies an empty policy. If the file exists in Census but its input bytes were not captured, retain the observation and return `NotCompleted`; do not assume an empty policy or fetch bytes into an old guard. Exact observed files and their reasons supply the ignore classifications to `AccountFiles`.
 
@@ -130,7 +130,7 @@ An ignore entry overlapping an input or registered artifact fails. Input protect
 
 The operator supplies an explicit profile file and an absolute state directory outside the governed repository; acquisition records both. The profile file defines `agentProfiles` and `checkProfiles` with typed, versioned, adapter-specific sections. The project refers to them by name, and `run` receives prepared profile identities, not provider wire objects.
 
-Host instruction inputs outside the repository remain explicit locations in adapter-owned configuration. Host profiles keep their inline typed, versioned, adapter-specific sections; a generic `adapterFormat` plus payload-file catalog is outside this contract. The concrete driver fields, versions, schema and readiness checks belong to the actual consumer and adapter deliverable.
+Host instruction inputs outside the repository remain explicit locations in adapter-owned configuration. Host profiles keep their inline typed, versioned, adapter-specific sections. The concrete driver fields, versions, schema and readiness checks belong to the actual consumer and adapter deliverable.
 
 | Profile | Required preparation |
 | --- | --- |
