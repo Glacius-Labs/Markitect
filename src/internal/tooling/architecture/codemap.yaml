@@ -12,7 +12,7 @@ packages:
   # --- apply-model --------------------------------------------------------
   - path: internal/model
     layer: apply-model
-    purpose: Validates supplied canonical-model bytes and defines typed compiler results and source provenance.
+    purpose: Inspects supplied manifests and compiles canonical models into typed results with source provenance.
     doc: docs/design/canonical-model/manager-apply-go-architecture.md#organize-by-responsibility
 
   # --- apply-snapshot -----------------------------------------------------
