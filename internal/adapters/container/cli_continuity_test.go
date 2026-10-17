@@ -135,7 +135,16 @@ func TestClaudeSessionSeesAQuiescentBasisAdvance(t *testing.T) {
 		time.Sleep(200 * time.Millisecond)
 	}
 
+	// The transition runs behind a write barrier: the session is frozen while
+	// the Host changes its workspace, then resumes.
+	name := r.spec("advance", mounts).Name
+	if err := r.engine.Pause(r.ctx, name); err != nil {
+		t.Fatal(err)
+	}
 	r.writeFile("advance-basis", mounts, "/work/basis.txt", "basis-3\n")
+	if err := r.engine.Unpause(r.ctx, name); err != nil {
+		t.Fatal(err)
+	}
 	if answer := c.turn("Read basis.txt again now and give its exact content."); !strings.Contains(answer, "basis-3") {
 		t.Fatalf("the continued session did not see the advanced basis: %q", answer)
 	}

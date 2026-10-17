@@ -4,6 +4,10 @@ artifacts:
     form: code
     realizes: [product/runtime/container-runtime]
     why: Implements the stated responsibility within its declared boundary.
+  - path: "internal/adapters/container/README.md"
+    form: doc
+    realizes: [product/runtime/container-runtime]
+    why: Documents the stated responsibility or preserves its historical evidence.
   - path: "internal/adapters/container/check_image_test.go"
     form: test
     realizes: [product/runtime/container-runtime]

@@ -212,6 +212,28 @@ func (e *Engine) RemoveContainer(ctx context.Context, name string) error {
 	return err
 }
 
+// Pause freezes every process in a container through the engine's cgroup
+// freezer. Frozen processes cannot write, start children or answer callbacks
+// until Unpause, which makes Pause the write barrier for a workspace-basis
+// transition. A frozen process keeps its open files and its in-memory view;
+// the next message must make it re-read what changed.
+func (e *Engine) Pause(ctx context.Context, name string) error {
+	if !namePattern.MatchString(name) {
+		return fmt.Errorf("container name %q is not a plain engine name", name)
+	}
+	_, err := e.output(ctx, "pause", name)
+	return err
+}
+
+// Unpause resumes a container frozen by Pause.
+func (e *Engine) Unpause(ctx context.Context, name string) error {
+	if !namePattern.MatchString(name) {
+		return fmt.Errorf("container name %q is not a plain engine name", name)
+	}
+	_, err := e.output(ctx, "unpause", name)
+	return err
+}
+
 // ImageID resolves an image reference to its engine image ID.
 func (e *Engine) ImageID(ctx context.Context, ref string) (string, error) {
 	if ref == "" || strings.HasPrefix(ref, "-") || strings.ContainsAny(ref, " \n\r\x00") {
