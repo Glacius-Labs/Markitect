@@ -6,7 +6,7 @@ The repository uses one Go module. Packages are organized by concrete responsibi
 
 Pure model and snapshot packages consume supplied bytes and values. Organization and realization use those pure values. Apply owns preparation and consumer ports; adapters implement concrete acquisition and metadata protocols. Bootstrap constructs actual services. Product and maintenance commands remain thin entrypoints with separate composition.
 
-The container runtime runs every Agent session in its own Linux container ([DEC-037](../concepts/register.md#dec-037-agent-sessions-and-checks-run-in-linux-containers)). `markitect-agentd`, built from `internal/agentd` by `cmd/markitect-agentd`, runs inside the container: it starts the provider CLI, relays its standard streams, serves the Host tools over MCP on a Unix socket and reports exits. The container adapter starts hardened session containers and speaks the frame protocol of `internal/agentd/frame` with agentd; it is the only Host package that imports that protocol. The base image is defined in [packaging/runtime](../../packaging/runtime/README.md).
+The container runtime runs every Agent session in its own Linux container ([DEC-037](../concepts/register.md#dec-037-agent-sessions-and-checks-run-in-linux-containers)). `markitect-agentd`, built from `internal/agentd` by `cmd/markitect-agentd`, runs inside the container: it starts the provider CLI, relays its standard streams, serves the Host tools over MCP on a Unix socket and reports exits. The container adapter starts hardened session containers and owns the frame transport of `internal/agentd/frame` with agentd. The concrete Codex session adapter may consume the frame DTOs exposed by that container API while implementing `run.Sessions`. The Claude wire codec has no Run, container or frame imports. The base image is defined in [packaging/runtime](../../packaging/runtime/README.md).
 
 Run owns fixed input bindings, deterministic budget and lifecycle transitions, and its narrow journal port. A proposal changes no confirmed state; an exact append acknowledgement commits the transition. The Host supplies clock observations. There is no SQL, repository acquisition, provider protocol or public execution path in this package.
 
@@ -27,7 +27,7 @@ The [Codex metadata preparer](../../internal/adapters/codexappserver/README.md) 
 | Model view | Apply, model, snapshot |
 | Repository adapter | Apply and required pure values |
 | Journal adapter | Apply and Run; model and snapshot only in tests |
-| Codex metadata adapter | Apply, model, organization, snapshot, container image reader |
+| Codex metadata and session adapter | Apply, model, organization, snapshot, Run, container API and its agent frame DTOs |
 | Check metadata adapter | Apply, model, organization, snapshot |
 | Container adapter | Agent frame protocol |
 | Session helper (agentd) | Agent frame protocol |

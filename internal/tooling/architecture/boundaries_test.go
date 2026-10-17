@@ -71,11 +71,15 @@ func TestConcreteResponsibilityBoundaries(t *testing.T) {
 		{"internal/adapters/claudecode", "internal/agentd/frame", false},
 		{"internal/adapters/claudecode", "internal/adapters/codexappserver", false},
 		{"internal/adapters/claudecode", "internal/tooling/source", false},
-		// Codex's concrete metadata factory uses only image inspection/copy.
-		// Session and agentd-frame consumption require a separate delivery.
+		// Codex uses the Run session port and the frame DTOs exposed by the
+		// container API; agentd execution and other adapters remain separate.
 		{"internal/adapters/codexappserver", "internal/adapters/container", true},
-		{"internal/adapters/codexappserver", "internal/run", false},
-		{"internal/adapters/codexappserver", "internal/agentd/frame", false},
+		{"internal/adapters/codexappserver", "internal/run", true},
+		{"internal/adapters/codexappserver", "internal/agentd/frame", true},
+		{"internal/adapters/codexappserver", "internal/agentd", false},
+		{"internal/adapters/codexappserver", "internal/adapters/claudecode", false},
+		{"internal/adapters/codexappserver", "internal/adapters/gitrepo", false},
+		{"internal/adapters/codexappserver", "internal/tooling/source", false},
 		{"internal/bootstrap", "internal/adapters/container", false},
 		{"internal/adapters/container", "internal/agentd/frame", true},
 		{"internal/adapters/container", "internal/agentd", false},
