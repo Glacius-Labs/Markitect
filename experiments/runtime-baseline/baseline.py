@@ -76,11 +76,12 @@ def docker(*args, **kw):
 
 def issue_codex_login(image, home):
     """Write the runtime login without its refresh token into a provider home."""
-    raw = docker("run", "--rm", "--user", "1000:1000", "--mount", f"type=volume,src={CODEX_AUTH_VOLUME},dst=/auth,readonly",
+    hardening = ["--network", "none", "--user", "1000:1000", "--cap-drop", "ALL", "--security-opt", "no-new-privileges"]
+    raw = docker("run", "--rm", *hardening, "--mount", f"type=volume,src={CODEX_AUTH_VOLUME},dst=/auth,readonly",
                  "--entrypoint", "/bin/cat", image, "/auth/auth.json", check=True, capture_output=True).stdout
     login = json.loads(raw)
     login["tokens"]["refresh_token"] = ""
-    docker("run", "-i", "--rm", "--user", "1000:1000", "--mount", f"type=volume,src={home},dst=/home/agent",
+    docker("run", "-i", "--rm", *hardening, "--mount", f"type=volume,src={home},dst=/home/agent",
            "--entrypoint", "/bin/sh", image, "-c", "mkdir -p /home/agent/.codex && umask 077 && cat > /home/agent/.codex/auth.json",
            input=json.dumps(login).encode(), check=True, capture_output=True)
 

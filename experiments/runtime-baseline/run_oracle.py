@@ -1,13 +1,17 @@
-"""Runs inside the assessment container: write the manifest, then the oracle.
+"""Runs inside the assessment container: bind the manifest, run the oracle.
 
-Mounts: /out (built program, writable), /assess/realization (read-only),
-/evaluator (playground files at a fixed commit, read-only).
+Mounts: /out holds the built program and is read-only, /assess/realization
+is read-only, /evaluator holds the playground files at a fixed revision,
+read-only. The report goes to standard output, never to a file the program
+under test could reach.
 """
 import argparse
 import hashlib
 import json
-import subprocess
 import sys
+
+sys.path.insert(0, "/evaluator")
+import assess as oracle  # noqa: E402  (the evaluator from experiments/library-playground)
 
 p = argparse.ArgumentParser()
 p.add_argument("--label", required=True)
@@ -15,12 +19,11 @@ p.add_argument("--profile", required=True)
 p.add_argument("--source", required=True)
 p.add_argument("--commit", required=True)
 p.add_argument("--limits", required=True)
+p.add_argument("--protected", required=True, help="evaluator file hashes computed on the Host")
 a = p.parse_args()
 
 with open("/out/library", "rb") as f:
     program = hashlib.sha256(f.read()).hexdigest()
-protected = json.loads(subprocess.run([sys.executable, "-B", "/evaluator/assess.py", "--hashes"],
-                                      check=True, capture_output=True, text=True).stdout)
 manifest = {
     "experiment_id": "durchstich-" + a.label,
     "artifact_id": a.label,
@@ -30,10 +33,10 @@ manifest = {
     "command": ["/out/library"],
     "cwd": "/assess/realization",
     "program_sha256": {"/out/library": program},
-    "protected_sha256": protected,
+    "protected_sha256": json.loads(a.protected),
     "limits": json.loads(a.limits),
 }
-with open("/out/manifest.json", "w", encoding="utf-8") as f:
-    json.dump(manifest, f, indent=2)
-sys.exit(subprocess.run([sys.executable, "-B", "/evaluator/assess.py", "--manifest", "/out/manifest.json",
-                         "--output", "/out/assessment.json"]).returncode)
+raw = json.dumps(manifest, indent=2).encode()
+report = oracle.assess(json.loads(raw), raw)
+json.dump(report, sys.stdout)
+sys.exit(0 if report.get("passed") else 1)
