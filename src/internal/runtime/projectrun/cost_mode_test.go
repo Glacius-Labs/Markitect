@@ -7,8 +7,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/Glacius-Labs/Markitect/src/internal/runtime/agentexec"
 	"github.com/Glacius-Labs/Markitect/internal/testkit"
+	"github.com/Glacius-Labs/Markitect/src/internal/runtime/agentexec"
 )
 
 func TestCostModeValidationAndUnmeteredCostStaysUnknown(t *testing.T) {

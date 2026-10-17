@@ -3,8 +3,8 @@ package projecthistory
 import (
 	"testing"
 
-	"github.com/Glacius-Labs/Markitect/src/internal/core/projectmodel/projectbriefing"
 	"github.com/Glacius-Labs/Markitect/internal/testkit"
+	"github.com/Glacius-Labs/Markitect/src/internal/core/projectmodel/projectbriefing"
 )
 
 // TestMain shields git in these tests from the machine's Git configuration.

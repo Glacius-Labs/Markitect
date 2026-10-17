@@ -17,6 +17,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/Glacius-Labs/Markitect/internal/testkit"
 	"github.com/Glacius-Labs/Markitect/src/internal/application/mcp"
 	"github.com/Glacius-Labs/Markitect/src/internal/application/projectapp"
 	"github.com/Glacius-Labs/Markitect/src/internal/application/projectexplore"
@@ -24,7 +25,6 @@ import (
 	"github.com/Glacius-Labs/Markitect/src/internal/core/projectmodel/projectbriefing"
 	"github.com/Glacius-Labs/Markitect/src/internal/runtime/agentexec"
 	"github.com/Glacius-Labs/Markitect/src/internal/runtime/projectrun"
-	"github.com/Glacius-Labs/Markitect/internal/testkit"
 )
 
 type contractCase struct {

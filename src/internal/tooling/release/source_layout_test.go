@@ -8,8 +8,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/Glacius-Labs/Markitect/src/internal/core/snapshot"
 	"github.com/Glacius-Labs/Markitect/internal/testkit"
+	"github.com/Glacius-Labs/Markitect/src/internal/core/snapshot"
 )
 
 func TestTransitionalFoundationsMatchLiveAndFixedSourceArchives(t *testing.T) {

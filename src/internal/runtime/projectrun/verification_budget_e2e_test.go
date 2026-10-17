@@ -15,11 +15,11 @@ import (
 	"testing"
 	"time"
 
+	"github.com/Glacius-Labs/Markitect/internal/testkit"
 	"github.com/Glacius-Labs/Markitect/src/internal/core/projectmodel"
 	"github.com/Glacius-Labs/Markitect/src/internal/core/snapshot"
 	"github.com/Glacius-Labs/Markitect/src/internal/infrastructure/source"
 	"github.com/Glacius-Labs/Markitect/src/internal/runtime/agentexec"
-	"github.com/Glacius-Labs/Markitect/internal/testkit"
 	yaml "go.yaml.in/yaml/v3"
 )
 

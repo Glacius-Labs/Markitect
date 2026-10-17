@@ -19,9 +19,9 @@ import (
 	"testing"
 	"time"
 
+	"github.com/Glacius-Labs/Markitect/internal/testkit"
 	"github.com/Glacius-Labs/Markitect/src/internal/runtime/agentexec"
 	"github.com/Glacius-Labs/Markitect/src/internal/runtime/projectworkspace"
-	"github.com/Glacius-Labs/Markitect/internal/testkit"
 )
 
 // TestMain supplies a protocol-only child executable. It does not invoke Codex
