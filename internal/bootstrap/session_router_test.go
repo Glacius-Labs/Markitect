@@ -164,7 +164,10 @@ func TestSessionsRouterRefusesUnselectedAndUnconfiguredProfiles(t *testing.T) {
 		name   string
 		change func(*runport.SessionAdmission)
 	}{
-		{"unknown media", func(a *runport.SessionAdmission) { a.Plan.Profile.MediaType = "application/json" }},
+		{"unknown media", func(a *runport.SessionAdmission) {
+			a.Profile, _ = runport.NewPayload("application/json", "utf-8", []byte(`{}`))
+			a.Plan.Profile = a.Profile.Ref()
+		}},
 		{"invalid payload", func(a *runport.SessionAdmission) { a.Profile = runport.Payload{} }},
 		{"changed reference", func(a *runport.SessionAdmission) { a.Plan.Profile.Size++ }},
 		{"empty ID", func(a *runport.SessionAdmission) { a.Plan.ID = "" }},
