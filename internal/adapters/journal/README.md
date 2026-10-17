@@ -59,7 +59,8 @@ No adapter reducer decides event meaning.
 
 Reads pin a committed head and return whole batches at exact boundaries, limited
 to 256 batches and 64 MiB of canonical batch bytes per page. `Next` continues the
-same pinned interval. Exact batch lookup reports the current head and observed
+same pinned interval. Multi-batch pages target 8 MiB; a larger valid batch is
+returned alone. Exact batch lookup reports the current head and observed
 presence or absence. Length, canonical bytes, digest, sequence and event indexes
 are checked; malformed or missing required payloads are errors.
 

@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 	"time"
 
@@ -83,8 +84,12 @@ func TestAtomicAppendExactRetryCASAndPinnedWholeBatchReads(t *testing.T) {
 		t.Fatal("historical exact retry", got, err)
 	}
 	for _, bad := range []run.AppendBatch{batch(t, "first", 0, "changed"), batch(t, "stale", 0, "new"), batch(t, "duplicate-event", 3, "e1")} {
-		if _, err := s.Append(ctx, bad); !errors.Is(err, run.ErrConflict) {
+		known, err := s.Append(ctx, bad)
+		if !errors.Is(err, run.ErrConflict) {
 			t.Fatal("conflict accepted", err)
+		}
+		if bad.ID() == "first" && known != receipt {
+			t.Fatal("known original receipt lost beside conflict", known)
 		}
 	}
 	page, err := s.Read(ctx, run.EventQuery{Limit: 1})
@@ -155,6 +160,40 @@ func TestImmutableBlobInterpretationsAndCorruption(t *testing.T) {
 	}
 	if _, err := s.ReadBlob(ctx, refs[0]); !errors.Is(err, ErrCorrupt) {
 		t.Fatal("changed bytes accepted", err)
+	}
+}
+
+func TestReadByteBudgetStopsOnlyAtWholeBatchBoundaries(t *testing.T) {
+	s := acquire(t, request(t))
+	ctx := context.Background()
+	large := strings.Repeat("x", 5<<20)
+	for n := range 2 {
+		id := fmt.Sprintf("large-%d", n)
+		w := struct {
+			Version          uint32
+			ID               string
+			ExpectedRevision uint64
+			Events           []run.Event
+		}{1, id, uint64(n), []run.Event{{ID: id, Kind: "run.state-changed", Body: run.Command{ID: id, Kind: run.WaitRun, Assignment: "a", Run: "r", ObservedAt: time.Date(2026, 10, 17, 0, 0, 0, 0, time.UTC), Reason: large, NextActor: "owner"}}}}
+		data, err := json.Marshal(w)
+		if err != nil {
+			t.Fatal(err)
+		}
+		b, err := run.DecodeBatch(data)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if _, err := s.Append(ctx, b); err != nil {
+			t.Fatal(err)
+		}
+	}
+	page, err := s.Read(ctx, run.EventQuery{Limit: 256})
+	if err != nil || page.Revision != 2 || page.Next != 1 || len(page.Batches) != 1 {
+		t.Fatal("byte budget exposed partial or oversized page", page.Revision, page.Next, len(page.Batches), err)
+	}
+	page, err = s.Read(ctx, run.EventQuery{After: page.Next, Through: page.Revision, Limit: 256})
+	if err != nil || page.Revision != 2 || page.Next != 0 || len(page.Batches) != 1 || page.Batches[0].ID() != "large-1" {
+		t.Fatal("whole-batch continuation", page.Revision, page.Next, len(page.Batches), err)
 	}
 }
 

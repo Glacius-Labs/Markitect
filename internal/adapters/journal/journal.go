@@ -116,13 +116,13 @@ func (s *session) Append(ctx context.Context, b run.AppendBatch) (receipt run.Ap
 			return err
 		}
 		if found {
+			receipt = run.ReceiptFor(old)
 			if !bytes.Equal(old.Bytes(), b.Bytes()) {
 				return run.ErrConflict
 			}
 			if err := requiredBlobs(ctx, tx, old); err != nil {
 				return err
 			}
-			receipt = run.ReceiptFor(old)
 			return nil
 		}
 		revision, err := head(ctx, tx)

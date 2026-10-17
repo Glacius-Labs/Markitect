@@ -12,6 +12,10 @@ import (
 // canonical batch bytes even when the caller requests 256 batches.
 const maxPageBytes = maxPayloadBytes
 
+// A smaller target keeps ordinary multi-batch pages cheap. One individually
+// valid larger batch still fits by itself, up to maxPageBytes.
+const targetPageBytes = 8 << 20
+
 func (s *session) Read(ctx context.Context, q run.EventQuery) (page run.EventPage, err error) {
 	if !q.Valid() {
 		return page, run.ErrInvalid
@@ -73,7 +77,7 @@ func (s *session) Read(ctx context.Context, q run.EventQuery) (page run.EventPag
 			if length <= 0 || length > maxPayloadBytes || end <= int64(next) || end > int64(through) {
 				return ErrCorrupt
 			}
-			if bytes+length > maxPageBytes {
+			if len(page.Batches) > 0 && bytes+length > targetPageBytes {
 				break
 			}
 			b, found, err := lookupBatch(ctx, tx, id)
