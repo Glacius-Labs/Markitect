@@ -766,7 +766,11 @@ func (s *stateValue) concludeStep(c Command) error {
 	}
 	// The step's messages take effect with its conclusion, before its outcome
 	// that may wait on them; a failed step's messages are dropped with it
-	// (core rule T6), except a reply step's (core rule T11).
+	// (core rule T6), except a reply step's (core rule T11). A reply step the
+	// Host could not finish is retried.
+	if t.Phase == PhaseReply && !r.HostFault {
+		s.replyStepTaken(t, r.Step)
+	}
 	if r.Outcome != outcomeFailed || t.Phase == PhaseReply && !r.HostFault {
 		if err := s.recordSends(t, s.revision); err != nil {
 			return err
@@ -815,7 +819,6 @@ func (s *stateValue) concludeWork(r ConclusionRecord, t *taskValue, revision uin
 		t.Own, t.OwnTree = r.Candidate, r.Tree
 	}
 	if t.Phase == PhaseReply {
-		s.replyStepTaken(*t, r.Step)
 		return nil
 	}
 	t.Failure, t.HostFault = "", false

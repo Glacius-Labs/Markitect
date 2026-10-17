@@ -332,7 +332,10 @@ func (h *harness) newEngineWith(c *run.Coordinator, checks run.Checks) *run.Engi
 	}
 	var reviewChecks map[string]run.CheckRequest
 	if checks != nil {
-		reviewChecks = map[string]run.CheckRequest{"go-tests": requiredCheck(h.t).Request}
+		// A review check fits a review step; the slow one does not.
+		fast, slow := requiredCheck(h.t).Request, requiredCheck(h.t).Request
+		fast.Timeout = 20 * time.Second
+		reviewChecks = map[string]run.CheckRequest{"go-tests": fast, "slow": slow}
 	}
 	e, err := run.NewEngine(context.Background(), run.EngineConfig{Coordinator: c, Journal: journal, Sessions: h.sessions, Workspaces: h.ws, Checks: checks, ReviewChecks: reviewChecks, Preparation: h.inputs,
 		Profile: func(run.ProfileRequest) (run.SessionProfile, error) {

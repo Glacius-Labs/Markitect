@@ -68,7 +68,11 @@ func (c *Coordinator) CheckSend(manager string, args []byte) (string, error) {
 	if err := decodeArgs(args, &in); err != nil {
 		return "", err
 	}
-	m, err := c.state.resolveSend(t, in, len(c.state.stepSends(t))+1)
+	sends := c.state.stepSends(t)
+	if in.Kind == messageReply && slices.ContainsFunc(sends, func(v ToolView) bool { return v.Send != nil && v.Send.Kind == messageReply && v.Send.To == in.To }) {
+		return "", fmt.Errorf("this step already replies to %q", in.To)
+	}
+	m, err := c.state.resolveSend(t, in, len(sends)+1)
 	return m.ID, err
 }
 
@@ -190,21 +194,29 @@ func (s stateValue) unanswered(t taskValue) []Issue {
 	return out
 }
 
-// replyStepTaken marks the questions a reply step saw, so that each question
-// admits one reply step (core rule T11).
+// replyStepTaken marks the oldest unanswered question, which admitted the reply
+// step, so that each question admits one reply step (core rule T11).
 func (s *stateValue) replyStepTaken(t taskValue, step StepID) {
-	for _, q := range s.unanswered(t) {
+	if open := s.unanswered(t); len(open) > 0 {
+		q := open[0]
 		q.ReplyStep = step
 		s.issues[q.ID] = q
 	}
 }
 
-// waitsForOwner reports whether a task waits for an answer from the owner.
-func (s stateValue) waitsForOwner(t taskValue) bool {
-	return t.State == TaskBlocked && slices.ContainsFunc(t.Waits, func(w Wait) bool {
-		q, ok := s.issues[w.Ref]
-		return (w.Kind == waitOwner || w.Kind == waitReply) && ok && q.To == addressedToOwner && q.State == issueOpen
-	})
+// Resumable reports whether a waiting run has work again: every owner question
+// is answered, or an answer made a step admissible (core rules W1, W2).
+func (c *Coordinator) Resumable() bool {
+	s := c.state
+	if s.current.State != Waiting || c.pending != nil || c.recovering {
+		return false
+	}
+	if len(c.OwnerQuestions()) == 0 {
+		return true
+	}
+	s.current.State = Running
+	_, ok := s.next()
+	return ok
 }
 
 // AnswerQuestion records the owner's answer (core rules I2, W2).

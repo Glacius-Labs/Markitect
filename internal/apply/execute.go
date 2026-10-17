@@ -75,8 +75,8 @@ func (c *ControlledRun) Execute(ctx context.Context, ports ExecutionPorts) (Exec
 	if err != nil {
 		return c.result(nil), err
 	}
-	if r := co.Current(); r.State == run.Waiting && len(co.OwnerQuestions()) == 0 {
-		// The owner answered; the run continues (core rule W2).
+	if r := co.Current(); co.Resumable() {
+		// The owner answered; the run continues (core rules W1, W2).
 		if err := c.commit(ctx, run.Command{ID: c.meta("resume", ports.Clock).ID, Kind: run.ResumeRun, Assignment: r.Assignment, Run: r.ID, ObservedAt: ports.Clock().UTC()}); err != nil {
 			return c.result(nil), err
 		}
@@ -317,6 +317,17 @@ func (c *ControlledRun) publish(ctx context.Context, engine *run.Engine, ports E
 			return &receipt, err
 		}
 	} else {
+		// Nothing is journaled or written before the preflight passes, so a
+		// failed preflight leaves no publication to reconcile.
+		permit, err := ports.Publisher.Preflight(ctx, request, c)
+		switch {
+		case errors.Is(err, ErrCaptureChanged):
+			return nil, errors.Join(err, c.finish(ctx, run.Stale, "the source changed since its capture: "+err.Error(), ports.Clock))
+		case errors.Is(err, ErrUnpublishable):
+			return nil, errors.Join(err, c.finish(ctx, run.Failed, "the target cannot represent the change set: "+err.Error(), ports.Clock))
+		case err != nil:
+			return nil, err // nothing was journaled; the next Execute publishes again
+		}
 		cmd, err := co.PreparePublicationCommand(c.meta("prepare-publication", ports.Clock), string(request.ID), target.Digest(), request.Changes)
 		if err != nil {
 			return nil, err
@@ -324,17 +335,7 @@ func (c *ControlledRun) publish(ctx context.Context, engine *run.Engine, ports E
 		if err := c.commit(ctx, cmd); err != nil {
 			return nil, err
 		}
-		permit, err := ports.Publisher.Preflight(ctx, request, c)
-		switch {
-		case err == nil:
-			receipt, err = ports.Publisher.Publish(ctx, permit, c)
-		case errors.Is(err, ErrCaptureChanged):
-			receipt = PublicationReceipt{ID: request.ID, Outcome: PublicationStale, Reason: err.Error()}
-		case errors.Is(err, ErrUnpublishable):
-			receipt = PublicationReceipt{ID: request.ID, Outcome: PublicationFailed, Reason: err.Error()}
-		default:
-			return nil, err // nothing was written; the next Execute publishes again
-		}
+		receipt, err = ports.Publisher.Publish(ctx, permit, c)
 		if receipt.Outcome == "" {
 			receipt = PublicationReceipt{ID: request.ID, Outcome: PublicationUnknown, Reason: errors.Join(errors.New("the publisher returned no outcome"), err).Error()}
 		}

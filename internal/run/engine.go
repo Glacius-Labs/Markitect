@@ -72,7 +72,10 @@ type Engine struct {
 	versions []realization.Aggregate
 }
 
-var errStep = errors.New("step stopped before its conclusion")
+var (
+	errStep        = errors.New("step stopped before its conclusion")
+	errNotAdmitted = errors.New("the check was not admitted")
+)
 
 // NewEngine binds an engine to its run. It rebuilds the aggregate from the
 // captured source and the run's accepted deliveries (core rule D2).
@@ -219,8 +222,9 @@ type RequiredCheck struct {
 // Verify runs the required checks on the tree that publishing the aggregate
 // writes and returns the passing ones, which the final evidence check names.
 // A check that already passed on that tree in this run is not run again. A
-// failing check finishes the run Incomplete with its receipt retained;
-// correcting it through the Managers is not supported yet.
+// failing check, or one the budget no longer fits, finishes the run Incomplete
+// with its receipts retained; correcting it through the Managers is not
+// supported yet.
 func (e *Engine) Verify(ctx context.Context, target snapshot.Tree, required []RequiredCheck) ([]CheckID, error) {
 	c := e.cfg.Coordinator
 	if c.Current().State != Verifying || len(required) > 0 && e.cfg.Checks == nil {
@@ -238,7 +242,10 @@ func (e *Engine) Verify(ctx context.Context, target snapshot.Tree, required []Re
 		if err != nil {
 			return nil, err
 		}
-		receipt, err := e.runCheck(ctx, cmd, req)
+		receipt, _, err := e.runCheck(ctx, cmd, req)
+		if errors.Is(err, ErrBudget) {
+			return nil, e.finish(ctx, "the budget does not fit the required check "+check.Name)
+		}
 		if err != nil {
 			return nil, err
 		}
@@ -267,30 +274,36 @@ func (e *Engine) checkReservation(req CheckRequest) Reservation {
 
 // runCheck admits one check, runs it and records its receipt. An uncertain
 // receipt leaves the run to reconciliation.
-func (e *Engine) runCheck(ctx context.Context, admit Command, req CheckRequest) (CheckReceipt, error) {
+// A check whose admission the reducer refuses ran nowhere and returns
+// errNotAdmitted with the refusal; it returns the time the check ran.
+func (e *Engine) runCheck(ctx context.Context, admit Command, req CheckRequest) (CheckReceipt, time.Duration, error) {
 	c := e.cfg.Coordinator
 	if err := e.commit(ctx, admit); err != nil {
-		return CheckReceipt{}, err
+		if errors.Is(err, ErrUncertain) {
+			return CheckReceipt{}, 0, err
+		}
+		return CheckReceipt{}, 0, fmt.Errorf("%w: %w", errNotAdmitted, err)
 	}
 	began := e.cfg.Clock()
 	receipt, runErr := e.cfg.Checks.Run(ctx, req)
+	elapsed := e.cfg.Clock().Sub(began)
 	if receipt.ID == "" {
 		receipt.ID = req.ID
 	}
 	if runErr != nil && receipt.Reason == "" {
 		receipt.Reason = runErr.Error()
 	}
-	observed, err := c.ObserveCheckCommand(e.meta("observe-check"), receipt, e.cfg.Clock().Sub(began))
+	observed, err := c.ObserveCheckCommand(e.meta("observe-check"), receipt, elapsed)
 	if err != nil {
-		return receipt, err
+		return receipt, elapsed, err
 	}
 	if err := e.commit(ctx, observed); err != nil {
-		return receipt, err
+		return receipt, elapsed, err
 	}
 	if receipt.Uncertain {
-		return receipt, errors.Join(errStep, runErr)
+		return receipt, elapsed, errors.Join(errStep, runErr)
 	}
-	return receipt, nil
+	return receipt, elapsed, nil
 }
 
 func (e *Engine) finish(ctx context.Context, reason string) error {
@@ -330,6 +343,8 @@ type stepRun struct {
 	openEnded    time.Time
 	stepBegan    time.Time
 	stepEnded    time.Time
+	deadline     time.Time
+	checked      time.Duration
 	pending      []Claim
 	opened       bool
 	openSettled  bool
@@ -447,6 +462,7 @@ func (e *Engine) drive(ctx context.Context, s *stepRun, purpose Purpose, workspa
 	if deadline <= 0 {
 		deadline = c.StepTimeout(s.manager) / 2
 	}
+	s.deadline = s.stepBegan.Add(deadline)
 	stepCtx, cancel := context.WithTimeout(ctx, deadline)
 	observed, err := e.cfg.Sessions.Step(stepCtx, stepAdmission, detached{channel})
 	cancel()
@@ -455,7 +471,9 @@ func (e *Engine) drive(ctx context.Context, s *stepRun, purpose Purpose, workspa
 		return errors.Join(errStep, err)
 	}
 	s.stepTerminal = true
-	if err := e.settle(ctx, s.stepInvoke, s.stepBegan); err != nil {
+	// The review checks the step requested are charged as their own
+	// invocations, so the step's charge leaves their time out.
+	if err := e.settle(ctx, s.stepInvoke, s.stepBegan.Add(s.checked)); err != nil {
 		return err
 	}
 	s.stepSettled = true
@@ -557,7 +575,7 @@ func (e *Engine) abandon(ctx context.Context, s *stepRun, cause error) error {
 	case s.stepPrepared && !s.dispatched:
 		settle(ReleaseUndispatched, s.stepInvoke, "the Host never dispatched the step", time.Time{}, time.Time{})
 	case s.dispatched && !s.stepSettled && stopped:
-		settle(SettleInvocation, s.stepInvoke, "the Host stopped the container before the step ended", s.stepBegan, s.stepEnded)
+		settle(SettleInvocation, s.stepInvoke, "the Host stopped the container before the step ended", s.stepBegan.Add(s.checked), s.stepEnded)
 	case s.dispatched && !s.stepSettled:
 		settle(ObserveUncertain, s.stepInvoke, "the step's end is not known", time.Time{}, time.Time{})
 	}
@@ -829,7 +847,7 @@ func (e *Engine) tools(s *stepRun) ToolHandler {
 		}
 		switch call.Tool {
 		case ToolRequestCheck:
-			return e.reviewCheck(ctx, manager, phase, version, call, args)
+			return e.reviewCheck(ctx, s, call, args)
 		case ToolRead:
 			var in struct {
 				Ref string `json:"ref"`
@@ -885,12 +903,13 @@ func (e *Engine) tools(s *stepRun) ToolHandler {
 	}
 }
 
-// reviewCheck runs a configured check that a candidate review requests, on the
+// reviewCheck runs a configured check that a candidate review requests, within
+// the step's remaining time, on the
 // frozen candidate it reviews, and answers with the receipt's outcome and the
 // end of its output, which the review cites as evidence by the check's ID.
-func (e *Engine) reviewCheck(ctx context.Context, manager string, phase Phase, version stepVersion, call ToolCall, args []byte) (ToolOutcome, error) {
+func (e *Engine) reviewCheck(ctx context.Context, s *stepRun, call ToolCall, args []byte) (ToolOutcome, error) {
 	refuse := func(reason string) (ToolOutcome, error) { return ToolOutcome{Status: ToolRefused, Reason: reason}, nil }
-	if phase != PhaseReviewerCandidate {
+	if s.phase != PhaseReviewerCandidate {
 		return refuse("checks run on a submitted candidate during its review")
 	}
 	var in struct {
@@ -904,12 +923,20 @@ func (e *Engine) reviewCheck(ctx context.Context, manager string, phase Phase, v
 		names := slices.Sorted(maps.Keys(e.cfg.ReviewChecks))
 		return refuse(fmt.Sprintf("%q is not a configured check; the configured checks are %s", in.Check, strings.Join(names, ", ")))
 	}
-	req.Tree, req.ID = version.tree, CheckID(fmt.Sprintf("%s-%s-%s", req.ID, call.Step, call.Call))
-	admit, err := e.cfg.Coordinator.PrepareReviewCheckCommand(e.meta("prepare-check"), manager, in.Check, req, e.checkReservation(req))
+	req.Tree, req.ID = s.version.tree, CheckID(fmt.Sprintf("%s-%s-%s", req.ID, call.Step, call.Call))
+	reservation := e.checkReservation(req)
+	if left := s.deadline.Sub(e.cfg.Clock()); reservation.Maximum > left {
+		return refuse(fmt.Sprintf("the check needs up to %s, and the step has %s left", reservation.Maximum, left.Round(time.Second)))
+	}
+	admit, err := e.cfg.Coordinator.PrepareReviewCheckCommand(e.meta("prepare-check"), s.manager, in.Check, req, reservation)
 	if err != nil {
 		return refuse(err.Error())
 	}
-	receipt, err := e.runCheck(ctx, admit, req)
+	receipt, elapsed, err := e.runCheck(ctx, admit, req)
+	s.checked += elapsed
+	if errors.Is(err, errNotAdmitted) {
+		return refuse(err.Error())
+	}
 	if err != nil {
 		return ToolOutcome{}, err
 	}

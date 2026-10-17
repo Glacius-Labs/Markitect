@@ -137,14 +137,20 @@ func (c *executionChecks) Run(_ context.Context, r run.CheckRequest) (run.CheckR
 }
 
 type executionPublisher struct {
-	requests []apply.PublicationRequest
-	stale    bool
-	failing  error
+	requests   []apply.PublicationRequest
+	stale      bool
+	failing    error
+	preflights int
+	failOn     int // the preflight that fails transiently, counted from 1
 }
 
 func (p *executionPublisher) Preflight(_ context.Context, r apply.PublicationRequest, c apply.ControlCheck) (apply.PublicationPermit, error) {
 	if err := c.Check(context.Background()); err != nil {
 		return apply.PublicationPermit{}, err
+	}
+	p.preflights++
+	if p.preflights == p.failOn {
+		return apply.PublicationPermit{}, errors.New("the repository is busy")
 	}
 	if p.stale {
 		return apply.PublicationPermit{}, apply.ErrCaptureChanged
@@ -269,5 +275,22 @@ func TestExecuteFinishesARunOfAnotherCaptureStale(t *testing.T) {
 	runs := c.Coordinator().Assignments()[0].Runs
 	if runs[0].ID != "old-run" || runs[0].Outcome != run.Stale {
 		t.Fatalf("the drifted run did not finish Stale: %+v", runs)
+	}
+}
+
+// A transient error in the publication's own preflight journals nothing, so
+// the next Execute publishes instead of reconciling (execution contract,
+// Publishing).
+func TestExecuteRetriesATransientPublicationPreflight(t *testing.T) {
+	prepared, facts, s, _ := controlFixture(t)
+	c := openControlled(t, prepared, facts, s)
+	publisher, checks := &executionPublisher{failOn: 2}, &executionChecks{}
+	result, err := c.Execute(context.Background(), executionPorts(t, publisher, checks))
+	if err == nil || result.Run.State != run.Publishing || c.Coordinator().Publication().ID != "" {
+		t.Fatalf("a transient preflight error journaled the publication: %+v %v", result.Run, err)
+	}
+	result, err = c.Execute(context.Background(), executionPorts(t, publisher, checks))
+	if err != nil || result.Run.State != run.Finished || result.Run.Outcome != run.NoChange {
+		t.Fatalf("the retry did not publish: %+v %v", result.Run, err)
 	}
 }

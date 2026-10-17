@@ -12,12 +12,17 @@ import (
 )
 
 type fakeChecks struct {
-	exit int
-	runs []run.CheckRequest
+	exit  int
+	runs  []run.CheckRequest
+	clock *time.Time // advanced by took on each run
+	took  time.Duration
 }
 
 func (f *fakeChecks) Run(_ context.Context, r run.CheckRequest) (run.CheckReceipt, error) {
 	f.runs = append(f.runs, r)
+	if f.clock != nil {
+		*f.clock = f.clock.Add(f.took)
+	}
 	return run.CheckReceipt{ID: r.ID, ImageID: r.ImageID, Tree: r.Tree.Digest(), Started: true, Exited: true, ExitCode: f.exit, Output: []byte("ok\n")}, nil
 }
 
@@ -155,17 +160,27 @@ func TestCandidateReviewRequestsChecksOnItsCandidate(t *testing.T) {
 		case s.Manager == "lending" && s.Phase == run.PhaseReviewerCandidate:
 			return append([]action{
 				{Tool: run.ToolRequestCheck, Args: `{"check":"lint"}`, Want: run.ToolRefused},
+				{Tool: run.ToolRequestCheck, Args: `{"check":"slow"}`, Want: run.ToolRefused},
 				{Tool: run.ToolRequestCheck, Args: `{"check":"go-tests"}`, Want: run.ToolOK},
 			}, happyAgent(s)...)
 		}
 		return happyAgent(s)
 	}
 	h := newHarness(t, true, agent)
-	checks := &fakeChecks{}
+	checks := &fakeChecks{clock: &h.clock, took: 15 * time.Second}
 	h.engine = h.newEngineWith(h.c, checks)
 	runToEnd(t, h)
 	if h.c.Current().State != run.Verifying || len(checks.runs) != 1 {
 		t.Fatal("review check not run once", h.c.Current(), len(checks.runs))
+	}
+	// The check's time is charged once, as the check's own invocation.
+	for _, v := range h.c.Invocations() {
+		if v.Reservation.Kind == run.AgentStep && v.Elapsed >= checks.took {
+			t.Fatal("a step was charged the check's time", v.Reservation.ID, v.Elapsed)
+		}
+		if v.Reservation.Kind == run.ProjectCheck && v.Elapsed < checks.took {
+			t.Fatal("the check was not charged its time", v.Elapsed)
+		}
 	}
 	views := h.c.Checks()
 	// lending's candidate became the aggregate, so its tree is the aggregate's.
@@ -213,5 +228,35 @@ func TestVerificationBindsRequiredChecksAndPublication(t *testing.T) {
 	other, _ := h.c.PreparePublicationCommand(meta("other-target"), "publication-2", h.inputs.Binding.Census.Digest(), nil)
 	if _, err := h.c.Propose(other); err == nil {
 		t.Fatal("a second publication was prepared")
+	}
+}
+
+// A review check the budget does not fit is refused and the review goes on; a
+// required check the budget does not fit finishes the run Incomplete.
+func TestChecksOutsideTheBudget(t *testing.T) {
+	agent := func(s agentStep) []action {
+		if s.Manager == "lending" && s.Phase == run.PhaseReviewerCandidate {
+			return append([]action{{Tool: run.ToolRequestCheck, Args: `{"check":"go-tests"}`, Want: run.ToolRefused}}, happyAgent(s)...)
+		}
+		return happyAgent(s)
+	}
+	inputs := stepInputs(t, true)
+	// A review step holds a minute, which leaves no room for its check.
+	inputs.Binding.Policy.Assignment.ExecutionTime = 66 * time.Second
+	inputs.Binding.Policy.Reserve.ExecutionTime = time.Second
+	h := newHarnessWith(t, inputs, agent)
+	checks := &fakeChecks{}
+	h.engine = h.newEngineWith(h.c, checks)
+	runToEnd(t, h)
+	if h.c.Current().State != run.Verifying || len(checks.runs) != 0 {
+		t.Fatal("a review check outside the budget ran or stopped the run", h.c.Current(), len(checks.runs))
+	}
+	required := requiredCheck(t)
+	required.Request.Timeout = 2 * time.Minute
+	if _, err := h.engine.Verify(context.Background(), h.engine.Aggregate().Tree(), []run.RequiredCheck{required}); err != nil {
+		t.Fatal(err)
+	}
+	if r := h.c.Current(); r.State != run.Finished || r.Outcome != run.Incomplete || len(checks.runs) != 0 {
+		t.Fatal("a required check outside the budget did not finish the run Incomplete", r)
 	}
 }

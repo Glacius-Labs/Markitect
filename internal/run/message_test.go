@@ -198,3 +198,76 @@ func TestQuestionsTravelAlongTheTree(t *testing.T) {
 		t.Fatal("a Manager on the path does not see the question")
 	}
 }
+
+// Each open question admits its own reply step: two children that ask their
+// blocked parent both get a reply (core rule T11).
+func TestEachQuestionGetsItsReplyStep(t *testing.T) {
+	var asks []string
+	replied := 0
+	agent := func(s agentStep) []action {
+		switch {
+		case (s.Manager == "empty" || s.Manager == "lending/reminders") && s.Phase == run.PhaseWork && s.Attempt == 0:
+			id := questionID(s, 1)
+			asks = append(asks, id)
+			return []action{
+				{Tool: run.ToolSend, Args: sendArgs("question", "parent", "Which format, "+s.Manager+"?"), Want: run.ToolOK},
+				{Tool: run.ToolWait, Args: waitReplyArgs(id), Want: run.ToolOK},
+			}
+		case s.Phase == run.PhaseReply:
+			id := asks[replied]
+			replied++
+			return []action{{Tool: run.ToolSend, Args: sendArgs("reply", id, "The shared one."), Want: run.ToolOK}}
+		}
+		return happyAgent(s)
+	}
+	inputs := stepInputs(t, false)
+	inputs.Binding.Policy.Assignment.Steps, inputs.Binding.Policy.Assignment.SessionStarts = 64, 64
+	h := newHarnessWith(t, inputs, agent)
+	runToEnd(t, h)
+	if h.c.Current().State != run.Verifying || len(asks) != 2 || replied != 2 {
+		t.Fatal("not every question was answered", h.c.Current(), asks, replied)
+	}
+	for _, m := range h.c.Messages() {
+		if m.Kind == "reply" && !slices.Contains(asks, m.About) {
+			t.Fatalf("a reply answers no asked question: %+v", m)
+		}
+	}
+}
+
+// A reply step the Host could not finish drops its reply and is retried.
+func TestAReplyStepTheHostCouldNotFinishIsRetried(t *testing.T) {
+	var asked string
+	var h *harness
+	replies := 0
+	agent := func(s agentStep) []action {
+		switch {
+		case s.Manager == "lending" && s.Phase == run.PhaseWork && s.Attempt == 0:
+			asked = questionID(s, 1)
+			return []action{
+				{Tool: run.ToolSend, Args: sendArgs("question", "parent", "Should Item carry a title?"), Want: run.ToolOK},
+				{Tool: run.ToolWait, Args: waitReplyArgs(asked), Want: run.ToolOK},
+			}
+		case s.Manager == "." && s.Phase == run.PhaseReply:
+			replies++
+			if replies == 1 {
+				h.ws.failHarvest = 1
+			}
+			return []action{{Tool: run.ToolSend, Args: sendArgs("reply", asked, "Yes, a title."), Want: run.ToolOK}}
+		}
+		return happyAgent(s)
+	}
+	h = newHarness(t, true, agent)
+	runToEnd(t, h)
+	if h.c.Current().State != run.Verifying || replies != 2 {
+		t.Fatal("the failed reply step was not retried", h.c.Current(), replies)
+	}
+	var count int
+	for _, m := range h.c.Messages() {
+		if m.Kind == "reply" {
+			count++
+		}
+	}
+	if count != 1 {
+		t.Fatal("the failed reply step's reply was kept", count)
+	}
+}

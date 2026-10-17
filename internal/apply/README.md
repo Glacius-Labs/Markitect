@@ -64,8 +64,10 @@ Incomplete. The publisher then preflights the target's change set against the
 captured source: a source that changed finishes the run Stale, a change set
 the target cannot represent (`ErrUnpublishable`) finishes it Failed, and any
 other error leaves the run Verifying for the next Execute. The final evidence
-check binds the target and moves the run to Publishing. The change set is
-journaled with its source and target before the first write, and the
+check binds the target and moves the run to Publishing. Publishing preflights
+again; the change set is journaled with its source and target only after that
+preflight passed and before the first write, so a transient preflight error
+journals nothing and the next Execute publishes again. The
 publication receipt finishes the run Applied, NoChange, Stale or Failed, or
 leaves it to reconciliation when the write was partial or its result is
 unknown. A publication that an earlier process prepared is inspected, not
@@ -74,4 +76,5 @@ written again.
 Execute returns when the run finished, waits for the owner or needs
 reconciliation. `ExecutionResult` lists the open questions to the owner among
 its issues; `Answer` records the owner's answer, and the next Execute resumes
-the waiting run.
+the waiting run as soon as every owner question is answered or an answer made a
+step admissible.

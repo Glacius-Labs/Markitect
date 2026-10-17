@@ -299,7 +299,9 @@ Managers on its path see it in their next step without being dispatched (M2).
 A question becomes an issue addressed to its addressee; a reply from that
 addressee resolves it and wakes an asker waiting for it (I2, T10). A Manager
 that cannot otherwise act, because it is done, blocked or explored, answers in
-a read-only reply step and keeps its state (T10, T11). A question to the owner
+a read-only reply step and keeps its state (T10, T11). Each open question
+admits one reply step, oldest first; a reply step the Host could not finish
+drops its reply and is admitted again. A question to the owner
 travels up to the root; when nothing else is admissible the run waits for the
 owner (M4, W1). `AnswerCommand` records the owner's answer: it wakes the asker,
 or starts a fresh review when a review asked (T8), and `ResumeRun` continues
@@ -324,9 +326,17 @@ The basis binds the names of the required checks. While the run is Verifying,
 container's start and stop, and `ObserveCheckCommand` records its receipt and
 settles its reservation; an uncertain receipt moves the run to Reconciling. A
 check passes on an observed zero exit of the same image and tree.
+
+A candidate reviewer may run a configured check on the frozen candidate with
+`request_check` (`PrepareReviewCheckCommand`). The check must fit the step's
+remaining time and the budget, or the call is refused and the review goes on;
+its time is charged once, as the check's own invocation, and the step's
+charge leaves it out. The candidate tree it runs on does not yet contain the
+regenerated registry shards that publication writes.
 `Engine.Verify` runs the required checks on the tree that publishing the
 aggregate writes, reuses a check that already passed on it, and finishes the
-run Incomplete when one fails. `VerifyRunCommand` is the final evidence check:
+run Incomplete when one fails or the budget no longer fits it.
+`VerifyRunCommand` is the final evidence check:
 every task is done, no blocking issue is open, nothing is running and every
 required check passed on that tree; it moves the run to Publishing.
 
