@@ -129,6 +129,8 @@ func (c *Codec) EncodeThreadStart(id RequestID, p ThreadStartParams) ([]byte, er
 
 // EncodePersistentThread explicitly retains fresh threads, or resumes only the
 // named thread from the mounted provider home. History/path overrides are absent.
+// A resume excludes the thread's turns from the response: the adapter never
+// reads them, and a long Manager thread outgrows the wire limit.
 func (c *Codec) EncodePersistentThread(id RequestID, p ThreadStartParams, resume ThreadID) ([]byte, error) {
 	if _, err := c.EncodeThreadStart(id, p); err != nil {
 		return nil, err
@@ -144,8 +146,9 @@ func (c *Codec) EncodePersistentThread(id RequestID, p ThreadStartParams, resume
 	}
 	return c.request(id, ThreadResume, struct {
 		ThreadStartParams
-		Thread ThreadID `json:"threadId"`
-	}{p, resume})
+		Thread       ThreadID `json:"threadId"`
+		ExcludeTurns bool     `json:"excludeTurns"`
+	}{p, resume, true})
 }
 func (c *Codec) EncodeTurnStart(id RequestID, p TurnStartParams) ([]byte, error) {
 	if p.Thread == "" {
