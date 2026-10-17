@@ -138,7 +138,10 @@ func TestSelectedInputAndDependencyByteMismatchesRefuseBeforeCompile(t *testing.
 func TestPackageInventoryComesFromActualModelDirectoryEntries(t *testing.T) {
 	selection, raw := libraryInputs(t)
 	raw.Local.Source.Entries = append(raw.Local.Source.Entries, model.Entry{Path: "model/empty/leaf", Kind: model.Directory})
-	result, err := captureService(captured(raw), nil).CaptureModel(context.Background(), apply.CaptureRequest{Selection: selection}, model.Limits{})
+	source := controlledSource{preview: func(context.Context, apply.PreviewRequest) (apply.PreviewedInputs, error) {
+		return apply.PreviewedInputs{Raw: raw, Head: fixtureHead}, nil
+	}}
+	result, err := apply.NewModelService(nil, source).PreviewModel(context.Background(), apply.PreviewRequest{Selection: selection}, model.Limits{})
 	if err != nil || result.Compilation().Status != model.Passed {
 		t.Fatalf("%v %+v", err, result.Compilation())
 	}

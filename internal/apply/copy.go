@@ -38,16 +38,22 @@ func cloneRaw(value RawInputs) RawInputs {
 	return value
 }
 
-// model.Value and snapshot values are immutable. Compiler report containers,
-// diagnostics and optional spans/titles remain mutable public Go values.
-func cloneCompilation(value model.Result) model.Result {
-	value.Diagnostics = slices.Clone(value.Diagnostics)
-	for i := range value.Diagnostics {
-		if value.Diagnostics[i].Position != nil {
-			position := *value.Diagnostics[i].Position
-			value.Diagnostics[i].Position = &position
+// Diagnostics contain optional mutable source positions.
+func cloneDiagnostics(value []model.Diagnostic) []model.Diagnostic {
+	value = slices.Clone(value)
+	for i := range value {
+		if value[i].Position != nil {
+			position := *value[i].Position
+			value[i].Position = &position
 		}
 	}
+	return value
+}
+
+// model.Value and snapshot values are immutable. Compiler report containers
+// and optional spans/titles remain mutable public Go values.
+func cloneCompilation(value model.Result) model.Result {
+	value.Diagnostics = cloneDiagnostics(value.Diagnostics)
 	value.Models = slices.Clone(value.Models)
 	for i := range value.Models {
 		m := &value.Models[i]

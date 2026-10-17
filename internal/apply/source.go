@@ -9,7 +9,10 @@ import (
 	"github.com/Glacius-Labs/Markitect/internal/snapshot"
 )
 
-// Source captures the current committed, clean HEAD. Before returning without
+// Source captures model, execution, registry and ignore sources from the current
+// committed, clean HEAD, alongside the complete actual repository census (also
+// Git-ignored untracked files). Gitignore exempts untracked files only from the
+// clean-HEAD check, never from census observation. Before returning without
 // error, the adapter must read exactly spelled manifests, locks and declared
 // roots without following redirects, establish physically distinct, non-nested
 // model roots, and capture every selected input and the complete census.
@@ -17,6 +20,10 @@ import (
 // observations must be returned even on error. Compilation proves none of
 // these acquisition facts. One repository adapter implements both source ports
 // using the same acquisition mechanism.
+// If InspectManifest supplies no Root, return a ManifestPreflightError carrying
+// its actual result and the known partial inputs, before capturing Definitions.
+// A committed capture refuses model directories that exist only in the working
+// tree and cannot be represented by the selected fixed revision.
 type Source interface {
 	Capture(context.Context, CaptureRequest) (CapturedInputs, error)
 }
@@ -24,6 +31,8 @@ type Source interface {
 // PreviewSource observes a working-tree draft or an explicitly selected fixed
 // revision. It has the same acquisition obligations, but grants no publication
 // guard. A preview cannot be promoted to a Capture result by the model service.
+// Working preview observes the actual tree, including empty model directories;
+// historical preview observes exactly the selected Git tree, never today's files.
 type PreviewSource interface {
 	CapturePreview(context.Context, PreviewRequest) (PreviewedInputs, error)
 }
@@ -75,8 +84,10 @@ type PublicationGuard string
 
 // ModelSource retains the actual complete model acquisition, including empty
 // directories and duplicate entry paths. Files retains original file modes
-// and bytes. Root is the declared lexical root within this boundary, not an
-// independently authored Package inventory or proof of physical separation.
+// and bytes. Root is relative to the acquisition boundary: the manifest directory
+// followed by InspectManifest.Root's original declaration ('.' keeps that
+// directory), without silently normalizing paths or following redirects. It is
+// not a second Package inventory or proof of physical separation.
 // RepositoryArea locates this acquisition boundary in Census; every Files path
 // is relative to that area. Local must have an area, as must every in-repository
 // dependency. Only an external dependency leaves it zero. The adapter establishes
@@ -100,7 +111,9 @@ type SourceFile struct {
 }
 
 // RawInputs is shared by committed capture and read-only preview. Census is the
-// complete immutable repository tree, with the contract's state exclusion.
+// complete immutable actual repository observation for Capture and Working
+// preview, including Git-ignored untracked files. Fixed preview retains exactly
+// its historical Git tree. Only .markitect/state is excluded from source staleness.
 // Each repository-local ModelSource supplies its own acquisition area. Other
 // input coordinates remain explicit. No classification or decoding is inferred
 // from these bytes.
@@ -115,8 +128,8 @@ type RawInputs struct {
 	Instructions []SourceFile
 }
 
-// CapturedInputs binds Raw to the current committed HEAD and its comparison
-// guard. On error any known fields remain useful partial observations.
+// CapturedInputs binds committed sources to HEAD and the actual census to its
+// comparison guard. On error known fields remain useful partial observations.
 type CapturedInputs struct {
 	Raw   RawInputs
 	Head  string
