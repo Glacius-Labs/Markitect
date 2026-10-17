@@ -1,4 +1,9 @@
-# Markitect
+<h1>
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="assets/markitect-wordmark-dark.svg">
+    <img src="assets/markitect-wordmark-light.svg" alt="Markitect" width="360">
+  </picture>
+</h1>
 
 **Don't chase the code. Let the code chase you.**
 
