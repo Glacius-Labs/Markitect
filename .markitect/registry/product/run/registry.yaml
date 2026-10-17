@@ -160,6 +160,30 @@ artifacts:
     form: test
     realizes: [product/run/confirmed-run-history]
     why: Checks that steps the Host cannot finish are stopped, settled or released and concluded as failed.
+  - path: "internal/run/verify.go"
+    form: code
+    realizes: [product/run/confirmed-run-history]
+    why: Reduces required checks, the final evidence check and the recorded publication of a run.
+  - path: "internal/run/verify_test.go"
+    form: test
+    realizes: [product/run/confirmed-run-history]
+    why: Checks verification on the exact aggregate and every publication outcome.
+  - path: "internal/run/message.go"
+    form: code
+    realizes: [product/run/confirmed-run-history]
+    why: Reduces messages along the Manager tree, reply steps and the owner's answers.
+  - path: "internal/run/message_test.go"
+    form: test
+    realizes: [product/run/confirmed-run-history]
+    why: Checks questions, replies, hints, owner answers and routing along the tree.
+  - path: "internal/run/claims.go"
+    form: code
+    realizes: [product/run/confirmed-run-history]
+    why: Records the path reservations and registry proposals of concluded writing steps, so a restarted Host forms the same claims.
+  - path: "internal/run/reopen_test.go"
+    form: test
+    realizes: [product/run/confirmed-run-history]
+    why: Checks that claims survive an engine restart and that an integration finding reopens the child that owns the artifacts.
   - path: "internal/run/task_test.go"
     form: test
     realizes: [product/run/confirmed-run-history]

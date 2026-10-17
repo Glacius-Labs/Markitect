@@ -52,6 +52,9 @@ type BindingInput struct {
 	Documents       []Document
 	Policy          BudgetPolicy
 	PolicySource    organization.SettingSource
+	// RequiredChecks names the configured checks that the aggregate must pass
+	// before publication.
+	RequiredChecks []string
 }
 
 type compiledBinding struct {
@@ -126,6 +129,7 @@ type bindingWire struct {
 	ManagerPolicy   *managerPolicy                                  `json:",omitempty"`
 	Scope           *[]organization.Setting[organization.ScopeRule] `json:",omitempty"`
 	MaxContextBytes *organization.Setting[int64]                    `json:",omitempty"`
+	RequiredChecks  *[]string                                       `json:",omitempty"`
 }
 
 // Binding owns its exact serialized basis. Its identity includes empty Package
@@ -154,7 +158,12 @@ func Bind(input BindingInput) (Binding, error) {
 	if err != nil || input.Settings.ModelID() != topology.ModelID() || input.Settings.ModelDigest() != topology.ModelDigest() {
 		return Binding{}, ErrInvalid
 	}
-	w := bindingWire{Version: 3, ManagerPolicy: liveManagerPolicy(), Source: s, OwnerRequest: input.OwnerRequest.Ref(), ModelInput: input.ModelInput, Managers: topology.Managers(), Profiles: slices.Clone(input.Profiles), Policy: input.Policy, PolicySource: input.PolicySource}
+	required := slices.Clone(input.RequiredChecks)
+	if required == nil {
+		required = []string{}
+	}
+	slices.Sort(required)
+	w := bindingWire{Version: 3, ManagerPolicy: liveManagerPolicy(), Source: s, OwnerRequest: input.OwnerRequest.Ref(), ModelInput: input.ModelInput, Managers: topology.Managers(), Profiles: slices.Clone(input.Profiles), Policy: input.Policy, PolicySource: input.PolicySource, RequiredChecks: &required}
 	if input.Scope != nil {
 		scope := slices.Clone(input.Scope)
 		w.Scope = &scope

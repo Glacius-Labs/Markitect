@@ -328,7 +328,7 @@ func TestCandidateRecordClosedCanonicalCorruptionAndConsistency(t *testing.T) {
 			}
 		},
 		"null required list":       func(w *candidateRecordWire) { w.Claims = nil },
-		"nonempty claims":          func(w *candidateRecordWire) { w.Claims = []string{"made-up-grant"} },
+		"unused claim":             func(w *candidateRecordWire) { w.Claims = []recordClaim{{"made-up-grant", "out/unused.go", Code}} },
 		"duplicate assessment":     func(w *candidateRecordWire) { w.Assessments = append(w.Assessments, w.Assessments[0]) },
 		"duplicate classification": func(w *candidateRecordWire) { w.Classifications = append(w.Classifications, w.Classifications[0]) },
 		"duplicate protection":     func(w *candidateRecordWire) { w.Protections = append(w.Protections, w.Protections[0]) },
@@ -473,7 +473,7 @@ func TestCandidateRecordJSONBudgetMatchesCanonicalSize(t *testing.T) {
 	}
 }
 
-func TestCandidateRecordLiveRejectsNonemptyClaims(t *testing.T) {
+func TestCandidateRecordKeepsClaims(t *testing.T) {
 	f := recordSetup(t, false)
 	path := recordPath(t, "out/new.go")
 	request, err := NewPathRequest("host:new-file", f.candidate.Owner(), path, Code)
@@ -513,8 +513,29 @@ func TestCandidateRecordLiveRejectsNonemptyClaims(t *testing.T) {
 		t.Fatal("fixture did not use a claim")
 	}
 	record, err := NewCandidateRecord(f.compiled, candidate, f.classes, f.rows, recordLimits())
-	if !errors.Is(err, ErrInvalidCandidateRecord) || record.Valid() {
-		t.Fatalf("nonempty live claims recorded: %v", err)
+	if err != nil {
+		t.Fatalf("a claimed new file was not recorded: %v", err)
+	}
+	got := record.Observation().Candidate()
+	if !got.Valid() || !slices.Equal(got.TouchedPaths(), candidate.TouchedPaths()) || len(got.Claims()) != 1 || got.Claims()[0].Request() != request {
+		t.Fatalf("decoded claims = %+v, want the recorded request", got.Claims())
+	}
+	for name, change := range map[string]func(*candidateRecordWire){
+		"missing claim": func(w *candidateRecordWire) { w.Claims = []recordClaim{} },
+		"other form":    func(w *candidateRecordWire) { w.Claims[0].Form = Doc },
+		"duplicate":     func(w *candidateRecordWire) { w.Claims = append(w.Claims, w.Claims[0]) },
+		"extra claim": func(w *candidateRecordWire) {
+			w.Claims = append(w.Claims, recordClaim{"host:other", "out/other.go", Code})
+		},
+		"protected path": func(w *candidateRecordWire) { w.Claims[0].Path = ".markitect/state/x.go" },
+	} {
+		t.Run(name, func(t *testing.T) {
+			w := recordWireFrom(t, record)
+			change(&w)
+			if _, err := DecodeCandidateRecord(recordEncode(t, w), recordLimits()); err == nil {
+				t.Fatal("a changed claim was accepted")
+			}
+		})
 	}
 }
 

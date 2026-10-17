@@ -52,9 +52,12 @@ func renderArtifacts(w *contextWriter, artifacts []ArtifactFact, label string) {
 			Package, Path, ContentID string
 			Content                  ArtifactContent
 		}{artifact.Package, artifact.Path.String(), artifact.ContentID.String(), artifact.Content}, hostRender(artifact.Source))
-		if artifact.Content == ArtifactText {
+		switch artifact.Content {
+		case ArtifactText:
 			w.add(label+"-original-artifact-text", *artifact.Text, hostRender(artifact.Source))
-		} else {
+		case ArtifactWorkspaceRef:
+			w.add(label+"-workspace-reference", workspaceReferenceText, productLiteral("workspace-reference", workspaceReferenceText))
+		default:
 			w.add(label+"-binary-reference-not-inspected", binaryReferenceText, productLiteral("binary-reference", binaryReferenceText))
 		}
 	}

@@ -31,7 +31,7 @@ type candidateRecordWire struct {
 	Owner           recordOwner            `json:"owner"`
 	Creation        []recordCreation       `json:"creation"`
 	Protections     []recordProtection     `json:"protections"`
-	Claims          []string               `json:"claims"`
+	Claims          []recordClaim          `json:"claims"`
 	Classifications []recordClassification `json:"classifications"`
 	Assessments     []recordAssessment     `json:"assessments"`
 }
@@ -70,6 +70,13 @@ type recordRegistration struct {
 	Form  Form             `json:"form"`
 	Basis []recordIdentity `json:"basis"`
 	Why   string           `json:"why"`
+}
+
+// recordClaim is a path claim of the candidate's owner that a new file used.
+type recordClaim struct {
+	ID   string `json:"id"`
+	Path string `json:"path"`
+	Form Form   `json:"form"`
 }
 type recordCreation struct {
 	Owner     recordOwner `json:"owner"`
@@ -113,7 +120,7 @@ func (o recordOwner) value() (Owner, error) {
 	return PackageOwner(o.Package)
 }
 func recordWire(inventory modelInventory, candidate Candidate, classes []Classification, rows []DefinitionAssessment, limits CandidateRecordLimits) (candidateRecordWire, error) {
-	w := candidateRecordWire{Version: 1, Models: []recordModel{}, BaseTree: []recordFile{}, ResultTree: []recordFile{}, Data: []recordData{}, BaseRegistry: []recordRegistration{}, ResultRegistry: []recordRegistration{}, Owner: ownerWire(candidate.Owner()), Creation: []recordCreation{}, Protections: []recordProtection{}, Claims: []string{}, Classifications: []recordClassification{}, Assessments: []recordAssessment{}}
+	w := candidateRecordWire{Version: 1, Models: []recordModel{}, BaseTree: []recordFile{}, ResultTree: []recordFile{}, Data: []recordData{}, BaseRegistry: []recordRegistration{}, ResultRegistry: []recordRegistration{}, Owner: ownerWire(candidate.Owner()), Creation: []recordCreation{}, Protections: []recordProtection{}, Claims: []recordClaim{}, Classifications: []recordClassification{}, Assessments: []recordAssessment{}}
 	for _, scope := range inventory.models {
 		m := recordModel{ID: scope.id, Digest: scope.digest, Local: scope.local, Packages: append([]string{}, scope.packages...), Definitions: []recordDefinition{}}
 		for _, d := range scope.definitions {
@@ -185,6 +192,9 @@ func recordWire(inventory modelInventory, candidate Candidate, classes []Classif
 	}
 	for _, p := range facts.protections {
 		w.Protections = append(w.Protections, recordProtection{p.file.String(), p.directory.String(), p.why})
+	}
+	for _, c := range candidate.value.claims {
+		w.Claims = append(w.Claims, recordClaim{string(c.request.id), c.request.path.String(), c.request.form})
 	}
 	for _, c := range classes {
 		w.Classifications = append(w.Classifications, recordClassification{c.path.String(), c.class, c.why})
@@ -276,7 +286,7 @@ func (w candidateRecordWire) observation() (CandidateObservation, modelInventory
 	fail := func(err error) (CandidateObservation, modelInventory, error) {
 		return CandidateObservation{}, modelInventory{}, err
 	}
-	if w.Version != 1 || len(w.Claims) != 0 {
+	if w.Version != 1 {
 		return fail(ErrInvalidCandidateRecord)
 	}
 	inv, err := w.inventory()
@@ -427,10 +437,32 @@ func (w candidateRecordWire) observation() (CandidateObservation, modelInventory
 	if err != nil {
 		return fail(err)
 	}
-	capture := CaptureCandidate(base, owner, PathClaims{}, resultTree, resultRegistry)
+	// Reserve the recorded claims again under the recorded facts; capture must
+	// use exactly these, in its own path order.
+	var claims PathClaims
+	var requests []PathRequest
+	for _, c := range w.Claims {
+		path, err := snapshot.NewPath(c.Path)
+		if err != nil {
+			return fail(err)
+		}
+		request, err := NewPathRequest(ClaimID(c.ID), owner, path, c.Form)
+		if err != nil {
+			return fail(err)
+		}
+		next, decision := ReserveNewPath(facts, claims, request)
+		if decision.Status() != PathAdmissible || decision.Repeated() {
+			return fail(fmt.Errorf("%w: recorded claim %s: %v", ErrInvalidCandidateRecord, path, decision.Findings()))
+		}
+		claims, requests = next, append(requests, request)
+	}
+	capture := CaptureCandidate(base, owner, claims, resultTree, resultRegistry)
 	candidate, ok := capture.Candidate()
 	if !ok {
 		return fail(fmt.Errorf("candidate capture refused: %v", capture.Findings()))
+	}
+	if !slices.EqualFunc(candidate.value.claims, requests, func(c PathClaim, r PathRequest) bool { return c.request == r }) {
+		return fail(fmt.Errorf("%w: recorded claims differ from the claims the candidate uses", ErrInvalidCandidateRecord))
 	}
 	classes := []Classification{}
 	seenClasses := map[snapshot.Path]bool{}

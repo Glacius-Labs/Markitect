@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"maps"
 	"slices"
+	"time"
 
 	"github.com/Glacius-Labs/Markitect/internal/snapshot"
 )
@@ -22,6 +23,11 @@ type Issue struct {
 	State              string
 	Raised             StepID
 	Source             BlobRef
+	At                 uint64
+	// Answer is the reply that resolved a question; ReplyStep the reply step
+	// it admitted for a done task (core rule T11).
+	Answer    string
+	ReplyStep StepID
 }
 
 const (
@@ -60,6 +66,7 @@ type reviewInput struct {
 	Resolutions []resolutionInput `json:"resolutions"`
 }
 type findingInput struct {
+	To                string   `json:"to,omitempty"`
 	Severity          string   `json:"severity"`
 	Definitions       []string `json:"definitions"`
 	Grounds           string   `json:"grounds"`
@@ -128,6 +135,12 @@ func (s stateValue) checkReview(t taskValue, in reviewInput) error {
 		if f.Severity != severityBlocking && f.Severity != severityAdvisory || f.Definitions == nil || !text(f.Grounds) || !text(f.RequestedEvidence) {
 			return errors.New("each finding needs the severity blocking or advisory, definitions, grounds and the requested evidence")
 		}
+		if f.To != "" && f.To != t.Slot.Package && (t.Submission.Purpose != "integration" || !s.descends(f.To, t.Slot.Package)) {
+			return fmt.Errorf("a finding goes to the reviewed Manager or, in an integration review, to one of its descendants; %q is neither", f.To)
+		}
+		if f.To != "" && f.To != t.Slot.Package && in.Verdict != "changes_requested" {
+			return errors.New("a finding to a descendant requests its correction, so the verdict is changes_requested")
+		}
 	}
 	switch in.Verdict {
 	case "pass":
@@ -171,9 +184,18 @@ func (s stateValue) verdictOf(t taskValue, in reviewInput) ReviewVerdict {
 	for _, r := range in.Resolutions {
 		resolved[r.Finding] = true
 	}
-	for _, issue := range s.openIssues(t.Slot.Package) {
-		if issue.Severity == severityBlocking && !resolved[issue.ID] {
-			return VerdictWithhold
+	// An open blocking issue blocks its subject and every aggregate that
+	// contains it (core rule I3); only an integration candidate contains the
+	// descendants' work.
+	covered := []string{t.Slot.Package}
+	if t.Submission.Purpose == "integration" {
+		covered = s.subtree(t)
+	}
+	for _, manager := range covered {
+		for _, issue := range s.openIssues(manager) {
+			if issue.Severity == severityBlocking && !resolved[issue.ID] {
+				return VerdictWithhold
+			}
 		}
 	}
 	for _, producer := range t.Submission.Uses {
@@ -204,6 +226,17 @@ func (c *Coordinator) ReviewVerdict(manager string, input Payload) (ReviewVerdic
 		return "", ErrInvalid
 	}
 	return c.state.verdictOf(t, in), nil
+}
+
+// StepTimeout is the bound step timeout of a Manager's steps; reviews of its
+// task use it too.
+func (c *Coordinator) StepTimeout(manager string) time.Duration {
+	for _, m := range c.state.managerBasis.Settings {
+		if m.Package == manager {
+			return time.Duration(m.StepTimeout.Value)
+		}
+	}
+	return 0
 }
 
 func (s stateValue) rejectionLimit(manager string) int {
@@ -260,7 +293,7 @@ func (s *stateValue) concludeReview(r ConclusionRecord, t *taskValue, revision u
 		// The owner's answer starts a fresh review of the same frozen
 		// candidate (core rule T8); the run waits for it (core rule W1).
 		id := fmt.Sprintf("question-%s", r.Step)
-		s.addIssue(Issue{ID: id, Kind: issueQuestion, Severity: severityBlocking, Task: t.Slot.Package, To: addressedToOwner, Purpose: purpose, Request: in.Question, State: issueOpen, Raised: r.Step, Source: r.Input})
+		s.addIssue(Issue{ID: id, Kind: issueQuestion, Severity: severityBlocking, Task: t.Slot.Package, To: addressedToOwner, Purpose: purpose, Request: in.Question, State: issueOpen, Raised: r.Step, Source: r.Input, At: revision})
 		t.State, t.Since, t.Waits = TaskBlocked, revision, []Wait{{Kind: waitOwner, Ref: id}}
 	case VerdictReject:
 		t.Rejections = maps.Clone(t.Rejections)
@@ -269,9 +302,22 @@ func (s *stateValue) concludeReview(r ConclusionRecord, t *taskValue, revision u
 		}
 		t.Rejections[purpose]++
 		t.Submission = Submission{}
-		if limit := s.rejectionLimit(t.Slot.Package); t.Rejections[purpose] >= limit {
+		// Findings about a descendant's artifacts reopen it; the reviewed
+		// Manager integrates again once its children are done (core rule T11).
+		var targets []string
+		for _, f := range in.Findings {
+			if f.To != "" && f.To != t.Slot.Package && f.Severity == severityBlocking && !slices.Contains(targets, f.To) {
+				targets = append(targets, f.To)
+			}
+		}
+		s.reopen(targets, t.Slot.Package, revision)
+		corrected := len(targets) > 0
+		switch {
+		case s.rejectionLimit(t.Slot.Package) <= t.Rejections[purpose]:
 			t.State, t.Reason = TaskIncomplete, fmt.Sprintf("the %s review rejected %d candidates, which reaches the rejection limit", purpose, t.Rejections[purpose])
-		} else {
+		case corrected:
+			t.State, t.Since, t.Waits = TaskBlocked, revision, []Wait{{Kind: waitChildren}}
+		default:
 			t.State, t.Since = TaskReady, revision
 		}
 	case VerdictAccept:
@@ -307,8 +353,54 @@ func (s *stateValue) recordReview(r ConclusionRecord, t taskValue, in reviewInpu
 		s.issues[res.Finding] = issue
 	}
 	for i, f := range in.Findings {
-		s.addIssue(Issue{ID: fmt.Sprintf("finding-%s-%d", r.Step, i+1), Kind: issueFinding, Severity: f.Severity, Task: t.Slot.Package, To: t.Slot.Package, Purpose: t.Submission.Purpose,
+		to, purpose := t.Slot.Package, t.Submission.Purpose
+		if f.To != "" && f.To != to {
+			// A correction of a child's artifacts belongs to the child's own
+			// delivery (core rule D5).
+			to, purpose = f.To, "local"
+		}
+		s.addIssue(Issue{ID: fmt.Sprintf("finding-%s-%d", r.Step, i+1), Kind: issueFinding, Severity: f.Severity, Task: to, To: to, Purpose: purpose,
 			Definitions: slices.Clone(f.Definitions), Grounds: f.Grounds, Request: f.RequestedEvidence, State: issueOpen, Raised: r.Step, Source: r.Input})
+	}
+}
+
+// descends reports whether a Manager lies strictly below another.
+func (s stateValue) descends(child, ancestor string) bool {
+	for t, ok := s.tasks[child]; ok && t.Slot.Parent != ""; t, ok = s.tasks[t.Slot.Parent] {
+		if t.Slot.Parent == ancestor {
+			return true
+		}
+	}
+	return false
+}
+
+// subtree lists a task's Manager and every descendant.
+func (s stateValue) subtree(t taskValue) []string {
+	out := []string{t.Slot.Package}
+	for _, child := range t.Slot.Children {
+		out = append(out, s.subtree(s.tasks[child])...)
+	}
+	return out
+}
+
+// reopen returns the done tasks that open blocking findings address to work,
+// and every other ancestor below the reviewed Manager whose accepted
+// integration contains one of them to waiting for its children; counters
+// carry on (core rule T11).
+func (s *stateValue) reopen(targets []string, reviewed string, revision uint64) {
+	for _, manager := range targets {
+		if x := s.tasks[manager]; x.State == TaskDone {
+			x.State, x.Since, x.LocalDone, x.Waits = TaskReady, revision, false, nil
+			s.tasks[manager] = x
+		}
+	}
+	for _, manager := range targets {
+		for p := s.tasks[manager].Slot.Parent; p != "" && p != reviewed; p = s.tasks[p].Slot.Parent {
+			if a := s.tasks[p]; a.State == TaskDone && !slices.Contains(targets, p) {
+				a.State, a.Since, a.Waits = TaskBlocked, revision, []Wait{{Kind: waitChildren}}
+				s.tasks[p] = a
+			}
+		}
 	}
 }
 
