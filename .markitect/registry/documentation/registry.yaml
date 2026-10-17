@@ -1,5 +1,25 @@
 apiVersion: markitect.registry/v1
 artifacts:
+  - path: "docs/design/canonical-model/standard-library-history.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Preserves the source discussion and superseded standard-library proposals separately from the consolidated current contract.
+  - path: "docs/design/canonical-model/standard-library-project-coverage.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Records the selected six-area project coverage, illustrative Library obligations and remaining project decisions.
+  - path: "docs/design/canonical-model/standard-library-architecture-platform.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Records the selected first architecture, data and deployment Kinds with Package ownership and proposed connected Library relationships.
+  - path: "docs/design/canonical-model/standard-library-data-and-views.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Defines the proposed Web Library C4, data-access, migration and recovery contracts while preserving current-source evidence boundaries.
+  - path: "docs/design/canonical-model/standard-library.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Owns the consolidated standard-library scope, Package/version contract, relationship boundaries and implementation handoff.
   - path: "docs/concepts/sources/manager-process-clarification-20261017.md"
     form: doc
     realizes: [documentation/current-guidance]
