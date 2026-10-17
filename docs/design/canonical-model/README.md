@@ -68,7 +68,7 @@ The [standard-library discussion](standard-library.md) records the owner's 17 Oc
 - [Project](project.md) — the project's name, purpose and associated definitions.
 - [Actor](actor.md) — a role through which a person or another system interacts with the system or participates in project work.
 - [UseCase](use-case.md) — an action available to an Actor and its outcome, accessed through an Interface.
-- [Interface](interface.md) — an interaction point through which an Actor uses UseCases.
+- [Interface](interface.md) — a contract for interaction at an external or internal boundary.
 - [Concept](concept.md) — something meaningful in the project's domain, its meaning and relevant characteristics.
 - [Rule](rule.md) — a condition that must hold within the project.
 - [Component](component.md) — a part of the system, its purpose and responsibilities.

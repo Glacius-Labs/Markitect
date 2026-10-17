@@ -12,6 +12,7 @@ Source: the owner's standard-library design discussion in this chat on 17 Octobe
 - Selected decision: "Okay, dann bleiben wir bei Körperlinks und spec: {} für die drei." Thus Concept, Rule and UseCase use body links for their domain relationships and have empty structured field contracts. The selection does not approve every sentence of proposed Kind wording or settle other Kinds.
 - Next requested subject: "Lass uns als Nächstes Actor und Interface am Bibliotheksbeispiel durchgehen. Welche Properties brauchen die wirklich?" Actor and Interface remain under discussion.
 - Recording instruction: "Denke daran, alles festzuhalten, sodass wir das ins Konzept mit aufnehmen können und nichts vergessen." Keep selected decisions, proposals and unresolved questions distinguishable as the discussion continues.
+- Further owner decision and question: "Interface sollte auch interne technische Verträge abdecken. Wie würde das am Bibliotheksbeispiel aussehen, und wie grenzen wir Interface dabei von Component ab?" Interface includes internal technical contracts. The concrete architecture and exact Property contracts below remain proposals.
 
 ## Current design state
 
@@ -19,6 +20,7 @@ Source: the owner's standard-library design discussion in this chat on 17 Octobe
 | --- | --- | --- |
 | Concept, Rule, UseCase: body links and empty spec | Owner-selected direction | [Concept](concept.md), [Rule](rule.md), [UseCase](use-case.md) |
 | UseCase.rules and its Property definition | Dropped from the proposal following the owner's challenge and selection | Rationale below |
+| Interface covers internal technical contracts as well as external interaction | Owner-selected direction | [Interface](interface.md), internal example below |
 | Actor and Interface: body links and empty spec | Assistant proposal awaiting discussion | [Actor](actor.md), [Interface](interface.md), example below |
 | Standard-library distribution, Package names and remaining Kinds | Assistant proposals; not selected | Initial proposal below |
 | Production library, migration and consumer behavior | Not implemented by this record | Existing fixtures remain unchanged |
@@ -130,13 +132,101 @@ Changing callable-interface from Rule to Interface is a proposed Kind change und
 | Actor permissions | The Library assumes a trusted operator and no authentication. An Actor declaration does not grant authority. |
 | Interface.actors or Interface.useCases | Body links and the existing operation table identify participants and offered behavior. A second list would require maintenance. |
 | Interface.protocol or version | The exact JSON Lines protocol and identifier are already binding prose; no structured consumer has been identified. |
-| Interface.provider | Component/provider modeling has not been designed in this discussion. |
+| Interface.provider | The internal example states provider and consumer relationships in Component bodies; it requires no second structured list. |
 
 A Property needs a demonstrated purpose beyond labeling existing prose. Exact schema generation, structured validation or independent parameter maintenance could supply such a purpose. A specialized protocol Kind could then declare its exact fields; it would not automatically inherit Interface behavior under v1.
 
+## Internal contract and Component boundary
+
+Owner-selected scope: Interface includes internal technical contracts. The earlier Actor-only working definition was too narrow. An internal consumer can be a Component without being recast as an Actor. The [Interface page](interface.md) owns the expanded definition; the [Component page](component.md) owns its responsibility distinction.
+
+The new observation is the owner's explicit scope selection. Earlier [Library architecture exploration](../product-model-refinement/library-architecture-example.md) already used service and repository contracts, but its old format, frontend/backend/database choices and provider checks do not become current requirements. Current M1 [realization](library-example/m1/model/library/realization.yaml) deliberately leaves internal architecture free and requires no production database. The following is an illustrative architecture proposal, not a change to M1 or its Apply acceptance target.
+
+| Definition | Proposed Kind | Owns |
+| --- | --- | --- |
+| operator | Actor | The role that operates the library. |
+| callable-interface | Interface | The existing external JSON Lines interaction contract. |
+| jsonl-adapter | Component | Translation between the external contract and internal calls. |
+| lending-api | Interface | The internal lending call contract. |
+| lending-service | Component | Responsibility for realizing borrowing and returns. |
+| lending/borrow and lending/return | UseCase | The existing domain behavior, including conditions, effects and refusals. |
+
+Both Components and Interfaces describe intended architecture. Neither is the source implementation itself. An Interface states expectations at an interaction boundary; a Component states which system part fulfills a responsibility. The same Component can offer multiple Interfaces, and its internal representation can change while those contracts stay valid. A separate Interface is useful where a deliberate boundary or consumer/provider agreement needs a stable, independently addressable owner; do not create one for every helper call.
+
+### Proposed internal lending contract
+
+One proposed Definition file in Package library:
+
+```yaml
+imports:
+  - package: markitect/software
+    as: Software
+  - package: lending
+    as: Lending
+id: lending-api
+kind: Software.Interface
+body: >-
+  An in-process contract for borrowing and returns.
+  Borrow accepts a member identifier, a copy identifier and a borrowing date.
+  It returns the created loan's identifier and due date, or a domain refusal,
+  as specified by [[Lending.borrow]].
+  Return accepts a loan identifier and a return date.
+  It returns the loan result and distinguishes returned from already returned,
+  as specified by [[Lending.return]].
+  Each call completes before returning its outcome.
+  This contract carries domain inputs and outcomes, without a JSON envelope
+  or a transport correlation identifier.
+spec: {}
+```
+
+The call semantics are a concrete proposed technical choice. Existing UseCases remain the owners of domain admission rules and effects. The contract does not copy the borrowing limit or independently redefine return eligibility. Exact Go signatures, type representation and package layout remain unspecified by this excerpt.
+
+### Proposed consumer and provider
+
+One proposed consumer Definition file in the same Package:
+
+```yaml
+imports:
+  - package: markitect/software
+    as: Software
+id: jsonl-adapter
+kind: Software.Component
+body: >-
+  Provides [[callable-interface]] and translates its requests and responses.
+  For borrowing and returns, it consumes [[lending-api]].
+  It maps request arguments to call inputs and call outcomes to JSON responses,
+  preserving the external contract's ordering and error behavior.
+  Domain admission and loan state transitions belong to [[lending-service]].
+spec: {}
+```
+
+One proposed provider Definition file in the same Package:
+
+```yaml
+imports:
+  - package: markitect/software
+    as: Software
+  - package: lending
+    as: Lending
+id: lending-service
+kind: Software.Component
+body: >-
+  Provides [[lending-api]] and realizes [[Lending.borrow]] and [[Lending.return]]
+  against the current library state, including their applicable obligations.
+  It owns domain admission and loan state transitions for those operations.
+  It does not parse JSON Lines or read or write standard input and output.
+spec: {}
+```
+
+Only the borrowing/returning slice is expanded here. The adapter still has to satisfy every other operation of the external contract; this example does not select their internal providers. It introduces no persistence, extra process, frontend, dependency-injection framework or additional Manager. All of these Definition excerpts are design illustrations, not a complete compiled fixture.
+
+The provider/consumer roles follow from explicit sentences, not from the link notation alone. The Core verifies target identity, not a formal provides/consumes relationship, actual code dependency direction or fulfillment. No universal single-provider rule or automatic provider selection is proposed. Component does not imply a source-language class or process; Interface does not imply a Go or C# interface declaration.
+
+This example needs no additional structured Properties. Potential fields such as provides and consumes remain unselected. A later structured consumer could justify them; preserving the same relationship in prose and a second manually maintained list is not currently necessary. A useful future observation would be that a consumer can be reviewed against this contract while its provider's internal representation changes, with no lost domain or external behavior. This discussion supplies no execution proof of that result.
+
 ## Remaining discussion
 
-- Owner review of Actor and Interface meaning, wording and empty specs; especially whether an Interface also covers internal technical contracts.
+- Owner review of Actor/Interface wording and empty specs. Interface's inclusion of internal technical contracts is selected; the exact proposed call contract and Component split are not.
 - Examine Component, Scenario and Check individually before selecting their fields or the complete eight-Kind target.
 - Decide distribution model, Package identities and update policy before publishing them.
 - Preserve the Library's complete intent when proposing a vocabulary migration; do not alter the M1/M2 Apply acceptance target merely to demonstrate the standard library.
