@@ -22,9 +22,11 @@ import (
 const MaxImageFileObservationBytes int64 = 512 << 20
 
 const (
-	maxImagePathHeaderBytes     = 1 << 20
-	maxImagePathObservations    = 256
-	imagePathObservationTimeout = 15 * time.Second
+	maxImagePathHeaderBytes  = 1 << 20
+	maxImagePathObservations = 256
+	// A cold image can take longer to expose its first path on Docker Desktop.
+	// Keep every header observation finite and subordinate to the caller's context.
+	imagePathObservationTimeout = 60 * time.Second
 )
 
 // ImageFileObservation identifies every byte of one regular file in an image.
@@ -203,7 +205,7 @@ func (e *Engine) observeImagePathHeader(ctx context.Context, id, file string, wa
 	defer cancel()
 	cmd := exec.CommandContext(bounded, e.path, "cp", id+":"+file, "-")
 	stderr := &boundedBuffer{max: maxCommandOutput}
-	cmd.Stderr, cmd.WaitDelay = stderr, imagePathObservationTimeout
+	cmd.Stderr, cmd.WaitDelay = stderr, 15*time.Second
 	stdout, err := cmd.StdoutPipe()
 	if err != nil {
 		return err

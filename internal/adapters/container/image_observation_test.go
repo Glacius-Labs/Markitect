@@ -68,6 +68,49 @@ func imagePathHeader(t *testing.T, file string, kind byte, link string) string {
 	return string(archive[:512])
 }
 
+func TestObserveImageFileAllowsSlowFirstPathObservation(t *testing.T) {
+	// The first path in a cold image can exceed the former 15-second bound.
+	// Exercise the real deadline without changing the production timeout.
+	archive := imageArchive(t, tar.Header{Name: "check", Typeflag: tar.TypeReg, Size: 3}, "abc", false)
+	e, calls := fakeCommandEngine(t, engineStep{Out: commandID},
+		engineStep{Out: imagePathHeader(t, "/work", tar.TypeDir, ""), SleepMillis: 16000},
+		engineStep{Out: string(archive)}, engineStep{})
+	got, err := e.ObserveImageFileWithRequiredPaths(context.Background(), commandImage, "/check", 3, []string{"/work"}, nil)
+	if err != nil || got.SHA256 != sha256.Sum256([]byte("abc")) || got.Size != 3 {
+		t.Fatalf("observation=%+v err=%v", got, err)
+	}
+	all := calls()
+	wantTail := [][]string{{"cp", commandID + ":/work", "-"}, {"cp", commandID + ":/check", "-"}, {"rm", "--force", "--volumes", commandID}}
+	if len(all) != 4 || !reflect.DeepEqual(all[1:], wantTail) {
+		t.Fatalf("engine calls=%q", all)
+	}
+}
+
+func TestObserveImageFileColdPathHonorsParentDeadline(t *testing.T) {
+	e, calls := fakeCommandEngine(t, engineStep{Out: commandID}, engineStep{SleepMillis: 16000}, engineStep{})
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+	type result struct {
+		observation ImageFileObservation
+		err         error
+	}
+	done := make(chan result, 1)
+	go func() {
+		got, err := e.ObserveImageFileWithRequiredPaths(ctx, commandImage, "/check", 3, []string{"/work"}, nil)
+		done <- result{got, err}
+	}()
+	select {
+	case got := <-done:
+		all := calls()
+		wantTail := [][]string{{"cp", commandID + ":/work", "-"}, {"rm", "--force", "--volumes", commandID}}
+		if !errors.Is(got.err, context.DeadlineExceeded) || got.observation != (ImageFileObservation{}) || len(all) != 3 || !reflect.DeepEqual(all[1:], wantTail) {
+			t.Fatalf("observation=%+v err=%v calls=%q", got.observation, got.err, all)
+		}
+	case <-time.After(8 * time.Second):
+		t.Fatal("cold path observation did not honor the shorter parent deadline and clean its container")
+	}
+}
+
 func TestObserveImageFileRequiredPathsAreOrderedUniqueAndBounded(t *testing.T) {
 	// /opt and /opt/tools occur in both the executable and required-directory
 	// chain; every resource is observed once, with parents before children.
