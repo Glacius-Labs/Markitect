@@ -43,6 +43,10 @@ type stateValue struct {
 	runs           map[string]RunView
 	invocations    map[string]Invocation
 	operations     map[string]operation
+	sessions       map[SessionID]SessionView
+	steps          map[StepID]StepView
+	transports     map[messageKey]TransportView
+	tools          map[toolKey]ToolView
 }
 
 // Coordinator owns one repository's confirmed projection and at most one
@@ -60,7 +64,7 @@ func NewCoordinator(repository string) (*Coordinator, error) {
 	if !text(repository) {
 		return nil, ErrInvalid
 	}
-	return &Coordinator{state: stateValue{repository: repository, runs: map[string]RunView{}, invocations: map[string]Invocation{}, operations: map[string]operation{}}}, nil
+	return &Coordinator{state: stateValue{repository: repository, runs: map[string]RunView{}, invocations: map[string]Invocation{}, operations: map[string]operation{}, sessions: map[SessionID]SessionView{}, steps: map[StepID]StepView{}, transports: map[messageKey]TransportView{}, tools: map[toolKey]ToolView{}}}, nil
 }
 func (c *Coordinator) Current() RunView { return c.state.current }
 func (c *Coordinator) Revision() uint64 { return c.state.revision }
@@ -126,7 +130,7 @@ func (c *Coordinator) Propose(command Command) (Proposal, error) {
 		r := previous.receipt
 		return Proposal{command: command, replay: &r}, nil
 	}
-	if c.recovering && command.Kind != SettleInvocation && command.Kind != ReleaseUndispatched && command.Kind != ObserveUncertain && command.Kind != StopRun {
+	if c.recovering && command.Kind != SettleInvocation && command.Kind != ReleaseUndispatched && command.Kind != ObserveUncertain && command.Kind != StopRun && !sessionReconciliation(command.Kind) && !(command.Kind == PrepareTransport && command.Session.Control) {
 		return Proposal{}, ErrRecovery
 	}
 	next := c.state
@@ -135,12 +139,19 @@ func (c *Coordinator) Propose(command Command) (Proposal, error) {
 	next.operations = maps.Clone(c.state.operations)
 	next.extensions = slices.Clone(c.state.extensions)
 	next.history = slices.Clone(c.state.history)
+	next.sessions = maps.Clone(c.state.sessions)
+	next.steps = maps.Clone(c.state.steps)
+	next.transports = maps.Clone(c.state.transports)
+	next.tools = maps.Clone(c.state.tools)
 	if err := next.apply(command); err != nil {
 		return Proposal{}, err
 	}
 	var events []Event
 	if command.Kind == PrepareRun && (c.state.assignment == "" || c.state.closure.CommandID != "") {
 		events = append(events, Event{ID: fmt.Sprintf("%x", sha256.Sum256(append(data, byte(0)))), Kind: "assignment.created", Body: command})
+	}
+	if command.Kind == PrepareSession || command.Kind == PrepareStep {
+		events = append(events, Event{ID: fmt.Sprintf("%x", sha256.Sum256(append(data, byte(2)))), Kind: ReserveInvocation, Body: command})
 	}
 	events = append(events, Event{ID: fmt.Sprintf("%x", sha256.Sum256(append(data, byte(1)))), Kind: eventTag(command.Kind), Body: command})
 	batch, err := newBatch(command.ID, c.state.revision, events)
@@ -149,10 +160,12 @@ func (c *Coordinator) Propose(command Command) (Proposal, error) {
 	}
 	next.revision = batch.Revision()
 	next.operations[command.ID] = operation{digest, ReceiptFor(batch)}
+	next.sessionReceipt(command, ReceiptFor(batch))
 	p := Proposal{batch: batch, next: next, command: command}
 	if command.Kind == PrepareRun {
 		p.payloads = []Payload{command.binding.owner, command.binding.payload}
 	}
+	p.payloads = append(p.payloads, command.sessionPayloads...)
 	return p, nil
 }
 
@@ -218,6 +231,9 @@ func (s *stateValue) apply(c Command) error {
 	if s.current.State == Finished {
 		return ErrState
 	}
+	if c.Session.Session != "" {
+		return s.applySession(c)
+	}
 	r := s.current
 	switch c.Kind {
 	case StartRun:
@@ -226,31 +242,15 @@ func (s *stateValue) apply(c Command) error {
 		}
 		r.State = Running
 	case ReserveInvocation:
-		if r.State != Running {
-			return ErrState
-		}
-		if _, exists := s.invocations[c.Reservation.ID]; exists {
-			return ErrConflict
-		}
-		for _, prior := range s.history {
-			for _, invocation := range prior.Invocations {
-				if invocation.Reservation.ID == c.Reservation.ID {
-					return ErrConflict
-				}
-			}
-		}
-		for _, invocation := range s.invocations {
-			if open(invocation) && invocation.Reservation.Purpose == Writing && c.Reservation.Purpose == Writing {
-				return ErrState
-			}
-		}
-		if err := admit(s.policy, budget(s.policy, int64(len(s.runs)), s.invocations), c.Reservation); err != nil {
+		if err := s.reserve(c.Reservation); err != nil {
 			return err
 		}
-		s.invocations[c.Reservation.ID] = Invocation{Reservation: c.Reservation, CapRevision: s.capRevision(), State: Reserved}
 	case SettleInvocation, ObserveUncertain, ReleaseUndispatched:
 		invocation, ok := s.invocations[c.Invocation]
 		if !ok || !open(invocation) {
+			return ErrState
+		}
+		if !s.sessionSettlementAllowed(c.Invocation, c.Kind) {
 			return ErrState
 		}
 		if c.Kind == ObserveUncertain {
@@ -286,7 +286,7 @@ func (s *stateValue) apply(c Command) error {
 		r.Reason = c.Reason
 		r.NextActor = ""
 	case FinishRun:
-		if s.hasOpen() || c.Outcome == Stopped && !r.StopRequested {
+		if s.hasOpen() || s.hasLiveSessions() || c.Outcome == Stopped && !r.StopRequested {
 			return ErrState
 		}
 		r.State = Finished
@@ -304,6 +304,9 @@ func open(invocation Invocation) bool {
 	return invocation.State == Reserved || invocation.State == Uncertain
 }
 func (s stateValue) hasOpen() bool {
+	if s.hasSessionActivity() {
+		return true
+	}
 	for _, invocation := range s.invocations {
 		if open(invocation) {
 			return true

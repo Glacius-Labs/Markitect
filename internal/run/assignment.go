@@ -103,7 +103,7 @@ func (s *stateValue) amendAssignment(c Command) error {
 		s.policy.Assignment = c.Caps
 		s.extensions = append(s.extensions, AssignmentExtension{c.ID, c.ObservedAt, s.capRevision() + 1, c.Caps, c.OwnerInput})
 	case CloseAssignment:
-		if s.current.State != Finished || s.hasOpen() {
+		if s.current.State != Finished || s.hasOpen() || s.hasLiveSessions() {
 			return ErrState
 		}
 		s.closure = AssignmentClosure{c.ID, c.ObservedAt, s.current.ID, s.current.Outcome, c.OwnerInput, c.Quiescence}

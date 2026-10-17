@@ -1,5 +1,21 @@
 apiVersion: markitect.registry/v1
 artifacts:
+  - path: "internal/run/session.go"
+    form: code
+    realizes: [product/run/confirmed-run-history]
+    why: Defines the provider-neutral Session port and permitted journal wire representations.
+  - path: "internal/run/session_io.go"
+    form: code
+    realizes: [product/run/confirmed-run-history]
+    why: Confirms channel-bound callbacks and deduplicates persisted tool exchanges without executing tools.
+  - path: "internal/run/session_state.go"
+    form: code
+    realizes: [product/run/confirmed-run-history]
+    why: Reduces admitted session and step facts, send uncertainty and observed termination.
+  - path: "internal/run/session_test.go"
+    form: test
+    realizes: [product/run/confirmed-run-history]
+    why: Checks durable send ordering, tool deduplication, reference integrity and recovery holds.
   - path: "internal/run/assignment.go"
     form: code
     realizes: [product/run/confirmed-run-history]
