@@ -97,7 +97,8 @@ func TestConcreteResponsibilityBoundaries(t *testing.T) {
 		{"internal/adapters/codexappserver", "internal/adapters/claudecode", false},
 		{"internal/adapters/codexappserver", "internal/adapters/gitrepo", false},
 		{"internal/adapters/codexappserver", "internal/tooling/source", false},
-		{"internal/bootstrap", "internal/adapters/container", false},
+		{"internal/bootstrap", "internal/adapters/container", true},
+		{"internal/bootstrap", "internal/adapters/journal", true},
 		{"internal/adapters/container", "internal/agentd/frame", true},
 		{"internal/adapters/container", "internal/agentd", false},
 		{"internal/adapters/container", "internal/apply", false},
@@ -245,18 +246,18 @@ func TestJournalFixtureEdgesStayTestOnly(t *testing.T) {
 	}
 }
 
-func TestBootstrapControlFixtureEdgesStayTestOnly(t *testing.T) {
-	// Session router composition consumes Run in production; control fixtures
-	// retain their separate test-only imports.
+func TestBootstrapExecutionCompositionPreservesFixtureBoundaries(t *testing.T) {
+	// Bootstrap composes Run with journal control and the container engine for
+	// workspaces and checks; pure model and snapshot imports remain test-only.
 	for _, tc := range []struct {
 		to               string
 		production, test bool
 	}{
 		{"internal/apply", true, true}, {"internal/adapters/gitrepo", true, true},
-		{"internal/adapters/journal", false, true}, {"internal/model", false, true},
+		{"internal/adapters/journal", true, true}, {"internal/model", false, true},
 		{"internal/snapshot", false, true}, {"internal/run", true, true}, {"internal/testkit", false, true},
 		{"internal/organization", false, false}, {"internal/realization", false, false},
-		{"internal/adapters/container", false, false}, {"internal/adapters/unknown", false, false},
+		{"internal/adapters/container", true, true}, {"internal/adapters/unknown", false, false},
 	} {
 		for _, test := range []bool{false, true} {
 			allowed := tc.production
@@ -268,11 +269,15 @@ func TestBootstrapControlFixtureEdgesStayTestOnly(t *testing.T) {
 			}
 		}
 	}
-	for _, producer := range []struct{ path, layer, pkg string }{
-		{"internal/adapters/journal", "apply-adapter", "journal"},
-		{"internal/model", "apply-model", "model"},
-		{"internal/snapshot", "apply-snapshot", "snapshot"},
-		{"internal/run", "apply-run", "run"},
+	for _, producer := range []struct {
+		path, layer, pkg string
+		production       bool
+	}{
+		{"internal/adapters/journal", "apply-adapter", "journal", true},
+		{"internal/adapters/container", "apply-adapter", "container", true},
+		{"internal/model", "apply-model", "model", false},
+		{"internal/snapshot", "apply-snapshot", "snapshot", false},
+		{"internal/run", "apply-run", "run", true},
 	} {
 		for _, file := range []string{"fixture_windows_test.go", "fixture_linux_test.go", "fixture_windows.go", "fixture_linux.go"} {
 			t.Run(producer.pkg+"/"+file, func(t *testing.T) {
@@ -288,7 +293,7 @@ func TestBootstrapControlFixtureEdgesStayTestOnly(t *testing.T) {
 					t.Fatal(err)
 				}
 				want := 0
-				if producer.path != "internal/run" && !strings.HasSuffix(file, "_test.go") {
+				if !producer.production && !strings.HasSuffix(file, "_test.go") {
 					want = 1
 				}
 				if len(got) != want {
