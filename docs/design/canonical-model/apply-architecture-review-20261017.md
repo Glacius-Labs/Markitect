@@ -5,7 +5,7 @@ The owner asked the assistant to act as the project's architect. The owner wante
 **Basis:**
 - **Revision:** Main [`3580b30d`](https://github.com/Glacius-Labs/Markitect/tree/3580b30d37f31fbaba0ff1606cd29ed3e58f44e8). Later merges up to `0674e129` are noted where they change a finding.
 - **Method:** four independent read-only reviews. They covered code architecture, documentation, work in flight and process, and the Apply concept family. The main claims were then spot-checked against source.
-- **What the numbers are:** measurements at that revision. The judgments are the assistant's.
+- **What the numbers are:** counts are measurements at that revision. Cost figures for a 15-Package model are estimates. The judgments are the assistant's.
 
 ## Verdict
 
@@ -14,7 +14,7 @@ The product idea and the target architecture are sound, and the Go dependency st
 ## Keep
 
 - **Four separate inputs and records:** model, organization configuration, realization registry and execution history. Binding intent lives only in the model.
-- **Participation and process are guaranteed by the Host** ([DEC-039](../../concepts/register.md#dec-039-deterministic-manager-process)). Agents only judge.
+- **Participation and process are guaranteed by the Host** ([DEC-039](../../concepts/register.md#dec-039-deterministic-manager-process)). Agents realize and judge; they do not choose participants or rewrite operations.
 - **Ownership:** one accountable owner per artifact, one writer at a time, and an overlap is an error.
 - **Reviews** record their expectations before they see the candidate.
 - **Definition census:** each Definition gets a disposition backed by evidence. The Host checks the final evidence.
@@ -40,7 +40,7 @@ The product idea and the target architecture are sound, and the Go dependency st
 
 - **The concept** says composition is a disjoint union because each file has one owner and one task writes at a time. An overlap stops the run ([concept](manager-apply-concept.md#apply-lifecycle)).
 - **The port contracts** say sequential writing does not establish a common base. A composition without a proven common base is refused and "never silently rebased" ([port contracts](manager-apply-port-contracts.md#candidate-workspace-port)). The [library walkthrough](manager-apply-library-flow.md#consuming-a-delivery-without-losing-local-work) says the same.
-- **After a limited delivery**, such as a skeleton, producer and consumer never share a base again. The operation that every parent integration needs is therefore forbidden.
+- **After a limited delivery**, such as a skeleton, producer and consumer never share a base again. The port contracts require the producer to establish a common base or return the conflict. The walkthrough relies on an explicitly admitted basis advance. So the operation that every parent integration needs has no specified rule.
 
 **Recommendation:**
 - Define composition as replaying owned file deltas onto the latest accepted aggregate. Exclusive ownership makes this safe.
@@ -57,16 +57,16 @@ The first version specifies a large runtime apparatus: conversation continuity a
   - The Host composes the next workspace version between steps.
   - The conversation resumes from the retained provider home where that is supported. Otherwise the Host supplies an evidence-linked handoff.
 - Merge [#352](https://github.com/Glacius-Labs/Markitect/pull/352) showed after the basis revision that both CLIs can resume a conversation in a new container from the retained provider home ([record](../../validation/runtime-capabilities-20261017.md)). This makes the step-bound form cheap.
-- An owner question ends the run Incomplete instead of waiting inside the run.
-- Warm retention and waiting inside a run can return when a real run shows the need.
+- While the run waits for the owner, no container runs, and the Host process can exit. `answer` and `resume` continue the run.
+- Warm retention can return when a real run shows the need.
 
 ### F4 Complete participation costs a lot and does not scale yet
 
 - **Cost per Apply for 15 Packages:**
-  - The protected review demand is `2 * (N + P)` session starts ([execution](manager-apply-execution.md#one-ledger-with-protected-completion-capacity)).
-  - With 16 Managers and 5 parents that is 42 review starts plus 16 Explore sessions. The floor is about 58 sessions, even for a one-field change.
-  - A realistic Apply needs about 70 to 90 sessions. A strong single-agent baseline needs 2 to 5.
-- **Cost of routing:** cross-area questions travel one tree edge at a time. A question from `lending/reminders` to `members` costs five intermediate Agent turns.
+  - Preparation reserves `2 * (N + P)` session starts for reviews ([execution](manager-apply-execution.md#one-ledger-with-protected-completion-capacity)).
+  - With 16 Managers and 5 parents that is 42 reserved review starts plus 16 Explore sessions. The floor is about 58 sessions, even for a one-field change.
+  - The estimate for a realistic Apply is about 70 to 90 sessions. A strong single-agent baseline would need 2 to 5.
+- **Cost of routing:** cross-area questions travel one tree edge at a time. A question from `lending/reminders` to `members` and its reply cost four intermediate Agent turns: lending, root, root and lending.
 - **Computed scope contradicts DEC-039.** [Computed scope](manager-apply-concept.md#toward-computed-scope) says "Managers outside it get no task". DEC-039 says no Manager is skipped.
 
 **Recommendation:**
@@ -93,7 +93,7 @@ The first version specifies a large runtime apparatus: conversation continuity a
   - two Git acquisition stacks: `tooling/source` and `adapters/gitrepo`;
   - six strict-YAML node walkers;
   - two digest representations.
-- **Errors are opaque.** `run` returns a bare `ErrInvalid` on 162 paths, and `run.Bind` alone has about 22. When the first real binding fails, the reason will be unknown. One condition at `internal/run/manager.go:327` is 872 characters long.
+- **Errors are opaque.** Production code in `run` returns a bare `ErrInvalid` at 124 sites, and `run.Bind` alone has about 22. When the first real binding fails, the reason will be unknown. One condition at `internal/run/manager.go:327` is 872 characters long.
 - **Leftovers, contrary to [DEC-032](../../concepts/register.md#dec-032-quality-simplicity-and-stability-over-effort-and-compatibility):**
   - The v1/v2 basis replay is retained for runs that never happened.
   - `organization.Manager.PassThrough` is deprecated but still used by `run.reviewFloor`.
@@ -111,7 +111,7 @@ The first version specifies a large runtime apparatus: conversation continuity a
 - **"Apply is unavailable"** is repeated in at least twelve places.
 - **Volume:** `docs/` holds 5.5 MB against 1.5 MB of production Go. The reading path to understand Apply is about 42k words.
 - **History mixed with contracts:** about 970 KB of historical, retired or dated material sits outside `history/`. It includes the replacement map with 26 retired `src/` paths.
-- **Register entries are patched instead of replaced.** DEC-039 is 5.4 KB with four refinement bullets, and the register has no Superseded status.
+- **Register entries are patched instead of replaced.** DEC-039 is 5.4 KB with four refinement bullets. The register defines a Superseded status, but no entry uses it, even where DEC-039 replaces parts of DEC-029 and DEC-036.
 - **Links:** CI checks the links of 33 entry documents only. The Apply family is not checked.
 - **Contract style:** the contracts are careful prose. They have no rule IDs, and owner narration is woven into the binding rules, so an implementer must decide sentence by sentence what binds.
 
@@ -119,7 +119,7 @@ The first version specifies a large runtime apparatus: conversation continuity a
 - One short "built and planned" table, linked from everywhere else.
 - One contract per rule, with numbered rule IDs that tests can cite, and links elsewhere.
 - Archive material moves to `history/`.
-- Register entries hold the statement, reason and owner link, with Superseded and Retired statuses.
+- Register entries hold the statement, reason and owner link. Replaced entries use the existing Superseded status, and a new Retired status covers entries whose subject no longer exists.
 - The link check covers all active documents.
 
 ### F8 Process overhead and repository hygiene
@@ -140,8 +140,11 @@ The first version specifies a large runtime apparatus: conversation continuity a
 
 1. **Freeze the concept** ([DEC-040](../../concepts/register.md#dec-040-concept-freeze-until-the-core-runs)). No new mechanisms or design areas until the core runs.
 2. **Complete the concept without adding scope:**
-   - Write the one-page core specification (F1) and resolve F2 and F4.
-   - Apply the cuts of F3 after owner confirmation where they change an adopted item.
+   - Write the one-page core specification (F1).
+   - Resolve F2 and F4, and apply the cuts of F3.
+   - Where a proposal changes an adopted item, the owner confirms it first. Such items include:
+     - computed scope, which is in DEC-003 and DEC-010;
+     - DEC-039's participation and review-reuse rules.
    - Merge the roughly twenty status vocabularies into a few:
      - one effect record with the outcomes done, not done and unknown;
      - one issue type for findings, questions and decisions;
@@ -163,11 +166,10 @@ The first version specifies a large runtime apparatus: conversation continuity a
 
 ## Owner decisions
 
-On 17 October 2026, after this assessment, the owner decided the following (original wording):
-
-- Concept freeze: „Das Konzept ist jetzt eingefroren.“
-- Order: „Falls er das nicht tut, sollten wir erst das Konzept fertigstellen und die Aufräumrunde starten. Die Aufräumrunde wäre generell gut zu starten unabhängig davon.“ Here "er" is the Coordinator and "das" is implementing the concept.
-- Division of work, proposed: „Wir kümmern uns um Konzept und Herzstück. Er kümmert sich dann um die Dinge aussenrum schlage ich vor.“
+On 17 October 2026, after this assessment, the owner made these decisions. The [source](../../concepts/sources/architecture-review-20261017.md) keeps the original wording.
+- **Freeze:** the owner froze the concept ([DEC-040](../../concepts/register.md#dec-040-concept-freeze-until-the-core-runs)).
+- **Order:** complete the concept and start the cleanup round before implementation. The cleanup round is worthwhile in any case.
+- **Division of work:** proposed by the owner, and acknowledged by the Coordinator.
 
 This review asked whether a Codex credential would be provided. Merge #352 answers that: a dedicated runtime login now serves Codex sessions ([record](../../validation/runtime-capabilities-20261017.md)).
 

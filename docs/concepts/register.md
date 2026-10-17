@@ -488,14 +488,14 @@ The owner's [origin account of 15 October 2026](sources/owner-origin-20261015.md
 
 ### DEC-040 Concept freeze until the core runs
 
-- **Status:** Accepted, owner, 17 October 2026 ([owner wording](../design/canonical-model/apply-architecture-review-20261017.md#owner-decisions)), adopting the [architecture review](../design/canonical-model/apply-architecture-review-20261017.md#proposed-approach).
+- **Status:** Accepted, owner, 17 October 2026 ([source](sources/architecture-review-20261017.md#concept-freeze-and-order-of-work)), after the [architecture review](../design/canonical-model/apply-architecture-review-20261017.md).
 - **Statement:**
-  - The Apply concept and its technical contracts are frozen („Das Konzept ist jetzt eingefroren“). These are the documents of the [Apply design map](../design/canonical-model/README.md#apply-design).
-  - No new mechanisms, operations or design areas are added until one Package completes Explore, work, independent review, rework, acceptance and guarded publication through `markitect apply`.
-  - Before implementation, the concept is completed without adding scope: the core is specified, contradictions are resolved and each rule gets one owner.
-  - A contradiction found during implementation reopens only the affected rule.
-  - The cleanup round starts independently of this.
-- **Boundary:** DEC-025 to DEC-039 remain in force. A review recommendation that changes an adopted item still needs the owner, as [DEC-036](#dec-036-adopted-design-refinements-for-the-first-apply) requires.
+  - The concept is frozen („Das Konzept ist jetzt eingefroren“).
+  - It is to be completed first („erst das Konzept fertigstellen“), and the cleanup round should start in any case („Die Aufräumrunde wäre generell gut zu starten unabhängig davon“).
+  - Implementation follows once the concept is clean, uniform and worked out („sauber, einheitlich und ausgearbeitet“).
+- **Interpretation (marked):** the freeze applies to the documents of the [Apply design map](../design/canonical-model/README.md#apply-design). It answers the review's recommendation to add no new mechanisms until one Package runs end to end. Completing the concept means specifying the core, resolving contradictions and giving each rule one owner, without adding scope.
+- **Boundary:** DEC-025 to DEC-039 remain in force. A review proposal that changes an adopted item still needs the owner, as [DEC-036](#dec-036-adopted-design-refinements-for-the-first-apply) requires.
+- **Owning document:** the [Apply design map](../design/canonical-model/README.md#apply-design).
 
 ## Promises
 

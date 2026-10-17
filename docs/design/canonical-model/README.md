@@ -36,7 +36,8 @@ Read in this order:
 | [Acceptance gates](manager-apply-implementation-plan.md) | What each delivery step must prove. |
 | [Library M1](library-example/README.md) | The example model, including its [callable interface](library-example/m1/model/library/callable-interface.yaml), and the [independent expectations](library-example/evaluation-contract.md). |
 | [North star](manager-realization-north-star.md) | Ideas and variants that were not selected, later operations and open questions. |
-| [Architecture review of 17 October 2026](apply-architecture-review-20261017.md) | Dated findings on this design and the proposed approach under the concept freeze ([DEC-040](../../concepts/register.md#dec-040-concept-freeze-until-the-core-runs)). |
+
+These documents are frozen under [DEC-040](../../concepts/register.md#dec-040-concept-freeze-until-the-core-runs) while the concept is completed. The [architecture review of 17 October 2026](apply-architecture-review-20261017.md) is a dated assessment of this design and its proposed approach. It does not own any contract.
 
 Implementations identify the supported part of this target and its evidence. An intentional deviation changes the owning contract in the same pull request; partial implementation does not silently redefine the target. Record shapes, event tags and Go signatures in the design are illustrative unless explicitly identified as executable fixtures; the behavioral requirements remain binding. Exact implemented formats belong to the versioned contracts in source.
 
