@@ -30,7 +30,7 @@ at `962f17468ae1b3558e042a0429888ece59106545`. Its application and public test
 are byte-identical to the immutable original source.
 The earlier fixture and ordinary wording left the error response shape too
 open. Both now require exactly one JSON object with only a nonempty string
-`error` field. This is a requirements-precision update; the existing application,
+`error` field. This makes both requirement representations more precise; the existing application,
 public test and known input-error gap remain unchanged, without a behavior claim.
 
 `readinglog-existing` means **no added seed**, not a claim of correctness. The
