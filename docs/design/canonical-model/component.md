@@ -4,9 +4,9 @@ A **Component** describes a part of the system, its purpose and its responsibili
 
 A Component can be a logical part or have a runtime or deployment role. It can contain other Components; a separate process or deployment is not required. For example, Task Logic is a logical Component, while a backend service can be a runtime Component.
 
-Design decision: the owner chose this general, nestable meaning on 15 October 2026 in the [consolidated design discussion](consolidation.md#1-component-allgemeiner-systemteil-oder-laufzeitbaustein). The additional purposes of System and Module remain to be clarified.
+Design decision: the owner chose this general, nestable meaning on 15 October 2026 in the [consolidated design discussion](consolidation.md#1-component-allgemeiner-systemteil-oder-laufzeitbaustein). At that stage the additional purposes of System and Module were still open.
 
-Current review status: the owner subsequently marked Component versus Module, together with System, as [provisional terms](consolidation.md#arbeitsziel-und-wackelkandidaten). The general meaning above is the discussion basis; whether both Component and Module are needed is open and is the next design priority.
+Earlier review status: the owner marked Component versus Module, together with System, as [provisional terms](consolidation.md#arbeitsziel-und-wackelkandidaten). On 17 October the owner selected Component for the first foundation and the [System/Application/Component boundaries](standard-library.md#selected-boundaries). Component retains its broad meaning; System supplies a coherent solution's purpose and external boundary, while Application identifies an executable runtime boundary. Module remains deferred and is not a prerequisite for this first library.
 
 ## Boundary with Interface
 

@@ -69,6 +69,8 @@ The owner adopted the modular coverage direction and the system/application/depl
 
 The [Web Library view/data/recovery contract](standard-library-data-and-views.md) works out C4 view assessment, atomic access, the reference database, retries, migrations and recovery as detailed proposals.
 
+The [path to concept closure](standard-library.md#path-to-concept-closure) identifies the remaining decisions, a bounded project-coverage walkthrough and the proposed integration/implementation sequence. It does not claim that the concept is already approved, integrated or implemented.
+
 - [Project](project.md) — the project's name, purpose and associated definitions.
 - [Actor](actor.md) — a role through which a person or another system interacts with the system or participates in project work.
 - [UseCase](use-case.md) — an action available to an Actor and its outcome, accessed through an Interface.

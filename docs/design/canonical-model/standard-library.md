@@ -2,6 +2,39 @@
 
 Date: 17 October 2026. This is the owning discussion record for the proposed standard library. Per-Kind pages own their proposed Definition text. The [language specification](minimal-language/language-contract.md) remains the sole language contract. This record changes neither the compiler nor the Library fixtures and does not establish Apply or runtime evidence.
 
+## Path to concept closure
+
+The owner wants a clean concept integrated into Main, polished and then implemented when the Coordinator reaches its checkpoint. The following is the recommended closing sequence, not an expansion of the approved implementation scope. The foundation decisions are selected; the remaining companion contracts and reference-project recommendations are still proposals.
+
+### Finish these design decisions
+
+1. Review the final wording of the eight foundation Kinds together. Their separate term pages own that wording. Check that each has a distinct purpose, internal Interfaces need no invented Actor, a Check is a method rather than a result, and no relationship list or field has returned implicitly.
+2. Close one bounded first companion scope for architecture, data and operation. Start from the discussed System, Application, DataStore, Environment and Deployment meanings; decide which operating-resource distinctions need their own Kind. Give every selected Kind one complete body, one owning Package and a dependency direction. Frontend/backend remain roles; C4 starts with reviewed views of the same project objects. Optional Instance and specific load-balancer/database Kinds need an actual additional contract. Do not implement every candidate in the topic map merely because it appears there.
+3. Review the [data-and-view recommendations](standard-library-data-and-views.md) as reference-project choices. In particular, decide the proposed Deployment extension to logical stores and the intended transaction/failure boundaries. Keep the proposed PostgreSQL reference, maintenance migrations and recovery exercise separate from generic library obligations. A foundation release does not require every project to use that engine or operating method.
+4. Walk one coherent Web Library model through the coverage table below. Every applicable obligation needs one clear owner and an examination method; a topic can use the foundation Kinds without receiving a new specialist Kind. Mark deliberately free realization choices and genuinely open project requirements explicitly.
+
+| Coverage to close in the example | Existing approach or remaining question |
+| --- | --- |
+| Purpose, roles, behavior and domain invariants | Foundation Concepts, Actors, UseCases, Rules, Scenarios and Checks. |
+| Frontend, backend, internal parts and external dependencies | Application/Component boundaries and Interface contracts; verify responsibility and relationship ownership. |
+| Data, consistency, failure and schema evolution | Logical DataStore plus the proposed access, outcome and migration contracts. |
+| Deployment, routing, capacity and operation | Environment/Deployment and relevant operating resources; explicit configuration needs, health, observability and recovery obligations. |
+| Security and sensitive configuration | State trust boundaries, identity/access and data-protection obligations as applicable; model secret requirements/references rather than live secret values. A trusted local operator is not a web security design. |
+| Repository and delivery | State relevant source/toolchain/dependency constraints, local setup, build/test and release expectations, documentation and applicable licensing obligations. Required artifacts belong to intent; actual file ownership belongs to the registry. |
+| Architecture views and verification | One set of project identities, source-supported C4 meanings and Checks with observable success criteria. Execution results remain evidence. |
+
+This coverage pass is a bounded design walkthrough, not a mandate to create all proposed companion Packages or a new exhaustive test programme. A second small domain example can resolve a concrete suspected Library-specific assumption; it is not an unconditional prerequisite for concept closure.
+
+### Consolidate and integrate
+
+After these decisions, make the current contract easy to read: one concise overview, the owning Kind definitions, the Package/version contract and the coherent example. Keep the source statements and superseded proposals as identifiable history, with links from the current text. Remove stale open-question claims and duplicate recommendation text without discarding the original decision evidence. Do not create another parallel specification.
+
+Prepare a focused documentation PR against current Main, resolve substantive overlap with the ongoing Apply concept work, obtain independent complete-diff review and exact-head required CI, then integrate and read back Main under the repository's delivery rules. Documentation integration can carry explicitly deferred proposals; it must not present them as accepted contracts. Neither integration nor a clean branch proves that the Coordinator has reached its checkpoint.
+
+The subsequent implementation assignment should identify the selected scope and integrated source, produce actual Definition files/manifests and exact dependency locks, and validate a complete consumer with the real compiler. Preserve the current Library M1/M2 acceptance target; any migration needs an explicit intent-preserving change. Implement the foundation first; add only the selected companion slice, rather than silently dispatching the whole topic map.
+
+The concept is ready to hand over when the selected first scope has complete contracts, the example reveals no unresolved obligation essential to that scope, proposals and deferrals are visible, and the integrated documents agree. Physical source placement, packaging/release automation and routine implementation choices can be resolved during implementation within those contracts. Numeric operating targets, production readiness, the entire future vocabulary family and a deterministic C4 renderer are not concept-closure prerequisites. Reassessing spec remains observation during actual use.
+
 ## Source and selected decisions
 
 Source: the owner's standard-library design discussion in this chat on 17 October 2026. Direct quotations below are owner statements; recommendations elsewhere are assistant proposals unless explicitly selected.
@@ -482,7 +515,7 @@ Keep the selected broad Component meaning. Offer C4 as an optional, explicit mod
 
 Official C4 distinguishes an [application/data-store container](https://c4model.com/abstractions/container), a [Component within a container](https://c4model.com/abstractions/component), and [deployment nodes/instances and supporting infrastructure](https://c4model.com/diagrams/deployment). A C4 container is not inherently a Docker container. C4 Components are not separate deployable units. A load balancer can be infrastructure in a deployment view. These external definitions explain why one generic containment tree cannot silently be called strict C4.
 
-Proposed approach: an optional markitect/c4 Package could offer SoftwareSystem, Container and Component with their precise C4 contracts and later a deliberate view mechanism. The existing Software.Component stays general. C4.Component would be a separate nominal Kind, not an inherited subtype under v1. A project can choose the precise Kind for a particular part without declaring a second duplicate object merely to call it Software.Component as well. Body links can refer to either; a future typed Property targeting one exact Kind would require explicit design. Do not promise that every broad Component can be projected to a valid C4 Component without additional information.
+Earlier option, superseded as the first-support recommendation by the [later walkthrough](#c4-mapping-without-duplicate-project-objects): an optional markitect/c4 Package could offer SoftwareSystem, Container and Component with precise C4 contracts. Keep this option for a demonstrated additional contract; the current recommendation starts with views of neutral project Definitions. Under either approach Software.Component stays general, v1 supplies no inheritance, and a broad Component is not automatically a valid C4 Component.
 
 C4 diagrams should be derived views of accepted Definitions and explicit relationships. They must not become an independently edited copy of architecture. Exact view definitions, required relationships and validation rules remain to design; a renderer or plugin gains no new canonical authority.
 
@@ -490,7 +523,7 @@ C4 diagrams should be derived views of accepted Definitions and explicit relatio
 
 Distinguish a logical application from its instances in an environment. In a proposed web Library, library-api is the logical backend; its production instances and the load balancer are separate intended deployment subjects. This keeps development, staging and production variations from duplicating domain meaning.
 
-Illustrative candidate typing, not selected Definitions or a change to M1:
+Earlier illustrative C4-specific candidate typing, superseded for first support by the [neutral-definition walkthrough](#one-coherent-example). These are not selected Definitions or a change to M1:
 
 | Subject | Possible Kind | Meaning |
 | --- | --- | --- |
