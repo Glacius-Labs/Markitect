@@ -12,7 +12,7 @@ The self-model is `.markitect/model.yaml`, its `model-lock.yaml` and Definition 
 
 ## Verify a change
 
-Use Git and Go from `go.mod`. Run meaningful focused tests while developing, then run these gates on the frozen complete candidate. Do not edit sources while a gate runs, and await each running Go process before another Go command in the same worktree.
+Use Git and Go from `go.mod`. Run meaningful local checks for the actual change; the commands below also define the repository-wide required CI gates. Follow the [delivery plan](docs/implementation-plan.md#integration) for background CI and direct delivery merges. Do not repeat unrelated full suites for unchanged source. Do not edit sources while a gate runs, and await each running Go process before another Go command in the same worktree.
 
 ```text
 go mod verify
@@ -57,7 +57,7 @@ It packages and builds root-layout source, tests the standalone bootstrap and dr
 
 Verify checkout, branch, full SHA and dirty state before edits. Use the coordinator's exact integrated base and one assigned non-protected branch/worktree per writer. Preserve unrelated work; never stash across worktrees, reset it or force-push reviewed heads. Shared contracts and dependencies need explicit coordination.
 
-Before integration, obtain independent complete-diff review and resolve findings. Freeze the pushed exact head while required hosted Linux Quality/Race checks run, compose with actual current Main and read back merged SHA/tree and Main CI separately. Local tests and Windows diagnostics do not replace hosted CI or source integration. Publication, provider runs, studies and owner acceptance need separate authority and evidence.
+Before integration, obtain independent complete-diff review and resolve findings. Freeze the exact head and await its required CI in the background. The delivering chat merges directly with a merge commit and `--match-head-commit`; recompose only for conflicts or substantive overlap. Do not monitor Main CI or retrieve artifacts after each merge; respond to reported Main failures. Local checks do not replace required CI. Publication, provider runs, studies and owner acceptance need separate authority and evidence.
 
 ## Historical Project/Domain contracts
 
