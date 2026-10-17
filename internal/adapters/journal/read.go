@@ -14,7 +14,7 @@ const maxPageBytes = maxPayloadBytes
 
 // A smaller target keeps ordinary multi-batch pages cheap. One individually
 // valid larger batch still fits by itself, up to maxPageBytes.
-const targetPageBytes = 8 << 20
+const targetPageBytes = 1 << 20
 
 func (s *session) Read(ctx context.Context, q run.EventQuery) (page run.EventPage, err error) {
 	if !q.Valid() {

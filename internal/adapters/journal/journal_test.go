@@ -166,7 +166,7 @@ func TestImmutableBlobInterpretationsAndCorruption(t *testing.T) {
 func TestReadByteBudgetStopsOnlyAtWholeBatchBoundaries(t *testing.T) {
 	s := acquire(t, request(t))
 	ctx := context.Background()
-	large := strings.Repeat("x", 5<<20)
+	large := strings.Repeat("x", 640<<10)
 	for n := range 2 {
 		id := fmt.Sprintf("large-%d", n)
 		w := struct {
