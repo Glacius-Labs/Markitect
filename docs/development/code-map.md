@@ -55,7 +55,7 @@ The target `cmd/` and `internal/` responsibilities use separate `apply-*` layers
 
 | Package | Purpose | Owning document |
 |---|---|---|
-| `internal/organization` | Derives local Manager topology, resolves exact settings and selects model context with inclusion reasons. | [docs/design/canonical-model/manager-apply-go-architecture.md](../design/canonical-model/manager-apply-go-architecture.md#organize-by-responsibility) |
+| `internal/organization` | Derives Manager topology, resolves settings, selects model context and renders sourced role packages with mandates. | [docs/design/canonical-model/manager-apply-go-architecture.md](../design/canonical-model/manager-apply-go-architecture.md#organize-by-responsibility) |
 
 ## Apply realization
 
