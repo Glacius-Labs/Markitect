@@ -79,8 +79,12 @@ func TestConcreteResponsibilityBoundaries(t *testing.T) {
 		{"internal/adapters/gitrepo", "internal/adapters/checks", false},
 		{"internal/adapters/gitrepo", "internal/adapters/codexappserver", false},
 		{"internal/adapters/gitrepo", "internal/tooling/source", false},
-		// Claude uses the Run session port and the frame DTOs exposed by the
-		// container API; agentd execution and other adapters remain separate.
+		// Claude metadata uses Apply ports and pure values; sessions use Run and
+		// the container frame DTOs. Execution and sibling adapters stay separate.
+		{"internal/adapters/claudecode", "internal/apply", true},
+		{"internal/adapters/claudecode", "internal/model", true},
+		{"internal/adapters/claudecode", "internal/organization", true},
+		{"internal/adapters/claudecode", "internal/snapshot", true},
 		{"internal/adapters/claudecode", "internal/run", true},
 		{"internal/adapters/claudecode", "internal/adapters/container", true},
 		{"internal/adapters/claudecode", "internal/agentd/frame", true},
@@ -88,6 +92,10 @@ func TestConcreteResponsibilityBoundaries(t *testing.T) {
 		{"internal/adapters/claudecode", "internal/adapters/codexappserver", false},
 		{"internal/adapters/claudecode", "internal/adapters/gitrepo", false},
 		{"internal/adapters/claudecode", "internal/tooling/source", false},
+		{"internal/apply", "internal/adapters/claudecode", false},
+		{"internal/model", "internal/adapters/claudecode", false},
+		{"internal/organization", "internal/adapters/claudecode", false},
+		{"internal/snapshot", "internal/adapters/claudecode", false},
 		// Codex uses the Run session port and the frame DTOs exposed by the
 		// container API; agentd execution and other adapters remain separate.
 		{"internal/adapters/codexappserver", "internal/adapters/container", true},
@@ -194,12 +202,27 @@ func TestCheckWorkspaceCompositionEdgeStaysTestOnly(t *testing.T) {
 	}
 }
 
-func TestClaudeSnapshotSmokeEdgeStaysTestOnly(t *testing.T) {
-	// The external Claude smoke computes its candidate tree from actual files.
-	for _, test := range []bool{false, true} {
-		got := Check([]Edge{{From: "internal/adapters/claudecode", To: "internal/snapshot", Test: test}})
-		if (len(got) == 0) != test {
-			t.Errorf("claudecode -> snapshot test=%v: %v", test, got)
+func TestClaudeProfileImportsAcrossPlatforms(t *testing.T) {
+	for _, producer := range []struct{ path, layer, pkg string }{
+		{"internal/apply", "apply-usecase", "apply"},
+		{"internal/model", "apply-model", "model"},
+		{"internal/organization", "apply-organization", "organization"},
+		{"internal/snapshot", "apply-snapshot", "snapshot"},
+	} {
+		for _, file := range []string{"profile_windows.go", "profile_linux.go", "profile_windows_test.go", "profile_linux_test.go"} {
+			t.Run(producer.pkg+"/"+file, func(t *testing.T) {
+				root := t.TempDir()
+				entries := mapEntry(producer.path, producer.layer) + mapEntry("internal/adapters/claudecode", "apply-adapter")
+				writeFixture(t, root, map[string]string{
+					"README.md": "# Owner\n", CodeMapSource: "packages:\n" + entries,
+					producer.path + "/producer.go":         "package " + producer.pkg + "\n",
+					"internal/adapters/claudecode/" + file: "package claudecode\nimport _ \"" + ModulePath + producer.path + "\"\n",
+				})
+				got, err := CheckRepository(root)
+				if err != nil || len(got) != 0 {
+					t.Fatalf("Claude profile dependency refused: %v %v", got, err)
+				}
+			})
 		}
 	}
 }

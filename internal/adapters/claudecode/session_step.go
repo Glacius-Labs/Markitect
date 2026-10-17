@@ -131,7 +131,7 @@ func (s *Sessions) Step(ctx context.Context, a run.StepAdmission, channel run.Se
 					return out, errors.Join(err, run.ErrObservationLimit)
 				}
 				pending = nil
-			case UserMessage, AssistantMessage, StreamEventMessage:
+			case UserMessage, AssistantMessage, StreamEventMessage, RateLimitEventMessage:
 				if e.bound.BatchID == "" {
 					return out, ErrProtocol
 				}

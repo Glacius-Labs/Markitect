@@ -146,6 +146,8 @@ type fakeRuntime struct {
 	journal                                                   *fakeChannel
 	useTool, writeFail, stopFail, cancelTurn                  bool
 	noInit, wrongInit, resultWrong, wrongVersion, errorResult bool
+	rateLimitEvents                                           []string
+	rateLimitBeforeInit                                       bool
 	stopCalls                                                 int
 }
 
@@ -176,6 +178,11 @@ func (f *fakeRuntime) WriteInput(data []byte) error {
 		f.emit(`{"type":"control_response","response":{"subtype":"success","request_id":"markitect-initialize","response":{"commands":[],"agents":[],"models":[],"output_style":"default","available_output_styles":[],"account":{},"claude_code_version":"2.1.301"}}}`)
 		return nil
 	}
+	if f.rateLimitBeforeInit {
+		for _, event := range f.rateLimitEvents {
+			f.emit(event)
+		}
+	}
 	if !f.noInit {
 		session := "conversation"
 		if f.wrongInit {
@@ -186,6 +193,11 @@ func (f *fakeRuntime) WriteInput(data []byte) error {
 			version = "wrong"
 		}
 		f.emit(`{"type":"system","subtype":"init","session_id":"` + session + `","uuid":"init-event","claude_code_version":"` + version + `"}`)
+	}
+	if !f.rateLimitBeforeInit {
+		for _, event := range f.rateLimitEvents {
+			f.emit(event)
+		}
 	}
 	if f.cancelTurn {
 		return nil
@@ -797,5 +809,60 @@ func TestClaudeKnownSecretHostAnswerRefusedBeforeReply(t *testing.T) {
 		if err == nil || !out.Uncertain || len(channel.calls) != 1 || len(runtime.replies) != 0 || strings.Contains(err.Error(), "secret-token") {
 			t.Fatal("known secret Host answer reached provider")
 		}
+	}
+}
+
+func TestClaudeRateLimitEventsAreInformationalOnlyAfterBoundInit(t *testing.T) {
+	for _, tc := range []struct {
+		name                     string
+		before, foreign, limited bool
+	}{
+		{name: "after init"}, {name: "before init", before: true}, {name: "foreign session", foreign: true}, {name: "wire bound", limited: true},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			channel := &fakeChannel{}
+			runtime := peer(channel)
+			event := strings.Replace(fixtureRateLimit, fixtureSession, "conversation", 1)
+			if tc.foreign {
+				event = strings.Replace(event, "conversation", "foreign", 1)
+			}
+			runtime.rateLimitEvents = []string{event}
+			runtime.rateLimitBeforeInit = tc.before
+			a, b := sessionAdmissions(t)
+			if tc.limited {
+				// Each event fits; their accumulated raw wire exceeds the
+				// admitted bound. Rate events do not reset that budget.
+				a.Plan.MaxWireBytes = 4096
+				b.Session = a.Plan
+				b.Plan.SessionBinding = a.Plan.Binding()
+				runtime.rateLimitEvents = make([]string, 24)
+				for i := range runtime.rateLimitEvents {
+					runtime.rateLimitEvents[i] = event
+				}
+			}
+			s := sessionsForTest(t, runtime)
+			ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+			defer cancel()
+			if _, err := s.Open(ctx, a, channel); err != nil {
+				t.Fatal(err)
+			}
+			out, err := s.Step(ctx, b, channel)
+			if tc.before || tc.foreign || tc.limited {
+				want := ErrProtocol
+				if tc.limited {
+					want = ErrLimit
+				}
+				if err == nil || !errors.Is(err, ErrSession) || !strings.Contains(err.Error(), want.Error()) || !out.Uncertain || out.Terminal {
+					t.Fatalf("event bypassed step binding/bound: terminal=%v uncertain=%v error=%v", out.Terminal, out.Uncertain, err)
+				}
+				return
+			}
+			if err != nil || !out.Terminal || out.Uncertain || out.Proposed.Valid() || len(channel.bindings) != 1 || len(channel.steps) != 2 || len(channel.calls) != 0 || len(runtime.writes) != 2 || len(runtime.replies) != 0 {
+				t.Fatalf("informational event affected step state: %+v %v", out, err)
+			}
+			if !bytes.Contains(out.Wire.Journal.Bytes(), []byte(event+"\n")) || out.Wire.Identity.ContentID != sha256.Sum256(out.Wire.Journal.Bytes()) || out.Wire.Identity.Size != int64(len(out.Wire.Journal.Bytes())) {
+				t.Fatal("informational event lost raw wire identity")
+			}
+		})
 	}
 }

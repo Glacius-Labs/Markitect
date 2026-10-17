@@ -1,5 +1,9 @@
 apiVersion: markitect.registry/v1
 artifacts:
+  - path: "docs/concepts/sources/model-migrations-20261017.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Preserves owner acceptance and Main documentation authority for meaning-preserving model restructuring and identity, Manager, registry and configuration migration.
   - path: "docs/concepts/sources/technical-risk-derivation-20261017.md"
     form: doc
     realizes: [documentation/current-guidance]
