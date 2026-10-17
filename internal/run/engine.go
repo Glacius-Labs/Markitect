@@ -833,7 +833,12 @@ func (e *Engine) tools(s *stepRun) ToolHandler {
 				return refuse(err.Error())
 			}
 			answered = answered || phase == PhaseReply
-			return ok(map[string]string{"id": id})
+			if phase == PhaseReply {
+				return ok(map[string]string{"id": id})
+			}
+			// In D2 and D4 the root ended its step after a question without an
+			// outcome, so the step failed and the question was dropped.
+			return ok(map[string]string{"id": id, "note": fmt.Sprintf("The message is recorded with your step's outcome. Sending does not end your step: end it with exactly one outcome call, for example wait with {\"on\":[{\"kind\":\"reply\",\"ref\":%q}]} if you need the answer first.", id)})
 		}
 		if OutcomeTool(phase, call.Tool) {
 			if answered {
