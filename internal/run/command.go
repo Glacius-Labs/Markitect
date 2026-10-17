@@ -57,11 +57,12 @@ type Command struct {
 	Elapsed                   time.Duration
 	Reason, NextActor         string
 	Outcome                   Outcome
-	Caps                      Capacity      `json:",omitzero"`
-	OwnerInput                string        `json:",omitempty"`
-	Quiescence                string        `json:",omitempty"`
-	Session                   SessionRecord `json:",omitzero"`
-	Manager                   ManagerRecord `json:",omitzero"`
+	Caps                      Capacity         `json:",omitzero"`
+	OwnerInput                string           `json:",omitempty"`
+	Quiescence                string           `json:",omitempty"`
+	Session                   SessionRecord    `json:",omitzero"`
+	Manager                   ManagerRecord    `json:",omitzero"`
+	Conclusion                ConclusionRecord `json:",omitzero"`
 	managerProof              [32]byte
 	replaying                 bool
 	binding                   Binding
@@ -149,6 +150,11 @@ func (c Command) validate() error {
 			}
 			allowed.Reservation = c.Reservation
 		}
+	case TaskConclude:
+		if err := c.Conclusion.validate(); err != nil {
+			return err
+		}
+		allowed.Conclusion = c.Conclusion
 	default:
 		return ErrInvalid
 	}
@@ -158,4 +164,10 @@ func (c Command) validate() error {
 		return ErrInvalid
 	}
 	return nil
+}
+
+// payloadRefs lists every payload a command references, which the journal
+// retains before acknowledging its batch.
+func (c Command) payloadRefs() []BlobRef {
+	return append(c.Session.payloadRefs(), c.Conclusion.payloadRefs()...)
 }

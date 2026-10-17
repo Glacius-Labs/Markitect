@@ -108,7 +108,7 @@ func TestClosureRequiresFinishedAndExplicitQuiescence(t *testing.T) {
 func TestClosedAssignmentAndFreshLedgerSurviveSameStreamRestoreAndReplay(t *testing.T) {
 	c, j := running(t)
 	b := binding(t)
-	completeRootExplore(t, c, j, exploreInputs(t, false))
+	exploreNext(t, c, j, stepInputs(t, false), "root")
 	finishIncomplete(t, c, j)
 	extend := extension("extend", fixture(t).Policy.Ceilings)
 	commit(t, c, j, extend)
@@ -174,8 +174,13 @@ func TestClosedAssignmentAndFreshLedgerSurviveSameStreamRestoreAndReplay(t *test
 	commit(t, c2, j, start)
 	x := sessionPreparation(t, c2, "new-session")
 	// Constructor proof includes the attempted historical invocation identity.
+	item, _ := c2.Next()
 	profile, tools := payload(t, `{"profile":"synthetic recorded metadata"}`), payload(t, `{"tools":[]}`)
-	x, err = c2.PrepareExploreSessionCommand(meta("new-command"), ".", x.Session.Plan, run.Reservation{ID: "invoke-root", Kind: run.SessionStart, Purpose: run.Writing, Maximum: time.Minute}, profile, tools)
+	tools, err = run.ToolCatalog(item.Phase)
+	if err != nil {
+		t.Fatal(err)
+	}
+	x, err = c2.PrepareTaskSessionCommand(meta("new-command"), item, x.Session.Plan, run.Reservation{ID: "invoke-root", Kind: run.SessionStart, Purpose: run.Writing, Maximum: time.Minute}, profile, tools)
 	if err != nil {
 		t.Fatal(err)
 	}

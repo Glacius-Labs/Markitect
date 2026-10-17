@@ -174,7 +174,7 @@ func (b AppendBatch) SessionRefs() ([]BlobRef, error) {
 	var refs []BlobRef
 	seen := map[BlobRef]bool{}
 	for _, event := range validated.Events() {
-		for _, ref := range event.Body.Session.payloadRefs() {
+		for _, ref := range event.Body.payloadRefs() {
 			if !seen[ref] {
 				refs = append(refs, ref)
 				seen[ref] = true

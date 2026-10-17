@@ -413,7 +413,7 @@ func alteredBatch(t *testing.T, b run.AppendBatch, change func(*struct {
 
 func TestRestoreRejectsMalformedOrUnavailablePages(t *testing.T) {
 	c, j := running(t)
-	completeRootExplore(t, c, j, exploreInputs(t, false))
+	exploreNext(t, c, j, stepInputs(t, false), "root")
 	for name, hook := range map[string]func(int, run.EventQuery, run.EventPage) (run.EventPage, error){
 		"unreachable": func(_ int, _ run.EventQuery, _ run.EventPage) (run.EventPage, error) {
 			return run.EventPage{}, errors.New("unreachable")
@@ -591,7 +591,7 @@ func TestRestoreCountsRequiredBlobBytesInItsReadBudget(t *testing.T) {
 
 func TestRestoreContinuationKeepsAssignmentOwnerAndConsumedLedger(t *testing.T) {
 	c, j := running(t)
-	completeRootExplore(t, c, j, exploreInputs(t, false))
+	exploreNext(t, c, j, stepInputs(t, false), "root")
 	finishIncomplete(t, c, j)
 	i := fixture(t)
 	i.Source.Guard = "changed-source"

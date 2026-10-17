@@ -4,33 +4,35 @@ import (
 	"bytes"
 	"crypto/sha256"
 	"encoding/json"
+	"fmt"
 	"slices"
+	"strings"
 	"unicode/utf8"
 
 	"github.com/Glacius-Labs/Markitect/internal/model"
 	"github.com/Glacius-Labs/Markitect/internal/organization"
+	"github.com/Glacius-Labs/Markitect/internal/realization"
 	"github.com/Glacius-Labs/Markitect/internal/snapshot"
 )
 
-// This is an initial-assessment protocol, not work or publication authority.
-const initialExplore = "initial-explore"
-const exploreInputMedia = "application/vnd.markitect.explore-input+json"
-const exploreReportMedia = "application/vnd.markitect.explore-report+json"
+const stepInputMedia = "application/vnd.markitect.step-input+json"
 
-// ManagerRecord associates the existing atomic session/step preparation with a
-// queued responsibility. Zero is omitted from historical command JSON.
+// ManagerRecord binds a session or step preparation to one task and phase.
+// Zero is omitted from historical command JSON.
 type ManagerRecord struct {
-	Manager   string
-	Parent    *string
-	HandoffID string
-	Phase     string
+	Manager string
+	Parent  *string
+	Task    string
+	Phase   Phase
 }
+
+var managerPhases = []Phase{PhaseExplore, PhaseWork, PhaseIntegrate, PhaseReviewerExpectations, PhaseReviewerCandidate}
 
 func (m ManagerRecord) validate() error {
 	if m == (ManagerRecord{}) {
 		return nil
 	}
-	if !text(m.Manager) || !identifier(m.HandoffID) || m.Phase != initialExplore || (m.Manager == organization.Root) != (m.Parent == nil) || m.Parent != nil && !text(*m.Parent) {
+	if !text(m.Manager) || !identifier(m.Task) || !slices.Contains(managerPhases, m.Phase) || (m.Manager == organization.Root) != (m.Parent == nil) || m.Parent != nil && !text(*m.Parent) {
 		return ErrInvalid
 	}
 	return nil
@@ -97,9 +99,10 @@ func validateManagerPolicy(w bindingWire) error {
 	return nil
 }
 
-// ExploreContext retains actual producer bytes and product identities, inline.
-// These identities are recorded producer assertions, not authenticated authority.
-type ExploreContext struct {
+// StepContext retains the actual rendered context bytes and product
+// identities, inline. These identities are recorded producer assertions, not
+// authenticated authority.
+type StepContext struct {
 	View                          organization.ContextView
 	Package, ModelID, ModelDigest string
 	Format, Template              organization.ProductText
@@ -107,80 +110,112 @@ type ExploreContext struct {
 	Bytes                         []byte
 }
 
-// ExplorePacket has no dereferenceable nested payload references. Its own input
-// identity is the existing StepPlan.Input, outside these self-contained bytes.
-type ExplorePacket struct {
+// StepPacket is the complete input of one task step. It has no dereferenceable
+// nested payload references; its own identity is StepPlan.Input.
+type StepPacket struct {
 	Version                 uint32
 	Assignment, Run         string
 	RunBasis                snapshot.ContentID
 	Manager                 string
 	Parent                  *string
-	HandoffID, Phase        string
+	Task                    string
+	Phase                   Phase
 	Session                 SessionID
 	SessionBinding          snapshot.ContentID
 	Step                    StepID
 	Operation               operationText
-	Context                 ExploreContext
+	Context                 StepContext
 	OutputContractContentID snapshot.ContentID
-}
-
-// ExploreReport is an Agent explanation only. Explicit uncertainty/questions may
-// complete initial participation, never prerequisites, review or a delivery.
-type ExploreReport struct {
-	Version                                                  uint32
-	Assignment, Run                                          string
-	RunBasis                                                 snapshot.ContentID
-	Manager                                                  string
-	Parent                                                   *string
-	HandoffID                                                string
-	Session                                                  SessionID
-	SessionBinding                                           snapshot.ContentID
-	Step                                                     StepID
-	InputContentID, OperationContentID, ContextContentID     snapshot.ContentID
-	Summary                                                  string
-	ProposedChanges, Prerequisites, Uncertainties, Questions []string
 }
 
 func commandDigest(c Command) [32]byte { b, _ := json.Marshal(c); return sha256.Sum256(b) }
 func sameParent(a, b *string) bool     { return a == nil && b == nil || a != nil && b != nil && *a == *b }
-func recordFor(v managerValue) ManagerRecord {
-	m := ManagerRecord{Manager: v.Slot.Package, HandoffID: v.HandoffID, Phase: initialExplore}
-	if v.Slot.Parent != "" {
-		p := v.Slot.Parent
-		m.Parent = &p
-	}
-	return m
-}
 func sameManager(a, b ManagerRecord) bool {
-	return a.Manager == b.Manager && a.HandoffID == b.HandoffID && a.Phase == b.Phase && sameParent(a.Parent, b.Parent)
+	return a.Manager == b.Manager && a.Task == b.Task && a.Phase == b.Phase && sameParent(a.Parent, b.Parent)
 }
 
-// PrepareExploreSessionCommand admits only a queued initial RO Manager session.
-// Writing remains the expense class protecting completion capacity; it grants
-// no write effect. Actual workspace isolation remains a Host obligation.
-func (c *Coordinator) PrepareExploreSessionCommand(meta RecordMeta, manager string, plan SessionPlan, reservation Reservation, profile, tools Payload) (Command, error) {
-	v, ok := c.state.managers[manager]
-	if !ok || c.state.basisVersion != 3 {
+// PrepareTaskSessionCommand admits a new session for the run's next step. The
+// plan must carry the phase's tool catalogue, a read-only workspace for
+// Explore, the task's provider home and its last conversation for resume.
+func (c *Coordinator) PrepareTaskSessionCommand(meta RecordMeta, item Admission, plan SessionPlan, reservation Reservation, profile, tools Payload) (Command, error) {
+	next, ok := c.Next()
+	t, found := c.state.tasks[item.Manager]
+	if !ok || !found || next != item || c.state.basisVersion != 3 {
 		return Command{}, ErrState
 	}
 	cmd := PrepareSessionCommand(meta, c.Current().Assignment, c.Current().ID, plan, reservation, profile, tools)
-	cmd.Manager = recordFor(v)
+	cmd.Manager = recordForTask(t, item.Phase)
 	cmd.managerProof = commandDigest(cmd)
 	return cmd, nil
 }
 
-// ExplorePreparation supplies actual producer inputs. Live preparation compiles
-// original model bytes, resolves settings again, and matches the whole resulting
-// binding before calling SelectContext and RenderContext. Raw host JSON cannot
-// substitute for that checked path. Nothing is sent or acquired here.
-type ExplorePreparation struct {
+// StepPreparation supplies actual producer inputs. Preparation compiles the
+// original model bytes, resolves settings again and matches the whole binding
+// before rendering the step's context. Nothing is sent or acquired here.
+type StepPreparation struct {
 	Binding  BindingInput
 	Settings organization.SettingsFacts
 }
 
-func (c *Coordinator) PrepareExploreStepCommand(meta RecordMeta, plan StepPlan, reservation Reservation, input ExplorePreparation) (Command, error) {
-	v, ok := c.state.managerForSession(plan.Session)
-	if !ok || c.state.basisVersion != 3 {
+// StepFacts are the Host facts of one step that the reducer does not hold: the
+// version its workspace starts from (core rules D3, T7) and the recorded
+// payloads its context quotes, which StepQuotes names.
+type StepFacts struct {
+	Tree     snapshot.Tree
+	Registry realization.Registry
+	Quoted   []Payload
+}
+
+// StepQuotes names the recorded payloads the context of the manager's current
+// step quotes: its children's reports and delivery proposals and, for a
+// candidate review, the proposal and the recorded expectations.
+func (c *Coordinator) StepQuotes(manager string) []BlobRef {
+	t, ok := c.state.tasks[manager]
+	if !ok {
+		return nil
+	}
+	var refs []BlobRef
+	if t.Phase != PhaseReviewerExpectations {
+		for _, child := range t.Slot.Children {
+			refs = append(refs, childReports(c.state.tasks[child])...)
+		}
+	}
+	if t.Phase == PhaseReviewerCandidate {
+		refs = append(refs, t.Submission.Proposal, t.Review.Expectations)
+	}
+	return refs
+}
+
+func childReports(t taskValue) []BlobRef {
+	var refs []BlobRef
+	add := func(ref BlobRef) {
+		if ref != (BlobRef{}) && !slices.Contains(refs, ref) {
+			refs = append(refs, ref)
+		}
+	}
+	add(t.Report)
+	add(t.Submission.Proposal)
+	for _, d := range t.Deliveries {
+		add(d.Proposal)
+	}
+	return refs
+}
+
+func phaseView(p Phase) organization.ContextView {
+	switch p {
+	case PhaseReviewerExpectations:
+		return organization.ReviewerExpectations
+	case PhaseReviewerCandidate:
+		return organization.ReviewerCandidate
+	}
+	return organization.ManagerView
+}
+
+// PrepareTaskStepCommand renders the step's input for the task that owns the
+// session and records it with the phase's output contract.
+func (c *Coordinator) PrepareTaskStepCommand(meta RecordMeta, plan StepPlan, reservation Reservation, input StepPreparation, facts StepFacts) (Command, error) {
+	t, ok := c.state.taskForSession(plan.Session)
+	if !ok || c.state.basisVersion != 3 || t.Step != "" {
 		return Command{}, ErrState
 	}
 	compiled := model.Compile(input.Binding.ModelInput)
@@ -198,58 +233,41 @@ func (c *Coordinator) PrepareExploreStepCommand(meta RecordMeta, plan StepPlan, 
 	if err != nil || bound.Ref() != c.Current().Basis {
 		return Command{}, ErrInvalid
 	}
-	selection, err := organization.SelectContext(compiled, v.Slot.Package, input.Binding.Scope)
+	selection, err := organization.SelectContext(compiled, t.Slot.Package, input.Binding.Scope)
 	if err != nil {
 		return Command{}, err
 	}
-	source := organization.HostSource{RecordID: v.HandoffID, ContentID: c.Current().Basis.ContentID}
-	_, operation := organization.ApplyOperation()
-	renderInput := organization.RenderInput{
-		View: organization.ManagerView, Process: &organization.ManagerProcess{Phase: organization.ManagerExplore, Source: source}, InputBinding: source,
-		Task:            organization.TaskFacts{ID: v.HandoffID, Package: v.Slot.Package, Outcome: organization.HostText{Text: operation, Source: source}, Findings: organization.OpenFindings{Source: source}},
-		MaxContextBytes: input.Binding.MaxContextBytes,
+	renderInput, err := c.state.renderInput(t, facts, c.Current().Basis.ContentID)
+	if err != nil {
+		return Command{}, err
 	}
-	if v.Slot.Package == organization.Root {
+	renderInput.MaxContextBytes = input.Binding.MaxContextBytes
+	if t.Slot.Package == organization.Root && renderInput.View == organization.ManagerView {
 		renderInput.OwnerInput = &organization.HostText{Text: string(bound.owner.Bytes()), Source: organization.HostSource{RecordID: c.Current().Assignment, ContentID: bound.owner.Ref().ContentID}}
-	}
-	for _, registration := range input.Binding.Registry.Entries() {
-		owner := ownerName(registration.Owner())
-		if owner != v.Slot.Package {
-			continue
-		}
-		path := registration.Artifact().Path()
-		entry, found := input.Binding.Census.Lookup(path)
-		if !found {
-			return Command{}, ErrInvalid
-		}
-		fact := organization.ArtifactFact{Package: owner, Path: path, ContentID: entry.ContentID(), Content: organization.ArtifactBinaryRef, Source: organization.HostSource{RecordID: c.Current().Basis.ContentID.String(), ContentID: entry.ContentID(), Field: path.String()}}
-		if utf8.Valid(entry.Bytes()) {
-			text := string(entry.Bytes())
-			fact.Content = organization.ArtifactText
-			fact.Text = &text
-		}
-		renderInput.OwnArtifacts = append(renderInput.OwnArtifacts, fact)
 	}
 	rendered, err := organization.RenderContext(selection, settings, renderInput)
 	if err != nil {
 		return Command{}, err
 	}
-	r := recordFor(v)
-	packet := ExplorePacket{Version: 1, Assignment: c.Current().Assignment, Run: c.Current().ID, RunBasis: c.Current().Basis.ContentID,
-		Manager: r.Manager, Parent: r.Parent, HandoffID: r.HandoffID, Phase: r.Phase, Session: plan.Session, SessionBinding: plan.SessionBinding, Step: plan.ID,
+	contract, err := NewStepContract(t.Phase)
+	if err != nil {
+		return Command{}, err
+	}
+	r := recordForTask(t, t.Phase)
+	packet := StepPacket{Version: 1, Assignment: c.Current().Assignment, Run: c.Current().ID, RunBasis: c.Current().Basis.ContentID,
+		Manager: r.Manager, Parent: r.Parent, Task: r.Task, Phase: r.Phase, Session: plan.Session, SessionBinding: plan.SessionBinding, Step: plan.ID,
 		Operation:               c.state.managerBasis.ManagerPolicy.Operation,
-		Context:                 ExploreContext{View: rendered.View(), Package: rendered.Package(), ModelID: selection.ModelID(), ModelDigest: selection.ModelDigest(), Format: rendered.Format(), Template: rendered.Template(), ContentID: rendered.ContentID(), Bytes: rendered.Bytes()},
-		OutputContractContentID: exploreOutputContract().Ref().ContentID,
+		Context:                 StepContext{View: rendered.View(), Package: rendered.Package(), ModelID: selection.ModelID(), ModelDigest: selection.ModelDigest(), Format: rendered.Format(), Template: rendered.Template(), ContentID: rendered.ContentID(), Bytes: rendered.Bytes()},
+		OutputContractContentID: contract.Ref().ContentID,
 	}
 	data, err := json.Marshal(packet)
 	if err != nil {
 		return Command{}, err
 	}
-	payload, err := NewPayload(exploreInputMedia, "utf-8", data)
+	payload, err := NewPayload(stepInputMedia, "utf-8", data)
 	if err != nil {
 		return Command{}, err
 	}
-	contract := exploreOutputContract()
 	plan.Input = payload.Ref()
 	plan.OutputContract = contract.Ref()
 	cmd := PrepareStepCommand(meta, c.Current().Assignment, c.Current().ID, plan, reservation, payload, contract)
@@ -258,44 +276,167 @@ func (c *Coordinator) PrepareExploreStepCommand(meta RecordMeta, plan StepPlan, 
 	return cmd, nil
 }
 
-// The contract is a closed format identity, not a provider schema interpreter.
-// Its complete field/type catalogue is retained with the admitted step.
-func exploreOutputContract() Payload {
-	data := []byte(`{"Format":"markitect.explore-report/v1","Fields":{"Version":"integer=1","Assignment":"string","Run":"string","RunBasis":"ContentID","Manager":"string","Parent":"string|null","HandoffID":"string","Session":"SessionID","SessionBinding":"ContentID","Step":"StepID","InputContentID":"ContentID","OperationContentID":"ContentID","ContextContentID":"ContentID","Summary":"nonblank-string","ProposedChanges":"string[]","Prerequisites":"string[]","Uncertainties":"string[]","Questions":"string[]"},"AdditionalFields":false}`)
-	p, _ := NewPayload("application/vnd.markitect.explore-contract+json", "utf-8", data)
-	return p
-}
-
-// NewExploreReportPayload retains a proposal, not a Host-accepted result.
-// The reducer separately checks its association with an actual observed step.
-func NewExploreReportPayload(report ExploreReport) (Payload, error) {
-	if report.Version != 1 || !text(report.Summary) || report.ProposedChanges == nil || report.Prerequisites == nil || report.Uncertainties == nil || report.Questions == nil {
-		return Payload{}, ErrInvalid
-	}
-	for _, list := range [][]string{report.ProposedChanges, report.Prerequisites, report.Uncertainties, report.Questions} {
-		for _, item := range list {
-			if !text(item) {
-				return Payload{}, ErrInvalid
+// renderInput projects the task's Host facts into its phase's view. Managers
+// see their own artifacts in the step's version, their open findings and their
+// children's states and reports. The expectations review sees the model and
+// the open findings only; the candidate review also sees the frozen candidate,
+// its proposal and the recorded expectations.
+func (s stateValue) renderInput(t taskValue, facts StepFacts, basis snapshot.ContentID) (organization.RenderInput, error) {
+	source := organization.HostSource{RecordID: t.ID, ContentID: basis}
+	_, operation := organization.ApplyOperation()
+	quote := func(ref BlobRef) (organization.HostText, error) {
+		for _, p := range facts.Quoted {
+			if p.Ref() == ref && p.Valid() && utf8.Valid(p.Bytes()) {
+				return organization.HostText{Text: string(p.Bytes()), Source: organization.HostSource{RecordID: ref.MediaType, ContentID: ref.ContentID}}, nil
 			}
 		}
+		return organization.HostText{}, ErrInvalid
 	}
-	data, err := json.Marshal(report)
+	findings := s.openFindings(t, source)
+	if t.Failure != "" && !t.Phase.reviewer() {
+		// The Host's own check of the last step is a finding the Manager sees
+		// in its next step (core rule T6).
+		id := t.ID + "-last-step"
+		text := "Your last step failed the Host's check: " + t.Failure
+		if t.HostFault {
+			text = "Your last step ended without a result because the Host could not finish it. Continue from the current state of your workspace."
+		}
+		findings.IDs = append(findings.IDs, id)
+		findings.Items = append(findings.Items, organization.FindingFact{ID: id, Grounds: organization.HostText{Text: text, Source: organization.HostSource{RecordID: id, ContentID: basis}}})
+	}
+	in := organization.RenderInput{View: phaseView(t.Phase), InputBinding: source,
+		Task: organization.TaskFacts{ID: t.ID, Package: t.Slot.Package, Outcome: organization.HostText{Text: operation, Source: source}, Findings: findings}}
+	artifacts, err := ownedArtifacts(t.Slot.Package, facts)
 	if err != nil {
-		return Payload{}, err
+		return in, err
 	}
-	return NewPayload(exploreReportMedia, "utf-8", data)
+	for _, child := range t.Slot.Children {
+		fact := organization.ChildFact{Package: child}
+		if t.Phase != PhaseReviewerExpectations {
+			ct := s.tasks[child]
+			fact.State = &organization.HostText{Text: string(ct.State), Source: organization.HostSource{RecordID: ct.ID, ContentID: basis}}
+			for _, ref := range childReports(ct) {
+				report, err := quote(ref)
+				if err != nil {
+					return in, err
+				}
+				fact.Reports = append(fact.Reports, report)
+			}
+		}
+		in.Children = append(in.Children, fact)
+	}
+	switch t.Phase {
+	case PhaseExplore, PhaseWork, PhaseIntegrate:
+		phase := map[Phase]organization.ManagerPhase{PhaseExplore: organization.ManagerExplore, PhaseWork: organization.ManagerWork, PhaseIntegrate: organization.ManagerIntegrate}[t.Phase]
+		in.Process = &organization.ManagerProcess{Phase: phase, Source: source}
+		in.OwnArtifacts = artifacts
+	case PhaseReviewerCandidate:
+		proposal, err := quote(t.Submission.Proposal)
+		if err != nil {
+			return in, err
+		}
+		expectations, err := quote(t.Review.Expectations)
+		if err != nil {
+			return in, err
+		}
+		in.Review = &organization.ReviewFacts{Package: t.Slot.Package,
+			Subject:      organization.HostSource{RecordID: t.ID + "/" + t.Submission.Purpose, ContentID: t.Submission.Proposal.ContentID},
+			Candidate:    organization.HostSource{RecordID: "candidate", ContentID: snapshot.ContentID(facts.Tree.Digest())},
+			Expectations: organization.HostSource{RecordID: "expectations", ContentID: t.Review.Expectations.ContentID},
+			Files:        artifacts, Evidence: []organization.HostText{proposal, expectations}}
+	case PhaseReviewerExpectations:
+	default:
+		return in, ErrInvalid
+	}
+	return in, nil
 }
-func decodeExploreReport(p Payload, packet ExplorePacket, input snapshot.ContentID) (ExploreReport, error) {
-	var r ExploreReport
-	if p.Ref().MediaType != exploreReportMedia || p.Ref().Encoding != "utf-8" || strictJSON(p.Bytes(), &r) != nil {
-		return r, ErrInvalid
+
+// openFindings projects the task's open findings (core rule I1).
+func (s stateValue) openFindings(t taskValue, source organization.HostSource) organization.OpenFindings {
+	set := organization.OpenFindings{Source: source}
+	for _, issue := range s.openIssues(t.Slot.Package) {
+		if issue.Kind != issueFinding {
+			continue
+		}
+		set.IDs = append(set.IDs, issue.ID)
+		text := fmt.Sprintf("%s %s finding on %s: %s Requested evidence: %s", issue.Severity, issue.Purpose, strings.Join(issue.Definitions, ", "), issue.Grounds, issue.Request)
+		set.Items = append(set.Items, organization.FindingFact{ID: issue.ID, Grounds: organization.HostText{Text: text, Source: organization.HostSource{RecordID: issue.ID, ContentID: issue.Source.ContentID}}})
 	}
-	checked, err := NewExploreReportPayload(r)
-	if err != nil || !bytes.Equal(checked.Bytes(), p.Bytes()) || r.Assignment != packet.Assignment || r.Run != packet.Run || r.RunBasis != packet.RunBasis || r.Manager != packet.Manager || !sameParent(r.Parent, packet.Parent) || r.HandoffID != packet.HandoffID || r.Session != packet.Session || r.SessionBinding != packet.SessionBinding || r.Step != packet.Step || r.InputContentID != input || r.OperationContentID != packet.Operation.Product.ContentID || r.ContextContentID != packet.Context.ContentID {
-		return ExploreReport{}, ErrInvalid
-	}
-	return r, nil
+	return set
 }
+
+// ownedArtifacts lists the manager's registered artifacts in the step's
+// version, with their text where it is UTF-8.
+func ownedArtifacts(manager string, facts StepFacts) ([]organization.ArtifactFact, error) {
+	var out []organization.ArtifactFact
+	version := snapshot.ContentID(facts.Tree.Digest()).String()
+	for _, registration := range facts.Registry.Entries() {
+		if ownerName(registration.Owner()) != manager {
+			continue
+		}
+		path := registration.Artifact().Path()
+		entry, found := facts.Tree.Lookup(path)
+		if !found {
+			return nil, ErrInvalid
+		}
+		fact := organization.ArtifactFact{Package: manager, Path: path, ContentID: entry.ContentID(), Content: organization.ArtifactBinaryRef, Source: organization.HostSource{RecordID: version, ContentID: entry.ContentID(), Field: path.String()}}
+		if utf8.Valid(entry.Bytes()) {
+			text := string(entry.Bytes())
+			fact.Content = organization.ArtifactText
+			fact.Text = &text
+		}
+		out = append(out, fact)
+	}
+	return out, nil
+}
+
+// StepResult is the Host's account of one ended step (core rule S4). Input is
+// the answered outcome call's recorded input; Candidate is the S4 candidate
+// record of a writing step that changed files and Tree its observed tree.
+// Aggregate is the aggregate version after the step. Failure, when set, fails
+// the step whatever its outcome call said (core rule T6).
+type StepResult struct {
+	Input, Candidate Payload
+	Tree             snapshot.TreeID
+	Aggregate        uint64
+	AggregateTree    snapshot.TreeID
+	Failure          string
+	HostFault        bool
+}
+
+// ConcludeStepCommand records the end of the task's current step. A session
+// the Host abandoned before its step was prepared concludes as failed.
+func (c *Coordinator) ConcludeStepCommand(meta RecordMeta, manager string, result StepResult) (Command, error) {
+	t, ok := c.state.tasks[manager]
+	if !ok || t.Session == "" || c.state.basisVersion != 3 || t.Step == "" && result.Failure == "" {
+		return Command{}, ErrState
+	}
+	call, count := c.state.stepOutcomeCall(t)
+	r := ConclusionRecord{Manager: manager, Task: t.ID, Step: t.Step, Aggregate: result.Aggregate, AggregateTree: result.AggregateTree}
+	var payloads []Payload
+	switch {
+	case result.Failure != "":
+		r.Outcome, r.Reason, r.HostFault = outcomeFailed, result.Failure, result.HostFault
+	case count == 0:
+		r.Outcome, r.Reason = outcomeFailed, "the step ended without an outcome tool call"
+	case count == 1:
+		if !result.Input.Valid() || result.Input.Ref() != call.Record.Wire.Journal {
+			return Command{}, ErrInvalid
+		}
+		r.Outcome, r.Input = call.Record.Tool, result.Input.Ref()
+		payloads = append(payloads, result.Input)
+		if result.Candidate.Valid() {
+			r.Candidate, r.Tree = result.Candidate.Ref(), result.Tree
+			payloads = append(payloads, result.Candidate)
+		}
+	default:
+		return Command{}, ErrState
+	}
+	cmd := Command{ID: meta.ID, ObservedAt: meta.ObservedAt, Kind: TaskConclude, Assignment: c.Current().Assignment, Run: c.Current().ID, Conclusion: r, sessionPayloads: payloads}
+	cmd.managerProof = commandDigest(cmd)
+	return cmd, nil
+}
+
 func payloadFor(c Command, ref BlobRef) (Payload, bool) {
 	for _, p := range c.sessionPayloads {
 		if p.Ref() == ref && p.Valid() {
@@ -304,28 +445,18 @@ func payloadFor(c Command, ref BlobRef) (Payload, bool) {
 	}
 	return Payload{}, false
 }
-func copyReport(r ExploreReport) ExploreReport {
-	r.ProposedChanges = slices.Clone(r.ProposedChanges)
-	r.Prerequisites = slices.Clone(r.Prerequisites)
-	r.Uncertainties = slices.Clone(r.Uncertainties)
-	r.Questions = slices.Clone(r.Questions)
-	if r.Parent != nil {
-		p := *r.Parent
-		r.Parent = &p
-	}
-	return r
-}
-func validateExplorePacket(p Payload, c Command, v managerValue, s stateValue) (ExplorePacket, error) {
-	var packet ExplorePacket
-	if p.Ref().MediaType != exploreInputMedia || p.Ref().Encoding != "utf-8" || strictJSON(p.Bytes(), &packet) != nil {
+
+func validateStepPacket(p Payload, c Command, t taskValue, s stateValue) (StepPacket, error) {
+	var packet StepPacket
+	if p.Ref().MediaType != stepInputMedia || p.Ref().Encoding != "utf-8" || strictJSON(p.Bytes(), &packet) != nil {
 		return packet, ErrInvalid
 	}
-	r := recordFor(v)
+	r := recordForTask(t, t.Phase)
 	q := packet.Context
 	operation, _ := json.Marshal(packet.Operation)
 	expected, _ := json.Marshal(s.managerBasis.ManagerPolicy.Operation)
-	if packet.Version != 1 || packet.Assignment != c.Assignment || packet.Run != c.Run || packet.RunBasis != s.current.Basis.ContentID || !sameManager(ManagerRecord{packet.Manager, packet.Parent, packet.HandoffID, packet.Phase}, r) || packet.Session != c.Session.Session || packet.SessionBinding != c.Session.StepPlan.SessionBinding || packet.Step != c.Session.Step || !bytes.Equal(operation, expected) || packet.OutputContractContentID != c.Session.StepPlan.OutputContract.ContentID || q.View != organization.ManagerView || q.Package != r.Manager || !text(q.ModelID) || !text(q.ModelDigest) || len(q.Bytes) == 0 || q.ContentID != snapshot.ContentID(sha256.Sum256(q.Bytes)) || !text(q.Format.ID) || !text(q.Format.Version) || q.Format.ContentID == (snapshot.ContentID{}) || !text(q.Template.ID) || !text(q.Template.Version) || q.Template.ContentID == (snapshot.ContentID{}) {
-		return ExplorePacket{}, ErrInvalid
+	if packet.Version != 1 || packet.Assignment != c.Assignment || packet.Run != c.Run || packet.RunBasis != s.current.Basis.ContentID || !sameManager(ManagerRecord{packet.Manager, packet.Parent, packet.Task, packet.Phase}, r) || packet.Session != c.Session.Session || packet.SessionBinding != c.Session.StepPlan.SessionBinding || packet.Step != c.Session.Step || !bytes.Equal(operation, expected) || packet.OutputContractContentID != c.Session.StepPlan.OutputContract.ContentID || q.View != phaseView(t.Phase) || q.Package != r.Manager || !text(q.ModelID) || !text(q.ModelDigest) || len(q.Bytes) == 0 || q.ContentID != snapshot.ContentID(sha256.Sum256(q.Bytes)) || !text(q.Format.ID) || !text(q.Format.Version) || q.Format.ContentID == (snapshot.ContentID{}) || !text(q.Template.ID) || !text(q.Template.Version) || q.Template.ContentID == (snapshot.ContentID{}) {
+		return StepPacket{}, ErrInvalid
 	}
 	local := false
 	for _, scope := range s.managerBasis.Compilation {
@@ -334,11 +465,7 @@ func validateExplorePacket(p Payload, c Command, v managerValue, s stateValue) (
 		}
 	}
 	if !local {
-		return ExplorePacket{}, ErrInvalid
-	}
-	contract, ok := payloadFor(c, c.Session.StepPlan.OutputContract)
-	if !ok || contract.Ref() != exploreOutputContract().Ref() {
-		return ExplorePacket{}, ErrInvalid
+		return StepPacket{}, ErrInvalid
 	}
 	return packet, nil
 }

@@ -47,6 +47,7 @@ type ToolView struct {
 	Record             SessionRecord
 	Requested, Replied AppendReceipt
 	Reply              WireRecord
+	OK                 bool
 }
 
 func imageIdentity(s string) bool {
@@ -401,6 +402,10 @@ func (s *stateValue) applySession(c Command) error {
 			return ErrState
 		}
 		tool.Reply = r.Wire
+		if answer, ok := payloadFor(c, r.Wire.Journal); ok {
+			var outcome ToolOutcome
+			tool.OK = strictJSON(answer.Bytes(), &outcome) == nil && outcome.Status == ToolOK
+		}
 		s.tools[key] = tool
 	case ObserveSessionStop:
 		if v.Terminated {
@@ -522,7 +527,9 @@ func (s stateValue) sessionSettlementAllowed(invocation, kind string) bool {
 			if kind == SettleInvocation {
 				return v.Terminal
 			}
-			if v.Started || v.Provider != "" || !v.Terminal {
+			// A step that was never started and never sent can be released;
+			// the release ends it.
+			if v.Started || v.Provider != "" {
 				return false
 			}
 			for key, m := range s.transports {
