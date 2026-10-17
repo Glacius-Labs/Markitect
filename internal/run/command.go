@@ -39,6 +39,8 @@ const (
 	ResumeRun           = "run.resumed"
 	StopRun             = "run.stop-requested"
 	FinishRun           = "run.finished"
+	ExtendAssignment    = "assignment.extended"
+	CloseAssignment     = "assignment.closed"
 )
 
 // Command is a closed RUN-1 command record. ObservedAt labels facts in UTC;
@@ -55,6 +57,9 @@ type Command struct {
 	Elapsed                   time.Duration
 	Reason, NextActor         string
 	Outcome                   Outcome
+	Caps                      Capacity `json:",omitzero"`
+	OwnerInput                string   `json:",omitempty"`
+	Quiescence                string   `json:",omitempty"`
 	binding                   Binding
 }
 
@@ -110,6 +115,18 @@ func (c Command) validate() error {
 		}
 		allowed.Reason = c.Reason
 		allowed.Outcome = c.Outcome
+	case ExtendAssignment:
+		if !capacityPositive(c.Caps) || !boundedInput(c.OwnerInput) {
+			return ErrInvalid
+		}
+		allowed.Caps = c.Caps
+		allowed.OwnerInput = c.OwnerInput
+	case CloseAssignment:
+		if !boundedInput(c.OwnerInput) || !boundedInput(c.Quiescence) {
+			return ErrInvalid
+		}
+		allowed.OwnerInput = c.OwnerInput
+		allowed.Quiescence = c.Quiescence
 	default:
 		return ErrInvalid
 	}

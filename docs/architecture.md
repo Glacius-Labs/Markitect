@@ -55,6 +55,8 @@ Bootstrap alone constructs concrete adapters. CLI code owns parsing/presentation
 
 `internal/run` supplies fixed run bindings, assignment budget admission and confirmed journal transitions. It reconstructs confirmed state from bounded reads pinned to one journal revision, without replaying external effects. Open reservations retain their holds behind a separate recovery barrier. The package has no physical journal adapter or public execution entrypoint.
 
+Recorded cap extensions preserve spent and held capacity; explicit quiescent closure makes an assignment immutable before a fresh ordinary assignment receives its own ledger on the same repository stream. Host-supplied observations do not establish physical termination or authenticated authority.
+
 Recursive Manager execution, sessions, workspace creation, executable checks, durable journal storage, verification and guarded artifact publication remain later implementation work. There is no active legacy runtime or fallback execution engine. A structural or metadata pass cannot authorize those effects. The current CLI exposes no MCP server.
 
 ## Operational record storage
