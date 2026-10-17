@@ -1,0 +1,15 @@
+{
+  "schema": 1,
+  "id": "conv-readinglog-001",
+  "case": "readinglog",
+  "method": "conventional",
+  "agent": {
+    "kind": "codex",
+    "codexVersion": "0.162.0",
+    "model": "gpt-6-luna",
+    "effort": "high",
+    "maxSubagents": 3
+  },
+  "limits": {"stationSeconds": 5400, "totalSeconds": 14400},
+  "container": {"cpus": 4, "memory": "8g", "pidsLimit": 2048}
+}

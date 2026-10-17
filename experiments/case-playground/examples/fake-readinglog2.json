@@ -1,0 +1,15 @@
+{
+  "schema": 1,
+  "id": "fake-readinglog2-001",
+  "case": "readinglog2",
+  "method": "conventional",
+  "agent": {
+    "kind": "fake",
+    "codexVersion": "0.162.0",
+    "model": "gpt-6-luna",
+    "effort": "high",
+    "maxSubagents": 3
+  },
+  "limits": {"stationSeconds": 120, "totalSeconds": 900},
+  "container": {"cpus": 2, "memory": "2g", "pidsLimit": 512}
+}

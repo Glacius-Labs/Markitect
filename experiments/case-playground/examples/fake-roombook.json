@@ -1,0 +1,15 @@
+{
+  "schema": 1,
+  "id": "fake-roombook-001",
+  "case": "roombook",
+  "method": "conventional",
+  "agent": {
+    "kind": "fake",
+    "codexVersion": "0.162.0",
+    "model": "gpt-6-luna",
+    "effort": "high",
+    "maxSubagents": 3
+  },
+  "limits": {"stationSeconds": 120, "totalSeconds": 600},
+  "container": {"cpus": 2, "memory": "2g", "pidsLimit": 512}
+}

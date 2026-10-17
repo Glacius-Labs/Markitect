@@ -2672,3 +2672,31 @@ artifacts:
     form: doc
     realizes: [examples/independent-oracles]
     why: Documents the stated responsibility or preserves its historical evidence.
+  - path: "experiments/case-playground/examples/conventional-readinglog.json"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Preserves a historical Study or registration input with its original source binding.
+  - path: "experiments/case-playground/examples/fake-claude-roombook.json"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Preserves a historical Study or registration input with its original source binding.
+  - path: "experiments/case-playground/examples/fake-readinglog2.json"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Preserves a historical Study or registration input with its original source binding.
+  - path: "experiments/case-playground/examples/fake-roombook.json"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Preserves a historical Study or registration input with its original source binding.
+  - path: "experiments/case-playground/examples/markitect-readinglog.json"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Preserves a historical Study or registration input with its original source binding.
+  - path: "experiments/case-playground/examples/study-fake-roombook.json"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Preserves a historical Study or registration input with its original source binding.
+  - path: "experiments/case-playground/examples/study-readinglog2.json"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Preserves a historical Study or registration input with its original source binding.
