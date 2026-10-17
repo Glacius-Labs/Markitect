@@ -1,16 +1,20 @@
 # Markitect
 
-**You model the world of your project. Markitect organizes its realization.**
+**Don't chase the code. Let the code chase you.**
+
+You shape the idea. Markitect organizes the work that brings your project into alignment.
 
 [![CI](https://github.com/Glacius-Labs/Markitect/actions/workflows/ci.yaml/badge.svg)](https://github.com/Glacius-Labs/Markitect/actions/workflows/ci.yaml)
 [![License: Apache-2.0](https://img.shields.io/badge/License-Apache--2.0-blue.svg)](LICENSE)
 [![Status: In development](https://img.shields.io/badge/Status-In%20development-orange.svg)](docs/implementation-plan.md)
 
-[Why Markitect](#why-markitect) · [Working with a model](#working-with-a-model) · [An example](#one-rule-changes-the-project-follows) · [Development status](#development-status) · [Explore the source](#run-the-current-source)
+[Why Markitect](#why-markitect) · [Working with a model](#working-with-a-model) · [An example](#let-the-project-do-the-catching-up) · [Development status](#development-status) · [Explore the source](#run-the-current-source)
 
-Markitect is model-first development with delegated AI realization. Describe what your project should be: its behavior, architecture, concepts and rules. Markitect is being built to organize the work that turns that model into code, tests, configuration and documentation—and keeps them consistent through change.
+You have a picture of what your project should be: its behavior, architecture, concepts and rules. As that picture develops, bringing the project along can become a job of its own.
 
-The goal is a clean, uniform and understandable repository, without drift, forgotten rules or contradictions. You model the intended world and can trust that the result reflects it, without routinely reviewing the implementation yourself.
+Markitect is model-first development with delegated AI realization. Make your intended world explicit in a canonical model. Markitect is being built to let the project take on the work of aligning itself with that intent: working out the changes, carrying them through and checking the result across code, tests, configuration and documentation.
+
+The goal is a clean, uniform and understandable repository, without drift, forgotten rules or contradictions. Your attention stays with the idea. The project's realization follows it, with enough trust that you no longer need routine implementation review.
 
 ## Why Markitect
 
@@ -18,9 +22,11 @@ The difficult question after an AI implementation is:
 
 > Does what the AI built actually match what I intended?
 
-A feature can work while an existing rule is overlooked, another area breaks or the documentation describes something different. Finding those gaps takes attention. Explaining them, prompting again and checking the repair takes more. Some omissions may never be noticed.
+A feature can work while an existing rule is overlooked, another area breaks or the documentation describes something different. You then have to find the gap, explain what you meant, prompt again and check the repair. Some omissions may never be noticed. Keeping the project close to the picture in your head becomes a continuing responsibility.
 
-Markitect treats **human attention as the scarce resource**. Its purpose is to make realization dependable through explicit intent, systematic collaboration and verification. Focused agents can spend effort on implementation and checking while people concentrate on the intended system and decisions that need their judgment.
+Markitect aims to reverse who carries that responsibility. **You develop the intended world; the project works toward it.** Its organization takes on the translation, implementation, coordination and verification needed to bring the actual project into agreement.
+
+That treats **human attention as the scarce resource**. Focused agents can spend effort on implementation and checking while people concentrate on the intended system and decisions that need their judgment.
 
 The method draws on familiar practices from human teams: clear responsibility, delegation, escalation, the four-eyes principle and integration of independently examined work. Their effectiveness for AI realization must be demonstrated in use.
 
@@ -38,17 +44,17 @@ These are the product's target outcomes. The [development status](#development-s
 
 ## Working with a model
 
-1. **Describe the intended project.** Define its behavior, concepts, architecture and rules in the canonical model. AI can help you explore and author that intent.
-2. **Have it realized.** Markitect organizes implementation, review and integration across the project's responsibilities.
-3. **Change the model as the project evolves.** New intent starts a new realization. Existing obligations continue to apply, and deviations from unchanged intent can be repaired against the same model.
+1. **Shape the idea.** Define the project's behavior, concepts, architecture and rules in the canonical model. AI can help you explore and author that intent.
+2. **Let the project work toward it.** Markitect organizes the changes, independent review and integration needed to align the realization with the model.
+3. **Keep developing your vision.** Refine the model as your understanding evolves. The next realization works toward that new intent while preserving the obligations that still apply. Deviations from unchanged intent can be repaired against the same model.
 
-Code, tests and documentation are realizations of the model. The aim is to keep them aligned without asking you to rediscover every consequence of every change.
+The idea becomes the shared point of reference: you develop it, and the project brings its realizations into alignment. Code, tests and documentation follow that intent without asking you to rediscover every consequence of every change.
 
-## One rule changes. The project follows.
+## Let the project do the catching up.
 
 Imagine a library where a member may borrow five books. The rule changes: members may now borrow three.
 
-You update the model. The intended outcome is coordinated:
+You express the new rule in the model. Working out where that change belongs and carrying it through is the project's realization work. The intended outcome is coordinated:
 
 - The implementation enforces the new limit.
 - Tests check the new boundary against the requirement.

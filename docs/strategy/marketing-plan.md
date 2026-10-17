@@ -6,7 +6,13 @@ This is an editorial recommendation and draft copy, not an adopted product decis
 
 ## Positioning
 
-**Working line:** You model the world of your project. Markitect organizes its realization.
+**Headline:** Don't chase the code. Let the code chase you.
+
+**Supporting line:** You shape the idea. Markitect organizes the work that brings your project into alignment.
+
+**Product story:** You model the world of your project. Markitect organizes its realization.
+
+The owner selected this editorial direction after clarifying the reversal as human → idea ← project: the human develops the intended world; the project takes on the work of aligning its realization with it. The metaphor concerns responsibility for adaptation. It does not authorize the implementation to redefine the intended world. Use the headline with its supporting line so "chase you" clearly points to the person's evolving intent and the whole project, beyond code alone.
 
 **Category:** Model-first development with delegated realization.
 
@@ -66,15 +72,17 @@ All drafts below describe the target product story from the owner's clarificatio
 
 ### Short pitch
 
-You model the world of your project. Markitect organizes its realization, with the goal of a clean, consistent repository whose fidelity to the model you can trust without reviewing every implementation yourself.
+Don't chase the code. Let the code chase you. You shape the idea; Markitect organizes the work that brings your project into alignment, with the goal of a clean, consistent result you can trust without routine implementation review.
 
 ### Thirty seconds
 
-You model the world of your project. Markitect organizes its realization. Behavior, architecture and rules live in one canonical model; code, tests and documentation realize it. Markitect combines AI with deterministic structure, clear responsibilities and independent verification. The goal is a clean, uniform repository without drift, forgotten rules or contradictions, and a result you can trust without routine human implementation review.
+Don't chase the code. Let the code chase you. Make the project you have in mind explicit in a canonical model. Markitect is being built to let the project take on the work of aligning itself with that intent, combining AI, deterministic structure, clear responsibilities and independent verification. You develop the idea; its realization follows. The goal is a clean, uniform repository without drift, forgotten rules or contradictions, and a result you can trust without routine implementation review.
 
 ### Two minutes
 
-You model the world of your project. Markitect organizes its realization.
+Don't chase the code. Let the code chase you.
+
+You develop a picture of the project you want. Turning that picture into changes, keeping every part aligned and checking the result can become a continuing job. Markitect aims to reverse who carries that work: you shape the intended world, and the project works toward it.
 
 When coding agents change a growing project, a feature can work while an architecture rule is forgotten, tests follow the wrong expectation or documentation contradicts the implementation. People then have to rediscover what should have changed and review the work themselves.
 
