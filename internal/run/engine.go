@@ -833,12 +833,12 @@ func (e *Engine) tools(s *stepRun) ToolHandler {
 				return refuse(err.Error())
 			}
 			answered = answered || phase == PhaseReply
-			if phase == PhaseReply {
-				return ok(map[string]string{"id": id})
-			}
 			// In D2 and D4 the root ended its step after a question without an
 			// outcome, so the step failed and the question was dropped.
-			return ok(map[string]string{"id": id, "note": fmt.Sprintf("The message is recorded with your step's outcome. Sending does not end your step: end it with exactly one outcome call, for example wait with {\"on\":[{\"kind\":\"reply\",\"ref\":%q}]} if you need the answer first.", id)})
+			if note := sendNote(phase, args, id); note != "" {
+				return ok(map[string]string{"id": id, "note": note})
+			}
+			return ok(map[string]string{"id": id})
 		}
 		if OutcomeTool(phase, call.Tool) {
 			if answered {
@@ -918,6 +918,22 @@ func (e *Engine) tools(s *stepRun) ToolHandler {
 		}
 		return refuse("the " + call.Tool + " tool is not available in this version of the core")
 	}
+}
+
+// sendNote reminds a Manager that sending does not end its step, with an
+// outcome that fits the phase.
+func sendNote(phase Phase, args []byte, id string) string {
+	var in sendInput
+	_ = decodeArgs(args, &in)
+	switch {
+	case phase == PhaseExplore:
+		return "The message is recorded with your step's outcome. Sending does not end your step: end it with report or submit."
+	case phase.writing() && in.Kind == messageQuestion:
+		return fmt.Sprintf("The message is recorded with your step's outcome. Sending does not end your step: end it with exactly one outcome call, for example wait with {\"on\":[{\"kind\":\"reply\",\"ref\":%q}],\"reason\":\"Needs the answer.\"} if you need the answer first.", id)
+	case phase.writing():
+		return "The message is recorded with your step's outcome. Sending does not end your step: end it with exactly one outcome call, submit or wait."
+	}
+	return ""
 }
 
 // reviewCheck runs a configured check that a candidate review requests, within

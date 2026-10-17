@@ -55,6 +55,9 @@ type TaskFacts struct {
 	Constraints  []HostText
 	Requirements []HostText
 	Findings     OpenFindings
+	// Purpose is the reviewed submission's purpose, local or integration;
+	// reviewer views only.
+	Purpose string
 }
 
 // ManagerPhase is an instruction/input projection, not a run state, evidence

@@ -5,6 +5,7 @@ import (
 	"errors"
 	"github.com/Glacius-Labs/Markitect/internal/organization"
 	"reflect"
+	"strings"
 	"testing"
 	"time"
 )
@@ -342,6 +343,28 @@ func TestManagerPolicyRejectsForgedOperationAndLegacyNewFields(t *testing.T) {
 			if err := validateManagerPolicy(old); !errors.Is(err, ErrInvalid) {
 				t.Fatal("new field smuggled into legacy", version, field, err)
 			}
+		}
+	}
+}
+
+// A send's answer says how to end the step for the phase and message kind;
+// a reply step needs no note. In D2 and D4 a root ended its work step right
+// after a question, without an outcome.
+func TestSendNoteFitsThePhase(t *testing.T) {
+	question, hint := []byte(`{"kind":"question","to":"parent","body":"Which?"}`), []byte(`{"kind":"hint","to":"a","body":"Use it."}`)
+	for _, tc := range []struct {
+		phase    Phase
+		args     []byte
+		contains string
+	}{
+		{PhaseExplore, question, "end it with report or submit"},
+		{PhaseWork, question, `{"on":[{"kind":"reply","ref":"q-1"}],"reason":"Needs the answer."}`},
+		{PhaseIntegrate, hint, "submit or wait"},
+		{PhaseReply, []byte(`{"kind":"reply","to":"q-1","body":"Yes."}`), ""},
+	} {
+		note := sendNote(tc.phase, tc.args, "q-1")
+		if tc.contains == "" && note != "" || tc.contains != "" && !strings.Contains(note, tc.contains) {
+			t.Fatalf("%s: note %q", tc.phase, note)
 		}
 	}
 }
