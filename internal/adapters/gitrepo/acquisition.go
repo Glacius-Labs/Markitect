@@ -214,6 +214,13 @@ func (a *acquisition) boundary(location string) (*sourceBoundary, error) {
 	if err != nil {
 		return nil, err
 	}
+	// identifyGit confirmed the explicitly selected root's physical identity.
+	// Preserve coordinates under that root even when Git reports another native
+	// spelling (for example Windows 8.3). Do not resolve other aliases or alter
+	// descendant spelling; the ordinary exact-path checks still apply below.
+	if rel, err := filepath.Rel(a.git.selectedPath, abs); err == nil && rel != ".." && !strings.HasPrefix(rel, ".."+string(filepath.Separator)) {
+		abs = filepath.Join(a.git.path, rel)
+	}
 	if b, ok := a.boundaries[abs]; ok {
 		return b, nil
 	}
