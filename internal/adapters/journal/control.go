@@ -95,7 +95,8 @@ func (c *Control) Acquire(ctx context.Context, req apply.ControlRequest) (_ appl
 	if regErr != nil && !errors.Is(regErr, os.ErrNotExist) {
 		return nil, regErr
 	}
-	s.lock, err = openLock(lockPath, errors.Is(regErr, os.ErrNotExist))
+	var createdLock bool
+	s.lock, createdLock, err = openLock(lockPath, errors.Is(regErr, os.ErrNotExist))
 	if err != nil {
 		return nil, err
 	}
@@ -117,6 +118,9 @@ func (c *Control) Acquire(ctx context.Context, req apply.ControlRequest) (_ appl
 	s.paths[lockPath] = lockID
 	repoID := s.paths[repo]
 	if _, err = os.Lstat(regPath); errors.Is(err, os.ErrNotExist) {
+		if !createdLock {
+			return nil, ErrReconcile
+		}
 		if err = directory(state, true); err != nil {
 			return nil, err
 		}
@@ -136,6 +140,10 @@ func (c *Control) Acquire(ctx context.Context, req apply.ControlRequest) (_ appl
 		// Record intent BEFORE creating a database. An interrupted initialization
 		// is visible and cannot be mistaken for a genuinely new empty store.
 		if err = createRegistration(regPath, s.registration); err != nil {
+			return nil, err
+		}
+		s.registration.RegistrationFile, err = physicalID(regPath)
+		if err != nil {
 			return nil, err
 		}
 		dbPath := filepath.Join(state, "journal.sqlite")
@@ -181,6 +189,9 @@ func (c *Control) Acquire(ctx context.Context, req apply.ControlRequest) (_ appl
 		r := s.registration
 		if r.Status != "ready" || r.Repository != req.RepositoryIdentity || r.RepositoryPath != repo || r.RepositoryFile != repoID || r.Directory != state {
 			return nil, ErrReconcile
+		}
+		if err = samePhysical(regPath, r.RegistrationFile); err != nil {
+			return nil, err
 		}
 		if err = private(state); err != nil {
 			return nil, err
@@ -265,7 +276,12 @@ func (s *session) checkPaths() error {
 	if err != nil || string(data) != string(s.registrationBytes) {
 		return errors.Join(apply.ErrControlBinding, err)
 	}
-	// SQLite sidecars are private regular, single-link files if present.
+	return s.checkStorePaths()
+}
+
+func (s *session) checkStorePaths() error {
+	// Also called BEFORE opening SQLite: unsafe preexisting sidecars must not
+	// be touched during WAL recovery, PRAGMAs or epoch acquisition.
 	for _, suffix := range []string{"", "-wal", "-shm"} {
 		path := filepath.Join(s.registration.Directory, "journal.sqlite"+suffix)
 		if _, err := os.Lstat(path); errors.Is(err, os.ErrNotExist) && suffix != "" {

@@ -208,7 +208,7 @@ func assertFenced(t *testing.T, s *session) {
 }
 
 func TestMissingAndCopiedPhysicalStoreNeverBecomeEmptyHistory(t *testing.T) {
-	for _, change := range []string{"missing database", "copied database", "missing registration", "copied checkout", "host assertion"} {
+	for _, change := range []string{"missing database", "copied database", "missing registration", "missing registration alternate store", "replaced registration", "copied checkout", "host assertion"} {
 		t.Run(change, func(t *testing.T) {
 			r := request(t)
 			s := acquire(t, r)
@@ -235,8 +235,23 @@ func TestMissingAndCopiedPhysicalStoreNeverBecomeEmptyHistory(t *testing.T) {
 				if err := os.WriteFile(path, data, 0600); err != nil {
 					t.Fatal(err)
 				}
-			case "missing registration":
+			case "missing registration", "missing registration alternate store":
 				if err := os.Remove(filepath.Join(r.Repository, ".markitect", "state", "journal.json")); err != nil {
+					t.Fatal(err)
+				}
+				if change == "missing registration alternate store" {
+					r.StateDirectory = filepath.Join(testkit.TempDir(t), "alternate")
+				}
+			case "replaced registration":
+				reg := filepath.Join(r.Repository, ".markitect", "state", "journal.json")
+				data, err := os.ReadFile(reg)
+				if err != nil {
+					t.Fatal(err)
+				}
+				if err := os.Rename(reg, reg+".old"); err != nil {
+					t.Fatal(err)
+				}
+				if err := os.WriteFile(reg, data, 0600); err != nil {
 					t.Fatal(err)
 				}
 			case "copied checkout":
@@ -366,7 +381,10 @@ func TestRegistrationInitializationAndInsecurePathsRefuse(t *testing.T) {
 	if err := createRegistration(filepath.Join(r.Repository, ".markitect", "state", "journal.json"), reg); err != nil {
 		t.Fatal(err)
 	}
-	if _, err := New().Acquire(context.Background(), r); err == nil {
+	if err := os.WriteFile(filepath.Join(r.Repository, ".markitect", "state", "journal.lock"), nil, 0600); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := New().Acquire(context.Background(), r); !errors.Is(err, ErrReconcile) {
 		t.Fatal("interrupted initialization authorized")
 	}
 	r = request(t)

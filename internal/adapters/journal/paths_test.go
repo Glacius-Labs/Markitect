@@ -1,6 +1,7 @@
 package journal
 
 import (
+	"bytes"
 	"context"
 	"database/sql"
 	"errors"
@@ -10,6 +11,7 @@ import (
 
 	"github.com/Glacius-Labs/Markitect/internal/apply"
 	"github.com/Glacius-Labs/Markitect/internal/run"
+	"github.com/Glacius-Labs/Markitect/internal/testkit"
 )
 
 func TestLiveRegistrationReplacementPoisonsHandle(t *testing.T) {
@@ -53,6 +55,43 @@ func TestControlDirectoryAndStateRedirectsRefuse(t *testing.T) {
 	if got, err := New().Acquire(context.Background(), r); err == nil {
 		got.Close()
 		t.Fatal("hardlinked database authorized")
+	}
+}
+
+func TestUnsafeSidecarRefusesBeforeSQLiteCanTouchIt(t *testing.T) {
+	for _, suffix := range []string{"-wal", "-shm"} {
+		t.Run(suffix, func(t *testing.T) {
+			r := request(t)
+			s := acquire(t, r)
+			if err := s.Close(); err != nil {
+				t.Fatal(err)
+			}
+			path := filepath.Join(r.StateDirectory, "journal.sqlite"+suffix)
+			original := []byte("external alias must stay exactly unchanged")
+			if err := os.WriteFile(path, original, 0600); err != nil {
+				t.Fatal(err)
+			}
+			alias := filepath.Join(testkit.TempDir(t), "alias")
+			if err := os.Link(path, alias); err != nil {
+				t.Fatal(err)
+			}
+			before, err := os.ReadFile(filepath.Join(r.StateDirectory, "journal.sqlite"))
+			if err != nil {
+				t.Fatal(err)
+			}
+			if got, err := New().Acquire(context.Background(), r); err == nil {
+				got.Close()
+				t.Fatal("unsafe sidecar opened")
+			}
+			got, err := os.ReadFile(alias)
+			if err != nil || !bytes.Equal(got, original) {
+				t.Fatal("SQLite mutated external sidecar alias", err)
+			}
+			after, err := os.ReadFile(filepath.Join(r.StateDirectory, "journal.sqlite"))
+			if err != nil || !bytes.Equal(before, after) {
+				t.Fatal("store changed before unsafe-sidecar refusal", err)
+			}
+		})
 	}
 }
 

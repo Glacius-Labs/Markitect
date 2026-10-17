@@ -15,7 +15,7 @@ import (
 )
 
 const schema = `
-CREATE TABLE store_meta (singleton INTEGER PRIMARY KEY CHECK(singleton=1), format INTEGER NOT NULL CHECK(format=1), repository TEXT NOT NULL, repository_file TEXT NOT NULL, store_id TEXT NOT NULL, database_file TEXT NOT NULL, epoch INTEGER NOT NULL CHECK(epoch>=0));
+CREATE TABLE store_meta (singleton INTEGER PRIMARY KEY CHECK(singleton=1), format INTEGER NOT NULL CHECK(format=1), repository TEXT NOT NULL, repository_file TEXT NOT NULL, store_id TEXT NOT NULL, database_file TEXT NOT NULL, registration_file TEXT NOT NULL, epoch INTEGER NOT NULL CHECK(epoch>=0));
 CREATE TABLE stream_head (singleton INTEGER PRIMARY KEY CHECK(singleton=1), revision INTEGER NOT NULL CHECK(revision>=0));
 CREATE TABLE blobs (digest BLOB PRIMARY KEY CHECK(length(digest)=32), size INTEGER NOT NULL CHECK(size>=0 AND size<=67108864), data BLOB NOT NULL CHECK(length(data)=size)) WITHOUT ROWID;
 CREATE TABLE batches (id TEXT PRIMARY KEY, digest BLOB NOT NULL CHECK(length(digest)=32), previous INTEGER NOT NULL UNIQUE CHECK(previous>=0), revision INTEGER NOT NULL UNIQUE CHECK(revision>previous AND revision-previous<=256), data BLOB NOT NULL CHECK(length(data)>0 AND length(data)<=67108864));
@@ -23,6 +23,9 @@ CREATE TABLE events (id TEXT PRIMARY KEY, batch TEXT NOT NULL REFERENCES batches
 INSERT INTO stream_head VALUES(1,0);`
 
 func (s *session) openDatabase(ctx context.Context, initial bool) error {
+	if err := s.checkStorePaths(); err != nil {
+		return err
+	}
 	path := filepath.ToSlash(filepath.Join(s.registration.Directory, "journal.sqlite"))
 	if runtime.GOOS == "windows" {
 		path = "/" + path
@@ -54,7 +57,7 @@ func (s *session) openDatabase(ctx context.Context, initial bool) error {
 			return err
 		}
 		r := s.registration
-		if _, err = tx.ExecContext(ctx, "INSERT INTO store_meta VALUES(1,1,?,?,?,?,0)", r.Repository, r.RepositoryFile, r.StoreID, r.DatabaseFile); err != nil {
+		if _, err = tx.ExecContext(ctx, "INSERT INTO store_meta VALUES(1,1,?,?,?,?,?,0)", r.Repository, r.RepositoryFile, r.StoreID, r.DatabaseFile, r.RegistrationFile); err != nil {
 			return err
 		}
 		if err = tx.Commit(); err != nil {
@@ -85,11 +88,11 @@ func (s *session) settings(ctx context.Context) error {
 
 func (s *session) meta(ctx context.Context, tx *sql.Tx, expected uint64) (uint64, error) {
 	var version int
-	var repository, repoFile, store, dbFile string
+	var repository, repoFile, store, dbFile, regFile string
 	var epoch int64
-	err := tx.QueryRowContext(ctx, "SELECT format,repository,repository_file,store_id,database_file,epoch FROM store_meta WHERE singleton=1").Scan(&version, &repository, &repoFile, &store, &dbFile, &epoch)
+	err := tx.QueryRowContext(ctx, "SELECT format,repository,repository_file,store_id,database_file,registration_file,epoch FROM store_meta WHERE singleton=1").Scan(&version, &repository, &repoFile, &store, &dbFile, &regFile, &epoch)
 	r := s.registration
-	if err != nil || version != 1 || repository != r.Repository || repoFile != r.RepositoryFile || store != r.StoreID || dbFile != r.DatabaseFile || epoch < 0 {
+	if err != nil || version != 1 || repository != r.Repository || repoFile != r.RepositoryFile || store != r.StoreID || dbFile != r.DatabaseFile || regFile != r.RegistrationFile || epoch < 0 {
 		return 0, errors.Join(ErrCorrupt, err)
 	}
 	if expected != 0 && uint64(epoch) != expected {

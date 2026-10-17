@@ -18,10 +18,16 @@ Other lock backends fail closed.
 
 Initialization records an `initializing` registration before creating a database,
 then writes and flushes the schema and completes the registration. Interrupted
-initialization needs reconciliation. A registered missing, copied or replaced
+initialization needs reconciliation. A persistent lock without its registration
+also needs reconciliation even when another empty state directory is selected.
+A registered missing, copied or replaced
 database, another checkout, another Host identity assertion or another selected
 state directory cannot silently start empty history. Store identity is random;
-repository and database physical identities are also recorded. Each acquisition
+repository, registration and database physical identities are also recorded.
+Registration is finalized in place to preserve its checked-created identity.
+Linux flushes newly created directory entries in their parents before proceeding;
+Windows uses file flushing and the host filesystem's directory guarantees.
+Each acquisition
 increments the signed 63-bit controller epoch; exhaustion refuses acquisition.
 This package supplies no administrative reconciliation or migration command.
 

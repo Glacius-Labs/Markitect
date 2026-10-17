@@ -103,50 +103,50 @@ func physicalFileID(f *os.File) (string, error) {
 	return fmt.Sprintf("%x:%x:%x", info.VolumeSerialNumber, info.FileIndexHigh, info.FileIndexLow), nil
 }
 
-func openLock(path string, create bool) (*os.File, error) {
+func openLock(path string, create bool) (*os.File, bool, error) {
 	if _, err := safeAbsolute(path); err != nil {
-		return nil, err
+		return nil, false, err
 	}
 	p, err := windows.UTF16PtrFromString(path)
 	if err != nil {
-		return nil, err
-	}
-	mode := uint32(windows.OPEN_EXISTING)
-	if create {
-		mode = windows.OPEN_ALWAYS
+		return nil, false, err
 	}
 	// No delete sharing: the live lock cannot be renamed or removed on Windows.
-	h, err := windows.CreateFile(p, windows.GENERIC_READ|windows.GENERIC_WRITE, windows.FILE_SHARE_READ|windows.FILE_SHARE_WRITE, nil, mode, windows.FILE_ATTRIBUTE_NORMAL|windows.FILE_FLAG_OPEN_REPARSE_POINT, 0)
+	open := func(mode uint32) (windows.Handle, error) {
+		return windows.CreateFile(p, windows.GENERIC_READ|windows.GENERIC_WRITE, windows.FILE_SHARE_READ|windows.FILE_SHARE_WRITE, nil, mode, windows.FILE_ATTRIBUTE_NORMAL|windows.FILE_FLAG_OPEN_REPARSE_POINT, 0)
+	}
+	var h windows.Handle
+	created := false
+	if create {
+		h, err = open(windows.CREATE_NEW)
+		if err == nil {
+			created = true
+		} else if !errors.Is(err, windows.ERROR_FILE_EXISTS) && !errors.Is(err, windows.ERROR_ALREADY_EXISTS) {
+			return nil, false, err
+		}
+	}
+	if !created {
+		h, err = open(windows.OPEN_EXISTING)
+	}
 	if err != nil {
-		return nil, err
+		return nil, false, err
 	}
 	f := os.NewFile(uintptr(h), path)
 	if err := private(path); err != nil {
 		f.Close()
-		return nil, err
+		return nil, false, err
 	}
 	if err := f.Sync(); err != nil {
 		f.Close()
-		return nil, err
+		return nil, false, err
 	}
-	return f, nil
+	return f, created, nil
 }
 
 func lockExclusive(f *os.File) error {
 	return windows.LockFileEx(windows.Handle(f.Fd()), windows.LOCKFILE_EXCLUSIVE_LOCK|windows.LOCKFILE_FAIL_IMMEDIATELY, 0, 1, 0, &windows.Overlapped{})
 }
 
-// Registration files are flushed before a write-through rename. Windows does
-// not provide a portable directory fsync; this is not a power-loss experiment.
+// Registration files are flushed in place. Windows does not provide a portable
+// directory fsync; this is not a power-loss experiment.
 func syncDirectory(string) error { return nil }
-func durableRename(from, to string) error {
-	f, err := windows.UTF16PtrFromString(from)
-	if err != nil {
-		return err
-	}
-	t, err := windows.UTF16PtrFromString(to)
-	if err != nil {
-		return err
-	}
-	return windows.MoveFileEx(f, t, windows.MOVEFILE_REPLACE_EXISTING|windows.MOVEFILE_WRITE_THROUGH)
-}

@@ -13,6 +13,7 @@ import (
 type registration struct {
 	Version                                                 int
 	Repository, RepositoryPath, RepositoryFile              string
+	RegistrationFile                                        string
 	StoreID, Directory, DirectoryFile, DatabaseFile, Status string
 }
 
@@ -62,7 +63,12 @@ func directory(path string, create bool) error {
 		return errors.Join(ErrUnsafe, err)
 	}
 	if create {
-		return private(path)
+		if err := private(path); err != nil {
+			return err
+		}
+		// Persist its name even after a prior acquisition failed while creating
+		// this directory. A retry cannot silently skip an earlier failed fsync.
+		return syncDirectory(filepath.Dir(path))
 	}
 	return nil
 }
@@ -108,12 +114,23 @@ func createRegistration(path string, r registration) error {
 }
 
 func finishRegistration(path string, r registration) error {
-	temporary := path + ".initializing"
-	if err := createRegistration(temporary, r); err != nil {
+	// Preserve the checked-created physical registration identity. A crash
+	// during this write leaves initialization visibly incomplete, never empty.
+	f, err := os.OpenFile(path, os.O_WRONLY, 0)
+	if err != nil {
 		return err
 	}
-	if err := durableRename(temporary, path); err != nil {
+	defer f.Close()
+	id, err := physicalFileID(f)
+	if err != nil || id != r.RegistrationFile {
+		return ErrReconcile
+	}
+	data, _ := json.Marshal(r)
+	if err := f.Truncate(0); err != nil {
 		return err
 	}
-	return syncDirectory(filepath.Dir(path))
+	if _, err := f.Write(data); err != nil {
+		return err
+	}
+	return f.Sync()
 }
