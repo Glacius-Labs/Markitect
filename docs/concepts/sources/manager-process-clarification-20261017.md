@@ -72,4 +72,16 @@ The owner confirmed the proposed flow and requested persistence and coordination
 
 > Ja, der Ablauf passt für mich so. Halte das im Konzept fest und stimme es mit dem Coordinator ab. Lass uns noch klären, wie wir das Review-Budget sinnvoll gestalten, ohne erfolgreiche Teillieferungen unnötig zu begrenzen.
 
-This confirmation selects the flow above. It leaves the review-budget replacement open: the existing three-submission limit can be consumed by successful limited deliveries. The assistant's later proposal to count rejections separately is discussion, not an accepted rule. This source records product intent, not implementation or execution evidence.
+This confirmation selected the flow above and initially left the review-budget replacement open: the existing three-submission limit could be consumed by successful limited deliveries. The following exchange resolved that question. This source records product intent, not implementation or execution evidence.
+
+## Review budget confirmation
+
+The assistant proposed a separate rejection counter per run, Manager and review purpose, with no reset through successful deliveries or new tasks. All work would still consume the finite shared execution budget. The explicit question was:
+
+> Soll das Review-Limit künftig Zurückweisungen zählen: standardmäßig nach zwei Ablehnungen prüft der Parent den Korrekturplan, nach der dritten endet die betroffene Arbeit unvollständig; erfolgreiche Teillieferungen zählen nicht mit und setzen nichts zurück? Alle Arbeiten verbrauchen weiterhin das endliche Gesamtbudget.
+
+The owner selected:
+
+> Ja, Zurückweisungen separat begrenzen
+
+The [execution contract](../../design/canonical-model/manager-apply-execution.md#admission-amendments-and-finite-correction) records this selected rule. Successful limited deliveries do not consume or replenish the rejection allowance; local and integration review remain distinct purposes. This supersedes the earlier submission-count design, not the finite assignment budget or mandatory evidence. Technical implementation and real Apply proof remain separate work.

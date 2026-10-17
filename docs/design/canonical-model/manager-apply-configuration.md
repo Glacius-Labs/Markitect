@@ -9,8 +9,8 @@ This is a target contract, not evidence that preparation or its input decoders a
 | Source | Maintained content | Library example |
 | --- | --- | --- |
 | Canonical model | Intended behavior, required outputs, architecture and binding interfaces. | `loan-policy.spec.maxOpenLoans` is five in M1 and three in M2; existing loans remain returnable. |
-| `.markitect/execution.yaml` | Manager profiles and instructions, creation areas, finite ceilings, Package overrides, scope selection, check selection and owner approval. | Lending uses the selected Manager profile and at most three review rounds. |
-| Product strategy defaults | Versioned defaults shipped with the product, with their original bytes and source fields. | Absent review-round configuration takes three from the strategy document. |
+| `.markitect/execution.yaml` | Manager profiles and instructions, creation areas, finite ceilings, Package overrides, scope selection, check selection and owner approval. | Lending uses the selected Manager profile and a limit of three rejections per review purpose. |
+| Product strategy defaults | Versioned defaults shipped with the product, with their original bytes and source fields. | Absent rejection-limit configuration takes three from the strategy document. |
 | `.markitect/ignore.yaml` | Optional exact-file accounting exceptions with reasons. | One observed library editor-state file is ignored. |
 | Explicit host profile file | Literal executables, pinned protocol and tool identities, model and effort, controlled environment and instruction inputs. Supplied by the operator; no implicit discovery. | The selected Codex build and the local test executable. Credentials are resolved locally and never copied into model or journal payloads. |
 | Assignment record | The owner's goal, constraints, granted caps and recorded extensions. | Apply the current library model. |
@@ -95,13 +95,15 @@ For `recursive-apply-v1`, these accepted effects apply when the corresponding pr
 | `batchNoChangeReviews` | `false` |
 | `acceptance.ownerApproval` | `[]` |
 
+The existing field name `reviewRounds` is retained, but the owner-confirmed design now counts rejected submissions, not all submissions. Successful limited or complete deliveries neither use nor reset this allowance. `maxReviewRounds` caps that configured rejection limit. All work still consumes the shared assignment budget; [execution](manager-apply-execution.md#admission-amendments-and-finite-correction) defines stable counter identity, parent assessment after two rejections and exhaustion. This is an explicit change from the earlier submission-count design. Existing source preparation of the numeric setting is not proof of runtime counting; technical realization must bind the selected policy without reinterpreting historical runs.
+
 These values must come from one real, versioned product-owned defaults document shipped with the product. Preparation retains its original bytes and digest, using `product:recursive-apply-v1/defaults.yaml` and the actual field pointer in that document as the source. A missing document leaves preparation `NotCompleted`; it cannot be replaced with invented provenance. This contract does not create that document or prescribe an implementation package.
 
-`AuthoredExecution` retains absence. Resolution obtains an absent effective value from the captured strategy document; an explicitly configured value keeps its authored source. Effective defaults must satisfy the project ceilings: an absent review-round setting with `maxReviewRounds: 2` fails because the effective default is three. Never clamp the value or cite a nonexistent execution field as its source.
+`AuthoredExecution` retains absence. Resolution obtains an absent effective value from the captured strategy document; an explicitly configured value keeps its authored source. Effective defaults must satisfy the project ceilings: an absent rejection-limit setting with `maxReviewRounds: 2` fails because the effective default is three. Never clamp the value or cite a nonexistent execution field as its source.
 
 ## Resolve settings deterministically
 
-Resolve project defaults, then the exact Manager override only; there is no inheritance from ancestor overrides. Profile references replace the role's value. Instructions append the project defaults, then the exact override, in declared order. `stepTimeout`, `reviewRounds` and `creationRoots` replace the default within the project ceilings; a default is not a ceiling, so a default of two review rounds can be overridden to three where `maxReviewRounds` allows it. Creation directories must equal or descend from an allowed root. There is no deep merge, wildcard override or environment interpolation.
+Resolve project defaults, then the exact Manager override only; there is no inheritance from ancestor overrides. Profile references replace the role's value. Instructions append the project defaults, then the exact override, in declared order. `stepTimeout`, `reviewRounds` and `creationRoots` replace the default within the project ceilings; a default is not a ceiling, so a rejection limit of two can be overridden to three where `maxReviewRounds` allows it. Creation directories must equal or descend from an allowed root. There is no deep merge, wildcard override or environment interpolation.
 
 In the example, lending gets eight minutes per step while lending/reminders keeps the ten-minute default, and a `.` override configures the root only. The Host enforces model obligations, resolved configuration and fixed process constraints; a parent message supplies advice or prerequisite information, not extra task restrictions. Effective values are stored with the file and field that supplied them, so every bound is explainable.
 

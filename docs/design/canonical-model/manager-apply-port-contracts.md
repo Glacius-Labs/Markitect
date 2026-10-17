@@ -72,7 +72,7 @@ A dependent task starts only from an accepted producer delivery composed into it
 
 The illustrative `TaskSpec.Outcome` above is the static Host operation instruction, not parent-authored prose. Its model basis and complete scope are compiler-derived. Additional work messages remain separate and cannot redefine that mandate. Exact responsibility and prerequisite records must follow the remaining [process details](manager-apply-concept.md#remaining-process-detail-and-technical-boundary); existing provider Session contracts are not a Manager scheduler.
 
-The confirmed process uses normal deliveries with limited scope while their Manager remains open. The technical representation must bind Host acceptance and the consumer's composed basis, separately from a reviewer pass. Do not invent a parallel receipt lifecycle or a budget reset for each limited delivery; the review-budget replacement remains an owner decision.
+The confirmed process uses normal deliveries with limited scope while their Manager remains open. The technical representation must bind Host acceptance and the consumer's composed basis, separately from a reviewer pass. Do not invent a parallel receipt lifecycle or a budget reset for each limited delivery. Successful deliveries consume shared execution capacity but neither use nor reset the rejection counter, whose identity is fixed per run, Manager and review purpose by the [execution contract](manager-apply-execution.md#admission-amendments-and-finite-correction). Exact counting, binding and recovery need implementation evidence.
 
 ## Application boundary and source acquisition
 

@@ -1,6 +1,6 @@
 # Library Apply propagation and integration
 
-This walkthrough applies the [fixed Manager process](manager-apply-concept.md#tasks-and-delegation) to [M1](library-example/README.md). It replaces the earlier root-planned order and parent-authored prompts under [DEC-039](../../concepts/register.md#dec-039-deterministic-manager-process). The exchanges explain the owner-confirmed Explore, local planning and limited-delivery process, not an implemented scheduler or a real successful Apply. Review-budget treatment remains an open decision; exact technical bindings must enforce the selected process.
+This walkthrough applies the [fixed Manager process](manager-apply-concept.md#tasks-and-delegation) to [M1](library-example/README.md). It replaces the earlier root-planned order and parent-authored prompts under [DEC-039](../../concepts/register.md#dec-039-deterministic-manager-process). The exchanges explain the owner-confirmed Explore, local planning and limited-delivery process, not an implemented scheduler or a real successful Apply. Successful deliveries consume shared execution capacity but no rejection allowance; exact technical bindings must enforce the selected process.
 
 ## Starting point
 
@@ -33,6 +33,8 @@ The versioned Apply instruction is identical for every Manager: reconcile the ar
 | 10 Final verification and publication | Required aggregate checks, Host evidence check, source preflight, any configured owner approval, guarded write and actual read-back complete the operation. | Host establishes procedural completeness and actual effects. The owner's later commit accepts the result. |
 
 This is an illustrative successful exchange sequence, not a prescribed AI plan. A dependency can change which work is ready. The Host chooses the oldest eligible item, with stable ties, within one-writer and budget limits. Explore, planning and reviews on immutable subjects can run concurrently. After the initial Explore barrier, a waiting lending Manager does not prevent ready members work or library's prerequisite work. Waiting holds no active write grant. In this model the skeleton owner is a sibling reached through root. No Manager can be declared complete merely because its prerequisite was useful or its files did not change.
+
+For budget accounting, library's successful skeleton and successful final delivery leave its local rejection count at zero while consuming shared execution capacity. Lending's rejected six-loan candidate adds one local rejection; its successful five-loan correction leaves that count at one. An integration rejection belongs to the integrating Manager's separate integration counter; any later rejected local correction belongs to its owner's local counter. Success and newly named tasks never reset these counts. With the default limit, two rejections trigger parent assessment of the repair plan and the third leaves the affected work incomplete.
 
 ## Questions across areas
 
