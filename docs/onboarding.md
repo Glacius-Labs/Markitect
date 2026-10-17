@@ -6,7 +6,7 @@ This dated exercise measures a machine-run path through a published Windows CLI.
 
 ## Install and identify the release
 
-The original exercise used the now-retired `v0.5.0` binary; the following is historical setup, not an available download: set `$tag = 'v0.5.0'`, `$sha256 = '6f5b98dad2ea6003bc0368800691af70084a44d2c225c26fe12d120bcda27178'`, and the expected version string to `Markitect 0.5.0 (windows/amd64)` in those instructions. Confirm the installed path, hash, and version before authoring:
+The original exercise used the now-retired `v0.5.0` Windows binary with SHA-256 `6f5b98dad2ea6003bc0368800691af70084a44d2c225c26fe12d120bcda27178` and version string `Markitect 0.5.0 (windows/amd64)`. Its installation procedure remains in [the pre-retirement README](https://github.com/Glacius-Labs/Markitect/blob/1f4a1ede214d05fd2fee615b3905207df7702426/README.md#install-markitect); the following recorded its installed path, hash and version.
 
 ```powershell
 $binary = (Get-Command markitect.exe -ErrorAction Stop).Source
