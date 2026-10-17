@@ -59,6 +59,7 @@ func Check(edges []Edge) []Violation {
 			rule = "only test files may import testkit"
 		case to == "test-support":
 		case owner == target:
+		case e.Test && contains(responsibilityTestImports[owner], target):
 		case !contains(responsibilityImports[owner], target):
 			rule = "responsibility direction forbids " + owner + " -> " + target
 		}

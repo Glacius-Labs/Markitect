@@ -122,6 +122,49 @@ func TestTestsAndPlatformsCannotBypassDirection(t *testing.T) {
 	}
 }
 
+func TestJournalFixtureEdgesStayTestOnly(t *testing.T) {
+	for _, tc := range []struct {
+		to               string
+		production, test bool
+	}{
+		{"internal/apply", true, true}, {"internal/run", true, true},
+		{"internal/model", false, true}, {"internal/snapshot", false, true}, {"internal/testkit", false, true},
+		{"internal/adapters/gitrepo", false, false}, {"internal/adapters/container", false, false},
+		{"internal/organization", false, false}, {"internal/adapters/unknown", false, false},
+	} {
+		for _, test := range []bool{false, true} {
+			allowed := tc.production
+			if test {
+				allowed = tc.test
+			}
+			if got := Check([]Edge{{From: "internal/adapters/journal", To: tc.to, Test: test}}); (len(got) == 0) != allowed {
+				t.Errorf("journal -> %s test=%v: %v", tc.to, test, got)
+			}
+		}
+	}
+	for _, file := range []string{"fixture_windows_test.go", "fixture_linux_test.go", "fixture_windows.go", "fixture_linux.go"} {
+		t.Run(file, func(t *testing.T) {
+			root := t.TempDir()
+			writeFixture(t, root, map[string]string{
+				"README.md": "# Owner\n", CodeMapSource: "packages:\n" + mapEntry("internal/model", "apply-model") + mapEntry("internal/adapters/journal", "apply-adapter"),
+				"internal/model/model.go":           "package model\n",
+				"internal/adapters/journal/" + file: "package journal\nimport _ \"" + ModulePath + "internal/model\"\n",
+			})
+			got, err := CheckRepository(root)
+			if err != nil {
+				t.Fatal(err)
+			}
+			want := 0
+			if !strings.HasSuffix(file, "_test.go") {
+				want = 1
+			}
+			if len(got) != want {
+				t.Fatal("platform classification bypassed test-only boundary", got)
+			}
+		})
+	}
+}
+
 func TestInventoryRequiresActualOwnersAndProducers(t *testing.T) {
 	for _, tc := range []struct{ name, pkg, file, mapText, want string }{
 		{"empty", "", "", "packages: []\n", ""},

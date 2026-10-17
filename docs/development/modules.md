@@ -12,6 +12,8 @@ Run owns fixed input bindings, deterministic budget and lifecycle transitions, a
 
 Existing history is reconstructed through bounded, revision-pinned reads and the same transition rules. Required blobs and complete batches are verified before a projection is returned. Reading creates no effect observations; open invocations retain their holds until explicit reconciliation.
 
+The [SQLite journal adapter](../../internal/adapters/journal/README.md) implements Apply control and Run recording. Production imports only Apply and Run; its owned integration fixtures may import model and snapshot values from test files. Repository-local lifetime control remains independent of the external store directory. SQL commits validate the live epoch and required byte references; reopening never implies that previous processes stopped.
+
 ## Dependency direction
 
 | Consumer | Allowed responsibility |
@@ -22,6 +24,7 @@ Existing history is reconstructed through bounded, revision-pinned reads and the
 | Apply | Model, snapshot, organization, realization, run |
 | Model view | Apply, model, snapshot |
 | Repository adapter | Apply and required pure values |
+| Journal adapter | Apply and Run; model and snapshot only in tests |
 | Codex/Check metadata adapters | Apply, model, organization, snapshot |
 | Container adapter | Agent frame protocol |
 | Session helper (agentd) | Agent frame protocol |
