@@ -7,7 +7,8 @@ import (
 )
 
 // ResolveRevision resolves an explicit ref once in the selected worktree root.
-// It returns a full commit SHA without acquiring source inputs or a guard.
+// It confirms repository identity before returning a full commit SHA, without
+// acquiring source inputs or a guard.
 // The result can be used as a fixed PreviewRequest revision; an empty ref
 // never selects HEAD implicitly.
 func (r *Repository) ResolveRevision(ctx context.Context, repository string, explicitRef string) (string, error) {
@@ -26,5 +27,15 @@ func (r *Repository) ResolveRevision(ctx context.Context, repository string, exp
 	if err != nil {
 		return "", err
 	}
-	return git.commit(explicitRef, false)
+	sha, err := git.commit(explicitRef, false)
+	if err != nil {
+		return "", err
+	}
+	if r.observe != nil {
+		r.observe("before-confirm", git.path)
+	}
+	if err := git.confirm(); err != nil {
+		return "", err
+	}
+	return sha, nil
 }

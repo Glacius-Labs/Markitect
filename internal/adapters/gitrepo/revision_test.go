@@ -105,3 +105,48 @@ func TestResolveRevisionPreservesContextFailure(t *testing.T) {
 		})
 	}
 }
+
+func TestResolveRevisionRefusesChangedIdentityOrCancellationAfterResolution(t *testing.T) {
+	for _, kind := range []string{"git-directory-replacement", "cancel-before-confirm"} {
+		t.Run(kind, func(t *testing.T) {
+			repo := testkit.NewRepo(t)
+			repo.Write("file.txt", "original\n")
+			repo.Commit("original")
+			ctx, cancel := context.WithCancel(context.Background())
+			defer cancel()
+			r := adapter(t)
+			observed := false
+			r.observe = func(event, path string) {
+				if event != "before-confirm" || observed {
+					return
+				}
+				if filepath.Clean(path) != filepath.Clean(repo.Dir) {
+					t.Fatalf("confirmation path = %q; want %q", path, repo.Dir)
+				}
+				observed = true
+				if kind == "cancel-before-confirm" {
+					cancel()
+					return
+				}
+				replacement := testkit.NewRepo(t)
+				replacement.Write("file.txt", "replacement\n")
+				replacement.Commit("replacement")
+				gitDir := filepath.Join(repo.Dir, ".git")
+				if err := os.Rename(gitDir, gitDir+".original"); err != nil {
+					t.Fatal(err)
+				}
+				if err := os.Rename(filepath.Join(replacement.Dir, ".git"), gitDir); err != nil {
+					t.Fatal(err)
+				}
+			}
+			got, err := r.ResolveRevision(ctx, repo.Dir, "HEAD")
+			want := ErrChanged
+			if kind == "cancel-before-confirm" {
+				want = context.Canceled
+			}
+			if !observed || got != "" || !errors.Is(err, want) {
+				t.Fatalf("ResolveRevision = %q, %v; observed=%v; want empty SHA and %v", got, err, observed, want)
+			}
+		})
+	}
+}
