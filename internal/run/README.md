@@ -272,13 +272,21 @@ one at a time. It holds what the reducer does not: the compiled model, every
 aggregate version, path reservations and proposed registry records. It
 materializes each step's version (D3), answers the Host tools, captures the
 candidate after the step (S4) and composes an accepted delivery onto the
-aggregate before it concludes the review (D2). A new engine rebuilds the
-aggregate from the recorded deliveries. `Run` advances until nothing is
-admissible, then leaves the run Verifying, moves it to Waiting for an owner
-question (W1), or finishes it Incomplete.
+aggregate before it concludes the review (D2). A refused composition finishes
+the run Failed. A step the Host cannot finish is stopped, its known effects are
+settled or released, and it concludes as failed; its reservations and registry
+proposals are undone, and the Manager's next step sees why it failed (T6). An
+effect whose end is not known leaves the run to reconciliation (S2). Registry
+proposals are checked when they are made. A new engine rebuilds the aggregate
+from the recorded deliveries. `Run` advances until nothing is admissible, then
+leaves the run Verifying, moves it to Waiting for an owner question (W1), or
+finishes it Incomplete.
 
 Not yet implemented: messages (`send`, M1 to M5) and the waits on replies,
 owner answers and the run's resumption (W2), `assign_owner` and intake (T2,
 D6), `request_check`, the dispatch of a common parent for waits nothing
 satisfies (T12, the run finishes Incomplete instead), reopening done tasks
-(T11), review batching, and path reservations surviving an engine restart.
+(T11), review batching, path reservations surviving an engine restart, open
+issues carried into a continuation run (I5), a fresh conversation with a
+handoff when resume fails (S3), session rotation at `maxSessionSteps`, and the
+parent's assessment after two rejections.

@@ -527,7 +527,9 @@ func (s stateValue) sessionSettlementAllowed(invocation, kind string) bool {
 			if kind == SettleInvocation {
 				return v.Terminal
 			}
-			if v.Started || v.Provider != "" || !v.Terminal {
+			// A step that was never started and never sent can be released;
+			// the release ends it.
+			if v.Started || v.Provider != "" {
 				return false
 			}
 			for key, m := range s.transports {

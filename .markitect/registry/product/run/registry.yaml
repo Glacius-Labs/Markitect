@@ -156,6 +156,10 @@ artifacts:
     form: test
     realizes: [product/run/confirmed-run-history]
     why: Checks whole runs through review, rework, composition, integration, waiting and incomplete outcomes.
+  - path: "internal/run/engine_failure_test.go"
+    form: test
+    realizes: [product/run/confirmed-run-history]
+    why: Checks that steps the Host cannot finish are stopped, settled or released and concluded as failed.
   - path: "internal/run/task_test.go"
     form: test
     realizes: [product/run/confirmed-run-history]

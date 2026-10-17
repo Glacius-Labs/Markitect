@@ -52,6 +52,7 @@ type Submission struct {
 	Candidate      BlobRef
 	Tree           snapshot.TreeID
 	Aggregate      uint64
+	AggregateTree  snapshot.TreeID
 	Uses           []string
 }
 
@@ -78,6 +79,7 @@ type taskValue struct {
 	Deliveries   []Delivery
 	Rejections   map[string]int
 	Reason       string
+	Failure      string
 }
 
 // TaskView is the read-only projection of one Manager task.
@@ -99,6 +101,7 @@ type TaskView struct {
 	Deliveries          []Delivery
 	Rejections          map[string]int
 	Reason              string
+	Failure             string
 }
 
 func (t taskValue) view() TaskView {
@@ -106,7 +109,7 @@ func (t taskValue) view() TaskView {
 	s.Uses = slices.Clone(s.Uses)
 	return TaskView{Manager: t.Slot.Package, Parent: t.Slot.Parent, ID: t.ID, Children: slices.Clone(t.Slot.Children), State: t.State, Explored: t.Explored, Report: t.Report,
 		Phase: t.Phase, Session: t.Session, Step: t.Step, Waits: slices.Clone(t.Waits), Own: t.Own, OwnTree: t.OwnTree, Submission: s, Expectations: t.Review.Expectations,
-		LocalDone: t.LocalDone, Deliveries: slices.Clone(t.Deliveries), Rejections: maps.Clone(t.Rejections), Reason: t.Reason}
+		LocalDone: t.LocalDone, Deliveries: slices.Clone(t.Deliveries), Rejections: maps.Clone(t.Rejections), Reason: t.Reason, Failure: t.Failure}
 }
 
 // Tasks returns every task of the current run, root first, then by path.
@@ -130,11 +133,13 @@ func (c *Coordinator) Task(manager string) (TaskView, bool) {
 // D2); the captured source is version zero.
 func (c *Coordinator) AggregateVersion() uint64 { return c.state.aggregateVersion }
 
-func (s *stateValue) prepareTasks(b Binding) error {
+// prepareTasks creates one task per Manager for a new run. Open issues do not
+// carry into a continuation run yet (core rule I5).
+func (s *stateValue) prepareTasks(b Binding, runID string) error {
 	s.tasks = nil
 	s.issues = nil
 	s.issueOrder = nil
-	s.aggregateVersion = 0
+	s.aggregateVersion, s.aggregateTree = 0, snapshot.TreeID{}
 	s.managerBasis = bindingWire{}
 	if b.version != 3 {
 		return nil
@@ -144,12 +149,39 @@ func (s *stateValue) prepareTasks(b Binding) error {
 		return err
 	}
 	s.managerBasis = w
+	tree, err := censusTree(w)
+	if err != nil {
+		return err
+	}
+	s.aggregateTree = tree
 	s.tasks = map[string]taskValue{}
 	s.issues = map[string]Issue{}
 	for _, m := range w.Managers {
-		s.tasks[m.Package] = taskValue{Slot: m, ID: fmt.Sprintf("task-%x", sha256.Sum256([]byte(b.Ref().ContentID.String()+":"+m.Package))), State: TaskQueued, Since: s.revision}
+		id := fmt.Sprintf("task-%x", sha256.Sum256([]byte(runID+":"+b.Ref().ContentID.String()+":"+m.Package)))
+		s.tasks[m.Package] = taskValue{Slot: m, ID: id, State: TaskQueued, Since: s.revision}
 	}
 	return nil
+}
+
+// censusTree is the identity of the captured source, aggregate version zero.
+func censusTree(w bindingWire) (snapshot.TreeID, error) {
+	var entries []snapshot.Entry
+	for _, f := range w.Census {
+		path, err := snapshot.NewPath(f.Path)
+		if err != nil {
+			return snapshot.TreeID{}, ErrInvalid
+		}
+		entry, err := snapshot.NewEntry(path, f.Mode, f.Bytes)
+		if err != nil {
+			return snapshot.TreeID{}, ErrInvalid
+		}
+		entries = append(entries, entry)
+	}
+	tree, err := snapshot.NewTree(entries)
+	if err != nil {
+		return snapshot.TreeID{}, ErrInvalid
+	}
+	return tree.Digest(), nil
 }
 
 // Admission is the next admissible step of the run (core rule T4). Home is the
@@ -197,6 +229,16 @@ func (s stateValue) barrierOpen() bool {
 	return len(s.tasks) > 0
 }
 
+// barrierAt is the revision at which the write barrier opened: the last
+// Explore result.
+func (s stateValue) barrierAt() uint64 {
+	var at uint64
+	for _, t := range s.tasks {
+		at = max(at, t.ExploredAt)
+	}
+	return at
+}
+
 func (s stateValue) anyIncomplete() bool {
 	for _, t := range s.tasks {
 		if t.State == TaskIncomplete {
@@ -230,7 +272,7 @@ func (s stateValue) admission(t taskValue, barrier bool) (Admission, int, uint64
 		if t.LocalDone {
 			a.Phase = PhaseIntegrate // core rule T9
 		}
-		return a, 2, t.Since, true
+		return a, 2, max(t.Since, s.barrierAt()), true
 	}
 	return Admission{}, 0, 0, false
 }
@@ -342,9 +384,21 @@ func (s *stateValue) beforeTaskSession(c Command) error {
 		if err != nil || r.Plan.Tools != catalog.Ref() || r.Plan.Role != role || r.Plan.ReadOnly == next.Phase.writing() || c.Reservation.Purpose != purpose || r.Plan.ProviderHome != next.Home || r.Plan.Resume != next.Resume {
 			return ErrState
 		}
-		// The expectations step sees no candidate; the candidate step sees the
-		// frozen candidate (core rule T7).
-		if next.Phase == PhaseReviewerExpectations && r.Plan.Candidate != emptyTree || next.Phase == PhaseReviewerCandidate && t.Submission.Candidate != (BlobRef{}) && r.Plan.Candidate != t.Submission.Tree {
+		// A Manager without unaccepted changes starts from the aggregate (core
+		// rule D3). The expectations step sees no candidate; the candidate step
+		// sees the frozen candidate (core rule T7).
+		want := emptyTree
+		switch {
+		case next.Phase == PhaseReviewerCandidate && t.Submission.Candidate != (BlobRef{}):
+			want = t.Submission.Tree
+		case next.Phase == PhaseReviewerCandidate:
+			want = t.Submission.AggregateTree
+		case next.Phase != PhaseReviewerExpectations && t.Own == (BlobRef{}):
+			want = s.aggregateTree
+		case next.Phase != PhaseReviewerExpectations:
+			want = r.Plan.Candidate // own changes replayed onto the aggregate
+		}
+		if r.Plan.Candidate != want {
 			return ErrState
 		}
 		t.Session = r.Session
@@ -468,7 +522,10 @@ type ConclusionRecord struct {
 	Candidate BlobRef
 	Tree      snapshot.TreeID
 	Aggregate uint64
-	Reason    string
+	// AggregateTree is the composed aggregate's tree identity when the step's
+	// review accepted a changed candidate.
+	AggregateTree snapshot.TreeID
+	Reason        string
 }
 
 const outcomeFailed = "failed"
@@ -484,7 +541,8 @@ func (r ConclusionRecord) payloadRefs() []BlobRef {
 }
 
 func (r ConclusionRecord) validate() error {
-	if !text(r.Manager) || !identifier(r.Task) || !identifier(string(r.Step)) || !text(r.Outcome) || r.Reason != "" && !boundedInput(r.Reason) {
+	// A session the Host abandoned before its step concludes without a step.
+	if !text(r.Manager) || !identifier(r.Task) || !identifier(string(r.Step)) && (r.Step != "" || r.Outcome != outcomeFailed) || !text(r.Outcome) || r.Reason != "" && !boundedInput(r.Reason) {
 		return ErrInvalid
 	}
 	if (r.Outcome == outcomeFailed) != (r.Input == (BlobRef{})) || r.Outcome == outcomeFailed && (r.Reason == "" || r.Candidate != (BlobRef{})) {
@@ -655,15 +713,14 @@ func (s *stateValue) concludeStep(c Command) error {
 	if !ok || t.ID != r.Task || t.Step != r.Step || t.Session == "" {
 		return ErrState
 	}
+	// The container stopped and every effect of the session ended: the step
+	// ran to its end, or was never dispatched and released (core rule S2).
 	session, live := s.sessions[t.Session]
-	step := s.steps[t.Step]
-	if !live || !session.Terminated || session.Uncertain || !step.Terminal || step.Uncertain || s.toolOpen(t.Session) || s.transportOpen(t.Session) {
+	if !live || !session.Terminated || session.Uncertain || s.toolOpen(t.Session) || s.transportOpen(t.Session) || open(s.invocations[session.Invocation]) {
 		return ErrState
 	}
-	for _, invocation := range []string{session.Invocation, step.Invocation} {
-		if open(s.invocations[invocation]) {
-			return ErrState
-		}
+	if step := s.steps[t.Step]; t.Step != "" && (!step.Terminal || step.Uncertain || open(s.invocations[step.Invocation])) {
+		return ErrState
 	}
 	refs := r.payloadRefs()
 	if len(c.sessionPayloads) != len(refs) {
@@ -711,15 +768,16 @@ func (s *stateValue) concludeStep(c Command) error {
 // concludeWork applies an Explore, work or integration step's outcome (core
 // rules T2, T3, T5, T6).
 func (s *stateValue) concludeWork(r ConclusionRecord, t *taskValue, revision uint64, args []byte) error {
-	if r.Aggregate != s.aggregateVersion {
+	if r.Aggregate != s.aggregateVersion || r.AggregateTree != (snapshot.TreeID{}) {
 		return ErrState
 	}
 	if r.Candidate != (BlobRef{}) {
 		t.Own, t.OwnTree = r.Candidate, r.Tree
 	}
+	t.Failure = ""
 	switch r.Outcome {
 	case outcomeFailed:
-		t.State, t.Since = TaskReady, revision
+		t.State, t.Since, t.Failure = TaskReady, revision, r.Reason
 		if t.Phase == PhaseExplore {
 			t.State = TaskQueued
 		}
@@ -731,7 +789,9 @@ func (s *stateValue) concludeWork(r ConclusionRecord, t *taskValue, revision uin
 			return ErrInvalid
 		}
 		if t.Phase == PhaseExplore {
-			t.Explored, t.ExploredAt = true, revision // core rule T2
+			// The parent's Explore reads it as the child's report (core rules
+			// T1, T2), whatever the review decides.
+			t.Explored, t.ExploredAt, t.Report = true, revision, r.Input
 		}
 		uses := slices.Clone(t.Used)
 		for _, d := range in.Dependencies {
@@ -741,7 +801,7 @@ func (s *stateValue) concludeWork(r ConclusionRecord, t *taskValue, revision uin
 		}
 		slices.Sort(uses)
 		t.State, t.Since, t.Review = TaskReviewing, revision, reviewValue{}
-		t.Submission = Submission{Purpose: in.Purpose, Scope: in.Scope, Proposal: r.Input, Candidate: t.Own, Tree: t.OwnTree, Aggregate: s.aggregateVersion, Uses: uses}
+		t.Submission = Submission{Purpose: in.Purpose, Scope: in.Scope, Proposal: r.Input, Candidate: t.Own, Tree: t.OwnTree, Aggregate: s.aggregateVersion, AggregateTree: s.aggregateTree, Uses: uses}
 	case ToolWait:
 		var in waitInput
 		if json.Unmarshal(args, &in) != nil {

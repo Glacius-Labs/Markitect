@@ -291,8 +291,16 @@ func (s stateValue) renderInput(t taskValue, facts StepFacts, basis snapshot.Con
 		}
 		return organization.HostText{}, ErrInvalid
 	}
+	findings := s.openFindings(t, source)
+	if t.Failure != "" && !t.Phase.reviewer() {
+		// The Host's own check of the last step is a finding the Manager sees
+		// in its next step (core rule T6).
+		id := t.ID + "-last-step"
+		findings.IDs = append(findings.IDs, id)
+		findings.Items = append(findings.Items, organization.FindingFact{ID: id, Grounds: organization.HostText{Text: "Your last step failed the Host's check: " + t.Failure, Source: organization.HostSource{RecordID: id, ContentID: basis}}})
+	}
 	in := organization.RenderInput{View: phaseView(t.Phase), InputBinding: source,
-		Task: organization.TaskFacts{ID: t.ID, Package: t.Slot.Package, Outcome: organization.HostText{Text: operation, Source: source}, Findings: s.openFindings(t, source)}}
+		Task: organization.TaskFacts{ID: t.ID, Package: t.Slot.Package, Outcome: organization.HostText{Text: operation, Source: source}, Findings: findings}}
 	artifacts, err := ownedArtifacts(t.Slot.Package, facts)
 	if err != nil {
 		return in, err
@@ -386,17 +394,19 @@ type StepResult struct {
 	Input, Candidate Payload
 	Tree             snapshot.TreeID
 	Aggregate        uint64
+	AggregateTree    snapshot.TreeID
 	Failure          string
 }
 
-// ConcludeStepCommand records the end of the task's current step.
+// ConcludeStepCommand records the end of the task's current step. A session
+// the Host abandoned before its step was prepared concludes as failed.
 func (c *Coordinator) ConcludeStepCommand(meta RecordMeta, manager string, result StepResult) (Command, error) {
 	t, ok := c.state.tasks[manager]
-	if !ok || t.Step == "" || c.state.basisVersion != 3 {
+	if !ok || t.Session == "" || c.state.basisVersion != 3 || t.Step == "" && result.Failure == "" {
 		return Command{}, ErrState
 	}
 	call, count := c.state.stepOutcomeCall(t)
-	r := ConclusionRecord{Manager: manager, Task: t.ID, Step: t.Step, Aggregate: result.Aggregate}
+	r := ConclusionRecord{Manager: manager, Task: t.ID, Step: t.Step, Aggregate: result.Aggregate, AggregateTree: result.AggregateTree}
 	var payloads []Payload
 	switch {
 	case result.Failure != "":

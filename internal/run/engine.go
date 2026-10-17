@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"maps"
 	"slices"
 	"strings"
 	"time"
@@ -164,6 +165,9 @@ func (e *Engine) Run(ctx context.Context) error {
 		if errors.Is(err, ErrBudget) {
 			return e.finish(ctx, "the budget does not fit the next admissible step")
 		}
+		if _, failed := errors.AsType[stepFailure](err); failed {
+			continue // charged and concluded as failed; the budget bounds retries
+		}
 		if err != nil {
 			return err
 		}
@@ -204,9 +208,48 @@ type stepVersion struct {
 	registry realization.Registry
 }
 
+// stepFailure reports a step the Host could not finish but concluded as
+// failed (core rule T6): the run can continue with its next step.
+type stepFailure struct{ err error }
+
+func (f stepFailure) Error() string {
+	return "the step failed and was concluded as failed: " + f.err.Error()
+}
+func (f stepFailure) Unwrap() error { return f.err }
+
+// stepRun is the progress of one admitted step, which decides what the Host
+// must settle when the step cannot finish.
+type stepRun struct {
+	task         string
+	manager      string
+	phase        Phase
+	session      SessionID
+	plan         SessionPlan
+	version      stepVersion
+	openID       string
+	stepID       StepID
+	stepInvoke   string
+	channel      SessionIO
+	began        time.Time
+	opened       bool
+	openUnknown  bool
+	openSettled  bool
+	stepPrepared bool
+	dispatched   bool
+	stepTerminal bool
+	stepSettled  bool
+	claims       claimSnapshot
+}
+
 // Advance runs the run's next admissible step to its conclusion. It reports
-// false when nothing is admissible.
+// false when nothing is admissible. A step the Host cannot finish is stopped,
+// its known effects are settled, and it concludes as failed (core rules S2,
+// T6); that error is a stepFailure. An effect whose end is not known leaves
+// the run to reconciliation.
 func (e *Engine) Advance(ctx context.Context) (bool, error) {
+	if err := e.recover(ctx); err != nil {
+		return true, err
+	}
 	c := e.cfg.Coordinator
 	item, ok := c.Next()
 	if !ok {
@@ -219,11 +262,11 @@ func (e *Engine) Advance(ctx context.Context) (bool, error) {
 	}
 	sid := SessionID(e.id("s", task.ID))
 	workspace := WorkspaceID(e.id("w", task.ID))
+	defer e.cfg.Workspaces.Close(context.WithoutCancel(ctx), workspace)
 	materialized, err := e.cfg.Workspaces.Materialize(ctx, WorkspaceSpec{ID: workspace, Tree: version.tree})
 	if err != nil || materialized.Uncertain || materialized.Tree != version.tree.Digest() {
 		return true, errors.Join(errStep, err)
 	}
-	defer e.cfg.Workspaces.Close(context.WithoutCancel(ctx), workspace)
 	role, purpose := stepRole(item.Phase)
 	profile, err := e.cfg.Profile(item.Manager, role)
 	if err != nil {
@@ -233,85 +276,185 @@ func (e *Engine) Advance(ctx context.Context) (bool, error) {
 	if err != nil {
 		return true, err
 	}
-	plan := SessionPlan{ID: sid, Role: role, Workspace: materialized.Volume, ProviderHome: item.Home, Resume: item.Resume, ImageID: profile.ImageID, CredentialRef: profile.CredentialRef,
+	s := &stepRun{task: task.ID, manager: item.Manager, phase: item.Phase, session: sid, version: version, openID: "open-" + string(sid), claims: e.saveClaims(item.Manager)}
+	s.plan = SessionPlan{ID: sid, Role: role, Workspace: materialized.Volume, ProviderHome: item.Home, Resume: item.Resume, ImageID: profile.ImageID, CredentialRef: profile.CredentialRef,
 		Candidate: version.tree.Digest(), ReadOnly: !item.Phase.writing(), MaxWireBytes: profile.MaxWireBytes, Profile: profile.Profile.Ref(), Tools: tools.Ref()}
-	openReservation := Reservation{ID: "open-" + string(sid), Kind: SessionStart, Purpose: purpose, Maximum: e.cfg.Limits.StartTimeout}
-	prepared, err := c.PrepareTaskSessionCommand(e.meta("prepare-session"), item, plan, openReservation, profile.Profile, tools)
+	prepared, err := c.PrepareTaskSessionCommand(e.meta("prepare-session"), item, s.plan, Reservation{ID: s.openID, Kind: SessionStart, Purpose: purpose, Maximum: e.cfg.Limits.StartTimeout}, profile.Profile, tools)
 	if err != nil {
 		return true, err
 	}
 	if err := e.commit(ctx, prepared); err != nil {
 		return true, err
 	}
-	channel, err := c.SessionChannel(e.cfg.Journal, sid, e.tools(task.Manager, item.Phase, version))
-	if err != nil {
-		return true, err
+	if err := e.drive(ctx, s, purpose, workspace); err != nil {
+		if abandonErr := e.abandon(ctx, s, err); abandonErr != nil {
+			return true, errors.Join(err, abandonErr)
+		}
+		return true, stepFailure{err}
 	}
-	admission, err := c.SessionAdmission(ctx, e.cfg.Journal, sid)
+	return true, nil
+}
+
+// drive runs one prepared session through its single step (core rule S1).
+func (e *Engine) drive(ctx context.Context, s *stepRun, purpose Purpose, workspace WorkspaceID) error {
+	c := e.cfg.Coordinator
+	channel, err := c.SessionChannel(e.cfg.Journal, s.session, e.tools(s.manager, s.phase, s.version))
 	if err != nil {
-		return true, err
+		return err
 	}
-	began := e.cfg.Clock()
+	s.channel = channel
+	admission, err := c.SessionAdmission(ctx, e.cfg.Journal, s.session)
+	if err != nil {
+		return err
+	}
+	s.began = e.cfg.Clock()
+	s.opened = true
 	opened, err := e.cfg.Sessions.Open(ctx, admission, channel)
+	s.openUnknown = opened.Uncertain
 	if err != nil || opened.Uncertain {
-		return true, errors.Join(errStep, err)
+		return errors.Join(errStep, err)
 	}
-	if err := e.settle(ctx, openReservation.ID, began); err != nil {
-		return true, err
+	if err := e.settle(ctx, s.openID, s.began); err != nil {
+		return err
 	}
-	stopped := false
-	stop := func(ctx context.Context, reason string) error {
-		request, err := c.StopRequest(sid, reason)
-		if err != nil {
-			return err
-		}
-		request.Timeout = e.cfg.Limits.StopTimeout
-		observed, err := e.cfg.Sessions.Stop(ctx, request, channel)
-		if err != nil || !observed.Terminated {
-			return errors.Join(errStep, err)
-		}
-		stopped = true
-		return nil
-	}
-	defer func() {
-		if !stopped {
-			_ = stop(context.WithoutCancel(ctx), "the Host ended the step early")
-		}
-	}()
-	quoted, err := e.quotes(ctx, task.Manager)
+	s.openSettled = true
+	quoted, err := e.quotes(ctx, s.manager)
 	if err != nil {
-		return true, err
+		return err
 	}
-	stepID := StepID(e.id("step", task.ID))
-	stepReservation := Reservation{ID: "step-" + string(stepID), Kind: AgentStep, Purpose: purpose, Maximum: e.cfg.Limits.StepTimeout}
-	prepStep, err := c.PrepareTaskStepCommand(e.meta("prepare-step"), StepPlan{Session: sid, ID: stepID, SessionBinding: plan.Binding()}, stepReservation, e.cfg.Preparation,
-		StepFacts{Tree: version.tree, Registry: version.registry, Quoted: quoted})
+	s.stepID = StepID(e.id("step", s.task))
+	s.stepInvoke = "step-" + string(s.stepID)
+	prepStep, err := c.PrepareTaskStepCommand(e.meta("prepare-step"), StepPlan{Session: s.session, ID: s.stepID, SessionBinding: s.plan.Binding()}, Reservation{ID: s.stepInvoke, Kind: AgentStep, Purpose: purpose, Maximum: e.cfg.Limits.StepTimeout},
+		e.cfg.Preparation, StepFacts{Tree: s.version.tree, Registry: s.version.registry, Quoted: quoted})
 	if err != nil {
-		return true, err
+		return err
 	}
 	if err := e.commit(ctx, prepStep); err != nil {
-		return true, err
+		return err
 	}
-	stepAdmission, err := c.StepAdmission(ctx, e.cfg.Journal, stepID)
+	s.stepPrepared = true
+	stepAdmission, err := c.StepAdmission(ctx, e.cfg.Journal, s.stepID)
 	if err != nil {
-		return true, err
+		return err
 	}
-	began = e.cfg.Clock()
+	began := e.cfg.Clock()
+	s.dispatched = true
 	observed, err := e.cfg.Sessions.Step(ctx, stepAdmission, channel)
 	if err != nil || observed.Uncertain || !observed.Terminal {
-		return true, errors.Join(errStep, err)
+		return errors.Join(errStep, err)
 	}
-	if err := e.settle(ctx, stepReservation.ID, began); err != nil {
-		return true, err
+	s.stepTerminal = true
+	if err := e.settle(ctx, s.stepInvoke, began); err != nil {
+		return err
 	}
-	if err := stop(ctx, "the step ended"); err != nil {
-		return true, err
+	s.stepSettled = true
+	if err := e.stop(ctx, s.session, channel, "the step ended"); err != nil {
+		return err
 	}
 	harvest, err := e.cfg.Workspaces.Harvest(ctx, HarvestRequest{ID: workspace, MaxEntries: e.cfg.Limits.HarvestEntries, MaxBytes: e.cfg.Limits.HarvestBytes})
 	if err != nil || !harvest.Complete() {
-		return true, errors.Join(errStep, err)
+		return errors.Join(errStep, err)
 	}
-	return true, e.conclude(ctx, task, item.Phase, version, harvest.Tree)
+	return e.conclude(ctx, s, harvest.Tree)
+}
+
+func (e *Engine) stop(ctx context.Context, sid SessionID, channel SessionIO, reason string) error {
+	request, err := e.cfg.Coordinator.StopRequest(sid, reason)
+	if err != nil {
+		return err
+	}
+	request.Timeout = e.cfg.Limits.StopTimeout
+	observed, err := e.cfg.Sessions.Stop(ctx, request, channel)
+	if err != nil || !observed.Terminated {
+		return errors.Join(errStep, err)
+	}
+	return nil
+}
+
+// abandon ends a step the Host could not finish: it stops the container,
+// settles or releases the effects whose end is known, marks the others
+// uncertain, and concludes the step as failed when nothing is left open.
+func (e *Engine) abandon(ctx context.Context, s *stepRun, cause error) error {
+	ctx = context.WithoutCancel(ctx)
+	c := e.cfg.Coordinator
+	e.restoreClaims(s.manager, s.claims)
+	if s.channel == nil {
+		channel, err := c.SessionChannel(e.cfg.Journal, s.session, RefuseTools)
+		if err != nil {
+			return err
+		}
+		s.channel = channel
+	}
+	var errs []error
+	if v, _ := c.Session(s.session); !v.Terminated {
+		if !s.opened {
+			// Nothing was started: the Host's own observation ends the session.
+			_, err := s.channel.ObserveStop(ctx, StopObservation{RecordMeta: e.meta("abandoned"), Terminated: true, Reason: "the Host never opened the session"})
+			errs = append(errs, err)
+		} else {
+			errs = append(errs, e.stop(ctx, s.session, s.channel, "the Host ended the step early"))
+		}
+	}
+	settle := func(kind, invocation, reason string) {
+		cmd := Command{ID: fmt.Sprintf("%s-%s", kind, invocation), ObservedAt: e.cfg.Clock().UTC(), Kind: kind, Assignment: c.Current().Assignment, Run: c.Current().ID, Invocation: invocation, Reason: reason}
+		if kind == SettleInvocation {
+			cmd.Elapsed = e.cfg.Clock().Sub(s.began)
+		}
+		errs = append(errs, e.commit(ctx, cmd))
+	}
+	switch {
+	case !s.opened:
+		settle(ReleaseUndispatched, s.openID, "the Host never opened the session")
+	case s.openUnknown:
+		settle(ObserveUncertain, s.openID, "the session's start is not known")
+	case !s.openSettled:
+		settle(SettleInvocation, s.openID, "Host observed the failed start and its elapsed duration")
+	}
+	switch {
+	case s.stepPrepared && !s.dispatched:
+		settle(ReleaseUndispatched, s.stepInvoke, "the Host never dispatched the step")
+	case s.dispatched && !s.stepTerminal:
+		settle(ObserveUncertain, s.stepInvoke, "the step's end is not known")
+	case s.stepTerminal && !s.stepSettled:
+		settle(SettleInvocation, s.stepInvoke, "Host observed the step's end and elapsed duration")
+	}
+	if err := errors.Join(errs...); err != nil {
+		return err
+	}
+	cmd, err := c.ConcludeStepCommand(e.meta("conclude"), s.manager, StepResult{Aggregate: c.AggregateVersion(), Failure: "the Host could not finish the step: " + cause.Error()})
+	if err != nil {
+		return err
+	}
+	return e.commit(ctx, cmd)
+}
+
+// recover concludes a step that an earlier error or process left bound to its
+// task, once its container is stopped and its effects have ended. A step whose
+// effects are still open needs reconciliation first.
+func (e *Engine) recover(ctx context.Context) error {
+	c := e.cfg.Coordinator
+	for _, t := range c.Tasks() {
+		if t.Session == "" {
+			continue
+		}
+		if v, _ := c.Session(t.Session); !v.Terminated {
+			channel, err := c.SessionChannel(e.cfg.Journal, t.Session, RefuseTools)
+			if err != nil {
+				return err
+			}
+			if err := e.stop(ctx, t.Session, channel, "the Host recovers the step"); err != nil {
+				return err
+			}
+		}
+		cmd, err := c.ConcludeStepCommand(e.meta("conclude"), t.Manager, StepResult{Aggregate: c.AggregateVersion(), Failure: "the Host lost the step before its conclusion"})
+		if err == nil {
+			err = e.commit(ctx, cmd)
+		}
+		if err != nil {
+			return fmt.Errorf("the step of %s needs reconciliation: %w", t.Manager, err)
+		}
+	}
+	return nil
 }
 
 // stepVersion builds the step's workspace content (core rules D3, T7): the
@@ -377,13 +520,15 @@ func (e *Engine) quotes(ctx context.Context, manager string) ([]Payload, error) 
 
 // conclude records the step's S4 result and its outcome (core rules S4, T5,
 // T6, T8). A read-only step that changed files, or a write outside the
-// owner's claims, ends the step as failed. A candidate review that passes
-// composes the delivery onto the aggregate first (core rule D2); a refused
-// composition is a Host error that stops the run.
-func (e *Engine) conclude(ctx context.Context, task TaskView, phase Phase, version stepVersion, observed snapshot.Tree) error {
+// owner's claims, ends the step as failed, and a failed step's reservations
+// and registry proposals are undone. A candidate review that passes composes
+// the delivery onto the aggregate first (core rule D2); a refused composition
+// is a Host error that finishes the run Failed.
+func (e *Engine) conclude(ctx context.Context, s *stepRun, observed snapshot.Tree) error {
 	c := e.cfg.Coordinator
+	task, _ := c.Task(s.manager)
 	result := StepResult{Aggregate: c.AggregateVersion()}
-	if ref, ok := c.OutcomeInput(task.Manager); ok {
+	if ref, ok := c.OutcomeInput(s.manager); ok {
 		p, err := e.cfg.Journal.ReadBlob(ctx, ref)
 		if err != nil || p.Ref() != ref {
 			return ErrObservationLimit
@@ -392,11 +537,11 @@ func (e *Engine) conclude(ctx context.Context, task TaskView, phase Phase, versi
 	}
 	var composed realization.Aggregate
 	switch {
-	case !phase.writing() && !observed.Equal(version.tree):
+	case !s.phase.writing() && !observed.Equal(s.version.tree):
 		result.Failure = "a read-only step changed its workspace"
-	case phase.writing() && (!observed.Equal(version.tree) || len(e.registered[task.Manager]) > 0):
+	case s.phase.writing() && (!observed.Equal(s.version.tree) || len(e.registered[s.manager]) > 0):
 		// Registry proposals change the candidate even without file changes.
-		record, err := e.capture(task.Manager, observed)
+		record, err := e.capture(s.manager, observed)
 		if err != nil {
 			result.Failure = "the step's changes are outside its owner's claims: " + err.Error()
 			break
@@ -406,8 +551,8 @@ func (e *Engine) conclude(ctx context.Context, task TaskView, phase Phase, versi
 			return err
 		}
 		result.Candidate, result.Tree = p, observed.Digest()
-	case phase == PhaseReviewerCandidate && result.Input.Valid() && task.Submission.Candidate != (BlobRef{}):
-		verdict, err := c.ReviewVerdict(task.Manager, result.Input)
+	case s.phase == PhaseReviewerCandidate && result.Input.Valid() && task.Submission.Candidate != (BlobRef{}):
+		verdict, err := c.ReviewVerdict(s.manager, result.Input)
 		if err != nil || verdict != VerdictAccept {
 			break
 		}
@@ -418,13 +563,16 @@ func (e *Engine) conclude(ctx context.Context, task TaskView, phase Phase, versi
 		replay := realization.ReplayDelivery(e.aggregate(), candidate)
 		next, ok := replay.Aggregate()
 		if !ok {
-			reason := "the accepted delivery of " + task.Manager + " cannot be composed: " + findingText(replay.Findings())
-			_ = e.commit(ctx, Command{ID: e.meta("stop").ID, ObservedAt: e.cfg.Clock().UTC(), Kind: StopRun, Assignment: c.Current().Assignment, Run: c.Current().ID, Reason: reason})
-			return errors.New(reason)
+			reason := "the accepted delivery of " + s.manager + " cannot be composed: " + findingText(replay.Findings())
+			finish := Command{ID: e.meta("finish").ID, ObservedAt: e.cfg.Clock().UTC(), Kind: FinishRun, Assignment: c.Current().Assignment, Run: c.Current().ID, Outcome: Failed, Reason: reason}
+			return errors.Join(errors.New(reason), e.commit(ctx, finish))
 		}
-		composed, result.Aggregate = next, next.Version()
+		composed, result.Aggregate, result.AggregateTree = next, next.Version(), next.Tree().Digest()
 	}
-	cmd, err := c.ConcludeStepCommand(e.meta("conclude"), task.Manager, result)
+	if result.Failure != "" || !result.Input.Valid() {
+		e.restoreClaims(s.manager, s.claims)
+	}
+	cmd, err := c.ConcludeStepCommand(e.meta("conclude"), s.manager, result)
 	if err != nil {
 		return err
 	}
@@ -433,10 +581,48 @@ func (e *Engine) conclude(ctx context.Context, task TaskView, phase Phase, versi
 	}
 	if composed.Valid() {
 		e.versions = append(e.versions, composed)
-		delete(e.reserved, task.Manager)
-		delete(e.registered, task.Manager)
+		e.settleClaims(s.manager)
 	}
 	return nil
+}
+
+// claimSnapshot is a Manager's reservations and registry proposals before a
+// step, restored when the step fails (core rule T6).
+type claimSnapshot struct {
+	reserved   []realization.PathRequest
+	registered map[snapshot.Path]realization.Registration
+}
+
+func (e *Engine) saveClaims(manager string) claimSnapshot {
+	return claimSnapshot{slices.Clone(e.reserved[manager]), maps.Clone(e.registered[manager])}
+}
+
+func (e *Engine) restoreClaims(manager string, s claimSnapshot) {
+	e.reserved[manager], e.registered[manager] = s.reserved, s.registered
+}
+
+// settleClaims drops what the composed aggregate now holds: reservations of
+// registered paths and proposals the registry records as proposed. The rest
+// stays for the Manager's later deliveries.
+func (e *Engine) settleClaims(manager string) {
+	registry := e.aggregate().Registry()
+	var kept []realization.PathRequest
+	for _, r := range e.reserved[manager] {
+		if _, registered := registry.Lookup(r.Path()); !registered {
+			kept = append(kept, r)
+		}
+	}
+	e.reserved[manager] = kept
+	for path, proposed := range e.registered[manager] {
+		if current, ok := registry.Lookup(path); ok && sameRecord(current, proposed) {
+			delete(e.registered[manager], path)
+		}
+	}
+}
+
+func sameRecord(a, b realization.Registration) bool {
+	x, y := a.Artifact(), b.Artifact()
+	return a.Owner() == b.Owner() && x.Path() == y.Path() && x.Form() == y.Form() && x.Why() == y.Why() && slices.Equal(x.Basis(), y.Basis())
 }
 
 // capture checks the observed tree against the current aggregate and the
@@ -597,6 +783,9 @@ func (e *Engine) tools(manager string, phase Phase, version stepVersion) ToolHan
 				}
 				basis = append(basis, id)
 			}
+			if err := e.registrable(manager, owner, path, basis); err != nil {
+				return refuse(err.Error())
+			}
 			artifact, err := realization.NewArtifact(path, realization.Form(in.Form), basis, in.Why)
 			if err != nil {
 				return refuse("invalid registry record: " + err.Error())
@@ -615,11 +804,43 @@ func (e *Engine) tools(manager string, phase Phase, version stepVersion) ToolHan
 	}
 }
 
+// registrable checks a proposed registry record before it is accepted: its
+// Definitions exist in the compiled model, and its path is registered to the
+// Manager or reserved by it.
+func (e *Engine) registrable(manager string, owner realization.Owner, path snapshot.Path, basis []model.Identity) error {
+	for _, id := range basis {
+		if !e.defined(id) {
+			return fmt.Errorf("Definition %s/%s does not exist in the model", id.Package, id.ID)
+		}
+	}
+	if current, ok := e.aggregate().Registry().Lookup(path); ok {
+		if current.Owner() != owner {
+			return fmt.Errorf("%s is registered to another Manager", path)
+		}
+		return nil
+	}
+	if !slices.ContainsFunc(e.reserved[manager], func(r realization.PathRequest) bool { return r.Path() == path }) {
+		return fmt.Errorf("%s is neither registered to you nor reserved by you; reserve it first", path)
+	}
+	return nil
+}
+
+func (e *Engine) defined(id model.Identity) bool {
+	for _, m := range e.compiled.Models {
+		for _, d := range m.Definitions {
+			if d.Identity == id {
+				return true
+			}
+		}
+	}
+	return false
+}
+
 // read returns a Definition as package/id or a file of the step's version.
 // The expectations review reads Definitions only (core rule T7).
 func (e *Engine) read(phase Phase, version stepVersion, ref string) (ToolOutcome, error) {
 	refuse := func(reason string) (ToolOutcome, error) { return ToolOutcome{Status: ToolRefused, Reason: reason}, nil }
-	if id, ok := definitionIdentity(ref); ok {
+	if id, ok := definitionIdentity(ref); ok && e.defined(id) {
 		for _, m := range e.compiled.Models {
 			for _, d := range m.Definitions {
 				if d.Identity == id {

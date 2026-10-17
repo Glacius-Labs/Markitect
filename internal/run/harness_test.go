@@ -82,6 +82,11 @@ func taskSession(t *testing.T, c *run.Coordinator, id run.SessionID, candidate s
 type fakeWorkspaces struct {
 	trees   map[run.WorkspaceID]snapshot.Tree
 	volumes map[string]run.WorkspaceID
+	// Fault injection: the next failHarvest harvests fail; failMaterialize
+	// refuses every materialization. closes counts Close calls.
+	failHarvest     int
+	failMaterialize bool
+	closes          int
 }
 
 func newWorkspaces() *fakeWorkspaces {
@@ -89,6 +94,9 @@ func newWorkspaces() *fakeWorkspaces {
 }
 
 func (w *fakeWorkspaces) Materialize(_ context.Context, s run.WorkspaceSpec) (run.WorkspaceObservation, error) {
+	if w.failMaterialize {
+		return run.WorkspaceObservation{ID: s.ID, Uncertain: true, Reason: "injected"}, errors.New("injected materialization failure")
+	}
 	if _, ok := w.trees[s.ID]; ok {
 		return run.WorkspaceObservation{ID: s.ID}, errors.New("workspace exists")
 	}
@@ -99,6 +107,10 @@ func (w *fakeWorkspaces) Materialize(_ context.Context, s run.WorkspaceSpec) (ru
 }
 
 func (w *fakeWorkspaces) Harvest(_ context.Context, r run.HarvestRequest) (run.WorkspaceHarvest, error) {
+	if w.failHarvest > 0 {
+		w.failHarvest--
+		return run.WorkspaceHarvest{ID: r.ID, Uncertain: true, Reason: "injected"}, errors.New("injected harvest failure")
+	}
 	tree, ok := w.trees[r.ID]
 	if !ok {
 		return run.WorkspaceHarvest{ID: r.ID, Uncertain: true, Reason: "absent"}, errors.New("absent")
@@ -107,6 +119,7 @@ func (w *fakeWorkspaces) Harvest(_ context.Context, r run.HarvestRequest) (run.W
 }
 
 func (w *fakeWorkspaces) Close(_ context.Context, id run.WorkspaceID) (run.WorkspaceObservation, error) {
+	w.closes++
 	delete(w.trees, id)
 	return run.WorkspaceObservation{ID: id, Closed: true}, nil
 }
@@ -157,6 +170,10 @@ type fakeSessions struct {
 	answers  []string
 	packets  []run.StepPacket
 	n        int
+	// Fault injection: the next failOpen opens fail after the init send.
+	// stops counts Stop calls.
+	failOpen int
+	stops    int
 }
 
 func (f *fakeSessions) meta(kind string) run.RecordMeta {
@@ -177,6 +194,10 @@ func (f *fakeSessions) send(ctx context.Context, io run.SessionIO, step run.Step
 func (f *fakeSessions) Open(ctx context.Context, a run.SessionAdmission, io run.SessionIO) (run.SessionObservation, error) {
 	if err := f.send(ctx, io, "", "", `{"control":"initialize"}`); err != nil {
 		return run.SessionObservation{}, err
+	}
+	if f.failOpen > 0 {
+		f.failOpen--
+		return run.SessionObservation{}, errors.New("injected start failure")
 	}
 	if a.Plan.Resume != "" {
 		_, err := io.Bind(ctx, run.SessionObservation{RecordMeta: f.meta("bind"), ProviderSession: a.Plan.Resume, Wire: wire(f.t, `{"resumed":true}`), Reason: "resumed conversation"})
@@ -240,6 +261,7 @@ func (f *fakeSessions) Inspect(context.Context, run.InspectionRequest) (run.Step
 }
 
 func (f *fakeSessions) Stop(ctx context.Context, r run.StopRequest, io run.SessionIO) (run.StopObservation, error) {
+	f.stops++
 	observation := run.StopObservation{RecordMeta: f.meta("stop"), Terminated: true, Reason: "observed container exit"}
 	_, err := io.ObserveStop(ctx, observation)
 	return observation, err
@@ -255,6 +277,8 @@ type harness struct {
 	sessions *fakeSessions
 	engine   *run.Engine
 	clock    time.Time
+	// journal, when set, replaces j as the engine's journal.
+	journal run.Journal
 }
 
 func newHarness(t *testing.T, onePackage bool, script agentScript) *harness {
@@ -278,7 +302,11 @@ func newHarnessWith(t *testing.T, inputs run.StepPreparation, script agentScript
 func (h *harness) newEngine(c *run.Coordinator) *run.Engine {
 	h.t.Helper()
 	profile := payload(h.t, `{"profile":"synthetic recorded metadata"}`)
-	e, err := run.NewEngine(context.Background(), run.EngineConfig{Coordinator: c, Journal: h.j, Sessions: h.sessions, Workspaces: h.ws, Preparation: h.inputs,
+	var journal run.Journal = h.j
+	if h.journal != nil {
+		journal = h.journal
+	}
+	e, err := run.NewEngine(context.Background(), run.EngineConfig{Coordinator: c, Journal: journal, Sessions: h.sessions, Workspaces: h.ws, Preparation: h.inputs,
 		Profile: func(string, string) (run.SessionProfile, error) {
 			return run.SessionProfile{ImageID: testImage, CredentialRef: "credential-ref", Profile: profile, MaxWireBytes: 1 << 20}, nil
 		},

@@ -222,7 +222,7 @@ func (s *stateValue) concludeReview(r ConclusionRecord, t *taskValue, revision u
 		t.Review, t.Since = reviewValue{}, revision
 	}
 	if r.Outcome == outcomeFailed || t.Phase == PhaseReviewerExpectations {
-		if r.Aggregate != s.aggregateVersion {
+		if r.Aggregate != s.aggregateVersion || r.AggregateTree != (snapshot.TreeID{}) {
 			return ErrState
 		}
 		if r.Outcome == outcomeFailed {
@@ -242,14 +242,15 @@ func (s *stateValue) concludeReview(r ConclusionRecord, t *taskValue, revision u
 	if composed {
 		want++
 	}
-	if r.Aggregate != want {
+	if r.Aggregate != want || composed == (r.AggregateTree == (snapshot.TreeID{})) {
 		return ErrState
 	}
 	if verdict == VerdictFresh {
 		fresh()
 		return nil
 	}
-	s.recordReview(r, *t, in)
+	// A withheld pass does not stand, so it resolves nothing (core rule I1).
+	s.recordReview(r, *t, in, verdict != VerdictWithhold)
 	purpose, scope := t.Submission.Purpose, t.Submission.Scope
 	t.Review = reviewValue{}
 	switch verdict {
@@ -275,7 +276,7 @@ func (s *stateValue) concludeReview(r ConclusionRecord, t *taskValue, revision u
 		}
 	case VerdictAccept:
 		if composed {
-			s.aggregateVersion = want
+			s.aggregateVersion, s.aggregateTree = want, r.AggregateTree
 			t.Own, t.OwnTree = BlobRef{}, snapshot.TreeID{}
 		}
 		t.Used = nil
@@ -294,10 +295,13 @@ func (s *stateValue) concludeReview(r ConclusionRecord, t *taskValue, revision u
 	return nil
 }
 
-// recordReview applies a review's resolutions and records its findings,
-// addressed to the reviewed task (core rule I1).
-func (s *stateValue) recordReview(r ConclusionRecord, t taskValue, in reviewInput) {
+// recordReview records a review's findings, addressed to the reviewed task,
+// and applies its resolutions when the review stands (core rule I1).
+func (s *stateValue) recordReview(r ConclusionRecord, t taskValue, in reviewInput, resolve bool) {
 	for _, res := range in.Resolutions {
+		if !resolve {
+			break
+		}
 		issue := s.issues[res.Finding]
 		issue.State = res.State
 		s.issues[res.Finding] = issue
