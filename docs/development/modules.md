@@ -8,6 +8,8 @@ Pure model and snapshot packages consume supplied bytes and values. Organization
 
 Run owns fixed input bindings, deterministic budget and lifecycle transitions, and its narrow journal port. A proposal changes no confirmed state; an exact append acknowledgement commits the transition. The Host supplies clock observations. There is no SQL, repository acquisition, provider protocol or public execution path in this package.
 
+Existing history is reconstructed through bounded, revision-pinned reads and the same transition rules. Required blobs and complete batches are verified before a projection is returned. Reading creates no effect observations; open invocations retain their holds until explicit reconciliation. Assignment extensions and closure remain later work.
+
 ## Dependency direction
 
 | Consumer | Allowed responsibility |
