@@ -61,7 +61,7 @@ The target `cmd/` and `internal/` responsibilities use separate `apply-*` layers
 
 | Package | Purpose | Owning document |
 |---|---|---|
-| `internal/realization` | Validates registry ownership, file accounting and claims; captures candidates and composes disjoint changes. | [docs/design/canonical-model/manager-apply-go-architecture.md](../design/canonical-model/manager-apply-go-architecture.md#organize-by-responsibility) |
+| `internal/realization` | Validates registry ownership, file accounting, claims and Definition census; captures and composes candidates. | [docs/design/canonical-model/manager-apply-go-architecture.md](../design/canonical-model/manager-apply-go-architecture.md#organize-by-responsibility) |
 
 ## Deterministic core
 
