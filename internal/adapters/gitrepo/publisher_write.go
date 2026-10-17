@@ -12,6 +12,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/Glacius-Labs/Markitect/internal/apply"
 	"github.com/Glacius-Labs/Markitect/internal/model"
 	"github.com/Glacius-Labs/Markitect/internal/snapshot"
 )
@@ -113,7 +114,7 @@ func (c *publicationConverter) checkout(entry snapshot.Entry, p publicationPolic
 		return nil, err
 	}
 	if !bytes.Equal(clean, entry.Bytes()) {
-		return nil, fmt.Errorf("%w: requested content is not Git clean form at %q", ErrUnrepresentable, entry.Path())
+		return nil, fmt.Errorf("%w: %w: requested content is not Git clean form at %q", apply.ErrUnpublishable, ErrUnrepresentable, entry.Path())
 	}
 	return data, nil
 }
@@ -128,8 +129,10 @@ func publicationParent(d *diskBoundary, relative string, create bool) (*os.Root,
 			return nil, "", err
 		}
 		if !slices.Contains(names, name) {
-			if _, err := root.Lstat(name); !errors.Is(err, os.ErrNotExist) {
-				return nil, "", ErrUnrepresentable
+			if _, err := root.Lstat(name); err == nil {
+				return nil, "", fmt.Errorf("%w: %w: native publication parent alias %q", apply.ErrUnpublishable, ErrUnrepresentable, name)
+			} else if !errors.Is(err, os.ErrNotExist) {
+				return nil, "", err
 			}
 			key, ok := model.NameCollisionKey(name)
 			if !ok {
@@ -137,8 +140,11 @@ func publicationParent(d *diskBoundary, relative string, create bool) (*os.Root,
 			}
 			for _, other := range names {
 				k, ok := model.NameCollisionKey(other)
-				if !ok || key == k {
+				if !ok {
 					return nil, "", ErrUnrepresentable
+				}
+				if key == k {
+					return nil, "", fmt.Errorf("%w: %w: publication parent alias %q / %q", apply.ErrUnpublishable, ErrUnrepresentable, name, other)
 				}
 			}
 			if !create {
@@ -205,8 +211,11 @@ func (r *Repository) publicationWrite(ctx context.Context, g *gitRepository, cha
 		key, _ := model.NameCollisionKey(name)
 		for _, other := range names {
 			k, ok := model.NameCollisionKey(other)
-			if !ok || k == key {
+			if !ok {
 				return false, ErrUnrepresentable
+			}
+			if k == key {
+				return false, fmt.Errorf("%w: %w: publication name alias %q / %q", apply.ErrUnpublishable, ErrUnrepresentable, name, other)
 			}
 		}
 	}

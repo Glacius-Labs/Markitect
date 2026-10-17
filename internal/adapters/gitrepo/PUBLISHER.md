@@ -20,6 +20,14 @@ An acquisition error that combines drift with another failure is not classified
 as a confirmed capture change. Publication receipt outcomes keep their existing
 meaning, including unknown after a failed final fence.
 
+Confirmed target name aliases, native invalid paths, modes the target cannot
+retain and a successful Git checkout/clean roundtrip that cannot reproduce the
+requested bytes also wrap `apply.ErrUnpublishable`. They retain
+`ErrUnrepresentable` for `errors.Is`. Unknown filesystem observations, including
+failed `Lstat` calls, keep their original causes. Unsupported checkout policies,
+changes to `.gitattributes`, automatic conversion of existing CRLF index content
+and split-index acquisition remain adapter refusals without this classification.
+
 Publish repeats source, controller, checkout-policy and complete index checks
 before writing. It creates ordinary directories and adds, replaces or removes
 only requested files. Replacements remove and recreate the directory entry, so
