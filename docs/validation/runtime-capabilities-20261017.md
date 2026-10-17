@@ -12,7 +12,8 @@ Validation record, 17 October 2026. These probes answer the runtime questions th
   - user 1000:1000, `--init`, read-only root filesystem, all capabilities dropped and `no-new-privileges`;
   - bounded CPU, memory, processes and `/tmp`;
   - named volumes only.
-- Claude Code used a long-lived token from `claude setup-token`, passed only to the provider process. Codex had no runtime credential.
+- Claude Code used a long-lived token from `claude setup-token`, passed only to the provider process. Later Claude probes ran Claude Haiku with high effort.
+- Codex later used a dedicated runtime login, created by device-code authorization in its own Docker volume and never the desktop login. Each session received a copy of that login without the refresh token, written into its provider home by a helper container. Codex probes ran Luna (`gpt-6-luna`) with high effort.
 
 ## Results
 
@@ -26,10 +27,13 @@ Validation record, 17 October 2026. These probes answer the runtime questions th
 | Write barrier | A shell provider rewrote a counter file in the workspace every 50 ms. While the engine paused the container, a helper read the same value twice, one second apart; after unpausing, the value advanced again. |
 | Barrier-protected basis advance with Claude Code | After a quiescent turn the Host paused the session, changed `basis.txt` through a helper container and unpaused it; the next turn of the same conversation read the new content. |
 | Codex without a credential | `codex app-server` reported the Host MCP server `ready` inside the hardened container. No turn ran. |
+| Codex turn | With the session login, one real turn wrote `hello.txt` and called the Host tool over MCP through `markitect-agentd mcp`; a helper read the file back. |
+| Codex continues in a new environment | A persistent thread (`ephemeral: false`) learned a code word in container A, which then ended. A helper changed `basis.txt`, and container B resumed the thread with `thread/resume` from the same provider home. The answer named both the code word and the new content. |
 
 ## Findings
 
-- **A conversation can continue across environments.** For Claude Code, the retained provider home is enough. The conversation must not run with `--no-session-persistence`.
+- **A conversation can continue across environments.** For both CLIs, the retained provider home is enough. Claude Code must not run with `--no-session-persistence`, and Codex threads must not be ephemeral.
+- **A Codex subscription login can serve sessions without racing.** The session copy lacks the refresh token, so no session can refresh or rotate the login. The runtime login stayed valid after the probes. Two easier routes do not work: `codex login --with-access-token` expects an agent-identity token, not a ChatGPT access token, and the App Server's `chatgptAuthTokens` login is marked for OpenAI internal use only.
 - **A workspace change between turns works without remounting.** A helper container writes into the same volume that the session has mounted. A changed mount plan still needs a new environment, as the design states.
 - **Pausing the container is an effective write barrier with a live provider.** A frozen Claude Code session continued normally after a short pause.
 - **The census makes quiescence observable.** The provider's own MCP bridge stays alive between turns. Quiescence therefore means "only the provider's known processes remain", not an empty table. A census is a snapshot and cannot prevent a later start.
@@ -37,6 +41,7 @@ Validation record, 17 October 2026. These probes answer the runtime questions th
 
 ## Limits
 
-- **Single runs, Claude Code only.** Codex resume and a real Codex turn remain unproven until a Codex runtime credential exists.
+- **Single runs.** Each probe ran once per CLI.
+- **Login refresh is not covered.** Refreshing the runtime login before it expires is a maintenance step outside the sessions; no probe covered it.
 - **No mid-turn cases.** The probes covered no interruption during a turn, no recovery after a Host crash and no concurrent sessions.
 - **The quiescence rule is a test assertion,** not a Host implementation.

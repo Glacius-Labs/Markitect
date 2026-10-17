@@ -28,8 +28,10 @@ These rules come from real runs, recorded in the [handshake record](../../../doc
 - **A conversation that may continue must be persistent.**
   - Codex threads are not ephemeral, and `CODEX_HOME` stays in the provider home (`/home/agent/.codex`).
   - Claude Code runs without `--no-session-persistence`.
-  - A new container on the same provider-home volume then resumes, for example with `claude --resume <session>`. This is demonstrated for Claude Code; Codex resume is still unproven.
-- **The credential goes in `frame.Start.Env`**, never into container environment or arguments. Record that message with the value redacted.
+  - A new container on the same provider-home volume then resumes: Claude Code with `claude --resume <session>`, and Codex with `thread/resume`. Both are demonstrated.
+- **Credentials:**
+  - An API key or Claude Code's long-lived token goes in `frame.Start.Env`, never into container environment or arguments. Record that message with the value redacted.
+  - A Codex subscription uses a dedicated runtime login, never the desktop login. Before a session starts, a helper writes a copy of that login into the provider home with the refresh token removed. The session then cannot refresh or rotate the login, and the access token outlives a run.
 - **Provider messages can be large.** A tool result can carry a whole file, so size per-message limits for that.
 - **Quiescence before a basis change:**
   1. Close admission and reconcile admitted actions.

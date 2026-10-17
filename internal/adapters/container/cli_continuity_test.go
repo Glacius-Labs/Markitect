@@ -29,7 +29,8 @@ func startClaude(t *testing.T, r *runtimeSmoke, s *container.Session, resume str
 	t.Helper()
 	args := []string{"claude", "-p", "--input-format", "stream-json", "--output-format", "stream-json", "--verbose",
 		"--strict-mcp-config", "--mcp-config", `{"mcpServers":{"markitect":{"type":"stdio","command":"` + container.AgentdPath + `","args":["mcp"]}}}`,
-		"--tools", "Read,Write", "--allowedTools", "mcp__markitect__submit_work", "Read", "Write", "--permission-mode", "dontAsk"}
+		"--tools", "Read,Write", "--allowedTools", "mcp__markitect__submit_work", "Read", "Write", "--permission-mode", "dontAsk",
+		"--model", claudeModel, "--effort", "high"}
 	if resume != "" {
 		args = append(args, "--resume", resume)
 	}
@@ -164,4 +165,42 @@ func quiescent(processes []frame.Process) bool {
 		}
 	}
 	return true
+}
+
+// TestCodexConversationContinuesInANewEnvironment ends a Codex thread's
+// container, advances the workspace basis while no session runs, and resumes
+// the persistent thread from its retained provider home in a new container.
+func TestCodexConversationContinuesInANewEnvironment(t *testing.T) {
+	r := newRuntimeSmoke(t)
+	word := fmt.Sprintf("harbor-%d", time.Now().UnixNano()%100000)
+	mounts := r.volumes("codex-resume")
+	env, credentialed := r.codexCredential("codex-resume", mounts)
+	if !credentialed {
+		t.Skip("set OPENAI_API_KEY or MARKITECT_TEST_CODEX_AUTH_VOLUME")
+	}
+
+	first := r.start("codex-resume-a", mounts)
+	a := startCodex(t, r, first, env, make(chan frame.ToolCall, 4))
+	thread := a.call("thread/start", map[string]any{"cwd": "/work", "approvalPolicy": "never", "sandbox": "danger-full-access", "ephemeral": false, "model": codexModel})
+	if thread["error"] != nil {
+		t.Fatalf("thread/start: %v; diagnostics %q", thread["error"], first.Diagnostics())
+	}
+	threadID := thread["result"].(map[string]any)["thread"].(map[string]any)["id"]
+	codexTurn(a, threadID, "Remember this code word for later: "+word+". Do not run commands or write files. Reply with OK.")
+	if err := first.Close(); err != nil {
+		t.Fatalf("close first environment: %v", err)
+	}
+
+	r.writeFile("codex-resume-basis", mounts, "/work/basis.txt", "basis-2\n")
+
+	second := r.start("codex-resume-b", mounts)
+	b := startCodex(t, r, second, env, make(chan frame.ToolCall, 4))
+	resumed := b.call("thread/resume", map[string]any{"threadId": threadID, "cwd": "/work", "approvalPolicy": "never", "sandbox": "danger-full-access"})
+	if resumed["error"] != nil {
+		t.Fatalf("thread/resume: %v; diagnostics %q", resumed["error"], second.Diagnostics())
+	}
+	answer := codexTurn(b, threadID, "What was the code word I gave you earlier, and what does the file basis.txt in the working directory contain? Answer in one line.")
+	if !strings.Contains(answer, word) || !strings.Contains(answer, "basis-2") {
+		t.Fatalf("resumed answer %q lacks the code word %s or the new basis", answer, word)
+	}
 }
