@@ -1760,3 +1760,7 @@ artifacts:
     form: doc
     realizes: [documentation/current-guidance]
     why: Preserves a historical evidence route referenced by the unchanged Apply specification.
+  - path: "docs/concepts/sources/orchestrator-terminology-20261017.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Preserves the owner-selected Orchestrator name and the documentation-only scope.

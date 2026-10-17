@@ -17,7 +17,7 @@ One controller per repository holds the execution lock; inspection uses bounded 
 The lifetime is explicit through one consumer-owned port:
 
 ```go
-// Package apply. A Host controller session is distinct from an Agent session.
+// Package apply. An Orchestrator controller session is distinct from an Agent session.
 type Control interface {
 	Acquire(context.Context, ControlRequest) (ControlSession, error)
 }
@@ -34,7 +34,7 @@ type ControlSession interface {
 
 The lock and the active store registration live in small repository control metadata under `.markitect/state/`, which Git ignores and coverage classifies as Markitect state. It is excluded from source staleness and from the clean-working-tree check, and an alternate `--state-dir` cannot bypass the lock or hide unresolved work. The first store binding uses checked creation; a missing or replaced registered database needs explicit reconciliation, not a fresh empty history.
 
-Append requires the current controller binding. Publication permits carry that binding plus a run-scoped Host check, and the publisher verifies both at the write boundary; a live controller alone cannot authorize a finished run. CLI and MCP handlers never own this lifecycle.
+Append requires the current controller binding. Publication permits carry that binding plus a run-scoped Orchestrator check, and the publisher verifies both at the write boundary; a live controller alone cannot authorize a finished run. CLI and MCP handlers never own this lifecycle.
 
 | Stored relation | Essential columns and constraints |
 | --- | --- |
@@ -48,7 +48,7 @@ Append checks the expected revision, inserts the batch and events and advances t
 
 Before rejecting a stale expected revision, look up the batch ID: an identical retry returns the earlier result, different bytes under the same ID fail. If a commit outcome is uncertain, query that batch before proceeding; an unreachable database is not evidence of absence. No database retry resends provider work.
 
-Host records are versioned UTF-8 JSON with fixed field order, rejecting duplicate or unknown fields and oversize values. IDs are opaque strings, counters bounded nonnegative integers, timestamps UTC. Raw prompts and provider wire bytes keep their own byte identity. State is reduced from committed typed events; large blobs load on demand, and rebuilding a projection performs no external action. A read pins a committed revision and returns ordered pages. Timestamps never invent a causal order; the sequence and causal links do.
+Orchestrator records are versioned UTF-8 JSON with fixed field order, rejecting duplicate or unknown fields and oversize values. IDs are opaque strings, counters bounded nonnegative integers, timestamps UTC. Raw prompts and provider wire bytes keep their own byte identity. State is reduced from committed typed events; large blobs load on demand, and rebuilding a projection performs no external action. A read pins a committed revision and returns ordered pages. Timestamps never invent a causal order; the sequence and causal links do.
 
 The first version retains every referenced payload, including rejected candidates. A backup or export must capture a consistent database including its WAL state.
 
@@ -126,7 +126,7 @@ Illustrative event families and tags for the target workflow, each requiring a c
 
 ## Questions answers and model changes
 
-1. The responsible Manager raises a source-grounded question addressed to the owner, which goes through the application ([M4](manager-apply-core.md#messages)). The Host records its version, proposal and affected tasks. Other ready work continues; required unresolved work prevents aggregate completion.
+1. The responsible Manager raises a source-grounded question addressed to the owner, which goes through the application ([M4](manager-apply-core.md#messages)). The Orchestrator records its version, proposal and affected tasks. Other ready work continues; required unresolved work prevents aggregate completion.
 2. The application receives the owner's answer, records it raw and binds it to the displayed question version. Repeated ingress is deduplicated. An Agent-supplied actor name carries no owner authority.
 3. The answer's effect is classified with a reason. Context about an existing rule can be supplied in a later step of the same run. Asking for an alternative to be elaborated authorizes preparation only. Deferral leaves dependent work waiting. A new obligation or authority change needs a new basis.
 4. Accepting authorizes the exact displayed edit; the same permission is not asked again. A clear free-text answer can authorize a different edit; remaining material ambiguity gets a revised proposal. If the source drifted, the edit is withheld and revalidated, and the owner is asked again only if the choice materially changed.

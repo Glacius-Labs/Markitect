@@ -6,7 +6,7 @@ This contract owns the external experiment for gates P02 and P10 of the [accepta
 
 | Owner | Responsibility |
 | --- | --- |
-| Markitect | Compile complete v1 inputs, construct context/mandates, run the ordinary root and Package Managers, delegate through the Host, review, integrate, verify, publish and journal. |
+| Markitect | Compile complete v1 inputs, construct context/mandates, run the ordinary root and Package Managers, delegate through the Orchestrator, review, integrate, verify, publish and journal. |
 | Generated library | Implement M1, including its [callable interface](library-example/m1/model/library/callable-interface.yaml), with automated tests and concise usage documentation in its owned realization tree. |
 | External Playground | Prepare frozen inputs, invoke the actual product, capture fixed outputs and history, build/run the library and apply the [independent expectations](library-example/evaluation-contract.md). |
 
@@ -20,7 +20,7 @@ Before any real session, create a manifest with exact file hashes and literal co
 | --- | --- |
 | Product | Markitect source revision, executable bytes/hash, build recipe/toolchain and supported public invocation arguments. One build for both Applies. |
 | Model | Complete [M1](library-example/README.md), dependency sources and lock; deterministic M2 patch and its expected compiled digest. Production compilation validates both before dispatch. |
-| Execution | Effective project/host profiles, runtime image digest and provider CLI/schema identity, literal model/effort, custom instructions, check definitions and declared environment/tool inputs, all as required by the configuration contract. Secrets are supplied separately, never copied into reports. |
+| Execution | Effective project/Orchestrator profiles, runtime image digest and provider CLI/schema identity, literal model/effort, custom instructions, check definitions and declared environment/tool inputs, all as required by the configuration contract. Secrets are supplied separately, never copied into reports. |
 | Authority and budgets | Explicit authorization for both Applies, mandatory review and integration policy, finite caps and completion reserve per Apply, and output limits. Values are reviewed and frozen before launch; examples in design documents are not authorization. |
 | Assessment | Evaluator source, independent M1/M2 expectation sets, case data/seed, oracle self-checks and external request/build/output limits. |
 | Environment | Linux reference environment/image identity, exact Go/Git/Python and provider versions, dependency/cache provenance and enforced mounts/process permissions. A Windows diagnostic run is separate evidence. |

@@ -66,3 +66,5 @@ SHA-256 of the original files before import:
 ## Continuing the collection
 
 New concepts and ideas belong in the [register](../register.md), with any owner wording added here as a dated source file. Separate, untracked or branch-only notes are what this record replaces. Their later changes would not be reflected here.
+
+- [Orchestrator terminology, 17 October 2026](orchestrator-terminology-20261017.md): owner-selected name and the documentation-only delivery boundary.

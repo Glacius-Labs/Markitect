@@ -12,10 +12,10 @@ This is a target contract, not evidence that preparation or its input decoders a
 | `.markitect/execution.yaml` | Manager profiles and instructions, creation areas, finite ceilings, Package overrides, scope selection, check selection and owner approval. | Lending uses the selected Manager profile and a limit of three rejections per review purpose. |
 | Product strategy defaults | Versioned defaults shipped with the product, with their original bytes and source fields. | Absent rejection-limit configuration takes three from the strategy document. |
 | `.markitect/ignore.yaml` | Optional exact-file accounting exceptions with reasons. | One observed library editor-state file is ignored. |
-| Explicit host profile file | Literal executables, pinned protocol and tool identities, model and effort, controlled environment and instruction inputs. Supplied by the operator; no implicit discovery. | The selected Codex build and the local test executable. Credentials are resolved locally and never copied into model or journal payloads. |
+| Explicit Orchestrator profile file | Literal executables, pinned protocol and tool identities, model and effort, controlled environment and instruction inputs. Supplied by the operator; no implicit discovery. | The selected Codex build and the local test executable. Credentials are resolved locally and never copied into model or journal payloads. |
 | Assignment record | The owner's goal, constraints, granted caps and recorded extensions. | Apply the current library model. |
 | Registry | Versioned artifact ownership and Definition links in `.markitect/registry/`. | Lending owns a particular source file; a parent cannot acquire it through a prompt. |
-| Host operation contract | Artifact-only Apply, required independent review, source and candidate bindings, guarded publication. | Configuration cannot disable review or authorize model edits. |
+| Orchestrator operation contract | Artifact-only Apply, required independent review, source and candidate bindings, guarded publication. | Configuration cannot disable review or authorize model edits. |
 | Mandate section | A computed, source-bound explanation of the above for one Manager, task and role, rendered into its context package. | Lending may choose its implementation within the architecture and coordinates through its parent. |
 
 The model stays language v1. None of these runtime records adds a canonical Assignment, Manager, Permission or Question Kind. Required behavior is never copied into execution settings; the loan limit in particular has no configuration override.
@@ -70,7 +70,7 @@ acceptance:
   ownerApproval: []
 ```
 
-Everything under `limits` is a hard project ceiling. `assignment` sets the default caps of a new assignment; an owner extension can raise them up to `maxRuns`, `maxSessionStarts`, `maxSteps` and `maxExecutionTime`. `maxStepTimeout`, `maxRejectionLimit` and `creationRoots` are ceilings, not consumable counters. `hostOperationTimeout` bounds each Host control operation outside the budget. `completionReserve` is part of the caps, not extra allowance; a reserve that the execution contract's preparation check rejects is a preparation failure, and no run is prepared.
+Everything under `limits` is a hard project ceiling. `assignment` sets the default caps of a new assignment; an owner extension can raise them up to `maxRuns`, `maxSessionStarts`, `maxSteps` and `maxExecutionTime`. `maxStepTimeout`, `maxRejectionLimit` and `creationRoots` are ceilings, not consumable counters. `hostOperationTimeout` bounds each Orchestrator control operation outside the budget. `completionReserve` is part of the caps, not extra allowance; a reserve that the execution contract's preparation check rejects is a preparation failure, and no run is prepared.
 
 `maxContextBytes` bounds a rendered context package ([concept](manager-apply-concept.md#context-packages)). `maxSessionSteps` and `maxTransientRetries` bound one Manager conversation and automatic retries ([execution](manager-apply-execution.md#admission-amendments-and-finite-correction)). `batchNoChangeReviews` enables batched no-change reviews ([concept](manager-apply-concept.md#distinct-review-responsibilities)). `acceptance.ownerApproval` lists Packages whose changes need the owner's approval before publication, asked as an ordinary question; it is empty by default, because the owner's commit already accepts the result.
 
@@ -80,9 +80,9 @@ A check that executes a command the model requires names that Definition in `req
 
 `limits.creationRoots` bounds the permitted creation areas; defaults and Package settings select within it. Here the code, tests and documentation live below `realization/`. Existing artifacts still need registry ownership, and a directory permission grants no other Manager's files or protected model and configuration paths. A check's `directory` is confined to its captured candidate, and its arguments are literal, never a shell command.
 
-`defaults` applies to every local Package Manager, including the root. `packages` keys are exact local Package paths, and `.` is the root. An unknown or imported Package key is an error, not a request to create a Manager. Local and integration reviews use the reviewer profile in fresh sessions; the final evidence check is deterministic Host work. Reviewer profiles should use a different model family than Manager profiles, for example Claude Code reviewing Codex ([ASM-005](../../concepts/register.md#assumptions-and-hypotheses)). The same family is allowed, and the run report states each role's profile; the example keeps one profile for brevity. The first strategy is Manager plus reviewer with sequential writing.
+`defaults` applies to every local Package Manager, including the root. `packages` keys are exact local Package paths, and `.` is the root. An unknown or imported Package key is an error, not a request to create a Manager. Local and integration reviews use the reviewer profile in fresh sessions; the final evidence check is deterministic Orchestrator work. Reviewer profiles should use a different model family than Manager profiles, for example Claude Code reviewing Codex ([ASM-005](../../concepts/register.md#assumptions-and-hypotheses)). The same family is allowed, and the run report states each role's profile; the example keeps one profile for brevity. The first strategy is Manager plus reviewer with sequential writing.
 
-Custom instructions are optional file lists under `defaults.instructions` or `packages.<path>.instructions`, keyed by `manager` or `reviewer`. Each entry identifies an exact repository-relative regular file. Preserve list order, repeated entries and original captured bytes; do not expand directories or globs, normalize paths or deduplicate the list. An existing instruction file without captured bytes leaves preparation `NotCompleted` and requires a new complete capture; preparation cannot extend an old capture or its guard. Instructions carry operational guidance only, such as reporting style or tool usage; a project rule in them is a review finding and belongs in the model ([concept](manager-apply-concept.md#four-kinds-of-input-and-record)). The static operation instruction enters at the root and is propagated unchanged by the Host to every local Manager. Each receives separately compiled context and resolved settings. Parent messages supply work facts, questions and separately attributed hints within the model's implementation freedom, never a replacement operation prompt, new binding rule or configuration override ([fixed process](manager-apply-concept.md#tasks-and-delegation)).
+Custom instructions are optional file lists under `defaults.instructions` or `packages.<path>.instructions`, keyed by `manager` or `reviewer`. Each entry identifies an exact repository-relative regular file. Preserve list order, repeated entries and original captured bytes; do not expand directories or globs, normalize paths or deduplicate the list. An existing instruction file without captured bytes leaves preparation `NotCompleted` and requires a new complete capture; preparation cannot extend an old capture or its guard. Instructions carry operational guidance only, such as reporting style or tool usage; a project rule in them is a review finding and belongs in the model ([concept](manager-apply-concept.md#four-kinds-of-input-and-record)). The static operation instruction enters at the root and is propagated unchanged by the Orchestrator to every local Manager. Each receives separately compiled context and resolved settings. Parent messages supply work facts, questions and separately attributed hints within the model's implementation freedom, never a replacement operation prompt, new binding rule or configuration override ([fixed process](manager-apply-concept.md#tasks-and-delegation)).
 
 ## Strategy defaults and their sources
 
@@ -105,7 +105,7 @@ These values must come from one real, versioned product-owned defaults document 
 
 Resolve project defaults, then the exact Manager override only; there is no inheritance from ancestor overrides. Profile references replace the role's value. Instructions append the project defaults, then the exact override, in declared order. `stepTimeout`, `rejectionLimit` and `creationRoots` replace the default within the project ceilings; a default is not a ceiling, so a rejection limit of two can be overridden to three where `maxRejectionLimit` allows it. Creation directories must equal or descend from an allowed root. There is no deep merge, wildcard override or environment interpolation.
 
-In the example, lending gets eight minutes per step while lending/reminders keeps the ten-minute default, and a `.` override configures the root only. The Host enforces model obligations, resolved configuration and fixed process constraints; a parent message supplies advice or prerequisite information, not extra task restrictions. Effective values are stored with the file and field that supplied them, so every bound is explainable.
+In the example, lending gets eight minutes per step while lending/reminders keeps the ten-minute default, and a `.` override configures the root only. The Orchestrator enforces model obligations, resolved configuration and fixed process constraints; a parent message supplies advice or prerequisite information, not extra task restrictions. Effective values are stored with the file and field that supplied them, so every bound is explainable.
 
 Reject duplicate or unknown keys, unresolved profiles or instruction files, invalid Package paths, unbounded or nonpositive limits and unsupported strategy or role values before dispatch. Use restricted YAML without aliases, custom tags or implicit nulls; durations are explicit positive strings. Structural checks reject forbidden options such as disabling mandatory review. A prose conflict between custom instructions and a model obligation is a question for grounded assessment; no precedence rule lets instructions, configuration or a parent prompt weaken a binding requirement.
 
@@ -128,11 +128,13 @@ A complete Census proving that `.markitect/ignore.yaml` is absent supplies an em
 
 An ignore entry overlapping an input or registered artifact fails. Input protection covers model manifests, locks and declared trees, plus exact configuration, registry, instruction and control inputs, including reserved or future input paths; it does not protect every file beneath an acquisition boundary. Gitignore never supplies coverage. Ignoring a file cannot satisfy or waive required realization, independent review or the Definition census.
 
-## Host profiles and operational state
+<a id="host-profiles-and-operational-state"></a>
+
+## Orchestrator profiles and operational state
 
 The operator supplies an explicit profile file and an absolute state directory outside the governed repository; acquisition records both. The profile file defines `agentProfiles` and `checkProfiles` with typed, versioned, adapter-specific sections. The project refers to them by name, and `run` receives prepared profile identities, not provider wire objects.
 
-Host instruction inputs outside the repository remain explicit locations in adapter-owned configuration. Host profiles keep their inline typed, versioned, adapter-specific sections. The concrete driver fields, versions, schema and readiness checks belong to the actual consumer and adapter deliverable.
+Orchestrator instruction inputs outside the repository remain explicit locations in adapter-owned configuration. Orchestrator profiles keep their inline typed, versioned, adapter-specific sections. The concrete driver fields, versions, schema and readiness checks belong to the actual consumer and adapter deliverable.
 
 | Profile | Required preparation |
 | --- | --- |
@@ -140,7 +142,7 @@ Host instruction inputs outside the repository remain explicit locations in adap
 | Check | Runtime image ID, executable inside the image, fixed environment policy, argument prefix, container, output and termination limits. Project arguments are appended literally. |
 | State location | Repository and store identity, a confined private directory, the SQLite journal configuration, and the container engine executable with the runtime's volume prefix. Its identity is validated before an assignment resumes. |
 
-The selected bytes and identities enter the run's input binding and are rechecked at effect boundaries. Secrets are never persisted; capture safe configuration and instruction bytes, secret references and identity bindings, and report the observation boundary. A credential reference names an environment variable or a private file on the Host; its value goes only to the provider process inside the container ([rebuild plan](manager-apply-rebuild-plan.md#container-runtime)). The [rebuild plan](manager-apply-rebuild-plan.md#bind-the-runtime-image-before-real-work) also owns the image and handshake gate.
+The selected bytes and identities enter the run's input binding and are rechecked at effect boundaries. Secrets are never persisted; capture safe configuration and instruction bytes, secret references and identity bindings, and report the observation boundary. A credential reference names an environment variable or a private file on the Orchestrator; its value goes only to the provider process inside the container ([rebuild plan](manager-apply-rebuild-plan.md#container-runtime)). The [rebuild plan](manager-apply-rebuild-plan.md#bind-the-runtime-image-before-real-work) also owns the image and handshake gate.
 
 ## Assignment run task and attempt
 
@@ -163,11 +165,11 @@ For lending it states:
 - Responsibility: reconcile all local lending Definitions and coordinate reminders through its child.
 - Binding basis: the current policy, member eligibility, copy availability, returns and required outputs, with the original passages available.
 - Freedom: the internal implementation within the model's architecture and interfaces; no additional business restrictions.
-- Artifact authority: its owned files plus new paths claimed through the Host; changes to other owners' files are requested through the common parent.
+- Artifact authority: its owned files plus new paths claimed through the Orchestrator; changes to other owners' files are requested through the common parent.
 - Reserved choices: changed business rules, authority or protected inputs need a decision outside artifact Apply.
 - Limits: the remaining assignment capacity, local step and rejection limits and the mandatory gates.
 
-The section may display the bound loan limit but cites `loan-policy` as its authority, so M2 changes one canonical value and no mandate text. The reviewer checks material decisions against their source-bound authority as well as their behavior. The Host validates the typed boundaries; judging semantic authority remains reviewable Agent work.
+The section may display the bound loan limit but cites `loan-policy` as its authority, so M2 changes one canonical value and no mandate text. The reviewer checks material decisions against their source-bound authority as well as their behavior. The Orchestrator validates the typed boundaries; judging semantic authority remains reviewable Agent work.
 
 ## Questions and owner attention
 

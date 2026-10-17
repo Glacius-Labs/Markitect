@@ -52,6 +52,7 @@ The owner's [origin account of 15 October 2026](sources/owner-origin-20261015.md
 | [DEC-039](#dec-039-deterministic-manager-process) | Decision | Deterministic Manager process | Accepted |
 | [DEC-040](#dec-040-concept-freeze-until-the-core-runs) | Decision | Concept freeze until the core runs | Accepted |
 | [DEC-041](#dec-041-core-protocol-choices) | Decision | Core protocol choices | Accepted |
+| [DEC-042](#dec-042-orchestrator-names-the-deterministic-coordination-component) | Decision | Orchestrator names the deterministic coordination component | Accepted |
 | [PRM-001 to PRM-007](#promises) | Promise | Target outcomes | Target |
 | [ASM-001 to ASM-006](#assumptions-and-hypotheses) | Assumption | Assumptions and hypotheses | See entries |
 | [CPT-001](#cpt-001-federalism) | Concept | Federalism | Accepted |
@@ -134,7 +135,7 @@ The owner's [origin account of 15 October 2026](sources/owner-origin-20261015.md
   - The owner adds that interpreted languages and bytecode are not necessarily deterministic either.
 - **Interpretation (marked):** The owner's sentence about a "real compiler" breaks off without its predicate. The register reads it as follows: a compiler cannot read a naturally described world model, take context into account, fill unspecified gaps, interpret intent and still be deterministic with classical compiler guarantees. See the recorder's note in the source.
 - **Consequence:** Trust in realization comes from computed scope, independent review, declared checks and integration verification ([CPT-003](#cpt-003-two-parts-of-the-promise)).
-- **First-Apply clarification:** This consequence and [DEC-010](#dec-010-evaluate-the-method-separately-from-its-execution-runtime) retain earlier "computed scope" wording. Under [DEC-039](#dec-039-deterministic-manager-process), compilation supplies explicit obligations and responsibilities while every local Manager participates. Omitting out-of-scope Managers conflicts with that decision; Host-verified reuse is a separate proposal. Both remain unresolved under the [core's scope questions](../design/canonical-model/manager-apply-core.md#not-settled-here). The earlier wording grants no exception to first-Apply participation.
+- **First-Apply clarification:** This consequence and [DEC-010](#dec-010-evaluate-the-method-separately-from-its-execution-runtime) retain earlier "computed scope" wording. Under [DEC-039](#dec-039-deterministic-manager-process), compilation supplies explicit obligations and responsibilities while every local Manager participates. Omitting out-of-scope Managers conflicts with that decision; Orchestrator-verified reuse is a separate proposal. Both remain unresolved under the [core's scope questions](../design/canonical-model/manager-apply-core.md#not-settled-here). The earlier wording grants no exception to first-Apply participation.
 
 ### DEC-004 The Manager hierarchy is core; Government belongs to a later axis
 
@@ -392,7 +393,7 @@ The owner's [origin account of 15 October 2026](sources/owner-origin-20261015.md
 
 ### DEC-029 Instructions enter through the root
 
-**Updated by [DEC-039](#dec-039-deterministic-manager-process):** root entry remains; parent-authored child operation prompts are superseded by unchanged, Host-guaranteed propagation. The statement below records the earlier decision.
+**Updated by [DEC-039](#dec-039-deterministic-manager-process):** root entry remains; parent-authored child operation prompts are superseded by unchanged, Orchestrator-guaranteed propagation. The statement below records the earlier decision.
 
 - **Status:** Accepted, owner, 16 October 2026 ([source](../design/canonical-model/sources/manager-realization-20261016.md#apply-first-and-delegation-from-the-root)). The file-access part was left to refine.
 - **Statement:** The operation's instruction goes to the root Manager only. Each parent writes its own prompt for its children, which must not be too specific: it does not tell them which files to touch. Whether higher Managers read descendant files only when someone supplies them „gilt es zu refinen“; the Apply concept chose summaries first plus recorded targeted reads.
@@ -446,8 +447,8 @@ The owner's [origin account of 15 October 2026](sources/owner-origin-20261015.md
   - the ownership of project-level artifacts, the skeleton and the wiring task;
   - the root's recorded delivery order (superseded by [DEC-039](#dec-039-deterministic-manager-process));
   - the registry layout and Markitect's own initial registry at the cutover;
-  - the closed Host tool catalogue;
-  - the Host's final evidence check instead of a separate verifier Agent;
+  - the closed Orchestrator tool catalogue;
+  - the Orchestrator's final evidence check instead of a separate verifier Agent;
   - continuation runs instead of a Superseded handoff.
 
   The source lists every item; the [design map](../design/canonical-model/README.md#apply-design) names the document that owns each subject.
@@ -458,14 +459,14 @@ The owner's [origin account of 15 October 2026](sources/owner-origin-20261015.md
 
 - **Status:** Accepted, owner, 17 October 2026 ([source](sources/runtime-discussion-20261017.md)), after a real handshake with both CLIs ([record](../validation/runtime-handshake-20261017.md)).
 - **Statement:**
-  - Every Agent session and every project check runs in its own Linux container, started from a runtime image that the Host profile names by its image ID. The image pins the agent CLIs and the project's toolchain. Real Apply requires Docker or a compatible engine; controlled fake sessions in tests need none.
+  - Every Agent session and every project check runs in its own Linux container, started from a runtime image that the Orchestrator profile names by its image ID. The image pins the agent CLIs and the project's toolchain. Real Apply requires Docker or a compatible engine; controlled fake sessions in tests need none.
   - Authority comes from what a container receives. A writer gets its workspace writable, a reviewer the frozen candidate read-only, and a check a disposable copy. Independent expectations never enter a writer's container, and a writer's change to model, configuration or registry fails at Freeze. The container, hardened and running as a non-root user, is the boundary instead of the provider's sandbox, and stopping a session ends its whole process tree.
-  - Workspaces live on Linux volumes owned by the runtime. Inputs and candidates move as Git objects through the Host's private state store, and only guarded publication writes to the owner's working tree.
-  - The session helper `markitect-agentd` runs the provider CLI, serves it the Host tools over MCP, and carries provider protocol, tool calls and control over the container's single stdio connection.
-  - Two session adapters implement the same port in the first version: Codex App Server and Claude Code. Host tools reach both through MCP, not through Codex's experimental dynamic tools.
-  - Runtime credentials are API keys or long-lived tokens referenced by the Host profile, never copied desktop logins. They reach only the provider process and are redacted from the journal; because the Agent can still reach them, they should be scoped and spend-capped.
+  - Workspaces live on Linux volumes owned by the runtime. Inputs and candidates move as Git objects through the Orchestrator's private state store, and only guarded publication writes to the owner's working tree.
+  - The session helper `markitect-agentd` runs the provider CLI, serves it the Orchestrator tools over MCP, and carries provider protocol, tool calls and control over the container's single stdio connection.
+  - Two session adapters implement the same port in the first version: Codex App Server and Claude Code. Orchestrator tools reach both through MCP, not through Codex's experimental dynamic tools.
+  - Runtime credentials are API keys or long-lived tokens referenced by the Orchestrator profile, never copied desktop logins. They reach only the provider process and are redacted from the journal; because the Agent can still reach them, they should be scoped and spend-capped.
 - **Consequences:**
-  - Windows path identity, host process trees, provider sandbox setup and ambient user configuration leave the session path. The Host talks only to the container engine and Git.
+  - Windows path identity, host process trees, provider sandbox setup and ambient user configuration leave the session path. The Orchestrator talks only to the container engine and Git.
   - The read-only metadata adapter that pins a Windows desktop binary is replaced by metadata the image records at build time.
   - The second session adapter and sandbox profiles move from the later extensions into the first version.
 - **Owning document:** the [rebuild plan](../design/canonical-model/manager-apply-rebuild-plan.md#container-runtime). It serves [DEC-013](#dec-013-linux-first-for-tests-and-the-playground) and [ENH-005](#enh-005-exchangeable-executor-for-the-delegated-method).
@@ -479,15 +480,15 @@ The owner's [origin account of 15 October 2026](sources/owner-origin-20261015.md
 
 ### DEC-039 Deterministic Manager process
 
-**Updated by [DEC-041](#dec-041-core-protocol-choices):** cross-area requests are forwarded by the Host instead of dispatched hop by hop. Warm retention and quiescent basis advances are deferred beyond the first Apply. The statement below records the decision as accepted.
+**Updated by [DEC-041](#dec-041-core-protocol-choices):** cross-area requests are forwarded by the Orchestrator instead of dispatched hop by hop. Warm retention and quiescent basis advances are deferred beyond the first Apply. The statement below records the decision as accepted.
 
 - **Status:** Accepted, owner, 17 October 2026 ([original clarification and confirmation](sources/manager-process-clarification-20261017.md)). This changes the parent-authored prompts of DEC-029 and the root-planned delivery order adopted in DEC-036. Historical sources remain unchanged.
-- **Statement:** Apply supplies one static operation instruction. Deterministic compilation supplies each Manager's explicit model context; configuration and Host facts complete its template. The Host guarantees propagation from root through every direct child, recursively, without AI selection, rewriting or omission. Every local Manager assesses its area and returns reviewed change or no-change; intermediate and empty Packages are not skipped. Managers act on messages and communicate only with direct parent or children. Cross-area requests travel up and down that tree, using explicit routing facts or bounded inquiry, never inferred model relationships. Local review, integration, corrections and final evidence/publication follow the fixed Host process. Parents retain their own work and integration responsibility, including prerequisites needed by waiting children.
+- **Statement:** Apply supplies one static operation instruction. Deterministic compilation supplies each Manager's explicit model context; configuration and Orchestrator facts complete its template. The Orchestrator guarantees propagation from root through every direct child, recursively, without AI selection, rewriting or omission. Every local Manager assesses its area and returns reviewed change or no-change; intermediate and empty Packages are not skipped. Managers act on messages and communicate only with direct parent or children. Cross-area requests travel up and down that tree, using explicit routing facts or bounded inquiry, never inferred model relationships. Local review, integration, corrections and final evidence/publication follow the fixed Orchestrator process. Parents retain their own work and integration responsibility, including prerequisites needed by waiting children.
 - **Why:** The owner observed that the previous design moved already modeled structure back into AI planning. The intended organization should guarantee participation and required workflow steps while leaving realization and semantic judgment to Agents.
 - **Canonical owners:** [organization/delegated-context](../../.markitect/model/product/organization/delegated-context.yaml) and [run/confirmed-run-history](../../.markitect/model/product/run/confirmed-run-history.yaml). The [Apply concept](../design/canonical-model/manager-apply-concept.md#tasks-and-delegation) owns the process and its remaining design questions.
-- **Confirmed refinement:** The owner selected an initial read-only Explore assessment by every Manager before writing, followed by local plans without a global Plan barrier. The Host admits eligible work in recorded FIFO order with stable ties. Limited normal deliveries require review, Host acceptance and a concrete consumer basis while the producer Manager remains open. Parent hints stay separate from the operation and model; parents use broad, traceable child summaries. Dependency waits and resource exclusion remain distinct, with one writer in the first strategy ([confirmation](sources/manager-process-clarification-20261017.md#explore-planning-and-limited-deliveries)). Review reuse requires the unchanged complete bound subject.
+- **Confirmed refinement:** The owner selected an initial read-only Explore assessment by every Manager before writing, followed by local plans without a global Plan barrier. The Orchestrator admits eligible work in recorded FIFO order with stable ties. Limited normal deliveries require review, Orchestrator acceptance and a concrete consumer basis while the producer Manager remains open. Parent hints stay separate from the operation and model; parents use broad, traceable child summaries. Dependency waits and resource exclusion remain distinct, with one writer in the first strategy ([confirmation](sources/manager-process-clarification-20261017.md#explore-planning-and-limited-deliveries)). Review reuse requires the unchanged complete bound subject.
 - **Confirmed budget refinement:** Limit rejected submissions per run, Manager and review purpose, rather than all submissions. Success neither uses nor resets rejection allowance; all work consumes the finite shared execution budget. At the default limit, the parent assesses the plan after two rejections and the third leaves the affected work incomplete. New tasks or limited deliveries grant no fresh counters ([confirmation](sources/manager-process-clarification-20261017.md#review-budget-confirmation), [execution contract](../design/canonical-model/manager-apply-execution.md#admission-amendments-and-finite-correction)).
-- **Confirmed continuity refinement:** Keep Manager responsibility and conversation across explicitly versioned step bases where supported, while retaining immutable run inputs and review candidates. Preserve own unaccepted work during a recorded quiescent basis advance; stale actions and unknown effects block progress. Changed execution rights need a newly bound environment with proven resume or an explicit handoff. Separate role, effect authority and budget class. Before the Explore barrier, enforce read-only artifact mounts and Host mutation denial. Name the target setting `rejectionLimit` and its ceiling `maxRejectionLimit`; preserve historical records rather than reinterpret them. Basic metrics remain in Apply; a later hot-path view is an extension ([confirmation](sources/manager-process-clarification-20261017.md#working-bases-and-session-continuity), [concept](../design/canonical-model/manager-apply-concept.md#working-bases-and-conversation-continuity)).
+- **Confirmed continuity refinement:** Keep Manager responsibility and conversation across explicitly versioned step bases where supported, while retaining immutable run inputs and review candidates. Preserve own unaccepted work during a recorded quiescent basis advance; stale actions and unknown effects block progress. Changed execution rights need a newly bound environment with proven resume or an explicit handoff. Separate role, effect authority and budget class. Before the Explore barrier, enforce read-only artifact mounts and Orchestrator mutation denial. Name the target setting `rejectionLimit` and its ceiling `maxRejectionLimit`; preserve historical records rather than reinterpret them. Basic metrics remain in Apply; a later hot-path view is an extension ([confirmation](sources/manager-process-clarification-20261017.md#working-bases-and-session-continuity), [concept](../design/canonical-model/manager-apply-concept.md#working-bases-and-conversation-continuity)).
 - **Confirmed coordination refinement:** Versioned bounded child reports preserve delivery/completion status, interfaces, prerequisites, findings, uncertainty and evidence; enforce the parent input limit as well as each report limit, using visible partitioning without dropping obligations. Logical Managers may retain conversations without resident containers; finite warm retention and deterministic stop rules require actual quiescence, charged replacement starts and proven resume or explicit handoff. Process census alone is not quiescence: close admission, reconcile effects and enforce an artifact-write barrier through basis changes. Reuse of accepted Manager assessments and coordination-based modeling hints are later extensions, not changes to initial Explore or current review capacity ([confirmation](sources/manager-process-clarification-20261017.md#bounded-coordination-and-idle-execution), [concept](../design/canonical-model/manager-apply-concept.md#tasks-and-delegation)).
 - **Evidence boundary:** This records intent, not a working recursive runtime. The concept includes a fixed-source comparison and distinguishing process cases. Technical realization follows the process; no new Core language feature, provider execution or release is authorized here.
 
@@ -506,18 +507,25 @@ The owner's [origin account of 15 October 2026](sources/owner-origin-20261015.md
 
 - **Status:** Accepted, owner, 17 October 2026 ([source](sources/architecture-review-20261017.md#core-protocol-choices)). The owner selected one prepared option for each of six questions.
 - **Statement:**
-  - A question to a known addressee is forwarded by the Host along the tree, without dispatching the Managers in between („Host leitet weiter“).
+  - A question to a known addressee is forwarded by the Orchestrator along the tree, without dispatching the Managers in between („Host leitet weiter“).
   - Each step starts from the currently accepted aggregate plus the Manager's own open changes („Aktueller Gesamtstand“).
   - A Manager that finds nothing to change during Explore submits a no-change result directly („Ja, direkt einreichen“).
-  - When a task cannot finish, the Host admits no new work and finishes the run Incomplete, retaining the work („Sofort stoppen“).
+  - When a task cannot finish, the Orchestrator admits no new work and finishes the run Incomplete, retaining the work („Sofort stoppen“).
   - The first Apply stops every container after its step, and warm retention follows later („Erst stoppen, warm später“).
-  - While a run waits for the owner, the Host process may exit; `answer` and `resume` continue the run („Ja, Prozess darf enden“).
+  - While a run waits for the owner, the Orchestrator process may exit; `answer` and `resume` continue the run („Ja, Prozess darf enden“).
 - **Changes:**
   - DEC-039's hop-by-hop dispatch of cross-area requests becomes forwarding. Requests still travel along the tree, and every hop is recorded.
   - The concept's explicit consumption of each delivery into a working basis becomes the current aggregate.
   - DEC-039's finite warm-retention policy and quiescent basis advance are deferred. The first Apply keeps no container warm.
   - An incomplete task now finishes the whole run, not only the affected work.
 - **Owning document:** the [core protocol](../design/canonical-model/manager-apply-core.md), rules M2, D3, T3, T14, S6 and W2.
+
+### DEC-042 Orchestrator names the deterministic coordination component
+
+- **Status:** Accepted, owner, 17 October 2026 ([source](sources/orchestrator-terminology-20261017.md#owner-instruction)).
+- **Statement:** Use **Orchestrator** for Markitect's deterministic coordination component previously called Host. The Manager responsibilities and the accepted process are unchanged.
+- **Boundary:** Update current documentation and its generated sources. Keep historical sources and literal quotations unchanged. Existing API identifiers, wire/configuration fields and CLI options keep their implemented names; this decision does not dispatch an implementation rename or alter the ongoing Apply work. A host machine remains a host machine.
+- **Owning document:** the [Apply glossary](../design/canonical-model/README.md#apply-design).
 
 ## Promises
 
@@ -635,7 +643,7 @@ These entries record agreed or endorsed direction. Recording an enhancement does
   - Allow mixing, for example one model implements and another reviews.
   - Evaluate combinations as an experimental factor ([ASM-005](#assumptions-and-hypotheses), [OQ-003](#open-questions)).
 - **Historical work items:** RUN-01 (merged as pull request #104) and PLAY-06 (merged as pull request #241) in the [backlog](https://github.com/Glacius-Labs/Markitect/blob/bc4b49e76f9b9e4b3ec98033a0b8c73d5013b310/docs/work-items/backlog.yaml).
-- **Rebuild note (16 October 2026):** the rebuilt first strategy has two Agent roles, Manager and reviewer, configured per Manager; there is no separate verifier Agent, because the Host performs the final evidence check ([DEC-036](#dec-036-adopted-design-refinements-for-the-first-apply)).
+- **Rebuild note (16 October 2026):** the rebuilt first strategy has two Agent roles, Manager and reviewer, configured per Manager; there is no separate verifier Agent, because the Orchestrator performs the final evidence check ([DEC-036](#dec-036-adopted-design-refinements-for-the-first-apply)).
 
 ### ENH-005 Exchangeable executor for the delegated method
 
@@ -680,7 +688,7 @@ These entries record agreed or endorsed direction. Recording an enhancement does
 | OQ-007 | How reliable is the native delivery path? The combined A01 native smoke passed once (Actual28, on a Windows host) after 27 failed attempts, was not repeated, and never ran on Linux ([A01 record](../validation/a01-native-smoke-20261010.md)). The rebuilt runtime measures this again in containers, starting from the [handshake record](../validation/runtime-handshake-20261017.md). | [DEC-013](#dec-013-linux-first-for-tests-and-the-playground), [ENH-005](#enh-005-exchangeable-executor-for-the-delegated-method) |
 | OQ-008 | Should the Manager organization become the application's entry point, with the canonical model as its foundation, and would that better support a later Government axis? Owner framing, 16 October 2026: „Eventuell wäre das sogar die bessere Betrachtungsweise“ ([source](../design/canonical-model/sources/manager-realization-20261016.md#apply-first-and-delegation-from-the-root)). The north star keeps it with the [later extensions](../design/canonical-model/manager-realization-north-star.md#later-operations-and-extensions). | [DEC-004](#dec-004-the-manager-hierarchy-is-core-government-belongs-to-a-later-axis), [DEC-026](#dec-026-apply-comes-first-and-changes-only-artifacts) |
 | OQ-009 | How do DEC-018 and DEC-021 to DEC-023, written for the earlier Project model, map to language v1 and the registry once computed scope is built? | [DEC-018](#dec-018-the-knowledge-graph-explains-impact), [computed scope](../design/canonical-model/manager-apply-concept.md#toward-computed-scope) |
-| OQ-010 | How can a Codex subscription login, rather than an API key, serve several concurrent session containers without racing on refresh-token rotation? A candidate is Host-owned tokens through the App Server's external token refresh; a smoke with concurrent sessions decides. | [DEC-037](#dec-037-agent-sessions-and-checks-run-in-linux-containers) |
+| OQ-010 | How can a Codex subscription login, rather than an API key, serve several concurrent session containers without racing on refresh-token rotation? A candidate is Orchestrator-owned tokens through the App Server's external token refresh; a smoke with concurrent sessions decides. | [DEC-037](#dec-037-agent-sessions-and-checks-run-in-linux-containers) |
 
 ## Ideas
 
