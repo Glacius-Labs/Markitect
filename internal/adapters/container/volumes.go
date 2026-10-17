@@ -133,6 +133,9 @@ func (e *Engine) VolumeMounts(ctx context.Context, name string) ([]string, error
 			return nil, fmt.Errorf("container mount census identity mismatch")
 		}
 		for _, m := range *rows[0].Mounts {
+			if m.Type == "" || (m.Type == "volume" && !namePattern.MatchString(m.Name)) {
+				return nil, fmt.Errorf("container mount census has an incomplete mount entry")
+			}
 			if m.Type == "volume" && m.Name == name {
 				mounted = append(mounted, id)
 				break
