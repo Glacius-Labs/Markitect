@@ -1,6 +1,6 @@
 # Commands over the Manager organization
 
-Status: accepted direction, 17 October 2026 ([DEC-044](../../concepts/register.md#dec-044-commands-reuse-the-manager-organization), [owner discussion](../../concepts/sources/commands-extract-optimize-20261017.md)). This document owns the later command semantics and the Extract workflow. It records no executable command registration, model-writing runtime or completed Verify capability. The [current operations guide](../../project-operations.md) owns availability. Apply remains the first delivery target; this documentation adds no implementation queue and does not change the frozen Apply core.
+Status: accepted direction, 17 October 2026 ([DEC-044](../../concepts/register.md#dec-044-commands-reuse-the-manager-organization), [owner discussion](../../concepts/sources/commands-extract-optimize-20261017.md)). This document owns the later command semantics and the Extract and Optimize workflows. It records no executable command registration, model-writing runtime or completed Verify capability. The [current operations guide](../../project-operations.md) owns availability. Apply remains the first delivery target; this documentation adds no implementation queue and does not change the frozen Apply core.
 
 ## One organization and different instructions
 
@@ -80,8 +80,51 @@ The reuse above is a design direction. How a provisional model tree is rebuilt b
 
 Optimize extends the existing [strict links and optional Optimizer direction](../../concepts/register.md#dec-027-strict-links-with-an-optional-optimizer). It uses the Manager tree to examine the model itself, with independent model review and parent integration. It may inspect relevant artifacts as evidence, but its change target is the model and it does not repair artifacts.
 
-Look for missing justified links, unclear wording, duplication and organization that can be improved while preserving intended meaning. A link proposal names its source, target and reason. Wider reading is allowed within the selected scope because existing links are exactly what the investigation tests; this does not authorize compensating for missing links during ordinary Apply or inventing semantic relationships.
+### Find candidates beyond existing links
 
-“Without inventing too much” means that additions need a concrete basis in existing model content or examined evidence. Do not invent requirements, features, guarantees, relationships or architecture to make the model seem more complete. Ambiguous intent and changes of meaning are questions or explicit proposals for the authorized decision process, not automatic optimization. A justified no-op is a valid result. Review and adoption follow existing authority; there is no manual approval round for every clear link.
+Each Manager examines its own Definitions for mentions of other concepts or rules without a link, unclear wording, duplication, contradictions and mismatches between stated responsibilities and connections. Wider reading is allowed within the selected scope because existing links are exactly what the investigation tests. Begin with a simple model inventory and text search, then read candidate Definitions. Similar words identify search candidates, not established relationships. This does not authorize compensating for missing links during ordinary Apply.
+
+For cross-area questions, reuse the existing communication and parent integration. Each Manager edits only its own model responsibility. Parents coordinate changes involving several areas; no Manager takes over a sibling's Definitions. Imported vocabulary remains read-only in the consuming project.
+
+### Explain each proposed change
+
+In the normal change proposal, show the existing source statement, the problem, the proposed edit, why the meaning is preserved and the expected benefit. A link names its source, target and reason. Describe useful context gained and unnecessary context added; more links or more text are not success criteria. This explanation belongs to the ordinary review subject, not a new permanent proposal catalogue.
+
+| Observation | Appropriate response |
+| --- | --- |
+| A lending Definition explicitly says it uses membership eligibility, but omits the link to the unambiguously named eligibility Definition. | Propose that link with both source statements and the intended context effect. |
+| Lending and reservations both use the word “availability”. | Investigate their meanings; the shared word alone establishes no relationship. |
+| Code uses a 14-day term, but the model specifies no duration. | Report a possible modeling gap or ask a question. Do not promote the implementation number into a binding requirement automatically. |
+| Two similarly worded rules apply to different areas. | Preserve their scopes; do not merge them merely because the wording is similar. |
+
+“Without inventing too much” means that additions need a concrete basis in existing model content or examined evidence. Do not invent requirements, features, guarantees, relationships or architecture to make the model seem more complete. Artifact evidence can expose a gap; observed behavior alone does not establish intended meaning. Ambiguous intent and changes of meaning become questions or explicit proposals for the authorized decision process, not automatic optimization.
+
+### Review meaning and integrate the result
+
+Reuse independent local review and existing rework. The reviewer receives the proposed change and its source basis and asks: **Is this statement or connection already justified by the existing content, or does this edit decide something new?** In particular:
+
+- Is the target unambiguous, and does the source support the stated relationship?
+- Does the edit strengthen an obligation or lose a condition, exception or scope?
+- Does a new link provide needed context or only add unrelated material?
+- Does consolidation turn an incidental implementation choice into a future requirement?
+
+A reverse link is not added merely to make the graph symmetric. Plausible but unsupported additions become review findings and return through normal rework. Several materially different readings become a source-bound owner question with alternatives. Existing authority can cover clear reviewed links; no new manual approval round is required for each one.
+
+Parents integrate accepted local work and obtain independent review of the aggregate, especially shared terms, conflicting edits and cross-area context effects. Structural checks and context previews complement semantic review: a structurally valid link may still be wrong. A justified no-op is valid. The semantic results are a reviewed improvement, a grounded question or a justified no-change result; missing evidence and exhausted capacity remain incomplete under the ordinary execution rules. These descriptions select no new wire-enum names.
+
+The [owner accepted this workflow](../../concepts/sources/commands-extract-optimize-20261017.md#optimize-workflow-clarification). Review and adoption retain the existing project authority. This adds no implementation queue or general permission to change model meaning.
 
 Optimize improves the existing model; Extract derives an initial candidate from a repository. Both can reuse the same model-authoring, review, findings and integration capabilities. No separate optimization framework, automatic operation schedule or implementation package is introduced here.
+
+## Remaining command decisions
+
+The workflow and authority distinctions above are selected. The questions below are still open; the recommendations are assistant proposals, not owner decisions or implementation assignments.
+
+| Priority | Open question | Recommendation and tradeoff |
+| --- | --- | --- |
+| 1 | What exact reading boundary and limits govern Optimize's search beyond existing links? | Start with an inventory of the selected local model and targeted reads of captured model/artifact evidence within the granted scope. This is inspectable and avoids a semantic-index subsystem, but broad unlinked models may require more reading. Imported model edits still belong to their own project. |
+| 2 | How far should structural optimization go: renaming Definitions, moving Packages, splitting or merging them? | Start with clear links and wording. Prepare larger reorganizations as explicit reviewed candidates showing identity, scope, context, Manager-topology and registry consequences. This makes their effects visible, but leaves more involved improvements for a deliberate change rather than a silent cleanup. Any artifact changes remain separate. |
+| 3 | How is Extract detail depth expressed and evaluated consistently? | Give author and reviewer one short shared objective with concrete behavior, refusal, state and interface examples. Select exact settings only from useful cases; this stays simple but needs judgment rather than a numerical completeness score. Known obligations and material contradictions cannot be waived. |
+| 4 | How are Custom instructions and operation inputs registered and bound reproducibly? | Reuse the common operation, context, target, authority and budget bindings. Keep the accepted top-level verb direction and six-skill split; command labels need not create matching skills. Exact formats and optional model-only Cleanup/Refactor naming remain to be selected. This avoids duplicate workflows but requires a precise common invocation contract. |
+
+One technical boundary still needs producer contracts: how model-writing sessions stage a candidate, refresh the Manager tree and accounting after identity/topology changes, and give read-only Verify an exact model/artifact pair. Current artifact Apply cannot be used to bypass protected inputs. This is implementation design within the selected semantics, not another product decision to reopen or authority to start that work. The accepted [Init/skill design](../project-capability-skills-20261009.md#accepted-init-design--17-october-2026) keeps technical setup and model adoption separate.

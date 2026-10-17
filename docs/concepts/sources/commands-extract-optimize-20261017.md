@@ -40,3 +40,17 @@ Recorder's summary of the resulting assistant proposal: treat the extracted mode
 > Ausserdem sollte es noch eine Art Optimize geben, welches das kanonische Modell untersucht und nach fehlenden Links sucht oder generell das kanonische Modell optimieren soll, ohne zu viel dazuzudichten.
 
 Recorder's interpretation: record the agreed command direction and the proposed reuse for Extract, plus a model-focused Optimize that seeks justified missing links and improvements without unsupported invention. This authorizes the documentation delivery on Main despite the prior discussion-only scope. It does not authorize a new command implementation queue, a change to the artifact-only Apply target, or provider, Docker, Apply, comparison or study runs. Exact future schemas, settings and draft execution contracts remain design work.
+
+## Optimize workflow clarification
+
+The owner asked:
+
+> Lass uns Optimize genauer durchgehen: Wie finden die Manager fehlende Links und sinnvolle Modellverbesserungen, ohne neue Anforderungen oder Beziehungen zu erfinden?
+
+Recorder's summary of the assistant proposal: Managers start with their own Definitions and search beyond existing links through a simple model inventory, text search and targeted reading. Similar terms are candidates rather than relationships. Ordinary proposals explain source support, the change, preserved meaning and context benefit. Independent review checks unambiguous targets, stronger or lost obligations, preserved scopes and whether a link supplies useful context. Implementation observations can raise a model question but do not automatically become requirements. Managers retain their own write responsibility; parents coordinate cross-area questions and obtain independent integration review. Reuse ordinary findings, rework, structural checks and context previews. Outcomes are reviewed improvement, a grounded question or justified no-op; link counts are not success measures.
+
+The owner accepted this and requested the remaining questions:
+
+> Klingt gut, halte das so fest und schaue was es sonst noch zu klären gibt
+
+Recorder's note: this accepts the preceding Optimize workflow and authorizes its documentation under the existing Main publication request. The remaining command questions and recommendations in the owning design are assistant analysis, not further accepted decisions. No implementation or runtime authority is added.
