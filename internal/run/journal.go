@@ -232,7 +232,7 @@ type EventPage struct {
 }
 
 func eventKind(event, command string) bool {
-	return event == eventTag(command) || command == PrepareRun && event == "assignment.created" || (command == PrepareSession || command == PrepareStep) && event == ReserveInvocation
+	return event == eventTag(command) || command == PrepareRun && event == "assignment.created" || (command == PrepareSession || command == PrepareStep || command == PrepareCheck) && event == ReserveInvocation
 }
 
 func eventTag(command string) string {

@@ -67,6 +67,16 @@ The architect delivers this queue in order, in one or more pull requests each. T
 | A5 | The core parts of P07 to P09: every Manager of the tree, integration at every parent, messages and questions, aggregate verification and reports, then guarded publication through `markitect apply`. | The two-Apply demonstration |
 | A6 | Cleanup inside the architect's packages: remove the v1/v2 basis replay and `PassThrough`, give errors a reason, and split preparation out of `internal/apply`. | None |
 
+**Request to the Coordinator: the `apply` verb.** `apply.ControlledRun.Execute` runs the whole first Apply through the ports in `apply.ExecutionPorts` ([apply README](../internal/apply/README.md#execution)). The `markitect apply` verb and its composition in the bootstrap are the Coordinator's files. They need:
+- the captured settings preparation with metadata, `apply.ControlService.Open` on the journal adapter's control, and then `Execute`;
+- one `run.Sessions` that routes each session plan to the adapter of its role's profile (`ControlledRun.RoleProfile` names the prepared profile), with the credential resolver;
+- `Profile`, which builds each adapter's session profile payload from that prepared profile;
+- `CheckRequest`, which builds a `run.CheckRequest` from a configured check and its check profile;
+- the repository's `Workspaces`, the check runner and the GitRepo publisher;
+- a report of `ExecutionResult`: the run, every task, the issues including the open questions to the owner, the checks and the publication receipt;
+- an `answer` verb that calls `ControlledRun.Answer` and then `Execute` again;
+- in the GitRepo publisher, errors that wrap `apply.ErrCaptureChanged` for a changed source and `apply.ErrUnpublishable` for a change set the target cannot represent, as the Publisher port now names them.
+
 ### Branch names
 
 Use an isolated managed worktree and a non-protected branch from the integrated baseline. New branches use a prefix that describes their scope, such as `dev/`, `fix/` or `docs/`. Never stash, reset unrelated work, force-push reviewed branches or implement on Main. Verify path, branch, full SHA and dirty state before writing.

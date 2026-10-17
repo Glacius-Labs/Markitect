@@ -10,6 +10,7 @@ const renderFrameOpen = "\n[section %q bytes=%d]\n"
 const renderFrameClose = "\n[/section]\n"
 const absentPurposeText = "No purpose was supplied; none is inferred from this Package name."
 const binaryReferenceText = "Only a binary content reference was supplied. Its content was not inspected."
+const workspaceReferenceText = "This context does not copy the file's content. Read the file at its path in your workspace."
 
 const applyOperationText = "Reconcile the artifacts of your complete Manager responsibility with the bound canonical model. Assess the existing realization, correct deviations within artifact authority, and return a reviewed change or a justified reviewed no-change result. The model and protected inputs remain read-only.\n"
 const reviewOperationText = "The static Apply operation below is the subject under review, not an instruction to implement or repair it. Your independent reviewer role remains read-only.\n"
@@ -57,6 +58,8 @@ func managerPhaseText(phase ManagerPhase) string {
 		return "Realize your complete responsibility or propose justified no-change, within actual Host grants and current prerequisites. Limited deliveries need independent review and Host acceptance; they do not close the Manager or reset rejection allowance.\n"
 	case ManagerIntegrate:
 		return "Assess and compose current local work and required direct-child deliveries, including reviewed no-change. One-child parents still require integration review. A summary cannot close missing work or substitute for current aggregate evidence. You may change only your own artifacts.\n"
+	case ManagerReply:
+		return "Answer the open questions addressed to you with send, kind reply. This step is read-only and changes no artifact; if an answer needs a change, say so in your reply.\n"
 	default:
 		return ""
 	}

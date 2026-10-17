@@ -34,6 +34,47 @@ explicit Host assertion until a physical adapter grounds it against the selected
 acquisition location. Store identity is durably assigned and registered by that
 adapter; paths and source hashes cannot invent it.
 
-This package supplies the executable consumer contract and controlled tests. A
-physical Control/Journal adapter, SQL durability, execution and guarded publication
-are still absent. Passing source checks establishes none of those capabilities.
+This package supplies the executable consumer contract and controlled tests.
+The physical Control/Journal, session, workspace, check and publication adapters
+live outside it. Passing source checks establishes none of their capabilities.
+
+## Execution
+
+`ControlledRun.Execute` runs the bound basis through the core with the
+adapters in `ExecutionPorts`, which the Host composes: one `run.Sessions` for
+both roles, `run.Workspaces`, `run.Checks`, a `Publisher`, the session profile
+of each Manager's role, the request of each configured check, a clock and the
+engine limits. `RoleProfile` returns the prepared Agent profile a role runs
+with, from which the Host builds its adapter's session profile. Apply chooses no
+provider, credential or image.
+
+When no run is active, Execute prepares and starts one. An active run bound to
+another capture finishes Stale first. The first run opens an assignment; after
+an incomplete, stale or failed run, a run on a changed basis continues the
+assignment; after Applied or NoChange the assignment is closed and a new one
+opens. A finished basis is not run again. The Managers then work until the root
+is done (`run.Engine.Run`).
+
+In Verifying, Execute builds the publication target: the aggregate's files plus
+every registry shard whose records changed, regenerated from the aggregate's
+registry. A regenerated shard keeps the captured order of its remaining records
+and lists new ones after them. Every configured check with `requiredBy`, which
+the basis binds, runs on that exact target; a failing check finishes the run
+Incomplete. The publisher then preflights the target's change set against the
+captured source: a source that changed finishes the run Stale, a change set
+the target cannot represent (`ErrUnpublishable`) finishes it Failed, and any
+other error leaves the run Verifying for the next Execute. The final evidence
+check binds the target and moves the run to Publishing. Publishing preflights
+again; the change set is journaled with its source and target only after that
+preflight passed and before the first write, so a transient preflight error
+journals nothing and the next Execute publishes again. The
+publication receipt finishes the run Applied, NoChange, Stale or Failed, or
+leaves it to reconciliation when the write was partial or its result is
+unknown. A publication that an earlier process prepared is inspected, not
+written again.
+
+Execute returns when the run finished, waits for the owner or needs
+reconciliation. `ExecutionResult` lists the open questions to the owner among
+its issues; `Answer` records the owner's answer, and the next Execute resumes
+the waiting run as soon as every owner question is answered or an answer made a
+step admissible.

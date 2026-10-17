@@ -25,6 +25,7 @@ func (c CheckSelection) Profile() PreparedProfile { return clonePreparedProfile(
 type hostSettingsPreparation struct {
 	status         model.Status
 	settings       *organization.Settings
+	facts          *organization.SettingsFacts
 	checks         []CheckSelection
 	checksComplete bool
 	profiles       []PreparedProfile
@@ -45,6 +46,18 @@ func (r hostSettingsPreparation) Settings() (organization.Settings, bool) {
 		return organization.Settings{}, false
 	}
 	return *r.settings, true
+}
+
+// SettingsFacts returns the facts the settings were resolved from.
+func (r hostSettingsPreparation) SettingsFacts() (organization.SettingsFacts, bool) {
+	if r.facts == nil {
+		return organization.SettingsFacts{}, false
+	}
+	f := *r.facts
+	f.Overrides = slices.Clone(f.Overrides)
+	f.Profiles = slices.Clone(f.Profiles)
+	f.Instructions = slices.Clone(f.Instructions)
+	return f, true
 }
 func (r hostSettingsPreparation) Checks() ([]CheckSelection, bool) {
 	if !r.checksComplete {

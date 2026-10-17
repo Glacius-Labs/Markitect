@@ -218,9 +218,8 @@ harvest the complete observed tree, close it, and run one fixed check on a
 disposable copy. They carry no ownership or review semantics; a check passes
 only on an observed zero exit that neither timed out nor is uncertain.
 
-Final evidence, the work after Verifying, Publishing and Applied/NoChange are
-not implemented yet. The concrete Session, Workspace, Check, journal and
-publication adapters live outside this package. The full contracts remain in
+The concrete Session, Workspace, Check, journal and publication adapters live
+outside this package. The full contracts remain in
 the design documents.
 
 ## Manager tasks
@@ -263,13 +262,17 @@ its purpose; it is withheld while another open blocking issue covers the task
 candidate's step (D4). Changes requested count one rejection per purpose; at
 the bound rejection limit the task becomes incomplete. A needs-decision verdict
 blocks the task on an owner question, and a failed assessment starts a fresh
-review. Accepted deliveries advance the aggregate version when they carry
+review. An integration review may address a finding to a descendant that owns
+the affected artifacts (D5); rejecting with such a blocking finding returns a
+done descendant to work, blocks its ancestors below the reviewed Manager on
+their children, and the reviewed Manager integrates again once they are done
+(T11). Accepted deliveries advance the aggregate version when they carry
 changes. Blocked tasks wake when what they named arrives (T10), and the root's
 completion moves the run to Verifying (T13).
 
 `Engine` drives admitted steps through the `Sessions` and `Workspaces` ports,
-one at a time. It holds what the reducer does not: the compiled model, every
-aggregate version, path reservations and proposed registry records. It
+one at a time. It holds what the reducer does not: the compiled model and every
+aggregate version. It
 materializes each step's version (D3), answers the Host tools, captures the
 candidate after the step (S4) and composes an accepted delivery onto the
 aggregate before it concludes the review (D2). A refused composition finishes
@@ -277,19 +280,71 @@ the run Failed. A step the Host cannot finish is stopped. A confirmed stop ends
 all activity in the container (S2), so its start and step are settled as
 observed, an unstarted one is released, and a run that an uncertain
 observation moved to Reconciling resumes; the step then concludes as failed,
-its reservations and registry proposals are undone, and the Manager's next step
-sees a note (T6). Without a confirmed stop the effects stay for reconciliation.
+its reservations and registry proposals are dropped with it, and the Manager's
+next step sees a note (T6). Without a confirmed stop the effects stay for reconciliation.
 A failure before the container starts costs nothing, so `Run` returns it
-instead of retrying. Registry proposals are checked when they are made. A new engine rebuilds the aggregate
-from the recorded deliveries. `Run` advances until nothing is admissible, then
+instead of retrying. Path reservations and registry proposals are checked when
+they are made and recorded with the concluded writing step (S4), so a candidate
+record carries the claims its new files used and a new engine forms the same
+claims; it rebuilds the aggregate from the recorded deliveries. `Run` advances until nothing is admissible, then
 leaves the run Verifying, moves it to Waiting for an owner question (W1), or
 finishes it Incomplete.
 
-Not yet implemented: messages (`send`, M1 to M5) and the waits on replies,
-owner answers and the run's resumption (W2), `assign_owner` and intake (T2,
-D6), `request_check`, the dispatch of a common parent for waits nothing
-satisfies (T12, the run finishes Incomplete instead), reopening done tasks
-(T11), review batching, path reservations surviving an engine restart, open
-issues carried into a continuation run (I5), a fresh conversation with a
-handoff when resume fails (S3), session rotation at `maxSessionSteps`, and the
-parent's assessment after two rejections.
+Messages follow M1 to M5. A Manager sends a question, reply or hint with
+`send`; `CheckSend` checks it against the tree and returns the message's
+identity, and the message takes effect when the step concludes, before the
+step's outcome, which may wait on it. A question to `parent` goes to the
+direct parent, a question to another Manager travels along the tree, and the
+Managers on its path see it in their next step without being dispatched (M2).
+A question becomes an issue addressed to its addressee; a reply from that
+addressee resolves it and wakes an asker waiting for it (I2, T10). A Manager
+that cannot otherwise act, because it is done, blocked or explored, answers in
+a read-only reply step and keeps its state (T10, T11). Each open question
+admits one reply step, oldest first; a reply step the Host could not finish
+drops its reply and is admitted again. A question to the owner
+travels up to the root; when nothing else is admissible the run waits for the
+owner (M4, W1). `AnswerCommand` records the owner's answer: it wakes the asker,
+or starts a fresh review when a review asked (T8), and `ResumeRun` continues
+the run. The owner's decisions about a task reach its later steps and reviews.
+A parent's hints reach its direct children. A failed step's messages are
+dropped with it (T6).
+
+Not yet implemented: a parent forwarding or broadcasting a question it cannot
+answer (M3, it asks anew instead), `assign_owner` and intake (T2, D6), the
+dispatch of a common parent for waits nothing satisfies (T12, the run finishes
+Incomplete instead), a done task reopened by anything but an integration
+finding (T11, reply steps are read-only), review batching, open issues carried
+into a continuation run (I5), a fresh conversation
+with a handoff when resume fails (S3), session rotation at `maxSessionSteps`,
+an answer that requires a model change (W3), and the parent's assessment after
+two rejections.
+
+## Verification and publication
+
+The basis binds the names of the required checks. While the run is Verifying,
+`PrepareCheckCommand` admits one check as assessment work, with room for its
+container's start and stop, and `ObserveCheckCommand` records its receipt and
+settles its reservation; an uncertain receipt moves the run to Reconciling. A
+check passes on an observed zero exit of the same image and tree.
+
+A candidate reviewer may run a configured check on the frozen candidate with
+`request_check` (`PrepareReviewCheckCommand`). The check must fit the step's
+remaining time and the budget, or the call is refused and the review goes on;
+its time is charged once, as the check's own invocation, and the step's
+charge leaves it out. The candidate tree it runs on does not yet contain the
+regenerated registry shards that publication writes.
+`Engine.Verify` runs the required checks on the tree that publishing the
+aggregate writes, reuses a check that already passed on it, and finishes the
+run Incomplete when one fails or the budget no longer fits it.
+`VerifyRunCommand` is the final evidence check:
+every task is done, no blocking issue is open, nothing is running and every
+required check passed on that tree; it moves the run to Publishing.
+
+`PreparePublicationCommand` records the change set before the first write,
+bound to the captured source and the verified tree, and `PublishRunCommand`
+records the publisher's receipt; until then the run cannot finish. Applied requires a
+non-empty change set and NoChange an empty one; stale and failed finish the run
+as such, and a partial or unknown publication moves it to Reconciling. These
+are the only commands that finish a run Applied or NoChange. A step's deadline
+leaves its container's stop inside the step's reservation, and the adapter's
+records of a step are written even after its deadline.

@@ -36,6 +36,10 @@ func imageObservation(t *testing.T, provider apply.AgentImageProvider) apply.Pro
 func prepareImageProfile(t *testing.T, observation apply.ProfileObservation, portErr error) (apply.CapturedSettingsPreparation, error) {
 	t.Helper()
 	selection, raw := hostSettingsInputs(t)
+	if observation.AgentImage != nil && observation.AgentImage.Provider == apply.AgentImageClaudeCode {
+		// A Claude image belongs to a claudeCode section.
+		addHostDocument(t, &selection, &raw, strings.Replace(testHostDocument, "codexAppServer:", "claudeCode:", 1))
+	}
 	m := registryModel(t, selection, raw)
 	_, checks := hostPorts(t)
 	agent := rawHostAgentPort(func(_ context.Context, input apply.ProfileInput) (apply.ProfileObservation, error) {
