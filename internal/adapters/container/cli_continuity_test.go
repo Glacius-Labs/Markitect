@@ -186,7 +186,7 @@ func TestCodexConversationContinuesInANewEnvironment(t *testing.T) {
 		t.Fatalf("thread/start: %v; diagnostics %q", thread["error"], first.Diagnostics())
 	}
 	threadID := thread["result"].(map[string]any)["thread"].(map[string]any)["id"]
-	codexTurn(a, threadID, "Remember this code word for later: "+word+". Do not run commands or write files. Reply with OK.")
+	codexTurn(a, threadID, "Remember this code word for later: "+word+". Do not write any file. Reply with OK.")
 	if err := first.Close(); err != nil {
 		t.Fatalf("close first environment: %v", err)
 	}
@@ -202,7 +202,8 @@ func TestCodexConversationContinuesInANewEnvironment(t *testing.T) {
 	if model := resumed["result"].(map[string]any)["model"]; model != codexModel {
 		t.Fatalf("resumed thread runs %v, want %s", model, codexModel)
 	}
-	answer := codexTurn(b, threadID, "What was the code word I gave you earlier, and what does the file basis.txt in the working directory contain? Answer in one line.")
+	answer := codexTurn(b, threadID, "Read the file basis.txt in the working directory now, with a shell command if needed. "+
+		"Then answer in one line: what was the code word I gave you earlier, and what does basis.txt contain?")
 	if !strings.Contains(answer, word) || !strings.Contains(answer, "basis-2") {
 		t.Fatalf("resumed answer %q lacks the code word %s or the new basis", answer, word)
 	}
