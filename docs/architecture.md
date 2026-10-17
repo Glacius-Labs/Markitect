@@ -51,7 +51,9 @@ Bootstrap alone constructs concrete adapters. CLI code owns parsing/presentation
 
 ## Runtime layer
 
-The recursive execution lifecycle, sessions, workspace creation, executable checks, journal, verification and guarded artifact publication are later implementation packages. There is no active legacy runtime or fallback execution engine. A structural or metadata pass cannot authorize those effects. The current CLI exposes no MCP server.
+`internal/run` supplies fixed run bindings, assignment budget admission and confirmed journal transitions. Its narrow journal port separates proposals from acknowledged history and retains uncertain reservations. It has no physical journal adapter or public execution entrypoint.
+
+Recursive Manager execution, sessions, workspace creation, executable checks, durable journal storage, verification and guarded artifact publication remain later implementation work. There is no active legacy runtime or fallback execution engine. A structural or metadata pass cannot authorize those effects. The current CLI exposes no MCP server.
 
 ## Operational record storage
 

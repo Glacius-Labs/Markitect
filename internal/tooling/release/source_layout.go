@@ -19,6 +19,7 @@ var sourceRoots = []string{
 	"internal/snapshot",
 	"internal/organization",
 	"internal/realization",
+	"internal/run",
 	"internal/apply",
 	"internal/modeldocs",
 	"internal/buildinfo",
