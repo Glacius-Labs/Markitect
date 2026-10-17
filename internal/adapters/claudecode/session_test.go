@@ -132,6 +132,7 @@ func (f *fakeStream) Read(p []byte) (int, error) {
 func (f *fakeStream) close() { f.once.Do(func() { close(f.done) }) }
 
 type fakeRuntime struct {
+	exitSignal                                                string
 	stream                                                    *fakeStream
 	tools                                                     chan frame.ToolCall
 	writes                                                    [][]byte
@@ -211,7 +212,11 @@ func (f *fakeRuntime) Stop(context.Context, int64) (frame.Exited, error) {
 	if f.stopFail {
 		return frame.Exited{}, context.DeadlineExceeded
 	}
-	return frame.Exited{Code: -1, Signal: "terminated"}, nil
+	signal := f.exitSignal
+	if signal == "" {
+		signal = "terminated"
+	}
+	return frame.Exited{Code: -1, Signal: signal}, nil
 }
 func (f *fakeRuntime) Close() error { f.stream.close(); return nil }
 func payloadForSession(t *testing.T, media string, data []byte) run.Payload {
@@ -574,4 +579,19 @@ func TestClaudeNativeSessionAndStopReasonCannotJournalKnownToken(t *testing.T) {
 			t.Fatal("known credential escaped wire redaction through native session field")
 		}
 	})
+	t.Run("stop", func(t *testing.T) {
+		channel := &fakeChannel{}
+		runtime := peer(channel)
+		runtime.exitSignal = "secret-token"
+		s := sessionsForTest(t, runtime)
+		a, _ := sessionAdmissions(t)
+		if _, err := s.Open(context.Background(), a, channel); err != nil {
+			t.Fatal(err)
+		}
+		out, err := s.Stop(context.Background(), run.StopRequest{Session: a.Plan.ID, Timeout: time.Second}, channel)
+		if err != nil || !out.Terminated || strings.Contains(out.Reason, "secret-token") || len(channel.stops) != 1 || strings.Contains(channel.stops[0].Reason, "secret-token") {
+			t.Fatal("known credential entered stop journal reason")
+		}
+	})
+
 }
