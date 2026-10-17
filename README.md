@@ -46,7 +46,7 @@ Imagine a library where a member may borrow five books. The rule changes: member
 You change the rule in the model. The intended result reaches every affected part of the project:
 
 ```mermaid
-flowchart LR
+flowchart TB
     accTitle: One model change across the project
     accDescr: Planned realization of a library policy change. Changing the loan limit from five to three in the model updates the implementation, boundary tests and usage guide. Existing rules still apply.
     model["Model<br/>Loan limit: 5 → 3"] --> code["Code<br/>Enforce the new limit"]
