@@ -56,11 +56,17 @@ Role context carries the complete set of open findings for the task's responsibi
 
 ## Accepted deliveries and dependent work
 
-Every local Manager receives the same operation before relevance can be assessed; a dependency blocks dependent work, not initial participation. Follow the [fixed Manager cycle](manager-apply-concept.md#fixed-manager-cycle). A reviewed prerequisite contribution can support only its explicit scope while its parent Manager remains incomplete. Its concrete acceptance representation must be settled before recursive implementation; it cannot be presented as a complete subtree delivery.
+Every local Manager receives the same operation before relevance can be assessed; a dependency blocks dependent work, not initial participation. Follow the [fixed Manager cycle](manager-apply-concept.md#fixed-manager-cycle): all Managers report an initial read-only Explore assessment before any artifact writing. Local plans and dependency resolution then progress without a global Plan barrier. The Host admits ready work using the recorded order and current prerequisites, not an Agent's global plan.
+
+A prerequisite uses a normal delivery with explicit limited scope and outstanding obligations. It has the ordinary candidate, checks, independent review and Host acceptance; it adds no separate delivery lifecycle. Acceptance makes only that scope usable and does not complete the Manager or subtree. The exact representation must preserve this distinction before recursive implementation.
 
 Only the Host issues an accepted delivery: the exact candidate, registry revision, completed reviews and checks, and the child deliveries it contains. A task that depends on another area starts only when the producer's accepted delivery has been composed into its base. An Agent's completion message is not enough.
 
+Here, dependent task start means implementation that consumes the result; initial Explore, planning and independent work need not wait for that delivery. A reviewer pass alone never establishes Host acceptance or a consumer's current base. Dependency waiting does not retain an active write grant, and uncertain writer effects must be reconciled before a grant can pass to another task.
+
 Accepted deliveries are immutable. If a later blocking finding concerns an accepted delivery, then neither that delivery nor its consumers (tasks whose base composes it) can be dispatched further, accepted or published until the finding is resolved. The common parent selects a replacement delivery explicitly and has it composed into the affected consumers. Correcting it is ordinary bounded rework and resets no budget or round counter.
+
+Reuse a review only when its complete bound subject and inputs remain unchanged. An Agent's assertion of no impact is insufficient; changed bindings need renewed assessment and unknown effects broaden it. Current integration evidence must cover any changed aggregate.
 
 ## Admission, amendments and finite correction
 
@@ -70,7 +76,9 @@ A failed call is retried automatically only when the adapter proves that nothing
 
 `reviewRounds` is the number of candidate submissions per run, responsibility and review purpose (local or integration), including the first; the default is three. A responsibility is a Host-bound obligation within the fixed Manager cycle, not an Agent-created slot. Prerequisite work, later wiring and correction must preserve the obligation's identity; implementation must define their relation before admitting recursive work ([process boundary](manager-apply-concept.md#remaining-process-detail-and-technical-boundary)). The counter is keyed by `(run, responsibility, review purpose)`, so recreating a task or session for the same slot does not reset it. An attempt number identifies one submission within a task; the round counter is the limit. A repeat with the same submission ID and the same bytes returns the existing receipt. A new submission ID is a new round, even with unchanged bytes. A candidate that fails a required check still consumes its round.
 
-After each rejection, the Manager records the unresolved finding, the progress made and a different next action with an observable target. After the second rejection, the parent assesses that plan before a third submission; at the root, the root does. This grants no extra round. Missing authority or uncertain effects stop dependent work at once.
+**Open owner decision:** this existing rule also charges successful limited deliveries. A skeleton, a later interface delivery and a final delivery could consume all three submissions without a rejection. The confirmed process must support useful successful handoffs without mistaking them for failed correction. The replacement budget rule is not yet selected: do not reinterpret `reviewRounds`, exempt successes or create fresh responsibility slots. Resolve this before recursive implementation. All work remains charged to the shared assignment budget and required evidence is never waived.
+
+After each rejection, the Manager records the unresolved finding, the progress made and a different next action with an observable target. After the second rejection, the parent assesses that plan before any further allowed submission; at the root, the root does. If submission capacity is exhausted, the work remains incomplete; parent assessment grants no extra round. Missing authority or uncertain effects stop dependent work at once.
 
 A continuation run needs a changed basis or a recorded extension, never just the wish to reset rounds. Its reviews and checks run again in full; earlier approvals remain history.
 
@@ -118,7 +126,7 @@ An assignment closes Completed by itself when its last run finished Applied or N
 | A run ended awaiting a model change while a loan-limit finding was open | The continuation carries the finding; the reviewer marks it not applicable on M2 and records the new three-loan requirement as a linked finding with current evidence. |
 | Lending asks; catalog can continue | Lending waits; the run stays Running, and catalog's work is charged. |
 | All work awaits an owner answer | Effects quiesce; the run is Waiting with the exact question. Nothing is charged for the wait. |
-| Review rejects suspension or return behavior twice | The parent assesses a concrete repair plan before candidate three. A third rejection ends Incomplete; renaming the task grants no fourth candidate. |
+| Review rejects suspension or return behavior twice | The parent assesses a concrete repair plan before any remaining allowed submission. If the submission cap is exhausted, finish Incomplete; earlier successful deliveries also consume it under the current rule. Renaming the task grants no extra candidate. |
 | Only the completion reserve remains | No further writing is admitted. The candidate is retained and the run ends Incomplete with its open work. |
 | A required L1/L2 case cannot be afforded | The finding stays open; a passing ordinary return does not discharge it, and nothing unsupported is published. |
 | A step times out; writer state unknown | Reconciling with the reservation held; no replacement writer or publication until termination and effects are known. |
