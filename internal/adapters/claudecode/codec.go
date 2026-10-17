@@ -125,6 +125,7 @@ type MessageKind string
 const (
 	ControlResponseMessage MessageKind = "control-response"
 	SystemInitMessage      MessageKind = "system-init"
+	ThinkingTokensMessage  MessageKind = "thinking-tokens"
 	UserMessage            MessageKind = "user"
 	AssistantMessage       MessageKind = "assistant"
 	StreamEventMessage     MessageKind = "stream-event"
@@ -303,9 +304,27 @@ func decodeLine(raw []byte) (Message, error) {
 		m.kind = ControlResponseMessage
 	case "system":
 		m.subtype, err = nonempty(o["subtype"])
-		if err == nil && m.subtype == "init" {
-			_, err = readInit(o)
-			m.kind = SystemInitMessage
+		if err == nil {
+			switch m.subtype {
+			case "init":
+				_, err = readInit(o)
+				m.kind = SystemInitMessage
+			case "thinking_tokens":
+				// Select only the observed six-key informational shape. The
+				// pinned SDK declares numbers, with no integer/sign restriction.
+				if len(o) != 6 {
+					err = ErrProtocol
+				} else {
+					err = envelopeIDs(o, true)
+					for _, key := range []string{"estimated_tokens", "estimated_tokens_delta"} {
+						var value float64
+						if bytes.Equal(bytes.TrimSpace(o[key]), []byte("null")) || json.Unmarshal(o[key], &value) != nil {
+							err = ErrProtocol
+						}
+					}
+				}
+				m.kind = ThinkingTokensMessage
+			}
 		}
 	case "user", "assistant", "stream_event":
 		if typ == "stream_event" {
