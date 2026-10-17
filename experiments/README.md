@@ -9,6 +9,7 @@ The current [Project workflow](../docs/project-workflow.md) and separate [Librar
 | Exercise | Scope |
 |---|---|
 | [Library playground](library-playground/README.md) | Current independent Library oracle and bounded transport checks; no provider or Apply acceptance |
+| [Runtime baseline](runtime-baseline/README.md) | Single-agent Library M1 runs in the hardened container runtime, and oracle assessment of realizations in containers; no Apply or Manager-organization evidence |
 | [Case playground](case-playground/README.md) | Historical executable generation retired; cases, evaluation, inventory, examples and evidence preserved with their immutable source |
 
 ## Earlier bounded evaluations

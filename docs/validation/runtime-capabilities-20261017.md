@@ -30,6 +30,18 @@ Validation record, 17 October 2026. These probes answer the runtime questions th
 | Codex turn | With the session login, one real turn wrote `hello.txt` and called the Host tool over MCP through `markitect-agentd mcp`; a helper read the file back. |
 | Codex continues in a new environment | A persistent thread (`ephemeral: false`) learned a code word in container A, which then ended. A helper changed `basis.txt`, and container B resumed the thread with `thread/resume` from the same provider home. The answer named both the code word and the new content. |
 
+## Single-agent baselines
+
+The [runtime baseline](../../experiments/runtime-baseline/README.md) gave one session the M1 model and the software vocabulary, never the evaluation contract, in the hardened runtime container with the Go example image. The independent oracle then assessed the result in containers without network.
+
+| Provider and model | Duration | Usage | Oracle |
+| --- | --- | --- | --- |
+| Claude Code, Opus (first run, before the owner's model choice) | 1.2 min | about 0.20 USD (CLI estimate) | 12 of 12 cases and the M1/M2 discrimination passed |
+| Claude Code, Haiku, high effort | 4.6 min, 33 turns | about 0.06 USD (CLI estimate) | 12 of 12 cases and the discrimination passed |
+| Codex, Luna, high effort | 2.2 min | about 727,000 input tokens, 95 percent cached | 12 of 12 cases and the discrimination passed |
+
+These runs show that real sessions of both providers complete a realistic task in the runtime and that the assessment harness works end to end. They show nothing about the Manager organization, whose expected benefit lies in larger projects.
+
 ## Findings
 
 - **A conversation can continue across environments.** For both CLIs, the retained provider home is enough. Claude Code must not run with `--no-session-persistence`, and Codex threads must not be ephemeral.
