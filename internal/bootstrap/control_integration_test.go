@@ -288,7 +288,7 @@ func TestGitControlRefusesCommittedInputDriftAndRetainsRegisteredHistory(t *test
 	if err != nil {
 		t.Fatal(err)
 	}
-	f.repo.Write(changedPath, strings.Replace(string(data), "maxReviewRounds: 3", "maxReviewRounds: 2", 1))
+	f.repo.Write(changedPath, strings.Replace(string(data), "maxRejectionLimit: 3", "maxRejectionLimit: 2", 1))
 	head := f.repo.Commit("tracked capture input changed after preparation")
 	result, err := apply.NewControlService(f.source, journal.New()).Open(context.Background(), f.prepared, f.facts, f.options)
 	if _, ok := result.Controlled(); !errors.Is(err, apply.ErrCaptureChanged) || ok {

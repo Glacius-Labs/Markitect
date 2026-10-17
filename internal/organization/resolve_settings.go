@@ -46,8 +46,8 @@ func ResolveSettings(topology Topology, facts SettingsFacts) (Settings, error) {
 		}
 		manager := ManagerSettings{
 			Package: slot.Package, StepTimeout: replaceSetting(defaults.StepTimeout, override.StepTimeout),
-			ReviewRounds:  replaceSetting(defaults.ReviewRounds, override.ReviewRounds),
-			CreationRoots: replaceSetting(defaults.CreationRoots, override.CreationRoots), BatchNoChangeReviews: defaults.BatchNoChangeReviews,
+			RejectionLimit: replaceSetting(defaults.RejectionLimit, override.RejectionLimit),
+			CreationRoots:  replaceSetting(defaults.CreationRoots, override.CreationRoots), BatchNoChangeReviews: defaults.BatchNoChangeReviews,
 		}
 		manager.Manager, err = validation.role(defaults.Manager, override.Manager, profiles, instructions)
 		if err != nil {

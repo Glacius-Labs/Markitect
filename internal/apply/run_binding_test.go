@@ -143,7 +143,7 @@ func TestCapturedRunBindingRetainsFinalActualPreparationAndOriginalDocuments(t *
 	}
 	settings, _ := a.Settings().Settings()
 	ceilings := settings.Ceilings()
-	if view.Ceilings.StepTimeout.Value != int64(ceilings.StepTimeout.Value) || view.Ceilings.StepTimeout.Source != ceilings.StepTimeout.Source || view.Ceilings.ReviewRounds != ceilings.ReviewRounds || view.Ceilings.CreationSource != ceilings.CreationRoots.Source {
+	if view.Ceilings.StepTimeout.Value != int64(ceilings.StepTimeout.Value) || view.Ceilings.StepTimeout.Source != ceilings.StepTimeout.Source || view.Ceilings.ReviewRounds != ceilings.RejectionLimit || view.Ceilings.CreationSource != ceilings.CreationRoots.Source {
 		t.Fatal("actual resolved ceilings/provenance changed")
 	}
 	var originals []apply.SourceFile

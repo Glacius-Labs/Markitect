@@ -82,11 +82,11 @@ func (v settingsValidation) ceilingFacts(ceilings SettingsCeilings) error {
 	if err := v.field(ceilings.StepTimeout.Source, ceilings.StepTimeout.Value); err != nil {
 		return err
 	}
-	if err := v.field(ceilings.ReviewRounds.Source, ceilings.ReviewRounds.Value); err != nil {
+	if err := v.field(ceilings.RejectionLimit.Source, ceilings.RejectionLimit.Value); err != nil {
 		return err
 	}
-	if ceilings.StepTimeout.Value <= 0 || ceilings.ReviewRounds.Value <= 0 {
-		return fmt.Errorf("project time and review ceilings must be positive")
+	if ceilings.StepTimeout.Value <= 0 || ceilings.RejectionLimit.Value <= 0 {
+		return fmt.Errorf("project step-timeout and rejection-limit ceilings must be positive")
 	}
 	return v.roots(ceilings.CreationRoots)
 }
@@ -108,15 +108,15 @@ func (v settingsValidation) roots(roots Setting[[]snapshot.DirectoryBoundary]) e
 	return nil
 }
 
-func (v settingsValidation) selection(timeout Setting[time.Duration], rounds Setting[int], roots Setting[[]snapshot.DirectoryBoundary], ceilings SettingsCeilings) error {
+func (v settingsValidation) selection(timeout Setting[time.Duration], rejectionLimit Setting[int], roots Setting[[]snapshot.DirectoryBoundary], ceilings SettingsCeilings) error {
 	if err := v.field(timeout.Source, timeout.Value); err != nil {
 		return err
 	}
-	if err := v.field(rounds.Source, rounds.Value); err != nil {
+	if err := v.field(rejectionLimit.Source, rejectionLimit.Value); err != nil {
 		return err
 	}
-	if timeout.Value <= 0 || timeout.Value > ceilings.StepTimeout.Value || rounds.Value <= 0 || rounds.Value > ceilings.ReviewRounds.Value {
-		return fmt.Errorf("step timeout and review rounds must be positive and within project ceilings")
+	if timeout.Value <= 0 || timeout.Value > ceilings.StepTimeout.Value || rejectionLimit.Value <= 0 || rejectionLimit.Value > ceilings.RejectionLimit.Value {
+		return fmt.Errorf("step timeout and rejection limit must be positive and within project ceilings")
 	}
 	if err := v.roots(roots); err != nil {
 		return err

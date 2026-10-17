@@ -93,10 +93,10 @@ func strategySettingsValues(effective AuthoredExecution) DeclarativeSettings {
 		Defaults: organization.SettingsDefaults{
 			Manager:     organization.RoleDefaults{Profile: *e.Defaults.Manager.Profile, Instructions: *e.Defaults.Manager.Instructions},
 			Reviewer:    organization.RoleDefaults{Profile: *e.Defaults.Reviewer.Profile, Instructions: *e.Defaults.Reviewer.Instructions},
-			StepTimeout: e.Defaults.StepTimeout, ReviewRounds: *e.Defaults.ReviewRounds,
+			StepTimeout: e.Defaults.StepTimeout, RejectionLimit: *e.Defaults.RejectionLimit,
 			CreationRoots: e.Defaults.CreationRoots, BatchNoChangeReviews: *e.Defaults.BatchNoChangeReviews,
 		},
-		Ceilings:      organization.SettingsCeilings{StepTimeout: e.Limits.MaxStepTimeout, ReviewRounds: e.Limits.MaxReviewRounds, CreationRoots: e.Limits.CreationRoots},
+		Ceilings:      organization.SettingsCeilings{StepTimeout: e.Limits.MaxStepTimeout, RejectionLimit: e.Limits.MaxRejectionLimit, CreationRoots: e.Limits.CreationRoots},
 		OwnerApproval: *e.OwnerApproval,
 	}
 	if e.Packages != nil {
@@ -135,8 +135,8 @@ func prepareStrategySettings(parent executionDecoding, compiled model.Result, in
 	}
 	r.effective = cloneExecution(parent.authored)
 	e := &r.effective
-	if e.Defaults.ReviewRounds == nil {
-		e.Defaults.ReviewRounds = executionPointer(&r.product.rounds)
+	if e.Defaults.RejectionLimit == nil {
+		e.Defaults.RejectionLimit = executionPointer(&r.product.rejectionLimit)
 	}
 	if e.Defaults.Manager.Instructions == nil {
 		e.Defaults.Manager.Instructions = executionListPointer(&r.product.manager)

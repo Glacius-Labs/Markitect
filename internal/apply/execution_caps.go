@@ -5,14 +5,14 @@ func (d *executionDecoder) limits(field executionField) ExecutionLimits {
 	if field.node == nil {
 		return r
 	}
-	f := d.object(field, "maxRuns", "maxSessionStarts", "maxSteps", "maxExecutionTime", "maxStepTimeout", "hostOperationTimeout", "maxReviewRounds", "maxContextBytes", "maxSessionSteps", "maxTransientRetries", "creationRoots")
+	f := d.object(field, "maxRuns", "maxSessionStarts", "maxSteps", "maxExecutionTime", "maxStepTimeout", "hostOperationTimeout", "maxRejectionLimit", "maxContextBytes", "maxSessionSteps", "maxTransientRetries", "creationRoots")
 	r.MaxRuns, _ = d.integer(d.required(f, field, "maxRuns"))
 	r.MaxSessionStarts, _ = d.integer(d.required(f, field, "maxSessionStarts"))
 	r.MaxSteps, _ = d.integer(d.required(f, field, "maxSteps"))
 	r.MaxExecutionTime, _ = d.duration(d.required(f, field, "maxExecutionTime"))
 	r.MaxStepTimeout, _ = d.duration(d.required(f, field, "maxStepTimeout"))
 	r.HostOperationTimeout, _ = d.duration(d.required(f, field, "hostOperationTimeout"))
-	r.MaxReviewRounds, _ = d.count(d.required(f, field, "maxReviewRounds"))
+	r.MaxRejectionLimit, _ = d.count(d.required(f, field, "maxRejectionLimit"))
 	r.MaxContextBytes, _ = d.integer(d.required(f, field, "maxContextBytes"))
 	r.MaxSessionSteps, _ = d.integer(d.required(f, field, "maxSessionSteps"))
 	r.MaxTransientRetries, _ = d.integer(d.required(f, field, "maxTransientRetries"))

@@ -172,7 +172,7 @@ limits:
   maxExecutionTime: 16h
   maxStepTimeout: 10m
   hostOperationTimeout: 2m
-  maxReviewRounds: 3
+  maxRejectionLimit: 3
   maxContextBytes: 400000
   maxSessionSteps: 40
   maxTransientRetries: 2

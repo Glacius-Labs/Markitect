@@ -23,9 +23,9 @@ func TestHostSettingsKeepsDefaultsFailuresAndExactSelectionSources(t *testing.T)
 			case "invalid product":
 				input.Bytes = []byte("invalid: true")
 			case "ceiling":
-				rewriteFileCheckSource(t, &raw, &raw.Execution[0], strings.Replace(defaultsAbsentExecution(t), "maxReviewRounds: 3", "maxReviewRounds: 2", 1))
+				rewriteFileCheckSource(t, &raw, &raw.Execution[0], strings.Replace(defaultsAbsentExecution(t), "maxRejectionLimit: 3", "maxRejectionLimit: 2", 1))
 			case "explicit declarations":
-				content := strings.Replace(defaultsAbsentExecution(t), "  profiles:", "  reviewRounds: 2\n  batchNoChangeReviews: false\n  instructions: {manager: [], reviewer: []}\n  profiles:", 1)
+				content := strings.Replace(defaultsAbsentExecution(t), "  profiles:", "  rejectionLimit: 2\n  batchNoChangeReviews: false\n  instructions: {manager: [], reviewer: []}\n  profiles:", 1)
 				rewriteFileCheckSource(t, &raw, &raw.Execution[0], content)
 				want = model.Passed
 			}
@@ -40,7 +40,7 @@ func TestHostSettingsKeepsDefaultsFailuresAndExactSelectionSources(t *testing.T)
 			if available {
 				root, _ := settings.Manager(".")
 				original, _ := m.DecodeExecution().Document()
-				if root.ReviewRounds != *original.Defaults.ReviewRounds || root.BatchNoChangeReviews != *original.Defaults.BatchNoChangeReviews || len(root.Manager.InstructionSources) != 1 || root.Manager.InstructionSources[0] != original.Defaults.Manager.Instructions.Source {
+				if root.RejectionLimit != *original.Defaults.RejectionLimit || root.BatchNoChangeReviews != *original.Defaults.BatchNoChangeReviews || len(root.Manager.InstructionSources) != 1 || root.Manager.InstructionSources[0] != original.Defaults.Manager.Instructions.Source {
 					t.Fatal("explicit false/empty/round selection lost authored source")
 				}
 			}

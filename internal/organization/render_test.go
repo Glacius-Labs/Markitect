@@ -91,6 +91,9 @@ func TestRenderThreeViewsAndOriginalInstructionFrames(t *testing.T) {
 	if result.Package() != "a" || result.View() != organization.ManagerView || result.Template().ID != "markitect/context/manager" || result.Template().Version != "2" {
 		t.Fatal("missing product template/view identity")
 	}
+	if !strings.Contains(string(result.Bytes()), `"RejectionLimit"`) || strings.Contains(string(result.Bytes()), `"ReviewRounds"`) {
+		t.Fatal("rendered settings did not use the authored rejection-limit names")
+	}
 	if got := sectionTexts(t, result, "original-custom-instruction"); len(got) != 1 || !bytes.Equal(got[0], []byte("\xef\xbb\xbfUse concise reports.\r\nKeep source references.")) {
 		t.Fatalf("instruction bytes rewritten: %q", got)
 	}

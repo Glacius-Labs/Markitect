@@ -12,7 +12,7 @@ import (
 func TestProductStrategyDefaultsDocumentBindsAcceptedEffects(t *testing.T) {
 	input := ProductStrategyDefaults()
 	decoded := decodeStrategyDefaults(input)
-	if decoded.status != model.Passed || len(decoded.diagnostics) != 0 || decoded.rounds.Value != 3 || len(decoded.manager.Value) != 0 || len(decoded.reviewer.Value) != 0 || decoded.batch.Value || len(decoded.approval.Value) != 0 {
+	if decoded.status != model.Passed || len(decoded.diagnostics) != 0 || decoded.rejectionLimit.Value != 3 || len(decoded.manager.Value) != 0 || len(decoded.reviewer.Value) != 0 || decoded.batch.Value || len(decoded.approval.Value) != 0 {
 		t.Fatalf("actual embedded product defaults failed: %+v", decoded)
 	}
 	id := snapshot.ContentID(sha256.Sum256(input.Bytes))
@@ -20,7 +20,7 @@ func TestProductStrategyDefaultsDocumentBindsAcceptedEffects(t *testing.T) {
 		source organization.SettingSource
 		path   string
 	}{
-		{decoded.rounds.Source, "/defaults/reviewRounds"},
+		{decoded.rejectionLimit.Source, "/defaults/rejectionLimit"},
 		{decoded.manager.Source, "/defaults/instructions/manager"},
 		{decoded.reviewer.Source, "/defaults/instructions/reviewer"},
 		{decoded.batch.Source, "/defaults/batchNoChangeReviews"},
