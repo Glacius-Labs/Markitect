@@ -16,6 +16,12 @@ import (
 // resolver, publication permit, live controller or evidence of a clean checkout.
 type SourceBasis struct{ Repository, Revision, Guard, ProductBuild, Operation string }
 
+func (s SourceBasis) valid() bool {
+	return text(s.Repository) && text(s.Revision) && text(s.Guard) && text(s.ProductBuild) && s.Operation == "artifact-apply/v1"
+}
+
+const bindingMediaType = "application/vnd.markitect.run-basis+json"
+
 // Document projects an original acquired input without importing apply. Source
 // addresses the whole file; RepositoryPath is absent for external documents.
 // No locator is interpreted as a physical path. Include execution, strategy,
@@ -128,7 +134,7 @@ func (b Binding) Valid() bool            { return b.payload.Valid() && b.owner.V
 
 func Bind(input BindingInput) (Binding, error) {
 	s := input.Source
-	if !text(s.Repository) || !text(s.Revision) || !text(s.Guard) || !text(s.ProductBuild) || s.Operation != "artifact-apply/v1" || !input.OwnerRequest.Valid() {
+	if !s.valid() || !input.OwnerRequest.Valid() {
 		return Binding{}, ErrInvalid
 	}
 	topology, err := organization.BuildTopology(input.Compilation)
@@ -213,16 +219,10 @@ func Bind(input BindingInput) (Binding, error) {
 		return Binding{}, ErrInvalid
 	}
 	var areas []realization.CreationArea
-	var reviews int64
+	reviews := reviewFloor(w.Managers)
 	for i, manager := range managers {
 		if manager.Package != w.Managers[i].Package {
 			return Binding{}, ErrInvalid
-		}
-		if w.Managers[i].HasLocalWork() {
-			reviews++
-		}
-		if len(w.Managers[i].Children) > 0 && !w.Managers[i].PassThrough() {
-			reviews++
 		}
 		for _, role := range []organization.RoleSettings{manager.Manager, manager.Reviewer} {
 			if !covered(role.Profile.Source) || !slices.Contains(input.Profiles, role.Profile.Value) {
@@ -293,11 +293,24 @@ func Bind(input BindingInput) (Binding, error) {
 	if err != nil {
 		return Binding{}, err
 	}
-	payload, err := NewPayload("application/vnd.markitect.run-basis+json", "utf-8", data)
+	payload, err := NewPayload(bindingMediaType, "utf-8", data)
 	if err != nil {
 		return Binding{}, err
 	}
 	return Binding{payload, input.OwnerRequest, s, input.Policy, reviews}, nil
+}
+
+func reviewFloor(managers []organization.Manager) int64 {
+	var reviews int64
+	for _, manager := range managers {
+		if manager.HasLocalWork() {
+			reviews++
+		}
+		if len(manager.Children) > 0 && !manager.PassThrough() {
+			reviews++
+		}
+	}
+	return reviews
 }
 func definitionSources(definitions []model.Definition) []model.Source {
 	var sources []model.Source

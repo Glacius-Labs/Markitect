@@ -17,20 +17,22 @@ func (c *Coordinator) Commit(ctx context.Context, journal Journal, p Proposal) (
 	if c.pending != nil {
 		return AppendReceipt{}, ErrUncertain
 	}
-	if p.replay != nil {
-		check, err := c.Propose(p.command)
-		if err != nil || check.replay == nil || *check.replay != *p.replay {
-			return AppendReceipt{}, ErrConflict
-		}
-		return *check.replay, nil
-	}
-	if p.batch.ID() == "" || p.batch.ExpectedRevision() != c.state.revision {
-		return AppendReceipt{}, ErrConflict
-	}
 	// A proposal from another Coordinator/assignment is not a continuation of
 	// this projection merely because its numeric revision happens to match.
 	check, err := c.Propose(p.command)
-	if err != nil || !bytes.Equal(check.batch.Bytes(), p.batch.Bytes()) {
+	if err != nil {
+		if err == ErrRecovery {
+			return AppendReceipt{}, err
+		}
+		return AppendReceipt{}, ErrConflict
+	}
+	if check.replay != nil {
+		if p.replay != nil && *p.replay == *check.replay || p.replay == nil && check.replay.Matches(p.batch) {
+			return *check.replay, nil
+		}
+		return AppendReceipt{}, ErrConflict
+	}
+	if p.replay != nil || p.batch.ID() == "" || p.batch.ExpectedRevision() != c.state.revision || !bytes.Equal(check.batch.Bytes(), p.batch.Bytes()) {
 		return AppendReceipt{}, ErrConflict
 	}
 	p = check
@@ -49,6 +51,7 @@ func (c *Coordinator) Commit(ctx context.Context, journal Journal, p Proposal) (
 		return receipt, fmt.Errorf("%w: append: %v", ErrUncertain, err)
 	}
 	c.state = p.next
+	c.recovering = c.recovering && c.state.hasOpen()
 	c.pending = nil
 	return receipt, nil
 }
@@ -56,8 +59,8 @@ func (c *Coordinator) Commit(ctx context.Context, journal Journal, p Proposal) (
 // ReconcilePending inspects the exact known batch. Presence adopts only that
 // matching complete commit. Proven absence at the unchanged stream head leaves
 // the previous projection and allows the caller to propose/retry explicitly.
-// Other committed work requires full stream reconstruction by a later recovery
-// consumer; RUN-1 does not silently skip it or manufacture an empty history.
+// Other committed work requires Restore; no committed work is silently skipped
+// and no empty history is manufactured.
 func (c *Coordinator) ReconcilePending(ctx context.Context, journal Journal) error {
 	if ctx == nil || journal == nil {
 		return ErrInvalid
@@ -91,6 +94,7 @@ func (c *Coordinator) ReconcilePending(ctx context.Context, journal Journal) err
 		}
 	}
 	c.state = p.next
+	c.recovering = c.recovering && c.state.hasOpen()
 	c.pending = nil
 	return nil
 }

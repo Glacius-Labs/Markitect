@@ -114,7 +114,8 @@ func (j *memoryJournal) Append(ctx context.Context, b run.AppendBatch) (run.Appe
 	if err := ctx.Err(); err != nil {
 		return run.AppendReceipt{}, err
 	}
-	if _, err := run.DecodeBatch(b.Bytes()); err != nil {
+	stored, err := run.DecodeBatch(b.Bytes())
+	if err != nil {
 		return run.AppendReceipt{}, err
 	}
 	for _, previous := range j.batches {
@@ -145,7 +146,8 @@ func (j *memoryJournal) Append(ctx context.Context, b run.AppendBatch) (run.Appe
 			}
 		}
 	}
-	j.batches = append(j.batches, b)
+	// Persist only the closed serialized form; no live proposal/Binding survives.
+	j.batches = append(j.batches, stored)
 	j.head = b.Revision()
 	receipt := run.ReceiptFor(b)
 	if j.appendMode == "lost" {

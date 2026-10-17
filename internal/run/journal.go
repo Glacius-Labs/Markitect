@@ -22,7 +22,8 @@ const maxRecordBytes = 64 << 20
 var (
 	ErrInvalid   = errors.New("invalid run record")
 	ErrConflict  = errors.New("conflicting run record")
-	ErrUncertain = errors.New("unconfirmed journal commit; reconciliation required")
+	ErrUncertain = errors.New("unconfirmed journal observation; reconciliation required")
+	ErrRecovery  = errors.New("restored invocation requires explicit effect reconciliation")
 )
 
 // Journal is bound by its adapter to one repository and live controller epoch.

@@ -43,10 +43,12 @@ type stateValue struct {
 // Coordinator owns one repository's confirmed projection and at most one
 // uncertain append. Its methods are serialized by the Host's single controller;
 // it is not a lock, runtime, scheduler or concurrent service. A new instance has
-// revision zero and may only be used with an actually new journal stream.
+// revision zero and may only be used with an actually new journal stream. Use
+// Restore when opening a store whose history has not already been established.
 type Coordinator struct {
-	state   stateValue
-	pending *Proposal
+	state      stateValue
+	pending    *Proposal
+	recovering bool
 }
 
 func NewCoordinator(repository string) (*Coordinator, error) {
@@ -57,6 +59,11 @@ func NewCoordinator(repository string) (*Coordinator, error) {
 }
 func (c *Coordinator) Current() RunView { return c.state.current }
 func (c *Coordinator) Revision() uint64 { return c.state.revision }
+
+// RecoveryRequired is a Host observation barrier, separate from committed run
+// state. Restore keeps it while any recorded invocation still needs explicit
+// reconciliation. Reading alone never settles or releases a reservation.
+func (c *Coordinator) RecoveryRequired() bool { return c.recovering }
 func (c *Coordinator) Budget() BudgetView {
 	return budget(c.state.policy, int64(len(c.state.runs)), c.state.invocations)
 }
@@ -113,6 +120,9 @@ func (c *Coordinator) Propose(command Command) (Proposal, error) {
 		}
 		r := previous.receipt
 		return Proposal{command: command, replay: &r}, nil
+	}
+	if c.recovering && command.Kind != SettleInvocation && command.Kind != ReleaseUndispatched && command.Kind != ObserveUncertain && command.Kind != StopRun {
+		return Proposal{}, ErrRecovery
 	}
 	next := c.state
 	next.runs = maps.Clone(c.state.runs)
