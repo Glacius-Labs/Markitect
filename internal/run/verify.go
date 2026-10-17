@@ -26,11 +26,14 @@ const (
 )
 
 // CheckRecord is one admitted project check. Name is the configured check it
-// runs; Request is its recorded request and Tree the tree it runs on. Receipt
-// is the recorded observation once the check ended.
+// runs; Request is its recorded request and Tree the tree it runs on. Task
+// names the Manager whose candidate review requested it; it is empty for the
+// aggregate's required checks. Receipt is the recorded observation once the
+// check ended.
 type CheckRecord struct {
 	ID      CheckID
 	Name    string
+	Task    string
 	Request BlobRef
 	Tree    snapshot.TreeID
 	Receipt BlobRef
@@ -130,6 +133,18 @@ func (c *Coordinator) PrepareCheckCommand(meta RecordMeta, name string, req Chec
 	}
 	cmd := Command{ID: meta.ID, ObservedAt: meta.ObservedAt, Kind: PrepareCheck, Assignment: c.Current().Assignment, Run: c.Current().ID, Reservation: reservation,
 		Check: CheckRecord{ID: req.ID, Name: name, Request: p.Ref(), Tree: w.Tree}, sessionPayloads: []Payload{p}}
+	cmd.managerProof = commandDigest(cmd)
+	return cmd, nil
+}
+
+// PrepareReviewCheckCommand admits a check that the running candidate review
+// of a manager's task requests, on the frozen candidate it reviews.
+func (c *Coordinator) PrepareReviewCheckCommand(meta RecordMeta, manager, name string, req CheckRequest, reservation Reservation) (Command, error) {
+	cmd, err := c.PrepareCheckCommand(meta, name, req, reservation)
+	if err != nil {
+		return Command{}, err
+	}
+	cmd.Check.Task = manager
 	cmd.managerProof = commandDigest(cmd)
 	return cmd, nil
 }
@@ -256,10 +271,10 @@ func (s *stateValue) applyVerification(c Command) error {
 	case PrepareCheck:
 		request, ok := payloadFor(c, c.Check.Request)
 		var w checkRequestWire
-		if r.State != Verifying || !ok || len(c.sessionPayloads) != 1 || request.Ref().MediaType != checkRequestMedia || strictJSON(request.Bytes(), &w) != nil {
+		if !ok || len(c.sessionPayloads) != 1 || request.Ref().MediaType != checkRequestMedia || strictJSON(request.Bytes(), &w) != nil {
 			return ErrInvalid
 		}
-		if _, exists := s.checks[c.Check.ID]; exists || w.ID != c.Check.ID || w.Name != c.Check.Name || w.Tree != c.Check.Tree || c.Check.Tree != s.aggregateTree || s.hasOpen() {
+		if _, exists := s.checks[c.Check.ID]; exists || w.ID != c.Check.ID || w.Name != c.Check.Name || w.Tree != c.Check.Tree || !s.checkAdmissible(c.Check) {
 			return ErrState
 		}
 		if c.Reservation.Kind != ProjectCheck || c.Reservation.Purpose != Assessment || c.Reservation.Maximum < w.Timeout {
@@ -360,6 +375,25 @@ func (s *stateValue) applyVerification(c Command) error {
 	s.current = r
 	s.runs[r.ID] = r
 	return nil
+}
+
+// checkAdmissible admits the aggregate's required checks while the run is
+// Verifying and nothing else is open, and a review's check while that review's
+// candidate step runs, on its frozen candidate, one check at a time.
+func (s stateValue) checkAdmissible(k CheckRecord) bool {
+	if k.Task == "" {
+		return s.current.State == Verifying && k.Tree == s.aggregateTree && !s.hasOpen()
+	}
+	t, ok := s.tasks[k.Task]
+	if !ok || s.current.State != Running || t.Phase != PhaseReviewerCandidate || t.Step == "" || s.sessions[t.Session].Plan.Candidate != k.Tree {
+		return false
+	}
+	for _, id := range s.checkOrder {
+		if open(s.invocations[s.checkInvocations[id]]) {
+			return false
+		}
+	}
+	return true
 }
 
 func (s stateValue) openBlockingIssues(manager string) []Issue {

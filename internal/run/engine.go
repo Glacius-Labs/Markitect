@@ -42,10 +42,13 @@ type EngineConfig struct {
 	Sessions    Sessions
 	Workspaces  Workspaces
 	Checks      Checks
-	Preparation StepPreparation
-	Profile     func(manager, role string) (SessionProfile, error)
-	Clock       func() time.Time
-	Limits      EngineLimits
+	// ReviewChecks are the configured checks a candidate review may request,
+	// by name; their trees are filled in by the engine.
+	ReviewChecks map[string]CheckRequest
+	Preparation  StepPreparation
+	Profile      func(manager, role string) (SessionProfile, error)
+	Clock        func() time.Time
+	Limits       EngineLimits
 }
 
 // Engine drives a run's admitted steps through the ports, one at a time (core
@@ -219,31 +222,14 @@ func (e *Engine) Verify(ctx context.Context, required []RequiredCheck) ([]CheckI
 	var passed []CheckID
 	for _, check := range required {
 		req := check.Request
-		req.Tree = e.aggregate().Tree()
+		req.Tree, req.ID = e.aggregate().Tree(), CheckID(fmt.Sprintf("%s-%s", req.ID, c.Current().ID))
 		cmd, err := c.PrepareCheckCommand(e.meta("prepare-check"), check.Name, req, Reservation{ID: "check-" + string(req.ID), Kind: ProjectCheck, Purpose: Assessment, Maximum: req.Timeout})
 		if err != nil {
 			return nil, err
 		}
-		if err := e.commit(ctx, cmd); err != nil {
-			return nil, err
-		}
-		began := e.cfg.Clock()
-		receipt, runErr := e.cfg.Checks.Run(ctx, req)
-		if receipt.ID == "" {
-			receipt.ID = req.ID
-		}
-		if runErr != nil && receipt.Reason == "" {
-			receipt.Reason = runErr.Error()
-		}
-		observed, err := c.ObserveCheckCommand(e.meta("observe-check"), receipt, e.cfg.Clock().Sub(began))
+		receipt, err := e.runCheck(ctx, cmd, req)
 		if err != nil {
 			return nil, err
-		}
-		if err := e.commit(ctx, observed); err != nil {
-			return nil, err
-		}
-		if receipt.Uncertain {
-			return nil, errors.Join(errStep, runErr)
 		}
 		if !receipt.Passed(req) {
 			return nil, e.finish(ctx, "the required check "+check.Name+" did not pass on the aggregate")
@@ -251,6 +237,34 @@ func (e *Engine) Verify(ctx context.Context, required []RequiredCheck) ([]CheckI
 		passed = append(passed, req.ID)
 	}
 	return passed, nil
+}
+
+// runCheck admits one check, runs it and records its receipt. An uncertain
+// receipt leaves the run to reconciliation.
+func (e *Engine) runCheck(ctx context.Context, admit Command, req CheckRequest) (CheckReceipt, error) {
+	c := e.cfg.Coordinator
+	if err := e.commit(ctx, admit); err != nil {
+		return CheckReceipt{}, err
+	}
+	began := e.cfg.Clock()
+	receipt, runErr := e.cfg.Checks.Run(ctx, req)
+	if receipt.ID == "" {
+		receipt.ID = req.ID
+	}
+	if runErr != nil && receipt.Reason == "" {
+		receipt.Reason = runErr.Error()
+	}
+	observed, err := c.ObserveCheckCommand(e.meta("observe-check"), receipt, e.cfg.Clock().Sub(began))
+	if err != nil {
+		return receipt, err
+	}
+	if err := e.commit(ctx, observed); err != nil {
+		return receipt, err
+	}
+	if receipt.Uncertain {
+		return receipt, errors.Join(errStep, runErr)
+	}
+	return receipt, nil
 }
 
 func (e *Engine) finish(ctx context.Context, reason string) error {
@@ -806,7 +820,7 @@ func (e *Engine) freshClaims() (realization.PathClaims, error) {
 // step's files. Tools the core does not support yet are refused with a reason.
 func (e *Engine) tools(manager string, phase Phase, version stepVersion) ToolHandler {
 	answered := false
-	return func(_ context.Context, call ToolCall, _ int64) (ToolOutcome, error) {
+	return func(ctx context.Context, call ToolCall, _ int64) (ToolOutcome, error) {
 		refuse := func(reason string) (ToolOutcome, error) { return ToolOutcome{Status: ToolRefused, Reason: reason}, nil }
 		ok := func(result any) (ToolOutcome, error) {
 			data, err := json.Marshal(result)
@@ -849,6 +863,8 @@ func (e *Engine) tools(manager string, phase Phase, version stepVersion) ToolHan
 			return ok(map[string]bool{"accepted": true})
 		}
 		switch call.Tool {
+		case ToolRequestCheck:
+			return e.reviewCheck(ctx, manager, phase, version, call, args)
 		case ToolRead:
 			var in struct {
 				Ref string `json:"ref"`
@@ -934,6 +950,47 @@ func (e *Engine) tools(manager string, phase Phase, version stepVersion) ToolHan
 		return refuse("the " + call.Tool + " tool is not available in this version of the core")
 	}
 }
+
+// reviewCheck runs a configured check that a candidate review requests, on the
+// frozen candidate it reviews, and answers with the receipt's outcome and the
+// end of its output, which the review cites as evidence by the check's ID.
+func (e *Engine) reviewCheck(ctx context.Context, manager string, phase Phase, version stepVersion, call ToolCall, args []byte) (ToolOutcome, error) {
+	refuse := func(reason string) (ToolOutcome, error) { return ToolOutcome{Status: ToolRefused, Reason: reason}, nil }
+	if phase != PhaseReviewerCandidate {
+		return refuse("checks run on a submitted candidate during its review")
+	}
+	var in struct {
+		Check string `json:"check"`
+	}
+	if err := decodeArgs(args, &in); err != nil {
+		return refuse(err.Error())
+	}
+	req, ok := e.cfg.ReviewChecks[in.Check]
+	if !ok || e.cfg.Checks == nil {
+		names := slices.Sorted(maps.Keys(e.cfg.ReviewChecks))
+		return refuse(fmt.Sprintf("%q is not a configured check; the configured checks are %s", in.Check, strings.Join(names, ", ")))
+	}
+	req.Tree, req.ID = version.tree, CheckID(fmt.Sprintf("%s-%s-%s", req.ID, call.Step, call.Call))
+	admit, err := e.cfg.Coordinator.PrepareReviewCheckCommand(e.meta("prepare-check"), manager, in.Check, req, Reservation{ID: "check-" + string(req.ID), Kind: ProjectCheck, Purpose: Assessment, Maximum: req.Timeout})
+	if err != nil {
+		return refuse(err.Error())
+	}
+	receipt, err := e.runCheck(ctx, admit, req)
+	if err != nil {
+		return ToolOutcome{}, err
+	}
+	output := receipt.Output
+	if len(output) > reviewCheckOutput {
+		output = output[len(output)-reviewCheckOutput:]
+	}
+	data, err := json.Marshal(map[string]any{"check": string(req.ID), "passed": receipt.Passed(req), "exitCode": receipt.ExitCode, "timedOut": receipt.TimedOut, "outputTail": string(output), "reason": receipt.Reason})
+	if err != nil {
+		return refuse("the receipt cannot be encoded")
+	}
+	return ToolOutcome{Status: ToolOK, Result: data}, nil
+}
+
+const reviewCheckOutput = 16 << 10
 
 // registrable checks a proposed registry record before it is accepted: its
 // Definitions exist in the compiled model, and its path is registered to the

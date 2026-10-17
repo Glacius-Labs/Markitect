@@ -320,7 +320,11 @@ func (h *harness) newEngineWith(c *run.Coordinator, checks run.Checks) *run.Engi
 	if h.journal != nil {
 		journal = h.journal
 	}
-	e, err := run.NewEngine(context.Background(), run.EngineConfig{Coordinator: c, Journal: journal, Sessions: h.sessions, Workspaces: h.ws, Checks: checks, Preparation: h.inputs,
+	var reviewChecks map[string]run.CheckRequest
+	if checks != nil {
+		reviewChecks = map[string]run.CheckRequest{"go-tests": requiredCheck(h.t).Request}
+	}
+	e, err := run.NewEngine(context.Background(), run.EngineConfig{Coordinator: c, Journal: journal, Sessions: h.sessions, Workspaces: h.ws, Checks: checks, ReviewChecks: reviewChecks, Preparation: h.inputs,
 		Profile: func(string, string) (run.SessionProfile, error) {
 			return run.SessionProfile{ImageID: testImage, CredentialRef: "credential-ref", Profile: profile, MaxWireBytes: 1 << 20}, nil
 		},

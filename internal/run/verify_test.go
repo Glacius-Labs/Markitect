@@ -143,3 +143,35 @@ func TestVerificationRefusesUnadmittedChecks(t *testing.T) {
 		t.Fatal("a running run was verified", err)
 	}
 }
+
+// A candidate review runs a configured check on the frozen candidate and cites
+// its receipt; other steps and unknown checks are refused (Host tools).
+func TestCandidateReviewRequestsChecksOnItsCandidate(t *testing.T) {
+	agent := func(s agentStep) []action {
+		switch {
+		case s.Manager == "lending" && s.Phase == run.PhaseWork:
+			return append([]action{{Tool: run.ToolRequestCheck, Args: `{"check":"go-tests"}`, Want: run.ToolRefused}}, happyAgent(s)...)
+		case s.Manager == "lending" && s.Phase == run.PhaseReviewerCandidate:
+			return append([]action{
+				{Tool: run.ToolRequestCheck, Args: `{"check":"lint"}`, Want: run.ToolRefused},
+				{Tool: run.ToolRequestCheck, Args: `{"check":"go-tests"}`, Want: run.ToolOK},
+			}, happyAgent(s)...)
+		}
+		return happyAgent(s)
+	}
+	h := newHarness(t, true, agent)
+	checks := &fakeChecks{}
+	h.engine = h.newEngineWith(h.c, checks)
+	runToEnd(t, h)
+	if h.c.Current().State != run.Verifying || len(checks.runs) != 1 {
+		t.Fatal("review check not run once", h.c.Current(), len(checks.runs))
+	}
+	views := h.c.Checks()
+	// lending's candidate became the aggregate, so its tree is the aggregate's.
+	if len(views) != 1 || views[0].Record.Task != "lending" || !views[0].Passed || views[0].Record.Tree != h.engine.Aggregate().Tree().Digest() {
+		t.Fatal("review check not recorded on its candidate", views)
+	}
+	if b := h.c.Budget(); b.Held != (run.Capacity{}) {
+		t.Fatal("check hold survived", b.Held)
+	}
+}

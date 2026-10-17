@@ -64,8 +64,12 @@ func (c *ControlledRun) Execute(ctx context.Context, ports ExecutionPorts) (Exec
 	if err != nil {
 		return c.result(nil), err
 	}
+	reviewChecks, err := c.reviewChecks(ports)
+	if err != nil {
+		return c.result(nil), err
+	}
 	engine, err := run.NewEngine(ctx, run.EngineConfig{Coordinator: co, Journal: c.Journal(), Sessions: ports.Sessions, Workspaces: ports.Workspaces, Checks: ports.Checks,
-		Preparation: preparation, Profile: ports.Profile, Clock: ports.Clock, Limits: ports.Limits})
+		ReviewChecks: reviewChecks, Preparation: preparation, Profile: ports.Profile, Clock: ports.Clock, Limits: ports.Limits})
 	if err != nil {
 		return c.result(nil), err
 	}
@@ -176,6 +180,25 @@ func (c *ControlledRun) start(ctx context.Context, clock func() time.Time) error
 	}
 	current = co.Current()
 	return c.commit(ctx, run.Command{ID: c.meta("start", clock).ID, Kind: run.StartRun, Assignment: current.Assignment, Run: current.ID, ObservedAt: clock().UTC()})
+}
+
+// reviewChecks are the configured checks, by name, that candidate reviews may
+// request.
+func (c *ControlledRun) reviewChecks(ports ExecutionPorts) (map[string]run.CheckRequest, error) {
+	a, _ := c.prepared.Prepared()
+	selections, ok := a.Settings().Checks()
+	if !ok {
+		return nil, fmt.Errorf("%w: the check selections are incomplete", run.ErrInvalid)
+	}
+	out := map[string]run.CheckRequest{}
+	for _, selection := range selections {
+		request, err := ports.CheckRequest(selection)
+		if err != nil {
+			return nil, err
+		}
+		out[selection.Declaration().ID.Value] = request
+	}
+	return out, nil
 }
 
 // verify runs the required checks on the aggregate, preflights the source

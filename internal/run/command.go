@@ -164,14 +164,14 @@ func (c Command) validate() error {
 		allowed.Conclusion = c.Conclusion
 	case PrepareCheck:
 		k := c.Check
-		if !identifier(string(k.ID)) || !identifier(k.Name) || !k.Request.Valid() || k.Tree == (snapshot.TreeID{}) || k.Receipt != (BlobRef{}) || !c.Reservation.valid() || c.Reservation.Kind != ProjectCheck {
+		if !identifier(string(k.ID)) || !identifier(k.Name) || k.Task != "" && !text(k.Task) || !k.Request.Valid() || k.Tree == (snapshot.TreeID{}) || k.Receipt != (BlobRef{}) || !c.Reservation.valid() || c.Reservation.Kind != ProjectCheck {
 			return ErrInvalid
 		}
 		allowed.Check = k
 		allowed.Reservation = c.Reservation
 	case ObserveCheck:
 		k := c.Check
-		if !identifier(string(k.ID)) || !k.Receipt.Valid() || k.Name != "" || k.Request != (BlobRef{}) || k.Tree != (snapshot.TreeID{}) || c.Elapsed < 0 || !text(c.Reason) {
+		if !identifier(string(k.ID)) || !k.Receipt.Valid() || k.Name != "" || k.Task != "" || k.Request != (BlobRef{}) || k.Tree != (snapshot.TreeID{}) || c.Elapsed < 0 || !text(c.Reason) {
 			return ErrInvalid
 		}
 		allowed.Check = k
