@@ -3,6 +3,22 @@
 `MetadataPreparer` observes the existing closed static Check profile format. It
 does not run the executable or establish runtime capability.
 
+`ContainerProfile.Request(check, tree)` projects explicit Host-supplied container
+values and an `apply.ExecutionCheck` into the existing `run.CheckRequest`. The
+caller selects the profile for `check.Profile` and supplies the actual immutable
+tree. The fixed argument prefix precedes literal project arguments; image,
+environment, limits, directory, timeout and check identity are retained exactly.
+The helper copies argument/environment slices and refuses incomplete or invalid
+requests before effects, using the request and runner's existing conditions.
+It supplies no defaults and does not inspect the Host environment.
+
+This pure value is not a Host document format or an acquired profile binding.
+It does not translate the existing host-executable `process/v1` metadata or
+certify an image. A future source-bound Host decoder must select and validate
+the explicit configuration before calling this helper. Source tests connect the
+projected request to the existing runner with controlled runtime/workspace peers;
+they establish no actual container or Apply execution.
+
 `NewRunner(engine, workspaces)` implements `run.Checks` with the container engine
 and a separately configured `run.Workspaces` adapter. The application supplies
 the concrete workspace adapter; its helper image is independent of the exact
