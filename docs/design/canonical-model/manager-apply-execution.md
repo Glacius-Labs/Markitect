@@ -74,6 +74,18 @@ A Manager may propose a resolution but cannot record one. Budget or rejection-li
 
 Role context carries the complete set of open findings for the task's responsibility and its recorded dependencies, with their grounds and evidence references. Paging the set is allowed; an unread page cannot discharge an obligation. A receiving Manager that is not responsible for a finding reports that through the common parent, which records the corrected accountability; "not mine" cannot orphan it.
 
+### Extract findings at the first Apply
+
+The owner accepted the [post-adoption workflow](manager-apply-library-flow.md#first-apply-after-model-adoption) and reuse of this finding structure ([source](../project-capability-skills-20261009.md#owner-source)). Carry known realization deviations from model adoption into the first Apply through the existing [issue shape](manager-apply-core.md#issues), not a separate repair list, approval ledger or run state machine.
+
+- Preserve the originating report and identity as provenance, affected Definitions, the original model/source/candidate basis, evidence, reason and requested correction or observation. Reuse existing references; do not manufacture a reviewer identity, receipt or runtime observation.
+- Bind applicability to the adopted model and the actual captured realization for this Apply. Check the responsible Manager and relevant dependencies. Historical review or model adoption does not approve the current artifacts. A changed source or meaning requires current assessment, not blind reuse of an earlier conclusion.
+- Represent still-applicable findings with their current subject, responsible owner, blocking/advisory severity and open state under the existing issue rules. Source notes that are not reviewer findings inform independent assessment; they do not silently become authenticated reviewer verdicts. Only an independent review with current grounds can resolve a finding, mark it not applicable or correct its severity.
+- Supply the findings and their evidence to the ordinary Explore and review contexts. They guide investigation without narrowing the complete Manager responsibility to the known list. Unclear applicability or responsibility stays visible until assessed; forwarding a finding cannot orphan it.
+- A Manager may propose a repair or resolution. A specific required case needs current evidence that it ran and addressed the concern. A generic pass, old green test, unchanged file or omitted report cannot close the issue. If the underlying realization has already changed, independent review establishes its current effect instead of repairing by rote.
+
+This is an input handoff into the existing process, not a new approval round or automatic replay of an Extract run. Exact persistence, identity mapping and producer bindings remain implementation work; the documented semantics grant no new model writes or execution rights. The adopted model remains read-only during Apply. Any necessary model correction follows the separate owner decision and model-change path.
+
 ## Review conflicts and arbitration
 
 Configuration selects the [reviewArbiter](manager-apply-configuration.md#resolve-the-team) for each Manager from project defaults and exact overrides. The Parent coordinates concerns but neither it nor the implementing Manager can close its own blocking findings. The Orchestrator admits the configured arbiter only when a Manager or reviewer has explicitly recorded a disputed blocking finding, its conflicting assessments and grounds. A reviewer preferring another valid design raises an advisory recommendation, not an invented binding requirement.
