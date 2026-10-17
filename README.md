@@ -15,11 +15,9 @@ You shape the idea. Markitect organizes the work that brings your project into a
 
 [Why Markitect](#why-markitect) · [Working with a model](#working-with-a-model) · [An example](#let-the-project-do-the-catching-up) · [Development status](#development-status) · [Explore the source](#run-the-current-source)
 
-You have a picture of what your project should be: its behavior, architecture, concepts and rules. As that picture develops, bringing the project along can become a job of its own.
+Markitect is model-first development with delegated AI realization. You describe your project's intended world in a canonical model: its behavior, concepts, architecture and rules. Markitect is being built to organize its realization across code, tests, configuration and documentation.
 
-Markitect is model-first development with delegated AI realization. Make your intended world explicit in a canonical model. Markitect is being built to let the project take on the work of aligning itself with that intent: working out the changes, carrying them through and checking the result across code, tests, configuration and documentation.
-
-The goal is a clean, uniform and understandable repository, without drift, forgotten rules or contradictions. Your attention stays with the idea. The project's realization follows it, with enough trust that you no longer need routine implementation review.
+Think of it as programming through documentation: the model defines what the project should be, and becomes the starting point for making it so.
 
 ## Why Markitect
 
@@ -27,64 +25,40 @@ The difficult question after an AI implementation is:
 
 > Does what the AI built actually match what I intended?
 
-A feature can work while an existing rule is overlooked, another area breaks or the documentation describes something different. You then have to find the gap, explain what you meant, prompt again and check the repair. Some omissions may never be noticed. Keeping the project close to the picture in your head becomes a continuing responsibility.
+A feature can work while an existing rule is overlooked, another area breaks or the documentation describes something different. You have to find the gap, prompt again and check the repair. Some omissions may never be noticed.
 
-Markitect aims to reverse who carries that responsibility. **You develop the intended world; the project works toward it.** Its organization takes on the translation, implementation, coordination and verification needed to bring the actual project into agreement.
+The bottleneck is **human attention**. Another agent can check the work, but it can overlook things too. Markitect aims to make that checking a dependable part of the organization, so you can concentrate on the intended system and decisions that need your judgment.
 
-That treats **human attention as the scarce resource**. Focused agents can spend effort on implementation and checking while people concentrate on the intended system and decisions that need their judgment.
-
-The method draws on familiar practices from human teams: clear responsibility, delegation, escalation, the four-eyes principle and integration of independently examined work. Their effectiveness for AI realization must be demonstrated in use.
-
-## What Markitect aims to deliver
-
-| Goal | What it means for your project |
-| --- | --- |
-| **Model first** | One authoritative account of behavior, architecture and rules remains effective through every change. |
-| **A coherent repository** | Code, tests, configuration and documentation agree with that model and with one another. |
-| **Continuing obligations** | A new feature preserves the rules and behavior that still apply. |
-| **Trustworthy realization** | Systematic implementation, independent review and verification support confidence in the result. |
-| **Your attention on intent** | Routine human implementation review becomes unnecessary; meaningful decisions remain yours. |
-
-These are the product's target outcomes. The [development status](#development-status) below describes what you can run today.
+The goal is a clean, uniform and understandable repository, without drift, forgotten rules or contradictions.
 
 ## Working with a model
 
-1. **Shape the idea.** Define the project's behavior, concepts, architecture and rules in the canonical model. AI can help you explore and author that intent.
-2. **Let the project work toward it.** Markitect organizes the changes, independent review and integration needed to align the realization with the model.
-3. **Keep developing your vision.** Refine the model as your understanding evolves. The next realization works toward that new intent while preserving the obligations that still apply. Deviations from unchanged intent can be repaired against the same model.
-
-The idea becomes the shared point of reference: you develop it, and the project brings its realizations into alignment. Code, tests and documentation follow that intent without asking you to rediscover every consequence of every change.
+1. **Shape the idea.** Work with AI to explore and author the model, or edit it directly. Make the decisions that define your project.
+2. **Apply it.** The planned realization workflow assigns work to responsible agents, brings their contributions together and verifies the result.
+3. **Evolve the model.** Change your intent as your understanding develops. The next realization carries that change through while preserving the obligations that still apply. Deviations can also be repaired against unchanged intent.
 
 ## Let the project do the catching up.
 
 Imagine a library where a member may borrow five books. The rule changes: members may now borrow three.
 
-You express the new rule in the model. Working out where that change belongs and carrying it through is the project's realization work. The intended outcome is coordinated:
+You change the rule in the model. The intended result reaches every affected part of the project:
 
 - The implementation enforces the new limit.
 - Tests check the new boundary against the requirement.
 - The usage guide explains the changed behavior.
 - Existing rules, including returning books and handling suspended members, still hold.
 
-The first complete demonstration applies the original library model, changes that one policy value and applies the revised model against the actual first result. It is the workflow we are building toward, with [independent expectations](docs/design/canonical-model/library-example/evaluation-contract.md) assessing the result.
+This is the [two-Apply library demonstration](docs/design/canonical-model/manager-apply-playground.md) we are building toward: realize the original model, then apply the changed policy to that actual result.
 
 ## Where trust should come from
 
-Markitect combines **AI judgment with deterministic structure**. Explicit model relationships, accountable responsibilities and required process steps organize work and make it inspectable. Agents interpret and realize intent; independent assessment examines their work and how it fits together.
+Markitect combines **AI judgment with deterministic structure**. Its method draws on familiar practices from human teams: clear responsibilities, delegation, escalation, the four-eyes principle and integration of independently reviewed work. Focused context helps each agent attend to its own obligations; explicit relationships and required checks make the process inspectable.
 
-The organization matters because agents can overlook things. Implementation, tests and review can share a mistaken assumption. Markitect's method aims to expose those gaps through distinct responsibilities, relevant context, independent judgment and integration checks.
+The ambition is to make routine human implementation review unnecessary. Implementation, tests and review can still share a mistaken assumption, so the effectiveness of this organization must be demonstrated in use.
 
-Model calls, elapsed time and human attention are different costs. Lower-cost models can make focused collaboration practical; making development cheaper is not the product goal. What matters is the quality of the result and how much human attention it needs. Parallel execution is a later opportunity to reduce elapsed time.
+Agent calls, elapsed time and human attention are different costs. Lower-cost models can make focused collaboration practical; reducing spending is not the product goal. Parallel execution is a later opportunity to reduce elapsed time.
 
 For the full explanation, read [Markitect in brief](docs/vision.md#markitect-in-brief) and [origin and rationale](docs/concepts/origin-and-rationale.md).
-
-## What we want to find out
-
-The intended comparison is straightforward: give an agent ordinary documentation containing the same project intent as the canonical model, with the instruction to read it and implement it.
-
-Does Markitect's structured realization preserve that intent more reliably through a sequence of changes? Does it leave fewer omissions, contradictions and manual corrections? Can people trust the result without routine implementation review?
-
-The conventional approach is allowed to succeed. [Measurement](docs/measurement.md) owns evaluation procedure; an early successful example does not establish a general advantage.
 
 ## Development status
 
@@ -94,7 +68,7 @@ Current source supports model compilation, repository file accounting, context p
 
 Real runtime probes and small single-agent library baselines have passed. They establish their [recorded scope](docs/validation/runtime-capabilities-20261017.md); they do not demonstrate the complete Manager organization or the two-Apply workflow.
 
-The next complete milestone is the [two-Apply library demonstration](docs/design/canonical-model/manager-apply-playground.md). Follow the [delivery plan](docs/implementation-plan.md) for scope and dependencies.
+We plan to compare this approach with an agent given ordinary documentation containing the same intent and the instruction to implement it. [Evaluation](docs/measurement.md) will examine fidelity and required human correction through successive changes. Follow the [delivery plan](docs/implementation-plan.md) for scope and dependencies.
 
 ## Run the current source
 
