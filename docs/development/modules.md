@@ -15,7 +15,7 @@ Run owns fixed input bindings, deterministic budget and lifecycle transitions, a
 | Model, snapshot | No other Markitect responsibility |
 | Organization, realization | Model, snapshot |
 | Run | Model, snapshot, organization, realization |
-| Apply | Model, snapshot, organization, realization |
+| Apply | Model, snapshot, organization, realization, run |
 | Model view | Apply, model, snapshot |
 | Repository adapter | Apply and required pure values |
 | Codex/Check metadata adapters | Apply, model, organization, snapshot |

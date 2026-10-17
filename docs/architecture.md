@@ -47,6 +47,8 @@ Codex and Check adapters parse explicitly selected source-bound metadata. They d
 
 `internal/apply` owns the acquisition and metadata-preparation ports. It retains original requests, every actual capture attempt, known failures and incomplete observations. New closure inputs require a fresh complete acquisition, never an extended old guard. Static context preserves actual Definitions, resolved values and inclusion reasons. Settings resolution preserves authored absence and the original embedded defaults source.
 
+A complete captured settings result can assemble a fixed run basis through `run.Bind`. Original inputs and provenance come from that final capture; the Host explicitly supplies the owner request, allocation and identity assertions. This projection acquires nothing and creates no run or journal record. Static profile metadata grants no execution capability.
+
 Bootstrap alone constructs concrete adapters. CLI code owns parsing/presentation and uses the repository port to resolve explicit refs once. It does not invoke Git directly or reconstruct producer semantics.
 
 ## Runtime layer
