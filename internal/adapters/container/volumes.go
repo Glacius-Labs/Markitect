@@ -104,8 +104,9 @@ func (e *Engine) CreateVolumeExclusive(ctx context.Context, name string, labels 
 }
 
 // VolumeMounts returns every container ID mounting the exact named volume,
-// including stopped containers and read-only mounts. Any incomplete inspect
-// fails the census; it cannot establish that the volume is unused.
+// including stopped containers and read-only mounts. An inspect that fails
+// fails the census, unless a fresh listing shows the container is gone; it
+// cannot otherwise establish that the volume is unused.
 func (e *Engine) VolumeMounts(ctx context.Context, name string) ([]string, error) {
 	if !namePattern.MatchString(name) {
 		return nil, fmt.Errorf("invalid volume name %q", name)

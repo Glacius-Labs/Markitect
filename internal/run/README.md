@@ -150,6 +150,8 @@ still own truthful protocol interpretation and encoding of the compiled input.
 The actual provider init then binds the observed ID before definite Step/tool
 observations and later Steps. Missing init, uncertain send or append failure
 retains effects and holds; another Open cannot replace a recorded startup send.
+An adapter may send several handshake messages, one at a time, before the
+session is ready or bound; the Codex App Server sends three.
 Restoration preserves readiness and the first Step/send identities behind the
 existing recovery barrier, without dispatching anything. Readiness cannot erase
 earlier uncertainty or supply inspection handles.
