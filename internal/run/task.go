@@ -81,6 +81,7 @@ type taskValue struct {
 	Reason       string
 	Failure      string
 	HostFault    bool
+	Claims       []Claim
 }
 
 // TaskView is the read-only projection of one Manager task.
@@ -770,6 +771,9 @@ func (s *stateValue) concludeStep(c Command) error {
 		if err := s.recordSends(t, s.revision); err != nil {
 			return err
 		}
+	}
+	if r.Outcome != outcomeFailed && t.Phase.writing() {
+		t.Claims = addClaims(t.Claims, s.stepClaims(t)) // core rule S4
 	}
 	// A failed conclusion may override an answered outcome when the Host's own
 	// check of the step failed (core rules S4, T6).

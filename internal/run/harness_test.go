@@ -19,6 +19,11 @@ import (
 // them again rather than trusting arbitrary Host context JSON. The one-Package
 // variant keeps only the root and lending.
 func stepInputs(t *testing.T, onePackage bool) run.StepPreparation {
+	return stepInputsWith(t, onePackage, nil)
+}
+
+// stepInputsWith also changes the settings facts before they are resolved.
+func stepInputsWith(t *testing.T, onePackage bool, settings func(*organization.SettingsFacts)) run.StepPreparation {
 	var facts organization.SettingsFacts
 	change := func(input *model.Input) {
 		if !onePackage {
@@ -32,7 +37,12 @@ func stepInputs(t *testing.T, onePackage bool) run.StepPreparation {
 		}
 		input.Root.Entries = entries
 	}
-	input := fixtureWith(t, change, func(f *organization.SettingsFacts) { facts = *f })
+	input := fixtureWith(t, change, func(f *organization.SettingsFacts) {
+		if settings != nil {
+			settings(f)
+		}
+		facts = *f
+	})
 	subjects := int64(len(input.Settings.Managers()))
 	topology, err := organization.BuildTopology(input.Compilation)
 	if err != nil {

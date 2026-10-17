@@ -262,13 +262,17 @@ its purpose; it is withheld while another open blocking issue covers the task
 candidate's step (D4). Changes requested count one rejection per purpose; at
 the bound rejection limit the task becomes incomplete. A needs-decision verdict
 blocks the task on an owner question, and a failed assessment starts a fresh
-review. Accepted deliveries advance the aggregate version when they carry
+review. An integration review may address a finding to a descendant that owns
+the affected artifacts (D5); rejecting with such a blocking finding returns a
+done descendant to work, blocks its ancestors below the reviewed Manager on
+their children, and the reviewed Manager integrates again once they are done
+(T11). Accepted deliveries advance the aggregate version when they carry
 changes. Blocked tasks wake when what they named arrives (T10), and the root's
 completion moves the run to Verifying (T13).
 
 `Engine` drives admitted steps through the `Sessions` and `Workspaces` ports,
-one at a time. It holds what the reducer does not: the compiled model, every
-aggregate version, path reservations and proposed registry records. It
+one at a time. It holds what the reducer does not: the compiled model and every
+aggregate version. It
 materializes each step's version (D3), answers the Host tools, captures the
 candidate after the step (S4) and composes an accepted delivery onto the
 aggregate before it concludes the review (D2). A refused composition finishes
@@ -276,11 +280,13 @@ the run Failed. A step the Host cannot finish is stopped. A confirmed stop ends
 all activity in the container (S2), so its start and step are settled as
 observed, an unstarted one is released, and a run that an uncertain
 observation moved to Reconciling resumes; the step then concludes as failed,
-its reservations and registry proposals are undone, and the Manager's next step
-sees a note (T6). Without a confirmed stop the effects stay for reconciliation.
+its reservations and registry proposals are dropped with it, and the Manager's
+next step sees a note (T6). Without a confirmed stop the effects stay for reconciliation.
 A failure before the container starts costs nothing, so `Run` returns it
-instead of retrying. Registry proposals are checked when they are made. A new engine rebuilds the aggregate
-from the recorded deliveries. `Run` advances until nothing is admissible, then
+instead of retrying. Path reservations and registry proposals are checked when
+they are made and recorded with the concluded writing step (S4), so a candidate
+record carries the claims its new files used and a new engine forms the same
+claims; it rebuilds the aggregate from the recorded deliveries. `Run` advances until nothing is admissible, then
 leaves the run Verifying, moves it to Waiting for an owner question (W1), or
 finishes it Incomplete.
 
@@ -302,11 +308,11 @@ A parent's hints reach its direct children. A failed step's messages are
 dropped with it (T6).
 
 Not yet implemented: a parent forwarding or broadcasting a question it cannot
-answer (M3, it asks anew instead), `assign_owner` and intake (T2, D6),
-`request_check`, the dispatch of a common parent for waits nothing satisfies
-(T12, the run finishes Incomplete instead), reopening done tasks (T11, reply
-steps are read-only), review batching, path reservations surviving an engine
-restart, open issues carried into a continuation run (I5), a fresh conversation
+answer (M3, it asks anew instead), `assign_owner` and intake (T2, D6), the
+dispatch of a common parent for waits nothing satisfies (T12, the run finishes
+Incomplete instead), a done task reopened by anything but an integration
+finding (T11, reply steps are read-only), review batching, open issues carried
+into a continuation run (I5), a fresh conversation
 with a handoff when resume fails (S3), session rotation at `maxSessionSteps`,
 an answer that requires a model change (W3), and the parent's assessment after
 two rejections.

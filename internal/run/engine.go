@@ -67,11 +67,9 @@ type EngineConfig struct {
 // nothing the Coordinator has not admitted, and it stops at the first
 // uncertain or failed effect.
 type Engine struct {
-	cfg        EngineConfig
-	compiled   model.Result
-	versions   []realization.Aggregate
-	reserved   map[string][]realization.PathRequest
-	registered map[string]map[snapshot.Path]realization.Registration
+	cfg      EngineConfig
+	compiled model.Result
+	versions []realization.Aggregate
 }
 
 var errStep = errors.New("step stopped before its conclusion")
@@ -108,7 +106,7 @@ func NewEngine(ctx context.Context, cfg EngineConfig) (*Engine, error) {
 	if err != nil {
 		return nil, err
 	}
-	e := &Engine{cfg: cfg, compiled: compiled, versions: []realization.Aggregate{aggregate}, reserved: map[string][]realization.PathRequest{}, registered: map[string]map[snapshot.Path]realization.Registration{}}
+	e := &Engine{cfg: cfg, compiled: compiled, versions: []realization.Aggregate{aggregate}}
 	var composed []Delivery
 	for _, t := range cfg.Coordinator.Tasks() {
 		for _, d := range t.Deliveries {
@@ -332,13 +330,13 @@ type stepRun struct {
 	openEnded    time.Time
 	stepBegan    time.Time
 	stepEnded    time.Time
+	pending      []Claim
 	opened       bool
 	openSettled  bool
 	stepPrepared bool
 	dispatched   bool
 	stepTerminal bool
 	stepSettled  bool
-	claims       claimSnapshot
 }
 
 // Advance runs the run's next admissible step to its conclusion. It reports
@@ -376,7 +374,7 @@ func (e *Engine) Advance(ctx context.Context) (bool, error) {
 	if err != nil {
 		return true, err
 	}
-	s := &stepRun{task: task.ID, manager: item.Manager, phase: item.Phase, session: sid, version: version, openID: "open-" + string(sid), claims: e.saveClaims(item.Manager)}
+	s := &stepRun{task: task.ID, manager: item.Manager, phase: item.Phase, session: sid, version: version, openID: "open-" + string(sid)}
 	s.plan = SessionPlan{ID: sid, Role: role, Workspace: materialized.Volume, ProviderHome: item.Home, Resume: item.Resume, ImageID: profile.ImageID, CredentialRef: profile.CredentialRef,
 		Candidate: version.tree.Digest(), ReadOnly: !item.Phase.writing(), MaxWireBytes: profile.MaxWireBytes, Profile: profile.Profile.Ref(), Tools: tools.Ref()}
 	prepared, err := c.PrepareTaskSessionCommand(e.meta("prepare-session"), item, s.plan, Reservation{ID: s.openID, Kind: SessionStart, Purpose: purpose, Maximum: e.cfg.Limits.StartTimeout}, profile.Profile, tools)
@@ -401,7 +399,7 @@ func (e *Engine) Advance(ctx context.Context) (bool, error) {
 // drive runs one prepared session through its single step (core rule S1).
 func (e *Engine) drive(ctx context.Context, s *stepRun, purpose Purpose, workspace WorkspaceID) error {
 	c := e.cfg.Coordinator
-	channel, err := c.SessionChannel(e.cfg.Journal, s.session, e.tools(s.manager, s.phase, s.version))
+	channel, err := c.SessionChannel(e.cfg.Journal, s.session, e.tools(s))
 	if err != nil {
 		return err
 	}
@@ -519,7 +517,6 @@ func (e *Engine) stop(ctx context.Context, sid SessionID, channel SessionIO, rea
 func (e *Engine) abandon(ctx context.Context, s *stepRun, cause error) error {
 	ctx = context.WithoutCancel(ctx)
 	c := e.cfg.Coordinator
-	e.restoreClaims(s.manager, s.claims)
 	if s.channel == nil {
 		channel, err := c.SessionChannel(e.cfg.Journal, s.session, RefuseTools)
 		if err != nil {
@@ -699,9 +696,9 @@ func (e *Engine) conclude(ctx context.Context, s *stepRun, observed snapshot.Tre
 	switch {
 	case !s.phase.writing() && !observed.Equal(s.version.tree):
 		result.Failure = "a read-only step changed its workspace"
-	case s.phase.writing() && (!observed.Equal(s.version.tree) || len(e.registered[s.manager]) > 0):
+	case s.phase.writing() && (!observed.Equal(s.version.tree) || e.proposes(s)):
 		// Registry proposals change the candidate even without file changes.
-		record, err := e.capture(s.manager, observed)
+		record, err := e.capture(s, observed)
 		if err != nil {
 			result.Failure = "the step's changes are outside its owner's claims: " + err.Error()
 			break
@@ -729,9 +726,6 @@ func (e *Engine) conclude(ctx context.Context, s *stepRun, observed snapshot.Tre
 		}
 		composed, result.Aggregate, result.AggregateTree = next, next.Version(), next.Tree().Digest()
 	}
-	if result.Failure != "" || !result.Input.Valid() {
-		e.restoreClaims(s.manager, s.claims)
-	}
 	cmd, err := c.ConcludeStepCommand(e.meta("conclude"), s.manager, result)
 	if err != nil {
 		return err
@@ -741,59 +735,23 @@ func (e *Engine) conclude(ctx context.Context, s *stepRun, observed snapshot.Tre
 	}
 	if composed.Valid() {
 		e.versions = append(e.versions, composed)
-		e.settleClaims(s.manager)
 	}
 	return nil
 }
 
-// claimSnapshot is a Manager's reservations and registry proposals before a
-// step, restored when the step fails (core rule T6).
-type claimSnapshot struct {
-	reserved   []realization.PathRequest
-	registered map[snapshot.Path]realization.Registration
-}
-
-func (e *Engine) saveClaims(manager string) claimSnapshot {
-	return claimSnapshot{slices.Clone(e.reserved[manager]), maps.Clone(e.registered[manager])}
-}
-
-func (e *Engine) restoreClaims(manager string, s claimSnapshot) {
-	e.reserved[manager], e.registered[manager] = s.reserved, s.registered
-}
-
-// settleClaims drops what the composed aggregate now holds: reservations of
-// registered paths and proposals the registry records as proposed. The rest
-// stays for the Manager's later deliveries.
-func (e *Engine) settleClaims(manager string) {
-	registry := e.aggregate().Registry()
-	var kept []realization.PathRequest
-	for _, r := range e.reserved[manager] {
-		if _, registered := registry.Lookup(r.Path()); !registered {
-			kept = append(kept, r)
-		}
-	}
-	e.reserved[manager] = kept
-	for path, proposed := range e.registered[manager] {
-		if current, ok := registry.Lookup(path); ok && sameRecord(current, proposed) {
-			delete(e.registered[manager], path)
-		}
-	}
-}
-
-func sameRecord(a, b realization.Registration) bool {
-	x, y := a.Artifact(), b.Artifact()
-	return a.Owner() == b.Owner() && x.Path() == y.Path() && x.Form() == y.Form() && x.Why() == y.Why() && slices.Equal(x.Basis(), y.Basis())
-}
-
 // capture checks the observed tree against the current aggregate and the
 // task's claims and proposed registry records (core rule S4).
-func (e *Engine) capture(manager string, observed snapshot.Tree) (realization.CandidateRecord, error) {
-	owner, err := managerOwner(manager)
+func (e *Engine) capture(s *stepRun, observed snapshot.Tree) (realization.CandidateRecord, error) {
+	owner, err := managerOwner(s.manager)
 	if err != nil {
 		return realization.CandidateRecord{}, err
 	}
 	base := e.aggregate().CandidateBase()
-	claims, err := e.freshClaims()
+	claims, err := e.freshClaims(s)
+	if err != nil {
+		return realization.CandidateRecord{}, err
+	}
+	proposed, err := e.proposals(s.manager, s)
 	if err != nil {
 		return realization.CandidateRecord{}, err
 	}
@@ -801,18 +759,18 @@ func (e *Engine) capture(manager string, observed snapshot.Tree) (realization.Ca
 	for _, r := range base.Registry().Entries() {
 		records[r.Artifact().Path()] = r
 	}
-	for path, r := range e.registered[manager] {
+	for path, r := range proposed {
 		records[path] = r
 	}
 	var entries []realization.Registration
 	for _, r := range records {
 		entries = append(entries, r)
 	}
-	proposed, err := realization.NewRegistry(entries)
+	registry, err := realization.NewRegistry(entries)
 	if err != nil {
 		return realization.CandidateRecord{}, err
 	}
-	result := realization.CaptureCandidate(base, owner, claims, observed, proposed)
+	result := realization.CaptureCandidate(base, owner, claims, observed, registry)
 	candidate, ok := result.Candidate()
 	if !ok {
 		return realization.CandidateRecord{}, errors.New(findingText(result.Findings()))
@@ -820,33 +778,12 @@ func (e *Engine) capture(manager string, observed snapshot.Tree) (realization.Ca
 	return realization.NewCandidateRecord(e.compiled, candidate, nil, nil, e.cfg.Limits.Record)
 }
 
-// freshClaims forms the run-wide claim set at the current aggregate version by
-// reserving every recorded reservation again.
-func (e *Engine) freshClaims() (realization.PathClaims, error) {
-	facts := e.aggregate().PathFacts()
-	var claims realization.PathClaims
-	managers := make([]string, 0, len(e.reserved))
-	for m := range e.reserved {
-		managers = append(managers, m)
-	}
-	slices.Sort(managers)
-	for _, m := range managers {
-		for _, request := range e.reserved[m] {
-			next, decision := realization.ReserveNewPath(facts, claims, request)
-			if decision.Status() != realization.PathAdmissible {
-				return realization.PathClaims{}, fmt.Errorf("reservation of %s no longer fits", request.Path())
-			}
-			claims = next
-		}
-	}
-	return claims, nil
-}
-
 // tools answers the Host tools of one step. Outcome tools are accepted once
 // per step, after the Coordinator's own check; reservations and registry
 // proposals take effect for the task; read supplies Definitions and the
 // step's files. Tools the core does not support yet are refused with a reason.
-func (e *Engine) tools(manager string, phase Phase, version stepVersion) ToolHandler {
+func (e *Engine) tools(s *stepRun) ToolHandler {
+	manager, phase, version := s.manager, s.phase, s.version
 	answered := false
 	return func(ctx context.Context, call ToolCall, _ int64) (ToolOutcome, error) {
 		refuse := func(reason string) (ToolOutcome, error) { return ToolOutcome{Status: ToolRefused, Reason: reason}, nil }
@@ -909,28 +846,19 @@ func (e *Engine) tools(manager string, phase Phase, version stepVersion) ToolHan
 			if err := decodeArgs(args, &in); err != nil {
 				return refuse(err.Error())
 			}
-			owner, err := managerOwner(manager)
+			claim := Claim{Tool: ToolReservePath, Path: in.Path, Form: in.Form}
+			request, err := requestOf(manager, claim)
 			if err != nil {
 				return refuse(err.Error())
 			}
-			path, err := snapshot.NewPath(in.Path)
-			if err != nil {
-				return refuse("invalid path")
-			}
-			request, err := realization.NewPathRequest(realization.ClaimID(manager+":"+in.Path), owner, path, realization.Form(in.Form))
-			if err != nil {
-				return refuse("invalid reservation")
-			}
-			claims, err := e.freshClaims()
+			claims, err := e.freshClaims(s)
 			if err != nil {
 				return refuse(err.Error())
 			}
-			if _, decision := realization.ReserveNewPath(e.aggregate().PathFacts(), claims, request); decision.Status() != realization.PathAdmissible {
+			if _, decision := realization.ReserveNewPath(e.aggregate().PathFacts(), claims, request); decision.Status() != realization.PathAdmissible && !slices.ContainsFunc(e.claimsOf(manager, s), func(c Claim) bool { return c.Tool == claim.Tool && c.Path == claim.Path && c.Form == claim.Form }) {
 				return refuse(findingText(decision.Findings()))
 			}
-			if !slices.Contains(e.reserved[manager], request) {
-				e.reserved[manager] = append(e.reserved[manager], request)
-			}
+			s.pending = addClaims(s.pending, []Claim{claim})
 			return ok(map[string]bool{"reserved": true})
 		case ToolRegister:
 			var in struct {
@@ -942,37 +870,15 @@ func (e *Engine) tools(manager string, phase Phase, version stepVersion) ToolHan
 			if err := decodeArgs(args, &in); err != nil {
 				return refuse(err.Error())
 			}
-			owner, err := managerOwner(manager)
+			claim := Claim{Tool: ToolRegister, Path: in.Path, Form: in.Form, Realizes: in.Realizes, Why: in.Why}
+			record, err := registrationOf(manager, claim)
 			if err != nil {
 				return refuse(err.Error())
 			}
-			path, err := snapshot.NewPath(in.Path)
-			if err != nil {
-				return refuse("invalid path")
-			}
-			var basis []model.Identity
-			for _, d := range in.Realizes {
-				id, found := definitionIdentity(d)
-				if !found {
-					return refuse("realizes must name Definitions as package/id")
-				}
-				basis = append(basis, id)
-			}
-			if err := e.registrable(manager, owner, path, basis); err != nil {
+			if err := e.registrable(s, record); err != nil {
 				return refuse(err.Error())
 			}
-			artifact, err := realization.NewArtifact(path, realization.Form(in.Form), basis, in.Why)
-			if err != nil {
-				return refuse("invalid registry record: " + err.Error())
-			}
-			record, err := realization.NewRegistration(owner, artifact)
-			if err != nil {
-				return refuse("invalid registry record: " + err.Error())
-			}
-			if e.registered[manager] == nil {
-				e.registered[manager] = map[snapshot.Path]realization.Registration{}
-			}
-			e.registered[manager][path] = record
+			s.pending = addClaims(s.pending, []Claim{claim})
 			return ok(map[string]bool{"registered": true})
 		}
 		return refuse("the " + call.Tool + " tool is not available in this version of the core")
@@ -1023,22 +929,30 @@ const reviewCheckOutput = 16 << 10
 // registrable checks a proposed registry record before it is accepted: its
 // Definitions exist in the compiled model, and its path is registered to the
 // Manager or reserved by it.
-func (e *Engine) registrable(manager string, owner realization.Owner, path snapshot.Path, basis []model.Identity) error {
-	for _, id := range basis {
+func (e *Engine) registrable(s *stepRun, record realization.Registration) error {
+	for _, id := range record.Artifact().Basis() {
 		if !e.defined(id) {
 			return fmt.Errorf("Definition %s/%s does not exist in the model", id.Package, id.ID)
 		}
 	}
+	path := record.Artifact().Path()
 	if current, ok := e.aggregate().Registry().Lookup(path); ok {
-		if current.Owner() != owner {
+		if current.Owner() != record.Owner() {
 			return fmt.Errorf("%s is registered to another Manager", path)
 		}
 		return nil
 	}
-	if !slices.ContainsFunc(e.reserved[manager], func(r realization.PathRequest) bool { return r.Path() == path }) {
+	if !slices.ContainsFunc(e.claimsOf(s.manager, s), func(c Claim) bool { return c.Tool == ToolReservePath && c.Path == path.String() }) {
 		return fmt.Errorf("%s is neither registered to you nor reserved by you; reserve it first", path)
 	}
 	return nil
+}
+
+// proposes reports whether the step's Manager has a registry proposal that
+// differs from the aggregate.
+func (e *Engine) proposes(s *stepRun) bool {
+	proposed, err := e.proposals(s.manager, s)
+	return err != nil || len(proposed) > 0
 }
 
 func (e *Engine) defined(id model.Identity) bool {
