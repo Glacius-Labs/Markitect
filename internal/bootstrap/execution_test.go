@@ -1,15 +1,20 @@
 package bootstrap
 
 import (
+	"bytes"
 	"context"
+	"crypto/sha256"
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io/fs"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 	"time"
 
+	"github.com/Glacius-Labs/Markitect/internal/adapters/checks"
 	"github.com/Glacius-Labs/Markitect/internal/adapters/cli"
 	"github.com/Glacius-Labs/Markitect/internal/apply"
 	"github.com/Glacius-Labs/Markitect/internal/model"
@@ -26,6 +31,7 @@ type bootstrapExecutionSessions struct {
 	t              *testing.T
 	records, steps int
 	askOwner       bool
+	answered       bool
 }
 
 func (f *bootstrapExecutionSessions) meta() runport.RecordMeta {
@@ -92,11 +98,15 @@ func (f *bootstrapExecutionSessions) Step(ctx context.Context, a runport.StepAdm
 	if _, err := channel.ObserveStep(ctx, runport.StepObservation{RecordMeta: f.meta(), Step: step, ProviderStep: "turn", Wire: f.wire(`{"turn":"started"}`), Reason: "fake start"}); err != nil {
 		return runport.StepObservation{}, err
 	}
-	if f.askOwner && packet.Manager == "." && packet.Phase == runport.PhaseExplore {
+	asked := f.askOwner && packet.Phase == runport.PhaseWork
+	if asked {
 		f.askOwner = false
-		if err := f.call(ctx, channel, step, "ask-"+string(step), runport.ToolSend, `{"kind":"question","to":"parent","body":"May the fake no-change realization continue?"}`); err != nil {
+		if err := f.call(ctx, channel, step, "ask-"+string(step), runport.ToolSend, `{"kind":"question","to":"owner","body":"May the fake no-change realization continue?"}`); err != nil {
 			return runport.StepObservation{}, err
 		}
+	}
+	if packet.Phase == runport.PhaseWork && bytes.Contains(packet.Context.Bytes, []byte("Continue the fake no-change realization.")) {
+		f.answered = true
 	}
 	tool, args := runport.ToolReport, `{"summary":"Nothing to change.","proposedChanges":[],"prerequisites":[],"uncertainties":[],"questions":[]}`
 	switch packet.Phase {
@@ -108,6 +118,9 @@ func (f *bootstrapExecutionSessions) Step(ctx context.Context, a runport.StepAdm
 		tool, args = runport.ToolRecordExpectations, `{"cases":[{"name":"area","expectation":"Unchanged.","discriminates":"Any change."}]}`
 	case runport.PhaseReviewerCandidate:
 		tool, args = runport.ToolSubmitReview, `{"verdict":"pass","summary":"Fake review passed.","evidence":[],"findings":[],"resolutions":[]}`
+	}
+	if asked {
+		tool, args = runport.ToolWait, fmt.Sprintf(`{"on":[{"kind":"owner","ref":%q}],"reason":"Await the explicit owner answer."}`, "question-"+string(step)+"-1")
 	}
 	if err := f.call(ctx, channel, step, "call-"+string(step), tool, args); err != nil {
 		return runport.StepObservation{}, err
@@ -147,7 +160,7 @@ func (bootstrapExecutionChecks) Run(_ context.Context, request runport.CheckRequ
 }
 
 func TestExecutionServiceUsesControlledExecuteAndAnswerOnRealGitJournal(t *testing.T) {
-	f := newGitControlFixture(t)
+	f := gitControlFixtureForRepository(t, executionRepositoryFixture(t))
 	// Make this source fixture's explicit project ceilings large enough for
 	// every Manager's real Core steps. No runtime resource is allocated.
 	executionPath := filepath.Join(f.repo.Dir, ".markitect", "execution.yaml")
@@ -208,11 +221,78 @@ func TestExecutionServiceUsesControlledExecuteAndAnswerOnRealGitJournal(t *testi
 	}
 	request.Question, request.Answer = questions[0].ID, "Continue the fake no-change realization."
 	second, err := service.Execute(context.Background(), request)
-	if err != nil || second.Status != model.Passed || second.Execution == nil || second.Execution.Run.Outcome != runport.NoChange || second.Execution.Publication == nil || second.Execution.Publication.Outcome != apply.PublicationNoChange {
+	if err != nil || second.Status != model.Passed || second.Execution == nil || second.Execution.Run.Outcome != runport.NoChange || second.Execution.Publication == nil || second.Execution.Publication.Outcome != apply.PublicationNoChange || !sessions.answered {
 		t.Fatalf("actual Answer/Execute did not finish no-change publication: status=%s execution=%+v err=%v", second.Status, second.Execution, err)
 	}
 	after, err := f.source.Capture(context.Background(), apply.CaptureRequest{Selection: request.Selection})
 	if err != nil || before.Head != after.Head || before.Raw.Census.Digest() != after.Raw.Census.Digest() {
 		t.Fatalf("fake no-change run altered owner tree or commit: %v", err)
+	}
+}
+
+// One actual canonical Core Package keeps this outer-composition test bounded.
+// The ordinary root and pass-through ancestor remain in the real topology.
+func executionRepositoryFixture(t *testing.T) *testkit.Repo {
+	t.Helper()
+	repo := testkit.NewRepo(t)
+	err := filepath.WalkDir("../../.markitect/model/markitect/core", func(name string, entry fs.DirEntry, err error) error {
+		if err != nil || entry.IsDir() {
+			return err
+		}
+		data, err := os.ReadFile(name)
+		if err != nil {
+			return err
+		}
+		repo.Write(".markitect/model/markitect/core/"+entry.Name(), string(data))
+		return nil
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, name := range []string{"model.yaml", "model-lock.yaml", "execution.yaml"} {
+		data, err := os.ReadFile("../../.markitect/" + name)
+		if err != nil {
+			t.Fatal(err)
+		}
+		repo.Write(".markitect/"+name, string(data))
+	}
+	repo.Write("docs/target.md", "Unchanged fake realization.\n")
+	repo.Write(".markitect/registry/markitect/core/registry.yaml", "apiVersion: markitect.registry/v1\nartifacts:\n  - path: docs/target.md\n    form: doc\n    realizes: [markitect/core/Kind]\n    why: Exact artifact used only by the fake outer composition fixture.\n")
+	repo.Commit("small committed canonical execution fixture")
+	return repo
+}
+
+func TestExecutionRefusesPreparedLegacyProcessCheck(t *testing.T) {
+	f := gitControlFixtureForRepository(t, executionRepositoryFixture(t))
+	executionPath := filepath.Join(f.repo.Dir, ".markitect", "execution.yaml")
+	raw, err := os.ReadFile(executionPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	text := strings.Replace(string(raw), "checks: []", "checks:\n  - id: legacy\n    profile: legacy\n    directory: .\n    args: []\n    requiredBy: markitect/core/Kind\n    timeout: 1s", 1)
+	f.repo.Write(".markitect/execution.yaml", text)
+	f.repo.Commit("explicit historical metadata-only check")
+	data := []byte("Fake credential-free file; deliberately not an executable image.\n")
+	executable := filepath.Join(testkit.TempDir(t), "not-executed")
+	if err := os.WriteFile(executable, data, 0600); err != nil {
+		t.Fatal(err)
+	}
+	selection := f.prepared.Request().Selection
+	host := selection.HostProfiles[0]
+	document := fmt.Sprintf("apiVersion: markitect.host/v1\nagentProfiles:\n  markitect-agent:\n    codexAppServer: {profileVersion: 1}\ncheckProfiles:\n  legacy:\n    process:\n      profileVersion: 1\n      executable: %q\n      sha256: '%x'\n", executable, sha256.Sum256(data))
+	if err := os.WriteFile(filepath.Join(host.Boundary, host.Path.String()), []byte(document), 0600); err != nil {
+		t.Fatal(err)
+	}
+	prepared, err := apply.NewPreparationService(apply.NewModelService(f.source, f.source)).CaptureSettings(context.Background(), apply.CaptureRequest{Selection: selection}, model.Limits{}, fakeControlMetadata{}, checks.MetadataPreparer{})
+	attempt, ok := prepared.Prepared()
+	if err != nil || !ok || prepared.Status() != model.Passed {
+		t.Fatalf("historical metadata preparation failed: %s %v", prepared.Status(), err)
+	}
+	selected, ok := attempt.Settings().Checks()
+	if !ok || len(selected) != 1 || selected[0].Profile().Input().Section() != "process" {
+		t.Fatal("actual process metadata selection missing")
+	}
+	if _, err := executionCheck(selected[0], runConfig{}); err == nil || err.Error() != "execution requires a prepared container check using the explicit run engine" {
+		t.Fatalf("metadata-only process profile became executable: %v", err)
 	}
 }
