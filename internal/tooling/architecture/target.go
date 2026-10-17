@@ -95,6 +95,7 @@ var responsibilityImports = map[string][]string{
 // consumer-owned Control and Journal ports as its complete Markitect boundary.
 var responsibilityTestImports = map[string][]string{
 	"internal/adapters/journal": {"internal/model", "internal/snapshot"},
+	"internal/bootstrap":        {"internal/adapters/journal", "internal/model", "internal/snapshot", "internal/run"},
 }
 
 // Edge.Test alone cannot distinguish internal from external Go tests.
