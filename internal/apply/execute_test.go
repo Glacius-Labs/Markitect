@@ -142,6 +142,7 @@ type executionPublisher struct {
 	failing    error
 	preflights int
 	failOn     int // the preflight that fails transiently, counted from 1
+	staleOn    int // the preflight that observes a changed source
 }
 
 func (p *executionPublisher) Preflight(_ context.Context, r apply.PublicationRequest, c apply.ControlCheck) (apply.PublicationPermit, error) {
@@ -151,6 +152,9 @@ func (p *executionPublisher) Preflight(_ context.Context, r apply.PublicationReq
 	p.preflights++
 	if p.preflights == p.failOn {
 		return apply.PublicationPermit{}, errors.New("the repository is busy")
+	}
+	if p.preflights == p.staleOn {
+		return apply.PublicationPermit{}, apply.ErrCaptureChanged
 	}
 	if p.stale {
 		return apply.PublicationPermit{}, apply.ErrCaptureChanged
@@ -292,5 +296,16 @@ func TestExecuteRetriesATransientPublicationPreflight(t *testing.T) {
 	result, err = c.Execute(context.Background(), executionPorts(t, publisher, checks))
 	if err != nil || result.Run.State != run.Finished || result.Run.Outcome != run.NoChange {
 		t.Fatalf("the retry did not publish: %+v %v", result.Run, err)
+	}
+}
+
+// A source that changed between verification and publication finishes the
+// run Stale without a prepared publication.
+func TestExecuteFinishesStaleWhenThePublicationPreflightSeesAChange(t *testing.T) {
+	prepared, facts, s, _ := controlFixture(t)
+	c := openControlled(t, prepared, facts, s)
+	result, err := c.Execute(context.Background(), executionPorts(t, &executionPublisher{staleOn: 2}, &executionChecks{}))
+	if !errors.Is(err, apply.ErrCaptureChanged) || result.Run.State != run.Finished || result.Run.Outcome != run.Stale || c.Coordinator().Publication().ID != "" {
+		t.Fatalf("a changed source at publication did not finish Stale: %+v %v", result.Run, err)
 	}
 }
