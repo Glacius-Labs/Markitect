@@ -32,7 +32,7 @@ func RenderContext(selection ContextSelection, settings Settings, input RenderIn
 	w.reference("captured-basis-reference-not-verification", input.InputBinding)
 	w.json("task-identity", struct{ ID, Package, ModelID, ModelDigest string }{input.Task.ID, input.Task.Package, selection.ModelID(), selection.ModelDigest()}, hostRender(input.InputBinding))
 	if input.View != ManagerView && input.Task.Purpose != "" {
-		w.json("reviewed-submission-purpose", input.Task.Purpose, hostRender(input.InputBinding))
+		w.json("reviewed-submission", struct{ Purpose, Scope string }{input.Task.Purpose, input.Task.Scope}, hostRender(input.InputBinding))
 	}
 	parent, children := selection.treePosition()
 	w.json("tree-position", struct {

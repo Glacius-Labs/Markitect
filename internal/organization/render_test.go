@@ -187,14 +187,14 @@ func TestRenderStatesTheTreePosition(t *testing.T) {
 		if !strings.Contains(text, `[section "tree-position"`) || !strings.Contains(text, want) || !strings.Contains(text, "Its integration step composes only the deliveries of the direct children") {
 			t.Fatalf("%s: tree position missing or wrong", pkg)
 		}
-		if strings.Contains(text, "reviewed-submission-purpose") {
+		if strings.Contains(text, "reviewed-submission") {
 			t.Fatalf("%s: a Manager view states a review purpose", pkg)
 		}
 	}
 	selection, settings, input := renderFixture(t, "a", organization.ReviewerExpectations)
-	input.Task.Purpose = "local"
+	input.Task.Purpose, input.Task.Scope = "local", "limited"
 	text := string(requireRendered(t, selection, settings, input).Bytes())
-	if !strings.Contains(text, `{"Manager":"a","Parent":".","DirectChildren":["a/child"]}`) || !strings.Contains(text, "[section \"reviewed-submission-purpose\"") || !strings.Contains(text, `"local"`) {
+	if !strings.Contains(text, `{"Manager":"a","Parent":".","DirectChildren":["a/child"]}`) || !strings.Contains(text, `{"Purpose":"local","Scope":"limited"}`) {
 		t.Fatal("the reviewer view lacks the tree position or the reviewed purpose")
 	}
 }
