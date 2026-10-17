@@ -74,9 +74,9 @@ For the full explanation, read [Markitect in brief](docs/vision.md#markitect-in-
 
 ## Development status
 
-**Markitect is under active development. Full Apply is not available yet.**
+**Markitect is under active development. Controlled Apply is exposed in current source; complete workflow validation is still in progress.**
 
-Current source supports model compilation, repository file accounting, context preparation and a guarded readable model view. Session, workspace, check and publication foundations are integrated, while the core realization workflow and its public Apply entrypoint are being completed.
+Current source supports model compilation, repository file accounting, context preparation and a guarded readable model view. Explicit Apply and owner Answer commands compose the recursive Manager workflow with container sessions, workspaces, checks, a durable journal and guarded publication. They require complete Host profiles and an explicit invocation configuration; see the [project workflow](docs/project-workflow.md#execute-verify-and-apply).
 
 Real runtime probes and small single-agent library baselines have passed. They establish their [recorded scope](docs/validation/runtime-capabilities-20261017.md); they do not demonstrate the complete Manager organization or the two-Apply workflow.
 
@@ -115,7 +115,7 @@ Build from current reviewed source. A future published release needs its own sou
 
 ## Examples
 
-Use the [canonical Library model](docs/design/canonical-model/library-example/README.md), current [source workflow](docs/project-workflow.md) and [independent Playground](experiments/library-playground/README.md). A complete Apply remains the delivery target.
+Use the [canonical Library model](docs/design/canonical-model/library-example/README.md), current [source workflow](docs/project-workflow.md) and [independent Playground](experiments/library-playground/README.md). The complete two-Apply demonstration remains a separate validation target.
 
 <!-- markitect-release:try:end -->
 

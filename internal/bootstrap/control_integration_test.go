@@ -52,7 +52,11 @@ type gitControlFixture struct {
 
 func newGitControlFixture(t *testing.T) gitControlFixture {
 	t.Helper()
-	repo := productFixture(t)
+	return gitControlFixtureForRepository(t, productFixture(t))
+}
+
+func gitControlFixtureForRepository(t *testing.T, repo *testkit.Repo) gitControlFixture {
+	t.Helper()
 	// Derive the policy from the complete real compiled fixture topology,
 	// including the ordinary root, empty leaves and intermediate Managers.
 	source, err := gitrepo.New(gitrepo.Limits{})

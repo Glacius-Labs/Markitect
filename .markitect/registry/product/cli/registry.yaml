@@ -1,5 +1,33 @@
 apiVersion: markitect.registry/v1
 artifacts:
+  - path: "internal/adapters/cli/execution.go"
+    form: code
+    realizes: [product/cli/honest-read-only-interface]
+    why: Parses explicit Apply and owner-answer invocations and reports actual controlled execution observations without admitting previews as execution.
+  - path: "internal/adapters/cli/execution_test.go"
+    form: test
+    realizes: [product/cli/honest-read-only-interface]
+    why: Verifies exact execution input selection, owner-answer arguments, preview refusals and preserved incomplete and failed statuses with a fake execution boundary.
+  - path: "internal/bootstrap/run_config.go"
+    form: code
+    realizes: [product/cli/honest-read-only-interface]
+    why: Decodes the closed explicit invocation configuration directly into existing Host and Core inputs without defaults or credential acquisition.
+  - path: "internal/bootstrap/run_config_test.go"
+    form: test
+    realizes: [product/cli/honest-read-only-interface]
+    why: Verifies complete explicit invocation values, closed JSON objects, finite numeric limits and no referenced credential reads during parsing.
+  - path: "internal/bootstrap/execution.go"
+    form: code
+    realizes: [product/cli/honest-read-only-interface]
+    why: Composes captured settings, durable repository control, concrete container adapters and guarded publication through the actual ControlledRun Execute and Answer methods.
+  - path: "internal/bootstrap/execution_test.go"
+    form: test
+    realizes: [product/cli/honest-read-only-interface]
+    why: Exercises actual controlled Execute, owner waiting, Answer and no-change publication through real Git and SQLite with fake sessions and workspaces.
+  - path: "internal/bootstrap/profile_router.go"
+    form: code
+    realizes: [product/cli/honest-read-only-interface]
+    why: Routes each selected captured Agent profile section to its concrete metadata adapter without a provider fallback or duplicate decoder.
   - path: "internal/bootstrap/runtime_credentials.go"
     form: code
     realizes: [product/cli/honest-read-only-interface]

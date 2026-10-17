@@ -1,4 +1,4 @@
-// Package cli presents the implemented read-only preparation stages. It owns
+// Package cli presents preparation and controlled execution. It owns
 // command parsing and reports, not repository processes or execution policy.
 package cli
 
@@ -38,10 +38,11 @@ type Command struct {
 	checks      apply.CheckProfilePreparer
 	revisions   RevisionResolver
 	documents   Documents
+	execute     ExecuteFunc
 }
 
-func New(preparation *apply.PreparationService, agents apply.AgentProfilePreparer, checks apply.CheckProfilePreparer, revisions RevisionResolver, documents Documents) *Command {
-	return &Command{preparation, agents, checks, revisions, documents}
+func New(preparation *apply.PreparationService, agents apply.AgentProfilePreparer, checks apply.CheckProfilePreparer, revisions RevisionResolver, documents Documents, execute ExecuteFunc) *Command {
+	return &Command{preparation, agents, checks, revisions, documents, execute}
 }
 
 type manifestList []string
@@ -49,12 +50,13 @@ type manifestList []string
 func (s *manifestList) String() string         { return fmt.Sprint([]string(*s)) }
 func (s *manifestList) Set(value string) error { *s = append(*s, value); return nil }
 
-const help = `Markitect: canonical v1 model and read-only preparation
+const help = `Markitect: canonical v1 model, preparation and controlled Apply
 
   check [options]           structural model, registry and file accounting
   context <package> [options]  actual static selection and inclusion reasons
   docs [options]            preview a generated v1 model view
-  apply                    unavailable until the RUN implementation exists
+  apply [options]          execute controlled artifact Apply from committed inputs
+  answer <question> [options]  record an owner answer and continue that Apply
   version | licenses | help
 
 Common options:
@@ -76,6 +78,15 @@ docs options:
   Writes require every acquired source to be repository-bound. External
   model/control/instruction sources remain preview-only because target
   disjointness has not been established.
+
+apply / answer options:
+  --run-config PATH        explicit absolute closed JSON invocation configuration
+  --host-profile PATH      explicit absolute versioned Host profile document
+  --text ANSWER            required for answer; reuse the original run-config
+  --repo, --model and repeated --dependency select committed capture inputs.
+  Revision previews and --metadata are preparation options, not execution flags.
+  Configuration supplies explicit budgets, state storage, helper resources,
+  productBuild assertion and dedicated credential references. No ambient defaults.
 
 Exit codes: 0 requested stage passed; 1 known failure; 2 usage;
 3 incomplete observation, I/O/budget refusal or unavailable operation.
@@ -109,9 +120,8 @@ func (c *Command) Run(ctx context.Context, args []string, stdout, stderr io.Writ
 		}
 		return 0
 	}
-	if verb == "apply" {
-		emit(map[string]string{"operation": "apply", "status": "not_completed", "reason": "Apply is unavailable until RUN and its actual execution/publication ports are implemented."})
-		return 3
+	if verb == "apply" || verb == "answer" {
+		return c.execution(ctx, verb, args[1:], stdout, stderr, emit)
 	}
 	if verb != "check" && verb != "context" && verb != "docs" {
 		fmt.Fprintln(stderr, "unknown operation:", verb)
