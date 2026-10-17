@@ -4,6 +4,18 @@ artifacts:
     form: doc
     realizes: [product/ports-and-adapters]
     why: Documents disposable exact-tree check execution and its observation and source evidence boundaries.
+  - path: "internal/adapters/checks/container_metadata.go"
+    form: code
+    realizes: [product/adapters/checks/closed-check-metadata]
+    why: Observes the complete regular executable inside an explicitly selected immutable image and projects source-bound prepared container configuration.
+  - path: "internal/adapters/checks/container_metadata_decode.go"
+    form: code
+    realizes: [product/adapters/checks/closed-check-metadata]
+    why: Decodes the closed container/v1 Check section with explicit engine, image, executable, literal arguments, environment and resource and output bounds.
+  - path: "internal/adapters/checks/container_metadata_test.go"
+    form: test
+    realizes: [product/adapters/checks/closed-check-metadata]
+    why: Exercises source-bound container preparation with controlled image readers, exact projection and refusal of invalid configuration or incomplete and mismatched evidence.
   - path: "internal/adapters/checks/container_profile.go"
     form: code
     realizes: [product/ports-and-adapters]
