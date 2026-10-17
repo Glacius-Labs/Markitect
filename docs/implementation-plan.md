@@ -29,7 +29,41 @@ The coordinating chat owns scope, dependencies and shared-file reservations. The
 
 Package scopes and dependencies live here. Actual running state, candidate SHAs, reviews and CI results live in each chat/PR; do not create a status file, backlog or dashboard mirror. A chat advances through its authorized queue without waiting for another handoff. A blocked dependency is reported; the next independent queued task can proceed within the same reservation.
 
-The coordinator owns shared policy, this plan, the concept register, root module dependencies and cross-package contracts. A bootstrap/cutover package can receive explicit shared-file ownership. Other chats submit a bounded request instead of changing shared files opportunistically.
+The coordinator owns shared policy, this plan except the [architect section](#architect-and-coordinator), root module dependencies, shared-file reservations and every contract and register entry that section does not assign. A bootstrap/cutover package can receive explicit shared-file ownership. Other chats submit a bounded request instead of changing shared files opportunistically.
+
+### Architect and Coordinator
+
+On 17 October 2026 the owner proposed a division of the work between an architect session and the Coordinator, and the Coordinator acknowledged it ([source](concepts/sources/architecture-review-20261017.md#division-of-work)). The owner's words are "Konzept und Herzstück" for the architect and "die Dinge aussenrum" for the Coordinator. The concept stays frozen until the core runs, and it is completed first ([DEC-040](concepts/register.md#dec-040-concept-freeze-until-the-core-runs)).
+
+Interpretation of that division (marked):
+- **Architect session:**
+  - the [Apply design map](design/canonical-model/README.md#apply-design);
+  - the register entries DEC-024 to DEC-031, DEC-033 to DEC-037, DEC-039, DEC-040 and later entries on the Apply concept;
+  - the consumer-owned ports in `internal/run/` and `internal/apply/`;
+  - the whole directories `internal/run/`, `internal/realization/`, `internal/organization/` and `internal/apply/`;
+  - the `apply` verb wiring, which it requests in the CLI and bootstrap files reserved below.
+
+  These replace the APPLY-ORG, APPLY-REALIZATION, APPLY-RUN and APPLY-INTEGRATE rows of the zones table below.
+- **Coordinator and its implementers:** everything else. This includes:
+  - the model and snapshot packages;
+  - the container runtime, `agentd` and its frame protocol;
+  - the session, journal, repository and check adapters;
+  - the rest of the CLI and bootstrap;
+  - packaging, CI and release tooling, and marketing;
+  - the branch and worktree cleanup the Coordinator planned.
+- **Shared files** stay reserved explicitly through the Coordinator: `go.mod`, `internal/adapters/cli/command.go`, `internal/bootstrap/main.go`, the model and registry shards outside the architect's packages, the architecture and module gates, and the code map.
+- **Port changes** go only through the architect. An adapter that needs one asks the owner, who relays the request.
+
+The architect delivers this queue in order, one pull request each. The Coordinator plans around it. A1 completes the session port contract, in code and in its owning documents, before the rest of the concept. The adapters depend on it, and it adds no core behavior.
+
+| ID | Deliverable | Unblocks |
+| --- | --- | --- |
+| A1 | Step-bound [session port](design/canonical-model/manager-apply-port-contracts.md#session-and-communication-port). | Codex and Claude session adapters |
+| A2 | Core protocol and completed concept: the task machine, messages, issues and composition, with rule IDs and one owner per rule. Open proposals are put to the owner. | A4 and A5 |
+| A3 | Producer contracts for `run.Workspaces`, `run.Checks` and `apply.Publisher`. | Repository, check and publication adapters |
+| A4 | The core part of P06: one Package through `run` with a controlled fake session, covering Explore, work, independent review, rework and acceptance. | A real session through the core |
+| A5 | The core parts of P07 to P09: composition, recursion and integration, aggregate verification and reports, then guarded publication through `markitect apply`. | The two-Apply demonstration |
+| A6 | Cleanup inside the architect's packages: remove the v1/v2 basis replay and `PassThrough`, give errors a reason, and split preparation out of `internal/apply`. | None |
 
 ### Branch names
 
@@ -44,15 +78,15 @@ Use an isolated managed worktree and a non-protected branch from the integrated 
 | APPLY-SNAPSHOT | `internal/snapshot/`, including tests | First wave. Own fixed generic tree/path/entry/digest values. No Git/process/model dependency. Integration waits for BOOT. |
 | APPLY-TESTKIT | Move `src/internal/testkit/` to `internal/testkit/`; mechanical test imports, test-only import/map gates, matching ownership and current guidance | Before repository tests. Share the existing hermetic Git fixtures with root-layout packages without a legacy import or a duplicate helper. Preserve the helper API and behavior; production imports stay forbidden. The coordinator grants these exact shared migration edits. |
 | APPLY-PLAY | `experiments/library-playground/` | First wave. Independent Python standard-library oracle and bounded harness checks. No library implementation, Manager engine or real provider invocation. |
-| APPLY-ORG | `internal/organization/` | After MODEL/SNAPSHOT APIs: topology, exact settings, context and mandates from explicit facts. No runtime or registry import. |
-| APPLY-REALIZATION | `internal/realization/` | After MODEL/SNAPSHOT APIs: ownership, census, registry, claims, candidates and composition. No scheduler. |
-| APPLY-CUTOVER | CLI/bootstrap, self-model, source/coverage/import gates, packaging/smoke, root module and current guidance | After deterministic foundation, read-only Apply preparation and repository capture. One owner switches the active product and deletes old compiler/project/runtime/API consumers. Apply stays explicitly unavailable until implemented. |
-| APPLY-RUN | `internal/run/` and consumer-owned Session/Workspace/Check/Journal ports | After foundation/cutover. One owner for task/review/finding/budget/lifecycle semantics. Establish executable ports before adapters. |
+| APPLY-ORG | `internal/organization/` | Architect session since 17 October 2026, see [above](#architect-and-coordinator). After MODEL/SNAPSHOT APIs: topology, exact settings, context and mandates from explicit facts. No runtime or registry import. |
+| APPLY-REALIZATION | `internal/realization/` | Architect session since 17 October 2026, see [above](#architect-and-coordinator). After MODEL/SNAPSHOT APIs: ownership, census, registry, claims, candidates and composition. No scheduler. |
+| APPLY-CUTOVER | CLI/bootstrap except the `apply` verb wiring, self-model, source/coverage/import gates, packaging/smoke, root module and current guidance | After deterministic foundation, read-only Apply preparation and repository capture. One owner switches the active product and deletes old compiler/project/runtime/API consumers. Apply stays explicitly unavailable until implemented. |
+| APPLY-RUN | `internal/run/` and consumer-owned Session/Workspace/Check/Journal ports | Architect session since 17 October 2026, see [above](#architect-and-coordinator). After foundation/cutover. One owner for task/review/finding/budget/lifecycle semantics. Establish executable ports before adapters. |
 | APPLY-JOURNAL | `internal/adapters/journal/` | After RUN/Apply control contracts. SQLite append/control/recovery; coordinator owns dependency pin. |
 | APPLY-RUNTIME | `internal/adapters/container/`, `internal/agentd/`, `cmd/markitect-agentd/`, `packaging/runtime/` | Below the session port; may start beside RUN. Container engine client, volumes, limits, the agentd session helper with its MCP bridge and stdio framing, and the pinned base image with both CLIs ([DEC-037](concepts/register.md#dec-037-agent-sessions-and-checks-run-in-linux-containers)). No task, model or review semantics; real smoke needs finite authority. |
 | APPLY-AGENT | `internal/adapters/codexappserver/`, `internal/adapters/claudecode/` | Session adapters for Codex App Server and Claude Code on `run.Sessions`, after RUN's Session contract and APPLY-RUNTIME. Profile metadata comes from the runtime image through the engine, which preparation may query but never runs the image; the existing offline metadata preparer is replaced accordingly. Each adapter needs its bounded real handshake smoke; real smoke needs finite authority. |
 | APPLY-REPOSITORY | `internal/adapters/gitrepo/`, `internal/adapters/checks/` | Read-only capture follows the reviewed Apply Source/PreviewSource contracts before CUTOVER. A read-only CheckProfilePreparer may follow the Apply metadata port there; workspace creation on runtime volumes, check execution in containers and guarded publication follow the corresponding RUN/Apply contracts and APPLY-RUNTIME. |
-| APPLY-INTEGRATE | `internal/apply/`, bootstrap/wiring and composed evidence | Before CUTOVER, establish consumer-owned Source/PreviewSource ports and read-only preparation over actual acquired inputs. Model compilation is the first small slice, not a complete check or context. After RUN, add Control/Publisher and orchestration; one Package, recursive integration, verification/publication and real M1/M2 proof follow their adapters. |
+| APPLY-INTEGRATE | `internal/apply/` and composed evidence; `apply` wiring through the reserved CLI and bootstrap files | Architect session since 17 October 2026, see [above](#architect-and-coordinator). Before CUTOVER, establish consumer-owned Source/PreviewSource ports and read-only preparation over actual acquired inputs. Model compilation is the first small slice, not a complete check or context. After RUN, add Control/Publisher and orchestration; one Package, recursive integration, verification/publication and real M1/M2 proof follow their adapters. |
 
 A scope is reserved only when dispatched; it is not permission to start every later row. Parent scope grants no sibling files. Shared outputs have one current writer; reservation changes are explicit.
 
