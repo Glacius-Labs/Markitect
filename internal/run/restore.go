@@ -76,6 +76,8 @@ func Restore(ctx context.Context, journal Journal, repository string, limits Res
 				}
 				command.sessionPayloads = append(command.sessionPayloads, payload)
 			}
+			command.replaying = true
+			command.managerProof = commandDigest(command)
 			proposal, err := c.Propose(command)
 			if err != nil || proposal.replay != nil || !bytes.Equal(proposal.batch.Bytes(), data) {
 				return nil, ErrInvalid

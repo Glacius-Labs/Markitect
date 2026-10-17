@@ -112,3 +112,19 @@ artifacts:
     form: test
     realizes: [product/run/confirmed-run-history]
     why: Checks lifecycle admission, budget conservation and retained uncertainty.
+  - path: "internal/run/manager.go"
+    form: code
+    realizes: [product/run/confirmed-run-history]
+    why: Binds initial Explore inputs to actual compiler and organization preparation and closes inline report records.
+  - path: "internal/run/manager_state.go"
+    form: code
+    realizes: [product/run/confirmed-run-history]
+    why: Records every Manager's initial assessment and quiescence in the existing Coordinator without granting work authority.
+  - path: "internal/run/manager_test.go"
+    form: test
+    realizes: [product/run/confirmed-run-history]
+    why: Distinguishes initial participation, exact input provenance, protected review demand and historical replay from fresh execution.
+  - path: "internal/run/testdata/manager-process-prepolicy-v2.json"
+    form: config
+    realizes: [product/run/confirmed-run-history]
+    why: Retains immutable synthetic v2 history captured from unmodified c9d69dc5 before the Explore policy and fresh-dispatch denial.

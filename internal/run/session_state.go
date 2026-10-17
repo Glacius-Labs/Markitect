@@ -172,7 +172,7 @@ func (r SessionRecord) payloadRefs() []BlobRef {
 	return refs
 }
 func sessionReconciliation(kind string) bool {
-	return kind == ReadySession || kind == BindSession || kind == ObserveStep || kind == ObserveTransport || kind == ReplyTool || kind == ObserveSessionStop
+	return kind == RequestTool || kind == ReadySession || kind == BindSession || kind == ObserveStep || kind == ObserveTransport || kind == ReplyTool || kind == ObserveSessionStop
 }
 func (s stateValue) hasLiveSessions() bool {
 	for _, v := range s.sessions {
@@ -203,7 +203,7 @@ func (s stateValue) hasSessionActivity() bool {
 		if !v.Terminated && (v.Uncertain || !v.Bound || s.transportOpen(id)) {
 			return true
 		}
-		if s.toolOpen(id) {
+		if s.toolOpen(id) || s.transportOpen(id) {
 			return true
 		}
 	}
@@ -364,7 +364,7 @@ func (s *stateValue) applySession(c Command) error {
 		s.steps[r.Step] = step
 	case RequestTool:
 		step, ok := s.steps[r.Step]
-		if !ok || step.Plan.Session != r.Session || !step.Started || step.Terminal || step.Uncertain || v.Terminated || v.Uncertain || s.current.State != Running {
+		if !ok || step.Plan.Session != r.Session || !step.Started || step.Terminal || step.Uncertain || v.Terminated || v.Uncertain || (s.current.State != Running && (s.basisVersion != 3 || s.current.State != Reconciling)) {
 			return ErrState
 		}
 		key := toolKey{r.Session, r.Call}

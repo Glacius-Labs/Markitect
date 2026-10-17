@@ -5,6 +5,7 @@ import (
 	"context"
 	"crypto/sha256"
 	"errors"
+	"fmt"
 	"os"
 	"path/filepath"
 	"reflect"
@@ -52,11 +53,62 @@ type gitControlFixture struct {
 func newGitControlFixture(t *testing.T) gitControlFixture {
 	t.Helper()
 	repo := productFixture(t)
+	// Derive the policy from the complete real compiled fixture topology,
+	// including the ordinary root, empty leaves and intermediate Managers.
+	source, err := gitrepo.New(gitrepo.Limits{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	manifest, _ := snapshot.NewPath("model.yaml")
+	compiled, err := apply.NewModelService(source, source).CaptureModel(context.Background(), apply.CaptureRequest{
+		Selection: apply.InputSelection{Repository: repo.Dir, Local: apply.ModelSelection{
+			Boundary: filepath.Join(repo.Dir, ".markitect"), ManifestPath: manifest}},
+	}, model.Limits{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	result := compiled.Compilation()
+	if result.Status != model.Passed {
+		t.Fatal("fixture model compilation", result.Status)
+	}
+	subjects, localModels := int64(0), 0
+	for _, local := range result.Models {
+		if !local.Local {
+			continue
+		}
+		localModels++
+		parents := map[string]bool{}
+		for _, pkg := range local.Packages {
+			parent := "."
+			if slash := strings.LastIndexByte(pkg.Name, '/'); slash >= 0 {
+				parent = pkg.Name[:slash]
+			}
+			parents[parent] = true
+		}
+		subjects = 1 + int64(len(local.Packages)+len(parents))
+	}
+	if localModels != 1 {
+		t.Fatal("fixture requires exactly one local model")
+	}
+	demand, allocation := 2*subjects, 2*subjects+8
 	execution, err := os.ReadFile(filepath.Join(repo.Dir, ".markitect", "execution.yaml"))
 	if err != nil {
 		t.Fatal(err)
 	}
 	text := strings.ReplaceAll(string(execution), "\r\n", "\n")
+	for original, replacement := range map[string]string{
+		"  maxSessionStarts: 160\n": fmt.Sprintf("  maxSessionStarts: %d\n", 2*allocation),
+		"  maxSteps: 320\n":         fmt.Sprintf("  maxSteps: %d\n", 2*allocation),
+		"  sessionStarts: 80\n":     fmt.Sprintf("  sessionStarts: %d\n", allocation),
+		"  steps: 160\n":            fmt.Sprintf("  steps: %d\n", allocation),
+		"  sessionStarts: 24\n":     fmt.Sprintf("  sessionStarts: %d\n", demand),
+		"  steps: 40\n":             fmt.Sprintf("  steps: %d\n", demand),
+	} {
+		if strings.Count(text, original) != 1 {
+			t.Fatalf("fixture policy changed: missing unique %q", original)
+		}
+		text = strings.Replace(text, original, replacement, 1)
+	}
 	start, end := strings.Index(text, "\nchecks:\n"), strings.Index(text, "\nacceptance:\n")
 	if start < 0 || end <= start {
 		t.Fatal("fixture execution sections missing")
@@ -75,10 +127,6 @@ func newGitControlFixture(t *testing.T) gitControlFixture {
 	}
 	host := testkit.TempDir(t)
 	if err := os.WriteFile(filepath.Join(host, "host.yaml"), []byte("apiVersion: markitect.host/v1\nagentProfiles:\n  markitect-agent:\n    codexAppServer: {profileVersion: 1}\ncheckProfiles: {}\n"), 0600); err != nil {
-		t.Fatal(err)
-	}
-	source, err := gitrepo.New(gitrepo.Limits{})
-	if err != nil {
 		t.Fatal(err)
 	}
 	selection := apply.InputSelection{Repository: repo.Dir,
@@ -104,7 +152,7 @@ func newGitControlFixture(t *testing.T) gitControlFixture {
 	}
 	// Explicit Host assertions, not inferred assignment choices or capabilities.
 	facts := apply.RunBindingFacts{RepositoryIdentity: "bootstrap-git-control-fixture", ProductBuild: "bootstrap-source-test",
-		OwnerRequest: owner, Allocation: runcontrol.Capacity{Runs: 2, SessionStarts: 70, Steps: 140, ExecutionTime: 7 * time.Hour}}
+		OwnerRequest: owner, Allocation: runcontrol.Capacity{Runs: 2, SessionStarts: allocation, Steps: allocation, ExecutionTime: 7 * time.Hour}}
 	if _, err := prepared.BindRun(facts); err != nil {
 		t.Fatal("actual prepared binding", err)
 	}

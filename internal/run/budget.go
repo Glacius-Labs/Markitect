@@ -23,12 +23,16 @@ type BudgetPolicy struct {
 }
 
 func (p BudgetPolicy) validate(reviews int64) error {
+	return p.validateDemand(reviewDemand{Subjects: reviews, Starts: reviews, Steps: reviews})
+}
+
+func (p BudgetPolicy) validateDemand(demand reviewDemand) error {
 	for _, c := range []Capacity{p.Ceilings, p.Assignment} {
 		if c.Runs <= 0 || c.SessionStarts <= 0 || c.Steps <= 0 || c.ExecutionTime <= 0 {
 			return ErrInvalid
 		}
 	}
-	if !fits(p.Assignment, p.Ceilings) || p.Reserve.Runs != 0 || p.Reserve.SessionStarts < reviews || p.Reserve.Steps < reviews || p.Reserve.ExecutionTime <= 0 || !fits(p.Reserve, p.Assignment) || p.MaxStepTimeout <= 0 || p.HostOperationTimeout <= 0 {
+	if !fits(p.Assignment, p.Ceilings) || p.Reserve.Runs != 0 || p.Reserve.SessionStarts < demand.Starts || p.Reserve.Steps < demand.Steps || p.Reserve.ExecutionTime <= 0 || !fits(p.Reserve, p.Assignment) || p.MaxStepTimeout <= 0 || p.HostOperationTimeout <= 0 {
 		return ErrInvalid
 	}
 	return nil

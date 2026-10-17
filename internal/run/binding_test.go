@@ -24,7 +24,7 @@ func TestBindingFixesCompleteInputsAndOwnsOriginalBytes(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if b.RequiredReviews() != 4 {
+	if b.RequiredReviews() != 6 {
 		t.Fatal("local/integration review floor", b.RequiredReviews())
 	}
 	for name, change := range map[string]func(*run.BindingInput){
@@ -108,6 +108,9 @@ type closureRecord struct {
 	ModelInput                                                                                                              model.Input
 	Compilation                                                                                                             []closureScope
 	Managers, Settings, Ceilings, Profiles, Documents, Census, Registry, Classifications, Protections, Policy, PolicySource json.RawMessage
+	ManagerPolicy                                                                                                           json.RawMessage `json:",omitempty"`
+	Scope                                                                                                                   json.RawMessage `json:",omitempty"`
+	MaxContextBytes                                                                                                         json.RawMessage `json:",omitempty"`
 }
 type closureScope struct {
 	ID, Digest  string
