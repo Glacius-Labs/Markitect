@@ -255,7 +255,9 @@ const (
 // no recording of its own. Its encoded outcome must fit maxBytes, the
 // session's wire limit. An error or an invalid or oversize outcome leaves the
 // call pending until reconciled. The channel does not call the handler while
-// the run admits no new work; it records a fixed refusal instead.
+// the run admits no new work; it records a fixed refusal instead, which only
+// settles the call in the journal and is never sent, because the Host stops
+// the session.
 type ToolHandler func(ctx context.Context, call ToolCall, maxBytes int64) (ToolOutcome, error)
 
 // RefuseTools answers every call with a refusal, for slices without Host tools.

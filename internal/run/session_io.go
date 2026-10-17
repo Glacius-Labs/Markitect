@@ -135,7 +135,7 @@ func (io *sessionChannel) ObserveSend(ctx context.Context, o TransportObservatio
 // changed repeat conflicts. A call recorded without an answer stays pending:
 // its effect is unknown and only reconciliation can settle it. While the run
 // admits no new work, the call is answered with a fixed refusal instead of
-// reaching the handler.
+// reaching the handler; that refusal settles the call but is never sent.
 func (io *sessionChannel) Call(ctx context.Context, call ToolCall) (ToolResult, error) {
 	r := SessionRecord{Session: io.session, Step: call.Step, Call: call.Call, Tool: call.Tool, Wire: call.Input.record()}
 	if old, ok := io.c.state.tools[toolKey{io.session, call.Call}]; ok {

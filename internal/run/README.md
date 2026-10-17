@@ -180,7 +180,9 @@ with a reason) whose encoding fits the session's wire limit. The adapter
 returns those exact bytes to the provider; a refusal is an answer, not a
 transport failure. While the run admits no new work (recovery, a stop request
 or any state but Running), the call is answered with a fixed refusal and the
-handler is not called. Calls are deduplicated by session channel and provider
+handler is not called. That refusal only settles the call in the journal: no
+ordinary write is admitted in that state, so the adapter never sends it, and
+the Host stops the session. Calls are deduplicated by session channel and provider
 call identity, including the exact step, tool identity and
 content/representation: an exact repeat returns the recorded answer without
 executing again, and a changed call conflicts. A handler error or an invalid or
