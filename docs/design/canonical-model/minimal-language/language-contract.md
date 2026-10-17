@@ -2,7 +2,7 @@
 
 **Status:** Abgeschlossene v1-Designbaseline, vom Nutzer am 16. Oktober 2026 bestätigt. Diese Datei ist die alleinige normative Quelle für die kanonische Form. Der gewählte v1-Sprachumfang ist fertig designt; es bestehen keine offenen Sprachentscheidungen innerhalb dieses Umfangs.
 
-Der Abschluss betrifft das Sprachdesign. Produktive Go-Implementierung und ein breiter Konformitätskorpus stehen noch aus. Die ausführbaren Entwurfsproben belegen ihren jeweiligen Prüfungsumfang, keine vollständige Unterstützung durch den Produktcompiler. Projektvokabulare und die gesonderten Verfahrensvorschläge gehören nicht zum Abschluss dieser Sprachbaseline.
+The design of the full v1 language is complete. As of 17 October 2026, the current source implements its product compiler; the [delivery plan](../../../implementation-plan.md) owns the remaining product work. The design probes show only the checks recorded for each probe. Compiler and repository checks do not prove real provider execution, Apply, a release or human acceptance. Project vocabulary and the separate procedure proposals are outside this language baseline.
 
 **Verbindlichkeit:** MUSS und DARF NICHT bezeichnen verpflichtende Regeln beziehungsweise Verbote. DARF bezeichnet eine erlaubte Möglichkeit. Auch die deklarativen Regeln, Tabellen, Grammatiken und die neun Core-Definitionen dieser Spezifikation sind normativ. Es gibt keine implizite Fehlerkorrektur. Beispiele und Prüfberichte außerhalb dieser Datei sind informativ und können diese Regeln nicht ergänzen oder überschreiben.
 
@@ -745,7 +745,7 @@ Strukturelle Gültigkeit beweist weder die Wahrheit oder Vollständigkeit verbin
 
 Nicht Teil von v1 sind kompakte oder eingebettete Definitionen, zusätzliche Namespaces, benutzerdefinierte Metaklassen, automatische Namenskorrekturen oder Weiterleitungen, Versionsbereiche, Mehrversionsimporte und eine allgemeine formale Wertebedingungs- oder Ausführungssprache. Zusätzliche Fach-Kinds aus Bibliotheken erhalten keine privilegierte Compilersemantik.
 
-Kontextbildung, semantischer Index, Änderungsbewertung, Realisierungszuordnung, Prüfplanung, Delegation, Integration und Apply sind keine durch diese Spezifikation festgelegten Verfahren. Die [separaten Verfahrensvorschläge](procedure-proposals.md) sind nicht gewählt. Produktive Go-Implementierung, Konformitätskorpus, Fehlercodes, Ausgabeformate, Bereitstellung und Migration sind gesonderte Implementierungsarbeit; daraus folgen keine weiteren Pflicht-Kinds und keine Änderung der v1-Regeln.
+Context, semantic indexing, change assessment, realization mapping, check planning, delegation, integration and Apply are not procedures defined by this specification. The [separate procedure proposals](procedure-proposals.md) have not been selected. Diagnostic profiles, output formats, deployment and migration remain separate work. They add no required Kinds and do not change the v1 rules.
 
 <a id="121-stand-der-definition-des-kanonischen-modells"></a>
 

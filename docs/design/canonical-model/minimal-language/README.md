@@ -2,7 +2,7 @@
 
 **Historisch und nicht normativ.** Die nachfolgenden Gesprächsstände, Varianten und Berichte behalten ihren ursprünglichen Geltungsbereich. Spätere Entscheidungen setzen sie nicht rückwirkend um.
 
-Die [Sprachspezifikation v1](language-contract.md) ist seit dem 16. Oktober 2026 die vom Nutzer bestätigte abgeschlossene Designbaseline. Die historische Herleitung auf dieser Seite enthält keine offenen v1-Sprachentscheidungen. Produktive Go-Implementierung und ein breiter Konformitätskorpus bleiben gesonderte Arbeit.
+The [v1 language contract](language-contract.md) is the completed design baseline confirmed by the owner on 16 October 2026. This historical record contains no open v1 language decisions. As of 17 October 2026, the current source implements the v1 product compiler. The design probes below show only their recorded scope; the [delivery plan](../../../implementation-plan.md) owns current product status and remaining work.
 
 | Einstieg | Rolle |
 | --- | --- |

@@ -151,12 +151,7 @@ The owner's [origin account of 15 October 2026](sources/owner-origin-20261015.md
 ### DEC-006 Every file is covered or explicitly ignored
 
 - **Status:** Accepted, owner, 10 October 2026 ([owner response, point 3](sources/idea-review-20261010.md#owner-response-to-the-five-points)).
-- **Current source:**
-  - This is enforced through whole-repository coverage, not inside the structural model compiler.
-  - With `coverageMode: full`, the `init` default, an unclassified file fails `check`, Plan and full Verify.
-  - The working-tree check judges only files the working tree has, so a deleted or renamed file stops failing at once; a file that is staged and then deleted from disk passes it, and a fixed-revision check catches it (for example of a commit built from the index with `git write-tree` and `git commit-tree`). Deleting an ignored file reports the unused ignore entry at once.
-  - Ignore rules live in `.markitect/ignore.yaml`; the discussion's `.markitectignore` refers to the same concept.
-  - A transitional class counts as accounted for but not conforming.
+- **Historical source snapshot (10 October 2026):** The predecessor engine checked coverage separately from its model compiler and supported `coverageMode: full`. The current source compiles canonical v1 and prepares exact repository accounting; it has no legacy `init`, Plan or Verify commands. See the [workflow](../project-workflow.md) and [delivery plan](../implementation-plan.md) for current behavior and sequence.
 - **Statement:**
   - Every repository file must be accounted for: realized through the model, classified as a Markitect file, or explicitly ignored. Otherwise the project does not "compile" in the owner's sense.
   - One file may realize several definitions.
@@ -168,7 +163,7 @@ The owner's [origin account of 15 October 2026](sources/owner-origin-20261015.md
 - **Statement:**
   - The cost hypothesis targets capable mid-tier models such as Luna and Sonnet. Haiku is a candidate for cost-sensitive use if it proves sufficient.
   - These models are not weak. The owner distinguishes them from the high-end tier: Fable, Opus and Astra.
-- **Current source:** By default every inner role runs on Luna. Since RUN-01 a role can use another model through a process executor ([ENH-004](#enh-004-per-role-agent-configuration-and-model-mixing), [ENH-005](#enh-005-exchangeable-executor-for-the-delegated-method)); a Claude executor for Sonnet or Haiku is RUN-03.
+- **Historical source snapshot (10 October 2026):** The predecessor engine defaulted inner roles to Luna and allowed process executors. Those settings and that runtime are not the current source. Current implementation and planned work are owned by the [delivery plan](../implementation-plan.md).
 
 ### DEC-008 The delegated method has not yet been tested
 
@@ -570,10 +565,10 @@ These entries record agreed or endorsed direction. Recording an enhancement does
 ### ENH-004 Per-role agent configuration and model mixing
 
 - **Status:** Accepted direction, owner, 10 October 2026. A separate configuration for every agent role was already planned.
-- **Current source:**
+- **Historical source snapshot (10 October 2026):**
   - `.markitect/runtime.yaml` binds one executor and one reviewer per Manager. Each binding has its own model, plus a reasoning effort for the App Server or model options for the process transport. One verifier is configured globally.
   - `config` generates a default profile for every role: Codex App Server, `gpt-6-luna`, `high` effort. Since RUN-01, a setup options record gives Managers, reviewers and the verifier their own provider (`codex` or `process`), model, effort and cost mode, and profiles can be mixed ([role profiles](../provider-adapters.md#role-profiles)).
-  - PLAY-06 is integrated as [PR241](https://github.com/Glacius-Labs/Markitect/pull/241) at Main `d083c8f37b6bb1e09a9c5a7947c421651a7e755b` with complete [push CI38231391134](https://github.com/Glacius-Labs/Markitect/actions/runs/38231391134). Playground manifests select role executor/model/effort; setup confirms actual runtime arguments, effective cost mode and requested process version, and reports the configuration. Provider-free checks and fake setup prove this configuration path, not provider honor or a method study; PLAY-07 remains gated.
+  - PLAY-06 was integrated as [PR241](https://github.com/Glacius-Labs/Markitect/pull/241) at Main `d083c8f37b6bb1e09a9c5a7947c421651a7e755b` with [push CI38231391134](https://github.com/Glacius-Labs/Markitect/actions/runs/38231391134). Playground manifests selected role executor/model/effort; setup confirmed actual runtime arguments, effective cost mode and requested process version, and reported the configuration. Provider-free checks and fake setup proved this configuration path, not provider honor or a method study. This evidence remains historical and is not the current implementation. The rebuilt source and its sequence belong to the [delivery plan](../implementation-plan.md).
   - Helpers inherit their parent's configuration.
   - The Manager implements its own slice; there is no separate implementer role.
 - **Direction:**
@@ -585,16 +580,16 @@ These entries record agreed or endorsed direction. Recording an enhancement does
 
 ### ENH-005 Exchangeable executor for the delegated method
 
-- **Status:** Endorsed by the owner on 10 October 2026. Increment 1 (RUN-01) and the asynchronous work/review boundary (RUN-02, [PR245](https://github.com/Glacius-Labs/Markitect/pull/245)) are merged. Actual-Main push CI38250236626 passed Quality, Race and source-artifact publication at e9979084dd085a2cd2715828358ed384feba0383. This is the product side of [DEC-010](#dec-010-evaluate-the-method-separately-from-its-execution-runtime); runtime extraction, provider execution and recovery retain their separate packages and gates.
-- **Problem:** In practice every delegated role runs through one native runtime, the Codex App Server adapter. Runtime and environment failures therefore block both product use and evaluation of the method.
-- **Current source:**
+- **Status:** Endorsed by the owner on 10 October 2026. The predecessor source's RUN-01 and RUN-02 increments were merged; their recorded CI result at `e9979084dd085a2cd2715828358ed384feba0383` remains evidence for that source only. This is the product side of [DEC-010](#dec-010-evaluate-the-method-separately-from-its-execution-runtime). The current rebuild and its evidence are owned by the [delivery plan](../implementation-plan.md).
+- **Historical motivation (10 October 2026):** In the predecessor source, every delegated role ran through one native runtime, the Codex App Server adapter. Runtime and environment failures therefore blocked both product use and evaluation of the method.
+- **Historical source snapshot (10 October 2026):**
   - Internal role invocations use the `projectrun.Invoker` interface. That interface has two transports:
     - a hand-configurable process transport with a versioned JSON protocol (`agent-execution/v1alpha1`);
     - the native Codex App Server transport.
   - Repository end-to-end tests drive Plan, Run, Review, Verify and guarded Apply through a scripted, model-free process executor.
   - Since RUN-01, the role options accepted by `config` select a process executor per role, `costMode: unmetered` covers executors that cannot report token usage, such as scripts or people, and `markitect-exchange-executor` is a reference adapter that hands each invocation to a person, a script or another session through files ([bring your own executor](../provider-adapters.md#bring-your-own-executor)).
   - RUN-02 adds deterministic Manager/reviewer packet export, read-only listing and digest-bound response or fixed Git-candidate submission through CLI/MCP. Submission stores data; a later explicit scheduler continuation validates the response and advances Manager/review work. Verify uses the existing local path, and guarded Apply remains a separate operation. Git candidates include grounded deletions. New Plans bind method policy independently of an installed executor, while actual internal invocations retain executor identity checks.
-  - Passed review reuse binds the review's retained parent, current scoped bytes/modes, typed operations, deletion preimages and current model/helper policy. Integration/rework retains the actual materialized merged input as its direct parent. This is provider-free capability and source-bound technical proof; packetized Verifier, successful interruption recovery, provider studies and human acceptance are separate.
+  - Passed review reuse bound the review's retained parent, scoped bytes/modes, typed operations, deletion preimages and model/helper policy. Integration/rework retained the actual materialized merged input as its direct parent. This was provider-free capability and source-bound technical proof; packetized Verifier, successful interruption recovery, provider studies and human acceptance were separate. These details describe the predecessor implementation, not current source.
 - **Direction (proposal):**
   - Separate the deterministic method from the execution runtime.
     - The method covers the compiled model, coverage, impact, Manager scopes and briefings, required reviews, candidate validation, Verify and guarded Apply.
@@ -602,7 +597,7 @@ These entries record agreed or endorsed direction. Recording an enhancement does
   - Expose a stable executor boundary. Through it, Markitect hands each role a deterministic work packet: scope, context, obligations, required checks and required reviews. It then accepts the resulting candidate and review verdict and validates them with the same rules as today.
   - The native Codex adapter becomes one executor among others. Further executors, for example Claude Code, can be added without changing the method.
   - Authority does not change. Scope checks, fixed snapshots and guarded Apply apply to every executor, and submitted reviews remain AI evidence, not human acceptance.
-- **Rebuild consequence (design, under [DEC-024](#dec-024-first-reliable-apply-rebuild-and-coordinated-start) and [DEC-032](#dec-032-quality-simplicity-and-stability-over-effort-and-compatibility)):** the rebuild replaces the current executor boundary with the provider-neutral session port `run.Sessions`. The process executor, exchange packets and Claude wrapper are deleted at the cutover. Since [DEC-037](#dec-037-agent-sessions-and-checks-run-in-linux-containers) the port has two adapters, Codex App Server and Claude Code, both in containers ([rebuild plan](../design/canonical-model/manager-apply-rebuild-plan.md#session-adapters)). The direction of this entry stays.
+- **Current design (17 October 2026):** The rebuild defines a provider-neutral session port `run.Sessions` and two container-based adapters, Codex App Server and Claude Code ([DEC-037](#dec-037-agent-sessions-and-checks-run-in-linux-containers), [rebuild plan](../design/canonical-model/manager-apply-rebuild-plan.md#session-adapters)). The [delivery plan](../implementation-plan.md) owns implementation status and sequencing. This design is not evidence that provider execution or Apply has been implemented or accepted.
 - **Historical work items:** RUN-01 (merged as pull request #104), RUN-02, RUN-03 and RUN-05 in the [backlog](https://github.com/Glacius-Labs/Markitect/blob/bc4b49e76f9b9e4b3ec98033a0b8c73d5013b310/docs/work-items/backlog.yaml).
 - **Design link (17 October 2026):** the Claude Code session adapter moved from the later extensions into the first version ([DEC-037](#dec-037-agent-sessions-and-checks-run-in-linux-containers)).
 
@@ -660,7 +655,7 @@ The ideas below come from the owner's contributions of 9 October 2026. The produ
 
 - **Status:** Owner idea, discussed earlier and restated on 9 October 2026 (Concepts `USER-20261009-01`). Provisional; not an accepted contract.
 - **Idea:** Each Manager can be configured with a degree of freedom or something similar, and rules can carry a "strictness" („Strenge“).
-- **Current source:** `.markitect/runtime.yaml` already has a strictness setting, as a project default and per Manager. It asks a Manager for additional evidence and counterexamples.
+- **Historical source snapshot (9 October 2026):** `.markitect/runtime.yaml` held a strictness setting for the predecessor engine. That file is not part of the current source. This idea remains open; the [delivery plan](../implementation-plan.md) owns the current rebuild scope.
 - **Recorder's interpretation:** That setting covers one possible reading of "strictness": how deeply work is checked. The Concepts chat left other readings open.
 - **Related:** [IDEA-008](#idea-008-configurable-local-priorities-at-every-level). Source: [discussion-boundaries](sources/concepts-chat-20261009/discussion-boundaries-20261009.md).
 
