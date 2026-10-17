@@ -5,7 +5,6 @@ import (
 	"math/big"
 	"regexp"
 	"strings"
-	"time"
 
 	"github.com/Glacius-Labs/Markitect/internal/model"
 	"github.com/Glacius-Labs/Markitect/internal/organization"
@@ -144,7 +143,7 @@ func (d *executionDecoder) integer(field executionField) (organization.Setting[i
 	}
 	var value int64
 	if err := field.node.Decode(&value); err != nil {
-		d.issue(model.NotCompleted, "execution.integer_range", field, "The declared integer exceeds this decoder's integer representation.")
+		d.issue(model.Failed, "execution.integer", field, "Expected a positive integer cap.")
 		return organization.Setting[int64]{}, false
 	}
 	if value <= 0 {
@@ -167,24 +166,6 @@ func (d *executionDecoder) count(field executionField) (organization.Setting[int
 }
 
 var executionDecimal = regexp.MustCompile(`^[+-]?[0-9](?:_?[0-9])*$`)
-var executionDuration = regexp.MustCompile(`^\+?(?:([0-9]+(?:\.[0-9]*)?|\.[0-9]+)(ns|us|µs|μs|ms|s|m|h))+$`)
-
-func (d *executionDecoder) duration(field executionField) (organization.Setting[time.Duration], bool) {
-	text, ok := d.text(field, false)
-	if !ok {
-		return organization.Setting[time.Duration]{}, false
-	}
-	value, err := time.ParseDuration(text.Value)
-	if err != nil || value <= 0 {
-		status, code := model.Failed, "execution.duration"
-		if executionDuration.MatchString(text.Value) && strings.ContainsAny(text.Value, "123456789") {
-			status, code = model.NotCompleted, "execution.duration_range"
-		}
-		d.issue(status, code, field, "Expected a positive explicit duration string representable at nanosecond resolution.")
-		return organization.Setting[time.Duration]{}, false
-	}
-	return organization.Setting[time.Duration]{Value: value, Source: text.Source}, true
-}
 
 func (d *executionDecoder) strings(field executionField) (organization.Setting[[]string], bool) {
 	if field.node == nil {

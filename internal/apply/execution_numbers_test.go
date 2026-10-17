@@ -30,7 +30,7 @@ func TestExecutionIntegerRepresentationLimitIsNotALanguageMaximum(t *testing.T) 
 }
 
 func TestExecutionRejectsNonpositiveAndNonintegerCaps(t *testing.T) {
-	for _, literal := range []string{"0", "-1", "-184467440737095516160", "-0xffffffffffffffffffffffffffffffff", "1.0", ".inf", ".nan", `"5"`, "true"} {
+	for _, literal := range []string{"0", "-1", "-184467440737095516160", "-0xffffffffffffffffffffffffffffffff", "1.0", ".inf", ".nan", `"5"`, "true", "!!int nope", "!!int 1.5"} {
 		t.Run(literal, func(t *testing.T) {
 			selection, raw := executionInputs(t, strings.Replace(documentedExecution(t), "maxRuns: 5", "maxRuns: "+literal, 1))
 			result := registryModel(t, selection, raw).DecodeExecution()
@@ -59,6 +59,12 @@ func TestExecutionDurationsAreExplicitPositiveStrings(t *testing.T) {
 		{"forever", model.Failed, 0}, {"1d", model.Failed, 0},
 		{"999999999999999999999h", model.NotCompleted, 0},
 		{"0.1ns", model.NotCompleted, 0},
+		{"1.5ns", model.NotCompleted, 0},
+		{"1.0000000001s", model.NotCompleted, 0},
+		{"1.000000001s", model.Passed, time.Second + time.Nanosecond},
+		{"9223372036854775807ns", model.Passed, time.Duration(1<<63 - 1)},
+		{"9223372036854775808ns", model.NotCompleted, 0},
+		{"1.s", model.Passed, time.Second},
 	} {
 		t.Run(tc.literal, func(t *testing.T) {
 			selection, raw := executionInputs(t, strings.Replace(documentedExecution(t), "maxExecutionTime: 16h", "maxExecutionTime: "+tc.literal, 1))
