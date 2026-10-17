@@ -54,6 +54,26 @@ func TestCodecEncodesSelectedPinnedRequests(t *testing.T) {
 	}
 }
 
+// A resume asks for the thread without its turns: the adapter never reads the
+// history, and a long Manager thread would outgrow the wire limit.
+func TestCodecResumeExcludesTheThreadHistory(t *testing.T) {
+	c := testCodec(t, 1<<20)
+	params := ThreadStartParams{Model: "configured-model", Cwd: "/work", ApprovalPolicy: "never", Sandbox: "danger-full-access"}
+	var request struct {
+		Method string
+		Params map[string]json.RawMessage
+	}
+	resume, err := c.EncodePersistentThread(IntegerRequestID(2), params, codecThreadID)
+	if err != nil || json.Unmarshal(resume, &request) != nil || request.Method != "thread/resume" || string(request.Params["threadId"]) != `"`+string(codecThreadID)+`"` || string(request.Params["excludeTurns"]) != "true" {
+		t.Fatalf("resume shape: %s %v", resume, err)
+	}
+	start, err := c.EncodePersistentThread(IntegerRequestID(2), params, "")
+	request.Params = nil
+	if err != nil || json.Unmarshal(start, &request) != nil || request.Method != "thread/start" || request.Params["excludeTurns"] != nil || string(request.Params["ephemeral"]) != "false" {
+		t.Fatalf("start shape: %s %v", start, err)
+	}
+}
+
 func TestCodecFragmentsRetainExactCopiedNDJSONIdentity(t *testing.T) {
 	original := []byte(" \t{\"id\":17,\"result\":" + codecInitialization + "} \r\n")
 	c := testCodec(t, len(original))
