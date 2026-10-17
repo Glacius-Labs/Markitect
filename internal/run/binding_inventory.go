@@ -64,7 +64,7 @@ func BindingInventory(payload Payload) (RecordedInventory, error) {
 		return RecordedInventory{}, err
 	}
 	i := RecordedInventory{basis: payload.Ref()}
-	if w.Version == 2 {
+	if w.Version >= 2 {
 		i.models = make([]RecordedModelInventory, len(w.Compilation))
 		for n, scope := range w.Compilation {
 			m := RecordedModelInventory{ID: scope.ID, Digest: scope.Digest, Local: scope.Local, Manifest: scope.Manifest, Packages: slices.Clone(scope.Packages), Definitions: make([]model.Identity, len(*scope.Definitions))}
@@ -151,7 +151,7 @@ func recordedManagers(w bindingWire) ([]organization.Manager, error) {
 		managers[parent].Children = append(managers[parent].Children, m.Package)
 	}
 	var definitions []model.Identity
-	if w.Version == 2 {
+	if w.Version >= 2 {
 		for _, d := range *scope.Definitions {
 			definitions = append(definitions, d.Identity)
 		}

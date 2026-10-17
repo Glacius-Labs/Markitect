@@ -158,13 +158,14 @@ func fixtureWith(t *testing.T, changeModel func(*model.Input), changeSettings fu
 	registry, _ := realization.NewRegistry([]realization.Registration{r})
 	request, _ := run.NewPayload("text/plain", "utf-8", []byte("Apply the captured library model."))
 	return run.BindingInput{
-		Source:       run.SourceBasis{Repository: "repo", Revision: "fixed-source", Guard: "source-guard", ProductBuild: "test-build", Operation: "artifact-apply/v1"},
-		OwnerRequest: request, ModelInput: input, Compilation: c, Census: tree(t, entries), Registry: registry, Classifications: classifications, Protections: protections,
+		MaxContextBytes: selected(exec, "/limits/maxContextBytes", int64(1<<20)),
+		Source:          run.SourceBasis{Repository: "repo", Revision: "fixed-source", Guard: "source-guard", ProductBuild: "test-build", Operation: "artifact-apply/v1"},
+		OwnerRequest:    request, ModelInput: input, Compilation: c, Census: tree(t, entries), Registry: registry, Classifications: classifications, Protections: protections,
 		Settings: settings, Profiles: profiles, Documents: docs, PolicySource: source(exec, "/budget"),
 		Policy: run.BudgetPolicy{
-			Ceilings:       run.Capacity{Runs: 8, SessionStarts: 20, Steps: 40, ExecutionTime: 20 * time.Minute},
-			Assignment:     run.Capacity{Runs: 3, SessionStarts: 8, Steps: 10, ExecutionTime: 10 * time.Minute},
-			Reserve:        run.Capacity{SessionStarts: 4, Steps: 4, ExecutionTime: 2 * time.Minute},
+			Ceilings:       run.Capacity{Runs: 8, SessionStarts: 128, Steps: 256, ExecutionTime: 20 * time.Minute},
+			Assignment:     run.Capacity{Runs: 3, SessionStarts: 32, Steps: 40, ExecutionTime: 10 * time.Minute},
+			Reserve:        run.Capacity{SessionStarts: 12, Steps: 12, ExecutionTime: 2 * time.Minute},
 			MaxStepTimeout: 2 * time.Minute, HostOperationTimeout: time.Minute,
 		},
 	}
@@ -177,4 +178,53 @@ func binding(t *testing.T) run.Binding {
 		t.Fatal(err)
 	}
 	return b
+}
+
+// exploreInputs keeps the real settings inputs so live RUN preparation resolves
+// them again rather than trusting arbitrary host context JSON.
+func exploreInputs(t *testing.T, onePackage bool) run.ExplorePreparation {
+	var facts organization.SettingsFacts
+	change := func(input *model.Input) {
+		if !onePackage {
+			return
+		}
+		var entries []model.Entry
+		for _, e := range input.Root.Entries {
+			if e.Path != "model/empty" && e.Path != "model/lending/reminders/item.yaml" {
+				entries = append(entries, e)
+			}
+		}
+		input.Root.Entries = entries
+	}
+	input := fixtureWith(t, change, func(f *organization.SettingsFacts) { facts = *f })
+	subjects := int64(len(input.Settings.Managers()))
+	topology, err := organization.BuildTopology(input.Compilation)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, m := range topology.Managers() {
+		if len(m.Children) > 0 {
+			subjects++
+		}
+	}
+	input.Policy.Reserve.SessionStarts = 2 * subjects
+	input.Policy.Reserve.Steps = 2 * subjects
+	return run.ExplorePreparation{Binding: input, Settings: facts}
+}
+func exploreSessionPreparation(t *testing.T, c *run.Coordinator, inputs run.ExplorePreparation, manager string, id run.SessionID) run.Command {
+	t.Helper()
+	profile, tools := payload(t, `{"profile":"synthetic recorded metadata"}`), payload(t, `{"tools":[]}`)
+	plan := run.SessionPlan{ID: id, Role: "manager", Workspace: "linux-workspace-" + string(id), Candidate: inputs.Binding.Census.Digest(), ReadOnly: true, ImageID: "sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef", CredentialRef: "credential-ref", MaxWireBytes: 1 << 20, Profile: profile.Ref(), Tools: tools.Ref()}
+	cmd, err := c.PrepareExploreSessionCommand(meta("prepare-"+string(id)), manager, plan, run.Reservation{ID: "open-" + string(id), Kind: run.SessionStart, Purpose: run.Writing, Maximum: time.Minute}, profile, tools)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return cmd
+}
+
+func completeRootExplore(t *testing.T, c *run.Coordinator, j *memoryJournal, inputs run.ExplorePreparation) {
+	t.Helper()
+	io, p, plan := explorePreparedStep(t, c, j, inputs, ".", "root")
+	exploreObserveReport(t, c, j, io, p, plan, nil)
+	exploreStop(t, c, j, io, "root")
 }
