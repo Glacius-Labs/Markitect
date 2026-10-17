@@ -29,4 +29,8 @@
 // with artifact eligibility computed from the bound classification facts. It
 // checks minimum form and references, never evidence existence or semantic support;
 // those remain Host and independent reviewer responsibilities respectively.
+// Candidate records retain closed bounded immutable historical subjects. Decode
+// reuses the same capture/accounting/census core without reconstructing compiler
+// success. A record hash binds bytes; acquisition and live applicability remain
+// external obligations. The initial codec deliberately supports empty claims only.
 package realization

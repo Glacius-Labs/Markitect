@@ -27,11 +27,15 @@ type candidateBasis struct {
 type CandidateBase struct{ value *candidateBasis }
 
 func NewCandidateBase(compiled model.Result, facts PathFacts) (CandidateBase, error) {
+	return newCandidateBase(inventoryFromResult(compiled), facts)
+}
+
+func newCandidateBase(inventory modelInventory, facts PathFacts) (CandidateBase, error) {
 	if facts.basis == nil {
 		return CandidateBase{}, ErrIncompleteCandidateBase
 	}
 	b := facts.basis
-	matching, err := NewPathFacts(compiled, b.registry, b.tree, b.areas, b.protections)
+	matching, err := newPathFacts(inventory, b.registry, b.tree, b.areas, b.protections)
 	if err != nil {
 		if errors.Is(err, ErrIncompleteClaimFacts) {
 			return CandidateBase{}, ErrIncompleteCandidateBase
@@ -41,8 +45,7 @@ func NewCandidateBase(compiled model.Result, facts PathFacts) (CandidateBase, er
 	if !b.same(matching.basis) {
 		return CandidateBase{}, ErrInvalidCandidateBase
 	}
-	_, definitions, _, _ := accountingModel(compiled)
-	return CandidateBase{&candidateBasis{facts, definitions}}, nil
+	return CandidateBase{&candidateBasis{facts, inventory.definitions}}, nil
 }
 
 func (b CandidateBase) Valid() bool { return b.value != nil }
