@@ -18,13 +18,13 @@ The baseline fixes the uniform definition form, nine Core definitions, values an
 
 ## Apply design
 
-Status: the design basis for the rebuild commissioned in [DEC-024](../../concepts/register.md#dec-024-first-reliable-apply-rebuild-and-coordinated-start). The owner decisions are [DEC-025 to DEC-037](../../concepts/register.md#dec-025-package-managers-organize-realization); DEC-036 covers the refinements the owner adopted for the design itself, and DEC-037 the container runtime. Details below that level, such as exact schemas or default numbers like three review rounds, are design decisions under DEC-024 that review may improve. These documents describe target behavior, not implemented behavior; implementation pull requests establish the evidence, and producer packages refine exact Go names and schemas in review. A change of intent goes to the document that owns the subject, not into a new parallel note.
+Status: the design basis for the rebuild commissioned in [DEC-024](../../concepts/register.md#dec-024-first-reliable-apply-rebuild-and-coordinated-start). The owner decisions include [DEC-025 to DEC-037](../../concepts/register.md#dec-025-package-managers-organize-realization) and [DEC-039](../../concepts/register.md#dec-039-deterministic-manager-process). DEC-039 supersedes AI-planned delivery order and parent-authored operation prompts with the fixed Manager process; DEC-037 still owns the container runtime. Details below that level, such as exact schemas or default numbers like three review rounds, are design decisions under DEC-024 that review may improve. These documents describe target behavior, not implemented behavior; implementation pull requests establish the evidence, and producer packages refine exact Go names and schemas in review. A change of intent goes to the document that owns the subject, not into a new parallel note.
 
 Read in this order:
 
 | Document | Owns |
 | --- | --- |
-| [Apply concept](manager-apply-concept.md) | Organization, context, delegation, deliveries, review purposes, artifact ownership, Apply lifecycle and reporting. |
+| [Apply concept](manager-apply-concept.md) | Organization, deterministic operation propagation, message-driven Manager cycle, remaining process questions, fixed-source comparison, review, ownership and reporting. |
 | [Library delegation walkthrough](manager-apply-library-flow.md) | The order of exchanges in one Apply of M1 and the first refusal cases. |
 | [Go architecture](manager-apply-go-architecture.md) | Target packages, responsibilities and dependency direction. |
 | [Port contracts](manager-apply-port-contracts.md) | Interfaces between the core and its adapters and the values they exchange. |

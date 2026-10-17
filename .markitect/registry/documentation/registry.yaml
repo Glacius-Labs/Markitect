@@ -1,5 +1,9 @@
 apiVersion: markitect.registry/v1
 artifacts:
+  - path: "docs/concepts/sources/manager-process-clarification-20261017.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Preserves the owner clarification of deterministic Apply propagation and Manager responsibility.
   - path: "docs/concepts/sources/project-history-working-method-20261017.md"
     form: doc
     realizes: [documentation/current-guidance]
