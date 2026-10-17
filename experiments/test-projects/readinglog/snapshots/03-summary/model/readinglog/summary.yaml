@@ -1,0 +1,15 @@
+imports:
+  - package: software
+    as: Software
+id: summary
+kind: Software.UseCase
+body: |-
+  At [[interface]], `summary` reads [[storage]] and returns an object with authors,
+  an array of objects with exactly author, books, finished and pages. Group all
+  [[book|books]] by their author value and order the groups lexically by author.
+  For each author, books counts every record, finished counts only finished
+  records, and pages sums all their pages regardless of status. Empty state
+  returns an empty authors array. Include the effects of [[finish]] and [[import]]
+  when reporting current records. The query does not change or rewrite data;
+  malformed data fails through the existing [[interface]] error contract.
+spec: {}
