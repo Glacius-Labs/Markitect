@@ -432,6 +432,10 @@ artifacts:
     form: doc
     realizes: [documentation/current-guidance]
     why: Preserves the owner-authored language, Apply or concept contract as a reference.
+  - path: "docs/design/canonical-model/apply-architecture-review-20261017.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Records the dated architecture review of the Apply design, its proposed approach and the owner's concept freeze.
   - path: "docs/design/canonical-model/minimal-language/README.md"
     form: doc
     realizes: [documentation/current-guidance]
