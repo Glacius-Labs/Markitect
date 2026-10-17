@@ -138,6 +138,9 @@ func (s stateValue) checkReview(t taskValue, in reviewInput) error {
 		if f.To != "" && f.To != t.Slot.Package && (t.Submission.Purpose != "integration" || !s.descends(f.To, t.Slot.Package)) {
 			return fmt.Errorf("a finding goes to the reviewed Manager or, in an integration review, to one of its descendants; %q is neither", f.To)
 		}
+		if f.To != "" && f.To != t.Slot.Package && in.Verdict != "changes_requested" {
+			return errors.New("a finding to a descendant requests its correction, so the verdict is changes_requested")
+		}
 	}
 	switch in.Verdict {
 	case "pass":
@@ -182,8 +185,13 @@ func (s stateValue) verdictOf(t taskValue, in reviewInput) ReviewVerdict {
 		resolved[r.Finding] = true
 	}
 	// An open blocking issue blocks its subject and every aggregate that
-	// contains it (core rule I3).
-	for _, manager := range s.subtree(t) {
+	// contains it (core rule I3); only an integration candidate contains the
+	// descendants' work.
+	covered := []string{t.Slot.Package}
+	if t.Submission.Purpose == "integration" {
+		covered = s.subtree(t)
+	}
+	for _, manager := range covered {
 		for _, issue := range s.openIssues(manager) {
 			if issue.Severity == severityBlocking && !resolved[issue.ID] {
 				return VerdictWithhold
@@ -296,13 +304,14 @@ func (s *stateValue) concludeReview(r ConclusionRecord, t *taskValue, revision u
 		t.Submission = Submission{}
 		// Findings about a descendant's artifacts reopen it; the reviewed
 		// Manager integrates again once its children are done (core rule T11).
-		corrected := false
+		var targets []string
 		for _, f := range in.Findings {
-			if f.To != "" && f.To != t.Slot.Package && f.Severity == severityBlocking {
-				s.reopen(f.To, t.Slot.Package, revision)
-				corrected = true
+			if f.To != "" && f.To != t.Slot.Package && f.Severity == severityBlocking && !slices.Contains(targets, f.To) {
+				targets = append(targets, f.To)
 			}
 		}
+		s.reopen(targets, t.Slot.Package, revision)
+		corrected := len(targets) > 0
 		switch {
 		case s.rejectionLimit(t.Slot.Package) <= t.Rejections[purpose]:
 			t.State, t.Reason = TaskIncomplete, fmt.Sprintf("the %s review rejected %d candidates, which reaches the rejection limit", purpose, t.Rejections[purpose])
@@ -374,20 +383,23 @@ func (s stateValue) subtree(t taskValue) []string {
 	return out
 }
 
-// reopen returns a done task that an open blocking finding addresses to work,
-// and every ancestor below the reviewed Manager whose accepted integration
-// contains it to waiting for its children; counters carry on (core rule T11).
-func (s *stateValue) reopen(manager, reviewed string, revision uint64) {
-	x := s.tasks[manager]
-	if x.State == TaskDone {
-		x.State, x.Since, x.LocalDone, x.Waits = TaskReady, revision, false, nil
-		s.tasks[manager] = x
+// reopen returns the done tasks that open blocking findings address to work,
+// and every other ancestor below the reviewed Manager whose accepted
+// integration contains one of them to waiting for its children; counters
+// carry on (core rule T11).
+func (s *stateValue) reopen(targets []string, reviewed string, revision uint64) {
+	for _, manager := range targets {
+		if x := s.tasks[manager]; x.State == TaskDone {
+			x.State, x.Since, x.LocalDone, x.Waits = TaskReady, revision, false, nil
+			s.tasks[manager] = x
+		}
 	}
-	for p := x.Slot.Parent; p != "" && p != reviewed; p = s.tasks[p].Slot.Parent {
-		a := s.tasks[p]
-		if a.State == TaskDone {
-			a.State, a.Since, a.Waits = TaskBlocked, revision, []Wait{{Kind: waitChildren}}
-			s.tasks[p] = a
+	for _, manager := range targets {
+		for p := s.tasks[manager].Slot.Parent; p != "" && p != reviewed; p = s.tasks[p].Slot.Parent {
+			if a := s.tasks[p]; a.State == TaskDone && !slices.Contains(targets, p) {
+				a.State, a.Since, a.Waits = TaskBlocked, revision, []Wait{{Kind: waitChildren}}
+				s.tasks[p] = a
+			}
 		}
 	}
 }

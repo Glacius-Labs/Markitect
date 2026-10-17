@@ -258,7 +258,9 @@ artifacts:
     why: Admits a new loan only within the open-loan limit.
 ```
 
-Only guarded publication writes registry files. An edit made outside Apply is drift: `check` validates it, and the next Apply's intake reassesses it. A registry revision is bound to the candidate tree. Review and check observations refer to that revision instead of being copied into mutable verdict fields.
+Only guarded publication writes registry files. An unmanaged edit is drift: `check` validates it, and the next Apply's intake reassesses it. A registry revision is bound to the candidate tree. Review and check observations refer to that revision instead of being copied into mutable verdict fields.
+
+The owner-accepted later [model-migration workflow](commands.md#model-restructuring-as-an-explicit-migration) also carries the registry/configuration adjustments necessary for an explicit identity and responsibility transfer. It reviews model and metadata together and retains realization artifacts. This is future controlled model-operation publication, not permission for current Apply workers to edit protected inputs or for unreviewed registry edits to bypass intake; its producer support remains unimplemented.
 
 Registry paths are independent of Package paths; lending can own source, test and documentation files in three directories. Other Managers can read or cite those files but cannot claim them. Managers propose registration through Orchestrator tools; the Orchestrator validates them and builds the registry delta. Editing the registry file directly is not a way around ownership.
 

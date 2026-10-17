@@ -194,13 +194,22 @@ func (s stateValue) unanswered(t taskValue) []Issue {
 	return out
 }
 
-// replyStepTaken marks the oldest unanswered question, which admitted the reply
-// step, so that each question admits one reply step (core rule T11).
+// replyStepTaken marks the question a reply step answered, or the oldest
+// unanswered one when it sent no reply, so that each question admits one reply
+// step (core rule T11).
 func (s *stateValue) replyStepTaken(t taskValue, step StepID) {
-	if open := s.unanswered(t); len(open) > 0 {
-		q := open[0]
+	id := ""
+	for _, v := range s.stepSends(t) {
+		if v.Send != nil && v.Send.Kind == messageReply {
+			id = v.Send.To
+		}
+	}
+	if open := s.unanswered(t); id == "" && len(open) > 0 {
+		id = open[0].ID
+	}
+	if q, ok := s.issues[id]; ok {
 		q.ReplyStep = step
-		s.issues[q.ID] = q
+		s.issues[id] = q
 	}
 }
 

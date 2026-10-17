@@ -271,3 +271,33 @@ func TestAReplyStepTheHostCouldNotFinishIsRetried(t *testing.T) {
 		t.Fatal("the failed reply step's reply was kept", count)
 	}
 }
+
+// A reply step takes the question it answered: two questions to the same
+// Manager, answered newest first, both get a reply (core rule T11).
+func TestAReplyStepTakesTheQuestionItAnswered(t *testing.T) {
+	var asks []string
+	replied := 0
+	agent := func(s agentStep) []action {
+		switch {
+		case (s.Manager == "empty" || s.Manager == "lending/reminders") && s.Phase == run.PhaseWork && s.Attempt == 0:
+			id := questionID(s, 1)
+			asks = append(asks, id)
+			return []action{
+				{Tool: run.ToolSend, Args: sendArgs("question", ".", "Which format, "+s.Manager+"?"), Want: run.ToolOK},
+				{Tool: run.ToolWait, Args: waitReplyArgs(id), Want: run.ToolOK},
+			}
+		case s.Manager == "." && s.Phase == run.PhaseReply:
+			id := asks[len(asks)-1-replied]
+			replied++
+			return []action{{Tool: run.ToolSend, Args: sendArgs("reply", id, "The shared one."), Want: run.ToolOK}}
+		}
+		return happyAgent(s)
+	}
+	inputs := stepInputs(t, false)
+	inputs.Binding.Policy.Assignment.Steps, inputs.Binding.Policy.Assignment.SessionStarts = 64, 64
+	h := newHarnessWith(t, inputs, agent)
+	runToEnd(t, h)
+	if h.c.Current().State != run.Verifying || len(asks) != 2 || replied != 2 {
+		t.Fatal("a question was left without its reply step", h.c.Current(), asks, replied)
+	}
+}

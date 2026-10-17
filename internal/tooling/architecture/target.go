@@ -71,7 +71,7 @@ var responsibilityImports = map[string][]string{
 	"internal/adapters/checks":         {"internal/apply", "internal/model", "internal/organization", "internal/snapshot", "internal/run", "internal/adapters/container"},
 	"internal/adapters/cli":            {"internal/apply", "internal/model", "internal/organization", "internal/realization", "internal/snapshot", "internal/modeldocs", "internal/buildinfo", "internal/tooling/licenses"},
 	"internal/adapters/codexappserver": {"internal/apply", "internal/model", "internal/organization", "internal/snapshot", "internal/adapters/container", "internal/run", "internal/agentd/frame"},
-	"internal/adapters/claudecode":     {"internal/run", "internal/adapters/container", "internal/agentd/frame"},
+	"internal/adapters/claudecode":     {"internal/apply", "internal/model", "internal/organization", "internal/snapshot", "internal/run", "internal/adapters/container", "internal/agentd/frame"},
 	"internal/adapters/container":      {"internal/agentd/frame"},
 	"internal/adapters/documents":      {"internal/modeldocs", "internal/tooling/guardedwrite"},
 	"internal/adapters/gitrepo":        {"internal/apply", "internal/model", "internal/organization", "internal/realization", "internal/snapshot", "internal/run", "internal/adapters/container"},
@@ -96,10 +96,9 @@ var responsibilityImports = map[string][]string{
 // Only concrete fixture and composition needs receive test-only edges;
 // production keeps its separately declared responsibility imports.
 var responsibilityTestImports = map[string][]string{
-	"internal/adapters/checks":     {"internal/adapters/gitrepo"},
-	"internal/adapters/claudecode": {"internal/snapshot"},
-	"internal/adapters/journal":    {"internal/model", "internal/snapshot"},
-	"internal/bootstrap":           {"internal/model", "internal/snapshot"},
+	"internal/adapters/checks":  {"internal/adapters/gitrepo"},
+	"internal/adapters/journal": {"internal/model", "internal/snapshot"},
+	"internal/bootstrap":        {"internal/model", "internal/snapshot"},
 }
 
 // Edge.Test alone cannot distinguish internal from external Go tests.

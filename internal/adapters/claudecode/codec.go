@@ -128,6 +128,7 @@ const (
 	UserMessage            MessageKind = "user"
 	AssistantMessage       MessageKind = "assistant"
 	StreamEventMessage     MessageKind = "stream-event"
+	RateLimitEventMessage  MessageKind = "rate-limit-event"
 	ResultMessage          MessageKind = "result"
 	UnsupportedMessage     MessageKind = "unsupported-message"
 	UnsupportedRequest     MessageKind = "unsupported-control-request"
@@ -349,6 +350,15 @@ func decodeLine(raw []byte) (Message, error) {
 		case "stream_event":
 			m.kind = StreamEventMessage
 		}
+	case "rate_limit_event":
+		// SDK 0.3.301 declares this four-key informational envelope. Its
+		// subscription payload remains opaque and supplies no step outcome.
+		if len(o) != 4 {
+			err = ErrProtocol
+		} else if _, err = object(o["rate_limit_info"]); err == nil {
+			err = envelopeIDs(o, true)
+		}
+		m.kind = RateLimitEventMessage
 	case "result":
 		m.subtype, err = nonempty(o["subtype"])
 		if err == nil {
