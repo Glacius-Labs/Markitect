@@ -133,6 +133,15 @@ func (a *acquisition) virtualFile(p string) error {
 
 func (a *acquisition) preflightRoots() error {
 	for _, m := range a.models {
+		if a.revision == "" && m.boundary.area.String() != "" {
+			d, err := a.repositoryDisk()
+			if err != nil {
+				return err
+			}
+			if _, err = d.directory(m.boundary.area.String(), true); err != nil {
+				return err
+			}
+		}
 		if m.boundary.area.String() != "" {
 			root := appendRelative(m.boundary.area.String(), m.target.Root.String())
 			if root == ".markitect/state" || technical(root) {
@@ -217,6 +226,9 @@ func (a *acquisition) modelTree(m *modelCapture) error {
 		}
 		slices.Sort(paths)
 		for _, p := range paths {
+			if m.target.Root.IsRoot() && p == m.boundary.area.String() {
+				continue
+			}
 			rel := p
 			if !m.boundary.area.IsRoot() {
 				rel = strings.TrimPrefix(p, m.boundary.area.String()+"/")

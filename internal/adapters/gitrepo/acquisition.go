@@ -55,9 +55,13 @@ func (r *Repository) acquire(ctx context.Context, selection apply.InputSelection
 	}
 	defer func() {
 		for _, m := range a.models {
-			m.target.Files, _ = snapshot.NewTree(m.files)
+			var treeErr error
+			m.target.Files, treeErr = snapshot.NewTree(m.files)
+			err = errors.Join(err, treeErr)
 		}
-		a.raw.Census, _ = snapshot.NewTree(a.census)
+		var treeErr error
+		a.raw.Census, treeErr = snapshot.NewTree(a.census)
+		err = errors.Join(err, treeErr)
 		if a.git != nil {
 			if closeErr := a.git.finishBlobs(err == nil); err == nil {
 				err = closeErr
@@ -118,6 +122,9 @@ func (r *Repository) acquire(ctx context.Context, selection apply.InputSelection
 	}
 	if r.observe != nil {
 		r.observe("roots-validated", a.git.path)
+	}
+	if err = a.preflightRoots(); err != nil {
+		return a, err
 	}
 	for _, m := range a.models {
 		if err = a.modelTree(m); err != nil {
@@ -240,12 +247,13 @@ func (a *acquisition) boundary(location string) (*sourceBoundary, error) {
 	if err != nil {
 		return b, err
 	}
+	b.disk.repoArea = b.area
 	if b.area.String() != "" {
 		repoDisk, err := a.repositoryDisk()
 		if err != nil {
 			return b, err
 		}
-		exact, err := repoDisk.directory(b.area.String(), false)
+		exact, err := repoDisk.directory(b.area.String(), true)
 		if err != nil {
 			return b, err
 		}
@@ -269,6 +277,7 @@ func (a *acquisition) repositoryDisk() (*diskBoundary, error) {
 		d.close()
 		return nil, ErrChanged
 	}
+	d.repoArea = snapshot.RootDirectory()
 	a.boundaries[a.git.path] = &sourceBoundary{abs: a.git.path, area: snapshot.RootDirectory(), disk: d}
 	return d, nil
 }

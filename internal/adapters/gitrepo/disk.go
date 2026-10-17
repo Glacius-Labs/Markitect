@@ -26,12 +26,14 @@ type diskDirectory struct {
 }
 type diskBoundary struct {
 	abs      string
+	repoArea snapshot.DirectoryBoundary
 	ctx      context.Context
 	limits   Limits
 	dirs     map[string]diskDirectory
 	listings map[string][]string
 	files    map[string]os.FileInfo
 	contents map[string]snapshot.ContentID
+	names    map[string]bool
 	observe  func(string, string)
 }
 
@@ -69,7 +71,7 @@ func openDisk(ctx context.Context, abs string, limits Limits, observe func(strin
 		_ = root.Close()
 		return nil, ErrChanged
 	}
-	return &diskBoundary{abs: abs, ctx: ctx, limits: limits, dirs: map[string]diskDirectory{".": {root: root, info: opened}}, listings: make(map[string][]string), files: make(map[string]os.FileInfo), contents: make(map[string]snapshot.ContentID), observe: observe}, nil
+	return &diskBoundary{abs: abs, ctx: ctx, limits: limits, dirs: map[string]diskDirectory{".": {root: root, info: opened}}, listings: make(map[string][]string), files: make(map[string]os.FileInfo), contents: make(map[string]snapshot.ContentID), names: make(map[string]bool), observe: observe}, nil
 }
 
 func (d *diskBoundary) close() {
@@ -146,6 +148,9 @@ func (d *diskBoundary) directory(rel string, collision bool) (*os.Root, error) {
 			return nil, fmt.Errorf("%w: directory component %q", ErrUnsafe, name)
 		}
 		key := strings.Join(parts[:i+1], "/")
+		if collision {
+			d.names[key] = true
+		}
 		if cached, ok := d.dirs[key]; ok {
 			if !os.SameFile(info, cached.info) {
 				return nil, ErrChanged
@@ -198,7 +203,19 @@ func (d *diskBoundary) read(rel string, collision bool) ([]byte, snapshot.Mode, 
 				}
 			}
 		}
+		if existed := d.names[rel]; existed {
+			return nil, 0, false, ErrChanged
+		}
+		if collision {
+			d.names[rel] = false
+		}
 		return nil, 0, false, nil
+	}
+	if present, observed := d.names[rel]; observed && !present {
+		return nil, 0, false, ErrChanged
+	}
+	if collision {
+		d.names[rel] = true
 	}
 	if err := exactName(names, name, collision); err != nil {
 		return nil, 0, false, err
@@ -223,6 +240,10 @@ func (d *diskBoundary) read(rel string, collision bool) ([]byte, snapshot.Mode, 
 	defer f.Close()
 	opened, err := f.Stat()
 	if err != nil || !opened.Mode().IsRegular() || !os.SameFile(info, opened) {
+		return nil, 0, false, ErrChanged
+	}
+	beforeRead, err := root.Lstat(name)
+	if err != nil || redirected(beforeRead) || !os.SameFile(opened, beforeRead) {
 		return nil, 0, false, ErrChanged
 	}
 	data, err := io.ReadAll(io.LimitReader(f, d.limits.FileBytes+1))
@@ -274,14 +295,14 @@ func (d *diskBoundary) scan(prefix string, census bool) ([]diskEntry, error) {
 			if rel != "." {
 				p = rel + "/" + name
 			}
-			if technical(p) {
+			if d.excluded(p, false) {
 				continue
 			}
 			info, err := dir.Lstat(name)
 			if err != nil {
 				return err
 			}
-			if census && p == ".markitect/state" && info.IsDir() && !redirected(info) {
+			if d.excluded(p, info.IsDir()) {
 				continue
 			}
 			included = append(included, name)
@@ -328,6 +349,33 @@ func (d *diskBoundary) scan(prefix string, census bool) ([]diskEntry, error) {
 }
 
 func (d *diskBoundary) confirm() error {
+	for rel, present := range d.names {
+		parent, err := d.directory(path.Dir(rel), true)
+		if err != nil {
+			return fmt.Errorf("%w: %w", ErrChanged, err)
+		}
+		names, err := directoryNames(parent, d.limits.Entries)
+		if err != nil {
+			return err
+		}
+		name := path.Base(rel)
+		if slices.Contains(names, name) != present {
+			return ErrChanged
+		}
+		if present {
+			if err := exactName(names, name, true); err != nil {
+				return fmt.Errorf("%w: %w", ErrChanged, err)
+			}
+		} else {
+			key, _ := model.NameCollisionKey(name)
+			for _, other := range names {
+				candidate, ok := model.NameCollisionKey(other)
+				if !ok || key == candidate {
+					return ErrChanged
+				}
+			}
+		}
+	}
 	// Metadata alone misses same-size rewrites with restored timestamps. Read
 	// the original paths again and require their captured bytes and identities.
 	for rel := range d.files {
@@ -356,7 +404,8 @@ func (d *diskBoundary) confirm() error {
 				if rel != "." {
 					p = rel + "/" + name
 				}
-				return technical(p)
+				info, err := dir.root.Lstat(name)
+				return err == nil && d.excluded(p, info.IsDir())
 			})
 			if !slices.Equal(names, current) {
 				return ErrChanged
@@ -374,4 +423,17 @@ func (d *diskBoundary) confirm() error {
 		}
 	}
 	return d.ctx.Err()
+}
+
+func (d *diskBoundary) excluded(p string, directory bool) bool {
+	for _, part := range strings.Split(p, "/") {
+		if part == ".git" {
+			return true
+		}
+	}
+	if d.repoArea.String() == "" {
+		return false
+	}
+	repoPath := appendRelative(d.repoArea.String(), p)
+	return strings.HasPrefix(repoPath, ".markitect/state/") || directory && repoPath == ".markitect/state"
 }
