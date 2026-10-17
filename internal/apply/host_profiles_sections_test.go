@@ -67,6 +67,22 @@ func TestProfilesSelectOneAdapterSectionAndBindItsImage(t *testing.T) {
 			if tc.want == model.Passed && (sections["library-agent"] != "claudeCode" || sections["library-tests"] != "container") {
 				t.Fatal("the ports did not see the selected sections", sections)
 			}
+			if tc.want == model.Passed {
+				// Neither a returned observation nor the preparer's own pointer
+				// can change the prepared binding.
+				selections, _ := result.Checks()
+				before := selections[0].Profile()
+				identity, _ := before.Identity()
+				returned := before.Observation()
+				returned.CheckImage.ImageID = imageID('d')
+				held := *tc.check
+				defer func() { *tc.check = held }()
+				tc.check.ImageID = imageID('e')
+				after := selections[0].Profile()
+				if id, _ := after.Identity(); id != identity || after.Observation().CheckImage.ImageID != imageID('c') {
+					t.Fatal("prepared check image evidence changed", after.Observation().CheckImage)
+				}
+			}
 		})
 	}
 }

@@ -212,6 +212,10 @@ func cloneProfileObservation(o ProfileObservation) ProfileObservation {
 		image := *o.AgentImage
 		o.AgentImage = &image
 	}
+	if o.CheckImage != nil {
+		image := *o.CheckImage
+		o.CheckImage = &image
+	}
 	o.Files = slices.Clone(o.Files)
 	o.Inventories = slices.Clone(o.Inventories)
 	for i := range o.Inventories {
