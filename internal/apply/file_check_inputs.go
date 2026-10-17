@@ -69,7 +69,7 @@ func repositoryPath(area snapshot.DirectoryBoundary, relative string) snapshot.P
 	path, _ := snapshot.NewPath(relative)
 	return path
 }
-func (c *fileChecker) modelInputs(source ModelSource) {
+func (c *fileChecker) modelInputs(source ModelSource, limits model.Limits) {
 	if source.RepositoryArea.String() == "" {
 		return
 	}
@@ -80,9 +80,13 @@ func (c *fileChecker) modelInputs(source ModelSource) {
 	}
 	c.protectFile(repositoryPath(source.RepositoryArea, manifest), realization.CanonicalInput, "Canonical model manifest.")
 	c.protectFile(repositoryPath(source.RepositoryArea, lock), realization.CanonicalInput, "Canonical model lock.")
+	declared, ok := c.modelRoot(source, limits)
+	if !ok {
+		return
+	}
 	root := source.RepositoryArea
-	if !source.Root.IsRoot() {
-		root, _ = snapshot.DirectoryAt(repositoryPath(source.RepositoryArea, source.Root.String()))
+	if !declared.IsRoot() {
+		root, _ = snapshot.DirectoryAt(repositoryPath(source.RepositoryArea, declared.String()))
 	}
 	c.protectDirectory(root, realization.CanonicalInput, "Declared canonical model tree.")
 	for _, entry := range c.raw.Census.Entries() {
@@ -100,10 +104,10 @@ func (c *fileChecker) modelInputs(source ModelSource) {
 	}
 }
 
-func (c *fileChecker) sourceInputs() {
-	c.modelInputs(c.raw.Local)
+func (c *fileChecker) sourceInputs(limits model.Limits) {
+	c.modelInputs(c.raw.Local, limits)
 	for _, dependency := range c.raw.Dependencies {
-		c.modelInputs(dependency)
+		c.modelInputs(dependency, limits)
 	}
 	for _, name := range []string{executionPath, ignorePath} {
 		path, _ := snapshot.NewPath(name)
@@ -125,4 +129,38 @@ func (c *fileChecker) sourceInputs() {
 			}
 		}
 	}
+}
+
+// Protection follows the actual authored root, not contradictory acquisition
+// metadata. Reuse the language inspector; do not parse a second manifest schema.
+func (c *fileChecker) modelRoot(source ModelSource, limits model.Limits) (snapshot.DirectoryBoundary, bool) {
+	manifest, found := source.Files.Lookup(source.Selection.ManifestPath)
+	if !found {
+		c.issue(model.NotCompleted, "files.manifest_uncaptured", repositoryPath(source.RepositoryArea, source.Selection.ManifestPath.String()), "", nil, "The actual model manifest is unavailable for protection.")
+		return snapshot.DirectoryBoundary{}, false
+	}
+	result := model.InspectManifest(model.ManifestInput{Origin: source.Source.Origin, ManifestPath: source.Selection.ManifestPath.String(), Bytes: manifest.Bytes(), Limits: limits})
+	if result.Status != model.Passed {
+		c.issue(result.Status, "files.manifest_not_passed", repositoryPath(source.RepositoryArea, source.Selection.ManifestPath.String()), "/root", nil, "The actual manifest root could not be inspected.")
+		return snapshot.DirectoryBoundary{}, false
+	}
+	name := result.Root
+	prefix := ""
+	if slash := strings.LastIndexByte(source.Selection.ManifestPath.String(), '/'); slash >= 0 {
+		prefix = source.Selection.ManifestPath.String()[:slash]
+	}
+	if name == "." {
+		name = prefix
+	} else if prefix != "" {
+		name = prefix + "/" + name
+	}
+	declared := snapshot.RootDirectory()
+	if name != "" {
+		path, _ := snapshot.NewPath(name)
+		declared, _ = snapshot.DirectoryAt(path)
+	}
+	if declared != source.Root {
+		c.issue(model.Failed, "files.model_root_mismatch", repositoryPath(source.RepositoryArea, source.Selection.ManifestPath.String()), "/root", nil, "Captured model root metadata contradicts the actual manifest declaration.")
+	}
+	return declared, true
 }

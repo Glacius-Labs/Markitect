@@ -15,9 +15,6 @@ func (c *fileChecker) instructions(execution AuthoredExecution) {
 		if source.RepositoryPath.String() == "" {
 			continue
 		}
-		if selected[source.RepositoryPath] {
-			c.issue(model.Failed, "files.instruction_source_duplicate", source.RepositoryPath, "", nil, "A repository instruction source was selected more than once.")
-		}
 		selected[source.RepositoryPath] = sameCensusFile(c.raw.Census, source.RepositoryPath.String(), source.File)
 	}
 	lists := []*organization.Setting[[]string]{execution.Defaults.Manager.Instructions, execution.Defaults.Reviewer.Instructions}

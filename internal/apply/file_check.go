@@ -56,6 +56,9 @@ func (r fileCheck) Protections() ([]realization.Protection, bool) {
 	}
 	return slices.Clone(r.protections), true
 }
+
+// Diagnostics orders by file, field, code and message, then nil position before
+// positioned observations and finally exact line/column.
 func (r fileCheck) Diagnostics() []FileCheckDiagnostic {
 	result := slices.Clone(r.diagnostics)
 	for i := range result {

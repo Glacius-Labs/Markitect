@@ -48,7 +48,7 @@ func checkFiles(parent registryPreparation, compiled model.Result, raw RawInputs
 	for _, diagnostic := range execution.diagnostics {
 		r.diagnostics = append(r.diagnostics, FileCheckDiagnostic(diagnostic))
 	}
-	c.sourceInputs()
+	c.sourceInputs(compiled.Limits)
 	c.instructions(execution.authored)
 	c.ignore()
 	for _, classification := range c.inputs {
@@ -75,7 +75,15 @@ func checkFiles(parent registryPreparation, compiled model.Result, raw RawInputs
 		}
 	}
 	slices.SortFunc(r.diagnostics, func(a, b FileCheckDiagnostic) int {
-		return cmp.Or(cmp.Compare(a.Source.File, b.Source.File), cmp.Compare(a.Source.Field, b.Source.Field), cmp.Compare(a.Code, b.Code), cmp.Compare(a.Message, b.Message))
+		ap, bp := model.Position{}, model.Position{}
+		an, bn := 0, 0
+		if a.Position != nil {
+			ap, an = *a.Position, 1
+		}
+		if b.Position != nil {
+			bp, bn = *b.Position, 1
+		}
+		return cmp.Or(cmp.Compare(a.Source.File, b.Source.File), cmp.Compare(a.Source.Field, b.Source.Field), cmp.Compare(a.Code, b.Code), cmp.Compare(a.Message, b.Message), cmp.Compare(an, bn), cmp.Compare(ap.Line, bp.Line), cmp.Compare(ap.Column, bp.Column))
 	})
 	return r
 }
