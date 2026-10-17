@@ -18,6 +18,10 @@ Metadata preparation never starts a process, probes a version, exports a schema,
 
 Fixed previews refuse unbound present-day external profile or dependency inputs, even for HEAD. Working previews retain actual observed bytes. Neither preview supplies an artifact publication guard.
 
+## Container runtime
+
+The runtime for real sessions is implemented below the session port; no product command uses it yet. `internal/adapters/container` starts each session in a hardened Linux container from the [base image](../packaging/runtime/README.md), and `markitect-agentd` inside it runs the provider CLI and serves the Host tools over MCP. The container adapter's smoke shows both CLIs connecting to the Host tools in that container. The Codex and Claude Code session adapters follow the RUN Session port.
+
 ## Bring your own executor
 
 An alternate runtime is not implemented by this metadata boundary. It requires a real consumer port, adapter, bounded readiness evidence and explicit execution authority. The previous [provider/runtime generation](https://github.com/Glacius-Labs/Markitect/blob/5ff3206917fa3b7482d9daedb903d57a919f56b8/docs/provider-adapters.md) remains a historical contract.

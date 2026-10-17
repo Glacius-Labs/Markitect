@@ -53,7 +53,9 @@ Bootstrap alone constructs concrete adapters. CLI code owns parsing/presentation
 
 `internal/run` supplies fixed run bindings, assignment budget admission and confirmed journal transitions. Its narrow journal port separates proposals from acknowledged history and retains uncertain reservations. It has no physical journal adapter or public execution entrypoint.
 
-Recursive Manager execution, sessions, workspace creation, executable checks, durable journal storage, verification and guarded artifact publication remain later implementation work. There is no active legacy runtime or fallback execution engine. A structural or metadata pass cannot authorize those effects. The current CLI exposes no MCP server.
+The container runtime is in place below the future session port ([DEC-037](concepts/register.md#dec-037-agent-sessions-and-checks-run-in-linux-containers)). `internal/adapters/container` starts hardened session containers from an image named by its engine image ID and speaks the frame protocol of `internal/agentd/frame` with `markitect-agentd`, which runs the provider CLI, relays its streams, serves the Host tools over MCP and reports exits. The [base image](../packaging/runtime/README.md) pins Codex and Claude Code. Nothing in the product composes it yet.
+
+Recursive Manager execution, session adapters, workspace creation, executable checks, durable journal storage, verification and guarded artifact publication remain later implementation work. There is no active legacy runtime or fallback execution engine. A structural or metadata pass cannot authorize those effects. The current CLI exposes no MCP server.
 
 ## Operational record storage
 

@@ -39,6 +39,10 @@ packages:
     layer: apply-adapter
     purpose: Concrete repository, profile metadata and document I/O.
     doc: docs/development/modules.md
+  - path: internal/adapters/container
+    layer: apply-adapter
+    purpose: Container engine client and the Host side of the agentd connection.
+    doc: docs/development/modules.md
   - path: internal/adapters/documents
     layer: apply-adapter
     purpose: Concrete repository, profile metadata and document I/O.
@@ -54,6 +58,18 @@ packages:
   - path: cmd/markitect
     layer: apply-command
     purpose: Thin entrypoint to product composition.
+    doc: docs/development/modules.md
+  - path: internal/agentd/frame
+    layer: agent-protocol
+    purpose: Frame protocol between the Host and the session helper.
+    doc: docs/development/modules.md
+  - path: internal/agentd
+    layer: agent-runtime
+    purpose: Session helper inside each Agent container.
+    doc: docs/development/modules.md
+  - path: cmd/markitect-agentd
+    layer: runtime-command
+    purpose: Thin entrypoint of the session helper.
     doc: docs/development/modules.md
   - path: internal/buildinfo
     layer: build-data
