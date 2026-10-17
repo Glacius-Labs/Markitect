@@ -1,0 +1,256 @@
+package run
+
+import (
+	"crypto/sha256"
+	"encoding/json"
+	"errors"
+	"fmt"
+	"maps"
+	"slices"
+
+	"github.com/Glacius-Labs/Markitect/internal/snapshot"
+)
+
+var (
+	ErrBudget = errors.New("assignment capacity or completion reserve would be exceeded")
+	ErrState  = errors.New("transition unavailable in this run state")
+)
+
+type RunView struct {
+	ID, Assignment    string
+	Basis             BlobRef
+	State             State
+	Outcome           Outcome
+	Reason, NextActor string
+	StopRequested     bool
+}
+type operation struct {
+	digest  snapshot.ContentID
+	receipt AppendReceipt
+}
+type stateValue struct {
+	repository  string
+	revision    uint64
+	assignment  string
+	policy      BudgetPolicy
+	current     RunView
+	runs        map[string]RunView
+	invocations map[string]Invocation
+	operations  map[string]operation
+}
+
+// Coordinator owns one repository's confirmed projection and at most one
+// uncertain append. Its methods are serialized by the Host's single controller;
+// it is not a lock, runtime, scheduler or concurrent service. A new instance has
+// revision zero and may only be used with an actually new journal stream.
+type Coordinator struct {
+	state   stateValue
+	pending *Proposal
+}
+
+func NewCoordinator(repository string) (*Coordinator, error) {
+	if !text(repository) {
+		return nil, ErrInvalid
+	}
+	return &Coordinator{state: stateValue{repository: repository, runs: map[string]RunView{}, invocations: map[string]Invocation{}, operations: map[string]operation{}}}, nil
+}
+func (c *Coordinator) Current() RunView { return c.state.current }
+func (c *Coordinator) Revision() uint64 { return c.state.revision }
+func (c *Coordinator) Budget() BudgetView {
+	return budget(c.state.policy, int64(len(c.state.runs)), c.state.invocations)
+}
+func (c *Coordinator) Invocations() []Invocation {
+	var out []Invocation
+	for _, v := range c.state.invocations {
+		out = append(out, v)
+	}
+	slices.SortFunc(out, func(a, b Invocation) int {
+		if a.Reservation.ID < b.Reservation.ID {
+			return -1
+		}
+		if a.Reservation.ID > b.Reservation.ID {
+			return 1
+		}
+		return 0
+	})
+	return out
+}
+
+// Pending reports an observation limit, not an invented committed run state.
+// No dependent proposal is permitted while an append outcome is unconfirmed.
+func (c *Coordinator) Pending() (AppendBatch, bool) {
+	if c.pending == nil {
+		return AppendBatch{}, false
+	}
+	return c.pending.batch, true
+}
+
+type Proposal struct {
+	batch    AppendBatch
+	next     stateValue
+	command  Command
+	payloads []Payload
+	replay   *AppendReceipt
+}
+
+func (p Proposal) Batch() AppendBatch { return p.batch }
+
+// Propose has no journal or external effect. In particular a Prepared proposal
+// does not expose a prepared run or consume a run unit on this Coordinator.
+func (c *Coordinator) Propose(command Command) (Proposal, error) {
+	if c.pending != nil {
+		return Proposal{}, ErrUncertain
+	}
+	if err := command.validate(); err != nil {
+		return Proposal{}, err
+	}
+	data, _ := json.Marshal(command)
+	digest := snapshot.ContentID(sha256.Sum256(data))
+	if previous, ok := c.state.operations[command.ID]; ok {
+		if previous.digest != digest {
+			return Proposal{}, ErrConflict
+		}
+		r := previous.receipt
+		return Proposal{command: command, replay: &r}, nil
+	}
+	next := c.state
+	next.runs = maps.Clone(c.state.runs)
+	next.invocations = maps.Clone(c.state.invocations)
+	next.operations = maps.Clone(c.state.operations)
+	if err := next.apply(command); err != nil {
+		return Proposal{}, err
+	}
+	var events []Event
+	if command.Kind == PrepareRun && c.state.assignment == "" {
+		events = append(events, Event{ID: fmt.Sprintf("%x", sha256.Sum256(append(data, byte(0)))), Kind: "assignment.created", Body: command})
+	}
+	events = append(events, Event{ID: fmt.Sprintf("%x", sha256.Sum256(append(data, byte(1)))), Kind: eventTag(command.Kind), Body: command})
+	batch, err := newBatch(command.ID, c.state.revision, events)
+	if err != nil {
+		return Proposal{}, err
+	}
+	next.revision = batch.Revision()
+	next.operations[command.ID] = operation{digest, ReceiptFor(batch)}
+	p := Proposal{batch: batch, next: next, command: command}
+	if command.Kind == PrepareRun {
+		p.payloads = []Payload{command.binding.owner, command.binding.payload}
+	}
+	return p, nil
+}
+
+func (s *stateValue) apply(c Command) error {
+	if c.Kind == PrepareRun {
+		b := c.binding
+		if !b.Valid() || b.Ref() != c.Basis || b.source.Repository != s.repository {
+			return ErrInvalid
+		}
+		if _, exists := s.runs[c.Run]; exists {
+			return ErrConflict
+		}
+		if s.assignment == "" {
+			if c.Predecessor != "" {
+				return ErrInvalid
+			}
+			s.assignment = c.Assignment
+			s.policy = b.policy
+		} else {
+			if s.assignment != c.Assignment || s.current.State != Finished || c.Predecessor != s.current.ID || c.Basis == s.current.Basis || s.policy != b.policy {
+				return ErrState
+			}
+		}
+		if int64(len(s.runs)) >= s.policy.Assignment.Runs || budget(s.policy, int64(len(s.runs)), s.invocations).Overrun {
+			return ErrBudget
+		}
+		s.current = RunView{ID: c.Run, Assignment: c.Assignment, Basis: c.Basis, State: Prepared}
+		s.runs[c.Run] = s.current
+		return nil
+	}
+	if s.assignment != c.Assignment || s.current.ID != c.Run || s.current.State == Finished {
+		return ErrState
+	}
+	r := s.current
+	switch c.Kind {
+	case StartRun:
+		if r.State != Prepared {
+			return ErrState
+		}
+		r.State = Running
+	case ReserveInvocation:
+		if r.State != Running {
+			return ErrState
+		}
+		if _, exists := s.invocations[c.Reservation.ID]; exists {
+			return ErrConflict
+		}
+		for _, invocation := range s.invocations {
+			if open(invocation) && invocation.Reservation.Purpose == Writing && c.Reservation.Purpose == Writing {
+				return ErrState
+			}
+		}
+		if err := admit(s.policy, budget(s.policy, int64(len(s.runs)), s.invocations), c.Reservation); err != nil {
+			return err
+		}
+		s.invocations[c.Reservation.ID] = Invocation{Reservation: c.Reservation, State: Reserved}
+	case SettleInvocation, ObserveUncertain, ReleaseUndispatched:
+		invocation, ok := s.invocations[c.Invocation]
+		if !ok || !open(invocation) {
+			return ErrState
+		}
+		if c.Kind == ObserveUncertain {
+			invocation.State = Uncertain
+			r.State = Reconciling
+			r.Reason = c.Reason
+		} else if c.Kind == ReleaseUndispatched {
+			invocation.State = Released
+			invocation.Observation = c.Reason
+		} else {
+			invocation.State = Settled
+			invocation.Elapsed = c.Elapsed
+			invocation.Observation = c.Reason
+		}
+		s.invocations[c.Invocation] = invocation
+	case WaitRun:
+		if r.State != Running || s.hasOpen() {
+			return ErrState
+		}
+		r.State = Waiting
+		r.Reason = c.Reason
+		r.NextActor = c.NextActor
+	case ResumeRun:
+		if (r.State != Waiting && r.State != Reconciling) || s.hasOpen() || r.StopRequested || budget(s.policy, int64(len(s.runs)), s.invocations).Overrun {
+			return ErrState
+		}
+		r.State = Running
+		r.Reason = ""
+		r.NextActor = ""
+	case StopRun:
+		r.StopRequested = true
+		r.State = Reconciling
+		r.Reason = c.Reason
+		r.NextActor = ""
+	case FinishRun:
+		if s.hasOpen() || c.Outcome == Stopped && !r.StopRequested {
+			return ErrState
+		}
+		r.State = Finished
+		r.Outcome = c.Outcome
+		r.Reason = c.Reason
+		r.NextActor = ""
+	default:
+		return ErrState
+	}
+	s.current = r
+	s.runs[r.ID] = r
+	return nil
+}
+func open(invocation Invocation) bool {
+	return invocation.State == Reserved || invocation.State == Uncertain
+}
+func (s stateValue) hasOpen() bool {
+	for _, invocation := range s.invocations {
+		if open(invocation) {
+			return true
+		}
+	}
+	return false
+}
