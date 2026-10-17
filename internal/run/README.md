@@ -150,6 +150,8 @@ still own truthful protocol interpretation and encoding of the compiled input.
 The actual provider init then binds the observed ID before definite Step/tool
 observations and later Steps. Missing init, uncertain send or append failure
 retains effects and holds; another Open cannot replace a recorded startup send.
+An adapter may send several handshake messages, one at a time, before the
+session is ready or bound; the Codex App Server sends three.
 Restoration preserves readiness and the first Step/send identities behind the
 existing recovery barrier, without dispatching anything. Readiness cannot erase
 earlier uncertainty or supply inspection handles.
@@ -267,7 +269,7 @@ the affected artifacts (D5), with changes requested; such a blocking finding
 returns the done descendant to work, blocks its ancestors below the reviewed Manager on
 their children, and the reviewed Manager integrates again once they are done
 (T11). Accepted deliveries advance the aggregate version when they carry
-changes. Blocked tasks wake when what they named arrives (T10), and the root's
+changes. Blocked tasks wake when what they named arrives (T10); a wait that only the waiting Manager itself could end, such as the delivery of a Manager that waits for it, is refused, and the root's
 completion moves the run to Verifying (T13).
 
 `Engine` drives admitted steps through the `Sessions` and `Workspaces` ports,

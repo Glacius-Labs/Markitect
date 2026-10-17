@@ -874,7 +874,7 @@ func (e *Engine) tools(s *stepRun) ToolHandler {
 				return refuse(err.Error())
 			}
 			if _, decision := realization.ReserveNewPath(e.aggregate().PathFacts(), claims, request); decision.Status() != realization.PathAdmissible && !slices.ContainsFunc(e.claimsOf(manager, s), func(c Claim) bool { return c.Tool == claim.Tool && c.Path == claim.Path && c.Form == claim.Form }) {
-				return refuse(findingText(decision.Findings()))
+				return refuse(findingText(decision.Findings()) + e.holderHint(s, in.Path))
 			}
 			s.pending = addClaims(s.pending, []Claim{claim})
 			return ok(map[string]bool{"reserved": true})
@@ -965,7 +965,7 @@ func (e *Engine) registrable(s *stepRun, record realization.Registration) error 
 	path := record.Artifact().Path()
 	if current, ok := e.aggregate().Registry().Lookup(path); ok {
 		if current.Owner() != record.Owner() {
-			return fmt.Errorf("%s is registered to another Manager", path)
+			return fmt.Errorf("%s is registered to the Manager %s; you may use it but not change it", path, ownerManager(current.Owner()))
 		}
 		return nil
 	}
