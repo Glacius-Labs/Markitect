@@ -52,9 +52,13 @@ The product idea and the target architecture are sound, and the Go dependency st
 The first version specifies a large runtime apparatus: conversation continuity across working-basis versions, quiescence proofs, write barriers, warm retention, eviction order and provider resume ([concept](manager-apply-concept.md#working-bases-and-conversation-continuity), [execution](manager-apply-execution.md#idle-execution-and-resumption)). Every writing Manager meets this, because Explore is read-only and a change of mounts needs a new environment. DEC-039 already says "where supported", and a warm limit of zero is allowed.
 
 **Recommendation:**
-- In the first version, every step uses a fresh session with an evidence-linked handoff.
+- In the first version, every step runs in its own container, and that container stops when the step ends.
+  - The stopped container is the proof of quiescence. Warm retention, pause barriers and eviction rules become unnecessary.
+  - The Host composes the next workspace version between steps.
+  - The conversation resumes from the retained provider home where that is supported. Otherwise the Host supplies an evidence-linked handoff.
+- Merge [#352](https://github.com/Glacius-Labs/Markitect/pull/352) showed after the basis revision that both CLIs can resume a conversation in a new container from the retained provider home ([record](../../validation/runtime-capabilities-20261017.md)). This makes the step-bound form cheap.
 - An owner question ends the run Incomplete instead of waiting inside the run.
-- Both mechanisms can return when a real run shows the need.
+- Warm retention and waiting inside a run can return when a real run shows the need.
 
 ### F4 Complete participation costs a lot and does not scale yet
 
@@ -147,7 +151,7 @@ The first version specifies a large runtime apparatus: conversation continuity a
    - Give each rule one owner and an ID (F7).
 3. **Clean up in parallel** where no other session works: documentation (F7), code duplication and leftovers (F6), and repository hygiene (F8).
 4. **Build a walking skeleton:**
-   - `markitect apply` on library M1 for one Package, first with a controlled fake session and then with a real Claude Code session.
+   - `markitect apply` on library M1 for one Package, first with a controlled fake session and then with real Claude Code and Codex sessions.
    - The steps are Explore, work, review, rework, acceptance and guarded publication.
    - Recursion, integration, the complete Manager tree and the two-Apply demonstration follow.
 5. **Measure** the coordination account against a strong baseline (F5) before any later extension.
@@ -165,7 +169,7 @@ On 17 October 2026, after this assessment, the owner decided the following (orig
 - Order: „Falls er das nicht tut, sollten wir erst das Konzept fertigstellen und die Aufräumrunde starten. Die Aufräumrunde wäre generell gut zu starten unabhängig davon.“ Here "er" is the Coordinator and "das" is implementing the concept.
 - Division of work, proposed: „Wir kümmern uns um Konzept und Herzstück. Er kümmert sich dann um die Dinge aussenrum schlage ich vor.“
 
-Still open: whether a Codex credential is provided for the first real Apply, or whether that Apply may run with Claude Code only.
+This review asked whether a Codex credential would be provided. Merge #352 answers that: a dedicated runtime login now serves Codex sessions ([record](../../validation/runtime-capabilities-20261017.md)).
 
 ## What would change this assessment
 
