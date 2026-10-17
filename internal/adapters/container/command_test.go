@@ -42,9 +42,23 @@ func TestMain(m *testing.M) {
 		}
 		_ = os.WriteFile(filepath.Join(dir, "index"), []byte(strconv.Itoa(index+1)), 0600)
 		args, _ := json.Marshal(os.Args[1:])
-		f, _ := os.OpenFile(filepath.Join(dir, "calls"), os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0600)
-		_, _ = f.Write(append(args, '\n'))
-		_ = f.Close()
+		f, err := os.OpenFile(filepath.Join(dir, "calls"), os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0600)
+		if err != nil {
+			fmt.Fprintln(os.Stderr, err)
+			os.Exit(98)
+		}
+		_, writeErr := f.Write(append(args, '\n'))
+		if err := errors.Join(writeErr, f.Close()); err != nil {
+			fmt.Fprintln(os.Stderr, err)
+			os.Exit(98)
+		}
+		if len(os.Args) > 1 && os.Args[1] == "cp" {
+			// Cancellation tests may proceed only after the invocation is recorded.
+			if err := os.WriteFile(filepath.Join(dir, "copy-ready"), []byte("ready"), 0600); err != nil {
+				fmt.Fprintln(os.Stderr, err)
+				os.Exit(98)
+			}
+		}
 		step := steps[index]
 		for i, arg := range os.Args[1:] {
 			if arg == "--cidfile" && i+2 < len(os.Args) {

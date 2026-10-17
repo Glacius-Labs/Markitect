@@ -248,13 +248,14 @@ func TestObserveImageFileCancellationCleansWithoutCertifyingBytes(t *testing.T) 
 		case <-deadline.C:
 			t.Fatal("observation did not reconcile cancellation")
 		case got := <-done:
-			if !errors.Is(got.err, context.Canceled) || got.observation != (ImageFileObservation{}) || len(calls()) != 3 {
-				t.Fatalf("result=%+v calls=%q", got, calls())
+			all := calls()
+			if !errors.Is(got.err, context.Canceled) || got.observation != (ImageFileObservation{}) || len(all) != 3 || len(all[0]) == 0 || all[0][0] != "create" ||
+				!reflect.DeepEqual(all[1], []string{"cp", commandID + ":/check", "-"}) || !reflect.DeepEqual(all[2], []string{"rm", "--force", "--volumes", commandID}) {
+				t.Fatalf("result=%+v calls=%q", got, all)
 			}
 			return
 		case <-tick.C:
-			index, _ := os.ReadFile(filepath.Join(os.Getenv("MARKITECT_FAKE_COMMAND_ENGINE"), "index"))
-			if string(index) == "2" {
+			if _, err := os.Stat(filepath.Join(os.Getenv("MARKITECT_FAKE_COMMAND_ENGINE"), "copy-ready")); err == nil {
 				cancel()
 			}
 		}
