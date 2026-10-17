@@ -38,6 +38,16 @@ A project builds its own image `FROM` this one and adds the toolchain its checks
 
 Runtime credentials are API keys or long-lived tokens, never copied desktop logins: providers rotate refresh tokens, so a copy can sign the desktop out. The Host passes a credential to agentd at start, and agentd gives it only to the provider process. Use scoped, spend-capped credentials, because the Agent can still read them.
 
+A Codex subscription works through a dedicated runtime login:
+
+1. Create it once with `codex login --device-auth`, inside its own volume, with a maintenance container as the only writer.
+2. Before a session starts, a helper writes a copy of that login into the session's provider home, with the refresh token removed. The session cannot rotate anything, and the access token outlives a run.
+3. Refreshing the runtime login stays a maintenance step between runs.
+
+The login volume holds `auth.json` at its root, written by user 1000.
+
+The session copy carries a full-account access token, not a scoped or spend-capped credential. The Agent runs as the same user and can read it. The copy also remains in the retained provider home after the session, so the Host removes it when the session ends.
+
 ## Smoke
 
 The container adapter's tests drive this image when the engine and image are named:
@@ -45,7 +55,7 @@ The container adapter's tests drive this image when the engine and image are nam
 ```text
 MARKITECT_TEST_ENGINE=/usr/bin/docker MARKITECT_TEST_RUNTIME_IMAGE=markitect-runtime \
 MARKITECT_TEST_GO_IMAGE=markitect-runtime-go \
-  go test ./internal/adapters/container -run 'TestRealEngine|TestRuntimeImage|TestClaude|TestProjectImage' -count=1
+  go test ./internal/adapters/container -run 'TestRealEngine|TestRuntimeImage|TestClaude|TestCodex|TestProjectImage' -count=1
 ```
 
-Without credentials, the smoke shows that both CLIs start in the hardened container and connect to the Host tools through `markitect-agentd mcp`. With `OPENAI_API_KEY`, and `ANTHROPIC_API_KEY` or `CLAUDE_CODE_OAUTH_TOKEN`, each CLI also changes a file, which a helper container reads back, and calls a Host tool. With a Claude credential, two further probes resume a conversation in a new container after a workspace change, and continue one session across a quiescent workspace change. Repeat the smoke for every new image; the [capability record](../../docs/validation/runtime-capabilities-20261017.md) holds the first results.
+Without credentials, the smoke shows that both CLIs start in the hardened container and connect to the Host tools through `markitect-agentd mcp`. With a Codex credential (`OPENAI_API_KEY`, or `MARKITECT_TEST_CODEX_AUTH_VOLUME` naming a dedicated runtime login volume) and `ANTHROPIC_API_KEY` or `CLAUDE_CODE_OAUTH_TOKEN`, each CLI also changes a file, which a helper container reads back, and calls a Host tool. The probes use Codex Luna and Claude Haiku, both with high effort. Further probes resume a conversation in a new container after a workspace change, for both CLIs. With a Claude credential, one more probe continues a session across a barrier-protected workspace change. Repeat the smoke for every new image; the [capability record](../../docs/validation/runtime-capabilities-20261017.md) holds the first results.
