@@ -50,9 +50,20 @@ func TestVolumeMountCensusIncludesStoppedReadOnlyAndExactVolume(t *testing.T) {
 }
 
 func TestVolumeMountCensusFailsWhenOneInspectFails(t *testing.T) {
-	e, _ := fakeCommandEngine(t, engineStep{Out: commandID}, engineStep{Code: 1, Err: "container disappeared"})
+	e, _ := fakeCommandEngine(t, engineStep{Out: commandID}, engineStep{Code: 1, Err: "inspect failed"}, engineStep{Out: commandID})
 	if _, err := e.VolumeMounts(context.Background(), "work"); err == nil {
 		t.Fatal("partial census was accepted")
+	}
+}
+
+// A container removed between the listing and its inspection mounts nothing;
+// a fresh listing without it proves that (a session container that was just
+// stopped and removed, or any other container on the engine).
+func TestVolumeMountCensusSkipsAContainerRemovedAfterTheListing(t *testing.T) {
+	e, calls := fakeCommandEngine(t, engineStep{Out: commandID}, engineStep{Code: 1, Err: "Error response from daemon: No such container"}, engineStep{Out: ""})
+	ids, err := e.VolumeMounts(context.Background(), "work")
+	if err != nil || len(ids) != 0 || len(calls()) != 3 || !containsArg(calls()[2], "id="+commandID) {
+		t.Fatalf("ids=%v err=%v calls=%q", ids, err, calls())
 	}
 }
 
