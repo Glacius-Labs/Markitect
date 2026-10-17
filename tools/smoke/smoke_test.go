@@ -36,10 +36,10 @@ func writeZip(t *testing.T, entries map[string]string) string {
 
 func TestUnzipExtractsNestedFiles(t *testing.T) {
 	target := t.TempDir()
-	if err := unzip(writeZip(t, map[string]string{"src/cmd/markitect/main.go": "package main\n", "go.mod": "module x\n"}), target); err != nil {
+	if err := unzip(writeZip(t, map[string]string{"cmd/markitect/main.go": "package main\n", "go.mod": "module x\n"}), target); err != nil {
 		t.Fatal(err)
 	}
-	if err := requirePresent(target, "src/cmd/markitect/main.go", "go.mod"); err != nil {
+	if err := requirePresent(target, "cmd/markitect/main.go", "go.mod"); err != nil {
 		t.Fatal(err)
 	}
 }

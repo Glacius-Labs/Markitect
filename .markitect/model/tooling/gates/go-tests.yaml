@@ -1,0 +1,8 @@
+imports:
+  - package: vocabulary
+    as: Vocab
+id: go-tests
+kind: Vocab.Check
+body: "Run the declared go-tests source maintenance check and retain failures separately from runtime and acceptance evidence."
+spec:
+  command: "go test ./... -count=1"

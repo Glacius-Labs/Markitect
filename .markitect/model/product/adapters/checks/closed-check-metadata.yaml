@@ -1,0 +1,7 @@
+imports:
+  - package: vocabulary
+    as: Vocab
+id: closed-check-metadata
+kind: Vocab.Rule
+body: "Parse only explicitly selected source-bound executable and Check profile metadata in closed formats. Preserve literal arguments, environment policy, finite limits and original identities. Preparation does not execute a check and cannot establish execution success."
+spec: {}

@@ -54,8 +54,8 @@ jobs:
       - name: Verify module checksums
         run: go mod verify
 
-      - name: Enforce Core, Module, Host and CLI import boundaries
-        run: go test ./src/internal/tooling/architecture
+      - name: Enforce actual responsibility import boundaries
+        run: go run ./cmd/markitect-check-architecture --repo .
 
       - name: Test
         shell: bash
@@ -85,36 +85,30 @@ jobs:
         run: |
           # The full report goes to a file; a failure prints only its findings.
           report="$RUNNER_TEMP/project-check.json"
-          go run ./src/cmd/markitect check --repo . --revision ${{ github.sha }} > "$report" || { grep -A3 '"code":' "$report" | head -n 200; exit 1; }
+          go run ./cmd/markitect check --repo . --revision ${{ github.sha }} > "$report" || { grep -A3 '"code":' "$report" | head -n 200; exit 1; }
 
       - name: Check that the project model view is current
         if: runner.os == 'Linux'
         shell: python {0}
         run: |
-          # The docs preview's digest is the SHA-256 of the view it would write.
+          # The rendered content digest is separate from the reviewed write-plan digest.
           import hashlib, json, subprocess, sys
           sha = "${{ github.sha }}"
-          view = json.loads(subprocess.run(["go", "run", "./src/cmd/markitect", "docs", "--repo", ".", "--revision", sha], check=True, stdout=subprocess.PIPE).stdout)
+          view = json.loads(subprocess.run(["go", "run", "./cmd/markitect", "docs", "--repo", ".", "--revision", sha], check=True, stdout=subprocess.PIPE).stdout)["view"]
           committed = subprocess.run(["git", "show", sha + ":" + view["path"]], check=True, stdout=subprocess.PIPE).stdout
-          if "sha256:" + hashlib.sha256(committed).hexdigest() != view["digest"]:
-              sys.exit(view["path"] + " is stale; regenerate it with 'go run ./src/cmd/markitect docs --repo . --expect DIGEST --write' and commit it.")
+          if "sha256:" + hashlib.sha256(committed).hexdigest() != view["contentDigest"]:
+              sys.exit(view["path"] + " is stale; regenerate it with 'go run ./cmd/markitect docs --repo . --expect PREVIEW_DIGEST --write' and commit it.")
 
       - name: Check full project artifact accounting
-        run: go run ./src/cmd/markitect check --repo .
+        run: go run ./cmd/markitect check --repo .
 
       - name: Check configured modules
-        run: go run ./src/cmd/markitect-check-modules --repo . --hooks .markitect/modules/githooks.config --pipelines .markitect/modules/pipelines.config
-
-      - name: Check Claude proposal adapter protocol
-        run: python -B -m unittest discover -s src/internal/tooling/clauderunner
-
-      - name: Check Codex proposal adapter protocol
-        run: python -B -m unittest discover -s src/internal/tooling/codexrunner
+        run: go run ./cmd/markitect-check-modules --repo . --hooks .markitect/modules/githooks.config --pipelines .markitect/modules/pipelines.config
 
       - name: Check Go formatting
         shell: bash
         run: |
-          unformatted="$(gofmt -l $(git ls-files '*.go'))"
+          unformatted="$(git ls-files -z '*.go' | xargs -0 -n 32 gofmt -l)"
           if [ -n "$unformatted" ]; then echo "Run gofmt -w on these files:"; echo "$unformatted"; exit 1; fi
 
       - name: Check diff whitespace
@@ -129,7 +123,7 @@ jobs:
       - name: Check maintained documentation links
         run: python -B scripts/check-docs.py
 
-      - name: Check library oracle and bounded transport
+      - name: Check independent library oracle and bounded transport
         run: python -B -m unittest discover -s experiments/library-playground
 
       - name: Upload Go test results
@@ -210,7 +204,7 @@ jobs:
         shell: bash
         run: |
           package_dir="$RUNNER_TEMP/markitect-source-$GITHUB_SHA"
-          go run ./src/cmd/markitect-release package --repo . --output "$package_dir"
+          go run ./cmd/markitect-release package --repo . --output "$package_dir"
           mkdir -p "$package_dir/.markitect/bootstrap"
           cp integration/run-markitect.go "$package_dir/.markitect/bootstrap/run.go"
           cp integration/run-markitect_test.go "$package_dir/.markitect/bootstrap/run_test.go"

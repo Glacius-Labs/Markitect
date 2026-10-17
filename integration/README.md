@@ -7,14 +7,14 @@ Markitect's distribution unit is a versioned, immutable GitHub Release. Source f
 The current source keeps local distribution commands in `markitect-release`, separately from the product verbs. `package` writes a source package to an absent directory; `bundle` binds an absent ZIP to a fixed source commit; `install` verifies the supplied ZIP digest and previews the complete five-file pin, with `--write` required to apply it. Neither command calls a provider or publishes a release. `version` and `licenses` also work without a project. The product binary retains its information verbs and uses the same independent build version.
 
 ```powershell
-go run ./src/cmd/markitect-release package --repo . --output ABSENT_DIRECTORY
-go run ./src/cmd/markitect-release bundle --repo . --revision FULL_COMMIT --output ABSENT_BUNDLE.zip
-go run ./src/cmd/markitect-release install --repo CONSUMER --bundle BUNDLE.zip --sha256 EXPECTED_SHA256
-go run ./src/cmd/markitect-release version
-go run ./src/cmd/markitect-release licenses
+go run ./cmd/markitect-release package --repo . --output ABSENT_DIRECTORY
+go run ./cmd/markitect-release bundle --repo . --revision FULL_COMMIT --output ABSENT_BUNDLE.zip
+go run ./cmd/markitect-release install --repo CONSUMER --bundle BUNDLE.zip --sha256 EXPECTED_SHA256
+go run ./cmd/markitect-release version
+go run ./cmd/markitect-release licenses
 ```
 
-The source/bootstrap and portable build inject `src/internal/application/buildinfo.version`. The bootstrap selects the historical linker location when building an older immutable source archive. The installer uses the public guarded-write API, holds the shared writer lock through the final complete-pin readback, writes the manifest last, and reports completed paths on failure. Preview remains available in an empty non-Git directory. Unchanged pins retain their bytes and modes; ZIP pins remain byte-exact.
+The source/bootstrap and portable build inject `internal/buildinfo.version`. Current source packages and bootstrap accept only the root cmd/internal layout; published older archives retain their own original bootstrap. The installer uses the public guarded-write API, holds the shared writer lock through the final complete-pin readback, writes the manifest last, and reports completed paths on failure. Preview remains available in an empty non-Git directory. Unchanged pins retain their bytes and modes; ZIP pins remain byte-exact.
 
 The following download and installed-binary examples describe the selected published release's contract. They do not claim that a current source change updated its assets.
 
@@ -102,7 +102,7 @@ validation repeats some release-side rules without importing the code it has
 not yet built. When changing those rules, check both the release package and
 bootstrap tests.
 
-The bootstrap selects the sole command tree, `src/cmd/` or `cmd/`, and requires that layout's internal directory, command entry point and root `go.mod`. Additional root `internal/` files do not change a `src/cmd/` selection; release tooling owns the allowed source package set. To test the two standalone files from the source repository, run `go test ./integration/run-markitect.go ./integration/run-markitect_test.go -count=1`.
+The bootstrap requires root `cmd/markitect/main.go`, `internal/` and `go.mod`, and refuses legacy or mixed `src/` layouts. Release tooling independently validates exact responsibility roots, raw source/schema modes and required embedded data before extension filtering. Its binary cache binds the source archive, version, toolchain, build policy and executable bytes. To test the two standalone files from the source repository, run `go test ./integration/run-markitect.go ./integration/run-markitect_test.go -count=1`.
 
 The installer writes the complete pin as five individual atomic file replacements; it is not a filesystem transaction. If a later write fails, inspect the returned `written` paths. Do not treat a partial set as resumable. For a fresh install, remove only the listed files known to have been created by that attempt before retrying. For an upgrade, restore the previous complete committed set or use a normal Git revert. Keep a baseline commit so the whole pin can be rolled back together. Do not move or recreate an immutable release tag.
 
@@ -147,10 +147,10 @@ From the exact tagged source checkout, first print and inspect the read-only pla
 ```powershell
 Set-Location -LiteralPath '<exact tagged Markitect source checkout>'
 $tag = 'vX.Y.Z' # Replace with the exact version tag for this release.
-go run ./src/cmd/markitect-release --tag $tag --run $runId --assets $assets
+go run ./cmd/markitect-release --tag $tag --run $runId --assets $assets
 if ($LASTEXITCODE -ne 0) { throw 'Release preflight failed.' }
 # Review the exact tag, source commit, run and four assets in the plan.
-go run ./src/cmd/markitect-release --tag $tag --run $runId --assets $assets --publish
+go run ./cmd/markitect-release --tag $tag --run $runId --assets $assets --publish
 if ($LASTEXITCODE -ne 0) { throw 'Publication or final verification failed; inspect the release state.' }
 ```
 

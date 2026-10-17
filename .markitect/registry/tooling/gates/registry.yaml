@@ -1,0 +1,186 @@
+apiVersion: markitect.registry/v1
+artifacts:
+  - path: ".githooks/pre-commit"
+    form: build
+    realizes: [tooling/gates/source-checks]
+    why: Wires the required source checks or reproducible build.
+  - path: ".github/ISSUE_TEMPLATE/bug_report.yml"
+    form: build
+    realizes: [tooling/gates/source-checks]
+    why: Wires the required source checks or reproducible build.
+  - path: ".github/ISSUE_TEMPLATE/feature_request.yml"
+    form: build
+    realizes: [tooling/gates/source-checks]
+    why: Wires the required source checks or reproducible build.
+  - path: ".github/PULL_REQUEST_TEMPLATE.md"
+    form: doc
+    realizes: [tooling/gates/source-checks]
+    why: Documents the stated responsibility or preserves its historical evidence.
+  - path: ".github/workflows/ci.yaml"
+    form: build
+    realizes: [tooling/gates/source-checks]
+    why: Wires the required source checks or reproducible build.
+  - path: ".github/workflows/flake-report.yaml"
+    form: build
+    realizes: [tooling/gates/source-checks]
+    why: Wires the required source checks or reproducible build.
+  - path: ".github/workflows/release-benchmark.yaml"
+    form: build
+    realizes: [tooling/gates/source-checks]
+    why: Wires the required source checks or reproducible build.
+  - path: ".github/workflows/release.yaml"
+    form: build
+    realizes: [tooling/gates/source-checks]
+    why: Wires the required source checks or reproducible build.
+  - path: ".github/workflows/winget-validation.yaml"
+    form: build
+    realizes: [tooling/gates/source-checks]
+    why: Wires the required source checks or reproducible build.
+  - path: ".markitect/modules/githooks.config"
+    form: config
+    realizes: [tooling/gates/source-checks]
+    why: Supplies exact configuration, fixtures or retained evidence for this responsibility.
+  - path: ".markitect/modules/pipelines.config"
+    form: config
+    realizes: [tooling/gates/source-checks]
+    why: Supplies exact configuration, fixtures or retained evidence for this responsibility.
+  - path: "go.mod"
+    form: build
+    realizes: [tooling/gates/source-checks]
+    why: Wires the required source checks or reproducible build.
+  - path: "go.sum"
+    form: build
+    realizes: [tooling/gates/source-checks]
+    why: Wires the required source checks or reproducible build.
+  - path: "internal/testkit/isolate.go"
+    form: code
+    realizes: [tooling/gates/source-checks]
+    why: Implements the stated responsibility within its declared boundary.
+  - path: "internal/testkit/repo.go"
+    form: code
+    realizes: [tooling/gates/source-checks]
+    why: Implements the stated responsibility within its declared boundary.
+  - path: "internal/testkit/tempdir.go"
+    form: code
+    realizes: [tooling/gates/source-checks]
+    why: Implements the stated responsibility within its declared boundary.
+  - path: "internal/testkit/testdata/hostile.gitconfig"
+    form: config
+    realizes: [tooling/gates/source-checks]
+    why: Supplies exact configuration, fixtures or retained evidence for this responsibility.
+  - path: "internal/testkit/testkit_test.go"
+    form: test
+    realizes: [tooling/gates/source-checks]
+    why: Tests the stated responsibility and retains negative boundaries.
+  - path: "internal/tooling/architecture/boundaries_test.go"
+    form: test
+    realizes: [tooling/gates/source-checks]
+    why: Tests the stated responsibility and retains negative boundaries.
+  - path: "internal/tooling/architecture/codemap.go"
+    form: code
+    realizes: [tooling/gates/source-checks]
+    why: Implements the stated responsibility within its declared boundary.
+  - path: "internal/tooling/architecture/codemap.yaml"
+    form: config
+    realizes: [tooling/gates/source-checks]
+    why: Supplies exact configuration, fixtures or retained evidence for this responsibility.
+  - path: "internal/tooling/architecture/codemap_test.go"
+    form: test
+    realizes: [tooling/gates/source-checks]
+    why: Tests the stated responsibility and retains negative boundaries.
+  - path: "internal/tooling/architecture/imports.go"
+    form: code
+    realizes: [tooling/gates/source-checks]
+    why: Implements the stated responsibility within its declared boundary.
+  - path: "internal/tooling/architecture/layers.go"
+    form: code
+    realizes: [tooling/gates/source-checks]
+    why: Implements the stated responsibility within its declared boundary.
+  - path: "internal/tooling/architecture/target.go"
+    form: code
+    realizes: [tooling/gates/source-checks]
+    why: Implements the stated responsibility within its declared boundary.
+  - path: "internal/tooling/architecturecli/architecturecli.go"
+    form: code
+    realizes: [tooling/gates/source-checks]
+    why: Implements the stated responsibility within its declared boundary.
+  - path: "internal/tooling/architecturecli/architecturecli_test.go"
+    form: test
+    realizes: [tooling/gates/source-checks]
+    why: Tests the stated responsibility and retains negative boundaries.
+  - path: "internal/tooling/modulechecks/module_checks.go"
+    form: code
+    realizes: [tooling/gates/source-checks]
+    why: Implements the stated responsibility within its declared boundary.
+  - path: "internal/tooling/modulecli/modulecli.go"
+    form: code
+    realizes: [tooling/gates/source-checks]
+    why: Implements the stated responsibility within its declared boundary.
+  - path: "internal/tooling/modulecli/modulecli_test.go"
+    form: test
+    realizes: [tooling/gates/source-checks]
+    why: Tests the stated responsibility and retains negative boundaries.
+  - path: "internal/tooling/modules/githooks/githooks.go"
+    form: code
+    realizes: [tooling/gates/source-checks]
+    why: Implements the stated responsibility within its declared boundary.
+  - path: "internal/tooling/modules/githooks/githooks_test.go"
+    form: test
+    realizes: [tooling/gates/source-checks]
+    why: Tests the stated responsibility and retains negative boundaries.
+  - path: "internal/tooling/modules/pipelines/pipelines.go"
+    form: code
+    realizes: [tooling/gates/source-checks]
+    why: Implements the stated responsibility within its declared boundary.
+  - path: "internal/tooling/modules/pipelines/pipelines_test.go"
+    form: test
+    realizes: [tooling/gates/source-checks]
+    why: Tests the stated responsibility and retains negative boundaries.
+  - path: "scripts/check-docs.py"
+    form: code
+    realizes: [tooling/gates/source-checks]
+    why: Implements the stated responsibility within its declared boundary.
+  - path: "scripts/flake-report.py"
+    form: code
+    realizes: [tooling/gates/source-checks]
+    why: Implements the stated responsibility within its declared boundary.
+  - path: "scripts/go-test-report.py"
+    form: code
+    realizes: [tooling/gates/source-checks]
+    why: Implements the stated responsibility within its declared boundary.
+  - path: "scripts/mcp-evaluation/probe-stdio.ps1"
+    form: code
+    realizes: [tooling/gates/source-checks]
+    why: Implements the stated responsibility within its declared boundary.
+  - path: "scripts/mcp-evaluation/run-transport.ps1"
+    form: code
+    realizes: [tooling/gates/source-checks]
+    why: Implements the stated responsibility within its declared boundary.
+  - path: "scripts/mcp-evaluation/task.md"
+    form: doc
+    realizes: [tooling/gates/source-checks]
+    why: Documents the stated responsibility or preserves its historical evidence.
+  - path: "scripts/test_check_docs.py"
+    form: test
+    realizes: [tooling/gates/source-checks]
+    why: Tests the stated responsibility and retains negative boundaries.
+  - path: "scripts/test_flake_report.py"
+    form: test
+    realizes: [tooling/gates/source-checks]
+    why: Tests the stated responsibility and retains negative boundaries.
+  - path: "scripts/test_go_test_report.py"
+    form: test
+    realizes: [tooling/gates/source-checks]
+    why: Tests the stated responsibility and retains negative boundaries.
+  - path: "tools/smoke/library.go"
+    form: code
+    realizes: [tooling/gates/source-checks]
+    why: Implements the stated responsibility within its declared boundary.
+  - path: "tools/smoke/main.go"
+    form: code
+    realizes: [tooling/gates/source-checks]
+    why: Implements the stated responsibility within its declared boundary.
+  - path: "tools/smoke/smoke_test.go"
+    form: test
+    realizes: [tooling/gates/source-checks]
+    why: Tests the stated responsibility and retains negative boundaries.

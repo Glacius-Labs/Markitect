@@ -1,0 +1,326 @@
+apiVersion: markitect.registry/v1
+artifacts:
+  - path: "internal/apply/config_yaml.go"
+    form: code
+    realizes: [product/apply/read-only-preparation]
+    why: Implements the stated responsibility within its declared boundary.
+  - path: "internal/apply/context.go"
+    form: code
+    realizes: [product/apply/read-only-preparation]
+    why: Implements the stated responsibility within its declared boundary.
+  - path: "internal/apply/context_copy_test.go"
+    form: test
+    realizes: [product/apply/read-only-preparation]
+    why: Tests the stated responsibility and retains negative boundaries.
+  - path: "internal/apply/context_failures_test.go"
+    form: test
+    realizes: [product/apply/read-only-preparation]
+    why: Tests the stated responsibility and retains negative boundaries.
+  - path: "internal/apply/context_fixture_test.go"
+    form: test
+    realizes: [product/apply/read-only-preparation]
+    why: Tests the stated responsibility and retains negative boundaries.
+  - path: "internal/apply/context_scope_test.go"
+    form: test
+    realizes: [product/apply/read-only-preparation]
+    why: Tests the stated responsibility and retains negative boundaries.
+  - path: "internal/apply/context_test.go"
+    form: test
+    realizes: [product/apply/read-only-preparation]
+    why: Tests the stated responsibility and retains negative boundaries.
+  - path: "internal/apply/copy.go"
+    form: code
+    realizes: [product/apply/read-only-preparation]
+    why: Implements the stated responsibility within its declared boundary.
+  - path: "internal/apply/copy_test.go"
+    form: test
+    realizes: [product/apply/read-only-preparation]
+    why: Tests the stated responsibility and retains negative boundaries.
+  - path: "internal/apply/execution.go"
+    form: code
+    realizes: [product/apply/read-only-preparation]
+    why: Implements the stated responsibility within its declared boundary.
+  - path: "internal/apply/execution_binding_test.go"
+    form: test
+    realizes: [product/apply/read-only-preparation]
+    why: Tests the stated responsibility and retains negative boundaries.
+  - path: "internal/apply/execution_caps.go"
+    form: code
+    realizes: [product/apply/read-only-preparation]
+    why: Implements the stated responsibility within its declared boundary.
+  - path: "internal/apply/execution_contract_test.go"
+    form: test
+    realizes: [product/apply/read-only-preparation]
+    why: Tests the stated responsibility and retains negative boundaries.
+  - path: "internal/apply/execution_copy.go"
+    form: code
+    realizes: [product/apply/read-only-preparation]
+    why: Implements the stated responsibility within its declared boundary.
+  - path: "internal/apply/execution_copy_test.go"
+    form: test
+    realizes: [product/apply/read-only-preparation]
+    why: Tests the stated responsibility and retains negative boundaries.
+  - path: "internal/apply/execution_decode.go"
+    form: code
+    realizes: [product/apply/read-only-preparation]
+    why: Implements the stated responsibility within its declared boundary.
+  - path: "internal/apply/execution_duration.go"
+    form: code
+    realizes: [product/apply/read-only-preparation]
+    why: Implements the stated responsibility within its declared boundary.
+  - path: "internal/apply/execution_numbers_test.go"
+    form: test
+    realizes: [product/apply/read-only-preparation]
+    why: Tests the stated responsibility and retains negative boundaries.
+  - path: "internal/apply/execution_roles.go"
+    form: code
+    realizes: [product/apply/read-only-preparation]
+    why: Implements the stated responsibility within its declared boundary.
+  - path: "internal/apply/execution_selections.go"
+    form: code
+    realizes: [product/apply/read-only-preparation]
+    why: Implements the stated responsibility within its declared boundary.
+  - path: "internal/apply/execution_test.go"
+    form: test
+    realizes: [product/apply/read-only-preparation]
+    why: Tests the stated responsibility and retains negative boundaries.
+  - path: "internal/apply/execution_yaml.go"
+    form: code
+    realizes: [product/apply/read-only-preparation]
+    why: Implements the stated responsibility within its declared boundary.
+  - path: "internal/apply/file_check.go"
+    form: code
+    realizes: [product/apply/read-only-preparation]
+    why: Implements the stated responsibility within its declared boundary.
+  - path: "internal/apply/file_check_copy_test.go"
+    form: test
+    realizes: [product/apply/read-only-preparation]
+    why: Tests the stated responsibility and retains negative boundaries.
+  - path: "internal/apply/file_check_failures_test.go"
+    form: test
+    realizes: [product/apply/read-only-preparation]
+    why: Tests the stated responsibility and retains negative boundaries.
+  - path: "internal/apply/file_check_fixture_test.go"
+    form: test
+    realizes: [product/apply/read-only-preparation]
+    why: Tests the stated responsibility and retains negative boundaries.
+  - path: "internal/apply/file_check_ignore.go"
+    form: code
+    realizes: [product/apply/read-only-preparation]
+    why: Implements the stated responsibility within its declared boundary.
+  - path: "internal/apply/file_check_ignore_test.go"
+    form: test
+    realizes: [product/apply/read-only-preparation]
+    why: Tests the stated responsibility and retains negative boundaries.
+  - path: "internal/apply/file_check_inputs.go"
+    form: code
+    realizes: [product/apply/read-only-preparation]
+    why: Implements the stated responsibility within its declared boundary.
+  - path: "internal/apply/file_check_instructions.go"
+    form: code
+    realizes: [product/apply/read-only-preparation]
+    why: Implements the stated responsibility within its declared boundary.
+  - path: "internal/apply/file_check_instructions_test.go"
+    form: test
+    realizes: [product/apply/read-only-preparation]
+    why: Tests the stated responsibility and retains negative boundaries.
+  - path: "internal/apply/file_check_protection_test.go"
+    form: test
+    realizes: [product/apply/read-only-preparation]
+    why: Tests the stated responsibility and retains negative boundaries.
+  - path: "internal/apply/file_check_run.go"
+    form: code
+    realizes: [product/apply/read-only-preparation]
+    why: Implements the stated responsibility within its declared boundary.
+  - path: "internal/apply/file_check_test.go"
+    form: test
+    realizes: [product/apply/read-only-preparation]
+    why: Tests the stated responsibility and retains negative boundaries.
+  - path: "internal/apply/host_profiles.go"
+    form: code
+    realizes: [product/apply/read-only-preparation]
+    why: Implements the stated responsibility within its declared boundary.
+  - path: "internal/apply/host_profiles_binding_test.go"
+    form: test
+    realizes: [product/apply/read-only-preparation]
+    why: Tests the stated responsibility and retains negative boundaries.
+  - path: "internal/apply/host_profiles_decode.go"
+    form: code
+    realizes: [product/apply/read-only-preparation]
+    why: Implements the stated responsibility within its declared boundary.
+  - path: "internal/apply/host_profiles_observe.go"
+    form: code
+    realizes: [product/apply/read-only-preparation]
+    why: Implements the stated responsibility within its declared boundary.
+  - path: "internal/apply/host_profiles_observe_test.go"
+    form: test
+    realizes: [product/apply/read-only-preparation]
+    why: Tests the stated responsibility and retains negative boundaries.
+  - path: "internal/apply/host_profiles_test.go"
+    form: test
+    realizes: [product/apply/read-only-preparation]
+    why: Tests the stated responsibility and retains negative boundaries.
+  - path: "internal/apply/input_binding_test.go"
+    form: test
+    realizes: [product/apply/read-only-preparation]
+    why: Tests the stated responsibility and retains negative boundaries.
+  - path: "internal/apply/manifest_error.go"
+    form: code
+    realizes: [product/apply/read-only-preparation]
+    why: Implements the stated responsibility within its declared boundary.
+  - path: "internal/apply/manifest_error_test.go"
+    form: test
+    realizes: [product/apply/read-only-preparation]
+    why: Tests the stated responsibility and retains negative boundaries.
+  - path: "internal/apply/model.go"
+    form: code
+    realizes: [product/apply/read-only-preparation]
+    why: Implements the stated responsibility within its declared boundary.
+  - path: "internal/apply/model_area_test.go"
+    form: test
+    realizes: [product/apply/read-only-preparation]
+    why: Tests the stated responsibility and retains negative boundaries.
+  - path: "internal/apply/model_failures_test.go"
+    form: test
+    realizes: [product/apply/read-only-preparation]
+    why: Tests the stated responsibility and retains negative boundaries.
+  - path: "internal/apply/model_test.go"
+    form: test
+    realizes: [product/apply/read-only-preparation]
+    why: Tests the stated responsibility and retains negative boundaries.
+  - path: "internal/apply/preparation.go"
+    form: code
+    realizes: [product/apply/read-only-preparation]
+    why: Implements the stated responsibility within its declared boundary.
+  - path: "internal/apply/preparation_binding_test.go"
+    form: test
+    realizes: [product/apply/read-only-preparation]
+    why: Tests the stated responsibility and retains negative boundaries.
+  - path: "internal/apply/preparation_capture.go"
+    form: code
+    realizes: [product/apply/read-only-preparation]
+    why: Implements the stated responsibility within its declared boundary.
+  - path: "internal/apply/preparation_closure.go"
+    form: code
+    realizes: [product/apply/read-only-preparation]
+    why: Implements the stated responsibility within its declared boundary.
+  - path: "internal/apply/preparation_closure_test.go"
+    form: test
+    realizes: [product/apply/read-only-preparation]
+    why: Tests the stated responsibility and retains negative boundaries.
+  - path: "internal/apply/preparation_settings.go"
+    form: code
+    realizes: [product/apply/read-only-preparation]
+    why: Implements the stated responsibility within its declared boundary.
+  - path: "internal/apply/preparation_settings_binding_test.go"
+    form: test
+    realizes: [product/apply/read-only-preparation]
+    why: Tests the stated responsibility and retains negative boundaries.
+  - path: "internal/apply/preparation_settings_failures_test.go"
+    form: test
+    realizes: [product/apply/read-only-preparation]
+    why: Tests the stated responsibility and retains negative boundaries.
+  - path: "internal/apply/preparation_settings_test.go"
+    form: test
+    realizes: [product/apply/read-only-preparation]
+    why: Tests the stated responsibility and retains negative boundaries.
+  - path: "internal/apply/preparation_status_test.go"
+    form: test
+    realizes: [product/apply/read-only-preparation]
+    why: Tests the stated responsibility and retains negative boundaries.
+  - path: "internal/apply/preparation_test.go"
+    form: test
+    realizes: [product/apply/read-only-preparation]
+    why: Tests the stated responsibility and retains negative boundaries.
+  - path: "internal/apply/registry.go"
+    form: code
+    realizes: [product/apply/read-only-preparation]
+    why: Implements the stated responsibility within its declared boundary.
+  - path: "internal/apply/registry_binding_test.go"
+    form: test
+    realizes: [product/apply/read-only-preparation]
+    why: Tests the stated responsibility and retains negative boundaries.
+  - path: "internal/apply/registry_decode.go"
+    form: code
+    realizes: [product/apply/read-only-preparation]
+    why: Implements the stated responsibility within its declared boundary.
+  - path: "internal/apply/registry_failures_test.go"
+    form: test
+    realizes: [product/apply/read-only-preparation]
+    why: Tests the stated responsibility and retains negative boundaries.
+  - path: "internal/apply/registry_prepare.go"
+    form: code
+    realizes: [product/apply/read-only-preparation]
+    why: Implements the stated responsibility within its declared boundary.
+  - path: "internal/apply/registry_record.go"
+    form: code
+    realizes: [product/apply/read-only-preparation]
+    why: Implements the stated responsibility within its declared boundary.
+  - path: "internal/apply/registry_test.go"
+    form: test
+    realizes: [product/apply/read-only-preparation]
+    why: Tests the stated responsibility and retains negative boundaries.
+  - path: "internal/apply/registry_yaml_test.go"
+    form: test
+    realizes: [product/apply/read-only-preparation]
+    why: Tests the stated responsibility and retains negative boundaries.
+  - path: "internal/apply/settings_preparation.go"
+    form: code
+    realizes: [product/apply/read-only-preparation]
+    why: Implements the stated responsibility within its declared boundary.
+  - path: "internal/apply/settings_preparation_binding_test.go"
+    form: test
+    realizes: [product/apply/read-only-preparation]
+    why: Tests the stated responsibility and retains negative boundaries.
+  - path: "internal/apply/settings_preparation_failures_test.go"
+    form: test
+    realizes: [product/apply/read-only-preparation]
+    why: Tests the stated responsibility and retains negative boundaries.
+  - path: "internal/apply/settings_preparation_resolve.go"
+    form: code
+    realizes: [product/apply/read-only-preparation]
+    why: Implements the stated responsibility within its declared boundary.
+  - path: "internal/apply/settings_preparation_test.go"
+    form: test
+    realizes: [product/apply/read-only-preparation]
+    why: Tests the stated responsibility and retains negative boundaries.
+  - path: "internal/apply/source.go"
+    form: code
+    realizes: [product/apply/read-only-preparation]
+    why: Implements the stated responsibility within its declared boundary.
+  - path: "internal/apply/source_binding.go"
+    form: code
+    realizes: [product/apply/read-only-preparation]
+    why: Implements the stated responsibility within its declared boundary.
+  - path: "internal/apply/strategy_defaults.go"
+    form: code
+    realizes: [product/apply/read-only-preparation]
+    why: Implements the stated responsibility within its declared boundary.
+  - path: "internal/apply/strategy_defaults.yaml"
+    form: config
+    realizes: [product/apply/read-only-preparation]
+    why: Supplies exact configuration, fixtures or retained evidence for this responsibility.
+  - path: "internal/apply/strategy_defaults_binding_test.go"
+    form: test
+    realizes: [product/apply/read-only-preparation]
+    why: Tests the stated responsibility and retains negative boundaries.
+  - path: "internal/apply/strategy_defaults_decode.go"
+    form: code
+    realizes: [product/apply/read-only-preparation]
+    why: Implements the stated responsibility within its declared boundary.
+  - path: "internal/apply/strategy_defaults_decode_test.go"
+    form: test
+    realizes: [product/apply/read-only-preparation]
+    why: Tests the stated responsibility and retains negative boundaries.
+  - path: "internal/apply/strategy_defaults_failures_test.go"
+    form: test
+    realizes: [product/apply/read-only-preparation]
+    why: Tests the stated responsibility and retains negative boundaries.
+  - path: "internal/apply/strategy_defaults_settings.go"
+    form: code
+    realizes: [product/apply/read-only-preparation]
+    why: Implements the stated responsibility within its declared boundary.
+  - path: "internal/apply/strategy_defaults_test.go"
+    form: test
+    realizes: [product/apply/read-only-preparation]
+    why: Tests the stated responsibility and retains negative boundaries.

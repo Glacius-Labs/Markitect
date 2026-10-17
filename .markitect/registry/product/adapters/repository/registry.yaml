@@ -1,0 +1,126 @@
+apiVersion: markitect.registry/v1
+artifacts:
+  - path: "internal/adapters/gitrepo/acquisition.go"
+    form: code
+    realizes: [product/adapters/repository/repository-boundaries]
+    why: Implements the stated responsibility within its declared boundary.
+  - path: "internal/adapters/gitrepo/blobs.go"
+    form: code
+    realizes: [product/adapters/repository/repository-boundaries]
+    why: Implements the stated responsibility within its declared boundary.
+  - path: "internal/adapters/gitrepo/census.go"
+    form: code
+    realizes: [product/adapters/repository/repository-boundaries]
+    why: Implements the stated responsibility within its declared boundary.
+  - path: "internal/adapters/gitrepo/copy_test.go"
+    form: test
+    realizes: [product/adapters/repository/repository-boundaries]
+    why: Tests the stated responsibility and retains negative boundaries.
+  - path: "internal/adapters/gitrepo/directory_identity_test.go"
+    form: test
+    realizes: [product/adapters/repository/repository-boundaries]
+    why: Tests the stated responsibility and retains negative boundaries.
+  - path: "internal/adapters/gitrepo/disk.go"
+    form: code
+    realizes: [product/adapters/repository/repository-boundaries]
+    why: Implements the stated responsibility within its declared boundary.
+  - path: "internal/adapters/gitrepo/drift_test.go"
+    form: test
+    realizes: [product/adapters/repository/repository-boundaries]
+    why: Tests the stated responsibility and retains negative boundaries.
+  - path: "internal/adapters/gitrepo/entry_budget_test.go"
+    form: test
+    realizes: [product/adapters/repository/repository-boundaries]
+    why: Tests the stated responsibility and retains negative boundaries.
+  - path: "internal/adapters/gitrepo/file_check_cases_test.go"
+    form: test
+    realizes: [product/adapters/repository/repository-boundaries]
+    why: Tests the stated responsibility and retains negative boundaries.
+  - path: "internal/adapters/gitrepo/file_check_seam_test.go"
+    form: test
+    realizes: [product/adapters/repository/repository-boundaries]
+    why: Tests the stated responsibility and retains negative boundaries.
+  - path: "internal/adapters/gitrepo/fixture_test.go"
+    form: test
+    realizes: [product/adapters/repository/repository-boundaries]
+    why: Tests the stated responsibility and retains negative boundaries.
+  - path: "internal/adapters/gitrepo/git.go"
+    form: code
+    realizes: [product/adapters/repository/repository-boundaries]
+    why: Implements the stated responsibility within its declared boundary.
+  - path: "internal/adapters/gitrepo/git_safety_test.go"
+    form: test
+    realizes: [product/adapters/repository/repository-boundaries]
+    why: Tests the stated responsibility and retains negative boundaries.
+  - path: "internal/adapters/gitrepo/guard.go"
+    form: code
+    realizes: [product/adapters/repository/repository-boundaries]
+    why: Implements the stated responsibility within its declared boundary.
+  - path: "internal/adapters/gitrepo/models.go"
+    form: code
+    realizes: [product/adapters/repository/repository-boundaries]
+    why: Implements the stated responsibility within its declared boundary.
+  - path: "internal/adapters/gitrepo/preflight_test.go"
+    form: test
+    realizes: [product/adapters/repository/repository-boundaries]
+    why: Tests the stated responsibility and retains negative boundaries.
+  - path: "internal/adapters/gitrepo/preparation_history_test.go"
+    form: test
+    realizes: [product/adapters/repository/repository-boundaries]
+    why: Tests the stated responsibility and retains negative boundaries.
+  - path: "internal/adapters/gitrepo/preparation_seam_test.go"
+    form: test
+    realizes: [product/adapters/repository/repository-boundaries]
+    why: Tests the stated responsibility and retains negative boundaries.
+  - path: "internal/adapters/gitrepo/preparation_settings_refusal_test.go"
+    form: test
+    realizes: [product/adapters/repository/repository-boundaries]
+    why: Tests the stated responsibility and retains negative boundaries.
+  - path: "internal/adapters/gitrepo/preparation_settings_seam_test.go"
+    form: test
+    realizes: [product/adapters/repository/repository-boundaries]
+    why: Tests the stated responsibility and retains negative boundaries.
+  - path: "internal/adapters/gitrepo/redirect_other.go"
+    form: code
+    realizes: [product/adapters/repository/repository-boundaries]
+    why: Implements the stated responsibility within its declared boundary.
+  - path: "internal/adapters/gitrepo/redirect_test.go"
+    form: test
+    realizes: [product/adapters/repository/repository-boundaries]
+    why: Tests the stated responsibility and retains negative boundaries.
+  - path: "internal/adapters/gitrepo/redirect_windows.go"
+    form: code
+    realizes: [product/adapters/repository/repository-boundaries]
+    why: Implements the stated responsibility within its declared boundary.
+  - path: "internal/adapters/gitrepo/registry_seam_test.go"
+    form: test
+    realizes: [product/adapters/repository/repository-boundaries]
+    why: Tests the stated responsibility and retains negative boundaries.
+  - path: "internal/adapters/gitrepo/repository.go"
+    form: code
+    realizes: [product/adapters/repository/repository-boundaries]
+    why: Implements the stated responsibility within its declared boundary.
+  - path: "internal/adapters/gitrepo/repository_test.go"
+    form: test
+    realizes: [product/adapters/repository/repository-boundaries]
+    why: Tests the stated responsibility and retains negative boundaries.
+  - path: "internal/adapters/gitrepo/revision.go"
+    form: code
+    realizes: [product/adapters/repository/repository-boundaries]
+    why: Implements the stated responsibility within its declared boundary.
+  - path: "internal/adapters/gitrepo/revision_test.go"
+    form: test
+    realizes: [product/adapters/repository/repository-boundaries]
+    why: Tests the stated responsibility and retains negative boundaries.
+  - path: "internal/adapters/gitrepo/root_dot_test.go"
+    form: test
+    realizes: [product/adapters/repository/repository-boundaries]
+    why: Tests the stated responsibility and retains negative boundaries.
+  - path: "internal/adapters/gitrepo/scope_test.go"
+    form: test
+    realizes: [product/adapters/repository/repository-boundaries]
+    why: Tests the stated responsibility and retains negative boundaries.
+  - path: "internal/adapters/gitrepo/repository_alias_windows_test.go"
+    form: test
+    realizes: [product/adapters/repository/repository-boundaries]
+    why: Verifies confirmed native-root aliases without weakening exact spelling or historical external-source refusal.

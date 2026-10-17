@@ -1,25 +1,15 @@
-# Examples and executable fixtures
+# Examples and preserved fixtures
 
-Start with the model-first [Shop example](project-world/README.md) for the current project workflow. The current executable fixtures use the recursive Manager model. Historical Project/Domain fixtures remain available at their original source or release.
+The current source smoke in `tools/smoke` consumes the unchanged [canonical Library M1 model](../docs/design/canonical-model/library-example/README.md), makes only the specified M2 loan-limit edit in a temporary repository and tests actual read-only preparation, context, generated-view identity and refusals. It builds the actual packaged root-layout CLI and standalone bootstrap. It creates no Library implementation or provider/Apply evidence.
+
+The separate [Library playground](../experiments/library-playground/README.md) owns its independent oracle and bounded transport checks. Its rules and expectation data are unchanged by the product cutover. The [Project workflow](../docs/project-workflow.md) describes current usage.
 
 ## Model-first project workflow
 
-| Example | Purpose |
-|---|---|
-| [Shop](project-world/README.md) | Recursive Managers, model intent, artifact ownership and deterministic application checks |
-
-The [Project workflow](../docs/project-workflow.md) and [Project operations](../docs/project-operations.md) describe normal usage. Live provider exercises and their dated evidence are indexed under [experiments](../experiments/README.md).
-
-The [scripted method harness](../src/harness/examples/method_exchange_e2e_test.go) builds the real `markitect` and `markitect-exchange-executor` binaries. Disposable projects use private exchange directories and recorded requests, literal file expectations, independent review of changed bytes and declared Git checks. Run it with `go test ./src/harness/examples -run '^TestMethodExchangeCLIEndToEnd$' -count=1 -timeout=10m`. It exercises plan, recursive work, review, integration, verification, guarded Apply, an out-of-scope write, a forgotten file replacement repaired after a failed check, and an integration defect corrected after review. A separate omitted-file scenario proves that a wholly absent required artifact fails structurally before process checks and is not eligible for explicit repair or Apply; the completeness check detects the reparable forgotten replacement.
-
-The Windows/Linux hard-kill scenario stops the real CLI while its process executor is waiting for a response. `resume` must reclaim the dead writer lock and durably block the uncertain invocation without issuing another request. This proves the existing no-replay safety boundary; successful continuation after an in-flight process kill remains unproven. Scripted responses establish local method mechanics, not provider quality or adopting-project acceptance.
-
-For a retained local evidence run, set `MARKITECT_METHOD_EVIDENCE_DIR` to a fresh absolute directory outside the source repository and capture the test's complete `-json` output there. The harness retains CLI child arguments/stdout/stderr, raw exchange requests, literal expectations and durable run state before temporary fixture cleanup. Each scenario refuses an existing evidence directory, preserving earlier attempts.
+[Shop](project-world/README.md) and the earlier recursive Manager/DTO fixtures belong to the preceding executable product generation. Their source and former scripted exchange harness remain reconstructible from [5ff32069](https://github.com/Glacius-Labs/Markitect/tree/5ff3206917fa3b7482d9daedb903d57a919f56b8/examples). Current source does not run or reinterpret those formats.
 
 ## Historical Project/Domain fixtures
 
-The earlier structural, navigation, content-package, architecture, projection and selective-adoption examples were retired with the Project/Domain implementation. The [v0.14.1 tag](https://github.com/Glacius-Labs/Markitect/tree/v0.14.1/examples) retains the published fixtures and their original instructions. Use their named historical binary rather than current source.
+The [v0.14.1 tag](https://github.com/Glacius-Labs/Markitect/tree/v0.14.1/examples) retains published fixtures and original instructions. The [release benchmark](../benchmark/README.md) preserves versioned historical workloads. Use their named source/binary and keep original results and evidence unchanged.
 
-The retained [release benchmark fixtures](../benchmark/README.md) measure versioned synthetic CLI workloads through historical published binaries. Their input versions and raw records remain unchanged. The [design map](../docs/design/README.md) and [validation map](../docs/validation/README.md) retain the dated evidence boundaries.
-
-The current [example harnesses](../src/harness/examples) and [contribution checks](../CONTRIBUTING.md#verify-a-change) own source regression coverage. The Shop and scripted method-exchange scenarios establish finite local mechanics, not provider quality or adopting-project acceptance.
+[CONTRIBUTING](../CONTRIBUTING.md#verify-a-change) owns current source gates. Source mechanics, independent assessment, provider quality and owner acceptance remain separate evidence.

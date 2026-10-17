@@ -9,7 +9,7 @@ if git rev-parse --verify --quiet HEAD >/dev/null; then
 else
 	c=$(git commit-tree "$tree" -m pre-commit)
 fi
-go run ./src/cmd/markitect check --repo . --revision "$c" >/dev/null || {
-	echo "pre-commit: the staged project model does not check green; run 'go run ./src/cmd/markitect check --repo . --revision $c' for the findings" >&2
+go run ./cmd/markitect check --repo . --revision "$c" >/dev/null || {
+	echo "pre-commit: the staged project model does not check green; run 'go run ./cmd/markitect check --repo . --revision $c' for the findings" >&2
 	exit 1
 }

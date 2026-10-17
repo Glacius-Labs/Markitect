@@ -1,0 +1,466 @@
+apiVersion: markitect.registry/v1
+artifacts:
+  - path: "cmd/markitect-check-architecture/main.go"
+    form: code
+    realizes: [tooling/maintenance-boundaries]
+    why: Implements the stated responsibility within its declared boundary.
+  - path: "cmd/markitect-check-modules/main.go"
+    form: code
+    realizes: [tooling/maintenance-boundaries]
+    why: Implements the stated responsibility within its declared boundary.
+  - path: "cmd/markitect-release/main.go"
+    form: code
+    realizes: [tooling/maintenance-boundaries]
+    why: Implements the stated responsibility within its declared boundary.
+  - path: "integration/README.md"
+    form: doc
+    realizes: [tooling/maintenance-boundaries]
+    why: Documents the stated responsibility or preserves its historical evidence.
+  - path: "integration/run-markitect.go"
+    form: code
+    realizes: [tooling/maintenance-boundaries]
+    why: Implements the stated responsibility within its declared boundary.
+  - path: "integration/run-markitect_test.go"
+    form: test
+    realizes: [tooling/maintenance-boundaries]
+    why: Tests the stated responsibility and retains negative boundaries.
+  - path: "internal/tooling/guardedwrite/guardedwrite.go"
+    form: code
+    realizes: [tooling/maintenance-boundaries]
+    why: Implements the stated responsibility within its declared boundary.
+  - path: "internal/tooling/guardedwrite/guardedwrite_test.go"
+    form: test
+    realizes: [tooling/maintenance-boundaries]
+    why: Tests the stated responsibility and retains negative boundaries.
+  - path: "internal/tooling/guardedwrite/guardedwrite_windows_test.go"
+    form: test
+    realizes: [tooling/maintenance-boundaries]
+    why: Tests the stated responsibility and retains negative boundaries.
+  - path: "internal/tooling/guardedwrite/helpers_test.go"
+    form: test
+    realizes: [tooling/maintenance-boundaries]
+    why: Tests the stated responsibility and retains negative boundaries.
+  - path: "internal/tooling/guardedwrite/path_spelling_other.go"
+    form: code
+    realizes: [tooling/maintenance-boundaries]
+    why: Implements the stated responsibility within its declared boundary.
+  - path: "internal/tooling/guardedwrite/path_spelling_windows.go"
+    form: code
+    realizes: [tooling/maintenance-boundaries]
+    why: Implements the stated responsibility within its declared boundary.
+  - path: "internal/tooling/guardedwrite/root.go"
+    form: code
+    realizes: [tooling/maintenance-boundaries]
+    why: Implements the stated responsibility within its declared boundary.
+  - path: "internal/tooling/guardedwrite/root_nonwindows_test.go"
+    form: test
+    realizes: [tooling/maintenance-boundaries]
+    why: Tests the stated responsibility and retains negative boundaries.
+  - path: "internal/tooling/guardedwrite/root_test.go"
+    form: test
+    realizes: [tooling/maintenance-boundaries]
+    why: Tests the stated responsibility and retains negative boundaries.
+  - path: "internal/tooling/guardedwrite/root_windows_test.go"
+    form: test
+    realizes: [tooling/maintenance-boundaries]
+    why: Tests the stated responsibility and retains negative boundaries.
+  - path: "internal/tooling/guardedwrite/testmain_test.go"
+    form: test
+    realizes: [tooling/maintenance-boundaries]
+    why: Tests the stated responsibility and retains negative boundaries.
+  - path: "internal/tooling/licenses/licenses.go"
+    form: code
+    realizes: [tooling/maintenance-boundaries]
+    why: Implements the stated responsibility within its declared boundary.
+  - path: "internal/tooling/licenses/notices.md"
+    form: doc
+    realizes: [tooling/maintenance-boundaries]
+    why: Documents the stated responsibility or preserves its historical evidence.
+  - path: "internal/tooling/publish/distribution.go"
+    form: code
+    realizes: [tooling/maintenance-boundaries]
+    why: Implements the stated responsibility within its declared boundary.
+  - path: "internal/tooling/publish/distribution_readme.go"
+    form: code
+    realizes: [tooling/maintenance-boundaries]
+    why: Implements the stated responsibility within its declared boundary.
+  - path: "internal/tooling/publish/distribution_test.go"
+    form: test
+    realizes: [tooling/maintenance-boundaries]
+    why: Tests the stated responsibility and retains negative boundaries.
+  - path: "internal/tooling/publish/publish.go"
+    form: code
+    realizes: [tooling/maintenance-boundaries]
+    why: Implements the stated responsibility within its declared boundary.
+  - path: "internal/tooling/publish/publish_api.go"
+    form: code
+    realizes: [tooling/maintenance-boundaries]
+    why: Implements the stated responsibility within its declared boundary.
+  - path: "internal/tooling/publish/publish_assets.go"
+    form: code
+    realizes: [tooling/maintenance-boundaries]
+    why: Implements the stated responsibility within its declared boundary.
+  - path: "internal/tooling/publish/publish_fixture_test.go"
+    form: test
+    realizes: [tooling/maintenance-boundaries]
+    why: Tests the stated responsibility and retains negative boundaries.
+  - path: "internal/tooling/publish/publish_remote.go"
+    form: code
+    realizes: [tooling/maintenance-boundaries]
+    why: Implements the stated responsibility within its declared boundary.
+  - path: "internal/tooling/publish/publish_test.go"
+    form: test
+    realizes: [tooling/maintenance-boundaries]
+    why: Tests the stated responsibility and retains negative boundaries.
+  - path: "internal/tooling/release/bundle.go"
+    form: code
+    realizes: [tooling/maintenance-boundaries]
+    why: Implements the stated responsibility within its declared boundary.
+  - path: "internal/tooling/release/bundle_fixture_test.go"
+    form: test
+    realizes: [tooling/maintenance-boundaries]
+    why: Tests the stated responsibility and retains negative boundaries.
+  - path: "internal/tooling/release/bundle_manifest.go"
+    form: code
+    realizes: [tooling/maintenance-boundaries]
+    why: Implements the stated responsibility within its declared boundary.
+  - path: "internal/tooling/release/bundle_parse_test.go"
+    form: test
+    realizes: [tooling/maintenance-boundaries]
+    why: Tests the stated responsibility and retains negative boundaries.
+  - path: "internal/tooling/release/bundle_snapshot.go"
+    form: code
+    realizes: [tooling/maintenance-boundaries]
+    why: Implements the stated responsibility within its declared boundary.
+  - path: "internal/tooling/release/bundle_test.go"
+    form: test
+    realizes: [tooling/maintenance-boundaries]
+    why: Tests the stated responsibility and retains negative boundaries.
+  - path: "internal/tooling/release/install/install.go"
+    form: code
+    realizes: [tooling/maintenance-boundaries]
+    why: Implements the stated responsibility within its declared boundary.
+  - path: "internal/tooling/release/install/install_fixture_test.go"
+    form: test
+    realizes: [tooling/maintenance-boundaries]
+    why: Tests the stated responsibility and retains negative boundaries.
+  - path: "internal/tooling/release/install/install_plan.go"
+    form: code
+    realizes: [tooling/maintenance-boundaries]
+    why: Implements the stated responsibility within its declared boundary.
+  - path: "internal/tooling/release/install/install_safety_test.go"
+    form: test
+    realizes: [tooling/maintenance-boundaries]
+    why: Tests the stated responsibility and retains negative boundaries.
+  - path: "internal/tooling/release/install/install_test.go"
+    form: test
+    realizes: [tooling/maintenance-boundaries]
+    why: Tests the stated responsibility and retains negative boundaries.
+  - path: "internal/tooling/release/install/install_write.go"
+    form: code
+    realizes: [tooling/maintenance-boundaries]
+    why: Implements the stated responsibility within its declared boundary.
+  - path: "internal/tooling/release/install/testmain_test.go"
+    form: test
+    realizes: [tooling/maintenance-boundaries]
+    why: Tests the stated responsibility and retains negative boundaries.
+  - path: "internal/tooling/release/notices_test.go"
+    form: test
+    realizes: [tooling/maintenance-boundaries]
+    why: Tests the stated responsibility and retains negative boundaries.
+  - path: "internal/tooling/release/package.go"
+    form: code
+    realizes: [tooling/maintenance-boundaries]
+    why: Implements the stated responsibility within its declared boundary.
+  - path: "internal/tooling/release/package_archive.go"
+    form: code
+    realizes: [tooling/maintenance-boundaries]
+    why: Implements the stated responsibility within its declared boundary.
+  - path: "internal/tooling/release/package_archive_test.go"
+    form: test
+    realizes: [tooling/maintenance-boundaries]
+    why: Tests the stated responsibility and retains negative boundaries.
+  - path: "internal/tooling/release/package_fixture_test.go"
+    form: test
+    realizes: [tooling/maintenance-boundaries]
+    why: Tests the stated responsibility and retains negative boundaries.
+  - path: "internal/tooling/release/package_source.go"
+    form: code
+    realizes: [tooling/maintenance-boundaries]
+    why: Implements the stated responsibility within its declared boundary.
+  - path: "internal/tooling/release/package_test.go"
+    form: test
+    realizes: [tooling/maintenance-boundaries]
+    why: Tests the stated responsibility and retains negative boundaries.
+  - path: "internal/tooling/release/source_layout.go"
+    form: code
+    realizes: [tooling/maintenance-boundaries]
+    why: Implements the stated responsibility within its declared boundary.
+  - path: "internal/tooling/release/source_layout_test.go"
+    form: test
+    realizes: [tooling/maintenance-boundaries]
+    why: Tests the stated responsibility and retains negative boundaries.
+  - path: "internal/tooling/release/strategy_defaults_test.go"
+    form: test
+    realizes: [tooling/maintenance-boundaries]
+    why: Tests the stated responsibility and retains negative boundaries.
+  - path: "internal/tooling/releasecli/licenses_test.go"
+    form: test
+    realizes: [tooling/maintenance-boundaries]
+    why: Tests the stated responsibility and retains negative boundaries.
+  - path: "internal/tooling/releasecli/local.go"
+    form: code
+    realizes: [tooling/maintenance-boundaries]
+    why: Implements the stated responsibility within its declared boundary.
+  - path: "internal/tooling/releasecli/local_distribution.go"
+    form: code
+    realizes: [tooling/maintenance-boundaries]
+    why: Implements the stated responsibility within its declared boundary.
+  - path: "internal/tooling/releasecli/local_distribution_test.go"
+    form: test
+    realizes: [tooling/maintenance-boundaries]
+    why: Tests the stated responsibility and retains negative boundaries.
+  - path: "internal/tooling/releasecli/main.go"
+    form: code
+    realizes: [tooling/maintenance-boundaries]
+    why: Implements the stated responsibility within its declared boundary.
+  - path: "internal/tooling/releasecli/main_test.go"
+    form: test
+    realizes: [tooling/maintenance-boundaries]
+    why: Tests the stated responsibility and retains negative boundaries.
+  - path: "internal/tooling/releasecli/testmain_test.go"
+    form: test
+    realizes: [tooling/maintenance-boundaries]
+    why: Tests the stated responsibility and retains negative boundaries.
+  - path: "internal/tooling/source/filemode.go"
+    form: code
+    realizes: [tooling/maintenance-boundaries]
+    why: Implements the stated responsibility within its declared boundary.
+  - path: "internal/tooling/source/filemode_windows.go"
+    form: code
+    realizes: [tooling/maintenance-boundaries]
+    why: Implements the stated responsibility within its declared boundary.
+  - path: "internal/tooling/source/git_snapshot.go"
+    form: code
+    realizes: [tooling/maintenance-boundaries]
+    why: Implements the stated responsibility within its declared boundary.
+  - path: "internal/tooling/source/input.go"
+    form: code
+    realizes: [tooling/maintenance-boundaries]
+    why: Implements the stated responsibility within its declared boundary.
+  - path: "internal/tooling/source/input_test.go"
+    form: test
+    realizes: [tooling/maintenance-boundaries]
+    why: Tests the stated responsibility and retains negative boundaries.
+  - path: "internal/tooling/source/materialize.go"
+    form: code
+    realizes: [tooling/maintenance-boundaries]
+    why: Implements the stated responsibility within its declared boundary.
+  - path: "internal/tooling/source/materialize_test.go"
+    form: test
+    realizes: [tooling/maintenance-boundaries]
+    why: Tests the stated responsibility and retains negative boundaries.
+  - path: "internal/tooling/source/scoped_revision.go"
+    form: code
+    realizes: [tooling/maintenance-boundaries]
+    why: Implements the stated responsibility within its declared boundary.
+  - path: "internal/tooling/source/scoped_revision_test.go"
+    form: test
+    realizes: [tooling/maintenance-boundaries]
+    why: Tests the stated responsibility and retains negative boundaries.
+  - path: "internal/tooling/source/scoped_working.go"
+    form: code
+    realizes: [tooling/maintenance-boundaries]
+    why: Implements the stated responsibility within its declared boundary.
+  - path: "internal/tooling/source/scoped_working_test.go"
+    form: test
+    realizes: [tooling/maintenance-boundaries]
+    why: Tests the stated responsibility and retains negative boundaries.
+  - path: "internal/tooling/source/selective.go"
+    form: code
+    realizes: [tooling/maintenance-boundaries]
+    why: Implements the stated responsibility within its declared boundary.
+  - path: "internal/tooling/source/selective_identity_test.go"
+    form: test
+    realizes: [tooling/maintenance-boundaries]
+    why: Tests the stated responsibility and retains negative boundaries.
+  - path: "internal/tooling/source/selective_test.go"
+    form: test
+    realizes: [tooling/maintenance-boundaries]
+    why: Tests the stated responsibility and retains negative boundaries.
+  - path: "internal/tooling/source/source.go"
+    form: code
+    realizes: [tooling/maintenance-boundaries]
+    why: Implements the stated responsibility within its declared boundary.
+  - path: "internal/tooling/source/source_fixture_test.go"
+    form: test
+    realizes: [tooling/maintenance-boundaries]
+    why: Tests the stated responsibility and retains negative boundaries.
+  - path: "internal/tooling/source/source_test.go"
+    form: test
+    realizes: [tooling/maintenance-boundaries]
+    why: Tests the stated responsibility and retains negative boundaries.
+  - path: "internal/tooling/source/testmain_test.go"
+    form: test
+    realizes: [tooling/maintenance-boundaries]
+    why: Tests the stated responsibility and retains negative boundaries.
+  - path: "internal/tooling/source/working_tree.go"
+    form: code
+    realizes: [tooling/maintenance-boundaries]
+    why: Implements the stated responsibility within its declared boundary.
+  - path: "internal/tooling/source/working_tree_test.go"
+    form: test
+    realizes: [tooling/maintenance-boundaries]
+    why: Tests the stated responsibility and retains negative boundaries.
+  - path: "packaging/winget/GlaciusLabs.Markitect/0.10.0/GlaciusLabs.Markitect.installer.yaml"
+    form: config
+    realizes: [tooling/maintenance-boundaries]
+    why: Supplies exact configuration, fixtures or retained evidence for this responsibility.
+  - path: "packaging/winget/GlaciusLabs.Markitect/0.10.0/GlaciusLabs.Markitect.locale.en-US.yaml"
+    form: config
+    realizes: [tooling/maintenance-boundaries]
+    why: Supplies exact configuration, fixtures or retained evidence for this responsibility.
+  - path: "packaging/winget/GlaciusLabs.Markitect/0.10.0/GlaciusLabs.Markitect.yaml"
+    form: config
+    realizes: [tooling/maintenance-boundaries]
+    why: Supplies exact configuration, fixtures or retained evidence for this responsibility.
+  - path: "packaging/winget/GlaciusLabs.Markitect/0.11.0/GlaciusLabs.Markitect.installer.yaml"
+    form: config
+    realizes: [tooling/maintenance-boundaries]
+    why: Supplies exact configuration, fixtures or retained evidence for this responsibility.
+  - path: "packaging/winget/GlaciusLabs.Markitect/0.11.0/GlaciusLabs.Markitect.locale.en-US.yaml"
+    form: config
+    realizes: [tooling/maintenance-boundaries]
+    why: Supplies exact configuration, fixtures or retained evidence for this responsibility.
+  - path: "packaging/winget/GlaciusLabs.Markitect/0.11.0/GlaciusLabs.Markitect.yaml"
+    form: config
+    realizes: [tooling/maintenance-boundaries]
+    why: Supplies exact configuration, fixtures or retained evidence for this responsibility.
+  - path: "packaging/winget/GlaciusLabs.Markitect/0.12.0/GlaciusLabs.Markitect.installer.yaml"
+    form: config
+    realizes: [tooling/maintenance-boundaries]
+    why: Supplies exact configuration, fixtures or retained evidence for this responsibility.
+  - path: "packaging/winget/GlaciusLabs.Markitect/0.12.0/GlaciusLabs.Markitect.locale.en-US.yaml"
+    form: config
+    realizes: [tooling/maintenance-boundaries]
+    why: Supplies exact configuration, fixtures or retained evidence for this responsibility.
+  - path: "packaging/winget/GlaciusLabs.Markitect/0.12.0/GlaciusLabs.Markitect.yaml"
+    form: config
+    realizes: [tooling/maintenance-boundaries]
+    why: Supplies exact configuration, fixtures or retained evidence for this responsibility.
+  - path: "packaging/winget/GlaciusLabs.Markitect/0.13.0/GlaciusLabs.Markitect.installer.yaml"
+    form: config
+    realizes: [tooling/maintenance-boundaries]
+    why: Supplies exact configuration, fixtures or retained evidence for this responsibility.
+  - path: "packaging/winget/GlaciusLabs.Markitect/0.13.0/GlaciusLabs.Markitect.locale.en-US.yaml"
+    form: config
+    realizes: [tooling/maintenance-boundaries]
+    why: Supplies exact configuration, fixtures or retained evidence for this responsibility.
+  - path: "packaging/winget/GlaciusLabs.Markitect/0.13.0/GlaciusLabs.Markitect.yaml"
+    form: config
+    realizes: [tooling/maintenance-boundaries]
+    why: Supplies exact configuration, fixtures or retained evidence for this responsibility.
+  - path: "packaging/winget/GlaciusLabs.Markitect/0.14.1/GlaciusLabs.Markitect.installer.yaml"
+    form: config
+    realizes: [tooling/maintenance-boundaries]
+    why: Supplies exact configuration, fixtures or retained evidence for this responsibility.
+  - path: "packaging/winget/GlaciusLabs.Markitect/0.14.1/GlaciusLabs.Markitect.locale.en-US.yaml"
+    form: config
+    realizes: [tooling/maintenance-boundaries]
+    why: Supplies exact configuration, fixtures or retained evidence for this responsibility.
+  - path: "packaging/winget/GlaciusLabs.Markitect/0.14.1/GlaciusLabs.Markitect.yaml"
+    form: config
+    realizes: [tooling/maintenance-boundaries]
+    why: Supplies exact configuration, fixtures or retained evidence for this responsibility.
+  - path: "packaging/winget/GlaciusLabs.Markitect/0.5.0/GlaciusLabs.Markitect.installer.yaml"
+    form: config
+    realizes: [tooling/maintenance-boundaries]
+    why: Supplies exact configuration, fixtures or retained evidence for this responsibility.
+  - path: "packaging/winget/GlaciusLabs.Markitect/0.5.0/GlaciusLabs.Markitect.locale.en-US.yaml"
+    form: config
+    realizes: [tooling/maintenance-boundaries]
+    why: Supplies exact configuration, fixtures or retained evidence for this responsibility.
+  - path: "packaging/winget/GlaciusLabs.Markitect/0.5.0/GlaciusLabs.Markitect.yaml"
+    form: config
+    realizes: [tooling/maintenance-boundaries]
+    why: Supplies exact configuration, fixtures or retained evidence for this responsibility.
+  - path: "packaging/winget/GlaciusLabs.Markitect/0.6.0/GlaciusLabs.Markitect.installer.yaml"
+    form: config
+    realizes: [tooling/maintenance-boundaries]
+    why: Supplies exact configuration, fixtures or retained evidence for this responsibility.
+  - path: "packaging/winget/GlaciusLabs.Markitect/0.6.0/GlaciusLabs.Markitect.locale.en-US.yaml"
+    form: config
+    realizes: [tooling/maintenance-boundaries]
+    why: Supplies exact configuration, fixtures or retained evidence for this responsibility.
+  - path: "packaging/winget/GlaciusLabs.Markitect/0.6.0/GlaciusLabs.Markitect.yaml"
+    form: config
+    realizes: [tooling/maintenance-boundaries]
+    why: Supplies exact configuration, fixtures or retained evidence for this responsibility.
+  - path: "packaging/winget/GlaciusLabs.Markitect/0.7.0/GlaciusLabs.Markitect.installer.yaml"
+    form: config
+    realizes: [tooling/maintenance-boundaries]
+    why: Supplies exact configuration, fixtures or retained evidence for this responsibility.
+  - path: "packaging/winget/GlaciusLabs.Markitect/0.7.0/GlaciusLabs.Markitect.locale.en-US.yaml"
+    form: config
+    realizes: [tooling/maintenance-boundaries]
+    why: Supplies exact configuration, fixtures or retained evidence for this responsibility.
+  - path: "packaging/winget/GlaciusLabs.Markitect/0.7.0/GlaciusLabs.Markitect.yaml"
+    form: config
+    realizes: [tooling/maintenance-boundaries]
+    why: Supplies exact configuration, fixtures or retained evidence for this responsibility.
+  - path: "packaging/winget/GlaciusLabs.Markitect/0.8.0/GlaciusLabs.Markitect.installer.yaml"
+    form: config
+    realizes: [tooling/maintenance-boundaries]
+    why: Supplies exact configuration, fixtures or retained evidence for this responsibility.
+  - path: "packaging/winget/GlaciusLabs.Markitect/0.8.0/GlaciusLabs.Markitect.locale.en-US.yaml"
+    form: config
+    realizes: [tooling/maintenance-boundaries]
+    why: Supplies exact configuration, fixtures or retained evidence for this responsibility.
+  - path: "packaging/winget/GlaciusLabs.Markitect/0.8.0/GlaciusLabs.Markitect.yaml"
+    form: config
+    realizes: [tooling/maintenance-boundaries]
+    why: Supplies exact configuration, fixtures or retained evidence for this responsibility.
+  - path: "packaging/winget/GlaciusLabs.Markitect/0.8.1/GlaciusLabs.Markitect.installer.yaml"
+    form: config
+    realizes: [tooling/maintenance-boundaries]
+    why: Supplies exact configuration, fixtures or retained evidence for this responsibility.
+  - path: "packaging/winget/GlaciusLabs.Markitect/0.8.1/GlaciusLabs.Markitect.locale.en-US.yaml"
+    form: config
+    realizes: [tooling/maintenance-boundaries]
+    why: Supplies exact configuration, fixtures or retained evidence for this responsibility.
+  - path: "packaging/winget/GlaciusLabs.Markitect/0.8.1/GlaciusLabs.Markitect.yaml"
+    form: config
+    realizes: [tooling/maintenance-boundaries]
+    why: Supplies exact configuration, fixtures or retained evidence for this responsibility.
+  - path: "packaging/winget/GlaciusLabs.Markitect/0.9.0/GlaciusLabs.Markitect.installer.yaml"
+    form: config
+    realizes: [tooling/maintenance-boundaries]
+    why: Supplies exact configuration, fixtures or retained evidence for this responsibility.
+  - path: "packaging/winget/GlaciusLabs.Markitect/0.9.0/GlaciusLabs.Markitect.locale.en-US.yaml"
+    form: config
+    realizes: [tooling/maintenance-boundaries]
+    why: Supplies exact configuration, fixtures or retained evidence for this responsibility.
+  - path: "packaging/winget/GlaciusLabs.Markitect/0.9.0/GlaciusLabs.Markitect.yaml"
+    form: config
+    realizes: [tooling/maintenance-boundaries]
+    why: Supplies exact configuration, fixtures or retained evidence for this responsibility.
+  - path: "packaging/winget/GlaciusLabs.Markitect/0.9.1/GlaciusLabs.Markitect.installer.yaml"
+    form: config
+    realizes: [tooling/maintenance-boundaries]
+    why: Supplies exact configuration, fixtures or retained evidence for this responsibility.
+  - path: "packaging/winget/GlaciusLabs.Markitect/0.9.1/GlaciusLabs.Markitect.locale.en-US.yaml"
+    form: config
+    realizes: [tooling/maintenance-boundaries]
+    why: Supplies exact configuration, fixtures or retained evidence for this responsibility.
+  - path: "packaging/winget/GlaciusLabs.Markitect/0.9.1/GlaciusLabs.Markitect.yaml"
+    form: config
+    realizes: [tooling/maintenance-boundaries]
+    why: Supplies exact configuration, fixtures or retained evidence for this responsibility.
+  - path: "packaging/winget/Test-CatalogContract.ps1"
+    form: code
+    realizes: [tooling/maintenance-boundaries]
+    why: Implements the stated responsibility within its declared boundary.
+  - path: "packaging/winget/Test-InstallUpgrade.ps1"
+    form: code
+    realizes: [tooling/maintenance-boundaries]
+    why: Implements the stated responsibility within its declared boundary.

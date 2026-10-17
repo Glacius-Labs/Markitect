@@ -1,0 +1,7 @@
+imports:
+  - package: vocabulary
+    as: Vocab
+id: ports-and-adapters
+kind: Vocab.Rule
+body: "Keep model, snapshot, organization and realization values independent of execution and infrastructure. Apply owns consumer ports; adapters implement physical acquisition and protocols. Bootstrap composes actual services. All maintained Go code belongs to one root module and an explicit architecture responsibility; no old compiler, Manager DTO or runtime remains active."
+spec: {}

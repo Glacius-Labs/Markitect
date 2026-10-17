@@ -5,7 +5,6 @@ import (
 	"bytes"
 	"crypto/sha256"
 	"encoding/hex"
-	"errors"
 	"os"
 	"path/filepath"
 	"reflect"
@@ -48,70 +47,15 @@ func validZipEntries() []zipFixtureEntry {
 	return []zipFixtureEntry{
 		{name: "go.mod", data: []byte("module markitect\n\ngo 1.24.0\n"), mode: 0644},
 		{name: "go.sum", data: []byte(""), mode: 0644},
-		{name: "src/cmd/markitect/main.go", data: []byte("package main\n"), mode: 0644},
-		{name: "src/internal/application/buildinfo/version.go", data: []byte("package buildinfo\nvar version = \"0.1.0-dev\"\n"), mode: 0644},
-		{name: "src/internal/app/host.go", data: []byte("package app\n"), mode: 0644},
-	}
-}
-
-func legacyZipEntries() []zipFixtureEntry {
-	return []zipFixtureEntry{
-		{name: "go.mod", data: []byte("module markitect\n\ngo 1.24.0\n"), mode: 0644},
-		{name: "go.sum", data: []byte(""), mode: 0644},
 		{name: "cmd/markitect/main.go", data: []byte("package main\n"), mode: 0644},
-		{name: "internal/app/host.go", data: []byte("package app\n"), mode: 0644},
+		{name: "internal/buildinfo/version.go", data: []byte("package buildinfo\nvar version = \"0.1.0-dev\"\n"), mode: 0644},
+		{name: "internal/apply/host.go", data: []byte("package app\n"), mode: 0644},
 	}
 }
 
 func fixtureManifest(data []byte) manifest {
 	digest := sha256.Sum256(data)
 	return manifest{version: "0.1.0-dev", source: ".markitect/tool/source.zip", sha256: hex.EncodeToString(digest[:])}
-}
-
-func TestPinnedArchiveBuildVersionLocations(t *testing.T) {
-	for _, prefix := range []string{"src/", ""} {
-		for _, location := range []string{"internal/application/buildinfo", "internal/host/buildinfo", "internal/host/cli"} {
-			t.Run(prefix+location, func(t *testing.T) {
-				entries := []zipFixtureEntry{
-					{name: "go.mod", data: []byte("module markitect\n\ngo 1.24.0\n"), mode: 0644},
-					{name: "go.sum", mode: 0644},
-					{name: prefix + "cmd/markitect/main.go", data: []byte("package main\n"), mode: 0644},
-					{name: prefix + location + "/version.go", data: []byte("package version\nvar version = \"0.1.0-dev\"\n"), mode: 0644},
-				}
-				if location == "internal/application/buildinfo" {
-					entries = append(entries, zipFixtureEntry{name: prefix + "internal/host/buildinfo/version.go", data: []byte("package buildinfo\n"), mode: 0644})
-				}
-				if location != "internal/host/cli" {
-					entries = append(entries, zipFixtureEntry{name: prefix + "internal/host/cli/version.go", data: []byte("package cli\n"), mode: 0644})
-				}
-				data := makeZip(t, entries)
-				archivePath := filepath.Join(t.TempDir(), "source.zip")
-				if err := os.WriteFile(archivePath, data, 0644); err != nil {
-					t.Fatal(err)
-				}
-				archive, err := readArchive(archivePath, hexDigest(data), defaultLimits)
-				if err != nil {
-					t.Fatal(err)
-				}
-				var buildArgs []string
-				_, err = buildOrReuse(t.TempDir(), fixtureManifest(data), archive, "fake-go", os.Environ(), func(_ string, args []string, _ string, _ []string) error {
-					buildArgs = append([]string(nil), args...)
-					output := indexOf(args, "-o")
-					if output < 0 || output+1 >= len(args) {
-						return errors.New("missing output argument")
-					}
-					return os.WriteFile(args[output+1], []byte("mock executable"), 0755)
-				}, func(_, _ string, _ []string) (string, error) { return "go1.27.1", nil })
-				if err != nil {
-					t.Fatal(err)
-				}
-				want := "-X main.version=0.1.0-dev -X github.com/Glacius-Labs/Markitect/" + prefix + location + ".version=0.1.0-dev"
-				if !contains(buildArgs, want) || !contains(buildArgs, "./"+prefix+"cmd/markitect") {
-					t.Fatalf("wrong pinned version/executable selection: %v, want %s", buildArgs, want)
-				}
-			})
-		}
-	}
 }
 
 func TestParseManifestStrictFieldsAndCRLF(t *testing.T) {
@@ -219,10 +163,10 @@ func TestReadArchiveVerifiesDigestLayoutAndRejectsUnsafeEntries(t *testing.T) {
 		{name: "traversal", entries: append(validZipEntries(), zipFixtureEntry{name: "../escape", mode: 0644})},
 		{name: "symlink", entries: append(validZipEntries(), zipFixtureEntry{name: "link", data: []byte("target"), mode: os.ModeSymlink | 0777})},
 		{name: "reparse", entries: append(validZipEntries(), zipFixtureEntry{name: "reparse", data: []byte("x"), mode: 0644, attr: 0x400})},
-		{name: "case-collision", entries: append(validZipEntries(), zipFixtureEntry{name: "SRC/CMD/other.go", data: []byte("x"), mode: 0644})},
-		{name: "file-directory-collision", entries: append(validZipEntries(), zipFixtureEntry{name: "src/internal", data: []byte("x"), mode: 0644})},
+		{name: "case-collision", entries: append(validZipEntries(), zipFixtureEntry{name: "CMD/other.go", data: []byte("x"), mode: 0644})},
+		{name: "file-directory-collision", entries: append(validZipEntries(), zipFixtureEntry{name: "internal", data: []byte("x"), mode: 0644})},
 		{name: "count-limit", entries: validZipEntries(), limits: limits{maxEntries: 2, maxFile: 100, maxTotal: 1000, maxArchive: 1000}},
-		{name: "file-limit", entries: append(validZipEntries(), zipFixtureEntry{name: "src/internal/large.go", data: bytes.Repeat([]byte("a"), 8), mode: 0644}), limits: limits{maxEntries: 100, maxFile: 4, maxTotal: 100, maxArchive: 10000}},
+		{name: "file-limit", entries: append(validZipEntries(), zipFixtureEntry{name: "internal/large.go", data: bytes.Repeat([]byte("a"), 8), mode: 0644}), limits: limits{maxEntries: 100, maxFile: 4, maxTotal: 100, maxArchive: 10000}},
 	} {
 		t.Run(test.name, func(t *testing.T) {
 			data := makeZip(t, test.entries)
@@ -242,157 +186,49 @@ func TestReadArchiveVerifiesDigestLayoutAndRejectsUnsafeEntries(t *testing.T) {
 	}
 }
 
-func TestReadArchiveAcceptsPinnedLegacyLayoutButRejectsMixedLayouts(t *testing.T) {
-	legacy := makeZip(t, legacyZipEntries())
-	legacyPath := filepath.Join(t.TempDir(), "legacy.zip")
-	if err := os.WriteFile(legacyPath, legacy, 0644); err != nil {
-		t.Fatal(err)
-	}
-	archive, err := readArchive(legacyPath, hexDigest(legacy), defaultLimits)
-	if err != nil {
-		t.Fatalf("pinned legacy source archive was rejected: %v", err)
-	}
-	if archive.sourcePrefix != "" {
-		t.Fatalf("legacy archive selected source prefix %q", archive.sourcePrefix)
-	}
-	var legacyBuildArgs []string
-	_, err = buildOrReuse(t.TempDir(), fixtureManifest(legacy), archive, "fake-go", os.Environ(), func(_ string, args []string, _ string, _ []string) error {
-		legacyBuildArgs = append([]string(nil), args...)
-		outputIndex := indexOf(args, "-o")
-		if outputIndex < 0 || outputIndex+1 >= len(args) {
-			return errors.New("build output argument missing")
+func TestReadArchiveRejectsLegacyAndMixedLayouts(t *testing.T) {
+	for _, mixed := range []bool{false, true} {
+		entries := validZipEntries()
+		if !mixed {
+			for i := range entries {
+				if strings.HasPrefix(entries[i].name, "cmd/") || strings.HasPrefix(entries[i].name, "internal/") {
+					entries[i].name = "src/" + entries[i].name
+				}
+			}
+		} else {
+			entries = append(entries, zipFixtureEntry{name: "src/internal/old.go", data: []byte("package old\n"), mode: 0644})
 		}
-		return os.WriteFile(args[outputIndex+1], []byte("mock executable"), 0755)
-	}, func(_, _ string, _ []string) (string, error) {
-		return "go1.27.1", nil
-	})
-	if err != nil {
-		t.Fatalf("pinned legacy source archive did not build: %v", err)
-	}
-	if !contains(legacyBuildArgs, "./cmd/markitect") || !contains(legacyBuildArgs, "-X main.version=0.1.0-dev -X github.com/Glacius-Labs/Markitect/internal/host/cli.version=0.1.0-dev") {
-		t.Fatalf("legacy archive used non-legacy build paths: %v", legacyBuildArgs)
-	}
-
-	mixedEntries := append(validZipEntries(), zipFixtureEntry{name: "cmd/markitect/legacy.go", data: []byte("package main\n"), mode: 0644})
-	mixed := makeZip(t, mixedEntries)
-	mixedPath := filepath.Join(t.TempDir(), "mixed.zip")
-	if err := os.WriteFile(mixedPath, mixed, 0644); err != nil {
-		t.Fatal(err)
-	}
-	if _, err := readArchive(mixedPath, hexDigest(mixed), defaultLimits); err == nil || !strings.Contains(err.Error(), "mixes") {
-		t.Fatalf("mixed old/new source layout was not rejected: %v", err)
-	}
-}
-
-func TestSrcArchiveWithRootInternalBuildsSrcCommand(t *testing.T) {
-	for _, test := range []struct {
-		name  string
-		paths []string
-	}{
-		{"snapshot", []string{"internal/snapshot/tree.go"}},
-		{"foundations", []string{"internal/model/model.go", "internal/snapshot/tree.go", "internal/organization/manager.go", "internal/realization/registry.go"}},
-		{"other internal files", []string{"internal/other/value.go"}},
-	} {
-		t.Run(test.name, func(t *testing.T) {
-			entries := validZipEntries()
-			for _, name := range test.paths {
-				entries = append(entries, zipFixtureEntry{name: name, data: []byte("package value\n"), mode: 0644})
-			}
-			data := makeZip(t, entries)
-			archivePath := filepath.Join(t.TempDir(), "source.zip")
-			if err := os.WriteFile(archivePath, data, 0644); err != nil {
-				t.Fatal(err)
-			}
-			archive, err := readArchive(archivePath, hexDigest(data), defaultLimits)
-			if err != nil {
-				t.Fatalf("src command with additional root internal files was rejected: %v", err)
-			}
-			var buildArgs []string
-			_, err = buildOrReuse(t.TempDir(), fixtureManifest(data), archive, "fake-go", os.Environ(), func(_ string, args []string, _ string, _ []string) error {
-				buildArgs = append([]string(nil), args...)
-				output := indexOf(args, "-o")
-				if output < 0 || output+1 >= len(args) {
-					return errors.New("missing output argument")
-				}
-				return os.WriteFile(args[output+1], []byte("mock executable"), 0755)
-			}, func(_, _ string, _ []string) (string, error) { return "go1.27.1", nil })
-			if err != nil {
-				t.Fatal(err)
-			}
-			if archive.sourcePrefix != "src/" || !contains(buildArgs, "./src/cmd/markitect") || contains(buildArgs, "./cmd/markitect") {
-				t.Fatalf("additional internal files changed command selection: prefix=%q args=%v", archive.sourcePrefix, buildArgs)
-			}
-		})
-	}
-}
-
-func TestReadArchiveRejectsAdditionalCommandTrees(t *testing.T) {
-	for _, entry := range []zipFixtureEntry{
-		{name: "cmd/", mode: os.ModeDir | 0755},
-		{name: "cmd/other/main.go", data: []byte("package main\n"), mode: 0644},
-		{name: "cmd/markitect/main.go", data: []byte("package main\n"), mode: 0644},
-	} {
-		t.Run(entry.name, func(t *testing.T) {
-			data := makeZip(t, append(validZipEntries(), entry))
-			archivePath := filepath.Join(t.TempDir(), "source.zip")
-			if err := os.WriteFile(archivePath, data, 0644); err != nil {
-				t.Fatal(err)
-			}
-			if _, err := readArchive(archivePath, hexDigest(data), defaultLimits); err == nil || !strings.Contains(err.Error(), "mixes") {
-				t.Fatalf("additional command tree was not rejected: %v", err)
-			}
-		})
-	}
-}
-
-func TestReadArchiveRequiresCompleteSelectedLayout(t *testing.T) {
-	for _, prefix := range []string{"src/", ""} {
-		for _, missing := range []string{"go.mod", "command tree", "command entry", "internal tree"} {
-			t.Run(prefix+missing, func(t *testing.T) {
-				original := validZipEntries()
-				if prefix == "" {
-					original = legacyZipEntries()
-				}
-				var entries []zipFixtureEntry
-				for _, entry := range original {
-					if missing == "go.mod" && entry.name == "go.mod" ||
-						missing == "command tree" && strings.HasPrefix(entry.name, prefix+"cmd/") ||
-						missing == "command entry" && entry.name == prefix+"cmd/markitect/main.go" ||
-						missing == "internal tree" && strings.HasPrefix(entry.name, prefix+"internal/") {
-						continue
-					}
-					entries = append(entries, entry)
-				}
-				if missing == "command entry" {
-					entries = append(entries, zipFixtureEntry{name: prefix + "cmd/markitect/other.go", data: []byte("package main\n"), mode: 0644})
-				}
-				if prefix == "src/" {
-					// Root internal cannot replace the selected src/internal tree.
-					entries = append(entries, zipFixtureEntry{name: "internal/snapshot/tree.go", data: []byte("package snapshot\n"), mode: 0644})
-				}
-				data := makeZip(t, entries)
-				archivePath := filepath.Join(t.TempDir(), "source.zip")
-				if err := os.WriteFile(archivePath, data, 0644); err != nil {
-					t.Fatal(err)
-				}
-				if _, err := readArchive(archivePath, hexDigest(data), defaultLimits); err == nil || !strings.Contains(err.Error(), "not a canonical Markitect Go module") {
-					t.Fatalf("incomplete %q layout without %s was not rejected: %v", prefix, missing, err)
-				}
-			})
+		data := makeZip(t, entries)
+		name := filepath.Join(t.TempDir(), "source.zip")
+		if err := os.WriteFile(name, data, 0644); err != nil {
+			t.Fatal(err)
+		}
+		if _, err := readArchive(name, hexDigest(data), defaultLimits); err == nil || !strings.Contains(err.Error(), "legacy src") {
+			t.Fatalf("legacy/mixed source accepted: %v", err)
 		}
 	}
 }
 
-func TestFlatCommandIsNotChangedBySrcInternalFiles(t *testing.T) {
-	entries := append(legacyZipEntries(), zipFixtureEntry{name: "src/internal/other/value.go", data: []byte("package value\n"), mode: 0644})
-	data := makeZip(t, entries)
-	archivePath := filepath.Join(t.TempDir(), "source.zip")
-	if err := os.WriteFile(archivePath, data, 0644); err != nil {
-		t.Fatal(err)
-	}
-	archive, err := readArchive(archivePath, hexDigest(data), defaultLimits)
-	if err != nil || archive.sourcePrefix != "" {
-		t.Fatalf("internal files changed the flat command selection: archive=%v err=%v", archive, err)
+func TestReadArchiveRequiresCompleteRootLayout(t *testing.T) {
+	for _, missing := range []string{"go.mod", "command tree", "command entry", "internal tree"} {
+		var entries []zipFixtureEntry
+		for _, entry := range validZipEntries() {
+			if missing == "go.mod" && entry.name == "go.mod" || missing == "command tree" && strings.HasPrefix(entry.name, "cmd/") || missing == "command entry" && entry.name == "cmd/markitect/main.go" || missing == "internal tree" && strings.HasPrefix(entry.name, "internal/") {
+				continue
+			}
+			entries = append(entries, entry)
+		}
+		if missing == "command entry" {
+			entries = append(entries, zipFixtureEntry{name: "cmd/markitect/other.go", data: []byte("package main\n"), mode: 0644})
+		}
+		data := makeZip(t, entries)
+		name := filepath.Join(t.TempDir(), "source.zip")
+		if err := os.WriteFile(name, data, 0644); err != nil {
+			t.Fatal(err)
+		}
+		if _, err := readArchive(name, hexDigest(data), defaultLimits); err == nil || !strings.Contains(err.Error(), "not a canonical Markitect Go module") {
+			t.Fatalf("missing %s accepted: %v", missing, err)
+		}
 	}
 }
 
@@ -414,7 +250,7 @@ func TestExtractedSourceIsVerifiedAndTamperingInvalidatesIt(t *testing.T) {
 	if valid, err := verifyExtracted(sourceDir, a); err != nil || !valid {
 		t.Fatalf("valid extracted source = %v, err=%v", valid, err)
 	}
-	if err := os.WriteFile(filepath.Join(sourceDir, "src", "cmd", "markitect", "main.go"), []byte("tampered"), 0644); err != nil {
+	if err := os.WriteFile(filepath.Join(sourceDir, "cmd", "markitect", "main.go"), []byte("tampered"), 0644); err != nil {
 		t.Fatal(err)
 	}
 	if valid, err := verifyExtracted(sourceDir, a); err != nil || valid {
@@ -478,7 +314,7 @@ func TestBuildCacheReusesOnlyVerifiedBinaryAndUsesLocalGoCaches(t *testing.T) {
 	if noiseReuse != first || buildCount != 1 {
 		t.Fatalf("irrelevant caller environment invalidated cache: builds=%d", buildCount)
 	}
-	if indexOf(buildArgs, "-buildvcs=false") < 0 || indexOf(buildArgs, "-trimpath") < 0 || !contains(buildArgs, "-X main.version="+m.version+" -X github.com/Glacius-Labs/Markitect/src/internal/application/buildinfo.version="+m.version) || !contains(buildArgs, "./src/cmd/markitect") {
+	if indexOf(buildArgs, "-buildvcs=false") < 0 || indexOf(buildArgs, "-trimpath") < 0 || !contains(buildArgs, "-X github.com/Glacius-Labs/Markitect/internal/buildinfo.version="+m.version) || !contains(buildArgs, "./cmd/markitect") {
 		t.Fatalf("build flags missing: %v", buildArgs)
 	}
 	base := filepath.Join(root, ".artifacts", "markitect")
@@ -567,7 +403,7 @@ func TestBuildMutationIsNotStampedAsPinnedSource(t *testing.T) {
 		if err := os.WriteFile(args[indexOf(args, "-o")+1], []byte("mock executable"), 0755); err != nil {
 			return err
 		}
-		return os.WriteFile(filepath.Join(dir, filepath.FromSlash(archive.sourcePrefix+"cmd/markitect/main.go")), []byte("mutated during build"), 0644)
+		return os.WriteFile(filepath.Join(dir, filepath.FromSlash("cmd/markitect/main.go")), []byte("mutated during build"), 0644)
 	}
 	probe := func(_ string, _ string, _ []string) (string, error) { return "go1.27.1", nil }
 	if _, err := buildOrReuse(root, m, archive, "fake-go", nil, fakeBuild, probe); err == nil || !strings.Contains(err.Error(), "changed during build") {

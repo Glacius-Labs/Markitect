@@ -1,0 +1,133 @@
+packages:
+  - path: internal/model
+    layer: apply-model
+    purpose: Pure canonical v1 compiler over explicit bytes.
+    doc: docs/development/modules.md
+  - path: internal/snapshot
+    layer: apply-snapshot
+    purpose: Pure immutable repository tree values.
+    doc: docs/development/modules.md
+  - path: internal/organization
+    layer: apply-organization
+    purpose: Pure Manager topology, context selection and settings.
+    doc: docs/development/modules.md
+  - path: internal/realization
+    layer: apply-realization
+    purpose: Pure ownership, accounting and candidate rules.
+    doc: docs/development/modules.md
+  - path: internal/apply
+    layer: apply-usecase
+    purpose: Read-only preparation through consumer-owned ports.
+    doc: docs/development/modules.md
+  - path: internal/modeldocs
+    layer: model-view
+    purpose: Deterministic readable view and reviewed source-bound write plan.
+    doc: docs/development/modules.md
+  - path: internal/adapters/checks
+    layer: apply-adapter
+    purpose: Concrete repository, profile metadata and document I/O.
+    doc: docs/development/modules.md
+  - path: internal/adapters/cli
+    layer: apply-adapter
+    purpose: Concrete repository, profile metadata and document I/O.
+    doc: docs/development/modules.md
+  - path: internal/adapters/codexappserver
+    layer: apply-adapter
+    purpose: Concrete repository, profile metadata and document I/O.
+    doc: docs/development/modules.md
+  - path: internal/adapters/documents
+    layer: apply-adapter
+    purpose: Concrete repository, profile metadata and document I/O.
+    doc: docs/development/modules.md
+  - path: internal/adapters/gitrepo
+    layer: apply-adapter
+    purpose: Concrete repository, profile metadata and document I/O.
+    doc: docs/development/modules.md
+  - path: internal/bootstrap
+    layer: apply-bootstrap
+    purpose: Constructs actual services and their adapters.
+    doc: docs/development/modules.md
+  - path: cmd/markitect
+    layer: apply-command
+    purpose: Thin entrypoint to product composition.
+    doc: docs/development/modules.md
+  - path: internal/buildinfo
+    layer: build-data
+    purpose: Version identity and embedded license notices.
+    doc: docs/development/modules.md
+  - path: internal/tooling/licenses
+    layer: build-data
+    purpose: Version identity and embedded license notices.
+    doc: docs/development/modules.md
+  - path: internal/tooling/architecture
+    layer: maintenance
+    purpose: Explicitly separated release and repository tooling.
+    doc: docs/development/modules.md
+  - path: internal/tooling/architecturecli
+    layer: maintenance
+    purpose: Explicitly separated release and repository tooling.
+    doc: docs/development/modules.md
+  - path: internal/tooling/guardedwrite
+    layer: maintenance
+    purpose: Explicitly separated release and repository tooling.
+    doc: docs/development/modules.md
+  - path: internal/tooling/modulechecks
+    layer: maintenance
+    purpose: Explicitly separated release and repository tooling.
+    doc: docs/development/modules.md
+  - path: internal/tooling/modulecli
+    layer: maintenance
+    purpose: Explicitly separated release and repository tooling.
+    doc: docs/development/modules.md
+  - path: internal/tooling/modules/githooks
+    layer: maintenance
+    purpose: Explicitly separated release and repository tooling.
+    doc: docs/development/modules.md
+  - path: internal/tooling/modules/pipelines
+    layer: maintenance
+    purpose: Explicitly separated release and repository tooling.
+    doc: docs/development/modules.md
+  - path: internal/tooling/publish
+    layer: maintenance
+    purpose: Explicitly separated release and repository tooling.
+    doc: docs/development/modules.md
+  - path: internal/tooling/release
+    layer: maintenance
+    purpose: Explicitly separated release and repository tooling.
+    doc: docs/development/modules.md
+  - path: internal/tooling/release/install
+    layer: maintenance
+    purpose: Explicitly separated release and repository tooling.
+    doc: docs/development/modules.md
+  - path: internal/tooling/releasecli
+    layer: maintenance
+    purpose: Explicitly separated release and repository tooling.
+    doc: docs/development/modules.md
+  - path: internal/tooling/source
+    layer: maintenance
+    purpose: Explicitly separated release and repository tooling.
+    doc: docs/development/modules.md
+  - path: cmd/markitect-check-architecture
+    layer: maintenance-command
+    purpose: Thin entrypoints to maintenance services.
+    doc: docs/development/modules.md
+  - path: cmd/markitect-check-modules
+    layer: maintenance-command
+    purpose: Thin entrypoints to maintenance services.
+    doc: docs/development/modules.md
+  - path: cmd/markitect-release
+    layer: maintenance-command
+    purpose: Thin entrypoints to maintenance services.
+    doc: docs/development/modules.md
+  - path: internal/testkit
+    layer: test-support
+    purpose: Hermetic fixture support available only to tests.
+    doc: docs/development/modules.md
+  - path: integration
+    layer: standalone
+    purpose: Public bootstrap and source smoke with no product imports.
+    doc: docs/development/modules.md
+  - path: tools/smoke
+    layer: standalone
+    purpose: Public bootstrap and source smoke with no product imports.
+    doc: docs/development/modules.md

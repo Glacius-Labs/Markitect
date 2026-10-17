@@ -1,0 +1,7 @@
+imports:
+  - package: vocabulary
+    as: Vocab
+id: closed-agent-metadata
+kind: Vocab.Rule
+body: "Parse only explicitly selected source-bound Codex executable, protocol-schema and profile metadata in closed formats. Preserve content identities and diagnostics. Metadata preparation never starts a process, probes a version, exports a schema or invokes a provider, and a pass does not establish runtime support."
+spec: {}
