@@ -1,6 +1,7 @@
 package container_test
 
 import (
+	"bufio"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -240,6 +241,12 @@ func TestRealEngineCensusSeesOnlyTheSession(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	// Wait until the provider reports its started child.
+	stdout := bufio.NewScanner(s.Stdout())
+	if !stdout.Scan() || !strings.HasPrefix(stdout.Text(), "child ") {
+		t.Fatalf("no child report; diagnostics %q", s.Diagnostics())
+	}
+	go func() { _, _ = io.Copy(io.Discard, s.Stdout()) }()
 	processes, err := s.Census(ctx)
 	if err != nil {
 		t.Fatal(err)

@@ -27,9 +27,13 @@ const (
 	TypeCensus ControlType = "census"
 )
 
-// ControlMessage is one control message. Exactly the field named by Type is set.
+// ControlMessage is one control message. Exactly the field named by Type is
+// set. Request numbers a Host request; agentd copies it into the reply
+// (started, failure or census), and leaves it zero on messages it sends on
+// its own, such as hello, exited or a failure that ends the session.
 type ControlMessage struct {
 	Type    ControlType `json:"type"`
+	Request uint64      `json:"request,omitempty"`
 	Hello   *Hello      `json:"hello,omitempty"`
 	Start   *Start      `json:"start,omitempty"`
 	Started *Started    `json:"started,omitempty"`

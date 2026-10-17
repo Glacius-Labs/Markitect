@@ -11,12 +11,12 @@ import (
 // its ancestors, such as the container's init. A platform without a process
 // table answers with a failure, never with an empty list that would look
 // quiescent.
-func (s *server) census() error {
+func (s *server) census(request uint64) error {
 	processes, err := listProcesses(os.Getpid())
 	if err != nil {
-		return s.sendControl(frame.ControlMessage{Type: frame.TypeFailure, Failure: &frame.Failure{Message: "census: " + err.Error()}})
+		return s.sendControl(frame.ControlMessage{Type: frame.TypeFailure, Request: request, Failure: &frame.Failure{Message: "census: " + err.Error()}})
 	}
-	return s.sendControl(frame.ControlMessage{Type: frame.TypeCensus, Census: &frame.Census{Processes: processes}})
+	return s.sendControl(frame.ControlMessage{Type: frame.TypeCensus, Request: request, Census: &frame.Census{Processes: processes}})
 }
 
 func sortProcesses(p []frame.Process) {

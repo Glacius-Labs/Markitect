@@ -64,7 +64,12 @@ func (e *Engine) Start(ctx context.Context, spec ContainerSpec) (*Session, error
 	if err := l.start(); err != nil {
 		return nil, err
 	}
-	return newSession(ctx, stdin, stdout, l.wait, l.kill)
+	wait := func() error {
+		err := l.wait()
+		l.cleanup()
+		return err
+	}
+	return newSession(ctx, stdin, stdout, wait, l.kill)
 }
 
 // RunHelper runs one command in a fresh container under the same hardening as
@@ -86,6 +91,7 @@ func (e *Engine) RunHelper(ctx context.Context, spec ContainerSpec, argv []strin
 	}
 	done := make(chan error, 1)
 	go func() { done <- l.wait() }()
+	defer l.cleanup() // only after kill has read the cidfile
 	select {
 	case err := <-done:
 		return err
@@ -141,10 +147,12 @@ func (l *launch) wait() error {
 		if err := l.cmd.Wait(); err != nil {
 			l.waitErr = fmt.Errorf("container %s: %w: %s", l.name, err, strings.TrimSpace(l.stderr.String()))
 		}
-		_ = os.RemoveAll(l.cidDir)
 	})
 	return l.waitErr
 }
+
+// cleanup removes the cidfile directory once nothing needs the container ID.
+func (l *launch) cleanup() { _ = os.RemoveAll(l.cidDir) }
 
 // kill ends the engine run process and removes the container it created.
 func (l *launch) kill() {

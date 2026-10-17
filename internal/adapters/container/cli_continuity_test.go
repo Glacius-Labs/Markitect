@@ -118,22 +118,39 @@ func TestClaudeSessionSeesAQuiescentBasisAdvance(t *testing.T) {
 	c := startClaude(t, r, s, "")
 	c.turn("Read the file basis.txt in the working directory if it exists and say what it contains, or say MISSING. Do not write files.")
 
-	processes, err := s.Census(r.ctx)
-	if err != nil {
-		t.Fatal(err)
-	}
-	t.Logf("census after the turn: %+v", processes)
-	for _, p := range processes {
-		if p.State == "Z" {
-			continue
+	// The Host waits for quiescence: only the provider's own processes remain.
+	deadline := time.Now().Add(15 * time.Second)
+	for {
+		processes, err := s.Census(r.ctx)
+		if err != nil {
+			t.Fatal(err)
 		}
-		if !strings.Contains(p.Command, "claude") && !strings.Contains(p.Command, "node") && !strings.Contains(p.Command, "markitect-agent") {
-			t.Fatalf("process %+v still runs after the turn; the session is not quiescent", p)
+		if quiescent(processes) {
+			t.Logf("quiescent census after the turn: %+v", processes)
+			break
 		}
+		if time.Now().After(deadline) {
+			t.Fatalf("the session did not become quiescent: %+v", processes)
+		}
+		time.Sleep(200 * time.Millisecond)
 	}
 
 	r.writeFile("advance-basis", mounts, "/work/basis.txt", "basis-3\n")
 	if answer := c.turn("Read basis.txt again now and give its exact content."); !strings.Contains(answer, "basis-3") {
 		t.Fatalf("the continued session did not see the advanced basis: %q", answer)
 	}
+}
+
+// quiescent accepts only Claude Code itself and its MCP bridge; an ended
+// process awaiting its parent's wait does not count.
+func quiescent(processes []frame.Process) bool {
+	for _, p := range processes {
+		if p.State == "Z" {
+			continue
+		}
+		if !strings.Contains(p.Command, "claude") && !strings.Contains(p.Command, "node") && !strings.Contains(p.Command, "markitect-agent") {
+			return false
+		}
+	}
+	return true
 }

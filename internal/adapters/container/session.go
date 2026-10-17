@@ -26,7 +26,6 @@ const (
 type Session struct {
 	in    io.WriteCloser
 	wmu   sync.Mutex
-	reqMu sync.Mutex // one outstanding control request at a time
 	hello frame.Hello
 	wait  func() error
 	kill  func()
@@ -35,12 +34,13 @@ type Session struct {
 
 	stdout  *outputBuffer
 	tools   chan frame.ToolCall
-	control chan frame.ControlMessage
 	exited  chan frame.Exited
 	ended   chan struct{}
 	closing chan struct{}
 
 	mu          sync.Mutex
+	nextRequest uint64
+	replies     map[uint64]chan frame.ControlMessage
 	diagnostics []byte
 	failure     string
 	err         error
@@ -95,7 +95,7 @@ func newSession(ctx context.Context, in io.WriteCloser, out io.Reader, wait func
 		in: in, hello: hello, wait: wait, kill: kill, closeTimeout: closeTimeout,
 		stdout:  newOutputBuffer(),
 		tools:   make(chan frame.ToolCall, 16),
-		control: make(chan frame.ControlMessage, 4),
+		replies: map[uint64]chan frame.ControlMessage{},
 		exited:  make(chan frame.Exited, 1),
 		ended:   make(chan struct{}),
 		closing: make(chan struct{}),
@@ -147,12 +147,16 @@ func (s *Session) demux(out io.Reader) {
 				s.exited <- *c.Exited
 				s.stdout.close()
 			case frame.TypeFailure:
-				s.mu.Lock()
-				s.failure = c.Failure.Message
-				s.mu.Unlock()
-				s.deliverControl(c)
+				if c.Request == 0 {
+					// A failure agentd sends on its own ends the session.
+					s.mu.Lock()
+					s.failure = c.Failure.Message
+					s.mu.Unlock()
+					continue
+				}
+				s.deliverReply(c)
 			case frame.TypeStarted, frame.TypeCensus:
-				s.deliverControl(c)
+				s.deliverReply(c)
 			default:
 				s.fail(fmt.Errorf("agentd sent an unexpected %q message", c.Type))
 			}
@@ -162,57 +166,75 @@ func (s *Session) demux(out io.Reader) {
 	}
 }
 
-func (s *Session) deliverControl(c frame.ControlMessage) {
+// deliverReply hands a reply to the request that is still waiting for it. A
+// reply to an abandoned request is dropped, so it can never answer a later one.
+func (s *Session) deliverReply(c frame.ControlMessage) {
+	s.mu.Lock()
+	ch, waiting := s.replies[c.Request]
+	delete(s.replies, c.Request)
+	s.mu.Unlock()
+	if waiting {
+		ch <- c
+	}
+}
+
+// request sends one numbered control request and waits for its own reply.
+func (s *Session) request(ctx context.Context, c frame.ControlMessage, purpose string) (frame.ControlMessage, error) {
+	s.mu.Lock()
+	s.nextRequest++
+	c.Request = s.nextRequest
+	reply := make(chan frame.ControlMessage, 1)
+	s.replies[c.Request] = reply
+	s.mu.Unlock()
+	abandon := func() {
+		s.mu.Lock()
+		delete(s.replies, c.Request)
+		s.mu.Unlock()
+	}
+	if err := s.sendControl(c); err != nil {
+		abandon()
+		return frame.ControlMessage{}, err
+	}
 	select {
-	case s.control <- c:
-	case <-s.closing:
+	case r := <-reply:
+		if r.Type == frame.TypeFailure {
+			return frame.ControlMessage{}, fmt.Errorf("agentd refused the %s: %s", purpose, r.Failure.Message)
+		}
+		return r, nil
+	case <-s.ended:
+		abandon()
+		return frame.ControlMessage{}, s.endError("before the " + purpose + " was answered")
+	case <-ctx.Done():
+		abandon()
+		return frame.ControlMessage{}, ctx.Err()
 	}
 }
 
 // StartProvider asks agentd to start the provider and returns its process ID.
 // A refused start returns the provider's reported reason.
 func (s *Session) StartProvider(ctx context.Context, req frame.Start) (frame.Started, error) {
-	s.reqMu.Lock()
-	defer s.reqMu.Unlock()
-	if err := s.sendControl(frame.ControlMessage{Type: frame.TypeStart, Start: &req}); err != nil {
+	r, err := s.request(ctx, frame.ControlMessage{Type: frame.TypeStart, Start: &req}, "start")
+	if err != nil {
 		return frame.Started{}, err
 	}
-	select {
-	case c := <-s.control:
-		if c.Type == frame.TypeStarted {
-			return *c.Started, nil
-		}
-		return frame.Started{}, fmt.Errorf("agentd refused the start: %s", c.Failure.Message)
-	case <-s.ended:
-		return frame.Started{}, s.endError("before the provider started")
-	case <-ctx.Done():
-		return frame.Started{}, ctx.Err()
+	if r.Type != frame.TypeStarted {
+		return frame.Started{}, fmt.Errorf("agentd answered the start with %q", r.Type)
 	}
+	return *r.Started, nil
 }
 
 // Census returns the processes running in the container besides agentd and
 // its init. It is a snapshot for a quiescence judgment: the Host decides
 // which of the listed processes, if any, may remain.
 func (s *Session) Census(ctx context.Context) ([]frame.Process, error) {
-	s.reqMu.Lock()
-	defer s.reqMu.Unlock()
-	if err := s.sendControl(frame.ControlMessage{Type: frame.TypeCensus, Census: &frame.Census{}}); err != nil {
+	r, err := s.request(ctx, frame.ControlMessage{Type: frame.TypeCensus, Census: &frame.Census{}}, "census")
+	if err != nil {
 		return nil, err
 	}
-	select {
-	case c := <-s.control:
-		if c.Type == frame.TypeCensus {
-			return c.Census.Processes, nil
-		}
-		if c.Failure != nil {
-			return nil, fmt.Errorf("agentd refused the census: %s", c.Failure.Message)
-		}
-		return nil, fmt.Errorf("agentd answered the census with %q", c.Type)
-	case <-s.ended:
-		return nil, s.endError("before the census arrived")
-	case <-ctx.Done():
-		return nil, ctx.Err()
+	if r.Type != frame.TypeCensus {
+		return nil, fmt.Errorf("agentd answered the census with %q", r.Type)
 	}
+	return r.Census.Processes, nil
 }
 
 // Stdout is the provider's standard output. It ends when the provider exits

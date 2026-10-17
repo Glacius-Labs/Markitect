@@ -32,6 +32,15 @@ func TestOutputBufferBoundsAnAbsentReader(t *testing.T) {
 	if _, err := b.Write([]byte{1}); !errors.Is(err, errOutputOverflow) {
 		t.Fatalf("overflow = %v", err)
 	}
+	if _, err := b.Read(make([]byte, maxBufferedOutput)); err != nil {
+		t.Fatalf("draining after the overflow = %v", err)
+	}
+	if _, err := b.Write([]byte{2}); !errors.Is(err, errOutputOverflow) {
+		t.Fatalf("a write after the overflow was accepted: %v", err)
+	}
+	if _, err := b.Read(make([]byte, 1)); !errors.Is(err, errOutputOverflow) {
+		t.Fatalf("read after draining = %v, want the overflow", err)
+	}
 	b.detach()
 	if n, err := b.Write([]byte("discarded")); err != nil || n != 9 {
 		t.Fatalf("write after detach = %d, %v", n, err)

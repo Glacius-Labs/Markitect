@@ -19,8 +19,9 @@ type outputBuffer struct {
 	mu       sync.Mutex
 	ready    *sync.Cond
 	data     []byte
-	closed   bool // the writer finished; the reader drains, then sees EOF
-	detached bool // the reader left; writes are discarded
+	closed   bool  // the writer finished; the reader drains, then sees EOF
+	detached bool  // the reader left; writes are discarded
+	failed   error // final: later writes are dropped, the reader drains, then sees it
 }
 
 func newOutputBuffer() *outputBuffer {
@@ -35,10 +36,15 @@ func (b *outputBuffer) Write(p []byte) (int, error) {
 	switch {
 	case b.detached:
 		return len(p), nil
+	case b.failed != nil:
+		return 0, b.failed
 	case b.closed:
 		return 0, io.ErrClosedPipe
 	case len(b.data)+len(p) > maxBufferedOutput:
-		return 0, errOutputOverflow
+		// The stream would have a gap; end it for the reader instead.
+		b.failed = errOutputOverflow
+		b.ready.Broadcast()
+		return 0, b.failed
 	}
 	b.data = append(b.data, p...)
 	b.ready.Broadcast()
@@ -48,10 +54,13 @@ func (b *outputBuffer) Write(p []byte) (int, error) {
 func (b *outputBuffer) Read(p []byte) (int, error) {
 	b.mu.Lock()
 	defer b.mu.Unlock()
-	for len(b.data) == 0 && !b.closed && !b.detached {
+	for len(b.data) == 0 && !b.closed && !b.detached && b.failed == nil {
 		b.ready.Wait()
 	}
 	if len(b.data) == 0 {
+		if b.failed != nil && !b.detached {
+			return 0, b.failed
+		}
 		return 0, io.EOF
 	}
 	n := copy(p, b.data)

@@ -83,7 +83,7 @@ func TestSessionCarriesAProviderLifetime(t *testing.T) {
 		if c.Type != frame.TypeStart || c.Start.Argv[0] != "codex" {
 			t.Errorf("start = %+v", c)
 		}
-		a.control(frame.ControlMessage{Type: frame.TypeStarted, Started: &frame.Started{PID: 42}})
+		a.control(frame.ControlMessage{Type: frame.TypeStarted, Request: c.Request, Started: &frame.Started{PID: 42}})
 		if in := a.read(); in.Channel != frame.ProviderIn || string(in.Payload) != "turn\n" {
 			t.Errorf("input = %s %q", in.Channel, in.Payload)
 		}
@@ -143,8 +143,8 @@ func TestRefusedStartCarriesTheReason(t *testing.T) {
 	}
 	defer s.Close()
 	go func() {
-		a.read()
-		a.control(frame.ControlMessage{Type: frame.TypeFailure, Failure: &frame.Failure{Message: "start provider: exec: no such file"}})
+		req, _ := frame.DecodeControl(a.read().Payload)
+		a.control(frame.ControlMessage{Type: frame.TypeFailure, Request: req.Request, Failure: &frame.Failure{Message: "start provider: exec: no such file"}})
 		a.finish()
 	}()
 	_, err = s.StartProvider(context.Background(), frame.Start{Argv: []string{"missing"}, Dir: "/work"})
@@ -195,5 +195,32 @@ func TestCloseRemovesAContainerThatDoesNotEnd(t *testing.T) {
 	case <-killed:
 	default:
 		t.Fatal("the container was not removed by force")
+	}
+}
+
+func TestALateReplyNeverAnswersALaterRequest(t *testing.T) {
+	s, a, err := connect(t, frame.ProtocolVersion)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer s.Close()
+	firstAsked := make(chan uint64, 1)
+	go func() {
+		first, _ := frame.DecodeControl(a.read().Payload)
+		firstAsked <- first.Request
+		second, _ := frame.DecodeControl(a.read().Payload)
+		// Answer the abandoned request first, then the current one.
+		a.control(frame.ControlMessage{Type: frame.TypeCensus, Request: first.Request, Census: &frame.Census{Processes: []frame.Process{{PID: 1001, Command: "stale"}}}})
+		a.control(frame.ControlMessage{Type: frame.TypeCensus, Request: second.Request, Census: &frame.Census{Processes: []frame.Process{{PID: 2002, Command: "current"}}}})
+		a.finish()
+	}()
+	ctx, cancel := context.WithCancel(context.Background())
+	go func() { <-firstAsked; cancel() }()
+	if _, err := s.Census(ctx); !errors.Is(err, context.Canceled) {
+		t.Fatalf("abandoned census = %v", err)
+	}
+	processes, err := s.Census(context.Background())
+	if err != nil || len(processes) != 1 || processes[0].Command != "current" {
+		t.Fatalf("second census = %+v, %v; the late reply must be dropped", processes, err)
 	}
 }
