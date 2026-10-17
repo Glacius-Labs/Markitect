@@ -90,7 +90,8 @@ func (e *Engine) Start(ctx context.Context, spec SessionSpec) (*Session, error) 
 	}
 	kill := func() {
 		_ = cmd.Process.Kill()
-		id, err := os.ReadFile(cidPath)
+		raw, err := os.ReadFile(cidPath)
+		id := bytes.TrimSpace(raw)
 		if err != nil || !containerIDPattern.Match(id) {
 			return // the engine created no container
 		}
