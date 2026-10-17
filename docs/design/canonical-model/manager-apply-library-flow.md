@@ -91,3 +91,37 @@ That step's input names the changed catalog interface, lending's own changes and
 | Source inputs drift or publication is partial | Preserve observations; do not return Applied. |
 
 These are controlled process cases for later implementation. They neither authorize real provider runs nor replace the two real library Applies.
+
+## First Apply after model adoption
+
+Status: owner-accepted workflow, 17 October 2026 ([source](../project-capability-skills-20261009.md#owner-source)). This is a hypothetical existing-project scenario, not an observed defect in Library M1 or an executed Apply. It adds no implementation or first-Apply delivery scope. The [Extract completion criterion](commands.md#completion-and-adoption-with-known-deviations) permits adoption of a reviewed model with known realization deviations; artifact reconciliation is the next separately authorized operation.
+
+Suppose the owner has adopted the model, responsibilities and exact file accounting for an existing library application. The model permits five open loans, but the code still admits a sixth. Return behavior and other parts already conform. The owner's ordinary request is: "Reconcile the existing application with the adopted model and correct the known deviations. Preserve valid realization and its existing interfaces."
+
+The starting aggregate is the captured existing realization, not an empty replacement or a freshly generated skeleton. A construction prerequisite in the earlier exchange example is needed only when an actual obligation is missing; adoption does not itself require reconstruction. The outer coding agent selects the accepted model revision, current source and configured execution authority, commissions Apply and relays status or decisions. It does not repair artifacts outside Markitect to bypass the process.
+
+### Assess the whole responsibility, change what needs correction
+
+1. **Bind and hand over.** Bind the adopted model, actual realization, configuration and registry. The [existing finding structure](manager-apply-execution.md#extract-findings-at-the-first-apply) carries known Extract deviations and source evidence into the current responsibility; model acceptance is not artifact acceptance.
+2. **Explore every area read-only.** Every local Manager, including root, examines its full obligations and current artifacts. All initial Explore assessments precede artifact writing. Known findings are useful inputs, not an exclusive task list; absence of an Extract finding is no proof of correctness.
+3. **Keep or correct with reasons.** Managers propose justified no-change results or changes addressing actual obligations and deviations. Each writing Manager changes only its allowed artifacts; another area's correction goes through its responsible Manager. The model is not weakened to excuse a defect, and missing intended meaning becomes an owner question.
+4. **Review current subjects.** The configured independent reviewers assess both change and no-change proposals against the model and current evidence. Existing suitable checks may be reused after judging their assertions and applicability. Actual required observations must still be available; tests themselves can be faulty realizations.
+5. **Integrate and publish.** Parents assess the composed result and cross-area behavior. Changed interfaces or assumptions can require renewed affected assessment even when a consumer's bytes remain unchanged. Required aggregate checks, final evidence, source preflight, configured owner approval, guarded publication and read-back remain mandatory; the owner's later commit accepts the result.
+
+| Observed condition against the adopted model | Appropriate outcome |
+| --- | --- |
+| Lending admits a sixth loan against the five-loan limit. | Correct admission and supply distinguishing evidence: the fifth remains possible under valid conditions and the next loan is refused at the limit. Assess the other applicable lending obligations too. |
+| Return code correctly permits a suspended member to return, but a test expects refusal. | Correct the faulty test and retain conforming return code. A green test cannot override the model. |
+| Catalog behavior and its required interfaces already conform. | Retain the realization with an explained no-change assessment and independent review. |
+| Documentation already states the accepted five-loan policy accurately. | Keep it; generating a different wording is not required by adoption. |
+| An agent prefers other internal function names without a violated obligation. | Record a useful suggestion as advisory if appropriate. It creates no repair duty or blocking conformity finding. |
+
+No-change means a supported judgment about obligations and actual realization, not merely an empty diff or an old approval. Conversely, a valid existing design is not wrong because an agent would implement it differently. Review asks which obligation or demonstrated deviation justifies a material change. A coherent local restructuring needed for a correction can be justified; there is no smallest-diff-at-any-cost rule. Cleanup or Refactor can separately seek improvements in conforming artifacts under their own authorized objectives.
+
+For the loan-limit correction, reviewers derive distinguishing expectations from the model, inspect the actual candidate and check evidence that the boundary now holds without losing the other required behavior. The responsible Manager proposes closure of the original finding; independent review establishes resolution on the current subject. Local review does not replace parent integration. Ownership and subject bindings are mechanically checked by the Orchestrator; the substance of a justification remains review judgment, not a proof from diff size.
+
+### Completion after adoption is stricter than model readiness
+
+Extract could finish with adequately supported known realization deviations. Apply cannot report success while its blocking deviations, necessary checks or required current assessments remain open. Insufficient authority or budget leaves retained candidates and findings with an honest Incomplete result; it cannot waive evidence, trigger unlimited retries or turn adoption into a pass for the artifacts. A necessary model change remains separate from this artifact-only operation.
+
+The concise result distinguishes changed and retained areas, the model obligations and evidence supporting each judgment, the actual resolution of known findings, open work and what was actually published. Preservation means keeping conforming artifacts; it does not mean omitting them from the first reconciliation or exempting them from integration assessment. These remain design requirements until the complete executable path and its evidence exist.
