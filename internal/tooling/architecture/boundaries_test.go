@@ -246,13 +246,15 @@ func TestJournalFixtureEdgesStayTestOnly(t *testing.T) {
 }
 
 func TestBootstrapControlFixtureEdgesStayTestOnly(t *testing.T) {
+	// Session router composition consumes Run in production; control fixtures
+	// retain their separate test-only imports.
 	for _, tc := range []struct {
 		to               string
 		production, test bool
 	}{
 		{"internal/apply", true, true}, {"internal/adapters/gitrepo", true, true},
 		{"internal/adapters/journal", false, true}, {"internal/model", false, true},
-		{"internal/snapshot", false, true}, {"internal/run", false, true}, {"internal/testkit", false, true},
+		{"internal/snapshot", false, true}, {"internal/run", true, true}, {"internal/testkit", false, true},
 		{"internal/organization", false, false}, {"internal/realization", false, false},
 		{"internal/adapters/container", false, false}, {"internal/adapters/unknown", false, false},
 	} {
@@ -286,7 +288,7 @@ func TestBootstrapControlFixtureEdgesStayTestOnly(t *testing.T) {
 					t.Fatal(err)
 				}
 				want := 0
-				if !strings.HasSuffix(file, "_test.go") {
+				if producer.path != "internal/run" && !strings.HasSuffix(file, "_test.go") {
 					want = 1
 				}
 				if len(got) != want {
