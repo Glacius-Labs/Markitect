@@ -15,7 +15,11 @@ type SessionView struct {
 	Assignment, Run, Invocation  string
 	Plan                         SessionPlan
 	Prepared, Binding, Stop      AppendReceipt
+	Readiness                    AppendReceipt
 	Provider                     ProviderSessionID
+	InitialStep                  StepID
+	InitialSend                  MessageID
+	Ready                        bool
 	Bound, Uncertain, Terminated bool
 }
 type StepView struct {
@@ -86,6 +90,12 @@ func (r SessionRecord) validate(kind string) error {
 		}
 		a.ProviderSession = r.ProviderSession
 		a.Uncertain = r.Uncertain
+		a.Reason = r.Reason
+		a.Wire = r.Wire
+	case ReadySession:
+		if !boundedInput(r.Reason) || !r.Wire.valid() {
+			return ErrInvalid
+		}
 		a.Reason = r.Reason
 		a.Wire = r.Wire
 	case ObserveStep:
@@ -162,7 +172,7 @@ func (r SessionRecord) payloadRefs() []BlobRef {
 	return refs
 }
 func sessionReconciliation(kind string) bool {
-	return kind == BindSession || kind == ObserveStep || kind == ObserveTransport || kind == ReplyTool || kind == ObserveSessionStop
+	return kind == ReadySession || kind == BindSession || kind == ObserveStep || kind == ObserveTransport || kind == ReplyTool || kind == ObserveSessionStop
 }
 func (s stateValue) hasLiveSessions() bool {
 	for _, v := range s.sessions {
@@ -243,11 +253,25 @@ func (s *stateValue) applySession(c Command) error {
 		return ErrInvalid
 	}
 	switch c.Kind {
+	case ReadySession:
+		if v.Terminated || v.Ready || v.Bound || v.Provider != "" || s.transportOpen(r.Session) {
+			return ErrState
+		}
+		for _, step := range s.steps {
+			if step.Plan.Session == r.Session {
+				return ErrState
+			}
+		}
+		v.Ready = true
+		s.sessions[r.Session] = v
 	case PrepareStep:
 		if r.StepPlan.SessionBinding != v.Plan.Binding() {
 			return ErrState
 		}
-		if !v.Bound || v.Uncertain || v.Terminated || s.transportOpen(r.Session) || s.toolOpen(r.Session) {
+		if v.Uncertain || v.Terminated || s.transportOpen(r.Session) || s.toolOpen(r.Session) {
+			return ErrState
+		}
+		if !v.Bound && (!v.Ready || v.Readiness.BatchID == "" || v.InitialStep != "" || s.invocations[v.Invocation].State != Settled) {
 			return ErrState
 		}
 		if _, exists := s.steps[r.Step]; exists {
@@ -263,6 +287,10 @@ func (s *stateValue) applySession(c Command) error {
 		}
 		if err := s.reserve(c.Reservation); err != nil {
 			return err
+		}
+		if !v.Bound {
+			v.InitialStep = r.Step
+			s.sessions[r.Session] = v
 		}
 		s.steps[r.Step] = StepView{Assignment: c.Assignment, Run: c.Run, Invocation: c.Reservation.ID, Plan: r.StepPlan}
 	case BindSession:
@@ -281,6 +309,21 @@ func (s *stateValue) applySession(c Command) error {
 	case PrepareTransport:
 		if v.Terminated || !r.Control && (s.transportOpen(r.Session) || s.current.State != Running || v.Uncertain) {
 			return ErrState
+		}
+		if v.Ready && !v.Bound {
+			if r.Control {
+				// Before the actual identity binds, control is termination only;
+				// it cannot relabel the first compiled turn or bypass its slot.
+				if r.Step != "" || s.current.State != Reconciling {
+					return ErrState
+				}
+			} else {
+				if v.InitialStep == "" || r.Step != v.InitialStep || v.InitialSend != "" {
+					return ErrState
+				}
+				v.InitialSend = r.Message
+				s.sessions[r.Session] = v
+			}
 		}
 		if r.Step != "" {
 			step, ok := s.steps[r.Step]
@@ -366,10 +409,12 @@ func (s *stateValue) applySession(c Command) error {
 func (s *stateValue) sessionReceipt(c Command, receipt AppendReceipt) {
 	r := c.Session
 	switch c.Kind {
-	case PrepareSession, BindSession, ObserveSessionStop:
+	case PrepareSession, ReadySession, BindSession, ObserveSessionStop:
 		v := s.sessions[r.Session]
 		if c.Kind == PrepareSession {
 			v.Prepared = receipt
+		} else if c.Kind == ReadySession {
+			v.Readiness = receipt
 		} else if c.Kind == BindSession {
 			v.Binding = receipt
 		} else {
@@ -438,9 +483,9 @@ func (s stateValue) sessionSettlementAllowed(invocation, kind string) bool {
 	for id, v := range s.sessions {
 		if v.Invocation == invocation {
 			if kind == SettleInvocation {
-				return v.Bound && !v.Uncertain || v.Terminated
+				return v.Bound && !v.Uncertain || v.Ready && !v.Uncertain && s.invocations[invocation].State == Reserved && !s.transportOpen(id) || v.Terminated
 			}
-			if v.Bound || v.Provider != "" || !v.Terminated {
+			if v.Ready || v.Bound || v.Provider != "" || !v.Terminated {
 				return false
 			}
 			for key, m := range s.transports {

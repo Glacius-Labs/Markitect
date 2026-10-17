@@ -31,8 +31,13 @@ func (c *Coordinator) Inspection(session SessionID, step StepID) (InspectionRequ
 }
 func (c *Coordinator) SessionAdmission(id SessionID) (SessionAdmission, error) {
 	v, ok := c.state.sessions[id]
-	if !ok || v.Terminated || v.Bound || v.Uncertain || c.pending != nil || c.recovering || v.Run != c.Current().ID || c.Current().State != Running || c.Current().StopRequested {
+	if !ok || v.Terminated || v.Ready || v.Bound || v.Uncertain || c.pending != nil || c.recovering || v.Run != c.Current().ID || c.Current().State != Running || c.Current().StopRequested {
 		return SessionAdmission{}, ErrState
+	}
+	for key := range c.state.transports {
+		if key.Session == id {
+			return SessionAdmission{}, ErrObservationLimit
+		}
 	}
 	return SessionAdmission{v.Plan, v.Prepared, v.Invocation}, nil
 }
@@ -40,6 +45,9 @@ func (c *Coordinator) StepAdmission(id StepID) (StepAdmission, error) {
 	v, ok := c.state.steps[id]
 	if !ok || v.Terminal || v.Started || v.Uncertain || c.pending != nil || c.recovering || v.Run != c.Current().ID || c.Current().State != Running || c.Current().StopRequested {
 		return StepAdmission{}, ErrState
+	}
+	if session := c.state.sessions[v.Plan.Session]; session.InitialStep == id && session.InitialSend != "" {
+		return StepAdmission{}, ErrObservationLimit
 	}
 	return StepAdmission{v.Plan, c.state.sessions[v.Plan.Session].Plan, v.Prepared, v.Invocation}, nil
 }
@@ -65,7 +73,14 @@ func (io *sessionChannel) commit(ctx context.Context, meta RecordMeta, kind stri
 	return io.c.Commit(ctx, io.journal, p)
 }
 func (io *sessionChannel) Bind(ctx context.Context, o SessionObservation) (AppendReceipt, error) {
+	if o.Ready || !o.Valid() {
+		return AppendReceipt{}, ErrInvalid
+	}
 	return io.commit(ctx, o.RecordMeta, BindSession, SessionRecord{ProviderSession: o.ProviderSession, Wire: o.Wire.record(), Uncertain: o.Uncertain, Reason: o.Reason}, o.Wire.Journal)
+}
+
+func (io *sessionChannel) Ready(ctx context.Context, o SessionReadiness) (AppendReceipt, error) {
+	return io.commit(ctx, o.RecordMeta, ReadySession, SessionRecord{Wire: o.Wire.record(), Reason: o.Reason}, o.Wire.Journal)
 }
 func (io *sessionChannel) PrepareSend(ctx context.Context, p TransportPreparation) (SendPermit, error) {
 	r := SessionRecord{Session: io.session, Step: p.Step, Message: p.Message, Control: p.Control, Wire: p.Wire.record()}

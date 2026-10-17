@@ -17,7 +17,9 @@ type ProviderStepID string
 type ProviderCallID string
 
 // Sessions is implemented by the two container-based provider adapters. Open
-// starts one container and provider session; Step sends one compiled turn.
+// starts one container and establishes either control readiness or the actual
+// provider session identity; Step sends one compiled turn. A ready-but-unbound
+// Open permits only the first admitted Step; it supplies no provider identity.
 // Inspect reads only the exact journal-bound handles; it never creates or sends.
 // Stop reports actual termination or uncertainty, never cancellation as success.
 // Useful partial observations survive errors. The Host records uncertainty and
@@ -36,6 +38,7 @@ type Sessions interface {
 // delivery or replay authority. Known secrets must be redacted by the Host before
 // supplying journal payloads; RUN receives no secret value or credential bytes.
 type SessionIO interface {
+	Ready(context.Context, SessionReadiness) (AppendReceipt, error)
 	Bind(context.Context, SessionObservation) (AppendReceipt, error)
 	PrepareSend(context.Context, TransportPreparation) (SendPermit, error)
 	ObserveSend(context.Context, TransportObservation) (AppendReceipt, error)
@@ -130,9 +133,35 @@ type SessionObservation struct {
 	RecordMeta
 	ProviderSession ProviderSessionID
 	Wire            WirePayload
+	Ready           bool
 	Uncertain       bool
 	Reason          string
 }
+
+// SessionReadiness records the incoming control acknowledgment, not a requested
+// UUID or a provider Session ID. It cannot clear an earlier uncertain effect.
+type SessionReadiness struct {
+	RecordMeta
+	Wire   WirePayload
+	Reason string
+}
+
+// Valid checks an Open observation's exclusive ready, bound or uncertain shape.
+// Actual provider protocol interpretation and receipt acknowledgment are separate.
+func (o SessionObservation) Valid() bool {
+	if !boundedInput(o.Reason) {
+		return false
+	}
+	w := o.Wire.record()
+	if o.Ready {
+		return !o.Uncertain && o.ProviderSession == "" && w.valid()
+	}
+	if !o.Uncertain {
+		return identifier(string(o.ProviderSession)) && w.valid()
+	}
+	return (o.ProviderSession == "" || identifier(string(o.ProviderSession))) && (w == (WireRecord{}) || w.valid())
+}
+
 type StepObservation struct {
 	RecordMeta
 	Step                StepID
@@ -198,6 +227,7 @@ type ToolReceipt struct {
 
 const (
 	PrepareSession     = "session.prepared"
+	ReadySession       = "session.ready"
 	BindSession        = "session.observed"
 	PrepareStep        = "step.prepared"
 	ObserveStep        = "step.observed"

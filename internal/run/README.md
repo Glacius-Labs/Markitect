@@ -120,6 +120,32 @@ Each Step explicitly asserts the still-current Session plan binding, including
 profile, image, workspace and candidate. A changed or unprovable binding needs a
 new session. Physical workspace currentness remains the Host's responsibility.
 
+`Open` may return acknowledged control readiness before the provider supplies
+its actual session ID. `SessionIO.Ready` records that incoming acknowledgment
+with a separate receipt; the Session is live, ready and unbound. Empty IDs and
+requested UUIDs never imply readiness or binding. Open observations distinguish
+ready, actually bound and uncertain outcomes; `Bind` cannot consume readiness.
+The adapter records each actual send outcome before forwarding an immediate
+incoming readiness/init event, buffering that observation within its limits.
+
+Acknowledged readiness permits startup's observed elapsed time to settle, but
+never makes it undispatched or terminated. Both Manager and reviewer require
+that settlement before admitting one first Step on the still-unbound Session.
+Its identity and finite reservation commit together. Only that Step's first
+non-control send can receive a fresh permit before actual binding; even a
+`NotSent` observation does not restore this initial slot. Known preparations
+return their receipts without another send. Control before binding is bounded
+termination during reconciliation, not a way to relabel user input. Adapters
+still own truthful protocol interpretation and encoding of the compiled input.
+
+The actual provider init then binds the observed ID before definite Step/tool
+observations and later Steps. Missing init, uncertain send or append failure
+retains effects and holds; another Open cannot replace a recorded startup send.
+Restoration preserves readiness and the first Step/send identities behind the
+existing recovery barrier, without dispatching anything. Readiness cannot erase
+earlier uncertainty or supply inspection handles. Literal prechange session
+history retains its original canonical bytes and retry receipts.
+
 `SessionChannel` implements the serialized Host `SessionIO` callbacks against
 the same Coordinator and journal. Before every provider write, including tool
 responses and notifications, `PrepareSend` must return a fresh acknowledged
@@ -147,7 +173,10 @@ receipt is not tool-execution authority. Tool interpretation and actual executio
 are not implemented in this slice.
 
 Provider session/step IDs remain distinct from Host IDs. Inspect can select only
-the exact journal-bound handles and never starts a container or resends. Stop
+the exact journal-bound handles and never creates or resumes a provider Session
+or turn. A future separately authorized bounded read-only history helper may
+use a container; it is not implemented here and changes no Inspect contract.
+An unavailable history reader remains an explicit observation limit. Stop
 records actual termination or uncertainty, preserving partial observations on
 error. Settled startup time does not mean a provider stopped: live sessions,
 active steps and unresolved Host tool activity prevent run completion and
