@@ -1,5 +1,73 @@
 apiVersion: markitect.registry/v1
 artifacts:
+  - path: "internal/adapters/journal/README.md"
+    form: doc
+    realizes: [product/ports-and-adapters]
+    why: Explains the concrete SQLite control boundary and its evidence limits.
+  - path: "internal/adapters/journal/codec_compatibility_test.go"
+    form: test
+    realizes: [product/ports-and-adapters]
+    why: Verifies the physical Journal and Control contracts with owned repository and store fixtures.
+  - path: "internal/adapters/journal/control.go"
+    form: code
+    realizes: [product/ports-and-adapters]
+    why: Implements repository control and durable SQLite recording behind consumer-owned ports.
+  - path: "internal/adapters/journal/control_integration_test.go"
+    form: test
+    realizes: [product/ports-and-adapters]
+    why: Verifies the physical Journal and Control contracts with owned repository and store fixtures.
+  - path: "internal/adapters/journal/integration_fixture_test.go"
+    form: test
+    realizes: [product/ports-and-adapters]
+    why: Verifies the physical Journal and Control contracts with owned repository and store fixtures.
+  - path: "internal/adapters/journal/journal.go"
+    form: code
+    realizes: [product/ports-and-adapters]
+    why: Implements repository control and durable SQLite recording behind consumer-owned ports.
+  - path: "internal/adapters/journal/journal_test.go"
+    form: test
+    realizes: [product/ports-and-adapters]
+    why: Verifies the physical Journal and Control contracts with owned repository and store fixtures.
+  - path: "internal/adapters/journal/lock_linux.go"
+    form: code
+    realizes: [product/ports-and-adapters]
+    why: Implements repository control and durable SQLite recording behind consumer-owned ports.
+  - path: "internal/adapters/journal/lock_unsupported.go"
+    form: code
+    realizes: [product/ports-and-adapters]
+    why: Implements repository control and durable SQLite recording behind consumer-owned ports.
+  - path: "internal/adapters/journal/lock_windows.go"
+    form: code
+    realizes: [product/ports-and-adapters]
+    why: Implements repository control and durable SQLite recording behind consumer-owned ports.
+  - path: "internal/adapters/journal/paths.go"
+    form: code
+    realizes: [product/ports-and-adapters]
+    why: Implements repository control and durable SQLite recording behind consumer-owned ports.
+  - path: "internal/adapters/journal/paths_linux_test.go"
+    form: test
+    realizes: [product/ports-and-adapters]
+    why: Verifies the physical Journal and Control contracts with owned repository and store fixtures.
+  - path: "internal/adapters/journal/paths_test.go"
+    form: test
+    realizes: [product/ports-and-adapters]
+    why: Verifies the physical Journal and Control contracts with owned repository and store fixtures.
+  - path: "internal/adapters/journal/paths_windows_test.go"
+    form: test
+    realizes: [product/ports-and-adapters]
+    why: Verifies the physical Journal and Control contracts with owned repository and store fixtures.
+  - path: "internal/adapters/journal/process_test.go"
+    form: test
+    realizes: [product/ports-and-adapters]
+    why: Verifies the physical Journal and Control contracts with owned repository and store fixtures.
+  - path: "internal/adapters/journal/read.go"
+    form: code
+    realizes: [product/ports-and-adapters]
+    why: Implements repository control and durable SQLite recording behind consumer-owned ports.
+  - path: "internal/adapters/journal/store.go"
+    form: code
+    realizes: [product/ports-and-adapters]
+    why: Implements repository control and durable SQLite recording behind consumer-owned ports.
   - path: "internal/buildinfo/version.go"
     form: code
     realizes: [product/ports-and-adapters]

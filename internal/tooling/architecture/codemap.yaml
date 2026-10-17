@@ -51,6 +51,10 @@ packages:
     layer: apply-adapter
     purpose: Concrete repository, profile metadata and document I/O.
     doc: docs/development/modules.md
+  - path: internal/adapters/journal
+    layer: apply-adapter
+    purpose: Repository control and fenced durable SQLite journal storage.
+    doc: internal/adapters/journal/README.md
   - path: internal/bootstrap
     layer: apply-bootstrap
     purpose: Constructs actual services and their adapters.

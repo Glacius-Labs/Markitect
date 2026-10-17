@@ -28,6 +28,7 @@ var sourceRoots = []string{
 	"internal/adapters/cli",
 	"internal/adapters/documents",
 	"internal/adapters/gitrepo",
+	"internal/adapters/journal",
 	"internal/adapters/codexappserver",
 	"internal/adapters/checks",
 	"internal/adapters/container",

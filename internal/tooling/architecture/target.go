@@ -26,6 +26,7 @@ var targetRoots = []struct{ path, layer string }{
 	{"internal/tooling/releasecli", "maintenance"},
 	{"internal/tooling/modulecli", "maintenance"},
 	{"internal/adapters/gitrepo", "apply-adapter"},
+	{"internal/adapters/journal", "apply-adapter"},
 	{"internal/tooling/licenses", "build-data"},
 	{"internal/adapters/checks", "apply-adapter"},
 	{"internal/agentd/frame", "agent-protocol"},
@@ -72,6 +73,7 @@ var responsibilityImports = map[string][]string{
 	"internal/adapters/container":      {"internal/agentd/frame"},
 	"internal/adapters/documents":      {"internal/modeldocs", "internal/tooling/guardedwrite"},
 	"internal/adapters/gitrepo":        {"internal/apply", "internal/model", "internal/organization", "internal/realization", "internal/snapshot"},
+	"internal/adapters/journal":        {"internal/apply", "internal/run"},
 	"internal/agentd":                  {"internal/agentd/frame"},
 	"internal/apply":                   {"internal/model", "internal/snapshot", "internal/organization", "internal/realization", "internal/run"},
 	"internal/bootstrap":               {"internal/adapters/checks", "internal/adapters/cli", "internal/adapters/codexappserver", "internal/adapters/documents", "internal/adapters/gitrepo", "internal/apply", "internal/modeldocs"},
@@ -87,6 +89,12 @@ var responsibilityImports = map[string][]string{
 	"internal/tooling/release":         {"internal/tooling/source", "internal/tooling/licenses"},
 	"internal/tooling/release/install": {"internal/tooling/source", "internal/tooling/release", "internal/tooling/guardedwrite"},
 	"internal/tooling/releasecli":      {"internal/buildinfo", "internal/tooling/source", "internal/tooling/licenses", "internal/tooling/release", "internal/tooling/release/install", "internal/tooling/publish"},
+}
+
+// Only concrete fixture needs receive test-only edges; production keeps the
+// consumer-owned Control and Journal ports as its complete Markitect boundary.
+var responsibilityTestImports = map[string][]string{
+	"internal/adapters/journal": {"internal/model", "internal/snapshot"},
 }
 
 // Edge.Test alone cannot distinguish internal from external Go tests.

@@ -21,7 +21,7 @@ Tests in `internal/tooling/architecture` require every actual Go package to have
 | `apply-run` | Fixed run bindings, assignment budgets and confirmed journal transitions. | `apply-run` | 1 |
 | `apply-usecase` | Read-only preparation through consumer-owned ports. | `apply-usecase` | 1 |
 | `model-view` | Deterministic readable view and reviewed source-bound write plan. | `model-view` | 1 |
-| `apply-adapter` | Concrete repository, container engine, profile metadata and document I/O. | `apply-adapter` | 6 |
+| `apply-adapter` | Concrete repository, journal, container engine, profile metadata and document I/O. | `apply-adapter` | 7 |
 | `apply-bootstrap` | Constructs actual services and their adapters. | `apply-bootstrap` | 1 |
 | `apply-command` | Thin entrypoint to product composition. | `apply-command` | 1 |
 | `agent-protocol` | Frame protocol between the Host and the session helper. | `agent-protocol` | 1 |
@@ -85,6 +85,7 @@ Tests in `internal/tooling/architecture` require every actual Go package to have
 | `internal/adapters/container` | Container engine client and the Host side of the agentd connection. | [docs/development/modules.md](modules.md) |
 | `internal/adapters/documents` | Concrete repository, profile metadata and document I/O. | [docs/development/modules.md](modules.md) |
 | `internal/adapters/gitrepo` | Concrete repository, profile metadata and document I/O. | [docs/development/modules.md](modules.md) |
+| `internal/adapters/journal` | Repository control and fenced durable SQLite journal storage. | [internal/adapters/journal/README.md](../../internal/adapters/journal/README.md) |
 
 ## Composition
 
