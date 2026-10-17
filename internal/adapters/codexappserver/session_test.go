@@ -17,8 +17,6 @@ import (
 	"github.com/Glacius-Labs/Markitect/internal/snapshot"
 )
 
-const sessionContract = `{"Format":"markitect.explore-report/v1","Fields":{"Version":"integer=1","Assignment":"string","Run":"string","RunBasis":"ContentID","Manager":"string","Parent":"string|null","HandoffID":"string","Session":"SessionID","SessionBinding":"ContentID","Step":"StepID","InputContentID":"ContentID","OperationContentID":"ContentID","ContextContentID":"ContentID","Summary":"nonblank-string","ProposedChanges":"string[]","Prerequisites":"string[]","Uncertainties":"string[]","Questions":"string[]"},"AdditionalFields":false}`
-
 type fakeChannel struct {
 	preparations     []run.TransportPreparation
 	sends            []run.TransportObservation
@@ -31,6 +29,7 @@ type fakeChannel struct {
 	observeNoReceipt bool
 	callFail         bool
 	refuse           bool
+	stopRecordError  error
 }
 
 func receipt() run.AppendReceipt { return run.AppendReceipt{BatchID: "recorded", Revision: 1} }
@@ -87,6 +86,9 @@ func (f *fakeChannel) ObserveStep(_ context.Context, o run.StepObservation) (run
 }
 func (f *fakeChannel) ObserveStop(_ context.Context, o run.StopObservation) (run.AppendReceipt, error) {
 	f.stops = append(f.stops, o)
+	if f.stopRecordError != nil {
+		return run.AppendReceipt{}, f.stopRecordError
+	}
 	return receipt(), nil
 }
 
@@ -127,13 +129,30 @@ type fakeRuntime struct {
 	writeBlock     <-chan struct{}
 	startBlocked   bool
 	stopBlocked    bool
+	secretField    string
+	finalText      string
+	terminalStatus string
 	stopCalls      int
 }
 
 func peer(f *fakeChannel) *fakeRuntime {
 	return &fakeRuntime{stream: &fakeStream{chunks: make(chan []byte, 32), done: make(chan struct{})}, tools: make(chan frame.ToolCall, 16), journal: f}
 }
-func (f *fakeRuntime) emit(raw string) { f.stream.chunks <- []byte(raw + "\n") }
+func (f *fakeRuntime) emit(raw string) {
+	if f.secretField == "thread-marker" && strings.Contains(raw, `"id":2`) {
+		raw = strings.ReplaceAll(raw, string(codecThreadID), "prefix-[REDACTED]")
+	}
+	if f.secretField == "thread-response" && strings.Contains(raw, `"id":2`) {
+		raw = strings.ReplaceAll(raw, string(codecThreadID), "prefix-secret-key-for-runtime")
+	}
+	if f.secretField == "turn-response" && strings.Contains(raw, `"id":3`) {
+		raw = strings.ReplaceAll(raw, string(codecTurnID), "prefix-secret-key-for-runtime")
+	}
+	if f.secretField == "call" {
+		raw = strings.ReplaceAll(raw, "actual-call", "prefix-secret-key-for-runtime")
+	}
+	f.stream.chunks <- []byte(raw + "\n")
+}
 func (f *fakeRuntime) StartProvider(_ context.Context, s frame.Start) (frame.Started, error) {
 	f.start = s
 	if f.startBlocked {
@@ -169,12 +188,21 @@ func (f *fakeRuntime) WriteInput(data []byte) error {
 	case "initialize":
 		f.emit(`{"id":1,"result":` + codecInitialization + `}`)
 	case "thread/start", "thread/resume":
+		if f.secretField == "thread-notification" {
+			f.emit(`{"method":"thread/started","params":{"thread":` + strings.ReplaceAll(codecThread, string(codecThreadID), "prefix-secret-key-for-runtime") + `}}`)
+		}
 		thread := codecThread
 		if f.resumeMismatch {
 			thread = strings.ReplaceAll(thread, string(codecThreadID), "wrong-thread")
 		}
 		f.emit(`{"id":2,"result":{"thread":` + thread + `,"approvalPolicy":"never","approvalsReviewer":"user","cwd":"/work","model":"admitted-model","modelProvider":"markitect","sandbox":{"type":"dangerFullAccess"}}}`)
 	case "turn/start":
+		if f.secretField == "turn-notification" {
+			f.emit(`{"method":"turn/started","params":{"threadId":"` + string(codecThreadID) + `","turn":{"id":"prefix-secret-key-for-runtime","status":"inProgress","items":[],"error":null}}}`)
+		}
+		if f.secretField == "turn-item" {
+			f.emit(`{"method":"item/started","params":{"threadId":"` + string(codecThreadID) + `","turnId":"prefix-secret-key-for-runtime","item":{"id":"observed-item","type":"agentMessage","text":"observed"}}}`)
+		}
 		f.emit(`{"id":3,"result":{"turn":{"id":"` + string(codecTurnID) + `","status":"inProgress","items":[],"error":null}}}`)
 		if f.cancelTurn {
 			return nil
@@ -185,8 +213,12 @@ func (f *fakeRuntime) WriteInput(data []byte) error {
 				thread = "foreign-thread"
 			}
 			// Deliberately enqueue MCP first, before its stdout identity event.
-			f.tools <- frame.ToolCall{ID: 1, Name: "submit_work", Arguments: json.RawMessage(`{"summary":"done"}`), Meta: json.RawMessage(`{"threadId":"` + thread + `","callId":"actual-call"}`)}
-			f.emit(`{"method":"item/started","params":{"threadId":"` + string(codecThreadID) + `","turnId":"` + string(codecTurnID) + `","item":{"id":"actual-call","type":"mcpToolCall","server":"markitect","tool":"submit_work","arguments":{"summary":"done"},"status":"inProgress"}}}`)
+			callID := "actual-call"
+			if f.secretField == "call" {
+				callID = "prefix-secret-key-for-runtime"
+			}
+			f.tools <- frame.ToolCall{ID: 1, Name: "submit", Arguments: json.RawMessage(`{"summary":"done"}`), Meta: json.RawMessage(`{"threadId":"` + thread + `","callId":"` + callID + `"}`)}
+			f.emit(`{"method":"item/started","params":{"threadId":"` + string(codecThreadID) + `","turnId":"` + string(codecTurnID) + `","item":{"id":"actual-call","type":"mcpToolCall","server":"markitect","tool":"submit","arguments":{"summary":"done"},"status":"inProgress"}}}`)
 		} else {
 			f.finish()
 		}
@@ -194,12 +226,14 @@ func (f *fakeRuntime) WriteInput(data []byte) error {
 	return nil
 }
 func (f *fakeRuntime) finish() {
-	report := run.ExploreReport{Version: 1, Summary: "observed", ProposedChanges: []string{}, Prerequisites: []string{}, Uncertainties: []string{}, Questions: []string{}}
-	p, _ := run.NewExploreReportPayload(report)
-	item := map[string]any{"method": "item/completed", "params": map[string]any{"threadId": codecThreadID, "turnId": codecTurnID, "item": map[string]any{"id": "answer", "type": "agentMessage", "phase": "final_answer", "text": string(p.Bytes())}}}
+	item := map[string]any{"method": "item/completed", "params": map[string]any{"threadId": codecThreadID, "turnId": codecTurnID, "item": map[string]any{"id": "answer", "type": "agentMessage", "phase": "final_answer", "text": f.finalText}}}
 	data, _ := json.Marshal(item)
 	f.emit(string(data))
-	f.emit(`{"method":"turn/completed","params":{"threadId":"` + string(codecThreadID) + `","turn":{"id":"` + string(codecTurnID) + `","status":"completed","items":[],"error":null}}}`)
+	status := f.terminalStatus
+	if status == "" {
+		status = "completed"
+	}
+	f.emit(`{"method":"turn/completed","params":{"threadId":"` + string(codecThreadID) + `","turn":{"id":"` + string(codecTurnID) + `","status":"` + status + `","items":[],"error":null}}}`)
 }
 func (f *fakeRuntime) Reply(r frame.ToolReply) error {
 	f.replies = append(f.replies, r)
@@ -214,6 +248,15 @@ func (f *fakeRuntime) Stop(context.Context, int64) (frame.Exited, error) {
 	}
 	if f.stopFail {
 		return frame.Exited{}, context.DeadlineExceeded
+	}
+	if f.secretField == "stop-signal" {
+		return frame.Exited{Code: -1, Signal: "prefix-secret-key-for-runtime"}, nil
+	}
+	if f.secretField == "stop-marker" {
+		return frame.Exited{Code: -1, Signal: "prefix-[REDACTED]"}, nil
+	}
+	if f.secretField == "stop-marker-nested" {
+		return frame.Exited{Code: -1, Signal: "[RED[REDACTED]ACTED]"}, nil
 	}
 	return frame.Exited{Code: -1, Signal: "terminated"}, nil
 }
@@ -231,11 +274,17 @@ func sessionAdmissions(t *testing.T) (run.SessionAdmission, run.StepAdmission) {
 	t.Helper()
 	profile, _ := json.Marshal(SessionProfile{Version: 1, Model: "admitted-model", Effort: "high", Store: "store", CPUs: 1, MemoryBytes: 1 << 30, Pids: 128, TmpBytes: 1 << 20})
 	p := payloadForSession(t, "application/vnd.markitect.codex-session-profile+json", profile)
-	tools := payloadForSession(t, "application/vnd.markitect.tools+json", []byte(`{"version":1,"tools":[{"name":"submit_work","description":"Submit to Host","inputSchema":{"type":"object"}}]}`))
+	tools, err := run.ToolCatalog(run.PhaseWork)
+	if err != nil {
+		t.Fatal(err)
+	}
 	plan := run.SessionPlan{ID: "session", Role: "manager", Workspace: "workspace", ProviderHome: "provider-home", ImageID: "sha256:" + strings.Repeat("a", 64), CredentialRef: "exact-credential", Candidate: snapshot.TreeID{1}, MaxWireBytes: 1 << 20, Profile: p.Ref(), Tools: tools.Ref()}
 	a := run.SessionAdmission{Plan: plan, Profile: p, Tools: tools, Receipt: receipt(), Invocation: "open"}
 	input := payloadForSession(t, "application/vnd.markitect.explore-input+json", []byte(`{"exact":"input"}`))
-	contract := payloadForSession(t, "application/vnd.markitect.explore-contract+json", []byte(sessionContract))
+	contract, err := run.NewStepContract(run.PhaseWork)
+	if err != nil {
+		t.Fatal(err)
+	}
 	b := run.StepAdmission{Session: plan, Plan: run.StepPlan{Session: plan.ID, ID: "step", SessionBinding: plan.Binding(), Input: input.Ref(), OutputContract: contract.Ref()}, Input: input, OutputContract: contract, Receipt: receipt(), Invocation: "step"}
 	return a, b
 }
@@ -259,6 +308,44 @@ func sessionsForTest(t *testing.T, f *fakeRuntime) *Sessions {
 	return s
 }
 
+func TestCodexVerifiedEmptyWorkspaceDisablesImageCopyUp(t *testing.T) {
+	empty, err := snapshot.NewTree(nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, readOnly := range []bool{false, true} {
+		t.Run(map[bool]string{false: "manager", true: "reviewer"}[readOnly], func(t *testing.T) {
+			channel := &fakeChannel{}
+			runtime := peer(channel)
+			t.Cleanup(func() { _ = runtime.Close() })
+			a, _ := sessionAdmissions(t)
+			a.Plan.Candidate = empty.Digest()
+			a.Plan.ReadOnly = readOnly
+			if readOnly {
+				a.Plan.Role = "reviewer"
+			}
+			started := false
+			s, err := NewSessionsWithRuntime(func(_ context.Context, spec container.ContainerSpec) (RuntimeSession, error) {
+				started = true
+				// A provider image can contain /work files absent from the verified
+				// empty tree. Its mount must suppress Docker's default population.
+				if len(spec.Mounts) != 2 || spec.Mounts[0] != (container.Mount{Volume: a.Plan.Workspace, Target: "/work", ReadOnly: readOnly, NoCopy: true}) || spec.Mounts[1] != (container.Mount{Volume: a.Plan.ProviderHome, Target: "/home/agent"}) {
+					t.Fatalf("verified workspace or initial provider-home copy-up changed: %+v", spec.Mounts)
+				}
+				return runtime, nil
+			}, nil, func(context.Context, string) (RuntimeCredential, error) {
+				return RuntimeCredential{Mode: "api-key", APIKey: "secret-key-for-runtime"}, nil
+			})
+			if err != nil {
+				t.Fatal(err)
+			}
+			if _, err := s.Open(context.Background(), a, channel); err != nil || !started {
+				t.Fatalf("empty verified workspace did not open: %v", err)
+			}
+		})
+	}
+}
+
 func TestAdmittedCodexSessionOneStepHostToolsAndObservedExit(t *testing.T) {
 	for _, refuse := range []bool{false, true} {
 		t.Run(map[bool]string{false: "answer", true: "refusal"}[refuse], func(t *testing.T) {
@@ -277,7 +364,7 @@ func TestAdmittedCodexSessionOneStepHostToolsAndObservedExit(t *testing.T) {
 				t.Fatalf("provider start %+v", runtime.start)
 			}
 			step, err := s.Step(ctx, b, channel)
-			if err != nil || !step.Terminal || step.ProviderStep != run.ProviderStepID(codecTurnID) || !step.Proposed.Valid() {
+			if err != nil || !step.Terminal || step.ProviderStep != run.ProviderStepID(codecTurnID) || step.Proposed.Valid() {
 				t.Fatalf("step %+v %v", step, err)
 			}
 			if len(channel.calls) != 1 || channel.calls[0].Call != "actual-call" || len(runtime.replies) != 1 {
@@ -310,6 +397,123 @@ func TestAdmittedCodexSessionOneStepHostToolsAndObservedExit(t *testing.T) {
 			stopped, err := s.Stop(ctx, run.StopRequest{Session: a.Plan.ID, ProviderSession: opened.ProviderSession, Timeout: time.Second}, channel)
 			if err != nil || !stopped.Terminated || !strings.Contains(stopped.Reason, "signal=terminated") {
 				t.Fatalf("stop %+v %v", stopped, err)
+			}
+		})
+	}
+}
+
+func TestCodexStepContractsRetainFinalTextWithoutProposingOutcomes(t *testing.T) {
+	cases := []struct {
+		phase run.Phase
+		text  string
+	}{
+		{run.PhaseExplore, `{"Version":1,"Summary":"claimed report","ProposedChanges":[],"Prerequisites":[],"Uncertainties":[],"Questions":[]}`},
+		{run.PhaseWork, "not JSON"},
+		{run.PhaseIntegrate, ""},
+		{run.PhaseReply, `{"kind":"reply","body":"claimed outcome"}`},
+		{run.PhaseReviewerExpectations, "claimed expectations"},
+		{run.PhaseReviewerCandidate, `{"verdict":"pass"}`},
+	}
+	for _, tc := range cases {
+		t.Run(string(tc.phase), func(t *testing.T) {
+			channel := &fakeChannel{}
+			runtime := peer(channel)
+			runtime.finalText = tc.text
+			s := sessionsForTest(t, runtime)
+			a, b := sessionAdmissions(t)
+			var err error
+			a.Tools, err = run.ToolCatalog(tc.phase)
+			if err != nil {
+				t.Fatal(err)
+			}
+			a.Plan.Tools = a.Tools.Ref()
+			if tc.phase == run.PhaseReviewerExpectations || tc.phase == run.PhaseReviewerCandidate {
+				a.Plan.Role, a.Plan.ReadOnly = "reviewer", true
+			}
+			b.Session = a.Plan
+			b.Plan.SessionBinding = a.Plan.Binding()
+			b.OutputContract, err = run.NewStepContract(tc.phase)
+			if err != nil {
+				t.Fatal(err)
+			}
+			b.Plan.OutputContract = b.OutputContract.Ref()
+			if _, err := s.Open(context.Background(), a, channel); err != nil {
+				t.Fatal(err)
+			}
+			var catalog struct {
+				Tools []frame.ToolSpec `json:"tools"`
+			}
+			if json.Unmarshal(a.Tools.Bytes(), &catalog) != nil {
+				t.Fatal("invalid producer tools")
+			}
+			wantTools, _ := json.Marshal(catalog.Tools)
+			gotTools, _ := json.Marshal(runtime.start.Tools)
+			if !bytes.Equal(wantTools, gotTools) {
+				t.Fatal("admitted tools changed before provider registration")
+			}
+			step, err := s.Step(context.Background(), b, channel)
+			if err != nil || !step.Terminal || step.Proposed.Valid() || len(channel.calls) != 0 {
+				t.Fatalf("final text became an outcome: %+v %v", step, err)
+			}
+			var observedWire []byte
+			for _, observation := range channel.steps {
+				if observation.Proposed.Valid() {
+					t.Fatal("ObserveStep received a proposed outcome")
+				}
+				observedWire = append(observedWire, observation.Wire.Journal.Bytes()...)
+			}
+			wireText, _ := json.Marshal(tc.text)
+			if !bytes.Contains(observedWire, wireText) {
+				t.Fatal("final text lost from provider wire observation")
+			}
+			turnWrite := runtime.writes[len(runtime.writes)-1]
+			var turn struct {
+				Params struct {
+					Input        []struct{ Text string }
+					OutputSchema json.RawMessage
+				}
+			}
+			if json.Unmarshal(turnWrite, &turn) != nil || len(turn.Params.Input) != 1 || !strings.Contains(turn.Params.Input[0].Text, string(b.Input.Bytes())) || !strings.Contains(turn.Params.Input[0].Text, string(b.OutputContract.Bytes())) || len(turn.Params.OutputSchema) != 0 {
+				t.Fatal("exact input/contract instructions changed or became provider schema")
+			}
+		})
+	}
+}
+
+func TestCodexTerminalStatusesRemainProviderObservations(t *testing.T) {
+	for _, status := range []string{"completed", "failed", "interrupted"} {
+		t.Run(status, func(t *testing.T) {
+			channel := &fakeChannel{}
+			runtime := peer(channel)
+			runtime.terminalStatus = status
+			s := sessionsForTest(t, runtime)
+			a, b := sessionAdmissions(t)
+			if _, err := s.Open(context.Background(), a, channel); err != nil {
+				t.Fatal(err)
+			}
+			step, err := s.Step(context.Background(), b, channel)
+			if err != nil || !step.Terminal || step.Proposed.Valid() || !strings.Contains(step.Reason, "status="+status+";") {
+				t.Fatalf("provider status lost: %+v %v", step, err)
+			}
+		})
+	}
+}
+
+func TestCodexRejectsOldOrChangedContractBeforeDispatch(t *testing.T) {
+	for _, media := range []string{"application/vnd.markitect.explore-contract+json", run.StepContractMedia} {
+		t.Run(media, func(t *testing.T) {
+			channel := &fakeChannel{}
+			runtime := peer(channel)
+			s := sessionsForTest(t, runtime)
+			a, b := sessionAdmissions(t)
+			b.OutputContract = payloadForSession(t, media, []byte(`{"Format":"markitect.step-outcome/v1","Phase":"work","Outcomes":["submit"]}`))
+			b.Plan.OutputContract = b.OutputContract.Ref()
+			if _, err := s.Open(context.Background(), a, channel); err != nil {
+				t.Fatal(err)
+			}
+			writes := len(runtime.writes)
+			if _, err := s.Step(context.Background(), b, channel); err == nil || len(runtime.writes) != writes || len(channel.steps) != 0 {
+				t.Fatal("unsupported contract dispatched or produced an observation")
 			}
 		})
 	}
@@ -497,6 +701,126 @@ func TestCodexBlockedRuntimeControlsRespectCancellation(t *testing.T) {
 			stopped, stopErr := s.Stop(context.Background(), run.StopRequest{Session: a.Plan.ID, ProviderSession: opened.ProviderSession, Timeout: 20 * time.Millisecond}, channel)
 			if operation == "stop" && (stopErr == nil || stopped.Terminated) {
 				t.Fatalf("blocked stop %+v %v", stopped, stopErr)
+			}
+		})
+	}
+}
+
+func TestCodexSecretEchoCannotEscapeThroughCallbackIdentityFields(t *testing.T) {
+	for _, field := range []string{"thread-response", "thread-notification", "turn-response", "turn-notification", "turn-item", "call"} {
+		t.Run(field, func(t *testing.T) {
+			channel := &fakeChannel{}
+			runtime := peer(channel)
+			runtime.secretField = field
+			runtime.useTool = field == "call"
+			s := sessionsForTest(t, runtime)
+			a, b := sessionAdmissions(t)
+			ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+			defer cancel()
+			opened, err := s.Open(ctx, a, channel)
+			if strings.HasPrefix(field, "thread-") {
+				if err == nil || !opened.Uncertain || opened.ProviderSession != "" {
+					t.Fatalf("unsafe thread accepted: uncertain=%t bound=%t error=%v", opened.Uncertain, opened.ProviderSession != "", err)
+				}
+			} else {
+				if err != nil {
+					t.Fatal(err)
+				}
+				step, stepErr := s.Step(ctx, b, channel)
+				if stepErr == nil || !step.Uncertain {
+					t.Fatalf("unsafe native identity accepted: uncertain=%t error=%v", step.Uncertain, stepErr)
+				}
+				if field != "call" && step.ProviderStep != "" {
+					t.Fatal("unsafe turn replaced by invented identity")
+				}
+			}
+			// Assert the actual values handed to every journal callback, including
+			// uncertain deferred observations, rather than just Wire.Redacted.
+			for _, bound := range channel.bindings {
+				if strings.Contains(string(bound.ProviderSession), "secret-key-for-runtime") || bytes.Contains(bound.Wire.Journal.Bytes(), []byte("secret-key-for-runtime")) {
+					t.Fatal("thread secret reached Bind")
+				}
+			}
+			for _, step := range channel.steps {
+				if strings.Contains(string(step.ProviderStep), "secret-key-for-runtime") || bytes.Contains(step.Wire.Journal.Bytes(), []byte("secret-key-for-runtime")) {
+					t.Fatal("turn secret reached ObserveStep")
+				}
+			}
+			if field == "call" && len(channel.calls) != 0 {
+				t.Fatal("unsafe native call ID reached Host callback")
+			}
+			for _, prepared := range channel.preparations {
+				if strings.Contains(string(prepared.Call), "secret-key-for-runtime") {
+					t.Fatal("call secret reached PrepareSend")
+				}
+			}
+		})
+	}
+}
+
+func TestCodexStopSignalSecretIsRedactedBeforeObservation(t *testing.T) {
+	channel := &fakeChannel{}
+	runtime := peer(channel)
+	runtime.secretField = "stop-signal"
+	s := sessionsForTest(t, runtime)
+	a, _ := sessionAdmissions(t)
+	opened, err := s.Open(context.Background(), a, channel)
+	if err != nil {
+		t.Fatal(err)
+	}
+	stopped, err := s.Stop(context.Background(), run.StopRequest{Session: a.Plan.ID, ProviderSession: opened.ProviderSession, Timeout: time.Second}, channel)
+	if err != nil || !stopped.Terminated || len(channel.stops) != 1 || strings.Contains(stopped.Reason, "secret-key-for-runtime") || strings.Contains(channel.stops[0].Reason, "secret-key-for-runtime") || !strings.Contains(stopped.Reason, "[REDACTED]") {
+		t.Fatalf("unsafe stop observation %+v %v", stopped, err)
+	}
+}
+
+func TestCodexStopJournalErrorCannotReturnKnownCredential(t *testing.T) {
+	channel := &fakeChannel{stopRecordError: errors.New("journal refused secret-key-for-runtime")}
+	runtime := peer(channel)
+	s := sessionsForTest(t, runtime)
+	a, _ := sessionAdmissions(t)
+	opened, err := s.Open(context.Background(), a, channel)
+	if err != nil {
+		t.Fatal(err)
+	}
+	stopped, err := s.Stop(context.Background(), run.StopRequest{Session: a.Plan.ID, ProviderSession: opened.ProviderSession, Timeout: time.Second}, channel)
+	if !stopped.Terminated || err == nil || strings.Contains(err.Error(), "secret-key-for-runtime") || !strings.Contains(err.Error(), "[REDACTED]") {
+		t.Fatal("stop journal error escaped credential redaction")
+	}
+}
+
+func TestCodexCredentialCannotEqualRedactionMarker(t *testing.T) {
+	for _, field := range []string{"thread-marker", "stop-marker", "stop-marker-nested"} {
+		t.Run(field, func(t *testing.T) {
+			channel := &fakeChannel{}
+			runtime := peer(channel)
+			runtime.secretField = field
+			s, err := NewSessionsWithRuntime(func(context.Context, container.ContainerSpec) (RuntimeSession, error) { return runtime, nil }, nil, func(context.Context, string) (RuntimeCredential, error) {
+				return RuntimeCredential{Mode: "api-key", APIKey: "[REDACTED]"}, nil
+			})
+			if err != nil {
+				t.Fatal(err)
+			}
+			t.Cleanup(func() { _ = runtime.Close() })
+			a, _ := sessionAdmissions(t)
+			opened, openErr := s.Open(context.Background(), a, channel)
+			if field == "thread-marker" {
+				if openErr == nil || !opened.Uncertain || opened.ProviderSession != "" {
+					t.Fatal("replacement token accepted as native identity")
+				}
+				for _, bound := range channel.bindings {
+					if strings.Contains(string(bound.ProviderSession), "[REDACTED]") || bytes.Contains(bound.Wire.Journal.Bytes(), []byte("[REDACTED]")) {
+						t.Fatal("marker-valued credential reached Bind")
+					}
+				}
+			} else {
+				if openErr != nil {
+					t.Fatal(openErr)
+				}
+				stopped, stopErr := s.Stop(context.Background(), run.StopRequest{Session: a.Plan.ID, ProviderSession: opened.ProviderSession, Timeout: time.Second}, channel)
+				if stopErr != nil || !stopped.Terminated || strings.Contains(stopped.Reason, "[REDACTED]") || strings.Contains(channel.stops[0].Reason, "[REDACTED]") {
+					t.Fatal("marker-valued credential reached ObserveStop")
+				}
 			}
 		})
 	}

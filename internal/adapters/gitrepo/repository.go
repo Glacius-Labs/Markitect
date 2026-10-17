@@ -1,13 +1,16 @@
-// Package gitrepo acquires explicit repository sources without modifying them.
+// Package gitrepo acquires explicit repository sources and publishes guarded
+// working-tree changes.
 // Relative acquisition boundaries are relative to the selected repository;
 // model paths remain exact, manifest-relative language values. No discovery,
-// compiler, workspace, publication or provider operation is performed here.
+// compiler or provider operation is performed here. Workspace creation has its
+// own adapter contract; source capture remains read-only.
 package gitrepo
 
 import (
 	"context"
 	"errors"
 	"fmt"
+	"sync"
 	"time"
 
 	"github.com/Glacius-Labs/Markitect/internal/apply"
@@ -39,11 +42,14 @@ func DefaultLimits() Limits {
 	return Limits{Entries: 100000, FileBytes: 64 << 20, TotalBytes: 512 << 20, Timeout: 2 * time.Minute}
 }
 
-// Repository is a reusable stateless adapter. Each call owns its observations,
-// handles and Git processes. Construction performs no acquisition.
+// Repository retains capture bindings and opaque publication permits in memory.
+// Each call owns its handles and Git processes. Construction performs no I/O.
 type Repository struct {
-	limits Limits
-	// A private deterministic scheduling seam for acquisition race tests.
+	limits        Limits
+	publicationMu sync.Mutex
+	captures      map[apply.PublicationGuard]publicationCapture
+	permits       map[string]publicationPlan
+	// A private deterministic scheduling seam for acquisition/publication races.
 	observe func(event, path string)
 }
 
@@ -81,6 +87,7 @@ func (r *Repository) Capture(ctx context.Context, request apply.CaptureRequest) 
 	result := apply.CapturedInputs{Raw: a.raw, Head: a.head}
 	if err == nil {
 		result.Guard = a.guard()
+		r.rememberPublicationCapture(request.Selection, a)
 	}
 	return result, err
 }

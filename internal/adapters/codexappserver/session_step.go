@@ -5,8 +5,6 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"fmt"
-	"strings"
 
 	"github.com/Glacius-Labs/Markitect/internal/agentd/frame"
 	"github.com/Glacius-Labs/Markitect/internal/run"
@@ -21,8 +19,6 @@ type stepItem struct {
 		Server    string          `json:"server"`
 		Tool      string          `json:"tool"`
 		Arguments json.RawMessage `json:"arguments"`
-		Text      string          `json:"text"`
-		Phase     string          `json:"phase"`
 	} `json:"item"`
 }
 type stepEvent struct {
@@ -42,10 +38,10 @@ func (s *Sessions) Step(ctx context.Context, a run.StepAdmission, channel run.Se
 	if e.stopped || e.peer == nil || e.bound.BatchID == "" || e.step != "" || a.Session != e.plan || a.Plan.SessionBinding != e.plan.Binding() || a.Plan.ID == "" || a.Receipt.BatchID == "" || a.Invocation == "" || !a.Input.Valid() || a.Input.Ref() != a.Plan.Input || !a.OutputContract.Valid() || a.OutputContract.Ref() != a.Plan.OutputContract {
 		return out, ErrSession
 	}
-	// Contract interpretation precedes any provider write. The field catalogue
-	// is sent literally as instructions, never mislabelled as JSON Schema.
-	if err = exploreContract(a.OutputContract); err != nil {
-		return out, err
+	// Decode the producer's contract before any provider write. Step outcomes
+	// reach the Host through admitted tools, never through final text.
+	if _, err = run.DecodeStepContract(a.OutputContract); err != nil {
+		return out, errors.Join(ErrSession, err)
 	}
 	e.step = a.Plan.ID
 	var pending []byte
@@ -56,10 +52,11 @@ func (s *Sessions) Step(ctx context.Context, a run.StepAdmission, channel run.Se
 				out.Wire = e.wire(pending)
 			}
 			_, recordErr := channel.ObserveStep(context.WithoutCancel(ctx), out)
-			err = errors.Join(e.safe(err), recordErr)
+			err = errors.Join(err, recordErr)
 		}
+		err = e.safe(err)
 	}()
-	prompt := "Perform exactly one admitted Markitect step. Return the requested report as one JSON object in your final answer. The Host will assess it separately.\nExact input bytes:\n" + string(a.Input.Bytes()) + "\nExact output contract bytes (a field catalogue, not JSON Schema):\n" + string(a.OutputContract.Bytes())
+	prompt := "Perform exactly one admitted Markitect step. Submit the step outcome through the admitted Host tools named by the contract. Final answer text carries no outcome.\nExact input bytes:\n" + string(a.Input.Bytes()) + "\nExact step contract bytes (instructions, not JSON Schema):\n" + string(a.OutputContract.Bytes())
 	id := IntegerRequestID(3)
 	raw, err := e.codec.EncodeTurnStart(id, TurnStartParams{Thread: e.thread, Text: prompt, Effort: e.profile.Effort})
 	if err != nil {
@@ -89,7 +86,6 @@ func (s *Sessions) Step(ctx context.Context, a run.StepAdmission, channel run.Se
 	var waiting []frame.ToolCall
 	calls := map[string]stepItem{}
 	seenCalls := map[uint64]bool{}
-	lastAnswer := ""
 	responseSeen := false
 	for {
 		// MCP and provider stdout are distinct runtime queues. A call can arrive
@@ -101,6 +97,9 @@ func (s *Sessions) Step(ctx context.Context, a run.StepAdmission, channel run.Se
 				Call   string `json:"callId"`
 			}
 			if _, parseErr := protocolObject(call.Meta); parseErr != nil || json.Unmarshal(call.Meta, &meta) != nil || meta.Thread != string(e.thread) || meta.Call == "" {
+				return out, ErrProtocol
+			}
+			if !e.nativeIdentity(meta.Call) {
 				return out, ErrProtocol
 			}
 			item, ok := calls[meta.Call]
@@ -155,12 +154,18 @@ func (s *Sessions) Step(ctx context.Context, a run.StepAdmission, channel run.Se
 				if e.turn != "" && e.turn != r.Turn.Turn {
 					return out, ErrProtocol
 				}
+				if !e.nativeIdentity(string(r.Turn.Turn)) {
+					return out, ErrProtocol
+				}
 				e.turn = r.Turn.Turn
 				responseSeen = true
 				terminal = r.Turn.Status != TurnInProgress
 			case TurnStartedMessage, TurnCompletedMessage:
 				t := m.Turn()
 				if t.Thread != e.thread || e.turn != "" && e.turn != t.Turn {
+					return out, ErrProtocol
+				}
+				if !e.nativeIdentity(string(t.Turn)) {
 					return out, ErrProtocol
 				}
 				e.turn = t.Turn
@@ -178,15 +183,15 @@ func (s *Sessions) Step(ctx context.Context, a run.StepAdmission, channel run.Se
 					if json.Unmarshal(m.body, &item) != nil || item.Thread != string(e.thread) || item.Turn == "" || e.turn != "" && item.Turn != string(e.turn) {
 						return out, ErrProtocol
 					}
+					if !e.nativeIdentity(item.Turn) {
+						return out, ErrProtocol
+					}
 					e.turn = TurnID(item.Turn)
 					if item.Item.Type == "mcpToolCall" {
 						if item.Item.ID == "" {
 							return out, ErrProtocol
 						}
 						calls[item.Item.ID] = item
-					}
-					if m.method == "item/completed" && item.Item.Type == "agentMessage" && (item.Item.Phase == "" || item.Item.Phase == "final_answer") {
-						lastAnswer = item.Item.Text
 					}
 				}
 			default:
@@ -196,7 +201,6 @@ func (s *Sessions) Step(ctx context.Context, a run.StepAdmission, channel run.Se
 				continue
 			}
 			out = run.StepObservation{RecordMeta: e.meta(), Step: e.step, ProviderStep: run.ProviderStepID(e.turn), Wire: e.wire(pending), Reason: "raw provider observation; no task acceptance"}
-			var projectionErr error
 			if terminal {
 				// Runtime queues have no cross-channel ordering. Never accept a
 				// terminal event while ignoring an already queued MCP call.
@@ -216,20 +220,14 @@ func (s *Sessions) Step(ctx context.Context, a run.StepAdmission, channel run.Se
 					r, _ := m.ReadResponse(id, TurnStart)
 					status = r.Turn.Status
 				}
-				out.Reason = "provider terminal status=" + string(status) + "; proposal requires Host assessment"
-				if status == TurnCompleted {
-					out.Proposed, projectionErr = projectExplore(lastAnswer, e)
-					if projectionErr != nil {
-						out.Reason = "provider completed; final report could not be projected"
-					}
-				}
+				out.Reason = "provider terminal status=" + string(status) + "; outcomes are recorded only through Host tools"
 			}
 			e.observed, err = channel.ObserveStep(ctx, out)
 			if err == nil && e.observed.BatchID == "" {
 				err = run.ErrObservationLimit
 			}
 			if err != nil || terminal {
-				return out, errors.Join(err, projectionErr)
+				return out, err
 			}
 			pending = nil
 		}
@@ -256,6 +254,9 @@ func jsonEqual(a, b []byte) bool {
 	return bytes.Equal(aa, bb)
 }
 func (e *sessionEntry) answerTool(ctx context.Context, channel run.SessionIO, call frame.ToolCall, providerID run.ProviderCallID) error {
+	if !e.nativeIdentity(string(providerID)) || !e.nativeIdentity(call.Name) {
+		return ErrProtocol
+	}
 	allowed := false
 	for _, tool := range e.tools {
 		if tool.Name == call.Name {
@@ -309,44 +310,4 @@ func (e *sessionEntry) answerTool(ctx context.Context, channel run.SessionIO, ca
 		return err
 	}
 	return e.send(ctx, channel, e.step, providerID, wire, func() error { return e.peer.Reply(reply) })
-}
-
-func exploreContract(p run.Payload) error {
-	if p.Ref().MediaType != "application/vnd.markitect.explore-contract+json" || p.Ref().Encoding != "utf-8" {
-		return fmt.Errorf("%w: unsupported output contract", ErrSession)
-	}
-	var contract struct {
-		Format           string
-		Fields           map[string]string
-		AdditionalFields bool
-	}
-	if strictValue(p.Bytes(), &contract) != nil || contract.Format != "markitect.explore-report/v1" || contract.AdditionalFields {
-		return ErrSession
-	}
-	// Require the supported catalogue's field types, without interpreting it as
-	// provider JSON Schema or accepting a future changed contract silently.
-	expected := map[string]string{"Version": "integer=1", "Assignment": "string", "Run": "string", "RunBasis": "ContentID", "Manager": "string", "Parent": "string|null", "HandoffID": "string", "Session": "SessionID", "SessionBinding": "ContentID", "Step": "StepID", "InputContentID": "ContentID", "OperationContentID": "ContentID", "ContextContentID": "ContentID", "Summary": "nonblank-string", "ProposedChanges": "string[]", "Prerequisites": "string[]", "Uncertainties": "string[]", "Questions": "string[]"}
-	if len(contract.Fields) != len(expected) {
-		return ErrSession
-	}
-	for k, v := range expected {
-		if contract.Fields[k] != v {
-			return ErrSession
-		}
-	}
-	return nil
-}
-func projectExplore(text string, e *sessionEntry) (run.Payload, error) {
-	if strings.TrimSpace(text) == "" || int64(len(text)) > e.plan.MaxWireBytes || !bytes.Equal(e.redact([]byte(text)), []byte(text)) {
-		return run.Payload{}, ErrSession
-	}
-	var report run.ExploreReport
-	if strictValue([]byte(text), &report) != nil {
-		return run.Payload{}, ErrSession
-	}
-	proposal, err := run.NewExploreReportPayload(report)
-	if err != nil || !bytes.Equal(e.redact(proposal.Bytes()), proposal.Bytes()) {
-		return run.Payload{}, ErrSession
-	}
-	return proposal, nil
 }

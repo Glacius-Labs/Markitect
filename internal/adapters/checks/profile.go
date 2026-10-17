@@ -1,5 +1,6 @@
-// Package checks observes pinned executable metadata for project Check profiles.
-// It does not execute checks or prepare a process/runtime capability.
+// Package checks prepares static Check profile metadata and runs exact allowed
+// project checks in disposable container workspaces. Metadata preparation alone
+// does not establish process capability or check success.
 package checks
 
 import (

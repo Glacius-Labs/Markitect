@@ -26,6 +26,9 @@ type Mount struct {
 	Volume   string
 	Target   string
 	ReadOnly bool
+	// NoCopy prevents Docker from populating an empty volume with files from
+	// the image at Target. Use it when the volume already represents exact bytes.
+	NoCopy bool
 }
 
 // ContainerSpec describes one session or helper container. Every container
@@ -115,6 +118,9 @@ func (s ContainerSpec) runArgs(entry []string) ([]string, error) {
 		}
 		targets[m.Target] = true
 		mount := "type=volume,src=" + m.Volume + ",dst=" + m.Target
+		if m.NoCopy {
+			mount += ",volume-nocopy"
+		}
 		if m.ReadOnly {
 			mount += ",readonly"
 		}

@@ -1,5 +1,9 @@
 apiVersion: markitect.registry/v1
 artifacts:
+  - path: "internal/adapters/gitrepo/WORKSPACES.md"
+    form: doc
+    realizes: [product/adapters/repository/repository-boundaries]
+    why: Documents exact workspace materialization, census and retained volume ownership boundaries.
   - path: "internal/adapters/gitrepo/acquisition.go"
     form: code
     realizes: [product/adapters/repository/repository-boundaries]
@@ -60,6 +64,30 @@ artifacts:
     form: code
     realizes: [product/adapters/repository/repository-boundaries]
     why: Implements the stated responsibility within its declared boundary.
+  - path: "internal/adapters/gitrepo/PUBLISHER.md"
+    form: doc
+    realizes: [product/adapters/repository/repository-boundaries]
+    why: Documents guarded working-tree publication, source refusals and retained partial-write observations.
+  - path: "internal/adapters/gitrepo/publisher.go"
+    form: code
+    realizes: [product/adapters/repository/repository-boundaries]
+    why: Implements Apply publication preflight and exact request permits over the retained capture guard.
+  - path: "internal/adapters/gitrepo/publisher_capture.go"
+    form: code
+    realizes: [product/adapters/repository/repository-boundaries]
+    why: Retains capture provenance and physical repository identities for guarded publication comparison.
+  - path: "internal/adapters/gitrepo/publisher_observe.go"
+    form: code
+    realizes: [product/adapters/repository/repository-boundaries]
+    why: Rechecks the source, checkout policy and complete index and observes publication effects.
+  - path: "internal/adapters/gitrepo/publisher_test.go"
+    form: test
+    realizes: [product/adapters/repository/repository-boundaries]
+    why: Verifies publication guards, exact working-tree effects and refusal of unsafe or uncertain writes.
+  - path: "internal/adapters/gitrepo/publisher_write.go"
+    form: code
+    realizes: [product/adapters/repository/repository-boundaries]
+    why: Writes only permitted paths through rooted identities and preserves unrelated Git and filesystem state.
   - path: "internal/adapters/gitrepo/preflight_test.go"
     form: test
     realizes: [product/adapters/repository/repository-boundaries]
@@ -124,3 +152,15 @@ artifacts:
     form: test
     realizes: [product/adapters/repository/repository-boundaries]
     why: Verifies confirmed native-root aliases without weakening exact spelling or historical external-source refusal.
+  - path: "internal/adapters/gitrepo/workspace.go"
+    form: code
+    realizes: [product/adapters/repository/repository-boundaries]
+    why: Implements Run workspace materialization, exact harvest and guarded volume lifetime through the container API.
+  - path: "internal/adapters/gitrepo/workspace_census.go"
+    form: code
+    realizes: [product/adapters/repository/repository-boundaries]
+    why: Captures bounded workspace paths, modes and content without importing repository administration or excluded state.
+  - path: "internal/adapters/gitrepo/workspace_test.go"
+    form: test
+    realizes: [product/adapters/repository/repository-boundaries]
+    why: Verifies exact workspace readback, volume ownership and refusal of uncertain or unowned operations.

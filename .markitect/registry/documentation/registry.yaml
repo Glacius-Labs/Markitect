@@ -3,11 +3,19 @@ artifacts:
   - path: "docs/concepts/sources/product-goals-clarification-20261017.md"
     form: doc
     realizes: [documentation/current-guidance]
-    why: Preserves the owner's clarification of quality, model-first realization and trust as product goals, with lower cost explicitly excluded as a goal.
+    why: Preserves the owner clarification of product goals and trustworthy model-first realization.
   - path: "docs/concepts/sources/conceptual-influences-20261017.md"
     form: doc
     realizes: [documentation/current-guidance]
-    why: Preserves the owner's account of the conceptual influences and naming origin used to explain Markitect.
+    why: Preserves the owner account of conceptual influences and naming origin.
+  - path: "docs/strategy/marketing-plan.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Prepares product messaging, pitches and marketing recommendations with explicit evidence boundaries.
+  - path: "docs/concepts/sources/foundations-and-trust-20261017.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Preserves the owner's restatement of Markitect's foundations and desired trust in model-first realization.
   - path: "docs/design/canonical-model/standard-library-history.md"
     form: doc
     realizes: [documentation/current-guidance]
@@ -1452,10 +1460,6 @@ artifacts:
     form: doc
     realizes: [documentation/current-guidance]
     why: Documents the stated responsibility or preserves its historical evidence.
-  - path: "docs/strategy/marketing-plan.md"
-    form: doc
-    realizes: [documentation/current-guidance]
-    why: Prepares source-bound product messaging, pitch drafts and marketing recommendations while preserving current and historical evidence boundaries.
   - path: "docs/strategy/sources/01-ai-first-executable-engineering-constitution.md"
     form: doc
     realizes: [documentation/current-guidance]

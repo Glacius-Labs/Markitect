@@ -29,14 +29,16 @@ Read this section first. The rest of this page develops it, and the [concept reg
 - Capable mid-tier models can do most of the delegated work.
 - People concentrate on deciding and modeling while the code reliably reflects the model.
 
+The intended end state is **model intent → AI realizes and independently reviews it → people can rely on the result without routinely reviewing code diffs themselves**. Automated four-eyes review and integration remain part of the process. Human attention goes to model quality, architecture and escalated decisions. This is the owner's [restated goal of 17 October 2026](concepts/sources/foundations-and-trust-20261017.md#owner-statement), already recorded in [PRM-004](concepts/register.md#promises); it is a target to earn through evidence, not a claim that current Apply has achieved it. The project's acceptance policy still applies.
+
 These are [promises](concepts/register.md#promises), not established results.
 
 **How to judge it.**
 - Judge Markitect's trust against today's practice, not against a compiler's guarantees. Comparative studies still use a strong conventional workflow that is allowed to win.
 - "Compiler" names a borrowed idea. The model's structure compiles deterministically, and an invalid or incompletely covered model blocks work. Realization by agents is not deterministic.
-- Markitect's claim is that computed scope, bounded responsibility and independent review make delegated work more trustworthy than unstructured agentic work. [Where trust comes from](#where-trust-comes-from) lists these mechanisms.
+- Markitect's claim is that compiled obligations, guaranteed Manager participation, bounded responsibility and independent review make delegated work more trustworthy than unstructured agentic work. [Where trust comes from](#where-trust-comes-from) lists these mechanisms.
 - Delegated realization is central to the product. It is not an optional layer on top of a validator.
-- Markitect's product owner has endorsed separating the method from any particular execution runtime. Current source includes the provider-neutral `run.Sessions` and `run.SessionIO` contracts; review orchestration and concrete adapters are not implemented. The accepted rebuild design assigns Codex App Server and Claude Code adapters to those contracts, each in its own Linux container; the runtime and adapters remain planned ([DEC-037](concepts/register.md#dec-037-agent-sessions-and-checks-run-in-linux-containers), [delivery plan](implementation-plan.md)). See [provider adapters](provider-adapters.md) and [DEC-010](concepts/register.md#dec-010-evaluate-the-method-separately-from-its-execution-runtime).
+- Markitect's product owner has endorsed separating the method from any particular execution runtime. The accepted design puts Codex App Server and Claude Code behind provider-neutral session contracts, with each step in its own Linux container ([DEC-037](concepts/register.md#dec-037-agent-sessions-and-checks-run-in-linux-containers)). The [delivery plan](implementation-plan.md), [provider guide](provider-adapters.md) and delivery PRs distinguish available components from a complete Apply; a runtime probe or adapter test alone does not establish the Manager process. See [DEC-010](concepts/register.md#dec-010-evaluate-the-method-separately-from-its-execution-runtime).
 - [Common misreadings](#common-misreadings) lists the readings to avoid.
 
 ## The thesis
@@ -55,6 +57,8 @@ Humans should spend more attention defining goals, concepts, architecture, invar
 
 > **Humans architect the system of work. AI performs the work. Markitect keeps them aligned.**
 
+The owner's [foundations](concepts/origin-and-rationale.md#foundations-restated-on-17-october-2026) connect model-first and specification-driven development, typing, architectural boundaries, divide and conquer, bounded delegation, escalation, independent perspectives and capable lower-cost agents. Their common purpose is a clear, uniform repository whose code, tests, documentation and configuration continue to express the same model. Typing catches structural inconsistencies early; the Host guarantees required participation and process; Agents interpret meaning, realize their areas and review the result. Each part has a different job.
+
 ## Product definition
 
 **Markitect is the canonical model of a project's intended world and the responsibilities for realizing it.** A project organizes concepts, rules, architecture, workflows and decisions into Packages. One Manager per Package realizes that slice, and the Managers form a hierarchy that follows the Packages ([DEC-025](concepts/register.md#dec-025-package-managers-organize-realization)). Markitect keeps a registry, built from the Managers' registrations, that links every artifact to the Definitions it realizes; every other file is a Markitect input or explicitly ignored. The model lives under `.markitect/` in the adopting repository; the generated readable project document is a view of those sources, not a competing owner. Provider, editor and file-format choices are implementation details unless the project deliberately makes them part of its intent.
@@ -64,7 +68,7 @@ Humans should spend more attention defining goals, concepts, architecture, invar
 ```text
 explore goals, constraints and open decisions
     -> accept and commit the project model
-    -> derive affected Managers and bounded work
+    -> derive every local Manager and its bounded context
     -> delegate implementation within declared freedom
     -> integrate child changes and run declared checks
     -> Verify the full required Manager tree
@@ -87,7 +91,7 @@ Markitect lets humans program the shape and rules of software development instea
 
 For governed changes, the intended flow is committed accepted model → relevant Manager context and bounded checks → materialization or repair of declared artifacts → full Verify and observed evidence. A real intent change updates its canonical owner before implementation. When intent is unchanged, a bug or stale artifact is repaired against that same model; no artificial model edit is needed. Exploration, distillation and other proposals remain drafts until the owner chooses to commit the revised model. A commit is the specification basis, not proof of who reviewed or approved it.
 
-This operating model does not claim that the published release supports the new workflow or that current source closes every user journey. As of 17 October 2026, current source implements v1 model compilation, repository accounting, static context preparation and a guarded generated model view. Apply returns unavailable before acquiring a source or making changes. Manager sessions, workspaces, executable checks and artifact publication remain planned in the [delivery plan](implementation-plan.md). Checks establish only their declared scope; none proves semantic correctness, human acceptance or success for every adopting repository. Agent instructions and scoped execution do not provide an OS sandbox.
+This operating model does not claim that the published release supports the new workflow or that current source closes every user journey. The [delivery plan](implementation-plan.md) and delivery PRs own implementation progress. Current CLI preparation and generated model views do not establish a working Apply, and isolated execution components do not establish the complete Manager workflow. Checks establish only their declared scope; none proves semantic correctness, human acceptance or success for every adopting repository. Runtime isolation has its own concrete boundary under [DEC-037](concepts/register.md#dec-037-agent-sessions-and-checks-run-in-linux-containers).
 
 The target human role is specification and engineering judgment. Being a permanent agent scheduler, prompt supervisor, manual synchronizer or reader of every routine PR should not be necessary merely to keep declared intent consistent. Whether those activities can actually be reduced is a validation question. A project still defines which changes require human acceptance; passing technical checks do not grant authority or authenticate a reviewer.
 
@@ -97,7 +101,7 @@ Markitect does not try to make agents infallible. It changes the structure they 
 
 | Markitect mechanism | What it replaces in today's practice |
 |---|---|
-| **Computed scope.** The model, its full file coverage and impact determine which obligations, files and Managers a change affects. | An agent deciding from memory which files might be relevant |
+| **Compiled responsibility and guaranteed participation.** The model and registry make declared obligations, responsibilities and files explicit. The Host includes every local Manager in the first Apply. | An agent deciding from memory which files might be relevant |
 | **Bounded responsibility.** Each Manager owns a slice of the model, the files that realize it and the context it needs. Its parent keeps the duty to integrate. | One agent holding the whole project in a single context |
 | **Independent review with fresh context.** A Manager, or a helper it starts, implements within the Manager's scope. An independent reviewer then assesses the candidate: the four-eyes principle at the lowest level. Each integration result gets its own independent review. | Self-review in the same thread, or one generic pull-request review |
 | **Rules in the way.** Applicable rules and policies are compiled into the responsible Manager's context, and its reviewers check them. | Rules in a long instruction file that are overlooked when nothing forces the agent to see them |
@@ -121,7 +125,7 @@ The method has three responsibilities. They are responsibilities, not three Core
 | Execution | Takes the applicable context, implements the affected work as a bounded candidate, and repairs failed representations without redefining success. |
 | Independent verification | Checks the candidate against the accepted obligations with evidence suited to the target. Exposes violations, missing coverage and uncertainty, and returns pass, repair or an owner decision. |
 
-In the target method, a Manager or its helper executes, while independent reviewers and verification assess the result ([where trust comes from](#where-trust-comes-from)). The current source does not yet execute Manager sessions. An Executor must not be the sole judge of its own success. Verification needs the accepted obligations and evidence about the candidate, including its integration, not only tests written by the Executor. Deterministic tools can add evidence. An agent label or a second model call alone does not make verification independent.
+In the target method, a Manager or its helper executes, while independent reviewers and verification assess the result ([where trust comes from](#where-trust-comes-from)). The [delivery plan](implementation-plan.md) distinguishes session components from the complete workflow. An Executor must not be the sole judge of its own success. Verification needs the accepted obligations and evidence about the candidate, including its integration, not only tests written by the Executor. Deterministic tools can add evidence. An agent label or a second model call alone does not make verification independent.
 
 **Valid representations.** Code, documentation, agent instructions and other files represent the accepted intent; they do not hold their own copies of its rules. A representation is correct when it is one of the valid representations of that intent. Different structures or names can be equally valid where the policy allows them, so the allowed freedom is explicit. Byte equality applies only to targets with an exact deterministic contract. Keep representations that are already valid instead of rewriting them to an agent's taste.
 
@@ -129,13 +133,13 @@ In the target method, a Manager or its helper executes, while independent review
 
 1. **Fix the starting point.** Resolve the fixed revision and the relevant model, ownership and checks. Classify the task as an intent change, an implementation or repair against unchanged intent, or an open owner decision. A bug fix needs no invented model edit.
 2. **Change intent first.** A real intent change updates the model before its implementation: edit, check, inspect impact and conflicts, and obtain the decisions the delegation policy requires. Observed artifacts may inform a proposal, but they never become accepted intent on their own.
-3. **Plan the affected work.** Derive it from the model change, declared relationships, observed drift and the obligations of each representation. Unknown impact stays in the plan as conservative scope.
+3. **Assess and plan locally.** The Host guarantees the same operation at every local Manager, with separately compiled context. Every Manager explores its area before writing starts, then plans its own work against the model, declared relationships and observed drift. There is no Agent-authored global delivery plan or participant selection; unknown impact stays explicit under the [fixed Manager cycle](design/canonical-model/manager-apply-concept.md#fixed-manager-cycle).
 4. **Execute bounded candidates.** Each Executor receives the obligations and freedom for its scope.
 5. **Verify and compose.** Verify each candidate against its own obligations. Compose child results into the parent candidate and verify the parent's own obligations; passing children do not prove that the integration is correct. A failed candidate goes back for bounded repair. Unresolved intent, ownership or authority goes back to its owner.
 6. **Apply and account.** Apply only a verified candidate whose inputs and scope are still current, through the guarded write boundary. A final check compares what actually changed with the intent, ownership, plan and evidence. Stale plans, unexplained changes and missing required evidence leave the result failing or incomplete; they are never reported as complete. This is the target completion rule; current commands enforce only the boundaries that [Project workflow](project-workflow.md) describes.
 7. **Repair drift, evolve intent.** When files depart from unchanged intent, repair them against that intent. A change of intent starts a new cycle.
 
-**The same method at every scope.** The cycle applies to a single file, a vertical slice, a subsystem and the whole project. A parent coordinates its children and verifies its own contracts and their integration; it does not just collect green child reports. Decompose by ownership, dependencies and concrete obligations, and do not force a tiny edit through a deep hierarchy. A declared relationship, a rule that requires a broader surface and an unexplained changed file are different signals. Keep each one instead of inferring dependencies from links.
+**The same method at every scope.** A parent coordinates its children and verifies its own contracts and their integration; it does not just collect green child reports. Decomposition follows ownership, dependencies and concrete obligations. The first Apply assesses every local Manager even for a small change. Omitting out-of-scope Managers would change DEC-039 and needs an owner decision; Host-verified reuse is a separate proposal. Neither is selected for the first Apply ([open scope questions](design/canonical-model/manager-apply-core.md#not-settled-here)). A declared relationship, a rule that requires a broader surface and an unexplained changed file are different signals. Keep each one instead of inferring execution dependencies from links.
 
 **Rules, process and evidence.** A precise rule can have a deterministic check. A broad rule, such as consistent error handling, needs a declared surface, a concrete interpretation and independent evidence; a few examples do not prove it everywhere. Check the agent's process as well as its files: a compliant final file does not prove that the agent started from the model, used its context or handled intent first. A planted defect shows only that a check catches that defect. How often the method works needs repeated real tasks ([measurement](measurement.md)).
 
@@ -154,6 +158,8 @@ Continuous autonomous agents are the desired consumer operating model. They may 
 ## Desired operating model
 
 Humans should eventually review decisions at the level of architecture, ambiguous requirements, unresolved policy conflicts, deliberate exceptions and exceptional risk. Agents should handle ordinary implementation details within the project's declared freedom.
+
+The organization must make a justified no-change result, a useful objection and timely escalation count as good work. Different stakeholders and perspectives need distinct questions and the context to answer them; adding Agent titles or rewarding completion alone supplies no such control. These are motivations for the existing [team direction](concepts/register.md#enh-006-configurable-teams-for-perspectives-and-four-eyes), not a requirement to add more roles, separate hierarchies, scores or incentive machinery to the first Apply.
 
 An illustrative future summary might say:
 
@@ -182,13 +188,14 @@ The readings below came up repeatedly, most recently in the [idea review of 10 O
 | Misreading | Correct reading |
 |---|---|
 | Markitect is a linter or context tool for AI instructions such as rules, skills and `AGENTS.md`. | That is where the name comes from. The product is model-first development of the whole project with delegated realization. Agent instructions are one kind of realization among many. |
-| The deterministic parts are the product, and Manager execution is scope creep. | Delegated realization is the purpose, and deterministic preparation supports it. The accepted rebuild separates the method from its runtime behind a session port; current source does not yet execute Manager sessions or Apply ([DEC-001](concepts/register.md#dec-001-delegated-realization-is-central-to-the-product), [DEC-037](concepts/register.md#dec-037-agent-sessions-and-checks-run-in-linux-containers), [delivery plan](implementation-plan.md)). |
+| The deterministic parts are the product, and Manager execution is scope creep. | Delegated realization is the purpose, and deterministic preparation supports it. The accepted rebuild separates the method from its runtime behind session ports; component availability and complete Apply remain distinct ([DEC-001](concepts/register.md#dec-001-delegated-realization-is-central-to-the-product), [DEC-037](concepts/register.md#dec-037-agent-sessions-and-checks-run-in-linux-containers), [delivery plan](implementation-plan.md)). |
 | Without compiler-grade guarantees the idea fails. | The compiler is a borrowed concept, and the trust bar is today's practice ([DEC-002](concepts/register.md#dec-002-trust-is-measured-against-todays-practice), [DEC-003](concepts/register.md#dec-003-the-compiler-is-a-borrowed-concept)). |
 | The Manager hierarchy is the Government experiment. | The Manager hierarchy belongs to the core axis, Model → Repository. Government belongs to a later axis, in which management levels decide model changes within mandates. Results of the former Government experiment arm are not results about the Manager hierarchy ([DEC-004](concepts/register.md#dec-004-the-manager-hierarchy-is-core-government-belongs-to-a-later-axis)). |
 | "More economical models" means weak models. | It means capable mid-tier models such as Luna or Sonnet, and Haiku only if it proves sufficient ([DEC-007](concepts/register.md#dec-007-more-economical-models-means-capable-mid-tier-models)). |
 | Earlier comparisons showed that conventional agentic coding wins. | Environment, runtime and harness failures dominated the October 2026 comparison attempts, and none of them exercised the delegated method over a series of changes. They allow no conclusion about the concept. Earlier matched comparisons tested an earlier product; their findings, including the cost of model upkeep, stand ([DEC-008](concepts/register.md#dec-008-the-delegated-method-has-not-yet-been-tested)). |
 | The model has to mirror the code, with one definition per file. | Granularity is the author's choice. A file may realize several definitions, and every file must be covered or explicitly ignored ([DEC-005](concepts/register.md#dec-005-model-granularity-is-the-authors-responsibility), [DEC-006](concepts/register.md#dec-006-every-file-is-covered-or-explicitly-ignored)). |
 | Green agent-written tests prove the realization. | Tests are realizations too. Agents write them, so they can be wrong. Reviewing them against the statements they claim to verify is an agreed direction ([CPT-002](concepts/register.md#cpt-002-tests-are-realizations-too)). |
+| The goal of removing routine human code review removes the four-eyes principle. | Independent Agent review, integration review and Host checks are the means to earn that trust. People retain model decisions, escalation and their project's acceptance policy ([PRM-004](concepts/register.md#promises)). |
 
 ## Feature decision filter
 
@@ -197,6 +204,8 @@ Ask: **Does this improve fidelity to accepted intent and reliable autonomous rec
 A proposal should identify the human activity it aims to remove, its canonical owner, the agent's remaining freedom, the exact evidence/check boundary and the new authoring or maintenance cost. Deterministic checks, task context, impact, policy evolution, exceptions, discovery and reconciliation can support this goal, but each needs a concrete workflow and evaluation.
 
 Reconsider proposals that introduce another manually synchronized truth owner, hide architectural decisions in inference, specialize Core for one provider, or add machinery without evidence that coordination gets easier. More generated text, adapters, language operators or agent throughput alone do not demonstrate progress. This filter does not override the constitution's bar for new semantics or authorize a new feature wave.
+
+For the first Apply, use the existing [complete-workflow gates](design/canonical-model/manager-apply-implementation-plan.md) to ask whether the organization preserves obligations, finds and corrects a bad delivery through its owner, composes the areas correctly and exposes what still needs a human decision. A successful run is bounded feasibility evidence. Reduced routine human review and dependable use of cheaper models need repeated quality and attention evidence under [Measurement](measurement.md#human-attention-and-delegated-work). Keep the first strategy small enough to learn this before adding roles, parallelism or reuse mechanisms.
 
 ## Current basis and unproven benefit
 

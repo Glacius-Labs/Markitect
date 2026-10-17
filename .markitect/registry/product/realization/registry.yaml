@@ -52,14 +52,14 @@ artifacts:
     form: test
     realizes: [product/realization/artifact-accounting]
     why: Tests the stated responsibility and retains negative boundaries.
-  - path: "internal/realization/composition.go"
+  - path: "internal/realization/replay.go"
     form: code
     realizes: [product/realization/artifact-accounting]
-    why: Implements the stated responsibility within its declared boundary.
-  - path: "internal/realization/composition_test.go"
+    why: Composes accepted deliveries onto the run's aggregate by replaying owned deltas (core rule D2).
+  - path: "internal/realization/replay_test.go"
     form: test
     realizes: [product/realization/artifact-accounting]
-    why: Tests the stated responsibility and retains negative boundaries.
+    why: Checks replay across versions and its refusals for changed content, records, ownership and inventory.
   - path: "internal/realization/doc.go"
     form: code
     realizes: [product/realization/artifact-accounting]

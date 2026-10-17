@@ -40,6 +40,14 @@ artifacts:
     form: test
     realizes: [product/run/confirmed-run-history]
     why: Checks that check requests are complete and bounded and when a receipt passes.
+  - path: "internal/run/step_contract.go"
+    form: code
+    realizes: [product/run/confirmed-run-history]
+    why: Defines the step output contract, the Host tool names and the tool catalogue per phase.
+  - path: "internal/run/step_contract_test.go"
+    form: test
+    realizes: [product/run/confirmed-run-history]
+    why: Checks the step contract round trip and the tool catalogue schemas per phase.
   - path: "internal/run/session.go"
     form: code
     realizes: [product/run/confirmed-run-history]

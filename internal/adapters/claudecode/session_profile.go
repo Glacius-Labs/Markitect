@@ -109,7 +109,7 @@ func readSessionProfile(a run.SessionAdmission) (SessionProfile, []frame.ToolSpe
 func sessionSpec(p run.SessionPlan, profile SessionProfile) container.ContainerSpec {
 	return container.ContainerSpec{Name: "markitect-" + string(p.ID), Image: p.ImageID,
 		Labels: map[string]string{"markitect.store": profile.Store}, User: "1000:1000", Workdir: "/work",
-		Mounts: []container.Mount{{Volume: p.Workspace, Target: "/work", ReadOnly: p.ReadOnly}, {Volume: p.ProviderHome, Target: "/home/agent"}},
+		Mounts: []container.Mount{{Volume: p.Workspace, Target: "/work", ReadOnly: p.ReadOnly, NoCopy: true}, {Volume: p.ProviderHome, Target: "/home/agent"}},
 		CPUs:   profile.CPUs, MemoryBytes: profile.MemoryBytes, Pids: profile.Pids, TmpBytes: profile.TmpBytes, Network: profile.Network}
 }
 

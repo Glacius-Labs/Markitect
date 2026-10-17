@@ -158,8 +158,8 @@ func TestCensusBindsCompleteModelSubjectOwnerAndClassifications(t *testing.T) {
 	}
 	for _, result := range []realization.DefinitionCensus{
 		{}, realization.CheckCandidateCensus(f.compiled, realization.Candidate{}, nil, nil),
-		realization.CheckCompositionCensus(f.compiled, realization.CompositionPlan{}, realization.RootOwner(), nil, nil),
-		realization.CheckProjectCensus(f.compiled, realization.CompositionPlan{}, nil, nil),
+		realization.CheckCompositionCensus(f.compiled, realization.Aggregate{}, realization.RootOwner(), nil, nil),
+		realization.CheckProjectCensus(f.compiled, realization.Aggregate{}, nil, nil),
 	} {
 		censusStatus(t, result, realization.CensusIncomplete)
 	}

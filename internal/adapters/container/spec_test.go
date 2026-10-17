@@ -95,3 +95,21 @@ func TestRunArgsNeedAnAbsoluteEntry(t *testing.T) {
 		t.Fatalf("helper args = %q, %v", got, err)
 	}
 }
+
+func TestRunArgsPreventImageCopyUpForExactVolumes(t *testing.T) {
+	for _, readOnly := range []bool{false, true} {
+		spec := validSpec()
+		spec.Mounts = []Mount{{Volume: "verified-copy", Target: "/work", NoCopy: true, ReadOnly: readOnly}}
+		args, err := spec.runArgs([]string{"/usr/bin/check"})
+		if err != nil {
+			t.Fatal(err)
+		}
+		want := "type=volume,src=verified-copy,dst=/work,volume-nocopy"
+		if readOnly {
+			want += ",readonly"
+		}
+		if !containsArg(args, want) {
+			t.Fatalf("missing exact volume mount %q in %q", want, args)
+		}
+	}
+}
