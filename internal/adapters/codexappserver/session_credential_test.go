@@ -25,7 +25,7 @@ func TestDedicatedRuntimeLoginCopyCleanupAndUncertainty(t *testing.T) {
 			var installed []byte
 			cleaned := 0
 			helper := func(_ context.Context, spec container.ContainerSpec, argv []string, in io.Reader, _ io.Writer) error {
-				if len(spec.Mounts) != 1 || spec.Mounts[0].Volume != "provider-home" || spec.Mounts[0].Target != "/home/agent" || spec.Image != "sha256:"+strings.Repeat("a", 64) {
+				if len(spec.Mounts) != 1 || spec.Mounts[0].Volume != "provider-home" || spec.Mounts[0].Target != "/home/agent" || spec.Mounts[0].NoCopy || spec.Image != "sha256:"+strings.Repeat("a", 64) {
 					t.Fatalf("credential helper resolved other inputs %+v", spec)
 				}
 				if argv[0] == "/bin/rm" {
