@@ -9,58 +9,85 @@ import (
 // PublicationID is the Host identity of one publication.
 type PublicationID string
 
-// Publisher writes a verified result into the owner's working tree. It knows no
-// reviews or evidence: apply decides what may be published. Preflight rechecks
-// the captured source against its guard and the live controller, and returns a
-// permit bound to that request. Publish revalidates guard and controller at the
-// write boundary, writes exactly the requested changes the way Git checks files
-// out in that repository, and reads every written path back. It never commits,
-// merges or pushes. Multi-file publication is not atomic: a partial write stays
-// visible and is reported. Inspect observes an earlier publication after an
-// interruption. Receipts are returned with known observations also on error.
-type Publisher interface {
-	Preflight(context.Context, PublicationRequest) (PublicationPermit, error)
-	Publish(context.Context, PublicationPermit) (PublicationReceipt, error)
-	Inspect(context.Context, PublicationID) (PublicationReceipt, error)
+// ControlCheck fences a publication to the live repository controller. A
+// ControlSession satisfies it.
+type ControlCheck interface {
+	Check(context.Context) error
 }
 
-// PublicationRequest names one publication. Changes are the exact artifact and
-// registry changes against the captured tree; apply limits them to paths the
-// artifact-only target permits. The run and controller bind the request, so a
-// finished run or a lost controller cannot publish.
+// Publisher writes a verified result into the owner's working tree. It knows no
+// reviews, runs or evidence: apply decides what may be published, and voids the
+// permit of a finished run. Preflight rechecks the captured source against its
+// guard and the controller, refuses changes the target cannot represent (such
+// as case aliases or modes the repository does not track), and returns a permit
+// bound to that request. Publish checks guard and controller before its first
+// and after its last write, writes exactly the requested changes the way Git
+// checks files out in that repository, and reads every written path back in
+// Git's clean form, so line-ending conversion does not count as a mismatch. It
+// never commits, merges or pushes. Multi-file publication is not atomic: a
+// partial write stays visible and is reported. Inspect classifies the paths of
+// an earlier request, which apply journaled before Publish, after an
+// interruption. Receipts are returned with known observations also on error.
+type Publisher interface {
+	Preflight(context.Context, PublicationRequest, ControlCheck) (PublicationPermit, error)
+	Publish(context.Context, PublicationPermit, ControlCheck) (PublicationReceipt, error)
+	Inspect(context.Context, PublicationRequest) (PublicationReceipt, error)
+}
+
+// PublicationRequest names one publication. Repository is the same explicit
+// acquisition location the capture used. Changes are the exact artifact and
+// registry changes against the captured tree; apply limits them to the paths
+// the artifact-only target permits. An empty change set is valid and publishes
+// nothing.
 type PublicationRequest struct {
 	ID         PublicationID
 	Run        string
 	Repository string
-	Control    ControlBinding
 	Guard      PublicationGuard
 	Changes    []snapshot.Change
 }
 
 // PublicationPermit binds one preflighted request. Token is issued by the
-// adapter and opaque to apply. A permit is void once its run has finished.
+// adapter and opaque to apply.
 type PublicationPermit struct {
 	Request PublicationRequest
 	Token   string
 }
 
+// PublicationOutcome is the observed result of a publication. Its zero value
+// is invalid.
 type PublicationOutcome string
 
 const (
-	PublicationApplied  PublicationOutcome = "applied"
-	PublicationNoChange PublicationOutcome = "no-change"
-	PublicationStale    PublicationOutcome = "stale"
-	PublicationPartial  PublicationOutcome = "partial"
-	PublicationUnknown  PublicationOutcome = "unknown"
-	PublicationFailed   PublicationOutcome = "failed"
+	PublicationApplied  PublicationOutcome = "applied"   // every change was written and read back
+	PublicationNoChange PublicationOutcome = "no_change" // the change set was empty and the guard held
+	PublicationStale    PublicationOutcome = "stale"     // the guard failed before any write
+	PublicationPartial  PublicationOutcome = "partial"   // some, not all, changes were written
+	PublicationUnknown  PublicationOutcome = "unknown"   // the state of some path is not known
+	PublicationFailed   PublicationOutcome = "failed"    // a definite failure without a write
 )
 
-// PublicationReceipt is what the adapter observed. Written lists the paths
-// whose read-back matched the requested change; on any outcome but applied or
-// no-change, Reason says what is known.
+// PathState classifies one requested path as the adapter observed it.
+type PathState string
+
+const (
+	PathAfter  PathState = "after"  // holds the requested content
+	PathBefore PathState = "before" // still holds the captured content
+	PathOther  PathState = "other"  // holds something else or could not be read
+)
+
+// PublishedPath is one requested path and its observed state.
+type PublishedPath struct {
+	Path  snapshot.Path
+	State PathState
+}
+
+// PublicationReceipt is what the adapter observed. Paths classifies every
+// requested path; on any outcome but applied or no-change, Reason says what is
+// known.
 type PublicationReceipt struct {
 	ID      PublicationID
 	Outcome PublicationOutcome
-	Written []snapshot.Path
+	Paths   []PublishedPath
 	Reason  string
 }

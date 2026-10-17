@@ -35,7 +35,11 @@ artifacts:
   - path: "internal/run/workspace_test.go"
     form: test
     realizes: [product/run/confirmed-run-history]
-    why: Checks the bounds of workspace and check requests and when a check passes.
+    why: Checks the bounds of workspace requests and when a harvest is complete.
+  - path: "internal/run/checks_test.go"
+    form: test
+    realizes: [product/run/confirmed-run-history]
+    why: Checks that check requests are complete and bounded and when a receipt passes.
   - path: "internal/run/session.go"
     form: code
     realizes: [product/run/confirmed-run-history]

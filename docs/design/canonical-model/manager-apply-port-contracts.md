@@ -164,7 +164,14 @@ type Workspaces interface {
 | `HarvestRequest` | Workspace ID and the entry and byte limits of one observation. |
 | `WorkspaceHarvest` | The complete observed tree after the step's container stopped. Entries that a tree cannot represent are listed by name instead of being dropped. An observation that hit a limit is uncertain. |
 
-The Host owns claims and decisions, and the adapter only observes files. `run` compares a harvest with the step's start tree, checks owned and reserved paths and protected inputs, and records the result. A later claim never authorizes an earlier unauthorized write.
+The Host owns claims and decisions, and the adapter only observes files. `run` compares a harvest with the step's start tree, checks owned and reserved paths and protected inputs, and records the result. A later claim never authorizes an earlier unauthorized write. `run` stores harvested candidates as payloads in the Host's private journal store.
+
+Recovery rests on three rules:
+- `Materialize` refuses an existing ID, so it never overwrites content that was not harvested.
+- `Harvest` is uncertain while any container still mounts the volume.
+- `Close` is idempotent and reports an absent volume as closed.
+
+Observation follows Git's view of files. A regular file is executable exactly when its owner execute bit is set, other permission bits are ignored, and empty directories are ignored. Only non-regular entries and names that a snapshot path rejects are unsupported. A harvest excludes exactly what the repository census excludes: Git administration and `.markitect/state`.
 
 Workspaces are volumes of the container runtime. The adapter materializes and harvests them inside a helper container, so observation follows Linux file semantics. A session container mounts only its own workspace.
 
@@ -181,22 +188,22 @@ type Checks interface {
 
 `CheckRequest` binds:
 - a Host check ID and the exact tree to check;
-- the runtime image and the executable inside it;
+- the runtime image and the absolute executable inside it;
 - literal arguments: the profile's prefix followed by the project arguments, never passed through a shell;
-- a fixed environment;
-- the working directory relative to the tree;
-- a timeout and an output limit.
+- unique `KEY=VALUE` environment entries from the profile's fixed policy;
+- the working directory as a boundary inside the tree;
+- container limits for CPU, memory and processes, a timeout and an output limit.
 
 A reviewer may request an allowed check. A missing artifact test becomes a finding for its owner.
 
 `CheckReceipt` carries:
-- the image that ran;
+- the image that ran and the identity of the tree copy it ran on;
 - whether the process started and exited, and its exit code;
 - whether it timed out;
 - the combined output up to the limit, with a truncation mark;
 - any uncertainty, with its reason.
 
-Only an observed zero exit that neither timed out nor is uncertain passes. A nonzero exit is a check failure, and a startup or observation failure is reported separately. Cancellation never turns an unknown process into a pass. Checks run in a container from the check profile's image, on a disposable copy of the fixed candidate. An Agent saying "tests pass" is not a check receipt.
+A receipt passes only for exactly its request: same check, image and tree, with an observed zero exit that neither timed out nor is uncertain. A nonzero exit is a check failure, and a startup or observation failure is reported separately. Cancellation never turns an unknown process into a pass. Checks run in a container from the check profile's image, on a disposable copy of the fixed candidate. An Agent saying "tests pass" is not a check receipt.
 
 ## Durable journal port
 
@@ -217,22 +224,41 @@ Payloads are immutable content-addressed bytes whose references keep media and e
 ```go
 // Package apply.
 type Publisher interface {
-	Preflight(context.Context, PublicationRequest) (PublicationPermit, error)
-	Publish(context.Context, PublicationPermit) (PublicationReceipt, error)
-	Inspect(context.Context, PublicationID) (PublicationReceipt, error)
+	Preflight(context.Context, PublicationRequest, ControlCheck) (PublicationPermit, error)
+	Publish(context.Context, PublicationPermit, ControlCheck) (PublicationReceipt, error)
+	Inspect(context.Context, PublicationRequest) (PublicationReceipt, error)
 }
 ```
 
 `PublicationRequest` holds:
-- a publication ID, the run and the repository;
-- the live controller binding and the original acquisition guard;
+- a publication ID and the run;
+- the repository, which is the same explicit acquisition location the capture used;
+- the original acquisition guard;
 - the exact artifact and registry changes against the captured tree.
 
-`apply` derives the changes from the verified aggregate and limits them to the paths that the artifact-only target permits. A live controller alone cannot authorize an obsolete run, and a finished run's permits are void. Preflight rechecks guard and controller, and its opaque permit is bound to that request.
+An empty change set is valid and publishes nothing. The controller fence is passed separately as a `ControlCheck`, which a `ControlSession` satisfies.
 
-Publish writes into the working tree and never commits, merges or pushes; the owner's commit accepts the result. At the write boundary it revalidates the guard and the controller, including additions, deletions and input changes. It writes exactly the requested changes, the way Git checks files out in that repository, and reads every written path back.
+`apply` derives the changes from the verified aggregate and limits them to the paths that the artifact-only target permits. It also voids the permit of a finished run, because the adapter knows no runs. Preflight rechecks guard and controller and refuses changes the target cannot represent, such as case aliases or modes the repository does not track. Its opaque permit is bound to that request.
 
-Its receipt carries one outcome: applied, no-change, stale, partial, unknown or failed. It also lists the paths whose read-back matched and states what else is known, also when an error is returned; callers keep such receipts. Multi-file publication is not atomic. Partial writes stay visible and recorded, and the owner commits or reverts them before a later run captures the state. Even an applied result is machine evidence, not human acceptance.
+Publish writes into the working tree and never commits, merges or pushes; the owner's commit accepts the result. It checks the guard and the controller before its first and after its last write, including additions, deletions and input changes. It writes exactly the requested changes, the way Git checks files out in that repository. It reads every written path back in Git's clean form, so line-ending conversion does not count as a mismatch.
+
+Its receipt carries one outcome:
+
+| Outcome | Meaning |
+| --- | --- |
+| applied | Every change was written and read back. |
+| no_change | The change set was empty and the guard held. |
+| stale | The guard failed before any write. |
+| partial | Some changes were written, not all. |
+| unknown | The state of some path is not known. |
+| failed | A definite failure, with nothing written. |
+
+The receipt also classifies every requested path:
+- it holds the requested content;
+- it still holds the captured content;
+- it holds something else or could not be read.
+
+It states what else is known, also when an error is returned, and callers keep such receipts. `Inspect` classifies the paths of an earlier request, which `apply` journaled before `Publish`, after an interruption. Multi-file publication is not atomic. Partial writes stay visible and recorded, and the owner commits or reverts them before a later run captures the state. Even an applied result is machine evidence, not human acceptance.
 
 ## Host lifecycle and completion
 
