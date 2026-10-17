@@ -264,6 +264,18 @@ artifacts:
     form: test
     realizes: [product/apply/read-only-preparation]
     why: Tests the stated responsibility and retains negative boundaries.
+  - path: "internal/apply/run_binding.go"
+    form: code
+    realizes: [product/apply/read-only-preparation]
+    why: Projects one complete captured preparation and explicit Host facts into a fixed run basis without effects.
+  - path: "internal/apply/run_binding_failures_test.go"
+    form: test
+    realizes: [product/apply/read-only-preparation]
+    why: Rejects incomplete captures, missing Host facts and invalid allocations before basis construction.
+  - path: "internal/apply/run_binding_test.go"
+    form: test
+    realizes: [product/apply/read-only-preparation]
+    why: Checks final capture identity, original input provenance and absence of new acquisition effects.
   - path: "internal/apply/settings_preparation.go"
     form: code
     realizes: [product/apply/read-only-preparation]
