@@ -106,17 +106,17 @@ func TestObserveImageFileRequiredPathsAreOrderedUniqueAndBounded(t *testing.T) {
 
 func TestObserveImageFileRefusesAncestorAndMountAliases(t *testing.T) {
 	for _, tc := range []struct {
-		name, file, alias string
-		dirs, files       []string
-		prefix            []engineStep
+		name, file, alias, target string
+		dirs, files               []string
+		prefix                    []engineStep
 	}{
-		{name: "executable ancestor", file: "/opt/tools/check", alias: "/opt/tools", prefix: []engineStep{{Out: imagePathHeader(t, "/opt", tar.TypeDir, "")}}},
-		{name: "directory mount target", file: "/check", alias: "/work", dirs: []string{"/work"}},
-		{name: "daemon file mount target", file: "/check", alias: "/etc/hosts", files: []string{"/etc/hosts"}, prefix: []engineStep{{Out: imagePathHeader(t, "/etc", tar.TypeDir, "")}}},
+		{name: "executable ancestor", file: "/opt/tools/check", alias: "/opt/tools", target: "/work", prefix: []engineStep{{Out: imagePathHeader(t, "/opt", tar.TypeDir, "")}}},
+		{name: "directory mount target", file: "/opt/tools/check", alias: "/work", target: "/opt/tools", dirs: []string{"/work"}, prefix: []engineStep{{Out: imagePathHeader(t, "/opt", tar.TypeDir, "")}}},
+		{name: "daemon file mount target", file: "/check", alias: "/etc/hosts", target: "/check", files: []string{"/etc/hosts"}, prefix: []engineStep{{Out: imagePathHeader(t, "/etc", tar.TypeDir, "")}}},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			steps := append([]engineStep{{Out: commandID}}, tc.prefix...)
-			steps = append(steps, engineStep{Out: imagePathHeader(t, tc.alias, tar.TypeSymlink, "/work")}, engineStep{})
+			steps = append(steps, engineStep{Out: imagePathHeader(t, tc.alias, tar.TypeSymlink, tc.target)}, engineStep{})
 			e, calls := fakeCommandEngine(t, steps...)
 			got, err := e.ObserveImageFileWithRequiredPaths(context.Background(), commandImage, tc.file, 100, tc.dirs, tc.files)
 			if err == nil || got != (ImageFileObservation{}) {
