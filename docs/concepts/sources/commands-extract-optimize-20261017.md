@@ -70,3 +70,17 @@ The owner accepted the workflow and changed the criterion:
 > Das klingt gut. Halte den Ablauf in unseren Docs fest und passe das Extract-Abschlusskriterium an: Ein geprüfter Modellvorschlag darf mit bekannten Realisierungsabweichungen übernommen werden. Weiterhin keine Implementierung.
 
 Recorder's interpretation: the current [Extract contract](../../design/canonical-model/commands.md#completion-and-adoption-with-known-deviations) now allows adoption of a structurally valid, reviewed and integrated candidate with adequately supported known realization deviations. Material unresolved intent, inadequate model coverage and evidence gaps still prevent adoption readiness. Verify keeps its actual result, and deviations remain visible for later separately authorized artifact work. This is a documentation-only change to the later-operation design; it grants no runtime, model-writing implementation or artifact repair authority.
+
+## Optimize search space and targeted reading
+
+The owner asked:
+
+> Lass uns als Nächstes den Suchraum von Optimize klären: Wie weit dürfen die Manager über bestehende Links hinaus lesen, ohne unnötig viel Kontext zu laden oder relevante Zusammenhänge zu übersehen?
+
+Recorder's summary of the assistant proposal: distinguish searchable evidence, loaded context and change authority. Search the selected local model, explicitly bound dependencies and permitted artifacts from the fixed repository stand; load own obligations, explicit references and targeted candidate sources rather than every searchable byte. Every Manager assesses its own area. Concrete questions drive model-wide inventory/text search, followed by source matches, candidate Definitions and necessary contracts. Further questions justify further reads within the existing grant. Existing communication, parent integration and independent review examine cross-area meanings and differently named concepts; lexical similarity alone grants no relationship or write authority. Search results remain bounded with visible continuation. Budget/context limits and unfinished searches do not prove completeness. Ordinary reports retain relevant sources, conclusions and open questions without a second search catalogue. Start without a fixed link-depth limit or semantic-index subsystem; real use would supply evidence for later extensions.
+
+The owner accepted the proposal and requested Main documentation:
+
+> Klingt gut. Halte diesen Suchraum und den Ablauf für gezieltes Nachlesen in den Docs auf main fest. Weiterhin keine Implementierung.
+
+Recorder's interpretation: this selects the [search and targeted-reading workflow](../../design/canonical-model/commands.md#find-candidates-beyond-existing-links), resolving its earlier open product-scope question. Existing model authority, write ownership, source bindings and budgets remain. Exact search APIs, output formats and numeric limits are not selected; no implementation, provider, Docker, Apply or study authority is granted.

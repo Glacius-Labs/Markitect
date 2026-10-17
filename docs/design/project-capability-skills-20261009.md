@@ -26,6 +26,10 @@ After discussing the first Apply of an adopted project, the owner accepted the w
 
 > Das klingt gut. Halte diesen Apply-Ablauf in unseren Docs fest, inklusive der Übergabe der Extract-Befunde über die vorhandene Befundstruktur und dem begründeten Beibehalten korrekter Teile. Weiterhin keine Implementierung.
 
+The owner then accepted the first business-rule change in that working day:
+
+> Das klingt gut. Halte diesen Ablauf für die erste fachliche Änderung in unseren Docs fest, inklusive der Modelländerung von fünf auf sieben, der anschließenden Realisierung durch Markitect und meiner Entscheidungspunkte. Weiterhin keine Implementierung.
+
 ### The six installed skills
 
 Both clients receive the same skill names, responsibilities and authority boundaries. Provider-specific packaging does not create different project rules.
@@ -42,6 +46,8 @@ Both clients receive the same skill names, responsibilities and authority bounda
 `check` assesses structure; `verify` assesses realization and evidence. Skill names describe user tasks, not a promise of matching CLI verbs. Where a necessary operation is unsupported, report that limit instead of inventing a command, execution result or successful completion.
 
 The outer coding agent chains relevant skills within the existing assignment. For the library's five-to-three limit change, it uses `design` and `check`, commits the authorized model revision within its grant, then commissions `apply`. Existing loans stay valid and returnable because the model says so, not because a skill adds that policy. Apply itself changes only artifacts and does not commit, merge or push; the owner accepts the published result under [DEC-035](../concepts/register.md#dec-035-committed-model-in-owner-commit-accepts-the-result).
+
+The [first business-rule change](canonical-model/manager-apply-library-flow.md#first-business-rule-change-from-five-to-seven) walks through the same handoff for the working day's increase from five to seven: the coding agent maintains the intended model, Markitect realizes it, and the owner decides only unresolved meaning or missing authority under the existing acceptance policy. This scenario does not replace the delivery demonstration's five-to-three change.
 
 One ordinary request must not become six human prompts or repeated permission requests for already authorized steps. Status and continuation belong to the ongoing Apply workflow. Separate `extract`, `cleanup`, `refactor` or `bughunt` skills wait until their actual operations justify independent instructions; suggestions are already discoverable through `design`. This decision does not add those operations to the first Apply.
 

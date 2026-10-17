@@ -125,3 +125,52 @@ For the loan-limit correction, reviewers derive distinguishing expectations from
 Extract could finish with adequately supported known realization deviations. Apply cannot report success while its blocking deviations, necessary checks or required current assessments remain open. Insufficient authority or budget leaves retained candidates and findings with an honest Incomplete result; it cannot waive evidence, trigger unlimited retries or turn adoption into a pass for the artifacts. A necessary model change remains separate from this artifact-only operation.
 
 The concise result distinguishes changed and retained areas, the model obligations and evidence supporting each judgment, the actual resolution of known findings, open work and what was actually published. Preservation means keeping conforming artifacts; it does not mean omitting them from the first reconciliation or exempting them from integration assessment. These remain design requirements until the complete executable path and its evidence exist.
+
+## First business-rule change: from five to seven
+
+Status: owner-accepted working-day walkthrough, 17 October 2026 ([source](../project-capability-skills-20261009.md#owner-source)). Assume the first reconciliation above has succeeded and the existing application conforms to the adopted five-loan model. This is a hypothetical continuation, not evidence of an executed Apply. It changes no model fixture, implementation or delivery scope; the [delivery demonstration](../../implementation-plan.md#target-and-baseline) retains its separate five-to-three change.
+
+The owner's ordinary request can be: "Increase the limit from five to seven simultaneously open loans per member. Preserve its existing scope and all other conditions. Update the model first, then have Markitect reconcile the application. Ask only about material conflicts or missing authority." This is a change of intended behavior, rather than a defect repair against unchanged intent. A discussion-only request authorizes neither the model edit nor execution; this document records the workflow only.
+
+### Coding agent: maintain and adopt the intended model
+
+The outer coding agent uses `markitect-design` to locate the authoritative Definition and inspect its meaning, references and constraints. In the library example, the canonical owner is [lending/loan-policy](library-example/m1/model/lending/loan-policy.yaml), using [maxOpenLoans](library-example/m1/model/lending/max-open-loans.yaml): the resulting count after successful borrowing must not exceed the limit. The proposed value change is only:
+
+```diff
+-  maxOpenLoans: 5
++  maxOpenLoans: 7
+```
+
+The scope remains per member, counting open loans as already defined. Loan duration, suspension, return behavior, ownership and other conditions retain their accepted meaning. The agent does not replace unrelated occurrences of five or add a new policy merely to make the edit seem complete. Consequential conflicts with another binding statement become a concrete owner question with sources and a recommendation.
+
+Review checks that the proposed model expresses the requested change without unintended changes of meaning. The agent uses `markitect-check` for structure and accounting, refreshes the official readable view through its supported writer, and commits the authorized model revision under the project's existing adoption policy and delegated authority. The owner's clear instruction already settles seven; no additional confirmation is needed for that same decision. A commit supplies the specification basis, not proof of human review.
+
+At this boundary the application may still enforce five. Report that difference honestly; a valid new model is not evidence that artifacts conform. Commit the selected model and leave a clean captured source before commissioning Apply. Do not ask artifact workers to change the model during realization.
+
+### Markitect: realize the new rule in the existing application
+
+Through `markitect-apply`, the coding agent commissions the supported workflow against the committed new model, actual source, configuration and existing finite execution grant. It observes progress and relays decisions; it does not make application repairs outside Markitect or construct a second Manager scheduler. An ordinary assignment can authorize both model work and subsequent realization without requiring a separate human prompt for each skill.
+
+The [fixed process](#messages-down-reviewed-results-up) still includes every local Manager, including root, with read-only Explore completed throughout the tree before writing. The numeric change does not authorize omitting Managers based only on a predicted impact list. Each Manager assesses its complete responsibility, changes its own artifacts where needed and supplies justified no-change results for conforming parts. Parents integrate their local work and direct children's results; configured independent reviewers assess both changes and retained realization.
+
+| Area | Expected assessment and possible change |
+| --- | --- |
+| Lending | Enforce the seven-loan admission limit while retaining the other borrowing and return obligations. |
+| Tests | Update expectations that intentionally depended on five; establish that the sixth and seventh loans succeed when other prerequisites hold, and an eighth is refused with no observable state change. |
+| User documentation | Update statements of the current binding limit; preserve unrelated correct guidance and historical records in their original scope. |
+| Catalog, membership and reminders | Assess relevant interactions; retain conforming realization with reasons and review. Suspension and due-date behavior do not change merely because the limit increased. |
+| Parent integration | Assess the composed application and required cross-area behavior with current evidence. Local approval alone does not establish aggregate success. |
+
+A former test requiring refusal of the sixth loan now expresses superseded intent. Change that expectation deliberately and preserve its purpose of testing the admission boundary at the new limit; do not remove boundary protection merely to obtain green tests. Reviewers derive expectations from the new model and examine actual assertions and observations. Prior passes cannot automatically approve changed meaning. Any earlier finding retains its provenance through the [existing issue structure](manager-apply-execution.md#extract-findings-at-the-first-apply); its applicability or resolution needs current grounds rather than silent deletion.
+
+### Owner decisions and the completion boundary
+
+| Situation | Owner involvement |
+| --- | --- |
+| The model unambiguously expresses the same rule with seven instead of five. | The instruction already decides the change. The agent performs authorized model maintenance and Markitect handles realization, review and bounded rework. |
+| A conflicting binding rule or consequential ambiguity changes who or what the limit covers. | Decide the source-bound question and concrete proposed meaning. Do not let an agent silently choose an exception or broaden the request. |
+| Realization exposes a necessary additional model change or exceptional tradeoff. | Decide the separate intent proposal. Apply keeps the model read-only and cannot claim completion while a necessary unresolved decision remains. |
+| Required provider authority, budget or publication approval is missing. | Supply the specific missing grant or choice if desired; otherwise retain an honest incomplete result. Existing valid grants need no repeated approval. |
+| Publication succeeds and the project requires result acceptance. | Follow the existing acceptance policy; the owner's later commit accepts the published artifacts. Apply itself never commits, merges or pushes. An outer agent may handle repository delivery only within separately granted authority. |
+
+Routine implementation choices, ordinary review findings and bounded corrections stay with the responsible Managers and reviewers. They do not create a standing owner approval round. Required aggregate checks, current independent assessments, preflight, any configured approval, guarded publication and actual read-back still apply. The final report identifies the selected model/source, changed and retained areas with their reasons, evidence for the new boundary and preserved behavior, open findings and actual publication. It distinguishes model adoption, realization, publication and owner acceptance; this documentation claims none of them was executed.
