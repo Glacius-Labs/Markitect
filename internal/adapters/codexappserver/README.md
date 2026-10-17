@@ -90,3 +90,25 @@ The Host resolves only the admitted `CredentialRef`. `RuntimeCredential.Mode` mu
 The helper uses the exact admitted image and provider-home volume, with no workspace mount. After an actual observed exit, a second hardened helper removes the session copy. Partial installation is remembered for cleanup even if no provider started. If stop is uncertain, the copy is retained; if cleanup fails, the returned error and stop reason explicitly say cleanup is incomplete. The Host must reconcile that retained credential and its lifetime. The adapter does not refresh or rotate a runtime login. These mechanics implement the existing [runtime credential procedure](../../../packaging/runtime/README.md#credentials); they are not a new provider experiment.
 
 The resume and item/call projections were checked against `v2/ThreadResumeParams.json`, `v2/ThreadResumeResponse.json`, and `codex-rs/core/src/mcp_tool_call.rs` at the same pinned upstream commit as the codec table. Synthetic tests cover a complete fake-runtime turn, Host answers/refusals, exact admission/permit binding, partial writes, callback recording failure, foreign-thread calls, cancellation, resume mismatch, read-only mounts, dedicated-login copy/cleanup and cleanup uncertainty. They establish source behavior only, not real provider execution, runtime readiness, guarded Apply or owner acceptance. Existing [runtime probes](../../../docs/validation/runtime-capabilities-20261017.md) keep their own evidence scope.
+
+## Opt-in actual Session adapter smoke
+
+Status: **UNEXECUTED**. The source in `session_smoke_test.go` prepares a bounded real adapter smoke. Compilation and skipped tests establish no runtime or provider result. Existing container CLI probes bypass this adapter and cannot supply this evidence.
+
+The test calls actual `NewSessions(engine, resolver)` with explicit `run.SessionAdmission` and `run.StepAdmission` values, the current `run.ToolCatalog` and `run.NewStepContract`. Its `controlledSessionIO` is explicitly in-memory smoke scaffolding: its synthetic receipts acknowledge that observer only. It establishes no durable journal, Coordinator admission, Core integration, task acceptance, recovery or Apply authority.
+
+A separately authorized execution admits at most three read-only steps under one five-minute context: manager Explore, manager resume in a new container using the same provider home, then a fresh reviewer Candidate step using a different home. Every step must make the expected Host outcome call with the observed artifact content; final text cannot satisfy it. Resume must retain the actual provider session ID and recall a random token supplied only in the first Host answer. A fresh reviewer must have a different observed provider ID. Reviewer resume remains forbidden by the current contract. Each step requires exact acknowledged wire permits, observed sends, terminal observation, actual Stop and readback of the unchanged one-file candidate. Initial materialization refuses image-populated workspace entries; all subsequent workspace mounts use `NoCopy` and are read-only.
+
+Ordinary CI leaves the boolean command-line activation flag false. Runtime environment variables cannot enable it. The activation check precedes profile, engine or credential access. A future operator must supply all of these explicit flags after a finite runtime grant; no command below is an execution record:
+
+| Flag | Explicit input |
+| --- | --- |
+| `-markitect-codex-session-smoke` | Boolean opt-in, default false. |
+| `-markitect-codex-smoke-engine` | Absolute engine executable path. |
+| `-markitect-codex-smoke-image` | Immutable `sha256:` image ID, checked against the engine observation. |
+| `-markitect-codex-smoke-profile` | Absolute closed SessionProfile JSON source path. |
+| `-markitect-codex-smoke-profile-sha256` | Expected whole source bytes SHA-256, lowercase hex without prefix. |
+| `-markitect-codex-smoke-metadata-sha256` | Expected whole image `/opt/markitect/runtime.env` SHA-256, same format; the pinned provider version must also match. |
+| `-markitect-codex-smoke-login-volume` | Name of a preexisting dedicated runtime login volume containing auth.json; never desktop login. The helper reads only that volume and the adapter strips refresh authority from its session copy. |
+
+The profile selects Codex Luna (`gpt-6-luna`) with high effort. These inputs bind this smoke only; profile provenance and the finite runtime grant remain Host obligations. Run this package's `TestAdmittedSessionAdapterSmoke` alone with `-count=1`, an external test timeout greater than the five-minute runtime bound plus cleanup, and the explicit flags through `go test ... -args`. Never place credential values in flags, output or committed files. Diagnostic output reports stage failures and source digests without logging credential values or raw provider transcripts. Created smoke volumes are removed with bounded cleanup; incomplete Stop or cleanup fails the test and retains uncertainty.

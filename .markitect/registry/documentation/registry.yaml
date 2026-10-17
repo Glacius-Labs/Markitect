@@ -8,6 +8,30 @@ artifacts:
     form: config
     realizes: [documentation/current-guidance]
     why: Preserves original release and asset identities, tag objects and verified GitHub attestation observations before download removal.
+  - path: "assets/markitect-wordmark-light.svg"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Provides the original Markitect wordmark for the README in light themes.
+  - path: "assets/markitect-wordmark-dark.svg"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Provides the original Markitect wordmark for the README in dark themes.
+  - path: "docs/concepts/sources/attention-and-comparison-20261017.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Records the owner clarification of human attention and the equivalent-documentation comparison as an English translation.
+  - path: "docs/concepts/sources/product-goals-clarification-20261017.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Preserves the owner clarification of product goals and trustworthy model-first realization.
+  - path: "docs/concepts/sources/conceptual-influences-20261017.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Preserves the owner account of conceptual influences and naming origin.
+  - path: "docs/strategy/marketing-plan.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Prepares product messaging, pitches and marketing recommendations with explicit evidence boundaries.
   - path: "docs/concepts/sources/human-attention-and-baseline-20261017.md"
     form: doc
     realizes: [documentation/current-guidance]

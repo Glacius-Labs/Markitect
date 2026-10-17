@@ -4,12 +4,13 @@ Use this map to find the product guide or the document that owns a decision or s
 
 ## Start by task
 
-| If you want toâ€¦ | Start here |
+| If you want to… | Start here |
 |---|---|
 | Inspect current canonical v1 preparation | [Project workflow](project-workflow.md), [Project operations](project-operations.md), and the [self-model](../.markitect/README.md) |
 | Understand what Markitect is for, before assessing or redirecting it | [Markitect in brief](vision.md#markitect-in-brief), [Common misreadings](vision.md#common-misreadings), and the [concept register](concepts/register.md) |
 | Understand where the idea came from and why its mechanisms might help | [Origin and rationale](concepts/origin-and-rationale.md) and the [owner's original account](concepts/sources/owner-origin-20261015.md) |
-| Trace the project's development, major turns and working method | [Project history, timeline and process assessment â€” 17 October 2026](history/project-history-20261017.md), with a fixed historical cutoff |
+| Explain Markitect, prepare a pitch or plan marketing material | [Marketing working plan](strategy/marketing-plan.md), with draft pitches, audience hypotheses and evidence-based artifact sequencing |
+| Trace the project's development, major turns and working method | [Project history, timeline and process assessment — 17 October 2026](history/project-history-20261017.md), with a fixed historical cutoff |
 | Apply the adopted design and delivery working method | [Working method](development/working-method.md), [DEC-038](concepts/register.md#dec-038-learn-through-complete-workflows), and the [delivery plan](implementation-plan.md) |
 | Continue thoughts about future use and organization | [Product reflections](concepts/reflections/README.md), starting with [trust through organized agent work](concepts/reflections/organization-and-trust-20261016.md) |
 | Understand the product goal, method, or technical boundaries | [Vision](vision.md), its [delegated method](vision.md#the-delegated-method), [Architecture](architecture.md), and [Measurement](measurement.md) |

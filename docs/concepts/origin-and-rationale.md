@@ -68,6 +68,8 @@ The goal is to use explicit structure and ordinary deterministic software where 
 
 ## Foundations restated on 17 October 2026
 
+The marketing discussion also records the owner's [conceptual influences](sources/conceptual-influences-20261017.md) and [product-goal clarification](sources/product-goals-clarification-20261017.md). These supply additional provenance for the foundations below: lower cost is not the product goal, and routine human implementation review should become unnecessary through trustworthy realization.
+
 The owner named the following influences and reaffirmed the goal: a clean, uniform and clear repository, without drift, forgotten rules, inconsistencies or contradictions; model first; trustworthy AI results through system and structure; ultimately modeling followed by AI realization that needs no routine human code review. The [source](sources/foundations-and-trust-20261017.md#owner-statement) preserves the wording. The table connects those influences to existing choices; it introduces no new roles, language semantics or delivery scope.
 
 | Foundation | Intended contribution and current design connection |

@@ -32,6 +32,10 @@ artifacts:
     form: test
     realizes: [product/ports-and-adapters]
     why: Distinguishes fake lifecycle, native versus adapter identity, permits, append failures, no replay, credentials and stop uncertainty.
+  - path: "internal/adapters/claudecode/session_smoke_test.go"
+    form: test
+    realizes: [product/ports-and-adapters]
+    why: Prepares an explicitly opted-in actual Session adapter smoke with source-bound inputs, acknowledged Host calls, manager continuity and fresh read-only review; runtime evidence remains unexecuted.
   - path: "internal/adapters/codexappserver/README.md"
     form: doc
     realizes: [product/adapters/agent/closed-agent-metadata, product/ports-and-adapters]
@@ -96,3 +100,7 @@ artifacts:
     form: test
     realizes: [product/ports-and-adapters]
     why: Exercises complete fake-runtime session behavior and distinguishes acknowledgement, partial-write, callback, identity, cancellation and inspection failure boundaries.
+  - path: "internal/adapters/codexappserver/session_smoke_test.go"
+    form: test
+    realizes: [product/ports-and-adapters]
+    why: Prepares an explicitly opted-in actual Session adapter smoke with source-bound inputs, acknowledged Host calls, manager continuity and fresh read-only review; runtime evidence remains unexecuted.
