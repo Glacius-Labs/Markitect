@@ -25,6 +25,9 @@ var (
 // Limits are acquisition budgets, not language maxima. Zero fields select
 // DefaultLimits. Manifest is passed unchanged to model.InspectManifest, whose
 // actual failure or incomplete result is retained in ManifestPreflightError.
+// Entries bounds distinct acquired files and model directories across all
+// boundaries. The same location in one Git commit or on disk counts once;
+// Git and disk are separate observations. Each inventory scan is also bounded.
 type Limits struct {
 	Entries               int
 	FileBytes, TotalBytes int64

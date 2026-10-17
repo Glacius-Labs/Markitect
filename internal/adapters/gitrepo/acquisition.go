@@ -35,6 +35,7 @@ type acquisition struct {
 	boundaries             map[string]*sourceBoundary
 	models                 []*modelCapture
 	accounted              map[string]snapshot.Entry
+	entries                map[string]bool
 	total                  int64
 	indexModes             map[string]snapshot.Mode
 	census                 []snapshot.Entry
@@ -47,7 +48,7 @@ func (r *Repository) acquire(ctx context.Context, selection apply.InputSelection
 	}
 	ctx, cancel := context.WithTimeout(ctx, r.limits.Timeout)
 	defer cancel()
-	a = &acquisition{ctx: ctx, repository: r, revision: revision, committed: committed, boundaries: make(map[string]*sourceBoundary), accounted: make(map[string]snapshot.Entry)}
+	a = &acquisition{ctx: ctx, repository: r, revision: revision, committed: committed, boundaries: make(map[string]*sourceBoundary), accounted: make(map[string]snapshot.Entry), entries: make(map[string]bool)}
 	a.raw.Local.Selection = selection.Local
 	a.raw.Dependencies = make([]apply.ModelSource, len(selection.Dependencies))
 	for i, dependency := range selection.Dependencies {
@@ -303,7 +304,6 @@ func (a *acquisition) read(b *sourceBoundary, p string, collision bool) (snapsho
 	var data []byte
 	var mode snapshot.Mode
 	var found bool
-	var key string
 	if a.commit != "" && b.area.String() != "" {
 		repoPath := within(b.area, p)
 		if collision {
@@ -327,7 +327,6 @@ func (a *acquisition) read(b *sourceBoundary, p string, collision bool) (snapsho
 			mode = snapshot.Executable
 		}
 		found = true
-		key = "git:" + a.commit + ":" + repoPath
 	} else {
 		if b.disk == nil {
 			return snapshot.Entry{}, false, fmt.Errorf("%w: no revision source for external boundary", ErrUnsafe)
@@ -341,16 +340,33 @@ func (a *acquisition) read(b *sourceBoundary, p string, collision bool) (snapsho
 				mode = indexed
 			}
 		}
-		key = "disk:" + filepath.Join(b.abs, filepath.FromSlash(p))
 	}
 	entry, err := snapshot.NewEntry(path, mode, data)
 	if err != nil {
 		return snapshot.Entry{}, false, err
 	}
-	if err = a.account(key, entry); err != nil {
+	if err = a.account(a.observationKey(b, p), entry); err != nil {
 		return snapshot.Entry{}, false, err
 	}
 	return entry, found, nil
+}
+
+func (a *acquisition) observationKey(b *sourceBoundary, p string) string {
+	if a.commit != "" && b.area.String() != "" {
+		return "git:" + a.commit + ":" + within(b.area, p)
+	}
+	return "disk:" + filepath.Join(b.abs, filepath.FromSlash(p))
+}
+
+func (a *acquisition) admit(key string) error {
+	if a.entries[key] {
+		return nil
+	}
+	if len(a.entries) >= a.repository.limits.Entries {
+		return ErrLimit
+	}
+	a.entries[key] = true
+	return nil
 }
 
 func (a *acquisition) account(key string, entry snapshot.Entry) error {
@@ -360,8 +376,11 @@ func (a *acquisition) account(key string, entry snapshot.Entry) error {
 		}
 		return nil
 	}
-	if len(a.accounted) >= a.repository.limits.Entries || int64(len(entry.Bytes())) > a.repository.limits.TotalBytes-a.total {
+	if int64(len(entry.Bytes())) > a.repository.limits.TotalBytes-a.total {
 		return ErrLimit
+	}
+	if err := a.admit(key); err != nil {
+		return err
 	}
 	a.total += int64(len(entry.Bytes()))
 	a.accounted[key] = entry

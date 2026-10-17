@@ -235,6 +235,9 @@ func (a *acquisition) modelTree(m *modelCapture) error {
 			}
 			entry := a.git.tree[p]
 			if entry.kind == "tree" {
+				if err := a.admit(a.observationKey(m.boundary, rel)); err != nil {
+					return err
+				}
 				m.target.Source.Entries = append(m.target.Source.Entries, model.Entry{Path: rel, Kind: model.Directory})
 				continue
 			}
@@ -256,6 +259,9 @@ func (a *acquisition) modelTree(m *modelCapture) error {
 		}
 		for _, entry := range metadata {
 			if entry.info.IsDir() {
+				if err := a.admit(a.observationKey(m.boundary, entry.path)); err != nil {
+					return err
+				}
 				m.target.Source.Entries = append(m.target.Source.Entries, model.Entry{Path: entry.path, Kind: model.Directory})
 				continue
 			}
