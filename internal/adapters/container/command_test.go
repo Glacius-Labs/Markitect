@@ -39,6 +39,9 @@ func TestMain(m *testing.M) {
 		_, _ = f.Write(append(args, '\n'))
 		_ = f.Close()
 		step := steps[index]
+		if len(os.Args) > 1 && os.Args[1] == "start" {
+			_ = os.WriteFile(filepath.Join(dir, "attach-ready"), []byte("ready"), 0600)
+		}
 		if strings.Contains(step.Out, "CREATION_TOKEN") {
 			data, _ := os.ReadFile(filepath.Join(dir, "calls"))
 			for _, line := range strings.Split(strings.TrimSpace(string(data)), "\n") {
@@ -67,6 +70,9 @@ func fakeCommandEngine(t *testing.T, steps ...engineStep) (*Engine, func() [][]s
 		t.Fatal(err)
 	}
 	t.Setenv("MARKITECT_FAKE_COMMAND_ENGINE", dir)
+	// Race-instrumented helper subprocesses need no exit delay: each process
+	// performs its own normal race finalization and reports any detected race.
+	t.Setenv("GORACE", strings.TrimSpace(os.Getenv("GORACE")+" atexit_sleep_ms=0"))
 	exe, err := os.Executable()
 	if err != nil {
 		t.Fatal(err)
@@ -158,10 +164,8 @@ func TestRunCommandDoesNotInferExitFromCLIZero(t *testing.T) {
 
 func TestRunCommandCancellationStillObservesAndCleans(t *testing.T) {
 	e, calls := fakeCommandEngine(t, engineStep{Out: commandID}, engineStep{SleepMillis: 10000}, engineStep{Out: commandState("running", true, 0)}, engineStep{})
-	ctx, cancel := context.WithTimeout(context.Background(), 300*time.Millisecond)
-	defer cancel()
-	r, err := e.RunCommand(ctx, commandSpec(), []string{"/check"}, nil, 10)
-	if !errors.Is(err, context.DeadlineExceeded) || !r.Started || r.Exited || !r.Uncertain || len(calls()) != 4 {
+	r, err := cancelAttachedCommand(t, e)
+	if !errors.Is(err, context.Canceled) || !r.Started || r.Exited || !r.Uncertain || len(calls()) != 4 {
 		t.Fatalf("result=%+v err=%v calls=%q", r, err, calls())
 	}
 }
@@ -184,11 +188,47 @@ func TestRunCommandRetainsAttachmentFailureWithKnownExit(t *testing.T) {
 
 func TestRunCommandCancellationRetainsUncertaintyWithKnownExit(t *testing.T) {
 	e, _ := fakeCommandEngine(t, engineStep{Out: commandID}, engineStep{SleepMillis: 10000}, engineStep{Out: commandState("exited", true, 0)}, engineStep{})
-	ctx, cancel := context.WithTimeout(context.Background(), 300*time.Millisecond)
-	defer cancel()
-	r, err := e.RunCommand(ctx, commandSpec(), []string{"/check"}, nil, 10)
-	if !errors.Is(err, context.DeadlineExceeded) || !r.Exited || !r.Uncertain {
+	r, err := cancelAttachedCommand(t, e)
+	if !errors.Is(err, context.Canceled) || !r.Exited || !r.Uncertain {
 		t.Fatalf("result=%+v err=%v", r, err)
+	}
+}
+
+func cancelAttachedCommand(t *testing.T, engine *Engine) (CommandResult, error) {
+	t.Helper()
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	type observed struct {
+		result CommandResult
+		err    error
+	}
+	done := make(chan observed, 1)
+	go func() {
+		r, err := engine.RunCommand(ctx, commandSpec(), []string{"/check"}, nil, 10)
+		done <- observed{r, err}
+	}()
+	deadline := time.NewTimer(10 * time.Second)
+	defer deadline.Stop()
+	tick := time.NewTicker(5 * time.Millisecond)
+	defer tick.Stop()
+	for {
+		select {
+		case result := <-done:
+			t.Fatalf("command ended before attached cancellation: %+v, %v", result.result, result.err)
+		case <-deadline.C:
+			t.Fatal("fake engine did not attach")
+		case <-tick.C:
+			if _, err := os.Stat(filepath.Join(os.Getenv("MARKITECT_FAKE_COMMAND_ENGINE"), "attach-ready")); err != nil {
+				continue
+			}
+			cancel()
+			select {
+			case result := <-done:
+				return result.result, result.err
+			case <-deadline.C:
+				t.Fatal("command did not reconcile cancellation")
+			}
+		}
 	}
 }
 
