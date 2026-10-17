@@ -109,7 +109,10 @@ func decodeHost(raw RawInputs) hostEnvelope {
 	if value, ok := d.text(version, false); ok && value != "markitect.host/v1" {
 		d.issue("version", version, "Unsupported Host document version.")
 	}
-	for _, ns := range []struct{ name, section string }{{"agentProfiles", "codexAppServer"}, {"checkProfiles", "process"}} {
+	for _, ns := range []struct {
+		name     string
+		sections []string
+	}{{"agentProfiles", []string{"codexAppServer", "claudeCode"}}, {"checkProfiles", []string{"process", "container"}}} {
 		catalog := d.required(fields, root, ns.name)
 		entries := d.object(catalog)
 		names := make([]string, 0, len(entries))
@@ -122,10 +125,16 @@ func decodeHost(raw RawInputs) hostEnvelope {
 			if strings.TrimSpace(name) == "" {
 				d.issue("name", entry, "Profile names must be nonempty literal strings.")
 			}
-			wrapper := d.object(entry, ns.section)
-			inline := d.required(wrapper, entry, ns.section)
-			d.object(inline)
-			h.profiles = append(h.profiles, ProfileInput{document: file, namespace: ns.name, name: name, field: inline.pointer, inline: inline.node, instructions: slices.Clone(raw.Instructions)})
+			// Exactly one adapter section selects the profile's adapter.
+			wrapper := d.object(entry, ns.sections...)
+			if len(wrapper) != 1 {
+				d.issue("section", entry, "A profile selects exactly one adapter section: "+strings.Join(ns.sections, " or ")+".")
+				continue
+			}
+			for section, inline := range wrapper {
+				d.object(inline)
+				h.profiles = append(h.profiles, ProfileInput{document: file, namespace: ns.name, name: name, section: section, field: inline.pointer, inline: inline.node, instructions: slices.Clone(raw.Instructions)})
+			}
 		}
 	}
 	if len(h.profiles) > maxHostProfiles {

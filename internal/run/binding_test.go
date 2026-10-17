@@ -143,6 +143,7 @@ type closureRecord struct {
 	ManagerPolicy                                                                                                           json.RawMessage `json:",omitempty"`
 	Scope                                                                                                                   json.RawMessage `json:",omitempty"`
 	MaxContextBytes                                                                                                         json.RawMessage `json:",omitempty"`
+	RequiredChecks                                                                                                          json.RawMessage `json:",omitempty"`
 }
 type closureScope struct {
 	ID, Digest  string

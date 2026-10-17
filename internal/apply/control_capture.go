@@ -81,7 +81,7 @@ func (s *ControlService) Open(ctx context.Context, prepared CapturedSettingsResu
 		}
 		return result, err
 	}
-	handle := &ControlledRun{session: session, basis: basis}
+	handle := &ControlledRun{prepared: prepared, facts: facts, session: session, basis: basis}
 	defer func() {
 		if err != nil {
 			err = errors.Join(err, handle.Close())

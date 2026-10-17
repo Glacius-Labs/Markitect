@@ -81,6 +81,7 @@ type taskValue struct {
 	Reason       string
 	Failure      string
 	HostFault    bool
+	Claims       []Claim
 }
 
 // TaskView is the read-only projection of one Manager task.
@@ -140,7 +141,10 @@ func (s *stateValue) prepareTasks(b Binding, runID string) error {
 	s.tasks = nil
 	s.issues = nil
 	s.issueOrder = nil
-	s.aggregateVersion, s.aggregateTree = 0, snapshot.TreeID{}
+	s.messages = nil
+	s.aggregateVersion, s.aggregateTree, s.sourceTree = 0, snapshot.TreeID{}, snapshot.TreeID{}
+	s.checks, s.checkOrder, s.checkInvocations = nil, nil, nil
+	s.verification, s.publication, s.publicationChanges = VerificationRecord{}, PublicationRecord{}, 0
 	s.managerBasis = bindingWire{}
 	if b.version != 3 {
 		return nil
@@ -154,9 +158,10 @@ func (s *stateValue) prepareTasks(b Binding, runID string) error {
 	if err != nil {
 		return err
 	}
-	s.aggregateTree = tree
+	s.aggregateTree, s.sourceTree = tree, tree
 	s.tasks = map[string]taskValue{}
 	s.issues = map[string]Issue{}
+	s.checks, s.checkInvocations = map[CheckID]checkValue{}, map[CheckID]string{}
 	for _, m := range w.Managers {
 		id := fmt.Sprintf("task-%x", sha256.Sum256([]byte(runID+":"+b.Ref().ContentID.String()+":"+m.Package)))
 		s.tasks[m.Package] = taskValue{Slot: m, ID: id, State: TaskQueued, Since: s.revision}
@@ -257,6 +262,11 @@ func (s stateValue) admission(t taskValue, barrier bool) (Admission, int, uint64
 	switch {
 	case t.Session != "":
 		return Admission{}, 0, 0, false
+	case (t.State == TaskDone || t.State == TaskBlocked || t.State == TaskExplored) && len(s.unanswered(t)) > 0:
+		// A Manager that cannot otherwise act answers in a read-only reply
+		// step and keeps its state (core rules T10, T11).
+		a.Phase, a.Home, a.Resume = PhaseReply, managerHome(t), t.Conversation
+		return a, 2, s.unanswered(t)[0].At, true
 	case s.explorable(t):
 		a.Phase, a.Home, a.Resume = PhaseExplore, managerHome(t), t.Conversation
 		return a, 0, s.exploreSince(t), true
@@ -683,6 +693,12 @@ func (s stateValue) checkOutcome(t taskValue, tool string, args []byte) error {
 		if err := s.checkReview(t, in); err != nil {
 			return err
 		}
+	case ToolSend:
+		// A reply step ends with its reply, which CheckSend checked.
+		var in sendInput
+		if err := decodeArgs(args, &in); err != nil || in.Kind != messageReply {
+			return errors.New("a reply step ends with a reply")
+		}
 	}
 	return nil
 }
@@ -704,7 +720,16 @@ func (s stateValue) checkWait(t taskValue, w Wait) error {
 			return errors.New("a children wait needs children that are not all done, and no ref")
 		}
 	case waitReply, waitOwner:
-		return fmt.Errorf("%s waits arrive with messages, which this version of the core does not support yet", w.Kind)
+		to, asked := s.pendingQuestions(t)[w.Ref]
+		if q, ok := s.issues[w.Ref]; !asked && ok && q.Kind == issueQuestion && q.Task == t.Slot.Package && q.State == issueOpen {
+			to, asked = q.To, true
+		}
+		if !asked {
+			return fmt.Errorf("%q is not an open question you asked", w.Ref)
+		}
+		if w.Kind == waitOwner && to != addressedToOwner {
+			return fmt.Errorf("%q is not a question to the owner", w.Ref)
+		}
 	default:
 		return fmt.Errorf("unknown wait kind %q", w.Kind)
 	}
@@ -738,6 +763,21 @@ func (s *stateValue) concludeStep(c Command) error {
 	call, count := s.stepOutcomeCall(t)
 	if count > 1 {
 		return ErrState
+	}
+	// The step's messages take effect with its conclusion, before its outcome
+	// that may wait on them; a failed step's messages are dropped with it
+	// (core rule T6), except a reply step's (core rule T11). A reply step the
+	// Host could not finish is retried.
+	if t.Phase == PhaseReply && !r.HostFault {
+		s.replyStepTaken(t, r.Step)
+	}
+	if r.Outcome != outcomeFailed || t.Phase == PhaseReply && !r.HostFault {
+		if err := s.recordSends(t, s.revision); err != nil {
+			return err
+		}
+	}
+	if r.Outcome != outcomeFailed && t.Phase.writing() {
+		t.Claims = addClaims(t.Claims, s.stepClaims(t)) // core rule S4
 	}
 	// A failed conclusion may override an answered outcome when the Host's own
 	// check of the step failed (core rules S4, T6).
@@ -777,6 +817,9 @@ func (s *stateValue) concludeWork(r ConclusionRecord, t *taskValue, revision uin
 	}
 	if r.Candidate != (BlobRef{}) {
 		t.Own, t.OwnTree = r.Candidate, r.Tree
+	}
+	if t.Phase == PhaseReply {
+		return nil
 	}
 	t.Failure, t.HostFault = "", false
 	switch r.Outcome {
@@ -854,6 +897,8 @@ func (s stateValue) waitArrived(t taskValue, w Wait) bool {
 		return slices.ContainsFunc(s.tasks[w.Ref].Deliveries, func(d Delivery) bool { return d.At > t.Since })
 	case waitChildren:
 		return s.childrenDone(t)
+	case waitReply, waitOwner:
+		return s.issues[w.Ref].State != issueOpen
 	}
 	return false
 }
@@ -890,8 +935,8 @@ func (c *Coordinator) freshTaskAdmission(cmd Command, digest snapshot.ContentID)
 	switch cmd.Kind {
 	case ReserveInvocation:
 		return ErrState // No unscoped executable consumer exists.
-	case PrepareSession, PrepareStep, TaskConclude:
-		if c.state.basisVersion != 3 || cmd.Kind != TaskConclude && cmd.Manager == (ManagerRecord{}) || cmd.managerProof != digest {
+	case PrepareSession, PrepareStep, TaskConclude, PrepareCheck:
+		if c.state.basisVersion != 3 || (cmd.Kind == PrepareSession || cmd.Kind == PrepareStep) && cmd.Manager == (ManagerRecord{}) || cmd.managerProof != digest {
 			return ErrState
 		}
 	case PrepareTransport:
