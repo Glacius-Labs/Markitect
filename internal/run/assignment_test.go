@@ -82,7 +82,7 @@ func TestClosureRequiresFinishedAndExplicitQuiescence(t *testing.T) {
 	if _, err := c.Propose(close); !errors.Is(err, run.ErrState) {
 		t.Fatal("stop request established quiescence", err)
 	}
-	io, _ := c.SessionChannel(j, "s")
+	io, _ := c.SessionChannel(j, "s", run.RefuseTools)
 	if _, err := io.ObserveStop(context.Background(), run.StopObservation{RecordMeta: meta("stopped"), Terminated: true, Reason: "Host observed termination"}); err != nil {
 		t.Fatal(err)
 	}

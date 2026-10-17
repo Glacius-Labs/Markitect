@@ -73,7 +73,10 @@ func (r SessionRecord) validate(kind string) error {
 	switch kind {
 	case PrepareSession:
 		p := r.Plan
-		if p.ID != r.Session || (p.Role != "manager" && p.Role != "reviewer") || !identifier(p.Workspace) || !imageIdentity(p.ImageID) || !identifier(p.CredentialRef) || p.Candidate == (snapshot.TreeID{}) || p.MaxWireBytes <= 0 || p.MaxWireBytes > maxRecordBytes || !p.Profile.Valid() || !p.Tools.Valid() || p.Role == "reviewer" && !p.ReadOnly {
+		if p.ID != r.Session || (p.Role != "manager" && p.Role != "reviewer") || !identifier(p.Workspace) || !identifier(p.ProviderHome) || p.ProviderHome == p.Workspace || !imageIdentity(p.ImageID) || !identifier(p.CredentialRef) || p.Candidate == (snapshot.TreeID{}) || p.MaxWireBytes <= 0 || p.MaxWireBytes > maxRecordBytes || !p.Profile.Valid() || !p.Tools.Valid() {
+			return ErrInvalid
+		}
+		if p.Resume != "" && !identifier(string(p.Resume)) || p.Role == "reviewer" && (!p.ReadOnly || p.Resume != "") {
 			return ErrInvalid
 		}
 		a.Plan = p
@@ -113,11 +116,12 @@ func (r SessionRecord) validate(kind string) error {
 		a.Wire = r.Wire
 		a.Proposed = r.Proposed
 	case PrepareTransport:
-		if !identifier(string(r.Message)) || !r.Wire.valid() || r.Step != "" && !identifier(string(r.Step)) {
+		if !identifier(string(r.Message)) || !r.Wire.valid() || r.Step != "" && !identifier(string(r.Step)) || r.Call != "" && (!identifier(string(r.Call)) || r.Step == "" || r.Control) {
 			return ErrInvalid
 		}
 		a.Message = r.Message
 		a.Step = r.Step
+		a.Call = r.Call
 		a.Control = r.Control
 		a.Wire = r.Wire
 	case ObserveTransport:
@@ -136,7 +140,7 @@ func (r SessionRecord) validate(kind string) error {
 		a.Tool = r.Tool
 		a.Wire = r.Wire
 	case ReplyTool:
-		if !identifier(string(r.Call)) || !r.Wire.valid() {
+		if !identifier(string(r.Call)) || !r.Wire.valid() || r.Wire.Redacted || r.Wire.Journal.MediaType != toolOutcomeMedia {
 			return ErrInvalid
 		}
 		a.Call = r.Call
@@ -300,6 +304,11 @@ func (s *stateValue) applySession(c Command) error {
 		if !r.Uncertain && s.transportOpen(r.Session) {
 			return ErrState
 		}
+		// A resumed conversation binds only under the identity it was asked to
+		// continue; a different provider identity is an uncertain observation.
+		if !r.Uncertain && v.Plan.Resume != "" && r.ProviderSession != v.Plan.Resume {
+			return ErrState
+		}
 		if r.ProviderSession != "" {
 			v.Provider = r.ProviderSession
 		}
@@ -332,6 +341,19 @@ func (s *stateValue) applySession(c Command) error {
 			}
 		} else if v.Bound && !r.Control {
 			return ErrState
+		}
+		if r.Call != "" {
+			// An answer follows the recorded Host answer to a call of this step,
+			// exactly once.
+			tool, ok := s.tools[toolKey{r.Session, r.Call}]
+			if !ok || tool.Record.Step != r.Step || tool.Replied.BatchID == "" {
+				return ErrState
+			}
+			for key, m := range s.transports {
+				if key.Session == r.Session && m.Record.Call == r.Call {
+					return ErrState
+				}
+			}
 		}
 		key := messageKey{r.Session, r.Message}
 		if _, exists := s.transports[key]; exists {
