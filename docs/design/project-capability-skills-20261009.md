@@ -99,6 +99,8 @@ Model adoption is a separate `markitect-design` task in the same conversation. "
 
 The agent examines relevant requirements, documentation, tests and code, proposes a coherent model and surfaces consequential conflicts. For example: "The README and application allow five loans, but a test expects three. Which limit should apply?" It groups related questions with their sources and a justified recommendation. The owner decides meaning that the assignment or authoritative sources do not already settle. An existing bug must not become a requirement merely because extraction observed it.
 
+The [source-grounded model-adoption workflow](canonical-model/commands.md#model-adoption-without-turning-defects-into-rules) owns the detailed procedure. Under its [accepted completion criterion](canonical-model/commands.md#completion-and-adoption-with-known-deviations), a reviewed model proposal may be adopted with adequately supported known realization deviations. Those findings remain visible, Verify keeps its actual result, and artifact repair is separate work; unresolved material intent or evidence gaps are not waived.
+
 Adoption also needs explicit responsibility and exact file accounting under [DEC-006](../concepts/register.md#dec-006-every-file-is-covered-or-explicitly-ignored). The agent can prepare registry associations within authorized modeling choices; the owner need not approve every registry line. Unclear responsibility boundaries and genuine exceptions need a decision. Init must not ignore unknown files or invent ownership merely to produce a passing report. A registered file is accounted for, not thereby semantically correct.
 
 #### Ask only for decisions or missing authority

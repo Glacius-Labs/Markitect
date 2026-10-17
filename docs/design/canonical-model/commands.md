@@ -37,7 +37,7 @@ These are meanings, not selected wire-enum names. Missing evidence does not coun
 
 ## Extract the existing stand
 
-Extract initially describes what exists. It does not use adoption as an opportunity to improve product behavior or repair code. Code, tests, interfaces, documentation, configuration, CI and recorded decisions are evidence. When code contradicts documented intent, present a question with both sources instead of silently choosing one or inventing a resolution.
+Extract initially describes what exists. It does not use adoption as an opportunity to improve product behavior or repair code. Code, tests, interfaces, documentation, configuration, CI and recorded decisions are evidence. An observed behavior is not automatically intended behavior. When sources conflict and existing authority does not settle the intended rule, present a question with both sources instead of silently choosing one. When an authoritative requirement is already clear, retain it and record violating code, tests or documentation as a realization deviation; do not require the owner to decide the same intent again.
 
 ### Build the first candidate
 
@@ -47,6 +47,26 @@ Extract initially describes what exists. It does not use adoption as an opportun
 4. Propose ownership and Definition links for existing artifacts, using the registry and explicit accounting rather than a second intended model. A file assignment alone does not establish that its behavior has been described adequately.
 
 The model remains a candidate until adopted through the project's decision process. Source revisions and evidence do not themselves confer authority. Imported vocabulary is read-only; it is not silently rewritten to make the extracted project compile.
+
+### Model adoption without turning defects into rules
+
+The owner accepted this workflow and the completion clarification below in the [Usage, Skills, UX continuation](../../concepts/sources/commands-extract-optimize-20261017.md#model-adoption-with-known-realization-deviations). The outer coding agent can prepare the model proposal through `markitect-design`; the later Extract runtime reuses the model-authoring and review capabilities described here. Neither path assumes that the existing realization is correct. The [Init flow](../project-capability-skills-20261009.md#existing-project-init-flow) owns the separate technical setup.
+
+The assignment may say: "Prepare a model proposal from code, tests and documentation. Show contradictions and unclear intent. Do not change the application." Fix its source revision and scope, identify existing authoritative requirements and distinguish observations, interpretations, proposed intent and unresolved questions. There is no universal ranking in which tests, code or a README always win. The owner's designation of a current requirement or an applicable recorded decision has a different authority from an undated implementation comment.
+
+This library example is hypothetical evidence for the design distinction, not an observed defect in the canonical Library example or a completed product run:
+
+| Source observation | Model-authoring response |
+| --- | --- |
+| A current authoritative requirement permits at most five open loans. Code checks `count > 5` before adding a loan and therefore admits a sixth. | Keep the five-loan requirement in the candidate and record the suspected off-by-one realization defect. Do not make six the intended limit. |
+| Tests demonstrate successful borrowing up to five but never test refusal of a sixth. | Record the limited evidence scope and assess the missing boundary case. Passing these tests does not establish complete enforcement. |
+| A current authoritative requirement permits suspended members to return books, but a test expects refusal. | Review the test as a potentially faulty realization; a passing assertion is not authority to forbid returns. |
+| Documentation says 14 days, another requirement version and tests say 21, and their current authority is unresolved. | Present the concrete source-bound choice with a justified recommendation. Do not fill in either value merely to complete the candidate. |
+| The implementation uses an internal dictionary. | Do not require a dictionary in future implementations unless an actual obligation makes that choice binding. |
+
+The resulting proposal can state a maximum of five after successful borrowing and continued return during suspension, with their source bases. The loan period remains a question until resolved. Existing behavior and discrepancies stay retrievable as findings beside the proposal, rather than becoming binding rules by extraction. The agent groups consequential questions; clear authorized requirements do not need individual reapproval, and recording a possible defect is not proof of its diagnosis.
+
+Independent model review asks whether sources support each consequential statement, whether important behavior could change without violating the proposal, and whether incidental implementation choices have become unnecessary constraints. Examine discriminating cases and actual assertions, not only test names. If all examined sources share the same mistaken assumption, agreement alone cannot establish intended correctness; further authoritative domain evidence or an owner decision is still needed. Keep that uncertainty visible rather than claiming automatic defect-free extraction.
 
 ### Reuse independent review and integration
 
@@ -62,17 +82,31 @@ Compile and validate the candidate and its accounting, then run read-only Verify
 
 | Finding | Extract response |
 | --- | --- |
-| The candidate incorrectly describes behavior supported by the sources. | Correct the candidate with a reason and source basis; review the change. |
+| The candidate misstates a source-supported intended requirement or confuses it with observed behavior. | Correct the candidate with a reason and source basis; review the change. Do not rewrite correct intent to match faulty artifacts. |
 | A statement or its scope is too vague. | Make the observed rule precise without inventing additional behavior. |
 | A justified connection is missing. | Add and review the explicit model link; recompile affected contexts. |
-| Code and documented intent conflict. | Present a concrete owner question and retain the unresolved conflict. |
+| Code, tests or documentation violate an already established intended requirement. | Keep the justified model statement, record the concrete realization deviation with its Definition and evidence, and retain it for later authorized artifact work. |
+| Sources conflict and intended meaning remains unsettled. | Present a concrete owner question and retain the unresolved conflict. |
 | Evidence is insufficient. | Examine further available sources or retain the evidence gap; do not weaken the statement to force conformity. |
 
-After each model revision, update affected context and proposed accounting, review and integrate the model changes, and Verify again against the same artifact basis. A changed meaning cannot inherit an old positive assessment automatically. Unresolved questions, insufficient evidence, budget exhaustion or no useful progress leave an explicit incomplete result, not an endless loop or a manufactured pass. Source drift requires an explicit new source binding.
+After each model revision, update affected context and proposed accounting, review and integrate the model changes, and Verify again against the same artifact basis. A changed meaning cannot inherit an old positive assessment automatically. Material questions or evidence gaps that prevent a sound model or assessment, budget exhaustion or no useful progress leave an explicit incomplete result, not an endless loop or a manufactured pass. A known, adequately supported realization deviation alone does not require another model rewrite or prevent adoption readiness. Source drift requires an explicit new source binding.
 
 Verify can pass against a shallow model. The normal Extract review therefore also judges whether important source behavior is missing from the model. This is a model-quality responsibility of Extract, not a broader meaning of Verify. Removing a candidate rule does not erase the source observation or its open review finding.
 
-Completion requires a structurally valid, reviewed and integrated candidate with adequate detail for the selected scope, explained accounting, a conforming Verify result and no unresolved material questions or evidence gaps. Report partial scope honestly. The owner reviews and commits the chosen model and accounting through the normal adoption boundary. Any later correction of existing artifacts is a separate Apply.
+### Completion and adoption with known deviations
+
+The owner's [completion clarification](../../concepts/sources/commands-extract-optimize-20261017.md#model-adoption-with-known-realization-deviations) replaces the earlier requirement that Verify must report conformity before Extract can finish. A reviewed model proposal may be adopted while the existing realization has known deviations. Successful model preparation and existing-artifact conformity are separate judgments.
+
+Completion for the selected scope requires:
+
+- A structurally valid, independently reviewed and integrated model candidate with adequate detail, supported intended meaning and explained proposed artifact accounting.
+- Completed read-only realization assessment against the exact candidate and fixed source basis. Its actual conformity or nonconformity remains visible.
+- Each known realization deviation identified by its applicable Definition, source/candidate binding, evidence and reason. Unsupported suspicions or insufficiently assessable behavior are not relabeled as known deviations to close the work.
+- No unresolved material question or evidence gap that prevents a sound model, adequate coverage of the selected scope or the classification of a reported deviation.
+
+Report partial scope honestly. The owner reviews and commits the chosen model and accounting through the normal adoption boundary, with known deviations retained in the handoff. Adoption neither changes a nonconforming Verify result to a pass nor accepts defective artifacts as correct. Do not weaken or delete a justified model rule, hide a finding, or change existing code, tests or documentation to manufacture conformity during Extract. Resolving a model question may refine the candidate; correcting an existing realization remains a separately authorized artifact operation.
+
+For the library example, an honest result can say: "Model proposal reviewed and ready for owner adoption. The existing realization admits a sixth loan against the five-loan rule; this deviation is retained. No material intent question remains. No artifact repair was performed." A later Apply can repair that deviation against the adopted model. Model adoption alone does not establish that the repair was executed or verified.
 
 The reuse above is a design direction. How a provisional model tree is rebuilt between rounds, how candidate model/registry bytes are staged for Verify, and how model-writing sessions are admitted need future producer contracts. Current artifact Apply still protects canonical and control inputs; this document grants it no new mutation rights.
 
