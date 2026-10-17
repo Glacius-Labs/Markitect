@@ -22,7 +22,7 @@ The target `cmd/` and `internal/` responsibilities use separate `apply-*` layers
 | `apply-realization` | Pure registry, ownership, claims and candidate rules. | `apply-realization` | 1 |
 | `apply-run` | Tasks, sessions, review, budgets and lifecycle with consumer-owned ports. | `apply-run` | 0 |
 | `apply-usecase` | Aggregate reconciliation, verification and guarded publication. | `apply-usecase` | 1 |
-| `apply-adapter` | Concrete protocols and effects implementing inward consumer ports. | `apply-adapter` | 1 |
+| `apply-adapter` | Concrete protocols and effects implementing inward consumer ports. | `apply-adapter` | 2 |
 | `apply-process` | Process lifetime mechanics for Codex sessions and project checks. | `apply-process` | 0 |
 | `apply-bootstrap` | Constructs concrete adapters and wires their consumers. | `apply-bootstrap` | 0 |
 | `apply-command` | Thin command entrypoint delegating to composition. | `apply-command` | 0 |
@@ -73,6 +73,7 @@ The target `cmd/` and `internal/` responsibilities use separate `apply-*` layers
 
 | Package | Purpose | Owning document |
 |---|---|---|
+| `internal/adapters/checks` | Observes pinned Check process-profile file metadata without executing checks. | [docs/design/canonical-model/manager-apply-go-architecture.md](../design/canonical-model/manager-apply-go-architecture.md#organize-by-responsibility) |
 | `internal/adapters/gitrepo` | Acquires explicit committed or preview source inputs with manifest preflight, repository census and comparison guards. | [docs/design/canonical-model/manager-apply-go-architecture.md](../design/canonical-model/manager-apply-go-architecture.md#organize-by-responsibility) |
 
 ## Deterministic core
