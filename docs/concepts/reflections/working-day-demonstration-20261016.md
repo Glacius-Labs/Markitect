@@ -81,9 +81,10 @@ The bounded conclusion after passing: in these library scenarios, the owner coul
 
 ## Deferred ideas
 
+The owner adopted the previously deferred duty to examine consequential task premises and act within existing authority on 17 October 2026, as part of [technical risk derivation](../../design/canonical-model/manager-apply-concept.md#technical-risk-derivation) ([DEC-045](../register.md#dec-045-managers-and-reviewers-derive-technical-risks)). Its investigation, correction and evidence use the existing Manager/reviewer process; the remaining ideas below stay deferred.
+
 These were discussed on 16 October and wait until the scenarios run:
 
-- Managers check the premises of their task for consequential context gaps and act on authorized grounds instead of seeking exhaustive certainty; this belongs in Manager instructions.
 - Escalations are judged against the information available at the time, and decision quality is evaluated beyond counting questions, including decisions made without asking.
 - Feedback improves context and mandates without silently becoming policy.
 - Integration cases are derived from intended outcomes and selected by distinct composed obligations, with coverage traced to check references ([ENH-003](../register.md#enh-003-test-to-statement-binding-and-test-review)).
@@ -101,7 +102,8 @@ The evening discussion of 16 October added detailed runtime rules here. They now
 | <a id="release-a-dependency-from-an-accepted-delivery"></a><a id="correct-an-accepted-delivery-without-discarding-downstream-work"></a><a id="gate-active-work-by-recorded-delivery-dependencies"></a>Accepted deliveries and dependent work; exposure gating was dropped for the first version | [Execution: accepted deliveries](../../design/canonical-model/manager-apply-execution.md#accepted-deliveries-and-dependent-work), [north star](../../design/canonical-model/manager-realization-north-star.md#simplified-for-the-first-version) |
 | <a id="record-supplied-inputs-rather-than-every-file-read"></a><a id="shape-useful-input-packages-without-unnecessary-artifact-exposure"></a><a id="give-reviewers-a-reproducible-obligation-context-with-explicit-limits"></a>Supplied inputs, input packages and reviewer context | [Concept: context packages](../../design/canonical-model/manager-apply-concept.md#context-packages) |
 | <a id="detect-relationship-gaps-from-concrete-boundary-discrepancies"></a>Relationship gaps at Package boundaries | [Concept: checking effects across boundaries](../../design/canonical-model/manager-apply-concept.md#checking-effects-across-package-boundaries) |
-| <a id="detect-consequential-context-gaps-during-ordinary-work"></a><a id="prefer-authorized-action-over-exhaustive-certainty"></a><a id="assess-questions-using-the-information-available-at-the-time"></a><a id="improve-context-and-mandates-without-turning-feedback-into-policy"></a><a id="evaluate-better-decisions-including-decisions-made-without-questions"></a>Context gaps, authorized action and decision quality | [Deferred ideas](#deferred-ideas) |
+| <a id="detect-consequential-context-gaps-during-ordinary-work"></a><a id="prefer-authorized-action-over-exhaustive-certainty"></a>Context gaps and authorized action | [Technical risk derivation](../../design/canonical-model/manager-apply-concept.md#technical-risk-derivation) |
+| <a id="assess-questions-using-the-information-available-at-the-time"></a><a id="improve-context-and-mandates-without-turning-feedback-into-policy"></a><a id="evaluate-better-decisions-including-decisions-made-without-questions"></a>Decision quality and feedback | [Deferred ideas](#deferred-ideas) |
 | <a id="derive-integration-cases-from-intended-outcomes-before-mapping-responsibilities"></a><a id="select-integration-cases-by-distinct-composed-obligations"></a><a id="derive-integration-coverage-from-check-references-and-current-review-evidence"></a><a id="select-semantic-check-reassessment-from-changed-effects-and-actual-use"></a>Integration cases, their coverage and selective reassessment | [Concept: review responsibilities](../../design/canonical-model/manager-apply-concept.md#distinct-review-responsibilities) and [deferred ideas](#deferred-ideas) |
 
 Return to [product reflections](README.md).

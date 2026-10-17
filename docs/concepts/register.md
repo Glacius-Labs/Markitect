@@ -55,6 +55,7 @@ The owner's [origin account of 15 October 2026](sources/owner-origin-20261015.md
 | [DEC-042](#dec-042-orchestrator-names-the-deterministic-coordination-component) | Decision | Orchestrator names the deterministic coordination component | Accepted |
 | [DEC-043](#dec-043-project-teams-review-arbitration-and-product-defaults) | Decision | Project teams, review arbitration and product defaults | Accepted; implementation pending |
 | [DEC-044](#dec-044-commands-reuse-the-manager-organization) | Decision | Commands reuse the Manager organization | Accepted direction; implementation deferred |
+| [DEC-045](#dec-045-managers-and-reviewers-derive-technical-risks) | Clarification | Managers and reviewers derive technical risks | Accepted |
 | [PRM-001 to PRM-007](#promises) | Promise | Target outcomes | Target |
 | [ASM-001 to ASM-006](#assumptions-and-hypotheses) | Assumption | Assumptions and hypotheses | See entries |
 | [CPT-001](#cpt-001-federalism) | Concept | Federalism | Accepted |
@@ -547,6 +548,14 @@ The owner's [origin account of 15 October 2026](sources/owner-origin-20261015.md
 - **Interpretation (marked):** The owner's request to record the resulting Extract proposal adopts reuse of normal model-candidate review rather than a separate permanent completeness catalogue. Verify conformity alone does not establish model depth. Model-quality review remains Extract's responsibility. The owning design distinguishes selected behavior from future settings, staging and execution contracts.
 - **Boundary:** Extends DEC-026 and DEC-027's later-operation direction. This is authority to record and integrate documentation on Main, not to expand the frozen Apply runtime, start implementation packages or execute providers, Docker, Apply, comparisons or studies. The current delivery order, model/artifact separation, canonical authority and mandatory review remain in force.
 - **Owner:** [Commands over the Manager organization](../design/canonical-model/commands.md). The [current operations guide](../project-operations.md) continues to own executable availability.
+
+### DEC-045 Managers and reviewers derive technical risks
+
+- **Status:** Accepted clarification, owner, 17 October 2026 ([question and implementation instruction](sources/technical-risk-derivation-20261017.md)).
+- **Decision:** Managers and independent reviewers actively derive relevant technical risks and necessary evidence from applicable model obligations, operating conditions and actual realization, including interactions between areas. The owner need not enumerate every failure mode. Managers investigate and repair within their mandate; reviewers independently derive model-based expectations and, after candidate access, examine implementation-specific risks and obtain additional necessary evidence through existing findings and rework.
+- **Authority boundary:** A necessary technical consequence of existing intent is realization judgment, not a new project rule requiring its own model edit. Changed business policy, exceptional tradeoffs outside the mandate and missing necessary model relationships retain the existing decision/model-change route. No invented operating conditions, new rights or inferred canonical links.
+- **Scope:** Clarifies existing responsibilities and the previously deferred task-premise duty. No new role, register, workflow stage, schema or experiment is introduced. Existing budgets, independent review, arbitration and evidence requirements remain. This authorizes the bounded concept and role-template change, not provider execution or a claim that risk discovery has been demonstrated.
+- **Owners:** [Apply concept](../design/canonical-model/manager-apply-concept.md#technical-risk-derivation), [execution evidence](../design/canonical-model/manager-apply-execution.md#evidence-need-survives-budget-pressure), and the canonical [delegated-context Rule](../../.markitect/model/product/organization/delegated-context.yaml).
 
 ## Promises
 
