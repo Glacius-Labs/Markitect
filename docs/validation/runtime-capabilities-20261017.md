@@ -23,12 +23,15 @@ Validation record, 17 October 2026. These probes answer the runtime questions th
 | Quiescent basis advance in one session | After a turn the census showed only `claude` and its MCP bridge (`markitect-agent`). A helper container changed `basis.txt` in the mounted workspace, and the next turn of the same process read the new content. |
 | Census in a session container | With a provider that started a background child, the census listed exactly the provider and the child, never agentd or the container's init. An ended child appears as a zombie (`Z`) until its parent reaps it. |
 | Project check in the Go image | A helper container ran `go test ./...` on a workspace module and passed, with Go's caches in the provider home. |
+| Write barrier | A shell provider rewrote a counter file in the workspace every 50 ms. While the engine paused the container, a helper read the same value twice, one second apart; after unpausing, the value advanced again. |
+| Barrier-protected basis advance with Claude Code | After a quiescent turn the Host paused the session, changed `basis.txt` through a helper container and unpaused it; the next turn of the same conversation read the new content. |
 | Codex without a credential | `codex app-server` reported the Host MCP server `ready` inside the hardened container. No turn ran. |
 
 ## Findings
 
 - **A conversation can continue across environments.** For Claude Code, the retained provider home is enough. The conversation must not run with `--no-session-persistence`.
 - **A workspace change between turns works without remounting.** A helper container writes into the same volume that the session has mounted. A changed mount plan still needs a new environment, as the design states.
+- **Pausing the container is an effective write barrier with a live provider.** A frozen Claude Code session continued normally after a short pause.
 - **The census makes quiescence observable.** The provider's own MCP bridge stays alive between turns. Quiescence therefore means "only the provider's known processes remain", not an empty table. A census is a snapshot and cannot prevent a later start.
 - **`/tmp` must allow execution.** Docker mounts a `--tmpfs` with `noexec` by default, and `go test` failed with `permission denied` on its test binary in `/tmp`. Because the workspace is executable anyway, the runtime now mounts `/tmp` with `exec`.
 

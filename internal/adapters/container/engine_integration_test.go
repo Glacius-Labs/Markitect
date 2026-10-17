@@ -140,6 +140,20 @@ func TestRealEngineStopsAWritingSessionWhenTheHostLeaves(t *testing.T) {
 
 func buildTestImage(ctx context.Context, t *testing.T, enginePath string) string {
 	t.Helper()
+	return buildTestImageFrom(ctx, t, enginePath, "scratch", "")
+}
+
+// buildShellTestImage adds agentd to a small Linux base with a shell, for
+// tests whose provider is a shell script.
+func buildShellTestImage(ctx context.Context, t *testing.T, enginePath string) string {
+	t.Helper()
+	return buildTestImageFrom(ctx, t, enginePath,
+		"ubuntu:24.04@sha256:008173c23f95b170204355c12626cb5a965d779a7e1283b09e9cffbb1bf33ca3",
+		"RUN mkdir -p /work && chown 1000:1000 /work\n")
+}
+
+func buildTestImageFrom(ctx context.Context, t *testing.T, enginePath, base, extra string) string {
+	t.Helper()
 	arch, err := exec.CommandContext(ctx, enginePath, "version", "--format", "{{.Server.Arch}}").Output()
 	if err != nil {
 		t.Fatalf("engine architecture: %v", err)
@@ -164,7 +178,7 @@ func buildTestImage(ctx context.Context, t *testing.T, enginePath string) string
 	if err := os.WriteFile(filepath.Join(dir, "runtime.env"), []byte("agentd=test\n"), 0o644); err != nil {
 		t.Fatal(err)
 	}
-	dockerfile := "FROM scratch\n" +
+	dockerfile := "FROM " + base + "\n" + extra +
 		"COPY markitect-agentd /usr/local/bin/markitect-agentd\n" +
 		"COPY agentd.test /usr/local/bin/agentd.test\n" +
 		"COPY runtime.env /opt/markitect/runtime.env\n"
@@ -264,5 +278,71 @@ func TestRealEngineCensusSeesOnlyTheSession(t *testing.T) {
 	}
 	if !provider || !child || len(processes) != 2 {
 		t.Fatalf("census = %+v, want exactly the provider and its child", processes)
+	}
+}
+
+// TestRealEnginePauseIsAWriteBarrier freezes a session whose provider keeps
+// writing to the workspace and shows that nothing changes until it resumes.
+func TestRealEnginePauseIsAWriteBarrier(t *testing.T) {
+	enginePath := os.Getenv("MARKITECT_TEST_ENGINE")
+	if enginePath == "" {
+		t.Skip("set MARKITECT_TEST_ENGINE to an absolute container engine path")
+	}
+	engine, err := container.NewEngine(enginePath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
+	defer cancel()
+	image := buildShellTestImage(ctx, t, enginePath)
+	store := fmt.Sprintf("test-%d", time.Now().UnixNano())
+	labels := map[string]string{"io.markitect.store": store}
+	work := "mk-" + store + "-work"
+	if err := engine.CreateVolume(ctx, work, labels); err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { _ = engine.RemoveVolume(context.Background(), work) })
+	spec := container.ContainerSpec{
+		Name: "mk-" + store, Image: image, Labels: labels, User: "1000:1000",
+		Mounts:  []container.Mount{{Volume: work, Target: "/work"}},
+		Workdir: "/work", CPUs: 1, MemoryBytes: 256 << 20, Pids: 64, TmpBytes: 16 << 20, Network: "none",
+	}
+	s, err := engine.Start(ctx, spec)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer s.Close()
+	go func() { _, _ = io.Copy(io.Discard, s.Stdout()) }()
+	ticker := `i=0; while true; do i=$((i+1)); echo $i > /work/tick; sleep 0.05; done`
+	if _, err := s.StartProvider(ctx, frame.Start{Argv: []string{"/bin/sh", "-c", ticker}, Dir: "/work"}); err != nil {
+		t.Fatal(err)
+	}
+	helper := spec
+	helper.Name = spec.Name + "-read"
+	read := func() string {
+		var out strings.Builder
+		if err := engine.RunHelper(ctx, helper, []string{"/bin/cat", "/work/tick"}, nil, &out); err != nil {
+			t.Fatalf("read tick: %v", err)
+		}
+		return strings.TrimSpace(out.String())
+	}
+	time.Sleep(300 * time.Millisecond)
+	if err := engine.Pause(ctx, spec.Name); err != nil {
+		t.Fatal(err)
+	}
+	// A deferred unpause runs before the deferred Close, so a failure never
+	// closes a frozen session.
+	defer func() { _ = engine.Unpause(context.Background(), spec.Name) }()
+	frozen := read()
+	time.Sleep(time.Second)
+	if again := read(); again != frozen {
+		t.Fatalf("the paused provider kept writing: %s then %s", frozen, again)
+	}
+	if err := engine.Unpause(ctx, spec.Name); err != nil {
+		t.Fatal(err)
+	}
+	time.Sleep(500 * time.Millisecond)
+	if resumed := read(); resumed == frozen {
+		t.Fatalf("the provider did not resume after Unpause: still %s", resumed)
 	}
 }
