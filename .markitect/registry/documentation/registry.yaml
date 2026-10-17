@@ -1,5 +1,13 @@
 apiVersion: markitect.registry/v1
 artifacts:
+  - path: "assets/markitect-wordmark-light.svg"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Provides the original Markitect wordmark for the README in light themes.
+  - path: "assets/markitect-wordmark-dark.svg"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Provides the original Markitect wordmark for the README in dark themes.
   - path: "docs/concepts/sources/attention-and-comparison-20261017.md"
     form: doc
     realizes: [documentation/current-guidance]
