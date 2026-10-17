@@ -556,3 +556,22 @@ func TestClaudeFreshReviewerMountAndReadOnlyTools(t *testing.T) {
 		t.Fatalf("reviewer inherited writing or conversation state: %+v %v", spec, argv)
 	}
 }
+
+func TestClaudeNativeSessionAndStopReasonCannotJournalKnownToken(t *testing.T) {
+	t.Run("session", func(t *testing.T) {
+		channel := &fakeChannel{}
+		runtime := peer(channel)
+		runtime.noInit = true
+		runtime.cancelTurn = true
+		s := sessionsForTest(t, runtime)
+		a, b := sessionAdmissions(t)
+		if _, err := s.Open(context.Background(), a, channel); err != nil {
+			t.Fatal(err)
+		}
+		runtime.emit(`{"type":"system","subtype":"init","session_id":"secret-token","uuid":"init-event","claude_code_version":"2.1.301"}`)
+		out, err := s.Step(context.Background(), b, channel)
+		if err == nil || !out.Uncertain || len(channel.bindings) != 0 || bytes.Contains(out.Wire.Journal.Bytes(), []byte("secret-token")) {
+			t.Fatal("known credential escaped wire redaction through native session field")
+		}
+	})
+}

@@ -113,7 +113,7 @@ func (s *Sessions) Step(ctx context.Context, a run.StepAdmission, channel run.Se
 			switch m.kind {
 			case SystemInitMessage:
 				init, readErr := m.Init()
-				if readErr != nil || e.thread != "" || init.Version != "2.1.301" || e.plan.Resume != "" && string(init.Session) != string(e.plan.Resume) {
+				if readErr != nil || e.thread != "" || init.Version != "2.1.301" || !bytes.Equal(e.redact([]byte(init.Session)), []byte(init.Session)) || e.plan.Resume != "" && string(init.Session) != string(e.plan.Resume) {
 					return out, ErrProtocol
 				}
 				e.thread = init.Session

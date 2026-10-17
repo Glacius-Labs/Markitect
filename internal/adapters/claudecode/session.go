@@ -349,7 +349,7 @@ func (s *Sessions) Stop(ctx context.Context, request run.StopRequest, channel ru
 		err = e.safe(stopErr)
 		if stopErr == nil {
 			out.Terminated = true
-			out.Reason = "actual provider exit code=" + strconv.Itoa(exit.Code) + " signal=" + exit.Signal
+			out.Reason = "actual provider exit code=" + strconv.Itoa(exit.Code) + " signal=" + string(e.redact([]byte(exit.Signal)))
 		}
 		e.readOnce.Do(func() { close(e.readDone) })
 		closeErr := e.peer.Close()
