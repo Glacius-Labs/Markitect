@@ -59,9 +59,10 @@ func (p Protection) Directory() (snapshot.DirectoryBoundary, bool) {
 }
 
 type claimModelBasis struct {
-	id, digest string
-	local      bool
-	packages   []string
+	id, digest  string
+	local       bool
+	packages    []string
+	definitions []inventoryDefinition
 }
 
 type pathBasis struct {
@@ -84,23 +85,17 @@ type pathBasis struct {
 type PathFacts struct{ basis *pathBasis }
 
 func NewPathFacts(compiled model.Result, registry Registry, tree snapshot.Tree, areas []CreationArea, protections []Protection) (PathFacts, error) {
-	owners, _, ready, findings := accountingModel(compiled)
-	if !ready {
-		if compiled.Status == model.Failed || hasModelInconsistency(findings) {
+	return newPathFacts(inventoryFromResult(compiled), registry, tree, areas, protections)
+}
+
+func newPathFacts(inventory modelInventory, registry Registry, tree snapshot.Tree, areas []CreationArea, protections []Protection) (PathFacts, error) {
+	if !inventory.ready {
+		if inventory.invalid {
 			return PathFacts{}, ErrInvalidClaimFacts
 		}
 		return PathFacts{}, ErrIncompleteClaimFacts
 	}
-	b := &pathBasis{owners: owners, registry: registry, tree: tree, areas: slices.Clone(areas), protections: slices.Clone(protections)}
-	for _, scope := range compiled.Models {
-		binding := claimModelBasis{id: scope.ID, digest: scope.Digest, local: scope.Local}
-		for _, pkg := range scope.Packages {
-			binding.packages = append(binding.packages, pkg.Name)
-		}
-		slices.Sort(binding.packages)
-		b.models = append(b.models, binding)
-	}
-	slices.SortFunc(b.models, func(a, c claimModelBasis) int { return strings.Compare(a.id, c.id) })
+	b := &pathBasis{owners: inventory.owners, models: inventory.models, registry: registry, tree: tree, areas: slices.Clone(areas), protections: slices.Clone(protections)}
 	for _, a := range b.areas {
 		if !a.owner.valid() || a.directory.String() == "" {
 			return PathFacts{}, ErrInvalidClaimFacts
@@ -151,7 +146,7 @@ func (b *pathBasis) same(other *pathBasis) bool {
 		return false
 	}
 	if !slices.EqualFunc(b.models, other.models, func(a, c claimModelBasis) bool {
-		return a.id == c.id && a.digest == c.digest && a.local == c.local && slices.Equal(a.packages, c.packages)
+		return a.id == c.id && a.digest == c.digest && a.local == c.local && slices.Equal(a.packages, c.packages) && slices.Equal(a.definitions, c.definitions)
 	}) {
 		return false
 	}

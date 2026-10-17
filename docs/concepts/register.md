@@ -49,6 +49,7 @@ The owner's [origin account of 15 October 2026](sources/owner-origin-20261015.md
 | [DEC-036](#dec-036-adopted-design-refinements-for-the-first-apply) | Decision | Adopted design refinements for the first Apply | Accepted |
 | [DEC-037](#dec-037-agent-sessions-and-checks-run-in-linux-containers) | Decision | Agent sessions and checks run in Linux containers | Accepted |
 | [DEC-038](#dec-038-learn-through-complete-workflows) | Decision | Learn through complete workflows | Accepted |
+| [DEC-039](#dec-039-deterministic-manager-process) | Decision | Deterministic Manager process | Accepted |
 | [PRM-001 to PRM-007](#promises) | Promise | Target outcomes | Target |
 | [ASM-001 to ASM-006](#assumptions-and-hypotheses) | Assumption | Assumptions and hypotheses | See entries |
 | [CPT-001](#cpt-001-federalism) | Concept | Federalism | Accepted |
@@ -387,6 +388,8 @@ The owner's [origin account of 15 October 2026](sources/owner-origin-20261015.md
 
 ### DEC-029 Instructions enter through the root
 
+**Updated by [DEC-039](#dec-039-deterministic-manager-process):** root entry remains; parent-authored child operation prompts are superseded by unchanged, Host-guaranteed propagation. The statement below records the earlier decision.
+
 - **Status:** Accepted, owner, 16 October 2026 ([source](../design/canonical-model/sources/manager-realization-20261016.md#apply-first-and-delegation-from-the-root)). The file-access part was left to refine.
 - **Statement:** The operation's instruction goes to the root Manager only. Each parent writes its own prompt for its children, which must not be too specific: it does not tell them which files to touch. Whether higher Managers read descendant files only when someone supplies them „gilt es zu refinen“; the Apply concept chose summaries first plus recorded targeted reads.
 
@@ -437,7 +440,7 @@ The owner's [origin account of 15 October 2026](sources/owner-origin-20261015.md
 - **Status:** Accepted, owner, 16 October 2026 ([recommendations](sources/consolidation-discussion-20261016.md#adopt-the-recommendations), [all recommendations](sources/consolidation-discussion-20261016.md#adopt-all-recommendations)).
 - **Statement:** The owner adopted every item of the assistant's list of 16 October. Besides DEC-033 to DEC-035 these include:
   - the ownership of project-level artifacts, the skeleton and the wiring task;
-  - the root's recorded delivery order;
+  - the root's recorded delivery order (superseded by [DEC-039](#dec-039-deterministic-manager-process));
   - the registry layout and Markitect's own initial registry at the cutover;
   - the closed Host tool catalogue;
   - the Host's final evidence check instead of a separate verifier Agent;
@@ -469,6 +472,14 @@ The owner's [origin account of 15 October 2026](sources/owner-origin-20261015.md
 - **Decision:** Adopt the proposed working method for future Markitect development: explain substantial redesign through new observations and a visible improvement criterion; give the accepted foundation coherent actual use against a complete workflow; investigate consequential uncertain boundaries early; review the need and simpler alternatives for mechanisms; and give short workflow-oriented owner updates at milestones. Keep current knowledge at existing owners.
 - **Canonical owner:** [repository/learning-driven-workflow](../../.markitect/model/repository/learning-driven-workflow.yaml). The [working-method guide](../development/working-method.md) is its operational realization. The delivery plan retains scopes, sequence and integration; chats/PRs retain candidate evidence.
 - **Boundary:** Adoption does not make the assistant's historical assessments measured facts, prove product benefit, waive review/CI/safeguards, create routine approval gates or authorize provider runs, studies or releases. This governs Markitect's own development; it does not impose a new product contract on adopting projects. It preserves DEC-031's two-Apply target and DEC-032's quality priorities.
+
+### DEC-039 Deterministic Manager process
+
+- **Status:** Accepted, owner, 17 October 2026 ([original clarification and confirmation](sources/manager-process-clarification-20261017.md)). This changes the parent-authored prompts of DEC-029 and the root-planned delivery order adopted in DEC-036. Historical sources remain unchanged.
+- **Statement:** Apply supplies one static operation instruction. Deterministic compilation supplies each Manager's explicit model context; configuration and Host facts complete its template. The Host guarantees propagation from root through every direct child, recursively, without AI selection, rewriting or omission. Every local Manager assesses its area and returns reviewed change or no-change; intermediate and empty Packages are not skipped. Managers act on messages and communicate only with direct parent or children. Cross-area requests travel up and down that tree, using explicit routing facts or bounded inquiry, never inferred model relationships. Local review, integration, corrections and final evidence/publication follow the fixed Host process. Parents retain their own work and integration responsibility, including prerequisites needed by waiting children.
+- **Why:** The owner observed that the previous design moved already modeled structure back into AI planning. The intended organization should guarantee participation and required workflow steps while leaving realization and semantic judgment to Agents.
+- **Canonical owners:** [organization/delegated-context](../../.markitect/model/product/organization/delegated-context.yaml) and [run/confirmed-run-history](../../.markitect/model/product/run/confirmed-run-history.yaml). The [Apply concept](../design/canonical-model/manager-apply-concept.md#tasks-and-delegation) owns the process and its remaining design questions.
+- **Evidence boundary:** This records intent, not a working recursive runtime. The concept includes a fixed-source comparison and distinguishing process cases. Technical realization follows the process; no new Core language feature, provider execution or release is authorized here.
 
 ## Promises
 

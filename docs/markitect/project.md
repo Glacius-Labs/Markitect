@@ -4,7 +4,7 @@ Generated from acquired canonical v1 source bytes. This view is not execution or
 
 ## markitect
 
-Canonical model digest: `sha256:84ce94cbf41f868ef9065c0dd8b7640f729f2a3b2e67e03cedea9af0dd61c347`.
+Canonical model digest: `sha256:1fa9f0f0ce75b17121b8c673b8b46beeffa6a921365f502130806f1b2be97c9a`.
 
 Manifest: `.markitect/model.yaml` (original bytes `sha256:d40feb9e02db275aed89d53b0a88849e463acaca076c8fa70fad38b367a68559`).
 
@@ -184,9 +184,9 @@ Compile the complete canonical language v1 from explicitly supplied immutable so
 
 ### product/organization/delegated-context
 
-Kind: `vocabulary/Rule`. Source: `.markitect/model/product/organization/delegated-context.yaml` (original bytes `sha256:c4b6947cc77f7e1ab380a3f819a855164d7fc57d66b0ec92a37247f485a5ff3d`).
+Kind: `vocabulary/Rule`. Source: `.markitect/model/product/organization/delegated-context.yaml` (original bytes `sha256:c99c6062e18919a39a481a4120f5b447ff2c5efcead713a085861181faa5daa9`).
 
-Derive one ordinary root and one Manager per local canonical Package from authoritative compiled facts. Resolve settings exactly and select context only through declared model links and reasons. Preserve the provenance of limits and settings. Do not infer ownership, tasks, runtime state or provider facts.
+Derive one ordinary root and one Manager per local canonical Package from authoritative compiled facts. Resolve settings exactly and select context only through declared model links and reasons. Preserve the provenance of limits and settings. Compile each Manager context deterministically from explicit model facts, never AI relevance selection or inferred missing relationships. Supply the same static operation instruction with separately compiled local context and configuration. Every local Manager, including empty and intermediate Packages, participates; do not optimize a Manager out. Missing necessary model links remain modeling errors for a separate model change. Do not infer ownership, runtime state or provider facts.
 
 ### product/realization/artifact-accounting
 
@@ -196,9 +196,9 @@ Account for every observed regular file as a protected input, exact registered a
 
 ### product/run/confirmed-run-history
 
-Kind: `vocabulary/Rule`. Source: `.markitect/model/product/run/confirmed-run-history.yaml` (original bytes `sha256:0d99d2416f788e2c55ffccf9b3e410122d0e280130de83bdf6316af43bbc63b9`).
+Kind: `vocabulary/Rule`. Source: `.markitect/model/product/run/confirmed-run-history.yaml` (original bytes `sha256:900e4a57a28a0a36faf1ecfd843cc14013f1888fdc00c5c5976ba0e9977f7a67`).
 
-Bind each run to its exact supplied model, repository, configuration and owner request. Admit work against finite assignment budgets and required review capacity. Change confirmed run state only after an exact journal acknowledgement. Preserve uncertain effects and their budget holds. Keep transition semantics separate from SQL, repository acquisition and provider protocols.
+Bind each run to its exact supplied model, repository, configuration and owner request. Admit work against finite assignment budgets and required review capacity. Change confirmed run state only after an exact journal acknowledgement. Preserve uncertain effects and their budget holds. The Host guarantees unchanged Apply propagation through every local Manager along direct parent-child edges. Managers act only on delivered messages and communicate only with their direct parent or children. Participation, required local and integration review, correction and completion follow a fixed Host protocol, never an AI plan. Managers judge local realization and integration, with reviewed change or no-change outcomes; parent-owned prerequisite work remains possible while children wait. Route cross-area questions through the tree and never compensate for missing model links. Finish only with current complete evidence and observed publication, not Agent consensus. Keep transition semantics separate from SQL, repository acquisition and provider protocols.
 
 ### product/runtime/container-runtime
 

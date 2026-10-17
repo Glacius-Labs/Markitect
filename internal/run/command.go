@@ -129,7 +129,7 @@ func (c Command) validate() error {
 		}
 		allowed.OwnerInput = c.OwnerInput
 		allowed.Quiescence = c.Quiescence
-	case PrepareSession, BindSession, PrepareStep, ObserveStep, PrepareTransport, ObserveTransport, RequestTool, ReplyTool, ObserveSessionStop:
+	case PrepareSession, ReadySession, BindSession, PrepareStep, ObserveStep, PrepareTransport, ObserveTransport, RequestTool, ReplyTool, ObserveSessionStop:
 		if err := c.Session.validate(c.Kind); err != nil {
 			return err
 		}

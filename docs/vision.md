@@ -12,7 +12,7 @@ Read this section first. The rest of this page develops it, and the [concept reg
 - A change of intent is made to the model, usually in conversation with a coding agent. Markitect then has it applied:
   - It compiles the model and checks that every repository file is accounted for.
   - It derives which responsibilities, obligations and files the change affects.
-  - It delegates the realization to recursive Managers. Each Manager implements its own slice or delegates parts of it to child Managers.
+  - The Host propagates one static operation through every local Manager. Each receives separately compiled explicit context, realizes its own area and integrates its direct children under a fixed review process; AI does not select participants or rewrite child operations ([DEC-039](concepts/register.md#dec-039-deterministic-manager-process)).
   - Independent reviewers with fresh context assess each candidate and each integration result.
   - The result is verified across the required Manager tree before a guarded Apply.
 - A repair that leaves intent unchanged is realized against the same model, without an invented model edit.

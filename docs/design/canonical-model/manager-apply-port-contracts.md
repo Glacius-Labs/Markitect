@@ -23,14 +23,6 @@ Markitect's state in `.markitect/state/` is excluded from source staleness; addi
 
 ```go
 // Package run. Referenced domain values belong to their defining packages.
-type DelegateProposal struct {
-	To          organization.ManagerID
-	Outcome     string
-	ModelBasis  []model.DefinitionRef
-	Constraints []string
-	DependsOn   []TaskID
-}
-
 type TaskSpec struct {
 	ID             TaskID
 	Assignment     AssignmentID
@@ -78,6 +70,8 @@ A dependent task starts only from an accepted producer delivery composed into it
 
 `QuestionRef` binds identity and version. The application binds owner answers to that exact proposal; an Agent cannot assert owner authority. A context-only answer may continue the same run; changed intent ends the run Incomplete and needs a committed model edit and a continuation ([journal](manager-apply-journal.md#questions-answers-and-model-changes)).
 
+The illustrative `TaskSpec.Outcome` above is the static Host operation instruction, not parent-authored prose. Its model basis and complete scope are compiler-derived. Additional work messages remain separate and cannot redefine that mandate. Exact responsibility and prerequisite records must follow the remaining [process details](manager-apply-concept.md#remaining-process-detail-and-technical-boundary); existing provider Session contracts are not a Manager scheduler.
+
 ## Application boundary and source acquisition
 
 CLI and MCP call a concrete `apply.Service.Apply(ctx, request)` and receive a result plus an ordinary error. The request names the repository and either starts a new assignment or continues an open one by its ID; a repository with an unfinished run refuses a new Apply until that run is resumed to its end or stopped ([execution contract](manager-apply-execution.md#assignments-and-runs)). Apply depends on one consumer-owned acquisition port:
@@ -117,18 +111,17 @@ type SessionIO interface {
 | `StepReceipt` | Step and session identity, observed status, proposed result or yield, output references, usage when observable and observation limits. Yield, proposed completion, needs decision, failure and uncertain interruption are distinct; none is an accepted delivery. |
 | `SessionQuery` | Known session ID and, where relevant, step ID. Unavailable information stays unknown. |
 | `SessionEvent` | Session and step, sequence and correlation, kind and exact observed payload, including prepared outbound payloads, transport observations, incoming content and tool exchanges. |
-| `ToolCall` / `ToolReply` | Correlation ID and a closed typed request or result for delegation, yielding, targeted reads, path claims, registry proposals, questions, allowed checks or result submission. The sender is the session whose container channel carried the call. |
+| `ToolCall` / `ToolReply` | Correlation ID and a closed typed request or result for adjacent messaging, yielding, targeted reads, path claims, registry proposals, questions, allowed checks or result submission. The sender is the session whose container channel carried the call. |
 
 Every session runs in its own container through the session helper `markitect-agentd`, which serves the Host tools to the provider CLI over MCP and carries everything over one stdio connection ([rebuild plan](manager-apply-rebuild-plan.md#container-runtime)). The Host implements `SessionIO`. The adapter calls `Observe` with the actual outgoing content and waits for durable acknowledgement before sending it. Hidden provider context and unobservable activity are reported as limits, never reconstructed from templates. An executor that cannot support this protocol and its input observation is not selectable.
 
-`Call` validates role and task state. A delegate call records a child task and returns its ID; the parent then yields, and the child is scheduled outside the callback. A callback never runs a session recursively or waits for a child workflow. Reviewer tools can read, request allowed checks and report; they cannot claim paths, change ownership or delegate.
+`Call` validates role, task state and every adjacent parent-child communication edge. Initial operation propagation is a Host obligation independent of tool calls or Agent output. A Manager can submit a question, dependency response or result and yield; a callback never runs a session recursively or waits for a child workflow. Reviewers can read, request allowed checks and report; they cannot claim paths, change ownership or control Manager participation.
 
-The tools form one closed catalogue; each role sees only its own:
+The tools form one closed catalogue; each role sees only its own. DEC-039 removes the former `plan` and `delegate` controls. The adjacent-message schema must follow the [fixed process](manager-apply-concept.md#tasks-and-delegation) before implementation; the table does not freeze that API:
 
 | Tool | Roles | Effect |
 | --- | --- | --- |
-| `plan(order, reasons)` | Manager | Records or revises the planned order of its child tasks, with reasons. |
-| `delegate(to, outcome, basis, constraints, depends_on)` | Manager | Records a task for a direct child, with the producer tasks whose accepted deliveries it needs, and returns its ID. |
+| Adjacent message (schema pending) | Manager | Sends a bounded question, response or result to a direct parent or child. Host checks each hop and records pending replies; this cannot create a narrower operation or omit a Manager. |
 | `read(ref)` | Manager, reviewer | Returns a Definition, artifact, delivery report or transcript by identity and records what was supplied. |
 | `reserve_path(path, form)` | Manager | Reserves a new artifact path within the creation areas and exclusive ownership. |
 | `register(path, realizes, why)` | Manager | Proposes a registry change for an owned, reserved or intake-assigned path. |
@@ -211,7 +204,7 @@ Publish writes into the working tree and never commits, merges or pushes; the ow
 
 ## Host lifecycle and completion
 
-The coordinator runs one writer at a time with recorded ready and waiting tasks. A task moves through local work, checks and review; a rejection starts the next bounded submission. A Manager with children also composes their deliveries and obtains integration review before the Host accepts its subtree. The [execution contract](manager-apply-execution.md#one-run-state-machine) owns run states, outcomes and admission; this port defines no other lifecycle. Typed results keep the current state, any terminal outcome, reasons and observation limits even when a Go error is returned.
+The Host guarantees the same operation reaches every local Manager and runs one writer at a time with recorded ready and waiting tasks. The ready-work policy is fixed by the product, not supplied by an Agent. Managers act only on messages; no silent skip or pass-through startup exception is allowed. A task moves through local work, checks and review; a rejection starts the next bounded submission. A Manager with children also composes their deliveries and obtains integration review before the Host accepts its subtree. The [execution contract](manager-apply-execution.md#one-run-state-machine) owns run states, outcomes and admission; this port defines no other lifecycle. Typed results keep the current state, any terminal outcome, reasons and observation limits even when a Go error is returned.
 
 The root is ordinary in this protocol. `apply` adds the final evidence check and publication after the root delivery. Evidence stays bound to its subject; changed content or assumptions require current assessment. Source drift prevents publication even when every Agent reported success.
 

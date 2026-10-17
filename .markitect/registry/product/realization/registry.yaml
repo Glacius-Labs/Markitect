@@ -24,6 +24,18 @@ artifacts:
     form: code
     realizes: [product/realization/artifact-accounting]
     why: Implements the stated responsibility within its declared boundary.
+  - path: "internal/realization/candidate_record.go"
+    form: code
+    realizes: [product/realization/artifact-accounting]
+    why: Records immutable bounded candidates and historical local census observations.
+  - path: "internal/realization/candidate_record_test.go"
+    form: test
+    realizes: [product/realization/artifact-accounting]
+    why: Tests historical roundtrips and distinguishing record refusal boundaries.
+  - path: "internal/realization/candidate_record_wire.go"
+    form: code
+    realizes: [product/realization/artifact-accounting]
+    why: Encodes closed canonical candidate facts and reconstructs them through shared invariants.
   - path: "internal/realization/candidate_test.go"
     form: test
     realizes: [product/realization/artifact-accounting]

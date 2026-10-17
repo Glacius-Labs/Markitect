@@ -3,5 +3,5 @@ imports:
     as: Vocab
 id: delegated-context
 kind: Vocab.Rule
-body: "Derive one ordinary root and one Manager per local canonical Package from authoritative compiled facts. Resolve settings exactly and select context only through declared model links and reasons. Preserve the provenance of limits and settings. Do not infer ownership, tasks, runtime state or provider facts."
+body: "Derive one ordinary root and one Manager per local canonical Package from authoritative compiled facts. Resolve settings exactly and select context only through declared model links and reasons. Preserve the provenance of limits and settings. Compile each Manager context deterministically from explicit model facts, never AI relevance selection or inferred missing relationships. Supply the same static operation instruction with separately compiled local context and configuration. Every local Manager, including empty and intermediate Packages, participates; do not optimize a Manager out. Missing necessary model links remain modeling errors for a separate model change. Do not infer ownership, runtime state or provider facts."
 spec: {}
