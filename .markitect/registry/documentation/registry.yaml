@@ -1,5 +1,9 @@
 apiVersion: markitect.registry/v1
 artifacts:
+  - path: "docs/design/canonical-model/standard-library.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Preserves standard-library owner decisions, proposal boundaries and the Library examples for continued design.
   - path: "docs/concepts/sources/manager-process-clarification-20261017.md"
     form: doc
     realizes: [documentation/current-guidance]
