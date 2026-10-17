@@ -524,3 +524,219 @@ artifacts:
     form: doc
     realizes: [examples/independent-oracles]
     why: Gives one coding Agent a neutral instruction to restore the actual existing Readinglog application to the selected visible baseline requirements.
+  - path: "experiments/test-projects/roombook/README.md"
+    form: doc
+    realizes: [examples/independent-oracles]
+    why: Documents complete Roombook requirement snapshots, explicit refinements, empty initial realization and selected actor-packet boundaries.
+  - path: "experiments/test-projects/roombook/snapshots/01-book-list/model-lock.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Pins exact dependency identities, versions and canonical digests for the complete Roombook 01-book-list snapshot.
+  - path: "experiments/test-projects/roombook/snapshots/01-book-list/model.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Declares the Roombook 01-book-list snapshot identity, version and explicit dependency requirements.
+  - path: "experiments/test-projects/roombook/snapshots/01-book-list/model/roombook/availability.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Defines roombook/availability in the complete 01-book-list requirement snapshot for later realization from an explicitly selected initial state.
+  - path: "experiments/test-projects/roombook/snapshots/01-book-list/model/roombook/book.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Defines roombook/book in the complete 01-book-list requirement snapshot for later realization from an explicitly selected initial state.
+  - path: "experiments/test-projects/roombook/snapshots/01-book-list/model/roombook/inputs.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Defines roombook/inputs in the complete 01-book-list requirement snapshot for later realization from an explicitly selected initial state.
+  - path: "experiments/test-projects/roombook/snapshots/01-book-list/model/roombook/interface.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Defines roombook/interface in the complete 01-book-list requirement snapshot for later realization from an explicitly selected initial state.
+  - path: "experiments/test-projects/roombook/snapshots/01-book-list/model/roombook/list.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Defines roombook/list in the complete 01-book-list requirement snapshot for later realization from an explicitly selected initial state.
+  - path: "experiments/test-projects/roombook/snapshots/01-book-list/model/roombook/realization.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Defines roombook/realization in the complete 01-book-list requirement snapshot for later realization from an explicitly selected initial state.
+  - path: "experiments/test-projects/roombook/snapshots/01-book-list/model/roombook/reservation.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Defines roombook/reservation in the complete 01-book-list requirement snapshot for later realization from an explicitly selected initial state.
+  - path: "experiments/test-projects/roombook/snapshots/01-book-list/model/roombook/storage.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Defines roombook/storage in the complete 01-book-list requirement snapshot for later realization from an explicitly selected initial state.
+  - path: "experiments/test-projects/roombook/snapshots/01-book-list/model/roombook/system.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Defines roombook/system in the complete 01-book-list requirement snapshot for later realization from an explicitly selected initial state.
+  - path: "experiments/test-projects/roombook/snapshots/02-cancel/model-lock.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Pins exact dependency identities, versions and canonical digests for the complete Roombook 02-cancel snapshot.
+  - path: "experiments/test-projects/roombook/snapshots/02-cancel/model.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Declares the Roombook 02-cancel snapshot identity, version and explicit dependency requirements.
+  - path: "experiments/test-projects/roombook/snapshots/02-cancel/model/roombook/availability.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Defines roombook/availability in the complete 02-cancel requirement snapshot for later realization from an explicitly selected initial state.
+  - path: "experiments/test-projects/roombook/snapshots/02-cancel/model/roombook/book.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Defines roombook/book in the complete 02-cancel requirement snapshot for later realization from an explicitly selected initial state.
+  - path: "experiments/test-projects/roombook/snapshots/02-cancel/model/roombook/cancel.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Defines roombook/cancel in the complete 02-cancel requirement snapshot for later realization from an explicitly selected initial state.
+  - path: "experiments/test-projects/roombook/snapshots/02-cancel/model/roombook/inputs.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Defines roombook/inputs in the complete 02-cancel requirement snapshot for later realization from an explicitly selected initial state.
+  - path: "experiments/test-projects/roombook/snapshots/02-cancel/model/roombook/interface.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Defines roombook/interface in the complete 02-cancel requirement snapshot for later realization from an explicitly selected initial state.
+  - path: "experiments/test-projects/roombook/snapshots/02-cancel/model/roombook/list.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Defines roombook/list in the complete 02-cancel requirement snapshot for later realization from an explicitly selected initial state.
+  - path: "experiments/test-projects/roombook/snapshots/02-cancel/model/roombook/realization.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Defines roombook/realization in the complete 02-cancel requirement snapshot for later realization from an explicitly selected initial state.
+  - path: "experiments/test-projects/roombook/snapshots/02-cancel/model/roombook/reservation.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Defines roombook/reservation in the complete 02-cancel requirement snapshot for later realization from an explicitly selected initial state.
+  - path: "experiments/test-projects/roombook/snapshots/02-cancel/model/roombook/storage.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Defines roombook/storage in the complete 02-cancel requirement snapshot for later realization from an explicitly selected initial state.
+  - path: "experiments/test-projects/roombook/snapshots/02-cancel/model/roombook/system.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Defines roombook/system in the complete 02-cancel requirement snapshot for later realization from an explicitly selected initial state.
+  - path: "experiments/test-projects/roombook/snapshots/03-summary/model-lock.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Pins exact dependency identities, versions and canonical digests for the complete Roombook 03-summary snapshot.
+  - path: "experiments/test-projects/roombook/snapshots/03-summary/model.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Declares the Roombook 03-summary snapshot identity, version and explicit dependency requirements.
+  - path: "experiments/test-projects/roombook/snapshots/03-summary/model/roombook/availability.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Defines roombook/availability in the complete 03-summary requirement snapshot for later realization from an explicitly selected initial state.
+  - path: "experiments/test-projects/roombook/snapshots/03-summary/model/roombook/book.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Defines roombook/book in the complete 03-summary requirement snapshot for later realization from an explicitly selected initial state.
+  - path: "experiments/test-projects/roombook/snapshots/03-summary/model/roombook/cancel.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Defines roombook/cancel in the complete 03-summary requirement snapshot for later realization from an explicitly selected initial state.
+  - path: "experiments/test-projects/roombook/snapshots/03-summary/model/roombook/inputs.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Defines roombook/inputs in the complete 03-summary requirement snapshot for later realization from an explicitly selected initial state.
+  - path: "experiments/test-projects/roombook/snapshots/03-summary/model/roombook/interface.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Defines roombook/interface in the complete 03-summary requirement snapshot for later realization from an explicitly selected initial state.
+  - path: "experiments/test-projects/roombook/snapshots/03-summary/model/roombook/list.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Defines roombook/list in the complete 03-summary requirement snapshot for later realization from an explicitly selected initial state.
+  - path: "experiments/test-projects/roombook/snapshots/03-summary/model/roombook/realization.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Defines roombook/realization in the complete 03-summary requirement snapshot for later realization from an explicitly selected initial state.
+  - path: "experiments/test-projects/roombook/snapshots/03-summary/model/roombook/reservation.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Defines roombook/reservation in the complete 03-summary requirement snapshot for later realization from an explicitly selected initial state.
+  - path: "experiments/test-projects/roombook/snapshots/03-summary/model/roombook/storage.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Defines roombook/storage in the complete 03-summary requirement snapshot for later realization from an explicitly selected initial state.
+  - path: "experiments/test-projects/roombook/snapshots/03-summary/model/roombook/summary.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Defines roombook/summary in the complete 03-summary requirement snapshot for later realization from an explicitly selected initial state.
+  - path: "experiments/test-projects/roombook/snapshots/03-summary/model/roombook/system.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Defines roombook/system in the complete 03-summary requirement snapshot for later realization from an explicitly selected initial state.
+  - path: "experiments/test-projects/roombook/sources.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Binds Roombook public requirements, unchanged dependencies and illustrative controls to immutable source paths and digests, with explicit fixture refinements.
+  - path: "experiments/test-projects/roombook/sources/public-contract.md"
+    form: doc
+    realizes: [examples/independent-oracles]
+    why: Preserves the immutable public Roombook contract as authoring provenance outside selected actor packets.
+  - path: "experiments/test-projects/roombook/template/.markitect/dependencies/core/model.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Preserves the exact pinned Core vocabulary input shared by all Roombook snapshots for portable model compilation.
+  - path: "experiments/test-projects/roombook/template/.markitect/dependencies/core/model/markitect/core/kind.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Preserves the exact pinned Core vocabulary input shared by all Roombook snapshots for portable model compilation.
+  - path: "experiments/test-projects/roombook/template/.markitect/dependencies/core/model/markitect/core/max-count.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Preserves the exact pinned Core vocabulary input shared by all Roombook snapshots for portable model compilation.
+  - path: "experiments/test-projects/roombook/template/.markitect/dependencies/core/model/markitect/core/min-count.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Preserves the exact pinned Core vocabulary input shared by all Roombook snapshots for portable model compilation.
+  - path: "experiments/test-projects/roombook/template/.markitect/dependencies/core/model/markitect/core/name.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Preserves the exact pinned Core vocabulary input shared by all Roombook snapshots for portable model compilation.
+  - path: "experiments/test-projects/roombook/template/.markitect/dependencies/core/model/markitect/core/properties.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Preserves the exact pinned Core vocabulary input shared by all Roombook snapshots for portable model compilation.
+  - path: "experiments/test-projects/roombook/template/.markitect/dependencies/core/model/markitect/core/property.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Preserves the exact pinned Core vocabulary input shared by all Roombook snapshots for portable model compilation.
+  - path: "experiments/test-projects/roombook/template/.markitect/dependencies/core/model/markitect/core/target.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Preserves the exact pinned Core vocabulary input shared by all Roombook snapshots for portable model compilation.
+  - path: "experiments/test-projects/roombook/template/.markitect/dependencies/core/model/markitect/core/type.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Preserves the exact pinned Core vocabulary input shared by all Roombook snapshots for portable model compilation.
+  - path: "experiments/test-projects/roombook/template/.markitect/dependencies/core/model/markitect/core/values.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Preserves the exact pinned Core vocabulary input shared by all Roombook snapshots for portable model compilation.
+  - path: "experiments/test-projects/roombook/template/.markitect/dependencies/software/model.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Preserves the exact pinned Software vocabulary input shared by all Roombook snapshots for portable model compilation.
+  - path: "experiments/test-projects/roombook/template/.markitect/dependencies/software/model/software/concept.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Preserves the exact pinned Software vocabulary input shared by all Roombook snapshots for portable model compilation.
+  - path: "experiments/test-projects/roombook/template/.markitect/dependencies/software/model/software/rule.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Preserves the exact pinned Software vocabulary input shared by all Roombook snapshots for portable model compilation.
+  - path: "experiments/test-projects/roombook/template/.markitect/dependencies/software/model/software/use-case.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Preserves the exact pinned Software vocabulary input shared by all Roombook snapshots for portable model compilation.
+  - path: "experiments/test-projects/roombook/template/.markitect/execution.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Supplies illustrative Roombook preparation controls and the model-required Python test command without runtime execution authority.

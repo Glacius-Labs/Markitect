@@ -1,0 +1,29 @@
+imports:
+  - package: software
+    as: Software
+id: interface
+kind: Software.Rule
+body: |-
+  From realization/, invoke [[system]] as:
+  `python -B app.py --db PATH COMMAND ...`
+  Use Python 3.13 standard library; no network, service or external package.
+  Every successful command writes one JSON object to stdout and exits 0.
+  Invalid input or a business conflict writes exactly one JSON object to stdout
+  with only an error field containing an understandable nonempty string; it
+  exits 2 and leaves stored state unchanged. Expected
+  failures do not produce an unhandled crash. Exact error wording is free.
+
+  Commands:
+  - `book --room NAME --start YYYY-MM-DDTHH:MMZ --end YYYY-MM-DDTHH:MMZ --title TEXT`
+    follows [[book]] and returns the created [[reservation]] record directly.
+  - `list [--room NAME]` follows [[list]] and returns a reservations array sorted
+    by start then id, including canceled records.
+
+  [[inputs]] governs values and [[storage]] governs durability and errors. The
+  record fields are id, room, start, end, title and status. [[realization]] requires
+  usage documentation and tests. From realization/, `python -B -m unittest
+  discover -s tests` runs the automated suite. The fixed CLI/test entry points do
+  not prescribe internal module organization or a production framework.
+  `cancel --id INTEGER` follows [[cancel]] and returns the existing record with
+  canceled status; a repeated cancellation is an idempotent success.
+spec: {}
