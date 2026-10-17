@@ -67,7 +67,7 @@ The target `cmd/` and `internal/` responsibilities use separate `apply-*` layers
 
 | Package | Purpose | Owning document |
 |---|---|---|
-| `internal/apply` | Captures or previews selected source inputs and compiles their original model bytes through consumer-owned ports. | [docs/design/canonical-model/manager-apply-go-architecture.md](../design/canonical-model/manager-apply-go-architecture.md#organize-by-responsibility) |
+| `internal/apply` | Compiles captured or previewed model inputs and prepares their source-bound registry ownership. | [docs/design/canonical-model/manager-apply-go-architecture.md](../design/canonical-model/manager-apply-go-architecture.md#organize-by-responsibility) |
 
 ## Apply adapters
 
