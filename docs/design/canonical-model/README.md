@@ -42,7 +42,7 @@ Implementations identify the supported part of this target and its evidence. An 
 | Term | Meaning |
 | --- | --- |
 | Host | Markitect's deterministic orchestration: preparation, scheduling, validation, records and guarded writes. |
-| Manager | The logical owner of one local Package's realization. The separate runtime root coordinates the whole model and its aggregate integration; it may write only its owned artifacts and authorized new paths. No canonical root Package is invented. |
+| Manager | The logical owner of one local Package's realization. The root is also an ordinary Manager, with a runtime identity but no canonical root Package. It coordinates the whole model and its aggregate integration, and may write only its owned artifacts and authorized new paths. |
 | Assignment | One owner request with its caps; it links its runs. |
 | Run | One Apply over fixed inputs, from Prepared to one Finished outcome. |
 | Continuation | A further run of the same assignment after a run finished without completing it. |
