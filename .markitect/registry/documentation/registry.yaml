@@ -1,5 +1,9 @@
 apiVersion: markitect.registry/v1
 artifacts:
+  - path: "docs/concepts/sources/project-history-working-method-20261017.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Preserves owner reflection and explicit adoption of the future working method.
   - path: "docs/history/project-history-20261017.md"
     form: doc
     realizes: [documentation/current-guidance]
