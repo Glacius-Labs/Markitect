@@ -166,8 +166,10 @@ func TestImmutableBlobInterpretationsAndCorruption(t *testing.T) {
 func TestReadByteBudgetStopsOnlyAtWholeBatchBoundaries(t *testing.T) {
 	s := acquire(t, request(t))
 	ctx := context.Background()
-	large := strings.Repeat("x", 640<<10)
-	for n := range 2 {
+	// Two ordinary batches exceed the aggregate target; one larger batch must
+	// still fit whole by itself, with a final small batch continuing after it.
+	for n, size := range []int{640 << 10, 640 << 10, 1100 << 10, 1} {
+		large := strings.Repeat("x", size)
 		id := fmt.Sprintf("large-%d", n)
 		w := struct {
 			Version          uint32
@@ -187,13 +189,20 @@ func TestReadByteBudgetStopsOnlyAtWholeBatchBoundaries(t *testing.T) {
 			t.Fatal(err)
 		}
 	}
-	page, err := s.Read(ctx, run.EventQuery{Limit: 256})
-	if err != nil || page.Revision != 2 || page.Next != 1 || len(page.Batches) != 1 {
-		t.Fatal("byte budget exposed partial or oversized page", page.Revision, page.Next, len(page.Batches), err)
-	}
-	page, err = s.Read(ctx, run.EventQuery{After: page.Next, Through: page.Revision, Limit: 256})
-	if err != nil || page.Revision != 2 || page.Next != 0 || len(page.Batches) != 1 || page.Batches[0].ID() != "large-1" {
-		t.Fatal("whole-batch continuation", page.Revision, page.Next, len(page.Batches), err)
+	var after, through uint64
+	for n := range 4 {
+		page, err := s.Read(ctx, run.EventQuery{After: after, Through: through, Limit: 256})
+		wantNext := uint64(n + 1)
+		if n == 3 {
+			wantNext = 0
+		}
+		if err != nil || page.Revision != 4 || page.Next != wantNext || len(page.Batches) != 1 || page.Batches[0].ID() != fmt.Sprintf("large-%d", n) {
+			t.Fatal("whole-batch budget/continuation", n, page.Revision, page.Next, len(page.Batches), err)
+		}
+		if n == 2 && len(page.Batches[0].Bytes()) <= targetPageBytes {
+			t.Fatal("above-target batch was truncated")
+		}
+		after, through = page.Next, page.Revision
 	}
 }
 
