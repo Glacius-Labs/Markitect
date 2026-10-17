@@ -42,22 +42,11 @@ The owner also considered whether higher Managers should not know or read descen
 
 The owner selected the strict variant as the baseline: authors express the cross-Package connections that context compilation needs ([DEC-027](../../concepts/register.md#dec-027-strict-links-with-an-optional-optimizer)). The compensating variant, in which discovery or broader reading during every realization finds unlinked statements, was not selected.
 
-An optional Optimizer proposes missing links. Each proposal names its source, target and reason, and it may prepare the actual edits as a candidate. Review and integration under the project's delegated authority decide which edits become model content, without manual confirmation of each link. Finding a connection and adopting it are separate steps. The Optimizer's context can reach beyond existing links, since those links are what it investigates. How Managers organize that wider investigation is open. Structural validation can check a link once its form is defined; it cannot prove that all relevant prose is linked.
+The accepted later [Optimize direction](commands.md#optimize-the-canonical-model) extends this to justified model improvements, using Manager review and integration without unsupported invention ([DEC-044](../../concepts/register.md#dec-044-commands-reuse-the-manager-organization)). Finding a connection and adopting it remain separate steps. Structural validation can check a link's form; it cannot prove that all relevant prose is linked.
 
 ## Later operations and extensions
 
-Model changes and artifact changes are separate operations. A task can read both, but its change target is explicit and checked against the returned edits.
-
-| Operation | Change target | Intended work |
-| --- | --- | --- |
-| Compile | None | Check compilability and resolve the model deterministically, without Managers. |
-| Model optimize | Model | Managers look for missing connections and return justified link proposals or candidate edits. |
-| Check or verify meaning | None | Managers and reviewers assess selected obligations and report evidence and findings. |
-| Cleanup or refactor | Model or artifacts, one per operation | Improve organization within the existing requirements and permitted freedom. |
-| Bughunt | Artifacts | A prepared instruction: find bugs against the model and fix them, with review and integration. It never rewrites the model to fit faulty artifacts. |
-| Apply | Artifacts | Reconcile artifacts with the current model. Implemented first. |
-
-Most operations share one sequence: check and load the model, assemble context, give the operation's instruction and custom instructions to the root, delegate recursively, integrate and check. Custom commands could reuse it by declaring a task prompt, context, configuration and one change target. Command naming (for example `markitect model optimize` against a flat surface), a separate prepare command and the registration format are open.
+[Commands over the Manager organization](commands.md) now owns the accepted operation semantics: Apply, Cleanup, Bughunt, Refactor, read-only Verify, Custom Commands, Extract and Optimize ([DEC-044](../../concepts/register.md#dec-044-commands-reuse-the-manager-organization)). Model and artifact changes remain separate. Structural compilation is deterministic preparation without Managers. Exact command registration and future model-writing execution contracts remain open; this direction does not add first-Apply implementation scope.
 
 Further extensions recorded for after the two-Apply demonstration:
 
@@ -65,7 +54,7 @@ Further extensions recorded for after the two-Apply demonstration:
 | --- | --- | --- |
 | Computed scope | Impact-scoped Apply from the model difference, references and registry ([concept](manager-apply-concept.md#toward-computed-scope)). | Vision mechanism 1 |
 | Reuse accepted Manager assessments | Later, reuse an Explore assessment, local result or integration result separately only when its complete bound subject and assumptions remain valid. Retain every Manager in the census and record the exact reused evidence; unchanged bytes do not resolve new findings or unanswered messages. This needs an explicit future extension to active participation and does not waive the first Apply's initial Explore or review reserve. | [Owner confirmation](../../concepts/sources/manager-process-clarification-20261017.md#bounded-coordination-and-idle-execution) |
-| Assess | A full reconciliation that stops before publication and reports drift, for CI and existing projects. | |
+| Assess | A full reconciliation that stops before publication and reports drift, for CI and existing projects. This earlier idea may create a candidate; it is distinct from the accepted read-only Verify operation. | |
 | Observed code dependencies | Compare, for example, the Go import graph with the model's references; a difference becomes an Optimizer proposal for a missing link. | [ENH-001](../../concepts/register.md#enh-001-observed-code-dependencies-widen-impact) |
 | Model lint | Registry-based signals: Definitions without realization, files realizing many Definitions, Packages near the context limit. | [ENH-002](../../concepts/register.md#enh-002-model-quality-linter-and-metrics) |
 | Scenario Definitions | Owner-authored examples with structured inputs and outputs in the model, which tests must demonstrably cover. | [ENH-003](../../concepts/register.md#enh-003-test-to-statement-binding-and-test-review) |
@@ -74,8 +63,8 @@ Further extensions recorded for after the two-Apply demonstration:
 | Coordination hot paths | A later view of recurring waits, cross-area requests and correction/integration costs, derived from the already required [coordination account](manager-apply-concept.md#reports-and-execution-history). This does not defer basic metrics, add a second ledger or automatically reorganize Managers. | [Owner confirmation](../../concepts/sources/manager-process-clarification-20261017.md#working-bases-and-session-continuity) |
 | Coordination as a modeling signal | In the later hot-path view, show recurring cross-branch questions together with waiting, rework and integration costs, their routes and evidence. Suggest that the author examine responsibility boundaries; high traffic alone does not prove a bad model. Never reorganize Managers or author model links automatically. | [Owner confirmation](../../concepts/sources/manager-process-clarification-20261017.md#bounded-coordination-and-idle-execution) |
 | Kind guidance | Operational task and review recipes keyed by resolved Kind identity, adding no project rules and granting no execution rights. | |
-| Model operations | Optimizer, cleanup, bughunt and custom commands as listed above. | [DEC-026](../../concepts/register.md#dec-026-apply-comes-first-and-changes-only-artifacts) |
-| Existing-project adoption | An operation that drafts a model and a registry proposal from existing code; the owner reviews and commits them. | |
+| Commands and model operations | Accepted semantics and remaining execution boundaries in the [command design](commands.md). | [DEC-044](../../concepts/register.md#dec-044-commands-reuse-the-manager-organization) |
+| Existing-project adoption | [Extract](commands.md#extract-the-existing-stand) drafts and refines a model and accounting proposal from existing code; the owner reviews and commits them. Implementation remains deferred. | [DEC-044](../../concepts/register.md#dec-044-commands-reuse-the-manager-organization) |
 | Egress allowlist | Restrict a session container's network to its provider and declared hosts. | [DEC-037](../../concepts/register.md#dec-037-agent-sessions-and-checks-run-in-linux-containers) |
 | Experience and doctor | Experience notes and an operational check through the Managers ([experience reflection](../../concepts/reflections/experience-without-implicit-rules-20261016.md)). | [IDEA-001](../../concepts/register.md#idea-001-the-model-as-institutional-memory-for-stateless-agents), [IDEA-017](../../concepts/register.md#idea-017-operational-check-through-the-managers) |
 | Approval reuse, cockpit, Government | Reusing earlier approvals, a richer interface and delegated model authority. | [VIS-001](../../concepts/register.md#vis-001-cockpit-personal-ai-and-autonomous-project-organization), [OQ-008](../../concepts/register.md#open-questions) |
@@ -102,7 +91,7 @@ The consolidation of 16 October 2026 replaced these earlier proposals with simpl
 ## Open questions
 
 - Which explicit connections does the strict baseline require, and which reference classes and directions feed context?
-- How does the Optimizer present, review and integrate its suggestions, and how is its investigation scoped?
+- How are the accepted Optimize and Extract workflows staged and bound to model-writing execution? Their review and integration reuse is selected in the [command design](commands.md); exact producer contracts remain future work.
 - Which further team variants should be tried after the named-reviewer/arbiter target in DEC-043? Its conflict and finite rejection rules are now selected, not an open question.
 - Should code, tests and documentation ever get separate hierarchies?
 - How are model and artifact commands named, and how are custom commands registered without another execution mechanism?
