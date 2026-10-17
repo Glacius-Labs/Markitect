@@ -18,7 +18,7 @@ This package is the Host's client of the container engine ([DEC-037](../../../do
 
 ## Integrating a session adapter
 
-These rules come from real runs; the [capability record](../../../docs/validation/runtime-capabilities-20261017.md) holds the evidence.
+These rules come from real runs, recorded in the [handshake record](../../../docs/validation/runtime-handshake-20261017.md) and the [capability record](../../../docs/validation/runtime-capabilities-20261017.md).
 
 - **Codex runs with sandbox `danger-full-access`.** Its own sandbox cannot start in an unprivileged container. With `read-only` or `workspace-write`, every shell command fails, and the Agent may still report success. Read-only roles get read-only mounts instead.
 - **Host tools go through MCP.**
@@ -28,14 +28,16 @@ These rules come from real runs; the [capability record](../../../docs/validatio
 - **A conversation that may continue must be persistent.**
   - Codex threads are not ephemeral, and `CODEX_HOME` stays in the provider home (`/home/agent/.codex`).
   - Claude Code runs without `--no-session-persistence`.
-  - A new container on the same provider-home volume then resumes, for example with `claude --resume <session>`.
+  - A new container on the same provider-home volume then resumes, for example with `claude --resume <session>`. This is demonstrated for Claude Code; Codex resume is still unproven.
 - **The credential goes in `frame.Start.Env`**, never into container environment or arguments. Record that message with the value redacted.
 - **Provider messages can be large.** A tool result can carry a whole file, so size per-message limits for that.
 - **Quiescence before a basis change:**
   1. Close admission and reconcile admitted actions.
-  2. `Pause` the session container and take a `Census` for the record. The MCP bridge (`markitect-agent`) stays alive between turns, and zombies (state `Z`) have ended.
+  2. Take a `Census` for the record, then `Pause` the session container. The MCP bridge (`markitect-agent`) stays alive between turns, and zombies (state `Z`) have ended.
   3. Change the workspace through `RunHelper` and confirm it.
   4. `Unpause`. The next message names what changed, because a frozen provider keeps its open files and in-memory view.
+
+  Pausing also freezes agentd, so a paused session answers no control request: not `Census`, not `Stop` (its grace starts only after `Unpause`) and not the graceful end of `Close`. Unpause before any of them; a `Close` on a paused session removes the container by force only after its timeout.
 - **Fresh volumes take over ownership from the image.** The image owns `/home/agent` and `/work` by user 1000, so fresh volumes mounted there are writable for the session user.
 
 ## Tests

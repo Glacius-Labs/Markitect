@@ -2,6 +2,7 @@ package container_test
 
 import (
 	"bufio"
+	"context"
 	"encoding/json"
 	"fmt"
 	"strings"
@@ -141,6 +142,7 @@ func TestClaudeSessionSeesAQuiescentBasisAdvance(t *testing.T) {
 	if err := r.engine.Pause(r.ctx, name); err != nil {
 		t.Fatal(err)
 	}
+	t.Cleanup(func() { _ = r.engine.Unpause(context.Background(), name) }) // never leave it frozen
 	r.writeFile("advance-basis", mounts, "/work/basis.txt", "basis-3\n")
 	if err := r.engine.Unpause(r.ctx, name); err != nil {
 		t.Fatal(err)

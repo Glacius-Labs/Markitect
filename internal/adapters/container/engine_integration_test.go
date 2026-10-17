@@ -330,6 +330,7 @@ func TestRealEnginePauseIsAWriteBarrier(t *testing.T) {
 	if err := engine.Pause(ctx, spec.Name); err != nil {
 		t.Fatal(err)
 	}
+	t.Cleanup(func() { _ = engine.Unpause(context.Background(), spec.Name) }) // never leave it frozen
 	frozen := read()
 	time.Sleep(time.Second)
 	if again := read(); again != frozen {
