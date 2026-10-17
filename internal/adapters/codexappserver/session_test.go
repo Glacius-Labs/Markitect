@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"io"
+	"math"
 	"strings"
 	"sync"
 	"testing"
@@ -272,8 +273,10 @@ func payloadForSession(t *testing.T, media string, data []byte) run.Payload {
 }
 func sessionAdmissions(t *testing.T) (run.SessionAdmission, run.StepAdmission) {
 	t.Helper()
-	profile, _ := json.Marshal(SessionProfile{Version: 1, Model: "admitted-model", Effort: "high", Store: "store", CPUs: 1, MemoryBytes: 1 << 30, Pids: 128, TmpBytes: 1 << 20})
-	p := payloadForSession(t, "application/vnd.markitect.codex-session-profile+json", profile)
+	p, err := NewSessionProfile(SessionProfile{Version: 1, Model: "admitted-model", Effort: "high", Store: "store", CPUs: 1, MemoryBytes: 1 << 30, Pids: 128, TmpBytes: 1 << 20})
+	if err != nil {
+		t.Fatal(err)
+	}
 	tools, err := run.ToolCatalog(run.PhaseWork)
 	if err != nil {
 		t.Fatal(err)
@@ -306,6 +309,144 @@ func sessionsForTest(t *testing.T, f *fakeRuntime) *Sessions {
 	}
 	t.Cleanup(func() { _ = f.Close() })
 	return s
+}
+
+func TestCodexNewSessionProfileRoundTripAndOpen(t *testing.T) {
+	want := SessionProfile{Version: 1, Model: "admitted-model", Effort: "high", BaseInstructions: "Base: ä <example>\n", DeveloperInstructions: "Use the exact \"Host\" instruction.", Store: "explicit-store", CPUs: 1.5, MemoryBytes: 2 << 30, Pids: 192, TmpBytes: 2 << 20, Network: "explicit-network"}
+	p, err := NewSessionProfile(want)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !p.Valid() || p.Ref().MediaType != "application/vnd.markitect.codex-session-profile+json" || p.Ref().Encoding != "utf-8" {
+		t.Fatalf("invalid profile payload: %+v", p.Ref())
+	}
+	var decoded SessionProfile
+	if err := strictValue(p.Bytes(), &decoded); err != nil || decoded != want {
+		t.Fatalf("profile changed during serialization: %+v, %v", decoded, err)
+	}
+	a, _ := sessionAdmissions(t)
+	a.Profile, a.Plan.Profile = p, p.Ref()
+	got, _, err := readSessionProfile(a)
+	if err != nil || got != want {
+		t.Fatalf("profile changed during admission: %+v, %v", got, err)
+	}
+	channel := &fakeChannel{}
+	runtime := peer(channel)
+	s := sessionsForTest(t, runtime)
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+	opened, err := s.Open(ctx, a, channel)
+	if err != nil || opened.Uncertain || opened.ProviderSession != run.ProviderSessionID(codecThreadID) {
+		t.Fatalf("factory payload refused by Open: %+v, %v", opened, err)
+	}
+	if _, err := s.Stop(ctx, run.StopRequest{Session: a.Plan.ID, ProviderSession: opened.ProviderSession, Timeout: time.Second}, channel); err != nil {
+		t.Fatal(err)
+	}
+}
+
+func TestCodexNewSessionProfileAndAdmissionRejectInvalidSettings(t *testing.T) {
+	cases := []struct {
+		name   string
+		change func(*SessionProfile)
+	}{
+		{"version", func(p *SessionProfile) { p.Version = 0 }},
+		{"model", func(p *SessionProfile) { p.Model = " \t" }},
+		{"effort", func(p *SessionProfile) { p.Effort = "unsupported" }},
+		{"store", func(p *SessionProfile) { p.Store = "" }},
+		{"cpus", func(p *SessionProfile) { p.CPUs = 0 }},
+		{"memory", func(p *SessionProfile) { p.MemoryBytes = 0 }},
+		{"pids", func(p *SessionProfile) { p.Pids = 0 }},
+		{"tmp", func(p *SessionProfile) { p.TmpBytes = 0 }},
+		{"network", func(p *SessionProfile) { p.Network = "host" }},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			a, _ := sessionAdmissions(t)
+			var profile SessionProfile
+			if err := json.Unmarshal(a.Profile.Bytes(), &profile); err != nil {
+				t.Fatal(err)
+			}
+			tc.change(&profile)
+			if p, err := NewSessionProfile(profile); !errors.Is(err, ErrSession) || p.Valid() {
+				t.Fatalf("constructor admitted invalid profile: %+v, %v", p.Ref(), err)
+			}
+			data, err := json.Marshal(profile)
+			if err != nil {
+				t.Fatal(err)
+			}
+			a.Profile = payloadForSession(t, "application/vnd.markitect.codex-session-profile+json", data)
+			a.Plan.Profile = a.Profile.Ref()
+			if _, _, err := readSessionProfile(a); !errors.Is(err, ErrSession) {
+				t.Fatalf("reader admitted invalid profile: %v", err)
+			}
+		})
+	}
+	for _, tc := range []struct {
+		name   string
+		change func(*SessionProfile)
+	}{
+		{"nonfinite-cpus", func(p *SessionProfile) { p.CPUs = math.NaN() }},
+		{"invalid-utf8", func(p *SessionProfile) { p.BaseInstructions = string([]byte{0xff}) }},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			a, _ := sessionAdmissions(t)
+			var profile SessionProfile
+			if err := json.Unmarshal(a.Profile.Bytes(), &profile); err != nil {
+				t.Fatal(err)
+			}
+			tc.change(&profile)
+			if p, err := NewSessionProfile(profile); !errors.Is(err, ErrSession) || p.Valid() {
+				t.Fatalf("constructor serialized unrepresentable settings: %+v, %v", p.Ref(), err)
+			}
+		})
+	}
+}
+
+func TestCodexOpenRejectsWrongProfileAndToolsInterpretation(t *testing.T) {
+	cases := []struct {
+		name    string
+		profile bool
+		media   string
+		codec   string
+	}{
+		{"claude-profile-media", true, "application/vnd.markitect.claude-session-profile+json", "utf-8"},
+		{"generic-profile-media", true, "application/json", "utf-8"},
+		{"profile-encoding", true, "application/vnd.markitect.codex-session-profile+json", "utf-16"},
+		{"mixed-tools-media", false, "application/vnd.markitect.codex-session-profile+json", "utf-8"},
+		{"tools-encoding", false, "application/vnd.markitect.tools+json", "utf-16"},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			a, _ := sessionAdmissions(t)
+			original := a.Tools
+			if tc.profile {
+				original = a.Profile
+			}
+			p, err := run.NewPayload(tc.media, tc.codec, original.Bytes())
+			if err != nil {
+				t.Fatal(err)
+			}
+			if tc.profile {
+				a.Profile, a.Plan.Profile = p, p.Ref()
+			} else {
+				a.Tools, a.Plan.Tools = p, p.Ref()
+			}
+			started, resolved := false, false
+			s, err := NewSessionsWithRuntime(func(context.Context, container.ContainerSpec) (RuntimeSession, error) {
+				started = true
+				return nil, errors.New("unexpected runtime start")
+			}, nil, func(context.Context, string) (RuntimeCredential, error) {
+				resolved = true
+				return RuntimeCredential{}, errors.New("unexpected credential access")
+			})
+			if err != nil {
+				t.Fatal(err)
+			}
+			if _, err := s.Open(context.Background(), a, &fakeChannel{}); !errors.Is(err, ErrSession) || started || resolved {
+				t.Fatalf("wrong payload interpretation reached execution: start=%t credentials=%t error=%v", started, resolved, err)
+			}
+		})
+	}
 }
 
 func TestCodexVerifiedEmptyWorkspaceDisablesImageCopyUp(t *testing.T) {
