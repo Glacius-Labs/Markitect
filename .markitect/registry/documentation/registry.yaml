@@ -1248,6 +1248,10 @@ artifacts:
     form: doc
     realizes: [documentation/current-guidance]
     why: Preserves the explicitly requested Coordinator transition, fixed delivery sources and next scoped tasks.
+  - path: "docs/development/coordinator-handoff-20261017-1505.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Preserves the owner-requested five-hour Coordinator checkpoint, fixed deliveries and evidence recovery limits.
   - path: "docs/development/documentation.md"
     form: doc
     realizes: [documentation/current-guidance]
