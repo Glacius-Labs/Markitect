@@ -1,6 +1,6 @@
 # Usage
 
-This reference describes current executable behavior before the [Apply rebuild](implementation-plan.md). The [target design](design/canonical-model/README.md) will be implemented in bounded packages; its proposed interfaces are not already CLI features.
+Current source implements canonical v1 read-only preparation and a guarded generated model view. Apply and execution remain unavailable in the staged [rebuild](implementation-plan.md). The [design contracts](design/canonical-model/README.md) govern later bounded packages; they do not imply executable commands.
 
 Current source uses the model-first command surface documented in [Project operations](project-operations.md), with workflow and ownership explained in [Project workflow](project-workflow.md). Release preparation commands are documented in the repository [distribution guide](../integration/README.md).
 
@@ -16,7 +16,7 @@ See the [v0.14.1 compatibility guide](https://github.com/Glacius-Labs/Markitect/
 
 <a id="initialize-a-project"></a>
 
-See [v0.14.1 initialization behavior](https://github.com/Glacius-Labs/Markitect/blob/v0.14.1/docs/usage.md#initialize-a-project). Current initialization is documented in [Project operations](project-operations.md#cli-setup-and-current-roots).
+See [v0.14.1 initialization behavior](https://github.com/Glacius-Labs/Markitect/blob/v0.14.1/docs/usage.md#initialize-a-project). The current explicit-input boundary is documented in [Project operations](project-operations.md#cli-setup-and-current-roots).
 
 ## Historical Markitect-first release candidate
 

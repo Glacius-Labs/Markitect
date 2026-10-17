@@ -1,0 +1,34 @@
+apiVersion: markitect.registry/v1
+artifacts:
+  - path: "cmd/markitect/main.go"
+    form: code
+    realizes: [product/cli/honest-read-only-interface]
+    why: Implements the stated responsibility within its declared boundary.
+  - path: "internal/adapters/cli/command.go"
+    form: code
+    realizes: [product/cli/honest-read-only-interface]
+    why: Implements the stated responsibility within its declared boundary.
+  - path: "internal/adapters/cli/json.go"
+    form: code
+    realizes: [product/cli/honest-read-only-interface]
+    why: Implements the stated responsibility within its declared boundary.
+  - path: "internal/adapters/cli/report.go"
+    form: code
+    realizes: [product/cli/honest-read-only-interface]
+    why: Implements the stated responsibility within its declared boundary.
+  - path: "internal/bootstrap/main.go"
+    form: code
+    realizes: [product/cli/honest-read-only-interface]
+    why: Implements the stated responsibility within its declared boundary.
+  - path: "internal/adapters/cli/command_test.go"
+    form: test
+    realizes: [product/cli/honest-read-only-interface]
+    why: Verifies actual consumer stages, source bindings and negative effect boundaries.
+  - path: "internal/bootstrap/main_test.go"
+    form: test
+    realizes: [product/cli/honest-read-only-interface]
+    why: Verifies actual consumer stages, source bindings and negative effect boundaries.
+  - path: "internal/bootstrap/documents_alias_windows_test.go"
+    form: test
+    realizes: [product/cli/honest-read-only-interface]
+    why: Tests actual native-alias external-source write refusal and preserved target bytes through the composed product.

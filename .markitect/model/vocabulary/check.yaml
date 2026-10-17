@@ -1,0 +1,10 @@
+imports:
+  - package: markitect/core
+    as: Core
+id: Check
+kind: Core.Kind
+body: >-
+  A required source maintenance check. Its command is a literal command string
+  for contributor and pipeline wiring; declaring it never executes it.
+spec:
+  properties: [command]

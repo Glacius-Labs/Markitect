@@ -1,0 +1,130 @@
+apiVersion: markitect.registry/v1
+artifacts:
+  - path: "internal/organization/context.go"
+    form: code
+    realizes: [product/organization/delegated-context]
+    why: Implements the stated responsibility within its declared boundary.
+  - path: "internal/organization/context_behavior_test.go"
+    form: test
+    realizes: [product/organization/delegated-context]
+    why: Tests the stated responsibility and retains negative boundaries.
+  - path: "internal/organization/context_contracts.go"
+    form: code
+    realizes: [product/organization/delegated-context]
+    why: Implements the stated responsibility within its declared boundary.
+  - path: "internal/organization/context_fixture_test.go"
+    form: test
+    realizes: [product/organization/delegated-context]
+    why: Tests the stated responsibility and retains negative boundaries.
+  - path: "internal/organization/context_refusal_test.go"
+    form: test
+    realizes: [product/organization/delegated-context]
+    why: Tests the stated responsibility and retains negative boundaries.
+  - path: "internal/organization/context_scope.go"
+    form: code
+    realizes: [product/organization/delegated-context]
+    why: Implements the stated responsibility within its declared boundary.
+  - path: "internal/organization/context_test.go"
+    form: test
+    realizes: [product/organization/delegated-context]
+    why: Tests the stated responsibility and retains negative boundaries.
+  - path: "internal/organization/core_fixture_test.go"
+    form: test
+    realizes: [product/organization/delegated-context]
+    why: Tests the stated responsibility and retains negative boundaries.
+  - path: "internal/organization/fixtures_test.go"
+    form: test
+    realizes: [product/organization/delegated-context]
+    why: Tests the stated responsibility and retains negative boundaries.
+  - path: "internal/organization/render.go"
+    form: code
+    realizes: [product/organization/delegated-context]
+    why: Implements the stated responsibility within its declared boundary.
+  - path: "internal/organization/render_binding_test.go"
+    form: test
+    realizes: [product/organization/delegated-context]
+    why: Tests the stated responsibility and retains negative boundaries.
+  - path: "internal/organization/render_bytes_test.go"
+    form: test
+    realizes: [product/organization/delegated-context]
+    why: Tests the stated responsibility and retains negative boundaries.
+  - path: "internal/organization/render_context.go"
+    form: code
+    realizes: [product/organization/delegated-context]
+    why: Implements the stated responsibility within its declared boundary.
+  - path: "internal/organization/render_directory.go"
+    form: code
+    realizes: [product/organization/delegated-context]
+    why: Implements the stated responsibility within its declared boundary.
+  - path: "internal/organization/render_spec.go"
+    form: code
+    realizes: [product/organization/delegated-context]
+    why: Implements the stated responsibility within its declared boundary.
+  - path: "internal/organization/render_templates.go"
+    form: code
+    realizes: [product/organization/delegated-context]
+    why: Implements the stated responsibility within its declared boundary.
+  - path: "internal/organization/render_test.go"
+    form: test
+    realizes: [product/organization/delegated-context]
+    why: Tests the stated responsibility and retains negative boundaries.
+  - path: "internal/organization/render_validation.go"
+    form: code
+    realizes: [product/organization/delegated-context]
+    why: Implements the stated responsibility within its declared boundary.
+  - path: "internal/organization/render_values_test.go"
+    form: test
+    realizes: [product/organization/delegated-context]
+    why: Tests the stated responsibility and retains negative boundaries.
+  - path: "internal/organization/render_views_test.go"
+    form: test
+    realizes: [product/organization/delegated-context]
+    why: Tests the stated responsibility and retains negative boundaries.
+  - path: "internal/organization/render_writer.go"
+    form: code
+    realizes: [product/organization/delegated-context]
+    why: Implements the stated responsibility within its declared boundary.
+  - path: "internal/organization/resolve_settings.go"
+    form: code
+    realizes: [product/organization/delegated-context]
+    why: Implements the stated responsibility within its declared boundary.
+  - path: "internal/organization/select_context.go"
+    form: code
+    realizes: [product/organization/delegated-context]
+    why: Implements the stated responsibility within its declared boundary.
+  - path: "internal/organization/settings.go"
+    form: code
+    realizes: [product/organization/delegated-context]
+    why: Implements the stated responsibility within its declared boundary.
+  - path: "internal/organization/settings_fixture_test.go"
+    form: test
+    realizes: [product/organization/delegated-context]
+    why: Tests the stated responsibility and retains negative boundaries.
+  - path: "internal/organization/settings_refusal_test.go"
+    form: test
+    realizes: [product/organization/delegated-context]
+    why: Tests the stated responsibility and retains negative boundaries.
+  - path: "internal/organization/settings_selections.go"
+    form: code
+    realizes: [product/organization/delegated-context]
+    why: Implements the stated responsibility within its declared boundary.
+  - path: "internal/organization/settings_selections_test.go"
+    form: test
+    realizes: [product/organization/delegated-context]
+    why: Tests the stated responsibility and retains negative boundaries.
+  - path: "internal/organization/settings_test.go"
+    form: test
+    realizes: [product/organization/delegated-context]
+    why: Tests the stated responsibility and retains negative boundaries.
+  - path: "internal/organization/settings_validation.go"
+    form: code
+    realizes: [product/organization/delegated-context]
+    why: Implements the stated responsibility within its declared boundary.
+  - path: "internal/organization/topology.go"
+    form: code
+    realizes: [product/organization/delegated-context]
+    why: Implements the stated responsibility within its declared boundary.
+  - path: "internal/organization/topology_test.go"
+    form: test
+    realizes: [product/organization/delegated-context]
+    why: Tests the stated responsibility and retains negative boundaries.

@@ -1,0 +1,7 @@
+imports:
+  - package: vocabulary
+    as: Vocab
+id: artifact-accounting
+kind: Vocab.Rule
+body: "Account for every observed regular file as a protected input, exact registered artifact or exact explained ignore. Bind each artifact to one responsibility and existing model Definitions. Claims, candidates and composition preserve ownership and source identity; these values do not schedule or publish work."
+spec: {}

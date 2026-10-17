@@ -1,30 +1,31 @@
 # Operations
 
-This document describes current model-first development and release operations. [Project operations](project-operations.md) is the CLI and runtime reference; the repository [distribution guide](../integration/README.md) owns packaging and publication. Dated evidence remains bound to its recorded source and environment in the [production assessment](production-assessment.md).
+Current source provides canonical v1 read-only preparation and a guarded generated model view. [Project operations](project-operations.md) is the command reference; [distribution](../integration/README.md) owns separate maintenance packaging and publication. Dated evidence retains its original source/environment scope in the [production assessment](production-assessment.md).
 
 ## Authoring and checking
 
-Use the [Project workflow](project-workflow.md) for ordinary changes and Brownfield adoption. Keep canonical intent in `.markitect/model/`; review generated readable views rather than editing them. A committed model and its digest bind bytes but do not authenticate human approval. Check the selected revision, project coverage and Manager context before planning work. Implementation-only changes do not need an artificial model edit.
+Use the [Project workflow](project-workflow.md). Keep intended behavior in canonical Definitions, exact realization ownership in the registry and operational declarations outside the model. A commit binds a specification revision without authenticating human approval. Check actual structural preparation and the owning Package context before edits. Implementation-only changes need no artificial intent change.
 
-The repository's full-coverage project check accounts for source artifacts. Separate module and architecture checks enforce implementation ownership and import boundaries. The current contributor gate list and fixed-revision command forms are maintained in [CONTRIBUTING.md](../CONTRIBUTING.md#verify-a-change). They are source gates, not adopting-project acceptance.
+The complete census includes Git-ignored files. Separate architecture and module gates check explicit dependencies, actual v1 registry facts, selected byte pins and literal workflow command scalars. [CONTRIBUTING](../CONTRIBUTING.md#verify-a-change) owns the current gates. These are source checks, not provider or owner acceptance.
 
 ## Rendering and controlled writes
 
-`docs` previews the readable project view. Write only after reviewing the preview and supply the returned digest with `--expect`; generated files are not edited directly. Model changes and generated output must be reviewed together. Other mutations use the operation-specific preview, authorization and digest bindings described in [Project operations](project-operations.md).
+`docs` previews the readable canonical view. Use its nested `view.previewDigest` with `--write --expect` after review. `contentDigest` identifies rendered bytes; `canonicalModelDigest` identifies model meaning. The independent documentation guard binds actual sources and target bytes/mode/existence, rejects protected inputs and historical writes, rechecks the plan and reads back actual bytes. Retain completed paths after any partial failure.
 
-Markitect executes with the local caller's authority; project workspaces are not an operating-system sandbox. Guarded Apply checks the captured repository identity and bytes before writing. Multi-file operations can report partial failure and are not filesystem transactions. Preserve the operation's written-path list and recovery guidance when a write stops part-way through.
+Apply, sessions, executable checks, candidate workspaces and artifact publication remain unavailable in the current product. The guarded document write is not Apply. Multi-file/interrupted effects must not be assumed transactional or safe to replay blindly.
+
+Documentation previews may include explicitly selected external sources. For this increment, `docs --write` requires every acquired model, control and instruction source to have an actual repository binding. Otherwise it returns `not_completed` before effects because target disjointness has not been established. Repository-bound dependencies remain writable; an external source is not silently reclassified or followed through an alternate native spelling.
 
 ## Troubleshooting
 
 | Observation | Response |
-|---|---|
-| Project check reports uncovered paths | Assign each path to the responsible Manager Artifact or add a justified ignore entry, then check the fixed candidate again. |
-| A preview digest is stale | Re-read the current model and inputs, preview again and use only the returned digest. |
-| A write refuses changed repository state | Inspect the affected paths and repository identity, then create a fresh preview against the intended candidate. |
-| A guarded write reports partial completion | Preserve its path report, inspect each path, and recover explicitly before retrying. |
-| A gate fails or times out | Inspect bounded output and the exact command; repair the cause and verify a new candidate. |
-| Archive or executable integrity fails | Compare against the selected immutable release and provision exact verified bytes. |
-| Review evidence is ineligible | Read the diagnostic and assess the new fixed context; do not alter old evidence hashes. |
+| --- | --- |
+| Structural check reports an unaccounted file | Register its exact owner/Definition basis or make an exact explained ignore decision; protected inputs cannot be ignored. |
+| Known model/control failure | Read the actual diagnostics and repair the authored input before a new preview. |
+| Incomplete acquisition or metadata | Preserve observed facts and diagnose the unavailable bytes, budget or source binding. |
+| Preview digest changed | Review a fresh source/target-bound preview; never reconstruct the expected token. |
+| Document write reports completed paths and an error | Inspect those actual effects and current sources before deciding recovery. |
+| Fixed preview refuses current external sources | Use historically bound inputs or an explicit working preview; do not silently substitute today's bytes. |
 
 ## Release operations
 
@@ -41,7 +42,7 @@ After a new release is published and verified, update the README's pinned CLI in
 Use the read-only distribution check to confirm that the marked README installation and example blocks, plus the versioned canonical WinGet manifests, match a selected public release:
 
 ```powershell
-go run ./src/cmd/markitect-release distribution --tag vX.Y.Z --repo .
+go run ./cmd/markitect-release distribution --tag vX.Y.Z --repo .
 ```
 
 The command loads only a stable, published immutable release. It verifies the release and each asset attestation, downloads the exact four assets, checks the provenance against the successful release workflow attempt and tag commit, and matches every asset digest. It then checks the README markers and generated WinGet manifest files. `--write` applies those local files after validation; `--export-winget PATH` writes just the three manifests into `PATH/manifests/g/GlaciusLabs/Markitect/VERSION` for review and submission in a separate WinGet community PR. The modes are mutually exclusive. The command does not submit a package or publish a release.

@@ -1,0 +1,1690 @@
+apiVersion: markitect.registry/v1
+artifacts:
+  - path: "docs/README.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Documents the stated responsibility or preserves its historical evidence.
+  - path: "docs/architecture.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Documents the stated responsibility or preserves its historical evidence.
+  - path: "docs/authoring-assessment.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Documents the stated responsibility or preserves its historical evidence.
+  - path: "docs/authoring-pilot.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Documents the stated responsibility or preserves its historical evidence.
+  - path: "docs/canonical-engineering-plan.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Documents the stated responsibility or preserves its historical evidence.
+  - path: "docs/concepts/README.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Preserves the owner-authored language, Apply or concept contract as a reference.
+  - path: "docs/concepts/origin-and-rationale.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Preserves the owner-authored language, Apply or concept contract as a reference.
+  - path: "docs/concepts/reflections/README.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Preserves the owner-authored language, Apply or concept contract as a reference.
+  - path: "docs/concepts/reflections/desired-working-day-20261016.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Preserves the owner-authored language, Apply or concept contract as a reference.
+  - path: "docs/concepts/reflections/experience-without-implicit-rules-20261016.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Preserves the owner-authored language, Apply or concept contract as a reference.
+  - path: "docs/concepts/reflections/organization-and-trust-20261016.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Preserves the owner-authored language, Apply or concept contract as a reference.
+  - path: "docs/concepts/reflections/working-day-demonstration-20261016.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Preserves the owner-authored language, Apply or concept contract as a reference.
+  - path: "docs/concepts/register.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Preserves the owner-authored language, Apply or concept contract as a reference.
+  - path: "docs/concepts/sources/README.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Preserves the owner-authored language, Apply or concept contract as a reference.
+  - path: "docs/concepts/sources/concepts-chat-20261009/README.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Preserves the owner-authored language, Apply or concept contract as a reference.
+  - path: "docs/concepts/sources/concepts-chat-20261009/canonical-model-and-delegated-development.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Preserves the owner-authored language, Apply or concept contract as a reference.
+  - path: "docs/concepts/sources/concepts-chat-20261009/decision-framework-ideas-20261009.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Preserves the owner-authored language, Apply or concept contract as a reference.
+  - path: "docs/concepts/sources/concepts-chat-20261009/discussion-boundaries-20261009.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Preserves the owner-authored language, Apply or concept contract as a reference.
+  - path: "docs/concepts/sources/concepts-chat-20261009/discussion-impulse-20261009-01.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Preserves the owner-authored language, Apply or concept contract as a reference.
+  - path: "docs/concepts/sources/concepts-chat-20261009/government-as-model-governance-20261009.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Preserves the owner-authored language, Apply or concept contract as a reference.
+  - path: "docs/concepts/sources/concepts-chat-20261009/government-evaluation-mandate-20261009.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Preserves the owner-authored language, Apply or concept contract as a reference.
+  - path: "docs/concepts/sources/concepts-chat-20261009/historian-intake.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Preserves the owner-authored language, Apply or concept contract as a reference.
+  - path: "docs/concepts/sources/concepts-chat-20261009/operational-overview-ideas-20261009.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Preserves the owner-authored language, Apply or concept contract as a reference.
+  - path: "docs/concepts/sources/concepts-chat-20261009/operational-overview-source-check-20261009.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Preserves the owner-authored language, Apply or concept contract as a reference.
+  - path: "docs/concepts/sources/concepts-chat-20261009/personal-agent-cockpit-20261009.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Preserves the owner-authored language, Apply or concept contract as a reference.
+  - path: "docs/concepts/sources/concepts-chat-20261009/source-snapshot-20261009.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Preserves the owner-authored language, Apply or concept contract as a reference.
+  - path: "docs/concepts/sources/concepts-chat-20261009/user-description-20261009.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Preserves the owner-authored language, Apply or concept contract as a reference.
+  - path: "docs/concepts/sources/consolidation-discussion-20261016.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Preserves the owner-authored language, Apply or concept contract as a reference.
+  - path: "docs/concepts/sources/dashboard-delegation-20261011.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Preserves the owner-authored language, Apply or concept contract as a reference.
+  - path: "docs/concepts/sources/experience-discussion-20261016.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Preserves the owner-authored language, Apply or concept contract as a reference.
+  - path: "docs/concepts/sources/idea-review-20261010.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Preserves the owner-authored language, Apply or concept contract as a reference.
+  - path: "docs/concepts/sources/ideas-register-20261009.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Preserves the owner-authored language, Apply or concept contract as a reference.
+  - path: "docs/concepts/sources/organization-and-trust-20261016.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Preserves the owner-authored language, Apply or concept contract as a reference.
+  - path: "docs/concepts/sources/organization-and-trust-assistant-20261016.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Preserves the owner-authored language, Apply or concept contract as a reference.
+  - path: "docs/concepts/sources/owner-origin-20261015.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Preserves the owner-authored language, Apply or concept contract as a reference.
+  - path: "docs/concepts/sources/owner-product-description-20261009.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Preserves the owner-authored language, Apply or concept contract as a reference.
+  - path: "docs/concepts/sources/roadmap-planning-20261010.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Preserves the owner-authored language, Apply or concept contract as a reference.
+  - path: "docs/concepts/sources/working-day-discussion-20261016.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Preserves the owner-authored language, Apply or concept contract as a reference.
+  - path: "docs/consistency.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Documents the stated responsibility or preserves its historical evidence.
+  - path: "docs/content-packages.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Documents the stated responsibility or preserves its historical evidence.
+  - path: "docs/design/README.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Documents the stated responsibility or preserves its historical evidence.
+  - path: "docs/design/brownfield-representation-adoption.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Documents the stated responsibility or preserves its historical evidence.
+  - path: "docs/design/candidate-dependency-execution.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Documents the stated responsibility or preserves its historical evidence.
+  - path: "docs/design/canonical-model/README.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Preserves the owner-authored language, Apply or concept contract as a reference.
+  - path: "docs/design/canonical-model/actor.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Preserves the owner-authored language, Apply or concept contract as a reference.
+  - path: "docs/design/canonical-model/artifact.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Preserves the owner-authored language, Apply or concept contract as a reference.
+  - path: "docs/design/canonical-model/check.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Preserves the owner-authored language, Apply or concept contract as a reference.
+  - path: "docs/design/canonical-model/component.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Preserves the owner-authored language, Apply or concept contract as a reference.
+  - path: "docs/design/canonical-model/concept.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Preserves the owner-authored language, Apply or concept contract as a reference.
+  - path: "docs/design/canonical-model/condition.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Preserves the owner-authored language, Apply or concept contract as a reference.
+  - path: "docs/design/canonical-model/connector-example.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Preserves the owner-authored language, Apply or concept contract as a reference.
+  - path: "docs/design/canonical-model/consolidation.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Preserves the owner-authored language, Apply or concept contract as a reference.
+  - path: "docs/design/canonical-model/current-main-comparison.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Preserves the owner-authored language, Apply or concept contract as a reference.
+  - path: "docs/design/canonical-model/decision.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Preserves the owner-authored language, Apply or concept contract as a reference.
+  - path: "docs/design/canonical-model/interface.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Preserves the owner-authored language, Apply or concept contract as a reference.
+  - path: "docs/design/canonical-model/library-example/README.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Preserves the owner-authored language, Apply or concept contract as a reference.
+  - path: "docs/design/canonical-model/library-example/business-rules.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Preserves the owner-authored language, Apply or concept contract as a reference.
+  - path: "docs/design/canonical-model/library-example/evaluation-contract.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Preserves the owner-authored language, Apply or concept contract as a reference.
+  - path: "docs/design/canonical-model/library-example/m1/model-lock.yaml"
+    form: config
+    realizes: [documentation/current-guidance]
+    why: Preserves the owner-authored language, Apply or concept contract as a reference.
+  - path: "docs/design/canonical-model/library-example/m1/model.yaml"
+    form: config
+    realizes: [documentation/current-guidance]
+    why: Preserves the owner-authored language, Apply or concept contract as a reference.
+  - path: "docs/design/canonical-model/library-example/m1/model/catalog/availability.yaml"
+    form: config
+    realizes: [documentation/current-guidance]
+    why: Preserves the owner-authored language, Apply or concept contract as a reference.
+  - path: "docs/design/canonical-model/library-example/m1/model/catalog/copy.yaml"
+    form: config
+    realizes: [documentation/current-guidance]
+    why: Preserves the owner-authored language, Apply or concept contract as a reference.
+  - path: "docs/design/canonical-model/library-example/m1/model/catalog/inspect-copy.yaml"
+    form: config
+    realizes: [documentation/current-guidance]
+    why: Preserves the owner-authored language, Apply or concept contract as a reference.
+  - path: "docs/design/canonical-model/library-example/m1/model/catalog/register-copy.yaml"
+    form: config
+    realizes: [documentation/current-guidance]
+    why: Preserves the owner-authored language, Apply or concept contract as a reference.
+  - path: "docs/design/canonical-model/library-example/m1/model/lending/borrow.yaml"
+    form: config
+    realizes: [documentation/current-guidance]
+    why: Preserves the owner-authored language, Apply or concept contract as a reference.
+  - path: "docs/design/canonical-model/library-example/m1/model/lending/inspect-loans.yaml"
+    form: config
+    realizes: [documentation/current-guidance]
+    why: Preserves the owner-authored language, Apply or concept contract as a reference.
+  - path: "docs/design/canonical-model/library-example/m1/model/lending/lending-policy.yaml"
+    form: config
+    realizes: [documentation/current-guidance]
+    why: Preserves the owner-authored language, Apply or concept contract as a reference.
+  - path: "docs/design/canonical-model/library-example/m1/model/lending/loan-period-days.yaml"
+    form: config
+    realizes: [documentation/current-guidance]
+    why: Preserves the owner-authored language, Apply or concept contract as a reference.
+  - path: "docs/design/canonical-model/library-example/m1/model/lending/loan-policy.yaml"
+    form: config
+    realizes: [documentation/current-guidance]
+    why: Preserves the owner-authored language, Apply or concept contract as a reference.
+  - path: "docs/design/canonical-model/library-example/m1/model/lending/loan.yaml"
+    form: config
+    realizes: [documentation/current-guidance]
+    why: Preserves the owner-authored language, Apply or concept contract as a reference.
+  - path: "docs/design/canonical-model/library-example/m1/model/lending/max-open-loans.yaml"
+    form: config
+    realizes: [documentation/current-guidance]
+    why: Preserves the owner-authored language, Apply or concept contract as a reference.
+  - path: "docs/design/canonical-model/library-example/m1/model/lending/reminders/assess-overdue.yaml"
+    form: config
+    realizes: [documentation/current-guidance]
+    why: Preserves the owner-authored language, Apply or concept contract as a reference.
+  - path: "docs/design/canonical-model/library-example/m1/model/lending/return.yaml"
+    form: config
+    realizes: [documentation/current-guidance]
+    why: Preserves the owner-authored language, Apply or concept contract as a reference.
+  - path: "docs/design/canonical-model/library-example/m1/model/library/callable-interface.yaml"
+    form: config
+    realizes: [documentation/current-guidance]
+    why: Preserves the owner-authored language, Apply or concept contract as a reference.
+  - path: "docs/design/canonical-model/library-example/m1/model/library/inputs.yaml"
+    form: config
+    realizes: [documentation/current-guidance]
+    why: Preserves the owner-authored language, Apply or concept contract as a reference.
+  - path: "docs/design/canonical-model/library-example/m1/model/library/library.yaml"
+    form: config
+    realizes: [documentation/current-guidance]
+    why: Preserves the owner-authored language, Apply or concept contract as a reference.
+  - path: "docs/design/canonical-model/library-example/m1/model/library/realization.yaml"
+    form: config
+    realizes: [documentation/current-guidance]
+    why: Preserves the owner-authored language, Apply or concept contract as a reference.
+  - path: "docs/design/canonical-model/library-example/m1/model/members/eligibility.yaml"
+    form: config
+    realizes: [documentation/current-guidance]
+    why: Preserves the owner-authored language, Apply or concept contract as a reference.
+  - path: "docs/design/canonical-model/library-example/m1/model/members/inspect-member.yaml"
+    form: config
+    realizes: [documentation/current-guidance]
+    why: Preserves the owner-authored language, Apply or concept contract as a reference.
+  - path: "docs/design/canonical-model/library-example/m1/model/members/member.yaml"
+    form: config
+    realizes: [documentation/current-guidance]
+    why: Preserves the owner-authored language, Apply or concept contract as a reference.
+  - path: "docs/design/canonical-model/library-example/m1/model/members/register-member.yaml"
+    form: config
+    realizes: [documentation/current-guidance]
+    why: Preserves the owner-authored language, Apply or concept contract as a reference.
+  - path: "docs/design/canonical-model/library-example/m1/model/members/set-member-status.yaml"
+    form: config
+    realizes: [documentation/current-guidance]
+    why: Preserves the owner-authored language, Apply or concept contract as a reference.
+  - path: "docs/design/canonical-model/library-example/verification.json"
+    form: config
+    realizes: [documentation/current-guidance]
+    why: Preserves the owner-authored language, Apply or concept contract as a reference.
+  - path: "docs/design/canonical-model/library-example/verify-model.py"
+    form: code
+    realizes: [documentation/current-guidance]
+    why: Preserves the owner-authored language, Apply or concept contract as a reference.
+  - path: "docs/design/canonical-model/library-example/vocabulary/model.yaml"
+    form: config
+    realizes: [documentation/current-guidance]
+    why: Preserves the owner-authored language, Apply or concept contract as a reference.
+  - path: "docs/design/canonical-model/library-example/vocabulary/model/software/concept.yaml"
+    form: config
+    realizes: [documentation/current-guidance]
+    why: Preserves the owner-authored language, Apply or concept contract as a reference.
+  - path: "docs/design/canonical-model/library-example/vocabulary/model/software/rule.yaml"
+    form: config
+    realizes: [documentation/current-guidance]
+    why: Preserves the owner-authored language, Apply or concept contract as a reference.
+  - path: "docs/design/canonical-model/library-example/vocabulary/model/software/use-case.yaml"
+    form: config
+    realizes: [documentation/current-guidance]
+    why: Preserves the owner-authored language, Apply or concept contract as a reference.
+  - path: "docs/design/canonical-model/manager-apply-concept.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Preserves the owner-authored language, Apply or concept contract as a reference.
+  - path: "docs/design/canonical-model/manager-apply-configuration.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Preserves the owner-authored language, Apply or concept contract as a reference.
+  - path: "docs/design/canonical-model/manager-apply-execution.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Preserves the owner-authored language, Apply or concept contract as a reference.
+  - path: "docs/design/canonical-model/manager-apply-go-architecture.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Preserves the owner-authored language, Apply or concept contract as a reference.
+  - path: "docs/design/canonical-model/manager-apply-implementation-plan.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Preserves the owner-authored language, Apply or concept contract as a reference.
+  - path: "docs/design/canonical-model/manager-apply-journal.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Preserves the owner-authored language, Apply or concept contract as a reference.
+  - path: "docs/design/canonical-model/manager-apply-library-flow.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Preserves the owner-authored language, Apply or concept contract as a reference.
+  - path: "docs/design/canonical-model/manager-apply-playground.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Preserves the owner-authored language, Apply or concept contract as a reference.
+  - path: "docs/design/canonical-model/manager-apply-port-contracts.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Preserves the owner-authored language, Apply or concept contract as a reference.
+  - path: "docs/design/canonical-model/manager-apply-rebuild-plan.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Preserves the owner-authored language, Apply or concept contract as a reference.
+  - path: "docs/design/canonical-model/manager-realization-north-star.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Preserves the owner-authored language, Apply or concept contract as a reference.
+  - path: "docs/design/canonical-model/minimal-language/README.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Preserves the owner-authored language, Apply or concept contract as a reference.
+  - path: "docs/design/canonical-model/minimal-language/bootstrap/compact-probe.json"
+    form: config
+    realizes: [documentation/current-guidance]
+    why: Preserves the owner-authored language, Apply or concept contract as a reference.
+  - path: "docs/design/canonical-model/minimal-language/bootstrap/connector-compact.yaml"
+    form: config
+    realizes: [documentation/current-guidance]
+    why: Preserves the owner-authored language, Apply or concept contract as a reference.
+  - path: "docs/design/canonical-model/minimal-language/bootstrap/connector.yaml"
+    form: config
+    realizes: [documentation/current-guidance]
+    why: Preserves the owner-authored language, Apply or concept contract as a reference.
+  - path: "docs/design/canonical-model/minimal-language/bootstrap/core.yaml"
+    form: config
+    realizes: [documentation/current-guidance]
+    why: Preserves the owner-authored language, Apply or concept contract as a reference.
+  - path: "docs/design/canonical-model/minimal-language/bootstrap/probe.json"
+    form: config
+    realizes: [documentation/current-guidance]
+    why: Preserves the owner-authored language, Apply or concept contract as a reference.
+  - path: "docs/design/canonical-model/minimal-language/connector.yaml"
+    form: config
+    realizes: [documentation/current-guidance]
+    why: Preserves the owner-authored language, Apply or concept contract as a reference.
+  - path: "docs/design/canonical-model/minimal-language/diagnostic-contract.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Preserves the owner-authored language, Apply or concept contract as a reference.
+  - path: "docs/design/canonical-model/minimal-language/exchange-example/README.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Preserves the owner-authored language, Apply or concept contract as a reference.
+  - path: "docs/design/canonical-model/minimal-language/exchange-example/body_links.py"
+    form: code
+    realizes: [documentation/current-guidance]
+    why: Preserves the owner-authored language, Apply or concept contract as a reference.
+  - path: "docs/design/canonical-model/minimal-language/exchange-example/canonical/README.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Preserves the owner-authored language, Apply or concept contract as a reference.
+  - path: "docs/design/canonical-model/minimal-language/exchange-example/canonical/core.json"
+    form: config
+    realizes: [documentation/current-guidance]
+    why: Preserves the owner-authored language, Apply or concept contract as a reference.
+  - path: "docs/design/canonical-model/minimal-language/exchange-example/canonical_bytes.py"
+    form: code
+    realizes: [documentation/current-guidance]
+    why: Preserves the owner-authored language, Apply or concept contract as a reference.
+  - path: "docs/design/canonical-model/minimal-language/exchange-example/canonical_probes.py"
+    form: code
+    realizes: [documentation/current-guidance]
+    why: Preserves the owner-authored language, Apply or concept contract as a reference.
+  - path: "docs/design/canonical-model/minimal-language/exchange-example/core_probes.py"
+    form: code
+    realizes: [documentation/current-guidance]
+    why: Preserves the owner-authored language, Apply or concept contract as a reference.
+  - path: "docs/design/canonical-model/minimal-language/exchange-example/dependencies/core/model.yaml"
+    form: config
+    realizes: [documentation/current-guidance]
+    why: Preserves the owner-authored language, Apply or concept contract as a reference.
+  - path: "docs/design/canonical-model/minimal-language/exchange-example/dependencies/core/model/markitect/core/kind.yaml"
+    form: config
+    realizes: [documentation/current-guidance]
+    why: Preserves the owner-authored language, Apply or concept contract as a reference.
+  - path: "docs/design/canonical-model/minimal-language/exchange-example/dependencies/core/model/markitect/core/max-count.yaml"
+    form: config
+    realizes: [documentation/current-guidance]
+    why: Preserves the owner-authored language, Apply or concept contract as a reference.
+  - path: "docs/design/canonical-model/minimal-language/exchange-example/dependencies/core/model/markitect/core/min-count.yaml"
+    form: config
+    realizes: [documentation/current-guidance]
+    why: Preserves the owner-authored language, Apply or concept contract as a reference.
+  - path: "docs/design/canonical-model/minimal-language/exchange-example/dependencies/core/model/markitect/core/name.yaml"
+    form: config
+    realizes: [documentation/current-guidance]
+    why: Preserves the owner-authored language, Apply or concept contract as a reference.
+  - path: "docs/design/canonical-model/minimal-language/exchange-example/dependencies/core/model/markitect/core/properties.yaml"
+    form: config
+    realizes: [documentation/current-guidance]
+    why: Preserves the owner-authored language, Apply or concept contract as a reference.
+  - path: "docs/design/canonical-model/minimal-language/exchange-example/dependencies/core/model/markitect/core/property.yaml"
+    form: config
+    realizes: [documentation/current-guidance]
+    why: Preserves the owner-authored language, Apply or concept contract as a reference.
+  - path: "docs/design/canonical-model/minimal-language/exchange-example/dependencies/core/model/markitect/core/target.yaml"
+    form: config
+    realizes: [documentation/current-guidance]
+    why: Preserves the owner-authored language, Apply or concept contract as a reference.
+  - path: "docs/design/canonical-model/minimal-language/exchange-example/dependencies/core/model/markitect/core/type.yaml"
+    form: config
+    realizes: [documentation/current-guidance]
+    why: Preserves the owner-authored language, Apply or concept contract as a reference.
+  - path: "docs/design/canonical-model/minimal-language/exchange-example/dependencies/core/model/markitect/core/values.yaml"
+    form: config
+    realizes: [documentation/current-guidance]
+    why: Preserves the owner-authored language, Apply or concept contract as a reference.
+  - path: "docs/design/canonical-model/minimal-language/exchange-example/diagnostic_coordinates.py"
+    form: code
+    realizes: [documentation/current-guidance]
+    why: Preserves the owner-authored language, Apply or concept contract as a reference.
+  - path: "docs/design/canonical-model/minimal-language/exchange-example/diagnostic_probes.py"
+    form: code
+    realizes: [documentation/current-guidance]
+    why: Preserves the owner-authored language, Apply or concept contract as a reference.
+  - path: "docs/design/canonical-model/minimal-language/exchange-example/model-lock.yaml"
+    form: config
+    realizes: [documentation/current-guidance]
+    why: Preserves the owner-authored language, Apply or concept contract as a reference.
+  - path: "docs/design/canonical-model/minimal-language/exchange-example/model.yaml"
+    form: config
+    realizes: [documentation/current-guidance]
+    why: Preserves the owner-authored language, Apply or concept contract as a reference.
+  - path: "docs/design/canonical-model/minimal-language/exchange-example/model/example/connector/project/api.yaml"
+    form: config
+    realizes: [documentation/current-guidance]
+    why: Preserves the owner-authored language, Apply or concept contract as a reference.
+  - path: "docs/design/canonical-model/minimal-language/exchange-example/model/example/connector/project/list-documents-command.yaml"
+    form: config
+    realizes: [documentation/current-guidance]
+    why: Preserves the owner-authored language, Apply or concept contract as a reference.
+  - path: "docs/design/canonical-model/minimal-language/exchange-example/model/example/connector/project/list-documents.yaml"
+    form: config
+    realizes: [documentation/current-guidance]
+    why: Preserves the owner-authored language, Apply or concept contract as a reference.
+  - path: "docs/design/canonical-model/minimal-language/exchange-example/model/example/connector/project/messaging.yaml"
+    form: config
+    realizes: [documentation/current-guidance]
+    why: Preserves the owner-authored language, Apply or concept contract as a reference.
+  - path: "docs/design/canonical-model/minimal-language/exchange-example/model/example/connector/project/onprem.yaml"
+    form: config
+    realizes: [documentation/current-guidance]
+    why: Preserves the owner-authored language, Apply or concept contract as a reference.
+  - path: "docs/design/canonical-model/minimal-language/exchange-example/model/example/connector/project/replies.yaml"
+    form: config
+    realizes: [documentation/current-guidance]
+    why: Preserves the owner-authored language, Apply or concept contract as a reference.
+  - path: "docs/design/canonical-model/minimal-language/exchange-example/model/example/connector/project/requests.yaml"
+    form: config
+    realizes: [documentation/current-guidance]
+    why: Preserves the owner-authored language, Apply or concept contract as a reference.
+  - path: "docs/design/canonical-model/minimal-language/exchange-example/model/example/connector/vocabulary/broker.yaml"
+    form: config
+    realizes: [documentation/current-guidance]
+    why: Preserves the owner-authored language, Apply or concept contract as a reference.
+  - path: "docs/design/canonical-model/minimal-language/exchange-example/model/example/connector/vocabulary/channel.yaml"
+    form: config
+    realizes: [documentation/current-guidance]
+    why: Preserves the owner-authored language, Apply or concept contract as a reference.
+  - path: "docs/design/canonical-model/minimal-language/exchange-example/model/example/connector/vocabulary/command-kind.yaml"
+    form: config
+    realizes: [documentation/current-guidance]
+    why: Preserves the owner-authored language, Apply or concept contract as a reference.
+  - path: "docs/design/canonical-model/minimal-language/exchange-example/model/example/connector/vocabulary/command-property.yaml"
+    form: config
+    realizes: [documentation/current-guidance]
+    why: Preserves the owner-authored language, Apply or concept contract as a reference.
+  - path: "docs/design/canonical-model/minimal-language/exchange-example/model/example/connector/vocabulary/container.yaml"
+    form: config
+    realizes: [documentation/current-guidance]
+    why: Preserves the owner-authored language, Apply or concept contract as a reference.
+  - path: "docs/design/canonical-model/minimal-language/exchange-example/model/example/connector/vocabulary/delivery.yaml"
+    form: config
+    realizes: [documentation/current-guidance]
+    why: Preserves the owner-authored language, Apply or concept contract as a reference.
+  - path: "docs/design/canonical-model/minimal-language/exchange-example/model/example/connector/vocabulary/exchange.yaml"
+    form: config
+    realizes: [documentation/current-guidance]
+    why: Preserves the owner-authored language, Apply or concept contract as a reference.
+  - path: "docs/design/canonical-model/minimal-language/exchange-example/model/example/connector/vocabulary/location.yaml"
+    form: config
+    realizes: [documentation/current-guidance]
+    why: Preserves the owner-authored language, Apply or concept contract as a reference.
+  - path: "docs/design/canonical-model/minimal-language/exchange-example/model/example/connector/vocabulary/max-attempts.yaml"
+    form: config
+    realizes: [documentation/current-guidance]
+    why: Preserves the owner-authored language, Apply or concept contract as a reference.
+  - path: "docs/design/canonical-model/minimal-language/exchange-example/model/example/connector/vocabulary/mqtt-service.yaml"
+    form: config
+    realizes: [documentation/current-guidance]
+    why: Preserves the owner-authored language, Apply or concept contract as a reference.
+  - path: "docs/design/canonical-model/minimal-language/exchange-example/model/example/connector/vocabulary/operation-id.yaml"
+    form: config
+    realizes: [documentation/current-guidance]
+    why: Preserves the owner-authored language, Apply or concept contract as a reference.
+  - path: "docs/design/canonical-model/minimal-language/exchange-example/model/example/connector/vocabulary/receiver.yaml"
+    form: config
+    realizes: [documentation/current-guidance]
+    why: Preserves the owner-authored language, Apply or concept contract as a reference.
+  - path: "docs/design/canonical-model/minimal-language/exchange-example/model/example/connector/vocabulary/reply-channel.yaml"
+    form: config
+    realizes: [documentation/current-guidance]
+    why: Preserves the owner-authored language, Apply or concept contract as a reference.
+  - path: "docs/design/canonical-model/minimal-language/exchange-example/model/example/connector/vocabulary/request-channel.yaml"
+    form: config
+    realizes: [documentation/current-guidance]
+    why: Preserves the owner-authored language, Apply or concept contract as a reference.
+  - path: "docs/design/canonical-model/minimal-language/exchange-example/model/example/connector/vocabulary/requester.yaml"
+    form: config
+    realizes: [documentation/current-guidance]
+    why: Preserves the owner-authored language, Apply or concept contract as a reference.
+  - path: "docs/design/canonical-model/minimal-language/exchange-example/model/example/connector/vocabulary/timeout-seconds.yaml"
+    form: config
+    realizes: [documentation/current-guidance]
+    why: Preserves the owner-authored language, Apply or concept contract as a reference.
+  - path: "docs/design/canonical-model/minimal-language/exchange-example/model/example/connector/vocabulary/topic-pattern.yaml"
+    form: config
+    realizes: [documentation/current-guidance]
+    why: Preserves the owner-authored language, Apply or concept contract as a reference.
+  - path: "docs/design/canonical-model/minimal-language/exchange-example/model_lock.py"
+    form: code
+    realizes: [documentation/current-guidance]
+    why: Preserves the owner-authored language, Apply or concept contract as a reference.
+  - path: "docs/design/canonical-model/minimal-language/exchange-example/model_manifest.py"
+    form: code
+    realizes: [documentation/current-guidance]
+    why: Preserves the owner-authored language, Apply or concept contract as a reference.
+  - path: "docs/design/canonical-model/minimal-language/exchange-example/name_profile.py"
+    form: code
+    realizes: [documentation/current-guidance]
+    why: Preserves the owner-authored language, Apply or concept contract as a reference.
+  - path: "docs/design/canonical-model/minimal-language/exchange-example/object_resource_probes.py"
+    form: code
+    realizes: [documentation/current-guidance]
+    why: Preserves the owner-authored language, Apply or concept contract as a reference.
+  - path: "docs/design/canonical-model/minimal-language/exchange-example/package_probes.py"
+    form: code
+    realizes: [documentation/current-guidance]
+    why: Preserves the owner-authored language, Apply or concept contract as a reference.
+  - path: "docs/design/canonical-model/minimal-language/exchange-example/requirements.txt"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Preserves the owner-authored language, Apply or concept contract as a reference.
+  - path: "docs/design/canonical-model/minimal-language/exchange-example/resources.py"
+    form: code
+    realizes: [documentation/current-guidance]
+    why: Preserves the owner-authored language, Apply or concept contract as a reference.
+  - path: "docs/design/canonical-model/minimal-language/exchange-example/root_path_probes.py"
+    form: code
+    realizes: [documentation/current-guidance]
+    why: Preserves the owner-authored language, Apply or concept contract as a reference.
+  - path: "docs/design/canonical-model/minimal-language/exchange-example/root_paths.py"
+    form: code
+    realizes: [documentation/current-guidance]
+    why: Preserves the owner-authored language, Apply or concept contract as a reference.
+  - path: "docs/design/canonical-model/minimal-language/exchange-example/verification-before-body-whitespace.json"
+    form: config
+    realizes: [documentation/current-guidance]
+    why: Preserves the owner-authored language, Apply or concept contract as a reference.
+  - path: "docs/design/canonical-model/minimal-language/exchange-example/verification-before-core-empty-imports.json"
+    form: config
+    realizes: [documentation/current-guidance]
+    why: Preserves the owner-authored language, Apply or concept contract as a reference.
+  - path: "docs/design/canonical-model/minimal-language/exchange-example/verification-before-diagnostic-separation.json"
+    form: config
+    realizes: [documentation/current-guidance]
+    why: Preserves the owner-authored language, Apply or concept contract as a reference.
+  - path: "docs/design/canonical-model/minimal-language/exchange-example/verification-before-dotless-names.json"
+    form: config
+    realizes: [documentation/current-guidance]
+    why: Preserves the owner-authored language, Apply or concept contract as a reference.
+  - path: "docs/design/canonical-model/minimal-language/exchange-example/verification-before-empty-package-bindings.json"
+    form: config
+    realizes: [documentation/current-guidance]
+    why: Preserves the owner-authored language, Apply or concept contract as a reference.
+  - path: "docs/design/canonical-model/minimal-language/exchange-example/verification-before-literal-nul.json"
+    form: config
+    realizes: [documentation/current-guidance]
+    why: Preserves the owner-authored language, Apply or concept contract as a reference.
+  - path: "docs/design/canonical-model/minimal-language/exchange-example/verification-before-literal-x.json"
+    form: config
+    realizes: [documentation/current-guidance]
+    why: Preserves the owner-authored language, Apply or concept contract as a reference.
+  - path: "docs/design/canonical-model/minimal-language/exchange-example/verification-before-semantic-core.json"
+    form: config
+    realizes: [documentation/current-guidance]
+    why: Preserves the owner-authored language, Apply or concept contract as a reference.
+  - path: "docs/design/canonical-model/minimal-language/exchange-example/verification-before-strict-names.json"
+    form: config
+    realizes: [documentation/current-guidance]
+    why: Preserves the owner-authored language, Apply or concept contract as a reference.
+  - path: "docs/design/canonical-model/minimal-language/exchange-example/verification-before-v1-consolidation.json"
+    form: config
+    realizes: [documentation/current-guidance]
+    why: Preserves the owner-authored language, Apply or concept contract as a reference.
+  - path: "docs/design/canonical-model/minimal-language/exchange-example/verification-before-v1-design-baseline.json"
+    form: config
+    realizes: [documentation/current-guidance]
+    why: Preserves the owner-authored language, Apply or concept contract as a reference.
+  - path: "docs/design/canonical-model/minimal-language/exchange-example/verification-before-v1-package-fixes.json"
+    form: config
+    realizes: [documentation/current-guidance]
+    why: Preserves the owner-authored language, Apply or concept contract as a reference.
+  - path: "docs/design/canonical-model/minimal-language/exchange-example/verification.json"
+    form: config
+    realizes: [documentation/current-guidance]
+    why: Preserves the owner-authored language, Apply or concept contract as a reference.
+  - path: "docs/design/canonical-model/minimal-language/exchange-example/verify.py"
+    form: code
+    realizes: [documentation/current-guidance]
+    why: Preserves the owner-authored language, Apply or concept contract as a reference.
+  - path: "docs/design/canonical-model/minimal-language/exchange-walkthrough-probe.json"
+    form: config
+    realizes: [documentation/current-guidance]
+    why: Preserves the owner-authored language, Apply or concept contract as a reference.
+  - path: "docs/design/canonical-model/minimal-language/identities/core-1.0.0.yaml"
+    form: config
+    realizes: [documentation/current-guidance]
+    why: Preserves the owner-authored language, Apply or concept contract as a reference.
+  - path: "docs/design/canonical-model/minimal-language/identities/locks.yaml"
+    form: config
+    realizes: [documentation/current-guidance]
+    why: Preserves the owner-authored language, Apply or concept contract as a reference.
+  - path: "docs/design/canonical-model/minimal-language/identities/probe.json"
+    form: config
+    realizes: [documentation/current-guidance]
+    why: Preserves the owner-authored language, Apply or concept contract as a reference.
+  - path: "docs/design/canonical-model/minimal-language/identities/project-a.yaml"
+    form: config
+    realizes: [documentation/current-guidance]
+    why: Preserves the owner-authored language, Apply or concept contract as a reference.
+  - path: "docs/design/canonical-model/minimal-language/identities/project-b.yaml"
+    form: config
+    realizes: [documentation/current-guidance]
+    why: Preserves the owner-authored language, Apply or concept contract as a reference.
+  - path: "docs/design/canonical-model/minimal-language/identities/project-c-stale.yaml"
+    form: config
+    realizes: [documentation/current-guidance]
+    why: Preserves the owner-authored language, Apply or concept contract as a reference.
+  - path: "docs/design/canonical-model/minimal-language/identities/project-c.yaml"
+    form: config
+    realizes: [documentation/current-guidance]
+    why: Preserves the owner-authored language, Apply or concept contract as a reference.
+  - path: "docs/design/canonical-model/minimal-language/identities/vocabulary-1.0.0.yaml"
+    form: config
+    realizes: [documentation/current-guidance]
+    why: Preserves the owner-authored language, Apply or concept contract as a reference.
+  - path: "docs/design/canonical-model/minimal-language/identities/vocabulary-1.1.0.yaml"
+    form: config
+    realizes: [documentation/current-guidance]
+    why: Preserves the owner-authored language, Apply or concept contract as a reference.
+  - path: "docs/design/canonical-model/minimal-language/identities/vocabulary-2.0.0.yaml"
+    form: config
+    realizes: [documentation/current-guidance]
+    why: Preserves the owner-authored language, Apply or concept contract as a reference.
+  - path: "docs/design/canonical-model/minimal-language/language-contract.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Preserves the owner-authored language, Apply or concept contract as a reference.
+  - path: "docs/design/canonical-model/minimal-language/language-history.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Preserves the owner-authored language, Apply or concept contract as a reference.
+  - path: "docs/design/canonical-model/minimal-language/probes/README.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Preserves the owner-authored language, Apply or concept contract as a reference.
+  - path: "docs/design/canonical-model/minimal-language/probes/archive/exchange-probe.go.txt"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Preserves the owner-authored language, Apply or concept contract as a reference.
+  - path: "docs/design/canonical-model/minimal-language/probes/archive/inputs.json"
+    form: config
+    realizes: [documentation/current-guidance]
+    why: Preserves the owner-authored language, Apply or concept contract as a reference.
+  - path: "docs/design/canonical-model/minimal-language/probes/archive/markitect-bootstrap-probe.py"
+    form: code
+    realizes: [documentation/current-guidance]
+    why: Preserves the owner-authored language, Apply or concept contract as a reference.
+  - path: "docs/design/canonical-model/minimal-language/probes/archive/markitect-identity-walkthrough-probe.py"
+    form: code
+    realizes: [documentation/current-guidance]
+    why: Preserves the owner-authored language, Apply or concept contract as a reference.
+  - path: "docs/design/canonical-model/minimal-language/probes/archive/markitect-inline-property-probe.py"
+    form: code
+    realizes: [documentation/current-guidance]
+    why: Preserves the owner-authored language, Apply or concept contract as a reference.
+  - path: "docs/design/canonical-model/minimal-language/probes/archive/probe.go.txt"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Preserves the owner-authored language, Apply or concept contract as a reference.
+  - path: "docs/design/canonical-model/minimal-language/probes/replay.py"
+    form: code
+    realizes: [documentation/current-guidance]
+    why: Preserves the owner-authored language, Apply or concept contract as a reference.
+  - path: "docs/design/canonical-model/minimal-language/procedure-proposals.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Preserves the owner-authored language, Apply or concept contract as a reference.
+  - path: "docs/design/canonical-model/minimal-language/structural-probe.json"
+    form: config
+    realizes: [documentation/current-guidance]
+    why: Preserves the owner-authored language, Apply or concept contract as a reference.
+  - path: "docs/design/canonical-model/minimal-language/vocabulary.yaml"
+    form: config
+    realizes: [documentation/current-guidance]
+    why: Preserves the owner-authored language, Apply or concept contract as a reference.
+  - path: "docs/design/canonical-model/procedure.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Preserves the owner-authored language, Apply or concept contract as a reference.
+  - path: "docs/design/canonical-model/project.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Preserves the owner-authored language, Apply or concept contract as a reference.
+  - path: "docs/design/canonical-model/relationships.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Preserves the owner-authored language, Apply or concept contract as a reference.
+  - path: "docs/design/canonical-model/rule.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Preserves the owner-authored language, Apply or concept contract as a reference.
+  - path: "docs/design/canonical-model/scenario.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Preserves the owner-authored language, Apply or concept contract as a reference.
+  - path: "docs/design/canonical-model/sources/concept-assessment-20261016.txt"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Preserves the owner-authored language, Apply or concept contract as a reference.
+  - path: "docs/design/canonical-model/sources/concept-refinements-20261016.txt"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Preserves the owner-authored language, Apply or concept contract as a reference.
+  - path: "docs/design/canonical-model/sources/manager-realization-20261016.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Preserves the owner-authored language, Apply or concept contract as a reference.
+  - path: "docs/design/canonical-model/task-management-example.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Preserves the owner-authored language, Apply or concept contract as a reference.
+  - path: "docs/design/canonical-model/use-case.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Preserves the owner-authored language, Apply or concept contract as a reference.
+  - path: "docs/design/canonical-model/workflow.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Preserves the owner-authored language, Apply or concept contract as a reference.
+  - path: "docs/design/canonical-projection-reset.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Documents the stated responsibility or preserves its historical evidence.
+  - path: "docs/design/canonical-reverse-inference.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Documents the stated responsibility or preserves its historical evidence.
+  - path: "docs/design/canonical-verification-refresh.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Documents the stated responsibility or preserves its historical evidence.
+  - path: "docs/design/canonical-verifier-observation-coverage.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Documents the stated responsibility or preserves its historical evidence.
+  - path: "docs/design/clean-architecture-consolidation.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Documents the stated responsibility or preserves its historical evidence.
+  - path: "docs/design/copy-me-evidence-review.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Documents the stated responsibility or preserves its historical evidence.
+  - path: "docs/design/domain-language-pressure.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Documents the stated responsibility or preserves its historical evidence.
+  - path: "docs/design/goal-led-modeling.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Documents the stated responsibility or preserves its historical evidence.
+  - path: "docs/design/host-write-identity.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Documents the stated responsibility or preserves its historical evidence.
+  - path: "docs/design/init-adoption-preparation.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Documents the stated responsibility or preserves its historical evidence.
+  - path: "docs/design/managed-artifact-coverage.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Documents the stated responsibility or preserves its historical evidence.
+  - path: "docs/design/nested-project-output-boundary.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Documents the stated responsibility or preserves its historical evidence.
+  - path: "docs/design/policy-failure-analysis.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Documents the stated responsibility or preserves its historical evidence.
+  - path: "docs/design/product-model-refinement/LibraryModelExample.cs"
+    form: code
+    realizes: [documentation/current-guidance]
+    why: Implements the stated responsibility within its declared boundary.
+  - path: "docs/design/product-model-refinement/README.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Documents the stated responsibility or preserves its historical evidence.
+  - path: "docs/design/product-model-refinement/SoftwareProjectModel.cs"
+    form: code
+    realizes: [documentation/current-guidance]
+    why: Implements the stated responsibility within its declared boundary.
+  - path: "docs/design/product-model-refinement/canonical-model-draft.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Documents the stated responsibility or preserves its historical evidence.
+  - path: "docs/design/product-model-refinement/canonical-model-main-comparison.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Documents the stated responsibility or preserves its historical evidence.
+  - path: "docs/design/product-model-refinement/canonical-model-proposal.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Documents the stated responsibility or preserves its historical evidence.
+  - path: "docs/design/product-model-refinement/csharp-model-design.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Documents the stated responsibility or preserves its historical evidence.
+  - path: "docs/design/product-model-refinement/library-architecture-example.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Documents the stated responsibility or preserves its historical evidence.
+  - path: "docs/design/product-model-refinement/library-change-walkthrough.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Documents the stated responsibility or preserves its historical evidence.
+  - path: "docs/design/product-model-refinement/library-filesystem-example.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Documents the stated responsibility or preserves its historical evidence.
+  - path: "docs/design/product-model-refinement/library-methodical-alternative.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Documents the stated responsibility or preserves its historical evidence.
+  - path: "docs/design/product-model-refinement/library-model-example.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Documents the stated responsibility or preserves its historical evidence.
+  - path: "docs/design/product-model-refinement/system-description-notes.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Documents the stated responsibility or preserves its historical evidence.
+  - path: "docs/design/product-vision-alignment.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Documents the stated responsibility or preserves its historical evidence.
+  - path: "docs/design/project-capability-skills-20261009.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Documents the stated responsibility or preserves its historical evidence.
+  - path: "docs/design/project-native-codex-work-20261009.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Documents the stated responsibility or preserves its historical evidence.
+  - path: "docs/design/project-simplification-and-api-direction-20261009.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Documents the stated responsibility or preserves its historical evidence.
+  - path: "docs/design/project-world/README.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Documents the stated responsibility or preserves its historical evidence.
+  - path: "docs/design/project-world/adoption-and-agent-boundary.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Documents the stated responsibility or preserves its historical evidence.
+  - path: "docs/design/project-world/conceptual-modules.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Documents the stated responsibility or preserves its historical evidence.
+  - path: "docs/design/project-world/delivery-contract.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Documents the stated responsibility or preserves its historical evidence.
+  - path: "docs/design/project-world/implementation-plan.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Documents the stated responsibility or preserves its historical evidence.
+  - path: "docs/design/project-world/model-first-user-workflow.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Documents the stated responsibility or preserves its historical evidence.
+  - path: "docs/design/project-world/model.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Documents the stated responsibility or preserves its historical evidence.
+  - path: "docs/design/project-world/native-codex-work.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Documents the stated responsibility or preserves its historical evidence.
+  - path: "docs/design/project-world/native-work-item-delivery.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Documents the stated responsibility or preserves its historical evidence.
+  - path: "docs/design/project-world/operating-protocol.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Documents the stated responsibility or preserves its historical evidence.
+  - path: "docs/design/project-world/operation-scopes-and-model-briefings.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Documents the stated responsibility or preserves its historical evidence.
+  - path: "docs/design/project-world/project-contract.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Documents the stated responsibility or preserves its historical evidence.
+  - path: "docs/design/project-world/shop-example/README.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Documents the stated responsibility or preserves its historical evidence.
+  - path: "docs/design/project-world/shop-example/before/model/commerce.yaml.example"
+    form: config
+    realizes: [documentation/current-guidance]
+    why: Supplies exact configuration, fixtures or retained evidence for this responsibility.
+  - path: "docs/design/project-world/shop-example/before/model/realization.yaml.example"
+    form: config
+    realizes: [documentation/current-guidance]
+    why: Supplies exact configuration, fixtures or retained evidence for this responsibility.
+  - path: "docs/design/project-world/shop-example/before/model/sales.yaml.example"
+    form: config
+    realizes: [documentation/current-guidance]
+    why: Supplies exact configuration, fixtures or retained evidence for this responsibility.
+  - path: "docs/design/project-world/shop-example/changes/add-cancellation.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Documents the stated responsibility or preserves its historical evidence.
+  - path: "docs/design/project-world/shop-example/project/markitect.runtime.yaml.example"
+    form: config
+    realizes: [documentation/current-guidance]
+    why: Supplies exact configuration, fixtures or retained evidence for this responsibility.
+  - path: "docs/design/project-world/shop-example/project/markitect.yaml.example"
+    form: config
+    realizes: [documentation/current-guidance]
+    why: Supplies exact configuration, fixtures or retained evidence for this responsibility.
+  - path: "docs/design/project-world/shop-example/project/model/commerce.yaml.example"
+    form: config
+    realizes: [documentation/current-guidance]
+    why: Supplies exact configuration, fixtures or retained evidence for this responsibility.
+  - path: "docs/design/project-world/shop-example/project/model/engineering.yaml.example"
+    form: config
+    realizes: [documentation/current-guidance]
+    why: Supplies exact configuration, fixtures or retained evidence for this responsibility.
+  - path: "docs/design/project-world/shop-example/project/model/inventory.yaml.example"
+    form: config
+    realizes: [documentation/current-guidance]
+    why: Supplies exact configuration, fixtures or retained evidence for this responsibility.
+  - path: "docs/design/project-world/shop-example/project/model/modules.yaml.example"
+    form: config
+    realizes: [documentation/current-guidance]
+    why: Supplies exact configuration, fixtures or retained evidence for this responsibility.
+  - path: "docs/design/project-world/shop-example/project/model/organization.yaml.example"
+    form: config
+    realizes: [documentation/current-guidance]
+    why: Supplies exact configuration, fixtures or retained evidence for this responsibility.
+  - path: "docs/design/project-world/shop-example/project/model/realization.yaml.example"
+    form: config
+    realizes: [documentation/current-guidance]
+    why: Supplies exact configuration, fixtures or retained evidence for this responsibility.
+  - path: "docs/design/project-world/shop-example/project/model/sales.yaml.example"
+    form: config
+    realizes: [documentation/current-guidance]
+    why: Supplies exact configuration, fixtures or retained evidence for this responsibility.
+  - path: "docs/design/project-world/shop-example/verify_design.py"
+    form: code
+    realizes: [documentation/current-guidance]
+    why: Implements the stated responsibility within its declared boundary.
+  - path: "docs/design/project-world/shop-walkthrough.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Documents the stated responsibility or preserves its historical evidence.
+  - path: "docs/design/projection-assurance-direction.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Documents the stated responsibility or preserves its historical evidence.
+  - path: "docs/design/projection-evidence-refresh.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Documents the stated responsibility or preserves its historical evidence.
+  - path: "docs/design/projection-first-reconciliation.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Documents the stated responsibility or preserves its historical evidence.
+  - path: "docs/design/proof-readiness-capabilities.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Documents the stated responsibility or preserves its historical evidence.
+  - path: "docs/design/resolved-target-equality.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Documents the stated responsibility or preserves its historical evidence.
+  - path: "docs/design/scoped-target-exclusions.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Documents the stated responsibility or preserves its historical evidence.
+  - path: "docs/design/selective-adoption-handoff.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Documents the stated responsibility or preserves its historical evidence.
+  - path: "docs/design/software-architecture-experiment.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Documents the stated responsibility or preserves its historical evidence.
+  - path: "docs/design/standard-operating-model.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Documents the stated responsibility or preserves its historical evidence.
+  - path: "docs/design/task-management-model/README.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Documents the stated responsibility or preserves its historical evidence.
+  - path: "docs/design/task-management-model/artifacts.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Documents the stated responsibility or preserves its historical evidence.
+  - path: "docs/design/task-management-model/assessment.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Documents the stated responsibility or preserves its historical evidence.
+  - path: "docs/design/task-management-model/checks.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Documents the stated responsibility or preserves its historical evidence.
+  - path: "docs/design/task-management-model/components.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Documents the stated responsibility or preserves its historical evidence.
+  - path: "docs/design/task-management-model/concepts.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Documents the stated responsibility or preserves its historical evidence.
+  - path: "docs/design/task-management-model/decisions.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Documents the stated responsibility or preserves its historical evidence.
+  - path: "docs/design/task-management-model/model-language.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Documents the stated responsibility or preserves its historical evidence.
+  - path: "docs/design/task-management-model/relations.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Documents the stated responsibility or preserves its historical evidence.
+  - path: "docs/design/task-management-model/requirements.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Documents the stated responsibility or preserves its historical evidence.
+  - path: "docs/design/task-management-model/source-description.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Documents the stated responsibility or preserves its historical evidence.
+  - path: "docs/design/task-management-model/use-cases.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Documents the stated responsibility or preserves its historical evidence.
+  - path: "docs/design/task-management/AGENTS.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Documents the stated responsibility or preserves its historical evidence.
+  - path: "docs/design/task-management/CHANGELOG.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Documents the stated responsibility or preserves its historical evidence.
+  - path: "docs/design/task-management/CONTRIBUTING.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Documents the stated responsibility or preserves its historical evidence.
+  - path: "docs/design/task-management/README.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Documents the stated responsibility or preserves its historical evidence.
+  - path: "docs/design/task-management/docs/README.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Documents the stated responsibility or preserves its historical evidence.
+  - path: "docs/design/task-management/docs/architecture.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Documents the stated responsibility or preserves its historical evidence.
+  - path: "docs/design/task-management/docs/cli.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Documents the stated responsibility or preserves its historical evidence.
+  - path: "docs/design/task-management/docs/decisions.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Documents the stated responsibility or preserves its historical evidence.
+  - path: "docs/design/task-management/docs/domain.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Documents the stated responsibility or preserves its historical evidence.
+  - path: "docs/design/task-management/docs/operations.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Documents the stated responsibility or preserves its historical evidence.
+  - path: "docs/design/task-management/docs/product.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Documents the stated responsibility or preserves its historical evidence.
+  - path: "docs/design/task-management/docs/storage.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Documents the stated responsibility or preserves its historical evidence.
+  - path: "docs/design/task-management/docs/testing.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Documents the stated responsibility or preserves its historical evidence.
+  - path: "docs/design/verb-table.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Documents the stated responsibility or preserves its historical evidence.
+  - path: "docs/design/work-item-comparison-20261009.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Documents the stated responsibility or preserves its historical evidence.
+  - path: "docs/development/README.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Documents the stated responsibility or preserves its historical evidence.
+  - path: "docs/development/adoption-boundaries.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Documents the stated responsibility or preserves its historical evidence.
+  - path: "docs/development/code-map.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Documents the stated responsibility or preserves its historical evidence.
+  - path: "docs/development/documentation.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Documents the stated responsibility or preserves its historical evidence.
+  - path: "docs/development/modules.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Documents the stated responsibility or preserves its historical evidence.
+  - path: "docs/development/parallel-work.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Documents the stated responsibility or preserves its historical evidence.
+  - path: "docs/development/session-handoff.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Documents the stated responsibility or preserves its historical evidence.
+  - path: "docs/development/shared-contracts.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Documents the stated responsibility or preserves its historical evidence.
+  - path: "docs/documentation-routers.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Documents the stated responsibility or preserves its historical evidence.
+  - path: "docs/documentation.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Documents the stated responsibility or preserves its historical evidence.
+  - path: "docs/engineering-constitution.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Documents the stated responsibility or preserves its historical evidence.
+  - path: "docs/history/README.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Documents the stated responsibility or preserves its historical evidence.
+  - path: "docs/history/architecture-legacy-sections-20261010.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Documents the stated responsibility or preserves its historical evidence.
+  - path: "docs/history/canonical-projections-v0.14.1.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Documents the stated responsibility or preserves its historical evidence.
+  - path: "docs/history/development-modules-legacy-sections-20261010.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Documents the stated responsibility or preserves its historical evidence.
+  - path: "docs/history/engineering-constitution-v0.13-20261010.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Documents the stated responsibility or preserves its historical evidence.
+  - path: "docs/history/implementation-plan-before-product-integration-20261009.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Documents the stated responsibility or preserves its historical evidence.
+  - path: "docs/history/operating-methodology-20261011.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Documents the stated responsibility or preserves its historical evidence.
+  - path: "docs/implementation-plan.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Documents the stated responsibility or preserves its historical evidence.
+  - path: "docs/markitect-first.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Documents the stated responsibility or preserves its historical evidence.
+  - path: "docs/markitect/project.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Documents the stated responsibility or preserves its historical evidence.
+  - path: "docs/mcp-evaluation.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Documents the stated responsibility or preserves its historical evidence.
+  - path: "docs/measurement.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Documents the stated responsibility or preserves its historical evidence.
+  - path: "docs/onboarding.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Documents the stated responsibility or preserves its historical evidence.
+  - path: "docs/operating-methodology.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Documents the stated responsibility or preserves its historical evidence.
+  - path: "docs/operations.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Documents the stated responsibility or preserves its historical evidence.
+  - path: "docs/production-assessment.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Documents the stated responsibility or preserves its historical evidence.
+  - path: "docs/project-operations.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Documents the stated responsibility or preserves its historical evidence.
+  - path: "docs/project-workflow.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Documents the stated responsibility or preserves its historical evidence.
+  - path: "docs/projections.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Documents the stated responsibility or preserves its historical evidence.
+  - path: "docs/provider-adapters.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Documents the stated responsibility or preserves its historical evidence.
+  - path: "docs/refinement.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Documents the stated responsibility or preserves its historical evidence.
+  - path: "docs/release-assessment.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Documents the stated responsibility or preserves its historical evidence.
+  - path: "docs/repository-layout.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Documents the stated responsibility or preserves its historical evidence.
+  - path: "docs/research/README.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Documents the stated responsibility or preserves its historical evidence.
+  - path: "docs/research/capability-matrix.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Documents the stated responsibility or preserves its historical evidence.
+  - path: "docs/research/implemented-capability-inventory.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Documents the stated responsibility or preserves its historical evidence.
+  - path: "docs/research/ontology-projection-assurance.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Documents the stated responsibility or preserves its historical evidence.
+  - path: "docs/research/optional-research-r01-r03-20261009.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Documents the stated responsibility or preserves its historical evidence.
+  - path: "docs/research/proof-program.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Documents the stated responsibility or preserves its historical evidence.
+  - path: "docs/source-snapshots.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Documents the stated responsibility or preserves its historical evidence.
+  - path: "docs/strategy/README.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Documents the stated responsibility or preserves its historical evidence.
+  - path: "docs/strategy/markitect-strategic-positioning-and-validation.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Documents the stated responsibility or preserves its historical evidence.
+  - path: "docs/strategy/sources/01-ai-first-executable-engineering-constitution.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Documents the stated responsibility or preserves its historical evidence.
+  - path: "docs/strategy/sources/02-reusable-architecture-patterns-and-project-shapes.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Documents the stated responsibility or preserves its historical evidence.
+  - path: "docs/strategy/sources/03-copy-me-engineering-style-discovery.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Documents the stated responsibility or preserves its historical evidence.
+  - path: "docs/strategy/sources/canonical-reset/markitect-coordinator-addendum-module-types-ai-projection.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Documents the stated responsibility or preserves its historical evidence.
+  - path: "docs/strategy/sources/canonical-reset/markitect-coordinator-addendum-projection-binding.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Documents the stated responsibility or preserves its historical evidence.
+  - path: "docs/strategy/sources/canonical-reset/markitect-coordinator-addendum-reconcile-and-projection-resolution.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Documents the stated responsibility or preserves its historical evidence.
+  - path: "docs/strategy/sources/canonical-reset/markitect-coordinator-canonical-projection-reset.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Documents the stated responsibility or preserves its historical evidence.
+  - path: "docs/strategy/sources/canonical-reset/markitect-coordinator-steer-latest-architecture-clarifications.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Documents the stated responsibility or preserves its historical evidence.
+  - path: "docs/strategy/sources/canonical-reset/markitect-minimal-core-language.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Documents the stated responsibility or preserves its historical evidence.
+  - path: "docs/strategy/sources/canonical-reset/markitect-operating-model.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Documents the stated responsibility or preserves its historical evidence.
+  - path: "docs/strategy/sources/follow-up-concepts-readme.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Documents the stated responsibility or preserves its historical evidence.
+  - path: "docs/strategy/sources/markitect-canonical-domain-plugins-adapters-reconciliation.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Documents the stated responsibility or preserves its historical evidence.
+  - path: "docs/strategy/sources/markitect-core-modeling-language-design.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Documents the stated responsibility or preserves its historical evidence.
+  - path: "docs/strategy/sources/markitect-product-definition-and-vision.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Documents the stated responsibility or preserves its historical evidence.
+  - path: "docs/strategy/sources/parallel-development/.gitattributes"
+    form: config
+    realizes: [documentation/current-guidance]
+    why: Supplies exact configuration, fixtures or retained evidence for this responsibility.
+  - path: "docs/strategy/sources/parallel-development/00-coordinator-prompt.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Documents the stated responsibility or preserves its historical evidence.
+  - path: "docs/strategy/sources/parallel-development/01-core-invariants.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Documents the stated responsibility or preserves its historical evidence.
+  - path: "docs/strategy/sources/parallel-development/02-risk-register-and-triage.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Documents the stated responsibility or preserves its historical evidence.
+  - path: "docs/strategy/sources/parallel-development/03-parallelization-and-modularity.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Documents the stated responsibility or preserves its historical evidence.
+  - path: "docs/strategy/sources/parallel-development/04-adapter-modularity-contract.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Documents the stated responsibility or preserves its historical evidence.
+  - path: "docs/strategy/sources/parallel-development/05-existing-project-adoption-and-discovery.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Documents the stated responsibility or preserves its historical evidence.
+  - path: "docs/strategy/sources/parallel-development/06-init-existing-project-adoption.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Documents the stated responsibility or preserves its historical evidence.
+  - path: "docs/strategy/sources/parallel-development/07-workstream-map.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Documents the stated responsibility or preserves its historical evidence.
+  - path: "docs/strategy/sources/parallel-development/README.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Documents the stated responsibility or preserves its historical evidence.
+  - path: "docs/strategy/sources/parallel-development/bundle-readme.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Documents the stated responsibility or preserves its historical evidence.
+  - path: "docs/strategy/sources/parallel-development/manifest.json"
+    form: config
+    realizes: [documentation/current-guidance]
+    why: Supplies exact configuration, fixtures or retained evidence for this responsibility.
+  - path: "docs/strategy/sources/parallel-development/start-wave-prompt.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Documents the stated responsibility or preserves its historical evidence.
+  - path: "docs/usage.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Documents the stated responsibility or preserves its historical evidence.
+  - path: "docs/validation/README.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Documents the stated responsibility or preserves its historical evidence.
+  - path: "docs/validation/a01-native-smoke-20261010.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Documents the stated responsibility or preserves its historical evidence.
+  - path: "docs/validation/agents-md-vs-markitect.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Documents the stated responsibility or preserves its historical evidence.
+  - path: "docs/validation/astra-assessment-2026-10-06.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Documents the stated responsibility or preserves its historical evidence.
+  - path: "docs/validation/canonical-projection-reset.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Documents the stated responsibility or preserves its historical evidence.
+  - path: "docs/validation/classic-commerce-entrypoint.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Documents the stated responsibility or preserves its historical evidence.
+  - path: "docs/validation/clean-architecture-baseline.json"
+    form: config
+    realizes: [documentation/current-guidance]
+    why: Supplies exact configuration, fixtures or retained evidence for this responsibility.
+  - path: "docs/validation/clean-architecture-consolidation.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Documents the stated responsibility or preserves its historical evidence.
+  - path: "docs/validation/clean-architecture-final.json"
+    form: config
+    realizes: [documentation/current-guidance]
+    why: Supplies exact configuration, fixtures or retained evidence for this responsibility.
+  - path: "docs/validation/clean-architecture-gates.json"
+    form: config
+    realizes: [documentation/current-guidance]
+    why: Supplies exact configuration, fixtures or retained evidence for this responsibility.
+  - path: "docs/validation/impact-assessment-protocol.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Documents the stated responsibility or preserves its historical evidence.
+  - path: "docs/validation/independent-proof-capability-review.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Documents the stated responsibility or preserves its historical evidence.
+  - path: "docs/validation/integration-queue-20261011.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Documents the stated responsibility or preserves its historical evidence.
+  - path: "docs/validation/integration-round-20261012.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Documents the stated responsibility or preserves its historical evidence.
+  - path: "docs/validation/markitect-first-dogfood.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Documents the stated responsibility or preserves its historical evidence.
+  - path: "docs/validation/markitect-first-release-readiness.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Documents the stated responsibility or preserves its historical evidence.
+  - path: "docs/validation/parallel-development-wave-1.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Documents the stated responsibility or preserves its historical evidence.
+  - path: "docs/validation/parallel-wave-azure-devops.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Documents the stated responsibility or preserves its historical evidence.
+  - path: "docs/validation/parallel-wave-claude.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Documents the stated responsibility or preserves its historical evidence.
+  - path: "docs/validation/parallel-wave-codex.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Documents the stated responsibility or preserves its historical evidence.
+  - path: "docs/validation/parallel-wave-docs.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Documents the stated responsibility or preserves its historical evidence.
+  - path: "docs/validation/parallel-wave-dotnet.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Documents the stated responsibility or preserves its historical evidence.
+  - path: "docs/validation/parallel-wave-github.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Documents the stated responsibility or preserves its historical evidence.
+  - path: "docs/validation/parallel-wave-konfyra.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Documents the stated responsibility or preserves its historical evidence.
+  - path: "docs/validation/parallel-wave-risk-triage.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Documents the stated responsibility or preserves its historical evidence.
+  - path: "docs/validation/project-native-delivery-2026-10-09.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Documents the stated responsibility or preserves its historical evidence.
+  - path: "docs/validation/project-native-work-2026-10-09.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Documents the stated responsibility or preserves its historical evidence.
+  - path: "docs/validation/project-operations-2026-10-09.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Documents the stated responsibility or preserves its historical evidence.
+  - path: "docs/validation/project-world-delivery.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Documents the stated responsibility or preserves its historical evidence.
+  - path: "docs/validation/projection-first-reconciliation.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Documents the stated responsibility or preserves its historical evidence.
+  - path: "docs/validation/proof-capability-checkpoint-2026-10-06.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Documents the stated responsibility or preserves its historical evidence.
+  - path: "docs/validation/real-project-adoption-pilot.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Documents the stated responsibility or preserves its historical evidence.
+  - path: "docs/validation/selective-adoption-handoff.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Documents the stated responsibility or preserves its historical evidence.
+  - path: "docs/validation/standard-operating-model.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Documents the stated responsibility or preserves its historical evidence.
+  - path: "docs/vision.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Documents the stated responsibility or preserves its historical evidence.
+  - path: "docs/winget.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Documents the stated responsibility or preserves its historical evidence.
+  - path: "docs/work-items/README.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Documents the stated responsibility or preserves its historical evidence.
+  - path: "docs/work-items/surveys/README.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Documents the stated responsibility or preserves its historical evidence.
+  - path: "docs/work-items/surveys/agent-files-20261010.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Documents the stated responsibility or preserves its historical evidence.
+  - path: "docs/work-items/surveys/branches-and-worktrees-20261010.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Documents the stated responsibility or preserves its historical evidence.
+  - path: "docs/work-items/surveys/case-playground-20261010.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Documents the stated responsibility or preserves its historical evidence.
+  - path: "docs/work-items/surveys/cli-mcp-app-server-20261010.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Documents the stated responsibility or preserves its historical evidence.
+  - path: "docs/work-items/surveys/code-architecture-20261010.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Documents the stated responsibility or preserves its historical evidence.
+  - path: "docs/work-items/surveys/earlier-plans-20261011.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Documents the stated responsibility or preserves its historical evidence.
+  - path: "docs/work-items/surveys/knowledge-graph-and-government-20261010.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Documents the stated responsibility or preserves its historical evidence.
+  - path: "docs/work-items/surveys/product-readiness-lessons-20261010.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Documents the stated responsibility or preserves its historical evidence.
+  - path: "docs/work-items/surveys/tests-and-ci-20261010.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Documents the stated responsibility or preserves its historical evidence.

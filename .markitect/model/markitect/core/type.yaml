@@ -1,0 +1,15 @@
+id: type
+kind: Property
+body: Der vom Core verstandene Werttyp dieser Property.
+spec:
+  type: enum
+  minCount: 1
+  maxCount: 1
+  values:
+    - string
+    - boolean
+    - integer
+    - number
+    - enum
+    - object
+    - reference
