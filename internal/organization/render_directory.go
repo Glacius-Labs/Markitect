@@ -57,7 +57,9 @@ func localResponsibilityOf(c ContextSelection, input RenderInput) localResponsib
 	}
 	paths := []string{}
 	for _, artifact := range files {
-		paths = append(paths, artifact.Path.String())
+		if artifact.Package == c.Package() {
+			paths = append(paths, artifact.Path.String())
+		}
 	}
 	slices.Sort(paths)
 	r.OwnArtifacts = &paths

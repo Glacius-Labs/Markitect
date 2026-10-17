@@ -213,7 +213,7 @@ func TestRenderStatesTheLocalResponsibility(t *testing.T) {
 	selection, settings, input := renderFixture(t, ".", organization.ReviewerCandidate)
 	input.Task.Purpose, input.Task.Scope = "local", "complete"
 	input.Task.Findings = organization.OpenFindings{Source: hostRef("open-findings", ""), IDs: []string{}}
-	input.Review = &organization.ReviewFacts{Package: ".", Subject: hostRef("subject", ""), Candidate: hostRef("candidate", ""), Expectations: hostRef("expectations", "")}
+	input.Review = &organization.ReviewFacts{Package: ".", Subject: hostRef("subject", ""), Candidate: hostRef("candidate", ""), Expectations: hostRef("expectations", ""), Files: []organization.ArtifactFact{renderArtifact(t, "a")}}
 	if got := inventory(input, selection, settings); got != `{"LocalDefinitions":[],"OwnArtifacts":[],"OpenFindings":[]}` {
 		t.Fatalf("root no-change review inventory: %s", got)
 	}
