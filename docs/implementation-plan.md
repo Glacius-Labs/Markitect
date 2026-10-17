@@ -38,7 +38,7 @@ On 17 October 2026 the owner proposed a division of the work between an architec
 Interpretation of that division (marked):
 - **Architect session:**
   - the [Apply design map](design/canonical-model/README.md#apply-design);
-  - the register entries DEC-024 to DEC-031, DEC-033 to DEC-037, DEC-039 to DEC-041 and later entries on the Apply concept;
+  - the register entries DEC-024 to DEC-031, DEC-033 to DEC-037, DEC-039, DEC-040 and later entries on the Apply concept;
   - the consumer-owned ports in `internal/run/` and `internal/apply/`;
   - the whole directories `internal/run/`, `internal/realization/`, `internal/organization/` and `internal/apply/`;
   - the `apply` verb wiring, which it requests in the CLI and bootstrap files reserved below.
@@ -86,7 +86,7 @@ Use an isolated managed worktree and a non-protected branch from the integrated 
 | APPLY-RUNTIME | `internal/adapters/container/`, `internal/agentd/`, `cmd/markitect-agentd/`, `packaging/runtime/` | Below the session port; may start beside RUN. Container engine client, volumes, limits, the agentd session helper with its MCP bridge and stdio framing, and the pinned base image with both CLIs ([DEC-037](concepts/register.md#dec-037-agent-sessions-and-checks-run-in-linux-containers)). No task, model or review semantics; real smoke needs finite authority. |
 | APPLY-AGENT | `internal/adapters/codexappserver/`, `internal/adapters/claudecode/` | Session adapters for Codex App Server and Claude Code on `run.Sessions`, after RUN's Session contract and APPLY-RUNTIME. Profile metadata comes from the runtime image through the engine, which preparation may query but never runs the image; the existing offline metadata preparer is replaced accordingly. Each adapter needs its bounded real handshake smoke; real smoke needs finite authority. |
 | APPLY-REPOSITORY | `internal/adapters/gitrepo/`, `internal/adapters/checks/` | Read-only capture follows the reviewed Apply Source/PreviewSource contracts before CUTOVER. A read-only CheckProfilePreparer may follow the Apply metadata port there; workspace creation on runtime volumes, check execution in containers and guarded publication follow the corresponding RUN/Apply contracts and APPLY-RUNTIME. |
-| APPLY-INTEGRATE | `internal/apply/`, bootstrap/wiring and composed evidence | Architect session since 17 October 2026, see [above](#architect-and-coordinator). Before CUTOVER, establish consumer-owned Source/PreviewSource ports and read-only preparation over actual acquired inputs. Model compilation is the first small slice, not a complete check or context. After RUN, add Control/Publisher and orchestration; one Package, recursive integration, verification/publication and real M1/M2 proof follow their adapters. |
+| APPLY-INTEGRATE | `internal/apply/` and composed evidence; `apply` wiring through the reserved CLI and bootstrap files | Architect session since 17 October 2026, see [above](#architect-and-coordinator). Before CUTOVER, establish consumer-owned Source/PreviewSource ports and read-only preparation over actual acquired inputs. Model compilation is the first small slice, not a complete check or context. After RUN, add Control/Publisher and orchestration; one Package, recursive integration, verification/publication and real M1/M2 proof follow their adapters. |
 
 A scope is reserved only when dispatched; it is not permission to start every later row. Parent scope grants no sibling files. Shared outputs have one current writer; reservation changes are explicit.
 
