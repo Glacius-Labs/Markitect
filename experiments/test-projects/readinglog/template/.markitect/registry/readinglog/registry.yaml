@@ -1,0 +1,10 @@
+apiVersion: markitect.registry/v1
+artifacts:
+  - path: realization/app.py
+    form: code
+    realizes: [readinglog/add, readinglog/list, readinglog/storage, readinglog/interface]
+    why: Preserves the actual source-bound existing add/list application as the shared starting realization, without implementing the new features.
+  - path: realization/tests/test_baseline.py
+    form: test
+    realizes: [readinglog/add, readinglog/list, readinglog/storage]
+    why: Preserves the public existing CLI baseline regression test verbatim; it is not a hidden evaluator or a new-feature solution.

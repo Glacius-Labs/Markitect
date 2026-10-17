@@ -1,0 +1,13 @@
+imports:
+  - package: software
+    as: Software
+id: book
+kind: Software.Concept
+body: |-
+  A [[system]] book has exactly the fields id, title, author, pages and status.
+  The first three are nonempty strings, pages is a positive integer (not a
+  boolean), and status is unread or finished. IDs are unique and case-sensitive.
+  [[add]] normalizes command text through [[inputs]] and creates an unread book.
+  [[storage]] retains insertion order and existing stored records. No live books
+  are pre-created by this Definition.
+spec: {}

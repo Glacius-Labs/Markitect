@@ -61,7 +61,7 @@ Before integration, obtain independent complete-diff review and resolve findings
 
 ## Historical Project/Domain contracts
 
-Published v0.14.1 binaries and their [immutable source and guide](https://github.com/Glacius-Labs/Markitect/tree/v0.14.1) retain their contract. The preceding source generation remains at [5ff32069](https://github.com/Glacius-Labs/Markitect/tree/5ff3206917fa3b7482d9daedb903d57a919f56b8). Current consumers do not reinterpret those formats or revive their runtime.
+The retired v0.14.1 distribution and its [preserved source and guide](https://github.com/Glacius-Labs/Markitect/tree/v0.14.1) retain their contract. The preceding source generation remains at [5ff32069](https://github.com/Glacius-Labs/Markitect/tree/5ff3206917fa3b7482d9daedb903d57a919f56b8). Current consumers do not reinterpret those formats or revive their runtime.
 
 ## Release work
 

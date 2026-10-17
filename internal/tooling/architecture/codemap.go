@@ -44,7 +44,7 @@ var Layers = []MapLayer{
 	{"apply-adapter", "Adapters", "Concrete repository, journal, container engine, profile metadata and document I/O.", []string{"apply-adapter"}},
 	{"apply-bootstrap", "Composition", "Constructs actual services and their adapters.", []string{"apply-bootstrap"}},
 	{"apply-command", "Product command", "Thin entrypoint to product composition.", []string{"apply-command"}},
-	{"agent-protocol", "Agent protocol", "Frame protocol between the Host and the session helper.", []string{"agent-protocol"}},
+	{"agent-protocol", "Agent protocol", "Frame protocol between the Orchestrator and the session helper.", []string{"agent-protocol"}},
 	{"agent-runtime", "Session helper", "Runs inside each Agent container: provider process, MCP bridge and stdio framing.", []string{"agent-runtime"}},
 	{"runtime-command", "Runtime command", "Thin entrypoint of the session helper.", []string{"runtime-command"}},
 	{"build-data", "Build data", "Version identity and embedded license notices.", []string{"build-data"}},

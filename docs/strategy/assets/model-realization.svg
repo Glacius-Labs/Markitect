@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1120" height="380" viewBox="0 0 1120 380" role="img" aria-labelledby="title description">
+  <title id="title">You shape the world. The project follows.</title>
+  <desc id="description">Planned Markitect workflow. You define the canonical model of concepts, behavior, architecture and rules. The project aligns its code, tests, configuration and documentation to that same model. Markitect organizes responsibilities, AI work, independent review, integration and checks. Full Apply is under development.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0 0 10 5 0 10Z" fill="#596462"/>
+    </marker>
+  </defs>
+  <rect width="1120" height="380" rx="18" fill="#f6f7f4"/>
+  <g font-family="Segoe UI, Arial, sans-serif">
+    <text x="40" y="35" fill="#596462" font-size="13" font-weight="700" letter-spacing="2">MARKITECT / MODEL-FIRST DEVELOPMENT</text>
+    <text x="40" y="76" fill="#212b2a" font-size="30" font-weight="700">You shape the world. The project follows.</text>
+
+    <rect x="40" y="112" width="260" height="120" rx="12" fill="#ffffff" stroke="#c4cac8"/>
+    <text x="62" y="147" fill="#212b2a" font-size="22" font-weight="700">You</text>
+    <text x="62" y="178" fill="#596462" font-size="17">Ideas, decisions</text>
+    <text x="62" y="204" fill="#596462" font-size="17">and evolving intent</text>
+
+    <rect x="430" y="112" width="260" height="120" rx="12" fill="#e2ebe5" stroke="#698173" stroke-width="2"/>
+    <text x="452" y="147" fill="#212b2a" font-size="22" font-weight="700">Canonical model</text>
+    <text x="452" y="178" fill="#394e43" font-size="17">Concepts, behavior,</text>
+    <text x="452" y="204" fill="#394e43" font-size="17">architecture and rules</text>
+
+    <rect x="820" y="112" width="260" height="120" rx="12" fill="#ffffff" stroke="#c4cac8"/>
+    <text x="842" y="147" fill="#212b2a" font-size="22" font-weight="700">Your project</text>
+    <text x="842" y="178" fill="#596462" font-size="17">Code, tests, configuration</text>
+    <text x="842" y="204" fill="#596462" font-size="17">and documentation</text>
+
+    <path d="M310 174H418" stroke="#596462" stroke-width="2.5" marker-end="url(#arrow)"/>
+    <text x="364" y="155" text-anchor="middle" fill="#596462" font-size="16">defines</text>
+    <path d="M810 174H702" stroke="#596462" stroke-width="2.5" marker-end="url(#arrow)"/>
+    <text x="756" y="155" text-anchor="middle" fill="#596462" font-size="16">aligns to</text>
+
+    <rect x="430" y="253" width="650" height="76" rx="12" fill="#212b2a"/>
+    <text x="452" y="279" fill="#c4cac8" font-size="12" font-weight="700" letter-spacing="1.5">MARKITECT ORGANIZES REALIZATION</text>
+    <text x="452" y="308" fill="#ffffff" font-size="16">Responsibilities → AI work → Independent review → Integration &amp; checks</text>
+    <text x="40" y="358" fill="#596462" font-size="14">Planned workflow · Full Apply is under development.</text>
+  </g>
+</svg>

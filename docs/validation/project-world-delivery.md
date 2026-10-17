@@ -2,7 +2,7 @@
 
 Validation: 2026-10-08 to 2026-10-09 (Europe/Berlin). Branch: `codex/model-driven-delivery`. Base: `a97cbd5ef3e0b22b9e6397501047a4e01dc90204`.
 
-This local source candidate implements the user-authorized [project-world design](../design/project-world/README.md). The [workflow](../project-workflow.md), executable [Shop fixture](../../examples/project-world/README.md), and [live exercise](https://github.com/Glacius-Labs/Markitect/blob/d6239ab05345c49f8f855ce9675af6925609742c/experiments/project-world-live/README.md) are the entrypoints. The earlier `.yaml.example` design specimens are historical proposals. No remote push, release, deployment or adopting-project human acceptance is claimed.
+This local source candidate implements the user-authorized [project-world design](../design/project-world/README.md). The [workflow](../project-workflow.md), executable [Shop fixture](https://github.com/Glacius-Labs/Markitect/blob/1f4a1ede214d05fd2fee615b3905207df7702426/examples/project-world/README.md), and [live exercise](https://github.com/Glacius-Labs/Markitect/blob/d6239ab05345c49f8f855ce9675af6925609742c/experiments/project-world-live/README.md) are the entrypoints. The earlier `.yaml.example` design specimens are historical proposals. No remote push, release, deployment or adopting-project human acceptance is claimed.
 
 ## Implemented behavior
 

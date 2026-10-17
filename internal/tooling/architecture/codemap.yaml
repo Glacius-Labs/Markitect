@@ -45,7 +45,7 @@ packages:
     doc: internal/adapters/codexappserver/README.md
   - path: internal/adapters/container
     layer: apply-adapter
-    purpose: Container engine client and the Host side of the agentd connection.
+    purpose: Container engine client and the Orchestrator side of the agentd connection.
     doc: docs/development/modules.md
   - path: internal/adapters/documents
     layer: apply-adapter
@@ -69,7 +69,7 @@ packages:
     doc: docs/development/modules.md
   - path: internal/agentd/frame
     layer: agent-protocol
-    purpose: Frame protocol between the Host and the session helper.
+    purpose: Frame protocol between the Orchestrator and the session helper.
     doc: docs/development/modules.md
   - path: internal/agentd
     layer: agent-runtime

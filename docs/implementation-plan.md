@@ -13,7 +13,7 @@ Starting product: Main `bc4b49e76f9b9e4b3ec98033a0b8c73d5013b310`. Its existing 
 ## Guiding decisions
 
 - Implement completed v1 and the Manager concept directly. Compatibility is not required; delete obsolete product paths, formats and tests together.
-- One ordinary root and one Manager per local Package, shared across code, tests and docs. Default teams are Manager plus fresh independent reviewer, with sequential writing. [DEC-039](concepts/register.md#dec-039-deterministic-manager-process) requires unchanged Host-guaranteed operation propagation to every Manager, adjacent-only communication and fixed review/integration; AI-planned participation and rewritten child operations are superseded.
+- One ordinary root and one Manager per local Package, shared across code, tests and docs. Default teams are Manager plus fresh independent reviewer, with sequential writing. [DEC-039](concepts/register.md#dec-039-deterministic-manager-process) requires unchanged Orchestrator-guaranteed operation propagation to every Manager, adjacent-only communication and fixed review/integration; AI-planned participation and rewritten child operations are superseded.
 - Separate pure model/snapshot/organization/realization values from execution, repository I/O and provider protocols. Use consumer-owned Ports and Adapters and one Go module.
 - Reuse work with current assessment, not old approval. Keep exact bindings, recorded questions and actual effect observations.
 - Budget shortage and uncertainty produce visible retained incomplete work. They cannot waive evidence or authorize blind replay.
@@ -98,7 +98,7 @@ MODEL first supplies an I/O-free compilation entrypoint over explicit source/dep
 
 New foundation packages may develop in isolation while BOOT is reviewed. They cannot integrate with unclassified paths or disabled import checks. BOOT coordinates ownership and package-map handling without writing producer implementations. The public CLI must not consume the partial foundation before CUTOVER.
 
-Before CUTOVER, read-only preparation and repository capture must support real check/context inputs. Source captures committed clean HEAD with an opaque comparison guard; PreviewSource observes a working draft or an explicitly resolved fixed revision without that guard. Both use the same raw input contract and acquisition mechanism. After the reviewed Apply metadata port exists, Host adapters may parse source-bound bytes of explicitly selected Check profile metadata using closed formats only; Agent profile metadata comes from the runtime image (APPLY-AGENT). This preparation does not start processes, probe versions, export schemas or invoke providers; passing it does not establish runtime support. Initial context preview exposes the actual model selection, inclusion reasons and resolved settings; full role rendering waits for real task facts. No invented run, task, evidence or budget records make a preview executable. Workspace creation, sessions, check execution and publication remain later work.
+Before CUTOVER, read-only preparation and repository capture must support real check/context inputs. Source captures committed clean HEAD with an opaque comparison guard; PreviewSource observes a working draft or an explicitly resolved fixed revision without that guard. Both use the same raw input contract and acquisition mechanism. After the reviewed Apply metadata port exists, Orchestrator adapters may parse source-bound bytes of explicitly selected Check profile metadata using closed formats only; Agent profile metadata comes from the runtime image (APPLY-AGENT). This preparation does not start processes, probe versions, export schemas or invoke providers; passing it does not establish runtime support. Initial context preview exposes the actual model selection, inclusion reasons and resolved settings; full role rendering waits for real task facts. No invented run, task, evidence or budget records make a preview executable. Workspace creation, sessions, check execution and publication remain later work.
 
 ### Integration
 
@@ -114,7 +114,7 @@ These rules implement the owner's 17 October 2026 handoff instruction and replac
 
 ### Session and process contracts
 
-The real handshake ran on 17 October 2026 ([record](validation/runtime-handshake-20261017.md)). Since [DEC-037](concepts/register.md#dec-037-agent-sessions-and-checks-run-in-linux-containers), every Agent session and project check runs in its own Linux container, and the [rebuild plan](design/canonical-model/manager-apply-rebuild-plan.md#container-runtime) owns the runtime and the session mapping. RUN defines the Session port against that mapping: Host tools reach the provider over MCP through `markitect-agentd`, and Codex App Server and Claude Code are the two adapters. Codex dynamic tools are not used.
+The real handshake ran on 17 October 2026 ([record](validation/runtime-handshake-20261017.md)). Since [DEC-037](concepts/register.md#dec-037-agent-sessions-and-checks-run-in-linux-containers), every Agent session and project check runs in its own Linux container, and the [rebuild plan](design/canonical-model/manager-apply-rebuild-plan.md#container-runtime) owns the runtime and the session mapping. RUN defines the Session port against that mapping: Orchestrator tools reach the provider over MCP through `markitect-agentd`, and Codex App Server and Claude Code are the two adapters. Codex dynamic tools are not used.
 
 The earlier runtime lessons move into the container runtime:
 
@@ -122,8 +122,8 @@ The earlier runtime lessons move into the container runtime:
 | --- | --- |
 | Terminate the whole process tree on timeout or cancellation ([caeb57c5](https://github.com/Glacius-Labs/Markitect/commit/caeb57c5cca4ff0e27b0f821590a82d5d26dbd94)) | agentd signals the provider's process group, and stopping the container ends every remaining process. Keep a child and grandchild termination test at agentd. No Windows Job Object. |
 | Require the exact configured CLI version ([cbe21140](https://github.com/Glacius-Labs/Markitect/commit/cbe211404df4455d7fa26897857757cf38ec1a15)) | The image pins the CLI versions; the profile binds the image ID and the versions it records, and a mismatch refuses the profile. |
-| Keep a CLI rejection visible, including for a large prompt ([c1d4ba6c](https://github.com/Glacius-Labs/Markitect/commit/c1d4ba6c30aeeeee7f3489476aa40684d67add56)) | agentd forwards the provider's standard error and exit status, so a refused start reaches the Host with its diagnostic. |
-| Guard Windows short names and aliases ([a726fce4](https://github.com/Glacius-Labs/Markitect/commit/a726fce45e3565513a6f9e13b7a14ec4314af1a8), [837f137e](https://github.com/Glacius-Labs/Markitect/commit/837f137e4f445428a9707aa90d7d9770983f5cd7)) | Sessions never see host paths. The guards stay where the Host touches the owner's repository: acquisition and guarded publication in `gitrepo`. |
+| Keep a CLI rejection visible, including for a large prompt ([c1d4ba6c](https://github.com/Glacius-Labs/Markitect/commit/c1d4ba6c30aeeeee7f3489476aa40684d67add56)) | agentd forwards the provider's standard error and exit status, so a refused start reaches the Orchestrator with its diagnostic. |
+| Guard Windows short names and aliases ([a726fce4](https://github.com/Glacius-Labs/Markitect/commit/a726fce45e3565513a6f9e13b7a14ec4314af1a8), [837f137e](https://github.com/Glacius-Labs/Markitect/commit/837f137e4f445428a9707aa90d7d9770983f5cd7)) | Sessions never see host paths. The guards stay where the Orchestrator touches the owner's repository: acquisition and guarded publication in `gitrepo`. |
 
 APPLY-RUNTIME builds the container runtime below the session port; APPLY-AGENT builds the two adapters on top of it. Real provider and Apply execution still needs separate finite authority.
 
@@ -146,7 +146,7 @@ A pinned runtime image and a bounded real handshake smoke for each session adapt
 
 The retired backlog/roadmap remain in [Git at previous Main](https://github.com/Glacius-Labs/Markitect/tree/bc4b49e76f9b9e4b3ec98033a0b8c73d5013b310/docs). Old [handoffs](development/session-handoff.md) and [surveys](work-items/surveys/README.md) preserve their scope and cannot restart queues. The local dashboard is retired without a replacement monitor.
 
-Published assets, original PRs and failed diagnostics retain their identities. [Operations](operations.md) owns separate release work.
+The owner retired old release pages and downloads on 17 October 2026. Git tags, captured release identities/attestations, original PRs and needed diagnostics are preserved in the [retirement record](history/distribution-retirement-20261017.md). [Operations](operations.md) owns separate release work; this cleanup changes no Apply-Core contract.
 
 ## Historical roadmap links
 

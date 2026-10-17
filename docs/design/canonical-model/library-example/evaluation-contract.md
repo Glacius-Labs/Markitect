@@ -76,7 +76,7 @@ This keeps the existing simple domain scope. If live data across upgrades become
 
 ## Additional assessment and completion
 
-The external behavior suite is one evidence class. Also run the candidate's own tests, inspect actual source/diff, check usage documentation against the build/run contract, and examine registry/Definition assessments and the real Host history. These checks answer different questions; generated test success or a Manager's report does not replace the external oracle. Human acceptance is a separate recorded decision.
+The external behavior suite is one evidence class. Also run the candidate's own tests, inspect actual source/diff, check usage documentation against the build/run contract, and examine registry/Definition assessments and the real Orchestrator history. These checks answer different questions; generated test success or a Manager's report does not replace the external oracle. Human acceptance is a separate recorded decision.
 
 Before trusting an evaluator, exercise it against controlled wrong transcripts/program stubs: always-five policy against M2, always-three against M1, off-by-one due dates, mutation on refusal, duplicate notices and an old return that closes a newer loan. Keep these negative checks outside the two real artifacts. Their success proves evaluator discrimination only, not a real Apply or complete defect detection.
 

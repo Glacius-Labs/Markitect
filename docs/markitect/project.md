@@ -4,7 +4,7 @@ Generated from acquired canonical v1 source bytes. This view is not execution or
 
 ## markitect
 
-Canonical model digest: `sha256:9db6cfdc15b1a7c1a3543efd3ccc62d2a0cb8455c312ecdb42a3c51b31f8a887`.
+Canonical model digest: `sha256:9b677bddd701306b6fc1c6111bd6bd6a6c8c8033d97d146fcceed7ce6cba4609`.
 
 Manifest: `.markitect/model.yaml` (original bytes `sha256:d40feb9e02db275aed89d53b0a88849e463acaca076c8fa70fad38b367a68559`).
 
@@ -166,9 +166,9 @@ Acquire explicitly selected model and control inputs through consumer-owned port
 
 ### product/cli/honest-read-only-interface
 
-Kind: `vocabulary/Rule`. Source: `.markitect/model/product/cli/honest-read-only-interface.yaml` (original bytes `sha256:88816150a53fc6e1110d38d11c2b7866cb9d2e5827fbf15cbcddbcb20644e090`).
+Kind: `vocabulary/Rule`. Source: `.markitect/model/product/cli/honest-read-only-interface.yaml` (original bytes `sha256:4b1ccd0938e8a3e795e179965da9d31377a87d95c16b05cb2178457279748981`).
 
-Expose check and context over actual PreparationService reports, with structural preparation as the default requested stage and explicitly selected Host metadata as an additional stage. Preserve actual statuses, sources and inclusion reasons. The apply command returns unavailable before acquisition or effects until execution exists. Usage, known failure and incomplete work have distinct exit statuses.
+Expose check and context over actual PreparationService reports, with structural preparation as the default requested stage and explicitly selected Orchestrator metadata as an additional stage. Preserve actual statuses, sources and inclusion reasons. The apply command returns unavailable before acquisition or effects until execution exists. Usage, known failure and incomplete work have distinct exit statuses.
 
 ### product/documents/guarded-model-view
 
@@ -196,15 +196,15 @@ Account for every observed regular file as a protected input, exact registered a
 
 ### product/run/confirmed-run-history
 
-Kind: `vocabulary/Rule`. Source: `.markitect/model/product/run/confirmed-run-history.yaml` (original bytes `sha256:900e4a57a28a0a36faf1ecfd843cc14013f1888fdc00c5c5976ba0e9977f7a67`).
+Kind: `vocabulary/Rule`. Source: `.markitect/model/product/run/confirmed-run-history.yaml` (original bytes `sha256:497280b171125e69913383c5dd65e2b4f9bd689e7cf98da25ee3cea64f0b444e`).
 
-Bind each run to its exact supplied model, repository, configuration and owner request. Admit work against finite assignment budgets and required review capacity. Change confirmed run state only after an exact journal acknowledgement. Preserve uncertain effects and their budget holds. The Host guarantees unchanged Apply propagation through every local Manager along direct parent-child edges. Managers act only on delivered messages and communicate only with their direct parent or children. Participation, required local and integration review, correction and completion follow a fixed Host protocol, never an AI plan. Managers judge local realization and integration, with reviewed change or no-change outcomes; parent-owned prerequisite work remains possible while children wait. Route cross-area questions through the tree and never compensate for missing model links. Finish only with current complete evidence and observed publication, not Agent consensus. Keep transition semantics separate from SQL, repository acquisition and provider protocols.
+Bind each run to its exact supplied model, repository, configuration and owner request. Admit work against finite assignment budgets and required review capacity. Change confirmed run state only after an exact journal acknowledgement. Preserve uncertain effects and their budget holds. The Orchestrator guarantees unchanged Apply propagation through every local Manager along direct parent-child edges. Managers act only on delivered messages and communicate only with their direct parent or children. Participation, required local and integration review, correction and completion follow a fixed Orchestrator protocol, never an AI plan. Managers judge local realization and integration, with reviewed change or no-change outcomes; parent-owned prerequisite work remains possible while children wait. Route cross-area questions through the tree and never compensate for missing model links. Finish only with current complete evidence and observed publication, not Agent consensus. Keep transition semantics separate from SQL, repository acquisition and provider protocols.
 
 ### product/runtime/container-runtime
 
-Kind: `vocabulary/Rule`. Source: `.markitect/model/product/runtime/container-runtime.yaml` (original bytes `sha256:fbc2ad4f53c550ab5dac037e3b01773201fb86098fe778ac8160477a6607b8ad`).
+Kind: `vocabulary/Rule`. Source: `.markitect/model/product/runtime/container-runtime.yaml` (original bytes `sha256:d79d2c319c69026403ae02580a1de476478fc4d0337e629468e4191bb6df533e`).
 
-Run every Agent session and project check in its own hardened Linux container from a runtime image named by its engine image ID. markitect-agentd is the only program the Host talks to: it starts the provider CLI, relays its standard streams, serves the Host tools over MCP on a Unix socket inside the container and reports exits, adding no policy. The Host passes only validated specs to the engine, gives containers named volumes and never host paths, runs them as a non-root user with a read-only root filesystem, no capabilities and bounded resources, and refuses a different frame protocol.
+Run every Agent session and project check in its own hardened Linux container from a runtime image named by its engine image ID. markitect-agentd is the only program the Orchestrator talks to: it starts the provider CLI, relays its standard streams, serves the Orchestrator tools over MCP on a Unix socket inside the container and reports exits, adding no policy. The Orchestrator passes only validated specs to the engine, gives containers named volumes and never host paths, runs them as a non-root user with a read-only root filesystem, no capabilities and bounded resources, and refuses a different frame protocol.
 
 ### product/snapshot/fixed-values
 
@@ -233,9 +233,9 @@ At design and delivery milestones, the responsible chat gives the owner a short 
 
 ### tooling/maintenance-boundaries
 
-Kind: `vocabulary/Rule`. Source: `.markitect/model/tooling/maintenance-boundaries.yaml` (original bytes `sha256:3e976bd1c6390cf61fe45785bd15f4e3ad1883732d40a2c2350bc2f42dc90512`).
+Kind: `vocabulary/Rule`. Source: `.markitect/model/tooling/maintenance-boundaries.yaml` (original bytes `sha256:633fbc919470ea2717d400147e6f27c8349365cca9032c81b17e4414ae9c0615`).
 
-Maintain strict root-layout source packaging, deterministic release archives, licenses, distribution and guarded installation as independent maintenance services. Reject unsupported files, redirection, nested modules and archive collisions. Preserve published bytes and historical release evidence. A source smoke is not release, installation, provider or Apply acceptance.
+Maintain strict root-layout source packaging, deterministic release archives, licenses, distribution and guarded installation as independent maintenance services. Reject unsupported files, redirection, nested modules and archive collisions. Preserve Git tag identities and required historical release evidence. Retire public release pages and downloads only on explicit owner instruction; retain their source/asset identities and attestations without implying current availability. A source smoke is not release, installation, provider or Apply acceptance.
 
 ### tooling/gates/architecture
 

@@ -4,6 +4,14 @@ artifacts:
     form: doc
     realizes: [product/ports-and-adapters]
     why: Documents disposable exact-tree check execution and its observation and source evidence boundaries.
+  - path: "internal/adapters/checks/container_profile.go"
+    form: code
+    realizes: [product/ports-and-adapters]
+    why: Projects explicit container configuration and a declared check into the existing exact-tree CheckRequest without effects or inferred settings.
+  - path: "internal/adapters/checks/container_profile_test.go"
+    form: test
+    realizes: [product/ports-and-adapters]
+    why: Verifies literal request projection, defensive copies, existing Runner composition with controlled peers and refusal before effects.
   - path: "internal/adapters/checks/file_other.go"
     form: code
     realizes: [product/adapters/checks/closed-check-metadata]
@@ -48,3 +56,7 @@ artifacts:
     form: test
     realizes: [product/ports-and-adapters]
     why: Distinguishes literal command and resource binding, failed tree verification, known failed exits, cancellation and unconfirmed cleanup.
+  - path: "internal/adapters/checks/runtime_smoke_test.go"
+    form: test
+    realizes: [product/ports-and-adapters]
+    why: Defines an explicitly opted-in actual container Engine, repository Workspaces and Check Runner composition smoke with exact tree and image receipts, empty-volume copy-up challenges and observed disposable cleanup.

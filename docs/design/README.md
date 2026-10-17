@@ -1,8 +1,8 @@
 # Design records
 
-This directory contains decisions, proposals, assessments, experiments, and design evidence from different stages of Markitect. A file's presence here does not make it a supported contract or current implementation. For current product behavior use [Architecture](../architecture.md), the [Project workflow](../project-workflow.md), and [Usage](../usage.md); for source plans use the [roadmap](../implementation-plan.md). Each record owns its own date, scope, and stated status.
+This directory contains decisions, proposals, assessments, experiments, and design evidence from different stages of Markitect. A file's presence here does not make it a supported contract or current implementation. For current product behavior use [Architecture](../architecture.md), the [Project workflow](../project-workflow.md); for source plans use the [roadmap](../implementation-plan.md). Each record owns its own date, scope, and stated status.
 
-The [Project World package](project-world/README.md) has its own reading order and status notes. Read that map before interpreting its individual design documents or shop artifacts.
+Earlier Project/Domain designs and modeling exercises are routed through the [historical design section](../history/README.md#earlier-design-exercises). Their original documents and fixtures keep their paths and recorded scope.
 
 ## Product direction and work shape
 
@@ -16,7 +16,6 @@ The [Project World package](project-world/README.md) has its own reading order a
 - [Earlier model-design consolidation](canonical-model/consolidation.md) — chronology from 15 October 2026 and remaining product questions outside the completed language scope.
 - [Grundmodell und Bibliotheksentwurf](product-model-refinement/README.md) — typisierte Prosa, dokumentierte Designentscheidungen und Sprachkandidaten.
 - [Standalone Tasks project documentation](task-management/README.md) — fachliche Gegenprobe als eigenständige Projektspezifikation; Anwendung noch nicht implementiert.
-- [Historical Tasks modeling sketch](task-management-model/README.md) — früherer, abgelöster Modellierungsversuch.
 - [Domain-language pressure test](domain-language-pressure.md)
 - [Goal-led modeling proposal](goal-led-modeling.md)
 - [Product-vision alignment assessment](product-vision-alignment.md)

@@ -2,7 +2,7 @@
 
 ## Scope
 
-This source iteration starts at main `93181bb9bc1af0e663b3daa1a4ff772822320307`, after PR 72. Published v0.12.0, historical examples/packages/releases and the negative adoption-pilot findings remain unchanged. The [handoff design](../design/selective-adoption-handoff.md) owns the new versioned boundary; [Usage](../usage.md#selective-adoption-preparation-and-copy-me-unreleased-source) owns commands. This is acquisition/storage/reference validation, not a discovery-quality or productivity study.
+This source iteration starts at main `93181bb9bc1af0e663b3daa1a4ff772822320307`, after PR 72. Published v0.12.0, historical examples/packages/releases and the negative adoption-pilot findings remain unchanged. The [handoff design](../design/selective-adoption-handoff.md) owns the new versioned boundary; [Usage](https://github.com/Glacius-Labs/Markitect/blob/1f4a1ede214d05fd2fee615b3905207df7702426/docs/usage.md#selective-adoption-preparation-and-copy-me-unreleased-source) owns commands. This is acquisition/storage/reference validation, not a discovery-quality or productivity study.
 
 ## Executable evidence
 
