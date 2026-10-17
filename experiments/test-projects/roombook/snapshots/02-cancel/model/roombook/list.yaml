@@ -1,0 +1,14 @@
+imports:
+  - package: software
+    as: Software
+id: list
+kind: Software.UseCase
+body: |-
+  At [[interface]], return an object with reservations containing the stored
+  [[reservation|reservations]], sorted by start and then integer id, including
+  canceled history. Optional --room NAME applies the same trimming and
+  case-sensitive room identity as [[inputs]], preserving the same ordering.
+  Without a filter include all rooms; a filter with no matches returns an empty
+  array. Missing data is an empty result and malformed data fails under [[storage]].
+  This query does not mutate stored state.
+spec: {}

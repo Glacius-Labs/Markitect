@@ -1,0 +1,15 @@
+imports:
+  - package: software
+    as: Software
+id: inputs
+kind: Software.Rule
+body: |-
+  For commands of [[system]], strip surrounding whitespace from room and title;
+  nonempty values are required. Room identities are case-sensitive after trimming,
+  and the optional [[list]] room filter uses the same normalization. Timestamps
+  must be exactly YYYY-MM-DDTHH:MMZ, valid calendar values at UTC-minute precision;
+  end must be later than start. Do not accept or silently reinterpret timezone
+  offsets, seconds or invalid calendar values. Invalid input and business conflicts
+  use the understandable error object and exit 2 at [[interface]], leaving stored
+  state unchanged under [[storage]]. Error wording is free.
+spec: {}

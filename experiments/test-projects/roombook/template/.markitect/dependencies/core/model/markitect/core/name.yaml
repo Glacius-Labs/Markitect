@@ -1,0 +1,11 @@
+id: name
+kind: Property
+body: >-
+  Optionaler ausdrücklich abweichender nichtleerer Feldname.
+  Ohne Angabe gilt die vollständige lokale ID der Property als Feldname.
+  Der effektive Feldname muss innerhalb jedes verwendenden Vertrags
+  eindeutig sein.
+spec:
+  type: string
+  minCount: 0
+  maxCount: 1
