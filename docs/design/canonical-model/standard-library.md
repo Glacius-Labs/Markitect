@@ -4,13 +4,13 @@ Date: 17 October 2026. This is the owning discussion record for the proposed sta
 
 ## Path to concept closure
 
-The owner wants a clean concept integrated into Main, polished and then implemented when the Coordinator reaches its checkpoint. The following is the recommended closing sequence, not an expansion of the approved implementation scope. The foundation decisions are selected; the remaining companion contracts and reference-project recommendations are still proposals.
+The owner wants a clean concept integrated into Main, polished and then implemented when the Coordinator reaches its checkpoint. The following is the closing sequence, not an expansion of the approved implementation scope. The eight foundation Kinds and six first companion Kinds are selected; the reference-project recommendations remain proposals unless explicitly selected.
 
 ### Finish these design decisions
 
 1. Review the final wording of the eight foundation Kinds together. Their separate term pages own that wording. Check that each has a distinct purpose, internal Interfaces need no invented Actor, a Check is a method rather than a result, and no relationship list or field has returned implicitly.
-2. Close one bounded first companion scope for architecture, data and operation. Start from the discussed System, Application, DataStore, Environment and Deployment meanings; decide which operating-resource distinctions need their own Kind. Give every selected Kind one complete body, one owning Package and a dependency direction. Frontend/backend remain roles; C4 starts with reviewed views of the same project objects. Optional Instance and specific load-balancer/database Kinds need an actual additional contract. Do not implement every candidate in the topic map merely because it appears there.
-3. Review the [data-and-view recommendations](standard-library-data-and-views.md) as reference-project choices. In particular, decide the proposed Deployment extension to logical stores and the intended transaction/failure boundaries. Keep the proposed PostgreSQL reference, maintenance migrations and recovery exercise separate from generic library obligations. A foundation release does not require every project to use that engine or operating method.
+2. Completed: the owner selected the [six-Kind companion scope](standard-library-architecture-platform.md), body links, empty specs and Package assignments. Frontend/backend remain roles; C4 starts with reviewed views of the same project objects. Optional Instance and specific load-balancer/database Kinds need an actual additional contract. Do not implement every candidate in the topic map merely because it appears there.
+3. Review the [data-and-view recommendations](standard-library-data-and-views.md) as reference-project choices, including the intended transaction/failure boundaries. Deployment's extension to logical stores is now part of its selected contract. Keep the proposed PostgreSQL reference, maintenance migrations and recovery exercise separate from generic library obligations. A foundation release does not require every project to use that engine or operating method.
 4. Walk one coherent Web Library model through the coverage table below. Every applicable obligation needs one clear owner and an examination method; a topic can use the foundation Kinds without receiving a new specialist Kind. Mark deliberately free realization choices and genuinely open project requirements explicitly.
 
 | Coverage to close in the example | Existing approach or remaining question |
@@ -59,6 +59,7 @@ Source: the owner's standard-library design discussion in this chat on 17 Octobe
 - Boundary selection: "Okay, dann halten wir diese Abgrenzungen fest." This selects the discussed System, Application, Component, Environment, Deployment and optional intended Instance distinctions, including the separation from runtime records. The owner then requested the logical data store, operating resources and C4 mapping in the Library example. The new data/resource contracts and mapping recommendations below remain proposals.
 - The owner then asked to work out the quoted open C4/data-access/database/migration/failure/recovery points next ("Damm kümmere dich als nächstes darum"). The [detailed data-and-view contract](standard-library-data-and-views.md) records the resulting recommendations. This commissions design work; its new PostgreSQL reference choice and other detailed recommendations are not silently owner-selected.
 - Following the closure plan, the owner requested concrete definitions, Package assignments and relationships for System, Application, DataStore, Environment, Deployment and operating resources in the Library. The [first companion slice](standard-library-architecture-platform.md) owns the resulting six-Kind proposal. Commissioning that proposal does not select every new contract or example choice.
+- Companion selection: "Okay, dann übernehmen wir die sechs Kinds mit Körperlinks und spec: {} sowie die Paketzuordnung." This selects System, Application, DataStore, Environment, Deployment and OperatingResource and their listed Package assignments, including Deployment's logical-store subject. Concrete Web Library security, configuration, technology and operating choices remain separate. The owner then requested the [security/configuration/build/test/release/operation coverage walkthrough](standard-library-project-coverage.md).
 
 ## Current design state
 
@@ -72,8 +73,9 @@ Source: the owner's standard-library design discussion in this chat on 17 Octobe
 | Exactly the eight discussed Kinds as the first scope | Owner-selected direction | Scope assessment below |
 | markitect-standard distribution, two initial Packages and version policy | Owner-selected direction | Package/version contract below |
 | Broader project/repository coverage and modular extension | Owner adopts the modular coverage direction; exact companion contracts remain design work | Broader library section below |
-| System/application/component and environment/deployment/instance boundaries | Owner-selected direction; exact Kind wording and companion identities remain working design | Runtime walkthrough below |
-| Six first companion Kinds, three Packages, shared OperatingResource and connected example | Concrete proposal pending selection | [First companion slice](standard-library-architecture-platform.md) |
+| System/application/component and environment/deployment/instance boundaries | Owner-selected direction; the six concrete companion contracts are selected below, while a dedicated Instance Kind remains deferred | Runtime walkthrough below |
+| Six first companion Kinds, three Packages, shared OperatingResource | Owner-selected contracts, body links, empty specs and Package assignments; connected Web Library example remains illustrative | [First companion slice](standard-library-architecture-platform.md) |
+| Security, configuration, build, tests, release and operation | Coverage walkthrough commissioned; proposed reference-project obligations remain under discussion | [Project coverage](standard-library-project-coverage.md) |
 | Production library, migration and consumer behavior | Not implemented by this record | Existing fixtures remain unchanged |
 
 The initial source assessment used Main `f8c1acaa169c9955d237e17cd245add963c155bd`. Before recording, the isolated documentation branch advanced to integrated Main `f23eaa2072226d905a8d79b8d6c20f419dfdc136`. These are source observations, not compatibility or execution evidence. The canonical v1 compiler and read-only preparation exist; full Apply remains separate delivery work.
@@ -766,7 +768,7 @@ Omitting an empty spec in author syntax and removing structured contracts altoge
 - The owner has selected all eight discussed Kinds as the first scope, each with empty spec and body-link relationships.
 - Exact Kind wording remains a working formulation. Interface's internal/external scope is selected; the particular call contract and Component split remain illustrative architecture proposals.
 - The markitect-standard model, its two initial Package identities and the stated version/update policy are selected. Actual distribution, exact source location, fixtures and release automation remain implementation work.
-- Review the broader topic map and architecture/platform example before selecting any new companion Package or Kind.
+- The six first companion Kinds and their Package assignments are selected. Additional entries in the broader topic map remain candidates, not an implementation queue.
 - Review the [detailed data-and-view recommendations](standard-library-data-and-views.md), including the reference engine and explicit failure/recovery limits, separately from the already selected foundation.
 - During actual modeling, observe the benefit of structured spec content and the cost of mandatory empty specs, as directed above.
 - Preserve the Library's complete intent when proposing a vocabulary migration; do not alter the M1/M2 Apply acceptance target merely to demonstrate the standard library.

@@ -1,10 +1,10 @@
 # First companion slice: architecture, data and deployment
 
-Date: 17 October 2026. Concrete proposal requested by the owner after the [concept-closure plan](standard-library.md#path-to-concept-closure). The owner selected the earlier system/application/deployment distinctions and commissioned this exact scope discussion; the six Kind contracts, Package assignments and example below are recommendations pending selection. This document owns their proposed wording and the connected example. The [discussion record](standard-library.md) owns selections and provenance; the [data-and-view contract](standard-library-data-and-views.md) owns detailed transaction, migration, recovery and C4 recommendations.
+Date: 17 October 2026. The owner selected the six Kinds below, body links, empty specs and their Package assignments after reviewing this proposal: "Okay, dann übernehmen wir die sechs Kinds mit Körperlinks und spec: {} sowie die Paketzuordnung." This document owns the selected Kind wording and the connected example. The concrete Web Library arrangements remain illustrative project proposals. The [discussion record](standard-library.md) owns selections and provenance; the [data-and-view contract](standard-library-data-and-views.md) owns detailed transaction, migration, recovery and C4 recommendations.
 
 This prospective Web Library does not replace the local Library M1/M2 fixture. These are authoring examples, not compiled inputs, deployed infrastructure or execution evidence.
 
-## Recommended scope and distribution
+## Selected scope and distribution
 
 Add exactly six Kinds. Keep the selected eight foundation Kinds unchanged.
 
@@ -25,9 +25,9 @@ Each proposed model starts at preview 0.1.0 when actually published, follows the
 
 The actual consumer binds every transitive dependency through its complete lock and explicit acquisition. There is no implicit model download. Model IDs, exact versions and Package imports remain different concepts. A consumer imports only the Packages used by that Definition.
 
-All six proposed Kinds use body links and `spec: {}`. No structured consumer currently justifies environment, replicas, engine, provides/consumes or resource-reference fields. This is a proposal for these six contracts, not an empty-spec policy for all future companions. The body obligations below are assessed semantically; empty specs do not make their sentences compiler-enforced relationship types. V1 supplies neither inheritance nor a union-reference mechanism.
+All six selected Kinds use body links and `spec: {}`. No structured consumer currently justifies environment, replicas, engine, provides/consumes or resource-reference fields. This selects these six contracts, not an empty-spec policy for all future companions. The body obligations below are assessed semantically; empty specs do not make their sentences compiler-enforced relationship types. V1 supplies neither inheritance nor a union-reference mechanism.
 
-## Complete proposed Kind definitions
+## Complete selected Kind definitions
 
 Each code block is one Definition file. The paths are relative to that distribution's model root and establish Package membership; there is no extra package declaration.
 
@@ -134,7 +134,7 @@ body: >-
 spec: {}
 ```
 
-This explicitly proposes extending the previously accepted application-only subject to logical DataStores. One subject and one Environment make a Deployment independently addressable. A deployment may use several resources and describe several roles/replicas; split it when an independently meaningful arrangement needs its own identity. The prose alternative Application or DataStore is not a typed union field. A named OperatingResource is already an intended capability in its stated scope; it need not receive another Deployment just to repeat that declaration.
+This extends the previously accepted application-only subject to logical DataStores. One subject and one Environment make a Deployment independently addressable. A deployment may use several resources and describe several roles/replicas; split it when an independently meaningful arrangement needs its own identity. The prose alternative Application or DataStore is not a typed union field. A named OperatingResource is already an intended capability in its stated scope; it need not receive another Deployment just to repeat that declaration.
 
 ### OperatingResource
 
@@ -472,8 +472,8 @@ This slice supplies the subjects for the earlier C4 mapping without new C4 ident
 
 Review should be able to answer where the frontend executes, what API replicas share, which object owns domain meaning, which resource hosts the store, what would change for another environment, and which relationship supports each diagram edge. Local link/accounting checks do not supply this semantic assessment or runtime evidence.
 
-## Decision proposed to the owner
+## Selected scope and deferred choices
 
-Select these six Kinds in the three listed Packages, initially with body links and empty specs. Select Deployment's single Application-or-DataStore subject in one Environment and keep OperatingResource as the common first operating-capability contract. Defer dedicated Instance, DatabaseService, LoadBalancer and Volume Kinds until their extra contract is demonstrated. Keep C4 as reviewed views of these same objects. Exact project security/protocol, PostgreSQL, production operating targets and physical distribution are separate choices, not implicitly selected by accepting these generic definitions.
+The owner selected these six Kinds in the three listed Packages, with body links and empty specs. Deployment has a single Application-or-DataStore subject in one Environment; OperatingResource supplies the common first operating-capability contract. Dedicated Instance, DatabaseService, LoadBalancer and Volume Kinds remain deferred until their extra contract is demonstrated. C4 remains reviewed views of these same objects. Exact project security/protocol, PostgreSQL, production operating targets and physical distribution are separate choices, not implicitly selected by accepting these generic definitions. The [project-coverage walkthrough](standard-library-project-coverage.md) examines security, configuration, build, tests, release and operation next.
 
 Return to the [standard-library discussion](standard-library.md) or [design map](README.md).

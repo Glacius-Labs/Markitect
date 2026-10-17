@@ -1,9 +1,13 @@
 apiVersion: markitect.registry/v1
 artifacts:
+  - path: "docs/design/canonical-model/standard-library-project-coverage.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Assesses six project concerns against the selected vocabulary and records proposed Library obligations and remaining project decisions.
   - path: "docs/design/canonical-model/standard-library-architecture-platform.md"
     form: doc
     realizes: [documentation/current-guidance]
-    why: Defines the proposed first architecture, data and deployment Kinds with Package ownership and connected Library relationships.
+    why: Records the selected first architecture, data and deployment Kinds with Package ownership and proposed connected Library relationships.
   - path: "docs/design/canonical-model/standard-library-data-and-views.md"
     form: doc
     realizes: [documentation/current-guidance]

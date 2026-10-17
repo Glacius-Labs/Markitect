@@ -71,7 +71,9 @@ The [standard-library discussion](standard-library.md) records the owner's 17 Oc
 
 The owner adopted the modular coverage direction and the system/application/deployment boundaries. The [data/resource/C4 walkthrough](standard-library.md#logical-data-operating-resources-and-c4-walkthrough) proposes the next distinction and views without changing the current Library fixture.
 
-The [first architecture/data/deployment companion slice](standard-library-architecture-platform.md) proposes six complete Kind definitions, three Package assignments and connected Web Library Definitions. OperatingResource supplies the common first contract for hosting, delivery, database and routing capabilities; specialized resource Kinds remain deferred.
+The owner selected the six Kinds, body links, empty specs and Package assignments in the [first architecture/data/deployment companion slice](standard-library-architecture-platform.md). Its connected Web Library Definitions remain an illustrative reference proposal. OperatingResource supplies the common first contract for hosting, delivery, database and routing capabilities; specialized resource Kinds remain deferred.
+
+The [project-coverage walkthrough](standard-library-project-coverage.md) examines security, configuration, build, tests, release and operation using those fourteen Kinds. It distinguishes vocabulary coverage from incomplete project requirements and actual execution evidence.
 
 The [Web Library view/data/recovery contract](standard-library-data-and-views.md) works out C4 view assessment, atomic access, the reference database, retries, migrations and recovery as detailed proposals.
 
