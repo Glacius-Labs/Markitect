@@ -12,7 +12,8 @@ from unittest import mock
 from playground import assess, codex_agent
 
 PLAYGROUND = Path(__file__).resolve().parents[1]
-GIT_IDENTITY = ["-c", "user.name=Test", "-c", "user.email=test@example.invalid", "-c", "core.autocrlf=false"]
+GIT_IDENTITY = ["-c", "user.name=Test", "-c", "user.email=test@example.invalid", "-c", "core.autocrlf=false",
+                "-c", "maintenance.auto=false", "-c", "gc.auto=0"]
 
 
 def make_candidate(root: Path) -> Path:
@@ -37,6 +38,21 @@ class AssessTest(unittest.TestCase):
         if codex_agent.container_mode():  # checks run as the agent user, which writes here too
             os.chown(self.temp, *codex_agent._agent_ids())
         self.candidate = make_candidate(self.temp)
+
+    def test_candidate_fixture_does_not_start_automatic_maintenance(self):
+        config = self.temp / "global.gitconfig"
+        config.write_text("[maintenance]\n\tauto = true\n[gc]\n\tauto = 1\n", encoding="utf-8")
+        trace = self.temp / "git-trace.jsonl"
+        env = {key: value for key, value in os.environ.items() if not key.upper().startswith("GIT_")}
+        env.update(GIT_CONFIG_GLOBAL=str(config), GIT_CONFIG_NOSYSTEM="1", GIT_TRACE2_EVENT=trace.as_posix())
+        with mock.patch.dict(os.environ, env, clear=True):
+            candidate = make_candidate(self.temp / "isolated")
+        events = [json.loads(line) for line in trace.read_text(encoding="utf-8").splitlines()]
+        self.assertTrue((candidate / ".git" / "HEAD").is_file())
+        self.assertTrue(any(event["event"] == "start" and "commit" in event["argv"] for event in events))
+        maintenance = [event["argv"] for event in events if event["event"] == "child_start"
+                       and any(command in event["argv"] for command in ("maintenance", "gc"))]
+        self.assertEqual(maintenance, [])
 
     def test_station_one_fails_new_items_but_baseline_passes(self):
         result = assess.station(self.candidate, "readinglog", 1, PLAYGROUND, self.temp / "S1")
