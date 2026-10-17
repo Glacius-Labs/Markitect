@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"crypto/sha256"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"slices"
 	"strings"
@@ -26,7 +27,7 @@ type ManagerRecord struct {
 	Phase   Phase
 }
 
-var managerPhases = []Phase{PhaseExplore, PhaseWork, PhaseIntegrate, PhaseReviewerExpectations, PhaseReviewerCandidate}
+var managerPhases = []Phase{PhaseExplore, PhaseWork, PhaseIntegrate, PhaseReply, PhaseReviewerExpectations, PhaseReviewerCandidate}
 
 func (m ManagerRecord) validate() error {
 	if m == (ManagerRecord{}) {
@@ -70,10 +71,13 @@ func recordedReviewDemand(w bindingWire) reviewDemand {
 }
 func validateManagerPolicy(w bindingWire) error {
 	if w.Version != 3 {
-		if w.ManagerPolicy != nil || w.Scope != nil || w.MaxContextBytes != nil {
+		if w.ManagerPolicy != nil || w.Scope != nil || w.MaxContextBytes != nil || w.RequiredChecks != nil {
 			return ErrInvalid
 		}
 		return nil
+	}
+	if w.RequiredChecks == nil || !slices.IsSorted(*w.RequiredChecks) || slices.ContainsFunc(*w.RequiredChecks, func(id string) bool { return !identifier(id) }) || len(slices.Compact(slices.Clone(*w.RequiredChecks))) != len(*w.RequiredChecks) {
+		return ErrInvalid
 	}
 	if w.MaxContextBytes == nil || w.MaxContextBytes.Value <= 0 || !recordedSettingSource(w, w.MaxContextBytes.Source) {
 		return ErrInvalid
@@ -246,6 +250,16 @@ func (c *Coordinator) PrepareTaskStepCommand(meta RecordMeta, plan StepPlan, res
 		renderInput.OwnerInput = &organization.HostText{Text: string(bound.owner.Bytes()), Source: organization.HostSource{RecordID: c.Current().Assignment, ContentID: bound.owner.Ref().ContentID}}
 	}
 	rendered, err := organization.RenderContext(selection, settings, renderInput)
+	if refusal, ok := errors.AsType[*organization.RenderRefusal](err); ok && refusal.Code == "context-too-large" {
+		// The workspace holds every artifact; the context then names them only.
+		renderInput.OwnArtifacts = workspaceReferences(renderInput.OwnArtifacts)
+		if renderInput.Review != nil {
+			review := *renderInput.Review
+			review.Files = workspaceReferences(review.Files)
+			renderInput.Review = &review
+		}
+		rendered, err = organization.RenderContext(selection, settings, renderInput)
+	}
 	if err != nil {
 		return Command{}, err
 	}
@@ -305,7 +319,7 @@ func (s stateValue) renderInput(t taskValue, facts StepFacts, basis snapshot.Con
 		findings.Items = append(findings.Items, organization.FindingFact{ID: id, Grounds: organization.HostText{Text: text, Source: organization.HostSource{RecordID: id, ContentID: basis}}})
 	}
 	in := organization.RenderInput{View: phaseView(t.Phase), InputBinding: source,
-		Task: organization.TaskFacts{ID: t.ID, Package: t.Slot.Package, Outcome: organization.HostText{Text: operation, Source: source}, Findings: findings}}
+		Task: organization.TaskFacts{ID: t.ID, Package: t.Slot.Package, Outcome: organization.HostText{Text: operation, Source: source}, Findings: findings, Constraints: s.ownerDecisions(t)}}
 	artifacts, err := ownedArtifacts(t.Slot.Package, facts)
 	if err != nil {
 		return in, err
@@ -326,10 +340,11 @@ func (s stateValue) renderInput(t taskValue, facts StepFacts, basis snapshot.Con
 		in.Children = append(in.Children, fact)
 	}
 	switch t.Phase {
-	case PhaseExplore, PhaseWork, PhaseIntegrate:
-		phase := map[Phase]organization.ManagerPhase{PhaseExplore: organization.ManagerExplore, PhaseWork: organization.ManagerWork, PhaseIntegrate: organization.ManagerIntegrate}[t.Phase]
+	case PhaseExplore, PhaseWork, PhaseIntegrate, PhaseReply:
+		phase := map[Phase]organization.ManagerPhase{PhaseExplore: organization.ManagerExplore, PhaseWork: organization.ManagerWork, PhaseIntegrate: organization.ManagerIntegrate, PhaseReply: organization.ManagerReply}[t.Phase]
 		in.Process = &organization.ManagerProcess{Phase: phase, Source: source}
 		in.OwnArtifacts = artifacts
+		in.Messages, in.ParentHints = s.inbox(t)
 	case PhaseReviewerCandidate:
 		proposal, err := quote(t.Submission.Proposal)
 		if err != nil {
@@ -351,6 +366,35 @@ func (s stateValue) renderInput(t taskValue, facts StepFacts, basis snapshot.Con
 	return in, nil
 }
 
+// inbox projects the messages that reach a Manager: questions and replies it
+// sent, received or forwards (core rule M2), and its parent's hints.
+func (s stateValue) inbox(t taskValue) ([]organization.MessageFact, []organization.ParentHint) {
+	var messages []organization.MessageFact
+	var hints []organization.ParentHint
+	for _, m := range s.messages {
+		body := organization.HostText{Text: m.Body, Source: organization.HostSource{RecordID: m.ID, ContentID: m.Source.ContentID}}
+		switch {
+		case m.Kind == messageHint && m.To == t.Slot.Package:
+			hints = append(hints, organization.ParentHint{Package: m.From, Advice: body})
+		case m.Kind != messageHint && (m.To == t.Slot.Package || m.From == t.Slot.Package || slices.Contains(m.Path, t.Slot.Package)):
+			messages = append(messages, organization.MessageFact{ID: m.ID, Kind: m.Kind, From: m.From, To: m.To, About: m.About, Body: body})
+		}
+	}
+	return messages, hints
+}
+
+// ownerDecisions are the owner's answers to questions about a task, which
+// bind its realization and its reviews (core rules I2, T8).
+func (s stateValue) ownerDecisions(t taskValue) []organization.HostText {
+	var out []organization.HostText
+	for _, m := range s.messages {
+		if q := s.issues[m.About]; m.From == addressedToOwner && q.Task == t.Slot.Package {
+			out = append(out, organization.HostText{Text: "The owner decided on the question \"" + q.Request + "\": " + m.Body, Source: organization.HostSource{RecordID: m.ID, ContentID: m.Source.ContentID}})
+		}
+	}
+	return out
+}
+
 // openFindings projects the task's open findings (core rule I1).
 func (s stateValue) openFindings(t taskValue, source organization.HostSource) organization.OpenFindings {
 	set := organization.OpenFindings{Source: source}
@@ -363,6 +407,16 @@ func (s stateValue) openFindings(t taskValue, source organization.HostSource) or
 		set.Items = append(set.Items, organization.FindingFact{ID: issue.ID, Grounds: organization.HostText{Text: text, Source: organization.HostSource{RecordID: issue.ID, ContentID: issue.Source.ContentID}}})
 	}
 	return set
+}
+
+func workspaceReferences(artifacts []organization.ArtifactFact) []organization.ArtifactFact {
+	out := slices.Clone(artifacts)
+	for i := range out {
+		if out[i].Content == organization.ArtifactText {
+			out[i].Content, out[i].Text = organization.ArtifactWorkspaceRef, nil
+		}
+	}
+	return out
 }
 
 // ownedArtifacts lists the manager's registered artifacts in the step's

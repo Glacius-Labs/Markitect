@@ -19,6 +19,11 @@ import (
 // them again rather than trusting arbitrary Host context JSON. The one-Package
 // variant keeps only the root and lending.
 func stepInputs(t *testing.T, onePackage bool) run.StepPreparation {
+	return stepInputsWith(t, onePackage, nil)
+}
+
+// stepInputsWith also changes the settings facts before they are resolved.
+func stepInputsWith(t *testing.T, onePackage bool, settings func(*organization.SettingsFacts)) run.StepPreparation {
 	var facts organization.SettingsFacts
 	change := func(input *model.Input) {
 		if !onePackage {
@@ -32,7 +37,12 @@ func stepInputs(t *testing.T, onePackage bool) run.StepPreparation {
 		}
 		input.Root.Entries = entries
 	}
-	input := fixtureWith(t, change, func(f *organization.SettingsFacts) { facts = *f })
+	input := fixtureWith(t, change, func(f *organization.SettingsFacts) {
+		if settings != nil {
+			settings(f)
+		}
+		facts = *f
+	})
 	subjects := int64(len(input.Settings.Managers()))
 	topology, err := organization.BuildTopology(input.Compilation)
 	if err != nil {
@@ -310,17 +320,29 @@ func newHarnessWith(t *testing.T, inputs run.StepPreparation, script agentScript
 
 func (h *harness) newEngine(c *run.Coordinator) *run.Engine {
 	h.t.Helper()
+	return h.newEngineWith(c, nil)
+}
+
+func (h *harness) newEngineWith(c *run.Coordinator, checks run.Checks) *run.Engine {
+	h.t.Helper()
 	profile := payload(h.t, `{"profile":"synthetic recorded metadata"}`)
 	var journal run.Journal = h.j
 	if h.journal != nil {
 		journal = h.journal
 	}
-	e, err := run.NewEngine(context.Background(), run.EngineConfig{Coordinator: c, Journal: journal, Sessions: h.sessions, Workspaces: h.ws, Preparation: h.inputs,
-		Profile: func(string, string) (run.SessionProfile, error) {
+	var reviewChecks map[string]run.CheckRequest
+	if checks != nil {
+		// A review check fits a review step; the slow one does not.
+		fast, slow := requiredCheck(h.t).Request, requiredCheck(h.t).Request
+		fast.Timeout = 20 * time.Second
+		reviewChecks = map[string]run.CheckRequest{"go-tests": fast, "slow": slow}
+	}
+	e, err := run.NewEngine(context.Background(), run.EngineConfig{Coordinator: c, Journal: journal, Sessions: h.sessions, Workspaces: h.ws, Checks: checks, ReviewChecks: reviewChecks, Preparation: h.inputs,
+		Profile: func(run.ProfileRequest) (run.SessionProfile, error) {
 			return run.SessionProfile{ImageID: testImage, CredentialRef: "credential-ref", Profile: profile, MaxWireBytes: 1 << 20}, nil
 		},
 		Clock: func() time.Time { h.clock = h.clock.Add(time.Millisecond); return h.clock },
-		Limits: run.EngineLimits{StartTimeout: time.Second, StepTimeout: time.Minute, StopTimeout: time.Second, HarvestEntries: 1000, HarvestBytes: 1 << 20,
+		Limits: run.EngineLimits{StartTimeout: time.Second, StopTimeout: time.Second, HarvestEntries: 1000, HarvestBytes: 1 << 20,
 			Record: realization.CandidateRecordLimits{EncodedBytes: 1 << 20, FileBytes: 1 << 20, ManifestEntries: 1000, MetadataRows: 10000}}})
 	if err != nil {
 		h.t.Fatal(err)

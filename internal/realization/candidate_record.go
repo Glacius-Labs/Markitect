@@ -64,14 +64,16 @@ func (r CandidateRecord) Digest() string {
 }
 
 // NewCandidateRecord records an actual supplied Passed compiler result matched
-// to the exact CandidateBase. V1 deliberately supports EMPTY claims only; new
-// unclaimed paths refuse on decode using the ordinary capture engine. Incomplete
-// or invalid census proposals are retained with their recomputed status.
+// to the exact CandidateBase. The path claims the candidate used for its new
+// files are recorded with it and reserved again on decode against the recorded
+// facts; new unclaimed paths refuse on decode using the ordinary capture engine.
+// Incomplete or invalid census proposals are retained with their recomputed
+// status.
 func NewCandidateRecord(compiled model.Result, candidate Candidate, classifications []Classification, rows []DefinitionAssessment, limits CandidateRecordLimits) (CandidateRecord, error) {
 	if !limits.valid() {
 		return CandidateRecord{}, ErrCandidateRecordLimit
 	}
-	if !candidate.Valid() || len(candidate.value.claims) != 0 {
+	if !candidate.Valid() {
 		return CandidateRecord{}, ErrInvalidCandidateRecord
 	}
 	if err := boundRecordInputs(compiled, candidate, classifications, rows, limits); err != nil {
@@ -225,6 +227,11 @@ func boundRecordInputs(compiled model.Result, candidate Candidate, classes []Cla
 	}
 	if !charge(1, candidate.Owner().packageName) {
 		return ErrCandidateRecordLimit
+	}
+	for _, c := range candidate.value.claims {
+		if !charge(1, string(c.request.id), c.request.path.String(), string(c.request.form)) {
+			return ErrCandidateRecordLimit
+		}
 	}
 	for _, c := range classes {
 		if !charge(1, c.path.String(), string(c.class), c.why) {

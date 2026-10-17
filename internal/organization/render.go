@@ -65,6 +65,7 @@ const (
 	ManagerExplore   ManagerPhase = "explore"
 	ManagerWork      ManagerPhase = "work"
 	ManagerIntegrate ManagerPhase = "integrate"
+	ManagerReply     ManagerPhase = "reply"
 )
 
 type ManagerProcess struct {
@@ -78,6 +79,15 @@ type ManagerProcess struct {
 type ParentHint struct {
 	Package string
 	Advice  HostText
+}
+
+// MessageFact is a question or reply that reaches the Manager along the tree:
+// addressed to it, answering its question, or passing through it. From and To
+// are Manager paths or "owner"; About names the question a reply answers.
+// A message carries no authority and cannot change the operation or scope.
+type MessageFact struct {
+	ID, Kind, From, To, About string
+	Body                      HostText
 }
 
 type PackageFact struct {
@@ -99,6 +109,9 @@ type ArtifactContent string
 const (
 	ArtifactText      ArtifactContent = "utf8-text"
 	ArtifactBinaryRef ArtifactContent = "binary-reference"
+	// ArtifactWorkspaceRef names a file that the step's workspace holds but
+	// whose content the context does not copy.
+	ArtifactWorkspaceRef ArtifactContent = "workspace-reference"
 )
 
 // ArtifactFact displays an explicit Host ownership/content assertion, never
@@ -135,6 +148,7 @@ type RenderInput struct {
 	View            ContextView
 	Process         *ManagerProcess // Required only for ManagerView.
 	ParentHints     []ParentHint    // ManagerView only; the root receives none.
+	Messages        []MessageFact   // ManagerView only.
 	InputBinding    HostSource
 	Task            TaskFacts
 	OwnerInput      *HostText

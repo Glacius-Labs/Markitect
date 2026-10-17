@@ -27,9 +27,32 @@ type RunBindingFacts struct {
 // run.Bind owns binding/accounting/budget validation; producer stages retain
 // compilation, configuration resolution and acquisition responsibility.
 func (r CapturedSettingsResult) BindRun(facts RunBindingFacts) (run.Binding, error) {
+	input, err := r.runInput(facts)
+	if err != nil {
+		return run.Binding{}, err
+	}
+	return run.Bind(input)
+}
+
+// stepPreparation returns the producer inputs of the bound run, which each
+// step preparation compiles and resolves again.
+func (r CapturedSettingsResult) stepPreparation(facts RunBindingFacts) (run.StepPreparation, error) {
+	input, err := r.runInput(facts)
+	if err != nil {
+		return run.StepPreparation{}, err
+	}
+	a, _ := r.Prepared()
+	settings, ok := a.Settings().SettingsFacts()
+	if !ok {
+		return run.StepPreparation{}, fmt.Errorf("%w: resolved settings facts required", run.ErrInvalid)
+	}
+	return run.StepPreparation{Binding: input, Settings: settings}, nil
+}
+
+func (r CapturedSettingsResult) runInput(facts RunBindingFacts) (run.BindingInput, error) {
 	a, ok := r.Prepared()
 	if !ok || a.Error() != nil {
-		return run.Binding{}, fmt.Errorf("%w: complete captured settings required", run.ErrInvalid)
+		return run.BindingInput{}, fmt.Errorf("%w: complete captured settings required", run.ErrInvalid)
 	}
 	s := a.Structural()
 	m := s.Model()
@@ -40,7 +63,7 @@ func (r CapturedSettingsResult) BindRun(facts RunBindingFacts) (run.Binding, err
 	settings, settingsOK := a.Settings().Settings()
 	execution, executionOK := s.Execution().Document()
 	if !registryOK || !classesOK || !protectionsOK || !settingsOK || !executionOK {
-		return run.Binding{}, fmt.Errorf("%w: incomplete captured binding inputs", run.ErrInvalid)
+		return run.BindingInput{}, fmt.Errorf("%w: incomplete captured binding inputs", run.ErrInvalid)
 	}
 	input := run.BindingInput{
 		MaxContextBytes: execution.Limits.MaxContextBytes,
@@ -71,6 +94,13 @@ func (r CapturedSettingsResult) BindRun(facts RunBindingFacts) (run.Binding, err
 		},
 		PolicySource: execution.APIVersion.Source,
 	}
+	if execution.Checks != nil {
+		for _, check := range execution.Checks.Value {
+			if check.RequiredBy != nil {
+				input.RequiredChecks = append(input.RequiredChecks, check.ID.Value)
+			}
+		}
+	}
 	if execution.Scope != nil {
 		input.Scope = append([]organization.Setting[organization.ScopeRule]{}, execution.Scope.Value...) // Preserve explicit empty versus absent.
 	}
@@ -81,7 +111,7 @@ func (r CapturedSettingsResult) BindRun(facts RunBindingFacts) (run.Binding, err
 	for _, profile := range a.Settings().ProfileObservations() {
 		identity, complete := profile.Identity()
 		if !complete {
-			return run.Binding{}, fmt.Errorf("%w: incomplete static profile identity", run.ErrInvalid)
+			return run.BindingInput{}, fmt.Errorf("%w: incomplete static profile identity", run.ErrInvalid)
 		}
 		// Keep both Agent and Check metadata identities. Their original catalog
 		// field sources distinguish namespaces even when names coincide.
@@ -108,12 +138,12 @@ func (r CapturedSettingsResult) BindRun(facts RunBindingFacts) (run.Binding, err
 	// file. Keep the product's original opaque source separately from its name.
 	productPath, err := snapshot.NewPath("strategy-defaults.yaml")
 	if err != nil {
-		return run.Binding{}, err
+		return run.BindingInput{}, err
 	}
 	product, err := snapshot.NewEntry(productPath, snapshot.Regular, a.Defaults().ProductInput().Bytes)
 	if err != nil {
-		return run.Binding{}, err
+		return run.BindingInput{}, err
 	}
 	input.Documents = append(input.Documents, run.Document{Source: a.Defaults().ProductSource(), File: product})
-	return run.Bind(input)
+	return input, nil
 }
