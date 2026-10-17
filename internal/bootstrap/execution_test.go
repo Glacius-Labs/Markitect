@@ -10,6 +10,7 @@ import (
 	"io/fs"
 	"os"
 	"path/filepath"
+	"reflect"
 	"strings"
 	"testing"
 	"time"
@@ -294,5 +295,43 @@ func TestExecutionRefusesPreparedLegacyProcessCheck(t *testing.T) {
 	}
 	if _, err := executionCheck(selected[0], runConfig{}); err == nil || err.Error() != "execution requires a prepared container check using the explicit run engine" {
 		t.Fatalf("metadata-only process profile became executable: %v", err)
+	}
+}
+
+func TestExecutionReportRetainsDefaultsAndContextDiagnostics(t *testing.T) {
+	f := gitControlFixtureForRepository(t, executionRepositoryFixture(t))
+	raw, err := os.ReadFile(filepath.Join(f.repo.Dir, ".markitect", "execution.yaml"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	var execution map[string]any
+	if err := yaml.Unmarshal(raw, &execution); err != nil {
+		t.Fatal(err)
+	}
+	// The omitted project value inherits product rejectionLimit=3, which
+	// exceeds this explicit project ceiling. The precise refusal belongs to
+	// the Defaults producer; Settings points the caller to those diagnostics.
+	delete(execution["defaults"].(map[string]any), "rejectionLimit")
+	execution["limits"].(map[string]any)["maxRejectionLimit"] = 2
+	raw, err = yaml.Marshal(execution)
+	if err != nil {
+		t.Fatal(err)
+	}
+	f.repo.Write(".markitect/execution.yaml", string(raw))
+	f.repo.Commit("explicit invalid inherited rejection limit")
+	prepared, err := apply.NewPreparationService(apply.NewModelService(f.source, f.source)).CaptureSettings(context.Background(), apply.CaptureRequest{Selection: f.prepared.Request().Selection}, model.Limits{}, fakeControlMetadata{}, nil)
+	if err != nil || prepared.Status() != model.Failed {
+		t.Fatalf("actual defaults refusal missing: %s %v", prepared.Status(), err)
+	}
+	report := capturedExecutionReport(prepared, "explicit-source-test-assertion").(map[string]any)
+	entries := report["attempts"].([]any)
+	if len(entries) != len(prepared.Attempts()) {
+		t.Fatal("actual capture attempts were lost")
+	}
+	for i, attempt := range prepared.Attempts() {
+		entry := entries[i].(map[string]any)
+		if len(attempt.Defaults().Diagnostics()) == 0 || entry["defaultsStatus"] != attempt.Defaults().Status() || !reflect.DeepEqual(entry["defaultsDiagnostics"], attempt.Defaults().Diagnostics()) || entry["contextStatus"] != attempt.Structural().Contexts().Status() || !reflect.DeepEqual(entry["contextDiagnostics"], attempt.Structural().Contexts().Diagnostics()) {
+			t.Fatal("defaults or context status/diagnostics omitted from actual report")
+		}
 	}
 }

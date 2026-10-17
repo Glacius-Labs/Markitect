@@ -132,6 +132,10 @@ func capturedExecutionReport(prepared apply.CapturedSettingsResult, productBuild
 			"executionDiagnostics": structural.Execution().Diagnostics(),
 			"registryDiagnostics":  structural.Registry().Diagnostics(),
 			"fileDiagnostics":      structural.Files().Diagnostics(),
+			"contextStatus":        structural.Contexts().Status(),
+			"contextDiagnostics":   structural.Contexts().Diagnostics(),
+			"defaultsStatus":       attempt.Defaults().Status(),
+			"defaultsDiagnostics":  attempt.Defaults().Diagnostics(),
 			"settingsDiagnostics":  attempt.Settings().Diagnostics(),
 		}
 		if attempt.Error() != nil {
