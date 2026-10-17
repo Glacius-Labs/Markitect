@@ -42,3 +42,16 @@ Recorder's note: the option descriptions shown to the owner were the following.
 - The current aggregate avoids stale views; a review is renewed only when a delivery the candidate used has changed.
 - The direct no-change submission saves one step per unchanged Manager; independent review stays mandatory.
 - Stopping at once is cheaper and simpler; a continuation takes over the retained work.
+
+## Container lifetime and waiting
+
+Recorder's note: after the independent review of the core protocol, the assistant asked two more questions with prepared options. The owner selected one option for each.
+
+| Question | Selected option |
+| --- | --- |
+| Container zwischen den Schritten eines Managers: Am Vormittag hast du eine endliche Warmhalte-Regel bestätigt, statt nach jeder Nachricht zu stoppen. Soll die erste Apply-Version trotzdem jeden Container nach seinem Schritt stoppen? Das Gespräch wird dann aus dem Provider-Verzeichnis fortgesetzt, das ist seit #352 für Codex belegt. | Erst stoppen, warm später (Recommended) |
+| Wartet ein Lauf auf deine Antwort, läuft kein Container mehr. Darf der Markitect-Prozess sich dann beenden? Du antwortest später mit `markitect answer` und setzt den Lauf mit `markitect resume` fort. | Ja, Prozess darf enden (Recommended) |
+
+Recorder's note: the option descriptions shown to the owner were the following.
+- Stopping after each step means a fresh container for every step. No quiescence proof, write barrier or basis change in a running container is needed for the first version. Warm retention follows as an optimization when measurements show that startup time matters. This changes the morning's confirmation for the first version.
+- Letting the process end means no process has to run for hours. Answer and continuation are separate verbs in the target command set. Resumption after a Host crash still needs its own evidence.
