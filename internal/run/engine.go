@@ -869,11 +869,12 @@ func (e *Engine) tools(s *stepRun) ToolHandler {
 			if err != nil {
 				return refuse(err.Error())
 			}
-			claims, err := e.freshClaims(s)
+			// Reserving a path again changes the form of one's own reservation.
+			claims, err := e.freshClaimsWithout(s, in.Path)
 			if err != nil {
 				return refuse(err.Error())
 			}
-			if _, decision := realization.ReserveNewPath(e.aggregate().PathFacts(), claims, request); decision.Status() != realization.PathAdmissible && !slices.ContainsFunc(e.claimsOf(manager, s), func(c Claim) bool { return c.Tool == claim.Tool && c.Path == claim.Path && c.Form == claim.Form }) {
+			if _, decision := realization.ReserveNewPath(e.aggregate().PathFacts(), claims, request); decision.Status() != realization.PathAdmissible {
 				return refuse(findingText(decision.Findings()) + e.holderHint(s, in.Path))
 			}
 			s.pending = addClaims(s.pending, []Claim{claim})
@@ -892,6 +893,10 @@ func (e *Engine) tools(s *stepRun) ToolHandler {
 			record, err := registrationOf(manager, claim)
 			if err != nil {
 				return refuse(err.Error())
+			}
+			// A new file's record carries the form of its reservation (core rule S4).
+			if form, reserved := e.reservedForm(s, in.Path); reserved && form != in.Form {
+				return refuse(fmt.Sprintf("%s is reserved with form %s; register it with that form, or reserve it again with form %s first", in.Path, form, in.Form))
 			}
 			if err := e.registrable(s, record); err != nil {
 				return refuse(err.Error())

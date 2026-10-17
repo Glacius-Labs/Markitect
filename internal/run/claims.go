@@ -75,20 +75,28 @@ func (s stateValue) stepClaims(t taskValue) []Claim {
 	return out
 }
 
-// addClaims adds a step's claims: a reservation once per path, and the latest
+// addClaims adds a step's claims: the latest reservation and the latest
 // proposal per path.
 func addClaims(existing, added []Claim) []Claim {
 	out := slices.Clone(existing)
 	for _, c := range added {
-		i := slices.IndexFunc(out, func(x Claim) bool { return x.Tool == c.Tool && x.Path == c.Path })
-		switch {
-		case i < 0:
+		if i := slices.IndexFunc(out, func(x Claim) bool { return x.Tool == c.Tool && x.Path == c.Path }); i < 0 {
 			out = append(out, c)
-		case c.Tool == ToolRegister:
+		} else {
 			out[i] = c
 		}
 	}
 	return out
+}
+
+// reservedForm returns the form of a Manager's own reservation of a path.
+func (e *Engine) reservedForm(s *stepRun, path string) (string, bool) {
+	for _, c := range e.claimsOf(s.manager, s) {
+		if c.Tool == ToolReservePath && c.Path == path {
+			return c.Form, true
+		}
+	}
+	return "", false
 }
 
 // Claims returns the claims a task's concluded steps made.
@@ -205,12 +213,18 @@ func registrationOf(manager string, c Claim) (realization.Registration, error) {
 // from every task's reservations, root first, that the aggregate does not yet
 // register.
 func (e *Engine) freshClaims(s *stepRun) (realization.PathClaims, error) {
+	return e.freshClaimsWithout(s, "")
+}
+
+// freshClaimsWithout leaves out the step's own reservation of one path, which
+// a new reservation of it replaces.
+func (e *Engine) freshClaimsWithout(s *stepRun, own string) (realization.PathClaims, error) {
 	facts := e.aggregate().PathFacts()
 	registry := e.aggregate().Registry()
 	var claims realization.PathClaims
 	for _, t := range e.cfg.Coordinator.Tasks() {
 		for _, c := range e.claimsOf(t.Manager, s) {
-			if c.Tool != ToolReservePath {
+			if c.Tool != ToolReservePath || own != "" && t.Manager == s.manager && c.Path == own {
 				continue
 			}
 			request, err := requestOf(t.Manager, c)
