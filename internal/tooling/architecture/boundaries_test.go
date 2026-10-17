@@ -52,6 +52,7 @@ func TestConcreteResponsibilityBoundaries(t *testing.T) {
 		{"internal/run", "internal/realization", true},
 		{"internal/run", "internal/apply", false},
 		{"internal/run", "internal/adapters/gitrepo", false},
+		{"internal/run", "internal/adapters/checks", false},
 		{"internal/run", "internal/adapters/claudecode", false},
 		{"internal/model", "internal/run", false},
 		{"internal/apply", "internal/organization", true},
@@ -66,6 +67,19 @@ func TestConcreteResponsibilityBoundaries(t *testing.T) {
 		{"internal/adapters/documents", "internal/tooling/guardedwrite", true},
 		{"internal/adapters/documents", "internal/tooling/source", false},
 		{"internal/adapters/checks", "internal/adapters/codexappserver", false},
+		// Workspace and check execution consume Run ports and the container
+		// API without acquiring provider, frame or sibling adapter privileges.
+		{"internal/adapters/checks", "internal/run", true},
+		{"internal/adapters/checks", "internal/adapters/container", true},
+		{"internal/adapters/checks", "internal/agentd/frame", false},
+		{"internal/adapters/checks", "internal/adapters/gitrepo", false},
+		{"internal/adapters/checks", "internal/tooling/source", false},
+		{"internal/adapters/gitrepo", "internal/run", true},
+		{"internal/adapters/gitrepo", "internal/adapters/container", true},
+		{"internal/adapters/gitrepo", "internal/agentd/frame", false},
+		{"internal/adapters/gitrepo", "internal/adapters/checks", false},
+		{"internal/adapters/gitrepo", "internal/adapters/codexappserver", false},
+		{"internal/adapters/gitrepo", "internal/tooling/source", false},
 		// Claude uses the Run session port and the frame DTOs exposed by the
 		// container API; agentd execution and other adapters remain separate.
 		{"internal/adapters/claudecode", "internal/run", true},

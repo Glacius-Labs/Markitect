@@ -56,8 +56,9 @@ func (s *Sessions) Step(ctx context.Context, a run.StepAdmission, channel run.Se
 				out.Wire = e.wire(pending)
 			}
 			_, recordErr := channel.ObserveStep(context.WithoutCancel(ctx), out)
-			err = errors.Join(e.safe(err), recordErr)
+			err = errors.Join(err, recordErr)
 		}
+		err = e.safe(err)
 	}()
 	prompt := "Perform exactly one admitted Markitect step. Return the requested report as one JSON object in your final answer. The Host will assess it separately.\nExact input bytes:\n" + string(a.Input.Bytes()) + "\nExact output contract bytes (a field catalogue, not JSON Schema):\n" + string(a.OutputContract.Bytes())
 	id := IntegerRequestID(3)
@@ -101,6 +102,9 @@ func (s *Sessions) Step(ctx context.Context, a run.StepAdmission, channel run.Se
 				Call   string `json:"callId"`
 			}
 			if _, parseErr := protocolObject(call.Meta); parseErr != nil || json.Unmarshal(call.Meta, &meta) != nil || meta.Thread != string(e.thread) || meta.Call == "" {
+				return out, ErrProtocol
+			}
+			if !e.nativeIdentity(meta.Call) {
 				return out, ErrProtocol
 			}
 			item, ok := calls[meta.Call]
@@ -155,12 +159,18 @@ func (s *Sessions) Step(ctx context.Context, a run.StepAdmission, channel run.Se
 				if e.turn != "" && e.turn != r.Turn.Turn {
 					return out, ErrProtocol
 				}
+				if !e.nativeIdentity(string(r.Turn.Turn)) {
+					return out, ErrProtocol
+				}
 				e.turn = r.Turn.Turn
 				responseSeen = true
 				terminal = r.Turn.Status != TurnInProgress
 			case TurnStartedMessage, TurnCompletedMessage:
 				t := m.Turn()
 				if t.Thread != e.thread || e.turn != "" && e.turn != t.Turn {
+					return out, ErrProtocol
+				}
+				if !e.nativeIdentity(string(t.Turn)) {
 					return out, ErrProtocol
 				}
 				e.turn = t.Turn
@@ -176,6 +186,9 @@ func (s *Sessions) Step(ctx context.Context, a run.StepAdmission, channel run.Se
 				if m.method == "item/started" || m.method == "item/completed" {
 					var item stepItem
 					if json.Unmarshal(m.body, &item) != nil || item.Thread != string(e.thread) || item.Turn == "" || e.turn != "" && item.Turn != string(e.turn) {
+						return out, ErrProtocol
+					}
+					if !e.nativeIdentity(item.Turn) {
 						return out, ErrProtocol
 					}
 					e.turn = TurnID(item.Turn)
@@ -256,6 +269,9 @@ func jsonEqual(a, b []byte) bool {
 	return bytes.Equal(aa, bb)
 }
 func (e *sessionEntry) answerTool(ctx context.Context, channel run.SessionIO, call frame.ToolCall, providerID run.ProviderCallID) error {
+	if !e.nativeIdentity(string(providerID)) || !e.nativeIdentity(call.Name) {
+		return ErrProtocol
+	}
 	allowed := false
 	for _, tool := range e.tools {
 		if tool.Name == call.Name {

@@ -12,7 +12,7 @@ import (
 type censusFixture struct {
 	compiled  model.Result
 	candidate realization.Candidate
-	plan      realization.CompositionPlan
+	plan      realization.Aggregate
 	child     model.Identity
 }
 
@@ -38,10 +38,9 @@ func censusSetup(t *testing.T) censusFixture {
 	ca := capture(t, base, a, claims, fileTree(t, "out/lending"), registry(t, registration(t, a, artifact(t, "out/lending", borrow, policy))))
 	cb := capture(t, base, b, claims, fileTree(t, "out/reminders"), registry(t, registration(t, b, artifact(t, "out/reminders", child))))
 	cd := capture(t, base, d, claims, fileTree(t, "out/library"), registry(t, registration(t, d, artifact(t, "out/library", callable))))
-	result := realization.ComposeCandidates(base, []realization.Candidate{ca, cb, cd})
-	plan, ok := result.Plan()
-	if !ok {
-		t.Fatal(result.Findings())
+	plan := aggregate(t, base)
+	for _, part := range []realization.Candidate{ca, cb, cd} {
+		plan = replayed(t, plan, part)
 	}
 	return censusFixture{c, ca, plan, child}
 }
@@ -84,7 +83,7 @@ func TestCensusSeparatesCandidateIntermediateCompositionAndWholeProject(t *testi
 	}
 	integrated := realization.CheckCompositionCensus(f.compiled, f.plan, owner(t, "lending"), nil, rows)
 	censusStatus(t, integrated, realization.CensusStructurallyComplete)
-	if plan, ok := integrated.Composition(); !ok || !plan.Tree().Equal(f.plan.Tree()) || !integrated.Basis().Equal(f.plan.Base()) {
+	if plan, ok := integrated.Aggregate(); !ok || !plan.Tree().Equal(f.plan.Tree()) || !integrated.Basis().Equal(f.plan.Base()) {
 		t.Fatal("intermediate census lost exact integrated subject")
 	}
 	root := realization.CheckCompositionCensus(f.compiled, f.plan, realization.RootOwner(), nil, nil)
