@@ -8,6 +8,18 @@ guard and live controller before issuing an opaque permit for the entire copied
 request. Apply decides artifact scope and run authority; this adapter has no run
 or review state. Empty changes are valid.
 
+Observed capture drift also wraps `apply.ErrCaptureChanged`, retaining the
+adapter's `ErrChanged` or `ErrDirty` cause for `errors.Is`. This classification
+covers source rechecks, repository identity, index and checkout-policy changes,
+and a requested path that changes before its write. A dirty recapture requires
+a complete safe draft acquisition before receiving this classification, because
+Git's early dirty check can encounter an untracked redirected directory.
+Invalid requests or guards, mismatched before tuples, controller failures,
+unsafe paths, limits and unknown acquisition errors retain their own errors.
+An acquisition error that combines drift with another failure is not classified
+as a confirmed capture change. Publication receipt outcomes keep their existing
+meaning, including unknown after a failed final fence.
+
 Publish repeats source, controller, checkout-policy and complete index checks
 before writing. It creates ordinary directories and adds, replaces or removes
 only requested files. Replacements remove and recreate the directory entry, so

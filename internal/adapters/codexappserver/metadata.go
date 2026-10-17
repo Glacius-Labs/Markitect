@@ -78,6 +78,9 @@ func (m *MetadataPreparer) PrepareAgentProfile(ctx context.Context, input apply.
 	if !ok {
 		return p.out, nil
 	}
+	if config.version == 3 {
+		p.out.Contract.Version = 3
+	}
 	for _, location := range config.instructions {
 		found := false
 		for _, file := range input.Instructions() {
