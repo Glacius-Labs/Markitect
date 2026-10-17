@@ -23,9 +23,9 @@ Starting product: Main `bc4b49e76f9b9e4b3ec98033a0b8c73d5013b310`. Its existing 
 
 ### Sessions
 
-The coordinating chat acts as integrator. Separate implementation chats receive one bounded package, isolated worktree, exact base, owned paths, dependencies and acceptance criteria. They may use subagents inside their assignment. Start at most four implementation writers in the first wave.
+The coordinating chat owns scope, dependencies and shared-file reservations. The delivering chat owns its pull request and merge. Separate implementation chats receive one bounded package, isolated worktree, integrated starting base, owned paths, dependencies, acceptance criteria and a short queue of two or three next tasks. They may use independent review subagents. Start at most four implementation writers in the first wave.
 
-Package scopes and dependencies live here. Actual running state, candidate SHAs, reviews and CI results live in each chat/PR; do not create a status file, backlog or dashboard mirror. Integration requires exact-head required CI, independent review, merge and Main read-back.
+Package scopes and dependencies live here. Actual running state, candidate SHAs, reviews and CI results live in each chat/PR; do not create a status file, backlog or dashboard mirror. A chat advances through its authorized queue without waiting for another handoff. A blocked dependency is reported; the next independent queued task can proceed within the same reservation.
 
 The coordinator owns shared policy, this plan, the concept register, root module dependencies and cross-package contracts. A bootstrap/cutover package can receive explicit shared-file ownership. Other chats submit a bounded request instead of changing shared files opportunistically.
 
@@ -66,13 +66,30 @@ Before CUTOVER, read-only preparation and repository capture must support real c
 
 ### Integration
 
-1. One focused PR per package/API slice, with its ID and fixed-base evidence.
-2. Independent complete-diff review; resolve findings, shared seams and composition conflicts.
-3. Freeze the pushed head while required Linux Quality/Race run. Preserve failed attempts; Windows remains separate diagnostic evidence.
-4. Compose with current Main and merge one dependency-ready exact head at a time using merge commits. Never bypass checks or protection.
-5. Fetch/read back Main SHA/tree and hosted CI. Downstream dispatch uses the integrated base. Source integration is not release, real-provider proof or owner acceptance.
+These rules implement the owner's 17 October 2026 handoff instruction and replace the earlier central merge and per-merge observation procedure.
 
-[CONTRIBUTING](../CONTRIBUTING.md) owns commands. Run focused checks while developing and complete integration gates against the actual target. Delete obsolete checks with their feature; no skip or allowlist may make an unimplemented replacement look complete.
+1. Keep one focused PR per package/API slice. The delivering chat obtains independent complete-diff review and resolves every finding and shared-file dependency.
+2. Freeze the approved head and require the configured required CI on exactly that head. A changed head needs renewed relevant review and CI. Wait in the background, through repository auto-merge or a bounded watcher owned by that delivery; do not spend Coordinator turns polling CI.
+3. Once review has no open findings and required CI is green, the delivering chat merges its own PR directly with a merge commit and `--match-head-commit`. It needs no second approval or merge action from the Coordinator. Never bypass branch protection.
+4. Recompose only when GitHub reports conflicts or the PR overlaps substantively with newly merged work. A newer Main SHA alone does not justify another composition, full test run or CI cycle. When composition changes the candidate, review the relevant delta and require CI on its new exact head.
+5. Record the merge result in the delivery chat and move to the next authorized task. Do not watch Main CI or read source artifacts after each merge. React when Main is reported red; investigate the actual failure before assigning a repair.
+
+[CONTRIBUTING](../CONTRIBUTING.md) lists checks. Run local checks relevant to the contract and actual change; required CI supplies the repository-wide gates. Preserve failed observations. Prefer a small distinguishing test for a real error over exhaustive matrices or repeated hardening of unchanged code. Delete obsolete checks with their feature; no skip or allowlist may make an unimplemented replacement look complete. Source integration remains distinct from provider execution, release and owner acceptance.
+
+### Session and process contracts
+
+Keep the RUN Session protocol provisional. A separately commissioned real Codex handshake is testing experimental `dynamicTools`; assess its result before fixing that protocol or starting a duplicate experiment. Static metadata does not establish runtime support.
+
+Carry these existing runtime lessons and their failure tests into the new Process/Host boundaries, without restoring the old runtime:
+
+| Lesson | Existing source |
+| --- | --- |
+| Terminate the whole process tree on timeout/cancellation, using a Windows Job Object | [caeb57c5](https://github.com/Glacius-Labs/Markitect/commit/caeb57c5cca4ff0e27b0f821590a82d5d26dbd94) |
+| Require the exact configured Codex CLI version | [cbe21140](https://github.com/Glacius-Labs/Markitect/commit/cbe211404df4455d7fa26897857757cf38ec1a15) |
+| Preserve a visible CLI-rejection diagnostic, including for a large prompt | [c1d4ba6c](https://github.com/Glacius-Labs/Markitect/commit/c1d4ba6c30aeeeee7f3489476aa40684d67add56) |
+| Preserve Windows short-name/alias guards at the actual file-approval and guarded-write boundaries | [a726fce4](https://github.com/Glacius-Labs/Markitect/commit/a726fce45e3565513a6f9e13b7a14ec4314af1a8), [837f137e](https://github.com/Glacius-Labs/Markitect/commit/837f137e4f445428a9707aa90d7d9770983f5cd7) |
+
+The Process adapter owns process lifetime and observations; it does not acquire file-write authority. Port the concrete failure cases to their current owners and use owned helper processes for tests. Real provider/Apply execution still needs its separate finite authority.
 
 ## Implementation sequence
 

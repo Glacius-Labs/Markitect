@@ -25,6 +25,7 @@ Use this map to find the product guide or the document that owns a decision or s
 | Product decisions, promises, assumptions, long-term vision, agreed but unscheduled directions, ideas, and open questions, with their origin | [Concept record](concepts/README.md) |
 | Technical behavior and product boundaries | [Architecture](architecture.md) and the task-specific current guides above |
 | Work-package scope, dependencies and reservations | [Delivery plan](implementation-plan.md); actual candidates/checks live in chats and PRs. [Earlier records](work-items/README.md) are historical. |
+| Take over coordination from the stopped 17 October session | [Coordinator handoff](development/coordinator-handoff-20261017.md); a fixed transition snapshot, not a live backlog |
 | Earlier interrupted sessions and restart records | [Historical session handoff](development/session-handoff.md); its retired queue grants no current assignment |
 | Native A01 result, attempt accounting and acceptance limits | [A01 validation record](validation/a01-native-smoke-20261010.md) |
 | Known technical limits and lessons from Product Readiness | [Product Readiness lessons survey](work-items/surveys/product-readiness-lessons-20261010.md) |

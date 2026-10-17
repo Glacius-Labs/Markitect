@@ -1232,6 +1232,10 @@ artifacts:
     form: doc
     realizes: [documentation/current-guidance]
     why: Documents the stated responsibility or preserves its historical evidence.
+  - path: "docs/development/coordinator-handoff-20261017.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Preserves the explicitly requested Coordinator transition, fixed delivery sources and next scoped tasks.
   - path: "docs/development/documentation.md"
     form: doc
     realizes: [documentation/current-guidance]
