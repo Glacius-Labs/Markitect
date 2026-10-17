@@ -81,6 +81,11 @@ func (s fixtureSource) Capture(context.Context, apply.CaptureRequest) (apply.Cap
 
 func m1Parents(t *testing.T, process string) (apply.CapturedFileCheck, apply.CapturedDefaultsPreparation) {
 	t.Helper()
+	return m1SectionParents(t, "process", process)
+}
+
+func m1SectionParents(t *testing.T, section, process string) (apply.CapturedFileCheck, apply.CapturedDefaultsPreparation) {
+	t.Helper()
 	base := "../../../docs/design/canonical-model"
 	raw := apply.RawInputs{Local: fixtureModel(t, base+"/library-example/m1", "controlled-local"), Dependencies: []apply.ModelSource{fixtureModel(t, base+"/library-example/vocabulary", "controlled-vocabulary"), fixtureModel(t, base+"/minimal-language/exchange-example/dependencies/core", "controlled-core")}}
 	area, err := snapshot.DirectoryAt(fixturePath(t, ".markitect"))
@@ -132,7 +137,7 @@ func m1Parents(t *testing.T, process string) (apply.CapturedFileCheck, apply.Cap
 		}
 	}
 	raw.Census = fixtureTree(t, census)
-	host := "apiVersion: markitect.host/v1\nagentProfiles:\n  library-agent: {codexAppServer: {profileVersion: 1}}\ncheckProfiles:\n  library-tests:\n    process:\n"
+	host := "apiVersion: markitect.host/v1\nagentProfiles:\n  library-agent: {codexAppServer: {profileVersion: 1}}\ncheckProfiles:\n  library-tests:\n    " + section + ":\n"
 	for _, line := range strings.Split(strings.TrimSuffix(process, "\n"), "\n") {
 		host += "      " + line + "\n"
 	}
