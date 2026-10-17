@@ -410,7 +410,7 @@
         {
           "source": "experiments/test-projects/readinglog/snapshots/00-baseline/model-lock.yaml",
           "target": ".markitect/model-lock.yaml",
-          "revision": "7908e69bc3b73cf8689eba9a30c9f4865cdb8934",
+          "revision": "962f17468ae1b3558e042a0429888ece59106545",
           "sha256": "924f3427a89a17703e0c7a402178df1c94221cf39dd362170c7a39f16b375ee5",
           "arms": [
             "markitect"
@@ -419,7 +419,7 @@
         {
           "source": "experiments/test-projects/readinglog/snapshots/00-baseline/model.yaml",
           "target": ".markitect/model.yaml",
-          "revision": "7908e69bc3b73cf8689eba9a30c9f4865cdb8934",
+          "revision": "962f17468ae1b3558e042a0429888ece59106545",
           "sha256": "7f720c12fecfa70c4036c6ed51ab795f3374ba953cdef55f9349cc132b9a7116",
           "arms": [
             "markitect"
@@ -428,7 +428,7 @@
         {
           "source": "experiments/test-projects/readinglog/snapshots/00-baseline/model/readinglog/add.yaml",
           "target": ".markitect/model/readinglog/add.yaml",
-          "revision": "7908e69bc3b73cf8689eba9a30c9f4865cdb8934",
+          "revision": "962f17468ae1b3558e042a0429888ece59106545",
           "sha256": "85f9358ee9903c987124c833e1b270be8bb9b51460e5196eeb8b3ccbfa825dca",
           "arms": [
             "markitect"
@@ -437,7 +437,7 @@
         {
           "source": "experiments/test-projects/readinglog/snapshots/00-baseline/model/readinglog/book.yaml",
           "target": ".markitect/model/readinglog/book.yaml",
-          "revision": "7908e69bc3b73cf8689eba9a30c9f4865cdb8934",
+          "revision": "962f17468ae1b3558e042a0429888ece59106545",
           "sha256": "8c965549c03ab2280d74d8c844524ac9203e90dd8496058a58c8e2dd96d2a654",
           "arms": [
             "markitect"
@@ -446,7 +446,7 @@
         {
           "source": "experiments/test-projects/readinglog/snapshots/00-baseline/model/readinglog/inputs.yaml",
           "target": ".markitect/model/readinglog/inputs.yaml",
-          "revision": "7908e69bc3b73cf8689eba9a30c9f4865cdb8934",
+          "revision": "962f17468ae1b3558e042a0429888ece59106545",
           "sha256": "ce35064bb54b455b9d55493e9a10c62a764ae7df3b0d33df18fddcd0b25cc5ca",
           "arms": [
             "markitect"
@@ -455,8 +455,8 @@
         {
           "source": "experiments/test-projects/readinglog/snapshots/00-baseline/model/readinglog/interface.yaml",
           "target": ".markitect/model/readinglog/interface.yaml",
-          "revision": "7908e69bc3b73cf8689eba9a30c9f4865cdb8934",
-          "sha256": "a64b5859e4239dbac9b277ea9e936861f5541ef83c859e44e124e56b88e016df",
+          "revision": "962f17468ae1b3558e042a0429888ece59106545",
+          "sha256": "93fa873e86c254bafd8e99ab7dd668ab391dd03f66e7022283504fed0295b3ee",
           "arms": [
             "markitect"
           ]
@@ -464,7 +464,7 @@
         {
           "source": "experiments/test-projects/readinglog/snapshots/00-baseline/model/readinglog/list.yaml",
           "target": ".markitect/model/readinglog/list.yaml",
-          "revision": "7908e69bc3b73cf8689eba9a30c9f4865cdb8934",
+          "revision": "962f17468ae1b3558e042a0429888ece59106545",
           "sha256": "c943ce6871db833bc7f7c30f541640423e343f7397b1b7aa8eab1ccfeca7cb15",
           "arms": [
             "markitect"
@@ -473,7 +473,7 @@
         {
           "source": "experiments/test-projects/readinglog/snapshots/00-baseline/model/readinglog/realization.yaml",
           "target": ".markitect/model/readinglog/realization.yaml",
-          "revision": "7908e69bc3b73cf8689eba9a30c9f4865cdb8934",
+          "revision": "962f17468ae1b3558e042a0429888ece59106545",
           "sha256": "805a81819f2723b7c61dac9e2852d98ace94422ddf1d767c0d01a756b9295c01",
           "arms": [
             "markitect"
@@ -482,7 +482,7 @@
         {
           "source": "experiments/test-projects/readinglog/snapshots/00-baseline/model/readinglog/storage.yaml",
           "target": ".markitect/model/readinglog/storage.yaml",
-          "revision": "7908e69bc3b73cf8689eba9a30c9f4865cdb8934",
+          "revision": "962f17468ae1b3558e042a0429888ece59106545",
           "sha256": "b9d5836273bc9a78751651c3e64e266b38eb31f4653b807b203bea0d2113f9d5",
           "arms": [
             "markitect"
@@ -491,7 +491,7 @@
         {
           "source": "experiments/test-projects/readinglog/snapshots/00-baseline/model/readinglog/system.yaml",
           "target": ".markitect/model/readinglog/system.yaml",
-          "revision": "7908e69bc3b73cf8689eba9a30c9f4865cdb8934",
+          "revision": "962f17468ae1b3558e042a0429888ece59106545",
           "sha256": "17b96d59df860cd10c78f35b6adffbb1d7719d91e2efa1d99c634fcceb6211b0",
           "arms": [
             "markitect"
@@ -500,7 +500,7 @@
         {
           "source": "experiments/test-projects/readinglog/template/.markitect/dependencies/core/model.yaml",
           "target": ".markitect/dependencies/core/model.yaml",
-          "revision": "7908e69bc3b73cf8689eba9a30c9f4865cdb8934",
+          "revision": "962f17468ae1b3558e042a0429888ece59106545",
           "sha256": "998be5061baadb3de9bec2a988a5fae7b449236f296e70a2be153b521fc8049a",
           "arms": [
             "markitect"
@@ -509,7 +509,7 @@
         {
           "source": "experiments/test-projects/readinglog/template/.markitect/dependencies/core/model/markitect/core/kind.yaml",
           "target": ".markitect/dependencies/core/model/markitect/core/kind.yaml",
-          "revision": "7908e69bc3b73cf8689eba9a30c9f4865cdb8934",
+          "revision": "962f17468ae1b3558e042a0429888ece59106545",
           "sha256": "b8694323468d4d8c90e64740b39a10045fd21ae759066c4d99c9bc1d82003ebe",
           "arms": [
             "markitect"
@@ -518,7 +518,7 @@
         {
           "source": "experiments/test-projects/readinglog/template/.markitect/dependencies/core/model/markitect/core/max-count.yaml",
           "target": ".markitect/dependencies/core/model/markitect/core/max-count.yaml",
-          "revision": "7908e69bc3b73cf8689eba9a30c9f4865cdb8934",
+          "revision": "962f17468ae1b3558e042a0429888ece59106545",
           "sha256": "206aa732af928dafc01b6949eca98db1fb5f9e3a001046d7adf889a1a1303789",
           "arms": [
             "markitect"
@@ -527,7 +527,7 @@
         {
           "source": "experiments/test-projects/readinglog/template/.markitect/dependencies/core/model/markitect/core/min-count.yaml",
           "target": ".markitect/dependencies/core/model/markitect/core/min-count.yaml",
-          "revision": "7908e69bc3b73cf8689eba9a30c9f4865cdb8934",
+          "revision": "962f17468ae1b3558e042a0429888ece59106545",
           "sha256": "d2f2c064071c75f3f4b41cef16bd94cc7a3a7ef036f9eb7e8226559425a38744",
           "arms": [
             "markitect"
@@ -536,7 +536,7 @@
         {
           "source": "experiments/test-projects/readinglog/template/.markitect/dependencies/core/model/markitect/core/name.yaml",
           "target": ".markitect/dependencies/core/model/markitect/core/name.yaml",
-          "revision": "7908e69bc3b73cf8689eba9a30c9f4865cdb8934",
+          "revision": "962f17468ae1b3558e042a0429888ece59106545",
           "sha256": "ec8abd72a1f308f00f905dacf2d8959054961f55e84b6c894aa3214a5da30d10",
           "arms": [
             "markitect"
@@ -545,7 +545,7 @@
         {
           "source": "experiments/test-projects/readinglog/template/.markitect/dependencies/core/model/markitect/core/properties.yaml",
           "target": ".markitect/dependencies/core/model/markitect/core/properties.yaml",
-          "revision": "7908e69bc3b73cf8689eba9a30c9f4865cdb8934",
+          "revision": "962f17468ae1b3558e042a0429888ece59106545",
           "sha256": "e3f430b729a355704ba208bcfb95bd206b66e91307f43a6af1af263f3c9879b8",
           "arms": [
             "markitect"
@@ -554,7 +554,7 @@
         {
           "source": "experiments/test-projects/readinglog/template/.markitect/dependencies/core/model/markitect/core/property.yaml",
           "target": ".markitect/dependencies/core/model/markitect/core/property.yaml",
-          "revision": "7908e69bc3b73cf8689eba9a30c9f4865cdb8934",
+          "revision": "962f17468ae1b3558e042a0429888ece59106545",
           "sha256": "be6149acf2d5ebcca9e18bad13932ca3be9bb6d838ac5a142dd83d7bc6143590",
           "arms": [
             "markitect"
@@ -563,7 +563,7 @@
         {
           "source": "experiments/test-projects/readinglog/template/.markitect/dependencies/core/model/markitect/core/target.yaml",
           "target": ".markitect/dependencies/core/model/markitect/core/target.yaml",
-          "revision": "7908e69bc3b73cf8689eba9a30c9f4865cdb8934",
+          "revision": "962f17468ae1b3558e042a0429888ece59106545",
           "sha256": "06dc15e8673124553bd2b71a73e1b7bb75a237d2b0a01e690da3230a467a0a63",
           "arms": [
             "markitect"
@@ -572,7 +572,7 @@
         {
           "source": "experiments/test-projects/readinglog/template/.markitect/dependencies/core/model/markitect/core/type.yaml",
           "target": ".markitect/dependencies/core/model/markitect/core/type.yaml",
-          "revision": "7908e69bc3b73cf8689eba9a30c9f4865cdb8934",
+          "revision": "962f17468ae1b3558e042a0429888ece59106545",
           "sha256": "acbcb268f34a4aedfcde704af97648dbda499c6a8d22522c3e4b93f2802d9579",
           "arms": [
             "markitect"
@@ -581,7 +581,7 @@
         {
           "source": "experiments/test-projects/readinglog/template/.markitect/dependencies/core/model/markitect/core/values.yaml",
           "target": ".markitect/dependencies/core/model/markitect/core/values.yaml",
-          "revision": "7908e69bc3b73cf8689eba9a30c9f4865cdb8934",
+          "revision": "962f17468ae1b3558e042a0429888ece59106545",
           "sha256": "e69f9a0d9720055274bf0854072e2cce495e94630359599bd73d4f5a2589fffd",
           "arms": [
             "markitect"
@@ -590,7 +590,7 @@
         {
           "source": "experiments/test-projects/readinglog/template/.markitect/dependencies/software/model.yaml",
           "target": ".markitect/dependencies/software/model.yaml",
-          "revision": "7908e69bc3b73cf8689eba9a30c9f4865cdb8934",
+          "revision": "962f17468ae1b3558e042a0429888ece59106545",
           "sha256": "88aca2d29c354ceeb1d24e402e5124dd7916a279a6cd229a3917e1cdc29f3a2b",
           "arms": [
             "markitect"
@@ -599,7 +599,7 @@
         {
           "source": "experiments/test-projects/readinglog/template/.markitect/dependencies/software/model/software/concept.yaml",
           "target": ".markitect/dependencies/software/model/software/concept.yaml",
-          "revision": "7908e69bc3b73cf8689eba9a30c9f4865cdb8934",
+          "revision": "962f17468ae1b3558e042a0429888ece59106545",
           "sha256": "ecef70eefceb61c7f34c1c35340b46b89bbd91615d8b0c71152f4709248b7065",
           "arms": [
             "markitect"
@@ -608,7 +608,7 @@
         {
           "source": "experiments/test-projects/readinglog/template/.markitect/dependencies/software/model/software/rule.yaml",
           "target": ".markitect/dependencies/software/model/software/rule.yaml",
-          "revision": "7908e69bc3b73cf8689eba9a30c9f4865cdb8934",
+          "revision": "962f17468ae1b3558e042a0429888ece59106545",
           "sha256": "38dbdb11d1398174ba509ec445be7d3122e3653206df967b01904a4d24433cbf",
           "arms": [
             "markitect"
@@ -617,7 +617,7 @@
         {
           "source": "experiments/test-projects/readinglog/template/.markitect/dependencies/software/model/software/use-case.yaml",
           "target": ".markitect/dependencies/software/model/software/use-case.yaml",
-          "revision": "7908e69bc3b73cf8689eba9a30c9f4865cdb8934",
+          "revision": "962f17468ae1b3558e042a0429888ece59106545",
           "sha256": "7c85f07c989483c6a262d9c513e71929c03e04c278f95e8d42623f02079fcbb6",
           "arms": [
             "markitect"
@@ -626,7 +626,7 @@
         {
           "source": "experiments/test-projects/readinglog/template/.markitect/execution.yaml",
           "target": ".markitect/execution.yaml",
-          "revision": "7908e69bc3b73cf8689eba9a30c9f4865cdb8934",
+          "revision": "962f17468ae1b3558e042a0429888ece59106545",
           "sha256": "6a320758cc508f000dfe49c0abab4e782f274caba4003938609d4dc3fc4a1117",
           "arms": [
             "markitect"
@@ -635,7 +635,7 @@
         {
           "source": "experiments/test-projects/readinglog/template/.markitect/registry/readinglog/registry.yaml",
           "target": ".markitect/registry/readinglog/registry.yaml",
-          "revision": "7908e69bc3b73cf8689eba9a30c9f4865cdb8934",
+          "revision": "962f17468ae1b3558e042a0429888ece59106545",
           "sha256": "4747fb1b8e93ac3d033eafeea2d086a83746197f3270a2c28234c1e0f20d8d79",
           "arms": [
             "markitect"
@@ -644,7 +644,7 @@
         {
           "source": "experiments/test-projects/readinglog/template/realization/app.py",
           "target": "realization/app.py",
-          "revision": "7908e69bc3b73cf8689eba9a30c9f4865cdb8934",
+          "revision": "962f17468ae1b3558e042a0429888ece59106545",
           "sha256": "b66a2417b532e993710e5436864c3d58c3ebeb1d3dfab05fa1ef13f76c00dfd4",
           "arms": [
             "ordinary",
@@ -654,7 +654,7 @@
         {
           "source": "experiments/test-projects/readinglog/template/realization/tests/test_baseline.py",
           "target": "realization/tests/test_baseline.py",
-          "revision": "7908e69bc3b73cf8689eba9a30c9f4865cdb8934",
+          "revision": "962f17468ae1b3558e042a0429888ece59106545",
           "sha256": "6a10ef1af13cc01f7e040796aacb8ecfbd5a619522fbfcebe81f40c646b4e6ab",
           "arms": [
             "ordinary",
@@ -665,7 +665,7 @@
           "source": "experiments/test-projects/comparison/readinglog/00-baseline/requirements.md",
           "target": "requirements.md",
           "revision": "packet",
-          "sha256": "1e04e40b338b9638731dcbc347314b489f6246f6e901cfe365cf3d9d2cad6cae",
+          "sha256": "4bb7ebb87bba0a0403fa74ac08367ef9685a76d66b8c13c231e926f9e3f37a76",
           "arms": [
             "ordinary"
           ]
@@ -682,7 +682,7 @@
       ],
       "initialState": "Existing add/list application and public tests, no data file; missing data file represents empty state.",
       "canonicalSnapshot": {
-        "revision": "7908e69bc3b73cf8689eba9a30c9f4865cdb8934",
+        "revision": "962f17468ae1b3558e042a0429888ece59106545",
         "identity": "readinglog",
         "version": "0.1.0",
         "path": "experiments/test-projects/readinglog/snapshots/00-baseline/",

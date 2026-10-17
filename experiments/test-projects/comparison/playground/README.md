@@ -26,8 +26,12 @@ remain a follow-up after their complete ordinary packets are available.
 The [ordinary baseline requirements](../readinglog/00-baseline/requirements.md)
 and [neutral single Agent prompt](../readinglog/00-baseline/implementation-prompt.md)
 carry all eight Definitions of the actual integrated Readinglog `0.1.0` snapshot
-at `7908e69bc3b73cf8689eba9a30c9f4865cdb8934`. Its application and public test
+at `962f17468ae1b3558e042a0429888ece59106545`. Its application and public test
 are byte-identical to the immutable original source.
+The earlier fixture and ordinary wording left the error response shape too
+open. Both now require exactly one JSON object with only a nonempty string
+`error` field. This makes both requirement representations more precise; the existing application,
+public test and known input-error gap remain unchanged, without a behavior claim.
 
 `readinglog-existing` means **no added seed**, not a claim of correctness. The
 original application's argparse usage errors differ from the public JSON error

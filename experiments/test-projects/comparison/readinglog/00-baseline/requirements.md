@@ -81,8 +81,9 @@ python -B app.py --db PATH COMMAND ...
 | `list` | An object with a `books` array in insertion order, including every status. |
 
 Every success writes one JSON object to standard output and exits 0. Every
-domain or input error writes one JSON object with an understandable, nonempty
-`error` field and exits 2. Stored data remains unchanged on error. Command names,
+domain or input error writes exactly one JSON object to standard output with
+only an `error` field containing an understandable nonempty string, and exits 2.
+Stored data remains unchanged on error. Command names,
 record fields and the default list envelope remain compatible with this contract.
 
 ## Delivery
