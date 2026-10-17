@@ -25,6 +25,7 @@ Earlier Project/Domain designs and modeling exercises are routed through the [hi
 
 ## Command and tool surface
 
+- [Commands over the Manager organization](canonical-model/commands.md) — accepted later-operation direction: read-only Verify, reviewed Extract refinement and bounded model Optimize; no new executable surface or first-Apply scope.
 - [Verb table](verb-table.md) — CLI-01 specification of the top-level verbs and MCP tools (DEC-017), dated 10 October 2026
 
 ## Architecture, ownership, and capability boundaries
