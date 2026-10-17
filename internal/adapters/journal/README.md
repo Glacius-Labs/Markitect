@@ -52,7 +52,10 @@ digest, length, media type and encoding; identical bytes may have several valid
 interpretations. Append uses RUN's canonical codec, checks batch identity before
 revision CAS, rejects reused event IDs, and verifies the required basis and owner
 payloads through `BindingRefs` and `BindingOwnerRef`. All rows and the head change
-in one transaction. No adapter reducer decides event meaning.
+in one transaction. `SessionRefs` supplies the required stored profile, tool,
+step, permitted wire representation and result references. A wire identity is
+not a stored payload; redacted journal bytes never imply exact replayable output.
+No adapter reducer decides event meaning.
 
 Reads pin a committed head and return whole batches at exact boundaries, limited
 to 256 batches and 64 MiB of canonical batch bytes per page. `Next` continues the

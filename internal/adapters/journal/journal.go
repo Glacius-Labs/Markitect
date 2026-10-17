@@ -91,6 +91,15 @@ func requiredBlobs(ctx context.Context, tx *sql.Tx, b run.AppendBatch) error {
 			return err
 		}
 	}
+	sessionRefs, err := b.SessionRefs()
+	if err != nil {
+		return err
+	}
+	for _, ref := range sessionRefs {
+		if _, err := readBlob(ctx, tx, ref); err != nil {
+			return err
+		}
+	}
 	return nil
 }
 
