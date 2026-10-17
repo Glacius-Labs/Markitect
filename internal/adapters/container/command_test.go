@@ -39,6 +39,18 @@ func TestMain(m *testing.M) {
 		_, _ = f.Write(append(args, '\n'))
 		_ = f.Close()
 		step := steps[index]
+		if strings.Contains(step.Out, "CREATION_TOKEN") {
+			data, _ := os.ReadFile(filepath.Join(dir, "calls"))
+			for _, line := range strings.Split(strings.TrimSpace(string(data)), "\n") {
+				var recorded []string
+				_ = json.Unmarshal([]byte(line), &recorded)
+				for _, arg := range recorded {
+					if token, ok := strings.CutPrefix(arg, creationLabel+"="); ok {
+						step.Out = strings.ReplaceAll(step.Out, "CREATION_TOKEN", token)
+					}
+				}
+			}
+		}
 		time.Sleep(time.Duration(step.SleepMillis) * time.Millisecond)
 		fmt.Fprint(os.Stdout, step.Out)
 		fmt.Fprint(os.Stderr, step.Err)
@@ -96,7 +108,7 @@ func commandState(status string, started bool, exit int) string {
 }
 
 func TestRunCommandUsesObservedExitAndLiteralInvocation(t *testing.T) {
-	e, calls := fakeCommandEngine(t, engineStep{Out: commandID}, engineStep{Out: "stdout", Err: "stderr", Code: 125}, engineStep{Out: commandState("exited", true, 7)}, engineStep{})
+	e, calls := fakeCommandEngine(t, engineStep{Out: commandID}, engineStep{Out: "stdout", Err: "stderr", Code: 7}, engineStep{Out: commandState("exited", true, 7)}, engineStep{})
 	result, err := e.RunCommand(context.Background(), commandSpec(), []string{"/usr/bin/check", "--rm", "space $literal"}, []string{"CHECK=value with spaces"}, 20)
 	if err != nil || !result.Started || !result.Exited || result.ExitCode != 7 || result.Uncertain || result.ImageID != commandImage {
 		t.Fatalf("result=%+v err=%v", result, err)
@@ -158,6 +170,33 @@ func TestRunCommandRetainsCleanupUncertainty(t *testing.T) {
 	e, _ := fakeCommandEngine(t, engineStep{Out: commandID}, engineStep{}, engineStep{Out: commandState("exited", true, 0)}, engineStep{Code: 1, Err: "cleanup denied"})
 	r, err := e.RunCommand(context.Background(), commandSpec(), []string{"/check"}, nil, 10)
 	if err == nil || !r.Exited || !r.Uncertain || !strings.Contains(r.Reason, "cleanup") {
+		t.Fatalf("result=%+v err=%v", r, err)
+	}
+}
+
+func TestRunCommandRetainsAttachmentFailureWithKnownExit(t *testing.T) {
+	e, _ := fakeCommandEngine(t, engineStep{Out: commandID}, engineStep{Code: 125, Err: "attachment failed"}, engineStep{Out: commandState("exited", true, 7)}, engineStep{})
+	r, err := e.RunCommand(context.Background(), commandSpec(), []string{"/check"}, nil, 10)
+	if err == nil || !r.Started || !r.Exited || r.ExitCode != 7 || !r.Uncertain {
+		t.Fatalf("result=%+v err=%v", r, err)
+	}
+}
+
+func TestRunCommandCancellationRetainsUncertaintyWithKnownExit(t *testing.T) {
+	e, _ := fakeCommandEngine(t, engineStep{Out: commandID}, engineStep{SleepMillis: 10000}, engineStep{Out: commandState("exited", true, 0)}, engineStep{})
+	ctx, cancel := context.WithTimeout(context.Background(), 300*time.Millisecond)
+	defer cancel()
+	r, err := e.RunCommand(ctx, commandSpec(), []string{"/check"}, nil, 10)
+	if !errors.Is(err, context.DeadlineExceeded) || !r.Exited || !r.Uncertain {
+		t.Fatalf("result=%+v err=%v", r, err)
+	}
+}
+
+func TestRunCommandRefusesIncompleteStateObservation(t *testing.T) {
+	out := strings.Replace(commandState("exited", true, 0), `,"ExitCode":0`, "", 1)
+	e, _ := fakeCommandEngine(t, engineStep{Out: commandID}, engineStep{}, engineStep{Out: out}, engineStep{})
+	r, err := e.RunCommand(context.Background(), commandSpec(), []string{"/check"}, nil, MaxCommandOutputBytes)
+	if err == nil || r.Exited || !r.Uncertain {
 		t.Fatalf("result=%+v err=%v", r, err)
 	}
 }

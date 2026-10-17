@@ -24,14 +24,18 @@ type CommandResult struct {
 
 var envKeyPattern = regexp.MustCompile(`^[A-Za-z_][A-Za-z0-9_]*$`)
 
+// MaxCommandOutputBytes bounds target command output independently of engine
+// metadata responses. Callers may choose any smaller positive bound.
+const MaxCommandOutputBytes = 64 << 20
+
 // RunCommand runs a literal executable/argument vector in one hardened container.
 // Environment entries are literal KEY=value additions to the pinned image's
 // environment. It preserves RunHelper behavior by using a separate lifecycle.
 // A known nonzero container exit is a result, not a transport error. Cleanup and
 // inspection use an independent bounded context after caller cancellation.
 func (e *Engine) RunCommand(ctx context.Context, spec ContainerSpec, argv, env []string, maxOutputBytes int64) (result CommandResult, err error) {
-	if maxOutputBytes <= 0 || maxOutputBytes > maxCommandOutput {
-		return result, fmt.Errorf("command output limit must be between 1 and %d", maxCommandOutput)
+	if maxOutputBytes <= 0 || maxOutputBytes > MaxCommandOutputBytes {
+		return result, fmt.Errorf("command output limit must be between 1 and %d", MaxCommandOutputBytes)
 	}
 	for _, arg := range argv {
 		if strings.ContainsRune(arg, 0) {
@@ -99,15 +103,15 @@ func (e *Engine) RunCommand(ctx context.Context, spec ContainerSpec, argv, env [
 		ID, Image string
 		State     struct {
 			Status                string
-			Running               bool
+			Running               *bool
 			StartedAt, FinishedAt string
-			ExitCode              int
+			ExitCode              *int
 			Error                 string
 		}
 	}
 	if decodeErr := json.Unmarshal(out, &rows); decodeErr != nil {
 		result.Uncertain, result.Reason = true, "invalid container state observation"
-		return result, errors.Join(startErr, decodeErr)
+		return result, errors.Join(ctx.Err(), startErr, decodeErr)
 	}
 	if len(rows) != 1 || rows[0].ID != id || rows[0].Image != spec.Image {
 		result.Uncertain, result.Reason = true, "container identity or image mismatch"
@@ -115,15 +119,19 @@ func (e *Engine) RunCommand(ctx context.Context, spec ContainerSpec, argv, env [
 	}
 	state := rows[0].State
 	result.ImageID = rows[0].Image
+	if state.Running == nil || state.ExitCode == nil {
+		result.Uncertain, result.Reason = true, "incomplete container state observation"
+		return result, errors.Join(ctx.Err(), startErr, fmt.Errorf("incomplete container state observation"))
+	}
 	started, timeErr := time.Parse(time.RFC3339Nano, state.StartedAt)
 	result.Started = timeErr == nil && !started.IsZero()
 	finished, finishErr := time.Parse(time.RFC3339Nano, state.FinishedAt)
-	result.Exited = result.Started && !state.Running && state.Status == "exited" && finishErr == nil && !finished.IsZero()
+	result.Exited = result.Started && !*state.Running && state.Status == "exited" && finishErr == nil && !finished.IsZero()
 	if result.Exited {
-		result.ExitCode = state.ExitCode
+		result.ExitCode = *state.ExitCode
 	}
 	if ctx.Err() != nil {
-		result.Uncertain = !result.Exited
+		result.Uncertain = true
 		result.Reason = "command context ended"
 		return result, ctx.Err()
 	}
@@ -131,6 +139,14 @@ func (e *Engine) RunCommand(ctx context.Context, spec ContainerSpec, argv, env [
 		result.Uncertain, result.Reason = true, "target container terminal state was not observed"
 		return result, errors.Join(startErr, fmt.Errorf("target container terminal state was not observed: %s", state.Error))
 	}
-	// The inspected target exit is authoritative even when the CLI exits nonzero.
+	// A matching CLI status is the engine's ordinary target exit report. Other
+	// attachment failures can leave output incomplete even with a known exit.
+	if startErr != nil {
+		var exitErr *exec.ExitError
+		if !errors.As(startErr, &exitErr) || exitErr.ExitCode() != result.ExitCode {
+			result.Uncertain, result.Reason = true, "command attachment failed"
+			return result, startErr
+		}
+	}
 	return result, nil
 }
