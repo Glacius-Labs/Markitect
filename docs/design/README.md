@@ -57,7 +57,7 @@ Earlier Project/Domain designs and modeling exercises are routed through the [hi
 
 ## Capability work and focused analysis
 
-- [Capability skills and native project entrypoints](project-capability-skills-20261009.md) — dated 9 October 2026
+- [Capability skills and native project entrypoints](project-capability-skills-20261009.md) — accepted Init split of 17 October 2026: six skills for Codex and Claude Code, short entrypoints and one shared maintained source; includes the historical 9 October audit. Design only, not implemented setup.
 - [Native Codex work for Markitect Managers](project-native-codex-work-20261009.md) — dated 9 October 2026
 - [Read-only analysis of policy failures](policy-failure-analysis.md)
 - [Software architecture language experiment](software-architecture-experiment.md) — explicitly an experiment
