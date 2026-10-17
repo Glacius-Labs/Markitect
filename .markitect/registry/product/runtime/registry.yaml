@@ -44,6 +44,22 @@ artifacts:
     form: code
     realizes: [product/runtime/container-runtime]
     why: Implements the stated responsibility within its declared boundary.
+  - path: "internal/adapters/container/command.go"
+    form: code
+    realizes: [product/runtime/container-runtime]
+    why: Runs literal bounded commands and observes actual container identity, image and terminal state with explicit cleanup uncertainty.
+  - path: "internal/adapters/container/command_test.go"
+    form: test
+    realizes: [product/runtime/container-runtime]
+    why: Checks literal hardened invocation, actual target exit observation, bounded combined output and cancellation cleanup with a fake engine.
+  - path: "internal/adapters/container/volumes.go"
+    form: code
+    realizes: [product/runtime/container-runtime]
+    why: Observes exact volume ownership and all-container mounts and refuses preexisting or ambiguously created volumes.
+  - path: "internal/adapters/container/volumes_test.go"
+    form: test
+    realizes: [product/runtime/container-runtime]
+    why: Checks volume ownership, preexisting and competing creation refusals and complete mount census failure boundaries.
   - path: "internal/adapters/container/engine_integration_test.go"
     form: test
     realizes: [product/runtime/container-runtime]
