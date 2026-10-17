@@ -167,11 +167,12 @@ func validateSelection(selection InputSelection, raw RawInputs) error {
 		}
 	}
 	for _, group := range []struct {
-		selected []SourceLocation
-		actual   []SourceFile
+		selected        []SourceLocation
+		actual          []SourceFile
+		repositoryLocal bool
 	}{
-		{selection.Execution, raw.Execution}, {selection.Registry, raw.Registry}, {selection.Ignore, raw.Ignore},
-		{selection.HostProfiles, raw.HostProfiles}, {selection.Instructions, raw.Instructions},
+		{selection.Execution, raw.Execution, true}, {selection.Registry, raw.Registry, true}, {selection.Ignore, raw.Ignore, true},
+		{selection.HostProfiles, raw.HostProfiles, false}, {selection.Instructions, raw.Instructions, false},
 	} {
 		if len(group.selected) != len(group.actual) {
 			return invalid("selected input observations missing")
@@ -179,6 +180,9 @@ func validateSelection(selection InputSelection, raw RawInputs) error {
 		for i, location := range group.selected {
 			if location.Boundary == "" || location.Path.String() == "" || group.actual[i].Location != location || group.actual[i].File.Path() != location.Path {
 				return invalid("input acquisition coordinates differ from selection")
+			}
+			if group.repositoryLocal && group.actual[i].RepositoryPath.String() == "" {
+				return invalid("execution, registry and ignore inputs require repository coordinates")
 			}
 			if file := group.actual[i]; file.RepositoryPath.String() != "" && !sameCensusFile(raw, file.RepositoryPath.String(), file.File) {
 				return invalid("local input differs from repository census")

@@ -76,7 +76,7 @@ func TestExactOriginalTreesModesCoordinatesAndSelectedSourcesSurvive(t *testing.
 }
 
 func TestSelectedInputAndDependencyByteMismatchesRefuseBeforeCompile(t *testing.T) {
-	for _, kind := range []string{"execution missing", "registry missing", "ignore missing", "host missing", "instruction missing", "extra input", "input location", "input path", "input bytes", "input mode", "input repo path", "dependency bytes", "local bytes"} {
+	for _, kind := range []string{"execution missing", "registry missing", "ignore missing", "host missing", "instruction missing", "extra input", "input location", "input path", "input bytes", "input mode", "input repo path", "execution repo coordinate missing", "registry repo coordinate missing", "ignore repo coordinate missing", "dependency bytes", "local bytes"} {
 		t.Run(kind, func(t *testing.T) {
 			selection, raw := libraryInputs(t)
 			withSelectedSources(t, &selection, &raw)
@@ -103,6 +103,15 @@ func TestSelectedInputAndDependencyByteMismatchesRefuseBeforeCompile(t *testing.
 				raw.Execution[0].File, _ = snapshot.NewEntry(raw.Execution[0].File.Path(), snapshot.Regular, raw.Execution[0].File.Bytes())
 			case "input repo path":
 				raw.Execution[0].RepositoryPath = path(t, "other")
+			case "execution repo coordinate missing":
+				raw.Execution[0].RepositoryPath = snapshot.Path{}
+				raw.Execution[0].File, _ = snapshot.NewEntry(raw.Execution[0].File.Path(), snapshot.Executable, []byte("uncensused execution bytes"))
+			case "registry repo coordinate missing":
+				raw.Registry[0].RepositoryPath = snapshot.Path{}
+				raw.Registry[0].File, _ = snapshot.NewEntry(raw.Registry[0].File.Path(), snapshot.Executable, []byte("uncensused registry bytes"))
+			case "ignore repo coordinate missing":
+				raw.Ignore[0].RepositoryPath = snapshot.Path{}
+				raw.Ignore[0].File, _ = snapshot.NewEntry(raw.Ignore[0].File.Path(), snapshot.Executable, []byte("uncensused ignore bytes"))
 			case "dependency bytes":
 				for i := range raw.Dependencies[0].Source.Entries {
 					if raw.Dependencies[0].Source.Entries[i].Kind == model.Regular {

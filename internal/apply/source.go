@@ -44,6 +44,9 @@ type SourceLocation struct {
 
 // InputSelection retains caller order and duplicates for adapter validation.
 // It selects sources, not decoded settings or provider wire configuration.
+// Execution, Registry and Ignore select repository-local committed inputs
+// (or their explicit preview counterparts); their observations must carry
+// RepositoryPath. HostProfiles and Instructions also allow external sources.
 type InputSelection struct {
 	Repository   string
 	Local        ModelSelection
