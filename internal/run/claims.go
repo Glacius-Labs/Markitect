@@ -89,6 +89,28 @@ func addClaims(existing, added []Claim) []Claim {
 	return out
 }
 
+// formMismatch names a new file whose registry proposal has another form than
+// its reservation; its capture would fail (core rule S4).
+func (e *Engine) formMismatch(s *stepRun) string {
+	registry := e.aggregate().Registry()
+	for _, c := range e.claimsOf(s.manager, s) {
+		if c.Tool != ToolRegister {
+			continue
+		}
+		path, err := snapshot.NewPath(c.Path)
+		if err != nil {
+			continue
+		}
+		if _, registered := registry.Lookup(path); registered {
+			continue
+		}
+		if form, reserved := e.reservedForm(s, c.Path); reserved && form != c.Form {
+			return fmt.Sprintf("%s is reserved with form %s but registered with form %s; register it again with form %s before you submit", c.Path, form, c.Form, form)
+		}
+	}
+	return ""
+}
+
 // reservedForm returns the form of a Manager's own reservation of a path.
 func (e *Engine) reservedForm(s *stepRun, path string) (string, bool) {
 	for _, c := range e.claimsOf(s.manager, s) {

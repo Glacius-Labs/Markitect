@@ -842,6 +842,11 @@ func (e *Engine) tools(s *stepRun) ToolHandler {
 			if err := e.cfg.Coordinator.CheckOutcome(manager, call.Tool, args); err != nil {
 				return refuse(err.Error())
 			}
+			if call.Tool == ToolSubmit && phase.writing() {
+				if reason := e.formMismatch(s); reason != "" {
+					return refuse(reason)
+				}
+			}
 			answered = true
 			return ok(map[string]bool{"accepted": true})
 		}
@@ -895,8 +900,10 @@ func (e *Engine) tools(s *stepRun) ToolHandler {
 				return refuse(err.Error())
 			}
 			// A new file's record carries the form of its reservation (core rule S4).
-			if form, reserved := e.reservedForm(s, in.Path); reserved && form != in.Form {
-				return refuse(fmt.Sprintf("%s is reserved with form %s; register it with that form, or reserve it again with form %s first", in.Path, form, in.Form))
+			if _, registered := e.aggregate().Registry().Lookup(record.Artifact().Path()); !registered {
+				if form, reserved := e.reservedForm(s, in.Path); reserved && form != in.Form {
+					return refuse(fmt.Sprintf("%s is reserved with form %s; register it with that form, or reserve it again with form %s first", in.Path, form, in.Form))
+				}
 			}
 			if err := e.registrable(s, record); err != nil {
 				return refuse(err.Error())

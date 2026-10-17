@@ -315,3 +315,47 @@ func TestARegistrationCarriesItsReservationsForm(t *testing.T) {
 		t.Fatal("the file was not delivered with its corrected form")
 	}
 }
+
+// Reserving a registered new file again with another form leaves the earlier
+// record's form behind; the submission is refused until the record matches.
+func TestASubmissionWaitsForMatchingForms(t *testing.T) {
+	agent := func(s agentStep) []action {
+		if s.Manager == "lending" && s.Phase == run.PhaseWork && s.Attempt == 0 {
+			return []action{
+				{Tool: run.ToolReservePath, Args: `{"path":"out/item_test.go","form":"code"}`, Want: run.ToolOK},
+				{Tool: run.ToolRegister, Args: `{"path":"out/item_test.go","form":"code","realizes":["lending/Item"],"why":"Tests Item."}`, Want: run.ToolOK},
+				{Tool: run.ToolReservePath, Args: `{"path":"out/item_test.go","form":"test"}`, Want: run.ToolOK},
+				{Write: map[string]string{"out/item_test.go": "package library\n"}, Tool: run.ToolSubmit, Args: submitArgs("local", "complete"), Want: run.ToolRefused},
+				{Tool: run.ToolRegister, Args: `{"path":"out/item_test.go","form":"test","realizes":["lending/Item"],"why":"Tests Item."}`, Want: run.ToolOK},
+				{Tool: run.ToolSubmit, Args: submitArgs("local", "complete"), Want: run.ToolOK},
+			}
+		}
+		return happyAgent(s)
+	}
+	h := newHarnessWith(t, stepInputsWith(t, true, withCreationArea(t)), agent)
+	runToEnd(t, h)
+	if h.c.Current().State != run.Verifying || !slices.ContainsFunc(h.sessions.answers, func(a string) bool {
+		return strings.HasPrefix(a, "lending work submit refused") && strings.Contains(a, "out/item_test.go is reserved with form test but registered with form code")
+	}) {
+		t.Fatal("the mismatching submission was not refused", h.c.Current(), h.sessions.answers)
+	}
+	if record, ok := h.engine.Aggregate().Registry().Lookup(mustPath(t, "out/item_test.go")); !ok || record.Artifact().Form() != "test" {
+		t.Fatal("the file was not delivered with its corrected form")
+	}
+}
+
+// A Manager may register its own existing file with another form; only new
+// files follow their reservation.
+func TestAnExistingOwnFileMayChangeItsForm(t *testing.T) {
+	agent := func(s agentStep) []action {
+		if s.Manager == "lending" && s.Phase == run.PhaseWork && s.Attempt == 0 {
+			return append([]action{{Tool: run.ToolRegister, Args: `{"path":"out/library.go","form":"doc","realizes":["lending/Item"],"why":"Documents Item."}`, Want: run.ToolOK}}, happyAgent(s)...)
+		}
+		return happyAgent(s)
+	}
+	h := newHarness(t, true, agent)
+	runToEnd(t, h)
+	if record, ok := h.engine.Aggregate().Registry().Lookup(mustPath(t, "out/library.go")); h.c.Current().State != run.Verifying || !ok || record.Artifact().Form() != "doc" {
+		t.Fatal("the own file's form did not change", h.c.Current(), h.sessions.answers)
+	}
+}
