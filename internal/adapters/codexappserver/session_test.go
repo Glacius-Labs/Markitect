@@ -139,6 +139,9 @@ func peer(f *fakeChannel) *fakeRuntime {
 	return &fakeRuntime{stream: &fakeStream{chunks: make(chan []byte, 32), done: make(chan struct{})}, tools: make(chan frame.ToolCall, 16), journal: f}
 }
 func (f *fakeRuntime) emit(raw string) {
+	if f.secretField == "thread-marker" && strings.Contains(raw, `"id":2`) {
+		raw = strings.ReplaceAll(raw, string(codecThreadID), "prefix-[REDACTED]")
+	}
 	if f.secretField == "thread-response" && strings.Contains(raw, `"id":2`) {
 		raw = strings.ReplaceAll(raw, string(codecThreadID), "prefix-secret-key-for-runtime")
 	}
@@ -246,6 +249,9 @@ func (f *fakeRuntime) Stop(context.Context, int64) (frame.Exited, error) {
 	}
 	if f.secretField == "stop-signal" {
 		return frame.Exited{Code: -1, Signal: "prefix-secret-key-for-runtime"}, nil
+	}
+	if f.secretField == "stop-marker" {
+		return frame.Exited{Code: -1, Signal: "prefix-[REDACTED]"}, nil
 	}
 	return frame.Exited{Code: -1, Signal: "terminated"}, nil
 }
@@ -614,5 +620,42 @@ func TestCodexStopJournalErrorCannotReturnKnownCredential(t *testing.T) {
 	stopped, err := s.Stop(context.Background(), run.StopRequest{Session: a.Plan.ID, ProviderSession: opened.ProviderSession, Timeout: time.Second}, channel)
 	if !stopped.Terminated || err == nil || strings.Contains(err.Error(), "secret-key-for-runtime") || !strings.Contains(err.Error(), "[REDACTED]") {
 		t.Fatal("stop journal error escaped credential redaction")
+	}
+}
+
+func TestCodexCredentialCannotEqualRedactionMarker(t *testing.T) {
+	for _, field := range []string{"thread-marker", "stop-marker"} {
+		t.Run(field, func(t *testing.T) {
+			channel := &fakeChannel{}
+			runtime := peer(channel)
+			runtime.secretField = field
+			s, err := NewSessionsWithRuntime(func(context.Context, container.ContainerSpec) (RuntimeSession, error) { return runtime, nil }, nil, func(context.Context, string) (RuntimeCredential, error) {
+				return RuntimeCredential{Mode: "api-key", APIKey: "[REDACTED]"}, nil
+			})
+			if err != nil {
+				t.Fatal(err)
+			}
+			t.Cleanup(func() { _ = runtime.Close() })
+			a, _ := sessionAdmissions(t)
+			opened, openErr := s.Open(context.Background(), a, channel)
+			if field == "thread-marker" {
+				if openErr == nil || !opened.Uncertain || opened.ProviderSession != "" {
+					t.Fatal("replacement token accepted as native identity")
+				}
+				for _, bound := range channel.bindings {
+					if strings.Contains(string(bound.ProviderSession), "[REDACTED]") || bytes.Contains(bound.Wire.Journal.Bytes(), []byte("[REDACTED]")) {
+						t.Fatal("marker-valued credential reached Bind")
+					}
+				}
+			} else {
+				if openErr != nil {
+					t.Fatal(openErr)
+				}
+				stopped, stopErr := s.Stop(context.Background(), run.StopRequest{Session: a.Plan.ID, ProviderSession: opened.ProviderSession, Timeout: time.Second}, channel)
+				if stopErr != nil || !stopped.Terminated || strings.Contains(stopped.Reason, "[REDACTED]") || strings.Contains(channel.stops[0].Reason, "[REDACTED]") {
+					t.Fatal("marker-valued credential reached ObserveStop")
+				}
+			}
+		})
 	}
 }

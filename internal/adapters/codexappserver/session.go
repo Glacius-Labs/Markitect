@@ -94,10 +94,20 @@ func (e *sessionEntry) safe(err error) error {
 }
 func (e *sessionEntry) redact(data []byte) []byte {
 	data = bytes.Clone(data)
+	marker := []byte("[REDACTED]")
 	for _, secret := range e.secrets {
-		data = bytes.ReplaceAll(data, secret, []byte("[REDACTED]"))
+		if len(secret) > 0 && bytes.Contains(marker, secret) {
+			marker = nil
+			break
+		}
+	}
+	for _, secret := range e.secrets {
+		if len(secret) == 0 {
+			continue
+		}
+		data = bytes.ReplaceAll(data, secret, marker)
 		encoded, _ := json.Marshal(string(secret))
-		data = bytes.ReplaceAll(data, encoded[1:len(encoded)-1], []byte("[REDACTED]"))
+		data = bytes.ReplaceAll(data, encoded[1:len(encoded)-1], marker)
 	}
 	return data
 }
@@ -105,7 +115,16 @@ func (e *sessionEntry) redact(data []byte) []byte {
 // A native identity is exact or unavailable. Redacting it would invent a
 // different identity and could collapse distinct provider handles.
 func (e *sessionEntry) nativeIdentity(value string) bool {
-	return bytes.Equal([]byte(value), e.redact([]byte(value)))
+	for _, secret := range e.secrets {
+		if len(secret) == 0 {
+			continue
+		}
+		encoded, _ := json.Marshal(string(secret))
+		if bytes.Contains([]byte(value), secret) || bytes.Contains([]byte(value), encoded[1:len(encoded)-1]) {
+			return false
+		}
+	}
+	return true
 }
 func (e *sessionEntry) wire(raw []byte) run.WirePayload {
 	data := e.redact(raw)
