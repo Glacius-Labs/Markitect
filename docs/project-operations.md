@@ -2,6 +2,8 @@
 
 The current commands are `check`, `context`, `docs`, `version`, `licenses` and `help`. `apply` reports unavailable before acquisition or effects. Build from `cmd/markitect`; [Project workflow](project-workflow.md) owns the sequence and [CONTRIBUTING](../CONTRIBUTING.md) owns source gates.
 
+The later [command design](design/canonical-model/commands.md) records the accepted Verify, Extract, Optimize and other operation semantics. It does not add them to this executable surface or authorize their execution.
+
 ## Structural and metadata stages
 
 `check --repo PATH` calls actual PreparationService with an explicit canonical v1 manifest and dependencies. Reports retain each acquisition attempt and actual compiler, execution, registry, file-accounting and context-selection statuses. Failed or incomplete acquisition cannot become an empty passing model.

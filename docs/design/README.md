@@ -25,6 +25,7 @@ Earlier Project/Domain designs and modeling exercises are routed through the [hi
 
 ## Command and tool surface
 
+- [Commands over the Manager organization](canonical-model/commands.md) — accepted later-operation direction: read-only Verify, reviewed Extract refinement and bounded model Optimize; no new executable surface or first-Apply scope.
 - [Verb table](verb-table.md) — CLI-01 specification of the top-level verbs and MCP tools (DEC-017), dated 10 October 2026
 
 ## Architecture, ownership, and capability boundaries
@@ -50,6 +51,7 @@ Earlier Project/Domain designs and modeling exercises are routed through the [hi
 
 ## Existing-project adoption
 
+- [Accepted existing-project Init flow](project-capability-skills-20261009.md#existing-project-init-flow) — technical setup, model adoption through the coding agent and owner decisions; design only, not implemented setup.
 - [Zero-churn representation adoption](brownfield-representation-adoption.md) — source-alpha design
 - [Copy Me evidence review and candidate queue](copy-me-evidence-review.md) — explicitly an earlier proposal
 - [Existing-project preparation](init-adoption-preparation.md) — explicitly an earlier Init proposal

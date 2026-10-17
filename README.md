@@ -52,8 +52,10 @@ flowchart TB
     model["Model<br/>Loan limit: 5 → 3"] --> code["Code<br/>Enforce the new limit"]
     model --> tests["Tests<br/>Check the new boundary"]
     model --> guide["Usage guide<br/>Explain the changed rule"]
-    classDef intent fill:#e2ebe5,stroke:#698173,color:#212b2a
+    classDef intent fill:#c9dff6,stroke:#7ab1e0,color:#212121
+    classDef realization fill:#262626,stroke:#9aa0a6,color:#ececec
     class model intent
+    class code,tests,guide realization
 ```
 
 Existing rules, including returning books and handling suspended members, still hold.
