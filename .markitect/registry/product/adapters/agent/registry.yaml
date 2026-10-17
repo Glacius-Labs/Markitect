@@ -16,6 +16,22 @@ artifacts:
     form: test
     realizes: [product/ports-and-adapters]
     why: Distinguishes framing limits, identity preservation, control acknowledgments and independent result statuses.
+  - path: "internal/adapters/claudecode/session.go"
+    form: code
+    realizes: [product/ports-and-adapters]
+    why: Implements admitted single-step Claude readiness, acknowledged transport and actual exit observation through the existing runtime.
+  - path: "internal/adapters/claudecode/session_profile.go"
+    form: code
+    realizes: [product/ports-and-adapters]
+    why: Validates exact admitted Claude profile and tool bytes and resolves only an explicit dedicated runtime token.
+  - path: "internal/adapters/claudecode/session_step.go"
+    form: code
+    realizes: [product/ports-and-adapters]
+    why: Binds actual init identity and the exclusive single-step channel, returns acknowledged Host answers and projects only the current Explore catalogue.
+  - path: "internal/adapters/claudecode/session_test.go"
+    form: test
+    realizes: [product/ports-and-adapters]
+    why: Distinguishes fake lifecycle, native versus adapter identity, permits, append failures, no replay, credentials and stop uncertainty.
   - path: "internal/adapters/codexappserver/README.md"
     form: doc
     realizes: [product/adapters/agent/closed-agent-metadata, product/ports-and-adapters]

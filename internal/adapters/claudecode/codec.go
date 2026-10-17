@@ -1,4 +1,5 @@
-// Package claudecode contains a pure, selected Claude Code 2.1.301 wire codec.
+// Package claudecode contains the selected Claude Code 2.1.301 wire codec
+// and an admitted single-step container session adapter.
 package claudecode
 
 import (
