@@ -1,5 +1,17 @@
 apiVersion: markitect.registry/v1
 artifacts:
+  - path: "docs/strategy/explainer.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Explains the intended product workflow and present stage in a concise marketing draft.
+  - path: "docs/strategy/short-posts.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Supplies three English publication drafts with distinct openings and explicit current-stage boundaries.
+  - path: "docs/strategy/assets/model-realization.svg"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Illustrates the planned model-first relationship and organized realization for the explainer and future material.
   - path: "docs/history/distribution-retirement-20261017.md"
     form: doc
     realizes: [documentation/current-guidance]

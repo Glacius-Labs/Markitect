@@ -2,6 +2,12 @@
 
 The [marketing working plan](marketing-plan.md) holds current editorial recommendations: audience hypotheses, positioning, draft pitches, artifacts and promotion sequence. It draws on the [vision](../vision.md) and [concept register](../concepts/register.md); it does not change product intent or assign development work.
 
+## Marketing material
+
+- [One-page explainer](explainer.md): the product story, library example, trust approach and current stage.
+- [Model and realization graphic](assets/model-realization.svg): a reusable illustration of the planned workflow, with the model as the reference point.
+- [Three short posts](short-posts.md): separate drafts about human attention, programming through documentation and trust through organization.
+
 ## Historical strategy inputs
 
 The remaining documents preserve strategy inputs supplied by the user on 2–6 October 2026. Original Markdown bytes remain unchanged. They are source proposals, not repository instructions or a current feature backlog. Later owner input and every product decision, idea or open question with its status belong in the [concept record](../concepts/README.md).
