@@ -6,6 +6,7 @@ import (
 	"crypto/sha256"
 	"errors"
 	"reflect"
+	"strings"
 	"testing"
 	"time"
 
@@ -219,12 +220,12 @@ func TestLiveSessionAndUnknownStopBlockFinishEvenAfterBudgetSettlement(t *testin
 // answering returns a handler that answers every call with result and counts
 // how often the Host executed it.
 func answering(result string, calls *int) run.ToolHandler {
-	return func(context.Context, run.ToolCall) (run.ToolOutcome, error) {
+	return func(context.Context, run.ToolCall, int64) (run.ToolOutcome, error) {
 		*calls++
 		return run.ToolOutcome{Status: run.ToolOK, Result: []byte(result)}, nil
 	}
 }
-func failing(context.Context, run.ToolCall) (run.ToolOutcome, error) {
+func failing(context.Context, run.ToolCall, int64) (run.ToolOutcome, error) {
 	return run.ToolOutcome{}, errors.New("Host tool failed after possible effect")
 }
 func channel(t *testing.T, c *run.Coordinator, j run.Journal, tools run.ToolHandler) run.SessionIO {
@@ -282,15 +283,76 @@ func TestChannelRequiresHandlerAndRefusalIsAnAnswer(t *testing.T) {
 	if err != nil || string(r.Output.Bytes()) != `{"status":"refused","reason":"no Host tool is available in this slice"}` {
 		t.Fatal("refusal not recorded as an answer", r, err)
 	}
-	mixed := func(context.Context, run.ToolCall) (run.ToolOutcome, error) {
-		return run.ToolOutcome{Status: run.ToolOK, Reason: "mixed"}, nil
-	}
-	if _, err := channel(t, c, j, mixed).Call(context.Background(), run.ToolCall{RecordMeta: meta("mixed"), Step: "step", Call: "other", Tool: "unsupported", Input: wire(t, `{}`)}); !errors.Is(err, run.ErrInvalid) {
-		t.Fatal("open outcome shape accepted", err)
+	for name, outcome := range map[string]run.ToolOutcome{
+		"ok with reason":         {Status: run.ToolOK, Reason: "mixed"},
+		"refused without reason": {Status: run.ToolRefused},
+		"refused with result":    {Status: run.ToolRefused, Result: []byte(`{}`), Reason: "mixed"},
+		"invalid result":         {Status: run.ToolOK, Result: []byte(`{"open"`)},
+		"unknown status":         {Status: "maybe"},
+		"oversize result":        {Status: run.ToolOK, Result: []byte(`"` + strings.Repeat("x", 1<<20) + `"`)},
+	} {
+		executed := 0
+		handler := func(context.Context, run.ToolCall, int64) (run.ToolOutcome, error) {
+			executed++
+			return outcome, nil
+		}
+		call := run.ToolCall{RecordMeta: meta("shape-" + name), Step: "step", Call: run.ProviderCallID("shape-" + name), Tool: "unsupported", Input: wire(t, `{}`)}
+		if _, err := channel(t, c, j, handler).Call(context.Background(), call); !errors.Is(err, run.ErrInvalid) || executed != 1 {
+			t.Fatal(name, "accepted", err)
+		}
+		if _, err := channel(t, c, j, handler).Call(context.Background(), call); !errors.Is(err, run.ErrObservationLimit) || executed != 1 {
+			t.Fatal(name, "invalid answer did not leave the call pending", err)
+		}
 	}
 }
 
-func TestRedactedWireStoresPermittedRepresentationWithoutReplayAuthority(t *testing.T) {
+func TestHaltedRunAnswersWithoutReachingTheHandler(t *testing.T) {
+	c, j, _ := activeStep(t)
+	stop := command("stop", run.StopRun)
+	stop.Reason = "owner stop"
+	commit(t, c, j, stop)
+	executed := 0
+	r, err := channel(t, c, j, answering(`{}`, &executed)).Call(context.Background(), run.ToolCall{RecordMeta: meta("after-stop"), Step: "step", Call: "after-stop", Tool: "read", Input: wire(t, `{}`)})
+	if err != nil || executed != 0 || r.Outcome.Status != run.ToolRefused || r.Receipt.BatchID == "" {
+		t.Fatal("stopped run reached the Host tool", r, err, executed)
+	}
+}
+
+func TestLostAnswerKeepsOutcomeForHostReconciliation(t *testing.T) {
+	c, j, _ := activeStep(t)
+	executed := 0
+	io := channel(t, c, j, answering(`{"read":"content"}`, &executed))
+	if _, err := io.Call(context.Background(), run.ToolCall{RecordMeta: meta("first"), Step: "step", Call: "first", Tool: "read", Input: wire(t, `{}`)}); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := c.ToolReconciliation(meta("not-pending"), "s", "first", run.ToolOutcome{Status: run.ToolRefused, Reason: "late"}); !errors.Is(err, run.ErrState) {
+		t.Fatal("reconciled an answered call", err)
+	}
+	call := run.ToolCall{RecordMeta: meta("lost"), Step: "step", Call: "lost", Tool: "read", Input: wire(t, `{}`)}
+	j.appendMode = "absent-after-next"
+	r, err := io.Call(context.Background(), call)
+	j.appendMode = ""
+	if err == nil || r.Receipt.BatchID != "" || r.Outcome.Status != run.ToolOK || string(r.Output.Bytes()) != `{"status":"ok","result":{"read":"content"}}` || executed != 2 {
+		t.Fatal("lost answer not kept for reconciliation", r, err, executed)
+	}
+	if err := c.ReconcilePending(context.Background(), j); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := io.Call(context.Background(), call); !errors.Is(err, run.ErrObservationLimit) || executed != 2 {
+		t.Fatal("absent answer executed again", err)
+	}
+	reconciled, err := c.ToolReconciliation(meta("lost-reconciled"), "s", "lost", r.Outcome)
+	if err != nil {
+		t.Fatal(err)
+	}
+	commit(t, c, j, reconciled)
+	again, err := io.Call(context.Background(), call)
+	if err != nil || executed != 2 || !bytes.Equal(again.Output.Bytes(), r.Output.Bytes()) {
+		t.Fatal("reconciled answer not returned", again, err)
+	}
+}
+
+func TestRedactedCallInputStoresOnlyThePermittedRepresentation(t *testing.T) {
 	c, j, io := activeStep(t)
 	// The supplied hash is the identity of a hypothetical real wire, not a
 	// BlobRef. No secret value is constructed or supplied to pure RUN.
@@ -619,6 +681,15 @@ func TestResumedSessionBindsOnlyTheRequestedConversation(t *testing.T) {
 	same := run.SessionObservation{RecordMeta: meta("bind"), ProviderSession: "provider-session", Wire: wire(t, `{"thread":"provider-session"}`), Reason: "provider resumed the thread"}
 	if _, err := io.Bind(context.Background(), same); err != nil {
 		t.Fatal(err)
+	}
+}
+
+func TestResumedSessionReportsAnotherConversationAsUncertain(t *testing.T) {
+	io := resumedSession(t)
+	send(t, io, "resume", "")
+	other := run.SessionObservation{RecordMeta: meta("bind-other"), ProviderSession: "other-session", Wire: wire(t, `{"thread":"other-session"}`), Uncertain: true, Reason: "provider reported a different thread"}
+	if _, err := io.Bind(context.Background(), other); err != nil {
+		t.Fatal("uncertain observation of another conversation refused", err)
 	}
 }
 

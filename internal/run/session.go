@@ -248,12 +248,19 @@ const (
 
 // ToolHandler authorizes and executes one Host tool call. The session channel
 // records the call before and the outcome after the handler; the handler does
-// no recording of its own. An error leaves the call pending until reconciled.
-type ToolHandler func(context.Context, ToolCall) (ToolOutcome, error)
+// no recording of its own. Its encoded outcome must fit maxBytes, the
+// session's wire limit. An error or an invalid or oversize outcome leaves the
+// call pending until reconciled. The channel does not call the handler while
+// the run admits no new work; it records a fixed refusal instead.
+type ToolHandler func(ctx context.Context, call ToolCall, maxBytes int64) (ToolOutcome, error)
 
 // RefuseTools answers every call with a refusal, for slices without Host tools.
-func RefuseTools(context.Context, ToolCall) (ToolOutcome, error) {
+func RefuseTools(context.Context, ToolCall, int64) (ToolOutcome, error) {
 	return ToolOutcome{Status: ToolRefused, Reason: "no Host tool is available in this slice"}, nil
+}
+
+func refuseHalted(context.Context, ToolCall, int64) (ToolOutcome, error) {
+	return ToolOutcome{Status: ToolRefused, Reason: "the run admits no new work"}, nil
 }
 
 func (o ToolOutcome) payload() (Payload, error) {
@@ -269,10 +276,14 @@ func (o ToolOutcome) payload() (Payload, error) {
 	return NewPayload(toolOutcomeMedia, "utf-8", data)
 }
 
-// ToolResult is the recorded answer to one call. Output holds the encoded
-// ToolOutcome that the adapter returns to the provider unchanged.
+// ToolResult is the answer to one call. Output holds the encoded Outcome that
+// the adapter returns to the provider unchanged. When recording the answer
+// fails, Call returns the error with Outcome and Output still set but no
+// Receipt; the adapter must not send it. After reconciliation shows the answer
+// absent, the Host records that Outcome through ToolReconciliation.
 type ToolResult struct {
 	Receipt AppendReceipt
+	Outcome ToolOutcome
 	Output  Payload
 }
 

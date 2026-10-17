@@ -3,7 +3,7 @@ artifacts:
   - path: "internal/run/session_readiness_test.go"
     form: test
     realizes: [product/run/confirmed-run-history]
-    why: Checks truthful ready-but-unbound startup, one first send, retained holds and literal historical receipts.
+    why: Checks truthful ready-but-unbound startup, one first send, retained holds and the initial Explore gate.
   - path: "internal/run/binding_inventory.go"
     form: code
     realizes: [product/run/confirmed-run-history]

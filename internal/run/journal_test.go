@@ -177,6 +177,9 @@ func (j *memoryJournal) Append(ctx context.Context, b run.AppendBatch) (run.Appe
 	j.batches = append(j.batches, stored)
 	j.head = b.Revision()
 	receipt := run.ReceiptFor(b)
+	if j.appendMode == "absent-after-next" {
+		j.appendMode = "absent" // This append succeeds; the following one is never stored.
+	}
 	if j.appendMode == "lost" {
 		return receipt, errors.New("ack lost after commit")
 	}

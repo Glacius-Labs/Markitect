@@ -119,7 +119,7 @@ type Sessions interface {
 
 type SessionIO interface {
 	Observe(context.Context, SessionEvent) error
-	Call(context.Context, ToolCall) (ToolReply, error)
+	Call(context.Context, ToolCall) (ToolResult, error)
 }
 ```
 

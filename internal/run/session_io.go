@@ -1,6 +1,10 @@
 package run
 
-import "context"
+import (
+	"context"
+	"crypto/sha256"
+	"encoding/hex"
+)
 
 type sessionChannel struct {
 	c               *Coordinator
@@ -129,7 +133,9 @@ func (io *sessionChannel) ObserveSend(ctx context.Context, o TransportObservatio
 // Call records the tool call, lets the Host answer it and records the answer.
 // An exact repeat returns the recorded answer without executing again; a
 // changed repeat conflicts. A call recorded without an answer stays pending:
-// its effect is unknown and only reconciliation can settle it.
+// its effect is unknown and only reconciliation can settle it. While the run
+// admits no new work, the call is answered with a fixed refusal instead of
+// reaching the handler.
 func (io *sessionChannel) Call(ctx context.Context, call ToolCall) (ToolResult, error) {
 	r := SessionRecord{Session: io.session, Step: call.Step, Call: call.Call, Tool: call.Tool, Wire: call.Input.record()}
 	if old, ok := io.c.state.tools[toolKey{io.session, call.Call}]; ok {
@@ -143,12 +149,21 @@ func (io *sessionChannel) Call(ctx context.Context, call ToolCall) (ToolResult, 
 		if err != nil {
 			return ToolResult{Receipt: old.Replied}, err
 		}
-		return ToolResult{Receipt: old.Replied, Output: p[0]}, nil
+		var outcome ToolOutcome
+		if err := strictJSON(p[0].Bytes(), &outcome); err != nil {
+			return ToolResult{Receipt: old.Replied}, ErrObservationLimit
+		}
+		return ToolResult{Receipt: old.Replied, Outcome: outcome, Output: p[0]}, nil
 	}
 	if _, err := io.commit(ctx, call.RecordMeta, RequestTool, r, call.Input.Journal); err != nil {
 		return ToolResult{}, err
 	}
-	outcome, err := io.tools(ctx, call)
+	limit := io.c.state.sessions[io.session].Plan.MaxWireBytes
+	answer, current := io.tools, io.c.Current()
+	if io.c.recovering || current.State != Running || current.StopRequested {
+		answer = refuseHalted
+	}
+	outcome, err := answer(ctx, call, limit)
 	if err != nil {
 		return ToolResult{}, err
 	}
@@ -156,32 +171,45 @@ func (io *sessionChannel) Call(ctx context.Context, call ToolCall) (ToolResult, 
 	if err != nil {
 		return ToolResult{}, err
 	}
-	// The Host answers inside the same callback, so the answer shares the
-	// call's observation time; its record identity derives from the call's.
-	meta := RecordMeta{ID: call.ID + "/reply", ObservedAt: call.ObservedAt}
-	wire := WirePayload{Identity: WireIdentity{ContentID: output.Ref().ContentID, Size: output.Ref().Size}, Journal: output}
-	receipt, err := io.commit(ctx, meta, ReplyTool, SessionRecord{Call: call.Call, Wire: wire.record()}, output)
-	if err != nil {
-		return ToolResult{}, err
+	if output.Ref().Size > limit {
+		return ToolResult{}, ErrInvalid
 	}
-	return ToolResult{Receipt: receipt, Output: output}, nil
+	result := ToolResult{Outcome: outcome, Output: output}
+	// The Host answers inside the same callback, so the answer shares the
+	// call's observation time.
+	meta := RecordMeta{ID: replyID(io.session, call.Call), ObservedAt: call.ObservedAt}
+	result.Receipt, err = io.commit(ctx, meta, ReplyTool, SessionRecord{Call: call.Call, Wire: outcomeWire(output)}, output)
+	return result, err
+}
+
+// replyID derives the record identity of a call's answer from its dedup key,
+// so it is always a valid identifier and stable across retries.
+func replyID(session SessionID, call ProviderCallID) string {
+	sum := sha256.Sum256([]byte(string(session) + "\x00" + string(call)))
+	return "tool-reply-" + hex.EncodeToString(sum[:])
+}
+
+func outcomeWire(output Payload) WireRecord {
+	return WirePayload{Identity: WireIdentity{ContentID: output.Ref().ContentID, Size: output.Ref().Size}, Journal: output}.record()
 }
 
 // ToolReconciliation records the Host's established answer for a call that was
-// recorded without one, for example after proving it was never executed. It is
-// Host reconciliation, not an adapter callback.
+// recorded without one: for example the answer Call returned with a recording
+// error, or a refusal after proving the call never ran. It is Host
+// reconciliation, not an adapter callback, and refuses a call that is not
+// pending.
 func (c *Coordinator) ToolReconciliation(meta RecordMeta, session SessionID, call ProviderCallID, outcome ToolOutcome) (Command, error) {
 	v, ok := c.state.sessions[session]
-	if !ok {
+	tool, found := c.state.tools[toolKey{session, call}]
+	if !ok || !found || tool.Replied.BatchID != "" {
 		return Command{}, ErrState
 	}
 	output, err := outcome.payload()
 	if err != nil {
 		return Command{}, err
 	}
-	wire := WirePayload{Identity: WireIdentity{ContentID: output.Ref().ContentID, Size: output.Ref().Size}, Journal: output}
 	return Command{ID: meta.ID, ObservedAt: meta.ObservedAt, Kind: ReplyTool, Assignment: v.Assignment, Run: v.Run,
-		Session: SessionRecord{Session: session, Call: call, Wire: wire.record()}, sessionPayloads: []Payload{output}}, nil
+		Session: SessionRecord{Session: session, Call: call, Wire: outcomeWire(output)}, sessionPayloads: []Payload{output}}, nil
 }
 
 func (io *sessionChannel) ObserveStep(ctx context.Context, o StepObservation) (AppendReceipt, error) {

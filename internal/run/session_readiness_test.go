@@ -17,17 +17,6 @@ import (
 	"github.com/Glacius-Labs/Markitect/internal/snapshot"
 )
 
-type priorSessionBlob struct {
-	Ref   run.BlobRef
-	Bytes []byte
-}
-type priorSessionFixture struct {
-	Source, Scope string
-	Batches       [][]byte
-	Receipts      []run.AppendReceipt
-	Blobs         []priorSessionBlob
-}
-
 func unboundSession(t *testing.T, role string) (*run.Coordinator, *memoryJournal, run.SessionIO) {
 	t.Helper()
 	c, j := running(t)
@@ -822,7 +811,7 @@ func TestExploreUnexpectedToolCallIsRefusedWithoutExecutionAuthority(t *testing.
 	commit(t, c, j, stop)
 	call := run.ToolCall{RecordMeta: meta("late-known-step-call"), Step: "step", Call: "mutating", Tool: "write-workspace", Input: wire(t, `{"path":"owned.go"}`)}
 	result, err := io.Call(context.Background(), call)
-	if err != nil || result.Receipt.BatchID == "" || string(result.Output.Bytes()) != `{"status":"refused","reason":"no Host tool is available in this slice"}` {
+	if err != nil || result.Receipt.BatchID == "" || string(result.Output.Bytes()) != `{"status":"refused","reason":"the run admits no new work"}` {
 		t.Fatal("known incoming call was not recorded and refused", result, err)
 	}
 	if _, err := c.Propose(reserve("execute", run.ToolProcess, run.Writing, time.Second)); err == nil {

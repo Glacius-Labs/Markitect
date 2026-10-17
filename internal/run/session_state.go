@@ -139,7 +139,7 @@ func (r SessionRecord) validate(kind string) error {
 		a.Tool = r.Tool
 		a.Wire = r.Wire
 	case ReplyTool:
-		if !identifier(string(r.Call)) || !r.Wire.valid() {
+		if !identifier(string(r.Call)) || !r.Wire.valid() || r.Wire.Redacted || r.Wire.Journal.MediaType != toolOutcomeMedia {
 			return ErrInvalid
 		}
 		a.Call = r.Call

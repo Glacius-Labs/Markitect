@@ -174,15 +174,26 @@ store verifies and retains all three closures before acknowledging Append.
 
 `Call` records a tool call, lets the channel's `ToolHandler` answer it and
 records the answer as a closed `ToolOutcome` (`ok` with a result or `refused`
-with a reason). The adapter returns those exact bytes to the provider; a
-refusal is an answer, not a transport failure. Calls are deduplicated by
-session channel and provider call identity, including the exact step, tool
-identity and content/representation: an exact repeat returns the recorded
-answer without executing again, and a changed call conflicts. A handler error
-leaves the call pending; it cannot execute again implicitly, and only Host
-reconciliation (`ToolReconciliation`) records its established answer. Slices
-without Host tools use `RefuseTools`; the Manager and reviewer tools arrive with
-the core protocol.
+with a reason) whose encoding fits the session's wire limit. The adapter
+returns those exact bytes to the provider; a refusal is an answer, not a
+transport failure. While the run admits no new work (recovery, a stop request
+or any state but Running), the call is answered with a fixed refusal and the
+handler is not called. Calls are deduplicated by session channel and provider
+call identity, including the exact step, tool identity and
+content/representation: an exact repeat returns the recorded answer without
+executing again, and a changed call conflicts. A handler error or an invalid or
+oversize outcome leaves the call pending; it cannot execute again implicitly.
+If recording the answer fails, `Call` returns the error together with the
+outcome, which the adapter must not send; once reconciliation shows the answer
+absent, the Host records it through `ToolReconciliation`. Recorded answers are
+never redacted and always carry the tool-outcome media type. Slices without
+Host tools use `RefuseTools`; the Manager and reviewer tools arrive with the
+core protocol.
+
+Before the Claude Code adapter relies on resume binding, a bounded probe must
+show that a resumed Claude Code session reports the resumed session ID in its
+init event. The runtime capability record shows that the conversation content
+continues, not the reported identity.
 
 Provider session/step IDs remain distinct from Host IDs. Inspect can select only
 the exact journal-bound handles and never creates or resumes a provider Session
@@ -233,8 +244,8 @@ single-step slice supplies no automatic replacement attempt.
 
 The initial gate clears only after every Manager's report is confirmed and all
 effects are stopped/reconciled and charged. A terminal step alone is insufficient.
-Unexpected tool ingress is recorded for denial/reconciliation, never executed;
-`ToolReceipt.Fresh` grants no authority. Unresolved callbacks and transports remain
+An unexpected tool call is recorded and refused; no Host tool runs in this
+slice. Unresolved callbacks and transports remain
 visible even after a session stops. All unclassified sessions, later steps,
 standalone invocation reservations and unimplemented work/review/tool phases
 remain denied after the gate clears. Actual Workspace/Check/Apply execution and
@@ -243,8 +254,9 @@ provider-output extraction are absent; source fixtures prove no real dispatch.
 V3 protects two session starts and two steps per required review subject: one
 local review for every Manager, plus integration review for every Manager with
 children. Distinct physical phase bindings are conservatively budgeted; no
-unproved session reuse discounts this minimum. The original v1/v2 floors still
-replay exactly, including literal pre-readiness and pre-Explore histories. Exact
+unproved session reuse discounts this minimum. The original v1/v2 basis floors
+still replay; session histories recorded before the step-bound session port are
+not supported. Exact
 known retries return their original receipts before fresh-admission checks.
 Restored legacy history permits only known-effect observation/reconciliation and
 stop, not fresh legacy execution or replaying a send.

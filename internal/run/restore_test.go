@@ -174,11 +174,10 @@ func TestRestoreKeepsPinnedHeadWhenLaterWorkCommits(t *testing.T) {
 func TestRestoreHoldsOpenInvocationsBehindSeparateRecoveryBarrier(t *testing.T) {
 	for _, uncertain := range []bool{false, true} {
 		t.Run(map[bool]string{false: "reserved", true: "uncertain"}[uncertain], func(t *testing.T) {
-			c, j, io := activeStep(t)
+			c, j, _ := activeStep(t)
 			oldCommand := stepPreparation(t, c, "step", "step-invocation")
 			step, _ := c.Step("step")
 			oldReceipt := step.Prepared
-			_ = io
 			if _, err := channel(t, c, j, failing).Call(context.Background(), run.ToolCall{RecordMeta: meta("pending-callback"), Step: "step", Call: "call", Tool: "unsupported", Input: wire(t, "request")}); err == nil {
 				t.Fatal("failed Host tool reported an answer")
 			}
