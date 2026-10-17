@@ -93,7 +93,7 @@ The consolidation of 16 October 2026 replaced these earlier proposals with simpl
 | An optional absolute delivery deadline that keeps running while work waits. | No deadline; caps on active execution time remain. |
 | One assignment commissioned for both stages of the two-Apply demonstration. | Each Apply invocation is its own assignment; further runs within an assignment are continuations. |
 | A separate final verifier Agent. | The Host's deterministic final evidence check; the root's fresh integration review is the semantic review of the whole. |
-| Successor runs replacing an unfinished run in one Superseded handoff. | A run that needs a changed basis finishes Incomplete; a continuation starts after the committed model edit. |
+| Successor runs replacing an unfinished run in one Superseded handoff. | A run requiring changed captured model/configuration inputs finishes Incomplete; a continuation captures the committed change. An accepted artifact delivery can instead advance the step workspace basis inside the same run. |
 | Four applicability judgments for inherited findings. | Three finding states: open, resolved, not applicable; a changed requirement becomes a new linked finding. |
 | Gating active work by derived delivery exposure. | Dependent work starts only from an accepted, composed delivery; a blocked delivery blocks its consumers. |
 | Three numbering schemes (P00 to P12, R0 to R6, delivery packages). | Gates P00 to P12 keyed to the delivery packages. |

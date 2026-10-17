@@ -8,6 +8,8 @@ An assignment is one owner request, such as "Apply the current library model". A
 
 A repository has at most one unfinished run. A new Apply on a repository whose run is still unfinished is refused until that run finishes or is stopped. An interrupted run is **resumed**, not continued: resuming reopens the same run, reconciles its effects first and keeps its basis.
 
+Here, the **run input basis** is the immutable captured model, configuration, source and profiles. The **step workspace basis** may advance within that run by consuming an accepted delivery through the [confirmed transition](#step-basis-and-continued-conversations). That is not a new Apply or a continuation run. A new conversation or execution session changes neither the run input basis nor the assignment's allowance.
+
 The two-Apply demonstration therefore uses two ordinary invocations: R1 on M1 and, after the model edit, R2 on M2 against the committed A1. Each is its own assignment, and both are reported. No budget carries over between them, and no approval does either.
 
 ## A shared assignment budget
@@ -32,11 +34,13 @@ The configuration sets a completion reserve for session starts, steps and execut
 
 Role, permitted effects and budget class are separate. The one-writer constraint applies to active artifact mutation authority, not every Manager turn. Independent read-only Manager work may run concurrently while preserving the completion reserve. Host admission and physical workspace/tool enforcement must agree; a read-only label does not establish either. Existing source's `Writing`/`Assessment` coupling needs a deliberate technical migration, not relabeling Explore as review.
 
-Before a run is Prepared, the Host rejects a reserve that cannot cover at least one session start and one step for every required local and integration review of the organization. Such a rejection is a preparation failure and consumes no run unit. That check is structural; whether the reserve is generous enough remains a judgment that a run can prove wrong.
+Before a run is Prepared, the Host checks the complete review census: one local subject per Manager, including root, empty and intermediate Managers, plus one integration subject for each Manager with children. Each review has the [two stages](manager-apply-concept.md#distinct-review-responsibilities) of expectations before implementation evidence and subsequent candidate assessment. The versioned run policy binds the protected starts and steps; batching or a no-change claim cannot reduce that preparation floor. Insufficient capacity is a preparation failure and consumes no run unit. The floor is structural, not a promise that the reserve will cover every correction or required check.
+
+Source reference: at Main `d60ae93dedb39da112f382a284b33f0ca24c6c08`, `run.managerReviewDemand` binds V3 to `N + P` subjects and `2 * (N + P)` starts and steps, where `N` includes all Managers and `P` counts Managers with children. This conservative startup floor does not require each review stage to use a separate session. Older records retain their original versioned demand and bytes. The source floor does not establish a working review engine or sufficient execution-time capacity.
 
 Settled consumption never decreases. Settlement records an actual overrun instead of rejecting it; an overrun sets the remaining capacity to zero, blocks further work and is reported. Waiting consumes nothing: while all work is quiescent and waiting for an answer, no step or execution time is charged. Status inspection starts no Agent.
 
-Budget pressure never waives evidence. When writing work no longer fits, the Host retains the candidate and the run finishes Incomplete with its open work. The owner can extend the assignment's caps within the project ceilings; the extension is recorded and used by the continuation run. A run that ended Incomplete stays Incomplete.
+Budget pressure never waives evidence. When required ordinary Manager work no longer fits, it is not admitted; eligible assessment work may still use the reserve. If no permitted work can complete the outstanding obligations, retain the candidate and finish Incomplete after reconciling effects. The owner can extend the assignment's caps within the project ceilings; the extension is recorded and used by the continuation run. A run that ended Incomplete stays Incomplete.
 
 ## Idle execution and resumption
 
@@ -62,7 +66,7 @@ A concern a reviewer records is a **finding**: a Host-recorded identity, the aff
 
 A finding is **blocking** or **advisory**. Only blocking findings reject a submission and prevent acceptance. Advisory findings, such as a suggested simplification, are recorded for the owning Manager and never block.
 
-A Manager may propose a resolution but cannot record one. Budget or round exhaustion cannot resolve a finding. A generic pass, an invented receipt, a failed or unknown check, or an old resolution on a changed subject cannot close it. When a specific case is required, its evidence must show that the case ran; an exit code of zero alone is not enough. If a requirement changes in substance, the old finding becomes not applicable and a new, linked finding carries the changed requirement. Open findings carry into a continuation run even when their candidate files are discarded.
+A Manager may propose a resolution but cannot record one. Budget or rejection-limit exhaustion cannot resolve a finding. A generic pass, an invented receipt, a failed or unknown check, or an old resolution on a changed subject cannot close it. When a specific case is required, its evidence must show that the case ran; an exit code of zero alone is not enough. If a requirement changes in substance, the old finding becomes not applicable and a new, linked finding carries the changed requirement. Open findings carry into a continuation run even when their candidate files are discarded.
 
 Role context carries the complete set of open findings for the task's responsibility and its recorded dependencies, with their grounds and evidence references. Paging the set is allowed; an unread page cannot discharge an obligation. A receiving Manager that is not responsible for a finding reports that through the common parent, which records the corrected accountability; "not mine" cannot orphan it.
 
@@ -76,7 +80,7 @@ Only the Host issues an accepted delivery: the exact candidate, registry revisio
 
 Here, dependent task start means implementation that consumes the result; initial Explore, planning and independent work need not wait for that delivery. A reviewer pass alone never establishes Host acceptance or a consumer's current base. Dependency waiting does not retain an active write grant, and uncertain writer effects must be reconciled before a grant can pass to another task.
 
-Accepted deliveries are immutable. If a later blocking finding concerns an accepted delivery, then neither that delivery nor its consumers (tasks whose base composes it) can be dispatched further, accepted or published until the finding is resolved. The common parent selects a replacement delivery explicitly and has it composed into the affected consumers. Correcting it is ordinary bounded rework and resets no budget or rejection counter.
+Accepted deliveries are immutable. A later blocking finding prevents further dependent use, acceptance and publication of that delivery and affected consumer results. It does not prohibit the owned correction and independent reassessment needed to resolve the finding. Admit such work only with its exact findings, permitted scope, current basis and remaining budget; it cannot use a blocked prerequisite as if it were valid. Uncertain effects still block handoff and must be reconciled first. The common parent routes correction to the owner and selects an accepted replacement explicitly for composition into affected consumers. Rework resets no budget or rejection counter, and earlier acceptance remains historical evidence for its original subject.
 
 Reuse a review only when its complete bound subject and inputs remain unchanged. An Agent's assertion of no impact is insufficient; changed bindings need renewed assessment and unknown effects broaden it. Current integration evidence must cover any changed aggregate.
 
@@ -96,7 +100,7 @@ After each rejection, the Manager records unresolved findings, progress and a di
 
 A later finding against an accepted delivery blocks that delivery and its consumers as above; it does not retroactively turn a successful submission into a rejection. If a new submitted candidate fails assessment, count that rejection once under its current purpose. Local and integration counters are separate because they judge different obligations. Required evidence and finite shared budget remain mandatory even when every limited delivery passes.
 
-A continuation run needs a changed basis or a recorded extension, never just the wish to reset rounds. Its reviews and checks run again in full; earlier approvals remain history.
+A continuation run needs changed run inputs or a recorded extension, never just the wish to reset rejection counts. Its reviews and checks run again in full; earlier approvals remain history.
 
 ## Step basis and continued conversations
 
@@ -113,9 +117,9 @@ Only `run` owns these lifecycle meanings. `apply` requests transitions for verif
 | State | Meaning and permitted next transition |
 | --- | --- |
 | Prepared | Fixed inputs and a run unit are committed. Start work (Running) or finish without dispatch. |
-| Running | Work, checks, reviews or integration are being coordinated; some tasks may wait while others continue. Move to Waiting only when all remaining useful work depends on external input and no effect is active or uncertain. Move to Verifying when the required deliveries are accepted. If an answer changes the basis, admission stops, running work finishes or is reconciled, and the run finishes Incomplete. |
-| Waiting | Quiescent, with a named next actor and reason: an owner decision, the owner's approval of publication or another external prerequisite. A context-only answer resumes Running, a granted approval resumes Publishing, and an answer that changes the basis finishes the run Incomplete. |
-| Verifying | Required aggregate checks, the Host's final evidence check and source preflight. A correctable finding returns to Running only if rounds and budget remain. Current passing evidence permits Publishing. Where the configuration requires the owner's approval, the run first waits on an approval question: approval resumes Publishing, and a declined approval finishes the run Incomplete with its retained candidate. |
+| Running | Work, checks, reviews or integration are being coordinated; some tasks may wait while others continue. Move to Waiting only when all remaining useful work depends on external input and no effect is active or uncertain. Move to Verifying when the required deliveries are accepted. If an answer changes the captured run inputs, admission stops, running work finishes or is reconciled, and the run finishes Incomplete. |
+| Waiting | Quiescent, with a named next actor and reason: an owner decision, the owner's approval of publication or another external prerequisite. A context-only answer resumes Running, a granted approval resumes Publishing, and an answer that changes the captured run inputs finishes the run Incomplete. |
+| Verifying | Required aggregate checks, the Host's final evidence check and source preflight. A correctable finding returns to Running only if rejection allowance and budget remain. Current passing evidence permits Publishing. Where the configuration requires the owner's approval, the run first waits on an approval question: approval resumes Publishing, and a declined approval finishes the run Incomplete with its retained candidate. |
 | Publishing | The guarded write and read-back are being observed. No new implementation or competing publication is dispatched. Complete to Finished, or enter Reconciling on partial or unknown observations. |
 | Reconciling | A stop, interruption, controller loss, partial or unknown publication or uncertain execution needs inspection. New work and publication are blocked; only bounded inspection and termination run. Once effects are known, resume the eligible phase on the same basis or finish with the observed result. |
 | Finished | Exactly one immutable outcome below. No further dispatch or publication. Later runs link to it without changing it. |
@@ -132,7 +136,7 @@ Stop requests, input drift and exhaustion first stop admission and reconcile act
 | NoChange | The same assessment and current source and read-back establish that nothing needs publication. Absence of edits alone is not enough. |
 | Stale | Inputs drifted; the run is quiescent and cannot publish. |
 | Stopped | An explicit owner stop reached known quiescence. Work and evidence are retained. |
-| Incomplete | Budget or round exhaustion, an unanswered question, a needed model change, a declined publication approval or the lack of a viable authorized correction prevents completion. The reason, retained work and open questions are recorded. |
+| Incomplete | Budget or rejection-limit exhaustion, an unanswered question, a needed model change, a declined publication approval or the lack of a viable authorized correction prevents completion. The reason, retained work and open questions are recorded. |
 | Failed | A definitive acquisition, execution, validation or publication failure. Actual effects are preserved; a known partial publication is Failed, not rolled back. |
 
 An acquisition rejected before Prepared is a preparation failure, not a run. Unknown effects never become Failed just to clear a blocker; they stay Reconciling until established. Later discoveries add findings instead of rewriting results.
@@ -152,7 +156,7 @@ An assignment closes Completed by itself when its last run finished Applied or N
 | All work awaits an owner answer | Effects quiesce; the run is Waiting with the exact question. Nothing is charged for the wait. |
 | Review rejects suspension or return behavior twice | The parent assesses a concrete repair plan before further permitted correction. At the default limit a third rejection makes the work incomplete; renaming tasks or splitting deliveries grants no fresh counter. |
 | A skeleton and a final delivery both pass | Both consume shared execution capacity but no rejection allowance. An intervening rejection remains counted after the later pass. |
-| Only the completion reserve remains | No further writing is admitted. The candidate is retained and the run ends Incomplete with its open work. |
+| Only the completion reserve remains | Ordinary Manager work is refused; eligible reviews and checks may continue. Required unfinished Manager work leaves the run Incomplete. |
 | A required L1/L2 case cannot be afforded | The finding stays open; a passing ordinary return does not discharge it, and nothing unsupported is published. |
 | A step times out; writer state unknown | Reconciling with the reservation held; no replacement writer or publication until termination and effects are known. |
 | Source drift or partial publication | Admission stops and the run reconciles. Known drift finishes Stale; a known partial write finishes Failed with exact paths. Unknown effects stay blocked. |

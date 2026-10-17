@@ -18,18 +18,18 @@ The baseline fixes the uniform definition form, nine Core definitions, values an
 
 ## Apply design
 
-Status: the design basis for the rebuild commissioned in [DEC-024](../../concepts/register.md#dec-024-first-reliable-apply-rebuild-and-coordinated-start). The owner decisions include [DEC-025 to DEC-037](../../concepts/register.md#dec-025-package-managers-organize-realization) and [DEC-039](../../concepts/register.md#dec-039-deterministic-manager-process). DEC-039 supersedes AI-planned delivery order and parent-authored operation prompts with the fixed Manager process; DEC-037 still owns the container runtime. Details below that level, such as exact schemas or default numbers like three review rounds, are design decisions under DEC-024 that review may improve. These documents describe target behavior, not implemented behavior; implementation pull requests establish the evidence, and producer packages refine exact Go names and schemas in review. A change of intent goes to the document that owns the subject, not into a new parallel note.
+Status: the design basis for the rebuild commissioned in [DEC-024](../../concepts/register.md#dec-024-first-reliable-apply-rebuild-and-coordinated-start). The owner decisions include [DEC-025 to DEC-037](../../concepts/register.md#dec-025-package-managers-organize-realization) and [DEC-039](../../concepts/register.md#dec-039-deterministic-manager-process). DEC-039 owns the fixed Manager process and its confirmed refinements, including rejection counting; DEC-037 owns the container boundary. Producer packages refine exact Go names and versioned schemas in review within those decisions. These documents describe target behavior; implementation pull requests establish which parts work. Historical source comparisons retain their stated revision and are not live status. A change of intent goes to its owning document, not into a parallel note.
 
 Read in this order:
 
 | Document | Owns |
 | --- | --- |
-| [Apply concept](manager-apply-concept.md) | Organization, deterministic operation propagation, message-driven Manager cycle, remaining process questions, fixed-source comparison, review, ownership and reporting. |
+| [Apply concept](manager-apply-concept.md) | Organization, fixed Manager cycle, semantic review responsibilities, ownership and reporting. |
 | [Library delegation walkthrough](manager-apply-library-flow.md) | The order of exchanges in one Apply of M1 and the first refusal cases. |
 | [Go architecture](manager-apply-go-architecture.md) | Target packages, responsibilities and dependency direction. |
 | [Port contracts](manager-apply-port-contracts.md) | Interfaces between the core and its adapters and the values they exchange. |
 | [Configuration](manager-apply-configuration.md) | Execution inputs, override resolution, host profiles, identities, mandates and questions. |
-| [Execution](manager-apply-execution.md) | Budget and admission, blocking findings, dependencies, review rounds, run states and outcomes. |
+| [Execution](manager-apply-execution.md) | Budget and admission, blocking findings, dependencies, rejection limits, idle policy, run states and outcomes. |
 | [Journal](manager-apply-journal.md) | Durable records and storage, the controller lock, answers and continuation runs. |
 | [Rebuild plan](manager-apply-rebuild-plan.md) | The container runtime, the Codex and Claude Code session adapters, and what happens to the current source. |
 | [Playground](manager-apply-playground.md) | The external two-Apply experiment and its independent assessment. |
@@ -37,21 +37,25 @@ Read in this order:
 | [Library M1](library-example/README.md) | The example model, including its [callable interface](library-example/m1/model/library/callable-interface.yaml), and the [independent expectations](library-example/evaluation-contract.md). |
 | [North star](manager-realization-north-star.md) | Ideas and variants that were not selected, later operations and open questions. |
 
-An implementation that deviates from a contract changes that contract in the same pull request; the documents and the code never drift apart.
+Implementations identify the supported part of this target and its evidence. An intentional deviation changes the owning contract in the same pull request; partial implementation does not silently redefine the target. Record shapes, event tags and Go signatures in the design are illustrative unless explicitly identified as executable fixtures; the behavioral requirements remain binding. Exact implemented formats belong to the versioned contracts in source.
 
 | Term | Meaning |
 | --- | --- |
 | Host | Markitect's deterministic orchestration: preparation, scheduling, validation, records and guarded writes. |
-| Manager | The logical owner of one Package's realization; the root Manager owns the whole local model. |
+| Manager | The logical owner of one local Package's realization. The root is also an ordinary Manager, with a runtime identity but no canonical root Package. It coordinates the whole model and its aggregate integration, and may write only its owned artifacts and authorized new paths. |
 | Assignment | One owner request with its caps; it links its runs. |
 | Run | One Apply over fixed inputs, from Prepared to one Finished outcome. |
 | Continuation | A further run of the same assignment after a run finished without completing it. |
-| Resume | Reopening the same unfinished run after an interruption; it reconciles first and keeps the run's basis. |
+| Run resume | Reopening the same unfinished run after an interruption; reconcile first and retain its captured run inputs. Provider conversation resume is a separate, capability-bound operation. |
 | Task | One Manager responsibility within a run. |
 | Attempt | One submission within a task. |
-| Round | A counted submission per Manager and review purpose; the limit on rework. |
+| Rejection | One rejected submission, counted per run, Manager and review purpose. Successful attempts neither use nor reset this allowance. |
+| Execution session | One bound execution environment with fixed profile, mounts and authority ceiling. Starting a replacement consumes budget. |
+| Conversation | Provider dialogue whose identity may survive a proven execution-session replacement; otherwise use an explicit handoff. |
+| Step | One admitted Agent turn bound to an exact workspace version, supplied inputs and permitted effects. |
+| Working basis | Captured source plus explicitly consumed accepted deliveries; own unaccepted changes are retained separately. Its version can advance between proven quiescent steps within the same run. |
 | Candidate | An immutable artifact tree with its registry revision. |
-| Delivery | A Host-accepted candidate of a task with its reviews, checks and assessments. |
+| Delivery | A Host-accepted candidate with reviewed scope and exact evidence. It can supply a prerequisite while its producer's remaining responsibility stays open. |
 | Finding | A recorded concern, blocking or advisory, that only an independent review resolves. |
 | Registry | The record of which Manager owns each artifact and which Definitions it realizes. |
 | Mandate | The section of a context package that states responsibility, freedom, authority and limits. |
