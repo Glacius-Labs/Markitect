@@ -272,7 +272,7 @@ func TestPublisherPreflightKeepsUnknownFailuresDistinctFromCaptureChange(t *test
 				repo.Write(".git/config", "[invalid\n")
 			}
 			permit, err := r.Preflight(ctx, req, &publicationControl{})
-			if err == nil || errors.Is(err, apply.ErrCaptureChanged) || permit.Token != "" {
+			if err == nil || errors.Is(err, apply.ErrCaptureChanged) || errors.Is(err, apply.ErrUnpublishable) || permit.Token != "" {
 				t.Fatalf("unknown failure misclassified as drift: %+v %v", permit, err)
 			}
 			if kind == "budget" && !errors.Is(err, ErrLimit) || kind == "canceled" && !errors.Is(err, context.Canceled) {
@@ -472,10 +472,23 @@ func TestPublisherEmptyChangeSetAndUnissuedGuard(t *testing.T) {
 }
 
 func TestPublisherRefusesFiltersModesAndAliasesBeforeWriting(t *testing.T) {
-	for _, kind := range []string{"filter", "encoding", "ident", "mode", "alias", "empty-dir-alias", "zero", "duplicate", "before", "attributes", "attribute-alias", "split-index"} {
+	for _, kind := range []string{"filter", "encoding", "ident", "mode", "alias", "leaf-alias", "empty-dir-alias", "clean-mismatch", "zero", "duplicate", "before", "attributes", "attribute-alias", "split-index"} {
 		t.Run(kind, func(t *testing.T) {
 			r, repo, req := publicationFixture(t)
 			switch kind {
+			case "clean-mismatch":
+				repo.Write(".gitattributes", "*.txt text\n")
+				repo.Commit("Explicit text policy")
+				selection := r.captures[req.Guard].selection
+				captured, err := r.Capture(context.Background(), apply.CaptureRequest{Selection: selection})
+				if err != nil {
+					t.Fatal(err)
+				}
+				req.Guard = captured.Guard
+				before, _ := req.Changes[1].Before()
+				b, _ := snapshot.NewTree([]snapshot.Entry{before})
+				a, _ := snapshot.NewTree([]snapshot.Entry{publicationEntry(t, "real/change.txt", "new\r\n")})
+				req.Changes = snapshot.Compare(b, a)
 			case "split-index":
 				repo.Git("update-index", "--split-index")
 			case "filter", "encoding", "ident":
@@ -500,6 +513,9 @@ func TestPublisherRefusesFiltersModesAndAliasesBeforeWriting(t *testing.T) {
 				req.Changes = snapshot.Compare(b, a)
 			case "alias":
 				a, _ := snapshot.NewTree([]snapshot.Entry{publicationEntry(t, "REAL/change.txt", "new\n")})
+				req.Changes = snapshot.Compare(snapshot.Tree{}, a)
+			case "leaf-alias":
+				a, _ := snapshot.NewTree([]snapshot.Entry{publicationEntry(t, "real/CHANGE.txt", "new\n")})
 				req.Changes = snapshot.Compare(snapshot.Tree{}, a)
 			case "empty-dir-alias":
 				if err := os.Mkdir(filepath.Join(repo.Dir, "NEW"), 0755); err != nil {
@@ -528,12 +544,61 @@ func TestPublisherRefusesFiltersModesAndAliasesBeforeWriting(t *testing.T) {
 				a, _ := snapshot.NewTree([]snapshot.Entry{publicationEntry(t, name, "*.txt text\n")})
 				req.Changes = snapshot.Compare(snapshot.Tree{}, a)
 			}
-			if _, err := r.Preflight(context.Background(), req, &publicationControl{}); err == nil || errors.Is(err, apply.ErrCaptureChanged) {
-				t.Fatalf("invalid request accepted or classified as capture drift: %v", err)
+			permit, err := r.Preflight(context.Background(), req, &publicationControl{})
+			unpublishable := slices.Contains([]string{"mode", "alias", "leaf-alias", "empty-dir-alias", "clean-mismatch"}, kind)
+			if err == nil || permit.Token != "" || errors.Is(err, apply.ErrCaptureChanged) || errors.Is(err, apply.ErrUnpublishable) != unpublishable {
+				t.Fatalf("refusal classification (unpublishable=%v): %+v %v", unpublishable, permit, err)
+			}
+			if unpublishable && !errors.Is(err, ErrUnrepresentable) {
+				t.Fatalf("lost adapter representation cause: %v", err)
 			}
 			data, _ := os.ReadFile(filepath.Join(repo.Dir, "real", "change.txt"))
 			if string(data) != "old\n" {
 				t.Fatal("preflight wrote owner file")
+			}
+		})
+	}
+}
+
+func TestPublisherNativeInvalidNameIsUnpublishable(t *testing.T) {
+	if runtime.GOOS != "windows" {
+		t.Skip("Windows native path restrictions")
+	}
+	r, _, req := publicationFixture(t)
+	a, _ := snapshot.NewTree([]snapshot.Entry{publicationEntry(t, "invalid?.txt", "new\n")})
+	req.Changes = snapshot.Compare(snapshot.Tree{}, a)
+	permit, err := r.Preflight(context.Background(), req, &publicationControl{})
+	if !errors.Is(err, apply.ErrUnpublishable) || !errors.Is(err, ErrUnrepresentable) || permit.Token != "" {
+		t.Fatalf("native invalid name lost refusal identities: %+v %v", permit, err)
+	}
+}
+
+func TestPublisherUnexpectedLstatFailureIsNotUnpublishable(t *testing.T) {
+	r, _, req := publicationFixture(t)
+	_, a, err := r.publicationSource(context.Background(), req)
+	if err != nil {
+		t.Fatal(err)
+	}
+	d, err := openDisk(context.Background(), a.git.path, r.limits, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer d.close()
+	// A component beyond native filesystem limits fails Lstat. This is not an
+	// observation that another entry exists at or aliases the requested name.
+	name := strings.Repeat("x", 4096)
+	for _, parent := range []bool{false, true} {
+		t.Run(fmt.Sprintf("parent=%v", parent), func(t *testing.T) {
+			var err error
+			if parent {
+				_, _, err = publicationParent(d, name+"/add.txt", false)
+			} else {
+				tree, _ := snapshot.NewTree([]snapshot.Entry{publicationEntry(t, name, "new\n")})
+				err = publicationRepresentable(a, snapshot.Compare(snapshot.Tree{}, tree), nil)
+			}
+			var pathErr *os.PathError
+			if !errors.As(err, &pathErr) || errors.Is(err, apply.ErrUnpublishable) || errors.Is(err, ErrUnrepresentable) {
+				t.Fatalf("unexpected Lstat failure lost its unknown cause: %v", err)
 			}
 		})
 	}
