@@ -1,0 +1,13 @@
+imports:
+  - package: software
+    as: Software
+id: finish
+kind: Software.UseCase
+body: |-
+  At [[interface]], `finish --id ID` normalizes the ID through [[inputs]] and finds
+  that exact [[book]] in [[storage]]. Change its status to finished, retain all
+  other fields and other records, commit successfully through [[storage]], and
+  return the record directly. Repeating finish for a finished record succeeds
+  idempotently and returns that record. A missing/unknown ID is an understandable
+  error under [[interface]] without changing data.
+spec: {}

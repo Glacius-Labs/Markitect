@@ -212,3 +212,271 @@ artifacts:
     form: config
     realizes: [examples/independent-oracles]
     why: Binds every copied Library r2 input to its upstream path, full source revision and original blob digest, with explicit derivations.
+  - path: "experiments/test-projects/readinglog/README.md"
+    form: doc
+    realizes: [examples/independent-oracles]
+    why: Documents complete Readinglog requirement snapshots, the actual existing application, source provenance and selected actor-packet boundaries.
+  - path: "experiments/test-projects/readinglog/snapshots/00-baseline/model-lock.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Pins exact dependency identities, versions and canonical digests for the complete Readinglog 00-baseline snapshot.
+  - path: "experiments/test-projects/readinglog/snapshots/00-baseline/model.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Declares the Readinglog 00-baseline snapshot identity, version and explicit dependency requirements.
+  - path: "experiments/test-projects/readinglog/snapshots/00-baseline/model/readinglog/add.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Defines readinglog/add in the complete 00-baseline requirement snapshot for later realization against the actual starting application.
+  - path: "experiments/test-projects/readinglog/snapshots/00-baseline/model/readinglog/book.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Defines readinglog/book in the complete 00-baseline requirement snapshot for later realization against the actual starting application.
+  - path: "experiments/test-projects/readinglog/snapshots/00-baseline/model/readinglog/inputs.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Defines readinglog/inputs in the complete 00-baseline requirement snapshot for later realization against the actual starting application.
+  - path: "experiments/test-projects/readinglog/snapshots/00-baseline/model/readinglog/interface.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Defines readinglog/interface in the complete 00-baseline requirement snapshot for later realization against the actual starting application.
+  - path: "experiments/test-projects/readinglog/snapshots/00-baseline/model/readinglog/list.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Defines readinglog/list in the complete 00-baseline requirement snapshot for later realization against the actual starting application.
+  - path: "experiments/test-projects/readinglog/snapshots/00-baseline/model/readinglog/realization.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Defines readinglog/realization in the complete 00-baseline requirement snapshot for later realization against the actual starting application.
+  - path: "experiments/test-projects/readinglog/snapshots/00-baseline/model/readinglog/storage.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Defines readinglog/storage in the complete 00-baseline requirement snapshot for later realization against the actual starting application.
+  - path: "experiments/test-projects/readinglog/snapshots/00-baseline/model/readinglog/system.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Defines readinglog/system in the complete 00-baseline requirement snapshot for later realization against the actual starting application.
+  - path: "experiments/test-projects/readinglog/snapshots/01-finish-status/model-lock.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Pins exact dependency identities, versions and canonical digests for the complete Readinglog 01-finish-status snapshot.
+  - path: "experiments/test-projects/readinglog/snapshots/01-finish-status/model.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Declares the Readinglog 01-finish-status snapshot identity, version and explicit dependency requirements.
+  - path: "experiments/test-projects/readinglog/snapshots/01-finish-status/model/readinglog/add.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Defines readinglog/add in the complete 01-finish-status requirement snapshot for later realization against the actual starting application.
+  - path: "experiments/test-projects/readinglog/snapshots/01-finish-status/model/readinglog/book.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Defines readinglog/book in the complete 01-finish-status requirement snapshot for later realization against the actual starting application.
+  - path: "experiments/test-projects/readinglog/snapshots/01-finish-status/model/readinglog/finish.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Defines readinglog/finish in the complete 01-finish-status requirement snapshot for later realization against the actual starting application.
+  - path: "experiments/test-projects/readinglog/snapshots/01-finish-status/model/readinglog/inputs.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Defines readinglog/inputs in the complete 01-finish-status requirement snapshot for later realization against the actual starting application.
+  - path: "experiments/test-projects/readinglog/snapshots/01-finish-status/model/readinglog/interface.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Defines readinglog/interface in the complete 01-finish-status requirement snapshot for later realization against the actual starting application.
+  - path: "experiments/test-projects/readinglog/snapshots/01-finish-status/model/readinglog/list.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Defines readinglog/list in the complete 01-finish-status requirement snapshot for later realization against the actual starting application.
+  - path: "experiments/test-projects/readinglog/snapshots/01-finish-status/model/readinglog/realization.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Defines readinglog/realization in the complete 01-finish-status requirement snapshot for later realization against the actual starting application.
+  - path: "experiments/test-projects/readinglog/snapshots/01-finish-status/model/readinglog/storage.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Defines readinglog/storage in the complete 01-finish-status requirement snapshot for later realization against the actual starting application.
+  - path: "experiments/test-projects/readinglog/snapshots/01-finish-status/model/readinglog/system.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Defines readinglog/system in the complete 01-finish-status requirement snapshot for later realization against the actual starting application.
+  - path: "experiments/test-projects/readinglog/snapshots/02-import/model-lock.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Pins exact dependency identities, versions and canonical digests for the complete Readinglog 02-import snapshot.
+  - path: "experiments/test-projects/readinglog/snapshots/02-import/model.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Declares the Readinglog 02-import snapshot identity, version and explicit dependency requirements.
+  - path: "experiments/test-projects/readinglog/snapshots/02-import/model/readinglog/add.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Defines readinglog/add in the complete 02-import requirement snapshot for later realization against the actual starting application.
+  - path: "experiments/test-projects/readinglog/snapshots/02-import/model/readinglog/book.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Defines readinglog/book in the complete 02-import requirement snapshot for later realization against the actual starting application.
+  - path: "experiments/test-projects/readinglog/snapshots/02-import/model/readinglog/finish.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Defines readinglog/finish in the complete 02-import requirement snapshot for later realization against the actual starting application.
+  - path: "experiments/test-projects/readinglog/snapshots/02-import/model/readinglog/import.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Defines readinglog/import in the complete 02-import requirement snapshot for later realization against the actual starting application.
+  - path: "experiments/test-projects/readinglog/snapshots/02-import/model/readinglog/inputs.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Defines readinglog/inputs in the complete 02-import requirement snapshot for later realization against the actual starting application.
+  - path: "experiments/test-projects/readinglog/snapshots/02-import/model/readinglog/interface.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Defines readinglog/interface in the complete 02-import requirement snapshot for later realization against the actual starting application.
+  - path: "experiments/test-projects/readinglog/snapshots/02-import/model/readinglog/list.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Defines readinglog/list in the complete 02-import requirement snapshot for later realization against the actual starting application.
+  - path: "experiments/test-projects/readinglog/snapshots/02-import/model/readinglog/realization.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Defines readinglog/realization in the complete 02-import requirement snapshot for later realization against the actual starting application.
+  - path: "experiments/test-projects/readinglog/snapshots/02-import/model/readinglog/storage.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Defines readinglog/storage in the complete 02-import requirement snapshot for later realization against the actual starting application.
+  - path: "experiments/test-projects/readinglog/snapshots/02-import/model/readinglog/system.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Defines readinglog/system in the complete 02-import requirement snapshot for later realization against the actual starting application.
+  - path: "experiments/test-projects/readinglog/snapshots/03-summary/model-lock.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Pins exact dependency identities, versions and canonical digests for the complete Readinglog 03-summary snapshot.
+  - path: "experiments/test-projects/readinglog/snapshots/03-summary/model.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Declares the Readinglog 03-summary snapshot identity, version and explicit dependency requirements.
+  - path: "experiments/test-projects/readinglog/snapshots/03-summary/model/readinglog/add.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Defines readinglog/add in the complete 03-summary requirement snapshot for later realization against the actual starting application.
+  - path: "experiments/test-projects/readinglog/snapshots/03-summary/model/readinglog/book.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Defines readinglog/book in the complete 03-summary requirement snapshot for later realization against the actual starting application.
+  - path: "experiments/test-projects/readinglog/snapshots/03-summary/model/readinglog/finish.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Defines readinglog/finish in the complete 03-summary requirement snapshot for later realization against the actual starting application.
+  - path: "experiments/test-projects/readinglog/snapshots/03-summary/model/readinglog/import.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Defines readinglog/import in the complete 03-summary requirement snapshot for later realization against the actual starting application.
+  - path: "experiments/test-projects/readinglog/snapshots/03-summary/model/readinglog/inputs.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Defines readinglog/inputs in the complete 03-summary requirement snapshot for later realization against the actual starting application.
+  - path: "experiments/test-projects/readinglog/snapshots/03-summary/model/readinglog/interface.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Defines readinglog/interface in the complete 03-summary requirement snapshot for later realization against the actual starting application.
+  - path: "experiments/test-projects/readinglog/snapshots/03-summary/model/readinglog/list.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Defines readinglog/list in the complete 03-summary requirement snapshot for later realization against the actual starting application.
+  - path: "experiments/test-projects/readinglog/snapshots/03-summary/model/readinglog/realization.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Defines readinglog/realization in the complete 03-summary requirement snapshot for later realization against the actual starting application.
+  - path: "experiments/test-projects/readinglog/snapshots/03-summary/model/readinglog/storage.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Defines readinglog/storage in the complete 03-summary requirement snapshot for later realization against the actual starting application.
+  - path: "experiments/test-projects/readinglog/snapshots/03-summary/model/readinglog/summary.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Defines readinglog/summary in the complete 03-summary requirement snapshot for later realization against the actual starting application.
+  - path: "experiments/test-projects/readinglog/snapshots/03-summary/model/readinglog/system.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Defines readinglog/system in the complete 03-summary requirement snapshot for later realization against the actual starting application.
+  - path: "experiments/test-projects/readinglog/sources.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Binds Readinglog public requirements, baseline application and tests, dependencies and illustrative controls to immutable source paths and digests.
+  - path: "experiments/test-projects/readinglog/sources/public-contract.md"
+    form: doc
+    realizes: [examples/independent-oracles]
+    why: Preserves the immutable public Readinglog contract as authoring provenance outside selected actor packets.
+  - path: "experiments/test-projects/readinglog/template/.markitect/dependencies/core/model.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Preserves the exact pinned Core vocabulary input shared by all Readinglog snapshots for portable model compilation.
+  - path: "experiments/test-projects/readinglog/template/.markitect/dependencies/core/model/markitect/core/kind.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Preserves the exact pinned Core vocabulary input shared by all Readinglog snapshots for portable model compilation.
+  - path: "experiments/test-projects/readinglog/template/.markitect/dependencies/core/model/markitect/core/max-count.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Preserves the exact pinned Core vocabulary input shared by all Readinglog snapshots for portable model compilation.
+  - path: "experiments/test-projects/readinglog/template/.markitect/dependencies/core/model/markitect/core/min-count.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Preserves the exact pinned Core vocabulary input shared by all Readinglog snapshots for portable model compilation.
+  - path: "experiments/test-projects/readinglog/template/.markitect/dependencies/core/model/markitect/core/name.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Preserves the exact pinned Core vocabulary input shared by all Readinglog snapshots for portable model compilation.
+  - path: "experiments/test-projects/readinglog/template/.markitect/dependencies/core/model/markitect/core/properties.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Preserves the exact pinned Core vocabulary input shared by all Readinglog snapshots for portable model compilation.
+  - path: "experiments/test-projects/readinglog/template/.markitect/dependencies/core/model/markitect/core/property.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Preserves the exact pinned Core vocabulary input shared by all Readinglog snapshots for portable model compilation.
+  - path: "experiments/test-projects/readinglog/template/.markitect/dependencies/core/model/markitect/core/target.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Preserves the exact pinned Core vocabulary input shared by all Readinglog snapshots for portable model compilation.
+  - path: "experiments/test-projects/readinglog/template/.markitect/dependencies/core/model/markitect/core/type.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Preserves the exact pinned Core vocabulary input shared by all Readinglog snapshots for portable model compilation.
+  - path: "experiments/test-projects/readinglog/template/.markitect/dependencies/core/model/markitect/core/values.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Preserves the exact pinned Core vocabulary input shared by all Readinglog snapshots for portable model compilation.
+  - path: "experiments/test-projects/readinglog/template/.markitect/dependencies/software/model.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Preserves the exact pinned Software vocabulary input shared by all Readinglog snapshots for portable model compilation.
+  - path: "experiments/test-projects/readinglog/template/.markitect/dependencies/software/model/software/concept.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Preserves the exact pinned Software vocabulary input shared by all Readinglog snapshots for portable model compilation.
+  - path: "experiments/test-projects/readinglog/template/.markitect/dependencies/software/model/software/rule.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Preserves the exact pinned Software vocabulary input shared by all Readinglog snapshots for portable model compilation.
+  - path: "experiments/test-projects/readinglog/template/.markitect/dependencies/software/model/software/use-case.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Preserves the exact pinned Software vocabulary input shared by all Readinglog snapshots for portable model compilation.
+  - path: "experiments/test-projects/readinglog/template/.markitect/execution.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Supplies illustrative Readinglog preparation controls and the model-required Python test command without runtime execution authority.
+  - path: "experiments/test-projects/readinglog/template/.markitect/registry/readinglog/registry.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Accounts for exactly the two existing Readinglog application and public regression files when materializing the shared template.
+  - path: "experiments/test-projects/readinglog/template/realization/app.py"
+    form: code
+    realizes: [examples/independent-oracles]
+    why: Preserves the actual source-bound Readinglog add/list application as the shared initial realization without implementing later extensions.
+  - path: "experiments/test-projects/readinglog/template/realization/tests/test_baseline.py"
+    form: test
+    realizes: [examples/independent-oracles]
+    why: Preserves the actual source-bound public regression test for the existing Readinglog add/list starting application.

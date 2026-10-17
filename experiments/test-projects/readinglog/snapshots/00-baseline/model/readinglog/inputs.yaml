@@ -1,0 +1,15 @@
+imports:
+  - package: software
+    as: Software
+id: inputs
+kind: Software.Rule
+body: |-
+  For commands of [[system]], strip surrounding whitespace from text input;
+  required id, title and author text must then be nonempty. Compare normalized
+  IDs exactly and case-sensitively; never merge differently cased IDs. Pages must
+  be a positive integer. Missing, invalid or duplicate domain inputs return an
+  understandable JSON error through [[interface]] without changing stored data
+  under [[storage]]. The same input normalization applies wherever a command
+  accepts these fields. Expected input/domain failures do not produce an unhandled
+  crash. Error wording is free.
+spec: {}

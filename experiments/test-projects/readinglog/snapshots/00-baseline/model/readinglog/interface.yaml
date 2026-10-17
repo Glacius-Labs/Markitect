@@ -1,0 +1,23 @@
+imports:
+  - package: software
+    as: Software
+id: interface
+kind: Software.Rule
+body: |-
+  [[system]] is invoked from realization/ as:
+  `python -B app.py --db PATH COMMAND ...`
+  Use Python 3.13 and its standard library, with no network or external package.
+  Every success writes one JSON object to stdout and exits 0. Every domain/input
+  error writes one object with an understandable nonempty error field and exits 2,
+  leaving stored data unchanged under [[storage]]. Error wording is free.
+
+  Commands:
+  - `add --id ID --title TITLE --author AUTHOR --pages INTEGER` returns the created
+    [[book]] record directly, as specified by [[add]].
+  - `list` returns an object with a books array in insertion order, containing
+    every status, as specified by [[list]].
+
+  The book record has id, title, author, pages and status as defined by [[book]].
+  Command names, record fields and the default list envelope remain compatible.
+  [[inputs]] applies to required values and [[realization]] requires tests/docs.
+spec: {}

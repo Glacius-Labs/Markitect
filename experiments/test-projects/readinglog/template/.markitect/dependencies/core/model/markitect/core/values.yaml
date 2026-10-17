@@ -1,0 +1,10 @@
+id: values
+kind: Property
+body: >-
+  Erlaubte Stringwerte einer enum-Property.
+  Bei type enum ist eine nichtleere Liste eindeutiger Werte erforderlich.
+  Bei anderen Werttypen ist diese Angabe nicht zulässig.
+spec:
+  type: string
+  minCount: 0
+  maxCount: -1
