@@ -67,7 +67,7 @@ The target `cmd/` and `internal/` responsibilities use separate `apply-*` layers
 
 | Package | Purpose | Owning document |
 |---|---|---|
-| `internal/apply` | Compiles captured or previewed models, prepares source-bound registry ownership and decodes authored execution documents. | [docs/design/canonical-model/manager-apply-go-architecture.md](../design/canonical-model/manager-apply-go-architecture.md#organize-by-responsibility) |
+| `internal/apply` | Compiles captured or previewed models, prepares registry ownership, decodes authored execution documents and selects static Manager context. | [docs/design/canonical-model/manager-apply-go-architecture.md](../design/canonical-model/manager-apply-go-architecture.md#organize-by-responsibility) |
 
 ## Apply adapters
 
