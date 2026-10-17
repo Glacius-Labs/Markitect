@@ -29,7 +29,42 @@ The coordinating chat owns scope, dependencies and shared-file reservations. The
 
 Package scopes and dependencies live here. Actual running state, candidate SHAs, reviews and CI results live in each chat/PR; do not create a status file, backlog or dashboard mirror. A chat advances through its authorized queue without waiting for another handoff. A blocked dependency is reported; the next independent queued task can proceed within the same reservation.
 
-The coordinator owns shared policy, this plan, the concept register, root module dependencies and cross-package contracts. A bootstrap/cutover package can receive explicit shared-file ownership. Other chats submit a bounded request instead of changing shared files opportunistically.
+The coordinator owns shared policy, this plan except the [architect section](#architect-and-coordinator), root module dependencies and the concept register outside the Apply entries. A bootstrap/cutover package can receive explicit shared-file ownership. Other chats submit a bounded request instead of changing shared files opportunistically.
+
+### Architect and Coordinator
+
+Since 17 October 2026 the owner has divided the work between an architect session and the Coordinator ([source](concepts/sources/architecture-review-20261017.md#division-of-work)). The concept is frozen while it is completed ([DEC-040](concepts/register.md#dec-040-concept-freeze-until-the-core-runs)).
+
+**The architect session owns:**
+- **The concept:** the [Apply design map](design/canonical-model/README.md#apply-design) and the Apply entries of the register.
+- **The ports:** the consumer-owned interfaces in `internal/run/` and `internal/apply/`.
+- **The core:**
+  - `internal/run/`: tasks, messages, issues, reviews, integration and completion;
+  - `internal/realization/`: composition;
+  - `internal/organization/`: context rendering;
+  - `internal/apply/`: orchestration;
+  - the `apply` wiring in `internal/adapters/cli/` and `internal/bootstrap/`.
+
+**The Coordinator and its implementers own everything around it:**
+- the container runtime and `agentd`;
+- the session adapters on `run.Sessions`;
+- the journal adapter;
+- the repository and check adapters;
+- packaging, CI and release tooling;
+- marketing and repository hygiene.
+
+A port change goes only through the architect. An adapter that needs one asks the owner, who relays the request.
+
+The architect delivers this queue in order, one pull request each. The Coordinator plans around it:
+
+| ID | Deliverable | Unblocks |
+| --- | --- | --- |
+| A1 | Step-bound session port on branch `dev/run-step-session-port`. One container serves one step. The plan carries the provider home and the conversation to resume, admissions carry the verified bytes, and `SessionIO.Call` returns the recorded Host answer. | Codex and Claude session adapters |
+| A2 | Core protocol and completed concept: the task machine, messages, issues and composition, with rule IDs and one owner per rule. Owner decisions on the open proposals. | A4 and A5 |
+| A3 | Producer contracts for `run.Workspaces`, `run.Checks` and `apply.Publisher`. | Repository, check and publication adapters |
+| A4 | One Package end to end through `run` with a controlled fake session: Explore, work, independent review, rework and acceptance (P06). | A real session through the core |
+| A5 | Composition, recursion and integration (P07), then guarded publication through `markitect apply` (P09). | The two-Apply demonstration |
+| A6 | Cleanup inside the core: the v1/v2 basis replay, `PassThrough`, errors that carry a reason, and splitting preparation out of `internal/apply`. | None |
 
 ### Branch names
 
