@@ -96,9 +96,10 @@ var responsibilityImports = map[string][]string{
 // Only concrete fixture and composition needs receive test-only edges;
 // production keeps its separately declared responsibility imports.
 var responsibilityTestImports = map[string][]string{
-	"internal/adapters/checks":  {"internal/adapters/gitrepo"},
-	"internal/adapters/journal": {"internal/model", "internal/snapshot"},
-	"internal/bootstrap":        {"internal/adapters/journal", "internal/model", "internal/snapshot", "internal/run"},
+	"internal/adapters/checks":     {"internal/adapters/gitrepo"},
+	"internal/adapters/claudecode": {"internal/snapshot"},
+	"internal/adapters/journal":    {"internal/model", "internal/snapshot"},
+	"internal/bootstrap":           {"internal/adapters/journal", "internal/model", "internal/snapshot", "internal/run"},
 }
 
 // Edge.Test alone cannot distinguish internal from external Go tests.
