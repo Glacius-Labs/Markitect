@@ -3,6 +3,7 @@ package gitrepo
 import (
 	"context"
 	"errors"
+	"fmt"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -195,7 +196,98 @@ func TestPublisherStaleGuardControllerAndFinalOutsideDrift(t *testing.T) {
 			if err == nil || receipt.Outcome != want || len(receipt.Paths) != len(req.Changes) {
 				t.Fatalf("%+v / %v", receipt, err)
 			}
+			changed := !strings.HasPrefix(when, "controller-")
+			if errors.Is(err, apply.ErrCaptureChanged) != changed {
+				t.Fatalf("capture classification changed=%v: %v", changed, err)
+			}
+			if changed && !errors.Is(err, ErrChanged) && !errors.Is(err, ErrDirty) {
+				t.Fatalf("lost adapter drift cause: %v", err)
+			}
 		})
+	}
+}
+
+func TestPublisherPreflightClassifiesObservedCaptureChanges(t *testing.T) {
+	for _, kind := range []string{"head", "tracked-file", "external-input", "root-identity", "during-acquisition"} {
+		t.Run(kind, func(t *testing.T) {
+			r, repo, req := publicationFixture(t)
+			want := ErrChanged
+			switch kind {
+			case "head":
+				repo.Commit("New HEAD with unchanged files")
+			case "tracked-file":
+				repo.Write("real/change.txt", "other writer\n")
+				want = ErrDirty
+			case "external-input":
+				dir := t.TempDir()
+				p := filepath.Join(dir, "instruction.txt")
+				if err := os.WriteFile(p, []byte("original\n"), 0600); err != nil {
+					t.Fatal(err)
+				}
+				selection := r.captures[req.Guard].selection
+				selection.Instructions = []apply.SourceLocation{{Boundary: dir, Path: fixturePath(t, "instruction.txt")}}
+				captured, err := r.Capture(context.Background(), apply.CaptureRequest{Selection: selection})
+				if err != nil {
+					t.Fatal(err)
+				}
+				req.Guard = captured.Guard
+				if err := os.WriteFile(p, []byte("changed\n"), 0600); err != nil {
+					t.Fatal(err)
+				}
+			case "root-identity":
+				original := filepath.Join(t.TempDir(), "original")
+				if err := os.Rename(repo.Dir, original); err != nil {
+					t.Fatal(err)
+				}
+				copyBoundary(t, original, repo.Dir)
+			case "during-acquisition":
+				mutated := false
+				r.observe = func(event, p string) {
+					if event == "before-confirm" && !mutated {
+						mutated = true
+						repo.Write("ignored/new.txt", "drift\n")
+					}
+				}
+			}
+			permit, err := r.Preflight(context.Background(), req, &publicationControl{})
+			if !errors.Is(err, apply.ErrCaptureChanged) || !errors.Is(err, want) || permit.Token != "" {
+				t.Fatalf("capture drift did not retain consumer and adapter errors: %+v %v", permit, err)
+			}
+		})
+	}
+}
+
+func TestPublisherPreflightKeepsUnknownFailuresDistinctFromCaptureChange(t *testing.T) {
+	for _, kind := range []string{"budget", "canceled", "git-error"} {
+		t.Run(kind, func(t *testing.T) {
+			r, repo, req := publicationFixture(t)
+			ctx, cancel := context.WithCancel(context.Background())
+			defer cancel()
+			switch kind {
+			case "budget":
+				r.limits.Entries = 1
+			case "canceled":
+				cancel()
+			case "git-error":
+				repo.Write(".git/config", "[invalid\n")
+			}
+			permit, err := r.Preflight(ctx, req, &publicationControl{})
+			if err == nil || errors.Is(err, apply.ErrCaptureChanged) || permit.Token != "" {
+				t.Fatalf("unknown failure misclassified as drift: %+v %v", permit, err)
+			}
+			if kind == "budget" && !errors.Is(err, ErrLimit) || kind == "canceled" && !errors.Is(err, context.Canceled) {
+				t.Fatalf("lost original failure: %v", err)
+			}
+		})
+	}
+	for _, cause := range []error{ErrUnsafe, ErrLimit, context.Canceled, os.ErrPermission, errors.New("unknown I/O")} {
+		// Acquisition can join a drift observation with another failure. The
+		// incomplete observation must not become a confirmed capture change.
+		err := fmt.Errorf("confirmation: %w", errors.Join(ErrChanged, cause))
+		got := publicationCaptureError(err)
+		if got != err || errors.Is(got, apply.ErrCaptureChanged) || !errors.Is(got, cause) {
+			t.Fatalf("mixed acquisition failure misclassified: %v", got)
+		}
 	}
 }
 
@@ -239,8 +331,8 @@ func TestPublisherRefusesRedirectedParentAtPreflightAndWrite(t *testing.T) {
 			}
 			if when == "preflight" {
 				link()
-				if _, err := r.Preflight(context.Background(), req, &publicationControl{}); err == nil {
-					t.Fatal("redirected parent accepted")
+				if _, err := r.Preflight(context.Background(), req, &publicationControl{}); err == nil || errors.Is(err, apply.ErrCaptureChanged) {
+					t.Fatalf("redirected parent accepted or classified as capture drift: %v", err)
 				}
 			} else {
 				permit, err := r.Preflight(context.Background(), req, &publicationControl{})
@@ -348,8 +440,8 @@ func TestPublisherEmptyChangeSetAndUnissuedGuard(t *testing.T) {
 		t.Fatalf("%+v / %v", receipt, err)
 	}
 	req.Guard = "gitrepo-capture/1:invented"
-	if _, err := r.Preflight(context.Background(), req, &publicationControl{}); err == nil {
-		t.Fatal("invented guard accepted")
+	if _, err := r.Preflight(context.Background(), req, &publicationControl{}); !errors.Is(err, ErrUnsafe) || errors.Is(err, apply.ErrCaptureChanged) {
+		t.Fatalf("invented guard accepted or classified as capture drift: %v", err)
 	}
 }
 
@@ -410,8 +502,8 @@ func TestPublisherRefusesFiltersModesAndAliasesBeforeWriting(t *testing.T) {
 				a, _ := snapshot.NewTree([]snapshot.Entry{publicationEntry(t, name, "*.txt text\n")})
 				req.Changes = snapshot.Compare(snapshot.Tree{}, a)
 			}
-			if _, err := r.Preflight(context.Background(), req, &publicationControl{}); err == nil {
-				t.Fatal("unrepresentable request accepted")
+			if _, err := r.Preflight(context.Background(), req, &publicationControl{}); err == nil || errors.Is(err, apply.ErrCaptureChanged) {
+				t.Fatalf("invalid request accepted or classified as capture drift: %v", err)
 			}
 			data, _ := os.ReadFile(filepath.Join(repo.Dir, "real", "change.txt"))
 			if string(data) != "old\n" {

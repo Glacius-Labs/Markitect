@@ -75,13 +75,13 @@ func (r *Repository) publicationSource(ctx context.Context, request apply.Public
 	}
 	a, err := r.acquire(ctx, capture.selection, "", true)
 	if err != nil {
-		return capture, a, err
+		return capture, a, publicationCaptureError(err)
 	}
 	if a.guard() != request.Guard {
-		return capture, a, ErrChanged
+		return capture, a, publicationCaptureError(ErrChanged)
 	}
 	if !os.SameFile(capture.rootInfo, a.git.rootInfo) || !os.SameFile(capture.gitInfo, a.git.gitInfo) || !os.SameFile(capture.commonInfo, a.git.commonInfo) {
-		return capture, a, ErrChanged
+		return capture, a, publicationCaptureError(ErrChanged)
 	}
 	a.git.ctx = ctx
 	return capture, a, nil
@@ -90,14 +90,14 @@ func (r *Repository) publicationSource(ctx context.Context, request apply.Public
 func (r *Repository) publicationFinal(ctx context.Context, plan publicationPlan) error {
 	a, err := r.acquire(ctx, plan.capture.selection, "", false)
 	if err != nil {
-		return err
+		return publicationCaptureError(err)
 	}
 	a.git.ctx = ctx
 	if !os.SameFile(plan.capture.rootInfo, a.git.rootInfo) || !os.SameFile(plan.capture.gitInfo, a.git.gitInfo) || !os.SameFile(plan.capture.commonInfo, a.git.commonInfo) {
-		return ErrChanged
+		return publicationCaptureError(ErrChanged)
 	}
 	if a.head != plan.capture.head || publicationExternal(a) != plan.capture.external {
-		return ErrChanged
+		return publicationCaptureError(ErrChanged)
 	}
 	outside := func(tree snapshot.Tree) []snapshot.Entry {
 		var result []snapshot.Entry
@@ -109,23 +109,56 @@ func (r *Repository) publicationFinal(ctx context.Context, plan publicationPlan)
 		return result
 	}
 	if !slices.Equal(outside(a.raw.Census), outside(plan.capture.census)) {
-		return fmt.Errorf("%w: outside publication paths", ErrChanged)
+		return publicationCaptureError(fmt.Errorf("%w: outside publication paths", ErrChanged))
 	}
 	index, err := publicationIndex(a.git, r.limits)
 	if err != nil {
-		return err
+		return publicationCaptureError(err)
 	}
 	if index != plan.index {
-		return fmt.Errorf("%w: publication index", ErrChanged)
+		return publicationCaptureError(fmt.Errorf("%w: publication index", ErrChanged))
 	}
 	policies, err := publicationPolicies(a.git, plan.request.Changes)
 	if err != nil {
 		return err
 	}
 	if !reflect.DeepEqual(policies, plan.policies) {
-		return fmt.Errorf("%w: Git checkout policy", ErrChanged)
+		return publicationCaptureError(fmt.Errorf("%w: Git checkout policy", ErrChanged))
 	}
 	return nil
+}
+
+// Only positively observed drift gets the consumer's capture classification.
+// Acquisition can join drift with an unsafe path or an unknown I/O failure;
+// those incomplete observations must retain their original error meaning.
+func publicationCaptureError(err error) error {
+	if !publicationOnlyDrift(err) {
+		return err
+	}
+	return fmt.Errorf("%w: %w", apply.ErrCaptureChanged, err)
+}
+
+func publicationOnlyDrift(err error) bool {
+	if err == ErrChanged || err == ErrDirty {
+		return true
+	}
+	switch err := err.(type) {
+	case interface{ Unwrap() error }:
+		return publicationOnlyDrift(err.Unwrap())
+	case interface{ Unwrap() []error }:
+		children := err.Unwrap()
+		if len(children) == 0 {
+			return false
+		}
+		for _, child := range children {
+			if !publicationOnlyDrift(child) {
+				return false
+			}
+		}
+		return true
+	default:
+		return false
+	}
 }
 
 func publicationIndex(g *gitRepository, limits Limits) (string, error) {
