@@ -16,6 +16,7 @@ func transitionalFoundationRoots() []string {
 		"internal/snapshot",
 		"internal/organization",
 		"internal/realization",
+		"internal/testkit",
 	}
 }
 
@@ -26,7 +27,7 @@ type sourceLayoutPresence struct {
 	rootInternal bool
 }
 
-// classifySourceLayout chooses the active product tree. Root foundations are
+// classifySourceLayout chooses the active product tree. Optional root packages are
 // permitted alongside the src/ tree, but never make a product layout complete.
 func classifySourceLayout(presence sourceLayoutPresence) (string, error) {
 	if presence.srcCommand || presence.srcInternal {
@@ -42,9 +43,9 @@ func classifySourceLayout(presence sourceLayoutPresence) (string, error) {
 	return "", fmt.Errorf("Markitect source is missing a complete cmd/internal layout")
 }
 
-// isTransitionalFoundationPath accepts Go source only below one of the four
-// exact root package prefixes. A sibling such as internal/modeling is not
-// admitted by prefix coincidence.
+// isTransitionalFoundationPath accepts source only below one of the exact
+// transitional root package prefixes. A sibling such as internal/modeling is
+// not admitted by prefix coincidence.
 func isTransitionalFoundationPath(name string) bool {
 	for _, root := range transitionalFoundationRoots() {
 		if strings.HasPrefix(name, root+"/") {
@@ -54,8 +55,14 @@ func isTransitionalFoundationPath(name string) bool {
 	return false
 }
 
+// isTransitionalTestkitDataPath includes non-Go files under Go's conventional
+// testdata directory for the one transitional shared test-support package.
+func isTransitionalTestkitDataPath(name string) bool {
+	return strings.HasPrefix(name, "internal/testkit/testdata/")
+}
+
 // validateTransitionalFoundationFiles rejects any root internal source that
-// is outside the optional foundation roots. It is shared by live and fixed
+// is outside the optional transitional package roots. It is shared by live and fixed
 // source packaging so neither path can silently omit an unknown package.
 func validateTransitionalFoundationFiles(names []string) error {
 	ordered := append([]string(nil), names...)
@@ -183,10 +190,10 @@ func validateTransitionalFoundationDirectories(moduleDir string) error {
 		return nil
 	}
 	if err != nil {
-		return fmt.Errorf("inspect optional root foundations: %w", err)
+		return fmt.Errorf("inspect optional root packages: %w", err)
 	}
 	if info.Mode()&os.ModeSymlink != 0 || !info.IsDir() {
-		return fmt.Errorf("optional root foundations must be a real directory")
+		return fmt.Errorf("optional root packages must be a real directory")
 	}
 	allowed := make(map[string]bool, len(transitionalFoundationRoots()))
 	for _, path := range transitionalFoundationRoots() {
@@ -194,17 +201,17 @@ func validateTransitionalFoundationDirectories(moduleDir string) error {
 	}
 	entries, err := os.ReadDir(root)
 	if err != nil {
-		return fmt.Errorf("read optional root foundations: %w", err)
+		return fmt.Errorf("read optional root packages: %w", err)
 	}
 	for _, entry := range entries {
 		if !allowed[entry.Name()] {
 			return fmt.Errorf("unsupported root internal path during src layout: internal/%s", entry.Name())
 		}
 		if entry.Type()&os.ModeSymlink != 0 || !entry.IsDir() {
-			return fmt.Errorf("root foundation must be a real directory: internal/%s", entry.Name())
+			return fmt.Errorf("root package must be a real directory: internal/%s", entry.Name())
 		}
 		if err := requireRealDirectory(filepath.Join(root, entry.Name())); err != nil {
-			return fmt.Errorf("root foundation internal/%s: %w", entry.Name(), err)
+			return fmt.Errorf("root package internal/%s: %w", entry.Name(), err)
 		}
 	}
 	return nil

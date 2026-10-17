@@ -15,6 +15,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/Glacius-Labs/Markitect/internal/testkit"
 	"github.com/Glacius-Labs/Markitect/src/internal/application/projectexplore"
 	"github.com/Glacius-Labs/Markitect/src/internal/application/projecthistory"
 	"github.com/Glacius-Labs/Markitect/src/internal/application/projectwork"
@@ -27,7 +28,6 @@ import (
 	"github.com/Glacius-Labs/Markitect/src/internal/runtime/projectconfig"
 	"github.com/Glacius-Labs/Markitect/src/internal/runtime/projectexecutor"
 	"github.com/Glacius-Labs/Markitect/src/internal/runtime/projectrun"
-	"github.com/Glacius-Labs/Markitect/src/internal/testkit"
 	"go.yaml.in/yaml/v3"
 )
 

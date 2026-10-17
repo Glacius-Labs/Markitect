@@ -9,8 +9,8 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/Glacius-Labs/Markitect/internal/testkit"
 	"github.com/Glacius-Labs/Markitect/src/internal/application/buildinfo"
-	"github.com/Glacius-Labs/Markitect/src/internal/testkit"
 )
 
 func invokeRelease(t *testing.T, args ...string) (int, string, string) {

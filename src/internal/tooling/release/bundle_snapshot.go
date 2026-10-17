@@ -25,6 +25,7 @@ func snapshotModuleFiles(snapshot *snapshot.Snapshot) (map[string][]byte, error)
 	if err := validateTransitionalSnapshotInputs(snapshot.Files, snapshot.Modes, prefix); err != nil {
 		return nil, err
 	}
+	transitional := hasTransitionalSourceTree(snapshot.Files, prefix)
 	module := make(map[string][]byte)
 	for name, data := range snapshot.Files {
 		if !strings.HasPrefix(name, prefix) {
@@ -39,7 +40,7 @@ func snapshotModuleFiles(snapshot *snapshot.Snapshot) (map[string][]byte, error)
 		}
 		include := relative == "go.mod" || relative == "go.sum" || relative == "README.md" || relative == "LICENSE"
 		if sourceTreePath(relative) {
-			include = includeSourceTreeFile(relative)
+			include = includeSourceTreeFile(relative, transitional)
 		}
 		if strings.HasPrefix(relative, "schema/") {
 			ext := strings.ToLower(path.Ext(relative))
@@ -57,6 +58,7 @@ func snapshotModuleFiles(snapshot *snapshot.Snapshot) (map[string][]byte, error)
 
 func collectModuleSnapshot(files map[string][]byte) ([]sourceFile, error) {
 	selected := make([]sourceFile, 0, len(files))
+	transitional := hasTransitionalSourceTree(files, "")
 	for _, name := range []string{"go.mod", "go.sum"} {
 		data, ok := files[name]
 		if !ok {
@@ -75,7 +77,7 @@ func collectModuleSnapshot(files map[string][]byte) ([]sourceFile, error) {
 		ext := strings.ToLower(path.Ext(name))
 		include := name == "README.md" || name == "LICENSE"
 		if sourceTreePath(name) {
-			include = includeSourceTreeFile(name)
+			include = includeSourceTreeFile(name, transitional)
 		}
 		if strings.HasPrefix(name, "schema/") {
 			include = ext == ".json" || ext == ".yaml" || ext == ".yml" || ext == ".md"
@@ -107,14 +109,27 @@ func sourceTreePath(name string) bool {
 }
 
 // includeSourceTreeFile mirrors live source-tree selection for fixed
-// snapshots. Excluded directories apply only to the four transitional root
-// foundations; the historical src and flat selection rules stay unchanged.
-func includeSourceTreeFile(name string) bool {
+// snapshots. Excluded directories apply only to transitional root packages;
+// the historical src and flat selection rules stay unchanged.
+func includeSourceTreeFile(name string, transitional bool) bool {
 	if isTransitionalFoundationPath(name) && hasExcludedSourceDirectory(name) {
 		return false
 	}
 	ext := strings.ToLower(path.Ext(name))
-	return ext == ".go" || embeddedNotices(name) || name == "internal/licenses/notices.md" || name == "src/internal/licenses/notices.md"
+	return ext == ".go" || embeddedNotices(name) || (transitional && isTransitionalTestkitDataPath(name)) || name == "internal/licenses/notices.md" || name == "src/internal/licenses/notices.md"
+}
+
+func hasTransitionalSourceTree(files map[string][]byte, modulePrefix string) bool {
+	for name := range files {
+		if !strings.HasPrefix(name, modulePrefix) {
+			continue
+		}
+		relative := strings.TrimPrefix(name, modulePrefix)
+		if strings.HasPrefix(relative, "src/cmd/") || strings.HasPrefix(relative, "src/internal/") {
+			return true
+		}
+	}
+	return false
 }
 
 func validateSnapshotModuleLayout(files []sourceFile) error {

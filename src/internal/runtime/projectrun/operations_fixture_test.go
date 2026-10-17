@@ -9,8 +9,8 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/Glacius-Labs/Markitect/internal/testkit"
 	"github.com/Glacius-Labs/Markitect/src/internal/runtime/agentexec"
-	"github.com/Glacius-Labs/Markitect/src/internal/testkit"
 )
 
 const operationsVerifyHelperEnv = "MARKITECT_OPERATIONS_VERIFY_HELPER"

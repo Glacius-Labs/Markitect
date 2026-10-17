@@ -145,6 +145,22 @@ func TestTargetCommandAndAdapterRepositoryEdges(t *testing.T) {
 	}
 }
 
+func TestTargetTestsMayImportSharedTestkit(t *testing.T) {
+	for _, from := range []string{"internal/model", "internal/adapters/gitrepo", "cmd/markitect"} {
+		if got := Check([]Edge{{From: from, To: "internal/testkit", Test: true}}); len(got) != 0 {
+			t.Errorf("test in %s importing shared testkit: %v", from, got)
+		}
+		if got := Check([]Edge{{From: from, To: "internal/testkit"}}); len(got) != 1 {
+			t.Errorf("production code in %s importing shared testkit: %v", from, got)
+		}
+	}
+	for _, to := range []string{"internal/model", "src/internal/core"} {
+		if got := Check([]Edge{{From: "internal/testkit", To: to}}); len(got) != 1 {
+			t.Errorf("shared testkit importing product package %s: %v", to, got)
+		}
+	}
+}
+
 func layerRank(name string) int {
 	for i, l := range Layers {
 		if l.Name == name {

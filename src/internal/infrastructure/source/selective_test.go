@@ -14,7 +14,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/Glacius-Labs/Markitect/src/internal/testkit"
+	"github.com/Glacius-Labs/Markitect/internal/testkit"
 )
 
 func TestLoadSelectedReadsOnlyExactBlobsAfterAllMetadata(t *testing.T) {

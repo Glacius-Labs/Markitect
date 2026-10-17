@@ -1,7 +1,7 @@
 package recordstore
 
 import (
-	"github.com/Glacius-Labs/Markitect/src/internal/testkit"
+	"github.com/Glacius-Labs/Markitect/internal/testkit"
 	"os"
 	"testing"
 )

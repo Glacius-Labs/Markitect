@@ -9,7 +9,7 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/Glacius-Labs/Markitect/src/internal/testkit"
+	"github.com/Glacius-Labs/Markitect/internal/testkit"
 )
 
 var batchedGitIdentityArgs = []string{

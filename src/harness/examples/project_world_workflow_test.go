@@ -17,7 +17,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/Glacius-Labs/Markitect/src/internal/testkit"
+	"github.com/Glacius-Labs/Markitect/internal/testkit"
 )
 
 // TestProjectWorldNativeCLIWorkflow runs the built native CLI against a fixed
