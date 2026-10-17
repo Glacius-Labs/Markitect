@@ -16,6 +16,7 @@ func transitionalFoundationRoots() []string {
 		"internal/snapshot",
 		"internal/organization",
 		"internal/realization",
+		"internal/apply",
 		"internal/testkit",
 	}
 }
