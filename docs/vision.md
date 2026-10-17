@@ -36,7 +36,7 @@ These are [promises](concepts/register.md#promises), not established results.
 **How to judge it.**
 - Judge Markitect's trust against today's practice, not against a compiler's guarantees. Comparative studies still use a strong conventional workflow that is allowed to win.
 - "Compiler" names a borrowed idea. The model's structure compiles deterministically, and an invalid or incompletely covered model blocks work. Realization by agents is not deterministic.
-- Markitect's claim is that computed scope, bounded responsibility and independent review make delegated work more trustworthy than unstructured agentic work. [Where trust comes from](#where-trust-comes-from) lists these mechanisms.
+- Markitect's claim is that compiled obligations, guaranteed Manager participation, bounded responsibility and independent review make delegated work more trustworthy than unstructured agentic work. [Where trust comes from](#where-trust-comes-from) lists these mechanisms.
 - Delegated realization is central to the product. It is not an optional layer on top of a validator.
 - Markitect's product owner has endorsed separating the method from any particular execution runtime. The accepted design puts Codex App Server and Claude Code behind provider-neutral session contracts, with each step in its own Linux container ([DEC-037](concepts/register.md#dec-037-agent-sessions-and-checks-run-in-linux-containers)). The [delivery plan](implementation-plan.md), [provider guide](provider-adapters.md) and delivery PRs distinguish available components from a complete Apply; a runtime probe or adapter test alone does not establish the Manager process. See [DEC-010](concepts/register.md#dec-010-evaluate-the-method-separately-from-its-execution-runtime).
 - [Common misreadings](#common-misreadings) lists the readings to avoid.
@@ -101,7 +101,7 @@ Markitect does not try to make agents infallible. It changes the structure they 
 
 | Markitect mechanism | What it replaces in today's practice |
 |---|---|
-| **Computed scope.** The model, its full file coverage and impact determine which obligations, files and Managers a change affects. | An agent deciding from memory which files might be relevant |
+| **Compiled responsibility and guaranteed participation.** The model and registry make declared obligations, responsibilities and files explicit. The Host includes every local Manager in the first Apply. | An agent deciding from memory which files might be relevant |
 | **Bounded responsibility.** Each Manager owns a slice of the model, the files that realize it and the context it needs. Its parent keeps the duty to integrate. | One agent holding the whole project in a single context |
 | **Independent review with fresh context.** A Manager, or a helper it starts, implements within the Manager's scope. An independent reviewer then assesses the candidate: the four-eyes principle at the lowest level. Each integration result gets its own independent review. | Self-review in the same thread, or one generic pull-request review |
 | **Rules in the way.** Applicable rules and policies are compiled into the responsible Manager's context, and its reviewers check them. | Rules in a long instruction file that are overlooked when nothing forces the agent to see them |
