@@ -31,6 +31,7 @@ type fakeChannel struct {
 	observeNoReceipt bool
 	callFail         bool
 	refuse           bool
+	stopRecordError  error
 }
 
 func receipt() run.AppendReceipt { return run.AppendReceipt{BatchID: "recorded", Revision: 1} }
@@ -87,6 +88,9 @@ func (f *fakeChannel) ObserveStep(_ context.Context, o run.StepObservation) (run
 }
 func (f *fakeChannel) ObserveStop(_ context.Context, o run.StopObservation) (run.AppendReceipt, error) {
 	f.stops = append(f.stops, o)
+	if f.stopRecordError != nil {
+		return run.AppendReceipt{}, f.stopRecordError
+	}
 	return receipt(), nil
 }
 
@@ -127,13 +131,28 @@ type fakeRuntime struct {
 	writeBlock     <-chan struct{}
 	startBlocked   bool
 	stopBlocked    bool
+	secretField    string
 	stopCalls      int
 }
 
 func peer(f *fakeChannel) *fakeRuntime {
 	return &fakeRuntime{stream: &fakeStream{chunks: make(chan []byte, 32), done: make(chan struct{})}, tools: make(chan frame.ToolCall, 16), journal: f}
 }
-func (f *fakeRuntime) emit(raw string) { f.stream.chunks <- []byte(raw + "\n") }
+func (f *fakeRuntime) emit(raw string) {
+	if f.secretField == "thread-marker" && strings.Contains(raw, `"id":2`) {
+		raw = strings.ReplaceAll(raw, string(codecThreadID), "prefix-[REDACTED]")
+	}
+	if f.secretField == "thread-response" && strings.Contains(raw, `"id":2`) {
+		raw = strings.ReplaceAll(raw, string(codecThreadID), "prefix-secret-key-for-runtime")
+	}
+	if f.secretField == "turn-response" && strings.Contains(raw, `"id":3`) {
+		raw = strings.ReplaceAll(raw, string(codecTurnID), "prefix-secret-key-for-runtime")
+	}
+	if f.secretField == "call" {
+		raw = strings.ReplaceAll(raw, "actual-call", "prefix-secret-key-for-runtime")
+	}
+	f.stream.chunks <- []byte(raw + "\n")
+}
 func (f *fakeRuntime) StartProvider(_ context.Context, s frame.Start) (frame.Started, error) {
 	f.start = s
 	if f.startBlocked {
@@ -169,12 +188,21 @@ func (f *fakeRuntime) WriteInput(data []byte) error {
 	case "initialize":
 		f.emit(`{"id":1,"result":` + codecInitialization + `}`)
 	case "thread/start", "thread/resume":
+		if f.secretField == "thread-notification" {
+			f.emit(`{"method":"thread/started","params":{"thread":` + strings.ReplaceAll(codecThread, string(codecThreadID), "prefix-secret-key-for-runtime") + `}}`)
+		}
 		thread := codecThread
 		if f.resumeMismatch {
 			thread = strings.ReplaceAll(thread, string(codecThreadID), "wrong-thread")
 		}
 		f.emit(`{"id":2,"result":{"thread":` + thread + `,"approvalPolicy":"never","approvalsReviewer":"user","cwd":"/work","model":"admitted-model","modelProvider":"markitect","sandbox":{"type":"dangerFullAccess"}}}`)
 	case "turn/start":
+		if f.secretField == "turn-notification" {
+			f.emit(`{"method":"turn/started","params":{"threadId":"` + string(codecThreadID) + `","turn":{"id":"prefix-secret-key-for-runtime","status":"inProgress","items":[],"error":null}}}`)
+		}
+		if f.secretField == "turn-item" {
+			f.emit(`{"method":"item/started","params":{"threadId":"` + string(codecThreadID) + `","turnId":"prefix-secret-key-for-runtime","item":{"id":"observed-item","type":"agentMessage","text":"observed"}}}`)
+		}
 		f.emit(`{"id":3,"result":{"turn":{"id":"` + string(codecTurnID) + `","status":"inProgress","items":[],"error":null}}}`)
 		if f.cancelTurn {
 			return nil
@@ -185,7 +213,11 @@ func (f *fakeRuntime) WriteInput(data []byte) error {
 				thread = "foreign-thread"
 			}
 			// Deliberately enqueue MCP first, before its stdout identity event.
-			f.tools <- frame.ToolCall{ID: 1, Name: "submit_work", Arguments: json.RawMessage(`{"summary":"done"}`), Meta: json.RawMessage(`{"threadId":"` + thread + `","callId":"actual-call"}`)}
+			callID := "actual-call"
+			if f.secretField == "call" {
+				callID = "prefix-secret-key-for-runtime"
+			}
+			f.tools <- frame.ToolCall{ID: 1, Name: "submit_work", Arguments: json.RawMessage(`{"summary":"done"}`), Meta: json.RawMessage(`{"threadId":"` + thread + `","callId":"` + callID + `"}`)}
 			f.emit(`{"method":"item/started","params":{"threadId":"` + string(codecThreadID) + `","turnId":"` + string(codecTurnID) + `","item":{"id":"actual-call","type":"mcpToolCall","server":"markitect","tool":"submit_work","arguments":{"summary":"done"},"status":"inProgress"}}}`)
 		} else {
 			f.finish()
@@ -214,6 +246,15 @@ func (f *fakeRuntime) Stop(context.Context, int64) (frame.Exited, error) {
 	}
 	if f.stopFail {
 		return frame.Exited{}, context.DeadlineExceeded
+	}
+	if f.secretField == "stop-signal" {
+		return frame.Exited{Code: -1, Signal: "prefix-secret-key-for-runtime"}, nil
+	}
+	if f.secretField == "stop-marker" {
+		return frame.Exited{Code: -1, Signal: "prefix-[REDACTED]"}, nil
+	}
+	if f.secretField == "stop-marker-nested" {
+		return frame.Exited{Code: -1, Signal: "[RED[REDACTED]ACTED]"}, nil
 	}
 	return frame.Exited{Code: -1, Signal: "terminated"}, nil
 }
@@ -497,6 +538,126 @@ func TestCodexBlockedRuntimeControlsRespectCancellation(t *testing.T) {
 			stopped, stopErr := s.Stop(context.Background(), run.StopRequest{Session: a.Plan.ID, ProviderSession: opened.ProviderSession, Timeout: 20 * time.Millisecond}, channel)
 			if operation == "stop" && (stopErr == nil || stopped.Terminated) {
 				t.Fatalf("blocked stop %+v %v", stopped, stopErr)
+			}
+		})
+	}
+}
+
+func TestCodexSecretEchoCannotEscapeThroughCallbackIdentityFields(t *testing.T) {
+	for _, field := range []string{"thread-response", "thread-notification", "turn-response", "turn-notification", "turn-item", "call"} {
+		t.Run(field, func(t *testing.T) {
+			channel := &fakeChannel{}
+			runtime := peer(channel)
+			runtime.secretField = field
+			runtime.useTool = field == "call"
+			s := sessionsForTest(t, runtime)
+			a, b := sessionAdmissions(t)
+			ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+			defer cancel()
+			opened, err := s.Open(ctx, a, channel)
+			if strings.HasPrefix(field, "thread-") {
+				if err == nil || !opened.Uncertain || opened.ProviderSession != "" {
+					t.Fatalf("unsafe thread accepted: uncertain=%t bound=%t error=%v", opened.Uncertain, opened.ProviderSession != "", err)
+				}
+			} else {
+				if err != nil {
+					t.Fatal(err)
+				}
+				step, stepErr := s.Step(ctx, b, channel)
+				if stepErr == nil || !step.Uncertain {
+					t.Fatalf("unsafe native identity accepted: uncertain=%t error=%v", step.Uncertain, stepErr)
+				}
+				if field != "call" && step.ProviderStep != "" {
+					t.Fatal("unsafe turn replaced by invented identity")
+				}
+			}
+			// Assert the actual values handed to every journal callback, including
+			// uncertain deferred observations, rather than just Wire.Redacted.
+			for _, bound := range channel.bindings {
+				if strings.Contains(string(bound.ProviderSession), "secret-key-for-runtime") || bytes.Contains(bound.Wire.Journal.Bytes(), []byte("secret-key-for-runtime")) {
+					t.Fatal("thread secret reached Bind")
+				}
+			}
+			for _, step := range channel.steps {
+				if strings.Contains(string(step.ProviderStep), "secret-key-for-runtime") || bytes.Contains(step.Wire.Journal.Bytes(), []byte("secret-key-for-runtime")) {
+					t.Fatal("turn secret reached ObserveStep")
+				}
+			}
+			if field == "call" && len(channel.calls) != 0 {
+				t.Fatal("unsafe native call ID reached Host callback")
+			}
+			for _, prepared := range channel.preparations {
+				if strings.Contains(string(prepared.Call), "secret-key-for-runtime") {
+					t.Fatal("call secret reached PrepareSend")
+				}
+			}
+		})
+	}
+}
+
+func TestCodexStopSignalSecretIsRedactedBeforeObservation(t *testing.T) {
+	channel := &fakeChannel{}
+	runtime := peer(channel)
+	runtime.secretField = "stop-signal"
+	s := sessionsForTest(t, runtime)
+	a, _ := sessionAdmissions(t)
+	opened, err := s.Open(context.Background(), a, channel)
+	if err != nil {
+		t.Fatal(err)
+	}
+	stopped, err := s.Stop(context.Background(), run.StopRequest{Session: a.Plan.ID, ProviderSession: opened.ProviderSession, Timeout: time.Second}, channel)
+	if err != nil || !stopped.Terminated || len(channel.stops) != 1 || strings.Contains(stopped.Reason, "secret-key-for-runtime") || strings.Contains(channel.stops[0].Reason, "secret-key-for-runtime") || !strings.Contains(stopped.Reason, "[REDACTED]") {
+		t.Fatalf("unsafe stop observation %+v %v", stopped, err)
+	}
+}
+
+func TestCodexStopJournalErrorCannotReturnKnownCredential(t *testing.T) {
+	channel := &fakeChannel{stopRecordError: errors.New("journal refused secret-key-for-runtime")}
+	runtime := peer(channel)
+	s := sessionsForTest(t, runtime)
+	a, _ := sessionAdmissions(t)
+	opened, err := s.Open(context.Background(), a, channel)
+	if err != nil {
+		t.Fatal(err)
+	}
+	stopped, err := s.Stop(context.Background(), run.StopRequest{Session: a.Plan.ID, ProviderSession: opened.ProviderSession, Timeout: time.Second}, channel)
+	if !stopped.Terminated || err == nil || strings.Contains(err.Error(), "secret-key-for-runtime") || !strings.Contains(err.Error(), "[REDACTED]") {
+		t.Fatal("stop journal error escaped credential redaction")
+	}
+}
+
+func TestCodexCredentialCannotEqualRedactionMarker(t *testing.T) {
+	for _, field := range []string{"thread-marker", "stop-marker", "stop-marker-nested"} {
+		t.Run(field, func(t *testing.T) {
+			channel := &fakeChannel{}
+			runtime := peer(channel)
+			runtime.secretField = field
+			s, err := NewSessionsWithRuntime(func(context.Context, container.ContainerSpec) (RuntimeSession, error) { return runtime, nil }, nil, func(context.Context, string) (RuntimeCredential, error) {
+				return RuntimeCredential{Mode: "api-key", APIKey: "[REDACTED]"}, nil
+			})
+			if err != nil {
+				t.Fatal(err)
+			}
+			t.Cleanup(func() { _ = runtime.Close() })
+			a, _ := sessionAdmissions(t)
+			opened, openErr := s.Open(context.Background(), a, channel)
+			if field == "thread-marker" {
+				if openErr == nil || !opened.Uncertain || opened.ProviderSession != "" {
+					t.Fatal("replacement token accepted as native identity")
+				}
+				for _, bound := range channel.bindings {
+					if strings.Contains(string(bound.ProviderSession), "[REDACTED]") || bytes.Contains(bound.Wire.Journal.Bytes(), []byte("[REDACTED]")) {
+						t.Fatal("marker-valued credential reached Bind")
+					}
+				}
+			} else {
+				if openErr != nil {
+					t.Fatal(openErr)
+				}
+				stopped, stopErr := s.Stop(context.Background(), run.StopRequest{Session: a.Plan.ID, ProviderSession: opened.ProviderSession, Timeout: time.Second}, channel)
+				if stopErr != nil || !stopped.Terminated || strings.Contains(stopped.Reason, "[REDACTED]") || strings.Contains(channel.stops[0].Reason, "[REDACTED]") {
+					t.Fatal("marker-valued credential reached ObserveStop")
+				}
 			}
 		})
 	}
