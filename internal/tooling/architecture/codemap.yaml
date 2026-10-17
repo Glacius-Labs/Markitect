@@ -15,6 +15,10 @@ packages:
     layer: apply-realization
     purpose: Pure ownership, accounting and candidate rules.
     doc: docs/development/modules.md
+  - path: internal/run
+    layer: apply-run
+    purpose: Fixed run bindings, assignment budgets and confirmed journal transitions.
+    doc: docs/development/modules.md
   - path: internal/apply
     layer: apply-usecase
     purpose: Read-only preparation through consumer-owned ports.

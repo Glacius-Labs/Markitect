@@ -6,12 +6,15 @@ The repository uses one Go module. Packages are organized by concrete responsibi
 
 Pure model and snapshot packages consume supplied bytes and values. Organization and realization use those pure values. Apply owns preparation and consumer ports; adapters implement concrete acquisition and metadata protocols. Bootstrap constructs actual services. Product and maintenance commands remain thin entrypoints with separate composition.
 
+Run owns fixed input bindings, deterministic budget and lifecycle transitions, and its narrow journal port. A proposal changes no confirmed state; an exact append acknowledgement commits the transition. The Host supplies clock observations. There is no SQL, repository acquisition, provider protocol or public execution path in this package.
+
 ## Dependency direction
 
 | Consumer | Allowed responsibility |
 | --- | --- |
 | Model, snapshot | No other Markitect responsibility |
 | Organization, realization | Model, snapshot |
+| Run | Model, snapshot, organization, realization |
 | Apply | Model, snapshot, organization, realization |
 | Model view | Apply, model, snapshot |
 | Repository adapter | Apply and required pure values |

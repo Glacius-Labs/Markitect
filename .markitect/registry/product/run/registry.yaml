@@ -1,0 +1,50 @@
+apiVersion: markitect.registry/v1
+artifacts:
+  - path: "internal/run/README.md"
+    form: doc
+    realizes: [product/run/confirmed-run-history]
+    why: Documents the implemented admission boundary and its explicit remaining gaps.
+  - path: "internal/run/binding.go"
+    form: code
+    realizes: [product/run/confirmed-run-history]
+    why: Binds complete supplied inputs and their provenance before run admission.
+  - path: "internal/run/binding_test.go"
+    form: test
+    realizes: [product/run/confirmed-run-history]
+    why: Checks fixed input identity, completeness and rejected preparation.
+  - path: "internal/run/budget.go"
+    form: code
+    realizes: [product/run/confirmed-run-history]
+    why: Accounts finite assignment capacity, completion reserve and uncertain holds.
+  - path: "internal/run/command.go"
+    form: code
+    realizes: [product/run/confirmed-run-history]
+    why: Defines closed commands and validates their intrinsic values.
+  - path: "internal/run/commit.go"
+    form: code
+    realizes: [product/run/confirmed-run-history]
+    why: Confirms exact journal commits and reconciles uncertain append outcomes.
+  - path: "internal/run/core_fixture_test.go"
+    form: test
+    realizes: [product/run/confirmed-run-history]
+    why: Supplies deterministic journal observations for admission and failure checks.
+  - path: "internal/run/fixture_test.go"
+    form: test
+    realizes: [product/run/confirmed-run-history]
+    why: Supplies actual model and organization producer values for run tests.
+  - path: "internal/run/journal.go"
+    form: code
+    realizes: [product/run/confirmed-run-history]
+    why: Defines the consumer-owned journal port and closed versioned byte records.
+  - path: "internal/run/journal_test.go"
+    form: test
+    realizes: [product/run/confirmed-run-history]
+    why: Checks closed records, exact retries and journal acknowledgement failures.
+  - path: "internal/run/state.go"
+    form: code
+    realizes: [product/run/confirmed-run-history]
+    why: Reduces confirmed lifecycle and budget transitions without ambient effects.
+  - path: "internal/run/state_test.go"
+    form: test
+    realizes: [product/run/confirmed-run-history]
+    why: Checks lifecycle admission, budget conservation and retained uncertainty.

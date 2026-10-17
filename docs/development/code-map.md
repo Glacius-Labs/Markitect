@@ -18,6 +18,7 @@ Tests in `internal/tooling/architecture` require every actual Go package to have
 | `apply-snapshot` | Pure immutable repository tree values. | `apply-snapshot` | 1 |
 | `apply-organization` | Pure Manager topology, context selection and settings. | `apply-organization` | 1 |
 | `apply-realization` | Pure ownership, accounting and candidate rules. | `apply-realization` | 1 |
+| `apply-run` | Fixed run bindings, assignment budgets and confirmed journal transitions. | `apply-run` | 1 |
 | `apply-usecase` | Read-only preparation through consumer-owned ports. | `apply-usecase` | 1 |
 | `model-view` | Deterministic readable view and reviewed source-bound write plan. | `model-view` | 1 |
 | `apply-adapter` | Concrete repository, profile metadata and document I/O. | `apply-adapter` | 5 |
@@ -52,6 +53,12 @@ Tests in `internal/tooling/architecture` require every actual Go package to have
 | Package | Purpose | Owning document |
 |---|---|---|
 | `internal/realization` | Pure ownership, accounting and candidate rules. | [docs/development/modules.md](modules.md) |
+
+## Run admission
+
+| Package | Purpose | Owning document |
+|---|---|---|
+| `internal/run` | Fixed run bindings, assignment budgets and confirmed journal transitions. | [docs/development/modules.md](modules.md) |
 
 ## Preparation
 
