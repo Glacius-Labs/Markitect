@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/Glacius-Labs/Markitect/internal/model"
+	"github.com/Glacius-Labs/Markitect/internal/realization"
 	"github.com/Glacius-Labs/Markitect/internal/snapshot"
 )
 
@@ -27,6 +28,17 @@ func reportValue(value any) any {
 		return v.String()
 	case model.Value:
 		return valueReport(v)
+	case realization.Owner:
+		if v.IsRoot() {
+			return "."
+		}
+		if name, ok := v.Package(); ok {
+			return name
+		}
+		return nil
+	case realization.Registration:
+		artifact := v.Artifact()
+		return map[string]any{"owner": reportValue(v.Owner()), "artifact": map[string]any{"path": artifact.Path().String(), "form": artifact.Form(), "realizes": reportValue(artifact.Basis()), "why": artifact.Why()}}
 	case time.Duration:
 		return v.String()
 	case []byte:

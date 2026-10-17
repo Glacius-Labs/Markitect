@@ -71,8 +71,18 @@ func validateSnapshotInputs(files map[string][]byte, modes map[string]string, pr
 			continue
 		}
 		rel := strings.TrimPrefix(name, prefix)
-		if strings.HasPrefix(rel, "src/") {
+		if rel == "src" || strings.HasPrefix(rel, "src/") {
 			return fmt.Errorf("legacy src layout is unsupported: %s", rel)
+		}
+		// Files has no directory entries. A literal schema entry therefore
+		// cannot represent the real optional directory accepted by live capture.
+		if rel == "schema" {
+			return fmt.Errorf("optional schema path must be a real directory")
+		}
+		if strings.HasPrefix(rel, "schema/") && !hasExcludedSourceDirectory(rel) {
+			if modes[name] != "100644" && modes[name] != "100755" {
+				return fmt.Errorf("source snapshot schema path %q is not regular", name)
+			}
 		}
 		if !sourceTreePath(rel) {
 			continue

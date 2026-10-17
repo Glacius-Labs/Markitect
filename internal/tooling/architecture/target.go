@@ -61,7 +61,7 @@ var responsibilityImports = map[string][]string{
 	"cmd/markitect-check-modules":      {"internal/tooling/modulecli"},
 	"cmd/markitect-release":            {"internal/tooling/releasecli"},
 	"internal/adapters/checks":         {"internal/apply", "internal/model", "internal/organization", "internal/snapshot"},
-	"internal/adapters/cli":            {"internal/apply", "internal/model", "internal/organization", "internal/snapshot", "internal/modeldocs", "internal/buildinfo", "internal/tooling/licenses"},
+	"internal/adapters/cli":            {"internal/apply", "internal/model", "internal/organization", "internal/realization", "internal/snapshot", "internal/modeldocs", "internal/buildinfo", "internal/tooling/licenses"},
 	"internal/adapters/codexappserver": {"internal/apply", "internal/model", "internal/organization", "internal/snapshot"},
 	"internal/adapters/documents":      {"internal/modeldocs", "internal/tooling/guardedwrite"},
 	"internal/adapters/gitrepo":        {"internal/apply", "internal/model", "internal/organization", "internal/realization", "internal/snapshot"},

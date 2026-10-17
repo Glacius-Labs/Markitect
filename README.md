@@ -1,107 +1,37 @@
 # Markitect
 
-Markitect is model-first development with delegated realization. You maintain one canonical YAML model of your project's intended world under `.markitect/`: its concepts, rules, boundaries, responsibilities, checks and dependencies. Source code, tests, configuration and prose remain ordinary files in the adopting project; they realize the model.
-
-You change the model, usually in conversation with your coding agent, and Markitect has the change applied. It compiles the model, derives the affected Managers and files, and lets recursive Managers implement the change with independent review, integration, fixed-candidate verification and guarded Apply. Markitect reports evidence for the checks performed; project owners retain decisions about semantic acceptance and release. [Markitect in brief](docs/vision.md#markitect-in-brief) explains why and how to judge it.
-
-## Quick navigation
-
-| Goal | Start here |
-|---|---|
-| Build the model-first workflow from this source checkout | [Run the current source](#run-the-current-source) |
-| Create a new adopting project | [Start a model-first project](#start-a-model-first-project) |
-| Model an existing repository | [Brownfield workflow](docs/project-workflow.md#existing-repositories) |
-| Understand the workflow and tool boundaries | [Project workflow](docs/project-workflow.md), [Project operations](docs/project-operations.md), and [Architecture](docs/architecture.md) |
-| Install the published compatibility CLI | [Install Markitect](#install-markitect) and [distribution guidance](integration/README.md) |
+Markitect is model-first development with delegated realization. People maintain a canonical model of their project's intended world. Code, tests, configuration and documents realize that intent. Recursive Managers are intended to realize model changes with independent review, integration, verification and guarded Apply. [Markitect in brief](docs/vision.md#markitect-in-brief) explains the product purpose and evidence boundary.
 
 ## Run the current source
 
-The model-first `markitect <verb>` workflow is available in this development source checkout; it is not included in the published v0.14.1 binary. Building from source does not publish a release or change a project's existing version pin.
+Current source implements canonical language v1 compilation, complete file accounting, execution declarations, static context selection and optional source-bound profile metadata/settings preparation. It also generates a reviewed readable model view. Apply explicitly returns unavailable before acquisition or effects. Sessions, workspaces, executable checks and artifact publication are later stages in the [delivery plan](docs/implementation-plan.md).
 
-For Windows, use Git and Go 1.27.1 or later. From this Markitect source checkout, build a separate development executable:
+Use Git and the Go version in `go.mod`, then run from this checkout:
 
-```powershell
-$toolBin = Join-Path $env:LOCALAPPDATA 'Markitect\development'
-New-Item -ItemType Directory -Force -Path $toolBin | Out-Null
-go build -o (Join-Path $toolBin 'markitect.exe') ./src/cmd/markitect
-if ($LASTEXITCODE -ne 0) { throw 'Markitect build failed.' }
-$env:PATH = "$toolBin;$env:PATH"
-markitect help
+```text
+go run ./cmd/markitect help
+go run ./cmd/markitect check --repo .
+go run ./cmd/markitect context product/model --repo .
+go run ./cmd/markitect docs --repo .
 ```
 
-Keep the source checkout for development. Configure the adopting project's runtime with `config`, then connect the outer coding client to its repository-local Markitect MCP server. Manager, reviewer and verifier roles use the supported Codex App Server runtime by default. Setup can give each role class its own provider, model, effort and cost mode, including a bring-your-own process executor; an executor that Markitect cannot price runs `unmetered`, and its cost is reported as unknown, not zero. See [Provider adapters](docs/provider-adapters.md) for connection, [role profiles](docs/provider-adapters.md#role-profiles) and execution boundaries.
+Build into an external directory with `go build -o ABSOLUTE_EXTERNAL_PATH/markitect ./cmd/markitect` (use a native path and `markitect.exe` on Windows). This source surface is separate from the published v0.14.1 binary below. Building does not publish or update a project pin.
 
 ## Start a model-first project
 
-Initialize your target Git repository on a feature branch, then create its scaffold:
+Use an existing Git commit, author a [canonical v1 manifest and model](docs/design/canonical-model/minimal-language/language-contract.md), and register exact artifact ownership. The default manifest is `.markitect/model.yaml`; `--model PATH` and repeated `--dependency PATH` select explicit sources. No automatic scaffold or dependency discovery runs. The [self-model](.markitect/README.md) is one complete current example.
 
-```powershell
-# Run in the target project, with the development executable on PATH.
-git init -b codex/project-start
-markitect init --repo . --name my-project
-markitect init --repo . --name my-project --expect INIT_PLAN_DIGEST --write
-markitect onboard --repo . --provider codex
-```
-
-Review the onboarding preview and apply it with the returned digest:
-
-```powershell
-markitect onboard --repo . --provider codex --expect ONBOARDING_PLAN_DIGEST --write
-```
-
-Choose `claude` or `both` for those contributors. Onboarding previews repository-local entrypoints and discoverable skills, preserves custom content, and points contributors to the shared workflow. It does not register MCP or change global account/provider settings. Connect the selected client using [Provider adapters](docs/provider-adapters.md).
-
-Then give your agent an ordinary request, for example:
-
-> Build a small shop where creating an order reserves stock and cancelling it restores the reserved stock exactly once. Include tests and explain the project through its generated documentation.
-
-Use the [Project workflow](docs/project-workflow.md) to inspect the model, record scope and acceptance, update canonical intent when needed, establish readiness, and continue the same operation through execution, verification, and guarded Apply. The [Project operations reference](docs/project-operations.md) documents exact interfaces and recovery. The [Shop example](examples/project-world/README.md) provides a runnable model and finite tests.
-
-## Example adopting-project layout
-
-The tree below illustrates a repository that uses Markitect. It describes a target adopting project, not this Markitect source repository. In this source checkout, implementation is under `src/`, product documentation is under `docs/`, and adopting-project examples are under `examples/`.
-
-```text
-.markitect/
-  project.yaml                    project selection and policy
-  model/
-    manager.yaml                  root responsibility
-    sales/
-      manager.yaml                Sales responsibility
-      orders/                     concepts, rules and use cases together
-  runtime.yaml                    pinned local execution and budgets
-  workflows/model-first.md        installed contributor workflow
-  state/                          exploration and model-change history
-  runs/                           candidates, receipts and verification
-.agents/skills/                   native Codex skills, when selected
-.claude/skills/                   native Claude skills, when selected
-AGENTS.md / CLAUDE.md             selected native entrypoints
-src/                             application artifacts in the adopting project
-tests/                           tests in the adopting project
-docs/markitect/project.md         generated readable model view
-```
-
-Application paths are choices made by each project, not imposed language conventions. The model tree follows conceptual slices. Each file has one accountable owner and explicit relationships to the concepts or rules it realizes; a shared file can realize several concepts. Managers receive bounded context and public neighbor contracts. Parents receive child results for integration, not private transcripts.
+`check` requests structural preparation. `context <package>` reports selected Definitions and inclusion reasons. `--revision REF` resolves once to a fixed commit. `--metadata --host-profile ABSOLUTE_DOCUMENT_PATH` additionally requests static metadata/settings preparation; it starts no process and does not establish runtime support. [Project workflow](docs/project-workflow.md) explains the stages and exits.
 
 ## Change, verify, and recover
 
-Start an intent change in the model. Review its readable view and commit the accepted canonical model under the repository's policy before implementing it. Drafts remain proposals. Markitect records accepted first-parent model transitions and supplies scoped change briefings.
+Maintain intent in canonical Definitions and exact file ownership in the registry. After a model edit, review `docs` and pass its returned `view.previewDigest` to `--write --expect`. Content, canonical model and write-plan digests are distinct. Source or target changes refuse a stale write; protected inputs and fixed revisions cannot be overwritten. Actual completed paths remain visible after partial failure.
 
-Implementation follows impact through responsible Managers and their ancestors. Leaf implementers and independent reviewers iterate within finite limits; parent Managers integrate child results and can request bounded rework. Final verification evaluates permanent Manager responsibilities and declared checks against one immutable candidate. Coverage accounts for ordinary files, explicit ignores, and known tool files so an unknown file cannot silently disappear.
-
-The MCP-led workflow advances a ready named scope through planning, Manager work and integration, verification, preflight, and guarded Apply. A successful Apply records technical completion, not semantic acceptance. Interrupted work resumes with the same durable IDs; unknown outcomes are inspected rather than replayed. See [Project operations](docs/project-operations.md) for recovery and exact interfaces.
-
-For an existing repository, begin with fixed-source discovery and iterative reverse modeling. Separate observed code behavior from documented intent and future decisions. Managers make bounded proposals; parent Managers integrate them, and explicit owner resolutions precede model-only adoption. Commit the accepted model before a separate cleanup or implementation request. Unresolved or transitional areas remain visible. See the [Brownfield workflow](docs/project-workflow.md#existing-repositories).
-
-Native instructions guide cooperation but do not prevent a process with ordinary filesystem permissions from editing files directly. Guarded Apply, checks, and repository policy enforce their stated boundaries. Commits, digests, and decision references bind evidence but do not authenticate human approval.
+[Architecture](docs/architecture.md), [contributor gates](CONTRIBUTING.md) and the [code map](docs/development/code-map.md) describe the implementation. The packaged source smoke exercises actual Library M1/M2 read-only preparation and refusals; the separate [Library oracle](experiments/library-playground/README.md) remains independent. These are source checks, not delegated realization or acceptance proof.
 
 ## Current source status and compatibility
 
-The combined A01 native smoke passed for source `cdd30b0efc540f151404dabe86b022275dc40d83`. That result is tied to its recorded source and does not establish human semantic acceptance or productivity benefit. The [delivery plan](docs/implementation-plan.md) owns the rebuild scope and coordination; chats/PRs record candidate evidence; the [A01 validation record](docs/validation/a01-native-smoke-20261010.md) records the run and its limits.
-
-Earlier Project/Domain contracts, released examples and historical research are preserved at their original immutable revisions, including the [v0.14.1 compatibility guide](https://github.com/Glacius-Labs/Markitect/blob/v0.14.1/docs/usage.md). Existing projects need an explicit migration; the model-first workflow does not silently reinterpret old files. Use the [distribution guide](integration/README.md) to maintain a released installation.
-<details>
-<summary>Install and try the published v0.14.1 compatibility CLI</summary>
+Current source has one root Go module and no legacy product engine. Historical source and published releases retain their identities and evidence. The installation and example blocks below intentionally remain pinned to the existing immutable v0.14.1 release; they do not describe this source increment.
 
 <!-- markitect-release:install:start -->
 
@@ -187,12 +117,11 @@ markitect check --repo ./markitect-sample-v0.14.1/examples/minimal
 The [minimal example from v0.14.1](https://github.com/Glacius-Labs/Markitect/tree/v0.14.1/examples/minimal) is a synthetic, executable fixture. To use Markitect in your own repository, follow the [release installation and verification guide](integration/README.md) to preview and install a project pin.
 
 <!-- markitect-release:try:end -->
-</details>
 
 ## Documentation and development
 
-Use the [documentation map](docs/README.md) to find product and development guidance. The [architecture](docs/architecture.md) describes product boundaries; [contribution checks](CONTRIBUTING.md) describes source validation. Adopting projects own their business rules, technologies, and acceptance policy.
+Start with [the documentation map](docs/README.md), [the workflow](docs/project-workflow.md), [operations](docs/operations.md) and [CONTRIBUTING](CONTRIBUTING.md). Accepted product decisions remain in the [concept register](docs/concepts/register.md).
 
 ## License
 
-Markitect is licensed under [Apache-2.0](LICENSE). The Glacius Labs and Markitect names and logos are not licensed as trademarks by that license. Third-party notices are maintained with the [distribution guidance](integration/README.md).
+Markitect is licensed under [Apache-2.0](LICENSE). Third-party notices are available through `markitect licenses` and [the canonical notice file](internal/tooling/licenses/notices.md).

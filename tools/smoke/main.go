@@ -12,6 +12,7 @@ package main
 import (
 	"archive/zip"
 	"bytes"
+	"context"
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
@@ -90,6 +91,15 @@ type check struct {
 // stops at the first failure because later checks build on earlier ones.
 func (s *smoke) runChecks(checks []check) error {
 	fmt.Fprintf(s.out, "smoke: repo %s\nsmoke: work %s\n", s.repo, s.work)
+	head, err := s.run(s.repo, nil, "git", "rev-parse", "HEAD")
+	if err != nil {
+		return err
+	}
+	status, err := s.run(s.repo, nil, "git", "status", "--porcelain=v1", "--untracked-files=normal")
+	if err != nil {
+		return err
+	}
+	fmt.Fprintf(s.out, "smoke: source HEAD %s; working changes %t\n", strings.TrimSpace(head), strings.TrimSpace(status) != "")
 	for _, c := range checks {
 		start := time.Now()
 		if err := c.run(); err != nil {
@@ -203,6 +213,11 @@ func (s *smoke) packageSource(pkg string) error {
 	if _, err := s.run(s.repo, nil, "go", "run", "./cmd/markitect-release", "package", "--repo", s.repo, "--output", pkg); err != nil {
 		return err
 	}
+	digest, err := sha256File(filepath.Join(pkg, ".markitect", "tool", "source.zip"))
+	if err != nil {
+		return err
+	}
+	fmt.Fprintf(s.out, "smoke: source archive sha256:%s\n", digest)
 	bootstrap := filepath.Join(pkg, ".markitect", "bootstrap")
 	if err := os.MkdirAll(bootstrap, 0o755); err != nil {
 		return err
@@ -260,11 +275,7 @@ func (s *smoke) gitRepo(name, branch string) (string, error) {
 			return "", err
 		}
 	}
-	// Use the fixture's actual Git root spelling. The source adapter separately
-	// rejects unsupported or unbound source boundary spellings; the harness does
-	// not exercise native short-name aliases as a hidden alternate source.
-	root, err := s.run(repo, nil, "git", "rev-parse", "--show-toplevel")
-	return strings.TrimSpace(root), err
+	return repo, nil
 }
 
 func (s *smoke) tool(name string) string {
@@ -277,7 +288,10 @@ func (s *smoke) tool(name string) string {
 // run executes a command and returns its standard output. A failure reports
 // the exit status and the tail of both output streams.
 func (s *smoke) run(dir string, env []string, name string, args ...string) (string, error) {
-	cmd := exec.Command(name, args...)
+	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Minute)
+	defer cancel()
+	cmd := exec.CommandContext(ctx, name, args...)
+	cmd.WaitDelay = time.Second
 	cmd.Dir = dir
 	cmd.Env = append(append(os.Environ(), "PATH="+s.bin+string(os.PathListSeparator)+os.Getenv("PATH")), env...)
 	var stdout, stderr bytes.Buffer

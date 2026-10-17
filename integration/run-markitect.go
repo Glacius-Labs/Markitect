@@ -63,7 +63,7 @@ type builderFunc func(goPath string, args []string, dir string, env []string) er
 
 type toolchainVersionFunc func(goPath, dir string, env []string) (string, error)
 
-const buildPolicy = "portable-native-v1"
+const buildPolicy = "root-module-native-v2"
 
 // goBuildInputs lists environment settings that can change tool selection,
 // build inputs, target features, or cache behavior. Other environment names

@@ -100,6 +100,9 @@ func TestActualStructuralPreparationAndFixedContext(t *testing.T) {
 	if r.Status != "passed" || r.RequestedStage != "structural" || r.Stages.Metadata.Requested || r.Stages.Settings.Requested {
 		t.Fatal(out)
 	}
+	if !strings.Contains(out, `"owner": "documentation"`) || !strings.Contains(out, `"path": "docs/markitect/project.md"`) || !strings.Contains(out, `"realizes"`) {
+		t.Fatal("actual artifact owner/basis was lost behind private producer fields: " + out)
+	}
 	out = invoke(t, repo.Dir, 0, "context", "product/model", "--revision", "HEAD")
 	if !strings.Contains(out, "language-v1") || !strings.Contains(out, `"reasons"`) || !strings.Contains(out, repo.Git("rev-parse", "HEAD")) {
 		t.Fatal(out)
@@ -197,4 +200,103 @@ func TestMalformedManifestIsKnownFailureButMissingBytesAreIncomplete(t *testing.
 		t.Fatal(err)
 	}
 	invoke(t, repo.Dir, 3, "docs")
+}
+
+func moveFixtureCore(t *testing.T, repo *testkit.Repo, destination, rootDeclaration string) string {
+	t.Helper()
+	old := filepath.Join(repo.Dir, ".markitect", "model", "markitect", "core")
+	entries, err := os.ReadDir(old)
+	if err != nil {
+		t.Fatal(err)
+	}
+	modelRoot := destination
+	if rootDeclaration != "." {
+		modelRoot = filepath.Join(destination, rootDeclaration)
+	}
+	for _, entry := range entries {
+		data, err := os.ReadFile(filepath.Join(old, entry.Name()))
+		if err != nil {
+			t.Fatal(err)
+		}
+		target := filepath.Join(modelRoot, "markitect", "core", entry.Name())
+		if err := os.MkdirAll(filepath.Dir(target), 0755); err != nil {
+			t.Fatal(err)
+		}
+		if err := os.WriteFile(target, data, 0644); err != nil {
+			t.Fatal(err)
+		}
+	}
+	if err := os.RemoveAll(filepath.Join(repo.Dir, ".markitect", "model", "markitect")); err != nil {
+		t.Fatal(err)
+	}
+	manifest, err := os.ReadFile("../../docs/design/canonical-model/minimal-language/exchange-example/dependencies/core/model.yaml")
+	if err != nil {
+		t.Fatal(err)
+	}
+	manifestPath := filepath.Join(destination, "model.yaml")
+	if err := os.WriteFile(manifestPath, []byte(strings.Replace(string(manifest), "root: model", "root: "+rootDeclaration, 1)), 0644); err != nil {
+		t.Fatal(err)
+	}
+	local, err := os.ReadFile(filepath.Join(repo.Dir, ".markitect", "model.yaml"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	repo.Write(".markitect/model.yaml", strings.Replace(string(local), "dependencies: {}", "dependencies: {markitect-core: '1.0.0'}", 1))
+	lock, err := os.ReadFile("../../docs/design/canonical-model/library-example/m1/model-lock.yaml")
+	if err != nil {
+		t.Fatal(err)
+	}
+	coreLock, _, found := strings.Cut(string(lock), "\n  software-basics:")
+	if !found {
+		t.Fatal("normative core lock entry missing")
+	}
+	repo.Write(".markitect/model-lock.yaml", coreLock+"\n")
+	return manifestPath
+}
+
+func TestExternalModelAndHostSourcesRemainPreviewOnly(t *testing.T) {
+	for _, kind := range []string{"dependency", "host"} {
+		t.Run(kind, func(t *testing.T) {
+			repo := productFixture(t)
+			var options []string
+			if kind == "dependency" {
+				manifest := moveFixtureCore(t, repo, t.TempDir(), "model")
+				options = []string{"--dependency", manifest}
+			} else {
+				host := filepath.Join(t.TempDir(), "host.yaml")
+				if err := os.WriteFile(host, []byte("apiVersion: markitect.host/v1\nagentProfiles: {}\ncheckProfiles: {}\n"), 0644); err != nil {
+					t.Fatal(err)
+				}
+				options = []string{"--host-profile", host}
+			}
+			preview := docsPreview(t, repo.Dir, options...)
+			args := append([]string{"docs", "--write", "--expect", preview.View.PreviewDigest}, options...)
+			out := invoke(t, repo.Dir, 3, args...)
+			if !strings.Contains(out, "requires repository-bound sources") {
+				t.Fatal(out)
+			}
+			actual, err := os.ReadFile(filepath.Join(repo.Dir, "docs", "markitect", "project.md"))
+			if err != nil || string(actual) != "reviewed prior generated target\n" {
+				t.Fatalf("target changed: %q %v", actual, err)
+			}
+		})
+	}
+}
+
+func TestRepositoryBoundDependencyKeepsDocumentationWritable(t *testing.T) {
+	repo := productFixture(t)
+	manifest := moveFixtureCore(t, repo, filepath.Join(repo.Dir, "inputs", "core"), "model")
+	preview := docsPreview(t, repo.Dir, "--dependency", manifest)
+	out := invoke(t, repo.Dir, 0, "docs", "--dependency", manifest, "--write", "--expect", preview.View.PreviewDigest)
+	var written docsReport
+	if err := json.Unmarshal([]byte(out), &written); err != nil {
+		t.Fatal(err)
+	}
+	if !written.View.Written || len(written.View.CompletedPaths) != 1 {
+		t.Fatal(out)
+	}
+	actual, err := os.ReadFile(filepath.Join(repo.Dir, "docs", "markitect", "project.md"))
+	if err != nil || string(actual) != preview.View.Markdown {
+		t.Fatalf("dependency-bound write/readback mismatch: %v", err)
+	}
 }

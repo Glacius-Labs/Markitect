@@ -141,6 +141,51 @@ func TestRootResponsibilityPrefixesAreExact(t *testing.T) {
 	}
 }
 
+func TestRawLegacyAndSchemaBoundariesMatchLiveAndFixed(t *testing.T) {
+	for _, name := range []string{"src", "schema"} {
+		t.Run(name, func(t *testing.T) {
+			root := rootLayoutFixture(t)
+			writeLayoutFile(t, root, name, "not a directory\n")
+			if _, _, err := Package(root, "1.2.3"); err == nil {
+				t.Fatal("live file at a directory boundary was accepted")
+			}
+			fixed := fixedSourceSnapshot(t, root)
+			for _, mode := range []string{"100644", "120000"} {
+				fixed.Modes[name] = mode
+				if _, err := snapshotModuleFiles(fixed); err == nil {
+					t.Fatalf("fixed %s mode %s was silently filtered", name, mode)
+				}
+			}
+		})
+	}
+	for _, name := range []string{"schema/selected.yaml", "schema/unselected.txt"} {
+		t.Run(name, func(t *testing.T) {
+			root := rootLayoutFixture(t)
+			fixed := fixedSourceSnapshot(t, root)
+			fixed.Files[name] = []byte("outside")
+			fixed.Modes[name] = "120000"
+			if _, err := snapshotModuleFiles(fixed); err == nil {
+				t.Fatal("fixed schema redirect was filtered before mode validation")
+			}
+			external := filepath.Join(t.TempDir(), "outside")
+			if err := os.WriteFile(external, []byte("outside"), 0644); err != nil {
+				t.Fatal(err)
+			}
+			full := filepath.Join(root, filepath.FromSlash(name))
+			if err := os.MkdirAll(filepath.Dir(full), 0755); err != nil {
+				t.Fatal(err)
+			}
+			if err := os.Symlink(external, full); err != nil {
+				t.Logf("live symlink creation unavailable; fixed raw-mode assertion passed: %v", err)
+				return
+			}
+			if _, _, err := Package(root, "1.2.3"); err == nil {
+				t.Fatal("live schema redirect was silently filtered")
+			}
+		})
+	}
+}
+
 func fixedSourceSnapshot(t *testing.T, root string) *source.Input {
 	t.Helper()
 	files := map[string][]byte{}

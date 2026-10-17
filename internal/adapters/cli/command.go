@@ -73,6 +73,9 @@ docs options:
   --write --expect PREVIEW_DIGEST
   contentDigest identifies rendered bytes; previewDigest binds their sources
   and observed target. Neither is the canonicalModelDigest.
+  Writes require every acquired source to be repository-bound. External
+  model/control/instruction sources remain preview-only because target
+  disjointness has not been established.
 
 Exit codes: 0 requested stage passed; 1 known failure; 2 usage;
 3 incomplete observation, I/O/budget refusal or unavailable operation.

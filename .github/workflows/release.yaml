@@ -53,8 +53,8 @@ jobs:
           git merge-base --is-ancestor "$SOURCE_SHA" origin/main || { echo "tagged commit is not contained in origin/main" >&2; exit 1; }
 
           version_output="$(go run ./cmd/markitect version)"
-          source_version="$(sed -E 's/^Markitect ([^ ]+) \(.+$/\1/' <<< "$version_output")"
-          [[ "$version_output" == "Markitect $source_version (linux/amd64)" ]] || { echo "could not read the source version from Markitect" >&2; exit 1; }
+          source_version="$(python -c 'import json,sys; print(json.load(sys.stdin)["version"])' <<< "$version_output")"
+          [[ -n "$source_version" ]] || { echo "could not read the source version from Markitect" >&2; exit 1; }
           [[ "$TAG" == "v$source_version" ]] || { echo "release tag $TAG does not match source version $source_version" >&2; exit 1; }
 
           bundle_path="$RUNNER_TEMP/markitect-$TAG-bundle.zip"
@@ -153,7 +153,7 @@ jobs:
           set -euo pipefail
           [[ "$(git rev-parse "refs/tags/$TAG^{commit}")" == "$SOURCE_SHA" ]] || { echo "release tag moved away from the workflow source commit" >&2; exit 1; }
           git merge-base --is-ancestor "$SOURCE_SHA" origin/main || { echo "release source commit is no longer contained in origin/main" >&2; exit 1; }
-          [[ "$(go run ./cmd/markitect version)" == "Markitect $VERSION (linux/amd64)" ]] || { echo "release source version changed" >&2; exit 1; }
+          [[ "$(go run ./cmd/markitect version | python -c 'import json,sys; print(json.load(sys.stdin)["version"])')" == "$VERSION" ]] || { echo "release source version changed" >&2; exit 1; }
 
           out="$RUNNER_TEMP/markitect-release-$GITHUB_SHA"
           mkdir -p "$out"

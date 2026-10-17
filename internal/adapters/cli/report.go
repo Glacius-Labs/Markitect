@@ -116,7 +116,11 @@ func attemptReport(a apply.PreviewPreparationAttempt) map[string]any {
 		var entries []any
 		for _, f := range report.Files() {
 			registered, present := f.Registration()
-			entries = append(entries, map[string]any{"path": f.Entry().Path().String(), "class": f.Class(), "why": f.Why(), "contentDigest": f.Entry().ContentID().String(), "mode": f.Entry().Mode(), "registration": registered, "registered": present})
+			entry := map[string]any{"path": f.Entry().Path().String(), "class": f.Class(), "why": f.Why(), "contentDigest": f.Entry().ContentID().String(), "mode": f.Entry().Mode(), "registered": present}
+			if present {
+				entry["registration"] = registered
+			}
+			entries = append(entries, entry)
 		}
 		accounting = map[string]any{"available": true, "status": report.Status(), "treeDigest": report.TreeID().String(), "files": entries, "findings": report.Findings()}
 	}

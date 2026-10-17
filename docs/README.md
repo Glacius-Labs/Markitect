@@ -6,7 +6,7 @@ Use this map to find the product guide or the document that owns a decision or s
 
 | If you want to… | Start here |
 |---|---|
-| Work through an ordinary model-first Work Item | [Project workflow](project-workflow.md), [Project operations](project-operations.md), and the [executable Shop example](../examples/project-world/README.md) |
+| Inspect current canonical v1 preparation | [Project workflow](project-workflow.md), [Project operations](project-operations.md), and the [self-model](../.markitect/README.md) |
 | Understand what Markitect is for, before assessing or redirecting it | [Markitect in brief](vision.md#markitect-in-brief), [Common misreadings](vision.md#common-misreadings), and the [concept register](concepts/register.md) |
 | Understand where the idea came from and why its mechanisms might help | [Origin and rationale](concepts/origin-and-rationale.md) and the [owner's original account](concepts/sources/owner-origin-20261015.md) |
 | Continue thoughts about future use and organization | [Product reflections](concepts/reflections/README.md), starting with [trust through organized agent work](concepts/reflections/organization-and-trust-20261016.md) |

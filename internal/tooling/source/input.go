@@ -17,7 +17,8 @@ const (
 	ExecutableMode = "100755"
 )
 
-// Snapshot contains file bytes keyed by slash-separated repository paths.
+// Input contains maintenance source bytes keyed by repository-relative paths.
+// It is not the product snapshot.Tree or a canonical model value.
 // ID is an opaque identity supplied by the source; it and Provisional do not
 // affect Digest. Modes uses portable regular-file mode tokens in the legacy
 // Git mode encoding.

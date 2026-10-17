@@ -89,6 +89,12 @@ func (s *Service) Write(ctx context.Context, request apply.PreviewRequest, expec
 		p.Status = model.Failed
 		return p, errors.New("documentation previewDigest changed; review a new source/target-bound preview")
 	}
+	for _, source := range p.Sources {
+		if source.RepositoryPath == "" {
+			p.Status = model.NotCompleted
+			return p, errors.New("documentation write requires repository-bound sources; target disjointness from an unbound model, control or instruction input is not established")
+		}
+	}
 	if !controlsPassed {
 		p.Status = model.NotCompleted
 		return p, errors.New("documentation write requires validated execution declarations to protect instruction inputs")

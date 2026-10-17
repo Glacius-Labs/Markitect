@@ -1,49 +1,51 @@
 # Project workflow
 
-This guide describes current executable behavior before the [Apply rebuild](implementation-plan.md). Use the [target contracts](design/canonical-model/README.md) for new implementation work; current commands do not establish completed v1/Manager support.
-
-Markitect manages an adopting repository through one canonical project model under `.markitect/`. The outer coding agent uses typed Markitect MCP operations for project decisions and lifecycle. The Host schedules the model's Managers and reviewers; by default those inner roles run through Codex CLI 0.162.0 App Server with the `gpt-6-luna` model at `high` reasoning effort, and setup can select another profile per role (see [Provider adapters](provider-adapters.md#role-profiles)). The published v0.14.1 binary does not include this `markitect <verb>` workflow; use a matching source build.
+Markitect's purpose is canonical model-first development with delegated realization. This source increment implements read-only preparation and a guarded generated-model view. Recursive work, sessions, executable checks, candidate workspaces, publication and Apply remain unavailable; the [delivery plan](implementation-plan.md) describes their implementation sequence.
 
 ## Connect and inspect
 
-The project workflow needs Git 2.40 or later: Explore, Plan and Apply read fixed Git attributes with `git check-attr --source`, which older Git rejects.
+Use Git with an existing commit and the root-layout CLI:
 
-Install project-local guidance with `markitect onboard`, then register the selected client's MCP server as described in [Provider adapters](provider-adapters.md). The server starts with one explicit repository root. It does not accept a tool argument that changes that root. Use the typed tools and their published schemas; do not invent record fields, IDs, or digests.
+```text
+go run ./cmd/markitect check --repo .
+go run ./cmd/markitect context product/model --repo .
+```
 
-For an ordinary issue, bug, feature, or backlog Work Item, inspect the repository and Git state, then use `model`, `check`, and `context` as needed. Clarify only material questions about intent, scope, authority, or acceptance. Record assumptions and unresolved decisions rather than silently promoting them to requirements.
+The default manifest is `.markitect/model.yaml`. `--model` selects another explicit manifest. Supply every required dependency manifest with repeated `--dependency PATH`; there is no discovery from folders, registries or old project formats. The manifest and `model-lock.yaml` must satisfy the [canonical v1 contract](design/canonical-model/minimal-language/language-contract.md).
+
+An omitted revision observes the actual working draft, including Git-ignored files. `--revision REF` resolves once and captures exactly that full commit. Neither preview supplies an Apply publication guard. A fixed preview refuses present-day external inputs without historical revision binding, including an external Host document even when REF is HEAD.
 
 ## Model and readiness
 
-Use `explore` to preview a typed, one-scope Work Item. Review the selected model/revision binding and its returned `plan.digest`; persist that plan with `write: true` and the exact digest as `expect`. This is durable task context, not accepted model intent.
+`check` requests structural preparation by default: actual compilation, execution declarations, registry, complete file accounting and static context selection. `context <package>` uses the same preparation and reports selected Definitions, provenance and inclusion reasons for one local Package, or `.` for the ordinary root.
 
-If canonical intent, ownership, artifacts, rules, or checks need to change, use `edit` to preview a bounded mutation. Review structural findings and impact, repair concrete diagnostics within authority, and write only with the returned digest. Run `check` again. Under `committed-model` policy, readiness uses the valid selected model committed under repository policy. A digest or commit binds input bytes but does not authenticate human review.
+Add `--metadata --host-profile ABSOLUTE_DOCUMENT_PATH` to request static Agent/Check profile metadata and settings preparation. Actual adapters parse explicitly selected source-bound executable, schema and profile files. A metadata pass does not establish runtime support. Unrequested metadata and settings report `requested: false`; absent or incomplete required observations remain incomplete.
 
-Use `ready` for the named scope. If structure acknowledgement is required, inspect its exact `writePlan`, then submit the acknowledgement with its returned digest and caller-supplied actor/provenance. This records an assertion; it does not authenticate identity. Do not add an acknowledgement step when the scope does not require it.
+## Generated documentation
+
+```text
+go run ./cmd/markitect docs --repo .
+go run ./cmd/markitect docs --repo . --expect PREVIEW_DIGEST --write
+```
+
+Read the nested `view` in the preview. `canonicalModelDigest` identifies compiled model meaning; `contentDigest` hashes rendered Markdown bytes; `previewDigest` binds observed sources, target bytes/existence/mode and generated content. Pass only the returned `previewDigest` to `--expect`. Changed sources or targets refuse the old plan. Fixed-revision views never write, and protected model/control/instruction inputs cannot become generated targets. A write uses an independent documentation guard and actual read-back, with completed paths retained if a later check fails. It is separate from artifact Apply.
+
+Documentation previews may include explicitly selected external sources. For this increment, `docs --write` requires every acquired model, control and instruction source to have an actual repository binding. Otherwise it returns `not_completed` before effects because target disjointness has not been established. Repository-bound dependencies remain writable; an external source is not silently reclassified or followed through an alternate native spelling.
 
 ## Execute, verify, and apply
 
-`projectrun` coordinates planning, resume, work batches, bottom-up integration and closure. Each run or resume invocation holds the writer lock across its method phases; recovery, receipts and cumulative budgets share the durable method state. Configuration validation belongs to `projectconfig` and concrete invocation belongs to `projectexecutor`. Candidate ancestry, independent review freshness, local verification and guarded Apply remain method responsibilities.
-
-When the original Work Item authorizes execution and readiness is clear, use `deliver` with the same exploration and scope and `execute: true` and `write: true`. It advances one durable plan/run through Manager work and integration, full verification, preflight, and guarded Apply. Inspect the returned stages and bindings. For staged control, use `plan`, `run`, `status`, `resume` or `repair`, `verify`, and `apply` (its preview is the preflight) with the typed fields returned by preceding stages. Apply only the reviewed verified candidate. Apply does not commit, merge, publish, deploy, or establish semantic acceptance.
-
-Managers work in separate owned candidate workspaces. The Host integrates candidate deltas against the selected accepted base while retaining the source working-tree baseline; only guarded Apply writes the adopting checkout. A workspace is harvested or removed only after the root turn and every child start the adapter has observed are terminal. Native child telemetry is partial: observed counts are a lower bound, and zero observed child starts does not prove none occurred. Local execution uses the caller's permissions; the workflow is not an operating-system sandbox or hard billing cap.
-
-If a run is interrupted, inspect `status` and continue the same run. Repair a known failed attempt only when the durable receipt makes it retryable and the existing budgets allow it. If the outcome is unknown, do not replay the role or create a replacement run; preserve the workspace/journal and use the recovery operation or report the unresolved blocker. Changed model, source, method policy, or candidate bindings require a fresh preview. New plans bind method policy and selected inputs without resolving executor binaries. Each actual internal invocation records its executor identity separately. A plan saved under an older runtime binding version requires a fresh plan before execution.
-
-For execution outside the configured executor, persist the same authorized plan and use `packet-export RUN --execute`. The scheduler stops at `awaiting-external`, releases its lock and exports immutable Manager or independent review packets. `packet-list RUN` reads pending packets without execution. Submit the complete protocol response with `packet-submit RUN --packet ID --expect DIGEST --response FILE --execute`, then continue with `packet-export RUN --execute`. Re-export preserves the original invocation bytes; an exact duplicate submission adds no evidence, and a changed submission for the same packet is rejected. Submission does not Apply the candidate. The normal ownership, obligation, integration, exact-candidate review, required-check Verify and guarded Apply gates still apply. An external review verdict is technical evidence, not human acceptance.
+`apply` returns `not_completed` and exit 3 before acquiring a source or performing an effect. No preview, digest, test result or metadata report makes it available. This CLI has no execution lifecycle or MCP server. The [design contracts](design/canonical-model/README.md) and assigned package dispatches govern later stages.
 
 ## Existing repositories
 
-For Brownfield adoption, select fixed source and target revisions, explicit inventory paths, exclusions, and scope roots. `adopt` provides typed discovery/session stages and bounded Manager proposals/integration. Manager evidence IDs authorize raw source access; delegation IDs authorize only assignment to children. Keep those pools explicit and disjoint, include counterexamples and uncertainty, and treat observed code as evidence about implementation rather than accepted intent.
+Author the intended canonical v1 model and explicit dependencies, then register exact realization files in `.markitect/registry/<package>/registry.yaml`. File granularity is the author's choice; a file may realize several Definitions but has one explicit owner. An exceptional ignore names one exact observed file with a reason. Missing entries, missing paths, duplicate ownership and overlaps with protected inputs fail. Gitignore is not coverage.
 
-Brownfield adoption writes only the planned canonical model through guarded Apply. Review and commit that model before a separate implementation Work Item. Do not infer intended behavior from filenames, metadata, or a Manager report alone. Use `ready` and current coverage/check results before execution.
+There is no automatic conversion, scaffold or Brownfield runtime. Earlier workflows remain reproducible from their [immutable source](https://github.com/Glacius-Labs/Markitect/tree/5ff3206917fa3b7482d9daedb903d57a919f56b8).
 
 ## Record setup and interrupted work
 
-Domain records use `.markitect/records/<kind>/<id>/`; they are operational evidence rather than canonical model intent. Existing projects add anchored `/records/` to their local ignore file through a reviewed edit. Stop and quiesce old-layout writers before upgrading. An affected kind with preserved old domain records or remnants refuses new work without import, deletion or replay; inspect it using the original source after stopping current writers. Private recovery material and explicit transport inputs retain their old paths. Follow [record setup and cutover](project-operations.md#record-layout-and-cutover) and preserve any unknown publication outcome.
+These operations create no run, task, budget, candidate or recovery journal. Preserve acquisition diagnostics and actual generated-document completed-path reports. Execution/recovery records belong to real ports and implementation, not invented preview records.
 
 ## Acceptance and status
 
-A successful compiler check establishes structural conformity; declared checks and scoped Manager/reviewer reports establish only their stated evidence. A successful Apply records technical materialization, not semantic correctness, owner acceptance, or human approval. The adopting repository owns its approval, merge, and release policy.
-
-The [delivery plan](implementation-plan.md) owns current scope; chats/PRs record candidate evidence. Actual28 passed the combined A01 native smoke on source `cdd30b0efc540f151404dabe86b022275dc40d83`, including Verify, guarded Apply and original-turn recovery; the [A01 validation record](validation/a01-native-smoke-20261010.md) states what it does and does not establish. That result is source-bound; later CI and Main integration are separate evidence. Acceptance grants are exercise authority, not universal runtime defaults. Historical validation remains bound to its recorded source SHAs.
+JSON reports name the operation, requested stage and actual statuses. Exit 0 means the requested stage passed; 1 is a known failure; 2 is invalid usage; 3 is incomplete observation, I/O/budget refusal or unavailable operation. `failed` and `not_completed` remain distinct. A committed model binds a specification revision; it does not authenticate a human decision. Local source checks, hosted CI, provider execution, releases and owner acceptance remain separate evidence.
