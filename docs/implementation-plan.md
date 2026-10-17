@@ -43,12 +43,12 @@ Use an isolated managed worktree and a non-protected branch from the integrated 
 | APPLY-PLAY | `experiments/library-playground/` | First wave. Independent Python standard-library oracle and bounded harness checks. No library implementation, Manager engine or real provider invocation. |
 | APPLY-ORG | `internal/organization/` | After MODEL/SNAPSHOT APIs: topology, exact settings, context and mandates from explicit facts. No runtime or registry import. |
 | APPLY-REALIZATION | `internal/realization/` | After MODEL/SNAPSHOT APIs: ownership, census, registry, claims, candidates and composition. No scheduler. |
-| APPLY-CUTOVER | CLI/bootstrap, self-model, source/coverage/import gates, packaging/smoke, root module and current guidance | After deterministic foundation. One owner switches the active product and deletes old compiler/project/runtime/API consumers. Apply stays explicitly unavailable until implemented. |
+| APPLY-CUTOVER | CLI/bootstrap, self-model, source/coverage/import gates, packaging/smoke, root module and current guidance | After deterministic foundation, read-only Apply preparation and repository capture. One owner switches the active product and deletes old compiler/project/runtime/API consumers. Apply stays explicitly unavailable until implemented. |
 | APPLY-RUN | `internal/run/` and consumer-owned Session/Workspace/Check/Journal ports | After foundation/cutover. One owner for task/review/finding/budget/lifecycle semantics. Establish executable ports before adapters. |
 | APPLY-JOURNAL | `internal/adapters/journal/` | After RUN/Apply control contracts. SQLite append/control/recovery; coordinator owns dependency pin. |
 | APPLY-AGENT | `internal/adapters/codexappserver/`, `internal/adapters/process/` | After Session/process contracts. Pin executable/schema, implement direct stdio; real smoke needs finite authority. |
-| APPLY-REPOSITORY | `internal/adapters/gitrepo/`, `internal/adapters/checks/` | After snapshot/workspace/check/publication contracts. Capture, checks, guarded effects and read-back. |
-| APPLY-INTEGRATE | `internal/apply/`, bootstrap/wiring and composed evidence | A first slice after RUN declares the consumer-owned `apply` ports (Source, Control, Publisher) that JOURNAL and REPOSITORY implement. The use case and wiring follow the adapters: one Package, then recursive integration, verification/publication and real M1/M2 proof. |
+| APPLY-REPOSITORY | `internal/adapters/gitrepo/`, `internal/adapters/checks/` | Read-only capture follows the reviewed Apply Source/PreviewSource contracts, before CUTOVER. Workspace, check and guarded publication effects follow the corresponding RUN/Apply contracts. |
+| APPLY-INTEGRATE | `internal/apply/`, bootstrap/wiring and composed evidence | Before CUTOVER, establish consumer-owned Source/PreviewSource ports and read-only preparation over actual acquired inputs. Model compilation is the first small slice, not a complete check or context. After RUN, add Control/Publisher and orchestration; one Package, recursive integration, verification/publication and real M1/M2 proof follow their adapters. |
 
 A scope is reserved only when dispatched; it is not permission to start every later row. Parent scope grants no sibling files. Shared outputs have one current writer; reservation changes are explicit.
 
@@ -59,6 +59,8 @@ Every dispatch states: package ID, full integrated base, exact paths, contracts,
 MODEL first supplies an I/O-free compilation entrypoint over explicit source/dependency bytes, typed identities/values/provenance and a result that cannot claim success with partial v1. SNAPSHOT supplies immutable tree/path/mode/content identities and deterministic comparison, distinct from canonical model digests. Exact Go names are producer-owned choices reviewed before consumers start.
 
 New foundation packages may develop in isolation while BOOT is reviewed. They cannot integrate with unclassified paths or disabled import checks. BOOT coordinates ownership and package-map handling without writing producer implementations. The public CLI must not consume the partial foundation before CUTOVER.
+
+Before CUTOVER, read-only preparation and repository capture must support real check/context inputs. Source captures committed clean HEAD with an opaque comparison guard; PreviewSource observes a working draft or an explicitly resolved fixed revision without that guard. Both use the same raw input contract and acquisition mechanism. Initial context preview exposes the actual model selection, inclusion reasons and resolved settings; full role rendering waits for real task facts. No invented run, task, evidence or budget records make a preview executable. This moves only read-only prerequisites forward; workspace, provider and publication effects remain later work.
 
 ### Integration
 
@@ -74,7 +76,7 @@ New foundation packages may develop in isolation while BOOT is reviewed. They ca
 
 1. **Baseline and measurement:** integrate this concept/coordination reset, then dispatch BOOT, MODEL, SNAPSHOT and PLAY separately. The oracle needs no finished CLI; synthetic Apply bookkeeping is not a prerequisite for the pure compiler.
 2. **Deterministic foundation:** integrate BOOT, producer API slices and complete v1 conformance; then parallel ORG and REALIZATION. Implement all language constructs, not only M1. Bounded probe evidence remains separate.
-3. **Product cutover:** switch CLI, self-model and build/coverage/import gates together; remove obsolete source/commands/tests. Keep Main buildable and explicit about unavailable execution.
+3. **Read-only preparation and product cutover:** establish Apply's Source/PreviewSource consumer contracts and model preparation, then repository capture and complete preparation for check/context. Switch CLI, self-model and build/coverage/import gates together; remove obsolete source/commands/tests. Keep Main buildable and explicit about unavailable execution.
 4. **Execution/adapters:** RUN establishes ports/reducer. JOURNAL, AGENT and REPOSITORY then work independently against them, without a second scheduler or ledger.
 5. **Realization:** one Package through work/review/rework, then root recursion, integration, complete evidence and guarded publication.
 6. **Demonstration:** freeze product/profile; real M1/R1 and independent A1 inspection; exact model-only M2 edit; real R2 on A1 and independent A2 inspection. Preserve all attempts.
