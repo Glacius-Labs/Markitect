@@ -76,6 +76,8 @@ checks:
 
 `defaults` applies to every local Package Manager, including root. `packages` keys are exact local Package paths; `.` is root. Unknown or imported Package keys fail. There is no inheritance from ancestor overrides: `lending/reminders` uses project defaults unless it has its own entry.
 
+The accepted later [model-migration workflow](commands.md#model-restructuring-as-an-explicit-migration) explicitly migrates affected Package bindings and reviews their effective settings before activating the future Manager tree. Conflicting teams, instructions, limits or rights require resolution, not an implicit winner or added budgets. This preserves the resolution rules below; it implements no model/configuration migration API and grants no new execution authority.
+
 | Setting | Resolution |
 | --- | --- |
 | Manager and reviewArbiter | Project `model` and `effort` are required. An exact Package override replaces only supplied scalar fields. |
