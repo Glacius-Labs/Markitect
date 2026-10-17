@@ -107,11 +107,11 @@ func publicationRepresentable(a *acquisition, changes []snapshot.Change, policie
 		}
 		if runtime.GOOS == "windows" {
 			if !filepath.IsLocal(filepath.FromSlash(c.Path().String())) {
-				return ErrUnrepresentable
+				return fmt.Errorf("%w: %w: native publication path %q", apply.ErrUnpublishable, ErrUnrepresentable, c.Path())
 			}
 			for _, part := range strings.Split(c.Path().String(), "/") {
 				if strings.ContainsAny(part, `<>:"|?*`) || strings.HasSuffix(part, ".") || strings.HasSuffix(part, " ") {
-					return ErrUnrepresentable
+					return fmt.Errorf("%w: %w: native publication name %q", apply.ErrUnpublishable, ErrUnrepresentable, part)
 				}
 			}
 		}
@@ -122,10 +122,10 @@ func publicationRepresentable(a *acquisition, changes []snapshot.Change, policie
 			return fmt.Errorf("%w: automatic text conversion with a CRLF index entry", ErrUnrepresentable)
 		}
 		if has && runtime.GOOS == "windows" && policies[c.Path().String()].filemode == "true" && after.Mode() == snapshot.Executable {
-			return fmt.Errorf("%w: executable mode on this filesystem", ErrUnrepresentable)
+			return fmt.Errorf("%w: %w: executable mode on this filesystem", apply.ErrUnpublishable, ErrUnrepresentable)
 		}
 		if has && policies[c.Path().String()].filemode == "false" && ((!had && after.Mode() == snapshot.Executable) || (had && before.Mode() != after.Mode())) {
-			return fmt.Errorf("%w: repository does not track requested mode at %q", ErrUnrepresentable, c.Path())
+			return fmt.Errorf("%w: %w: repository does not track requested mode at %q", apply.ErrUnpublishable, ErrUnrepresentable, c.Path())
 		}
 		if has {
 			entries[c.Path()] = after
@@ -151,14 +151,19 @@ func publicationRepresentable(a *acquisition, changes []snapshot.Change, policie
 			return err
 		}
 		if c.Kind() == snapshot.Add {
-			if _, err := root.Lstat(name); !errors.Is(err, os.ErrNotExist) {
-				return fmt.Errorf("%w: native publication alias at %q", ErrUnrepresentable, c.Path())
+			if _, err := root.Lstat(name); err == nil {
+				return fmt.Errorf("%w: %w: native publication alias at %q", apply.ErrUnpublishable, ErrUnrepresentable, c.Path())
+			} else if !errors.Is(err, os.ErrNotExist) {
+				return err
 			}
 			want, _ := model.NameCollisionKey(name)
 			for _, other := range names {
 				key, ok := model.NameCollisionKey(other)
-				if !ok || key == want {
-					return fmt.Errorf("%w: publication target name exists or aliases at %q", ErrUnrepresentable, c.Path())
+				if !ok {
+					return ErrUnrepresentable
+				}
+				if key == want {
+					return fmt.Errorf("%w: %w: publication target name exists or aliases at %q", apply.ErrUnpublishable, ErrUnrepresentable, c.Path())
 				}
 			}
 		}
@@ -173,7 +178,7 @@ func publicationRepresentable(a *acquisition, changes []snapshot.Change, policie
 				return ErrUnrepresentable
 			}
 			if previous, found := keys[key]; found && previous != p {
-				return fmt.Errorf("%w: publication case or Unicode alias %q / %q", ErrUnrepresentable, previous, p)
+				return fmt.Errorf("%w: %w: publication case or Unicode alias %q / %q", apply.ErrUnpublishable, ErrUnrepresentable, previous, p)
 			}
 			keys[key] = p
 		}
@@ -185,7 +190,7 @@ func publicationRepresentable(a *acquisition, changes []snapshot.Change, policie
 		for _, old := range a.raw.Census.Entries() {
 			oldKey, _ := model.NameCollisionKey(old.Path().String())
 			if key == oldKey && c.Path() != old.Path() {
-				return fmt.Errorf("%w: case-only publication rename", ErrUnrepresentable)
+				return fmt.Errorf("%w: %w: case-only publication rename", apply.ErrUnpublishable, ErrUnrepresentable)
 			}
 		}
 	}
