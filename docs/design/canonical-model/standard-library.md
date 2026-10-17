@@ -22,6 +22,7 @@ Source: the owner's standard-library design discussion in this chat on 17 Octobe
 - Observation direction: "Wir sollten spec beobachten. Falls wir nie einen Anwendungsfall dafür haben, könnten wir überlegen ob wir das überhaupt brauchen". Retain this as an evidence-led simplification question during actual use. It is not a decision to remove spec or change the completed v1 baseline now.
 - Package/version selection: "Dann übernehmen wir die Paketstruktur und Versionierung wie vorgeschlagen." This selects the markitect-standard distribution, its two initial Packages, and the version/release policy below. It does not publish a release or select the later companion-library candidates.
 - Broader library requirement: "Unsere Standard Lib muss alles relevante beschreiben können, was normalerweise in einem Software Projekt bzw Repo auch dokumentiert und festgelegt sein muss. Es muss schließlich das Projekt beschreiben können." The owner explicitly named Frontend, Backend, C4 and Load Balancer, and allowed separate Packages. The eight-Kind foundation is therefore the first shared layer, not a claim that a complete software-project vocabulary family has already been designed. The proposed topic map below answers this broader requirement.
+- Continuation: "Alles klar, dann halten wir das so fest und machen so weiter". The owner adopts the modular coverage direction and continuation with system/application/component/deployment/instance boundaries. Exact companion Kind contracts and the web example remain design work; this is not a change to existing M1 behavior or a deployment operation.
 
 ## Current design state
 
@@ -34,7 +35,7 @@ Source: the owner's standard-library design discussion in this chat on 17 Octobe
 | Scenario and general-purpose Check: body links and empty spec | Owner-selected direction | [Scenario](scenario.md), [Check](check.md), example below |
 | Exactly the eight discussed Kinds as the first scope | Owner-selected direction | Scope assessment below |
 | markitect-standard distribution, two initial Packages and version policy | Owner-selected direction | Package/version contract below |
-| Broader project/repository coverage and modular extension | Owner requirement; proposed topic map and exact companion Kinds remain under discussion | Broader library section below |
+| Broader project/repository coverage and modular extension | Owner adopts the modular coverage direction; exact companion contracts remain design work | Broader library section below |
 | Production library, migration and consumer behavior | Not implemented by this record | Existing fixtures remain unchanged |
 
 The initial source assessment used Main `f8c1acaa169c9955d237e17cd245add963c155bd`. Before recording, the isolated documentation branch advanced to integrated Main `f23eaa2072226d905a8d79b8d6c20f419dfdc136`. These are source observations, not compatibility or execution evidence. The canonical v1 compiler and read-only preparation exist; full Apply remains separate delivery work.
@@ -515,6 +516,78 @@ This example deliberately extends beyond the current local JSON Lines Library. I
 The eight base Kinds are ready for final wording and a concrete compiler/consumer fixture without waiting for every companion. The broader library family needs the above design work before claiming coverage of ordinary full software projects. Producing the family is not equivalent to modeling every vendor, framework or infrastructure resource in advance; extensible project-specific vocabulary remains part of the language.
 
 Recommended next design slice: distinguish a system, an application/runtime boundary, an internal Component and a deployment/instance, then place frontend, backend and load balancing in that example. These choices determine the architecture/platform vocabulary more directly than adding a long list of technology names.
+
+## System, application and deployment walkthrough
+
+Working design, 17 October 2026, continuing the owner-adopted sequence. The distinctions and possible Kind names below are recommendations for discussion. They preserve the selected eight-Kind foundation; they do not add Definitions to the Library fixture or select the complete companion taxonomy.
+
+### Proposed meanings
+
+| Term | Working meaning | Owns in the web Library |
+| --- | --- | --- |
+| System | A coherent software solution with an explicitly stated purpose, scope, responsibilities and external boundaries. | What belongs to the Library solution and what remains external. |
+| Application | An executable software unit with a defined runtime boundary and offered/consumed contracts. | The browser application or API application, independent of a particular deployment. |
+| Component | The selected general system-part concept; an internal responsibility can be described with it without a separate runtime boundary. | Lending logic within the API. |
+| Environment | A context with its intended operating conditions and constraints. | Production versus local development, without copies of domain meaning. |
+| Deployment | An intended arrangement of an application in an environment, with configuration, capacity, hosting and integration choices as required. | How the same API application should run in production. |
+| Instance | A specifically distinguished intended occurrence within a deployment, when its identity or role matters. Actual runtime identities and observed state remain operational records. | A stable primary/standby role if the project requires one; not every transient process. |
+
+The proposed System boundary does not follow automatically from a repository, model Package or Manager boundary. The model describes it explicitly. Frontend and backend remain roles, not automatically additional Kinds. A UseCase can span several Components or applications.
+
+Application is a more specific architectural contract than the broad Component meaning, but v1 supplies no nominal inheritance. A particular API application would be one Definition with a chosen Kind; there is no need for a duplicate Software.Component Definition representing the same object. Required common meaning must be stated explicitly in any new Kind contract.
+
+Deployment here means desired arrangement, not the historical act of deploying. An executed rollout, current pod list or observed failure belongs to records and evidence. Intended placement/configuration constraints remain canonical model content. Whether a distinct Deployment Kind, Environment Kind or stable Instance Kind is useful must be checked through the example before finalizing their exact contracts.
+
+### One coherent example
+
+The prospective web Library has the following subjects. Candidate names below are explanatory, not selected stable Package identities or a compiled fixture:
+
+| Definition | Possible Kind | Statement |
+| --- | --- | --- |
+| library | Architecture.System | The solution includes a browser application, API and its supporting data responsibility. |
+| library-web | Architecture.Application | The frontend presents the existing operator behavior and uses the Library HTTP contract. |
+| library-api | Architecture.Application | The backend offers that contract and contains lending logic. |
+| lending-logic | Software.Component | Realizes borrowing and returns within the API, with their domain rules. |
+| library-http-api | Software.Interface | Owns the request/response contract; domain meaning stays linked to the UseCases. |
+| production | Deployment.Environment | States the production context and applicable operating constraints. |
+| api-production | Deployment.Deployment | Arranges library-api in production with at least two interchangeable instances. |
+| public-entry | Networking.LoadBalancer | Serves the intended public entry and routes to suitable healthy instances of api-production. |
+
+The data-store type and data contracts are intentionally not finalized by this slice. Two API replicas require shared or correctly coordinated lending state and an explicit admission consistency contract; independently running M1 processes each own local state and do not establish those guarantees across replicas. Deployment capacity alone does not solve this issue. The example adds no direct member self-service role and does not grant persistence or web behavior to the current local M1. If the existing library Concept were deliberately retyped as System later, preserve a single owner of purpose/scope rather than maintain duplicate competing descriptions.
+
+Illustrative body relationship excerpts, not complete Definition files:
+
+```text
+library:
+  [[library-web]] and [[library-api]] belong to this system.
+
+library-api:
+  Provides [[library-http-api]] and contains [[lending-logic]].
+
+api-production:
+  Runs [[library-api]] in [[production]] with at least two
+  interchangeable application instances.
+
+public-entry:
+  Routes public requests for [[library-http-api]] only to suitable healthy
+  instances of [[api-production]].
+```
+
+The sentences carry membership, offering, deployment and routing meaning; links carry explicit target identities. They are not new Core operators or automatic provider/routing validation. All exact imports, host placement and remaining domain constraints would be supplied in a complete consuming example.
+
+### Avoid unnecessary instance Definitions
+
+Refinement of the earlier two-instance illustration: two interchangeable replicas do not necessarily justify two separately named canonical Definitions. A desired capacity statement in api-production can describe them without maintaining api-instance-a and api-instance-b. Use explicit intended Instances when a difference such as role or fixed placement matters. Autoscaled or replaced process identities should not force model edits on every runtime change.
+
+This reduces model upkeep. The tradeoff is that an individual occurrence is not separately referenceable unless the model explicitly needs and declares it. The proposed Instance concept therefore remains optional rather than mandatory for every deployment.
+
+A desired replica count is a possible concrete spec use if a manifest generator or validator must consume an exact value. That consumer and its value contract would justify a Property proposal. The current illustration keeps it in prose; neither a replica Property nor empty specs for every companion Kind are selected here.
+
+### Relation to C4 and the next distinction
+
+The generic application/component/deployment distinctions are the first design step. An optional C4 vocabulary can subsequently state its exact system/container/component contracts and view rules. A logical data store is a separate subject from a running database host or its deployment. Do not silently force all generic Components into C4's narrower Component category or create duplicate architecture owners to populate two views.
+
+Recommended next step: review these meanings, especially application versus Component and desired deployment versus actual runtime records, then refine logical data store, infrastructure/hosting and C4 mapping. Final companion Kind wording and fields should follow the concrete boundaries rather than be filled in for completeness.
 
 ## Observe the value of spec
 
