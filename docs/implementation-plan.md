@@ -54,7 +54,7 @@ Interpretation of that division (marked):
 - **Shared files** stay reserved explicitly through the Coordinator: `go.mod`, `internal/adapters/cli/command.go`, `internal/bootstrap/main.go`, the model and registry shards outside the architect's packages, the architecture and module gates, and the code map.
 - **Port changes** go only through the architect. An adapter that needs one asks the owner, who relays the request.
 
-The architect delivers this queue in order, one pull request each. The Coordinator plans around it. A1 completes the session port contract, in code and in its owning documents, before the rest of the concept. The adapters depend on it, and it adds no core behavior.
+The architect delivers this queue in order, in one or more pull requests each. The Coordinator plans around it. A1 completes the session port contract, in code and in its owning documents, before the rest of the concept. The adapters depend on it, and it adds no core behavior.
 
 | ID | Deliverable | Unblocks |
 | --- | --- | --- |

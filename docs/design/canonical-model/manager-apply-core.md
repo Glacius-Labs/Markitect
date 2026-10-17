@@ -57,7 +57,7 @@ Each Manager of the topology has exactly one task per run. The Host creates ever
 **Review**
 - **T7** On a submission, the Host freezes the candidate and moves the task to `reviewing`. A fresh reviewer conversation assesses it in two steps: first expectations from the model, then the candidate and its evidence. Where the configuration enables review batching, one such review covers several pending no-change submissions in the same two steps, each with its own verdict bound to its subject. Batching never removes a subject or lowers the protected review floor.
 - **T8** A review ends in one of four ways:
-  - **Pass:** the Host accepts the delivery (D1). A pass must resolve, or mark not applicable, every open blocking finding on its subject; a pass that leaves one open is an invalid verdict. If another open blocking issue covers the subject (I3), the Host withholds acceptance instead, and the task returns to `ready` with no rejection counted.
+  - **Pass:** the Host accepts the delivery (D1). A pass must resolve, or mark not applicable, every open blocking finding addressed to the task for this review purpose, including those raised on its earlier candidates; a pass that leaves one open is an invalid verdict. If another open blocking issue covers the subject (I3), the Host withholds acceptance instead, and the task returns to `ready` with no rejection counted.
     - After a `limited` delivery, the task returns to `ready`.
     - After a `complete` local delivery, a Manager without children is `done`. A Manager with children becomes `ready` for integration if all its children are `done`, and otherwise `blocked` on them.
     - After a `complete` integration delivery, the task is `done`.

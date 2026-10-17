@@ -123,10 +123,44 @@ func TestReplayRefusesChangedContentRecordsAndOwnership(t *testing.T) {
 	recordAgain := capture(t, base, who, realization.PathClaims{}, fileTree(t, "owned"), registry(t, registration(t, who, artifact(t, "owned", borrow, policy))))
 	replayRefused(t, replayed(t, aggregate(t, base), record), recordAgain, "replay.registry_changed")
 
-	// A record transferred to another owner after capture (core rule D6) makes
-	// the earlier owner's file change unowned.
+	// A record transferred to another owner after capture (core rule D6) is a
+	// changed record for the earlier owner's file change.
 	transferred := candidateBase(t, compiledFacts(), registry(t, registration(t, other, artifact(t, "owned", borrow))), fileTree(t, "owned"), nil)
-	replayRefused(t, aggregate(t, transferred), edit, "replay.not_owned")
+	replayRefused(t, aggregate(t, transferred), edit, "replay.registry_changed")
+}
+
+func TestReplayRefusesFileAndRecordEditsTheCandidateDidNotSee(t *testing.T) {
+	who := owner(t, "empty")
+	old := registry(t, registration(t, who, artifact(t, "owned", borrow)))
+	base := candidateBase(t, compiledFacts(), old, fileTree(t, "owned"), nil)
+	recordOnly := capture(t, base, who, realization.PathClaims{}, fileTree(t, "owned"), registry(t, registration(t, who, artifact(t, "owned", policy))))
+	bytesOnly := capture(t, base, who, realization.PathClaims{}, contentTree(t, "owned", "changed"), old)
+	replayRefused(t, replayed(t, aggregate(t, base), recordOnly), bytesOnly, "replay.registry_changed")
+	replayRefused(t, replayed(t, aggregate(t, base), bytesOnly), recordOnly, "replay.content_changed")
+}
+
+func TestNewFileCarriesAcrossAVersionWithFreshClaims(t *testing.T) {
+	a, b := owner(t, "empty"), owner(t, "lending")
+	compiled := compiledFacts()
+	f := facts(t, compiled, realization.Registry{}, snapshot.Tree{}, []realization.CreationArea{area(t, a, "out"), area(t, b, "out")})
+	base, err := realization.NewCandidateBase(compiled, f)
+	if err != nil {
+		t.Fatal(err)
+	}
+	other := capture(t, base, b, reserve(t, f, b, "out/b.go", realization.PathClaims{}), fileTree(t, "out/b.go"), registry(t, registration(t, b, artifact(t, "out/b.go", policy))))
+	agg := replayed(t, aggregate(t, base), other)
+	// The Host reserves a's recorded path again on the facts of the new version.
+	claims := reserve(t, agg.PathFacts(), a, "out/a.go", realization.PathClaims{})
+	ra := registration(t, a, artifact(t, "out/a.go", borrow))
+	reg := registry(t, ra, registration(t, b, artifact(t, "out/b.go", policy)))
+	own := capture(t, agg.CandidateBase(), a, claims, fileTree(t, "out/a.go", "out/b.go"), reg)
+	if len(own.Changes()) != 1 || own.Changes()[0].Path().String() != "out/a.go" {
+		t.Fatal("a capture at a later version holds another owner's change")
+	}
+	agg = replayed(t, agg, own)
+	if agg.Version() != 2 || !agg.Tree().Equal(fileTree(t, "out/a.go", "out/b.go")) {
+		t.Fatal("the carried new file was not composed")
+	}
 }
 
 func TestReplayRefusesTreeConflictsBetweenDeliveries(t *testing.T) {

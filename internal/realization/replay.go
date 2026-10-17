@@ -55,19 +55,29 @@ func (a Aggregate) Registry() Registry {
 	return a.value.registry
 }
 
-// CandidateBase returns the base a step starts from at this aggregate version:
-// the captured model inventory, creation areas and protections over the
-// aggregate's current tree and registry (core rule D3). Candidates captured on
-// it hold exactly the step owner's changes.
+// PathFacts returns the facts a step's path claims are checked against at this
+// aggregate version: the captured model inventory, creation areas and
+// protections over the aggregate's current tree and registry. Claims are bound
+// to one version, so the Host forms a fresh claim set for each step by
+// reserving the task's recorded reservations again on these facts.
+func (a Aggregate) PathFacts() PathFacts {
+	if !a.Valid() {
+		return PathFacts{}
+	}
+	basis := *a.value.base.value.facts.basis
+	basis.tree = a.value.tree
+	basis.registry = a.value.registry
+	return PathFacts{&basis}
+}
+
+// CandidateBase returns the base a step starts from at this aggregate version
+// (core rule D3). Candidates captured on it hold exactly the step owner's
+// changes.
 func (a Aggregate) CandidateBase() CandidateBase {
 	if !a.Valid() {
 		return CandidateBase{}
 	}
-	b := a.value.base.value
-	basis := *b.facts.basis
-	basis.tree = a.value.tree
-	basis.registry = a.value.registry
-	return CandidateBase{&candidateBasis{facts: PathFacts{&basis}, definitions: b.definitions}}
+	return CandidateBase{&candidateBasis{facts: a.PathFacts(), definitions: a.value.base.value.definitions}}
 }
 
 // ReplayResult is the outcome of composing one delivery onto an aggregate. A
@@ -90,12 +100,12 @@ func replayRefusal(code string, owner Owner, path snapshot.Path, message string)
 
 // ReplayDelivery composes a candidate's owned changes onto the aggregate (core
 // rule D2). The candidate must share the aggregate's model inventory, creation
-// areas and protections. Every changed path must still be registered to the
-// candidate's owner, or be new and registered by the candidate, and must still
-// hold in the aggregate the content the candidate was made on. Every changed
-// registry record must still hold the record the candidate was made on. No
-// common base is required, because ownership is exclusive. Composition never
-// merges content or chooses between owners.
+// areas and protections. Every path it touches, by file or by record, must
+// still be registered to the candidate's owner or be newly registered by the
+// candidate, and must still hold in the aggregate both the file entry and the
+// registry record the candidate was made on. No common base is required,
+// because ownership is exclusive. Composition never merges content or chooses
+// between owners.
 func ReplayDelivery(a Aggregate, c Candidate) ReplayResult {
 	if !a.Valid() || !c.Valid() {
 		return replayRefusal("replay.unavailable", Owner{}, snapshot.Path{}, "A valid aggregate and candidate are required.")
@@ -115,23 +125,26 @@ func ReplayDelivery(a Aggregate, c Candidate) ReplayResult {
 	}
 	added := map[snapshot.Path]bool{}
 	for _, change := range c.value.registryChanges {
-		before, had := madeRecords[change.path]
-		now, has := current[change.path]
-		if had != has || had && !sameRegistration(before, now) {
-			return replayRefusal("replay.registry_changed", owner, change.path, "The registry record changed after the candidate was made.")
-		}
-		if next, ok := change.After(); ok && !has && next.owner == owner {
-			added[change.path] = true
+		if next, ok := change.After(); ok && next.owner == owner {
+			if _, had := madeRecords[change.path]; !had {
+				added[change.path] = true
+			}
 		}
 	}
-	for _, change := range c.value.changes {
-		path := change.Path()
-		if r, registered := current[path]; registered && r.owner != owner || !registered && !added[path] {
-			return replayRefusal("replay.not_owned", owner, path, "The changed path is not registered to the delivering owner.")
+	// File and record of one path are checked together, so two candidates of
+	// one owner cannot combine into a pair that neither of them saw.
+	for _, path := range c.value.touched {
+		before, had := madeRecords[path]
+		now, has := current[path]
+		if had != has || had && !sameRegistration(before, now) {
+			return replayRefusal("replay.registry_changed", owner, path, "The registry record changed after the candidate was made.")
 		}
-		before, had := made.Tree().Lookup(path)
-		now, has := a.value.tree.Lookup(path)
-		if had != has || had && before != now {
+		if has && now.owner != owner || !has && !added[path] {
+			return replayRefusal("replay.not_owned", owner, path, "The touched path is not registered to the delivering owner.")
+		}
+		entry, hadEntry := made.Tree().Lookup(path)
+		current, hasEntry := a.value.tree.Lookup(path)
+		if hadEntry != hasEntry || hadEntry && entry != current {
 			return replayRefusal("replay.content_changed", owner, path, "The path no longer holds the content the candidate was made on.")
 		}
 	}
