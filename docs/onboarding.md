@@ -1,10 +1,12 @@
 # Windows CLI onboarding exercise
 
+**Retired walkthrough:** the old release downloads and their installation paths were removed on 17 October 2026. This page preserves the original Windows exercise and observations only. Use [current source](../README.md#run-the-current-source); original binaries are identified by the [retained release evidence](history/distribution-retirement-20261017.md).
+
 This dated exercise measures a machine-run path through a published Windows CLI. It is a reproducible adoption smoke exercise, not novice-user research: one maintainer/agent runs a fixed synthetic task, and the timer does not represent a population or a human learning curve.
 
 ## Install and identify the release
 
-For current installation, follow the pinned Windows instructions in the repository [README](../README.md#install-markitect). To reproduce the dated exercise, use the immutable `v0.5.0` release instead: set `$tag = 'v0.5.0'`, `$sha256 = '6f5b98dad2ea6003bc0368800691af70084a44d2c225c26fe12d120bcda27178'`, and the expected version string to `Markitect 0.5.0 (windows/amd64)` in those instructions. Confirm the installed path, hash, and version before authoring:
+The original exercise used the now-retired `v0.5.0` Windows binary with SHA-256 `6f5b98dad2ea6003bc0368800691af70084a44d2c225c26fe12d120bcda27178` and version string `Markitect 0.5.0 (windows/amd64)`. Its installation procedure remains in [the pre-retirement README](https://github.com/Glacius-Labs/Markitect/blob/1f4a1ede214d05fd2fee615b3905207df7702426/README.md#install-markitect); the following recorded its installed path, hash and version.
 
 ```powershell
 $binary = (Get-Command markitect.exe -ErrorAction Stop).Source
@@ -18,11 +20,7 @@ The release binary is already installed when the measurement script receives `-M
 
 The synthetic [parcel-support fixture](https://github.com/Glacius-Labs/Markitect/blob/d083c8f37b6bb1e09a9c5a7947c421651a7e755b/examples/onboarding/delivery-service/README.md) contains shared customer-data guidance, a policy, workflow, contract, agent, and Skill entrypoint. `tasks/query-only-prompt.md` with `tasks/query-only-expected.yaml` is the shared read-only task for MCP/CLI find, explain, and context parity. `tasks/policy-edit-prompt.md` with `tasks/expected.yaml` is a separate CLI-only mutation task that also exercises verification and fixed-SHA impact. Oracle and prompt files are excluded from the measured project's Git snapshots.
 
-The scripted replay of this task, `scripts/onboarding/Measure-Adoption.ps1`, was retired on 11 October 2026 (backlog CI-03). It mixed the model-first `init` with legacy commands. Two checks now cover the model-first onboarding path:
-- On every pull request, the [smoke driver](../tools/smoke/main.go) runs `init` and `onboard` with a preview, a digest-checked write and `check`.
-- The [playground smoke](../.github/workflows/playground-smoke.yaml) also runs it in a container.
-
-The driver also took over the script's version check and its fixed policy edit, which it checks with `impact` between full commit IDs. The legacy context compile and the `fixture.bundle` evidence were dropped. The driver also replays a fixed-revision `verify --execute` of the project-world example: the declared checks run, and a scripted auditor answers each Manager's audit through `markitect-exchange-executor`, so no model is needed.
+The original scripted replay and its later Project/Domain smoke were retired. Their source and procedure remain in [the pre-retirement record](https://github.com/Glacius-Labs/Markitect/blob/1f4a1ede214d05fd2fee615b3905207df7702426/docs/onboarding.md). The current [source smoke](../tools/smoke/main.go) exercises canonical Library M1/M2 read-only preparation and refusals; it does not run this historical onboarding or prove Apply.
 
 The dated result below is the record of the retired script.
 

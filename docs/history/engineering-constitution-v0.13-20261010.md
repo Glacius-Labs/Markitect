@@ -1,8 +1,8 @@
 # Engineering constitution of the v0.13 line
 
-> Historical record, moved from the [engineering constitution](../engineering-constitution.md) on 10 October 2026 (ARCH-10). This is the constitution's text for the earlier v0.13 Project/Domain line and the removed canonical alpha, kept for reference; it does not describe the current product.
+> Historical record, moved from the [engineering constitution](https://github.com/Glacius-Labs/Markitect/blob/1f4a1ede214d05fd2fee615b3905207df7702426/docs/engineering-constitution.md) on 10 October 2026 (ARCH-10). This is the constitution's text for the earlier v0.13 Project/Domain line and the removed canonical alpha, kept for reference; it does not describe the current product.
 
-**Status:** v0.13.0 is the latest published product contract. It adds read-only policy-failure analysis, bounded selective handoff, the provider-neutral Markitect-first workflow and managed-artifact accounting; v0.12.0 adds the finite `same-target` assertion described in [Architecture](../architecture.md). v0.11.0 is the historical baseline for reusable architecture contracts; v0.10.0 is the historical baseline for the generic model. The [roadmap](../implementation-plan.md) owns verified release evidence; [Usage](../usage.md) documents source syntax and published CLI behavior.
+**Status:** v0.13.0 is the latest published product contract. It adds read-only policy-failure analysis, bounded selective handoff, the provider-neutral Markitect-first workflow and managed-artifact accounting; v0.12.0 adds the finite `same-target` assertion described in [Architecture](../architecture.md). v0.11.0 is the historical baseline for reusable architecture contracts; v0.10.0 is the historical baseline for the generic model. The [roadmap](../implementation-plan.md) owns verified release evidence; [Usage](https://github.com/Glacius-Labs/Markitect/blob/1f4a1ede214d05fd2fee615b3905207df7702426/docs/usage.md) documents source syntax and published CLI behavior.
 
 ## Product purpose
 

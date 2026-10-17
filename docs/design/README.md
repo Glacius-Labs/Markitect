@@ -1,6 +1,6 @@
 # Design records
 
-This directory contains decisions, proposals, assessments, experiments, and design evidence from different stages of Markitect. A file's presence here does not make it a supported contract or current implementation. For current product behavior use [Architecture](../architecture.md), the [Project workflow](../project-workflow.md), and [Usage](../usage.md); for source plans use the [roadmap](../implementation-plan.md). Each record owns its own date, scope, and stated status.
+This directory contains decisions, proposals, assessments, experiments, and design evidence from different stages of Markitect. A file's presence here does not make it a supported contract or current implementation. For current product behavior use [Architecture](../architecture.md), the [Project workflow](../project-workflow.md), and [Usage](https://github.com/Glacius-Labs/Markitect/blob/1f4a1ede214d05fd2fee615b3905207df7702426/docs/usage.md); for source plans use the [roadmap](../implementation-plan.md). Each record owns its own date, scope, and stated status.
 
 The [Project World package](project-world/README.md) has its own reading order and status notes. Read that map before interpreting its individual design documents or shop artifacts.
 

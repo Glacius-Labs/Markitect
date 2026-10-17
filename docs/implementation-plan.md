@@ -146,7 +146,7 @@ A pinned runtime image and a bounded real handshake smoke for each session adapt
 
 The retired backlog/roadmap remain in [Git at previous Main](https://github.com/Glacius-Labs/Markitect/tree/bc4b49e76f9b9e4b3ec98033a0b8c73d5013b310/docs). Old [handoffs](development/session-handoff.md) and [surveys](work-items/surveys/README.md) preserve their scope and cannot restart queues. The local dashboard is retired without a replacement monitor.
 
-Published assets, original PRs and failed diagnostics retain their identities. [Operations](operations.md) owns separate release work.
+The owner retired old release pages and downloads on 17 October 2026. Git tags, captured release identities/attestations, original PRs and needed diagnostics are preserved in the [retirement record](history/distribution-retirement-20261017.md). [Operations](operations.md) owns separate release work; this cleanup changes no Apply-Core contract.
 
 ## Historical roadmap links
 

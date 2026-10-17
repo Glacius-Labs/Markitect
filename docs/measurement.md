@@ -75,27 +75,13 @@ The object of evaluation is the delegated method: computed scope, bounded Manage
 
 ## Correctness first
 
-Use a synthetic project with explicit shared policy and two separately scoped areas. Record expected effects before running the tool. Cover local and shared Rule changes, removed dependencies, Contract-binding changes, and an unmodelled input change. Unknown inputs must remain conservative until they are declared.
+Current component and oracle tests establish only their actual assertions and source. [CONTRIBUTING](../CONTRIBUTING.md#verify-a-change) owns executable gates; the [Library Playground](../experiments/library-playground/README.md) owns independent behavior expectations. A successful source check does not establish semantic realization or attention savings.
 
-Go scenario tests compare exact expected context and impact sets. Go benchmarks measure deterministic operations after fixture construction. They can report allocations, context bytes, and affected-resource count; they do not measure human authoring speed or model savings. Keep the source revision, command, platform, and raw output together in excluded development artifacts.
-
-```powershell
-go test ./internal/app -run AuthoringScenario -count=1
-go test ./internal/app -run DocumentationScenario -count=1
-go test ./internal/app -run '^$' -bench Authoring -benchmem -count=3
-```
-
-The [code and documentation example](documentation.md) exercises exact source-file inputs with a predeclared affected set and an unrelated area. Its source-only change intentionally leaves stale prose structurally valid: the scenario verifies routing to review, not semantic correction by the compiler.
-
-CI executes one iteration of each authoring benchmark to keep the measurement fixtures valid as the resource model evolves. This is a correctness smoke check, with no timing threshold. For timing reports, run the repeated command above on a fixed source commit and record the host; the measured section excludes Git reads, parsing, agent interaction, and provider calls.
-
-The historical `.github/workflows/release-benchmark.yaml` runs only when a maintainer manually selects an exact immutable Project/Domain release tag from v0.9.0 through v0.14.1. It compares the selected and immediately previous attested platform binaries on Windows and Linux; new publications do not trigger it. These historical releases use `benchmark/fixtures/v2`; the previous binary uses v1 when its release predates 0.9.0 and v2 otherwise. The immutable v1 fixture preserves the pre-0.9 layout, while v2 exercises the selected Markdown output with canonical resources beneath `.markitect/areas/sample/` and an ordinary input beneath `docs/`. The harness gives both binaries one shared prepared repository when fixture version and bytes match. Across a version transition it prepares each compatible fixture independently, records the version, root, digest, base commit, and candidate commit for each release, and suppresses performance-change percentages because workloads differ. The model-first product does not support this workload; any replacement requires a separately accepted protocol and cannot reuse its timing comparisons as equivalent work. See the [benchmark contract](../benchmark/README.md) for invocation and metric definitions.
-
-Each command (`check`, `render`, `context`, `impact`, and `verify`) runs once as the first fresh process and three more times as fresh processes, with release order alternating. Records include wall time, sampled peak working set, exit status, status text, and bounded output. JSON and Markdown summaries are workflow artifacts; no asset is added to the immutable release. Each manual invocation selects a supported historical stable tag; it verifies the same immutable release and assets without changing them. The first run does not clear operating-system caches, and a short process can exit before memory sampling, which is recorded as null. There is no performance threshold or release-blocking benchmark gate.
+The old authoring scenarios, `internal/app` examples and published-binary timing workload are retired. Their protocols and dated observations remain at [the pre-retirement measurement record](https://github.com/Glacius-Labs/Markitect/blob/1f4a1ede214d05fd2fee615b3905207df7702426/docs/measurement.md) and [benchmark source](https://github.com/Glacius-Labs/Markitect/tree/1f4a1ede214d05fd2fee615b3905207df7702426/benchmark). Removing obsolete commands does not rescore their results or establish a replacement benchmark. A new comparative study follows the current primary baseline above and requires its own authorization.
 
 ## Authoring exercise
 
-Copy the complete minimal example into an isolated Git repository and commit a baseline. Give an agent a normal requirement, access to the CLI, and the bundled `authoring` context. An independent reviewer checks the changed owner, required relationships, unaffected scopes, generated outputs, and fixed impact. Retain failures and corrections. This is a product usability exercise, not an A/B benchmark or provider-runtime certification.
+Use the canonical Library model and the [staged readiness gates](#staged-method-readiness) for current authoring and realization work. The earlier Project/Domain authoring exercise remains in [its source-bound record](https://github.com/Glacius-Labs/Markitect/blob/1f4a1ede214d05fd2fee615b3905207df7702426/docs/authoring-pilot.md).
 
 ## Controlled model comparison
 

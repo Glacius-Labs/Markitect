@@ -1,6 +1,6 @@
 # Ein kleines Shop-Projekt mit Markitect
 
-Historischer Entwurf. Den aktuellen Dateibaum, das implementierte Modell und die Bedienung zeigen das [ausführbare Shop-Projekt](../../../examples/project-world/README.md) und der [Arbeitsablauf](../../project-workflow.md).
+Historischer Entwurf. Den aktuellen Dateibaum, das implementierte Modell und die Bedienung zeigen das [ausführbare Shop-Projekt](https://github.com/Glacius-Labs/Markitect/blob/1f4a1ede214d05fd2fee615b3905207df7702426/examples/project-world/README.md) und der [Arbeitsablauf](../../project-workflow.md).
 
 Status des folgenden Belegs: ausgearbeiteter Zielentwurf. Die folgenden Dateien, Bedienaktionen und Agentenabläufe sind ein Vorschlag für das künftige Produkt. Das [konkrete YAML-Beispiel](shop-example/README.md) ist ein lokal prüfbarer Designbeleg, keine implementierte Shop-Anwendung und kein aktueller CLI-Vertrag. Dieser Walkthrough beantwortet die fünf Benutzerfragen; das [Laufzeitprotokoll](operating-protocol.md) besitzt die detaillierten Ausführungsverträge.
 

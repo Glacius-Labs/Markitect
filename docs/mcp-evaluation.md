@@ -1,6 +1,6 @@
 # MCP evaluation (2026-10-01)
 
-**Status:** dated record of the read-only MCP pilot. Its decision no longer describes the product: the MCP server now ships in the `markitect` binary as `markitect mcp`, with one tool per verb and a `--read-only` mode. For the current server see [Project operations](project-operations.md#mcp-server-and-tool-groups), [Provider adapters](provider-adapters.md#connect-the-outer-client) and the [verb table](design/verb-table.md#mcp). The text below is kept as it was written.
+**Status:** historical read-only MCP pilot, recorded against its original source. Its experimental server and harness are retired from Main. Current source has no public MCP command; [Project operations](project-operations.md) owns the active CLI. Original observations below remain dated evidence, not current instructions.
 
 ## Decision
 
@@ -23,15 +23,15 @@ as blocked; the present assessment does not depend on repairing authentication.
 
 ## Evidence and reproducibility
 
-- [Client report](../experiments/mcp-pilot/evaluation.md) owns the exact fixed
+- [Client report](https://github.com/Glacius-Labs/Markitect/blob/1f4a1ede214d05fd2fee615b3905207df7702426/experiments/mcp-pilot/evaluation.md) owns the exact fixed
   inputs, client versions, setup failures, counters, answer review and limits.
-- [Predeclared plan](../experiments/mcp-pilot/evaluation-plan.yaml) and
-  [observed results](../experiments/mcp-pilot/evaluation-results.yaml) retain the
+- [Predeclared plan](https://github.com/Glacius-Labs/Markitect/blob/1f4a1ede214d05fd2fee615b3905207df7702426/experiments/mcp-pilot/evaluation-plan.yaml) and
+  [observed results](https://github.com/Glacius-Labs/Markitect/blob/1f4a1ede214d05fd2fee615b3905207df7702426/experiments/mcp-pilot/evaluation-results.yaml) retain the
   original experiment. Historical snapshots and measured binary identities
   are not relabeled as the integrated candidate.
-- [Prototype setup](../experiments/mcp-pilot/README.md) describes fixed startup
+- [Prototype setup](https://github.com/Glacius-Labs/Markitect/blob/1f4a1ede214d05fd2fee615b3905207df7702426/experiments/mcp-pilot/README.md) describes fixed startup
   repository/SHA inputs, allowlisted queries, protocol versions and boundaries.
-- [Transport harness](../scripts/mcp-evaluation/run-transport.ps1) replays
+- [Transport harness](https://github.com/Glacius-Labs/Markitect/blob/1f4a1ede214d05fd2fee615b3905207df7702426/scripts/mcp-evaluation/run-transport.ps1) replays
   find, explain, and context against the onboarding fixture and compares
   CLI/MCP payloads, rejecting unknown tools and extra arguments. It is a direct
   protocol test, not a model task or a second-client comparison.
@@ -63,7 +63,7 @@ preserved as observed.
 
 ### Question and task
 
-The pilot asks whether a local MCP interface helps an authoring agent inspect an existing resource graph while preserving Markitect's deterministic answers. The shared actor prompt and oracle are owned by the delivery-service fixture: [prompt](https://github.com/Glacius-Labs/Markitect/blob/d083c8f37b6bb1e09a9c5a7947c421651a7e755b/examples/onboarding/delivery-service/tasks/query-only-prompt.md) and [oracle](https://github.com/Glacius-Labs/Markitect/blob/d083c8f37b6bb1e09a9c5a7947c421651a7e755b/examples/onboarding/delivery-service/tasks/query-only-expected.yaml). The evaluation runbook is [here](../scripts/mcp-evaluation/task.md). The fixture also has a separate policy-mutation task, which is CLI-only because MCP has no write, verification, commit, or impact tool.
+The pilot asks whether a local MCP interface helps an authoring agent inspect an existing resource graph while preserving Markitect's deterministic answers. The shared actor prompt and oracle are owned by the delivery-service fixture: [prompt](https://github.com/Glacius-Labs/Markitect/blob/d083c8f37b6bb1e09a9c5a7947c421651a7e755b/examples/onboarding/delivery-service/tasks/query-only-prompt.md) and [oracle](https://github.com/Glacius-Labs/Markitect/blob/d083c8f37b6bb1e09a9c5a7947c421651a7e755b/examples/onboarding/delivery-service/tasks/query-only-expected.yaml). The evaluation runbook is [here](https://github.com/Glacius-Labs/Markitect/blob/1f4a1ede214d05fd2fee615b3905207df7702426/scripts/mcp-evaluation/task.md). The fixture also has a separate policy-mutation task, which is CLI-only because MCP has no write, verification, commit, or impact tool.
 
 The intended query comparison uses one immutable baseline snapshot. Both conditions receive the same read-only task and fixture. The CLI condition may use `find`, `explain`, and `context` directly; the MCP condition has the equivalent `find`, `explain`, and `context` tools. The MCP prototype does not expose `impact`, so fixed-SHA impact is scored as a separate CLI result and is not treated as MCP parity. The shared query task does not authorize source edits or project command execution.
 
@@ -113,7 +113,7 @@ The stdio probe used the same experimental server build (SHA-256 `5b0b0f2c2f06a3
 
 All three returned the pinned revision and snapshot digest and matched the fixture oracle. The context contained `markitect.yaml` and the six expected typed resource YAML inputs. These direct timings are CLI process times, not a client-side MCP latency comparison; no token estimate is inferred from the byte counts.
 
-The same stdio transport returned JSON-RPC `-32601` for an unknown tool. Extra `path`, `package`, `repo`, and `revision` properties each returned an `isError=true` tool result with `unknown argument` (23, 26, 23, and 27 UTF-8 bytes respectively). The server fixes repository and revision at startup; the tool schema does not accept per-call overrides. Reproduce with [`run-transport.ps1`](../scripts/mcp-evaluation/run-transport.ps1), which runs the three published CLI queries, direct stdio calls, byte/hash comparisons, and boundary requests; raw responses remain in TEMP rather than the repository. These are deterministic protocol checks, not authoring-client evidence.
+The same stdio transport returned JSON-RPC `-32601` for an unknown tool. Extra `path`, `package`, `repo`, and `revision` properties each returned an `isError=true` tool result with `unknown argument` (23, 26, 23, and 27 UTF-8 bytes respectively). The server fixes repository and revision at startup; the tool schema does not accept per-call overrides. Reproduce with [`run-transport.ps1`](https://github.com/Glacius-Labs/Markitect/blob/1f4a1ede214d05fd2fee615b3905207df7702426/scripts/mcp-evaluation/run-transport.ps1), which runs the three published CLI queries, direct stdio calls, byte/hash comparisons, and boundary requests; raw responses remain in TEMP rather than the repository. These are deterministic protocol checks, not authoring-client evidence.
 
 ### Current result
 
