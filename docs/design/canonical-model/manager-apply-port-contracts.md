@@ -60,7 +60,7 @@ type ReviewProposal struct {
 
 `BudgetView` is a read-only snapshot of the remaining caps for planning. Admission always uses the current ledger, never that snapshot ([execution contract](manager-apply-execution.md)).
 
-The sender of a delegation is the bound session; it cannot choose its own authority, base, attempt or source binding. The Host allows only a direct child and keeps the child's full Package responsibility, inherited restrictions and unresolved obligations. A cited subset of Definitions never narrows reconciliation.
+The sender of an adjacent message is the bound Manager session; it cannot choose its own authority, base, attempt or source binding. The Host permits only its direct parent or children and preserves each recipient's complete responsibility, resolved constraints and unresolved obligations. A message cannot create participation, replace the operation or narrow reconciliation to a cited subset of Definitions.
 
 Work proposals are explanations, not trusted diffs. Definition assessments cover every local Definition with a disposition, grounds and evidence references; a `vocabulary` disposition must show where concrete uses meet their obligations. Registry proposals refer to Host-authorized path claims. A no-change proposal needs the same assessment as a changed candidate.
 
@@ -71,6 +71,8 @@ A dependent task starts only from an accepted producer delivery composed into it
 `QuestionRef` binds identity and version. The application binds owner answers to that exact proposal; an Agent cannot assert owner authority. A context-only answer may continue the same run; changed intent ends the run Incomplete and needs a committed model edit and a continuation ([journal](manager-apply-journal.md#questions-answers-and-model-changes)).
 
 The illustrative `TaskSpec.Outcome` above is the static Host operation instruction, not parent-authored prose. Its model basis and complete scope are compiler-derived. Additional work messages remain separate and cannot redefine that mandate. Exact responsibility and prerequisite records must follow the remaining [process details](manager-apply-concept.md#remaining-process-detail-and-technical-boundary); existing provider Session contracts are not a Manager scheduler.
+
+The confirmed process uses normal deliveries with limited scope while their Manager remains open. The technical representation must bind Host acceptance and the consumer's composed basis, separately from a reviewer pass. Do not invent a parallel receipt lifecycle or a budget reset for each limited delivery. Successful deliveries consume shared execution capacity but neither use nor reset the rejection counter, whose identity is fixed per run, Manager and review purpose by the [execution contract](manager-apply-execution.md#admission-amendments-and-finite-correction). Exact counting, binding and recovery need implementation evidence.
 
 ## Application boundary and source acquisition
 
@@ -205,6 +207,8 @@ Publish writes into the working tree and never commits, merges or pushes; the ow
 ## Host lifecycle and completion
 
 The Host guarantees the same operation reaches every local Manager and runs one writer at a time with recorded ready and waiting tasks. The ready-work policy is fixed by the product, not supplied by an Agent. Managers act only on messages; no silent skip or pass-through startup exception is allowed. A task moves through local work, checks and review; a rejection starts the next bounded submission. A Manager with children also composes their deliveries and obtains integration review before the Host accepts its subtree. The [execution contract](manager-apply-execution.md#one-run-state-machine) owns run states, outcomes and admission; this port defines no other lifecycle. Typed results keep the current state, any terminal outcome, reasons and observation limits even when a Go error is returned.
+
+Before any artifact write, the Host requires the initial read-only Explore assessment from every Manager. Local planning thereafter has no global barrier. Dispatch follows [recorded readiness](manager-apply-concept.md#ready-work-and-parent-guidance); dependency waiting cannot retain an active write grant. Separate parent hints preserve the operation, compiled context and authority. These are admission requirements within the existing lifecycle, not additional run states.
 
 The root is ordinary in this protocol. `apply` adds the final evidence check and publication after the root delivery. Evidence stays bound to its subject; changed content or assumptions require current assessment. Source drift prevents publication even when every Agent reported success.
 
