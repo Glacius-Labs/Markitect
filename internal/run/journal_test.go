@@ -164,6 +164,16 @@ func (j *memoryJournal) Append(ctx context.Context, b run.AppendBatch) (run.Appe
 			return run.AppendReceipt{}, run.ErrInvalid
 		}
 	}
+	sessionRefs, err := b.SessionRefs()
+	if err != nil {
+		return run.AppendReceipt{}, err
+	}
+	for _, ref := range sessionRefs {
+		p, ok := j.blobs[ref]
+		if !ok || !p.Valid() || p.Ref() != ref {
+			return run.AppendReceipt{}, run.ErrInvalid
+		}
+	}
 	// Persist only the closed serialized form; no live proposal/Binding survives.
 	j.batches = append(j.batches, stored)
 	j.head = b.Revision()
