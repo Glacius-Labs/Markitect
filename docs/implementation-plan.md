@@ -61,8 +61,8 @@ The architect delivers this queue in order, one pull request each. The Coordinat
 | A1 | Step-bound [session port](design/canonical-model/manager-apply-port-contracts.md#session-and-communication-port). | Codex and Claude session adapters |
 | A2 | Core protocol and completed concept: the task machine, messages, issues and composition, with rule IDs and one owner per rule. Open proposals are put to the owner. | A4 and A5 |
 | A3 | Producer contracts for `run.Workspaces`, `run.Checks` and `apply.Publisher`. | Repository, check and publication adapters |
-| A4 | The core part of P06: one Package through `run` with a controlled fake session, covering Explore, work, independent review, rework and acceptance. | A real session through the core |
-| A5 | The core parts of P07 to P09: composition, recursion and integration, aggregate verification and reports, then guarded publication through `markitect apply`. | The two-Apply demonstration |
+| A4 | The core part of P06: one Package under the root through `run` with controlled fake ports. It covers Explore, work, independent review, rework, acceptance by replay, the root's integration and the move to Verifying. | A real session through the core |
+| A5 | The core parts of P07 to P09: every Manager of the tree, integration at every parent, messages and questions, aggregate verification and reports, then guarded publication through `markitect apply`. | The two-Apply demonstration |
 | A6 | Cleanup inside the architect's packages: remove the v1/v2 basis replay and `PassThrough`, give errors a reason, and split preparation out of `internal/apply`. | None |
 
 ### Branch names

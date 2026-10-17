@@ -32,8 +32,8 @@ func checkCensus(compiled model.Result, base CandidateBase, tree snapshot.Tree, 
 func checkInventoryCensus(inventory modelInventory, base CandidateBase, tree snapshot.Tree, registry Registry, result DefinitionCensus, classifications []Classification, rows []DefinitionAssessment) DefinitionCensus {
 	result.classifications = slices.Clone(classifications)
 	result.assessments = copyAssessments(rows)
-	if !base.Valid() || !result.candidate.Valid() && !result.composition.Valid() {
-		result.add(CensusIncomplete, "census.subject_unavailable", snapshot.Path{}, model.Identity{}, "An exact structural candidate or composition is required.")
+	if !base.Valid() || !result.candidate.Valid() && !result.aggregate.Valid() {
+		result.add(CensusIncomplete, "census.subject_unavailable", snapshot.Path{}, model.Identity{}, "An exact structural candidate or accepted aggregate is required.")
 		return result.finish()
 	}
 	result.status = CensusStructurallyComplete

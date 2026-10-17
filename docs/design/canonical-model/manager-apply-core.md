@@ -44,7 +44,7 @@ Each Manager of the topology has exactly one task per run. The Host creates ever
 
 **Explore and the write barrier**
 - **T1** Explore runs children before parents. Each Manager has one read-only Explore step. A parent's Explore becomes admissible once all its direct children's Explore results are confirmed, and its input contains their reports.
-- **T2** The Host admits no writing step until every task is `explored` or later. If the captured source has unexplained files, the root's Explore proposes their owners, and an independent intake review assesses those proposals before the barrier opens. Accepted assignments are recorded as D6 describes. A rejected proposal leaves its file unexplained and becomes an issue addressed to the root. The root can propose again in a later work step through `assign_owner`, under a new intake review. Intake rejections count against the root's rejection limit under their own review purpose. Publication still requires conforming coverage.
+- **T2** The Host admits no writing step until every task is explored. A task counts as explored once its Explore result is confirmed, including a T3 no-change submission, whatever its later state. If the captured source has unexplained files, the root's Explore proposes their owners, and an independent intake review assesses those proposals before the barrier opens. Accepted assignments are recorded as D6 describes. A rejected proposal leaves its file unexplained and becomes an issue addressed to the root. The root can propose again in a later work step through `assign_owner`, under a new intake review. Intake rejections count against the root's rejection limit under their own review purpose. Publication still requires conforming coverage.
 - **T3** An Explore step ends with `report`, or with a `complete` no-change `submit` when the Manager finds nothing to change. A no-change submission is reviewed like any other. Its review may run before the write barrier, because nothing is written.
 
 **Admission and step outcomes**
@@ -57,7 +57,7 @@ Each Manager of the topology has exactly one task per run. The Host creates ever
 **Review**
 - **T7** On a submission, the Host freezes the candidate and moves the task to `reviewing`. A fresh reviewer conversation assesses it in two steps: first expectations from the model, then the candidate and its evidence. Where the configuration enables review batching, one such review covers several pending no-change submissions in the same two steps, each with its own verdict bound to its subject. Batching never removes a subject or lowers the protected review floor.
 - **T8** A review ends in one of four ways:
-  - **Pass:** the Host accepts the delivery (D1). If an open blocking issue covers the subject (I3), the Host withholds acceptance instead, and the task returns to `ready` with no rejection counted.
+  - **Pass:** the Host accepts the delivery (D1). A pass must resolve, or mark not applicable, every open blocking finding on its subject; a pass that leaves one open is an invalid verdict. If another open blocking issue covers the subject (I3), the Host withholds acceptance instead, and the task returns to `ready` with no rejection counted.
     - After a `limited` delivery, the task returns to `ready`.
     - After a `complete` local delivery, a Manager without children is `done`. A Manager with children becomes `ready` for integration if all its children are `done`, and otherwise `blocked` on them.
     - After a `complete` integration delivery, the task is `done`.

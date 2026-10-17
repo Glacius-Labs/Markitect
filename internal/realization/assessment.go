@@ -64,7 +64,7 @@ type DefinitionCensus struct {
 	status                        CensusStatus
 	basis                         CandidateBase
 	candidate                     Candidate
-	composition                   CompositionPlan
+	aggregate                     Aggregate
 	owner                         Owner
 	project                       bool
 	classifications               []Classification
@@ -77,14 +77,14 @@ type DefinitionCensus struct {
 func (c DefinitionCensus) Status() CensusStatus         { return c.status }
 func (c DefinitionCensus) Basis() CandidateBase         { return c.basis }
 func (c DefinitionCensus) Candidate() (Candidate, bool) { return c.candidate, c.candidate.Valid() }
-func (c DefinitionCensus) Composition() (CompositionPlan, bool) {
-	return c.composition, c.composition.Valid()
+func (c DefinitionCensus) Aggregate() (Aggregate, bool) {
+	return c.aggregate, c.aggregate.Valid()
 }
-func (c DefinitionCensus) ProjectScope() bool { return c.project && c.composition.Valid() }
+func (c DefinitionCensus) ProjectScope() bool { return c.project && c.aggregate.Valid() }
 
 // Owner returns the requested own-scope binding, not a live authority assertion.
 func (c DefinitionCensus) Owner() (Owner, bool) {
-	return c.owner, !c.project && (c.candidate.Valid() || c.composition.Valid())
+	return c.owner, !c.project && (c.candidate.Valid() || c.aggregate.Valid())
 }
 func (c DefinitionCensus) Classifications() []Classification   { return slices.Clone(c.classifications) }
 func (c DefinitionCensus) Assessments() []DefinitionAssessment { return copyAssessments(c.assessments) }
@@ -100,14 +100,15 @@ func CheckCandidateCensus(compiled model.Result, candidate Candidate, classifica
 	return checkCensus(compiled, candidate.Base(), candidate.Tree(), candidate.Registry(), DefinitionCensus{candidate: candidate, owner: candidate.Owner()}, classifications, rows)
 }
 
-// CheckCompositionCensus checks one explicitly bound local owner on the integrated
-// plan. The Host supplies the owner from its task; Agent claims grant no authority.
-func CheckCompositionCensus(compiled model.Result, plan CompositionPlan, owner Owner, classifications []Classification, rows []DefinitionAssessment) DefinitionCensus {
-	return checkCensus(compiled, plan.Base(), plan.Tree(), plan.Registry(), DefinitionCensus{composition: plan, owner: owner}, classifications, rows)
+// CheckCompositionCensus checks one explicitly bound local owner on the accepted
+// aggregate. The Host supplies the owner from its task; Agent claims grant no
+// authority.
+func CheckCompositionCensus(compiled model.Result, aggregate Aggregate, owner Owner, classifications []Classification, rows []DefinitionAssessment) DefinitionCensus {
+	return checkCensus(compiled, aggregate.Base(), aggregate.Tree(), aggregate.Registry(), DefinitionCensus{aggregate: aggregate, owner: owner}, classifications, rows)
 }
 
 // CheckProjectCensus checks every Definition in the selected local model on the
-// exact aggregate, independently of which parts were supplied for composition.
-func CheckProjectCensus(compiled model.Result, plan CompositionPlan, classifications []Classification, rows []DefinitionAssessment) DefinitionCensus {
-	return checkCensus(compiled, plan.Base(), plan.Tree(), plan.Registry(), DefinitionCensus{composition: plan, project: true}, classifications, rows)
+// exact accepted aggregate, independently of which deliveries composed it.
+func CheckProjectCensus(compiled model.Result, aggregate Aggregate, classifications []Classification, rows []DefinitionAssessment) DefinitionCensus {
+	return checkCensus(compiled, aggregate.Base(), aggregate.Tree(), aggregate.Registry(), DefinitionCensus{aggregate: aggregate, project: true}, classifications, rows)
 }
