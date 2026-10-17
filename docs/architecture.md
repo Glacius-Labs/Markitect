@@ -53,7 +53,7 @@ Bootstrap alone constructs concrete adapters. CLI code owns parsing/presentation
 
 ## Runtime layer
 
-`internal/run` supplies fixed run bindings, assignment budget admission and confirmed journal transitions. Its narrow journal port separates proposals from acknowledged history and retains uncertain reservations. It has no physical journal adapter or public execution entrypoint.
+`internal/run` supplies fixed run bindings, assignment budget admission and confirmed journal transitions. It reconstructs confirmed state from bounded reads pinned to one journal revision, without replaying external effects. Open reservations retain their holds behind a separate recovery barrier. The package has no physical journal adapter or public execution entrypoint.
 
 Recursive Manager execution, sessions, workspace creation, executable checks, durable journal storage, verification and guarded artifact publication remain later implementation work. There is no active legacy runtime or fallback execution engine. A structural or metadata pass cannot authorize those effects. The current CLI exposes no MCP server.
 
