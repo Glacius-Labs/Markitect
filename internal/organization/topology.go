@@ -26,12 +26,15 @@ type Manager struct {
 }
 
 // HasLocalWork reports local Definition responsibility, not child integration
-// work or any completed realization assessment. An empty leaf has none.
+// work, participation or any completed realization assessment. An empty leaf
+// still participates and requires assessment and review.
 func (m Manager) HasLocalWork() bool { return len(m.Definitions) != 0 }
 
 // PassThrough identifies an intermediate Package with no local Definitions
-// and exactly one child. It retains its Manager slot without an Agent startup.
+// and exactly one child. It describes structure only.
 // Root is not an intermediate canonical Package.
+// Deprecated: this legacy predicate grants no startup or participation
+// exemption. Every local Manager must participate, including this structure.
 func (m Manager) PassThrough() bool {
 	return m.Package != "" && m.Package != Root && !m.HasLocalWork() && len(m.Children) == 1
 }

@@ -23,9 +23,23 @@ func RenderContext(selection ContextSelection, settings Settings, input RenderIn
 	w := contextWriter{limit: input.MaxContextBytes}
 	w.add("role", strings.TrimSuffix(text, mandateTemplate), product)
 	w.add("mandate", mandateTemplate, product)
+	operation, instruction := ApplyOperation()
+	if input.View != ManagerView {
+		w.add("operation-is-review-subject", reviewOperationText, productLiteral("review-operation", reviewOperationText))
+	}
+	w.add("static-apply-operation", instruction, RenderSource{Kind: ProductRenderSource, Product: operation})
+	w.reference("operation-record-reference-not-authentication", input.Task.Outcome.Source)
 	w.reference("captured-basis-reference-not-verification", input.InputBinding)
 	w.json("task-identity", struct{ ID, Package, ModelID, ModelDigest string }{input.Task.ID, input.Task.Package, selection.ModelID(), selection.ModelDigest()}, hostRender(input.InputBinding))
-	w.host("task-outcome", input.Task.Outcome)
+	if input.Process != nil {
+		w.json("host-manager-phase-not-admission", input.Process.Phase, hostRender(input.Process.Source))
+		phaseText := managerPhaseText(input.Process.Phase)
+		w.add("manager-phase-instruction-not-grant", phaseText, productLiteral("phase/"+string(input.Process.Phase), phaseText))
+	}
+	for _, hint := range input.ParentHints {
+		w.json("asserted-direct-parent-hint-sender", hint.Package, hostRender(hint.Advice.Source))
+		w.host("parent-hint-not-authority", hint.Advice)
+	}
 	if input.OwnerInput != nil {
 		w.host("root-owner-input", *input.OwnerInput)
 	}
