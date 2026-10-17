@@ -246,7 +246,7 @@ func TestUncitedOldRegistryClassificationConflictIsNotGlobalCensusGate(t *testin
 	if err != nil {
 		t.Fatal(err)
 	}
-	reg := registry(t, append(f.plan.Registry().Entries(), registration(t, owner(t, "gone"), artifact(t, "old/input", borrow)))...)
+	reg := registry(t, append(f.plan.Registry().Entries(), registration(t, owner(t, "lending"), artifact(t, "old/input", borrow)))...)
 	base := candidateBase(t, f.compiled, reg, tree, nil)
 	c := capture(t, base, owner(t, "lending"), realization.PathClaims{}, tree, reg)
 	classes := []realization.Classification{classified(t, "old/input", realization.IgnoredFile)}
