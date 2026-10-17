@@ -96,18 +96,17 @@ func (e *sessionEntry) redact(data []byte) []byte {
 	data = bytes.Clone(data)
 	marker := []byte("[REDACTED]")
 	for _, secret := range e.secrets {
-		if len(secret) > 0 && bytes.Contains(marker, secret) {
-			marker = nil
-			break
-		}
-	}
-	for _, secret := range e.secrets {
 		if len(secret) == 0 {
 			continue
 		}
 		data = bytes.ReplaceAll(data, secret, marker)
 		encoded, _ := json.Marshal(string(secret))
 		data = bytes.ReplaceAll(data, encoded[1:len(encoded)-1], marker)
+	}
+	// A replacement marker or adjacent fragments can themselves form a known
+	// credential. Omit that journal text; the separate true wire identity stays.
+	if !e.nativeIdentity(string(data)) {
+		return nil
 	}
 	return data
 }

@@ -253,6 +253,9 @@ func (f *fakeRuntime) Stop(context.Context, int64) (frame.Exited, error) {
 	if f.secretField == "stop-marker" {
 		return frame.Exited{Code: -1, Signal: "prefix-[REDACTED]"}, nil
 	}
+	if f.secretField == "stop-marker-nested" {
+		return frame.Exited{Code: -1, Signal: "[RED[REDACTED]ACTED]"}, nil
+	}
 	return frame.Exited{Code: -1, Signal: "terminated"}, nil
 }
 func (f *fakeRuntime) Close() error { f.stream.close(); return nil }
@@ -624,7 +627,7 @@ func TestCodexStopJournalErrorCannotReturnKnownCredential(t *testing.T) {
 }
 
 func TestCodexCredentialCannotEqualRedactionMarker(t *testing.T) {
-	for _, field := range []string{"thread-marker", "stop-marker"} {
+	for _, field := range []string{"thread-marker", "stop-marker", "stop-marker-nested"} {
 		t.Run(field, func(t *testing.T) {
 			channel := &fakeChannel{}
 			runtime := peer(channel)
