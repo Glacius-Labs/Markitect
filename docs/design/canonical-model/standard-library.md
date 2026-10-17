@@ -19,6 +19,7 @@ Source: the owner's standard-library design discussion in this chat on 17 Octobe
 - The owner then asked: "Haben wir damit die wichtigsten Bausteine für die erste Standardbibliothek, oder fehlt noch etwas Wesentliches? Und ist dann hier alles mit empty spec?" The first-scope assessment below is an assistant recommendation, not a decision to publish or implement the library.
 - Scope selection: "Okay, dann nehmen wir die acht Bausteine als ersten Umfang." The first scope is Concept, Rule, UseCase, Actor, Interface, Component, Scenario and Check.
 - Next subject: "Lass uns als Nächstes die Paketstruktur und Versionierung der Standardbibliothek festlegen. Was schlägst du vor?" The distribution and version policy below remain proposals pending owner selection.
+- Observation direction: "Wir sollten spec beobachten. Falls wir nie einen Anwendungsfall dafür haben, könnten wir überlegen ob wir das überhaupt brauchen". Retain this as an evidence-led simplification question during actual use. It is not a decision to remove spec or change the completed v1 baseline now.
 
 ## Current design state
 
@@ -438,11 +439,25 @@ A consumer update changes the exact dependency requirement and regenerates the f
 
 The proposal deliberately leaves storage/download locations, repository release tags and packaging automation for the distribution implementation. No versions are independently declared on Package imports and no range resolution, latest selector or automatic upgrade is introduced.
 
+## Observe the value of spec
+
+Owner direction, 17 October 2026: observe whether spec has a useful application. If actual use supplies no convincing case, reconsider whether it is needed. Do not invent structured fields merely to justify the existing mechanism.
+
+Distinguish two questions as experience accumulates:
+
+- Does structured model content provide a concrete benefit over a binding body and explicit links? Identify the value being maintained or consumed and what exact validation or processing requires it.
+- Does requiring the literal empty spec mapping on every Definition provide enough value, even where no structured fields apply?
+
+The Library's maxOpenLoans and loanPeriodDays and the repository's maintenance command are existing examples to examine, not sufficient proof of usefulness merely because they have been modeled. Keep examples, actual consumers and observed benefit distinct. Reconsideration should compare the simpler alternative and its effect on authoring, validation and realization.
+
+Omitting an empty spec in author syntax and removing structured contracts altogether are different possible changes. The latter also affects Core Kind/Property definitions and their field/value contracts. The current v1 rule and the eight selected empty-spec contracts remain in effect during this observation. No compiler, fixture or canonical-language change, scheduled monitoring or separate study is introduced by this record.
+
 ## Remaining discussion
 
 - The owner has selected all eight discussed Kinds as the first scope, each with empty spec and body-link relationships.
 - Exact Kind wording remains a working formulation. Interface's internal/external scope is selected; the particular call contract and Component split remain illustrative architecture proposals.
 - Review the proposed markitect-standard model, two Package identities, first preview and stable release/update policy before publishing them.
+- During actual modeling, observe the benefit of structured spec content and the cost of mandatory empty specs, as directed above.
 - Preserve the Library's complete intent when proposing a vocabulary migration; do not alter the M1/M2 Apply acceptance target merely to demonstrate the standard library.
 - Examine a small Tasks model after the Library to distinguish shared needs from Library-specific vocabulary. This is a proposed design check, not authorization for a study or proof of benefit.
 - A useful result would reduce repeated basic definitions while preserving expressiveness and understandable Manager context. Compiler success and Definition counts do not measure that benefit.
