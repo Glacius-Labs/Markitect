@@ -17,6 +17,41 @@ instructions: []
 
 The two digests above are illustrative, not a usable image/profile. Use the actual immutable engine image ID and the expected build-recorded schema digest. `engineExecutable` must be an exact native absolute path on the Host; it names the engine, never a provider executable. `instructions` is an ordered list of `{boundary, path}` coordinates for already captured source files. Missing instructions request a new complete acquisition and remain incomplete; this adapter never reads instruction paths.
 
+### Source-bound execution settings
+
+Version 2 remains metadata-only. Version 3 uses the same `codexAppServer` section in `markitect.host/v1`, retains every version 2 field above and requires these explicit additions. This illustrative section shows the complete shape; its image, schema and model literals establish no runtime availability:
+
+```yaml
+profileVersion: 3
+engineExecutable: /usr/bin/docker
+imageID: sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+agentdVersion: development
+recordedCodexSchemaDigest: sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+instructions: []
+credentialRef: dedicated-runtime-credential
+maxWireBytes: 1048576
+session:
+  version: 1
+  model: explicitly-selected-model
+  effort: high
+  baseInstructions: ''
+  developerInstructions: ''
+  store: explicit-store
+  cpus: 1.5
+  memoryBytes: 2147483648
+  pids: 192
+  tmpBytes: 2097152
+  network: ''
+```
+
+All fields are required, including explicit empty instruction strings and network. Numeric fields require YAML numbers, with integer types for byte counts, version and process count. The adapter validates `session` through `NewSessionProfile`; model, credential reference and store are bounded nonempty literals. `maxWireBytes` is a positive integer at most 1 MiB, matching the current Codex transport limit. There are no environment lookups, interpolation, defaults or secret reads. Credential references remain opaque identifiers for the later Host resolver. Base and developer instruction strings are passed literally, including newlines and empty strings. Captured `instructions` remain separate ordered inputs to the existing context renderer; this projection never appends or duplicates them in either string.
+
+The v3 static observation uses `markitect.codex-app-server.image-metadata` contract version 3. Apply's identity binds the whole captured Host document and selected field, captured instruction view, observation contract and actual image metadata. A change to execution settings therefore changes the static identity even when image metadata stays identical. Version 2 retains contract version 1.
+
+`SessionProfileFromPrepared(prepared apply.PreparedProfile) (profile run.Payload, credentialRef string, maxWireBytes int64, err error)` requires complete passed preparation with an identity, exact input-binding echo, v3 contract, Codex provider, selected immutable image and matching recorded versions/schema. It uses the same private configuration decoder as metadata preparation and the existing `NewSessionProfile` factory. It returns only a fresh immutable payload and the captured credential reference and wire limit. The already observed image ID remains at `prepared.Observation().AgentImage.ImageID`. Missing facts, old v2 metadata, foreign contracts and mismatches refuse without partial output. Projection acquires nothing and resolves no credentials.
+
+The Host still must bind those returned facts and the observed image into its admitted SessionPlan and supply the existing runtime credential resolver. This source producer does not wire Core profile selection, establish an execution grant or prove provider/model availability. Fake-reader tests use the actual Apply consumer; they run no Docker, provider, credentials, Apply or smoke.
+
 Preparation resolves the selected image ID, copies only `/opt/markitect/runtime.env` through `Engine.ReadImageFile`, and checks the image identity again. The engine creates a container for copying and removes it without starting it. It does not pull/build an image, start a Session, invoke either provider, probe a CLI version or export a schema.
 
 The supported metadata format is exactly four unique LF-separated records emitted by [the runtime Dockerfile](../../../packaging/runtime/Dockerfile): `codex`, `claude`, `codexSchema` and `agentd`. Values must be bounded nonempty UTF-8 literals without control characters or surrounding whitespace. The recorded Codex version must equal `codex-cli 0.162.0`; the recorded agentd version and Codex schema digest must match the selected profile. The Claude record is retained through the whole file identity, with no assertion that this package supports Claude sessions. Unknown/duplicate records, old profile versions, tags and passthrough fields fail closed.
@@ -66,7 +101,7 @@ The upstream root `LICENSE` at the same commit is Apache-2.0, SHA-256 `d17f227e4
 {"version":1,"model":"gpt-6-luna","effort":"high","baseInstructions":"","developerInstructions":"","store":"example-store","cpus":1,"memoryBytes":1073741824,"pids":128,"tmpBytes":67108864,"network":""}
 ```
 
-The model and effort are explicit admitted values; the adapter selects neither. Effort accepts the pinned protocol's `none`, `minimal`, `low`, `medium`, `high` and `xhigh`. The constructor and admission share intrinsic profile validation; the constructor supplies no defaults. This representation is distinct from the static metadata profile above. Translating selected Host configuration into these explicit execution settings remains a separate Host responsibility; this factory supplies no configuration translation. Profile and tools must be valid payloads matching their plan references, and execution requires nonempty admission receipts. Admission requires the exact profile media type and `application/vnd.markitect.tools+json`, both encoded as `utf-8`. Unknown JSON fields and duplicate keys fail closed. RUN's `ToolCatalog(phase)` supplies the closed version 1 catalogue of names, descriptions and input schemas. The adapter registers exactly the admitted catalogue through agentd; it adds no tools or schema of its own. An explicit empty tools list is supported.
+The model and effort are explicit admitted values; the adapter selects neither. Effort accepts the pinned protocol's `none`, `minimal`, `low`, `medium`, `high` and `xhigh`. The constructor and admission share intrinsic profile validation; the constructor supplies no defaults. This representation is distinct from static metadata. The v3 source projection above translates explicit captured Host configuration into this payload; the Host owns admission and runtime composition. Profile and tools must be valid payloads matching their plan references, and execution requires nonempty admission receipts. Admission requires the exact profile media type and `application/vnd.markitect.tools+json`, both encoded as `utf-8`. Unknown JSON fields and duplicate keys fail closed. RUN's `ToolCatalog(phase)` supplies the closed version 1 catalogue of names, descriptions and input schemas. The adapter registers exactly the admitted catalogue through agentd; it adds no tools or schema of its own. An explicit empty tools list is supported.
 
 The runtime mounts exactly the admitted workspace at `/work` with `NoCopy`, preserving the verified tree even when it is empty and the provider image contains files at that path. Provider home at `/home/agent` retains ordinary initial image copy-up for ownership. The runtime uses user `1000:1000` and the container adapter's hardening. Read-only roles receive a read-only workspace mount. Reviewer sessions require read-only access and cannot resume. Codex runs `/usr/local/bin/codex app-server` with native delegation and unrelated UI features disabled, MCP through `/usr/local/bin/markitect-agentd mcp`, approval policy `never`, and `danger-full-access` inside the hardened container. Resource limits and network come from the admitted profile.
 

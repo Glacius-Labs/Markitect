@@ -56,6 +56,14 @@ artifacts:
     form: code
     realizes: [product/adapters/agent/closed-agent-metadata]
     why: Observes selected immutable image metadata and preserves failures and partial acquisition.
+  - path: "internal/adapters/codexappserver/execution_profile.go"
+    form: code
+    realizes: [product/adapters/agent/closed-agent-metadata, product/ports-and-adapters]
+    why: Projects only complete source-bound Codex v3 Host settings into the existing admitted session payload and explicit credential reference and transport limit.
+  - path: "internal/adapters/codexappserver/execution_profile_test.go"
+    form: test
+    realizes: [product/adapters/agent/closed-agent-metadata, product/ports-and-adapters]
+    why: Distinguishes literal execution settings, source binding, metadata-only profiles and incomplete evidence through the actual Apply consumer with fake image readers.
   - path: "internal/adapters/codexappserver/metadata_decode.go"
     form: code
     realizes: [product/adapters/agent/closed-agent-metadata]

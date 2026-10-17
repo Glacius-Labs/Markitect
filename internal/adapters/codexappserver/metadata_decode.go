@@ -16,15 +16,33 @@ import (
 type metadataConfig struct {
 	engine, imageID, agentd, schema string
 	instructions                    []apply.SourceLocation
+	version                         int
+	credentialRef                   string
+	maxWireBytes                    int64
+	session                         SessionProfile
 }
 
 func (p *preparation) decode(root *yaml.Node) (metadataConfig, bool) {
 	var c metadataConfig
 	start := len(p.out.Diagnostics)
-	fields := p.object(root, "", "profileVersion", "engineExecutable", "imageID", "agentdVersion", "recordedCodexSchemaDigest", "instructions")
+	names := []string{"profileVersion", "engineExecutable", "imageID", "agentdVersion", "recordedCodexSchemaDigest", "instructions"}
+	// Select the closed field set without interpreting any execution setting in v2.
+	if root != nil && root.Kind == yaml.MappingNode {
+		for i := 0; i+1 < len(root.Content); i += 2 {
+			if root.Content[i].Value == "profileVersion" && root.Content[i+1].Tag == "!!int" && root.Content[i+1].Value == "3" {
+				c.version = 3
+			}
+		}
+	}
+	if c.version == 3 {
+		names = append(names, "credentialRef", "maxWireBytes", "session")
+	}
+	fields := p.object(root, "", names...)
 	v := fields["profileVersion"]
-	if v == nil || v.Kind != yaml.ScalarNode || v.Tag != "!!int" || v.Value != "2" {
-		p.issue(model.Failed, "version", "/profileVersion", "Only integer profileVersion 2 is supported.")
+	if v == nil || v.Kind != yaml.ScalarNode || v.Tag != "!!int" || (v.Value != "2" && v.Value != "3") {
+		p.issue(model.Failed, "version", "/profileVersion", "Only integer profileVersion 2 (metadata) or 3 (execution settings) is supported.")
+	} else if v.Value == "2" {
+		c.version = 2
 	}
 	c.engine = p.text(fields["engineExecutable"], "/engineExecutable")
 	if !filepath.IsAbs(c.engine) || filepath.Clean(c.engine) != c.engine {
@@ -54,7 +72,46 @@ func (p *preparation) decode(root *yaml.Node) (metadataConfig, bool) {
 			c.instructions = append(c.instructions, apply.SourceLocation{Boundary: boundary, Path: path})
 		}
 	}
+	if c.version == 3 {
+		c.credentialRef = p.text(fields["credentialRef"], "/credentialRef")
+		p.scalar(fields["maxWireBytes"], "/maxWireBytes", &c.maxWireBytes, "!!int")
+		if c.maxWireBytes <= 0 || c.maxWireBytes > maxProtocolMessage {
+			p.issue(model.Failed, "wire_limit", "/maxWireBytes", "Wire limit must be positive and at most 1 MiB.")
+		}
+		c.session = p.decodeSession(fields["session"])
+	}
 	return c, len(p.out.Diagnostics) == start
+}
+
+func (p *preparation) decodeSession(n *yaml.Node) SessionProfile {
+	fields := p.object(n, "/session", "version", "model", "effort", "baseInstructions", "developerInstructions", "store", "cpus", "memoryBytes", "pids", "tmpBytes", "network")
+	var s SessionProfile
+	p.scalar(fields["version"], "/session/version", &s.Version, "!!int")
+	s.Model = p.text(fields["model"], "/session/model")
+	s.Effort = p.text(fields["effort"], "/session/effort")
+	s.Store = p.text(fields["store"], "/session/store")
+	p.scalar(fields["baseInstructions"], "/session/baseInstructions", &s.BaseInstructions, "!!str")
+	p.scalar(fields["developerInstructions"], "/session/developerInstructions", &s.DeveloperInstructions, "!!str")
+	p.scalar(fields["network"], "/session/network", &s.Network, "!!str")
+	p.scalar(fields["cpus"], "/session/cpus", &s.CPUs, "!!int", "!!float")
+	p.scalar(fields["memoryBytes"], "/session/memoryBytes", &s.MemoryBytes, "!!int")
+	p.scalar(fields["pids"], "/session/pids", &s.Pids, "!!int")
+	p.scalar(fields["tmpBytes"], "/session/tmpBytes", &s.TmpBytes, "!!int")
+	if _, err := NewSessionProfile(s); err != nil {
+		p.issue(model.Failed, "session", "/session", "Session settings do not satisfy the Codex SessionProfile v1 contract.")
+	}
+	return s
+}
+
+func (p *preparation) scalar(n *yaml.Node, field string, target any, tags ...string) {
+	if n != nil && n.Kind == yaml.ScalarNode {
+		for _, tag := range tags {
+			if n.Tag == tag && n.Decode(target) == nil {
+				return
+			}
+		}
+	}
+	p.issue(model.Failed, "scalar", field, "Expected an explicit scalar with the required type and range.")
 }
 
 func (p *preparation) object(n *yaml.Node, field string, names ...string) map[string]*yaml.Node {

@@ -51,6 +51,11 @@ func profileInput(t *testing.T, inline string, instructions []apply.SourceFile) 
 
 func consumeProfile(t *testing.T, inline string, instructions []apply.SourceFile, port apply.AgentProfilePreparer) apply.CapturedSettingsPreparation {
 	t.Helper()
+	return consumeProfileAt(t, inline, instructions, port, filepath.Join(t.TempDir(), "host"))
+}
+
+func consumeProfileAt(t *testing.T, inline string, instructions []apply.SourceFile, port apply.AgentProfilePreparer, boundary string) apply.CapturedSettingsPreparation {
+	t.Helper()
 	base := filepath.Join("..", "..", "..", "docs", "design", "canonical-model")
 	readModel := func(dir, boundary string) apply.ModelSource {
 		area, _ := snapshot.DirectoryAt(testPath(t, "model"))
@@ -108,7 +113,7 @@ func consumeProfile(t *testing.T, inline string, instructions []apply.SourceFile
 		host += "      " + line + "\n"
 	}
 	host += "checkProfiles: {}\n"
-	location := apply.SourceLocation{Boundary: filepath.Join(t.TempDir(), "host"), Path: testPath(t, "profiles.yaml")}
+	location := apply.SourceLocation{Boundary: boundary, Path: testPath(t, "profiles.yaml")}
 	entry, err := snapshot.NewEntry(location.Path, snapshot.Regular, []byte(host))
 	if err != nil {
 		t.Fatal(err)
