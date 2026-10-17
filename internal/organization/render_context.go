@@ -40,6 +40,8 @@ func RenderContext(selection ContextSelection, settings Settings, input RenderIn
 		DirectChildren  []string
 	}{selection.Package(), parent, children}, hostRender(input.InputBinding))
 	w.add("tree-position-meaning", treePositionText, productLiteral("tree-position", treePositionText))
+	w.json("local-responsibility", localResponsibilityOf(selection, input), hostRender(input.InputBinding), hostRender(input.Task.Findings.Source))
+	w.add("local-responsibility-meaning", localResponsibilityText, productLiteral("local-responsibility", localResponsibilityText))
 	if input.Process != nil {
 		w.json("host-manager-phase-not-admission", input.Process.Phase, hostRender(input.Process.Source))
 		phaseText := managerPhaseText(input.Process.Phase)
