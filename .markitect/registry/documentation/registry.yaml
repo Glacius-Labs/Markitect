@@ -1,5 +1,9 @@
 apiVersion: markitect.registry/v1
 artifacts:
+  - path: "docs/concepts/sources/conceptual-influences-20261017.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Preserves the owner's account of the conceptual influences and naming origin used to explain Markitect.
   - path: "docs/design/canonical-model/standard-library-history.md"
     form: doc
     realizes: [documentation/current-guidance]

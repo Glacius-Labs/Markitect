@@ -18,6 +18,19 @@ This is an editorial recommendation and draft copy, not an adopted product decis
 
 Lead with the user's problem, then explain the mechanism with one concrete change. Introduce Packages, Managers and the Host only as needed to explain that change. The model is the continuing specification; a completed feature does not retire its existing obligations.
 
+### Organizing idea behind the story
+
+On 17 October 2026 the owner supplied the [conceptual influences](../concepts/sources/conceptual-influences-20261017.md) behind Markitect. Their single explanatory owner is [Origin and rationale](../concepts/origin-and-rationale.md#conceptual-influences). Our marketing interpretation is: **Make delegated AI work trustworthy through explicit intent, accountable responsibility and an inspectable process.** This is a proposed story, not a claim that trust has been measured.
+
+The public explanation can unfold in four steps:
+
+1. Describe the desired project world once in a canonical model.
+2. Divide its realization into responsibilities with focused context, local authority and escalation.
+3. Require independent judgment of the parts and their integration: the four-eyes principle at both scopes.
+4. Inspect the actual result and evidence before accepting it.
+
+"Trust the Process" names the aim of putting control into structure and procedure. Show what that process requires and what it actually observed. Type checks catch expressible structural errors early; semantic judgments still need assessment. Lower model cost is a hypothesis about focused work, evaluated over the full process. Stakeholders, incentives and multiple perspectives enrich the rationale; their mention introduces no reward system or additional reviewer institution. For a short pitch, translate these roots into a user's experience rather than reciting every contributing concept.
+
 ### First audience hypothesis
 
 Start with hands-on technical leads, maintainers and small teams already using coding agents on repositories with continuing architecture, testing and documentation obligations. Their recurring reconciliation work is the proposed reason to try Markitect. This audience and its demand have not been validated.
@@ -51,7 +64,7 @@ Markitect is being built to turn a canonical project model into coordinated AI w
 
 ### Thirty seconds
 
-Coding agents can implement a change and still miss a rule, a related test or a documentation update. Markitect starts with a canonical model of what your project should be. It is being built to give each area an accountable AI Manager, explicit context and independent review, including review of how the areas fit together. The goal is to keep the project consistent while you focus on design and decisions. Model preparation works today; recursive realization and Apply are still being built.
+Coding agents can implement a change and still miss a rule, a related test or a documentation update. Markitect starts with a canonical model of what your project should be. It is being built to organize realization through clear responsibilities, focused context, delegation and escalation. Independent reviewers assess both each area's work and how the areas fit together. The goal is to keep the project consistent while you focus on design and decisions. Model preparation works today; recursive realization and Apply are still being built.
 
 ### Two minutes
 
@@ -59,7 +72,7 @@ The hard part of using coding agents on a growing project is keeping the whole p
 
 Markitect starts with one canonical model of the desired project: its concepts, behavior, architecture and rules. Code, tests, configuration and documentation realize that model. Its structure makes ownership and explicit relationships inspectable before work starts.
 
-The realization design gives each model Package a Manager. A deterministic Host supplies explicit context and propagates the same operation to every local Manager. Managers interpret and realize their responsibilities, integrate their children's results and return evidence. Fresh reviewers assess local work and integration. Required checks and a final evidence check support guarded publication. A missing decision or incomplete result stays visible to the owner.
+The design draws on architectural decomposition and organized collaboration: clear responsibilities, delegation and escalation, abstraction, focused context and the four-eyes principle. Each model Package has a Manager. A deterministic Host supplies explicit context and propagates the same operation unchanged to every local Manager. Managers assess their responsibilities, make needed changes, integrate their children's results and return evidence. Fresh reviewers assess local change or no-change and integration. Required checks and a final evidence check support guarded publication. A missing decision or incomplete result stays visible to the owner.
 
 Consider a library whose borrowing limit changes from five books to three. The intended demonstration applies the first model, changes that one policy value and applies the second model against the actual first result. Code, tests and documentation must follow the new limit together, with independent expectations checking the result.
 

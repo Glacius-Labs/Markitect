@@ -1,6 +1,6 @@
 # Markitect's origin and rationale
 
-This page owns the causal account of why Markitect was conceived and how its mechanisms are expected to address the originating problems. It organizes the product owner's [retrospective account of 15 October 2026](sources/owner-origin-20261015.md) and the earlier [product description](sources/owner-product-description-20261009.md). The sequence is the owner's account; the dates when its individual stages first occurred are not established here.
+This page owns the causal account of why Markitect was conceived and how its mechanisms are expected to address the originating problems. It organizes the product owner's [retrospective account of 15 October 2026](sources/owner-origin-20261015.md), the earlier [product description](sources/owner-product-description-20261009.md) and the [conceptual influences named on 17 October 2026](sources/conceptual-influences-20261017.md). The sequence is the owner's account; the dates when its individual stages first occurred are not established here.
 
 The [vision](../vision.md) owns the product thesis. The [register](register.md) owns decisions and their status, promises, assumptions and ideas. This explanation adds provenance and connects those entries; it does not create a second decision register, schedule work or claim that the method has demonstrated its benefits. Current behavior belongs to [Architecture](../architecture.md), implementation status to the [roadmap](../implementation-plan.md), and evaluation procedure to [Measurement](../measurement.md).
 
@@ -11,6 +11,28 @@ The owner was developing a project with explicit Core, Module and Product bounda
 The owner also wanted to specify the working method, review policies, a documentation location for each use case, the skills belonging to a module, an Area, required documentation and its shape. The intended system therefore covered more than application behavior: architecture, development practice and the relationships among code, documentation and contributor guidance all mattered.
 
 In the owner's experience, those representations repeatedly contradicted one another. Changes missed or violated rules, and documentation suffered from what the owner called "Bleeding". This account preserves that term without inventing a precise failure classification for it. Repeated AI consolidation found further drift, took a long time, and eventually left the owner unsure what applied and what was missing. These are reported observations about the originating project, not a measured failure rate for AI development in general.
+
+## Conceptual influences
+
+On 17 October 2026 the owner explicitly identified the following influences. This table groups their intended contributions for explanation; it does not adopt new mechanisms or change the frozen Apply concept. Existing decisions keep their status.
+
+| Influence named by the owner | Contribution to the idea | Existing connection and boundary |
+| --- | --- | --- |
+| Four-eyes principle | A separate judgment challenges the implementer's result. | [Independent review](../design/canonical-model/manager-apply-concept.md#distinct-review-responsibilities); fresh review supplies evidence, with shared blind spots still possible. |
+| Responsibility areas | Each area has an accountable owner and explicit obligations. | [Package Managers](register.md#dec-025-package-managers-organize-realization). |
+| Delegation and escalation | Local work can proceed within authority; unresolved decisions reach the responsible level. | [Organization and trust](reflections/organization-and-trust-20261016.md); the current Apply contracts own the actual protocol. |
+| Divide and conquer | Split a problem into parts, then assess their composition. | Local delivery and independent integration review have distinct responsibilities. Passing parts alone do not establish a correct whole. |
+| Model and projections; realization of a worldview | The software project expresses a canonical account of its intended world. | Code, tests, configuration and documentation are realizations. This broader model/view analogy does not imply deterministic generation or establish software correctness. |
+| Good planning, system and structure; Trust the Process | Make responsibility and required workflow steps explicit so control is supported by the process. | [Deterministic Manager process](register.md#dec-039-deterministic-manager-process) and its linked refinements; the Host enforces the selected procedure while Agents interpret meaning. |
+| Stakeholders, incentives and perspectives | Direct attention to different questions about the same subject and consider what the organization rewards. | [Different perspectives](reflections/organization-and-trust-20261016.md#different-perspectives-through-configurable-teams) and its incentive discussion; this account selects no stakeholder roster, reward function or scoring system. |
+| Type systems and compile-time consistency | Detect expressible identity, type and reference problems before realization. | [Borrowed compiler concept](register.md#dec-003-the-compiler-is-a-borrowed-concept); semantic interpretation and undeclared relationships remain separate. |
+| Many capable, less expensive agents; God Agent/God Class analogy | Use focused cooperating roles instead of concentrating every responsibility in one agent. | [Mid-tier models](register.md#dec-007-more-economical-models-means-capable-mid-tier-models) and [hypotheses](register.md#assumptions-and-hypotheses); suitability and total cost include coordination, review and rework. The owner's named models are examples, not selected profiles. |
+| Abstraction and need to know; breadth and depth | Keep local detail with specialists and coordinate it through summaries and targeted inspection. | [Context direction](register.md#dec-028-context-follows-need-to-know-and-starts-simple); focused context is an attention boundary, not a security guarantee. |
+| Doc/spec-driven development, Single Source of Truth, Clean Architecture and the Dependency Rule | Bring explicit intent, separation of responsibility and disciplined dependencies into agent work. | The model owns binding intent. The originating project's architecture is motivation; each adopting project chooses its own intended architecture. |
+
+The owner also explains the name through the original idea of programming in Markdown: "Markitect = Markdown Arcitect", with YAML now used for the canonical language. This records the owner's naming account; it supplies no independently dated naming history. The [language specification](../design/canonical-model/minimal-language/language-contract.md) owns today's authoring contract.
+
+Editorial synthesis: Markitect brings explicit project intent, architectural decomposition and organized independent judgment into one realization method. The intended trust comes from how responsibilities and evidence fit together. Whether that combination transfers successfully to Agents and reduces human supervision remains to be demonstrated. The [marketing plan](../strategy/marketing-plan.md) develops the public explanation without giving these analogies new implementation authority.
 
 ## How the idea followed from the problem
 
