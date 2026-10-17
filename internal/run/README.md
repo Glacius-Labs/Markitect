@@ -114,11 +114,18 @@ remaining shared ledger; this need not replenish the configured reserve that
 assessment work may spend.
 The consumer-owned `Sessions` port maps one Host session to Open, one compiled
 turn to Step, exact known provider handles to read-only Inspect, and bounded
-termination to Stop. It names no engine or provider protocol. Session and step
-preparation commit their finite admission reservations atomically with the
-preallocated identities, fixed profile/image/workspace and input/contract
-references. The original payloads must be available and verified. Reviewer
-workspaces are read-only. Credential fields are references only.
+termination to Stop. It names no engine or provider protocol. In the first
+strategy one Session is one container serving exactly one Step; the Host
+prepares a new Session for every Step. The plan names the step's workspace
+volume, a separate provider-home volume that keeps the conversation across
+containers, and optionally the provider conversation to resume. A resumed
+Session binds only under that identity. Reviewers are read-only and never
+resume. Session and step preparation commit their finite admission reservations
+atomically with the preallocated identities, fixed profile/image/workspace and
+input/contract references. `SessionAdmission` and `StepAdmission` read and
+verify the recorded profile, tool, input and contract bytes from the journal and
+hand them to the adapter, which uses exactly those bytes. Credential fields are
+references only; the adapter resolves them at Open.
 Each Step explicitly asserts the still-current Session plan binding, including
 profile, image, workspace and candidate. A changed or unprovable binding needs a
 new session. Physical workspace currentness remains the Host's responsibility.
@@ -146,8 +153,7 @@ observations and later Steps. Missing init, uncertain send or append failure
 retains effects and holds; another Open cannot replace a recorded startup send.
 Restoration preserves readiness and the first Step/send identities behind the
 existing recovery barrier, without dispatching anything. Readiness cannot erase
-earlier uncertainty or supply inspection handles. Literal prechange session
-history retains its original canonical bytes and retry receipts.
+earlier uncertainty or supply inspection handles.
 
 `SessionChannel` implements the serialized Host `SessionIO` callbacks against
 the same Coordinator and journal. Before every provider write, including tool
@@ -155,8 +161,10 @@ responses and notifications, `PrepareSend` must return a fresh acknowledged
 `SendPermit` whose identity matches the actual bytes. Failed or uncertain
 acknowledgement never grants dispatch. Re-observing a preparation never grants
 another send, even after restart. Actual sent/not-sent/uncertain observations
-remain separate. Shutdown control sends stay available during reconciliation
-without clearing earlier unknown activity or charging new Agent work.
+remain separate. A write that answers a tool call names that call; it may follow
+only the recorded Host answer to that call in the same step, and only once.
+Shutdown control sends stay available during reconciliation without clearing
+earlier unknown activity or charging new Agent work.
 
 Wire records separate the actual byte digest/length from the permitted journal
 representation. The Host redacts known secrets **before** supplying any payload
@@ -166,14 +174,30 @@ authorize replay of the original wire. `AppendBatch.SessionRefs` lists exactly
 the direct stored payloads, alongside `BindingRefs` and `BindingOwnerRef`; the
 store verifies and retains all three closures before acknowledging Append.
 
-Tool ingress is deduplicated by session channel and provider call identity,
-including the exact step, tool identity and content/representation. A changed
-call conflicts. An unresolved duplicate stays pending and cannot execute again
-implicitly. A recorded reply is returned with its original receipt and bytes
-when the retained representation permits it; redaction or unavailable bytes
-returns the known receipt and an observation limit instead. A fresh ingress
-receipt is not tool-execution authority. Tool interpretation and actual execution
-are not implemented in this slice.
+`Call` records a tool call, lets the channel's `ToolHandler` answer it and
+records the answer as a closed `ToolOutcome` (`ok` with a result or `refused`
+with a reason) whose encoding fits the session's wire limit. The adapter
+returns those exact bytes to the provider; a refusal is an answer, not a
+transport failure. While the run admits no new work (recovery, a stop request
+or any state but Running), the call is answered with a fixed refusal and the
+handler is not called. That refusal only settles the call in the journal: no
+ordinary write is admitted in that state, so the adapter never sends it, and
+the Host stops the session. Calls are deduplicated by session channel and provider
+call identity, including the exact step, tool identity and
+content/representation: an exact repeat returns the recorded answer without
+executing again, and a changed call conflicts. A handler error or an invalid or
+oversize outcome leaves the call pending; it cannot execute again implicitly.
+If recording the answer fails, `Call` returns the error together with the
+outcome, which the adapter must not send; once reconciliation shows the answer
+absent, the Host records it through `ToolReconciliation`. Recorded answers are
+never redacted and always carry the tool-outcome media type. Slices without
+Host tools use `RefuseTools`; the Manager and reviewer tools arrive with the
+core protocol.
+
+Before the Claude Code adapter relies on resume binding, a bounded probe must
+show that a resumed Claude Code session reports the resumed session ID in its
+init event. The runtime capability record shows that the conversation content
+continues, not the reported identity.
 
 Provider session/step IDs remain distinct from Host IDs. Inspect can select only
 the exact journal-bound handles and never creates or resumes a provider Session
@@ -224,8 +248,8 @@ single-step slice supplies no automatic replacement attempt.
 
 The initial gate clears only after every Manager's report is confirmed and all
 effects are stopped/reconciled and charged. A terminal step alone is insufficient.
-Unexpected tool ingress is recorded for denial/reconciliation, never executed;
-`ToolReceipt.Fresh` grants no authority. Unresolved callbacks and transports remain
+An unexpected tool call is recorded and refused; no Host tool runs in this
+slice. Unresolved callbacks and transports remain
 visible even after a session stops. All unclassified sessions, later steps,
 standalone invocation reservations and unimplemented work/review/tool phases
 remain denied after the gate clears. Actual Workspace/Check/Apply execution and
@@ -234,8 +258,9 @@ provider-output extraction are absent; source fixtures prove no real dispatch.
 V3 protects two session starts and two steps per required review subject: one
 local review for every Manager, plus integration review for every Manager with
 children. Distinct physical phase bindings are conservatively budgeted; no
-unproved session reuse discounts this minimum. The original v1/v2 floors still
-replay exactly, including literal pre-readiness and pre-Explore histories. Exact
+unproved session reuse discounts this minimum. The original v1/v2 basis floors
+still replay; session histories recorded before the step-bound session port are
+not supported. Exact
 known retries return their original receipts before fresh-admission checks.
 Restored legacy history permits only known-effect observation/reconciliation and
 stop, not fresh legacy execution or replaying a send.

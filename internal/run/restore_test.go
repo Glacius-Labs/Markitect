@@ -174,12 +174,12 @@ func TestRestoreKeepsPinnedHeadWhenLaterWorkCommits(t *testing.T) {
 func TestRestoreHoldsOpenInvocationsBehindSeparateRecoveryBarrier(t *testing.T) {
 	for _, uncertain := range []bool{false, true} {
 		t.Run(map[bool]string{false: "reserved", true: "uncertain"}[uncertain], func(t *testing.T) {
-			c, j, io := activeStep(t)
+			c, j, _ := activeStep(t)
 			oldCommand := stepPreparation(t, c, "step", "step-invocation")
 			step, _ := c.Step("step")
 			oldReceipt := step.Prepared
-			if _, err := io.ToolRequest(context.Background(), run.ToolCall{RecordMeta: meta("pending-callback"), Step: "step", Call: "call", Tool: "unsupported", Input: wire(t, "request")}); err != nil {
-				t.Fatal(err)
+			if _, err := channel(t, c, j, failing).Call(context.Background(), run.ToolCall{RecordMeta: meta("pending-callback"), Step: "step", Call: "call", Tool: "unsupported", Input: wire(t, "request")}); err == nil {
+				t.Fatal("failed Host tool reported an answer")
 			}
 			if uncertain {
 				u := command("uncertain", run.ObserveUncertain)
@@ -204,7 +204,7 @@ func TestRestoreHoldsOpenInvocationsBehindSeparateRecoveryBarrier(t *testing.T) 
 			if err != nil || r != oldReceipt {
 				t.Fatal("retry", err)
 			}
-			io2, _ := c2.SessionChannel(j, "s")
+			io2, _ := c2.SessionChannel(j, "s", run.RefuseTools)
 			if _, err := io2.ObserveStop(context.Background(), run.StopObservation{RecordMeta: meta("stopped"), Terminated: true, Reason: "observed termination"}); err != nil {
 				t.Fatal(err)
 			}
@@ -213,7 +213,15 @@ func TestRestoreHoldsOpenInvocationsBehindSeparateRecoveryBarrier(t *testing.T) 
 				t.Fatal("unresolved callback lost after elapsed settlement")
 			}
 			j.appendMode = "lost"
-			if _, err := io2.ToolReply(context.Background(), run.ToolReply{RecordMeta: meta("denied"), Call: "call", Output: wire(t, "denied; not executed")}); !errors.Is(err, run.ErrUncertain) {
+			denied, err := c2.ToolReconciliation(meta("denied"), "s", "call", run.ToolOutcome{Status: run.ToolRefused, Reason: "denied; not executed"})
+			if err != nil {
+				t.Fatal(err)
+			}
+			p, err = c2.Propose(denied)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if _, err := c2.Commit(context.Background(), j, p); !errors.Is(err, run.ErrUncertain) {
 				t.Fatal(err)
 			}
 			if !c2.RecoveryRequired() {

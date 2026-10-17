@@ -214,7 +214,7 @@ func exploreInputs(t *testing.T, onePackage bool) run.ExplorePreparation {
 func exploreSessionPreparation(t *testing.T, c *run.Coordinator, inputs run.ExplorePreparation, manager string, id run.SessionID) run.Command {
 	t.Helper()
 	profile, tools := payload(t, `{"profile":"synthetic recorded metadata"}`), payload(t, `{"tools":[]}`)
-	plan := run.SessionPlan{ID: id, Role: "manager", Workspace: "linux-workspace-" + string(id), Candidate: inputs.Binding.Census.Digest(), ReadOnly: true, ImageID: "sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef", CredentialRef: "credential-ref", MaxWireBytes: 1 << 20, Profile: profile.Ref(), Tools: tools.Ref()}
+	plan := run.SessionPlan{ID: id, Role: "manager", Workspace: "linux-workspace-" + string(id), ProviderHome: "provider-home", Candidate: inputs.Binding.Census.Digest(), ReadOnly: true, ImageID: "sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef", CredentialRef: "credential-ref", MaxWireBytes: 1 << 20, Profile: profile.Ref(), Tools: tools.Ref()}
 	cmd, err := c.PrepareExploreSessionCommand(meta("prepare-"+string(id)), manager, plan, run.Reservation{ID: "open-" + string(id), Kind: run.SessionStart, Purpose: run.Writing, Maximum: time.Minute}, profile, tools)
 	if err != nil {
 		t.Fatal(err)

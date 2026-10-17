@@ -10,7 +10,7 @@ One chat owns one bounded package/API slice and tests. Dispatch lists paths, inp
 
 ## Shared-file requests
 
-The coordinator owns root dependencies, cross-package contracts, the plan and concept register. BOOT/CUTOVER may receive explicit bounded ownership of gates, canonical sources, generated views and wiring. Others request a concrete change with intended behavior, consumer and cases rather than editing shared files.
+The coordinator owns root dependencies and the plan; the [architect section](../implementation-plan.md#architect-and-coordinator) assigns the Apply concept, its register entries, the ports and the core packages to the architect session, and everything else stays with the coordinator. BOOT/CUTOVER may receive explicit bounded ownership of gates, canonical sources, generated views and wiring. Others request a concrete change with intended behavior, consumer and cases rather than editing shared files.
 
 Producers own value types; consumers own ports. No global types/interface package, old Project DTO bridge or duplicate definitions to unblock an adapter. Follow the [target Go boundaries](../design/canonical-model/manager-apply-go-architecture.md), not obsolete Module/Host rules in historical guides. Until cutover, current source retains its gates and the public CLI does not import partial replacement packages.
 

@@ -119,7 +119,7 @@ type Sessions interface {
 
 type SessionIO interface {
 	Observe(context.Context, SessionEvent) error
-	Call(context.Context, ToolCall) (ToolReply, error)
+	Call(context.Context, ToolCall) (ToolResult, error)
 }
 ```
 
@@ -130,11 +130,11 @@ type SessionIO interface {
 | `StepReceipt` | Step and session identity, observed status, the proposed step outcome ([T3](manager-apply-core.md#manager-tasks), [T5](manager-apply-core.md#manager-tasks), [T6](manager-apply-core.md#manager-tasks)), output references, usage when observable and observation limits. A report, a submission, a `wait`, a step without a valid outcome and an uncertain interruption are distinct; none is an accepted delivery. |
 | `SessionQuery` | Known session ID and, where relevant, step ID. Unavailable information stays unknown. |
 | `SessionEvent` | Session and step, sequence and correlation, kind and exact observed payload, including prepared outbound payloads, transport observations, incoming content and tool exchanges. |
-| `ToolCall` / `ToolReply` | Correlation ID and a closed typed request or result for one tool of the role's [Host tool catalogue](manager-apply-core.md#host-tools). The sender is the session whose container channel carried the call. |
+| `ToolCall` / `ToolOutcome` | Correlation ID and a closed typed request for one tool of the role's [Host tool catalogue](manager-apply-core.md#host-tools). `Call` records it, the Host answers it and the answer is recorded before the adapter returns it unchanged: `ok` with a result, or `refused` with a reason, which the adapter reports as a tool error. The write that delivers an answer names its call and may happen once. The sender is the session whose container channel carried the call. |
 
 Every session runs in its own container through the session helper `markitect-agentd`, which serves the Host tools to the provider CLI over MCP and carries everything over one stdio connection ([rebuild plan](manager-apply-rebuild-plan.md#container-runtime)). The Host implements `SessionIO`. The adapter calls `Observe` with the actual outgoing content and waits for durable acknowledgement before sending it. Hidden provider context and unobservable activity are reported as limits, never reconstructed from templates. An executor that cannot support this protocol and its input observation is not selectable.
 
-The records above describe the selected target, not an already implemented Go API. Current `SessionPlan.Candidate` binds the whole execution session to one candidate. Moving evolving workspace identity into each admitted step requires a versioned producer change with exact source, tool and recovery bindings. Retain historical session/step bytes and their original transition rules. Do not weaken the current binding in place or treat a source-only continuation claim as a physical capability.
+The records above describe the selected target; the implemented Go API is `run.Sessions` and `run.SessionIO` in source. In the first strategy one execution session is one container serving exactly one step, so the session plan's workspace and candidate are the step's. The plan also names a provider-home volume that survives the container and, when continuing, the provider conversation to resume; a resumed session binds only under that identity, and reviewers never resume. The admissions hand the adapter the exact recorded profile, tool, input and contract bytes. A source-only continuation claim is not a physical capability.
 
 Nothing changes a workspace while its step runs, and the next step starts from a newly materialized version ([S6](manager-apply-core.md#steps), [D3](manager-apply-core.md#deliveries-and-composition)). Every action is checked against the active step and version. A late request from an older step cannot write or create new current evidence; a repeated completed request returns only its old receipt. Independent review uses its frozen subject rather than a Manager's workspace.
 

@@ -265,15 +265,22 @@ func TestReviewerSessionContractRequiresROAssessmentAndSettledReadiness(t *testi
 	s := unitState(t)
 	profile, _ := NewPayload("application/json", "utf-8", []byte("profile"))
 	tools, _ := NewPayload("application/json", "utf-8", []byte("tools"))
-	plan := SessionPlan{ID: "reviewer", Role: "reviewer", Workspace: "unit-reviewer", ReadOnly: true, ImageID: "sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef", CredentialRef: "credential", MaxWireBytes: 4096, Profile: profile.Ref(), Tools: tools.Ref()}
+	plan := SessionPlan{ID: "reviewer", Role: "reviewer", Workspace: "unit-reviewer", ProviderHome: "provider-home", ReadOnly: true, ImageID: "sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef", CredentialRef: "credential", MaxWireBytes: 4096, Profile: profile.Ref(), Tools: tools.Ref()}
 	plan.Candidate[0] = 1
 	prepare := PrepareSessionCommand(RecordMeta{}, "a", "r", plan, Reservation{"open", SessionStart, Assessment, time.Minute}, profile, tools)
-	bad := prepare
-	bad.Session.Plan.ReadOnly = false
-	if err := bad.Session.validate(PrepareSession); !errors.Is(err, ErrInvalid) {
-		t.Fatal(err)
+	for name, edit := range map[string]func(*SessionPlan){
+		"writable reviewer":          func(p *SessionPlan) { p.ReadOnly = false },
+		"resumed reviewer":           func(p *SessionPlan) { p.Resume = "provider-session" },
+		"missing provider home":      func(p *SessionPlan) { p.ProviderHome = "" },
+		"provider home is workspace": func(p *SessionPlan) { p.ProviderHome = p.Workspace },
+	} {
+		bad := prepare
+		edit(&bad.Session.Plan)
+		if err := bad.Session.validate(PrepareSession); !errors.Is(err, ErrInvalid) {
+			t.Fatal(name, err)
+		}
 	}
-	bad = prepare
+	bad := prepare
 	bad.Reservation.Purpose = Writing
 	if err := s.applySession(bad); !errors.Is(err, ErrInvalid) {
 		t.Fatal(err)
