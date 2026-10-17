@@ -19,7 +19,7 @@ An omitted revision observes the actual working draft, including Git-ignored fil
 
 `check` requests structural preparation by default: actual compilation, execution declarations, registry, complete file accounting and static context selection. `context <package>` uses the same preparation and reports selected Definitions, provenance and inclusion reasons for one local Package, or `.` for the ordinary root.
 
-Add `--metadata --host-profile ABSOLUTE_DOCUMENT_PATH` to request static Agent/Check profile metadata and settings preparation. Actual adapters parse explicitly selected source-bound executable, schema and profile files. A metadata pass does not establish runtime support. Unrequested metadata and settings report `requested: false`; absent or incomplete required observations remain incomplete.
+Add `--metadata --host-profile ABSOLUTE_DOCUMENT_PATH` to request static Agent/Check profile metadata and settings preparation. The [Codex Agent profile](../internal/adapters/codexappserver/README.md) uses `profileVersion: 2` and an explicitly configured engine to inspect an immutable image ID and copy `/opt/markitect/runtime.env` from a created, never started container. It binds the actual whole metadata bytes and recorded versions; the recorded schema digest is a build assertion, not an observed schema inventory. Check profiles retain their static host-executable metadata contract. A metadata pass establishes neither runtime nor provider capability. Unrequested metadata and settings report `requested: false`; absent or incomplete required observations remain incomplete.
 
 ## Generated documentation
 

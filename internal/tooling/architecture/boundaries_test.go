@@ -65,6 +65,12 @@ func TestConcreteResponsibilityBoundaries(t *testing.T) {
 		{"internal/adapters/documents", "internal/tooling/guardedwrite", true},
 		{"internal/adapters/documents", "internal/tooling/source", false},
 		{"internal/adapters/checks", "internal/adapters/codexappserver", false},
+		// Codex's concrete metadata factory uses only image inspection/copy.
+		// Session and agentd-frame consumption require a separate delivery.
+		{"internal/adapters/codexappserver", "internal/adapters/container", true},
+		{"internal/adapters/codexappserver", "internal/run", false},
+		{"internal/adapters/codexappserver", "internal/agentd/frame", false},
+		{"internal/bootstrap", "internal/adapters/container", false},
 		{"internal/adapters/container", "internal/agentd/frame", true},
 		{"internal/adapters/container", "internal/agentd", false},
 		{"internal/adapters/container", "internal/apply", false},

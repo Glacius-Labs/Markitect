@@ -4,7 +4,7 @@ Generated from acquired canonical v1 source bytes. This view is not execution or
 
 ## markitect
 
-Canonical model digest: `sha256:1fa9f0f0ce75b17121b8c673b8b46beeffa6a921365f502130806f1b2be97c9a`.
+Canonical model digest: `sha256:9db6cfdc15b1a7c1a3543efd3ccc62d2a0cb8455c312ecdb42a3c51b31f8a887`.
 
 Manifest: `.markitect/model.yaml` (original bytes `sha256:d40feb9e02db275aed89d53b0a88849e463acaca076c8fa70fad38b367a68559`).
 
@@ -142,9 +142,9 @@ Keep model, snapshot, organization and realization values independent of executi
 
 ### product/adapters/agent/closed-agent-metadata
 
-Kind: `vocabulary/Rule`. Source: `.markitect/model/product/adapters/agent/closed-agent-metadata.yaml` (original bytes `sha256:296ba23e8ebf7009cd990a31ee2d9d4cc25569c21f972e5ecc7cbd3a0948fdf3`).
+Kind: `vocabulary/Rule`. Source: `.markitect/model/product/adapters/agent/closed-agent-metadata.yaml` (original bytes `sha256:41a6dfd7742793234d55c6b5ba370246d603b6d68946808117b413b6764e8017`).
 
-Parse only explicitly selected source-bound Codex executable, protocol-schema and profile metadata in closed formats. Preserve content identities and diagnostics. Metadata preparation never starts a process, probes a version, exports a schema or invokes a provider, and a pass does not establish runtime support.
+Prepare only explicitly selected source-bound Agent profile metadata in closed formats. Bind the immutable runtime image identity and the actual whole metadata file bytes. The configured container engine may inspect the image and copy build metadata from a created, never started container; preparation never reads a host provider executable, probes a provider version, exports a schema, starts an Agent Session or invokes a model. Preserve recorded CLI and agentd versions, diagnostics and observation limits. A build-recorded schema digest is an assertion, not an observed complete schema inventory. Instructions come only from captured inputs. A static pass establishes neither runtime nor provider capability.
 
 ### product/adapters/checks/closed-check-metadata
 

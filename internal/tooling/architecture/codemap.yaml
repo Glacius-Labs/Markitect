@@ -37,8 +37,8 @@ packages:
     doc: docs/development/modules.md
   - path: internal/adapters/codexappserver
     layer: apply-adapter
-    purpose: Concrete repository, profile metadata and document I/O.
-    doc: docs/development/modules.md
+    purpose: Prepares Codex build metadata from an explicitly selected immutable runtime image without starting it.
+    doc: internal/adapters/codexappserver/README.md
   - path: internal/adapters/container
     layer: apply-adapter
     purpose: Container engine client and the Host side of the agentd connection.

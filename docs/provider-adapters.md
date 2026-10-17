@@ -1,6 +1,6 @@
 # Provider adapters
 
-This source increment implements read-only Agent and Check profile metadata preparation. Actual sessions, provider protocols, process execution, executable checks and workspaces are later stages in the [delivery plan](implementation-plan.md). There is no active legacy provider runtime or MCP server. The target runtime runs every Agent session and check in its own Linux container, with Codex App Server and Claude Code adapters ([DEC-037](concepts/register.md#dec-037-agent-sessions-and-checks-run-in-linux-containers), [rebuild plan](design/canonical-model/manager-apply-rebuild-plan.md#container-runtime)).
+This source increment implements read-only Codex Agent and Check profile metadata preparation. Product session execution, executable checks and workspaces are later stages in the [delivery plan](implementation-plan.md). There is no active legacy provider runtime or MCP server. The target runtime runs every Agent session and check in its own Linux container, with Codex App Server and Claude Code adapters ([DEC-037](concepts/register.md#dec-037-agent-sessions-and-checks-run-in-linux-containers), [rebuild plan](design/canonical-model/manager-apply-rebuild-plan.md#container-runtime)).
 
 ## Connect the outer client
 
@@ -8,19 +8,19 @@ Build `cmd/markitect` and use its CLI from the coding environment. `check` and `
 
 ## Role profiles
 
-The explicit Host document contains closed, typed Agent and Check profile sections consumed by the actual adapters. Project execution declarations select profile names. Agent preparation binds exact executable and protocol-schema bytes, supported schema metadata, selected model/effort/settings and instruction policy. Check preparation binds exact executable bytes, literal argument/environment policy and finite limits. Effective settings retain real source provenance and product defaults.
+The explicit Host document contains closed, typed Agent and Check profile sections consumed by the actual adapters. Project execution declarations select profile names. The Codex section uses `profileVersion: 2`, an explicit engine executable and immutable image ID. Agent preparation binds the actual whole `/opt/markitect/runtime.env` bytes, recorded Codex and agentd versions, and build-recorded Codex schema digest. That digest is an assertion, not an observed complete schema inventory. Instructions select only captured inputs. Check preparation retains its exact host-executable bytes, literal argument/environment policy and finite limits. Effective settings retain real source provenance and product defaults.
 
-See the implemented [Codex metadata adapter](../internal/adapters/codexappserver/) and [Check metadata adapter](../internal/adapters/checks/) for supported versioned fields and their contract tests, and [configuration assignments](design/canonical-model/manager-apply-configuration.md) for the separation of inputs.
+See the implemented [Codex metadata adapter](../internal/adapters/codexappserver/README.md) and [Check metadata adapter](../internal/adapters/checks/) for supported versioned fields and their contract tests, and [configuration assignments](design/canonical-model/manager-apply-configuration.md) for the separation of inputs.
 
 ## Inner role execution and workspace boundary
 
-Metadata preparation never starts a process, probes a version, exports a schema, creates a workspace or invokes a provider. A successful metadata result is not runtime support evidence. Structural output never reports metadata as implicitly passed.
+Codex metadata preparation may run the configured engine to inspect the image and copy its metadata from a created, never started container. It never starts the image, an Agent Session or a provider, probes a CLI version, exports a schema, creates a workspace or invokes a model. Check metadata preparation remains process-free. A successful metadata result establishes neither runtime nor provider capability. Structural output never reports metadata as implicitly passed.
 
 Fixed previews refuse unbound present-day external profile or dependency inputs, even for HEAD. Working previews retain actual observed bytes. Neither preview supplies an artifact publication guard.
 
 ## Container runtime
 
-The runtime for real sessions is implemented below the session port; no product command uses it yet. `internal/adapters/container` starts each session in a hardened Linux container from the [base image](../packaging/runtime/README.md), and `markitect-agentd` inside it runs the provider CLI and serves the Host tools over MCP. The container adapter's smoke shows both CLIs connecting to the Host tools in that container. The Codex and Claude Code session adapters follow the RUN Session port.
+The runtime for real sessions is implemented below the session port. Product metadata preparation uses only its image inspection/copy API; provider Session adapters remain unimplemented. `internal/adapters/container` starts each session in a hardened Linux container from the [base image](../packaging/runtime/README.md), and `markitect-agentd` inside it runs the provider CLI and serves the Host tools over MCP. The container adapter's smoke shows both CLIs connecting to the Host tools in that container. The Codex and Claude Code session adapters follow the RUN Session port.
 
 ## Bring your own executor
 

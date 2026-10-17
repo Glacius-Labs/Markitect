@@ -14,42 +14,38 @@ import (
 )
 
 type metadataConfig struct {
-	executable, stable, experimental string
-	instructions                     []apply.SourceLocation
+	engine, imageID, agentd, schema string
+	instructions                    []apply.SourceLocation
 }
 
-func (p *preparation) decode() (metadataConfig, bool) {
+func (p *preparation) decode(root *yaml.Node) (metadataConfig, bool) {
 	var c metadataConfig
 	start := len(p.out.Diagnostics)
-	if p.input.Namespace() != "agentProfiles" || p.input.Binding() == (apply.ProfileBinding{}) {
-		p.issue(model.Failed, "input", "", "A bound Agent profile input is required.")
-		return c, false
-	}
-	root := p.input.Inline()
-	fields := p.object(root, "", "profileVersion", "metadataPin", "executable", "schemas", "instructions")
+	fields := p.object(root, "", "profileVersion", "engineExecutable", "imageID", "agentdVersion", "recordedCodexSchemaDigest", "instructions")
 	v := fields["profileVersion"]
-	if v == nil || v.Kind != yaml.ScalarNode || v.Tag != "!!int" || v.Value != "1" {
-		p.issue(model.Failed, "version", "/profileVersion", "Only integer profileVersion 1 is supported.")
+	if v == nil || v.Kind != yaml.ScalarNode || v.Tag != "!!int" || v.Value != "2" {
+		p.issue(model.Failed, "version", "/profileVersion", "Only integer profileVersion 2 is supported.")
 	}
-	if p.text(fields["metadataPin"], "/metadataPin") != metadataPinName {
-		p.issue(model.Failed, "pin", "/metadataPin", "Only the fixed historical offline metadata pin is supported.")
+	c.engine = p.text(fields["engineExecutable"], "/engineExecutable")
+	if !filepath.IsAbs(c.engine) || filepath.Clean(c.engine) != c.engine {
+		p.issue(model.Failed, "engine_path", "/engineExecutable", "Engine executable requires an explicit canonical native absolute path.")
 	}
-	c.executable = p.absolute(fields["executable"], "/executable")
-	schemas := p.object(fields["schemas"], "/schemas", "stable", "experimental")
-	c.stable = p.absolute(schemas["stable"], "/schemas/stable")
-	c.experimental = p.absolute(schemas["experimental"], "/schemas/experimental")
-	if c.stable != "" && c.experimental != "" && (overlaps(c.stable, c.experimental) || overlaps(c.experimental, c.stable)) {
-		p.issue(model.Failed, "schema_boundaries", "/schemas", "Schema inventories must have distinct nonnested literal boundaries.")
+	c.imageID = p.text(fields["imageID"], "/imageID")
+	if !sha256Literal(c.imageID) {
+		p.issue(model.Failed, "image_identity", "/imageID", "Select an immutable sha256 image ID; tags and aliases are unsupported.")
+	}
+	c.agentd = p.text(fields["agentdVersion"], "/agentdVersion")
+	c.schema = p.text(fields["recordedCodexSchemaDigest"], "/recordedCodexSchemaDigest")
+	if !sha256Literal(c.schema) {
+		p.issue(model.Failed, "recorded_schema", "/recordedCodexSchemaDigest", "Select the expected build-recorded sha256 schema digest.")
 	}
 	n := fields["instructions"]
 	if n == nil || n.Kind != yaml.SequenceNode {
-		p.issue(model.Failed, "instructions", "/instructions", "An explicit ordered instruction list is required.")
+		p.issue(model.Failed, "instructions", "/instructions", "An explicit ordered captured instruction list is required.")
 	} else {
 		for i, child := range n.Content {
 			field := fmt.Sprintf("/instructions/%d", i)
 			entry := p.object(child, field, "boundary", "path")
-			// Instruction boundaries are opaque captured coordinates. Unlike our
-			// executable/schema acquisition paths, this port never resolves them.
 			boundary := p.text(entry["boundary"], field+"/boundary")
 			path, err := snapshot.NewPath(p.text(entry["path"], field+"/path"))
 			if err != nil {
@@ -63,11 +59,11 @@ func (p *preparation) decode() (metadataConfig, bool) {
 
 func (p *preparation) object(n *yaml.Node, field string, names ...string) map[string]*yaml.Node {
 	result := map[string]*yaml.Node{}
-	if n == nil || n.Kind != yaml.MappingNode {
+	if n == nil || n.Kind != yaml.MappingNode || n.Tag != "!!map" || len(n.Content)%2 != 0 {
 		p.issue(model.Failed, "object", field, "Expected a closed mapping.")
 		return result
 	}
-	for i := 0; i+1 < len(n.Content); i += 2 {
+	for i := 0; i < len(n.Content); i += 2 {
 		key, value := n.Content[i], n.Content[i+1]
 		allowed := false
 		for _, name := range names {
@@ -89,30 +85,25 @@ func (p *preparation) object(n *yaml.Node, field string, names ...string) map[st
 }
 
 func (p *preparation) text(n *yaml.Node, field string) string {
-	if n == nil || n.Kind != yaml.ScalarNode || n.Tag != "!!str" || strings.TrimSpace(n.Value) == "" {
-		p.issue(model.Failed, "string", field, "Expected an explicit nonempty string.")
+	if n == nil || n.Kind != yaml.ScalarNode || n.Tag != "!!str" || !literal(n.Value) {
+		p.issue(model.Failed, "literal", field, "Expected a bounded nonempty literal without controls or surrounding whitespace.")
 		return ""
 	}
 	return n.Value
 }
 
-func literalAbsolute(s string) bool {
-	if !utf8.ValidString(s) || !filepath.IsAbs(s) || filepath.Clean(s) != s || strings.HasPrefix(s, `\\`) {
+func literal(s string) bool {
+	return len(s) > 0 && len(s) <= 4096 && utf8.ValidString(s) && strings.TrimSpace(s) == s && !strings.ContainsFunc(s, unicode.IsControl)
+}
+
+func sha256Literal(s string) bool {
+	if len(s) != 71 || !strings.HasPrefix(s, "sha256:") {
 		return false
 	}
-	for _, r := range s {
-		if unicode.IsControl(r) {
+	for _, c := range s[7:] {
+		if !(c >= '0' && c <= '9' || c >= 'a' && c <= 'f') {
 			return false
 		}
 	}
 	return true
-}
-
-func (p *preparation) absolute(n *yaml.Node, field string) string {
-	s := p.text(n, field)
-	if !literalAbsolute(s) {
-		p.issue(model.Failed, "literal_path", field, "Expected an exact native absolute path without aliases, dot segments or redirects.")
-		return ""
-	}
-	return s
 }

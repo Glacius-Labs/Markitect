@@ -2,8 +2,6 @@ package codexappserver
 
 import (
 	"context"
-	"crypto/sha256"
-	"fmt"
 	"io/fs"
 	"os"
 	"path/filepath"
@@ -13,43 +11,8 @@ import (
 	"github.com/Glacius-Labs/Markitect/internal/apply"
 	"github.com/Glacius-Labs/Markitect/internal/model"
 	"github.com/Glacius-Labs/Markitect/internal/snapshot"
-	"github.com/Glacius-Labs/Markitect/internal/testkit"
 )
 
-type metadataFixture struct {
-	exe, stable, experimental string
-	pin                       offlinePin
-}
-
-func writeFixture(t *testing.T, path, text string) {
-	t.Helper()
-	if err := os.MkdirAll(filepath.Dir(path), 0700); err != nil {
-		t.Fatal(err)
-	}
-	if err := os.WriteFile(path, []byte(text), 0600); err != nil {
-		t.Fatal(err)
-	}
-}
-func fixture(t *testing.T) metadataFixture {
-	t.Helper()
-	dir := testkit.TempDir(t)
-	f := metadataFixture{exe: filepath.Join(dir, "bin", "program"), stable: filepath.Join(dir, "stable"), experimental: filepath.Join(dir, "experimental")}
-	writeFixture(t, f.exe, "fixture executable\r\n")
-	f.pin.executable = sha256.Sum256([]byte("fixture executable\r\n"))
-	f.pin.selected = []string{"schema.json"}
-	for i, boundary := range []string{f.stable, f.experimental} {
-		writeFixture(t, filepath.Join(boundary, "schema.json"), `{"type":"object"}`)
-		writeFixture(t, filepath.Join(boundary, "unused.json"), "{}\n")
-		// Independent fixture manifest, not a production pin configuration API.
-		manifest := fmt.Sprintf("schema.json\x0017\x00%x\x00unused.json\x003\x00%x\x00", sha256.Sum256([]byte(`{"type":"object"}`)), sha256.Sum256([]byte("{}\n")))
-		f.pin.inventories[i] = sha256.Sum256([]byte(manifest))
-	}
-	return f
-}
-func (f metadataFixture) inline() string {
-	quote := func(s string) string { return "'" + strings.ReplaceAll(s, "'", "''") + "'" }
-	return fmt.Sprintf("profileVersion: 1\nmetadataPin: %s\nexecutable: %s\nschemas: {stable: %s, experimental: %s}\ninstructions: []\n", metadataPinName, quote(f.exe), quote(f.stable), quote(f.experimental))
-}
 func testPath(t *testing.T, s string) snapshot.Path {
 	t.Helper()
 	p, err := snapshot.NewPath(s)
@@ -74,6 +37,19 @@ func (f captureProfile) PrepareAgentProfile(c context.Context, p apply.ProfileIn
 // Obtain the opaque input through Apply's real public M1 consumer. The fixture
 // Source supplies existing language bytes; it claims no physical Git acquisition.
 func profileInput(t *testing.T, inline string, instructions []apply.SourceFile) apply.ProfileInput {
+	t.Helper()
+	var input apply.ProfileInput
+	consumeProfile(t, inline, instructions, captureProfile(func(_ context.Context, p apply.ProfileInput) (apply.ProfileObservation, error) {
+		input = p
+		return apply.ProfileObservation{InputBinding: p.Binding(), Status: model.NotCompleted}, nil
+	}))
+	if input.Inline() == nil {
+		t.Fatal("actual consumer did not select the fixture profile")
+	}
+	return input
+}
+
+func consumeProfile(t *testing.T, inline string, instructions []apply.SourceFile, port apply.AgentProfilePreparer) apply.CapturedSettingsPreparation {
 	t.Helper()
 	base := filepath.Join("..", "..", "..", "docs", "design", "canonical-model")
 	readModel := func(dir, boundary string) apply.ModelSource {
@@ -149,14 +125,9 @@ func profileInput(t *testing.T, inline string, instructions []apply.SourceFile) 
 	if err != nil || m.Compilation().Status != model.Passed {
 		t.Fatalf("M1 source: %v %+v", err, m.Compilation())
 	}
-	var input apply.ProfileInput
-	port := captureProfile(func(_ context.Context, p apply.ProfileInput) (apply.ProfileObservation, error) {
-		input = p
-		return apply.ProfileObservation{InputBinding: p.Binding(), Status: model.NotCompleted}, nil
-	})
-	_, err = m.PrepareRegistry().CheckFiles().PrepareSettings(context.Background(), m.DecodeExecution().PrepareDefaults(apply.ProductStrategyDefaults()), port, nil)
-	if err != nil || input.Inline() == nil {
+	prepared, err := m.PrepareRegistry().CheckFiles().PrepareSettings(context.Background(), m.DecodeExecution().PrepareDefaults(apply.ProductStrategyDefaults()), port, nil)
+	if err != nil {
 		t.Fatalf("real consumer input: %v", err)
 	}
-	return input
+	return prepared
 }
