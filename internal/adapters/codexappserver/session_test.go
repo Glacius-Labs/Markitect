@@ -17,8 +17,6 @@ import (
 	"github.com/Glacius-Labs/Markitect/internal/snapshot"
 )
 
-const sessionContract = `{"Format":"markitect.explore-report/v1","Fields":{"Version":"integer=1","Assignment":"string","Run":"string","RunBasis":"ContentID","Manager":"string","Parent":"string|null","HandoffID":"string","Session":"SessionID","SessionBinding":"ContentID","Step":"StepID","InputContentID":"ContentID","OperationContentID":"ContentID","ContextContentID":"ContentID","Summary":"nonblank-string","ProposedChanges":"string[]","Prerequisites":"string[]","Uncertainties":"string[]","Questions":"string[]"},"AdditionalFields":false}`
-
 type fakeChannel struct {
 	preparations     []run.TransportPreparation
 	sends            []run.TransportObservation
@@ -132,6 +130,8 @@ type fakeRuntime struct {
 	startBlocked   bool
 	stopBlocked    bool
 	secretField    string
+	finalText      string
+	terminalStatus string
 	stopCalls      int
 }
 
@@ -217,8 +217,8 @@ func (f *fakeRuntime) WriteInput(data []byte) error {
 			if f.secretField == "call" {
 				callID = "prefix-secret-key-for-runtime"
 			}
-			f.tools <- frame.ToolCall{ID: 1, Name: "submit_work", Arguments: json.RawMessage(`{"summary":"done"}`), Meta: json.RawMessage(`{"threadId":"` + thread + `","callId":"` + callID + `"}`)}
-			f.emit(`{"method":"item/started","params":{"threadId":"` + string(codecThreadID) + `","turnId":"` + string(codecTurnID) + `","item":{"id":"actual-call","type":"mcpToolCall","server":"markitect","tool":"submit_work","arguments":{"summary":"done"},"status":"inProgress"}}}`)
+			f.tools <- frame.ToolCall{ID: 1, Name: "submit", Arguments: json.RawMessage(`{"summary":"done"}`), Meta: json.RawMessage(`{"threadId":"` + thread + `","callId":"` + callID + `"}`)}
+			f.emit(`{"method":"item/started","params":{"threadId":"` + string(codecThreadID) + `","turnId":"` + string(codecTurnID) + `","item":{"id":"actual-call","type":"mcpToolCall","server":"markitect","tool":"submit","arguments":{"summary":"done"},"status":"inProgress"}}}`)
 		} else {
 			f.finish()
 		}
@@ -226,12 +226,14 @@ func (f *fakeRuntime) WriteInput(data []byte) error {
 	return nil
 }
 func (f *fakeRuntime) finish() {
-	report := run.ExploreReport{Version: 1, Summary: "observed", ProposedChanges: []string{}, Prerequisites: []string{}, Uncertainties: []string{}, Questions: []string{}}
-	p, _ := run.NewExploreReportPayload(report)
-	item := map[string]any{"method": "item/completed", "params": map[string]any{"threadId": codecThreadID, "turnId": codecTurnID, "item": map[string]any{"id": "answer", "type": "agentMessage", "phase": "final_answer", "text": string(p.Bytes())}}}
+	item := map[string]any{"method": "item/completed", "params": map[string]any{"threadId": codecThreadID, "turnId": codecTurnID, "item": map[string]any{"id": "answer", "type": "agentMessage", "phase": "final_answer", "text": f.finalText}}}
 	data, _ := json.Marshal(item)
 	f.emit(string(data))
-	f.emit(`{"method":"turn/completed","params":{"threadId":"` + string(codecThreadID) + `","turn":{"id":"` + string(codecTurnID) + `","status":"completed","items":[],"error":null}}}`)
+	status := f.terminalStatus
+	if status == "" {
+		status = "completed"
+	}
+	f.emit(`{"method":"turn/completed","params":{"threadId":"` + string(codecThreadID) + `","turn":{"id":"` + string(codecTurnID) + `","status":"` + status + `","items":[],"error":null}}}`)
 }
 func (f *fakeRuntime) Reply(r frame.ToolReply) error {
 	f.replies = append(f.replies, r)
@@ -272,11 +274,17 @@ func sessionAdmissions(t *testing.T) (run.SessionAdmission, run.StepAdmission) {
 	t.Helper()
 	profile, _ := json.Marshal(SessionProfile{Version: 1, Model: "admitted-model", Effort: "high", Store: "store", CPUs: 1, MemoryBytes: 1 << 30, Pids: 128, TmpBytes: 1 << 20})
 	p := payloadForSession(t, "application/vnd.markitect.codex-session-profile+json", profile)
-	tools := payloadForSession(t, "application/vnd.markitect.tools+json", []byte(`{"version":1,"tools":[{"name":"submit_work","description":"Submit to Host","inputSchema":{"type":"object"}}]}`))
+	tools, err := run.ToolCatalog(run.PhaseWork)
+	if err != nil {
+		t.Fatal(err)
+	}
 	plan := run.SessionPlan{ID: "session", Role: "manager", Workspace: "workspace", ProviderHome: "provider-home", ImageID: "sha256:" + strings.Repeat("a", 64), CredentialRef: "exact-credential", Candidate: snapshot.TreeID{1}, MaxWireBytes: 1 << 20, Profile: p.Ref(), Tools: tools.Ref()}
 	a := run.SessionAdmission{Plan: plan, Profile: p, Tools: tools, Receipt: receipt(), Invocation: "open"}
 	input := payloadForSession(t, "application/vnd.markitect.explore-input+json", []byte(`{"exact":"input"}`))
-	contract := payloadForSession(t, "application/vnd.markitect.explore-contract+json", []byte(sessionContract))
+	contract, err := run.NewStepContract(run.PhaseWork)
+	if err != nil {
+		t.Fatal(err)
+	}
 	b := run.StepAdmission{Session: plan, Plan: run.StepPlan{Session: plan.ID, ID: "step", SessionBinding: plan.Binding(), Input: input.Ref(), OutputContract: contract.Ref()}, Input: input, OutputContract: contract, Receipt: receipt(), Invocation: "step"}
 	return a, b
 }
@@ -356,7 +364,7 @@ func TestAdmittedCodexSessionOneStepHostToolsAndObservedExit(t *testing.T) {
 				t.Fatalf("provider start %+v", runtime.start)
 			}
 			step, err := s.Step(ctx, b, channel)
-			if err != nil || !step.Terminal || step.ProviderStep != run.ProviderStepID(codecTurnID) || !step.Proposed.Valid() {
+			if err != nil || !step.Terminal || step.ProviderStep != run.ProviderStepID(codecTurnID) || step.Proposed.Valid() {
 				t.Fatalf("step %+v %v", step, err)
 			}
 			if len(channel.calls) != 1 || channel.calls[0].Call != "actual-call" || len(runtime.replies) != 1 {
@@ -389,6 +397,123 @@ func TestAdmittedCodexSessionOneStepHostToolsAndObservedExit(t *testing.T) {
 			stopped, err := s.Stop(ctx, run.StopRequest{Session: a.Plan.ID, ProviderSession: opened.ProviderSession, Timeout: time.Second}, channel)
 			if err != nil || !stopped.Terminated || !strings.Contains(stopped.Reason, "signal=terminated") {
 				t.Fatalf("stop %+v %v", stopped, err)
+			}
+		})
+	}
+}
+
+func TestCodexStepContractsRetainFinalTextWithoutProposingOutcomes(t *testing.T) {
+	cases := []struct {
+		phase run.Phase
+		text  string
+	}{
+		{run.PhaseExplore, `{"Version":1,"Summary":"claimed report","ProposedChanges":[],"Prerequisites":[],"Uncertainties":[],"Questions":[]}`},
+		{run.PhaseWork, "not JSON"},
+		{run.PhaseIntegrate, ""},
+		{run.PhaseReply, `{"kind":"reply","body":"claimed outcome"}`},
+		{run.PhaseReviewerExpectations, "claimed expectations"},
+		{run.PhaseReviewerCandidate, `{"verdict":"pass"}`},
+	}
+	for _, tc := range cases {
+		t.Run(string(tc.phase), func(t *testing.T) {
+			channel := &fakeChannel{}
+			runtime := peer(channel)
+			runtime.finalText = tc.text
+			s := sessionsForTest(t, runtime)
+			a, b := sessionAdmissions(t)
+			var err error
+			a.Tools, err = run.ToolCatalog(tc.phase)
+			if err != nil {
+				t.Fatal(err)
+			}
+			a.Plan.Tools = a.Tools.Ref()
+			if tc.phase == run.PhaseReviewerExpectations || tc.phase == run.PhaseReviewerCandidate {
+				a.Plan.Role, a.Plan.ReadOnly = "reviewer", true
+			}
+			b.Session = a.Plan
+			b.Plan.SessionBinding = a.Plan.Binding()
+			b.OutputContract, err = run.NewStepContract(tc.phase)
+			if err != nil {
+				t.Fatal(err)
+			}
+			b.Plan.OutputContract = b.OutputContract.Ref()
+			if _, err := s.Open(context.Background(), a, channel); err != nil {
+				t.Fatal(err)
+			}
+			var catalog struct {
+				Tools []frame.ToolSpec `json:"tools"`
+			}
+			if json.Unmarshal(a.Tools.Bytes(), &catalog) != nil {
+				t.Fatal("invalid producer tools")
+			}
+			wantTools, _ := json.Marshal(catalog.Tools)
+			gotTools, _ := json.Marshal(runtime.start.Tools)
+			if !bytes.Equal(wantTools, gotTools) {
+				t.Fatal("admitted tools changed before provider registration")
+			}
+			step, err := s.Step(context.Background(), b, channel)
+			if err != nil || !step.Terminal || step.Proposed.Valid() || len(channel.calls) != 0 {
+				t.Fatalf("final text became an outcome: %+v %v", step, err)
+			}
+			var observedWire []byte
+			for _, observation := range channel.steps {
+				if observation.Proposed.Valid() {
+					t.Fatal("ObserveStep received a proposed outcome")
+				}
+				observedWire = append(observedWire, observation.Wire.Journal.Bytes()...)
+			}
+			wireText, _ := json.Marshal(tc.text)
+			if !bytes.Contains(observedWire, wireText) {
+				t.Fatal("final text lost from provider wire observation")
+			}
+			turnWrite := runtime.writes[len(runtime.writes)-1]
+			var turn struct {
+				Params struct {
+					Input        []struct{ Text string }
+					OutputSchema json.RawMessage
+				}
+			}
+			if json.Unmarshal(turnWrite, &turn) != nil || len(turn.Params.Input) != 1 || !strings.Contains(turn.Params.Input[0].Text, string(b.Input.Bytes())) || !strings.Contains(turn.Params.Input[0].Text, string(b.OutputContract.Bytes())) || len(turn.Params.OutputSchema) != 0 {
+				t.Fatal("exact input/contract instructions changed or became provider schema")
+			}
+		})
+	}
+}
+
+func TestCodexTerminalStatusesRemainProviderObservations(t *testing.T) {
+	for _, status := range []string{"completed", "failed", "interrupted"} {
+		t.Run(status, func(t *testing.T) {
+			channel := &fakeChannel{}
+			runtime := peer(channel)
+			runtime.terminalStatus = status
+			s := sessionsForTest(t, runtime)
+			a, b := sessionAdmissions(t)
+			if _, err := s.Open(context.Background(), a, channel); err != nil {
+				t.Fatal(err)
+			}
+			step, err := s.Step(context.Background(), b, channel)
+			if err != nil || !step.Terminal || step.Proposed.Valid() || !strings.Contains(step.Reason, "status="+status+";") {
+				t.Fatalf("provider status lost: %+v %v", step, err)
+			}
+		})
+	}
+}
+
+func TestCodexRejectsOldOrChangedContractBeforeDispatch(t *testing.T) {
+	for _, media := range []string{"application/vnd.markitect.explore-contract+json", run.StepContractMedia} {
+		t.Run(media, func(t *testing.T) {
+			channel := &fakeChannel{}
+			runtime := peer(channel)
+			s := sessionsForTest(t, runtime)
+			a, b := sessionAdmissions(t)
+			b.OutputContract = payloadForSession(t, media, []byte(`{"Format":"markitect.step-outcome/v1","Phase":"work","Outcomes":["submit"]}`))
+			b.Plan.OutputContract = b.OutputContract.Ref()
+			if _, err := s.Open(context.Background(), a, channel); err != nil {
+				t.Fatal(err)
+			}
+			writes := len(runtime.writes)
+			if _, err := s.Step(context.Background(), b, channel); err == nil || len(runtime.writes) != writes || len(channel.steps) != 0 {
+				t.Fatal("unsupported contract dispatched or produced an observation")
 			}
 		})
 	}
