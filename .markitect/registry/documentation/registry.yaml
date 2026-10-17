@@ -1,5 +1,9 @@
 apiVersion: markitect.registry/v1
 artifacts:
+  - path: "docs/concepts/sources/configuration-teams-defaults-20261017.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Preserves owner requirements and the explicit Main publication decision for review teams, arbitration and product defaults.
   - path: "docs/strategy/explainer.md"
     form: doc
     realizes: [documentation/current-guidance]
