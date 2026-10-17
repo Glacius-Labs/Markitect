@@ -10,7 +10,7 @@ For technical leads and maintainers; a discussion opener for a professional netw
 
 The AI finished the feature. Now you have to find out what it forgot.
 
-An architecture rule. A boundary test. A guide that still describes yesterday's behavior. Another prompt can fix a gap you notice. It cannot tell you about the gap you never saw.
+An architecture rule. A boundary test. A guide that still describes yesterday's behavior. Another prompt may uncover or fix a gap. It may still miss an obligation you have not thought to check.
 
 The scarce resource is human attention.
 
