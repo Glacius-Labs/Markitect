@@ -664,10 +664,19 @@ func (s stateValue) checkOutcome(t taskValue, tool string, args []byte) error {
 		if len(in.On) == 0 || !text(in.Reason) {
 			return errors.New("wait needs at least one wait and a reason")
 		}
+		// A wait ends on any arrival, so it is refused only when none of its
+		// items can ever arrive (core rule T10).
+		var stuck []string
 		for _, w := range in.On {
 			if err := s.checkWait(t, w); err != nil {
 				return err
 			}
+			if reason := s.stuckWait(t, w); reason != "" {
+				stuck = append(stuck, reason)
+			}
+		}
+		if len(stuck) == len(in.On) {
+			return fmt.Errorf("this wait would never end: %s; deliver what they wait for first, such as your own local work, and let the integrating parent compose the parts", strings.Join(stuck, "; "))
 		}
 	case ToolRecordExpectations:
 		var in expectationsInput
@@ -712,17 +721,9 @@ func (s stateValue) checkWait(t taskValue, w Wait) error {
 		if producer.State == TaskDone {
 			return fmt.Errorf("%s is done; its accepted result is already in your workspace", w.Ref)
 		}
-		if s.waitsFor(w.Ref, t.Slot.Package, map[string]bool{}) {
-			return fmt.Errorf("%s waits for you, so waiting for its delivery would never end; realize your own Definitions now and let the integrating parent compose the parts", w.Ref)
-		}
 	case waitChildren:
 		if len(t.Slot.Children) == 0 || s.childrenDone(t) || w.Ref != "" {
 			return errors.New("a children wait needs children that are not all done, and no ref")
-		}
-		for _, child := range t.Slot.Children {
-			if s.waitsFor(child, t.Slot.Package, map[string]bool{}) {
-				return fmt.Errorf("your child %s waits for you, so waiting for your children would never end; deliver what it waits for first, such as your local work", child)
-			}
 		}
 	case waitReply, waitOwner:
 		to, asked := s.pendingQuestions(t)[w.Ref]
@@ -896,32 +897,60 @@ func (s *stateValue) advanceTasks(revision uint64) {
 	}
 }
 
+// stuckWait says why one wait item can never arrive: the Manager it needs waits
+// for the asker.
+func (s stateValue) stuckWait(t taskValue, w Wait) string {
+	switch w.Kind {
+	case waitDelivery:
+		if s.waitsFor(w.Ref, t.Slot.Package, map[string]int{}) {
+			return fmt.Sprintf("%s waits for you, so its delivery cannot come first", w.Ref)
+		}
+	case waitChildren:
+		for _, child := range t.Slot.Children {
+			if s.tasks[child].State != TaskDone && s.waitsFor(child, t.Slot.Package, map[string]int{}) {
+				return fmt.Sprintf("your child %s waits for you, so your children cannot all finish first", child)
+			}
+		}
+	}
+	return ""
+}
+
 // waitsFor reports whether a blocked Manager can act again only after another
 // Manager acts: each of its waits needs that Manager, directly or through other
-// blocked Managers. A wait that would close such a cycle can never arrive
-// (core rule T10).
-func (s stateValue) waitsFor(manager, other string, seen map[string]bool) bool {
+// blocked Managers. memo holds each Manager's result, or pending while it is
+// being decided.
+func (s stateValue) waitsFor(manager, other string, memo map[string]int) bool {
+	const pending, yes, no = 1, 2, 3
+	switch memo[manager] {
+	case pending, no:
+		return false
+	case yes:
+		return true
+	}
 	t, ok := s.tasks[manager]
-	if !ok || t.State != TaskBlocked || len(t.Waits) == 0 || seen[manager] {
+	if !ok || t.State != TaskBlocked || len(t.Waits) == 0 {
+		memo[manager] = no
 		return false
 	}
-	seen[manager] = true
+	memo[manager] = pending
 	for _, w := range t.Waits {
 		stuck := false
 		switch w.Kind {
 		case waitDelivery:
-			stuck = w.Ref == other || s.waitsFor(w.Ref, other, seen)
+			stuck = w.Ref == other || s.waitsFor(w.Ref, other, memo)
 		case waitChildren:
 			for _, child := range t.Slot.Children {
-				if s.tasks[child].State != TaskDone && (child == other || s.waitsFor(child, other, seen)) {
+				if s.tasks[child].State != TaskDone && (child == other || s.waitsFor(child, other, memo)) {
 					stuck = true
 				}
 			}
 		}
 		if !stuck {
+			memo[manager] = no
 			return false
 		}
 	}
+	memo[manager] = yes
 	return true
 }
 

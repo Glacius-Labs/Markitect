@@ -124,6 +124,9 @@ func (e *Engine) holderHint(s *stepRun, path string) string {
 	registry := e.aggregate().Registry()
 	for _, r := range registry.Entries() {
 		if p := r.Artifact().Path().String(); pathsOverlap(p, path) {
+			if ownerManager(r.Owner()) == s.manager {
+				return fmt.Sprintf(" %s is already yours: change it directly in your workspace; reserve_path is only for new files", p)
+			}
 			return fmt.Sprintf(" %s is registered to the Manager %s and already in your workspace; use it as it is, or send that Manager the change you need", p, ownerManager(r.Owner()))
 		}
 	}

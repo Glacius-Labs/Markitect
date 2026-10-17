@@ -268,3 +268,21 @@ func TestAWaitThatClosesACycleIsRefused(t *testing.T) {
 		t.Fatal("the run did not complete after the refusal", h.c.Current())
 	}
 }
+
+// Reserving one's own registered file is refused with the advice to change it
+// directly.
+func TestReservingOnesOwnFileSaysToChangeItDirectly(t *testing.T) {
+	agent := func(s agentStep) []action {
+		if s.Manager == "lending" && s.Phase == run.PhaseWork && s.Attempt == 0 {
+			return append([]action{{Tool: run.ToolReservePath, Args: `{"path":"out/library.go","form":"code"}`, Want: run.ToolRefused}}, happyAgent(s)...)
+		}
+		return happyAgent(s)
+	}
+	h := newHarness(t, true, agent)
+	runToEnd(t, h)
+	if !slices.ContainsFunc(h.sessions.answers, func(a string) bool {
+		return strings.HasPrefix(a, "lending work reserve_path refused") && strings.Contains(a, "out/library.go is already yours: change it directly")
+	}) {
+		t.Fatal("the refusal does not say the file is the Manager's own", h.sessions.answers)
+	}
+}
