@@ -34,7 +34,7 @@ Changing a frozen product, profile, model or oracle input after seeing results c
 
 ## Physical boundaries and ownership
 
-Use a new, bounded `experiments/library-playground/` runner when implementing P02. Reuse independent capture/container utilities from the [existing Playground](../../../experiments/case-playground/README.md) selectively; its old commands, comparative arms and model format do not define this scenario. The runner and evaluator belong to the experiments owner, outside the temporary adopting project.
+Use a new, bounded `experiments/library-playground/` runner when implementing P02. Reuse independent capture/container utilities from the [existing Playground](https://github.com/Glacius-Labs/Markitect/blob/1f4a1ede214d05fd2fee615b3905207df7702426/experiments/case-playground/README.md) selectively; its old commands, comparative arms and model format do not define this scenario. The runner and evaluator belong to the experiments owner, outside the temporary adopting project.
 
 An external experiment directory contains:
 

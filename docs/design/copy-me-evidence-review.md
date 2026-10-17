@@ -1,6 +1,6 @@
 # Copy Me evidence review and candidate queue: earlier design proposal
 
-**Status:** Historical design proposal. The current source has a `copy-me` command and bounded record validation outside Core. The canonical source contract and workspace boundary are in [Selective adoption handoff](selective-adoption-handoff.md); CLI invocation is documented in [Usage](../usage.md). Implementation verification is in progress; no CI or publication claim is made here. Published v0.12.0 remains unchanged.
+**Status:** Historical design proposal. The current source has a `copy-me` command and bounded record validation outside Core. The canonical source contract and workspace boundary are in [Selective adoption handoff](selective-adoption-handoff.md); CLI invocation is documented in [Usage](https://github.com/Glacius-Labs/Markitect/blob/1f4a1ede214d05fd2fee615b3905207df7702426/docs/usage.md). Implementation verification is in progress; no CI or publication claim is made here. Published v0.12.0 remains unchanged.
 
 ## Earlier decision request
 

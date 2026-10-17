@@ -1,0 +1,3868 @@
+{
+  "formatVersion": 1,
+  "repository": "Glacius-Labs/Markitect",
+  "capturedBeforeRetirementOn": "2026-10-17",
+  "sourceRevision": "1f4a1ede214d05fd2fee615b3905207df7702426",
+  "scope": "Historical release metadata and verified attestation output, not retained binary downloads or a new release.",
+  "tagRefsBefore": [
+    {
+      "ref": "refs/tags/archive/claude/byo-executor-role-config",
+      "object": "3fbb8269abf5f5d29ae4c21b9179f357bbeef8ff"
+    },
+    {
+      "ref": "refs/tags/archive/claude/vision-concept-record-20261010",
+      "object": "61c8943b909e9e8cf974cfac0d6ed2c21818bbd6"
+    },
+    {
+      "ref": "refs/tags/archive/codex/adapter-modules",
+      "object": "79d41aa88481af5e09d4d58494543250a7cde2a2"
+    },
+    {
+      "ref": "refs/tags/archive/codex/adoption-distill-runner",
+      "object": "c09e8caeb21c766e5a1251b18a31a99fd0a01dca"
+    },
+    {
+      "ref": "refs/tags/archive/codex/adoption-distill-usability",
+      "object": "542a81070d6cb3667475e2c6f30e7725462a5dfe"
+    },
+    {
+      "ref": "refs/tags/archive/codex/adoption-mcp-winget",
+      "object": "9780b92add87f7bcd64d311def2c8597aa95d542"
+    },
+    {
+      "ref": "refs/tags/archive/codex/adoption-reportonly-prompt",
+      "object": "c28eb123c4443d3ecdfc56d68daeab1668dbde77"
+    },
+    {
+      "ref": "refs/tags/archive/codex/agent-behaviour-designer",
+      "object": "c54ecfd72c68d9b7a52644fd55ce54e48accb3f5"
+    },
+    {
+      "ref": "refs/tags/archive/codex/agent-invocation-binding",
+      "object": "df4ef7fb2172b8fbff6f08341815f2f9aedc8f26"
+    },
+    {
+      "ref": "refs/tags/archive/codex/agent-process-lifecycle",
+      "object": "e0ba53f80cf97dfdac2aab5861939f7724176db6"
+    },
+    {
+      "ref": "refs/tags/archive/codex/agent-rules-projection",
+      "object": "2f5597e23c6dcad611f38f50fca529033a4679e9"
+    },
+    {
+      "ref": "refs/tags/archive/codex/agentexec-legacy-env-fingerprint",
+      "object": "d4a13199b2509e7d224973015e1bd2dcae2fde08"
+    },
+    {
+      "ref": "refs/tags/archive/codex/agents-md-comparison",
+      "object": "9b0ed1b2dc1d2b5e94ada881f6b068e7fae8f794"
+    },
+    {
+      "ref": "refs/tags/archive/codex/anchored-host-writes",
+      "object": "9c2d4228beaf24584e6e807851317e61826ba7fa"
+    },
+    {
+      "ref": "refs/tags/archive/codex/architecture-docs",
+      "object": "6567523a87f0cbf29c259a9b818785eb012e1d35"
+    },
+    {
+      "ref": "refs/tags/archive/codex/artifact-product-boundary",
+      "object": "9856644228dc3a80cb19e60201a396541860ea53"
+    },
+    {
+      "ref": "refs/tags/archive/codex/astra-assessment-follow-through",
+      "object": "f84a3854f6d1fe76a0bac7b3bd74614e78960971"
+    },
+    {
+      "ref": "refs/tags/archive/codex/authoring-pilot-results",
+      "object": "dc891eb87dc75411c441b542459230deee14f279"
+    },
+    {
+      "ref": "refs/tags/archive/codex/autonomous-ab-gauntlet",
+      "object": "a22717b5ce172faee1dcd3177ed4fcf8cfcaeee7"
+    },
+    {
+      "ref": "refs/tags/archive/codex/azure-pipelines-projection",
+      "object": "66dc5daa699b7e2b5ffa4fd864a87e3cf308a197"
+    },
+    {
+      "ref": "refs/tags/archive/codex/bounded-canonical-unit-fixture",
+      "object": "f4f6a9b0404f384f9d553b0809375e495ea9ad72"
+    },
+    {
+      "ref": "refs/tags/archive/codex/brownfield-inference-cli",
+      "object": "f17c199b0d40bd1db96db746ec7867be82705f66"
+    },
+    {
+      "ref": "refs/tags/archive/codex/c1-five-ontology-cli-proof",
+      "object": "ce6c802b51980a94792de3687b2b9b08e35cda71"
+    },
+    {
+      "ref": "refs/tags/archive/codex/c1-typed-ontology-proof",
+      "object": "eca734c2a1e6b6064e69ff09cb88299fb14566d7"
+    },
+    {
+      "ref": "refs/tags/archive/codex/c11-replay-harness",
+      "object": "e788fc0110b2f89b488c8c719602d4aedab8362e"
+    },
+    {
+      "ref": "refs/tags/archive/codex/c12-goal-propose-02-evidence",
+      "object": "dadfb6b358c04d038b1f7dc0d5b2c27282d2ee8e"
+    },
+    {
+      "ref": "refs/tags/archive/codex/c13-durable-proof",
+      "object": "68007ca4379bbf008efd4d0ab12fd84dad64b246"
+    },
+    {
+      "ref": "refs/tags/archive/codex/c13-forward-proof",
+      "object": "0e7920833f4994b3932e7cca6fbddca433c909d5"
+    },
+    {
+      "ref": "refs/tags/archive/codex/c3-v5-trials",
+      "object": "80f614b668ac36a0ab2d190017a92b7a26d5209a"
+    },
+    {
+      "ref": "refs/tags/archive/codex/c6-proof-preparation",
+      "object": "1de398cfe52249e0cc2a965383490a5b62dea360"
+    },
+    {
+      "ref": "refs/tags/archive/codex/c7-unknown-exclusion-01",
+      "object": "41ec0239f5fcb953642de4736f1df5c257ab0297"
+    },
+    {
+      "ref": "refs/tags/archive/codex/c9-real-proof-v5",
+      "object": "5a1fb5462b2c1546786a9de5916561b81f81bbbb"
+    },
+    {
+      "ref": "refs/tags/archive/codex/canonical-assurance-preflight",
+      "object": "9771abb3e11ccde06025592baebab74669adf3d2"
+    },
+    {
+      "ref": "refs/tags/archive/codex/canonical-doc-refresh-claims",
+      "object": "7ab8a68992f986ea46aa5efcc9e14814f18f61e2"
+    },
+    {
+      "ref": "refs/tags/archive/codex/canonical-engineering-v010",
+      "object": "44f14040a26330d7c395654835ac81f4f039da72"
+    },
+    {
+      "ref": "refs/tags/archive/codex/canonical-reset",
+      "object": "6212c157adc5866b2c3f65027911233495f5ff79"
+    },
+    {
+      "ref": "refs/tags/archive/codex/canonical-workflow-host-composition",
+      "object": "9e4a054a743c52b86d53d7a6904ccf371af423a8"
+    },
+    {
+      "ref": "refs/tags/archive/codex/capability-proof-program",
+      "object": "710725c6120f34c3ea298b6009d6448a8a27ab68"
+    },
+    {
+      "ref": "refs/tags/archive/codex/classic-main-documentation",
+      "object": "698e54fb3b65e73ae03e545997f7e9822e730b69"
+    },
+    {
+      "ref": "refs/tags/archive/codex/classic-p1-intent-change",
+      "object": "6b0336dfbd85bef680adc46ee441ba907569fd72"
+    },
+    {
+      "ref": "refs/tags/archive/codex/classic-public-example",
+      "object": "8927704c5bc2c83601d36eb2ff99ae8332c7b406"
+    },
+    {
+      "ref": "refs/tags/archive/codex/classic-readiness-v0141",
+      "object": "c91363b7ac4decbe87212ff0f588b5451581a152"
+    },
+    {
+      "ref": "refs/tags/archive/codex/claude-proposal-adapter",
+      "object": "ab31a62a0bc22b9a962414d296f65550c3748ca0"
+    },
+    {
+      "ref": "refs/tags/archive/codex/clean-architecture-consolidation",
+      "object": "a74a306ede12f8c5be02b75a5c2a5b0889afb15f"
+    },
+    {
+      "ref": "refs/tags/archive/codex/cli-installation",
+      "object": "d3492836d62587c69c28792a9e0fc15a8a0d8416"
+    },
+    {
+      "ref": "refs/tags/archive/codex/cli-installation-resolve",
+      "object": "44db39765349a36206eecb06327c8949ae4fd7e1"
+    },
+    {
+      "ref": "refs/tags/archive/codex/codex-prompt-witness",
+      "object": "bfaaf797b553cfffcce07b2376699f455944d494"
+    },
+    {
+      "ref": "refs/tags/archive/codex/codexrunner-livecli-adapter",
+      "object": "e06a884ae95e23ad4be9fca02dbd57b713178e5e"
+    },
+    {
+      "ref": "refs/tags/archive/codex/concepts-historian-notes",
+      "object": "5be48ce1ba3f218ccfd0ed696bddf106b9a6ff5e"
+    },
+    {
+      "ref": "refs/tags/archive/codex/concurrency-witness",
+      "object": "eb60c14caad4c579af2e62c7f773308249d0cae3"
+    },
+    {
+      "ref": "refs/tags/archive/codex/concurrency-witness-record-v6",
+      "object": "4121288e03a84475afb7bcc2dbcef2ec9ff80927"
+    },
+    {
+      "ref": "refs/tags/archive/codex/concurrency-witness-v6",
+      "object": "a009249b2122d7b1ca76bb433a9a4968533bfaa9"
+    },
+    {
+      "ref": "refs/tags/archive/codex/concurrency-witness-v7",
+      "object": "246f4a00319825b3d345d8f75c94049d5fb73639"
+    },
+    {
+      "ref": "refs/tags/archive/codex/control-plane-layout-v090",
+      "object": "9fb1a82c2c91d4df9d2e38a39e021dd3485b158e"
+    },
+    {
+      "ref": "refs/tags/archive/codex/controller-lease-anchoring",
+      "object": "1403096e023b06179c0a276ff1095eb95d7a3706"
+    },
+    {
+      "ref": "refs/tags/archive/codex/controller-source-docs",
+      "object": "73b892cc87d94d5b514a93790e4ad2d52e4b8fdd"
+    },
+    {
+      "ref": "refs/tags/archive/codex/core-consolidation",
+      "object": "330cf7007366eaa48b5dc1f835d9f6edf0d3f311"
+    },
+    {
+      "ref": "refs/tags/archive/codex/current-verification-reconcile",
+      "object": "c202ffb7ade1728bfec82f5ed5db3197480c6621"
+    },
+    {
+      "ref": "refs/tags/archive/codex/distribution-follow-up",
+      "object": "c6874fb272a3886e895549c0ff099cf3f83447ea"
+    },
+    {
+      "ref": "refs/tags/archive/codex/documentation-routers",
+      "object": "653325364e47b00c716e761fc61fe1a0d11dd6d5"
+    },
+    {
+      "ref": "refs/tags/archive/codex/dogfood-test-fixture-portability",
+      "object": "fa7f8ea8bab1c3a721aebc333e69ae505084283c"
+    },
+    {
+      "ref": "refs/tags/archive/codex/domain-language-stress-test",
+      "object": "1e707e8f6eef3953832ce6182e8cdf6bdce4abfc"
+    },
+    {
+      "ref": "refs/tags/archive/codex/durable-adoption-state-report",
+      "object": "443330ed100d1160515c410fa216a9a97a6f1678"
+    },
+    {
+      "ref": "refs/tags/archive/codex/durable-canonical-adoption",
+      "object": "1402339701b55cfec20c2fccf2f5ec1e65cda1e5"
+    },
+    {
+      "ref": "refs/tags/archive/codex/engineering-constitution",
+      "object": "9acb01fc8beadcf0b13b04422eecb33aca494e98"
+    },
+    {
+      "ref": "refs/tags/archive/codex/engineering-constitution-release-evidence",
+      "object": "b2f2effb6e10bebf14b3bee6b853e59532ad0eef"
+    },
+    {
+      "ref": "refs/tags/archive/codex/evidence-commit",
+      "object": "1698636c311c23b8e8df89381a0258cedf63ccd4"
+    },
+    {
+      "ref": "refs/tags/archive/codex/evidence-refresh-coverage",
+      "object": "0d55fd70fabff1c4d6fad0bf00e1e355cee9ed4c"
+    },
+    {
+      "ref": "refs/tags/archive/codex/evidence-tree-metadata",
+      "object": "a51f39e790254b69b47b11e71c8e6fb2663fa3ff"
+    },
+    {
+      "ref": "refs/tags/archive/codex/git-snapshot-adapter",
+      "object": "431aa9e823400ca1bc71e9069f4d7191cab6c420"
+    },
+    {
+      "ref": "refs/tags/archive/codex/githooks-projection",
+      "object": "b8fedc0cc31e1ac8edc870754cafa1730f48b883"
+    },
+    {
+      "ref": "refs/tags/archive/codex/goal-modeling-proposal",
+      "object": "ca219dfd764b37068c0cc8f98d32a4cbf8549c23"
+    },
+    {
+      "ref": "refs/tags/archive/codex/goal-proposal-reference-context",
+      "object": "07c8d022b6e072996de087c2d8fdec66c03efab3"
+    },
+    {
+      "ref": "refs/tags/archive/codex/government-evaluation-20261009",
+      "object": "3708cfef8a8b6513c731ad632cefe355e924d302"
+    },
+    {
+      "ref": "refs/tags/archive/codex/government-scientist",
+      "object": "5ef17d7328972da66747eb38532929fbee7128ec"
+    },
+    {
+      "ref": "refs/tags/archive/codex/guarded-write",
+      "object": "970123228358072372b08d84b3dafac59576b2dd"
+    },
+    {
+      "ref": "refs/tags/archive/codex/host-contentpackage",
+      "object": "bb7989fbe5ab3235f9ade68aa46cf9b810cefede"
+    },
+    {
+      "ref": "refs/tags/archive/codex/host-inputs",
+      "object": "9eb778d2926ec2503e485abc3b8448c8c27c6200"
+    },
+    {
+      "ref": "refs/tags/archive/codex/host-inputs-resolver",
+      "object": "79658f85c27ef208b74290726a9799ba38bbe343"
+    },
+    {
+      "ref": "refs/tags/archive/codex/host-module-checks",
+      "object": "df0e958be3ae794a793fdb64042506f5d603c251"
+    },
+    {
+      "ref": "refs/tags/archive/codex/host-private-inference-logs",
+      "object": "532a8d02fe74bf7d21f154d80603c7c98b2ddec7"
+    },
+    {
+      "ref": "refs/tags/archive/codex/host-runtime",
+      "object": "b85ddd60e74fdab1c6fd32ef183a73a46f39938c"
+    },
+    {
+      "ref": "refs/tags/archive/codex/ideas-notes-20261009",
+      "object": "719081575681ddade4da57a6203f823ce7727697"
+    },
+    {
+      "ref": "refs/tags/archive/codex/knowledge-graph-frontmatter-options",
+      "object": "6ddbc66e0ee3515149fcf806fca1f33bf2c8107e"
+    },
+    {
+      "ref": "refs/tags/archive/codex/layout-doc-followup",
+      "object": "1f47e7b7176b776b6b6575e3bef5702b34aae294"
+    },
+    {
+      "ref": "refs/tags/archive/codex/live-operating-proof",
+      "object": "658866480bafa37c8c2e94b5d58fc2074655f416"
+    },
+    {
+      "ref": "refs/tags/archive/codex/luna-high-projectrun",
+      "object": "4443d7eb334d8321f8bfedd606ea8246a53e9c9f"
+    },
+    {
+      "ref": "refs/tags/archive/codex/luna-project-cli",
+      "object": "e3dc9c577c68341448c4c0933e3adf8781279476"
+    },
+    {
+      "ref": "refs/tags/archive/codex/luna-projectwork-frontend",
+      "object": "65d8a7a4a62d9413f1eb7d99c8e5049e8324121e"
+    },
+    {
+      "ref": "refs/tags/archive/codex/markdown-reference-module",
+      "object": "22c062ddea387f3346381003117cfc92a9fa4ca7"
+    },
+    {
+      "ref": "refs/tags/archive/codex/marketing-notes-20261009",
+      "object": "5be48ce1ba3f218ccfd0ed696bddf106b9a6ff5e"
+    },
+    {
+      "ref": "refs/tags/archive/codex/markitect-brand-concepts",
+      "object": "7609eeee69912b2823c95aef7137bc294a8f486b"
+    },
+    {
+      "ref": "refs/tags/archive/codex/markitect-first-coverage-fix",
+      "object": "f1c1428867ef09902590599588a64af537f9528d"
+    },
+    {
+      "ref": "refs/tags/archive/codex/markitect-first-release",
+      "object": "688b0950a8b31e2a4f6c6980927a7903876875f9"
+    },
+    {
+      "ref": "refs/tags/archive/codex/markitect-marketing",
+      "object": "14a59e0dcee3046d458afa0863ad1b283652f52f"
+    },
+    {
+      "ref": "refs/tags/archive/codex/markitect-release-evidence",
+      "object": "70143b775e8b954b70092afcb18be899a1c81fdf"
+    },
+    {
+      "ref": "refs/tags/archive/codex/mcp-pilot",
+      "object": "c7814656424c6e793a8b791916e74195de05e900"
+    },
+    {
+      "ref": "refs/tags/archive/codex/model-driven-delivery",
+      "object": "ae6396dcc11777b773763b8fa6f27e4237a63462"
+    },
+    {
+      "ref": "refs/tags/archive/codex/model-first-operations",
+      "object": "669cecd2f3594d452a2ea820682ee8d1922d0b1b"
+    },
+    {
+      "ref": "refs/tags/archive/codex/module-agentrules",
+      "object": "4b9df44bfe486dd51a225eabc7d394f7a742cf8a"
+    },
+    {
+      "ref": "refs/tags/archive/codex/module-artifacts",
+      "object": "35ce355366d8cd32c0aea453c7811dcf76ecd2a2"
+    },
+    {
+      "ref": "refs/tags/archive/codex/module-artifacts-host",
+      "object": "5c3b6389bbc6d2496f66e714253de25eaf645029"
+    },
+    {
+      "ref": "refs/tags/archive/codex/module-dogfood",
+      "object": "d35cfa461a009d7eff0ba42cfa18d835c2a653b0"
+    },
+    {
+      "ref": "refs/tags/archive/codex/module-markdown",
+      "object": "67e31e0aadcb50bf056cd923c1f9c4c48f6b68c4"
+    },
+    {
+      "ref": "refs/tags/archive/codex/modules-hooks-pipelines",
+      "object": "619e0181285c1f88e348c9bae8f08488a40d2c86"
+    },
+    {
+      "ref": "refs/tags/archive/codex/mymeetings-utility-pilot",
+      "object": "9d20adbf4883ea618d9969ec7753d9cd6d1339fb"
+    },
+    {
+      "ref": "refs/tags/archive/codex/onboarding-release-retry",
+      "object": "3c79ccde1814848ab46ddf2fcdc1f48e470f42d3"
+    },
+    {
+      "ref": "refs/tags/archive/codex/operating-audit-cli",
+      "object": "1e28dbe3c9e21facd004293355206ee880ae488d"
+    },
+    {
+      "ref": "refs/tags/archive/codex/operating-closure",
+      "object": "f9a9e29860f61707152ab5af7b65a37bbc708163"
+    },
+    {
+      "ref": "refs/tags/archive/codex/operating-example",
+      "object": "8ab35e920b47a5c342da6fc15291973fdbcc3f26"
+    },
+    {
+      "ref": "refs/tags/archive/codex/operating-model-c4-proof",
+      "object": "121f6545724e30860d4cd683e47cf94f1de77bb4"
+    },
+    {
+      "ref": "refs/tags/archive/codex/operating-model-c5-proof",
+      "object": "911ccfa27c1d674d07f3876a1a30a0d1f40a69ac"
+    },
+    {
+      "ref": "refs/tags/archive/codex/parallel-development-baseline",
+      "object": "747ab4b67b8a7007237c36d5c5af359a9b23ddfe"
+    },
+    {
+      "ref": "refs/tags/archive/codex/parallel-wave-1",
+      "object": "6fcc150d6ba79a8e98f6a728cf27382255f2f841"
+    },
+    {
+      "ref": "refs/tags/archive/codex/policy-failure-analysis",
+      "object": "1996ef2106e2df6aa8f5955359fa4a5542004799"
+    },
+    {
+      "ref": "refs/tags/archive/codex/product-app-server-20261009",
+      "object": "8b3f69ec26d7e3d19e61b7de3156dd2ccaf3c2c8"
+    },
+    {
+      "ref": "refs/tags/archive/codex/product-docs-followup",
+      "object": "ad7a13c5db08b8d21cdbc6367938e9dbd3164098"
+    },
+    {
+      "ref": "refs/tags/archive/codex/product-integration-20261009",
+      "object": "f12ffb00bd6fd7bc45d0014487434a5a58aafadb"
+    },
+    {
+      "ref": "refs/tags/archive/codex/product-mcp-20261009",
+      "object": "6e4b620fc8cf553690b22ba63ee9fa58dc063f21"
+    },
+    {
+      "ref": "refs/tags/archive/codex/product-vision",
+      "object": "2eb6e9ffbe10aff548fec44503411ee8699dcc96"
+    },
+    {
+      "ref": "refs/tags/archive/codex/product-workspaces-20261009",
+      "object": "4840bac0ac96a13e224f353bf926d6779ef3101e"
+    },
+    {
+      "ref": "refs/tags/archive/codex/project-distill-fixed-basis",
+      "object": "4153c6c2bdb9e26e6d0e054c045ef557a1fc00c2"
+    },
+    {
+      "ref": "refs/tags/archive/codex/project-model-analysis",
+      "object": "feb8cae9fe17a8f9db3caffc9b7da2cd5ff7d914"
+    },
+    {
+      "ref": "refs/tags/archive/codex/project-repair-cli",
+      "object": "aa018477f991525f653073e322381560199bb01b"
+    },
+    {
+      "ref": "refs/tags/archive/codex/project-schema-action",
+      "object": "660318be69156aedbb89af8fd56910a24452397b"
+    },
+    {
+      "ref": "refs/tags/archive/codex/project-setup-cli",
+      "object": "81f944a3c0b7aa0b8cdd7ac1c02dd914a91b509b"
+    },
+    {
+      "ref": "refs/tags/archive/codex/project-world-planning",
+      "object": "d3f3b43284aa438ff523f80bc8fa3f697de73425"
+    },
+    {
+      "ref": "refs/tags/archive/codex/projectadoption",
+      "object": "6c4ddbdd768a74dc606ac4e01c97133010d28a9c"
+    },
+    {
+      "ref": "refs/tags/archive/codex/projection-artifact-modes",
+      "object": "db7be73309084c43e0b3ee3f598c5d45ba8c0baa"
+    },
+    {
+      "ref": "refs/tags/archive/codex/projection-first",
+      "object": "896c1ad644114bedd266a3b77b0c66197833f901"
+    },
+    {
+      "ref": "refs/tags/archive/codex/projection-recordstore",
+      "object": "f5b14547b7f30cc651069bf3fb3d88d93e9bb3f8"
+    },
+    {
+      "ref": "refs/tags/archive/codex/projection-refresh-design",
+      "object": "7e238bdc5a3f5387977985477a014c2ea3911f9d"
+    },
+    {
+      "ref": "refs/tags/archive/codex/projectrun-process-e2e",
+      "object": "ffbdf871cc7cb55c80e3cd98972936dd8973b347"
+    },
+    {
+      "ref": "refs/tags/archive/codex/projectrun-process-e2e-final",
+      "object": "54b199f64aab1c4ee2812849a3314728d7601e13"
+    },
+    {
+      "ref": "refs/tags/archive/codex/projectrun-verify-budget",
+      "object": "2baacaf98083189b9f1b234dc9c2871fa678fbbc"
+    },
+    {
+      "ref": "refs/tags/archive/codex/proof-agentexec-control",
+      "object": "ac3fa37557498d795fc09271ed64f912d816d56a"
+    },
+    {
+      "ref": "refs/tags/archive/codex/proof-brownfield",
+      "object": "27a685ad3f7e3feb372f007f591f6214a01e25f1"
+    },
+    {
+      "ref": "refs/tags/archive/codex/proof-capability-docs",
+      "object": "3859af440946484e3cf3a8f05255f177b2f65b9c"
+    },
+    {
+      "ref": "refs/tags/archive/codex/proof-controller-cli",
+      "object": "a5b97314f25c116f936da51435d78e2a03aca81a"
+    },
+    {
+      "ref": "refs/tags/archive/codex/proof-controller-lifecycle-tests",
+      "object": "8a9147a025a918c542482cf2b23036a6db508b6f"
+    },
+    {
+      "ref": "refs/tags/archive/codex/proof-controller-portability",
+      "object": "dc77fdd160ec7cd413d2ecf3143fef3728c46352"
+    },
+    {
+      "ref": "refs/tags/archive/codex/proof-controller-tests",
+      "object": "8a084d17801485de887adcd1e8602b0b859675a7"
+    },
+    {
+      "ref": "refs/tags/archive/codex/proof-controller-verify",
+      "object": "92f9f61a0bcaa5711f5440aaa2c2bb01fdab892f"
+    },
+    {
+      "ref": "refs/tags/archive/codex/proof-coverage",
+      "object": "6ec45fa3060f09a1f91f04d1e6f29188223d6a28"
+    },
+    {
+      "ref": "refs/tags/archive/codex/proof-coverage-followup",
+      "object": "83c75863054a62603da04b1cccd0b02365344c7f"
+    },
+    {
+      "ref": "refs/tags/archive/codex/proof-driver-hardening",
+      "object": "dd2ce84de65ade1aef738cb95cc0ba8dff628416"
+    },
+    {
+      "ref": "refs/tags/archive/codex/proof-evidence-ref-contract",
+      "object": "d92eaddcb5479163271a6d589e21c963c35eba2f"
+    },
+    {
+      "ref": "refs/tags/archive/codex/proof-example-gates",
+      "object": "74e06f68ae0f2b4b06938466fa4da568cf175f51"
+    },
+    {
+      "ref": "refs/tags/archive/codex/proof-inflight-v5",
+      "object": "24462e8e653701759bde18c0dcd478a2af69bb24"
+    },
+    {
+      "ref": "refs/tags/archive/codex/proof-modules-markdown-render-projection",
+      "object": "d88afeb7f3d5ab3c2b2a33aff764134cb429149f"
+    },
+    {
+      "ref": "refs/tags/archive/codex/proof-operating-fixture",
+      "object": "d290af602a2e302816d9245c6c79931681fe91f9"
+    },
+    {
+      "ref": "refs/tags/archive/codex/proof-ready-controller",
+      "object": "5808ea586979cb48e20f94157b6ccfa9ed318c60"
+    },
+    {
+      "ref": "refs/tags/archive/codex/proof-recursive-assurance",
+      "object": "866b70a3de21f4a2cad46804706934c8a6d19ddb"
+    },
+    {
+      "ref": "refs/tags/archive/codex/proof-ref-completeness",
+      "object": "1fd01da081b2216c211459ca2d0aeae2c2f91617"
+    },
+    {
+      "ref": "refs/tags/archive/codex/proof-runner",
+      "object": "5c44c9ddd63bbd34974afa9853863fe12b470f5c"
+    },
+    {
+      "ref": "refs/tags/archive/codex/proof-source-docs-finish",
+      "object": "6250b9d74f7a4df4f5244fa686e19f2f6dda5799"
+    },
+    {
+      "ref": "refs/tags/archive/codex/proof-workflow-fixture",
+      "object": "7d1cd21478b691a05e7439cedf46956bc7ef71fe"
+    },
+    {
+      "ref": "refs/tags/archive/codex/prose-navigation-v091",
+      "object": "6afd17cdfc6e9e64a0cc405c976a015d0f8948e8"
+    },
+    {
+      "ref": "refs/tags/archive/codex/provider-adapters-bench-consistency",
+      "object": "be91082b0e36b488a3ed3f3406a43b920d851c9e"
+    },
+    {
+      "ref": "refs/tags/archive/codex/provider-review-fixes",
+      "object": "cbdbbee0e1ffea0a9b3217f003916cbfcf394192"
+    },
+    {
+      "ref": "refs/tags/archive/codex/readiness-candidate-fix-20261009",
+      "object": "ea1dbd3435fc0b5542f1262d4a1e101ca5a9017c"
+    },
+    {
+      "ref": "refs/tags/archive/codex/readme-product-narrative",
+      "object": "683fb5b3ec27272900e5ff31033cf605eacf85ad"
+    },
+    {
+      "ref": "refs/tags/archive/codex/readme-wordmark",
+      "object": "f58481f5778e0379af2000808d4b567de1cb6e11"
+    },
+    {
+      "ref": "refs/tags/archive/codex/real-project-adoption-pilot",
+      "object": "7ca99b65e833f9a41e8a95e82e87f8e7e6421957"
+    },
+    {
+      "ref": "refs/tags/archive/codex/real-project-validation",
+      "object": "e80c6ddd08401d54ca21e7e4b8eb6eeaf55c51d6"
+    },
+    {
+      "ref": "refs/tags/archive/codex/recordstore-rooted-io",
+      "object": "3f18d54bb9ff25a274f05416d384f53fc8962e64"
+    },
+    {
+      "ref": "refs/tags/archive/codex/recursive-assurance",
+      "object": "6fffbb9ba1a1fe2ad683a5ca2dd309fbb1ceee7a"
+    },
+    {
+      "ref": "refs/tags/archive/codex/refactor-source-responsibilities",
+      "object": "a46b712d070daceaa60e186270b72e7438d69fec"
+    },
+    {
+      "ref": "refs/tags/archive/codex/release-distribution-sync",
+      "object": "c641a8349da5d35451e1d973167114867f68ac48"
+    },
+    {
+      "ref": "refs/tags/archive/codex/release-v0.5.0",
+      "object": "a609eae7bef11b67360cda5284a37751d1ccbaef"
+    },
+    {
+      "ref": "refs/tags/archive/codex/release-v0.6.0",
+      "object": "8ee0924f9e4f94b0b0d74529cf7217f80e16de3a"
+    },
+    {
+      "ref": "refs/tags/archive/codex/release-v010-evidence",
+      "object": "41958e6b4dc33f27976a6a48ff62e508101f22a8"
+    },
+    {
+      "ref": "refs/tags/archive/codex/release-v070-evidence",
+      "object": "7c0ea8ce6f74d00c7255af5af2f51179349853fd"
+    },
+    {
+      "ref": "refs/tags/archive/codex/release-v080-evidence",
+      "object": "487ed540e242b5e17a27f30d8e33418a66262f67"
+    },
+    {
+      "ref": "refs/tags/archive/codex/release-v081-evidence",
+      "object": "2e93aebdc0e89faf982482baa9cf6e539c13eeb4"
+    },
+    {
+      "ref": "refs/tags/archive/codex/release-v090-evidence",
+      "object": "a556552974c2528d4e086344be530023e16e912e"
+    },
+    {
+      "ref": "refs/tags/archive/codex/release-v091-evidence",
+      "object": "2fb006ddd848547af7fcc5b2096cfa9ca3b9c945"
+    },
+    {
+      "ref": "refs/tags/archive/codex/repository-cleanup-20261010",
+      "object": "f3ec05f0f02cf68e000a58b3814a2187394f3036"
+    },
+    {
+      "ref": "refs/tags/archive/codex/repository-layout-control-plane",
+      "object": "983b96b4b87892079b25c2e8c59321179c1fccb9"
+    },
+    {
+      "ref": "refs/tags/archive/codex/resolve-target-binding",
+      "object": "a4da2a5455e4c27960ed02aef8804c8c734280b2"
+    },
+    {
+      "ref": "refs/tags/archive/codex/resolved-target-equality",
+      "object": "b8013c0eac2cd9ccfdb57da47fd0268e59375dd8"
+    },
+    {
+      "ref": "refs/tags/archive/codex/retry-release-attestation",
+      "object": "8025e2bf7bcc0072211866c82385f1721370f870"
+    },
+    {
+      "ref": "refs/tags/archive/codex/reverse-inference-proof",
+      "object": "26195c0f17f9f9e8ab5b5962561b2bed33412462"
+    },
+    {
+      "ref": "refs/tags/archive/codex/runtime-project-edit",
+      "object": "bfe884b872c967b1f0b704b3c2fc67fc26663530"
+    },
+    {
+      "ref": "refs/tags/archive/codex/scoped-source-slice",
+      "object": "45e1ae7da7ff0b8ec3b336e4ec9201ca498bfc56"
+    },
+    {
+      "ref": "refs/tags/archive/codex/scoped-target-exclusions",
+      "object": "c130a56b48c576f627f517c2d862b5f3f67129dc"
+    },
+    {
+      "ref": "refs/tags/archive/codex/selective-adoption-handoff",
+      "object": "005e7f17e1b5411a112561b3f57e3a904ec0612f"
+    },
+    {
+      "ref": "refs/tags/archive/codex/shop-runtime-audit",
+      "object": "983f9440ec9666ea04073618bd14a54e950e7e53"
+    },
+    {
+      "ref": "refs/tags/archive/codex/shop-runtime-context-a3ba",
+      "object": "4eb30bc1cf8190ed1738e56bba45b8ec971e5ab6"
+    },
+    {
+      "ref": "refs/tags/archive/codex/shop-runtime-routing",
+      "object": "9ee79bbc55e3af2cbfc4bc598e22954a4e7512c9"
+    },
+    {
+      "ref": "refs/tags/archive/codex/source-query-batching",
+      "object": "361dfd8fc96b1d2a5d335bc6a4eb2a33deb2a995"
+    },
+    {
+      "ref": "refs/tags/archive/codex/standard-operating-model",
+      "object": "c26aa905ec8eb1cf11049198c70d243dfba07881"
+    },
+    {
+      "ref": "refs/tags/archive/codex/structure-followup",
+      "object": "3d7ec3124d01b8f0a4b108d9ab0968ef0f5293d7"
+    },
+    {
+      "ref": "refs/tags/archive/codex/survey-task-context",
+      "object": "0942be024cad977b54a3513f852b8be9de9d551f"
+    },
+    {
+      "ref": "refs/tags/archive/codex/unknown-ontology",
+      "object": "73b375a1d0ce3b347c3b4ac66d65f1c851642d34"
+    },
+    {
+      "ref": "refs/tags/archive/codex/v0.13.0-publication-evidence",
+      "object": "5ca1313a63c739aee81c82d95c06668374ffa982"
+    },
+    {
+      "ref": "refs/tags/archive/codex/v0.5-release-followup",
+      "object": "44e1d935e547298c2720a379944a47a1f00c5095"
+    },
+    {
+      "ref": "refs/tags/archive/codex/v0.5-release-record",
+      "object": "09a3ac4c8015fb5d39e5111017381ebc9f676c7a"
+    },
+    {
+      "ref": "refs/tags/archive/codex/v0.6.0-publication",
+      "object": "810a86ffe13aef065f38e70ae49d40911f447af2"
+    },
+    {
+      "ref": "refs/tags/archive/codex/v0.6.0-release-record",
+      "object": "d12d1a01672b5eb12f02558f59f365c37a2c6e73"
+    },
+    {
+      "ref": "refs/tags/archive/codex/v012-publication-metadata",
+      "object": "e80c6ddd08401d54ca21e7e4b8eb6eeaf55c51d6"
+    },
+    {
+      "ref": "refs/tags/archive/codex/v012-release-source",
+      "object": "7ca99b65e833f9a41e8a95e82e87f8e7e6421957"
+    },
+    {
+      "ref": "refs/tags/archive/codex/v0141-fixture-lifecycle",
+      "object": "e2fd633d8983eb4a9e24bb55bc81d1467d487d12"
+    },
+    {
+      "ref": "refs/tags/archive/codex/v0141-release-evidence",
+      "object": "58ddabec1ca163557f184d0e822d46fe498308da"
+    },
+    {
+      "ref": "refs/tags/archive/codex/verifier-coverage-enforcement",
+      "object": "f5d2f9d7fc5b0743956fe143856f525ef4d7c65b"
+    },
+    {
+      "ref": "refs/tags/archive/codex/verifier-observation-coverage",
+      "object": "3d410ee85149ad92df261913a5567b31cb4202d9"
+    },
+    {
+      "ref": "refs/tags/archive/codex/wave-azure",
+      "object": "dca78e1b7fb8bd3b9dae632e605c52098f809304"
+    },
+    {
+      "ref": "refs/tags/archive/codex/wave-claude",
+      "object": "148f40698cf3aa86517815087931340002e07d12"
+    },
+    {
+      "ref": "refs/tags/archive/codex/wave-codex",
+      "object": "de36c6cb226a2027ced878efc24c23c365189c77"
+    },
+    {
+      "ref": "refs/tags/archive/codex/wave-copy",
+      "object": "befda848a3eb9617856699c0389f56a48a750985"
+    },
+    {
+      "ref": "refs/tags/archive/codex/wave-docs",
+      "object": "d7daa4b759d94f409ba298e067255f0aa7d3e788"
+    },
+    {
+      "ref": "refs/tags/archive/codex/wave-dotnet",
+      "object": "971b6e7887c2a8f2772bd70d855516772d653955"
+    },
+    {
+      "ref": "refs/tags/archive/codex/wave-github",
+      "object": "edf4be2943a85a67df260ede85109be1c826adf7"
+    },
+    {
+      "ref": "refs/tags/archive/codex/wave-init",
+      "object": "d53a05576e3c5a4c53c49c6391adb2a6f016fecf"
+    },
+    {
+      "ref": "refs/tags/archive/codex/wave-konfyra",
+      "object": "da3ab5992b12b3a3b436eddca9038a8627d7afee"
+    },
+    {
+      "ref": "refs/tags/archive/codex/wave-risk",
+      "object": "947b8a5ffd5de2c39151d7956cf21d0fb141f291"
+    },
+    {
+      "ref": "refs/tags/archive/codex/windows-host-diagnosis",
+      "object": "a20135450c094241ddfce4a51c1e07bab6617387"
+    },
+    {
+      "ref": "refs/tags/archive/codex/windows-verifier-path-fix",
+      "object": "8440ba8e70798f276b36e558173969a1cebb4a47"
+    },
+    {
+      "ref": "refs/tags/archive/codex/winget-path-fix",
+      "object": "ee7f93ddd05c0b09ed448ba0f17ca05434914fa9"
+    },
+    {
+      "ref": "refs/tags/archive/feature/content-packages",
+      "object": "f8c03d64421dd38a365704bd449e4dde8f15e53a"
+    },
+    {
+      "ref": "refs/tags/archive/feature/core-authoring",
+      "object": "8f3b11a6a67a60293673c46fe6bff4206023173e"
+    },
+    {
+      "ref": "refs/tags/archive/feature/production-release",
+      "object": "4adb45964a172a77a1355c6ea5ac2596c325b90d"
+    },
+    {
+      "ref": "refs/tags/archive/feature/project-initialization",
+      "object": "c7135d09ebb321f684210f69ff54f7ee0cec8c86"
+    },
+    {
+      "ref": "refs/tags/archive/refactor/standalone-product",
+      "object": "3abb0f446f64f8a298804732c3dc7771c89e73ed"
+    },
+    {
+      "ref": "refs/tags/archive/tmp-arch04-old",
+      "object": "84dbf71ce1485d5e6164e99f0111f7a2ab0884b7"
+    },
+    {
+      "ref": "refs/tags/archive/wip/projectrun-known-check-repair-20261010",
+      "object": "97df2ca457687999823d57a8237a3f556e6c2e55"
+    },
+    {
+      "ref": "refs/tags/v0.1.0",
+      "object": "45e0017a3d25d2abd464de934b5ef3a802732d0a"
+    },
+    {
+      "ref": "refs/tags/v0.10.0",
+      "object": "33f63566110201408b4bc38f2b214a5008038fd2"
+    },
+    {
+      "ref": "refs/tags/v0.10.0^{}",
+      "object": "8882d8f8b9eee184036c1dec4b4c51422608d1b1"
+    },
+    {
+      "ref": "refs/tags/v0.11.0",
+      "object": "eff84473c931982ff9c027ede0fe31e3b19e2adf"
+    },
+    {
+      "ref": "refs/tags/v0.11.0^{}",
+      "object": "a86903f1e94cada583a225800fa42b2273755fbd"
+    },
+    {
+      "ref": "refs/tags/v0.12.0",
+      "object": "848efc4448e872279b1a7da3210e8ef644ed9d6d"
+    },
+    {
+      "ref": "refs/tags/v0.12.0^{}",
+      "object": "83b715c415e39af79715cd8a40b3c79237a4c850"
+    },
+    {
+      "ref": "refs/tags/v0.13.0",
+      "object": "1a1ae2bbd6bab6bee9d25e871fbfe5552138634e"
+    },
+    {
+      "ref": "refs/tags/v0.13.0^{}",
+      "object": "ec312e35c15012c07acb6838c03e9316c5373dde"
+    },
+    {
+      "ref": "refs/tags/v0.14.0",
+      "object": "bd3c84a1a1fb396ca44cb06204726c09afd956b9"
+    },
+    {
+      "ref": "refs/tags/v0.14.0^{}",
+      "object": "c59acc45f05c7cd1368376f8ea5bac707615a1fc"
+    },
+    {
+      "ref": "refs/tags/v0.14.1",
+      "object": "784d3c3c61443b291ac7db9727c7c5856e253d66"
+    },
+    {
+      "ref": "refs/tags/v0.14.1^{}",
+      "object": "7dbd599c81540c8203a1b7f83afbc335174f4f1f"
+    },
+    {
+      "ref": "refs/tags/v0.2.0",
+      "object": "e461c06bedfc2dc36457bfff40e1f14170b988f2"
+    },
+    {
+      "ref": "refs/tags/v0.2.0^{}",
+      "object": "8ff0af4adb8e22619704afea0c99b80f2100ae25"
+    },
+    {
+      "ref": "refs/tags/v0.3.0",
+      "object": "444d28897f29d65554567de2ea09744357d0f864"
+    },
+    {
+      "ref": "refs/tags/v0.3.1",
+      "object": "52f0bd64ce64759be10ffdee180c2cf7c939d49b"
+    },
+    {
+      "ref": "refs/tags/v0.4.0",
+      "object": "a03e05e5841f5382c5f2a5a06ee1254fa4abbed5"
+    },
+    {
+      "ref": "refs/tags/v0.4.0^{}",
+      "object": "1f0d17bff22143afc6b2b63b4ea8f17486c818e6"
+    },
+    {
+      "ref": "refs/tags/v0.4.1",
+      "object": "65ae8735dc7fc38d045b8260f3dcc87c261a7e0d"
+    },
+    {
+      "ref": "refs/tags/v0.4.1^{}",
+      "object": "f4244324b04d4dd748ae13cea43e2455b251a5de"
+    },
+    {
+      "ref": "refs/tags/v0.5.0",
+      "object": "f12e9d2d647b88ee45aa7d105e8f4e9d790f075e"
+    },
+    {
+      "ref": "refs/tags/v0.5.0^{}",
+      "object": "78837346d0cb27c95b3a10f0a469b2709b757a83"
+    },
+    {
+      "ref": "refs/tags/v0.6.0",
+      "object": "811d7d488cf15ccbccc575cebd2ed9239d7a15aa"
+    },
+    {
+      "ref": "refs/tags/v0.6.0^{}",
+      "object": "810a86ffe13aef065f38e70ae49d40911f447af2"
+    },
+    {
+      "ref": "refs/tags/v0.7.0",
+      "object": "1ca3b45ba4f3550fe6a9f69c99c619cbb509c317"
+    },
+    {
+      "ref": "refs/tags/v0.7.0^{}",
+      "object": "857a77f86b3a4056c7973fed49d12ce2e6bf9b28"
+    },
+    {
+      "ref": "refs/tags/v0.8.0",
+      "object": "7158be7e3217fcb0d9fe35c837ca9a49031422ec"
+    },
+    {
+      "ref": "refs/tags/v0.8.0^{}",
+      "object": "b8b81f0739d23894592ba5b76ee91a25e7dea6d4"
+    },
+    {
+      "ref": "refs/tags/v0.8.1",
+      "object": "7c1f6bd140932f26e15a32350042513168a6bfdf"
+    },
+    {
+      "ref": "refs/tags/v0.8.1^{}",
+      "object": "a8f4eb2b4257cb877f891d51f582c6f08ce25389"
+    },
+    {
+      "ref": "refs/tags/v0.9.0",
+      "object": "46e632536af8e3bf4e26060c260039aa5f567a14"
+    },
+    {
+      "ref": "refs/tags/v0.9.0^{}",
+      "object": "ff5ffd5e3b538be58341fdb7983490895201d2b1"
+    },
+    {
+      "ref": "refs/tags/v0.9.1",
+      "object": "97cbc738700aa11e446f2ebb9ab6b4dc18255a36"
+    },
+    {
+      "ref": "refs/tags/v0.9.1^{}",
+      "object": "eb1b9781da6459d796c4e8fe108b6a8260c75b8e"
+    }
+  ],
+  "releases": [
+    {
+      "id": 405781964,
+      "tag": "v0.14.1",
+      "sourceCommit": "7dbd599c81540c8203a1b7f83afbc335174f4f1f",
+      "name": "Markitect v0.14.1",
+      "createdAt": "2026-10-07T12:56:45Z",
+      "publishedAt": "2026-10-07T13:15:35Z",
+      "immutable": true,
+      "notes": "Markitect 0.14.1 preserves the published Project/Domain CLI and bundles an experimental canonical projection/controller preview.\n\n- The canonical alpha supports Schema/Definition intent, Schema and Projection Modules, explicitly bound execution, guarded materialization, fresh Verify and declared-scope Audit. Saved Apply-result handoff belongs to this alpha.\n- Temporary Git test fixtures disable automatic detached maintenance/GC. Linux CI repeats the existing cleanup regression 100 times without relaxing assertions or timeouts.\n- This is a bounded CLI and evidence workflow. Continuous autonomous operation, whole-repository semantic assurance and reduced human supervision remain unproven.\n\nSource: [7dbd599c81540c8203a1b7f83afbc335174f4f1f](https://github.com/Glacius-Labs/Markitect/commit/7dbd599c81540c8203a1b7f83afbc335174f4f1f). [Windows/Linux release and installation gates](https://github.com/Glacius-Labs/Markitect/actions/runs/37624704624) passed on attempt 1. The immutable release and all four asset attestations were verified; anonymous download hashes and native Windows/Linux version outputs matched.\n\nThe original v0.14.0 tag remains unchanged and unpublished after two recorded [fixture-cleanup failures](https://github.com/Glacius-Labs/Markitect/actions/runs/37619287880). The original writer was not identified.\n\nSee the [README](https://github.com/Glacius-Labs/Markitect#readme), [alpha guide](https://github.com/Glacius-Labs/Markitect/blob/main/docs/canonical-projections.md) and [production assessment](https://github.com/Glacius-Labs/Markitect/blob/main/docs/production-assessment.md) for installation, scope and evidence. Government-specific redesign is outside this release.",
+      "assets": [
+        {
+          "id": 618745885,
+          "name": "markitect-v0.14.1-bundle.zip",
+          "size": 3742812,
+          "digest": "sha256:f57f3ff41a0a01f6e12a57e7529ebf6e9ef4fe3afa1a8bf59d0c2a783d7cb297",
+          "content_type": "application/zip",
+          "created_at": "2026-10-07T13:15:28Z"
+        },
+        {
+          "id": 618745880,
+          "name": "markitect-v0.14.1-linux-amd64",
+          "size": 9351328,
+          "digest": "sha256:f515f8fb37335ff5bd36f77cbbd0af227c3558d0d5aa8ba80503bae40314fbdc",
+          "content_type": "application/octet-stream",
+          "created_at": "2026-10-07T13:15:28Z"
+        },
+        {
+          "id": 618745881,
+          "name": "markitect-v0.14.1-provenance.yaml",
+          "size": 658,
+          "digest": "sha256:7cd30dff6b2fc2023a7528abdee9b8edbce18e9ca6f091cb067c63fbb6da1a5a",
+          "content_type": "application/octet-stream",
+          "created_at": "2026-10-07T13:15:28Z"
+        },
+        {
+          "id": 618745883,
+          "name": "markitect-v0.14.1-windows-amd64.exe",
+          "size": 9576960,
+          "digest": "sha256:2cad55efad64f15d7f57638bea78312918fbf7d181c730f188b9921504da71c4",
+          "content_type": "application/x-msdownload",
+          "created_at": "2026-10-07T13:15:28Z"
+        }
+      ]
+    },
+    {
+      "id": 402873994,
+      "tag": "v0.13.0",
+      "sourceCommit": "ec312e35c15012c07acb6838c03e9316c5373dde",
+      "name": "Markitect v0.13.0",
+      "createdAt": "2026-10-04T06:04:11Z",
+      "publishedAt": "2026-10-04T06:14:38Z",
+      "immutable": true,
+      "notes": "Private Markitect release for source commit ec312e35c15012c07acb6838c03e9316c5373dde. See the provenance YAML asset for the source, run, toolchain, and release asset digests.",
+      "assets": [
+        {
+          "id": 609261028,
+          "name": "markitect-v0.13.0-bundle.zip",
+          "size": 1764184,
+          "digest": "sha256:a14e7ce2619f9cd4bc633e23beaaf49ba83d9681bd9957075803abb04644f953",
+          "content_type": "application/zip",
+          "created_at": "2026-10-04T06:14:26Z"
+        },
+        {
+          "id": 609261026,
+          "name": "markitect-v0.13.0-linux-amd64",
+          "size": 6447264,
+          "digest": "sha256:7163bea66f539c3bf558770cdbd0745beea6b5b26a50e5f3fc4f1021a22abf2c",
+          "content_type": "application/octet-stream",
+          "created_at": "2026-10-04T06:14:26Z"
+        },
+        {
+          "id": 609261029,
+          "name": "markitect-v0.13.0-provenance.yaml",
+          "size": 658,
+          "digest": "sha256:1f3e4ce5bfdc28a2ba0ded6a706a02d157da2fe29e4ff6de4e703693aea90bfd",
+          "content_type": "application/octet-stream",
+          "created_at": "2026-10-04T06:14:26Z"
+        },
+        {
+          "id": 609261027,
+          "name": "markitect-v0.13.0-windows-amd64.exe",
+          "size": 6637056,
+          "digest": "sha256:ac40c666ff549e2f6a7af0923a716278ecf4e019589fdd0de0982259bde17054",
+          "content_type": "application/x-msdownload",
+          "created_at": "2026-10-04T06:14:26Z"
+        }
+      ]
+    },
+    {
+      "id": 402288212,
+      "tag": "v0.12.0",
+      "sourceCommit": "83b715c415e39af79715cd8a40b3c79237a4c850",
+      "name": "Markitect v0.12.0",
+      "createdAt": "2026-10-03T02:33:28Z",
+      "publishedAt": "2026-10-03T02:43:26Z",
+      "immutable": true,
+      "notes": "Private Markitect release for source commit 83b715c415e39af79715cd8a40b3c79237a4c850. See the provenance YAML asset for the source, run, toolchain, and release asset digests.",
+      "assets": [
+        {
+          "id": 606999441,
+          "name": "markitect-v0.12.0-bundle.zip",
+          "size": 1398903,
+          "digest": "sha256:577b05e57817a4623ddbdb1fa4e29dbfe6aad044640e3bac0a1e3edb49584ef0",
+          "content_type": "application/zip",
+          "created_at": "2026-10-03T02:43:22Z"
+        },
+        {
+          "id": 606999433,
+          "name": "markitect-v0.12.0-linux-amd64",
+          "size": 5447840,
+          "digest": "sha256:f2072ded99d709b8267124d1460e6b1c1b5afd45c3b70ba7c723a82e17152297",
+          "content_type": "application/octet-stream",
+          "created_at": "2026-10-03T02:43:21Z"
+        },
+        {
+          "id": 606999438,
+          "name": "markitect-v0.12.0-provenance.yaml",
+          "size": 658,
+          "digest": "sha256:f093da2c40773bea1f30c8203714bc4e343a348cd5ffb1fe58bb23aa3a3e2f9c",
+          "content_type": "application/octet-stream",
+          "created_at": "2026-10-03T02:43:21Z"
+        },
+        {
+          "id": 606999434,
+          "name": "markitect-v0.12.0-windows-amd64.exe",
+          "size": 5625856,
+          "digest": "sha256:b03424560caa460322e3580785d6abc9dfbf2137df878e03ddedcf76b3a8fa47",
+          "content_type": "application/x-msdownload",
+          "created_at": "2026-10-03T02:43:21Z"
+        }
+      ]
+    },
+    {
+      "id": 402071906,
+      "tag": "v0.11.0",
+      "sourceCommit": "a86903f1e94cada583a225800fa42b2273755fbd",
+      "name": "Markitect v0.11.0",
+      "createdAt": "2026-10-02T18:42:21Z",
+      "publishedAt": "2026-10-02T18:49:01Z",
+      "immutable": true,
+      "notes": "Private Markitect release for source commit a86903f1e94cada583a225800fa42b2273755fbd. See the provenance YAML asset for the source, run, toolchain, and release asset digests.",
+      "assets": [
+        {
+          "id": 606257322,
+          "name": "markitect-v0.11.0-bundle.zip",
+          "size": 1307980,
+          "digest": "sha256:ba46ab6327bde9df31f420a4023bd7c826725085a911ace4e1287d7ff9d2eccf",
+          "content_type": "application/zip",
+          "created_at": "2026-10-02T18:48:54Z"
+        },
+        {
+          "id": 606257319,
+          "name": "markitect-v0.11.0-linux-amd64",
+          "size": 5357728,
+          "digest": "sha256:5a3e4de0449e266191080a04e4c1da0cc2bfa09e88ee99965b03cce58e7fdb90",
+          "content_type": "application/octet-stream",
+          "created_at": "2026-10-02T18:48:54Z"
+        },
+        {
+          "id": 606257321,
+          "name": "markitect-v0.11.0-provenance.yaml",
+          "size": 658,
+          "digest": "sha256:bf5c78f7ba9c5b7c3358de255eaf2cdbcf7efac58e28aaea9a14d2463f5ea43f",
+          "content_type": "application/octet-stream",
+          "created_at": "2026-10-02T18:48:54Z"
+        },
+        {
+          "id": 606257325,
+          "name": "markitect-v0.11.0-windows-amd64.exe",
+          "size": 5534208,
+          "digest": "sha256:4e563a19a2e572b0bfc940a24ffee38cf08509639e46a68aa60f2dfadd82f6d8",
+          "content_type": "application/x-msdownload",
+          "created_at": "2026-10-02T18:48:54Z"
+        }
+      ]
+    },
+    {
+      "id": 401991913,
+      "tag": "v0.10.0",
+      "sourceCommit": "8882d8f8b9eee184036c1dec4b4c51422608d1b1",
+      "name": "Markitect v0.10.0",
+      "createdAt": "2026-10-02T16:39:14Z",
+      "publishedAt": "2026-10-02T16:45:34Z",
+      "immutable": true,
+      "notes": "Private Markitect release for source commit 8882d8f8b9eee184036c1dec4b4c51422608d1b1. See the provenance YAML asset for the source, run, toolchain, and release asset digests.",
+      "assets": [
+        {
+          "id": 606042369,
+          "name": "markitect-v0.10.0-bundle.zip",
+          "size": 1226657,
+          "digest": "sha256:4633b6257d3bc0f571e212906eb96464e78022dc7b79bddd1137abe59c31eaa4",
+          "content_type": "application/zip",
+          "created_at": "2026-10-02T16:45:28Z"
+        },
+        {
+          "id": 606042363,
+          "name": "markitect-v0.10.0-linux-amd64",
+          "size": 5267616,
+          "digest": "sha256:520b35bee308ce06f3e7d539ea593da25e6b3adf609baa0262b27c130f4e25a6",
+          "content_type": "application/octet-stream",
+          "created_at": "2026-10-02T16:45:28Z"
+        },
+        {
+          "id": 606042367,
+          "name": "markitect-v0.10.0-provenance.yaml",
+          "size": 658,
+          "digest": "sha256:c8f43c2c3906622a78696fa13ea63862d9ae4d2f4a2bedd1cda9a3098a4ce8a1",
+          "content_type": "application/octet-stream",
+          "created_at": "2026-10-02T16:45:28Z"
+        },
+        {
+          "id": 606042361,
+          "name": "markitect-v0.10.0-windows-amd64.exe",
+          "size": 5447168,
+          "digest": "sha256:da230c607a8779c882f825944353f629def22ff9f84be21eeb6f39c2e7f0f230",
+          "content_type": "application/x-msdownload",
+          "created_at": "2026-10-02T16:45:28Z"
+        }
+      ]
+    },
+    {
+      "id": 401496097,
+      "tag": "v0.9.1",
+      "sourceCommit": "eb1b9781da6459d796c4e8fe108b6a8260c75b8e",
+      "name": "Markitect v0.9.1",
+      "createdAt": "2026-10-02T02:19:23Z",
+      "publishedAt": "2026-10-02T02:24:51Z",
+      "immutable": true,
+      "notes": "Private Markitect release for source commit eb1b9781da6459d796c4e8fe108b6a8260c75b8e. See the provenance YAML asset for the source, run, toolchain, and release asset digests.",
+      "assets": [
+        {
+          "id": 604622879,
+          "name": "markitect-v0.9.1-bundle.zip",
+          "size": 992158,
+          "digest": "sha256:aab429352a5fe884d26a498c4b0e45ae881709ddc10484a90ea5e1bbb4edb9b3",
+          "content_type": "application/zip",
+          "created_at": "2026-10-02T02:24:47Z"
+        },
+        {
+          "id": 604622881,
+          "name": "markitect-v0.9.1-linux-amd64",
+          "size": 4866208,
+          "digest": "sha256:37e5de60e9a5ca5216f359ca2a332f55811118f2b84932c456ee1001b739b81c",
+          "content_type": "application/octet-stream",
+          "created_at": "2026-10-02T02:24:47Z"
+        },
+        {
+          "id": 604622877,
+          "name": "markitect-v0.9.1-provenance.yaml",
+          "size": 654,
+          "digest": "sha256:716d5bd3508b205ecce89039da6b8fd03b5a425b38ef32fe9a120569e1ee4023",
+          "content_type": "application/octet-stream",
+          "created_at": "2026-10-02T02:24:47Z"
+        },
+        {
+          "id": 604622876,
+          "name": "markitect-v0.9.1-windows-amd64.exe",
+          "size": 5038592,
+          "digest": "sha256:792e12c8ff44ad44ffb515bac381fcd1d171cb9a0a46a43e11a135bf17abe38e",
+          "content_type": "application/x-msdownload",
+          "created_at": "2026-10-02T02:24:47Z"
+        }
+      ]
+    },
+    {
+      "id": 401463997,
+      "tag": "v0.9.0",
+      "sourceCommit": "ff5ffd5e3b538be58341fdb7983490895201d2b1",
+      "name": "Markitect v0.9.0",
+      "createdAt": "2026-10-02T00:53:23Z",
+      "publishedAt": "2026-10-02T00:59:30Z",
+      "immutable": true,
+      "notes": "Private Markitect release for source commit ff5ffd5e3b538be58341fdb7983490895201d2b1. See the provenance YAML asset for the source, run, toolchain, and release asset digests.",
+      "assets": [
+        {
+          "id": 604475271,
+          "name": "markitect-v0.9.0-bundle.zip",
+          "size": 942454,
+          "digest": "sha256:987f667a570ede674a845b7ff06e0aa76e5f52c83456800840384cdaa39a5b71",
+          "content_type": "application/zip",
+          "created_at": "2026-10-02T00:59:25Z"
+        },
+        {
+          "id": 604475272,
+          "name": "markitect-v0.9.0-linux-amd64",
+          "size": 4694176,
+          "digest": "sha256:22c8198d608f01d01069329ed2dbd9ca784479d80ba72a17c63a0ef2d90d2449",
+          "content_type": "application/octet-stream",
+          "created_at": "2026-10-02T00:59:25Z"
+        },
+        {
+          "id": 604475279,
+          "name": "markitect-v0.9.0-provenance.yaml",
+          "size": 654,
+          "digest": "sha256:de5ae4b572fd895fdef3f06dedb057af341881f6b77c22fba77f176bfae5de53",
+          "content_type": "application/octet-stream",
+          "created_at": "2026-10-02T00:59:25Z"
+        },
+        {
+          "id": 604475265,
+          "name": "markitect-v0.9.0-windows-amd64.exe",
+          "size": 4867072,
+          "digest": "sha256:aee5fdd2e1ed91bdefd84c423bbc56213c9015c7de0bd91c00d4d182b6eea281",
+          "content_type": "application/x-msdownload",
+          "created_at": "2026-10-02T00:59:25Z"
+        }
+      ]
+    },
+    {
+      "id": 401377439,
+      "tag": "v0.8.1",
+      "sourceCommit": "a8f4eb2b4257cb877f891d51f582c6f08ce25389",
+      "name": "Markitect v0.8.1",
+      "createdAt": "2026-10-01T21:34:30Z",
+      "publishedAt": "2026-10-01T21:41:52Z",
+      "immutable": true,
+      "notes": "Private Markitect release for source commit a8f4eb2b4257cb877f891d51f582c6f08ce25389. See the provenance YAML asset for the source, run, toolchain, and release asset digests.",
+      "assets": [
+        {
+          "id": 604191232,
+          "name": "markitect-v0.8.1-bundle.zip",
+          "size": 919647,
+          "digest": "sha256:f0b42b564cf280f490b98e441c3a5ede649aa0a29db3287a13cbcc5051fbc7b0",
+          "content_type": "application/zip",
+          "created_at": "2026-10-01T21:41:46Z"
+        },
+        {
+          "id": 604191234,
+          "name": "markitect-v0.8.1-linux-amd64",
+          "size": 4673696,
+          "digest": "sha256:2519814945606eb08cdc710576f9b4b032c91ad05f44d17025c891601298a642",
+          "content_type": "application/octet-stream",
+          "created_at": "2026-10-01T21:41:46Z"
+        },
+        {
+          "id": 604191229,
+          "name": "markitect-v0.8.1-provenance.yaml",
+          "size": 654,
+          "digest": "sha256:c43146398fda780cea76b15587c8b7f0e1d475ec9ac24021f0f2c295559b214a",
+          "content_type": "application/octet-stream",
+          "created_at": "2026-10-01T21:41:46Z"
+        },
+        {
+          "id": 604191231,
+          "name": "markitect-v0.8.1-windows-amd64.exe",
+          "size": 4845056,
+          "digest": "sha256:6804409617bf0bb007df42710a3a609b996525d4d20289160981abf933ed6c71",
+          "content_type": "application/x-msdownload",
+          "created_at": "2026-10-01T21:41:46Z"
+        }
+      ]
+    },
+    {
+      "id": 401351835,
+      "tag": "v0.8.0",
+      "sourceCommit": "b8b81f0739d23894592ba5b76ee91a25e7dea6d4",
+      "name": "Markitect v0.8.0",
+      "createdAt": "2026-10-01T20:50:58Z",
+      "publishedAt": "2026-10-01T21:00:47Z",
+      "immutable": true,
+      "notes": "Private Markitect release for source commit b8b81f0739d23894592ba5b76ee91a25e7dea6d4. See the provenance YAML asset for the source, run, toolchain, and release asset digests.",
+      "assets": [
+        {
+          "id": 604128143,
+          "name": "markitect-v0.8.0-bundle.zip",
+          "size": 904978,
+          "digest": "sha256:3c8fbb78b5467fdd5e16e21db11ffa72995dbd894f8bd47a5cd4bc0b651d24d8",
+          "content_type": "application/zip",
+          "created_at": "2026-10-01T21:00:39Z"
+        },
+        {
+          "id": 604128141,
+          "name": "markitect-v0.8.0-linux-amd64",
+          "size": 4669600,
+          "digest": "sha256:b764576514556f23c06a6e4bf41e96cdd8f0361a0132c697045053aaa2dc40cd",
+          "content_type": "application/octet-stream",
+          "created_at": "2026-10-01T21:00:39Z"
+        },
+        {
+          "id": 604128145,
+          "name": "markitect-v0.8.0-provenance.yaml",
+          "size": 654,
+          "digest": "sha256:d7477e521f6d908fa8d92111cc8c16f4a455e3da322cf6a83da3f34c6b337b1b",
+          "content_type": "application/octet-stream",
+          "created_at": "2026-10-01T21:00:40Z"
+        },
+        {
+          "id": 604128144,
+          "name": "markitect-v0.8.0-windows-amd64.exe",
+          "size": 4841984,
+          "digest": "sha256:85757530e1f5ac3a50d3173a5c9e7f6c0401fadc40e0d1b7ce3876dadd7a3c62",
+          "content_type": "application/x-msdownload",
+          "created_at": "2026-10-01T21:00:39Z"
+        }
+      ]
+    },
+    {
+      "id": 401286207,
+      "tag": "v0.7.0",
+      "sourceCommit": "857a77f86b3a4056c7973fed49d12ce2e6bf9b28",
+      "name": "Markitect v0.7.0",
+      "createdAt": "2026-10-01T19:23:36Z",
+      "publishedAt": "2026-10-01T19:30:56Z",
+      "immutable": true,
+      "notes": "Private Markitect release for source commit 857a77f86b3a4056c7973fed49d12ce2e6bf9b28. See the provenance YAML asset for the source, run, toolchain, and release asset digests.",
+      "assets": [
+        {
+          "id": 603982591,
+          "name": "markitect-v0.7.0-bundle.zip",
+          "size": 897780,
+          "digest": "sha256:461ae101e3cc50f15b315382162fff1f75f4d91266a0e96790871e80b93c9db5",
+          "content_type": "application/zip",
+          "created_at": "2026-10-01T19:30:50Z"
+        },
+        {
+          "id": 603982586,
+          "name": "markitect-v0.7.0-linux-amd64",
+          "size": 4665504,
+          "digest": "sha256:384718c6574b28ffdcce121a17bda167d963996c3c954e0c27a33493cd9725c8",
+          "content_type": "application/octet-stream",
+          "created_at": "2026-10-01T19:30:50Z"
+        },
+        {
+          "id": 603982589,
+          "name": "markitect-v0.7.0-provenance.yaml",
+          "size": 654,
+          "digest": "sha256:08f0ab103e33f0f8acbf5a1428ccc85b6e552ec5ed11d22136886610f4cba0f6",
+          "content_type": "application/octet-stream",
+          "created_at": "2026-10-01T19:30:50Z"
+        },
+        {
+          "id": 603982588,
+          "name": "markitect-v0.7.0-windows-amd64.exe",
+          "size": 4838912,
+          "digest": "sha256:d797dbbd26d2c40b819b1519dd554701c407505091c9494baa30ff1447a4be0f",
+          "content_type": "application/x-msdownload",
+          "created_at": "2026-10-01T19:30:50Z"
+        }
+      ]
+    },
+    {
+      "id": 401237667,
+      "tag": "v0.6.0",
+      "sourceCommit": "810a86ffe13aef065f38e70ae49d40911f447af2",
+      "name": "Markitect v0.6.0",
+      "createdAt": "2026-10-01T18:16:08Z",
+      "publishedAt": "2026-10-01T18:25:07Z",
+      "immutable": true,
+      "notes": "Private Markitect release for source commit 810a86ffe13aef065f38e70ae49d40911f447af2. See the provenance YAML asset for the source, run, toolchain, and release asset digests.",
+      "assets": [
+        {
+          "id": 603863725,
+          "name": "markitect-v0.6.0-bundle.zip",
+          "size": 848561,
+          "digest": "sha256:6fc7ad77b13e3b25d5666f7136a7a631b62bfcd931a5454610b96de12a2981d1",
+          "content_type": "application/zip",
+          "created_at": "2026-10-01T18:25:01Z"
+        },
+        {
+          "id": 603863732,
+          "name": "markitect-v0.6.0-linux-amd64",
+          "size": 4645024,
+          "digest": "sha256:52f017f191a21ef352e602da15e7db7ea5d71b0fa0d0fdcaae9d166def00948c",
+          "content_type": "application/octet-stream",
+          "created_at": "2026-10-01T18:25:01Z"
+        },
+        {
+          "id": 603863729,
+          "name": "markitect-v0.6.0-provenance.yaml",
+          "size": 654,
+          "digest": "sha256:b13009121cab1e748db5afe5c04a39a9c298e7d794233301ba4f2f8b18aa19ae",
+          "content_type": "application/octet-stream",
+          "created_at": "2026-10-01T18:25:01Z"
+        },
+        {
+          "id": 603863734,
+          "name": "markitect-v0.6.0-windows-amd64.exe",
+          "size": 4813824,
+          "digest": "sha256:7bd08165e11e2cf315307c49b65d7ab08f61d75dc8a178ad229bfea450067280",
+          "content_type": "application/x-msdownload",
+          "created_at": "2026-10-01T18:25:01Z"
+        }
+      ]
+    },
+    {
+      "id": 401138862,
+      "tag": "v0.5.0",
+      "sourceCommit": "78837346d0cb27c95b3a10f0a469b2709b757a83",
+      "name": "Markitect v0.5.0",
+      "createdAt": "2026-10-01T16:01:51Z",
+      "publishedAt": "2026-10-01T16:11:34Z",
+      "immutable": true,
+      "notes": "Private Markitect release for source commit 78837346d0cb27c95b3a10f0a469b2709b757a83. See the provenance YAML asset for the source, run, toolchain, and release asset digests.",
+      "assets": [
+        {
+          "id": 603628858,
+          "name": "markitect-v0.5.0-bundle.zip",
+          "size": 812844,
+          "digest": "sha256:25c995f40a8e704197ee4245dc8daf37255adfb2dc2af6524c25d9b638c97da0",
+          "content_type": "application/zip",
+          "created_at": "2026-10-01T16:11:29Z"
+        },
+        {
+          "id": 603628860,
+          "name": "markitect-v0.5.0-linux-amd64",
+          "size": 4546720,
+          "digest": "sha256:e9eaa87fa36bb30578aaed0bef5bae2639689b39ac5bcd35c2d0632323d794cc",
+          "content_type": "application/octet-stream",
+          "created_at": "2026-10-01T16:11:29Z"
+        },
+        {
+          "id": 603628856,
+          "name": "markitect-v0.5.0-provenance.yaml",
+          "size": 654,
+          "digest": "sha256:1f0713059bc6962e41d1b1dc4013e1ec479ed69924582e550608552c53e20281",
+          "content_type": "application/octet-stream",
+          "created_at": "2026-10-01T16:11:29Z"
+        },
+        {
+          "id": 603628857,
+          "name": "markitect-v0.5.0-windows-amd64.exe",
+          "size": 4713984,
+          "digest": "sha256:6f5b98dad2ea6003bc0368800691af70084a44d2c225c26fe12d120bcda27178",
+          "content_type": "application/x-msdownload",
+          "created_at": "2026-10-01T16:11:29Z"
+        }
+      ]
+    },
+    {
+      "id": 401051061,
+      "tag": "v0.4.1",
+      "sourceCommit": "f4244324b04d4dd748ae13cea43e2455b251a5de",
+      "name": "Markitect v0.4.1",
+      "createdAt": "2026-10-01T14:20:12Z",
+      "publishedAt": "2026-10-01T14:30:35Z",
+      "immutable": true,
+      "notes": "Private Markitect release for source commit f4244324b04d4dd748ae13cea43e2455b251a5de. See the provenance YAML asset for the source, run, toolchain, and release asset digests.",
+      "assets": [
+        {
+          "id": 603442936,
+          "name": "markitect-v0.4.1-bundle.zip",
+          "size": 761588,
+          "digest": "sha256:440e0829e405c4a793eaa02fe102cdabc6d596ed142d3d472f35182d37c13eab",
+          "content_type": "application/zip",
+          "created_at": "2026-10-01T14:30:30Z"
+        },
+        {
+          "id": 603442937,
+          "name": "markitect-v0.4.1-linux-amd64",
+          "size": 4493472,
+          "digest": "sha256:a02d0eb0ada42d95012da0965d471e6e31c4f5d607ac849fb8bd29d85b9b65a3",
+          "content_type": "application/octet-stream",
+          "created_at": "2026-10-01T14:30:30Z"
+        },
+        {
+          "id": 603442953,
+          "name": "markitect-v0.4.1-provenance.yaml",
+          "size": 654,
+          "digest": "sha256:5bfcf67cb3f30a16f5ca7a879bfd1533762000319133e702a171e2db01798c56",
+          "content_type": "application/octet-stream",
+          "created_at": "2026-10-01T14:30:31Z"
+        },
+        {
+          "id": 603442942,
+          "name": "markitect-v0.4.1-windows-amd64.exe",
+          "size": 4662784,
+          "digest": "sha256:419f61e99a3ee09c4d87624b44755bacbcb796244cffe7a1fa148da4c79a35f1",
+          "content_type": "application/x-msdownload",
+          "created_at": "2026-10-01T14:30:30Z"
+        }
+      ]
+    },
+    {
+      "id": 400944013,
+      "tag": "v0.4.0",
+      "sourceCommit": "1f0d17bff22143afc6b2b63b4ea8f17486c818e6",
+      "name": "Markitect v0.4.0",
+      "createdAt": "2026-10-01T12:19:48Z",
+      "publishedAt": "2026-10-01T12:25:48Z",
+      "immutable": true,
+      "notes": "Private Markitect release for source commit 1f0d17bff22143afc6b2b63b4ea8f17486c818e6. See the provenance YAML asset for the source, run, toolchain, and release asset digests.",
+      "assets": [
+        {
+          "id": 603214006,
+          "name": "markitect-v0.4.0-bundle.zip",
+          "size": 748987,
+          "digest": "sha256:7966d53a1fe81e2b65d1896f267d708ea6ab95dc08f041476664193a5f10d4c3",
+          "content_type": "application/zip",
+          "created_at": "2026-10-01T12:25:44Z"
+        },
+        {
+          "id": 603214015,
+          "name": "markitect-v0.4.0-linux-amd64",
+          "size": 4493472,
+          "digest": "sha256:8487c3f3258992e89d890ddf036945ce4f026f504d3ed7d80b133b4c3b576608",
+          "content_type": "application/octet-stream",
+          "created_at": "2026-10-01T12:25:44Z"
+        },
+        {
+          "id": 603214012,
+          "name": "markitect-v0.4.0-provenance.yaml",
+          "size": 654,
+          "digest": "sha256:0a852d3b89a5430eaf882dfc6b0bebd53d8748cce6a8030da5302da366fd35a5",
+          "content_type": "application/octet-stream",
+          "created_at": "2026-10-01T12:25:44Z"
+        },
+        {
+          "id": 603214013,
+          "name": "markitect-v0.4.0-windows-amd64.exe",
+          "size": 4662784,
+          "digest": "sha256:67d62b1ebdd1224dc18591c72c98c7d8e3f395cedd137ffff1ed3cd66eebc719",
+          "content_type": "application/x-msdownload",
+          "created_at": "2026-10-01T12:25:44Z"
+        }
+      ]
+    },
+    {
+      "id": 400495147,
+      "tag": "v0.3.1",
+      "sourceCommit": "52f0bd64ce64759be10ffdee180c2cf7c939d49b",
+      "name": "Markitect v0.3.1",
+      "createdAt": "2026-09-30T22:48:38Z",
+      "publishedAt": "2026-09-30T22:55:23Z",
+      "immutable": true,
+      "notes": "Private Markitect release for source commit 52f0bd64ce64759be10ffdee180c2cf7c939d49b. See the provenance YAML asset for the source, run, toolchain, and release asset digests.",
+      "assets": [
+        {
+          "id": 601954750,
+          "name": "markitect-v0.3.1-bundle.zip",
+          "size": 681305,
+          "digest": "sha256:d486d311d8e19db4cf826640fb368c0478fadc28e12d4074a5268c68104596b7",
+          "content_type": "application/zip",
+          "created_at": "2026-09-30T22:55:18Z"
+        },
+        {
+          "id": 601954748,
+          "name": "markitect-v0.3.1-linux-amd64",
+          "size": 4432032,
+          "digest": "sha256:afac78120495409a7da073a59e6aba0d6d853a0c552be39eb9ac7a4e3a3cf289",
+          "content_type": "application/octet-stream",
+          "created_at": "2026-09-30T22:55:18Z"
+        },
+        {
+          "id": 601954746,
+          "name": "markitect-v0.3.1-provenance.yaml",
+          "size": 654,
+          "digest": "sha256:0005ce64e9320185496c14535502734d23de88097833bc4081b016062d0a2090",
+          "content_type": "application/octet-stream",
+          "created_at": "2026-09-30T22:55:18Z"
+        },
+        {
+          "id": 601954747,
+          "name": "markitect-v0.3.1-windows-amd64.exe",
+          "size": 4592640,
+          "digest": "sha256:5e7446da2bda153964416d6bd366d3353ac127919c46de39d329507c5baf73a0",
+          "content_type": "application/x-msdownload",
+          "created_at": "2026-09-30T22:55:18Z"
+        }
+      ]
+    },
+    {
+      "id": 400485422,
+      "tag": "v0.3.0",
+      "sourceCommit": "444d28897f29d65554567de2ea09744357d0f864",
+      "name": "Markitect v0.3.0",
+      "createdAt": "2026-09-30T22:27:11Z",
+      "publishedAt": "2026-09-30T22:33:30Z",
+      "immutable": true,
+      "notes": "Private Markitect release for source commit 444d28897f29d65554567de2ea09744357d0f864. See the provenance YAML asset for the source, run, toolchain, and release asset digests.",
+      "assets": [
+        {
+          "id": 601923571,
+          "name": "markitect-v0.3.0-bundle.zip",
+          "size": 679876,
+          "digest": "sha256:5e5992d7046a7fb557f9d29dd06230b5d8cd96c586ffdcf9beb1c1b6f0ff7ed9",
+          "content_type": "application/zip",
+          "created_at": "2026-09-30T22:33:26Z"
+        },
+        {
+          "id": 601923575,
+          "name": "markitect-v0.3.0-linux-amd64",
+          "size": 4432032,
+          "digest": "sha256:b7e45ca031fb4921f139577af7a1543337bee89cc01f9be7fbf0f074547c6400",
+          "content_type": "application/octet-stream",
+          "created_at": "2026-09-30T22:33:27Z"
+        },
+        {
+          "id": 601923568,
+          "name": "markitect-v0.3.0-provenance.yaml",
+          "size": 654,
+          "digest": "sha256:7ff3ca5df326178b09196fcfe1c6a1d3bbc227ed2728b84f87fe8780256bcde3",
+          "content_type": "application/octet-stream",
+          "created_at": "2026-09-30T22:33:26Z"
+        },
+        {
+          "id": 601923572,
+          "name": "markitect-v0.3.0-windows-amd64.exe",
+          "size": 4592640,
+          "digest": "sha256:3470e0295f2db5118a5febfe10184e1feda3ec3bbc11e4916fa118f3f7ff62c9",
+          "content_type": "application/x-msdownload",
+          "created_at": "2026-09-30T22:33:26Z"
+        }
+      ]
+    },
+    {
+      "id": 400440873,
+      "tag": "v0.2.0",
+      "sourceCommit": "8ff0af4adb8e22619704afea0c99b80f2100ae25",
+      "name": "Markitect v0.2.0",
+      "createdAt": "2026-09-30T21:05:35Z",
+      "publishedAt": "2026-09-30T21:12:46Z",
+      "immutable": true,
+      "notes": "Private Markitect release for source commit 8ff0af4adb8e22619704afea0c99b80f2100ae25. See the provenance YAML asset for the source, run, toolchain, and release asset digests.",
+      "assets": [
+        {
+          "id": 601808636,
+          "name": "markitect-v0.2.0-bundle.zip",
+          "size": 578554,
+          "digest": "sha256:6aaa411d265e29c261adf3fced4c266e97e6fafc25e627c4e904cf767ca60e4a",
+          "content_type": "application/zip",
+          "created_at": "2026-09-30T21:12:41Z"
+        },
+        {
+          "id": 601808635,
+          "name": "markitect-v0.2.0-linux-amd64",
+          "size": 4284576,
+          "digest": "sha256:ce7c642add072a0f03a3786ab09b3431b13a675a5a1ec681815fbfe33b08fca5",
+          "content_type": "application/octet-stream",
+          "created_at": "2026-09-30T21:12:41Z"
+        },
+        {
+          "id": 601808633,
+          "name": "markitect-v0.2.0-provenance.yaml",
+          "size": 654,
+          "digest": "sha256:0c0eb1783d001dcf59eb429870a4f310752e953c563d17128d1cc4bc3a3d4f4d",
+          "content_type": "application/octet-stream",
+          "created_at": "2026-09-30T21:12:41Z"
+        },
+        {
+          "id": 601808634,
+          "name": "markitect-v0.2.0-windows-amd64.exe",
+          "size": 4444672,
+          "digest": "sha256:1996c9f04680ea11797e69130b5d370f18662c4ae893ec2ac47ded986a4a21e8",
+          "content_type": "application/x-msdownload",
+          "created_at": "2026-09-30T21:12:41Z"
+        }
+      ]
+    },
+    {
+      "id": 400355906,
+      "tag": "v0.1.0",
+      "sourceCommit": "45e0017a3d25d2abd464de934b5ef3a802732d0a",
+      "name": "Markitect v0.1.0",
+      "createdAt": "2026-09-30T19:02:42Z",
+      "publishedAt": "2026-09-30T19:08:33Z",
+      "immutable": true,
+      "notes": "Private Markitect release for source commit 45e0017a3d25d2abd464de934b5ef3a802732d0a. See the provenance YAML asset for the source, run, toolchain, and release asset digests.",
+      "assets": [
+        {
+          "id": 601615436,
+          "name": "markitect-v0.1.0-bundle.zip",
+          "size": 641541,
+          "digest": "sha256:9bb4d2badedf806faa9bf2150a0bcd78551b1f69238d53e7b58f49282a4fd6b6",
+          "content_type": "application/zip",
+          "created_at": "2026-09-30T19:08:27Z"
+        },
+        {
+          "id": 601615435,
+          "name": "markitect-v0.1.0-linux-amd64",
+          "size": 5124256,
+          "digest": "sha256:2c338b3601efe54026d5266e592f69cb3e677bfba051f21182d837229a98581f",
+          "content_type": "application/octet-stream",
+          "created_at": "2026-09-30T19:08:27Z"
+        },
+        {
+          "id": 601615433,
+          "name": "markitect-v0.1.0-provenance.yaml",
+          "size": 654,
+          "digest": "sha256:41af323fef7b1c1040c25541eb989616724446c5c3222e21fc00046bf2d1cb6a",
+          "content_type": "application/octet-stream",
+          "created_at": "2026-09-30T19:08:27Z"
+        },
+        {
+          "id": 601615434,
+          "name": "markitect-v0.1.0-windows-amd64.exe",
+          "size": 5297152,
+          "digest": "sha256:a6dab3a59c83c29a0f1317982516177be848055b024e07455cafe025847f3431",
+          "content_type": "application/x-msdownload",
+          "created_at": "2026-09-30T19:08:27Z"
+        }
+      ]
+    }
+  ],
+  "verificationObservations": [
+    {
+      "tag": "v0.14.1",
+      "exit_code": 0,
+      "attestation": {
+        "attestation": {
+          "bundle": {
+            "mediaType": "application/vnd.dev.sigstore.bundle.v0.3+json",
+            "verificationMaterial": {
+              "certificate": {
+                "rawBytes": "MIICKzCCAbCgAwIBAgIUFEsbikF1pCGydxjUbs+jmoS800MwCgYIKoZIzj0EAwMwODEVMBMGA1UEChMMR2l0SHViLCBJbmMuMR8wHQYDVQQDExZGdWxjaW8gSW50ZXJtZWRpYXRlIGwxMB4XDTI2MDYxMjAwMDAwMFoXDTI3MDYxMjAwMDAwMFowKjEVMBMGA1UEChMMR2l0SHViLCBJbmMuMREwDwYDVQQDEwhBdHRlc3RlcjBZMBMGByqGSM49AgEGCCqGSM49AwEHA0IABGUVEVNqcSQmA0J45gqVHzCQkSWaZn4DucVDFhO4Q5OWgVdOP4WF44OUvFXQm9lDfRrHMsIVHEbvMfL7SHOVuVWjgaUwgaIwDgYDVR0PAQH/BAQDAgeAMBMGA1UdJQQMMAoGCCsGAQUFBwMDMAwGA1UdEwEB/wQCMAAwHQYDVR0OBBYEFDrgKNmcXl2HuRedxYt9HulXf/9IMB8GA1UdIwQYMBaAFMDhuFKkS08+3no4EQbPSY6hRZszMC0GA1UdEQQmMCSGImh0dHBzOi8vZG90Y29tLnJlbGVhc2VzLmdpdGh1Yi5jb20wCgYIKoZIzj0EAwMDaQAwZgIxAJnC2khPGWJqZiEFvgyv0rktYBinUh6AkDn43wYSgUhzm8aRUa+rF25Qk1ZeoGi3IAIxAIgIBMwOkMqDQ1DVCJydaIZu1bxtvgX9Anva7kRDZrboNxsAllbdnorYRTm9mxkZaQ=="
+              },
+              "timestampVerificationData": {
+                "rfc3161Timestamps": [
+                  {
+                    "signedTimestamp": "MIIC0TADAgEAMIICyAYJKoZIhvcNAQcCoIICuTCCArUCAQMxDTALBglghkgBZQMEAgIwgbwGCyqGSIb3DQEJEAEEoIGsBIGpMIGmAgEBBgkrBgEEAYO/MAIwMTANBglghkgBZQMEAgEFAAQgC+vTjN4tgg8QUGeLWfjmJkyxxcjm7kmIQslNG4fo1Z0CFQDBkT3RS6isi6+omW4TB4qsHlBwmRgPMjAyNjEwMDcxMzE1MzVaMAMCAQGgNqQ0MDIxFTATBgNVBAoTDEdpdEh1YiwgSW5jLjEZMBcGA1UEAxMQVFNBIFRpbWVzdGFtcGluZ6AAMYIB3jCCAdoCAQEwSjAyMRUwEwYDVQQKEwxHaXRIdWIsIEluYy4xGTAXBgNVBAMTEFRTQSBpbnRlcm1lZGlhdGUCFBcz29bp/g76H6hT8wF4gebJRzNSMAsGCWCGSAFlAwQCAqCCAQUwGgYJKoZIhvcNAQkDMQ0GCyqGSIb3DQEJEAEEMBwGCSqGSIb3DQEJBTEPFw0yNjEwMDcxMzE1MzVaMD8GCSqGSIb3DQEJBDEyBDBc5pMvLihetC1vimN+1Pk3+Xgl9KmLnoYcma3am73CrNilkk+jRT8Tdk1VK/Wkio0wgYcGCyqGSIb3DQEJEAIvMXgwdjB0MHIEIEQWyK5zFGpjoTfC5Vvo3nDjya8wc785i6q6qNsIF87XME4wNqQ0MDIxFTATBgNVBAoTDEdpdEh1YiwgSW5jLjEZMBcGA1UEAxMQVFNBIGludGVybWVkaWF0ZQIUFzPb1un+DvofqFPzAXiB5slHM1IwCgYIKoZIzj0EAwMEZzBlAjBNMPv/sPWerVZ2o6LjPSE4oDsToqU0qTVbJbkkGz09PYonb5XbljmZ2oBK/4II1IICMQC2Qg/0MElpyP+vIovWasktZ/nVmQTX5AcOrhsC9RbPVRuMKDXX1plTKZpOBXuJPKc="
+                  }
+                ]
+              }
+            },
+            "dsseEnvelope": {
+              "payload": "eyJfdHlwZSI6Imh0dHBzOi8vaW4tdG90by5pby9TdGF0ZW1lbnQvdjEiLCJzdWJqZWN0IjpbeyJ1cmkiOiJwa2c6Z2l0aHViL0dsYWNpdXMtTGFicy9NYXJraXRlY3RAdjAuMTQuMSIsImRpZ2VzdCI6eyJzaGExIjoiNzg0ZDNjM2M2MTQ0M2IyOTFhYzdkYjk3MjdjN2M1ODU2ZTI1M2Q2NiJ9fSx7Im5hbWUiOiJtYXJraXRlY3QtdjAuMTQuMS1idW5kbGUuemlwIiwiZGlnZXN0Ijp7InNoYTI1NiI6ImY1N2YzZmY0MWEwYTAxZjZlMTJhNTdlNzUyOWViZjZlOWVmNGZlM2FmYTFhOGJmNTlkMGMyYTc4M2Q3Y2IyOTcifX0seyJuYW1lIjoibWFya2l0ZWN0LXYwLjE0LjEtbGludXgtYW1kNjQiLCJkaWdlc3QiOnsic2hhMjU2IjoiZjUxNWY4ZmIzNzMzNWZmNWJkMzZmNzdjYmJkMGFmMjI3YzM1NThkMGQ1YWE4YmE4MDUwM2JhZTQwMzE0ZmJkYyJ9fSx7Im5hbWUiOiJtYXJraXRlY3QtdjAuMTQuMS1wcm92ZW5hbmNlLnlhbWwiLCJkaWdlc3QiOnsic2hhMjU2IjoiN2NkMzBkZmY2YjJmYzIwMjNhNzUyOGFiZGVlOWI4ZWRiY2UxOGU5Y2E2ZjA5MWNiMDY3YzYzZmJiNmRhMWE1YSJ9fSx7Im5hbWUiOiJtYXJraXRlY3QtdjAuMTQuMS13aW5kb3dzLWFtZDY0LmV4ZSIsImRpZ2VzdCI6eyJzaGEyNTYiOiIyY2FkNTVlZmFkNjRmMTVkN2Y1NzYzOGJlYTc4MzEyOTE4ZmJmN2QxODFjNzMwZjE4OGI5OTIxNTA0ZGE3MWM0In19XSwicHJlZGljYXRlVHlwZSI6Imh0dHBzOi8vaW4tdG90by5pby9hdHRlc3RhdGlvbi9yZWxlYXNlL3YwLjIiLCJwcmVkaWNhdGUiOnsiZGF0YWJhc2VJZCI6IjQwNTc4MTk2NCIsIm93bmVySWQiOiIyMDE4Mjc0NTQiLCJwYWNrYWdlSWQiOiIxMzk4MzczNDQ0IiwicHVybCI6InBrZzpnaXRodWIvR2xhY2l1cy1MYWJzL01hcmtpdGVjdEB2MC4xNC4xIiwicmVwb3NpdG9yeSI6IkdsYWNpdXMtTGFicy9NYXJraXRlY3QiLCJyZXBvc2l0b3J5SWQiOiIxMzk4MzczNDQ0IiwidGFnIjoidjAuMTQuMSJ9fQ==",
+              "payloadType": "application/vnd.in-toto+json",
+              "signatures": [
+                {
+                  "sig": "MEUCIQD0WpuEm+xDBinzm3bcB2XsALeG+hZRlMO8qNtgmXLmeAIgbrqKHd5ovhOWDCm44NkVuJLKszC9OfW8Mixra7PNEkg="
+                }
+              ]
+            }
+          },
+          "bundle_url": "",
+          "initiator": ""
+        },
+        "verificationResult": {
+          "mediaType": "application/vnd.dev.sigstore.verificationresult+json;version=0.1",
+          "signature": {
+            "certificate": {
+              "certificateIssuer": "CN=Fulcio Intermediate l1,O=GitHub\\, Inc.",
+              "subjectAlternativeName": "https://dotcom.releases.github.com"
+            }
+          },
+          "verifiedTimestamps": [
+            {
+              "type": "TimestampAuthority",
+              "uri": "timestamp.githubapp.com",
+              "timestamp": "2026-10-07T13:15:35Z"
+            }
+          ],
+          "verifiedIdentity": {
+            "subjectAlternativeName": {
+              "subjectAlternativeName": "",
+              "regexp": "^https://dotcom\\.releases\\.github\\.com$"
+            },
+            "issuer": {
+              "issuer": "",
+              "regexp": ".*"
+            }
+          },
+          "statement": {
+            "_type": "https://in-toto.io/Statement/v1",
+            "subject": [
+              {
+                "uri": "pkg:github/Glacius-Labs/Markitect@v0.14.1",
+                "digest": {
+                  "sha1": "784d3c3c61443b291ac7db9727c7c5856e253d66"
+                }
+              },
+              {
+                "name": "markitect-v0.14.1-bundle.zip",
+                "digest": {
+                  "sha256": "f57f3ff41a0a01f6e12a57e7529ebf6e9ef4fe3afa1a8bf59d0c2a783d7cb297"
+                }
+              },
+              {
+                "name": "markitect-v0.14.1-linux-amd64",
+                "digest": {
+                  "sha256": "f515f8fb37335ff5bd36f77cbbd0af227c3558d0d5aa8ba80503bae40314fbdc"
+                }
+              },
+              {
+                "name": "markitect-v0.14.1-provenance.yaml",
+                "digest": {
+                  "sha256": "7cd30dff6b2fc2023a7528abdee9b8edbce18e9ca6f091cb067c63fbb6da1a5a"
+                }
+              },
+              {
+                "name": "markitect-v0.14.1-windows-amd64.exe",
+                "digest": {
+                  "sha256": "2cad55efad64f15d7f57638bea78312918fbf7d181c730f188b9921504da71c4"
+                }
+              }
+            ],
+            "predicateType": "https://in-toto.io/attestation/release/v0.2",
+            "predicate": {
+              "databaseId": "405781964",
+              "ownerId": "201827454",
+              "packageId": "1398373444",
+              "purl": "pkg:github/Glacius-Labs/Markitect@v0.14.1",
+              "repository": "Glacius-Labs/Markitect",
+              "repositoryId": "1398373444",
+              "tag": "v0.14.1"
+            }
+          }
+        }
+      },
+      "error": null,
+      "prior_observation": {
+        "tag": "v0.14.1",
+        "exit_code": 1,
+        "error": "failed to verify attestations for tag v0.14.1: no valid Sigstore verifiers could be initialized"
+      }
+    },
+    {
+      "tag": "v0.13.0",
+      "exit_code": 0,
+      "attestation": {
+        "attestation": {
+          "bundle": {
+            "mediaType": "application/vnd.dev.sigstore.bundle.v0.3+json",
+            "verificationMaterial": {
+              "certificate": {
+                "rawBytes": "MIICKzCCAbCgAwIBAgIUFEsbikF1pCGydxjUbs+jmoS800MwCgYIKoZIzj0EAwMwODEVMBMGA1UEChMMR2l0SHViLCBJbmMuMR8wHQYDVQQDExZGdWxjaW8gSW50ZXJtZWRpYXRlIGwxMB4XDTI2MDYxMjAwMDAwMFoXDTI3MDYxMjAwMDAwMFowKjEVMBMGA1UEChMMR2l0SHViLCBJbmMuMREwDwYDVQQDEwhBdHRlc3RlcjBZMBMGByqGSM49AgEGCCqGSM49AwEHA0IABGUVEVNqcSQmA0J45gqVHzCQkSWaZn4DucVDFhO4Q5OWgVdOP4WF44OUvFXQm9lDfRrHMsIVHEbvMfL7SHOVuVWjgaUwgaIwDgYDVR0PAQH/BAQDAgeAMBMGA1UdJQQMMAoGCCsGAQUFBwMDMAwGA1UdEwEB/wQCMAAwHQYDVR0OBBYEFDrgKNmcXl2HuRedxYt9HulXf/9IMB8GA1UdIwQYMBaAFMDhuFKkS08+3no4EQbPSY6hRZszMC0GA1UdEQQmMCSGImh0dHBzOi8vZG90Y29tLnJlbGVhc2VzLmdpdGh1Yi5jb20wCgYIKoZIzj0EAwMDaQAwZgIxAJnC2khPGWJqZiEFvgyv0rktYBinUh6AkDn43wYSgUhzm8aRUa+rF25Qk1ZeoGi3IAIxAIgIBMwOkMqDQ1DVCJydaIZu1bxtvgX9Anva7kRDZrboNxsAllbdnorYRTm9mxkZaQ=="
+              },
+              "timestampVerificationData": {
+                "rfc3161Timestamps": [
+                  {
+                    "signedTimestamp": "MIIC0jADAgEAMIICyQYJKoZIhvcNAQcCoIICujCCArYCAQMxDTALBglghkgBZQMEAgIwgbwGCyqGSIb3DQEJEAEEoIGsBIGpMIGmAgEBBgkrBgEEAYO/MAIwMTANBglghkgBZQMEAgEFAAQgDo6fGEKq2zA3tjLakJyU0g0zMZLpyHKjkcYcVbky3asCFQDL/v3Epm24owqJzuKD1kSQEPdU2BgPMjAyNjEwMDQwNjE0MzlaMAMCAQGgNqQ0MDIxFTATBgNVBAoTDEdpdEh1YiwgSW5jLjEZMBcGA1UEAxMQVFNBIFRpbWVzdGFtcGluZ6AAMYIB3zCCAdsCAQEwSjAyMRUwEwYDVQQKEwxHaXRIdWIsIEluYy4xGTAXBgNVBAMTEFRTQSBpbnRlcm1lZGlhdGUCFBcz29bp/g76H6hT8wF4gebJRzNSMAsGCWCGSAFlAwQCAqCCAQUwGgYJKoZIhvcNAQkDMQ0GCyqGSIb3DQEJEAEEMBwGCSqGSIb3DQEJBTEPFw0yNjEwMDQwNjE0MzlaMD8GCSqGSIb3DQEJBDEyBDCK2JvClxtYVfscz5bbRdP9z9B/tK82TJICil26SgrYMfIMNKURe7uSCRINw0PSHDswgYcGCyqGSIb3DQEJEAIvMXgwdjB0MHIEIEQWyK5zFGpjoTfC5Vvo3nDjya8wc785i6q6qNsIF87XME4wNqQ0MDIxFTATBgNVBAoTDEdpdEh1YiwgSW5jLjEZMBcGA1UEAxMQVFNBIGludGVybWVkaWF0ZQIUFzPb1un+DvofqFPzAXiB5slHM1IwCgYIKoZIzj0EAwMEaDBmAjEAvJy7a0GvOUp+YFIGVveVUMrI/N1RqAayFzug1MLeA+aLLYgYMD/PDjhg4+IeFLzOAjEArGRiFR5zv4Kll2CtbviOI32LItYvzlZx7DwYxFKTHZTQTbe6gam2bbVJHM5yo6hF"
+                  }
+                ]
+              }
+            },
+            "dsseEnvelope": {
+              "payload": "eyJfdHlwZSI6Imh0dHBzOi8vaW4tdG90by5pby9TdGF0ZW1lbnQvdjEiLCAic3ViamVjdCI6W3sidXJpIjoicGtnOmdpdGh1Yi9HbGFjaXVzLUxhYnMvTWFya2l0ZWN0QHYwLjEzLjAiLCAiZGlnZXN0Ijp7InNoYTEiOiIxYTFhZTJiYmQ2YmFiNmJlZTlkMjVlODcxZmJmZTU1NTIxMzg2MzRlIn19LCB7Im5hbWUiOiJtYXJraXRlY3QtdjAuMTMuMC1idW5kbGUuemlwIiwgImRpZ2VzdCI6eyJzaGEyNTYiOiJhMTRlN2NlMjYxOWY5Y2Q0YmM2MzNlMjNiZWFhZjQ5YmE4M2Q5NjgxYmQ5OTU3MDc1ODAzYWJiMDQ2NDRmOTUzIn19LCB7Im5hbWUiOiJtYXJraXRlY3QtdjAuMTMuMC1saW51eC1hbWQ2NCIsICJkaWdlc3QiOnsic2hhMjU2IjoiNzE2M2JlYTY2ZjUzOWMzYmY1NTg3NzBjZGJkMDc0NWJlZWE2YjViMjZhNTBlNWYzZmM0ZjEwMjFhMjJhYmYyYyJ9fSwgeyJuYW1lIjoibWFya2l0ZWN0LXYwLjEzLjAtcHJvdmVuYW5jZS55YW1sIiwgImRpZ2VzdCI6eyJzaGEyNTYiOiIxZjNlNGNlNWJmZGMyOGEyYmEwZGVkNmE3MDZhMDJkMTU3ZGEyZmUyOWU0ZmY2ZGU0ZTcwMzY5M2FlYTkwYmZkIn19LCB7Im5hbWUiOiJtYXJraXRlY3QtdjAuMTMuMC13aW5kb3dzLWFtZDY0LmV4ZSIsICJkaWdlc3QiOnsic2hhMjU2IjoiYWM0MGM2NjZmZjU0OWUyZjZhN2FmMDkyM2E3MTYyNzhlY2Y0ZTAxOTU4OWZkZDBkZTA5ODIyNTliZGUxNzA1NCJ9fV0sICJwcmVkaWNhdGVUeXBlIjoiaHR0cHM6Ly9pbi10b3RvLmlvL2F0dGVzdGF0aW9uL3JlbGVhc2UvdjAuMiIsICJwcmVkaWNhdGUiOnsiZGF0YWJhc2VJZCI6IjQwMjg3Mzk5NCIsICJvd25lcklkIjoiMjAxODI3NDU0IiwgInBhY2thZ2VJZCI6IjEzOTgzNzM0NDQiLCAicHVybCI6InBrZzpnaXRodWIvR2xhY2l1cy1MYWJzL01hcmtpdGVjdEB2MC4xMy4wIiwgInJlcG9zaXRvcnkiOiJHbGFjaXVzLUxhYnMvTWFya2l0ZWN0IiwgInJlcG9zaXRvcnlJZCI6IjEzOTgzNzM0NDQiLCAidGFnIjoidjAuMTMuMCJ9fQ==",
+              "payloadType": "application/vnd.in-toto+json",
+              "signatures": [
+                {
+                  "sig": "MEUCIGaa64ZaCLvy6nAzkobd1+BgdVb1Wp0jsVDvuxAadsNBAiEAuiKl9S65bphZDjxqTVX8RO+/hvS3hVFpg0FVpfPmsTY="
+                }
+              ]
+            }
+          },
+          "bundle_url": "",
+          "initiator": ""
+        },
+        "verificationResult": {
+          "mediaType": "application/vnd.dev.sigstore.verificationresult+json;version=0.1",
+          "signature": {
+            "certificate": {
+              "certificateIssuer": "CN=Fulcio Intermediate l1,O=GitHub\\, Inc.",
+              "subjectAlternativeName": "https://dotcom.releases.github.com"
+            }
+          },
+          "verifiedTimestamps": [
+            {
+              "type": "TimestampAuthority",
+              "uri": "timestamp.githubapp.com",
+              "timestamp": "2026-10-04T06:14:39Z"
+            }
+          ],
+          "verifiedIdentity": {
+            "subjectAlternativeName": {
+              "subjectAlternativeName": "",
+              "regexp": "^https://dotcom\\.releases\\.github\\.com$"
+            },
+            "issuer": {
+              "issuer": "",
+              "regexp": ".*"
+            }
+          },
+          "statement": {
+            "_type": "https://in-toto.io/Statement/v1",
+            "subject": [
+              {
+                "uri": "pkg:github/Glacius-Labs/Markitect@v0.13.0",
+                "digest": {
+                  "sha1": "1a1ae2bbd6bab6bee9d25e871fbfe5552138634e"
+                }
+              },
+              {
+                "name": "markitect-v0.13.0-bundle.zip",
+                "digest": {
+                  "sha256": "a14e7ce2619f9cd4bc633e23beaaf49ba83d9681bd9957075803abb04644f953"
+                }
+              },
+              {
+                "name": "markitect-v0.13.0-linux-amd64",
+                "digest": {
+                  "sha256": "7163bea66f539c3bf558770cdbd0745beea6b5b26a50e5f3fc4f1021a22abf2c"
+                }
+              },
+              {
+                "name": "markitect-v0.13.0-provenance.yaml",
+                "digest": {
+                  "sha256": "1f3e4ce5bfdc28a2ba0ded6a706a02d157da2fe29e4ff6de4e703693aea90bfd"
+                }
+              },
+              {
+                "name": "markitect-v0.13.0-windows-amd64.exe",
+                "digest": {
+                  "sha256": "ac40c666ff549e2f6a7af0923a716278ecf4e019589fdd0de0982259bde17054"
+                }
+              }
+            ],
+            "predicateType": "https://in-toto.io/attestation/release/v0.2",
+            "predicate": {
+              "databaseId": "402873994",
+              "ownerId": "201827454",
+              "packageId": "1398373444",
+              "purl": "pkg:github/Glacius-Labs/Markitect@v0.13.0",
+              "repository": "Glacius-Labs/Markitect",
+              "repositoryId": "1398373444",
+              "tag": "v0.13.0"
+            }
+          }
+        }
+      },
+      "error": null,
+      "prior_observation": {
+        "tag": "v0.13.0",
+        "exit_code": 1,
+        "error": "failed to verify attestations for tag v0.13.0: no valid Sigstore verifiers could be initialized"
+      }
+    },
+    {
+      "tag": "v0.12.0",
+      "exit_code": 0,
+      "attestation": {
+        "attestation": {
+          "bundle": {
+            "mediaType": "application/vnd.dev.sigstore.bundle.v0.3+json",
+            "verificationMaterial": {
+              "certificate": {
+                "rawBytes": "MIICKzCCAbCgAwIBAgIUFEsbikF1pCGydxjUbs+jmoS800MwCgYIKoZIzj0EAwMwODEVMBMGA1UEChMMR2l0SHViLCBJbmMuMR8wHQYDVQQDExZGdWxjaW8gSW50ZXJtZWRpYXRlIGwxMB4XDTI2MDYxMjAwMDAwMFoXDTI3MDYxMjAwMDAwMFowKjEVMBMGA1UEChMMR2l0SHViLCBJbmMuMREwDwYDVQQDEwhBdHRlc3RlcjBZMBMGByqGSM49AgEGCCqGSM49AwEHA0IABGUVEVNqcSQmA0J45gqVHzCQkSWaZn4DucVDFhO4Q5OWgVdOP4WF44OUvFXQm9lDfRrHMsIVHEbvMfL7SHOVuVWjgaUwgaIwDgYDVR0PAQH/BAQDAgeAMBMGA1UdJQQMMAoGCCsGAQUFBwMDMAwGA1UdEwEB/wQCMAAwHQYDVR0OBBYEFDrgKNmcXl2HuRedxYt9HulXf/9IMB8GA1UdIwQYMBaAFMDhuFKkS08+3no4EQbPSY6hRZszMC0GA1UdEQQmMCSGImh0dHBzOi8vZG90Y29tLnJlbGVhc2VzLmdpdGh1Yi5jb20wCgYIKoZIzj0EAwMDaQAwZgIxAJnC2khPGWJqZiEFvgyv0rktYBinUh6AkDn43wYSgUhzm8aRUa+rF25Qk1ZeoGi3IAIxAIgIBMwOkMqDQ1DVCJydaIZu1bxtvgX9Anva7kRDZrboNxsAllbdnorYRTm9mxkZaQ=="
+              },
+              "timestampVerificationData": {
+                "rfc3161Timestamps": [
+                  {
+                    "signedTimestamp": "MIIC0TADAgEAMIICyAYJKoZIhvcNAQcCoIICuTCCArUCAQMxDTALBglghkgBZQMEAgIwgbwGCyqGSIb3DQEJEAEEoIGsBIGpMIGmAgEBBgkrBgEEAYO/MAIwMTANBglghkgBZQMEAgEFAAQglbzc+BVEelbHQLm9DYi1XdbWUpOCIpJvTiUo7jOiAt0CFQCP30p24p+Y/+ileKM+RabnGjWOLxgPMjAyNjEwMDMwMjQzMjdaMAMCAQGgNqQ0MDIxFTATBgNVBAoTDEdpdEh1YiwgSW5jLjEZMBcGA1UEAxMQVFNBIFRpbWVzdGFtcGluZ6AAMYIB3jCCAdoCAQEwSjAyMRUwEwYDVQQKEwxHaXRIdWIsIEluYy4xGTAXBgNVBAMTEFRTQSBpbnRlcm1lZGlhdGUCFBcz29bp/g76H6hT8wF4gebJRzNSMAsGCWCGSAFlAwQCAqCCAQUwGgYJKoZIhvcNAQkDMQ0GCyqGSIb3DQEJEAEEMBwGCSqGSIb3DQEJBTEPFw0yNjEwMDMwMjQzMjdaMD8GCSqGSIb3DQEJBDEyBDAWxEcuuLtVWg57f36NPVIaCofCS4fxipn/7qNWNU4KJNnHKCl74qn9z/2mvXONucgwgYcGCyqGSIb3DQEJEAIvMXgwdjB0MHIEIEQWyK5zFGpjoTfC5Vvo3nDjya8wc785i6q6qNsIF87XME4wNqQ0MDIxFTATBgNVBAoTDEdpdEh1YiwgSW5jLjEZMBcGA1UEAxMQVFNBIGludGVybWVkaWF0ZQIUFzPb1un+DvofqFPzAXiB5slHM1IwCgYIKoZIzj0EAwMEZzBlAjB1EYiVLN3FnzTcPIftbhj2C1oeRUklNabxJcsQYi4lVlL/aDGB8lwywLezIM5+3tgCMQC6EBj6m2sXqT0yWMgjvsgDjn/oL3ad/ER7lScal3HJyKGbieDkJ+QA+THuO14cCZM="
+                  }
+                ]
+              }
+            },
+            "dsseEnvelope": {
+              "payload": "eyJfdHlwZSI6Imh0dHBzOi8vaW4tdG90by5pby9TdGF0ZW1lbnQvdjEiLCAic3ViamVjdCI6W3sidXJpIjoicGtnOmdpdGh1Yi9HbGFjaXVzLUxhYnMvTWFya2l0ZWN0QHYwLjEyLjAiLCAiZGlnZXN0Ijp7InNoYTEiOiI4NDhlZmM0NDQ4ZTg3MjI3OWIxYTdkYTMyMTBlOGVmNjQ0ZWQ5ZDZkIn19LCB7Im5hbWUiOiJtYXJraXRlY3QtdjAuMTIuMC1idW5kbGUuemlwIiwgImRpZ2VzdCI6eyJzaGEyNTYiOiI1NzdiMDVlNTc4MTdhNDYyM2RkYmRiMWZhNGUyOWRiZmU2YWFkMDQ0NjQwZTNiYWMwYTFlM2VkYjQ5NTg0ZWYwIn19LCB7Im5hbWUiOiJtYXJraXRlY3QtdjAuMTIuMC1saW51eC1hbWQ2NCIsICJkaWdlc3QiOnsic2hhMjU2IjoiZjIwNzJkZWQ5OWQ3MDliODI2NzEyNGQxNDYwZTZiMWMxYjVhZmQ0NWMzYjcwYmE3YzcyM2E4MmUxNzE1MjI5NyJ9fSwgeyJuYW1lIjoibWFya2l0ZWN0LXYwLjEyLjAtcHJvdmVuYW5jZS55YW1sIiwgImRpZ2VzdCI6eyJzaGEyNTYiOiJmMDkzZGEyYzQwNzczYmVhMWYzMGM4MjAzNzE0YmM0ZTM0M2EzNDhjZDVmZmIxZmU1OGJiMjNhYTNhM2UyZjljIn19LCB7Im5hbWUiOiJtYXJraXRlY3QtdjAuMTIuMC13aW5kb3dzLWFtZDY0LmV4ZSIsICJkaWdlc3QiOnsic2hhMjU2IjoiYjAzNDI0NTYwY2FhNDYwMzIyZTM1ODA3ODVkNmFiYzlkZmJmMjEzN2RmODc4ZTAzZGRlZGNmNzZiM2E4ZmE0NyJ9fV0sICJwcmVkaWNhdGVUeXBlIjoiaHR0cHM6Ly9pbi10b3RvLmlvL2F0dGVzdGF0aW9uL3JlbGVhc2UvdjAuMiIsICJwcmVkaWNhdGUiOnsiZGF0YWJhc2VJZCI6IjQwMjI4ODIxMiIsICJvd25lcklkIjoiMjAxODI3NDU0IiwgInBhY2thZ2VJZCI6IjEzOTgzNzM0NDQiLCAicHVybCI6InBrZzpnaXRodWIvR2xhY2l1cy1MYWJzL01hcmtpdGVjdEB2MC4xMi4wIiwgInJlcG9zaXRvcnkiOiJHbGFjaXVzLUxhYnMvTWFya2l0ZWN0IiwgInJlcG9zaXRvcnlJZCI6IjEzOTgzNzM0NDQiLCAidGFnIjoidjAuMTIuMCJ9fQ==",
+              "payloadType": "application/vnd.in-toto+json",
+              "signatures": [
+                {
+                  "sig": "MEYCIQD47BduGg7/sXpG/Rg8PrGPRGVKuV7/F2456X/ozpTjvAIhAOcWF4YOdx9GCRwyjEKNoGL77wTB3MLUaCaPeuQbtnT0"
+                }
+              ]
+            }
+          },
+          "bundle_url": "",
+          "initiator": ""
+        },
+        "verificationResult": {
+          "mediaType": "application/vnd.dev.sigstore.verificationresult+json;version=0.1",
+          "signature": {
+            "certificate": {
+              "certificateIssuer": "CN=Fulcio Intermediate l1,O=GitHub\\, Inc.",
+              "subjectAlternativeName": "https://dotcom.releases.github.com"
+            }
+          },
+          "verifiedTimestamps": [
+            {
+              "type": "TimestampAuthority",
+              "uri": "timestamp.githubapp.com",
+              "timestamp": "2026-10-03T02:43:27Z"
+            }
+          ],
+          "verifiedIdentity": {
+            "subjectAlternativeName": {
+              "subjectAlternativeName": "",
+              "regexp": "^https://dotcom\\.releases\\.github\\.com$"
+            },
+            "issuer": {
+              "issuer": "",
+              "regexp": ".*"
+            }
+          },
+          "statement": {
+            "_type": "https://in-toto.io/Statement/v1",
+            "subject": [
+              {
+                "uri": "pkg:github/Glacius-Labs/Markitect@v0.12.0",
+                "digest": {
+                  "sha1": "848efc4448e872279b1a7da3210e8ef644ed9d6d"
+                }
+              },
+              {
+                "name": "markitect-v0.12.0-bundle.zip",
+                "digest": {
+                  "sha256": "577b05e57817a4623ddbdb1fa4e29dbfe6aad044640e3bac0a1e3edb49584ef0"
+                }
+              },
+              {
+                "name": "markitect-v0.12.0-linux-amd64",
+                "digest": {
+                  "sha256": "f2072ded99d709b8267124d1460e6b1c1b5afd45c3b70ba7c723a82e17152297"
+                }
+              },
+              {
+                "name": "markitect-v0.12.0-provenance.yaml",
+                "digest": {
+                  "sha256": "f093da2c40773bea1f30c8203714bc4e343a348cd5ffb1fe58bb23aa3a3e2f9c"
+                }
+              },
+              {
+                "name": "markitect-v0.12.0-windows-amd64.exe",
+                "digest": {
+                  "sha256": "b03424560caa460322e3580785d6abc9dfbf2137df878e03ddedcf76b3a8fa47"
+                }
+              }
+            ],
+            "predicateType": "https://in-toto.io/attestation/release/v0.2",
+            "predicate": {
+              "databaseId": "402288212",
+              "ownerId": "201827454",
+              "packageId": "1398373444",
+              "purl": "pkg:github/Glacius-Labs/Markitect@v0.12.0",
+              "repository": "Glacius-Labs/Markitect",
+              "repositoryId": "1398373444",
+              "tag": "v0.12.0"
+            }
+          }
+        }
+      },
+      "error": null
+    },
+    {
+      "tag": "v0.11.0",
+      "exit_code": 0,
+      "attestation": {
+        "attestation": {
+          "bundle": {
+            "mediaType": "application/vnd.dev.sigstore.bundle.v0.3+json",
+            "verificationMaterial": {
+              "certificate": {
+                "rawBytes": "MIICKzCCAbCgAwIBAgIUFEsbikF1pCGydxjUbs+jmoS800MwCgYIKoZIzj0EAwMwODEVMBMGA1UEChMMR2l0SHViLCBJbmMuMR8wHQYDVQQDExZGdWxjaW8gSW50ZXJtZWRpYXRlIGwxMB4XDTI2MDYxMjAwMDAwMFoXDTI3MDYxMjAwMDAwMFowKjEVMBMGA1UEChMMR2l0SHViLCBJbmMuMREwDwYDVQQDEwhBdHRlc3RlcjBZMBMGByqGSM49AgEGCCqGSM49AwEHA0IABGUVEVNqcSQmA0J45gqVHzCQkSWaZn4DucVDFhO4Q5OWgVdOP4WF44OUvFXQm9lDfRrHMsIVHEbvMfL7SHOVuVWjgaUwgaIwDgYDVR0PAQH/BAQDAgeAMBMGA1UdJQQMMAoGCCsGAQUFBwMDMAwGA1UdEwEB/wQCMAAwHQYDVR0OBBYEFDrgKNmcXl2HuRedxYt9HulXf/9IMB8GA1UdIwQYMBaAFMDhuFKkS08+3no4EQbPSY6hRZszMC0GA1UdEQQmMCSGImh0dHBzOi8vZG90Y29tLnJlbGVhc2VzLmdpdGh1Yi5jb20wCgYIKoZIzj0EAwMDaQAwZgIxAJnC2khPGWJqZiEFvgyv0rktYBinUh6AkDn43wYSgUhzm8aRUa+rF25Qk1ZeoGi3IAIxAIgIBMwOkMqDQ1DVCJydaIZu1bxtvgX9Anva7kRDZrboNxsAllbdnorYRTm9mxkZaQ=="
+              },
+              "timestampVerificationData": {
+                "rfc3161Timestamps": [
+                  {
+                    "signedTimestamp": "MIIC0TADAgEAMIICyAYJKoZIhvcNAQcCoIICuTCCArUCAQMxDTALBglghkgBZQMEAgIwgbwGCyqGSIb3DQEJEAEEoIGsBIGpMIGmAgEBBgkrBgEEAYO/MAIwMTANBglghkgBZQMEAgEFAAQgxa6VpB7Bxo7bjMdz1WldSP2CYENaFF98dD3rWwZq79wCFQDRfSdVlsnno/opb5Z9vktqBV6OJBgPMjAyNjEwMDIxODQ5MDFaMAMCAQGgNqQ0MDIxFTATBgNVBAoTDEdpdEh1YiwgSW5jLjEZMBcGA1UEAxMQVFNBIFRpbWVzdGFtcGluZ6AAMYIB3jCCAdoCAQEwSjAyMRUwEwYDVQQKEwxHaXRIdWIsIEluYy4xGTAXBgNVBAMTEFRTQSBpbnRlcm1lZGlhdGUCFBcz29bp/g76H6hT8wF4gebJRzNSMAsGCWCGSAFlAwQCAqCCAQUwGgYJKoZIhvcNAQkDMQ0GCyqGSIb3DQEJEAEEMBwGCSqGSIb3DQEJBTEPFw0yNjEwMDIxODQ5MDJaMD8GCSqGSIb3DQEJBDEyBDBpR+yJDdyXWU4GSuF5RKSTHs8NtJo4XT1u3fT+mfEfGam1di5xcmg1SVAZXeCv9MAwgYcGCyqGSIb3DQEJEAIvMXgwdjB0MHIEIEQWyK5zFGpjoTfC5Vvo3nDjya8wc785i6q6qNsIF87XME4wNqQ0MDIxFTATBgNVBAoTDEdpdEh1YiwgSW5jLjEZMBcGA1UEAxMQVFNBIGludGVybWVkaWF0ZQIUFzPb1un+DvofqFPzAXiB5slHM1IwCgYIKoZIzj0EAwMEZzBlAjAgiSjMe50joFerFRfLVexalXUPaCWqg/HkZOGf340hZxnS/H7mNp+Y0+OWf0qmBmICMQDJFfCDot5BhJRo/fVuh8dnkFQVbn9qSj/LOyrHugiEl6qc/xsrxeevtYUF0cO1YGY="
+                  }
+                ]
+              }
+            },
+            "dsseEnvelope": {
+              "payload": "eyJfdHlwZSI6Imh0dHBzOi8vaW4tdG90by5pby9TdGF0ZW1lbnQvdjEiLCAic3ViamVjdCI6W3sidXJpIjoicGtnOmdpdGh1Yi9HbGFjaXVzLUxhYnMvTWFya2l0ZWN0QHYwLjExLjAiLCAiZGlnZXN0Ijp7InNoYTEiOiJlZmY4NDQ3M2M5MzE5ODJmZjljMDI3ZWRlMGZlMzFlM2IxOWUyYWRmIn19LCB7Im5hbWUiOiJtYXJraXRlY3QtdjAuMTEuMC1idW5kbGUuemlwIiwgImRpZ2VzdCI6eyJzaGEyNTYiOiJiYTQ2YWI2MzI3YmRlOWRmMzFmNDIwYTQwMjNiZDdjODI2NzI1MDg1YTkxMWFjZTRlMTI4N2Q3ZmY5ZDJlY2NmIn19LCB7Im5hbWUiOiJtYXJraXRlY3QtdjAuMTEuMC1saW51eC1hbWQ2NCIsICJkaWdlc3QiOnsic2hhMjU2IjoiNWEzZTRkZTA0NDllMjY2MTkxMDgwYTA0ZTRjMWRhMGNjMmJmYTA5ZTg4ZWU5OTk2NWIwM2NjZTU4ZTdmZGI5MCJ9fSwgeyJuYW1lIjoibWFya2l0ZWN0LXYwLjExLjAtcHJvdmVuYW5jZS55YW1sIiwgImRpZ2VzdCI6eyJzaGEyNTYiOiJiZjVjNzhmN2JhOWM1YjdjMzM1OGRlMjU1ZWFmMmNkYmNmN2VmYWM1OGUyOGFhZWE5YTE0ZDI0NjNmNWVhNDNmIn19LCB7Im5hbWUiOiJtYXJraXRlY3QtdjAuMTEuMC13aW5kb3dzLWFtZDY0LmV4ZSIsICJkaWdlc3QiOnsic2hhMjU2IjoiNGU1NjNhMTlhMmU1NzJiMGJmYzk0MGEyNGZmZWUzOGNmMDg1MDk2MzllNDZhNjhhYTYwZjJkZmFkZDgyZjZkOCJ9fV0sICJwcmVkaWNhdGVUeXBlIjoiaHR0cHM6Ly9pbi10b3RvLmlvL2F0dGVzdGF0aW9uL3JlbGVhc2UvdjAuMiIsICJwcmVkaWNhdGUiOnsiZGF0YWJhc2VJZCI6IjQwMjA3MTkwNiIsICJvd25lcklkIjoiMjAxODI3NDU0IiwgInBhY2thZ2VJZCI6IjEzOTgzNzM0NDQiLCAicHVybCI6InBrZzpnaXRodWIvR2xhY2l1cy1MYWJzL01hcmtpdGVjdEB2MC4xMS4wIiwgInJlcG9zaXRvcnkiOiJHbGFjaXVzLUxhYnMvTWFya2l0ZWN0IiwgInJlcG9zaXRvcnlJZCI6IjEzOTgzNzM0NDQiLCAidGFnIjoidjAuMTEuMCJ9fQ==",
+              "payloadType": "application/vnd.in-toto+json",
+              "signatures": [
+                {
+                  "sig": "MEQCIEI5+rLA9Ooziup5fyCPODsbfV7e9VNCoXA5r9vRWR71AiAHutz0IeBgYpPHlzm1hFF0ijrSjZ5GiZvge5E6TE+jAw=="
+                }
+              ]
+            }
+          },
+          "bundle_url": "",
+          "initiator": ""
+        },
+        "verificationResult": {
+          "mediaType": "application/vnd.dev.sigstore.verificationresult+json;version=0.1",
+          "signature": {
+            "certificate": {
+              "certificateIssuer": "CN=Fulcio Intermediate l1,O=GitHub\\, Inc.",
+              "subjectAlternativeName": "https://dotcom.releases.github.com"
+            }
+          },
+          "verifiedTimestamps": [
+            {
+              "type": "TimestampAuthority",
+              "uri": "timestamp.githubapp.com",
+              "timestamp": "2026-10-02T18:49:01Z"
+            }
+          ],
+          "verifiedIdentity": {
+            "subjectAlternativeName": {
+              "subjectAlternativeName": "",
+              "regexp": "^https://dotcom\\.releases\\.github\\.com$"
+            },
+            "issuer": {
+              "issuer": "",
+              "regexp": ".*"
+            }
+          },
+          "statement": {
+            "_type": "https://in-toto.io/Statement/v1",
+            "subject": [
+              {
+                "uri": "pkg:github/Glacius-Labs/Markitect@v0.11.0",
+                "digest": {
+                  "sha1": "eff84473c931982ff9c027ede0fe31e3b19e2adf"
+                }
+              },
+              {
+                "name": "markitect-v0.11.0-bundle.zip",
+                "digest": {
+                  "sha256": "ba46ab6327bde9df31f420a4023bd7c826725085a911ace4e1287d7ff9d2eccf"
+                }
+              },
+              {
+                "name": "markitect-v0.11.0-linux-amd64",
+                "digest": {
+                  "sha256": "5a3e4de0449e266191080a04e4c1da0cc2bfa09e88ee99965b03cce58e7fdb90"
+                }
+              },
+              {
+                "name": "markitect-v0.11.0-provenance.yaml",
+                "digest": {
+                  "sha256": "bf5c78f7ba9c5b7c3358de255eaf2cdbcf7efac58e28aaea9a14d2463f5ea43f"
+                }
+              },
+              {
+                "name": "markitect-v0.11.0-windows-amd64.exe",
+                "digest": {
+                  "sha256": "4e563a19a2e572b0bfc940a24ffee38cf08509639e46a68aa60f2dfadd82f6d8"
+                }
+              }
+            ],
+            "predicateType": "https://in-toto.io/attestation/release/v0.2",
+            "predicate": {
+              "databaseId": "402071906",
+              "ownerId": "201827454",
+              "packageId": "1398373444",
+              "purl": "pkg:github/Glacius-Labs/Markitect@v0.11.0",
+              "repository": "Glacius-Labs/Markitect",
+              "repositoryId": "1398373444",
+              "tag": "v0.11.0"
+            }
+          }
+        }
+      },
+      "error": null
+    },
+    {
+      "tag": "v0.10.0",
+      "exit_code": 0,
+      "attestation": {
+        "attestation": {
+          "bundle": {
+            "mediaType": "application/vnd.dev.sigstore.bundle.v0.3+json",
+            "verificationMaterial": {
+              "certificate": {
+                "rawBytes": "MIICKzCCAbCgAwIBAgIUFEsbikF1pCGydxjUbs+jmoS800MwCgYIKoZIzj0EAwMwODEVMBMGA1UEChMMR2l0SHViLCBJbmMuMR8wHQYDVQQDExZGdWxjaW8gSW50ZXJtZWRpYXRlIGwxMB4XDTI2MDYxMjAwMDAwMFoXDTI3MDYxMjAwMDAwMFowKjEVMBMGA1UEChMMR2l0SHViLCBJbmMuMREwDwYDVQQDEwhBdHRlc3RlcjBZMBMGByqGSM49AgEGCCqGSM49AwEHA0IABGUVEVNqcSQmA0J45gqVHzCQkSWaZn4DucVDFhO4Q5OWgVdOP4WF44OUvFXQm9lDfRrHMsIVHEbvMfL7SHOVuVWjgaUwgaIwDgYDVR0PAQH/BAQDAgeAMBMGA1UdJQQMMAoGCCsGAQUFBwMDMAwGA1UdEwEB/wQCMAAwHQYDVR0OBBYEFDrgKNmcXl2HuRedxYt9HulXf/9IMB8GA1UdIwQYMBaAFMDhuFKkS08+3no4EQbPSY6hRZszMC0GA1UdEQQmMCSGImh0dHBzOi8vZG90Y29tLnJlbGVhc2VzLmdpdGh1Yi5jb20wCgYIKoZIzj0EAwMDaQAwZgIxAJnC2khPGWJqZiEFvgyv0rktYBinUh6AkDn43wYSgUhzm8aRUa+rF25Qk1ZeoGi3IAIxAIgIBMwOkMqDQ1DVCJydaIZu1bxtvgX9Anva7kRDZrboNxsAllbdnorYRTm9mxkZaQ=="
+              },
+              "timestampVerificationData": {
+                "rfc3161Timestamps": [
+                  {
+                    "signedTimestamp": "MIIC0DADAgEAMIICxwYJKoZIhvcNAQcCoIICuDCCArQCAQMxDTALBglghkgBZQMEAgIwgbsGCyqGSIb3DQEJEAEEoIGrBIGoMIGlAgEBBgkrBgEEAYO/MAIwMTANBglghkgBZQMEAgEFAAQgnjO5nZILEFmM7Wm/NvaJhvaxJvoYFLWaRcZKEO1rAs0CFBj42UDmU+yv8uicLkrk4E0nfF+nGA8yMDI2MTAwMjE2NDUzNVowAwIBAaA2pDQwMjEVMBMGA1UEChMMR2l0SHViLCBJbmMuMRkwFwYDVQQDExBUU0EgVGltZXN0YW1waW5noAAxggHeMIIB2gIBATBKMDIxFTATBgNVBAoTDEdpdEh1YiwgSW5jLjEZMBcGA1UEAxMQVFNBIGludGVybWVkaWF0ZQIUFzPb1un+DvofqFPzAXiB5slHM1IwCwYJYIZIAWUDBAICoIIBBTAaBgkqhkiG9w0BCQMxDQYLKoZIhvcNAQkQAQQwHAYJKoZIhvcNAQkFMQ8XDTI2MTAwMjE2NDUzNVowPwYJKoZIhvcNAQkEMTIEMMc1CB80tZzRGorhmQYo83CiZ2zkPyjdieW1T5wtNKYOMAc4VgqiwcmrHQp14NsbKTCBhwYLKoZIhvcNAQkQAi8xeDB2MHQwcgQgRBbIrnMUamOhN8LlW+jecOPJrzBzvzmLqrqo2wgXztcwTjA2pDQwMjEVMBMGA1UEChMMR2l0SHViLCBJbmMuMRkwFwYDVQQDExBUU0EgaW50ZXJtZWRpYXRlAhQXM9vW6f4O+h+oU/MBeIHmyUczUjAKBggqhkjOPQQDAwRnMGUCMQCpZ3dApZAh6bmRlBIVYdTP92f1vnbB60JkGgdC0aqxwUBiRrz0JbKs507LooiampkCMBP0gz7mIjo1Tnvx0WALoQVzGaIEI3UZJ/RvQSuz723lM9+c6tHCx/hkjMtQloHdYQ=="
+                  }
+                ]
+              }
+            },
+            "dsseEnvelope": {
+              "payload": "eyJfdHlwZSI6Imh0dHBzOi8vaW4tdG90by5pby9TdGF0ZW1lbnQvdjEiLCAic3ViamVjdCI6W3sidXJpIjoicGtnOmdpdGh1Yi9HbGFjaXVzLUxhYnMvTWFya2l0ZWN0QHYwLjEwLjAiLCAiZGlnZXN0Ijp7InNoYTEiOiIzM2Y2MzU2NjExMDIwMTQwOGI0YmMzOGYyYjIxNGE1MDA4MDM4ZmQyIn19LCB7Im5hbWUiOiJtYXJraXRlY3QtdjAuMTAuMC1idW5kbGUuemlwIiwgImRpZ2VzdCI6eyJzaGEyNTYiOiI0NjMzYjYyNTdkM2JjMGY1NzFlMjEyOTA2ZWI5NjQ2NGU3ODAyMmRjN2I3OWJkZGQxMTM3YWJlNTljMzFlYWE0In19LCB7Im5hbWUiOiJtYXJraXRlY3QtdjAuMTAuMC1saW51eC1hbWQ2NCIsICJkaWdlc3QiOnsic2hhMjU2IjoiNTIwYjM1YmVlMzA4Y2UwNmYzZTdkNTM5ZWE1OTNkYTI1ZTZiM2FkZjYwOWJhYTAyNjJiMjdjMTMwZjRlMjVhNiJ9fSwgeyJuYW1lIjoibWFya2l0ZWN0LXYwLjEwLjAtcHJvdmVuYW5jZS55YW1sIiwgImRpZ2VzdCI6eyJzaGEyNTYiOiJjOGY0M2MyYzM5MDY2MjJhNzg2OTZmYTEzZWE2Mzg2MmQ5YWU0ZDJmNGEyYmVkZDFjZGE5YTMwOThhNGNlOGExIn19LCB7Im5hbWUiOiJtYXJraXRlY3QtdjAuMTAuMC13aW5kb3dzLWFtZDY0LmV4ZSIsICJkaWdlc3QiOnsic2hhMjU2IjoiZGEyMzBjNjA3YTg3NzljODgyZjgyNTk0NDM1M2Y2MjlkZWYyMmZmOWY4NGJlMjFlZWI2ZjM5YzJlN2YwZjIzMCJ9fV0sICJwcmVkaWNhdGVUeXBlIjoiaHR0cHM6Ly9pbi10b3RvLmlvL2F0dGVzdGF0aW9uL3JlbGVhc2UvdjAuMiIsICJwcmVkaWNhdGUiOnsiZGF0YWJhc2VJZCI6IjQwMTk5MTkxMyIsICJvd25lcklkIjoiMjAxODI3NDU0IiwgInBhY2thZ2VJZCI6IjEzOTgzNzM0NDQiLCAicHVybCI6InBrZzpnaXRodWIvR2xhY2l1cy1MYWJzL01hcmtpdGVjdEB2MC4xMC4wIiwgInJlcG9zaXRvcnkiOiJHbGFjaXVzLUxhYnMvTWFya2l0ZWN0IiwgInJlcG9zaXRvcnlJZCI6IjEzOTgzNzM0NDQiLCAidGFnIjoidjAuMTAuMCJ9fQ==",
+              "payloadType": "application/vnd.in-toto+json",
+              "signatures": [
+                {
+                  "sig": "MEUCIQDyZkOIx+5AfBLab2Qzw+10QibkE0mCUNqSD2ua6gKNeQIgX2FE1hy+ZXUvb4sLDUc+takdJfcV92x8w36ZoEXB5fk="
+                }
+              ]
+            }
+          },
+          "bundle_url": "",
+          "initiator": ""
+        },
+        "verificationResult": {
+          "mediaType": "application/vnd.dev.sigstore.verificationresult+json;version=0.1",
+          "signature": {
+            "certificate": {
+              "certificateIssuer": "CN=Fulcio Intermediate l1,O=GitHub\\, Inc.",
+              "subjectAlternativeName": "https://dotcom.releases.github.com"
+            }
+          },
+          "verifiedTimestamps": [
+            {
+              "type": "TimestampAuthority",
+              "uri": "timestamp.githubapp.com",
+              "timestamp": "2026-10-02T16:45:35Z"
+            }
+          ],
+          "verifiedIdentity": {
+            "subjectAlternativeName": {
+              "subjectAlternativeName": "",
+              "regexp": "^https://dotcom\\.releases\\.github\\.com$"
+            },
+            "issuer": {
+              "issuer": "",
+              "regexp": ".*"
+            }
+          },
+          "statement": {
+            "_type": "https://in-toto.io/Statement/v1",
+            "subject": [
+              {
+                "uri": "pkg:github/Glacius-Labs/Markitect@v0.10.0",
+                "digest": {
+                  "sha1": "33f63566110201408b4bc38f2b214a5008038fd2"
+                }
+              },
+              {
+                "name": "markitect-v0.10.0-bundle.zip",
+                "digest": {
+                  "sha256": "4633b6257d3bc0f571e212906eb96464e78022dc7b79bddd1137abe59c31eaa4"
+                }
+              },
+              {
+                "name": "markitect-v0.10.0-linux-amd64",
+                "digest": {
+                  "sha256": "520b35bee308ce06f3e7d539ea593da25e6b3adf609baa0262b27c130f4e25a6"
+                }
+              },
+              {
+                "name": "markitect-v0.10.0-provenance.yaml",
+                "digest": {
+                  "sha256": "c8f43c2c3906622a78696fa13ea63862d9ae4d2f4a2bedd1cda9a3098a4ce8a1"
+                }
+              },
+              {
+                "name": "markitect-v0.10.0-windows-amd64.exe",
+                "digest": {
+                  "sha256": "da230c607a8779c882f825944353f629def22ff9f84be21eeb6f39c2e7f0f230"
+                }
+              }
+            ],
+            "predicateType": "https://in-toto.io/attestation/release/v0.2",
+            "predicate": {
+              "databaseId": "401991913",
+              "ownerId": "201827454",
+              "packageId": "1398373444",
+              "purl": "pkg:github/Glacius-Labs/Markitect@v0.10.0",
+              "repository": "Glacius-Labs/Markitect",
+              "repositoryId": "1398373444",
+              "tag": "v0.10.0"
+            }
+          }
+        }
+      },
+      "error": null
+    },
+    {
+      "tag": "v0.9.1",
+      "exit_code": 0,
+      "attestation": {
+        "attestation": {
+          "bundle": {
+            "mediaType": "application/vnd.dev.sigstore.bundle.v0.3+json",
+            "verificationMaterial": {
+              "certificate": {
+                "rawBytes": "MIICKzCCAbCgAwIBAgIUFEsbikF1pCGydxjUbs+jmoS800MwCgYIKoZIzj0EAwMwODEVMBMGA1UEChMMR2l0SHViLCBJbmMuMR8wHQYDVQQDExZGdWxjaW8gSW50ZXJtZWRpYXRlIGwxMB4XDTI2MDYxMjAwMDAwMFoXDTI3MDYxMjAwMDAwMFowKjEVMBMGA1UEChMMR2l0SHViLCBJbmMuMREwDwYDVQQDEwhBdHRlc3RlcjBZMBMGByqGSM49AgEGCCqGSM49AwEHA0IABGUVEVNqcSQmA0J45gqVHzCQkSWaZn4DucVDFhO4Q5OWgVdOP4WF44OUvFXQm9lDfRrHMsIVHEbvMfL7SHOVuVWjgaUwgaIwDgYDVR0PAQH/BAQDAgeAMBMGA1UdJQQMMAoGCCsGAQUFBwMDMAwGA1UdEwEB/wQCMAAwHQYDVR0OBBYEFDrgKNmcXl2HuRedxYt9HulXf/9IMB8GA1UdIwQYMBaAFMDhuFKkS08+3no4EQbPSY6hRZszMC0GA1UdEQQmMCSGImh0dHBzOi8vZG90Y29tLnJlbGVhc2VzLmdpdGh1Yi5jb20wCgYIKoZIzj0EAwMDaQAwZgIxAJnC2khPGWJqZiEFvgyv0rktYBinUh6AkDn43wYSgUhzm8aRUa+rF25Qk1ZeoGi3IAIxAIgIBMwOkMqDQ1DVCJydaIZu1bxtvgX9Anva7kRDZrboNxsAllbdnorYRTm9mxkZaQ=="
+              },
+              "timestampVerificationData": {
+                "rfc3161Timestamps": [
+                  {
+                    "signedTimestamp": "MIIC0TADAgEAMIICyAYJKoZIhvcNAQcCoIICuTCCArUCAQMxDTALBglghkgBZQMEAgIwgbwGCyqGSIb3DQEJEAEEoIGsBIGpMIGmAgEBBgkrBgEEAYO/MAIwMTANBglghkgBZQMEAgEFAAQgVvIFx0MjBrjg57ahb9/5wID9BxLGt+dLtTCROIkp1rICFQCcAAXYi9YaIqEcXY6HfaMwujJgVxgPMjAyNjEwMDIwMjI0NTJaMAMCAQGgNqQ0MDIxFTATBgNVBAoTDEdpdEh1YiwgSW5jLjEZMBcGA1UEAxMQVFNBIFRpbWVzdGFtcGluZ6AAMYIB3jCCAdoCAQEwSjAyMRUwEwYDVQQKEwxHaXRIdWIsIEluYy4xGTAXBgNVBAMTEFRTQSBpbnRlcm1lZGlhdGUCFBcz29bp/g76H6hT8wF4gebJRzNSMAsGCWCGSAFlAwQCAqCCAQUwGgYJKoZIhvcNAQkDMQ0GCyqGSIb3DQEJEAEEMBwGCSqGSIb3DQEJBTEPFw0yNjEwMDIwMjI0NTJaMD8GCSqGSIb3DQEJBDEyBDDnYYPhzHJfQ0oce9HytyOg/TU8v1K7uPAim3NaB+J9SSzyUf9xqoULprIrNGGAuFkwgYcGCyqGSIb3DQEJEAIvMXgwdjB0MHIEIEQWyK5zFGpjoTfC5Vvo3nDjya8wc785i6q6qNsIF87XME4wNqQ0MDIxFTATBgNVBAoTDEdpdEh1YiwgSW5jLjEZMBcGA1UEAxMQVFNBIGludGVybWVkaWF0ZQIUFzPb1un+DvofqFPzAXiB5slHM1IwCgYIKoZIzj0EAwMEZzBlAjEAmo7ZoqIX3XZhzL2zSENyBewu2va2r4jfvgPPBTRtZ2iK0JfV4lVYYv9EeXNDTYSNAjBYr3OUhL5C2KAimNtV49hZdpmdGg5zUl/5mbRJCP1/EATxgIA/YHTGwB8xNa4hPIE="
+                  }
+                ]
+              }
+            },
+            "dsseEnvelope": {
+              "payload": "eyJfdHlwZSI6Imh0dHBzOi8vaW4tdG90by5pby9TdGF0ZW1lbnQvdjEiLCAic3ViamVjdCI6W3sidXJpIjoicGtnOmdpdGh1Yi9HbGFjaXVzLUxhYnMvTWFya2l0ZWN0QHYwLjkuMSIsICJkaWdlc3QiOnsic2hhMSI6Ijk3Y2JjNzM4NzAwYWExMWU0NDZmMmViYjlhYjZiNGRjMTgyNTVhMzYifX0sIHsibmFtZSI6Im1hcmtpdGVjdC12MC45LjEtYnVuZGxlLnppcCIsICJkaWdlc3QiOnsic2hhMjU2IjoiYWFiNDI5MzUyYTVmZTg4NGQyNmE0OThjNGIwZTQ1YWU4ODE3MDlkZGMxMDQ4NGE5MGVhNWUxYmJiNGVkYjliMyJ9fSwgeyJuYW1lIjoibWFya2l0ZWN0LXYwLjkuMS1saW51eC1hbWQ2NCIsICJkaWdlc3QiOnsic2hhMjU2IjoiMzdlNWRlNjBlOWE1Y2E1MjE2ZjM1OWNhMmEzMzJmNTU4MTExMThmMmI4NDkzMmM0NTZlZTEwMDFiNzM5YjgxYyJ9fSwgeyJuYW1lIjoibWFya2l0ZWN0LXYwLjkuMS1wcm92ZW5hbmNlLnlhbWwiLCAiZGlnZXN0Ijp7InNoYTI1NiI6IjcxNmQ1YmQzNTA4YjIwNWVjY2U4OTAzOWRhNmI4ZmQwM2I1YTQyNWIzOGVmMzJmZTlhMTIwNTY5ZTFlZTQwMjMifX0sIHsibmFtZSI6Im1hcmtpdGVjdC12MC45LjEtd2luZG93cy1hbWQ2NC5leGUiLCAiZGlnZXN0Ijp7InNoYTI1NiI6Ijc5MmUxMmM4ZmY0NGFkNDRmZmI1MTViYWMzODFmY2QxZDE3MWNiOWEwYTQ2YTQzZTExYTEzNWJmMTdhYmUzOGUifX1dLCAicHJlZGljYXRlVHlwZSI6Imh0dHBzOi8vaW4tdG90by5pby9hdHRlc3RhdGlvbi9yZWxlYXNlL3YwLjIiLCAicHJlZGljYXRlIjp7ImRhdGFiYXNlSWQiOiI0MDE0OTYwOTciLCAib3duZXJJZCI6IjIwMTgyNzQ1NCIsICJwYWNrYWdlSWQiOiIxMzk4MzczNDQ0IiwgInB1cmwiOiJwa2c6Z2l0aHViL0dsYWNpdXMtTGFicy9NYXJraXRlY3RAdjAuOS4xIiwgInJlcG9zaXRvcnkiOiJHbGFjaXVzLUxhYnMvTWFya2l0ZWN0IiwgInJlcG9zaXRvcnlJZCI6IjEzOTgzNzM0NDQiLCAidGFnIjoidjAuOS4xIn19",
+              "payloadType": "application/vnd.in-toto+json",
+              "signatures": [
+                {
+                  "sig": "MEYCIQCzC19TwPhGCXjQcxf9qKMN6P+hG4JeFqAN0A4a1olzEAIhAPr0PB2JPxyPLOATVtPduoeOta13CYzMryrfNn0qkVL8"
+                }
+              ]
+            }
+          },
+          "bundle_url": "",
+          "initiator": ""
+        },
+        "verificationResult": {
+          "mediaType": "application/vnd.dev.sigstore.verificationresult+json;version=0.1",
+          "signature": {
+            "certificate": {
+              "certificateIssuer": "CN=Fulcio Intermediate l1,O=GitHub\\, Inc.",
+              "subjectAlternativeName": "https://dotcom.releases.github.com"
+            }
+          },
+          "verifiedTimestamps": [
+            {
+              "type": "TimestampAuthority",
+              "uri": "timestamp.githubapp.com",
+              "timestamp": "2026-10-02T02:24:52Z"
+            }
+          ],
+          "verifiedIdentity": {
+            "subjectAlternativeName": {
+              "subjectAlternativeName": "",
+              "regexp": "^https://dotcom\\.releases\\.github\\.com$"
+            },
+            "issuer": {
+              "issuer": "",
+              "regexp": ".*"
+            }
+          },
+          "statement": {
+            "_type": "https://in-toto.io/Statement/v1",
+            "subject": [
+              {
+                "uri": "pkg:github/Glacius-Labs/Markitect@v0.9.1",
+                "digest": {
+                  "sha1": "97cbc738700aa11e446f2ebb9ab6b4dc18255a36"
+                }
+              },
+              {
+                "name": "markitect-v0.9.1-bundle.zip",
+                "digest": {
+                  "sha256": "aab429352a5fe884d26a498c4b0e45ae881709ddc10484a90ea5e1bbb4edb9b3"
+                }
+              },
+              {
+                "name": "markitect-v0.9.1-linux-amd64",
+                "digest": {
+                  "sha256": "37e5de60e9a5ca5216f359ca2a332f55811118f2b84932c456ee1001b739b81c"
+                }
+              },
+              {
+                "name": "markitect-v0.9.1-provenance.yaml",
+                "digest": {
+                  "sha256": "716d5bd3508b205ecce89039da6b8fd03b5a425b38ef32fe9a120569e1ee4023"
+                }
+              },
+              {
+                "name": "markitect-v0.9.1-windows-amd64.exe",
+                "digest": {
+                  "sha256": "792e12c8ff44ad44ffb515bac381fcd1d171cb9a0a46a43e11a135bf17abe38e"
+                }
+              }
+            ],
+            "predicateType": "https://in-toto.io/attestation/release/v0.2",
+            "predicate": {
+              "databaseId": "401496097",
+              "ownerId": "201827454",
+              "packageId": "1398373444",
+              "purl": "pkg:github/Glacius-Labs/Markitect@v0.9.1",
+              "repository": "Glacius-Labs/Markitect",
+              "repositoryId": "1398373444",
+              "tag": "v0.9.1"
+            }
+          }
+        }
+      },
+      "error": null
+    },
+    {
+      "tag": "v0.9.0",
+      "exit_code": 0,
+      "attestation": {
+        "attestation": {
+          "bundle": {
+            "mediaType": "application/vnd.dev.sigstore.bundle.v0.3+json",
+            "verificationMaterial": {
+              "certificate": {
+                "rawBytes": "MIICKzCCAbCgAwIBAgIUFEsbikF1pCGydxjUbs+jmoS800MwCgYIKoZIzj0EAwMwODEVMBMGA1UEChMMR2l0SHViLCBJbmMuMR8wHQYDVQQDExZGdWxjaW8gSW50ZXJtZWRpYXRlIGwxMB4XDTI2MDYxMjAwMDAwMFoXDTI3MDYxMjAwMDAwMFowKjEVMBMGA1UEChMMR2l0SHViLCBJbmMuMREwDwYDVQQDEwhBdHRlc3RlcjBZMBMGByqGSM49AgEGCCqGSM49AwEHA0IABGUVEVNqcSQmA0J45gqVHzCQkSWaZn4DucVDFhO4Q5OWgVdOP4WF44OUvFXQm9lDfRrHMsIVHEbvMfL7SHOVuVWjgaUwgaIwDgYDVR0PAQH/BAQDAgeAMBMGA1UdJQQMMAoGCCsGAQUFBwMDMAwGA1UdEwEB/wQCMAAwHQYDVR0OBBYEFDrgKNmcXl2HuRedxYt9HulXf/9IMB8GA1UdIwQYMBaAFMDhuFKkS08+3no4EQbPSY6hRZszMC0GA1UdEQQmMCSGImh0dHBzOi8vZG90Y29tLnJlbGVhc2VzLmdpdGh1Yi5jb20wCgYIKoZIzj0EAwMDaQAwZgIxAJnC2khPGWJqZiEFvgyv0rktYBinUh6AkDn43wYSgUhzm8aRUa+rF25Qk1ZeoGi3IAIxAIgIBMwOkMqDQ1DVCJydaIZu1bxtvgX9Anva7kRDZrboNxsAllbdnorYRTm9mxkZaQ=="
+              },
+              "timestampVerificationData": {
+                "rfc3161Timestamps": [
+                  {
+                    "signedTimestamp": "MIIC0jADAgEAMIICyQYJKoZIhvcNAQcCoIICujCCArYCAQMxDTALBglghkgBZQMEAgIwgbwGCyqGSIb3DQEJEAEEoIGsBIGpMIGmAgEBBgkrBgEEAYO/MAIwMTANBglghkgBZQMEAgEFAAQgT6j4rIlapmZHU6fMSGUQLzxz6FfQYghOjgx3ujQI3GICFQDByam6Cb0RzcClLD6skbk5OvvcVhgPMjAyNjEwMDIwMDU5MzFaMAMCAQGgNqQ0MDIxFTATBgNVBAoTDEdpdEh1YiwgSW5jLjEZMBcGA1UEAxMQVFNBIFRpbWVzdGFtcGluZ6AAMYIB3zCCAdsCAQEwSjAyMRUwEwYDVQQKEwxHaXRIdWIsIEluYy4xGTAXBgNVBAMTEFRTQSBpbnRlcm1lZGlhdGUCFBcz29bp/g76H6hT8wF4gebJRzNSMAsGCWCGSAFlAwQCAqCCAQUwGgYJKoZIhvcNAQkDMQ0GCyqGSIb3DQEJEAEEMBwGCSqGSIb3DQEJBTEPFw0yNjEwMDIwMDU5MzFaMD8GCSqGSIb3DQEJBDEyBDD/128Uh9cWGyj7Aj5W66SZolOEePzTk/rEbm+QuGMK6kRZ7ym9S8EC7Ng/+ZgetQQwgYcGCyqGSIb3DQEJEAIvMXgwdjB0MHIEIEQWyK5zFGpjoTfC5Vvo3nDjya8wc785i6q6qNsIF87XME4wNqQ0MDIxFTATBgNVBAoTDEdpdEh1YiwgSW5jLjEZMBcGA1UEAxMQVFNBIGludGVybWVkaWF0ZQIUFzPb1un+DvofqFPzAXiB5slHM1IwCgYIKoZIzj0EAwMEaDBmAjEAidNE8UKnFrEgvfVFPWdRHnXdzFwv41JqkLrQQDkxdjUuIOTBl5rcy3TwNSoH+/eHAjEAxXEoAuv97SqSWSnWqf2SKjffqLFnYI09u9MGxn4TDvFyAORzyvhSIRfa61UqnQ0/"
+                  }
+                ]
+              }
+            },
+            "dsseEnvelope": {
+              "payload": "eyJfdHlwZSI6Imh0dHBzOi8vaW4tdG90by5pby9TdGF0ZW1lbnQvdjEiLCAic3ViamVjdCI6W3sidXJpIjoicGtnOmdpdGh1Yi9HbGFjaXVzLUxhYnMvTWFya2l0ZWN0QHYwLjkuMCIsICJkaWdlc3QiOnsic2hhMSI6IjQ2ZTYzMjUzNmFmOGUzYmY0ZTI2MDYwYzI2MDAzOWFhNWY1NjdhMTQifX0sIHsibmFtZSI6Im1hcmtpdGVjdC12MC45LjAtYnVuZGxlLnppcCIsICJkaWdlc3QiOnsic2hhMjU2IjoiOTg3ZjY2N2E1NzBlZGU2NzRhODQ1YjdmZjA2ZTBhYTc2ZTVmNTJjODM0NTY4MDA4NDAzODRjZGFhMzlhNWI3MSJ9fSwgeyJuYW1lIjoibWFya2l0ZWN0LXYwLjkuMC1saW51eC1hbWQ2NCIsICJkaWdlc3QiOnsic2hhMjU2IjoiMjJjODE5OGQ2MDhmMDFkMDEwNjkzMjllZDJkYmQ5Y2E3ODQ0NzlkODBiYTcyYTE3YzYzYTBlZjJkOTBkMjQ0OSJ9fSwgeyJuYW1lIjoibWFya2l0ZWN0LXYwLjkuMC1wcm92ZW5hbmNlLnlhbWwiLCAiZGlnZXN0Ijp7InNoYTI1NiI6ImRlNWFlNGI1NzJmZDg5NWZkZWYzZjA2ZGVkYjA1N2FmMzQxODgxZjZiNzdjMjJmYmE3N2YxNzZiZmFlNWRlNTMifX0sIHsibmFtZSI6Im1hcmtpdGVjdC12MC45LjAtd2luZG93cy1hbWQ2NC5leGUiLCAiZGlnZXN0Ijp7InNoYTI1NiI6ImFlZTVmZGQyZTFlZDkxYmRlZmQ4NGM0MjNiYmM1NjIxM2M5MDE1YzdkZTBiZDkxYzAwZDRkMTgyYjZlZWEyODEifX1dLCAicHJlZGljYXRlVHlwZSI6Imh0dHBzOi8vaW4tdG90by5pby9hdHRlc3RhdGlvbi9yZWxlYXNlL3YwLjIiLCAicHJlZGljYXRlIjp7ImRhdGFiYXNlSWQiOiI0MDE0NjM5OTciLCAib3duZXJJZCI6IjIwMTgyNzQ1NCIsICJwYWNrYWdlSWQiOiIxMzk4MzczNDQ0IiwgInB1cmwiOiJwa2c6Z2l0aHViL0dsYWNpdXMtTGFicy9NYXJraXRlY3RAdjAuOS4wIiwgInJlcG9zaXRvcnkiOiJHbGFjaXVzLUxhYnMvTWFya2l0ZWN0IiwgInJlcG9zaXRvcnlJZCI6IjEzOTgzNzM0NDQiLCAidGFnIjoidjAuOS4wIn19",
+              "payloadType": "application/vnd.in-toto+json",
+              "signatures": [
+                {
+                  "sig": "MEUCIA6Y4q29n3BG1hevbK+LV4jIISJT9DhHgXI9EykufhlPAiEAvBqVXmQMrzUTC6Ql2j4O6J9hSASg48wbn1k2+ItAgqk="
+                }
+              ]
+            }
+          },
+          "bundle_url": "",
+          "initiator": ""
+        },
+        "verificationResult": {
+          "mediaType": "application/vnd.dev.sigstore.verificationresult+json;version=0.1",
+          "signature": {
+            "certificate": {
+              "certificateIssuer": "CN=Fulcio Intermediate l1,O=GitHub\\, Inc.",
+              "subjectAlternativeName": "https://dotcom.releases.github.com"
+            }
+          },
+          "verifiedTimestamps": [
+            {
+              "type": "TimestampAuthority",
+              "uri": "timestamp.githubapp.com",
+              "timestamp": "2026-10-02T00:59:31Z"
+            }
+          ],
+          "verifiedIdentity": {
+            "subjectAlternativeName": {
+              "subjectAlternativeName": "",
+              "regexp": "^https://dotcom\\.releases\\.github\\.com$"
+            },
+            "issuer": {
+              "issuer": "",
+              "regexp": ".*"
+            }
+          },
+          "statement": {
+            "_type": "https://in-toto.io/Statement/v1",
+            "subject": [
+              {
+                "uri": "pkg:github/Glacius-Labs/Markitect@v0.9.0",
+                "digest": {
+                  "sha1": "46e632536af8e3bf4e26060c260039aa5f567a14"
+                }
+              },
+              {
+                "name": "markitect-v0.9.0-bundle.zip",
+                "digest": {
+                  "sha256": "987f667a570ede674a845b7ff06e0aa76e5f52c83456800840384cdaa39a5b71"
+                }
+              },
+              {
+                "name": "markitect-v0.9.0-linux-amd64",
+                "digest": {
+                  "sha256": "22c8198d608f01d01069329ed2dbd9ca784479d80ba72a17c63a0ef2d90d2449"
+                }
+              },
+              {
+                "name": "markitect-v0.9.0-provenance.yaml",
+                "digest": {
+                  "sha256": "de5ae4b572fd895fdef3f06dedb057af341881f6b77c22fba77f176bfae5de53"
+                }
+              },
+              {
+                "name": "markitect-v0.9.0-windows-amd64.exe",
+                "digest": {
+                  "sha256": "aee5fdd2e1ed91bdefd84c423bbc56213c9015c7de0bd91c00d4d182b6eea281"
+                }
+              }
+            ],
+            "predicateType": "https://in-toto.io/attestation/release/v0.2",
+            "predicate": {
+              "databaseId": "401463997",
+              "ownerId": "201827454",
+              "packageId": "1398373444",
+              "purl": "pkg:github/Glacius-Labs/Markitect@v0.9.0",
+              "repository": "Glacius-Labs/Markitect",
+              "repositoryId": "1398373444",
+              "tag": "v0.9.0"
+            }
+          }
+        }
+      },
+      "error": null
+    },
+    {
+      "tag": "v0.8.1",
+      "exit_code": 0,
+      "attestation": {
+        "attestation": {
+          "bundle": {
+            "mediaType": "application/vnd.dev.sigstore.bundle.v0.3+json",
+            "verificationMaterial": {
+              "certificate": {
+                "rawBytes": "MIICKzCCAbCgAwIBAgIUFEsbikF1pCGydxjUbs+jmoS800MwCgYIKoZIzj0EAwMwODEVMBMGA1UEChMMR2l0SHViLCBJbmMuMR8wHQYDVQQDExZGdWxjaW8gSW50ZXJtZWRpYXRlIGwxMB4XDTI2MDYxMjAwMDAwMFoXDTI3MDYxMjAwMDAwMFowKjEVMBMGA1UEChMMR2l0SHViLCBJbmMuMREwDwYDVQQDEwhBdHRlc3RlcjBZMBMGByqGSM49AgEGCCqGSM49AwEHA0IABGUVEVNqcSQmA0J45gqVHzCQkSWaZn4DucVDFhO4Q5OWgVdOP4WF44OUvFXQm9lDfRrHMsIVHEbvMfL7SHOVuVWjgaUwgaIwDgYDVR0PAQH/BAQDAgeAMBMGA1UdJQQMMAoGCCsGAQUFBwMDMAwGA1UdEwEB/wQCMAAwHQYDVR0OBBYEFDrgKNmcXl2HuRedxYt9HulXf/9IMB8GA1UdIwQYMBaAFMDhuFKkS08+3no4EQbPSY6hRZszMC0GA1UdEQQmMCSGImh0dHBzOi8vZG90Y29tLnJlbGVhc2VzLmdpdGh1Yi5jb20wCgYIKoZIzj0EAwMDaQAwZgIxAJnC2khPGWJqZiEFvgyv0rktYBinUh6AkDn43wYSgUhzm8aRUa+rF25Qk1ZeoGi3IAIxAIgIBMwOkMqDQ1DVCJydaIZu1bxtvgX9Anva7kRDZrboNxsAllbdnorYRTm9mxkZaQ=="
+              },
+              "timestampVerificationData": {
+                "rfc3161Timestamps": [
+                  {
+                    "signedTimestamp": "MIIC0TADAgEAMIICyAYJKoZIhvcNAQcCoIICuTCCArUCAQMxDTALBglghkgBZQMEAgIwgbwGCyqGSIb3DQEJEAEEoIGsBIGpMIGmAgEBBgkrBgEEAYO/MAIwMTANBglghkgBZQMEAgEFAAQgROu2KM+EVSOengpXYcmvkB2c3wbWSw91s3zSqStGPA4CFQCnx7W4eq5s3TWQ5uzQSdBxjI6bcBgPMjAyNjEwMDEyMTQxNTJaMAMCAQGgNqQ0MDIxFTATBgNVBAoTDEdpdEh1YiwgSW5jLjEZMBcGA1UEAxMQVFNBIFRpbWVzdGFtcGluZ6AAMYIB3jCCAdoCAQEwSjAyMRUwEwYDVQQKEwxHaXRIdWIsIEluYy4xGTAXBgNVBAMTEFRTQSBpbnRlcm1lZGlhdGUCFBcz29bp/g76H6hT8wF4gebJRzNSMAsGCWCGSAFlAwQCAqCCAQUwGgYJKoZIhvcNAQkDMQ0GCyqGSIb3DQEJEAEEMBwGCSqGSIb3DQEJBTEPFw0yNjEwMDEyMTQxNTJaMD8GCSqGSIb3DQEJBDEyBDD8hz9fRVc+hWmWXAudx8LiDCuihqioTVp3DFY2TqDIgR2UMHcJuU9suqquqY7hxHIwgYcGCyqGSIb3DQEJEAIvMXgwdjB0MHIEIEQWyK5zFGpjoTfC5Vvo3nDjya8wc785i6q6qNsIF87XME4wNqQ0MDIxFTATBgNVBAoTDEdpdEh1YiwgSW5jLjEZMBcGA1UEAxMQVFNBIGludGVybWVkaWF0ZQIUFzPb1un+DvofqFPzAXiB5slHM1IwCgYIKoZIzj0EAwMEZzBlAjBdqOV696RmtOonkFdGXwGjPqxtsUQ86JFfqSMqu47F33tXqXYE1uWTeQ1dedoezqQCMQD4Pa/4SqE/tuacdN/pWPo+273TJpPyGwSJSsW32h2PMkRxmQt+eibgqAsvqV+SO/4="
+                  }
+                ]
+              }
+            },
+            "dsseEnvelope": {
+              "payload": "eyJfdHlwZSI6Imh0dHBzOi8vaW4tdG90by5pby9TdGF0ZW1lbnQvdjEiLCAic3ViamVjdCI6W3sidXJpIjoicGtnOmdpdGh1Yi9HbGFjaXVzLUxhYnMvTWFya2l0ZWN0QHYwLjguMSIsICJkaWdlc3QiOnsic2hhMSI6IjdjMWY2YmQxNDA5MzJmMjZlMTVhMzIzNTAwNDI1MTMxNjhhNmJmZGYifX0sIHsibmFtZSI6Im1hcmtpdGVjdC12MC44LjEtYnVuZGxlLnppcCIsICJkaWdlc3QiOnsic2hhMjU2IjoiZjBiNDJiNTY0Y2YyODBmNDkwYjk4ZTQ0MWMzYTVlZGU2NDlhYTBhMjlkYjMyODdhMTNjYmNjNTA1MWZiYzdiMCJ9fSwgeyJuYW1lIjoibWFya2l0ZWN0LXYwLjguMS1saW51eC1hbWQ2NCIsICJkaWdlc3QiOnsic2hhMjU2IjoiMjUxOTgxNDk0NTYwNmViMDhjZGM3MTA1NzZmOWI0YjAzMmM5MWFkMDVmNDRkMTcwMjVjODkxNjAxMjk4YTY0MiJ9fSwgeyJuYW1lIjoibWFya2l0ZWN0LXYwLjguMS1wcm92ZW5hbmNlLnlhbWwiLCAiZGlnZXN0Ijp7InNoYTI1NiI6ImM0MzE0NjM5OGZkYTc4MGNlYTc2YjE1NTg3YzhiN2YwZTFkNDc1ZWM5YWMyNDAyMWYwZjJjMjk1NTU5YjIxNGEifX0sIHsibmFtZSI6Im1hcmtpdGVjdC12MC44LjEtd2luZG93cy1hbWQ2NC5leGUiLCAiZGlnZXN0Ijp7InNoYTI1NiI6IjY4MDQ0MDk2MTdiZjBiYjAwN2RmNDI3MTBhM2E2MDliOTk2NTI1ZDRkMjAyODkxNjA5ODFhYmY5MzNlZDZjNzEifX1dLCAicHJlZGljYXRlVHlwZSI6Imh0dHBzOi8vaW4tdG90by5pby9hdHRlc3RhdGlvbi9yZWxlYXNlL3YwLjIiLCAicHJlZGljYXRlIjp7ImRhdGFiYXNlSWQiOiI0MDEzNzc0MzkiLCAib3duZXJJZCI6IjIwMTgyNzQ1NCIsICJwYWNrYWdlSWQiOiIxMzk4MzczNDQ0IiwgInB1cmwiOiJwa2c6Z2l0aHViL0dsYWNpdXMtTGFicy9NYXJraXRlY3RAdjAuOC4xIiwgInJlcG9zaXRvcnkiOiJHbGFjaXVzLUxhYnMvTWFya2l0ZWN0IiwgInJlcG9zaXRvcnlJZCI6IjEzOTgzNzM0NDQiLCAidGFnIjoidjAuOC4xIn19",
+              "payloadType": "application/vnd.in-toto+json",
+              "signatures": [
+                {
+                  "sig": "MEQCIHl567MChN6fD7PHTUeHqboyC+EqOCigu30IqqbEJymWAiAJZ46whussfijoNEryec9JZHBgqqd4fjjCyQ8grGCMAg=="
+                }
+              ]
+            }
+          },
+          "bundle_url": "",
+          "initiator": ""
+        },
+        "verificationResult": {
+          "mediaType": "application/vnd.dev.sigstore.verificationresult+json;version=0.1",
+          "signature": {
+            "certificate": {
+              "certificateIssuer": "CN=Fulcio Intermediate l1,O=GitHub\\, Inc.",
+              "subjectAlternativeName": "https://dotcom.releases.github.com"
+            }
+          },
+          "verifiedTimestamps": [
+            {
+              "type": "TimestampAuthority",
+              "uri": "timestamp.githubapp.com",
+              "timestamp": "2026-10-01T21:41:52Z"
+            }
+          ],
+          "verifiedIdentity": {
+            "subjectAlternativeName": {
+              "subjectAlternativeName": "",
+              "regexp": "^https://dotcom\\.releases\\.github\\.com$"
+            },
+            "issuer": {
+              "issuer": "",
+              "regexp": ".*"
+            }
+          },
+          "statement": {
+            "_type": "https://in-toto.io/Statement/v1",
+            "subject": [
+              {
+                "uri": "pkg:github/Glacius-Labs/Markitect@v0.8.1",
+                "digest": {
+                  "sha1": "7c1f6bd140932f26e15a32350042513168a6bfdf"
+                }
+              },
+              {
+                "name": "markitect-v0.8.1-bundle.zip",
+                "digest": {
+                  "sha256": "f0b42b564cf280f490b98e441c3a5ede649aa0a29db3287a13cbcc5051fbc7b0"
+                }
+              },
+              {
+                "name": "markitect-v0.8.1-linux-amd64",
+                "digest": {
+                  "sha256": "2519814945606eb08cdc710576f9b4b032c91ad05f44d17025c891601298a642"
+                }
+              },
+              {
+                "name": "markitect-v0.8.1-provenance.yaml",
+                "digest": {
+                  "sha256": "c43146398fda780cea76b15587c8b7f0e1d475ec9ac24021f0f2c295559b214a"
+                }
+              },
+              {
+                "name": "markitect-v0.8.1-windows-amd64.exe",
+                "digest": {
+                  "sha256": "6804409617bf0bb007df42710a3a609b996525d4d20289160981abf933ed6c71"
+                }
+              }
+            ],
+            "predicateType": "https://in-toto.io/attestation/release/v0.2",
+            "predicate": {
+              "databaseId": "401377439",
+              "ownerId": "201827454",
+              "packageId": "1398373444",
+              "purl": "pkg:github/Glacius-Labs/Markitect@v0.8.1",
+              "repository": "Glacius-Labs/Markitect",
+              "repositoryId": "1398373444",
+              "tag": "v0.8.1"
+            }
+          }
+        }
+      },
+      "error": null
+    },
+    {
+      "tag": "v0.8.0",
+      "exit_code": 0,
+      "attestation": {
+        "attestation": {
+          "bundle": {
+            "mediaType": "application/vnd.dev.sigstore.bundle.v0.3+json",
+            "verificationMaterial": {
+              "certificate": {
+                "rawBytes": "MIICKzCCAbCgAwIBAgIUFEsbikF1pCGydxjUbs+jmoS800MwCgYIKoZIzj0EAwMwODEVMBMGA1UEChMMR2l0SHViLCBJbmMuMR8wHQYDVQQDExZGdWxjaW8gSW50ZXJtZWRpYXRlIGwxMB4XDTI2MDYxMjAwMDAwMFoXDTI3MDYxMjAwMDAwMFowKjEVMBMGA1UEChMMR2l0SHViLCBJbmMuMREwDwYDVQQDEwhBdHRlc3RlcjBZMBMGByqGSM49AgEGCCqGSM49AwEHA0IABGUVEVNqcSQmA0J45gqVHzCQkSWaZn4DucVDFhO4Q5OWgVdOP4WF44OUvFXQm9lDfRrHMsIVHEbvMfL7SHOVuVWjgaUwgaIwDgYDVR0PAQH/BAQDAgeAMBMGA1UdJQQMMAoGCCsGAQUFBwMDMAwGA1UdEwEB/wQCMAAwHQYDVR0OBBYEFDrgKNmcXl2HuRedxYt9HulXf/9IMB8GA1UdIwQYMBaAFMDhuFKkS08+3no4EQbPSY6hRZszMC0GA1UdEQQmMCSGImh0dHBzOi8vZG90Y29tLnJlbGVhc2VzLmdpdGh1Yi5jb20wCgYIKoZIzj0EAwMDaQAwZgIxAJnC2khPGWJqZiEFvgyv0rktYBinUh6AkDn43wYSgUhzm8aRUa+rF25Qk1ZeoGi3IAIxAIgIBMwOkMqDQ1DVCJydaIZu1bxtvgX9Anva7kRDZrboNxsAllbdnorYRTm9mxkZaQ=="
+              },
+              "timestampVerificationData": {
+                "rfc3161Timestamps": [
+                  {
+                    "signedTimestamp": "MIIC0jADAgEAMIICyQYJKoZIhvcNAQcCoIICujCCArYCAQMxDTALBglghkgBZQMEAgIwgbwGCyqGSIb3DQEJEAEEoIGsBIGpMIGmAgEBBgkrBgEEAYO/MAIwMTANBglghkgBZQMEAgEFAAQg3znH3EVBtS0obmwWwJcN1eh87SeU0q6DgdnzCQEVWpMCFQDmz4m12o35HDPsnt9PBYy0zkeCZBgPMjAyNjEwMDEyMTAwNDdaMAMCAQGgNqQ0MDIxFTATBgNVBAoTDEdpdEh1YiwgSW5jLjEZMBcGA1UEAxMQVFNBIFRpbWVzdGFtcGluZ6AAMYIB3zCCAdsCAQEwSjAyMRUwEwYDVQQKEwxHaXRIdWIsIEluYy4xGTAXBgNVBAMTEFRTQSBpbnRlcm1lZGlhdGUCFBcz29bp/g76H6hT8wF4gebJRzNSMAsGCWCGSAFlAwQCAqCCAQUwGgYJKoZIhvcNAQkDMQ0GCyqGSIb3DQEJEAEEMBwGCSqGSIb3DQEJBTEPFw0yNjEwMDEyMTAwNDdaMD8GCSqGSIb3DQEJBDEyBDDq9TE/R570jpN2IYel2vC+mEpFlVlH2oL8y/fls9x0dHOORtGwUtFrUrF+VKEx3OEwgYcGCyqGSIb3DQEJEAIvMXgwdjB0MHIEIEQWyK5zFGpjoTfC5Vvo3nDjya8wc785i6q6qNsIF87XME4wNqQ0MDIxFTATBgNVBAoTDEdpdEh1YiwgSW5jLjEZMBcGA1UEAxMQVFNBIGludGVybWVkaWF0ZQIUFzPb1un+DvofqFPzAXiB5slHM1IwCgYIKoZIzj0EAwMEaDBmAjEAsdA6wBwo9M+AJD2yUkAhVYo5ENh6VvRwy/e4Y8vh+v4Ledg4lVj8khsWgcW2aKbSAjEAqcVt4oB5GY6BMLXvom1QgFxsyA7CpuYE2rXj3mX+jMd36yF+7z9BW+eV9s9kd6ia"
+                  }
+                ]
+              }
+            },
+            "dsseEnvelope": {
+              "payload": "eyJfdHlwZSI6Imh0dHBzOi8vaW4tdG90by5pby9TdGF0ZW1lbnQvdjEiLCAic3ViamVjdCI6W3sidXJpIjoicGtnOmdpdGh1Yi9HbGFjaXVzLUxhYnMvTWFya2l0ZWN0QHYwLjguMCIsICJkaWdlc3QiOnsic2hhMSI6IjcxNThiZTdlMzIxN2ZjYjBkOWZlMzVjODM3Y2E5YTQ5MDMxNDIyZWMifX0sIHsibmFtZSI6Im1hcmtpdGVjdC12MC44LjAtYnVuZGxlLnppcCIsICJkaWdlc3QiOnsic2hhMjU2IjoiM2M4ZmJiNzhiNTQ2N2ZkZDVlMTZlMjFkYjExZmZhNzI5OTVkYmQ4OTRmOGJkNDdhNWNkNGJjMGI2NTFkMjRkOCJ9fSwgeyJuYW1lIjoibWFya2l0ZWN0LXYwLjguMC1saW51eC1hbWQ2NCIsICJkaWdlc3QiOnsic2hhMjU2IjoiYjc2NDU3NjUxNDU1NmYyM2MwNmE2ZTRiZjQxZTk2Y2RkOGYwMzYxYTAxMzJjNjk3MDQ1MDUzYWFhMmRjNDBjZCJ9fSwgeyJuYW1lIjoibWFya2l0ZWN0LXYwLjguMC1wcm92ZW5hbmNlLnlhbWwiLCAiZGlnZXN0Ijp7InNoYTI1NiI6ImQ3NDc3ZTUyMWY2ZDkwOGZhOGQ5MjExMWNjOGMxNmY0YTQ1NWUzZGEzMjJjZjZhODNkYTNmMzRjNmIzMzdiMWIifX0sIHsibmFtZSI6Im1hcmtpdGVjdC12MC44LjAtd2luZG93cy1hbWQ2NC5leGUiLCAiZGlnZXN0Ijp7InNoYTI1NiI6Ijg1NzU3NTMwZTFmNWFjM2E1MGQzMTczYTVjOWU3ZjZjMDQwMWZhZGM0MGUwZDFiN2NlMzg3NmRhZGQ3YTNjNjIifX1dLCAicHJlZGljYXRlVHlwZSI6Imh0dHBzOi8vaW4tdG90by5pby9hdHRlc3RhdGlvbi9yZWxlYXNlL3YwLjIiLCAicHJlZGljYXRlIjp7ImRhdGFiYXNlSWQiOiI0MDEzNTE4MzUiLCAib3duZXJJZCI6IjIwMTgyNzQ1NCIsICJwYWNrYWdlSWQiOiIxMzk4MzczNDQ0IiwgInB1cmwiOiJwa2c6Z2l0aHViL0dsYWNpdXMtTGFicy9NYXJraXRlY3RAdjAuOC4wIiwgInJlcG9zaXRvcnkiOiJHbGFjaXVzLUxhYnMvTWFya2l0ZWN0IiwgInJlcG9zaXRvcnlJZCI6IjEzOTgzNzM0NDQiLCAidGFnIjoidjAuOC4wIn19",
+              "payloadType": "application/vnd.in-toto+json",
+              "signatures": [
+                {
+                  "sig": "MEQCIEVlo7tlmzftRwsVaEUunMIyzJgAzHb70MaY/gIk+HEwAiANiBoyFBpqjqxWz5ARPbYXbIp0pDOMOkB/m5ejW/JhTw=="
+                }
+              ]
+            }
+          },
+          "bundle_url": "",
+          "initiator": ""
+        },
+        "verificationResult": {
+          "mediaType": "application/vnd.dev.sigstore.verificationresult+json;version=0.1",
+          "signature": {
+            "certificate": {
+              "certificateIssuer": "CN=Fulcio Intermediate l1,O=GitHub\\, Inc.",
+              "subjectAlternativeName": "https://dotcom.releases.github.com"
+            }
+          },
+          "verifiedTimestamps": [
+            {
+              "type": "TimestampAuthority",
+              "uri": "timestamp.githubapp.com",
+              "timestamp": "2026-10-01T21:00:47Z"
+            }
+          ],
+          "verifiedIdentity": {
+            "subjectAlternativeName": {
+              "subjectAlternativeName": "",
+              "regexp": "^https://dotcom\\.releases\\.github\\.com$"
+            },
+            "issuer": {
+              "issuer": "",
+              "regexp": ".*"
+            }
+          },
+          "statement": {
+            "_type": "https://in-toto.io/Statement/v1",
+            "subject": [
+              {
+                "uri": "pkg:github/Glacius-Labs/Markitect@v0.8.0",
+                "digest": {
+                  "sha1": "7158be7e3217fcb0d9fe35c837ca9a49031422ec"
+                }
+              },
+              {
+                "name": "markitect-v0.8.0-bundle.zip",
+                "digest": {
+                  "sha256": "3c8fbb78b5467fdd5e16e21db11ffa72995dbd894f8bd47a5cd4bc0b651d24d8"
+                }
+              },
+              {
+                "name": "markitect-v0.8.0-linux-amd64",
+                "digest": {
+                  "sha256": "b764576514556f23c06a6e4bf41e96cdd8f0361a0132c697045053aaa2dc40cd"
+                }
+              },
+              {
+                "name": "markitect-v0.8.0-provenance.yaml",
+                "digest": {
+                  "sha256": "d7477e521f6d908fa8d92111cc8c16f4a455e3da322cf6a83da3f34c6b337b1b"
+                }
+              },
+              {
+                "name": "markitect-v0.8.0-windows-amd64.exe",
+                "digest": {
+                  "sha256": "85757530e1f5ac3a50d3173a5c9e7f6c0401fadc40e0d1b7ce3876dadd7a3c62"
+                }
+              }
+            ],
+            "predicateType": "https://in-toto.io/attestation/release/v0.2",
+            "predicate": {
+              "databaseId": "401351835",
+              "ownerId": "201827454",
+              "packageId": "1398373444",
+              "purl": "pkg:github/Glacius-Labs/Markitect@v0.8.0",
+              "repository": "Glacius-Labs/Markitect",
+              "repositoryId": "1398373444",
+              "tag": "v0.8.0"
+            }
+          }
+        }
+      },
+      "error": null
+    },
+    {
+      "tag": "v0.7.0",
+      "exit_code": 0,
+      "attestation": {
+        "attestation": {
+          "bundle": {
+            "mediaType": "application/vnd.dev.sigstore.bundle.v0.3+json",
+            "verificationMaterial": {
+              "certificate": {
+                "rawBytes": "MIICKzCCAbCgAwIBAgIUFEsbikF1pCGydxjUbs+jmoS800MwCgYIKoZIzj0EAwMwODEVMBMGA1UEChMMR2l0SHViLCBJbmMuMR8wHQYDVQQDExZGdWxjaW8gSW50ZXJtZWRpYXRlIGwxMB4XDTI2MDYxMjAwMDAwMFoXDTI3MDYxMjAwMDAwMFowKjEVMBMGA1UEChMMR2l0SHViLCBJbmMuMREwDwYDVQQDEwhBdHRlc3RlcjBZMBMGByqGSM49AgEGCCqGSM49AwEHA0IABGUVEVNqcSQmA0J45gqVHzCQkSWaZn4DucVDFhO4Q5OWgVdOP4WF44OUvFXQm9lDfRrHMsIVHEbvMfL7SHOVuVWjgaUwgaIwDgYDVR0PAQH/BAQDAgeAMBMGA1UdJQQMMAoGCCsGAQUFBwMDMAwGA1UdEwEB/wQCMAAwHQYDVR0OBBYEFDrgKNmcXl2HuRedxYt9HulXf/9IMB8GA1UdIwQYMBaAFMDhuFKkS08+3no4EQbPSY6hRZszMC0GA1UdEQQmMCSGImh0dHBzOi8vZG90Y29tLnJlbGVhc2VzLmdpdGh1Yi5jb20wCgYIKoZIzj0EAwMDaQAwZgIxAJnC2khPGWJqZiEFvgyv0rktYBinUh6AkDn43wYSgUhzm8aRUa+rF25Qk1ZeoGi3IAIxAIgIBMwOkMqDQ1DVCJydaIZu1bxtvgX9Anva7kRDZrboNxsAllbdnorYRTm9mxkZaQ=="
+              },
+              "timestampVerificationData": {
+                "rfc3161Timestamps": [
+                  {
+                    "signedTimestamp": "MIIC0DADAgEAMIICxwYJKoZIhvcNAQcCoIICuDCCArQCAQMxDTALBglghkgBZQMEAgIwgbwGCyqGSIb3DQEJEAEEoIGsBIGpMIGmAgEBBgkrBgEEAYO/MAIwMTANBglghkgBZQMEAgEFAAQglnqZ8D20Rs2oGTlKYomY9blpA2fB0AZbjZyJzRtMwmMCFQDFsdQfPMd7a/jcc8g/mojjsHVtmxgPMjAyNjEwMDExOTMwNTdaMAMCAQGgNqQ0MDIxFTATBgNVBAoTDEdpdEh1YiwgSW5jLjEZMBcGA1UEAxMQVFNBIFRpbWVzdGFtcGluZ6AAMYIB3TCCAdkCAQEwSjAyMRUwEwYDVQQKEwxHaXRIdWIsIEluYy4xGTAXBgNVBAMTEFRTQSBpbnRlcm1lZGlhdGUCFBcz29bp/g76H6hT8wF4gebJRzNSMAsGCWCGSAFlAwQCAqCCAQUwGgYJKoZIhvcNAQkDMQ0GCyqGSIb3DQEJEAEEMBwGCSqGSIb3DQEJBTEPFw0yNjEwMDExOTMwNTdaMD8GCSqGSIb3DQEJBDEyBDAmlqwkzLkNE09BUhnKam4OszXK/qsPQ1D2FC7f2+3DhOheP+9JiKvpTIzSo7/yGWIwgYcGCyqGSIb3DQEJEAIvMXgwdjB0MHIEIEQWyK5zFGpjoTfC5Vvo3nDjya8wc785i6q6qNsIF87XME4wNqQ0MDIxFTATBgNVBAoTDEdpdEh1YiwgSW5jLjEZMBcGA1UEAxMQVFNBIGludGVybWVkaWF0ZQIUFzPb1un+DvofqFPzAXiB5slHM1IwCgYIKoZIzj0EAwMEZjBkAjBhS8m2nNk7ZrykYYFYRZDwf0RIGqqThmm0m9NHHNyUH0prY43ECJdng3lwNTTEo/0CMGTcggiAUhhgzJVCNHas0l7b09sL1O8iTc3tOcOQdXxEYwbecKALzXrPjs2E2Gofrw=="
+                  }
+                ]
+              }
+            },
+            "dsseEnvelope": {
+              "payload": "eyJfdHlwZSI6Imh0dHBzOi8vaW4tdG90by5pby9TdGF0ZW1lbnQvdjEiLCAic3ViamVjdCI6W3sidXJpIjoicGtnOmdpdGh1Yi9HbGFjaXVzLUxhYnMvTWFya2l0ZWN0QHYwLjcuMCIsICJkaWdlc3QiOnsic2hhMSI6IjFjYTNiNDViYTRmMzU1MGZlNmE5ZjY5Yzk5YzYxOWNiYjUwOWMzMTcifX0sIHsibmFtZSI6Im1hcmtpdGVjdC12MC43LjAtYnVuZGxlLnppcCIsICJkaWdlc3QiOnsic2hhMjU2IjoiNDYxYWUxMDFlM2NjNTBmMTViMzE1MzgyMTYyZmZmMWY3NWY0ZDkxMjY2YTBlOTY3OTA4NzFlODBiOTNjOWRiNSJ9fSwgeyJuYW1lIjoibWFya2l0ZWN0LXYwLjcuMC1saW51eC1hbWQ2NCIsICJkaWdlc3QiOnsic2hhMjU2IjoiMzg0NzE4YzY1NzRiMjhmZmRjY2UxMjFhMTdiZGExNjdkOTYzOTk2YzNjOTU0ZTBjMjdhMzM0OTNjZDk3MjVjOCJ9fSwgeyJuYW1lIjoibWFya2l0ZWN0LXYwLjcuMC1wcm92ZW5hbmNlLnlhbWwiLCAiZGlnZXN0Ijp7InNoYTI1NiI6IjA4ZjBhYjEwM2UzM2YwZjhhY2JmNWExNDI4Y2NjODViNmU1NTJlYzVlZDExZDIyMTM2ODg2NjEwZjRjYmEwZjYifX0sIHsibmFtZSI6Im1hcmtpdGVjdC12MC43LjAtd2luZG93cy1hbWQ2NC5leGUiLCAiZGlnZXN0Ijp7InNoYTI1NiI6ImQ3OTdkYmJkMjZkMmM0MGI4MTliMTUxOWRkNTU0NzAxYzQwNzUwNTA5MWM5NDk0YmFhMzBmZjE0NDdhNGJlMGYifX1dLCAicHJlZGljYXRlVHlwZSI6Imh0dHBzOi8vaW4tdG90by5pby9hdHRlc3RhdGlvbi9yZWxlYXNlL3YwLjIiLCAicHJlZGljYXRlIjp7ImRhdGFiYXNlSWQiOiI0MDEyODYyMDciLCAib3duZXJJZCI6IjIwMTgyNzQ1NCIsICJwYWNrYWdlSWQiOiIxMzk4MzczNDQ0IiwgInB1cmwiOiJwa2c6Z2l0aHViL0dsYWNpdXMtTGFicy9NYXJraXRlY3RAdjAuNy4wIiwgInJlcG9zaXRvcnkiOiJHbGFjaXVzLUxhYnMvTWFya2l0ZWN0IiwgInJlcG9zaXRvcnlJZCI6IjEzOTgzNzM0NDQiLCAidGFnIjoidjAuNy4wIn19",
+              "payloadType": "application/vnd.in-toto+json",
+              "signatures": [
+                {
+                  "sig": "MEYCIQCTSuhim0IvSRIemOhuyD3ggqA/yFj+RySBrUBlK5J/TAIhAK2gTYzVYj5NexTzHPBjWvBoUiceswDPhJVniD1JGaRH"
+                }
+              ]
+            }
+          },
+          "bundle_url": "",
+          "initiator": ""
+        },
+        "verificationResult": {
+          "mediaType": "application/vnd.dev.sigstore.verificationresult+json;version=0.1",
+          "signature": {
+            "certificate": {
+              "certificateIssuer": "CN=Fulcio Intermediate l1,O=GitHub\\, Inc.",
+              "subjectAlternativeName": "https://dotcom.releases.github.com"
+            }
+          },
+          "verifiedTimestamps": [
+            {
+              "type": "TimestampAuthority",
+              "uri": "timestamp.githubapp.com",
+              "timestamp": "2026-10-01T19:30:57Z"
+            }
+          ],
+          "verifiedIdentity": {
+            "subjectAlternativeName": {
+              "subjectAlternativeName": "",
+              "regexp": "^https://dotcom\\.releases\\.github\\.com$"
+            },
+            "issuer": {
+              "issuer": "",
+              "regexp": ".*"
+            }
+          },
+          "statement": {
+            "_type": "https://in-toto.io/Statement/v1",
+            "subject": [
+              {
+                "uri": "pkg:github/Glacius-Labs/Markitect@v0.7.0",
+                "digest": {
+                  "sha1": "1ca3b45ba4f3550fe6a9f69c99c619cbb509c317"
+                }
+              },
+              {
+                "name": "markitect-v0.7.0-bundle.zip",
+                "digest": {
+                  "sha256": "461ae101e3cc50f15b315382162fff1f75f4d91266a0e96790871e80b93c9db5"
+                }
+              },
+              {
+                "name": "markitect-v0.7.0-linux-amd64",
+                "digest": {
+                  "sha256": "384718c6574b28ffdcce121a17bda167d963996c3c954e0c27a33493cd9725c8"
+                }
+              },
+              {
+                "name": "markitect-v0.7.0-provenance.yaml",
+                "digest": {
+                  "sha256": "08f0ab103e33f0f8acbf5a1428ccc85b6e552ec5ed11d22136886610f4cba0f6"
+                }
+              },
+              {
+                "name": "markitect-v0.7.0-windows-amd64.exe",
+                "digest": {
+                  "sha256": "d797dbbd26d2c40b819b1519dd554701c407505091c9494baa30ff1447a4be0f"
+                }
+              }
+            ],
+            "predicateType": "https://in-toto.io/attestation/release/v0.2",
+            "predicate": {
+              "databaseId": "401286207",
+              "ownerId": "201827454",
+              "packageId": "1398373444",
+              "purl": "pkg:github/Glacius-Labs/Markitect@v0.7.0",
+              "repository": "Glacius-Labs/Markitect",
+              "repositoryId": "1398373444",
+              "tag": "v0.7.0"
+            }
+          }
+        }
+      },
+      "error": null
+    },
+    {
+      "tag": "v0.6.0",
+      "exit_code": 0,
+      "attestation": {
+        "attestation": {
+          "bundle": {
+            "mediaType": "application/vnd.dev.sigstore.bundle.v0.3+json",
+            "verificationMaterial": {
+              "certificate": {
+                "rawBytes": "MIICKzCCAbCgAwIBAgIUFEsbikF1pCGydxjUbs+jmoS800MwCgYIKoZIzj0EAwMwODEVMBMGA1UEChMMR2l0SHViLCBJbmMuMR8wHQYDVQQDExZGdWxjaW8gSW50ZXJtZWRpYXRlIGwxMB4XDTI2MDYxMjAwMDAwMFoXDTI3MDYxMjAwMDAwMFowKjEVMBMGA1UEChMMR2l0SHViLCBJbmMuMREwDwYDVQQDEwhBdHRlc3RlcjBZMBMGByqGSM49AgEGCCqGSM49AwEHA0IABGUVEVNqcSQmA0J45gqVHzCQkSWaZn4DucVDFhO4Q5OWgVdOP4WF44OUvFXQm9lDfRrHMsIVHEbvMfL7SHOVuVWjgaUwgaIwDgYDVR0PAQH/BAQDAgeAMBMGA1UdJQQMMAoGCCsGAQUFBwMDMAwGA1UdEwEB/wQCMAAwHQYDVR0OBBYEFDrgKNmcXl2HuRedxYt9HulXf/9IMB8GA1UdIwQYMBaAFMDhuFKkS08+3no4EQbPSY6hRZszMC0GA1UdEQQmMCSGImh0dHBzOi8vZG90Y29tLnJlbGVhc2VzLmdpdGh1Yi5jb20wCgYIKoZIzj0EAwMDaQAwZgIxAJnC2khPGWJqZiEFvgyv0rktYBinUh6AkDn43wYSgUhzm8aRUa+rF25Qk1ZeoGi3IAIxAIgIBMwOkMqDQ1DVCJydaIZu1bxtvgX9Anva7kRDZrboNxsAllbdnorYRTm9mxkZaQ=="
+              },
+              "timestampVerificationData": {
+                "rfc3161Timestamps": [
+                  {
+                    "signedTimestamp": "MIIC0TADAgEAMIICyAYJKoZIhvcNAQcCoIICuTCCArUCAQMxDTALBglghkgBZQMEAgIwgbsGCyqGSIb3DQEJEAEEoIGrBIGoMIGlAgEBBgkrBgEEAYO/MAIwMTANBglghkgBZQMEAgEFAAQgSiO4P5VI97taPdbOxEJQilqENG6jZpC1/EbUfgewoGACFBnhrM1EFiPvaLb0xRdOHvmXfAlaGA8yMDI2MTAwMTE4MjUwN1owAwIBAaA2pDQwMjEVMBMGA1UEChMMR2l0SHViLCBJbmMuMRkwFwYDVQQDExBUU0EgVGltZXN0YW1waW5noAAxggHfMIIB2wIBATBKMDIxFTATBgNVBAoTDEdpdEh1YiwgSW5jLjEZMBcGA1UEAxMQVFNBIGludGVybWVkaWF0ZQIUFzPb1un+DvofqFPzAXiB5slHM1IwCwYJYIZIAWUDBAICoIIBBTAaBgkqhkiG9w0BCQMxDQYLKoZIhvcNAQkQAQQwHAYJKoZIhvcNAQkFMQ8XDTI2MTAwMTE4MjUwN1owPwYJKoZIhvcNAQkEMTIEMDoxpqax7w0oR4a+5EFaTGrOEpaZC4n+ooGjqIx9ekClQVy0wuh7FCGm/EBywzzP4TCBhwYLKoZIhvcNAQkQAi8xeDB2MHQwcgQgRBbIrnMUamOhN8LlW+jecOPJrzBzvzmLqrqo2wgXztcwTjA2pDQwMjEVMBMGA1UEChMMR2l0SHViLCBJbmMuMRkwFwYDVQQDExBUU0EgaW50ZXJtZWRpYXRlAhQXM9vW6f4O+h+oU/MBeIHmyUczUjAKBggqhkjOPQQDAwRoMGYCMQC1THdBSSl+BAmmKSVfDbMyYh1XPqwebTcRDv49/8o0KVmb8JYzVHIUdf1k/cc58nMCMQCFeTJ+lAXEUkhKDRqveg5wQJG0C46S15+ASGyCGecs3O7+v/u8fGEvSJTs0WMslvg="
+                  }
+                ]
+              }
+            },
+            "dsseEnvelope": {
+              "payload": "eyJfdHlwZSI6Imh0dHBzOi8vaW4tdG90by5pby9TdGF0ZW1lbnQvdjEiLCAic3ViamVjdCI6W3sidXJpIjoicGtnOmdpdGh1Yi9HbGFjaXVzLUxhYnMvTWFya2l0ZWN0QHYwLjYuMCIsICJkaWdlc3QiOnsic2hhMSI6IjgxMWQ3ZDQ4OGNmMTVjY2JjY2M1NzVjZWJkMmVkOTIzOWQ3YTE1YWEifX0sIHsibmFtZSI6Im1hcmtpdGVjdC12MC42LjAtYnVuZGxlLnppcCIsICJkaWdlc3QiOnsic2hhMjU2IjoiNmZjN2FkNzdiMTNlM2IyNWQ1NjY2ZjcxMzZhN2E2MzFiNjJiZmNkOTMxYTU0NTQ2MTBiOTZkZTEyYTI5ODFkMSJ9fSwgeyJuYW1lIjoibWFya2l0ZWN0LXYwLjYuMC1saW51eC1hbWQ2NCIsICJkaWdlc3QiOnsic2hhMjU2IjoiNTJmMDE3ZjE5MWEyMWVmMzUyZTYwMmRhMTVlN2RiN2VhNWQ3MWIwZmEwZDBmZGNhYWU5ZDE2NmRlZjAwOTQ4YyJ9fSwgeyJuYW1lIjoibWFya2l0ZWN0LXYwLjYuMC1wcm92ZW5hbmNlLnlhbWwiLCAiZGlnZXN0Ijp7InNoYTI1NiI6ImIxMzAwOTEyMWNhYjFlNzQ4ZGI1YWZlNWMwNGEzOWE5YzI5OGU3ZDc5NDIzMzMwMWJhNGYyZjhiMThhYTE5YWUifX0sIHsibmFtZSI6Im1hcmtpdGVjdC12MC42LjAtd2luZG93cy1hbWQ2NC5leGUiLCAiZGlnZXN0Ijp7InNoYTI1NiI6IjdiZDA4MTY1ZTExZTJjZjMxNTMwN2M0OWI2NWQ3YWIwOGY2MWQ3NWRjOGExNzhhZDIyOWJmZWE0NTAwNjcyODAifX1dLCAicHJlZGljYXRlVHlwZSI6Imh0dHBzOi8vaW4tdG90by5pby9hdHRlc3RhdGlvbi9yZWxlYXNlL3YwLjIiLCAicHJlZGljYXRlIjp7ImRhdGFiYXNlSWQiOiI0MDEyMzc2NjciLCAib3duZXJJZCI6IjIwMTgyNzQ1NCIsICJwYWNrYWdlSWQiOiIxMzk4MzczNDQ0IiwgInB1cmwiOiJwa2c6Z2l0aHViL0dsYWNpdXMtTGFicy9NYXJraXRlY3RAdjAuNi4wIiwgInJlcG9zaXRvcnkiOiJHbGFjaXVzLUxhYnMvTWFya2l0ZWN0IiwgInJlcG9zaXRvcnlJZCI6IjEzOTgzNzM0NDQiLCAidGFnIjoidjAuNi4wIn19",
+              "payloadType": "application/vnd.in-toto+json",
+              "signatures": [
+                {
+                  "sig": "MEUCIQDeNeB/GppXNMODZCtE3ln+K3P7XdYdpWg5LDKrSMJU0gIgZ25Eznr1A9EN438cp9GqzCnz7XKfQUO+dBclh6Y9LQg="
+                }
+              ]
+            }
+          },
+          "bundle_url": "",
+          "initiator": ""
+        },
+        "verificationResult": {
+          "mediaType": "application/vnd.dev.sigstore.verificationresult+json;version=0.1",
+          "signature": {
+            "certificate": {
+              "certificateIssuer": "CN=Fulcio Intermediate l1,O=GitHub\\, Inc.",
+              "subjectAlternativeName": "https://dotcom.releases.github.com"
+            }
+          },
+          "verifiedTimestamps": [
+            {
+              "type": "TimestampAuthority",
+              "uri": "timestamp.githubapp.com",
+              "timestamp": "2026-10-01T18:25:07Z"
+            }
+          ],
+          "verifiedIdentity": {
+            "subjectAlternativeName": {
+              "subjectAlternativeName": "",
+              "regexp": "^https://dotcom\\.releases\\.github\\.com$"
+            },
+            "issuer": {
+              "issuer": "",
+              "regexp": ".*"
+            }
+          },
+          "statement": {
+            "_type": "https://in-toto.io/Statement/v1",
+            "subject": [
+              {
+                "uri": "pkg:github/Glacius-Labs/Markitect@v0.6.0",
+                "digest": {
+                  "sha1": "811d7d488cf15ccbccc575cebd2ed9239d7a15aa"
+                }
+              },
+              {
+                "name": "markitect-v0.6.0-bundle.zip",
+                "digest": {
+                  "sha256": "6fc7ad77b13e3b25d5666f7136a7a631b62bfcd931a5454610b96de12a2981d1"
+                }
+              },
+              {
+                "name": "markitect-v0.6.0-linux-amd64",
+                "digest": {
+                  "sha256": "52f017f191a21ef352e602da15e7db7ea5d71b0fa0d0fdcaae9d166def00948c"
+                }
+              },
+              {
+                "name": "markitect-v0.6.0-provenance.yaml",
+                "digest": {
+                  "sha256": "b13009121cab1e748db5afe5c04a39a9c298e7d794233301ba4f2f8b18aa19ae"
+                }
+              },
+              {
+                "name": "markitect-v0.6.0-windows-amd64.exe",
+                "digest": {
+                  "sha256": "7bd08165e11e2cf315307c49b65d7ab08f61d75dc8a178ad229bfea450067280"
+                }
+              }
+            ],
+            "predicateType": "https://in-toto.io/attestation/release/v0.2",
+            "predicate": {
+              "databaseId": "401237667",
+              "ownerId": "201827454",
+              "packageId": "1398373444",
+              "purl": "pkg:github/Glacius-Labs/Markitect@v0.6.0",
+              "repository": "Glacius-Labs/Markitect",
+              "repositoryId": "1398373444",
+              "tag": "v0.6.0"
+            }
+          }
+        }
+      },
+      "error": null
+    },
+    {
+      "tag": "v0.5.0",
+      "exit_code": 0,
+      "attestation": {
+        "attestation": {
+          "bundle": {
+            "mediaType": "application/vnd.dev.sigstore.bundle.v0.3+json",
+            "verificationMaterial": {
+              "certificate": {
+                "rawBytes": "MIICKzCCAbCgAwIBAgIUFEsbikF1pCGydxjUbs+jmoS800MwCgYIKoZIzj0EAwMwODEVMBMGA1UEChMMR2l0SHViLCBJbmMuMR8wHQYDVQQDExZGdWxjaW8gSW50ZXJtZWRpYXRlIGwxMB4XDTI2MDYxMjAwMDAwMFoXDTI3MDYxMjAwMDAwMFowKjEVMBMGA1UEChMMR2l0SHViLCBJbmMuMREwDwYDVQQDEwhBdHRlc3RlcjBZMBMGByqGSM49AgEGCCqGSM49AwEHA0IABGUVEVNqcSQmA0J45gqVHzCQkSWaZn4DucVDFhO4Q5OWgVdOP4WF44OUvFXQm9lDfRrHMsIVHEbvMfL7SHOVuVWjgaUwgaIwDgYDVR0PAQH/BAQDAgeAMBMGA1UdJQQMMAoGCCsGAQUFBwMDMAwGA1UdEwEB/wQCMAAwHQYDVR0OBBYEFDrgKNmcXl2HuRedxYt9HulXf/9IMB8GA1UdIwQYMBaAFMDhuFKkS08+3no4EQbPSY6hRZszMC0GA1UdEQQmMCSGImh0dHBzOi8vZG90Y29tLnJlbGVhc2VzLmdpdGh1Yi5jb20wCgYIKoZIzj0EAwMDaQAwZgIxAJnC2khPGWJqZiEFvgyv0rktYBinUh6AkDn43wYSgUhzm8aRUa+rF25Qk1ZeoGi3IAIxAIgIBMwOkMqDQ1DVCJydaIZu1bxtvgX9Anva7kRDZrboNxsAllbdnorYRTm9mxkZaQ=="
+              },
+              "timestampVerificationData": {
+                "rfc3161Timestamps": [
+                  {
+                    "signedTimestamp": "MIICzzADAgEAMIICxgYJKoZIhvcNAQcCoIICtzCCArMCAQMxDTALBglghkgBZQMEAgIwgbsGCyqGSIb3DQEJEAEEoIGrBIGoMIGlAgEBBgkrBgEEAYO/MAIwMTANBglghkgBZQMEAgEFAAQgvNSkD0eHTAPygZ5Kugy+UcAHEMxoabK5s+fj1wATFuMCFESq3kef5myTauW6JxR1mAWqlEWlGA8yMDI2MTAwMTE2MTEzNVowAwIBAaA2pDQwMjEVMBMGA1UEChMMR2l0SHViLCBJbmMuMRkwFwYDVQQDExBUU0EgVGltZXN0YW1waW5noAAxggHdMIIB2QIBATBKMDIxFTATBgNVBAoTDEdpdEh1YiwgSW5jLjEZMBcGA1UEAxMQVFNBIGludGVybWVkaWF0ZQIUFzPb1un+DvofqFPzAXiB5slHM1IwCwYJYIZIAWUDBAICoIIBBTAaBgkqhkiG9w0BCQMxDQYLKoZIhvcNAQkQAQQwHAYJKoZIhvcNAQkFMQ8XDTI2MTAwMTE2MTEzNVowPwYJKoZIhvcNAQkEMTIEMHvYA0ZEGF7pblG+6jCXHjZprxk5kwMlaqlDvdRZt75W/1KsbZKUDLzmMUSfpGQ1xTCBhwYLKoZIhvcNAQkQAi8xeDB2MHQwcgQgRBbIrnMUamOhN8LlW+jecOPJrzBzvzmLqrqo2wgXztcwTjA2pDQwMjEVMBMGA1UEChMMR2l0SHViLCBJbmMuMRkwFwYDVQQDExBUU0EgaW50ZXJtZWRpYXRlAhQXM9vW6f4O+h+oU/MBeIHmyUczUjAKBggqhkjOPQQDAwRmMGQCMFXWcZYXkYOFxcwmZj4P4oxOXHDFTbiRTXA3HWAn8Zu4QRxn9qFhtV+QQ2nTHqTOrAIwImzwPz/O3MuYY0kG0WomfhfGhFWzwtWiPyeIzG7v3aPOwhr0J7xV0uOK+nXQdkSN"
+                  }
+                ]
+              }
+            },
+            "dsseEnvelope": {
+              "payload": "eyJfdHlwZSI6Imh0dHBzOi8vaW4tdG90by5pby9TdGF0ZW1lbnQvdjEiLCAic3ViamVjdCI6W3sidXJpIjoicGtnOmdpdGh1Yi9HbGFjaXVzLUxhYnMvTWFya2l0ZWN0QHYwLjUuMCIsICJkaWdlc3QiOnsic2hhMSI6ImYxMmU5ZDJkNjQ3Yjg4ZWU0NWFhN2QxMDVlOGY0ZTlkNzkwZjA3NWUifX0sIHsibmFtZSI6Im1hcmtpdGVjdC12MC41LjAtYnVuZGxlLnppcCIsICJkaWdlc3QiOnsic2hhMjU2IjoiMjVjOTk1ZjQwYThlNzA0MTk3ZWU0MjQ1ZGM4ZGFmMzcyNTVhZGZiMmRjMmFmNjUyNGMyNWQ5YjYzOGM5N2RhMCJ9fSwgeyJuYW1lIjoibWFya2l0ZWN0LXYwLjUuMC1saW51eC1hbWQ2NCIsICJkaWdlc3QiOnsic2hhMjU2IjoiZTllYWE4N2ZhMzZiYjMwNTc4YWFlZDBiZWY1YmFlMjYzOTY4OWIzOWFjNWJjZDM1YzJkMDYzMjMyM2Q3OTRjYyJ9fSwgeyJuYW1lIjoibWFya2l0ZWN0LXYwLjUuMC1wcm92ZW5hbmNlLnlhbWwiLCAiZGlnZXN0Ijp7InNoYTI1NiI6IjFmMDcxMzA1OWJjNjk2MmU0MWQxYjFkYzQwMTNlMWVjNDc5ZWQ2OTkyNDU4MmU1NTA2MDg1NTJjNTNlMjAyODEifX0sIHsibmFtZSI6Im1hcmtpdGVjdC12MC41LjAtd2luZG93cy1hbWQ2NC5leGUiLCAiZGlnZXN0Ijp7InNoYTI1NiI6IjZmNWI5OGRhZDJlYTYwMDNiYzAzNjg4MDA2OTFhZjcwMDg0YTQ0ZDJjMjI1YzI2ZmUxMmQxMjBiY2RhMjcxNzgifX1dLCAicHJlZGljYXRlVHlwZSI6Imh0dHBzOi8vaW4tdG90by5pby9hdHRlc3RhdGlvbi9yZWxlYXNlL3YwLjIiLCAicHJlZGljYXRlIjp7ImRhdGFiYXNlSWQiOiI0MDExMzg4NjIiLCAib3duZXJJZCI6IjIwMTgyNzQ1NCIsICJwYWNrYWdlSWQiOiIxMzk4MzczNDQ0IiwgInB1cmwiOiJwa2c6Z2l0aHViL0dsYWNpdXMtTGFicy9NYXJraXRlY3RAdjAuNS4wIiwgInJlcG9zaXRvcnkiOiJHbGFjaXVzLUxhYnMvTWFya2l0ZWN0IiwgInJlcG9zaXRvcnlJZCI6IjEzOTgzNzM0NDQiLCAidGFnIjoidjAuNS4wIn19",
+              "payloadType": "application/vnd.in-toto+json",
+              "signatures": [
+                {
+                  "sig": "MEUCIQCcTsnC6+ysz0qbNu3vBPN+TOo9Vc32m+LW9rPbjFatjQIgbvQ+miuTq6NWvhvkLrZMV5HcFr0bbRkz8+9YwoHvOdA="
+                }
+              ]
+            }
+          },
+          "bundle_url": "",
+          "initiator": ""
+        },
+        "verificationResult": {
+          "mediaType": "application/vnd.dev.sigstore.verificationresult+json;version=0.1",
+          "signature": {
+            "certificate": {
+              "certificateIssuer": "CN=Fulcio Intermediate l1,O=GitHub\\, Inc.",
+              "subjectAlternativeName": "https://dotcom.releases.github.com"
+            }
+          },
+          "verifiedTimestamps": [
+            {
+              "type": "TimestampAuthority",
+              "uri": "timestamp.githubapp.com",
+              "timestamp": "2026-10-01T16:11:35Z"
+            }
+          ],
+          "verifiedIdentity": {
+            "subjectAlternativeName": {
+              "subjectAlternativeName": "",
+              "regexp": "^https://dotcom\\.releases\\.github\\.com$"
+            },
+            "issuer": {
+              "issuer": "",
+              "regexp": ".*"
+            }
+          },
+          "statement": {
+            "_type": "https://in-toto.io/Statement/v1",
+            "subject": [
+              {
+                "uri": "pkg:github/Glacius-Labs/Markitect@v0.5.0",
+                "digest": {
+                  "sha1": "f12e9d2d647b88ee45aa7d105e8f4e9d790f075e"
+                }
+              },
+              {
+                "name": "markitect-v0.5.0-bundle.zip",
+                "digest": {
+                  "sha256": "25c995f40a8e704197ee4245dc8daf37255adfb2dc2af6524c25d9b638c97da0"
+                }
+              },
+              {
+                "name": "markitect-v0.5.0-linux-amd64",
+                "digest": {
+                  "sha256": "e9eaa87fa36bb30578aaed0bef5bae2639689b39ac5bcd35c2d0632323d794cc"
+                }
+              },
+              {
+                "name": "markitect-v0.5.0-provenance.yaml",
+                "digest": {
+                  "sha256": "1f0713059bc6962e41d1b1dc4013e1ec479ed69924582e550608552c53e20281"
+                }
+              },
+              {
+                "name": "markitect-v0.5.0-windows-amd64.exe",
+                "digest": {
+                  "sha256": "6f5b98dad2ea6003bc0368800691af70084a44d2c225c26fe12d120bcda27178"
+                }
+              }
+            ],
+            "predicateType": "https://in-toto.io/attestation/release/v0.2",
+            "predicate": {
+              "databaseId": "401138862",
+              "ownerId": "201827454",
+              "packageId": "1398373444",
+              "purl": "pkg:github/Glacius-Labs/Markitect@v0.5.0",
+              "repository": "Glacius-Labs/Markitect",
+              "repositoryId": "1398373444",
+              "tag": "v0.5.0"
+            }
+          }
+        }
+      },
+      "error": null
+    },
+    {
+      "tag": "v0.4.1",
+      "exit_code": 0,
+      "attestation": {
+        "attestation": {
+          "bundle": {
+            "mediaType": "application/vnd.dev.sigstore.bundle.v0.3+json",
+            "verificationMaterial": {
+              "certificate": {
+                "rawBytes": "MIICKzCCAbCgAwIBAgIUFEsbikF1pCGydxjUbs+jmoS800MwCgYIKoZIzj0EAwMwODEVMBMGA1UEChMMR2l0SHViLCBJbmMuMR8wHQYDVQQDExZGdWxjaW8gSW50ZXJtZWRpYXRlIGwxMB4XDTI2MDYxMjAwMDAwMFoXDTI3MDYxMjAwMDAwMFowKjEVMBMGA1UEChMMR2l0SHViLCBJbmMuMREwDwYDVQQDEwhBdHRlc3RlcjBZMBMGByqGSM49AgEGCCqGSM49AwEHA0IABGUVEVNqcSQmA0J45gqVHzCQkSWaZn4DucVDFhO4Q5OWgVdOP4WF44OUvFXQm9lDfRrHMsIVHEbvMfL7SHOVuVWjgaUwgaIwDgYDVR0PAQH/BAQDAgeAMBMGA1UdJQQMMAoGCCsGAQUFBwMDMAwGA1UdEwEB/wQCMAAwHQYDVR0OBBYEFDrgKNmcXl2HuRedxYt9HulXf/9IMB8GA1UdIwQYMBaAFMDhuFKkS08+3no4EQbPSY6hRZszMC0GA1UdEQQmMCSGImh0dHBzOi8vZG90Y29tLnJlbGVhc2VzLmdpdGh1Yi5jb20wCgYIKoZIzj0EAwMDaQAwZgIxAJnC2khPGWJqZiEFvgyv0rktYBinUh6AkDn43wYSgUhzm8aRUa+rF25Qk1ZeoGi3IAIxAIgIBMwOkMqDQ1DVCJydaIZu1bxtvgX9Anva7kRDZrboNxsAllbdnorYRTm9mxkZaQ=="
+              },
+              "timestampVerificationData": {
+                "rfc3161Timestamps": [
+                  {
+                    "signedTimestamp": "MIIC0TADAgEAMIICyAYJKoZIhvcNAQcCoIICuTCCArUCAQMxDTALBglghkgBZQMEAgIwgbwGCyqGSIb3DQEJEAEEoIGsBIGpMIGmAgEBBgkrBgEEAYO/MAIwMTANBglghkgBZQMEAgEFAAQgMm0ZuolJPJuyDO7q+w/Ed2hp2Xk1FQXAZWNJzWyclh0CFQCzl2YTuYHRQO2sV39w4AfdSecgdxgPMjAyNjEwMDExNDMwMzZaMAMCAQGgNqQ0MDIxFTATBgNVBAoTDEdpdEh1YiwgSW5jLjEZMBcGA1UEAxMQVFNBIFRpbWVzdGFtcGluZ6AAMYIB3jCCAdoCAQEwSjAyMRUwEwYDVQQKEwxHaXRIdWIsIEluYy4xGTAXBgNVBAMTEFRTQSBpbnRlcm1lZGlhdGUCFBcz29bp/g76H6hT8wF4gebJRzNSMAsGCWCGSAFlAwQCAqCCAQUwGgYJKoZIhvcNAQkDMQ0GCyqGSIb3DQEJEAEEMBwGCSqGSIb3DQEJBTEPFw0yNjEwMDExNDMwMzZaMD8GCSqGSIb3DQEJBDEyBDB1qseLy4dlMnXYOtjhA+SGU45okZw+JUA4I5ZuMswUQMY6NRTDBn3v+BR+W7TjF/8wgYcGCyqGSIb3DQEJEAIvMXgwdjB0MHIEIEQWyK5zFGpjoTfC5Vvo3nDjya8wc785i6q6qNsIF87XME4wNqQ0MDIxFTATBgNVBAoTDEdpdEh1YiwgSW5jLjEZMBcGA1UEAxMQVFNBIGludGVybWVkaWF0ZQIUFzPb1un+DvofqFPzAXiB5slHM1IwCgYIKoZIzj0EAwMEZzBlAjB5jSwHhJg58ghcyjvObxb9vFxzWtw24E5XjYvwiEh02+ubkXZSKoBjYsWB2j16YZsCMQD7stN92sa9ZWxF59bhTDfWODNZNwrkv2sjy9IxNvFsZuxJ9tO/0B1PWceUF1jdxVw="
+                  }
+                ]
+              }
+            },
+            "dsseEnvelope": {
+              "payload": "eyJfdHlwZSI6Imh0dHBzOi8vaW4tdG90by5pby9TdGF0ZW1lbnQvdjEiLCAic3ViamVjdCI6W3sidXJpIjoicGtnOmdpdGh1Yi9HbGFjaXVzLUxhYnMvTWFya2l0ZWN0QHYwLjQuMSIsICJkaWdlc3QiOnsic2hhMSI6IjY1YWU4NzM1ZGM3ZmMzOGQwNDViODI2MGYzZGNjODdjMjYxYTdlMGQifX0sIHsibmFtZSI6Im1hcmtpdGVjdC12MC40LjEtYnVuZGxlLnppcCIsICJkaWdlc3QiOnsic2hhMjU2IjoiNDQwZTA4MjllNDA1YzRhNzkzZWFhMDJmZTEwMmNkYWJjNmQ1OTZlZDE0MmQzZDQ3MmYzNTE4MmQzN2MxM2VhYiJ9fSwgeyJuYW1lIjoibWFya2l0ZWN0LXYwLjQuMS1saW51eC1hbWQ2NCIsICJkaWdlc3QiOnsic2hhMjU2IjoiYTAyZDBlYjBhZGE0MmQ5NTAxMmRhMDk2NWQ0NzFlNmUzMWM0ZjVkNjA3YWM4NDlmYjhiZDI5ZDg1YjliNjVhMyJ9fSwgeyJuYW1lIjoibWFya2l0ZWN0LXYwLjQuMS1wcm92ZW5hbmNlLnlhbWwiLCAiZGlnZXN0Ijp7InNoYTI1NiI6IjViZmNmNjdjYjNmMzBhMTZmNWNhN2E4NzliZmQxNTMzNzYyMDAwMzE5MTMzZTcwMmExNzFlMmRiMDE3OThjNTYifX0sIHsibmFtZSI6Im1hcmtpdGVjdC12MC40LjEtd2luZG93cy1hbWQ2NC5leGUiLCAiZGlnZXN0Ijp7InNoYTI1NiI6IjQxOWY2MWU5OWEzZWUwOWM0ZDg3NjI0YjQ0NzU1YmFjYmNiNzk2MjQ0Y2ZmZTdhMWZhMTQ4ZGE0Yzc5YTM1ZjEifX1dLCAicHJlZGljYXRlVHlwZSI6Imh0dHBzOi8vaW4tdG90by5pby9hdHRlc3RhdGlvbi9yZWxlYXNlL3YwLjIiLCAicHJlZGljYXRlIjp7ImRhdGFiYXNlSWQiOiI0MDEwNTEwNjEiLCAib3duZXJJZCI6IjIwMTgyNzQ1NCIsICJwYWNrYWdlSWQiOiIxMzk4MzczNDQ0IiwgInB1cmwiOiJwa2c6Z2l0aHViL0dsYWNpdXMtTGFicy9NYXJraXRlY3RAdjAuNC4xIiwgInJlcG9zaXRvcnkiOiJHbGFjaXVzLUxhYnMvTWFya2l0ZWN0IiwgInJlcG9zaXRvcnlJZCI6IjEzOTgzNzM0NDQiLCAidGFnIjoidjAuNC4xIn19",
+              "payloadType": "application/vnd.in-toto+json",
+              "signatures": [
+                {
+                  "sig": "MEUCIQCUinxA8TiZLuMZXKpO+6rkDe/MBvYZWJQUndGWsYmT0AIgbfemDnfFKw08y0326z0O7rJCq2Vf8YCePElVxOyEF00="
+                }
+              ]
+            }
+          },
+          "bundle_url": "",
+          "initiator": ""
+        },
+        "verificationResult": {
+          "mediaType": "application/vnd.dev.sigstore.verificationresult+json;version=0.1",
+          "signature": {
+            "certificate": {
+              "certificateIssuer": "CN=Fulcio Intermediate l1,O=GitHub\\, Inc.",
+              "subjectAlternativeName": "https://dotcom.releases.github.com"
+            }
+          },
+          "verifiedTimestamps": [
+            {
+              "type": "TimestampAuthority",
+              "uri": "timestamp.githubapp.com",
+              "timestamp": "2026-10-01T14:30:36Z"
+            }
+          ],
+          "verifiedIdentity": {
+            "subjectAlternativeName": {
+              "subjectAlternativeName": "",
+              "regexp": "^https://dotcom\\.releases\\.github\\.com$"
+            },
+            "issuer": {
+              "issuer": "",
+              "regexp": ".*"
+            }
+          },
+          "statement": {
+            "_type": "https://in-toto.io/Statement/v1",
+            "subject": [
+              {
+                "uri": "pkg:github/Glacius-Labs/Markitect@v0.4.1",
+                "digest": {
+                  "sha1": "65ae8735dc7fc38d045b8260f3dcc87c261a7e0d"
+                }
+              },
+              {
+                "name": "markitect-v0.4.1-bundle.zip",
+                "digest": {
+                  "sha256": "440e0829e405c4a793eaa02fe102cdabc6d596ed142d3d472f35182d37c13eab"
+                }
+              },
+              {
+                "name": "markitect-v0.4.1-linux-amd64",
+                "digest": {
+                  "sha256": "a02d0eb0ada42d95012da0965d471e6e31c4f5d607ac849fb8bd29d85b9b65a3"
+                }
+              },
+              {
+                "name": "markitect-v0.4.1-provenance.yaml",
+                "digest": {
+                  "sha256": "5bfcf67cb3f30a16f5ca7a879bfd1533762000319133e702a171e2db01798c56"
+                }
+              },
+              {
+                "name": "markitect-v0.4.1-windows-amd64.exe",
+                "digest": {
+                  "sha256": "419f61e99a3ee09c4d87624b44755bacbcb796244cffe7a1fa148da4c79a35f1"
+                }
+              }
+            ],
+            "predicateType": "https://in-toto.io/attestation/release/v0.2",
+            "predicate": {
+              "databaseId": "401051061",
+              "ownerId": "201827454",
+              "packageId": "1398373444",
+              "purl": "pkg:github/Glacius-Labs/Markitect@v0.4.1",
+              "repository": "Glacius-Labs/Markitect",
+              "repositoryId": "1398373444",
+              "tag": "v0.4.1"
+            }
+          }
+        }
+      },
+      "error": null
+    },
+    {
+      "tag": "v0.4.0",
+      "exit_code": 0,
+      "attestation": {
+        "attestation": {
+          "bundle": {
+            "mediaType": "application/vnd.dev.sigstore.bundle.v0.3+json",
+            "verificationMaterial": {
+              "certificate": {
+                "rawBytes": "MIICKzCCAbCgAwIBAgIUFEsbikF1pCGydxjUbs+jmoS800MwCgYIKoZIzj0EAwMwODEVMBMGA1UEChMMR2l0SHViLCBJbmMuMR8wHQYDVQQDExZGdWxjaW8gSW50ZXJtZWRpYXRlIGwxMB4XDTI2MDYxMjAwMDAwMFoXDTI3MDYxMjAwMDAwMFowKjEVMBMGA1UEChMMR2l0SHViLCBJbmMuMREwDwYDVQQDEwhBdHRlc3RlcjBZMBMGByqGSM49AgEGCCqGSM49AwEHA0IABGUVEVNqcSQmA0J45gqVHzCQkSWaZn4DucVDFhO4Q5OWgVdOP4WF44OUvFXQm9lDfRrHMsIVHEbvMfL7SHOVuVWjgaUwgaIwDgYDVR0PAQH/BAQDAgeAMBMGA1UdJQQMMAoGCCsGAQUFBwMDMAwGA1UdEwEB/wQCMAAwHQYDVR0OBBYEFDrgKNmcXl2HuRedxYt9HulXf/9IMB8GA1UdIwQYMBaAFMDhuFKkS08+3no4EQbPSY6hRZszMC0GA1UdEQQmMCSGImh0dHBzOi8vZG90Y29tLnJlbGVhc2VzLmdpdGh1Yi5jb20wCgYIKoZIzj0EAwMDaQAwZgIxAJnC2khPGWJqZiEFvgyv0rktYBinUh6AkDn43wYSgUhzm8aRUa+rF25Qk1ZeoGi3IAIxAIgIBMwOkMqDQ1DVCJydaIZu1bxtvgX9Anva7kRDZrboNxsAllbdnorYRTm9mxkZaQ=="
+              },
+              "timestampVerificationData": {
+                "rfc3161Timestamps": [
+                  {
+                    "signedTimestamp": "MIICzzADAgEAMIICxgYJKoZIhvcNAQcCoIICtzCCArMCAQMxDTALBglghkgBZQMEAgIwgbsGCyqGSIb3DQEJEAEEoIGrBIGoMIGlAgEBBgkrBgEEAYO/MAIwMTANBglghkgBZQMEAgEFAAQgHV6uZBeyJAg8wsP08AxJbNFTn7ozn7AIKFP0KyXEzw8CFCaKeDxThFKPGf2BIJAtoGaHJzDvGA8yMDI2MTAwMTEyMjU0OVowAwIBAaA2pDQwMjEVMBMGA1UEChMMR2l0SHViLCBJbmMuMRkwFwYDVQQDExBUU0EgVGltZXN0YW1waW5noAAxggHdMIIB2QIBATBKMDIxFTATBgNVBAoTDEdpdEh1YiwgSW5jLjEZMBcGA1UEAxMQVFNBIGludGVybWVkaWF0ZQIUFzPb1un+DvofqFPzAXiB5slHM1IwCwYJYIZIAWUDBAICoIIBBTAaBgkqhkiG9w0BCQMxDQYLKoZIhvcNAQkQAQQwHAYJKoZIhvcNAQkFMQ8XDTI2MTAwMTEyMjU0OVowPwYJKoZIhvcNAQkEMTIEMOJvsGG7ulnRbRMjhxxLs8XnE9RFQzUh61x4ccknLE2PJvb93g8tT4RryjwQSmOGEjCBhwYLKoZIhvcNAQkQAi8xeDB2MHQwcgQgRBbIrnMUamOhN8LlW+jecOPJrzBzvzmLqrqo2wgXztcwTjA2pDQwMjEVMBMGA1UEChMMR2l0SHViLCBJbmMuMRkwFwYDVQQDExBUU0EgaW50ZXJtZWRpYXRlAhQXM9vW6f4O+h+oU/MBeIHmyUczUjAKBggqhkjOPQQDAwRmMGQCMDk33k/oQA9+bxfGVWj5mJvl1gSKp7XcNxk0pzdqCMACk0Sg83Yl/0/4WS2hR+nWsAIwQWD/6GF4WyKpZiveMgu3K/8qoqg8Fkzd21Z1lAtqF7FI2lpFKMhan9rft/LwP280"
+                  }
+                ]
+              }
+            },
+            "dsseEnvelope": {
+              "payload": "eyJfdHlwZSI6Imh0dHBzOi8vaW4tdG90by5pby9TdGF0ZW1lbnQvdjEiLCAic3ViamVjdCI6W3sidXJpIjoicGtnOmdpdGh1Yi9HbGFjaXVzLUxhYnMvTWFya2l0ZWN0QHYwLjQuMCIsICJkaWdlc3QiOnsic2hhMSI6ImEwM2UwNWU1ODQxZjUzODJjNWYyYTVhMDZlZTEyNTRmYTRhYmJlZDUifX0sIHsibmFtZSI6Im1hcmtpdGVjdC12MC40LjAtYnVuZGxlLnppcCIsICJkaWdlc3QiOnsic2hhMjU2IjoiNzk2NmQ1M2ExZmU4MWUyYjY1ZDE4OTZmMjY3ZDcwOGVhNmFiOTVkYzA4ZjA0MTQ3NjY2NDE5M2E1ZjEwZDRjMyJ9fSwgeyJuYW1lIjoibWFya2l0ZWN0LXYwLjQuMC1saW51eC1hbWQ2NCIsICJkaWdlc3QiOnsic2hhMjU2IjoiODQ4N2MzZjMyNTg5OTJlODlkODkwZGRmMDM2OTQ1Y2U0ZjAyNmY1MDRkM2VkN2Q4MGIxMzNiNGMzYjU3NjYwOCJ9fSwgeyJuYW1lIjoibWFya2l0ZWN0LXYwLjQuMC1wcm92ZW5hbmNlLnlhbWwiLCAiZGlnZXN0Ijp7InNoYTI1NiI6IjBhODUyZDNiODlhNTQzMGVhZjg4MmRmYzZiMGJlYmQ1M2Q4NzQ4Y2NlNmE4MDMwZGE1MzAyZGEzNjZmZDM1YTUifX0sIHsibmFtZSI6Im1hcmtpdGVjdC12MC40LjAtd2luZG93cy1hbWQ2NC5leGUiLCAiZGlnZXN0Ijp7InNoYTI1NiI6IjY3ZDYyYjFlYmRkMTIyNGRjMTg1OTFjNzJjOThjN2Q4ZTNmMzk1Y2VkZDEzN2ZmZmYxZWQzY2Q2NmVlYmM3MTkifX1dLCAicHJlZGljYXRlVHlwZSI6Imh0dHBzOi8vaW4tdG90by5pby9hdHRlc3RhdGlvbi9yZWxlYXNlL3YwLjIiLCAicHJlZGljYXRlIjp7ImRhdGFiYXNlSWQiOiI0MDA5NDQwMTMiLCAib3duZXJJZCI6IjIwMTgyNzQ1NCIsICJwYWNrYWdlSWQiOiIxMzk4MzczNDQ0IiwgInB1cmwiOiJwa2c6Z2l0aHViL0dsYWNpdXMtTGFicy9NYXJraXRlY3RAdjAuNC4wIiwgInJlcG9zaXRvcnkiOiJHbGFjaXVzLUxhYnMvTWFya2l0ZWN0IiwgInJlcG9zaXRvcnlJZCI6IjEzOTgzNzM0NDQiLCAidGFnIjoidjAuNC4wIn19",
+              "payloadType": "application/vnd.in-toto+json",
+              "signatures": [
+                {
+                  "sig": "MEUCIF/gi9evQJAAToIcvx2dl5wxkVWr2DEzCupisSbb/DCoAiEA9FovOSizNErR/SFNVHMUXltH0WEFnFJ0WBRQ0Timh/M="
+                }
+              ]
+            }
+          },
+          "bundle_url": "",
+          "initiator": ""
+        },
+        "verificationResult": {
+          "mediaType": "application/vnd.dev.sigstore.verificationresult+json;version=0.1",
+          "signature": {
+            "certificate": {
+              "certificateIssuer": "CN=Fulcio Intermediate l1,O=GitHub\\, Inc.",
+              "subjectAlternativeName": "https://dotcom.releases.github.com"
+            }
+          },
+          "verifiedTimestamps": [
+            {
+              "type": "TimestampAuthority",
+              "uri": "timestamp.githubapp.com",
+              "timestamp": "2026-10-01T12:25:49Z"
+            }
+          ],
+          "verifiedIdentity": {
+            "subjectAlternativeName": {
+              "subjectAlternativeName": "",
+              "regexp": "^https://dotcom\\.releases\\.github\\.com$"
+            },
+            "issuer": {
+              "issuer": "",
+              "regexp": ".*"
+            }
+          },
+          "statement": {
+            "_type": "https://in-toto.io/Statement/v1",
+            "subject": [
+              {
+                "uri": "pkg:github/Glacius-Labs/Markitect@v0.4.0",
+                "digest": {
+                  "sha1": "a03e05e5841f5382c5f2a5a06ee1254fa4abbed5"
+                }
+              },
+              {
+                "name": "markitect-v0.4.0-bundle.zip",
+                "digest": {
+                  "sha256": "7966d53a1fe81e2b65d1896f267d708ea6ab95dc08f041476664193a5f10d4c3"
+                }
+              },
+              {
+                "name": "markitect-v0.4.0-linux-amd64",
+                "digest": {
+                  "sha256": "8487c3f3258992e89d890ddf036945ce4f026f504d3ed7d80b133b4c3b576608"
+                }
+              },
+              {
+                "name": "markitect-v0.4.0-provenance.yaml",
+                "digest": {
+                  "sha256": "0a852d3b89a5430eaf882dfc6b0bebd53d8748cce6a8030da5302da366fd35a5"
+                }
+              },
+              {
+                "name": "markitect-v0.4.0-windows-amd64.exe",
+                "digest": {
+                  "sha256": "67d62b1ebdd1224dc18591c72c98c7d8e3f395cedd137ffff1ed3cd66eebc719"
+                }
+              }
+            ],
+            "predicateType": "https://in-toto.io/attestation/release/v0.2",
+            "predicate": {
+              "databaseId": "400944013",
+              "ownerId": "201827454",
+              "packageId": "1398373444",
+              "purl": "pkg:github/Glacius-Labs/Markitect@v0.4.0",
+              "repository": "Glacius-Labs/Markitect",
+              "repositoryId": "1398373444",
+              "tag": "v0.4.0"
+            }
+          }
+        }
+      },
+      "error": null
+    },
+    {
+      "tag": "v0.3.1",
+      "exit_code": 0,
+      "attestation": {
+        "attestation": {
+          "bundle": {
+            "mediaType": "application/vnd.dev.sigstore.bundle.v0.3+json",
+            "verificationMaterial": {
+              "certificate": {
+                "rawBytes": "MIICKzCCAbCgAwIBAgIUFEsbikF1pCGydxjUbs+jmoS800MwCgYIKoZIzj0EAwMwODEVMBMGA1UEChMMR2l0SHViLCBJbmMuMR8wHQYDVQQDExZGdWxjaW8gSW50ZXJtZWRpYXRlIGwxMB4XDTI2MDYxMjAwMDAwMFoXDTI3MDYxMjAwMDAwMFowKjEVMBMGA1UEChMMR2l0SHViLCBJbmMuMREwDwYDVQQDEwhBdHRlc3RlcjBZMBMGByqGSM49AgEGCCqGSM49AwEHA0IABGUVEVNqcSQmA0J45gqVHzCQkSWaZn4DucVDFhO4Q5OWgVdOP4WF44OUvFXQm9lDfRrHMsIVHEbvMfL7SHOVuVWjgaUwgaIwDgYDVR0PAQH/BAQDAgeAMBMGA1UdJQQMMAoGCCsGAQUFBwMDMAwGA1UdEwEB/wQCMAAwHQYDVR0OBBYEFDrgKNmcXl2HuRedxYt9HulXf/9IMB8GA1UdIwQYMBaAFMDhuFKkS08+3no4EQbPSY6hRZszMC0GA1UdEQQmMCSGImh0dHBzOi8vZG90Y29tLnJlbGVhc2VzLmdpdGh1Yi5jb20wCgYIKoZIzj0EAwMDaQAwZgIxAJnC2khPGWJqZiEFvgyv0rktYBinUh6AkDn43wYSgUhzm8aRUa+rF25Qk1ZeoGi3IAIxAIgIBMwOkMqDQ1DVCJydaIZu1bxtvgX9Anva7kRDZrboNxsAllbdnorYRTm9mxkZaQ=="
+              },
+              "timestampVerificationData": {
+                "rfc3161Timestamps": [
+                  {
+                    "signedTimestamp": "MIICzzADAgEAMIICxgYJKoZIhvcNAQcCoIICtzCCArMCAQMxDTALBglghkgBZQMEAgIwgbsGCyqGSIb3DQEJEAEEoIGrBIGoMIGlAgEBBgkrBgEEAYO/MAIwMTANBglghkgBZQMEAgEFAAQgTemeied7vElccdhH79AexAgGR+I9jl5fOIjsZSXY+osCFGOxw6wcfEmuymOgw74a6T7vfhUrGA8yMDI2MDkzMDIyNTUyNFowAwIBAaA2pDQwMjEVMBMGA1UEChMMR2l0SHViLCBJbmMuMRkwFwYDVQQDExBUU0EgVGltZXN0YW1waW5noAAxggHdMIIB2QIBATBKMDIxFTATBgNVBAoTDEdpdEh1YiwgSW5jLjEZMBcGA1UEAxMQVFNBIGludGVybWVkaWF0ZQIUFzPb1un+DvofqFPzAXiB5slHM1IwCwYJYIZIAWUDBAICoIIBBTAaBgkqhkiG9w0BCQMxDQYLKoZIhvcNAQkQAQQwHAYJKoZIhvcNAQkFMQ8XDTI2MDkzMDIyNTUyNFowPwYJKoZIhvcNAQkEMTIEMHC+5bf/CCl0+/BsjqIP3zbfhpkg9DWQE9BjtB3dZyWeGBIkwrSrK0Cen65w/43S2jCBhwYLKoZIhvcNAQkQAi8xeDB2MHQwcgQgRBbIrnMUamOhN8LlW+jecOPJrzBzvzmLqrqo2wgXztcwTjA2pDQwMjEVMBMGA1UEChMMR2l0SHViLCBJbmMuMRkwFwYDVQQDExBUU0EgaW50ZXJtZWRpYXRlAhQXM9vW6f4O+h+oU/MBeIHmyUczUjAKBggqhkjOPQQDAwRmMGQCMFtrDBd9gCZc3hhVGh6PjQOtnbE59YjeBwHfX25VhCYW+3Dh4J6K8QnAGNfQXioPCAIwYjIPteJe+PN7CFoJpUMPEGcS7w2CSDrE1/q8b4+PkQbCD6lZ5yBAMvhZhkkbo1Bv"
+                  }
+                ]
+              }
+            },
+            "dsseEnvelope": {
+              "payload": "eyJfdHlwZSI6Imh0dHBzOi8vaW4tdG90by5pby9TdGF0ZW1lbnQvdjEiLCAic3ViamVjdCI6W3sidXJpIjoicGtnOmdpdGh1Yi9HbGFjaXVzLUxhYnMvTWFya2l0ZWN0QHYwLjMuMSIsICJkaWdlc3QiOnsic2hhMSI6IjUyZjBiZDY0Y2U2NDc1OWJlMTBmZmRlZTE4MGMyY2Y3YzkzOWQ0OWIifX0sIHsibmFtZSI6Im1hcmtpdGVjdC12MC4zLjEtYnVuZGxlLnppcCIsICJkaWdlc3QiOnsic2hhMjU2IjoiZDQ4NmQzMTFkOGUxOWRiNGNmODI2NjQwZmIzNjhjMDQ3OGZhZGMyOGUxMmQ0MDc0YTUyNjhjNjgxMDQ1OTZiNyJ9fSwgeyJuYW1lIjoibWFya2l0ZWN0LXYwLjMuMS1saW51eC1hbWQ2NCIsICJkaWdlc3QiOnsic2hhMjU2IjoiYWZhYzc4MTIwNDk1NDA5YTdkYTA3M2E1OWU2YWJhMGQ2ZDg1M2EwYzU1MmJlMzllYjlhYzdhNGUzYTNjZjI4OSJ9fSwgeyJuYW1lIjoibWFya2l0ZWN0LXYwLjMuMS1wcm92ZW5hbmNlLnlhbWwiLCAiZGlnZXN0Ijp7InNoYTI1NiI6IjAwMDVjZTY0ZTkzMjAxODU0OTZjMTQ1MzU1MDI3MzRkMjNkZTg4MDk3ODMzYmM0MDgxYjAxNjA2MmQwYTIwOTAifX0sIHsibmFtZSI6Im1hcmtpdGVjdC12MC4zLjEtd2luZG93cy1hbWQ2NC5leGUiLCAiZGlnZXN0Ijp7InNoYTI1NiI6IjVlNzQ0NmRhMmJkYTE1Mzk2NDQxNmQ2YmQzNjZkMzM1M2FjMTI3OTE5YzQ2ZGUzOWQzMjk1MDdjNWJhZjczYTAifX1dLCAicHJlZGljYXRlVHlwZSI6Imh0dHBzOi8vaW4tdG90by5pby9hdHRlc3RhdGlvbi9yZWxlYXNlL3YwLjIiLCAicHJlZGljYXRlIjp7ImRhdGFiYXNlSWQiOiI0MDA0OTUxNDciLCAib3duZXJJZCI6IjIwMTgyNzQ1NCIsICJwYWNrYWdlSWQiOiIxMzk4MzczNDQ0IiwgInB1cmwiOiJwa2c6Z2l0aHViL0dsYWNpdXMtTGFicy9NYXJraXRlY3RAdjAuMy4xIiwgInJlcG9zaXRvcnkiOiJHbGFjaXVzLUxhYnMvTWFya2l0ZWN0IiwgInJlcG9zaXRvcnlJZCI6IjEzOTgzNzM0NDQiLCAidGFnIjoidjAuMy4xIn19",
+              "payloadType": "application/vnd.in-toto+json",
+              "signatures": [
+                {
+                  "sig": "MEUCIFZEuYY5pay03kxoFeEgZBZP4tsLBrBCP90nhgITWt8HAiEAn6nWHmPq+xpE9eW7/oZFxUarIi5i9ucEQpCICXrhM+0="
+                }
+              ]
+            }
+          },
+          "bundle_url": "",
+          "initiator": ""
+        },
+        "verificationResult": {
+          "mediaType": "application/vnd.dev.sigstore.verificationresult+json;version=0.1",
+          "signature": {
+            "certificate": {
+              "certificateIssuer": "CN=Fulcio Intermediate l1,O=GitHub\\, Inc.",
+              "subjectAlternativeName": "https://dotcom.releases.github.com"
+            }
+          },
+          "verifiedTimestamps": [
+            {
+              "type": "TimestampAuthority",
+              "uri": "timestamp.githubapp.com",
+              "timestamp": "2026-09-30T22:55:24Z"
+            }
+          ],
+          "verifiedIdentity": {
+            "subjectAlternativeName": {
+              "subjectAlternativeName": "",
+              "regexp": "^https://dotcom\\.releases\\.github\\.com$"
+            },
+            "issuer": {
+              "issuer": "",
+              "regexp": ".*"
+            }
+          },
+          "statement": {
+            "_type": "https://in-toto.io/Statement/v1",
+            "subject": [
+              {
+                "uri": "pkg:github/Glacius-Labs/Markitect@v0.3.1",
+                "digest": {
+                  "sha1": "52f0bd64ce64759be10ffdee180c2cf7c939d49b"
+                }
+              },
+              {
+                "name": "markitect-v0.3.1-bundle.zip",
+                "digest": {
+                  "sha256": "d486d311d8e19db4cf826640fb368c0478fadc28e12d4074a5268c68104596b7"
+                }
+              },
+              {
+                "name": "markitect-v0.3.1-linux-amd64",
+                "digest": {
+                  "sha256": "afac78120495409a7da073a59e6aba0d6d853a0c552be39eb9ac7a4e3a3cf289"
+                }
+              },
+              {
+                "name": "markitect-v0.3.1-provenance.yaml",
+                "digest": {
+                  "sha256": "0005ce64e9320185496c14535502734d23de88097833bc4081b016062d0a2090"
+                }
+              },
+              {
+                "name": "markitect-v0.3.1-windows-amd64.exe",
+                "digest": {
+                  "sha256": "5e7446da2bda153964416d6bd366d3353ac127919c46de39d329507c5baf73a0"
+                }
+              }
+            ],
+            "predicateType": "https://in-toto.io/attestation/release/v0.2",
+            "predicate": {
+              "databaseId": "400495147",
+              "ownerId": "201827454",
+              "packageId": "1398373444",
+              "purl": "pkg:github/Glacius-Labs/Markitect@v0.3.1",
+              "repository": "Glacius-Labs/Markitect",
+              "repositoryId": "1398373444",
+              "tag": "v0.3.1"
+            }
+          }
+        }
+      },
+      "error": null
+    },
+    {
+      "tag": "v0.3.0",
+      "exit_code": 0,
+      "attestation": {
+        "attestation": {
+          "bundle": {
+            "mediaType": "application/vnd.dev.sigstore.bundle.v0.3+json",
+            "verificationMaterial": {
+              "certificate": {
+                "rawBytes": "MIICKzCCAbCgAwIBAgIUFEsbikF1pCGydxjUbs+jmoS800MwCgYIKoZIzj0EAwMwODEVMBMGA1UEChMMR2l0SHViLCBJbmMuMR8wHQYDVQQDExZGdWxjaW8gSW50ZXJtZWRpYXRlIGwxMB4XDTI2MDYxMjAwMDAwMFoXDTI3MDYxMjAwMDAwMFowKjEVMBMGA1UEChMMR2l0SHViLCBJbmMuMREwDwYDVQQDEwhBdHRlc3RlcjBZMBMGByqGSM49AgEGCCqGSM49AwEHA0IABGUVEVNqcSQmA0J45gqVHzCQkSWaZn4DucVDFhO4Q5OWgVdOP4WF44OUvFXQm9lDfRrHMsIVHEbvMfL7SHOVuVWjgaUwgaIwDgYDVR0PAQH/BAQDAgeAMBMGA1UdJQQMMAoGCCsGAQUFBwMDMAwGA1UdEwEB/wQCMAAwHQYDVR0OBBYEFDrgKNmcXl2HuRedxYt9HulXf/9IMB8GA1UdIwQYMBaAFMDhuFKkS08+3no4EQbPSY6hRZszMC0GA1UdEQQmMCSGImh0dHBzOi8vZG90Y29tLnJlbGVhc2VzLmdpdGh1Yi5jb20wCgYIKoZIzj0EAwMDaQAwZgIxAJnC2khPGWJqZiEFvgyv0rktYBinUh6AkDn43wYSgUhzm8aRUa+rF25Qk1ZeoGi3IAIxAIgIBMwOkMqDQ1DVCJydaIZu1bxtvgX9Anva7kRDZrboNxsAllbdnorYRTm9mxkZaQ=="
+              },
+              "timestampVerificationData": {
+                "rfc3161Timestamps": [
+                  {
+                    "signedTimestamp": "MIIC0DADAgEAMIICxwYJKoZIhvcNAQcCoIICuDCCArQCAQMxDTALBglghkgBZQMEAgIwgbsGCyqGSIb3DQEJEAEEoIGrBIGoMIGlAgEBBgkrBgEEAYO/MAIwMTANBglghkgBZQMEAgEFAAQgL7N9Y/J0v1neimy6l55I26rVx+NQsPz40QCTOXEoSFcCFC3Xb7N2lQiDqhKFjmU2gvE9X5VAGA8yMDI2MDkzMDIyMzMzMVowAwIBAaA2pDQwMjEVMBMGA1UEChMMR2l0SHViLCBJbmMuMRkwFwYDVQQDExBUU0EgVGltZXN0YW1waW5noAAxggHeMIIB2gIBATBKMDIxFTATBgNVBAoTDEdpdEh1YiwgSW5jLjEZMBcGA1UEAxMQVFNBIGludGVybWVkaWF0ZQIUFzPb1un+DvofqFPzAXiB5slHM1IwCwYJYIZIAWUDBAICoIIBBTAaBgkqhkiG9w0BCQMxDQYLKoZIhvcNAQkQAQQwHAYJKoZIhvcNAQkFMQ8XDTI2MDkzMDIyMzMzMVowPwYJKoZIhvcNAQkEMTIEMGD6Np+Ik8RQuNkYuQMf/kkD1vRF4cBwAiwaWE9kuarNktpqgI4GvkBbyA8r4BI6LjCBhwYLKoZIhvcNAQkQAi8xeDB2MHQwcgQgRBbIrnMUamOhN8LlW+jecOPJrzBzvzmLqrqo2wgXztcwTjA2pDQwMjEVMBMGA1UEChMMR2l0SHViLCBJbmMuMRkwFwYDVQQDExBUU0EgaW50ZXJtZWRpYXRlAhQXM9vW6f4O+h+oU/MBeIHmyUczUjAKBggqhkjOPQQDAwRnMGUCMQDDYO8KI1in3bM7L1i62LwklxY8iNMg9qsjoRRq63ON7Wb43imiH6JfpR+pocvCpKYCMAmAinhHOxcX9KLEMDHu0up6VvecriBIcTk0Lfe8gjaQsFqfomMGwUxcT78M4tDnPw=="
+                  }
+                ]
+              }
+            },
+            "dsseEnvelope": {
+              "payload": "eyJfdHlwZSI6Imh0dHBzOi8vaW4tdG90by5pby9TdGF0ZW1lbnQvdjEiLCAic3ViamVjdCI6W3sidXJpIjoicGtnOmdpdGh1Yi9HbGFjaXVzLUxhYnMvTWFya2l0ZWN0QHYwLjMuMCIsICJkaWdlc3QiOnsic2hhMSI6IjQ0NGQyODg5N2YyOWQ2NTU1NDU2N2RlMmVhMDk3NDQzNTdkMGY4NjQifX0sIHsibmFtZSI6Im1hcmtpdGVjdC12MC4zLjAtYnVuZGxlLnppcCIsICJkaWdlc3QiOnsic2hhMjU2IjoiNWU1OTkyZDcwNDZhN2ZiNTU3ZjlkMjlkZDA2MjMwYjVkOGNkOTZjNTg2ZmZkY2Y5YmViMWMxYjZmMGZmN2VkOSJ9fSwgeyJuYW1lIjoibWFya2l0ZWN0LXYwLjMuMC1saW51eC1hbWQ2NCIsICJkaWdlc3QiOnsic2hhMjU2IjoiYjdlNDVjYTAzMWZiNDkyMWYxMzk1NzdhZjdhMTU0MzMzN2JlZTg5Y2MwMWY5YmU3ZmJmMGYwNzQ1NDdjNjQwMCJ9fSwgeyJuYW1lIjoibWFya2l0ZWN0LXYwLjMuMC1wcm92ZW5hbmNlLnlhbWwiLCAiZGlnZXN0Ijp7InNoYTI1NiI6IjdmZjNjYTVkZjMyNjE3OGIwOTE5NmZjZmUxYzZhMWQzYmJjMjI3ZWQyNzI4Yjg0Zjg3ZmU4NzgwMjU2YmNkZTMifX0sIHsibmFtZSI6Im1hcmtpdGVjdC12MC4zLjAtd2luZG93cy1hbWQ2NC5leGUiLCAiZGlnZXN0Ijp7InNoYTI1NiI6IjM0NzBlMDI5NWYyZGI1MTE4YTVmZWJmZTEwMTg0ZTFmZWRhM2VjM2JiYzExZTQ5MTZmYTExOGYzZjdmZjYyYzkifX1dLCAicHJlZGljYXRlVHlwZSI6Imh0dHBzOi8vaW4tdG90by5pby9hdHRlc3RhdGlvbi9yZWxlYXNlL3YwLjIiLCAicHJlZGljYXRlIjp7ImRhdGFiYXNlSWQiOiI0MDA0ODU0MjIiLCAib3duZXJJZCI6IjIwMTgyNzQ1NCIsICJwYWNrYWdlSWQiOiIxMzk4MzczNDQ0IiwgInB1cmwiOiJwa2c6Z2l0aHViL0dsYWNpdXMtTGFicy9NYXJraXRlY3RAdjAuMy4wIiwgInJlcG9zaXRvcnkiOiJHbGFjaXVzLUxhYnMvTWFya2l0ZWN0IiwgInJlcG9zaXRvcnlJZCI6IjEzOTgzNzM0NDQiLCAidGFnIjoidjAuMy4wIn19",
+              "payloadType": "application/vnd.in-toto+json",
+              "signatures": [
+                {
+                  "sig": "MEUCIHV7uOuAKNLsH0WWgOWyqTvUkLZ8OcyztFPzZdeBsGuJAiEA3sDcevbNtIHmPz6XXqfNb3eLdKP2cigiG059h8+/0nE="
+                }
+              ]
+            }
+          },
+          "bundle_url": "",
+          "initiator": ""
+        },
+        "verificationResult": {
+          "mediaType": "application/vnd.dev.sigstore.verificationresult+json;version=0.1",
+          "signature": {
+            "certificate": {
+              "certificateIssuer": "CN=Fulcio Intermediate l1,O=GitHub\\, Inc.",
+              "subjectAlternativeName": "https://dotcom.releases.github.com"
+            }
+          },
+          "verifiedTimestamps": [
+            {
+              "type": "TimestampAuthority",
+              "uri": "timestamp.githubapp.com",
+              "timestamp": "2026-09-30T22:33:31Z"
+            }
+          ],
+          "verifiedIdentity": {
+            "subjectAlternativeName": {
+              "subjectAlternativeName": "",
+              "regexp": "^https://dotcom\\.releases\\.github\\.com$"
+            },
+            "issuer": {
+              "issuer": "",
+              "regexp": ".*"
+            }
+          },
+          "statement": {
+            "_type": "https://in-toto.io/Statement/v1",
+            "subject": [
+              {
+                "uri": "pkg:github/Glacius-Labs/Markitect@v0.3.0",
+                "digest": {
+                  "sha1": "444d28897f29d65554567de2ea09744357d0f864"
+                }
+              },
+              {
+                "name": "markitect-v0.3.0-bundle.zip",
+                "digest": {
+                  "sha256": "5e5992d7046a7fb557f9d29dd06230b5d8cd96c586ffdcf9beb1c1b6f0ff7ed9"
+                }
+              },
+              {
+                "name": "markitect-v0.3.0-linux-amd64",
+                "digest": {
+                  "sha256": "b7e45ca031fb4921f139577af7a1543337bee89cc01f9be7fbf0f074547c6400"
+                }
+              },
+              {
+                "name": "markitect-v0.3.0-provenance.yaml",
+                "digest": {
+                  "sha256": "7ff3ca5df326178b09196fcfe1c6a1d3bbc227ed2728b84f87fe8780256bcde3"
+                }
+              },
+              {
+                "name": "markitect-v0.3.0-windows-amd64.exe",
+                "digest": {
+                  "sha256": "3470e0295f2db5118a5febfe10184e1feda3ec3bbc11e4916fa118f3f7ff62c9"
+                }
+              }
+            ],
+            "predicateType": "https://in-toto.io/attestation/release/v0.2",
+            "predicate": {
+              "databaseId": "400485422",
+              "ownerId": "201827454",
+              "packageId": "1398373444",
+              "purl": "pkg:github/Glacius-Labs/Markitect@v0.3.0",
+              "repository": "Glacius-Labs/Markitect",
+              "repositoryId": "1398373444",
+              "tag": "v0.3.0"
+            }
+          }
+        }
+      },
+      "error": null
+    },
+    {
+      "tag": "v0.2.0",
+      "exit_code": 0,
+      "attestation": {
+        "attestation": {
+          "bundle": {
+            "mediaType": "application/vnd.dev.sigstore.bundle.v0.3+json",
+            "verificationMaterial": {
+              "certificate": {
+                "rawBytes": "MIICKzCCAbCgAwIBAgIUFEsbikF1pCGydxjUbs+jmoS800MwCgYIKoZIzj0EAwMwODEVMBMGA1UEChMMR2l0SHViLCBJbmMuMR8wHQYDVQQDExZGdWxjaW8gSW50ZXJtZWRpYXRlIGwxMB4XDTI2MDYxMjAwMDAwMFoXDTI3MDYxMjAwMDAwMFowKjEVMBMGA1UEChMMR2l0SHViLCBJbmMuMREwDwYDVQQDEwhBdHRlc3RlcjBZMBMGByqGSM49AgEGCCqGSM49AwEHA0IABGUVEVNqcSQmA0J45gqVHzCQkSWaZn4DucVDFhO4Q5OWgVdOP4WF44OUvFXQm9lDfRrHMsIVHEbvMfL7SHOVuVWjgaUwgaIwDgYDVR0PAQH/BAQDAgeAMBMGA1UdJQQMMAoGCCsGAQUFBwMDMAwGA1UdEwEB/wQCMAAwHQYDVR0OBBYEFDrgKNmcXl2HuRedxYt9HulXf/9IMB8GA1UdIwQYMBaAFMDhuFKkS08+3no4EQbPSY6hRZszMC0GA1UdEQQmMCSGImh0dHBzOi8vZG90Y29tLnJlbGVhc2VzLmdpdGh1Yi5jb20wCgYIKoZIzj0EAwMDaQAwZgIxAJnC2khPGWJqZiEFvgyv0rktYBinUh6AkDn43wYSgUhzm8aRUa+rF25Qk1ZeoGi3IAIxAIgIBMwOkMqDQ1DVCJydaIZu1bxtvgX9Anva7kRDZrboNxsAllbdnorYRTm9mxkZaQ=="
+              },
+              "timestampVerificationData": {
+                "rfc3161Timestamps": [
+                  {
+                    "signedTimestamp": "MIIC0jADAgEAMIICyQYJKoZIhvcNAQcCoIICujCCArYCAQMxDTALBglghkgBZQMEAgIwgbwGCyqGSIb3DQEJEAEEoIGsBIGpMIGmAgEBBgkrBgEEAYO/MAIwMTANBglghkgBZQMEAgEFAAQgk39FU0dzCdzhud0l9FeyKfTJqG62OLjnelmIc7cV7woCFQDFFRkisUIS/ANPqQe24WOJoEuV/hgPMjAyNjA5MzAyMTEyNDZaMAMCAQGgNqQ0MDIxFTATBgNVBAoTDEdpdEh1YiwgSW5jLjEZMBcGA1UEAxMQVFNBIFRpbWVzdGFtcGluZ6AAMYIB3zCCAdsCAQEwSjAyMRUwEwYDVQQKEwxHaXRIdWIsIEluYy4xGTAXBgNVBAMTEFRTQSBpbnRlcm1lZGlhdGUCFBcz29bp/g76H6hT8wF4gebJRzNSMAsGCWCGSAFlAwQCAqCCAQUwGgYJKoZIhvcNAQkDMQ0GCyqGSIb3DQEJEAEEMBwGCSqGSIb3DQEJBTEPFw0yNjA5MzAyMTEyNDZaMD8GCSqGSIb3DQEJBDEyBDAua0x0cplqDYmwsc89gw9fGPpfZQRcXQLRGmptynUXeEU5wt41M0KuiMWoNFavgrowgYcGCyqGSIb3DQEJEAIvMXgwdjB0MHIEIEQWyK5zFGpjoTfC5Vvo3nDjya8wc785i6q6qNsIF87XME4wNqQ0MDIxFTATBgNVBAoTDEdpdEh1YiwgSW5jLjEZMBcGA1UEAxMQVFNBIGludGVybWVkaWF0ZQIUFzPb1un+DvofqFPzAXiB5slHM1IwCgYIKoZIzj0EAwMEaDBmAjEArVFaUD40oJffMk8mWKr/pk4ibzXlvN1cM4llSFLvRDSZd6T5GlUcV8UGNHUjMcXTAjEAlbPb/iJfPwCUI+NHIKqQpXGiSpEiysezKTUJZ5k8rqFkBJfGFWqEbmXaNXUG/gN8"
+                  }
+                ]
+              }
+            },
+            "dsseEnvelope": {
+              "payload": "eyJfdHlwZSI6Imh0dHBzOi8vaW4tdG90by5pby9TdGF0ZW1lbnQvdjEiLCAic3ViamVjdCI6W3sidXJpIjoicGtnOmdpdGh1Yi9HbGFjaXVzLUxhYnMvTWFya2l0ZWN0QHYwLjIuMCIsICJkaWdlc3QiOnsic2hhMSI6ImU0NjFjMDZiZWRmYzJkYzM2NDU3YmZmZjQwZTFmMTQxNzBiOTg4ZjIifX0sIHsibmFtZSI6Im1hcmtpdGVjdC12MC4yLjAtYnVuZGxlLnppcCIsICJkaWdlc3QiOnsic2hhMjU2IjoiNmFhYTQxMWQyNjVlMjljMjYxYWRmM2ZjZWQ0YzI2NmU5N2U2ZmFmYzI1ZTYyN2M0ZTkwNGNmNzY3Y2E2MGU0YSJ9fSwgeyJuYW1lIjoibWFya2l0ZWN0LXYwLjIuMC1saW51eC1hbWQ2NCIsICJkaWdlc3QiOnsic2hhMjU2IjoiY2U3YzY0MmFkZDA3MmEwZjAzYTM3ODZhYjA5YjM0MzFiMTNhNjc1YTVhMWVjNjgxODE1ZmJmZTMzYjA4ZmNhNSJ9fSwgeyJuYW1lIjoibWFya2l0ZWN0LXYwLjIuMC1wcm92ZW5hbmNlLnlhbWwiLCAiZGlnZXN0Ijp7InNoYTI1NiI6IjBjMGViMTc4M2QwMDFkY2Y1OWViNDI5ODcwYTRmMzEwNzUyZTk1M2M1NjNkMTcxMjhkMWNjNGJjM2EzZDRmNGQifX0sIHsibmFtZSI6Im1hcmtpdGVjdC12MC4yLjAtd2luZG93cy1hbWQ2NC5leGUiLCAiZGlnZXN0Ijp7InNoYTI1NiI6IjE5OTZjOWYwNDY4MGVhMTE3OTdlNjkxMzBiNWQzNzBmMTg2NjJjNGFlODkzZWMyYWM0N2RlZDk4NmE0YTIxZTgifX1dLCAicHJlZGljYXRlVHlwZSI6Imh0dHBzOi8vaW4tdG90by5pby9hdHRlc3RhdGlvbi9yZWxlYXNlL3YwLjIiLCAicHJlZGljYXRlIjp7ImRhdGFiYXNlSWQiOiI0MDA0NDA4NzMiLCAib3duZXJJZCI6IjIwMTgyNzQ1NCIsICJwYWNrYWdlSWQiOiIxMzk4MzczNDQ0IiwgInB1cmwiOiJwa2c6Z2l0aHViL0dsYWNpdXMtTGFicy9NYXJraXRlY3RAdjAuMi4wIiwgInJlcG9zaXRvcnkiOiJHbGFjaXVzLUxhYnMvTWFya2l0ZWN0IiwgInJlcG9zaXRvcnlJZCI6IjEzOTgzNzM0NDQiLCAidGFnIjoidjAuMi4wIn19",
+              "payloadType": "application/vnd.in-toto+json",
+              "signatures": [
+                {
+                  "sig": "MEQCIGS90252GgHmwMWnimsYLZjCUIWr5IB+NpoMGIn44OgTAiAYWeIfDhfw4MpgqFEzMFbTM//wDSfdDSnCRrYiLhCCgw=="
+                }
+              ]
+            }
+          },
+          "bundle_url": "",
+          "initiator": ""
+        },
+        "verificationResult": {
+          "mediaType": "application/vnd.dev.sigstore.verificationresult+json;version=0.1",
+          "signature": {
+            "certificate": {
+              "certificateIssuer": "CN=Fulcio Intermediate l1,O=GitHub\\, Inc.",
+              "subjectAlternativeName": "https://dotcom.releases.github.com"
+            }
+          },
+          "verifiedTimestamps": [
+            {
+              "type": "TimestampAuthority",
+              "uri": "timestamp.githubapp.com",
+              "timestamp": "2026-09-30T21:12:46Z"
+            }
+          ],
+          "verifiedIdentity": {
+            "subjectAlternativeName": {
+              "subjectAlternativeName": "",
+              "regexp": "^https://dotcom\\.releases\\.github\\.com$"
+            },
+            "issuer": {
+              "issuer": "",
+              "regexp": ".*"
+            }
+          },
+          "statement": {
+            "_type": "https://in-toto.io/Statement/v1",
+            "subject": [
+              {
+                "uri": "pkg:github/Glacius-Labs/Markitect@v0.2.0",
+                "digest": {
+                  "sha1": "e461c06bedfc2dc36457bfff40e1f14170b988f2"
+                }
+              },
+              {
+                "name": "markitect-v0.2.0-bundle.zip",
+                "digest": {
+                  "sha256": "6aaa411d265e29c261adf3fced4c266e97e6fafc25e627c4e904cf767ca60e4a"
+                }
+              },
+              {
+                "name": "markitect-v0.2.0-linux-amd64",
+                "digest": {
+                  "sha256": "ce7c642add072a0f03a3786ab09b3431b13a675a5a1ec681815fbfe33b08fca5"
+                }
+              },
+              {
+                "name": "markitect-v0.2.0-provenance.yaml",
+                "digest": {
+                  "sha256": "0c0eb1783d001dcf59eb429870a4f310752e953c563d17128d1cc4bc3a3d4f4d"
+                }
+              },
+              {
+                "name": "markitect-v0.2.0-windows-amd64.exe",
+                "digest": {
+                  "sha256": "1996c9f04680ea11797e69130b5d370f18662c4ae893ec2ac47ded986a4a21e8"
+                }
+              }
+            ],
+            "predicateType": "https://in-toto.io/attestation/release/v0.2",
+            "predicate": {
+              "databaseId": "400440873",
+              "ownerId": "201827454",
+              "packageId": "1398373444",
+              "purl": "pkg:github/Glacius-Labs/Markitect@v0.2.0",
+              "repository": "Glacius-Labs/Markitect",
+              "repositoryId": "1398373444",
+              "tag": "v0.2.0"
+            }
+          }
+        }
+      },
+      "error": null
+    },
+    {
+      "tag": "v0.1.0",
+      "exit_code": 0,
+      "attestation": {
+        "attestation": {
+          "bundle": {
+            "mediaType": "application/vnd.dev.sigstore.bundle.v0.3+json",
+            "verificationMaterial": {
+              "certificate": {
+                "rawBytes": "MIICKzCCAbCgAwIBAgIUFEsbikF1pCGydxjUbs+jmoS800MwCgYIKoZIzj0EAwMwODEVMBMGA1UEChMMR2l0SHViLCBJbmMuMR8wHQYDVQQDExZGdWxjaW8gSW50ZXJtZWRpYXRlIGwxMB4XDTI2MDYxMjAwMDAwMFoXDTI3MDYxMjAwMDAwMFowKjEVMBMGA1UEChMMR2l0SHViLCBJbmMuMREwDwYDVQQDEwhBdHRlc3RlcjBZMBMGByqGSM49AgEGCCqGSM49AwEHA0IABGUVEVNqcSQmA0J45gqVHzCQkSWaZn4DucVDFhO4Q5OWgVdOP4WF44OUvFXQm9lDfRrHMsIVHEbvMfL7SHOVuVWjgaUwgaIwDgYDVR0PAQH/BAQDAgeAMBMGA1UdJQQMMAoGCCsGAQUFBwMDMAwGA1UdEwEB/wQCMAAwHQYDVR0OBBYEFDrgKNmcXl2HuRedxYt9HulXf/9IMB8GA1UdIwQYMBaAFMDhuFKkS08+3no4EQbPSY6hRZszMC0GA1UdEQQmMCSGImh0dHBzOi8vZG90Y29tLnJlbGVhc2VzLmdpdGh1Yi5jb20wCgYIKoZIzj0EAwMDaQAwZgIxAJnC2khPGWJqZiEFvgyv0rktYBinUh6AkDn43wYSgUhzm8aRUa+rF25Qk1ZeoGi3IAIxAIgIBMwOkMqDQ1DVCJydaIZu1bxtvgX9Anva7kRDZrboNxsAllbdnorYRTm9mxkZaQ=="
+              },
+              "timestampVerificationData": {
+                "rfc3161Timestamps": [
+                  {
+                    "signedTimestamp": "MIIC0DADAgEAMIICxwYJKoZIhvcNAQcCoIICuDCCArQCAQMxDTALBglghkgBZQMEAgIwgbsGCyqGSIb3DQEJEAEEoIGrBIGoMIGlAgEBBgkrBgEEAYO/MAIwMTANBglghkgBZQMEAgEFAAQgVdAl4UKrmwPeZI69hfg3NQ1G+h2VhZqFrn9DWdXOFTICFE1haY7GG16BZPK6m/H4mho/mK5xGA8yMDI2MDkzMDE5MDgzNFowAwIBAaA2pDQwMjEVMBMGA1UEChMMR2l0SHViLCBJbmMuMRkwFwYDVQQDExBUU0EgVGltZXN0YW1waW5noAAxggHeMIIB2gIBATBKMDIxFTATBgNVBAoTDEdpdEh1YiwgSW5jLjEZMBcGA1UEAxMQVFNBIGludGVybWVkaWF0ZQIUFzPb1un+DvofqFPzAXiB5slHM1IwCwYJYIZIAWUDBAICoIIBBTAaBgkqhkiG9w0BCQMxDQYLKoZIhvcNAQkQAQQwHAYJKoZIhvcNAQkFMQ8XDTI2MDkzMDE5MDgzNFowPwYJKoZIhvcNAQkEMTIEMIdM6i1yYstx36u2QpWA5zRWvnbfP4+2kPvJpCNAQTJz2WbDLb7uVlWYlKV2AbDIOzCBhwYLKoZIhvcNAQkQAi8xeDB2MHQwcgQgRBbIrnMUamOhN8LlW+jecOPJrzBzvzmLqrqo2wgXztcwTjA2pDQwMjEVMBMGA1UEChMMR2l0SHViLCBJbmMuMRkwFwYDVQQDExBUU0EgaW50ZXJtZWRpYXRlAhQXM9vW6f4O+h+oU/MBeIHmyUczUjAKBggqhkjOPQQDAwRnMGUCMCxUrFr7XpXxtVJ9Z9OzWXvOnqUpIaSujV50s5mw9dEWt3ogDW5I1765t4NKeLx7dwIxAOhCXRghII5w3cd6yh4CKXhmjOEw5igkBMVlZw2O24TYcYxFNy/P9YSknVg3wSae2g=="
+                  }
+                ]
+              }
+            },
+            "dsseEnvelope": {
+              "payload": "eyJfdHlwZSI6Imh0dHBzOi8vaW4tdG90by5pby9TdGF0ZW1lbnQvdjEiLCAic3ViamVjdCI6W3sidXJpIjoicGtnOmdpdGh1Yi9HbGFjaXVzLUxhYnMvTWFya2l0ZWN0QHYwLjEuMCIsICJkaWdlc3QiOnsic2hhMSI6IjQ1ZTAwMTdhM2QyNWQyYWJkNDY0ZGU5MzRiNWVmM2E4MDI3MzJkMGEifX0sIHsibmFtZSI6Im1hcmtpdGVjdC12MC4xLjAtYnVuZGxlLnppcCIsICJkaWdlc3QiOnsic2hhMjU2IjoiOWJiNGQyYmFkZWRmODA2ZmFhOWJmMjE1MGEwYmNkNzg1NTFiMWY2OTIzOGQ1M2U3YjU4ZjQ5MjgyYTRmZDZiNiJ9fSwgeyJuYW1lIjoibWFya2l0ZWN0LXYwLjEuMC1saW51eC1hbWQ2NCIsICJkaWdlc3QiOnsic2hhMjU2IjoiMmMzMzhiMzYwMWVmZTU0MDI2ZDUyNjZlNTkyZjY5Y2IzZTY3N2JmYmEwNTFmMjExODJkODM3MjI5YTk4NTgxZiJ9fSwgeyJuYW1lIjoibWFya2l0ZWN0LXYwLjEuMC1wcm92ZW5hbmNlLnlhbWwiLCAiZGlnZXN0Ijp7InNoYTI1NiI6IjQxYWYzMjNmZWY3YjFjMTA0MGMyNTU0MWViOTg5NjE2NzI0NDQ2YzVjMzIyMmUyMWZjMDAwNDZiZjJkMWNiNmEifX0sIHsibmFtZSI6Im1hcmtpdGVjdC12MC4xLjAtd2luZG93cy1hbWQ2NC5leGUiLCAiZGlnZXN0Ijp7InNoYTI1NiI6ImE2ZGFiM2E1OWM4M2MyOWEwZjEzMTc5ODI1MTYxNzdiZTg0ODA1NWIwMjRlMDc0NTVjYWZlMDI1ODQ3ZjM0MzEifX1dLCAicHJlZGljYXRlVHlwZSI6Imh0dHBzOi8vaW4tdG90by5pby9hdHRlc3RhdGlvbi9yZWxlYXNlL3YwLjIiLCAicHJlZGljYXRlIjp7ImRhdGFiYXNlSWQiOiI0MDAzNTU5MDYiLCAib3duZXJJZCI6IjIwMTgyNzQ1NCIsICJwYWNrYWdlSWQiOiIxMzk4MzczNDQ0IiwgInB1cmwiOiJwa2c6Z2l0aHViL0dsYWNpdXMtTGFicy9NYXJraXRlY3RAdjAuMS4wIiwgInJlcG9zaXRvcnkiOiJHbGFjaXVzLUxhYnMvTWFya2l0ZWN0IiwgInJlcG9zaXRvcnlJZCI6IjEzOTgzNzM0NDQiLCAidGFnIjoidjAuMS4wIn19",
+              "payloadType": "application/vnd.in-toto+json",
+              "signatures": [
+                {
+                  "sig": "MEUCIQDQLlMtdC1M1ed/XcWJAgoHigjTKUEPAZZQkiN0TYxh7AIgGfMvHGHWiIVFxkhcYPyW6V8AI7V4SLSi9iXp648I4ak="
+                }
+              ]
+            }
+          },
+          "bundle_url": "",
+          "initiator": ""
+        },
+        "verificationResult": {
+          "mediaType": "application/vnd.dev.sigstore.verificationresult+json;version=0.1",
+          "signature": {
+            "certificate": {
+              "certificateIssuer": "CN=Fulcio Intermediate l1,O=GitHub\\, Inc.",
+              "subjectAlternativeName": "https://dotcom.releases.github.com"
+            }
+          },
+          "verifiedTimestamps": [
+            {
+              "type": "TimestampAuthority",
+              "uri": "timestamp.githubapp.com",
+              "timestamp": "2026-09-30T19:08:34Z"
+            }
+          ],
+          "verifiedIdentity": {
+            "subjectAlternativeName": {
+              "subjectAlternativeName": "",
+              "regexp": "^https://dotcom\\.releases\\.github\\.com$"
+            },
+            "issuer": {
+              "issuer": "",
+              "regexp": ".*"
+            }
+          },
+          "statement": {
+            "_type": "https://in-toto.io/Statement/v1",
+            "subject": [
+              {
+                "uri": "pkg:github/Glacius-Labs/Markitect@v0.1.0",
+                "digest": {
+                  "sha1": "45e0017a3d25d2abd464de934b5ef3a802732d0a"
+                }
+              },
+              {
+                "name": "markitect-v0.1.0-bundle.zip",
+                "digest": {
+                  "sha256": "9bb4d2badedf806faa9bf2150a0bcd78551b1f69238d53e7b58f49282a4fd6b6"
+                }
+              },
+              {
+                "name": "markitect-v0.1.0-linux-amd64",
+                "digest": {
+                  "sha256": "2c338b3601efe54026d5266e592f69cb3e677bfba051f21182d837229a98581f"
+                }
+              },
+              {
+                "name": "markitect-v0.1.0-provenance.yaml",
+                "digest": {
+                  "sha256": "41af323fef7b1c1040c25541eb989616724446c5c3222e21fc00046bf2d1cb6a"
+                }
+              },
+              {
+                "name": "markitect-v0.1.0-windows-amd64.exe",
+                "digest": {
+                  "sha256": "a6dab3a59c83c29a0f1317982516177be848055b024e07455cafe025847f3431"
+                }
+              }
+            ],
+            "predicateType": "https://in-toto.io/attestation/release/v0.2",
+            "predicate": {
+              "databaseId": "400355906",
+              "ownerId": "201827454",
+              "packageId": "1398373444",
+              "purl": "pkg:github/Glacius-Labs/Markitect@v0.1.0",
+              "repository": "Glacius-Labs/Markitect",
+              "repositoryId": "1398373444",
+              "tag": "v0.1.0"
+            }
+          }
+        }
+      },
+      "error": null
+    }
+  ],
+  "releaseRetirementObservation": {
+    "repository": "Glacius-Labs/Markitect",
+    "operation": "owner-authorized old release removal; tags retained",
+    "deleted": [
+      {
+        "id": 405781964,
+        "tag": "v0.14.1",
+        "assets": 4
+      },
+      {
+        "id": 402873994,
+        "tag": "v0.13.0",
+        "assets": 4
+      },
+      {
+        "id": 402288212,
+        "tag": "v0.12.0",
+        "assets": 4
+      },
+      {
+        "id": 402071906,
+        "tag": "v0.11.0",
+        "assets": 4
+      },
+      {
+        "id": 401991913,
+        "tag": "v0.10.0",
+        "assets": 4
+      },
+      {
+        "id": 401496097,
+        "tag": "v0.9.1",
+        "assets": 4
+      },
+      {
+        "id": 401463997,
+        "tag": "v0.9.0",
+        "assets": 4
+      },
+      {
+        "id": 401377439,
+        "tag": "v0.8.1",
+        "assets": 4
+      },
+      {
+        "id": 401351835,
+        "tag": "v0.8.0",
+        "assets": 4
+      },
+      {
+        "id": 401286207,
+        "tag": "v0.7.0",
+        "assets": 4
+      },
+      {
+        "id": 401237667,
+        "tag": "v0.6.0",
+        "assets": 4
+      },
+      {
+        "id": 401138862,
+        "tag": "v0.5.0",
+        "assets": 4
+      },
+      {
+        "id": 401051061,
+        "tag": "v0.4.1",
+        "assets": 4
+      },
+      {
+        "id": 400944013,
+        "tag": "v0.4.0",
+        "assets": 4
+      },
+      {
+        "id": 400495147,
+        "tag": "v0.3.1",
+        "assets": 4
+      },
+      {
+        "id": 400485422,
+        "tag": "v0.3.0",
+        "assets": 4
+      },
+      {
+        "id": 400440873,
+        "tag": "v0.2.0",
+        "assets": 4
+      },
+      {
+        "id": 400355906,
+        "tag": "v0.1.0",
+        "assets": 4
+      }
+    ],
+    "errors": [],
+    "remainingReleaseIds": [],
+    "capturedTagRefsUnchanged": true,
+    "tagRefsBefore": 261,
+    "tagRefsAfter": 261
+  }
+}

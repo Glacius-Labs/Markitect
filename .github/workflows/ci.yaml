@@ -216,4 +216,4 @@ jobs:
           name: markitect-source-${{ github.sha }}
           path: ${{ runner.temp }}/markitect-source-${{ github.sha }}/
           if-no-files-found: error
-          retention-days: 30
+          retention-days: 7
