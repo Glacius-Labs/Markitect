@@ -37,6 +37,13 @@ variable names. Resource limits must be positive; output is bounded to at most
 64 MiB. Unknown fields, missing fields and wrong types refuse preparation before
 acquisition. No engine, image, argument, environment or bound is inferred.
 
+The executable cannot be under the Runner's `/work`, `/home/agent` or `/tmp`
+mounts, the engine's `/dev`, `/proc` or `/sys` mounts, or name its managed
+`/etc/hosts`, `/etc/hostname` or `/etc/resolv.conf` files. These runtime mounts
+obscure image bytes, so observing an image file there cannot bind the executable
+that the check would actually run. Such paths refuse preparation before reading
+the image.
+
 The explicit reader factory receives only the captured `engineExecutable`.
 The production reader inspects the exact image ID, then streams the entire
 regular executable file through `Engine.ObserveImageFile` from a temporary

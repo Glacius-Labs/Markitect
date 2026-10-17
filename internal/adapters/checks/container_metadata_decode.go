@@ -40,6 +40,16 @@ func (p *containerPreparation) decode() (containerConfig, bool) {
 	if len(profile.Executable) > 256 || !strings.HasPrefix(profile.Executable, "/") || profile.Executable == "/" || path.Clean(profile.Executable) != profile.Executable || strings.Contains(profile.Executable, "\\") {
 		p.issue(model.Failed, "executable_path", "/executable", "Executable requires a clean absolute POSIX image file path of at most 256 bytes.")
 	}
+	// Runner's work/home/tmp mounts and the container engine's standard system
+	// mounts obscure these image paths. Their image bytes cannot bind execution.
+	for _, mount := range []string{"/work", "/home/agent", "/tmp", "/dev", "/proc", "/sys"} {
+		if profile.Executable == mount || strings.HasPrefix(profile.Executable, mount+"/") {
+			p.issue(model.Failed, "executable_mount", "/executable", "Executable cannot be inside a runtime mount that obscures image bytes.")
+		}
+	}
+	if slices.Contains([]string{"/etc/hosts", "/etc/hostname", "/etc/resolv.conf"}, profile.Executable) {
+		p.issue(model.Failed, "executable_mount", "/executable", "Executable cannot name a container-engine managed runtime file.")
+	}
 	profile.ArgumentPrefix = p.list(fields["argumentPrefix"], "/argumentPrefix")
 	profile.Env = p.list(fields["env"], "/env")
 	keys := map[string]bool{}
