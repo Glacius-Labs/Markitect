@@ -58,8 +58,9 @@ func (a Aggregate) Registry() Registry {
 // PathFacts returns the facts a step's path claims are checked against at this
 // aggregate version: the captured model inventory, creation areas and
 // protections over the aggregate's current tree and registry. Claims are bound
-// to one version, so the Host forms a fresh claim set for each step by
-// reserving the task's recorded reservations again on these facts.
+// to one version, so at each version the Host forms one run-wide claim set by
+// reserving every open recorded reservation of every task again on these
+// facts. A reservation that no longer fits is refused there, not at replay.
 func (a Aggregate) PathFacts() PathFacts {
 	if !a.Valid() {
 		return PathFacts{}
@@ -139,12 +140,13 @@ func ReplayDelivery(a Aggregate, c Candidate) ReplayResult {
 		if had != has || had && !sameRegistration(before, now) {
 			return replayRefusal("replay.registry_changed", owner, path, "The registry record changed after the candidate was made.")
 		}
+		// Defensive: capture already guarantees ownership of an unchanged record.
 		if has && now.owner != owner || !has && !added[path] {
 			return replayRefusal("replay.not_owned", owner, path, "The touched path is not registered to the delivering owner.")
 		}
-		entry, hadEntry := made.Tree().Lookup(path)
-		current, hasEntry := a.value.tree.Lookup(path)
-		if hadEntry != hasEntry || hadEntry && entry != current {
+		madeEntry, hadEntry := made.Tree().Lookup(path)
+		nowEntry, hasEntry := a.value.tree.Lookup(path)
+		if hadEntry != hasEntry || hadEntry && madeEntry != nowEntry {
 			return replayRefusal("replay.content_changed", owner, path, "The path no longer holds the content the candidate was made on.")
 		}
 	}
