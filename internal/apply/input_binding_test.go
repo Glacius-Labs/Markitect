@@ -105,10 +105,13 @@ func TestSelectedInputAndDependencyByteMismatchesRefuseBeforeCompile(t *testing.
 				raw.Execution[0].RepositoryPath = path(t, "other")
 			case "execution repo coordinate missing":
 				raw.Execution[0].RepositoryPath = snapshot.Path{}
+				raw.Execution[0].File, _ = snapshot.NewEntry(raw.Execution[0].File.Path(), snapshot.Executable, []byte("uncensused execution bytes"))
 			case "registry repo coordinate missing":
 				raw.Registry[0].RepositoryPath = snapshot.Path{}
+				raw.Registry[0].File, _ = snapshot.NewEntry(raw.Registry[0].File.Path(), snapshot.Executable, []byte("uncensused registry bytes"))
 			case "ignore repo coordinate missing":
 				raw.Ignore[0].RepositoryPath = snapshot.Path{}
+				raw.Ignore[0].File, _ = snapshot.NewEntry(raw.Ignore[0].File.Path(), snapshot.Executable, []byte("uncensused ignore bytes"))
 			case "dependency bytes":
 				for i := range raw.Dependencies[0].Source.Entries {
 					if raw.Dependencies[0].Source.Entries[i].Kind == model.Regular {
