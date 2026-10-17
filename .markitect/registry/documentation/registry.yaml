@@ -1,5 +1,9 @@
 apiVersion: markitect.registry/v1
 artifacts:
+  - path: "docs/design/canonical-model/standard-library-data-and-views.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Defines the proposed Web Library C4, data-access, migration and recovery contracts while preserving current-source evidence boundaries.
   - path: "docs/design/canonical-model/standard-library.md"
     form: doc
     realizes: [documentation/current-guidance]

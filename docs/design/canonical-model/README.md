@@ -67,6 +67,8 @@ The [standard-library discussion](standard-library.md) records the owner's 17 Oc
 
 The owner adopted the modular coverage direction and the system/application/deployment boundaries. The [data/resource/C4 walkthrough](standard-library.md#logical-data-operating-resources-and-c4-walkthrough) proposes the next distinction and views without changing the current Library fixture.
 
+The [Web Library view/data/recovery contract](standard-library-data-and-views.md) works out C4 view assessment, atomic access, the reference database, retries, migrations and recovery as detailed proposals.
+
 - [Project](project.md) — the project's name, purpose and associated definitions.
 - [Actor](actor.md) — a role through which a person or another system interacts with the system or participates in project work.
 - [UseCase](use-case.md) — an action available to an Actor and its outcome, accessed through an Interface.

@@ -24,6 +24,7 @@ Source: the owner's standard-library design discussion in this chat on 17 Octobe
 - Broader library requirement: "Unsere Standard Lib muss alles relevante beschreiben können, was normalerweise in einem Software Projekt bzw Repo auch dokumentiert und festgelegt sein muss. Es muss schließlich das Projekt beschreiben können." The owner explicitly named Frontend, Backend, C4 and Load Balancer, and allowed separate Packages. The eight-Kind foundation is therefore the first shared layer, not a claim that a complete software-project vocabulary family has already been designed. The proposed topic map below answers this broader requirement.
 - Continuation: "Alles klar, dann halten wir das so fest und machen so weiter". The owner adopts the modular coverage direction and continuation with system/application/component/deployment/instance boundaries. Exact companion Kind contracts and the web example remain design work; this is not a change to existing M1 behavior or a deployment operation.
 - Boundary selection: "Okay, dann halten wir diese Abgrenzungen fest." This selects the discussed System, Application, Component, Environment, Deployment and optional intended Instance distinctions, including the separation from runtime records. The owner then requested the logical data store, operating resources and C4 mapping in the Library example. The new data/resource contracts and mapping recommendations below remain proposals.
+- The owner then asked to work out the quoted open C4/data-access/database/migration/failure/recovery points next ("Damm kümmere dich als nächstes darum"). The [detailed data-and-view contract](standard-library-data-and-views.md) records the resulting recommendations. This commissions design work; its new PostgreSQL reference choice and other detailed recommendations are not silently owner-selected.
 
 ## Current design state
 
@@ -706,7 +707,7 @@ The canonical Definitions and their explicit sentences remain authoritative. A b
 
 ### Remaining data/operation choices
 
-Before a complete web Library can be realized, decide the data access contract, relevant storage/engine choice or allowed freedom, migration behavior, concurrent failure/retry semantics and backup/recovery requirements. Keep numeric recovery/retention targets unset until the project chooses them. A prospective concurrent-admission Scenario and Check should bind the cross-instance behavior and actual observations, independently of a claim that the selected database is sufficient.
+The owner commissioned these points next. The [detailed data-and-view contract](standard-library-data-and-views.md) now owns the proposed first C4 generation/review method, atomic data-access interface, PostgreSQL reference approach, outcome/retry distinctions, maintenance migration procedure and backup/restore method. Numeric operating objectives still require project requirements. This walkthrough remains the initial boundary example rather than a competing detailed contract.
 
 Recommendation for this slice: add the logical DataStore distinction, separate it from the technical database/hosting resources, broaden Deployment's subject scope explicitly, and begin C4 support with reviewed views of the same project Definitions. These recommendations remain under discussion; no complete new companion schema or database technology is selected here.
 
@@ -729,6 +730,7 @@ Omitting an empty spec in author syntax and removing structured contracts altoge
 - Exact Kind wording remains a working formulation. Interface's internal/external scope is selected; the particular call contract and Component split remain illustrative architecture proposals.
 - The markitect-standard model, its two initial Package identities and the stated version/update policy are selected. Actual distribution, exact source location, fixtures and release automation remain implementation work.
 - Review the broader topic map and architecture/platform example before selecting any new companion Package or Kind.
+- Review the [detailed data-and-view recommendations](standard-library-data-and-views.md), including the reference engine and explicit failure/recovery limits, separately from the already selected foundation.
 - During actual modeling, observe the benefit of structured spec content and the cost of mandatory empty specs, as directed above.
 - Preserve the Library's complete intent when proposing a vocabulary migration; do not alter the M1/M2 Apply acceptance target merely to demonstrate the standard library.
 - Examine a small Tasks model after the Library to distinguish shared needs from Library-specific vocabulary. This is a proposed design check, not authorization for a study or proof of benefit.
