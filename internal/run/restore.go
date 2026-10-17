@@ -69,6 +69,13 @@ func Restore(ctx context.Context, journal Journal, repository string, limits Res
 					return nil, err
 				}
 			}
+			for _, ref := range command.Session.payloadRefs() {
+				payload, readErr := reader.blob(ref)
+				if readErr != nil {
+					return nil, readErr
+				}
+				command.sessionPayloads = append(command.sessionPayloads, payload)
+			}
 			proposal, err := c.Propose(command)
 			if err != nil || proposal.replay != nil || !bytes.Equal(proposal.batch.Bytes(), data) {
 				return nil, ErrInvalid
@@ -81,7 +88,7 @@ func Restore(ctx context.Context, journal Journal, repository string, limits Res
 			if after != head {
 				return nil, ErrInvalid
 			}
-			c.recovering = c.state.hasOpen()
+			c.recovering = c.state.hasOpen() || c.state.hasLiveSessions()
 			return c, nil
 		}
 		if len(page.Batches) == 0 || page.Next != after || after >= head {
