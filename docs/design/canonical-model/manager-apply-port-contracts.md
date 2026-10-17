@@ -74,6 +74,23 @@ The illustrative `TaskSpec.Outcome` above is the static Host operation instructi
 
 The confirmed process uses normal deliveries with limited scope while their Manager remains open. The technical representation must bind Host acceptance and the consumer's composed basis, separately from a reviewer pass. Do not invent a parallel receipt lifecycle or a budget reset for each limited delivery. Successful deliveries consume shared execution capacity but neither use nor reset the rejection counter, whose identity is fixed per run, Manager and review purpose by the [execution contract](manager-apply-execution.md#admission-amendments-and-finite-correction). Exact counting, binding and recovery need implementation evidence.
 
+## Bounded child reports
+
+The owner selected this target message structure; it is not an implemented wire schema or a second delivery ledger. Use the existing adjacent-message channel and journal. The Host binds sender, recipient, run, Manager and exact step; a child cannot assert those identities or issue an accepted delivery.
+
+| Part | Required meaning |
+| --- | --- |
+| Identity and basis | Report ID/version, exact originating step and workspace/candidate binding, and any accepted delivery reference. A later report identifies what it supersedes. |
+| Responsibility and status | Covered scope and initial assessment, progress, limited delivery or completion proposal. Remaining responsibility stays explicit; only the Host can confirm completion. |
+| Result and interfaces | Short result, changed interface references and implications for the direct parent. No descendant transcript dump. |
+| Prerequisites and replies | Needed results, exact producer/delivery references when known, outstanding questions and replies required to proceed. |
+| Findings and uncertainty | Open finding references, unresolved assumptions and observation limits. Absence from a summary never resolves an existing finding. |
+| Evidence and detail | Exact immutable evidence/detail references with the scope each supports. An Agent's report remains a proposal until required review and Host acceptance. |
+
+The Host enforces finite report and assembled-input byte limits from a versioned policy. Exact field names and numeric defaults are producer work, not additions to today's execution YAML. Keep a complete direct-child census and the outstanding-obligation records in the existing journal; only bounded views enter a turn. If a report or a parent input exceeds its limit, split it visibly into version-bound pages with stable ordering, a complete index and an explicit remainder. The Host tracks which required parts were supplied and acknowledged, including across turns, and invalidates those acknowledgements when their bound report changes. Required findings and prerequisites cannot be silently truncated or disappear behind a successful summary. If required material cannot be supplied within the finite limits, retain incomplete work and report that boundary.
+
+Targeted detail retrieval uses evidence references and existing access rules, never direct sibling communication or a provider-selected participation list. Reading every descendant file is not the default. Summarization may judge significance but cannot waive a child, an outstanding question or a mandatory review. The first Apply still obtains a fresh initial assessment from every Manager; report paging is not assessment reuse.
+
 ## Application boundary and source acquisition
 
 CLI and MCP call a concrete `apply.Service.Apply(ctx, request)` and receive a result plus an ordinary error. The request names the repository and either starts a new assignment or continues an open one by its ID; a repository with an unfinished run refuses a new Apply until that run is resumed to its end or stopped ([execution contract](manager-apply-execution.md#assignments-and-runs)). Apply depends on one consumer-owned acquisition port:
