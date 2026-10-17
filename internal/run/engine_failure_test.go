@@ -6,6 +6,7 @@ import (
 	"errors"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/Glacius-Labs/Markitect/internal/run"
 	"github.com/Glacius-Labs/Markitect/internal/snapshot"
@@ -177,5 +178,17 @@ func TestUnchargedFailureStopsTheRun(t *testing.T) {
 	}
 	if v := h.task("lending"); v.Session != "" || v.State != run.TaskQueued {
 		t.Fatal("the abandoned session stayed bound", v)
+	}
+}
+
+// A failed start that overran its reservation ends the run Incomplete once
+// the container is stopped, instead of leaving it in Reconciling.
+func TestOverrunningFailedStartFinishesTheRun(t *testing.T) {
+	h := newHarness(t, true, happyAgent)
+	h.sessions.failOpen = 1
+	h.sessions.onOpen = func() { h.clock = h.clock.Add(2 * time.Second) }
+	runToEnd(t, h)
+	if r := h.c.Current(); r.State != run.Finished || r.Outcome != run.Incomplete || !h.c.Budget().Overrun {
+		t.Fatal("an overrunning failed start did not finish the run", r, h.c.Budget())
 	}
 }

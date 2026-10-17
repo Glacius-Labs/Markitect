@@ -174,6 +174,7 @@ type fakeSessions struct {
 	// stops counts Stop calls.
 	failOpen int
 	stops    int
+	onOpen   func()
 }
 
 func (f *fakeSessions) meta(kind string) run.RecordMeta {
@@ -194,6 +195,9 @@ func (f *fakeSessions) send(ctx context.Context, io run.SessionIO, step run.Step
 func (f *fakeSessions) Open(ctx context.Context, a run.SessionAdmission, io run.SessionIO) (run.SessionObservation, error) {
 	if err := f.send(ctx, io, "", "", `{"control":"initialize"}`); err != nil {
 		return run.SessionObservation{}, err
+	}
+	if f.onOpen != nil {
+		f.onOpen()
 	}
 	if f.failOpen > 0 {
 		// Like the provider adapters, record the start as uncertain first.

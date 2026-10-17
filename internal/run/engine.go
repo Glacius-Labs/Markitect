@@ -231,7 +231,9 @@ type stepRun struct {
 	stepInvoke   string
 	channel      SessionIO
 	began        time.Time
+	openEnded    time.Time
 	stepBegan    time.Time
+	stepEnded    time.Time
 	opened       bool
 	openSettled  bool
 	stepPrepared bool
@@ -313,6 +315,7 @@ func (e *Engine) drive(ctx context.Context, s *stepRun, purpose Purpose, workspa
 	s.began = e.cfg.Clock()
 	s.opened = true
 	opened, err := e.cfg.Sessions.Open(ctx, admission, channel)
+	s.openEnded = e.cfg.Clock()
 	if err != nil || opened.Uncertain {
 		return errors.Join(errStep, err)
 	}
@@ -342,6 +345,7 @@ func (e *Engine) drive(ctx context.Context, s *stepRun, purpose Purpose, workspa
 	s.stepBegan = e.cfg.Clock()
 	s.dispatched = true
 	observed, err := e.cfg.Sessions.Step(ctx, stepAdmission, channel)
+	s.stepEnded = e.cfg.Clock()
 	if err != nil || observed.Uncertain || !observed.Terminal {
 		return errors.Join(errStep, err)
 	}
@@ -402,33 +406,40 @@ func (e *Engine) abandon(ctx context.Context, s *stepRun, cause error) error {
 	}
 	v, _ := c.Session(s.session)
 	stopped := v.Terminated && !v.Uncertain
-	settle := func(kind, invocation, reason string, since time.Time) {
+	// An invocation is charged until its port call returned; stopping the
+	// container afterwards is Host control work.
+	settle := func(kind, invocation, reason string, began, ended time.Time) {
 		cmd := Command{ID: fmt.Sprintf("%s-%s", kind, invocation), ObservedAt: e.cfg.Clock().UTC(), Kind: kind, Assignment: c.Current().Assignment, Run: c.Current().ID, Invocation: invocation, Reason: reason}
 		if kind == SettleInvocation {
-			cmd.Elapsed = e.cfg.Clock().Sub(since)
+			cmd.Elapsed = ended.Sub(began)
 		}
 		errs = append(errs, e.commit(ctx, cmd))
 	}
 	switch {
 	case !s.opened:
-		settle(ReleaseUndispatched, s.openID, "the Host never opened the session", time.Time{})
+		settle(ReleaseUndispatched, s.openID, "the Host never opened the session", time.Time{}, time.Time{})
 	case !s.openSettled && stopped:
-		settle(SettleInvocation, s.openID, "the Host stopped the container after a failed start", s.began)
+		settle(SettleInvocation, s.openID, "the Host stopped the container after a failed start", s.began, s.openEnded)
 	case !s.openSettled:
-		settle(ObserveUncertain, s.openID, "the session's start is not known", time.Time{})
+		settle(ObserveUncertain, s.openID, "the session's start is not known", time.Time{}, time.Time{})
 	}
 	switch {
 	case s.stepPrepared && !s.dispatched:
-		settle(ReleaseUndispatched, s.stepInvoke, "the Host never dispatched the step", time.Time{})
+		settle(ReleaseUndispatched, s.stepInvoke, "the Host never dispatched the step", time.Time{}, time.Time{})
 	case s.dispatched && !s.stepSettled && stopped:
-		settle(SettleInvocation, s.stepInvoke, "the Host stopped the container before the step ended", s.stepBegan)
+		settle(SettleInvocation, s.stepInvoke, "the Host stopped the container before the step ended", s.stepBegan, s.stepEnded)
 	case s.dispatched && !s.stepSettled:
-		settle(ObserveUncertain, s.stepInvoke, "the step's end is not known", time.Time{})
+		settle(ObserveUncertain, s.stepInvoke, "the step's end is not known", time.Time{}, time.Time{})
 	}
 	if err := errors.Join(errs...); err != nil {
 		return err
 	}
 	if r := c.Current(); r.State == Reconciling && !r.StopRequested && stopped {
+		if c.Budget().Overrun {
+			// Every effect ended, but the run cannot continue (core rule T14).
+			return e.commit(ctx, Command{ID: e.meta("finish").ID, ObservedAt: e.cfg.Clock().UTC(), Kind: FinishRun, Assignment: r.Assignment, Run: r.ID, Outcome: Incomplete,
+				Reason: "the failed step overran the budget"})
+		}
 		resume := Command{ID: e.meta("resume").ID, ObservedAt: e.cfg.Clock().UTC(), Kind: ResumeRun, Assignment: r.Assignment, Run: r.ID}
 		if err := e.commit(ctx, resume); err != nil {
 			return err
