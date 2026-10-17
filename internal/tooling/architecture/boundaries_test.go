@@ -99,6 +99,7 @@ func TestConcreteResponsibilityBoundaries(t *testing.T) {
 		{"internal/adapters/codexappserver", "internal/tooling/source", false},
 		{"internal/bootstrap", "internal/adapters/container", true},
 		{"internal/bootstrap", "internal/adapters/journal", true},
+		{"internal/bootstrap", "internal/adapters/claudecode", true},
 		{"internal/adapters/container", "internal/agentd/frame", true},
 		{"internal/adapters/container", "internal/agentd", false},
 		{"internal/adapters/container", "internal/apply", false},
@@ -247,14 +248,15 @@ func TestJournalFixtureEdgesStayTestOnly(t *testing.T) {
 }
 
 func TestBootstrapExecutionCompositionPreservesFixtureBoundaries(t *testing.T) {
-	// Bootstrap composes Run with journal control and the container engine for
-	// workspaces and checks; pure model and snapshot imports remain test-only.
+	// Bootstrap composes Run with journal control, Claude sessions and the container
+	// engine for workspaces and checks; pure model and snapshot imports remain test-only.
 	for _, tc := range []struct {
 		to               string
 		production, test bool
 	}{
 		{"internal/apply", true, true}, {"internal/adapters/gitrepo", true, true},
 		{"internal/adapters/journal", true, true}, {"internal/model", false, true},
+		{"internal/adapters/claudecode", true, true},
 		{"internal/snapshot", false, true}, {"internal/run", true, true}, {"internal/testkit", false, true},
 		{"internal/organization", false, false}, {"internal/realization", false, false},
 		{"internal/adapters/container", true, true}, {"internal/adapters/unknown", false, false},
@@ -275,6 +277,7 @@ func TestBootstrapExecutionCompositionPreservesFixtureBoundaries(t *testing.T) {
 	}{
 		{"internal/adapters/journal", "apply-adapter", "journal", true},
 		{"internal/adapters/container", "apply-adapter", "container", true},
+		{"internal/adapters/claudecode", "apply-adapter", "claudecode", true},
 		{"internal/model", "apply-model", "model", false},
 		{"internal/snapshot", "apply-snapshot", "snapshot", false},
 		{"internal/run", "apply-run", "run", true},

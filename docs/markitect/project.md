@@ -4,7 +4,7 @@ Generated from acquired canonical v1 source bytes. This view is not execution or
 
 ## markitect
 
-Canonical model digest: `sha256:9b677bddd701306b6fc1c6111bd6bd6a6c8c8033d97d146fcceed7ce6cba4609`.
+Canonical model digest: `sha256:25899654dc44e9d6f39dbeab7b57699d75a91e1711e506d952f76cf1b4a6df8f`.
 
 Manifest: `.markitect/model.yaml` (original bytes `sha256:d40feb9e02db275aed89d53b0a88849e463acaca076c8fa70fad38b367a68559`).
 
@@ -184,9 +184,9 @@ Compile the complete canonical language v1 from explicitly supplied immutable so
 
 ### product/organization/delegated-context
 
-Kind: `vocabulary/Rule`. Source: `.markitect/model/product/organization/delegated-context.yaml` (original bytes `sha256:c99c6062e18919a39a481a4120f5b447ff2c5efcead713a085861181faa5daa9`).
+Kind: `vocabulary/Rule`. Source: `.markitect/model/product/organization/delegated-context.yaml` (original bytes `sha256:4b15c16e7e997ed0953c9535bb348a0130ee105549354a27ae6d5415b8b2358d`).
 
-Derive one ordinary root and one Manager per local canonical Package from authoritative compiled facts. Resolve settings exactly and select context only through declared model links and reasons. Preserve the provenance of limits and settings. Compile each Manager context deterministically from explicit model facts, never AI relevance selection or inferred missing relationships. Supply the same static operation instruction with separately compiled local context and configuration. Every local Manager, including empty and intermediate Packages, participates; do not optimize a Manager out. Missing necessary model links remain modeling errors for a separate model change. Do not infer ownership, runtime state or provider facts.
+Derive one ordinary root and one Manager per local canonical Package from authoritative compiled facts. Resolve settings exactly and select context only through declared model links and reasons. Preserve the provenance of limits and settings. Compile each Manager context deterministically from explicit model facts, never AI relevance selection or inferred missing relationships. Supply the same static operation instruction with separately compiled local context and configuration. Every local Manager, including empty and intermediate Packages, participates; do not optimize a Manager out. Require Managers and independent reviewers to derive relevant technical risks and necessary evidence from applicable obligations, available operating conditions and the actual realization, including interactions between areas. Reviewers first derive independent model-based expectations, then investigate implementation-specific risks when the candidate is supplied and request additional evidence through existing findings. Managers investigate and repair violations within their mandate without requiring the owner to enumerate each technical failure mode. Preserve existing intent; a derived technical consequence is not a new project rule, while a changed business policy or a necessary missing model link requires a separate model decision. Keep risks, evidence and unresolved concerns in existing assessments, reports and findings. Do not infer ownership, runtime state or provider facts.
 
 ### product/realization/artifact-accounting
 

@@ -1,5 +1,17 @@
 apiVersion: markitect.registry/v1
 artifacts:
+  - path: "docs/concepts/sources/technical-risk-derivation-20261017.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Preserves the owner clarification and bounded instruction for independent technical risk derivation through existing Manager and reviewer responsibilities.
+  - path: "docs/design/canonical-model/commands.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Records accepted later command semantics, read-only Verify, Extract through existing review and integration, and evidence-based model optimization.
+  - path: "docs/concepts/sources/commands-extract-optimize-20261017.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Preserves owner command examples, Verify and Extract clarifications, Optimize intent and explicit Main publication authority.
   - path: "docs/concepts/sources/configuration-teams-defaults-20261017.md"
     form: doc
     realizes: [documentation/current-guidance]
