@@ -101,6 +101,12 @@ func (e *sessionEntry) redact(data []byte) []byte {
 	}
 	return data
 }
+
+// A native identity is exact or unavailable. Redacting it would invent a
+// different identity and could collapse distinct provider handles.
+func (e *sessionEntry) nativeIdentity(value string) bool {
+	return bytes.Equal([]byte(value), e.redact([]byte(value)))
+}
 func (e *sessionEntry) wire(raw []byte) run.WirePayload {
 	data := e.redact(raw)
 	p, _ := run.NewPayload("application/vnd.markitect.codex-wire", "utf-8", data)
@@ -234,6 +240,9 @@ func (e *sessionEntry) response(ctx context.Context, id RequestID, method Reques
 			return Response{}, ErrProtocolUnsupported
 		}
 		if m.kind == ThreadStartedMessage {
+			if !e.nativeIdentity(string(m.Thread())) {
+				return Response{}, ErrProtocol
+			}
 			if e.thread != "" && e.thread != m.Thread() || e.plan.Resume != "" && string(m.Thread()) != string(e.plan.Resume) {
 				return Response{}, ErrProtocol
 			}
@@ -265,7 +274,7 @@ func (s *Sessions) Open(ctx context.Context, a run.SessionAdmission, channel run
 				out.Wire = e.wire(transcript)
 			}
 			_, recordErr := channel.Bind(context.WithoutCancel(ctx), out)
-			err = errors.Join(e.safe(err), recordErr)
+			err = e.safe(errors.Join(err, recordErr))
 		}
 	}()
 	credential, err := s.credentials(ctx, a.Plan.CredentialRef)
@@ -339,6 +348,9 @@ func (s *Sessions) Open(ctx context.Context, a run.SessionAdmission, channel run
 	if e.thread != "" && e.thread != r.Thread {
 		return out, ErrProtocol
 	}
+	if !e.nativeIdentity(string(r.Thread)) {
+		return out, ErrProtocol
+	}
 	e.thread = r.Thread
 	if a.Plan.Resume != "" && string(e.thread) != string(a.Plan.Resume) {
 		return out, ErrProtocol
@@ -405,7 +417,7 @@ func (s *Sessions) Stop(ctx context.Context, request run.StopRequest, channel ru
 		err = e.safe(stopErr)
 		if stopErr == nil {
 			out.Terminated = true
-			out.Reason = "actual provider exit code=" + strconv.Itoa(exit.Code) + " signal=" + exit.Signal
+			out.Reason = "actual provider exit code=" + strconv.Itoa(exit.Code) + " signal=" + string(e.redact([]byte(exit.Signal)))
 		}
 		e.readOnce.Do(func() { close(e.readDone) })
 		closeErr := e.peer.Close()
@@ -428,7 +440,7 @@ func (s *Sessions) Stop(ctx context.Context, request run.StopRequest, channel ru
 		recordErr = run.ErrObservationLimit
 	}
 	e.stopped = out.Terminated
-	return out, errors.Join(err, recordErr)
+	return out, e.safe(errors.Join(err, recordErr))
 }
 
 var _ run.Sessions = (*Sessions)(nil)
