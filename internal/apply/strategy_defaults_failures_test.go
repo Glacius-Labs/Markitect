@@ -23,11 +23,12 @@ func TestDefaultsRefuseMissingUnknownAndInvalidProductInputs(t *testing.T) {
 		{"observed empty", "", "", "strategy_defaults.yaml", "", model.Failed},
 		{"unknown version", "markitect.strategy-defaults/v1", "markitect.strategy-defaults/v2", "strategy_defaults.profile_unknown", "/apiVersion", model.NotCompleted},
 		{"unknown strategy", "recursive-apply-v1", "future-strategy", "strategy_defaults.profile_unknown", "/strategy", model.NotCompleted},
-		{"missing field", "  reviewRounds: 3\n", "", "strategy_defaults.field_missing", "/defaults/reviewRounds", model.Failed},
-		{"wrong type", "reviewRounds: 3", "reviewRounds: '3'", "strategy_defaults.integer", "/defaults/reviewRounds", model.Failed},
-		{"nonpositive", "reviewRounds: 3", "reviewRounds: 0", "strategy_defaults.positive", "/defaults/reviewRounds", model.Failed},
-		{"null", "reviewRounds: 3", "reviewRounds: null", "strategy_defaults.yaml_feature", "/defaults/reviewRounds", model.Failed},
-		{"duplicate", "  reviewRounds: 3", "  reviewRounds: 3\n  reviewRounds: 2", "strategy_defaults.duplicate_key", "/defaults/reviewRounds", model.Failed},
+		{"missing field", "  rejectionLimit: 3\n", "", "strategy_defaults.field_missing", "/defaults/rejectionLimit", model.Failed},
+		{"wrong type", "rejectionLimit: 3", "rejectionLimit: '3'", "strategy_defaults.integer", "/defaults/rejectionLimit", model.Failed},
+		{"old rejection setting key", "rejectionLimit: 3", "reviewRounds: 3", "strategy_defaults.unknown_key", "/defaults/reviewRounds", model.Failed},
+		{"nonpositive", "rejectionLimit: 3", "rejectionLimit: 0", "strategy_defaults.positive", "/defaults/rejectionLimit", model.Failed},
+		{"null", "rejectionLimit: 3", "rejectionLimit: null", "strategy_defaults.yaml_feature", "/defaults/rejectionLimit", model.Failed},
+		{"duplicate", "  rejectionLimit: 3", "  rejectionLimit: 3\n  rejectionLimit: 2", "strategy_defaults.duplicate_key", "/defaults/rejectionLimit", model.Failed},
 		{"unknown field", "defaults:", "unlimited: true\ndefaults:", "strategy_defaults.unknown_key", "/unlimited", model.Failed},
 		{"alias feature", "manager: []", "manager: &instructions []", "strategy_defaults.yaml_feature", "/defaults/instructions/manager", model.Failed},
 		{"empty instruction reference", "manager: []", "manager: ['']", "strategy_defaults.instruction_reference", "/defaults/instructions/manager", model.Failed},
@@ -100,9 +101,9 @@ func TestDefaultsKnownInvalidProductSurvivesIncompleteExecutionParent(t *testing
 func TestDefaultsValidateActualProjectCeilingsWithoutClamping(t *testing.T) {
 	base := defaultsAbsentExecution(t)
 	for _, tc := range []struct{ name, from, to string }{
-		{"product rounds exceed project", "maxReviewRounds: 3", "maxReviewRounds: 2"},
-		{"authored rounds exceed project", "  stepTimeout: 10m", "  reviewRounds: 4\n  stepTimeout: 10m"},
-		{"override rounds exceed project", "    stepTimeout: 8m", "    reviewRounds: 4\n    stepTimeout: 8m"},
+		{"product default exceeds project ceiling", "maxRejectionLimit: 3", "maxRejectionLimit: 2"},
+		{"authored rejection limit exceeds project ceiling", "  stepTimeout: 10m", "  rejectionLimit: 4\n  stepTimeout: 10m"},
+		{"override rejection limit exceeds project ceiling", "    stepTimeout: 8m", "    rejectionLimit: 4\n    stepTimeout: 8m"},
 		{"default time exceeds project", "  stepTimeout: 10m", "  stepTimeout: 11m"},
 		{"override time exceeds project", "    stepTimeout: 8m", "    stepTimeout: 11m"},
 		{"default roots exceed project", "  creationRoots: [realization]\npackages:", "  creationRoots: [outside]\npackages:"},
@@ -120,7 +121,7 @@ func TestDefaultsValidateActualProjectCeilingsWithoutClamping(t *testing.T) {
 			if _, ok := prepared.Declarations(); ok || prepared.Status() != model.Failed || len(prepared.Diagnostics()) != 1 || prepared.Diagnostics()[0].Code != "settings.selections" || !reflect.DeepEqual(prepared.Execution().Partial(), parent.Partial()) {
 				t.Fatalf("actual project ceiling was clamped or bypassed: %+v", prepared.Diagnostics())
 			}
-			if tc.name == "product rounds exceed project" && (prepared.Execution().Partial().Defaults.ReviewRounds != nil || prepared.Execution().Partial().Limits.MaxReviewRounds.Value != 2) {
+			if tc.name == "product default exceeds project ceiling" && (prepared.Execution().Partial().Defaults.RejectionLimit != nil || prepared.Execution().Partial().Limits.MaxRejectionLimit.Value != 2) {
 				t.Fatal("product default was forged into authored execution or project ceiling was changed")
 			}
 		})

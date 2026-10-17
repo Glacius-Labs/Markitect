@@ -57,6 +57,19 @@ func fakeProvider(mode string) int {
 		fmt.Println("closed")
 		time.Sleep(time.Hour)
 		return 0
+	case "background":
+		child := exec.Command(os.Args[0])
+		child.Env = append(os.Environ(), "AGENTD_TEST_PROVIDER=nap")
+		if err := child.Start(); err != nil {
+			return 1
+		}
+		fmt.Printf("child %d\n", child.Process.Pid)
+		_, _ = io.Copy(io.Discard, os.Stdin)
+		_ = child.Wait()
+		return 0
+	case "nap":
+		time.Sleep(time.Second)
+		return 0
 	case "deaf":
 		time.Sleep(time.Hour)
 		return 0

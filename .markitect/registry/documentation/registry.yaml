@@ -1,5 +1,29 @@
 apiVersion: markitect.registry/v1
 artifacts:
+  - path: "docs/design/canonical-model/standard-library-history.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Preserves the source discussion and superseded standard-library proposals separately from the consolidated current contract.
+  - path: "docs/design/canonical-model/standard-library-project-coverage.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Records the selected six-area project coverage, illustrative Library obligations and remaining project decisions.
+  - path: "docs/design/canonical-model/standard-library-architecture-platform.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Records the selected first architecture, data and deployment Kinds with Package ownership and proposed connected Library relationships.
+  - path: "docs/design/canonical-model/standard-library-data-and-views.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Defines the proposed Web Library C4, data-access, migration and recovery contracts while preserving current-source evidence boundaries.
+  - path: "docs/design/canonical-model/standard-library.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Owns the consolidated standard-library scope, Package/version contract, relationship boundaries and implementation handoff.
+  - path: "docs/concepts/sources/architecture-review-20261017.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Preserves the owner instructions for the architecture review, the concept freeze and the division of work.
   - path: "docs/concepts/sources/manager-process-clarification-20261017.md"
     form: doc
     realizes: [documentation/current-guidance]
@@ -196,6 +220,10 @@ artifacts:
     form: doc
     realizes: [documentation/current-guidance]
     why: Preserves the owner-authored language, Apply or concept contract as a reference.
+  - path: "docs/design/canonical-model/apply-architecture-review-20261017.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Records the dated architecture review of the Apply design, its proposed approach and the owner's concept freeze.
   - path: "docs/design/canonical-model/artifact.md"
     form: doc
     realizes: [documentation/current-guidance]
@@ -368,6 +396,10 @@ artifacts:
     form: config
     realizes: [documentation/current-guidance]
     why: Preserves the owner-authored language, Apply or concept contract as a reference.
+  - path: "docs/design/canonical-model/manager-apply-core.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Owns the core protocol of the first Apply by rule ID.
   - path: "docs/design/canonical-model/manager-apply-concept.md"
     form: doc
     realizes: [documentation/current-guidance]
@@ -1248,6 +1280,10 @@ artifacts:
     form: doc
     realizes: [documentation/current-guidance]
     why: Preserves the explicitly requested Coordinator transition, fixed delivery sources and next scoped tasks.
+  - path: "docs/development/coordinator-handoff-20261017-1505.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Preserves the owner-requested five-hour Coordinator checkpoint, fixed deliveries and evidence recovery limits.
   - path: "docs/development/documentation.md"
     form: doc
     realizes: [documentation/current-guidance]
@@ -1649,6 +1685,10 @@ artifacts:
     realizes: [documentation/current-guidance]
     why: Documents the stated responsibility or preserves its historical evidence.
   - path: "docs/validation/real-project-adoption-pilot.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Documents the stated responsibility or preserves its historical evidence.
+  - path: "docs/validation/runtime-capabilities-20261017.md"
     form: doc
     realizes: [documentation/current-guidance]
     why: Documents the stated responsibility or preserves its historical evidence.

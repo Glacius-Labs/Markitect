@@ -28,10 +28,10 @@ type Mount struct {
 	ReadOnly bool
 }
 
-// SessionSpec describes one session container. Every container runs agentd
-// as a non-root user with a read-only root filesystem, no capabilities and
-// no privilege escalation; only its mounts and /tmp are writable.
-type SessionSpec struct {
+// ContainerSpec describes one session or helper container. Every container
+// runs as a non-root user with a read-only root filesystem, no capabilities
+// and no privilege escalation; only its mounts and /tmp are writable.
+type ContainerSpec struct {
 	// Name is the unique container name.
 	Name string
 	// Image is the engine image ID, the content digest "sha256:...".
@@ -55,8 +55,9 @@ type SessionSpec struct {
 	Network string
 }
 
-// runArgs validates the spec and returns the engine's run arguments.
-func (s SessionSpec) runArgs() ([]string, error) {
+// runArgs validates the spec and returns the engine's run arguments for the
+// entry command: an absolute path inside the image and its arguments.
+func (s ContainerSpec) runArgs(entry []string) ([]string, error) {
 	if !namePattern.MatchString(s.Name) {
 		return nil, fmt.Errorf("container name %q is not a plain engine name", s.Name)
 	}
@@ -85,7 +86,9 @@ func (s SessionSpec) runArgs() ([]string, error) {
 		"--cap-drop", "ALL",
 		"--security-opt", "no-new-privileges",
 		"--user", s.User,
-		"--tmpfs", "/tmp:rw,nosuid,nodev,mode=1777,size=" + strconv.FormatInt(s.TmpBytes, 10),
+		// Executable on purpose: the workspace is executable anyway, and
+		// toolchains such as Go run their build products from /tmp.
+		"--tmpfs", "/tmp:rw,exec,nosuid,nodev,mode=1777,size=" + strconv.FormatInt(s.TmpBytes, 10),
 		"--workdir", s.Workdir,
 		"--cpus", strconv.FormatFloat(s.CPUs, 'f', -1, 64),
 		"--memory", strconv.FormatInt(s.MemoryBytes, 10),
@@ -117,7 +120,11 @@ func (s SessionSpec) runArgs() ([]string, error) {
 		}
 		args = append(args, "--mount", mount)
 	}
-	return append(args, "--entrypoint", AgentdPath, s.Image, "serve"), nil
+	if len(entry) == 0 || !absolute(entry[0]) {
+		return nil, fmt.Errorf("container %s needs an absolute entry command", s.Name)
+	}
+	args = append(args, "--entrypoint", entry[0], s.Image)
+	return append(args, entry[1:]...), nil
 }
 
 func labelArgs(labels map[string]string) ([]string, error) {

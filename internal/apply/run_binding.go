@@ -43,6 +43,7 @@ func (r CapturedSettingsResult) BindRun(facts RunBindingFacts) (run.Binding, err
 		return run.Binding{}, fmt.Errorf("%w: incomplete captured binding inputs", run.ErrInvalid)
 	}
 	input := run.BindingInput{
+		MaxContextBytes: execution.Limits.MaxContextBytes,
 		Source: run.SourceBasis{
 			Repository: facts.RepositoryIdentity, Revision: inputs.Head,
 			Guard: string(inputs.Guard), ProductBuild: facts.ProductBuild,
@@ -69,6 +70,9 @@ func (r CapturedSettingsResult) BindRun(facts RunBindingFacts) (run.Binding, err
 			HostOperationTimeout: execution.Limits.HostOperationTimeout.Value,
 		},
 		PolicySource: execution.APIVersion.Source,
+	}
+	if execution.Scope != nil {
+		input.Scope = append([]organization.Setting[organization.ScopeRule]{}, execution.Scope.Value...) // Preserve explicit empty versus absent.
 	}
 	input.PolicySource.Field = "" // The actual whole execution document, not an invented budget field.
 	for _, dependency := range inputs.Raw.Dependencies {

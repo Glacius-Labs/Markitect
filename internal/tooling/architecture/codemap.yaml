@@ -31,13 +31,17 @@ packages:
     layer: apply-adapter
     purpose: Concrete repository, profile metadata and document I/O.
     doc: docs/development/modules.md
+  - path: internal/adapters/claudecode
+    layer: apply-adapter
+    purpose: Claude Code stream protocol and step session adaptation through the container runtime.
+    doc: internal/adapters/claudecode/README.md
   - path: internal/adapters/cli
     layer: apply-adapter
     purpose: Concrete repository, profile metadata and document I/O.
     doc: docs/development/modules.md
   - path: internal/adapters/codexappserver
     layer: apply-adapter
-    purpose: Prepares Codex build metadata from an explicitly selected immutable runtime image without starting it.
+    purpose: Prepares Codex image metadata and implements step sessions through the container runtime.
     doc: internal/adapters/codexappserver/README.md
   - path: internal/adapters/container
     layer: apply-adapter

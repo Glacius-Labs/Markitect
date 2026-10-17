@@ -6,6 +6,7 @@ import (
 	"crypto/sha256"
 	"errors"
 	"reflect"
+	"strings"
 	"testing"
 	"time"
 
@@ -30,17 +31,24 @@ func wire(t *testing.T, data string) run.WirePayload {
 	p := payload(t, data)
 	return run.WirePayload{Identity: run.WireIdentity{ContentID: p.Ref().ContentID, Size: p.Ref().Size}, Journal: p}
 }
-func sessionPreparation(t *testing.T, id run.SessionID) run.Command {
-	profile, tools := payload(t, `{"model":"configured","credentials":"credential-ref"}`), payload(t, `{"host-tool":"supplied-schema"}`)
-	plan := run.SessionPlan{ID: id, Role: "manager", Workspace: "linux-workspace", Candidate: snapshot.TreeID{1}, ImageID: "sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef", CredentialRef: "credential-ref", MaxWireBytes: 4096, Profile: profile.Ref(), Tools: tools.Ref()}
-	r := run.Reservation{ID: "open-" + string(id), Kind: run.SessionStart, Purpose: run.Writing, Maximum: time.Minute}
-	return run.PrepareSessionCommand(meta("prepare-"+string(id)), "a", "r", plan, r, profile, tools)
+func sessionPreparation(t *testing.T, c *run.Coordinator, id run.SessionID) run.Command {
+	return exploreSessionPreparation(t, c, exploreInputs(t, false), ".", id)
 }
+func stepPreparation(t *testing.T, c *run.Coordinator, id run.StepID, invocation string) run.Command {
+	t.Helper()
+	v, _ := c.Session("s")
+	cmd, err := c.PrepareExploreStepCommand(meta("prepare-"+string(id)), run.StepPlan{Session: "s", ID: id, SessionBinding: v.Plan.Binding()}, run.Reservation{ID: invocation, Kind: run.AgentStep, Purpose: run.Writing, Maximum: time.Minute}, exploreInputs(t, false))
+	if err != nil {
+		t.Fatal(err)
+	}
+	return cmd
+}
+
 func preparedSession(t *testing.T) (*run.Coordinator, *memoryJournal, run.SessionIO) {
 	t.Helper()
 	c, j := running(t)
-	commit(t, c, j, sessionPreparation(t, "s"))
-	io, err := c.SessionChannel(j, "s")
+	commit(t, c, j, sessionPreparation(t, c, "s"))
+	io, err := c.SessionChannel(j, "s", run.RefuseTools)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -73,7 +81,7 @@ func activeStep(t *testing.T) (*run.Coordinator, *memoryJournal, run.SessionIO) 
 	c, j, io := boundSession(t)
 	input, contract := payload(t, `{"compiled":"turn"}`), payload(t, `{"result":"proposal-only"}`)
 	plan := run.StepPlan{Session: "s", SessionBinding: currentSessionBinding(c), ID: "step", Input: input.Ref(), OutputContract: contract.Ref()}
-	commit(t, c, j, run.PrepareStepCommand(meta("prepare-step"), "a", "r", plan, run.Reservation{ID: "step-invocation", Kind: run.AgentStep, Purpose: run.Writing, Maximum: time.Minute}, input, contract))
+	commit(t, c, j, stepPreparation(t, c, plan.ID, "step-invocation"))
 	send(t, io, "turn", "step")
 	_, err := io.ObserveStep(context.Background(), run.StepObservation{RecordMeta: meta("step-started"), Step: "step", ProviderStep: "provider-turn", Wire: wire(t, `{"turn":"started"}`), Reason: "known turn"})
 	if err != nil {
@@ -84,7 +92,7 @@ func activeStep(t *testing.T) (*run.Coordinator, *memoryJournal, run.SessionIO) 
 
 func TestSessionAdmissionAndReferencesCommitAtomically(t *testing.T) {
 	c, j := running(t)
-	cmd := sessionPreparation(t, "s")
+	cmd := sessionPreparation(t, c, "s")
 	before := c.Budget()
 	p, err := c.Propose(cmd)
 	if err != nil {
@@ -119,8 +127,8 @@ func TestSessionAdmissionAndReferencesCommitAtomically(t *testing.T) {
 	if c.Budget().Held.SessionStarts != 1 {
 		t.Fatal("startup not held")
 	}
-	a, err := c.SessionAdmission("s")
-	if err != nil || a.Plan.ID != "s" || a.Receipt.BatchID == "" {
+	a, err := c.SessionAdmission(context.Background(), j, "s")
+	if err != nil || a.Plan.ID != "s" || a.Receipt.BatchID == "" || a.Profile.Ref() != a.Plan.Profile || a.Tools.Ref() != a.Plan.Tools || string(a.Tools.Bytes()) != `{"tools":[]}` {
 		t.Fatal(a, err)
 	}
 	if _, err := c.Inspection("s", "missing"); !errors.Is(err, run.ErrObservationLimit) {
@@ -164,7 +172,7 @@ func TestSendRequiresExactAcknowledgementAndCannotReplay(t *testing.T) {
 			if !c2.RecoveryRequired() {
 				t.Fatal("recovery forgot possible dispatch")
 			}
-			io2, err := c2.SessionChannel(j, "s")
+			io2, err := c2.SessionChannel(j, "s", run.RefuseTools)
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -195,7 +203,7 @@ func TestLiveSessionAndUnknownStopBlockFinishEvenAfterBudgetSettlement(t *testin
 	if !c2.RecoveryRequired() {
 		t.Fatal("live provider forgotten")
 	}
-	io2, err := c2.SessionChannel(j, "s")
+	io2, err := c2.SessionChannel(j, "s", run.RefuseTools)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -209,44 +217,53 @@ func TestLiveSessionAndUnknownStopBlockFinishEvenAfterBudgetSettlement(t *testin
 	commit(t, c2, j, f)
 }
 
-func TestChannelBoundToolDedupRetainsPendingAndExistingReply(t *testing.T) {
-	c, j, io := activeStep(t)
+// answering returns a handler that answers every call with result and counts
+// how often the Host executed it.
+func answering(result string, calls *int) run.ToolHandler {
+	return func(context.Context, run.ToolCall, int64) (run.ToolOutcome, error) {
+		*calls++
+		return run.ToolOutcome{Status: run.ToolOK, Result: []byte(result)}, nil
+	}
+}
+func failing(context.Context, run.ToolCall, int64) (run.ToolOutcome, error) {
+	return run.ToolOutcome{}, errors.New("Host tool failed after possible effect")
+}
+func channel(t *testing.T, c *run.Coordinator, j run.Journal, tools run.ToolHandler) run.SessionIO {
+	t.Helper()
+	io, err := c.SessionChannel(j, "s", tools)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return io
+}
+
+func TestCallAnswersOnceAndReturnsTheRecordedAnswer(t *testing.T) {
+	c, j, _ := activeStep(t)
+	executed := 0
+	io := channel(t, c, j, answering(`{"read":"content"}`, &executed))
 	call := run.ToolCall{RecordMeta: meta("tool-ingress"), Step: "step", Call: "provider-call", Tool: "supplied-host-tool", Input: wire(t, `{"read":"target"}`)}
-	r, err := io.ToolRequest(context.Background(), call)
-	if err != nil || !r.Fresh {
-		t.Fatal("ingress not recorded", r, err)
+	first, err := io.Call(context.Background(), call)
+	if err != nil || executed != 1 || first.Receipt.BatchID == "" || string(first.Output.Bytes()) != `{"status":"ok","result":{"read":"content"}}` {
+		t.Fatal("call not answered and recorded", first, err, executed)
 	}
-	before, calls := c.Revision(), j.appendCalls
+	before, appends := c.Revision(), j.appendCalls
 	call.RecordMeta = meta("duplicate-ingress")
-	r, err = io.ToolRequest(context.Background(), call)
-	if !errors.Is(err, run.ErrObservationLimit) || r.Fresh || r.Replied {
-		t.Fatal("unresolved callback re-executed", r, err)
+	again, err := io.Call(context.Background(), call)
+	if err != nil || executed != 1 || again.Receipt != first.Receipt || !bytes.Equal(again.Output.Bytes(), first.Output.Bytes()) {
+		t.Fatal("exact repeat executed again or lost its answer", again, err, executed)
 	}
-	if c.Revision() != before || j.appendCalls != calls {
-		t.Fatal("duplicate appended")
+	if c.Revision() != before || j.appendCalls != appends {
+		t.Fatal("exact repeat appended")
 	}
 	changed := call
 	changed.Input = wire(t, `{"read":"different"}`)
-	if _, err := io.ToolRequest(context.Background(), changed); !errors.Is(err, run.ErrConflict) {
+	if _, err := io.Call(context.Background(), changed); !errors.Is(err, run.ErrConflict) || executed != 1 {
 		t.Fatal("call identity changed content", err)
 	}
-	reply := run.ToolReply{RecordMeta: meta("reply"), Call: call.Call, Output: wire(t, `{"result":"known reply"}`)}
-	receipt, err := io.ToolReply(context.Background(), reply)
-	if err != nil {
-		t.Fatal(err)
-	}
-	r, err = io.ToolRequest(context.Background(), call)
-	if err != nil || !r.Replied || r.Fresh || r.Receipt != receipt || !bytes.Equal(r.Payload.Bytes(), reply.Output.Journal.Bytes()) {
-		t.Fatal("existing reply not reused", r, err)
-	}
 	c2 := restored(t, &readJournal{store: j})
-	io2, err := c2.SessionChannel(j, "s")
-	if err != nil {
-		t.Fatal(err)
-	}
-	r, err = io2.ToolRequest(context.Background(), call)
-	if err != nil || r.Fresh || r.Receipt != receipt {
-		t.Fatal("restart lost tool dedup", r, err)
+	restarted, err := channel(t, c2, j, answering(`{"read":"other"}`, &executed)).Call(context.Background(), call)
+	if err != nil || executed != 1 || restarted.Receipt != first.Receipt || !bytes.Equal(restarted.Output.Bytes(), first.Output.Bytes()) {
+		t.Fatal("restart lost the recorded answer", restarted, err)
 	}
 	inspection, err := c2.Inspection("s", "step")
 	if err != nil || inspection.ProviderSession != "provider-session" || inspection.ProviderStep != "provider-turn" || inspection.SessionBinding.BatchID == "" || inspection.StepBinding.BatchID == "" {
@@ -257,27 +274,139 @@ func TestChannelBoundToolDedupRetainsPendingAndExistingReply(t *testing.T) {
 	}
 }
 
-func TestRedactedWireStoresPermittedRepresentationWithoutReplayAuthority(t *testing.T) {
+func TestChannelRequiresHandlerAndRefusalIsAnAnswer(t *testing.T) {
 	c, j, io := activeStep(t)
-	call := run.ToolCall{RecordMeta: meta("call"), Step: "step", Call: "call", Tool: "schema", Input: wire(t, `{"request":"nonsecret"}`)}
-	if _, err := io.ToolRequest(context.Background(), call); err != nil {
+	if _, err := c.SessionChannel(j, "s", nil); !errors.Is(err, run.ErrState) {
+		t.Fatal("channel without Host tools", err)
+	}
+	r, err := io.Call(context.Background(), run.ToolCall{RecordMeta: meta("refused"), Step: "step", Call: "call", Tool: "unsupported", Input: wire(t, `{}`)})
+	if err != nil || string(r.Output.Bytes()) != `{"status":"refused","reason":"no Host tool is available in this slice"}` {
+		t.Fatal("refusal not recorded as an answer", r, err)
+	}
+	for name, outcome := range map[string]run.ToolOutcome{
+		"ok with reason":         {Status: run.ToolOK, Reason: "mixed"},
+		"refused without reason": {Status: run.ToolRefused},
+		"refused with result":    {Status: run.ToolRefused, Result: []byte(`{}`), Reason: "mixed"},
+		"invalid result":         {Status: run.ToolOK, Result: []byte(`{"open"`)},
+		"unknown status":         {Status: "maybe"},
+		"oversize result":        {Status: run.ToolOK, Result: []byte(`"` + strings.Repeat("x", 1<<20) + `"`)},
+	} {
+		executed := 0
+		handler := func(context.Context, run.ToolCall, int64) (run.ToolOutcome, error) {
+			executed++
+			return outcome, nil
+		}
+		call := run.ToolCall{RecordMeta: meta("shape-" + name), Step: "step", Call: run.ProviderCallID("shape-" + name), Tool: "unsupported", Input: wire(t, `{}`)}
+		if _, err := channel(t, c, j, handler).Call(context.Background(), call); !errors.Is(err, run.ErrInvalid) || executed != 1 {
+			t.Fatal(name, "accepted", err)
+		}
+		if _, err := channel(t, c, j, handler).Call(context.Background(), call); !errors.Is(err, run.ErrObservationLimit) || executed != 1 {
+			t.Fatal(name, "invalid answer did not leave the call pending", err)
+		}
+	}
+}
+
+func TestEveryRecordedAnswerCanBeSentOnceInItsStep(t *testing.T) {
+	_, _, io := activeStep(t)
+	for _, id := range []run.ProviderCallID{"first", "second"} {
+		if _, err := io.Call(context.Background(), run.ToolCall{RecordMeta: meta("call-" + string(id)), Step: "step", Call: id, Tool: "unsupported", Input: wire(t, `{}`)}); err != nil {
+			t.Fatal(err)
+		}
+		frame := wire(t, `{"id":"`+string(id)+`","result":"refused"}`)
+		answer := run.TransportPreparation{RecordMeta: meta("answer-" + string(id)), Message: run.MessageID("answer-" + string(id)), Step: "step", Call: id, Wire: frame}
+		if p, err := io.PrepareSend(context.Background(), answer); err != nil || !p.Dispatch {
+			t.Fatal("recorded answer could not be sent", id, err)
+		}
+		if _, err := io.ObserveSend(context.Background(), run.TransportObservation{RecordMeta: meta("answered-" + string(id)), Message: answer.Message, Outcome: run.Sent, Reason: "observed write"}); err != nil {
+			t.Fatal(err)
+		}
+	}
+	again := run.TransportPreparation{RecordMeta: meta("answer-again"), Message: "answer-again", Step: "step", Call: "first", Wire: wire(t, `{"id":"first","result":"again"}`)}
+	if _, err := io.PrepareSend(context.Background(), again); !errors.Is(err, run.ErrState) {
+		t.Fatal("answer sent twice", err)
+	}
+	unanswered := run.TransportPreparation{RecordMeta: meta("answer-unknown"), Message: "answer-unknown", Step: "step", Call: "unknown", Wire: wire(t, `{"id":"unknown"}`)}
+	if _, err := io.PrepareSend(context.Background(), unanswered); !errors.Is(err, run.ErrState) {
+		t.Fatal("answer without a recorded Host answer", err)
+	}
+	plain := run.TransportPreparation{RecordMeta: meta("plain"), Message: "plain", Step: "step", Wire: wire(t, `{"user":"another turn"}`)}
+	if _, err := io.PrepareSend(context.Background(), plain); !errors.Is(err, run.ErrState) {
+		t.Fatal("a second turn input was sent", err)
+	}
+}
+
+func TestHaltedRunAnswersWithoutReachingTheHandler(t *testing.T) {
+	c, j, _ := activeStep(t)
+	stop := command("stop", run.StopRun)
+	stop.Reason = "owner stop"
+	commit(t, c, j, stop)
+	executed := 0
+	r, err := channel(t, c, j, answering(`{}`, &executed)).Call(context.Background(), run.ToolCall{RecordMeta: meta("after-stop"), Step: "step", Call: "after-stop", Tool: "read", Input: wire(t, `{}`)})
+	if err != nil || executed != 0 || r.Outcome.Status != run.ToolRefused || r.Receipt.BatchID == "" {
+		t.Fatal("stopped run reached the Host tool", r, err, executed)
+	}
+}
+
+func TestLostAnswerKeepsOutcomeForHostReconciliation(t *testing.T) {
+	c, j, _ := activeStep(t)
+	executed := 0
+	io := channel(t, c, j, answering(`{"read":"content"}`, &executed))
+	if _, err := io.Call(context.Background(), run.ToolCall{RecordMeta: meta("first"), Step: "step", Call: "first", Tool: "read", Input: wire(t, `{}`)}); err != nil {
 		t.Fatal(err)
 	}
+	if _, err := c.ToolReconciliation(meta("not-pending"), "s", "first", run.ToolOutcome{Status: run.ToolRefused, Reason: "late"}); !errors.Is(err, run.ErrState) {
+		t.Fatal("reconciled an answered call", err)
+	}
+	call := run.ToolCall{RecordMeta: meta("lost"), Step: "step", Call: "lost", Tool: "read", Input: wire(t, `{}`)}
+	j.appendMode = "absent-after-next"
+	r, err := io.Call(context.Background(), call)
+	j.appendMode = ""
+	if err == nil || r.Receipt.BatchID != "" || r.Outcome.Status != run.ToolOK || string(r.Output.Bytes()) != `{"status":"ok","result":{"read":"content"}}` || executed != 2 {
+		t.Fatal("lost answer not kept for reconciliation", r, err, executed)
+	}
+	if err := c.ReconcilePending(context.Background(), j); err != nil {
+		t.Fatal(err)
+	}
+	acked := run.ToolCall{RecordMeta: meta("ack-lost"), Step: "step", Call: "ack-lost", Tool: "read", Input: wire(t, `{}`)}
+	j.appendMode = "lost-after-next"
+	lost, err := io.Call(context.Background(), acked)
+	j.appendMode = ""
+	if err == nil || lost.Receipt != (run.AppendReceipt{}) || lost.Outcome.Status != run.ToolOK {
+		t.Fatal("lost acknowledgement returned a receipt", lost, err)
+	}
+	if err := c.ReconcilePending(context.Background(), j); err != nil {
+		t.Fatal(err)
+	}
+	if recorded, err := io.Call(context.Background(), acked); err != nil || recorded.Receipt.BatchID == "" || executed != 3 {
+		t.Fatal("answer committed behind a lost acknowledgement not adopted", recorded, err)
+	}
+	if _, err := io.Call(context.Background(), call); !errors.Is(err, run.ErrObservationLimit) || executed != 3 {
+		t.Fatal("absent answer executed again", err)
+	}
+	reconciled, err := c.ToolReconciliation(meta("lost-reconciled"), "s", "lost", r.Outcome)
+	if err != nil {
+		t.Fatal(err)
+	}
+	commit(t, c, j, reconciled)
+	again, err := io.Call(context.Background(), call)
+	if err != nil || executed != 3 || !bytes.Equal(again.Output.Bytes(), r.Output.Bytes()) {
+		t.Fatal("reconciled answer not returned", again, err)
+	}
+}
+
+func TestRedactedCallInputStoresOnlyThePermittedRepresentation(t *testing.T) {
+	c, j, io := activeStep(t)
 	// The supplied hash is the identity of a hypothetical real wire, not a
 	// BlobRef. No secret value is constructed or supplied to pure RUN.
 	identity := run.WireIdentity{ContentID: snapshot.ContentID(sha256.Sum256([]byte("opaque wire identity fixture"))), Size: 80}
 	redacted := run.WirePayload{Identity: identity, Journal: payload(t, `{"credential":"[REDACTED]"}`), Redacted: true, ObservationLimit: "Host redacted known credential before append; original bytes unavailable for replay"}
-	_, err := io.ToolReply(context.Background(), run.ToolReply{RecordMeta: meta("reply"), Call: "call", Output: redacted})
-	if err != nil {
+	call := run.ToolCall{RecordMeta: meta("call"), Step: "step", Call: "call", Tool: "schema", Input: redacted}
+	if _, err := io.Call(context.Background(), call); err != nil {
 		t.Fatal(err)
 	}
-	refs, err := j.batches[len(j.batches)-1].SessionRefs()
+	refs, err := j.batches[len(j.batches)-2].SessionRefs()
 	if err != nil || len(refs) != 1 || refs[0] != redacted.Journal.Ref() || refs[0].ContentID == identity.ContentID {
 		t.Fatal("wire identity confused with stored bytes", refs, err)
-	}
-	r, err := io.ToolRequest(context.Background(), call)
-	if !errors.Is(err, run.ErrObservationLimit) || !r.Replied || r.Payload.Valid() || r.Reply.Identity != identity {
-		t.Fatal("redacted reply became original wire", r, err)
 	}
 	c2 := restored(t, &readJournal{store: j})
 	if v, _ := c2.Session("s"); v.Plan.CredentialRef != "credential-ref" {
@@ -288,11 +417,16 @@ func TestRedactedWireStoresPermittedRepresentationWithoutReplayAuthority(t *test
 	}
 }
 
-func TestTerminalStepAndStoppedSessionStillRetainUnresolvedToolActivity(t *testing.T) {
-	c, j, io := activeStep(t)
+func TestPendingToolCallBlocksCompletionUntilHostReconciliation(t *testing.T) {
+	c, j, _ := activeStep(t)
+	io := channel(t, c, j, failing)
 	call := run.ToolCall{RecordMeta: meta("tool"), Step: "step", Call: "call", Tool: "schema", Input: wire(t, `{"request":"bounded"}`)}
-	if _, err := io.ToolRequest(context.Background(), call); err != nil {
-		t.Fatal(err)
+	if _, err := io.Call(context.Background(), call); err == nil {
+		t.Fatal("failed Host tool reported an answer")
+	}
+	executed := 0
+	if _, err := channel(t, c, j, answering(`{}`, &executed)).Call(context.Background(), call); !errors.Is(err, run.ErrObservationLimit) || executed != 0 {
+		t.Fatal("pending call executed again", err, executed)
 	}
 	terminal := run.StepObservation{RecordMeta: meta("terminal"), Step: "step", ProviderStep: "provider-turn", Wire: wire(t, `{"terminal":true}`), Terminal: true, Reason: "provider result"}
 	if _, err := io.ObserveStep(context.Background(), terminal); !errors.Is(err, run.ErrState) {
@@ -308,9 +442,11 @@ func TestTerminalStepAndStoppedSessionStillRetainUnresolvedToolActivity(t *testi
 	if _, err := c.Propose(f); !errors.Is(err, run.ErrState) {
 		t.Fatal("provider stop cleared Host tool uncertainty", err)
 	}
-	if _, err := io.ToolReply(context.Background(), run.ToolReply{RecordMeta: meta("tool-reconciled"), Call: "call", Output: wire(t, `{"observation":"proven not executed"}`)}); err != nil {
+	reconciled, err := c.ToolReconciliation(meta("tool-reconciled"), "s", "call", run.ToolOutcome{Status: run.ToolRefused, Reason: "proven not executed"})
+	if err != nil {
 		t.Fatal(err)
 	}
+	commit(t, c, j, reconciled)
 	commit(t, c, j, f)
 	c2 := restored(t, &readJournal{store: j})
 	if c2.RecoveryRequired() || !reflect.DeepEqual(c.Assignments(), c2.Assignments()) {
@@ -329,16 +465,16 @@ func TestSessionAdmissionsRefuseAfterStopRequest(t *testing.T) {
 				c, j, _ = boundSession(t)
 				input, contract := payload(t, "input"), payload(t, "contract")
 				plan := run.StepPlan{Session: "s", SessionBinding: currentSessionBinding(c), ID: "unstarted", Input: input.Ref(), OutputContract: contract.Ref()}
-				commit(t, c, j, run.PrepareStepCommand(meta("step-prep"), "a", "r", plan, run.Reservation{ID: "step-hold", Kind: run.AgentStep, Purpose: run.Writing, Maximum: time.Minute}, input, contract))
+				commit(t, c, j, stepPreparation(t, c, plan.ID, "step-hold"))
 			}
 			stop := command("stop", run.StopRun)
 			stop.Reason = "owner stop"
 			commit(t, c, j, stop)
 			var err error
 			if kind == "session" {
-				_, err = c.SessionAdmission("s")
+				_, err = c.SessionAdmission(context.Background(), j, "s")
 			} else {
-				_, err = c.StepAdmission("unstarted")
+				_, err = c.StepAdmission(context.Background(), j, "unstarted")
 			}
 			if !errors.Is(err, run.ErrState) {
 				t.Fatal("stop request allowed new external launch", err)
@@ -349,7 +485,12 @@ func TestSessionAdmissionsRefuseAfterStopRequest(t *testing.T) {
 
 func TestRecoveryAllowsBoundedStopSendWithoutClearingUnknownOrdinarySend(t *testing.T) {
 	c, j, io := activeStep(t)
-	p := run.TransportPreparation{RecordMeta: meta("uncertain-send"), Message: "uncertain", Step: "step", Wire: wire(t, "possible outbound notification")}
+	denied, err := io.Call(context.Background(), run.ToolCall{RecordMeta: meta("deny-request"), Step: "step", Call: "deny", Tool: "unsupported", Input: wire(t, "request")})
+	if err != nil {
+		t.Fatal(err)
+	}
+	reply := run.WirePayload{Identity: run.WireIdentity{ContentID: denied.Output.Ref().ContentID, Size: denied.Output.Ref().Size}, Journal: denied.Output}
+	p := run.TransportPreparation{RecordMeta: meta("uncertain-send"), Message: "uncertain", Step: "step", Call: "deny", Wire: reply}
 	if _, err := io.PrepareSend(context.Background(), p); err != nil {
 		t.Fatal(err)
 	}
@@ -358,7 +499,7 @@ func TestRecoveryAllowsBoundedStopSendWithoutClearingUnknownOrdinarySend(t *test
 	}
 	c2 := restored(t, &readJournal{store: j})
 	before := c2.Budget()
-	io2, err := c2.SessionChannel(j, "s")
+	io2, err := c2.SessionChannel(j, "s", run.RefuseTools)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -381,6 +522,15 @@ func TestRecoveryAllowsBoundedStopSendWithoutClearingUnknownOrdinarySend(t *test
 		t.Fatal("termination released elapsed hold without observation")
 	}
 	commit(t, c2, j, settle("step-invocation", time.Second))
+	if !c2.RecoveryRequired() {
+		t.Fatal("stop erased unknown send")
+	}
+	if _, err := io2.ObserveSend(context.Background(), run.TransportObservation{RecordMeta: meta("stop-sent"), Message: "stop", Outcome: run.Sent, Reason: "observed stop transport"}); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := io2.ObserveSend(context.Background(), run.TransportObservation{RecordMeta: meta("reply-sent"), Message: "uncertain", Outcome: run.Sent, Reason: "explicitly reconciled denial transport"}); err != nil {
+		t.Fatal(err)
+	}
 	if c2.RecoveryRequired() {
 		t.Fatal("known quiescence did not clear recovery")
 	}
@@ -391,7 +541,7 @@ func TestUncertainStepRejectsMalformedPartialProviderHandle(t *testing.T) {
 	c, j, io := boundSession(t)
 	input, contract := payload(t, "input"), payload(t, "contract")
 	plan := run.StepPlan{Session: "s", SessionBinding: currentSessionBinding(c), ID: "step", Input: input.Ref(), OutputContract: contract.Ref()}
-	commit(t, c, j, run.PrepareStepCommand(meta("prepare-step"), "a", "r", plan, run.Reservation{ID: "step-effect", Kind: run.AgentStep, Purpose: run.Writing, Maximum: time.Minute}, input, contract))
+	commit(t, c, j, stepPreparation(t, c, plan.ID, "step-effect"))
 	before := c.Revision()
 	_, err := io.ObserveStep(context.Background(), run.StepObservation{RecordMeta: meta("unknown"), Step: "step", ProviderStep: "bad\x00handle", Uncertain: true, Reason: "incomplete provider observation"})
 	if !errors.Is(err, run.ErrInvalid) || c.Revision() != before {
@@ -410,13 +560,14 @@ func TestStepRequiresExplicitMatchingSessionPlanBinding(t *testing.T) {
 	changed.Workspace = "different-workspace"
 	plan := run.StepPlan{Session: "s", ID: "step", SessionBinding: changed.Binding(), Input: input.Ref(), OutputContract: contract.Ref()}
 	before := c.Budget()
-	cmd := run.PrepareStepCommand(meta("step-prep"), "a", "r", plan, run.Reservation{ID: "step-hold", Kind: run.AgentStep, Purpose: run.Writing, Maximum: time.Minute}, input, contract)
+	cmd := stepPreparation(t, c, plan.ID, "step-hold")
+	cmd.Session.StepPlan.SessionBinding = changed.Binding()
 	if _, err := c.Propose(cmd); !errors.Is(err, run.ErrState) || c.Budget() != before {
 		t.Fatal("changed session basis continued", err)
 	}
 	plan.SessionBinding = v.Plan.Binding()
-	commit(t, c, j, run.PrepareStepCommand(meta("step-prep"), "a", "r", plan, cmd.Reservation, input, contract))
-	admission, err := c.StepAdmission("step")
+	commit(t, c, j, stepPreparation(t, c, plan.ID, "step-hold"))
+	admission, err := c.StepAdmission(context.Background(), j, "step")
 	if err != nil || admission.Session != v.Plan || admission.Plan.SessionBinding != v.Plan.Binding() {
 		t.Fatal("admission lost fixed plan", admission, err)
 	}
@@ -424,7 +575,7 @@ func TestStepRequiresExplicitMatchingSessionPlanBinding(t *testing.T) {
 
 func TestSessionLimitsAndRestoreRefuseMissingOrCorruptRequiredBytes(t *testing.T) {
 	c, j, io := preparedSession(t)
-	bad := sessionPreparation(t, "other")
+	bad := sessionPreparation(t, c, "other")
 	bad.Session.Plan.Profile = run.BlobRef{}
 	if _, err := c.Propose(bad); !errors.Is(err, run.ErrInvalid) {
 		t.Fatal("missing mandatory reference accepted", err)
@@ -432,7 +583,7 @@ func TestSessionLimitsAndRestoreRefuseMissingOrCorruptRequiredBytes(t *testing.T
 	if refs, err := (run.AppendBatch{}).SessionRefs(); err == nil || len(refs) != 0 {
 		t.Fatal("invalid batch exposed partial closure", err)
 	}
-	oversize := run.TransportPreparation{RecordMeta: meta("oversize"), Message: "large", Wire: wire(t, string(bytes.Repeat([]byte("x"), 4097)))}
+	oversize := run.TransportPreparation{RecordMeta: meta("oversize"), Message: "large", Wire: wire(t, string(bytes.Repeat([]byte("x"), (1<<20)+1)))}
 	if p, err := io.PrepareSend(context.Background(), oversize); !errors.Is(err, run.ErrInvalid) || p.Dispatch {
 		t.Fatal("profile wire bound ignored", err)
 	}
@@ -499,7 +650,7 @@ func TestProviderNeutralPortMapsOpenStepInspectStopWithoutReplay(t *testing.T) {
 	c, j, io := preparedSession(t)
 	fake := &portFake{t: t}
 	ctx := context.Background()
-	a, err := c.SessionAdmission("s")
+	a, err := c.SessionAdmission(context.Background(), j, "s")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -509,8 +660,8 @@ func TestProviderNeutralPortMapsOpenStepInspectStopWithoutReplay(t *testing.T) {
 	commit(t, c, j, settle("open-s", time.Second))
 	input, contract := payload(t, "compiled input"), payload(t, "output contract")
 	plan := run.StepPlan{Session: "s", SessionBinding: currentSessionBinding(c), ID: "step", Input: input.Ref(), OutputContract: contract.Ref()}
-	commit(t, c, j, run.PrepareStepCommand(meta("prepare-step"), "a", "r", plan, run.Reservation{ID: "step-effect", Kind: run.AgentStep, Purpose: run.Writing, Maximum: time.Minute}, input, contract))
-	step, err := c.StepAdmission("step")
+	commit(t, c, j, stepPreparation(t, c, plan.ID, "step-effect"))
+	step, err := c.StepAdmission(context.Background(), j, "step")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -545,5 +696,54 @@ func TestProviderNeutralPortMapsOpenStepInspectStopWithoutReplay(t *testing.T) {
 	st, _ := c2.Step("step")
 	if !s.Terminated || !st.Terminal || st.Proposed == (run.BlobRef{}) || c2.RecoveryRequired() {
 		t.Fatal("port observations not reconstructed", s, st)
+	}
+}
+
+func resumedSession(t *testing.T) run.SessionIO {
+	t.Helper()
+	c, j := running(t)
+	inputs := exploreInputs(t, false)
+	profile, tools := payload(t, `{"profile":"synthetic recorded metadata"}`), payload(t, `{"tools":[]}`)
+	plan := run.SessionPlan{ID: "s", Role: "manager", Workspace: "linux-workspace-s", ProviderHome: "provider-home", Resume: "provider-session", Candidate: inputs.Binding.Census.Digest(), ReadOnly: true, ImageID: "sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef", CredentialRef: "credential-ref", MaxWireBytes: 1 << 20, Profile: profile.Ref(), Tools: tools.Ref()}
+	cmd, err := c.PrepareExploreSessionCommand(meta("prepare-s"), ".", plan, run.Reservation{ID: "open-s", Kind: run.SessionStart, Purpose: run.Writing, Maximum: time.Minute}, profile, tools)
+	if err != nil {
+		t.Fatal(err)
+	}
+	commit(t, c, j, cmd)
+	return channel(t, c, j, run.RefuseTools)
+}
+
+func TestResumedSessionBindsOnlyTheRequestedConversation(t *testing.T) {
+	io := resumedSession(t)
+	send(t, io, "resume", "")
+	other := run.SessionObservation{RecordMeta: meta("bind-other"), ProviderSession: "other-session", Wire: wire(t, `{"thread":"other-session"}`), Reason: "provider started a new thread"}
+	if _, err := io.Bind(context.Background(), other); !errors.Is(err, run.ErrState) {
+		t.Fatal("a different conversation bound as the resumed one", err)
+	}
+	same := run.SessionObservation{RecordMeta: meta("bind"), ProviderSession: "provider-session", Wire: wire(t, `{"thread":"provider-session"}`), Reason: "provider resumed the thread"}
+	if _, err := io.Bind(context.Background(), same); err != nil {
+		t.Fatal(err)
+	}
+}
+
+func TestResumedSessionReportsAnotherConversationAsUncertain(t *testing.T) {
+	io := resumedSession(t)
+	send(t, io, "resume", "")
+	other := run.SessionObservation{RecordMeta: meta("bind-other"), ProviderSession: "other-session", Wire: wire(t, `{"thread":"other-session"}`), Uncertain: true, Reason: "provider reported a different thread"}
+	if _, err := io.Bind(context.Background(), other); err != nil {
+		t.Fatal("uncertain observation of another conversation refused", err)
+	}
+}
+
+func TestStepAdmissionCarriesTheVerifiedRecordedBytes(t *testing.T) {
+	c, j, _ := boundSession(t)
+	commit(t, c, j, stepPreparation(t, c, "unstarted", "step-hold"))
+	a, err := c.StepAdmission(context.Background(), j, "unstarted")
+	if err != nil || a.Input.Ref() != a.Plan.Input || a.OutputContract.Ref() != a.Plan.OutputContract || len(a.Input.Bytes()) == 0 {
+		t.Fatal("admission lacks the exact step bytes", a, err)
+	}
+	delete(j.blobs, a.Plan.Input)
+	if _, err := c.StepAdmission(context.Background(), j, "unstarted"); !errors.Is(err, run.ErrObservationLimit) {
+		t.Fatal("admission without its recorded input", err)
 	}
 }

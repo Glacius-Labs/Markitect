@@ -23,9 +23,23 @@ func RenderContext(selection ContextSelection, settings Settings, input RenderIn
 	w := contextWriter{limit: input.MaxContextBytes}
 	w.add("role", strings.TrimSuffix(text, mandateTemplate), product)
 	w.add("mandate", mandateTemplate, product)
+	operation, instruction := ApplyOperation()
+	if input.View != ManagerView {
+		w.add("operation-is-review-subject", reviewOperationText, productLiteral("review-operation", reviewOperationText))
+	}
+	w.add("static-apply-operation", instruction, RenderSource{Kind: ProductRenderSource, Product: operation})
+	w.reference("operation-record-reference-not-authentication", input.Task.Outcome.Source)
 	w.reference("captured-basis-reference-not-verification", input.InputBinding)
 	w.json("task-identity", struct{ ID, Package, ModelID, ModelDigest string }{input.Task.ID, input.Task.Package, selection.ModelID(), selection.ModelDigest()}, hostRender(input.InputBinding))
-	w.host("task-outcome", input.Task.Outcome)
+	if input.Process != nil {
+		w.json("host-manager-phase-not-admission", input.Process.Phase, hostRender(input.Process.Source))
+		phaseText := managerPhaseText(input.Process.Phase)
+		w.add("manager-phase-instruction-not-grant", phaseText, productLiteral("phase/"+string(input.Process.Phase), phaseText))
+	}
+	for _, hint := range input.ParentHints {
+		w.json("asserted-direct-parent-hint-sender", hint.Package, hostRender(hint.Advice.Source))
+		w.host("parent-hint-not-authority", hint.Advice)
+	}
 	if input.OwnerInput != nil {
 		w.host("root-owner-input", *input.OwnerInput)
 	}
@@ -47,16 +61,16 @@ func RenderContext(selection ContextSelection, settings Settings, input RenderIn
 	}
 	w.json("operational-settings-not-grants", struct {
 		StepTimeout          string
-		ReviewRounds         int
+		RejectionLimit       int
 		CreationAreas        []string
 		BatchNoChangeReviews bool
-	}{manager.StepTimeout.Value.String(), manager.ReviewRounds.Value, directoryStrings(manager.CreationRoots.Value), manager.BatchNoChangeReviews.Value}, configRender(manager.StepTimeout.Source), configRender(manager.ReviewRounds.Source), configRender(manager.CreationRoots.Source), configRender(manager.BatchNoChangeReviews.Source))
+	}{manager.StepTimeout.Value.String(), manager.RejectionLimit.Value, directoryStrings(manager.CreationRoots.Value), manager.BatchNoChangeReviews.Value}, configRender(manager.StepTimeout.Source), configRender(manager.RejectionLimit.Source), configRender(manager.CreationRoots.Source), configRender(manager.BatchNoChangeReviews.Source))
 	ceilings := settings.Ceilings()
 	w.json("project-ceilings", struct {
-		StepTimeout   string
-		ReviewRounds  int
-		CreationAreas []string
-	}{ceilings.StepTimeout.Value.String(), ceilings.ReviewRounds.Value, directoryStrings(ceilings.CreationRoots.Value)}, configRender(ceilings.StepTimeout.Source), configRender(ceilings.ReviewRounds.Source), configRender(ceilings.CreationRoots.Source))
+		StepTimeout    string
+		RejectionLimit int
+		CreationAreas  []string
+	}{ceilings.StepTimeout.Value.String(), ceilings.RejectionLimit.Value, directoryStrings(ceilings.CreationRoots.Value)}, configRender(ceilings.StepTimeout.Source), configRender(ceilings.RejectionLimit.Source), configRender(ceilings.CreationRoots.Source))
 	w.json("max-context-bytes", input.MaxContextBytes.Value, configRender(input.MaxContextBytes.Source))
 	for _, text := range input.RemainingLimits {
 		w.host("remaining-limit-view-not-accounting", text)

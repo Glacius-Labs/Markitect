@@ -1,7 +1,7 @@
 apiVersion: markitect.strategy-defaults/v1
 strategy: recursive-apply-v1
 defaults:
-  reviewRounds: 3
+  rejectionLimit: 3
   instructions:
     manager: []
     reviewer: []

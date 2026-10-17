@@ -24,7 +24,7 @@ func TestBindingFixesCompleteInputsAndOwnsOriginalBytes(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if b.RequiredReviews() != 4 {
+	if b.RequiredReviews() != 6 {
 		t.Fatal("local/integration review floor", b.RequiredReviews())
 	}
 	for name, change := range map[string]func(*run.BindingInput){
@@ -99,6 +99,38 @@ func TestBindingFixesCompleteInputsAndOwnsOriginalBytes(t *testing.T) {
 	}
 }
 
+func TestRejectionLimitUsesHistoricalBindingFieldNames(t *testing.T) {
+	binding, err := run.Bind(fixture(t))
+	if err != nil {
+		t.Fatal(err)
+	}
+	var wire struct {
+		Version  uint32
+		Settings []struct {
+			ReviewRounds   organization.Setting[int]
+			RejectionLimit *organization.Setting[int]
+		}
+		Ceilings struct {
+			ReviewRounds   organization.Setting[int]
+			RejectionLimit *organization.Setting[int]
+		}
+	}
+	if err := json.Unmarshal(binding.Payload().Bytes(), &wire); err != nil {
+		t.Fatal(err)
+	}
+	if wire.Version != 3 || len(wire.Settings) != len(fixture(t).Settings.Managers()) {
+		t.Fatalf("unexpected binding version or manager count: %+v", wire)
+	}
+	for _, manager := range wire.Settings {
+		if manager.ReviewRounds.Value != 2 || manager.ReviewRounds.Source.Field != "/defaults/rejectionLimit" || manager.RejectionLimit != nil {
+			t.Fatalf("modern setting did not map onto its historical wire field: %+v", manager)
+		}
+	}
+	if wire.Ceilings.ReviewRounds.Value != 3 || wire.Ceilings.ReviewRounds.Source.Field != "/limits/maxRejectionLimit" || wire.Ceilings.RejectionLimit != nil {
+		t.Fatalf("modern ceiling did not map onto its historical wire field: %+v", wire.Ceilings)
+	}
+}
+
 // Only the fields under test are decoded. RawMessage preserves every other
 // closed field verbatim and in its original order; the round-trip control below
 // proves malformed probes are not rejected merely for a different JSON shape.
@@ -108,6 +140,9 @@ type closureRecord struct {
 	ModelInput                                                                                                              model.Input
 	Compilation                                                                                                             []closureScope
 	Managers, Settings, Ceilings, Profiles, Documents, Census, Registry, Classifications, Protections, Policy, PolicySource json.RawMessage
+	ManagerPolicy                                                                                                           json.RawMessage `json:",omitempty"`
+	Scope                                                                                                                   json.RawMessage `json:",omitempty"`
+	MaxContextBytes                                                                                                         json.RawMessage `json:",omitempty"`
 }
 type closureScope struct {
 	ID, Digest  string
@@ -360,8 +395,8 @@ func TestBindingIncludesCeilingsValuesAndEverySource(t *testing.T) {
 		t.Fatal(err)
 	}
 	for name, change := range map[string]func(*organization.SettingsFacts){
-		"step timeout":  func(f *organization.SettingsFacts) { f.Ceilings.StepTimeout.Value = 3 * time.Minute },
-		"review rounds": func(f *organization.SettingsFacts) { f.Ceilings.ReviewRounds.Value = 4 },
+		"step timeout":    func(f *organization.SettingsFacts) { f.Ceilings.StepTimeout.Value = 3 * time.Minute },
+		"rejection limit": func(f *organization.SettingsFacts) { f.Ceilings.RejectionLimit.Value = 4 },
 		"creation roots": func(f *organization.SettingsFacts) {
 			f.Ceilings.CreationRoots.Value = []snapshot.DirectoryBoundary{snapshot.RootDirectory()}
 		},
@@ -380,7 +415,7 @@ func TestBindingIncludesCeilingsValuesAndEverySource(t *testing.T) {
 			}
 		})
 	}
-	for _, field := range []string{"step timeout", "review rounds", "creation roots"} {
+	for _, field := range []string{"step timeout", "rejection limit", "creation roots"} {
 		t.Run(field, func(t *testing.T) {
 			e := file(t, "separate-ceilings.yaml", snapshot.Regular, "Separate ceiling input bytes\r\n")
 			d := run.Document{Source: organization.SettingSource{File: "host/separate-ceilings.yaml", ContentID: e.ContentID()}, File: e}
@@ -388,8 +423,8 @@ func TestBindingIncludesCeilingsValuesAndEverySource(t *testing.T) {
 				switch field {
 				case "step timeout":
 					f.Ceilings.StepTimeout.Source = source(d, "/stepTimeout")
-				case "review rounds":
-					f.Ceilings.ReviewRounds.Source = source(d, "/reviewRounds")
+				case "rejection limit":
+					f.Ceilings.RejectionLimit.Source = source(d, "/maxRejectionLimit")
 				case "creation roots":
 					f.Ceilings.CreationRoots.Source = source(d, "/creationRoots")
 				}
@@ -413,8 +448,8 @@ func TestBindingIncludesCeilingsValuesAndEverySource(t *testing.T) {
 				switch field {
 				case "step timeout":
 					f.Ceilings.StepTimeout.Source = source(d, "/otherStepTimeout")
-				case "review rounds":
-					f.Ceilings.ReviewRounds.Source = source(d, "/otherReviewRounds")
+				case "rejection limit":
+					f.Ceilings.RejectionLimit.Source = source(d, "/otherMaxRejectionLimit")
 				case "creation roots":
 					f.Ceilings.CreationRoots.Source = source(d, "/otherCreationRoots")
 				}

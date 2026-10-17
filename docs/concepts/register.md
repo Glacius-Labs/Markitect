@@ -50,6 +50,8 @@ The owner's [origin account of 15 October 2026](sources/owner-origin-20261015.md
 | [DEC-037](#dec-037-agent-sessions-and-checks-run-in-linux-containers) | Decision | Agent sessions and checks run in Linux containers | Accepted |
 | [DEC-038](#dec-038-learn-through-complete-workflows) | Decision | Learn through complete workflows | Accepted |
 | [DEC-039](#dec-039-deterministic-manager-process) | Decision | Deterministic Manager process | Accepted |
+| [DEC-040](#dec-040-concept-freeze-until-the-core-runs) | Decision | Concept freeze until the core runs | Accepted |
+| [DEC-041](#dec-041-core-protocol-choices) | Decision | Core protocol choices | Accepted |
 | [PRM-001 to PRM-007](#promises) | Promise | Target outcomes | Target |
 | [ASM-001 to ASM-006](#assumptions-and-hypotheses) | Assumption | Assumptions and hypotheses | See entries |
 | [CPT-001](#cpt-001-federalism) | Concept | Federalism | Accepted |
@@ -475,11 +477,45 @@ The owner's [origin account of 15 October 2026](sources/owner-origin-20261015.md
 
 ### DEC-039 Deterministic Manager process
 
+**Updated by [DEC-041](#dec-041-core-protocol-choices):** cross-area requests are forwarded by the Host instead of dispatched hop by hop. Warm retention and quiescent basis advances are deferred beyond the first Apply. The statement below records the decision as accepted.
+
 - **Status:** Accepted, owner, 17 October 2026 ([original clarification and confirmation](sources/manager-process-clarification-20261017.md)). This changes the parent-authored prompts of DEC-029 and the root-planned delivery order adopted in DEC-036. Historical sources remain unchanged.
 - **Statement:** Apply supplies one static operation instruction. Deterministic compilation supplies each Manager's explicit model context; configuration and Host facts complete its template. The Host guarantees propagation from root through every direct child, recursively, without AI selection, rewriting or omission. Every local Manager assesses its area and returns reviewed change or no-change; intermediate and empty Packages are not skipped. Managers act on messages and communicate only with direct parent or children. Cross-area requests travel up and down that tree, using explicit routing facts or bounded inquiry, never inferred model relationships. Local review, integration, corrections and final evidence/publication follow the fixed Host process. Parents retain their own work and integration responsibility, including prerequisites needed by waiting children.
 - **Why:** The owner observed that the previous design moved already modeled structure back into AI planning. The intended organization should guarantee participation and required workflow steps while leaving realization and semantic judgment to Agents.
 - **Canonical owners:** [organization/delegated-context](../../.markitect/model/product/organization/delegated-context.yaml) and [run/confirmed-run-history](../../.markitect/model/product/run/confirmed-run-history.yaml). The [Apply concept](../design/canonical-model/manager-apply-concept.md#tasks-and-delegation) owns the process and its remaining design questions.
+- **Confirmed refinement:** The owner selected an initial read-only Explore assessment by every Manager before writing, followed by local plans without a global Plan barrier. The Host admits eligible work in recorded FIFO order with stable ties. Limited normal deliveries require review, Host acceptance and a concrete consumer basis while the producer Manager remains open. Parent hints stay separate from the operation and model; parents use broad, traceable child summaries. Dependency waits and resource exclusion remain distinct, with one writer in the first strategy ([confirmation](sources/manager-process-clarification-20261017.md#explore-planning-and-limited-deliveries)). Review reuse requires the unchanged complete bound subject.
+- **Confirmed budget refinement:** Limit rejected submissions per run, Manager and review purpose, rather than all submissions. Success neither uses nor resets rejection allowance; all work consumes the finite shared execution budget. At the default limit, the parent assesses the plan after two rejections and the third leaves the affected work incomplete. New tasks or limited deliveries grant no fresh counters ([confirmation](sources/manager-process-clarification-20261017.md#review-budget-confirmation), [execution contract](../design/canonical-model/manager-apply-execution.md#admission-amendments-and-finite-correction)).
+- **Confirmed continuity refinement:** Keep Manager responsibility and conversation across explicitly versioned step bases where supported, while retaining immutable run inputs and review candidates. Preserve own unaccepted work during a recorded quiescent basis advance; stale actions and unknown effects block progress. Changed execution rights need a newly bound environment with proven resume or an explicit handoff. Separate role, effect authority and budget class. Before the Explore barrier, enforce read-only artifact mounts and Host mutation denial. Name the target setting `rejectionLimit` and its ceiling `maxRejectionLimit`; preserve historical records rather than reinterpret them. Basic metrics remain in Apply; a later hot-path view is an extension ([confirmation](sources/manager-process-clarification-20261017.md#working-bases-and-session-continuity), [concept](../design/canonical-model/manager-apply-concept.md#working-bases-and-conversation-continuity)).
+- **Confirmed coordination refinement:** Versioned bounded child reports preserve delivery/completion status, interfaces, prerequisites, findings, uncertainty and evidence; enforce the parent input limit as well as each report limit, using visible partitioning without dropping obligations. Logical Managers may retain conversations without resident containers; finite warm retention and deterministic stop rules require actual quiescence, charged replacement starts and proven resume or explicit handoff. Process census alone is not quiescence: close admission, reconcile effects and enforce an artifact-write barrier through basis changes. Reuse of accepted Manager assessments and coordination-based modeling hints are later extensions, not changes to initial Explore or current review capacity ([confirmation](sources/manager-process-clarification-20261017.md#bounded-coordination-and-idle-execution), [concept](../design/canonical-model/manager-apply-concept.md#tasks-and-delegation)).
 - **Evidence boundary:** This records intent, not a working recursive runtime. The concept includes a fixed-source comparison and distinguishing process cases. Technical realization follows the process; no new Core language feature, provider execution or release is authorized here.
+
+### DEC-040 Concept freeze until the core runs
+
+- **Status:** Accepted, owner, 17 October 2026 ([source](sources/architecture-review-20261017.md#concept-freeze-and-order-of-work)), after the [architecture review](../design/canonical-model/apply-architecture-review-20261017.md).
+- **Statement:**
+  - The concept is frozen („Das Konzept ist jetzt eingefroren“).
+  - It is to be completed first („erst das Konzept fertigstellen“), and the cleanup round should start in any case („Die Aufräumrunde wäre generell gut zu starten unabhängig davon“).
+  - Implementation follows once the concept is clean, uniform and worked out („sauber, einheitlich und ausgearbeitet“).
+- **Interpretation (marked):** the freeze applies to the documents of the [Apply design map](../design/canonical-model/README.md#apply-design). It answers the review's recommendation to add no new mechanisms until one Package runs end to end. Completing the concept means specifying the core, resolving contradictions and giving each rule one owner, without adding scope.
+- **Boundary:** DEC-025 to DEC-039 remain in force. A review proposal that changes an adopted item still needs the owner, as [DEC-036](#dec-036-adopted-design-refinements-for-the-first-apply) requires.
+- **Owning document:** the [Apply design map](../design/canonical-model/README.md#apply-design).
+
+### DEC-041 Core protocol choices
+
+- **Status:** Accepted, owner, 17 October 2026 ([source](sources/architecture-review-20261017.md#core-protocol-choices)). The owner selected one prepared option for each of six questions.
+- **Statement:**
+  - A question to a known addressee is forwarded by the Host along the tree, without dispatching the Managers in between („Host leitet weiter“).
+  - Each step starts from the currently accepted aggregate plus the Manager's own open changes („Aktueller Gesamtstand“).
+  - A Manager that finds nothing to change during Explore submits a no-change result directly („Ja, direkt einreichen“).
+  - When a task cannot finish, the Host admits no new work and finishes the run Incomplete, retaining the work („Sofort stoppen“).
+  - The first Apply stops every container after its step, and warm retention follows later („Erst stoppen, warm später“).
+  - While a run waits for the owner, the Host process may exit; `answer` and `resume` continue the run („Ja, Prozess darf enden“).
+- **Changes:**
+  - DEC-039's hop-by-hop dispatch of cross-area requests becomes forwarding. Requests still travel along the tree, and every hop is recorded.
+  - The concept's explicit consumption of each delivery into a working basis becomes the current aggregate.
+  - DEC-039's finite warm-retention policy and quiescent basis advance are deferred. The first Apply keeps no container warm.
+  - An incomplete task now finishes the whole run, not only the affected work.
+- **Owning document:** the [core protocol](../design/canonical-model/manager-apply-core.md), rules M2, D3, T3, T14, S6 and W2.
 
 ## Promises
 

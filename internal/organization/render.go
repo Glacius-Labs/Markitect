@@ -45,12 +45,40 @@ type OpenFindings struct {
 }
 
 type TaskFacts struct {
-	ID           string
-	Package      string
-	Outcome      HostText
+	ID      string
+	Package string
+	// Outcome must equal ApplyOperation's exact text. Source identifies the
+	// Host's operation record; it does not authenticate receipt or authority.
+	Outcome HostText
+	// Constraints and Requirements project already bound obligations/checks.
+	// They cannot add intent, narrow responsibility or waive the fixed process.
 	Constraints  []HostText
 	Requirements []HostText
 	Findings     OpenFindings
+}
+
+// ManagerPhase is an instruction/input projection, not a run state, evidence
+// of completed Explore, admission decision or artifact write grant.
+type ManagerPhase string
+
+const (
+	ManagerExplore   ManagerPhase = "explore"
+	ManagerPlan      ManagerPhase = "plan"
+	ManagerWork      ManagerPhase = "work"
+	ManagerIntegrate ManagerPhase = "integrate"
+)
+
+type ManagerProcess struct {
+	Phase  ManagerPhase
+	Source HostSource
+}
+
+// ParentHint is separate advice. Package identifies its asserted sender, which
+// must be the exact direct parent. Topology/record shape is not authentication.
+// Advice cannot author scope, replace the operation or change model authority.
+type ParentHint struct {
+	Package string
+	Advice  HostText
 }
 
 type PackageFact struct {
@@ -106,6 +134,8 @@ type ReviewFacts struct {
 // phase-2 review inputs. No implementer conversation field is supported.
 type RenderInput struct {
 	View            ContextView
+	Process         *ManagerProcess // Required only for ManagerView.
+	ParentHints     []ParentHint    // ManagerView only; the root receives none.
 	InputBinding    HostSource
 	Task            TaskFacts
 	OwnerInput      *HostText

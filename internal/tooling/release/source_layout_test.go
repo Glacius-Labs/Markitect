@@ -77,8 +77,48 @@ func TestRootLayoutLiveAndFixedMatch(t *testing.T) {
 	}
 }
 
+// Use the real new package bytes so both live and fixed source selections must
+// carry the codec and its synthetic tests, not a successful placeholder package.
+func TestClaudeCodecLiveAndFixedSourceBytes(t *testing.T) {
+	root := rootLayoutFixture(t)
+	originals := make(map[string][]byte)
+	for _, name := range []string{"codec.go", "codec_fixture_test.go", "codec_test.go"} {
+		path := "internal/adapters/claudecode/" + name
+		data, err := os.ReadFile(filepath.Join("..", "..", "..", filepath.FromSlash(path)))
+		if err != nil {
+			t.Fatal(err)
+		}
+		originals[path] = data
+		writeLayoutFile(t, root, path, string(data))
+	}
+	fixed := fixedSourceSnapshot(t, root)
+	live, _, err := Package(root, "1.2.3")
+	if err != nil {
+		t.Fatal(err)
+	}
+	selected, err := snapshotModuleFiles(fixed)
+	if err != nil {
+		t.Fatal(err)
+	}
+	files, err := collectModuleSnapshot(selected)
+	if err != nil {
+		t.Fatal(err)
+	}
+	archive, err := makeArchive(files)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, contents := range []map[string][]byte{archiveContents(t, live), archiveContents(t, archive)} {
+		for path, want := range originals {
+			if !bytes.Equal(contents[path], want) {
+				t.Errorf("source bytes lost or changed: %s", path)
+			}
+		}
+	}
+}
+
 func TestRootLayoutRejectsUnsupportedInputsBeforeFiltering(t *testing.T) {
-	for _, name := range []string{"src/cmd/markitect/main.go", "internal/other/x.txt", "internal/model-extra/x.go", "internal/run-extra/x.go", "internal/adapters/direct.go", "internal/adapters/journal-extra/store.go", "internal/adapters/checks-extra/profile.go", "internal/tooling-extra/release/x.go", "internal/tooling/other/x.go", "cmd/other/main.go", "internal/model/nested/go.mod"} {
+	for _, name := range []string{"src/cmd/markitect/main.go", "internal/other/x.txt", "internal/model-extra/x.go", "internal/run-extra/x.go", "internal/adapters/direct.go", "internal/adapters/journal-extra/store.go", "internal/adapters/checks-extra/profile.go", "internal/adapters/claudecode-extra/codec.go", "internal/adapters/unowned/codec.go", "internal/tooling-extra/release/x.go", "internal/tooling/other/x.go", "cmd/other/main.go", "internal/model/nested/go.mod"} {
 		t.Run(name, func(t *testing.T) {
 			root := rootLayoutFixture(t)
 			writeLayoutFile(t, root, name, "unexpected\n")
@@ -132,7 +172,7 @@ func TestRootLayoutRequiresCommandAndInternalGoSources(t *testing.T) {
 }
 
 func TestRootResponsibilityPrefixesAreExact(t *testing.T) {
-	for _, name := range []string{"internal/model/a.go", "internal/tooling/release/install/a.go", "internal/adapters/documents/a.go", "cmd/markitect/main.go"} {
+	for _, name := range []string{"internal/model/a.go", "internal/tooling/release/install/a.go", "internal/adapters/documents/a.go", "internal/adapters/claudecode/codec.go", "cmd/markitect/main.go"} {
 		if !sourceRoot(name) {
 			t.Errorf("rejected %s", name)
 		}

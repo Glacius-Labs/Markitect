@@ -10,11 +10,13 @@ The terms describe different aspects of a project. Their relationships explain h
 |---|---|---|
 | [Project](project.md) brings definitions together | Each definition belongs to the project it describes. | Tasks brings together its Actors, UseCases, Concepts and other definitions. |
 | [Actor](actor.md) uses an [Interface](interface.md) | A role interacts with the software through an interaction point. | User uses the Tasks command line. |
-| Interface exposes a [UseCase](use-case.md) | The interaction point makes an action available to an Actor. | The command line exposes Add task. |
+| Interface exposes a [UseCase](use-case.md) | The interaction point makes an action available under its contract. An internal consumer can be a Component. | The command line exposes Add task; an internal application contract can expose it to the command-line Component. |
 | UseCase works with [Concepts](concept.md) | The action uses, creates or changes things described by the project's domain vocabulary. | Add task creates a Task with a Title and a TaskStatus. |
 | Concept relates to another Concept | The relationship explains how domain terms fit together. | A Task has a Title and a TaskStatus. |
 
 An Actor is a role in a stated context. User interacts with the application. Contributor and Reviewer participate in work on the project. A person can fulfil several roles. The relationship identifies what that role does in each context.
+
+Owner clarification, 17 October 2026: [Interface](interface.md) also covers internal technical contracts. Components can provide and consume them without being reclassified as Actors. The [Library walkthrough](standard-library.md#internal-contract-and-component-boundary) states those relationships through body links; a body link alone does not identify its relationship kind.
 
 ## Structure and files
 

@@ -16,9 +16,9 @@ func defaultsExplicitExecution(t *testing.T) string {
 	t.Helper()
 	content := strings.ReplaceAll(documentedExecution(t), "\r\n", "\n")
 	for _, edit := range [][2]string{
-		{"  reviewRounds: 3", "  reviewRounds: 2"},
+		{"  rejectionLimit: 3", "  rejectionLimit: 2"},
 		{"  profiles:", "  instructions: {manager: [one.md, two.md, one.md], reviewer: []}\n  profiles:"},
-		{"packages:\n  lending:\n    stepTimeout: 8m", "packages:\n  lending:\n    profiles: {manager: unobserved-profile}\n    instructions: {manager: [third.md, one.md]}\n    stepTimeout: 8m\n    reviewRounds: 3\n    creationRoots: [realization/lending]\n  '.':\n    stepTimeout: 9m\n  lending/reminders: {}"},
+		{"packages:\n  lending:\n    stepTimeout: 8m", "packages:\n  lending:\n    profiles: {manager: unobserved-profile}\n    instructions: {manager: [third.md, one.md]}\n    stepTimeout: 8m\n    rejectionLimit: 3\n    creationRoots: [realization/lending]\n  '.':\n    stepTimeout: 9m\n  lending/reminders: {}"},
 		{"ownerApproval: []", "ownerApproval: [lending/reminders, ., lending]"},
 	} {
 		if strings.Count(content, edit[0]) != 1 {
@@ -34,16 +34,16 @@ func TestDefaultsExplicitFalseEmptyListsAndExactOverridesKeepAuthoredSources(t *
 	before, _ := parent.Document()
 	prepared := parent.PrepareDefaults(apply.ProductStrategyDefaults())
 	values, ok := prepared.Declarations()
-	if !ok || prepared.Status() != model.Passed || values.Defaults.ReviewRounds != *before.Defaults.ReviewRounds || values.Defaults.BatchNoChangeReviews != *before.Defaults.BatchNoChangeReviews || !reflect.DeepEqual(values.Defaults.Reviewer.Instructions, *before.Defaults.Reviewer.Instructions) || !reflect.DeepEqual(values.OwnerApproval, *before.OwnerApproval) {
+	if !ok || prepared.Status() != model.Passed || values.Defaults.RejectionLimit != *before.Defaults.RejectionLimit || values.Defaults.BatchNoChangeReviews != *before.Defaults.BatchNoChangeReviews || !reflect.DeepEqual(values.Defaults.Reviewer.Instructions, *before.Defaults.Reviewer.Instructions) || !reflect.DeepEqual(values.OwnerApproval, *before.OwnerApproval) {
 		t.Fatalf("explicit false/empty/value declarations were replaced: %+v", prepared.Diagnostics())
 	}
 	if values.Defaults.BatchNoChangeReviews.Value || values.Defaults.Reviewer.Instructions.Source.File != ".markitect/execution.yaml" || values.Defaults.Reviewer.Instructions.Source.Field != "/defaults/instructions/reviewer" || !reflect.DeepEqual(values.Defaults.Manager.Instructions.Value, []string{"one.md", "two.md", "one.md"}) {
 		t.Fatal("explicit empty/repeated instructions lost their actual source")
 	}
-	if !reflect.DeepEqual(values.Overrides, before.Packages.Value) || len(values.Overrides) != 3 || values.Overrides[2].Package != "lending/reminders" || values.Overrides[2].StepTimeout != nil || values.Overrides[2].ReviewRounds != nil || values.Overrides[2].Manager.Profile != nil {
+	if !reflect.DeepEqual(values.Overrides, before.Packages.Value) || len(values.Overrides) != 3 || values.Overrides[2].Package != "lending/reminders" || values.Overrides[2].StepTimeout != nil || values.Overrides[2].RejectionLimit != nil || values.Overrides[2].Manager.Profile != nil {
 		t.Fatal("exact override was changed or acquired ancestor declarations")
 	}
-	if values.Defaults.ReviewRounds.Value != 2 || values.Overrides[0].ReviewRounds.Value != 3 || values.Overrides[0].Manager.Profile.Value != "unobserved-profile" || len(parent.Model().Inputs().Raw.HostProfiles) != 0 || len(parent.Model().Inputs().Raw.Instructions) != 0 {
+	if values.Defaults.RejectionLimit.Value != 2 || values.Overrides[0].RejectionLimit.Value != 3 || values.Overrides[0].Manager.Profile.Value != "unobserved-profile" || len(parent.Model().Inputs().Raw.HostProfiles) != 0 || len(parent.Model().Inputs().Raw.Instructions) != 0 {
 		t.Fatal("project defaults became ceilings, or declarative names invented resolved profile/instruction facts")
 	}
 	if !reflect.DeepEqual(prepared.Execution().Partial(), before) {
@@ -107,7 +107,7 @@ func TestDefaultsOwnEveryInputDeclarationAndDiagnosticCopy(t *testing.T) {
 		t.Fatal("returned/input declaration data aliases the bound preparation")
 	}
 	invalid := apply.ProductStrategyDefaults()
-	invalid.Bytes = []byte(strings.Replace(string(invalid.Bytes), "reviewRounds: 3", "reviewRounds: null", 1))
+	invalid.Bytes = []byte(strings.Replace(string(invalid.Bytes), "rejectionLimit: 3", "rejectionLimit: null", 1))
 	refused := parent.PrepareDefaults(invalid)
 	diagnostics := refused.Diagnostics()
 	originalDiagnostics := refused.Diagnostics()

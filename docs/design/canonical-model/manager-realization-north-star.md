@@ -63,12 +63,15 @@ Further extensions recorded for after the two-Apply demonstration:
 | Extension | Idea | Register |
 | --- | --- | --- |
 | Computed scope | Impact-scoped Apply from the model difference, references and registry ([concept](manager-apply-concept.md#toward-computed-scope)). | Vision mechanism 1 |
+| Reuse accepted Manager assessments | Later, reuse an Explore assessment, local result or integration result separately only when its complete bound subject and assumptions remain valid. Retain every Manager in the census and record the exact reused evidence; unchanged bytes do not resolve new findings or unanswered messages. This needs an explicit future extension to active participation and does not waive the first Apply's initial Explore or review reserve. | [Owner confirmation](../../concepts/sources/manager-process-clarification-20261017.md#bounded-coordination-and-idle-execution) |
 | Assess | A full reconciliation that stops before publication and reports drift, for CI and existing projects. | |
 | Observed code dependencies | Compare, for example, the Go import graph with the model's references; a difference becomes an Optimizer proposal for a missing link. | [ENH-001](../../concepts/register.md#enh-001-observed-code-dependencies-widen-impact) |
 | Model lint | Registry-based signals: Definitions without realization, files realizing many Definitions, Packages near the context limit. | [ENH-002](../../concepts/register.md#enh-002-model-quality-linter-and-metrics) |
 | Scenario Definitions | Owner-authored examples with structured inputs and outputs in the model, which tests must demonstrably cover. | [ENH-003](../../concepts/register.md#enh-003-test-to-statement-binding-and-test-review) |
 | Richer teams | The team variants above, perspectives and four eyes. | [ENH-006](../../concepts/register.md#enh-006-configurable-teams-for-perspectives-and-four-eyes) |
 | Parallel writers | Bounded concurrency on the same ownership and reservation rules. | |
+| Coordination hot paths | A later view of recurring waits, cross-area requests and correction/integration costs, derived from the already required [coordination account](manager-apply-concept.md#reports-and-execution-history). This does not defer basic metrics, add a second ledger or automatically reorganize Managers. | [Owner confirmation](../../concepts/sources/manager-process-clarification-20261017.md#working-bases-and-session-continuity) |
+| Coordination as a modeling signal | In the later hot-path view, show recurring cross-branch questions together with waiting, rework and integration costs, their routes and evidence. Suggest that the author examine responsibility boundaries; high traffic alone does not prove a bad model. Never reorganize Managers or author model links automatically. | [Owner confirmation](../../concepts/sources/manager-process-clarification-20261017.md#bounded-coordination-and-idle-execution) |
 | Kind guidance | Operational task and review recipes keyed by resolved Kind identity, adding no project rules and granting no execution rights. | |
 | Model operations | Optimizer, cleanup, bughunt and custom commands as listed above. | [DEC-026](../../concepts/register.md#dec-026-apply-comes-first-and-changes-only-artifacts) |
 | Existing-project adoption | An operation that drafts a model and a registry proposal from existing code; the owner reviews and commits them. | |
@@ -77,6 +80,8 @@ Further extensions recorded for after the two-Apply demonstration:
 | Approval reuse, cockpit, Government | Reusing earlier approvals, a richer interface and delegated model authority. | [VIS-001](../../concepts/register.md#vis-001-cockpit-personal-ai-and-autonomous-project-organization), [OQ-008](../../concepts/register.md#open-questions) |
 
 The second session adapter and session containers with declared mounts, once listed here, moved into the first version with [DEC-037](../../concepts/register.md#dec-037-agent-sessions-and-checks-run-in-linux-containers).
+
+Assessment reuse is a future optimization, not an AI relevance judgment. Its key must cover exact scoped model/context, configuration and instructions, owned artifacts and ownership, consumed dependencies including those outside the child tree, child results, applicable process/evidence rules and required environment assumptions. Changed or unknown influence, a new blocking finding or unresolved required message prevents reuse. Revalidate an earlier assessment against the resulting accepted state: an Explore report proposing work is not an assessment that the completed work needs no change. A changed child may require integration while an unchanged local result remains reusable. Never transfer an old approval to a changed aggregate. Deterministic inventory/comparison work still scales with what must be examined, even if fewer Agent sessions are needed. The first two-Apply demonstration continues to obtain fresh initial assessments from all Managers; any later activation requires its own precise acceptance and invalidation contract.
 
 ## Simplified for the first version
 
@@ -88,7 +93,7 @@ The consolidation of 16 October 2026 replaced these earlier proposals with simpl
 | An optional absolute delivery deadline that keeps running while work waits. | No deadline; caps on active execution time remain. |
 | One assignment commissioned for both stages of the two-Apply demonstration. | Each Apply invocation is its own assignment; further runs within an assignment are continuations. |
 | A separate final verifier Agent. | The Host's deterministic final evidence check; the root's fresh integration review is the semantic review of the whole. |
-| Successor runs replacing an unfinished run in one Superseded handoff. | A run that needs a changed basis finishes Incomplete; a continuation starts after the committed model edit. |
+| Successor runs replacing an unfinished run in one Superseded handoff. | A run requiring changed captured model/configuration inputs finishes Incomplete; a continuation captures the committed change. An accepted artifact delivery can instead advance the step workspace basis inside the same run. |
 | Four applicability judgments for inherited findings. | Three finding states: open, resolved, not applicable; a changed requirement becomes a new linked finding. |
 | Gating active work by derived delivery exposure. | Dependent work starts only from an accepted, composed delivery; a blocked delivery blocks its consumers. |
 | Three numbering schemes (P00 to P12, R0 to R6, delivery packages). | Gates P00 to P12 keyed to the delivery packages. |

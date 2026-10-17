@@ -101,38 +101,39 @@ func TestRestorePreparedRunningAndFinishedFromStoredBytes(t *testing.T) {
 }
 
 func TestRestorePinsPagesAndRebuildsBudgetAndRetryReceipts(t *testing.T) {
-	c, j := running(t)
-	start := reserve("session", run.SessionStart, run.Assessment, time.Minute)
-	startProposal, err := c.Propose(start)
+	c, j, io := activeStep(t)
+	startup := sessionPreparation(t, c, "s")
+	startProposal, err := c.Propose(startup)
 	if err != nil {
 		t.Fatal(err)
 	}
-	startReceipt, err := c.Commit(context.Background(), j, startProposal)
+	session, _ := c.Session("s")
+	startReceipt := session.Prepared
+	_, err = io.ObserveStep(context.Background(), run.StepObservation{RecordMeta: meta("done"), Step: "step", ProviderStep: "provider-turn", Terminal: true, Wire: wire(t, "terminal"), Reason: "observed terminal"})
 	if err != nil {
 		t.Fatal(err)
 	}
-	settlement := settle("session", 20*time.Second)
+	settlement := settle("step-invocation", 10*time.Second)
 	settledReceipt := commit(t, c, j, settlement)
-	commit(t, c, j, reserve("step", run.AgentStep, run.Writing, time.Minute))
-	commit(t, c, j, settle("step", 10*time.Second))
+	_, err = io.ObserveStop(context.Background(), run.StopObservation{RecordMeta: meta("stopped"), Terminated: true, Reason: "observed stop"})
+	if err != nil {
+		t.Fatal(err)
+	}
 	reads := &readJournal{store: j}
 	c2 := restored(t, reads)
 	sameProjection(t, c, c2)
-	if len(reads.queries) < 3 || len(reads.blobRefs) != 2 || reads.writes != 0 {
-		t.Fatal("not restored from paged stored batches/blobs", len(reads.queries), reads.blobRefs)
+	if len(reads.queries) < 3 || len(reads.blobRefs) != len(j.blobs) || reads.writes != 0 {
+		t.Fatal("not paged from complete original closure", len(reads.queries), len(reads.blobRefs), len(j.blobs))
 	}
 	for n, q := range reads.queries {
 		if q.Limit != 1 || n == 0 && q.Through != 0 || n > 0 && q.Through != c.Revision() {
-			t.Fatal("unpinned query", q)
+			t.Fatal("unpinned", q)
 		}
 	}
-	before := c2.Budget()
-	revision := c2.Revision()
-	// Both the original exact batch proposal and a fresh identical logical
-	// command return their old receipts, without touching the read-only port.
+	before, revision := c2.Budget(), c2.Revision()
 	r, err := c2.Commit(context.Background(), reads, startProposal)
 	if err != nil || r != startReceipt {
-		t.Fatal("batch retry after restart", err)
+		t.Fatal("startup retry", err)
 	}
 	p, err := c2.Propose(settlement)
 	if err != nil {
@@ -140,10 +141,10 @@ func TestRestorePinsPagesAndRebuildsBudgetAndRetryReceipts(t *testing.T) {
 	}
 	r, err = c2.Commit(context.Background(), reads, p)
 	if err != nil || r != settledReceipt {
-		t.Fatal("command retry after restart", err)
+		t.Fatal("settlement retry", err)
 	}
 	if c2.Revision() != revision || !reflect.DeepEqual(before, c2.Budget()) || reads.writes != 0 {
-		t.Fatal("retry appended or charged twice")
+		t.Fatal("retry wrote or charged")
 	}
 }
 
@@ -173,24 +174,27 @@ func TestRestoreKeepsPinnedHeadWhenLaterWorkCommits(t *testing.T) {
 func TestRestoreHoldsOpenInvocationsBehindSeparateRecoveryBarrier(t *testing.T) {
 	for _, uncertain := range []bool{false, true} {
 		t.Run(map[bool]string{false: "reserved", true: "uncertain"}[uncertain], func(t *testing.T) {
-			c, j := running(t)
-			oldCommand := reserve("writer", run.AgentStep, run.Writing, time.Minute)
-			oldReceipt := commit(t, c, j, oldCommand)
-			commit(t, c, j, reserve("check", run.ProjectCheck, run.Assessment, time.Minute))
+			c, j, _ := activeStep(t)
+			oldCommand := stepPreparation(t, c, "step", "step-invocation")
+			step, _ := c.Step("step")
+			oldReceipt := step.Prepared
+			if _, err := channel(t, c, j, failing).Call(context.Background(), run.ToolCall{RecordMeta: meta("pending-callback"), Step: "step", Call: "call", Tool: "unsupported", Input: wire(t, "request")}); err == nil {
+				t.Fatal("failed Host tool reported an answer")
+			}
 			if uncertain {
 				u := command("uncertain", run.ObserveUncertain)
-				u.Invocation = "writer"
-				u.Reason = "Host could not establish termination"
+				u.Invocation = "step-invocation"
+				u.Reason = "unknown turn"
 				commit(t, c, j, u)
 			}
 			reads := &readJournal{store: j}
 			c2 := restored(t, reads)
 			sameProjection(t, c, c2)
-			if !c2.RecoveryRequired() || c2.Budget().Held.ExecutionTime != 2*time.Minute || reads.writes != 0 {
-				t.Fatal("open holds were lost")
+			if !c2.RecoveryRequired() || c2.Budget().Held.ExecutionTime != time.Minute || reads.writes != 0 {
+				t.Fatal("lost hold")
 			}
 			if _, err := c2.Propose(reserve("new", run.AgentStep, run.Assessment, time.Second)); !errors.Is(err, run.ErrRecovery) {
-				t.Fatal("dependent work admitted after restart", err)
+				t.Fatal(err)
 			}
 			p, err := c2.Propose(oldCommand)
 			if err != nil {
@@ -198,38 +202,40 @@ func TestRestoreHoldsOpenInvocationsBehindSeparateRecoveryBarrier(t *testing.T) 
 			}
 			r, err := c2.Commit(context.Background(), reads, p)
 			if err != nil || r != oldReceipt {
-				t.Fatal("read-only exact retry blocked", err)
+				t.Fatal("retry", err)
 			}
-			commit(t, c2, j, settle("writer", 5*time.Second))
-			if !c2.RecoveryRequired() || c2.Budget().Held.ExecutionTime != time.Minute {
-				t.Fatal("barrier cleared while another hold remained")
+			io2, _ := c2.SessionChannel(j, "s", run.RefuseTools)
+			if _, err := io2.ObserveStop(context.Background(), run.StopObservation{RecordMeta: meta("stopped"), Terminated: true, Reason: "observed termination"}); err != nil {
+				t.Fatal(err)
 			}
-			release := command("release-check", run.ReleaseUndispatched)
-			release.Invocation = "check"
-			release.Reason = "Explicit Host inspection established no dispatch"
-			proposal, err := c2.Propose(release)
+			commit(t, c2, j, settle("step-invocation", 5*time.Second))
+			if !c2.RecoveryRequired() || c2.Budget().Held.ExecutionTime != 0 {
+				t.Fatal("unresolved callback lost after elapsed settlement")
+			}
+			j.appendMode = "lost"
+			denied, err := c2.ToolReconciliation(meta("denied"), "s", "call", run.ToolOutcome{Status: run.ToolRefused, Reason: "denied; not executed"})
 			if err != nil {
 				t.Fatal(err)
 			}
-			if !c2.RecoveryRequired() {
-				t.Fatal("proposal cleared recovery")
-			}
-			j.appendMode = "lost"
-			if _, err := c2.Commit(context.Background(), j, proposal); !errors.Is(err, run.ErrUncertain) {
+			p, err = c2.Propose(denied)
+			if err != nil {
 				t.Fatal(err)
 			}
-			if !c2.RecoveryRequired() || c2.Budget().Held.ExecutionTime != time.Minute {
-				t.Fatal("unconfirmed release cleared recovery")
+			if _, err := c2.Commit(context.Background(), j, p); !errors.Is(err, run.ErrUncertain) {
+				t.Fatal(err)
+			}
+			if !c2.RecoveryRequired() {
+				t.Fatal("lost ack cleared callback")
 			}
 			j.appendMode = ""
 			if err := c2.ReconcilePending(context.Background(), j); err != nil {
 				t.Fatal(err)
 			}
 			if c2.RecoveryRequired() || c2.Budget().Held.ExecutionTime != 0 {
-				t.Fatal("confirmed explicit reconciliation not adopted")
+				t.Fatal("known callback reconciliation not adopted")
 			}
 			if uncertain && c2.Current().State != run.Reconciling {
-				t.Fatal("restore or release invented lifecycle resume")
+				t.Fatal("invented resume")
 			}
 		})
 	}
@@ -301,7 +307,7 @@ func TestRestoreAdvancedHistoryDoesNotRetryAbsentOldProposal(t *testing.T) {
 
 func TestRestoreStaleAbsentReservationNeedsExplicitNewProposal(t *testing.T) {
 	c, j := running(t)
-	intent := reserve("absent", run.AgentStep, run.Assessment, time.Minute)
+	intent := sessionPreparation(t, c, "s")
 	old, err := c.Propose(intent)
 	if err != nil {
 		t.Fatal(err)
@@ -312,8 +318,11 @@ func TestRestoreStaleAbsentReservationNeedsExplicitNewProposal(t *testing.T) {
 	}
 	j.appendMode = ""
 	other := restored(t, &readJournal{store: j})
-	commit(t, other, j, reserve("known", run.SessionStart, run.Assessment, time.Second))
-	commit(t, other, j, settle("known", 0))
+	wait := command("known-wait", run.WaitRun)
+	wait.Reason = "explicit external wait"
+	wait.NextActor = "owner"
+	commit(t, other, j, wait)
+	commit(t, other, j, command("known-resume", run.ResumeRun))
 	reads := &readJournal{store: j}
 	c2 := restored(t, reads)
 	before, rev := c2.Budget(), c2.Revision()
@@ -342,7 +351,7 @@ func TestRestoreLostReservationACKKeepsCommittedIntentHeld(t *testing.T) {
 	for _, mode := range []string{"lost", "absent"} {
 		t.Run(mode, func(t *testing.T) {
 			c, j := running(t)
-			intent := reserve("step", run.AgentStep, run.Assessment, time.Minute)
+			intent := sessionPreparation(t, c, "s")
 			proposal, err := c.Propose(intent)
 			if err != nil {
 				t.Fatal(err)
@@ -358,16 +367,16 @@ func TestRestoreLostReservationACKKeepsCommittedIntentHeld(t *testing.T) {
 				t.Fatal("restart invented consumption or effects")
 			}
 			if mode == "lost" {
-				if !c2.RecoveryRequired() || c2.Budget().Held.Steps != 1 || c2.Budget().Held.ExecutionTime != time.Minute {
+				if !c2.RecoveryRequired() || c2.Budget().Held.SessionStarts != 1 || c2.Budget().Held.ExecutionTime != time.Minute {
 					t.Fatal("committed intent not held")
 				}
 				if _, err := c2.Commit(context.Background(), reads, proposal); err != nil {
 					t.Fatal("exact batch retry unavailable", err)
 				}
-				if !c2.RecoveryRequired() || c2.Budget().Held.Steps != 1 || reads.writes != 0 {
+				if !c2.RecoveryRequired() || c2.Budget().Held.SessionStarts != 1 || reads.writes != 0 {
 					t.Fatal("retry dispatched or cleared hold")
 				}
-			} else if c2.RecoveryRequired() || c2.Budget().Held.Steps != 0 {
+			} else if c2.RecoveryRequired() || c2.Budget().Held.SessionStarts != 0 {
 				t.Fatal("phantom reservation")
 			}
 		})
@@ -404,8 +413,7 @@ func alteredBatch(t *testing.T, b run.AppendBatch, change func(*struct {
 
 func TestRestoreRejectsMalformedOrUnavailablePages(t *testing.T) {
 	c, j := running(t)
-	commit(t, c, j, reserve("step", run.AgentStep, run.Assessment, time.Minute))
-	commit(t, c, j, settle("step", time.Second))
+	completeRootExplore(t, c, j, exploreInputs(t, false))
 	for name, hook := range map[string]func(int, run.EventQuery, run.EventPage) (run.EventPage, error){
 		"unreachable": func(_ int, _ run.EventQuery, _ run.EventPage) (run.EventPage, error) {
 			return run.EventPage{}, errors.New("unreachable")
@@ -583,8 +591,7 @@ func TestRestoreCountsRequiredBlobBytesInItsReadBudget(t *testing.T) {
 
 func TestRestoreContinuationKeepsAssignmentOwnerAndConsumedLedger(t *testing.T) {
 	c, j := running(t)
-	commit(t, c, j, reserve("step", run.AgentStep, run.Assessment, time.Minute))
-	commit(t, c, j, settle("step", time.Second))
+	completeRootExplore(t, c, j, exploreInputs(t, false))
 	finishIncomplete(t, c, j)
 	i := fixture(t)
 	i.Source.Guard = "changed-source"
@@ -596,7 +603,7 @@ func TestRestoreContinuationKeepsAssignmentOwnerAndConsumedLedger(t *testing.T) 
 	reads := &readJournal{store: j}
 	c2 := restored(t, reads)
 	sameProjection(t, c, c2)
-	if len(reads.blobRefs) != 3 {
+	if len(reads.blobRefs) != len(j.blobs) {
 		t.Fatal("continuation did not reuse immutable owner blob", len(reads.blobRefs))
 	}
 	f := command("finish-r2", run.FinishRun)

@@ -13,7 +13,7 @@ import (
 
 // ProtocolVersion identifies this frame format and its control messages.
 // The Host and agentd refuse each other when their versions differ.
-const ProtocolVersion = 1
+const ProtocolVersion = 2
 
 // MaxPayload bounds one frame. Larger provider output is split by the writer.
 const MaxPayload = 1 << 20

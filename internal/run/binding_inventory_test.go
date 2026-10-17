@@ -12,7 +12,9 @@ import (
 	"testing"
 
 	"github.com/Glacius-Labs/Markitect/internal/model"
+	"github.com/Glacius-Labs/Markitect/internal/organization"
 	"github.com/Glacius-Labs/Markitect/internal/run"
+	"github.com/Glacius-Labs/Markitect/internal/snapshot"
 )
 
 // Captured by the unmodified v1 Bind/Propose at
@@ -203,6 +205,53 @@ func rejectInventoryRecord(t *testing.T, basis, owner run.Payload, batch run.App
 	reads := &readJournal{store: store}
 	if c, err := run.Restore(context.Background(), reads, "repo", restoreLimits); !errors.Is(err, run.ErrInvalid) || c != nil || reads.writes != 0 {
 		t.Fatal("invalid record restored", err)
+	}
+}
+
+func TestV3RejectsChangedSettingSourceDocumentWithoutRecompiling(t *testing.T) {
+	i := fixture(t)
+	basis, err := run.Bind(i)
+	if err != nil {
+		t.Fatal(err)
+	}
+	c, _ := run.NewCoordinator("repo")
+	p, err := c.Propose(run.PrepareCommand("prepare", "a", "r", "", observed, basis))
+	if err != nil {
+		t.Fatal(err)
+	}
+	type document struct {
+		Source               organization.SettingSource
+		Path, RepositoryPath string
+		Mode                 snapshot.Mode
+		Bytes                []byte
+	}
+	for _, probe := range []string{"bytes", "partial source"} {
+		t.Run(probe, func(t *testing.T) {
+			rejectInventoryRecord(t, basis.Payload(), i.OwnerRequest, p.Batch(), func(w *closureRecord) {
+				var documents []document
+				if err := json.Unmarshal(w.Documents, &documents); err != nil {
+					t.Fatal(err)
+				}
+				found := false
+				for n := range documents {
+					if documents[n].Source.File == i.MaxContextBytes.Source.File {
+						found = true
+						if probe == "bytes" {
+							documents[n].Bytes = append(documents[n].Bytes, '\n')
+						} else {
+							documents[n].Source.Field = "/limits"
+						}
+					}
+				}
+				if !found {
+					t.Fatal("fixture lacks retained context-limit source")
+				}
+				w.Documents, err = json.Marshal(documents)
+				if err != nil {
+					t.Fatal(err)
+				}
+			})
+		})
 	}
 }
 

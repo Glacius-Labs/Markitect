@@ -9,8 +9,8 @@ This is a target contract, not evidence that preparation or its input decoders a
 | Source | Maintained content | Library example |
 | --- | --- | --- |
 | Canonical model | Intended behavior, required outputs, architecture and binding interfaces. | `loan-policy.spec.maxOpenLoans` is five in M1 and three in M2; existing loans remain returnable. |
-| `.markitect/execution.yaml` | Manager profiles and instructions, creation areas, finite ceilings, Package overrides, scope selection, check selection and owner approval. | Lending uses the selected Manager profile and at most three review rounds. |
-| Product strategy defaults | Versioned defaults shipped with the product, with their original bytes and source fields. | Absent review-round configuration takes three from the strategy document. |
+| `.markitect/execution.yaml` | Manager profiles and instructions, creation areas, finite ceilings, Package overrides, scope selection, check selection and owner approval. | Lending uses the selected Manager profile and a limit of three rejections per review purpose. |
+| Product strategy defaults | Versioned defaults shipped with the product, with their original bytes and source fields. | Absent rejection-limit configuration takes three from the strategy document. |
 | `.markitect/ignore.yaml` | Optional exact-file accounting exceptions with reasons. | One observed library editor-state file is ignored. |
 | Explicit host profile file | Literal executables, pinned protocol and tool identities, model and effort, controlled environment and instruction inputs. Supplied by the operator; no implicit discovery. | The selected Codex build and the local test executable. Credentials are resolved locally and never copied into model or journal payloads. |
 | Assignment record | The owner's goal, constraints, granted caps and recorded extensions. | Apply the current library model. |
@@ -22,7 +22,7 @@ The model stays language v1. None of these runtime records adds a canonical Assi
 
 ## Project execution file
 
-One versioned YAML file outside the Definition roots. The figures below are illustrative, not measured sufficient capacity.
+One versioned YAML file outside the Definition roots. The figures below are illustrative, not measured sufficient capacity. Preparation tests consume this executable example directly.
 
 ```yaml
 apiVersion: markitect.execution/v1
@@ -34,7 +34,7 @@ limits:
   maxExecutionTime: 16h
   maxStepTimeout: 10m
   hostOperationTimeout: 2m
-  maxReviewRounds: 3
+  maxRejectionLimit: 3
   maxContextBytes: 400000
   maxSessionSteps: 40
   maxTransientRetries: 2
@@ -52,7 +52,7 @@ defaults:
   profiles:
     manager: library-agent
     reviewer: library-agent
-  reviewRounds: 3
+  rejectionLimit: 3
   batchNoChangeReviews: false
   stepTimeout: 10m
   creationRoots: [realization]
@@ -70,9 +70,9 @@ acceptance:
   ownerApproval: []
 ```
 
-Everything under `limits` is a hard project ceiling. `assignment` sets the default caps of a new assignment; an owner extension can raise them up to `maxRuns`, `maxSessionStarts`, `maxSteps` and `maxExecutionTime`. `maxStepTimeout`, `maxReviewRounds` and `creationRoots` are ceilings, not consumable counters. `hostOperationTimeout` bounds each Host control operation outside the budget. `completionReserve` is part of the caps, not extra allowance; a reserve that the execution contract's preparation check rejects is a preparation failure, and no run is prepared.
+Everything under `limits` is a hard project ceiling. `assignment` sets the default caps of a new assignment; an owner extension can raise them up to `maxRuns`, `maxSessionStarts`, `maxSteps` and `maxExecutionTime`. `maxStepTimeout`, `maxRejectionLimit` and `creationRoots` are ceilings, not consumable counters. `hostOperationTimeout` bounds each Host control operation outside the budget. `completionReserve` is part of the caps, not extra allowance; a reserve that the execution contract's preparation check rejects is a preparation failure, and no run is prepared.
 
-`maxContextBytes` bounds a rendered context package ([concept](manager-apply-concept.md#context-packages)). `maxSessionSteps` and `maxTransientRetries` bound one Manager session and automatic retries ([execution](manager-apply-execution.md#admission-amendments-and-finite-correction)). `batchNoChangeReviews` enables batched no-change reviews ([concept](manager-apply-concept.md#distinct-review-responsibilities)). `acceptance.ownerApproval` lists Packages whose changes need the owner's approval before publication, asked as an ordinary question; it is empty by default, because the owner's commit already accepts the result.
+`maxContextBytes` bounds a rendered context package ([concept](manager-apply-concept.md#context-packages)). `maxSessionSteps` and `maxTransientRetries` bound one Manager conversation and automatic retries ([execution](manager-apply-execution.md#admission-amendments-and-finite-correction)). `batchNoChangeReviews` enables batched no-change reviews ([concept](manager-apply-concept.md#distinct-review-responsibilities)). `acceptance.ownerApproval` lists Packages whose changes need the owner's approval before publication, asked as an ordinary question; it is empty by default, because the owner's commit already accepts the result.
 
 `scope` optionally names the Kinds and Properties through which the model states a Definition's scope, for example `scope: [{kind: software/Rule, property: software/appliesTo}]`. The Property's values are local Package paths; `.` stands for the whole model, and the organization rejects unknown paths before dispatch. A Definition whose scope lists a Package or one of its ancestors enters the context of that Package's Managers. The configuration never lists individual Definitions; M1 needs no `scope`, because its shared rules reach every area through explicit links.
 
@@ -82,7 +82,7 @@ A check that executes a command the model requires names that Definition in `req
 
 `defaults` applies to every local Package Manager, including the root. `packages` keys are exact local Package paths, and `.` is the root. An unknown or imported Package key is an error, not a request to create a Manager. Local and integration reviews use the reviewer profile in fresh sessions; the final evidence check is deterministic Host work. Reviewer profiles should use a different model family than Manager profiles, for example Claude Code reviewing Codex ([ASM-005](../../concepts/register.md#assumptions-and-hypotheses)). The same family is allowed, and the run report states each role's profile; the example keeps one profile for brevity. The first strategy is Manager plus reviewer with sequential writing.
 
-Custom instructions are optional file lists under `defaults.instructions` or `packages.<path>.instructions`, keyed by `manager` or `reviewer`. Each entry identifies an exact repository-relative regular file. Preserve list order, repeated entries and original captured bytes; do not expand directories or globs, normalize paths or deduplicate the list. An existing instruction file without captured bytes leaves preparation `NotCompleted` and requires a new complete capture; preparation cannot extend an old capture or its guard. Instructions carry operational guidance only, such as reporting style or tool usage; a project rule in them is a review finding and belongs in the model ([concept](manager-apply-concept.md#four-kinds-of-input-and-record)). The static operation instruction enters at the root and is propagated unchanged by the Host to every local Manager. Each receives separately compiled context and resolved settings. Parent messages supply work facts and questions, never a replacement operation prompt ([fixed process](manager-apply-concept.md#tasks-and-delegation)).
+Custom instructions are optional file lists under `defaults.instructions` or `packages.<path>.instructions`, keyed by `manager` or `reviewer`. Each entry identifies an exact repository-relative regular file. Preserve list order, repeated entries and original captured bytes; do not expand directories or globs, normalize paths or deduplicate the list. An existing instruction file without captured bytes leaves preparation `NotCompleted` and requires a new complete capture; preparation cannot extend an old capture or its guard. Instructions carry operational guidance only, such as reporting style or tool usage; a project rule in them is a review finding and belongs in the model ([concept](manager-apply-concept.md#four-kinds-of-input-and-record)). The static operation instruction enters at the root and is propagated unchanged by the Host to every local Manager. Each receives separately compiled context and resolved settings. Parent messages supply work facts, questions and separately attributed hints within the model's implementation freedom, never a replacement operation prompt, new binding rule or configuration override ([fixed process](manager-apply-concept.md#tasks-and-delegation)).
 
 ## Strategy defaults and their sources
 
@@ -90,20 +90,22 @@ For `recursive-apply-v1`, these accepted effects apply when the corresponding pr
 
 | Effective setting | Default |
 | --- | --- |
-| `reviewRounds` | `3` |
+| `rejectionLimit` | `3` |
 | Manager and reviewer instruction lists | `[]` each |
 | `batchNoChangeReviews` | `false` |
 | `acceptance.ownerApproval` | `[]` |
 
+The fields count rejected submissions, not all submissions. Successful limited or complete deliveries neither use nor reset this allowance. All work still consumes the shared assignment budget; [execution](manager-apply-execution.md#admission-amendments-and-finite-correction) defines stable counter identity, parent assessment after two rejections and exhaustion. Source preparation resolves the configured numeric limit; it does not implement a rejection counter or review engine. Historical records retain their original names and semantics under their recorded version.
+
 These values must come from one real, versioned product-owned defaults document shipped with the product. Preparation retains its original bytes and digest, using `product:recursive-apply-v1/defaults.yaml` and the actual field pointer in that document as the source. A missing document leaves preparation `NotCompleted`; it cannot be replaced with invented provenance. This contract does not create that document or prescribe an implementation package.
 
-`AuthoredExecution` retains absence. Resolution obtains an absent effective value from the captured strategy document; an explicitly configured value keeps its authored source. Effective defaults must satisfy the project ceilings: an absent review-round setting with `maxReviewRounds: 2` fails because the effective default is three. Never clamp the value or cite a nonexistent execution field as its source.
+`AuthoredExecution` retains absence. Resolution obtains an absent effective value from the captured strategy document; an explicitly configured value keeps its authored source. Effective defaults must satisfy the project ceilings: an absent rejection-limit setting with `maxRejectionLimit: 2` fails because the effective default is three. Never clamp the value or cite a nonexistent execution field as its source.
 
 ## Resolve settings deterministically
 
-Resolve project defaults, then the exact Manager override only; there is no inheritance from ancestor overrides. Profile references replace the role's value. Instructions append the project defaults, then the exact override, in declared order. `stepTimeout`, `reviewRounds` and `creationRoots` replace the default within the project ceilings; a default is not a ceiling, so a default of two review rounds can be overridden to three where `maxReviewRounds` allows it. Creation directories must equal or descend from an allowed root. There is no deep merge, wildcard override or environment interpolation.
+Resolve project defaults, then the exact Manager override only; there is no inheritance from ancestor overrides. Profile references replace the role's value. Instructions append the project defaults, then the exact override, in declared order. `stepTimeout`, `rejectionLimit` and `creationRoots` replace the default within the project ceilings; a default is not a ceiling, so a rejection limit of two can be overridden to three where `maxRejectionLimit` allows it. Creation directories must equal or descend from an allowed root. There is no deep merge, wildcard override or environment interpolation.
 
-In the example, lending gets eight minutes per step while lending/reminders keeps the ten-minute default, and a `.` override configures the root only. Restrictions in a delegated task are a separate runtime narrowing that still constrains the child. Effective values are stored with the file and field that supplied them, so every bound is explainable.
+In the example, lending gets eight minutes per step while lending/reminders keeps the ten-minute default, and a `.` override configures the root only. The Host enforces model obligations, resolved configuration and fixed process constraints; a parent message supplies advice or prerequisite information, not extra task restrictions. Effective values are stored with the file and field that supplied them, so every bound is explainable.
 
 Reject duplicate or unknown keys, unresolved profiles or instruction files, invalid Package paths, unbounded or nonpositive limits and unsupported strategy or role values before dispatch. Use restricted YAML without aliases, custom tags or implicit nulls; durations are explicit positive strings. Structural checks reject forbidden options such as disabling mandatory review. A prose conflict between custom instructions and a model obligation is a question for grounded assessment; no precedence rule lets instructions, configuration or a parent prompt weaken a binding requirement.
 
@@ -147,8 +149,8 @@ The selected bytes and identities enter the run's input binding and are rechecke
 | Assignment | One owner request with its caps. It links its runs, questions, consumption and extensions and owns no scheduler. |
 | Apply run | One immutable model, configuration and source binding and its reconciliation. A changed basis or execution policy needs a continuation run after this one finished. |
 | Task | One Manager responsibility within a run. Tasks in a continuation get new IDs with predecessor links where work carries forward. |
-| Attempt | One submission within a task against the run's fixed basis. It resets no budget or round counter. |
-| Session and step | An actual role conversation and one dispatch. They never supply authority. |
+| Attempt | One submission within a task against the run's fixed basis. It resets no budget or rejection counter. |
+| Execution session, conversation and step | A bound execution environment, separately identified provider dialogue and one dispatch. In the first Apply each step has its own execution session ([S1](manager-apply-core.md#steps)), and a conversation spans many of them ([S3](manager-apply-core.md#steps)); each step binds its current workspace and authority. None supplies authority by its identity alone. |
 
 The assignment stores the owner input and goal, constraints, operation target, project identity, caps and authority source. Omitted caps use the `assignment` defaults. Renewing an exhausted cap needs a recorded extension within the project ceilings; raising a ceiling needs an authorized configuration edit. Starting another run grants nothing. The first product has one local operator as decision owner and no identity service based on Agent-reported names. An accepted decision can authorize a continuation run within the assignment; it never authorizes merge, release, deployment or production-data edits.
 
@@ -163,7 +165,7 @@ For lending it states:
 - Freedom: the internal implementation within the model's architecture and interfaces; no additional business restrictions.
 - Artifact authority: its owned files plus new paths claimed through the Host; changes to other owners' files are requested through the common parent.
 - Reserved choices: changed business rules, authority or protected inputs need a decision outside artifact Apply.
-- Limits: the remaining assignment capacity, local step and round limits and the mandatory gates.
+- Limits: the remaining assignment capacity, local step and rejection limits and the mandatory gates.
 
 The section may display the bound loan limit but cites `loan-policy` as its authority, so M2 changes one canonical value and no mandate text. The reviewer checks material decisions against their source-bound authority as well as their behavior. The Host validates the typed boundaries; judging semantic authority remains reviewable Agent work.
 
@@ -173,4 +175,4 @@ A Manager first retrieves existing knowledge, then decides within its freedom or
 
 The [journal contract](manager-apply-journal.md#questions-answers-and-model-changes) owns the content of questions, how owner answers are bound and what they trigger. A blocked assignment or a serious execution uncertainty shows in the status at once; routine findings and local decisions stay inspectable without an answer. CLI status and question inspection suffice for the first version.
 
-Configuration needs negative cases for exact overrides versus task restrictions, ceilings, unknown Packages and profiles, invalid reserves, protected inputs, conflicting instructions, oversized contexts and unknown approval Packages. Experience hints and an operational doctor are later extensions ([north star](manager-realization-north-star.md#later-operations-and-extensions)).
+Configuration needs negative cases for exact overrides versus attempted parent-message restrictions, ceilings, unknown Packages and profiles, invalid reserves, protected inputs, conflicting instructions, oversized contexts and unknown approval Packages. Experience hints and an operational doctor are later extensions ([north star](manager-realization-north-star.md#later-operations-and-extensions)).

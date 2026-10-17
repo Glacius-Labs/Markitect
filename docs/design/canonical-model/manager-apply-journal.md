@@ -86,14 +86,16 @@ Optional identities use explicit absence in the codec. `EventBody` is a closed t
 | Run binding | Model closure and lock, captured repository tree and census with its publication guard, configuration and prepared profiles, instructions, initial registry, operation contract and product build. |
 | Retained work | Exact predecessor run and candidate, original base, matching registry, open findings and the reason for carrying it forward. Old approval is never promoted. |
 | Task | Run, Manager, parent task, attempt, outcome, complete responsibility, candidate base, context package reference, constraints and predecessor link. |
-| Supplied inputs | Exact prompt and context, selected deliveries composed into the base, session lineage and later supplied replies. |
+| Supplied inputs | Exact prompt and context, step workspace version, the aggregate version it started from and own starting changes, execution-session/conversation lineage and later supplied replies. |
 | Context package | Immutable rendered package including its mandate section, with source references, effective configuration, registry and task basis, and the product prompt template identity. |
 | Question and proposal | Stable ID and version, originating task and run, affected work, model passages, decision and reason, alternatives, exact before and after source edits and the effect on work. |
 | Answer | Question version, exact owner input, ingress and authority, selected disposition and any remaining ambiguity. |
 | Candidate, review and check | Exact input, tree, registry and subject bindings, assessments, findings and observed results; carry-forward judgments for retained work. |
 | Finding | Stable ID, issuing reviewer and session, responsibility, model and input basis, requested evidence, optional candidate, and later state changes with their evidence or grounds. Its state is a projection of history, not an editable flag. |
 | Publication | Publication ID, run and captured source guard, verified candidate and registry, prepared request, completed paths and read-back or uncertainty. |
-| Budget | Reservation ID, assignment and cap revision, purpose (writing or assessment), resource quantities, effect identity, maximum duration, settlement or unresolved hold. |
+| Budget | Reservation ID, assignment and cap revision, budget class (ordinary Manager work or assessment), separately bound role/permitted effects, resource quantities, effect identity, maximum duration, settlement or unresolved hold. |
+
+The table specifies target meaning, not a rewrite of persisted codecs. Existing `Writing`/`Assessment` literals retain their recorded version and accounting behavior until an explicit producer migration supplies the separated target contract. Historical records, original bytes and retry identities remain intact.
 
 Proposed model edits are exact file bytes or identified source fragments with their prior content identities. A changed proposal gets a new version. A description of desired behavior alone does not authorize a concrete edit.
 
@@ -105,10 +107,10 @@ Proposed model edits are exact file bytes or identified source fragments with th
 | --- | --- |
 | Assignment | Open or closed, linked runs, caps and extensions. Activity labels derive from these facts. |
 | Run | Exactly the states and outcomes of the execution contract. |
-| Task | Local work, check, review and integration phases plus question and child waits. Round counters survive task recreation. |
+| Task | The states of the [core task machine](manager-apply-core.md#manager-tasks). Rejection counters are kept per run, Manager and review purpose. |
 | Question | Open, answered, deferred or replaced; a stale proposal is replaced by a new version. Recording an answer does not mean its model effect happened. |
 
-Version-1 event tags, each with a closed payload codec:
+Illustrative event families and tags for the target workflow, each requiring a closed versioned payload codec. This table does not declare them implemented or redefine an existing source format version:
 
 | Family | Event tags |
 | --- | --- |
@@ -124,11 +126,11 @@ Version-1 event tags, each with a closed payload codec:
 
 ## Questions answers and model changes
 
-1. The responsible Manager raises a source-grounded question through its parent. The Host records its version, proposal and affected tasks. Other ready work continues; required unresolved work prevents aggregate completion.
+1. The responsible Manager raises a source-grounded question addressed to the owner, which goes through the application ([M4](manager-apply-core.md#messages)). The Host records its version, proposal and affected tasks. Other ready work continues; required unresolved work prevents aggregate completion.
 2. The application receives the owner's answer, records it raw and binds it to the displayed question version. Repeated ingress is deduplicated. An Agent-supplied actor name carries no owner authority.
 3. The answer's effect is classified with a reason. Context about an existing rule can be supplied in a later step of the same run. Asking for an alternative to be elaborated authorizes preparation only. Deferral leaves dependent work waiting. A new obligation or authority change needs a new basis.
 4. Accepting authorizes the exact displayed edit; the same permission is not asked again. A clear free-text answer can authorize a different edit; remaining material ambiguity gets a revised proposal. If the source drifted, the edit is withheld and revalidated, and the owner is asked again only if the choice materially changed.
-5. Artifact Apply never edits its model or configuration. If the answer changes the basis, the run quiesces and finishes Incomplete with the reason "awaiting model change". In the first version the owner or the calling agent applies and commits the exact approved edit; Markitect records the actual result and new model identity separately from the answer and compares the observed model difference with the approved patch. A deviation is shown to the owner but not blocked, because the owner holds that authority. A pending or failed edit stays visible.
+5. Artifact Apply never edits its model or configuration. If the answer changes the captured run input basis, the run quiesces and finishes Incomplete with the reason "awaiting model change". In the first version the owner or the calling agent applies and commits the exact approved edit; Markitect records the actual result and new model identity separately from the answer and compares the observed model difference with the approved patch. A deviation is shown to the owner but not blocked, because the owner holds that authority. A pending or failed edit stays visible. An accepted artifact delivery under unchanged run inputs instead reaches later steps through the current aggregate ([D3](manager-apply-core.md#deliveries-and-composition)).
 6. Once the edit is committed, the owner continues the assignment and the continuation below starts. "Model updated" and "work resumed" are each reported only after it is observed.
 
 Notifications are projections of these facts, not a source of permission. Approved code cannot authorize an unauthorized business-policy change.
@@ -160,7 +162,7 @@ The continuation repeats all required reviews, checks and integration and the fi
 
 **Two model versions.** R1 binds M1, produces reviewed A1 and finishes Applied. The owner changes only `loan-policy.spec.maxOpenLoans` from five to three and starts a new Apply. R2 binds M2 and the actual A1; lending adapts admission, other areas can deliver justified no-change results, and all required assessments run before A2 is published. The [Playground](manager-apply-playground.md) owns the independent evidence.
 
-**A missing decision during work.** A deliberately inconsistent future draft both preserves existing loans and requires all holdings to fit a lowered limit; this is not M1 or M2. Lending raises question Q1 version 1 with the conflicting passages and an exact correction that keeps the structured policy as the numeric authority. The root routes it to the owner, who accepts. The journal separates answer received, run finished Incomplete awaiting the model change, edit committed, model revision observed and continuation started. Lending's unfinished candidate is retained and assessed again; if no meaningful evidence fits the remaining budget, the run ends Incomplete.
+**A missing decision during work.** A deliberately inconsistent future draft both preserves existing loans and requires all holdings to fit a lowered limit; this is not M1 or M2. Lending raises question Q1 version 1 with the conflicting passages and an exact correction that keeps the structured policy as the numeric authority. It goes to the owner through the application ([M4](manager-apply-core.md#messages)), and the owner accepts. The journal separates answer received, run finished Incomplete awaiting the model change, edit committed, model revision observed and continuation started. Lending's unfinished candidate is retained and assessed again; if no meaningful evidence fits the remaining budget, the run ends Incomplete.
 
 **An inspectable timeline.**
 

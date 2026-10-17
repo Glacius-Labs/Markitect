@@ -18,7 +18,7 @@ func TestSettingsDefaultsCoverAllLocalManagers(t *testing.T) {
 	var paths []string
 	for _, manager := range settings.Managers() {
 		paths = append(paths, manager.Package)
-		if manager.StepTimeout != facts.Defaults.StepTimeout || manager.ReviewRounds != facts.Defaults.ReviewRounds || manager.BatchNoChangeReviews != facts.Defaults.BatchNoChangeReviews || !reflect.DeepEqual(manager.CreationRoots, facts.Defaults.CreationRoots) {
+		if manager.StepTimeout != facts.Defaults.StepTimeout || manager.RejectionLimit != facts.Defaults.RejectionLimit || manager.BatchNoChangeReviews != facts.Defaults.BatchNoChangeReviews || !reflect.DeepEqual(manager.CreationRoots, facts.Defaults.CreationRoots) {
 			t.Errorf("%s did not receive complete explicit defaults: %+v", manager.Package, manager)
 		}
 		if manager.Manager.Profile.Value != facts.Profiles[0] || manager.Reviewer.Profile.Value != facts.Profiles[1] {
@@ -52,13 +52,13 @@ func TestSettingsForRootOnlyModelAndExactUnicodeOverrides(t *testing.T) {
 	topology := requireTopology(t, compileFixture(t, localFixture(t, map[string][]string{"é/子": {"item"}}, "software")))
 	facts.Overrides = []organization.PackageOverride{
 		{Package: "é/子", Manager: organization.RoleOverride{Profile: settingPointer("alternate", "/packages/é~1子/profiles/manager")}},
-		{Package: "software", ReviewRounds: settingPointer(3, "/packages/software/reviewRounds")},
+		{Package: "software", RejectionLimit: settingPointer(3, "/packages/software/rejectionLimit")},
 	}
 	settings = requireSettings(t, topology, facts)
 	if got := managerSettings(t, settings, "é/子"); got.Manager.Profile.Value.Name != "alternate" || !got.BatchNoChangeReviews.Value {
 		t.Fatal("exact Unicode override or project-wide batch default lost")
 	}
-	if got := managerSettings(t, settings, "software"); got.ReviewRounds.Value != 3 {
+	if got := managerSettings(t, settings, "software"); got.RejectionLimit.Value != 3 {
 		t.Fatal("local empty spelling could not override its settings")
 	}
 	facts.Overrides[0].Package = "e\u0301/子"
@@ -79,16 +79,16 @@ func TestSettingsExactOverridesReplaceAndAppendWithoutInheritance(t *testing.T) 
 				Profile:      settingPointer("alternate", "/packages/lending/profiles/manager"),
 				Instructions: settingPointer([]string{"local", "style", "empty"}, "/packages/lending/instructions/manager"),
 			},
-			Reviewer:      organization.RoleOverride{Instructions: settingPointer([]string{}, "/packages/lending/instructions/reviewer")},
-			StepTimeout:   settingPointer(8*time.Minute, "/packages/lending/stepTimeout"),
-			ReviewRounds:  settingPointer(3, "/packages/lending/reviewRounds"),
-			CreationRoots: settingPointer([]snapshot.DirectoryBoundary{directory(t, "docs")}, "/packages/lending/creationRoots"),
+			Reviewer:       organization.RoleOverride{Instructions: settingPointer([]string{}, "/packages/lending/instructions/reviewer")},
+			StepTimeout:    settingPointer(8*time.Minute, "/packages/lending/stepTimeout"),
+			RejectionLimit: settingPointer(3, "/packages/lending/rejectionLimit"),
+			CreationRoots:  settingPointer([]snapshot.DirectoryBoundary{directory(t, "docs")}, "/packages/lending/creationRoots"),
 		},
 		{Package: "empty", CreationRoots: settingPointer([]snapshot.DirectoryBoundary{}, "/packages/empty/creationRoots")},
 	}
 	settings := requireSettings(t, settingsTopology(t), facts)
 	lending := managerSettings(t, settings, "lending")
-	if lending.Manager.Profile.Value.Name != "alternate" || lending.Reviewer.Profile.Value.Name != "critic" || lending.StepTimeout.Value != 8*time.Minute || lending.ReviewRounds.Value != 3 {
+	if lending.Manager.Profile.Value.Name != "alternate" || lending.Reviewer.Profile.Value.Name != "critic" || lending.StepTimeout.Value != 8*time.Minute || lending.RejectionLimit.Value != 3 {
 		t.Fatalf("exact replacements failed: %+v", lending)
 	}
 	if roots := lending.CreationRoots.Value; len(roots) != 1 || roots[0].String() != "docs" {
@@ -119,7 +119,7 @@ func TestSettingsExactOverridesReplaceAndAppendWithoutInheritance(t *testing.T) 
 	}
 	for _, path := range []string{"lending/reminders", "software"} {
 		got := managerSettings(t, settings, path)
-		if got.Manager.Profile.Value.Name != "writer" || got.StepTimeout.Value != 5*time.Minute || got.ReviewRounds.Value != 2 || got.CreationRoots.Value[0].String() != "real" || len(got.Manager.Instructions) != 1 {
+		if got.Manager.Profile.Value.Name != "writer" || got.StepTimeout.Value != 5*time.Minute || got.RejectionLimit.Value != 2 || got.CreationRoots.Value[0].String() != "real" || len(got.Manager.Instructions) != 1 {
 			t.Errorf("%s inherited root/ancestor overrides: %+v", path, got)
 		}
 	}
@@ -171,7 +171,7 @@ func TestSettingsPreserveOriginalInstructionBytesAndOwnAllViews(t *testing.T) {
 func TestSettingsDeterminismAcrossCatalogAndOverrideEnumeration(t *testing.T) {
 	topology := settingsTopology(t)
 	facts := settingsFixture(t)
-	facts.Overrides = []organization.PackageOverride{{Package: ".", ReviewRounds: settingPointer(3, "/packages/./reviewRounds")}, {Package: "empty", StepTimeout: settingPointer(time.Minute, "/packages/empty/stepTimeout")}}
+	facts.Overrides = []organization.PackageOverride{{Package: ".", RejectionLimit: settingPointer(3, "/packages/./rejectionLimit")}, {Package: "empty", StepTimeout: settingPointer(time.Minute, "/packages/empty/stepTimeout")}}
 	want := requireSettings(t, topology, facts)
 	slices.Reverse(facts.Overrides)
 	slices.Reverse(facts.Profiles)

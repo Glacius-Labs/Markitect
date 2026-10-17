@@ -30,6 +30,8 @@ Cross-command external-target exclusivity is **not enforced by a shared registry
 
 ## Coordinator-owned changes
 
+For the Apply rebuild, the [architect section](../implementation-plan.md#architect-and-coordinator) of the delivery plan assigns the ports and core contracts; the rest of this section describes the earlier Module/Host line.
+
 The coordinator owns shared Core contracts, Host composition/runtime seams, source identity, adapter DTOs/lifecycle/trust boundaries, package activation and controlled writes. Module implementers propose concrete changes with consumers, alternatives, compatibility/determinism/evidence tests and a focused design before editing shared contracts. One generic limitation needs repeated independent engineering evidence; a provider convenience does not justify Core expansion. See [Modules and static composition](modules.md) for the dependency law and Core request format.
 
 The shared handoff is included in v0.13.0 outside Core and is documented in the [selective adoption contract](../design/selective-adoption-handoff.md). `prepare` owns explicit selection and capture; `copy-me` validates externally supplied records over the captured bytes. Their adoption boundary is shared, but no automatic root scan, content-driven scope expansion, reviewer authentication, conflict resolution, Project mutation or candidate adoption is introduced. Published v0.13.0 remains unchanged by the architecture work. See [adoption boundaries](adoption-boundaries.md).

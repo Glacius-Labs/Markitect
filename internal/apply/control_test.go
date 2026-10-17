@@ -9,6 +9,7 @@ import (
 
 	"github.com/Glacius-Labs/Markitect/internal/apply"
 	"github.com/Glacius-Labs/Markitect/internal/run"
+	"github.com/Glacius-Labs/Markitect/internal/snapshot"
 )
 
 // These controlled ports test the consumer's composition. They provide no
@@ -177,8 +178,9 @@ func TestControlOpenRestoresRecordedHoldsAndKeepsOriginalBasis(t *testing.T) {
 	at := time.Date(2026, 10, 17, 8, 0, 0, 0, time.UTC)
 	controlCommit(t, original, j, run.PrepareCommand("prepare", "assignment", "run", "", at, basis))
 	controlCommit(t, original, j, run.Command{ID: "start", Kind: run.StartRun, Assignment: "assignment", Run: "run", ObservedAt: at})
-	controlCommit(t, original, j, run.Command{ID: "reserve", Kind: run.ReserveInvocation, Assignment: "assignment", Run: "run", ObservedAt: at,
-		Reservation: run.Reservation{ID: "invocation", Kind: run.SessionStart, Purpose: run.Writing, Maximum: time.Minute}})
+	a, _ := prepared.Prepared()
+	startup := controlExploreStartup(t, original, a.Structural().Model().Inputs().Raw.Census.Digest(), at)
+	controlCommit(t, original, j, startup)
 	puts, appends := j.puts, j.appends
 	c := openControlled(t, prepared, facts, s)
 	if c.Binding() != s.binding || c.Basis().Ref() != basis.Ref() || c.Coordinator().Current() != original.Current() || c.Coordinator().Revision() != original.Revision() || !c.Coordinator().RecoveryRequired() || !reflect.DeepEqual(c.Coordinator().Budget(), original.Budget()) {
@@ -188,7 +190,6 @@ func TestControlOpenRestoresRecordedHoldsAndKeepsOriginalBasis(t *testing.T) {
 		t.Fatal("open wrote history or did not reconstruct bounded pages")
 	}
 	view := runBindingRead(t, c.Basis())
-	a, _ := prepared.Prepared()
 	if view.Source.Guard != string(a.Structural().Model().Inputs().Guard) {
 		t.Fatal("fresh recapture guard replaced original publication basis")
 	}
@@ -233,4 +234,22 @@ func TestControlledJournalRetainsUncertainReceiptAndStopsAfterControlLoss(t *tes
 	if _, err := c.Journal().Append(context.Background(), p.Batch()); !errors.Is(err, apply.ErrControlBinding) || j.puts != puts || j.appends != appends {
 		t.Fatal("lost controller reached journal", err)
 	}
+}
+
+func controlExploreStartup(t *testing.T, c *run.Coordinator, candidate snapshot.TreeID, at time.Time) run.Command {
+	t.Helper()
+	profile, err := run.NewPayload("application/json", "utf-8", []byte(`{"profile":"controlled"}`))
+	if err != nil {
+		t.Fatal(err)
+	}
+	tools, err := run.NewPayload("application/json", "utf-8", []byte(`{"tools":[]}`))
+	if err != nil {
+		t.Fatal(err)
+	}
+	plan := run.SessionPlan{ID: "session", Role: "manager", Workspace: "controlled-linux-workspace", ProviderHome: "provider-home", Candidate: candidate, ReadOnly: true, ImageID: "sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef", CredentialRef: "credential-ref", MaxWireBytes: 1 << 20, Profile: profile.Ref(), Tools: tools.Ref()}
+	command, err := c.PrepareExploreSessionCommand(run.RecordMeta{ID: "reserve", ObservedAt: at}, ".", plan, run.Reservation{ID: "invocation", Kind: run.SessionStart, Purpose: run.Writing, Maximum: time.Minute}, profile, tools)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return command
 }

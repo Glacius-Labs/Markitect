@@ -10,6 +10,7 @@ import (
 
 	"github.com/Glacius-Labs/Markitect/internal/apply"
 	"github.com/Glacius-Labs/Markitect/internal/run"
+	"github.com/Glacius-Labs/Markitect/internal/snapshot"
 )
 
 var integrationAt = time.Date(2026, 10, 17, 8, 0, 0, 0, time.UTC)
@@ -55,8 +56,7 @@ func TestControlServiceRestoresDurableRunAndRecoveryBarrier(t *testing.T) {
 		}
 	}
 	integrationCommit(t, c, run.Command{ID: "start", Kind: run.StartRun, Assignment: "assignment", Run: "run", ObservedAt: integrationAt})
-	reserve := run.Command{ID: "reserve", Kind: run.ReserveInvocation, Assignment: "assignment", Run: "run", ObservedAt: integrationAt,
-		Reservation: run.Reservation{ID: "invocation", Kind: run.SessionStart, Purpose: run.Writing, Maximum: time.Minute}}
+	reserve := integrationExploreStartup(t, c.Coordinator(), f.source.inputs.Raw.Census.Digest())
 	integrationCommit(t, c, reserve)
 	want, binding := c.Coordinator(), c.Binding()
 	if err := c.Close(); err != nil {
@@ -78,6 +78,13 @@ func TestControlServiceRestoresDurableRunAndRecoveryBarrier(t *testing.T) {
 	reserve.ID, reserve.Reservation.ID = "new-reserve", "new-invocation"
 	if _, err := got.Propose(reserve); !errors.Is(err, run.ErrRecovery) {
 		t.Fatal("restored hold allowed new dispatch", err)
+	}
+	io, err := got.SessionChannel(reopened.Journal(), "session", run.RefuseTools)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := io.ObserveStop(context.Background(), run.StopObservation{RecordMeta: run.RecordMeta{ID: "proven-not-started", ObservedAt: integrationAt}, Terminated: true, Reason: "Host proved no process was dispatched in this fixture"}); err != nil {
+		t.Fatal(err)
 	}
 	integrationCommit(t, reopened, run.Command{ID: "release", Kind: run.ReleaseUndispatched, Assignment: "assignment", Run: "run", ObservedAt: integrationAt,
 		Invocation: "invocation", Reason: "The test issued no external dispatch."})
@@ -225,10 +232,13 @@ func TestSessionPreparationRequiresActualSQLPayloadsAndRestoresRecovery(t *testi
 	if err != nil {
 		t.Fatal(err)
 	}
-	plan := run.SessionPlan{ID: "session", Role: "manager", Workspace: "controlled-linux-workspace", Candidate: f.source.inputs.Raw.Census.Digest(),
+	plan := run.SessionPlan{ID: "session", Role: "manager", ReadOnly: true, Workspace: "controlled-linux-workspace", ProviderHome: "provider-home", Candidate: f.source.inputs.Raw.Census.Digest(),
 		ImageID: "sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef", CredentialRef: "credential-ref", MaxWireBytes: 4096, Profile: profile.Ref(), Tools: tools.Ref()}
-	command := run.PrepareSessionCommand(run.RecordMeta{ID: "prepare-session", ObservedAt: integrationAt}, "assignment", "run", plan,
+	command, err := coordinator.PrepareExploreSessionCommand(run.RecordMeta{ID: "prepare-session", ObservedAt: integrationAt}, ".", plan,
 		run.Reservation{ID: "session-start", Kind: run.SessionStart, Purpose: run.Writing, Maximum: time.Minute}, profile, tools)
+	if err != nil {
+		t.Fatal(err)
+	}
 	proposal, err := coordinator.Propose(command)
 	if err != nil {
 		t.Fatal(err)
@@ -287,4 +297,22 @@ func TestSessionPreparationRequiresActualSQLPayloadsAndRestoresRecovery(t *testi
 	if !ok || got != want || !reopened.Coordinator().RecoveryRequired() || reopened.Coordinator().Budget().Held.SessionStarts != 1 {
 		t.Fatal("session restoration lost its admitted plan, payloads or recovery barrier")
 	}
+}
+
+func integrationExploreStartup(t *testing.T, c *run.Coordinator, candidate snapshot.TreeID) run.Command {
+	t.Helper()
+	profile, err := run.NewPayload("application/json", "utf-8", []byte(`{"profile":"controlled"}`))
+	if err != nil {
+		t.Fatal(err)
+	}
+	tools, err := run.NewPayload("application/json", "utf-8", []byte(`{"tools":[]}`))
+	if err != nil {
+		t.Fatal(err)
+	}
+	plan := run.SessionPlan{ID: "session", Role: "manager", Workspace: "controlled-linux-workspace", ProviderHome: "provider-home", Candidate: candidate, ReadOnly: true, ImageID: "sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef", CredentialRef: "credential-ref", MaxWireBytes: 1 << 20, Profile: profile.Ref(), Tools: tools.Ref()}
+	command, err := c.PrepareExploreSessionCommand(run.RecordMeta{ID: "reserve", ObservedAt: integrationAt}, ".", plan, run.Reservation{ID: "invocation", Kind: run.SessionStart, Purpose: run.Writing, Maximum: time.Minute}, profile, tools)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return command
 }

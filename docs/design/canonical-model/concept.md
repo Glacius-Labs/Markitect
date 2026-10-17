@@ -1,3 +1,24 @@
 # Concept
 
 A **Concept** describes something meaningful in the project's domain, including its meaning and relevant characteristics. Examples include a Task, Priority or TaskStatus.
+
+## Standard-library contract
+
+Owner-selected direction, 17 October 2026: use body links for domain relationships and `spec: {}`. This page owns the consolidated Kind wording under the [standard-library contract](standard-library.md); the standard-library package has not been implemented.
+
+Each Definition has its own file. This file belongs to the selected Package `markitect/software` when implemented:
+
+```yaml
+imports:
+  - package: markitect/core
+    as: Core
+id: Concept
+kind: Core.Kind
+body: >-
+  Describes something meaningful in the project's domain, its meaning,
+  identity, relevant characteristics and relationships.
+  A Concept describes intended domain meaning, not a particular live record.
+spec: {}
+```
+
+The Library's [loan](library-example/m1/model/lending/loan.yaml) describes what a loan means. Actual loan records belong to the realized program. Body links connect that meaning to members, copies, borrowing and returns. A Concept Definition does not declare a new Kind for records; a project declares a separate Kind when it needs its own structured field contract.

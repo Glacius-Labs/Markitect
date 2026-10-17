@@ -60,7 +60,7 @@ type SettingsDefaults struct {
 	Manager              RoleDefaults
 	Reviewer             RoleDefaults
 	StepTimeout          Setting[time.Duration]
-	ReviewRounds         Setting[int]
+	RejectionLimit       Setting[int]
 	CreationRoots        Setting[[]snapshot.DirectoryBoundary]
 	BatchNoChangeReviews Setting[bool]
 }
@@ -70,12 +70,12 @@ type SettingsDefaults struct {
 // Instructions append; profiles and the other fields replace independently.
 // There is deliberately no BatchNoChangeReviews override or role registry.
 type PackageOverride struct {
-	Package       string
-	Manager       RoleOverride
-	Reviewer      RoleOverride
-	StepTimeout   *Setting[time.Duration]
-	ReviewRounds  *Setting[int]
-	CreationRoots *Setting[[]snapshot.DirectoryBoundary]
+	Package        string
+	Manager        RoleOverride
+	Reviewer       RoleOverride
+	StepTimeout    *Setting[time.Duration]
+	RejectionLimit *Setting[int]
+	CreationRoots  *Setting[[]snapshot.DirectoryBoundary]
 }
 
 // SettingsCeilings constrain every selection, including unused defaults.
@@ -85,9 +85,9 @@ type PackageOverride struct {
 // The explicit RootDirectory boundary is supported. No normalization, physical
 // existence, symlink resolution or artifact authority is implied.
 type SettingsCeilings struct {
-	StepTimeout   Setting[time.Duration]
-	ReviewRounds  Setting[int]
-	CreationRoots Setting[[]snapshot.DirectoryBoundary]
+	StepTimeout    Setting[time.Duration]
+	RejectionLimit Setting[int]
+	CreationRoots  Setting[[]snapshot.DirectoryBoundary]
 }
 
 // SettingsFacts is the complete explicit input to this small resolution slice.
@@ -120,7 +120,7 @@ type ManagerSettings struct {
 	Manager              RoleSettings
 	Reviewer             RoleSettings
 	StepTimeout          Setting[time.Duration]
-	ReviewRounds         Setting[int]
+	RejectionLimit       Setting[int]
 	CreationRoots        Setting[[]snapshot.DirectoryBoundary]
 	BatchNoChangeReviews Setting[bool]
 }

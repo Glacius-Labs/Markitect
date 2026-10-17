@@ -7,7 +7,6 @@ import (
 	"errors"
 	"strings"
 	"testing"
-	"time"
 
 	"github.com/Glacius-Labs/Markitect/internal/run"
 )
@@ -30,7 +29,7 @@ func TestCodecRejectsCanonicalBytesWithInvalidValueShapes(t *testing.T) {
 		t.Fatal(err)
 	}
 	runningCoordinator, _ := running(t)
-	reserved, err := runningCoordinator.Propose(reserve("step", run.AgentStep, run.Assessment, time.Second))
+	reserved, err := runningCoordinator.Propose(sessionPreparation(t, runningCoordinator, "s"))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -73,7 +72,7 @@ func TestCodecRejectsCanonicalBytesWithInvalidValueShapes(t *testing.T) {
 			if _, err := run.DecodeBatch(data); !errors.Is(err, run.ErrInvalid) {
 				t.Fatal("intrinsically invalid canonical record accepted", err)
 			}
-			if body.Kind == run.ReserveInvocation {
+			if body.Kind == run.ReserveInvocation || body.Kind == run.PrepareSession {
 				if _, err := runningCoordinator.Propose(*body); !errors.Is(err, run.ErrInvalid) {
 					t.Fatal("normal admission disagrees with codec", err)
 				}
@@ -178,6 +177,13 @@ func (j *memoryJournal) Append(ctx context.Context, b run.AppendBatch) (run.Appe
 	j.batches = append(j.batches, stored)
 	j.head = b.Revision()
 	receipt := run.ReceiptFor(b)
+	switch j.appendMode {
+	case "absent-after-next":
+		j.appendMode = "absent" // This append succeeds; the following one is never stored.
+	case "lost-after-next":
+		j.appendMode = "lost" // This append succeeds; the following one loses its acknowledgement.
+		return receipt, nil
+	}
 	if j.appendMode == "lost" {
 		return receipt, errors.New("ack lost after commit")
 	}
@@ -344,7 +350,7 @@ func TestBindingReferenceCodecRejectsChangedRecordedFormats(t *testing.T) {
 		t.Fatal(err)
 	}
 	for name, change := range map[string]func([]byte) []byte{
-		"unknown binding version": func(data []byte) []byte { return bytes.Replace(data, []byte(`"Version":2`), []byte(`"Version":3`), 1) },
+		"unknown binding version": func(data []byte) []byte { return bytes.Replace(data, []byte(`"Version":3`), []byte(`"Version":99`), 1) },
 		"wrong compiled digest": func(data []byte) []byte {
 			return bytes.Replace(data, []byte(i.Compilation.Models[0].Digest), []byte("sha256:"+strings.Repeat("0", 64)), 1)
 		},

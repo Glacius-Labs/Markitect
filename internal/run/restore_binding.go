@@ -25,7 +25,7 @@ func (r *restoreReader) binding(ref BlobRef) (Binding, error) {
 	if err != nil {
 		return Binding{}, err
 	}
-	return Binding{payload: p, owner: owner, source: w.Source, policy: w.Policy, reviews: reviews}, nil
+	return Binding{payload: p, owner: owner, source: w.Source, policy: w.Policy, reviews: reviews, version: w.Version, demand: recordedReviewDemand(w)}, nil
 }
 
 // BindingOwnerRef validates the original basis payload's byte identity and
@@ -47,7 +47,7 @@ func decodeBindingRecord(p Payload) (bindingWire, int64, error) {
 		return bindingWire{}, 0, ErrInvalid
 	}
 	var w bindingWire
-	if err := strictJSON(p.Bytes(), &w); err != nil || (w.Version != 1 && w.Version != 2) || !w.Source.valid() || !w.OwnerRequest.Valid() {
+	if err := strictJSON(p.Bytes(), &w); err != nil || (w.Version != 1 && w.Version != 2 && w.Version != 3) || !w.Source.valid() || !w.OwnerRequest.Valid() {
 		return bindingWire{}, 0, ErrInvalid
 	}
 	if _, err := matchRawClosure(w.ModelInput, w.Compilation); err != nil {
@@ -67,8 +67,12 @@ func decodeBindingRecord(p Payload) (bindingWire, int64, error) {
 	if !bytes.Equal(actual, recorded) {
 		return bindingWire{}, 0, ErrInvalid
 	}
-	reviews := reviewFloor(managers)
-	if err := w.Policy.validate(reviews); err != nil {
+	if err := validateManagerPolicy(w); err != nil {
+		return bindingWire{}, 0, err
+	}
+	demand := recordedReviewDemand(w)
+	reviews := demand.Subjects
+	if err := w.Policy.validateDemand(demand); err != nil {
 		return bindingWire{}, 0, err
 	}
 	return w, reviews, nil

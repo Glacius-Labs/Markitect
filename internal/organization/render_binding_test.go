@@ -62,7 +62,7 @@ func TestRenderRejectsContradictoryConfigurationBasis(t *testing.T) {
 	})
 	t.Run("cap-field-value", func(t *testing.T) {
 		changed := input
-		changed.MaxContextBytes.Source = settingSource("execution.yaml", "/defaults/reviewRounds")
+		changed.MaxContextBytes.Source = settingSource("execution.yaml", "/defaults/rejectionLimit")
 		requireRenderRefusal(t, selection, settings, changed, "invalid-input")
 	})
 	compiled := compileFixture(t, richContextInput(t))
@@ -77,7 +77,7 @@ func TestRenderRejectsContradictoryConfigurationBasis(t *testing.T) {
 			conflicting := requireContext(t, compiled, pkg, policy)
 			requireRenderRefusal(t, conflicting, settings, scopedInput, "invalid-input")
 			policy = scopeSelector()
-			policy.Source.Field = "/defaults/reviewRounds"
+			policy.Source.Field = "/defaults/rejectionLimit"
 			conflicting = requireContext(t, compiled, pkg, policy)
 			requireRenderRefusal(t, conflicting, settings, scopedInput, "invalid-input")
 		})

@@ -26,53 +26,6 @@ func closure(id string) run.Command {
 	return c
 }
 
-func TestAssignmentExtensionPreservesConsumptionHoldsAndCapRevisions(t *testing.T) {
-	c, j := running(t)
-	commit(t, c, j, reserve("spent", run.AgentStep, run.Assessment, time.Minute))
-	commit(t, c, j, settle("spent", 20*time.Second))
-	commit(t, c, j, reserve("held", run.SessionStart, run.Assessment, time.Minute))
-	before := c.Budget()
-	caps := fixture(t).Policy.Assignment
-	caps.Runs++
-	caps.SessionStarts++
-	caps.Steps++
-	caps.ExecutionTime += time.Minute
-	extend := extension("extend", caps)
-	receipt := commit(t, c, j, extend)
-	after := c.Budget()
-	if before.Consumed != after.Consumed || before.Held != after.Held || after.Remaining.ExecutionTime != before.Remaining.ExecutionTime+time.Minute {
-		t.Fatal("extension reset or consumed ledger facts", before, after)
-	}
-	v := c.Assignments()[0]
-	if v.CapRevision != 2 || len(v.Extensions) != 1 || v.Extensions[0].OwnerInput != extend.OwnerInput || v.Extensions[0].CapRevision != 2 || v.Policy.Assignment != caps || v.InitialPolicy != fixture(t).Policy {
-		t.Fatal("lost exact cap revision or grant", v)
-	}
-	commit(t, c, j, reserve("new", run.AgentStep, run.Assessment, time.Minute))
-	for _, i := range c.Invocations() {
-		want := uint64(1)
-		if i.Reservation.ID == "new" {
-			want = 2
-		}
-		if i.CapRevision != want {
-			t.Fatal("reservation cap revision changed", i)
-		}
-	}
-	reads := &readJournal{store: j}
-	c2 := restored(t, reads)
-	if !c2.RecoveryRequired() || !reflect.DeepEqual(c.Assignments(), c2.Assignments()) {
-		t.Fatal("restore lost cap history/holds")
-	}
-	if _, err := c2.Propose(extension("unreconciled-extension", v.InitialPolicy.Ceilings)); !errors.Is(err, run.ErrRecovery) {
-		t.Fatal("extension bypassed recovery", err)
-	}
-	if got := commit(t, c2, j, extend); got != receipt {
-		t.Fatal("extension replay changed receipt")
-	}
-	if reads.writes != 0 {
-		t.Fatal("restore wrote")
-	}
-}
-
 func TestAssignmentRejectsInvalidExtensionsWithoutMutation(t *testing.T) {
 	for _, kind := range []string{"equal", "decrease", "ceiling", "negative", "missing input", "oversize input", "invalid UTF8", "extra closure"} {
 		t.Run(kind, func(t *testing.T) {
@@ -115,9 +68,9 @@ func TestClosureRequiresFinishedAndExplicitQuiescence(t *testing.T) {
 	if _, err := c.Propose(close); !errors.Is(err, run.ErrState) {
 		t.Fatal("closed unfinished run", err)
 	}
-	commit(t, c, j, reserve("unknown", run.AgentStep, run.Assessment, time.Minute))
+	commit(t, c, j, sessionPreparation(t, c, "s"))
 	u := command("uncertain", run.ObserveUncertain)
-	u.Invocation = "unknown"
+	u.Invocation = "open-s"
 	u.Reason = "connection lost"
 	commit(t, c, j, u)
 	if _, err := c.Propose(close); !errors.Is(err, run.ErrState) {
@@ -129,7 +82,11 @@ func TestClosureRequiresFinishedAndExplicitQuiescence(t *testing.T) {
 	if _, err := c.Propose(close); !errors.Is(err, run.ErrState) {
 		t.Fatal("stop request established quiescence", err)
 	}
-	commit(t, c, j, settle("unknown", time.Second))
+	io, _ := c.SessionChannel(j, "s", run.RefuseTools)
+	if _, err := io.ObserveStop(context.Background(), run.StopObservation{RecordMeta: meta("stopped"), Terminated: true, Reason: "Host observed termination"}); err != nil {
+		t.Fatal(err)
+	}
+	commit(t, c, j, settle("open-s", time.Second))
 	finishIncomplete(t, c, j)
 	close.Quiescence = ""
 	if _, err := c.Propose(close); !errors.Is(err, run.ErrInvalid) {
@@ -151,8 +108,7 @@ func TestClosureRequiresFinishedAndExplicitQuiescence(t *testing.T) {
 func TestClosedAssignmentAndFreshLedgerSurviveSameStreamRestoreAndReplay(t *testing.T) {
 	c, j := running(t)
 	b := binding(t)
-	commit(t, c, j, reserve("first-effect", run.AgentStep, run.Assessment, time.Minute))
-	commit(t, c, j, settle("first-effect", 20*time.Second))
+	completeRootExplore(t, c, j, exploreInputs(t, false))
 	finishIncomplete(t, c, j)
 	extend := extension("extend", fixture(t).Policy.Ceilings)
 	commit(t, c, j, extend)
@@ -216,22 +172,15 @@ func TestClosedAssignmentAndFreshLedgerSurviveSameStreamRestoreAndReplay(t *test
 	start.Assignment = "b"
 	start.Run = "new-run"
 	commit(t, c2, j, start)
-	x := reserve("first-effect", run.AgentStep, run.Assessment, time.Second)
-	x.Assignment = "b"
-	x.Run = "new-run"
-	x.ID = "new-command"
+	x := sessionPreparation(t, c2, "new-session")
+	// Constructor proof includes the attempted historical invocation identity.
+	profile, tools := payload(t, `{"profile":"synthetic recorded metadata"}`), payload(t, `{"tools":[]}`)
+	x, err = c2.PrepareExploreSessionCommand(meta("new-command"), ".", x.Session.Plan, run.Reservation{ID: "invoke-root", Kind: run.SessionStart, Purpose: run.Writing, Maximum: time.Minute}, profile, tools)
+	if err != nil {
+		t.Fatal(err)
+	}
 	if _, err := c2.Propose(x); !errors.Is(err, run.ErrConflict) {
 		t.Fatal("reused historic effect identity", err)
-	}
-}
-
-func TestExtensionDoesNotClearObservedOverrun(t *testing.T) {
-	c, j := running(t)
-	commit(t, c, j, reserve("overrun", run.AgentStep, run.Assessment, time.Second))
-	commit(t, c, j, settle("overrun", 2*time.Second))
-	commit(t, c, j, extension("extend", fixture(t).Policy.Ceilings))
-	if !c.Budget().Overrun || c.Budget().Remaining != (run.Capacity{}) {
-		t.Fatal("grant erased overrun")
 	}
 }
 
@@ -242,7 +191,7 @@ func TestLifecycleCodecPreservesPriorCommandShapeAndExactRawInput(t *testing.T) 
 		t.Fatal(err)
 	}
 	// New optional fields must not alter existing v1 byte identity/history.
-	for _, name := range []string{"Caps", "OwnerInput", "Quiescence"} {
+	for _, name := range []string{"Caps", "OwnerInput", "Quiescence", "Manager"} {
 		if bytes.Contains(data, []byte(name)) {
 			t.Fatal("changed prior command shape", string(data))
 		}

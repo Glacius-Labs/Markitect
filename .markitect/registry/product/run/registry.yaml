@@ -3,11 +3,7 @@ artifacts:
   - path: "internal/run/session_readiness_test.go"
     form: test
     realizes: [product/run/confirmed-run-history]
-    why: Checks truthful ready-but-unbound startup, one first send, retained holds and literal historical receipts.
-  - path: "internal/run/testdata/session-bound-before-readiness.json"
-    form: config
-    realizes: [product/run/confirmed-run-history]
-    why: Retains literal bound-session and step history captured before readiness changes at fbffd7fb.
+    why: Checks truthful ready-but-unbound startup, one first send, retained holds and the initial Explore gate.
   - path: "internal/run/binding_inventory.go"
     form: code
     realizes: [product/run/confirmed-run-history]
@@ -28,6 +24,22 @@ artifacts:
     form: config
     realizes: [product/run/confirmed-run-history]
     why: Retains the original owner input required by the pre-v2 preparation history.
+  - path: "internal/run/workspace.go"
+    form: code
+    realizes: [product/run/confirmed-run-history]
+    why: Defines the consumer-owned Workspaces port that materializes and observes step workspaces.
+  - path: "internal/run/checks.go"
+    form: code
+    realizes: [product/run/confirmed-run-history]
+    why: Defines the consumer-owned Checks port and what a check receipt establishes.
+  - path: "internal/run/workspace_test.go"
+    form: test
+    realizes: [product/run/confirmed-run-history]
+    why: Checks the bounds of workspace requests and when a harvest is complete.
+  - path: "internal/run/checks_test.go"
+    form: test
+    realizes: [product/run/confirmed-run-history]
+    why: Checks that check requests are complete and bounded and when a receipt passes.
   - path: "internal/run/session.go"
     form: code
     realizes: [product/run/confirmed-run-history]
@@ -112,3 +124,15 @@ artifacts:
     form: test
     realizes: [product/run/confirmed-run-history]
     why: Checks lifecycle admission, budget conservation and retained uncertainty.
+  - path: "internal/run/manager.go"
+    form: code
+    realizes: [product/run/confirmed-run-history]
+    why: Binds initial Explore inputs to actual compiler and organization preparation and closes inline report records.
+  - path: "internal/run/manager_state.go"
+    form: code
+    realizes: [product/run/confirmed-run-history]
+    why: Records every Manager's initial assessment and quiescence in the existing Coordinator without granting work authority.
+  - path: "internal/run/manager_test.go"
+    form: test
+    realizes: [product/run/confirmed-run-history]
+    why: Distinguishes initial participation, exact input provenance, protected review demand and historical replay from fresh execution.

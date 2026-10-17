@@ -53,6 +53,9 @@ func runBindingCapture(t *testing.T, change func(*apply.RawInputs), complete boo
 		return agent(ctx, input)
 	}), check)
 	if _, ok := result.Prepared(); err != nil || !ok {
+		for _, attempt := range result.Attempts() {
+			t.Logf("model=%+v execution=%+v files=%+v", attempt.Structural().Model().Compilation().Diagnostics, attempt.Structural().Execution().Diagnostics(), attempt.Structural().Files().Diagnostics())
+		}
 		t.Fatalf("actual preparation: status=%s error=%v", result.Status(), err)
 	}
 	return result, &captures, &metadata
@@ -66,14 +69,17 @@ type runBindingDocument struct {
 }
 
 type runBindingView struct {
-	Source       run.SourceBasis
-	OwnerRequest run.BlobRef
-	ModelInput   model.Input
-	Policy       run.BudgetPolicy
-	PolicySource organization.SettingSource
-	Profiles     []organization.ProfileFact
-	Documents    []runBindingDocument
-	Ceilings     struct {
+	Version         uint32
+	Scope           *[]organization.Setting[organization.ScopeRule]
+	MaxContextBytes *organization.Setting[int64]
+	Source          run.SourceBasis
+	OwnerRequest    run.BlobRef
+	ModelInput      model.Input
+	Policy          run.BudgetPolicy
+	PolicySource    organization.SettingSource
+	Profiles        []organization.ProfileFact
+	Documents       []runBindingDocument
+	Ceilings        struct {
 		StepTimeout    organization.Setting[int64]
 		ReviewRounds   organization.Setting[int]
 		CreationRoots  []string
@@ -116,6 +122,16 @@ func TestCapturedRunBindingRetainsFinalActualPreparationAndOriginalDocuments(t *
 		t.Fatal("full original model closure, lock entries or compilation limits changed")
 	}
 	execution, _ := a.Structural().Execution().Document()
+	if view.Version != 3 || view.MaxContextBytes == nil || *view.MaxContextBytes != execution.Limits.MaxContextBytes {
+		t.Fatal("selected context limit/provenance not bound")
+	}
+	if execution.Scope == nil {
+		if view.Scope != nil {
+			t.Fatal("absent authored scope invented")
+		}
+	} else if view.Scope == nil || len(*view.Scope) != len(execution.Scope.Value) || len(*view.Scope) > 0 && !reflect.DeepEqual(*view.Scope, execution.Scope.Value) {
+		t.Fatal("authored scope/provenance not bound")
+	}
 	wantPolicy := run.BudgetPolicy{
 		Ceilings:       run.Capacity{Runs: execution.Limits.MaxRuns.Value, SessionStarts: execution.Limits.MaxSessionStarts.Value, Steps: execution.Limits.MaxSteps.Value, ExecutionTime: execution.Limits.MaxExecutionTime.Value},
 		Assignment:     facts.Allocation,
@@ -127,7 +143,7 @@ func TestCapturedRunBindingRetainsFinalActualPreparationAndOriginalDocuments(t *
 	}
 	settings, _ := a.Settings().Settings()
 	ceilings := settings.Ceilings()
-	if view.Ceilings.StepTimeout.Value != int64(ceilings.StepTimeout.Value) || view.Ceilings.StepTimeout.Source != ceilings.StepTimeout.Source || view.Ceilings.ReviewRounds != ceilings.ReviewRounds || view.Ceilings.CreationSource != ceilings.CreationRoots.Source {
+	if view.Ceilings.StepTimeout.Value != int64(ceilings.StepTimeout.Value) || view.Ceilings.StepTimeout.Source != ceilings.StepTimeout.Source || view.Ceilings.ReviewRounds != ceilings.RejectionLimit || view.Ceilings.CreationSource != ceilings.CreationRoots.Source {
 		t.Fatal("actual resolved ceilings/provenance changed")
 	}
 	var originals []apply.SourceFile
@@ -207,6 +223,61 @@ func TestCapturedRunBindingChangesWithExplicitHostFactsAndOriginalInputs(t *test
 			binding, err := changed.BindRun(facts)
 			if err != nil || binding.Ref() == baseline.Ref() {
 				t.Fatalf("changed %s bytes did not change basis: %v", original, err)
+			}
+		})
+	}
+}
+
+func TestCapturedRunBindingMapsAuthoredScopeAndContextLimit(t *testing.T) {
+	for _, scope := range []string{"", "scope: []\n", "scope: [{kind: lending/RunScopedRule, property: lending/runApplies}]\n"} {
+		t.Run(fmt.Sprint(len(scope)), func(t *testing.T) {
+			result, _, _ := runBindingCapture(t, func(raw *apply.RawInputs) {
+				for _, d := range []struct{ name, text string }{
+					{"lending/run-applies", "imports: [{package: markitect/core, as: Core}]\nid: runApplies\nkind: Core.Property\nbody: Explicit run scope.\nspec: {type: string, minCount: 0, maxCount: -1}\n"},
+					{"lending/run-scoped-rule", "imports: [{package: markitect/core, as: Core}]\nid: RunScopedRule\nkind: Core.Kind\nbody: Scoped run obligation.\nspec: {properties: [runApplies]}\n"},
+					{"lending/reminders/run-global", "imports: [{package: lending}]\nid: run-global\nkind: lending/RunScopedRule\nbody: Global initial run responsibility.\nspec: {runApplies: ['.']}\n"},
+				} {
+					e := model.Entry{Path: "model/" + d.name + ".yaml", Kind: model.Regular, Bytes: []byte(d.text)}
+					raw.Local.Source.Entries = append(raw.Local.Source.Entries, e)
+					file, err := snapshot.NewEntry(path(t, e.Path), snapshot.Regular, e.Bytes)
+					if err != nil {
+						t.Fatal(err)
+					}
+					raw.Local.Files, err = snapshot.NewTree(append(raw.Local.Files.Entries(), file))
+					if err != nil {
+						t.Fatal(err)
+					}
+					repoPath := e.Path
+					if !raw.Local.RepositoryArea.IsRoot() {
+						repoPath = raw.Local.RepositoryArea.String() + "/" + repoPath
+					}
+					censusFile(t, raw, repoPath, snapshot.Regular, e.Bytes)
+				}
+				rewriteFileCheckSource(t, raw, &raw.Execution[0], string(raw.Execution[0].File.Bytes())+"\n"+scope)
+			}, true)
+			basis, err := result.BindRun(runBindingHost(t))
+			if err != nil {
+				t.Fatal(err)
+			}
+			before := basis.Payload().Bytes()
+			view := runBindingRead(t, basis)
+			prepared, _ := result.Prepared()
+			execution, _ := prepared.Structural().Execution().Document()
+			if view.MaxContextBytes == nil || *view.MaxContextBytes != execution.Limits.MaxContextBytes {
+				t.Fatal("context limit source lost")
+			}
+			if scope == "" {
+				if view.Scope != nil {
+					t.Fatal("scope invented")
+				}
+			} else if view.Scope == nil || len(*view.Scope) != len(execution.Scope.Value) || len(*view.Scope) > 0 && !reflect.DeepEqual(*view.Scope, execution.Scope.Value) {
+				t.Fatal("typed authored scope or source lost")
+			}
+			if view.Scope != nil && len(*view.Scope) > 0 {
+				(*view.Scope)[0].Source.File = "changed"
+			}
+			if !bytes.Equal(before, basis.Payload().Bytes()) {
+				t.Fatal("scope aliases bound bytes")
 			}
 		})
 	}

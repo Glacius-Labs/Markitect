@@ -7,7 +7,7 @@ import (
 
 func TestStrategyDefaultsAssetIsPreservedInBothSourcePackages(t *testing.T) {
 	root := rootLayoutFixture(t)
-	asset := []byte("\xef\xbb\xbfapiVersion: markitect.strategy-defaults/v1\r\nstrategy: recursive-apply-v1\r\ndefaults:\r\n  reviewRounds: 3\r\n")
+	asset := []byte("\xef\xbb\xbfapiVersion: markitect.strategy-defaults/v1\r\nstrategy: recursive-apply-v1\r\ndefaults:\r\n  rejectionLimit: 3\r\n")
 	writeLayoutFile(t, root, embeddedStrategyDefaultsPath, string(asset))
 	writeLayoutFile(t, root, "internal/apply/nearby.yaml", "not a packaged source\n")
 

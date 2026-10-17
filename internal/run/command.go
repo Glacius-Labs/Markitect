@@ -61,6 +61,9 @@ type Command struct {
 	OwnerInput                string        `json:",omitempty"`
 	Quiescence                string        `json:",omitempty"`
 	Session                   SessionRecord `json:",omitzero"`
+	Manager                   ManagerRecord `json:",omitzero"`
+	managerProof              [32]byte
+	replaying                 bool
 	binding                   Binding
 	sessionPayloads           []Payload
 }
@@ -134,6 +137,12 @@ func (c Command) validate() error {
 			return err
 		}
 		allowed.Session = c.Session
+		if c.Kind == PrepareSession || c.Kind == PrepareStep {
+			if err := c.Manager.validate(); err != nil {
+				return err
+			}
+			allowed.Manager = c.Manager
+		}
 		if c.Kind == PrepareSession || c.Kind == PrepareStep {
 			if !c.Reservation.valid() || c.Kind == PrepareSession && c.Reservation.Kind != SessionStart || c.Kind == PrepareStep && c.Reservation.Kind != AgentStep {
 				return ErrInvalid

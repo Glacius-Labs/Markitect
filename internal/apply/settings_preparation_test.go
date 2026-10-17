@@ -91,7 +91,7 @@ func TestM1HostSettingsUsesActualFileCheckAndProductDefaultsParents(t *testing.T
 		t.Fatalf("M1 host settings: %v %s %+v; files=%+v defaults=%+v", err, result.Status(), result.Diagnostics(), files.Diagnostics(), defaults.Diagnostics())
 	}
 	root, ok := settings.Manager(".")
-	if !ok || root.ReviewRounds.Value != 3 || root.ReviewRounds.Source != defaults.ProductSource() && root.ReviewRounds.Source.File != defaults.ProductSource().File || root.Manager.Profile.Value.Name != "library-agent" || root.Manager.Profile.Value.Identity == "" {
+	if !ok || root.RejectionLimit.Value != 3 || root.RejectionLimit.Source != defaults.ProductSource() && root.RejectionLimit.Source.File != defaults.ProductSource().File || root.Manager.Profile.Value.Name != "library-agent" || root.Manager.Profile.Value.Identity == "" {
 		t.Fatalf("actual resolution/default provenance lost: %+v", root)
 	}
 	declaration := checks[0].Declaration()
