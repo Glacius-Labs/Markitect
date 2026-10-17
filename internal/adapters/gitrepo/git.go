@@ -86,7 +86,7 @@ func identifyGit(ctx context.Context, root string) (*gitRepository, error) {
 		return nil, err
 	}
 	top := strings.TrimSuffix(strings.TrimSuffix(string(out), "\n"), "\r")
-	topInfo, err := os.Lstat(top)
+	topInfo, err := realDirectory(top)
 	if err != nil || !os.SameFile(info, topInfo) {
 		return nil, fmt.Errorf("%w: repository must be the worktree root", ErrUnsafe)
 	}
