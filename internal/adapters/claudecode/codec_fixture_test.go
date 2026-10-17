@@ -8,12 +8,13 @@ import (
 // Independently authored synthetic examples, not provider captures, copied SDK
 // schemas or proof of runtime support. UUIDs are illustrative caller inputs.
 const (
-	fixtureSession    = "00000000-0000-4000-8000-000000000001"
-	fixtureUUID       = "00000000-0000-4000-8000-000000000002"
-	fixtureInitialize = `{"type":"control_response","response":{"subtype":"success","request_id":"synthetic-control","response":{"commands":[],"agents":[],"models":[],"output_style":"default","available_output_styles":["default"],"account":{},"claude_code_version":"2.1.301","future":{"visible":true}}}}`
-	fixtureInit       = `{"type":"system","subtype":"init","session_id":"` + fixtureSession + `","uuid":"` + fixtureUUID + `","claude_code_version":"2.1.301","apiKeySource":"none","cwd":"/work","tools":[],"mcp_servers":[],"model":"synthetic","permissionMode":"dontAsk","slash_commands":[],"output_style":"default","skills":[],"plugins":[]}`
-	fixtureRateLimit  = `{"type":"rate_limit_event","rate_limit_info":{"status":"allowed","future":{"visible":true}},"uuid":"` + fixtureUUID + `","session_id":"` + fixtureSession + `"}`
-	fixtureResult     = `{"type":"result","subtype":"success","session_id":"` + fixtureSession + `","uuid":"` + fixtureUUID + `","is_error":false,"result":"synthetic result","duration_ms":1,"duration_api_ms":1,"num_turns":1,"stop_reason":"end_turn","total_cost_usd":0,"usage":{},"modelUsage":{},"permission_denials":[],"terminal_reason":"completed","structured_output":{"answer":3},"user_message_uuid":"caller-user-uuid","user_message_uuids":["another-user-uuid","caller-user-uuid"]}`
+	fixtureSession        = "00000000-0000-4000-8000-000000000001"
+	fixtureUUID           = "00000000-0000-4000-8000-000000000002"
+	fixtureInitialize     = `{"type":"control_response","response":{"subtype":"success","request_id":"synthetic-control","response":{"commands":[],"agents":[],"models":[],"output_style":"default","available_output_styles":["default"],"account":{},"claude_code_version":"2.1.301","future":{"visible":true}}}}`
+	fixtureInit           = `{"type":"system","subtype":"init","session_id":"` + fixtureSession + `","uuid":"` + fixtureUUID + `","claude_code_version":"2.1.301","apiKeySource":"none","cwd":"/work","tools":[],"mcp_servers":[],"model":"synthetic","permissionMode":"dontAsk","slash_commands":[],"output_style":"default","skills":[],"plugins":[]}`
+	fixtureRateLimit      = `{"type":"rate_limit_event","rate_limit_info":{"status":"allowed","future":{"visible":true}},"uuid":"` + fixtureUUID + `","session_id":"` + fixtureSession + `"}`
+	fixtureThinkingTokens = `{"type":"system","subtype":"thinking_tokens","estimated_tokens":50,"estimated_tokens_delta":50,"session_id":"` + fixtureSession + `","uuid":"` + fixtureUUID + `"}`
+	fixtureResult         = `{"type":"result","subtype":"success","session_id":"` + fixtureSession + `","uuid":"` + fixtureUUID + `","is_error":false,"result":"synthetic result","duration_ms":1,"duration_api_ms":1,"num_turns":1,"stop_reason":"end_turn","total_cost_usd":0,"usage":{},"modelUsage":{},"permission_denials":[],"terminal_reason":"completed","structured_output":{"answer":3},"user_message_uuid":"caller-user-uuid","user_message_uuids":["another-user-uuid","caller-user-uuid"]}`
 )
 
 func newTestCodec(t *testing.T, limit int) *Codec {

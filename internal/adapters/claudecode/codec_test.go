@@ -318,3 +318,45 @@ func TestRateLimitEventRetainsKnownInformationalEnvelopeAndFrameBound(t *testing
 		}
 	}
 }
+
+func TestThinkingTokensRetainsClosedInformationalShape(t *testing.T) {
+	raw := []byte(fixtureThinkingTokens + "\n")
+	messages, err := newTestCodec(t, len(raw)).Feed(raw)
+	if err != nil || len(messages) != 1 || messages[0].Kind() != ThinkingTokensMessage || !bytes.Equal(messages[0].Raw(), raw) || messages[0].Digest() != sha256.Sum256(raw) {
+		t.Fatalf("thinking progress lost raw identity: %+v %v", messages, err)
+	}
+	if _, err := messages[0].Result(); !errors.Is(err, ErrUnsupported) {
+		t.Fatal("thinking progress became a result", err)
+	}
+	if _, err := messages[0].Init(); !errors.Is(err, ErrUnsupported) {
+		t.Fatal("thinking progress became init", err)
+	}
+	if _, err := newTestCodec(t, len(raw)-1).Feed(raw); !errors.Is(err, ErrLimit) {
+		t.Fatal("thinking progress escaped frame bound", err)
+	}
+	// The SDK declares numbers, not integers or a minimum. These estimates
+	// are retained without interpreting billing or deriving any outcome.
+	decodeFixture(t, strings.Replace(fixtureThinkingTokens, `"estimated_tokens":50`, `"estimated_tokens":1.25e2`, 1))
+	decodeFixture(t, strings.Replace(fixtureThinkingTokens, `"estimated_tokens_delta":50`, `"estimated_tokens_delta":-0.5`, 1))
+	for _, mutation := range []struct{ from, to string }{
+		{`"estimated_tokens":50`, `"estimated_tokens":null`},
+		{`"estimated_tokens":50`, `"estimated_tokens":  null  `},
+		{`"estimated_tokens":50`, `"estimated_tokens":"50"`},
+		{`"estimated_tokens":50`, `"estimated_tokens":true`},
+		{`"estimated_tokens_delta":50`, `"estimated_tokens_delta":{}`},
+		{`"estimated_tokens_delta":50`, `"estimated_tokens_delta":1e309`},
+		{`,"estimated_tokens_delta":50`, ""},
+		{`"estimated_tokens":50`, `"estimated_tokens":50,"estimated_tokens":51`},
+		{`"uuid":"` + fixtureUUID + `"`, `"uuid":""`},
+		{`"session_id":"` + fixtureSession + `"`, `"session_id":1`},
+		{`,"uuid":"` + fixtureUUID + `"`, ""},
+		{`"thinking_tokens",`, `"thinking_tokens","extra":true,`},
+		{`"thinking_tokens",`, `"thinking_tokens","user_message_uuid":"caller",`},
+	} {
+		bad := strings.Replace(fixtureThinkingTokens, mutation.from, mutation.to, 1)
+		messages, err := newTestCodec(t, maxLineBytes).Feed([]byte(bad + "\n"))
+		if !errors.Is(err, ErrProtocol) || len(messages) != 1 || messages[0].Kind() != RejectedMessage {
+			t.Fatalf("invalid thinking progress accepted: %s %v", bad, err)
+		}
+	}
+}

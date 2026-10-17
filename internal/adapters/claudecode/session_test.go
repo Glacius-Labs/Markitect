@@ -146,8 +146,9 @@ type fakeRuntime struct {
 	journal                                                   *fakeChannel
 	useTool, writeFail, stopFail, cancelTurn                  bool
 	noInit, wrongInit, resultWrong, wrongVersion, errorResult bool
-	rateLimitEvents                                           []string
-	rateLimitBeforeInit                                       bool
+	informationalEvents                                       []string
+	informationalBeforeInit                                   bool
+	afterReplyEvents                                          []string
 	stopCalls                                                 int
 }
 
@@ -178,8 +179,8 @@ func (f *fakeRuntime) WriteInput(data []byte) error {
 		f.emit(`{"type":"control_response","response":{"subtype":"success","request_id":"markitect-initialize","response":{"commands":[],"agents":[],"models":[],"output_style":"default","available_output_styles":[],"account":{},"claude_code_version":"2.1.301"}}}`)
 		return nil
 	}
-	if f.rateLimitBeforeInit {
-		for _, event := range f.rateLimitEvents {
+	if f.informationalBeforeInit {
+		for _, event := range f.informationalEvents {
 			f.emit(event)
 		}
 	}
@@ -194,8 +195,8 @@ func (f *fakeRuntime) WriteInput(data []byte) error {
 		}
 		f.emit(`{"type":"system","subtype":"init","session_id":"` + session + `","uuid":"init-event","claude_code_version":"` + version + `"}`)
 	}
-	if !f.rateLimitBeforeInit {
-		for _, event := range f.rateLimitEvents {
+	if !f.informationalBeforeInit {
+		for _, event := range f.informationalEvents {
 			f.emit(event)
 		}
 	}
@@ -227,6 +228,9 @@ func (f *fakeRuntime) finish() {
 }
 func (f *fakeRuntime) Reply(r frame.ToolReply) error {
 	f.replies = append(f.replies, r)
+	for _, event := range f.afterReplyEvents {
+		f.emit(event)
+	}
 	f.finish()
 	return nil
 }
@@ -826,8 +830,8 @@ func TestClaudeRateLimitEventsAreInformationalOnlyAfterBoundInit(t *testing.T) {
 			if tc.foreign {
 				event = strings.Replace(event, "conversation", "foreign", 1)
 			}
-			runtime.rateLimitEvents = []string{event}
-			runtime.rateLimitBeforeInit = tc.before
+			runtime.informationalEvents = []string{event}
+			runtime.informationalBeforeInit = tc.before
 			a, b := sessionAdmissions(t)
 			if tc.limited {
 				// Each event fits; their accumulated raw wire exceeds the
@@ -835,9 +839,9 @@ func TestClaudeRateLimitEventsAreInformationalOnlyAfterBoundInit(t *testing.T) {
 				a.Plan.MaxWireBytes = 4096
 				b.Session = a.Plan
 				b.Plan.SessionBinding = a.Plan.Binding()
-				runtime.rateLimitEvents = make([]string, 24)
-				for i := range runtime.rateLimitEvents {
-					runtime.rateLimitEvents[i] = event
+				runtime.informationalEvents = make([]string, 24)
+				for i := range runtime.informationalEvents {
+					runtime.informationalEvents[i] = event
 				}
 			}
 			s := sessionsForTest(t, runtime)
@@ -862,6 +866,88 @@ func TestClaudeRateLimitEventsAreInformationalOnlyAfterBoundInit(t *testing.T) {
 			}
 			if !bytes.Contains(out.Wire.Journal.Bytes(), []byte(event+"\n")) || out.Wire.Identity.ContentID != sha256.Sum256(out.Wire.Journal.Bytes()) || out.Wire.Identity.Size != int64(len(out.Wire.Journal.Bytes())) {
 				t.Fatal("informational event lost raw wire identity")
+			}
+		})
+	}
+}
+
+func TestClaudeThinkingTokensRequireBoundSessionAndPreserveWire(t *testing.T) {
+	for _, tc := range []struct {
+		name                                         string
+		before, foreign, limited, afterReply, secret bool
+		variant                                      string
+		want                                         error
+	}{
+		{name: "after init"},
+		{name: "after Host answer", afterReply: true},
+		{name: "before init", before: true, want: ErrProtocol},
+		{name: "foreign session", foreign: true, want: ErrProtocol},
+		{name: "cumulative wire limit", limited: true, want: ErrLimit},
+		{name: "unknown system", variant: "unknown", want: ErrUnsupported},
+		// The existing session reader retains a rejected frame before
+		// surfacing its codec error; that frame is refused as unsupported.
+		{name: "malformed estimate", variant: "malformed", want: ErrUnsupported},
+		{name: "credential redaction", secret: true},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			channel := &fakeChannel{}
+			runtime := peer(channel)
+			event := strings.Replace(fixtureThinkingTokens, fixtureSession, "conversation", 1)
+			if tc.foreign {
+				event = strings.Replace(event, "conversation", "foreign", 1)
+			}
+			if tc.variant == "unknown" {
+				event = strings.Replace(event, "thinking_tokens", "future_progress", 1)
+			}
+			if tc.variant == "malformed" {
+				event = strings.Replace(event, `"estimated_tokens":50`, `"estimated_tokens":null`, 1)
+			}
+			if tc.secret {
+				event = strings.Replace(event, fixtureUUID, "secret-token", 1)
+			}
+			runtime.informationalEvents = []string{event}
+			runtime.informationalBeforeInit = tc.before
+			if tc.afterReply {
+				runtime.informationalEvents = nil
+				runtime.afterReplyEvents = []string{event}
+				runtime.useTool = true
+			}
+			a, b := sessionAdmissions(t)
+			if tc.limited {
+				a.Plan.MaxWireBytes = 4096
+				b.Session = a.Plan
+				b.Plan.SessionBinding = a.Plan.Binding()
+				runtime.informationalEvents = make([]string, 24)
+				for i := range runtime.informationalEvents {
+					runtime.informationalEvents[i] = event
+				}
+			}
+			s := sessionsForTest(t, runtime)
+			ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+			defer cancel()
+			if _, err := s.Open(ctx, a, channel); err != nil {
+				t.Fatal(err)
+			}
+			out, err := s.Step(ctx, b, channel)
+			if tc.want != nil {
+				if err == nil || !errors.Is(err, ErrSession) || !strings.Contains(err.Error(), tc.want.Error()) || !out.Uncertain || out.Terminal || out.Proposed.Valid() {
+					t.Fatalf("progress bypassed binding/limit/refusal: %+v %v", out, err)
+				}
+				return
+			}
+			calls := 0
+			if tc.afterReply {
+				calls = 1
+			}
+			if err != nil || !out.Terminal || out.Uncertain || out.Proposed.Valid() || len(channel.bindings) != 1 || len(channel.steps) != 2 || len(channel.calls) != calls || len(runtime.replies) != calls || len(runtime.writes) != 2 {
+				t.Fatalf("progress affected step state: %+v %v", out, err)
+			}
+			if tc.secret {
+				if !out.Wire.Redacted || bytes.Contains(out.Wire.Journal.Bytes(), []byte("secret-token")) {
+					t.Fatal("thinking event bypassed credential redaction")
+				}
+			} else if !bytes.Contains(out.Wire.Journal.Bytes(), []byte(event+"\n")) || out.Wire.Identity.ContentID != sha256.Sum256(out.Wire.Journal.Bytes()) || out.Wire.Identity.Size != int64(len(out.Wire.Journal.Bytes())) {
+				t.Fatal("thinking event lost raw wire identity")
 			}
 		})
 	}
