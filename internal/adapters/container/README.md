@@ -14,10 +14,17 @@ This package is the Host's client of the container engine ([DEC-037](../../../do
 | `Engine.Pause` / `Engine.Unpause` | Freezes and resumes every process in a container; the write barrier for a workspace-basis transition. |
 | `Engine.CreateVolume`, `RemoveVolume`, `Containers`, `RemoveContainer` | Named, labeled volumes, and the label sweep for containers the Host no longer controls. |
 | `Engine.ImageID`, `ReadImageFile` | Image identity and the image's recorded metadata, read without running the image. |
-| `Engine.ObserveImageFile(ctx, imageID, path, maxBytes)` | Streams one complete regular image file into SHA-256 and actual size, up to an explicit bound of 512 MiB, without starting the image. Any archive, process, cancellation or cleanup failure refuses the observation. |
+| `Engine.ObserveImageFile(ctx, imageID, path, maxBytes)` | Verifies that executable ancestors are actual directories, then streams the complete regular image file into SHA-256 and actual size, up to an explicit bound of 512 MiB, without starting the image. |
+| `Engine.ObserveImageFileWithRequiredPaths(ctx, imageID, path, maxBytes, requiredDirectories, requiredRegularFiles)` | Also positively verifies the supplied directories and regular-file paths, including their directory ancestors, in the same never-started container. Unknown, absent, redirected or mismatched paths refuse the observation. |
 | `Session.StartProvider`, `WriteInput`, `CloseInput`, `Stdout` | The provider CLI's process and standard streams. Output is buffered up to 32 MiB, so control replies never wait for the reader. |
 | `Session.ToolCalls`, `Reply` | Host tool calls arriving over MCP through `markitect-agentd mcp`. `ToolCall.Meta` carries the provider's own call metadata. |
 | `Session.Census`, `Stop`, `Exited`, `Diagnostics`, `Close` | The container's processes, stop with grace, the observed exit, the tail of standard error, and the end of the connection. |
+
+## Image file observations
+
+An image-file digest alone cannot exclude ancestor aliases: `/opt/tools/check` can be copied as a regular file while `/opt/tools` links to `/work`, which a check later mounts over. Docker's Linux archive code preserves the leaf type while accessing its parent path ([Moby source](https://github.com/moby/moby/blob/3f38b15147b14ce0ce7b11558a1aa9e9f14db103/daemon/archive_unix.go#L59-L75)). The observation therefore checks each unique ancestor from root outward. A consumer can also supply its fixed mount directories and managed file targets; this prevents accepting a mount destination that itself redirects to the executable tree. The consumer owns selecting the relevant paths.
+
+Path probes read only the first logical tar header, bounded to 1 MiB of metadata, and require its exact name and type with no link. They deliberately stop and reap the copy CLI after that header; a successful reap or confirmed requested kill is required. Each probe has a 15-second deadline and a 15-second inherited-pipe bound. These are positive path/type observations, not complete archives or file-content certificates. The executable still requires the complete tar stream, successful copy exit and mandatory bounded container cleanup. Cancellation or uncertainty discards its hash. At most 256 unique paths are admitted, with one short copy per path before the executable copy. Symlinked layouts and missing required paths are refused; no fallback rewrites the configured executable.
 
 ## Integrating a session adapter
 

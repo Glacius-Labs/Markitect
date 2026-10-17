@@ -41,6 +41,20 @@ Recorder's summary of the resulting assistant proposal: treat the extracted mode
 
 Recorder's interpretation: record the agreed command direction and the proposed reuse for Extract, plus a model-focused Optimize that seeks justified missing links and improvements without unsupported invention. This authorizes the documentation delivery on Main despite the prior discussion-only scope. It does not authorize a new command implementation queue, a change to the artifact-only Apply target, or provider, Docker, Apply, comparison or study runs. Exact future schemas, settings and draft execution contracts remain design work.
 
+## Optimize workflow clarification
+
+The owner asked:
+
+> Lass uns Optimize genauer durchgehen: Wie finden die Manager fehlende Links und sinnvolle Modellverbesserungen, ohne neue Anforderungen oder Beziehungen zu erfinden?
+
+Recorder's summary of the assistant proposal: Managers start with their own Definitions and search beyond existing links through a simple model inventory, text search and targeted reading. Similar terms are candidates rather than relationships. Ordinary proposals explain source support, the change, preserved meaning and context benefit. Independent review checks unambiguous targets, stronger or lost obligations, preserved scopes and whether a link supplies useful context. Implementation observations can raise a model question but do not automatically become requirements. Managers retain their own write responsibility; parents coordinate cross-area questions and obtain independent integration review. Reuse ordinary findings, rework, structural checks and context previews. Outcomes are reviewed improvement, a grounded question or justified no-op; link counts are not success measures.
+
+The owner accepted this and requested the remaining questions:
+
+> Klingt gut, halte das so fest und schaue was es sonst noch zu klären gibt
+
+Recorder's note: this accepts the preceding Optimize workflow and authorizes its documentation under the existing Main publication request. The remaining command questions and recommendations in the owning design are assistant analysis, not further accepted decisions. No implementation or runtime authority is added.
+
 ## Model adoption with known realization deviations
 
 Recorder's note: a subsequent direct owner discussion on 17 October 2026 in **Usage, Skills, UX**, thread `01a14ac0-f40a-73a0-b401-e7e9d24ee4fc`. The earlier Commands statements above retain their history. This continuation explicitly changes the Extract completion criterion; it does not supply implementation or runtime evidence.
