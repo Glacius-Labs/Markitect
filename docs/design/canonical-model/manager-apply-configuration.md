@@ -22,7 +22,7 @@ The model stays language v1. None of these runtime records adds a canonical Assi
 
 ## Project execution file
 
-One versioned YAML file outside the Definition roots. The figures below are illustrative, not measured sufficient capacity.
+One versioned YAML file outside the Definition roots. The figures below are illustrative, not measured sufficient capacity. This executable example is also consumed by preparation tests and retains the current parser's `reviewRounds` / `maxReviewRounds` spelling until the coordinated rename. The selected target names are `rejectionLimit` / `maxRejectionLimit`, as specified below.
 
 ```yaml
 apiVersion: markitect.execution/v1
@@ -34,7 +34,7 @@ limits:
   maxExecutionTime: 16h
   maxStepTimeout: 10m
   hostOperationTimeout: 2m
-  maxRejectionLimit: 3
+  maxReviewRounds: 3
   maxContextBytes: 400000
   maxSessionSteps: 40
   maxTransientRetries: 2
@@ -52,7 +52,7 @@ defaults:
   profiles:
     manager: library-agent
     reviewer: library-agent
-  rejectionLimit: 3
+  reviewRounds: 3
   batchNoChangeReviews: false
   stepTimeout: 10m
   creationRoots: [realization]
@@ -95,7 +95,7 @@ For `recursive-apply-v1`, these accepted effects apply when the corresponding pr
 | `batchNoChangeReviews` | `false` |
 | `acceptance.ownerApproval` | `[]` |
 
-The selected field names are `rejectionLimit` and its ceiling `maxRejectionLimit`, replacing `reviewRounds` and `maxReviewRounds`. They count rejected submissions, not all submissions. Successful limited or complete deliveries neither use nor reset this allowance. All work still consumes the shared assignment budget; [execution](manager-apply-execution.md#admission-amendments-and-finite-correction) defines stable counter identity, parent assessment after two rejections and exhaustion. The example describes the target schema. Current source preparation still uses the old names until its parser, defaults, rendering and binding producers migrate together; do not claim it accepts this target example yet. Historical records retain their original names and semantics under their recorded version.
+The selected field names are `rejectionLimit` and its ceiling `maxRejectionLimit`, replacing `reviewRounds` and `maxReviewRounds`. They count rejected submissions, not all submissions. Successful limited or complete deliveries neither use nor reset this allowance. All work still consumes the shared assignment budget; [execution](manager-apply-execution.md#admission-amendments-and-finite-correction) defines stable counter identity, parent assessment after two rejections and exhaustion. Current source preparation and the executable example above still use the old names; migrate the parser, defaults, rendering, binding producers and example together. This does not defer the selected naming decision or claim the current parser accepts the target names. Historical records retain their original names and semantics under their recorded version.
 
 These values must come from one real, versioned product-owned defaults document shipped with the product. Preparation retains its original bytes and digest, using `product:recursive-apply-v1/defaults.yaml` and the actual field pointer in that document as the source. A missing document leaves preparation `NotCompleted`; it cannot be replaced with invented provenance. This contract does not create that document or prescribe an implementation package.
 
@@ -150,7 +150,7 @@ The selected bytes and identities enter the run's input binding and are rechecke
 | Apply run | One immutable model, configuration and source binding and its reconciliation. A changed basis or execution policy needs a continuation run after this one finished. |
 | Task | One Manager responsibility within a run. Tasks in a continuation get new IDs with predecessor links where work carries forward. |
 | Attempt | One submission within a task against the run's fixed basis. It resets no budget or rejection counter. |
-| Session and step | An actual role conversation and one dispatch. They never supply authority. |
+| Execution session, conversation and step | A bound execution environment, separately identified provider dialogue and one dispatch. A conversation may span proven environment replacements; each step binds its current workspace and authority. None supplies authority by its identity alone. |
 
 The assignment stores the owner input and goal, constraints, operation target, project identity, caps and authority source. Omitted caps use the `assignment` defaults. Renewing an exhausted cap needs a recorded extension within the project ceilings; raising a ceiling needs an authorized configuration edit. Starting another run grants nothing. The first product has one local operator as decision owner and no identity service based on Agent-reported names. An accepted decision can authorize a continuation run within the assignment; it never authorizes merge, release, deployment or production-data edits.
 
