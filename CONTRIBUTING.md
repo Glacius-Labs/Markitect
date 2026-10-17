@@ -15,7 +15,7 @@ Current source has four product layers ([Architecture](docs/architecture.md#laye
 
 Outside the layers:
 
-- `src/internal/testkit` holds hermetic test fixtures: Git isolation, repositories with fixed identity and dates, and short temporary directories. Only test files import it, and it imports no other Markitect package; the import gate enforces both.
+- `internal/testkit` holds hermetic test fixtures: Git isolation, repositories with fixed identity and dates, and short temporary directories. Only test files import it, and it imports no other Markitect package; the import gate enforces both.
 - `integration` holds the standalone public bootstrap that is copied into installed packages. It imports no Markitect package.
 - `packaging/winget` holds versioned portable package manifests derived from verified releases.
 

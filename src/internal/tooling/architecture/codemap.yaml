@@ -12,7 +12,7 @@ packages:
   # --- apply-model --------------------------------------------------------
   - path: internal/model
     layer: apply-model
-    purpose: Validates supplied canonical-model bytes and defines typed compiler results and source provenance.
+    purpose: Inspects supplied manifests and compiles canonical models into typed results with source provenance.
     doc: docs/design/canonical-model/manager-apply-go-architecture.md#organize-by-responsibility
 
   # --- apply-snapshot -----------------------------------------------------
@@ -31,6 +31,12 @@ packages:
   - path: internal/realization
     layer: apply-realization
     purpose: Validates registry ownership, file accounting, claims and Definition census; captures and composes candidates.
+    doc: docs/design/canonical-model/manager-apply-go-architecture.md#organize-by-responsibility
+
+  # --- apply-usecase ------------------------------------------------------
+  - path: internal/apply
+    layer: apply-usecase
+    purpose: Captures or previews selected source inputs and compiles their original model bytes through consumer-owned ports.
     doc: docs/design/canonical-model/manager-apply-go-architecture.md#organize-by-responsibility
 
   # --- core ---------------------------------------------------------------
@@ -232,14 +238,14 @@ packages:
     doc: integration/README.md
 
   # --- harness ------------------------------------------------------------
+  - path: internal/testkit
+    layer: harness
+    purpose: Hermetic Git and temporary-directory fixtures that only tests import.
+    doc: CONTRIBUTING.md#verify-a-change
   - path: src/harness/examples
     layer: harness
     purpose: Executable tests over the example fixtures.
     doc: examples/README.md
-  - path: src/internal/testkit
-    layer: harness
-    purpose: Hermetic Git and temporary-directory fixtures that only tests import.
-    doc: CONTRIBUTING.md#verify-a-change
 
   # --- experiment ---------------------------------------------------------
   - path: experiments/mcp-pilot

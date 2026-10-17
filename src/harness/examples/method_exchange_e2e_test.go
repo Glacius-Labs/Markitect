@@ -17,7 +17,7 @@ import (
 	"time"
 
 	"github.com/Glacius-Labs/Markitect/src/internal/runtime/projectrun"
-	"github.com/Glacius-Labs/Markitect/src/internal/testkit"
+	"github.com/Glacius-Labs/Markitect/internal/testkit"
 )
 
 // These scenarios exercise the public binary, its durable state and the real

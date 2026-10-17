@@ -2,7 +2,7 @@
 
 # markitect
 
-Model digest: sha256:08387417596c4b940e78921f37c8e3424b496f14a15157073387305c7328619c
+Model digest: sha256:c0b6fdf2eb538be8660dab2678fcd5dad8edce7839cab10c1c2fc6a620d6b3fc
 
 Report status: succeeded
 
@@ -33,7 +33,7 @@ The structural model compiled from the explicitly selected Definition files. Thi
 - Namespace: examples
 - Purpose: Owns the executable examples, the benchmark fixtures, the experiments, the harnesses that test them and the test kit.
 - Parent Manager: ["project.markitect.example.org/v1alpha1","Manager","","markitect"]
-- Delegated paths: benchmark/, examples/, experiments/, src/harness/, src/internal/testkit/
+- Delegated paths: benchmark/, examples/, experiments/, internal/testkit/, src/harness/
 - Instructions: Keep examples executable and keep each example's own policy inside it.
 
 ### product
@@ -246,7 +246,7 @@ Maintainer tooling enforces the import gate and the code map, builds and publish
 - Role: verification
 - Responsible Manager: ["project.markitect.example.org/v1alpha1","Manager","examples","examples"]
 - Realizes: ["project.markitect.example.org/v1alpha1","Statement","","canonical-sources"], ["project.markitect.example.org/v1alpha1","Statement","","project-local-policy"], ["project.markitect.example.org/v1alpha1","Statement","examples","examples"], ["project.markitect.example.org/v1alpha1","Statement","product","declared-inputs"], ["project.markitect.example.org/v1alpha1","Statement","tooling","published-releases"]
-- Expected paths: [benchmark/](../../benchmark), [examples/](../../examples), [src/harness/](../../src/harness), [src/internal/testkit/](../../src/internal/testkit)
+- Expected paths: [benchmark/](../../benchmark), [examples/](../../examples), [internal/testkit/](../../internal/testkit), [src/harness/](../../src/harness)
 - Related checks: ["project.markitect.example.org/v1alpha1","Check","","go-tests"] (declared; execution not observed)
 - Applicability: The examples and fixtures show the documented workflows and must stay executable.
 
@@ -268,7 +268,7 @@ Maintainer tooling enforces the import gate and the code map, builds and publish
 - Role: implementation
 - Responsible Manager: ["project.markitect.example.org/v1alpha1","Manager","product","product"]
 - Realizes: ["project.markitect.example.org/v1alpha1","Statement","","canonical-sources"], ["project.markitect.example.org/v1alpha1","Statement","","project-local-policy"], ["project.markitect.example.org/v1alpha1","Statement","product","core-stays-generic"], ["project.markitect.example.org/v1alpha1","Statement","product","distinct-state"], ["project.markitect.example.org/v1alpha1","Statement","product","evidence-not-acceptance"], ["project.markitect.example.org/v1alpha1","Statement","product","explicit-relationships"], ["project.markitect.example.org/v1alpha1","Statement","product","legacy-removal"], ["project.markitect.example.org/v1alpha1","Statement","product","product"], ["project.markitect.example.org/v1alpha1","Statement","tooling","published-releases"]
-- Expected paths: [src/cmd/markitect-release/](../../src/cmd/markitect-release), [src/cmd/markitect/](../../src/cmd/markitect), [src/internal/application/buildinfo/](../../src/internal/application/buildinfo), [src/internal/application/mcp/](../../src/internal/application/mcp), [src/internal/application/projectadoption/](../../src/internal/application/projectadoption), [src/internal/application/projectapp/](../../src/internal/application/projectapp), [src/internal/application/projectcli/](../../src/internal/application/projectcli), [src/internal/application/projectcoverage/](../../src/internal/application/projectcoverage), [src/internal/application/projectexplore/](../../src/internal/application/projectexplore), [src/internal/application/projecthistory/](../../src/internal/application/projecthistory), [src/internal/application/projectonboarding/](../../src/internal/application/projectonboarding), [src/internal/application/projectwork/](../../src/internal/application/projectwork), [src/internal/application/releasecli/](../../src/internal/application/releasecli), [src/internal/application/releaseinstall/](../../src/internal/application/releaseinstall)
+- Expected paths: [internal/apply/](../../internal/apply), [src/cmd/markitect-release/](../../src/cmd/markitect-release), [src/cmd/markitect/](../../src/cmd/markitect), [src/internal/application/buildinfo/](../../src/internal/application/buildinfo), [src/internal/application/mcp/](../../src/internal/application/mcp), [src/internal/application/projectadoption/](../../src/internal/application/projectadoption), [src/internal/application/projectapp/](../../src/internal/application/projectapp), [src/internal/application/projectcli/](../../src/internal/application/projectcli), [src/internal/application/projectcoverage/](../../src/internal/application/projectcoverage), [src/internal/application/projectexplore/](../../src/internal/application/projectexplore), [src/internal/application/projecthistory/](../../src/internal/application/projecthistory), [src/internal/application/projectonboarding/](../../src/internal/application/projectonboarding), [src/internal/application/projectwork/](../../src/internal/application/projectwork), [src/internal/application/releasecli/](../../src/internal/application/releasecli), [src/internal/application/releaseinstall/](../../src/internal/application/releaseinstall)
 - Related checks: ["project.markitect.example.org/v1alpha1","Check","","go-tests"], ["project.markitect.example.org/v1alpha1","Check","","go-vet"], ["project.markitect.example.org/v1alpha1","Check","tooling","architecture-gate"] (declared; execution not observed)
 - Applicability: The verbs, their MCP tools, the release command and the use cases behind them are the product surface.
 

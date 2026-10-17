@@ -84,10 +84,10 @@ func TestRelocatedFamiliesPreserveImportBoundaries(t *testing.T) {
 		}
 	}
 	for _, from := range []string{model, app, runtime, GuardedWritePackage, source} {
-		if got := Check([]Edge{{From: from, To: "src/internal/testkit"}}); len(got) != 1 {
+		if got := Check([]Edge{{From: from, To: "internal/testkit"}}); len(got) != 1 {
 			t.Fatalf("production testkit import from %s: %v", from, got)
 		}
-		if got := Check([]Edge{{From: from, To: "src/internal/testkit", Test: true}}); len(got) != 0 {
+		if got := Check([]Edge{{From: from, To: "internal/testkit", Test: true}}); len(got) != 0 {
 			t.Fatalf("testkit import from test in %s: %v", from, got)
 		}
 	}
@@ -239,6 +239,9 @@ func TestStandaloneBootstrapToolingHasNoProductDependencies(t *testing.T) {
 	if got := Check([]Edge{{From: "integration"}}); len(got) != 0 {
 		t.Fatal(got)
 	}
+	if got := Check([]Edge{{From: "integration", To: "internal/testkit", Test: true}}); len(got) != 1 {
+		t.Fatalf("bootstrap test import must remain forbidden: %v", got)
+	}
 	for _, target := range []string{"src/internal/core", "src/internal/host", "src/internal/modules/a"} {
 		if got := Check([]Edge{{From: "integration", To: target}}); len(got) != 1 {
 			t.Fatalf("bootstrap import privilege: %s: %v", target, got)
@@ -247,21 +250,21 @@ func TestStandaloneBootstrapToolingHasNoProductDependencies(t *testing.T) {
 }
 
 func TestTestkitIsTestOnlyAndStandalone(t *testing.T) {
-	if got := Check([]Edge{{From: "src/internal/testkit"}}); len(got) != 0 {
+	if got := Check([]Edge{{From: "internal/testkit"}}); len(got) != 0 {
 		t.Fatalf("testkit classification: %v", got)
 	}
 	for _, from := range []string{"src/internal/core", "src/internal/modules/a", "src/internal/host", "src/internal/infrastructure/source", "src/harness/examples"} {
-		if got := Check([]Edge{{From: from, To: "src/internal/testkit", Test: true}}); len(got) != 0 {
+		if got := Check([]Edge{{From: from, To: "internal/testkit", Test: true}}); len(got) != 0 {
 			t.Fatalf("test in %s importing testkit: %v", from, got)
 		}
-		if got := Check([]Edge{{From: from, To: "src/internal/testkit"}}); len(got) != 1 {
+		if got := Check([]Edge{{From: from, To: "internal/testkit"}}); len(got) != 1 {
 			t.Fatalf("production code in %s importing testkit: %v", from, got)
 		}
 	}
-	if got := Check([]Edge{{From: "src/internal/testkit", To: "src/internal/core"}}); len(got) != 1 {
+	if got := Check([]Edge{{From: "internal/testkit", To: "src/internal/core"}}); len(got) != 1 {
 		t.Fatalf("testkit importing a local package: %v", got)
 	}
-	if got := Check([]Edge{{From: "src/internal/host", To: "src/internal/testkit/gitfixture"}}); len(got) != 1 {
+	if got := Check([]Edge{{From: "src/internal/host", To: "internal/testkit/gitfixture"}}); len(got) != 1 {
 		t.Fatalf("production code importing a testkit subpackage: %v", got)
 	}
 }
