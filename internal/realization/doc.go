@@ -23,8 +23,9 @@
 // admission, transfers and run states remain separate responsibilities.
 // Candidate capture derives actual tree and logical registry differences. Every
 // changed/restored artifact needs current ownership and model basis; unchanged old
-// problems do not imply completion. Composition is a disjoint union over one exact
-// base and returns a fixed plan without accepting deliveries or causing effects.
+// problems do not imply completion. Replay composes one delivery's owned changes
+// onto the run's accepted aggregate (core rule D2) without a common base and
+// without accepting deliveries or causing effects.
 // Definition census checks copied proposals against exact own or project scope,
 // with artifact eligibility computed from the bound classification facts. It
 // checks minimum form and references, never evidence existence or semantic support;

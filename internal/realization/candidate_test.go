@@ -58,7 +58,7 @@ func reserve(t *testing.T, f realization.PathFacts, who realization.Owner, name 
 	return next
 }
 
-func TestCaptureAndComposeDisjointChildFilesAndRegistryRecords(t *testing.T) {
+func TestCaptureRecordsOneTouchPerFileAndRecord(t *testing.T) {
 	a, b := owner(t, "empty"), owner(t, "lending")
 	compiled := compiledFacts()
 	f := facts(t, compiled, realization.Registry{}, snapshot.Tree{}, []realization.CreationArea{area(t, a, "out"), area(t, b, "out")})
@@ -67,26 +67,13 @@ func TestCaptureAndComposeDisjointChildFilesAndRegistryRecords(t *testing.T) {
 		t.Fatal(err)
 	}
 	claims := reserve(t, f, a, "out/a.go", realization.PathClaims{})
-	claims = reserve(t, f, b, "out/b.go", claims)
 	ra := registration(t, a, artifact(t, "out/a.go", borrow))
-	rb := registration(t, b, artifact(t, "out/b.go", policy))
 	ca := capture(t, base, a, claims, fileTree(t, "out/a.go"), registry(t, ra))
-	cb := capture(t, base, b, claims, fileTree(t, "out/b.go"), registry(t, rb))
 	if len(ca.TouchedPaths()) != 1 || len(ca.Changes()) != 1 || len(ca.RegistryChanges()) != 1 || len(ca.Claims()) != 1 {
 		t.Fatal("file and record were not one touch within a part")
 	}
-	for _, parts := range [][]realization.Candidate{{ca, cb}, {cb, ca}} {
-		r := realization.ComposeCandidates(base, parts)
-		plan, ok := r.Plan()
-		if !ok || r.Status() != realization.CandidateAdmissible {
-			t.Fatalf("composition: %+v", r.Findings())
-		}
-		if !plan.Base().Equal(base) || !plan.Tree().Equal(fileTree(t, "out/a.go", "out/b.go")) || !reflect.DeepEqual(plan.Registry().Entries(), registry(t, ra, rb).Entries()) {
-			t.Fatal("union lost actual tree/registry/base")
-		}
-		if len(plan.Changes()) != 2 || len(plan.RegistryChanges()) != 2 || len(plan.Parts()) != 2 || plan.Parts()[0].Owner() != a {
-			t.Fatal("plan order or effects differ")
-		}
+	if !ca.Base().Equal(base) || ca.Owner() != a || !reflect.DeepEqual(ca.Registry().Entries(), registry(t, ra).Entries()) {
+		t.Fatal("capture lost its base, owner or registry")
 	}
 }
 
@@ -159,76 +146,4 @@ func TestCaptureRejectsFullObservedScopeViolations(t *testing.T) {
 		t.Fatal(err)
 	}
 	captureRefused(t, realization.CaptureCandidate(base, who, claims, fileTree(t, "out/new"), registry(t, registration(t, who, doc))), "candidate.claim_form_mismatch")
-}
-
-func TestComposeRefusesSharedOrPrefixTouchesEvenWithIdenticalBytes(t *testing.T) {
-	who := owner(t, "empty")
-	f := facts(t, compiledFacts(), realization.Registry{}, snapshot.Tree{}, []realization.CreationArea{area(t, who, "out")})
-	base, err := realization.NewCandidateBase(compiledFacts(), f)
-	if err != nil {
-		t.Fatal(err)
-	}
-	makePart := func(name string) realization.Candidate {
-		claims := reserve(t, f, who, name, realization.PathClaims{})
-		return capture(t, base, who, claims, fileTree(t, name), registry(t, registration(t, who, artifact(t, name, borrow))))
-	}
-	a, b := makePart("out/file"), makePart("out/file/child")
-	for _, parts := range [][]realization.Candidate{{a, a}, {a, b}, {b, a}} {
-		r := realization.ComposeCandidates(base, parts)
-		if r.Status() != realization.CandidateRefused || len(r.Findings()) != 1 || r.Findings()[0].Code != "composition.overlap" {
-			t.Fatalf("composition: %+v", r.Findings())
-		}
-		if p, ok := r.Plan(); ok || p.Valid() {
-			t.Fatal("partial conflicting plan")
-		}
-	}
-	// A registry-only edit and a byte edit conflict across parts as well.
-	old := registry(t, registration(t, who, artifact(t, "owned", borrow)))
-	base = candidateBase(t, compiledFacts(), old, fileTree(t, "owned"), nil)
-	regPart := capture(t, base, who, realization.PathClaims{}, fileTree(t, "owned"), registry(t, registration(t, who, artifact(t, "owned", policy))))
-	filePart := capture(t, base, who, realization.PathClaims{}, contentTree(t, "owned", "changed"), old)
-	r := realization.ComposeCandidates(base, []realization.Candidate{regPart, filePart})
-	if r.Status() != realization.CandidateRefused || r.Findings()[0].Code != "composition.overlap" {
-		t.Fatalf("metadata overlap: %+v", r.Findings())
-	}
-}
-
-func TestCompositionUsesDeltasInsteadOfOverwritingOtherPartsWithObservedOldFiles(t *testing.T) {
-	a, b := owner(t, "empty"), owner(t, "lending")
-	reg := registry(t, registration(t, a, artifact(t, "a", borrow)), registration(t, b, artifact(t, "b", policy)))
-	base := candidateBase(t, compiledFacts(), reg, fileTree(t, "a", "b"), nil)
-	changedA, err := snapshot.NewEntry(path(t, "a"), snapshot.Regular, []byte("changed"))
-	if err != nil {
-		t.Fatal(err)
-	}
-	changedB, err := snapshot.NewEntry(path(t, "b"), snapshot.Executable, []byte("b"))
-	if err != nil {
-		t.Fatal(err)
-	}
-	oldA, _ := base.Tree().Lookup(path(t, "a"))
-	oldB, _ := base.Tree().Lookup(path(t, "b"))
-	makeTree := func(entries ...snapshot.Entry) snapshot.Tree {
-		tree, err := snapshot.NewTree(entries)
-		if err != nil {
-			t.Fatal(err)
-		}
-		return tree
-	}
-	ca := capture(t, base, a, realization.PathClaims{}, makeTree(changedA, oldB), reg)
-	cb := capture(t, base, b, realization.PathClaims{}, makeTree(oldA, changedB), reg)
-	if len(cb.Changes()) != 1 || cb.Changes()[0].Kind() != snapshot.Modify {
-		t.Fatal("mode-only change was not observed")
-	}
-	before, _ := cb.Changes()[0].Before()
-	after, _ := cb.Changes()[0].After()
-	if before.Mode() != snapshot.Regular || after.Mode() != snapshot.Executable {
-		t.Fatal("mode evidence lost")
-	}
-	for _, parts := range [][]realization.Candidate{{ca, cb}, {cb, ca}} {
-		result := realization.ComposeCandidates(base, parts)
-		plan, ok := result.Plan()
-		if !ok || !plan.Tree().Equal(makeTree(changedA, changedB)) {
-			t.Fatalf("composed old observations over another owner's change: %+v", result.Findings())
-		}
-	}
 }

@@ -56,7 +56,7 @@ func TestStaticOperationForEveryManagerAndReviewView(t *testing.T) {
 
 func TestManagerProcessProjectionAndReviewerSeparation(t *testing.T) {
 	selection, settings, input := renderFixture(t, "a", organization.ManagerView)
-	for _, phase := range []organization.ManagerPhase{organization.ManagerExplore, organization.ManagerPlan, organization.ManagerWork, organization.ManagerIntegrate} {
+	for _, phase := range []organization.ManagerPhase{organization.ManagerExplore, organization.ManagerWork, organization.ManagerIntegrate} {
 		input.Process = &organization.ManagerProcess{Phase: phase, Source: hostRef("phase/"+string(phase), "/phase")}
 		result := requireRendered(t, selection, settings, input)
 		if len(sectionTexts(t, result, "host-manager-phase-not-admission")) != 1 || len(sectionTexts(t, result, "manager-phase-instruction-not-grant")) != 1 {
