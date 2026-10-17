@@ -3,6 +3,7 @@ package run
 import (
 	"fmt"
 	"slices"
+	"strings"
 
 	"github.com/Glacius-Labs/Markitect/internal/model"
 	"github.com/Glacius-Labs/Markitect/internal/realization"
@@ -113,6 +114,37 @@ func (e *Engine) claimsOf(manager string, s *stepRun) []Claim {
 		claims = addClaims(claims, s.pending)
 	}
 	return claims
+}
+
+// holderHint names the other Manager whose reservation holds a path, so that a
+// refused Manager can wait for that Manager's delivery, which brings the file
+// into its workspace, or ask it (core rules S4, M1, T10).
+func (e *Engine) holderHint(s *stepRun, path string) string {
+	for _, t := range e.cfg.Coordinator.Tasks() {
+		if t.Manager == s.manager {
+			continue
+		}
+		for _, c := range e.claimsOf(t.Manager, s) {
+			if c.Tool == ToolReservePath && pathsOverlap(c.Path, path) {
+				return fmt.Sprintf(" The Manager %s reserved %s; once its delivery is accepted, the file is in your workspace and you may use it without changing it. Wait for it with {\"kind\":\"delivery\",\"ref\":%q} or send it a question", t.Manager, c.Path, t.Manager)
+			}
+		}
+	}
+	return ""
+}
+
+// pathsOverlap reports whether two repository paths are equal or one lies
+// below the other.
+func pathsOverlap(a, b string) bool {
+	return a == b || strings.HasPrefix(a, b+"/") || strings.HasPrefix(b, a+"/")
+}
+
+// ownerManager names the Manager of an artifact owner.
+func ownerManager(o realization.Owner) string {
+	if name, ok := o.Package(); ok {
+		return name
+	}
+	return "."
 }
 
 func requestOf(manager string, c Claim) (realization.PathRequest, error) {

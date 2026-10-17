@@ -191,3 +191,28 @@ func TestFindingsToAChildAndItsChildReopenBoth(t *testing.T) {
 		t.Fatal("the reopened child did not work again", h.c.Current(), order)
 	}
 }
+
+// A reservation refused because another Manager reserved the path names that
+// Manager, so the refused Manager can wait for its delivery or ask it.
+func TestARefusedReservationNamesItsHolder(t *testing.T) {
+	agent := func(s agentStep) []action {
+		switch {
+		case s.Manager == "." && s.Phase == run.PhaseWork && s.Attempt == 0:
+			return []action{
+				{Tool: run.ToolReservePath, Args: `{"path":"out/shared.go","form":"code"}`, Want: run.ToolOK},
+				{Tool: run.ToolRegister, Args: `{"path":"out/shared.go","form":"code","realizes":["lending/Item"],"why":"Shared code."}`, Want: run.ToolOK},
+				{Write: map[string]string{"out/shared.go": "package library\n"}, Tool: run.ToolSubmit, Args: submitArgs("local", "complete"), Want: run.ToolOK},
+			}
+		case s.Manager == "lending" && s.Phase == run.PhaseWork && s.Attempt == 0:
+			return append([]action{{Tool: run.ToolReservePath, Args: `{"path":"out/shared.go","form":"code"}`, Want: run.ToolRefused}}, happyAgent(s)...)
+		}
+		return happyAgent(s)
+	}
+	h := newHarnessWith(t, stepInputsWith(t, true, withCreationArea(t)), agent)
+	runToEnd(t, h)
+	if !slices.ContainsFunc(h.sessions.answers, func(a string) bool {
+		return strings.HasPrefix(a, "lending work reserve_path refused") && strings.Contains(a, "The Manager . reserved out/shared.go") && strings.Contains(a, `"ref":"."`)
+	}) {
+		t.Fatal("the refusal does not name the holder", h.sessions.answers)
+	}
+}
