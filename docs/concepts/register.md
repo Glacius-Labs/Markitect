@@ -134,6 +134,7 @@ The owner's [origin account of 15 October 2026](sources/owner-origin-20261015.md
   - The owner adds that interpreted languages and bytecode are not necessarily deterministic either.
 - **Interpretation (marked):** The owner's sentence about a "real compiler" breaks off without its predicate. The register reads it as follows: a compiler cannot read a naturally described world model, take context into account, fill unspecified gaps, interpret intent and still be deterministic with classical compiler guarantees. See the recorder's note in the source.
 - **Consequence:** Trust in realization comes from computed scope, independent review, declared checks and integration verification ([CPT-003](#cpt-003-two-parts-of-the-promise)).
+- **First-Apply clarification:** This consequence and [DEC-010](#dec-010-evaluate-the-method-separately-from-its-execution-runtime) retain earlier "computed scope" wording. Under [DEC-039](#dec-039-deterministic-manager-process), compilation supplies explicit obligations and responsibilities while every local Manager participates. Omitting out-of-scope Managers conflicts with that decision; Host-verified reuse is a separate proposal. Both remain unresolved under the [core's scope questions](../design/canonical-model/manager-apply-core.md#not-settled-here). The earlier wording grants no exception to first-Apply participation.
 
 ### DEC-004 The Manager hierarchy is core; Government belongs to a later axis
 
@@ -526,7 +527,7 @@ These are the target outcomes Markitect is built to deliver. Each has the status
 | PRM-001 | Nothing in the modeled scope is silently forgotten. Affected obligations, files and responsible Managers come from the model, not from an agent's memory, and unknown impact remains visible. This covers declared relationships; dependencies in code are a known gap ([ENH-001](#enh-001-observed-code-dependencies-widen-impact)). |
 | PRM-002 | Rules and policies are applied where they matter. They are compiled into the responsible Manager's context and checked by independent reviewers, so they are not overlooked when nothing forces the agent to see them. |
 | PRM-003 | The repository stays contradiction-free, consistent, uniform and clean through many changes, so cleanups and refactorings become dependable. |
-| PRM-004 | People concentrate on deciding and modeling. Human review moves from code diffs to model changes and escalated decisions while the code reliably reflects the model. |
+| PRM-004 | People concentrate on deciding and modeling. Human review moves from code diffs to model changes and escalated decisions while the code reliably reflects the model. The owner [restated the end goal](sources/foundations-and-trust-20261017.md#owner-statement) on 17 October 2026: routine human code review becomes unnecessary because the realization can be trusted. Independent Agent review remains part of the method; reduced human intervention is a target to validate, with the project's acceptance policy retained. |
 | PRM-005 | Capable mid-tier models can do most of the delegated work, so routine delegation does not depend on the most expensive models. Lower total cost is a possible secondary benefit, not the primary purpose ([DEC-007](#dec-007-more-economical-models-means-capable-mid-tier-models), [ASM-003](#assumptions-and-hypotheses)). |
 | PRM-006 | Software becomes understandable: the model states what the system does and should do, and people can reason over it. |
 | PRM-007 | Order pays off: structure and careful definition are rewarded instead of turning into an endless cleanup. |
@@ -553,6 +554,8 @@ These are the target outcomes Markitect is built to deliver. Each has the status
   - Parent Managers integrate the results.
   - A global consistency check compares all areas with the canonical model.
   - Trust comes from this structure, not from any single agent being infallible.
+
+- **Owner restatement, 17 October 2026:** four eyes, responsibilities, delegation and escalation, divide and conquer, abstraction, need to know and coordinated lower-cost Agents are foundations of this organization. The [source](sources/foundations-and-trust-20261017.md#owner-statement) and [rationale](origin-and-rationale.md#foundations-restated-on-17-october-2026) connect them to the existing decisions; they add no new first-Apply mechanism.
 
 ### CPT-002 Tests are realizations too
 

@@ -4,6 +4,7 @@ Sources preserve where the [register](../register.md) entries come from. Owner s
 
 | Source | Origin | Content |
 |---|---|---|
+| [Foundations and trust](foundations-and-trust-20261017.md) | Direct owner message, 17 October 2026 | Founding influences, model-first repository consistency and the goal of reliable AI realization without routine human code review |
 | [Architecture review and concept freeze](architecture-review-20261017.md) | Direct owner messages, 17 October 2026 | Appoint the assistant as architect, request a deep review focused on cleanliness and architectural quality, freeze the concept, complete it and start the cleanup round before implementation, divide concept/core and surrounding work with the Coordinator |
 | [Project-history reflection and working method](project-history-working-method-20261017.md) | Direct owner messages, 17 October 2026 | Reported loss of overview, expectation of learning through successive designs, and adoption of the proposed working method for future Markitect development |
 | [Agent runtime](runtime-discussion-20261017.md) | Direct owner instructions, 17 October 2026 | Run a real handshake, support Codex and Claude, consider containers, avoid Windows, path and permission problems; adopt and implement the container runtime |

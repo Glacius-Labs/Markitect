@@ -1,5 +1,9 @@
 apiVersion: markitect.registry/v1
 artifacts:
+  - path: "docs/concepts/sources/foundations-and-trust-20261017.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Preserves the owner's restatement of Markitect's foundations and desired trust in model-first realization.
   - path: "docs/design/canonical-model/standard-library-history.md"
     form: doc
     realizes: [documentation/current-guidance]
