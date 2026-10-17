@@ -41,13 +41,16 @@ func Restore(ctx context.Context, journal Journal, repository string, limits Res
 			head = page.Revision
 			pinned = true
 		}
-		if page.Revision != head || head < after || len(page.Batches) > int(limits.PageSize) {
+		if page.Revision != head || head > MaxRevision || head < after || len(page.Batches) > int(limits.PageSize) {
 			return nil, ErrInvalid
 		}
 		for _, stored := range page.Batches {
 			data := stored.Bytes()
-			if limits.Batches == 0 || reader.consume(int64(len(data))) != nil {
-				return nil, ErrInvalid
+			if limits.Batches == 0 {
+				return nil, ErrRestoreLimit
+			}
+			if err := reader.consume(int64(len(data))); err != nil {
+				return nil, err
 			}
 			limits.Batches--
 			batch, err := DecodeBatch(data)
@@ -56,7 +59,7 @@ func Restore(ctx context.Context, journal Journal, repository string, limits Res
 			}
 			events := batch.Events()
 			if uint64(len(events)) > limits.Events {
-				return nil, ErrInvalid
+				return nil, ErrRestoreLimit
 			}
 			limits.Events -= uint64(len(events))
 			command := events[len(events)-1].Body
@@ -95,8 +98,11 @@ type restoreReader struct {
 }
 
 func (r *restoreReader) consume(size int64) error {
-	if size < 0 || size > r.remaining {
+	if size < 0 {
 		return ErrInvalid
+	}
+	if size > r.remaining {
+		return ErrRestoreLimit
 	}
 	r.remaining -= size
 	return nil

@@ -19,11 +19,16 @@ import (
 
 const maxRecordBytes = 64 << 20
 
+// MaxRevision is the v1 stream range [0, 2^63-1], representable exactly by
+// signed 64-bit stores. The uint64 API never permits wraparound or truncation.
+const MaxRevision uint64 = 1<<63 - 1
+
 var (
-	ErrInvalid   = errors.New("invalid run record")
-	ErrConflict  = errors.New("conflicting run record")
-	ErrUncertain = errors.New("unconfirmed journal observation; reconciliation required")
-	ErrRecovery  = errors.New("restored invocation requires explicit effect reconciliation")
+	ErrInvalid      = errors.New("invalid run record")
+	ErrConflict     = errors.New("conflicting run record")
+	ErrUncertain    = errors.New("unconfirmed journal observation; reconciliation required")
+	ErrRecovery     = errors.New("restored invocation requires explicit effect reconciliation")
+	ErrRestoreLimit = errors.New("journal reconstruction exceeds read budget")
 )
 
 // Journal is bound by its adapter to one repository and live controller epoch.
@@ -94,7 +99,7 @@ type AppendBatch struct {
 
 func newBatch(id string, revision uint64, events []Event) (AppendBatch, error) {
 	w := batchWire{1, id, revision, slices.Clone(events)}
-	if !identifier(id) || len(events) == 0 || len(events) > 256 || revision > ^uint64(0)-uint64(len(events)) {
+	if !identifier(id) || len(events) == 0 || len(events) > 256 || revision > MaxRevision-uint64(len(events)) {
 		return AppendBatch{}, ErrInvalid
 	}
 	seen := map[string]bool{}
@@ -136,6 +141,27 @@ func (b AppendBatch) Events() []Event {
 	return w.Events
 }
 
+// BindingRefs returns the distinct direct basis references in this closed
+// batch. For each original basis payload, BindingOwnerRef derives its required
+// owner input. These are all payload references in the current RUN-1 event set;
+// source documents and other basis data are inline. The store must verify and
+// retain every referenced payload before acknowledging Append.
+func (b AppendBatch) BindingRefs() ([]BlobRef, error) {
+	validated, err := DecodeBatch(b.Bytes())
+	if err != nil {
+		return nil, err
+	}
+	var refs []BlobRef
+	seen := map[BlobRef]bool{}
+	for _, event := range validated.Events() {
+		if event.Body.Kind == PrepareRun && !seen[event.Body.Basis] {
+			refs = append(refs, event.Body.Basis)
+			seen[event.Body.Basis] = true
+		}
+	}
+	return refs, nil
+}
+
 // A receipt is an adapter observation, not an authentication token. Constructors
 // and comparisons cannot establish a test fake's physical durability.
 type AppendReceipt struct {
@@ -151,8 +177,12 @@ func (r AppendReceipt) Matches(b AppendBatch) bool { return b.ID() != "" && r ==
 
 // Read returns whole atomic batches, so a page never exposes a partial commit.
 // Through=0 asks the adapter to pin its current head; later pages reuse that
-// head. BatchID selects an exact lookup (at most one batch), used for uncertain
-// commits. A complete empty lookup is observed absence at the returned head;
+// head. After and nonzero Through MUST be committed batch boundaries (zero
+// is the initial boundary); an interior position is an error, never rounded.
+// BatchID selects an exact lookup (at most one batch), used for uncertain
+// commits, and requires After=Through=0. Its returned Revision is the current
+// observed head and may exceed that batch's end. A complete empty lookup is
+// observed absence at the returned head;
 // an error/unreachable store is never absence. Next is the next After revision,
 // zero means that this query is exhausted. Limit is in [1,256].
 type EventQuery struct {
@@ -160,6 +190,19 @@ type EventQuery struct {
 	After, Through uint64
 	Limit          uint32
 }
+
+// Valid checks query shape and the supported range. The store must additionally
+// check actual head and batch boundaries under the same read snapshot.
+func (q EventQuery) Valid() bool {
+	if q.Limit < 1 || q.Limit > 256 || q.After > MaxRevision || q.Through > MaxRevision {
+		return false
+	}
+	if q.BatchID != "" {
+		return identifier(q.BatchID) && q.After == 0 && q.Through == 0
+	}
+	return q.Through == 0 || q.After <= q.Through
+}
+
 type EventPage struct {
 	Revision uint64
 	Batches  []AppendBatch

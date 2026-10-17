@@ -416,6 +416,10 @@ func TestRestoreRejectsMalformedOrUnavailablePages(t *testing.T) {
 			}
 			return p, nil
 		},
+		"unsupported head": func(_ int, _ run.EventQuery, p run.EventPage) (run.EventPage, error) {
+			p.Revision = run.MaxRevision + 1
+			return p, nil
+		},
 		"truncated page": func(_ int, _ run.EventQuery, p run.EventPage) (run.EventPage, error) {
 			p.Batches = nil
 			p.Next = 0
@@ -476,6 +480,30 @@ func TestRestoreRejectsMalformedOrUnavailablePages(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestKnownPendingBatchAtLaterHeadRequiresWholeRestore(t *testing.T) {
+	c, _ := run.NewCoordinator("repo")
+	j := journal()
+	p, err := c.Propose(run.PrepareCommand("prepare", "a", "r", "", observed, binding(t)))
+	if err != nil {
+		t.Fatal(err)
+	}
+	j.appendMode = "lost"
+	if _, err := c.Commit(context.Background(), j, p); !errors.Is(err, run.ErrUncertain) {
+		t.Fatal(err)
+	}
+	j.appendMode = ""
+	other := restored(t, j)
+	commit(t, other, j, command("start", run.StartRun))
+	if err := c.ReconcilePending(context.Background(), j); !errors.Is(err, run.ErrConflict) {
+		t.Fatal("advanced history skipped", err)
+	}
+	if c.Current().ID != "" || c.Budget().Consumed.Runs != 0 {
+		t.Fatal("old projection promoted past unknown later work")
+	}
+	c2 := restored(t, j)
+	sameProjection(t, other, c2)
 }
 
 func TestRestoreRejectsMissingOrChangedRequiredBlobs(t *testing.T) {
@@ -544,7 +572,7 @@ func TestRestoreCountsRequiredBlobBytesInItsReadBudget(t *testing.T) {
 	limits := restoreLimits
 	limits.Bytes = total - 1
 	reads := &readJournal{store: j}
-	if c, err := run.Restore(context.Background(), reads, "repo", limits); err == nil || c != nil {
+	if c, err := run.Restore(context.Background(), reads, "repo", limits); !errors.Is(err, run.ErrRestoreLimit) || c != nil {
 		t.Fatal("required blob bytes escaped read budget")
 	}
 	limits.Bytes = total

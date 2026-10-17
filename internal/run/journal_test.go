@@ -146,6 +146,24 @@ func (j *memoryJournal) Append(ctx context.Context, b run.AppendBatch) (run.Appe
 			}
 		}
 	}
+	refs, err := b.BindingRefs()
+	if err != nil {
+		return run.AppendReceipt{}, err
+	}
+	for _, ref := range refs {
+		basis, ok := j.blobs[ref]
+		if !ok || !basis.Valid() || basis.Ref() != ref {
+			return run.AppendReceipt{}, run.ErrInvalid
+		}
+		owner, err := run.BindingOwnerRef(basis)
+		if err != nil {
+			return run.AppendReceipt{}, err
+		}
+		payload, ok := j.blobs[owner]
+		if !ok || !payload.Valid() || payload.Ref() != owner {
+			return run.AppendReceipt{}, run.ErrInvalid
+		}
+	}
 	// Persist only the closed serialized form; no live proposal/Binding survives.
 	j.batches = append(j.batches, stored)
 	j.head = b.Revision()
@@ -165,7 +183,21 @@ func (j *memoryJournal) Read(ctx context.Context, q run.EventQuery) (run.EventPa
 	if j.readFailure {
 		return run.EventPage{}, errors.New("journal unavailable")
 	}
-	if q.Limit == 0 || q.Limit > 256 || q.After > j.head || q.Through > j.head || q.Through != 0 && q.After > q.Through || q.BatchID != "" && (q.After != 0 || q.Through != 0) {
+	if !q.Valid() || q.After > j.head || q.Through > j.head {
+		return run.EventPage{}, run.ErrInvalid
+	}
+	boundary := func(position uint64) bool {
+		if position == 0 {
+			return true
+		}
+		for _, b := range j.batches {
+			if b.Revision() == position {
+				return true
+			}
+		}
+		return false
+	}
+	if !boundary(q.After) || !boundary(q.Through) {
 		return run.EventPage{}, run.ErrInvalid
 	}
 	through := q.Through
@@ -262,5 +294,138 @@ func TestJournalCodecIdentityCASAndImmutablePayloads(t *testing.T) {
 	first, _ := j.Read(ctx, run.EventQuery{Limit: 1})
 	if first.Revision != b.Revision() || len(first.Batches) != 1 || first.Next != 0 {
 		t.Fatalf("atomic page: %+v", first)
+	}
+}
+
+func TestProducerReferenceAPIRequiresBasisAndOriginalOwnerBeforeAppend(t *testing.T) {
+	i := fixture(t)
+	basis, err := run.Bind(i)
+	if err != nil {
+		t.Fatal(err)
+	}
+	c, _ := run.NewCoordinator("repo")
+	p, err := c.Propose(run.PrepareCommand("prepare", "a", "r", "", observed, basis))
+	if err != nil {
+		t.Fatal(err)
+	}
+	refs, err := p.Batch().BindingRefs()
+	if err != nil || len(refs) != 1 || refs[0] != basis.Ref() {
+		t.Fatal("direct basis references", refs, err)
+	}
+	owner, err := run.BindingOwnerRef(basis.Payload())
+	if err != nil || owner != i.OwnerRequest.Ref() {
+		t.Fatal("indirect owner reference", err)
+	}
+	j := journal()
+	_, _ = j.Put(context.Background(), basis.Payload())
+	if _, err := j.Append(context.Background(), p.Batch()); !errors.Is(err, run.ErrInvalid) || j.head != 0 || len(j.batches) != 0 {
+		t.Fatal("basis without durable owner acknowledged", err)
+	}
+	_, _ = j.Put(context.Background(), i.OwnerRequest)
+	if receipt, err := j.Append(context.Background(), p.Batch()); err != nil || !receipt.Matches(p.Batch()) {
+		t.Fatal("complete references refused", err)
+	}
+}
+
+func TestBindingReferenceCodecRejectsChangedRecordedFormats(t *testing.T) {
+	i := fixture(t)
+	basis, err := run.Bind(i)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for name, change := range map[string]func([]byte) []byte{
+		"unknown binding version": func(data []byte) []byte { return bytes.Replace(data, []byte(`"Version":1`), []byte(`"Version":2`), 1) },
+		"wrong compiled digest": func(data []byte) []byte {
+			return bytes.Replace(data, []byte(i.Compilation.Models[0].Digest), []byte("sha256:"+strings.Repeat("0", 64)), 1)
+		},
+		"invalid policy": func(data []byte) []byte {
+			return bytes.Replace(data, []byte(`"MaxStepTimeout":120000000000`), []byte(`"MaxStepTimeout":0`), 1)
+		},
+		"invalid topology": func(data []byte) []byte {
+			return bytes.Replace(data, []byte(`"Parent":"lending"`), []byte(`"Parent":"empty"`), 1)
+		},
+		"invalid owner reference": func(data []byte) []byte {
+			before, _ := json.Marshal(i.OwnerRequest.Ref())
+			ref := i.OwnerRequest.Ref()
+			ref.Size = -1
+			after, _ := json.Marshal(ref)
+			return bytes.Replace(data, before, after, 1)
+		},
+		"noncanonical bytes": func(data []byte) []byte { return append(data, '\n') },
+	} {
+		t.Run(name, func(t *testing.T) {
+			data := change(basis.Payload().Bytes())
+			if bytes.Equal(data, basis.Payload().Bytes()) {
+				t.Fatal("fixture did not change record")
+			}
+			p, err := run.NewPayload(basis.Ref().MediaType, basis.Ref().Encoding, data)
+			if err != nil {
+				t.Fatal(err)
+			}
+			// Each replacement has a new correct content identity, so this must
+			// distinguish the recorded codec from a simple outer hash check.
+			if _, err := run.BindingOwnerRef(p); err == nil {
+				t.Fatal("invalid stored format accepted")
+			}
+		})
+	}
+	for _, interpretation := range [][2]string{{"text/plain", "utf-8"}, {basis.Ref().MediaType, "binary"}} {
+		p, _ := run.NewPayload(interpretation[0], interpretation[1], basis.Payload().Bytes())
+		if _, err := run.BindingOwnerRef(p); err == nil {
+			t.Fatal("wrong basis interpretation accepted")
+		}
+	}
+}
+
+func TestJournalReadUsesExactBatchBoundariesAndReportsLookupHead(t *testing.T) {
+	_, j := running(t)
+	for _, q := range []run.EventQuery{
+		{After: 1, Limit: 1}, {Through: 1, Limit: 1},
+		{BatchID: "prepare", Through: j.head, Limit: 1},
+		{After: run.MaxRevision + 1, Limit: 1},
+	} {
+		if _, err := j.Read(context.Background(), q); !errors.Is(err, run.ErrInvalid) {
+			t.Fatal("invalid interval accepted", q, err)
+		}
+	}
+	p, err := j.Read(context.Background(), run.EventQuery{After: 2, Through: 3, Limit: 1})
+	if err != nil || len(p.Batches) != 1 || p.Batches[0].ID() != "start" || p.Revision != 3 {
+		t.Fatal("exact boundary interval", p, err)
+	}
+	p, err = j.Read(context.Background(), run.EventQuery{BatchID: "prepare", Limit: 1})
+	if err != nil || len(p.Batches) != 1 || p.Batches[0].Revision() != 2 || p.Revision != 3 {
+		t.Fatal("lookup confused receipt with later head", p, err)
+	}
+	p, err = j.Read(context.Background(), run.EventQuery{BatchID: "absent", Limit: 1})
+	if err != nil || len(p.Batches) != 0 || p.Revision != 3 {
+		t.Fatal("lookup absence lost observed head", p, err)
+	}
+}
+
+func TestBatchCodecEnforcesSupportedRevisionRange(t *testing.T) {
+	c, _ := run.NewCoordinator("repo")
+	p, err := c.Propose(run.PrepareCommand("prepare", "a", "r", "", observed, binding(t)))
+	if err != nil {
+		t.Fatal(err)
+	}
+	var wire struct {
+		Version          uint32
+		ID               string
+		ExpectedRevision uint64
+		Events           []run.Event
+	}
+	if err := json.Unmarshal(p.Batch().Bytes(), &wire); err != nil {
+		t.Fatal(err)
+	}
+	wire.ExpectedRevision = run.MaxRevision - uint64(len(wire.Events))
+	data, _ := json.Marshal(wire)
+	b, err := run.DecodeBatch(data)
+	if err != nil || b.Revision() != run.MaxRevision {
+		t.Fatal("supported boundary refused", err)
+	}
+	wire.ExpectedRevision++
+	data, _ = json.Marshal(wire)
+	if _, err := run.DecodeBatch(data); !errors.Is(err, run.ErrInvalid) {
+		t.Fatal("out-of-range stream accepted", err)
 	}
 }

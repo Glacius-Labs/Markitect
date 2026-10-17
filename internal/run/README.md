@@ -28,9 +28,19 @@ The test journal demonstrates only process-local contract behavior. A physical
 adapter must establish durable atomic visibility, blob retention and controller
 fencing separately.
 
+`AppendBatch.BindingRefs` lists its direct basis references;
+`BindingOwnerRef` validates each original basis and derives the required owner
+input reference through the same recorded codec as restoration. A store verifies
+and retains both sets of bytes before Append acknowledgement, using these pure
+APIs and `Payload` identity checks. No adapter-owned binding decoder or reducer
+is needed. The v1 stream range is zero through `MaxRevision` (2^63-1), and both
+interval endpoints must be exact batch boundaries. Exact batch lookup reports
+the current observed head, which may be later than the matched batch's receipt.
+
 `Restore` opens existing or genuinely empty history through bounded `Read` and
 `ReadBlob` calls. Its explicit limits bound pages, batches, events and bytes,
-including required blobs. Every page keeps the first committed head. The same
+including required blobs. Exhaustion returns `ErrRestoreLimit`, separately from
+invalid history. Every page keeps the first committed head. The same
 transition rules regenerate each complete batch; gaps, partial batches, changed
 heads, invalid records and missing or changed blobs return no Coordinator.
 The historical versioned binding, compiled digests, inventory and original owner
