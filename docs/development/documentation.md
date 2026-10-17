@@ -27,6 +27,25 @@ Markdown links help readers navigate but do not declare artifact or semantic dep
 
 The old Project documentation-router feature is preserved in the immutable [v0.14.1 release](https://github.com/Glacius-Labs/Markitect/tree/v0.14.1). This guide describes where maintainers find and update current repository documentation.
 
+## Retire obsolete guidance without losing evidence
+
+Keep current guidance useful as the product changes. Classify a page by its present purpose before deciding whether to update, merge, move or delete it. Age alone does not establish that it is obsolete.
+
+| Finding | Maintenance action |
+| --- | --- |
+| A current guide names removed behavior or an old command | Correct it against the actual integrated source and its owning contract. Update the examples and navigation in the same slice. |
+| Two current pages repeat a changing rule or status | Keep the existing canonical owner and replace the duplicate account with a useful link. |
+| A replaced design or assessment still explains a decision or failed attempt | Keep its date, source and outcome visible; route it through the appropriate historical, design or validation map. |
+| A file has no current purpose and its useful content already has an owner | Remove it with its exact registry entry after checking incoming links, anchors and source/tool references. |
+| A release instruction or generated view needs changing | Use the owning generator or release workflow; edit the canonical source where applicable. |
+| A branch, PR, worktree or local output looks abandoned | Inspect its exact state, owner, unmerged work and active assignment before cleanup. A stale-looking name is not evidence that another session has finished. |
+
+Before a cleanup, fetch Main and verify the isolated checkout, branch, full SHA and local changes. Check current delivery reservations and relevant open PR paths. Separate a small documentation correction from a cross-package removal; the latter follows the delivery plan's ownership rules. Preserve dirty or unmerged work instead of sweeping shared directories. Never stash across worktrees.
+
+After moving or removing maintained documentation, update its local map, actual incoming links and exact registry accounting together. Keep original owner statements and fixed evidence in their original scope; a replacement guide can link to them without repeating their old instructions. Use the checks below and the relevant contributor gates. Report concrete findings and candidate evidence in the actual chat or PR instead of maintaining another cleanup backlog or status mirror.
+
+The [marketing working plan](../strategy/marketing-plan.md) owns pitch drafts and promotion recommendations. When a complete user workflow becomes available or its public instructions change, review the README's stage and invitation against the same evidence. A new package, passing check or design decision alone does not establish that workflow.
+
 ## Check changed navigation
 
 From the repository root, run:

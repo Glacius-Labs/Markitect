@@ -1,6 +1,37 @@
 # Markitect
 
-Markitect is model-first development with delegated realization. People maintain a canonical model of their project's intended world. Code, tests, configuration and documents realize that intent. Recursive Managers are intended to realize model changes with independent review, integration, verification and guarded Apply. [Markitect in brief](docs/vision.md#markitect-in-brief) explains the product purpose and evidence boundary.
+**Define the project. Keep its implementation aligned.**
+
+Markitect is model-first development with delegated realization. You describe what your project should be: its concepts, behavior, architecture and rules. Code, tests, configuration and documentation realize that model.
+
+Markitect is being built to organize AI agents around those responsibilities, with independent review of their work and its integration. The goal is to spend more attention on designing the system and making decisions while keeping its implementation consistent through change.
+
+**Development stage:** the current source supports model compilation, file accounting, context preparation and a guarded readable model view. Recursive realization and Apply are still being built. The published v0.14.1 CLI belongs to the earlier product generation; its installation instructions appear below.
+
+## Why Markitect
+
+As a project grows, a change can satisfy the immediate request while missing an existing rule, a related test or a documentation update. Markitect makes the intended project explicit and gives its realization accountable owners.
+
+The target workflow is:
+
+1. **Model the intent.** Define the project's behavior, rules and boundaries in one canonical model.
+2. **Organize the work.** A Manager owns each model Package. The Host supplies explicit context and propagates the same instruction unchanged to every local Manager.
+3. **Realize and review.** Every Manager assesses its area, makes needed changes and integrates its children's results. Fresh independent reviewers assess local work, including no-change results, and integration.
+4. **Verify and Apply.** Required checks and current reviews support guarded publication of the candidate. People retain decisions about intent and acceptance.
+
+For example, changing a library's borrowing limit from five books to three should bring its code, tests and usage guide into agreement. The [two-Apply library demonstration](docs/design/canonical-model/manager-apply-playground.md) is the next complete workflow the project is working toward, rather than an available demo.
+
+Markitect aims to reduce missed obligations and repeated synchronization. Those benefits still need validation. Start with [Markitect in brief](docs/vision.md#markitect-in-brief) for the full product picture, or [origin and rationale](docs/concepts/origin-and-rationale.md) for the experience behind it.
+
+## Explore the project
+
+| Your goal | Start here |
+| --- | --- |
+| Understand the product and its intended use | [Vision](docs/vision.md#markitect-in-brief) |
+| Run what current source supports | [Commands below](#run-the-current-source) and [project workflow](docs/project-workflow.md) |
+| Understand the new Manager and Apply concept | [Apply design map](docs/design/canonical-model/README.md#apply-design) |
+| Contribute to the rebuild | [Delivery plan](docs/implementation-plan.md) and [CONTRIBUTING](CONTRIBUTING.md) |
+| Find guides, evidence or historical records | [Documentation map](docs/README.md) |
 
 ## Run the current source
 

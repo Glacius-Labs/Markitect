@@ -1408,6 +1408,10 @@ artifacts:
     form: doc
     realizes: [documentation/current-guidance]
     why: Documents the stated responsibility or preserves its historical evidence.
+  - path: "docs/strategy/marketing-plan.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Prepares source-bound product messaging, pitch drafts and marketing recommendations while preserving current and historical evidence boundaries.
   - path: "docs/strategy/sources/01-ai-first-executable-engineering-constitution.md"
     form: doc
     realizes: [documentation/current-guidance]
