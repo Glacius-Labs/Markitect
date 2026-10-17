@@ -40,11 +40,12 @@ func TestMain(m *testing.M) {
 			fmt.Fprintln(os.Stderr, "unexpected engine call")
 			os.Exit(99)
 		}
-		_ = os.WriteFile(filepath.Join(dir, "index"), []byte(strconv.Itoa(index+1)), 0600)
 		args, _ := json.Marshal(os.Args[1:])
 		f, _ := os.OpenFile(filepath.Join(dir, "calls"), os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0600)
 		_, _ = f.Write(append(args, '\n'))
 		_ = f.Close()
+		// Cancellation tests observe this progress marker; record the call first.
+		_ = os.WriteFile(filepath.Join(dir, "index"), []byte(strconv.Itoa(index+1)), 0600)
 		step := steps[index]
 		for i, arg := range os.Args[1:] {
 			if arg == "--cidfile" && i+2 < len(os.Args) {
