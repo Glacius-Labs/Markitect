@@ -2,6 +2,41 @@
 
 This package implements a bounded `run.Sessions` adapter and a pure in-memory codec for selected Claude Code **2.1.301** stream-JSON shapes. The adapter uses the existing container runtime and agentd MCP transport. It has no CLI/bootstrap wiring and establishes no real provider or Apply acceptance.
 
+## Captured Host profile
+
+`NewMetadataPreparer(ImageReaderFactory)` prepares the `claudeCode` section selected by Apply. The closed adapter-local format uses `profileVersion: 1`; that number is independent of the Codex format and the session payload version. All fields below are required. No metadata-only or legacy format supplies execution settings.
+
+```yaml
+claudeCode:
+  profileVersion: 1
+  engineExecutable: /usr/bin/docker
+  imageID: sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+  agentdVersion: development
+  instructions: []
+  credentialRef: dedicated-runtime-token
+  maxWireBytes: 1048576
+  session:
+    version: 1
+    model: explicitly-selected-model
+    effort: high
+    systemPrompt: "Explicit replacement system prompt."
+    builtinTools: [Read, Write]
+    store: explicit-store
+    cpus: 1.5
+    memoryBytes: 2147483648
+    pids: 192
+    tmpBytes: 2097152
+    network: ''
+```
+
+The example image ID and model are placeholders for explicit owner configuration. The engine executable must be a canonical native absolute path. `NewEngineImageReader` binds that path through the existing container engine. Preparation inspects the immutable image, copies the complete regular `/opt/markitect/runtime.env` file from a never-started container through a reader bounded to 1 MiB, and inspects the image again. It checks the pinned literal `claude=2.1.301 (Claude Code)` and configured `agentd` build in the packaging format's four unique LF records (`codex`, `claude`, `codexSchema`, `agentd`). The Claude observation binds all actual metadata bytes, the exact image and Claude provider; `RecordedCodexSchemaDigest` remains absent. The other provider's records are retained in that byte identity and do not establish Claude capabilities. Preparation starts no image, session or provider and resolves no credential.
+
+`instructions` is an ordered list of captured `{boundary, path}` locations. Missing captures request a new complete acquisition. Their bytes follow the existing organization rendering path; they are never concatenated into `systemPrompt`. Unknown or duplicate fields, wrong types, absent execution fields and invalid existing `SessionProfile` settings fail before the image reader is created. Acquisition failures retain observed partial evidence and remain incomplete.
+
+`SessionProfileFromPrepared(prepared, stepReadOnly)` returns the existing session payload, literal credential reference and wire limit only after complete source-bound preparation. The Host passes the actual `run.ProfileRequest.ReadOnly` and binds the observed image into its admitted plan. The projection rechecks the selected Claude section, exact input binding, contract, provider, image, versions and instruction locations. Writing steps retain exactly the configured builtin list. Read-only steps receive its intersection with `Read`; a configured `Write` alone or an explicit empty list therefore yields an explicit empty list. Projection does not mutate the prepared writing profile. `NewSessionProfile` remains the intrinsic validation authority, and session admission retains its role, read-only, resume and catalogue checks. Model, effort, prompt, tools, credential and resource values come only from these captured fields; static preparation grants no execution authority.
+
+The metadata and projection tests use the actual Apply consumer with synthetic captured model/profile inputs and controlled image readers. They establish source behavior, including source identity and writing/read-only/writing isolation. They provide no real engine, credential, provider, Apply or owner acceptance evidence.
+
 ## One admitted step per container
 
 `NewSessions` receives an explicitly configured runtime engine and a Host credential resolver. `NewSessionsWithRuntime` exposes the same narrow runtime surface for controlled fake evidence. A Session creates one container and sends exactly one admitted user message. Failed Open and attempted Step entries remain retained; repeating either cannot recreate a container or replay a user message. Calls for a Session are serialized; cancel an active Open/Step before Stop.
