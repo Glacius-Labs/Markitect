@@ -31,6 +31,12 @@ func RenderContext(selection ContextSelection, settings Settings, input RenderIn
 	w.reference("operation-record-reference-not-authentication", input.Task.Outcome.Source)
 	w.reference("captured-basis-reference-not-verification", input.InputBinding)
 	w.json("task-identity", struct{ ID, Package, ModelID, ModelDigest string }{input.Task.ID, input.Task.Package, selection.ModelID(), selection.ModelDigest()}, hostRender(input.InputBinding))
+	parent, children := selection.treePosition()
+	w.json("tree-position", struct {
+		Manager, Parent string
+		DirectChildren  []string
+	}{selection.Package(), parent, children}, hostRender(input.InputBinding))
+	w.add("tree-position-meaning", treePositionText, productLiteral("tree-position", treePositionText))
 	if input.Process != nil {
 		w.json("host-manager-phase-not-admission", input.Process.Phase, hostRender(input.Process.Source))
 		phaseText := managerPhaseText(input.Process.Phase)

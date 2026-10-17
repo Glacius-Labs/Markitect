@@ -9,6 +9,7 @@ import (
 const renderFrameOpen = "\n[section %q bytes=%d]\n"
 const renderFrameClose = "\n[/section]\n"
 const absentPurposeText = "No purpose was supplied; none is inferred from this Package name."
+const treePositionText = "This is the task's place in the Manager tree. A Manager integrates only the deliveries of its direct children listed here; with no direct children, its responsibility is its own local Definitions. Other Managers, including siblings, deliver to their own parents; their accepted files are used as they are.\n"
 const binaryReferenceText = "Only a binary content reference was supplied. Its content was not inspected."
 const workspaceReferenceText = "This context does not copy the file's content. Read the file at its path in your workspace."
 
