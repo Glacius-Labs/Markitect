@@ -116,11 +116,12 @@ func (r SessionRecord) validate(kind string) error {
 		a.Wire = r.Wire
 		a.Proposed = r.Proposed
 	case PrepareTransport:
-		if !identifier(string(r.Message)) || !r.Wire.valid() || r.Step != "" && !identifier(string(r.Step)) {
+		if !identifier(string(r.Message)) || !r.Wire.valid() || r.Step != "" && !identifier(string(r.Step)) || r.Call != "" && (!identifier(string(r.Call)) || r.Step == "" || r.Control) {
 			return ErrInvalid
 		}
 		a.Message = r.Message
 		a.Step = r.Step
+		a.Call = r.Call
 		a.Control = r.Control
 		a.Wire = r.Wire
 	case ObserveTransport:
@@ -340,6 +341,19 @@ func (s *stateValue) applySession(c Command) error {
 			}
 		} else if v.Bound && !r.Control {
 			return ErrState
+		}
+		if r.Call != "" {
+			// An answer follows the recorded Host answer to a call of this step,
+			// exactly once.
+			tool, ok := s.tools[toolKey{r.Session, r.Call}]
+			if !ok || tool.Record.Step != r.Step || tool.Replied.BatchID == "" {
+				return ErrState
+			}
+			for key, m := range s.transports {
+				if key.Session == r.Session && m.Record.Call == r.Call {
+					return ErrState
+				}
+			}
 		}
 		key := messageKey{r.Session, r.Message}
 		if _, exists := s.transports[key]; exists {

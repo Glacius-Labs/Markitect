@@ -199,23 +199,10 @@ func (s *stateValue) beforeManagerSession(c Command) error {
 				sentBefore = true
 			}
 		}
-		if sentBefore {
-			// Only a previously recorded tool denial/reply may generate a response;
+		if sentBefore && r.Call == "" {
+			// After the turn input, a send may only answer a recorded tool call;
 			// it creates no execution authority and cannot resend the initial turn.
-			reply := false
-			for key, t := range s.tools {
-				if key.Session == r.Session && t.Record.Step == r.Step && t.Replied.BatchID != "" && t.Reply.Identity == r.Wire.Identity {
-					reply = true
-				}
-			}
-			for key, m := range s.transports {
-				if key.Session == r.Session && m.Record.Wire.Identity == r.Wire.Identity {
-					reply = false
-				}
-			}
-			if !reply {
-				return ErrState
-			}
+			return ErrState
 		}
 	case ObserveStep:
 		if r.Step != v.Step {

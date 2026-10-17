@@ -306,6 +306,35 @@ func TestChannelRequiresHandlerAndRefusalIsAnAnswer(t *testing.T) {
 	}
 }
 
+func TestEveryRecordedAnswerCanBeSentOnceInItsStep(t *testing.T) {
+	_, _, io := activeStep(t)
+	for _, id := range []run.ProviderCallID{"first", "second"} {
+		if _, err := io.Call(context.Background(), run.ToolCall{RecordMeta: meta("call-" + string(id)), Step: "step", Call: id, Tool: "unsupported", Input: wire(t, `{}`)}); err != nil {
+			t.Fatal(err)
+		}
+		frame := wire(t, `{"id":"`+string(id)+`","result":"refused"}`)
+		answer := run.TransportPreparation{RecordMeta: meta("answer-" + string(id)), Message: run.MessageID("answer-" + string(id)), Step: "step", Call: id, Wire: frame}
+		if p, err := io.PrepareSend(context.Background(), answer); err != nil || !p.Dispatch {
+			t.Fatal("recorded answer could not be sent", id, err)
+		}
+		if _, err := io.ObserveSend(context.Background(), run.TransportObservation{RecordMeta: meta("answered-" + string(id)), Message: answer.Message, Outcome: run.Sent, Reason: "observed write"}); err != nil {
+			t.Fatal(err)
+		}
+	}
+	again := run.TransportPreparation{RecordMeta: meta("answer-again"), Message: "answer-again", Step: "step", Call: "first", Wire: wire(t, `{"id":"first","result":"again"}`)}
+	if _, err := io.PrepareSend(context.Background(), again); !errors.Is(err, run.ErrState) {
+		t.Fatal("answer sent twice", err)
+	}
+	unanswered := run.TransportPreparation{RecordMeta: meta("answer-unknown"), Message: "answer-unknown", Step: "step", Call: "unknown", Wire: wire(t, `{"id":"unknown"}`)}
+	if _, err := io.PrepareSend(context.Background(), unanswered); !errors.Is(err, run.ErrState) {
+		t.Fatal("answer without a recorded Host answer", err)
+	}
+	plain := run.TransportPreparation{RecordMeta: meta("plain"), Message: "plain", Step: "step", Wire: wire(t, `{"user":"another turn"}`)}
+	if _, err := io.PrepareSend(context.Background(), plain); !errors.Is(err, run.ErrState) {
+		t.Fatal("a second turn input was sent", err)
+	}
+}
+
 func TestHaltedRunAnswersWithoutReachingTheHandler(t *testing.T) {
 	c, j, _ := activeStep(t)
 	stop := command("stop", run.StopRun)
@@ -338,7 +367,20 @@ func TestLostAnswerKeepsOutcomeForHostReconciliation(t *testing.T) {
 	if err := c.ReconcilePending(context.Background(), j); err != nil {
 		t.Fatal(err)
 	}
-	if _, err := io.Call(context.Background(), call); !errors.Is(err, run.ErrObservationLimit) || executed != 2 {
+	acked := run.ToolCall{RecordMeta: meta("ack-lost"), Step: "step", Call: "ack-lost", Tool: "read", Input: wire(t, `{}`)}
+	j.appendMode = "lost-after-next"
+	lost, err := io.Call(context.Background(), acked)
+	j.appendMode = ""
+	if err == nil || lost.Receipt != (run.AppendReceipt{}) || lost.Outcome.Status != run.ToolOK {
+		t.Fatal("lost acknowledgement returned a receipt", lost, err)
+	}
+	if err := c.ReconcilePending(context.Background(), j); err != nil {
+		t.Fatal(err)
+	}
+	if recorded, err := io.Call(context.Background(), acked); err != nil || recorded.Receipt.BatchID == "" || executed != 3 {
+		t.Fatal("answer committed behind a lost acknowledgement not adopted", recorded, err)
+	}
+	if _, err := io.Call(context.Background(), call); !errors.Is(err, run.ErrObservationLimit) || executed != 3 {
 		t.Fatal("absent answer executed again", err)
 	}
 	reconciled, err := c.ToolReconciliation(meta("lost-reconciled"), "s", "lost", r.Outcome)
@@ -347,7 +389,7 @@ func TestLostAnswerKeepsOutcomeForHostReconciliation(t *testing.T) {
 	}
 	commit(t, c, j, reconciled)
 	again, err := io.Call(context.Background(), call)
-	if err != nil || executed != 2 || !bytes.Equal(again.Output.Bytes(), r.Output.Bytes()) {
+	if err != nil || executed != 3 || !bytes.Equal(again.Output.Bytes(), r.Output.Bytes()) {
 		t.Fatal("reconciled answer not returned", again, err)
 	}
 }
@@ -448,7 +490,7 @@ func TestRecoveryAllowsBoundedStopSendWithoutClearingUnknownOrdinarySend(t *test
 		t.Fatal(err)
 	}
 	reply := run.WirePayload{Identity: run.WireIdentity{ContentID: denied.Output.Ref().ContentID, Size: denied.Output.Ref().Size}, Journal: denied.Output}
-	p := run.TransportPreparation{RecordMeta: meta("uncertain-send"), Message: "uncertain", Step: "step", Wire: reply}
+	p := run.TransportPreparation{RecordMeta: meta("uncertain-send"), Message: "uncertain", Step: "step", Call: "deny", Wire: reply}
 	if _, err := io.PrepareSend(context.Background(), p); err != nil {
 		t.Fatal(err)
 	}

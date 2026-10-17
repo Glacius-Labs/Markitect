@@ -199,10 +199,14 @@ const (
 	SendUncertain SendOutcome = "uncertain"
 )
 
+// TransportPreparation is one provider write. Call names the tool call this
+// write answers, if any; an answer may follow only a recorded Host answer to
+// that call in the same step, and only once.
 type TransportPreparation struct {
 	RecordMeta
 	Message MessageID
 	Step    StepID
+	Call    ProviderCallID
 	Control bool
 	Wire    WirePayload
 }

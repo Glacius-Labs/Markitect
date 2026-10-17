@@ -281,7 +281,6 @@ func TestReviewerSessionContractRequiresROAssessmentAndSettledReadiness(t *testi
 		}
 	}
 	bad := prepare
-	bad = prepare
 	bad.Reservation.Purpose = Writing
 	if err := s.applySession(bad); !errors.Is(err, ErrInvalid) {
 		t.Fatal(err)

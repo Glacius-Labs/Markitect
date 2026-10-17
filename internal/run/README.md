@@ -161,8 +161,10 @@ responses and notifications, `PrepareSend` must return a fresh acknowledged
 `SendPermit` whose identity matches the actual bytes. Failed or uncertain
 acknowledgement never grants dispatch. Re-observing a preparation never grants
 another send, even after restart. Actual sent/not-sent/uncertain observations
-remain separate. Shutdown control sends stay available during reconciliation
-without clearing earlier unknown activity or charging new Agent work.
+remain separate. A write that answers a tool call names that call; it may follow
+only the recorded Host answer to that call in the same step, and only once.
+Shutdown control sends stay available during reconciliation without clearing
+earlier unknown activity or charging new Agent work.
 
 Wire records separate the actual byte digest/length from the permitted journal
 representation. The Host redacts known secrets **before** supplying any payload

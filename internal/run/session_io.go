@@ -115,7 +115,7 @@ func (io *sessionChannel) Ready(ctx context.Context, o SessionReadiness) (Append
 	return io.commit(ctx, o.RecordMeta, ReadySession, SessionRecord{Wire: o.Wire.record(), Reason: o.Reason}, o.Wire.Journal)
 }
 func (io *sessionChannel) PrepareSend(ctx context.Context, p TransportPreparation) (SendPermit, error) {
-	r := SessionRecord{Session: io.session, Step: p.Step, Message: p.Message, Control: p.Control, Wire: p.Wire.record()}
+	r := SessionRecord{Session: io.session, Step: p.Step, Message: p.Message, Call: p.Call, Control: p.Control, Wire: p.Wire.record()}
 	// Re-observing a preparation never authorizes another physical send.
 	if old, ok := io.c.state.transports[messageKey{io.session, p.Message}]; ok {
 		if old.Record != r {
@@ -178,8 +178,13 @@ func (io *sessionChannel) Call(ctx context.Context, call ToolCall) (ToolResult, 
 	// The Host answers inside the same callback, so the answer shares the
 	// call's observation time.
 	meta := RecordMeta{ID: replyID(io.session, call.Call), ObservedAt: call.ObservedAt}
-	result.Receipt, err = io.commit(ctx, meta, ReplyTool, SessionRecord{Call: call.Call, Wire: outcomeWire(output)}, output)
-	return result, err
+	receipt, err := io.commit(ctx, meta, ReplyTool, SessionRecord{Call: call.Call, Wire: outcomeWire(output)}, output)
+	if err != nil {
+		// A possibly partial receipt is no proof that the answer was recorded.
+		return result, err
+	}
+	result.Receipt = receipt
+	return result, nil
 }
 
 // replyID derives the record identity of a call's answer from its dedup key,
