@@ -15,7 +15,7 @@ The two-Apply demonstration therefore uses two ordinary invocations: R1 on M1 an
 The assignment has four caps: prepared runs, session starts, Agent steps and active execution time. The configuration supplies their defaults and hard project ceilings. There are no per-Manager copies of the balance, and Managers do not manage budgets; the Host accounts for every invocation once, against the assignment.
 
 - A run consumes one run unit when its fixed binding is committed as Prepared. A rejected acquisition prepares no run.
-- A session start consumes one start unit. Resuming an established session does not; a replacement session does.
+- Starting a new execution session consumes one start unit, including a replacement container that resumes a known conversation. Continuing an already running session consumes no new start unit. Conversation continuity grants no free execution or new allowance.
 - A step is one Host-dispatched Agent turn, including a continued conversation. Tool callbacks belong to their turn.
 - Active execution time is the sum of charged invocation durations: session startup, Agent turns, project checks and Agent-requested tool processes. It excludes Host control work, idle sessions and waiting for the owner or for other tasks. It is neither CPU time nor a delivery clock.
 
@@ -27,8 +27,10 @@ Composition, source acquisition and preflight, journal control, publication with
 
 The configuration sets a completion reserve for session starts, steps and execution time. The rule is one admission check:
 
-- **Writing work** (implementation, rework and parent integration authoring) is admitted only if the capacity left after its reservation still covers the completion reserve.
+- **Ordinary Manager work** (Explore, Plan, coordination, implementation, rework and parent integration authoring) is admitted only if the capacity left after its reservation still covers the completion reserve. Read-only Manager work is not an independent review.
 - **Assessment work** (local and integration reviews and required checks) may use any remaining capacity, including the reserve.
+
+Role, permitted effects and budget class are separate. The one-writer constraint applies to active artifact mutation authority, not every Manager turn. Independent read-only Manager work may run concurrently while preserving the completion reserve. Host admission and physical workspace/tool enforcement must agree; a read-only label does not establish either. Existing source's `Writing`/`Assessment` coupling needs a deliberate technical migration, not relabeling Explore as review.
 
 Before a run is Prepared, the Host rejects a reserve that cannot cover at least one session start and one step for every required local and integration review of the organization. Such a rejection is a preparation failure and consumes no run unit. That check is structural; whether the reserve is generous enough remains a judgment that a run can prove wrong.
 
@@ -64,7 +66,7 @@ Only the Host issues an accepted delivery: the exact candidate, registry revisio
 
 Here, dependent task start means implementation that consumes the result; initial Explore, planning and independent work need not wait for that delivery. A reviewer pass alone never establishes Host acceptance or a consumer's current base. Dependency waiting does not retain an active write grant, and uncertain writer effects must be reconciled before a grant can pass to another task.
 
-Accepted deliveries are immutable. If a later blocking finding concerns an accepted delivery, then neither that delivery nor its consumers (tasks whose base composes it) can be dispatched further, accepted or published until the finding is resolved. The common parent selects a replacement delivery explicitly and has it composed into the affected consumers. Correcting it is ordinary bounded rework and resets no budget or round counter.
+Accepted deliveries are immutable. If a later blocking finding concerns an accepted delivery, then neither that delivery nor its consumers (tasks whose base composes it) can be dispatched further, accepted or published until the finding is resolved. The common parent selects a replacement delivery explicitly and has it composed into the affected consumers. Correcting it is ordinary bounded rework and resets no budget or rejection counter.
 
 Reuse a review only when its complete bound subject and inputs remain unchanged. An Agent's assertion of no impact is insufficient; changed bindings need renewed assessment and unknown effects broaden it. Current integration evidence must cover any changed aggregate.
 
@@ -74,7 +76,7 @@ Before any external execution, the Host checks the current run and controller, t
 
 A failed call is retried automatically only when the adapter proves that nothing was sent, at most `limits.maxTransientRetries` times, and each attempt is charged; otherwise the invocation is uncertain and is reconciled. A Manager session ends after `limits.maxSessionSteps` steps; the next step starts a recorded replacement session from the journal's summary of the task.
 
-The owner selected a rejection limit instead of a submission limit ([confirmation](../../concepts/sources/manager-process-clarification-20261017.md#review-budget-confirmation)). The existing configuration key `reviewRounds` now denotes the maximum number of rejected candidate submissions per run, Manager and review purpose (local or integration); its default remains three. This explicitly supersedes the earlier design that counted every submission. Preparing this numeric setting does not implement the counter. Runs retain the policy bound at preparation; historical evidence is not reinterpreted under the new rule.
+The owner selected a rejection limit instead of a submission limit ([confirmation](../../concepts/sources/manager-process-clarification-20261017.md#review-budget-confirmation)) and subsequently approved naming it `rejectionLimit`, with `maxRejectionLimit` as its project ceiling. It is the maximum number of rejected candidate submissions per run, Manager and review purpose (local or integration); its default remains three. This supersedes the earlier submission-count design and the misleading `reviewRounds`/`maxReviewRounds` names. The target schema rename and counter require coordinated source implementation; preparing the existing numeric setting is not proof of either. Runs retain the policy bound at preparation; historical bytes and evidence are not renamed or reinterpreted.
 
 The Host fixes the counter identity `(run, Manager, review purpose)` from the organization and fixed process. All limited deliveries, later completion work and corrections for that Manager share the corresponding counter. New tasks, sessions, candidate versions, claimed sub-responsibilities or submission IDs cannot reset or split it. Successful deliveries neither increase nor decrease it. They still consume the shared session, step and execution-time budget, as do checks and reviews; success never replenishes assignment capacity. An attempt number records a submission but is not the rejection counter.
 
@@ -85,6 +87,14 @@ After each rejection, the Manager records unresolved findings, progress and a di
 A later finding against an accepted delivery blocks that delivery and its consumers as above; it does not retroactively turn a successful submission into a rejection. If a new submitted candidate fails assessment, count that rejection once under its current purpose. Local and integration counters are separate because they judge different obligations. Required evidence and finite shared budget remain mandatory even when every limited delivery passes.
 
 A continuation run needs a changed basis or a recorded extension, never just the wish to reset rounds. Its reviews and checks run again in full; earlier approvals remain history.
+
+## Step basis and continued conversations
+
+Follow the [working-basis contract](manager-apply-concept.md#working-bases-and-conversation-continuity). A step starts only on a confirmed workspace version with its exact accepted inputs, own starting changes and authority. A new basis cannot be activated during that step. Its resulting changes are captured before a successor step is admitted. An action attributed to a stale step cannot modify the new workspace or produce current evidence; a duplicate observation of an old completed action may only recover its original receipt.
+
+Run inputs, Manager identity, findings and rejection counters survive a conversation handoff or execution-session replacement. Idle dialogue does not consume execution time, but establishing quiescence, actual replacement startup and subsequent work retain their existing accounting. Unknown outstanding effects retain their holds. Scope, candidate or rights changes cannot be disguised as a fresh task to evade admission.
+
+A recorded basis transition is not proof that materialization happened. A physical update without durable confirmation is not permission to continue. Reopening after interruption reconciles the exact prior/resulting trees, own delta, consumed deliveries and actual workspace before any new step. No automatic replay or Agent acknowledgement resolves an uncertain transition.
 
 ## One run state machine
 
@@ -137,4 +147,4 @@ An assignment closes Completed by itself when its last run finished Applied or N
 | A step times out; writer state unknown | Reconciling with the reservation held; no replacement writer or publication until termination and effects are known. |
 | Source drift or partial publication | Admission stops and the run reconciles. Known drift finishes Stale; a known partial write finishes Failed with exact paths. Unknown effects stay blocked. |
 
-Implement deterministic transition and accounting checks for these cases, plus duplicate reservation and settlement, refusal of writing work that would use the reserve, release of unused time, no inherited Package override, no charge while waiting, round counters surviving task recreation, advisory findings that never block, retries only after proven non-dispatch, session replacement at the step limit, publication waiting for a required approval, immutable outcomes and finding resolution only through independent current evidence. Real adapter termination is tested separately; fake events cannot establish that a process stopped.
+Implement deterministic transition and accounting checks for these cases, plus duplicate reservation and settlement, refusal of ordinary Manager work that would use the reserve, release of unused time, no inherited Package override, no charge while waiting, rejection counters surviving task recreation, advisory findings that never block, retries only after proven non-dispatch, session replacement at the step limit, publication waiting for a required approval, immutable outcomes and finding resolution only through independent current evidence. Real adapter termination is tested separately; fake events cannot establish that a process stopped.

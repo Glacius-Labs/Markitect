@@ -108,8 +108,8 @@ type SessionIO interface {
 
 | Record | Required fields and meaning |
 | --- | --- |
-| `SessionSpec` | Host session ID, role, Manager, task and attempt, executor profile identity including adapter kind and runtime image, workspace access as the container's mounts, and explicitly supplied history. Review sessions start fresh. |
-| `StepRequest` | Unique step ID, session ID, task and subject binding, exact prompt, context and instruction payload references, additional messages and tool grants. Recorded before dispatch. |
+| `SessionSpec` | Host execution-session ID, stable Manager identity, known conversation identity or explicit fresh-conversation handoff, role, executor profile and runtime image, fixed workspace access/authority ceiling and supplied history references. Resume capability is established, not inferred. Review sessions start fresh. |
+| `StepRequest` | Unique step ID, execution session and conversation association, task and exact admitted workspace version, consumed accepted deliveries, own starting changes, subject binding, exact prompt/context/instruction references, additional messages and permitted effects. Recorded before dispatch. |
 | `StepReceipt` | Step and session identity, observed status, proposed result or yield, output references, usage when observable and observation limits. Yield, proposed completion, needs decision, failure and uncertain interruption are distinct; none is an accepted delivery. |
 | `SessionQuery` | Known session ID and, where relevant, step ID. Unavailable information stays unknown. |
 | `SessionEvent` | Session and step, sequence and correlation, kind and exact observed payload, including prepared outbound payloads, transport observations, incoming content and tool exchanges. |
@@ -117,7 +117,11 @@ type SessionIO interface {
 
 Every session runs in its own container through the session helper `markitect-agentd`, which serves the Host tools to the provider CLI over MCP and carries everything over one stdio connection ([rebuild plan](manager-apply-rebuild-plan.md#container-runtime)). The Host implements `SessionIO`. The adapter calls `Observe` with the actual outgoing content and waits for durable acknowledgement before sending it. Hidden provider context and unobservable activity are reported as limits, never reconstructed from templates. An executor that cannot support this protocol and its input observation is not selectable.
 
-`Call` validates role, task state and every adjacent parent-child communication edge. Initial operation propagation is a Host obligation independent of tool calls or Agent output. A Manager can submit a question, dependency response or result and yield; a callback never runs a session recursively or waits for a child workflow. Reviewers can read, request allowed checks and report; they cannot claim paths, change ownership or control Manager participation.
+The records above describe the selected target, not an already implemented Go API. Current `SessionPlan.Candidate` binds the whole execution session to one candidate. Moving evolving workspace identity into each admitted step requires a versioned producer change with exact source, tool and recovery bindings. Retain historical session/step bytes and their original transition rules. Do not weaken the current binding in place or treat a source-only continuation claim as a physical capability.
+
+Conversation continuity does not permit concurrent mutation of its workspace. The Host permits a basis advance only between observed quiescent steps and records the [working-basis transition](manager-apply-concept.md#working-bases-and-conversation-continuity). Every action is checked against the active step and version. A late request from an older step cannot write or create new current evidence; a repeated completed request returns only its old receipt. Independent review uses its frozen subject rather than a Manager's advancing workspace.
+
+`Call` validates role, active step/version, permitted effects, task state and every adjacent parent-child communication edge. Before the complete Explore census, all artifact mounts are read-only and the Host denies artifact-mutating tools and workspace effects; role alone cannot grant them. Read-only analysis and proposed classifications remain distinct from mutation. Initial operation propagation is a Host obligation independent of tool calls or Agent output. A Manager can submit a question, dependency response or result and yield; a callback never runs a session recursively or waits for a child workflow. Reviewers can read, request allowed checks and report; they cannot claim paths, change ownership or control Manager participation.
 
 The tools form one closed catalogue; each role sees only its own. DEC-039 removes the former `plan` and `delegate` controls. The adjacent-message schema must follow the [fixed process](manager-apply-concept.md#tasks-and-delegation) before implementation; the table does not freeze that API:
 
@@ -138,6 +142,8 @@ The tools form one closed catalogue; each role sees only its own. DEC-039 remove
 The Host deduplicates a repeated correlation ID with identical content and returns the recorded reply; different content under the same ID is an error. Duplicate observations create no tasks or attempts. Cancellation propagates through `context.Context`. A timeout or error after possible dispatch returns the known receipt with an uncertain state; inspect the known session and step before retrying, and never resend work just because a reply was lost. `Stop` reports observed termination, not only a cancellation request. An uncertain writer blocks workspace handoff. A `SessionIO` callback error prevents further dispatch; external activity that may already have started stays uncertain until reconciled.
 
 ## Candidate workspace port
+
+Workspace materialization must preserve own unaccepted changes across an explicitly admitted basis advance or refuse the transition with that work retained. The existing pure `ComposeCandidates` requires an exact common base and disjoint effects; it is not an arbitrary-base rebase, a live workspace switch or a delivery-acceptance API. A producer must establish a common base and complete before/after facts or return the conflict for owned correction. The following port shape does not itself establish a safe transition, physical quiescence or restart behavior.
 
 ```go
 // Package run.

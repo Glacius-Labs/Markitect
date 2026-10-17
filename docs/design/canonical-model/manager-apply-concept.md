@@ -123,6 +123,31 @@ The owner also selected a review rejection limit: successful limited deliveries 
 
 The compiler pipeline here means deterministic preparation over compiled model facts. The existing `model`/`organization` separation can provide it; no new Core Kind or model-language change is implied. Managers and reviewers still interpret prose. The compiler can reject unresolved references but cannot prove that every necessary semantic relationship was authored.
 
+### Working bases and conversation continuity
+
+The owner selected continuity across limited deliveries rather than a fresh conversation for each changed working basis ([confirmation](../../concepts/sources/manager-process-clarification-20261017.md#working-bases-and-session-continuity)). The earlier contract fixed a candidate to the whole execution session; it would unnecessarily discard context when a Manager consumes a new accepted prerequisite. The target separates four lifetimes:
+
+| Subject | Lifetime and authority |
+| --- | --- |
+| Run inputs | Immutable captured model, configuration and original repository inputs. A model or configuration change still requires the existing stop/continuation process. |
+| Manager working basis | The original basis plus explicitly consumed, Host-accepted deliveries. Availability alone does not insert a delivery into every workspace. |
+| Own working changes | The Manager's unaccepted changes on that basis. Preserve them during a basis transition; they are neither an accepted dependency nor an approved result. |
+| Review candidate | An immutable snapshot and its exact review purpose, inputs and evidence. Later working changes cannot alter that subject or inherit its approval. |
+
+A stable Manager identity and conversation may span many working-basis versions. Each dispatched step binds the exact admitted workspace version, consumed deliveries, own starting changes, input and allowed actions. File edits during the step are observed outputs, not automatic session replacements; another actor cannot update the basis underneath it. Later steps bind the observed resulting version. The session retains its provider/profile, runtime and authority ceiling; a phase label alone never changes rights.
+
+A basis advance follows a bounded transition in the existing journal: stop admitting affected work, establish actual quiescence, retain the current basis and own changes, compose the accepted input without losing those changes, and record the before/after identities and actual result. Only a confirmed, observed resulting workspace permits the next step. A completed provider turn alone does not prove that tools or background writers stopped. Unknown effects block admission; after interruption, inspect the recorded transition instead of blindly repeating it.
+
+Composition must prove its exact input bases and ownership. Disjoint filenames alone do not authorize replaying a patch from a different base, resolving a conflict or accepting unreviewed own work. If preservation or composition is not established, retain the work and ask the responsible Manager to resolve the issue through the normal process. Changed assumptions reopen affected assessment; unknown influence broadens it.
+
+The next message identifies the newly admitted version, accepted input changes, preserved own changes, open findings and relevant reassessment. The Manager checks changed interfaces and assumptions from current sources. Old conversational claims are context, not current evidence. New dialogue, a container replacement or a context handoff cannot reset responsibility, findings, budgets or rejection counters.
+
+Continuation stays within the existing session-step and context limits. Use bounded summaries and retrievable evidence rather than copying every transcript into each step; never silently omit mandatory current obligations or findings to fit. An oversized required context remains a visible refusal. Provider-internal compaction or unavailable history is an observation limit, not a claim that all earlier context was preserved.
+
+Explore and Plan may share a read-only execution session. Consuming a delivery with unchanged execution rights should preserve the conversation through a supported, quiescent basis transition. Changing mounts, authority ceiling, profile or runtime needs a newly bound execution environment. Continuing the same provider conversation there requires demonstrated resume support and exact recorded identity; otherwise use an explicitly identified fresh conversation with a bounded, evidence-linked handoff. Independent reviews always start fresh. No adapter capability is implied by this design.
+
+Before implementing this transition, demonstrate the library case: lending retains its own unfinished work when a catalog delivery becomes available, receives the exact basis-change message and reassesses the affected interface; a crash during materialization cannot cause an unrecorded continuation or a repeated effect. Provider continuation, actual quiescence and preservation across different bases remain concrete technical proof obligations, not additional owner decisions about the intended flow.
+
 ### Fixed-source comparison and improvement criterion
 
 Comparison basis: Main [`0392cd2f`](https://github.com/Glacius-Labs/Markitect/tree/0392cd2fd724d98b3fc715cb5fd3db22e2d5d224), 17 October 2026. This is an assessment snapshot, not a live backlog. The owner observed that AI-created child prompts and root planning reintroduced discretion over already explicit structure ([source](../../concepts/sources/manager-process-clarification-20261017.md)).
