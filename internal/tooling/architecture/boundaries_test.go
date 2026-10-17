@@ -192,6 +192,16 @@ func TestCheckWorkspaceCompositionEdgeStaysTestOnly(t *testing.T) {
 	}
 }
 
+func TestClaudeSnapshotSmokeEdgeStaysTestOnly(t *testing.T) {
+	// The external Claude smoke computes its candidate tree from actual files.
+	for _, test := range []bool{false, true} {
+		got := Check([]Edge{{From: "internal/adapters/claudecode", To: "internal/snapshot", Test: test}})
+		if (len(got) == 0) != test {
+			t.Errorf("claudecode -> snapshot test=%v: %v", test, got)
+		}
+	}
+}
+
 func TestJournalFixtureEdgesStayTestOnly(t *testing.T) {
 	for _, tc := range []struct {
 		to               string
