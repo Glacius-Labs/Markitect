@@ -30,7 +30,7 @@ packages:
   # --- apply-realization --------------------------------------------------
   - path: internal/realization
     layer: apply-realization
-    purpose: Validates registry ownership, file accounting and claims; captures candidates and composes disjoint changes.
+    purpose: Validates registry ownership, file accounting, claims and Definition census; captures and composes candidates.
     doc: docs/design/canonical-model/manager-apply-go-architecture.md#organize-by-responsibility
 
   # --- core ---------------------------------------------------------------
