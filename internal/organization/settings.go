@@ -131,11 +131,12 @@ type ManagerSettings struct {
 // on every Manager; provenance explains supplied facts, never authenticates
 // approval or copies canonical Definitions into execution settings.
 type Settings struct {
-	modelID     string
-	modelDigest string
-	managers    []ManagerSettings
-	index       map[string]int
-	ceilings    SettingsCeilings
+	configuration settingsValidation // Fixed validated assertions, including unused facts.
+	modelID       string
+	modelDigest   string
+	managers      []ManagerSettings
+	index         map[string]int
+	ceilings      SettingsCeilings
 }
 
 func (s Settings) ModelID() string     { return s.modelID }
