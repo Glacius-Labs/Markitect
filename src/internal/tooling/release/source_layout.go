@@ -2,6 +2,7 @@ package release
 
 import (
 	"fmt"
+	"io/fs"
 	"os"
 	"path/filepath"
 	"sort"
@@ -17,6 +18,7 @@ func transitionalFoundationRoots() []string {
 		"internal/organization",
 		"internal/realization",
 		"internal/apply",
+		"internal/adapters/gitrepo",
 		"internal/testkit",
 	}
 }
@@ -74,6 +76,9 @@ func validateTransitionalFoundationFiles(names []string) error {
 		}
 		if !isTransitionalFoundationPath(name) {
 			return fmt.Errorf("unsupported root source path during src layout: %s", name)
+		}
+		if isNestedGoModuleManifest(name) && !hasExcludedSourceDirectory(name) {
+			return fmt.Errorf("nested Go module is not supported during src layout: %s", name)
 		}
 	}
 	return nil
@@ -152,6 +157,11 @@ func hasExcludedSourceDirectory(name string) bool {
 	return false
 }
 
+func isNestedGoModuleManifest(name string) bool {
+	parts := strings.Split(name, "/")
+	return len(parts) > 2 && parts[len(parts)-1] == "go.mod"
+}
+
 // validateCollectedSourceLayout requires the same active command and internal
 // Go source files from both live collection and fixed-snapshot selection.
 func validateCollectedSourceLayout(files []sourceFile, expectedPrefix string) error {
@@ -196,24 +206,83 @@ func validateTransitionalFoundationDirectories(moduleDir string) error {
 	if info.Mode()&os.ModeSymlink != 0 || !info.IsDir() {
 		return fmt.Errorf("optional root packages must be a real directory")
 	}
-	allowed := make(map[string]bool, len(transitionalFoundationRoots()))
+	allowed := make(map[string]*transitionalPackageDirectory)
 	for _, path := range transitionalFoundationRoots() {
-		allowed[strings.TrimPrefix(path, "internal/")] = true
+		current := allowed
+		parts := strings.Split(strings.TrimPrefix(path, "internal/"), "/")
+		for index, part := range parts {
+			node := current[part]
+			if node == nil {
+				node = &transitionalPackageDirectory{children: make(map[string]*transitionalPackageDirectory)}
+				current[part] = node
+			}
+			if index == len(parts)-1 {
+				node.packageRoot = true
+			}
+			current = node.children
+		}
 	}
-	entries, err := os.ReadDir(root)
+	return validateTransitionalPackageDirectory(root, "internal", &transitionalPackageDirectory{children: allowed})
+}
+
+type transitionalPackageDirectory struct {
+	children    map[string]*transitionalPackageDirectory
+	packageRoot bool
+}
+
+func validateTransitionalPackageDirectory(dir, relative string, node *transitionalPackageDirectory) error {
+	entries, err := os.ReadDir(dir)
 	if err != nil {
-		return fmt.Errorf("read optional root packages: %w", err)
+		return fmt.Errorf("read transitional package path %s: %w", relative, err)
+	}
+	if !node.packageRoot && len(entries) == 0 {
+		return fmt.Errorf("transitional package container is incomplete: %s", relative)
 	}
 	for _, entry := range entries {
-		if !allowed[entry.Name()] {
-			return fmt.Errorf("unsupported root internal path during src layout: internal/%s", entry.Name())
+		child := node.children[entry.Name()]
+		childPath := filepath.Join(dir, entry.Name())
+		childRelative := relative + "/" + entry.Name()
+		if child == nil {
+			return fmt.Errorf("unsupported root internal path during src layout: %s", childRelative)
 		}
 		if entry.Type()&os.ModeSymlink != 0 || !entry.IsDir() {
-			return fmt.Errorf("root package must be a real directory: internal/%s", entry.Name())
+			return fmt.Errorf("transitional package path must be a real directory: %s", childRelative)
 		}
-		if err := requireRealDirectory(filepath.Join(root, entry.Name())); err != nil {
-			return fmt.Errorf("root package internal/%s: %w", entry.Name(), err)
+		if err := requireRealDirectory(childPath); err != nil {
+			return fmt.Errorf("transitional package path %s: %w", childRelative, err)
+		}
+		if child.packageRoot {
+			if err := rejectNestedGoModules(childPath, childRelative); err != nil {
+				return err
+			}
+		}
+		if len(child.children) > 0 {
+			if err := validateTransitionalPackageDirectory(childPath, childRelative, child); err != nil {
+				return err
+			}
 		}
 	}
 	return nil
+}
+
+func rejectNestedGoModules(root, relative string) error {
+	return filepath.WalkDir(root, func(current string, entry fs.DirEntry, walkErr error) error {
+		if walkErr != nil {
+			return fmt.Errorf("walk transitional package %s: %w", relative, walkErr)
+		}
+		if entry.IsDir() {
+			if current != root && excludedDirs[strings.ToLower(entry.Name())] {
+				return filepath.SkipDir
+			}
+			return nil
+		}
+		if entry.Name() == "go.mod" {
+			path, err := filepath.Rel(root, current)
+			if err != nil {
+				return fmt.Errorf("resolve nested module path under %s: %w", relative, err)
+			}
+			return fmt.Errorf("nested Go module is not supported during src layout: %s/%s", relative, filepath.ToSlash(path))
+		}
+		return nil
+	})
 }
