@@ -50,6 +50,7 @@ Earlier Project/Domain designs and modeling exercises are routed through the [hi
 
 ## Existing-project adoption
 
+- [Accepted existing-project Init flow](project-capability-skills-20261009.md#existing-project-init-flow) — technical setup, model adoption through the coding agent and owner decisions; design only, not implemented setup.
 - [Zero-churn representation adoption](brownfield-representation-adoption.md) — source-alpha design
 - [Copy Me evidence review and candidate queue](copy-me-evidence-review.md) — explicitly an earlier proposal
 - [Existing-project preparation](init-adoption-preparation.md) — explicitly an earlier Init proposal
