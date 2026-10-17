@@ -2,7 +2,7 @@
 
 # markitect
 
-Model digest: sha256:9537a6327f43616b87cd01c47b89d665a893047a1ae7c7ce37ed08b5e1a3c4cf
+Model digest: sha256:6616f7321a07bb863b109bc5d4a3dbf3f05d45d096f68836f1e7d719ace3b335
 
 Report status: succeeded
 
@@ -301,7 +301,7 @@ Maintainer tooling enforces the import gate and the code map, builds and publish
 - Role: implementation
 - Responsible Manager: ["project.markitect.example.org/v1alpha1","Manager","product","product"]
 - Realizes: ["project.markitect.example.org/v1alpha1","Statement","","canonical-sources"], ["project.markitect.example.org/v1alpha1","Statement","","project-local-policy"], ["project.markitect.example.org/v1alpha1","Statement","product","core-stays-generic"], ["project.markitect.example.org/v1alpha1","Statement","product","distinct-state"], ["project.markitect.example.org/v1alpha1","Statement","product","explicit-relationships"], ["project.markitect.example.org/v1alpha1","Statement","product","legacy-removal"], ["project.markitect.example.org/v1alpha1","Statement","product","product"]
-- Expected paths: [internal/adapters/gitrepo/](../../internal/adapters/gitrepo), [src/internal/infrastructure/](../../src/internal/infrastructure)
+- Expected paths: [internal/adapters/checks/](../../internal/adapters/checks), [internal/adapters/gitrepo/](../../internal/adapters/gitrepo), [src/internal/infrastructure/](../../src/internal/infrastructure)
 - Related checks: ["project.markitect.example.org/v1alpha1","Check","","go-tests"], ["project.markitect.example.org/v1alpha1","Check","","go-vet"], ["project.markitect.example.org/v1alpha1","Check","tooling","architecture-gate"] (declared; execution not observed)
 - Applicability: Repository inputs and guarded effects belong to infrastructure adapters.
 
