@@ -66,7 +66,7 @@ var responsibilityImports = map[string][]string{
 	"internal/adapters/codexappserver": {"internal/apply", "internal/model", "internal/organization", "internal/snapshot"},
 	"internal/adapters/documents":      {"internal/modeldocs", "internal/tooling/guardedwrite"},
 	"internal/adapters/gitrepo":        {"internal/apply", "internal/model", "internal/organization", "internal/realization", "internal/snapshot"},
-	"internal/apply":                   {"internal/model", "internal/snapshot", "internal/organization", "internal/realization"},
+	"internal/apply":                   {"internal/model", "internal/snapshot", "internal/organization", "internal/realization", "internal/run"},
 	"internal/bootstrap":               {"internal/adapters/checks", "internal/adapters/cli", "internal/adapters/codexappserver", "internal/adapters/documents", "internal/adapters/gitrepo", "internal/apply", "internal/modeldocs"},
 	"internal/modeldocs":               {"internal/apply", "internal/model", "internal/snapshot"},
 	"internal/organization":            {"internal/model", "internal/snapshot"},
