@@ -50,6 +50,7 @@ The owner's [origin account of 15 October 2026](sources/owner-origin-20261015.md
 | [DEC-037](#dec-037-agent-sessions-and-checks-run-in-linux-containers) | Decision | Agent sessions and checks run in Linux containers | Accepted |
 | [DEC-038](#dec-038-learn-through-complete-workflows) | Decision | Learn through complete workflows | Accepted |
 | [DEC-039](#dec-039-deterministic-manager-process) | Decision | Deterministic Manager process | Accepted |
+| [DEC-040](#dec-040-concept-freeze-until-the-core-runs) | Decision | Concept freeze until the core runs | Accepted |
 | [PRM-001 to PRM-007](#promises) | Promise | Target outcomes | Target |
 | [ASM-001 to ASM-006](#assumptions-and-hypotheses) | Assumption | Assumptions and hypotheses | See entries |
 | [CPT-001](#cpt-001-federalism) | Concept | Federalism | Accepted |
@@ -484,6 +485,17 @@ The owner's [origin account of 15 October 2026](sources/owner-origin-20261015.md
 - **Confirmed continuity refinement:** Keep Manager responsibility and conversation across explicitly versioned step bases where supported, while retaining immutable run inputs and review candidates. Preserve own unaccepted work during a recorded quiescent basis advance; stale actions and unknown effects block progress. Changed execution rights need a newly bound environment with proven resume or an explicit handoff. Separate role, effect authority and budget class. Before the Explore barrier, enforce read-only artifact mounts and Host mutation denial. Name the target setting `rejectionLimit` and its ceiling `maxRejectionLimit`; preserve historical records rather than reinterpret them. Basic metrics remain in Apply; a later hot-path view is an extension ([confirmation](sources/manager-process-clarification-20261017.md#working-bases-and-session-continuity), [concept](../design/canonical-model/manager-apply-concept.md#working-bases-and-conversation-continuity)).
 - **Confirmed coordination refinement:** Versioned bounded child reports preserve delivery/completion status, interfaces, prerequisites, findings, uncertainty and evidence; enforce the parent input limit as well as each report limit, using visible partitioning without dropping obligations. Logical Managers may retain conversations without resident containers; finite warm retention and deterministic stop rules require actual quiescence, charged replacement starts and proven resume or explicit handoff. Process census alone is not quiescence: close admission, reconcile effects and enforce an artifact-write barrier through basis changes. Reuse of accepted Manager assessments and coordination-based modeling hints are later extensions, not changes to initial Explore or current review capacity ([confirmation](sources/manager-process-clarification-20261017.md#bounded-coordination-and-idle-execution), [concept](../design/canonical-model/manager-apply-concept.md#tasks-and-delegation)).
 - **Evidence boundary:** This records intent, not a working recursive runtime. The concept includes a fixed-source comparison and distinguishing process cases. Technical realization follows the process; no new Core language feature, provider execution or release is authorized here.
+
+### DEC-040 Concept freeze until the core runs
+
+- **Status:** Accepted, owner, 17 October 2026 ([source](sources/architecture-review-20261017.md#concept-freeze-and-order-of-work)), after the [architecture review](../design/canonical-model/apply-architecture-review-20261017.md).
+- **Statement:**
+  - The concept is frozen („Das Konzept ist jetzt eingefroren“).
+  - It is to be completed first („erst das Konzept fertigstellen“), and the cleanup round should start in any case („Die Aufräumrunde wäre generell gut zu starten unabhängig davon“).
+  - Implementation follows once the concept is clean, uniform and worked out („sauber, einheitlich und ausgearbeitet“).
+- **Interpretation (marked):** the freeze applies to the documents of the [Apply design map](../design/canonical-model/README.md#apply-design). It answers the review's recommendation to add no new mechanisms until one Package runs end to end. Completing the concept means specifying the core, resolving contradictions and giving each rule one owner, without adding scope.
+- **Boundary:** DEC-025 to DEC-039 remain in force. A review proposal that changes an adopted item still needs the owner, as [DEC-036](#dec-036-adopted-design-refinements-for-the-first-apply) requires.
+- **Owning document:** the [Apply design map](../design/canonical-model/README.md#apply-design).
 
 ## Promises
 
