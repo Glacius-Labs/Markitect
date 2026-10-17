@@ -79,7 +79,7 @@ The session port, effective role profiles, Host-mediated task and message transp
 
 Local workspaces, exclusive path reservations, Host-owned registry changes and fresh independent review for one Package's implementation, tests and documentation, with finite rework. Manager and reviewer ask which local statements need another area's behavior and whether the model connects them. Every positive Definition disposition has a reason and concrete realization or use.
 
-**Gate:** controlled tests reject model, configuration and ignore edits, direct registry changes and overlapping ownership. A bad candidate is rejected, revised and reviewed as a new exact candidate. A `vocabulary` disposition that ignores obligations on concrete uses fails review. An artifact whose only Definition was removed must be deleted or rejustified, and a project rule found in configuration or custom instructions becomes a finding. Missing evidence, an unresolved required assessment or exhausted rounds cannot return completion. Nothing is published in this gate.
+**Gate:** controlled tests reject model, configuration and ignore edits, direct registry changes and overlapping ownership. A bad candidate is rejected, revised and reviewed as a new exact candidate. A `vocabulary` disposition that ignores obligations on concrete uses fails review. An artifact whose only Definition was removed must be deleted or rejustified, and a project rule found in configuration or custom instructions becomes a finding. Missing evidence, an unresolved required assessment or an exhausted rejection allowance cannot return completion. Nothing is published in this gate.
 
 ### P07 Recursive delegation and integration
 
