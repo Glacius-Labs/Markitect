@@ -1,5 +1,9 @@
 apiVersion: markitect.registry/v1
 artifacts:
+  - path: "docs/design/canonical-model/standard-library-architecture-platform.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Defines the proposed first architecture, data and deployment Kinds with Package ownership and connected Library relationships.
   - path: "docs/design/canonical-model/standard-library-data-and-views.md"
     form: doc
     realizes: [documentation/current-guidance]

@@ -58,6 +58,7 @@ Source: the owner's standard-library design discussion in this chat on 17 Octobe
 - Continuation: "Alles klar, dann halten wir das so fest und machen so weiter". The owner adopts the modular coverage direction and continuation with system/application/component/deployment/instance boundaries. Exact companion Kind contracts and the web example remain design work; this is not a change to existing M1 behavior or a deployment operation.
 - Boundary selection: "Okay, dann halten wir diese Abgrenzungen fest." This selects the discussed System, Application, Component, Environment, Deployment and optional intended Instance distinctions, including the separation from runtime records. The owner then requested the logical data store, operating resources and C4 mapping in the Library example. The new data/resource contracts and mapping recommendations below remain proposals.
 - The owner then asked to work out the quoted open C4/data-access/database/migration/failure/recovery points next ("Damm kümmere dich als nächstes darum"). The [detailed data-and-view contract](standard-library-data-and-views.md) records the resulting recommendations. This commissions design work; its new PostgreSQL reference choice and other detailed recommendations are not silently owner-selected.
+- Following the closure plan, the owner requested concrete definitions, Package assignments and relationships for System, Application, DataStore, Environment, Deployment and operating resources in the Library. The [first companion slice](standard-library-architecture-platform.md) owns the resulting six-Kind proposal. Commissioning that proposal does not select every new contract or example choice.
 
 ## Current design state
 
@@ -72,6 +73,7 @@ Source: the owner's standard-library design discussion in this chat on 17 Octobe
 | markitect-standard distribution, two initial Packages and version policy | Owner-selected direction | Package/version contract below |
 | Broader project/repository coverage and modular extension | Owner adopts the modular coverage direction; exact companion contracts remain design work | Broader library section below |
 | System/application/component and environment/deployment/instance boundaries | Owner-selected direction; exact Kind wording and companion identities remain working design | Runtime walkthrough below |
+| Six first companion Kinds, three Packages, shared OperatingResource and connected example | Concrete proposal pending selection | [First companion slice](standard-library-architecture-platform.md) |
 | Production library, migration and consumer behavior | Not implemented by this record | Existing fixtures remain unchanged |
 
 The initial source assessment used Main `f8c1acaa169c9955d237e17cd245add963c155bd`. Before recording, the isolated documentation branch advanced to integrated Main `f23eaa2072226d905a8d79b8d6c20f419dfdc136`. These are source observations, not compatibility or execution evidence. The canonical v1 compiler and read-only preparation exist; full Apply remains separate delivery work.
@@ -628,6 +630,8 @@ Recommended next step: review these meanings, especially application versus Comp
 ## Logical data, operating resources and C4 walkthrough
 
 Working proposal, 17 October 2026, following the owner's selected runtime distinctions. The prospective web Library is a separate design example; the local sequential, process-lifetime-only M1/M2 contract remains unchanged. No persistence, concurrency support, database, renderer or deployment has been implemented by this discussion.
+
+This section preserves the initial boundary exploration. The [first companion slice](standard-library-architecture-platform.md) now owns the complete proposed Kind wording and connected example. It recommends OperatingResource for the initial database-service, hosting, delivery and routing capabilities rather than the dedicated DatabaseService/LoadBalancer Kinds considered here.
 
 ### Proposed data and resource meanings
 
