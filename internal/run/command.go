@@ -69,6 +69,7 @@ type Command struct {
 	Check                     CheckRecord        `json:",omitzero"`
 	Verification              VerificationRecord `json:",omitzero"`
 	Publication               PublicationRecord  `json:",omitzero"`
+	Answer                    AnswerRecord       `json:",omitzero"`
 	managerProof              [32]byte
 	replaying                 bool
 	binding                   Binding
@@ -187,6 +188,11 @@ func (c Command) validate() error {
 			return ErrInvalid
 		}
 		allowed.Publication = p
+	case AnswerQuestion:
+		if !identifier(c.Answer.Question) || !c.Answer.Text.Valid() {
+			return ErrInvalid
+		}
+		allowed.Answer = c.Answer
 	case PublishRun:
 		p := c.Publication
 		if !identifier(p.ID) || !p.Receipt.Valid() || p.Changes != (BlobRef{}) || p.Aggregate != 0 || !boundedInput(c.Reason) {
@@ -210,5 +216,6 @@ func (c Command) validate() error {
 func (c Command) payloadRefs() []BlobRef {
 	refs := append(c.Session.payloadRefs(), c.Conclusion.payloadRefs()...)
 	refs = append(refs, c.Check.payloadRefs()...)
+	refs = append(refs, c.Answer.payloadRefs()...)
 	return append(refs, c.Publication.payloadRefs()...)
 }

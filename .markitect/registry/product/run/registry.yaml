@@ -168,6 +168,14 @@ artifacts:
     form: test
     realizes: [product/run/confirmed-run-history]
     why: Checks verification on the exact aggregate and every publication outcome.
+  - path: "internal/run/message.go"
+    form: code
+    realizes: [product/run/confirmed-run-history]
+    why: Reduces messages along the Manager tree, reply steps and the owner's answers.
+  - path: "internal/run/message_test.go"
+    form: test
+    realizes: [product/run/confirmed-run-history]
+    why: Checks questions, replies, hints, owner answers and routing along the tree.
   - path: "internal/run/task_test.go"
     form: test
     realizes: [product/run/confirmed-run-history]

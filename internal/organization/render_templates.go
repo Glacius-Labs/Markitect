@@ -54,6 +54,8 @@ func managerPhaseText(phase ManagerPhase) string {
 		return "Realize your complete responsibility or propose justified no-change, within actual Host grants and current prerequisites. Limited deliveries need independent review and Host acceptance; they do not close the Manager or reset rejection allowance.\n"
 	case ManagerIntegrate:
 		return "Assess and compose current local work and required direct-child deliveries, including reviewed no-change. One-child parents still require integration review. A summary cannot close missing work or substitute for current aggregate evidence. You may change only your own artifacts.\n"
+	case ManagerReply:
+		return "Answer the open questions addressed to you with send, kind reply. This step is read-only and changes no artifact; if an answer needs a change, say so in your reply.\n"
 	default:
 		return ""
 	}

@@ -69,6 +69,12 @@ func (c *ControlledRun) Execute(ctx context.Context, ports ExecutionPorts) (Exec
 	if err != nil {
 		return c.result(nil), err
 	}
+	if r := co.Current(); r.State == run.Waiting && len(co.OwnerQuestions()) == 0 {
+		// The owner answered; the run continues (core rule W2).
+		if err := c.commit(ctx, run.Command{ID: c.meta("resume", ports.Clock).ID, Kind: run.ResumeRun, Assignment: r.Assignment, Run: r.ID, ObservedAt: ports.Clock().UTC()}); err != nil {
+			return c.result(nil), err
+		}
+	}
 	if co.Current().State == run.Running {
 		if err := engine.Run(ctx); err != nil {
 			return c.result(nil), err
@@ -84,6 +90,19 @@ func (c *ControlledRun) Execute(ctx context.Context, ports ExecutionPorts) (Exec
 		return c.result(receipt), err
 	}
 	return c.result(nil), nil
+}
+
+// Answer records the owner's answer to an open question to the owner (core
+// rule W2). The next Execute continues the run.
+func (c *ControlledRun) Answer(ctx context.Context, question, answer string, clock func() time.Time) error {
+	if err := c.Check(ctx); err != nil {
+		return err
+	}
+	cmd, err := c.coordinator.AnswerCommand(c.meta("answer", clock), question, answer)
+	if err != nil {
+		return err
+	}
+	return c.commit(ctx, cmd)
 }
 
 // RoleProfile returns the prepared Agent profile a Manager's role runs with,

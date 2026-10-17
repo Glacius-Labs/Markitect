@@ -63,5 +63,6 @@ the run Applied, NoChange, Stale or Failed, or leaves it to reconciliation when
 the write was partial or its result is unknown.
 
 Execute returns when the run finished, waits for the owner or needs
-reconciliation. Resuming an interrupted publication and the owner's answers are
-not implemented yet.
+reconciliation. `ExecutionResult` lists the open questions to the owner among
+its issues; `Answer` records the owner's answer, and the next Execute resumes
+the waiting run. Resuming an interrupted publication is not implemented yet.

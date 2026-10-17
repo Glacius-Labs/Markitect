@@ -67,8 +67,16 @@ func validateRender(c ContextSelection, s Settings, input RenderInput) (ManagerS
 		if err := hostSource(input.Process.Source); err != nil {
 			return ManagerSettings{}, err
 		}
-	} else if input.Process != nil || len(input.ParentHints) != 0 {
-		return ManagerSettings{}, renderInvalid("reviewer views forbid Manager process and parent hints")
+	} else if input.Process != nil || len(input.ParentHints) != 0 || len(input.Messages) != 0 {
+		return ManagerSettings{}, renderInvalid("reviewer views forbid Manager process, parent hints and messages")
+	}
+	for _, m := range input.Messages {
+		if m.ID == "" || m.Kind != "question" && m.Kind != "reply" || m.From == "" || m.To == "" || (m.Kind == "reply") != (m.About != "") || m.Body.Text == "" {
+			return ManagerSettings{}, renderInvalid("a message needs an identity, the kind question or reply, sender, addressee and body; a reply names its question")
+		}
+		if err := hostText(m.Body); err != nil {
+			return ManagerSettings{}, err
+		}
 	}
 	slot, _ := c.topology.Manager(c.packagePath)
 	for _, hint := range input.ParentHints {

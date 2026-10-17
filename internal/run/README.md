@@ -284,14 +284,32 @@ from the recorded deliveries. `Run` advances until nothing is admissible, then
 leaves the run Verifying, moves it to Waiting for an owner question (W1), or
 finishes it Incomplete.
 
-Not yet implemented: messages (`send`, M1 to M5) and the waits on replies,
-owner answers and the run's resumption (W2), `assign_owner` and intake (T2,
-D6), `request_check`, the dispatch of a common parent for waits nothing
-satisfies (T12, the run finishes Incomplete instead), reopening done tasks
-(T11), review batching, path reservations surviving an engine restart, open
-issues carried into a continuation run (I5), a fresh conversation with a
-handoff when resume fails (S3), session rotation at `maxSessionSteps`, and the
-parent's assessment after two rejections.
+Messages follow M1 to M5. A Manager sends a question, reply or hint with
+`send`; `CheckSend` checks it against the tree and returns the message's
+identity, and the message takes effect when the step concludes, before the
+step's outcome, which may wait on it. A question to `parent` goes to the
+direct parent, a question to another Manager travels along the tree, and the
+Managers on its path see it in their next step without being dispatched (M2).
+A question becomes an issue addressed to its addressee; a reply from that
+addressee resolves it and wakes an asker waiting for it (I2, T10). A Manager
+that cannot otherwise act, because it is done, blocked or explored, answers in
+a read-only reply step and keeps its state (T10, T11). A question to the owner
+travels up to the root; when nothing else is admissible the run waits for the
+owner (M4, W1). `AnswerCommand` records the owner's answer: it wakes the asker,
+or starts a fresh review when a review asked (T8), and `ResumeRun` continues
+the run. The owner's decisions about a task reach its later steps and reviews.
+A parent's hints reach its direct children. A failed step's messages are
+dropped with it (T6).
+
+Not yet implemented: a parent forwarding or broadcasting a question it cannot
+answer (M3, it asks anew instead), `assign_owner` and intake (T2, D6),
+`request_check`, the dispatch of a common parent for waits nothing satisfies
+(T12, the run finishes Incomplete instead), reopening done tasks (T11, reply
+steps are read-only), review batching, path reservations surviving an engine
+restart, open issues carried into a continuation run (I5), a fresh conversation
+with a handoff when resume fails (S3), session rotation at `maxSessionSteps`,
+an answer that requires a model change (W3), and the parent's assessment after
+two rejections.
 
 ## Verification and publication
 

@@ -23,6 +23,11 @@ type Issue struct {
 	State              string
 	Raised             StepID
 	Source             BlobRef
+	At                 uint64
+	// Answer is the reply that resolved a question; ReplyStep the reply step
+	// it admitted for a done task (core rule T11).
+	Answer    string
+	ReplyStep StepID
 }
 
 const (
@@ -272,7 +277,7 @@ func (s *stateValue) concludeReview(r ConclusionRecord, t *taskValue, revision u
 		// The owner's answer starts a fresh review of the same frozen
 		// candidate (core rule T8); the run waits for it (core rule W1).
 		id := fmt.Sprintf("question-%s", r.Step)
-		s.addIssue(Issue{ID: id, Kind: issueQuestion, Severity: severityBlocking, Task: t.Slot.Package, To: addressedToOwner, Purpose: purpose, Request: in.Question, State: issueOpen, Raised: r.Step, Source: r.Input})
+		s.addIssue(Issue{ID: id, Kind: issueQuestion, Severity: severityBlocking, Task: t.Slot.Package, To: addressedToOwner, Purpose: purpose, Request: in.Question, State: issueOpen, Raised: r.Step, Source: r.Input, At: revision})
 		t.State, t.Since, t.Waits = TaskBlocked, revision, []Wait{{Kind: waitOwner, Ref: id}}
 	case VerdictReject:
 		t.Rejections = maps.Clone(t.Rejections)

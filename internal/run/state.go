@@ -52,6 +52,7 @@ type stateValue struct {
 	tasks          map[string]taskValue
 	issues         map[string]Issue
 	issueOrder     []string
+	messages       []Message
 	// aggregateVersion counts the deliveries composed into the run's
 	// aggregate (core rule D2); aggregateTree is its tree identity.
 	aggregateVersion   uint64
@@ -166,6 +167,7 @@ func (c *Coordinator) Propose(command Command) (Proposal, error) {
 	next.tasks = maps.Clone(c.state.tasks)
 	next.issues = maps.Clone(c.state.issues)
 	next.issueOrder = slices.Clone(c.state.issueOrder)
+	next.messages = slices.Clone(c.state.messages)
 	next.checks = maps.Clone(c.state.checks)
 	next.checkOrder = slices.Clone(c.state.checkOrder)
 	next.checkInvocations = maps.Clone(c.state.checkInvocations)
@@ -279,6 +281,8 @@ func (s *stateValue) apply(c Command) error {
 	switch c.Kind {
 	case PrepareCheck, ObserveCheck, VerifyRun, PreparePublication, PublishRun:
 		return s.applyVerification(c)
+	case AnswerQuestion:
+		return s.answer(c)
 	}
 	r := s.current
 	switch c.Kind {

@@ -180,21 +180,22 @@ func (e *Engine) Run(ctx context.Context) error {
 	if c.Current().State != Running {
 		return nil
 	}
-	var incomplete, owner []string
+	var incomplete []string
 	for _, t := range c.Tasks() {
-		switch {
-		case t.State == TaskIncomplete:
+		if t.State == TaskIncomplete {
 			incomplete = append(incomplete, t.Manager+": "+t.Reason)
-		case t.State == TaskBlocked && slices.ContainsFunc(t.Waits, func(w Wait) bool { return w.Kind == waitOwner }):
-			owner = append(owner, t.Manager)
 		}
+	}
+	var questions []string
+	for _, q := range c.OwnerQuestions() {
+		questions = append(questions, q.ID)
 	}
 	switch {
 	case len(incomplete) > 0:
 		return e.finish(ctx, "incomplete tasks: "+strings.Join(incomplete, "; "))
-	case len(owner) > 0:
+	case len(questions) > 0:
 		return e.commit(ctx, Command{ID: e.meta("wait").ID, ObservedAt: e.cfg.Clock().UTC(), Kind: WaitRun, Assignment: c.Current().Assignment, Run: c.Current().ID,
-			Reason: "the review of " + strings.Join(owner, ", ") + " needs an owner decision", NextActor: addressedToOwner})
+			Reason: "open questions to the owner: " + strings.Join(questions, ", "), NextActor: addressedToOwner})
 	}
 	return e.finish(ctx, "no step is admissible and the remaining waits cannot be satisfied")
 }
@@ -823,6 +824,19 @@ func (e *Engine) tools(manager string, phase Phase, version stepVersion) ToolHan
 		args, err := CallArguments(call.Tool, call.Input.Journal.Bytes())
 		if err != nil {
 			return refuse(err.Error())
+		}
+		if call.Tool == ToolSend {
+			// Messages take effect with the step's conclusion; a reply step
+			// ends with its one reply (core rules M1 to M5, T11).
+			if phase == PhaseReply && answered {
+				return refuse("a reply step sends one reply")
+			}
+			id, err := e.cfg.Coordinator.CheckSend(manager, args)
+			if err != nil {
+				return refuse(err.Error())
+			}
+			answered = answered || phase == PhaseReply
+			return ok(map[string]string{"id": id})
 		}
 		if OutcomeTool(phase, call.Tool) {
 			if answered {
