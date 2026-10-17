@@ -24,6 +24,18 @@ artifacts:
     form: config
     realizes: [product/run/confirmed-run-history]
     why: Retains the original owner input required by the pre-v2 preparation history.
+  - path: "internal/run/workspace.go"
+    form: code
+    realizes: [product/run/confirmed-run-history]
+    why: Defines the consumer-owned Workspaces port that materializes and observes step workspaces.
+  - path: "internal/run/checks.go"
+    form: code
+    realizes: [product/run/confirmed-run-history]
+    why: Defines the consumer-owned Checks port and what a check receipt establishes.
+  - path: "internal/run/workspace_test.go"
+    form: test
+    realizes: [product/run/confirmed-run-history]
+    why: Checks the bounds of workspace and check requests and when a check passes.
   - path: "internal/run/session.go"
     form: code
     realizes: [product/run/confirmed-run-history]
