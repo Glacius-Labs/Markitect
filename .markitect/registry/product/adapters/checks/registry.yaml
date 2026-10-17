@@ -1,5 +1,9 @@
 apiVersion: markitect.registry/v1
 artifacts:
+  - path: "internal/adapters/checks/README.md"
+    form: doc
+    realizes: [product/ports-and-adapters]
+    why: Documents disposable exact-tree check execution and its observation and source evidence boundaries.
   - path: "internal/adapters/checks/file_other.go"
     form: code
     realizes: [product/adapters/checks/closed-check-metadata]
@@ -36,3 +40,11 @@ artifacts:
     form: test
     realizes: [product/adapters/checks/closed-check-metadata]
     why: Tests the stated responsibility and retains negative boundaries.
+  - path: "internal/adapters/checks/runner.go"
+    form: code
+    realizes: [product/ports-and-adapters]
+    why: Runs an exact allowed check through the container runtime on a verified disposable workspace and preserves uncertain outcomes.
+  - path: "internal/adapters/checks/runner_test.go"
+    form: test
+    realizes: [product/ports-and-adapters]
+    why: Distinguishes literal command and resource binding, failed tree verification, known failed exits, cancellation and unconfirmed cleanup.
