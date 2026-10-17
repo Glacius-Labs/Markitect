@@ -146,30 +146,36 @@ Tool deduplication binds the actual execution session, channel, step and call id
 
 ## Candidate workspace port
 
-`Materialize` builds a step's workspace from the current aggregate plus the Manager's own unaccepted changes, replayed by the composition rule ([D2](manager-apply-core.md#deliveries-and-composition), [D3](manager-apply-core.md#deliveries-and-composition)). The existing pure `ComposeCandidates` requires an exact common base and disjoint effects; it does not implement that replay, a live workspace switch or delivery acceptance. The following port shape does not itself establish restart behavior.
+The workspace adapter only materializes and observes. `run` decides what a workspace holds ([D3](manager-apply-core.md#deliveries-and-composition)) and what its observed change means ([S4](manager-apply-core.md#steps)).
 
 ```go
 // Package run.
 type Workspaces interface {
-	Open(context.Context, WorkspaceSpec) (WorkspaceObservation, error)
-	Freeze(context.Context, FreezeRequest) (Harvest, error)
-	Materialize(context.Context, MaterializeRequest) (WorkspaceObservation, error)
-	Inspect(context.Context, WorkspaceID) (WorkspaceObservation, error)
+	Materialize(context.Context, WorkspaceSpec) (WorkspaceObservation, error)
+	Harvest(context.Context, HarvestRequest) (WorkspaceHarvest, error)
 	Close(context.Context, WorkspaceID) (WorkspaceObservation, error)
 }
 ```
 
 | Record | Required fields and meaning |
 | --- | --- |
-| `WorkspaceSpec` | Host workspace ID, task and attempt, exact base candidate, protected input binding and role access. Writes are granted to owned paths and reserved new paths. |
-| `WorkspaceObservation` | ID, materialized base, access, lifecycle state and recovery information, also after partial preparation. |
-| `FreezeRequest` | Workspace ID, expected base and current registry ledger, after the writing step ended. An unknown active writer prevents freezing. |
-| `Harvest` | The full observed tree and delta, protected-input comparison, ownership violations and, when valid, the immutable candidate with its registry. A proposal's file list never limits observation. |
-| `MaterializeRequest` | A new workspace ID and a fixed `realization.CompositionPlan`, expressed through snapshot and realization values. |
+| `WorkspaceSpec` | Host workspace ID and the exact tree: the current aggregate plus the Manager's own unaccepted changes. |
+| `WorkspaceObservation` | ID, the runtime volume that a session plan mounts, the identity of the content read back after materialization, whether the volume is closed, and any uncertainty with its reason. |
+| `HarvestRequest` | Workspace ID and the entry and byte limits of one observation. |
+| `WorkspaceHarvest` | The complete observed tree after the step's container stopped. Entries that a tree cannot represent are listed by name instead of being dropped. An observation that hit a limit is uncertain. |
 
-The Host owns claims and decisions; the adapter observes files. New paths need a reservation before writing, and a later claim never authorizes an earlier unauthorized write. Freeze observes all relevant paths, including deletions and protected model and configuration inputs; read-only review access is checked the same way. Workspaces are volumes of the container runtime; the adapter materializes, observes and harvests them with Git inside a helper container, so observation follows Linux file semantics. A session container mounts only its own workspace. The checks do not claim protection against processes outside the container runtime.
+The Host owns claims and decisions, and the adapter only observes files. `run` compares a harvest with the step's start tree, checks owned and reserved paths and protected inputs, and records the result. A later claim never authorizes an earlier unauthorized write. `run` stores harvested candidates as payloads in the Host's private journal store.
 
-A frozen candidate is immutable; checks and reviews use it, never a mutable path with the same name. Before another writing attempt, the workspace must match its expected start or be rematerialized. Rejected candidates are stored with their evidence. Composition rules are pure functions in `realization` that check the [D2](manager-apply-core.md#deliveries-and-composition) conditions over owned changes, registry changes and the current aggregate and return a fixed plan. A failed condition is a Host error that stops the run. `Materialize` applies only a validated plan and reports what it observed; it never merges competing semantics or picks an owner.
+Recovery rests on three rules:
+- `Materialize` refuses an existing ID, so it never overwrites content that was not harvested.
+- `Harvest` is uncertain while any container still mounts the volume.
+- `Close` is idempotent and reports an absent volume as closed.
+
+Observation follows Git's view of files. A regular file is executable exactly when its owner execute bit is set, other permission bits are ignored, and empty directories are ignored. Only non-regular entries and names that a snapshot path rejects are unsupported. A harvest excludes exactly what the repository census excludes: Git administration and `.markitect/state`.
+
+Workspaces are volumes of the container runtime. The adapter materializes and harvests them inside a helper container, so observation follows Linux file semantics. A session container mounts only its own workspace.
+
+Checks and reviews use frozen candidates, never a mutable workspace with the same name, and rejected candidates are stored with their evidence. Composition is a pure function in `realization` that checks the [D2](manager-apply-core.md#deliveries-and-composition) conditions and returns a fixed result. It never merges competing content or picks an owner.
 
 ## Check execution port
 
@@ -180,9 +186,24 @@ type Checks interface {
 }
 ```
 
-`CheckRequest` binds a Host check ID, the exact review subject and an allowed check from fixed configuration, with its runtime image, executable, arguments, environment, limits and tool identity. A reviewer may request an allowed check; a missing artifact test becomes a finding for its owner.
+`CheckRequest` binds:
+- a Host check ID and the exact tree to check;
+- the runtime image and the absolute executable inside it;
+- literal arguments: the profile's prefix followed by the project arguments, never passed through a shell;
+- unique `KEY=VALUE` environment entries from the profile's fixed policy;
+- the working directory as a boundary inside the tree;
+- container limits for CPU, memory and processes, a timeout and an output limit.
 
-`CheckReceipt` carries the actual exit or termination state, output references, executable identity, candidate binding and observed drift or limits. A nonzero exit is a check failure; a startup or observation failure is reported separately. Cancellation never turns an unknown process into a pass. Checks run in a container from the check profile's image, on a disposable copy of the fixed candidate. An Agent saying "tests pass" is not a check receipt.
+A reviewer may request an allowed check. A missing artifact test becomes a finding for its owner.
+
+`CheckReceipt` carries:
+- the image that ran and the identity of the tree copy it ran on;
+- whether the process started and exited, and its exit code;
+- whether it timed out;
+- the combined output up to the limit, with a truncation mark;
+- any uncertainty, with its reason.
+
+A receipt passes only for exactly its request: same check, image and tree, with an observed zero exit that neither timed out nor is uncertain. A nonzero exit is a check failure, and a startup or observation failure is reported separately. Cancellation never turns an unknown process into a pass. Checks run in a container from the check profile's image, on a disposable copy of the fixed candidate. An Agent saying "tests pass" is not a check receipt.
 
 ## Durable journal port
 
@@ -203,15 +224,41 @@ Payloads are immutable content-addressed bytes whose references keep media and e
 ```go
 // Package apply.
 type Publisher interface {
-	Preflight(context.Context, PublicationRequest) (PublicationPermit, error)
-	Publish(context.Context, PublicationPermit) (PublicationReceipt, error)
-	Inspect(context.Context, PublicationID) (PublicationReceipt, error)
+	Preflight(context.Context, PublicationRequest, ControlCheck) (PublicationPermit, error)
+	Publish(context.Context, PublicationPermit, ControlCheck) (PublicationReceipt, error)
+	Inspect(context.Context, PublicationRequest) (PublicationReceipt, error)
 }
 ```
 
-`PublicationRequest` holds a publication ID, the original acquisition guard and input binding, the exact verified candidate with its registry, the final evidence references and the artifact-only target. It also carries the controller check, a run-scoped Host authorization and the run and epoch binding; a live controller alone cannot authorize an obsolete run, and a finished run's unused permits are void. Preflight checks readiness and source state; its permit is bound to that request.
+`PublicationRequest` holds:
+- a publication ID and the run;
+- the repository, which is the same explicit acquisition location the capture used;
+- the original acquisition guard;
+- the exact artifact and registry changes against the captured tree.
 
-Publish writes into the working tree and never commits, merges or pushes; the owner's commit accepts the result. It revalidates the source guard at the write boundary, including additions, deletions and input changes, writes only the verified artifact and registry change and reads the result back. Its receipt distinguishes applied, verified no change, stale, partial, unknown and failed, with the completed paths, observed tree and registry identities and observation limits, also when an error is returned; callers keep such receipts. Multi-file publication is not atomic. Partial writes stay visible and recorded; the owner commits or reverts them before a later run captures the state. Even Applied is machine evidence, not human acceptance.
+An empty change set is valid and publishes nothing. The controller fence is passed separately as a `ControlCheck`, which a `ControlSession` satisfies.
+
+`apply` derives the changes from the verified aggregate and limits them to the paths that the artifact-only target permits. It also voids the permit of a finished run, because the adapter knows no runs. Preflight rechecks guard and controller and refuses changes the target cannot represent, such as case aliases or modes the repository does not track. Its opaque permit is bound to that request.
+
+Publish writes into the working tree and never commits, merges or pushes; the owner's commit accepts the result. It checks the guard and the controller before its first and after its last write, including additions, deletions and input changes. It writes exactly the requested changes, the way Git checks files out in that repository. It reads every written path back in Git's clean form, so line-ending conversion does not count as a mismatch.
+
+Its receipt carries one outcome:
+
+| Outcome | Meaning |
+| --- | --- |
+| applied | Every change was written and read back, and the check after the last write held. |
+| no_change | The change set was empty and the guard held. |
+| stale | The guard failed before any write. |
+| partial | Some changes were written, not all. |
+| unknown | The state of some path, or of the check after the last write, is not known. |
+| failed | A definite failure, with nothing written. |
+
+The receipt also classifies every requested path:
+- it holds the requested content;
+- it still holds the captured content;
+- it holds something else or could not be read.
+
+After the writes, the guard holds when every path outside the change set is unchanged. The receipt states what else is known, also when an error is returned, and callers keep such receipts. `Inspect` classifies the paths of an earlier request, which `apply` journaled before `Publish`, after an interruption. Multi-file publication is not atomic. Partial writes stay visible and recorded, and the owner commits or reverts them before a later run captures the state. Even an applied result is machine evidence, not human acceptance.
 
 ## Host lifecycle and completion
 

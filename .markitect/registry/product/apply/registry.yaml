@@ -32,6 +32,10 @@ artifacts:
     form: test
     realizes: [product/apply/read-only-preparation]
     why: Tests the stated responsibility and retains negative boundaries.
+  - path: "internal/apply/publisher.go"
+    form: code
+    realizes: [product/ports-and-adapters]
+    why: Defines the consumer-owned Publisher port for guarded publication and read-back.
   - path: "internal/apply/control.go"
     form: code
     realizes: [product/ports-and-adapters]
