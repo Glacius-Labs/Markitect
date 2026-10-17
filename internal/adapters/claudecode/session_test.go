@@ -19,8 +19,6 @@ import (
 	"github.com/Glacius-Labs/Markitect/internal/run"
 )
 
-const sessionContract = `{"Format":"markitect.explore-report/v1","Fields":{"Version":"integer=1","Assignment":"string","Run":"string","RunBasis":"ContentID","Manager":"string","Parent":"string|null","HandoffID":"string","Session":"SessionID","SessionBinding":"ContentID","Step":"StepID","InputContentID":"ContentID","OperationContentID":"ContentID","ContextContentID":"ContentID","Summary":"nonblank-string","ProposedChanges":"string[]","Prerequisites":"string[]","Uncertainties":"string[]","Questions":"string[]"},"AdditionalFields":false}`
-
 type fakeChannel struct {
 	preparations     []run.TransportPreparation
 	sends            []run.TransportObservation
@@ -33,6 +31,7 @@ type fakeChannel struct {
 	observeNoReceipt bool
 	callFail         bool
 	refuse           bool
+	secretAnswer     json.RawMessage
 	halted           bool
 	readyFail        bool
 	bindFail         bool
@@ -83,6 +82,9 @@ func (f *fakeChannel) ObserveSend(_ context.Context, o run.TransportObservation)
 func (f *fakeChannel) Call(_ context.Context, c run.ToolCall) (run.ToolResult, error) {
 	f.calls = append(f.calls, c)
 	outcome := run.ToolOutcome{Status: run.ToolOK, Result: json.RawMessage(`{"echo":"host-value"}`)}
+	if f.secretAnswer != nil {
+		outcome.Result = f.secretAnswer
+	}
 	if f.refuse {
 		outcome = run.ToolOutcome{Status: run.ToolRefused, Reason: "Host refused this call"}
 	}
@@ -133,6 +135,8 @@ func (f *fakeStream) close() { f.once.Do(func() { close(f.done) }) }
 
 type fakeRuntime struct {
 	exitSignal                                                string
+	finalText                                                 string
+	toolArguments                                             json.RawMessage
 	stream                                                    *fakeStream
 	tools                                                     chan frame.ToolCall
 	writes                                                    [][]byte
@@ -186,20 +190,26 @@ func (f *fakeRuntime) WriteInput(data []byte) error {
 		return nil
 	}
 	if f.useTool {
-		f.tools <- frame.ToolCall{ID: 1, Name: "submit_work", Arguments: json.RawMessage(`{"summary":"done"}`)}
+		args := f.toolArguments
+		if args == nil {
+			args = json.RawMessage(`{"summary":"done"}`)
+		}
+		f.tools <- frame.ToolCall{ID: 1, Name: "submit", Arguments: args}
 	} else {
 		f.finish()
 	}
 	return nil
 }
 func (f *fakeRuntime) finish() {
-	report := run.ExploreReport{Version: 1, Summary: "observed", ProposedChanges: []string{}, Prerequisites: []string{}, Uncertainties: []string{}, Questions: []string{}}
-	p, _ := run.NewExploreReportPayload(report)
+	text := "ordinary final text is not an outcome"
+	if f.finalText != "" {
+		text = f.finalText
+	}
 	session := "conversation"
 	if f.resultWrong {
 		session = "foreign-conversation"
 	}
-	data, _ := json.Marshal(map[string]any{"type": "result", "subtype": "success", "session_id": session, "uuid": "result-event-not-a-turn", "is_error": f.errorResult, "result": string(p.Bytes())})
+	data, _ := json.Marshal(map[string]any{"type": "result", "subtype": "success", "session_id": session, "uuid": "result-event-not-a-turn", "is_error": f.errorResult, "result": text})
 	f.emit(string(data))
 }
 func (f *fakeRuntime) Reply(r frame.ToolReply) error {
@@ -231,19 +241,22 @@ func sessionAdmissions(t *testing.T) (run.SessionAdmission, run.StepAdmission) {
 	t.Helper()
 	profile, _ := json.Marshal(SessionProfile{Version: 1, Model: "admitted-model", Effort: "high", SystemPrompt: "Use the exact Host instruction.", BuiltinTools: []string{"Read", "Write"}, Store: "store", CPUs: 1, MemoryBytes: 1 << 30, Pids: 128, TmpBytes: 1 << 20})
 	p := payloadForSession(t, "application/vnd.markitect.claude-session-profile+json", profile)
-	tools := payloadForSession(t, "application/vnd.markitect.tools+json", []byte(`{"version":1,"tools":[{"name":"submit_work","description":"Submit to Host","inputSchema":{"type":"object"}}]}`))
+	tools := payloadForSession(t, "application/vnd.markitect.tools+json", []byte(`{"version":1,"tools":[{"name":"submit","description":"Submit to Host","inputSchema":{"type":"object"}}]}`))
 	plan := run.SessionPlan{ID: "session", Role: "manager", Workspace: "workspace", ProviderHome: "provider-home", ImageID: "sha256:" + strings.Repeat("a", 64), CredentialRef: "exact-credential", MaxWireBytes: 1 << 20, Profile: p.Ref(), Tools: tools.Ref()}
 	plan.Candidate[0] = 1
 	a := run.SessionAdmission{Plan: plan, Profile: p, Tools: tools, Receipt: receipt(), Invocation: "open"}
 	input := payloadForSession(t, "application/vnd.markitect.explore-input+json", []byte(`{"exact":"input"}`))
-	contract := payloadForSession(t, "application/vnd.markitect.explore-contract+json", []byte(sessionContract))
+	contract, err := run.NewStepContract(run.PhaseExplore)
+	if err != nil {
+		t.Fatal(err)
+	}
 	b := run.StepAdmission{Session: plan, Plan: run.StepPlan{Session: plan.ID, ID: "step", SessionBinding: plan.Binding(), Input: input.Ref(), OutputContract: contract.Ref()}, Input: input, OutputContract: contract, Receipt: receipt(), Invocation: "step"}
 	return a, b
 }
 func sessionsForTest(t *testing.T, f *fakeRuntime) *Sessions {
 	t.Helper()
 	s, err := NewSessionsWithRuntime(func(_ context.Context, spec container.ContainerSpec) (RuntimeSession, error) {
-		expected := container.ContainerSpec{Name: "markitect-session", Image: "sha256:" + strings.Repeat("a", 64), Labels: map[string]string{"markitect.store": "store"}, User: "1000:1000", Workdir: "/work", Mounts: []container.Mount{{Volume: "workspace", Target: "/work"}, {Volume: "provider-home", Target: "/home/agent"}}, CPUs: 1, MemoryBytes: 1 << 30, Pids: 128, TmpBytes: 1 << 20}
+		expected := container.ContainerSpec{Name: "markitect-session", Image: "sha256:" + strings.Repeat("a", 64), Labels: map[string]string{"markitect.store": "store"}, User: "1000:1000", Workdir: "/work", Mounts: []container.Mount{{Volume: "workspace", Target: "/work", NoCopy: true}, {Volume: "provider-home", Target: "/home/agent"}}, CPUs: 1, MemoryBytes: 1 << 30, Pids: 128, TmpBytes: 1 << 20}
 		if !reflect.DeepEqual(spec, expected) {
 			t.Errorf("unbound runtime spec %+v", spec)
 		}
@@ -274,12 +287,12 @@ func TestClaudeSingleAdmittedStepAcknowledgedToolsAndObservedExit(t *testing.T) 
 			if err != nil || !opened.Ready || opened.ProviderSession != "" || len(channel.bindings) != 0 {
 				t.Fatalf("open %+v %v", opened, err)
 			}
-			expectedArgv := []string{"/usr/local/bin/claude", "-p", "--input-format", "stream-json", "--output-format", "stream-json", "--verbose", "--strict-mcp-config", "--mcp-config", `{"mcpServers":{"markitect":{"type":"stdio","command":"/usr/local/bin/markitect-agentd","args":["mcp"]}}}`, "--tools", "Read,Write", "--allowedTools", "Read,Write,mcp__markitect__submit_work", "--permission-mode", "dontAsk", "--model", "admitted-model", "--effort", "high", "--setting-sources", "", "--system-prompt", "Use the exact Host instruction."}
+			expectedArgv := []string{"/usr/local/bin/claude", "-p", "--input-format", "stream-json", "--output-format", "stream-json", "--verbose", "--strict-mcp-config", "--mcp-config", `{"mcpServers":{"markitect":{"type":"stdio","command":"/usr/local/bin/markitect-agentd","args":["mcp"]}}}`, "--tools", "Read,Write", "--allowedTools", "Read,Write,mcp__markitect__submit", "--permission-mode", "dontAsk", "--model", "admitted-model", "--effort", "high", "--setting-sources", "", "--system-prompt", "Use the exact Host instruction."}
 			if len(runtime.start.Env) != 1 || runtime.start.Env[0] != "CLAUDE_CODE_OAUTH_TOKEN=secret-token" || !reflect.DeepEqual(runtime.start.Argv, expectedArgv) || runtime.start.Dir != "/work" {
 				t.Fatalf("provider invocation %+v", runtime.start)
 			}
 			step, err := s.Step(ctx, b, channel)
-			if err != nil || !step.Terminal || step.Uncertain || !step.Proposed.Valid() || !strings.HasPrefix(string(step.ProviderStep), "claude-single-step-") || step.ProviderStep == "result-event-not-a-turn" {
+			if err != nil || !step.Terminal || step.Uncertain || step.Proposed.Valid() || !strings.HasPrefix(string(step.ProviderStep), "claude-single-step-") || step.ProviderStep == "result-event-not-a-turn" {
 				t.Fatalf("step %+v %v", step, err)
 			}
 			if len(channel.calls) != 1 || channel.calls[0].Call != "claude-channel-call-1" || len(runtime.replies) != 1 || len(channel.bindings) != 1 || channel.bindings[0].ProviderSession != "conversation" {
@@ -411,14 +424,14 @@ func TestClaudeMatchingResumeAndErrorResult(t *testing.T) {
 				t.Fatal(err)
 			}
 			out, err := s.Step(context.Background(), b, channel)
-			if err != nil || !out.Terminal || out.Proposed.Valid() == errorResult {
-				t.Fatalf("result projection %+v %v", out, err)
+			if err != nil || !out.Terminal || out.Proposed.Valid() {
+				t.Fatalf("terminal observation %+v %v", out, err)
 			}
 		})
 	}
 }
 func TestClaudeContractAndBindingRefusedBeforeDispatch(t *testing.T) {
-	for _, mode := range []string{"contract", "input-ref", "session-binding", "session-plan"} {
+	for _, mode := range []string{"contract", "legacy-contract", "changed-outcomes", "input-ref", "session-binding", "session-plan"} {
 		t.Run(mode, func(t *testing.T) {
 			channel := &fakeChannel{}
 			runtime := peer(channel)
@@ -430,6 +443,12 @@ func TestClaudeContractAndBindingRefusedBeforeDispatch(t *testing.T) {
 			switch mode {
 			case "contract":
 				b.OutputContract = payloadForSession(t, "application/json", []byte(`{"unsupported":"work"}`))
+				b.Plan.OutputContract = b.OutputContract.Ref()
+			case "legacy-contract":
+				b.OutputContract = payloadForSession(t, "application/vnd.markitect.explore-contract+json", []byte(`{"Format":"markitect.explore-report/v1","Fields":{},"AdditionalFields":false}`))
+				b.Plan.OutputContract = b.OutputContract.Ref()
+			case "changed-outcomes":
+				b.OutputContract = payloadForSession(t, run.StepContractMedia, []byte(`{"Format":"markitect.step-outcome/v1","Phase":"work","Outcomes":["report"]}`))
 				b.Plan.OutputContract = b.OutputContract.Ref()
 			case "input-ref":
 				b.Plan.Input.Size++
@@ -557,7 +576,7 @@ func TestClaudeFreshReviewerMountAndReadOnlyTools(t *testing.T) {
 	}
 	spec := sessionSpec(a.Plan, parsed)
 	argv := sessionArgv(a.Plan, parsed, tools)
-	if !spec.Mounts[0].ReadOnly || spec.Mounts[1].ReadOnly || strings.Contains(strings.Join(argv, " "), "--resume") || strings.Contains(strings.Join(argv, " "), "Write") {
+	if !spec.Mounts[0].ReadOnly || !spec.Mounts[0].NoCopy || spec.Mounts[1].ReadOnly || spec.Mounts[1].NoCopy || strings.Contains(strings.Join(argv, " "), "--resume") || strings.Contains(strings.Join(argv, " "), "Write") {
 		t.Fatalf("reviewer inherited writing or conversation state: %+v %v", spec, argv)
 	}
 }
@@ -594,4 +613,83 @@ func TestClaudeNativeSessionAndStopReasonCannotJournalKnownToken(t *testing.T) {
 		}
 	})
 
+}
+
+func TestClaudeStepPhasesUseHostToolsAndIgnoreFinalText(t *testing.T) {
+	for _, phase := range []run.Phase{run.PhaseExplore, run.PhaseWork, run.PhaseIntegrate, run.PhaseReply, run.PhaseReviewerExpectations, run.PhaseReviewerCandidate} {
+		t.Run(string(phase), func(t *testing.T) {
+			channel := &fakeChannel{}
+			runtime := peer(channel)
+			runtime.finalText = `{"Version":1,"Summary":"this final report is not an outcome","secret":"secret-token"}`
+			a, b := sessionAdmissions(t)
+			catalog, err := run.ToolCatalog(phase)
+			if err != nil {
+				t.Fatal(err)
+			}
+			a.Tools = catalog
+			a.Plan.Tools = catalog.Ref()
+			b.Session = a.Plan
+			b.Plan.SessionBinding = a.Plan.Binding()
+			b.OutputContract, err = run.NewStepContract(phase)
+			if err != nil {
+				t.Fatal(err)
+			}
+			b.Plan.OutputContract = b.OutputContract.Ref()
+			s := sessionsForTest(t, runtime)
+			if _, err = s.Open(context.Background(), a, channel); err != nil {
+				t.Fatal(err)
+			}
+			var expected struct {
+				Tools []frame.ToolSpec `json:"tools"`
+			}
+			if err = json.Unmarshal(catalog.Bytes(), &expected); err != nil {
+				t.Fatal(err)
+			}
+			if !reflect.DeepEqual(runtime.start.Tools, expected.Tools) {
+				t.Fatal("admitted catalogue changed")
+			}
+			out, err := s.Step(context.Background(), b, channel)
+			if err != nil || !out.Terminal || out.Proposed.Valid() || len(channel.calls) != 0 || !out.Wire.Redacted || bytes.Contains(out.Wire.Journal.Bytes(), []byte("secret-token")) {
+				t.Fatalf("final text became an outcome or leaked: %+v %v", out, err)
+			}
+			for _, observed := range channel.steps {
+				if observed.Proposed.Valid() {
+					t.Fatal("journal proposal from final text")
+				}
+			}
+		})
+	}
+}
+func TestClaudeKnownSecretToolCallRefusedBeforeHost(t *testing.T) {
+	for _, arguments := range []json.RawMessage{json.RawMessage(`{"summary":"secret-token"}`), json.RawMessage(`{"summary":"\u0073ecret-token"}`)} {
+		channel := &fakeChannel{}
+		runtime := peer(channel)
+		runtime.useTool = true
+		runtime.toolArguments = arguments
+		s := sessionsForTest(t, runtime)
+		a, b := sessionAdmissions(t)
+		if _, err := s.Open(context.Background(), a, channel); err != nil {
+			t.Fatal(err)
+		}
+		out, err := s.Step(context.Background(), b, channel)
+		if err == nil || !out.Uncertain || len(channel.calls) != 0 || len(runtime.replies) != 0 || strings.Contains(err.Error(), "secret-token") {
+			t.Fatal("known secret tool call escaped refusal")
+		}
+	}
+}
+func TestClaudeKnownSecretHostAnswerRefusedBeforeReply(t *testing.T) {
+	for _, answer := range []json.RawMessage{json.RawMessage(`{"echo":"secret-token"}`), json.RawMessage(`{"echo":"\u0073ecret-token"}`)} {
+		channel := &fakeChannel{secretAnswer: answer}
+		runtime := peer(channel)
+		runtime.useTool = true
+		s := sessionsForTest(t, runtime)
+		a, b := sessionAdmissions(t)
+		if _, err := s.Open(context.Background(), a, channel); err != nil {
+			t.Fatal(err)
+		}
+		out, err := s.Step(context.Background(), b, channel)
+		if err == nil || !out.Uncertain || len(channel.calls) != 1 || len(runtime.replies) != 0 || strings.Contains(err.Error(), "secret-token") {
+			t.Fatal("known secret Host answer reached provider")
+		}
+	}
 }
