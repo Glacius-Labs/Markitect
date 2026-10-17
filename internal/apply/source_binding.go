@@ -11,7 +11,7 @@ import (
 // Match the two raw representations without collapsing the compiler's source
 // slice: duplicate paths, redirects and malformed source entries still reach
 // Compile unchanged and receive its language diagnostics.
-func validateModelFiles(source ModelSource) error {
+func validateModelFiles(source ModelSource, census snapshot.Tree) error {
 	regular := make(map[string]bool)
 	for _, entry := range source.Source.Entries {
 		if entry.Kind != model.Regular {
@@ -31,15 +31,24 @@ func validateModelFiles(source ModelSource) error {
 		if !regular[file.Path().String()] {
 			return fmt.Errorf("%w: fixed model file absent from source at %q", ErrIncompleteInputs, file.Path())
 		}
+		if source.RepositoryArea.String() != "" {
+			p := file.Path().String()
+			if !source.RepositoryArea.IsRoot() {
+				p = source.RepositoryArea.String() + "/" + p
+			}
+			if !sameCensusFile(census, p, file) {
+				return fmt.Errorf("%w: model files differ from repository census at %q", ErrIncompleteInputs, p)
+			}
+		}
 	}
 	return nil
 }
 
-func sameCensusFile(raw RawInputs, p string, file snapshot.Entry) bool {
+func sameCensusFile(census snapshot.Tree, p string, file snapshot.Entry) bool {
 	path, err := snapshot.NewPath(p)
 	if err != nil {
 		return false
 	}
-	actual, found := raw.Census.Lookup(path)
+	actual, found := census.Lookup(path)
 	return found && actual.Mode() == file.Mode() && bytes.Equal(actual.Bytes(), file.Bytes())
 }

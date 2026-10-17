@@ -42,8 +42,8 @@ func refreshLocalFiles(t *testing.T, raw *apply.RawInputs) {
 		}
 		files = append(files, file)
 		p := entry.Path
-		if !raw.LocalModelArea.IsRoot() {
-			p = raw.LocalModelArea.String() + "/" + p
+		if !raw.Local.RepositoryArea.IsRoot() {
+			p = raw.Local.RepositoryArea.String() + "/" + p
 		}
 		file, err = snapshot.NewEntry(path(t, p), mode, entry.Bytes)
 		if err != nil {
@@ -52,7 +52,7 @@ func refreshLocalFiles(t *testing.T, raw *apply.RawInputs) {
 		census = append(census, file)
 	}
 	for _, entry := range raw.Census.Entries() {
-		if !raw.LocalModelArea.Contains(entry.Path()) {
+		if !raw.Local.RepositoryArea.Contains(entry.Path()) {
 			census = append(census, entry)
 		}
 	}
@@ -121,7 +121,7 @@ func TestIncompleteOrMismatchedCaptureCannotPassModel(t *testing.T) {
 			case "guard":
 				observation.Guard = ""
 			case "local area":
-				observation.Raw.LocalModelArea = snapshot.DirectoryBoundary{}
+				observation.Raw.Local.RepositoryArea = snapshot.DirectoryBoundary{}
 			case "local selection":
 				observation.Raw.Local.Selection.Boundary = "different"
 			case "root":

@@ -77,11 +77,16 @@ type PublicationGuard string
 // directories and duplicate entry paths. Files retains original file modes
 // and bytes. Root is the declared lexical root within this boundary, not an
 // independently authored Package inventory or proof of physical separation.
+// RepositoryArea locates this acquisition boundary in Census; every Files path
+// is relative to that area. Local must have an area, as must every in-repository
+// dependency. Only an external dependency leaves it zero. The adapter establishes
+// that membership; Apply never infers it from Selection.Boundary or Origin.
 type ModelSource struct {
-	Selection ModelSelection
-	Root      snapshot.DirectoryBoundary
-	Source    model.SourceModel
-	Files     snapshot.Tree
+	Selection      ModelSelection
+	Root           snapshot.DirectoryBoundary
+	RepositoryArea snapshot.DirectoryBoundary
+	Source         model.SourceModel
+	Files          snapshot.Tree
 }
 
 // SourceFile retains the exact selected location, path, mode and original bytes.
@@ -96,19 +101,18 @@ type SourceFile struct {
 
 // RawInputs is shared by committed capture and read-only preview. Census is the
 // complete immutable repository tree, with the contract's state exclusion.
-// LocalModelArea locates the local model acquisition boundary in that tree;
-// model entry paths are relative to that area. Other input coordinates remain
-// explicit. No classification or decoding is inferred from these bytes.
+// Each repository-local ModelSource supplies its own acquisition area. Other
+// input coordinates remain explicit. No classification or decoding is inferred
+// from these bytes.
 type RawInputs struct {
-	Census         snapshot.Tree
-	LocalModelArea snapshot.DirectoryBoundary
-	Local          ModelSource
-	Dependencies   []ModelSource
-	Execution      []SourceFile
-	Registry       []SourceFile
-	Ignore         []SourceFile
-	HostProfiles   []SourceFile
-	Instructions   []SourceFile
+	Census       snapshot.Tree
+	Local        ModelSource
+	Dependencies []ModelSource
+	Execution    []SourceFile
+	Registry     []SourceFile
+	Ignore       []SourceFile
+	HostProfiles []SourceFile
+	Instructions []SourceFile
 }
 
 // CapturedInputs binds Raw to the current committed HEAD and its comparison

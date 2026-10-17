@@ -136,7 +136,7 @@ func compileModel(raw RawInputs, limits model.Limits) model.Result {
 // These are completeness/binding checks, not physical acquisition proof.
 func validateSelection(selection InputSelection, raw RawInputs) error {
 	invalid := func(detail string) error { return fmt.Errorf("%w: %s", ErrIncompleteInputs, detail) }
-	if selection.Repository == "" || raw.LocalModelArea.String() == "" {
+	if selection.Repository == "" || raw.Local.RepositoryArea.String() == "" {
 		return invalid("repository and local acquisition area required")
 	}
 	checkModel := func(want ModelSelection, actual ModelSource) bool {
@@ -146,23 +146,14 @@ func validateSelection(selection InputSelection, raw RawInputs) error {
 	if !checkModel(selection.Local, raw.Local) || len(selection.Dependencies) != len(raw.Dependencies) {
 		return invalid("selected local/dependency model observations required")
 	}
-	if err := validateModelFiles(raw.Local); err != nil {
+	if err := validateModelFiles(raw.Local, raw.Census); err != nil {
 		return err
-	}
-	for _, file := range raw.Local.Files.Entries() {
-		p := file.Path().String()
-		if !raw.LocalModelArea.IsRoot() {
-			p = raw.LocalModelArea.String() + "/" + p
-		}
-		if !sameCensusFile(raw, p, file) {
-			return invalid("local model files differ from repository census")
-		}
 	}
 	for i, dependency := range selection.Dependencies {
 		if !checkModel(dependency, raw.Dependencies[i]) {
 			return invalid("dependency acquisition coordinates differ from selection")
 		}
-		if err := validateModelFiles(raw.Dependencies[i]); err != nil {
+		if err := validateModelFiles(raw.Dependencies[i], raw.Census); err != nil {
 			return err
 		}
 	}
@@ -184,7 +175,7 @@ func validateSelection(selection InputSelection, raw RawInputs) error {
 			if group.repositoryLocal && group.actual[i].RepositoryPath.String() == "" {
 				return invalid("execution, registry and ignore inputs require repository coordinates")
 			}
-			if file := group.actual[i]; file.RepositoryPath.String() != "" && !sameCensusFile(raw, file.RepositoryPath.String(), file.File) {
+			if file := group.actual[i]; file.RepositoryPath.String() != "" && !sameCensusFile(raw.Census, file.RepositoryPath.String(), file.File) {
 				return invalid("local input differs from repository census")
 			}
 		}

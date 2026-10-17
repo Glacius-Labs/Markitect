@@ -91,13 +91,13 @@ func libraryInputs(t *testing.T) (apply.InputSelection, apply.RawInputs) {
 	t.Helper()
 	base := "../../docs/design/canonical-model"
 	raw := apply.RawInputs{
-		LocalModelArea: area(t, ".markitect"),
-		Local:          fixtureModel(t, base+"/library-example/m1", ".markitect"),
+		Local: fixtureModel(t, base+"/library-example/m1", ".markitect"),
 		Dependencies: []apply.ModelSource{
 			fixtureModel(t, base+"/library-example/vocabulary", "selected/vocabulary"),
 			fixtureModel(t, base+"/minimal-language/exchange-example/dependencies/core", "selected/core"),
 		},
 	}
+	raw.Local.RepositoryArea = area(t, ".markitect")
 	var files []snapshot.Entry
 	for _, entry := range raw.Local.Files.Entries() {
 		file, err := snapshot.NewEntry(path(t, ".markitect/"+entry.Path().String()), entry.Mode(), entry.Bytes())
