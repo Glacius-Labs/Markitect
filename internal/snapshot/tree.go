@@ -54,6 +54,9 @@ func NewTree(entries []Entry) (Tree, error) {
 	return Tree{entries: entries}, nil
 }
 
+// EntryCount returns the number of files without allocating a manifest copy.
+func (t Tree) EntryCount() int { return len(t.entries) }
+
 // Entries returns a caller-owned slice in exact-path byte order.
 func (t Tree) Entries() []Entry { return slices.Clone(t.entries) }
 

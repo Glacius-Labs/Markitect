@@ -26,6 +26,10 @@ func (c DefinitionCensus) finish() DefinitionCensus {
 }
 
 func checkCensus(compiled model.Result, base CandidateBase, tree snapshot.Tree, registry Registry, result DefinitionCensus, classifications []Classification, rows []DefinitionAssessment) DefinitionCensus {
+	return checkInventoryCensus(inventoryFromResult(compiled), base, tree, registry, result, classifications, rows)
+}
+
+func checkInventoryCensus(inventory modelInventory, base CandidateBase, tree snapshot.Tree, registry Registry, result DefinitionCensus, classifications []Classification, rows []DefinitionAssessment) DefinitionCensus {
 	result.classifications = slices.Clone(classifications)
 	result.assessments = copyAssessments(rows)
 	if !base.Valid() || !result.candidate.Valid() && !result.composition.Valid() {
@@ -33,7 +37,7 @@ func checkCensus(compiled model.Result, base CandidateBase, tree snapshot.Tree, 
 		return result.finish()
 	}
 	result.status = CensusStructurallyComplete
-	result.accounting = AccountFiles(compiled, tree, registry, result.classifications)
+	result.accounting = accountFiles(inventory, tree, registry, result.classifications)
 	// Invalid/duplicate/missing classifications contradict the supplied capture.
 	// A stale registry record conflicting with a classification instead makes that
 	// artifact uncitable; unrelated old registry problems are not a global gate.
@@ -42,7 +46,7 @@ func checkCensus(compiled model.Result, base CandidateBase, tree snapshot.Tree, 
 			result.add(CensusInvalid, f.Code, f.Path, f.Definition, f.Message)
 		}
 	}
-	matching, err := NewCandidateBase(compiled, base.value.facts)
+	matching, err := newCandidateBase(inventory, base.value.facts)
 	if err != nil {
 		status := CensusInvalid
 		if errors.Is(err, ErrIncompleteCandidateBase) {
@@ -60,19 +64,12 @@ func checkCensus(compiled model.Result, base CandidateBase, tree snapshot.Tree, 
 		result.add(CensusInvalid, "census.invalid_owner", snapshot.Path{}, model.Identity{}, "Own scope requires an explicit root or current local Package owner.")
 		return result.finish()
 	}
-	local := map[model.Identity]bool{}
+	local := inventory.local
 	expected := map[model.Identity]bool{}
-	for _, scope := range compiled.Models {
-		if !scope.Local {
-			continue
-		}
-		for _, definition := range scope.Definitions {
-			id := definition.Identity
-			local[id] = true
-			if result.project || !result.owner.root && id.Package == result.owner.packageName {
-				expected[id] = true
-				result.expected = append(result.expected, id)
-			}
+	for id := range local {
+		if result.project || !result.owner.root && id.Package == result.owner.packageName {
+			expected[id] = true
+			result.expected = append(result.expected, id)
 		}
 	}
 	eligible := map[snapshot.Path]bool{}

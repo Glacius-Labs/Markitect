@@ -48,6 +48,9 @@ func NewEntry(path Path, mode Mode, content []byte) (Entry, error) {
 func (e Entry) Path() Path { return e.path }
 func (e Entry) Mode() Mode { return e.mode }
 
+// ByteLength returns the exact content length without allocating a copy.
+func (e Entry) ByteLength() int64 { return int64(len(e.content)) }
+
 // Bytes returns a fresh copy of the content.
 func (e Entry) Bytes() []byte { return []byte(e.content) }
 

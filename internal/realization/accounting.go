@@ -108,16 +108,20 @@ func (a Accounting) Artifacts(id model.Identity) []snapshot.Path { return slices
 // The complete compiled Result must pass before Package/Definition absence is
 // authoritative. No package is inferred from Definitions or imported inventories.
 func AccountFiles(compiled model.Result, tree snapshot.Tree, registry Registry, classifications []Classification) Accounting {
+	return accountFiles(inventoryFromResult(compiled), tree, registry, classifications)
+}
+
+func accountFiles(inventory modelInventory, tree snapshot.Tree, registry Registry, classifications []Classification) Accounting {
 	result := Accounting{status: Accounted, tree: tree.Digest(), links: map[model.Identity][]snapshot.Path{}}
 	add := func(code string, path snapshot.Path, owner Owner, definition model.Identity, message string) {
 		result.findings = append(result.findings, Finding{code, path, owner, definition, message})
 		result.status = AccountingInvalid
 	}
-	packages, definitions, ready, modelFindings := accountingModel(compiled)
+	packages, definitions, ready, modelFindings := inventory.owners, inventory.definitions, inventory.ready, inventory.findings
 	result.findings = append(result.findings, modelFindings...)
 	if !ready {
 		result.status = AccountingIncomplete
-		if compiled.Status == model.Failed || hasModelInconsistency(modelFindings) {
+		if inventory.invalid {
 			result.status = AccountingInvalid
 		}
 	}
