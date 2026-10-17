@@ -20,6 +20,14 @@ artifacts:
     form: code
     realizes: [product/cli/honest-read-only-interface]
     why: Implements the stated responsibility within its declared boundary.
+  - path: "internal/bootstrap/session_router.go"
+    form: code
+    realizes: [product/cli/honest-read-only-interface]
+    why: Routes exact admitted session profiles to configured provider adapters and preserves their observations and refusal boundaries.
+  - path: "internal/bootstrap/session_router_test.go"
+    form: test
+    realizes: [product/cli/honest-read-only-interface]
+    why: Verifies sticky provider routing, retained failed-open routes, unchanged partial observations and refusal without fallback using fake session peers.
   - path: "internal/adapters/cli/command_test.go"
     form: test
     realizes: [product/cli/honest-read-only-interface]
