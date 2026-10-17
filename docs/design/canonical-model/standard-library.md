@@ -23,6 +23,7 @@ Source: the owner's standard-library design discussion in this chat on 17 Octobe
 - Package/version selection: "Dann übernehmen wir die Paketstruktur und Versionierung wie vorgeschlagen." This selects the markitect-standard distribution, its two initial Packages, and the version/release policy below. It does not publish a release or select the later companion-library candidates.
 - Broader library requirement: "Unsere Standard Lib muss alles relevante beschreiben können, was normalerweise in einem Software Projekt bzw Repo auch dokumentiert und festgelegt sein muss. Es muss schließlich das Projekt beschreiben können." The owner explicitly named Frontend, Backend, C4 and Load Balancer, and allowed separate Packages. The eight-Kind foundation is therefore the first shared layer, not a claim that a complete software-project vocabulary family has already been designed. The proposed topic map below answers this broader requirement.
 - Continuation: "Alles klar, dann halten wir das so fest und machen so weiter". The owner adopts the modular coverage direction and continuation with system/application/component/deployment/instance boundaries. Exact companion Kind contracts and the web example remain design work; this is not a change to existing M1 behavior or a deployment operation.
+- Boundary selection: "Okay, dann halten wir diese Abgrenzungen fest." This selects the discussed System, Application, Component, Environment, Deployment and optional intended Instance distinctions, including the separation from runtime records. The owner then requested the logical data store, operating resources and C4 mapping in the Library example. The new data/resource contracts and mapping recommendations below remain proposals.
 
 ## Current design state
 
@@ -36,6 +37,7 @@ Source: the owner's standard-library design discussion in this chat on 17 Octobe
 | Exactly the eight discussed Kinds as the first scope | Owner-selected direction | Scope assessment below |
 | markitect-standard distribution, two initial Packages and version policy | Owner-selected direction | Package/version contract below |
 | Broader project/repository coverage and modular extension | Owner adopts the modular coverage direction; exact companion contracts remain design work | Broader library section below |
+| System/application/component and environment/deployment/instance boundaries | Owner-selected direction; exact Kind wording and companion identities remain working design | Runtime walkthrough below |
 | Production library, migration and consumer behavior | Not implemented by this record | Existing fixtures remain unchanged |
 
 The initial source assessment used Main `f8c1acaa169c9955d237e17cd245add963c155bd`. Before recording, the isolated documentation branch advanced to integrated Main `f23eaa2072226d905a8d79b8d6c20f419dfdc136`. These are source observations, not compatibility or execution evidence. The canonical v1 compiler and read-only preparation exist; full Apply remains separate delivery work.
@@ -519,9 +521,9 @@ Recommended next design slice: distinguish a system, an application/runtime boun
 
 ## System, application and deployment walkthrough
 
-Working design, 17 October 2026, continuing the owner-adopted sequence. The distinctions and possible Kind names below are recommendations for discussion. They preserve the selected eight-Kind foundation; they do not add Definitions to the Library fixture or select the complete companion taxonomy.
+The owner selected the distinctions in this walkthrough on 17 October 2026. Exact Kind wording, example Definitions and companion Package identities remain working design. They preserve the selected eight-Kind foundation; they do not add Definitions to the Library fixture or select the complete companion taxonomy.
 
-### Proposed meanings
+### Selected boundaries
 
 | Term | Working meaning | Owns in the web Library |
 | --- | --- | --- |
@@ -588,6 +590,125 @@ A desired replica count is a possible concrete spec use if a manifest generator 
 The generic application/component/deployment distinctions are the first design step. An optional C4 vocabulary can subsequently state its exact system/container/component contracts and view rules. A logical data store is a separate subject from a running database host or its deployment. Do not silently force all generic Components into C4's narrower Component category or create duplicate architecture owners to populate two views.
 
 Recommended next step: review these meanings, especially application versus Component and desired deployment versus actual runtime records, then refine logical data store, infrastructure/hosting and C4 mapping. Final companion Kind wording and fields should follow the concrete boundaries rather than be filled in for completeness.
+
+## Logical data, operating resources and C4 walkthrough
+
+Working proposal, 17 October 2026, following the owner's selected runtime distinctions. The prospective web Library is a separate design example; the local sequential, process-lifetime-only M1/M2 contract remains unchanged. No persistence, concurrency support, database, renderer or deployment has been implemented by this discussion.
+
+### Proposed data and resource meanings
+
+| Subject | Proposed meaning | Web Library example |
+| --- | --- | --- |
+| DataStore | A logical data-holding boundary with owned data and access, consistency and lifetime expectations. It need not choose an engine or host. | library-data owns the authoritative member, copy and loan state used by the API instances. |
+| DatabaseService | The intended technical database service that can host logical stores, whether operated directly or obtained as a managed service. | database-service hosts library-data in production; exact product/version and service arrangement are not selected. |
+| Storage resource | A separately governed persistence resource when the project must specify one. It is not the logical domain data itself. | A durable volume for a self-operated engine, if selected later. A managed service need not expose such a resource as a separate project-owned subject. |
+
+The existing member, copy and loan Concepts own domain meaning. DataStore does not replace them with copies of their field descriptions or mean one database per Concept. Conversely, one logical DataStore does not require one physical database process, node or disk. Technology, hosting, availability and retained data have different owners and may vary independently where their contracts allow it.
+
+The Store's consistency expectations do not magically follow from selecting a shared database. The following behavior is proposed for the multi-instance extension:
+
+- All API instances use one authoritative logical lending state, without unrelated per-instance library state.
+- Admission and the resulting loan state change behave as one coordinated decision across instances, preserving the existing availability and loan-policy obligations. No two successful admissions may create open loans for the same copy, and concurrent requests must preserve the member's applicable limit.
+- Completed changes are visible to subsequent operations under the public contract whichever API instance handles them; routing a later inspection to another instance must not expose unrelated per-instance state.
+- In normal fault-free operation, two valid concurrent requests for the same available copy through different instances produce one success and one refusal. The refused request leaves no partial changes. A check must observe the resulting loans and copy state, not just response statuses.
+- Accepted changes remain accessible when an API instance is replaced. This does not yet select database-failure durability, disaster recovery loss/time objectives or backup policy.
+
+The example neither prescribes a particular lock/transaction mechanism nor treats routing or a health check as consistency proof. It adds no automatic request replay or business-idempotency promise; transport retry semantics need a separate explicit contract. Actual failure/recovery behavior remains to design.
+
+One illustrative DataStore Definition file, with candidate Package identities and an empty spec for this excerpt:
+
+```yaml
+imports:
+  - package: markitect/data
+    as: Data
+  - package: members
+    as: Members
+  - package: catalog
+    as: Catalog
+  - package: lending
+    as: Lending
+id: library-data
+kind: Data.DataStore
+body: >-
+  The authoritative logical store for [[Members.member]], [[Catalog.copy]]
+  and [[Lending.loan]] state used by [[library-api]].
+  Every instance of [[api-production]] uses this same logical state.
+  Admission and committed state changes preserve [[Catalog.availability]]
+  and [[Lending.loan-policy]] across instances.
+  Accepted changes remain available when API instances are replaced.
+  Domain record meaning remains with the referenced Concepts.
+spec: {}
+```
+
+This excerpt is not a complete compiled fixture or an owner-selected DataStore schema. It supplies no engine, storage size, retention number or new claim that structured fields are unnecessary for every data vocabulary.
+
+### Placement and a Deployment refinement
+
+The accepted Deployment distinction was introduced for an application. The DataStore case motivates a proposed refinement: a Deployment can arrange an application or a logical DataStore in an environment and associate it with the appropriate operating resources. It describes the desired arrangement; actual rollout and runtime inventory remain records. The extension of subject scope is a proposal, not an implicit retyping of DataStore as Application.
+
+In the example, api-production arranges library-api in production with the desired capacity. A separate data-production arranges library-data on database-service in that environment. Configuration and technology are fixed at their actual owner only when the project selects them. Multiple environments may realize the same logical store contract without duplicating its domain meaning.
+
+The logical store itself does not contain environment-specific credentials, hostnames or physical topology by default. A managed database may combine several underlying operating resources behind one service contract. Introduce explicit host, volume, primary/standby or placement subjects only where their constraints matter to the project. Runtime replica IDs are not new canonical Definitions on every change.
+
+### C4 mapping without duplicate project objects
+
+Recommendation for the first C4 support: start from the neutral architectural Definitions and state the mapping and view requirements explicitly. The earlier standalone C4 Kind list was an option, not a selected requirement. This example does not require parallel C4.Container Definitions duplicating each Application and DataStore. Whether additional C4-specific Kinds add useful authoring contracts can be decided from later concrete needs; v1 still supplies no inheritance or multi-kind instances.
+
+The following is a mapping for this example, not a universal classifier:
+
+| Canonical subject | C4 representation |
+| --- | --- |
+| library System | Software system. |
+| library-web and library-api Applications | Containers in the static container view. |
+| library-data DataStore | A data-store Container, such as the logical database/schema. |
+| lending-logic within library-api | A Component in that application's Component view, where its interface and runtime boundary satisfy the narrower C4 meaning. |
+| database-service hosting the store | A deployment node in the production deployment view. |
+| Intended occurrences of the API/store | Container instances placed on the intended deployment nodes; the view can represent them without separate author-maintained records for interchangeable replicas. |
+| public-entry load balancer | Supporting infrastructure node in this deployment view. |
+| data-production and api-production | Supply intended placement/configuration facts for the deployment view; Deployment is not automatically a C4 deployment-node box. |
+
+C4 explicitly treats applications and logical databases/schemas as [Containers](https://c4model.com/abstractions/container). A [Component](https://c4model.com/abstractions/component) sits inside a container rather than being independently deployed. The [deployment view](https://c4model.com/diagrams/deployment) places instances on hosting/runtime nodes and may show supporting infrastructure. These external definitions constrain a claimed C4 view; they do not add compiler operators to Markitect.
+
+An illustrative logical view contains the browser, API and logical store, while the internal lending part belongs to a separate component-level view. The load balancer and database host belong to the deployment view in this example. Keep those abstraction levels explicit rather than draw one mixed hierarchy and call it every C4 view.
+
+```mermaid
+flowchart LR
+    subgraph Library[Library system - logical container view]
+        Web[Browser application]
+        Api[API application]
+        Store[(library-data - logical store)]
+        Web -->|HTTP contract| Api
+        Api -->|data access contract| Store
+    end
+```
+
+```mermaid
+flowchart LR
+    subgraph Production[Production - illustrative deployment view]
+        Entry[Load balancer]
+        subgraph ApiHost[Intended API runtime]
+            ApiA[API occurrence A]
+            ApiB[API occurrence B]
+        end
+        subgraph DatabaseService[Database service - hosting resource]
+            StoreInstance[(Deployed library-data)]
+        end
+        Entry --> ApiA
+        Entry --> ApiB
+        ApiA --> StoreInstance
+        ApiB --> StoreInstance
+    end
+```
+
+These are explanatory sketches, not a selected host layout or generated evidence. The occurrences illustrate at least two intended API instances and do not require two individually maintained Instance Definitions. Actual node counts and placement policies remain open.
+
+The canonical Definitions and their explicit sentences remain authoritative. A body link alone does not say contains, calls, hosts or routes. A future agent/tool can realize and review the requested C4 view against those statements. A purely deterministic renderer would need an explicit sufficient relationship contract; it cannot infer C4 edges from mere graph reachability. This is a concrete possible structured-spec use to examine if such a renderer becomes a requirement, not an already implemented capability or permission to add fields to the eight selected empty-spec Kinds.
+
+### Remaining data/operation choices
+
+Before a complete web Library can be realized, decide the data access contract, relevant storage/engine choice or allowed freedom, migration behavior, concurrent failure/retry semantics and backup/recovery requirements. Keep numeric recovery/retention targets unset until the project chooses them. A prospective concurrent-admission Scenario and Check should bind the cross-instance behavior and actual observations, independently of a claim that the selected database is sufficient.
+
+Recommendation for this slice: add the logical DataStore distinction, separate it from the technical database/hosting resources, broaden Deployment's subject scope explicitly, and begin C4 support with reviewed views of the same project Definitions. These recommendations remain under discussion; no complete new companion schema or database technology is selected here.
 
 ## Observe the value of spec
 

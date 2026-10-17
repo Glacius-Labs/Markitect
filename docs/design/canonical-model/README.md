@@ -65,6 +65,8 @@ The term documents below are working vocabulary definitions from the earlier pro
 
 The [standard-library discussion](standard-library.md) records the owner's 17 October 2026 selection of Concept, Rule, UseCase, Actor, Interface, Component, Scenario and Check as the first scope, all with body links and empty specs. Interface includes internal technical contracts. The [Package/version contract](standard-library.md#package-and-version-contract) is selected. The broader goal includes normal software-project and repository concerns; the [companion-vocabulary map](standard-library.md#broader-project-and-repository-coverage) remains a proposal. The term pages distinguish selected design directions from implementation.
 
+The owner adopted the modular coverage direction and the system/application/deployment boundaries. The [data/resource/C4 walkthrough](standard-library.md#logical-data-operating-resources-and-c4-walkthrough) proposes the next distinction and views without changing the current Library fixture.
+
 - [Project](project.md) — the project's name, purpose and associated definitions.
 - [Actor](actor.md) — a role through which a person or another system interacts with the system or participates in project work.
 - [UseCase](use-case.md) — an action available to an Actor and its outcome, accessed through an Interface.
