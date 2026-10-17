@@ -57,8 +57,9 @@ type InputSelection struct {
 
 type CaptureRequest struct{ Selection InputSelection }
 
-// An empty Revision explicitly selects the working tree. Otherwise the adapter
-// resolves the selected revision once and records its fixed identity.
+// An empty Revision explicitly selects the working tree. Otherwise Revision
+// must already name the explicitly resolved fixed revision; the adapter must
+// return that exact identity, never substitute a symbolic selector's new value.
 type PreviewRequest struct {
 	Selection InputSelection
 	Revision  string
@@ -81,9 +82,13 @@ type ModelSource struct {
 }
 
 // SourceFile retains the exact selected location, path, mode and original bytes.
+// RepositoryPath is required for a repository-local input and absent only for
+// external inputs, including safe Host sources. It supplies protection/accounting
+// coordinates without interpreting an opaque boundary or provenance string.
 type SourceFile struct {
-	Location SourceLocation
-	File     snapshot.Entry
+	Location       SourceLocation
+	File           snapshot.Entry
+	RepositoryPath snapshot.Path
 }
 
 // RawInputs is shared by committed capture and read-only preview. Census is the

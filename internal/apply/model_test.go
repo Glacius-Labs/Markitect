@@ -172,4 +172,9 @@ func TestAcquisitionFailurePreservesKnownInputsWithoutPassingModel(t *testing.T)
 	if !errors.Is(err, failure) || result.Compilation().Status != model.NotCompleted || !reflect.DeepEqual(result.Inputs().Raw, raw) || result.Inputs().Head != fixtureHead {
 		t.Fatalf("partial observations lost or compilation asserted: %v %+v", err, result.Compilation())
 	}
+	limits := model.Limits{Entries: 5, BodyBytes: 7}
+	result, err = apply.NewModelService(source, nil).CaptureModel(context.Background(), apply.CaptureRequest{Selection: selection}, limits)
+	if !errors.Is(err, failure) || result.RequestedLimits() != limits {
+		t.Fatal("known compiler request limits lost on acquisition error")
+	}
 }
