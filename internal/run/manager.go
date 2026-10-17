@@ -188,14 +188,15 @@ func (c *Coordinator) StepQuotes(manager string) []BlobRef {
 
 func childReports(t taskValue) []BlobRef {
 	var refs []BlobRef
-	if t.Report != (BlobRef{}) {
-		refs = append(refs, t.Report)
+	add := func(ref BlobRef) {
+		if ref != (BlobRef{}) && !slices.Contains(refs, ref) {
+			refs = append(refs, ref)
+		}
 	}
-	if t.Submission.Proposal != (BlobRef{}) {
-		refs = append(refs, t.Submission.Proposal)
-	}
+	add(t.Report)
+	add(t.Submission.Proposal)
 	for _, d := range t.Deliveries {
-		refs = append(refs, d.Proposal)
+		add(d.Proposal)
 	}
 	return refs
 }
@@ -296,8 +297,12 @@ func (s stateValue) renderInput(t taskValue, facts StepFacts, basis snapshot.Con
 		// The Host's own check of the last step is a finding the Manager sees
 		// in its next step (core rule T6).
 		id := t.ID + "-last-step"
+		text := "Your last step failed the Host's check: " + t.Failure
+		if t.HostFault {
+			text = "Your last step ended without a result because the Host could not finish it. Continue from the current state of your workspace."
+		}
 		findings.IDs = append(findings.IDs, id)
-		findings.Items = append(findings.Items, organization.FindingFact{ID: id, Grounds: organization.HostText{Text: "Your last step failed the Host's check: " + t.Failure, Source: organization.HostSource{RecordID: id, ContentID: basis}}})
+		findings.Items = append(findings.Items, organization.FindingFact{ID: id, Grounds: organization.HostText{Text: text, Source: organization.HostSource{RecordID: id, ContentID: basis}}})
 	}
 	in := organization.RenderInput{View: phaseView(t.Phase), InputBinding: source,
 		Task: organization.TaskFacts{ID: t.ID, Package: t.Slot.Package, Outcome: organization.HostText{Text: operation, Source: source}, Findings: findings}}
@@ -396,6 +401,7 @@ type StepResult struct {
 	Aggregate        uint64
 	AggregateTree    snapshot.TreeID
 	Failure          string
+	HostFault        bool
 }
 
 // ConcludeStepCommand records the end of the task's current step. A session
@@ -410,7 +416,7 @@ func (c *Coordinator) ConcludeStepCommand(meta RecordMeta, manager string, resul
 	var payloads []Payload
 	switch {
 	case result.Failure != "":
-		r.Outcome, r.Reason = outcomeFailed, result.Failure
+		r.Outcome, r.Reason, r.HostFault = outcomeFailed, result.Failure, result.HostFault
 	case count == 0:
 		r.Outcome, r.Reason = outcomeFailed, "the step ended without an outcome tool call"
 	case count == 1:

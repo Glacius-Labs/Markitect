@@ -27,6 +27,11 @@ func TestHostFailureAfterTheStepConcludesItAsFailed(t *testing.T) {
 	if b := h.c.Budget(); b.Held != (run.Capacity{}) {
 		t.Fatal("a hold survived the failed step", b.Held)
 	}
+	// The retry sees a neutral note, not the Host's error text.
+	retry := h.sessions.packets[1].Context.Bytes
+	if !bytes.Contains(retry, []byte("because the Host could not finish it")) || bytes.Contains(retry, []byte("injected")) {
+		t.Fatal("the retry's context misreports the Host's failure")
+	}
 }
 
 // A container that fails to start is still stopped and charged, and its step
@@ -50,11 +55,12 @@ func TestFailedStartIsStoppedChargedAndConcluded(t *testing.T) {
 // dispatched.
 type failingInput struct {
 	*memoryJournal
+	media    string
 	failures int
 }
 
 func (j *failingInput) ReadBlob(ctx context.Context, ref run.BlobRef) (run.Payload, error) {
-	if j.failures > 0 && ref.MediaType == "application/vnd.markitect.step-input+json" {
+	if j.failures > 0 && ref.MediaType == j.media {
 		j.failures--
 		return run.Payload{}, errors.New("injected read failure")
 	}
@@ -65,7 +71,7 @@ func (j *failingInput) ReadBlob(ctx context.Context, ref run.BlobRef) (run.Paylo
 // concludes as failed.
 func TestUndispatchedStepIsReleased(t *testing.T) {
 	h := newHarness(t, true, happyAgent)
-	h.journal = &failingInput{memoryJournal: h.j, failures: 1}
+	h.journal = &failingInput{memoryJournal: h.j, media: "application/vnd.markitect.step-input+json", failures: 1}
 	h.engine = h.newEngine(h.c)
 	runToEnd(t, h)
 	if h.c.Current().State != run.Verifying {
@@ -155,4 +161,21 @@ func mustPath(t *testing.T, s string) snapshot.Path {
 		t.Fatal(err)
 	}
 	return p
+}
+
+// A failure before the container starts costs nothing, so the run stops
+// instead of retrying it without bound.
+func TestUnchargedFailureStopsTheRun(t *testing.T) {
+	h := newHarness(t, true, happyAgent)
+	h.journal = &failingInput{memoryJournal: h.j, media: run.ToolCatalogMedia, failures: 1000}
+	h.engine = h.newEngine(h.c)
+	if err := h.engine.Run(context.Background()); err == nil {
+		t.Fatal("a run whose sessions cannot be admitted reported success")
+	}
+	if n := len(admitted(h)); n != 1 || h.c.Budget().Consumed.SessionStarts != 0 {
+		t.Fatal("an uncharged failure was retried", n, h.c.Budget().Consumed)
+	}
+	if v := h.task("lending"); v.Session != "" || v.State != run.TaskQueued {
+		t.Fatal("the abandoned session stayed bound", v)
+	}
 }

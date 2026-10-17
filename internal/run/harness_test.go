@@ -196,8 +196,13 @@ func (f *fakeSessions) Open(ctx context.Context, a run.SessionAdmission, io run.
 		return run.SessionObservation{}, err
 	}
 	if f.failOpen > 0 {
+		// Like the provider adapters, record the start as uncertain first.
 		f.failOpen--
-		return run.SessionObservation{}, errors.New("injected start failure")
+		o := run.SessionObservation{RecordMeta: f.meta("bind"), Uncertain: true, Reason: "injected start failure"}
+		if _, err := io.Bind(ctx, o); err != nil {
+			return o, err
+		}
+		return o, errors.New("injected start failure")
 	}
 	if a.Plan.Resume != "" {
 		_, err := io.Bind(ctx, run.SessionObservation{RecordMeta: f.meta("bind"), ProviderSession: a.Plan.Resume, Wire: wire(f.t, `{"resumed":true}`), Reason: "resumed conversation"})

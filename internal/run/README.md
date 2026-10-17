@@ -273,11 +273,14 @@ aggregate version, path reservations and proposed registry records. It
 materializes each step's version (D3), answers the Host tools, captures the
 candidate after the step (S4) and composes an accepted delivery onto the
 aggregate before it concludes the review (D2). A refused composition finishes
-the run Failed. A step the Host cannot finish is stopped, its known effects are
-settled or released, and it concludes as failed; its reservations and registry
-proposals are undone, and the Manager's next step sees why it failed (T6). An
-effect whose end is not known leaves the run to reconciliation (S2). Registry
-proposals are checked when they are made. A new engine rebuilds the aggregate
+the run Failed. A step the Host cannot finish is stopped. A confirmed stop ends
+all activity in the container (S2), so its start and step are settled as
+observed, an unstarted one is released, and a run that an uncertain
+observation moved to Reconciling resumes; the step then concludes as failed,
+its reservations and registry proposals are undone, and the Manager's next step
+sees a note (T6). Without a confirmed stop the effects stay for reconciliation.
+A failure before the container starts costs nothing, so `Run` returns it
+instead of retrying. Registry proposals are checked when they are made. A new engine rebuilds the aggregate
 from the recorded deliveries. `Run` advances until nothing is admissible, then
 leaves the run Verifying, moves it to Waiting for an owner question (W1), or
 finishes it Incomplete.

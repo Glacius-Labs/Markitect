@@ -231,8 +231,8 @@ type stepRun struct {
 	stepInvoke   string
 	channel      SessionIO
 	began        time.Time
+	stepBegan    time.Time
 	opened       bool
-	openUnknown  bool
 	openSettled  bool
 	stepPrepared bool
 	dispatched   bool
@@ -290,6 +290,9 @@ func (e *Engine) Advance(ctx context.Context) (bool, error) {
 		if abandonErr := e.abandon(ctx, s, err); abandonErr != nil {
 			return true, errors.Join(err, abandonErr)
 		}
+		if !s.opened {
+			return true, err // nothing was charged, so a retry would cost nothing
+		}
 		return true, stepFailure{err}
 	}
 	return true, nil
@@ -310,7 +313,6 @@ func (e *Engine) drive(ctx context.Context, s *stepRun, purpose Purpose, workspa
 	s.began = e.cfg.Clock()
 	s.opened = true
 	opened, err := e.cfg.Sessions.Open(ctx, admission, channel)
-	s.openUnknown = opened.Uncertain
 	if err != nil || opened.Uncertain {
 		return errors.Join(errStep, err)
 	}
@@ -337,14 +339,14 @@ func (e *Engine) drive(ctx context.Context, s *stepRun, purpose Purpose, workspa
 	if err != nil {
 		return err
 	}
-	began := e.cfg.Clock()
+	s.stepBegan = e.cfg.Clock()
 	s.dispatched = true
 	observed, err := e.cfg.Sessions.Step(ctx, stepAdmission, channel)
 	if err != nil || observed.Uncertain || !observed.Terminal {
 		return errors.Join(errStep, err)
 	}
 	s.stepTerminal = true
-	if err := e.settle(ctx, s.stepInvoke, began); err != nil {
+	if err := e.settle(ctx, s.stepInvoke, s.stepBegan); err != nil {
 		return err
 	}
 	s.stepSettled = true
@@ -371,9 +373,12 @@ func (e *Engine) stop(ctx context.Context, sid SessionID, channel SessionIO, rea
 	return nil
 }
 
-// abandon ends a step the Host could not finish: it stops the container,
-// settles or releases the effects whose end is known, marks the others
-// uncertain, and concludes the step as failed when nothing is left open.
+// abandon ends a step the Host could not finish. It stops the container; a
+// confirmed stop ends all activity in it (core rule S2), so the start and the
+// step are settled as observed, an unstarted one is released, and a run that
+// an uncertain observation moved to Reconciling resumes. Without a confirmed
+// stop the effects are marked uncertain and stay for reconciliation.
+// Otherwise the step concludes as failed, as a fault of the Host.
 func (e *Engine) abandon(ctx context.Context, s *stepRun, cause error) error {
 	ctx = context.WithoutCancel(ctx)
 	c := e.cfg.Coordinator
@@ -395,33 +400,41 @@ func (e *Engine) abandon(ctx context.Context, s *stepRun, cause error) error {
 			errs = append(errs, e.stop(ctx, s.session, s.channel, "the Host ended the step early"))
 		}
 	}
-	settle := func(kind, invocation, reason string) {
+	v, _ := c.Session(s.session)
+	stopped := v.Terminated && !v.Uncertain
+	settle := func(kind, invocation, reason string, since time.Time) {
 		cmd := Command{ID: fmt.Sprintf("%s-%s", kind, invocation), ObservedAt: e.cfg.Clock().UTC(), Kind: kind, Assignment: c.Current().Assignment, Run: c.Current().ID, Invocation: invocation, Reason: reason}
 		if kind == SettleInvocation {
-			cmd.Elapsed = e.cfg.Clock().Sub(s.began)
+			cmd.Elapsed = e.cfg.Clock().Sub(since)
 		}
 		errs = append(errs, e.commit(ctx, cmd))
 	}
 	switch {
 	case !s.opened:
-		settle(ReleaseUndispatched, s.openID, "the Host never opened the session")
-	case s.openUnknown:
-		settle(ObserveUncertain, s.openID, "the session's start is not known")
+		settle(ReleaseUndispatched, s.openID, "the Host never opened the session", time.Time{})
+	case !s.openSettled && stopped:
+		settle(SettleInvocation, s.openID, "the Host stopped the container after a failed start", s.began)
 	case !s.openSettled:
-		settle(SettleInvocation, s.openID, "Host observed the failed start and its elapsed duration")
+		settle(ObserveUncertain, s.openID, "the session's start is not known", time.Time{})
 	}
 	switch {
 	case s.stepPrepared && !s.dispatched:
-		settle(ReleaseUndispatched, s.stepInvoke, "the Host never dispatched the step")
-	case s.dispatched && !s.stepTerminal:
-		settle(ObserveUncertain, s.stepInvoke, "the step's end is not known")
-	case s.stepTerminal && !s.stepSettled:
-		settle(SettleInvocation, s.stepInvoke, "Host observed the step's end and elapsed duration")
+		settle(ReleaseUndispatched, s.stepInvoke, "the Host never dispatched the step", time.Time{})
+	case s.dispatched && !s.stepSettled && stopped:
+		settle(SettleInvocation, s.stepInvoke, "the Host stopped the container before the step ended", s.stepBegan)
+	case s.dispatched && !s.stepSettled:
+		settle(ObserveUncertain, s.stepInvoke, "the step's end is not known", time.Time{})
 	}
 	if err := errors.Join(errs...); err != nil {
 		return err
 	}
-	cmd, err := c.ConcludeStepCommand(e.meta("conclude"), s.manager, StepResult{Aggregate: c.AggregateVersion(), Failure: "the Host could not finish the step: " + cause.Error()})
+	if r := c.Current(); r.State == Reconciling && !r.StopRequested && stopped {
+		resume := Command{ID: e.meta("resume").ID, ObservedAt: e.cfg.Clock().UTC(), Kind: ResumeRun, Assignment: r.Assignment, Run: r.ID}
+		if err := e.commit(ctx, resume); err != nil {
+			return err
+		}
+	}
+	cmd, err := c.ConcludeStepCommand(e.meta("conclude"), s.manager, StepResult{Aggregate: c.AggregateVersion(), Failure: "the Host could not finish the step: " + cause.Error(), HostFault: true})
 	if err != nil {
 		return err
 	}
@@ -433,6 +446,9 @@ func (e *Engine) abandon(ctx context.Context, s *stepRun, cause error) error {
 // effects are still open needs reconciliation first.
 func (e *Engine) recover(ctx context.Context) error {
 	c := e.cfg.Coordinator
+	if c.Current().State != Running {
+		return nil // a finished or waiting run admits nothing to recover for
+	}
 	for _, t := range c.Tasks() {
 		if t.Session == "" {
 			continue
@@ -446,7 +462,7 @@ func (e *Engine) recover(ctx context.Context) error {
 				return err
 			}
 		}
-		cmd, err := c.ConcludeStepCommand(e.meta("conclude"), t.Manager, StepResult{Aggregate: c.AggregateVersion(), Failure: "the Host lost the step before its conclusion"})
+		cmd, err := c.ConcludeStepCommand(e.meta("conclude"), t.Manager, StepResult{Aggregate: c.AggregateVersion(), Failure: "the Host lost the step before its conclusion", HostFault: true})
 		if err == nil {
 			err = e.commit(ctx, cmd)
 		}

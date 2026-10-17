@@ -80,6 +80,7 @@ type taskValue struct {
 	Rejections   map[string]int
 	Reason       string
 	Failure      string
+	HostFault    bool
 }
 
 // TaskView is the read-only projection of one Manager task.
@@ -526,6 +527,9 @@ type ConclusionRecord struct {
 	// review accepted a changed candidate.
 	AggregateTree snapshot.TreeID
 	Reason        string
+	// HostFault marks a failed step that the Host, not the Agent, could not
+	// finish.
+	HostFault bool
 }
 
 const outcomeFailed = "failed"
@@ -545,7 +549,7 @@ func (r ConclusionRecord) validate() error {
 	if !text(r.Manager) || !identifier(r.Task) || !identifier(string(r.Step)) && (r.Step != "" || r.Outcome != outcomeFailed) || !text(r.Outcome) || r.Reason != "" && !boundedInput(r.Reason) {
 		return ErrInvalid
 	}
-	if (r.Outcome == outcomeFailed) != (r.Input == (BlobRef{})) || r.Outcome == outcomeFailed && (r.Reason == "" || r.Candidate != (BlobRef{})) {
+	if (r.Outcome == outcomeFailed) != (r.Input == (BlobRef{})) || r.Outcome == outcomeFailed && (r.Reason == "" || r.Candidate != (BlobRef{})) || r.HostFault && r.Outcome != outcomeFailed {
 		return ErrInvalid
 	}
 	if (r.Candidate == (BlobRef{})) != (r.Tree == (snapshot.TreeID{})) {
@@ -774,10 +778,10 @@ func (s *stateValue) concludeWork(r ConclusionRecord, t *taskValue, revision uin
 	if r.Candidate != (BlobRef{}) {
 		t.Own, t.OwnTree = r.Candidate, r.Tree
 	}
-	t.Failure = ""
+	t.Failure, t.HostFault = "", false
 	switch r.Outcome {
 	case outcomeFailed:
-		t.State, t.Since, t.Failure = TaskReady, revision, r.Reason
+		t.State, t.Since, t.Failure, t.HostFault = TaskReady, revision, r.Reason, r.HostFault
 		if t.Phase == PhaseExplore {
 			t.State = TaskQueued
 		}
