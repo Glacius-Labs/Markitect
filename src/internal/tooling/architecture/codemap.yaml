@@ -36,7 +36,7 @@ packages:
   # --- apply-usecase ------------------------------------------------------
   - path: internal/apply
     layer: apply-usecase
-    purpose: Compiles captured or previewed models, prepares registry ownership, decodes authored execution documents and selects static Manager context.
+    purpose: Compiles fixed models and prepares source-bound inputs for delegated realization.
     doc: docs/design/canonical-model/manager-apply-go-architecture.md#organize-by-responsibility
 
   # --- apply-adapter ------------------------------------------------------
