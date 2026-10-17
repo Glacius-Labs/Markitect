@@ -842,7 +842,7 @@ func (e *Engine) tools(s *stepRun) ToolHandler {
 			if err := e.cfg.Coordinator.CheckOutcome(manager, call.Tool, args); err != nil {
 				return refuse(err.Error())
 			}
-			if call.Tool == ToolSubmit && phase.writing() {
+			if phase.writing() {
 				if reason := e.formMismatch(s); reason != "" {
 					return refuse(reason)
 				}
