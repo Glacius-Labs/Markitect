@@ -134,6 +134,7 @@ The owner's [origin account of 15 October 2026](sources/owner-origin-20261015.md
   - The owner adds that interpreted languages and bytecode are not necessarily deterministic either.
 - **Interpretation (marked):** The owner's sentence about a "real compiler" breaks off without its predicate. The register reads it as follows: a compiler cannot read a naturally described world model, take context into account, fill unspecified gaps, interpret intent and still be deterministic with classical compiler guarantees. See the recorder's note in the source.
 - **Consequence:** Trust in realization comes from computed scope, independent review, declared checks and integration verification ([CPT-003](#cpt-003-two-parts-of-the-promise)).
+- **First-Apply clarification:** This consequence and [DEC-010](#dec-010-evaluate-the-method-separately-from-its-execution-runtime) retain earlier "computed scope" wording. Under [DEC-039](#dec-039-deterministic-manager-process), compilation supplies explicit obligations and responsibilities while every local Manager participates. Omitting out-of-scope Managers conflicts with that decision; Host-verified reuse is a separate proposal. Both remain unresolved under the [core's scope questions](../design/canonical-model/manager-apply-core.md#not-settled-here). The earlier wording grants no exception to first-Apply participation.
 
 ### DEC-004 The Manager hierarchy is core; Government belongs to a later axis
 
