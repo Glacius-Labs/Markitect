@@ -21,3 +21,24 @@ Recorder's note: in this passage, "er" refers to the Coordinator, and "das" to i
 > Jedenfalls weiß er dann bescheid was wir machen bevor er loslegt und wir können direkt starten. Der Coordinator wird dann um uns herum arbeiten.
 
 Recorder's note: the Coordinator acknowledged the division in a message the owner relayed. In it, Claude takes the core, the concept and the ports, and the Coordinator takes the adapters and the remaining infrastructure.
+
+## Plan in the repository
+
+> Wie wäre es hiermit: Du fängst an mit deiner Arbeit und der Coordinator wartet bis er in deinem Branch oder irgendwie einen Plan findet. Dann plant er drumherum und wir kümmern uns nicht um ihn
+
+## Core protocol choices
+
+Recorder's note: the assistant asked four questions with prepared options, and the owner selected one option for each. The question and the selected option are reproduced exactly.
+
+| Question | Selected option |
+| --- | --- |
+| Fragen an einen bekannten Empfänger: Soll der Host sie direkt entlang des Baums weiterleiten, ohne die Manager dazwischen als Agenten aufzurufen? Diese sehen die Nachricht nur in ihrem nächsten Kontext. | Host leitet weiter (Recommended) |
+| Wie sieht ein Manager die Lieferungen anderer: Soll jeder Schritt auf dem aktuell akzeptierten Gesamtstand starten, plus den eigenen noch offenen Änderungen? | Aktueller Gesamtstand (Recommended) |
+| Darf ein Manager, der beim Explore findet, dass nichts zu ändern ist, direkt ein „keine Änderung“-Ergebnis einreichen? Das Review dazu läuft dann noch vor der Schreibsperre. | Ja, direkt einreichen (Recommended) |
+| Wenn eine Aufgabe nicht fertig werden kann (Ablehnungslimit oder offene Owner-Frage ohne Ausweg): Soll der Host dann keine neue Arbeit mehr zulassen und den Lauf als Incomplete beenden? Die Arbeit bleibt erhalten. | Sofort stoppen (Recommended) |
+
+Recorder's note: the option descriptions shown to the owner were the following.
+- Host forwarding keeps the tree as the path and records every hop, without Agent turns; the common parent is dispatched only as addressee or for a dispute or circular wait.
+- The current aggregate avoids stale views; a review is renewed only when a delivery the candidate used has changed.
+- The direct no-change submission saves one step per unchanged Manager; independent review stays mandatory.
+- Stopping at once is cheaper and simpler; a continuation takes over the retained work.
