@@ -77,6 +77,8 @@ func TestIntegrationFindingReopensTheChild(t *testing.T) {
 			finding = fmt.Sprintf("finding-%s-1", s.Packet.Step)
 			return []action{
 				{Tool: run.ToolSubmitReview, Args: strings.Replace(childFinding, `"to":"lending"`, `"to":"nowhere"`, 1), Want: run.ToolRefused},
+				// A finding to a child requests its correction.
+				{Tool: run.ToolSubmitReview, Args: strings.Replace(childFinding, `"verdict":"changes_requested"`, `"verdict":"needs_decision","question":"Which title?"`, 1), Want: run.ToolRefused},
 				{Tool: run.ToolSubmitReview, Args: childFinding, Want: run.ToolOK},
 			}
 		case s.Manager == "lending" && s.Phase == run.PhaseWork && s.Attempt == 1:
@@ -110,5 +112,82 @@ func TestIntegrationFindingReopensTheChild(t *testing.T) {
 	}
 	if got := aggregateFile(t, h.engine, "out/library.go"); got != "package library\n\ntype Item struct{ Title string }\n" {
 		t.Fatalf("the correction was not composed: %q", got)
+	}
+}
+
+// A child's open owner question does not block its parent's local delivery,
+// which does not contain the child's work; the run waits for the owner
+// (core rules I3, W1).
+func TestAChildsOpenQuestionLeavesTheParentsLocalReview(t *testing.T) {
+	agent := func(s agentStep) []action {
+		switch {
+		case s.Manager == "lending" && s.Phase == run.PhaseReviewerCandidate && s.Attempt == 0:
+			return []action{{Tool: run.ToolSubmitReview, Args: `{"verdict":"needs_decision","summary":"Open.","question":"Which format?","evidence":[],"findings":[],"resolutions":[]}`, Want: run.ToolOK}}
+		case s.Manager == "." && s.Phase == run.PhaseReviewerCandidate && s.Attempt == 0:
+			return []action{{Tool: run.ToolSubmitReview, Args: rejectArgs, Want: run.ToolOK}}
+		case s.Manager == "." && s.Phase == run.PhaseReviewerCandidate && strings.Contains(string(s.Packet.Context.Bytes), "finding-step-"):
+			return []action{{Tool: run.ToolSubmitReview, Args: passArgs(openFinding(t, s)), Want: run.ToolOK}}
+		}
+		return happyAgent(s)
+	}
+	h := newHarness(t, true, agent)
+	runToEnd(t, h)
+	order := strings.Join(admitted(h), ",")
+	if h.c.Current().State != run.Waiting || strings.Count(order, ". work") != 2 {
+		t.Fatal("the parent's local review was withheld for the child's question", h.c.Current(), order)
+	}
+}
+
+// A finding to a grandchild reopens it, and the chain above it integrates
+// again (core rule T11).
+func TestAGrandchildFindingReintegratesTheChain(t *testing.T) {
+	grand := `{"verdict":"changes_requested","summary":"Reminder lacks a title.","evidence":[],"resolutions":[],"findings":[{"to":"lending/reminders","severity":"blocking","definitions":["lending/reminders/Item"],"grounds":"No title.","requestedEvidence":"A title."}]}`
+	var finding string
+	agent := func(s agentStep) []action {
+		switch {
+		case s.Manager == "." && s.Phase == run.PhaseReviewerCandidate && s.Attempt == 1:
+			finding = fmt.Sprintf("finding-%s-1", s.Packet.Step)
+			return []action{{Tool: run.ToolSubmitReview, Args: grand, Want: run.ToolOK}}
+		case s.Manager == "lending/reminders" && s.Phase == run.PhaseReviewerCandidate && s.Attempt == 1:
+			return []action{{Tool: run.ToolSubmitReview, Args: passArgs(finding), Want: run.ToolOK}}
+		}
+		return happyAgent(s)
+	}
+	inputs := stepInputs(t, false)
+	inputs.Binding.Policy.Assignment.Steps, inputs.Binding.Policy.Assignment.SessionStarts = 64, 64
+	h := newHarnessWith(t, inputs, agent)
+	runToEnd(t, h)
+	order := strings.Join(admitted(h), ",")
+	if h.c.Current().State != run.Verifying || strings.Count(order, "lending integrate") != 2 || strings.Count(order, ". integrate") != 2 {
+		t.Fatal("the grandchild's correction did not re-integrate the chain", h.c.Current(), order)
+	}
+}
+
+// Findings to a child and to its own child reopen both, whatever their
+// order; the child works locally again before it integrates (core rule T11).
+func TestFindingsToAChildAndItsChildReopenBoth(t *testing.T) {
+	both := `{"verdict":"changes_requested","summary":"Both lack a title.","evidence":[],"resolutions":[],"findings":[` +
+		`{"to":"lending/reminders","severity":"blocking","definitions":["lending/reminders/Item"],"grounds":"No title.","requestedEvidence":"A title."},` +
+		`{"to":"lending","severity":"blocking","definitions":["lending/Item"],"grounds":"No title either.","requestedEvidence":"A title."}]}`
+	agent := func(s agentStep) []action {
+		switch {
+		case s.Manager == "." && s.Phase == run.PhaseReviewerCandidate && s.Attempt == 1:
+			return []action{{Tool: run.ToolSubmitReview, Args: both, Want: run.ToolOK}}
+		case (s.Manager == "lending/reminders" || s.Manager == "lending") && s.Phase == run.PhaseReviewerCandidate && strings.Contains(string(s.Packet.Context.Bytes), "finding-step-"):
+			return []action{{Tool: run.ToolSubmitReview, Args: passArgs(openFinding(t, s)), Want: run.ToolOK}}
+		}
+		return happyAgent(s)
+	}
+	inputs := stepInputs(t, false)
+	inputs.Binding.Policy.Assignment.Steps, inputs.Binding.Policy.Assignment.SessionStarts = 64, 64
+	h := newHarnessWith(t, inputs, agent)
+	h.advanceUntil(func(run.Admission) bool { return h.task(".").Rejections["integration"] == 1 })
+	if l := h.task("lending"); l.State != run.TaskReady || l.LocalDone {
+		t.Fatalf("the child was not reopened for local work: %+v", l)
+	}
+	runToEnd(t, h)
+	order := strings.Join(admitted(h), ",")
+	if h.c.Current().State != run.Verifying || strings.Count(order, "lending work") != 2 {
+		t.Fatal("the reopened child did not work again", h.c.Current(), order)
 	}
 }
