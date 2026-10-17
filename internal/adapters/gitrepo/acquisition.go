@@ -91,13 +91,13 @@ func (r *Repository) acquire(ctx context.Context, selection apply.InputSelection
 	if err != nil {
 		return a, err
 	}
-	if committed {
-		if err = a.git.clean(); err != nil {
+	if a.commit != "" {
+		if err = a.git.inventory(a.commit, r.limits.Entries); err != nil {
 			return a, err
 		}
 	}
-	if a.commit != "" {
-		if err = a.git.inventory(a.commit, r.limits.Entries); err != nil {
+	if committed {
+		if err = a.git.clean(); err != nil {
 			return a, err
 		}
 	}
@@ -140,6 +140,9 @@ func (r *Repository) acquire(ctx context.Context, selection apply.InputSelection
 	}
 	if committed {
 		if err = a.protectCommitted(); err != nil {
+			return a, err
+		}
+		if err = a.protectTracked(); err != nil {
 			return a, err
 		}
 	}

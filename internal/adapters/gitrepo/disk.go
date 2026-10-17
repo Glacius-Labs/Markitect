@@ -237,7 +237,7 @@ func (d *diskBoundary) read(rel string, collision bool) ([]byte, snapshot.Mode, 
 	if err != nil || pathErr != nil || redirected(atPath) || !os.SameFile(opened, after) || !os.SameFile(after, atPath) || opened.Size() != after.Size() || !opened.ModTime().Equal(after.ModTime()) || after.Size() != int64(len(data)) {
 		return nil, 0, false, ErrChanged
 	}
-	if prior, ok := d.files[rel]; ok && (!os.SameFile(prior, after) || prior.Size() != after.Size() || !prior.ModTime().Equal(after.ModTime())) {
+	if prior, ok := d.files[rel]; ok && (!os.SameFile(prior, after) || prior.Size() != after.Size() || !prior.ModTime().Equal(after.ModTime()) || prior.Mode() != after.Mode()) {
 		return nil, 0, false, ErrChanged
 	}
 	d.files[rel] = after
@@ -369,7 +369,7 @@ func (d *diskBoundary) confirm() error {
 			return err
 		}
 		after, err := root.Lstat(path.Base(rel))
-		if err != nil || redirected(after) || !os.SameFile(before, after) || before.Size() != after.Size() || !before.ModTime().Equal(after.ModTime()) {
+		if err != nil || redirected(after) || !os.SameFile(before, after) || before.Size() != after.Size() || !before.ModTime().Equal(after.ModTime()) || before.Mode() != after.Mode() {
 			return ErrChanged
 		}
 	}

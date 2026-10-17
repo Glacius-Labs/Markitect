@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"encoding/hex"
-	"errors"
 	"fmt"
 	"os"
 	"os/exec"
@@ -208,31 +207,44 @@ func (g *gitRepository) confirm() error {
 }
 
 func (g *gitRepository) clean() error {
-	out, err := g.run("status", "--porcelain=v1", "-z", "--untracked-files=all", "--ignore-submodules=none")
+	// Status may execute attribute clean filters. Read index metadata and raw
+	// files instead; no filter, fsmonitor, hook or user program is invoked.
+	out, err := g.run("ls-files", "--stage", "-z")
 	if err != nil {
 		return err
 	}
-	records := bytes.Split(out, []byte{0})
-	for i := 0; i < len(records); i++ {
-		record := records[i]
+	seen := make(map[string]bool)
+	for _, record := range bytes.Split(out, []byte{0}) {
 		if len(record) == 0 {
 			continue
 		}
-		if len(record) < 4 || record[2] != ' ' {
-			return fmt.Errorf("%w: malformed Git status", ErrUnsafe)
+		header, name, ok := bytes.Cut(record, []byte{'\t'})
+		fields := strings.Fields(string(header))
+		p := string(name)
+		if !ok || len(fields) != 3 {
+			return fmt.Errorf("%w: malformed index", ErrUnsafe)
 		}
-		paths := []string{string(record[3:])}
-		if record[0] == 'R' || record[0] == 'C' || record[1] == 'R' || record[1] == 'C' {
-			i++
-			if i >= len(records) || len(records[i]) == 0 {
-				return errors.New("incomplete Git rename status")
-			}
-			paths = append(paths, string(records[i]))
+		if technical(p) {
+			continue
 		}
-		for _, p := range paths {
-			if !technical(p) {
-				return fmt.Errorf("%w: %s", ErrDirty, p)
-			}
+		expected, exists := g.tree[p]
+		if !exists || fields[2] != "0" || fields[0] != expected.mode || fields[1] != expected.oid || seen[p] {
+			return fmt.Errorf("%w: index at %q", ErrDirty, p)
+		}
+		seen[p] = true
+	}
+	for p, entry := range g.tree {
+		if entry.kind != "tree" && !seen[p] {
+			return fmt.Errorf("%w: missing index file %q", ErrDirty, p)
+		}
+	}
+	out, err = g.run("ls-files", "--others", "--exclude-standard", "-z")
+	if err != nil {
+		return err
+	}
+	for _, name := range bytes.Split(out, []byte{0}) {
+		if len(name) > 0 && !technical(string(name)) {
+			return fmt.Errorf("%w: untracked %q", ErrDirty, name)
 		}
 	}
 	return nil

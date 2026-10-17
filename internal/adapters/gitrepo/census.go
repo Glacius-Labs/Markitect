@@ -172,3 +172,32 @@ func (a *acquisition) protectCommitted() error {
 	}
 	return nil
 }
+
+func (a *acquisition) protectTracked() error {
+	census, err := snapshot.NewTree(a.census)
+	if err != nil {
+		return err
+	}
+	b := &sourceBoundary{abs: a.git.path, area: snapshot.RootDirectory()}
+	var paths []string
+	for p, entry := range a.git.tree {
+		if entry.kind != "tree" {
+			paths = append(paths, p)
+		}
+	}
+	slices.Sort(paths)
+	for _, p := range paths {
+		expected, found, err := a.read(b, p, false)
+		if err != nil {
+			return err
+		}
+		if !found {
+			return ErrChanged
+		}
+		actual, present := census.Lookup(expected.Path())
+		if !present || actual.Mode() != expected.Mode() || actual.ContentID() != expected.ContentID() {
+			return fmt.Errorf("%w: raw tracked bytes or mode at %q", ErrDirty, p)
+		}
+	}
+	return nil
+}
