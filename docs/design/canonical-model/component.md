@@ -20,7 +20,7 @@ Body links with explicit sentences state these provider/consumer relationships. 
 
 ## Standard-library contract
 
-The following wording describes the selected empty-spec direction. It would occupy one Definition file in the proposed Package `markitect/software`; the package has not been implemented.
+This page owns the consolidated wording for the selected empty-spec contract. It occupies one Definition file in the selected Package `markitect/software` when implemented; the package has not been implemented.
 
 ```yaml
 imports:

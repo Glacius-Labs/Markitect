@@ -4,9 +4,9 @@ A **Concept** describes something meaningful in the project's domain, including 
 
 ## Standard-library contract
 
-Owner-selected direction, 17 October 2026: use body links for domain relationships and `spec: {}`. The [standard-library discussion](standard-library.md) records the decision and its boundaries. The following Kind definition is the working wording of that direction; the standard-library package has not been implemented.
+Owner-selected direction, 17 October 2026: use body links for domain relationships and `spec: {}`. This page owns the consolidated Kind wording under the [standard-library contract](standard-library.md); the standard-library package has not been implemented.
 
-Each Definition has its own file. This file would belong to the proposed Package `markitect/software`:
+Each Definition has its own file. This file belongs to the selected Package `markitect/software` when implemented:
 
 ```yaml
 imports:

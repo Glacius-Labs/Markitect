@@ -4,9 +4,9 @@ A **Rule** describes a condition that must hold within the project. For example,
 
 ## Standard-library contract
 
-Owner-selected direction, 17 October 2026: use body links for domain relationships and `spec: {}`. The [standard-library discussion](standard-library.md) records the decision and its boundaries. The following wording describes that direction; the standard-library package has not been implemented.
+Owner-selected direction, 17 October 2026: use body links for domain relationships and `spec: {}`. This page owns the consolidated Kind wording under the [standard-library contract](standard-library.md); the standard-library package has not been implemented.
 
-This Definition would have its own file in the proposed Package `markitect/software`:
+This Definition has its own file in the selected Package `markitect/software` when implemented:
 
 ```yaml
 imports:

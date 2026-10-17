@@ -6,9 +6,9 @@ Owner decision, 17 October 2026: Interface also covers internal technical contra
 
 ## Standard-library contract
 
-The expanded external/internal scope and the use of body links with `spec: {}` are owner-selected on 17 October 2026. Exact Kind wording remains a working formulation. The [standard-library discussion](standard-library.md#internal-contract-and-component-boundary) gives the Library example and separates these selections from the proposed architecture. The package has not been implemented.
+The expanded external/internal scope and body links with `spec: {}` are owner-selected on 17 October 2026. This page owns the consolidated Kind wording under the [standard-library contract](standard-library.md#internal-contract-and-component-boundary). The [discussion history](standard-library-history.md#internal-contract-and-component-boundary) preserves the initial Library example. The package has not been implemented.
 
-This Definition would have its own file in the proposed Package `markitect/software`:
+This Definition has its own file in the selected Package `markitect/software` when implemented:
 
 ```yaml
 imports:

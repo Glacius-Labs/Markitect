@@ -4,9 +4,9 @@ A **Check** describes how an expectation is verified and what counts as success.
 
 ## Standard-library contract
 
-Owner-selected direction, 17 October 2026: body links and `spec: {}` for the general-purpose Kind. Exact Kind wording remains a working formulation. The [standard-library discussion](standard-library.md#scenario-and-check-proposal) contains the Library example and Property assessment. The package has not been implemented.
+Owner-selected direction, 17 October 2026: body links and `spec: {}` for the general-purpose Kind. This page owns the consolidated wording under the [standard-library contract](standard-library.md). The [discussion history](standard-library-history.md#scenario-and-check-proposal) preserves the initial Library example and Property assessment. The package has not been implemented.
 
-This Definition would have its own file in the proposed Package `markitect/verification`:
+This Definition has its own file in the selected Package `markitect/verification` when implemented:
 
 ```yaml
 imports:

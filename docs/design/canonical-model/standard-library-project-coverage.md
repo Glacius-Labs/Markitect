@@ -1,6 +1,6 @@
 # Web Library: project-coverage walkthrough
 
-Date: 17 October 2026. The owner selected the eight foundation Kinds and the [six companion Kinds and Package assignments](standard-library-architecture-platform.md), then requested a Library walkthrough of security, configuration, build, tests, release and operation. This document owns that bounded coverage assessment and the proposed additional reference-project obligations. It does not select a web identity mechanism, stack, provider, database technology or numeric operating objectives.
+Date: 17 October 2026. After selecting the fourteen Kinds, the owner selected this six-area coverage: "Okay, dann halten wir diese Abdeckung so fest und lassen die konkreten Projektwerte offen." This document owns the selected qualitative coverage, its bounded assessment and illustrative reference-project Definitions. The examples make that coverage concrete; they do not select a web identity mechanism, stack, provider, database technology, numeric operating objectives or every detail of the prospective Web Library.
 
 ## Result and scope
 
@@ -8,7 +8,7 @@ The fourteen selected Kinds can describe all six requested areas in this example
 
 The reference Web Library is not yet a complete implementation assignment: its access contract, configuration requirements, build/release bindings and operating responsibilities need explicit project choices and complete clauses. A vocabulary's ability to describe these subjects does not supply those choices or prove their realization. This example is distinct from the existing local, sequential, process-lifetime-only M1/M2 fixture, whose [realization](library-example/m1/model/library/realization.yaml) and [callable interface](library-example/m1/model/library/callable-interface.yaml) already specify their bounded delivery. The Web design does not add authentication, persistence, networking or deployment requirements to that fixture.
 
-## Coverage and necessary completion
+## Selected coverage and open project values
 
 | Area | Proposed canonical owners | Concrete Web Library obligations and distinguishing examination |
 | --- | --- | --- |
@@ -241,7 +241,7 @@ The positive control prevents an always-denying or unusable service from passing
 
 ## What remains before closure
 
-For library design, retain the fourteen selected Kinds and no additional mandatory security/configuration/build/test/release/operations Package or Kind. Project rules above can already express the requested subjects. Specialized reusable libraries remain possible when actual repeated contracts justify them; a generic label such as SecurityPolicy or Pipeline alone supplies no missing capability.
+For library design, the owner selected the fourteen Kinds and this coverage, with no additional mandatory security/configuration/build/test/release/operations Package or Kind. Project rules above can already express the requested subjects. Specialized reusable libraries remain possible when actual repeated contracts justify them; a generic label such as SecurityPolicy or Pipeline alone supplies no missing capability.
 
 For this particular Web Library, complete these requirement groups before claiming it is fully specified:
 

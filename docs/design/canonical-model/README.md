@@ -63,21 +63,23 @@ Implementations identify the supported part of this target and its evidence. An 
 
 The [delivery plan](../../implementation-plan.md) owns packages, order and dispatch. The [owner discussion](sources/manager-realization-20261016.md) and the supplied [concept assessment](sources/concept-assessment-20261016.txt) and [refinements](sources/concept-refinements-20261016.txt) are the sources; the refinements are part of the concept. The [working-day reflections](../../concepts/reflections/README.md) describe the intended use and later acceptance scenarios.
 
-## Working vocabulary
+<a id="working-vocabulary"></a>
 
-The term documents below are working vocabulary definitions from the earlier product discussion. The [working goal and provisional terms](consolidation.md#arbeitsziel-und-wackelkandidaten) record their open questions. They are possible vocabulary contents, not built-in Core Kinds or open decisions of the language.
+## Standard-library design
 
-The [standard-library discussion](standard-library.md) records the owner's 17 October 2026 selection of Concept, Rule, UseCase, Actor, Interface, Component, Scenario and Check as the first scope, all with body links and empty specs. Interface includes internal technical contracts. The [Package/version contract](standard-library.md#package-and-version-contract) is selected. The broader goal includes normal software-project and repository concerns; the [companion-vocabulary map](standard-library.md#broader-project-and-repository-coverage) remains a proposal. The term pages distinguish selected design directions from implementation.
+Status: the owner selected fourteen Kinds across five Packages in four distribution models, all with body links and empty specs, plus security/configuration/build/test/release/operation coverage. The language is unchanged; actual library files, locks, compiler/consumer validation and releases remain implementation work.
 
-The owner adopted the modular coverage direction and the system/application/deployment boundaries. The [data/resource/C4 walkthrough](standard-library.md#logical-data-operating-resources-and-c4-walkthrough) proposes the next distinction and views without changing the current Library fixture.
+| Document | Owns |
+| --- | --- |
+| [Standard-library contract](standard-library.md) | Selected scope, Kind wording owners, Package/version policy, relationship boundaries and implementation handoff. Start here. |
+| [Architecture/data/deployment companion slice](standard-library-architecture-platform.md) | Six selected Kind definitions and the connected illustrative Web Library. |
+| [Project coverage](standard-library-project-coverage.md) | Six selected coverage areas, proposed reference Rules/Scenarios/Checks and open project values. |
+| [Data and views](standard-library-data-and-views.md) | Detailed C4/data-access/retry/migration/recovery recommendations; unselected reference technology remains a proposal. |
+| [Discussion history](standard-library-history.md) | Original owner statements, intermediate proposals and superseded open-question claims. |
 
-The owner selected the six Kinds, body links, empty specs and Package assignments in the [first architecture/data/deployment companion slice](standard-library-architecture-platform.md). Its connected Web Library Definitions remain an illustrative reference proposal. OperatingResource supplies the common first contract for hosting, delivery, database and routing capabilities; specialized resource Kinds remain deferred.
+## Earlier vocabulary and examples
 
-The [project-coverage walkthrough](standard-library-project-coverage.md) examines security, configuration, build, tests, release and operation using those fourteen Kinds. It distinguishes vocabulary coverage from incomplete project requirements and actual execution evidence.
-
-The [Web Library view/data/recovery contract](standard-library-data-and-views.md) works out C4 view assessment, atomic access, the reference database, retries, migrations and recovery as detailed proposals.
-
-The [path to concept closure](standard-library.md#path-to-concept-closure) identifies the remaining decisions, a bounded project-coverage walkthrough and the proposed integration/implementation sequence. It does not claim that the concept is already approved, integrated or implemented.
+The following term pages originated in the earlier product discussion. The eight selected foundation Kind pages now own their consolidated standard-library wording. Other terms and the older [provisional-term record](consolidation.md#arbeitsziel-und-wackelkandidaten) remain historical or deferred vocabulary exploration, not additional first-scope Kinds or open language decisions.
 
 - [Project](project.md) — the project's name, purpose and associated definitions.
 - [Actor](actor.md) — a role through which a person or another system interacts with the system or participates in project work.
@@ -94,10 +96,10 @@ The [path to concept closure](standard-library.md#path-to-concept-closure) ident
 - [Procedure](procedure.md) — how to carry out an activity, including its steps and expected result.
 - [Condition](condition.md) — a statement that can be true or false.
 
-The library proposal also introduces **System**, **Module** and **Mandate**; see its [architecture terms](../product-model-refinement/canonical-model-proposal.md#40-architekturbegriffe-und-ihre-abgrenzung) and [Mandate direction](../product-model-refinement/canonical-model-proposal.md#66-gewählter-dateiname-und-bevorzugte-kind-richtung).
+The earlier proposal explored **System**, **Module** and **Mandate**; see its [architecture terms](../product-model-refinement/canonical-model-proposal.md#40-architekturbegriffe-und-ihre-abgrenzung) and [Mandate direction](../product-model-refinement/canonical-model-proposal.md#66-gewählter-dateiname-und-bevorzugte-kind-richtung). The selected System contract is now owned by the companion slice above; Module/Mandate are not added to the standard library by those historical examples.
 
 - [Relationships](relationships.md) — how the terms connect, with simple examples.
-- [Tasks example](task-management-example.md) — a small task-management project described with all fourteen terms.
+- [Tasks example](task-management-example.md) — the earlier fourteen-term project exploration; its term set differs from the fourteen selected standard-library Kinds.
 - [Connector example](connector-example.md) — a source-informed pressure test of System, Container and Component; a proposed design, not a compiled model.
 - [Consolidated design history](consolidation.md) and [fixed Main comparison](current-main-comparison.md) — origin of the design and product boundaries.
 

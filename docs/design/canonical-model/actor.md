@@ -4,9 +4,9 @@ An **Actor** describes a role that interacts with the system or participates in 
 
 ## Standard-library contract
 
-Owner-selected direction, 17 October 2026: body links and `spec: {}`, as for Concept, Rule and UseCase. Exact Kind wording remains a working formulation. The [standard-library discussion](standard-library.md#actor-and-interface-proposal) gives the Library example and rationale. The package has not been implemented.
+Owner-selected direction, 17 October 2026: body links and `spec: {}`, as for Concept, Rule and UseCase. This page owns the consolidated Kind wording under the [standard-library contract](standard-library.md). The [discussion history](standard-library-history.md#actor-and-interface-proposal) preserves the initial Library example and rationale. The package has not been implemented.
 
-This Definition would have its own file in the proposed Package `markitect/software`:
+This Definition has its own file in the selected Package `markitect/software` when implemented:
 
 ```yaml
 imports:
