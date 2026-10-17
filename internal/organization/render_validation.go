@@ -3,17 +3,14 @@ package organization
 import (
 	"fmt"
 	"reflect"
-	"strings"
 	"unicode/utf8"
-
-	"github.com/Glacius-Labs/Markitect/internal/snapshot"
 )
 
 func renderInvalid(detail string) error { return &RenderRefusal{Code: "invalid-input", Detail: detail} }
 
 func renderText(text string) error {
-	if !utf8.ValidString(text) || strings.ContainsRune(text, 0) {
-		return &RenderRefusal{Code: "invalid-text", Detail: "text must be valid UTF-8 without binary NUL bytes; no repair was performed"}
+	if !utf8.ValidString(text) {
+		return &RenderRefusal{Code: "invalid-text", Detail: "text must be valid UTF-8; no repair was performed"}
 	}
 	return nil
 }
@@ -81,7 +78,12 @@ func validateRender(c ContextSelection, s Settings, input RenderInput) (ManagerS
 	if input.MaxContextBytes.Value <= 0 {
 		return ManagerSettings{}, renderInvalid("maxContextBytes must be positive")
 	}
-	validation := settingsValidation{files: make(map[string]snapshot.ContentID), fields: make(map[SettingSource]any)}
+	validation := s.configuration.clone()
+	for _, policy := range c.scope {
+		if err := validation.field(policy.Source, policy.Value); err != nil {
+			return ManagerSettings{}, renderInvalid(err.Error())
+		}
+	}
 	if err := validation.field(input.MaxContextBytes.Source, input.MaxContextBytes.Value); err != nil {
 		return ManagerSettings{}, renderInvalid(err.Error())
 	}
@@ -120,6 +122,9 @@ func validateRender(c ContextSelection, s Settings, input RenderInput) (ManagerS
 	}
 	if input.View == ReviewerExpectations && (len(input.OwnArtifacts) != 0 || input.Review != nil) {
 		return ManagerSettings{}, renderInvalid("expectation review forbids candidate/inventory/artifact/evidence payload inputs")
+	}
+	if input.View == ReviewerCandidate && len(input.OwnArtifacts) != 0 {
+		return ManagerSettings{}, renderInvalid("candidate review accepts artifact inputs only through its exact review candidate")
 	}
 	if input.View == ManagerView && input.Review != nil {
 		return ManagerSettings{}, renderInvalid("review subject belongs to candidate review")

@@ -24,7 +24,7 @@ func RenderContext(selection ContextSelection, settings Settings, input RenderIn
 	w.add("role", strings.TrimSuffix(text, mandateTemplate), product)
 	w.add("mandate", mandateTemplate, product)
 	w.reference("captured-basis-reference-not-verification", input.InputBinding)
-	w.json("task-identity", struct{ ID, Package, ModelID, ModelDigest string }{input.Task.ID, input.Task.Package, selection.ModelID(), selection.ModelDigest()}, hostRender(input.Task.Outcome.Source))
+	w.json("task-identity", struct{ ID, Package, ModelID, ModelDigest string }{input.Task.ID, input.Task.Package, selection.ModelID(), selection.ModelDigest()}, hostRender(input.InputBinding))
 	w.host("task-outcome", input.Task.Outcome)
 	if input.OwnerInput != nil {
 		w.host("root-owner-input", *input.OwnerInput)
@@ -39,7 +39,7 @@ func RenderContext(selection ContextSelection, settings Settings, input RenderIn
 	findings := slices.Clone(input.Task.Findings.Items)
 	slices.SortFunc(findings, func(a, b FindingFact) int { return cmp.Compare(a.ID, b.ID) })
 	for _, finding := range findings {
-		w.json("open-finding-identity", finding.ID, hostRender(finding.Grounds.Source))
+		w.json("open-finding-identity", finding.ID, hostRender(input.Task.Findings.Source))
 		w.host("open-finding-grounds", finding.Grounds)
 		for _, ref := range finding.Evidence {
 			w.reference("finding-evidence-reference-not-payload", ref)
@@ -75,10 +75,11 @@ func RenderContext(selection ContextSelection, settings Settings, input RenderIn
 			}
 		}
 		w.json("definition-identity-contract-and-inclusion", struct {
-			Identity, Kind model.Identity
-			Source         model.Source
-			Reasons        []ContextReason
-		}{entry.Definition.Identity, entry.Definition.Kind, entry.Definition.Source, entry.Reasons}, sources...)
+			Identity, Kind       model.Identity
+			ModelID, ModelDigest string
+			Source               model.Source
+			Reasons              []ContextReason
+		}{entry.Definition.Identity, entry.Definition.Kind, entry.Definition.ModelID, entry.ModelDigest, entry.Definition.Source, entry.Reasons}, sources...)
 		if entry.Definition.Title != nil {
 			w.add("original-title", *entry.Definition.Title, source)
 		}

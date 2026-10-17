@@ -72,6 +72,7 @@ func ResolveSettings(topology Topology, facts SettingsFacts) (Settings, error) {
 		result.index[slot.Package] = len(result.managers)
 		result.managers = append(result.managers, cloneManagerSettings(manager))
 	}
+	result.configuration = validation
 	return result, nil
 }
 

@@ -52,6 +52,7 @@ type ContextDefinition struct {
 // mandate, role prompt or proof of semantic completeness. Zero exposes nothing.
 type ContextSelection struct {
 	topology    Topology
+	scope       []Setting[ScopeRule] // Retain all policies, even those selecting no Definition.
 	packagePath string
 	modelID     string
 	modelDigest string

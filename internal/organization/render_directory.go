@@ -29,7 +29,7 @@ func renderDirectory(w *contextWriter, c ContextSelection, input RenderInput) {
 		if purpose := purposes[slot.Package]; purpose != nil {
 			w.host("explicit-package-purpose", *purpose)
 		} else {
-			w.add("package-purpose-not-supplied", "No purpose was supplied; none is inferred from this Package name.", RenderSource{Kind: ProductRenderSource, Product: contextFormat()})
+			w.add("package-purpose-not-supplied", absentPurposeText, productLiteral("absent-purpose", absentPurposeText))
 		}
 		if slot.Parent == c.Package() {
 			w.json("direct-child-identity", slot.Package, hostRender(input.InputBinding))
@@ -55,7 +55,7 @@ func renderArtifacts(w *contextWriter, artifacts []ArtifactFact, label string) {
 		if artifact.Content == ArtifactText {
 			w.add(label+"-original-artifact-text", *artifact.Text, hostRender(artifact.Source))
 		} else {
-			w.add(label+"-binary-reference-not-inspected", "Only a binary content reference was supplied. Its content was not inspected.", hostRender(artifact.Source))
+			w.add(label+"-binary-reference-not-inspected", binaryReferenceText, productLiteral("binary-reference", binaryReferenceText))
 		}
 	}
 }

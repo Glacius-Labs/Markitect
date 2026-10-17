@@ -8,9 +8,11 @@ import (
 
 const renderFrameOpen = "\n[section %q bytes=%d]\n"
 const renderFrameClose = "\n[/section]\n"
+const absentPurposeText = "No purpose was supplied; none is inferred from this Package name."
+const binaryReferenceText = "Only a binary content reference was supplied. Its content was not inspected."
 
 const mandateTemplate = `Mandate
-Responsibility: reconcile the local Definitions and coordinate direct children for this task.
+Manager responsibility: reconcile the local Definitions and coordinate direct children for this task. A reviewer assesses that responsibility under its own read-only view.
 Binding basis: the original selected Definitions, type contracts and explicit inclusion reasons below.
 Freedom: choose the implementation within the model's architecture and interfaces; this text creates no business rules.
 Artifact authority: the Host-supplied ownership/area view is descriptive, never a write grant. Other owners' changes go through the common parent.
@@ -50,4 +52,8 @@ func roleTemplate(view ContextView, root bool) (ProductText, string) {
 
 func contextFormat() ProductText {
 	return ProductText{ID: "markitect/context-text", Version: "1", ContentID: renderContentID([]byte(renderFrameOpen + renderFrameClose))}
+}
+
+func productLiteral(id, text string) RenderSource {
+	return RenderSource{Kind: ProductRenderSource, Product: ProductText{ID: "markitect/context-text/" + id, Version: "1", ContentID: renderContentID([]byte(text))}}
 }
