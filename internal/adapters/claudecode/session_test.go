@@ -31,7 +31,7 @@ type fakeChannel struct {
 	observeNoReceipt bool
 	callFail         bool
 	refuse           bool
-	secretAnswer     bool
+	secretAnswer     json.RawMessage
 	halted           bool
 	readyFail        bool
 	bindFail         bool
@@ -82,8 +82,8 @@ func (f *fakeChannel) ObserveSend(_ context.Context, o run.TransportObservation)
 func (f *fakeChannel) Call(_ context.Context, c run.ToolCall) (run.ToolResult, error) {
 	f.calls = append(f.calls, c)
 	outcome := run.ToolOutcome{Status: run.ToolOK, Result: json.RawMessage(`{"echo":"host-value"}`)}
-	if f.secretAnswer {
-		outcome.Result = json.RawMessage(`{"echo":"secret-token"}`)
+	if f.secretAnswer != nil {
+		outcome.Result = f.secretAnswer
 	}
 	if f.refuse {
 		outcome = run.ToolOutcome{Status: run.ToolRefused, Reason: "Host refused this call"}
@@ -661,32 +661,35 @@ func TestClaudeStepPhasesUseHostToolsAndIgnoreFinalText(t *testing.T) {
 	}
 }
 func TestClaudeKnownSecretToolCallRefusedBeforeHost(t *testing.T) {
-	channel := &fakeChannel{}
-	runtime := peer(channel)
-	runtime.useTool = true
-	runtime.toolArguments = json.RawMessage(`{"summary":"secret-token"}`)
-	s := sessionsForTest(t, runtime)
-	a, b := sessionAdmissions(t)
-	if _, err := s.Open(context.Background(), a, channel); err != nil {
-		t.Fatal(err)
-	}
-	out, err := s.Step(context.Background(), b, channel)
-	if err == nil || !out.Uncertain || len(channel.calls) != 0 || len(runtime.replies) != 0 || strings.Contains(err.Error(), "secret-token") {
-		t.Fatal("known secret tool call escaped refusal")
+	for _, arguments := range []json.RawMessage{json.RawMessage(`{"summary":"secret-token"}`), json.RawMessage(`{"summary":"\u0073ecret-token"}`)} {
+		channel := &fakeChannel{}
+		runtime := peer(channel)
+		runtime.useTool = true
+		runtime.toolArguments = arguments
+		s := sessionsForTest(t, runtime)
+		a, b := sessionAdmissions(t)
+		if _, err := s.Open(context.Background(), a, channel); err != nil {
+			t.Fatal(err)
+		}
+		out, err := s.Step(context.Background(), b, channel)
+		if err == nil || !out.Uncertain || len(channel.calls) != 0 || len(runtime.replies) != 0 || strings.Contains(err.Error(), "secret-token") {
+			t.Fatal("known secret tool call escaped refusal")
+		}
 	}
 }
-
 func TestClaudeKnownSecretHostAnswerRefusedBeforeReply(t *testing.T) {
-	channel := &fakeChannel{secretAnswer: true}
-	runtime := peer(channel)
-	runtime.useTool = true
-	s := sessionsForTest(t, runtime)
-	a, b := sessionAdmissions(t)
-	if _, err := s.Open(context.Background(), a, channel); err != nil {
-		t.Fatal(err)
-	}
-	out, err := s.Step(context.Background(), b, channel)
-	if err == nil || !out.Uncertain || len(channel.calls) != 1 || len(runtime.replies) != 0 || strings.Contains(err.Error(), "secret-token") {
-		t.Fatal("known secret Host answer reached provider")
+	for _, answer := range []json.RawMessage{json.RawMessage(`{"echo":"secret-token"}`), json.RawMessage(`{"echo":"\u0073ecret-token"}`)} {
+		channel := &fakeChannel{secretAnswer: answer}
+		runtime := peer(channel)
+		runtime.useTool = true
+		s := sessionsForTest(t, runtime)
+		a, b := sessionAdmissions(t)
+		if _, err := s.Open(context.Background(), a, channel); err != nil {
+			t.Fatal(err)
+		}
+		out, err := s.Step(context.Background(), b, channel)
+		if err == nil || !out.Uncertain || len(channel.calls) != 1 || len(runtime.replies) != 0 || strings.Contains(err.Error(), "secret-token") {
+			t.Fatal("known secret Host answer reached provider")
+		}
 	}
 }

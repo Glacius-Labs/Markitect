@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"github.com/Glacius-Labs/Markitect/internal/agentd/frame"
 	"github.com/Glacius-Labs/Markitect/internal/run"
+	"io"
 )
 
 type stepEvent struct {
@@ -187,7 +188,7 @@ func (e *sessionEntry) answerTool(ctx context.Context, channel run.SessionIO, ca
 	if err != nil {
 		return err
 	}
-	if !bytes.Equal(e.redact(input), input) {
+	if e.containsKnownSecretJSON(input) {
 		return ErrSession
 	}
 	if int64(len(input)) > e.plan.MaxWireBytes {
@@ -200,7 +201,7 @@ func (e *sessionEntry) answerTool(ctx context.Context, channel run.SessionIO, ca
 	// Validate the Host's closed recorded representation before returning its
 	// exact bytes in MCP text. A refusal is a tool error, never an accepted reply.
 	encoded, err := json.Marshal(result.Outcome)
-	if err != nil || !bytes.Equal(encoded, result.Output.Bytes()) || !bytes.Equal(e.redact(encoded), encoded) {
+	if err != nil || !bytes.Equal(encoded, result.Output.Bytes()) || e.containsKnownSecretJSON(encoded) {
 		return ErrProtocol
 	}
 	var mcp struct {
@@ -228,4 +229,23 @@ func (e *sessionEntry) answerTool(ctx context.Context, channel run.SessionIO, ca
 		return err
 	}
 	return e.send(ctx, channel, e.step, providerID, wire, func() error { return e.peer.Reply(reply) })
+}
+
+// RawMessage preserves JSON escapes. Inspect decoded strings as well as their
+// literal wire spelling before a Host call or provider reply can carry a secret.
+// The admitted bytes remain unchanged when they are safe.
+func (e *sessionEntry) containsKnownSecretJSON(raw []byte) bool {
+	decoder := json.NewDecoder(bytes.NewReader(raw))
+	for {
+		token, err := decoder.Token()
+		if err == io.EOF {
+			return false
+		}
+		if err != nil {
+			return true
+		}
+		if value, ok := token.(string); ok && !bytes.Equal(e.redact([]byte(value)), []byte(value)) {
+			return true
+		}
+	}
 }
