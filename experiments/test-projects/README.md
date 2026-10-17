@@ -10,6 +10,7 @@ Versioned project sources for preparing complete Markitect workflows and indepen
 | [Readinglog](readinglog/README.md) | Start from the actual add/list application; add finish/status, atomic CSV import and read-only author summaries through complete requirement snapshots. | [Initial model](readinglog/snapshots/00-baseline/model.yaml), [starting application](readinglog/template/realization/app.py), [source provenance](readinglog/sources.yaml) |
 | [Roombook](roombook/README.md) | Begin with an empty realization; add booking/listing, idempotent cancellation, then room summaries of active reservations through complete requirement snapshots. | [Initial model](roombook/snapshots/01-book-list/model.yaml), [source provenance](roombook/sources.yaml) |
 | [Ordinary documentation comparison](comparison/README.md) | Prepare the same intended requirements for one coding Agent and Markitect, with independent assessment outside both writer contexts. | [Library requirements](comparison/library/requirements.md), [writer instruction](comparison/library/implementation-prompt.md), [matched source bindings](comparison/library/matched-arms.yaml) |
+| [Comparison source playground](comparison/playground/README.md) | Preview selected Library and Readinglog input packets and declared byte changes from fixed Git sources. | [Scenario bindings](comparison/playground/scenarios.yaml), [Readinglog baseline requirements](comparison/readinglog/00-baseline/requirements.md), [writer instruction](comparison/readinglog/00-baseline/implementation-prompt.md) |
 
 ## Prepare a project
 

@@ -496,6 +496,34 @@ artifacts:
     form: config
     realizes: [examples/independent-oracles]
     why: Binds the comparison to exact integrated Library r2 model and illustrative execution sources while retaining unbound runtime and independent-assessment inputs.
+  - path: "experiments/test-projects/comparison/playground/README.md"
+    form: doc
+    realizes: [examples/independent-oracles]
+    why: Explains the curated comparison source cases, selected packet boundaries and fixed-source preview without granting execution authority.
+  - path: "experiments/test-projects/comparison/playground/factors.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Declares comparison factors and matched-profile controls while retaining unbound runtime, finite-grant and independent-assessment inputs.
+  - path: "experiments/test-projects/comparison/playground/scenarios.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Binds four curated Library and Readinglog source cases to exact Git blobs and declared byte changes for selected writer packets.
+  - path: "experiments/test-projects/comparison/playground/preview.py"
+    form: code
+    realizes: [examples/independent-oracles]
+    why: Verifies fixed Git source bytes, modes and exact patch conditions and previews packet inventories without executing applications or assessments.
+  - path: "experiments/test-projects/comparison/playground/test_preview.py"
+    form: test
+    realizes: [examples/independent-oracles]
+    why: Exercises source-binding and byte-change refusals, packet isolation and unbound readiness reporting for the comparison source preparer.
+  - path: "experiments/test-projects/comparison/readinglog/00-baseline/requirements.md"
+    form: doc
+    realizes: [examples/independent-oracles]
+    why: Supplies ordinary requirements matching all eight Definitions of the integrated Readinglog baseline without exposing later-stage intent.
+  - path: "experiments/test-projects/comparison/readinglog/00-baseline/implementation-prompt.md"
+    form: doc
+    realizes: [examples/independent-oracles]
+    why: Gives one coding Agent a neutral instruction to restore the actual existing Readinglog application to the selected visible baseline requirements.
   - path: "experiments/test-projects/roombook/README.md"
     form: doc
     realizes: [examples/independent-oracles]

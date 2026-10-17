@@ -16,11 +16,15 @@ writers' packets and evaluates both against the same hidden expectations.
 | Project | Ordinary requirements | Writer instruction | Source bindings |
 | --- | --- | --- | --- |
 | Library | [Requirements](library/requirements.md) | [Prompt](library/implementation-prompt.md) | [Matched arms](library/matched-arms.yaml) |
+| Readinglog baseline | [Requirements](readinglog/00-baseline/requirements.md) | [Prompt](readinglog/00-baseline/implementation-prompt.md) | [Playground source sets](playground/scenarios.yaml) |
 
 Library is greenfield and begins with an empty application. The Readinglog
-packet must begin with its genuine existing add/list application; it must not
-silently become greenfield. Roombook follows its own integrated starting-state
-requirements. Their packets can be added after their model inputs are integrated.
+baseline packet preserves its genuine existing add/list application and public
+test. Its model is the actual integrated `readinglog@0.1.0` snapshot at
+`7908e69bc3b73cf8689eba9a30c9f4865cdb8934`. Later Readinglog stages and Roombook
+packets follow their own integrated requirements; this packet adds none of them.
+The [small source playground](playground/README.md) previews four selected
+cases and one identical, byte-bound Readinglog defect without running them.
 
 The Library packet binds the actual integrated [Library r2](../library-r2/README.md)
 at `dc4910b9810c5aaa4deecf1ff74734ee97badc13`, identity `library-r2@1.0.0`.

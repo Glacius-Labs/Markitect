@@ -126,6 +126,9 @@ jobs:
       - name: Check independent library oracle and bounded transport
         run: python -B -m unittest discover -s experiments/library-playground
 
+      - name: Check comparison source packets
+        run: python -B -m unittest discover -s experiments/test-projects/comparison/playground -p 'test_*.py'
+
       - name: Upload Go test results
         if: always()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
