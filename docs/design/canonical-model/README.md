@@ -18,7 +18,7 @@ The baseline fixes the uniform definition form, nine Core definitions, values an
 
 ## Apply design
 
-Status: the design basis for the rebuild commissioned in [DEC-024](../../concepts/register.md#dec-024-first-reliable-apply-rebuild-and-coordinated-start). The owner decisions are [DEC-025 to DEC-036](../../concepts/register.md#dec-025-package-managers-organize-realization); DEC-036 covers the refinements the owner adopted for the design itself. Details below that level, such as exact schemas or default numbers like three review rounds, are design decisions under DEC-024 that review may improve. These documents describe target behavior, not implemented behavior; implementation pull requests establish the evidence, and producer packages refine exact Go names and schemas in review. A change of intent goes to the document that owns the subject, not into a new parallel note.
+Status: the design basis for the rebuild commissioned in [DEC-024](../../concepts/register.md#dec-024-first-reliable-apply-rebuild-and-coordinated-start). The owner decisions are [DEC-025 to DEC-037](../../concepts/register.md#dec-025-package-managers-organize-realization); DEC-036 covers the refinements the owner adopted for the design itself, and DEC-037 the container runtime. Details below that level, such as exact schemas or default numbers like three review rounds, are design decisions under DEC-024 that review may improve. These documents describe target behavior, not implemented behavior; implementation pull requests establish the evidence, and producer packages refine exact Go names and schemas in review. A change of intent goes to the document that owns the subject, not into a new parallel note.
 
 Read in this order:
 
@@ -31,7 +31,7 @@ Read in this order:
 | [Configuration](manager-apply-configuration.md) | Execution inputs, override resolution, host profiles, identities, mandates and questions. |
 | [Execution](manager-apply-execution.md) | Budget and admission, blocking findings, dependencies, review rounds, run states and outcomes. |
 | [Journal](manager-apply-journal.md) | Durable records and storage, the controller lock, answers and continuation runs. |
-| [Rebuild plan](manager-apply-rebuild-plan.md) | The first Agent adapter and what happens to the current source. |
+| [Rebuild plan](manager-apply-rebuild-plan.md) | The container runtime, the Codex and Claude Code session adapters, and what happens to the current source. |
 | [Playground](manager-apply-playground.md) | The external two-Apply experiment and its independent assessment. |
 | [Acceptance gates](manager-apply-implementation-plan.md) | What each delivery step must prove. |
 | [Library M1](library-example/README.md) | The example model, including its [callable interface](library-example/m1/model/library/callable-interface.yaml), and the [independent expectations](library-example/evaluation-contract.md). |

@@ -47,11 +47,15 @@ Codex and Check adapters parse explicitly selected source-bound metadata. They d
 
 `internal/apply` owns the acquisition and metadata-preparation ports. It retains original requests, every actual capture attempt, known failures and incomplete observations. New closure inputs require a fresh complete acquisition, never an extended old guard. Static context preserves actual Definitions, resolved values and inclusion reasons. Settings resolution preserves authored absence and the original embedded defaults source.
 
+A complete captured settings result can assemble a fixed run basis through `run.Bind`. Original inputs and provenance come from that final capture; the Host explicitly supplies the owner request, allocation and identity assertions. This projection acquires nothing and creates no run or journal record. Static profile metadata grants no execution capability.
+
 Bootstrap alone constructs concrete adapters. CLI code owns parsing/presentation and uses the repository port to resolve explicit refs once. It does not invoke Git directly or reconstruct producer semantics.
 
 ## Runtime layer
 
-`internal/run` supplies fixed run bindings, assignment budget admission and confirmed journal transitions. Its narrow journal port separates proposals from acknowledged history and retains uncertain reservations. It has no physical journal adapter or public execution entrypoint.
+`internal/run` supplies fixed run bindings, assignment budget admission and confirmed journal transitions. It reconstructs confirmed state from bounded reads pinned to one journal revision, without replaying external effects. Open reservations retain their holds behind a separate recovery barrier. The package has no physical journal adapter or public execution entrypoint.
+
+Recorded cap extensions preserve spent and held capacity; explicit quiescent closure makes an assignment immutable before a fresh ordinary assignment receives its own ledger on the same repository stream. Host-supplied observations do not establish physical termination or authenticated authority.
 
 The container runtime is in place below the future session port ([DEC-037](concepts/register.md#dec-037-agent-sessions-and-checks-run-in-linux-containers)). `internal/adapters/container` starts hardened session containers from an image named by its engine image ID and speaks the frame protocol of `internal/agentd/frame` with `markitect-agentd`, which runs the provider CLI, relays its streams, serves the Host tools over MCP and reports exits. The [base image](../packaging/runtime/README.md) pins Codex and Claude Code. Nothing in the product composes it yet.
 

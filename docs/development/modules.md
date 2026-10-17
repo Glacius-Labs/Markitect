@@ -10,6 +10,8 @@ The container runtime runs every Agent session in its own Linux container ([DEC-
 
 Run owns fixed input bindings, deterministic budget and lifecycle transitions, and its narrow journal port. A proposal changes no confirmed state; an exact append acknowledgement commits the transition. The Host supplies clock observations. There is no SQL, repository acquisition, provider protocol or public execution path in this package.
 
+Existing history is reconstructed through bounded, revision-pinned reads and the same transition rules. Required blobs and complete batches are verified before a projection is returned. Reading creates no effect observations; open invocations retain their holds until explicit reconciliation.
+
 ## Dependency direction
 
 | Consumer | Allowed responsibility |
@@ -17,7 +19,7 @@ Run owns fixed input bindings, deterministic budget and lifecycle transitions, a
 | Model, snapshot | No other Markitect responsibility |
 | Organization, realization | Model, snapshot |
 | Run | Model, snapshot, organization, realization |
-| Apply | Model, snapshot, organization, realization |
+| Apply | Model, snapshot, organization, realization, run |
 | Model view | Apply, model, snapshot |
 | Repository adapter | Apply and required pure values |
 | Codex/Check metadata adapters | Apply, model, organization, snapshot |

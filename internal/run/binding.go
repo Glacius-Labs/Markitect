@@ -16,6 +16,12 @@ import (
 // resolver, publication permit, live controller or evidence of a clean checkout.
 type SourceBasis struct{ Repository, Revision, Guard, ProductBuild, Operation string }
 
+func (s SourceBasis) valid() bool {
+	return text(s.Repository) && text(s.Revision) && text(s.Guard) && text(s.ProductBuild) && s.Operation == "artifact-apply/v1"
+}
+
+const bindingMediaType = "application/vnd.markitect.run-basis+json"
+
 // Document projects an original acquired input without importing apply. Source
 // addresses the whole file; RepositoryPath is absent for external documents.
 // No locator is interpreted as a physical path. Include execution, strategy,
@@ -128,7 +134,7 @@ func (b Binding) Valid() bool            { return b.payload.Valid() && b.owner.V
 
 func Bind(input BindingInput) (Binding, error) {
 	s := input.Source
-	if !text(s.Repository) || !text(s.Revision) || !text(s.Guard) || !text(s.ProductBuild) || s.Operation != "artifact-apply/v1" || !input.OwnerRequest.Valid() {
+	if !s.valid() || !input.OwnerRequest.Valid() {
 		return Binding{}, ErrInvalid
 	}
 	topology, err := organization.BuildTopology(input.Compilation)
@@ -136,36 +142,22 @@ func Bind(input BindingInput) (Binding, error) {
 		return Binding{}, ErrInvalid
 	}
 	w := bindingWire{Version: 1, Source: s, OwnerRequest: input.OwnerRequest.Ref(), ModelInput: input.ModelInput, Managers: topology.Managers(), Profiles: slices.Clone(input.Profiles), Policy: input.Policy, PolicySource: input.PolicySource}
-	raw := append([]model.SourceModel{input.ModelInput.Root}, input.ModelInput.Dependencies...)
-	if len(raw) != len(input.Compilation.Models) {
-		return Binding{}, ErrInvalid
-	}
-	matchedRaw := make(map[int]bool)
 	for _, compiled := range input.Compilation.Models {
-		i := -1
-		for index, source := range raw {
-			if source.Origin == compiled.Origin && source.ManifestPath == compiled.Manifest.Path && !matchedRaw[index] {
-				i = index
-				break
-			}
-		}
-		if i < 0 || compiled.Local != (i == 0) || compiled.Status != model.Passed || len(compiled.Canonical) == 0 || compiled.Digest != fmt.Sprintf("sha256:%x", sha256.Sum256(compiled.Canonical)) {
+		if compiled.Status != model.Passed || compiled.Origin != compiled.Manifest.Origin || len(compiled.Canonical) == 0 || compiled.Digest != fmt.Sprintf("sha256:%x", sha256.Sum256(compiled.Canonical)) {
 			return Binding{}, ErrInvalid
 		}
-		matchedRaw[i] = true
-		for _, source := range append([]model.Source{compiled.Manifest}, definitionSources(compiled.Definitions)...) {
-			matched := false
-			for _, entry := range raw[i].Entries {
-				if entry.Kind == model.Regular && entry.Path == source.Path && source.Origin == raw[i].Origin && source.Digest == fmt.Sprintf("sha256:%x", sha256.Sum256(entry.Bytes)) {
-					matched = true
-					break
-				}
-			}
-			if !matched {
+		w.Compilation = append(w.Compilation, compiledBinding{compiled.ID, compiled.Digest, compiled.Local, compiled.Manifest, compiled.Canonical, compiled.Packages})
+	}
+	raw, err := matchRawClosure(input.ModelInput, w.Compilation)
+	if err != nil {
+		return Binding{}, err
+	}
+	for i, compiled := range input.Compilation.Models {
+		for _, source := range definitionSources(compiled.Definitions) {
+			if !matchesOriginal(raw[i], source) {
 				return Binding{}, ErrInvalid
 			}
 		}
-		w.Compilation = append(w.Compilation, compiledBinding{compiled.ID, compiled.Digest, compiled.Local, compiled.Manifest, compiled.Canonical, compiled.Packages})
 	}
 	for _, document := range input.Documents {
 		if !text(document.Source.File) || document.Source.Field != "" || document.File.Path().String() == "" || document.Source.ContentID != document.File.ContentID() {
@@ -213,16 +205,10 @@ func Bind(input BindingInput) (Binding, error) {
 		return Binding{}, ErrInvalid
 	}
 	var areas []realization.CreationArea
-	var reviews int64
+	reviews := reviewFloor(w.Managers)
 	for i, manager := range managers {
 		if manager.Package != w.Managers[i].Package {
 			return Binding{}, ErrInvalid
-		}
-		if w.Managers[i].HasLocalWork() {
-			reviews++
-		}
-		if len(w.Managers[i].Children) > 0 && !w.Managers[i].PassThrough() {
-			reviews++
 		}
 		for _, role := range []organization.RoleSettings{manager.Manager, manager.Reviewer} {
 			if !covered(role.Profile.Source) || !slices.Contains(input.Profiles, role.Profile.Value) {
@@ -293,11 +279,75 @@ func Bind(input BindingInput) (Binding, error) {
 	if err != nil {
 		return Binding{}, err
 	}
-	payload, err := NewPayload("application/vnd.markitect.run-basis+json", "utf-8", data)
+	payload, err := NewPayload(bindingMediaType, "utf-8", data)
 	if err != nil {
 		return Binding{}, err
 	}
 	return Binding{payload, input.OwnerRequest, s, input.Policy, reviews}, nil
+}
+
+// matchRawClosure checks only recorded references, never source semantics. Each
+// scope must select one distinct acquired source by exact opaque Origin and
+// manifest path, and Local must select precisely Input.Root. The manifest binds
+// one actual regular original. Used by preparation and historical decoding.
+// Returned sources follow scope order, independent of dependency input order.
+func matchRawClosure(input model.Input, scopes []compiledBinding) ([]model.SourceModel, error) {
+	raw := append([]model.SourceModel{input.Root}, input.Dependencies...)
+	if len(raw) != len(scopes) {
+		return nil, ErrInvalid
+	}
+	type sourceKey struct{ origin, manifest string }
+	index := make(map[sourceKey]int, len(raw))
+	for i, source := range raw {
+		if !text(source.ManifestPath) {
+			return nil, ErrInvalid
+		}
+		key := sourceKey{source.Origin, source.ManifestPath}
+		if _, duplicate := index[key]; duplicate {
+			return nil, ErrInvalid
+		}
+		index[key] = i
+	}
+	used := make(map[int]bool, len(raw))
+	matched := make([]model.SourceModel, len(scopes))
+	for n, scope := range scopes {
+		i, found := index[sourceKey{scope.Manifest.Origin, scope.Manifest.Path}]
+		if !found || used[i] || scope.Local != (i == 0) || !matchesOriginal(raw[i], scope.Manifest) {
+			return nil, ErrInvalid
+		}
+		used[i] = true
+		matched[n] = raw[i]
+	}
+	return matched, nil
+}
+
+func matchesOriginal(raw model.SourceModel, ref model.Source) bool {
+	if ref.Origin != raw.Origin || !text(ref.Path) {
+		return false
+	}
+	count := 0
+	matched := false
+	for _, entry := range raw.Entries {
+		if entry.Path != ref.Path {
+			continue
+		}
+		count++
+		matched = entry.Kind == model.Regular && ref.Digest == fmt.Sprintf("sha256:%x", sha256.Sum256(entry.Bytes))
+	}
+	return count == 1 && matched
+}
+
+func reviewFloor(managers []organization.Manager) int64 {
+	var reviews int64
+	for _, manager := range managers {
+		if manager.HasLocalWork() {
+			reviews++
+		}
+		if len(manager.Children) > 0 && !manager.PassThrough() {
+			reviews++
+		}
+	}
+	return reviews
 }
 func definitionSources(definitions []model.Definition) []model.Source {
 	var sources []model.Source

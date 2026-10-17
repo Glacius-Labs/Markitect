@@ -54,6 +54,7 @@ func TestConcreteResponsibilityBoundaries(t *testing.T) {
 		{"internal/run", "internal/adapters/gitrepo", false},
 		{"internal/model", "internal/run", false},
 		{"internal/apply", "internal/organization", true},
+		{"internal/apply", "internal/run", true},
 		{"internal/apply", "internal/adapters/gitrepo", false},
 		{"internal/modeldocs", "internal/apply", true},
 		{"internal/modeldocs", "internal/adapters/documents", false},

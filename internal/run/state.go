@@ -29,24 +29,31 @@ type operation struct {
 	receipt AppendReceipt
 }
 type stateValue struct {
-	repository   string
-	revision     uint64
-	assignment   string
-	ownerRequest BlobRef
-	policy       BudgetPolicy
-	current      RunView
-	runs         map[string]RunView
-	invocations  map[string]Invocation
-	operations   map[string]operation
+	repository     string
+	revision       uint64
+	assignment     string
+	ownerRequest   BlobRef
+	policy         BudgetPolicy
+	initialPolicy  BudgetPolicy
+	extensions     []AssignmentExtension
+	closure        AssignmentClosure
+	history        []AssignmentView
+	runCapRevision uint64
+	current        RunView
+	runs           map[string]RunView
+	invocations    map[string]Invocation
+	operations     map[string]operation
 }
 
 // Coordinator owns one repository's confirmed projection and at most one
 // uncertain append. Its methods are serialized by the Host's single controller;
 // it is not a lock, runtime, scheduler or concurrent service. A new instance has
-// revision zero and may only be used with an actually new journal stream.
+// revision zero and may only be used with an actually new journal stream. Use
+// Restore when opening a store whose history has not already been established.
 type Coordinator struct {
-	state   stateValue
-	pending *Proposal
+	state      stateValue
+	pending    *Proposal
+	recovering bool
 }
 
 func NewCoordinator(repository string) (*Coordinator, error) {
@@ -57,6 +64,11 @@ func NewCoordinator(repository string) (*Coordinator, error) {
 }
 func (c *Coordinator) Current() RunView { return c.state.current }
 func (c *Coordinator) Revision() uint64 { return c.state.revision }
+
+// RecoveryRequired is a Host observation barrier, separate from committed run
+// state. Restore keeps it while any recorded invocation still needs explicit
+// reconciliation. Reading alone never settles or releases a reservation.
+func (c *Coordinator) RecoveryRequired() bool { return c.recovering }
 func (c *Coordinator) Budget() BudgetView {
 	return budget(c.state.policy, int64(len(c.state.runs)), c.state.invocations)
 }
@@ -114,15 +126,20 @@ func (c *Coordinator) Propose(command Command) (Proposal, error) {
 		r := previous.receipt
 		return Proposal{command: command, replay: &r}, nil
 	}
+	if c.recovering && command.Kind != SettleInvocation && command.Kind != ReleaseUndispatched && command.Kind != ObserveUncertain && command.Kind != StopRun {
+		return Proposal{}, ErrRecovery
+	}
 	next := c.state
 	next.runs = maps.Clone(c.state.runs)
 	next.invocations = maps.Clone(c.state.invocations)
 	next.operations = maps.Clone(c.state.operations)
+	next.extensions = slices.Clone(c.state.extensions)
+	next.history = slices.Clone(c.state.history)
 	if err := next.apply(command); err != nil {
 		return Proposal{}, err
 	}
 	var events []Event
-	if command.Kind == PrepareRun && c.state.assignment == "" {
+	if command.Kind == PrepareRun && (c.state.assignment == "" || c.state.closure.CommandID != "") {
 		events = append(events, Event{ID: fmt.Sprintf("%x", sha256.Sum256(append(data, byte(0)))), Kind: "assignment.created", Body: command})
 	}
 	events = append(events, Event{ID: fmt.Sprintf("%x", sha256.Sum256(append(data, byte(1)))), Kind: eventTag(command.Kind), Body: command})
@@ -148,15 +165,36 @@ func (s *stateValue) apply(c Command) error {
 		if _, exists := s.runs[c.Run]; exists {
 			return ErrConflict
 		}
-		if s.assignment == "" {
+		for _, prior := range s.history {
+			if prior.ID == c.Assignment {
+				return ErrState
+			}
+			for _, priorRun := range prior.Runs {
+				if priorRun.ID == c.Run {
+					return ErrConflict
+				}
+			}
+		}
+		if s.assignment == "" || s.closure.CommandID != "" {
 			if c.Predecessor != "" {
 				return ErrInvalid
+			}
+			if s.assignment == c.Assignment {
+				return ErrState
+			}
+			if s.assignment != "" {
+				s.history = append(s.history, s.assignmentView())
 			}
 			s.assignment = c.Assignment
 			s.ownerRequest = b.owner.Ref()
 			s.policy = b.policy
+			s.initialPolicy = b.policy
+			s.extensions = nil
+			s.closure = AssignmentClosure{}
+			s.runs = map[string]RunView{}
+			s.invocations = map[string]Invocation{}
 		} else {
-			if s.assignment != c.Assignment || s.current.State != Finished || c.Predecessor != s.current.ID || c.Basis == s.current.Basis || s.policy != b.policy || s.ownerRequest != b.owner.Ref() {
+			if s.assignment != c.Assignment || s.current.State != Finished || c.Predecessor != s.current.ID || c.Basis == s.current.Basis && s.runCapRevision == s.capRevision() || s.initialPolicy != b.policy || s.ownerRequest != b.owner.Ref() {
 				return ErrState
 			}
 		}
@@ -167,10 +205,17 @@ func (s *stateValue) apply(c Command) error {
 			return ErrBudget
 		}
 		s.current = RunView{ID: c.Run, Assignment: c.Assignment, Basis: c.Basis, State: Prepared}
+		s.runCapRevision = s.capRevision()
 		s.runs[c.Run] = s.current
 		return nil
 	}
-	if s.assignment != c.Assignment || s.current.ID != c.Run || s.current.State == Finished {
+	if s.assignment != c.Assignment || s.current.ID != c.Run || s.closure.CommandID != "" {
+		return ErrState
+	}
+	if c.Kind == ExtendAssignment || c.Kind == CloseAssignment {
+		return s.amendAssignment(c)
+	}
+	if s.current.State == Finished {
 		return ErrState
 	}
 	r := s.current
@@ -187,6 +232,13 @@ func (s *stateValue) apply(c Command) error {
 		if _, exists := s.invocations[c.Reservation.ID]; exists {
 			return ErrConflict
 		}
+		for _, prior := range s.history {
+			for _, invocation := range prior.Invocations {
+				if invocation.Reservation.ID == c.Reservation.ID {
+					return ErrConflict
+				}
+			}
+		}
 		for _, invocation := range s.invocations {
 			if open(invocation) && invocation.Reservation.Purpose == Writing && c.Reservation.Purpose == Writing {
 				return ErrState
@@ -195,7 +247,7 @@ func (s *stateValue) apply(c Command) error {
 		if err := admit(s.policy, budget(s.policy, int64(len(s.runs)), s.invocations), c.Reservation); err != nil {
 			return err
 		}
-		s.invocations[c.Reservation.ID] = Invocation{Reservation: c.Reservation, State: Reserved}
+		s.invocations[c.Reservation.ID] = Invocation{Reservation: c.Reservation, CapRevision: s.capRevision(), State: Reserved}
 	case SettleInvocation, ObserveUncertain, ReleaseUndispatched:
 		invocation, ok := s.invocations[c.Invocation]
 		if !ok || !open(invocation) {
