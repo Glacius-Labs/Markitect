@@ -3,7 +3,7 @@
 The owner asked the assistant to act as the project's architect. The owner wanted an assessment of the project and the Apply concept, with emphasis on cleanliness and architectural quality, and asked what is missing and what should be done differently. This page records the findings and the proposed approach. It is a dated assessment, not a measured result. The owner decisions it led to are listed under [owner decisions](#owner-decisions) and in [DEC-040](../../concepts/register.md#dec-040-concept-freeze-until-the-core-runs).
 
 **Basis:**
-- **Revision:** Main [`3580b30d`](https://github.com/Glacius-Labs/Markitect/tree/3580b30d37f31fbaba0ff1606cd29ed3e58f44e8). Later merges up to `0674e129` are noted where they change a finding.
+- **Revision:** Main [`3580b30d`](https://github.com/Glacius-Labs/Markitect/tree/3580b30d37f31fbaba0ff1606cd29ed3e58f44e8). Later merges up to `73bd7af8` (#352) are noted where they change a finding.
 - **Method:** four independent read-only reviews. They covered code architecture, documentation, work in flight and process, and the Apply concept family. The main claims were then spot-checked against source.
 - **What the numbers are:** counts are measurements at that revision. Cost figures for a 15-Package model are estimates. The judgments are the assistant's.
 
@@ -53,11 +53,12 @@ The first version specifies a large runtime apparatus: conversation continuity a
 
 **Recommendation:**
 - In the first version, every step runs in its own container, and that container stops when the step ends.
-  - The stopped container is the proof of quiescence. Warm retention, pause barriers and eviction rules become unnecessary.
+  - A confirmed stop ends all activity inside the container. Closing admission and reconciling Host-side and external effects remain required. Warm retention, pause barriers and eviction rules become unnecessary.
   - The Host composes the next workspace version between steps.
   - The conversation resumes from the retained provider home where that is supported. Otherwise the Host supplies an evidence-linked handoff.
-- Merge [#352](https://github.com/Glacius-Labs/Markitect/pull/352) showed after the basis revision that both CLIs can resume a conversation in a new container from the retained provider home ([record](../../validation/runtime-capabilities-20261017.md)). This makes the step-bound form cheap.
-- While the run waits for the owner, no container runs, and the Host process can exit. `answer` and `resume` continue the run.
+- Merge [#352](https://github.com/Glacius-Labs/Markitect/pull/352) showed after the basis revision that both CLIs can resume a conversation in a new container from the retained provider home ([record](../../validation/runtime-capabilities-20261017.md)). The step-bound form is therefore feasible.
+- Every step is then a charged session start, so starts equal steps. The start cap and the session counts in F4 must be read as step counts.
+- Proposal, for owner confirmation: while the run waits for the owner, no container runs, and the Host process may exit. The target verbs `answer` and `resume` ([verb table](manager-apply-go-architecture.md#source-layout)) then continue the run. The runtime record does not cover recovery after a Host crash, so this needs its own evidence.
 - Warm retention can return when a real run shows the need.
 
 ### F4 Complete participation costs a lot and does not scale yet
@@ -111,7 +112,7 @@ The first version specifies a large runtime apparatus: conversation continuity a
 - **"Apply is unavailable"** is repeated in at least twelve places.
 - **Volume:** `docs/` holds 5.5 MB against 1.5 MB of production Go. The reading path to understand Apply is about 42k words.
 - **History mixed with contracts:** about 970 KB of historical, retired or dated material sits outside `history/`. It includes the replacement map with 26 retired `src/` paths.
-- **Register entries are patched instead of replaced.** DEC-039 is 5.4 KB with four refinement bullets. The register defines a Superseded status, but no entry uses it, even where DEC-039 replaces parts of DEC-029 and DEC-036.
+- **Register entries are patched instead of replaced.** DEC-039 is 5.4 KB with four refinement bullets. The status vocabulary of the [concept record](../../concepts/README.md) defines a Superseded status, but no entry uses it, even where DEC-039 replaces parts of DEC-029 and DEC-036.
 - **Links:** CI checks the links of 33 entry documents only. The Apply family is not checked.
 - **Contract style:** the contracts are careful prose. They have no rule IDs, and owner narration is woven into the binding rules, so an implementer must decide sentence by sentence what binds.
 

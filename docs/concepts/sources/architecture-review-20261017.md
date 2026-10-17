@@ -8,7 +8,7 @@ Date: 17 October 2026. Source: the owner's Claude Code session in which the assi
 
 ## Concept freeze and order of work
 
-The owner answered the assistant's summary of the review, which recommended a freeze "until one Package runs end to end":
+Recorder's note: the owner answered the assistant's summary of the review, which recommended a freeze "until one Package runs end to end".
 
 > Das Konzept ist jetzt eingefroren. Halte erstmal deine Findings und dein vorgeschlagenes Vorgehen fest. Dann versuche herauszufinden woran aktuell aktiv gearbeitet wird und ob der neue Coordinator anfängt das Konzept umzusetzen. Falls er das nicht tut, sollten wir erst das Konzept fertigstellen und die Aufräumrunde starten. Die Aufräumrunde wäre generell gut zu starten unabhängig davon. Sobald klar ist was aktuell passiert und wir grünes Licht haben, dass wir mit Codex nicht in die Quere kommen und das Konzept sauber, einheitlich und ausgearbeitet ist, können wir die Implementierung hier übernehmen. Theoretisch kann ich den Coordinator auch von dir aus etwas fragen oder ihm eine Nachricht übermitteln, sodass er weiß was wir machen und uns nicht stört und ggfs. stoppt.
 
