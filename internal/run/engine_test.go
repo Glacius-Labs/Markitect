@@ -254,3 +254,17 @@ func TestDeliveryWaitWakesTheConsumer(t *testing.T) {
 		t.Fatal("root did not work again after lending's delivery", order)
 	}
 }
+
+// A Codex App Server session sends a three-message handshake and binds its
+// provider thread before the step; resumed steps bind the same thread. The
+// whole tree runs with it (core rules S1, S3).
+func TestACodexHandshakeRunsTheWholeTree(t *testing.T) {
+	inputs := stepInputs(t, false)
+	inputs.Binding.Policy.Assignment.Steps, inputs.Binding.Policy.Assignment.SessionStarts = 64, 64
+	h := newHarnessWith(t, inputs, happyAgent)
+	h.sessions.codex = true
+	runToEnd(t, h)
+	if h.c.Current().State != run.Verifying {
+		t.Fatal("the run did not complete with Codex sessions", h.c.Current(), h.sessions.answers)
+	}
+}

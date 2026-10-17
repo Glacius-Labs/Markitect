@@ -5,6 +5,7 @@ import (
 	"crypto/rand"
 	"encoding/hex"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"strings"
 )
@@ -120,7 +121,13 @@ func (e *Engine) VolumeMounts(ctx context.Context, name string) ([]string, error
 		}
 		out, err := e.output(ctx, "inspect", "--type", "container", id)
 		if err != nil {
-			return nil, err
+			// A container removed after the listing mounts nothing any more;
+			// only a fresh listing without it shows that.
+			again, listErr := e.output(ctx, "ps", "--all", "--quiet", "--no-trunc", "--filter", "id="+id)
+			if listErr == nil && strings.TrimSpace(string(again)) == "" {
+				continue
+			}
+			return nil, errors.Join(err, listErr)
 		}
 		var rows []struct {
 			ID     string

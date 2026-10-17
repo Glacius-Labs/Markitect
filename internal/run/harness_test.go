@@ -185,6 +185,9 @@ type fakeSessions struct {
 	failOpen int
 	stops    int
 	onOpen   func()
+	// codex makes Open behave like the Codex App Server adapter: a three-message
+	// handshake that binds the provider conversation before the step.
+	codex bool
 }
 
 func (f *fakeSessions) meta(kind string) run.RecordMeta {
@@ -203,6 +206,20 @@ func (f *fakeSessions) send(ctx context.Context, io run.SessionIO, step run.Step
 }
 
 func (f *fakeSessions) Open(ctx context.Context, a run.SessionAdmission, io run.SessionIO) (run.SessionObservation, error) {
+	if f.codex {
+		for _, m := range []string{`{"method":"initialize"}`, `{"method":"initialized"}`, `{"method":"thread/start"}`} {
+			if err := f.send(ctx, io, "", "", m); err != nil {
+				return run.SessionObservation{}, err
+			}
+		}
+		provider := run.ProviderSessionID("provider-" + string(a.Plan.ID))
+		if a.Plan.Resume != "" {
+			provider = a.Plan.Resume
+		}
+		o := run.SessionObservation{RecordMeta: f.meta("bind"), ProviderSession: provider, Wire: wire(f.t, `{"thread":"started"}`), Reason: "observed provider thread"}
+		_, err := io.Bind(ctx, o)
+		return o, err
+	}
 	if err := f.send(ctx, io, "", "", `{"control":"initialize"}`); err != nil {
 		return run.SessionObservation{}, err
 	}
@@ -238,7 +255,7 @@ func (f *fakeSessions) Step(ctx context.Context, a run.StepAdmission, io run.Ses
 	if err := f.send(ctx, io, step, "", `{"user":"compiled turn"}`); err != nil {
 		return run.StepObservation{}, fmt.Errorf("turn input: %w", err)
 	}
-	if a.Session.Resume == "" {
+	if a.Session.Resume == "" && !f.codex {
 		if _, err := io.Bind(ctx, run.SessionObservation{RecordMeta: f.meta("bind"), ProviderSession: run.ProviderSessionID("provider-" + string(a.Session.ID)), Wire: wire(f.t, `{"thread":"started"}`), Reason: "observed provider conversation"}); err != nil {
 			return run.StepObservation{}, fmt.Errorf("bind: %w", err)
 		}
