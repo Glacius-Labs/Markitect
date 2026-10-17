@@ -8,8 +8,9 @@ body: |-
   `python -B app.py --db PATH COMMAND ...`
   Use Python 3.13 and its standard library, with no network or external package.
   Every success writes one JSON object to stdout and exits 0. Every domain/input
-  error writes one object with an understandable nonempty error field and exits 2,
-  leaving stored data unchanged under [[storage]]. Error wording is free.
+  error writes exactly one JSON object to stdout with only an error field
+  containing an understandable nonempty string, exits 2, and leaves stored data
+  unchanged under [[storage]]. Error wording is free.
 
   Commands:
   - `add --id ID --title TITLE --author AUTHOR --pages INTEGER` returns the created

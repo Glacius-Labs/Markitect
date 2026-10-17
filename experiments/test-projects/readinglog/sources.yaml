@@ -21,6 +21,11 @@ snapshots:
   - path: snapshots/03-summary/model.yaml
     model: readinglog
     version: 0.4.0
+refinements:
+  - definition: readinglog/interface
+    classification: Correction of previously too-open fixture wording, not a historical behavior or coverage claim.
+    change: Require exactly one JSON object on stdout with only a nonempty string error field, exit 2 and unchanged stored data in all four snapshots.
+    sourceLimit: The copied application, public test and preserved upstream contract remain unchanged.
 templateDerivations:
   - target: template/.markitect/execution.yaml
     change: Adapt illustrative profile names, remove Library Package override, and bind the Python test command to readinglog/interface.
