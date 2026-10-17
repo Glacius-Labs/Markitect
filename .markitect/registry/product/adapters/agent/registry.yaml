@@ -4,6 +4,38 @@ artifacts:
     form: doc
     realizes: [product/ports-and-adapters]
     why: Documents the selected pinned Claude wire shapes, provenance and source-only evidence limits.
+  - path: "internal/adapters/claudecode/metadata.go"
+    form: code
+    realizes: [product/adapters/agent/closed-agent-metadata, product/ports-and-adapters]
+    why: Prepares source-bound Claude image observations from actual pinned metadata without executing the image.
+  - path: "internal/adapters/claudecode/metadata_decode.go"
+    form: code
+    realizes: [product/adapters/agent/closed-agent-metadata, product/ports-and-adapters]
+    why: Validates the closed Claude Host format and existing explicit session settings with captured instruction references.
+  - path: "internal/adapters/claudecode/metadata_engine.go"
+    form: code
+    realizes: [product/adapters/agent/closed-agent-metadata, product/ports-and-adapters]
+    why: Binds only an explicit engine image reader for inspection and bounded static metadata copying.
+  - path: "internal/adapters/claudecode/metadata_fixture_test.go"
+    form: test
+    realizes: [product/adapters/agent/closed-agent-metadata, product/ports-and-adapters]
+    why: Supplies captured M1 inputs through the real Apply profile consumer without provider execution.
+  - path: "internal/adapters/claudecode/metadata_test.go"
+    form: test
+    realizes: [product/adapters/agent/closed-agent-metadata, product/ports-and-adapters]
+    why: Distinguishes pinned Claude image identities, whole metadata binding and partial acquisition failures.
+  - path: "internal/adapters/claudecode/metadata_decode_test.go"
+    form: test
+    realizes: [product/adapters/agent/closed-agent-metadata, product/ports-and-adapters]
+    why: Distinguishes malformed metadata, closed fields and captured-only instruction requests.
+  - path: "internal/adapters/claudecode/execution_profile.go"
+    form: code
+    realizes: [product/adapters/agent/closed-agent-metadata, product/ports-and-adapters]
+    why: Projects complete prepared Claude settings into the existing session payload with the actual read-only tool intersection.
+  - path: "internal/adapters/claudecode/execution_profile_test.go"
+    form: test
+    realizes: [product/adapters/agent/closed-agent-metadata, product/ports-and-adapters]
+    why: Distinguishes source and provider binding, explicit settings and read-only projection without mutating the writing profile.
   - path: "internal/adapters/claudecode/codec.go"
     form: code
     realizes: [product/ports-and-adapters]
