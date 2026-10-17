@@ -72,7 +72,6 @@ func TestConcreteResponsibilityBoundaries(t *testing.T) {
 		{"internal/adapters/checks", "internal/run", true},
 		{"internal/adapters/checks", "internal/adapters/container", true},
 		{"internal/adapters/checks", "internal/agentd/frame", false},
-		{"internal/adapters/checks", "internal/adapters/gitrepo", false},
 		{"internal/adapters/checks", "internal/tooling/source", false},
 		{"internal/adapters/gitrepo", "internal/run", true},
 		{"internal/adapters/gitrepo", "internal/adapters/container", true},
@@ -153,6 +152,53 @@ func TestTestsAndPlatformsCannotBypassDirection(t *testing.T) {
 				t.Fatalf("%v %v", got, err)
 			}
 		})
+	}
+}
+
+func TestCheckWorkspaceCompositionEdgeStaysTestOnly(t *testing.T) {
+	// External checks tests compose the concrete workspace adapter with the
+	// check runner; production continues to consume the Run workspace port.
+	for _, test := range []bool{false, true} {
+		got := Check([]Edge{{From: "internal/adapters/checks", To: "internal/adapters/gitrepo", Test: test}})
+		if (len(got) == 0) != test {
+			t.Errorf("checks -> gitrepo test=%v: %v", test, got)
+		}
+	}
+	for _, file := range []string{"fixture_windows_test.go", "fixture_linux_test.go", "fixture_windows.go", "fixture_linux.go"} {
+		t.Run(file, func(t *testing.T) {
+			root := t.TempDir()
+			test := strings.HasSuffix(file, "_test.go")
+			pkg := "checks"
+			if test {
+				pkg += "_test"
+			}
+			writeFixture(t, root, map[string]string{
+				"README.md": "# Owner\n", CodeMapSource: "packages:\n" + mapEntry("internal/adapters/checks", "apply-adapter") + mapEntry("internal/adapters/gitrepo", "apply-adapter"),
+				"internal/adapters/gitrepo/producer.go": "package gitrepo\n",
+				"internal/adapters/checks/" + file:      "package " + pkg + "\nimport _ \"" + ModulePath + "internal/adapters/gitrepo\"\n",
+			})
+			got, err := CheckRepository(root)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if test {
+				if len(got) != 0 {
+					t.Fatal("external check test composition refused", got)
+				}
+			} else if len(got) != 1 || got[0].Edge.File != "internal/adapters/checks/"+file || !strings.Contains(got[0].Rule, "responsibility direction forbids") {
+				t.Fatal("production check imported workspace adapter", got)
+			}
+		})
+	}
+}
+
+func TestClaudeSnapshotSmokeEdgeStaysTestOnly(t *testing.T) {
+	// The external Claude smoke computes its candidate tree from actual files.
+	for _, test := range []bool{false, true} {
+		got := Check([]Edge{{From: "internal/adapters/claudecode", To: "internal/snapshot", Test: test}})
+		if (len(got) == 0) != test {
+			t.Errorf("claudecode -> snapshot test=%v: %v", test, got)
+		}
 	}
 }
 
