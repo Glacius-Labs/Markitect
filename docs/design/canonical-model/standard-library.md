@@ -15,6 +15,8 @@ Source: the owner's standard-library design discussion in this chat on 17 Octobe
 - Further owner decision and question: "Interface sollte auch interne technische Verträge abdecken. Wie würde das am Bibliotheksbeispiel aussehen, und wie grenzen wir Interface dabei von Component ab?" Interface includes internal technical contracts. The concrete architecture and exact Property contracts below remain proposals.
 - Further selection: "Okay, dann bleiben Actor, Interface und Component ebenfalls bei Körperlinks und spec: {}." This selects the empty structured contracts and body-link relationships for those three Kinds. It does not select the proposed internal Component split or every sentence of Kind wording.
 - Next requested subject: "Lass uns als Nächstes Scenario und Check am Bibliotheksbeispiel durchgehen. Welche Properties brauchen die wirklich?" Their contracts below remain assistant proposals.
+- Further selection: "Okay, dann bleiben Scenario und Check ebenfalls bei Körperlinks und spec: {}." This selects the same empty structured contracts and body-link relationships for the two verification Kinds. Exact wording remains a working formulation.
+- The owner then asked: "Haben wir damit die wichtigsten Bausteine für die erste Standardbibliothek, oder fehlt noch etwas Wesentliches? Und ist dann hier alles mit empty spec?" The first-scope assessment below is an assistant recommendation, not a decision to publish or implement the library.
 
 ## Current design state
 
@@ -24,8 +26,8 @@ Source: the owner's standard-library design discussion in this chat on 17 Octobe
 | UseCase.rules and its Property definition | Dropped from the proposal following the owner's challenge and selection | Rationale below |
 | Interface covers internal technical contracts as well as external interaction | Owner-selected direction | [Interface](interface.md), internal example below |
 | Actor, Interface and Component: body links and empty spec | Owner-selected direction | [Actor](actor.md), [Interface](interface.md), [Component](component.md) |
-| Scenario and general-purpose Check: body links and empty spec | Assistant proposal awaiting discussion | [Scenario](scenario.md), [Check](check.md), example below |
-| Standard-library distribution, Package names and remaining Kinds | Assistant proposals; not selected | Initial proposal below |
+| Scenario and general-purpose Check: body links and empty spec | Owner-selected direction | [Scenario](scenario.md), [Check](check.md), example below |
+| Standard-library distribution and Package names | Assistant proposals; not selected | Initial proposal below |
 | Production library, migration and consumer behavior | Not implemented by this record | Existing fixtures remain unchanged |
 
 The initial source assessment used Main `f8c1acaa169c9955d237e17cd245add963c155bd`. Before recording, the isolated documentation branch advanced to integrated Main `f23eaa2072226d905a8d79b8d6c20f419dfdc136`. These are source observations, not compatibility or execution evidence. The canonical v1 compiler and read-only preparation exist; full Apply remains separate delivery work.
@@ -43,7 +45,7 @@ The proposed first target was eight Kinds:
 
 Component would retain its earlier general, nestable meaning, including logical parts without a separate process. Scenario would describe an expected concrete situation, actions and result. Check would describe a verification procedure and success criteria; actual results remain execution evidence.
 
-The initial optional structured relations were UseCase.actors, UseCase.rules, Interface.useCases, Component.parts, Component.interfaces, Scenario.useCases and Check.scenarios. The selection of empty specs for the six software Kinds drops their proposed fields, including UseCase.rules. Scenario.useCases and Check.scenarios remain unselected candidates to assess below, not an implementation list. Reverse relationships would be derived rather than maintained twice.
+The initial optional structured relations were UseCase.actors, UseCase.rules, Interface.useCases, Component.parts, Component.interfaces, Scenario.useCases and Check.scenarios. The subsequent selection of empty specs for all eight Kinds drops these proposed fields. Their assessments below explain the choices rather than establish an implementation list. Reverse relationships need not be maintained twice.
 
 A single proposed distribution model, `markitect-standard`, would carry both Packages and depend on the existing Core model. Exact manifest dependencies, per-file imports and the complete external lock would bind its contents. Bundled availability with explicit imports is proposed. No registry, automatic update selection or additional language mechanism is required for the first design.
 
@@ -231,7 +233,7 @@ The owner has selected empty specs and body links for Component as well as Inter
 
 The [worked cases](library-example/business-rules.md#worked-cases), [return UseCase](library-example/m1/model/lending/return.yaml), [availability Rule](library-example/m1/model/catalog/availability.yaml) and [independent evaluation contract](library-example/evaluation-contract.md) already distinguish expected behavior, a method of examination and actual evidence. The evaluation contract includes repeated-old-return case E08. It also states observable-state limits and separates runtime observations from source review.
 
-Proposal: Scenario describes a concrete expected case; Check describes how to examine an expectation and decide whether observations satisfy it. The [Scenario](scenario.md) and [Check](check.md) pages own the proposed Kind wording. Both use empty specs and body links. Neither is an execution result. The new observation is that these existing examples can express the distinction without the initially proposed Scenario.useCases or Check.scenarios fields.
+Scenario describes a concrete expected case; Check describes how to examine an expectation and decide whether observations satisfy it. The [Scenario](scenario.md) and [Check](check.md) pages own the working Kind wording. The owner has selected empty specs and body links for both. Neither is an execution result. The observation supporting this choice is that the existing examples can express the distinction without the initially proposed Scenario.useCases or Check.scenarios fields.
 
 The following two proposed Definition files would live in Package lending. They are design illustrations, not changes to M1 or a compiled fixture. The core domain and interface Definitions remain the source of their meaning.
 
@@ -312,11 +314,27 @@ There is one concrete reason to retain structure in an existing narrower Kind: t
 
 Routine Checks can use parameters from an exact selected model, with semantic review when expectations change. The existing independent Library experiment deliberately freezes separate five/three profiles; this proposal does not change those controls or create a second evaluator. Neither new Scenario nor Check Definitions are prerequisites newly added to the two-Apply target.
 
-Recommendation pending owner selection: both general-purpose Kinds use body links and empty specs. Review their proposed meaning before treating the complete eight-Kind set as selected. No scenario execution, new test implementation or behavioral proof is supplied by this documentation.
+The owner has selected body links and empty specs for both general-purpose Kinds. Together with the previous selections, all eight discussed Kinds now have the selected empty structured field contract. No scenario execution, new test implementation or behavioral proof is supplied by this documentation.
+
+## First scope assessment and empty specs
+
+Assistant assessment: the eight discussed Kinds are a coherent first general-purpose vocabulary. They address domain meaning (Concept), obligations (Rule), behavior (UseCase), participating roles (Actor), interaction contracts (Interface), system responsibilities (Component), concrete expected cases (Scenario) and verification methods (Check). The Library exposes no concrete need for another universal Kind at this point. This is a bounded scope recommendation, not proof that the vocabulary will suit every project.
+
+Project purpose and scope can be stated in a Concept for the overall project, as the current Library does. Realization constraints can be Rules. The current general Component meaning can describe logical system parts without adding System or Module solely for completeness. Rationale can accompany the owning Definition and decision history remains separately recorded. Workflow, Decision, Artifact and more specific architecture/domain types remain deferred until their distinct purpose is established. This does not resolve their older open questions by deleting those terms.
+
+All eight selected standard Kinds declare `spec: {}`. Because a Kind's spec declares its instances' allowed structured fields, this is an empty field contract, not an open extension object. Definitions whose exact kind is one of these Kinds also have empty specs. They still have their identities, kind references, binding bodies, body links, imports and optional titles under the common envelope.
+
+The library's value is shared named contracts and common expectations for authoring and assessment. Kind bodies state what a Concept, Rule, Interface or Check means. The compiler can establish identities, exact kind targets, valid links and the closed empty spec shape. It does not thereby prove correct natural-language classification, formal provides/consumes relations, business invariants or complete verification coverage. Keeping relationships in prose is a deliberate choice that preserves expressiveness and avoids duplicate lists while leaving more interpretation to semantic assessment.
+
+Empty specs are not a rule for all project modeling, the Core or every future library. A project can declare a different Kind with structured Properties. The existing LendingPolicy declares maxOpenLoans and loanPeriodDays; its loan-policy instance sets 5 and 14. This gives exact field ownership, value types and cardinalities. It is not valid to add those fields directly to a standard Rule or Concept with an empty contract. Declaring a separate Kind is supported; no inheritance or automatic extension of the standard Kind follows. Any common meaning needed by that new Kind must be stated explicitly.
+
+The Core's Kind and Property Definitions retain their nonempty structural contracts. The repository's narrower maintenance Check retains its command Property and actual tooling consumer. Future specialized HTTP, messaging or deployment models can introduce structured fields where a concrete use requires them. The standard library does not replace those mechanisms with prose.
+
+Before a production library is ready, remaining work includes agreeing final Kind wording and stable Package/model identities, producing the separate Definition files and manifests, binding exact dependencies/locks, and checking a complete consuming example. Version/update policy, distribution and deliberate migration from the existing example/self-model vocabularies also remain to decide. These are the concrete remaining library design/delivery questions; adding more universal Kinds is not presently justified. None of this record claims that such implementation, migration or validation has occurred.
 
 ## Remaining discussion
 
-- Owner review of Scenario and general-purpose Check meaning and empty specs. The six software Kinds already have selected empty specs and body-link relationships.
+- All eight discussed Kinds have selected empty specs and body-link relationships. The recommendation to use exactly this first scope, with no additional universal Kind yet, is an assessment for discussion.
 - Exact Kind wording remains a working formulation. Interface's internal/external scope is selected; the particular call contract and Component split remain illustrative architecture proposals.
 - Decide distribution model, Package identities and update policy before publishing them.
 - Preserve the Library's complete intent when proposing a vocabulary migration; do not alter the M1/M2 Apply acceptance target merely to demonstrate the standard library.

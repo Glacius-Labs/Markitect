@@ -2,9 +2,9 @@
 
 A **Scenario** describes a concrete situation, the actions taken and the expected outcome.
 
-## Standard-library proposal
+## Standard-library contract
 
-Proposal for discussion, 17 October 2026: body links and `spec: {}`. The [standard-library discussion](standard-library.md#scenario-and-check-proposal) contains the Library example and Property assessment. The owner has not selected this contract yet.
+Owner-selected direction, 17 October 2026: body links and `spec: {}`. Exact Kind wording remains a working formulation. The [standard-library discussion](standard-library.md#scenario-and-check-proposal) contains the Library example and Property assessment. The package has not been implemented.
 
 This Definition would have its own file in the proposed Package `markitect/verification`:
 
