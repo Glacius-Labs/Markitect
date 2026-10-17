@@ -22,6 +22,10 @@ The owner subsequently accepted the [existing-project Init flow](#existing-proje
 
 > Das klingt gut. Halte diesen Init-Ablauf in unseren Docs fest, insbesondere die Trennung zwischen technischer Einrichtung, Modellübernahme und meinen Entscheidungen. Weiterhin keine Implementierung.
 
+After discussing the first Apply of an adopted project, the owner accepted the workflow and reuse of the existing finding structure:
+
+> Das klingt gut. Halte diesen Apply-Ablauf in unseren Docs fest, inklusive der Übergabe der Extract-Befunde über die vorhandene Befundstruktur und dem begründeten Beibehalten korrekter Teile. Weiterhin keine Implementierung.
+
 ### The six installed skills
 
 Both clients receive the same skill names, responsibilities and authority boundaries. Provider-specific packaging does not create different project rules.
@@ -100,6 +104,8 @@ Model adoption is a separate `markitect-design` task in the same conversation. "
 The agent examines relevant requirements, documentation, tests and code, proposes a coherent model and surfaces consequential conflicts. For example: "The README and application allow five loans, but a test expects three. Which limit should apply?" It groups related questions with their sources and a justified recommendation. The owner decides meaning that the assignment or authoritative sources do not already settle. An existing bug must not become a requirement merely because extraction observed it.
 
 The [source-grounded model-adoption workflow](canonical-model/commands.md#model-adoption-without-turning-defects-into-rules) owns the detailed procedure. Under its [accepted completion criterion](canonical-model/commands.md#completion-and-adoption-with-known-deviations), a reviewed model proposal may be adopted with adequately supported known realization deviations. Those findings remain visible, Verify keeps its actual result, and artifact repair is separate work; unresolved material intent or evidence gaps are not waived.
+
+The [first Apply after adoption](canonical-model/manager-apply-library-flow.md#first-apply-after-model-adoption) then reconciles the complete existing realization, preserving justified correct parts. Its [finding handoff](canonical-model/manager-apply-execution.md#extract-findings-at-the-first-apply) uses the existing issue structure with current applicability and evidence assessment; adoption supplies neither artifact approval nor authority to close those findings.
 
 Adoption also needs explicit responsibility and exact file accounting under [DEC-006](../concepts/register.md#dec-006-every-file-is-covered-or-explicitly-ignored). The agent can prepare registry associations within authorized modeling choices; the owner need not approve every registry line. Unclear responsibility boundaries and genuine exceptions need a decision. Init must not ignore unknown files or invent ownership merely to produce a passing report. A registered file is accounted for, not thereby semantically correct.
 
