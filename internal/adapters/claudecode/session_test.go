@@ -8,6 +8,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"reflect"
 	"strings"
 	"sync"
 	"testing"
@@ -237,7 +238,8 @@ func sessionAdmissions(t *testing.T) (run.SessionAdmission, run.StepAdmission) {
 func sessionsForTest(t *testing.T, f *fakeRuntime) *Sessions {
 	t.Helper()
 	s, err := NewSessionsWithRuntime(func(_ context.Context, spec container.ContainerSpec) (RuntimeSession, error) {
-		if spec.Image != "sha256:"+strings.Repeat("a", 64) || len(spec.Mounts) != 2 || spec.Mounts[0].Volume != "workspace" || spec.Mounts[1].Volume != "provider-home" {
+		expected := container.ContainerSpec{Name: "markitect-session", Image: "sha256:" + strings.Repeat("a", 64), Labels: map[string]string{"markitect.store": "store"}, User: "1000:1000", Workdir: "/work", Mounts: []container.Mount{{Volume: "workspace", Target: "/work"}, {Volume: "provider-home", Target: "/home/agent"}}, CPUs: 1, MemoryBytes: 1 << 30, Pids: 128, TmpBytes: 1 << 20}
+		if !reflect.DeepEqual(spec, expected) {
 			t.Errorf("unbound runtime spec %+v", spec)
 		}
 		return f, nil
@@ -267,7 +269,8 @@ func TestClaudeSingleAdmittedStepAcknowledgedToolsAndObservedExit(t *testing.T) 
 			if err != nil || !opened.Ready || opened.ProviderSession != "" || len(channel.bindings) != 0 {
 				t.Fatalf("open %+v %v", opened, err)
 			}
-			if len(runtime.start.Env) != 1 || runtime.start.Env[0] != "CLAUDE_CODE_OAUTH_TOKEN=secret-token" || runtime.start.Argv[0] != "/usr/local/bin/claude" {
+			expectedArgv := []string{"/usr/local/bin/claude", "-p", "--input-format", "stream-json", "--output-format", "stream-json", "--verbose", "--strict-mcp-config", "--mcp-config", `{"mcpServers":{"markitect":{"type":"stdio","command":"/usr/local/bin/markitect-agentd","args":["mcp"]}}}`, "--tools", "Read,Write", "--allowedTools", "Read,Write,mcp__markitect__submit_work", "--permission-mode", "dontAsk", "--model", "admitted-model", "--effort", "high", "--setting-sources", "", "--system-prompt", "Use the exact Host instruction."}
+			if len(runtime.start.Env) != 1 || runtime.start.Env[0] != "CLAUDE_CODE_OAUTH_TOKEN=secret-token" || !reflect.DeepEqual(runtime.start.Argv, expectedArgv) || runtime.start.Dir != "/work" {
 				t.Fatalf("provider invocation %+v", runtime.start)
 			}
 			step, err := s.Step(ctx, b, channel)
@@ -528,5 +531,28 @@ func TestClaudeStopRetainsPhysicalHandleAfterUnacknowledgedBind(t *testing.T) {
 	out, err := s.Stop(context.Background(), run.StopRequest{Session: a.Plan.ID, Timeout: time.Second}, channel)
 	if err != nil || !out.Terminated || runtime.stopCalls != 1 {
 		t.Fatalf("lost physical stop handle %+v %v", out, err)
+	}
+}
+
+func TestClaudeFreshReviewerMountAndReadOnlyTools(t *testing.T) {
+	a, _ := sessionAdmissions(t)
+	a.Plan.Role = "reviewer"
+	a.Plan.ReadOnly = true
+	var profile SessionProfile
+	if err := json.Unmarshal(a.Profile.Bytes(), &profile); err != nil {
+		t.Fatal(err)
+	}
+	profile.BuiltinTools = []string{"Read"}
+	raw, _ := json.Marshal(profile)
+	a.Profile = payloadForSession(t, "application/vnd.markitect.claude-session-profile+json", raw)
+	a.Plan.Profile = a.Profile.Ref()
+	parsed, tools, err := readSessionProfile(a)
+	if err != nil {
+		t.Fatal(err)
+	}
+	spec := sessionSpec(a.Plan, parsed)
+	argv := sessionArgv(a.Plan, parsed, tools)
+	if !spec.Mounts[0].ReadOnly || spec.Mounts[1].ReadOnly || strings.Contains(strings.Join(argv, " "), "--resume") || strings.Contains(strings.Join(argv, " "), "Write") {
+		t.Fatalf("reviewer inherited writing or conversation state: %+v %v", spec, argv)
 	}
 }
