@@ -1,0 +1,175 @@
+package checks
+
+import (
+	"context"
+	"crypto/rand"
+	"encoding/hex"
+	"errors"
+	"fmt"
+	"path"
+	"strings"
+	"time"
+
+	"github.com/Glacius-Labs/Markitect/internal/adapters/container"
+	"github.com/Glacius-Labs/Markitect/internal/run"
+	"github.com/Glacius-Labs/Markitect/internal/snapshot"
+)
+
+// CommandRuntime observes a command in its own hardened container. Production
+// implementations must preserve Engine.RunCommand's physical observations.
+type CommandRuntime interface {
+	RunCommand(context.Context, container.ContainerSpec, []string, []string, int64) (container.CommandResult, error)
+}
+
+// Runner executes allowed checks on fresh, verified workspace copies. It keeps
+// no task or review state; run decides what the resulting receipt establishes.
+type Runner struct {
+	runtime    CommandRuntime
+	workspaces run.Workspaces
+}
+
+var _ run.Checks = (*Runner)(nil)
+
+// NewRunner composes the actual container runtime with an independently
+// configured workspace adapter. Workspace helper images and check images have
+// separate identities; every check runs only in the request's exact image.
+func NewRunner(engine *container.Engine, workspaces run.Workspaces) (*Runner, error) {
+	if engine == nil {
+		return nil, fmt.Errorf("check runner needs a container engine")
+	}
+	return NewRunnerWithRuntime(engine, workspaces)
+}
+
+// NewRunnerWithRuntime supplies an observation-compatible runtime, including
+// deterministic peers for source tests. A workspace must be private to Run
+// until its command has ended and Close has completed.
+func NewRunnerWithRuntime(runtime CommandRuntime, workspaces run.Workspaces) (*Runner, error) {
+	if runtime == nil || workspaces == nil {
+		return nil, fmt.Errorf("check runner needs runtime and workspaces")
+	}
+	return &Runner{runtime: runtime, workspaces: workspaces}, nil
+}
+
+func (r *Runner) Run(ctx context.Context, req run.CheckRequest) (receipt run.CheckReceipt, err error) {
+	receipt.ID = req.ID
+	defer func() {
+		if err != nil && receipt.Reason == "" {
+			receipt.Reason = err.Error()
+		}
+	}()
+	if r == nil || r.runtime == nil || r.workspaces == nil || !req.Valid() {
+		return receipt, fmt.Errorf("invalid check request or runner")
+	}
+	if path.Clean(req.Executable) != req.Executable || strings.ContainsRune(req.Executable, 0) {
+		return receipt, fmt.Errorf("check executable must be a clean absolute container path")
+	}
+	for _, arg := range req.Args {
+		if strings.ContainsRune(arg, 0) {
+			return receipt, fmt.Errorf("check argument contains NUL")
+		}
+	}
+	if req.Limits.Processes > int64(int(^uint(0)>>1)) {
+		return receipt, fmt.Errorf("check process limit cannot be represented")
+	}
+	if err := ctx.Err(); err != nil {
+		receipt.Uncertain = true
+		receipt.Reason = err.Error()
+		return receipt, err
+	}
+	token := make([]byte, 16)
+	if _, err := rand.Read(token); err != nil {
+		return receipt, fmt.Errorf("allocate disposable check identity: %w", err)
+	}
+	name := "check-" + hex.EncodeToString(token)
+	id := run.WorkspaceID(name)
+	identities := []run.WorkspaceID{id}
+	limited, cancel := context.WithTimeout(ctx, req.Timeout)
+	defer cancel()
+	copy, materializeErr := r.workspaces.Materialize(limited, run.WorkspaceSpec{ID: id, Tree: req.Tree})
+	// Even a failed materialization may have created a volume. Close its exact
+	// private identity using a bounded context that survives caller cancellation.
+	defer func() {
+		operationErr := limited.Err()
+		cancel()
+		cleanup, stop := context.WithTimeout(context.WithoutCancel(ctx), 10*time.Second)
+		defer stop()
+		for _, identity := range identities {
+			closed, closeErr := r.workspaces.Close(cleanup, identity)
+			if closeErr != nil || closed.ID != identity || !closed.Closed || closed.Uncertain {
+				receipt.Uncertain = true
+				failure := fmt.Errorf("disposable check workspace %s closure unconfirmed: %s", identity, closed.Reason)
+				if closeErr != nil {
+					failure = fmt.Errorf("close disposable check workspace %s: %w", identity, closeErr)
+				}
+				err = errors.Join(err, failure)
+				receipt.Reason = err.Error()
+			}
+		}
+		if operationErr != nil {
+			receipt.Uncertain = true
+			receipt.TimedOut = errors.Is(operationErr, context.DeadlineExceeded)
+			err = errors.Join(err, operationErr)
+			receipt.Reason = err.Error()
+		}
+	}()
+	if materializeErr != nil || copy.ID != id || copy.Closed || copy.Uncertain || copy.Volume == "" || copy.Tree != req.Tree.Digest() {
+		err = fmt.Errorf("disposable check tree was not confirmed: %s", copy.Reason)
+		if materializeErr != nil {
+			err = fmt.Errorf("materialize disposable check tree: %w", materializeErr)
+		}
+		receipt.Uncertain = copy.Uncertain
+		receipt.Reason = err.Error()
+		return receipt, err
+	}
+	receipt.Tree = copy.Tree
+	// The runtime image keeps tool caches in /home/agent. Give the check an
+	// independently verified empty disposable home without rewriting fixed Env.
+	homeID := run.WorkspaceID(name + "-home")
+	identities = append(identities, homeID)
+	empty := snapshot.Tree{}
+	home, homeErr := r.workspaces.Materialize(limited, run.WorkspaceSpec{ID: homeID, Tree: empty})
+	if homeErr != nil || home.ID != homeID || home.Closed || home.Uncertain || home.Volume == "" || home.Volume == copy.Volume || home.Tree != empty.Digest() {
+		err = fmt.Errorf("disposable check home was not confirmed: %s", home.Reason)
+		if homeErr != nil {
+			err = fmt.Errorf("materialize disposable check home: %w", homeErr)
+		}
+		receipt.Uncertain = home.Uncertain
+		return receipt, err
+	}
+	workdir := "/work"
+	if !req.Directory.IsRoot() {
+		workdir += "/" + req.Directory.String()
+	}
+	spec := container.ContainerSpec{
+		Name: name, Image: req.ImageID, Labels: map[string]string{"markitect.check": string(req.ID)}, User: "1000:1000",
+		Mounts: []container.Mount{{Volume: copy.Volume, Target: "/work"}, {Volume: home.Volume, Target: "/home/agent"}}, Workdir: workdir,
+		CPUs: float64(req.Limits.MilliCPUs) / 1000, MemoryBytes: req.Limits.MemoryBytes, Pids: int(req.Limits.Processes),
+		TmpBytes: 64 << 20, Network: "none",
+	}
+	argv := append([]string{req.Executable}, req.Args...)
+	observed, commandErr := r.runtime.RunCommand(limited, spec, argv, append([]string(nil), req.Env...), req.MaxOutputBytes)
+	receipt.ImageID = observed.ImageID
+	receipt.Started, receipt.Exited, receipt.ExitCode = observed.Started, observed.Exited, observed.ExitCode
+	receipt.Output = append([]byte(nil), observed.Output...)
+	receipt.Truncated, receipt.Uncertain, receipt.Reason = observed.Truncated, observed.Uncertain, observed.Reason
+	if int64(len(receipt.Output)) > req.MaxOutputBytes {
+		receipt.Output = receipt.Output[:req.MaxOutputBytes]
+		receipt.Truncated = true
+	}
+	if observed.Started && observed.ImageID != req.ImageID || observed.Started && !observed.Exited || observed.Exited && !observed.Started {
+		receipt.Uncertain = true
+		commandErr = errors.Join(commandErr, fmt.Errorf("check image, start or exit was not confirmed"))
+	}
+	if !observed.Started && commandErr == nil {
+		commandErr = fmt.Errorf("check did not start")
+	}
+	if commandErr != nil {
+		// An error accompanying an otherwise passing exit cannot be dropped by
+		// Passed. Known startup refusal retains the runtime's certainty.
+		if observed.Started && observed.Exited {
+			receipt.Uncertain = true
+		}
+		receipt.Reason = commandErr.Error()
+	}
+	return receipt, commandErr
+}
