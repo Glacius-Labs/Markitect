@@ -1,5 +1,71 @@
 # Capability skills and native project entrypoints
 
+## Accepted Init design — 17 October 2026
+
+**Status:** accepted by the owner in the "Usage, Skills, UX" discussion on 17 October 2026. Init is to install six operation skills for both Codex and Claude Code, short native entrypoints and guidance maintained from one shared source. This section owns the current design. The [9 October record](#historical-design--9-october-2026) below preserves the earlier audit and proposals; its skill set and narrower meaning of Apply are superseded here.
+
+**Scope:** documentation only. This decision does not implement Init, install skills, change the canonical language or the frozen Apply core, or authorize execution. Installed instructions must describe only the capabilities supported by their selected Markitect version. The [current workflow](../project-workflow.md) owns executable behavior; the [delivery plan](../implementation-plan.md) owns delivery scope. The target skill set is not evidence that six corresponding CLI verbs exist.
+
+### Owner source
+
+The owner first specified the normal entry through a coding agent and the Init requirement:
+
+> Ich möchte Markitect normalerweise über meinen Coding-Agenten bedienen.
+>
+> Wir wollen beim Init direkt die entsprechenden Codex und Claude Skills haben, damit sie jeweils wissen wie hier zu arbeiten ist und wie man das Modell pflegt
+
+After the six-skill proposal, the owner accepted it and requested this record:
+
+> Das klingt gut. Halte diese Aufteilung in unseren Docs fest, inklusive der sechs Skills, der Inhalte von AGENTS.md und CLAUDE.md und der gemeinsamen Pflegequelle. Noch keine Implementierung.
+
+### The six installed skills
+
+Both clients receive the same skill names, responsibilities and authority boundaries. Provider-specific packaging does not create different project rules.
+
+| Skill | Trigger | Responsibility and boundary |
+| --- | --- | --- |
+| `markitect-init` | Set up Markitect or update the project integration. | Inspect the existing project, perform supported setup and install or update both native entrypoints and skill sets. Preserve custom guidance and unrelated files. Setup does not establish that an existing project is correctly modeled or realized. The installed skill also serves later setup work; initial bootstrap cannot depend on a skill that has not been installed yet. |
+| `markitect-configure` | Select a provider, change capacity or configure project checks. | Maintain supported project and execution settings, validate profile bindings and explain their provenance. Binding project rules belong in the model. This task does not implicitly authorize changes to personal accounts, credentials or security preferences. |
+| `markitect-design` | Explain the model, change intended behavior or propose improvements. | Find and understand the relevant Definitions, clarify consequential missing intent and make authorized model changes with their relationships and constraints. Use structural checks and refresh readable views through their supported writer. Suggestions remain proposals until adoption is authorized. This skill does not itself implement application artifacts. |
+| `markitect-check` | Check model structure or investigate compiler, registry or file-accounting diagnostics. | Run the structural preparation, explain diagnostics and repair them within the assignment's authority. Distinguish compilation, references, registry and complete file accounting from semantic implementation correctness. An assessment-only request grants no repair authority. |
+| `markitect-apply` | Realize the model, repair a deviation without changing intent, inspect current progress or continue an assignment. | Operate the complete supported Apply workflow: check prerequisites, commission execution, observe progress, relay questions and use supported continuation or recovery. Markitect owns realization, independent review, integration, verification and guarded publication. Status inspection starts no new work; the outer agent does not build another Manager scheduler or bypass publication. |
+| `markitect-verify` | Assess whether the realization meets the model, especially when asked to check without repairing. | Examine the actual realization and evidence against the selected model, run authorized checks and report deviations, uncertainty and missing evidence. Do not repair automatically or claim full semantic verification from a few passing checks. This is not an extra approval institution beside Apply's independent review. |
+
+`check` assesses structure; `verify` assesses realization and evidence. Skill names describe user tasks, not a promise of matching CLI verbs. Where a necessary operation is unsupported, report that limit instead of inventing a command, execution result or successful completion.
+
+The outer coding agent chains relevant skills within the existing assignment. For the library's five-to-three limit change, it uses `design` and `check`, commits the authorized model revision within its grant, then commissions `apply`. Existing loans stay valid and returnable because the model says so, not because a skill adds that policy. Apply itself changes only artifacts and does not commit, merge or push; the owner accepts the published result under [DEC-035](../concepts/register.md#dec-035-committed-model-in-owner-commit-accepts-the-result).
+
+One ordinary request must not become six human prompts or repeated permission requests for already authorized steps. Status and continuation belong to the ongoing Apply workflow. Separate `extract`, `cleanup`, `refactor` or `bughunt` skills wait until their actual operations justify independent instructions; suggestions are already discoverable through `design`. This decision does not add those operations to the first Apply.
+
+### What AGENTS.md and CLAUDE.md contain
+
+The Markitect-managed part of each native entrypoint gives only the orientation needed before any project task:
+
+- State that the project uses Markitect and that its canonical model owns binding intent.
+- Identify the actual selected model, project overview and configured Markitect invocation. Init fills observed project bindings instead of copying historical example paths.
+- Distinguish a change of intent, which needs model work, from a realization defect against unchanged intent.
+- Route requests briefly to the six skills above. Let the coding agent choose and chain them.
+- Continue already authorized work; ask a concrete question only when material intent or authority is missing. A discussion or suggestion alone is not authorization to change the model.
+- Distinguish model change, structural checks, realization assessment, publication and owner acceptance. Point to the applicable project policy rather than duplicating it.
+
+Detailed YAML rules, command options, configuration schemas, review evidence and recovery procedures belong in task-specific skill references and their existing owners. Load only the relevant references. The entrypoints must not become a second manual or an independently maintained copy of project rules. For example, the library's loan limit and required architecture stay in the model. This follows [DEC-033](../concepts/register.md#dec-033-binding-intent-lives-only-in-the-model).
+
+Codex uses `AGENTS.md` with `.agents/skills/<skill-name>/SKILL.md`; Claude Code uses `CLAUDE.md` with `.claude/skills/<skill-name>/SKILL.md`. Keep supported provider-specific metadata distinct while retaining the shared meaning. Existing user-written entrypoint text and unrelated skills remain intact. These are instructions for the outer project agent; they neither replace the inner Managers' compiled context nor prove that an independent reviewer ran.
+
+### One maintained source, two native outputs
+
+The Markitect integration/onboarding area owns one versioned, provider-neutral content set for these skills and the managed entrypoint sections. Provider mappings derive both native outputs deterministically from that source; neither provider output is separately authored. This document owns the agreed split. The implementation location and generation mechanism remain implementation work, not an additional design decision made by this record.
+
+Shared content references the actual owning contracts for model authoring, configuration, structural preparation and Apply. It does not become a second owner of those contracts. Each installed set is tied to the selected Markitect version and actual project bindings. Product-contract changes require review of the affected shared instructions; Init or an explicit integration update installs the corresponding supported version. A model edit does not independently rewrite the native guidance, and a binary change does not silently replace it.
+
+Keep updates idempotent, source/target-bound and explicit about ownership: preserve custom text and unrelated skills, refuse stale writes and surface unmanaged same-name collisions instead of overwriting them. No personal provider configuration is changed merely to make the two clients look alike.
+
+Future validation must establish valid native files and resolving references, consistent meaning in both outputs, preservation of custom content, repeatable updates, collision and stale-source handling, and actual selection of the right instructions for ordinary work, structural diagnostics, assessment-only requests and continuation. File existence or matching generated bytes alone does not demonstrate agent behavior, complete Apply or owner acceptance. This is a validation requirement for later implementation, not a run performed by this documentation change.
+
+## Historical design — 9 October 2026
+
+The remaining text is the dated audit and earlier design. Its instructions and execution allowances applied to that historical assignment and grant no current work authority. Use the accepted section above for the current Init split.
+
 Direct user request, 9 October 2026: improve Markitect Skills, CLAUDE.md, AGENTS.md and native installation guidance, using several skills for meaningful capabilities/work steps. This extends only the active Designer native-working package. Other owners, studies, automation, Main merge and releases remain stopped. The existing one native product-proof allowance is unchanged; no extra run or budget is implied.
 
 ## Source audit before changes
