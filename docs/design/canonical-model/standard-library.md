@@ -20,6 +20,8 @@ Source: the owner's standard-library design discussion in this chat on 17 Octobe
 - Scope selection: "Okay, dann nehmen wir die acht Bausteine als ersten Umfang." The first scope is Concept, Rule, UseCase, Actor, Interface, Component, Scenario and Check.
 - Next subject: "Lass uns als Nächstes die Paketstruktur und Versionierung der Standardbibliothek festlegen. Was schlägst du vor?" The distribution and version policy below remain proposals pending owner selection.
 - Observation direction: "Wir sollten spec beobachten. Falls wir nie einen Anwendungsfall dafür haben, könnten wir überlegen ob wir das überhaupt brauchen". Retain this as an evidence-led simplification question during actual use. It is not a decision to remove spec or change the completed v1 baseline now.
+- Package/version selection: "Dann übernehmen wir die Paketstruktur und Versionierung wie vorgeschlagen." This selects the markitect-standard distribution, its two initial Packages, and the version/release policy below. It does not publish a release or select the later companion-library candidates.
+- Broader library requirement: "Unsere Standard Lib muss alles relevante beschreiben können, was normalerweise in einem Software Projekt bzw Repo auch dokumentiert und festgelegt sein muss. Es muss schließlich das Projekt beschreiben können." The owner explicitly named Frontend, Backend, C4 and Load Balancer, and allowed separate Packages. The eight-Kind foundation is therefore the first shared layer, not a claim that a complete software-project vocabulary family has already been designed. The proposed topic map below answers this broader requirement.
 
 ## Current design state
 
@@ -31,7 +33,8 @@ Source: the owner's standard-library design discussion in this chat on 17 Octobe
 | Actor, Interface and Component: body links and empty spec | Owner-selected direction | [Actor](actor.md), [Interface](interface.md), [Component](component.md) |
 | Scenario and general-purpose Check: body links and empty spec | Owner-selected direction | [Scenario](scenario.md), [Check](check.md), example below |
 | Exactly the eight discussed Kinds as the first scope | Owner-selected direction | Scope assessment below |
-| Standard-library distribution and Package names | Assistant proposals; not selected | Initial proposal below |
+| markitect-standard distribution, two initial Packages and version policy | Owner-selected direction | Package/version contract below |
+| Broader project/repository coverage and modular extension | Owner requirement; proposed topic map and exact companion Kinds remain under discussion | Broader library section below |
 | Production library, migration and consumer behavior | Not implemented by this record | Existing fixtures remain unchanged |
 
 The initial source assessment used Main `f8c1acaa169c9955d237e17cd245add963c155bd`. Before recording, the isolated documentation branch advanced to integrated Main `f23eaa2072226d905a8d79b8d6c20f419dfdc136`. These are source observations, not compatibility or execution evidence. The canonical v1 compiler and read-only preparation exist; full Apply remains separate delivery work.
@@ -334,15 +337,17 @@ Empty specs are not a rule for all project modeling, the Core or every future li
 
 The Core's Kind and Property Definitions retain their nonempty structural contracts. The repository's narrower maintenance Check retains its command Property and actual tooling consumer. Future specialized HTTP, messaging or deployment models can introduce structured fields where a concrete use requires them. The standard library does not replace those mechanisms with prose.
 
-Before a production library is ready, remaining work includes agreeing final Kind wording and stable Package/model identities, producing the separate Definition files and manifests, binding exact dependencies/locks, and checking a complete consuming example. Version/update policy, distribution and deliberate migration from the existing example/self-model vocabularies also remain to decide. These are the concrete remaining library design/delivery questions; adding more universal Kinds is not presently justified. None of this record claims that such implementation, migration or validation has occurred.
+Before a production library is ready, remaining work includes agreeing final Kind wording, producing the separate Definition files and manifests, binding exact dependencies/locks, and checking a complete consuming example. The owner has selected the foundation's model/Package identities and version policy below. Physical distribution and deliberate migration from the existing example/self-model vocabularies still need concrete implementation choices. Additional specialist vocabulary is addressed separately below. None of this record claims that such implementation, migration or validation has occurred.
 
-## Package and version proposal
+<a id="package-and-version-proposal"></a>
 
-Status: assistant proposal, 17 October 2026, pending owner selection. This applies the existing language contract rather than extending it. [Packages](minimal-language/language-contract.md#packages) are namespaces; [models](minimal-language/language-contract.md#models) are versioning/distribution units; the [lock](minimal-language/language-contract.md#lock) binds exact external contents. The compiler treats versions as exact labels and does not infer compatibility or select updates.
+## Package and version contract
+
+Status: owner-selected direction, 17 October 2026, following the Package/version proposal. The names, common version and release/update convention below are selected; releases and implementation are not performed by this record. This applies the existing language contract rather than extending it. [Packages](minimal-language/language-contract.md#packages) are namespaces; [models](minimal-language/language-contract.md#models) are versioning/distribution units; the [lock](minimal-language/language-contract.md#lock) binds exact external contents. The compiler treats versions as exact labels and does not infer compatibility or select updates.
 
 ### One distribution model and two Packages
 
-Proposed model ID: `markitect-standard`. It owns exactly two populated Packages for the first scope:
+Selected model ID: `markitect-standard`. It owns exactly two populated Packages for the first scope:
 
 | Package | Definitions |
 | --- | --- |
@@ -373,7 +378,7 @@ standard/
 
 Each Definition keeps its own file. The model root contains no Definitions directly. `markitect` is an unpopulated prefix, not an umbrella import. Model ID and physical folder do not create a Package prefix; the folders under root create the two exact Package identities. There are no kinds/properties/instances subtrees or version segments in those identities.
 
-The first usable preview is proposed as `0.1.0`:
+The selected first usable preview version is `0.1.0`; no release is published by this record:
 
 ```yaml
 formatVersion: 1
@@ -419,11 +424,11 @@ Keep the library version independent of the Markitect executable, the language/m
 
 Before publishing, use an unpublished draft rather than repeatedly replacing a published version. Publish `0.1.0` only when the eight separate Definitions compile with actual dependencies/locks and a complete consuming example. Before 1.0, new previews still remain immutable and exactly pinned; incompatible contract revisions advance the middle component (for example 0.2.0) and explicitly state their effects.
 
-Propose `1.0.0` once the owner selects the complete wording, the package/model identities and version policy, and the real library passes relevant consumer validation. This is vocabulary stability, independent of whether the complete Apply product has shipped. No new provider run or release authority is supplied here.
+Target `1.0.0` once the complete wording is selected and the real library passes relevant consumer validation under the selected identities and version policy. This is vocabulary stability, independent of whether the complete Apply product has shipped. No new provider run or release authority is supplied here.
 
 After 1.0, use a three-part release convention:
 
-| Change | Proposed release increment |
+| Change | Selected release increment |
 | --- | --- |
 | Editorial correction preserving the obligations, interpretation and accepted inputs | Patch, such as 1.0.1 |
 | Additive content that preserves the existing supported contracts and name resolution | Minor, such as 1.1.0 |
@@ -437,7 +442,79 @@ Keep existing Package/ID pairs stable across releases; do not rename or move the
 
 A consumer update changes the exact dependency requirement and regenerates the full external lock from validated sources. Then check structure and reassess semantic effects on applicable Definitions, realizations and evidence. A version label or unchanged local files does not prove those effects absent. One version per model ID is bound at a time; aliases do not allow mixing two standard-library versions. Old published contents and evidence remain tied to their original bindings.
 
-The proposal deliberately leaves storage/download locations, repository release tags and packaging automation for the distribution implementation. No versions are independently declared on Package imports and no range resolution, latest selector or automatic upgrade is introduced.
+This contract leaves storage/download locations, repository release tags and packaging automation for the distribution implementation. No versions are independently declared on Package imports and no range resolution, latest selector or automatic upgrade is introduced.
+
+## Broader project and repository coverage
+
+Owner requirement, 17 October 2026: the library must describe the relevant intent normally documented and specified for a software project/repository. The owner named frontend, backend, C4 and load balancing and welcomed separate Packages. The previous eight-Kind assessment addressed the first shared foundation. It did not establish completeness for this broader scope. This section proposes the next design direction without changing that selected foundation or the current Apply target.
+
+The language can already express additional intent through bodies, links and project-defined Kinds. A useful standard-library family should also supply precise reusable vocabulary for common topics, so every project need not reinvent architecture and operation meanings. Completeness is about the applicable project obligations, not a prescribed UI, cloud platform or deployment style for every repository.
+
+### Proposed topic map
+
+The following companion names, distribution cuts and example contents are candidates for discussion, not approved Package identities, schemas or an implementation queue. The selected markitect-standard model retains its two Packages and shared version. Companion models can own new Packages and follow independent versions with exact dependencies; no second model can append Definitions to a populated Package owned by the foundation.
+
+| Candidate distribution | Candidate Packages | Intent to describe |
+| --- | --- | --- |
+| markitect-standard, selected | markitect/software, markitect/verification | Domain meaning, obligations, behavior, actors, interaction, responsibilities, expected cases and examination methods. |
+| markitect-architecture | markitect/architecture, markitect/c4 | System boundaries, applications, internal parts, external dependencies and optional precise C4 vocabulary/views. |
+| markitect-web | markitect/web, markitect/http | Screens, navigation and interaction, API contracts, request/response and failure behavior, applicable UI constraints. |
+| markitect-data | markitect/data, markitect/messaging | Data meaning and ownership, persistence expectations, migration and retention, messages/events, delivery and consistency expectations. |
+| markitect-platform | markitect/deployment, markitect/networking, markitect/operations | Environments, deployments and instances, configuration needs, routing/load balancing, scaling, health, observability, backup/recovery and operating procedures. |
+| markitect-security | markitect/security | Trust boundaries, identity/access requirements, sensitive-data handling and relevant security obligations. |
+| markitect-engineering | markitect/engineering | Language/toolchain choices, dependency rules, source boundaries, build/test/release contracts, local setup and documentation obligations. |
+
+Quality requirements such as response time, availability, accessibility or recoverability can already be Rules, Scenarios and Checks. A companion vocabulary should add precise reusable meaning where needed, not add a new Kind for every adjective. Likewise, a project's contribution or release process can be described as intended process; actual execution history stays outside intent. File assignments continue to use the realization registry, while a deliberately required output can be part of canonical intent.
+
+### Frontend and backend
+
+Frontend and backend are initially roles of particular system parts, not automatically new universal Kinds. A browser application can have the frontend role, an API application the backend role. They need explicit responsibilities, offered/consumed contracts, constraints and relevant user behavior. A CLI or library-only repository need not invent either one.
+
+For example, a hypothetical web Library could declare a browser application, an API application, the existing lending logic and a data store. An Interface owns the HTTP contract; UseCases own domain behavior; Rules own access, architecture and quality constraints. A web vocabulary can supply more specific screen/API concepts if their distinct contracts help authoring or consumers. A new Frontend Kind is warranted only when it supplies a useful contract beyond the role sentence.
+
+### C4 and the general Component
+
+Keep the selected broad Component meaning. Offer C4 as an optional, explicit model vocabulary/view choice, not a hidden redefinition of the base Kind. The earlier [Connector example](connector-example.md) exposed this same boundary and remains historical design evidence, not a current schema or implemented source.
+
+Official C4 distinguishes an [application/data-store container](https://c4model.com/abstractions/container), a [Component within a container](https://c4model.com/abstractions/component), and [deployment nodes/instances and supporting infrastructure](https://c4model.com/diagrams/deployment). A C4 container is not inherently a Docker container. C4 Components are not separate deployable units. A load balancer can be infrastructure in a deployment view. These external definitions explain why one generic containment tree cannot silently be called strict C4.
+
+Proposed approach: an optional markitect/c4 Package could offer SoftwareSystem, Container and Component with their precise C4 contracts and later a deliberate view mechanism. The existing Software.Component stays general. C4.Component would be a separate nominal Kind, not an inherited subtype under v1. A project can choose the precise Kind for a particular part without declaring a second duplicate object merely to call it Software.Component as well. Body links can refer to either; a future typed Property targeting one exact Kind would require explicit design. Do not promise that every broad Component can be projected to a valid C4 Component without additional information.
+
+C4 diagrams should be derived views of accepted Definitions and explicit relationships. They must not become an independently edited copy of architecture. Exact view definitions, required relationships and validation rules remain to design; a renderer or plugin gains no new canonical authority.
+
+### Deployment and load balancing
+
+Distinguish a logical application from its instances in an environment. In a proposed web Library, library-api is the logical backend; its production instances and the load balancer are separate intended deployment subjects. This keeps development, staging and production variations from duplicating domain meaning.
+
+Illustrative candidate typing, not selected Definitions or a change to M1:
+
+| Subject | Possible Kind | Meaning |
+| --- | --- | --- |
+| library-system | C4.SoftwareSystem | The modeled system boundary. |
+| reader-web | C4.Container | Browser application in the frontend role. |
+| library-api | C4.Container | API application in the backend role. |
+| lending | C4.Component | Lending functionality within the API application. |
+| catalog-db | C4.Container | The logical data store. |
+| library-http-api | Software.Interface | Request, response and error contract between browser and API. |
+| production | Deployment.Environment | An intended deployment environment. |
+| api-instance-a and api-instance-b | Deployment.Instance | Intended instances of the same API application. |
+| public-entry | Networking.LoadBalancer | The routing boundary serving those instances. |
+
+Statements can then require that public-entry routes requests to the intended healthy API instances, reader-web uses library-http-api, and the browser has no direct access to catalog-db. A load-balancer contract can own routing, health decisions, connection/TLS boundaries and failure behavior as selected by the project. Those are intent choices, not requirements imposed on all projects by importing a library.
+
+This example deliberately extends beyond the current local JSON Lines Library. It does not silently add a web frontend, persistence or production environment to M1/M2. It also does not establish the proposed Kinds, a live infrastructure inventory or deployment execution.
+
+### What to settle before broader implementation
+
+1. Confirm the common coverage areas and select a bounded first set of companion vocabularies. Agree what must be captured for the chosen project example and what stays a deliberate realization choice.
+2. Define the boundaries between logical structure, interaction, data and deployment, including the optional C4 interpretation. Decide whether each candidate is a distinct Kind, a role, a reusable Rule or a derived view. Avoid independent copies of the same fact.
+3. Define a small set of actual Kind contracts and explicit relationship meanings in each selected topic, with stable new Package ownership and exact dependency direction. Preserve the selected foundation; do not introduce inheritance or multi-kind instances implicitly.
+4. Use a coherent web-project example to walk from user behavior through frontend/API/data to deployment, operation and repository realization. Check whether each relevant obligation has one canonical owner and understandable realization/verification context. This is a proposed design walkthrough, not a new study or execution grant.
+5. Reassess spec only at actual uses. The eight base Kinds keep their selected empty specs. A companion may propose structured values if a concrete authoring, validation or processing need justifies them; neither empty nor nonempty specs are a blanket requirement for future vocabularies.
+
+The eight base Kinds are ready for final wording and a concrete compiler/consumer fixture without waiting for every companion. The broader library family needs the above design work before claiming coverage of ordinary full software projects. Producing the family is not equivalent to modeling every vendor, framework or infrastructure resource in advance; extensible project-specific vocabulary remains part of the language.
+
+Recommended next design slice: distinguish a system, an application/runtime boundary, an internal Component and a deployment/instance, then place frontend, backend and load balancing in that example. These choices determine the architecture/platform vocabulary more directly than adding a long list of technology names.
 
 ## Observe the value of spec
 
@@ -456,7 +533,8 @@ Omitting an empty spec in author syntax and removing structured contracts altoge
 
 - The owner has selected all eight discussed Kinds as the first scope, each with empty spec and body-link relationships.
 - Exact Kind wording remains a working formulation. Interface's internal/external scope is selected; the particular call contract and Component split remain illustrative architecture proposals.
-- Review the proposed markitect-standard model, two Package identities, first preview and stable release/update policy before publishing them.
+- The markitect-standard model, its two initial Package identities and the stated version/update policy are selected. Actual distribution, exact source location, fixtures and release automation remain implementation work.
+- Review the broader topic map and architecture/platform example before selecting any new companion Package or Kind.
 - During actual modeling, observe the benefit of structured spec content and the cost of mandatory empty specs, as directed above.
 - Preserve the Library's complete intent when proposing a vocabulary migration; do not alter the M1/M2 Apply acceptance target merely to demonstrate the standard library.
 - Examine a small Tasks model after the Library to distinguish shared needs from Library-specific vocabulary. This is a proposed design check, not authorization for a study or proof of benefit.
