@@ -189,11 +189,25 @@ func TestCapturedRunBindingChangesWithExplicitHostFactsAndOriginalInputs(t *test
 			}
 		})
 	}
-	changed, _, _ := runBindingCapture(t, func(raw *apply.RawInputs) {
-		rewriteFileCheckSource(t, raw, &raw.Execution[0], string(raw.Execution[0].File.Bytes())+"\n# Original configuration changed.\n")
-	}, true)
-	binding, err := changed.BindRun(facts)
-	if err != nil || binding.Ref() == baseline.Ref() {
-		t.Fatalf("original configuration bytes did not change basis: %v", err)
+	for _, original := range []string{"execution", "host-document", "instruction"} {
+		t.Run(original, func(t *testing.T) {
+			changed, _, _ := runBindingCapture(t, func(raw *apply.RawInputs) {
+				switch original {
+				case "execution":
+					rewriteFileCheckSource(t, raw, &raw.Execution[0], string(raw.Execution[0].File.Bytes())+"\n# Original configuration changed.\n")
+				case "host-document":
+					raw.HostProfiles[0].File, err = snapshot.NewEntry(raw.HostProfiles[0].File.Path(), raw.HostProfiles[0].File.Mode(), append(raw.HostProfiles[0].File.Bytes(), []byte("\n# Original Host configuration changed.\n")...))
+				case "instruction":
+					raw.Instructions[0].File, err = snapshot.NewEntry(raw.Instructions[0].File.Path(), raw.Instructions[0].File.Mode(), []byte("Changed original external instruction.\r\n"))
+				}
+				if err != nil {
+					t.Fatal(err)
+				}
+			}, true)
+			binding, err := changed.BindRun(facts)
+			if err != nil || binding.Ref() == baseline.Ref() {
+				t.Fatalf("changed %s bytes did not change basis: %v", original, err)
+			}
+		})
 	}
 }
