@@ -14,11 +14,13 @@ Current source uses canonical language v1, explicit input selection and exact ar
   registry/
     registry.yaml            ordinary root artifact ownership
     package/registry.yaml    local Package artifact ownership
-  state/                     private operational state; outside census
+  state/                     run registration and writer lock; outside census
 docs/markitect/project.md    official generated readable view
 ```
 
 Model granularity and artifact locations remain the author's choice. Canonical dependency manifests are explicitly selected; they are not discovered under an assumed directory. The operator supplies an explicit Host profile document for requested metadata preparation. No automatic scaffold, configuration migration or execution is implied.
+
+The future private SQLite journal lives outside the repository; `.markitect/state/` holds only its registration and writer lock. See the [journal contract](design/canonical-model/manager-apply-journal.md#physical-store-and-commit-contract). Current read-only preparation creates no journal.
 
 ## Ownership and boundaries
 

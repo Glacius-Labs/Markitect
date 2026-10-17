@@ -31,7 +31,7 @@ The coordinator owns shared policy, this plan, the concept register, root module
 
 ### Branch names
 
-Use an isolated managed worktree and a non-protected branch from the integrated baseline. New branches use `codex/apply-<scope>` by default. Never stash, reset unrelated work, force-push reviewed branches or implement on Main. Verify path, branch, full SHA and dirty state before writing.
+Use an isolated managed worktree and a non-protected branch from the integrated baseline. New branches use a prefix that describes their scope, such as `dev/`, `fix/` or `docs/`. Never stash, reset unrelated work, force-push reviewed branches or implement on Main. Verify path, branch, full SHA and dirty state before writing.
 
 ### Zones
 
