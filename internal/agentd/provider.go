@@ -33,6 +33,7 @@ type provider struct {
 	queue    [][]byte
 	queued   int
 	inClosed bool
+	inBroken bool
 
 	done chan struct{}
 	exit frame.Exited
@@ -86,7 +87,9 @@ func (p *provider) write(b []byte) error {
 		p.inReady.Signal()
 		return nil
 	}
-	if p.exited() {
+	if p.inBroken || p.exited() {
+		// The provider no longer reads its input; dropping it is an
+		// observation, and its exit report follows when it ends.
 		return nil
 	}
 	if p.queued+len(b) > maxInputBacklog {
@@ -118,7 +121,7 @@ func (p *provider) pumpInput() {
 		p.inMu.Unlock()
 		if _, err := p.stdin.Write(b); err != nil {
 			p.inMu.Lock()
-			p.queue, p.queued = nil, 0
+			p.queue, p.queued, p.inBroken = nil, 0, true
 			p.inMu.Unlock()
 			return
 		}

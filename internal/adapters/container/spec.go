@@ -15,8 +15,10 @@ const AgentdPath = "/usr/local/bin/markitect-agentd"
 var (
 	namePattern    = regexp.MustCompile(`^[a-zA-Z0-9][a-zA-Z0-9_.-]{0,127}$`)
 	imageIDPattern = regexp.MustCompile(`^sha256:[0-9a-f]{64}$`)
-	labelPattern   = regexp.MustCompile(`^[a-z0-9][a-z0-9.-]{0,127}$`)
-	userPattern    = regexp.MustCompile(`^([1-9][0-9]{0,9}):([1-9][0-9]{0,9})$`)
+	// containerIDPattern matches the full container ID an engine writes.
+	containerIDPattern = regexp.MustCompile(`^[0-9a-f]{64}$`)
+	labelPattern       = regexp.MustCompile(`^[a-z0-9][a-z0-9.-]{0,127}$`)
+	userPattern        = regexp.MustCompile(`^([1-9][0-9]{0,9}):([1-9][0-9]{0,9})$`)
 )
 
 // Mount gives a container one named volume.

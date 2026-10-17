@@ -178,3 +178,36 @@ func buildTestImage(ctx context.Context, t *testing.T, enginePath string) string
 	t.Cleanup(func() { _ = exec.Command(enginePath, "image", "rm", "--force", id).Run() })
 	return id
 }
+
+// TestRealEngineNameConflictLeavesTheOtherContainer shows that a failed start
+// never removes another container that already uses the name.
+func TestRealEngineNameConflictLeavesTheOtherContainer(t *testing.T) {
+	enginePath := os.Getenv("MARKITECT_TEST_ENGINE")
+	if enginePath == "" {
+		t.Skip("set MARKITECT_TEST_ENGINE to an absolute container engine path")
+	}
+	engine, err := container.NewEngine(enginePath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
+	defer cancel()
+	image := buildTestImage(ctx, t, enginePath)
+	store := fmt.Sprintf("test-%d", time.Now().UnixNano())
+	spec := container.SessionSpec{
+		Name: "mk-" + store, Image: image, Labels: map[string]string{"io.markitect.store": store}, User: "1000:1000",
+		Workdir: "/tmp", CPUs: 1, MemoryBytes: 256 << 20, Pids: 64, TmpBytes: 16 << 20, Network: "none",
+	}
+	first, err := engine.Start(ctx, spec)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer first.Close()
+	if second, err := engine.Start(ctx, spec); err == nil {
+		_ = second.Close()
+		t.Fatal("a second container started under the same name")
+	}
+	if names, err := engine.Containers(ctx, "io.markitect.store", store); err != nil || len(names) != 1 {
+		t.Fatalf("containers after the conflict = %v, %v; the first must survive", names, err)
+	}
+}

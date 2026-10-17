@@ -53,6 +53,15 @@ func (e *Engine) Start(ctx context.Context, spec SessionSpec) (*Session, error) 
 	if err != nil {
 		return nil, err
 	}
+	// The engine writes the created container's ID here. Forced removal uses
+	// that ID, never the name, so a name conflict cannot remove another
+	// container.
+	cidDir, err := os.MkdirTemp("", "markitect-cid")
+	if err != nil {
+		return nil, err
+	}
+	cidPath := filepath.Join(cidDir, "cid")
+	args = append([]string{args[0], "--cidfile", cidPath}, args[1:]...)
 	cmd := exec.Command(e.path, args...)
 	stdin, err := cmd.StdinPipe()
 	if err != nil {
@@ -65,6 +74,7 @@ func (e *Engine) Start(ctx context.Context, spec SessionSpec) (*Session, error) 
 	stderr := &boundedBuffer{max: maxCommandOutput}
 	cmd.Stderr = stderr
 	if err := cmd.Start(); err != nil {
+		_ = os.RemoveAll(cidDir)
 		return nil, fmt.Errorf("start container %s: %w", spec.Name, err)
 	}
 	var once sync.Once
@@ -74,14 +84,19 @@ func (e *Engine) Start(ctx context.Context, spec SessionSpec) (*Session, error) 
 			if err := cmd.Wait(); err != nil {
 				waitErr = fmt.Errorf("container %s: %w: %s", spec.Name, err, strings.TrimSpace(stderr.String()))
 			}
+			_ = os.RemoveAll(cidDir)
 		})
 		return waitErr
 	}
 	kill := func() {
 		_ = cmd.Process.Kill()
+		id, err := os.ReadFile(cidPath)
+		if err != nil || !containerIDPattern.Match(id) {
+			return // the engine created no container
+		}
 		rmCtx, cancel := context.WithTimeout(context.Background(), closeTimeout)
 		defer cancel()
-		_, _ = e.output(rmCtx, "rm", "--force", spec.Name)
+		_, _ = e.output(rmCtx, "rm", "--force", string(id))
 	}
 	return newSession(ctx, stdin, stdout, wait, kill)
 }

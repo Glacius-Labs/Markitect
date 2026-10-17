@@ -52,6 +52,11 @@ func fakeProvider(mode string) int {
 		return mcpClient(tool)
 	case "abandon":
 		return abandonCall()
+	case "closed-input":
+		_ = os.Stdin.Close()
+		fmt.Println("closed")
+		time.Sleep(time.Hour)
+		return 0
 	case "deaf":
 		time.Sleep(time.Hour)
 		return 0
@@ -488,5 +493,17 @@ func TestStartedPrecedesProviderOutput(t *testing.T) {
 	if f.Channel != frame.Control || err != nil || c.Type != frame.TypeStarted {
 		t.Fatalf("first frame after start = %s %q", f.Channel, f.Payload)
 	}
+	h.control(frame.TypeExited)
+}
+
+func TestInputToAProviderThatClosedItIsDropped(t *testing.T) {
+	h := newHarness(t)
+	h.start("closed-input")
+	h.output(frame.ProviderOut, "closed")
+	chunk := make([]byte, frame.MaxPayload)
+	for i := 0; i < 70; i++ { // more than the input backlog bound
+		h.send(frame.Frame{Channel: frame.ProviderIn, Payload: chunk})
+	}
+	h.sendControl(frame.ControlMessage{Type: frame.TypeStop, Stop: &frame.Stop{GraceMillis: 100}})
 	h.control(frame.TypeExited)
 }
