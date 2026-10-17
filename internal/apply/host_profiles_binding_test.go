@@ -13,6 +13,31 @@ import (
 // the response's supplied binding, to test missing and cached request echoes.
 type rawHostAgentPort func(context.Context, apply.ProfileInput) (apply.ProfileObservation, error)
 
+func TestHostLegacyProfileIdentityRemainsLiteral(t *testing.T) {
+	// Measured on assigned base 0392cd2f before AgentImage existed. These literal
+	// identities are retained by historical v1/v2 RUN bindings, not rehashed.
+	want := map[string]string{
+		"agentProfiles": "sha256:a06f3be1ced8e898cdd5198f6da2dee9dbae7652b76f0a08314144fd890180df",
+		"checkProfiles": "sha256:887d4ab208cd0396378075cbfb70d4a12bcdca8e755ef9de3fefe191951d0f34",
+	}
+	selection, raw := hostSettingsInputs(t)
+	m := registryModel(t, selection, raw)
+	agent, check := hostPorts(t)
+	result, err := m.PrepareRegistry().CheckFiles().PrepareSettings(context.Background(), m.DecodeExecution().PrepareDefaults(apply.ProductStrategyDefaults()), agent, check)
+	if err != nil || result.Status() != model.Passed {
+		t.Fatalf("legacy profile fixture: %v", err)
+	}
+	if len(result.ProfileObservations()) != len(want) {
+		t.Fatal("legacy fixture profile set changed")
+	}
+	for _, p := range result.ProfileObservations() {
+		identity, ok := p.Identity()
+		if !ok || identity != want[p.Input().Namespace()] {
+			t.Fatalf("legacy literal profile identity changed: %s %s", p.Input().Namespace(), identity)
+		}
+	}
+}
+
 func (p rawHostAgentPort) PrepareAgentProfile(c context.Context, i apply.ProfileInput) (apply.ProfileObservation, error) {
 	return p(c, i)
 }

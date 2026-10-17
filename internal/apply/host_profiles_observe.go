@@ -7,15 +7,23 @@ import (
 	"encoding/binary"
 	"fmt"
 	"hash"
+	"path"
 	"reflect"
 	"slices"
 	"strings"
+	"unicode"
+	"unicode/utf8"
 
 	"github.com/Glacius-Labs/Markitect/internal/model"
 	"github.com/Glacius-Labs/Markitect/internal/snapshot"
 )
 
 const maxProfileMetadataFiles = 100000
+
+const (
+	maxAgentImageMetadataBytes = 1 << 20
+	maxAgentImageLiteralBytes  = 4096
+)
 
 func hostPortMissing(port any) bool {
 	if port == nil {
@@ -77,7 +85,10 @@ func (p *PreparedProfile) validateObservation() {
 	if o.Status == model.Passed && (strings.TrimSpace(o.Contract.Name) == "" || o.Contract.Version == 0) {
 		p.problem(model.Failed, "contract", "Passed requires a nonempty literal adapter contract name and an explicit positive version.")
 	}
-	if o.Status == model.Passed && (len(o.Files) == 0 || p.input.namespace == "agentProfiles" && len(o.Inventories) == 0) {
+	if o.AgentImage != nil {
+		p.validateAgentImage()
+	}
+	if o.Status == model.Passed && o.AgentImage == nil && (len(o.Files) == 0 || p.input.namespace == "agentProfiles" && len(o.Inventories) == 0) {
 		p.problem(model.Failed, "metadata_missing", "Passed requires executable metadata and agent schema inventories.")
 	}
 	count := len(o.Files)
@@ -136,6 +147,74 @@ func (p *PreparedProfile) validateObservation() {
 		}
 		p.problem(model.NotCompleted, "instruction_required", "Host instruction is required in a new complete acquisition; existing inputs are unchanged.")
 	}
+}
+
+func (p *PreparedProfile) validateAgentImage() {
+	o := &p.observation
+	image := o.AgentImage
+	complete := o.Status == model.Passed
+	if p.input.namespace != "agentProfiles" || len(o.Files) != 0 || len(o.Inventories) != 0 {
+		p.problem(model.Failed, "image_evidence", "Agent image evidence is agent-only and cannot mix with file/inventory evidence.")
+	}
+	if complete || image.Provider != "" {
+		if image.Provider != AgentImageCodexAppServer && image.Provider != AgentImageClaudeCode {
+			p.problem(model.Failed, "image_provider", "Unknown agent image provider discriminator.")
+		}
+	}
+	if complete || image.ImageID != "" {
+		if !profileSHA256(image.ImageID) {
+			p.problem(model.Failed, "image_identity", "Agent image must name an immutable engine sha256 image ID.")
+		}
+	}
+	file := image.Metadata
+	if complete || file.Path != "" {
+		if !agentImageLiteral(file.Path) || !strings.HasPrefix(file.Path, "/") || file.Path == "/" || strings.Contains(file.Path, "\\") || path.Clean(file.Path) != file.Path {
+			p.problem(model.Failed, "image_metadata_path", "Image metadata requires an exact canonical absolute POSIX file path.")
+		}
+	}
+	if complete && file.ContentID == (snapshot.ContentID{}) || file.Size < 0 || complete && file.Size == 0 {
+		p.problem(model.Failed, "image_metadata_file", "Image metadata requires its actual whole-file digest and positive size.")
+	}
+	if file.Size > maxAgentImageMetadataBytes {
+		p.problem(model.NotCompleted, "image_metadata_limit", "Image metadata exceeds the finite 1 MiB observation limit.")
+	}
+	for _, literal := range []string{image.CLIVersion, image.AgentdVersion} {
+		if (complete || literal != "") && !agentImageLiteral(literal) {
+			p.problem(model.Failed, "image_version_literal", "Recorded CLI and agentd versions must be bounded nonblank literals without control characters.")
+		}
+	}
+	if complete && !agentImageLiteral(o.Contract.Name) {
+		p.problem(model.Failed, "image_contract", "Image validation contract name must be a bounded nonblank literal without controls.")
+	}
+	switch image.Provider {
+	case AgentImageCodexAppServer:
+		if (complete || image.RecordedCodexSchemaDigest != "") && !profileSHA256(image.RecordedCodexSchemaDigest) {
+			p.problem(model.Failed, "image_recorded_schema", "Codex image evidence requires the literal build-recorded sha256 schema digest, not an inventory assertion.")
+		}
+	case AgentImageClaudeCode:
+		if image.RecordedCodexSchemaDigest != "" {
+			p.problem(model.Failed, "image_recorded_schema", "Claude image evidence cannot claim Codex-specific schema evidence.")
+		}
+	}
+}
+
+func agentImageLiteral(value string) bool {
+	if len(value) > maxAgentImageLiteralBytes || !utf8.ValidString(value) || strings.TrimSpace(value) == "" {
+		return false
+	}
+	return !strings.ContainsFunc(value, unicode.IsControl)
+}
+
+func profileSHA256(value string) bool {
+	if len(value) != len("sha256:")+64 || !strings.HasPrefix(value, "sha256:") {
+		return false
+	}
+	for _, c := range value[len("sha256:"):] {
+		if !(c >= '0' && c <= '9' || c >= 'a' && c <= 'f') {
+			return false
+		}
+	}
+	return true
 }
 
 func (p PreparedProfile) instruction(location SourceLocation) (SourceFile, bool) {
@@ -206,7 +285,12 @@ func (p PreparedProfile) comparisonIdentity() string {
 		text(value.File.ContentID().String())
 		text(fmt.Sprint(value.File.Mode()))
 	}
-	text("markitect.host-profile/static-v1")
+	if p.observation.AgentImage == nil {
+		// Historical file/inventory identities retain their exact hash sequence.
+		text("markitect.host-profile/static-v1")
+	} else {
+		text("markitect.host-profile/static-image-v1")
+	}
 	text(p.input.Binding().content.String())
 	source(p.input.document)
 	text(p.input.namespace)
@@ -214,6 +298,16 @@ func (p PreparedProfile) comparisonIdentity() string {
 	text(p.input.field)
 	text(p.observation.Contract.Name)
 	text(fmt.Sprint(p.observation.Contract.Version))
+	if image := p.observation.AgentImage; image != nil {
+		text(string(image.Provider))
+		text(image.ImageID)
+		text(image.Metadata.Path)
+		text(image.Metadata.ContentID.String())
+		text(fmt.Sprint(image.Metadata.Size))
+		text(image.CLIVersion)
+		text(image.AgentdVersion)
+		text(image.RecordedCodexSchemaDigest)
+	}
 	text(fmt.Sprint(len(p.observation.Files)))
 	for _, file := range p.observation.Files {
 		metadata(file)
