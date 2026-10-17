@@ -108,6 +108,10 @@ func TestConcreteResponsibilityBoundaries(t *testing.T) {
 		{"internal/bootstrap", "internal/adapters/container", true},
 		{"internal/bootstrap", "internal/adapters/journal", true},
 		{"internal/bootstrap", "internal/adapters/claudecode", true},
+		{"internal/bootstrap", "internal/model", true},
+		{"internal/bootstrap", "internal/snapshot", true},
+		{"internal/model", "internal/bootstrap", false},
+		{"internal/snapshot", "internal/bootstrap", false},
 		{"internal/adapters/container", "internal/agentd/frame", true},
 		{"internal/adapters/container", "internal/agentd", false},
 		{"internal/adapters/container", "internal/apply", false},
@@ -118,6 +122,7 @@ func TestConcreteResponsibilityBoundaries(t *testing.T) {
 		{"cmd/markitect-agentd", "internal/bootstrap", false},
 		{"internal/bootstrap", "internal/adapters/gitrepo", true},
 		{"internal/bootstrap", "internal/tooling/release", false},
+		{"internal/bootstrap", "internal/tooling/source", false},
 		{"cmd/markitect", "internal/bootstrap", true},
 		{"cmd/markitect", "internal/apply", false},
 		{"cmd/markitect-release", "internal/tooling/releasecli", true},
@@ -271,16 +276,16 @@ func TestJournalFixtureEdgesStayTestOnly(t *testing.T) {
 }
 
 func TestBootstrapExecutionCompositionPreservesFixtureBoundaries(t *testing.T) {
-	// Bootstrap composes Run with journal control, Claude sessions and the container
-	// engine for workspaces and checks; pure model and snapshot imports remain test-only.
+	// Bootstrap composes actual services using model limits/status and snapshot
+	// check values; unrelated responsibilities keep their separate boundaries.
 	for _, tc := range []struct {
 		to               string
 		production, test bool
 	}{
 		{"internal/apply", true, true}, {"internal/adapters/gitrepo", true, true},
-		{"internal/adapters/journal", true, true}, {"internal/model", false, true},
+		{"internal/adapters/journal", true, true}, {"internal/model", true, true},
 		{"internal/adapters/claudecode", true, true},
-		{"internal/snapshot", false, true}, {"internal/run", true, true}, {"internal/testkit", false, true},
+		{"internal/snapshot", true, true}, {"internal/run", true, true}, {"internal/testkit", false, true},
 		{"internal/organization", false, false}, {"internal/realization", false, false},
 		{"internal/adapters/container", true, true}, {"internal/adapters/unknown", false, false},
 	} {
@@ -294,16 +299,13 @@ func TestBootstrapExecutionCompositionPreservesFixtureBoundaries(t *testing.T) {
 			}
 		}
 	}
-	for _, producer := range []struct {
-		path, layer, pkg string
-		production       bool
-	}{
-		{"internal/adapters/journal", "apply-adapter", "journal", true},
-		{"internal/adapters/container", "apply-adapter", "container", true},
-		{"internal/adapters/claudecode", "apply-adapter", "claudecode", true},
-		{"internal/model", "apply-model", "model", false},
-		{"internal/snapshot", "apply-snapshot", "snapshot", false},
-		{"internal/run", "apply-run", "run", true},
+	for _, producer := range []struct{ path, layer, pkg string }{
+		{"internal/adapters/journal", "apply-adapter", "journal"},
+		{"internal/adapters/container", "apply-adapter", "container"},
+		{"internal/adapters/claudecode", "apply-adapter", "claudecode"},
+		{"internal/model", "apply-model", "model"},
+		{"internal/snapshot", "apply-snapshot", "snapshot"},
+		{"internal/run", "apply-run", "run"},
 	} {
 		for _, file := range []string{"fixture_windows_test.go", "fixture_linux_test.go", "fixture_windows.go", "fixture_linux.go"} {
 			t.Run(producer.pkg+"/"+file, func(t *testing.T) {
@@ -318,12 +320,8 @@ func TestBootstrapExecutionCompositionPreservesFixtureBoundaries(t *testing.T) {
 				if err != nil {
 					t.Fatal(err)
 				}
-				want := 0
-				if !producer.production && !strings.HasSuffix(file, "_test.go") {
-					want = 1
-				}
-				if len(got) != want {
-					t.Fatal("platform classification bypassed bootstrap test-only boundary", got)
+				if len(got) != 0 {
+					t.Fatal("bootstrap composition dependency refused", got)
 				}
 			})
 		}

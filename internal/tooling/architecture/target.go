@@ -78,7 +78,7 @@ var responsibilityImports = map[string][]string{
 	"internal/adapters/journal":        {"internal/apply", "internal/run"},
 	"internal/agentd":                  {"internal/agentd/frame"},
 	"internal/apply":                   {"internal/model", "internal/snapshot", "internal/organization", "internal/realization", "internal/run"},
-	"internal/bootstrap":               {"internal/adapters/checks", "internal/adapters/claudecode", "internal/adapters/cli", "internal/adapters/codexappserver", "internal/adapters/container", "internal/adapters/documents", "internal/adapters/gitrepo", "internal/adapters/journal", "internal/apply", "internal/modeldocs", "internal/run"},
+	"internal/bootstrap":               {"internal/adapters/checks", "internal/adapters/claudecode", "internal/adapters/cli", "internal/adapters/codexappserver", "internal/adapters/container", "internal/adapters/documents", "internal/adapters/gitrepo", "internal/adapters/journal", "internal/apply", "internal/model", "internal/modeldocs", "internal/run", "internal/snapshot"},
 	"internal/modeldocs":               {"internal/apply", "internal/model", "internal/snapshot"},
 	"internal/organization":            {"internal/model", "internal/snapshot"},
 	"internal/realization":             {"internal/model", "internal/snapshot"},
@@ -98,7 +98,6 @@ var responsibilityImports = map[string][]string{
 var responsibilityTestImports = map[string][]string{
 	"internal/adapters/checks":  {"internal/adapters/gitrepo"},
 	"internal/adapters/journal": {"internal/model", "internal/snapshot"},
-	"internal/bootstrap":        {"internal/model", "internal/snapshot"},
 }
 
 // Edge.Test alone cannot distinguish internal from external Go tests.
