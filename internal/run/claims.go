@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/Glacius-Labs/Markitect/internal/model"
+	"github.com/Glacius-Labs/Markitect/internal/organization"
 	"github.com/Glacius-Labs/Markitect/internal/realization"
 	"github.com/Glacius-Labs/Markitect/internal/snapshot"
 )
@@ -120,13 +121,19 @@ func (e *Engine) claimsOf(manager string, s *stepRun) []Claim {
 // refused Manager can wait for that Manager's delivery, which brings the file
 // into its workspace, or ask it (core rules S4, M1, T10).
 func (e *Engine) holderHint(s *stepRun, path string) string {
+	registry := e.aggregate().Registry()
+	for _, r := range registry.Entries() {
+		if p := r.Artifact().Path().String(); pathsOverlap(p, path) {
+			return fmt.Sprintf(" %s is registered to the Manager %s and already in your workspace; use it as it is, or send that Manager the change you need", p, ownerManager(r.Owner()))
+		}
+	}
 	for _, t := range e.cfg.Coordinator.Tasks() {
 		if t.Manager == s.manager {
 			continue
 		}
 		for _, c := range e.claimsOf(t.Manager, s) {
 			if c.Tool == ToolReservePath && pathsOverlap(c.Path, path) {
-				return fmt.Sprintf(" The Manager %s reserved %s; once its delivery is accepted, the file is in your workspace and you may use it without changing it. Wait for it with {\"kind\":\"delivery\",\"ref\":%q} or send it a question", t.Manager, c.Path, t.Manager)
+				return fmt.Sprintf(" The Manager %s reserved %s; once its delivery is accepted, the file is in your workspace and you may use it without changing it. Wait for it with {\"on\":[{\"kind\":\"delivery\",\"ref\":%q}]} or send it a question", t.Manager, c.Path, t.Manager)
 			}
 		}
 	}
@@ -144,7 +151,7 @@ func ownerManager(o realization.Owner) string {
 	if name, ok := o.Package(); ok {
 		return name
 	}
-	return "."
+	return organization.Root
 }
 
 func requestOf(manager string, c Claim) (realization.PathRequest, error) {

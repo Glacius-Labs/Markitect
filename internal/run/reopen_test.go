@@ -216,3 +216,55 @@ func TestARefusedReservationNamesItsHolder(t *testing.T) {
 		t.Fatal("the refusal does not name the holder", h.sessions.answers)
 	}
 }
+
+// A path another Manager's accepted delivery registers is named with its
+// owner and is already in the workspace; no wait is suggested.
+func TestARefusedReservationOfARegisteredPathNamesItsOwner(t *testing.T) {
+	agent := func(s agentStep) []action {
+		switch {
+		case s.Manager == "lending" && s.Phase == run.PhaseWork && s.Attempt == 0:
+			return []action{{Tool: run.ToolWait, Args: `{"on":[{"kind":"delivery","ref":"."}],"reason":"Needs the shared file."}`, Want: run.ToolOK}}
+		case s.Manager == "." && s.Phase == run.PhaseWork && s.Attempt == 0:
+			return []action{
+				{Tool: run.ToolReservePath, Args: `{"path":"out/shared.go","form":"code"}`, Want: run.ToolOK},
+				{Tool: run.ToolRegister, Args: `{"path":"out/shared.go","form":"code","realizes":["lending/Item"],"why":"Shared code."}`, Want: run.ToolOK},
+				{Write: map[string]string{"out/shared.go": "package library\n"}, Tool: run.ToolSubmit, Args: submitArgs("local", "complete"), Want: run.ToolOK},
+			}
+		case s.Manager == "lending" && s.Phase == run.PhaseWork && s.Attempt == 1:
+			return append([]action{{Tool: run.ToolReservePath, Args: `{"path":"out/shared.go","form":"code"}`, Want: run.ToolRefused}}, happyAgent(s)...)
+		}
+		return happyAgent(s)
+	}
+	h := newHarnessWith(t, stepInputsWith(t, true, withCreationArea(t)), agent)
+	runToEnd(t, h)
+	if h.c.Current().State != run.Verifying || !slices.ContainsFunc(h.sessions.answers, func(a string) bool {
+		return strings.HasPrefix(a, "lending work reserve_path refused") && strings.Contains(a, "out/shared.go is registered to the Manager . and already in your workspace") && !strings.Contains(a, "Wait for it")
+	}) {
+		t.Fatal("the refusal does not name the owner of the registered path", h.c.Current(), h.sessions.answers)
+	}
+}
+
+// A wait that only the waiting Manager itself could end is refused: a child
+// cannot wait for the delivery of a parent that waits for its children
+// (core rule T10).
+func TestAWaitThatClosesACycleIsRefused(t *testing.T) {
+	agent := func(s agentStep) []action {
+		switch {
+		case s.Manager == "." && s.Phase == run.PhaseWork && s.Attempt == 0:
+			return []action{{Tool: run.ToolWait, Args: `{"on":[{"kind":"children"}],"reason":"Integrates its child."}`, Want: run.ToolOK}}
+		case s.Manager == "lending" && s.Phase == run.PhaseWork && s.Attempt == 0:
+			return append([]action{{Tool: run.ToolWait, Args: `{"on":[{"kind":"delivery","ref":"."}],"reason":"Wants the parent's code."}`, Want: run.ToolRefused}}, happyAgent(s)...)
+		}
+		return happyAgent(s)
+	}
+	h := newHarness(t, true, agent)
+	runToEnd(t, h)
+	if !slices.ContainsFunc(h.sessions.answers, func(a string) bool {
+		return strings.HasPrefix(a, "lending work wait refused") && strings.Contains(a, ". waits for you")
+	}) {
+		t.Fatal("the cyclic wait was not refused with its reason", h.sessions.answers)
+	}
+	if h.c.Current().State != run.Verifying {
+		t.Fatal("the run did not complete after the refusal", h.c.Current())
+	}
+}

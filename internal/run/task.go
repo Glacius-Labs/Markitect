@@ -712,9 +712,17 @@ func (s stateValue) checkWait(t taskValue, w Wait) error {
 		if producer.State == TaskDone {
 			return fmt.Errorf("%s is done; its accepted result is already in your workspace", w.Ref)
 		}
+		if s.waitsFor(w.Ref, t.Slot.Package, map[string]bool{}) {
+			return fmt.Errorf("%s waits for you, so waiting for its delivery would never end; realize your own Definitions now and let the integrating parent compose the parts", w.Ref)
+		}
 	case waitChildren:
 		if len(t.Slot.Children) == 0 || s.childrenDone(t) || w.Ref != "" {
 			return errors.New("a children wait needs children that are not all done, and no ref")
+		}
+		for _, child := range t.Slot.Children {
+			if s.waitsFor(child, t.Slot.Package, map[string]bool{}) {
+				return fmt.Errorf("your child %s waits for you, so waiting for your children would never end; deliver what it waits for first, such as your local work", child)
+			}
 		}
 	case waitReply, waitOwner:
 		to, asked := s.pendingQuestions(t)[w.Ref]
@@ -886,6 +894,35 @@ func (s *stateValue) advanceTasks(revision uint64) {
 		s.current.State = Verifying
 		s.runs[s.current.ID] = s.current
 	}
+}
+
+// waitsFor reports whether a blocked Manager can act again only after another
+// Manager acts: each of its waits needs that Manager, directly or through other
+// blocked Managers. A wait that would close such a cycle can never arrive
+// (core rule T10).
+func (s stateValue) waitsFor(manager, other string, seen map[string]bool) bool {
+	t, ok := s.tasks[manager]
+	if !ok || t.State != TaskBlocked || len(t.Waits) == 0 || seen[manager] {
+		return false
+	}
+	seen[manager] = true
+	for _, w := range t.Waits {
+		stuck := false
+		switch w.Kind {
+		case waitDelivery:
+			stuck = w.Ref == other || s.waitsFor(w.Ref, other, seen)
+		case waitChildren:
+			for _, child := range t.Slot.Children {
+				if s.tasks[child].State != TaskDone && (child == other || s.waitsFor(child, other, seen)) {
+					stuck = true
+				}
+			}
+		}
+		if !stuck {
+			return false
+		}
+	}
+	return true
 }
 
 func (s stateValue) waitArrived(t taskValue, w Wait) bool {
