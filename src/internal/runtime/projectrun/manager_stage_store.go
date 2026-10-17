@@ -18,8 +18,9 @@ import (
 
 type managerStageJournalKey struct{}
 
-// Only journal mutation is serialized. Transport calls and the existing
-// ordinary Manager batch remain concurrent. Budget locks precede this lock.
+// Journal mutation and snapshots share this lock. Readers outside the lock
+// use a detached snapshot. Transport calls and the existing ordinary Manager
+// batch remain concurrent. Budget locks precede this lock.
 type managerStageJournal struct {
 	mu     sync.Mutex
 	store  *runStore
@@ -518,10 +519,11 @@ func invokeManagerAttempt(ctx context.Context, j *managerStageJournal, log Invoc
 	if _, _, err := agentexec.PrepareInvocation(request); err != nil {
 		return agentexec.RunResult{}, log, errors.New("Manager request violates the bounded protocol")
 	}
-	roleRequest := agentexec.RoleStartRequest{RequestID: log.Attempt.ID, ParentSessionID: j.report.ID, Role: log.Role, State: "requested"}
+	report := j.snapshot()
+	roleRequest := agentexec.RoleStartRequest{RequestID: log.Attempt.ID, ParentSessionID: report.ID, Role: log.Role, State: "requested"}
 	var permit *RoleStartPermit
 	var err error
-	if j.report.ManagerStageBinding == nil && log.Role == agentexec.RoleExecutor && (log.Phase == "work" || log.Phase == "integrate") {
+	if report.ManagerStageBinding == nil && log.Role == agentexec.RoleExecutor && (log.Phase == "work" || log.Phase == "integrate") {
 		permit, err = j.budget.ReserveRecordedTaskRoot(ctx, log.TaskID, log.Phase, roleRequest)
 	} else {
 		permit, err = j.budget.ReserveRoot(ctx, log.TaskID, log.Phase, roleRequest)
@@ -534,7 +536,7 @@ func invokeManagerAttempt(ctx context.Context, j *managerStageJournal, log Invoc
 	}
 	result, invokeErr := dispatch(ctx)
 	cost, known, overflow := estimateAgentCost(result.Receipt.Usage, agent)
-	if j.report.ManagerStageBinding != nil {
+	if report.ManagerStageBinding != nil {
 		cost, known, overflow = managerStageCost(result.Receipt.Usage, log.Attempt.Bounds)
 	}
 	log.CostMicros, log.CostKnown, log.CostOverflow = cost, known, overflow
@@ -630,10 +632,14 @@ func (j *managerStageJournal) reconcileTerminalReservation(log InvocationLog) er
 // Ordinary adapters retain their request builders, transport options and
 // combined-floor pricing. Only attempt authority and role admission are shared.
 func ordinaryManagerAttemptLog(journal *managerStageJournal, invoker Invoker, config agentexec.Config, agent projectconfig.Agent, task ManagerTask, phase, id string, request agentexec.Request) (InvocationLog, error) {
-	if journal == nil || journal.report.ManagerStageBinding != nil {
+	if journal == nil {
 		return InvocationLog{}, errors.New("ordinary Manager requires its bound Runtime journal")
 	}
-	id = ordinaryRunAttemptID(*journal.report, id)
+	report := journal.snapshot()
+	if report.ManagerStageBinding != nil {
+		return InvocationLog{}, errors.New("ordinary Manager requires its bound Runtime journal")
+	}
+	id = ordinaryRunAttemptID(report, id)
 	requestDigest, err := digest(request)
 	if err != nil {
 		return InvocationLog{}, err
@@ -642,7 +648,7 @@ func ordinaryManagerAttemptLog(journal *managerStageJournal, invoker Invoker, co
 	if err != nil {
 		return InvocationLog{}, err
 	}
-	return InvocationLog{TaskID: task.ID, Role: agentexec.RoleExecutor, Phase: phase, InputDigest: requestDigest, Outcome: "started", Attempt: &ManagerStageAttempt{ID: id, StageKey: journal.report.ID + "/" + id, IterationID: task.ID, ManagerID: task.ManagerID, Phase: phase, ContextDigest: rawContentDigest(request.Context), RequestDigest: requestDigest, ConfigFingerprint: fingerprint, Bounds: managerStageBounds(agent, config), StartedAt: time.Now().UTC(), Status: "started"}}, nil
+	return InvocationLog{TaskID: task.ID, Role: agentexec.RoleExecutor, Phase: phase, InputDigest: requestDigest, Outcome: "started", Attempt: &ManagerStageAttempt{ID: id, StageKey: report.ID + "/" + id, IterationID: task.ID, ManagerID: task.ManagerID, Phase: phase, ContextDigest: rawContentDigest(request.Context), RequestDigest: requestDigest, ConfigFingerprint: fingerprint, Bounds: managerStageBounds(agent, config), StartedAt: time.Now().UTC(), Status: "started"}}, nil
 }
 
 func invocationAttemptIndex(rows []InvocationLog, log InvocationLog) int {
@@ -679,11 +685,12 @@ func recoverOrdinaryManagerAttempt(journal *managerStageJournal, attemptID strin
 	if journal == nil {
 		return InvocationLog{}, errors.New("recovery requires the original Runtime journal")
 	}
-	index := invocationAttemptIndex(journal.report.Invocations, InvocationLog{Attempt: &ManagerStageAttempt{ID: attemptID}})
+	report := journal.snapshot()
+	index := invocationAttemptIndex(report.Invocations, InvocationLog{Attempt: &ManagerStageAttempt{ID: attemptID}})
 	if index < 0 {
 		return InvocationLog{}, errors.New("original durable Manager attempt is absent; no replay")
 	}
-	log := journal.report.Invocations[index]
+	log := report.Invocations[index]
 	requestDigest, err := digest(request)
 	if err != nil || log.Attempt.RequestDigest != requestDigest {
 		return log, errors.New("original Manager request changed; no replay")
