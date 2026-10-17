@@ -124,15 +124,15 @@ func (e *Engine) VolumeMounts(ctx context.Context, name string) ([]string, error
 		}
 		var rows []struct {
 			ID     string
-			Mounts []struct{ Type, Name string }
+			Mounts *[]struct{ Type, Name string }
 		}
 		if err := json.Unmarshal(out, &rows); err != nil {
 			return nil, fmt.Errorf("decode mount census: %w", err)
 		}
-		if len(rows) != 1 || rows[0].ID != id {
+		if len(rows) != 1 || rows[0].ID != id || rows[0].Mounts == nil {
 			return nil, fmt.Errorf("container mount census identity mismatch")
 		}
-		for _, m := range rows[0].Mounts {
+		for _, m := range *rows[0].Mounts {
 			if m.Type == "volume" && m.Name == name {
 				mounted = append(mounted, id)
 				break
