@@ -10,7 +10,6 @@ import (
 
 	"github.com/Glacius-Labs/Markitect/internal/tooling/release"
 	"github.com/Glacius-Labs/Markitect/internal/tooling/source"
-	
 )
 
 func ensureInstallStateUnchanged(root string, state *installState) error {
