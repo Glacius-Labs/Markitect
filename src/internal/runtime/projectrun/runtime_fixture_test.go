@@ -9,7 +9,7 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/Glacius-Labs/Markitect/src/internal/testkit"
+	"github.com/Glacius-Labs/Markitect/internal/testkit"
 )
 
 const runtimeFixtureArg = "-markitect-runtime-fixture="

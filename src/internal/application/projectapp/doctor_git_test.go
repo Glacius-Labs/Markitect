@@ -7,9 +7,9 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/Glacius-Labs/Markitect/internal/testkit"
 	"github.com/Glacius-Labs/Markitect/src/internal/application/projectwork"
 	"github.com/Glacius-Labs/Markitect/src/internal/runtime/projectsetup"
-	"github.com/Glacius-Labs/Markitect/src/internal/testkit"
 )
 
 func TestDoctorGitVersionBoundaryAndDistributionSuffixes(t *testing.T) {

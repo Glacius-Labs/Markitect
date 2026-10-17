@@ -11,7 +11,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/Glacius-Labs/Markitect/src/internal/testkit"
+	"github.com/Glacius-Labs/Markitect/internal/testkit"
 )
 
 func testRepository(t *testing.T, committed bool) (string, string, string) {
