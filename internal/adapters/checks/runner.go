@@ -91,10 +91,10 @@ func (r *Runner) Run(ctx context.Context, req run.CheckRequest) (receipt run.Che
 	defer func() {
 		operationErr := limited.Err()
 		cancel()
-		cleanup, stop := context.WithTimeout(context.WithoutCancel(ctx), 10*time.Second)
-		defer stop()
 		for _, identity := range identities {
+			cleanup, stop := context.WithTimeout(context.WithoutCancel(ctx), 10*time.Second)
 			closed, closeErr := r.workspaces.Close(cleanup, identity)
+			stop()
 			if closeErr != nil || closed.ID != identity || !closed.Closed || closed.Uncertain {
 				receipt.Uncertain = true
 				failure := fmt.Errorf("disposable check workspace %s closure unconfirmed: %s", identity, closed.Reason)

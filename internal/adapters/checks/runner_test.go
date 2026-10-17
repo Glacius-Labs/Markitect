@@ -243,8 +243,49 @@ func TestRunnerCleanupFailureCannotBecomePass(t *testing.T) {
 				return passedCommand(req), nil
 			}}, w)
 			got, err := r.Run(context.Background(), req)
-			if err == nil || got.Passed(req) || !got.Uncertain {
+			if err == nil || got.Passed(req) || !got.Uncertain || w.closed != 2 {
 				t.Fatalf("receipt=%+v err=%v", got, err)
+			}
+		})
+	}
+}
+
+func TestRunnerRefusesUnverifiedHomeAndClosesBothCopies(t *testing.T) {
+	for _, kind := range []string{"tree", "same volume", "error"} {
+		t.Run(kind, func(t *testing.T) {
+			req := checkRequest(t)
+			w := &workspacePeer{}
+			w.materialize = func(s run.WorkspaceSpec) (run.WorkspaceObservation, error) {
+				o := run.WorkspaceObservation{ID: s.ID, Volume: "private-copy", Tree: s.Tree.Digest()}
+				if len(w.requests) == 2 {
+					o.Volume = "private-home"
+					switch kind {
+					case "tree":
+						o.Tree = req.Tree.Digest()
+					case "same volume":
+						o.Volume = "private-copy"
+					case "error":
+						return o, errors.New("home readback failed")
+					}
+				}
+				return o, nil
+			}
+			var first context.Context
+			w.close = func(ctx context.Context, id run.WorkspaceID) (run.WorkspaceObservation, error) {
+				if first == nil {
+					first = ctx
+				} else if first == ctx || ctx.Err() != nil {
+					t.Fatal("closures share an expired context")
+				}
+				return run.WorkspaceObservation{ID: id, Closed: true}, nil
+			}
+			r, _ := NewRunnerWithRuntime(commandPeer{func(context.Context, container.ContainerSpec, []string, []string, int64) (container.CommandResult, error) {
+				t.Fatal("unverified home executed")
+				return container.CommandResult{}, nil
+			}}, w)
+			got, err := r.Run(context.Background(), req)
+			if err == nil || got.Passed(req) || got.Started || w.closed != 2 {
+				t.Fatalf("receipt=%+v err=%v closed=%d", got, err, w.closed)
 			}
 		})
 	}
