@@ -16,6 +16,10 @@ artifacts:
     form: doc
     realizes: [documentation/current-guidance]
     why: Prepares product messaging, pitches and marketing recommendations with explicit evidence boundaries.
+  - path: "docs/concepts/sources/human-attention-and-baseline-20261017.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Preserves the owner's priority for human attention and the same-content documentation-plus-Agent comparison.
   - path: "docs/concepts/sources/foundations-and-trust-20261017.md"
     form: doc
     realizes: [documentation/current-guidance]
