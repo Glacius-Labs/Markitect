@@ -112,14 +112,14 @@ type SessionIO interface {
 
 | Record | Required fields and meaning |
 | --- | --- |
-| `SessionSpec` | Host session ID, role, Manager, task and attempt, executor profile identity, workspace access and explicitly supplied history. Review sessions start fresh. |
+| `SessionSpec` | Host session ID, role, Manager, task and attempt, executor profile identity including adapter kind and runtime image, workspace access as the container's mounts, and explicitly supplied history. Review sessions start fresh. |
 | `StepRequest` | Unique step ID, session ID, task and subject binding, exact prompt, context and instruction payload references, additional messages and tool grants. Recorded before dispatch. |
 | `StepReceipt` | Step and session identity, observed status, proposed result or yield, output references, usage when observable and observation limits. Yield, proposed completion, needs decision, failure and uncertain interruption are distinct; none is an accepted delivery. |
 | `SessionQuery` | Known session ID and, where relevant, step ID. Unavailable information stays unknown. |
 | `SessionEvent` | Session and step, sequence and correlation, kind and exact observed payload, including prepared outbound payloads, transport observations, incoming content and tool exchanges. |
-| `ToolCall` / `ToolReply` | Correlation ID and a closed typed request or result for delegation, yielding, targeted reads, path claims, registry proposals, questions, allowed checks or result submission. The sender comes from the session channel. |
+| `ToolCall` / `ToolReply` | Correlation ID and a closed typed request or result for delegation, yielding, targeted reads, path claims, registry proposals, questions, allowed checks or result submission. The sender is the session whose container channel carried the call. |
 
-The Host implements `SessionIO`. The adapter calls `Observe` with the actual outgoing content and waits for durable acknowledgement before sending it. Hidden provider context and unobservable activity are reported as limits, never reconstructed from templates. An executor that cannot support this protocol and its input observation is not selectable.
+Every session runs in its own container through the session helper `markitect-agentd`, which serves the Host tools to the provider CLI over MCP and carries everything over one stdio connection ([rebuild plan](manager-apply-rebuild-plan.md#container-runtime)). The Host implements `SessionIO`. The adapter calls `Observe` with the actual outgoing content and waits for durable acknowledgement before sending it. Hidden provider context and unobservable activity are reported as limits, never reconstructed from templates. An executor that cannot support this protocol and its input observation is not selectable.
 
 `Call` validates role and task state. A delegate call records a child task and returns its ID; the parent then yields, and the child is scheduled outside the callback. A callback never runs a session recursively or waits for a child workflow. Reviewer tools can read, request allowed checks and report; they cannot claim paths, change ownership or delegate.
 
@@ -163,7 +163,7 @@ type Workspaces interface {
 | `Harvest` | The full observed tree and delta, protected-input comparison, ownership violations and, when valid, the immutable candidate with its registry. A proposal's file list never limits observation. |
 | `MaterializeRequest` | A new workspace ID and a fixed `realization.CompositionPlan`, expressed through snapshot and realization values. |
 
-The Host owns claims and decisions; the adapter observes files. New paths need a reservation before writing, and a later claim never authorizes an earlier unauthorized write. Freeze observes all relevant paths, including deletions and protected model and configuration inputs; read-only review access is checked the same way. These checks do not claim isolation from other same-user processes.
+The Host owns claims and decisions; the adapter observes files. New paths need a reservation before writing, and a later claim never authorizes an earlier unauthorized write. Freeze observes all relevant paths, including deletions and protected model and configuration inputs; read-only review access is checked the same way. Workspaces are volumes of the container runtime; the adapter materializes, observes and harvests them with Git inside a helper container, so observation follows Linux file semantics. A session container mounts only its own workspace. The checks do not claim protection against processes outside the container runtime.
 
 A frozen candidate is immutable; checks and reviews use it, never a mutable path with the same name. Before another writing attempt, the workspace must match its expected start or be rematerialized. Rejected candidates are stored with their evidence. Composition rules are pure functions in `realization` that compare exact bases, owned changes and registry changes and return a fixed plan. With one owner per file and one writer at a time, composition is a disjoint union; an overlap is returned as a Host error. `Materialize` applies the plan and reports what it observed; it never merges competing semantics or picks an owner.
 
@@ -176,9 +176,9 @@ type Checks interface {
 }
 ```
 
-`CheckRequest` binds a Host check ID, the exact review subject and an allowed check from fixed configuration, with its executable, arguments, environment, limits and tool identity. A reviewer may request an allowed check; a missing artifact test becomes a finding for its owner.
+`CheckRequest` binds a Host check ID, the exact review subject and an allowed check from fixed configuration, with its runtime image, executable, arguments, environment, limits and tool identity. A reviewer may request an allowed check; a missing artifact test becomes a finding for its owner.
 
-`CheckReceipt` carries the actual exit or termination state, output references, executable identity, candidate binding and observed drift or limits. A nonzero exit is a check failure; a startup or observation failure is reported separately. Cancellation never turns an unknown process into a pass. Checks run on a disposable materialization of the fixed candidate. An Agent saying "tests pass" is not a check receipt.
+`CheckReceipt` carries the actual exit or termination state, output references, executable identity, candidate binding and observed drift or limits. A nonzero exit is a check failure; a startup or observation failure is reported separately. Cancellation never turns an unknown process into a pass. Checks run in a container from the check profile's image, on a disposable copy of the fixed candidate. An Agent saying "tests pass" is not a check receipt.
 
 ## Durable journal port
 

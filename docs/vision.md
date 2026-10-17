@@ -36,7 +36,7 @@ These are [promises](concepts/register.md#promises), not established results.
 - "Compiler" names a borrowed idea. The model's structure compiles deterministically, and an invalid or incompletely covered model blocks work. Realization by agents is not deterministic.
 - Markitect's claim is that computed scope, bounded responsibility and independent review make delegated work more trustworthy than unstructured agentic work. [Where trust comes from](#where-trust-comes-from) lists these mechanisms.
 - Delegated realization is central to the product. It is not an optional layer on top of a validator.
-- Markitect's product owner has endorsed separating the method from any particular execution runtime. Current source supports Codex App Server and a bring-your-own process executor, with per-role configuration (RUN-01); asynchronous work packets and further runtime separation remain planned. See [provider adapters](provider-adapters.md#bring-your-own-executor) and [DEC-010](concepts/register.md#dec-010-evaluate-the-method-separately-from-its-execution-runtime).
+- Markitect's product owner has endorsed separating the method from any particular execution runtime. The rebuild implements this as one session port with two adapters, Codex App Server and Claude Code, each session running in its own Linux container ([DEC-037](concepts/register.md#dec-037-agent-sessions-and-checks-run-in-linux-containers)). See [provider adapters](provider-adapters.md) and [DEC-010](concepts/register.md#dec-010-evaluate-the-method-separately-from-its-execution-runtime).
 - [Common misreadings](#common-misreadings) lists the readings to avoid.
 
 ## The thesis

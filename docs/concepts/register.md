@@ -47,6 +47,7 @@ The owner's [origin account of 15 October 2026](sources/owner-origin-20261015.md
 | [DEC-034](#dec-034-removed-intent-removes-its-realization) | Decision | Removed intent removes its realization | Accepted |
 | [DEC-035](#dec-035-committed-model-in-owner-commit-accepts-the-result) | Decision | Committed model in, owner commit accepts the result | Accepted |
 | [DEC-036](#dec-036-adopted-design-refinements-for-the-first-apply) | Decision | Adopted design refinements for the first Apply | Accepted |
+| [DEC-037](#dec-037-agent-sessions-and-checks-run-in-linux-containers) | Decision | Agent sessions and checks run in Linux containers | Accepted |
 | [PRM-001 to PRM-007](#promises) | Promise | Target outcomes | Target |
 | [ASM-001 to ASM-006](#assumptions-and-hypotheses) | Assumption | Assumptions and hypotheses | See entries |
 | [CPT-001](#cpt-001-federalism) | Concept | Federalism | Accepted |
@@ -59,7 +60,7 @@ The owner's [origin account of 15 October 2026](sources/owner-origin-20261015.md
 | [ENH-004](#enh-004-per-role-agent-configuration-and-model-mixing) | Enhancement | Per-role agent configuration and model mixing | Accepted direction |
 | [ENH-005](#enh-005-exchangeable-executor-for-the-delegated-method) | Enhancement | Exchangeable executor for the delegated method | Endorsed; increment 1 merged |
 | [ENH-006](#enh-006-configurable-teams-for-perspectives-and-four-eyes) | Enhancement | Configurable teams for perspectives and four eyes | Endorsed; design after the first strategy |
-| [OQ-001 to OQ-009](#open-questions) | Open question | Open questions | Open |
+| [OQ-001 to OQ-010](#open-questions) | Open question | Open questions | Open |
 | [IDEA-001](#idea-001-the-model-as-institutional-memory-for-stateless-agents) | Idea | The model as institutional memory for stateless agents | Proposed |
 | [IDEA-002](#idea-002-government-delegated-model-maintenance) | Idea | Government: delegated model maintenance | Owner idea; parked |
 | [IDEA-003](#idea-003-degree-of-freedom-per-manager-and-rule-strictness) | Idea | Degree of freedom per Manager and rule strictness | Owner idea; parked |
@@ -450,6 +451,22 @@ The owner's [origin account of 15 October 2026](sources/owner-origin-20261015.md
 - **Consequence:** Changing an adopted item needs the owner. Implementation can refine details within an item's intent, such as exact schemas or default numbers, through ordinary review.
 - **Owning documents:** the [Apply design map](../design/canonical-model/README.md#apply-design) and the documents it lists.
 
+### DEC-037 Agent sessions and checks run in Linux containers
+
+- **Status:** Accepted, owner, 17 October 2026 ([source](sources/runtime-discussion-20261017.md)), after a real handshake with both CLIs ([record](../validation/runtime-handshake-20261017.md)).
+- **Statement:**
+  - Every Agent session and every project check runs in its own Linux container, started from a runtime image that the Host profile names by digest. The image pins the agent CLIs and the project's toolchain. Real Apply requires Docker or a compatible engine; controlled fake sessions in tests need none.
+  - Authority comes from what a container receives. A writer gets its workspace writable, a reviewer the frozen candidate read-only, and a check a disposable copy. Model, configuration, registry and independent expectations are never writable. The container, not the provider's sandbox, is the boundary, and stopping a session ends its whole process tree.
+  - Workspaces live on Linux volumes owned by the runtime. Inputs and candidates move as Git objects, and only guarded publication writes to the owner's working tree.
+  - The session helper `markitect-agentd` runs the provider CLI, serves it the Host tools over MCP, and carries provider protocol, tool calls and control over the container's single stdio connection.
+  - Two session adapters implement the same port in the first version: Codex App Server and Claude Code. Host tools reach both through MCP, not through Codex's experimental dynamic tools.
+  - Runtime credentials are API keys or long-lived tokens referenced by the Host profile, never copied desktop logins.
+- **Consequences:**
+  - Windows path identity, host process trees, provider sandbox setup and ambient user configuration leave the session path. The Host talks only to the container engine and Git.
+  - The read-only metadata adapter that pins a Windows desktop binary is replaced by metadata the image records at build time.
+  - The second session adapter and sandbox profiles move from the later extensions into the first version.
+- **Owning document:** the [rebuild plan](../design/canonical-model/manager-apply-rebuild-plan.md#container-runtime). It serves [DEC-013](#dec-013-linux-first-for-tests-and-the-playground) and [ENH-005](#enh-005-exchangeable-executor-for-the-delegated-method).
+
 ## Promises
 
 These are the target outcomes Markitect is built to deliver. Each has the status **Target**: it is to be validated under [DEC-009](#dec-009-the-central-evaluation-question), and none is an established result. Sources are the [owner description](sources/owner-product-description-20261009.md) and the [confirmed summary](sources/idea-review-20261010.md#summary-confirmed-by-the-owner).
@@ -472,7 +489,7 @@ These are the target outcomes Markitect is built to deliver. Each has the status
 | ASM-002 | A reviewer with fresh context is more critical than self-review in the same thread, even with the same model. | Owner observation, backed by an Anthropic talk and papers the owner cited without recording references ([point 4](sources/idea-review-20261010.md#owner-response-to-the-five-points)) |
 | ASM-003 | Bounded scope and compiled context let capable mid-tier models do most implementation and review work. Total cost can then fall even after coordination and review. | Hypothesis; untested |
 | ASM-004 | Abstraction and management structures proven in human organizations transfer to agents. Pairing an implementer with a reviewer at the lowest level mirrors how teams already work today. | Owner hypothesis ([point 4](sources/idea-review-20261010.md#owner-response-to-the-five-points)); not yet properly evaluated for agents |
-| ASM-005 | Reviewers that differ from the implementer in model, not only in context, find more defects, because reviewers on the same model share blind spots. | Review proposal, endorsed for evaluation ("Modelle variieren und kombinieren und evaluieren"); to be tested with [ENH-004](#enh-004-per-role-agent-configuration-and-model-mixing); a second session adapter for reviewers from another model family is planned in the [north star](../design/canonical-model/manager-realization-north-star.md#later-operations-and-extensions) |
+| ASM-005 | Reviewers that differ from the implementer in model, not only in context, find more defects, because reviewers on the same model share blind spots. | Review proposal, endorsed for evaluation ("Modelle variieren und kombinieren und evaluieren"); to be tested with [ENH-004](#enh-004-per-role-agent-configuration-and-model-mixing); the Claude Code adapter of [DEC-037](#dec-037-agent-sessions-and-checks-run-in-linux-containers) lets the default reviewer come from another model family |
 | ASM-006 | Forgetting (coverage), rather than misunderstanding, is the main problem. | Independent-assessment hypothesis (claim 17), not an owner comparison; untested ([source note](sources/dashboard-delegation-20261011.md#idea-01-assumption-source-check)) |
 
 ## Concepts
@@ -585,9 +602,9 @@ These entries record agreed or endorsed direction. Recording an enhancement does
   - Expose a stable executor boundary. Through it, Markitect hands each role a deterministic work packet: scope, context, obligations, required checks and required reviews. It then accepts the resulting candidate and review verdict and validates them with the same rules as today.
   - The native Codex adapter becomes one executor among others. Further executors, for example Claude Code, can be added without changing the method.
   - Authority does not change. Scope checks, fixed snapshots and guarded Apply apply to every executor, and submitted reviews remain AI evidence, not human acceptance.
-- **Rebuild consequence (design, under [DEC-024](#dec-024-first-reliable-apply-rebuild-and-coordinated-start) and [DEC-032](#dec-032-quality-simplicity-and-stability-over-effort-and-compatibility)):** the rebuild replaces the current executor boundary with the provider-neutral session port `run.Sessions`. Its first adapter is the Codex App Server. The process executor, exchange packets and Claude wrapper are deleted at the cutover, and further executors such as Claude Code implement the same port ([rebuild plan](../design/canonical-model/manager-apply-rebuild-plan.md#first-adapter)). The direction of this entry stays.
+- **Rebuild consequence (design, under [DEC-024](#dec-024-first-reliable-apply-rebuild-and-coordinated-start) and [DEC-032](#dec-032-quality-simplicity-and-stability-over-effort-and-compatibility)):** the rebuild replaces the current executor boundary with the provider-neutral session port `run.Sessions`. The process executor, exchange packets and Claude wrapper are deleted at the cutover. Since [DEC-037](#dec-037-agent-sessions-and-checks-run-in-linux-containers) the port has two adapters, Codex App Server and Claude Code, both in containers ([rebuild plan](../design/canonical-model/manager-apply-rebuild-plan.md#session-adapters)). The direction of this entry stays.
 - **Historical work items:** RUN-01 (merged as pull request #104), RUN-02, RUN-03 and RUN-05 in the [backlog](https://github.com/Glacius-Labs/Markitect/blob/bc4b49e76f9b9e4b3ec98033a0b8c73d5013b310/docs/work-items/backlog.yaml).
-- **Design link (16 October 2026):** a Claude Code session adapter is planned as a later extension, so that reviewers can come from a different model family ([north star](../design/canonical-model/manager-realization-north-star.md#later-operations-and-extensions)).
+- **Design link (17 October 2026):** the Claude Code session adapter moved from the later extensions into the first version ([DEC-037](#dec-037-agent-sessions-and-checks-run-in-linux-containers)).
 
 ### ENH-006 Configurable teams for perspectives and four eyes
 
@@ -606,9 +623,10 @@ These entries record agreed or endorsed direction. Recording an enhancement does
 | OQ-004 | How much independence does a different reviewer model add beyond fresh context? | [ASM-005](#assumptions-and-hypotheses) |
 | OQ-005 | Should evaluation focus on a series of changes on a long-lived project? If so, what ground truth makes "nothing forgotten" measurable there, for example predeclared affected sets, seeded cross-cutting rules and hidden holdout checks? | [DEC-009](#dec-009-the-central-evaluation-question), [PRM-001](#promises) |
 | OQ-006 | How much current-state context does a bounded Manager need, so that limited responsibility does not become artificial blindness? The original product chat's hypothesis: shared contracts, plus current-state context on demand (Concepts note C19). Design: context packages plus recorded targeted reads ([Apply concept](../design/canonical-model/manager-apply-concept.md#context-packages)); evidence from real runs is pending. | [CPT-001](#cpt-001-federalism), [CPT-004](#cpt-004-the-specification-stays-effective) |
-| OQ-007 | How reliable is the native delivery path? The combined A01 native smoke passed once (Actual28, on a Windows host) after 27 failed attempts, was not repeated, and never ran on Linux ([A01 record](../validation/a01-native-smoke-20261010.md)). | [DEC-013](#dec-013-linux-first-for-tests-and-the-playground), [ENH-005](#enh-005-exchangeable-executor-for-the-delegated-method) |
+| OQ-007 | How reliable is the native delivery path? The combined A01 native smoke passed once (Actual28, on a Windows host) after 27 failed attempts, was not repeated, and never ran on Linux ([A01 record](../validation/a01-native-smoke-20261010.md)). The rebuilt runtime measures this again in containers, starting from the [handshake record](../validation/runtime-handshake-20261017.md). | [DEC-013](#dec-013-linux-first-for-tests-and-the-playground), [ENH-005](#enh-005-exchangeable-executor-for-the-delegated-method) |
 | OQ-008 | Should the Manager organization become the application's entry point, with the canonical model as its foundation, and would that better support a later Government axis? Owner framing, 16 October 2026: „Eventuell wäre das sogar die bessere Betrachtungsweise“ ([source](../design/canonical-model/sources/manager-realization-20261016.md#apply-first-and-delegation-from-the-root)). The north star keeps it with the [later extensions](../design/canonical-model/manager-realization-north-star.md#later-operations-and-extensions). | [DEC-004](#dec-004-the-manager-hierarchy-is-core-government-belongs-to-a-later-axis), [DEC-026](#dec-026-apply-comes-first-and-changes-only-artifacts) |
 | OQ-009 | How do DEC-018 and DEC-021 to DEC-023, written for the earlier Project model, map to language v1 and the registry once computed scope is built? | [DEC-018](#dec-018-the-knowledge-graph-explains-impact), [computed scope](../design/canonical-model/manager-apply-concept.md#toward-computed-scope) |
+| OQ-010 | How can a subscription login, rather than an API key, serve several concurrent session containers without racing on refresh-token rotation? Candidates are Host-owned tokens through the App Server's external token refresh and Claude Code's long-lived token; a smoke with concurrent sessions decides. | [DEC-037](#dec-037-agent-sessions-and-checks-run-in-linux-containers) |
 
 ## Ideas
 

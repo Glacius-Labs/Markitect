@@ -1,69 +1,108 @@
-# Agent adapter selection and Apply rebuild plan
+# Agent runtime, session adapters and Apply rebuild plan
 
-This plan owns the choice of the first Agent adapter, its session mapping and the map of what happens to the current source. The [Go architecture](manager-apply-go-architecture.md) and [port contracts](manager-apply-port-contracts.md) define the target; the [delivery plan](../../implementation-plan.md) owns the order of work. Architectural correctness and clear responsibilities take priority over saving implementation effort.
+This plan owns the Agent runtime, the session adapters, their session mapping and the map of what happens to the current source. The [Go architecture](manager-apply-go-architecture.md) and [port contracts](manager-apply-port-contracts.md) define the target; the [delivery plan](../../implementation-plan.md) owns the order of work. Architectural correctness and clear responsibilities take priority over saving implementation effort.
 
 Source inspected: Main `bc4b49e76f9b9e4b3ec98033a0b8c73d5013b310`. Paths below name that source; target paths name the replacement.
 
-## First adapter
+## Container runtime
 
-Use **Codex App Server over local stdio**, called directly from Go. Implement `run.Sessions` in `internal/adapters/codexappserver`. Markitect owns the organization, task scheduler, context, authority, review policy and accepted results. Codex supplies the coding workflow inside an individual Agent session.
+Every Agent session and every project check runs in its own Linux container ([DEC-037](../../concepts/register.md#dec-037-agent-sessions-and-checks-run-in-linux-containers)). The Host profile names the runtime image by digest. The image contains:
 
-The official [App Server documentation](https://learn.chatgpt.com/docs/app-server) describes thread creation/resumption, turns, event streams, interruption, structured output and client-handled dynamic tools. Dynamic tools and their call protocol are experimental. The [integration guidance](https://developers.openai.com/blog/codex-as-a-platform) positions App Server for applications that need direct lifecycle and tool control. Those capabilities fit the proposed session port; choosing this boundary is a design judgment, not proof of compatibility with a particular installed build.
+- the session helper `markitect-agentd`;
+- the pinned Codex and Claude Code CLIs;
+- the project's toolchain.
 
-| Alternative | Treatment for the first Apply |
+A project builds its image on the product's base image, so sessions and checks see the same tools as Linux CI ([DEC-013](../../concepts/register.md#dec-013-linux-first-for-tests-and-the-playground)). Real Apply requires Docker or a compatible engine; controlled fake sessions in tests need none. The [handshake record](../../validation/runtime-handshake-20261017.md) holds the evidence behind this choice.
+
+| Concern | Rule |
 | --- | --- |
-| Existing native App Server adapter | Select the transport and useful mechanisms; replace the adapter's old invocation, prompt and report design. |
-| Existing `codex exec` / process proposal adapter | Remove this implementation path. Its current contract exchanges one invocation and final report rather than implementing the proposed Host session protocol. |
-| Existing Claude wrapper | Remove the current proposal wrapper and its wiring. A future Claude session adapter must satisfy the same behavioral ports; this is not a conclusion about Claude's general capabilities. |
-| Direct model API with a new coding loop | Leave as a possible later adapter. It would make Markitect responsible for another coding loop and its tools; that responsibility is not needed to define the organization. |
-| External exchange packets | Remove their old implementation and CLI. Human/scripted packet exchange is outside the first real Apply. |
+| Authority | A container receives exactly what its role may use. A writer gets its workspace volume writable, a reviewer gets the frozen candidate read-only, and a check gets a disposable copy of it. Model, configuration, registry and independent expectations are never writable. No container receives the owner's working tree, the engine socket or another host path. Path claims still apply inside a workspace and are checked at Freeze. |
+| Isolation | The provider's own sandbox is off, because the container is the boundary: Codex runs with `danger-full-access`, Claude Code with an explicit tool allowlist. Every container starts with a clean home. User configuration, skills, plugins, memories and MCP servers reach a session only when the profile supplies them. |
+| Process lifetime | Stopping a session stops its container, which ends its whole process tree. The profile bounds CPU, memory, process count and output size. |
+| Files | Workspaces live on Linux volumes that the runtime owns. Inputs enter as Git objects of the captured commit, and candidates leave as Git objects. Only guarded publication writes to the owner's working tree. Windows short names, case aliases, reparse points, line endings and file modes therefore never occur inside a session. |
+| Credentials | A runtime credential is an API key or a long-lived token that the Host profile references, never a copied desktop login. Providers rotate refresh tokens, so a copy can sign the desktop out. The Host passes the value into the container's environment at start; it never enters prompts, the journal, logs or command arguments, and the journal records only its reference and kind. Subscription logins shared by concurrent sessions are [OQ-010](../../concepts/register.md#open-questions). |
+| Network | Sessions need egress to their provider. The first version does not restrict other egress; an allowlist is a later extension. |
 
-The choice rests on the session boundary and Host interaction, rather than the amount of existing Codex code. A new adapter must demonstrate the new contracts even where old tests pass.
+`markitect-agentd` is the container's entrypoint and the only program the Host talks to. It has three jobs:
+
+- run the provider CLI as its child;
+- serve the Host tool catalogue to that CLI as a stdio MCP server;
+- carry three channels over the container's single stdio connection: the provider's own protocol, Host tool calls, and control (start, stop and exit status).
+
+There is no network port and no host path, so the same transport works on every host operating system. agentd adds no policy. It relays bytes, reports exits and observation limits, and refuses to start when its version differs from the Host's.
+
+## Session adapters
+
+Two adapters implement `run.Sessions`:
+
+- Codex App Server in `internal/adapters/codexappserver`;
+- Claude Code in stream-JSON mode in `internal/adapters/claudecode`.
+
+Each role profile selects one, and the default reviewer profile uses a different model family than the Manager profile ([ASM-005](../../concepts/register.md#assumptions-and-hypotheses)). Markitect owns the organization, scheduling, context, authority, review policy and accepted results; the CLI supplies the coding workflow inside one session.
+
+Host tools reach both CLIs through MCP. Claude Code has no other client-handled tool mechanism, and Codex's dynamic tools are experimental. One protocol keeps one tool implementation, and a further CLI with MCP support can become an adapter without new tool code.
+
+| Alternative | Treatment |
+| --- | --- |
+| Codex dynamic tools | Not used. They work in `codex-cli 0.162.0` but are gated as experimental, and Claude Code has no counterpart. |
+| Sessions directly on the host operating system | Not supported for real Apply. They inherit user configuration and need per-system process, path and sandbox handling ([handshake record](../../validation/runtime-handshake-20261017.md)). |
+| Existing native App Server adapter | Keep the transport framing and recovery mechanisms; replace the invocation, prompt and report design. |
+| Existing `codex exec` process adapter and Claude wrapper | Remove. They exchange one invocation and a final report instead of the Host session protocol. |
+| Direct model API with a new coding loop | A possible later adapter. It would make Markitect responsible for a coding loop and its tools. |
+| External exchange packets | Remove; outside the first real Apply. |
+
+The choice rests on the session boundary and Host interaction, not on the amount of existing Codex code. A new adapter must demonstrate the new contracts even where old tests pass.
 
 ## Session lifetime and protocol mapping
 
-One Host session owns one App Server process, connection and provider thread. A process survives several known `Step` calls and can sit idle while its Manager waits. Local and integration reviews receive fresh sessions and threads. There is no shared process pool or provider-native Manager hierarchy in the first implementation. This spends more process resources in exchange for clear role configuration, lifetime and failure boundaries.
+One Host session owns one container, its agentd and the provider session inside it. A container survives several known `Step` calls and can sit idle while its Manager waits. Local and integration reviews receive fresh sessions. There is no shared container pool and no provider-native Manager hierarchy. This spends more resources in exchange for clear role configuration, lifetime and failure boundaries.
 
-| Host port operation | Adapter mapping |
-| --- | --- |
-| `Open` | Start the selected executable, initialize the connection, create a fresh thread and durably bind provider handles to the preallocated Host session ID. |
-| `Step` | Send one turn with the exact compiled input and output contract; route bounded tool calls/events to `SessionIO`; return the observed terminal turn and proposed result. |
-| `Inspect` | Inspect only the journal-bound thread and exact dispatched turn, using the selected version's supported history/read methods. Inspection never starts replacement work. |
-| `Stop` | Request interruption where applicable, terminate owned processes as needed and report observed termination or uncertainty. |
+| Host port operation | Codex App Server | Claude Code |
+| --- | --- | --- |
+| `Open` | Start the container with the role's mounts. agentd starts `codex app-server`; the adapter initializes, starts a fresh thread with the profile's settings and the Host MCP server, and durably binds the thread ID to the preallocated Host session ID. | Start the container with the role's mounts. agentd starts `claude -p --input-format stream-json --output-format stream-json` with the profile's tool allowlist and only the Host MCP server; the adapter durably binds the provider session ID from the init event. |
+| `Step` | Send one turn with the exact compiled input and output contract, route tool calls and events to `SessionIO`, and return the terminal turn and proposed result. | Send one user message, route tool calls and events to `SessionIO`, and return the `result` event and proposed result. |
+| `Inspect` | Read only the journal-bound thread and exact turn through the pinned version's history methods. | Read the session transcript on the session volume for the exact step. |
+| `Stop` | Interrupt the turn where possible, then stop the container and report observed termination or uncertainty. | The same. |
 
-This mapping uses the documented [thread and turn lifecycle](https://learn.chatgpt.com/docs/app-server#lifecycle-overview); exact request shapes come from the chosen executable's schemas. Provider request IDs, thread IDs, turn IDs and provider session IDs are not interchangeable with Host identities.
+Exact request shapes come from the pinned CLI version: the generated App Server schemas for Codex and the stream-JSON events for Claude Code. Provider request, thread, turn and session IDs are not interchangeable with Host identities. A Host tool call is bound through the session's channel; the provider's call identifiers are recorded as observations.
 
-Delegation is a short Host tool call returning a task ID. The Agent then ends its turn with a typed yield proposal. Host waits for the terminal observation and resolves active or uncertain tool/process activity before dispatching another writer. It later resumes the parent with a child result in a new step. A tool callback never executes a child session recursively or holds an RPC request open for the child's whole task.
+Delegation is a short Host tool call returning a task ID. The Agent then ends its turn with a typed yield proposal. The Host waits for the terminal observation and resolves active or uncertain tool or process activity before dispatching another writer. It later resumes the parent with a child result in a new step. A tool callback never executes a child session recursively or holds a request open for the child's whole task.
 
-Provider-native spawning, independent helpers and automatic review workflows are disabled in the first profile. Every organizational Agent is created through Host scheduling and counted in its budget/history. Local coding tools remain available within the assigned workspace. Their activity cannot become trusted project-check evidence without the `Checks` port. Markitect's reviewers use fresh ordinary role sessions and its own review contract; they do not inherit an implementer's conversation through a provider review shortcut.
+Provider-native spawning, independent helpers and automatic review workflows are disabled in every profile. Every organizational Agent is created through Host scheduling and counted in its budget and history. Local coding tools remain available within the workspace. Their activity cannot become trusted project-check evidence without the `Checks` port; an Agent's report of a passing command is not a receipt. Markitect's reviewers use fresh ordinary role sessions and its own review contract; they do not inherit an implementer's conversation through a provider review shortcut.
 
-Known Manager sessions may continue only with matching inputs, profile and an explicitly current candidate/workspace. A changed or unprovable binding requires a recorded new session, with supplied summaries rather than an invented continuation. Cancellation does not establish successful process termination. Unknown activity blocks affected handoff, even if a final message was received.
+Known Manager sessions may continue only with matching inputs, profile and an explicitly current candidate and workspace. A changed or unprovable binding requires a recorded new session, with supplied summaries rather than an invented continuation. Cancellation does not establish successful termination. Unknown activity blocks affected handoff, even if a final message was received.
 
-## Bind the executable before real work
+## Bind the runtime image before real work
 
-Keep a single explicitly supported protocol profile for the first adapter. It binds the literal executable path and bytes, exact version, generated stable/experimental schema identities, selected model/effort, effective configuration and tool schemas. Model selection remains configuration; this design introduces no new default model. Both demonstration Applies use the same frozen product build and profile.
+An executor profile binds:
 
-The current source accepts exactly `codex-cli 0.162.0` and embeds schema digests in [its protocol identity](../../../src/internal/runtime/codexappserver/process.go). A read-only `--version` probe of the locally found desktop executable returned `codex-cli 0.162.0-alpha.17.2`. These are different builds. Do not relax the old comparison, infer alpha compatibility or choose whichever executable PATH finds first.
+- the runtime image digest and the adapter kind;
+- the CLI version inside the image;
+- the provider's generated protocol schemas, where the provider has them;
+- model and effort, effective provider settings and tool schemas;
+- the credential reference.
 
-Before the first real turn, select a build deliberately, generate its schemas, review the methods/fields actually used and freeze the resulting adapter profile. The old version is a candidate, not a compatibility obligation. Read/version/schema probes establish metadata only. A bounded real session must separately establish model access, tool exchange, input observation and lifecycle behavior. No real session was launched for this design.
+The image records its CLI versions and schema digests when it is built, and preparation reads them from the image, not from a host executable. Model selection remains configuration. Both demonstration Applies use the same frozen product build, image and profiles.
 
-The profile must make implicit context explicit: selected project instructions, provider configuration, environment policy and enabled tools/features. Use a dedicated operational location for provider state, avoid ambient user skills/plugins/memory changing a run, and record observed instruction sources. Reuse existing authenticated access without copying credentials into prompts, fixtures or public logs. Bind identity-relevant environment/configuration separately from secret values. If the selected build cannot control or observe a required input, reject that profile instead of claiming a complete transcript.
+Earlier pins are candidates, not obligations. Those are `codex-cli 0.162.0`, which the deleted source required, and the desktop build `0.162.0-alpha.17.2`, which the offline metadata adapter recorded. Before real work, each adapter passes a bounded handshake smoke with the chosen image: start, one Host tool call, one file change observed by the Host, termination. The smoke repeats for every new image, and metadata never stands in for it.
+
+The profile makes implicit context explicit: instructions, provider settings, environment policy and enabled tools and features. The clean container home removes ambient configuration. The profile still disables provider features that would act outside the Host, such as native spawning, memories and app connectors, and records the observed instruction sources. A build that cannot control or observe a required input is rejected instead of claiming a complete transcript.
 
 ## Adapter implementation boundary
 
-Start with a single cohesive package containing `adapter.go`, `process.go`, `rpc.go`, `session.go`, `tools.go`, `codec.go` and `recovery.go`, splitting files further only for a real responsibility. `rpc.go` owns framed bytes, correlation and bounded reads; `codec.go` owns provider wire shapes. It must not contain library rules, canonical Kind dispatch, review policy or old Project report branches.
+`internal/adapters/container` is the concrete engine client. It handles images, volumes, containers, limits and the agentd framing on stdio. The session adapters, `checks` and the workspace implementation use it, and it knows no tasks, models or reports. Each session adapter starts as one cohesive package with `adapter.go`, `session.go`, `codec.go` and `recovery.go`, splitting only for a real responsibility; `codec.go` owns the provider's wire shapes. No adapter contains library rules, canonical Kind dispatch, review policy or old Project report branches.
 
-Session protocols use typed Host tools for delegation, targeted reads, claims/registry proposals, questions, allowed checks and work/review submission. The adapter decodes provider JSON and calls `SessionIO`; `run` validates meaning, authority and state. Prompt/context construction belongs to `organization` and `run`, with the adapter adding only the provider envelope. There is no `agentexec.Invocation` compatibility envelope around the new records.
+Session protocols use typed Host tools for delegation, targeted reads, claims and registry proposals, questions, allowed checks and work or review submission. The adapter decodes provider messages and calls `SessionIO`; `run` validates meaning, authority and state. Prompt and context construction belong to `organization` and `run`, and the adapter adds only the provider envelope. There is no `agentexec.Invocation` compatibility envelope around the new records.
 
-The current [client send path](../../../src/internal/runtime/codexappserver/client.go) observes successful outgoing requests after writing them. Replace that ordering: durably acknowledge the complete prepared bytes before writing, then record observed send outcome or uncertainty. Include tool responses and notifications, not only requests with IDs. A preparation record is not proof of delivery. The existing pre-turn recovery marker is useful material, but not a substitute for this contract.
+The old [client send path](https://github.com/Glacius-Labs/Markitect/blob/bc4b49e76f9b9e4b3ec98033a0b8c73d5013b310/src/internal/runtime/codexappserver/client.go) recorded outgoing requests after writing them. Replace that ordering: durably acknowledge the complete prepared bytes before writing, then record the observed send outcome or uncertainty. This covers tool responses and notifications, not only requests with IDs. A preparation record is not proof of delivery.
 
-The current [tool handler](../../../src/internal/runtime/codexappserver/tools.go) rejects duplicate call IDs. In the new design, Host owns durable deduplication and returns an existing reply for the same bound call/content. Different content under the same ID fails. The adapter must not consume an identity before the Host can reconcile a timed-out call.
+The old [tool handler](https://github.com/Glacius-Labs/Markitect/blob/bc4b49e76f9b9e4b3ec98033a0b8c73d5013b310/src/internal/runtime/codexappserver/tools.go) rejected duplicate call IDs. In the new design the Host owns durable deduplication and returns the existing reply for the same bound call and content. Different content under the same ID fails. The adapter must not consume an identity before the Host can reconcile a timed-out call.
 
-Recovery retains the existing valuable rule: inspect the exact known turn and never automatically resend a lost dispatch. Replace old invocation-bound handles and whole-history assumptions with the selected protocol's supported reads. Missing handles or inconclusive history stay unknown. Neither a new process nor a new provider thread repairs uncertainty about an earlier writer.
+Recovery keeps the existing rule: inspect the exact known turn and never automatically resend a lost dispatch. Missing handles or inconclusive history stay unknown. Neither a new container nor a new provider session repairs uncertainty about an earlier writer.
 
 ## Source replacement map
 
-“Retain mechanisms” means transplant a coherent implementation and its relevant failure tests when it fits the new contract. It does not require retaining package paths, exported APIs, wire formats or old storage layouts. Rewriting a mechanism is preferable when extraction would introduce old domain dependencies. The [current code map](../../../src/internal/tooling/architecture/codemap.yaml) bounds the package inventory used below.
+“Retain mechanisms” means transplant a coherent implementation and its relevant failure tests when it fits the new contract. It does not require retaining package paths, exported APIs, wire formats or old storage layouts. Rewriting a mechanism is preferable when extraction would introduce old domain dependencies. The [code map at that revision](https://github.com/Glacius-Labs/Markitect/blob/bc4b49e76f9b9e4b3ec98033a0b8c73d5013b310/src/internal/tooling/architecture/codemap.yaml) bounds the package inventory used below.
 
 | Current source family | Target and disposition |
 | --- | --- |
@@ -73,14 +112,14 @@ Recovery retains the existing valuable rule: inspect the exact known turn and ne
 | `src/internal/infrastructure/source` | **Retain suitable hardened acquisition mechanisms** in `adapters/gitrepo`. New `apply.Source` returns fixed new-model inputs, explicit dependencies and a complete census instead of loading the old Project. |
 | `src/internal/infrastructure/guardedwrite` | **Retain suitable checked-write mechanisms** behind `apply.Publisher` in `adapters/gitrepo`. Add exact registry/tree binding, final read-back and inspectable partial/unknown publication. Preserve stale and path-substitution counterexamples. |
 | `src/internal/infrastructure/recordstore` | **Replace as the journal backend** with `adapters/journal`, a SQLite store with one stream per repository. Retain suitable private-directory/identity/lease ideas and failure cases; verify the new driver's actual guarantees. Delete the closed four-record layout/codecs and old lifecycle coupling. |
-| `src/internal/runtime/codexappserver` | **Rebuild** as `adapters/codexappserver`. Candidate reuse: bounded framing, event observation, literal process launch, configuration fingerprinting, approval refusal and exact-turn recovery. Replace session orchestration, prompt/report codecs, outgoing recording order, duplicate handling and old subject-alias machinery. |
-| `src/internal/runtime/agentexec` | **Delete the old public execution protocol and runner.** Take only useful process/environment/fingerprinting mechanics and failure cases. A narrow concrete `adapters/process` package can serve the two actual consumers, Codex and project checks; it knows no tasks, models or reports and introduces no new generic port catalogue. |
+| `src/internal/runtime/codexappserver` | **Rebuild** as `adapters/codexappserver` inside the container runtime. Candidate reuse: bounded framing, event observation, configuration fingerprinting, approval refusal and exact-turn recovery. Replace session orchestration, prompt/report codecs, outgoing recording order, duplicate handling, host process launch and old subject-alias machinery. |
+| `src/internal/runtime/agentexec` | **Delete the old public execution protocol and runner.** Take only useful environment and fingerprinting mechanics and failure cases. Process lifetime moves into containers: `adapters/container` and `markitect-agentd` serve the session adapters and project checks; they know no tasks, models or reports and introduce no generic port catalogue. Host-side process trees, Windows job objects and short-name handling are not carried over. |
 | `src/internal/runtime/projectexecutor` | **Delete.** Its transport router, helper bridge and separate native journal are replaced by bootstrap wiring, `run.Sessions`, Host tools and one authoritative run journal. |
 | `src/internal/runtime/projectrun` | **Replace the runtime, not its outer DTO.** `run` owns tasks, scheduling, budgets, session messages, review rounds and accepted deliveries; `apply` owns aggregate reconciliation/publication; `realization` owns registry, candidates and composition rules. Preserve meaningful behavioral counterexamples. No broad Host callback struct or Plan/Report compatibility facade remains. |
 | `src/internal/runtime/projectworkspace` and `projectrun` workspace bridges | **Retain useful private materialization/harvest/cleanup mechanisms** in `adapters/gitrepo`; replace contracts with immutable candidates, Host claims and full protected-input observation. Remove old runtime-to-workspace bridges after the new consumer is wired. |
 | `src/internal/runtime/projectconfig`, `projectsetup` | **Replace.** Organization owns effective Manager/team policy and profile references; `run` owns budgets and execution policy; adapter setup owns typed provider configuration. Source acquisition captures all affecting bytes. Remove old manifest/schema setup and transport-specific configuration duplicated across layers. |
 | `src/internal/runtime/exchangecli`, `src/cmd/markitect-exchange-executor` | **Delete**, together with exchange protocol fixtures and active documentation. Future external work uses a new demonstrated need and the current ports. |
-| `src/internal/tooling/codexrunner`, `clauderunner` | **Delete** wrappers, private fixtures and their old protocol checks. The first production Agent path is Go-to-App-Server; controlled fake sessions remain test fixtures. |
+| `src/internal/tooling/codexrunner`, `clauderunner` | **Delete** wrappers, private fixtures and their old protocol checks. The production Agent paths are the Codex App Server and Claude Code adapters in containers; controlled fake sessions remain test fixtures. |
 | `src/internal/application/projectwork`, `projectcoverage` | **Replace** old acquisition/edit/render/coverage use cases with new model preparation, realization and adapter responsibilities. No adoption of old authoring edit semantics by Apply. |
 | `src/internal/application/projectapp` | **Replace** shared application composition and operation wrappers with `internal/bootstrap` and concrete application services. Preserve the single composition principle; remove old callback wiring and obsolete operations. |
 | `src/internal/application/projectcli`, `mcp`, `src/cmd/markitect` | **Replace command/tool schemas and handlers.** CLI first exposes implemented model preparation, Apply and run inspection; retain suitable CLI/MCP transport mechanics. MCP calls the same services when wired. Neither surface retains old operations or implements its own review loop. |
@@ -112,7 +151,7 @@ The old product is removed in one coherent cut, so that Main never holds half of
 | --- | --- |
 | APPLY-MODEL, APPLY-SNAPSHOT, APPLY-ORG, APPLY-REALIZATION | Nothing; the new pure packages grow beside the current source. They take over the rules of `core`, `projectmodel`, `projectbriefing` and `projectcoverage` in new form. Python probes never stand in for production conformance. |
 | APPLY-CUTOVER | Switches bootstrap, CLI preparation, the self-model, generated views and source gates to the new foundation in one change. Deletes the whole old product under `src/`: the old compiler and `projectmodel` family, every `application/project*` package, `mcp`, the old runtime (`projectrun`, `projectexecutor`, `projectworkspace`, `projectconfig`, `projectsetup`, `agentexec`, `codexappserver`, `exchangecli`), the old infrastructure (`source`, `guardedwrite`, `recordstore`), `markitect-exchange-executor`, `codexrunner`, `clauderunner`, and their tests and fixtures. It replaces the old `testkit`, `harness/examples` and `tools/smoke` assumptions, rewrites `tooling/architecture` for the target graph, retires `experiments/mcp-pilot` and the old Playground scripts, and keeps the independent release, licensing and packaging tools. Apply is explicitly unavailable until INTEGRATE. |
-| APPLY-RUN, APPLY-JOURNAL, APPLY-AGENT, APPLY-REPOSITORY | Build `run`, `adapters/journal`, `adapters/codexappserver` with `adapters/process`, and `adapters/gitrepo` with `adapters/checks`. They transplant the mechanisms the source map names, with their failure tests, from the pre-cutover source at a recorded commit. |
+| APPLY-RUN, APPLY-JOURNAL, APPLY-RUNTIME, APPLY-AGENT, APPLY-REPOSITORY | Build `run`, `adapters/journal`, the container runtime (`adapters/container`, `markitect-agentd` and the base image), `adapters/codexappserver` and `adapters/claudecode`, and `adapters/gitrepo` with `adapters/checks`. They transplant the mechanisms the source map names, with their failure tests, from the pre-cutover source at a recorded commit. |
 | APPLY-INTEGRATE | Declares the `apply` ports first, then wires `apply`, CLI and MCP to the new services and runs the library cycle. |
 
 After CUTOVER, Main builds, has one active model and command path, no old DTO imports and current architecture, coverage and packaging checks. The cut is prepared on its feature branch and integrated only when the new foundation and its replacement gates are real and passing.
@@ -121,4 +160,4 @@ After CUTOVER, Main builds, has one active model and command path, no old DTO im
 
 A removal is complete when production/test imports, bootstrap registrations, command/tool schemas, configuration fields, canonical owners, generated views, active documentation, fixtures and CI pins have all been accounted for. Use reference searches and the package inventory to identify residual consumers. Retain a historical observation's original identity; never reclassify an old native smoke as proof of the new adapter.
 
-The result is one compiler, one Host organization protocol, one run journal, one session adapter and one guarded publication route.
+The result is one compiler, one Host organization protocol, one run journal, one container runtime with one session port and two adapters, and one guarded publication route.
