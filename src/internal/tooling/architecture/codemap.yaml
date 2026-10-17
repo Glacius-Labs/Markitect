@@ -36,7 +36,7 @@ packages:
   # --- apply-usecase ------------------------------------------------------
   - path: internal/apply
     layer: apply-usecase
-    purpose: Captures or previews selected source inputs and compiles their original model bytes through consumer-owned ports.
+    purpose: Compiles captured or previewed model inputs and prepares their source-bound registry ownership.
     doc: docs/design/canonical-model/manager-apply-go-architecture.md#organize-by-responsibility
 
   # --- core ---------------------------------------------------------------
