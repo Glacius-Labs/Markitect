@@ -79,13 +79,13 @@ Tests in `internal/tooling/architecture` require every actual Go package to have
 
 | Package | Purpose | Owning document |
 |---|---|---|
-| `internal/adapters/checks` | Concrete repository, profile metadata and document I/O. | [docs/development/modules.md](modules.md) |
+| `internal/adapters/checks` | Check profile metadata and bounded container execution. | [docs/development/modules.md](modules.md) |
 | `internal/adapters/claudecode` | Claude Code stream protocol and step session adaptation through the container runtime. | [internal/adapters/claudecode/README.md](../../internal/adapters/claudecode/README.md) |
 | `internal/adapters/cli` | Concrete repository, profile metadata and document I/O. | [docs/development/modules.md](modules.md) |
 | `internal/adapters/codexappserver` | Prepares Codex image metadata and implements step sessions through the container runtime. | [internal/adapters/codexappserver/README.md](../../internal/adapters/codexappserver/README.md) |
 | `internal/adapters/container` | Container engine client and the Host side of the agentd connection. | [docs/development/modules.md](modules.md) |
 | `internal/adapters/documents` | Concrete repository, profile metadata and document I/O. | [docs/development/modules.md](modules.md) |
-| `internal/adapters/gitrepo` | Concrete repository, profile metadata and document I/O. | [docs/development/modules.md](modules.md) |
+| `internal/adapters/gitrepo` | Repository capture, workspace volumes and guarded publication. | [docs/development/modules.md](modules.md) |
 | `internal/adapters/journal` | Repository control and fenced durable SQLite journal storage. | [internal/adapters/journal/README.md](../../internal/adapters/journal/README.md) |
 
 ## Composition
