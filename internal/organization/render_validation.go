@@ -231,9 +231,9 @@ func validateArtifacts(c ContextSelection, artifacts []ArtifactFact, own bool) e
 			if renderContentID([]byte(*artifact.Text)) != artifact.ContentID {
 				return renderInvalid("artifact text does not match its content identity")
 			}
-		case ArtifactBinaryRef:
+		case ArtifactBinaryRef, ArtifactWorkspaceRef:
 			if artifact.Text != nil {
-				return renderInvalid("binary artifacts permit metadata only, no embedded payload")
+				return renderInvalid("artifact references permit metadata only, no embedded payload")
 			}
 		default:
 			return renderInvalid("unsupported artifact content form")

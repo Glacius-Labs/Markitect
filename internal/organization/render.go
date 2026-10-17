@@ -99,6 +99,9 @@ type ArtifactContent string
 const (
 	ArtifactText      ArtifactContent = "utf8-text"
 	ArtifactBinaryRef ArtifactContent = "binary-reference"
+	// ArtifactWorkspaceRef names a file that the step's workspace holds but
+	// whose content the context does not copy.
+	ArtifactWorkspaceRef ArtifactContent = "workspace-reference"
 )
 
 // ArtifactFact displays an explicit Host ownership/content assertion, never

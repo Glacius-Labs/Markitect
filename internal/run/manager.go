@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"crypto/sha256"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"slices"
 	"strings"
@@ -246,6 +247,16 @@ func (c *Coordinator) PrepareTaskStepCommand(meta RecordMeta, plan StepPlan, res
 		renderInput.OwnerInput = &organization.HostText{Text: string(bound.owner.Bytes()), Source: organization.HostSource{RecordID: c.Current().Assignment, ContentID: bound.owner.Ref().ContentID}}
 	}
 	rendered, err := organization.RenderContext(selection, settings, renderInput)
+	if refusal, ok := errors.AsType[*organization.RenderRefusal](err); ok && refusal.Code == "context-too-large" {
+		// The workspace holds every artifact; the context then names them only.
+		renderInput.OwnArtifacts = workspaceReferences(renderInput.OwnArtifacts)
+		if renderInput.Review != nil {
+			review := *renderInput.Review
+			review.Files = workspaceReferences(review.Files)
+			renderInput.Review = &review
+		}
+		rendered, err = organization.RenderContext(selection, settings, renderInput)
+	}
 	if err != nil {
 		return Command{}, err
 	}
@@ -363,6 +374,16 @@ func (s stateValue) openFindings(t taskValue, source organization.HostSource) or
 		set.Items = append(set.Items, organization.FindingFact{ID: issue.ID, Grounds: organization.HostText{Text: text, Source: organization.HostSource{RecordID: issue.ID, ContentID: issue.Source.ContentID}}})
 	}
 	return set
+}
+
+func workspaceReferences(artifacts []organization.ArtifactFact) []organization.ArtifactFact {
+	out := slices.Clone(artifacts)
+	for i := range out {
+		if out[i].Content == organization.ArtifactText {
+			out[i].Content, out[i].Text = organization.ArtifactWorkspaceRef, nil
+		}
+	}
+	return out
 }
 
 // ownedArtifacts lists the manager's registered artifacts in the step's

@@ -10,6 +10,7 @@ const renderFrameOpen = "\n[section %q bytes=%d]\n"
 const renderFrameClose = "\n[/section]\n"
 const absentPurposeText = "No purpose was supplied; none is inferred from this Package name."
 const binaryReferenceText = "Only a binary content reference was supplied. Its content was not inspected."
+const workspaceReferenceText = "This context does not copy the file's content. Read the file at its path in your workspace."
 
 const applyOperationText = "Reconcile the artifacts of your complete Manager responsibility with the bound canonical model. Assess the existing realization, correct deviations within artifact authority, and return a reviewed change or a justified reviewed no-change result. The model and protected inputs remain read-only.\n"
 const reviewOperationText = "The static Apply operation below is the subject under review, not an instruction to implement or repair it. Your independent reviewer role remains read-only.\n"
