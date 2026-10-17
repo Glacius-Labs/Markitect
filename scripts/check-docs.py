@@ -227,9 +227,9 @@ def extract_destinations(markdown: str) -> list[tuple[str, int]]:
             found.append((destination, line_no))
             consumed[line_index].append((definition.start(), definition.end()))
 
-        # Inline links and images. The `](` opener is sufficient for this
-        # deliberately bounded parser; nested label brackets are unsupported.
-        for match in re.finditer(r"\]\s*\(", line):
+        # Inline links and images require an adjacent `](` opener; nested label
+        # brackets are unsupported by this deliberately bounded parser.
+        for match in re.finditer(r"\]\(", line):
             open_paren = line.find("(", match.start(), match.end())
             destination = _destination_after_open(line, open_paren + 1)
             if destination is not None:
