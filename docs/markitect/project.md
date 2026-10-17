@@ -4,7 +4,7 @@ Generated from acquired canonical v1 source bytes. This view is not execution or
 
 ## markitect
 
-Canonical model digest: `sha256:5785b5485fcbeee54dde7e726e129245aa88c88e9c7f7e43dfb2461677842c51`.
+Canonical model digest: `sha256:511d06ea2e3b9baca1d598a550afb9be13cefb6b9fa41275df56de386c6a8993`.
 
 Manifest: `.markitect/model.yaml` (original bytes `sha256:d40feb9e02db275aed89d53b0a88849e463acaca076c8fa70fad38b367a68559`).
 
@@ -199,6 +199,12 @@ Account for every observed regular file as a protected input, exact registered a
 Kind: `vocabulary/Rule`. Source: `.markitect/model/product/run/confirmed-run-history.yaml` (original bytes `sha256:0d99d2416f788e2c55ffccf9b3e410122d0e280130de83bdf6316af43bbc63b9`).
 
 Bind each run to its exact supplied model, repository, configuration and owner request. Admit work against finite assignment budgets and required review capacity. Change confirmed run state only after an exact journal acknowledgement. Preserve uncertain effects and their budget holds. Keep transition semantics separate from SQL, repository acquisition and provider protocols.
+
+### product/runtime/container-runtime
+
+Kind: `vocabulary/Rule`. Source: `.markitect/model/product/runtime/container-runtime.yaml` (original bytes `sha256:fbc2ad4f53c550ab5dac037e3b01773201fb86098fe778ac8160477a6607b8ad`).
+
+Run every Agent session and project check in its own hardened Linux container from a runtime image named by its engine image ID. markitect-agentd is the only program the Host talks to: it starts the provider CLI, relays its standard streams, serves the Host tools over MCP on a Unix socket inside the container and reports exits, adding no policy. The Host passes only validated specs to the engine, gives containers named volumes and never host paths, runs them as a non-root user with a read-only root filesystem, no capabilities and bounded resources, and refuses a different frame protocol.
 
 ### product/snapshot/fixed-values
 
