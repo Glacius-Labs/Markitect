@@ -9,11 +9,14 @@ import (
 	"github.com/Glacius-Labs/Markitect/internal/snapshot"
 )
 
-// Source captures model, execution, registry and ignore sources from the current
-// committed, clean HEAD, alongside the complete actual repository census (also
-// Git-ignored untracked files). Gitignore exempts untracked files only from the
-// clean-HEAD check, never from census observation. Before returning without
-// error, the adapter must read exactly spelled manifests, locks and declared
+// Source captures repository-local model, execution, registry and ignore sources
+// from the current committed, clean HEAD. Explicitly external dependencies and
+// Host sources are current, exactly bound observations, not contents of HEAD.
+// The complete actual repository census also includes Git-ignored untracked
+// files, subject only to RawInputs' census exclusions. Gitignore exempts untracked
+// files only from the clean-HEAD check, never from census observation.
+// Before returning without error, the adapter must read exactly spelled
+// manifests, locks and declared
 // roots without following redirects, establish physically distinct, non-nested
 // model roots, and capture every selected input and the complete census.
 // Dirty tracked files and non-ignored untracked files refuse Capture. Known
@@ -113,7 +116,8 @@ type SourceFile struct {
 // RawInputs is shared by committed capture and read-only preview. Census is the
 // complete immutable actual repository observation for Capture and Working
 // preview, including Git-ignored untracked files. Fixed preview retains exactly
-// its historical Git tree. Only .markitect/state is excluded from source staleness.
+// its historical Git tree. Census excludes exactly .markitect/state/** and the
+// technical Git administration; Gitignore supplies no other scan exclusion.
 // Each repository-local ModelSource supplies its own acquisition area. Other
 // input coordinates remain explicit. No classification or decoding is inferred
 // from these bytes.
@@ -128,8 +132,9 @@ type RawInputs struct {
 	Instructions []SourceFile
 }
 
-// CapturedInputs binds committed sources to HEAD and the actual census to its
-// comparison guard. On error known fields remain useful partial observations.
+// CapturedInputs binds repository-local committed sources to HEAD; Raw also
+// retains the external source observations and actual census under the comparison
+// guard. On error known fields remain useful partial observations.
 type CapturedInputs struct {
 	Raw   RawInputs
 	Head  string
