@@ -1,0 +1,178 @@
+package codexappserver
+
+import (
+	"context"
+	"encoding/json"
+	"path/filepath"
+	"reflect"
+	"strings"
+	"testing"
+
+	"github.com/Glacius-Labs/Markitect/internal/apply"
+	"github.com/Glacius-Labs/Markitect/internal/model"
+	"github.com/Glacius-Labs/Markitect/internal/snapshot"
+)
+
+func executionHostProfile(engine string) string {
+	return strings.Replace(imageProfile(engine), "profileVersion: 2", "profileVersion: 3", 1) + `credentialRef: exact-runtime-credential
+maxWireBytes: 1048576
+session:
+  version: 1
+  model: explicitly-selected-model
+  effort: high
+  baseInstructions: "Literal ${NO_EXPANSION}\n"
+  developerInstructions: ''
+  store: explicit-store
+  cpus: 1.5
+  memoryBytes: 2147483648
+  pids: 192
+  tmpBytes: 2097152
+  network: ''
+`
+}
+
+func preparedExecution(t *testing.T, inline string, port apply.AgentProfilePreparer) apply.PreparedProfile {
+	t.Helper()
+	profiles := consumeProfile(t, inline, nil, port).ProfileObservations()
+	if len(profiles) != 1 {
+		t.Fatalf("expected one actual Apply profile, got %d", len(profiles))
+	}
+	return profiles[0]
+}
+
+func TestExecutionProfileProjectsOnlyCapturedLiteralSettings(t *testing.T) {
+	inline := executionHostProfile(filepath.Join(t.TempDir(), "engine"))
+	location := apply.SourceLocation{Boundary: "captured", Path: testPath(t, "instruction.md")}
+	entry, err := snapshot.NewEntry(location.Path, snapshot.Regular, []byte("Render this separately, once.\n"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	inline = strings.Replace(inline, "instructions: []", "instructions: [{boundary: captured, path: instruction.md}, {boundary: captured, path: instruction.md}]", 1)
+	fake := &fakeImages{data: []byte(fixtureMetadata)}
+	profiles := consumeProfile(t, inline, []apply.SourceFile{{Location: location, File: entry}}, imagesPreparer(fake)).ProfileObservations()
+	if len(profiles) != 1 {
+		t.Fatal(profiles)
+	}
+	prepared := profiles[0]
+	if prepared.Observation().Contract.Version != 3 || prepared.Observation().Status != model.Passed || len(prepared.Observation().Instructions) != 2 {
+		t.Fatal(prepared.Observation())
+	}
+	want := SessionProfile{Version: 1, Model: "explicitly-selected-model", Effort: "high", BaseInstructions: "Literal ${NO_EXPANSION}\n", DeveloperInstructions: "", Store: "explicit-store", CPUs: 1.5, MemoryBytes: 2147483648, Pids: 192, TmpBytes: 2097152, Network: ""}
+	wantPayload, err := NewSessionProfile(want)
+	if err != nil {
+		t.Fatal(err)
+	}
+	calls := append([]string(nil), fake.calls...)
+	payload, credential, wire, err := SessionProfileFromPrepared(prepared)
+	if err != nil || payload.Ref() != wantPayload.Ref() || string(payload.Bytes()) != string(wantPayload.Bytes()) || credential != "exact-runtime-credential" || wire != 1<<20 {
+		t.Fatalf("projection: %v %s %q %d", err, payload.Bytes(), credential, wire)
+	}
+	var actual SessionProfile
+	if err := json.Unmarshal(payload.Bytes(), &actual); err != nil || !reflect.DeepEqual(actual, want) {
+		t.Fatalf("constructor roundtrip: %v %+v", err, actual)
+	}
+	// Projection has no runtime/resolver seam and never revisits the fake reader.
+	if !reflect.DeepEqual(fake.calls, calls) {
+		t.Fatal("projection repeated acquisition", fake.calls)
+	}
+	copyBytes := payload.Bytes()
+	copyBytes[0] = '!'
+	again, _, _, err := SessionProfileFromPrepared(prepared)
+	if err != nil || again.Ref() != wantPayload.Ref() {
+		t.Fatal("returned bytes changed captured settings", err)
+	}
+}
+
+func TestExecutionProfileSourceChangesInvalidateStaticBinding(t *testing.T) {
+	inline := executionHostProfile(filepath.Join(t.TempDir(), "engine"))
+	boundary := filepath.Join(t.TempDir(), "same-host")
+	prepare := func(text string, port apply.AgentProfilePreparer) apply.PreparedProfile {
+		return consumeProfileAt(t, text, nil, port, boundary).ProfileObservations()[0]
+	}
+	first := prepare(inline, imagesPreparer(&fakeImages{data: []byte(fixtureMetadata)}))
+	changed := strings.Replace(inline, "effort: high", "effort: low", 1)
+	second := prepare(changed, imagesPreparer(&fakeImages{data: []byte(fixtureMetadata)}))
+	firstID, _ := first.Identity()
+	secondID, ok := second.Identity()
+	if !ok || first.Input().Location() != second.Input().Location() || firstID == secondID || first.Input().Binding() == second.Input().Binding() {
+		t.Fatal("changed literal settings lost source binding")
+	}
+	cached := prepare(changed, captureProfile(func(context.Context, apply.ProfileInput) (apply.ProfileObservation, error) {
+		return first.Observation(), nil
+	}))
+	if _, _, _, err := SessionProfileFromPrepared(cached); err == nil {
+		t.Fatal("accepted another source request's metadata")
+	}
+}
+
+func TestExecutionProfileRefusesMetadataOnlyAndIncompleteOrForeignEvidence(t *testing.T) {
+	engine := filepath.Join(t.TempDir(), "engine")
+	v2 := preparedExecution(t, imageProfile(engine), imagesPreparer(&fakeImages{data: []byte(fixtureMetadata)}))
+	if _, _, _, err := SessionProfileFromPrepared(v2); err == nil || !strings.Contains(err.Error(), "metadata-only") {
+		t.Fatal("v2 invented execution settings", err)
+	}
+	if _, _, _, err := SessionProfileFromPrepared(apply.PreparedProfile{}); err == nil {
+		t.Fatal("accepted missing prepared profile")
+	}
+	for _, scenario := range []string{"contract", "provider", "image", "CLI", "agentd", "schema", "instructions", "incomplete"} {
+		t.Run(scenario, func(t *testing.T) {
+			port := captureProfile(func(ctx context.Context, input apply.ProfileInput) (apply.ProfileObservation, error) {
+				o, err := imagesPreparer(&fakeImages{data: []byte(fixtureMetadata)}).PrepareAgentProfile(ctx, input)
+				switch scenario {
+				case "contract":
+					o.Contract.Version = 1
+				case "provider":
+					o.AgentImage.Provider = apply.AgentImageClaudeCode
+					o.AgentImage.RecordedCodexSchemaDigest = ""
+				case "image":
+					o.AgentImage.ImageID = "sha256:" + strings.Repeat("c", 64)
+				case "CLI":
+					o.AgentImage.CLIVersion = "codex-cli another-version"
+				case "agentd":
+					o.AgentImage.AgentdVersion = "another-build"
+				case "schema":
+					o.AgentImage.RecordedCodexSchemaDigest = "sha256:" + strings.Repeat("c", 64)
+				case "instructions":
+					o.Instructions = []apply.SourceLocation{{Boundary: "missing", Path: testPath(t, "missing.md")}}
+				case "incomplete":
+					o.Status = model.NotCompleted
+				}
+				return o, err
+			})
+			prepared := preparedExecution(t, executionHostProfile(engine), port)
+			if payload, credential, wire, err := SessionProfileFromPrepared(prepared); err == nil || payload.Valid() || credential != "" || wire != 0 {
+				t.Fatalf("accepted %s evidence or leaked partial projection: %v", scenario, err)
+			}
+		})
+	}
+}
+
+func TestExecutionProfileInvalidSettingsRefuseBeforeImageAcquisition(t *testing.T) {
+	base := executionHostProfile(filepath.Join(t.TempDir(), "engine"))
+	for _, tc := range []struct{ name, from, to string }{
+		{"missing credential", "credentialRef: exact-runtime-credential\n", ""},
+		{"missing model", "  model: explicitly-selected-model\n", ""},
+		{"missing instruction policy", "  developerInstructions: ''\n", ""},
+		{"invalid effort", "effort: high", "effort: max"},
+		{"wire too large", "maxWireBytes: 1048576", "maxWireBytes: 1048577"},
+		{"wire zero", "maxWireBytes: 1048576", "maxWireBytes: 0"},
+		{"wrong numeric type", "pids: 192", "pids: '192'"},
+		{"invalid resources", "cpus: 1.5", "cpus: .nan"},
+		{"unknown session field", "session:\n", "session:\n  extra: forbidden\n"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			calls := 0
+			port := NewMetadataPreparer(func(EngineConfig) (ImageReader, error) {
+				calls++
+				return &fakeImages{data: []byte(fixtureMetadata)}, nil
+			})
+			prepared := preparedExecution(t, strings.Replace(base, tc.from, tc.to, 1), port)
+			if prepared.Observation().Status != model.Failed || calls != 0 {
+				t.Fatal("invalid execution settings reached image reader", calls, prepared.Observation())
+			}
+			if _, _, _, err := SessionProfileFromPrepared(prepared); err == nil {
+				t.Fatal("projected invalid execution settings")
+			}
+		})
+	}
+}
