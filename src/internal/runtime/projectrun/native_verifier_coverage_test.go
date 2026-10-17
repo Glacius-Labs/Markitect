@@ -15,7 +15,7 @@ import (
 	"github.com/Glacius-Labs/Markitect/src/internal/runtime/agentexec"
 	"github.com/Glacius-Labs/Markitect/src/internal/runtime/codexappserver"
 	"github.com/Glacius-Labs/Markitect/src/internal/runtime/projectworkspace"
-	"github.com/Glacius-Labs/Markitect/src/internal/testkit"
+	"github.com/Glacius-Labs/Markitect/internal/testkit"
 )
 
 const nativeVerifierFixtureEnv = "MARKITECT_PROJECTRUN_NATIVE_VERIFIER_FIXTURE"

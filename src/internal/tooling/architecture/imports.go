@@ -62,7 +62,7 @@ func layer(p string) (string, string) {
 	case p == "src/internal/tooling" || strings.HasPrefix(p, "src/internal/tooling/") || p == "tools" || strings.HasPrefix(p, "tools/"):
 		return "tooling", "tooling"
 	// Hermetic test fixtures shared by the tests of every layer.
-	case p == "src/internal/testkit" || strings.HasPrefix(p, "src/internal/testkit/"):
+	case p == "internal/testkit" || strings.HasPrefix(p, "internal/testkit/"):
 		return "testkit", p
 	case p == "src/cmd" || strings.HasPrefix(p, "src/cmd/"):
 		return "cli", p
@@ -90,19 +90,19 @@ func Check(edges []Edge) []Violation {
 		to, target := layer(e.To)
 		rule := ""
 		switch {
-		case strings.HasPrefix(from, "apply-") || strings.HasPrefix(to, "apply-"):
-			rule = targetRule(e)
+		case from == "testkit":
+			rule = "testkit may import only the standard library"
 		case from == "bootstrap":
 			rule = "standalone bootstrap tooling may not import Markitect packages"
+		case to == "testkit" && !e.Test:
+			rule = "only test files may import testkit"
+		case to == "testkit":
+		case strings.HasPrefix(from, "apply-") || strings.HasPrefix(to, "apply-"):
+			rule = targetRule(e)
 		case e.From == e.To:
 			rule = "self-import is forbidden"
 		case strings.HasPrefix(to, "harness") && !strings.HasPrefix(from, "harness"):
 			rule = "product may not import test/example Harness"
-		case from == "testkit":
-			rule = "testkit may import only the standard library"
-		case to == "testkit" && !e.Test:
-			rule = "only test files may import testkit"
-		case to == "testkit":
 		case from == "harness-tests" && !e.Test:
 			rule = "Harness root may contain only test code"
 		case from == "harness-runtime" && to != "host" && !(strings.HasPrefix(to, "harness") && strings.HasPrefix(e.To, strings.TrimSuffix(e.From, "/pathspell"))):
