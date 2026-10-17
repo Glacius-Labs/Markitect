@@ -39,7 +39,7 @@ func collect(moduleDir string) ([]sourceFile, error) {
 		if err := requireRealDirectory(root); err != nil {
 			return nil, fmt.Errorf("required source tree %s: %w", tree, err)
 		}
-		if err := walkSourceTree(moduleDir, root, &files); err != nil {
+		if err := walkSourceTree(moduleDir, root, &files, prefix == "src/"); err != nil {
 			return nil, err
 		}
 	}
@@ -69,7 +69,7 @@ func collect(moduleDir string) ([]sourceFile, error) {
 	return files, nil
 }
 
-func walkSourceTree(moduleDir, start string, files *[]sourceFile) error {
+func walkSourceTree(moduleDir, start string, files *[]sourceFile, transitional bool) error {
 	return filepath.WalkDir(start, func(current string, entry fs.DirEntry, walkErr error) error {
 		if walkErr != nil {
 			return fmt.Errorf("walk Markitect source %q: %w", current, walkErr)
@@ -89,7 +89,7 @@ func walkSourceTree(moduleDir, start string, files *[]sourceFile) error {
 			return fmt.Errorf("refusing symlink in Markitect source tree: %s", rel)
 		}
 		ext := strings.ToLower(filepath.Ext(entry.Name()))
-		if ext != ".go" && !embeddedNotices(rel) {
+		if ext != ".go" && !embeddedNotices(rel) && !(transitional && isTransitionalTestkitDataPath(rel)) {
 			return nil
 		}
 		return appendRegularFile(moduleDir, rel, files, true)
@@ -98,7 +98,7 @@ func walkSourceTree(moduleDir, start string, files *[]sourceFile) error {
 
 // sourceLayoutPrefix selects the active source tree. The flat layout remains
 // readable for previously pinned source packages; during the transition, the
-// product engine stays under src/ and only the four pure root foundations may
+// product engine stays under src/ and only the bounded root packages may
 // accompany it.
 func sourceLayoutPrefix(moduleDir string) (string, error) {
 	presence := sourceLayoutPresence{

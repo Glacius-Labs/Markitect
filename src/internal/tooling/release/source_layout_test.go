@@ -49,6 +49,8 @@ func TestTransitionalFoundationsMatchLiveAndFixedSourceArchives(t *testing.T) {
 		"internal/snapshot/tree.go",
 		"internal/organization/organization.go",
 		"internal/realization/realization.go",
+		"internal/testkit/testkit.go",
+		"internal/testkit/testdata/hostile.gitconfig",
 		"internal/model/testdata/fixture.go",
 		"internal/model/vendor.go",
 	} {
@@ -62,9 +64,12 @@ func TestTransitionalFoundationsMatchLiveAndFixedSourceArchives(t *testing.T) {
 	if _, ok := contents["src/internal/model/model.go"]; ok {
 		t.Fatal("root foundation was rewritten under the legacy source prefix")
 	}
+	if got := string(contents["internal/testkit/testdata/hostile.gitconfig"]); got != "[core]\n\thooksPath = blocked\n" {
+		t.Fatalf("archived testkit fixture = %q; want exact input bytes", got)
+	}
 
 	before := sha256.Sum256(liveArchive)
-	writeLayoutFile(t, root, "internal/organization/organization.go", "package organization\n// changed\n")
+	writeLayoutFile(t, root, "internal/testkit/testdata/hostile.gitconfig", "[core]\n\thooksPath = changed\n")
 	changed, err := collect(root)
 	if err != nil {
 		t.Fatal(err)
@@ -75,7 +80,7 @@ func TestTransitionalFoundationsMatchLiveAndFixedSourceArchives(t *testing.T) {
 	}
 	after := sha256.Sum256(changedArchive)
 	if before == after {
-		t.Fatal("root foundation source change did not change the source archive digest")
+		t.Fatal("root test-support data change did not change the source archive digest")
 	}
 }
 
@@ -112,6 +117,24 @@ func TestTransitionalSnapshotRejectsNonGoFoundationSymlinks(t *testing.T) {
 	source.Modes[name] = "120000"
 	if _, err := snapshotModuleFiles(source); err == nil || !strings.Contains(err.Error(), "not regular") {
 		t.Fatalf("symlink named vendor bypassed validation: %v", err)
+	}
+}
+
+func TestTransitionalTestkitPathsStayBoundedAndRegular(t *testing.T) {
+	root := transitionalSourceFixture(t)
+	writeLayoutFile(t, root, "internal/testkit-extra/unexpected.go", "package testkitextra\n")
+	if _, err := collect(root); err == nil || !strings.Contains(err.Error(), "unsupported root internal path") {
+		t.Fatalf("testkit-like unknown package was not rejected: %v", err)
+	}
+
+	source := fixedSourceSnapshot(t, transitionalSourceFixture(t))
+	fixture := "internal/testkit/testdata/hostile.gitconfig"
+	if string(source.Files[fixture]) != "[core]\n\thooksPath = blocked\n" || source.Modes[fixture] != "100644" {
+		t.Fatalf("fixture input = %q, mode %q; want exact bytes and regular mode", source.Files[fixture], source.Modes[fixture])
+	}
+	source.Modes[fixture] = "120000"
+	if _, err := snapshotModuleFiles(source); err == nil || !strings.Contains(err.Error(), "not regular") {
+		t.Fatalf("testkit fixture redirect was not rejected: %v", err)
 	}
 }
 
@@ -237,12 +260,13 @@ func TestTransitionalSourceLayoutRequiresEntrypointAndInternalGoFiles(t *testing
 func TestFlatHistoricalSourceLayoutRemainsReadable(t *testing.T) {
 	root := testkit.TempDir(t)
 	for name, content := range map[string]string{
-		"go.mod":                "module " + sourceRepository + "\n\ngo 1.27.1\n",
-		"go.sum":                "example checksum\n",
-		"README.md":             "Markitect\n",
-		"LICENSE":               "Apache License\nVersion 2.0\n",
-		"cmd/markitect/main.go": "package main\n",
-		"internal/core/core.go": "package core\n",
+		"go.mod":                               "module " + sourceRepository + "\n\ngo 1.27.1\n",
+		"go.sum":                               "example checksum\n",
+		"README.md":                            "Markitect\n",
+		"LICENSE":                              "Apache License\nVersion 2.0\n",
+		"cmd/markitect/main.go":                "package main\n",
+		"internal/core/core.go":                "package core\n",
+		"internal/testkit/testdata/legacy.txt": "legacy fixture\n",
 	} {
 		writeLayoutFile(t, root, name, content)
 	}
@@ -269,6 +293,9 @@ func TestFlatHistoricalSourceLayoutRemainsReadable(t *testing.T) {
 	if !bytes.Equal(liveArchive, fixedArchive) {
 		t.Fatal("historical flat live and fixed-source archives differ")
 	}
+	if _, ok := archiveContents(t, liveArchive)["internal/testkit/testdata/legacy.txt"]; ok {
+		t.Fatal("historical flat source selection changed to include transitional testdata")
+	}
 
 	prefix, err := sourceLayoutPrefix(root)
 	if err != nil || prefix != "" {
@@ -290,6 +317,8 @@ func transitionalSourceFixture(t *testing.T) string {
 		"internal/snapshot/tree.go":                     "package snapshot\n",
 		"internal/organization/organization.go":         "package organization\n",
 		"internal/realization/realization.go":           "package realization\n",
+		"internal/testkit/testkit.go":                   "package testkit\n",
+		"internal/testkit/testdata/hostile.gitconfig":   "[core]\n\thooksPath = blocked\n",
 		"internal/model/testdata/fixture.go":            "package fixture\n",
 		"internal/model/other_platform_windows_test.go": "package model_test\n",
 	} {
@@ -340,7 +369,7 @@ func writeLayoutFile(t *testing.T, root, relative, content string) {
 }
 
 func TestTransitionalFoundationPathIsExact(t *testing.T) {
-	for _, name := range []string{"internal/model/model.go", "internal/snapshot/tree.go", "internal/organization/x.go", "internal/realization/x.go"} {
+	for _, name := range []string{"internal/model/model.go", "internal/snapshot/tree.go", "internal/organization/x.go", "internal/realization/x.go", "internal/testkit/testkit.go", "internal/testkit/testdata/hostile.gitconfig"} {
 		if !isTransitionalFoundationPath(name) {
 			t.Errorf("foundation path %q was rejected", name)
 		}
