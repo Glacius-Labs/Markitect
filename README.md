@@ -1,41 +1,91 @@
 # Markitect
 
-**Define the project. Keep its implementation aligned.**
+**You model the world of your project. Markitect organizes its realization.**
 
-Markitect is model-first development with delegated realization. You describe what your project should be: its concepts, behavior, architecture and rules. Code, tests, configuration and documentation realize that model.
+[![CI](https://github.com/Glacius-Labs/Markitect/actions/workflows/ci.yaml/badge.svg)](https://github.com/Glacius-Labs/Markitect/actions/workflows/ci.yaml)
+[![License: Apache-2.0](https://img.shields.io/badge/License-Apache--2.0-blue.svg)](LICENSE)
+[![Status: In development](https://img.shields.io/badge/Status-In%20development-orange.svg)](docs/implementation-plan.md)
 
-Markitect is being built to organize AI agents around those responsibilities, with independent review of their work and its integration. The goal is to spend more attention on designing the system and making decisions while keeping its implementation consistent through change.
+[Why Markitect](#why-markitect) · [Working with a model](#working-with-a-model) · [An example](#one-rule-changes-the-project-follows) · [Development status](#development-status) · [Explore the source](#run-the-current-source)
 
-**Development stage:** the current source supports model compilation, file accounting, context preparation and a guarded readable model view. Recursive realization and Apply are still being built. The published v0.14.1 CLI belongs to the earlier product generation; its installation instructions appear below.
+Markitect is model-first development with delegated AI realization. Describe what your project should be: its behavior, architecture, concepts and rules. Markitect is being built to organize the work that turns that model into code, tests, configuration and documentation—and keeps them consistent through change.
+
+The goal is a clean, uniform and understandable repository, without drift, forgotten rules or contradictions. You model the intended world and can trust that the result reflects it, without routinely reviewing the implementation yourself.
 
 ## Why Markitect
 
-As a project grows, a change can satisfy the immediate request while missing an existing rule, a related test or a documentation update. Markitect makes the intended project explicit and gives its realization accountable owners.
+The difficult question after an AI implementation is:
 
-The target workflow is:
+> Does what the AI built actually match what I intended?
 
-1. **Model the intent.** Define the project's behavior, rules and boundaries in one canonical model.
-2. **Organize the work.** A Manager owns each model Package. The Host supplies explicit context and propagates the same instruction unchanged to every local Manager.
-3. **Realize and review.** Every Manager assesses its area, makes needed changes and integrates its children's results. Fresh independent reviewers assess local work, including no-change results, and integration.
-4. **Verify and Apply.** Required checks and current reviews support guarded publication of the candidate. People retain decisions about intent and acceptance.
+A feature can work while an existing rule is overlooked, another area breaks or the documentation describes something different. Finding those gaps takes attention. Explaining them, prompting again and checking the repair takes more. Some omissions may never be noticed.
 
-For example, changing a library's borrowing limit from five books to three should bring its code, tests and usage guide into agreement. The [two-Apply library demonstration](docs/design/canonical-model/manager-apply-playground.md) is the next complete workflow the project is working toward, rather than an available demo.
+Markitect treats **human attention as the scarce resource**. Its purpose is to make realization dependable through explicit intent, systematic collaboration and verification. Focused agents can spend effort on implementation and checking while people concentrate on the intended system and decisions that need their judgment.
 
-Markitect aims to reduce missed obligations and repeated synchronization. Those benefits still need validation. Start with [Markitect in brief](docs/vision.md#markitect-in-brief) for the full product picture, or [origin and rationale](docs/concepts/origin-and-rationale.md) for the experience behind it.
+The method draws on familiar practices from human teams: clear responsibility, delegation, escalation, the four-eyes principle and integration of independently examined work. Their effectiveness for AI realization must be demonstrated in use.
 
-## Explore the project
+## What Markitect aims to deliver
 
-| Your goal | Start here |
+| Goal | What it means for your project |
 | --- | --- |
-| Understand the product and its intended use | [Vision](docs/vision.md#markitect-in-brief) |
-| Run what current source supports | [Commands below](#run-the-current-source) and [project workflow](docs/project-workflow.md) |
-| Understand the new Manager and Apply concept | [Apply design map](docs/design/canonical-model/README.md#apply-design) |
-| Contribute to the rebuild | [Delivery plan](docs/implementation-plan.md) and [CONTRIBUTING](CONTRIBUTING.md) |
-| Find guides, evidence or historical records | [Documentation map](docs/README.md) |
+| **Model first** | One authoritative account of behavior, architecture and rules remains effective through every change. |
+| **A coherent repository** | Code, tests, configuration and documentation agree with that model and with one another. |
+| **Continuing obligations** | A new feature preserves the rules and behavior that still apply. |
+| **Trustworthy realization** | Systematic implementation, independent review and verification support confidence in the result. |
+| **Your attention on intent** | Routine human implementation review becomes unnecessary; meaningful decisions remain yours. |
+
+These are the product's target outcomes. The [development status](#development-status) below describes what you can run today.
+
+## Working with a model
+
+1. **Describe the intended project.** Define its behavior, concepts, architecture and rules in the canonical model. AI can help you explore and author that intent.
+2. **Have it realized.** Markitect organizes implementation, review and integration across the project's responsibilities.
+3. **Change the model as the project evolves.** New intent starts a new realization. Existing obligations continue to apply, and deviations from unchanged intent can be repaired against the same model.
+
+Code, tests and documentation are realizations of the model. The aim is to keep them aligned without asking you to rediscover every consequence of every change.
+
+## One rule changes. The project follows.
+
+Imagine a library where a member may borrow five books. The rule changes: members may now borrow three.
+
+You update the model. The intended outcome is coordinated:
+
+- The implementation enforces the new limit.
+- Tests check the new boundary against the requirement.
+- The usage guide explains the changed behavior.
+- Existing rules, including returning books and handling suspended members, still hold.
+
+The first complete demonstration applies the original library model, changes that one policy value and applies the revised model against the actual first result. It is the workflow we are building toward, with [independent expectations](docs/design/canonical-model/library-example/evaluation-contract.md) assessing the result.
+
+## Where trust should come from
+
+Markitect combines **AI judgment with deterministic structure**. Explicit model relationships, accountable responsibilities and required process steps organize work and make it inspectable. Agents interpret and realize intent; independent assessment examines their work and how it fits together.
+
+The organization matters because agents can overlook things. Implementation, tests and review can share a mistaken assumption. Markitect's method aims to expose those gaps through distinct responsibilities, relevant context, independent judgment and integration checks.
+
+Model calls, elapsed time and human attention are different costs. Lower-cost models can make focused collaboration practical; making development cheaper is not the product goal. What matters is the quality of the result and how much human attention it needs. Parallel execution is a later opportunity to reduce elapsed time.
+
+For the full explanation, read [Markitect in brief](docs/vision.md#markitect-in-brief) and [origin and rationale](docs/concepts/origin-and-rationale.md).
+
+## What we want to find out
+
+The intended comparison is straightforward: give an agent ordinary documentation containing the same project intent as the canonical model, with the instruction to read it and implement it.
+
+Does Markitect's structured realization preserve that intent more reliably through a sequence of changes? Does it leave fewer omissions, contradictions and manual corrections? Can people trust the result without routine implementation review?
+
+The conventional approach is allowed to succeed. [Measurement](docs/measurement.md) owns evaluation procedure; an early successful example does not establish a general advantage.
+
+## Development status
+
+**Markitect is under active development. Full Apply is not available yet.**
+
+Current source supports model compilation, repository file accounting, context preparation and a guarded readable model view. Session, workspace, check and publication foundations are integrated, while the core realization workflow and its public Apply entrypoint are being completed.
+
+Real runtime probes and small single-agent library baselines have passed. They establish their [recorded scope](docs/validation/runtime-capabilities-20261017.md); they do not demonstrate the complete Manager organization or the two-Apply workflow.
+
+The next complete milestone is the [two-Apply library demonstration](docs/design/canonical-model/manager-apply-playground.md). Follow the [delivery plan](docs/implementation-plan.md) for scope and dependencies.
 
 ## Run the current source
-
-Current source implements canonical language v1 compilation, complete file accounting, execution declarations, static context selection and optional source-bound profile metadata/settings preparation. It also generates a reviewed readable model view. Apply explicitly returns unavailable before acquisition or effects. Sessions, workspaces, executable checks and artifact publication are later stages in the [delivery plan](docs/implementation-plan.md).
 
 Use Git and the Go version in `go.mod`, then run from this checkout:
 
@@ -46,23 +96,18 @@ go run ./cmd/markitect context product/model --repo .
 go run ./cmd/markitect docs --repo .
 ```
 
-Build into an external directory with `go build -o ABSOLUTE_EXTERNAL_PATH/markitect ./cmd/markitect` (use a native path and `markitect.exe` on Windows). This source surface is separate from the published v0.14.1 binary below. Building does not publish or update a project pin.
+These commands inspect and prepare the model. They do not start a realization. The [project workflow](docs/project-workflow.md) explains current commands, and the [self-model](.markitect/README.md) provides a complete authoring example.
 
-## Start a model-first project
+## Contribute
 
-Use an existing Git commit, author a [canonical v1 manifest and model](docs/design/canonical-model/minimal-language/language-contract.md), and register exact artifact ownership. The default manifest is `.markitect/model.yaml`; `--model PATH` and repeated `--dependency PATH` select explicit sources. No automatic scaffold or dependency discovery runs. The [self-model](.markitect/README.md) is one complete current example.
+Start with [CONTRIBUTING](CONTRIBUTING.md), the [delivery plan](docs/implementation-plan.md) and the [documentation map](docs/README.md). Concrete feedback about the model, workflow and missing obligations is useful alongside implementation contributions.
 
-`check` requests structural preparation. `context <package>` reports selected Definitions and inclusion reasons. `--revision REF` resolves once to a fixed commit. `--metadata --host-profile ABSOLUTE_DOCUMENT_PATH` additionally requests static metadata/settings preparation; it starts no process and does not establish runtime support. [Project workflow](docs/project-workflow.md) explains the stages and exits.
+## Earlier published release
 
-## Change, verify, and recover
+Published v0.14.1 belongs to the earlier product generation. Its commands and model formats differ from the current source. Use its versioned guides when trying that release.
 
-Maintain intent in canonical Definitions and exact file ownership in the registry. After a model edit, review `docs` and pass its returned `view.previewDigest` to `--write --expect`. Content, canonical model and write-plan digests are distinct. Source or target changes refuse a stale write; protected inputs and fixed revisions cannot be overwritten. Actual completed paths remain visible after partial failure.
-
-[Architecture](docs/architecture.md), [contributor gates](CONTRIBUTING.md) and the [code map](docs/development/code-map.md) describe the implementation. The packaged source smoke exercises actual Library M1/M2 read-only preparation and refusals; the separate [Library oracle](experiments/library-playground/README.md) remains independent. These are source checks, not delegated realization or acceptance proof.
-
-## Current source status and compatibility
-
-Current source has one root Go module and no legacy product engine. Historical source and published releases retain their identities and evidence. The installation and example blocks below intentionally remain pinned to the existing immutable v0.14.1 release; they do not describe this source increment.
+<details>
+<summary>Install and try the published v0.14.1 release</summary>
 
 <!-- markitect-release:install:start -->
 
@@ -149,9 +194,11 @@ The [minimal example from v0.14.1](https://github.com/Glacius-Labs/Markitect/tre
 
 <!-- markitect-release:try:end -->
 
-## Documentation and development
+</details>
 
-Start with [the documentation map](docs/README.md), [the workflow](docs/project-workflow.md), [operations](docs/operations.md) and [CONTRIBUTING](CONTRIBUTING.md). Accepted product decisions remain in the [concept register](docs/concepts/register.md).
+## Documentation
+
+[Vision](docs/vision.md) · [Origin](docs/concepts/origin-and-rationale.md) · [Workflow](docs/project-workflow.md) · [Design](docs/design/canonical-model/README.md) · [Evidence](docs/validation/README.md) · [All documentation](docs/README.md)
 
 ## License
 

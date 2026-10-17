@@ -1,5 +1,9 @@
 apiVersion: markitect.registry/v1
 artifacts:
+  - path: "docs/concepts/sources/attention-and-comparison-20261017.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Records the owner clarification of human attention and the equivalent-documentation comparison as an English translation.
   - path: "docs/concepts/sources/product-goals-clarification-20261017.md"
     form: doc
     realizes: [documentation/current-guidance]

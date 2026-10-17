@@ -1,19 +1,17 @@
 # Owner clarification of Markitect's product goals
 
-Date: 17 October 2026. Source: direct owner message in marketing chat `01a1495c-4b1d-7d82-b1c1-d1fd276d131a`. Owner wording is preserved below. This clarifies product goals and pitch framing, not implemented capability or a change to the frozen Apply protocol.
+Date: 17 October 2026. Source: direct owner message in marketing chat `01a1495c-4b1d-7d82-b1c1-d1fd276d131a`. The account below is an English translation; the original German wording remains in the chat and earlier commits of this branch. The owner subsequently required English throughout repository content. This clarifies goals and pitch framing, not implemented capability or the frozen Apply protocol.
 
-## Owner statement
+## Owner statement — English translation
 
-Zeig mir bitte die drei überarbeiteten Pitches mit dieser Produktgeschichte: Du modellierst die Welt deines Projekts. Markitect organisiert ihre Realisierung.
+Show the three revised pitches with this product story: You model the world of your project. Markitect organizes its realization.
 
+Markitect's goal is not to make development cheaper. Its goals are:
 
-
-Ausserdem ist das Ziel von Markitect keineswegs dass es günstiger wird. Das Ziel von Markitect ist:
-
-- Ein sauberes einheitliches und klares Repository, ohne Drift und ohne vergessene Regeln und ohne Inkonsistenze oder Widersprüche
-- Model First
-- Ergebnisse durch AI der man vertrauen kann durch Systematik und Struktur und die Fusion von AI und Determinismus
-- Letztlich: Modellieren => AI setzt um => Review nicht mehr nötig, man kann darauf vertrauen, dass das Ergebnis dem Modell entspricht.
+- A clean, uniform and clear repository, without drift, forgotten rules, inconsistencies or contradictions.
+- Model first.
+- AI results that can be trusted through systematics, structure and the fusion of AI with determinism.
+- Ultimately: model → AI implements → review is no longer necessary; the result can be trusted to correspond to the model.
 
 ## Recorder's interpretation
 

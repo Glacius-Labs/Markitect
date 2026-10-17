@@ -20,7 +20,13 @@ Lead with the user's problem, then explain the mechanism with one concrete chang
 
 ### Organizing idea behind the story
 
-On 17 October 2026 the owner supplied the [conceptual influences](../concepts/sources/conceptual-influences-20261017.md) behind Markitect. Their single explanatory owner is [Origin and rationale](../concepts/origin-and-rationale.md#conceptual-influences). Our marketing interpretation is: **Make delegated AI work trustworthy through explicit intent, accountable responsibility and an inspectable process.** This is a proposed story, not a claim that trust has been measured.
+On 17 October 2026 the owner supplied the [conceptual influences](../concepts/sources/conceptual-influences-20261017.md) behind Markitect. Their single explanatory owner is [Origin and rationale](../concepts/origin-and-rationale.md#foundations-restated-on-17-october-2026). Our marketing interpretation is: **Make delegated AI work trustworthy through explicit intent, accountable responsibility and an inspectable process.** This is a proposed story, not a claim that trust has been measured.
+
+The later [attention and comparison clarification](../concepts/sources/attention-and-comparison-20261017.md) sharpens the story: developer attention is the bottleneck. Agent expenditure, elapsed time and human intervention are separate quantities. Focused lower-cost agents can make more implementation and checking practical; parallelization is a later opportunity for elapsed time. The intended baseline gives an agent ordinary documentation with the same project content and the instruction to read it and implement it. The existing Measurement owner governs the actual comparison; this creates no study or execution grant.
+
+### README presentation
+
+After inspecting the public READMEs of [Aider](https://github.com/Aider-AI/aider), [OpenHands](https://github.com/OpenHands/OpenHands) and [Spec Kit](https://github.com/github/spec-kit) on 17 October 2026, use a fuller GitHub entry-page shape: a clear opening, short navigation, scannable user outcomes, one concrete example, a visible source status, a genuine runnable entrypoint and contribution routes. These are editorial structural references, not evidence of Markitect's uniqueness or effectiveness. Put detailed protocol explanations in their existing guides. Preserve generated release instructions in a collapsed section rather than letting them dominate the first visit.
 
 The public explanation can unfold in four steps:
 
