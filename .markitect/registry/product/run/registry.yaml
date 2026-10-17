@@ -1,5 +1,25 @@
 apiVersion: markitect.registry/v1
 artifacts:
+  - path: "internal/run/binding_inventory.go"
+    form: code
+    realizes: [product/run/confirmed-run-history]
+    why: Exposes copied historical basis inventories and checks versioned record agreement without recompilation.
+  - path: "internal/run/binding_inventory_test.go"
+    form: test
+    realizes: [product/run/confirmed-run-history]
+    why: Checks literal v1 compatibility and complete v2 inventories, refusals, copies and read budgets.
+  - path: "internal/run/testdata/basis-v1.json"
+    form: config
+    realizes: [product/run/confirmed-run-history]
+    why: Retains literal pre-v2 basis bytes captured before the inventory codec change.
+  - path: "internal/run/testdata/prepared-v1.json"
+    form: config
+    realizes: [product/run/confirmed-run-history]
+    why: Retains the original v1 preparation batch and its immutable basis reference for retry proof.
+  - path: "internal/run/testdata/owner-v1.txt"
+    form: config
+    realizes: [product/run/confirmed-run-history]
+    why: Retains the original owner input required by the pre-v2 preparation history.
   - path: "internal/run/session.go"
     form: code
     realizes: [product/run/confirmed-run-history]

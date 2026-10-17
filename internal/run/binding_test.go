@@ -110,11 +110,12 @@ type closureRecord struct {
 	Managers, Settings, Ceilings, Profiles, Documents, Census, Registry, Classifications, Protections, Policy, PolicySource json.RawMessage
 }
 type closureScope struct {
-	ID, Digest string
-	Local      bool
-	Manifest   model.Source
-	Canonical  []byte
-	Packages   []model.Package
+	ID, Digest  string
+	Local       bool
+	Manifest    model.Source
+	Canonical   []byte
+	Packages    []model.Package
+	Definitions *json.RawMessage `json:",omitempty"`
 }
 
 func rewrittenPreparation(t *testing.T, batch run.AppendBatch, basis run.BlobRef) run.AppendBatch {

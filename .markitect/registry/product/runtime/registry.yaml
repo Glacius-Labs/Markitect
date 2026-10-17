@@ -1,0 +1,86 @@
+apiVersion: markitect.registry/v1
+artifacts:
+  - path: "cmd/markitect-agentd/main.go"
+    form: code
+    realizes: [product/runtime/container-runtime]
+    why: Implements the stated responsibility within its declared boundary.
+  - path: "internal/adapters/container/cli_smoke_test.go"
+    form: test
+    realizes: [product/runtime/container-runtime]
+    why: Tests the stated responsibility and retains negative boundaries.
+  - path: "internal/adapters/container/engine.go"
+    form: code
+    realizes: [product/runtime/container-runtime]
+    why: Implements the stated responsibility within its declared boundary.
+  - path: "internal/adapters/container/engine_integration_test.go"
+    form: test
+    realizes: [product/runtime/container-runtime]
+    why: Tests the stated responsibility and retains negative boundaries.
+  - path: "internal/adapters/container/session.go"
+    form: code
+    realizes: [product/runtime/container-runtime]
+    why: Implements the stated responsibility within its declared boundary.
+  - path: "internal/adapters/container/session_test.go"
+    form: test
+    realizes: [product/runtime/container-runtime]
+    why: Tests the stated responsibility and retains negative boundaries.
+  - path: "internal/adapters/container/spec.go"
+    form: code
+    realizes: [product/runtime/container-runtime]
+    why: Implements the stated responsibility within its declared boundary.
+  - path: "internal/adapters/container/spec_test.go"
+    form: test
+    realizes: [product/runtime/container-runtime]
+    why: Tests the stated responsibility and retains negative boundaries.
+  - path: "internal/agentd/frame/frame.go"
+    form: code
+    realizes: [product/runtime/container-runtime]
+    why: Implements the stated responsibility within its declared boundary.
+  - path: "internal/agentd/frame/frame_test.go"
+    form: test
+    realizes: [product/runtime/container-runtime]
+    why: Tests the stated responsibility and retains negative boundaries.
+  - path: "internal/agentd/frame/messages.go"
+    form: code
+    realizes: [product/runtime/container-runtime]
+    why: Implements the stated responsibility within its declared boundary.
+  - path: "internal/agentd/mcp.go"
+    form: code
+    realizes: [product/runtime/container-runtime]
+    why: Implements the stated responsibility within its declared boundary.
+  - path: "internal/agentd/proc_other.go"
+    form: code
+    realizes: [product/runtime/container-runtime]
+    why: Implements the stated responsibility within its declared boundary.
+  - path: "internal/agentd/proc_unix.go"
+    form: code
+    realizes: [product/runtime/container-runtime]
+    why: Implements the stated responsibility within its declared boundary.
+  - path: "internal/agentd/provider.go"
+    form: code
+    realizes: [product/runtime/container-runtime]
+    why: Implements the stated responsibility within its declared boundary.
+  - path: "internal/agentd/serve.go"
+    form: code
+    realizes: [product/runtime/container-runtime]
+    why: Implements the stated responsibility within its declared boundary.
+  - path: "internal/agentd/serve_test.go"
+    form: test
+    realizes: [product/runtime/container-runtime]
+    why: Tests the stated responsibility and retains negative boundaries.
+  - path: "internal/agentd/serve_unix_test.go"
+    form: test
+    realizes: [product/runtime/container-runtime]
+    why: Tests the stated responsibility and retains negative boundaries.
+  - path: "packaging/runtime/Dockerfile"
+    form: build
+    realizes: [product/runtime/container-runtime]
+    why: Builds the runtime base image with pinned provider CLIs and the session helper.
+  - path: "packaging/runtime/Dockerfile.dockerignore"
+    form: build
+    realizes: [product/runtime/container-runtime]
+    why: Builds the runtime base image with pinned provider CLIs and the session helper.
+  - path: "packaging/runtime/README.md"
+    form: doc
+    realizes: [product/runtime/container-runtime]
+    why: Documents the stated responsibility or preserves its historical evidence.

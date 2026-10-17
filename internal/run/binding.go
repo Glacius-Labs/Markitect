@@ -53,11 +53,17 @@ type BindingInput struct {
 }
 
 type compiledBinding struct {
-	ID, Digest string
-	Local      bool
-	Manifest   model.Source
-	Canonical  []byte
-	Packages   []model.Package
+	ID, Digest  string
+	Local       bool
+	Manifest    model.Source
+	Canonical   []byte
+	Packages    []model.Package
+	Definitions *[]definitionBinding `json:",omitempty"`
+}
+
+type definitionBinding struct {
+	Identity model.Identity
+	ModelID  string
 }
 type fileBinding struct {
 	Path  string
@@ -141,12 +147,16 @@ func Bind(input BindingInput) (Binding, error) {
 	if err != nil || input.Settings.ModelID() != topology.ModelID() || input.Settings.ModelDigest() != topology.ModelDigest() {
 		return Binding{}, ErrInvalid
 	}
-	w := bindingWire{Version: 1, Source: s, OwnerRequest: input.OwnerRequest.Ref(), ModelInput: input.ModelInput, Managers: topology.Managers(), Profiles: slices.Clone(input.Profiles), Policy: input.Policy, PolicySource: input.PolicySource}
+	w := bindingWire{Version: 2, Source: s, OwnerRequest: input.OwnerRequest.Ref(), ModelInput: input.ModelInput, Managers: topology.Managers(), Profiles: slices.Clone(input.Profiles), Policy: input.Policy, PolicySource: input.PolicySource}
 	for _, compiled := range input.Compilation.Models {
 		if compiled.Status != model.Passed || compiled.Origin != compiled.Manifest.Origin || len(compiled.Canonical) == 0 || compiled.Digest != fmt.Sprintf("sha256:%x", sha256.Sum256(compiled.Canonical)) {
 			return Binding{}, ErrInvalid
 		}
-		w.Compilation = append(w.Compilation, compiledBinding{compiled.ID, compiled.Digest, compiled.Local, compiled.Manifest, compiled.Canonical, compiled.Packages})
+		definitions := make([]definitionBinding, len(compiled.Definitions))
+		for i, definition := range compiled.Definitions {
+			definitions[i] = definitionBinding{definition.Identity, definition.ModelID}
+		}
+		w.Compilation = append(w.Compilation, compiledBinding{compiled.ID, compiled.Digest, compiled.Local, compiled.Manifest, compiled.Canonical, compiled.Packages, &definitions})
 	}
 	raw, err := matchRawClosure(input.ModelInput, w.Compilation)
 	if err != nil {
@@ -281,6 +291,9 @@ func Bind(input BindingInput) (Binding, error) {
 	}
 	payload, err := NewPayload(bindingMediaType, "utf-8", data)
 	if err != nil {
+		return Binding{}, err
+	}
+	if _, _, err := decodeBindingRecord(payload); err != nil {
 		return Binding{}, err
 	}
 	return Binding{payload, input.OwnerRequest, s, input.Policy, reviews}, nil

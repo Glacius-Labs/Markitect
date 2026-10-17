@@ -4,7 +4,7 @@ Generated from acquired canonical v1 source bytes. This view is not execution or
 
 ## markitect
 
-Canonical model digest: `sha256:5785b5485fcbeee54dde7e726e129245aa88c88e9c7f7e43dfb2461677842c51`.
+Canonical model digest: `sha256:84ce94cbf41f868ef9065c0dd8b7640f729f2a3b2e67e03cedea9af0dd61c347`.
 
 Manifest: `.markitect/model.yaml` (original bytes `sha256:d40feb9e02db275aed89d53b0a88849e463acaca076c8fa70fad38b367a68559`).
 
@@ -200,6 +200,12 @@ Kind: `vocabulary/Rule`. Source: `.markitect/model/product/run/confirmed-run-his
 
 Bind each run to its exact supplied model, repository, configuration and owner request. Admit work against finite assignment budgets and required review capacity. Change confirmed run state only after an exact journal acknowledgement. Preserve uncertain effects and their budget holds. Keep transition semantics separate from SQL, repository acquisition and provider protocols.
 
+### product/runtime/container-runtime
+
+Kind: `vocabulary/Rule`. Source: `.markitect/model/product/runtime/container-runtime.yaml` (original bytes `sha256:fbc2ad4f53c550ab5dac037e3b01773201fb86098fe778ac8160477a6607b8ad`).
+
+Run every Agent session and project check in its own hardened Linux container from a runtime image named by its engine image ID. markitect-agentd is the only program the Host talks to: it starts the provider CLI, relays its standard streams, serves the Host tools over MCP on a Unix socket inside the container and reports exits, adding no policy. The Host passes only validated specs to the engine, gives containers named volumes and never host paths, runs them as a non-root user with a read-only root filesystem, no capabilities and bounded resources, and refuses a different frame protocol.
+
 ### product/snapshot/fixed-values
 
 Kind: `vocabulary/Rule`. Source: `.markitect/model/product/snapshot/fixed-values.yaml` (original bytes `sha256:26588b48ed9b6e0f28a946f4ea63b86eecff58b2ef0deece8899d5289e0a88b5`).
@@ -211,6 +217,19 @@ Represent exact repository-relative paths, modes, immutable bytes, trees and det
 Kind: `vocabulary/Rule`. Source: `.markitect/model/repository/intent-and-evidence.yaml` (original bytes `sha256:911ecd62e7e0659aebc1fcac712474584734ea7d3c2d5f1b17e8a09e36024830`).
 
 People maintain the canonical intended world. Artifacts realize its obligations. One ordinary root and one Manager per local Package organize delegated realization with independent review, integration, verification and guarded Apply. A committed model binds the specification for its revision; source checks and reports do not authenticate human acceptance or establish runtime readiness.
+
+### repository/learning-driven-workflow
+
+Kind: `vocabulary/Rule`. Source: `.markitect/model/repository/learning-driven-workflow.yaml` (original bytes `sha256:f050bb80233c979e76ecbe8f4c4e181bad5b390e263f26df5a62921b59031658`).
+
+Develop Markitect through explicit learning and complete user workflows. Separate observed facts, owner reports, assistant assessments, recommendations and accepted decisions. Similar independent-looking designs are evidence of conceptual stability, not proof that the method works.
+
+Before a substantial redesign, record briefly in the existing owning design or decision document: the new observation, the prior assumption it challenges, the resulting design change, and the observable result that would demonstrate improvement. An accepted foundation gets a coherent period of actual use. Keep the current complete-workflow target stable; fix concrete failures, missing accepted obligations and necessary blocked steps before unrelated generalization. New evidence can justify a bounded correction or an owner decision; this is not a ban on necessary redesign.
+
+Investigate a consequential uncertain technical boundary early with the smallest useful real probe before dependent design or implementation hardens. Record its observations and limits, and preserve separate finite authority for provider runs, studies, releases and deployments. Independent design review examines whether each added mechanism addresses an observed failure or accepted obligation and whether a simpler approach would serve it. Existing quality, review, evidence and write safeguards remain in force.
+
+At design and delivery milestones, the responsible chat gives the owner a short workflow-oriented account: what the owner can now do, what Markitect takes over, where human intervention remains, and which next observation could change the assessment. Derive this account from existing sources and exact evidence; do not create a parallel status system, mandatory periodic automation or another standing approval gate. Keep one current owner per knowledge subject, date historical status and link to current owners.
+
 
 ### tooling/maintenance-boundaries
 

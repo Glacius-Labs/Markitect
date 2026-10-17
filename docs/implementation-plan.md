@@ -21,6 +21,8 @@ Starting product: Main `bc4b49e76f9b9e4b3ec98033a0b8c73d5013b310`. Its existing 
 
 ## How we work
 
+The owner-adopted [working method](development/working-method.md) governs design learning, a stable complete-workflow target and short owner accounts at milestones ([DEC-038](concepts/register.md#dec-038-learn-through-complete-workflows)). This plan retains delivery scopes, dependencies and integration. The method creates no new backlog, experiment authority or standing approval gate.
+
 ### Sessions
 
 The coordinating chat owns scope, dependencies and shared-file reservations. The delivering chat owns its pull request and merge. Separate implementation chats receive one bounded package, isolated worktree, integrated starting base, owned paths, dependencies, acceptance criteria and a short queue of two or three next tasks. They may use independent review subagents. Start at most four implementation writers in the first wave.

@@ -5,9 +5,6 @@ import (
 	"crypto/sha256"
 	"encoding/json"
 	"fmt"
-
-	"github.com/Glacius-Labs/Markitect/internal/model"
-	"github.com/Glacius-Labs/Markitect/internal/organization"
 )
 
 // binding decodes the recorded versioned basis, not a new preparation. Original
@@ -50,40 +47,27 @@ func decodeBindingRecord(p Payload) (bindingWire, int64, error) {
 		return bindingWire{}, 0, ErrInvalid
 	}
 	var w bindingWire
-	if err := strictJSON(p.Bytes(), &w); err != nil || w.Version != 1 || !w.Source.valid() || !w.OwnerRequest.Valid() {
+	if err := strictJSON(p.Bytes(), &w); err != nil || (w.Version != 1 && w.Version != 2) || !w.Source.valid() || !w.OwnerRequest.Valid() {
 		return bindingWire{}, 0, ErrInvalid
 	}
 	if _, err := matchRawClosure(w.ModelInput, w.Compilation); err != nil {
 		return bindingWire{}, 0, err
 	}
-	// Rebuild topology through its producer from the stored compiled inventory
-	// and local identities. This validates ancestry/order and gives the same
-	// structural review floor without interpreting the original model anew.
-	compiled := model.Result{Status: model.Passed}
 	for _, scope := range w.Compilation {
 		if len(scope.Canonical) == 0 || scope.Digest != fmt.Sprintf("sha256:%x", sha256.Sum256(scope.Canonical)) {
 			return bindingWire{}, 0, ErrInvalid
 		}
-		m := model.ModelResult{ID: scope.ID, Digest: scope.Digest, Local: scope.Local, Status: model.Passed, Packages: scope.Packages}
-		if scope.Local {
-			for _, manager := range w.Managers {
-				for _, id := range manager.Definitions {
-					m.Definitions = append(m.Definitions, model.Definition{Identity: id, ModelID: scope.ID})
-				}
-			}
-		}
-		compiled.Models = append(compiled.Models, m)
 	}
-	topology, err := organization.BuildTopology(compiled)
+	managers, err := recordedManagers(w)
 	if err != nil {
 		return bindingWire{}, 0, ErrInvalid
 	}
-	actual, _ := json.Marshal(topology.Managers())
+	actual, _ := json.Marshal(managers)
 	recorded, _ := json.Marshal(w.Managers)
 	if !bytes.Equal(actual, recorded) {
 		return bindingWire{}, 0, ErrInvalid
 	}
-	reviews := reviewFloor(topology.Managers())
+	reviews := reviewFloor(managers)
 	if err := w.Policy.validate(reviews); err != nil {
 		return bindingWire{}, 0, err
 	}
