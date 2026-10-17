@@ -47,6 +47,12 @@ type BlobRef struct {
 	Encoding  string
 }
 
+// Valid checks the reference shape; only reading the original bytes can verify
+// their content identity. Empty payloads are allowed, absent references are not.
+func (r BlobRef) Valid() bool {
+	return r.ContentID != (snapshot.ContentID{}) && r.Size >= 0 && r.Size <= maxRecordBytes && text(r.MediaType) && text(r.Encoding)
+}
+
 type Payload struct {
 	ref  BlobRef
 	data []byte
@@ -61,7 +67,7 @@ func NewPayload(media, encoding string, data []byte) (Payload, error) {
 func (p Payload) Ref() BlobRef  { return p.ref }
 func (p Payload) Bytes() []byte { return slices.Clone(p.data) }
 func (p Payload) Valid() bool {
-	return text(p.ref.MediaType) && text(p.ref.Encoding) && len(p.data) <= maxRecordBytes && p.ref.ContentID == snapshot.ContentID(sha256.Sum256(p.data)) && p.ref.Size == int64(len(p.data))
+	return p.ref.Valid() && p.ref.ContentID == snapshot.ContentID(sha256.Sum256(p.data)) && p.ref.Size == int64(len(p.data))
 }
 
 // Event is a closed RUN-1 event. Body is a validated Command, never a free map.
