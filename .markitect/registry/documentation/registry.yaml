@@ -1,5 +1,9 @@
 apiVersion: markitect.registry/v1
 artifacts:
+  - path: "docs/concepts/sources/product-goals-clarification-20261017.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Preserves the owner's clarification of quality, model-first realization and trust as product goals, with lower cost explicitly excluded as a goal.
   - path: "docs/concepts/sources/conceptual-influences-20261017.md"
     form: doc
     realizes: [documentation/current-guidance]

@@ -16,6 +16,8 @@ In the owner's experience, those representations repeatedly contradicted one ano
 
 On 17 October 2026 the owner explicitly identified the following influences. This table groups their intended contributions for explanation; it does not adopt new mechanisms or change the frozen Apply concept. Existing decisions keep their status.
 
+In the subsequent [product-goal clarification](sources/product-goals-clarification-20261017.md), the owner explicitly states that making development cheaper is not Markitect's goal. The destination is model-first development with a clean, uniform and clear repository, without drift, forgotten rules, inconsistencies or contradictions. Systematic organization, structure and the combination of AI with determinism should make realization trustworthy enough that people no longer need routine implementation review. Internal independent review remains a means to earn that trust; this last sentence is the recorder's interpretation. Earlier cost-related influences and hypotheses below are historical context, not a product success objective or proof that these goals have been achieved.
+
 | Influence named by the owner | Contribution to the idea | Existing connection and boundary |
 | --- | --- | --- |
 | Four-eyes principle | A separate judgment challenges the implementer's result. | [Independent review](../design/canonical-model/manager-apply-concept.md#distinct-review-responsibilities); fresh review supplies evidence, with shared blind spots still possible. |

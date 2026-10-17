@@ -6,7 +6,7 @@ This is an editorial recommendation and draft copy, not an adopted product decis
 
 ## Positioning
 
-**Working line:** Define the project. Keep its implementation aligned.
+**Working line:** You model the world of your project. Markitect organizes its realization.
 
 **Category:** Model-first development with delegated realization.
 
@@ -14,7 +14,7 @@ This is an editorial recommendation and draft copy, not an adopted product decis
 
 **Product idea:** Maintain one canonical description of the intended project. Give its realization explicit responsibility, context, independent review and integration. Keep code, tests, configuration and documentation accountable to that intent through change.
 
-**Desired value:** More attention for design and decisions; fewer forgotten obligations and contradictory realizations. These are target benefits, not measured outcomes. The owner's [origin account](../concepts/origin-and-rationale.md) supports the problem narrative, not a market-size or prevalence claim.
+**Product goal:** Model-first development with a clean, uniform and clear repository, without drift, forgotten rules, inconsistencies or contradictions. The combination of AI, deterministic structure and systematic organization should make realization trustworthy enough that people can model intent and trust the result without routine implementation/diff review. Markitect's internal independent reviews and verification are mechanisms toward that goal. These are target outcomes, not measured results. The [owner clarification](../concepts/sources/product-goals-clarification-20261017.md) explicitly excludes lower cost as a product goal; earlier model-price examples describe influences, not the product's purpose.
 
 Lead with the user's problem, then explain the mechanism with one concrete change. Introduce Packages, Managers and the Host only as needed to explain that change. The model is the continuing specification; a completed feature does not retire its existing obligations.
 
@@ -27,9 +27,9 @@ The public explanation can unfold in four steps:
 1. Describe the desired project world once in a canonical model.
 2. Divide its realization into responsibilities with focused context, local authority and escalation.
 3. Require independent judgment of the parts and their integration: the four-eyes principle at both scopes.
-4. Inspect the actual result and evidence before accepting it.
+4. Have Markitect assess the actual result and evidence so people can trust realization without routinely reviewing implementation themselves; intent and acceptance remain human-owned.
 
-"Trust the Process" names the aim of putting control into structure and procedure. Show what that process requires and what it actually observed. Type checks catch expressible structural errors early; semantic judgments still need assessment. Lower model cost is a hypothesis about focused work, evaluated over the full process. Stakeholders, incentives and multiple perspectives enrich the rationale; their mention introduces no reward system or additional reviewer institution. For a short pitch, translate these roots into a user's experience rather than reciting every contributing concept.
+"Trust the Process" names the aim of putting control into structure and procedure. Show what that process requires and what it actually observed. Type checks catch expressible structural errors early; AI interprets meaning within explicit responsibilities, while independent assessment examines realization. The product story is quality and trustworthy model fidelity. Stakeholders, incentives and multiple perspectives enrich the rationale; their mention introduces no reward system or additional reviewer institution. For a short pitch, translate these roots into a user's experience rather than reciting every contributing concept.
 
 ### First audience hypothesis
 
@@ -56,27 +56,29 @@ Our editorial inference is to make Markitect's intended combination concrete: a 
 
 ## Pitch drafts
 
-All drafts below describe the direction and explicitly name the development stage. They can be revised without changing the product concept.
+All drafts below describe the target product story from the owner's clarification. They are pitches for that destination, not claims that current source has achieved it. In material inviting people to try the product, attach the actual stage and runnable scope separately.
 
-### One sentence
+### Short pitch
 
-Markitect is being built to turn a canonical project model into coordinated AI work that keeps code, tests and documentation aligned with your intent.
+You model the world of your project. Markitect organizes its realization, with the goal of a clean, consistent repository whose fidelity to the model you can trust without reviewing every implementation yourself.
 
 ### Thirty seconds
 
-Coding agents can implement a change and still miss a rule, a related test or a documentation update. Markitect starts with a canonical model of what your project should be. It is being built to organize realization through clear responsibilities, focused context, delegation and escalation. Independent reviewers assess both each area's work and how the areas fit together. The goal is to keep the project consistent while you focus on design and decisions. Model preparation works today; recursive realization and Apply are still being built.
+You model the world of your project. Markitect organizes its realization. Behavior, architecture and rules live in one canonical model; code, tests and documentation realize it. Markitect combines AI with deterministic structure, clear responsibilities and independent verification. The goal is a clean, uniform repository without drift, forgotten rules or contradictions, and a result you can trust without routine human implementation review.
 
 ### Two minutes
 
-The hard part of using coding agents on a growing project is keeping the whole project faithful to its intent through many changes. A feature can work while a rule, a test or the usage guide falls behind. The owner then has to rediscover what should have changed.
+You model the world of your project. Markitect organizes its realization.
 
-Markitect starts with one canonical model of the desired project: its concepts, behavior, architecture and rules. Code, tests, configuration and documentation realize that model. Its structure makes ownership and explicit relationships inspectable before work starts.
+When coding agents change a growing project, a feature can work while an architecture rule is forgotten, tests follow the wrong expectation or documentation contradicts the implementation. People then have to rediscover what should have changed and review the work themselves.
 
-The design draws on architectural decomposition and organized collaboration: clear responsibilities, delegation and escalation, abstraction, focused context and the four-eyes principle. Each model Package has a Manager. A deterministic Host supplies explicit context and propagates the same operation unchanged to every local Manager. Managers assess their responsibilities, make needed changes, integrate their children's results and return evidence. Fresh reviewers assess local change or no-change and integration. Required checks and a final evidence check support guarded publication. A missing decision or incomplete result stays visible to the owner.
+Markitect starts with the intended world: your project's concepts, behavior, architecture and rules. They live in one canonical model. Code, tests, configuration and documentation are realizations of that model, and every change must preserve the obligations that still apply.
 
-Consider a library whose borrowing limit changes from five books to three. The intended demonstration applies the first model, changes that one policy value and applies the second model against the actual first result. Code, tests and documentation must follow the new limit together, with independent expectations checking the result.
+The design combines AI with determinism. A typed model makes explicit structure checkable before realization. A deterministic Host supplies context and propagates the same instruction unchanged to every local Manager. Agents interpret and realize their responsibilities, delegate within the fixed process and integrate results. Fresh reviewers assess both local work and integration; checks and current evidence support guarded publication.
 
-That demonstration is the current development target. Source already supports model compilation, complete file accounting, context preparation and a guarded readable model view. Recursive realization and Apply are still being built. We want to learn whether the method preserves intent more reliably and reduces routine supervision after counting modeling, review and recovery too.
+Consider a library whose borrowing limit changes from five books to three. You change the rule in the model. The code, tests and usage guide should follow together, while the remaining rules continue to hold.
+
+The destination is a clean, uniform and understandable repository without drift, forgotten rules or contradictions. You model; AI realizes; Markitect's systematic process earns enough trust that routine human implementation review is no longer necessary. Internal review and verification carry that duty. Whether Markitect achieves this goal must be demonstrated through actual use.
 
 ## Claims and their basis
 
@@ -86,7 +88,7 @@ That demonstration is the current development target. Source already supports mo
 | Current executable behavior | [Workflow](../project-workflow.md), [Architecture](../architecture.md) and the exact source being shown | What the demonstrated revision actually does. |
 | Manager and Apply behavior | [Apply concept](../design/canonical-model/manager-apply-concept.md) and implementation evidence | Target behavior until demonstrated by the actual product. |
 | Published installation | [Production assessment](../production-assessment.md) and the fixed release | Name the release and its product generation. |
-| Reliability, quality, attention or cost benefit | [Measurement](../measurement.md) and the relevant source-bound result | Hypothesis until measured; report setup and upkeep as well as execution. |
+| Model fidelity, repository quality and freedom from routine human implementation review | [Measurement](../measurement.md) and the relevant source-bound result | Target until demonstrated; examine realization quality, omissions and human intervention over repeated changes. |
 
 At the preparation baseline, Apply returns unavailable. Container and session foundations or a provider handshake do not establish recursive product execution. A generated project view is a readable model, not proof that the repository fulfills it.
 
