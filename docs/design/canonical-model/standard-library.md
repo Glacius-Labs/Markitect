@@ -17,6 +17,8 @@ Source: the owner's standard-library design discussion in this chat on 17 Octobe
 - Next requested subject: "Lass uns als Nächstes Scenario und Check am Bibliotheksbeispiel durchgehen. Welche Properties brauchen die wirklich?" Their contracts below remain assistant proposals.
 - Further selection: "Okay, dann bleiben Scenario und Check ebenfalls bei Körperlinks und spec: {}." This selects the same empty structured contracts and body-link relationships for the two verification Kinds. Exact wording remains a working formulation.
 - The owner then asked: "Haben wir damit die wichtigsten Bausteine für die erste Standardbibliothek, oder fehlt noch etwas Wesentliches? Und ist dann hier alles mit empty spec?" The first-scope assessment below is an assistant recommendation, not a decision to publish or implement the library.
+- Scope selection: "Okay, dann nehmen wir die acht Bausteine als ersten Umfang." The first scope is Concept, Rule, UseCase, Actor, Interface, Component, Scenario and Check.
+- Next subject: "Lass uns als Nächstes die Paketstruktur und Versionierung der Standardbibliothek festlegen. Was schlägst du vor?" The distribution and version policy below remain proposals pending owner selection.
 
 ## Current design state
 
@@ -27,6 +29,7 @@ Source: the owner's standard-library design discussion in this chat on 17 Octobe
 | Interface covers internal technical contracts as well as external interaction | Owner-selected direction | [Interface](interface.md), internal example below |
 | Actor, Interface and Component: body links and empty spec | Owner-selected direction | [Actor](actor.md), [Interface](interface.md), [Component](component.md) |
 | Scenario and general-purpose Check: body links and empty spec | Owner-selected direction | [Scenario](scenario.md), [Check](check.md), example below |
+| Exactly the eight discussed Kinds as the first scope | Owner-selected direction | Scope assessment below |
 | Standard-library distribution and Package names | Assistant proposals; not selected | Initial proposal below |
 | Production library, migration and consumer behavior | Not implemented by this record | Existing fixtures remain unchanged |
 
@@ -318,7 +321,7 @@ The owner has selected body links and empty specs for both general-purpose Kinds
 
 ## First scope assessment and empty specs
 
-Assistant assessment: the eight discussed Kinds are a coherent first general-purpose vocabulary. They address domain meaning (Concept), obligations (Rule), behavior (UseCase), participating roles (Actor), interaction contracts (Interface), system responsibilities (Component), concrete expected cases (Scenario) and verification methods (Check). The Library exposes no concrete need for another universal Kind at this point. This is a bounded scope recommendation, not proof that the vocabulary will suit every project.
+Owner-selected first scope: the eight discussed Kinds. They address domain meaning (Concept), obligations (Rule), behavior (UseCase), participating roles (Actor), interaction contracts (Interface), system responsibilities (Component), concrete expected cases (Scenario) and verification methods (Check). The supporting assessment was that the Library exposes no concrete need for another universal Kind at this point. The selected scope does not claim that this vocabulary will suit every project.
 
 Project purpose and scope can be stated in a Concept for the overall project, as the current Library does. Realization constraints can be Rules. The current general Component meaning can describe logical system parts without adding System or Module solely for completeness. Rationale can accompany the owning Definition and decision history remains separately recorded. Workflow, Decision, Artifact and more specific architecture/domain types remain deferred until their distinct purpose is established. This does not resolve their older open questions by deleting those terms.
 
@@ -332,11 +335,114 @@ The Core's Kind and Property Definitions retain their nonempty structural contra
 
 Before a production library is ready, remaining work includes agreeing final Kind wording and stable Package/model identities, producing the separate Definition files and manifests, binding exact dependencies/locks, and checking a complete consuming example. Version/update policy, distribution and deliberate migration from the existing example/self-model vocabularies also remain to decide. These are the concrete remaining library design/delivery questions; adding more universal Kinds is not presently justified. None of this record claims that such implementation, migration or validation has occurred.
 
+## Package and version proposal
+
+Status: assistant proposal, 17 October 2026, pending owner selection. This applies the existing language contract rather than extending it. [Packages](minimal-language/language-contract.md#packages) are namespaces; [models](minimal-language/language-contract.md#models) are versioning/distribution units; the [lock](minimal-language/language-contract.md#lock) binds exact external contents. The compiler treats versions as exact labels and does not infer compatibility or select updates.
+
+### One distribution model and two Packages
+
+Proposed model ID: `markitect-standard`. It owns exactly two populated Packages for the first scope:
+
+| Package | Definitions |
+| --- | --- |
+| markitect/software | Actor, Component, Concept, Interface, Rule, UseCase |
+| markitect/verification | Check, Scenario |
+
+Both Packages share one release version. This keeps distribution, locks and updates simple for eight small contracts. The two namespaces distinguish software intent from its concrete expected cases and verification methods. The cost is a coordinated release even when only one Package changes. Independent models/versions can be considered if real independent use and release needs emerge; no further split is currently proposed.
+
+Illustrative distribution layout, not an implemented source or installation path:
+
+```text
+standard/
+  model.yaml
+  model-lock.yaml
+  model/
+    markitect/
+      software/
+        actor.yaml
+        component.yaml
+        concept.yaml
+        interface.yaml
+        rule.yaml
+        use-case.yaml
+      verification/
+        check.yaml
+        scenario.yaml
+```
+
+Each Definition keeps its own file. The model root contains no Definitions directly. `markitect` is an unpopulated prefix, not an umbrella import. Model ID and physical folder do not create a Package prefix; the folders under root create the two exact Package identities. There are no kinds/properties/instances subtrees or version segments in those identities.
+
+The first usable preview is proposed as `0.1.0`:
+
+```yaml
+formatVersion: 1
+id: markitect-standard
+version: "0.1.0"
+root: model
+dependencies:
+  markitect-core: "1.0.0"
+```
+
+Core remains separately owned by the existing `markitect-core` model and Package `markitect/core`. The standard distribution does not copy or redeclare its nine Definitions. Its only direct model dependency is Core. The eight standard Kinds currently need only Core imports; no software-to-verification or verification-to-software dependency is invented merely because both Packages are in the same model.
+
+A consuming Library would replace its current software-basics dependency through an explicit migration, for example:
+
+```yaml
+formatVersion: 1
+id: small-library
+root: model
+dependencies:
+  markitect-core: "1.0.0"
+  markitect-standard: "0.1.0"
+```
+
+The direct Core requirement is needed here because the Library declares its own LendingPolicy Kind and Properties using Core. A project that refers only to standard Kinds need not declare Core as a direct dependency just because the standard model needs it transitively. Every transitive model still needs explicit acquisition and its exact lock binding. An author's direct import of a Core Package always requires a direct Core model dependency.
+
+Each consuming Definition imports its needed Packages, for example:
+
+```yaml
+imports:
+  - package: markitect/software
+    as: Software
+  - package: markitect/verification
+    as: Verification
+```
+
+This example only illustrates two possible imports; do not add unused imports to every Definition. `Software.Rule` and `Verification.Check` are recommended explicit references where they improve clarity. Importing markitect/software does not open markitect/verification, and importing a Package is not an installation instruction. There is no automatic umbrella/reexport facility or implicit update to the language.
+
+The standard's lock binds Core. A consuming project's lock binds the complete reachable external set, including both markitect-standard and Core. Digests must be generated from real validated contents; none is invented in this proposal. Current acquisition still requires explicitly supplied dependency manifests. Bundled availability is a future distribution proposal, not an implemented resolver.
+
+### Exact bindings and release policy
+
+Keep the library version independent of the Markitect executable, the language/manifest formatVersion and the Core model version. The standard model can use version 0.1.0 with formatVersion 1 and Core 1.0.0. Release numbers do not become part of Package or Definition identity.
+
+Before publishing, use an unpublished draft rather than repeatedly replacing a published version. Publish `0.1.0` only when the eight separate Definitions compile with actual dependencies/locks and a complete consuming example. Before 1.0, new previews still remain immutable and exactly pinned; incompatible contract revisions advance the middle component (for example 0.2.0) and explicitly state their effects.
+
+Propose `1.0.0` once the owner selects the complete wording, the package/model identities and version policy, and the real library passes relevant consumer validation. This is vocabulary stability, independent of whether the complete Apply product has shipped. No new provider run or release authority is supplied here.
+
+After 1.0, use a three-part release convention:
+
+| Change | Proposed release increment |
+| --- | --- |
+| Editorial correction preserving the obligations, interpretation and accepted inputs | Patch, such as 1.0.1 |
+| Additive content that preserves the existing supported contracts and name resolution | Minor, such as 1.1.0 |
+| Changed meaning or obligations of an existing contract; renamed/moved/deleted identities; or a new field on an existing empty-spec Kind | Major, such as 2.0.0 |
+
+The public contract includes body meaning and reference identities, not just spec shape. A new obligation in a Kind body can invalidate a previously correct realization without a compiler error; it therefore needs the same compatibility assessment as a structural change. An optional field also changes an existing empty field contract and is treated conservatively as a major change. Every intentional published content revision gets a new immutable version and digest; pure source formatting can preserve the canonical digest but is not grounds to replace a published artifact.
+
+There is a specific name-resolution risk: Package imports expose short IDs even when an alias is supplied. Adding a Kind to an existing Package can make a consumer's previously unique short reference ambiguous. For example, adding Task could collide with a project's local Task. Alias qualification helps authors name foreign targets but does not make imports alias-only. An addition is therefore not automatically a minor change. Prefer a new explicit Package for a new subject area when that avoids changing an existing imported name set; otherwise classify the compatibility effect explicitly. The compiler does not prove this release classification.
+
+Keep existing Package/ID pairs stable across releases; do not rename or move them for cosmetic organization. New HTTP or messaging distributions should own new populated Packages such as markitect/http, not append Definitions to the standard model's existing populated Packages from a second model. The current language gives a populated Package exactly one owning model per bound input set.
+
+A consumer update changes the exact dependency requirement and regenerates the full external lock from validated sources. Then check structure and reassess semantic effects on applicable Definitions, realizations and evidence. A version label or unchanged local files does not prove those effects absent. One version per model ID is bound at a time; aliases do not allow mixing two standard-library versions. Old published contents and evidence remain tied to their original bindings.
+
+The proposal deliberately leaves storage/download locations, repository release tags and packaging automation for the distribution implementation. No versions are independently declared on Package imports and no range resolution, latest selector or automatic upgrade is introduced.
+
 ## Remaining discussion
 
-- All eight discussed Kinds have selected empty specs and body-link relationships. The recommendation to use exactly this first scope, with no additional universal Kind yet, is an assessment for discussion.
+- The owner has selected all eight discussed Kinds as the first scope, each with empty spec and body-link relationships.
 - Exact Kind wording remains a working formulation. Interface's internal/external scope is selected; the particular call contract and Component split remain illustrative architecture proposals.
-- Decide distribution model, Package identities and update policy before publishing them.
+- Review the proposed markitect-standard model, two Package identities, first preview and stable release/update policy before publishing them.
 - Preserve the Library's complete intent when proposing a vocabulary migration; do not alter the M1/M2 Apply acceptance target merely to demonstrate the standard library.
 - Examine a small Tasks model after the Library to distinguish shared needs from Library-specific vocabulary. This is a proposed design check, not authorization for a study or proof of benefit.
 - A useful result would reduce repeated basic definitions while preserving expressiveness and understandable Manager context. Compiler success and Definition counts do not measure that benefit.
