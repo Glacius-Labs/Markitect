@@ -16,7 +16,7 @@ import (
 func Compile(input Input) Result {
 	r := Result{Status: NotCompleted, Coordinates: NotCompleted}
 	r.Limits = effectiveLimits(input.Limits)
-	if input.Limits.SourceBytes < 0 || input.Limits.Entries < 0 || input.Limits.YAMLDepth < 0 || input.Limits.Models < 0 || input.Limits.BodyBytes < 0 || input.Limits.MarkdownNesting < 0 {
+	if invalidLimits(input.Limits) {
 		r.Diagnostics = []Diagnostic{{Code: "config.invalid_limit", Message: "Limits must be nonnegative; zero selects the default."}}
 		return r
 	}
@@ -135,6 +135,10 @@ func effectiveLimits(l Limits) Limits {
 	return d
 }
 
+func invalidLimits(l Limits) bool {
+	return l.SourceBytes < 0 || l.Entries < 0 || l.YAMLDepth < 0 || l.Models < 0 || l.BodyBytes < 0 || l.MarkdownNesting < 0
+}
+
 type sourceCompiler struct {
 	model        SourceModel
 	limits       Limits
@@ -168,41 +172,20 @@ func compileSource(m SourceModel, limits Limits) (ModelResult, []Diagnostic, sou
 	c.scope.manifest = manifest
 	r.Manifest = source(m.Origin, manifest)
 	r.Manifest.Path = m.ManifestPath
-	if !validPath(m.ManifestPath) || basename(m.ManifestPath) != "model.yaml" {
-		c.problem("input.manifest_path", "ManifestPath must explicitly select a relative model.yaml path.", Entry{Path: m.ManifestPath}, nil)
+	if !c.manifestPathValid() {
+		// The selection diagnostic is shared with standalone inspection.
 	} else if !ok || manifest.Kind != Regular {
 		c.problem("manifest.missing", "The selected manifest must be a supplied regular file.", Entry{Path: m.ManifestPath}, nil)
 	} else {
-		v, valid := c.decode(manifest)
-		if valid {
-			c.closed(v, []string{"formatVersion", "id", "version", "root", "dependencies"}, manifest)
-			c.manifestNames(v, manifest)
-			c.formatVersion(v, manifest)
-			r.ID, _ = c.requiredText(v, "id", manifest)
-			c.scope.modelID, c.scope.manifest = r.ID, manifest
-			if version, present := lookup(v, "version"); present {
-				c.nonemptyText(version, "version", manifest)
-			}
-			root, rootOK := c.requiredText(v, "root", manifest)
-			c.dependencies(v, manifest)
-			c.scope.version, c.scope.versionDeclared = lookup(v, "version")
-			dependencies, _ := lookup(v, "dependencies")
-			for _, dependency := range dependencies.fields {
-				c.scope.requirements = append(c.scope.requirements, modelRequirement{id: dependency.Name, version: dependency.Value})
-			}
-			c.scope.manifestReady = !c.failed && !c.limited
-			if rootOK {
-				if root != "." && !validPath(root) {
-					c.problem("manifest.root_path", "root must be '.' or an exact relative directory path without dot components.", manifest, nil)
-				} else {
-					rootPath := joinPath(parent(m.ManifestPath), root)
-					if !directoryExists(entries, rootPath) {
-						c.problem("manifest.root_missing", "The declared root must exist as a directory in the supplied tree.", manifest, nil)
-					} else {
-						c.definitions(entries, rootPath)
-						c.rootScanned = true
-					}
-				}
+		root, rootOK := c.readManifest(manifest)
+		r.ID = c.scope.modelID
+		if rootOK {
+			rootPath := joinPath(parent(m.ManifestPath), root)
+			if !directoryExists(entries, rootPath) {
+				c.problem("manifest.root_missing", "The declared root must exist as a directory in the supplied tree.", manifest, nil)
+			} else {
+				c.definitions(entries, rootPath)
+				c.rootScanned = true
 			}
 		}
 	}
