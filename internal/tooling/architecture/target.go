@@ -93,9 +93,10 @@ var responsibilityImports = map[string][]string{
 	"internal/tooling/releasecli":      {"internal/buildinfo", "internal/tooling/source", "internal/tooling/licenses", "internal/tooling/release", "internal/tooling/release/install", "internal/tooling/publish"},
 }
 
-// Only concrete fixture needs receive test-only edges; production keeps the
-// consumer-owned Control and Journal ports as its complete Markitect boundary.
+// Only concrete fixture and composition needs receive test-only edges;
+// production keeps its separately declared responsibility imports.
 var responsibilityTestImports = map[string][]string{
+	"internal/adapters/checks":  {"internal/adapters/gitrepo"},
 	"internal/adapters/journal": {"internal/model", "internal/snapshot"},
 	"internal/bootstrap":        {"internal/adapters/journal", "internal/model", "internal/snapshot", "internal/run"},
 }
