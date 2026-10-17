@@ -6,16 +6,17 @@ import (
 )
 
 // Phase names what one admitted step does (core protocol, rules T1 to T11).
-// Manager phase names match organization.ManagerPhase.
+// Manager phase names match organization.ManagerPhase and reviewer phase names
+// match organization.ContextView.
 type Phase string
 
 const (
-	PhaseExplore            Phase = "explore"
-	PhaseWork               Phase = "work"
-	PhaseIntegrate          Phase = "integrate"
-	PhaseReply              Phase = "reply"
-	PhaseReviewExpectations Phase = "review-expectations"
-	PhaseReviewAssessment   Phase = "review-assessment"
+	PhaseExplore              Phase = "explore"
+	PhaseWork                 Phase = "work"
+	PhaseIntegrate            Phase = "integrate"
+	PhaseReply                Phase = "reply"
+	PhaseReviewerExpectations Phase = "reviewer-expectations"
+	PhaseReviewerCandidate    Phase = "reviewer-candidate"
 )
 
 // Host tool names (core protocol, Host tools).
@@ -51,12 +52,12 @@ type StepContract struct {
 }
 
 var stepOutcomes = map[Phase][]string{
-	PhaseExplore:            {ToolReport, ToolSubmit},
-	PhaseWork:               {ToolSubmit, ToolWait},
-	PhaseIntegrate:          {ToolSubmit, ToolWait},
-	PhaseReply:              {ToolSend},
-	PhaseReviewExpectations: {ToolRecordExpectations},
-	PhaseReviewAssessment:   {ToolSubmitReview},
+	PhaseExplore:              {ToolReport, ToolSubmit},
+	PhaseWork:                 {ToolSubmit, ToolWait},
+	PhaseIntegrate:            {ToolSubmit, ToolWait},
+	PhaseReply:                {ToolSend},
+	PhaseReviewerExpectations: {ToolRecordExpectations},
+	PhaseReviewerCandidate:    {ToolSubmitReview},
 }
 
 // NewStepContract returns the output contract of a phase.
@@ -133,13 +134,21 @@ var toolSpecs = map[string]ToolSpec{
 		json.RawMessage(`{"type":"object","additionalProperties":false,"required":["verdict","summary","findings","resolutions","evidence"],"properties":{"verdict":{"type":"string","enum":["pass","changes_requested","needs_decision","failed_assessment"],"description":"One of: pass, changes_requested, needs_decision, failed_assessment."},"summary":` + nonBlank + `,"question":{"type":"string","description":"For needs_decision: the decision the owner must make."},"evidence":` + evidence + `,"findings":{"type":"array","items":{"type":"object","additionalProperties":false,"required":["severity","definitions","grounds","requestedEvidence"],"properties":{"severity":{"type":"string","enum":["blocking","advisory"],"description":"One of: blocking, advisory."},"definitions":` + defsField + `,"grounds":` + nonBlank + `,"requestedEvidence":` + nonBlank + `}}},"resolutions":{"type":"array","items":{"type":"object","additionalProperties":false,"required":["finding","state","grounds","evidence"],"properties":{"finding":{"type":"string","minLength":1,"description":"The ID of an open finding."},"state":{"type":"string","enum":["resolved","not-applicable"],"description":"One of: resolved, not-applicable."},"grounds":` + nonBlank + `,"evidence":` + evidence + `}}}}}`)},
 }
 
+// phaseSpecs narrows a tool's description for one phase. The expectations
+// step comes before the candidate, so its read reaches Definitions only; the
+// Host refuses any other read in that phase.
+var phaseSpecs = map[Phase]map[string]ToolSpec{
+	PhaseReviewerExpectations: {ToolRead: {ToolRead, "Read a Definition of the model by its identity, package/id. The candidate is not available in this step.",
+		json.RawMessage(`{"type":"object","additionalProperties":false,"required":["ref"],"properties":{"ref":{"type":"string","minLength":1,"description":"A Definition as package/id."}}}`)}},
+}
+
 var phaseTools = map[Phase][]string{
-	PhaseExplore:            {ToolReport, ToolSubmit, ToolRead, ToolSend},
-	PhaseWork:               {ToolSubmit, ToolWait, ToolSend, ToolRead, ToolReservePath, ToolRegister, ToolAssignOwner, ToolRequestCheck},
-	PhaseIntegrate:          {ToolSubmit, ToolWait, ToolSend, ToolRead, ToolReservePath, ToolRegister, ToolAssignOwner, ToolRequestCheck},
-	PhaseReply:              {ToolSend, ToolRead},
-	PhaseReviewExpectations: {ToolRecordExpectations, ToolRead},
-	PhaseReviewAssessment:   {ToolSubmitReview, ToolRead, ToolRequestCheck},
+	PhaseExplore:              {ToolReport, ToolSubmit, ToolRead, ToolSend, ToolAssignOwner},
+	PhaseWork:                 {ToolSubmit, ToolWait, ToolSend, ToolRead, ToolReservePath, ToolRegister, ToolAssignOwner, ToolRequestCheck},
+	PhaseIntegrate:            {ToolSubmit, ToolWait, ToolSend, ToolRead, ToolReservePath, ToolRegister, ToolAssignOwner, ToolRequestCheck},
+	PhaseReply:                {ToolSend, ToolRead},
+	PhaseReviewerExpectations: {ToolRecordExpectations, ToolRead},
+	PhaseReviewerCandidate:    {ToolSubmitReview, ToolRead, ToolRequestCheck},
 }
 
 // ToolCatalog returns the closed Host tool catalogue of a phase, in the format
@@ -152,7 +161,11 @@ func ToolCatalog(phase Phase) (Payload, error) {
 	}
 	catalog := toolCatalog{Version: 1}
 	for _, name := range names {
-		catalog.Tools = append(catalog.Tools, toolSpecs[name])
+		spec := toolSpecs[name]
+		if override, ok := phaseSpecs[phase][name]; ok {
+			spec = override
+		}
+		catalog.Tools = append(catalog.Tools, spec)
 	}
 	data, err := json.Marshal(catalog)
 	if err != nil {
