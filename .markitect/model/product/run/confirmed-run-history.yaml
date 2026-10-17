@@ -1,0 +1,7 @@
+imports:
+  - package: vocabulary
+    as: Vocab
+id: confirmed-run-history
+kind: Vocab.Rule
+body: "Bind each run to its exact supplied model, repository, configuration and owner request. Admit work against finite assignment budgets and required review capacity. Change confirmed run state only after an exact journal acknowledgement. Preserve uncertain effects and their budget holds. Keep transition semantics separate from SQL, repository acquisition and provider protocols."
+spec: {}

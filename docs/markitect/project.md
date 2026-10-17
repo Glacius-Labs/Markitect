@@ -4,7 +4,7 @@ Generated from acquired canonical v1 source bytes. This view is not execution or
 
 ## markitect
 
-Canonical model digest: `sha256:0dee32437f217a8a653d21a219c704e1656fa06f48db3d250e3a45c5519a206d`.
+Canonical model digest: `sha256:5785b5485fcbeee54dde7e726e129245aa88c88e9c7f7e43dfb2461677842c51`.
 
 Manifest: `.markitect/model.yaml` (original bytes `sha256:d40feb9e02db275aed89d53b0a88849e463acaca076c8fa70fad38b367a68559`).
 
@@ -193,6 +193,12 @@ Derive one ordinary root and one Manager per local canonical Package from author
 Kind: `vocabulary/Rule`. Source: `.markitect/model/product/realization/artifact-accounting.yaml` (original bytes `sha256:2b26cbe5c72dd9adb94b9c7c24ea7b2864dfb38be99c4f1a8730938f8629117a`).
 
 Account for every observed regular file as a protected input, exact registered artifact or exact explained ignore. Bind each artifact to one responsibility and existing model Definitions. Claims, candidates and composition preserve ownership and source identity; these values do not schedule or publish work.
+
+### product/run/confirmed-run-history
+
+Kind: `vocabulary/Rule`. Source: `.markitect/model/product/run/confirmed-run-history.yaml` (original bytes `sha256:0d99d2416f788e2c55ffccf9b3e410122d0e280130de83bdf6316af43bbc63b9`).
+
+Bind each run to its exact supplied model, repository, configuration and owner request. Admit work against finite assignment budgets and required review capacity. Change confirmed run state only after an exact journal acknowledgement. Preserve uncertain effects and their budget holds. Keep transition semantics separate from SQL, repository acquisition and provider protocols.
 
 ### product/snapshot/fixed-values
 
