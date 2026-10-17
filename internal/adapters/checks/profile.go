@@ -25,6 +25,7 @@ import (
 // Neither executable format, executable permission, nor runtime readiness is
 // inferred from a successful regular-file observation and SHA-256 pin match.
 type MetadataPreparer struct {
+	factory ImageReaderFactory
 	// Private deterministic observation seam; production uses the zero value.
 	observe func(stage string)
 }
@@ -38,6 +39,9 @@ var (
 )
 
 func (p MetadataPreparer) PrepareCheckProfile(ctx context.Context, input apply.ProfileInput) (apply.ProfileObservation, error) {
+	if input.Section() == "container" {
+		return p.prepareContainer(ctx, input)
+	}
 	o := apply.ProfileObservation{InputBinding: input.Binding(), Status: model.NotCompleted, Contract: apply.ProfileContract{Name: "markitect.process-check", Version: 1}}
 	issue := func(code, field, message string, node *yaml.Node) {
 		location := input.Location()
