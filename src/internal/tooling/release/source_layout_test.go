@@ -49,6 +49,7 @@ func TestTransitionalFoundationsMatchLiveAndFixedSourceArchives(t *testing.T) {
 		"internal/snapshot/tree.go",
 		"internal/organization/organization.go",
 		"internal/realization/realization.go",
+		"internal/apply/model.go",
 		"internal/testkit/testkit.go",
 		"internal/testkit/testdata/hostile.gitconfig",
 		"internal/model/testdata/fixture.go",
@@ -317,6 +318,7 @@ func transitionalSourceFixture(t *testing.T) string {
 		"internal/snapshot/tree.go":                     "package snapshot\n",
 		"internal/organization/organization.go":         "package organization\n",
 		"internal/realization/realization.go":           "package realization\n",
+		"internal/apply/model.go":                       "package apply\n",
 		"internal/testkit/testkit.go":                   "package testkit\n",
 		"internal/testkit/testdata/hostile.gitconfig":   "[core]\n\thooksPath = blocked\n",
 		"internal/model/testdata/fixture.go":            "package fixture\n",
@@ -369,12 +371,12 @@ func writeLayoutFile(t *testing.T, root, relative, content string) {
 }
 
 func TestTransitionalFoundationPathIsExact(t *testing.T) {
-	for _, name := range []string{"internal/model/model.go", "internal/snapshot/tree.go", "internal/organization/x.go", "internal/realization/x.go", "internal/testkit/testkit.go", "internal/testkit/testdata/hostile.gitconfig"} {
+	for _, name := range []string{"internal/model/model.go", "internal/snapshot/tree.go", "internal/organization/x.go", "internal/realization/x.go", "internal/apply/model.go", "internal/testkit/testkit.go", "internal/testkit/testdata/hostile.gitconfig"} {
 		if !isTransitionalFoundationPath(name) {
 			t.Errorf("foundation path %q was rejected", name)
 		}
 	}
-	for _, name := range []string{"internal/modeling/x.go", "internal/adapters/x.go", "src/internal/model/model.go"} {
+	for _, name := range []string{"internal/modeling/x.go", "internal/apply-extra/x.go", "internal/adapters/x.go", "src/internal/model/model.go"} {
 		if isTransitionalFoundationPath(name) {
 			t.Errorf("unsupported foundation path %q was accepted", name)
 		}
