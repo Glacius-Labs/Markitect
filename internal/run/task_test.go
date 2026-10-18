@@ -438,8 +438,9 @@ func TestAChangedResubmissionRecordsFreshExpectations(t *testing.T) {
 	}
 	h = newHarness(t, true, agent)
 	runToEnd(t, h)
-	if h.c.Current().State != run.Verifying {
-		t.Fatal("run did not complete", h.c.Current(), admitted(h))
+	// Three local submissions mean that two passes were withheld.
+	if h.c.Current().State != run.Verifying || strings.Count(strings.Join(admitted(h), ","), ". work") < 3 {
+		t.Fatal("run did not complete through withheld passes", h.c.Current(), admitted(h))
 	}
 	changed := 0
 	for i := 1; i < len(seen); i++ {
