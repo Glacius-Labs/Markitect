@@ -424,7 +424,7 @@ func passArgs(resolve ...string) string {
 	return `{"verdict":"pass","summary":"The candidate meets the expectations.","evidence":[],"cases":[{"name":"item","assessment":"evidenced","grounds":"Checked."}],"findings":[],"resolutions":` + resolutions + `]}`
 }
 
-const rejectArgs = `{"verdict":"changes_requested","summary":"Item is missing.","evidence":[],"cases":[{"name":"item","assessment":"missing","grounds":"No type realizes Item."}],"resolutions":[],"findings":[{"severity":"blocking","definitions":["lending/Item"],"grounds":"No type realizes Item.","requestedEvidence":"A type named Item."}]}`
+const rejectArgs = `{"verdict":"changes_requested","summary":"Item is missing.","evidence":[],"cases":[{"name":"item","assessment":"evidenced","grounds":"Checked."}],"resolutions":[],"findings":[{"severity":"blocking","definitions":["lending/Item"],"grounds":"No type realizes Item.","requestedEvidence":"A type named Item."}]}`
 
 // happyAgent explores with a report, submits local and integration work
 // complete, writes lending's file, and passes every review.

@@ -324,7 +324,7 @@ func (s stateValue) renderInput(t taskValue, facts StepFacts, basis snapshot.Con
 		// rule T8).
 		for _, purpose := range slices.Sorted(maps.Keys(t.Rejections)) {
 			id := t.ID + "-rejections-" + purpose
-			text := fmt.Sprintf("Reviews rejected %d of your %s candidates in this run; at %d rejections your work becomes incomplete.", t.Rejections[purpose], purpose, s.rejectionLimit(t.Slot.Package))
+			text := fmt.Sprintf("Reviews rejected %d of your %s candidates in this run; at %d rejections your task becomes incomplete and the run ends Incomplete.", t.Rejections[purpose], purpose, s.rejectionLimit(t.Slot.Package))
 			findings.IDs = append(findings.IDs, id)
 			findings.Items = append(findings.Items, organization.FindingFact{ID: id, Grounds: organization.HostText{Text: text, Source: organization.HostSource{RecordID: id, ContentID: basis}}})
 		}

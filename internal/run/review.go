@@ -56,11 +56,16 @@ type Delivery struct {
 }
 
 // reviewValue is the progress of the current review: the expectations its
-// first step recorded, which its candidate step receives, and the names of
-// their cases, which the candidate step accounts for (core rule T7).
+// first step recorded, which its candidate step receives, and their cases,
+// which the candidate step assesses (core rule T7).
 type reviewValue struct {
 	Expectations BlobRef
-	Cases        []string
+	Cases        []recordedCase
+}
+
+// recordedCase is one case of the recorded expectations.
+type recordedCase struct {
+	Name, Expectation string
 }
 
 type reviewInput struct {
@@ -125,7 +130,7 @@ func (s stateValue) openIssues(manager string) []Issue {
 }
 
 // checkReview refuses a review that cannot stand as a verdict: one that does
-// not account for every recorded case (core rule T7), a resolution of an issue
+// not assess every recorded case (core rule T7), a resolution of an issue
 // that is not an open finding of the task, or a pass that leaves a case
 // without evidence or an open blocking finding of the review purpose, or
 // raises a new one (core rule T8).
@@ -171,8 +176,9 @@ func (s stateValue) checkReview(t taskValue, in reviewInput) error {
 			}
 		}
 	case "changes_requested":
-		if !slices.ContainsFunc(in.Findings, func(f findingInput) bool { return f.Severity == severityBlocking }) {
-			return errors.New("changes_requested needs at least one blocking finding")
+		if !slices.ContainsFunc(in.Findings, func(f findingInput) bool { return f.Severity == severityBlocking }) &&
+			!slices.ContainsFunc(in.Cases, func(c caseInput) bool { return c.Assessment == caseMissing }) {
+			return errors.New("changes_requested needs at least one blocking finding or missing case")
 		}
 	case "needs_decision":
 		if !text(in.Question) {
@@ -187,12 +193,16 @@ func (s stateValue) checkReview(t taskValue, in reviewInput) error {
 
 // checkCases refuses a review that does not assess each recorded case exactly
 // once by its name, or that passes with a case it found missing.
-func checkCases(recorded []string, in reviewInput) error {
+func checkCases(recorded []recordedCase, in reviewInput) error {
+	var names []string
+	for _, c := range recorded {
+		names = append(names, fmt.Sprintf("%q", c.Name))
+	}
 	assessed := map[string]bool{}
 	missing := false
 	for _, c := range in.Cases {
-		if !slices.Contains(recorded, c.Name) || assessed[c.Name] {
-			return fmt.Errorf("case %q is not a recorded case or is assessed twice; the recorded cases are: %s", c.Name, strings.Join(recorded, "; "))
+		if !slices.ContainsFunc(recorded, func(r recordedCase) bool { return r.Name == c.Name }) || assessed[c.Name] {
+			return fmt.Errorf("case %q is not a recorded case or is assessed twice; the recorded cases are: %s", c.Name, strings.Join(names, ", "))
 		}
 		if c.Assessment != caseEvidenced && c.Assessment != caseNotApplicable && c.Assessment != caseMissing || !text(c.Grounds) {
 			return errors.New("each case needs the assessment evidenced, not-applicable or missing, and grounds")
@@ -201,16 +211,16 @@ func checkCases(recorded []string, in reviewInput) error {
 		missing = missing || c.Assessment == caseMissing
 	}
 	var absent []string
-	for _, name := range recorded {
-		if !assessed[name] {
-			absent = append(absent, name)
+	for _, c := range recorded {
+		if !assessed[c.Name] {
+			absent = append(absent, fmt.Sprintf("%q", c.Name))
 		}
 	}
 	if len(absent) > 0 {
-		return fmt.Errorf("assess every recorded case; not yet assessed: %s", strings.Join(absent, "; "))
+		return fmt.Errorf("assess every recorded case; not yet assessed: %s", strings.Join(absent, ", "))
 	}
 	if missing && in.Verdict == "pass" {
-		return errors.New("a pass cannot leave a recorded case missing; request changes with a blocking finding for it")
+		return errors.New("a pass cannot leave a recorded case missing; request changes instead")
 	}
 	return nil
 }
@@ -324,7 +334,7 @@ func (s *stateValue) concludeReview(r ConclusionRecord, t *taskValue, revision u
 		}
 		t.Review = reviewValue{Expectations: r.Input}
 		for _, c := range in.Cases {
-			t.Review.Cases = append(t.Review.Cases, c.Name)
+			t.Review.Cases = append(t.Review.Cases, recordedCase{Name: c.Name, Expectation: c.Expectation})
 		}
 		t.Since = revision
 		return nil
@@ -425,6 +435,19 @@ func (s *stateValue) recordReview(r ConclusionRecord, t taskValue, in reviewInpu
 		}
 		s.addIssue(Issue{ID: fmt.Sprintf("finding-%s-%d", r.Step, i+1), Kind: issueFinding, Severity: f.Severity, Task: to, To: to, Purpose: purpose,
 			Definitions: slices.Clone(f.Definitions), Grounds: f.Grounds, Request: f.RequestedEvidence, State: issueOpen, Raised: r.Step, Source: r.Input})
+	}
+	// Every recorded case without evidence is a blocking finding, so the
+	// Manager sees each gap at once and a later pass must resolve it (core
+	// rules T7, T8).
+	n := 0
+	for _, c := range in.Cases {
+		if c.Assessment != caseMissing {
+			continue
+		}
+		n++
+		i := slices.IndexFunc(t.Review.Cases, func(r recordedCase) bool { return r.Name == c.Name })
+		s.addIssue(Issue{ID: fmt.Sprintf("finding-%s-case-%d", r.Step, n), Kind: issueFinding, Severity: severityBlocking, Task: t.Slot.Package, To: t.Slot.Package, Purpose: t.Submission.Purpose,
+			Definitions: []string{}, Grounds: fmt.Sprintf("The recorded case %q has no evidence: %s", c.Name, c.Grounds), Request: t.Review.Cases[i].Expectation, State: issueOpen, Raised: r.Step, Source: r.Input})
 	}
 }
 

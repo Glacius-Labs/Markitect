@@ -52,7 +52,7 @@ func TestEngineRunsOnePackageThroughRejectionReworkAndIntegration(t *testing.T) 
 			if !strings.Contains(string(s.Packet.Context.Bytes), "No type realizes Item.") {
 				t.Error("rework did not see the finding")
 			}
-			if !strings.Contains(string(s.Packet.Context.Bytes), "Reviews rejected 1 of your local candidates in this run; at 2 rejections") {
+			if !strings.Contains(string(s.Packet.Context.Bytes), "Reviews rejected 1 of your local candidates in this run; at 2 rejections your task becomes incomplete and the run ends Incomplete.") {
 				t.Error("rework did not see its rejection count")
 			}
 		}
@@ -123,6 +123,9 @@ func TestACandidateReviewAssessesEveryRecordedCase(t *testing.T) {
 				{Tool: run.ToolSubmitReview, Args: review("pass", `[{"name":"other","assessment":"evidenced","grounds":"Seen."}]`), Want: run.ToolRefused},
 				{Tool: run.ToolSubmitReview, Args: review("pass", `[{"name":"item","assessment":"evidenced","grounds":"Seen."},{"name":"item","assessment":"evidenced","grounds":"Again."}]`), Want: run.ToolRefused},
 				{Tool: run.ToolSubmitReview, Args: review("pass", `[{"name":"item","assessment":"missing","grounds":"No test shows Item."}]`), Want: run.ToolRefused},
+				{Tool: run.ToolSubmitReview, Args: review("pass", `[{"name":"item","assessment":"seen","grounds":"Seen."}]`), Want: run.ToolRefused},
+				{Tool: run.ToolSubmitReview, Args: review("pass", `[{"name":"item","assessment":"evidenced","grounds":" "}]`), Want: run.ToolRefused},
+				{Tool: run.ToolSubmitReview, Args: review("changes_requested", `[{"name":"other","assessment":"missing","grounds":"No test."}]`), Want: run.ToolRefused},
 				{Tool: run.ToolSubmitReview, Args: review("failed_assessment", `[]`), Want: run.ToolOK},
 			}
 		case s.Manager == "lending" && s.Phase == run.PhaseReviewerCandidate:
@@ -134,6 +137,43 @@ func TestACandidateReviewAssessesEveryRecordedCase(t *testing.T) {
 	runToEnd(t, h)
 	if h.c.Current().State != run.Verifying || len(h.task("lending").Deliveries) != 1 {
 		t.Fatal("the run did not complete after the accounted review", h.c.Current(), h.sessions.answers)
+	}
+}
+
+// A recorded case the review finds missing becomes a blocking finding: the
+// Manager's rework sees it, a later review assesses its own recorded cases
+// only, and its pass must resolve that finding (core rules T7, T8).
+func TestAMissingCaseBecomesAFinding(t *testing.T) {
+	review := func(verdict, cases, resolutions string) string {
+		return `{"verdict":"` + verdict + `","summary":"Assessed.","evidence":[],"cases":` + cases + `,"findings":[],"resolutions":` + resolutions + `}`
+	}
+	missing := `[{"name":"item","assessment":"missing","grounds":"No test shows Item."}]`
+	title := `[{"name":"title","assessment":"evidenced","grounds":"out/library.go declares Title."}]`
+	agent := func(s agentStep) []action {
+		switch {
+		case s.Manager == "lending" && s.Phase == run.PhaseReviewerCandidate && s.Attempt == 0:
+			return []action{{Tool: run.ToolSubmitReview, Args: review("changes_requested", missing, `[]`), Want: run.ToolOK}}
+		case s.Manager == "lending" && s.Phase == run.PhaseWork && s.Attempt == 1:
+			if !strings.Contains(string(s.Packet.Context.Bytes), "has no evidence: No test shows Item.") {
+				t.Error("the rework does not see the missing case")
+			}
+		case s.Manager == "lending" && s.Phase == run.PhaseReviewerExpectations && s.Attempt == 1:
+			return []action{{Tool: run.ToolRecordExpectations, Args: `{"cases":[{"name":"title","expectation":"Item has a Title.","discriminates":"No Title."}]}`, Want: run.ToolOK}}
+		case s.Manager == "lending" && s.Phase == run.PhaseReviewerCandidate && s.Attempt == 1:
+			resolved := `[{"finding":"` + openFinding(t, s) + `","state":"resolved","grounds":"A test shows Item.","evidence":[]}]`
+			return []action{
+				{Tool: run.ToolSubmitReview, Args: review("pass", missing, resolved), Want: run.ToolRefused},
+				{Tool: run.ToolSubmitReview, Args: review("pass", title, `[]`), Want: run.ToolRefused},
+				{Tool: run.ToolSubmitReview, Args: review("pass", title, resolved), Want: run.ToolOK},
+			}
+		}
+		return happyAgent(s)
+	}
+	h := newHarness(t, true, agent)
+	runToEnd(t, h)
+	lending := h.task("lending")
+	if h.c.Current().State != run.Verifying || lending.Rejections["local"] != 1 || len(lending.Deliveries) != 1 {
+		t.Fatal("the missing case did not go through a finding to a pass", h.c.Current(), lending.Rejections, h.sessions.answers)
 	}
 }
 

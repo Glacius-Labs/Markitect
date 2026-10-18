@@ -261,7 +261,8 @@ unaccepted work.
 Reviews follow T7 and T8. The expectations step names each case once, and the
 candidate review assesses every recorded case by that name as evidenced,
 not applicable or missing; the Host refuses a review that leaves a case out
-and a pass with a case missing. A failed assessment needs no cases. A pass
+and a pass with a case missing, and records each missing case as a blocking
+finding. A failed assessment needs no cases. A pass
 must resolve every open blocking finding of its purpose; it is withheld while another open blocking issue covers the task,
 for an integration also one of a descendant (I3), while a producer the candidate used delivered again after the
 candidate's step (D4), or, for an integration, while a child is not done (T9). The
