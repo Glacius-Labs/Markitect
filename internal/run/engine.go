@@ -712,11 +712,13 @@ func (e *Engine) conclude(ctx context.Context, s *stepRun, observed snapshot.Tre
 		result.Input = p
 	}
 	var composed realization.Aggregate
+	result.Changed = !observed.Equal(s.version.tree)
 	switch {
-	case !s.writes && !observed.Equal(s.version.tree):
+	case !s.writes && result.Changed:
 		result.Failure = "a read-only step changed its workspace"
-	case s.writes && (!observed.Equal(s.version.tree) || e.proposes(s)):
-		// Registry proposals change the candidate even without file changes.
+	case s.writes && (result.Changed || s.phase != PhaseReply && e.proposes(s)):
+		// Registry proposals change the candidate even without file changes; a
+		// reply step offers no registry tool, so only its file changes count.
 		record, err := e.capture(s, observed)
 		if err != nil {
 			result.Failure = "the step's changes are outside its owner's claims: " + err.Error()

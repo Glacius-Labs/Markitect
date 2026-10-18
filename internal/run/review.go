@@ -168,9 +168,10 @@ func (s stateValue) checkReview(t taskValue, in reviewInput) error {
 }
 
 // verdictOf reads a checked review against the run: a pass is withheld while
-// another open blocking issue covers the subject (core rule I3), or while a
+// another open blocking issue covers the subject (core rule I3), while a
 // producer the candidate used delivered again after the candidate's step saw
-// the aggregate (core rule D4).
+// the aggregate (core rule D4), or, for an integration, while a child returned
+// to work after the candidate was frozen (core rules T9, T11).
 func (s stateValue) verdictOf(t taskValue, in reviewInput) ReviewVerdict {
 	switch in.Verdict {
 	case "changes_requested":
@@ -190,6 +191,11 @@ func (s stateValue) verdictOf(t taskValue, in reviewInput) ReviewVerdict {
 	covered := []string{t.Slot.Package}
 	if t.Submission.Purpose == "integration" {
 		covered = s.subtree(t)
+		for _, child := range t.Slot.Children {
+			if s.tasks[child].State != TaskDone {
+				return VerdictWithhold
+			}
+		}
 	}
 	for _, manager := range covered {
 		for _, issue := range s.openIssues(manager) {

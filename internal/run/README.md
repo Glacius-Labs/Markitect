@@ -301,7 +301,12 @@ Managers on its path see it in their next step without being dispatched (M2).
 A question becomes an issue addressed to its addressee; a reply from that
 addressee resolves it and wakes an asker waiting for it (I2, T10). A Manager
 that cannot otherwise act, because it is done, blocked or explored, answers in
-a read-only reply step and keeps its state (T10, T11). Each open question
+a reply step and keeps its state (T10, T11). Once every Manager has explored,
+the reply step of a done or blocked task may correct the Manager's own files,
+except while the owner decides on its frozen submission (T8); a change, even
+one the Host refuses, returns the task to work with any refusal as its failure,
+and a done task's done ancestors wait for it again. An integration composes
+done children only: its submission and its pass wait for every child (T9). Each open question
 admits one reply step: a reply step takes the question it answers, or the
 oldest one when it sends no reply; a reply step the Host could not finish
 drops its reply and is admitted again. A question to the owner
@@ -315,8 +320,7 @@ dropped with it (T6).
 Not yet implemented: a parent forwarding or broadcasting a question it cannot
 answer (M3, it asks anew instead), `assign_owner` and intake (T2, D6), the
 dispatch of a common parent for waits nothing satisfies (T12, the run finishes
-Incomplete instead), a done task reopened by anything but an integration
-finding (T11, reply steps are read-only), review batching, open issues carried
+Incomplete instead), review batching, open issues carried
 into a continuation run (I5), a fresh conversation
 with a handoff when resume fails (S3), session rotation at `maxSessionSteps`,
 an answer that requires a model change (W3), and the parent's assessment after

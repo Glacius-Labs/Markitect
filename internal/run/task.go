@@ -209,9 +209,15 @@ func (p Phase) writing() bool  { return p == PhaseWork || p == PhaseIntegrate }
 
 // writes reports whether a task's step in the phase may change files: a reply
 // step of a done or blocked task may correct the Manager's own files once
-// every Manager has explored (core rules T2, T10, T11).
+// every Manager has explored (core rules T2, T10, T11). A task blocked on the
+// owner's decision about its frozen submission keeps that candidate unchanged
+// until the fresh review (core rule T8).
 func (s stateValue) writes(t taskValue, phase Phase) bool {
-	return phase.writing() || phase == PhaseReply && (t.State == TaskDone || t.State == TaskBlocked) && s.barrierOpen()
+	if phase != PhaseReply {
+		return phase.writing()
+	}
+	frozen := t.State == TaskBlocked && t.Submission.Proposal != (BlobRef{})
+	return (t.State == TaskDone || t.State == TaskBlocked) && !frozen && s.barrierOpen()
 }
 
 func (s stateValue) explorable(t taskValue) bool {
@@ -548,6 +554,9 @@ type ConclusionRecord struct {
 	// HostFault marks a failed step that the Host, not the Agent, could not
 	// finish.
 	HostFault bool
+	// Changed marks a step that changed its workspace, whether or not the Host
+	// accepted the change (core rule T11).
+	Changed bool
 }
 
 const outcomeFailed = "failed"
@@ -661,6 +670,14 @@ func (s stateValue) checkOutcome(t taskValue, tool string, args []byte) error {
 		}
 		if t.Phase == PhaseWork && in.Purpose != "local" || t.Phase == PhaseIntegrate && in.Purpose != "integration" {
 			return errors.New("the submission's purpose does not match this step: work submits local, integration submits integration")
+		}
+		if in.Purpose == "integration" {
+			// An integration composes done children only (core rule T9).
+			for _, child := range t.Slot.Children {
+				if c := s.tasks[child]; c.State != TaskDone {
+					return fmt.Errorf("child %s is %s, not done: wait for your children before you integrate", child, c.State)
+				}
+			}
 		}
 		for _, d := range in.Dependencies {
 			if _, ok := s.tasks[d]; !ok || d == t.Slot.Package {
@@ -837,15 +854,19 @@ func (s *stateValue) concludeWork(r ConclusionRecord, t *taskValue, revision uin
 		t.Own, t.OwnTree = r.Candidate, r.Tree
 	}
 	if t.Phase == PhaseReply {
-		if r.Candidate != (BlobRef{}) {
-			// A reply step that corrected the Manager's files returns its task to
-			// work, so that the change goes through review; a done task's
-			// ancestors wait for it again (core rule T11).
+		if r.Changed && !r.HostFault && s.writes(*t, PhaseReply) {
+			// A reply step that changed the Manager's files returns its task to
+			// work, so that the change goes through review, and a done task's
+			// ancestors wait for it again (core rule T11). A change the Host
+			// refused reaches the work step as its failure.
 			if t.State == TaskDone {
 				t.LocalDone = false
 				s.blockAncestors(t.Slot.Package, "", revision)
 			}
 			t.State, t.Since, t.Waits = TaskReady, revision, nil
+			if r.Outcome == outcomeFailed {
+				t.Failure, t.HostFault = r.Reason, false
+			}
 		}
 		return nil
 	}
