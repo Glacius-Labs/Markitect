@@ -59,8 +59,8 @@ type Delivery struct {
 // reviewValue is the progress of the current review: the expectations its
 // first step recorded, which its candidate step receives, their cases, which
 // the candidate step assesses (core rule T7), the identity of what the
-// expectations step saw besides the model, and the candidate steps that
-// assessed against these expectations without an accepted delivery.
+// expectations step saw besides the model, and the candidate steps that have
+// assessed against these expectations.
 type reviewValue struct {
 	Expectations BlobRef
 	Cases        []recordedCase
@@ -197,11 +197,11 @@ func (s stateValue) checkReview(t taskValue, in reviewInput) error {
 }
 
 // expectationInputs identifies what renderInput gives an expectations step
-// besides the model and the fixed task facts: the submission's purpose and
-// scope, the task's open findings and the owner's decisions for it. Findings
-// raised by the steps except are left out.
+// besides the model and the fixed task facts: the submission's purpose, the
+// task's open findings and the owner's decisions for it. Findings raised by
+// the steps except are left out.
 func (s stateValue) expectationInputs(t taskValue, except []StepID) string {
-	parts := []string{t.Submission.Purpose, t.Submission.Scope}
+	parts := []string{t.Submission.Purpose}
 	for _, id := range s.openFindings(t, organization.HostSource{}).IDs {
 		if !slices.Contains(except, s.issues[id].Raised) {
 			parts = append(parts, id)
@@ -211,6 +211,29 @@ func (s stateValue) expectationInputs(t taskValue, except []StepID) string {
 		parts = append(parts, d.Source.RecordID)
 	}
 	return strings.Join(parts, "\n")
+}
+
+// standing returns the kept expectations of the task's next submission with
+// the purpose while their inputs are unchanged, apart from findings the
+// reviews against them raised or resolved (DEC-048).
+func (s stateValue) standing(t taskValue, purpose string) (reviewValue, bool) {
+	k, ok := t.Kept[purpose]
+	t.Submission.Purpose = purpose
+	return k, ok && k.Inputs == s.expectationInputs(t, k.Assessed)
+}
+
+// keep records the expectations that stand for the task's next submission
+// with the purpose; a review without inputs removes them (DEC-048).
+func (t *taskValue) keep(purpose string, review reviewValue) {
+	t.Kept = maps.Clone(t.Kept)
+	if review.Inputs == "" {
+		delete(t.Kept, purpose)
+		return
+	}
+	if t.Kept == nil {
+		t.Kept = map[string]reviewValue{}
+	}
+	t.Kept[purpose] = review
 }
 
 // checkCases refuses a review that does not assess each recorded case exactly
@@ -378,8 +401,9 @@ func (s *stateValue) concludeReview(r ConclusionRecord, t *taskValue, revision u
 		fresh()
 		return nil
 	}
-	// The recorded cases can stand for the next submission only while what
-	// their expectations step saw is unchanged (DEC-046, DEC-047).
+	// The recorded cases stand for the task's next submission with this
+	// purpose, whatever the verdict, but only while what their expectations
+	// step saw is unchanged (DEC-046, DEC-047, DEC-048).
 	standing := t.Review.Inputs != "" && t.Review.Inputs == s.expectationInputs(*t, t.Review.Assessed)
 	// A withheld pass does not stand, so it resolves nothing (core rule I1).
 	s.recordReview(r, *t, in, verdict != VerdictWithhold)
@@ -392,10 +416,11 @@ func (s *stateValue) concludeReview(r ConclusionRecord, t *taskValue, revision u
 		kept.Assessed = append(slices.Clone(review.Assessed), r.Step)
 		kept.Inputs = s.expectationInputs(*t, kept.Assessed)
 	}
+	t.keep(purpose, kept)
 	t.Review = reviewValue{}
 	switch verdict {
 	case VerdictWithhold:
-		t.State, t.Since, t.Submission, t.Withheld, t.Kept = TaskReady, revision, Submission{}, withheld, kept
+		t.State, t.Since, t.Submission, t.Withheld = TaskReady, revision, Submission{}, withheld
 	case VerdictDecision:
 		// The owner's answer starts a fresh review of the same frozen
 		// candidate (core rule T8); the run waits for it (core rule W1).
@@ -408,9 +433,6 @@ func (s *stateValue) concludeReview(r ConclusionRecord, t *taskValue, revision u
 			t.Rejections = map[string]int{}
 		}
 		t.Rejections[purpose]++
-		// The recorded cases stand for the resubmission, so that rework
-		// converges on them (DEC-047).
-		t.Kept = kept
 		t.Submission = Submission{}
 		// Findings about a descendant's artifacts reopen it; the reviewed
 		// Manager integrates again once its children are done (core rule T11).

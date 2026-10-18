@@ -87,6 +87,11 @@ func TestIntegrationFindingReopensTheChild(t *testing.T) {
 			if !bytes.Contains(s.Packet.Context.Bytes, []byte("Item has no title.")) {
 				t.Error("the reopened child does not see the finding")
 			}
+			// The finding changed what the child's cases rest on, so they no
+			// longer stand and the step does not show them (DEC-048).
+			if bytes.Contains(s.Packet.Context.Bytes, []byte("against these recorded cases")) {
+				t.Error("the reopened child sees cases that no longer stand")
+			}
 			return []action{{Write: map[string]string{"out/library.go": "package library\n\ntype Item struct{ Title string }\n"}, Tool: run.ToolSubmit, Args: submitArgs("local", "complete"), Want: run.ToolOK}}
 		case s.Manager == "lending" && s.Phase == run.PhaseReviewerCandidate && s.Attempt == 1:
 			return []action{
@@ -113,6 +118,11 @@ func TestIntegrationFindingReopensTheChild(t *testing.T) {
 	// review only.
 	if n := strings.Count(strings.Join(order, ","), ". reviewer-expectations"); n != 2 {
 		t.Fatal("the integration review after the rejection recorded new cases", n, order)
+	}
+	// The parent's finding changes what the child's cases rest on, so the
+	// child's next local review records fresh ones (DEC-048).
+	if n := strings.Count(strings.Join(order, ","), "lending reviewer-expectations"); n != 2 {
+		t.Fatal("the reopened child's review kept cases that the new finding changed", n, order)
 	}
 	issues := h.c.Issues("lending")
 	if !slices.ContainsFunc(issues, func(i run.Issue) bool { return i.ID == finding && i.State == "resolved" && i.Purpose == "local" }) {

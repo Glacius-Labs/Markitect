@@ -82,7 +82,7 @@ type taskValue struct {
 	Failure      string
 	HostFault    bool
 	Withheld     string
-	Kept         reviewValue
+	Kept         map[string]reviewValue
 	Worked       uint64
 	Claims       []Claim
 }
@@ -912,17 +912,16 @@ func (s *stateValue) concludeWork(r ConclusionRecord, t *taskValue, revision uin
 		slices.Sort(uses)
 		t.State, t.Since, t.Review = TaskReviewing, revision, reviewValue{}
 		t.Submission = Submission{Purpose: in.Purpose, Scope: in.Scope, Proposal: r.Input, Candidate: t.Own, Tree: t.OwnTree, Aggregate: s.aggregateVersion, AggregateTree: s.aggregateTree, Uses: uses}
-		if k := t.Kept; k.Inputs != "" && k.Inputs == s.expectationInputs(*t, k.Assessed) {
-			// A withheld or rejected candidate leaves its recorded expectations
-			// standing while their inputs are unchanged, apart from findings
-			// the reviews against them raised or resolved; the expectations
-			// step sees neither the candidate nor the aggregate. The next review
-			// assesses the same cases in a fresh candidate home (core rule T7,
-			// DEC-046, DEC-047).
+		if k, ok := s.standing(*t, in.Purpose); ok {
+			// The task's last review with this purpose leaves its recorded
+			// expectations standing, because the expectations step sees
+			// neither the candidate, its scope nor the aggregate. The next
+			// review assesses the same cases in a fresh candidate home (core
+			// rule T7, DEC-046, DEC-047, DEC-048).
 			t.Review = k
 			t.Reviews++
 		}
-		t.Kept = reviewValue{}
+		t.keep(in.Purpose, reviewValue{})
 	case ToolWait:
 		var in waitInput
 		if json.Unmarshal(args, &in) != nil {

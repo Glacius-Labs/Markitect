@@ -192,9 +192,9 @@ func TestRenderStatesTheTreePosition(t *testing.T) {
 		}
 	}
 	selection, settings, input := renderFixture(t, "a", organization.ReviewerExpectations)
-	input.Task.Purpose, input.Task.Scope = "local", "limited"
+	input.Task.Purpose = "local"
 	text := string(requireRendered(t, selection, settings, input).Bytes())
-	if !strings.Contains(text, `{"Manager":"a","Parent":".","DirectChildren":["a/child"]}`) || !strings.Contains(text, `{"Purpose":"local","Scope":"limited"}`) {
+	if !strings.Contains(text, `{"Manager":"a","Parent":".","DirectChildren":["a/child"]}`) || !strings.Contains(text, `{"Purpose":"local"}`) {
 		t.Fatal("the reviewer view lacks the tree position or the reviewed purpose")
 	}
 }
