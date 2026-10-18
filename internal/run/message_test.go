@@ -115,6 +115,11 @@ func TestOwnerQuestionWaitsAndTheAnswerContinuesTheRun(t *testing.T) {
 	if h.c.Current().State != run.Verifying {
 		t.Fatal("run did not continue after the answer", h.c.Current())
 	}
+	// The owner's decision is an input of lending's cases, so they are recorded
+	// again before its next work step (DEC-049).
+	if n := strings.Count(strings.Join(admitted(h), ","), "lending reviewer-expectations"); n != 2 {
+		t.Fatal("the owner's answer did not renew lending's cases", n, admitted(h))
+	}
 }
 
 // The owner's answer to a review's question starts a fresh review of the

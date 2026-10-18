@@ -87,10 +87,10 @@ func TestIntegrationFindingReopensTheChild(t *testing.T) {
 			if !bytes.Contains(s.Packet.Context.Bytes, []byte("Item has no title.")) {
 				t.Error("the reopened child does not see the finding")
 			}
-			// The finding changed what the child's cases rest on, so they no
-			// longer stand and the step does not show them (DEC-048).
-			if bytes.Contains(s.Packet.Context.Bytes, []byte("against these recorded cases")) {
-				t.Error("the reopened child sees cases that no longer stand")
+			// The finding changed what the child's cases rest on, so a
+			// reviewer records fresh ones before the rework (DEC-048, DEC-049).
+			if !bytes.Contains(s.Packet.Context.Bytes, []byte("against these recorded review cases")) {
+				t.Error("the reopened child does not see its fresh cases")
 			}
 			return []action{{Write: map[string]string{"out/library.go": "package library\n\ntype Item struct{ Title string }\n"}, Tool: run.ToolSubmit, Args: submitArgs("local", "complete"), Want: run.ToolOK}}
 		case s.Manager == "lending" && s.Phase == run.PhaseReviewerCandidate && s.Attempt == 1:
@@ -110,8 +110,9 @@ func TestIntegrationFindingReopensTheChild(t *testing.T) {
 	if strings.Count(strings.Join(order, ","), "lending work") != 2 || strings.Count(strings.Join(order, ","), ". integrate") != 2 {
 		t.Fatal("the child was not reopened or the parent did not integrate again", order)
 	}
-	if root := h.task("."); root.Rejections["integration"] != 1 {
-		t.Fatal("the integration rejection was not counted", root.Rejections)
+	// The accepted second integration restarts the count (DEC-050).
+	if root := h.task("."); root.Rejections["integration"] != 0 {
+		t.Fatal("the accepted integration did not restart the rejection count", root.Rejections)
 	}
 	// The second integration review keeps the cases of the rejected one
 	// (DEC-047); the root records cases for its local and its integration
@@ -120,9 +121,15 @@ func TestIntegrationFindingReopensTheChild(t *testing.T) {
 		t.Fatal("the integration review after the rejection recorded new cases", n, order)
 	}
 	// The parent's finding changes what the child's cases rest on, so the
-	// child's next local review records fresh ones (DEC-048).
-	if n := strings.Count(strings.Join(order, ","), "lending reviewer-expectations"); n != 2 {
-		t.Fatal("the reopened child's review kept cases that the new finding changed", n, order)
+	// child's fresh cases are recorded before its rework (DEC-048, DEC-049).
+	var lending []string
+	for _, step := range order {
+		if strings.HasPrefix(step, "lending ") {
+			lending = append(lending, strings.TrimPrefix(step, "lending "))
+		}
+	}
+	if !slices.Equal(lending, []string{"explore", "reviewer-expectations", "work", "reviewer-candidate", "reviewer-expectations", "work", "reviewer-candidate"}) {
+		t.Fatal("the reopened child's cases were not recorded fresh before its rework", lending)
 	}
 	issues := h.c.Issues("lending")
 	if !slices.ContainsFunc(issues, func(i run.Issue) bool { return i.ID == finding && i.State == "resolved" && i.Purpose == "local" }) {
@@ -172,6 +179,11 @@ func TestAReplyStepCorrectsADoneManagersFile(t *testing.T) {
 	order := strings.Join(admitted(h), ",")
 	if !strings.Contains(order, "lending reply") || strings.Count(order, "lending work") != 2 || strings.Count(order, "lending reviewer-candidate") != 2 {
 		t.Fatal("the corrected file did not return lending to work and review", order)
+	}
+	// A reply that changes no expectation input keeps the recorded cases
+	// (DEC-048, DEC-049).
+	if n := strings.Count(order, "lending reviewer-expectations"); n != 1 {
+		t.Fatal("the corrected file's review recorded new cases", n, order)
 	}
 	if got := aggregateFile(t, h.engine, "out/library.go"); got != corrected {
 		t.Fatalf("the correction was not composed: %q", got)

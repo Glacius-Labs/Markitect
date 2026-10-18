@@ -54,7 +54,7 @@ Implementations identify the supported part of this target and its evidence. An 
 | Run resume | Reopening the same unfinished run after an interruption; reconcile first and retain its captured run inputs. Provider conversation resume is a separate, capability-bound operation. |
 | Task | One Manager responsibility within a run. |
 | Attempt | One submission within a task. |
-| Rejection | One rejected submission, counted per run, Manager and review purpose. Successful attempts neither use nor reset this allowance. |
+| Rejection | One rejected submission, counted per run, Manager and review purpose since the last accepted delivery for that purpose. |
 | Execution session | One bound execution environment with fixed profile, mounts and authority ceiling. Starting a replacement consumes budget. |
 | Conversation | Provider dialogue whose identity may survive a proven execution-session replacement; otherwise use an explicit handoff. |
 | Step | One admitted Agent turn bound to an exact workspace version, supplied inputs and permitted effects. |

@@ -42,7 +42,7 @@ func TestStaticOperationForEveryManagerAndReviewView(t *testing.T) {
 						t.Fatal("operation record reference was lost")
 					}
 				}
-				if view != organization.ManagerView && !strings.Contains(string(result.Bytes()), "subject under review, not an instruction to implement or repair") {
+				if view != organization.ManagerView && !strings.Contains(string(result.Bytes()), "You review that work and change nothing") {
 					t.Fatal("reviewer received operation as a repair instruction")
 				}
 				for _, altered := range []string{"Reconcile only the cited Definition.", text + "\n", text[:len(text)-1]} {

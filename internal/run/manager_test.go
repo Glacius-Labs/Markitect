@@ -61,6 +61,11 @@ func TestWritingProtectsReserveAndAssessmentCanSpendIt(t *testing.T) {
 	if err := s.reserve(Reservation{"writer", AgentStep, Writing, time.Second}); !errors.Is(err, ErrBudget) {
 		t.Fatal(err)
 	}
+	// An expectations step that prepares writing protects the reserve too
+	// (DEC-049).
+	if err := s.reserve(Reservation{"prepare", AgentStep, Preparation, time.Second}); !errors.Is(err, ErrBudget) {
+		t.Fatal(err)
+	}
 	unitReserve(t, s, "review", AgentStep, Assessment, time.Minute)
 	if unitBudget(s).Held.Steps != 1 || unitBudget(s).Consumed.Steps != 6 {
 		t.Fatal(unitBudget(s))

@@ -472,7 +472,7 @@ func TestARejectionKeepsTheCasesItsReviewResolvedAgainst(t *testing.T) {
 		case s.Manager == "lending" && s.Phase == run.PhaseWork && s.Attempt == 0:
 			return []action{{Write: map[string]string{"out/library.go": "package library\n\ntype Item struct{}\n"}, Tool: run.ToolSubmit, Args: submitArgs("local", "limited"), Want: run.ToolOK}}
 		case s.Manager == "lending" && s.Phase == run.PhaseWork:
-			notes = append(notes, strings.Contains(string(s.Packet.Context.Bytes), "Your local reviews assess every candidate against these recorded cases"))
+			notes = append(notes, strings.Contains(string(s.Packet.Context.Bytes), "Your local work is assessed against these recorded review cases"))
 			return []action{{Write: map[string]string{"out/library.go": "package library\n\ntype Item struct{ Title string }\n"}, Tool: run.ToolSubmit, Args: submitArgs("local", "complete"), Want: run.ToolOK}}
 		case s.Manager == "lending" && s.Phase == run.PhaseReviewerCandidate && s.Attempt == 0:
 			advisory = "finding-" + string(s.Packet.Step) + "-1"
@@ -492,33 +492,62 @@ func TestARejectionKeepsTheCasesItsReviewResolvedAgainst(t *testing.T) {
 	h := newHarness(t, true, agent)
 	runToEnd(t, h)
 	order := strings.Join(admitted(h), ",")
-	// The first delivery and the failed review step record cases; the rework
-	// after the rejection keeps the second ones.
+	// The step before the first work step and the failed review step record
+	// cases; the rework after the rejection keeps the second ones.
 	if h.c.Current().State != run.Verifying || strings.Count(order, "lending reviewer-expectations") != 2 || !slices.Equal(notes, []bool{true, true}) {
 		t.Fatal("the rejection did not keep its recorded cases", h.c.Current(), notes, order)
 	}
 }
 
-// The recorded cases of a passed limited delivery stand for the task's next
-// delivery with the same purpose, whatever its scope, and the Manager's work
-// step sees them (core rule T7, DEC-048).
+// A reviewer records the cases before the Manager's first work step, which
+// sees them; they stand for the limited and the complete delivery, whatever
+// the scope (core rule T7, DEC-048, DEC-049).
 func TestAPassKeepsTheRecordedCasesForTheNextDelivery(t *testing.T) {
 	t.Parallel()
 	var notes []bool
 	agent := func(s agentStep) []action {
-		switch {
-		case s.Manager == "lending" && s.Phase == run.PhaseWork && s.Attempt == 0:
+		if s.Manager == "lending" && s.Phase == run.PhaseWork {
+			notes = append(notes, strings.Contains(string(s.Packet.Context.Bytes), "Your local work is assessed against these recorded review cases"))
+		}
+		if s.Manager == "lending" && s.Phase == run.PhaseWork && s.Attempt == 0 {
 			return []action{{Write: map[string]string{"out/library.go": "package library\n"}, Tool: run.ToolSubmit, Args: submitArgs("local", "limited"), Want: run.ToolOK}}
-		case s.Manager == "lending" && s.Phase == run.PhaseWork:
-			notes = append(notes, strings.Contains(string(s.Packet.Context.Bytes), "Your local reviews assess every candidate against these recorded cases"))
 		}
 		return happyAgent(s)
 	}
 	h := newHarness(t, true, agent)
 	runToEnd(t, h)
-	order := strings.Join(admitted(h), ",")
-	if h.c.Current().State != run.Verifying || len(h.task("lending").Deliveries) != 2 || strings.Count(order, "lending reviewer-expectations") != 1 || !slices.Equal(notes, []bool{true}) {
-		t.Fatal("the complete delivery did not keep the limited delivery's cases", h.c.Current(), notes, order)
+	var lending []string
+	for _, step := range admitted(h) {
+		if strings.HasPrefix(step, "lending ") {
+			lending = append(lending, strings.TrimPrefix(step, "lending "))
+		}
+	}
+	if h.c.Current().State != run.Verifying || len(h.task("lending").Deliveries) != 2 || !slices.Equal(notes, []bool{true, true}) ||
+		!slices.Equal(lending, []string{"explore", "reviewer-expectations", "work", "reviewer-candidate", "work", "reviewer-candidate"}) {
+		t.Fatal("the cases were not recorded before the first work step or did not stand", h.c.Current(), notes, lending)
+	}
+}
+
+// A failed expectations step before the work step is repeated; the work step
+// waits for the recorded cases (core rule T6, DEC-049).
+func TestAFailedExpectationsStepBeforeWorkIsRepeated(t *testing.T) {
+	t.Parallel()
+	agent := func(s agentStep) []action {
+		if s.Manager == "lending" && s.Phase == run.PhaseReviewerExpectations && s.Attempt == 0 {
+			return nil
+		}
+		return happyAgent(s)
+	}
+	h := newHarness(t, true, agent)
+	runToEnd(t, h)
+	var lending []string
+	for _, step := range admitted(h) {
+		if strings.HasPrefix(step, "lending ") {
+			lending = append(lending, strings.TrimPrefix(step, "lending "))
+		}
+	}
+	if h.c.Current().State != run.Verifying || !slices.Equal(lending, []string{"explore", "reviewer-expectations", "reviewer-expectations", "work", "reviewer-candidate"}) {
+		t.Fatal("the failed expectations step was not repeated before the work step", h.c.Current(), lending)
 	}
 }
 

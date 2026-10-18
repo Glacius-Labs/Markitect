@@ -196,12 +196,25 @@ func (s stateValue) checkReview(t taskValue, in reviewInput) error {
 	return nil
 }
 
+// reviewedPurpose is the purpose a reviewer step of the task assesses: the
+// submission's, or before a submission the purpose of the task's next writing
+// step (DEC-049).
+func (t taskValue) reviewedPurpose() string {
+	switch {
+	case t.Submission.Purpose != "":
+		return t.Submission.Purpose
+	case t.LocalDone:
+		return "integration"
+	}
+	return "local"
+}
+
 // expectationInputs identifies what renderInput gives an expectations step
-// besides the model and the fixed task facts: the submission's purpose, the
+// besides the model and the fixed task facts: the reviewed purpose, the
 // task's open findings and the owner's decisions for it. Findings raised by
 // the steps except are left out.
 func (s stateValue) expectationInputs(t taskValue, except []StepID) string {
-	parts := []string{t.Submission.Purpose}
+	parts := []string{t.reviewedPurpose()}
 	for _, id := range s.openFindings(t, organization.HostSource{}).IDs {
 		if !slices.Contains(except, s.issues[id].Raised) {
 			parts = append(parts, id)
@@ -220,6 +233,13 @@ func (s stateValue) standing(t taskValue, purpose string) (reviewValue, bool) {
 	k, ok := t.Kept[purpose]
 	t.Submission.Purpose = purpose
 	return k, ok && k.Inputs == s.expectationInputs(t, k.Assessed)
+}
+
+// hasStanding reports whether cases stand for the purpose of the task's next
+// writing step (DEC-049).
+func (s stateValue) hasStanding(t taskValue) bool {
+	_, ok := s.standing(t, t.reviewedPurpose())
+	return ok
 }
 
 // keep records the expectations that stand for the task's next submission
@@ -377,9 +397,16 @@ func (s *stateValue) concludeReview(r ConclusionRecord, t *taskValue, revision u
 		if json.Unmarshal(args, &in) != nil {
 			return ErrInvalid
 		}
-		t.Review = reviewValue{Expectations: r.Input, Inputs: s.expectationInputs(*t, nil)}
+		review := reviewValue{Expectations: r.Input, Inputs: s.expectationInputs(*t, nil)}
 		for _, c := range in.Cases {
-			t.Review.Cases = append(t.Review.Cases, recordedCase{Name: c.Name, Expectation: c.Expectation})
+			review.Cases = append(review.Cases, recordedCase{Name: c.Name, Expectation: c.Expectation})
+		}
+		if t.State == TaskReviewing {
+			t.Review = review
+		} else {
+			// Cases recorded before the submission stand for it, and the
+			// Manager's next step sees them (DEC-049).
+			t.keep(t.reviewedPurpose(), review)
 		}
 		t.Since = revision
 		return nil
@@ -460,6 +487,12 @@ func (s *stateValue) concludeReview(r ConclusionRecord, t *taskValue, revision u
 		t.Used = nil
 		t.Deliveries = append(slices.Clone(t.Deliveries), Delivery{Purpose: purpose, Scope: scope, Proposal: t.Submission.Proposal, Candidate: t.Submission.Candidate, Aggregate: s.aggregateVersion, At: revision})
 		t.Submission = Submission{}
+		// An accepted delivery shows that the work converges, so the
+		// rejection limit counts again from here (DEC-050).
+		if t.Rejections[purpose] > 0 {
+			t.Rejections = maps.Clone(t.Rejections)
+			delete(t.Rejections, purpose)
+		}
 		switch {
 		case scope == "limited":
 			t.State, t.Since = TaskReady, revision

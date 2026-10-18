@@ -29,8 +29,9 @@ func aggregateFile(t *testing.T, e *run.Engine, path string) string {
 }
 
 // The whole core runs one Package end to end: children explore first, the
-// barrier opens, the leaf's first candidate is rejected and reworked, the
-// accepted delivery is composed into the aggregate, the parent integrates,
+// barrier opens, reviewers record each task's cases before its writing step,
+// the leaf's first candidate is rejected and reworked against the same cases,
+// the accepted delivery is composed into the aggregate, the parent integrates,
 // and the root's completion moves the run to Verifying.
 func TestEngineRunsOnePackageThroughRejectionReworkAndIntegration(t *testing.T) {
 	t.Parallel()
@@ -53,8 +54,10 @@ func TestEngineRunsOnePackageThroughRejectionReworkAndIntegration(t *testing.T) 
 			if !strings.Contains(string(s.Packet.Context.Bytes), "No type realizes Item.") {
 				t.Error("rework did not see the finding")
 			}
-			if !strings.Contains(string(s.Packet.Context.Bytes), "Reviews rejected 1 of your local candidates in this run; at 2 rejections your task becomes incomplete and the run ends Incomplete.") {
-				t.Error("rework did not see its rejection count")
+			// The Orchestrator, not the Manager, keeps the rejection count
+			// (DEC-051).
+			if strings.Contains(string(s.Packet.Context.Bytes), "Reviews rejected") {
+				t.Error("rework sees the rejection count")
 			}
 		}
 		return happyAgent(s)
@@ -68,7 +71,8 @@ func TestEngineRunsOnePackageThroughRejectionReworkAndIntegration(t *testing.T) 
 	if root.State != run.TaskDone || lending.State != run.TaskDone || !root.LocalDone || len(root.Deliveries) != 2 || len(lending.Deliveries) != 1 {
 		t.Fatalf("tasks not done as T13 requires: %+v %+v", root, lending)
 	}
-	if lending.Rejections["local"] != 1 || lending.Deliveries[0].Aggregate != 1 || h.c.AggregateVersion() != 1 {
+	// The accepted delivery restarts the rejection count (DEC-050).
+	if lending.Rejections["local"] != 0 || lending.Deliveries[0].Aggregate != 1 || h.c.AggregateVersion() != 1 {
 		t.Fatal("rejection or composition not recorded", lending.Rejections, lending.Deliveries, h.c.AggregateVersion())
 	}
 	if got := aggregateFile(t, h.engine, "out/library.go"); got != "package library\n\ntype Item struct{}\n" {
@@ -81,9 +85,9 @@ func TestEngineRunsOnePackageThroughRejectionReworkAndIntegration(t *testing.T) 
 	order := admitted(h)
 	want := []string{
 		"lending explore", ". explore",
-		". work", "lending work", ". reviewer-expectations", "lending reviewer-expectations", ". reviewer-candidate", "lending reviewer-candidate",
+		". reviewer-expectations", "lending reviewer-expectations", ". work", "lending work", ". reviewer-candidate", "lending reviewer-candidate",
 		"lending work", "lending reviewer-candidate",
-		". integrate", ". reviewer-expectations", ". reviewer-candidate",
+		". reviewer-expectations", ". integrate", ". reviewer-candidate",
 	}
 	if !reflect.DeepEqual(order, want) {
 		t.Fatalf("admission order differs from T4:\n got %v\nwant %v", order, want)
@@ -162,7 +166,7 @@ func TestAMissingCaseBecomesAFinding(t *testing.T) {
 			if !strings.Contains(context, "blocking local finding: The recorded case \"item\" has no evidence: No test shows Item.") {
 				t.Error("the rework does not see the missing case")
 			}
-			if !strings.Contains(context, "Your local reviews assess every candidate against these recorded cases") || !strings.Contains(context, "The library realizes Item.") {
+			if !strings.Contains(context, "Your local work is assessed against these recorded review cases") || !strings.Contains(context, "The library realizes Item.") {
 				t.Error("the rework does not see the recorded cases")
 			}
 		case s.Manager == "lending" && s.Phase == run.PhaseReviewerCandidate && s.Attempt == 1:
@@ -178,7 +182,7 @@ func TestAMissingCaseBecomesAFinding(t *testing.T) {
 	h := newHarness(t, true, agent)
 	runToEnd(t, h)
 	lending := h.task("lending")
-	if h.c.Current().State != run.Verifying || lending.Rejections["local"] != 1 || len(lending.Deliveries) != 1 {
+	if h.c.Current().State != run.Verifying || lending.Rejections["local"] != 0 || len(lending.Deliveries) != 1 {
 		t.Fatal("the missing case did not go through a finding to a pass", h.c.Current(), lending.Rejections, h.sessions.answers)
 	}
 	if n := strings.Count(strings.Join(admitted(h), ","), "lending reviewer-expectations"); n != 1 {
@@ -260,6 +264,32 @@ func TestRejectionLimitFinishesTheRunIncomplete(t *testing.T) {
 	}
 	if r := h.c.Current(); r.State != run.Finished || r.Outcome != run.Incomplete || !strings.Contains(r.Reason, "rejection limit") {
 		t.Fatalf("run not finished Incomplete: %+v", r)
+	}
+}
+
+// An accepted delivery restarts the count, so a Manager that converges on
+// each delivery is not stopped by rejections of earlier deliveries; the limit
+// here is two (DEC-050).
+func TestAnAcceptedDeliveryRestartsTheRejectionCount(t *testing.T) {
+	t.Parallel()
+	agent := func(s agentStep) []action {
+		switch {
+		case s.Manager == "lending" && s.Phase == run.PhaseWork && s.Attempt < 2:
+			content := []string{"package library\n", "package library\n\ntype Item struct{}\n"}[s.Attempt]
+			return []action{{Write: map[string]string{"out/library.go": content}, Tool: run.ToolSubmit, Args: submitArgs("local", "limited"), Want: run.ToolOK}}
+		case s.Manager == "lending" && s.Phase == run.PhaseReviewerCandidate && s.Attempt%2 == 0 && s.Attempt < 4:
+			return []action{{Tool: run.ToolSubmitReview, Args: rejectArgs, Want: run.ToolOK}}
+		case s.Manager == "lending" && s.Phase == run.PhaseReviewerCandidate && s.Attempt%2 == 1:
+			return []action{{Tool: run.ToolSubmitReview, Args: passArgs(openFinding(t, s)), Want: run.ToolOK}}
+		}
+		return happyAgent(s)
+	}
+	h := newHarness(t, true, agent)
+	runToEnd(t, h)
+	lending := h.task("lending")
+	// Two rejections in total, one before each accepted delivery.
+	if h.c.Current().State != run.Verifying || len(lending.Deliveries) != 2 || strings.Count(strings.Join(admitted(h), ","), "lending reviewer-candidate") != 4 || lending.Rejections["local"] != 0 {
+		t.Fatalf("an accepted delivery did not restart the rejection count: %+v %+v", h.c.Current(), lending)
 	}
 }
 
