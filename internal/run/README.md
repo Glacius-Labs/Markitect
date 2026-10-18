@@ -260,8 +260,9 @@ unaccepted work.
 
 Reviews follow T7 and T8. A pass must resolve every open blocking finding of
 its purpose; it is withheld while another open blocking issue covers the task,
-for an integration also one of a descendant (I3), or while a producer the candidate used delivered again after the
-candidate's step (D4). Changes requested count one rejection per purpose; at
+for an integration also one of a descendant (I3), while a producer the candidate used delivered again after the
+candidate's step (D4), or, for an integration, while a child is not done (T9). The
+task's next step sees why its pass was withheld. Changes requested count one rejection per purpose; at
 the bound rejection limit the task becomes incomplete. A needs-decision verdict
 blocks the task on an owner question, and a failed assessment starts a fresh
 review. An integration review may address a finding to a descendant that owns

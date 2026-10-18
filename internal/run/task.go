@@ -81,6 +81,7 @@ type taskValue struct {
 	Reason       string
 	Failure      string
 	HostFault    bool
+	Withheld     string
 	Claims       []Claim
 }
 
@@ -104,6 +105,7 @@ type TaskView struct {
 	Rejections          map[string]int
 	Reason              string
 	Failure             string
+	Withheld            string
 }
 
 func (t taskValue) view() TaskView {
@@ -111,7 +113,7 @@ func (t taskValue) view() TaskView {
 	s.Uses = slices.Clone(s.Uses)
 	return TaskView{Manager: t.Slot.Package, Parent: t.Slot.Parent, ID: t.ID, Children: slices.Clone(t.Slot.Children), State: t.State, Explored: t.Explored, Report: t.Report,
 		Phase: t.Phase, Session: t.Session, Step: t.Step, Waits: slices.Clone(t.Waits), Own: t.Own, OwnTree: t.OwnTree, Submission: s, Expectations: t.Review.Expectations,
-		LocalDone: t.LocalDone, Deliveries: slices.Clone(t.Deliveries), Rejections: maps.Clone(t.Rejections), Reason: t.Reason, Failure: t.Failure}
+		LocalDone: t.LocalDone, Deliveries: slices.Clone(t.Deliveries), Rejections: maps.Clone(t.Rejections), Reason: t.Reason, Failure: t.Failure, Withheld: t.Withheld}
 }
 
 // Tasks returns every task of the current run, root first, then by path.
@@ -870,7 +872,7 @@ func (s *stateValue) concludeWork(r ConclusionRecord, t *taskValue, revision uin
 		}
 		return nil
 	}
-	t.Failure, t.HostFault = "", false
+	t.Failure, t.HostFault, t.Withheld = "", false, ""
 	switch r.Outcome {
 	case outcomeFailed:
 		t.State, t.Since, t.Failure, t.HostFault = TaskReady, revision, r.Reason, r.HostFault

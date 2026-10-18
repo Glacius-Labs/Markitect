@@ -230,6 +230,9 @@ func TestAnIntegrationWaitsForAChildThatCorrectsItself(t *testing.T) {
 				{Tool: run.ToolSubmit, Args: submitArgs("integration", "complete"), Want: run.ToolOK},
 			}
 		case s.Manager == "." && s.Phase == run.PhaseIntegrate && h.task("lending").State != run.TaskDone:
+			if !bytes.Contains(s.Packet.Context.Bytes, []byte("the Host did not accept it: an integration needs every child done, and lending is not done")) {
+				t.Error("the integration step after a withheld pass does not see why")
+			}
 			return []action{
 				{Tool: run.ToolSubmit, Args: submitArgs("integration", "complete"), Want: run.ToolRefused},
 				{Tool: run.ToolWait, Args: `{"on":[{"kind":"children"}],"reason":"Lending corrects Item."}`, Want: run.ToolOK},
@@ -248,6 +251,9 @@ func TestAnIntegrationWaitsForAChildThatCorrectsItself(t *testing.T) {
 	}
 	if got := aggregateFile(t, h.engine, "out/library.go"); got != corrected {
 		t.Fatalf("the integration was accepted without the correction: %q", got)
+	}
+	if h.task(".").Withheld != "" {
+		t.Fatal("the withheld note outlived the step that saw it", h.task(".").Withheld)
 	}
 }
 
