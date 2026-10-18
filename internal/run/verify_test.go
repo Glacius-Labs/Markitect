@@ -57,6 +57,7 @@ func verifiedHarness(t *testing.T, exit int) (*harness, *fakeChecks) {
 // final evidence check moves the run to Publishing (execution contract,
 // Verifying).
 func TestVerificationRunsRequiredChecksOnTheAggregate(t *testing.T) {
+	t.Parallel()
 	h, checks := verifiedHarness(t, 0)
 	if h.c.Current().State != run.Publishing || len(checks.runs) != 1 || checks.runs[0].Tree.Digest() != h.c.AggregateTree() {
 		t.Fatal("verification did not check the aggregate", h.c.Current(), checks.runs)
@@ -74,6 +75,7 @@ func TestVerificationRunsRequiredChecksOnTheAggregate(t *testing.T) {
 }
 
 func TestFailingRequiredCheckFinishesTheRunIncomplete(t *testing.T) {
+	t.Parallel()
 	h, _ := verifiedHarness(t, 1)
 	if r := h.c.Current(); r.State != run.Finished || r.Outcome != run.Incomplete {
 		t.Fatal("failing check did not finish the run Incomplete", r)
@@ -83,6 +85,7 @@ func TestFailingRequiredCheckFinishesTheRunIncomplete(t *testing.T) {
 // Publication records its changes before the first write; its receipt
 // decides the outcome (execution contract, Publishing and outcomes).
 func TestPublicationOutcomes(t *testing.T) {
+	t.Parallel()
 	for _, tc := range []struct {
 		outcome string
 		empty   bool
@@ -137,6 +140,7 @@ func TestPublicationOutcomes(t *testing.T) {
 }
 
 func TestVerificationRefusesUnadmittedChecks(t *testing.T) {
+	t.Parallel()
 	h := newHarness(t, true, happyAgent)
 	check := requiredCheck(t)
 	check.Request.Tree = h.inputs.Binding.Census
@@ -153,6 +157,7 @@ func TestVerificationRefusesUnadmittedChecks(t *testing.T) {
 // A candidate review runs a configured check on the frozen candidate and cites
 // its receipt; other steps and unknown checks are refused (Host tools).
 func TestCandidateReviewRequestsChecksOnItsCandidate(t *testing.T) {
+	t.Parallel()
 	agent := func(s agentStep) []action {
 		switch {
 		case s.Manager == "lending" && s.Phase == run.PhaseWork:
@@ -196,6 +201,7 @@ func TestCandidateReviewRequestsChecksOnItsCandidate(t *testing.T) {
 // that passed on the tree is not run again; a prepared publication cannot be
 // finished over without its receipt.
 func TestVerificationBindsRequiredChecksAndPublication(t *testing.T) {
+	t.Parallel()
 	inputs := stepInputs(t, true)
 	inputs.Binding.RequiredChecks = []string{"go-tests"}
 	h := newHarnessWith(t, inputs, happyAgent)
@@ -234,6 +240,7 @@ func TestVerificationBindsRequiredChecksAndPublication(t *testing.T) {
 // A review check the budget does not fit is refused and the review goes on; a
 // required check the budget does not fit finishes the run Incomplete.
 func TestChecksOutsideTheBudget(t *testing.T) {
+	t.Parallel()
 	agent := func(s agentStep) []action {
 		if s.Manager == "lending" && s.Phase == run.PhaseReviewerCandidate {
 			return append([]action{{Tool: run.ToolRequestCheck, Args: `{"check":"go-tests"}`, Want: run.ToolRefused}}, happyAgent(s)...)

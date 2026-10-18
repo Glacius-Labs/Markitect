@@ -258,11 +258,16 @@ S4 check failed, is failed and returns its task to the state before the step
 (T6). Writing steps record their S4 candidate record as the task's own
 unaccepted work.
 
-Reviews follow T7 and T8. A pass must resolve every open blocking finding of
-its purpose; it is withheld while another open blocking issue covers the task,
+Reviews follow T7 and T8. The expectations step names each case once, and the
+candidate review assesses every recorded case by that name as evidenced,
+not applicable or missing; the Host refuses a review that leaves a case out
+and a pass with a case missing, and records each missing case as a blocking
+finding. A failed assessment needs no cases. A pass
+must resolve every open blocking finding of its purpose; it is withheld while another open blocking issue covers the task,
 for an integration also one of a descendant (I3), while a producer the candidate used delivered again after the
 candidate's step (D4), or, for an integration, while a child is not done (T9). The
-task's next step sees why its pass was withheld. Changes requested count one rejection per purpose; at
+task's next step sees why its pass was withheld. Changes requested count one rejection per purpose, which
+the Manager's next steps see together with the limit; at
 the bound rejection limit the task becomes incomplete. A needs-decision verdict
 blocks the task on an owner question, and a failed assessment starts a fresh
 review. An integration review may address a finding to a descendant that owns

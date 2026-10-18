@@ -51,6 +51,7 @@ func firstSend(t *testing.T) run.TransportPreparation {
 }
 
 func TestReadinessAdmitsOneActualFirstStepBeforeObservedProviderBinding(t *testing.T) {
+	t.Parallel()
 	for _, role := range []string{"manager"} {
 		t.Run(role, func(t *testing.T) {
 			c, j, io := readySession(t, role, true)
@@ -118,6 +119,7 @@ func TestReadinessAdmitsOneActualFirstStepBeforeObservedProviderBinding(t *testi
 }
 
 func TestReadinessNeedsObservedAckAndSettledManagerStartup(t *testing.T) {
+	t.Parallel()
 	for _, role := range []string{"manager"} {
 		t.Run(role, func(t *testing.T) {
 			c, j, io := unboundSession(t, role)
@@ -161,6 +163,7 @@ func TestReadinessNeedsObservedAckAndSettledManagerStartup(t *testing.T) {
 }
 
 func TestInitialSendSlotCannotReplayOrUseAnotherMessageEvenAfterNotSent(t *testing.T) {
+	t.Parallel()
 	for _, outcome := range []run.SendOutcome{run.Sent, run.NotSent, run.SendUncertain} {
 		t.Run(string(outcome), func(t *testing.T) {
 			c, j, io := readySession(t, "manager", true)
@@ -216,6 +219,7 @@ func TestInitialSendSlotCannotReplayOrUseAnotherMessageEvenAfterNotSent(t *testi
 }
 
 func TestReadinessDoesNotClearUncertaintyOrReleaseRealStartup(t *testing.T) {
+	t.Parallel()
 	c, j, io := unboundSession(t, "manager")
 	if _, err := io.Bind(context.Background(), run.SessionObservation{RecordMeta: meta("unknown-open"), Uncertain: true, Reason: "actual startup effect not fully observed"}); err != nil {
 		t.Fatal(err)
@@ -246,6 +250,7 @@ func TestReadinessDoesNotClearUncertaintyOrReleaseRealStartup(t *testing.T) {
 }
 
 func TestMissingInitRetainsFirstStepAndShutdownRemainsAvailable(t *testing.T) {
+	t.Parallel()
 	c, j, io := readySession(t, "manager", true)
 	commit(t, c, j, readinessStep(t, c, "first"))
 	prep := firstSend(t)
@@ -276,6 +281,7 @@ func TestMissingInitRetainsFirstStepAndShutdownRemainsAvailable(t *testing.T) {
 }
 
 func TestReadinessCannotDischargeGenericStartupInvocationUncertainty(t *testing.T) {
+	t.Parallel()
 	c, j, io := unboundSession(t, "manager")
 	uncertain := command("startup-uncertain", run.ObserveUncertain)
 	uncertain.Invocation, uncertain.Reason = "open-s", "startup effect remains uncertain"
@@ -296,6 +302,7 @@ func TestReadinessCannotDischargeGenericStartupInvocationUncertainty(t *testing.
 }
 
 func TestReadinessAppendLossRetainsOriginalStateAndRequiredWireClosure(t *testing.T) {
+	t.Parallel()
 	for _, mode := range []string{"lost", "absent", "wrong"} {
 		t.Run(mode, func(t *testing.T) {
 			c, j, io := unboundSession(t, "manager")
@@ -342,6 +349,7 @@ func TestReadinessAppendLossRetainsOriginalStateAndRequiredWireClosure(t *testin
 }
 
 func TestOpenObservationOutcomesAreExclusiveAndBindCannotConsumeReady(t *testing.T) {
+	t.Parallel()
 	_, _, io := unboundSession(t, "manager")
 	ready := run.SessionObservation{RecordMeta: meta("ready-return"), Ready: true, Wire: wire(t, `{"control":"ready"}`), Reason: "observed control ready"}
 	if !ready.Valid() {

@@ -113,7 +113,7 @@ Each role sees only its own closed catalogue. Here reviewer includes each named 
 | `assign_owner(path, manager, reason)` | Manager | As the common parent, decides the owner of an artifact that several descendants' Definitions require, proposes an owner for an unexplained file during intake (T2), or transfers a record between descendants (D6). |
 | `request_check(check)` | Manager, reviewer | Runs an allowed project check on the current candidate and returns its receipt. |
 | `record_expectations(cases)` | Reviewer | Records the expected behavior and discriminating cases from the model before the candidate is supplied. |
-| `submit_review(proposal)` | Reviewer | Submits a review verdict with findings and evidence. |
+| `submit_review(proposal)` | Reviewer | Submits a review verdict with findings and evidence, assessing every recorded expectation case by its name. |
 
 ## Messages
 

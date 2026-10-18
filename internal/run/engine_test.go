@@ -33,6 +33,7 @@ func aggregateFile(t *testing.T, e *run.Engine, path string) string {
 // accepted delivery is composed into the aggregate, the parent integrates,
 // and the root's completion moves the run to Verifying.
 func TestEngineRunsOnePackageThroughRejectionReworkAndIntegration(t *testing.T) {
+	t.Parallel()
 	agent := func(s agentStep) []action {
 		switch {
 		case s.Manager == "lending" && s.Phase == run.PhaseWork && s.Attempt == 0:
@@ -51,6 +52,9 @@ func TestEngineRunsOnePackageThroughRejectionReworkAndIntegration(t *testing.T) 
 		case s.Manager == "lending" && s.Phase == run.PhaseWork:
 			if !strings.Contains(string(s.Packet.Context.Bytes), "No type realizes Item.") {
 				t.Error("rework did not see the finding")
+			}
+			if !strings.Contains(string(s.Packet.Context.Bytes), "Reviews rejected 1 of your local candidates in this run; at 2 rejections your task becomes incomplete and the run ends Incomplete.") {
+				t.Error("rework did not see its rejection count")
 			}
 		}
 		return happyAgent(s)
@@ -98,6 +102,84 @@ func TestEngineRunsOnePackageThroughRejectionReworkAndIntegration(t *testing.T) 
 	}
 }
 
+// Expectations name each case once, and a candidate review assesses every
+// recorded case by its name: the Host refuses a review that leaves one out,
+// names another or assesses one twice, and a pass with a case missing; a
+// failed assessment needs no cases (core rules T7, T8).
+func TestACandidateReviewAssessesEveryRecordedCase(t *testing.T) {
+	t.Parallel()
+	review := func(verdict, cases string) string {
+		return `{"verdict":"` + verdict + `","summary":"Assessed.","evidence":[],"cases":` + cases + `,"findings":[],"resolutions":[]}`
+	}
+	twice := `{"cases":[{"name":"item","expectation":"Item exists.","discriminates":"No Item."},{"name":"item","expectation":"Item again.","discriminates":"No Item."}]}`
+	agent := func(s agentStep) []action {
+		switch {
+		case s.Manager == "lending" && s.Phase == run.PhaseReviewerExpectations && s.Attempt == 0:
+			return []action{
+				{Tool: run.ToolRecordExpectations, Args: twice, Want: run.ToolRefused},
+				{Tool: run.ToolRecordExpectations, Args: expectationsArgs, Want: run.ToolOK},
+			}
+		case s.Manager == "lending" && s.Phase == run.PhaseReviewerCandidate && s.Attempt == 0:
+			return []action{
+				{Tool: run.ToolSubmitReview, Args: review("pass", `[]`), Want: run.ToolRefused},
+				{Tool: run.ToolSubmitReview, Args: review("pass", `[{"name":"other","assessment":"evidenced","grounds":"Seen."}]`), Want: run.ToolRefused},
+				{Tool: run.ToolSubmitReview, Args: review("pass", `[{"name":"item","assessment":"evidenced","grounds":"Seen."},{"name":"item","assessment":"evidenced","grounds":"Again."}]`), Want: run.ToolRefused},
+				{Tool: run.ToolSubmitReview, Args: review("pass", `[{"name":"item","assessment":"missing","grounds":"No test shows Item."}]`), Want: run.ToolRefused},
+				{Tool: run.ToolSubmitReview, Args: review("pass", `[{"name":"item","assessment":"seen","grounds":"Seen."}]`), Want: run.ToolRefused},
+				{Tool: run.ToolSubmitReview, Args: review("pass", `[{"name":"item","assessment":"evidenced","grounds":" "}]`), Want: run.ToolRefused},
+				{Tool: run.ToolSubmitReview, Args: review("changes_requested", `[{"name":"other","assessment":"missing","grounds":"No test."}]`), Want: run.ToolRefused},
+				{Tool: run.ToolSubmitReview, Args: review("failed_assessment", `[]`), Want: run.ToolOK},
+			}
+		case s.Manager == "lending" && s.Phase == run.PhaseReviewerCandidate:
+			return []action{{Tool: run.ToolSubmitReview, Args: review("pass", `[{"name":"item","assessment":"evidenced","grounds":"out/library.go declares Item."}]`), Want: run.ToolOK}}
+		}
+		return happyAgent(s)
+	}
+	h := newHarness(t, true, agent)
+	runToEnd(t, h)
+	if h.c.Current().State != run.Verifying || len(h.task("lending").Deliveries) != 1 {
+		t.Fatal("the run did not complete after the accounted review", h.c.Current(), h.sessions.answers)
+	}
+}
+
+// A recorded case the review finds missing becomes a blocking finding: the
+// Manager's rework sees it, a later review assesses its own recorded cases
+// only, and its pass must resolve that finding (core rules T7, T8).
+func TestAMissingCaseBecomesAFinding(t *testing.T) {
+	t.Parallel()
+	review := func(verdict, cases, resolutions string) string {
+		return `{"verdict":"` + verdict + `","summary":"Assessed.","evidence":[],"cases":` + cases + `,"findings":[],"resolutions":` + resolutions + `}`
+	}
+	missing := `[{"name":"item","assessment":"missing","grounds":"No test shows Item."}]`
+	title := `[{"name":"title","assessment":"evidenced","grounds":"out/library.go declares Title."}]`
+	agent := func(s agentStep) []action {
+		switch {
+		case s.Manager == "lending" && s.Phase == run.PhaseReviewerCandidate && s.Attempt == 0:
+			return []action{{Tool: run.ToolSubmitReview, Args: review("changes_requested", missing, `[]`), Want: run.ToolOK}}
+		case s.Manager == "lending" && s.Phase == run.PhaseWork && s.Attempt == 1:
+			if !strings.Contains(string(s.Packet.Context.Bytes), "blocking local finding: The recorded case \"item\" has no evidence: No test shows Item.") {
+				t.Error("the rework does not see the missing case")
+			}
+		case s.Manager == "lending" && s.Phase == run.PhaseReviewerExpectations && s.Attempt == 1:
+			return []action{{Tool: run.ToolRecordExpectations, Args: `{"cases":[{"name":"title","expectation":"Item has a Title.","discriminates":"No Title."}]}`, Want: run.ToolOK}}
+		case s.Manager == "lending" && s.Phase == run.PhaseReviewerCandidate && s.Attempt == 1:
+			resolved := `[{"finding":"` + openFinding(t, s) + `","state":"resolved","grounds":"A test shows Item.","evidence":[]}]`
+			return []action{
+				{Tool: run.ToolSubmitReview, Args: review("pass", missing, resolved), Want: run.ToolRefused},
+				{Tool: run.ToolSubmitReview, Args: review("pass", title, `[]`), Want: run.ToolRefused},
+				{Tool: run.ToolSubmitReview, Args: review("pass", title, resolved), Want: run.ToolOK},
+			}
+		}
+		return happyAgent(s)
+	}
+	h := newHarness(t, true, agent)
+	runToEnd(t, h)
+	lending := h.task("lending")
+	if h.c.Current().State != run.Verifying || lending.Rejections["local"] != 1 || len(lending.Deliveries) != 1 {
+		t.Fatal("the missing case did not go through a finding to a pass", h.c.Current(), lending.Rejections, h.sessions.answers)
+	}
+}
+
 func openFinding(t *testing.T, s agentStep) string {
 	t.Helper()
 	text := string(s.Packet.Context.Bytes)
@@ -128,6 +210,7 @@ func admitted(h *harness) []string {
 // from Explore; its review runs before the write barrier because nothing is
 // written (core rules T2, T3).
 func TestNoChangeExploreIsReviewedBeforeTheBarrier(t *testing.T) {
+	t.Parallel()
 	agent := func(s agentStep) []action {
 		if s.Manager == "empty" && s.Phase == run.PhaseExplore {
 			return []action{
@@ -156,6 +239,7 @@ func TestNoChangeExploreIsReviewedBeforeTheBarrier(t *testing.T) {
 // At the rejection limit the task becomes incomplete and the run finishes
 // Incomplete with all work retained (core rules T8, T14).
 func TestRejectionLimitFinishesTheRunIncomplete(t *testing.T) {
+	t.Parallel()
 	agent := func(s agentStep) []action {
 		if s.Manager == "lending" && s.Phase == run.PhaseReviewerCandidate {
 			return []action{{Tool: run.ToolSubmitReview, Args: rejectArgs, Want: run.ToolOK}}
@@ -176,9 +260,10 @@ func TestRejectionLimitFinishesTheRunIncomplete(t *testing.T) {
 // A review that needs an owner decision blocks the task on an owner question,
 // and the run waits for the owner (core rules T8, W1).
 func TestNeedsDecisionWaitsForTheOwner(t *testing.T) {
+	t.Parallel()
 	agent := func(s agentStep) []action {
 		if s.Manager == "lending" && s.Phase == run.PhaseReviewerCandidate {
-			return []action{{Tool: run.ToolSubmitReview, Args: `{"verdict":"needs_decision","summary":"The model leaves the format open.","question":"Which format should Item use?","evidence":[],"findings":[],"resolutions":[]}`, Want: run.ToolOK}}
+			return []action{{Tool: run.ToolSubmitReview, Args: `{"verdict":"needs_decision","summary":"The model leaves the format open.","question":"Which format should Item use?","evidence":[],"cases":[{"name":"item","assessment":"evidenced","grounds":"Checked."}],"findings":[],"resolutions":[]}`, Want: run.ToolOK}}
 		}
 		return happyAgent(s)
 	}
@@ -201,6 +286,7 @@ func TestNeedsDecisionWaitsForTheOwner(t *testing.T) {
 // to the state before the step (core rule T6). A write outside the owner's
 // claims fails the step whatever its outcome said (core rule S4).
 func TestFailedStepsReturnTasksToTheirStateBeforeTheStep(t *testing.T) {
+	t.Parallel()
 	agent := func(s agentStep) []action {
 		switch {
 		case s.Manager == "lending" && s.Phase == run.PhaseExplore && s.Attempt == 0:
@@ -230,6 +316,7 @@ func TestFailedStepsReturnTasksToTheirStateBeforeTheStep(t *testing.T) {
 // A consumer that waits for a producer's delivery wakes when it is accepted
 // (core rules T5, T10).
 func TestDeliveryWaitWakesTheConsumer(t *testing.T) {
+	t.Parallel()
 	agent := func(s agentStep) []action {
 		if s.Manager == "." && s.Phase == run.PhaseWork && s.Attempt == 0 {
 			return []action{
@@ -259,6 +346,7 @@ func TestDeliveryWaitWakesTheConsumer(t *testing.T) {
 // provider thread before the step; resumed steps bind the same thread. The
 // whole tree runs with it (core rules S1, S3).
 func TestACodexHandshakeRunsTheWholeTree(t *testing.T) {
+	t.Parallel()
 	inputs := stepInputs(t, false)
 	inputs.Binding.Policy.Assignment.Steps, inputs.Binding.Policy.Assignment.SessionStarts = 64, 64
 	h := newHarnessWith(t, inputs, happyAgent)

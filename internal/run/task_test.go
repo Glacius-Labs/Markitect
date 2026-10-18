@@ -18,6 +18,7 @@ import (
 // Only the step the queue admits can start, with the phase's role, tools,
 // workspace mode, provider home and conversation (core rules T4, S3, S5).
 func TestTaskAdmissionRefusesWhatTheQueueDidNotAdmit(t *testing.T) {
+	t.Parallel()
 	c, j := running(t)
 	item, ok := c.Next()
 	if !ok || item.Manager != "empty" || item.Phase != run.PhaseExplore || item.Resume != "" {
@@ -76,6 +77,7 @@ func TestTaskAdmissionRefusesWhatTheQueueDidNotAdmit(t *testing.T) {
 // Step preparation compiles the original model again and matches the exact
 // bound settings; nothing the binding does not record can change the input.
 func TestStepPreparationRecompilesOriginalsAndMatchesExactBoundSettings(t *testing.T) {
+	t.Parallel()
 	inputs := stepInputs(t, true)
 	b, err := run.Bind(inputs.Binding)
 	if err != nil {
@@ -117,6 +119,7 @@ func TestStepPreparationRecompilesOriginalsAndMatchesExactBoundSettings(t *testi
 }
 
 func TestRequiredReviewDemandIncludesRootEmptyAndTwoReviewSteps(t *testing.T) {
+	t.Parallel()
 	for _, one := range []bool{true, false} {
 		inputs := stepInputs(t, one)
 		want := int64(6)
@@ -145,6 +148,7 @@ func TestRequiredReviewDemandIncludesRootEmptyAndTwoReviewSteps(t *testing.T) {
 // root, the children's reports for a parent and the Manager's own artifacts
 // (core rules T1, D3).
 func TestStepContextCarriesScopeOwnerRequestReportsAndOwnArtifacts(t *testing.T) {
+	t.Parallel()
 	var facts organization.SettingsFacts
 	input := fixtureWith(t, func(m *model.Input) {
 		for _, d := range []struct{ path, text string }{
@@ -203,6 +207,7 @@ func TestStepContextCarriesScopeOwnerRequestReportsAndOwnArtifacts(t *testing.T)
 // A step concludes only after its container stopped and with its answered
 // outcome; the reducer checks that outcome again (core rules S1, T5, T6).
 func TestConclusionWaitsForTheStoppedContainerAndChecksTheOutcome(t *testing.T) {
+	t.Parallel()
 	for _, kind := range []string{"report", "bad report", "refused"} {
 		t.Run(kind, func(t *testing.T) {
 			inputs := stepInputs(t, true)
@@ -312,6 +317,7 @@ func stepPreparationWith(t *testing.T, c *run.Coordinator, inputs run.StepPrepar
 // again before the review passes (core rule D4); no rejection counts, and the
 // next work step learns why its pass was not accepted.
 func TestReviewIsRenewedWhenAUsedProducerDeliversAgain(t *testing.T) {
+	t.Parallel()
 	var notes []bool
 	agent := func(s agentStep) []action {
 		switch {
@@ -348,6 +354,7 @@ func TestReviewIsRenewedWhenAUsedProducerDeliversAgain(t *testing.T) {
 // A failed step after a withheld pass leaves no new submission, so the step
 // after it still learns why the pass was not accepted (core rules D4, T6).
 func TestAWithheldNoteOutlivesAFailedStep(t *testing.T) {
+	t.Parallel()
 	var notes []bool
 	agent := func(s agentStep) []action {
 		switch {
@@ -379,6 +386,7 @@ func TestAWithheldNoteOutlivesAFailedStep(t *testing.T) {
 // When the budget no longer fits the next step, the run finishes Incomplete
 // with its work retained (core rule T14).
 func TestBudgetExhaustionFinishesTheRunIncomplete(t *testing.T) {
+	t.Parallel()
 	agent := func(s agentStep) []action {
 		if s.Phase == run.PhaseReviewerCandidate {
 			return nil // every candidate review fails, so fresh reviews follow

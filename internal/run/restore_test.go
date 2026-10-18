@@ -72,6 +72,7 @@ func sameProjection(t *testing.T, want, got *run.Coordinator) {
 }
 
 func TestRestorePreparedRunningAndFinishedFromStoredBytes(t *testing.T) {
+	t.Parallel()
 	for _, phase := range []string{"empty", "prepared", "running", "finished"} {
 		t.Run(phase, func(t *testing.T) {
 			original, _ := run.NewCoordinator("repo")
@@ -101,6 +102,7 @@ func TestRestorePreparedRunningAndFinishedFromStoredBytes(t *testing.T) {
 }
 
 func TestRestorePinsPagesAndRebuildsBudgetAndRetryReceipts(t *testing.T) {
+	t.Parallel()
 	c, j, io := activeStep(t)
 	startup := sessionPreparation(t, c, "s")
 	startProposal, err := c.Propose(startup)
@@ -149,6 +151,7 @@ func TestRestorePinsPagesAndRebuildsBudgetAndRetryReceipts(t *testing.T) {
 }
 
 func TestRestoreKeepsPinnedHeadWhenLaterWorkCommits(t *testing.T) {
+	t.Parallel()
 	c, j := running(t)
 	head := c.Revision()
 	view, budget := c.Current(), c.Budget()
@@ -172,6 +175,7 @@ func TestRestoreKeepsPinnedHeadWhenLaterWorkCommits(t *testing.T) {
 }
 
 func TestRestoreHoldsOpenInvocationsBehindSeparateRecoveryBarrier(t *testing.T) {
+	t.Parallel()
 	for _, uncertain := range []bool{false, true} {
 		t.Run(map[bool]string{false: "reserved", true: "uncertain"}[uncertain], func(t *testing.T) {
 			c, j, _ := activeStep(t)
@@ -242,6 +246,7 @@ func TestRestoreHoldsOpenInvocationsBehindSeparateRecoveryBarrier(t *testing.T) 
 }
 
 func TestRestoreLostAppendACKUsesOnlyCommittedHistory(t *testing.T) {
+	t.Parallel()
 	for _, mode := range []string{"lost", "absent"} {
 		t.Run(mode, func(t *testing.T) {
 			c, _ := run.NewCoordinator("repo")
@@ -281,6 +286,7 @@ func TestRestoreLostAppendACKUsesOnlyCommittedHistory(t *testing.T) {
 }
 
 func TestRestoreAdvancedHistoryDoesNotRetryAbsentOldProposal(t *testing.T) {
+	t.Parallel()
 	c, _ := run.NewCoordinator("repo")
 	j := journal()
 	old, err := c.Propose(run.PrepareCommand("old", "a", "r", "", observed, binding(t)))
@@ -306,6 +312,7 @@ func TestRestoreAdvancedHistoryDoesNotRetryAbsentOldProposal(t *testing.T) {
 }
 
 func TestRestoreStaleAbsentReservationNeedsExplicitNewProposal(t *testing.T) {
+	t.Parallel()
 	c, j := running(t)
 	intent := sessionPreparation(t, c, "s")
 	old, err := c.Propose(intent)
@@ -348,6 +355,7 @@ func TestRestoreStaleAbsentReservationNeedsExplicitNewProposal(t *testing.T) {
 }
 
 func TestRestoreLostReservationACKKeepsCommittedIntentHeld(t *testing.T) {
+	t.Parallel()
 	for _, mode := range []string{"lost", "absent"} {
 		t.Run(mode, func(t *testing.T) {
 			c, j := running(t)
@@ -412,6 +420,7 @@ func alteredBatch(t *testing.T, b run.AppendBatch, change func(*struct {
 }
 
 func TestRestoreRejectsMalformedOrUnavailablePages(t *testing.T) {
+	t.Parallel()
 	c, j := running(t)
 	exploreNext(t, c, j, stepInputs(t, false), "root")
 	for name, hook := range map[string]func(int, run.EventQuery, run.EventPage) (run.EventPage, error){
@@ -491,6 +500,7 @@ func TestRestoreRejectsMalformedOrUnavailablePages(t *testing.T) {
 }
 
 func TestKnownPendingBatchAtLaterHeadRequiresWholeRestore(t *testing.T) {
+	t.Parallel()
 	c, _ := run.NewCoordinator("repo")
 	j := journal()
 	p, err := c.Propose(run.PrepareCommand("prepare", "a", "r", "", observed, binding(t)))
@@ -515,6 +525,7 @@ func TestKnownPendingBatchAtLaterHeadRequiresWholeRestore(t *testing.T) {
 }
 
 func TestRestoreRejectsMissingOrChangedRequiredBlobs(t *testing.T) {
+	t.Parallel()
 	for _, kind := range []string{"binding missing", "owner missing", "binding changed", "owner changed"} {
 		t.Run(kind, func(t *testing.T) {
 			c, j := running(t)
@@ -545,6 +556,7 @@ func TestRestoreRejectsMissingOrChangedRequiredBlobs(t *testing.T) {
 }
 
 func TestRestoreEnforcesFiniteBudgetsAndRepositoryIdentity(t *testing.T) {
+	t.Parallel()
 	_, j := running(t)
 	for _, limits := range []run.RestoreLimits{
 		{}, {PageSize: 257, Batches: 100, Events: 200, Bytes: 16 << 20},
@@ -569,6 +581,7 @@ func TestRestoreEnforcesFiniteBudgetsAndRepositoryIdentity(t *testing.T) {
 }
 
 func TestRestoreCountsRequiredBlobBytesInItsReadBudget(t *testing.T) {
+	t.Parallel()
 	_, j := running(t)
 	var total int64
 	for _, b := range j.batches {
@@ -590,6 +603,7 @@ func TestRestoreCountsRequiredBlobBytesInItsReadBudget(t *testing.T) {
 }
 
 func TestRestoreContinuationKeepsAssignmentOwnerAndConsumedLedger(t *testing.T) {
+	t.Parallel()
 	c, j := running(t)
 	exploreNext(t, c, j, stepInputs(t, false), "root")
 	finishIncomplete(t, c, j)

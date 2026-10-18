@@ -114,10 +114,11 @@ func (c *controlledSessionIO) Call(_ context.Context, call run.ToolCall) (run.To
 				Findings    []json.RawMessage `json:"findings"`
 				Resolutions []json.RawMessage `json:"resolutions"`
 				Evidence    []json.RawMessage `json:"evidence"`
+				Cases       []json.RawMessage `json:"cases"`
 			}
 			if strictValue(wireCall.Arguments, &review) != nil || review.Verdict != "pass" ||
 				review.Findings == nil || len(review.Findings) != 0 || review.Resolutions == nil || len(review.Resolutions) != 0 ||
-				review.Evidence == nil || len(review.Evidence) != 0 {
+				review.Evidence == nil || len(review.Evidence) != 0 || review.Cases == nil || len(review.Cases) != 0 {
 				return run.ToolResult{}, run.ErrInvalid
 			}
 			summary = review.Summary
@@ -181,7 +182,7 @@ func TestSessionSmokeObserverDecodesActualToolEnvelope(t *testing.T) {
 		tool, arguments string
 	}{
 		{run.PhaseExplore, run.ToolReport, `{"summary":"artifact-token conversation-token","proposedChanges":[],"prerequisites":[],"uncertainties":[],"questions":[]}`},
-		{run.PhaseReviewerCandidate, run.ToolSubmitReview, `{"verdict":"pass","summary":"artifact-token conversation-token","findings":[],"resolutions":[],"evidence":[]}`},
+		{run.PhaseReviewerCandidate, run.ToolSubmitReview, `{"verdict":"pass","summary":"artifact-token conversation-token","findings":[],"resolutions":[],"evidence":[],"cases":[]}`},
 	} {
 		t.Run(string(tc.phase), func(t *testing.T) {
 			channel := &controlledSessionIO{step: "step", phase: tc.phase, artifact: "artifact-token", continuity: "conversation-token",
@@ -342,7 +343,7 @@ func TestAdmittedSessionAdapterSmoke(t *testing.T) {
 			preparations: map[run.MessageID]run.TransportPreparation{}, observed: map[run.MessageID]bool{}, answered: map[run.ProviderCallID]bool{}}
 		prompt := "Read /work/smoke.txt with your native file-reading tool. Do not change any file. "
 		if role == "reviewer" {
-			prompt += "Independently inspect this one-file candidate. Call submit_review exactly once with verdict pass, summary containing the exact file contents, and empty findings, resolutions and evidence arrays."
+			prompt += "Independently inspect this one-file candidate. Call submit_review exactly once with verdict pass, summary containing the exact file contents, and empty cases, findings, resolutions and evidence arrays."
 		} else {
 			prompt += "Call report exactly once: summary must contain the exact file contents; proposedChanges, prerequisites, uncertainties and questions must all be empty arrays."
 		}

@@ -46,6 +46,7 @@ func legacyBinding(t *testing.T) (run.Payload, run.Payload, run.AppendBatch) {
 }
 
 func TestLiteralV1HistoryKeepsBytesReferencesAndExactRetry(t *testing.T) {
+	t.Parallel()
 	basis, owner, batch := legacyBinding(t)
 	refs, err := batch.BindingRefs()
 	if err != nil || !reflect.DeepEqual(refs, []run.BlobRef{basis.Ref()}) {
@@ -93,6 +94,7 @@ func TestLiteralV1HistoryKeepsBytesReferencesAndExactRetry(t *testing.T) {
 }
 
 func TestV2RecordedInventorySurvivesRestartWithOwnedViews(t *testing.T) {
+	t.Parallel()
 	i := fixture(t)
 	basis, err := run.Bind(i)
 	if err != nil {
@@ -209,6 +211,7 @@ func rejectInventoryRecord(t *testing.T, basis, owner run.Payload, batch run.App
 }
 
 func TestV3RejectsChangedSettingSourceDocumentWithoutRecompiling(t *testing.T) {
+	t.Parallel()
 	i := fixture(t)
 	basis, err := run.Bind(i)
 	if err != nil {
@@ -256,6 +259,7 @@ func TestV3RejectsChangedSettingSourceDocumentWithoutRecompiling(t *testing.T) {
 }
 
 func TestV2RejectsInconsistentInventoryInsteadOfNarrowingScope(t *testing.T) {
+	t.Parallel()
 	i := fixture(t)
 	basis, err := run.Bind(i)
 	if err != nil {
@@ -323,6 +327,7 @@ func TestV2RejectsInconsistentInventoryInsteadOfNarrowingScope(t *testing.T) {
 }
 
 func TestLiteralV1MalformedHistoryStillRefuses(t *testing.T) {
+	t.Parallel()
 	basis, owner, batch := legacyBinding(t)
 	for name, change := range map[string]func(*closureRecord){
 		"v1 cannot assert v2 completeness": func(w *closureRecord) { w.Version = 2 },
@@ -342,6 +347,7 @@ func TestLiteralV1MalformedHistoryStillRefuses(t *testing.T) {
 }
 
 func TestV2InventoryRetainsExistingPayloadAndRestoreLimits(t *testing.T) {
+	t.Parallel()
 	b := binding(t)
 	if _, err := run.NewPayload(b.Ref().MediaType, b.Ref().Encoding, make([]byte, (64<<20)+1)); !errors.Is(err, run.ErrInvalid) {
 		t.Fatal("basis payload limit removed", err)

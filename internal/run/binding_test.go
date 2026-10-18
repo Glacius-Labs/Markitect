@@ -19,6 +19,7 @@ import (
 )
 
 func TestBindingFixesCompleteInputsAndOwnsOriginalBytes(t *testing.T) {
+	t.Parallel()
 	input := fixture(t)
 	b, err := run.Bind(input)
 	if err != nil {
@@ -100,6 +101,7 @@ func TestBindingFixesCompleteInputsAndOwnsOriginalBytes(t *testing.T) {
 }
 
 func TestRejectionLimitUsesHistoricalBindingFieldNames(t *testing.T) {
+	t.Parallel()
 	binding, err := run.Bind(fixture(t))
 	if err != nil {
 		t.Fatal(err)
@@ -183,6 +185,7 @@ func rewrittenPreparation(t *testing.T, batch run.AppendBatch, basis run.BlobRef
 }
 
 func TestRecordedRawClosureMustMatchCompiledManifestReferences(t *testing.T) {
+	t.Parallel()
 	i := fixture(t)
 	basis, err := run.Bind(i)
 	if err != nil {
@@ -296,6 +299,7 @@ func TestRecordedRawClosureMustMatchCompiledManifestReferences(t *testing.T) {
 }
 
 func TestBindUsesTheSameRawClosureReferenceChecks(t *testing.T) {
+	t.Parallel()
 	for name, change := range map[string]func(*run.BindingInput){
 		"zero input":       func(i *run.BindingInput) { i.ModelInput = model.Input{} },
 		"duplicate source": func(i *run.BindingInput) { i.ModelInput.Dependencies[1] = i.ModelInput.Dependencies[0] },
@@ -336,6 +340,7 @@ func TestBindUsesTheSameRawClosureReferenceChecks(t *testing.T) {
 }
 
 func TestRawClosureMatchesExactOriginAndManifestPair(t *testing.T) {
+	t.Parallel()
 	i := fixtureWith(t, func(input *model.Input) {
 		rename := func(source *model.SourceModel, prefix string) {
 			source.Origin = "shared-opaque-origin"
@@ -361,6 +366,7 @@ func TestRawClosureMatchesExactOriginAndManifestPair(t *testing.T) {
 }
 
 func TestBindingRequiresCompleteProducerAccounting(t *testing.T) {
+	t.Parallel()
 	for name, change := range map[string]func(*run.BindingInput){
 		"unexplained file": func(i *run.BindingInput) {
 			i.Census = tree(t, append(i.Census.Entries(), file(t, "notes.txt", snapshot.Regular, "unclassified")))
@@ -390,6 +396,7 @@ func TestBindingRequiresCompleteProducerAccounting(t *testing.T) {
 }
 
 func TestBindingIncludesCeilingsValuesAndEverySource(t *testing.T) {
+	t.Parallel()
 	base := fixture(t)
 	original, err := run.Bind(base)
 	if err != nil {
@@ -468,6 +475,7 @@ func TestBindingIncludesCeilingsValuesAndEverySource(t *testing.T) {
 }
 
 func TestBindingRejectsUncoveredOrInconsistentFactsBeforePreparation(t *testing.T) {
+	t.Parallel()
 	for name, change := range map[string]func(*run.BindingInput){
 		"insufficient review starts": func(i *run.BindingInput) { i.Policy.Reserve.SessionStarts = 3 },
 		"insufficient review steps":  func(i *run.BindingInput) { i.Policy.Reserve.Steps = 3 },

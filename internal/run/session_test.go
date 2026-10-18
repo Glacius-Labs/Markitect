@@ -7,6 +7,7 @@ import (
 	"errors"
 	"reflect"
 	"strings"
+	"sync"
 	"testing"
 	"time"
 
@@ -34,21 +35,33 @@ func wire(t *testing.T, data string) run.WirePayload {
 
 // built remembers the live commands the helpers prepared per Coordinator, so
 // that a test can retry the exact recorded command after its task moved on.
-var built = map[*run.Coordinator]map[string]run.Command{}
+var built = struct {
+	sync.Mutex
+	commands map[*run.Coordinator]map[string]run.Command
+}{commands: map[*run.Coordinator]map[string]run.Command{}}
 
 func remember(c *run.Coordinator, cmd run.Command) run.Command {
-	if built[c] == nil {
-		built[c] = map[string]run.Command{}
+	built.Lock()
+	defer built.Unlock()
+	if built.commands[c] == nil {
+		built.commands[c] = map[string]run.Command{}
 	}
-	built[c][cmd.ID] = cmd
+	built.commands[c][cmd.ID] = cmd
 	return cmd
+}
+
+func remembered(c *run.Coordinator, id string) (run.Command, bool) {
+	built.Lock()
+	defer built.Unlock()
+	cmd, ok := built.commands[c][id]
+	return cmd, ok
 }
 
 // sessionPreparation prepares a session for the run's next admissible step,
 // the first leaf's Explore in a fresh run.
 func sessionPreparation(t *testing.T, c *run.Coordinator, id run.SessionID) run.Command {
 	t.Helper()
-	if cmd, ok := built[c]["prepare-"+string(id)]; ok {
+	if cmd, ok := remembered(c, "prepare-"+string(id)); ok {
 		return cmd
 	}
 	return remember(c, taskSession(t, c, id, stepInputs(t, false).Binding.Census.Digest()))
@@ -71,7 +84,7 @@ func stepPreparation(t *testing.T, c *run.Coordinator, id run.StepID, invocation
 	if err == nil {
 		return remember(c, cmd)
 	}
-	if cmd, ok := built[c]["prepare-"+string(id)]; ok {
+	if cmd, ok := remembered(c, "prepare-"+string(id)); ok {
 		return cmd
 	}
 	input, contract := payload(t, `{"compiled":"turn"}`), payload(t, `{"contract":"unproven"}`)
@@ -126,6 +139,7 @@ func activeStep(t *testing.T) (*run.Coordinator, *memoryJournal, run.SessionIO) 
 }
 
 func TestSessionAdmissionAndReferencesCommitAtomically(t *testing.T) {
+	t.Parallel()
 	c, j := running(t)
 	cmd := sessionPreparation(t, c, "s")
 	before := c.Budget()
@@ -177,6 +191,7 @@ func TestSessionAdmissionAndReferencesCommitAtomically(t *testing.T) {
 }
 
 func TestSendRequiresExactAcknowledgementAndCannotReplay(t *testing.T) {
+	t.Parallel()
 	for _, mode := range []string{"absent", "lost", "wrong"} {
 		t.Run(mode, func(t *testing.T) {
 			c, j, io := preparedSession(t)
@@ -220,6 +235,7 @@ func TestSendRequiresExactAcknowledgementAndCannotReplay(t *testing.T) {
 }
 
 func TestLiveSessionAndUnknownStopBlockFinishEvenAfterBudgetSettlement(t *testing.T) {
+	t.Parallel()
 	c, j, io := boundSession(t)
 	f := command("finish", run.FinishRun)
 	f.Outcome = run.Incomplete
@@ -273,6 +289,7 @@ func channel(t *testing.T, c *run.Coordinator, j run.Journal, tools run.ToolHand
 }
 
 func TestCallAnswersOnceAndReturnsTheRecordedAnswer(t *testing.T) {
+	t.Parallel()
 	c, j, _ := activeStep(t)
 	executed := 0
 	io := channel(t, c, j, answering(`{"read":"content"}`, &executed))
@@ -310,6 +327,7 @@ func TestCallAnswersOnceAndReturnsTheRecordedAnswer(t *testing.T) {
 }
 
 func TestChannelRequiresHandlerAndRefusalIsAnAnswer(t *testing.T) {
+	t.Parallel()
 	c, j, io := activeStep(t)
 	if _, err := c.SessionChannel(j, "s", nil); !errors.Is(err, run.ErrState) {
 		t.Fatal("channel without Host tools", err)
@@ -342,6 +360,7 @@ func TestChannelRequiresHandlerAndRefusalIsAnAnswer(t *testing.T) {
 }
 
 func TestEveryRecordedAnswerCanBeSentOnceInItsStep(t *testing.T) {
+	t.Parallel()
 	_, _, io := activeStep(t)
 	for _, id := range []run.ProviderCallID{"first", "second"} {
 		if _, err := io.Call(context.Background(), run.ToolCall{RecordMeta: meta("call-" + string(id)), Step: "step", Call: id, Tool: "unsupported", Input: wire(t, `{}`)}); err != nil {
@@ -371,6 +390,7 @@ func TestEveryRecordedAnswerCanBeSentOnceInItsStep(t *testing.T) {
 }
 
 func TestHaltedRunAnswersWithoutReachingTheHandler(t *testing.T) {
+	t.Parallel()
 	c, j, _ := activeStep(t)
 	stop := command("stop", run.StopRun)
 	stop.Reason = "owner stop"
@@ -383,6 +403,7 @@ func TestHaltedRunAnswersWithoutReachingTheHandler(t *testing.T) {
 }
 
 func TestLostAnswerKeepsOutcomeForHostReconciliation(t *testing.T) {
+	t.Parallel()
 	c, j, _ := activeStep(t)
 	executed := 0
 	io := channel(t, c, j, answering(`{"read":"content"}`, &executed))
@@ -430,6 +451,7 @@ func TestLostAnswerKeepsOutcomeForHostReconciliation(t *testing.T) {
 }
 
 func TestRedactedCallInputStoresOnlyThePermittedRepresentation(t *testing.T) {
+	t.Parallel()
 	c, j, io := activeStep(t)
 	// The supplied hash is the identity of a hypothetical real wire, not a
 	// BlobRef. No secret value is constructed or supplied to pure RUN.
@@ -453,6 +475,7 @@ func TestRedactedCallInputStoresOnlyThePermittedRepresentation(t *testing.T) {
 }
 
 func TestPendingToolCallBlocksCompletionUntilHostReconciliation(t *testing.T) {
+	t.Parallel()
 	c, j, _ := activeStep(t)
 	io := channel(t, c, j, failing)
 	call := run.ToolCall{RecordMeta: meta("tool"), Step: "step", Call: "call", Tool: "schema", Input: wire(t, `{"request":"bounded"}`)}
@@ -490,6 +513,7 @@ func TestPendingToolCallBlocksCompletionUntilHostReconciliation(t *testing.T) {
 }
 
 func TestSessionAdmissionsRefuseAfterStopRequest(t *testing.T) {
+	t.Parallel()
 	for _, kind := range []string{"session", "step"} {
 		t.Run(kind, func(t *testing.T) {
 			var c *run.Coordinator
@@ -519,6 +543,7 @@ func TestSessionAdmissionsRefuseAfterStopRequest(t *testing.T) {
 }
 
 func TestRecoveryAllowsBoundedStopSendWithoutClearingUnknownOrdinarySend(t *testing.T) {
+	t.Parallel()
 	c, j, io := activeStep(t)
 	denied, err := io.Call(context.Background(), run.ToolCall{RecordMeta: meta("deny-request"), Step: "step", Call: "deny", Tool: "unsupported", Input: wire(t, "request")})
 	if err != nil {
@@ -573,6 +598,7 @@ func TestRecoveryAllowsBoundedStopSendWithoutClearingUnknownOrdinarySend(t *test
 }
 
 func TestUncertainStepRejectsMalformedPartialProviderHandle(t *testing.T) {
+	t.Parallel()
 	c, j, io := boundSession(t)
 	input, contract := payload(t, "input"), payload(t, "contract")
 	plan := run.StepPlan{Session: "s", SessionBinding: currentSessionBinding(c), ID: "step", Input: input.Ref(), OutputContract: contract.Ref()}
@@ -588,6 +614,7 @@ func TestUncertainStepRejectsMalformedPartialProviderHandle(t *testing.T) {
 }
 
 func TestStepRequiresExplicitMatchingSessionPlanBinding(t *testing.T) {
+	t.Parallel()
 	c, j, _ := boundSession(t)
 	input, contract := payload(t, "input"), payload(t, "contract")
 	v, _ := c.Session("s")
@@ -609,6 +636,7 @@ func TestStepRequiresExplicitMatchingSessionPlanBinding(t *testing.T) {
 }
 
 func TestSessionLimitsAndRestoreRefuseMissingOrCorruptRequiredBytes(t *testing.T) {
+	t.Parallel()
 	c, j, io := preparedSession(t)
 	bad := sessionPreparation(t, c, "other")
 	bad.Session.Plan.Profile = run.BlobRef{}
@@ -682,6 +710,7 @@ func (f *portFake) Stop(ctx context.Context, r run.StopRequest, io run.SessionIO
 var _ run.Sessions = (*portFake)(nil)
 
 func TestProviderNeutralPortMapsOpenStepInspectStopWithoutReplay(t *testing.T) {
+	t.Parallel()
 	c, j, io := preparedSession(t)
 	fake := &portFake{t: t}
 	ctx := context.Background()
@@ -749,6 +778,7 @@ func resumedSession(t *testing.T) (run.SessionIO, run.ProviderSessionID) {
 }
 
 func TestResumedSessionBindsOnlyTheRequestedConversation(t *testing.T) {
+	t.Parallel()
 	io, resume := resumedSession(t)
 	send(t, io, "resume", "")
 	other := run.SessionObservation{RecordMeta: meta("bind-other"), ProviderSession: "other-session", Wire: wire(t, `{"thread":"other-session"}`), Reason: "provider started a new thread"}
@@ -762,6 +792,7 @@ func TestResumedSessionBindsOnlyTheRequestedConversation(t *testing.T) {
 }
 
 func TestResumedSessionReportsAnotherConversationAsUncertain(t *testing.T) {
+	t.Parallel()
 	io, _ := resumedSession(t)
 	send(t, io, "resume", "")
 	other := run.SessionObservation{RecordMeta: meta("bind-other"), ProviderSession: "other-session", Wire: wire(t, `{"thread":"other-session"}`), Uncertain: true, Reason: "provider reported a different thread"}
@@ -771,6 +802,7 @@ func TestResumedSessionReportsAnotherConversationAsUncertain(t *testing.T) {
 }
 
 func TestStepAdmissionCarriesTheVerifiedRecordedBytes(t *testing.T) {
+	t.Parallel()
 	c, j, _ := boundSession(t)
 	commit(t, c, j, stepPreparation(t, c, "unstarted", "step-hold"))
 	a, err := c.StepAdmission(context.Background(), j, "unstarted")

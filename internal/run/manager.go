@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"maps"
 	"slices"
 	"strings"
 	"unicode/utf8"
@@ -318,6 +319,16 @@ func (s stateValue) renderInput(t taskValue, facts StepFacts, basis snapshot.Con
 		findings.IDs = append(findings.IDs, id)
 		findings.Items = append(findings.Items, organization.FindingFact{ID: id, Grounds: organization.HostText{Text: text, Source: organization.HostSource{RecordID: id, ContentID: basis}}})
 	}
+	if !t.Phase.reviewer() {
+		// The Manager knows how much of its rejection allowance is used (core
+		// rule T8).
+		for _, purpose := range slices.Sorted(maps.Keys(t.Rejections)) {
+			id := t.ID + "-rejections-" + purpose
+			text := fmt.Sprintf("Reviews rejected %d of your %s candidates in this run; at %d rejections your task becomes incomplete and the run ends Incomplete.", t.Rejections[purpose], purpose, s.rejectionLimit(t.Slot.Package))
+			findings.IDs = append(findings.IDs, id)
+			findings.Items = append(findings.Items, organization.FindingFact{ID: id, Grounds: organization.HostText{Text: text, Source: organization.HostSource{RecordID: id, ContentID: basis}}})
+		}
+	}
 	if t.Withheld != "" && !t.Phase.reviewer() {
 		// A withheld pass leaves the task's work outside the accepted aggregate;
 		// its next step learns why (core rules D4, I3, T9).
@@ -417,7 +428,11 @@ func (s stateValue) openFindings(t taskValue, source organization.HostSource) or
 			continue
 		}
 		set.IDs = append(set.IDs, issue.ID)
-		text := fmt.Sprintf("%s %s finding on %s: %s Requested evidence: %s", issue.Severity, issue.Purpose, strings.Join(issue.Definitions, ", "), issue.Grounds, issue.Request)
+		on := ""
+		if len(issue.Definitions) > 0 {
+			on = " on " + strings.Join(issue.Definitions, ", ")
+		}
+		text := fmt.Sprintf("%s %s finding%s: %s Requested evidence: %s", issue.Severity, issue.Purpose, on, issue.Grounds, issue.Request)
 		set.Items = append(set.Items, organization.FindingFact{ID: issue.ID, Grounds: organization.HostText{Text: text, Source: organization.HostSource{RecordID: issue.ID, ContentID: issue.Source.ContentID}}})
 	}
 	return set

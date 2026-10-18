@@ -27,6 +27,7 @@ func closure(id string) run.Command {
 }
 
 func TestAssignmentRejectsInvalidExtensionsWithoutMutation(t *testing.T) {
+	t.Parallel()
 	for _, kind := range []string{"equal", "decrease", "ceiling", "negative", "missing input", "oversize input", "invalid UTF8", "extra closure"} {
 		t.Run(kind, func(t *testing.T) {
 			c, _ := running(t)
@@ -63,6 +64,7 @@ func TestAssignmentRejectsInvalidExtensionsWithoutMutation(t *testing.T) {
 }
 
 func TestClosureRequiresFinishedAndExplicitQuiescence(t *testing.T) {
+	t.Parallel()
 	c, j := running(t)
 	close := closure("close")
 	if _, err := c.Propose(close); !errors.Is(err, run.ErrState) {
@@ -106,6 +108,7 @@ func TestClosureRequiresFinishedAndExplicitQuiescence(t *testing.T) {
 }
 
 func TestClosedAssignmentAndFreshLedgerSurviveSameStreamRestoreAndReplay(t *testing.T) {
+	t.Parallel()
 	c, j := running(t)
 	b := binding(t)
 	exploreNext(t, c, j, stepInputs(t, false), "root")
@@ -190,6 +193,7 @@ func TestClosedAssignmentAndFreshLedgerSurviveSameStreamRestoreAndReplay(t *test
 }
 
 func TestLifecycleCodecPreservesPriorCommandShapeAndExactRawInput(t *testing.T) {
+	t.Parallel()
 	c := command("start", run.StartRun)
 	data, err := json.Marshal(c)
 	if err != nil {

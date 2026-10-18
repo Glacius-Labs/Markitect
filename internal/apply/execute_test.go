@@ -101,7 +101,7 @@ func (f *executionSessions) Step(ctx context.Context, a run.StepAdmission, io ru
 	case run.PhaseReviewerExpectations:
 		tool, args = run.ToolRecordExpectations, `{"cases":[{"name":"area","expectation":"Unchanged.","discriminates":"Any change."}]}`
 	case run.PhaseReviewerCandidate:
-		tool, args = run.ToolSubmitReview, `{"verdict":"pass","summary":"Fine.","evidence":[],"findings":[],"resolutions":[]}`
+		tool, args = run.ToolSubmitReview, `{"verdict":"pass","summary":"Fine.","evidence":[],"cases":[{"name":"area","assessment":"evidenced","grounds":"Unchanged."}],"findings":[],"resolutions":[]}`
 	}
 	call := run.ProviderCallID("call-" + string(step))
 	result, err := io.Call(ctx, run.ToolCall{RecordMeta: f.meta(), Step: step, Call: call, Tool: tool, Input: f.wire(fmt.Sprintf(`{"id":1,"name":%q,"arguments":%s}`, tool, args))})

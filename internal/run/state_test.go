@@ -59,6 +59,7 @@ func spend(t *testing.T, c *run.Coordinator, j *memoryJournal, kind run.Invocati
 }
 
 func TestContinuationPreservesAssignmentOwnerRequest(t *testing.T) {
+	t.Parallel()
 	c, j := running(t)
 	finishIncomplete(t, c, j)
 	before, rev, calls := c.Budget(), c.Revision(), j.appendCalls
@@ -102,6 +103,7 @@ func settle(id string, elapsed time.Duration) run.Command {
 }
 
 func TestPreparedAndRunChargeRequireConfirmedAtomicAppend(t *testing.T) {
+	t.Parallel()
 	for _, mode := range []string{"lost", "wrong", "absent", "put"} {
 		t.Run(mode, func(t *testing.T) {
 			c, _ := run.NewCoordinator("repo")
@@ -158,6 +160,7 @@ func TestPreparedAndRunChargeRequireConfirmedAtomicAppend(t *testing.T) {
 }
 
 func TestProposalReplayCannotCrossCoordinators(t *testing.T) {
+	t.Parallel()
 	c, j := running(t)
 	replayed, err := c.Propose(command("start", run.StartRun))
 	if err != nil {
@@ -175,6 +178,7 @@ func TestProposalReplayCannotCrossCoordinators(t *testing.T) {
 }
 
 func TestContinuationSharesConsumedBudgetAndCannotRewriteFinishedRun(t *testing.T) {
+	t.Parallel()
 	c, j := running(t)
 	exploreNext(t, c, j, stepInputs(t, false), "root")
 	finish := command("finish", run.FinishRun)

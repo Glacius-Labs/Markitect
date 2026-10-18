@@ -10,6 +10,7 @@ import (
 var phases = []run.Phase{run.PhaseExplore, run.PhaseWork, run.PhaseIntegrate, run.PhaseReply, run.PhaseReviewerExpectations, run.PhaseReviewerCandidate}
 
 func TestStepContractRoundTripsAndRefusesUnknownPhases(t *testing.T) {
+	t.Parallel()
 	for _, phase := range phases {
 		p, err := run.NewStepContract(phase)
 		if err != nil {
@@ -35,6 +36,7 @@ func TestStepContractRoundTripsAndRefusesUnknownPhases(t *testing.T) {
 }
 
 func TestToolCatalogOffersValidSchemasPerPhase(t *testing.T) {
+	t.Parallel()
 	for _, phase := range phases {
 		p, err := run.ToolCatalog(phase)
 		if err != nil || p.Ref().MediaType != run.ToolCatalogMedia {
@@ -71,11 +73,12 @@ var golden = map[run.Phase][2]string{
 	run.PhaseWork:                 {"e219a08a176d67e7afdfa58c1c3cc8cc4ca14b974fcb5d259293bfcd28d07afe", "b0de462d61e80cc2600af31c9e20b4f25407747261d22b7bc96c23c3fea831a4"},
 	run.PhaseIntegrate:            {"f5c4e1ef3fbd27e54ecca2c1d703f0e2c8260629ba97f7f97f87bd30d10f1efc", "b0de462d61e80cc2600af31c9e20b4f25407747261d22b7bc96c23c3fea831a4"},
 	run.PhaseReply:                {"97bc6117362b920e19b10bba44f4c7d11f95ba1930e03a8d9cdbc15b3b77b3f6", "3b201b87d143889b9e6824c0b34a1eb101417d65d4d063a76334842d9fad41e7"},
-	run.PhaseReviewerExpectations: {"260fcac91c1b7d66fe258ce24fa1216efd4f708a688bcb654eec88973404f109", "b40682f0daa353aee0f581964c4ba9d685ad8041719ca42006950883a97c79b8"},
-	run.PhaseReviewerCandidate:    {"731fe1b7da9210298c7b774e0eddc50fb08b979f922d4bd31c4eb44dc2457de4", "8cf5171603cb8ba82ef78db60361a83e52719c76f334dd83b69aa83d9a6540b0"},
+	run.PhaseReviewerExpectations: {"260fcac91c1b7d66fe258ce24fa1216efd4f708a688bcb654eec88973404f109", "3e4a547df0f19182b20de4b11608d8576fb8dbede14aacb9fd10ef3c6c7fdc17"},
+	run.PhaseReviewerCandidate:    {"731fe1b7da9210298c7b774e0eddc50fb08b979f922d4bd31c4eb44dc2457de4", "8b271539b08f54a65e6e190c48ab7c3364711bc8dcea435bbca00cbbda88f4a8"},
 }
 
 func TestContractAndCatalogBytesArePinned(t *testing.T) {
+	t.Parallel()
 	for _, phase := range phases {
 		c, _ := run.NewStepContract(phase)
 		k, _ := run.ToolCatalog(phase)
