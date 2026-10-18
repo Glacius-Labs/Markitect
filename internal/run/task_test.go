@@ -5,6 +5,8 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
+	"reflect"
 	"slices"
 	"strings"
 	"testing"
@@ -348,6 +350,109 @@ func TestReviewIsRenewedWhenAUsedProducerDeliversAgain(t *testing.T) {
 	}
 	if got := aggregateFile(t, h.engine, "out/library.go"); got != "package library\n\ntype Item struct{ Title string }\n" {
 		t.Fatalf("limited and complete deliveries not composed in order: %q", got)
+	}
+}
+
+// A pass the Host withholds leaves its recorded expectations standing while
+// their inputs are unchanged: the resubmission's review skips the expectations
+// step and assesses the same cases (core rules D4, T7).
+func TestARenewedReviewKeepsItsRecordedExpectations(t *testing.T) {
+	t.Parallel()
+	var h *harness
+	var seen []run.BlobRef
+	agent := func(s agentStep) []action {
+		switch {
+		case s.Manager == "." && s.Phase == run.PhaseWork:
+			return []action{{Tool: run.ToolSubmit, Args: `{"purpose":"local","scope":"complete","summary":"Uses lending.","assessments":[],"dependencies":["lending"]}`, Want: run.ToolOK}}
+		case s.Manager == "." && s.Phase == run.PhaseReviewerExpectations:
+			// Each recording differs, so a reused one is recognizable.
+			args := fmt.Sprintf(`{"cases":[{"name":"item","expectation":"The library realizes Item (recording %d).","discriminates":"A missing Item type fails."}]}`, s.Attempt)
+			return []action{{Tool: run.ToolRecordExpectations, Args: args, Want: run.ToolOK}}
+		case s.Manager == "." && s.Phase == run.PhaseReviewerCandidate:
+			seen = append(seen, h.task(".").Expectations)
+			if s.Attempt == 0 {
+				return nil // a failed review step: a fresh review follows
+			}
+			if s.Attempt == 1 {
+				// An advisory finding of the withheld pass itself does not
+				// change what its expectations rest on.
+				return []action{{Tool: run.ToolSubmitReview, Args: `{"verdict":"pass","summary":"Fine.","evidence":[],"cases":[{"name":"item","assessment":"evidenced","grounds":"Checked."}],"findings":[{"severity":"advisory","definitions":["lending/Item"],"grounds":"Item could carry a title.","requestedEvidence":"A title field."}],"resolutions":[]}`, Want: run.ToolOK}}
+			}
+		case s.Manager == "lending" && s.Phase == run.PhaseWork && s.Attempt == 0:
+			return []action{{Write: map[string]string{"out/library.go": "package library\n\ntype Item struct{}\n"}, Tool: run.ToolSubmit, Args: submitArgs("local", "limited"), Want: run.ToolOK}}
+		case s.Manager == "lending" && s.Phase == run.PhaseWork:
+			return []action{{Write: map[string]string{"out/library.go": "package library\n\ntype Item struct{ Title string }\n"}, Tool: run.ToolSubmit, Args: submitArgs("local", "complete"), Want: run.ToolOK}}
+		}
+		return happyAgent(s)
+	}
+	h = newHarness(t, true, agent)
+	runToEnd(t, h)
+	order := strings.Join(admitted(h), ",")
+	if h.c.Current().State != run.Verifying || strings.Count(order, ". work") != 3 {
+		t.Fatal("run did not complete through two withheld passes", h.c.Current(), order)
+	}
+	// The failed review starts a fresh local review with new expectations, the
+	// two withheld passes keep theirs, and the integration records its own.
+	if strings.Count(order, ". reviewer-expectations") != 3 || len(seen) != 5 || seen[0] == seen[1] || seen[1] != seen[2] || seen[2] != seen[3] || seen[3] == seen[4] {
+		t.Fatal("the renewed reviews did not keep the recorded expectations", order, seen)
+	}
+	restored, err := run.Restore(context.Background(), &readJournal{store: h.j}, "repo", run.RestoreLimits{PageSize: 16, Batches: 2000, Events: 4000, Bytes: 64 << 20})
+	if err != nil || !reflect.DeepEqual(restored.Tasks(), h.c.Tasks()) {
+		t.Fatal("restore does not rebuild the kept reviews", err)
+	}
+}
+
+// A resubmission whose expectation inputs differ from the withheld pass's,
+// here its scope, records fresh expectations (core rule T7).
+func TestAChangedResubmissionRecordsFreshExpectations(t *testing.T) {
+	t.Parallel()
+	var h *harness
+	type review struct {
+		scope        string
+		expectations run.BlobRef
+	}
+	var seen []review
+	agent := func(s agentStep) []action {
+		switch {
+		case s.Manager == "." && s.Phase == run.PhaseWork:
+			scope := "complete"
+			if s.Attempt == 1 {
+				scope = "limited"
+			}
+			return []action{{Tool: run.ToolSubmit, Args: `{"purpose":"local","scope":"` + scope + `","summary":"Uses lending.","assessments":[],"dependencies":["lending"]}`, Want: run.ToolOK}}
+		case s.Manager == "." && s.Phase == run.PhaseReviewerExpectations:
+			args := fmt.Sprintf(`{"cases":[{"name":"item","expectation":"The library realizes Item (recording %d).","discriminates":"A missing Item type fails."}]}`, s.Attempt)
+			return []action{{Tool: run.ToolRecordExpectations, Args: args, Want: run.ToolOK}}
+		case s.Manager == "." && s.Phase == run.PhaseReviewerCandidate:
+			v := h.task(".")
+			seen = append(seen, review{v.Submission.Scope, v.Expectations})
+			if s.Attempt == 0 {
+				return nil // a failed review step: a fresh review follows
+			}
+		case s.Manager == "lending" && s.Phase == run.PhaseWork && s.Attempt == 0:
+			return []action{{Write: map[string]string{"out/library.go": "package library\n\ntype Item struct{}\n"}, Tool: run.ToolSubmit, Args: submitArgs("local", "limited"), Want: run.ToolOK}}
+		case s.Manager == "lending" && s.Phase == run.PhaseWork:
+			return []action{{Write: map[string]string{"out/library.go": "package library\n\ntype Item struct{ Title string }\n"}, Tool: run.ToolSubmit, Args: submitArgs("local", "complete"), Want: run.ToolOK}}
+		}
+		return happyAgent(s)
+	}
+	h = newHarness(t, true, agent)
+	runToEnd(t, h)
+	// Three local submissions mean that two passes were withheld.
+	if h.c.Current().State != run.Verifying || strings.Count(strings.Join(admitted(h), ","), ". work") < 3 {
+		t.Fatal("run did not complete through withheld passes", h.c.Current(), admitted(h))
+	}
+	changed := 0
+	for i := 1; i < len(seen); i++ {
+		if seen[i].scope != seen[i-1].scope {
+			changed++
+			if seen[i].expectations == seen[i-1].expectations {
+				t.Fatal("a resubmission with another scope reused the kept expectations", seen)
+			}
+		}
+	}
+	if changed == 0 {
+		t.Fatal("no review saw a changed scope", seen)
 	}
 }
 

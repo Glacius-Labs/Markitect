@@ -8,6 +8,10 @@ artifacts:
     form: doc
     realizes: [documentation/current-guidance]
     why: Preserves the owner clarification and bounded instruction for independent technical risk derivation through existing Manager and reviewer responsibilities.
+  - path: "docs/concepts/sources/withheld-review-expectations-20261018.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Preserves the run evidence and the owner's authorization behind keeping a withheld review's recorded expectations.
   - path: "docs/design/canonical-model/commands.md"
     form: doc
     realizes: [documentation/current-guidance]
