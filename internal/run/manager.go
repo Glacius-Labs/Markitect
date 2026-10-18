@@ -318,6 +318,14 @@ func (s stateValue) renderInput(t taskValue, facts StepFacts, basis snapshot.Con
 		findings.IDs = append(findings.IDs, id)
 		findings.Items = append(findings.Items, organization.FindingFact{ID: id, Grounds: organization.HostText{Text: text, Source: organization.HostSource{RecordID: id, ContentID: basis}}})
 	}
+	if t.Withheld != "" && !t.Phase.reviewer() {
+		// A withheld pass leaves the task's work outside the accepted aggregate;
+		// its next step learns why (core rules D4, I3, T9).
+		id := t.ID + "-withheld"
+		text := "Your last submission passed its review, but the Host did not accept it, so it is not in the accepted aggregate and other Managers do not see it: " + t.Withheld + "."
+		findings.IDs = append(findings.IDs, id)
+		findings.Items = append(findings.Items, organization.FindingFact{ID: id, Grounds: organization.HostText{Text: text, Source: organization.HostSource{RecordID: id, ContentID: basis}}})
+	}
 	in := organization.RenderInput{View: phaseView(t.Phase), InputBinding: source,
 		Task: organization.TaskFacts{ID: t.ID, Package: t.Slot.Package, Outcome: organization.HostText{Text: operation, Source: source}, Findings: findings, Constraints: s.ownerDecisions(t)}}
 	if t.Phase.reviewer() {

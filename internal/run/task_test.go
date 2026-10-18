@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"slices"
 	"strings"
 	"testing"
 	"time"
@@ -308,11 +309,14 @@ func stepPreparationWith(t *testing.T, c *run.Coordinator, inputs run.StepPrepar
 }
 
 // A local review is renewed when a producer that the candidate used delivers
-// again before the review passes (core rule D4); no rejection counts.
+// again before the review passes (core rule D4); no rejection counts, and the
+// next work step learns why its pass was not accepted.
 func TestReviewIsRenewedWhenAUsedProducerDeliversAgain(t *testing.T) {
+	var notes []bool
 	agent := func(s agentStep) []action {
 		switch {
 		case s.Manager == "." && s.Phase == run.PhaseWork:
+			notes = append(notes, bytes.Contains(s.Packet.Context.Bytes, []byte("other Managers do not see it: lending, whose delivery your candidate used, delivered again after your step saw the aggregate; submit again")))
 			return []action{{Tool: run.ToolSubmit, Args: `{"purpose":"local","scope":"complete","summary":"Uses lending.","assessments":[],"dependencies":["lending"]}`, Want: run.ToolOK}}
 		case s.Manager == "." && s.Phase == run.PhaseReviewerCandidate && s.Attempt == 0:
 			return nil // a failed review step: a fresh review follows
@@ -333,8 +337,42 @@ func TestReviewIsRenewedWhenAUsedProducerDeliversAgain(t *testing.T) {
 	if len(root.Rejections) != 0 || strings.Count(strings.Join(admitted(h), ","), ". work") != 3 || root.Deliveries[0].Aggregate != 2 {
 		t.Fatal("the renewed review counted a rejection or the root did not work again", root.Rejections, root.Deliveries, admitted(h))
 	}
+	if !slices.Equal(notes, []bool{false, true, true}) || root.Withheld != "" {
+		t.Fatal("the work steps after a withheld pass did not see why", notes, root.Withheld)
+	}
 	if got := aggregateFile(t, h.engine, "out/library.go"); got != "package library\n\ntype Item struct{ Title string }\n" {
 		t.Fatalf("limited and complete deliveries not composed in order: %q", got)
+	}
+}
+
+// A failed step after a withheld pass leaves no new submission, so the step
+// after it still learns why the pass was not accepted (core rules D4, T6).
+func TestAWithheldNoteOutlivesAFailedStep(t *testing.T) {
+	var notes []bool
+	agent := func(s agentStep) []action {
+		switch {
+		case s.Manager == "." && s.Phase == run.PhaseWork:
+			notes = append(notes, bytes.Contains(s.Packet.Context.Bytes, []byte("lending, whose delivery your candidate used, delivered again")))
+			if s.Attempt == 1 {
+				return nil // a failed work step
+			}
+			return []action{{Tool: run.ToolSubmit, Args: `{"purpose":"local","scope":"complete","summary":"Uses lending.","assessments":[],"dependencies":["lending"]}`, Want: run.ToolOK}}
+		case s.Manager == "." && s.Phase == run.PhaseReviewerCandidate && s.Attempt == 0:
+			return nil // a failed review step: a fresh review follows
+		case s.Manager == "lending" && s.Phase == run.PhaseWork && s.Attempt == 0:
+			return []action{{Write: map[string]string{"out/library.go": "package library\n\ntype Item struct{}\n"}, Tool: run.ToolSubmit, Args: submitArgs("local", "limited"), Want: run.ToolOK}}
+		case s.Manager == "lending" && s.Phase == run.PhaseWork:
+			return []action{{Write: map[string]string{"out/library.go": "package library\n\ntype Item struct{ Title string }\n"}, Tool: run.ToolSubmit, Args: submitArgs("local", "complete"), Want: run.ToolOK}}
+		}
+		return happyAgent(s)
+	}
+	h := newHarness(t, true, agent)
+	runToEnd(t, h)
+	if h.c.Current().State != run.Verifying {
+		t.Fatal("run did not complete", h.c.Current(), h.sessions.answers)
+	}
+	if len(notes) < 3 || !notes[1] || !notes[2] {
+		t.Fatal("the step after a failed step did not see the withheld note", notes)
 	}
 }
 

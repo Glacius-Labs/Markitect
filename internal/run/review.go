@@ -171,15 +171,16 @@ func (s stateValue) checkReview(t taskValue, in reviewInput) error {
 // another open blocking issue covers the subject (core rule I3), while a
 // producer the candidate used delivered again after the candidate's step saw
 // the aggregate (core rule D4), or, for an integration, while a child returned
-// to work after the candidate was frozen (core rules T9, T11).
-func (s stateValue) verdictOf(t taskValue, in reviewInput) ReviewVerdict {
+// to work after the candidate was frozen (core rules T9, T11). A withheld pass
+// comes with its reason and what the Manager does next.
+func (s stateValue) verdictOf(t taskValue, in reviewInput) (ReviewVerdict, string) {
 	switch in.Verdict {
 	case "changes_requested":
-		return VerdictReject
+		return VerdictReject, ""
 	case "needs_decision":
-		return VerdictDecision
+		return VerdictDecision, ""
 	case "failed_assessment":
-		return VerdictFresh
+		return VerdictFresh, ""
 	}
 	resolved := map[string]bool{}
 	for _, r := range in.Resolutions {
@@ -193,23 +194,23 @@ func (s stateValue) verdictOf(t taskValue, in reviewInput) ReviewVerdict {
 		covered = s.subtree(t)
 		for _, child := range t.Slot.Children {
 			if s.tasks[child].State != TaskDone {
-				return VerdictWithhold
+				return VerdictWithhold, fmt.Sprintf("an integration needs every child done, and %s was not done; wait for your children, then integrate again", child)
 			}
 		}
 	}
 	for _, manager := range covered {
 		for _, issue := range s.openIssues(manager) {
 			if issue.Severity == severityBlocking && !resolved[issue.ID] {
-				return VerdictWithhold
+				return VerdictWithhold, fmt.Sprintf("the open blocking %s %s still covers %s; submit again once it is resolved", issue.Kind, issue.ID, manager)
 			}
 		}
 	}
 	for _, producer := range t.Submission.Uses {
 		if slices.ContainsFunc(s.tasks[producer].Deliveries, func(d Delivery) bool { return d.Aggregate > t.Submission.Aggregate && d.Candidate != (BlobRef{}) }) {
-			return VerdictWithhold
+			return VerdictWithhold, fmt.Sprintf("%s, whose delivery your candidate used, delivered again after your step saw the aggregate; submit again on the current aggregate", producer)
 		}
 	}
-	return VerdictAccept
+	return VerdictAccept, ""
 }
 
 // ReviewVerdict reports how the Host reads the current candidate review's
@@ -231,7 +232,8 @@ func (c *Coordinator) ReviewVerdict(manager string, input Payload) (ReviewVerdic
 	if err := c.state.checkReview(t, in); err != nil {
 		return "", ErrInvalid
 	}
-	return c.state.verdictOf(t, in), nil
+	verdict, _ := c.state.verdictOf(t, in)
+	return verdict, nil
 }
 
 // StepTimeout is the bound step timeout of a Manager's steps; reviews of its
@@ -275,7 +277,7 @@ func (s *stateValue) concludeReview(r ConclusionRecord, t *taskValue, revision u
 	if json.Unmarshal(args, &in) != nil {
 		return ErrInvalid
 	}
-	verdict := s.verdictOf(*t, in)
+	verdict, withheld := s.verdictOf(*t, in)
 	composed := verdict == VerdictAccept && t.Submission.Candidate != (BlobRef{})
 	want := s.aggregateVersion
 	if composed {
@@ -294,7 +296,7 @@ func (s *stateValue) concludeReview(r ConclusionRecord, t *taskValue, revision u
 	t.Review = reviewValue{}
 	switch verdict {
 	case VerdictWithhold:
-		t.State, t.Since, t.Submission = TaskReady, revision, Submission{}
+		t.State, t.Since, t.Submission, t.Withheld = TaskReady, revision, Submission{}, withheld
 	case VerdictDecision:
 		// The owner's answer starts a fresh review of the same frozen
 		// candidate (core rule T8); the run waits for it (core rule W1).
