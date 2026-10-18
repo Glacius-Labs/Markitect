@@ -24,6 +24,10 @@ artifacts:
     form: doc
     realizes: [documentation/current-guidance]
     why: Preserves the prompt evidence and the owner's instruction that agents get tasks while the Orchestrator owns the process.
+  - path: "docs/concepts/sources/implement-review-20261018.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Preserves the run evidence and the owner's decision to drop the Explore phase and work as implement then review.
   - path: "docs/concepts/sources/rejection-count-restart-20261018.md"
     form: doc
     realizes: [documentation/current-guidance]

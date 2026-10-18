@@ -139,7 +139,7 @@ artifacts:
   - path: "internal/run/task.go"
     form: code
     realizes: [product/run/confirmed-run-history]
-    why: Reduces the Manager task machine, its admission queue and the outcomes of Explore, work and integration steps.
+    why: Reduces the Manager task machine, its admission queue and the outcomes of work and integration steps.
   - path: "internal/run/review.go"
     form: code
     realizes: [product/run/confirmed-run-history]

@@ -56,7 +56,7 @@ func TestStaticOperationForEveryManagerAndReviewView(t *testing.T) {
 
 func TestManagerProcessProjectionAndReviewerSeparation(t *testing.T) {
 	selection, settings, input := renderFixture(t, "a", organization.ManagerView)
-	for _, phase := range []organization.ManagerPhase{organization.ManagerExplore, organization.ManagerWork, organization.ManagerIntegrate} {
+	for _, phase := range []organization.ManagerPhase{organization.ManagerWork, organization.ManagerIntegrate} {
 		input.Process = &organization.ManagerProcess{Phase: phase, Source: hostRef("phase/"+string(phase), "/phase")}
 		result := requireRendered(t, selection, settings, input)
 		if len(sectionTexts(t, result, "host-manager-phase-not-admission")) != 1 || len(sectionTexts(t, result, "manager-phase-instruction-not-grant")) != 1 {
@@ -71,7 +71,7 @@ func TestManagerProcessProjectionAndReviewerSeparation(t *testing.T) {
 			}
 		}
 	}
-	for _, process := range []*organization.ManagerProcess{nil, {}, {Phase: "unknown", Source: hostRef("phase", "")}, {Phase: organization.ManagerExplore}} {
+	for _, process := range []*organization.ManagerProcess{nil, {}, {Phase: "unknown", Source: hostRef("phase", "")}, {Phase: organization.ManagerWork}} {
 		input.Process = process
 		requireRenderRefusal(t, selection, settings, input, "invalid-input")
 	}
@@ -81,7 +81,7 @@ func TestManagerProcessProjectionAndReviewerSeparation(t *testing.T) {
 			input.Review = reviewFacts(t)
 		}
 		requireRendered(t, selection, settings, input)
-		input.Process = &organization.ManagerProcess{Phase: organization.ManagerExplore, Source: hostRef("phase", "")}
+		input.Process = &organization.ManagerProcess{Phase: organization.ManagerWork, Source: hostRef("phase", "")}
 		requireRenderRefusal(t, selection, settings, input, "invalid-input")
 		input.Process = nil
 		input.ParentHints = []organization.ParentHint{{Package: organization.Root, Advice: hostFact("hint", "Advice.")}}

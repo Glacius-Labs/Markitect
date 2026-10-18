@@ -283,7 +283,7 @@ func sessionAdmissions(t *testing.T) (run.SessionAdmission, run.StepAdmission) {
 	}
 	plan := run.SessionPlan{ID: "session", Role: "manager", Workspace: "workspace", ProviderHome: "provider-home", ImageID: "sha256:" + strings.Repeat("a", 64), CredentialRef: "exact-credential", Candidate: snapshot.TreeID{1}, MaxWireBytes: 1 << 20, Profile: p.Ref(), Tools: tools.Ref()}
 	a := run.SessionAdmission{Plan: plan, Profile: p, Tools: tools, Receipt: receipt(), Invocation: "open"}
-	input := payloadForSession(t, "application/vnd.markitect.explore-input+json", []byte(`{"exact":"input"}`))
+	input := payloadForSession(t, "application/vnd.markitect.step-input+json", []byte(`{"exact":"input"}`))
 	contract, err := run.NewStepContract(run.PhaseWork)
 	if err != nil {
 		t.Fatal(err)
@@ -548,7 +548,6 @@ func TestCodexStepContractsRetainFinalTextWithoutProposingOutcomes(t *testing.T)
 		phase run.Phase
 		text  string
 	}{
-		{run.PhaseExplore, `{"Version":1,"Summary":"claimed report","ProposedChanges":[],"Prerequisites":[],"Uncertainties":[],"Questions":[]}`},
 		{run.PhaseWork, "not JSON"},
 		{run.PhaseIntegrate, ""},
 		{run.PhaseReply, `{"kind":"reply","body":"claimed outcome"}`},

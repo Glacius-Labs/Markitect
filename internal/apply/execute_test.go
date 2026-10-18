@@ -32,7 +32,7 @@ func (w *executionWorkspaces) Close(_ context.Context, id run.WorkspaceID) (run.
 }
 
 // executionSessions is a scripted adapter whose Agents change nothing: they
-// report in Explore, submit complete no-change results and pass every review.
+// submit complete no-change results, record cases and pass every review.
 type executionSessions struct {
 	t *testing.T
 }
@@ -92,7 +92,7 @@ func (f *executionSessions) Step(ctx context.Context, a run.StepAdmission, io ru
 	if _, err := io.ObserveStep(ctx, run.StepObservation{RecordMeta: f.meta(), Step: step, ProviderStep: "turn", Wire: f.wire(`{"turn":"started"}`), Reason: "observed"}); err != nil {
 		return run.StepObservation{}, err
 	}
-	tool, args := run.ToolReport, `{"summary":"Nothing to change.","proposedChanges":[],"prerequisites":[],"uncertainties":[],"questions":[]}`
+	var tool, args string
 	switch packet.Phase {
 	case run.PhaseWork:
 		tool, args = run.ToolSubmit, `{"purpose":"local","scope":"complete","summary":"No change.","assessments":[],"dependencies":[]}`
@@ -102,6 +102,8 @@ func (f *executionSessions) Step(ctx context.Context, a run.StepAdmission, io ru
 		tool, args = run.ToolRecordExpectations, `{"cases":[{"name":"area","expectation":"Unchanged.","discriminates":"Any change."}]}`
 	case run.PhaseReviewerCandidate:
 		tool, args = run.ToolSubmitReview, `{"verdict":"pass","summary":"Fine.","evidence":[],"cases":[{"name":"area","assessment":"evidenced","grounds":"Unchanged."}],"findings":[],"resolutions":[]}`
+	default:
+		return run.StepObservation{}, fmt.Errorf("unexpected %s step", packet.Phase)
 	}
 	call := run.ProviderCallID("call-" + string(step))
 	result, err := io.Call(ctx, run.ToolCall{RecordMeta: f.meta(), Step: step, Call: call, Tool: tool, Input: f.wire(fmt.Sprintf(`{"id":1,"name":%q,"arguments":%s}`, tool, args))})
@@ -202,7 +204,7 @@ func executionPorts(t *testing.T, publisher *executionPublisher, checks *executi
 }
 
 // Execute runs the whole first Apply through controlled ports: every Manager
-// explores, works and is reviewed, the required checks pass on the aggregate,
+// works and is reviewed, the required checks pass on the aggregate,
 // the source is preflighted, and the empty change set publishes as no change.
 func TestExecuteRunsTheFirstApplyToItsPublication(t *testing.T) {
 	prepared, facts, s, _ := controlFixture(t)

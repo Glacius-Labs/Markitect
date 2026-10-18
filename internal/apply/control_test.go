@@ -179,7 +179,7 @@ func TestControlOpenRestoresRecordedHoldsAndKeepsOriginalBasis(t *testing.T) {
 	controlCommit(t, original, j, run.PrepareCommand("prepare", "assignment", "run", "", at, basis))
 	controlCommit(t, original, j, run.Command{ID: "start", Kind: run.StartRun, Assignment: "assignment", Run: "run", ObservedAt: at})
 	a, _ := prepared.Prepared()
-	startup := controlExploreStartup(t, original, a.Structural().Model().Inputs().Raw.Census.Digest(), at)
+	startup := controlStartup(t, original, a.Structural().Model().Inputs().Raw.Census.Digest(), at)
 	controlCommit(t, original, j, startup)
 	puts, appends := j.puts, j.appends
 	c := openControlled(t, prepared, facts, s)
@@ -236,7 +236,7 @@ func TestControlledJournalRetainsUncertainReceiptAndStopsAfterControlLoss(t *tes
 	}
 }
 
-func controlExploreStartup(t *testing.T, c *run.Coordinator, candidate snapshot.TreeID, at time.Time) run.Command {
+func controlStartup(t *testing.T, c *run.Coordinator, candidate snapshot.TreeID, at time.Time) run.Command {
 	t.Helper()
 	profile, err := run.NewPayload("application/json", "utf-8", []byte(`{"profile":"controlled"}`))
 	if err != nil {
@@ -250,8 +250,15 @@ func controlExploreStartup(t *testing.T, c *run.Coordinator, candidate snapshot.
 	if err != nil {
 		t.Fatal(err)
 	}
-	plan := run.SessionPlan{ID: "session", Role: "manager", Workspace: "controlled-linux-workspace", ProviderHome: item.Home, Resume: item.Resume, Candidate: candidate, ReadOnly: true, ImageID: "sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef", CredentialRef: "credential-ref", MaxWireBytes: 1 << 20, Profile: profile.Ref(), Tools: tools.Ref()}
-	command, err := c.PrepareTaskSessionCommand(run.RecordMeta{ID: "reserve", ObservedAt: at}, item, plan, run.Reservation{ID: "invocation", Kind: run.SessionStart, Purpose: run.Writing, Maximum: time.Minute}, profile, tools)
+	// The root's first step is a reviewer's expectations step, which sees no
+	// candidate.
+	if item.Phase != run.PhaseReviewerExpectations {
+		t.Fatal("unexpected first step", item)
+	}
+	empty, _ := snapshot.NewTree(nil)
+	candidate = empty.Digest()
+	plan := run.SessionPlan{ID: "session", Role: "reviewer", Workspace: "controlled-linux-workspace", ProviderHome: item.Home, Resume: item.Resume, Candidate: candidate, ReadOnly: true, ImageID: "sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef", CredentialRef: "credential-ref", MaxWireBytes: 1 << 20, Profile: profile.Ref(), Tools: tools.Ref()}
+	command, err := c.PrepareTaskSessionCommand(run.RecordMeta{ID: "reserve", ObservedAt: at}, item, plan, run.Reservation{ID: "invocation", Kind: run.SessionStart, Purpose: item.Purpose, Maximum: time.Minute}, profile, tools)
 	if err != nil {
 		t.Fatal(err)
 	}

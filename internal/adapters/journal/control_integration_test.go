@@ -56,7 +56,7 @@ func TestControlServiceRestoresDurableRunAndRecoveryBarrier(t *testing.T) {
 		}
 	}
 	integrationCommit(t, c, run.Command{ID: "start", Kind: run.StartRun, Assignment: "assignment", Run: "run", ObservedAt: integrationAt})
-	reserve := integrationExploreStartup(t, c.Coordinator(), f.source.inputs.Raw.Census.Digest())
+	reserve := integrationStartup(t, c.Coordinator(), f.source.inputs.Raw.Census.Digest())
 	integrationCommit(t, c, reserve)
 	want, binding := c.Coordinator(), c.Binding()
 	if err := c.Close(); err != nil {
@@ -236,10 +236,16 @@ func TestSessionPreparationRequiresActualSQLPayloadsAndRestoresRecovery(t *testi
 	if err != nil {
 		t.Fatal(err)
 	}
-	plan := run.SessionPlan{ID: "session", Role: "manager", ReadOnly: true, Workspace: "controlled-linux-workspace", ProviderHome: item.Home, Resume: item.Resume, Candidate: f.source.inputs.Raw.Census.Digest(),
+	// The root's first step is a reviewer's expectations step, which sees no
+	// candidate.
+	if item.Phase != run.PhaseReviewerExpectations {
+		t.Fatal("unexpected first step", item)
+	}
+	empty, _ := snapshot.NewTree(nil)
+	plan := run.SessionPlan{ID: "session", Role: "reviewer", ReadOnly: true, Workspace: "controlled-linux-workspace", ProviderHome: item.Home, Resume: item.Resume, Candidate: empty.Digest(),
 		ImageID: "sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef", CredentialRef: "credential-ref", MaxWireBytes: 4096, Profile: profile.Ref(), Tools: tools.Ref()}
 	command, err := coordinator.PrepareTaskSessionCommand(run.RecordMeta{ID: "prepare-session", ObservedAt: integrationAt}, item, plan,
-		run.Reservation{ID: "session-start", Kind: run.SessionStart, Purpose: run.Writing, Maximum: time.Minute}, profile, tools)
+		run.Reservation{ID: "session-start", Kind: run.SessionStart, Purpose: item.Purpose, Maximum: time.Minute}, profile, tools)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -303,7 +309,7 @@ func TestSessionPreparationRequiresActualSQLPayloadsAndRestoresRecovery(t *testi
 	}
 }
 
-func integrationExploreStartup(t *testing.T, c *run.Coordinator, candidate snapshot.TreeID) run.Command {
+func integrationStartup(t *testing.T, c *run.Coordinator, candidate snapshot.TreeID) run.Command {
 	t.Helper()
 	profile, err := run.NewPayload("application/json", "utf-8", []byte(`{"profile":"controlled"}`))
 	if err != nil {
@@ -317,8 +323,15 @@ func integrationExploreStartup(t *testing.T, c *run.Coordinator, candidate snaps
 	if err != nil {
 		t.Fatal(err)
 	}
-	plan := run.SessionPlan{ID: "session", Role: "manager", Workspace: "controlled-linux-workspace", ProviderHome: item.Home, Resume: item.Resume, Candidate: candidate, ReadOnly: true, ImageID: "sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef", CredentialRef: "credential-ref", MaxWireBytes: 1 << 20, Profile: profile.Ref(), Tools: tools.Ref()}
-	command, err := c.PrepareTaskSessionCommand(run.RecordMeta{ID: "reserve", ObservedAt: integrationAt}, item, plan, run.Reservation{ID: "invocation", Kind: run.SessionStart, Purpose: run.Writing, Maximum: time.Minute}, profile, tools)
+	// The root's first step is a reviewer's expectations step, which sees no
+	// candidate.
+	if item.Phase != run.PhaseReviewerExpectations {
+		t.Fatal("unexpected first step", item)
+	}
+	empty, _ := snapshot.NewTree(nil)
+	candidate = empty.Digest()
+	plan := run.SessionPlan{ID: "session", Role: "reviewer", Workspace: "controlled-linux-workspace", ProviderHome: item.Home, Resume: item.Resume, Candidate: candidate, ReadOnly: true, ImageID: "sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef", CredentialRef: "credential-ref", MaxWireBytes: 1 << 20, Profile: profile.Ref(), Tools: tools.Ref()}
+	command, err := c.PrepareTaskSessionCommand(run.RecordMeta{ID: "reserve", ObservedAt: integrationAt}, item, plan, run.Reservation{ID: "invocation", Kind: run.SessionStart, Purpose: item.Purpose, Maximum: time.Minute}, profile, tools)
 	if err != nil {
 		t.Fatal(err)
 	}

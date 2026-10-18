@@ -17,9 +17,6 @@ import (
 type TaskState string
 
 const (
-	TaskQueued     TaskState = "queued"
-	TaskExploring  TaskState = "exploring"
-	TaskExplored   TaskState = "explored"
 	TaskReady      TaskState = "ready"
 	TaskRunning    TaskState = "running"
 	TaskBlocked    TaskState = "blocked"
@@ -61,9 +58,6 @@ type taskValue struct {
 	ID           string
 	State        TaskState
 	Since        uint64
-	Explored     bool
-	ExploredAt   uint64
-	Report       BlobRef
 	Phase        Phase
 	Session      SessionID
 	Step         StepID
@@ -92,8 +86,6 @@ type TaskView struct {
 	Manager, Parent, ID string
 	Children            []string
 	State               TaskState
-	Explored            bool
-	Report              BlobRef
 	Phase               Phase
 	Session             SessionID
 	Step                StepID
@@ -113,7 +105,7 @@ type TaskView struct {
 func (t taskValue) view() TaskView {
 	s := t.Submission
 	s.Uses = slices.Clone(s.Uses)
-	return TaskView{Manager: t.Slot.Package, Parent: t.Slot.Parent, ID: t.ID, Children: slices.Clone(t.Slot.Children), State: t.State, Explored: t.Explored, Report: t.Report,
+	return TaskView{Manager: t.Slot.Package, Parent: t.Slot.Parent, ID: t.ID, Children: slices.Clone(t.Slot.Children), State: t.State,
 		Phase: t.Phase, Session: t.Session, Step: t.Step, Waits: slices.Clone(t.Waits), Own: t.Own, OwnTree: t.OwnTree, Submission: s, Expectations: t.Review.Expectations,
 		LocalDone: t.LocalDone, Deliveries: slices.Clone(t.Deliveries), Rejections: maps.Clone(t.Rejections), Reason: t.Reason, Failure: t.Failure, Withheld: t.Withheld}
 }
@@ -168,7 +160,7 @@ func (s *stateValue) prepareTasks(b Binding, runID string) error {
 	s.checks, s.checkInvocations = map[CheckID]checkValue{}, map[CheckID]string{}
 	for _, m := range w.Managers {
 		id := fmt.Sprintf("task-%x", sha256.Sum256([]byte(runID+":"+b.Ref().ContentID.String()+":"+m.Package)))
-		s.tasks[m.Package] = taskValue{Slot: m, ID: id, State: TaskQueued, Since: s.revision}
+		s.tasks[m.Package] = taskValue{Slot: m, ID: id, State: TaskReady, Since: s.revision}
 	}
 	return nil
 }
@@ -204,7 +196,8 @@ type Admission struct {
 	Home          string
 	Resume        ProviderSessionID
 	// Writes is whether the step may change files: every work and integrate
-	// step, and a reply step once the write barrier is open (core rule T11).
+	// step, and a reply step that does not follow a frozen submission (core
+	// rule T11).
 	Writes bool
 	// Purpose is the budget purpose of the step's reservations.
 	Purpose Purpose
@@ -214,57 +207,16 @@ func (p Phase) reviewer() bool { return p == PhaseReviewerExpectations || p == P
 func (p Phase) writing() bool  { return p == PhaseWork || p == PhaseIntegrate }
 
 // writes reports whether a task's step in the phase may change files: a reply
-// step of a done or blocked task may correct the Manager's own files once
-// every Manager has explored (core rules T2, T10, T11). A task blocked on the
-// owner's decision about its frozen submission keeps that candidate unchanged
-// until the fresh review (core rule T8).
+// step of a done or blocked task may correct the Manager's own files (core
+// rules T10, T11). A task blocked on the owner's decision about its frozen
+// submission keeps that candidate unchanged until the fresh review (core rule
+// T8).
 func (s stateValue) writes(t taskValue, phase Phase) bool {
 	if phase != PhaseReply {
 		return phase.writing()
 	}
 	frozen := t.State == TaskBlocked && t.Submission.Proposal != (BlobRef{})
-	return (t.State == TaskDone || t.State == TaskBlocked) && !frozen && s.barrierOpen()
-}
-
-func (s stateValue) explorable(t taskValue) bool {
-	if t.State != TaskQueued {
-		return false
-	}
-	for _, child := range t.Slot.Children {
-		if !s.tasks[child].Explored {
-			return false
-		}
-	}
-	return true
-}
-
-// exploreSince is the revision at which a queued task's Explore became
-// admissible: the start for a leaf, otherwise its last child's Explore result.
-func (s stateValue) exploreSince(t taskValue) uint64 {
-	since := t.Since
-	for _, child := range t.Slot.Children {
-		since = max(since, s.tasks[child].ExploredAt)
-	}
-	return since
-}
-
-func (s stateValue) barrierOpen() bool {
-	for _, t := range s.tasks {
-		if !t.Explored {
-			return false
-		}
-	}
-	return len(s.tasks) > 0
-}
-
-// barrierAt is the revision at which the write barrier opened: the last
-// Explore result.
-func (s stateValue) barrierAt() uint64 {
-	var at uint64
-	for _, t := range s.tasks {
-		at = max(at, t.ExploredAt)
-	}
-	return at
+	return (t.State == TaskDone || t.State == TaskBlocked) && !frozen
 }
 
 func (s stateValue) anyIncomplete() bool {
@@ -279,48 +231,45 @@ func (s stateValue) anyIncomplete() bool {
 func managerHome(t taskValue) string { return t.ID + "-manager" }
 
 // admission returns the item a task offers to the queue, if any.
-func (s stateValue) admission(t taskValue, barrier bool) (Admission, int, uint64, bool) {
+func (s stateValue) admission(t taskValue) (Admission, int, uint64, bool) {
 	a := Admission{Manager: t.Slot.Package, Task: t.ID}
 	switch {
 	case t.Session != "":
 		return Admission{}, 0, 0, false
-	case (t.State == TaskDone || t.State == TaskBlocked || t.State == TaskExplored) && len(s.unanswered(t)) > 0:
+	case (t.State == TaskDone || t.State == TaskBlocked) && len(s.unanswered(t)) > 0:
 		// A Manager that cannot otherwise act answers in a reply step and keeps
 		// its state unless the step corrects its files (core rules T10, T11).
 		a.Phase, a.Home, a.Resume = PhaseReply, managerHome(t), t.Conversation
 		a.Writes = s.writes(t, PhaseReply)
 		return a, 2, s.unanswered(t)[0].At, true
-	case s.explorable(t):
-		a.Phase, a.Home, a.Resume = PhaseExplore, managerHome(t), t.Conversation
-		return a, 0, s.exploreSince(t), true
 	case t.State == TaskReviewing && t.Review.Expectations == (BlobRef{}):
-		// A review never writes, so it may run before the barrier (core rule
-		// T3). Each review step starts a fresh conversation in a fresh home.
+		// Each review step starts a fresh conversation in a fresh home (core
+		// rule S3).
 		a.Phase, a.Home = PhaseReviewerExpectations, fmt.Sprintf("%s-review-%d-expectations", t.ID, t.Reviews+1)
 		return a, 1, t.Since, true
 	case t.State == TaskReviewing:
 		a.Phase, a.Home = PhaseReviewerCandidate, fmt.Sprintf("%s-review-%d-candidate", t.ID, t.Reviews)
 		return a, 1, t.Since, true
-	case barrier && t.State == TaskReady && !s.hasStanding(t):
+	case t.State == TaskReady && !s.hasStanding(t):
 		// A reviewer records the cases before the writing step that realizes
 		// them, so that the Manager knows them; they stand for its submissions
 		// with that purpose (core rule T7, DEC-049).
 		a.Phase, a.Home = PhaseReviewerExpectations, fmt.Sprintf("%s-review-%d-expectations", t.ID, t.Reviews+1)
-		return a, 1, max(t.Since, s.barrierAt()), true
-	case barrier && t.State == TaskReady:
+		return a, 1, t.Since, true
+	case t.State == TaskReady:
 		a.Phase, a.Home, a.Resume, a.Writes = PhaseWork, managerHome(t), t.Conversation, true
 		if t.LocalDone {
 			a.Phase = PhaseIntegrate // core rule T9
 		}
-		return a, 2, max(t.Since, s.barrierAt()), true
+		return a, 2, t.Since, true
 	}
 	return Admission{}, 0, 0, false
 }
 
 // next selects the admissible item that arose first; ties break with reply
 // steps first, so that a question is answered before the asking step's
-// submission is reviewed, then by Manager path, then by kind: Explore,
-// review, work (core rule T4). An incomplete task stops all admission (core
+// submission is reviewed, then by Manager path, then by kind: review, work
+// (core rule T4). An incomplete task stops all admission (core
 // rule T14).
 func (s stateValue) next() (Admission, bool) {
 	if s.current.State != Running || s.current.StopRequested || len(s.tasks) == 0 || s.anyIncomplete() {
@@ -332,9 +281,8 @@ func (s stateValue) next() (Admission, bool) {
 		a     Admission
 	}
 	var items []item
-	barrier := s.barrierOpen()
 	for _, t := range s.tasks {
-		if a, kind, since, ok := s.admission(t, barrier); ok {
+		if a, kind, since, ok := s.admission(t); ok {
 			items = append(items, item{since, kind, a})
 		}
 	}
@@ -466,8 +414,6 @@ func (s *stateValue) beforeTaskSession(c Command) error {
 		t.Session = r.Session
 		t.Phase = next.Phase
 		switch next.Phase {
-		case PhaseExplore:
-			t.State = TaskExploring
 		case PhaseWork, PhaseIntegrate:
 			t.State = TaskRunning
 		case PhaseReviewerExpectations:
@@ -563,7 +509,7 @@ func (s *stateValue) afterTaskSession(c Command) error {
 }
 
 // TaskConclude records the end of one task step after its container stopped
-// (core rules T3, T5, T6, T8, S4). The outcome is the step's answered outcome
+// (core rules T5, T6, T8, S4). The outcome is the step's answered outcome
 // tool call, unless the Host's own check failed the step.
 const TaskConclude = "task.step-concluded"
 
@@ -645,14 +591,6 @@ type submitInput struct {
 	Dependencies []string          `json:"dependencies"`
 }
 
-type reportInput struct {
-	Summary         string   `json:"summary"`
-	ProposedChanges []string `json:"proposedChanges"`
-	Prerequisites   []string `json:"prerequisites"`
-	Uncertainties   []string `json:"uncertainties"`
-	Questions       []string `json:"questions"`
-}
-
 type waitInput struct {
 	On     []Wait `json:"on"`
 	Reason string `json:"reason"`
@@ -683,14 +621,6 @@ func (s stateValue) checkOutcome(t taskValue, tool string, args []byte) error {
 		return fmt.Errorf("%s does not end a %s step", tool, t.Phase)
 	}
 	switch tool {
-	case ToolReport:
-		var in reportInput
-		if err := decodeArgs(args, &in); err != nil {
-			return err
-		}
-		if !text(in.Summary) || in.ProposedChanges == nil || in.Prerequisites == nil || in.Uncertainties == nil || in.Questions == nil {
-			return errors.New("report needs a summary and all four lists")
-		}
 	case ToolSubmit:
 		var in submitInput
 		if err := decodeArgs(args, &in); err != nil {
@@ -698,9 +628,6 @@ func (s stateValue) checkOutcome(t taskValue, tool string, args []byte) error {
 		}
 		if in.Purpose != "local" && in.Purpose != "integration" || in.Scope != "limited" && in.Scope != "complete" || !text(in.Summary) || in.Assessments == nil || in.Dependencies == nil {
 			return errors.New("submit needs purpose local or integration, scope limited or complete, a summary, assessments and dependencies")
-		}
-		if t.Phase == PhaseExplore && (in.Purpose != "local" || in.Scope != "complete") {
-			return errors.New("during Explore only a complete local no-change result can be submitted")
 		}
 		if t.Phase == PhaseWork && in.Purpose != "local" || t.Phase == PhaseIntegrate && in.Purpose != "integration" {
 			return errors.New("the submission's purpose does not match this step: work submits local, integration submits integration")
@@ -883,8 +810,8 @@ func (s *stateValue) concludeStep(c Command) error {
 	return nil
 }
 
-// concludeWork applies an Explore, work or integration step's outcome (core
-// rules T2, T3, T5, T6).
+// concludeWork applies a work, integration or reply step's outcome (core
+// rules T5, T6, T11).
 func (s *stateValue) concludeWork(r ConclusionRecord, t *taskValue, revision uint64, args []byte) error {
 	if r.Aggregate != s.aggregateVersion || r.AggregateTree != (snapshot.TreeID{}) {
 		return ErrState
@@ -918,20 +845,10 @@ func (s *stateValue) concludeWork(r ConclusionRecord, t *taskValue, revision uin
 	switch r.Outcome {
 	case outcomeFailed:
 		t.State, t.Since, t.Failure, t.HostFault = TaskReady, revision, r.Reason, r.HostFault
-		if t.Phase == PhaseExplore {
-			t.State = TaskQueued
-		}
-	case ToolReport:
-		t.State, t.Explored, t.ExploredAt, t.Report = TaskExplored, true, revision, r.Input
 	case ToolSubmit:
 		var in submitInput
 		if json.Unmarshal(args, &in) != nil {
 			return ErrInvalid
-		}
-		if t.Phase == PhaseExplore {
-			// The parent's Explore reads it as the child's report (core rules
-			// T1, T2), whatever the review decides.
-			t.Explored, t.ExploredAt, t.Report = true, revision, r.Input
 		}
 		uses := slices.Clone(t.Used)
 		for _, d := range in.Dependencies {
@@ -969,19 +886,10 @@ func (s *stateValue) concludeWork(r ConclusionRecord, t *taskValue, revision uin
 	return nil
 }
 
-// advanceTasks applies the rules that follow any conclusion: the write barrier
-// opens once every task is explored (core rule T2), blocked tasks wake when
-// what they named arrived (core rule T10), and the run moves to Verifying when
-// the root is done (core rule T13).
+// advanceTasks applies the rules that follow any conclusion: blocked tasks
+// wake when what they named arrived (core rule T10), and the run moves to
+// Verifying when the root is done (core rule T13).
 func (s *stateValue) advanceTasks(revision uint64) {
-	if s.barrierOpen() {
-		for name, t := range s.tasks {
-			if t.State == TaskExplored {
-				t.State, t.Since = TaskReady, revision
-				s.tasks[name] = t
-			}
-		}
-	}
 	for name, t := range s.tasks {
 		if t.State == TaskBlocked && (slices.ContainsFunc(t.Waits, func(w Wait) bool { return s.waitArrived(t, w) }) || s.messaged(t)) {
 			t.State, t.Since, t.Waits = TaskReady, revision, nil
@@ -995,7 +903,7 @@ func (s *stateValue) advanceTasks(revision uint64) {
 }
 
 // messaged reports whether a blocked task has a question that none of its
-// Explore, work or integrate steps has seen. The message makes the task ready,
+// work or integrate steps has seen. The message makes the task ready,
 // so that its next step answers it and can act on it (core rule T10). A task
 // awaiting the owner's decision on its frozen submission stays blocked and
 // answers in a read-only reply step (core rule T8), and so does a task whose

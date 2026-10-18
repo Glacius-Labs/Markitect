@@ -5,13 +5,12 @@ import (
 	"slices"
 )
 
-// Phase names what one admitted step does (core protocol, rules T1 to T11).
+// Phase names what one admitted step does (core protocol, rules T4 to T11).
 // Manager phase names match organization.ManagerPhase and reviewer phase names
 // match organization.ContextView.
 type Phase string
 
 const (
-	PhaseExplore              Phase = "explore"
 	PhaseWork                 Phase = "work"
 	PhaseIntegrate            Phase = "integrate"
 	PhaseReply                Phase = "reply"
@@ -21,7 +20,6 @@ const (
 
 // Host tool names (core protocol, Host tools).
 const (
-	ToolReport             = "report"
 	ToolSubmit             = "submit"
 	ToolWait               = "wait"
 	ToolSend               = "send"
@@ -52,7 +50,6 @@ type StepContract struct {
 }
 
 var stepOutcomes = map[Phase][]string{
-	PhaseExplore:              {ToolReport, ToolSubmit},
 	PhaseWork:                 {ToolSubmit, ToolWait},
 	PhaseIntegrate:            {ToolSubmit, ToolWait},
 	PhaseReply:                {ToolSend},
@@ -110,9 +107,7 @@ const (
 )
 
 var toolSpecs = map[string]ToolSpec{
-	ToolReport: {ToolReport, "End your Explore step with your initial read-only assessment of your area. Use submit instead when nothing needs to change.",
-		json.RawMessage(`{"type":"object","additionalProperties":false,"required":["summary","proposedChanges","prerequisites","uncertainties","questions"],"properties":{"summary":` + nonBlank + `,"proposedChanges":` + textList + `,"prerequisites":` + textList + `,"uncertainties":` + textList + `,"questions":` + textList + `}}`)},
-	ToolSubmit: {ToolSubmit, "End your step by submitting your current workspace for independent review, with one assessment for every local Definition. During Explore only a complete no-change result can be submitted. purpose is local or integration; scope is limited or complete.",
+	ToolSubmit: {ToolSubmit, "End your step by submitting your current workspace for independent review, with one assessment for every local Definition. purpose is local or integration; scope is limited or complete.",
 		json.RawMessage(`{"type":"object","additionalProperties":false,"required":["purpose","scope","summary","assessments","dependencies"],"properties":{"purpose":{"type":"string","enum":["local","integration"],"description":"One of: local, integration."},"scope":{"type":"string","enum":["limited","complete"],"description":"One of: limited, complete."},"summary":` + nonBlank + `,"dependencies":{"type":"array","items":{"type":"string","minLength":1},"description":"Manager paths whose accepted results this candidate used."},"assessments":{"type":"array","items":{"type":"object","additionalProperties":false,"required":["definition","disposition","artifacts","uses","evidence","reason"],"properties":{"definition":{"type":"string","minLength":1,"description":"A local Definition as package/id."},"disposition":{"type":"string","enum":["realized","constrains","vocabulary","unresolved"],"description":"One of: realized, constrains, vocabulary, unresolved."},"artifacts":` + textList + `,"uses":` + defsField + `,"evidence":` + evidence + `,"reason":` + nonBlank + `,"question":{"type":"string","description":"For unresolved: the ID of the open question that blocks it."}}}}}}`)},
 	ToolWait: {ToolWait, "End your step and name what your task waits for. kind is reply (ref: question ID), delivery (ref: producer Manager path), children (ref unused) or owner (ref: question ID). Wait only for something another Manager or the owner must provide first; missing files of your own are your work, not a reason to wait.",
 		json.RawMessage(`{"type":"object","additionalProperties":false,"required":["on","reason"],"properties":{"on":{"type":"array","minItems":1,"items":{"type":"object","additionalProperties":false,"required":["kind"],"properties":{"kind":{"type":"string","enum":["reply","delivery","children","owner"],"description":"One of: reply, delivery, children, owner."},"ref":{"type":"string"}}}},"reason":` + nonBlank + `}}`)},
@@ -124,7 +119,7 @@ var toolSpecs = map[string]ToolSpec{
 		json.RawMessage(`{"type":"object","additionalProperties":false,"required":["path","form"],"properties":{"path":` + pathField + `,"form":` + formField + `}}`)},
 	ToolRegister: {ToolRegister, "Propose the registry record of an owned or reserved artifact: its form and the Definitions it realizes.",
 		json.RawMessage(`{"type":"object","additionalProperties":false,"required":["path","form","realizes","why"],"properties":{"path":` + pathField + `,"form":` + formField + `,"realizes":` + defsField + `,"why":` + nonBlank + `}}`)},
-	ToolAssignOwner: {ToolAssignOwner, "As the common parent, decide the owner of an artifact that several descendants need, or of an unexplained file.",
+	ToolAssignOwner: {ToolAssignOwner, "As the common parent, decide the owner of an artifact that several descendants need.",
 		json.RawMessage(`{"type":"object","additionalProperties":false,"required":["path","manager","reason"],"properties":{"path":` + pathField + `,"manager":` + nonBlank + `,"reason":` + nonBlank + `}}`)},
 	ToolRequestCheck: {ToolRequestCheck, "Run an allowed project check on the current candidate and get its receipt.",
 		json.RawMessage(`{"type":"object","additionalProperties":false,"required":["check"],"properties":{"check":` + nonBlank + `}}`)},
@@ -143,7 +138,6 @@ var phaseSpecs = map[Phase]map[string]ToolSpec{
 }
 
 var phaseTools = map[Phase][]string{
-	PhaseExplore:              {ToolReport, ToolSubmit, ToolRead, ToolSend, ToolAssignOwner},
 	PhaseWork:                 {ToolSubmit, ToolWait, ToolSend, ToolRead, ToolReservePath, ToolRegister, ToolAssignOwner, ToolRequestCheck},
 	PhaseIntegrate:            {ToolSubmit, ToolWait, ToolSend, ToolRead, ToolReservePath, ToolRegister, ToolAssignOwner, ToolRequestCheck},
 	PhaseReply:                {ToolSend, ToolRead},

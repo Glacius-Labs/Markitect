@@ -58,7 +58,7 @@ func remembered(c *run.Coordinator, id string) (run.Command, bool) {
 }
 
 // sessionPreparation prepares a session for the run's next admissible step,
-// the first leaf's Explore in a fresh run.
+// the root's expectations step in a fresh run.
 func sessionPreparation(t *testing.T, c *run.Coordinator, id run.SessionID) run.Command {
 	t.Helper()
 	if cmd, ok := remembered(c, "prepare-"+string(id)); ok {
@@ -74,9 +74,12 @@ func stepPreparation(t *testing.T, c *run.Coordinator, id run.StepID, invocation
 	t.Helper()
 	v, _ := c.Session("s")
 	inputs := stepInputs(t, false)
+	// The step spends as its session start did: the task's next step decided it.
 	purpose := run.Writing
-	if v.Plan.Role == "reviewer" {
-		purpose = run.Assessment
+	for _, i := range c.Invocations() {
+		if i.Reservation.ID == v.Invocation {
+			purpose = i.Reservation.Purpose
+		}
 	}
 	plan := run.StepPlan{Session: "s", ID: id, SessionBinding: v.Plan.Binding()}
 	reservation := run.Reservation{ID: invocation, Kind: run.AgentStep, Purpose: purpose, Maximum: time.Minute}
@@ -763,15 +766,15 @@ func TestProviderNeutralPortMapsOpenStepInspectStopWithoutReplay(t *testing.T) {
 	}
 }
 
-// resumedSession prepares the root's work step, whose plan resumes the root's
-// recorded conversation.
+// resumedSession prepares the root's integrate step, whose plan resumes the
+// root's recorded work conversation.
 func resumedSession(t *testing.T) (run.SessionIO, run.ProviderSessionID) {
 	t.Helper()
 	h := newHarness(t, true, happyAgent)
-	h.advanceUntil(func(a run.Admission) bool { return a.Phase == run.PhaseWork })
+	h.advanceUntil(func(a run.Admission) bool { return a.Phase == run.PhaseIntegrate })
 	item, _ := h.c.Next()
 	if item.Resume == "" {
-		t.Fatal("work step does not resume the Explore conversation")
+		t.Fatal("integrate step does not resume the work conversation")
 	}
 	commit(t, h.c, h.j, taskSession(t, h.c, "s", h.engine.Aggregate().Tree().Digest()))
 	return channel(t, h.c, h.j, run.RefuseTools), item.Resume

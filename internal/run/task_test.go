@@ -18,33 +18,35 @@ import (
 )
 
 // Only the step the queue admits can start, with the phase's role, tools,
-// workspace mode, provider home and conversation (core rules T4, S3, S5).
+// workspace mode, provider home, conversation and spend (core rules T4, S3,
+// S5). Every task starts ready, so the first admission is the root's
+// expectations step.
 func TestTaskAdmissionRefusesWhatTheQueueDidNotAdmit(t *testing.T) {
 	t.Parallel()
 	c, j := running(t)
 	item, ok := c.Next()
-	if !ok || item.Manager != "empty" || item.Phase != run.PhaseExplore || item.Resume != "" {
-		t.Fatal("children-first Explore is not the first admission", item)
+	if !ok || item.Manager != "." || item.Phase != run.PhaseReviewerExpectations || item.Resume != "" || item.Purpose != run.Preparation {
+		t.Fatal("the root's expectations step is not the first admission", item)
 	}
 	good := taskSession(t, c, "s", stepInputs(t, false).Binding.Census.Digest())
 	profile := payload(t, `{"profile":"synthetic recorded metadata"}`)
 	workTools, _ := run.ToolCatalog(run.PhaseWork)
-	exploreTools, _ := run.ToolCatalog(run.PhaseExplore)
+	reviewTools, _ := run.ToolCatalog(run.PhaseReviewerExpectations)
 	for name, edit := range map[string]func(*run.SessionPlan, *run.Reservation) run.Payload{
-		"writable explore": func(p *run.SessionPlan, _ *run.Reservation) run.Payload { p.ReadOnly = false; return exploreTools },
-		"reviewer role": func(p *run.SessionPlan, r *run.Reservation) run.Payload {
-			p.Role, r.Purpose = "reviewer", run.Assessment
-			return exploreTools
+		"writable review": func(p *run.SessionPlan, _ *run.Reservation) run.Payload { p.ReadOnly = false; return reviewTools },
+		"manager role": func(p *run.SessionPlan, r *run.Reservation) run.Payload {
+			p.Role, r.Purpose = "manager", run.Writing
+			return reviewTools
 		},
 		"other catalogue": func(p *run.SessionPlan, _ *run.Reservation) run.Payload { p.Tools = workTools.Ref(); return workTools },
 		"other home": func(p *run.SessionPlan, _ *run.Reservation) run.Payload {
 			p.ProviderHome = "other-home"
-			return exploreTools
+			return reviewTools
 		},
-		"invented resume": func(p *run.SessionPlan, _ *run.Reservation) run.Payload { p.Resume = "invented"; return exploreTools },
+		"invented resume": func(p *run.SessionPlan, _ *run.Reservation) run.Payload { p.Resume = "invented"; return reviewTools },
 		"assessment spend": func(_ *run.SessionPlan, r *run.Reservation) run.Payload {
 			r.Purpose = run.Assessment
-			return exploreTools
+			return reviewTools
 		},
 	} {
 		plan, reservation := good.Session.Plan, good.Reservation
@@ -57,18 +59,18 @@ func TestTaskAdmissionRefusesWhatTheQueueDidNotAdmit(t *testing.T) {
 			t.Fatal(name, "accepted")
 		}
 	}
-	raw := run.PrepareSessionCommand(meta("raw"), "a", "r", good.Session.Plan, good.Reservation, profile, exploreTools)
+	raw := run.PrepareSessionCommand(meta("raw"), "a", "r", good.Session.Plan, good.Reservation, profile, reviewTools)
 	if _, err := c.Propose(raw); !errors.Is(err, run.ErrState) {
 		t.Fatal("unproven session preparation accepted", err)
 	}
 	other := item
 	other.Manager = "lending/reminders"
-	if _, err := c.PrepareTaskSessionCommand(meta("other"), other, good.Session.Plan, good.Reservation, profile, exploreTools); !errors.Is(err, run.ErrState) {
+	if _, err := c.PrepareTaskSessionCommand(meta("other"), other, good.Session.Plan, good.Reservation, profile, reviewTools); !errors.Is(err, run.ErrState) {
 		t.Fatal("a step the queue did not admit was prepared", err)
 	}
 	commit(t, c, j, good)
-	if next, ok := c.Next(); !ok || next.Manager != "lending/reminders" {
-		t.Fatal("queue lost the other leaf", next)
+	if next, ok := c.Next(); !ok || next.Manager != "empty" {
+		t.Fatal("queue lost the other task", next)
 	}
 	again := taskSession(t, c, "second", stepInputs(t, false).Binding.Census.Digest())
 	if _, err := c.Propose(again); !errors.Is(err, run.ErrState) {
@@ -147,8 +149,8 @@ func TestRequiredReviewDemandIncludesRootEmptyAndTwoReviewSteps(t *testing.T) {
 }
 
 // Each step's context carries the scoped model, the owner's request at the
-// root, the children's reports for a parent and the Manager's own artifacts
-// (core rules T1, D3).
+// root, the children's proposals for a parent and the Manager's own artifacts
+// (core rule D3).
 func TestStepContextCarriesScopeOwnerRequestReportsAndOwnArtifacts(t *testing.T) {
 	t.Parallel()
 	var facts organization.SettingsFacts
@@ -164,9 +166,9 @@ func TestStepContextCarriesScopeOwnerRequestReportsAndOwnArtifacts(t *testing.T)
 	input.Scope = []organization.Setting[organization.ScopeRule]{{Value: organization.ScopeRule{Kind: model.Identity{Package: "lending", ID: "ScopedRule"}, Property: model.Identity{Package: "lending", ID: "applies"}}, Source: source(input.Documents[0], "/scope/0")}}
 	inputs := run.StepPreparation{Binding: input, Settings: facts}
 	h := newHarnessWith(t, inputs, happyAgent)
-	h.advanceUntil(func(a run.Admission) bool { return a.Manager == "." && a.Phase == run.PhaseExplore })
-	if lending := h.packet("lending", run.PhaseExplore); !bytes.Contains(lending.Context.Bytes, []byte("package library\n")) || !bytes.Contains(lending.Context.Bytes, []byte("Inspected the area.")) {
-		t.Fatal("own artifact or child report omitted from the parent's Explore context")
+	h.advanceUntil(func(a run.Admission) bool { return a.Manager == "." && a.Phase == run.PhaseIntegrate })
+	if lending := h.packet("lending", run.PhaseIntegrate); !bytes.Contains(lending.Context.Bytes, []byte("package library\n")) || !bytes.Contains(lending.Context.Bytes, []byte("Realized the area.")) {
+		t.Fatal("own artifact or child proposal omitted from the parent's integration context")
 	}
 	// The scope is part of the bound basis; a substitute is refused.
 	cmd := taskSession(t, h.c, "s", h.engine.Aggregate().Tree().Digest())
@@ -186,7 +188,7 @@ func TestStepContextCarriesScopeOwnerRequestReportsAndOwnArtifacts(t *testing.T)
 		t.Fatal("scope replaced under unchanged basis")
 	}
 	if _, err := h.c.PrepareTaskStepCommand(meta("missing-reports"), plan, reservation, inputs, stepFacts); err == nil {
-		t.Fatal("parent context rendered without its children's reports")
+		t.Fatal("parent context rendered without its children's proposals")
 	}
 	for _, ref := range h.c.StepQuotes(".") {
 		stepFacts.Quoted = append(stepFacts.Quoted, h.j.blobs[ref])
@@ -210,12 +212,18 @@ func TestStepContextCarriesScopeOwnerRequestReportsAndOwnArtifacts(t *testing.T)
 // outcome; the reducer checks that outcome again (core rules S1, T5, T6).
 func TestConclusionWaitsForTheStoppedContainerAndChecksTheOutcome(t *testing.T) {
 	t.Parallel()
-	for _, kind := range []string{"report", "bad report", "refused"} {
+	for _, kind := range []string{"submit", "bad submit", "refused"} {
 		t.Run(kind, func(t *testing.T) {
 			inputs := stepInputs(t, true)
 			b, _ := run.Bind(inputs.Binding)
 			c, j := runningWith(t, b)
 			ctx := context.Background()
+			// Both tasks start with their reviewers' cases, then the root works.
+			driveNext(t, c, j, inputs, "cases-root")
+			driveNext(t, c, j, inputs, "cases-lending")
+			if item, ok := c.Next(); !ok || item.Manager != "." || item.Phase != run.PhaseWork {
+				t.Fatal("the root's work step is not next", item)
+			}
 			cmd := taskSession(t, c, "s", inputs.Binding.Census.Digest())
 			commit(t, c, j, cmd)
 			answer := run.ToolOutcome{Status: run.ToolOK, Result: []byte(`{"accepted":true}`)}
@@ -228,7 +236,7 @@ func TestConclusionWaitsForTheStoppedContainerAndChecksTheOutcome(t *testing.T) 
 				t.Fatal(err)
 			}
 			commit(t, c, j, settle("open-s", time.Second))
-			commit(t, c, j, stepPreparationWith(t, c, inputs, "step", "invoke-step"))
+			commit(t, c, j, stepPreparationWith(t, c, j, inputs, "step", "invoke-step"))
 			send(t, io, "turn", "step")
 			if _, err := io.Bind(ctx, run.SessionObservation{RecordMeta: meta("bind"), ProviderSession: "provider-s", Wire: wire(t, `{"thread":"s"}`), Reason: "observed"}); err != nil {
 				t.Fatal(err)
@@ -236,19 +244,19 @@ func TestConclusionWaitsForTheStoppedContainerAndChecksTheOutcome(t *testing.T) 
 			if _, err := io.ObserveStep(ctx, run.StepObservation{RecordMeta: meta("started"), Step: "step", ProviderStep: "turn", Wire: wire(t, `{"turn":"started"}`), Reason: "observed"}); err != nil {
 				t.Fatal(err)
 			}
-			args := reportArgs
-			if kind == "bad report" {
-				args = `{"summary":"Missing lists."}`
+			args := submitArgs("local", "complete")
+			if kind == "bad submit" {
+				args = `{"purpose":"local","scope":"complete","summary":"Missing lists."}`
 			}
-			if _, err := io.Call(ctx, run.ToolCall{RecordMeta: meta("call"), Step: "step", Call: "c1", Tool: run.ToolReport, Input: wire(t, `{"id":1,"name":"report","arguments":`+args+`}`)}); err != nil {
+			if _, err := io.Call(ctx, run.ToolCall{RecordMeta: meta("call"), Step: "step", Call: "c1", Tool: run.ToolSubmit, Input: wire(t, `{"id":1,"name":"submit","arguments":`+args+`}`)}); err != nil {
 				t.Fatal(err)
 			}
 			conclude := func() error {
 				var input run.Payload
-				if ref, ok := c.OutcomeInput("lending"); ok {
+				if ref, ok := c.OutcomeInput("."); ok {
 					input = j.blobs[ref]
 				}
-				cmd, err := c.ConcludeStepCommand(meta("conclude"), "lending", run.StepResult{Input: input, Aggregate: c.AggregateVersion()})
+				cmd, err := c.ConcludeStepCommand(meta("conclude"), ".", run.StepResult{Input: input, Aggregate: c.AggregateVersion()})
 				if err != nil {
 					return err
 				}
@@ -270,45 +278,45 @@ func TestConclusionWaitsForTheStoppedContainerAndChecksTheOutcome(t *testing.T) 
 			}
 			err := conclude()
 			switch kind {
-			case "report", "refused":
+			case "submit", "refused":
 				if err != nil {
 					t.Fatal(err)
 				}
-				ref, _ := c.OutcomeInput("lending")
+				ref, _ := c.OutcomeInput(".")
 				var input run.Payload
-				if kind == "report" {
+				if kind == "submit" {
 					input = j.blobs[ref]
 				}
-				cmd, _ := c.ConcludeStepCommand(meta("conclude"), "lending", run.StepResult{Input: input, Aggregate: c.AggregateVersion()})
+				cmd, _ := c.ConcludeStepCommand(meta("conclude"), ".", run.StepResult{Input: input, Aggregate: c.AggregateVersion()})
 				commit(t, c, j, cmd)
-				want := run.TaskExplored
+				want := run.TaskReviewing
 				if kind == "refused" {
-					want = run.TaskQueued // core rule T6
+					want = run.TaskReady // core rule T6
 				}
-				if v, _ := c.Task("lending"); v.State != want {
+				if v, _ := c.Task("."); v.State != want {
 					t.Fatal("conclusion applied the wrong outcome", v.State)
 				}
-			case "bad report":
+			case "bad submit":
 				if !errors.Is(err, run.ErrState) {
 					t.Fatal("an outcome the Host's check refuses was concluded", err)
 				}
-				cmd, err := c.ConcludeStepCommand(meta("conclude-failed"), "lending", run.StepResult{Aggregate: c.AggregateVersion(), Failure: "the answered report fails the Host's check"})
+				cmd, err := c.ConcludeStepCommand(meta("conclude-failed"), ".", run.StepResult{Aggregate: c.AggregateVersion(), Failure: "the answered submission fails the Host's check"})
 				if err != nil {
 					t.Fatal(err)
 				}
 				commit(t, c, j, cmd)
-				if v, _ := c.Task("lending"); v.State != run.TaskQueued {
-					t.Fatal("failed Explore did not return to queued", v.State)
+				if v, _ := c.Task("."); v.State != run.TaskReady {
+					t.Fatal("a failed work step did not return to ready", v.State)
 				}
 			}
 		})
 	}
 }
 
-func stepPreparationWith(t *testing.T, c *run.Coordinator, inputs run.StepPreparation, id run.StepID, invocation string) run.Command {
+func stepPreparationWith(t *testing.T, c *run.Coordinator, j *memoryJournal, inputs run.StepPreparation, id run.StepID, invocation string) run.Command {
 	t.Helper()
 	v, _ := c.Session("s")
-	cmd, err := c.PrepareTaskStepCommand(meta("prepare-"+string(id)), run.StepPlan{Session: "s", ID: id, SessionBinding: v.Plan.Binding()}, run.Reservation{ID: invocation, Kind: run.AgentStep, Purpose: run.Writing, Maximum: time.Minute}, inputs, sourceFacts(inputs))
+	cmd, err := c.PrepareTaskStepCommand(meta("prepare-"+string(id)), run.StepPlan{Session: "s", ID: id, SessionBinding: v.Plan.Binding()}, run.Reservation{ID: invocation, Kind: run.AgentStep, Purpose: run.Writing, Maximum: time.Minute}, inputs, quotedFacts(c, j, inputs, "."))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -523,7 +531,7 @@ func TestAPassKeepsTheRecordedCasesForTheNextDelivery(t *testing.T) {
 		}
 	}
 	if h.c.Current().State != run.Verifying || len(h.task("lending").Deliveries) != 2 || !slices.Equal(notes, []bool{true, true}) ||
-		!slices.Equal(lending, []string{"explore", "reviewer-expectations", "work", "reviewer-candidate", "work", "reviewer-candidate"}) {
+		!slices.Equal(lending, []string{"reviewer-expectations", "work", "reviewer-candidate", "work", "reviewer-candidate"}) {
 		t.Fatal("the cases were not recorded before the first work step or did not stand", h.c.Current(), notes, lending)
 	}
 }
@@ -546,7 +554,7 @@ func TestAFailedExpectationsStepBeforeWorkIsRepeated(t *testing.T) {
 			lending = append(lending, strings.TrimPrefix(step, "lending "))
 		}
 	}
-	if h.c.Current().State != run.Verifying || !slices.Equal(lending, []string{"explore", "reviewer-expectations", "reviewer-expectations", "work", "reviewer-candidate"}) {
+	if h.c.Current().State != run.Verifying || !slices.Equal(lending, []string{"reviewer-expectations", "reviewer-expectations", "work", "reviewer-candidate"}) {
 		t.Fatal("the failed expectations step was not repeated before the work step", h.c.Current(), lending)
 	}
 }

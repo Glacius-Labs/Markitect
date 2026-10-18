@@ -47,8 +47,6 @@ Judge cases and findings by the model's text and the owner's decisions: one that
 
 func managerPhaseText(phase ManagerPhase) string {
 	switch phase {
-	case ManagerExplore:
-		return "Inspect your area read-only and report what exists, what is missing and what you need from others, or submit a justified no-change when your files already realize your Definitions.\n"
 	case ManagerWork:
 		return "Create or change the files you own so that they realize your local Definitions, or submit a justified no-change when they already do. /work holds the accepted files of all Managers plus your own unaccepted changes; inspect it at the start of each step, because other Managers' deliveries change it. Reserve each new file with reserve_path inside your creation area before you write it, and register it with the Definitions it realizes. When Definitions of several Packages need the same file, their nearest common parent decides its owner, so ask your parent before you reserve it. Files other Managers own stay theirs: use them, wait for their delivery, or send their owner the change you need. Submit work that builds and passes its tests in /work; when another Manager needs a file of yours first, submit it as a limited delivery.\n"
 	case ManagerIntegrate:
