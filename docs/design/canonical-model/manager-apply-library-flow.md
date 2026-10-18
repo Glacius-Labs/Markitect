@@ -174,3 +174,49 @@ A former test requiring refusal of the sixth loan now expresses superseded inten
 | Publication succeeds and the project requires result acceptance. | Follow the existing acceptance policy; the owner's later commit accepts the published artifacts. Apply itself never commits, merges or pushes. An outer agent may handle repository delivery only within separately granted authority. |
 
 Routine implementation choices, ordinary review findings and bounded corrections stay with the responsible Managers and reviewers. They do not create a standing owner approval round. Required aggregate checks, current independent assessments, preflight, any configured approval, guarded publication and actual read-back still apply. The final report identifies the selected model/source, changed and retained areas with their reasons, evidence for the new boundary and preserved behavior, open findings and actual publication. It distinguishes model adoption, realization, publication and owner acceptance; this documentation claims none of them was executed.
+
+## Defect repair: an eighth loan despite the seven-loan limit
+
+Status: owner-accepted working-day walkthrough, 18 October 2026 ([source](../project-capability-skills-20261009.md#owner-source)). Continue the hypothetical seven-loan scenario above: the owner reports that an eighth open loan is admitted. This is not an observed defect in the executable library fixtures, an executed repair or new implementation scope. The accepted intent remains seven; no model edit or artificial model-version change is needed to repair a realization deviation.
+
+The owner's ordinary request can be: "Investigate and fix the eighth-loan admission through Markitect. Keep the seven-loan model and correct existing behavior. Show that seven loans remain possible and an eighth is refused without changing state." The request authorizes investigation and repair within existing execution grants. A discussion-only request, including this documentation task, executes neither.
+
+### Coding agent: bind the report and commission the repair
+
+The outer coding agent identifies the applicable committed model, the reported application version or repository revision, relevant configuration, starting data and reproduction steps. Keep the affected application and source bindings explicit; do not assume the observed version is the candidate under investigation. "An eighth loan was admitted" is a reported observation; "the comparison is off by one" is a diagnosis that still needs evidence.
+
+For an authorized repair, `markitect-apply` commissions the ordinary investigation, realization and review workflow against the unchanged model. A separate `verify` run is not a mandatory preliminary approval round. If the owner asks only for assessment, use `markitect-verify`, retain the actual findings and make no repairs. The coding agent relays progress and genuine questions; it neither patches application artifacts outside Markitect nor introduces a second scheduler. Model structure passing `check` cannot establish correct loan admission.
+
+### Markitect: investigate and carry the finding through the existing process
+
+Use the [existing issue shape](manager-apply-core.md#issues) and [finding rules](manager-apply-execution.md#evidence-need-survives-budget-pressure), not another repair ledger. Preserve the original report as provenance and supply its source basis and reproduction information to Explore and review. A user report is not an authenticated independent reviewer verdict. A confirmed deviation records the affected Definitions, exact model and realization subject, observed evidence, reason, responsible Manager, severity and required correction or observation. A confirmed admission above the applicable limit is blocking for a conforming Apply result.
+
+The illustrative reproduction starts with seven open loans for an otherwise eligible member and another available copy. Borrowing that copy should refuse without observable state change; instead, the reported application creates an eighth loan. Managers investigate the actual cause, such as a faulty boundary check or open-loan count, rather than implementing a guessed diagnosis. If the case cannot be reproduced or adequately assessed, retain the evidence gap; lack of reproduction alone does not establish conformity or close the report as resolved.
+
+Every local Manager, including root, still participates, and all initial read-only Explore assessments precede writing. Findings guide investigation without replacing full responsibility. The responsible Manager corrects its owned realization and suitable tests; necessary work in another area goes to that area's Manager. Correct artifacts remain with explained no-change assessments and required review. The model stays read-only: raising the limit to eight, weakening the rule or changing a test to expect the defect cannot count as repair.
+
+### Independent evidence and closure
+
+Configured independent reviewers derive expectations from the unchanged seven-loan model and examine the candidate, actual assertions and recorded observations. For a reproduced defect, retain the failing observation on its original basis and evidence that the corrected candidate addresses that case. The distinguishing checks include:
+
+| Starting condition | Required evidence on the corrected candidate |
+| --- | --- |
+| Six open loans; all other borrowing prerequisites hold. | The seventh succeeds with the required normal effects. |
+| Seven open loans; another copy is available and other prerequisites hold. | The eighth is refused; no loan is created, the copy remains available and no observable state changes. |
+| Other applicable borrowing or return conditions. | Suspension, availability, counting rules and return behavior still satisfy the model; fixing the boundary does not waive them. |
+
+A green suite with a wrong assertion or no exercised boundary is insufficient. The responsible Manager proposes resolution; only current independent review can establish closure under the existing finding rules. Old approval, an empty diff or generic exit code cannot replace required case evidence. Parents independently assess composition and cross-area behavior; local review does not replace integration, required aggregate checks, preflight, configured approval, guarded publication or actual read-back. No successful Apply may retain this blocking deviation or missing required assessment.
+
+### Owner decisions and existing affected data
+
+| Situation | Owner involvement |
+| --- | --- |
+| The seven-loan rule is clear and the application violates it. | No renewed decision about the limit. Diagnosis, routine implementation choices, review and bounded correction stay within the authorized repair. |
+| Investigation finds conflicting intended rules or a necessary additional model change. | Receive the concrete source-bound question and recommendation. Decide the separate intent proposal; Apply cannot change the model to settle it. |
+| Required authority, budget or configured publication approval is missing. | Decide the specific missing grant or choice. Existing valid authority needs no repeated approval; unresolved limits leave an honest incomplete result with retained findings and evidence. |
+| Eight loans already exist because of the defect. | The code repair does not itself authorize deleting loans, forcing returns or editing live data. Any needed data correction follows established rules and its own explicit scope and authority; unresolved policy becomes a concrete owner question. |
+| The result is ready for publication or acceptance. | Follow the existing project policy. Apply never commits, merges or pushes; the owner's later commit accepts the published artifacts, and any outer-agent repository delivery needs its own grant. |
+
+If the defect is confirmed after a previously successful Apply, examine the relevant prior evidence to explain which case, assertion or assessment missed it. Propose a concrete distinguishing improvement within the existing test/review responsibility, rather than inventing a general approval institution. Preserve what the earlier evidence actually established; do not claim that a hypothetical walkthrough or prior green CI demonstrated defect-free behavior.
+
+The final report separates reported and reproduced behavior, confirmed cause or remaining uncertainty, changed and retained areas, current independent evidence, finding resolution, outstanding decisions and actual publication. This record specifies that workflow only; no model fixture, application, live data or execution capability is changed here.
