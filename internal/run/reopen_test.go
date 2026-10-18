@@ -180,6 +180,11 @@ func TestAReplyStepCorrectsADoneManagersFile(t *testing.T) {
 	if !strings.Contains(order, "lending reply") || strings.Count(order, "lending work") != 2 || strings.Count(order, "lending reviewer-candidate") != 2 {
 		t.Fatal("the corrected file did not return lending to work and review", order)
 	}
+	// A reply that changes no expectation input keeps the recorded cases
+	// (DEC-048, DEC-049).
+	if n := strings.Count(order, "lending reviewer-expectations"); n != 1 {
+		t.Fatal("the corrected file's review recorded new cases", n, order)
+	}
 	if got := aggregateFile(t, h.engine, "out/library.go"); got != corrected {
 		t.Fatalf("the correction was not composed: %q", got)
 	}

@@ -184,7 +184,7 @@ func TestRenderStatesTheTreePosition(t *testing.T) {
 	} {
 		selection, settings, input := renderFixture(t, pkg, organization.ManagerView)
 		text := string(requireRendered(t, selection, settings, input).Bytes())
-		if !strings.Contains(text, `[section "tree-position"`) || !strings.Contains(text, want) || !strings.Contains(text, "Your integration step composes only the deliveries of your direct children") {
+		if !strings.Contains(text, `[section "tree-position"`) || !strings.Contains(text, want) || !strings.Contains(text, "Its integration step composes only the deliveries of its direct children") {
 			t.Fatalf("%s: tree position missing or wrong", pkg)
 		}
 		if strings.Contains(text, "reviewed-submission") {

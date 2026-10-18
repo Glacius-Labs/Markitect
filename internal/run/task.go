@@ -206,6 +206,8 @@ type Admission struct {
 	// Writes is whether the step may change files: every work and integrate
 	// step, and a reply step once the write barrier is open (core rule T11).
 	Writes bool
+	// Purpose is the budget purpose of the step's reservations.
+	Purpose Purpose
 }
 
 func (p Phase) reviewer() bool { return p == PhaseReviewerExpectations || p == PhaseReviewerCandidate }
@@ -343,8 +345,8 @@ func (s stateValue) next() (Admission, bool) {
 		if a.since != b.since {
 			return compareUint(a.since, b.since)
 		}
-		if reply := (a.a.Phase == PhaseReply) != (b.a.Phase == PhaseReply); reply {
-			if a.a.Phase == PhaseReply {
+		if ar, br := a.a.Phase == PhaseReply, b.a.Phase == PhaseReply; ar != br {
+			if ar {
 				return -1
 			}
 			return 1
@@ -354,7 +356,9 @@ func (s stateValue) next() (Admission, bool) {
 		}
 		return a.kind - b.kind
 	})
-	return items[0].a, true
+	a := items[0].a
+	a.Purpose = stepPurpose(s.tasks[a.Manager], a.Phase)
+	return a, true
 }
 
 func compareUint(a, b uint64) int {
@@ -401,6 +405,17 @@ func stepRole(p Phase) (string, Purpose) {
 	return "manager", Writing
 }
 
+// stepPurpose is the budget purpose of the task's step in the phase: an
+// expectations step before a writing step prepares that writing, so it may
+// not use the completion reserve either (DEC-049).
+func stepPurpose(t taskValue, p Phase) Purpose {
+	if p == PhaseReviewerExpectations && t.State != TaskReviewing {
+		return Preparation
+	}
+	_, purpose := stepRole(p)
+	return purpose
+}
+
 var emptyTree = func() snapshot.TreeID {
 	tree, _ := snapshot.NewTree(nil)
 	return tree.Digest()
@@ -426,7 +441,8 @@ func (s *stateValue) beforeTaskSession(c Command) error {
 			return ErrState
 		}
 		catalog, err := ToolCatalog(next.Phase)
-		role, purpose := stepRole(next.Phase)
+		role, _ := stepRole(next.Phase)
+		purpose := next.Purpose
 		if err != nil || r.Plan.Tools != catalog.Ref() || r.Plan.Role != role || r.Plan.ReadOnly == next.Writes || c.Reservation.Purpose != purpose || r.Plan.ProviderHome != next.Home || r.Plan.Resume != next.Resume {
 			return ErrState
 		}
@@ -466,7 +482,7 @@ func (s *stateValue) beforeTaskSession(c Command) error {
 	}
 	switch c.Kind {
 	case PrepareStep:
-		_, purpose := stepRole(t.Phase)
+		purpose := stepPurpose(t, t.Phase)
 		if !sameManager(recordForTask(t, t.Phase), c.Manager) || t.Step != "" || c.Reservation.Purpose != purpose {
 			return ErrState
 		}

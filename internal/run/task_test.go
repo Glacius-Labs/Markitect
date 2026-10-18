@@ -492,8 +492,8 @@ func TestARejectionKeepsTheCasesItsReviewResolvedAgainst(t *testing.T) {
 	h := newHarness(t, true, agent)
 	runToEnd(t, h)
 	order := strings.Join(admitted(h), ",")
-	// The first delivery and the failed review step record cases; the rework
-	// after the rejection keeps the second ones.
+	// The step before the first work step and the failed review step record
+	// cases; the rework after the rejection keeps the second ones.
 	if h.c.Current().State != run.Verifying || strings.Count(order, "lending reviewer-expectations") != 2 || !slices.Equal(notes, []bool{true, true}) {
 		t.Fatal("the rejection did not keep its recorded cases", h.c.Current(), notes, order)
 	}

@@ -245,7 +245,7 @@ func (s *stateValue) applySession(c Command) error {
 		if _, exists := s.sessions[r.Session]; exists {
 			return ErrConflict
 		}
-		if r.Plan.Role == "reviewer" && c.Reservation.Purpose != Assessment || r.Plan.Role == "manager" && c.Reservation.Purpose != Writing {
+		if !rolePurpose(r.Plan.Role, c.Reservation.Purpose) {
 			return ErrInvalid
 		}
 		if err := s.reserve(c.Reservation); err != nil {
@@ -291,7 +291,7 @@ func (s *stateValue) applySession(c Command) error {
 				return ErrState
 			}
 		}
-		if v.Plan.Role == "reviewer" && c.Reservation.Purpose != Assessment || v.Plan.Role == "manager" && c.Reservation.Purpose != Writing {
+		if !rolePurpose(v.Plan.Role, c.Reservation.Purpose) {
 			return ErrInvalid
 		}
 		if err := s.reserve(c.Reservation); err != nil {
@@ -507,6 +507,18 @@ func (s *stateValue) reserve(r Reservation) error {
 	}
 	s.invocations[r.ID] = Invocation{Reservation: r, CapRevision: s.capRevision(), State: Reserved}
 	return nil
+}
+
+// rolePurpose reports whether a session role may reserve for the purpose: a
+// reviewer assesses or prepares writing, a Manager writes (DEC-049).
+func rolePurpose(role string, purpose Purpose) bool {
+	switch role {
+	case "reviewer":
+		return purpose == Assessment || purpose == Preparation
+	case "manager":
+		return purpose == Writing
+	}
+	return true
 }
 
 func (s stateValue) sessionSettlementAllowed(invocation, kind string) bool {

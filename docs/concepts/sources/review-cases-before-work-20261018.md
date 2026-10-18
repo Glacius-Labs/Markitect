@@ -8,7 +8,7 @@ In bound run R2-A1-08 (Main a9f62311), 6 of 11 fresh case sets were rejected on 
 
 The journals of R2-A1-04 to R2-A1-08 show where the time goes. Agent steps take about 96 % of the wall time and run one after another. Reviews make up about 40 % of all steps, two steps per submission: 30 of 73 in R2-A1-08.
 
-The expectations step sees only the model, the purpose, the task's open findings and the owner's decisions. None of these depend on a candidate. Recording the cases before the writing step therefore changes nothing that step can see. It lets the Manager build against the cases, and most reviews keep only their candidate step.
+The expectations step sees only the model, the purpose, the task's open findings and the owner's decisions. None of these depend on a candidate. Recording the cases before the writing step therefore changes nothing that step can see, and it lets the Manager build against the cases. The expectations steps move rather than disappear: the gain is the expected drop in first-review rejections, not fewer steps.
 
 Recording a reviewer step before a work step exposed an ordering gap. A parent that asks a child and submits in the same step relied on a review delay. Without that delay, its pass could be accepted before the child answered. Reply steps now come first among items that become admissible together.
 

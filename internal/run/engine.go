@@ -381,7 +381,8 @@ func (e *Engine) Advance(ctx context.Context) (bool, error) {
 	if err != nil || materialized.Uncertain || materialized.Tree != version.tree.Digest() {
 		return true, errors.Join(errStep, err)
 	}
-	role, purpose := stepRole(item.Phase)
+	role, _ := stepRole(item.Phase)
+	purpose := item.Purpose
 	profile, err := e.cfg.Profile(ProfileRequest{Manager: item.Manager, Role: role, Phase: item.Phase, ReadOnly: !item.Writes})
 	if err != nil {
 		return true, err

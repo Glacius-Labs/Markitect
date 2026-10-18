@@ -79,7 +79,8 @@ The current first slice handles Prepared, Running, quiescent Waiting,
 Reconciling, and immutable non-successful Finished outcomes. Reservations are
 recorded invocation intent; this package dispatches nothing. Unknown effects keep
 their full holds. Explicit Host observations establish settlement or proven
-non-dispatch. Writing preserves the completion reserve; assessment may use it.
+non-dispatch. Writing and the expectations step that prepares it preserve the
+completion reserve; assessment may use it.
 An actual overrun is retained and blocks further admission.
 
 `ExtendAssignment` records absolute cap targets and exact raw UTF-8 owner input
@@ -231,8 +232,9 @@ for basis v3. Rule IDs refer to that document.
 
 When a run is prepared, every Manager of the recorded topology gets one task.
 `Next` returns the one admissible step of the run (T4): Explore children before
-parents (T1), reviews at any time (T3), and work and integration only after
-every task is explored (T2). Ties break with reply steps first, then by
+parents (T1), reviews of submissions at any time (T3), and work, integration
+and the expectations steps that precede them only after every task is explored
+(T2, DEC-049). Ties break with reply steps first, then by
 Manager path, then by kind. The admission names the phase, the provider home
 and the conversation to resume: a Manager's steps continue its conversation
 (S3), while expectations and candidate steps start fresh conversations, and
@@ -270,7 +272,8 @@ candidate's step (D4), or, for an integration, while a child is not done (T9). T
 task's next step sees why its pass was withheld. Once the write barrier is
 open, a reviewer records the expectations before a task's writing step for a
 purpose, unless cases for that purpose still stand, so that the Manager knows
-them and the review of its submission has only the candidate step (DEC-049).
+them and the review of its submission has only the candidate step; that step is
+charged as preparation and does not use the completion reserve (DEC-049).
 Unless its assessment failed, a review leaves its recorded expectations standing for the task's later submissions
 with the same purpose, whatever their scope. Their review skips the
 expectations step while the task's open findings, other than those the reviews

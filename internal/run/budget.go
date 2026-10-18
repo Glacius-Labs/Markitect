@@ -46,6 +46,10 @@ type Purpose string
 const (
 	Writing    Purpose = "writing"
 	Assessment Purpose = "assessment"
+	// Preparation is an assessment that prepares writing, such as the
+	// expectations step before a work step; like writing it leaves the
+	// completion reserve untouched (DEC-049).
+	Preparation Purpose = "preparation"
 )
 
 type InvocationKind string
@@ -67,7 +71,7 @@ type Reservation struct {
 // valid checks intrinsic record shape independently of the current balance and
 // selected timeout. The codec and admission use this same closed value contract.
 func (r Reservation) valid() bool {
-	return identifier(r.ID) && (r.Purpose == Writing || r.Purpose == Assessment) && r.Maximum > 0 &&
+	return identifier(r.ID) && (r.Purpose == Writing || r.Purpose == Assessment || r.Purpose == Preparation) && r.Maximum > 0 &&
 		(r.Kind == SessionStart || r.Kind == AgentStep || r.Kind == ProjectCheck || r.Kind == ToolProcess) &&
 		(r.Kind != ProjectCheck || r.Purpose == Assessment)
 }
@@ -162,7 +166,7 @@ func admit(p BudgetPolicy, view BudgetView, r Reservation) error {
 	if view.Overrun || !fits(c, view.Remaining) {
 		return ErrBudget
 	}
-	if r.Purpose == Writing {
+	if r.Purpose == Writing || r.Purpose == Preparation {
 		left := view.Remaining
 		left.SessionStarts -= c.SessionStarts
 		left.Steps -= c.Steps
