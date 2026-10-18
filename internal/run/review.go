@@ -59,8 +59,8 @@ type Delivery struct {
 // reviewValue is the progress of the current review: the expectations its
 // first step recorded, which its candidate step receives, their cases, which
 // the candidate step assesses (core rule T7), the identity of what the
-// expectations step saw besides the model, and the candidate steps that
-// assessed against these expectations without an accepted delivery.
+// expectations step saw besides the model, and the candidate steps that have
+// assessed against these expectations.
 type reviewValue struct {
 	Expectations BlobRef
 	Cases        []recordedCase
@@ -211,6 +211,15 @@ func (s stateValue) expectationInputs(t taskValue, except []StepID) string {
 		parts = append(parts, d.Source.RecordID)
 	}
 	return strings.Join(parts, "\n")
+}
+
+// standing returns the kept expectations of the task's next submission with
+// the purpose while their inputs are unchanged, apart from findings the
+// reviews against them raised or resolved (DEC-048).
+func (s stateValue) standing(t taskValue, purpose string) (reviewValue, bool) {
+	k, ok := t.Kept[purpose]
+	t.Submission.Purpose = purpose
+	return k, ok && k.Inputs == s.expectationInputs(t, k.Assessed)
 }
 
 // keep records the expectations that stand for the task's next submission

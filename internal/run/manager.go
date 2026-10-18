@@ -189,11 +189,23 @@ func (c *Coordinator) StepQuotes(manager string) []BlobRef {
 		refs = append(refs, t.Submission.Proposal, t.Review.Expectations)
 	}
 	if !t.Phase.reviewer() {
-		for _, purpose := range slices.Sorted(maps.Keys(t.Kept)) {
+		for _, purpose := range c.state.standingPurposes(t) {
 			refs = append(refs, t.Kept[purpose].Expectations)
 		}
 	}
 	return refs
+}
+
+// standingPurposes lists the purposes whose kept expectations still stand
+// for the task's next submission (DEC-048).
+func (s stateValue) standingPurposes(t taskValue) []string {
+	var out []string
+	for _, purpose := range slices.Sorted(maps.Keys(t.Kept)) {
+		if _, ok := s.standing(t, purpose); ok {
+			out = append(out, purpose)
+		}
+	}
+	return out
 }
 
 func childReports(t taskValue) []BlobRef {
@@ -336,8 +348,8 @@ func (s stateValue) renderInput(t taskValue, facts StepFacts, basis snapshot.Con
 	}
 	if !t.Phase.reviewer() {
 		// The Manager sees the cases its next review with each purpose
-		// assesses again (DEC-047, DEC-048).
-		for _, purpose := range slices.Sorted(maps.Keys(t.Kept)) {
+		// assesses again while they stand (DEC-047, DEC-048).
+		for _, purpose := range s.standingPurposes(t) {
 			kept := t.Kept[purpose].Expectations
 			recorded, err := quote(kept)
 			if err != nil {

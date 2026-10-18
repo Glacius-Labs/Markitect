@@ -87,6 +87,11 @@ func TestIntegrationFindingReopensTheChild(t *testing.T) {
 			if !bytes.Contains(s.Packet.Context.Bytes, []byte("Item has no title.")) {
 				t.Error("the reopened child does not see the finding")
 			}
+			// The finding changed what the child's cases rest on, so they no
+			// longer stand and the step does not show them (DEC-048).
+			if bytes.Contains(s.Packet.Context.Bytes, []byte("against these recorded cases")) {
+				t.Error("the reopened child sees cases that no longer stand")
+			}
 			return []action{{Write: map[string]string{"out/library.go": "package library\n\ntype Item struct{ Title string }\n"}, Tool: run.ToolSubmit, Args: submitArgs("local", "complete"), Want: run.ToolOK}}
 		case s.Manager == "lending" && s.Phase == run.PhaseReviewerCandidate && s.Attempt == 1:
 			return []action{
