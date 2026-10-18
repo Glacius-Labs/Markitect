@@ -45,7 +45,7 @@ Both accept the same `--model` and repeated `--dependency` selections as prepara
 
 ### Invocation configuration
 
-`--run-config` selects a closed UTF-8 JSON object with `formatVersion: 1`. Every field below is required, including empty network strings and explicit limits. The one optional field is `ownerDecisions`, a list of the owner's earlier decisions as plain texts; every Manager and reviewer of the run sees them from its start ([DEC-053](concepts/register.md#dec-053-owner-decisions-bind-the-whole-run)). Unknown, duplicate, null, relative-path or invalid values refuse construction. There are no environment defaults. This file supplies concrete invocation inputs; project policies and Agent/Check model, effort, image and resource settings remain in their existing execution and Host profile documents.
+`--run-config` selects a closed UTF-8 JSON object with `formatVersion: 1`. Every field below is required, including empty network strings and explicit limits. The one optional field is `ownerDecisions`, a nonempty list of at most 64 of the owner's earlier decisions as plain texts of at most 16 KiB each; every Manager and reviewer of the run sees them from its start ([DEC-053](concepts/register.md#dec-053-owner-decisions-bind-the-whole-run)). Unknown, duplicate, null, relative-path or invalid values refuse construction. There are no environment defaults. This file supplies concrete invocation inputs; project policies and Agent/Check model, effort, image and resource settings remain in their existing execution and Host profile documents.
 
 The following is an illustrative shape. Supply actual native absolute paths, immutable images, dedicated credentials and limits appropriate to the frozen project; these example assertions do not certify a runtime:
 
@@ -102,7 +102,7 @@ The following is an illustrative shape. Supply actual native absolute paths, imm
 }
 ```
 
-All duration numbers are integer nanoseconds, matching the existing Core types. Capacity and byte/count limits are positive integers; `restoreLimits.pageSize` is at most 256 and `engineLimits.record.encodedBytes` is at most 67108864. Core also enforces the captured project's budgets and policies. `productBuild` is the operator's explicit assertion identifying the frozen build, not an automatically verified Git SHA. `repositoryIdentity`, owner request and allocation participate in the bound run inputs.
+All duration numbers are integer nanoseconds, matching the existing Core types. Capacity and byte/count limits are positive integers; `restoreLimits.pageSize` is at most 256 and `engineLimits.record.encodedBytes` is at most 67108864. Core also enforces the captured project's budgets and policies. `productBuild` is the operator's explicit assertion identifying the frozen build, not an automatically verified Git SHA. `repositoryIdentity`, owner request, owner decisions and allocation participate in the bound run inputs.
 
 `engineExecutable` must equal the already validated literal in every selected executable Agent and Check profile. The helper is its own explicit container capability for workspace transfer: immutable image ID, non-root numeric user/group, finite positive CPU/memory/process/tmp limits and labels are required. Its work directory is `/work`; invocation JSON cannot add mounts. Empty `network` explicitly leaves network selection to the engine; use `"none"` to disable networking. Host networking is refused. These helper fields do not replace Agent or Check profile resources.
 

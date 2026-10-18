@@ -341,7 +341,11 @@ func Bind(input BindingInput) (Binding, error) {
 	if _, _, err := decodeBindingRecord(payload); err != nil {
 		return Binding{}, err
 	}
-	return Binding{payload: payload, owner: input.OwnerRequest, decisions: slices.Clone(input.OwnerDecisions), source: s, policy: input.Policy, reviews: reviews, version: w.Version, demand: demand}, nil
+	var decisions []string
+	if w.OwnerDecisions != nil {
+		decisions = slices.Clone(*w.OwnerDecisions)
+	}
+	return Binding{payload: payload, owner: input.OwnerRequest, decisions: decisions, source: s, policy: input.Policy, reviews: reviews, version: w.Version, demand: demand}, nil
 }
 
 // matchRawClosure checks only recorded references, never source semantics. Each

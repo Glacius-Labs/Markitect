@@ -88,6 +88,29 @@ func TestContinuationPreservesAssignmentOwnerRequest(t *testing.T) {
 	}
 }
 
+// A continuation run may bind owner decisions the earlier run did not have,
+// and a blank decision is never bound (DEC-053).
+func TestContinuationMayBindNewOwnerDecisions(t *testing.T) {
+	t.Parallel()
+	c, j := running(t)
+	finishIncomplete(t, c, j)
+	i := fixture(t)
+	i.Source.Guard = "changed-source"
+	i.OwnerDecisions = []string{" "}
+	if _, err := run.Bind(i); !errors.Is(err, run.ErrInvalid) {
+		t.Fatal("a blank owner decision was bound", err)
+	}
+	i.OwnerDecisions = []string{"Unknown argument fields return invalidRequest."}
+	b, err := run.Bind(i)
+	if err != nil {
+		t.Fatal(err)
+	}
+	commit(t, c, j, run.PrepareCommand("continue", "a", "r2", "r", observed, b))
+	if c.Budget().Consumed.Runs != 2 {
+		t.Fatal("a continuation with new owner decisions was refused")
+	}
+}
+
 func reserve(id string, kind run.InvocationKind, purpose run.Purpose, maximum time.Duration) run.Command {
 	c := command("reserve-"+id, run.ReserveInvocation)
 	c.Reservation = run.Reservation{ID: id, Kind: kind, Purpose: purpose, Maximum: maximum}

@@ -232,7 +232,6 @@ func (s *stateValue) apply(c Command) error {
 			}
 			s.assignment = c.Assignment
 			s.ownerRequest = b.owner.Ref()
-			s.bound, s.boundDecisions = b.payload.Ref(), slices.Clone(b.decisions)
 			s.policy = b.policy
 			s.initialPolicy = b.policy
 			s.extensions = nil
@@ -240,10 +239,13 @@ func (s *stateValue) apply(c Command) error {
 			s.runs = map[string]RunView{}
 			s.invocations = map[string]Invocation{}
 		} else {
-			if s.assignment != c.Assignment || s.current.State != Finished || c.Predecessor != s.current.ID || c.Basis == s.current.Basis && s.runCapRevision == s.capRevision() || s.initialPolicy != b.policy || s.ownerRequest != b.owner.Ref() || !slices.Equal(s.boundDecisions, b.decisions) {
+			if s.assignment != c.Assignment || s.current.State != Finished || c.Predecessor != s.current.ID || c.Basis == s.current.Basis && s.runCapRevision == s.capRevision() || s.initialPolicy != b.policy || s.ownerRequest != b.owner.Ref() {
 				return ErrState
 			}
 		}
+		// Each run binds its own owner decisions, so a continuation can carry
+		// decisions the owner made after the earlier run (DEC-053).
+		s.bound, s.boundDecisions = b.payload.Ref(), slices.Clone(b.decisions)
 		view := budget(s.policy, int64(len(s.runs)), s.invocations)
 		// Assessment may spend the configured reserve. Each new basis still
 		// needs its own structural review floor in the shared remaining ledger.

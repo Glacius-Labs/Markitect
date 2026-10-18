@@ -168,7 +168,7 @@ func (c runConfig) valid() bool {
 	if c.FormatVersion != 1 || !runConfigText(c.RepositoryIdentity) || len(c.RepositoryIdentity) > 256 || !runConfigText(c.ProductBuild) || !utf8.ValidString(c.OwnerRequest) || strings.TrimSpace(c.OwnerRequest) == "" || !credentialPath(c.StateDirectory) || !credentialPath(c.EngineExecutable) {
 		return false
 	}
-	if len(c.OwnerDecisions) > 64 || slices.ContainsFunc(c.OwnerDecisions, func(d string) bool {
+	if c.OwnerDecisions != nil && len(c.OwnerDecisions) == 0 || len(c.OwnerDecisions) > 64 || slices.ContainsFunc(c.OwnerDecisions, func(d string) bool {
 		return !utf8.ValidString(d) || strings.TrimSpace(d) == "" || strings.ContainsRune(d, 0) || len(d) > 16384
 	}) {
 		return false

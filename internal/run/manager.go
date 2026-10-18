@@ -72,10 +72,13 @@ func recordedReviewDemand(w bindingWire) reviewDemand {
 }
 func validateManagerPolicy(w bindingWire) error {
 	if w.Version != 3 {
-		if w.ManagerPolicy != nil || w.Scope != nil || w.MaxContextBytes != nil || w.RequiredChecks != nil {
+		if w.ManagerPolicy != nil || w.Scope != nil || w.MaxContextBytes != nil || w.RequiredChecks != nil || w.OwnerDecisions != nil {
 			return ErrInvalid
 		}
 		return nil
+	}
+	if w.OwnerDecisions != nil && (len(*w.OwnerDecisions) == 0 || slices.ContainsFunc(*w.OwnerDecisions, func(d string) bool { return !text(d) })) {
+		return ErrInvalid
 	}
 	if w.RequiredChecks == nil || !slices.IsSorted(*w.RequiredChecks) || slices.ContainsFunc(*w.RequiredChecks, func(id string) bool { return !identifier(id) }) || len(slices.Compact(slices.Clone(*w.RequiredChecks))) != len(*w.RequiredChecks) {
 		return ErrInvalid
@@ -448,7 +451,7 @@ func (s stateValue) ownerDecisions(t taskValue, all bool) []organization.HostTex
 	}
 	for _, m := range s.messages {
 		if q := s.issues[m.About]; m.From == addressedToOwner && (all || q.Task == t.Slot.Package) {
-			out = append(out, organization.HostText{Text: "The owner decided on the question \"" + q.Request + "\": " + m.Body, Source: organization.HostSource{RecordID: m.ID, ContentID: m.Source.ContentID}})
+			out = append(out, organization.HostText{Text: "The owner decided on the question that " + q.Task + " asked, \"" + q.Request + "\": " + m.Body, Source: organization.HostSource{RecordID: m.ID, ContentID: m.Source.ContentID}})
 		}
 	}
 	return out
