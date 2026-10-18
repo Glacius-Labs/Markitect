@@ -428,7 +428,11 @@ func (s stateValue) openFindings(t taskValue, source organization.HostSource) or
 			continue
 		}
 		set.IDs = append(set.IDs, issue.ID)
-		text := fmt.Sprintf("%s %s finding on %s: %s Requested evidence: %s", issue.Severity, issue.Purpose, strings.Join(issue.Definitions, ", "), issue.Grounds, issue.Request)
+		on := ""
+		if len(issue.Definitions) > 0 {
+			on = " on " + strings.Join(issue.Definitions, ", ")
+		}
+		text := fmt.Sprintf("%s %s finding%s: %s Requested evidence: %s", issue.Severity, issue.Purpose, on, issue.Grounds, issue.Request)
 		set.Items = append(set.Items, organization.FindingFact{ID: issue.ID, Grounds: organization.HostText{Text: text, Source: organization.HostSource{RecordID: issue.ID, ContentID: issue.Source.ContentID}}})
 	}
 	return set

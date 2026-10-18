@@ -154,7 +154,7 @@ func TestAMissingCaseBecomesAFinding(t *testing.T) {
 		case s.Manager == "lending" && s.Phase == run.PhaseReviewerCandidate && s.Attempt == 0:
 			return []action{{Tool: run.ToolSubmitReview, Args: review("changes_requested", missing, `[]`), Want: run.ToolOK}}
 		case s.Manager == "lending" && s.Phase == run.PhaseWork && s.Attempt == 1:
-			if !strings.Contains(string(s.Packet.Context.Bytes), "has no evidence: No test shows Item.") {
+			if !strings.Contains(string(s.Packet.Context.Bytes), "blocking local finding: The recorded case \"item\" has no evidence: No test shows Item.") {
 				t.Error("the rework does not see the missing case")
 			}
 		case s.Manager == "lending" && s.Phase == run.PhaseReviewerExpectations && s.Attempt == 1:
