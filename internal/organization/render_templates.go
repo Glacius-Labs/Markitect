@@ -61,7 +61,9 @@ func managerPhaseText(phase ManagerPhase) string {
 	case ManagerIntegrate:
 		return "Assess and compose current local work and required direct-child deliveries, including reviewed no-change. One-child parents still require integration review. A summary cannot close missing work or substitute for current aggregate evidence. You may change only your own artifacts.\n"
 	case ManagerReply:
-		return "Answer the open question addressed to you with send, kind reply; that reply ends the step. When the answer shows that files you own need a correction and every Manager has explored, make it in this step: change only your own files, and your task returns to work so that the change goes through review. Before then this step is read-only; say in your reply what needs to change.\n"
+		return "Answer the open question addressed to you with send, kind reply; that reply ends the step. When the answer shows that files you own need a correction, make it in this step: change only your own files, and your task returns to work so that the change goes through review.\n"
+	case ManagerReplyReadOnly:
+		return "Answer the open question addressed to you with send, kind reply; that reply ends the step. This step is read-only and changes no artifact; if an answer needs a change, say so in your reply.\n"
 	default:
 		return ""
 	}

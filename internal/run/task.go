@@ -825,7 +825,7 @@ func (s *stateValue) concludeStep(c Command) error {
 			return ErrState
 		}
 	}
-	if !writes && r.Candidate != (BlobRef{}) {
+	if !writes && r.Candidate != (BlobRef{}) || t.Phase == PhaseReply && r.Candidate != (BlobRef{}) && !r.Changed {
 		return ErrState
 	}
 	revision := s.revision
@@ -948,6 +948,11 @@ func (s stateValue) stuckWait(t taskValue, w Wait) string {
 		if s.waitsFor(w.Ref, t.Slot.Package, map[string]int{}) {
 			return fmt.Sprintf("%s waits for you, so its delivery cannot come first", w.Ref)
 		}
+		// An ancestor whose local work is accepted delivers next its integration,
+		// which waits for every descendant (core rule T9).
+		if s.ancestor(w.Ref, t.Slot.Package) && s.tasks[w.Ref].LocalDone {
+			return fmt.Sprintf("%s has delivered its local work; its next delivery is its integration, which waits for you", w.Ref)
+		}
 	case waitChildren:
 		for _, child := range t.Slot.Children {
 			if s.tasks[child].State != TaskDone && s.waitsFor(child, t.Slot.Package, map[string]int{}) {
@@ -956,6 +961,16 @@ func (s stateValue) stuckWait(t taskValue, w Wait) string {
 		}
 	}
 	return ""
+}
+
+// ancestor reports whether manager is an ancestor of other.
+func (s stateValue) ancestor(manager, other string) bool {
+	for p := s.tasks[other].Slot.Parent; p != ""; p = s.tasks[p].Slot.Parent {
+		if p == manager {
+			return true
+		}
+	}
+	return false
 }
 
 // waitsFor reports whether a blocked Manager can act again only after another

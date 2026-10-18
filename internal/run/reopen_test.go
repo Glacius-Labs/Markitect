@@ -159,6 +159,60 @@ func TestAReplyStepCorrectsADoneManagersFile(t *testing.T) {
 	}
 }
 
+// A done grandchild that corrects its file in a reply step returns its done
+// parent to waiting for its children: the parent integrates the correction
+// again before the root does (core rule T11).
+func TestAReplyCorrectionReopensTheDoneAncestors(t *testing.T) {
+	var h *harness
+	var asked string
+	corrected := "package reminders\n\nconst Days = 14\n"
+	var lendingAfter run.TaskState
+	agent := func(s agentStep) []action {
+		if order := admitted(h); lendingAfter == "" && len(order) > 1 && order[len(order)-2] == "lending/reminders reply" {
+			lendingAfter = h.task("lending").State
+		}
+		switch {
+		case s.Manager == "lending/reminders" && s.Phase == run.PhaseWork && s.Attempt == 0:
+			return []action{
+				{Tool: run.ToolReservePath, Args: `{"path":"out/reminders.go","form":"code"}`, Want: run.ToolOK},
+				{Tool: run.ToolRegister, Args: `{"path":"out/reminders.go","form":"code","realizes":["lending/reminders/Item"],"why":"Realizes reminders."}`, Want: run.ToolOK},
+				{Write: map[string]string{"out/reminders.go": "package reminders\n"}, Tool: run.ToolSubmit, Args: submitArgs("local", "complete"), Want: run.ToolOK},
+			}
+		case s.Manager == "." && s.Phase == run.PhaseIntegrate && s.Attempt == 0:
+			asked = questionID(s, 1)
+			return []action{
+				{Tool: run.ToolSend, Args: sendArgs("question", "lending/reminders", "Reminders need the loan period; can you add it?"), Want: run.ToolOK},
+				{Tool: run.ToolWait, Args: waitReplyArgs(asked), Want: run.ToolOK},
+			}
+		case s.Manager == "." && s.Phase == run.PhaseIntegrate && h.task("lending").State != run.TaskDone:
+			return []action{{Tool: run.ToolWait, Args: `{"on":[{"kind":"children"}],"reason":"Reminders correct their file."}`, Want: run.ToolOK}}
+		case s.Manager == "lending/reminders" && s.Phase == run.PhaseReply:
+			return []action{{Write: map[string]string{"out/reminders.go": corrected}, Tool: run.ToolSend, Args: sendArgs("reply", asked, "Added the period."), Want: run.ToolOK}}
+		case s.Manager == "lending/reminders" && s.Phase == run.PhaseWork && s.Attempt == 1:
+			return []action{{Tool: run.ToolSubmit, Args: submitArgs("local", "complete"), Want: run.ToolOK}}
+		case s.Manager == "lending" && s.Phase == run.PhaseWork && s.Attempt >= 1:
+			return []action{{Tool: run.ToolSubmit, Args: submitArgs("local", "complete"), Want: run.ToolOK}}
+		}
+		return happyAgent(s)
+	}
+	inputs := stepInputsWith(t, false, withCreationArea(t))
+	inputs.Binding.Policy.Assignment.Steps, inputs.Binding.Policy.Assignment.SessionStarts = 64, 64
+	h = newHarnessWith(t, inputs, agent)
+	runToEnd(t, h)
+	if h.c.Current().State != run.Verifying {
+		t.Fatal("the run did not complete", h.c.Current(), admitted(h))
+	}
+	if lendingAfter != run.TaskBlocked {
+		t.Fatal("the done parent did not wait for its corrected child", lendingAfter)
+	}
+	if order := strings.Join(admitted(h), ","); strings.Count(order, "lending integrate") != 2 {
+		t.Fatal("the parent did not integrate the correction again", order)
+	}
+	if got := aggregateFile(t, h.engine, "out/reminders.go"); got != corrected {
+		t.Fatalf("the correction was not composed: %q", got)
+	}
+}
+
 // A parent that asks a done child and submits its integration in the same step
 // does not get that integration accepted while the child corrects its file:
 // the pass is withheld, and the parent integrates the corrected delivery once

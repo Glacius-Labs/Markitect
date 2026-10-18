@@ -345,6 +345,9 @@ func (s stateValue) renderInput(t taskValue, facts StepFacts, basis snapshot.Con
 	switch t.Phase {
 	case PhaseExplore, PhaseWork, PhaseIntegrate, PhaseReply:
 		phase := map[Phase]organization.ManagerPhase{PhaseExplore: organization.ManagerExplore, PhaseWork: organization.ManagerWork, PhaseIntegrate: organization.ManagerIntegrate, PhaseReply: organization.ManagerReply}[t.Phase]
+		if t.Phase == PhaseReply && !s.writes(t, PhaseReply) {
+			phase = organization.ManagerReplyReadOnly
+		}
 		in.Process = &organization.ManagerProcess{Phase: phase, Source: source}
 		in.OwnArtifacts = artifacts
 		in.Messages, in.ParentHints = s.inbox(t)
