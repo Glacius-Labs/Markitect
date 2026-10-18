@@ -194,7 +194,7 @@ func (s stateValue) verdictOf(t taskValue, in reviewInput) (ReviewVerdict, strin
 		covered = s.subtree(t)
 		for _, child := range t.Slot.Children {
 			if s.tasks[child].State != TaskDone {
-				return VerdictWithhold, fmt.Sprintf("an integration needs every child done, and %s is not done; wait for your children, then integrate again", child)
+				return VerdictWithhold, fmt.Sprintf("an integration needs every child done, and %s was not done; wait for your children, then integrate again", child)
 			}
 		}
 	}

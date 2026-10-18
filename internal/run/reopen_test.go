@@ -230,7 +230,7 @@ func TestAnIntegrationWaitsForAChildThatCorrectsItself(t *testing.T) {
 				{Tool: run.ToolSubmit, Args: submitArgs("integration", "complete"), Want: run.ToolOK},
 			}
 		case s.Manager == "." && s.Phase == run.PhaseIntegrate && h.task("lending").State != run.TaskDone:
-			if !bytes.Contains(s.Packet.Context.Bytes, []byte("other Managers do not see it: an integration needs every child done, and lending is not done; wait for your children")) {
+			if !bytes.Contains(s.Packet.Context.Bytes, []byte("other Managers do not see it: an integration needs every child done, and lending was not done; wait for your children")) {
 				t.Error("the integration step after a withheld pass does not see why")
 			}
 			return []action{
