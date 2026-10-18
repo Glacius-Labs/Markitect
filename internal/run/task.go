@@ -915,10 +915,10 @@ func (s *stateValue) concludeWork(r ConclusionRecord, t *taskValue, revision uin
 		if k := t.Kept; k.Inputs != "" && k.Inputs == s.expectationInputs(*t, k.Assessed) {
 			// A withheld or rejected candidate leaves its recorded expectations
 			// standing while their inputs are unchanged, apart from findings
-			// the reviews against them raised; the expectations step sees
-			// neither the candidate nor the aggregate. The next review assesses
-			// the same cases in a fresh candidate home (core rule T7, DEC-046,
-			// DEC-047).
+			// the reviews against them raised or resolved; the expectations
+			// step sees neither the candidate nor the aggregate. The next review
+			// assesses the same cases in a fresh candidate home (core rule T7,
+			// DEC-046, DEC-047).
 			t.Review = k
 			t.Reviews++
 		}

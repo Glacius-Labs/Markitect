@@ -270,7 +270,7 @@ task's next step sees why its pass was withheld. A withheld pass and a rejected
 candidate leave their recorded expectations standing for the next submission:
 its review skips the expectations step while the submission's purpose and
 scope, the task's open findings other than those the reviews against these
-expectations raised and the owner's decisions are unchanged, because that step
+expectations raised or resolved and the owner's decisions are unchanged, because that step
 sees neither the candidate nor the aggregate, and the Manager's steps show the
 recorded cases (DEC-046, DEC-047). Changes requested count one rejection per purpose, which
 the Manager's next steps see together with the limit; at

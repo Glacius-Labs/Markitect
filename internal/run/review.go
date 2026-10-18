@@ -378,14 +378,24 @@ func (s *stateValue) concludeReview(r ConclusionRecord, t *taskValue, revision u
 		fresh()
 		return nil
 	}
+	// The recorded cases can stand for the next submission only while what
+	// their expectations step saw is unchanged (DEC-046, DEC-047).
+	standing := t.Review.Inputs != "" && t.Review.Inputs == s.expectationInputs(*t, t.Review.Assessed)
 	// A withheld pass does not stand, so it resolves nothing (core rule I1).
 	s.recordReview(r, *t, in, verdict != VerdictWithhold)
 	purpose, scope, review := t.Submission.Purpose, t.Submission.Scope, t.Review
+	var kept reviewValue
+	if standing {
+		// The findings this review raised or resolved belong to these
+		// expectations, so the inputs move on with them.
+		kept = review
+		kept.Assessed = append(slices.Clone(review.Assessed), r.Step)
+		kept.Inputs = s.expectationInputs(*t, kept.Assessed)
+	}
 	t.Review = reviewValue{}
 	switch verdict {
 	case VerdictWithhold:
-		review.Assessed = append(slices.Clone(review.Assessed), r.Step)
-		t.State, t.Since, t.Submission, t.Withheld, t.Kept = TaskReady, revision, Submission{}, withheld, review
+		t.State, t.Since, t.Submission, t.Withheld, t.Kept = TaskReady, revision, Submission{}, withheld, kept
 	case VerdictDecision:
 		// The owner's answer starts a fresh review of the same frozen
 		// candidate (core rule T8); the run waits for it (core rule W1).
@@ -400,8 +410,7 @@ func (s *stateValue) concludeReview(r ConclusionRecord, t *taskValue, revision u
 		t.Rejections[purpose]++
 		// The recorded cases stand for the resubmission, so that rework
 		// converges on them (DEC-047).
-		review.Assessed = append(slices.Clone(review.Assessed), r.Step)
-		t.Kept = review
+		t.Kept = kept
 		t.Submission = Submission{}
 		// Findings about a descendant's artifacts reopen it; the reviewed
 		// Manager integrates again once its children are done (core rule T11).

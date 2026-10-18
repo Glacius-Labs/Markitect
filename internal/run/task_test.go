@@ -456,6 +456,63 @@ func TestAChangedResubmissionRecordsFreshExpectations(t *testing.T) {
 	}
 }
 
+// A rejection keeps the recorded cases even when it resolves a finding that
+// was open when they were recorded: the rework sees the cases, and the next
+// review of the same scope assesses them without recording new ones (DEC-047).
+func TestARejectionKeepsTheCasesItsReviewResolvedAgainst(t *testing.T) {
+	t.Parallel()
+	var advisory string
+	var notes []bool
+	agent := func(s agentStep) []action {
+		switch {
+		case s.Manager == "lending" && s.Phase == run.PhaseWork && s.Attempt == 0:
+			return []action{{Write: map[string]string{"out/library.go": "package library\n\ntype Item struct{}\n"}, Tool: run.ToolSubmit, Args: submitArgs("local", "limited"), Want: run.ToolOK}}
+		case s.Manager == "lending" && s.Phase == run.PhaseWork:
+			notes = append(notes, strings.Contains(string(s.Packet.Context.Bytes), "Your last review assessed your candidate against these recorded cases"))
+			return []action{{Write: map[string]string{"out/library.go": "package library\n\ntype Item struct{ Title string }\n"}, Tool: run.ToolSubmit, Args: submitArgs("local", "complete"), Want: run.ToolOK}}
+		case s.Manager == "lending" && s.Phase == run.PhaseReviewerCandidate && s.Attempt == 0:
+			advisory = "finding-" + string(s.Packet.Step) + "-1"
+			return []action{{Tool: run.ToolSubmitReview, Args: `{"verdict":"pass","summary":"Fine.","evidence":[],"cases":[{"name":"item","assessment":"evidenced","grounds":"Checked."}],"findings":[{"severity":"advisory","definitions":["lending/Item"],"grounds":"Item could carry a title.","requestedEvidence":"A title field."}],"resolutions":[]}`, Want: run.ToolOK}}
+		case s.Manager == "lending" && s.Phase == run.PhaseReviewerCandidate && s.Attempt == 1:
+			reject := `{"verdict":"changes_requested","summary":"Item is incomplete.","evidence":[],"cases":[{"name":"item","assessment":"evidenced","grounds":"Checked."}],"resolutions":[{"finding":"` + advisory + `","state":"resolved","grounds":"Item has a title.","evidence":[]}],"findings":[{"severity":"blocking","definitions":["lending/Item"],"grounds":"No test.","requestedEvidence":"A test."}]}`
+			return []action{{Tool: run.ToolSubmitReview, Args: reject, Want: run.ToolOK}}
+		case s.Manager == "lending" && s.Phase == run.PhaseReviewerCandidate && s.Attempt == 2:
+			return []action{{Tool: run.ToolSubmitReview, Args: passArgs(openFinding(t, s)), Want: run.ToolOK}}
+		}
+		return happyAgent(s)
+	}
+	h := newHarness(t, true, agent)
+	runToEnd(t, h)
+	order := strings.Join(admitted(h), ",")
+	// The limited and the complete submission record their own cases; the
+	// rework after the rejection keeps them.
+	if h.c.Current().State != run.Verifying || strings.Count(order, "lending reviewer-expectations") != 2 || !slices.Equal(notes, []bool{false, true}) {
+		t.Fatal("the rejection did not keep its recorded cases", h.c.Current(), notes, order)
+	}
+}
+
+// A rejected candidate's next submission with another scope records fresh
+// cases (core rule T7, DEC-047).
+func TestARejectionThenAnotherScopeRecordsFreshCases(t *testing.T) {
+	t.Parallel()
+	agent := func(s agentStep) []action {
+		switch {
+		case s.Manager == "lending" && s.Phase == run.PhaseWork && s.Attempt == 0:
+			return []action{{Write: map[string]string{"out/library.go": "package library\n"}, Tool: run.ToolSubmit, Args: submitArgs("local", "limited"), Want: run.ToolOK}}
+		case s.Manager == "lending" && s.Phase == run.PhaseReviewerCandidate && s.Attempt == 0:
+			return []action{{Tool: run.ToolSubmitReview, Args: rejectArgs, Want: run.ToolOK}}
+		case s.Manager == "lending" && s.Phase == run.PhaseReviewerCandidate && s.Attempt == 1:
+			return []action{{Tool: run.ToolSubmitReview, Args: passArgs(openFinding(t, s)), Want: run.ToolOK}}
+		}
+		return happyAgent(s)
+	}
+	h := newHarness(t, true, agent)
+	runToEnd(t, h)
+	if order := strings.Join(admitted(h), ","); h.c.Current().State != run.Verifying || strings.Count(order, "lending reviewer-expectations") != 2 {
+		t.Fatal("the complete submission reused the limited submission's cases", h.c.Current(), order)
+	}
+}
+
 // A failed step after a withheld pass leaves no new submission, so the step
 // after it still learns why the pass was not accepted (core rules D4, T6).
 func TestAWithheldNoteOutlivesAFailedStep(t *testing.T) {

@@ -339,7 +339,7 @@ func (s stateValue) renderInput(t taskValue, facts StepFacts, basis snapshot.Con
 			return organization.RenderInput{}, err
 		}
 		id := t.ID + "-recorded-cases"
-		text := "Your last review assessed your candidate against these recorded cases. A resubmission with the same purpose and scope is assessed against the same cases again, each by its name, while no other finding or owner decision arrives; give each case evidence that shows it ran: " + recorded.Text
+		text := "Your last review assessed your candidate against these recorded cases. A resubmission with the same purpose and scope is assessed against the same cases again, each by its name, while no other finding or owner decision arrives and no review step fails; give each case evidence that shows it ran: " + recorded.Text
 		findings.IDs = append(findings.IDs, id)
 		findings.Items = append(findings.Items, organization.FindingFact{ID: id, Grounds: organization.HostText{Text: text, Source: organization.HostSource{RecordID: id, ContentID: t.Kept.Expectations.ContentID}}})
 	}
