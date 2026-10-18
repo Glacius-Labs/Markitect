@@ -57,6 +57,20 @@ func TestRunConfigIsExplicitAndDoesNotReadReferencedCredentials(t *testing.T) {
 	}
 }
 
+// Owner decisions are optional; when present they are retained in order
+// (DEC-053).
+func TestRunConfigRetainsOptionalOwnerDecisions(t *testing.T) {
+	document := runConfigFixture(t)
+	if cfg, err := decodeRunConfig(configBytes(t, document)); err != nil || cfg.OwnerDecisions != nil {
+		t.Fatal("a run config without owner decisions changed", err, cfg.OwnerDecisions)
+	}
+	document["ownerDecisions"] = []any{"Unknown argument fields return invalidRequest.", "A due date after 9999-12-31 refuses the borrow."}
+	cfg, err := decodeRunConfig(configBytes(t, document))
+	if err != nil || len(cfg.OwnerDecisions) != 2 || cfg.OwnerDecisions[1] != "A due date after 9999-12-31 refuses the borrow." {
+		t.Fatal("the owner decisions were not retained", err, cfg.OwnerDecisions)
+	}
+}
+
 func TestRunConfigRefusesImplicitOrUnknownValues(t *testing.T) {
 	for _, tc := range []struct {
 		name   string
@@ -79,6 +93,8 @@ func TestRunConfigRefusesImplicitOrUnknownValues(t *testing.T) {
 		{"invalid credential provider", func(m map[string]any) {
 			m["credentials"].(map[string]any)["dedicated"].(map[string]any)["provider"] = "ambient"
 		}},
+		{"blank owner decision", func(m map[string]any) { m["ownerDecisions"] = []any{" "} }},
+		{"null owner decisions", func(m map[string]any) { m["ownerDecisions"] = nil }},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			document := runConfigFixture(t)

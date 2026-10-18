@@ -211,7 +211,8 @@ func (t taskValue) reviewedPurpose() string {
 
 // expectationInputs identifies what renderInput gives an expectations step
 // besides the model and the fixed task facts: the reviewed purpose, the
-// task's open findings and the owner's decisions for it. Findings raised by
+// task's open findings and the owner's decisions bound with the run or given
+// on the task's own questions. Findings raised by
 // the steps except are left out.
 func (s stateValue) expectationInputs(t taskValue, except []StepID) string {
 	parts := []string{t.reviewedPurpose()}
@@ -220,7 +221,7 @@ func (s stateValue) expectationInputs(t taskValue, except []StepID) string {
 			parts = append(parts, id)
 		}
 	}
-	for _, d := range s.ownerDecisions(t) {
+	for _, d := range s.ownerDecisions(t, false) {
 		parts = append(parts, d.Source.RecordID)
 	}
 	return strings.Join(parts, "\n")

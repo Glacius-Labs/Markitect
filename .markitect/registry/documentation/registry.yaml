@@ -16,6 +16,10 @@ artifacts:
     form: doc
     realizes: [documentation/current-guidance]
     why: Preserves the run evidence and the owner's authorization behind keeping recorded review cases after a rejection.
+  - path: "docs/concepts/sources/run-wide-owner-decisions-20261018.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Preserves the run evidence and the owner's instruction behind owner decisions that bind the whole run.
   - path: "docs/concepts/sources/agents-get-tasks-20261018.md"
     form: doc
     realizes: [documentation/current-guidance]

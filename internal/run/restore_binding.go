@@ -5,6 +5,7 @@ import (
 	"crypto/sha256"
 	"encoding/json"
 	"fmt"
+	"slices"
 )
 
 // binding decodes the recorded versioned basis, not a new preparation. Original
@@ -25,7 +26,11 @@ func (r *restoreReader) binding(ref BlobRef) (Binding, error) {
 	if err != nil {
 		return Binding{}, err
 	}
-	return Binding{payload: p, owner: owner, source: w.Source, policy: w.Policy, reviews: reviews, version: w.Version, demand: recordedReviewDemand(w)}, nil
+	var decisions []string
+	if w.OwnerDecisions != nil {
+		decisions = slices.Clone(*w.OwnerDecisions)
+	}
+	return Binding{payload: p, owner: owner, decisions: decisions, source: w.Source, policy: w.Policy, reviews: reviews, version: w.Version, demand: recordedReviewDemand(w)}, nil
 }
 
 // BindingOwnerRef validates the original basis payload's byte identity and

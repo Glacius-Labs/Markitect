@@ -29,10 +29,13 @@ type operation struct {
 	receipt AppendReceipt
 }
 type stateValue struct {
-	repository     string
-	revision       uint64
-	assignment     string
-	ownerRequest   BlobRef
+	repository   string
+	revision     uint64
+	assignment   string
+	ownerRequest BlobRef
+	// bound is the binding that carries the owner's earlier decisions (DEC-053).
+	bound          BlobRef
+	boundDecisions []string
 	policy         BudgetPolicy
 	initialPolicy  BudgetPolicy
 	extensions     []AssignmentExtension
@@ -229,6 +232,7 @@ func (s *stateValue) apply(c Command) error {
 			}
 			s.assignment = c.Assignment
 			s.ownerRequest = b.owner.Ref()
+			s.bound, s.boundDecisions = b.payload.Ref(), slices.Clone(b.decisions)
 			s.policy = b.policy
 			s.initialPolicy = b.policy
 			s.extensions = nil
@@ -236,7 +240,7 @@ func (s *stateValue) apply(c Command) error {
 			s.runs = map[string]RunView{}
 			s.invocations = map[string]Invocation{}
 		} else {
-			if s.assignment != c.Assignment || s.current.State != Finished || c.Predecessor != s.current.ID || c.Basis == s.current.Basis && s.runCapRevision == s.capRevision() || s.initialPolicy != b.policy || s.ownerRequest != b.owner.Ref() {
+			if s.assignment != c.Assignment || s.current.State != Finished || c.Predecessor != s.current.ID || c.Basis == s.current.Basis && s.runCapRevision == s.capRevision() || s.initialPolicy != b.policy || s.ownerRequest != b.owner.Ref() || !slices.Equal(s.boundDecisions, b.decisions) {
 				return ErrState
 			}
 		}

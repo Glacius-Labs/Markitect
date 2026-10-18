@@ -150,7 +150,7 @@ Findings and questions share one issue shape:
 The [journal](manager-apply-journal.md) stores findings and questions as records of this shape.
 
 - **I1** A reviewer raises a finding. Only an independent review, including a bound arbiter ruling, with current evidence resolves it, marks it not applicable or grounds a severity correction, as the [execution contract](manager-apply-execution.md#evidence-need-survives-budget-pressure) defines. Preserve the original report and append the resolution. An unchanged closed dispute reopens only with new concrete evidence.
-- **I2** A Manager or a reviewer raises a question. It is resolved by a reply from its addressee: a Manager acting within its mandate, or the owner through the application. The Orchestrator binds every reply to the question's version.
+- **I2** A Manager or a reviewer raises a question. It is resolved by a reply from its addressee: a Manager acting within its mandate, or the owner through the application. The Orchestrator binds every reply to the question's version. An owner's answer binds the whole run: every task's later steps and reviews see it, while only the asking task's recorded review cases are renewed by it. Owner decisions bound with the run bind every task from its start ([DEC-053](../../concepts/register.md#dec-053-owner-decisions-bind-the-whole-run)).
 - **I3** An open blocking issue blocks acceptance of its subject and of every aggregate that contains it.
 - **I4** A Definition disposition `unresolved` needs a linked open issue.
 - **I5** Open issues carry into a continuation run.

@@ -8,6 +8,7 @@ import (
 	"io"
 	"math"
 	"regexp"
+	"slices"
 	"strings"
 	"unicode"
 	"unicode/utf8"
@@ -28,6 +29,7 @@ type runConfig struct {
 	RepositoryIdentity string                      `json:"repositoryIdentity"`
 	ProductBuild       string                      `json:"productBuild"`
 	OwnerRequest       string                      `json:"ownerRequest"`
+	OwnerDecisions     []string                    `json:"ownerDecisions"`
 	StateDirectory     string                      `json:"stateDirectory"`
 	Allocation         runport.Capacity            `json:"allocation"`
 	RestoreLimits      runport.RestoreLimits       `json:"restoreLimits"`
@@ -54,9 +56,21 @@ func decodeRunConfig(data []byte) (runConfig, error) {
 	if !utf8.Valid(data) {
 		return runConfig{}, errRunConfig
 	}
-	root, err := runConfigObject(data, "formatVersion", "repositoryIdentity", "productBuild", "ownerRequest", "stateDirectory", "allocation", "restoreLimits", "engineExecutable", "workspaceHelper", "engineLimits", "credentials")
+	root, err := runConfigObject(data)
 	if err != nil {
 		return runConfig{}, err
+	}
+	// ownerDecisions is the only optional field (DEC-053).
+	required := []string{"formatVersion", "repositoryIdentity", "productBuild", "ownerRequest", "stateDirectory", "allocation", "restoreLimits", "engineExecutable", "workspaceHelper", "engineLimits", "credentials"}
+	for key := range root {
+		if !slices.Contains(required, key) && key != "ownerDecisions" {
+			return runConfig{}, errRunConfig
+		}
+	}
+	for _, key := range required {
+		if root[key] == nil {
+			return runConfig{}, errRunConfig
+		}
 	}
 	for _, section := range []struct {
 		data json.RawMessage
@@ -152,6 +166,11 @@ var (
 
 func (c runConfig) valid() bool {
 	if c.FormatVersion != 1 || !runConfigText(c.RepositoryIdentity) || len(c.RepositoryIdentity) > 256 || !runConfigText(c.ProductBuild) || !utf8.ValidString(c.OwnerRequest) || strings.TrimSpace(c.OwnerRequest) == "" || !credentialPath(c.StateDirectory) || !credentialPath(c.EngineExecutable) {
+		return false
+	}
+	if len(c.OwnerDecisions) > 64 || slices.ContainsFunc(c.OwnerDecisions, func(d string) bool {
+		return !utf8.ValidString(d) || strings.TrimSpace(d) == "" || strings.ContainsRune(d, 0) || len(d) > 16384
+	}) {
 		return false
 	}
 	a, r, e, h := c.Allocation, c.RestoreLimits, c.EngineLimits, c.WorkspaceHelper

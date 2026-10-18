@@ -3,7 +3,9 @@ package run_test
 import (
 	"bytes"
 	"context"
+	"errors"
 	"fmt"
+	"reflect"
 	"slices"
 	"strings"
 	"testing"
@@ -80,7 +82,11 @@ func TestQuestionToParentIsAnsweredInItsNextStep(t *testing.T) {
 func TestOwnerQuestionWaitsAndTheAnswerContinuesTheRun(t *testing.T) {
 	t.Parallel()
 	var asked string
+	rootSaw := false
 	agent := func(s agentStep) []action {
+		if s.Manager == "." && s.Phase == run.PhaseIntegrate {
+			rootSaw = bytes.Contains(s.Packet.Context.Bytes, []byte("No, keep the name."))
+		}
 		switch {
 		case s.Manager == "lending" && s.Phase == run.PhaseWork && s.Attempt == 0:
 			asked = questionID(s, 1)
@@ -119,6 +125,39 @@ func TestOwnerQuestionWaitsAndTheAnswerContinuesTheRun(t *testing.T) {
 	// again before its next work step (DEC-049).
 	if n := strings.Count(strings.Join(admitted(h), ","), "lending reviewer-expectations"); n != 2 {
 		t.Fatal("the owner's answer did not renew lending's cases", n, admitted(h))
+	}
+	// The answer binds the whole run, so the root sees it too, but it renews
+	// only the asking task's cases (DEC-053).
+	if !rootSaw || strings.Count(strings.Join(admitted(h), ","), ". reviewer-expectations") != 2 {
+		t.Fatal("the answer did not reach the root or renewed its cases", rootSaw, admitted(h))
+	}
+}
+
+// The owner's decisions bound with the run reach every step from the start,
+// and a restored run keeps them (DEC-053).
+func TestBoundOwnerDecisionsReachEveryStep(t *testing.T) {
+	t.Parallel()
+	const decision = "Unknown argument fields return invalidRequest."
+	missed := []string{}
+	agent := func(s agentStep) []action {
+		if !bytes.Contains(s.Packet.Context.Bytes, []byte("The owner decided: "+decision)) {
+			missed = append(missed, s.Manager+" "+string(s.Phase))
+		}
+		return happyAgent(s)
+	}
+	inputs := stepInputs(t, true)
+	inputs.Binding.OwnerDecisions = []string{decision}
+	h := newHarnessWith(t, inputs, agent)
+	runToEnd(t, h)
+	if h.c.Current().State != run.Verifying || len(missed) != 0 {
+		t.Fatal("a step did not see the bound owner decision", h.c.Current(), missed)
+	}
+	restored, err := run.Restore(context.Background(), &readJournal{store: h.j}, "repo", run.RestoreLimits{PageSize: 16, Batches: 2000, Events: 4000, Bytes: 64 << 20})
+	if err != nil || !reflect.DeepEqual(restored.Tasks(), h.c.Tasks()) {
+		t.Fatal("restore does not rebuild the run with its bound decisions", err)
+	}
+	if _, err := run.Bind(func() run.BindingInput { b := inputs.Binding; b.OwnerDecisions = []string{" "}; return b }()); !errors.Is(err, run.ErrInvalid) {
+		t.Fatal("a blank owner decision was bound", err)
 	}
 }
 

@@ -59,7 +59,7 @@ func (s *executionService) Execute(ctx context.Context, request cli.ExecutionReq
 		return report, err
 	}
 	opened, err := apply.NewControlService(s.repository, journal.New()).Open(ctx, prepared,
-		apply.RunBindingFacts{RepositoryIdentity: cfg.RepositoryIdentity, ProductBuild: cfg.ProductBuild, OwnerRequest: owner, Allocation: cfg.Allocation},
+		apply.RunBindingFacts{RepositoryIdentity: cfg.RepositoryIdentity, ProductBuild: cfg.ProductBuild, OwnerRequest: owner, OwnerDecisions: cfg.OwnerDecisions, Allocation: cfg.Allocation},
 		apply.ControlOptions{StateDirectory: cfg.StateDirectory, RestoreLimits: cfg.RestoreLimits})
 	report.Control = opened.Binding()
 	if err != nil {

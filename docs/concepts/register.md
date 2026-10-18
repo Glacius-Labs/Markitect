@@ -62,6 +62,7 @@ The owner's [origin account of 15 October 2026](sources/owner-origin-20261015.md
 | [DEC-049](#dec-049-review-cases-are-recorded-before-the-work-they-assess) | Decision | Review cases are recorded before the work they assess | Accepted |
 | [DEC-050](#dec-050-an-accepted-delivery-restarts-the-rejection-count) | Decision | An accepted delivery restarts the rejection count | Accepted |
 | [DEC-051](#dec-051-agents-get-tasks-the-orchestrator-owns-the-process) | Decision | Agents get tasks; the Orchestrator owns the process | Accepted |
+| [DEC-053](#dec-053-owner-decisions-bind-the-whole-run) | Decision | Owner decisions bind the whole run | Accepted |
 | [PRM-001 to PRM-007](#promises) | Promise | Target outcomes | Target |
 | [ASM-001 to ASM-006](#assumptions-and-hypotheses) | Assumption | Assumptions and hypotheses | See entries |
 | [CPT-001](#cpt-001-federalism) | Concept | Federalism | Accepted |
@@ -620,6 +621,14 @@ The owner's [origin account of 15 October 2026](sources/owner-origin-20261015.md
 - **Reason:** The step inputs had accumulated the Host's rules: admission order, the write barrier, the rejection allowance, owner-question mechanics. The owner expects results to become less reliable as prompts take over organization and orchestration, and wants that loop stopped.
 - **Scope:** Applies to every rendered step input and Host note. The model's binding intent, the technical-judgment duty of [DEC-045](#dec-045-managers-and-reviewers-derive-technical-risks) and the provenance the Host records for each section are unchanged. The first change removes the process rules from the role, mandate, phase, review and note texts. The provenance sections the step input still shows, such as record references, limits, profile identities and inclusion reasons, move out of the visible text in a follow-up; the Host keeps recording them. Task facts such as a Manager's creation areas stay visible.
 - **Owners:** [organization/delegated-context](../../.markitect/model/product/organization/delegated-context.yaml) rendering in `internal/organization`, and the Host notes in `internal/run`.
+
+### DEC-053 Owner decisions bind the whole run
+
+- **Status:** Accepted, owner, 18 October 2026 ([evidence and owner instruction](sources/run-wide-owner-decisions-20261018.md)).
+- **Decision:** An owner's answer binds the whole run: every task's later steps and reviews see it, not only the asking task's. The owner's earlier decisions can be bound with a run as `ownerDecisions` in its configuration; every step sees them from the run's start, so a question that the owner has decided is not asked again. A candidate review judges a recorded case or finding that an owner decision contradicts as not applicable. Only the asking task's recorded review cases are renewed by an answer; bound decisions are inputs of every task's cases from the start.
+- **Reason:** In R2-A1-09 the run waited 54 minutes for the owner, on four questions about two topics. The root, `lending` and `library` asked about the same date boundary, because an answer reached only the task that asked.
+- **Scope:** Amends I2 and T8. Asking the owner, the Waiting state and the owner's authority are unchanged. A bound decision is the owner's own text; the Host neither infers nor matches decisions against questions.
+- **Owners:** [core protocol](../design/canonical-model/manager-apply-core.md#issues), rule I2, and the [run configuration](../project-workflow.md).
 
 ## Promises
 

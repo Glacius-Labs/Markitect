@@ -45,7 +45,7 @@ Both accept the same `--model` and repeated `--dependency` selections as prepara
 
 ### Invocation configuration
 
-`--run-config` selects a closed UTF-8 JSON object with `formatVersion: 1`. Every field below is required, including empty network strings and explicit limits. Unknown, duplicate, null, relative-path or invalid values refuse construction. There are no environment defaults. This file supplies concrete invocation inputs; project policies and Agent/Check model, effort, image and resource settings remain in their existing execution and Host profile documents.
+`--run-config` selects a closed UTF-8 JSON object with `formatVersion: 1`. Every field below is required, including empty network strings and explicit limits. The one optional field is `ownerDecisions`, a list of the owner's earlier decisions as plain texts; every Manager and reviewer of the run sees them from its start ([DEC-053](concepts/register.md#dec-053-owner-decisions-bind-the-whole-run)). Unknown, duplicate, null, relative-path or invalid values refuse construction. There are no environment defaults. This file supplies concrete invocation inputs; project policies and Agent/Check model, effort, image and resource settings remain in their existing execution and Host profile documents.
 
 The following is an illustrative shape. Supply actual native absolute paths, immutable images, dedicated credentials and limits appropriate to the frozen project; these example assertions do not certify a runtime:
 
