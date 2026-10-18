@@ -30,6 +30,10 @@ The owner then accepted the first business-rule change in that working day:
 
 > Das klingt gut. Halte diesen Ablauf für die erste fachliche Änderung in unseren Docs fest, inklusive der Modelländerung von fünf auf sieben, der anschließenden Realisierung durch Markitect und meiner Entscheidungspunkte. Weiterhin keine Implementierung.
 
+On 18 October 2026 the owner accepted the subsequent defect-repair workflow:
+
+> Das klingt gut. Halte diesen Fehlerbehebungsablauf in unseren Docs fest, inklusive unverändertem Siebenerlimit, Befundübergabe, unabhängigen Nachweisen und meinen Entscheidungspunkten. Weiterhin keine Implementierung.
+
 ### The six installed skills
 
 Both clients receive the same skill names, responsibilities and authority boundaries. Provider-specific packaging does not create different project rules.
@@ -48,6 +52,8 @@ Both clients receive the same skill names, responsibilities and authority bounda
 The outer coding agent chains relevant skills within the existing assignment. For the library's five-to-three limit change, it uses `design` and `check`, commits the authorized model revision within its grant, then commissions `apply`. Existing loans stay valid and returnable because the model says so, not because a skill adds that policy. Apply itself changes only artifacts and does not commit, merge or push; the owner accepts the published result under [DEC-035](../concepts/register.md#dec-035-committed-model-in-owner-commit-accepts-the-result).
 
 The [first business-rule change](canonical-model/manager-apply-library-flow.md#first-business-rule-change-from-five-to-seven) walks through the same handoff for the working day's increase from five to seven: the coding agent maintains the intended model, Markitect realizes it, and the owner decides only unresolved meaning or missing authority under the existing acceptance policy. This scenario does not replace the delivery demonstration's five-to-three change.
+
+The subsequent [eighth-loan defect repair](canonical-model/manager-apply-library-flow.md#defect-repair-an-eighth-loan-despite-the-seven-loan-limit) keeps that model unchanged. The coding agent hands the reported deviation to Apply for investigation, repair and independent evidence; an assessment-only request uses `verify` without repair. No artificial model edit, additional skill or mandatory separate Verify round is needed for an already authorized repair.
 
 One ordinary request must not become six human prompts or repeated permission requests for already authorized steps. Status and continuation belong to the ongoing Apply workflow. Separate `extract`, `cleanup`, `refactor` or `bughunt` skills wait until their actual operations justify independent instructions; suggestions are already discoverable through `design`. This decision does not add those operations to the first Apply.
 
