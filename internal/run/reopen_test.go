@@ -336,9 +336,9 @@ func TestAReplyOfATaskAwaitingADecisionIsReadOnly(t *testing.T) {
 	}
 }
 
-// A question that reached a task before it blocked gets a reply step, and a
-// reply that changes no file keeps the task blocked, even when it holds an
-// unaccepted registry proposal from an earlier step (core rules S4, T10, T11).
+// A question that a task's work step saw but left unanswered gets a reply step,
+// and a reply that changes no file keeps the task blocked, even when it holds
+// an unaccepted registry proposal from an earlier step (core rules S4, T10).
 func TestAReplyWithoutChangesKeepsABlockedTaskBlocked(t *testing.T) {
 	t.Parallel()
 	var h *harness
@@ -366,8 +366,11 @@ func TestAReplyWithoutChangesKeepsABlockedTaskBlocked(t *testing.T) {
 			}
 		case s.Manager == "lending" && s.Phase == run.PhaseReply:
 			return []action{{Tool: run.ToolSend, Args: sendArgs("reply", other, "out/library.go."), Want: run.ToolOK}}
-		case s.Manager == "." && s.Phase == run.PhaseReply:
-			return []action{{Tool: run.ToolSend, Args: sendArgs("reply", own, "Title."), Want: run.ToolOK}}
+		case s.Manager == "." && s.Phase == run.PhaseIntegrate && h.task("lending").State != run.TaskDone:
+			return []action{
+				{Tool: run.ToolSend, Args: sendArgs("reply", own, "Title."), Want: run.ToolOK},
+				{Tool: run.ToolWait, Args: `{"on":[{"kind":"children"}],"reason":"Lending realizes Item."}`, Want: run.ToolOK},
+			}
 		}
 		return happyAgent(s)
 	}
@@ -375,6 +378,44 @@ func TestAReplyWithoutChangesKeepsABlockedTaskBlocked(t *testing.T) {
 	runToEnd(t, h)
 	if after != run.TaskBlocked {
 		t.Fatal("a reply without changes returned the blocked task to work", after, admitted(h))
+	}
+}
+
+// A question that reaches a task awaiting the owner's decision on its frozen
+// submission does not wake it: the task answers read-only, keeps its candidate
+// and the run waits for the owner (core rules T8, T10).
+func TestAQuestionLeavesATaskAwaitingADecisionBlocked(t *testing.T) {
+	t.Parallel()
+	var h *harness
+	var asked string
+	decision := `{"verdict":"needs_decision","summary":"Unclear.","question":"Which title?","evidence":[],"cases":[{"name":"item","assessment":"evidenced","grounds":"Checked."}],"findings":[],"resolutions":[]}`
+	agent := func(s agentStep) []action {
+		switch {
+		case s.Manager == "lending" && s.Phase == run.PhaseReviewerCandidate && s.Attempt == 0:
+			return []action{{Tool: run.ToolSubmitReview, Args: decision, Want: run.ToolOK}}
+		case s.Manager == "lending/reminders" && s.Phase == run.PhaseWork && s.Attempt == 0:
+			return []action{{Tool: run.ToolWait, Args: `{"on":[{"kind":"delivery","ref":"empty"}],"reason":"Reminders build on empty."}`, Want: run.ToolOK}}
+		case s.Manager == "lending/reminders" && s.Phase == run.PhaseWork && s.Attempt == 1:
+			if h.task("lending").Submission.Proposal == (run.BlobRef{}) {
+				t.Error("lending is not yet awaiting the owner's decision")
+			}
+			asked = questionID(s, 1)
+			return []action{
+				{Tool: run.ToolSend, Args: sendArgs("question", "lending", "Which period applies?"), Want: run.ToolOK},
+				{Tool: run.ToolWait, Args: waitReplyArgs(asked), Want: run.ToolOK},
+			}
+		case s.Manager == "lending" && s.Phase == run.PhaseReply:
+			return []action{{Tool: run.ToolSend, Args: sendArgs("reply", asked, "Fourteen days."), Want: run.ToolOK}}
+		}
+		return happyAgent(s)
+	}
+	inputs := stepInputs(t, false)
+	inputs.Binding.Policy.Assignment.Steps, inputs.Binding.Policy.Assignment.SessionStarts = 64, 64
+	h = newHarnessWith(t, inputs, agent)
+	runToEnd(t, h)
+	lending := h.task("lending")
+	if !slices.Contains(admitted(h), "lending reply") || h.c.Current().State != run.Waiting || lending.State != run.TaskBlocked || lending.Submission.Proposal == (run.BlobRef{}) {
+		t.Fatal("the question woke the task awaiting a decision", admitted(h), h.c.Current(), lending.State)
 	}
 }
 
