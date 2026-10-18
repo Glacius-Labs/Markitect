@@ -385,6 +385,8 @@ func (s stateValue) renderInput(t taskValue, facts StepFacts, basis snapshot.Con
 			Expectations: organization.HostSource{RecordID: "expectations", ContentID: t.Review.Expectations.ContentID},
 			Files:        artifacts, Evidence: []organization.HostText{proposal, expectations}}
 	case PhaseReviewerExpectations:
+		// expectationInputs names what this view adds to the fixed task facts;
+		// a kept review is reused only while those stay the same.
 	default:
 		return in, ErrInvalid
 	}

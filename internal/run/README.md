@@ -268,9 +268,9 @@ for an integration also one of a descendant (I3), while a producer the candidate
 candidate's step (D4), or, for an integration, while a child is not done (T9). The
 task's next step sees why its pass was withheld, and its recorded expectations
 stand for the next submission: its review skips the expectations step while
-the submission's purpose and scope, the task's open findings and the owner's
-decisions are unchanged, because that step sees neither the candidate nor the
-aggregate. Changes requested count one rejection per purpose, which
+the submission's purpose and scope, the task's open findings other than those
+the withheld passes raised and the owner's decisions are unchanged, because
+that step sees neither the candidate nor the aggregate (DEC-046). Changes requested count one rejection per purpose, which
 the Manager's next steps see together with the limit; at
 the bound rejection limit the task becomes incomplete. A needs-decision verdict
 blocks the task on an owner question, and a failed assessment starts a fresh

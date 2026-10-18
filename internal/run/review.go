@@ -9,6 +9,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/Glacius-Labs/Markitect/internal/organization"
 	"github.com/Glacius-Labs/Markitect/internal/snapshot"
 )
 
@@ -57,12 +58,14 @@ type Delivery struct {
 
 // reviewValue is the progress of the current review: the expectations its
 // first step recorded, which its candidate step receives, their cases, which
-// the candidate step assesses (core rule T7), and the identity of what the
-// expectations step saw besides the model.
+// the candidate step assesses (core rule T7), the identity of what the
+// expectations step saw besides the model, and the candidate steps whose
+// passes the Host withheld while these expectations stood.
 type reviewValue struct {
 	Expectations BlobRef
 	Cases        []recordedCase
 	Inputs       string
+	Withheld     []StepID
 }
 
 // recordedCase is one case of the recorded expectations.
@@ -193,20 +196,19 @@ func (s stateValue) checkReview(t taskValue, in reviewInput) error {
 	return nil
 }
 
-// expectationInputs identifies what an expectations step sees besides the
-// model: the submission's purpose and scope, the task's open findings and the
-// owner's decisions for it.
-func (s stateValue) expectationInputs(t taskValue) string {
+// expectationInputs identifies what renderInput gives an expectations step
+// besides the model and the fixed task facts: the submission's purpose and
+// scope, the task's open findings and the owner's decisions for it. Findings
+// raised by the steps except are left out.
+func (s stateValue) expectationInputs(t taskValue, except []StepID) string {
 	parts := []string{t.Submission.Purpose, t.Submission.Scope}
-	for _, issue := range s.openIssues(t.Slot.Package) {
-		if issue.Kind == issueFinding {
-			parts = append(parts, issue.ID)
+	for _, id := range s.openFindings(t, organization.HostSource{}).IDs {
+		if !slices.Contains(except, s.issues[id].Raised) {
+			parts = append(parts, id)
 		}
 	}
-	for _, m := range s.messages {
-		if q := s.issues[m.About]; m.From == addressedToOwner && q.Task == t.Slot.Package {
-			parts = append(parts, m.ID)
-		}
+	for _, d := range s.ownerDecisions(t) {
+		parts = append(parts, d.Source.RecordID)
 	}
 	return strings.Join(parts, "\n")
 }
@@ -352,7 +354,7 @@ func (s *stateValue) concludeReview(r ConclusionRecord, t *taskValue, revision u
 		if json.Unmarshal(args, &in) != nil {
 			return ErrInvalid
 		}
-		t.Review = reviewValue{Expectations: r.Input, Inputs: s.expectationInputs(*t)}
+		t.Review = reviewValue{Expectations: r.Input, Inputs: s.expectationInputs(*t, nil)}
 		for _, c := range in.Cases {
 			t.Review.Cases = append(t.Review.Cases, recordedCase{Name: c.Name, Expectation: c.Expectation})
 		}
@@ -382,6 +384,7 @@ func (s *stateValue) concludeReview(r ConclusionRecord, t *taskValue, revision u
 	t.Review = reviewValue{}
 	switch verdict {
 	case VerdictWithhold:
+		review.Withheld = append(slices.Clone(review.Withheld), r.Step)
 		t.State, t.Since, t.Submission, t.Withheld, t.Kept = TaskReady, revision, Submission{}, withheld, review
 	case VerdictDecision:
 		// The owner's answer starts a fresh review of the same frozen

@@ -56,6 +56,7 @@ The owner's [origin account of 15 October 2026](sources/owner-origin-20261015.md
 | [DEC-043](#dec-043-project-teams-review-arbitration-and-product-defaults) | Decision | Project teams, review arbitration and product defaults | Accepted; implementation pending |
 | [DEC-044](#dec-044-commands-reuse-the-manager-organization) | Decision | Commands reuse the Manager organization | Accepted direction; implementation deferred |
 | [DEC-045](#dec-045-managers-and-reviewers-derive-technical-risks) | Clarification | Managers and reviewers derive technical risks | Accepted |
+| [DEC-046](#dec-046-a-withheld-pass-keeps-its-recorded-expectations) | Decision | A withheld pass keeps its recorded expectations | Accepted |
 | [PRM-001 to PRM-007](#promises) | Promise | Target outcomes | Target |
 | [ASM-001 to ASM-006](#assumptions-and-hypotheses) | Assumption | Assumptions and hypotheses | See entries |
 | [CPT-001](#cpt-001-federalism) | Concept | Federalism | Accepted |
@@ -561,6 +562,14 @@ The owner's [origin account of 15 October 2026](sources/owner-origin-20261015.md
 - **Authority boundary:** A necessary technical consequence of existing intent is realization judgment, not a new project rule requiring its own model edit. Changed business policy, exceptional tradeoffs outside the mandate and missing necessary model relationships retain the existing decision/model-change route. No invented operating conditions, new rights or inferred canonical links.
 - **Scope:** Clarifies existing responsibilities and the previously deferred task-premise duty. No new role, register, workflow stage, schema or experiment is introduced. Existing budgets, independent review, arbitration and evidence requirements remain. This authorizes the bounded concept and role-template change, not provider execution or a claim that risk discovery has been demonstrated.
 - **Owners:** [Apply concept](../design/canonical-model/manager-apply-concept.md#technical-risk-derivation), [execution evidence](../design/canonical-model/manager-apply-execution.md#evidence-need-survives-budget-pressure), and the canonical [delegated-context Rule](../../.markitect/model/product/organization/delegated-context.yaml).
+
+### DEC-046 A withheld pass keeps its recorded expectations
+
+- **Status:** Accepted, Architect under the owner's authorization, 18 October 2026 ([evidence and owner instruction](sources/withheld-review-expectations-20261018.md)).
+- **Decision:** When the Orchestrator withholds a pass (I3, D4, T9), the review's recorded expectations stand for the task's next submission. That submission's review skips the expectations step while the submission's purpose and scope, the task's open findings other than those the withheld passes raised, and the owner's decisions for the task are unchanged. Its candidate step still starts a fresh reviewer conversation and assesses every recorded case.
+- **Reason:** The expectations step sees neither the candidate nor the aggregate. Re-recording them for an unchanged resubmission only redraws the cases, and in the library runs it rejected candidates that had just passed, consuming the shared rejection limit.
+- **Scope:** Amends T7 for this case only. A rejection, a failed assessment, an owner answer and any changed input still record fresh expectations. Rejection limits, independence and evidence requirements are unchanged.
+- **Owners:** [core protocol](../design/canonical-model/manager-apply-core.md#manager-tasks), rule T7.
 
 ## Promises
 
