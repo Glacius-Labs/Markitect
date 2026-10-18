@@ -114,6 +114,11 @@ func TestIntegrationFindingReopensTheChild(t *testing.T) {
 	if n := strings.Count(strings.Join(order, ","), ". reviewer-expectations"); n != 2 {
 		t.Fatal("the integration review after the rejection recorded new cases", n, order)
 	}
+	// The parent's finding changes what the child's cases rest on, so the
+	// child's next local review records fresh ones (DEC-048).
+	if n := strings.Count(strings.Join(order, ","), "lending reviewer-expectations"); n != 2 {
+		t.Fatal("the reopened child's review kept cases that the new finding changed", n, order)
+	}
 	issues := h.c.Issues("lending")
 	if !slices.ContainsFunc(issues, func(i run.Issue) bool { return i.ID == finding && i.State == "resolved" && i.Purpose == "local" }) {
 		t.Fatalf("the child's local review did not resolve the finding: %+v", issues)

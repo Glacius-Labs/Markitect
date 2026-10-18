@@ -330,6 +330,8 @@ func TestReviewIsRenewedWhenAUsedProducerDeliversAgain(t *testing.T) {
 			return nil // a failed review step: a fresh review follows
 		case s.Manager == "lending" && s.Phase == run.PhaseWork && s.Attempt == 0:
 			return []action{{Write: map[string]string{"out/library.go": "package library\n\ntype Item struct{}\n"}, Tool: run.ToolSubmit, Args: submitArgs("local", "limited"), Want: run.ToolOK}}
+		case s.Manager == "lending" && s.Phase == run.PhaseWork && s.Attempt == 1:
+			return nil // a failed work step delays lending's second delivery
 		case s.Manager == "lending" && s.Phase == run.PhaseWork:
 			return []action{{Write: map[string]string{"out/library.go": "package library\n\ntype Item struct{ Title string }\n"}, Tool: run.ToolSubmit, Args: submitArgs("local", "complete"), Want: run.ToolOK}}
 		}
@@ -380,6 +382,8 @@ func TestARenewedReviewKeepsItsRecordedExpectations(t *testing.T) {
 			}
 		case s.Manager == "lending" && s.Phase == run.PhaseWork && s.Attempt == 0:
 			return []action{{Write: map[string]string{"out/library.go": "package library\n\ntype Item struct{}\n"}, Tool: run.ToolSubmit, Args: submitArgs("local", "limited"), Want: run.ToolOK}}
+		case s.Manager == "lending" && s.Phase == run.PhaseWork && s.Attempt == 1:
+			return nil // a failed work step delays lending's second delivery
 		case s.Manager == "lending" && s.Phase == run.PhaseWork:
 			return []action{{Write: map[string]string{"out/library.go": "package library\n\ntype Item struct{ Title string }\n"}, Tool: run.ToolSubmit, Args: submitArgs("local", "complete"), Want: run.ToolOK}}
 		}
@@ -402,9 +406,9 @@ func TestARenewedReviewKeepsItsRecordedExpectations(t *testing.T) {
 	}
 }
 
-// A resubmission whose expectation inputs differ from the withheld pass's,
-// here its scope, records fresh expectations (core rule T7).
-func TestAChangedResubmissionRecordsFreshExpectations(t *testing.T) {
+// A resubmission with another scope keeps the recorded expectations, because
+// the expectations step does not see the scope (core rule T7, DEC-048).
+func TestAnotherScopeKeepsTheRecordedExpectations(t *testing.T) {
 	t.Parallel()
 	var h *harness
 	type review struct {
@@ -446,8 +450,8 @@ func TestAChangedResubmissionRecordsFreshExpectations(t *testing.T) {
 	for i := 1; i < len(seen); i++ {
 		if seen[i].scope != seen[i-1].scope {
 			changed++
-			if seen[i].expectations == seen[i-1].expectations {
-				t.Fatal("a resubmission with another scope reused the kept expectations", seen)
+			if seen[i].expectations != seen[i-1].expectations {
+				t.Fatal("a resubmission with another scope recorded fresh expectations", seen)
 			}
 		}
 	}
@@ -458,7 +462,7 @@ func TestAChangedResubmissionRecordsFreshExpectations(t *testing.T) {
 
 // A rejection keeps the recorded cases even when it resolves a finding that
 // was open when they were recorded: the rework sees the cases, and the next
-// review of the same scope assesses them without recording new ones (DEC-047).
+// review assesses them without recording new ones (DEC-047).
 func TestARejectionKeepsTheCasesItsReviewResolvedAgainst(t *testing.T) {
 	t.Parallel()
 	var advisory string
@@ -468,15 +472,19 @@ func TestARejectionKeepsTheCasesItsReviewResolvedAgainst(t *testing.T) {
 		case s.Manager == "lending" && s.Phase == run.PhaseWork && s.Attempt == 0:
 			return []action{{Write: map[string]string{"out/library.go": "package library\n\ntype Item struct{}\n"}, Tool: run.ToolSubmit, Args: submitArgs("local", "limited"), Want: run.ToolOK}}
 		case s.Manager == "lending" && s.Phase == run.PhaseWork:
-			notes = append(notes, strings.Contains(string(s.Packet.Context.Bytes), "Your last review assessed your candidate against these recorded cases"))
+			notes = append(notes, strings.Contains(string(s.Packet.Context.Bytes), "Your local reviews assess every candidate against these recorded cases"))
 			return []action{{Write: map[string]string{"out/library.go": "package library\n\ntype Item struct{ Title string }\n"}, Tool: run.ToolSubmit, Args: submitArgs("local", "complete"), Want: run.ToolOK}}
 		case s.Manager == "lending" && s.Phase == run.PhaseReviewerCandidate && s.Attempt == 0:
 			advisory = "finding-" + string(s.Packet.Step) + "-1"
 			return []action{{Tool: run.ToolSubmitReview, Args: `{"verdict":"pass","summary":"Fine.","evidence":[],"cases":[{"name":"item","assessment":"evidenced","grounds":"Checked."}],"findings":[{"severity":"advisory","definitions":["lending/Item"],"grounds":"Item could carry a title.","requestedEvidence":"A title field."}],"resolutions":[]}`, Want: run.ToolOK}}
 		case s.Manager == "lending" && s.Phase == run.PhaseReviewerCandidate && s.Attempt == 1:
+			// A failed review step records fresh cases while the advisory
+			// finding is open.
+			return nil
+		case s.Manager == "lending" && s.Phase == run.PhaseReviewerCandidate && s.Attempt == 2:
 			reject := `{"verdict":"changes_requested","summary":"Item is incomplete.","evidence":[],"cases":[{"name":"item","assessment":"evidenced","grounds":"Checked."}],"resolutions":[{"finding":"` + advisory + `","state":"resolved","grounds":"Item has a title.","evidence":[]}],"findings":[{"severity":"blocking","definitions":["lending/Item"],"grounds":"No test.","requestedEvidence":"A test."}]}`
 			return []action{{Tool: run.ToolSubmitReview, Args: reject, Want: run.ToolOK}}
-		case s.Manager == "lending" && s.Phase == run.PhaseReviewerCandidate && s.Attempt == 2:
+		case s.Manager == "lending" && s.Phase == run.PhaseReviewerCandidate && s.Attempt == 3:
 			return []action{{Tool: run.ToolSubmitReview, Args: passArgs(openFinding(t, s)), Want: run.ToolOK}}
 		}
 		return happyAgent(s)
@@ -484,32 +492,33 @@ func TestARejectionKeepsTheCasesItsReviewResolvedAgainst(t *testing.T) {
 	h := newHarness(t, true, agent)
 	runToEnd(t, h)
 	order := strings.Join(admitted(h), ",")
-	// The limited and the complete submission record their own cases; the
-	// rework after the rejection keeps them.
-	if h.c.Current().State != run.Verifying || strings.Count(order, "lending reviewer-expectations") != 2 || !slices.Equal(notes, []bool{false, true}) {
+	// The first delivery and the failed review step record cases; the rework
+	// after the rejection keeps the second ones.
+	if h.c.Current().State != run.Verifying || strings.Count(order, "lending reviewer-expectations") != 2 || !slices.Equal(notes, []bool{true, true}) {
 		t.Fatal("the rejection did not keep its recorded cases", h.c.Current(), notes, order)
 	}
 }
 
-// A rejected candidate's next submission with another scope records fresh
-// cases (core rule T7, DEC-047).
-func TestARejectionThenAnotherScopeRecordsFreshCases(t *testing.T) {
+// The recorded cases of a passed limited delivery stand for the task's next
+// delivery with the same purpose, whatever its scope, and the Manager's work
+// step sees them (core rule T7, DEC-048).
+func TestAPassKeepsTheRecordedCasesForTheNextDelivery(t *testing.T) {
 	t.Parallel()
+	var notes []bool
 	agent := func(s agentStep) []action {
 		switch {
 		case s.Manager == "lending" && s.Phase == run.PhaseWork && s.Attempt == 0:
 			return []action{{Write: map[string]string{"out/library.go": "package library\n"}, Tool: run.ToolSubmit, Args: submitArgs("local", "limited"), Want: run.ToolOK}}
-		case s.Manager == "lending" && s.Phase == run.PhaseReviewerCandidate && s.Attempt == 0:
-			return []action{{Tool: run.ToolSubmitReview, Args: rejectArgs, Want: run.ToolOK}}
-		case s.Manager == "lending" && s.Phase == run.PhaseReviewerCandidate && s.Attempt == 1:
-			return []action{{Tool: run.ToolSubmitReview, Args: passArgs(openFinding(t, s)), Want: run.ToolOK}}
+		case s.Manager == "lending" && s.Phase == run.PhaseWork:
+			notes = append(notes, strings.Contains(string(s.Packet.Context.Bytes), "Your local reviews assess every candidate against these recorded cases"))
 		}
 		return happyAgent(s)
 	}
 	h := newHarness(t, true, agent)
 	runToEnd(t, h)
-	if order := strings.Join(admitted(h), ","); h.c.Current().State != run.Verifying || strings.Count(order, "lending reviewer-expectations") != 2 {
-		t.Fatal("the complete submission reused the limited submission's cases", h.c.Current(), order)
+	order := strings.Join(admitted(h), ",")
+	if h.c.Current().State != run.Verifying || len(h.task("lending").Deliveries) != 2 || strings.Count(order, "lending reviewer-expectations") != 1 || !slices.Equal(notes, []bool{true}) {
+		t.Fatal("the complete delivery did not keep the limited delivery's cases", h.c.Current(), notes, order)
 	}
 }
 

@@ -188,8 +188,10 @@ func (c *Coordinator) StepQuotes(manager string) []BlobRef {
 	if t.Phase == PhaseReviewerCandidate {
 		refs = append(refs, t.Submission.Proposal, t.Review.Expectations)
 	}
-	if !t.Phase.reviewer() && t.Kept.Expectations != (BlobRef{}) {
-		refs = append(refs, t.Kept.Expectations)
+	if !t.Phase.reviewer() {
+		for _, purpose := range slices.Sorted(maps.Keys(t.Kept)) {
+			refs = append(refs, t.Kept[purpose].Expectations)
+		}
 	}
 	return refs
 }
@@ -332,16 +334,20 @@ func (s stateValue) renderInput(t taskValue, facts StepFacts, basis snapshot.Con
 			findings.Items = append(findings.Items, organization.FindingFact{ID: id, Grounds: organization.HostText{Text: text, Source: organization.HostSource{RecordID: id, ContentID: basis}}})
 		}
 	}
-	if t.Kept.Expectations != (BlobRef{}) && !t.Phase.reviewer() {
-		// The Manager sees the cases its next review assesses again (DEC-047).
-		recorded, err := quote(t.Kept.Expectations)
-		if err != nil {
-			return organization.RenderInput{}, err
+	if !t.Phase.reviewer() {
+		// The Manager sees the cases its next review with each purpose
+		// assesses again (DEC-047, DEC-048).
+		for _, purpose := range slices.Sorted(maps.Keys(t.Kept)) {
+			kept := t.Kept[purpose].Expectations
+			recorded, err := quote(kept)
+			if err != nil {
+				return organization.RenderInput{}, err
+			}
+			id := t.ID + "-recorded-cases-" + purpose
+			text := fmt.Sprintf("Your %s reviews assess every candidate against these recorded cases, each by its name and whatever the candidate's scope, while no other finding or owner decision arrives and no review step fails; the review of a limited candidate decides which cases apply to it. Give each case that applies evidence that shows it ran: ", purpose) + recorded.Text
+			findings.IDs = append(findings.IDs, id)
+			findings.Items = append(findings.Items, organization.FindingFact{ID: id, Grounds: organization.HostText{Text: text, Source: organization.HostSource{RecordID: id, ContentID: kept.ContentID}}})
 		}
-		id := t.ID + "-recorded-cases"
-		text := "Your last review assessed your candidate against these recorded cases. A resubmission with the same purpose and scope is assessed against the same cases again, each by its name, while no other finding or owner decision arrives and no review step fails; give each case evidence that shows it ran: " + recorded.Text
-		findings.IDs = append(findings.IDs, id)
-		findings.Items = append(findings.Items, organization.FindingFact{ID: id, Grounds: organization.HostText{Text: text, Source: organization.HostSource{RecordID: id, ContentID: t.Kept.Expectations.ContentID}}})
 	}
 	if t.Withheld != "" && !t.Phase.reviewer() {
 		// A withheld pass leaves the task's work outside the accepted aggregate;
@@ -354,7 +360,12 @@ func (s stateValue) renderInput(t taskValue, facts StepFacts, basis snapshot.Con
 	in := organization.RenderInput{View: phaseView(t.Phase), InputBinding: source,
 		Task: organization.TaskFacts{ID: t.ID, Package: t.Slot.Package, Outcome: organization.HostText{Text: operation, Source: source}, Findings: findings, Constraints: s.ownerDecisions(t)}}
 	if t.Phase.reviewer() {
-		in.Task.Purpose, in.Task.Scope = t.Submission.Purpose, t.Submission.Scope
+		// The expectations step does not see the scope, so its cases stand
+		// for every submission with the purpose (DEC-048).
+		in.Task.Purpose = t.Submission.Purpose
+	}
+	if t.Phase == PhaseReviewerCandidate {
+		in.Task.Scope = t.Submission.Scope
 	}
 	artifacts, err := ownedArtifacts(t.Slot.Package, facts)
 	if err != nil {

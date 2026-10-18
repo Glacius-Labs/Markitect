@@ -56,7 +56,8 @@ type TaskFacts struct {
 	Requirements []HostText
 	Findings     OpenFindings
 	// Purpose and Scope are the reviewed submission's purpose (local or
-	// integration) and scope (limited or complete); reviewer views only.
+	// integration) and scope (limited or complete); reviewer views only, and
+	// the expectations view has no scope.
 	Purpose, Scope string
 }
 

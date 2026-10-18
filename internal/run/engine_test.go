@@ -162,7 +162,7 @@ func TestAMissingCaseBecomesAFinding(t *testing.T) {
 			if !strings.Contains(context, "blocking local finding: The recorded case \"item\" has no evidence: No test shows Item.") {
 				t.Error("the rework does not see the missing case")
 			}
-			if !strings.Contains(context, "Your last review assessed your candidate against these recorded cases") || !strings.Contains(context, "The library realizes Item.") {
+			if !strings.Contains(context, "Your local reviews assess every candidate against these recorded cases") || !strings.Contains(context, "The library realizes Item.") {
 				t.Error("the rework does not see the recorded cases")
 			}
 		case s.Manager == "lending" && s.Phase == run.PhaseReviewerCandidate && s.Attempt == 1:
