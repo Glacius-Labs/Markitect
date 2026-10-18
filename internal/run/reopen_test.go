@@ -336,9 +336,9 @@ func TestAReplyOfATaskAwaitingADecisionIsReadOnly(t *testing.T) {
 	}
 }
 
-// A reply step that changes no file keeps a blocked task blocked, even when the
-// task holds an unaccepted registry proposal from an earlier step (core rules
-// S4, T10).
+// A question that reached a task before it blocked gets a reply step, and a
+// reply that changes no file keeps the task blocked, even when it holds an
+// unaccepted registry proposal from an earlier step (core rules S4, T10, T11).
 func TestAReplyWithoutChangesKeepsABlockedTaskBlocked(t *testing.T) {
 	t.Parallel()
 	var h *harness
@@ -375,6 +375,45 @@ func TestAReplyWithoutChangesKeepsABlockedTaskBlocked(t *testing.T) {
 	runToEnd(t, h)
 	if after != run.TaskBlocked {
 		t.Fatal("a reply without changes returned the blocked task to work", after, admitted(h))
+	}
+}
+
+// A question that reaches a blocked task makes it ready: its next step is a
+// work step that sees the question, answers it and can act on it, here by
+// waiting again for the asker's delivery (core rule T10).
+func TestAQuestionMakesABlockedTaskReady(t *testing.T) {
+	t.Parallel()
+	var h *harness
+	var asked string
+	var answered bool
+	agent := func(s agentStep) []action {
+		switch {
+		case s.Manager == "lending" && s.Phase == run.PhaseWork && s.Attempt == 0:
+			return []action{{Tool: run.ToolWait, Args: `{"on":[{"kind":"delivery","ref":"lending/reminders"}],"reason":"Lending composes the reminders."}`, Want: run.ToolOK}}
+		case s.Manager == "lending/reminders" && s.Phase == run.PhaseWork && s.Attempt == 0:
+			asked = questionID(s, 1)
+			return []action{
+				{Tool: run.ToolSend, Args: sendArgs("question", "lending", "Which loan period applies?"), Want: run.ToolOK},
+				{Tool: run.ToolWait, Args: waitReplyArgs(asked), Want: run.ToolOK},
+			}
+		case s.Manager == "lending" && s.Phase == run.PhaseWork && s.Attempt == 1:
+			answered = bytes.Contains(s.Packet.Context.Bytes, []byte("Which loan period applies?"))
+			return []action{
+				{Tool: run.ToolSend, Args: sendArgs("reply", asked, "Fourteen days."), Want: run.ToolOK},
+				{Tool: run.ToolWait, Args: `{"on":[{"kind":"delivery","ref":"lending/reminders"}],"reason":"Lending composes the reminders."}`, Want: run.ToolOK},
+			}
+		}
+		return happyAgent(s)
+	}
+	inputs := stepInputsWith(t, false, withCreationArea(t))
+	inputs.Binding.Policy.Assignment.Steps, inputs.Binding.Policy.Assignment.SessionStarts = 64, 64
+	h = newHarnessWith(t, inputs, agent)
+	runToEnd(t, h)
+	if h.c.Current().State != run.Verifying {
+		t.Fatal("the run did not complete", h.c.Current(), admitted(h))
+	}
+	if !answered || slices.Contains(admitted(h), "lending reply") {
+		t.Fatal("the blocked task answered in a reply step instead of its next work step", answered, admitted(h))
 	}
 }
 
