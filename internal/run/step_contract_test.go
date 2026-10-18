@@ -10,6 +10,7 @@ import (
 var phases = []run.Phase{run.PhaseExplore, run.PhaseWork, run.PhaseIntegrate, run.PhaseReply, run.PhaseReviewerExpectations, run.PhaseReviewerCandidate}
 
 func TestStepContractRoundTripsAndRefusesUnknownPhases(t *testing.T) {
+	t.Parallel()
 	for _, phase := range phases {
 		p, err := run.NewStepContract(phase)
 		if err != nil {
@@ -35,6 +36,7 @@ func TestStepContractRoundTripsAndRefusesUnknownPhases(t *testing.T) {
 }
 
 func TestToolCatalogOffersValidSchemasPerPhase(t *testing.T) {
+	t.Parallel()
 	for _, phase := range phases {
 		p, err := run.ToolCatalog(phase)
 		if err != nil || p.Ref().MediaType != run.ToolCatalogMedia {
@@ -76,6 +78,7 @@ var golden = map[run.Phase][2]string{
 }
 
 func TestContractAndCatalogBytesArePinned(t *testing.T) {
+	t.Parallel()
 	for _, phase := range phases {
 		c, _ := run.NewStepContract(phase)
 		k, _ := run.ToolCatalog(phase)

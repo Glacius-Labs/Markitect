@@ -23,6 +23,7 @@ type memoryJournal struct {
 }
 
 func TestCodecRejectsCanonicalBytesWithInvalidValueShapes(t *testing.T) {
+	t.Parallel()
 	c, _ := run.NewCoordinator("repo")
 	prepared, err := c.Propose(run.PrepareCommand("prepare", "a", "r", "", observed, binding(t)))
 	if err != nil {
@@ -244,6 +245,7 @@ func (j *memoryJournal) Read(ctx context.Context, q run.EventQuery) (run.EventPa
 var _ run.Journal = (*memoryJournal)(nil)
 
 func TestJournalCodecIdentityCASAndImmutablePayloads(t *testing.T) {
+	t.Parallel()
 	ctx := context.Background()
 	j := journal()
 	data := []byte("original\r\n")
@@ -314,6 +316,7 @@ func TestJournalCodecIdentityCASAndImmutablePayloads(t *testing.T) {
 }
 
 func TestProducerReferenceAPIRequiresBasisAndOriginalOwnerBeforeAppend(t *testing.T) {
+	t.Parallel()
 	i := fixture(t)
 	basis, err := run.Bind(i)
 	if err != nil {
@@ -344,6 +347,7 @@ func TestProducerReferenceAPIRequiresBasisAndOriginalOwnerBeforeAppend(t *testin
 }
 
 func TestBindingReferenceCodecRejectsChangedRecordedFormats(t *testing.T) {
+	t.Parallel()
 	i := fixture(t)
 	basis, err := run.Bind(i)
 	if err != nil {
@@ -394,6 +398,7 @@ func TestBindingReferenceCodecRejectsChangedRecordedFormats(t *testing.T) {
 }
 
 func TestJournalReadUsesExactBatchBoundariesAndReportsLookupHead(t *testing.T) {
+	t.Parallel()
 	_, j := running(t)
 	for _, q := range []run.EventQuery{
 		{After: 1, Limit: 1}, {Through: 1, Limit: 1},
@@ -419,6 +424,7 @@ func TestJournalReadUsesExactBatchBoundariesAndReportsLookupHead(t *testing.T) {
 }
 
 func TestBatchCodecEnforcesSupportedRevisionRange(t *testing.T) {
+	t.Parallel()
 	c, _ := run.NewCoordinator("repo")
 	p, err := c.Propose(run.PrepareCommand("prepare", "a", "r", "", observed, binding(t)))
 	if err != nil {

@@ -25,6 +25,7 @@ func checkRequest(t *testing.T) run.CheckRequest {
 }
 
 func TestCheckRequestIsCompleteAndBounded(t *testing.T) {
+	t.Parallel()
 	if !checkRequest(t).Valid() {
 		t.Fatal("complete request refused")
 	}
@@ -51,6 +52,7 @@ func TestCheckRequestIsCompleteAndBounded(t *testing.T) {
 }
 
 func TestOnlyAnObservedZeroExitOfTheSameRequestPasses(t *testing.T) {
+	t.Parallel()
 	req := checkRequest(t)
 	pass := run.CheckReceipt{ID: req.ID, ImageID: req.ImageID, Tree: req.Tree.Digest(), Started: true, Exited: true}
 	if !pass.Passed(req) {

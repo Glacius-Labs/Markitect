@@ -15,6 +15,7 @@ import (
 // A step whose workspace cannot be observed after a clean stop concludes as
 // failed; its task is admitted again and the run continues (core rule T6).
 func TestHostFailureAfterTheStepConcludesItAsFailed(t *testing.T) {
+	t.Parallel()
 	h := newHarness(t, true, happyAgent)
 	h.ws.failHarvest = 1
 	runToEnd(t, h)
@@ -38,6 +39,7 @@ func TestHostFailureAfterTheStepConcludesItAsFailed(t *testing.T) {
 // A container that fails to start is still stopped and charged, and its step
 // concludes as failed (core rules S1, S2).
 func TestFailedStartIsStoppedChargedAndConcluded(t *testing.T) {
+	t.Parallel()
 	h := newHarness(t, true, happyAgent)
 	h.sessions.failOpen = 1
 	runToEnd(t, h)
@@ -71,6 +73,7 @@ func (j *failingInput) ReadBlob(ctx context.Context, ref run.BlobRef) (run.Paylo
 // A step that was prepared but never dispatched is released, not charged, and
 // concludes as failed.
 func TestUndispatchedStepIsReleased(t *testing.T) {
+	t.Parallel()
 	h := newHarness(t, true, happyAgent)
 	h.journal = &failingInput{memoryJournal: h.j, media: "application/vnd.markitect.step-input+json", failures: 1}
 	h.engine = h.newEngine(h.c)
@@ -92,6 +95,7 @@ func TestUndispatchedStepIsReleased(t *testing.T) {
 // Without a workspace no step starts; the workspace is still closed and the
 // run is not charged.
 func TestMaterializationFailureClosesTheWorkspace(t *testing.T) {
+	t.Parallel()
 	h := newHarness(t, true, happyAgent)
 	h.ws.failMaterialize = true
 	if err := h.engine.Run(context.Background()); err == nil {
@@ -106,6 +110,7 @@ func TestMaterializationFailureClosesTheWorkspace(t *testing.T) {
 // and the proposals of a failed step are undone (core rule T6). The next step
 // sees why its last step failed.
 func TestRegistryProposalsAreCheckedAndUndoneWithTheirFailedStep(t *testing.T) {
+	t.Parallel()
 	agent := func(s agentStep) []action {
 		if s.Manager != "lending" || s.Phase != run.PhaseWork {
 			return happyAgent(s)
@@ -139,6 +144,7 @@ func TestRegistryProposalsAreCheckedAndUndoneWithTheirFailedStep(t *testing.T) {
 // A no-change Explore result that its review rejects still reaches the
 // parent's Explore as the child's report (core rule T1).
 func TestRejectedNoChangeExploreStillReachesTheParent(t *testing.T) {
+	t.Parallel()
 	agent := func(s agentStep) []action {
 		switch {
 		case s.Manager == "empty" && s.Phase == run.PhaseExplore:
@@ -167,6 +173,7 @@ func mustPath(t *testing.T, s string) snapshot.Path {
 // A failure before the container starts costs nothing, so the run stops
 // instead of retrying it without bound.
 func TestUnchargedFailureStopsTheRun(t *testing.T) {
+	t.Parallel()
 	h := newHarness(t, true, happyAgent)
 	h.journal = &failingInput{memoryJournal: h.j, media: run.ToolCatalogMedia, failures: 1000}
 	h.engine = h.newEngine(h.c)
@@ -184,6 +191,7 @@ func TestUnchargedFailureStopsTheRun(t *testing.T) {
 // A failed start that overran its reservation ends the run Incomplete once
 // the container is stopped, instead of leaving it in Reconciling.
 func TestOverrunningFailedStartFinishesTheRun(t *testing.T) {
+	t.Parallel()
 	h := newHarness(t, true, happyAgent)
 	h.sessions.failOpen = 1
 	h.sessions.onOpen = func() { h.clock = h.clock.Add(2 * time.Second) }

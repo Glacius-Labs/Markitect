@@ -25,6 +25,7 @@ func waitReplyArgs(id string) string {
 // act, answers in a read-only reply step; the reply wakes the asker, whose
 // next step sees it (core rules M1, M3, M5, T10, T11).
 func TestQuestionToParentIsAnsweredInAReplyStep(t *testing.T) {
+	t.Parallel()
 	var asked string
 	agent := func(s agentStep) []action {
 		switch {
@@ -76,6 +77,7 @@ func TestQuestionToParentIsAnsweredInAReplyStep(t *testing.T) {
 // A question to the owner moves the run to Waiting; the owner's answer wakes
 // the asker, and the run continues (core rules M4, W1, W2).
 func TestOwnerQuestionWaitsAndTheAnswerContinuesTheRun(t *testing.T) {
+	t.Parallel()
 	var asked string
 	agent := func(s agentStep) []action {
 		switch {
@@ -117,6 +119,7 @@ func TestOwnerQuestionWaitsAndTheAnswerContinuesTheRun(t *testing.T) {
 // The owner's answer to a review's question starts a fresh review of the
 // same frozen candidate, which sees the decision (core rule T8).
 func TestAnsweredReviewQuestionStartsAFreshReview(t *testing.T) {
+	t.Parallel()
 	agent := func(s agentStep) []action {
 		if s.Manager == "lending" && s.Phase == run.PhaseReviewerCandidate {
 			if s.Attempt == 0 {
@@ -154,6 +157,7 @@ func TestAnsweredReviewQuestionStartsAFreshReview(t *testing.T) {
 // A parent's hint reaches its direct child only; a message to an unknown
 // addressee is refused (core rule M1).
 func TestHintsReachDirectChildren(t *testing.T) {
+	t.Parallel()
 	agent := func(s agentStep) []action {
 		switch {
 		case s.Manager == "." && s.Phase == run.PhaseWork:
@@ -182,6 +186,7 @@ func TestHintsReachDirectChildren(t *testing.T) {
 // A question to another branch travels along the tree; the Managers between
 // sender and addressee see it without being dispatched (core rule M2).
 func TestQuestionsTravelAlongTheTree(t *testing.T) {
+	t.Parallel()
 	agent := func(s agentStep) []action {
 		if s.Manager == "lending/reminders" && s.Phase == run.PhaseWork && s.Attempt == 0 {
 			return append([]action{{Tool: run.ToolSend, Args: sendArgs("question", "empty", "Do you own the shared format?"), Want: run.ToolOK}}, happyAgent(s)...)
@@ -202,6 +207,7 @@ func TestQuestionsTravelAlongTheTree(t *testing.T) {
 // Each open question admits its own reply step: two children that ask their
 // blocked parent both get a reply (core rule T11).
 func TestEachQuestionGetsItsReplyStep(t *testing.T) {
+	t.Parallel()
 	var asks []string
 	replied := 0
 	agent := func(s agentStep) []action {
@@ -236,6 +242,7 @@ func TestEachQuestionGetsItsReplyStep(t *testing.T) {
 
 // A reply step the Host could not finish drops its reply and is retried.
 func TestAReplyStepTheHostCouldNotFinishIsRetried(t *testing.T) {
+	t.Parallel()
 	var asked string
 	var h *harness
 	replies := 0
@@ -275,6 +282,7 @@ func TestAReplyStepTheHostCouldNotFinishIsRetried(t *testing.T) {
 // A reply step takes the question it answered: two questions to the same
 // Manager, answered newest first, both get a reply (core rule T11).
 func TestAReplyStepTakesTheQuestionItAnswered(t *testing.T) {
+	t.Parallel()
 	var asks []string
 	replied := 0
 	agent := func(s agentStep) []action {

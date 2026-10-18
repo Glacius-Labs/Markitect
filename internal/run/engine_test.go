@@ -33,6 +33,7 @@ func aggregateFile(t *testing.T, e *run.Engine, path string) string {
 // accepted delivery is composed into the aggregate, the parent integrates,
 // and the root's completion moves the run to Verifying.
 func TestEngineRunsOnePackageThroughRejectionReworkAndIntegration(t *testing.T) {
+	t.Parallel()
 	agent := func(s agentStep) []action {
 		switch {
 		case s.Manager == "lending" && s.Phase == run.PhaseWork && s.Attempt == 0:
@@ -106,6 +107,7 @@ func TestEngineRunsOnePackageThroughRejectionReworkAndIntegration(t *testing.T) 
 // names another or assesses one twice, and a pass with a case missing; a
 // failed assessment needs no cases (core rules T7, T8).
 func TestACandidateReviewAssessesEveryRecordedCase(t *testing.T) {
+	t.Parallel()
 	review := func(verdict, cases string) string {
 		return `{"verdict":"` + verdict + `","summary":"Assessed.","evidence":[],"cases":` + cases + `,"findings":[],"resolutions":[]}`
 	}
@@ -144,6 +146,7 @@ func TestACandidateReviewAssessesEveryRecordedCase(t *testing.T) {
 // Manager's rework sees it, a later review assesses its own recorded cases
 // only, and its pass must resolve that finding (core rules T7, T8).
 func TestAMissingCaseBecomesAFinding(t *testing.T) {
+	t.Parallel()
 	review := func(verdict, cases, resolutions string) string {
 		return `{"verdict":"` + verdict + `","summary":"Assessed.","evidence":[],"cases":` + cases + `,"findings":[],"resolutions":` + resolutions + `}`
 	}
@@ -207,6 +210,7 @@ func admitted(h *harness) []string {
 // from Explore; its review runs before the write barrier because nothing is
 // written (core rules T2, T3).
 func TestNoChangeExploreIsReviewedBeforeTheBarrier(t *testing.T) {
+	t.Parallel()
 	agent := func(s agentStep) []action {
 		if s.Manager == "empty" && s.Phase == run.PhaseExplore {
 			return []action{
@@ -235,6 +239,7 @@ func TestNoChangeExploreIsReviewedBeforeTheBarrier(t *testing.T) {
 // At the rejection limit the task becomes incomplete and the run finishes
 // Incomplete with all work retained (core rules T8, T14).
 func TestRejectionLimitFinishesTheRunIncomplete(t *testing.T) {
+	t.Parallel()
 	agent := func(s agentStep) []action {
 		if s.Manager == "lending" && s.Phase == run.PhaseReviewerCandidate {
 			return []action{{Tool: run.ToolSubmitReview, Args: rejectArgs, Want: run.ToolOK}}
@@ -255,6 +260,7 @@ func TestRejectionLimitFinishesTheRunIncomplete(t *testing.T) {
 // A review that needs an owner decision blocks the task on an owner question,
 // and the run waits for the owner (core rules T8, W1).
 func TestNeedsDecisionWaitsForTheOwner(t *testing.T) {
+	t.Parallel()
 	agent := func(s agentStep) []action {
 		if s.Manager == "lending" && s.Phase == run.PhaseReviewerCandidate {
 			return []action{{Tool: run.ToolSubmitReview, Args: `{"verdict":"needs_decision","summary":"The model leaves the format open.","question":"Which format should Item use?","evidence":[],"cases":[{"name":"item","assessment":"evidenced","grounds":"Checked."}],"findings":[],"resolutions":[]}`, Want: run.ToolOK}}
@@ -280,6 +286,7 @@ func TestNeedsDecisionWaitsForTheOwner(t *testing.T) {
 // to the state before the step (core rule T6). A write outside the owner's
 // claims fails the step whatever its outcome said (core rule S4).
 func TestFailedStepsReturnTasksToTheirStateBeforeTheStep(t *testing.T) {
+	t.Parallel()
 	agent := func(s agentStep) []action {
 		switch {
 		case s.Manager == "lending" && s.Phase == run.PhaseExplore && s.Attempt == 0:
@@ -309,6 +316,7 @@ func TestFailedStepsReturnTasksToTheirStateBeforeTheStep(t *testing.T) {
 // A consumer that waits for a producer's delivery wakes when it is accepted
 // (core rules T5, T10).
 func TestDeliveryWaitWakesTheConsumer(t *testing.T) {
+	t.Parallel()
 	agent := func(s agentStep) []action {
 		if s.Manager == "." && s.Phase == run.PhaseWork && s.Attempt == 0 {
 			return []action{
@@ -338,6 +346,7 @@ func TestDeliveryWaitWakesTheConsumer(t *testing.T) {
 // provider thread before the step; resumed steps bind the same thread. The
 // whole tree runs with it (core rules S1, S3).
 func TestACodexHandshakeRunsTheWholeTree(t *testing.T) {
+	t.Parallel()
 	inputs := stepInputs(t, false)
 	inputs.Binding.Policy.Assignment.Steps, inputs.Binding.Policy.Assignment.SessionStarts = 64, 64
 	h := newHarnessWith(t, inputs, happyAgent)

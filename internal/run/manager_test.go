@@ -48,6 +48,7 @@ func unitReserve(t *testing.T, s *stateValue, id string, kind InvocationKind, pu
 }
 func unitBudget(s *stateValue) BudgetView { return budget(s.policy, int64(len(s.runs)), s.invocations) }
 func TestWritingProtectsReserveAndAssessmentCanSpendIt(t *testing.T) {
+	t.Parallel()
 	s := unitState(t)
 	for n := 0; n < 6; n++ {
 		id := string(rune('a' + n))
@@ -76,6 +77,7 @@ func TestWritingProtectsReserveAndAssessmentCanSpendIt(t *testing.T) {
 	}
 }
 func TestActualOverrunIsPreservedAndBlocksAllAdmission(t *testing.T) {
+	t.Parallel()
 	s := unitState(t)
 	unitReserve(t, s, "step", AgentStep, Assessment, time.Second)
 	unitSettle(t, s, "step", 11*time.Minute)
@@ -88,6 +90,7 @@ func TestActualOverrunIsPreservedAndBlocksAllAdmission(t *testing.T) {
 	}
 }
 func TestUnknownEffectCannotBeFreedByFailureStopOrWaiting(t *testing.T) {
+	t.Parallel()
 	s := unitState(t)
 	unitReserve(t, s, "step", AgentStep, Writing, time.Minute)
 	u := unitCommand(ObserveUncertain)
@@ -126,6 +129,7 @@ func TestUnknownEffectCannotBeFreedByFailureStopOrWaiting(t *testing.T) {
 	}
 }
 func TestProvenNonDispatchAndWaitingDoNotCharge(t *testing.T) {
+	t.Parallel()
 	s := unitState(t)
 	before := unitBudget(s)
 	unitReserve(t, s, "start", SessionStart, Writing, time.Minute)
@@ -158,6 +162,7 @@ func TestProvenNonDispatchAndWaitingDoNotCharge(t *testing.T) {
 	}
 }
 func TestContinuationRequiresRemainingStructuralReviewFloor(t *testing.T) {
+	t.Parallel()
 	demand := reviewDemand{6, 12, 12}
 	base := BudgetView{Remaining: Capacity{Runs: 1, SessionStarts: 12, Steps: 12, ExecutionTime: time.Second}}
 	if !reviewCapacity(base, demand) {
@@ -183,6 +188,7 @@ func TestContinuationRequiresRemainingStructuralReviewFloor(t *testing.T) {
 	}
 }
 func TestContinuationCanUseStructuralFloorBelowConfiguredReserve(t *testing.T) {
+	t.Parallel()
 	s := unitState(t)
 	s.policy.Reserve = Capacity{SessionStarts: 6, Steps: 6, ExecutionTime: 5 * time.Minute}
 	s.policy.Assignment = Capacity{Runs: 3, SessionStarts: 8, Steps: 10, ExecutionTime: 10 * time.Minute}
@@ -208,6 +214,7 @@ func TestContinuationCanUseStructuralFloorBelowConfiguredReserve(t *testing.T) {
 	unitReserve(t, s, "review", AgentStep, Assessment, time.Second)
 }
 func TestZeroReviewContinuationHasZeroStructuralFloor(t *testing.T) {
+	t.Parallel()
 	w := bindingWire{Version: 2, Managers: []organization.Manager{{Package: organization.Root}}}
 	old := recordedReviewDemand(w)
 	if old != (reviewDemand{}) {
@@ -222,6 +229,7 @@ func TestZeroReviewContinuationHasZeroStructuralFloor(t *testing.T) {
 	}
 }
 func TestAssignmentExtensionPreservesConsumptionHoldsAndCapRevisions(t *testing.T) {
+	t.Parallel()
 	s := unitState(t)
 	unitReserve(t, s, "spent", AgentStep, Assessment, time.Minute)
 	unitSettle(t, s, "spent", 20*time.Second)
@@ -247,6 +255,7 @@ func TestAssignmentExtensionPreservesConsumptionHoldsAndCapRevisions(t *testing.
 	}
 }
 func TestExtensionDoesNotClearObservedOverrun(t *testing.T) {
+	t.Parallel()
 	s := unitState(t)
 	unitReserve(t, s, "overrun", AgentStep, Assessment, time.Second)
 	unitSettle(t, s, "overrun", 2*time.Second)
@@ -263,6 +272,7 @@ func TestExtensionDoesNotClearObservedOverrun(t *testing.T) {
 	}
 }
 func TestReviewerSessionContractRequiresROAssessmentAndSettledReadiness(t *testing.T) {
+	t.Parallel()
 	s := unitState(t)
 	profile, _ := NewPayload("application/json", "utf-8", []byte("profile"))
 	tools, _ := NewPayload("application/json", "utf-8", []byte("tools"))
@@ -315,6 +325,7 @@ func TestReviewerSessionContractRequiresROAssessmentAndSettledReadiness(t *testi
 }
 
 func TestManagerPolicyRejectsForgedOperationAndLegacyNewFields(t *testing.T) {
+	t.Parallel()
 	doc, _ := NewPayload("text/plain", "utf-8", []byte("original producer document"))
 	source := organization.SettingSource{File: "execution", Field: "/limits/maxContextBytes", ContentID: doc.Ref().ContentID}
 	limit := organization.Setting[int64]{Value: 4096, Source: source}
@@ -351,6 +362,7 @@ func TestManagerPolicyRejectsForgedOperationAndLegacyNewFields(t *testing.T) {
 // a reply step needs no note. In D2 and D4 a root ended its work step right
 // after a question, without an outcome.
 func TestSendNoteFitsThePhase(t *testing.T) {
+	t.Parallel()
 	question, hint := []byte(`{"kind":"question","to":"parent","body":"Which?"}`), []byte(`{"kind":"hint","to":"a","body":"Use it."}`)
 	for _, tc := range []struct {
 		phase    Phase

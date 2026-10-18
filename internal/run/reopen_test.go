@@ -29,6 +29,7 @@ func withCreationArea(t *testing.T) func(*organization.SettingsFacts) {
 // and a registry proposal made before the restart still hold for the rework
 // after it (core rule S4).
 func TestClaimsSurviveAnEngineRestart(t *testing.T) {
+	t.Parallel()
 	newFile := map[string]string{"out/library.go": "package library\n\ntype Item struct{}\n", "out/item_test.go": "package library\n"}
 	agent := func(s agentStep) []action {
 		switch {
@@ -69,6 +70,7 @@ func TestClaimsSurviveAnEngineRestart(t *testing.T) {
 // child: the done child is reopened, the parent waits for it, and the
 // child's next local review must resolve the finding (core rules D5, T11).
 func TestIntegrationFindingReopensTheChild(t *testing.T) {
+	t.Parallel()
 	childFinding := `{"verdict":"changes_requested","summary":"Item lacks a title.","evidence":[],"cases":[{"name":"item","assessment":"evidenced","grounds":"Checked."}],"resolutions":[],"findings":[{"to":"lending","severity":"blocking","definitions":["lending/Item"],"grounds":"Item has no title.","requestedEvidence":"A title field."}]}`
 	var finding string
 	agent := func(s agentStep) []action {
@@ -119,6 +121,7 @@ func TestIntegrationFindingReopensTheChild(t *testing.T) {
 // it in its reply step: the task returns to work, the change goes through its
 // review, and the parent integrates the corrected delivery (core rule T11).
 func TestAReplyStepCorrectsADoneManagersFile(t *testing.T) {
+	t.Parallel()
 	var h *harness
 	var asked string
 	corrected := "package library\n\ntype Item struct{ Title string }\n"
@@ -163,6 +166,7 @@ func TestAReplyStepCorrectsADoneManagersFile(t *testing.T) {
 // parent to waiting for its children: the parent integrates the correction
 // again before the root does (core rule T11).
 func TestAReplyCorrectionReopensTheDoneAncestors(t *testing.T) {
+	t.Parallel()
 	var h *harness
 	var asked string
 	corrected := "package reminders\n\nconst Days = 14\n"
@@ -218,6 +222,7 @@ func TestAReplyCorrectionReopensTheDoneAncestors(t *testing.T) {
 // the pass is withheld, and the parent integrates the corrected delivery once
 // the child is done again (core rules T9, T11).
 func TestAnIntegrationWaitsForAChildThatCorrectsItself(t *testing.T) {
+	t.Parallel()
 	var h *harness
 	var asked string
 	corrected := "package library\n\ntype Item struct{ Title string }\n"
@@ -261,6 +266,7 @@ func TestAnIntegrationWaitsForAChildThatCorrectsItself(t *testing.T) {
 // cannot reserve, still returns the task to work, whose step sees the refusal
 // and makes the change properly (core rules S4, T11).
 func TestARefusedReplyCorrectionReachesTheWorkStep(t *testing.T) {
+	t.Parallel()
 	var h *harness
 	var asked string
 	agent := func(s agentStep) []action {
@@ -301,6 +307,7 @@ func TestARefusedReplyCorrectionReachesTheWorkStep(t *testing.T) {
 // read-only: a change fails the step, the task stays blocked, and the run waits
 // for the owner (core rules T8, T11).
 func TestAReplyOfATaskAwaitingADecisionIsReadOnly(t *testing.T) {
+	t.Parallel()
 	var h *harness
 	var asked string
 	decision := `{"verdict":"needs_decision","summary":"Unclear.","question":"Which title?","evidence":[],"cases":[{"name":"item","assessment":"evidenced","grounds":"Checked."}],"findings":[],"resolutions":[]}`
@@ -333,6 +340,7 @@ func TestAReplyOfATaskAwaitingADecisionIsReadOnly(t *testing.T) {
 // task holds an unaccepted registry proposal from an earlier step (core rules
 // S4, T10).
 func TestAReplyWithoutChangesKeepsABlockedTaskBlocked(t *testing.T) {
+	t.Parallel()
 	var h *harness
 	var own, other string
 	var after run.TaskState
@@ -374,6 +382,7 @@ func TestAReplyWithoutChangesKeepsABlockedTaskBlocked(t *testing.T) {
 // which does not contain the child's work; the run waits for the owner
 // (core rules I3, W1).
 func TestAChildsOpenQuestionLeavesTheParentsLocalReview(t *testing.T) {
+	t.Parallel()
 	agent := func(s agentStep) []action {
 		switch {
 		case s.Manager == "lending" && s.Phase == run.PhaseReviewerCandidate && s.Attempt == 0:
@@ -396,6 +405,7 @@ func TestAChildsOpenQuestionLeavesTheParentsLocalReview(t *testing.T) {
 // A finding to a grandchild reopens it, and the chain above it integrates
 // again (core rule T11).
 func TestAGrandchildFindingReintegratesTheChain(t *testing.T) {
+	t.Parallel()
 	grand := `{"verdict":"changes_requested","summary":"Reminder lacks a title.","evidence":[],"cases":[{"name":"item","assessment":"evidenced","grounds":"Checked."}],"resolutions":[],"findings":[{"to":"lending/reminders","severity":"blocking","definitions":["lending/reminders/Item"],"grounds":"No title.","requestedEvidence":"A title."}]}`
 	var finding string
 	agent := func(s agentStep) []action {
@@ -421,6 +431,7 @@ func TestAGrandchildFindingReintegratesTheChain(t *testing.T) {
 // Findings to a child and to its own child reopen both, whatever their
 // order; the child works locally again before it integrates (core rule T11).
 func TestFindingsToAChildAndItsChildReopenBoth(t *testing.T) {
+	t.Parallel()
 	both := `{"verdict":"changes_requested","summary":"Both lack a title.","evidence":[],"cases":[{"name":"item","assessment":"evidenced","grounds":"Checked."}],"resolutions":[],"findings":[` +
 		`{"to":"lending/reminders","severity":"blocking","definitions":["lending/reminders/Item"],"grounds":"No title.","requestedEvidence":"A title."},` +
 		`{"to":"lending","severity":"blocking","definitions":["lending/Item"],"grounds":"No title either.","requestedEvidence":"A title."}]}`
@@ -450,6 +461,7 @@ func TestFindingsToAChildAndItsChildReopenBoth(t *testing.T) {
 // A reservation refused because another Manager reserved the path names that
 // Manager, so the refused Manager can wait for its delivery or ask it.
 func TestARefusedReservationNamesItsHolder(t *testing.T) {
+	t.Parallel()
 	agent := func(s agentStep) []action {
 		switch {
 		case s.Manager == "." && s.Phase == run.PhaseWork && s.Attempt == 0:
@@ -475,6 +487,7 @@ func TestARefusedReservationNamesItsHolder(t *testing.T) {
 // A path another Manager's accepted delivery registers is named with its
 // owner and is already in the workspace; no wait is suggested.
 func TestARefusedReservationOfARegisteredPathNamesItsOwner(t *testing.T) {
+	t.Parallel()
 	agent := func(s agentStep) []action {
 		switch {
 		case s.Manager == "lending" && s.Phase == run.PhaseWork && s.Attempt == 0:
@@ -503,6 +516,7 @@ func TestARefusedReservationOfARegisteredPathNamesItsOwner(t *testing.T) {
 // cannot wait for the delivery of a parent that waits for its children
 // (core rule T10).
 func TestAWaitThatClosesACycleIsRefused(t *testing.T) {
+	t.Parallel()
 	agent := func(s agentStep) []action {
 		switch {
 		case s.Manager == "." && s.Phase == run.PhaseWork && s.Attempt == 0:
@@ -527,6 +541,7 @@ func TestAWaitThatClosesACycleIsRefused(t *testing.T) {
 // Reserving one's own registered file is refused with the advice to change it
 // directly.
 func TestReservingOnesOwnFileSaysToChangeItDirectly(t *testing.T) {
+	t.Parallel()
 	agent := func(s agentStep) []action {
 		if s.Manager == "lending" && s.Phase == run.PhaseWork && s.Attempt == 0 {
 			return append([]action{{Tool: run.ToolReservePath, Args: `{"path":"out/library.go","form":"code"}`, Want: run.ToolRefused}}, happyAgent(s)...)
@@ -546,6 +561,7 @@ func TestReservingOnesOwnFileSaysToChangeItDirectly(t *testing.T) {
 // again changes that form. In real attempt D3 a mismatch passed both calls and
 // failed the whole step at capture.
 func TestARegistrationCarriesItsReservationsForm(t *testing.T) {
+	t.Parallel()
 	agent := func(s agentStep) []action {
 		if s.Manager == "lending" && s.Phase == run.PhaseWork && s.Attempt == 0 {
 			return []action{
@@ -574,6 +590,7 @@ func TestARegistrationCarriesItsReservationsForm(t *testing.T) {
 // Reserving a registered new file again with another form leaves the earlier
 // record's form behind; the submission is refused until the record matches.
 func TestASubmissionWaitsForMatchingForms(t *testing.T) {
+	t.Parallel()
 	agent := func(s agentStep) []action {
 		if s.Manager == "lending" && s.Phase == run.PhaseWork && s.Attempt == 0 {
 			return []action{
@@ -602,6 +619,7 @@ func TestASubmissionWaitsForMatchingForms(t *testing.T) {
 // A Manager may register its own existing file with another form; only new
 // files follow their reservation.
 func TestAnExistingOwnFileMayChangeItsForm(t *testing.T) {
+	t.Parallel()
 	agent := func(s agentStep) []action {
 		if s.Manager == "lending" && s.Phase == run.PhaseWork && s.Attempt == 0 {
 			return append([]action{{Tool: run.ToolRegister, Args: `{"path":"out/library.go","form":"doc","realizes":["lending/Item"],"why":"Documents Item."}`, Want: run.ToolOK}}, happyAgent(s)...)
@@ -618,6 +636,7 @@ func TestAnExistingOwnFileMayChangeItsForm(t *testing.T) {
 // A wait that ends a writing step is refused on a form mismatch too: its
 // capture would fail the same way.
 func TestAWaitWaitsForMatchingForms(t *testing.T) {
+	t.Parallel()
 	agent := func(s agentStep) []action {
 		if s.Manager == "lending" && s.Phase == run.PhaseWork && s.Attempt == 0 {
 			return []action{

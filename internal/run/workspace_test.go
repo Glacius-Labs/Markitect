@@ -7,6 +7,7 @@ import (
 )
 
 func TestWorkspaceRequestsNameAWorkspaceAndBoundObservation(t *testing.T) {
+	t.Parallel()
 	if !(run.WorkspaceSpec{ID: "w"}).Valid() || (run.WorkspaceSpec{}).Valid() {
 		t.Fatal("workspace spec validity")
 	}
