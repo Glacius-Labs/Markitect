@@ -912,12 +912,13 @@ func (s *stateValue) concludeWork(r ConclusionRecord, t *taskValue, revision uin
 		slices.Sort(uses)
 		t.State, t.Since, t.Review = TaskReviewing, revision, reviewValue{}
 		t.Submission = Submission{Purpose: in.Purpose, Scope: in.Scope, Proposal: r.Input, Candidate: t.Own, Tree: t.OwnTree, Aggregate: s.aggregateVersion, AggregateTree: s.aggregateTree, Uses: uses}
-		if k := t.Kept; k.Inputs != "" && k.Inputs == s.expectationInputs(*t, k.Withheld) {
-			// A withheld pass leaves its recorded expectations standing while
-			// their inputs are unchanged, apart from findings the withheld
-			// passes raised; the expectations step sees neither the candidate
-			// nor the aggregate. The renewed review assesses the same cases in
-			// a fresh candidate home (core rule T7).
+		if k := t.Kept; k.Inputs != "" && k.Inputs == s.expectationInputs(*t, k.Assessed) {
+			// A withheld or rejected candidate leaves its recorded expectations
+			// standing while their inputs are unchanged, apart from findings
+			// the reviews against them raised; the expectations step sees
+			// neither the candidate nor the aggregate. The next review assesses
+			// the same cases in a fresh candidate home (core rule T7, DEC-046,
+			// DEC-047).
 			t.Review = k
 			t.Reviews++
 		}

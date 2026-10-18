@@ -188,6 +188,9 @@ func (c *Coordinator) StepQuotes(manager string) []BlobRef {
 	if t.Phase == PhaseReviewerCandidate {
 		refs = append(refs, t.Submission.Proposal, t.Review.Expectations)
 	}
+	if !t.Phase.reviewer() && t.Kept.Expectations != (BlobRef{}) {
+		refs = append(refs, t.Kept.Expectations)
+	}
 	return refs
 }
 
@@ -328,6 +331,17 @@ func (s stateValue) renderInput(t taskValue, facts StepFacts, basis snapshot.Con
 			findings.IDs = append(findings.IDs, id)
 			findings.Items = append(findings.Items, organization.FindingFact{ID: id, Grounds: organization.HostText{Text: text, Source: organization.HostSource{RecordID: id, ContentID: basis}}})
 		}
+	}
+	if t.Kept.Expectations != (BlobRef{}) && !t.Phase.reviewer() {
+		// The Manager sees the cases its next review assesses again (DEC-047).
+		recorded, err := quote(t.Kept.Expectations)
+		if err != nil {
+			return organization.RenderInput{}, err
+		}
+		id := t.ID + "-recorded-cases"
+		text := "Your last review assessed your candidate against these recorded cases. A resubmission with the same purpose and scope is assessed against the same cases again, each by its name, while no other finding or owner decision arrives; give each case evidence that shows it ran: " + recorded.Text
+		findings.IDs = append(findings.IDs, id)
+		findings.Items = append(findings.Items, organization.FindingFact{ID: id, Grounds: organization.HostText{Text: text, Source: organization.HostSource{RecordID: id, ContentID: t.Kept.Expectations.ContentID}}})
 	}
 	if t.Withheld != "" && !t.Phase.reviewer() {
 		// A withheld pass leaves the task's work outside the accepted aggregate;

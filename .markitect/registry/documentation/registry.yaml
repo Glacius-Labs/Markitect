@@ -12,6 +12,10 @@ artifacts:
     form: doc
     realizes: [documentation/current-guidance]
     why: Preserves the run evidence and the owner's authorization behind keeping a withheld review's recorded expectations.
+  - path: "docs/concepts/sources/stable-review-cases-20261018.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Preserves the run evidence and the owner's authorization behind keeping recorded review cases after a rejection.
   - path: "docs/design/canonical-model/commands.md"
     form: doc
     realizes: [documentation/current-guidance]
