@@ -42,10 +42,15 @@ func TestCreateVolumeExclusiveObservesFreshOwnership(t *testing.T) {
 
 func TestVolumeMountCensusIncludesStoppedReadOnlyAndExactVolume(t *testing.T) {
 	other := strings.Repeat("b", 64)
-	e, _ := fakeCommandEngine(t, engineStep{Out: commandID + "\n" + other}, engineStep{Out: `[{"Id":"` + commandID + `","State":{"Running":false},"Mounts":[{"Type":"volume","Name":"work","RW":false}]}]`}, engineStep{Out: `[{"Id":"` + other + `","Mounts":[{"Type":"volume","Name":"work-other"},{"Type":"bind","Name":"work"}]}]`})
+	e, calls := fakeCommandEngine(t, engineStep{Out: commandID + "\n" + other}, engineStep{Out: `[{"Id":"` + commandID + `","State":{"Running":false},"Mounts":[{"Type":"volume","Name":"work","RW":false}]}]`}, engineStep{Out: `[{"Id":"` + other + `","Mounts":[{"Type":"volume","Name":"work-other"},{"Type":"bind","Name":"work"}]}]`})
 	ids, err := e.VolumeMounts(context.Background(), "work")
 	if err != nil || len(ids) != 1 || ids[0] != commandID {
 		t.Fatalf("ids=%v err=%v", ids, err)
+	}
+	// The engine narrows the listing to containers whose mounts match the
+	// name; the exact volume mount is still checked on each one.
+	if first := calls()[0]; !containsArg(first, "--all") || !containsArg(first, "volume=work") {
+		t.Fatalf("census listing %q", first)
 	}
 }
 
