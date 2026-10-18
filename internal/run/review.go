@@ -487,6 +487,12 @@ func (s *stateValue) concludeReview(r ConclusionRecord, t *taskValue, revision u
 		t.Used = nil
 		t.Deliveries = append(slices.Clone(t.Deliveries), Delivery{Purpose: purpose, Scope: scope, Proposal: t.Submission.Proposal, Candidate: t.Submission.Candidate, Aggregate: s.aggregateVersion, At: revision})
 		t.Submission = Submission{}
+		// An accepted delivery shows that the work converges, so the
+		// rejection limit counts again from here (DEC-050).
+		if t.Rejections[purpose] > 0 {
+			t.Rejections = maps.Clone(t.Rejections)
+			delete(t.Rejections, purpose)
+		}
 		switch {
 		case scope == "limited":
 			t.State, t.Since = TaskReady, revision

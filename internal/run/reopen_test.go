@@ -110,8 +110,9 @@ func TestIntegrationFindingReopensTheChild(t *testing.T) {
 	if strings.Count(strings.Join(order, ","), "lending work") != 2 || strings.Count(strings.Join(order, ","), ". integrate") != 2 {
 		t.Fatal("the child was not reopened or the parent did not integrate again", order)
 	}
-	if root := h.task("."); root.Rejections["integration"] != 1 {
-		t.Fatal("the integration rejection was not counted", root.Rejections)
+	// The accepted second integration restarts the count (DEC-050).
+	if root := h.task("."); root.Rejections["integration"] != 0 {
+		t.Fatal("the accepted integration did not restart the rejection count", root.Rejections)
 	}
 	// The second integration review keeps the cases of the rejected one
 	// (DEC-047); the root records cases for its local and its integration

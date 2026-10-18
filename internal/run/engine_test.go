@@ -69,7 +69,8 @@ func TestEngineRunsOnePackageThroughRejectionReworkAndIntegration(t *testing.T) 
 	if root.State != run.TaskDone || lending.State != run.TaskDone || !root.LocalDone || len(root.Deliveries) != 2 || len(lending.Deliveries) != 1 {
 		t.Fatalf("tasks not done as T13 requires: %+v %+v", root, lending)
 	}
-	if lending.Rejections["local"] != 1 || lending.Deliveries[0].Aggregate != 1 || h.c.AggregateVersion() != 1 {
+	// The accepted delivery restarts the rejection count (DEC-050).
+	if lending.Rejections["local"] != 0 || lending.Deliveries[0].Aggregate != 1 || h.c.AggregateVersion() != 1 {
 		t.Fatal("rejection or composition not recorded", lending.Rejections, lending.Deliveries, h.c.AggregateVersion())
 	}
 	if got := aggregateFile(t, h.engine, "out/library.go"); got != "package library\n\ntype Item struct{}\n" {
@@ -179,7 +180,7 @@ func TestAMissingCaseBecomesAFinding(t *testing.T) {
 	h := newHarness(t, true, agent)
 	runToEnd(t, h)
 	lending := h.task("lending")
-	if h.c.Current().State != run.Verifying || lending.Rejections["local"] != 1 || len(lending.Deliveries) != 1 {
+	if h.c.Current().State != run.Verifying || lending.Rejections["local"] != 0 || len(lending.Deliveries) != 1 {
 		t.Fatal("the missing case did not go through a finding to a pass", h.c.Current(), lending.Rejections, h.sessions.answers)
 	}
 	if n := strings.Count(strings.Join(admitted(h), ","), "lending reviewer-expectations"); n != 1 {
@@ -261,6 +262,32 @@ func TestRejectionLimitFinishesTheRunIncomplete(t *testing.T) {
 	}
 	if r := h.c.Current(); r.State != run.Finished || r.Outcome != run.Incomplete || !strings.Contains(r.Reason, "rejection limit") {
 		t.Fatalf("run not finished Incomplete: %+v", r)
+	}
+}
+
+// An accepted delivery restarts the count, so a Manager that converges on
+// each delivery is not stopped by rejections of earlier deliveries; the limit
+// here is two (DEC-050).
+func TestAnAcceptedDeliveryRestartsTheRejectionCount(t *testing.T) {
+	t.Parallel()
+	agent := func(s agentStep) []action {
+		switch {
+		case s.Manager == "lending" && s.Phase == run.PhaseWork && s.Attempt < 2:
+			content := []string{"package library\n", "package library\n\ntype Item struct{}\n"}[s.Attempt]
+			return []action{{Write: map[string]string{"out/library.go": content}, Tool: run.ToolSubmit, Args: submitArgs("local", "limited"), Want: run.ToolOK}}
+		case s.Manager == "lending" && s.Phase == run.PhaseReviewerCandidate && s.Attempt%2 == 0 && s.Attempt < 4:
+			return []action{{Tool: run.ToolSubmitReview, Args: rejectArgs, Want: run.ToolOK}}
+		case s.Manager == "lending" && s.Phase == run.PhaseReviewerCandidate && s.Attempt%2 == 1:
+			return []action{{Tool: run.ToolSubmitReview, Args: passArgs(openFinding(t, s)), Want: run.ToolOK}}
+		}
+		return happyAgent(s)
+	}
+	h := newHarness(t, true, agent)
+	runToEnd(t, h)
+	lending := h.task("lending")
+	// Two rejections in total, one before each accepted delivery.
+	if h.c.Current().State != run.Verifying || len(lending.Deliveries) != 2 || strings.Count(strings.Join(admitted(h), ","), "lending reviewer-candidate") != 4 || lending.Rejections["local"] != 0 {
+		t.Fatalf("an accepted delivery did not restart the rejection count: %+v %+v", h.c.Current(), lending)
 	}
 }
 

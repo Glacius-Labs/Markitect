@@ -277,9 +277,9 @@ expectations step while the task's open findings, other than those the reviews
 against these expectations raised or resolved, and the owner's decisions are
 unchanged. That step sees neither the candidate, its scope nor the aggregate,
 and the Manager's steps show the standing cases for each purpose (DEC-046,
-DEC-047, DEC-048). Changes requested count one rejection per purpose, which
-the Manager's next steps see together with the limit; at
-the bound rejection limit the task becomes incomplete. A needs-decision verdict
+DEC-047, DEC-048). Changes requested count one rejection per purpose, and an
+accepted delivery for the purpose restarts the count (DEC-050); at the bound
+rejection limit the task becomes incomplete. A needs-decision verdict
 blocks the task on an owner question, and a failed assessment starts a fresh
 review. An integration review may address a finding to a descendant that owns
 the affected artifacts (D5), with changes requested; such a blocking finding
