@@ -80,7 +80,11 @@ func TestQuestionToParentIsAnsweredInItsNextStep(t *testing.T) {
 func TestOwnerQuestionWaitsAndTheAnswerContinuesTheRun(t *testing.T) {
 	t.Parallel()
 	var asked string
+	rootSaw := false
 	agent := func(s agentStep) []action {
+		if s.Manager == "." && s.Phase == run.PhaseIntegrate {
+			rootSaw = bytes.Contains(s.Packet.Context.Bytes, []byte("No, keep the name."))
+		}
 		switch {
 		case s.Manager == "lending" && s.Phase == run.PhaseWork && s.Attempt == 0:
 			asked = questionID(s, 1)
@@ -119,6 +123,99 @@ func TestOwnerQuestionWaitsAndTheAnswerContinuesTheRun(t *testing.T) {
 	// again before its next work step (DEC-049).
 	if n := strings.Count(strings.Join(admitted(h), ","), "lending reviewer-expectations"); n != 2 {
 		t.Fatal("the owner's answer did not renew lending's cases", n, admitted(h))
+	}
+	// The answer binds the whole run, so the root sees it too, but it renews
+	// only the asking task's cases (DEC-053).
+	if !rootSaw || strings.Count(strings.Join(admitted(h), ","), ". reviewer-expectations") != 2 {
+		t.Fatal("the answer did not reach the root or renewed its cases", rootSaw, admitted(h))
+	}
+}
+
+// The owner's decisions bound with the run reach every step from the start,
+// and a restored run keeps them (DEC-053).
+func TestBoundOwnerDecisionsReachEveryStep(t *testing.T) {
+	t.Parallel()
+	const decision = "Unknown argument fields return invalidRequest."
+	missed := []string{}
+	agent := func(s agentStep) []action {
+		if !bytes.Contains(s.Packet.Context.Bytes, []byte("The owner decided: "+decision)) {
+			missed = append(missed, s.Manager+" "+string(s.Phase))
+		}
+		return happyAgent(s)
+	}
+	inputs := stepInputs(t, true)
+	inputs.Binding.OwnerDecisions = []string{decision}
+	h := newHarnessWith(t, inputs, agent)
+	runToEnd(t, h)
+	if h.c.Current().State != run.Verifying || len(missed) != 0 {
+		t.Fatal("a step did not see the bound owner decision", h.c.Current(), missed)
+	}
+}
+
+// A Host restarted from the journal keeps the run's bound decisions: the steps
+// after the restore still see them (DEC-053).
+func TestBoundOwnerDecisionsSurviveARestore(t *testing.T) {
+	t.Parallel()
+	const decision = "Unknown argument fields return invalidRequest."
+	missed := []string{}
+	agent := func(s agentStep) []action {
+		if !bytes.Contains(s.Packet.Context.Bytes, []byte("The owner decided: "+decision)) {
+			missed = append(missed, s.Manager+" "+string(s.Phase))
+		}
+		return happyAgent(s)
+	}
+	inputs := stepInputs(t, true)
+	inputs.Binding.OwnerDecisions = []string{decision}
+	h := newHarnessWith(t, inputs, agent)
+	h.advanceUntil(func(a run.Admission) bool { return a.Manager == "lending" && a.Phase == run.PhaseWork })
+	restored, err := run.Restore(context.Background(), &readJournal{store: h.j}, "repo", run.RestoreLimits{PageSize: 16, Batches: 2000, Events: 4000, Bytes: 64 << 20})
+	if err != nil {
+		t.Fatal(err)
+	}
+	h.c = restored
+	h.engine = h.newEngine(restored)
+	runToEnd(t, h)
+	if h.c.Current().State != run.Verifying || len(missed) != 0 {
+		t.Fatal("a step after the restore did not see the bound decision", h.c.Current(), missed)
+	}
+}
+
+// An answer to one task's question reaches a sibling's later steps but does
+// not renew the sibling's standing cases (DEC-053).
+func TestAnAnswerKeepsASiblingsStandingCases(t *testing.T) {
+	t.Parallel()
+	var asked string
+	rootSaw := false
+	agent := func(s agentStep) []action {
+		switch {
+		case s.Manager == "." && s.Phase == run.PhaseWork && s.Attempt == 0:
+			return []action{{Tool: run.ToolWait, Args: `{"on":[{"kind":"children"}],"reason":"Lending first."}`, Want: run.ToolOK}}
+		case s.Manager == "." && s.Phase == run.PhaseWork:
+			rootSaw = bytes.Contains(s.Packet.Context.Bytes, []byte("No, keep the name."))
+		case s.Manager == "lending" && s.Phase == run.PhaseWork && s.Attempt == 0:
+			asked = questionID(s, 1)
+			return []action{
+				{Tool: run.ToolSend, Args: sendArgs("question", "owner", "May Item be renamed?"), Want: run.ToolOK},
+				{Tool: run.ToolWait, Args: fmt.Sprintf(`{"on":[{"kind":"owner","ref":%q}],"reason":"Owner decision."}`, asked), Want: run.ToolOK},
+			}
+		}
+		return happyAgent(s)
+	}
+	h := newHarness(t, true, agent)
+	runToEnd(t, h)
+	answer, err := h.c.AnswerCommand(meta("answer"), asked, "No, keep the name.")
+	if err != nil {
+		t.Fatal(err)
+	}
+	commit(t, h.c, h.j, answer)
+	resume := command("resume", run.ResumeRun)
+	resume.Run = h.c.Current().ID
+	commit(t, h.c, h.j, resume)
+	runToEnd(t, h)
+	// The root's local cases were recorded before the answer and still stand
+	// for its local submission after it; only its integration records new ones.
+	if h.c.Current().State != run.Verifying || !rootSaw || strings.Count(strings.Join(admitted(h), ","), ". reviewer-expectations") != 2 {
+		t.Fatal("the answer renewed the sibling's cases or did not reach it", h.c.Current(), rootSaw, admitted(h))
 	}
 }
 

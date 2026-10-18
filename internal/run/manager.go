@@ -72,10 +72,13 @@ func recordedReviewDemand(w bindingWire) reviewDemand {
 }
 func validateManagerPolicy(w bindingWire) error {
 	if w.Version != 3 {
-		if w.ManagerPolicy != nil || w.Scope != nil || w.MaxContextBytes != nil || w.RequiredChecks != nil {
+		if w.ManagerPolicy != nil || w.Scope != nil || w.MaxContextBytes != nil || w.RequiredChecks != nil || w.OwnerDecisions != nil {
 			return ErrInvalid
 		}
 		return nil
+	}
+	if w.OwnerDecisions != nil && (len(*w.OwnerDecisions) == 0 || slices.ContainsFunc(*w.OwnerDecisions, func(d string) bool { return !text(d) })) {
+		return ErrInvalid
 	}
 	if w.RequiredChecks == nil || !slices.IsSorted(*w.RequiredChecks) || slices.ContainsFunc(*w.RequiredChecks, func(id string) bool { return !identifier(id) }) || len(slices.Compact(slices.Clone(*w.RequiredChecks))) != len(*w.RequiredChecks) {
 		return ErrInvalid
@@ -360,7 +363,7 @@ func (s stateValue) renderInput(t taskValue, facts StepFacts, basis snapshot.Con
 		findings.Items = append(findings.Items, organization.FindingFact{ID: id, Grounds: organization.HostText{Text: text, Source: organization.HostSource{RecordID: id, ContentID: basis}}})
 	}
 	in := organization.RenderInput{View: phaseView(t.Phase), InputBinding: source,
-		Task: organization.TaskFacts{ID: t.ID, Package: t.Slot.Package, Outcome: organization.HostText{Text: operation, Source: source}, Findings: findings, Constraints: s.ownerDecisions(t)}}
+		Task: organization.TaskFacts{ID: t.ID, Package: t.Slot.Package, Outcome: organization.HostText{Text: operation, Source: source}, Findings: findings, Constraints: s.ownerDecisions(t, t.Phase != PhaseReviewerExpectations)}}
 	if t.Phase.reviewer() {
 		// The expectations step does not see the scope, so its cases stand
 		// for every submission with the purpose (DEC-048, DEC-049).
@@ -437,13 +440,18 @@ func (s stateValue) inbox(t taskValue) ([]organization.MessageFact, []organizati
 	return messages, hints
 }
 
-// ownerDecisions are the owner's answers to questions about a task, which
-// bind its realization and its reviews (core rules I2, T8).
-func (s stateValue) ownerDecisions(t taskValue) []organization.HostText {
+// ownerDecisions are the owner's decisions that bind a task's realization and
+// its reviews: those bound with the run, and the answers to its own questions
+// or, with all, to every question of the run (core rules I2, T8, DEC-053).
+func (s stateValue) ownerDecisions(t taskValue, all bool) []organization.HostText {
 	var out []organization.HostText
+	for i, text := range s.boundDecisions {
+		id := fmt.Sprintf("owner-decision-%d", i+1)
+		out = append(out, organization.HostText{Text: "The owner decided: " + text, Source: organization.HostSource{RecordID: id, ContentID: s.bound.ContentID}})
+	}
 	for _, m := range s.messages {
-		if q := s.issues[m.About]; m.From == addressedToOwner && q.Task == t.Slot.Package {
-			out = append(out, organization.HostText{Text: "The owner decided on the question \"" + q.Request + "\": " + m.Body, Source: organization.HostSource{RecordID: m.ID, ContentID: m.Source.ContentID}})
+		if q := s.issues[m.About]; m.From == addressedToOwner && (all || q.Task == t.Slot.Package) {
+			out = append(out, organization.HostText{Text: "The owner decided on the question that " + q.Task + " asked, \"" + q.Request + "\": " + m.Body, Source: organization.HostSource{RecordID: m.ID, ContentID: m.Source.ContentID}})
 		}
 	}
 	return out

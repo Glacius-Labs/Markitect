@@ -18,7 +18,10 @@ type RunBindingFacts struct {
 	RepositoryIdentity string
 	ProductBuild       string
 	OwnerRequest       run.Payload
-	Allocation         run.Capacity
+	// OwnerDecisions are the owner's earlier decisions, bound for every task
+	// of the run (DEC-053).
+	OwnerDecisions []string
+	Allocation     run.Capacity
 }
 
 // BindRun assembles a fixed basis from only the final successful committed
@@ -72,7 +75,8 @@ func (r CapturedSettingsResult) runInput(facts RunBindingFacts) (run.BindingInpu
 			Guard: string(inputs.Guard), ProductBuild: facts.ProductBuild,
 			Operation: "artifact-apply/v1",
 		},
-		OwnerRequest: facts.OwnerRequest,
+		OwnerRequest:   facts.OwnerRequest,
+		OwnerDecisions: facts.OwnerDecisions,
 		ModelInput: model.Input{
 			Root: inputs.Raw.Local.Source, Limits: m.RequestedLimits(),
 		},

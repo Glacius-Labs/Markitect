@@ -29,10 +29,13 @@ type operation struct {
 	receipt AppendReceipt
 }
 type stateValue struct {
-	repository     string
-	revision       uint64
-	assignment     string
-	ownerRequest   BlobRef
+	repository   string
+	revision     uint64
+	assignment   string
+	ownerRequest BlobRef
+	// bound is the binding that carries the owner's earlier decisions (DEC-053).
+	bound          BlobRef
+	boundDecisions []string
 	policy         BudgetPolicy
 	initialPolicy  BudgetPolicy
 	extensions     []AssignmentExtension
@@ -240,6 +243,9 @@ func (s *stateValue) apply(c Command) error {
 				return ErrState
 			}
 		}
+		// Each run binds its own owner decisions, so a continuation can carry
+		// decisions the owner made after the earlier run (DEC-053).
+		s.bound, s.boundDecisions = b.payload.Ref(), slices.Clone(b.decisions)
 		view := budget(s.policy, int64(len(s.runs)), s.invocations)
 		// Assessment may spend the configured reserve. Each new basis still
 		// needs its own structural review floor in the shared remaining ledger.

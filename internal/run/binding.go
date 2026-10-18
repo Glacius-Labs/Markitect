@@ -41,6 +41,9 @@ type BindingInput struct {
 	MaxContextBytes organization.Setting[int64]
 	Source          SourceBasis
 	OwnerRequest    Payload
+	// OwnerDecisions are the owner's earlier decisions, which bind every task
+	// of the run from its start (DEC-053).
+	OwnerDecisions  []string
 	ModelInput      model.Input
 	Compilation     model.Result
 	Census          snapshot.Tree
@@ -130,6 +133,7 @@ type bindingWire struct {
 	Scope           *[]organization.Setting[organization.ScopeRule] `json:",omitempty"`
 	MaxContextBytes *organization.Setting[int64]                    `json:",omitempty"`
 	RequiredChecks  *[]string                                       `json:",omitempty"`
+	OwnerDecisions  *[]string                                       `json:",omitempty"`
 }
 
 // Binding owns its exact serialized basis. Its identity includes empty Package
@@ -137,6 +141,7 @@ type bindingWire struct {
 // It does not grant dispatch, review, artifact ownership or publication authority.
 type Binding struct {
 	payload, owner Payload
+	decisions      []string
 	source         SourceBasis
 	policy         BudgetPolicy
 	reviews        int64
@@ -151,7 +156,7 @@ func (b Binding) Valid() bool            { return b.payload.Valid() && b.owner.V
 
 func Bind(input BindingInput) (Binding, error) {
 	s := input.Source
-	if !s.valid() || !input.OwnerRequest.Valid() {
+	if !s.valid() || !input.OwnerRequest.Valid() || slices.ContainsFunc(input.OwnerDecisions, func(d string) bool { return !text(d) }) {
 		return Binding{}, ErrInvalid
 	}
 	topology, err := organization.BuildTopology(input.Compilation)
@@ -170,6 +175,10 @@ func Bind(input BindingInput) (Binding, error) {
 	}
 	contextLimit := input.MaxContextBytes
 	w.MaxContextBytes = &contextLimit
+	if len(input.OwnerDecisions) > 0 {
+		decisions := slices.Clone(input.OwnerDecisions)
+		w.OwnerDecisions = &decisions
+	}
 	for _, compiled := range input.Compilation.Models {
 		if compiled.Status != model.Passed || compiled.Origin != compiled.Manifest.Origin || len(compiled.Canonical) == 0 || compiled.Digest != fmt.Sprintf("sha256:%x", sha256.Sum256(compiled.Canonical)) {
 			return Binding{}, ErrInvalid
@@ -332,7 +341,11 @@ func Bind(input BindingInput) (Binding, error) {
 	if _, _, err := decodeBindingRecord(payload); err != nil {
 		return Binding{}, err
 	}
-	return Binding{payload: payload, owner: input.OwnerRequest, source: s, policy: input.Policy, reviews: reviews, version: w.Version, demand: demand}, nil
+	var decisions []string
+	if w.OwnerDecisions != nil {
+		decisions = slices.Clone(*w.OwnerDecisions)
+	}
+	return Binding{payload: payload, owner: input.OwnerRequest, decisions: decisions, source: s, policy: input.Policy, reviews: reviews, version: w.Version, demand: demand}, nil
 }
 
 // matchRawClosure checks only recorded references, never source semantics. Each

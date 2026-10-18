@@ -337,7 +337,10 @@ drops its reply and is admitted again. A question to the owner
 travels up to the root; when nothing else is admissible the run waits for the
 owner (M4, W1). `AnswerCommand` records the owner's answer: it wakes the asker,
 or starts a fresh review when a review asked (T8), and `ResumeRun` continues
-the run. The owner's decisions about a task reach its later steps and reviews.
+the run. Every owner decision binds the whole run: decisions bound with the
+run reach every step, and every answer reaches all later Manager steps and
+candidate reviews, while only the asking task's expectations steps see it and
+have their recorded cases renewed (DEC-053).
 A parent's hints reach its direct children. A failed step's messages are
 dropped with it (T6).
 
