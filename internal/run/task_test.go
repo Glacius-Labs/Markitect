@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"slices"
 	"strings"
 	"testing"
@@ -348,6 +349,46 @@ func TestReviewIsRenewedWhenAUsedProducerDeliversAgain(t *testing.T) {
 	}
 	if got := aggregateFile(t, h.engine, "out/library.go"); got != "package library\n\ntype Item struct{ Title string }\n" {
 		t.Fatalf("limited and complete deliveries not composed in order: %q", got)
+	}
+}
+
+// A pass the Host withholds leaves its recorded expectations standing while
+// their inputs are unchanged: the resubmission's review skips the expectations
+// step and assesses the same cases (core rules D4, T7).
+func TestARenewedReviewKeepsItsRecordedExpectations(t *testing.T) {
+	t.Parallel()
+	var h *harness
+	var seen []run.BlobRef
+	agent := func(s agentStep) []action {
+		switch {
+		case s.Manager == "." && s.Phase == run.PhaseWork:
+			return []action{{Tool: run.ToolSubmit, Args: `{"purpose":"local","scope":"complete","summary":"Uses lending.","assessments":[],"dependencies":["lending"]}`, Want: run.ToolOK}}
+		case s.Manager == "." && s.Phase == run.PhaseReviewerExpectations:
+			// Each recording differs, so a reused one is recognizable.
+			args := fmt.Sprintf(`{"cases":[{"name":"item","expectation":"The library realizes Item (recording %d).","discriminates":"A missing Item type fails."}]}`, s.Attempt)
+			return []action{{Tool: run.ToolRecordExpectations, Args: args, Want: run.ToolOK}}
+		case s.Manager == "." && s.Phase == run.PhaseReviewerCandidate:
+			seen = append(seen, h.task(".").Expectations)
+			if s.Attempt == 0 {
+				return nil // a failed review step: a fresh review follows
+			}
+		case s.Manager == "lending" && s.Phase == run.PhaseWork && s.Attempt == 0:
+			return []action{{Write: map[string]string{"out/library.go": "package library\n\ntype Item struct{}\n"}, Tool: run.ToolSubmit, Args: submitArgs("local", "limited"), Want: run.ToolOK}}
+		case s.Manager == "lending" && s.Phase == run.PhaseWork:
+			return []action{{Write: map[string]string{"out/library.go": "package library\n\ntype Item struct{ Title string }\n"}, Tool: run.ToolSubmit, Args: submitArgs("local", "complete"), Want: run.ToolOK}}
+		}
+		return happyAgent(s)
+	}
+	h = newHarness(t, true, agent)
+	runToEnd(t, h)
+	order := strings.Join(admitted(h), ",")
+	if h.c.Current().State != run.Verifying || strings.Count(order, ". work") != 3 {
+		t.Fatal("run did not complete through two withheld passes", h.c.Current(), order)
+	}
+	// The failed review starts a fresh local review with new expectations, the
+	// two withheld passes keep theirs, and the integration records its own.
+	if strings.Count(order, ". reviewer-expectations") != 3 || len(seen) != 5 || seen[0] == seen[1] || seen[1] != seen[2] || seen[2] != seen[3] || seen[3] == seen[4] {
+		t.Fatal("the renewed reviews did not keep the recorded expectations", order, seen)
 	}
 }
 

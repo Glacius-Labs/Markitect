@@ -266,7 +266,11 @@ finding. A failed assessment needs no cases. A pass
 must resolve every open blocking finding of its purpose; it is withheld while another open blocking issue covers the task,
 for an integration also one of a descendant (I3), while a producer the candidate used delivered again after the
 candidate's step (D4), or, for an integration, while a child is not done (T9). The
-task's next step sees why its pass was withheld. Changes requested count one rejection per purpose, which
+task's next step sees why its pass was withheld, and its recorded expectations
+stand for the next submission: its review skips the expectations step while
+the submission's purpose and scope, the task's open findings and the owner's
+decisions are unchanged, because that step sees neither the candidate nor the
+aggregate. Changes requested count one rejection per purpose, which
 the Manager's next steps see together with the limit; at
 the bound rejection limit the task becomes incomplete. A needs-decision verdict
 blocks the task on an owner question, and a failed assessment starts a fresh

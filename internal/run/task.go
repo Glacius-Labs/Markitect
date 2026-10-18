@@ -82,6 +82,7 @@ type taskValue struct {
 	Failure      string
 	HostFault    bool
 	Withheld     string
+	Kept         reviewValue
 	Claims       []Claim
 }
 
@@ -910,6 +911,15 @@ func (s *stateValue) concludeWork(r ConclusionRecord, t *taskValue, revision uin
 		slices.Sort(uses)
 		t.State, t.Since, t.Review = TaskReviewing, revision, reviewValue{}
 		t.Submission = Submission{Purpose: in.Purpose, Scope: in.Scope, Proposal: r.Input, Candidate: t.Own, Tree: t.OwnTree, Aggregate: s.aggregateVersion, AggregateTree: s.aggregateTree, Uses: uses}
+		if t.Kept.Inputs != "" && t.Kept.Inputs == s.expectationInputs(*t) {
+			// A withheld pass leaves its recorded expectations standing: a
+			// review reused only while all its inputs are unchanged, and the
+			// expectations step does not see the candidate or the aggregate. The
+			// renewed review assesses the same cases in a fresh candidate home.
+			t.Review = t.Kept
+			t.Reviews++
+		}
+		t.Kept = reviewValue{}
 	case ToolWait:
 		var in waitInput
 		if json.Unmarshal(args, &in) != nil {
