@@ -115,6 +115,255 @@ func TestIntegrationFindingReopensTheChild(t *testing.T) {
 	}
 }
 
+// A done Manager whose answer shows that its own file needs a correction makes
+// it in its reply step: the task returns to work, the change goes through its
+// review, and the parent integrates the corrected delivery (core rule T11).
+func TestAReplyStepCorrectsADoneManagersFile(t *testing.T) {
+	var h *harness
+	var asked string
+	corrected := "package library\n\ntype Item struct{ Title string }\n"
+	agent := func(s agentStep) []action {
+		switch {
+		case s.Manager == "." && s.Phase == run.PhaseIntegrate && s.Attempt == 0:
+			asked = questionID(s, 1)
+			return []action{
+				{Tool: run.ToolSend, Args: sendArgs("question", "lending", "Item needs a title; can you add it?"), Want: run.ToolOK},
+				{Tool: run.ToolWait, Args: waitReplyArgs(asked), Want: run.ToolOK},
+			}
+		case s.Manager == "." && s.Phase == run.PhaseIntegrate && h.task("lending").State != run.TaskDone:
+			return []action{{Tool: run.ToolWait, Args: `{"on":[{"kind":"children"}],"reason":"Lending corrects Item."}`, Want: run.ToolOK}}
+		case s.Manager == "lending" && s.Phase == run.PhaseReply:
+			if h.task("lending").State != run.TaskDone {
+				t.Error("the reply step is not the done Manager's")
+			}
+			return []action{{Write: map[string]string{"out/library.go": corrected}, Tool: run.ToolSend, Args: sendArgs("reply", asked, "Added the title."), Want: run.ToolOK}}
+		case s.Manager == "lending" && s.Phase == run.PhaseWork && s.Attempt == 1:
+			if !bytes.Contains(s.Packet.Context.Bytes, []byte("Title string")) {
+				t.Error("the returned task does not see its corrected file")
+			}
+			return []action{{Tool: run.ToolSubmit, Args: submitArgs("local", "complete"), Want: run.ToolOK}}
+		}
+		return happyAgent(s)
+	}
+	h = newHarness(t, true, agent)
+	runToEnd(t, h)
+	if h.c.Current().State != run.Verifying {
+		t.Fatal("the run did not complete", h.c.Current(), h.sessions.answers)
+	}
+	order := strings.Join(admitted(h), ",")
+	if !strings.Contains(order, "lending reply") || strings.Count(order, "lending work") != 2 || strings.Count(order, "lending reviewer-candidate") != 2 {
+		t.Fatal("the corrected file did not return lending to work and review", order)
+	}
+	if got := aggregateFile(t, h.engine, "out/library.go"); got != corrected {
+		t.Fatalf("the correction was not composed: %q", got)
+	}
+}
+
+// A done grandchild that corrects its file in a reply step returns its done
+// parent to waiting for its children: the parent integrates the correction
+// again before the root does (core rule T11).
+func TestAReplyCorrectionReopensTheDoneAncestors(t *testing.T) {
+	var h *harness
+	var asked string
+	corrected := "package reminders\n\nconst Days = 14\n"
+	var lendingAfter run.TaskState
+	agent := func(s agentStep) []action {
+		if order := admitted(h); lendingAfter == "" && len(order) > 1 && order[len(order)-2] == "lending/reminders reply" {
+			lendingAfter = h.task("lending").State
+		}
+		switch {
+		case s.Manager == "lending/reminders" && s.Phase == run.PhaseWork && s.Attempt == 0:
+			return []action{
+				{Tool: run.ToolReservePath, Args: `{"path":"out/reminders.go","form":"code"}`, Want: run.ToolOK},
+				{Tool: run.ToolRegister, Args: `{"path":"out/reminders.go","form":"code","realizes":["lending/reminders/Item"],"why":"Realizes reminders."}`, Want: run.ToolOK},
+				{Write: map[string]string{"out/reminders.go": "package reminders\n"}, Tool: run.ToolSubmit, Args: submitArgs("local", "complete"), Want: run.ToolOK},
+			}
+		case s.Manager == "." && s.Phase == run.PhaseIntegrate && s.Attempt == 0:
+			asked = questionID(s, 1)
+			return []action{
+				{Tool: run.ToolSend, Args: sendArgs("question", "lending/reminders", "Reminders need the loan period; can you add it?"), Want: run.ToolOK},
+				{Tool: run.ToolWait, Args: waitReplyArgs(asked), Want: run.ToolOK},
+			}
+		case s.Manager == "." && s.Phase == run.PhaseIntegrate && h.task("lending").State != run.TaskDone:
+			return []action{{Tool: run.ToolWait, Args: `{"on":[{"kind":"children"}],"reason":"Reminders correct their file."}`, Want: run.ToolOK}}
+		case s.Manager == "lending/reminders" && s.Phase == run.PhaseReply:
+			return []action{{Write: map[string]string{"out/reminders.go": corrected}, Tool: run.ToolSend, Args: sendArgs("reply", asked, "Added the period."), Want: run.ToolOK}}
+		case s.Manager == "lending/reminders" && s.Phase == run.PhaseWork && s.Attempt == 1:
+			return []action{{Tool: run.ToolSubmit, Args: submitArgs("local", "complete"), Want: run.ToolOK}}
+		case s.Manager == "lending" && s.Phase == run.PhaseWork && s.Attempt >= 1:
+			return []action{{Tool: run.ToolSubmit, Args: submitArgs("local", "complete"), Want: run.ToolOK}}
+		}
+		return happyAgent(s)
+	}
+	inputs := stepInputsWith(t, false, withCreationArea(t))
+	inputs.Binding.Policy.Assignment.Steps, inputs.Binding.Policy.Assignment.SessionStarts = 64, 64
+	h = newHarnessWith(t, inputs, agent)
+	runToEnd(t, h)
+	if h.c.Current().State != run.Verifying {
+		t.Fatal("the run did not complete", h.c.Current(), admitted(h))
+	}
+	if lendingAfter != run.TaskBlocked {
+		t.Fatal("the done parent did not wait for its corrected child", lendingAfter)
+	}
+	if order := strings.Join(admitted(h), ","); strings.Count(order, "lending integrate") != 2 {
+		t.Fatal("the parent did not integrate the correction again", order)
+	}
+	if got := aggregateFile(t, h.engine, "out/reminders.go"); got != corrected {
+		t.Fatalf("the correction was not composed: %q", got)
+	}
+}
+
+// A parent that asks a done child and submits its integration in the same step
+// does not get that integration accepted while the child corrects its file:
+// the pass is withheld, and the parent integrates the corrected delivery once
+// the child is done again (core rules T9, T11).
+func TestAnIntegrationWaitsForAChildThatCorrectsItself(t *testing.T) {
+	var h *harness
+	var asked string
+	corrected := "package library\n\ntype Item struct{ Title string }\n"
+	agent := func(s agentStep) []action {
+		switch {
+		case s.Manager == "." && s.Phase == run.PhaseIntegrate && s.Attempt == 0:
+			asked = questionID(s, 1)
+			return []action{
+				{Tool: run.ToolSend, Args: sendArgs("question", "lending", "Item needs a title; can you add it?"), Want: run.ToolOK},
+				{Tool: run.ToolSubmit, Args: submitArgs("integration", "complete"), Want: run.ToolOK},
+			}
+		case s.Manager == "." && s.Phase == run.PhaseIntegrate && h.task("lending").State != run.TaskDone:
+			return []action{
+				{Tool: run.ToolSubmit, Args: submitArgs("integration", "complete"), Want: run.ToolRefused},
+				{Tool: run.ToolWait, Args: `{"on":[{"kind":"children"}],"reason":"Lending corrects Item."}`, Want: run.ToolOK},
+			}
+		case s.Manager == "lending" && s.Phase == run.PhaseReply:
+			return []action{{Write: map[string]string{"out/library.go": corrected}, Tool: run.ToolSend, Args: sendArgs("reply", asked, "Added the title."), Want: run.ToolOK}}
+		case s.Manager == "lending" && s.Phase == run.PhaseWork && s.Attempt == 1:
+			return []action{{Tool: run.ToolSubmit, Args: submitArgs("local", "complete"), Want: run.ToolOK}}
+		}
+		return happyAgent(s)
+	}
+	h = newHarness(t, true, agent)
+	runToEnd(t, h)
+	if h.c.Current().State != run.Verifying || h.task("lending").State != run.TaskDone {
+		t.Fatal("the run did not complete with the corrected child", h.c.Current(), h.task("lending").State, h.sessions.answers)
+	}
+	if got := aggregateFile(t, h.engine, "out/library.go"); got != corrected {
+		t.Fatalf("the integration was accepted without the correction: %q", got)
+	}
+}
+
+// A reply step's change the Host refuses, here a new file the reply phase
+// cannot reserve, still returns the task to work, whose step sees the refusal
+// and makes the change properly (core rules S4, T11).
+func TestARefusedReplyCorrectionReachesTheWorkStep(t *testing.T) {
+	var h *harness
+	var asked string
+	agent := func(s agentStep) []action {
+		switch {
+		case s.Manager == "." && s.Phase == run.PhaseIntegrate && s.Attempt == 0:
+			asked = questionID(s, 1)
+			return []action{
+				{Tool: run.ToolSend, Args: sendArgs("question", "lending", "Add a test file?"), Want: run.ToolOK},
+				{Tool: run.ToolWait, Args: waitReplyArgs(asked), Want: run.ToolOK},
+			}
+		case s.Manager == "." && s.Phase == run.PhaseIntegrate && h.task("lending").State != run.TaskDone:
+			return []action{{Tool: run.ToolWait, Args: `{"on":[{"kind":"children"}],"reason":"Lending adds a test."}`, Want: run.ToolOK}}
+		case s.Manager == "lending" && s.Phase == run.PhaseReply:
+			return []action{{Write: map[string]string{"out/item_test.go": "package library\n"}, Tool: run.ToolSend, Args: sendArgs("reply", asked, "Adding the test."), Want: run.ToolOK}}
+		case s.Manager == "lending" && s.Phase == run.PhaseWork && s.Attempt == 1:
+			if !bytes.Contains(s.Packet.Context.Bytes, []byte("outside its owner's claims")) {
+				t.Error("the work step does not see the refused correction")
+			}
+			return []action{
+				{Tool: run.ToolReservePath, Args: `{"path":"out/item_test.go","form":"test"}`, Want: run.ToolOK},
+				{Tool: run.ToolRegister, Args: `{"path":"out/item_test.go","form":"test","realizes":["lending/Item"],"why":"Tests Item."}`, Want: run.ToolOK},
+				{Write: map[string]string{"out/item_test.go": "package library\n"}, Tool: run.ToolSubmit, Args: submitArgs("local", "complete"), Want: run.ToolOK},
+			}
+		}
+		return happyAgent(s)
+	}
+	h = newHarnessWith(t, stepInputsWith(t, true, withCreationArea(t)), agent)
+	runToEnd(t, h)
+	if h.c.Current().State != run.Verifying {
+		t.Fatal("the run did not complete", h.c.Current(), h.sessions.answers)
+	}
+	if got := aggregateFile(t, h.engine, "out/item_test.go"); got != "package library\n" {
+		t.Fatalf("the corrected file was not composed: %q", got)
+	}
+}
+
+// A task blocked on the owner's decision about its frozen submission answers
+// read-only: a change fails the step, the task stays blocked, and the run waits
+// for the owner (core rules T8, T11).
+func TestAReplyOfATaskAwaitingADecisionIsReadOnly(t *testing.T) {
+	var h *harness
+	var asked string
+	decision := `{"verdict":"needs_decision","summary":"Unclear.","question":"Which title?","evidence":[],"findings":[],"resolutions":[]}`
+	agent := func(s agentStep) []action {
+		switch {
+		case s.Manager == "lending" && s.Phase == run.PhaseReviewerCandidate && s.Attempt == 0:
+			return []action{{Tool: run.ToolSubmitReview, Args: decision, Want: run.ToolOK}}
+		case s.Manager == "." && s.Phase == run.PhaseWork && s.Attempt == 0:
+			asked = questionID(s, 1)
+			return []action{
+				{Tool: run.ToolSend, Args: sendArgs("question", "lending", "Item needs a title; can you add it?"), Want: run.ToolOK},
+				{Tool: run.ToolSubmit, Args: submitArgs("local", "complete"), Want: run.ToolOK},
+			}
+		case s.Manager == "lending" && s.Phase == run.PhaseReply:
+			return []action{{Write: map[string]string{"out/library.go": "package library\n\ntype Item struct{ Title string }\n"}, Tool: run.ToolSend, Args: sendArgs("reply", asked, "Added the title."), Want: run.ToolOK}}
+		}
+		return happyAgent(s)
+	}
+	h = newHarness(t, true, agent)
+	runToEnd(t, h)
+	if !slices.Contains(admitted(h), "lending reply") {
+		t.Fatal("the blocked task did not answer", admitted(h))
+	}
+	if h.c.Current().State != run.Waiting || h.task("lending").State != run.TaskBlocked {
+		t.Fatal("the task awaiting a decision left its frozen candidate", h.c.Current(), h.task("lending").State)
+	}
+}
+
+// A reply step that changes no file keeps a blocked task blocked, even when the
+// task holds an unaccepted registry proposal from an earlier step (core rules
+// S4, T10).
+func TestAReplyWithoutChangesKeepsABlockedTaskBlocked(t *testing.T) {
+	var h *harness
+	var own, other string
+	var after run.TaskState
+	agent := func(s agentStep) []action {
+		// The step after lending's reply observes lending's state.
+		if order := admitted(h); after == "" && len(order) > 1 && order[len(order)-2] == "lending reply" {
+			after = h.task("lending").State
+		}
+		switch {
+		case s.Manager == "lending" && s.Phase == run.PhaseWork && s.Attempt == 0:
+			own = questionID(s, 1)
+			return []action{
+				{Tool: run.ToolReservePath, Args: `{"path":"out/item_test.go","form":"test"}`, Want: run.ToolOK},
+				{Tool: run.ToolRegister, Args: `{"path":"out/item_test.go","form":"test","realizes":["lending/Item"],"why":"Tests Item."}`, Want: run.ToolOK},
+				{Write: map[string]string{"out/library.go": "package library\n\ntype Item struct{}\n", "out/item_test.go": "package library\n"}, Tool: run.ToolSend, Args: sendArgs("question", "parent", "Title or name?"), Want: run.ToolOK},
+				{Tool: run.ToolWait, Args: waitReplyArgs(own), Want: run.ToolOK},
+			}
+		case s.Manager == "." && s.Phase == run.PhaseWork && s.Attempt == 0:
+			other = questionID(s, 1)
+			return []action{
+				{Tool: run.ToolSend, Args: sendArgs("question", "lending", "Which file holds Item?"), Want: run.ToolOK},
+				{Tool: run.ToolSubmit, Args: submitArgs("local", "complete"), Want: run.ToolOK},
+			}
+		case s.Manager == "lending" && s.Phase == run.PhaseReply:
+			return []action{{Tool: run.ToolSend, Args: sendArgs("reply", other, "out/library.go."), Want: run.ToolOK}}
+		case s.Manager == "." && s.Phase == run.PhaseReply:
+			return []action{{Tool: run.ToolSend, Args: sendArgs("reply", own, "Title."), Want: run.ToolOK}}
+		}
+		return happyAgent(s)
+	}
+	h = newHarnessWith(t, stepInputsWith(t, true, withCreationArea(t)), agent)
+	runToEnd(t, h)
+	if after != run.TaskBlocked {
+		t.Fatal("a reply without changes returned the blocked task to work", after, admitted(h))
+	}
+}
+
 // A child's open owner question does not block its parent's local delivery,
 // which does not contain the child's work; the run waits for the owner
 // (core rules I3, W1).

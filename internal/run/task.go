@@ -199,10 +199,26 @@ type Admission struct {
 	Phase         Phase
 	Home          string
 	Resume        ProviderSessionID
+	// Writes is whether the step may change files: every work and integrate
+	// step, and a reply step once the write barrier is open (core rule T11).
+	Writes bool
 }
 
 func (p Phase) reviewer() bool { return p == PhaseReviewerExpectations || p == PhaseReviewerCandidate }
 func (p Phase) writing() bool  { return p == PhaseWork || p == PhaseIntegrate }
+
+// writes reports whether a task's step in the phase may change files: a reply
+// step of a done or blocked task may correct the Manager's own files once
+// every Manager has explored (core rules T2, T10, T11). A task blocked on the
+// owner's decision about its frozen submission keeps that candidate unchanged
+// until the fresh review (core rule T8).
+func (s stateValue) writes(t taskValue, phase Phase) bool {
+	if phase != PhaseReply {
+		return phase.writing()
+	}
+	frozen := t.State == TaskBlocked && t.Submission.Proposal != (BlobRef{})
+	return (t.State == TaskDone || t.State == TaskBlocked) && !frozen && s.barrierOpen()
+}
 
 func (s stateValue) explorable(t taskValue) bool {
 	if t.State != TaskQueued {
@@ -263,9 +279,10 @@ func (s stateValue) admission(t taskValue, barrier bool) (Admission, int, uint64
 	case t.Session != "":
 		return Admission{}, 0, 0, false
 	case (t.State == TaskDone || t.State == TaskBlocked || t.State == TaskExplored) && len(s.unanswered(t)) > 0:
-		// A Manager that cannot otherwise act answers in a read-only reply
-		// step and keeps its state (core rules T10, T11).
+		// A Manager that cannot otherwise act answers in a reply step and keeps
+		// its state unless the step corrects its files (core rules T10, T11).
 		a.Phase, a.Home, a.Resume = PhaseReply, managerHome(t), t.Conversation
+		a.Writes = s.writes(t, PhaseReply)
 		return a, 2, s.unanswered(t)[0].At, true
 	case s.explorable(t):
 		a.Phase, a.Home, a.Resume = PhaseExplore, managerHome(t), t.Conversation
@@ -279,7 +296,7 @@ func (s stateValue) admission(t taskValue, barrier bool) (Admission, int, uint64
 		a.Phase, a.Home = PhaseReviewerCandidate, fmt.Sprintf("%s-review-%d-candidate", t.ID, t.Reviews)
 		return a, 1, t.Since, true
 	case barrier && t.State == TaskReady:
-		a.Phase, a.Home, a.Resume = PhaseWork, managerHome(t), t.Conversation
+		a.Phase, a.Home, a.Resume, a.Writes = PhaseWork, managerHome(t), t.Conversation, true
 		if t.LocalDone {
 			a.Phase = PhaseIntegrate // core rule T9
 		}
@@ -392,7 +409,7 @@ func (s *stateValue) beforeTaskSession(c Command) error {
 		}
 		catalog, err := ToolCatalog(next.Phase)
 		role, purpose := stepRole(next.Phase)
-		if err != nil || r.Plan.Tools != catalog.Ref() || r.Plan.Role != role || r.Plan.ReadOnly == next.Phase.writing() || c.Reservation.Purpose != purpose || r.Plan.ProviderHome != next.Home || r.Plan.Resume != next.Resume {
+		if err != nil || r.Plan.Tools != catalog.Ref() || r.Plan.Role != role || r.Plan.ReadOnly == next.Writes || c.Reservation.Purpose != purpose || r.Plan.ProviderHome != next.Home || r.Plan.Resume != next.Resume {
 			return ErrState
 		}
 		// A Manager without unaccepted changes starts from the aggregate (core
@@ -537,6 +554,9 @@ type ConclusionRecord struct {
 	// HostFault marks a failed step that the Host, not the Agent, could not
 	// finish.
 	HostFault bool
+	// Changed marks a step that changed its workspace, whether or not the Host
+	// accepted the change (core rule T11).
+	Changed bool
 }
 
 const outcomeFailed = "failed"
@@ -650,6 +670,14 @@ func (s stateValue) checkOutcome(t taskValue, tool string, args []byte) error {
 		}
 		if t.Phase == PhaseWork && in.Purpose != "local" || t.Phase == PhaseIntegrate && in.Purpose != "integration" {
 			return errors.New("the submission's purpose does not match this step: work submits local, integration submits integration")
+		}
+		if in.Purpose == "integration" {
+			// An integration composes done children only (core rule T9).
+			for _, child := range t.Slot.Children {
+				if c := s.tasks[child]; c.State != TaskDone {
+					return fmt.Errorf("child %s is %s, not done: wait for your children before you integrate", child, c.State)
+				}
+			}
 		}
 		for _, d := range in.Dependencies {
 			if _, ok := s.tasks[d]; !ok || d == t.Slot.Package {
@@ -782,7 +810,8 @@ func (s *stateValue) concludeStep(c Command) error {
 			return err
 		}
 	}
-	if r.Outcome != outcomeFailed && t.Phase.writing() {
+	writes := s.writes(t, t.Phase)
+	if r.Outcome != outcomeFailed && writes {
 		t.Claims = addClaims(t.Claims, s.stepClaims(t)) // core rule S4
 	}
 	// A failed conclusion may override an answered outcome when the Host's own
@@ -796,7 +825,7 @@ func (s *stateValue) concludeStep(c Command) error {
 			return ErrState
 		}
 	}
-	if !t.Phase.writing() && r.Candidate != (BlobRef{}) {
+	if !writes && r.Candidate != (BlobRef{}) || t.Phase == PhaseReply && r.Candidate != (BlobRef{}) && !r.Changed {
 		return ErrState
 	}
 	revision := s.revision
@@ -825,6 +854,20 @@ func (s *stateValue) concludeWork(r ConclusionRecord, t *taskValue, revision uin
 		t.Own, t.OwnTree = r.Candidate, r.Tree
 	}
 	if t.Phase == PhaseReply {
+		if r.Changed && !r.HostFault && s.writes(*t, PhaseReply) {
+			// A reply step that changed the Manager's files returns its task to
+			// work, so that the change goes through review, and a done task's
+			// ancestors wait for it again (core rule T11). A change the Host
+			// refused reaches the work step as its failure.
+			if t.State == TaskDone {
+				t.LocalDone = false
+				s.blockAncestors(t.Slot.Package, "", revision)
+			}
+			t.State, t.Since, t.Waits = TaskReady, revision, nil
+			if r.Outcome == outcomeFailed {
+				t.Failure, t.HostFault = r.Reason, false
+			}
+		}
 		return nil
 	}
 	t.Failure, t.HostFault = "", false
@@ -905,6 +948,11 @@ func (s stateValue) stuckWait(t taskValue, w Wait) string {
 		if s.waitsFor(w.Ref, t.Slot.Package, map[string]int{}) {
 			return fmt.Sprintf("%s waits for you, so its delivery cannot come first", w.Ref)
 		}
+		// An ancestor whose local work is accepted delivers next its integration,
+		// which waits for every descendant (core rule T9).
+		if s.ancestor(w.Ref, t.Slot.Package) && s.tasks[w.Ref].LocalDone {
+			return fmt.Sprintf("%s has delivered its local work; its next delivery is its integration, which waits for you", w.Ref)
+		}
 	case waitChildren:
 		for _, child := range t.Slot.Children {
 			if s.tasks[child].State != TaskDone && s.waitsFor(child, t.Slot.Package, map[string]int{}) {
@@ -913,6 +961,16 @@ func (s stateValue) stuckWait(t taskValue, w Wait) string {
 		}
 	}
 	return ""
+}
+
+// ancestor reports whether manager is an ancestor of other.
+func (s stateValue) ancestor(manager, other string) bool {
+	for p := s.tasks[other].Slot.Parent; p != ""; p = s.tasks[p].Slot.Parent {
+		if p == manager {
+			return true
+		}
+	}
+	return false
 }
 
 // waitsFor reports whether a blocked Manager can act again only after another

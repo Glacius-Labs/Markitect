@@ -345,6 +345,9 @@ func (s stateValue) renderInput(t taskValue, facts StepFacts, basis snapshot.Con
 	switch t.Phase {
 	case PhaseExplore, PhaseWork, PhaseIntegrate, PhaseReply:
 		phase := map[Phase]organization.ManagerPhase{PhaseExplore: organization.ManagerExplore, PhaseWork: organization.ManagerWork, PhaseIntegrate: organization.ManagerIntegrate, PhaseReply: organization.ManagerReply}[t.Phase]
+		if t.Phase == PhaseReply && !s.writes(t, PhaseReply) {
+			phase = organization.ManagerReplyReadOnly
+		}
 		in.Process = &organization.ManagerProcess{Phase: phase, Source: source}
 		in.OwnArtifacts = artifacts
 		in.Messages, in.ParentHints = s.inbox(t)
@@ -451,7 +454,8 @@ func ownedArtifacts(manager string, facts StepFacts) ([]organization.ArtifactFac
 // the answered outcome call's recorded input; Candidate is the S4 candidate
 // record of a writing step that changed files and Tree its observed tree.
 // Aggregate is the aggregate version after the step. Failure, when set, fails
-// the step whatever its outcome call said (core rule T6).
+// the step whatever its outcome call said (core rule T6). Changed records that
+// the step changed its workspace, whether or not the Host accepted the change.
 type StepResult struct {
 	Input, Candidate Payload
 	Tree             snapshot.TreeID
@@ -459,6 +463,7 @@ type StepResult struct {
 	AggregateTree    snapshot.TreeID
 	Failure          string
 	HostFault        bool
+	Changed          bool
 }
 
 // ConcludeStepCommand records the end of the task's current step. A session
@@ -469,7 +474,7 @@ func (c *Coordinator) ConcludeStepCommand(meta RecordMeta, manager string, resul
 		return Command{}, ErrState
 	}
 	call, count := c.state.stepOutcomeCall(t)
-	r := ConclusionRecord{Manager: manager, Task: t.ID, Step: t.Step, Aggregate: result.Aggregate, AggregateTree: result.AggregateTree}
+	r := ConclusionRecord{Manager: manager, Task: t.ID, Step: t.Step, Aggregate: result.Aggregate, AggregateTree: result.AggregateTree, Changed: result.Changed}
 	var payloads []Payload
 	switch {
 	case result.Failure != "":

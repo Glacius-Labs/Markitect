@@ -69,6 +69,10 @@ const (
 	ManagerWork      ManagerPhase = "work"
 	ManagerIntegrate ManagerPhase = "integrate"
 	ManagerReply     ManagerPhase = "reply"
+	// ManagerReplyReadOnly is a reply step that may not change files: before
+	// every Manager has explored, or while the owner decides on a frozen
+	// submission.
+	ManagerReplyReadOnly ManagerPhase = "reply-read-only"
 )
 
 type ManagerProcess struct {

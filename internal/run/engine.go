@@ -332,6 +332,7 @@ type stepRun struct {
 	task         string
 	manager      string
 	phase        Phase
+	writes       bool
 	session      SessionID
 	plan         SessionPlan
 	version      stepVersion
@@ -381,7 +382,7 @@ func (e *Engine) Advance(ctx context.Context) (bool, error) {
 		return true, errors.Join(errStep, err)
 	}
 	role, purpose := stepRole(item.Phase)
-	profile, err := e.cfg.Profile(ProfileRequest{Manager: item.Manager, Role: role, Phase: item.Phase, ReadOnly: !item.Phase.writing()})
+	profile, err := e.cfg.Profile(ProfileRequest{Manager: item.Manager, Role: role, Phase: item.Phase, ReadOnly: !item.Writes})
 	if err != nil {
 		return true, err
 	}
@@ -389,9 +390,9 @@ func (e *Engine) Advance(ctx context.Context) (bool, error) {
 	if err != nil {
 		return true, err
 	}
-	s := &stepRun{task: task.ID, manager: item.Manager, phase: item.Phase, session: sid, version: version, openID: "open-" + string(sid)}
+	s := &stepRun{task: task.ID, manager: item.Manager, phase: item.Phase, writes: item.Writes, session: sid, version: version, openID: "open-" + string(sid)}
 	s.plan = SessionPlan{ID: sid, Role: role, Workspace: materialized.Volume, ProviderHome: item.Home, Resume: item.Resume, ImageID: profile.ImageID, CredentialRef: profile.CredentialRef,
-		Candidate: version.tree.Digest(), ReadOnly: !item.Phase.writing(), MaxWireBytes: profile.MaxWireBytes, Profile: profile.Profile.Ref(), Tools: tools.Ref()}
+		Candidate: version.tree.Digest(), ReadOnly: !item.Writes, MaxWireBytes: profile.MaxWireBytes, Profile: profile.Profile.Ref(), Tools: tools.Ref()}
 	prepared, err := c.PrepareTaskSessionCommand(e.meta("prepare-session"), item, s.plan, Reservation{ID: s.openID, Kind: SessionStart, Purpose: purpose, Maximum: e.cfg.Limits.StartTimeout}, profile.Profile, tools)
 	if err != nil {
 		return true, err
@@ -711,11 +712,13 @@ func (e *Engine) conclude(ctx context.Context, s *stepRun, observed snapshot.Tre
 		result.Input = p
 	}
 	var composed realization.Aggregate
+	result.Changed = !observed.Equal(s.version.tree)
 	switch {
-	case !s.phase.writing() && !observed.Equal(s.version.tree):
+	case !s.writes && result.Changed:
 		result.Failure = "a read-only step changed its workspace"
-	case s.phase.writing() && (!observed.Equal(s.version.tree) || e.proposes(s)):
-		// Registry proposals change the candidate even without file changes.
+	case s.writes && (result.Changed || s.phase != PhaseReply && e.proposes(s)):
+		// Registry proposals change the candidate even without file changes; a
+		// reply step offers no registry tool, so only its file changes count.
 		record, err := e.capture(s, observed)
 		if err != nil {
 			result.Failure = "the step's changes are outside its owner's claims: " + err.Error()

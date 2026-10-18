@@ -168,9 +168,10 @@ func (s stateValue) checkReview(t taskValue, in reviewInput) error {
 }
 
 // verdictOf reads a checked review against the run: a pass is withheld while
-// another open blocking issue covers the subject (core rule I3), or while a
+// another open blocking issue covers the subject (core rule I3), while a
 // producer the candidate used delivered again after the candidate's step saw
-// the aggregate (core rule D4).
+// the aggregate (core rule D4), or, for an integration, while a child returned
+// to work after the candidate was frozen (core rules T9, T11).
 func (s stateValue) verdictOf(t taskValue, in reviewInput) ReviewVerdict {
 	switch in.Verdict {
 	case "changes_requested":
@@ -190,6 +191,11 @@ func (s stateValue) verdictOf(t taskValue, in reviewInput) ReviewVerdict {
 	covered := []string{t.Slot.Package}
 	if t.Submission.Purpose == "integration" {
 		covered = s.subtree(t)
+		for _, child := range t.Slot.Children {
+			if s.tasks[child].State != TaskDone {
+				return VerdictWithhold
+			}
+		}
 	}
 	for _, manager := range covered {
 		for _, issue := range s.openIssues(manager) {
@@ -395,11 +401,18 @@ func (s *stateValue) reopen(targets []string, reviewed string, revision uint64) 
 		}
 	}
 	for _, manager := range targets {
-		for p := s.tasks[manager].Slot.Parent; p != "" && p != reviewed; p = s.tasks[p].Slot.Parent {
-			if a := s.tasks[p]; a.State == TaskDone && !slices.Contains(targets, p) {
-				a.State, a.Since, a.Waits = TaskBlocked, revision, []Wait{{Kind: waitChildren}}
-				s.tasks[p] = a
-			}
+		s.blockAncestors(manager, reviewed, revision, targets...)
+	}
+}
+
+// blockAncestors returns every done ancestor of manager below reviewed, other
+// than skip, to waiting for its children, because its accepted integration
+// contains the reopened task (core rule T11).
+func (s *stateValue) blockAncestors(manager, reviewed string, revision uint64, skip ...string) {
+	for p := s.tasks[manager].Slot.Parent; p != "" && p != reviewed; p = s.tasks[p].Slot.Parent {
+		if a := s.tasks[p]; a.State == TaskDone && !slices.Contains(skip, p) {
+			a.State, a.Since, a.Waits = TaskBlocked, revision, []Wait{{Kind: waitChildren}}
+			s.tasks[p] = a
 		}
 	}
 }
