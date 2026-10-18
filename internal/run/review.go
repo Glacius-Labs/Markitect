@@ -172,7 +172,7 @@ func (s stateValue) checkReview(t taskValue, in reviewInput) error {
 // producer the candidate used delivered again after the candidate's step saw
 // the aggregate (core rule D4), or, for an integration, while a child returned
 // to work after the candidate was frozen (core rules T9, T11). A withheld pass
-// comes with the reason the Manager's next step sees.
+// comes with its reason and what the Manager does next.
 func (s stateValue) verdictOf(t taskValue, in reviewInput) (ReviewVerdict, string) {
 	switch in.Verdict {
 	case "changes_requested":
@@ -194,20 +194,20 @@ func (s stateValue) verdictOf(t taskValue, in reviewInput) (ReviewVerdict, strin
 		covered = s.subtree(t)
 		for _, child := range t.Slot.Children {
 			if s.tasks[child].State != TaskDone {
-				return VerdictWithhold, fmt.Sprintf("an integration needs every child done, and %s is not done", child)
+				return VerdictWithhold, fmt.Sprintf("an integration needs every child done, and %s is not done; wait for your children, then integrate again", child)
 			}
 		}
 	}
 	for _, manager := range covered {
 		for _, issue := range s.openIssues(manager) {
 			if issue.Severity == severityBlocking && !resolved[issue.ID] {
-				return VerdictWithhold, fmt.Sprintf("the open blocking %s %s still covers %s", issue.Kind, issue.ID, manager)
+				return VerdictWithhold, fmt.Sprintf("the open blocking %s %s still covers %s; submit again once it is resolved", issue.Kind, issue.ID, manager)
 			}
 		}
 	}
 	for _, producer := range t.Submission.Uses {
 		if slices.ContainsFunc(s.tasks[producer].Deliveries, func(d Delivery) bool { return d.Aggregate > t.Submission.Aggregate && d.Candidate != (BlobRef{}) }) {
-			return VerdictWithhold, fmt.Sprintf("%s, whose delivery your candidate used, delivered again after your step saw the aggregate", producer)
+			return VerdictWithhold, fmt.Sprintf("%s, whose delivery your candidate used, delivered again after your step saw the aggregate; submit again on the current aggregate", producer)
 		}
 	}
 	return VerdictAccept, ""

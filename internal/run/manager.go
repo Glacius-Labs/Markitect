@@ -322,7 +322,7 @@ func (s stateValue) renderInput(t taskValue, facts StepFacts, basis snapshot.Con
 		// A withheld pass leaves the task's work outside the accepted aggregate;
 		// its next step learns why (core rules D4, I3, T9).
 		id := t.ID + "-withheld"
-		text := "Your last submission passed its review, but the Host did not accept it: " + t.Withheld + ". It is not in the accepted aggregate, and other Managers do not see it; submit again on the current aggregate."
+		text := "Your last submission passed its review, but the Host did not accept it, so it is not in the accepted aggregate and other Managers do not see it: " + t.Withheld + "."
 		findings.IDs = append(findings.IDs, id)
 		findings.Items = append(findings.Items, organization.FindingFact{ID: id, Grounds: organization.HostText{Text: text, Source: organization.HostSource{RecordID: id, ContentID: basis}}})
 	}

@@ -872,7 +872,12 @@ func (s *stateValue) concludeWork(r ConclusionRecord, t *taskValue, revision uin
 		}
 		return nil
 	}
-	t.Failure, t.HostFault, t.Withheld = "", false, ""
+	t.Failure, t.HostFault = "", false
+	if r.Outcome != outcomeFailed {
+		// A failed step leaves no new submission, so a withheld pass's note
+		// stays for the next step.
+		t.Withheld = ""
+	}
 	switch r.Outcome {
 	case outcomeFailed:
 		t.State, t.Since, t.Failure, t.HostFault = TaskReady, revision, r.Reason, r.HostFault
