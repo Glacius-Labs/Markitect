@@ -82,7 +82,7 @@ func TestEngineRunsOnePackageThroughRejectionReworkAndIntegration(t *testing.T) 
 	want := []string{
 		"lending explore", ". explore",
 		". work", "lending work", ". reviewer-expectations", "lending reviewer-expectations", ". reviewer-candidate", "lending reviewer-candidate",
-		"lending work", "lending reviewer-expectations", "lending reviewer-candidate",
+		"lending work", "lending reviewer-candidate",
 		". integrate", ". reviewer-expectations", ". reviewer-candidate",
 	}
 	if !reflect.DeepEqual(order, want) {
@@ -142,32 +142,35 @@ func TestACandidateReviewAssessesEveryRecordedCase(t *testing.T) {
 	}
 }
 
-// A recorded case the review finds missing becomes a blocking finding: the
-// Manager's rework sees it, a later review assesses its own recorded cases
-// only, and its pass must resolve that finding (core rules T7, T8).
+// A recorded case the review finds missing becomes a blocking finding. The
+// rework sees it and the recorded cases; the next review assesses the same
+// cases without recording new ones, and its pass must resolve that finding
+// (core rules T7, T8, DEC-047).
 func TestAMissingCaseBecomesAFinding(t *testing.T) {
 	t.Parallel()
 	review := func(verdict, cases, resolutions string) string {
 		return `{"verdict":"` + verdict + `","summary":"Assessed.","evidence":[],"cases":` + cases + `,"findings":[],"resolutions":` + resolutions + `}`
 	}
 	missing := `[{"name":"item","assessment":"missing","grounds":"No test shows Item."}]`
-	title := `[{"name":"title","assessment":"evidenced","grounds":"out/library.go declares Title."}]`
+	evidenced := `[{"name":"item","assessment":"evidenced","grounds":"A test shows Item."}]`
 	agent := func(s agentStep) []action {
 		switch {
 		case s.Manager == "lending" && s.Phase == run.PhaseReviewerCandidate && s.Attempt == 0:
 			return []action{{Tool: run.ToolSubmitReview, Args: review("changes_requested", missing, `[]`), Want: run.ToolOK}}
 		case s.Manager == "lending" && s.Phase == run.PhaseWork && s.Attempt == 1:
-			if !strings.Contains(string(s.Packet.Context.Bytes), "blocking local finding: The recorded case \"item\" has no evidence: No test shows Item.") {
+			context := string(s.Packet.Context.Bytes)
+			if !strings.Contains(context, "blocking local finding: The recorded case \"item\" has no evidence: No test shows Item.") {
 				t.Error("the rework does not see the missing case")
 			}
-		case s.Manager == "lending" && s.Phase == run.PhaseReviewerExpectations && s.Attempt == 1:
-			return []action{{Tool: run.ToolRecordExpectations, Args: `{"cases":[{"name":"title","expectation":"Item has a Title.","discriminates":"No Title."}]}`, Want: run.ToolOK}}
+			if !strings.Contains(context, "Your last review assessed your candidate against these recorded cases") || !strings.Contains(context, "The library realizes Item.") {
+				t.Error("the rework does not see the recorded cases")
+			}
 		case s.Manager == "lending" && s.Phase == run.PhaseReviewerCandidate && s.Attempt == 1:
 			resolved := `[{"finding":"` + openFinding(t, s) + `","state":"resolved","grounds":"A test shows Item.","evidence":[]}]`
 			return []action{
 				{Tool: run.ToolSubmitReview, Args: review("pass", missing, resolved), Want: run.ToolRefused},
-				{Tool: run.ToolSubmitReview, Args: review("pass", title, `[]`), Want: run.ToolRefused},
-				{Tool: run.ToolSubmitReview, Args: review("pass", title, resolved), Want: run.ToolOK},
+				{Tool: run.ToolSubmitReview, Args: review("pass", evidenced, `[]`), Want: run.ToolRefused},
+				{Tool: run.ToolSubmitReview, Args: review("pass", evidenced, resolved), Want: run.ToolOK},
 			}
 		}
 		return happyAgent(s)
@@ -177,6 +180,9 @@ func TestAMissingCaseBecomesAFinding(t *testing.T) {
 	lending := h.task("lending")
 	if h.c.Current().State != run.Verifying || lending.Rejections["local"] != 1 || len(lending.Deliveries) != 1 {
 		t.Fatal("the missing case did not go through a finding to a pass", h.c.Current(), lending.Rejections, h.sessions.answers)
+	}
+	if n := strings.Count(strings.Join(admitted(h), ","), "lending reviewer-expectations"); n != 1 {
+		t.Fatal("the review after the rejection recorded new expectations", n, admitted(h))
 	}
 }
 

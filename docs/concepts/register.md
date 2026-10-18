@@ -57,6 +57,7 @@ The owner's [origin account of 15 October 2026](sources/owner-origin-20261015.md
 | [DEC-044](#dec-044-commands-reuse-the-manager-organization) | Decision | Commands reuse the Manager organization | Accepted direction; implementation deferred |
 | [DEC-045](#dec-045-managers-and-reviewers-derive-technical-risks) | Clarification | Managers and reviewers derive technical risks | Accepted |
 | [DEC-046](#dec-046-a-withheld-pass-keeps-its-recorded-expectations) | Decision | A withheld pass keeps its recorded expectations | Accepted |
+| [DEC-047](#dec-047-recorded-review-cases-stand-until-their-inputs-change) | Decision | Recorded review cases stand until their inputs change | Accepted |
 | [PRM-001 to PRM-007](#promises) | Promise | Target outcomes | Target |
 | [ASM-001 to ASM-006](#assumptions-and-hypotheses) | Assumption | Assumptions and hypotheses | See entries |
 | [CPT-001](#cpt-001-federalism) | Concept | Federalism | Accepted |
@@ -568,7 +569,16 @@ The owner's [origin account of 15 October 2026](sources/owner-origin-20261015.md
 - **Status:** Accepted, Architect under the owner's authorization, 18 October 2026 ([evidence and owner instruction](sources/withheld-review-expectations-20261018.md)).
 - **Decision:** When the Orchestrator withholds a pass (I3, D4, T9), the review's recorded expectations stand for the task's next submission. That submission's review skips the expectations step while the submission's purpose and scope, the task's open findings other than those the withheld passes raised, and the owner's decisions for the task are unchanged. Its candidate step still starts a fresh reviewer conversation and assesses every recorded case.
 - **Reason:** The expectations step sees neither the candidate nor the aggregate. Re-recording them for an unchanged resubmission only redraws the cases, and in the library runs it rejected candidates that had just passed, consuming the shared rejection limit.
+- **Updated by [DEC-047](#dec-047-recorded-review-cases-stand-until-their-inputs-change):** a rejection also keeps the recorded expectations, and the Manager sees them.
 - **Scope:** Amends T7 for this case only. A rejection, a failed assessment, an owner answer and any changed input still record fresh expectations. Rejection limits, independence and evidence requirements are unchanged.
+- **Owners:** [core protocol](../design/canonical-model/manager-apply-core.md#manager-tasks), rule T7.
+
+### DEC-047 Recorded review cases stand until their inputs change
+
+- **Status:** Accepted, Architect under the owner's authorization, 18 October 2026 ([evidence and owner instruction](sources/stable-review-cases-20261018.md)).
+- **Decision:** A rejected candidate also leaves its review's recorded expectations standing for the task's next submission, as [DEC-046](#dec-046-a-withheld-pass-keeps-its-recorded-expectations) established for a withheld pass. The next review skips the expectations step while the submission's purpose and scope, the task's open findings other than those the reviews against these expectations raised or resolved, and the owner's decisions for the task are unchanged. The Manager's steps show these recorded cases, so that its rework can give each case evidence that shows it ran.
+- **Reason:** Review must converge across rounds. In the library runs each resubmission redrew the case set and re-judged every case; a case evidenced twice was judged missing the third time, and two runs ended Incomplete at the rejection limit without an asserted defect.
+- **Scope:** Amends T7 and DEC-046. Every candidate review still assesses every recorded case independently, resolves open findings with current evidence and may raise findings for other gaps. These review cases are not the frozen evaluation expectations of [DEC-037](#dec-037-agent-sessions-and-checks-run-in-linux-containers), which still never enter a writer's container. A failed assessment, an owner answer and any changed input still record fresh expectations. The rejection limit and evidence requirements are unchanged.
 - **Owners:** [core protocol](../design/canonical-model/manager-apply-core.md#manager-tasks), rule T7.
 
 ## Promises

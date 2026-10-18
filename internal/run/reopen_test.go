@@ -108,6 +108,12 @@ func TestIntegrationFindingReopensTheChild(t *testing.T) {
 	if root := h.task("."); root.Rejections["integration"] != 1 {
 		t.Fatal("the integration rejection was not counted", root.Rejections)
 	}
+	// The second integration review keeps the cases of the rejected one
+	// (DEC-047); the root records cases for its local and its integration
+	// review only.
+	if n := strings.Count(strings.Join(order, ","), ". reviewer-expectations"); n != 2 {
+		t.Fatal("the integration review after the rejection recorded new cases", n, order)
+	}
 	issues := h.c.Issues("lending")
 	if !slices.ContainsFunc(issues, func(i run.Issue) bool { return i.ID == finding && i.State == "resolved" && i.Purpose == "local" }) {
 		t.Fatalf("the child's local review did not resolve the finding: %+v", issues)
