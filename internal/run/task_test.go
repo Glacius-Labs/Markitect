@@ -472,7 +472,7 @@ func TestARejectionKeepsTheCasesItsReviewResolvedAgainst(t *testing.T) {
 		case s.Manager == "lending" && s.Phase == run.PhaseWork && s.Attempt == 0:
 			return []action{{Write: map[string]string{"out/library.go": "package library\n\ntype Item struct{}\n"}, Tool: run.ToolSubmit, Args: submitArgs("local", "limited"), Want: run.ToolOK}}
 		case s.Manager == "lending" && s.Phase == run.PhaseWork:
-			notes = append(notes, strings.Contains(string(s.Packet.Context.Bytes), "Your local reviews assess every candidate against these recorded cases"))
+			notes = append(notes, strings.Contains(string(s.Packet.Context.Bytes), "Your local work is assessed against these recorded review cases"))
 			return []action{{Write: map[string]string{"out/library.go": "package library\n\ntype Item struct{ Title string }\n"}, Tool: run.ToolSubmit, Args: submitArgs("local", "complete"), Want: run.ToolOK}}
 		case s.Manager == "lending" && s.Phase == run.PhaseReviewerCandidate && s.Attempt == 0:
 			advisory = "finding-" + string(s.Packet.Step) + "-1"
@@ -507,7 +507,7 @@ func TestAPassKeepsTheRecordedCasesForTheNextDelivery(t *testing.T) {
 	var notes []bool
 	agent := func(s agentStep) []action {
 		if s.Manager == "lending" && s.Phase == run.PhaseWork {
-			notes = append(notes, strings.Contains(string(s.Packet.Context.Bytes), "Your local reviews assess every candidate against these recorded cases"))
+			notes = append(notes, strings.Contains(string(s.Packet.Context.Bytes), "Your local work is assessed against these recorded review cases"))
 		}
 		if s.Manager == "lending" && s.Phase == run.PhaseWork && s.Attempt == 0 {
 			return []action{{Write: map[string]string{"out/library.go": "package library\n"}, Tool: run.ToolSubmit, Args: submitArgs("local", "limited"), Want: run.ToolOK}}

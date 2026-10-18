@@ -337,18 +337,8 @@ func (s stateValue) renderInput(t taskValue, facts StepFacts, basis snapshot.Con
 		findings.Items = append(findings.Items, organization.FindingFact{ID: id, Grounds: organization.HostText{Text: text, Source: organization.HostSource{RecordID: id, ContentID: basis}}})
 	}
 	if !t.Phase.reviewer() {
-		// The Manager knows how much of its rejection allowance is used (core
-		// rule T8).
-		for _, purpose := range slices.Sorted(maps.Keys(t.Rejections)) {
-			id := t.ID + "-rejections-" + purpose
-			text := fmt.Sprintf("Reviews rejected %d of your %s candidates in this run; at %d rejections your task becomes incomplete and the run ends Incomplete.", t.Rejections[purpose], purpose, s.rejectionLimit(t.Slot.Package))
-			findings.IDs = append(findings.IDs, id)
-			findings.Items = append(findings.Items, organization.FindingFact{ID: id, Grounds: organization.HostText{Text: text, Source: organization.HostSource{RecordID: id, ContentID: basis}}})
-		}
-	}
-	if !t.Phase.reviewer() {
-		// The Manager sees the cases its next review with each purpose
-		// assesses again while they stand (DEC-047, DEC-048).
+		// The Manager sees the cases its work with each purpose is assessed
+		// against while they stand (DEC-047, DEC-048, DEC-049).
 		for _, purpose := range s.standingPurposes(t) {
 			kept := t.Kept[purpose].Expectations
 			recorded, err := quote(kept)
@@ -356,7 +346,7 @@ func (s stateValue) renderInput(t taskValue, facts StepFacts, basis snapshot.Con
 				return organization.RenderInput{}, err
 			}
 			id := t.ID + "-recorded-cases-" + purpose
-			text := fmt.Sprintf("Your %s reviews assess every candidate against these recorded cases, each by its name and whatever the candidate's scope, while no other finding or owner decision arrives and no review step fails; the review of a limited candidate decides which cases apply to it. Give each case that applies evidence that shows it ran: ", purpose) + recorded.Text
+			text := fmt.Sprintf("Your %s work is assessed against these recorded review cases, each by its name; give each case that applies evidence that shows it ran: ", purpose) + recorded.Text
 			findings.IDs = append(findings.IDs, id)
 			findings.Items = append(findings.Items, organization.FindingFact{ID: id, Grounds: organization.HostText{Text: text, Source: organization.HostSource{RecordID: id, ContentID: kept.ContentID}}})
 		}
@@ -365,7 +355,7 @@ func (s stateValue) renderInput(t taskValue, facts StepFacts, basis snapshot.Con
 		// A withheld pass leaves the task's work outside the accepted aggregate;
 		// its next step learns why (core rules D4, I3, T9).
 		id := t.ID + "-withheld"
-		text := "Your last submission passed its review, but the Host did not accept it, so it is not in the accepted aggregate and other Managers do not see it: " + t.Withheld + "."
+		text := "Your last submission passed its review but was not accepted, so other Managers do not see it: " + t.Withheld + "."
 		findings.IDs = append(findings.IDs, id)
 		findings.Items = append(findings.Items, organization.FindingFact{ID: id, Grounds: organization.HostText{Text: text, Source: organization.HostSource{RecordID: id, ContentID: basis}}})
 	}

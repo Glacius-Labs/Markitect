@@ -88,7 +88,7 @@ func TestRenderThreeViewsAndOriginalInstructionFrames(t *testing.T) {
 	selection, settings, input := renderFixture(t, "a", organization.ManagerView)
 	input.OwnArtifacts = []organization.ArtifactFact{renderArtifact(t, "a")}
 	result := requireRendered(t, selection, settings, input)
-	if result.Package() != "a" || result.View() != organization.ManagerView || result.Template().ID != "markitect/context/manager" || result.Template().Version != "4" {
+	if result.Package() != "a" || result.View() != organization.ManagerView || result.Template().ID != "markitect/context/manager" || result.Template().Version != "5" {
 		t.Fatal("missing product template/view identity")
 	}
 	if !strings.Contains(string(result.Bytes()), `"RejectionLimit"`) || strings.Contains(string(result.Bytes()), `"ReviewRounds"`) {
@@ -168,7 +168,7 @@ func TestOnePackageNoChangeAndOrdinaryRootIntegrationContext(t *testing.T) {
 	if !bytes.Equal(sectionTexts(t, local, "static-apply-operation")[0], sectionTexts(t, root, "static-apply-operation")[0]) {
 		t.Fatal("parent replaced the operation when integrating no-change")
 	}
-	if !strings.Contains(string(root.Bytes()), "One-child parents still require integration review") {
+	if !strings.Contains(string(root.Bytes()), "Compose your local work with your direct children's accepted deliveries") {
 		t.Fatal("root's single no-change child removed the integration obligation")
 	}
 }
@@ -184,7 +184,7 @@ func TestRenderStatesTheTreePosition(t *testing.T) {
 	} {
 		selection, settings, input := renderFixture(t, pkg, organization.ManagerView)
 		text := string(requireRendered(t, selection, settings, input).Bytes())
-		if !strings.Contains(text, `[section "tree-position"`) || !strings.Contains(text, want) || !strings.Contains(text, "Its integration step composes only the deliveries of the direct children") {
+		if !strings.Contains(text, `[section "tree-position"`) || !strings.Contains(text, want) || !strings.Contains(text, "Your integration step composes only the deliveries of your direct children") {
 			t.Fatalf("%s: tree position missing or wrong", pkg)
 		}
 		if strings.Contains(text, "reviewed-submission") {

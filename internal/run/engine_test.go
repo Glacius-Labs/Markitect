@@ -54,8 +54,10 @@ func TestEngineRunsOnePackageThroughRejectionReworkAndIntegration(t *testing.T) 
 			if !strings.Contains(string(s.Packet.Context.Bytes), "No type realizes Item.") {
 				t.Error("rework did not see the finding")
 			}
-			if !strings.Contains(string(s.Packet.Context.Bytes), "Reviews rejected 1 of your local candidates in this run; at 2 rejections your task becomes incomplete and the run ends Incomplete.") {
-				t.Error("rework did not see its rejection count")
+			// The Orchestrator, not the Manager, keeps the rejection count
+			// (DEC-051).
+			if strings.Contains(string(s.Packet.Context.Bytes), "Reviews rejected") {
+				t.Error("rework sees the rejection count")
 			}
 		}
 		return happyAgent(s)
@@ -164,7 +166,7 @@ func TestAMissingCaseBecomesAFinding(t *testing.T) {
 			if !strings.Contains(context, "blocking local finding: The recorded case \"item\" has no evidence: No test shows Item.") {
 				t.Error("the rework does not see the missing case")
 			}
-			if !strings.Contains(context, "Your local reviews assess every candidate against these recorded cases") || !strings.Contains(context, "The library realizes Item.") {
+			if !strings.Contains(context, "Your local work is assessed against these recorded review cases") || !strings.Contains(context, "The library realizes Item.") {
 				t.Error("the rework does not see the recorded cases")
 			}
 		case s.Manager == "lending" && s.Phase == run.PhaseReviewerCandidate && s.Attempt == 1:

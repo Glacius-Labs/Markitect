@@ -89,7 +89,7 @@ func TestIntegrationFindingReopensTheChild(t *testing.T) {
 			}
 			// The finding changed what the child's cases rest on, so a
 			// reviewer records fresh ones before the rework (DEC-048, DEC-049).
-			if !bytes.Contains(s.Packet.Context.Bytes, []byte("against these recorded cases")) {
+			if !bytes.Contains(s.Packet.Context.Bytes, []byte("against these recorded review cases")) {
 				t.Error("the reopened child does not see its fresh cases")
 			}
 			return []action{{Write: map[string]string{"out/library.go": "package library\n\ntype Item struct{ Title string }\n"}, Tool: run.ToolSubmit, Args: submitArgs("local", "complete"), Want: run.ToolOK}}
