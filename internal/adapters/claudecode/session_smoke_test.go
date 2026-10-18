@@ -335,6 +335,8 @@ func TestAdmittedSessionAdapterSmoke(t *testing.T) {
 		if err != nil {
 			t.Fatal("actual StepContract unavailable")
 		}
+		// This read-only work plan is never admitted by the Coordinator; it only
+		// exercises the adapter.
 		plan := run.SessionPlan{ID: run.SessionID(name + "-" + suffix), Role: role, Workspace: workspace,
 			ProviderHome: home, ImageID: image, CredentialRef: credentialRef, Resume: resume,
 			Candidate: tree.Digest(), ReadOnly: true, MaxWireBytes: 1 << 20, Profile: profilePayload.Ref(), Tools: tools.Ref()}

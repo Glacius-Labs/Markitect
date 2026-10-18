@@ -4,13 +4,14 @@ Source of [DEC-052](../register.md#dec-052-implement-then-review-no-explore-phas
 
 ## Evidence
 
-In the bound runs R2-A1-04 to R2-A1-08, the Explore phase was 6 steps, about 4 % of wall time. In an empty repository it gave no information.
+In the bound runs R2-A1-04 (Main 3efbdcd7), R2-A1-05 (Main ddbbd4dc), R2-A1-06 (Main 1d0f31f4), R2-A1-07 (Main 9c7227e5) and R2-A1-08 (Main a9f62311), Explore was 6 steps per run, one for each of the 6 Managers, about 4 % of wall time. All five runs started from an empty repository, where Explore gave no information.
 
 The cost lay elsewhere:
 
 - the write barrier, which held every writing step until the last Explore result was confirmed;
-- the intake of unexplained files, which the barrier waited for;
 - the prompt rules that explained the phase and the barrier to the agents, against [DEC-051](../register.md#dec-051-agents-get-tasks-the-orchestrator-owns-the-process).
+
+The intake of unexplained files was never implemented, so it cost nothing in these runs. Removing it is a design simplification: the owner settles unexplained files before Apply, and the file check already fails a run on one.
 
 ## Owner instruction
 

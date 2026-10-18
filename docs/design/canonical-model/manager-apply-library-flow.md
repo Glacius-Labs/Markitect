@@ -150,7 +150,7 @@ At this boundary the application may still enforce five. Report that difference 
 
 Through `markitect-apply`, the coding agent commissions the supported workflow against the committed new model, actual source, configuration and existing finite execution grant. It observes progress and relays decisions; it does not make application repairs outside Markitect or construct a second Manager scheduler. An ordinary assignment can authorize both model work and subsequent realization without requiring a separate human prompt for each skill.
 
-The [fixed process](#messages-down-reviewed-results-up) still includes every local Manager, including root,. The numeric change does not authorize omitting Managers based only on a predicted impact list. Each Manager assesses its complete responsibility, changes its own artifacts where needed and supplies justified no-change results for conforming parts. Parents integrate their local work and direct children's results; configured independent reviewers assess both changes and retained realization.
+The [fixed process](#messages-down-reviewed-results-up) still includes every local Manager, including root. The numeric change does not authorize omitting Managers based only on a predicted impact list. Each Manager assesses its complete responsibility, changes its own artifacts where needed and supplies justified no-change results for conforming parts. Parents integrate their local work and direct children's results; configured independent reviewers assess both changes and retained realization.
 
 | Area | Expected assessment and possible change |
 | --- | --- |

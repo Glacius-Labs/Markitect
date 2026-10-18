@@ -206,12 +206,12 @@ type Admission struct {
 func (p Phase) reviewer() bool { return p == PhaseReviewerExpectations || p == PhaseReviewerCandidate }
 func (p Phase) writing() bool  { return p == PhaseWork || p == PhaseIntegrate }
 
-// writes reports whether a task's step in the phase may change files: a reply
+// mayWrite reports whether a task's step in the phase may change files: a reply
 // step of a done or blocked task may correct the Manager's own files (core
 // rules T10, T11). A task blocked on the owner's decision about its frozen
 // submission keeps that candidate unchanged until the fresh review (core rule
 // T8).
-func (s stateValue) writes(t taskValue, phase Phase) bool {
+func mayWrite(t taskValue, phase Phase) bool {
 	if phase != PhaseReply {
 		return phase.writing()
 	}
@@ -240,7 +240,7 @@ func (s stateValue) admission(t taskValue) (Admission, int, uint64, bool) {
 		// A Manager that cannot otherwise act answers in a reply step and keeps
 		// its state unless the step corrects its files (core rules T10, T11).
 		a.Phase, a.Home, a.Resume = PhaseReply, managerHome(t), t.Conversation
-		a.Writes = s.writes(t, PhaseReply)
+		a.Writes = mayWrite(t, PhaseReply)
 		return a, 2, s.unanswered(t)[0].At, true
 	case t.State == TaskReviewing && t.Review.Expectations == (BlobRef{}):
 		// Each review step starts a fresh conversation in a fresh home (core
@@ -776,7 +776,7 @@ func (s *stateValue) concludeStep(c Command) error {
 			return err
 		}
 	}
-	writes := s.writes(t, t.Phase)
+	writes := mayWrite(t, t.Phase)
 	if r.Outcome != outcomeFailed && writes {
 		t.Claims = addClaims(t.Claims, s.stepClaims(t)) // core rule S4
 	}
@@ -820,7 +820,7 @@ func (s *stateValue) concludeWork(r ConclusionRecord, t *taskValue, revision uin
 		t.Own, t.OwnTree = r.Candidate, r.Tree
 	}
 	if t.Phase == PhaseReply {
-		if r.Changed && !r.HostFault && s.writes(*t, PhaseReply) {
+		if r.Changed && !r.HostFault && mayWrite(*t, PhaseReply) {
 			// A reply step that changed the Manager's files returns its task to
 			// work, so that the change goes through review, and a done task's
 			// ancestors wait for it again (core rule T11). A change the Host

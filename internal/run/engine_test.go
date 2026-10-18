@@ -29,9 +29,10 @@ func aggregateFile(t *testing.T, e *run.Engine, path string) string {
 }
 
 // The whole core runs one Package end to end: reviewers record each task's
-// cases before its first work step, the leaf's first candidate is rejected and reworked against the same cases,
-// the accepted delivery is composed into the aggregate, the parent integrates,
-// and the root's completion moves the run to Verifying.
+// cases before its first work step, the leaf's first candidate is rejected
+// and reworked against the same cases, the accepted delivery is composed into
+// the aggregate, the parent integrates, and the root's completion moves the
+// run to Verifying.
 func TestEngineRunsOnePackageThroughRejectionReworkAndIntegration(t *testing.T) {
 	t.Parallel()
 	agent := func(s agentStep) []action {

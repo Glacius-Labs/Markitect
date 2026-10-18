@@ -182,7 +182,6 @@ Take N Managers, of which P have children. A run without rework or batching need
 - one integration step per parent.
 
 That is about 3N + 3P steps. For library M1 (N = 6, P = 2) it is 24. For 15 Packages (N = 16, P = 5) it is 63.
-- T5 lets a Manager that needs no change end its work step with a no-change submission.
 - Review batching (T7) shares review steps between no-change subjects.
 - Under S6, every step is also a session start.
 

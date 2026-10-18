@@ -98,7 +98,7 @@ Instructions identify exact repository-relative regular files. Preserve order, r
 | security | Absent | security-model, high, lending-security.md |
 | reviewArbiter | arbiter-model, high, review-resolution.md | arbiter-model, xhigh, review-resolution.md then lending-resolution.md |
 
-All instruction filenames in this table are below `instructions/`. The arbiter is configured but starts only for a named dispute. Managers still derive from the canonical topology, not a second authored organization. Sequential writing, guaranteed participation, independent local/integration/intake review and the deterministic final evidence check remain mandatory.
+All instruction filenames in this table are below `instructions/`. The arbiter is configured but starts only for a named dispute. Managers still derive from the canonical topology, not a second authored organization. Sequential writing, guaranteed participation, independent local/integration review and the deterministic final evidence check remain mandatory.
 
 ## Strategy defaults and their sources
 
