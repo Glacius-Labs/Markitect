@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"maps"
 	"slices"
+	"strings"
 	"time"
 
 	"github.com/Glacius-Labs/Markitect/internal/snapshot"
@@ -38,6 +39,9 @@ const (
 	issueNotApplicable = "not-applicable"
 	severityBlocking   = "blocking"
 	severityAdvisory   = "advisory"
+	caseEvidenced      = "evidenced"
+	caseNotApplicable  = "not-applicable"
+	caseMissing        = "missing"
 	addressedToOwner   = "owner"
 )
 
@@ -52,9 +56,11 @@ type Delivery struct {
 }
 
 // reviewValue is the progress of the current review: the expectations its
-// first step recorded, which its candidate step receives (core rule T7).
+// first step recorded, which its candidate step receives, and the names of
+// their cases, which the candidate step accounts for (core rule T7).
 type reviewValue struct {
 	Expectations BlobRef
+	Cases        []string
 }
 
 type reviewInput struct {
@@ -62,8 +68,14 @@ type reviewInput struct {
 	Summary     string            `json:"summary"`
 	Question    string            `json:"question,omitempty"`
 	Evidence    []json.RawMessage `json:"evidence"`
+	Cases       []caseInput       `json:"cases"`
 	Findings    []findingInput    `json:"findings"`
 	Resolutions []resolutionInput `json:"resolutions"`
+}
+type caseInput struct {
+	Name       string `json:"name"`
+	Assessment string `json:"assessment"`
+	Grounds    string `json:"grounds"`
 }
 type findingInput struct {
 	To                string   `json:"to,omitempty"`
@@ -112,13 +124,19 @@ func (s stateValue) openIssues(manager string) []Issue {
 	return out
 }
 
-// checkReview refuses a review that cannot stand as a verdict: a resolution
-// of an issue that is not an open finding of the task, or a pass that leaves
-// an open blocking finding of the review purpose or raises a new one (core
-// rule T8).
+// checkReview refuses a review that cannot stand as a verdict: one that does
+// not account for every recorded case (core rule T7), a resolution of an issue
+// that is not an open finding of the task, or a pass that leaves a case
+// without evidence or an open blocking finding of the review purpose, or
+// raises a new one (core rule T8).
 func (s stateValue) checkReview(t taskValue, in reviewInput) error {
-	if !text(in.Summary) || in.Evidence == nil || in.Findings == nil || in.Resolutions == nil {
-		return errors.New("submit_review needs a summary, evidence, findings and resolutions")
+	if !text(in.Summary) || in.Evidence == nil || in.Cases == nil || in.Findings == nil || in.Resolutions == nil {
+		return errors.New("submit_review needs a summary, evidence, cases, findings and resolutions")
+	}
+	if in.Verdict != "failed_assessment" {
+		if err := checkCases(t.Review.Cases, in); err != nil {
+			return err
+		}
 	}
 	resolved := map[string]bool{}
 	for _, r := range in.Resolutions {
@@ -163,6 +181,36 @@ func (s stateValue) checkReview(t taskValue, in reviewInput) error {
 	case "failed_assessment":
 	default:
 		return fmt.Errorf("unknown verdict %q", in.Verdict)
+	}
+	return nil
+}
+
+// checkCases refuses a review that does not assess each recorded case exactly
+// once by its name, or that passes with a case it found missing.
+func checkCases(recorded []string, in reviewInput) error {
+	assessed := map[string]bool{}
+	missing := false
+	for _, c := range in.Cases {
+		if !slices.Contains(recorded, c.Name) || assessed[c.Name] {
+			return fmt.Errorf("case %q is not a recorded case or is assessed twice; the recorded cases are: %s", c.Name, strings.Join(recorded, "; "))
+		}
+		if c.Assessment != caseEvidenced && c.Assessment != caseNotApplicable && c.Assessment != caseMissing || !text(c.Grounds) {
+			return errors.New("each case needs the assessment evidenced, not-applicable or missing, and grounds")
+		}
+		assessed[c.Name] = true
+		missing = missing || c.Assessment == caseMissing
+	}
+	var absent []string
+	for _, name := range recorded {
+		if !assessed[name] {
+			absent = append(absent, name)
+		}
+	}
+	if len(absent) > 0 {
+		return fmt.Errorf("assess every recorded case; not yet assessed: %s", strings.Join(absent, "; "))
+	}
+	if missing && in.Verdict == "pass" {
+		return errors.New("a pass cannot leave a recorded case missing; request changes with a blocking finding for it")
 	}
 	return nil
 }
@@ -268,9 +316,17 @@ func (s *stateValue) concludeReview(r ConclusionRecord, t *taskValue, revision u
 		}
 		if r.Outcome == outcomeFailed {
 			fresh()
-		} else {
-			t.Review.Expectations, t.Since = r.Input, revision
+			return nil
 		}
+		var in expectationsInput
+		if json.Unmarshal(args, &in) != nil {
+			return ErrInvalid
+		}
+		t.Review = reviewValue{Expectations: r.Input}
+		for _, c := range in.Cases {
+			t.Review.Cases = append(t.Review.Cases, c.Name)
+		}
+		t.Since = revision
 		return nil
 	}
 	var in reviewInput

@@ -69,7 +69,7 @@ func TestClaimsSurviveAnEngineRestart(t *testing.T) {
 // child: the done child is reopened, the parent waits for it, and the
 // child's next local review must resolve the finding (core rules D5, T11).
 func TestIntegrationFindingReopensTheChild(t *testing.T) {
-	childFinding := `{"verdict":"changes_requested","summary":"Item lacks a title.","evidence":[],"resolutions":[],"findings":[{"to":"lending","severity":"blocking","definitions":["lending/Item"],"grounds":"Item has no title.","requestedEvidence":"A title field."}]}`
+	childFinding := `{"verdict":"changes_requested","summary":"Item lacks a title.","evidence":[],"cases":[{"name":"item","assessment":"evidenced","grounds":"Checked."}],"resolutions":[],"findings":[{"to":"lending","severity":"blocking","definitions":["lending/Item"],"grounds":"Item has no title.","requestedEvidence":"A title field."}]}`
 	var finding string
 	agent := func(s agentStep) []action {
 		switch {
@@ -303,7 +303,7 @@ func TestARefusedReplyCorrectionReachesTheWorkStep(t *testing.T) {
 func TestAReplyOfATaskAwaitingADecisionIsReadOnly(t *testing.T) {
 	var h *harness
 	var asked string
-	decision := `{"verdict":"needs_decision","summary":"Unclear.","question":"Which title?","evidence":[],"findings":[],"resolutions":[]}`
+	decision := `{"verdict":"needs_decision","summary":"Unclear.","question":"Which title?","evidence":[],"cases":[{"name":"item","assessment":"evidenced","grounds":"Checked."}],"findings":[],"resolutions":[]}`
 	agent := func(s agentStep) []action {
 		switch {
 		case s.Manager == "lending" && s.Phase == run.PhaseReviewerCandidate && s.Attempt == 0:
@@ -377,7 +377,7 @@ func TestAChildsOpenQuestionLeavesTheParentsLocalReview(t *testing.T) {
 	agent := func(s agentStep) []action {
 		switch {
 		case s.Manager == "lending" && s.Phase == run.PhaseReviewerCandidate && s.Attempt == 0:
-			return []action{{Tool: run.ToolSubmitReview, Args: `{"verdict":"needs_decision","summary":"Open.","question":"Which format?","evidence":[],"findings":[],"resolutions":[]}`, Want: run.ToolOK}}
+			return []action{{Tool: run.ToolSubmitReview, Args: `{"verdict":"needs_decision","summary":"Open.","question":"Which format?","evidence":[],"cases":[{"name":"item","assessment":"evidenced","grounds":"Checked."}],"findings":[],"resolutions":[]}`, Want: run.ToolOK}}
 		case s.Manager == "." && s.Phase == run.PhaseReviewerCandidate && s.Attempt == 0:
 			return []action{{Tool: run.ToolSubmitReview, Args: rejectArgs, Want: run.ToolOK}}
 		case s.Manager == "." && s.Phase == run.PhaseReviewerCandidate && strings.Contains(string(s.Packet.Context.Bytes), "finding-step-"):
@@ -396,7 +396,7 @@ func TestAChildsOpenQuestionLeavesTheParentsLocalReview(t *testing.T) {
 // A finding to a grandchild reopens it, and the chain above it integrates
 // again (core rule T11).
 func TestAGrandchildFindingReintegratesTheChain(t *testing.T) {
-	grand := `{"verdict":"changes_requested","summary":"Reminder lacks a title.","evidence":[],"resolutions":[],"findings":[{"to":"lending/reminders","severity":"blocking","definitions":["lending/reminders/Item"],"grounds":"No title.","requestedEvidence":"A title."}]}`
+	grand := `{"verdict":"changes_requested","summary":"Reminder lacks a title.","evidence":[],"cases":[{"name":"item","assessment":"evidenced","grounds":"Checked."}],"resolutions":[],"findings":[{"to":"lending/reminders","severity":"blocking","definitions":["lending/reminders/Item"],"grounds":"No title.","requestedEvidence":"A title."}]}`
 	var finding string
 	agent := func(s agentStep) []action {
 		switch {
@@ -421,7 +421,7 @@ func TestAGrandchildFindingReintegratesTheChain(t *testing.T) {
 // Findings to a child and to its own child reopen both, whatever their
 // order; the child works locally again before it integrates (core rule T11).
 func TestFindingsToAChildAndItsChildReopenBoth(t *testing.T) {
-	both := `{"verdict":"changes_requested","summary":"Both lack a title.","evidence":[],"resolutions":[],"findings":[` +
+	both := `{"verdict":"changes_requested","summary":"Both lack a title.","evidence":[],"cases":[{"name":"item","assessment":"evidenced","grounds":"Checked."}],"resolutions":[],"findings":[` +
 		`{"to":"lending/reminders","severity":"blocking","definitions":["lending/reminders/Item"],"grounds":"No title.","requestedEvidence":"A title."},` +
 		`{"to":"lending","severity":"blocking","definitions":["lending/Item"],"grounds":"No title either.","requestedEvidence":"A title."}]}`
 	agent := func(s agentStep) []action {

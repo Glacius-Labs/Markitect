@@ -120,7 +120,7 @@ func TestAnsweredReviewQuestionStartsAFreshReview(t *testing.T) {
 	agent := func(s agentStep) []action {
 		if s.Manager == "lending" && s.Phase == run.PhaseReviewerCandidate {
 			if s.Attempt == 0 {
-				return []action{{Tool: run.ToolSubmitReview, Args: `{"verdict":"needs_decision","summary":"Open format.","question":"Which format?","evidence":[],"findings":[],"resolutions":[]}`, Want: run.ToolOK}}
+				return []action{{Tool: run.ToolSubmitReview, Args: `{"verdict":"needs_decision","summary":"Open format.","question":"Which format?","evidence":[],"cases":[{"name":"item","assessment":"evidenced","grounds":"Checked."}],"findings":[],"resolutions":[]}`, Want: run.ToolOK}}
 			}
 			if !bytes.Contains(s.Packet.Context.Bytes, []byte("Plain text.")) {
 				t.Error("the fresh review does not see the owner's decision")

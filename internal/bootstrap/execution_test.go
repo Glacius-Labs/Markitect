@@ -118,7 +118,7 @@ func (f *bootstrapExecutionSessions) Step(ctx context.Context, a runport.StepAdm
 	case runport.PhaseReviewerExpectations:
 		tool, args = runport.ToolRecordExpectations, `{"cases":[{"name":"area","expectation":"Unchanged.","discriminates":"Any change."}]}`
 	case runport.PhaseReviewerCandidate:
-		tool, args = runport.ToolSubmitReview, `{"verdict":"pass","summary":"Fake review passed.","evidence":[],"findings":[],"resolutions":[]}`
+		tool, args = runport.ToolSubmitReview, `{"verdict":"pass","summary":"Fake review passed.","evidence":[],"cases":[{"name":"area","assessment":"evidenced","grounds":"Unchanged."}],"findings":[],"resolutions":[]}`
 	}
 	if asked {
 		tool, args = runport.ToolWait, fmt.Sprintf(`{"on":[{"kind":"owner","ref":%q}],"reason":"Await the explicit owner answer."}`, "question-"+string(step)+"-1")

@@ -716,10 +716,15 @@ func (s stateValue) checkOutcome(t taskValue, tool string, args []byte) error {
 		if len(in.Cases) == 0 {
 			return errors.New("record_expectations needs at least one case")
 		}
+		names := map[string]bool{}
 		for _, c := range in.Cases {
 			if !text(c.Name) || !text(c.Expectation) || !text(c.Discriminates) {
 				return errors.New("each case needs a name, an expectation and what it discriminates")
 			}
+			if names[c.Name] {
+				return fmt.Errorf("case name %q is used twice; the candidate review assesses each case by its name", c.Name)
+			}
+			names[c.Name] = true
 		}
 	case ToolSubmitReview:
 		var in reviewInput

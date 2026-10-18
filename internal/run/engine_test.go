@@ -52,6 +52,9 @@ func TestEngineRunsOnePackageThroughRejectionReworkAndIntegration(t *testing.T) 
 			if !strings.Contains(string(s.Packet.Context.Bytes), "No type realizes Item.") {
 				t.Error("rework did not see the finding")
 			}
+			if !strings.Contains(string(s.Packet.Context.Bytes), "Reviews rejected 1 of your local candidates in this run; at 2 rejections") {
+				t.Error("rework did not see its rejection count")
+			}
 		}
 		return happyAgent(s)
 	}
@@ -95,6 +98,42 @@ func TestEngineRunsOnePackageThroughRejectionReworkAndIntegration(t *testing.T) 
 	again := h.newEngine(restored)
 	if !again.Aggregate().Tree().Equal(h.engine.Aggregate().Tree()) {
 		t.Fatal("a new engine does not rebuild the aggregate from the deliveries")
+	}
+}
+
+// Expectations name each case once, and a candidate review assesses every
+// recorded case by its name: the Host refuses a review that leaves one out,
+// names another or assesses one twice, and a pass with a case missing; a
+// failed assessment needs no cases (core rules T7, T8).
+func TestACandidateReviewAssessesEveryRecordedCase(t *testing.T) {
+	review := func(verdict, cases string) string {
+		return `{"verdict":"` + verdict + `","summary":"Assessed.","evidence":[],"cases":` + cases + `,"findings":[],"resolutions":[]}`
+	}
+	twice := `{"cases":[{"name":"item","expectation":"Item exists.","discriminates":"No Item."},{"name":"item","expectation":"Item again.","discriminates":"No Item."}]}`
+	agent := func(s agentStep) []action {
+		switch {
+		case s.Manager == "lending" && s.Phase == run.PhaseReviewerExpectations && s.Attempt == 0:
+			return []action{
+				{Tool: run.ToolRecordExpectations, Args: twice, Want: run.ToolRefused},
+				{Tool: run.ToolRecordExpectations, Args: expectationsArgs, Want: run.ToolOK},
+			}
+		case s.Manager == "lending" && s.Phase == run.PhaseReviewerCandidate && s.Attempt == 0:
+			return []action{
+				{Tool: run.ToolSubmitReview, Args: review("pass", `[]`), Want: run.ToolRefused},
+				{Tool: run.ToolSubmitReview, Args: review("pass", `[{"name":"other","assessment":"evidenced","grounds":"Seen."}]`), Want: run.ToolRefused},
+				{Tool: run.ToolSubmitReview, Args: review("pass", `[{"name":"item","assessment":"evidenced","grounds":"Seen."},{"name":"item","assessment":"evidenced","grounds":"Again."}]`), Want: run.ToolRefused},
+				{Tool: run.ToolSubmitReview, Args: review("pass", `[{"name":"item","assessment":"missing","grounds":"No test shows Item."}]`), Want: run.ToolRefused},
+				{Tool: run.ToolSubmitReview, Args: review("failed_assessment", `[]`), Want: run.ToolOK},
+			}
+		case s.Manager == "lending" && s.Phase == run.PhaseReviewerCandidate:
+			return []action{{Tool: run.ToolSubmitReview, Args: review("pass", `[{"name":"item","assessment":"evidenced","grounds":"out/library.go declares Item."}]`), Want: run.ToolOK}}
+		}
+		return happyAgent(s)
+	}
+	h := newHarness(t, true, agent)
+	runToEnd(t, h)
+	if h.c.Current().State != run.Verifying || len(h.task("lending").Deliveries) != 1 {
+		t.Fatal("the run did not complete after the accounted review", h.c.Current(), h.sessions.answers)
 	}
 }
 
@@ -178,7 +217,7 @@ func TestRejectionLimitFinishesTheRunIncomplete(t *testing.T) {
 func TestNeedsDecisionWaitsForTheOwner(t *testing.T) {
 	agent := func(s agentStep) []action {
 		if s.Manager == "lending" && s.Phase == run.PhaseReviewerCandidate {
-			return []action{{Tool: run.ToolSubmitReview, Args: `{"verdict":"needs_decision","summary":"The model leaves the format open.","question":"Which format should Item use?","evidence":[],"findings":[],"resolutions":[]}`, Want: run.ToolOK}}
+			return []action{{Tool: run.ToolSubmitReview, Args: `{"verdict":"needs_decision","summary":"The model leaves the format open.","question":"Which format should Item use?","evidence":[],"cases":[{"name":"item","assessment":"evidenced","grounds":"Checked."}],"findings":[],"resolutions":[]}`, Want: run.ToolOK}}
 		}
 		return happyAgent(s)
 	}
