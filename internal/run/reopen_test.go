@@ -115,6 +115,50 @@ func TestIntegrationFindingReopensTheChild(t *testing.T) {
 	}
 }
 
+// A done Manager whose answer shows that its own file needs a correction makes
+// it in its reply step: the task returns to work, the change goes through its
+// review, and the parent integrates the corrected delivery (core rule T11).
+func TestAReplyStepCorrectsADoneManagersFile(t *testing.T) {
+	var h *harness
+	var asked string
+	corrected := "package library\n\ntype Item struct{ Title string }\n"
+	agent := func(s agentStep) []action {
+		switch {
+		case s.Manager == "." && s.Phase == run.PhaseIntegrate && s.Attempt == 0:
+			asked = questionID(s, 1)
+			return []action{
+				{Tool: run.ToolSend, Args: sendArgs("question", "lending", "Item needs a title; can you add it?"), Want: run.ToolOK},
+				{Tool: run.ToolWait, Args: waitReplyArgs(asked), Want: run.ToolOK},
+			}
+		case s.Manager == "." && s.Phase == run.PhaseIntegrate && h.task("lending").State != run.TaskDone:
+			return []action{{Tool: run.ToolWait, Args: `{"on":[{"kind":"children"}],"reason":"Lending corrects Item."}`, Want: run.ToolOK}}
+		case s.Manager == "lending" && s.Phase == run.PhaseReply:
+			if h.task("lending").State != run.TaskDone {
+				t.Error("the reply step is not the done Manager's")
+			}
+			return []action{{Write: map[string]string{"out/library.go": corrected}, Tool: run.ToolSend, Args: sendArgs("reply", asked, "Added the title."), Want: run.ToolOK}}
+		case s.Manager == "lending" && s.Phase == run.PhaseWork && s.Attempt == 1:
+			if !bytes.Contains(s.Packet.Context.Bytes, []byte("Title string")) {
+				t.Error("the returned task does not see its corrected file")
+			}
+			return []action{{Tool: run.ToolSubmit, Args: submitArgs("local", "complete"), Want: run.ToolOK}}
+		}
+		return happyAgent(s)
+	}
+	h = newHarness(t, true, agent)
+	runToEnd(t, h)
+	if h.c.Current().State != run.Verifying {
+		t.Fatal("the run did not complete", h.c.Current(), h.sessions.answers)
+	}
+	order := strings.Join(admitted(h), ",")
+	if !strings.Contains(order, "lending reply") || strings.Count(order, "lending work") != 2 || strings.Count(order, "lending reviewer-candidate") != 2 {
+		t.Fatal("the corrected file did not return lending to work and review", order)
+	}
+	if got := aggregateFile(t, h.engine, "out/library.go"); got != corrected {
+		t.Fatalf("the correction was not composed: %q", got)
+	}
+}
+
 // A child's open owner question does not block its parent's local delivery,
 // which does not contain the child's work; the run waits for the owner
 // (core rules I3, W1).

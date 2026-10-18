@@ -395,11 +395,18 @@ func (s *stateValue) reopen(targets []string, reviewed string, revision uint64) 
 		}
 	}
 	for _, manager := range targets {
-		for p := s.tasks[manager].Slot.Parent; p != "" && p != reviewed; p = s.tasks[p].Slot.Parent {
-			if a := s.tasks[p]; a.State == TaskDone && !slices.Contains(targets, p) {
-				a.State, a.Since, a.Waits = TaskBlocked, revision, []Wait{{Kind: waitChildren}}
-				s.tasks[p] = a
-			}
+		s.blockAncestors(manager, reviewed, revision, targets...)
+	}
+}
+
+// blockAncestors returns every done ancestor of manager below reviewed, other
+// than skip, to waiting for its children, because its accepted integration
+// contains the reopened task (core rule T11).
+func (s *stateValue) blockAncestors(manager, reviewed string, revision uint64, skip ...string) {
+	for p := s.tasks[manager].Slot.Parent; p != "" && p != reviewed; p = s.tasks[p].Slot.Parent {
+		if a := s.tasks[p]; a.State == TaskDone && !slices.Contains(skip, p) {
+			a.State, a.Since, a.Waits = TaskBlocked, revision, []Wait{{Kind: waitChildren}}
+			s.tasks[p] = a
 		}
 	}
 }

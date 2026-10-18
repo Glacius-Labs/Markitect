@@ -199,10 +199,20 @@ type Admission struct {
 	Phase         Phase
 	Home          string
 	Resume        ProviderSessionID
+	// Writes is whether the step may change files: every work and integrate
+	// step, and a reply step once the write barrier is open (core rule T11).
+	Writes bool
 }
 
 func (p Phase) reviewer() bool { return p == PhaseReviewerExpectations || p == PhaseReviewerCandidate }
 func (p Phase) writing() bool  { return p == PhaseWork || p == PhaseIntegrate }
+
+// writes reports whether a task's step in the phase may change files: a reply
+// step of a done or blocked task may correct the Manager's own files once
+// every Manager has explored (core rules T2, T10, T11).
+func (s stateValue) writes(t taskValue, phase Phase) bool {
+	return phase.writing() || phase == PhaseReply && (t.State == TaskDone || t.State == TaskBlocked) && s.barrierOpen()
+}
 
 func (s stateValue) explorable(t taskValue) bool {
 	if t.State != TaskQueued {
@@ -263,9 +273,10 @@ func (s stateValue) admission(t taskValue, barrier bool) (Admission, int, uint64
 	case t.Session != "":
 		return Admission{}, 0, 0, false
 	case (t.State == TaskDone || t.State == TaskBlocked || t.State == TaskExplored) && len(s.unanswered(t)) > 0:
-		// A Manager that cannot otherwise act answers in a read-only reply
-		// step and keeps its state (core rules T10, T11).
+		// A Manager that cannot otherwise act answers in a reply step and keeps
+		// its state unless the step corrects its files (core rules T10, T11).
 		a.Phase, a.Home, a.Resume = PhaseReply, managerHome(t), t.Conversation
+		a.Writes = s.writes(t, PhaseReply)
 		return a, 2, s.unanswered(t)[0].At, true
 	case s.explorable(t):
 		a.Phase, a.Home, a.Resume = PhaseExplore, managerHome(t), t.Conversation
@@ -279,7 +290,7 @@ func (s stateValue) admission(t taskValue, barrier bool) (Admission, int, uint64
 		a.Phase, a.Home = PhaseReviewerCandidate, fmt.Sprintf("%s-review-%d-candidate", t.ID, t.Reviews)
 		return a, 1, t.Since, true
 	case barrier && t.State == TaskReady:
-		a.Phase, a.Home, a.Resume = PhaseWork, managerHome(t), t.Conversation
+		a.Phase, a.Home, a.Resume, a.Writes = PhaseWork, managerHome(t), t.Conversation, true
 		if t.LocalDone {
 			a.Phase = PhaseIntegrate // core rule T9
 		}
@@ -392,7 +403,7 @@ func (s *stateValue) beforeTaskSession(c Command) error {
 		}
 		catalog, err := ToolCatalog(next.Phase)
 		role, purpose := stepRole(next.Phase)
-		if err != nil || r.Plan.Tools != catalog.Ref() || r.Plan.Role != role || r.Plan.ReadOnly == next.Phase.writing() || c.Reservation.Purpose != purpose || r.Plan.ProviderHome != next.Home || r.Plan.Resume != next.Resume {
+		if err != nil || r.Plan.Tools != catalog.Ref() || r.Plan.Role != role || r.Plan.ReadOnly == next.Writes || c.Reservation.Purpose != purpose || r.Plan.ProviderHome != next.Home || r.Plan.Resume != next.Resume {
 			return ErrState
 		}
 		// A Manager without unaccepted changes starts from the aggregate (core
@@ -782,7 +793,8 @@ func (s *stateValue) concludeStep(c Command) error {
 			return err
 		}
 	}
-	if r.Outcome != outcomeFailed && t.Phase.writing() {
+	writes := s.writes(t, t.Phase)
+	if r.Outcome != outcomeFailed && writes {
 		t.Claims = addClaims(t.Claims, s.stepClaims(t)) // core rule S4
 	}
 	// A failed conclusion may override an answered outcome when the Host's own
@@ -796,7 +808,7 @@ func (s *stateValue) concludeStep(c Command) error {
 			return ErrState
 		}
 	}
-	if !t.Phase.writing() && r.Candidate != (BlobRef{}) {
+	if !writes && r.Candidate != (BlobRef{}) {
 		return ErrState
 	}
 	revision := s.revision
@@ -825,6 +837,16 @@ func (s *stateValue) concludeWork(r ConclusionRecord, t *taskValue, revision uin
 		t.Own, t.OwnTree = r.Candidate, r.Tree
 	}
 	if t.Phase == PhaseReply {
+		if r.Candidate != (BlobRef{}) {
+			// A reply step that corrected the Manager's files returns its task to
+			// work, so that the change goes through review; a done task's
+			// ancestors wait for it again (core rule T11).
+			if t.State == TaskDone {
+				t.LocalDone = false
+				s.blockAncestors(t.Slot.Package, "", revision)
+			}
+			t.State, t.Since, t.Waits = TaskReady, revision, nil
+		}
 		return nil
 	}
 	t.Failure, t.HostFault = "", false
