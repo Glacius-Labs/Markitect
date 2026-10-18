@@ -18,7 +18,7 @@ Across the six Managers, 5 of 11 fresh case sets passed their first review, and 
 
 ## A related reading conflict
 
-All three `library` sets read "unknown argument fields" of a known operation as a refusal. The model says such fields "make the request invalid". The owner's answer recorded in R2-A1-04, and the independent oracle, both expect `invalidRequest`. The Manager first implemented `invalidRequest`, then changed it to satisfy the first rejection. No owner question was raised. Because cases now stand, such a reading would persist for the whole run. The prompts therefore treat recorded cases and findings as readings of the model. A Manager or reviewer who finds them in conflict with the model's text asks the owner instead of changing behavior to satisfy them.
+All three `library` sets read "unknown argument fields" of a known operation as a refusal. The model says such fields "make the request invalid". The owner's answer recorded in R2-A1-04, and the independent oracle, both expect `invalidRequest`. The Manager first implemented `invalidRequest`, then changed it to satisfy the first rejection. No owner question was raised. Because cases now stand, such a reading would persist for the whole run. The prompts therefore treat recorded cases and findings as readings of the model, judged by its text. A Manager keeps behavior that the text supports and cites the passage, and the next review marks a contradicted case not applicable. The owner is asked only when the text leaves a consequential reading open, or when a review keeps its reading against the cited passage. This is the interim rule recorded at DEC-043.
 
 ## Owner instruction
 
