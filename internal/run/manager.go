@@ -373,8 +373,8 @@ func (s stateValue) renderInput(t taskValue, facts StepFacts, basis snapshot.Con
 		Task: organization.TaskFacts{ID: t.ID, Package: t.Slot.Package, Outcome: organization.HostText{Text: operation, Source: source}, Findings: findings, Constraints: s.ownerDecisions(t)}}
 	if t.Phase.reviewer() {
 		// The expectations step does not see the scope, so its cases stand
-		// for every submission with the purpose (DEC-048).
-		in.Task.Purpose = t.Submission.Purpose
+		// for every submission with the purpose (DEC-048, DEC-049).
+		in.Task.Purpose = t.reviewedPurpose()
 	}
 	if t.Phase == PhaseReviewerCandidate {
 		in.Task.Scope = t.Submission.Scope

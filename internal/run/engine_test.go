@@ -29,8 +29,9 @@ func aggregateFile(t *testing.T, e *run.Engine, path string) string {
 }
 
 // The whole core runs one Package end to end: children explore first, the
-// barrier opens, the leaf's first candidate is rejected and reworked, the
-// accepted delivery is composed into the aggregate, the parent integrates,
+// barrier opens, reviewers record each task's cases before its writing step,
+// the leaf's first candidate is rejected and reworked against the same cases,
+// the accepted delivery is composed into the aggregate, the parent integrates,
 // and the root's completion moves the run to Verifying.
 func TestEngineRunsOnePackageThroughRejectionReworkAndIntegration(t *testing.T) {
 	t.Parallel()
@@ -81,9 +82,9 @@ func TestEngineRunsOnePackageThroughRejectionReworkAndIntegration(t *testing.T) 
 	order := admitted(h)
 	want := []string{
 		"lending explore", ". explore",
-		". work", "lending work", ". reviewer-expectations", "lending reviewer-expectations", ". reviewer-candidate", "lending reviewer-candidate",
+		". reviewer-expectations", "lending reviewer-expectations", ". work", "lending work", ". reviewer-candidate", "lending reviewer-candidate",
 		"lending work", "lending reviewer-candidate",
-		". integrate", ". reviewer-expectations", ". reviewer-candidate",
+		". reviewer-expectations", ". integrate", ". reviewer-candidate",
 	}
 	if !reflect.DeepEqual(order, want) {
 		t.Fatalf("admission order differs from T4:\n got %v\nwant %v", order, want)

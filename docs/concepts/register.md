@@ -59,6 +59,7 @@ The owner's [origin account of 15 October 2026](sources/owner-origin-20261015.md
 | [DEC-046](#dec-046-a-withheld-pass-keeps-its-recorded-expectations) | Decision | A withheld pass keeps its recorded expectations | Accepted |
 | [DEC-047](#dec-047-recorded-review-cases-stand-until-their-inputs-change) | Decision | Recorded review cases stand until their inputs change | Accepted |
 | [DEC-048](#dec-048-recorded-review-cases-stand-for-every-delivery-of-a-purpose) | Decision | Recorded review cases stand for every delivery of a purpose | Accepted |
+| [DEC-049](#dec-049-review-cases-are-recorded-before-the-work-they-assess) | Decision | Review cases are recorded before the work they assess | Accepted |
 | [PRM-001 to PRM-007](#promises) | Promise | Target outcomes | Target |
 | [ASM-001 to ASM-006](#assumptions-and-hypotheses) | Assumption | Assumptions and hypotheses | See entries |
 | [CPT-001](#cpt-001-federalism) | Concept | Federalism | Accepted |
@@ -592,6 +593,14 @@ The owner's [origin account of 15 October 2026](sources/owner-origin-20261015.md
 - **Cost:** Fewer independent case sets are drawn, so coverage beyond the first set rests on each candidate review's duty to look past the recorded cases and raise findings for other gaps. The pass rates in the source (7 of 8 against kept cases, 5 of 11 on a fresh set's first review) favor kept cases but are confounded, because kept-case reviews follow rework.
 - **Scope:** Amends T7, DEC-046 and DEC-047. Purposes keep separate cases, and a changed finding or owner decision still records fresh ones, as does a failed assessment or a failed review step. Every candidate review still assesses every recorded case independently and may raise findings for other gaps. A recorded case is a reviewer's reading of the model, not new intent. A conflict between that reading and the model's text follows the interim rule recorded at [DEC-043](#dec-043-project-teams-review-arbitration-and-product-defaults). The rejection limit and its accounting per run, Manager and purpose, the evidence requirements and the frozen evaluation expectations of [DEC-037](#dec-037-agent-sessions-and-checks-run-in-linux-containers) are unchanged.
 - **Owners:** [core protocol](../design/canonical-model/manager-apply-core.md#manager-tasks), rule T7.
+
+### DEC-049 Review cases are recorded before the work they assess
+
+- **Status:** Accepted, Architect under the owner's authorization, 18 October 2026 ([evidence and owner instruction](sources/review-cases-before-work-20261018.md)).
+- **Decision:** Once the write barrier is open, a task whose next step writes for a purpose gets an expectations step first, unless cases for that purpose still stand ([DEC-048](#dec-048-recorded-review-cases-stand-for-every-delivery-of-a-purpose)). A work step writes for the local purpose; an integration step writes for the integration purpose. The recorded cases stand for the task's submissions with that purpose, and the Manager's writing step shows them. A review of a submission against standing cases has only its candidate step. A reply step is admitted before other items that became admissible with it, so that a question is answered before the asking step's submission is reviewed.
+- **Reason:** In R2-A1-08, 6 of 11 fresh case sets were rejected on their first review, for scenarios the Manager could not know. Recording the cases first lets the Manager build against them, and it removes the expectations step from most reviews. The expectations step never sees a candidate, so recording it earlier changes nothing it could see.
+- **Scope:** Amends T4 and T7. The candidate review still assesses every case independently and may raise findings for other gaps. Cases are recorded again when the task's open findings or owner decisions change, and when a review step fails. The rejection limit and the evidence requirements are unchanged.
+- **Owners:** [core protocol](../design/canonical-model/manager-apply-core.md#manager-tasks), rules T4 and T7.
 
 ## Promises
 

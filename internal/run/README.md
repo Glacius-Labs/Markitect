@@ -232,11 +232,12 @@ for basis v3. Rule IDs refer to that document.
 When a run is prepared, every Manager of the recorded topology gets one task.
 `Next` returns the one admissible step of the run (T4): Explore children before
 parents (T1), reviews at any time (T3), and work and integration only after
-every task is explored (T2). Ties break by Manager path, then by kind. The
-admission names the phase, the provider home and the conversation to resume:
-a Manager's steps continue its conversation (S3), while both steps of a review
-start fresh conversations, and the candidate step receives the expectations
-that the first step recorded (T7). An incomplete
+every task is explored (T2). Ties break with reply steps first, then by
+Manager path, then by kind. The admission names the phase, the provider home
+and the conversation to resume: a Manager's steps continue its conversation
+(S3), while expectations and candidate steps start fresh conversations, and
+the candidate step receives the expectations that were recorded before it
+(T7). An incomplete
 task stops all admission (T14).
 
 `PrepareTaskSessionCommand` and `PrepareTaskStepCommand` are the only way to
@@ -266,8 +267,11 @@ finding. A failed assessment needs no cases. A pass
 must resolve every open blocking finding of its purpose; it is withheld while another open blocking issue covers the task,
 for an integration also one of a descendant (I3), while a producer the candidate used delivered again after the
 candidate's step (D4), or, for an integration, while a child is not done (T9). The
-task's next step sees why its pass was withheld. Unless its assessment failed, a
-review leaves its recorded expectations standing for the task's later submissions
+task's next step sees why its pass was withheld. Once the write barrier is
+open, a reviewer records the expectations before a task's writing step for a
+purpose, unless cases for that purpose still stand, so that the Manager knows
+them and the review of its submission has only the candidate step (DEC-049).
+Unless its assessment failed, a review leaves its recorded expectations standing for the task's later submissions
 with the same purpose, whatever their scope. Their review skips the
 expectations step while the task's open findings, other than those the reviews
 against these expectations raised or resolved, and the owner's decisions are

@@ -299,6 +299,12 @@ func (s stateValue) admission(t taskValue, barrier bool) (Admission, int, uint64
 	case t.State == TaskReviewing:
 		a.Phase, a.Home = PhaseReviewerCandidate, fmt.Sprintf("%s-review-%d-candidate", t.ID, t.Reviews)
 		return a, 1, t.Since, true
+	case barrier && t.State == TaskReady && !s.hasStanding(t):
+		// A reviewer records the cases before the writing step that realizes
+		// them, so that the Manager knows them; they stand for its submissions
+		// with that purpose (core rule T7, DEC-049).
+		a.Phase, a.Home = PhaseReviewerExpectations, fmt.Sprintf("%s-review-%d-expectations", t.ID, t.Reviews+1)
+		return a, 1, max(t.Since, s.barrierAt()), true
 	case barrier && t.State == TaskReady:
 		a.Phase, a.Home, a.Resume, a.Writes = PhaseWork, managerHome(t), t.Conversation, true
 		if t.LocalDone {
@@ -309,9 +315,11 @@ func (s stateValue) admission(t taskValue, barrier bool) (Admission, int, uint64
 	return Admission{}, 0, 0, false
 }
 
-// next selects the admissible item that arose first; ties break by Manager
-// path, then by kind: Explore, review, work (core rule T4). An incomplete task
-// stops all admission (core rule T14).
+// next selects the admissible item that arose first; ties break with reply
+// steps first, so that a question is answered before the asking step's
+// submission is reviewed, then by Manager path, then by kind: Explore,
+// review, work (core rule T4). An incomplete task stops all admission (core
+// rule T14).
 func (s stateValue) next() (Admission, bool) {
 	if s.current.State != Running || s.current.StopRequested || len(s.tasks) == 0 || s.anyIncomplete() {
 		return Admission{}, false
@@ -334,6 +342,12 @@ func (s stateValue) next() (Admission, bool) {
 	slices.SortFunc(items, func(a, b item) int {
 		if a.since != b.since {
 			return compareUint(a.since, b.since)
+		}
+		if reply := (a.a.Phase == PhaseReply) != (b.a.Phase == PhaseReply); reply {
+			if a.a.Phase == PhaseReply {
+				return -1
+			}
+			return 1
 		}
 		if order := strings.Compare(a.a.Manager, b.a.Manager); order != 0 {
 			return order

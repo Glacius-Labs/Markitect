@@ -16,6 +16,10 @@ artifacts:
     form: doc
     realizes: [documentation/current-guidance]
     why: Preserves the run evidence and the owner's authorization behind keeping recorded review cases after a rejection.
+  - path: "docs/concepts/sources/review-cases-before-work-20261018.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Preserves the run evidence and the owner's authorization behind recording review cases before the work they assess.
   - path: "docs/concepts/sources/review-cases-per-purpose-20261018.md"
     form: doc
     realizes: [documentation/current-guidance]
