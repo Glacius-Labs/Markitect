@@ -309,9 +309,13 @@ step's outcome, which may wait on it. A question to `parent` goes to the
 direct parent, a question to another Manager travels along the tree, and the
 Managers on its path see it in their next step without being dispatched (M2).
 A question becomes an issue addressed to its addressee; a reply from that
-addressee resolves it and wakes an asker waiting for it (I2, T10). A Manager
-that cannot otherwise act, because it is done, blocked or explored, answers in
-a reply step and keeps its state (T10, T11). Once every Manager has explored,
+addressee resolves it and wakes an asker waiting for it (I2, T10). A question
+that none of a blocked task's Explore, work or integrate steps has seen makes
+it ready, so that its next step answers it and can act on it (T10); hints and
+replies it did not wait for do not wake it. A Manager that cannot otherwise
+act answers in a reply step and keeps its state: a done or explored one (T11),
+one awaiting the owner's decision on its frozen submission (T8), and a blocked
+one whose last step saw the question but left it unanswered. Once every Manager has explored,
 the reply step of a done or blocked task may correct the Manager's own files,
 except while the owner decides on its frozen submission (T8); a change, even
 one the Host refuses, returns the task to work with any refusal as its failure,

@@ -21,11 +21,12 @@ func waitReplyArgs(id string) string {
 	return fmt.Sprintf(`{"on":[{"kind":"reply","ref":%q}],"reason":"Needs the answer."}`, id)
 }
 
-// A Manager asks its parent and waits; the parent, which cannot otherwise
-// act, answers in a read-only reply step; the reply wakes the asker, whose
-// next step sees it (core rules M1, M3, M5, T10, T11).
-func TestQuestionToParentIsAnsweredInAReplyStep(t *testing.T) {
+// A Manager asks its parent and waits; the question makes the parent, blocked
+// on its children, ready, and its next step answers and waits again; the reply
+// wakes the asker, whose next step sees it (core rules M1, M3, M5, T10).
+func TestQuestionToParentIsAnsweredInItsNextStep(t *testing.T) {
 	t.Parallel()
+	var h *harness
 	var asked string
 	agent := func(s agentStep) []action {
 		switch {
@@ -35,14 +36,14 @@ func TestQuestionToParentIsAnsweredInAReplyStep(t *testing.T) {
 				{Tool: run.ToolSend, Args: sendArgs("question", "parent", "Should Item carry a title?"), Want: run.ToolOK},
 				{Tool: run.ToolWait, Args: waitReplyArgs(asked), Want: run.ToolOK},
 			}
-		case s.Manager == "." && s.Phase == run.PhaseReply:
+		case s.Manager == "." && s.Phase == run.PhaseIntegrate && h.task("lending").State != run.TaskDone:
 			if !bytes.Contains(s.Packet.Context.Bytes, []byte("Should Item carry a title?")) {
-				t.Error("the reply step does not show the question")
+				t.Error("the parent's step does not show the question")
 			}
 			return []action{
-				{Tool: run.ToolSend, Args: sendArgs("question", "lending", "Why?"), Want: run.ToolRefused},
 				{Tool: run.ToolSend, Args: sendArgs("reply", asked, "Yes, a title."), Want: run.ToolOK},
 				{Tool: run.ToolSend, Args: sendArgs("reply", asked, "Twice."), Want: run.ToolRefused},
+				{Tool: run.ToolWait, Args: `{"on":[{"kind":"children"}],"reason":"Lending realizes Item."}`, Want: run.ToolOK},
 			}
 		case s.Manager == "lending" && s.Phase == run.PhaseWork:
 			if !bytes.Contains(s.Packet.Context.Bytes, []byte("Yes, a title.")) {
@@ -51,13 +52,13 @@ func TestQuestionToParentIsAnsweredInAReplyStep(t *testing.T) {
 		}
 		return happyAgent(s)
 	}
-	h := newHarness(t, true, agent)
+	h = newHarness(t, true, agent)
 	runToEnd(t, h)
 	if h.c.Current().State != run.Verifying {
 		t.Fatal("run did not complete", h.c.Current(), h.sessions.answers)
 	}
-	if order := admitted(h); !slices.Contains(order, ". reply") {
-		t.Fatal("no reply step was admitted", order)
+	if order := admitted(h); slices.Contains(order, ". reply") {
+		t.Fatal("the blocked parent answered in a reply step", order)
 	}
 	var question run.Issue
 	for _, issue := range h.c.Issues("lending") {
@@ -204,22 +205,22 @@ func TestQuestionsTravelAlongTheTree(t *testing.T) {
 	}
 }
 
-// Each open question admits its own reply step: two children that ask their
-// blocked parent both get a reply (core rule T11).
+// Each open question admits its own reply step: two Managers that ask a done
+// Manager both get a reply (core rule T11).
 func TestEachQuestionGetsItsReplyStep(t *testing.T) {
 	t.Parallel()
 	var asks []string
 	replied := 0
 	agent := func(s agentStep) []action {
 		switch {
-		case (s.Manager == "empty" || s.Manager == "lending/reminders") && s.Phase == run.PhaseWork && s.Attempt == 0:
+		case (s.Manager == "lending" || s.Manager == "lending/reminders") && s.Phase == run.PhaseWork && s.Attempt == 0:
 			id := questionID(s, 1)
 			asks = append(asks, id)
 			return []action{
-				{Tool: run.ToolSend, Args: sendArgs("question", "parent", "Which format, "+s.Manager+"?"), Want: run.ToolOK},
+				{Tool: run.ToolSend, Args: sendArgs("question", "empty", "Which format, "+s.Manager+"?"), Want: run.ToolOK},
 				{Tool: run.ToolWait, Args: waitReplyArgs(id), Want: run.ToolOK},
 			}
-		case s.Phase == run.PhaseReply:
+		case s.Manager == "empty" && s.Phase == run.PhaseReply:
 			id := asks[replied]
 			replied++
 			return []action{{Tool: run.ToolSend, Args: sendArgs("reply", id, "The shared one."), Want: run.ToolOK}}
@@ -248,13 +249,13 @@ func TestAReplyStepTheHostCouldNotFinishIsRetried(t *testing.T) {
 	replies := 0
 	agent := func(s agentStep) []action {
 		switch {
-		case s.Manager == "lending" && s.Phase == run.PhaseWork && s.Attempt == 0:
+		case s.Manager == "." && s.Phase == run.PhaseIntegrate && s.Attempt == 0:
 			asked = questionID(s, 1)
 			return []action{
-				{Tool: run.ToolSend, Args: sendArgs("question", "parent", "Should Item carry a title?"), Want: run.ToolOK},
+				{Tool: run.ToolSend, Args: sendArgs("question", "lending", "Should Item carry a title?"), Want: run.ToolOK},
 				{Tool: run.ToolWait, Args: waitReplyArgs(asked), Want: run.ToolOK},
 			}
-		case s.Manager == "." && s.Phase == run.PhaseReply:
+		case s.Manager == "lending" && s.Phase == run.PhaseReply:
 			replies++
 			if replies == 1 {
 				h.ws.failHarvest = 1
@@ -280,21 +281,21 @@ func TestAReplyStepTheHostCouldNotFinishIsRetried(t *testing.T) {
 }
 
 // A reply step takes the question it answered: two questions to the same
-// Manager, answered newest first, both get a reply (core rule T11).
+// done Manager, answered newest first, both get a reply (core rule T11).
 func TestAReplyStepTakesTheQuestionItAnswered(t *testing.T) {
 	t.Parallel()
 	var asks []string
 	replied := 0
 	agent := func(s agentStep) []action {
 		switch {
-		case (s.Manager == "empty" || s.Manager == "lending/reminders") && s.Phase == run.PhaseWork && s.Attempt == 0:
+		case (s.Manager == "lending" || s.Manager == "lending/reminders") && s.Phase == run.PhaseWork && s.Attempt == 0:
 			id := questionID(s, 1)
 			asks = append(asks, id)
 			return []action{
-				{Tool: run.ToolSend, Args: sendArgs("question", ".", "Which format, "+s.Manager+"?"), Want: run.ToolOK},
+				{Tool: run.ToolSend, Args: sendArgs("question", "empty", "Which format, "+s.Manager+"?"), Want: run.ToolOK},
 				{Tool: run.ToolWait, Args: waitReplyArgs(id), Want: run.ToolOK},
 			}
-		case s.Manager == "." && s.Phase == run.PhaseReply:
+		case s.Manager == "empty" && s.Phase == run.PhaseReply:
 			id := asks[len(asks)-1-replied]
 			replied++
 			return []action{{Tool: run.ToolSend, Args: sendArgs("reply", id, "The shared one."), Want: run.ToolOK}}

@@ -83,6 +83,7 @@ type taskValue struct {
 	HostFault    bool
 	Withheld     string
 	Kept         reviewValue
+	Worked       uint64
 	Claims       []Claim
 }
 
@@ -878,7 +879,7 @@ func (s *stateValue) concludeWork(r ConclusionRecord, t *taskValue, revision uin
 		}
 		return nil
 	}
-	t.Failure, t.HostFault = "", false
+	t.Failure, t.HostFault, t.Worked = "", false, revision
 	if r.Outcome != outcomeFailed {
 		// A failed step leaves no new submission, so a withheld pass's note
 		// stays for the next step.
@@ -952,7 +953,7 @@ func (s *stateValue) advanceTasks(revision uint64) {
 		}
 	}
 	for name, t := range s.tasks {
-		if t.State == TaskBlocked && slices.ContainsFunc(t.Waits, func(w Wait) bool { return s.waitArrived(t, w) }) {
+		if t.State == TaskBlocked && (slices.ContainsFunc(t.Waits, func(w Wait) bool { return s.waitArrived(t, w) }) || s.messaged(t)) {
 			t.State, t.Since, t.Waits = TaskReady, revision, nil
 			s.tasks[name] = t
 		}
@@ -961,6 +962,19 @@ func (s *stateValue) advanceTasks(revision uint64) {
 		s.current.State = Verifying
 		s.runs[s.current.ID] = s.current
 	}
+}
+
+// messaged reports whether a blocked task has a question that none of its
+// Explore, work or integrate steps has seen. The message makes the task ready,
+// so that its next step answers it and can act on it (core rule T10). A task
+// awaiting the owner's decision on its frozen submission stays blocked and
+// answers in a read-only reply step (core rule T8), and so does a task whose
+// last step saw the question but left it unanswered.
+func (s stateValue) messaged(t taskValue) bool {
+	if t.Submission.Proposal != (BlobRef{}) {
+		return false
+	}
+	return slices.ContainsFunc(s.unanswered(t), func(q Issue) bool { return q.At > t.Worked })
 }
 
 // stuckWait says why one wait item can never arrive: the Manager it needs waits
