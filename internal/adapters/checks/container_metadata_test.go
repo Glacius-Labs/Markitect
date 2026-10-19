@@ -5,6 +5,7 @@ import (
 	"crypto/sha256"
 	"errors"
 	"fmt"
+	"os"
 	"path/filepath"
 	"reflect"
 	"strconv"
@@ -303,5 +304,28 @@ func TestContainerMetadataRequiresExplicitEmptyListsAndPreservesLegacyProcess(t 
 	o, err := preparer.PrepareCheckProfile(context.Background(), input)
 	if err != nil || o.Status != model.Failed || o.Contract.Name != "markitect.process-check" || o.CheckImage != nil {
 		t.Fatalf("legacy process path changed: %+v %v", o, err)
+	}
+}
+
+func TestEngineImageReadersShareOnlyWithinOneProvider(t *testing.T) {
+	exe, err := os.Executable()
+	if err != nil {
+		t.Fatal(err)
+	}
+	first, second := NewEngineImageReaders(), NewEngineImageReaders()
+	a, errA := first.Reader(EngineConfig{Executable: exe})
+	b, errB := first.Reader(EngineConfig{Executable: exe})
+	c, errC := second.Reader(EngineConfig{Executable: exe})
+	if errA != nil || errB != nil || errC != nil {
+		t.Fatal(errA, errB, errC)
+	}
+	if a != b {
+		t.Fatal("one provider must reuse its Engine for the same executable")
+	}
+	if a == c {
+		t.Fatal("providers must not share observations")
+	}
+	if _, err := first.Reader(EngineConfig{Executable: "relative/engine"}); err == nil {
+		t.Fatal("accepted relative engine path")
 	}
 }

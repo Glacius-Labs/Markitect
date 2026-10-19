@@ -625,25 +625,6 @@ func TestImageObservationMemoWaiterDoesNotInheritLeaderFailure(t *testing.T) {
 	}
 }
 
-func TestSharedEngineIsOnePerExecutable(t *testing.T) {
-	exe, err := os.Executable()
-	if err != nil {
-		t.Fatal(err)
-	}
-	a, err := SharedEngine(exe)
-	if err != nil {
-		t.Fatal(err)
-	}
-	b, err := SharedEngine(exe)
-	fresh, freshErr := NewEngine(exe)
-	if err != nil || freshErr != nil || a != b || a == fresh {
-		t.Fatalf("shared engines %p %p fresh %p errs %v %v", a, b, fresh, err, freshErr)
-	}
-	if _, err := SharedEngine("relative/engine"); err == nil {
-		t.Fatal("accepted relative engine path")
-	}
-}
-
 func TestObserveImageFileDoesNotReportItsOwnKillAsEngineFailure(t *testing.T) {
 	// The engine still has more to send when the observation refuses the first
 	// header and stops the copy on purpose.
@@ -668,5 +649,69 @@ func TestObserveImageFileStillReportsAnEngineCopyFailure(t *testing.T) {
 	_, err := e.ObserveImageFile(context.Background(), commandImage, "/check", 100)
 	if err == nil || !strings.Contains(err.Error(), "container engine cp") || !strings.Contains(err.Error(), "no such file") {
 		t.Fatalf("err=%v", err)
+	}
+}
+
+func TestObserveImageFileKeepsTheEnginesOwnReasonWhenItStopsTheCopy(t *testing.T) {
+	wrong := imageArchive(t, tar.Header{Name: "check", Typeflag: tar.TypeSymlink, Linkname: "elsewhere"}, "", false)
+	e, _ := fakeCommandEngine(t, engineStep{Out: commandID}, engineStep{Out: string(wrong), Err: "no such file", LingerMillis: 20000}, engineStep{})
+	_, err := e.ObserveImageFile(context.Background(), commandImage, "/check", 100)
+	if err == nil || !strings.Contains(err.Error(), "needs exactly regular file") || !strings.Contains(err.Error(), "no such file") || strings.Contains(err.Error(), "killed") {
+		t.Fatalf("err=%v", err)
+	}
+}
+
+func TestObserveImageFileDoesNotReportCancellationKillAsEngineFailure(t *testing.T) {
+	// The archive is complete and valid; the engine process lingers, and the
+	// caller cancels while the observation waits for it to end.
+	valid := imageArchive(t, tar.Header{Name: "check", Typeflag: tar.TypeReg, Size: 3}, "abc", false)
+	e, calls := fakeCommandEngine(t, engineStep{Out: commandID}, engineStep{Out: string(valid), LingerMillis: 20000}, engineStep{})
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	time.AfterFunc(1500*time.Millisecond, cancel)
+	start := time.Now()
+	got, err := e.ObserveImageFile(ctx, commandImage, "/check", 100)
+	if !errors.Is(err, context.Canceled) || got != (ImageFileObservation{}) {
+		t.Fatalf("observation=%+v err=%v", got, err)
+	}
+	if strings.Contains(err.Error(), "killed") || strings.Contains(err.Error(), "container engine cp") || time.Since(start) > 10*time.Second || len(calls()) != 3 {
+		t.Fatalf("cancellation kill leaked: err=%v elapsed=%s calls=%q", err, time.Since(start), calls())
+	}
+}
+
+func TestImageObservationMemoPanicReleasesWaitersAndRemembersNothing(t *testing.T) {
+	var memo imageObservationMemo
+	release, started := make(chan struct{}), make(chan struct{})
+	leaderDone := make(chan any, 1)
+	go func() {
+		defer func() { leaderDone <- recover() }()
+		_, _ = memo.observe(context.Background(), "key", func() (ImageFileObservation, error) {
+			close(started)
+			<-release
+			panic("observation panicked")
+		})
+	}()
+	<-started
+	waiter := make(chan ImageFileObservation, 1)
+	go func() {
+		got, _ := memo.observe(context.Background(), "key", func() (ImageFileObservation, error) { return ImageFileObservation{Size: 9}, nil })
+		waiter <- got
+	}()
+	close(release)
+	if v := <-leaderDone; v == nil {
+		t.Fatal("panic was swallowed")
+	}
+	select {
+	case got := <-waiter:
+		if got.Size != 9 {
+			t.Fatalf("waiter observation=%+v", got)
+		}
+	case <-time.After(5 * time.Second):
+		t.Fatal("waiter stayed blocked after the leader panicked")
+	}
+	memo.mu.Lock()
+	defer memo.mu.Unlock()
+	if len(memo.running) != 0 || len(memo.done) != 1 {
+		t.Fatalf("running=%d done=%d", len(memo.running), len(memo.done))
 	}
 }

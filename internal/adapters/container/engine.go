@@ -48,28 +48,6 @@ func NewEngine(path string) (*Engine, error) {
 	return &Engine{path: path}, nil
 }
 
-var (
-	sharedEnginesMu sync.Mutex
-	sharedEngines   = map[string]*Engine{}
-)
-
-// SharedEngine is NewEngine that returns the same Engine for the same
-// executable path, so the image observations that Engine remembers serve every
-// caller in the process. NewEngine still returns an independent Engine.
-func SharedEngine(path string) (*Engine, error) {
-	engine, err := NewEngine(path)
-	if err != nil {
-		return nil, err
-	}
-	sharedEnginesMu.Lock()
-	defer sharedEnginesMu.Unlock()
-	if shared, ok := sharedEngines[path]; ok {
-		return shared, nil
-	}
-	sharedEngines[path] = engine
-	return engine, nil
-}
-
 // Start runs one session container and returns its agentd connection after
 // agentd's hello. Closing the session ends the container.
 func (e *Engine) Start(ctx context.Context, spec ContainerSpec) (*Session, error) {

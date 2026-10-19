@@ -146,10 +146,21 @@ func (e *Engine) observeImageFile(ctx context.Context, imageID, file string, max
 		stopErr, stopped = cmd.Process.Kill(), true
 	}
 	if waitErr := cmd.Wait(); waitErr != nil {
-		// The kill was ours: the observation error already says why, and
-		// "signal: killed" would only look like an engine failure.
-		if !(stopped || ctx.Err() != nil) || !confirmedImageHeaderStop(stopErr, waitErr) {
-			err = errors.Join(err, fmt.Errorf("container engine cp: %w: %s", waitErr, strings.TrimSpace(stderr.String())))
+		detail := strings.TrimSpace(stderr.String())
+		if ctx.Err() != nil {
+			// The context's own kill may have ended the process before ours;
+			// the exit status below still has to be that kill.
+			stopErr = nil
+		}
+		if (stopped || ctx.Err() != nil) && confirmedImageHeaderStop(stopErr, waitErr) {
+			// The kill was ours: the observation error already says why, and
+			// "signal: killed" would only look like an engine failure. What the
+			// engine itself said is kept, so a real cause is never lost.
+			if detail != "" {
+				err = errors.Join(err, fmt.Errorf("container engine cp reported: %s", detail))
+			}
+		} else {
+			err = errors.Join(err, fmt.Errorf("container engine cp: %w: %s", waitErr, detail))
 		}
 	}
 	return observation, err
@@ -201,10 +212,18 @@ func (m *imageObservationMemo) observe(ctx context.Context, key string, run func
 				return ImageFileObservation{}, ctx.Err()
 			}
 		}
-		observation, err := run()
+		return m.lead(key, wait, run)
+	}
+}
+
+// lead runs the observation this caller registered. The registration ends and
+// its waiters wake even when run panics; only a success is remembered.
+func (m *imageObservationMemo) lead(key string, wait chan struct{}, run func() (ImageFileObservation, error)) (observation ImageFileObservation, err error) {
+	failed := true
+	defer func() {
 		m.mu.Lock()
 		delete(m.running, key)
-		if err == nil {
+		if !failed {
 			if m.done == nil {
 				m.done = map[string]ImageFileObservation{}
 			}
@@ -212,8 +231,10 @@ func (m *imageObservationMemo) observe(ctx context.Context, key string, run func
 		}
 		m.mu.Unlock()
 		close(wait)
-		return observation, err
-	}
+	}()
+	observation, err = run()
+	failed = err != nil
+	return observation, err
 }
 
 func imageObservationPath(p string) bool {

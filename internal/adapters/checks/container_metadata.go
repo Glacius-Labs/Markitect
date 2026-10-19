@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"sync"
 
 	"github.com/Glacius-Labs/Markitect/internal/adapters/container"
 	"github.com/Glacius-Labs/Markitect/internal/apply"
@@ -27,11 +28,32 @@ type ImageReader interface {
 
 type ImageReaderFactory func(EngineConfig) (ImageReader, error)
 
-// NewEngineImageReader binds only the explicitly supplied engine executable. It
-// returns one Engine per executable path, so a repeated preparation of the same
-// image reuses the observation that Engine already completed.
-func NewEngineImageReader(config EngineConfig) (ImageReader, error) {
-	return container.SharedEngine(config.Executable)
+// EngineImageReaders provides image readers that bind only the explicitly
+// supplied engine executable. It keeps one Engine per executable path, so
+// repeated preparations of the same image through one provider reuse the
+// observation that Engine already completed. Providers share nothing.
+type EngineImageReaders struct {
+	mu      sync.Mutex
+	engines map[string]*container.Engine
+}
+
+func NewEngineImageReaders() *EngineImageReaders {
+	return &EngineImageReaders{engines: map[string]*container.Engine{}}
+}
+
+// Reader is an ImageReaderFactory.
+func (r *EngineImageReaders) Reader(config EngineConfig) (ImageReader, error) {
+	engine, err := container.NewEngine(config.Executable)
+	if err != nil {
+		return nil, err
+	}
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	if known, ok := r.engines[config.Executable]; ok {
+		return known, nil
+	}
+	r.engines[config.Executable] = engine
+	return engine, nil
 }
 
 // NewMetadataPreparer composes container image observation. The zero value still
