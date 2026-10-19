@@ -62,7 +62,9 @@ The deadline cancels all running turns and checks and waits for them. The agent 
 and the round budget end the run Incomplete. Any turn whose container end was not observed
 (`TurnResult.Stopped` false), an incomplete harvest or a failed evidence record also ends it
 Incomplete, because quiescence, capture or the record is uncertain; nothing may then be
-published. A definite error of the configuration or a port is Failed.
+published. A definite error of the configuration or a port is Failed; a check that
+cannot run on a candidate, such as a missing check directory before the first Execute,
+is a failed check.
 
 Managers are trusted to write only their own area. After each capture the engine compares
 the new candidate with the previous one and records `write.observed` for files of a Manager
