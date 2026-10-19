@@ -158,7 +158,7 @@ func (c *Command) setupVerb(ctx context.Context, args []string, stdout, stderr i
 	report, err := c.setup(ctx, SetupRequest{
 		Selection: selection, Host: *host, Image: *image, Credential: *credential, Checks: checks,
 		AgentModel: *agentModel, Effort: *effort, Engine: *engine, Store: *store, OwnerRequest: *ownerRequest,
-		OwnerDecisions: decisions, Deadline: *deadline, ProductBuild: buildinfo.Version(),
+		OwnerDecisions: decisions, Deadline: *deadline, ProductBuild: buildinfo.Build(),
 	})
 	report.FormatVersion, report.Operation = 1, "setup"
 	report.AgentProfiles, report.CheckProfiles = nonNil(report.AgentProfiles), nonNil(report.CheckProfiles)
