@@ -20,6 +20,10 @@ artifacts:
     form: doc
     realizes: [documentation/current-guidance]
     why: "Preserves the owner decision that owners realize, others use, and parents settle cross-area matters."
+  - path: "docs/concepts/sources/start-stand-drift-20261019.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: "Preserves the owner decision that repairable start-stand drift is the owning Manager's first work in Apply."
   - path: "docs/concepts/sources/ownership-build-order-oracle-20261019.md"
     form: doc
     realizes: [documentation/current-guidance]

@@ -541,6 +541,12 @@ func (e *engine) run() (Status, string, snapshot.Tree) {
 	e.work = shared.volume
 	e.mu.Lock()
 	e.execRound = 1
+	// The start stand's drift goes to its owners behind their initial item.
+	for _, f := range cfg.StartFindings {
+		raised := e.structuralLocked(f, 0)
+		o := e.byPath[raised.Owner]
+		o.items = append(o.items, item{text: renderFinding(raised), finding: raised.ID})
+	}
 	e.releaseLocked(e.team[0], "the run started")
 	e.mu.Unlock()
 	previous := cfg.Start

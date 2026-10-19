@@ -31,11 +31,27 @@ func (c *fileChecker) issue(status model.Status, code string, path snapshot.Path
 	c.result.observe(status)
 }
 
+// repairableDrift lists the accounting findings of a start stand that the
+// owning Manager repairs within its own area and registry shard, when they
+// concern a committed file. A file that no Manager owns under the layout
+// (layout.no_owner) is not among them: only the owner can change the persistent
+// layout, and removing such files is no repair. Neither is a Git-ignored
+// untracked file, which is local to its developer and needs an entry in
+// .markitect/ignore.yaml.
+var repairableDrift = map[string]bool{
+	"file.unexplained":        true,
+	"registry.missing_file":   true,
+	"registry.dangling_basis": true,
+	"registry.outside_area":   true,
+}
+
 // checkFiles checks the files of one capture. With extract, an artifact that no
 // registry shard explains yet (file.unexplained) or that no Package or exception
 // covers yet (layout.no_owner) is not a failure: the Extract that follows
-// derives the model and the registration that account for it.
-func checkFiles(parent registryPreparation, compiled model.Result, raw RawInputs, execution executionDecoding, extract bool) fileCheck {
+// derives the model and the registration that account for it. With startDrift,
+// repairable drift is not a failure either: the Apply that follows hands it to
+// the owning Manager (DEC-062).
+func checkFiles(parent registryPreparation, compiled model.Result, raw RawInputs, execution executionDecoding, extract, startDrift bool) fileCheck {
 	r := fileCheck{status: parent.Status(), layout: execution.layout}
 	c := fileChecker{result: &r, raw: raw, inputs: make(map[snapshot.Path]realization.Classification), protections: make(map[string]bool)}
 	if compiled.Status != model.Passed {
@@ -69,7 +85,7 @@ func checkFiles(parent registryPreparation, compiled model.Result, raw RawInputs
 		}
 		if accounting.Status() == realization.AccountingInvalid {
 			for _, finding := range accounting.Findings() {
-				if extract && (finding.Code == "file.unexplained" || finding.Code == "layout.no_owner") {
+				if extract && (finding.Code == "file.unexplained" || finding.Code == "layout.no_owner") || startDrift && repairableDrift[finding.Code] && !slices.Contains(raw.Untracked, finding.Path) {
 					continue
 				}
 				// Missing observations can still explain otherwise-unclassified files.
