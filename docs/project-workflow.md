@@ -38,36 +38,26 @@ Use an existing committed repository, explicit dependency manifests, a Host prof
 
 ```text
 go run ./cmd/markitect apply --repo REPOSITORY --host-profile ABSOLUTE_HOST_YAML --run-config ABSOLUTE_RUN_JSON
-go run ./cmd/markitect answer QUESTION_ID --text "Owner decision" --repo REPOSITORY --host-profile ABSOLUTE_HOST_YAML --run-config ABSOLUTE_RUN_JSON
+go run ./cmd/markitect answer QUESTION_ID --text "Owner decision" --run-config ABSOLUTE_RUN_JSON
 ```
 
-Both accept the same `--model` and repeated `--dependency` selections as preparation. They capture the actual committed source and complete settings, acquire repository control, open the durable journal and call the controlled Core's `Execute` method. `answer` first records the actual owner answer through `Answer`, then continues execution. Reuse the original invocation configuration and source selections when answering or reopening; a changed captured basis cannot answer the old run. `--revision` and `--metadata` are preview options and are refused here. Missing explicit execution inputs leave Apply unavailable before source acquisition.
+`apply` accepts the same `--model` and repeated `--dependency` selections as preparation. It captures the actual committed source and complete settings, takes the state directory's exclusive lock, runs the permanent Manager team over one shared working tree until a candidate is verified or the budget ends, and publishes only a verified candidate. `--revision` and `--metadata` are preview options and are refused here. Missing explicit execution inputs leave Apply unavailable before source acquisition. Only one Apply runs per state directory; a second one refuses at the lock before it captures anything.
+
+`answer` is for a question Root asked while `apply` is running. `apply` prints one line to stderr per question, naming the question ID and this command. `answer` takes the same `--run-config`, writes `answers/QUESTION_ID.txt` in its state directory atomically and reports the file it wrote. It refuses when no Apply holds the state directory, when the question was not asked, and when the question is already answered; an answer is final. Work that does not depend on the answer continues meanwhile. If the Apply ends with the question still open, put the decision into `ownerDecisions` of the next Apply's configuration.
 
 ### Invocation configuration
 
-`--run-config` selects a closed UTF-8 JSON object with `formatVersion: 1`. Every field below is required, including empty network strings and explicit limits. The one optional field is `ownerDecisions`, a nonempty list of at most 64 of the owner's earlier decisions as plain texts of at most 16 KiB each; every Manager and reviewer of the run sees them from its start ([DEC-053](concepts/register.md#dec-053-owner-decisions-bind-the-whole-run)). Unknown, duplicate, null, relative-path or invalid values refuse construction. There are no environment defaults. This file supplies concrete invocation inputs; project policies and Agent/Check model, effort, image and resource settings remain in their existing execution and Host profile documents.
+`--run-config` selects a closed UTF-8 JSON object with `formatVersion: 2`. Every field below is required, including the empty network string and the explicit harvest bounds. The one optional field is `ownerDecisions`, a nonempty list of at most 64 of the owner's earlier decisions as plain texts of at most 16 KiB each; every Manager of the run sees them from its start ([DEC-053](concepts/register.md#dec-053-owner-decisions-bind-the-whole-run)). Unknown, duplicate, null, relative-path or invalid values refuse construction; files of the earlier version 1 (with `allocation`, `restoreLimits` and `engineLimits`) are refused. There are no environment defaults. This file supplies concrete invocation inputs; project policies and Agent/Check model, effort, image and resource settings remain in their existing execution and Host profile documents.
 
 The following is an illustrative shape. Supply actual native absolute paths, immutable images, dedicated credentials and limits appropriate to the frozen project; these example assertions do not certify a runtime:
 
 ```json
 {
-  "formatVersion": 1,
+  "formatVersion": 2,
   "repositoryIdentity": "library-project",
   "productBuild": "operator-identified-frozen-build",
   "ownerRequest": "Realize the captured model.",
   "stateDirectory": "/absolute/markitect-state",
-  "allocation": {
-    "runs": 2,
-    "sessionStarts": 80,
-    "steps": 160,
-    "executionTime": 28800000000000
-  },
-  "restoreLimits": {
-    "pageSize": 256,
-    "batches": 100000,
-    "events": 1000000,
-    "bytes": 268435456
-  },
   "engineExecutable": "/absolute/container-engine",
   "workspaceHelper": {
     "name": "library-workspace-helper",
@@ -80,17 +70,9 @@ The following is an illustrative shape. Supply actual native absolute paths, imm
     "tmpBytes": 16777216,
     "network": ""
   },
-  "engineLimits": {
-    "startTimeout": 30000000000,
-    "stopTimeout": 10000000000,
-    "harvestEntries": 100000,
-    "harvestBytes": 67108864,
-    "record": {
-      "encodedBytes": 16777216,
-      "fileBytes": 16777216,
-      "manifestEntries": 100000,
-      "metadataRows": 100000
-    }
+  "harvest": {
+    "maxEntries": 100000,
+    "maxBytes": 67108864
   },
   "credentials": {
     "runtime-credential-reference": {
@@ -102,7 +84,7 @@ The following is an illustrative shape. Supply actual native absolute paths, imm
 }
 ```
 
-All duration numbers are integer nanoseconds, matching the existing Core types. Capacity and byte/count limits are positive integers; `restoreLimits.pageSize` is at most 256 and `engineLimits.record.encodedBytes` is at most 67108864. Core also enforces the captured project's budgets and policies. `productBuild` is the operator's explicit assertion identifying the frozen build, not an automatically verified Git SHA. `repositoryIdentity`, owner request, owner decisions and allocation participate in the bound run inputs.
+`harvest` bounds every observation of the shared working tree: at most `maxEntries` entries and `maxBytes` bytes, within the Host's ceilings of 1048576 entries and 4 GiB; an observation that exceeds a bound is uncertain and ends the run incomplete. Turn timeouts, rounds and budgets come from the project's execution settings, not from this file. `productBuild` is the operator's explicit assertion identifying the frozen build, not an automatically verified Git SHA.
 
 `engineExecutable` must equal the already validated literal in every selected executable Agent and Check profile. The helper is its own explicit container capability for workspace transfer: immutable image ID, non-root numeric user/group, finite positive CPU/memory/process/tmp limits and labels are required. Its work directory is `/work`; invocation JSON cannot add mounts. Empty `network` explicitly leaves network selection to the engine; use `"none"` to disable networking. Host networking is refused. These helper fields do not replace Agent or Check profile resources.
 
@@ -112,9 +94,11 @@ All duration numbers are integer nanoseconds, matching the existing Core types. 
 
 API keys and Claude tokens retain literal file bytes. A dedicated Codex runtime login retains the supplied subscription-login semantics; the adapter strips refresh material from the container copy. The Host never refreshes or rotates the source login. Keep credentials and external Host inputs outside the realization tree, and account for any repository-bound invocation file explicitly.
 
-### Results and publication
+### Results and evidence
 
-The JSON result includes actual preparation diagnostics, control binding, execution state, tasks, checks, publication receipt and open owner questions. A waiting run returns `not_completed`; use its actual question ID with `answer`. Successful completion requires an actual `Applied` or `NoChange` result without an execution error. Failed, incomplete, exhausted and unavailable outcomes remain distinct. Publication uses the same Git repository adapter that captured the source, checks the captured guard and protects model/control/instruction inputs. It does not create a Git commit or push. No MCP server is provided by these commands.
+The JSON result includes the preparation status and diagnostics, the run (`status`, `reason`, every Verify round with its check results and Manager assessments, findings, questions, turns with usage and duration, and the total usage), the publication receipt and `evidenceDirectory`. `status` is `passed` only when a verified candidate was published as applied or no change without an error. A run that ended incomplete (budget, open question, uncertain observation), a failed run and a failed publication stay distinct; `answer` reports the file it wrote.
+
+Evidence stays on the Host under `STATE/runs/RUN/`: `events.jsonl` (one event per line, synced when recorded), `transcripts/TURN.jsonl` (each turn's provider stream with known secrets redacted) and `report.json` (the printed result, written at the end). Question files are in `STATE/questions/` and answers in `STATE/answers/`; both are cleared when the next Apply opens its channel. Publication uses the same Git repository adapter that captured the source, checks the captured guard and protects model/control/instruction inputs. It does not create a Git commit or push. No MCP server is provided by these commands.
 
 ## Existing repositories
 

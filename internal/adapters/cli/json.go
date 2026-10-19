@@ -10,6 +10,10 @@ import (
 	"github.com/Glacius-Labs/Markitect/internal/snapshot"
 )
 
+// ReportValue projects a report into plain JSON values, exactly as the command
+// prints it, so retained copies of a report match the printed one.
+func ReportValue(value any) any { return reportValue(value) }
+
 // Producer value types deliberately keep their internals private. Translate
 // those exact types at the presentation boundary instead of encoding them as
 // empty objects or adding serialization contracts to the pure producers.
@@ -41,6 +45,8 @@ func reportValue(value any) any {
 		return map[string]any{"owner": reportValue(v.Owner()), "artifact": map[string]any{"path": artifact.Path().String(), "form": artifact.Form(), "realizes": reportValue(artifact.Basis()), "why": artifact.Why()}}
 	case time.Duration:
 		return v.String()
+	case time.Time:
+		return v.Format(time.RFC3339Nano)
 	case []byte:
 		return value
 	}
