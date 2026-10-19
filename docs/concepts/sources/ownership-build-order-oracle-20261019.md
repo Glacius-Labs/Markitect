@@ -17,3 +17,7 @@ Recorder's note: verbatim owner statements from the Claude implementation sessio
 > Sobald wir das entsprechend haben sollten wir den Lauf nochmal starten und schauen wie es läuft
 
 Recorder's note: "Startsituation" refers to the proposal discussed immediately before: in starting situation 1 of [DEC-057](../register.md#dec-057-three-fundamental-starting-situations), Root prepares the skeleton first and the children build on it. An earlier statement in the same session, "Deadlines kannst du gerne generell auf 20 Minuten hochsetzten", set each Apply's budget to 20 minutes inside the demonstration's unchanged 30-minute limit.
+
+## Execute-first now
+
+Recorder's note: after DEC-058 (execute-first, documentation only) reached Main from a parallel discussion, the Claude session asked whether to implement it before the new run: "Auf Main steht jetzt DEC-058 (Execute zuerst ab Root, keine initiale Verify-Runde, kein Sonderweg für Fall 1), dort mit dem Vermerk „noch keine Implementierung“. Soll ich das vor dem neuen Lauf umsetzen?" The owner chose the option "Jetzt umsetzen (Empfohlen)": one uniform process for every Apply, Root first, each child after its parent's first turn, all Managers examine their areas in Execute, then independent Verify rounds; the initial Verify round and the separate build route are dropped.
