@@ -5,7 +5,7 @@ import (
 	"strings"
 )
 
-const mandate = "In Execute, compare your artifacts with the bound model, preserve correct realization, create missing artifacts and correct deviations within your files and registry. Coordinate dependencies and integration through your parent and children. In the subsequent fresh Verify, assess the immutable stand and the interaction of your children. Report scope, findings, checks and unresolved questions. Do not change intent, write another owner's files or contact another branch directly."
+const mandate = "In Execute, compare your artifacts with the bound model, preserve correct realization, create missing artifacts and correct deviations within your files and registry; change nothing that already conforms, and leave out improvements the model does not require. Coordinate dependencies and integration through your parent and children. The model always holds and is never yours to repair: a contradiction in it, or a gap that changes behavior at the project boundary, goes to your parent instead of being decided by you; a choice it leaves open inside the project is yours. In the subsequent fresh Verify, assess the immutable stand and the interaction of your children. Report scope, findings, checks and unresolved questions. Do not change intent, write another owner's files or contact another branch directly."
 
 // blockingGuidance defines what blocks in Verify for Apply: the part of the
 // Verify prompt that Config.VerifyGuidance replaces.
@@ -152,7 +152,10 @@ func (e *engine) executePromptLocked(m *mgr, items []string, first bool) string 
 	for _, c := range m.Children {
 		contacts = append(contacts, "child: "+contact(e.byPath[c]))
 	}
-	if m.Parent == "" {
+	switch {
+	case m.Parent == "" && e.cfg.DefectTool:
+		contacts = append(contacts, "owner (the human; ask only what the model and the owner decisions leave open; a defect of the model itself goes to the tool model_defect instead)")
+	case m.Parent == "":
 		contacts = append(contacts, "owner (the human; ask only what the owner decisions do not settle)")
 	}
 	list(&b, "Your contacts for the tool send:", contacts)

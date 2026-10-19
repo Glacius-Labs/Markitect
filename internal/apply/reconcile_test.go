@@ -371,8 +371,8 @@ func TestReconcileConfigBriefsStateResponsibilitiesAndWritePlans(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if !cfg.CheckTool {
-		t.Error("Apply's Execute turns are not offered the check tool")
+	if !cfg.CheckTool || !cfg.DefectTool {
+		t.Errorf("Apply's Execute turns lack the check or model_defect tool: check %v, defect %v", cfg.CheckTool, cfg.DefectTool)
 	}
 	if len(cfg.StartFindings) != 0 {
 		t.Errorf("an accounted start stand has start findings %+v", cfg.StartFindings)

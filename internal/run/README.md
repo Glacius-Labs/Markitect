@@ -110,6 +110,9 @@ tool refuses a report whose `satisfied` contradicts the raiser's open blocking f
   Questions are numbered `Q1`, `Q2`, ... (within a run, a refused question keeps its number); `Config.Questions` hands a run the answered
   questions of an earlier run on the same owner channel, which the prompts show and whose
   numbering new questions continue.
+- Execute, Root only, with `Config.DefectTool` (Apply sets it): `model_defect {text}` reports a
+  defect of the model itself (DEC-063), records `model.defect` and ends the run at once,
+  Incomplete with the reason `ModelDefectReason` plus the report; nothing is published.
 - Execute, with `Config.CheckTool` (Apply and Extract set it): `check {scope?}` peeks the shared volume through
   `Workspaces.Peek` (writers keep running), runs `Account` on the peeked tree and answers with
   the findings as compact text, the calling Manager's first and then the number of others
