@@ -22,7 +22,7 @@ The CLI has no MCP server and no automatic setup. The old generation remains in 
 
 ## Apply and answer
 
-`apply` needs a committed repository, an explicit absolute Host profile (`--host-profile`) and an explicit absolute run configuration (`--run-config`); without them it reports `not_completed` before acquisition. It starts real Agents in containers, runs the required checks, and publishes only a verified candidate; it never commits. Its JSON report names the evidence directory under the run configuration's state directory. `answer QUESTION_ID --text TEXT --run-config PATH` answers a question Root asked the running Apply. The [runtime contract](design/canonical-model/manager-apply-runtime.md) owns behavior, evidence and limits; the [workflow](project-workflow.md#execute-verify-and-apply) gives the sequence.
+`apply` needs a committed repository, an explicit absolute Host profile (`--host-profile`) and an explicit absolute run configuration (`--run-config`); without them it reports `not_completed` before acquisition. It starts real Agents in containers, runs the required checks, and publishes only a verified candidate; it never commits. Its JSON report names the evidence directory under the run configuration's state directory. Apply asks the owner nothing mid-run; a model defect ends it Incomplete with a report ([DEC-063](concepts/register.md#dec-063-the-model-is-authoritative-defects-escalate)). `answer QUESTION_ID --text TEXT --run-config PATH` answers a question Root asked a running `extract`. The [runtime contract](design/canonical-model/manager-apply-runtime.md) owns behavior, evidence and limits; the [workflow](project-workflow.md#execute-verify-and-apply) gives the sequence.
 
 ## Generated view and recovery
 

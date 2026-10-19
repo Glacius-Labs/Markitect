@@ -64,7 +64,7 @@ The [provider guide](provider-adapters.md#container-runtime) routes to the imple
 
 ## Operational record storage
 
-Read-only preparation creates no run, candidate or evidence. An Apply keeps its evidence in the operator's state directory outside the repository (`runs/<runID>/events.jsonl`, transcripts and `report.json`, plus the owner question and answer files) and holds one lock per state directory. Document writes retain observed completed paths if a later validation fails. A preview cannot fabricate run evidence.
+Read-only preparation creates no run, candidate or evidence. An Apply or Extract keeps its evidence in the operator's state directory outside the repository (`runs/<runID>/events.jsonl`, transcripts and `report.json`; Extract adds its owner question and answer files) and holds one lock per state directory. Document writes retain observed completed paths if a later validation fails. A preview cannot fabricate run evidence.
 
 ## Project artifact boundary
 
