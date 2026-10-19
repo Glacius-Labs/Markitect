@@ -26,6 +26,8 @@ Each Manager gets the same reconciliation mandate plus its identity, owned areas
 
 Communication is exclusively between direct parent and child. Give the Manager only those session contacts. Necessary knowledge of another area's interface is not permission to contact its Manager. A question outside the local area goes to the parent, which resolves it, delegates to a direct child or escalates further. Only Root asks the human. Root is not a central planner for every file or task; each parent coordinates its own children.
 
+The model always holds, and Apply never repairs it ([DEC-063](../../concepts/register.md#dec-063-the-model-is-authoritative-defects-escalate)). A matter that cannot be settled within the model escalates through the tree. At Root, a model defect ends the run with a report to the owner. A model defect is a self-contradiction, or a gap that changes behavior at the project boundary. Another unsettled matter becomes an owner question, and its answer stays within the model. A gap without effect at the boundary is realization freedom: the Manager decides and documents it.
+
 Prefer native session messaging as a transport where its observed capabilities fit. Do not assume either provider enforces tree routing. Keep ordinary readable questions, answers and findings; no special answer-only steps, per-hop AI relay transactions or bespoke message taxonomy. Do not add a direct sibling channel to avoid a parent bottleneck. Useful project coordination belongs in a parent's next normal work, not a mandatory separate planning ceremony.
 
 The first strategy's parent/child contact list is an operational tool/context boundary, not a claim that an Agent cannot discover other identities. Observe and report routing violations. If provider tooling exposes unrestricted cross-session calls, the implementation must state that limitation or restrict the exposed calls; it must not silently claim enforced routing from a prompt alone.
@@ -476,7 +478,7 @@ These counterexamples check the contracts; each becomes a test in the package th
 | A local pass is offered as integration or final evidence | Reject the substituted review purpose. |
 | A parent needs a child's file to judge integration | Supply a recorded targeted read. There is no file-blindness rule. |
 | An external edit changes the checkout or model during work | Preflight reports stale and preserves the candidates. |
-| Review cannot converge or a model contradiction remains | Finish Incomplete within the rejection and assignment limits, with the open question and retained evidence. |
+| Review cannot converge or a model contradiction remains | Finish Incomplete within the rejection and assignment limits, with the open question and retained evidence. A model contradiction now ends the run at once with a model-defect report ([DEC-063](../../concepts/register.md#dec-063-the-model-is-authoritative-defects-escalate)). |
 | A Definition was removed, but its artifacts remain | Their owner deletes them or records a new basis that review accepts; otherwise the run cannot complete. |
 | A Definition moved to another Package | The link to the old identity is a blocking finding until the owner re-registers the artifact; a move across Packages transfers the record. |
 | The model or another file has uncommitted changes when Apply starts | Refuse before preparation. |
