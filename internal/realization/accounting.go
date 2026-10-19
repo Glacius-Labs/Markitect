@@ -110,7 +110,9 @@ func (a Accounting) Artifacts(id model.Identity) []snapshot.Path { return slices
 //
 // A declared Layout additionally requires every registration to sit in the
 // registry shard of the owner the layout assigns to its path
-// (registry.outside_area). The zero Layout adds no ownership rule.
+// (registry.outside_area) and reports every file without an owner, in an
+// unmapped subdirectory of an artifact root, as layout.no_owner addressed to
+// Root. The zero Layout adds no ownership rule.
 func AccountFiles(compiled model.Result, tree snapshot.Tree, registry Registry, classifications []Classification, layout Layout) Accounting {
 	return accountFiles(inventoryFromResult(compiled), tree, registry, classifications, layout)
 }
@@ -171,6 +173,7 @@ func accountFiles(inventory modelInventory, tree snapshot.Tree, registry Registr
 			}
 		}
 		if layout.declared {
+			ok = ok && layout.HasOwner(path)
 			if expected := layout.OwnerOf(path); expected != entry.owner {
 				add("registry.outside_area", path, entry.owner, model.Identity{}, fmt.Sprintf("The path lies in the area of %s, not in the area of the registering %s; it belongs in that owner's registry shard.", expected.label(), entry.owner.label()))
 				ok = false
@@ -184,6 +187,12 @@ func accountFiles(inventory modelInventory, tree snapshot.Tree, registry Registr
 		registration, registered := registry.Lookup(path)
 		file.registration, file.registered = registration, registered
 		classified := classes[path]
+		// A file without an owner is reported once as such; "unexplained" would only
+		// tell Root to register a file that no Manager may own.
+		unowned := layout.declared && !layout.HasOwner(path) && !statePath(path) && len(classified) == 0
+		if unowned {
+			add("layout.no_owner", path, RootOwner(), model.Identity{}, "The file lies in a subdirectory of an artifact root that no Package directory or persistent layout exception covers, so no Manager owns it: the layout needs an exception for it in .markitect/execution.yaml, or the file must move.")
+		}
 		switch {
 		case statePath(path):
 			file.class, file.why = OperationalState, "Markitect operational state is outside realization."
@@ -198,7 +207,7 @@ func accountFiles(inventory modelInventory, tree snapshot.Tree, registry Registr
 			}
 		case len(classified) == 1:
 			file.class, file.why = classified[0].class, classified[0].why
-		default:
+		case !unowned:
 			add("file.unexplained", path, Owner{}, model.Identity{}, "The file is neither a registered artifact, a protected input nor explicitly ignored.")
 		}
 		result.files = append(result.files, file)

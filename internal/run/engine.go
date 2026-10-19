@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"regexp"
+	"slices"
 	"strings"
 	"sync"
 	"time"
@@ -56,12 +57,20 @@ type mgr struct {
 	consumed     []item
 	running      bool
 	disabled     bool
-	failures     int
-	execCount    int
-	execUsed     bool
-	verifyUsed   bool
-	ran          bool
-	changed      []string
+	// released is set when the Manager's start was released: Root's at the start
+	// of the run, every other Manager's when its parent's first Execute turn
+	// ended or the parent was disabled. A Manager that is not released runs no
+	// turn; its items wait.
+	released   bool
+	failures   int
+	execCount  int
+	execUsed   bool
+	verifyUsed bool
+	ran        bool
+	changed    []string
+	// refused is set when the budget refused the Manager's Execute turn in the
+	// current phase: its pending items no longer keep the phase open.
+	refused bool
 
 	// executed is set by an Execute turn that finished without error; until
 	// then the Manager's turn carries the full mandate, even when a failed turn
@@ -77,7 +86,6 @@ type roundState struct {
 	structural  []*Finding
 	assessments map[string]Assessment
 	assessed    map[string]bool
-	started     map[string]bool
 }
 
 type engine struct {
@@ -105,16 +113,19 @@ type engine struct {
 	usage       Usage
 	turnCount   int
 	rounds      []Round
-	rs          *roundState
 	execRound   int
 	work        string
 	executeOpen bool
-	inPhase     bool
 	closing     bool
 	running     int
 	polling     bool
 	nextFinding int
 	nextQuest   int
+
+	// budgetLimited is set when the budget refused an Execute turn in the
+	// current phase; phaseTurns counts the Execute turns admitted in it.
+	budgetLimited bool
+	phaseTurns    int
 }
 
 func slugOf(path string) string {
@@ -147,6 +158,10 @@ func validate(cfg Config) error {
 	}
 	index := map[string]int{}
 	slugs := map[string]string{}
+	files := map[string]bool{}
+	for _, entry := range cfg.Start.Entries() {
+		files[entry.Path().String()] = true
+	}
 	for i, m := range cfg.Team {
 		if !identifier(m.Path) || m.Path != strings.TrimSpace(m.Path) || strings.ContainsAny(m.Path, "\\") {
 			return bad("manager path %q is invalid", m.Path)
@@ -167,6 +182,9 @@ func validate(cfg Config) error {
 		}
 		if m.ExecuteProfile == "" || m.VerifyProfile == "" {
 			return bad("manager %q needs an Execute and a Verify profile", m.Path)
+		}
+		if err := validatePlan(m, files); err != nil {
+			return bad("%v", err)
 		}
 		if i == 0 {
 			continue
@@ -231,6 +249,61 @@ func validate(cfg Config) error {
 		return bad("checks need a Runner")
 	}
 	return nil
+}
+
+// validatePlan checks the mounts of an enforced write plan: clean relative
+// paths of the shared tree without duplicates, none of them "." or an existing
+// file of the start stand, and every mount before the mounts of its
+// descendants, so that a later mount never shadows an earlier one. The Base and
+// Mounts of an unenforced plan are not used.
+func validatePlan(m Manager, files map[string]bool) error {
+	if !m.Write.Enforced {
+		return nil
+	}
+	seen := map[string]bool{}
+	for _, mount := range m.Write.Mounts {
+		if _, err := snapshot.NewPath(mount.Path); err != nil {
+			return fmt.Errorf("manager %q has a mount %q that is not a clean relative path below /work", m.Path, mount.Path)
+		}
+		if seen[mount.Path] {
+			return fmt.Errorf("manager %q mounts %q twice", m.Path, mount.Path)
+		}
+		seen[mount.Path] = true
+		for end := 0; end <= len(mount.Path); end++ {
+			if (end == len(mount.Path) || mount.Path[end] == '/') && files[mount.Path[:end]] {
+				return fmt.Errorf("manager %q mounts %q, but %q is a file of the start stand", m.Path, mount.Path, mount.Path[:end])
+			}
+		}
+	}
+	for i, mount := range m.Write.Mounts {
+		for _, later := range m.Write.Mounts[i+1:] {
+			if strings.HasPrefix(mount.Path, later.Path+"/") {
+				return fmt.Errorf("manager %q lists mount %q after its descendant %q; parents come first", m.Path, later.Path, mount.Path)
+			}
+		}
+	}
+	return nil
+}
+
+// mountDirectories returns the sorted union of the mount paths of all enforced
+// write plans: the directories the shared work volume needs before the first
+// Execute turn.
+func (e *engine) mountDirectories() []string {
+	set := map[string]bool{}
+	for _, m := range e.team {
+		if !m.Write.Enforced {
+			continue
+		}
+		for _, mount := range m.Write.Mounts {
+			set[mount.Path] = true
+		}
+	}
+	dirs := make([]string, 0, len(set))
+	for dir := range set {
+		dirs = append(dirs, dir)
+	}
+	slices.Sort(dirs)
+	return dirs
 }
 
 func newEngine(parent context.Context, cfg Config) *engine {
@@ -330,8 +403,8 @@ func (e *engine) closeVolume(id WorkspaceID) {
 	_ = e.record(Event{Kind: "workspace.close", Data: data})
 }
 
-func (e *engine) materialize(id WorkspaceID, tree snapshot.Tree) (candidate, bool) {
-	obs, err := e.cfg.Workspaces.Materialize(e.ctx, WorkspaceSpec{ID: id, Tree: tree})
+func (e *engine) materialize(id WorkspaceID, tree snapshot.Tree, directories []string) (candidate, bool) {
+	obs, err := e.cfg.Workspaces.Materialize(e.ctx, WorkspaceSpec{ID: id, Tree: tree, Directories: directories})
 	if err == nil && (obs.Uncertain || obs.Volume == "" || obs.Tree != tree.Digest()) {
 		err = fmt.Errorf("materialization was not confirmed: %s", obs.Reason)
 	}
@@ -341,13 +414,6 @@ func (e *engine) materialize(id WorkspaceID, tree snapshot.Tree) (candidate, boo
 	}
 	_ = e.record(Event{Kind: "workspace.materialize", Data: map[string]any{"workspace": id, "volume": obs.Volume, "tree": tree.Digest().String(), "entries": tree.EntryCount()}})
 	return candidate{tree: tree, id: id, volume: obs.Volume}, e.ctx.Err() == nil
-}
-
-// affordRound reports whether the turn budget still covers one complete Verify round.
-func (e *engine) affordRound() bool {
-	e.mu.Lock()
-	defer e.mu.Unlock()
-	return e.turnCount+len(e.team) <= e.cfg.Budget.AgentTurns
 }
 
 // reserveTurnLocked counts one turn when the budget leaves room for it and for
@@ -423,8 +489,9 @@ func (e *engine) incomplete(fallback string) (Status, string, snapshot.Tree) {
 	return Incomplete, e.stopReason(fallback), snapshot.Tree{}
 }
 
-// run drives the rounds. Every exit leaves no turn or check running except
-// Execute turns that reconcile waits for after cancelling the context.
+// run drives the rounds: Execute phase, capture, Verify round. Every exit
+// leaves no turn or check running except Execute turns that reconcile waits
+// for after cancelling the context.
 func (e *engine) run() (Status, string, snapshot.Tree) {
 	cfg := e.cfg
 	managers := make([]string, 0, len(e.team))
@@ -434,27 +501,39 @@ func (e *engine) run() (Status, string, snapshot.Tree) {
 	if e.record(Event{Kind: "run.start", Data: map[string]any{"run": cfg.RunID, "managers": managers, "start": cfg.Start.Digest().String(), "agentTurns": cfg.Budget.AgentTurns, "rounds": cfg.Budget.Rounds, "deadline": cfg.Budget.Deadline}}) != nil {
 		return e.incomplete("")
 	}
-	if !e.affordRound() {
-		return e.incomplete(fmt.Sprintf("the agent turn budget of %d does not cover one Verify round of %d managers", cfg.Budget.AgentTurns, len(e.team)))
-	}
-	cand, ok := e.materialize(e.volumeID("c0"), cfg.Start)
-	if !ok {
-		e.closeVolume(e.volumeID("c0"))
-		return e.incomplete("")
+	if cfg.Budget.AgentTurns < 2*len(e.team) {
+		return e.incomplete(fmt.Sprintf("the agent turn budget of %d does not cover one Execute turn and one Verify turn of each of the %d managers", cfg.Budget.AgentTurns, len(e.team)))
 	}
 	work := e.volumeID("work")
-	shared, ok := e.materialize(work, cfg.Start)
+	shared, ok := e.materialize(work, cfg.Start, e.mountDirectories())
 	if !ok {
-		e.closeVolume(cand.id)
 		e.closeVolume(work)
 		return e.incomplete("")
 	}
 	e.work = shared.volume
+	e.mu.Lock()
+	e.execRound = 1
+	e.releaseLocked(e.team[0], "the run started")
+	e.mu.Unlock()
+	previous := cfg.Start
 	for round := 1; ; round++ {
-		if round > 1 && !e.affordRound() {
-			e.closeVolume(cand.id)
-			return e.incomplete("the agent turn budget cannot cover another Verify round")
+		stalled := e.executePhase(round)
+		if e.ctx.Err() != nil {
+			return e.incomplete("")
 		}
+		if stalled {
+			e.halt("the agent turn budget ended without a green round: no further Execute turn fits beside a whole Verify round")
+			return e.incomplete("")
+		}
+		if reason := e.disabledOwnerOpen(); reason != "" {
+			e.halt(reason)
+			return e.incomplete("")
+		}
+		cand, ok := e.capture(round, work, previous)
+		if !ok {
+			return e.incomplete("")
+		}
+		previous = cand.tree
 		green := e.verifyRound(round, cand)
 		e.closeVolume(cand.id)
 		if e.ctx.Err() != nil {
@@ -470,23 +549,11 @@ func (e *engine) run() (Status, string, snapshot.Tree) {
 		if round >= cfg.Budget.Rounds {
 			return e.incomplete(fmt.Sprintf("the round budget of %d ended without a green round", cfg.Budget.Rounds))
 		}
-		e.executePhase()
-		if e.ctx.Err() != nil {
-			return e.incomplete("")
-		}
-		if reason := e.disabledOwnerOpen(); reason != "" {
-			e.halt(reason)
-			return e.incomplete("")
-		}
-		next, ok := e.capture(round, work, cand.tree)
-		if !ok {
-			return e.incomplete("")
-		}
-		cand = next
 	}
 }
 
-// capture harvests the quiescent shared tree into the next candidate.
+// capture harvests the quiescent shared tree into the candidate of the round.
+// previous is the stand of the previous candidate, or the start.
 func (e *engine) capture(round int, work WorkspaceID, previous snapshot.Tree) (candidate, bool) {
 	h, err := e.cfg.Workspaces.Harvest(e.ctx, HarvestRequest{ID: work, MaxEntries: e.cfg.MaxEntries, MaxBytes: e.cfg.MaxBytes})
 	if err == nil && h.Uncertain {
@@ -496,14 +563,14 @@ func (e *engine) capture(round int, work WorkspaceID, previous snapshot.Tree) (c
 		e.halt("capture of the shared tree is uncertain: " + err.Error())
 		return candidate{}, false
 	}
-	next, ok := e.materialize(e.volumeID(fmt.Sprintf("c%d", round)), h.Tree)
+	next, ok := e.materialize(e.volumeID(fmt.Sprintf("c%d", round)), h.Tree, nil)
 	if !ok {
 		e.closeVolume(e.volumeID(fmt.Sprintf("c%d", round)))
 		return candidate{}, false
 	}
 	next.index, next.unsupported = round, h.Unsupported
 	e.observeWrites(round, previous, h.Tree)
-	_ = e.record(Event{Kind: "candidate", Round: round + 1, Data: map[string]any{"tree": h.Tree.Digest().String(), "workspace": next.id, "volume": next.volume, "entries": h.Tree.EntryCount(), "harvest": map[string]any{"uncertain": h.Uncertain, "unsupported": h.Unsupported, "reason": h.Reason}}})
+	_ = e.record(Event{Kind: "candidate", Round: round, Data: map[string]any{"tree": h.Tree.Digest().String(), "workspace": next.id, "volume": next.volume, "entries": h.Tree.EntryCount(), "harvest": map[string]any{"uncertain": h.Uncertain, "unsupported": h.Unsupported, "reason": h.Reason}}})
 	if e.ctx.Err() != nil {
 		e.closeVolume(next.id)
 		return candidate{}, false

@@ -24,6 +24,14 @@ type requiredDefinition struct {
 	Checks     []string
 }
 
+// briefChild is one direct child of a Manager as its parent sees it: where it
+// works and which Definitions it must realize there.
+type briefChild struct {
+	Path        string
+	Areas       []string
+	Definitions []string
+}
+
 // briefInput is everything one Manager's standing Brief states. The engine adds
 // the mandate, contacts, findings, messages and check results itself.
 type briefInput struct {
@@ -38,6 +46,11 @@ type briefInput struct {
 	// would otherwise never see what the whole-project checks and the shared
 	// files it owns are for.
 	Required []requiredDefinition
+	// Children are the Manager's direct children, in team order.
+	Children []briefChild
+	// Enforced says that the run mounts only the Manager's areas and shard
+	// writable; everything else of /work is read-only.
+	Enforced bool
 }
 
 func identityText(id model.Identity) string { return id.Package + "/" + id.ID }
@@ -45,7 +58,7 @@ func identityText(id model.Identity) string { return id.Package + "/" + id.ID }
 // managerRole is the short description of a Manager that its contacts see.
 func managerRole(manager organization.Manager, selection organization.ContextSelection) string {
 	if manager.Package == organization.Root {
-		return "integration of the whole project and shared files at the artifact roots"
+		return "foundations, coordination and integration of the whole project"
 	}
 	var titles []string
 	for _, definition := range selection.Definitions() {
@@ -85,6 +98,25 @@ func renderBrief(in briefInput) string {
 	for _, area := range in.Areas {
 		fmt.Fprintf(&b, "- %s\n", area)
 	}
+	if in.Enforced {
+		b.WriteString("Only these areas and your registry shard are writable in /work; everything else is read-only.\n")
+	}
+	if len(in.Children) > 0 {
+		b.WriteString("\nYour children\nYour children realize their own Definitions in their areas. You supply the foundations they need within your own area, coordinate them and integrate their results; you do not implement their areas, and you cannot release them from their obligations.\n")
+		for _, child := range in.Children {
+			areas := "none"
+			if len(child.Areas) > 0 {
+				areas = strings.Join(child.Areas, "; ")
+			}
+			fmt.Fprintf(&b, "- %s\n  areas: %s\n", child.Path, areas)
+			if len(child.Definitions) == 0 {
+				b.WriteString("  Definitions: none\n")
+			}
+			for _, definition := range child.Definitions {
+				fmt.Fprintf(&b, "  Definition %s\n", definition)
+			}
+		}
+	}
 	definitions := in.Selection.Definitions()
 	example := "package/id"
 	switch {
@@ -109,14 +141,27 @@ func renderBrief(in briefInput) string {
 	if len(definitions) == 0 {
 		b.WriteString("This Manager has no Definitions of its own and none are included.\n")
 	}
+	isOwn := func(d organization.ContextDefinition) bool {
+		return d.Definition.Identity.Package == in.Manager.Package
+	}
+	for _, definition := range definitions {
+		if isOwn(definition) {
+			writeDefinition(&b, definition, true, in.Manager, nil)
+		}
+	}
+	if in.Manager.Package != organization.Root {
+		b.WriteString("\nYour own Definitions are yours to realize in your area. Your parent coordinates; it cannot take them over or waive them.\n")
+	}
 	wroteIncluded := false
 	for _, definition := range definitions {
-		own := definition.Definition.Identity.Package == in.Manager.Package
-		if !own && !wroteIncluded {
+		if isOwn(definition) {
+			continue
+		}
+		if !wroteIncluded {
 			b.WriteString("\nIncluded Definitions (context from other Packages)\n")
 			wroteIncluded = true
 		}
-		writeDefinition(&b, definition, own, requiredBy[definition.Definition.Identity])
+		writeDefinition(&b, definition, false, in.Manager, requiredBy[definition.Definition.Identity])
 	}
 
 	b.WriteString("\nRequired checks\n")
@@ -136,9 +181,13 @@ func renderBrief(in briefInput) string {
 	return b.String()
 }
 
-func writeDefinition(b *strings.Builder, c organization.ContextDefinition, own bool, requiredBy []string) {
+func writeDefinition(b *strings.Builder, c organization.ContextDefinition, own bool, reader organization.Manager, requiredBy []string) {
 	d := c.Definition
-	fmt.Fprintf(b, "\n%s (%s): %s\n", identityText(d.Identity), identityText(d.Kind), definitionTitle(d))
+	fmt.Fprintf(b, "\n%s (%s): %s", identityText(d.Identity), identityText(d.Kind), definitionTitle(d))
+	if !own {
+		fmt.Fprintf(b, " (owned by %s)", d.Identity.Package)
+	}
+	b.WriteString("\n")
 	if strings.TrimSpace(d.Body) != "" {
 		fmt.Fprintf(b, "%s\n", strings.TrimSpace(d.Body))
 	}
@@ -150,7 +199,11 @@ func writeDefinition(b *strings.Builder, c organization.ContextDefinition, own b
 			fmt.Fprintf(b, "  included because: %s\n", reasonText(reason))
 		}
 		for _, check := range requiredBy {
-			fmt.Fprintf(b, "  included because: required by check %s\n", check)
+			if reader.Package == organization.Root {
+				fmt.Fprintf(b, "  included because: required by check %s; realized by %s, integrated and verified by you\n", check, d.Identity.Package)
+			} else {
+				fmt.Fprintf(b, "  included because: required by check %s; realized by %s\n", check, d.Identity.Package)
+			}
 		}
 	}
 }

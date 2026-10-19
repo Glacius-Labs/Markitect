@@ -4,26 +4,36 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"slices"
 	"strings"
 	"time"
 )
 
 // executePhase lets the owners work in the shared tree until the phase is
 // quiescent: no Execute turn runs, no Manager has undelivered items and no
-// owner question waits for an answer. It returns early when the run stops, but
-// only after every running turn returned.
-func (e *engine) executePhase() {
+// owner question waits for an answer. A Manager whose turn the budget refused
+// does not keep the phase open: the phase ends, the stand is captured and the
+// reserved turns verify it. The turns of the phase carry the number of the
+// Verify round that follows. It returns early when the run stops, but only
+// after every running turn returned, and reports whether the budget refused
+// work without admitting any turn: no further round fits then.
+func (e *engine) executePhase(round int) (stalled bool) {
 	e.mu.Lock()
 	defer e.mu.Unlock()
-	e.executeOpen, e.inPhase = true, true
+	e.executeOpen, e.execRound = true, round
+	e.budgetLimited, e.phaseTurns = false, 0
+	for _, m := range e.team {
+		m.refused = false
+	}
 	e.scheduleLocked()
 	for e.ctx.Err() == nil && !e.quiescentLocked() {
 		e.cond.Wait()
 	}
-	e.executeOpen, e.inPhase = false, false
+	e.executeOpen = false
 	for e.running > 0 {
 		e.cond.Wait()
 	}
+	return e.budgetLimited && e.phaseTurns == 0
 }
 
 func (e *engine) quiescentLocked() bool {
@@ -32,7 +42,9 @@ func (e *engine) quiescentLocked() bool {
 	}
 	for _, m := range e.team {
 		e.pruneLocked(m)
-		if !m.disabled && len(m.items) > 0 {
+		// Items of a Manager that is not released wait for its parent; those of a
+		// Manager the budget refused cannot be delivered.
+		if !m.disabled && m.released && !m.refused && len(m.items) > 0 {
 			return false
 		}
 	}
@@ -44,43 +56,76 @@ func (e *engine) quiescentLocked() bool {
 	return true
 }
 
-// scheduleLocked starts an Execute turn for every idle Manager with
+// scheduleLocked starts an Execute turn for every released, idle Manager with
 // undelivered items, while Execute is open.
 func (e *engine) scheduleLocked() {
 	if !e.executeOpen || e.closing || e.ctx.Err() != nil {
 		return
 	}
 	for _, m := range e.team {
-		if m.running || m.disabled {
+		if m.running || m.disabled || !m.released {
 			continue
 		}
 		e.pruneLocked(m)
 		if len(m.items) == 0 {
 			continue
 		}
-		// Keep room for the Verify round that follows this turn. An early turn
-		// also keeps room for the Verify turns of the open round 1.
-		reserve := len(e.team)
-		if !e.inPhase && e.rs != nil {
-			reserve += len(e.team) - len(e.rs.started)
-		}
+		// Keep room for the Verify round that follows the phase and for the
+		// first Execute turn of every Manager that has not run yet.
+		reserve := e.executeReserveLocked(m)
 		if !e.reserveTurnLocked(reserve) {
-			// An early start only waits; the Execute phase has no other way on.
-			if e.inPhase {
-				e.halt("the agent turn budget cannot cover another Execute turn and a closing Verify round")
+			m.refused = true
+			if !e.budgetLimited {
+				e.budgetLimited = true
+				_ = e.record(Event{Kind: "execute.budget_limit", Manager: m.Path, Round: e.execRound, Data: map[string]any{"turns": e.turnCount, "agentTurns": e.cfg.Budget.AgentTurns, "reserve": reserve}})
 			}
-			return
+			continue
 		}
+		m.refused = false
+		e.phaseTurns++
 		items, first := m.items, !m.executed || m.conversation == ""
 		m.items, m.consumed = nil, items
 		m.execCount++
 		m.running, m.ran, m.execUsed = true, true, true
 		ts := &turnState{m: m, kind: ExecuteTurn, id: fmt.Sprintf("%s-r%d-%s-x%d", e.cfg.RunID, e.execRound, m.slug, m.execCount), round: e.execRound}
 		turn := Turn{Profile: m.ExecuteProfile, Workspace: e.work, Home: m.execHome, Resume: m.conversation, Prompt: e.executePromptLocked(m, texts(items), first), Tools: executeTools(m.Parent == "")}
+		if m.Write.Enforced {
+			turn.ReadOnly, turn.Mounts = !m.Write.Base, slices.Clone(m.Write.Mounts)
+		}
 		e.running++
 		e.wg.Add(1)
 		go e.executeTurn(m, ts, turn)
 	}
+}
+
+// executeReserveLocked is the number of turns the budget must keep after an
+// Execute turn of m: one whole Verify round and the first Execute turn of every
+// other Manager that has not run yet, so that no Manager is starved of its
+// first turn by the repair work of others.
+func (e *engine) executeReserveLocked(m *mgr) int {
+	reserve := len(e.team)
+	for _, o := range e.team {
+		if o != m && o.execCount == 0 && !o.disabled {
+			reserve++
+		}
+	}
+	return reserve
+}
+
+// releaseLocked releases the start of a Manager: its initial mandate item goes
+// first, before any message its parent queued during its own first turn. The
+// release is recorded once per Manager.
+func (e *engine) releaseLocked(m *mgr, why string) {
+	if m.released {
+		return
+	}
+	m.released = true
+	m.items = append([]item{{text: initialItem(m)}}, m.items...)
+	data := map[string]any{"why": why}
+	if m.Parent != "" {
+		data["parent"] = m.Parent
+	}
+	_ = e.record(Event{Kind: "manager.release", Manager: m.Path, Round: e.execRound, Data: data})
 }
 
 func (e *engine) executeTurn(m *mgr, ts *turnState, turn Turn) {
@@ -103,9 +148,38 @@ func (e *engine) executeTurn(m *mgr, ts *turnState, turn Turn) {
 		case res.Stopped:
 			e.failedLocked(m, err)
 		}
+		e.reportLocked(m, ts, err)
+		// The children start when the parent's first turn ended without error. A
+		// failed first turn that is retried does not release them yet; a disabled
+		// parent has ended its first turn for good.
+		if err == nil || m.disabled {
+			for _, c := range m.Children {
+				e.releaseLocked(e.byPath[c], "the first Execute turn of its parent ended")
+			}
+		}
 	}
 	e.cond.Broadcast()
 	e.scheduleLocked()
+}
+
+// reportLocked delivers a child's summary to its direct parent when the child's
+// turn finished with status done, so that the parent integrates the result. A
+// turn that ended without finish counts as done, with a note that no summary
+// was given.
+func (e *engine) reportLocked(m *mgr, ts *turnState, err error) {
+	if err != nil || m.Parent == "" || ts.finished && ts.status != "done" {
+		return
+	}
+	p := e.byPath[m.Parent]
+	if p.disabled {
+		return
+	}
+	summary := ts.summary
+	if !ts.finished {
+		summary = "no summary was given, the turn ended without finish"
+	}
+	p.items = append(p.items, item{text: fmt.Sprintf("Your child %s reports done: %s", contact(m), summary)})
+	_ = e.record(Event{Kind: "child.report", Manager: m.Path, Turn: ts.id, Round: ts.round, Data: map[string]any{"from": m.Path, "to": p.Path, "summary": summary}})
 }
 
 // failedLocked handles a turn that ended with an error after its container
@@ -156,7 +230,7 @@ func (e *engine) finish(m *mgr, ts *turnState, args json.RawMessage) ToolAnswer 
 	if ts.finished {
 		return refuse("This turn is already finished.")
 	}
-	ts.finished, ts.status = true, in.Status
+	ts.finished, ts.status, ts.summary = true, in.Status, summary
 	_ = e.record(Event{Kind: "turn.finish", Manager: m.Path, Turn: ts.id, Round: ts.round, Data: map[string]any{"status": in.Status, "summary": summary}})
 	return ToolAnswer{Text: "Recorded. Your turn ends."}
 }

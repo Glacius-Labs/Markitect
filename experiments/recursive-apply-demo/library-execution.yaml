@@ -22,9 +22,9 @@ checks:
     args: [test, ./...]
     requiredBy: library/realization
     timeout: 3m
-  - id: library-oracle
-    profile: library-oracle
+  - id: project-build
+    profile: library-go
     directory: realization
-    args: []
+    args: [build, -o, /tmp/library, ./cmd/library]
     requiredBy: library/callable-interface
     timeout: 3m

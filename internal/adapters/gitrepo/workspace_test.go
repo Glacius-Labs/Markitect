@@ -9,6 +9,7 @@ import (
 	"encoding/json"
 	"errors"
 	"io"
+	"slices"
 	"strings"
 	"testing"
 
@@ -30,6 +31,7 @@ type workspaceFake struct {
 	removals                                  int
 	initialTree                               snapshot.Tree
 	censusCalls                               int
+	directories                               map[string][]string
 }
 
 func (f *workspaceFake) InspectVolume(_ context.Context, name string) (container.VolumeObservation, error) {
@@ -71,6 +73,16 @@ func (f *workspaceFake) RunHelper(_ context.Context, spec container.ContainerSpe
 			}
 			if err != nil {
 				return err
+			}
+			if header.Typeflag == tar.TypeDir {
+				if header.Mode != 0755 || !strings.HasSuffix(header.Name, "/") {
+					return errors.New("directory header is not mode 0755 with a trailing slash")
+				}
+				if f.directories == nil {
+					f.directories = make(map[string][]string)
+				}
+				f.directories[volume] = append(f.directories[volume], strings.TrimSuffix(header.Name, "/"))
+				continue
 			}
 			data, err := io.ReadAll(reader)
 			if err != nil {
@@ -197,6 +209,39 @@ func TestWorkspaceMaterializesExactArchiveAndReadback(t *testing.T) {
 		t.Fatal("close not idempotent")
 	}
 }
+func TestWorkspaceMaterializesEmptyDirectoriesWithoutChangingTheTree(t *testing.T) {
+	w, f := workspaceAdapter(t)
+	tree := workspaceTree(t, workspaceEntry(t, "go.mod", snapshot.Regular, "module m\n"), workspaceEntry(t, "lending/keep.go", snapshot.Regular, "package lending\n"))
+	got, err := w.Materialize(context.Background(), run.WorkspaceSpec{ID: "w", Tree: tree, Directories: []string{"lending/reminders", "library", "lending/reminders", "lending"}})
+	if err != nil || got.Uncertain || got.Tree != tree.Digest() {
+		t.Fatalf("materialize %+v %v", got, err)
+	}
+	if want := []string{"lending", "lending/reminders", "library"}; !slices.Equal(f.directories[got.Volume], want) {
+		t.Fatalf("directories %q, want %q with ancestors, parents first and no duplicates", f.directories[got.Volume], want)
+	}
+	h, err := w.Harvest(context.Background(), run.HarvestRequest{ID: "w", MaxEntries: 10, MaxBytes: 100})
+	if err != nil || !h.Complete() || !h.Tree.Equal(tree) {
+		t.Fatalf("empty directories changed the harvested tree: %+v %v", h, err)
+	}
+}
+
+func TestWorkspaceRefusesInvalidDirectoriesBeforeCreatingAnything(t *testing.T) {
+	tree := workspaceTree(t, workspaceEntry(t, "docs", snapshot.Regular, "file"), workspaceEntry(t, "a/b", snapshot.Regular, "file"))
+	for name, directory := range map[string]string{
+		"empty": "", "absolute": "/lending", "parent": "../lending", "dot": "lending/./x", "double slash": "lending//x", "trailing slash": "lending/",
+		"backslash": `lending\x`, "git": "lending/.git", "state": ".markitect/state", "state child": ".markitect/state/x",
+		"same as a file": "docs", "below a file": "docs/x", "deep below a file": "a/b/c/d",
+	} {
+		t.Run(name, func(t *testing.T) {
+			w, f := workspaceAdapter(t)
+			got, err := w.Materialize(context.Background(), run.WorkspaceSpec{ID: "w", Tree: tree, Directories: []string{"ok", directory}})
+			if err == nil || len(f.volumes) != 0 || len(f.helpers) != 0 || got.Uncertain {
+				t.Fatalf("invalid directory accepted or left effects: %+v %v volumes=%d helpers=%d", got, err, len(f.volumes), len(f.helpers))
+			}
+		})
+	}
+}
+
 func TestWorkspaceRetainsPartialAndUncertainVolumes(t *testing.T) {
 	for _, test := range []string{"creation response lost", "write failed", "readback mismatch", "missing terminal frame", "helper failed", "mount appeared"} {
 		t.Run(test, func(t *testing.T) {

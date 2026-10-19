@@ -39,7 +39,10 @@ const (
 // conversation an Execute turn continues; empty starts a fresh conversation.
 // A Verify turn never resumes. Transcript, when set, is an absolute Host path
 // where the implementation writes the provider stream with known secrets
-// redacted, as evidence for later inspection.
+// redacted, as evidence for later inspection. Mounts overlay directories of
+// the same Workspace volume below /work after the base mount (read-only when
+// ReadOnly), in order: each is the volume's subpath Path mounted at
+// /work/Path, writable only when Writable says so.
 type Turn struct {
 	ID         string
 	Manager    string
@@ -47,6 +50,7 @@ type Turn struct {
 	Profile    string
 	Workspace  string
 	ReadOnly   bool
+	Mounts     []PathMount
 	Home       string
 	Resume     string
 	Prompt     string

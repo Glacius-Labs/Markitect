@@ -5,7 +5,7 @@ import (
 	"strings"
 )
 
-const mandate = "Compare your artifacts with the bound model. Preserve correct realization and report concrete deviations. In Execute, correct your files and registry and coordinate dependencies through your parent and children. In fresh Verify, assess the immutable stand and the interaction of your children. Report scope, findings, checks and unresolved questions. Do not change intent, write another owner's files or contact another branch directly."
+const mandate = "In Execute, compare your artifacts with the bound model, preserve correct realization, create missing artifacts and correct deviations within your files and registry. Coordinate dependencies and integration through your parent and children. In the subsequent fresh Verify, assess the immutable stand and the interaction of your children. Report scope, findings, checks and unresolved questions. Do not change intent, write another owner's files or contact another branch directly."
 
 func label(m *mgr) string {
 	if m.Parent == "" {
@@ -49,6 +49,54 @@ func (e *engine) contextLocked(b *strings.Builder, m *mgr) {
 	list(b, "Owner decisions (fixed for this run):", e.cfg.OwnerDecisions)
 }
 
+// initialItem is the first Execute item of every Manager: it starts the
+// Manager's own reconciliation work without a finding. A parent first supplies
+// the foundation its children need, because they start when its turn ends; a
+// child builds on the foundation its parent supplied.
+func initialItem(m *mgr) string {
+	var b strings.Builder
+	b.WriteString("Carry out your responsibility now: reconcile your artifacts with the bound model. No change is a legitimate result when your area already conforms.")
+	if m.Parent != "" {
+		b.WriteString(" Your parent's foundation is in place; its messages to you tell you what is available. Build on it.")
+	}
+	if len(m.Children) > 0 {
+		b.WriteString(" Your children start when this turn ends. First establish, within your own area, the foundation they need: where none exists, create it; where one exists, assess it against the model and your children's known needs, preserve it when it fits, and correct or supplement it within your own area (or coordinate its owner) before they begin. Then tell them with send the concrete basis they can use. Their areas are theirs to realize, not yours.")
+	}
+	return b.String()
+}
+
+// writeNote states what an enforced write plan makes read-only in /work. An
+// unenforced plan, or one that restricts nothing, needs no note.
+func writeNote(plan WritePlan) string {
+	var writable, readOnly []string
+	for _, mount := range plan.Mounts {
+		if mount.Writable {
+			writable = append(writable, mount.Path)
+		} else {
+			readOnly = append(readOnly, mount.Path)
+		}
+	}
+	switch {
+	case !plan.Enforced:
+		return ""
+	case !plan.Base && len(writable) == 0:
+		return "Nothing in /work is writable for you: it is read-only and a write there fails. "
+	case !plan.Base:
+		note := "Outside your writable areas /work is read-only and a write there fails. Your writable areas: " + strings.Join(writable, ", ") + ". "
+		if len(readOnly) > 0 {
+			note += "Read-only even within them: " + strings.Join(readOnly, ", ") + ". "
+		}
+		return note
+	case len(readOnly) > 0:
+		note := "These areas of /work are read-only and a write there fails: " + strings.Join(readOnly, ", ") + ". "
+		if len(writable) > 0 {
+			note += "Writable again within them: " + strings.Join(writable, ", ") + ". "
+		}
+		return note
+	}
+	return ""
+}
+
 func (e *engine) executePromptLocked(m *mgr, items []string, first bool) string {
 	var b strings.Builder
 	if !first {
@@ -70,7 +118,7 @@ func (e *engine) executePromptLocked(m *mgr, items []string, first bool) string 
 		contacts = append(contacts, "owner (the human; ask only what the owner decisions do not settle)")
 	}
 	list(&b, "Your contacts for the tool send:", contacts)
-	b.WriteString("\nThe shared working tree is /work. Other Managers work in it at the same time: change only your own area and your registry shard. Run the project's build and tests yourself. Write binaries, coverage files and other scratch output outside /work, for example under /tmp: everything left under /work is captured and must be an accounted artifact.\n")
+	b.WriteString("\nThe shared working tree is /work. Other Managers work in it at the same time: change only your own area and your registry shard. " + writeNote(m.Write) + "Run the project's build and tests yourself. Write binaries, coverage files and other scratch output outside /work, for example under /tmp: everything left under /work is captured and must be an accounted artifact.\n")
 	list(&b, "Items:", items)
 	b.WriteString("\nWork on them. Use send to coordinate through your parent and children. Call finish when you are done or waiting.\n")
 	return b.String()

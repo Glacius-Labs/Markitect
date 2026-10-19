@@ -58,6 +58,7 @@ type fakeWS struct {
 	harvests  int
 	uncertain bool
 	extra     []string
+	dirs      map[WorkspaceID][]string
 	matErr    error
 	// matErrFor fails only the materialization of these workspaces.
 	matErrFor map[WorkspaceID]error
@@ -94,6 +95,10 @@ func (w *fakeWS) Materialize(_ context.Context, s WorkspaceSpec) (WorkspaceObser
 		v.files[e.Path().String()] = string(e.Bytes())
 	}
 	w.vols[s.ID], w.byName[v.name] = v, v
+	if w.dirs == nil {
+		w.dirs = map[WorkspaceID][]string{}
+	}
+	w.dirs[s.ID] = s.Directories
 	w.order = append(w.order, string(s.ID))
 	return WorkspaceObservation{ID: s.ID, Volume: v.name, Tree: s.Tree.Digest()}, nil
 }
@@ -166,6 +171,9 @@ type fakeAgents struct {
 	prompts   map[string]string
 	// noConversation makes Execute turns report no resumable conversation.
 	noConversation bool
+	// quiet makes the default script finish Execute turns as waiting, so that no
+	// child reports done to its parent and the number of Execute turns is exact.
+	quiet bool
 }
 
 type call struct {
@@ -190,7 +198,7 @@ func (a *fakeAgents) Run(ctx context.Context, turn Turn, h ToolHandler) (TurnRes
 	a.active++
 	a.maxActive = max(a.maxActive, a.active)
 	a.mu.Unlock()
-	writes := turn.Kind == ExecuteTurn && !turn.ReadOnly
+	writes := turn.Kind == ExecuteTurn && (!turn.ReadOnly || slices.ContainsFunc(turn.Mounts, func(m PathMount) bool { return m.Writable }))
 	if writes {
 		a.ws.mount(turn.Workspace, 1)
 	}
@@ -255,9 +263,21 @@ func (c *call) tool(name string, args any) ToolAnswer {
 	return c.h(c.ctx, name, raw)
 }
 
+// writable reports whether the turn's mounts allow a write to path: the base
+// mount first, then each mount in order overrides it for its directory.
+func writable(turn Turn, path string) bool {
+	ok := !turn.ReadOnly
+	for _, m := range turn.Mounts {
+		if path == m.Path || strings.HasPrefix(path, m.Path+"/") {
+			ok = m.Writable
+		}
+	}
+	return ok
+}
+
 func (c *call) write(path, content string) {
-	if c.turn.ReadOnly {
-		c.t.Errorf("turn %s writes to a read-only workspace", c.turn.ID)
+	if !writable(c.turn, path) {
+		c.t.Errorf("turn %s writes %s, which is read-only for it", c.turn.ID, path)
 	}
 	c.ag.ws.write(c.turn.Workspace, path, content)
 }
@@ -301,7 +321,8 @@ func (c *call) myOpen() []string {
 }
 
 // defaultScript assesses satisfied and closes every finding the Manager raised
-// earlier, or finishes an Execute turn as done.
+// earlier, or finishes an Execute turn as done (as waiting when the agents are
+// quiet).
 func (c *call) defaultScript() error {
 	if c.turn.Kind == VerifyTurn {
 		if a := c.assess(true, nil, c.myOpen()...); a.Refused {
@@ -309,7 +330,11 @@ func (c *call) defaultScript() error {
 		}
 		return nil
 	}
-	if a := c.finish("done"); a.Refused {
+	status := "done"
+	if c.ag.quiet {
+		status = "waiting"
+	}
+	if a := c.finish(status); a.Refused {
 		c.t.Errorf("finish refused: %s", a.Text)
 	}
 	return nil
@@ -532,6 +557,17 @@ func turnIDs(out Outcome) []string {
 		ids = append(ids, t.ID)
 	}
 	return ids
+}
+
+// executeTurnsOf counts the Execute turns of a Manager, from the given round on.
+func executeTurnsOf(out Outcome, manager string, fromRound int) int {
+	n := 0
+	for _, t := range out.Turns {
+		if t.Kind == ExecuteTurn && t.Manager == manager && t.Round >= fromRound {
+			n++
+		}
+	}
+	return n
 }
 
 func countKind(out Outcome, kind TurnKind) int {

@@ -76,6 +76,10 @@ Implementations identify the supported part of this target and its evidence. An 
 
 The [delivery plan](../../implementation-plan.md) owns packages, order and dispatch. The [owner discussion](sources/manager-realization-20261016.md) and the supplied [concept assessment](sources/concept-assessment-20261016.txt) and [refinements](sources/concept-refinements-20261016.txt) are the sources; the refinements are part of the concept. The [working-day reflections](../../concepts/reflections/README.md) describe the intended use and later acceptance scenarios.
 
+## Self-model refinement
+
+[Preparation-to-publication model proposal](reconciliation-model-proposal.md) records the owner-accepted 19 October 2026 refinement: six central meanings, explicit relationships, four behavioral contracts and the preservation/change comparison. It is documentation only; canonical Definitions and implementation are unchanged. The current Apply concept continues to own behavior.
+
 ## Later commands
 
 [Commands over the Manager organization](commands.md) owns the owner-accepted direction of [DEC-044](../../concepts/register.md#dec-044-commands-reuse-the-manager-organization): common operation instructions, read-only Verify, Extract through existing model review and integration, and model-focused Optimize. It is a later design, separate from the frozen first-Apply core and from current executable availability. The [north star](manager-realization-north-star.md#later-operations-and-extensions) routes the remaining extensions.

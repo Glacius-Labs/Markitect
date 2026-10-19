@@ -276,6 +276,80 @@ func TestVerifyTurnIsReadOnlyAndDropsWritingTools(t *testing.T) {
 	}
 }
 
+func TestWritingToolsFollowWhatTheTurnCanWrite(t *testing.T) {
+	for name, tc := range map[string]struct {
+		kind     run.TurnKind
+		readOnly bool
+		mounts   []run.PathMount
+		want     string
+	}{
+		"enforced execute: read-only base, writable mount": {run.ExecuteTurn, true, []run.PathMount{{Path: "lending", Writable: true}}, "Read,Write,Edit,Glob,Grep,Bash"},
+		"read-only base and only read-only mounts":         {run.ExecuteTurn, true, []run.PathMount{{Path: "lending"}}, "Read,Glob,Grep,Bash"},
+		"read-only base, no mounts":                        {run.ExecuteTurn, true, nil, "Read,Glob,Grep,Bash"},
+		"writable base":                                    {run.ExecuteTurn, false, []run.PathMount{{Path: "lending"}}, "Read,Write,Edit,Glob,Grep,Bash"},
+		"verify":                                           {run.VerifyTurn, true, nil, "Read,Glob,Grep,Bash"},
+	} {
+		t.Run(name, func(t *testing.T) {
+			profile := validProfile()
+			profile.Session.BuiltinTools = []string{"Read", "Write", "Edit", "Glob", "Grep", "Bash"}
+			rt := newFakeRuntime()
+			h := newHarness(t, rt, profile)
+			turn := testTurn()
+			turn.Kind, turn.ReadOnly, turn.Mounts = tc.kind, tc.readOnly, tc.mounts
+			if _, err := h.agents.Run(context.Background(), turn, echoHandler(new([]string))); err != nil {
+				t.Fatal(err)
+			}
+			if got := argAfter(rt.start.Argv, "--tools"); got != tc.want {
+				t.Fatalf("tools %q, want %q", got, tc.want)
+			}
+		})
+	}
+}
+
+func TestTurnMountsOverlayTheWorkspaceVolumeInOrder(t *testing.T) {
+	root := []run.PathMount{{Path: "lending"}, {Path: "library"}}
+	child := []run.PathMount{{Path: "lending", Writable: true}, {Path: "lending/reminders"}}
+	for name, tc := range map[string]struct {
+		readOnly bool
+		mounts   []run.PathMount
+		want     []container.Mount
+	}{
+		"root style: writable base, read-only overlays": {false, root, []container.Mount{
+			{Volume: "ws-volume", Target: "/work", NoCopy: true},
+			{Volume: "ws-volume", Target: "/work/lending", Subpath: "lending", ReadOnly: true, NoCopy: true},
+			{Volume: "ws-volume", Target: "/work/library", Subpath: "library", ReadOnly: true, NoCopy: true},
+			{Volume: "home-volume", Target: "/home/agent"}}},
+		"child style: read-only base, writable overlays": {true, child, []container.Mount{
+			{Volume: "ws-volume", Target: "/work", ReadOnly: true, NoCopy: true},
+			{Volume: "ws-volume", Target: "/work/lending", Subpath: "lending", NoCopy: true},
+			{Volume: "ws-volume", Target: "/work/lending/reminders", Subpath: "lending/reminders", ReadOnly: true, NoCopy: true},
+			{Volume: "home-volume", Target: "/home/agent"}}},
+	} {
+		t.Run(name, func(t *testing.T) {
+			rt := newFakeRuntime()
+			h := newHarness(t, rt, validProfile())
+			turn := testTurn()
+			turn.ReadOnly, turn.Mounts = tc.readOnly, tc.mounts
+			if _, err := h.agents.Run(context.Background(), turn, echoHandler(new([]string))); err != nil {
+				t.Fatal(err)
+			}
+			if !reflect.DeepEqual(rt.spec.Mounts, tc.want) {
+				t.Fatalf("mounts %+v", rt.spec.Mounts)
+			}
+		})
+	}
+}
+
+func TestVerifyTurnWithReadOnlyMountsStarts(t *testing.T) {
+	rt := newFakeRuntime()
+	h := newHarness(t, rt, validProfile())
+	turn := testTurn()
+	turn.Kind, turn.ReadOnly, turn.Tools, turn.Mounts = run.VerifyTurn, true, nil, []run.PathMount{{Path: "lending"}}
+	if _, err := h.agents.Run(context.Background(), turn, echoHandler(new([]string))); err != nil || len(rt.spec.Mounts) != 3 {
+		t.Fatalf("%v %+v", err, rt.spec.Mounts)
+	}
+}
+
 func TestResumeAcceptsAndRecordsADifferentConversation(t *testing.T) {
 	rt := newFakeRuntime()
 	rt.session = "observed-other"
@@ -497,6 +571,15 @@ func TestInvalidTurnsFailBeforeAnyContainerStarts(t *testing.T) {
 		"tool without text":      func(t *run.Turn) { t.Tools[0].Description = "" },
 		"relative transcript":    func(t *run.Turn) { t.Transcript = "relative.jsonl" },
 		"prompt over wire limit": func(t *run.Turn) { t.Prompt = strings.Repeat("x", maxLineBytes) },
+		"mount path escapes":     func(t *run.Turn) { t.Mounts = []run.PathMount{{Path: "../lending", Writable: true}} },
+		"mount path absolute":    func(t *run.Turn) { t.Mounts = []run.PathMount{{Path: "/lending"}} },
+		"mount path unclean":     func(t *run.Turn) { t.Mounts = []run.PathMount{{Path: "lending/./reminders"}} },
+		"mount path empty":       func(t *run.Turn) { t.Mounts = []run.PathMount{{}} },
+		"mount option inject":    func(t *run.Turn) { t.Mounts = []run.PathMount{{Path: "a,readonly=false"}} },
+		"mount path twice":       func(t *run.Turn) { t.Mounts = []run.PathMount{{Path: "a"}, {Path: "a", Writable: true}} },
+		"verify writable mount": func(t *run.Turn) {
+			t.Kind, t.ReadOnly, t.Mounts = run.VerifyTurn, true, []run.PathMount{{Path: "lending", Writable: true}}
+		},
 	} {
 		t.Run(name, func(t *testing.T) {
 			h := newHarness(t, newFakeRuntime(), validProfile())

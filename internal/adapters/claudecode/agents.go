@@ -173,6 +173,8 @@ func (a *Agents) admit(turn run.Turn, handler run.ToolHandler) (Profile, []frame
 		return bad("a verify turn is read-only and never resumes")
 	case strings.TrimSpace(turn.Prompt) == "" || turn.Timeout < 0:
 		return bad("a prompt and a non-negative timeout are required")
+	case !validMounts(turn.Mounts) || turn.Kind == run.VerifyTurn && writable(turn.Mounts):
+		return bad("workspace mounts must be distinct clean relative directories, none writable in a verify turn")
 	}
 	var tools []frame.ToolSpec
 	seen := map[string]bool{}
@@ -193,16 +195,45 @@ func turnSpec(turn run.Turn, profile Profile) container.ContainerSpec {
 	s := profile.Session
 	return container.ContainerSpec{Name: "markitect-" + turn.ID, Image: profile.ImageID,
 		Labels: map[string]string{"markitect.store": s.Store}, User: "1000:1000", Workdir: "/work",
-		Mounts: []container.Mount{{Volume: turn.Workspace, Target: "/work", ReadOnly: turn.ReadOnly, NoCopy: true}, {Volume: turn.Home, Target: "/home/agent"}},
+		Mounts: append(workspaceMounts(turn), container.Mount{Volume: turn.Home, Target: "/home/agent"}),
 		CPUs:   s.CPUs, MemoryBytes: s.MemoryBytes, Pids: s.Pids, TmpBytes: s.TmpBytes, Network: s.Network}
 }
 
-// turnTools returns the builtin tools a turn may use: a read-only workspace
-// takes away the tools that exist to change files.
+// workspaceMounts is the workspace volume at /work followed by the turn's
+// overlays: each a directory of the same volume at its own path below /work.
+func workspaceMounts(turn run.Turn) []container.Mount {
+	mounts := []container.Mount{{Volume: turn.Workspace, Target: "/work", ReadOnly: turn.ReadOnly, NoCopy: true}}
+	for _, m := range turn.Mounts {
+		mounts = append(mounts, container.Mount{Volume: turn.Workspace, Target: "/work/" + m.Path, Subpath: m.Path, ReadOnly: !m.Writable, NoCopy: true})
+	}
+	return mounts
+}
+
+// validMounts reports whether every overlay path is a distinct clean relative
+// directory path.
+func validMounts(mounts []run.PathMount) bool {
+	seen := map[string]bool{}
+	for _, m := range mounts {
+		if !container.ValidSubpath(m.Path) || seen[m.Path] {
+			return false
+		}
+		seen[m.Path] = true
+	}
+	return true
+}
+
+func writable(mounts []run.PathMount) bool {
+	return slices.ContainsFunc(mounts, func(m run.PathMount) bool { return m.Writable })
+}
+
+// turnTools returns the builtin tools a turn may use: a verify turn, or a turn
+// that can write nowhere in its workspace, loses the tools that exist to change
+// files. An Execute turn with a read-only base and writable mounts keeps them.
 func turnTools(turn run.Turn, profile Profile) []string {
+	cannotWrite := turn.Kind == run.VerifyTurn || turn.ReadOnly && !writable(turn.Mounts)
 	var builtin []string
 	for _, name := range profile.Session.BuiltinTools {
-		if !turn.ReadOnly || name != "Write" && name != "Edit" {
+		if !cannotWrite || name != "Write" && name != "Edit" {
 			builtin = append(builtin, name)
 		}
 	}

@@ -11,6 +11,7 @@ import (
 	"github.com/Glacius-Labs/Markitect/internal/model"
 	"github.com/Glacius-Labs/Markitect/internal/organization"
 	"github.com/Glacius-Labs/Markitect/internal/realization"
+	"github.com/Glacius-Labs/Markitect/internal/run"
 	"github.com/Glacius-Labs/Markitect/internal/snapshot"
 )
 
@@ -81,7 +82,9 @@ func NewCandidates(prepared CapturedSettingsAttempt) (Candidates, error) {
 // OwnerOf returns the Manager that owns a path: Root is ".". A registry shard
 // belongs to its Manager. Under a declared layout the layout decides; without
 // one the path's registration in the captured start registry decides, and a new
-// or unregistered path belongs to Root.
+// or unregistered path belongs to Root. A file in an unmapped subdirectory of an
+// artifact root has no owner under the layout: OwnerOf returns Root, which must
+// resolve it, and accounting reports it as layout.no_owner.
 func (c Candidates) OwnerOf(path snapshot.Path) string {
 	if owner, err := registryOwner(path); err == nil {
 		return ownerName(owner)
@@ -120,6 +123,46 @@ func (c Candidates) Areas(manager string) []string {
 		return []string{"every file that no other Manager registered in its shard"}
 	}
 	return []string{"the files it registers in " + c.Shard(manager)}
+}
+
+// WritePlan returns where a Manager's Execute turns may write in the shared
+// working tree. Without a declared layout nothing is enforced and ownership is
+// trusted. With one, Root writes the whole tree except the protected inputs
+// under .markitect, the areas of every other Manager and their registry shards;
+// a Package writes only its own areas and its registry shard, minus the deeper
+// areas of its descendants. The mounts name directories, parents before their
+// descendants, and list only where the writability changes. An exception that
+// names a file of the start stand cannot be mounted: it stays with trust and
+// accounting, like the files directly in an artifact root.
+func (c Candidates) WritePlan(manager string) run.WritePlan {
+	if !c.layout.Declared() {
+		return run.WritePlan{}
+	}
+	type region struct{ path, owner string }
+	regions := []region{{".markitect", ""}, {strings.TrimSuffix(registryDirectory, "/"), organization.Root}}
+	for _, member := range c.topology.Managers() {
+		if member.Package != organization.Root {
+			regions = append(regions, region{registryDirectory + member.Package, member.Package})
+		}
+	}
+	for _, area := range c.layout.Areas(c.start) {
+		regions = append(regions, region{area.Path.String(), ownerName(area.Owner)})
+	}
+	slices.SortFunc(regions, func(a, b region) int { return cmp.Compare(a.path, b.path) })
+	plan := run.WritePlan{Enforced: true, Base: manager == organization.Root}
+	for i, r := range regions {
+		inherited := plan.Base
+		for j := i - 1; j >= 0; j-- {
+			if strings.HasPrefix(r.path, regions[j].path+"/") {
+				inherited = regions[j].owner == manager
+				break
+			}
+		}
+		if writable := r.owner == manager; writable != inherited {
+			plan.Mounts = append(plan.Mounts, run.PathMount{Path: r.path, Writable: writable})
+		}
+	}
+	return plan
 }
 
 // Account returns the blocking findings of a candidate tree; an accounted
@@ -297,6 +340,11 @@ func (c Candidates) findingOwner(finding realization.Finding) string {
 }
 
 func (c Candidates) findingMessage(finding realization.Finding) string {
+	if finding.Code == "layout.no_owner" {
+		// Root cannot fix this by registering, and the layout lives in the protected
+		// execution.yaml that no Manager may change.
+		return "The file has no owner under the persistent layout: remove it, or ask the owner through Root for a layout exception."
+	}
 	if finding.Code != "file.unexplained" {
 		return finding.Message
 	}

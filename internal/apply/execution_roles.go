@@ -103,7 +103,7 @@ func (d *executionDecoder) layout(field executionField, compiled model.Result) *
 		} else {
 			for i, node := range exceptions.node.Content {
 				entry := executionChild(exceptions, fmt.Sprint(i), node)
-				e := d.object(entry, "path", "owner", "reason")
+				e := d.object(entry, "path", "kind", "owner", "reason")
 				var value ExecutionLayoutException
 				if text, ok := d.text(d.required(e, entry, "path"), false); ok {
 					path, err := snapshot.NewPath(text.Value)
@@ -111,6 +111,15 @@ func (d *executionDecoder) layout(field executionField, compiled model.Result) *
 						d.issue(model.Failed, "execution.layout_path", e["path"], err.Error())
 					} else {
 						value.Path = organization.Setting[snapshot.Path]{Value: path, Source: text.Source}
+					}
+				}
+				if kind, found := e["kind"]; found {
+					if text, ok := d.text(kind, false); ok {
+						if text.Value != "file" && text.Value != "directory" {
+							d.issue(model.Failed, "execution.layout_kind", kind, "an exception kind must be file or directory.")
+						} else {
+							value.Kind = text
+						}
 					}
 				}
 				value.Owner, _ = d.text(d.required(e, entry, "owner"), false)
@@ -131,7 +140,7 @@ func (d *executionDecoder) layout(field executionField, compiled model.Result) *
 		if exception.Owner.Value != organization.Root {
 			owner, _ = realization.PackageOwner(exception.Owner.Value)
 		}
-		exceptions = append(exceptions, realization.LayoutException{Path: exception.Path.Value, Owner: owner, Reason: exception.Reason.Value})
+		exceptions = append(exceptions, realization.LayoutException{Path: exception.Path.Value, File: exception.Kind.Value == "file", Owner: owner, Reason: exception.Reason.Value})
 	}
 	layout, err := realization.NewLayout(compiled, result.Roots.Value, exceptions)
 	if err != nil {

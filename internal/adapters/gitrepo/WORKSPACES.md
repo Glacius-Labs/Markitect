@@ -20,6 +20,7 @@ complete readback. A different complete readback is retained and reported as
 uncertain. Inputs that contain excluded Git administration or state descendants
 are refused before creation, since those bytes cannot enter the repository
 census. A regular file named `.markitect/state` remains observable.
+`WorkspaceSpec.Directories` are created as empty directories (tar directory headers, mode 0755, owned like the extracted files) together with their ancestors, parents first, so mount overlays of a write plan have their subpath. A path that is invalid, excluded or equal to or below a file of the tree is refused before creation. Empty directories stay outside the read-back identity.
 Before extraction it observes the new volume as empty, since the engine can
 initialize a new volume with the helper image's `/work` files. Unexpected initial
 content is retained and refused before any extraction.
