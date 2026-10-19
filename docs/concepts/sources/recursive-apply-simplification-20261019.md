@@ -55,3 +55,9 @@ The assistant recommended one shared writer working tree, optionally mounted by 
 > Ausserdem halte alles hier beschlossene fest. Ich werde dann eine Claude Session starten, die das entsprechend implementieren soll wie besprochen. Dafür muss sie aber wissen, was wir hier machen wollen
 
 Recorder's note: this records the accepted conceptual direction and the requested independent assessment. It is not an implementation dispatch to this session, an authorization to start more provider experiments, or runtime evidence for shared-workspace concurrency. The review's precise engineering recommendations remain labeled in the owning concept.
+
+## First-demonstration scope after independent review
+
+Recorder's note: after the separate conceptual assessment of Managers as departments with Forks, Subagents and Skills, the owner gave this direct scope confirmation. The additional proposal remains outside the first demonstration; the existing implementation assignment is not revised.
+
+> Dann halte bitte fest: Keine zusätzlichen Fork-, Team- oder Skill-Funktionen für den ersten Durchstich. Ihren Nutzen prüfen wir später anhand konkreter Engpässe. Claudes laufender Auftrag bleibt unverändert.
