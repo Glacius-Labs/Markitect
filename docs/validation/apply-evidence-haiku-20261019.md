@@ -6,7 +6,7 @@
 
 Every obligation of #492 was exercised in a real run; one of them, the no-change stand, only partly held. Every outcome was honest:
 - Nothing was published unless Verified, and published stands were read back.
-- Protected inputs stayed unchanged.
+- The model and control inputs stayed unchanged; publications changed only artifacts and registry shards.
 - Incomplete runs kept their work and evidence, and a new Apply from the committed repository always succeeded.
 
 Two product defects surfaced and are fixed on Main (#484, #486). Three findings remain open and are stated below.
@@ -35,9 +35,9 @@ Two product defects surfaced and are fixed on Main (#484, #486). Three findings 
 | RA-C1 | `5e16af2b` | model contradiction (prose "four", spec 5) | Incomplete: deadline; question asked and answered | 1 | 1126 s | not published |
 | RA-B1 | `4bedd20b` | 14 agent turns, then a new Apply | Incomplete (budget), then Verified, applied | 1, 1 | 774 s, 626 s | 12/12 after restart |
 | RA-A1 | `4bedd20b` | SIGTERM after 140 s, then a new Apply | Incomplete (cancelled), then Verified, applied | 0, 1 | 118 s, 811 s | 12/12 after restart |
-| RA-N2 | `7ed41975` | the verified stand of RA-A1, committed unchanged | Verified, applied: two added tests | 1 | 349 s | 12/12 (see finding 4) |
+| RA-N2 | `7ed41975` | the verified stand of RA-A1, committed unchanged | Verified, applied: one added test in each of two test files | 1 | 349 s | 12/12 (see finding 4) |
 
-Builds: `f15ea723` is Main before this work. `64f0a713` is the first commit of #484, and `cc11ff5a` is Main with #484. `35c2659c` and `5e16af2b` are commits of #486, before and after its review fixes. `4bedd20b` is Main with #486, and `7ed41975` is the final integrated Main, which adds #506 (image observation once per process), #507 (Extract fields and shared helpers) and documentation.
+Builds: `f15ea723` is Main before this work. `64f0a713` is the first commit of #484, and `cc11ff5a` is Main with #484. `35c2659c` and `5e16af2b` are commits of #486, before and after its review fixes. `4bedd20b` is Main with #486. `7ed41975` is the final integrated Main. Between the two, Main merged #481–#483, #485 and #506–#510, among them #483 (the Go example image), #506 (image observation once per process) and #507 (Extract fields and shared helpers).
 
 ## The obligations of #492
 
@@ -46,7 +46,7 @@ Builds: `f15ea723` is Main before this work. `64f0a713` is the first commit of #
 - **Repairable committed accounting drift:** passed after a fix (RA-R3). RA-R1 refused it in preparation, so the owner decided DEC-062 (#486). In RA-R3 members removed the stray file.
 - **Changes to already conforming areas:** justified in RA-R3. Reminders compared dates as instants instead of calendar days, and Root documented the wire behavior the model requires. In RA-N2 the change is a finding (see 3).
 - **Owner question with an applied answer:** partly passed (RA-C1).
-  - Root found the contradiction within one minute, asked, received the answer and applied it; the retained work has `MaxOpenLoans = 5`.
+  - Root found the contradiction 68 s after the run started, asked, received the answer 3 s later and applied it; the retained work has `MaxOpenLoans = 5`.
   - The run then ran into the deadline (see finding 2), so nothing was published.
   - The owner since decided [DEC-063](../concepts/register.md#dec-063-the-model-is-authoritative-defects-escalate): a model contradiction ends the run with a model-defect report instead of a run-only answer. RA-C1's continuation is therefore no longer the target behavior.
   - RA-Q1 asked nothing: the Managers decided the boundary edge cases themselves. The oracle was green, but under DEC-063 these are escalations.
@@ -59,7 +59,7 @@ Builds: `f15ea723` is Main before this work. `64f0a713` is the first commit of #
 - **Protected inputs, ownership, immutable Verify, guarded publication:** passed.
   - Enforced write plans applied in every run, and accounting ran on every candidate.
   - Every published stand returned an `applied` receipt with read-back.
-  - `.markitect` was unchanged after every publication.
+  - The model and control inputs under `.markitect` were unchanged after every publication; only the Managers' registry shards changed.
 - **Conforming no-change stand:** not achieved on the final build (RA-N2, finding 3).
 
 ## Findings and disposition
