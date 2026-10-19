@@ -25,9 +25,20 @@ type requiredDefinition struct {
 }
 
 // briefChild is one direct child of a Manager as its parent sees it: where it
-// works and which Definitions it must realize there.
+// works, which Definitions it must realize there and the Managers below it.
 type briefChild struct {
 	Path        string
+	Areas       []string
+	Definitions []string
+	// Below lists the child's descendants, parents before their children; they
+	// belong to the team and are coordinated by their own parents.
+	Below []briefDescendant
+}
+
+// briefDescendant is a Manager below a direct child.
+type briefDescendant struct {
+	Path        string
+	Parent      string
 	Areas       []string
 	Definitions []string
 }
@@ -115,7 +126,18 @@ func renderBrief(in briefInput) string {
 			for _, definition := range child.Definitions {
 				fmt.Fprintf(&b, "  Definition %s\n", definition)
 			}
+			for _, d := range child.Below {
+				areas := "none"
+				if len(d.Areas) > 0 {
+					areas = strings.Join(d.Areas, "; ")
+				}
+				fmt.Fprintf(&b, "  below it: %s, a child of %s, areas: %s\n", d.Path, d.Parent, areas)
+				for _, definition := range d.Definitions {
+					fmt.Fprintf(&b, "    Definition %s\n", definition)
+				}
+			}
 		}
+		b.WriteString("Every area listed here has its owner in the team; the Managers below your children are coordinated through their own parents.\n")
 	}
 	definitions := in.Selection.Definitions()
 	example := "package/id"
