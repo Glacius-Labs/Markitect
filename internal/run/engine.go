@@ -57,16 +57,17 @@ type mgr struct {
 	consumed     []item
 	running      bool
 	disabled     bool
-	// execEnded is set when an Execute turn of the Manager ended, in any way;
-	// buildWaited when its wait for a building parent was recorded.
-	execEnded   bool
-	buildWaited bool
-	failures    int
-	execCount   int
-	execUsed    bool
-	verifyUsed  bool
-	ran         bool
-	changed     []string
+	// released is set when the Manager's start was released: Root's at the start
+	// of the run, every other Manager's when its parent's first Execute turn
+	// ended or the parent was disabled. A Manager that is not released runs no
+	// turn; its items wait.
+	released   bool
+	failures   int
+	execCount  int
+	execUsed   bool
+	verifyUsed bool
+	ran        bool
+	changed    []string
 
 	// executed is set by an Execute turn that finished without error; until
 	// then the Manager's turn carries the full mandate, even when a failed turn
@@ -82,7 +83,6 @@ type roundState struct {
 	structural  []*Finding
 	assessments map[string]Assessment
 	assessed    map[string]bool
-	started     map[string]bool
 }
 
 type engine struct {
@@ -110,11 +110,9 @@ type engine struct {
 	usage       Usage
 	turnCount   int
 	rounds      []Round
-	rs          *roundState
 	execRound   int
 	work        string
 	executeOpen bool
-	inPhase     bool
 	closing     bool
 	running     int
 	polling     bool
@@ -410,13 +408,6 @@ func (e *engine) materialize(id WorkspaceID, tree snapshot.Tree, directories []s
 	return candidate{tree: tree, id: id, volume: obs.Volume}, e.ctx.Err() == nil
 }
 
-// affordRound reports whether the turn budget still covers one complete Verify round.
-func (e *engine) affordRound() bool {
-	e.mu.Lock()
-	defer e.mu.Unlock()
-	return e.turnCount+len(e.team) <= e.cfg.Budget.AgentTurns
-}
-
 // reserveTurnLocked counts one turn when the budget leaves room for it and for
 // the following reserve turns.
 func (e *engine) reserveTurnLocked(reserve int) bool {
@@ -490,8 +481,9 @@ func (e *engine) incomplete(fallback string) (Status, string, snapshot.Tree) {
 	return Incomplete, e.stopReason(fallback), snapshot.Tree{}
 }
 
-// run drives the rounds. Every exit leaves no turn or check running except
-// Execute turns that reconcile waits for after cancelling the context.
+// run drives the rounds: Execute phase, capture, Verify round. Every exit
+// leaves no turn or check running except Execute turns that reconcile waits
+// for after cancelling the context.
 func (e *engine) run() (Status, string, snapshot.Tree) {
 	cfg := e.cfg
 	managers := make([]string, 0, len(e.team))
@@ -501,27 +493,35 @@ func (e *engine) run() (Status, string, snapshot.Tree) {
 	if e.record(Event{Kind: "run.start", Data: map[string]any{"run": cfg.RunID, "managers": managers, "start": cfg.Start.Digest().String(), "agentTurns": cfg.Budget.AgentTurns, "rounds": cfg.Budget.Rounds, "deadline": cfg.Budget.Deadline}}) != nil {
 		return e.incomplete("")
 	}
-	if !e.affordRound() {
-		return e.incomplete(fmt.Sprintf("the agent turn budget of %d does not cover one Verify round of %d managers", cfg.Budget.AgentTurns, len(e.team)))
-	}
-	cand, ok := e.materialize(e.volumeID("c0"), cfg.Start, nil)
-	if !ok {
-		e.closeVolume(e.volumeID("c0"))
-		return e.incomplete("")
+	if cfg.Budget.AgentTurns < 2*len(e.team) {
+		return e.incomplete(fmt.Sprintf("the agent turn budget of %d does not cover one Execute turn and one Verify turn of each of the %d managers", cfg.Budget.AgentTurns, len(e.team)))
 	}
 	work := e.volumeID("work")
 	shared, ok := e.materialize(work, cfg.Start, e.mountDirectories())
 	if !ok {
-		e.closeVolume(cand.id)
 		e.closeVolume(work)
 		return e.incomplete("")
 	}
 	e.work = shared.volume
+	e.mu.Lock()
+	e.execRound = 1
+	e.releaseLocked(e.team[0], "the run started")
+	e.mu.Unlock()
+	previous := cfg.Start
 	for round := 1; ; round++ {
-		if round > 1 && !e.affordRound() {
-			e.closeVolume(cand.id)
-			return e.incomplete("the agent turn budget cannot cover another Verify round")
+		e.executePhase(round)
+		if e.ctx.Err() != nil {
+			return e.incomplete("")
 		}
+		if reason := e.disabledOwnerOpen(); reason != "" {
+			e.halt(reason)
+			return e.incomplete("")
+		}
+		cand, ok := e.capture(round, work, previous)
+		if !ok {
+			return e.incomplete("")
+		}
+		previous = cand.tree
 		green := e.verifyRound(round, cand)
 		e.closeVolume(cand.id)
 		if e.ctx.Err() != nil {
@@ -537,23 +537,11 @@ func (e *engine) run() (Status, string, snapshot.Tree) {
 		if round >= cfg.Budget.Rounds {
 			return e.incomplete(fmt.Sprintf("the round budget of %d ended without a green round", cfg.Budget.Rounds))
 		}
-		e.executePhase()
-		if e.ctx.Err() != nil {
-			return e.incomplete("")
-		}
-		if reason := e.disabledOwnerOpen(); reason != "" {
-			e.halt(reason)
-			return e.incomplete("")
-		}
-		next, ok := e.capture(round, work, cand.tree)
-		if !ok {
-			return e.incomplete("")
-		}
-		cand = next
 	}
 }
 
-// capture harvests the quiescent shared tree into the next candidate.
+// capture harvests the quiescent shared tree into the candidate of the round.
+// previous is the stand of the previous candidate, or the start.
 func (e *engine) capture(round int, work WorkspaceID, previous snapshot.Tree) (candidate, bool) {
 	h, err := e.cfg.Workspaces.Harvest(e.ctx, HarvestRequest{ID: work, MaxEntries: e.cfg.MaxEntries, MaxBytes: e.cfg.MaxBytes})
 	if err == nil && h.Uncertain {
@@ -570,7 +558,7 @@ func (e *engine) capture(round int, work WorkspaceID, previous snapshot.Tree) (c
 	}
 	next.index, next.unsupported = round, h.Unsupported
 	e.observeWrites(round, previous, h.Tree)
-	_ = e.record(Event{Kind: "candidate", Round: round + 1, Data: map[string]any{"tree": h.Tree.Digest().String(), "workspace": next.id, "volume": next.volume, "entries": h.Tree.EntryCount(), "harvest": map[string]any{"uncertain": h.Uncertain, "unsupported": h.Unsupported, "reason": h.Reason}}})
+	_ = e.record(Event{Kind: "candidate", Round: round, Data: map[string]any{"tree": h.Tree.Digest().String(), "workspace": next.id, "volume": next.volume, "entries": h.Tree.EntryCount(), "harvest": map[string]any{"uncertain": h.Uncertain, "unsupported": h.Unsupported, "reason": h.Reason}}})
 	if e.ctx.Err() != nil {
 		e.closeVolume(next.id)
 		return candidate{}, false

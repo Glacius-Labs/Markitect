@@ -171,6 +171,9 @@ type fakeAgents struct {
 	prompts   map[string]string
 	// noConversation makes Execute turns report no resumable conversation.
 	noConversation bool
+	// quiet makes the default script finish Execute turns as waiting, so that no
+	// child reports done to its parent and the number of Execute turns is exact.
+	quiet bool
 }
 
 type call struct {
@@ -318,7 +321,8 @@ func (c *call) myOpen() []string {
 }
 
 // defaultScript assesses satisfied and closes every finding the Manager raised
-// earlier, or finishes an Execute turn as done.
+// earlier, or finishes an Execute turn as done (as waiting when the agents are
+// quiet).
 func (c *call) defaultScript() error {
 	if c.turn.Kind == VerifyTurn {
 		if a := c.assess(true, nil, c.myOpen()...); a.Refused {
@@ -326,7 +330,11 @@ func (c *call) defaultScript() error {
 		}
 		return nil
 	}
-	if a := c.finish("done"); a.Refused {
+	status := "done"
+	if c.ag.quiet {
+		status = "waiting"
+	}
+	if a := c.finish(status); a.Refused {
 		c.t.Errorf("finish refused: %s", a.Text)
 	}
 	return nil
@@ -549,6 +557,17 @@ func turnIDs(out Outcome) []string {
 		ids = append(ids, t.ID)
 	}
 	return ids
+}
+
+// executeTurnsOf counts the Execute turns of a Manager, from the given round on.
+func executeTurnsOf(out Outcome, manager string, fromRound int) int {
+	n := 0
+	for _, t := range out.Turns {
+		if t.Kind == ExecuteTurn && t.Manager == manager && t.Round >= fromRound {
+			n++
+		}
+	}
+	return n
 }
 
 func countKind(out Outcome, kind TurnKind) int {

@@ -198,8 +198,7 @@ func reconcileConfig(req ReconcileRequest, now time.Time) (run.Config, error) {
 			Brief: renderBrief(briefInput{Manager: manager, Selection: selection, Settings: managerSettings,
 				Areas: candidates.Areas(manager.Package), Shard: candidates.Shard(manager.Package), Checks: briefChecks, Required: manageRequired,
 				Children: children, Enforced: write.Enforced}),
-			Write:    write,
-			Building: candidates.Building(manager.Package),
+			Write: write,
 		}
 		team = append(team, member)
 	}

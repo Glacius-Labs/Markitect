@@ -15,10 +15,8 @@ import (
 // accounting and the required checks first, then fresh Verify turns of all
 // Managers with children before parents. It reports whether the round is green.
 func (e *engine) verifyRound(n int, c candidate) bool {
-	rs := &roundState{n: n, tree: c.tree, volume: c.volume, assessments: map[string]Assessment{}, assessed: map[string]bool{}, started: map[string]bool{}}
+	rs := &roundState{n: n, tree: c.tree, volume: c.volume, assessments: map[string]Assessment{}, assessed: map[string]bool{}}
 	e.mu.Lock()
-	e.rs, e.execRound = rs, n
-	e.executeOpen = n == 1 && e.cfg.Budget.Rounds >= 2
 	for _, f := range e.findings {
 		if f.RaisedBy == MarkitectFinding && !f.Closed {
 			f.Closed, f.ClosedRound, f.ClosedReason = true, n, "a structural finding holds for exactly the candidate it was observed on"
@@ -26,10 +24,6 @@ func (e *engine) verifyRound(n int, c candidate) bool {
 		}
 	}
 	_ = e.record(Event{Kind: "round.start", Round: n, Data: map[string]any{"tree": c.tree.Digest().String(), "workspace": c.id}})
-	if e.executeOpen {
-		e.seedBuildingParentsLocked()
-		e.scheduleLocked()
-	}
 	e.mu.Unlock()
 
 	structural := e.cfg.Account(c.tree)
@@ -69,7 +63,6 @@ func (e *engine) verifyRound(n int, c candidate) bool {
 		rs.structural = append(rs.structural, e.addFindingLocked(Finding{Owner: chk.Owner, RaisedBy: MarkitectFinding, Obligation: fmt.Sprintf("Required check %q (required by %s) passes on the candidate", chk.Name, chk.RequiredBy), Observed: observed, Blocking: true}, n))
 	}
 	e.deliverLocked(n)
-	e.scheduleLocked()
 	e.mu.Unlock()
 
 	done := map[string]chan struct{}{}
@@ -178,7 +171,7 @@ func (e *engine) verifyManager(m *mgr, rs *roundState) {
 			e.halt("the agent turn budget ended")
 			return
 		}
-		m.verifyUsed, rs.started[m.Path] = true, true
+		m.verifyUsed = true
 		ts := &turnState{m: m, kind: VerifyTurn, id: fmt.Sprintf("%s-r%d-%s-v%d", e.cfg.RunID, rs.n, m.slug, attempt), round: rs.n}
 		prompt := e.verifyPromptLocked(m, rs, attempt > 1)
 		e.mu.Unlock()
@@ -312,7 +305,6 @@ func (e *engine) assessHandler(m *mgr, rs *roundState, ts *turnState) ToolHandle
 		ts.status = "assessed"
 		_ = e.record(Event{Kind: "assessment", Manager: m.Path, Turn: ts.id, Round: rs.n, Data: rs.assessments[m.Path]})
 		e.deliverLocked(rs.n)
-		e.scheduleLocked()
 		e.cond.Broadcast()
 		return ToolAnswer{Text: "Assessment recorded."}
 	}

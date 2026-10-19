@@ -11,17 +11,18 @@ import (
 
 // executePhase lets the owners work in the shared tree until the phase is
 // quiescent: no Execute turn runs, no Manager has undelivered items and no
-// owner question waits for an answer. It returns early when the run stops, but
+// owner question waits for an answer. The turns of the phase carry the number
+// of the Verify round that follows. It returns early when the run stops, but
 // only after every running turn returned.
-func (e *engine) executePhase() {
+func (e *engine) executePhase(round int) {
 	e.mu.Lock()
 	defer e.mu.Unlock()
-	e.executeOpen, e.inPhase = true, true
+	e.executeOpen, e.execRound = true, round
 	e.scheduleLocked()
 	for e.ctx.Err() == nil && !e.quiescentLocked() {
 		e.cond.Wait()
 	}
-	e.executeOpen, e.inPhase = false, false
+	e.executeOpen = false
 	for e.running > 0 {
 		e.cond.Wait()
 	}
@@ -45,31 +46,23 @@ func (e *engine) quiescentLocked() bool {
 	return true
 }
 
-// scheduleLocked starts an Execute turn for every idle Manager with
+// scheduleLocked starts an Execute turn for every released, idle Manager with
 // undelivered items, while Execute is open.
 func (e *engine) scheduleLocked() {
 	if !e.executeOpen || e.closing || e.ctx.Err() != nil {
 		return
 	}
 	for _, m := range e.team {
-		if m.running || m.disabled {
+		if m.running || m.disabled || !m.released {
 			continue
 		}
 		e.pruneLocked(m)
-		if len(m.items) == 0 || e.buildWaitLocked(m) {
+		if len(m.items) == 0 {
 			continue
 		}
-		// Keep room for the Verify round that follows this turn. An early turn
-		// also keeps room for the Verify turns of the open round 1.
-		reserve := len(e.team)
-		if !e.inPhase && e.rs != nil {
-			reserve += len(e.team) - len(e.rs.started)
-		}
-		if !e.reserveTurnLocked(reserve) {
-			// An early start only waits; the Execute phase has no other way on.
-			if e.inPhase {
-				e.halt("the agent turn budget cannot cover another Execute turn and a closing Verify round")
-			}
+		// Keep room for the Verify round that follows the phase.
+		if !e.reserveTurnLocked(len(e.team)) {
+			e.halt("the agent turn budget cannot cover another Execute turn and a closing Verify round")
 			return
 		}
 		items, first := m.items, !m.executed || m.conversation == ""
@@ -87,35 +80,20 @@ func (e *engine) scheduleLocked() {
 	}
 }
 
-// seedBuildingParentsLocked gives every building Manager that has a building
-// child one initial Execute item, so its first turn starts at once and does not
-// depend on a Verify finding: its children wait for that turn.
-func (e *engine) seedBuildingParentsLocked() {
-	for _, p := range e.team {
-		if p.Building && slices.ContainsFunc(p.Children, func(c string) bool { return e.byPath[c].Building }) {
-			p.items = append(p.items, item{text: buildSeed(p)})
-		}
+// releaseLocked releases the start of a Manager: its initial mandate item goes
+// first, before any message its parent queued during its own first turn. The
+// release is recorded once per Manager.
+func (e *engine) releaseLocked(m *mgr, why string) {
+	if m.released {
+		return
 	}
-}
-
-// buildWaitLocked reports whether the Manager's first Execute turn must wait
-// for its parent (starting situation 1, build from the model): both are
-// building and the parent, which every building parent with building children
-// starts at round start, has not ended its first Execute turn, whether it
-// finished, waited, failed or was disabled. The wait is recorded once.
-func (e *engine) buildWaitLocked(m *mgr) bool {
-	if !m.Building || m.execCount > 0 || m.Parent == "" {
-		return false
+	m.released = true
+	m.items = append([]item{{text: initialItem(m)}}, m.items...)
+	data := map[string]any{"why": why}
+	if m.Parent != "" {
+		data["parent"] = m.Parent
 	}
-	p := e.byPath[m.Parent]
-	if !p.Building || p.execEnded || p.disabled {
-		return false
-	}
-	if !m.buildWaited {
-		m.buildWaited = true
-		_ = e.record(Event{Kind: "build.wait", Manager: m.Path, Round: e.execRound, Data: map[string]any{"parent": p.Path}})
-	}
-	return true
+	_ = e.record(Event{Kind: "manager.release", Manager: m.Path, Round: e.execRound, Data: data})
 }
 
 func (e *engine) executeTurn(m *mgr, ts *turnState, turn Turn) {
@@ -123,7 +101,7 @@ func (e *engine) executeTurn(m *mgr, ts *turnState, turn Turn) {
 	res, err := e.runTurn(ts, turn, e.executeHandler(m, ts))
 	e.mu.Lock()
 	defer e.mu.Unlock()
-	m.running, m.execEnded = false, true
+	m.running = false
 	e.running--
 	if res.Conversation != "" {
 		m.conversation = res.Conversation
@@ -138,9 +116,29 @@ func (e *engine) executeTurn(m *mgr, ts *turnState, turn Turn) {
 		case res.Stopped:
 			e.failedLocked(m, err)
 		}
+		e.reportLocked(m, ts, err)
+		// The children start when the parent's first turn ended, in any way. A
+		// disabled parent has ended its first turn as well.
+		for _, c := range m.Children {
+			e.releaseLocked(e.byPath[c], "the first Execute turn of its parent ended")
+		}
 	}
 	e.cond.Broadcast()
 	e.scheduleLocked()
+}
+
+// reportLocked delivers a child's summary to its direct parent when the child's
+// turn finished with status done, so that the parent integrates the result.
+func (e *engine) reportLocked(m *mgr, ts *turnState, err error) {
+	if err != nil || ts.status != "done" || m.Parent == "" {
+		return
+	}
+	p := e.byPath[m.Parent]
+	if p.disabled {
+		return
+	}
+	p.items = append(p.items, item{text: fmt.Sprintf("Your child %s reports done: %s", contact(m), ts.summary)})
+	_ = e.record(Event{Kind: "child.report", Manager: m.Path, Turn: ts.id, Round: ts.round, Data: map[string]any{"from": m.Path, "to": p.Path, "summary": ts.summary}})
 }
 
 // failedLocked handles a turn that ended with an error after its container
@@ -191,7 +189,7 @@ func (e *engine) finish(m *mgr, ts *turnState, args json.RawMessage) ToolAnswer 
 	if ts.finished {
 		return refuse("This turn is already finished.")
 	}
-	ts.finished, ts.status = true, in.Status
+	ts.finished, ts.status, ts.summary = true, in.Status, summary
 	_ = e.record(Event{Kind: "turn.finish", Manager: m.Path, Turn: ts.id, Round: ts.round, Data: map[string]any{"status": in.Status, "summary": summary}})
 	return ToolAnswer{Text: "Recorded. Your turn ends."}
 }

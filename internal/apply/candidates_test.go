@@ -503,11 +503,6 @@ func TestCandidatesWritePlansOfTheLibraryLayout(t *testing.T) {
 			t.Errorf("write plan of %s:\n got %+v\nwant %+v", manager, got, want)
 		}
 	}
-	for manager, want := range map[string]bool{".": false, "library": false, "lending": false, "lending/reminders": false} {
-		if got := candidates.Building(manager); got != want {
-			t.Errorf("Building(%s) = %v, want %v", manager, got, want)
-		}
-	}
 }
 
 func TestCandidatesWithoutLayoutEnforceNothing(t *testing.T) {
@@ -519,55 +514,6 @@ func TestCandidatesWithoutLayoutEnforceNothing(t *testing.T) {
 	}
 	if got := candidates.WritePlan("lending"); !reflect.DeepEqual(got, run.WritePlan{}) {
 		t.Fatalf("an undeclared layout must not enforce: %+v", got)
-	}
-}
-
-func TestCandidatesBuildingManagersOwnNothingRegisteredAtTheStart(t *testing.T) {
-	selection, raw := executionInputs(t, withLayout(t, libraryLayoutYAML))
-	censusFile(t, &raw, "realization/library/library.go", snapshot.Regular, []byte("package library\n"))
-	registrySource(t, &selection, &raw, libraryShard, shardYAML(shardEntry("realization/library/library.go", "code", "library/library")), true)
-	candidates, err := apply.NewCandidates(preparedAttempt(t, selection, raw))
-	if err != nil {
-		t.Fatal(err)
-	}
-	for manager, want := range map[string]bool{".": true, "library": false, "lending": true, "lending/reminders": true} {
-		if got := candidates.Building(manager); got != want {
-			t.Errorf("Building(%s) = %v, want %v", manager, got, want)
-		}
-	}
-}
-
-func TestCandidatesRootBuildsUntilItOwnsAnArtifactInAnArtifactRoot(t *testing.T) {
-	for name, tc := range map[string]struct {
-		artifact string
-		want     bool
-	}{
-		"an artifact outside the roots does not count": {"Makefile", true},
-		"an artifact directly in a root counts":        {"realization/go.mod", false},
-	} {
-		t.Run(name, func(t *testing.T) {
-			selection, raw := executionInputs(t, withLayout(t, libraryLayoutYAML))
-			censusFile(t, &raw, tc.artifact, snapshot.Regular, []byte("all:\n"))
-			registrySource(t, &selection, &raw, rootShard, shardYAML(shardEntry(tc.artifact, "build", "library/library")), true)
-			candidates, err := apply.NewCandidates(preparedAttempt(t, selection, raw))
-			if err != nil {
-				t.Fatal(err)
-			}
-			if got := candidates.Building("."); got != tc.want {
-				t.Errorf("Building(.) = %v, want %v", got, tc.want)
-			}
-		})
-	}
-	// Without a layout the old rule holds: any registered artifact of Root counts.
-	selection, raw := executionInputs(t, documentedExecution(t))
-	censusFile(t, &raw, "Makefile", snapshot.Regular, []byte("all:\n"))
-	registrySource(t, &selection, &raw, rootShard, shardYAML(shardEntry("Makefile", "build", "library/library")), true)
-	candidates, err := apply.NewCandidates(preparedAttempt(t, selection, raw))
-	if err != nil {
-		t.Fatal(err)
-	}
-	if candidates.Building(".") {
-		t.Error("without a layout a registered artifact of Root ends its building")
 	}
 }
 
