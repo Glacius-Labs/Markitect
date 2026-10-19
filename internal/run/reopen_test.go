@@ -128,7 +128,7 @@ func TestIntegrationFindingReopensTheChild(t *testing.T) {
 			lending = append(lending, strings.TrimPrefix(step, "lending "))
 		}
 	}
-	if !slices.Equal(lending, []string{"explore", "reviewer-expectations", "work", "reviewer-candidate", "reviewer-expectations", "work", "reviewer-candidate"}) {
+	if !slices.Equal(lending, []string{"reviewer-expectations", "work", "reviewer-candidate", "reviewer-expectations", "work", "reviewer-candidate"}) {
 		t.Fatal("the reopened child's cases were not recorded fresh before its rework", lending)
 	}
 	issues := h.c.Issues("lending")

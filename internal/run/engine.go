@@ -930,8 +930,6 @@ func sendNote(phase Phase, args []byte, id string) string {
 	var in sendInput
 	_ = decodeArgs(args, &in)
 	switch {
-	case phase == PhaseExplore:
-		return "The message is recorded with your step's outcome. Sending does not end your step: end it with report or submit."
 	case phase.writing() && in.Kind == messageQuestion:
 		return fmt.Sprintf("The message is recorded with your step's outcome. Sending does not end your step: end it with exactly one outcome call, for example wait with {\"on\":[{\"kind\":\"reply\",\"ref\":%q}],\"reason\":\"Needs the answer.\"} if you need the answer first.", id)
 	case phase.writing():

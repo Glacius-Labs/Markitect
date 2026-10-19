@@ -230,11 +230,11 @@ the design documents.
 This section implements the [core protocol](../../docs/design/canonical-model/manager-apply-core.md)
 for basis v3. Rule IDs refer to that document.
 
-When a run is prepared, every Manager of the recorded topology gets one task.
-`Next` returns the one admissible step of the run (T4): Explore children before
-parents (T1), reviews of submissions at any time (T3), and work, integration
-and the expectations steps that precede them only after every task is explored
-(T2, DEC-049). Ties break with reply steps first, then by
+When a run is prepared, every Manager of the recorded topology gets one task,
+and every task starts ready (DEC-052). `Next` returns the one admissible step
+of the run (T4): reviews of submissions, work and integration steps, and the
+expectations steps that precede them (DEC-049), in the order in which they
+became admissible. Ties break with reply steps first, then by
 Manager path, then by kind. The admission names the phase, the provider home
 and the conversation to resume: a Manager's steps continue its conversation
 (S3), while expectations and candidate steps start fresh conversations, and
@@ -247,7 +247,7 @@ start a step. The reducer checks the phase's role, tool catalogue, workspace
 mode, provider home, conversation and reservation purpose, and keeps one step
 at a time (S5). Step preparation compiles the original model again, matches the
 whole binding and renders the phase's view: the Manager sees its own artifacts
-in the step's version, its open findings and its children's states and reports;
+in the step's version, its open findings and its children's states and proposals;
 the expectations review sees the model and the open findings; the candidate
 review also sees the frozen candidate, its proposal and the recorded
 expectations. The caller supplies that version and the quoted payloads that
@@ -269,9 +269,9 @@ finding. A failed assessment needs no cases. A pass
 must resolve every open blocking finding of its purpose; it is withheld while another open blocking issue covers the task,
 for an integration also one of a descendant (I3), while a producer the candidate used delivered again after the
 candidate's step (D4), or, for an integration, while a child is not done (T9). The
-task's next step sees why its pass was withheld. Once the write barrier is
-open, a reviewer records the expectations before a task's writing step for a
-purpose, unless cases for that purpose still stand, so that the Manager knows
+task's next step sees why its pass was withheld. A reviewer records the
+expectations before a task's writing step for a purpose, including its first,
+unless cases for that purpose still stand, so that the Manager knows
 them and the review of its submission has only the candidate step; that step is
 charged as preparation and does not use the completion reserve (DEC-049).
 Unless its assessment failed, a review leaves its recorded expectations standing for the task's later submissions
@@ -320,13 +320,13 @@ direct parent, a question to another Manager travels along the tree, and the
 Managers on its path see it in their next step without being dispatched (M2).
 A question becomes an issue addressed to its addressee; a reply from that
 addressee resolves it and wakes an asker waiting for it (I2, T10). A question
-that none of a blocked task's Explore, work or integrate steps has seen makes
+that none of a blocked task's work or integrate steps has seen makes
 it ready, so that its next step answers it and can act on it (T10); hints and
 replies it did not wait for do not wake it. A Manager that cannot otherwise
-act answers in a reply step and keeps its state: a done or explored one (T11),
+act answers in a reply step and keeps its state: a done one (T11),
 one awaiting the owner's decision on its frozen submission (T8), and a blocked
-one whose last step saw the question but left it unanswered. Once every Manager has explored,
-the reply step of a done or blocked task may correct the Manager's own files,
+one whose last step saw the question but left it unanswered. The reply
+step of a done or blocked task may correct the Manager's own files,
 except while the owner decides on its frozen submission (T8); a change, even
 one the Host refuses, returns the task to work with any refusal as its failure,
 and a done task's done ancestors wait for it again. An integration composes
@@ -345,7 +345,7 @@ A parent's hints reach its direct children. A failed step's messages are
 dropped with it (T6).
 
 Not yet implemented: a parent forwarding or broadcasting a question it cannot
-answer (M3, it asks anew instead), `assign_owner` and intake (T2, D6), the
+answer (M3, it asks anew instead), `assign_owner` (D6), the
 dispatch of a common parent for waits nothing satisfies (T12, the run finishes
 Incomplete instead), review batching, open issues carried
 into a continuation run (I5), a fresh conversation

@@ -374,7 +374,6 @@ func TestSendNoteFitsThePhase(t *testing.T) {
 		args     []byte
 		contains string
 	}{
-		{PhaseExplore, question, "end it with report or submit"},
 		{PhaseWork, question, `{"on":[{"kind":"reply","ref":"q-1"}],"reason":"Needs the answer."}`},
 		{PhaseIntegrate, hint, "submit or wait"},
 		{PhaseReply, []byte(`{"kind":"reply","to":"q-1","body":"Yes."}`), ""},

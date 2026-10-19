@@ -109,7 +109,7 @@ func (f *bootstrapExecutionSessions) Step(ctx context.Context, a runport.StepAdm
 	if packet.Phase == runport.PhaseWork && bytes.Contains(packet.Context.Bytes, []byte("Continue the fake no-change realization.")) {
 		f.answered = true
 	}
-	tool, args := runport.ToolReport, `{"summary":"Nothing to change.","proposedChanges":[],"prerequisites":[],"uncertainties":[],"questions":[]}`
+	var tool, args string
 	switch packet.Phase {
 	case runport.PhaseWork:
 		tool, args = runport.ToolSubmit, `{"purpose":"local","scope":"complete","summary":"No change.","assessments":[],"dependencies":[]}`
@@ -119,6 +119,8 @@ func (f *bootstrapExecutionSessions) Step(ctx context.Context, a runport.StepAdm
 		tool, args = runport.ToolRecordExpectations, `{"cases":[{"name":"area","expectation":"Unchanged.","discriminates":"Any change."}]}`
 	case runport.PhaseReviewerCandidate:
 		tool, args = runport.ToolSubmitReview, `{"verdict":"pass","summary":"Fake review passed.","evidence":[],"cases":[{"name":"area","assessment":"evidenced","grounds":"Unchanged."}],"findings":[],"resolutions":[]}`
+	default:
+		return runport.StepObservation{}, fmt.Errorf("unexpected %s step", packet.Phase)
 	}
 	if asked {
 		tool, args = runport.ToolWait, fmt.Sprintf(`{"on":[{"kind":"owner","ref":%q}],"reason":"Await the explicit owner answer."}`, "question-"+string(step)+"-1")

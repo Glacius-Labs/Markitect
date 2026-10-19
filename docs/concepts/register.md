@@ -62,6 +62,7 @@ The owner's [origin account of 15 October 2026](sources/owner-origin-20261015.md
 | [DEC-049](#dec-049-review-cases-are-recorded-before-the-work-they-assess) | Decision | Review cases are recorded before the work they assess | Accepted |
 | [DEC-050](#dec-050-an-accepted-delivery-restarts-the-rejection-count) | Decision | An accepted delivery restarts the rejection count | Accepted |
 | [DEC-051](#dec-051-agents-get-tasks-the-orchestrator-owns-the-process) | Decision | Agents get tasks; the Orchestrator owns the process | Accepted |
+| [DEC-052](#dec-052-implement-then-review-no-explore-phase) | Decision | Implement then review: no Explore phase | Accepted |
 | [DEC-053](#dec-053-owner-decisions-bind-the-whole-run) | Decision | Owner decisions bind the whole run | Accepted |
 | [PRM-001 to PRM-007](#promises) | Promise | Target outcomes | Target |
 | [ASM-001 to ASM-006](#assumptions-and-hypotheses) | Assumption | Assumptions and hypotheses | See entries |
@@ -492,6 +493,8 @@ The owner's [origin account of 15 October 2026](sources/owner-origin-20261015.md
 
 **Updated by [DEC-041](#dec-041-core-protocol-choices):** cross-area requests are forwarded by the Orchestrator instead of dispatched hop by hop. Warm retention and quiescent basis advances are deferred beyond the first Apply. The statement below records the decision as accepted.
 
+**Updated by [DEC-052](#dec-052-implement-then-review-no-explore-phase):** the Explore refinement, the write barrier and the "before the Explore barrier" mount rule below are removed; every Manager starts with a work step. Read-only mounts and mutation denial still apply to steps that may not write.
+
 - **Status:** Accepted, owner, 17 October 2026 ([original clarification and confirmation](sources/manager-process-clarification-20261017.md)). This changes the parent-authored prompts of DEC-029 and the root-planned delivery order adopted in DEC-036. Historical sources remain unchanged.
 - **Statement:** Apply supplies one static operation instruction. Deterministic compilation supplies each Manager's explicit model context; configuration and Orchestrator facts complete its template. The Orchestrator guarantees propagation from root through every direct child, recursively, without AI selection, rewriting or omission. Every local Manager assesses its area and returns reviewed change or no-change; intermediate and empty Packages are not skipped. Managers act on messages and communicate only with direct parent or children. Cross-area requests travel up and down that tree, using explicit routing facts or bounded inquiry, never inferred model relationships. Local review, integration, corrections and final evidence/publication follow the fixed Orchestrator process. Parents retain their own work and integration responsibility, including prerequisites needed by waiting children.
 - **Why:** The owner observed that the previous design moved already modeled structure back into AI planning. The intended organization should guarantee participation and required workflow steps while leaving realization and semantic judgment to Agents.
@@ -516,6 +519,8 @@ The owner's [origin account of 15 October 2026](sources/owner-origin-20261015.md
 - **Owning document:** the [Apply design map](../design/canonical-model/README.md#apply-design).
 
 ### DEC-041 Core protocol choices
+
+**Updated by [DEC-052](#dec-052-implement-then-review-no-explore-phase):** a Manager that finds nothing to change submits its no-change result from its first work step; there is no Explore step.
 
 - **Status:** Accepted, owner, 17 October 2026 ([source](sources/architecture-review-20261017.md#core-protocol-choices)). The owner selected one prepared option for each of six questions.
 - **Statement:**
@@ -599,6 +604,8 @@ The owner's [origin account of 15 October 2026](sources/owner-origin-20261015.md
 
 ### DEC-049 Review cases are recorded before the work they assess
 
+**Updated by [DEC-052](#dec-052-implement-then-review-no-explore-phase):** there is no write barrier any more, so "once the write barrier is open" below no longer limits anything. A ready task's expectations step is admissible when the run starts.
+
 - **Status:** Accepted, Architect under the owner's authorization, 18 October 2026 ([evidence and owner instruction](sources/review-cases-before-work-20261018.md)).
 - **Decision:** Once the write barrier is open, a task whose next step writes for a purpose gets an expectations step first, unless cases for that purpose still stand ([DEC-048](#dec-048-recorded-review-cases-stand-for-every-delivery-of-a-purpose)). A work step writes for the local purpose; an integration step writes for the integration purpose. The recorded cases stand for the task's submissions with that purpose, and the Manager's writing step shows them. A review of a submission against standing cases has only its candidate step. A reply step is admitted before other items that became admissible with it, so that a question is answered before the asking step's submission is reviewed.
 - **Reason:** In R2-A1-08, 6 of 11 fresh case sets were rejected on their first review, for scenarios the Manager could not know. Recording the cases first lets the Manager build against them. The expectations step never sees a candidate, so recording it earlier changes nothing it could see.
@@ -621,6 +628,15 @@ The owner's [origin account of 15 October 2026](sources/owner-origin-20261015.md
 - **Reason:** The step inputs had accumulated the Host's rules: admission order, the write barrier, the rejection allowance, owner-question mechanics. The owner expects results to become less reliable as prompts take over organization and orchestration, and wants that loop stopped.
 - **Scope:** Applies to every rendered step input and Host note. The model's binding intent, the technical-judgment duty of [DEC-045](#dec-045-managers-and-reviewers-derive-technical-risks) and the provenance the Host records for each section are unchanged. The first change removes the process rules from the role, mandate, phase, review and note texts. The provenance sections the step input still shows, such as record references, limits, profile identities and inclusion reasons, move out of the visible text in a follow-up; the Host keeps recording them. Task facts such as a Manager's creation areas stay visible.
 - **Owners:** [organization/delegated-context](../../.markitect/model/product/organization/delegated-context.yaml) rendering in `internal/organization`, and the Host notes in `internal/run`.
+
+### DEC-052 Implement then review: no Explore phase
+
+- **Status:** Accepted, owner, 18 October 2026 ([owner instruction and evidence](sources/implement-review-20261018.md)).
+- **Decision:** A Manager's first step is a work step. Every task starts ready. Apply has no Explore step, no write barrier and no intake review. A Manager that needs no change submits a complete no-change result from its first work step. A reviewer records the cases before that step ([DEC-049](#dec-049-review-cases-are-recorded-before-the-work-they-assess)), and the independent review assesses the result against them. No Plan step is added. The owner registers or ignores the unexplained files of the captured source before Apply, and the file check fails a run on an unexplained file.
+- **Reason:** In the bound runs R2-A1-04 to R2-A1-08, Explore took 6 steps per run, one for each of the 6 Managers, about 4 % of wall time, and gave no information in an empty repository. What it cost was the write barrier and the prompt rules around it, which [DEC-051](#dec-051-agents-get-tasks-the-orchestrator-owns-the-process) wants out of the prompts. Removing the intake of unexplained files is a design simplification: intake was never implemented, so it cost nothing in those runs.
+- **Cost:** The evidence comes only from an empty repository. A parent no longer reads its children's assessments before it starts, and the root learns about files that several Packages need only from messages and deliveries. Later runs have to show whether questions and waits grow. Settling unexplained files is now the owner's job before Apply, which is an adoption burden for existing code.
+- **Scope:** Replaces the Explore refinement of [DEC-039](#dec-039-deterministic-manager-process) and the no-change-during-Explore rule of [DEC-041](#dec-041-core-protocol-choices). Amends [DEC-049](#dec-049-review-cases-are-recorded-before-the-work-they-assess). Removes rules T1 to T3 (their IDs stay reserved), the `report` tool and the intake path of D6. Admission order, the review and acceptance rules, the rejection limit, the budget purposes and the messages are unchanged.
+- **Owners:** [core protocol](../design/canonical-model/manager-apply-core.md#manager-tasks), rules T4 to T7, D6 and the Orchestrator tool table.
 
 ### DEC-053 Owner decisions bind the whole run
 

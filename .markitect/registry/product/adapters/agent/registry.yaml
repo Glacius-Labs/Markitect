@@ -59,7 +59,7 @@ artifacts:
   - path: "internal/adapters/claudecode/session_step.go"
     form: code
     realizes: [product/ports-and-adapters]
-    why: Binds actual init identity and the exclusive single-step channel, returns acknowledged Host answers and projects only the current Explore catalogue.
+    why: Binds actual init identity and the exclusive single-step channel, returns acknowledged Host answers and projects only the admitted step's catalogue.
   - path: "internal/adapters/claudecode/session_test.go"
     form: test
     realizes: [product/ports-and-adapters]
@@ -135,7 +135,7 @@ artifacts:
   - path: "internal/adapters/codexappserver/session_step.go"
     form: code
     realizes: [product/ports-and-adapters]
-    why: Runs one admitted Codex turn with exact thread and call correlation, recorded Host outcomes and explicit Explore-report proposal projection.
+    why: Runs one admitted Codex turn with exact thread and call correlation, recorded Host outcomes, and proposes no outcome from final text.
   - path: "internal/adapters/codexappserver/session_test.go"
     form: test
     realizes: [product/ports-and-adapters]

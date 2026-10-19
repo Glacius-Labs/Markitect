@@ -412,3 +412,35 @@ func TestAReplyStepTakesTheQuestionItAnswered(t *testing.T) {
 		t.Fatal("a question was left without its reply step", h.c.Current(), asks, replied)
 	}
 }
+
+// A done Manager's reply step may correct its own files from the start of the
+// run: no other Manager has to finish first (core rules T10, T11).
+func TestADoneManagersReplyMayWriteWhileOthersStillWork(t *testing.T) {
+	t.Parallel()
+	var asked string
+	agent := func(s agentStep) []action {
+		switch {
+		case s.Manager == "." && s.Phase == run.PhaseWork && s.Attempt == 0:
+			asked = questionID(s, 1)
+			return append([]action{{Tool: run.ToolSend, Args: sendArgs("question", "empty", "Which format?"), Want: run.ToolOK}}, happyAgent(s)...)
+		case s.Manager == "empty" && s.Phase == run.PhaseReply:
+			return []action{{Tool: run.ToolSend, Args: sendArgs("reply", asked, "The shared one."), Want: run.ToolOK}}
+		}
+		return happyAgent(s)
+	}
+	inputs := stepInputs(t, false)
+	inputs.Binding.Policy.Assignment.Steps, inputs.Binding.Policy.Assignment.SessionStarts = 64, 64
+	h := newHarnessWith(t, inputs, agent)
+	h.advanceUntil(func(a run.Admission) bool { return a.Phase == run.PhaseReply })
+	item, ok := h.c.Next()
+	if !ok || item.Manager != "empty" || !item.Writes {
+		t.Fatal("the done Manager's reply step may not write", item, ok)
+	}
+	if h.task("empty").State != run.TaskDone || h.task("lending").State == run.TaskDone || h.task(".").State == run.TaskDone {
+		t.Fatal("the reply was not admitted while other Managers still work", h.task("empty").State, h.task("lending").State)
+	}
+	runToEnd(t, h)
+	if h.c.Current().State != run.Verifying {
+		t.Fatal("run did not complete", h.c.Current(), h.sessions.answers)
+	}
+}

@@ -264,8 +264,8 @@ func sessionAdmissions(t *testing.T) (run.SessionAdmission, run.StepAdmission) {
 	plan := run.SessionPlan{ID: "session", Role: "manager", Workspace: "workspace", ProviderHome: "provider-home", ImageID: "sha256:" + strings.Repeat("a", 64), CredentialRef: "exact-credential", MaxWireBytes: 1 << 20, Profile: p.Ref(), Tools: tools.Ref()}
 	plan.Candidate[0] = 1
 	a := run.SessionAdmission{Plan: plan, Profile: p, Tools: tools, Receipt: receipt(), Invocation: "open"}
-	input := payloadForSession(t, "application/vnd.markitect.explore-input+json", []byte(`{"exact":"input"}`))
-	contract, err := run.NewStepContract(run.PhaseExplore)
+	input := payloadForSession(t, "application/vnd.markitect.step-input+json", []byte(`{"exact":"input"}`))
+	contract, err := run.NewStepContract(run.PhaseWork)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -570,7 +570,7 @@ func TestClaudeContractAndBindingRefusedBeforeDispatch(t *testing.T) {
 				b.OutputContract = payloadForSession(t, "application/vnd.markitect.explore-contract+json", []byte(`{"Format":"markitect.explore-report/v1","Fields":{},"AdditionalFields":false}`))
 				b.Plan.OutputContract = b.OutputContract.Ref()
 			case "changed-outcomes":
-				b.OutputContract = payloadForSession(t, run.StepContractMedia, []byte(`{"Format":"markitect.step-outcome/v1","Phase":"work","Outcomes":["report"]}`))
+				b.OutputContract = payloadForSession(t, run.StepContractMedia, []byte(`{"Format":"markitect.step-outcome/v1","Phase":"work","Outcomes":["wait"]}`))
 				b.Plan.OutputContract = b.OutputContract.Ref()
 			case "input-ref":
 				b.Plan.Input.Size++
@@ -738,7 +738,7 @@ func TestClaudeNativeSessionAndStopReasonCannotJournalKnownToken(t *testing.T) {
 }
 
 func TestClaudeStepPhasesUseHostToolsAndIgnoreFinalText(t *testing.T) {
-	for _, phase := range []run.Phase{run.PhaseExplore, run.PhaseWork, run.PhaseIntegrate, run.PhaseReply, run.PhaseReviewerExpectations, run.PhaseReviewerCandidate} {
+	for _, phase := range []run.Phase{run.PhaseWork, run.PhaseIntegrate, run.PhaseReply, run.PhaseReviewerExpectations, run.PhaseReviewerCandidate} {
 		t.Run(string(phase), func(t *testing.T) {
 			channel := &fakeChannel{}
 			runtime := peer(channel)

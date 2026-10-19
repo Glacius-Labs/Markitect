@@ -111,7 +111,7 @@ func TestClosedAssignmentAndFreshLedgerSurviveSameStreamRestoreAndReplay(t *test
 	t.Parallel()
 	c, j := running(t)
 	b := binding(t)
-	exploreNext(t, c, j, stepInputs(t, false), "root")
+	driveNext(t, c, j, stepInputs(t, false), "root")
 	finishIncomplete(t, c, j)
 	extend := extension("extend", fixture(t).Policy.Ceilings)
 	commit(t, c, j, extend)
@@ -183,7 +183,7 @@ func TestClosedAssignmentAndFreshLedgerSurviveSameStreamRestoreAndReplay(t *test
 	if err != nil {
 		t.Fatal(err)
 	}
-	x, err = c2.PrepareTaskSessionCommand(meta("new-command"), item, x.Session.Plan, run.Reservation{ID: "invoke-root", Kind: run.SessionStart, Purpose: run.Writing, Maximum: time.Minute}, profile, tools)
+	x, err = c2.PrepareTaskSessionCommand(meta("new-command"), item, x.Session.Plan, run.Reservation{ID: "invoke-root", Kind: run.SessionStart, Purpose: item.Purpose, Maximum: time.Minute}, profile, tools)
 	if err != nil {
 		t.Fatal(err)
 	}

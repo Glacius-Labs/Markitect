@@ -34,7 +34,7 @@ func renderFixture(t *testing.T, pkg string, view organization.ContextView) (org
 		RemainingLimits: []organization.HostText{hostFact("limit-observation", "Remaining steps: 12. This observation grants no extension.")},
 	}
 	if view == organization.ManagerView {
-		input.Process = &organization.ManagerProcess{Phase: organization.ManagerExplore, Source: hostRef("phase-1", "/phase")}
+		input.Process = &organization.ManagerProcess{Phase: organization.ManagerWork, Source: hostRef("phase-1", "/phase")}
 	}
 	return selection, settings, input
 }

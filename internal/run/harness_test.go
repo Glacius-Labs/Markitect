@@ -70,9 +70,14 @@ func taskSession(t *testing.T, c *run.Coordinator, id run.SessionID, candidate s
 	if !ok {
 		t.Fatal("no admissible step")
 	}
-	role, purpose := "manager", run.Writing
+	role, purpose := "manager", item.Purpose
 	if item.Phase == run.PhaseReviewerExpectations || item.Phase == run.PhaseReviewerCandidate {
-		role, purpose = "reviewer", run.Assessment
+		role = "reviewer"
+	}
+	if item.Phase == run.PhaseReviewerExpectations {
+		// The expectations step sees no candidate (core rule T7).
+		empty, _ := snapshot.NewTree(nil)
+		candidate = empty.Digest()
 	}
 	profile := payload(t, `{"profile":"synthetic recorded metadata"}`)
 	tools, err := run.ToolCatalog(item.Phase)
@@ -180,6 +185,9 @@ type fakeSessions struct {
 	answers  []string
 	packets  []run.StepPacket
 	n        int
+	// prefix keeps the identities of several scripted adapters in one journal
+	// apart.
+	prefix string
 	// Fault injection: the next failOpen opens fail after the init send.
 	// stops counts Stop calls.
 	failOpen int
@@ -192,12 +200,12 @@ type fakeSessions struct {
 
 func (f *fakeSessions) meta(kind string) run.RecordMeta {
 	f.n++
-	return meta(fmt.Sprintf("fake-%s-%d", kind, f.n))
+	return meta(fmt.Sprintf("%sfake-%s-%d", f.prefix, kind, f.n))
 }
 
 func (f *fakeSessions) send(ctx context.Context, io run.SessionIO, step run.StepID, call run.ProviderCallID, data string) error {
 	f.n++
-	id := run.MessageID(fmt.Sprintf("message-%d", f.n))
+	id := run.MessageID(fmt.Sprintf("%smessage-%d", f.prefix, f.n))
 	if _, err := io.PrepareSend(ctx, run.TransportPreparation{RecordMeta: f.meta("send"), Message: id, Step: step, Call: call, Wire: wire(f.t, data)}); err != nil {
 		return err
 	}
@@ -405,7 +413,6 @@ func (h *harness) task(manager string) run.TaskView {
 
 // Scripted Agent arguments.
 const (
-	reportArgs       = `{"summary":"Inspected the area.","proposedChanges":[],"prerequisites":[],"uncertainties":[],"questions":[]}`
 	expectationsArgs = `{"cases":[{"name":"item","expectation":"The library realizes Item.","discriminates":"A missing Item type fails."}]}`
 )
 
@@ -426,12 +433,10 @@ func passArgs(resolve ...string) string {
 
 const rejectArgs = `{"verdict":"changes_requested","summary":"Item is missing.","evidence":[],"cases":[{"name":"item","assessment":"evidenced","grounds":"Checked."}],"resolutions":[],"findings":[{"severity":"blocking","definitions":["lending/Item"],"grounds":"No type realizes Item.","requestedEvidence":"A type named Item."}]}`
 
-// happyAgent explores with a report, submits local and integration work
-// complete, writes lending's file, and passes every review.
+// happyAgent submits local and integration work complete, writes lending's
+// file, records the reviewers' cases and passes every review.
 func happyAgent(s agentStep) []action {
 	switch s.Phase {
-	case run.PhaseExplore:
-		return []action{{Tool: run.ToolReport, Args: reportArgs, Want: run.ToolOK}}
 	case run.PhaseWork:
 		var writes map[string]string
 		if s.Manager == "lending" {
@@ -448,18 +453,23 @@ func happyAgent(s agentStep) []action {
 	return nil
 }
 
-// exploreNext drives the run's next admissible Explore step to a report with
-// fixed identities: session id, reservations open-<id> and invoke-<id>.
-func exploreNext(t *testing.T, c *run.Coordinator, j *memoryJournal, inputs run.StepPreparation, id run.SessionID) {
+// driveNext drives the run's next admissible step, a reviewer's expectations
+// step or a Manager's no-change work step, to its outcome with fixed
+// identities: session id, reservations open-<id> and invoke-<id>.
+func driveNext(t *testing.T, c *run.Coordinator, j *memoryJournal, inputs run.StepPreparation, id run.SessionID) {
 	t.Helper()
 	ctx := context.Background()
 	item, ok := c.Next()
-	if !ok || item.Phase != run.PhaseExplore {
-		t.Fatal("no admissible Explore step", item)
+	outcome := action{Tool: run.ToolRecordExpectations, Args: expectationsArgs, Want: run.ToolOK}
+	if item.Phase == run.PhaseWork {
+		outcome = action{Tool: run.ToolSubmit, Args: submitArgs("local", "complete"), Want: run.ToolOK}
+	}
+	if !ok || item.Phase != run.PhaseWork && item.Phase != run.PhaseReviewerExpectations {
+		t.Fatal("no admissible expectations or work step", item)
 	}
 	cmd := taskSession(t, c, id, inputs.Binding.Census.Digest())
 	commit(t, c, j, cmd)
-	f := &fakeSessions{t: t, ws: newWorkspaces(), script: func(agentStep) []action { return []action{{Tool: run.ToolReport, Args: reportArgs, Want: run.ToolOK}} }, attempts: map[string]int{}}
+	f := &fakeSessions{t: t, ws: newWorkspaces(), script: func(agentStep) []action { return []action{outcome} }, attempts: map[string]int{}, prefix: string(id) + "-"}
 	io, err := c.SessionChannel(j, id, func(_ context.Context, call run.ToolCall, _ int64) (run.ToolOutcome, error) {
 		args, err := run.CallArguments(call.Tool, call.Input.Journal.Bytes())
 		if err == nil {
@@ -481,14 +491,9 @@ func exploreNext(t *testing.T, c *run.Coordinator, j *memoryJournal, inputs run.
 		t.Fatal(err)
 	}
 	commit(t, c, j, settle("open-"+string(id), time.Second))
-	var quoted []run.Payload
-	for _, ref := range c.StepQuotes(item.Manager) {
-		quoted = append(quoted, j.blobs[ref])
-	}
-	facts := sourceFacts(inputs)
-	facts.Quoted = quoted
+	facts := quotedFacts(c, j, inputs, item.Manager)
 	step, err := c.PrepareTaskStepCommand(meta("prepare-step-"+string(id)), run.StepPlan{Session: id, ID: run.StepID("step-" + string(id)), SessionBinding: cmd.Session.Plan.Binding()},
-		run.Reservation{ID: "invoke-" + string(id), Kind: run.AgentStep, Purpose: run.Writing, Maximum: time.Minute}, inputs, facts)
+		run.Reservation{ID: "invoke-" + string(id), Kind: run.AgentStep, Purpose: item.Purpose, Maximum: time.Minute}, inputs, facts)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -510,11 +515,21 @@ func exploreNext(t *testing.T, c *run.Coordinator, j *memoryJournal, inputs run.
 	}
 	ref, ok := c.OutcomeInput(item.Manager)
 	if !ok {
-		t.Fatal("no answered report")
+		t.Fatal("no answered outcome")
 	}
 	conclude, err := c.ConcludeStepCommand(meta("conclude-"+string(id)), item.Manager, run.StepResult{Input: j.blobs[ref], Aggregate: c.AggregateVersion()})
 	if err != nil {
 		t.Fatal(err)
 	}
 	commit(t, c, j, conclude)
+}
+
+// quotedFacts are the step facts of the captured source with the recorded
+// payloads that the manager's current step quotes.
+func quotedFacts(c *run.Coordinator, j *memoryJournal, inputs run.StepPreparation, manager string) run.StepFacts {
+	facts := sourceFacts(inputs)
+	for _, ref := range c.StepQuotes(manager) {
+		facts.Quoted = append(facts.Quoted, j.blobs[ref])
+	}
+	return facts
 }

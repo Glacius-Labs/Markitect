@@ -97,7 +97,7 @@ func (c *controlledSessionIO) Call(_ context.Context, call run.ToolCall) (run.To
 		return run.ToolResult{}, run.ErrInvalid
 	}
 	outcome := run.ToolOutcome{Status: run.ToolRefused, Reason: "This bounded smoke supports only its requested outcome tool."}
-	expected := run.ToolReport
+	expected := run.ToolSubmit
 	if c.phase == run.PhaseReviewerCandidate {
 		expected = run.ToolSubmitReview
 	}
@@ -123,19 +123,18 @@ func (c *controlledSessionIO) Call(_ context.Context, call run.ToolCall) (run.To
 			}
 			summary = review.Summary
 		} else {
-			var report struct {
-				Summary         string   `json:"summary"`
-				ProposedChanges []string `json:"proposedChanges"`
-				Prerequisites   []string `json:"prerequisites"`
-				Uncertainties   []string `json:"uncertainties"`
-				Questions       []string `json:"questions"`
+			var submission struct {
+				Purpose      string            `json:"purpose"`
+				Scope        string            `json:"scope"`
+				Summary      string            `json:"summary"`
+				Assessments  []json.RawMessage `json:"assessments"`
+				Dependencies []string          `json:"dependencies"`
 			}
-			if strictValue(wireCall.Arguments, &report) != nil || report.ProposedChanges == nil || len(report.ProposedChanges) != 0 ||
-				report.Prerequisites == nil || len(report.Prerequisites) != 0 || report.Uncertainties == nil || len(report.Uncertainties) != 0 ||
-				report.Questions == nil || len(report.Questions) != 0 {
+			if strictValue(wireCall.Arguments, &submission) != nil || submission.Purpose != "local" || submission.Scope != "complete" ||
+				submission.Assessments == nil || len(submission.Assessments) != 0 || submission.Dependencies == nil || len(submission.Dependencies) != 0 {
 				return run.ToolResult{}, run.ErrInvalid
 			}
-			summary = report.Summary
+			summary = submission.Summary
 		}
 		if c.outcome || !strings.Contains(summary, c.artifact) ||
 			c.continuity != "" && !strings.Contains(summary, c.continuity) {
@@ -181,14 +180,14 @@ func TestSessionSmokeObserverDecodesActualToolEnvelope(t *testing.T) {
 		phase           run.Phase
 		tool, arguments string
 	}{
-		{run.PhaseExplore, run.ToolReport, `{"summary":"artifact-token conversation-token","proposedChanges":[],"prerequisites":[],"uncertainties":[],"questions":[]}`},
+		{run.PhaseWork, run.ToolSubmit, `{"purpose":"local","scope":"complete","summary":"artifact-token conversation-token","assessments":[],"dependencies":[]}`},
 		{run.PhaseReviewerCandidate, run.ToolSubmitReview, `{"verdict":"pass","summary":"artifact-token conversation-token","findings":[],"resolutions":[],"evidence":[],"cases":[]}`},
 	} {
 		t.Run(string(tc.phase), func(t *testing.T) {
 			channel := &controlledSessionIO{step: "step", phase: tc.phase, artifact: "artifact-token", continuity: "conversation-token",
 				bound: "observed-provider", answered: map[run.ProviderCallID]bool{}}
 			call := run.ToolCall{Step: "step", Call: "provider-call", Tool: tc.tool}
-			// A bare report, including report-shaped final text, is no observed tool
+			// A bare submission, including submission-shaped final text, is no observed tool
 			// envelope and must never satisfy this smoke.
 			call.Input.Journal = sessionSmokePayload(t, "application/vnd.markitect.agentd-tool-call", []byte(tc.arguments))
 			if _, err := channel.Call(context.Background(), call); err == nil || channel.outcome {
@@ -336,6 +335,8 @@ func TestAdmittedSessionAdapterSmoke(t *testing.T) {
 		if err != nil {
 			t.Fatal("actual StepContract unavailable")
 		}
+		// This read-only work plan is never admitted by the Coordinator; it only
+		// exercises the adapter.
 		plan := run.SessionPlan{ID: run.SessionID(name + "-" + suffix), Role: role, Workspace: workspace,
 			ProviderHome: home, ImageID: image, CredentialRef: credentialRef, Resume: resume,
 			Candidate: tree.Digest(), ReadOnly: true, MaxWireBytes: 1 << 20, Profile: profilePayload.Ref(), Tools: tools.Ref()}
@@ -345,7 +346,7 @@ func TestAdmittedSessionAdapterSmoke(t *testing.T) {
 		if role == "reviewer" {
 			prompt += "Independently inspect this one-file candidate. Call submit_review exactly once with verdict pass, summary containing the exact file contents, and empty cases, findings, resolutions and evidence arrays."
 		} else {
-			prompt += "Call report exactly once: summary must contain the exact file contents; proposedChanges, prerequisites, uncertainties and questions must all be empty arrays."
+			prompt += "Call submit exactly once with purpose local, scope complete, a summary that contains the exact file contents, and empty assessments and dependencies arrays."
 		}
 		if recall {
 			channel.continuity = conversation
@@ -390,8 +391,8 @@ func TestAdmittedSessionAdapterSmoke(t *testing.T) {
 		t.Logf("observed %s: image=%s profile=%x metadata=%x candidate=%s; controlled in-memory receipts only", suffix, image, profileSum, metadataSum, tree.Digest())
 		return channel.bound
 	}
-	first := oneStep("manager-first", "manager", managerHome, run.PhaseExplore, "", false)
-	resumed := oneStep("manager-resume", "manager", managerHome, run.PhaseExplore, first, true)
+	first := oneStep("manager-first", "manager", managerHome, run.PhaseWork, "", false)
+	resumed := oneStep("manager-resume", "manager", managerHome, run.PhaseWork, first, true)
 	reviewer := oneStep("reviewer-fresh", "reviewer", reviewerHome, run.PhaseReviewerCandidate, "", false)
 	if resumed != first || reviewer == first {
 		t.Fatal("manager continuity or fresh reviewer identity not distinguished")

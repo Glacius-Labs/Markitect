@@ -28,11 +28,11 @@ func aggregateFile(t *testing.T, e *run.Engine, path string) string {
 	return string(entry.Bytes())
 }
 
-// The whole core runs one Package end to end: children explore first, the
-// barrier opens, reviewers record each task's cases before its writing step,
-// the leaf's first candidate is rejected and reworked against the same cases,
-// the accepted delivery is composed into the aggregate, the parent integrates,
-// and the root's completion moves the run to Verifying.
+// The whole core runs one Package end to end: reviewers record each task's
+// cases before its first work step, the leaf's first candidate is rejected
+// and reworked against the same cases, the accepted delivery is composed into
+// the aggregate, the parent integrates, and the root's completion moves the
+// run to Verifying.
 func TestEngineRunsOnePackageThroughRejectionReworkAndIntegration(t *testing.T) {
 	t.Parallel()
 	agent := func(s agentStep) []action {
@@ -84,7 +84,6 @@ func TestEngineRunsOnePackageThroughRejectionReworkAndIntegration(t *testing.T) 
 	}
 	order := admitted(h)
 	want := []string{
-		"lending explore", ". explore",
 		". reviewer-expectations", "lending reviewer-expectations", ". work", "lending work", ". reviewer-candidate", "lending reviewer-candidate",
 		"lending work", "lending reviewer-candidate",
 		". reviewer-expectations", ". integrate", ". reviewer-candidate",
@@ -217,30 +216,27 @@ func admitted(h *harness) []string {
 }
 
 // A Manager that finds nothing to change submits a complete no-change result
-// from Explore; its review runs before the write barrier because nothing is
-// written (core rules T2, T3).
-func TestNoChangeExploreIsReviewedBeforeTheBarrier(t *testing.T) {
+// from its first work step. A reviewer recorded the cases before that step,
+// and the candidate review assesses the no-change result against them (core
+// rules T5, T7, DEC-049).
+func TestNoChangeFirstWorkStepIsReviewedAgainstCasesRecordedBefore(t *testing.T) {
 	t.Parallel()
-	agent := func(s agentStep) []action {
-		if s.Manager == "empty" && s.Phase == run.PhaseExplore {
-			return []action{
-				{Tool: run.ToolSubmit, Args: submitArgs("local", "limited"), Want: run.ToolRefused},
-				{Tool: run.ToolSubmit, Args: submitArgs("local", "complete"), Want: run.ToolOK},
-			}
-		}
-		return happyAgent(s)
-	}
-	h := newHarness(t, false, agent)
-	h.advanceUntil(func(a run.Admission) bool { return a.Phase == run.PhaseWork })
+	h := newHarness(t, false, happyAgent)
+	runToEnd(t, h)
 	order := admitted(h)
-	review := slices.Index(order, "empty reviewer-candidate")
-	if review < 0 || review > slices.Index(order, ". explore") {
-		t.Fatal("no-change review did not run before the barrier", order)
+	expectations, work, review := slices.Index(order, "empty reviewer-expectations"), slices.Index(order, "empty work"), slices.Index(order, "empty reviewer-candidate")
+	if expectations < 0 || work < expectations || review < work {
+		t.Fatal("the cases were not recorded before the no-change work step, or its review did not follow", order)
+	}
+	if n := strings.Count(strings.Join(order, ","), "empty reviewer-expectations"); n != 1 {
+		t.Fatal("the no-change review recorded cases again", n, order)
+	}
+	if !strings.Contains(string(h.packet("empty", run.PhaseWork).Context.Bytes), "The library realizes Item.") || !strings.Contains(string(h.packet("empty", run.PhaseReviewerCandidate).Context.Bytes), "The library realizes Item.") {
+		t.Fatal("the work step or its review does not see the recorded cases")
 	}
 	if v := h.task("empty"); v.State != run.TaskDone || len(v.Deliveries) != 1 || v.Deliveries[0].Candidate != (run.BlobRef{}) {
 		t.Fatalf("no-change delivery not accepted: %+v", v)
 	}
-	runToEnd(t, h)
 	if h.c.Current().State != run.Verifying {
 		t.Fatal("run did not complete", h.sessions.answers)
 	}
@@ -325,7 +321,7 @@ func TestFailedStepsReturnTasksToTheirStateBeforeTheStep(t *testing.T) {
 	t.Parallel()
 	agent := func(s agentStep) []action {
 		switch {
-		case s.Manager == "lending" && s.Phase == run.PhaseExplore && s.Attempt == 0:
+		case s.Manager == "lending" && s.Phase == run.PhaseWork && s.Attempt == 0:
 			return []action{{Tool: run.ToolWait, Args: `{"on":[{"kind":"children"}],"reason":"no"}`, Want: run.ToolRefused}}
 		case s.Manager == "." && s.Phase == run.PhaseWork && s.Attempt == 0:
 			return []action{{Write: map[string]string{"out/library.go": "package root\n"}, Tool: run.ToolSubmit, Args: submitArgs("local", "complete"), Want: run.ToolOK}}
@@ -338,8 +334,8 @@ func TestFailedStepsReturnTasksToTheirStateBeforeTheStep(t *testing.T) {
 		t.Fatal("run did not recover from failed steps", h.c.Current(), h.sessions.answers)
 	}
 	order := admitted(h)
-	if order[0] != "lending explore" || order[1] != "lending explore" {
-		t.Fatal("failed Explore was not admitted again", order)
+	if n := strings.Count(strings.Join(order, ","), "lending work"); n != 2 {
+		t.Fatal("failed work step was not admitted again", order)
 	}
 	if got := aggregateFile(t, h.engine, "out/library.go"); got != "package library\n\ntype Item struct{}\n" {
 		t.Fatalf("a write outside the root's claims reached the aggregate: %q", got)
@@ -390,5 +386,30 @@ func TestACodexHandshakeRunsTheWholeTree(t *testing.T) {
 	runToEnd(t, h)
 	if h.c.Current().State != run.Verifying {
 		t.Fatal("the run did not complete with Codex sessions", h.c.Current(), h.sessions.answers)
+	}
+}
+
+// A journal of the Implement then review flow restores to the projection the
+// run had: tasks that started ready, no-change deliveries and the standing
+// cases (core rules T4, T5, T7).
+func TestRestoreOfAnImplementThenReviewRunEqualsTheLiveProjection(t *testing.T) {
+	t.Parallel()
+	h := newHarness(t, false, happyAgent)
+	runToEnd(t, h)
+	if h.c.Current().State != run.Verifying {
+		t.Fatal("run did not complete", h.c.Current(), h.sessions.answers)
+	}
+	restored, err := run.Restore(context.Background(), &readJournal{store: h.j}, "repo", run.RestoreLimits{PageSize: 16, Batches: 4000, Events: 8000, Bytes: 64 << 20})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !reflect.DeepEqual(restored.Tasks(), h.c.Tasks()) || restored.Current() != h.c.Current() || restored.AggregateVersion() != h.c.AggregateVersion() || !reflect.DeepEqual(restored.Messages(), h.c.Messages()) {
+		t.Fatal("restore does not equal the live projection")
+	}
+	if v, _ := restored.Task("empty"); v.State != run.TaskDone || len(v.Deliveries) != 1 || v.Deliveries[0].Candidate != (run.BlobRef{}) {
+		t.Fatalf("the restored no-change delivery differs: %+v", v)
+	}
+	if next, ok := restored.Next(); ok {
+		t.Fatal("a restored finished run offers a step", next)
 	}
 }

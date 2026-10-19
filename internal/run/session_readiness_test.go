@@ -112,7 +112,7 @@ func TestReadinessAdmitsOneActualFirstStepBeforeObservedProviderBinding(t *testi
 			}
 			commit(t, c, j, settle("invoke-first", time.Second))
 			if _, err := c.Propose(readinessStep(t, c, "second")); !errors.Is(err, run.ErrState) {
-				t.Fatal("initial Explore granted a later phase", err)
+				t.Fatal("the initial step granted a later phase", err)
 			}
 		})
 	}

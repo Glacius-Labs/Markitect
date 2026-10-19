@@ -28,7 +28,7 @@ type ManagerRecord struct {
 	Phase   Phase
 }
 
-var managerPhases = []Phase{PhaseExplore, PhaseWork, PhaseIntegrate, PhaseReply, PhaseReviewerExpectations, PhaseReviewerCandidate}
+var managerPhases = []Phase{PhaseWork, PhaseIntegrate, PhaseReply, PhaseReviewerExpectations, PhaseReviewerCandidate}
 
 func (m ManagerRecord) validate() error {
 	if m == (ManagerRecord{}) {
@@ -143,8 +143,8 @@ func sameManager(a, b ManagerRecord) bool {
 }
 
 // PrepareTaskSessionCommand admits a new session for the run's next step. The
-// plan must carry the phase's tool catalogue, a read-only workspace for
-// Explore, the task's provider home and its last conversation for resume.
+// plan must carry the phase's tool catalogue, the task's provider home and its
+// last conversation for resume.
 func (c *Coordinator) PrepareTaskSessionCommand(meta RecordMeta, item Admission, plan SessionPlan, reservation Reservation, profile, tools Payload) (Command, error) {
 	next, ok := c.Next()
 	t, found := c.state.tasks[item.Manager]
@@ -175,7 +175,7 @@ type StepFacts struct {
 }
 
 // StepQuotes names the recorded payloads the context of the manager's current
-// step quotes: its children's reports and delivery proposals and, for a
+// step quotes: its children's submission and delivery proposals and, for a
 // candidate review, the proposal and the recorded expectations.
 func (c *Coordinator) StepQuotes(manager string) []BlobRef {
 	t, ok := c.state.tasks[manager]
@@ -218,7 +218,6 @@ func childReports(t taskValue) []BlobRef {
 			refs = append(refs, ref)
 		}
 	}
-	add(t.Report)
 	add(t.Submission.Proposal)
 	for _, d := range t.Deliveries {
 		add(d.Proposal)
@@ -392,9 +391,9 @@ func (s stateValue) renderInput(t taskValue, facts StepFacts, basis snapshot.Con
 		in.Children = append(in.Children, fact)
 	}
 	switch t.Phase {
-	case PhaseExplore, PhaseWork, PhaseIntegrate, PhaseReply:
-		phase := map[Phase]organization.ManagerPhase{PhaseExplore: organization.ManagerExplore, PhaseWork: organization.ManagerWork, PhaseIntegrate: organization.ManagerIntegrate, PhaseReply: organization.ManagerReply}[t.Phase]
-		if t.Phase == PhaseReply && !s.writes(t, PhaseReply) {
+	case PhaseWork, PhaseIntegrate, PhaseReply:
+		phase := map[Phase]organization.ManagerPhase{PhaseWork: organization.ManagerWork, PhaseIntegrate: organization.ManagerIntegrate, PhaseReply: organization.ManagerReply}[t.Phase]
+		if t.Phase == PhaseReply && !mayWrite(t, PhaseReply) {
 			phase = organization.ManagerReplyReadOnly
 		}
 		in.Process = &organization.ManagerProcess{Phase: phase, Source: source}
