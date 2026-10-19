@@ -14,7 +14,7 @@ Versioned project sources for preparing complete Markitect workflows and indepen
 
 ## Prepare a project
 
-Read the project guide before copying inputs into a fresh Git repository. Commit the initial requirement sources, supply every dependency manifest explicitly, and use the guide's structural check and context commands. Keep provenance and operator guidance outside the target repository when the guide specifies that copy boundary.
+Read the project guide before copying inputs into a fresh Git repository. Commit the initial requirement sources, supply every dependency manifest explicitly, and use the guide's structural check and context commands. Keep provenance and operator guidance outside the target repository when the guide specifies that copy boundary. The Roombook and Readinglog guides also own a black-box oracle (`oracle/`, sharing [oracle_kit.py](oracle_kit.py)) that assesses a finished realization per snapshot; it is not part of any actor packet.
 
 Inspect the compiled model digest, selected Definitions, provenance and inclusion reasons. Preserve the initial source identity and apply the documented model delta without changing other requirements. Register actual realization artifacts when they are authored.
 

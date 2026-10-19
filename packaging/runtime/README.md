@@ -24,6 +24,14 @@ docker build -f packaging/runtime/Dockerfile -t markitect-runtime .
 
 A project builds its own image `FROM` this one and adds the toolchain its checks need. The [Go example](examples/go/Dockerfile) adds Go for projects such as the library example and keeps Go's caches in the provider home. It also links `go` and `gofmt` into `/usr/local/bin`, because the Agent CLIs run commands in login shells, whose `/etc/profile` resets `PATH`. A project image keeps the entrypoint, the user and the two mount points.
 
+The [Python example](examples/python/Dockerfile) adds CPython 3.13 for the Roombook and Readinglog test projects:
+
+```text
+docker build -f packaging/runtime/examples/python/Dockerfile -t markitect-runtime-python .
+```
+
+The base keeps Node and the Agent CLIs under `/usr/local`, so the image copies only the interpreter, its standard library and `libpython` from the pinned official `python:3.13-slim-bookworm` image (the base already carries the C libraries the modules link against). `python` and `python3` are links in `/usr/local/bin`, for the login-shell reason above. The interpreter itself is the regular file `/usr/local/bin/python3.13`. A container check profile names the small regular wrapper `/opt/markitect/bin/python` (`exec /usr/local/bin/python3.13 "$@"`) as its executable: metadata preparation refuses a symbolic link and checks the type of every ancestor directory, which is slow for `/usr/local` and fast for `/opt/markitect/bin`. The root filesystem is read-only, so the image sets `PYTHONDONTWRITEBYTECODE=1`; the projects still call `python -B`.
+
 ## Session facilities
 
 | Facility | Use |
