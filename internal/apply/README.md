@@ -33,7 +33,7 @@ layout:                # optional persistent ownership of artifact paths
   exceptions:
     - {path: realization/cmd/library, owner: library, reason: The callable interface fixes the location.}
     # optional kind: file | directory (default directory); a file is never mounted:
-    # - {path: realization/lending/Makefile, kind: file, owner: library, reason: Shared build file.}
+    # - {path: realization/lending/Makefile, kind: file, owner: ., reason: Shared build file.}
 scope: []              # optional modeled scope selectors [{kind, property}] that add Definitions to a Manager's context
 checks: []             # required checks (id, profile, directory, args, requiredBy, timeout)
 ```
@@ -57,7 +57,9 @@ says to remove the file or ask the owner through Root for an exception, because 
 cannot register its way out and `execution.yaml` is protected. An exception declares
 its `kind`, `directory` by default or `file`; only directory exceptions are areas that are
 created and mounted, a file exception (like a mirrored Package directory that is a file of
-the start stand) is left to accounting and trust. Accounting
+the start stand) is left to accounting and trust. A file exception can only be owned by Root:
+a Package's base is read-only and a file cannot be mounted, so preparation refuses a file
+exception owned by a Package and asks for a directory exception. Accounting
 also requires every registration to sit in its owner's shard
 (`registry.outside_area`). An invalid
 layout (unknown owner, nested roots, anything under `.markitect`, spellings that

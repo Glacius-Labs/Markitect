@@ -356,7 +356,7 @@ func TestLayoutAreasAreDirectoriesParentsFirst(t *testing.T) {
 }
 
 func TestLayoutExceptionKindDecidesFileOrDirectory(t *testing.T) {
-	file := realization.LayoutException{Path: path(t, "realization/lending/Makefile"), File: true, Owner: owner(t, "library"), Reason: "The Makefile is shared."}
+	file := realization.LayoutException{Path: path(t, "realization/lending/Makefile"), File: true, Owner: realization.RootOwner(), Reason: "The Makefile is shared."}
 	layout, err := realization.NewLayout(layoutFacts(), roots(t, "realization"), []realization.LayoutException{file})
 	if err != nil {
 		t.Fatal(err)
@@ -386,9 +386,21 @@ func TestLayoutExceptionKindDecidesFileOrDirectory(t *testing.T) {
 	if owner := layout.OwnerOf(path(t, "realization/lending/Makefile")); owner != file.Owner {
 		t.Fatalf("owner %v", owner)
 	}
-	want := []string{"realization/library/**", "realization/lending/Makefile"}
-	if got := layout.Describe(owner(t, "library"), fileTree(t, "realization/go.mod")); !slices.Equal(got, want) {
+	want := []string{"files directly in realization/ such as realization/go.mod", "realization/lending/Makefile", "every file outside the artifact roots and exceptions"}
+	if got := layout.Describe(realization.RootOwner(), fileTree(t, "realization/go.mod")); !slices.Equal(got, want) {
 		t.Fatalf("description %q, want %q", got, want)
+	}
+}
+
+func TestLayoutRefusesAFileExceptionOwnedByAPackage(t *testing.T) {
+	file := realization.LayoutException{Path: path(t, "realization/lending/Makefile"), File: true, Owner: owner(t, "library"), Reason: "The Makefile is shared."}
+	_, err := realization.NewLayout(layoutFacts(), roots(t, "realization"), []realization.LayoutException{file})
+	if !errors.Is(err, realization.ErrInvalidLayout) || !strings.Contains(err.Error(), "only Root can own a file exception") || !strings.Contains(err.Error(), "use a directory exception") {
+		t.Fatalf("a Package-owned file exception was accepted or unclear: %v", err)
+	}
+	file.File = false
+	if _, err := realization.NewLayout(layoutFacts(), roots(t, "realization"), []realization.LayoutException{file}); err != nil {
+		t.Fatalf("the same exception as a directory refused: %v", err)
 	}
 }
 

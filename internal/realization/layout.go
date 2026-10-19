@@ -16,8 +16,9 @@ const markitectDirectory = ".markitect"
 
 // LayoutException maps an exact path, a file or a whole directory subtree, to
 // one owner regardless of the mirrored hierarchy. File declares that the path
-// is a file; otherwise it is a directory. Owner is a local Package or Root.
-// Reason is the required persistent explanation.
+// is a file; otherwise it is a directory. Owner is a local Package or Root; a
+// file can only be owned by Root, because it cannot be mounted writable for a
+// Package. Reason is the required persistent explanation.
 type LayoutException struct {
 	Path   snapshot.Path
 	File   bool
@@ -43,8 +44,8 @@ type Layout struct {
 // NewLayout validates the declared roots and exceptions against the local
 // Package inventory of the passed compiled model. It refuses a root that is
 // the repository root, repeated or nested; anything at or under .markitect;
-// an exception owner that is not Root or a local Package, a repeated exception
-// path or a missing reason; and any roots, exception paths or mirrored Package
+// an exception owner that is not Root or a local Package, a file exception
+// owned by a Package, a repeated exception path or a missing reason; and any roots, exception paths or mirrored Package
 // directories whose directory spellings differ only by letter case, because
 // they would name one location on a case-insensitive platform.
 func NewLayout(compiled model.Result, roots []snapshot.DirectoryBoundary, exceptions []LayoutException) (Layout, error) {
@@ -87,8 +88,13 @@ func NewLayout(compiled model.Result, roots []snapshot.DirectoryBoundary, except
 		case strings.TrimSpace(exception.Reason) == "":
 			return Layout{}, fmt.Errorf("%w: exception %q requires a reason", ErrInvalidLayout, name)
 		}
-		if packageName, isPackage := exception.Owner.Package(); isPackage && !inventory.owners[packageName] {
-			return Layout{}, fmt.Errorf("%w: exception %q names %q, which is not a Manager of the model", ErrInvalidLayout, name, packageName)
+		if packageName, isPackage := exception.Owner.Package(); isPackage {
+			if !inventory.owners[packageName] {
+				return Layout{}, fmt.Errorf("%w: exception %q names %q, which is not a Manager of the model", ErrInvalidLayout, name, packageName)
+			}
+			if exception.File {
+				return Layout{}, fmt.Errorf("%w: file exception %q cannot be owned by Package %q: a file cannot be mounted and the Package's base is read-only, so only Root can own a file exception under an enforced layout; use a directory exception", ErrInvalidLayout, name, packageName)
+			}
 		}
 		seen[name] = true
 		layout.exceptions = append(layout.exceptions, exception)

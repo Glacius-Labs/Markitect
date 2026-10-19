@@ -25,27 +25,31 @@ turn and no separate route for absent or unchanged artifacts.
    caller owns it and closes it after a successful publication or keeps it as retained work. A
    shared volume whose materialization failed is closed by the engine.
 2. The Execute phase starts at Root, which gets the initial mandate item at once. Every other
-   Manager gets its initial item when its parent's first Execute turn has ended (finished,
-   waiting or failed) or the parent is disabled, so a parent first supplies the foundation its
-   children need and tells them what is available; its messages to them during that turn are
+   Manager gets its initial item when its parent's first Execute turn has ended without error
+   (finished or waiting) or the parent is disabled; a failed first turn that is retried does not
+   release the children yet. A parent first establishes the foundation its children need, or
+   assesses an existing one against the model and the children's known needs, preserves it when
+   it fits and corrects or supplements it within its own area, and tells them what concrete
+   basis is available; its messages to them during that turn are
    queued behind the initial item for their first turn. A Manager that is not released runs no
    turn. Siblings then run in parallel. Every Manager takes part; its first turn may conclude
-   that no change is needed. The initial item tells a parent to supply its children's
+   that no change is needed. The initial item tells a parent to establish or assess its children's
    foundation within its own area, because they start when its turn ends, and a child that its
    parent's foundation is in place. The release of each Manager is recorded once as
    `manager.release`, with the parent. A Manager that is not running and has undelivered items
    gets an Execute turn.
-3. When a child's Execute turn finishes with status `done` (a `finish` call; a turn that ends
-   without one reports nothing), its summary goes to its direct parent as the item "Your child X
-   reports done: ..." (`child.report`), so the parent integrates its children's results. Items that
+3. When a child's Execute turn finishes with status `done`, or ends without a `finish` call
+   (which counts as done), its summary goes to its direct parent as the item "Your child X
+   reports done: ..." (`child.report`; without a call the text says that no summary was given),
+   so the parent integrates its children's results. `waiting` reports nothing. Items that
    arrive while the parent runs are batched into its next turn.
 4. A Manager with `Write.Enforced` runs its Execute turns read-only unless `Write.Base`, with
    `Write.Mounts` overlaid; without it the whole tree is writable and ownership is trusted.
    Verify turns are always read-only without mounts. Mount paths are validated before any
    effect: clean relative paths below `/work`, no `.`, no duplicates, none naming a file of the
    start stand, each before the mounts of its descendants.
-5. The phase is quiescent when no Execute turn runs, no Manager has undelivered items and
-   no owner question waits. The shared volume is then harvested (`Workspaces.Harvest`
+5. The phase is quiescent when no Execute turn runs, no released Manager the budget did not
+   refuse has undelivered items and no owner question waits. The shared volume is then harvested (`Workspaces.Harvest`
    itself refuses to call a volume complete while a container mounts it) and the tree
    becomes the candidate of round 1. If Execute changed nothing it equals `Start`.
 6. Round N runs `Account` and all required checks on the candidate (checks in parallel),
@@ -58,9 +62,14 @@ turn and no separate route for absent or unchanged artifacts.
    phase of round N+1), a new candidate is captured and a whole new round runs, until a round
    is green or the budget ends. Execute is paused for the whole of every round.
 8. Budget: `Rounds` counts Verify rounds. `AgentTurns` counts Execute and Verify turns and must
-   cover at least one Execute and one Verify turn of every Manager, or the run ends Incomplete
-   before any effect. Every Execute turn is only started while the budget also leaves room for
-   one whole Verify round after it; the run ends Incomplete when it cannot.
+   cover at least one Execute and one Verify turn of every Manager (2N), or the run ends Incomplete
+   before any effect. An Execute turn is only admitted while the budget also leaves room for one
+   whole Verify round and for the first Execute turn of every other Manager that has not run yet
+   and is not disabled, so a Manager's first turn always stays possible. When a turn is refused,
+   the engine records `execute.budget_limit` once for the phase and refuses every Execute turn that
+   does not fit; running turns end, the pending items of refused Managers do not keep the
+   phase open, the stand is captured and the reserved turns run the Verify round. The run ends
+   Incomplete only when that round is not green and the next phase admits no Execute turn.
 
 ## Findings
 
@@ -108,8 +117,10 @@ green while they stand.
 Managers are trusted to write only their own area. After each capture the engine compares
 the new candidate with the previous one and records `write.observed` for files of a Manager
 that changed although it ran no Execute turn, and shows them to that Manager's next Verify.
-This is an observation, not enforcement or complete write attribution. Registrations
-outside a Manager's area are rejected by `Account`, which Apply supplies.
+This is an observation, not enforcement or complete write attribution. It cannot see trespass
+by a Manager that ran in the same phase; under a declared layout the write plans enforce
+ownership instead. Registrations outside a Manager's area are rejected by `Account`, which Apply
+supplies.
 
 ## Files
 

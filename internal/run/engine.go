@@ -68,6 +68,9 @@ type mgr struct {
 	verifyUsed bool
 	ran        bool
 	changed    []string
+	// refused is set when the budget refused the Manager's Execute turn in the
+	// current phase: its pending items no longer keep the phase open.
+	refused bool
 
 	// executed is set by an Execute turn that finished without error; until
 	// then the Manager's turn carries the full mandate, even when a failed turn
@@ -118,6 +121,11 @@ type engine struct {
 	polling     bool
 	nextFinding int
 	nextQuest   int
+
+	// budgetLimited is set when the budget refused an Execute turn in the
+	// current phase; phaseTurns counts the Execute turns admitted in it.
+	budgetLimited bool
+	phaseTurns    int
 }
 
 func slugOf(path string) string {
@@ -509,8 +517,12 @@ func (e *engine) run() (Status, string, snapshot.Tree) {
 	e.mu.Unlock()
 	previous := cfg.Start
 	for round := 1; ; round++ {
-		e.executePhase(round)
+		stalled := e.executePhase(round)
 		if e.ctx.Err() != nil {
+			return e.incomplete("")
+		}
+		if stalled {
+			e.halt("the agent turn budget ended without a green round: no further Execute turn fits beside a whole Verify round")
 			return e.incomplete("")
 		}
 		if reason := e.disabledOwnerOpen(); reason != "" {
