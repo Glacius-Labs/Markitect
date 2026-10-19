@@ -25,4 +25,5 @@ ENV PATH=/usr/local/go/bin:${PATH} \
     GOTOOLCHAIN=local \
     GOPATH=/home/agent/go \
     GOCACHE=/home/agent/.cache/go-build \
+    GOTMPDIR=/home/agent \
     GOFLAGS=-buildvcs=false
