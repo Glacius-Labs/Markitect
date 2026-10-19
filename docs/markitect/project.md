@@ -4,7 +4,7 @@ Generated from acquired canonical v1 source bytes. This view is not execution or
 
 ## markitect
 
-Canonical model digest: `sha256:9892afea5c59325981c1c9b434eb261bf51a8b9ae77eabfce2b776ce297229d6`.
+Canonical model digest: `sha256:be5f59d092d980123748a2b34d8d349cd9b6f75cfb3495cf47c5426864af8c2a`.
 
 Manifest: `.markitect/model.yaml` (original bytes `sha256:d40feb9e02db275aed89d53b0a88849e463acaca076c8fa70fad38b367a68559`).
 
@@ -184,9 +184,9 @@ Compile the complete canonical language v1 from explicitly supplied immutable so
 
 ### product/organization/delegated-context
 
-Kind: `vocabulary/Rule`. Source: `.markitect/model/product/organization/delegated-context.yaml` (original bytes `sha256:991c1cd5ca74921de4df9af033ad25e1cd3d6fabe95da73ecac02a04e778037a`).
+Kind: `vocabulary/Rule`. Source: `.markitect/model/product/organization/delegated-context.yaml` (original bytes `sha256:71a995e5099e21bd8803d4dfe6f221f0a0c886566b5b67f83c0c11fd730cb342`).
 
-Derive one ordinary Root and one Manager per local canonical Package from authoritative compiled facts. Keep responsibilities and artifact-area mappings persistent across Applies, with a mirrored model hierarchy as the recommended layout and explicit project exceptions. Supply the same reconciliation mandate with separately compiled applicable model obligations, provenance, fixed owner decisions and direct-parent/child roles and contacts. Every local Manager, including empty and intermediate Packages, assesses its responsibility; do not select participants by AI relevance. Managers communicate only with their direct parent and children; only Root escalates to the human. Include required cross-area contracts without granting additional contacts, write ownership or inferred missing model links. A Manager realizes, coordinates and integrates its area and reviews it in fresh Verify conversations without the author's dialogue. Parents inspect their own obligations and actual child interaction rather than merely collecting green reports. Derive technical risks and suitable evidence from the model and realization without a mandatory advance expectations phase or per-case ledger. Preserve intent; changed policy or a necessary missing canonical link needs a separate model decision. Per-area prompts explain responsibility and work but never become a second owner of binding project rules.
+Derive one ordinary Root and one Manager per local canonical Package from authoritative compiled facts. Keep responsibilities and artifact-area mappings persistent across Applies, with a mirrored model hierarchy as the default layout and explicit persistent project exceptions. Supply the same reconciliation mandate with separately compiled applicable model obligations, provenance, fixed owner decisions and direct-parent/child roles and contacts. Every local Manager, including empty and intermediate Packages, assesses its responsibility; do not select participants by AI relevance. Managers communicate only with their direct parent and children; only Root escalates to the human. Include required cross-area contracts without granting additional contacts, write ownership or inferred missing model links. A Manager realizes, coordinates and integrates its area and reviews it in fresh Verify conversations without the author's dialogue. Parents inspect their own obligations and actual child interaction rather than merely collecting green reports. Derive technical risks and suitable evidence from the model and realization without a mandatory advance expectations phase or per-case ledger. Preserve intent; changed policy or a necessary missing canonical link needs a separate model decision. Per-area prompts explain responsibility and work but never become a second owner of binding project rules.
 
 ### product/realization/artifact-accounting
 

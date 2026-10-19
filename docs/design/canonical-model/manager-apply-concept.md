@@ -10,7 +10,7 @@ The purpose is model fidelity with less routine human supervision: permanent res
 
 One ordinary Root Manager and one Manager per local canonical Package form the responsibility tree. Canonical Package identity, not incidental code/test subdirectories, defines a Manager. Parents follow the model hierarchy. Every Manager assesses its area; Root cannot select a smaller team and silently omit responsibilities. Managers are accountable roles, not individual provider conversations.
 
-Recommended layout mirrors the model hierarchy beneath declared artifact roots such as `src`, `tests` and `docs`. Roots and explicit exceptions are persistent project choices, not per-Apply negotiations. Support existing framework layouts and colocated tests. The deepest Manager mapped to an artifact path owns it; ancestor areas exclude deeper owners. Shared files at an artifact root belong to Root unless a persistent explicit mapping says otherwise. Reject overlapping or ambiguous ownership before work starts, including path aliases under the actual platform's path rules.
+The default layout mirrors the model hierarchy beneath declared artifact roots such as `src`, `tests` and `docs`. The owner explicitly confirmed this default on 19 October 2026 ([source](../../concepts/sources/recursive-apply-simplification-20261019.md#default-layout-and-model-only-start)). Roots and explicit exceptions are persistent project choices, not per-Apply negotiations. Support existing framework layouts and colocated tests. Resolve the mapping before writing even when the corresponding artifact directories do not yet exist; the absence of files does not prevent deriving Managers or their areas. The deepest Manager mapped to an artifact path owns it; ancestor areas exclude deeper owners. Shared files at an artifact root belong to Root unless a persistent explicit mapping says otherwise. Reject overlapping or ambiguous ownership before work starts, including path aliases under the actual platform's path rules.
 
 This deliberately replaces ownership-by-creation/reservation and common-ancestor negotiation for ordinary new paths. A Manager creates files in its own area and registers them itself without per-file approval. Transfers and layout changes are explicit changes to the persistent organization, not a way to evade a finding during Apply. The registry preserves exact paths, one owner, links to existing Definitions and reasons. One artifact can realize several Definitions without gaining several owners.
 
@@ -31,6 +31,14 @@ Prefer native session messaging as a transport where its observed capabilities f
 The first strategy's parent/child contact list is an operational tool/context boundary, not a claim that an Agent cannot discover other identities. Observe and report routing violations. If provider tooling exposes unrestricted cross-session calls, the implementation must state that limitation or restrict the exposed calls; it must not silently claim enforced routing from a prompt alone.
 
 For a prerequisite, the consumer explains the missing interface or file to its parent. The parent gets the owner to supply it in the shared tree and tells the consumer what changed. No `limited` delivery or separate prerequisite acceptance is required before development can proceed. Missing scaffolding and mutually waiting children are coordination work for their parent, not grounds to invent duplicate shared types. A genuinely unresolved policy goes upward rather than being bypassed locally.
+
+### Start from the model without prepared implementation
+
+The next library demonstration must start with the accepted model and necessary execution controls, but no application artifacts or prepared internal APIs. Runtime profiles, declared artifact roots/exceptions and bound owner decisions are setup inputs; they must not hide an application skeleton, internal signatures, shared domain types or stub implementations. Missing realization is work for Execute, not a structural accounting failure for nonexistent files.
+
+Each Manager creates its own directories, artifacts and registry entries when needed. Root creates shared root-owned prerequisites such as the Go module. Other Managers create their own interfaces and implementations and coordinate dependencies through their parent/children. Root must not bootstrap child-owned implementations or signatures across the tree. Existing explicit callable/model contracts remain binding; technical choices left open by the model are made during ordinary realization. No additional planning phase or prerequisite approval is required.
+
+The [library walkthrough](manager-apply-library-flow.md#first-apply-m1-to-a1) applies this boundary. Preserve evidence of who supplied prerequisites and how interface dependencies were resolved, including waits, concrete conflicts and external interventions. The earlier experiment's bootstrap supplied cross-area skeletons before parallel work, so it does not establish this start-from-model behavior.
 
 ### Shared working tree and reconciliation cycle
 
@@ -66,6 +74,12 @@ The independent library oracle complements model review. The prior experiment's 
 The deterministic component prepares and supplies contexts, starts sessions, exposes only allowed contacts, keeps all responsibilities visible, bounds resource use, establishes quiescence/candidates and checks completion/publication. Retain enough ordinary execution evidence to identify the inputs, participant results, findings, checks and published stand, including uncertainty. Exact transport, record/schema and stop mechanics are implementation work. Do not substitute a second AI workflow planner or retain the old task machine merely under different names.
 
 Managers decide how to investigate and repair within their responsibility. The runtime does not prescribe per-case test plans, per-file reservations, separate reply turns, delivery purposes/scopes, rejection-counter resets or progress exceptions. A blocked parent-child relationship remains visible; budget and completion constraints cannot be waived by an Agent.
+
+### First-demonstration scope
+
+The owner confirmed after independent concept review on 19 October 2026: **no additional Fork, team or Skill functionality for the first end-to-end demonstration.** Assess their usefulness later against concrete observed bottlenecks, rather than adding them as anticipated optimizations. The already agreed Manager responsibilities, parallel Execute and fresh Verify remain the baseline; this adds no new product roles, helper lifecycle or acceptance requirement.
+
+This confirmation leaves Claude's running implementation assignment unchanged. It does not prohibit existing development tools already allowed by that assignment, authorize extra experiments or require implementing the later departmental/Fork/Skill proposal. The [verbatim confirmation](../../concepts/sources/recursive-apply-simplification-20261019.md#first-demonstration-scope-after-independent-review) records the boundary.
 
 ### Implementation handoff and supersession
 
