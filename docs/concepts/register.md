@@ -69,7 +69,7 @@ The owner's [origin account of 15 October 2026](sources/owner-origin-20261015.md
 | [DEC-054](#dec-054-a-rejection-that-finds-fewer-gaps-does-not-count) | Decision | A rejection that finds fewer gaps does not count | Accepted |
 | [DEC-055](#dec-055-a-submission-must-pass-its-required-checks) | Decision | A submission must pass its required checks | Accepted |
 | [DEC-056](#dec-056-recursive-reconciliation-with-a-shared-workspace) | Decision | Recursive reconciliation with a shared workspace | Accepted direction; implementation pending |
-| [DEC-057](#dec-057-three-fundamental-starting-situations) | Clarification | Three fundamental starting situations | Accepted high-level direction; documentation only |
+| [DEC-057](#dec-057-three-fundamental-starting-situations) | Clarification | Three starting situations, two processes: Apply and Extract | Accepted high-level direction; documentation only |
 | [PRM-001 to PRM-007](#promises) | Promise | Target outcomes | Target |
 | [ASM-001 to ASM-006](#assumptions-and-hypotheses) | Assumption | Assumptions and hypotheses | See entries |
 | [CPT-001](#cpt-001-federalism) | Concept | Federalism | Accepted |
@@ -685,11 +685,11 @@ The owner's [origin account of 15 October 2026](sources/owner-origin-20261015.md
 
 ### DEC-057 Three fundamental starting situations
 
-- **Status:** Accepted high-level direction, owner, 19 October 2026 ([owner discussion and documentation instruction](sources/three-starting-situations-20261019.md)).
-- **Statement:** Distinguish model without artifacts (build a modeled project), model with artifacts (normal reconciliation), and artifacts without a model (interactive adoption). These are fundamental product workflows, not implementation progress categories.
-- **Build:** Root prepares its project skeleton and shared prerequisites; children build their areas recursively on the available foundations. Parents integrate upward. This clarifies dependency order without selecting a new scheduler or transferring child ownership.
-- **Reconcile:** Managers reconcile artifacts with the accepted model, including repair against unchanged intent. Parents investigate contradictory child results during Apply or Verify and escalate unresolved intent through Root.
-- **Adopt:** Managers derive, review and integrate a model from existing artifacts, iteratively refine it using read-only Verify, and involve the owner especially for contradictions. Existing artifacts remain unchanged during derivation. Retain supported intent and known realization defects rather than changing meaning to manufacture a pass; later artifact repair belongs to reconciliation.
+- **Status:** Accepted high-level direction, owner, 19 October 2026; subsequently clarified as three starting situations and only two processes, Apply and Extract ([original discussion](sources/three-starting-situations-20261019.md), [process naming and documentation instruction](sources/three-starting-situations-20261019.md#owner-selects-apply-and-extract)).
+- **Statement:** Distinguish model without artifacts, model with artifacts, and artifacts without a model. The first two use **Apply: Model -> Artifacts**; the third uses **Extract: Artifacts -> Model**. Building and reconciling are starting states of Apply, not separate processes or commands. These are high-level product semantics, not implementation progress categories.
+- **Apply without artifacts:** Root prepares its project skeleton and shared prerequisites; children build their areas recursively on the available foundations. Parents integrate upward. This clarifies dependency order without selecting a new scheduler or transferring child ownership.
+- **Apply with artifacts:** Managers reconcile artifacts with the accepted model, including repair against unchanged intent. Missing artifacts are created, required existing artifacts are updated as needed, and obsolete realizations follow the existing removal rules. Parents investigate contradictory child results during Apply or Verify and escalate unresolved intent through Root.
+- **Extract:** Managers derive, review and integrate a model from existing artifacts, iteratively refine it using read-only Verify, and involve the owner especially for contradictions. Existing artifacts remain unchanged during derivation. Retain supported intent and known realization defects rather than changing meaning to manufacture a pass; later artifact repair belongs to Apply.
 - **Owner and scope:** [Vision: three starting situations](../vision.md#three-starting-situations) owns the high-level account. [DEC-056](#dec-056-recursive-reconciliation-with-a-shared-workspace) and the existing [Extract design](../design/canonical-model/commands.md#extract-the-existing-stand) retain their technical scope. This documentation decision adds no runtime, language construct, implementation assignment or provider/study authority.
 
 ## Promises
