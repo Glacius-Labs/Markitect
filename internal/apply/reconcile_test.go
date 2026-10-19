@@ -371,6 +371,9 @@ func TestReconcileConfigBriefsStateResponsibilitiesAndWritePlans(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	if !cfg.CheckTool {
+		t.Error("Apply's Execute turns are not offered the check tool")
+	}
 	team := map[string]run.Manager{}
 	for _, m := range cfg.Team {
 		team[m.Path] = m
@@ -387,7 +390,10 @@ func TestReconcileConfigBriefsStateResponsibilitiesAndWritePlans(t *testing.T) {
 	const children = "Your children realize their own Definitions in their areas. You supply the foundations they need within your own area, coordinate them and integrate their results; you do not implement their areas, and you cannot release them from their obligations."
 	const own = "Your own Definitions are yours to realize in your area. Your parent coordinates; it cannot take them over or waive them."
 	for manager, wantChildren := range map[string][]string{
-		".":                 {"- lending\n  areas: realization/lending/** except realization/lending/reminders/**\n  Definition lending/", "- library\n  areas: realization/library/**; realization/cmd/library/**\n  Definition library/"},
+		".": {"- lending\n  areas: realization/lending/** except realization/lending/reminders/**\n  Definition lending/", "- library\n  areas: realization/library/**; realization/cmd/library/**\n  Definition library/",
+			// The Managers below a child are named, so no area looks unowned.
+			"  below it: lending/reminders, a child of lending, areas: realization/lending/reminders/**\n    Definition lending/reminders/assess-overdue: ",
+			"Every area listed here has its owner in the team"},
 		"lending":           {"- lending/reminders\n  areas: realization/lending/reminders/**\n  Definition lending/reminders/assess-overdue: "},
 		"library":           nil,
 		"lending/reminders": nil,

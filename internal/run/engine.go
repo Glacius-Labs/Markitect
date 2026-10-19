@@ -42,9 +42,12 @@ type candidate struct {
 
 // item is one undelivered piece of work for a Manager. finding is the ID of
 // the finding an item restates; such an item lapses once the finding is closed.
+// report marks a child's done report, which alone does not start the parent's
+// turn while the parent's subtree still works.
 type item struct {
 	text    string
 	finding string
+	report  bool
 }
 
 // mgr is the engine's state of one Manager. Every field is guarded by engine.mu.
