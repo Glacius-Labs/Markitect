@@ -1820,6 +1820,10 @@ artifacts:
     form: doc
     realizes: [documentation/current-guidance]
     why: "Preserves the bounded Apply evidence of #492 on the library with Haiku and its open findings."
+  - path: "docs/validation/apply-stability-20261020.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: "Preserves the second Apply iteration after the #492 findings and its stability series."
   - path: "docs/validation/recursive-apply-demonstration-20261019.md"
     form: doc
     realizes: [documentation/current-guidance]
