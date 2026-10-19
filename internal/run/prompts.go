@@ -77,12 +77,12 @@ func (e *engine) contextLocked(b *strings.Builder, m *mgr) {
 // child builds on the foundation its parent supplied.
 func initialItem(m *mgr) string {
 	var b strings.Builder
-	b.WriteString("Carry out your responsibility now: reconcile your artifacts with the bound model. No change is a legitimate result when your area already conforms.")
+	b.WriteString("Carry out your responsibility now, as the mandate above describes. No change is a legitimate result when your area already conforms.")
 	if m.Parent != "" {
 		b.WriteString(" Your parent's foundation is in place; its messages to you tell you what is available. Build on it.")
 	}
 	if len(m.Children) > 0 {
-		b.WriteString(" Your children start when this turn ends. First establish, within your own area, the foundation they need: where none exists, create it; where one exists, assess it against the model and your children's known needs, preserve it when it fits, and correct or supplement it within your own area (or coordinate its owner) before they begin. Then tell them with send the concrete basis they can use. Their areas are theirs to realize, not yours.")
+		b.WriteString(" Your children start when this turn ends. First establish, within your own area, the foundation they need: where none exists, create it; where one exists, assess it against your obligations and your children's known needs, preserve it when it fits, and correct or supplement it within your own area (or coordinate its owner) before they begin. Then tell them with send the concrete basis they can use. Their areas are theirs to realize, not yours.")
 	}
 	return b.String()
 }
