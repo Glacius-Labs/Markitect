@@ -14,15 +14,16 @@ import (
 )
 
 // libraryFinding scripts round 1: library raises one blocking finding about
-// itself, everything else is default, and run executes the Execute turns.
-func libraryFinding(execute func(*call) error) func(*call) error {
+// itself and everything else is default. repair, when given, runs the Execute
+// turns of the repair phases (round 2 on); the first Execute phase is default.
+func libraryFinding(repair func(*call) error) func(*call) error {
 	return func(c *call) error {
 		switch {
 		case c.is(1, "library", VerifyTurn):
 			c.assess(false, []fnd{finding("library", "library obligation", true)})
 			return nil
-		case c.turn.Kind == ExecuteTurn && execute != nil:
-			return execute(c)
+		case c.turn.Kind == ExecuteTurn && c.round() >= 2 && repair != nil:
+			return repair(c)
 		}
 		return c.defaultScript()
 	}
@@ -30,16 +31,16 @@ func libraryFinding(execute func(*call) error) func(*call) error {
 
 func TestExecuteTurnWithoutObservedStopFinishesIncomplete(t *testing.T) {
 	f := newFixture(t)
-	f.agents.script = libraryFinding(func(c *call) error {
+	f.agents.script = func(c *call) error {
 		c.noStop = true
 		return nil
-	})
+	}
 	out := f.run()
 	if out.Status != Incomplete || !strings.Contains(out.Reason, "without an observed container stop") {
 		t.Fatalf("%s %s", out.Status, out.Reason)
 	}
-	if f.ws.harvests != 0 || f.ws.isClosed("run1-work") {
-		t.Fatal("captured or closed after uncertain quiescence")
+	if f.ws.harvests != 0 || f.ws.isClosed("run1-work") || len(out.Turns) != 1 {
+		t.Fatalf("captured, closed or went on after uncertain quiescence: %v", turnIDs(out))
 	}
 	for _, tr := range out.Turns {
 		if tr.Kind == ExecuteTurn && tr.Stopped {
@@ -65,15 +66,11 @@ func TestVerifyTurnWithoutObservedStopFinishesIncomplete(t *testing.T) {
 func TestUncertainHarvestFinishesIncompleteAndKeepsTheTree(t *testing.T) {
 	f := newFixture(t)
 	f.ws.uncertain = true
-	f.agents.script = libraryFinding(func(c *call) error {
-		c.write("library/new.go", "x")
-		return c.defaultScript()
-	})
 	out := f.run()
 	if out.Status != Incomplete || !strings.Contains(out.Reason, "capture") {
 		t.Fatalf("%s %s", out.Status, out.Reason)
 	}
-	if f.ws.harvests != 1 || f.ws.isClosed("run1-work") || len(out.Rounds) != 1 {
+	if f.ws.harvests != 1 || f.ws.isClosed("run1-work") || len(out.Rounds) != 0 || countKind(out, VerifyTurn) != 0 {
 		t.Fatalf("harvests %d rounds %d", f.ws.harvests, len(out.Rounds))
 	}
 	if !out.Candidate.Equal(snapshot.Tree{}) {
@@ -85,14 +82,12 @@ func TestUnsupportedHarvestEntriesBecomeFindingsOfTheirOwners(t *testing.T) {
 	f := newFixture(t)
 	f.ws.setExtra("library/odd", "link", "../x")
 	f.agents.script = libraryFinding(func(c *call) error {
-		if c.round() == 2 {
-			f.ws.setExtra()
-		}
+		f.ws.setExtra()
 		c.write("library/new"+c.turn.ID+".go", "x")
 		return c.defaultScript()
 	})
 	out := f.run()
-	if out.Status != Verified || len(out.Rounds) != 3 || out.Rounds[1].Green {
+	if out.Status != Verified || len(out.Rounds) != 2 || out.Rounds[0].Green || !out.Rounds[1].Green {
 		t.Fatalf("%s %s rounds %d", out.Status, out.Reason, len(out.Rounds))
 	}
 	owners := map[string]string{}
@@ -100,7 +95,7 @@ func TestUnsupportedHarvestEntriesBecomeFindingsOfTheirOwners(t *testing.T) {
 		if fd.RaisedBy != MarkitectFinding {
 			continue
 		}
-		if !fd.Blocking || !fd.Closed || fd.ClosedRound != 3 {
+		if !fd.Blocking || !fd.Closed || fd.ClosedRound != 2 {
 			t.Errorf("finding %+v", fd)
 		}
 		for _, name := range []string{"library/odd", "link", "../x"} {
@@ -112,7 +107,7 @@ func TestUnsupportedHarvestEntriesBecomeFindingsOfTheirOwners(t *testing.T) {
 	if want := (map[string]string{"library/odd": "library", "link": ".", "../x": "."}); !maps.Equal(owners, want) {
 		t.Fatalf("owners %v", owners)
 	}
-	contains(t, "library verify prompt", f.agents.prompt("run1-r2-library-v1"), "library/odd")
+	contains(t, "library verify prompt", f.agents.prompt("run1-r1-library-v1"), "library/odd")
 }
 
 func TestVerifyTurnErrorIsKeptInTheRunReason(t *testing.T) {
@@ -128,14 +123,14 @@ func TestVerifyTurnErrorIsKeptInTheRunReason(t *testing.T) {
 		t.Fatalf("%s %s", out.Status, out.Reason)
 	}
 	for _, tr := range out.Turns {
-		if tr.Manager == "library" && !strings.Contains(tr.Reason, "test failure") {
+		if tr.Manager == "library" && tr.Kind == VerifyTurn && !strings.Contains(tr.Reason, "test failure") {
 			t.Errorf("turn record %+v", tr)
 		}
 	}
 }
 
 func TestDeadlineStopsRunningTurnsAndKeepsTheSharedTree(t *testing.T) {
-	t.Run("verify", func(t *testing.T) {
+	t.Run("execute", func(t *testing.T) {
 		f := newFixture(t)
 		f.cfg.Budget.Deadline = time.Now().Add(150 * time.Millisecond)
 		f.agents.script = func(c *call) error {
@@ -143,11 +138,11 @@ func TestDeadlineStopsRunningTurnsAndKeepsTheSharedTree(t *testing.T) {
 			return c.ctx.Err()
 		}
 		out := f.run()
-		if out.Status != Incomplete || !strings.Contains(out.Reason, "deadline") {
-			t.Fatalf("%s %s", out.Status, out.Reason)
+		if out.Status != Incomplete || !strings.Contains(out.Reason, "deadline") || f.ws.harvests != 0 {
+			t.Fatalf("%s %s harvests %d", out.Status, out.Reason, f.ws.harvests)
 		}
-		if len(out.Turns) != 2 || !f.ws.isClosed("run1-c0") || f.ws.isClosed("run1-work") {
-			t.Fatalf("turns %v closed %v", turnIDs(out), f.ws.closed)
+		if len(out.Turns) != 1 || f.ws.isClosed("run1-work") || len(f.ws.order) != 1 {
+			t.Fatalf("only Root's first turn runs: %v closed %v", turnIDs(out), f.ws.closed)
 		}
 		for _, tr := range out.Turns {
 			if !tr.Stopped || tr.Reason == "" {
@@ -155,19 +150,27 @@ func TestDeadlineStopsRunningTurnsAndKeepsTheSharedTree(t *testing.T) {
 			}
 		}
 	})
-	t.Run("execute", func(t *testing.T) {
+	t.Run("verify", func(t *testing.T) {
 		f := newFixture(t)
-		f.cfg.Budget.Deadline = time.Now().Add(300 * time.Millisecond)
-		f.agents.script = libraryFinding(func(c *call) error {
-			<-c.ctx.Done()
-			return c.ctx.Err()
-		})
-		out := f.run()
-		if out.Status != Incomplete || !strings.Contains(out.Reason, "deadline") || f.ws.harvests != 0 {
-			t.Fatalf("%s %s harvests %d", out.Status, out.Reason, f.ws.harvests)
+		f.cfg.Budget.Deadline = time.Now().Add(400 * time.Millisecond)
+		f.agents.script = func(c *call) error {
+			if c.turn.Kind == VerifyTurn {
+				<-c.ctx.Done()
+				return c.ctx.Err()
+			}
+			return c.defaultScript()
 		}
-		if countKind(out, ExecuteTurn) != 1 || f.ws.isClosed("run1-work") {
-			t.Fatalf("turns %v", turnIDs(out))
+		out := f.run()
+		if out.Status != Incomplete || !strings.Contains(out.Reason, "deadline") {
+			t.Fatalf("%s %s", out.Status, out.Reason)
+		}
+		if countKind(out, VerifyTurn) != 2 || f.ws.harvests != 1 || !f.ws.isClosed("run1-c1") || f.ws.isClosed("run1-work") {
+			t.Fatalf("turns %v closed %v", turnIDs(out), f.ws.closed)
+		}
+		for _, tr := range out.Turns {
+			if tr.Kind == VerifyTurn && (!tr.Stopped || tr.Reason == "") {
+				t.Fatalf("turn %+v", tr)
+			}
 		}
 	})
 	t.Run("cancelled", func(t *testing.T) {
@@ -187,26 +190,30 @@ func TestDeadlineStopsRunningTurnsAndKeepsTheSharedTree(t *testing.T) {
 }
 
 func TestTurnAndRoundBudgetsEndIncomplete(t *testing.T) {
-	t.Run("turns do not cover a Verify round", func(t *testing.T) {
-		f := newFixture(t)
-		f.cfg.Budget.AgentTurns = 3
-		out := f.run()
-		if out.Status != Incomplete || len(out.Turns) != 0 || len(f.ws.order) != 0 || !strings.Contains(out.Reason, "budget") {
-			t.Fatalf("%s %s %v", out.Status, out.Reason, turnIDs(out))
+	t.Run("turns do not cover an Execute and a Verify turn of every Manager", func(t *testing.T) {
+		for _, turns := range []int{3, 7} {
+			f := newFixture(t)
+			f.cfg.Budget.AgentTurns = turns
+			out := f.run()
+			if out.Status != Incomplete || len(out.Turns) != 0 || len(f.ws.order) != 0 || !strings.Contains(out.Reason, "budget") {
+				t.Fatalf("%d turns: %s %s %v", turns, out.Status, out.Reason, turnIDs(out))
+			}
 		}
 	})
 	t.Run("turns end after the first round", func(t *testing.T) {
 		f := newFixture(t)
-		f.cfg.Budget.AgentTurns = 4
+		f.agents.quiet = true
+		f.cfg.Budget.AgentTurns = 8
 		f.agents.script = libraryFinding(nil)
 		out := f.run()
-		if out.Status != Incomplete || countKind(out, ExecuteTurn) != 0 || countKind(out, VerifyTurn) != 4 || !strings.Contains(out.Reason, "budget") || f.ws.harvests != 0 {
+		if out.Status != Incomplete || countKind(out, ExecuteTurn) != 4 || countKind(out, VerifyTurn) != 4 || !strings.Contains(out.Reason, "budget") || f.ws.harvests != 1 {
 			t.Fatalf("%s %s %v", out.Status, out.Reason, turnIDs(out))
 		}
 	})
 	t.Run("turns end during repair", func(t *testing.T) {
 		f := newFixture(t)
-		f.cfg.Budget.AgentTurns = 9
+		f.agents.quiet = true
+		f.cfg.Budget.AgentTurns = 13
 		f.agents.script = func(c *call) error {
 			switch {
 			case c.is(1, "library", VerifyTurn):
@@ -219,12 +226,14 @@ func TestTurnAndRoundBudgetsEndIncomplete(t *testing.T) {
 			return c.defaultScript()
 		}
 		out := f.run()
-		if out.Status != Incomplete || !strings.Contains(out.Reason, "budget") || len(out.Turns) > 9 || len(out.Turns) < 5 {
-			t.Fatalf("%s %s %d turns", out.Status, out.Reason, len(out.Turns))
+		// Four Execute and four Verify turns, then room for one repair turn only.
+		if out.Status != Incomplete || !strings.Contains(out.Reason, "budget") || len(out.Turns) != 9 || countKind(out, ExecuteTurn) != 5 {
+			t.Fatalf("%s %s %v", out.Status, out.Reason, turnIDs(out))
 		}
 	})
 	t.Run("rounds end without green", func(t *testing.T) {
 		f := newFixture(t)
+		f.agents.quiet = true
 		f.cfg.Budget.Rounds = 2
 		f.agents.script = func(c *call) error {
 			switch {
@@ -241,65 +250,58 @@ func TestTurnAndRoundBudgetsEndIncomplete(t *testing.T) {
 		if out.Status != Incomplete || len(out.Rounds) != 2 || !strings.Contains(out.Reason, "round budget") {
 			t.Fatalf("%s %s %d rounds", out.Status, out.Reason, len(out.Rounds))
 		}
-		if countKind(out, ExecuteTurn) != 1 {
+		if executeTurnsOf(out, "lending/reminders", 2) != 1 || countKind(out, ExecuteTurn) != 5 {
 			t.Fatalf("no repair follows the last round: %v", turnIDs(out))
 		}
 	})
-	t.Run("one round never starts Execute", func(t *testing.T) {
+	t.Run("one round runs one Execute phase and no repair", func(t *testing.T) {
 		f := newFixture(t)
+		f.agents.quiet = true
 		f.cfg.Budget.Rounds = 1
 		f.agents.script = libraryFinding(nil)
 		out := f.run()
-		if out.Status != Incomplete || countKind(out, ExecuteTurn) != 0 || f.ws.harvests != 0 {
+		if out.Status != Incomplete || countKind(out, ExecuteTurn) != 4 || len(out.Rounds) != 1 || f.ws.harvests != 1 || !strings.Contains(out.Reason, "round budget") {
 			t.Fatalf("%s %s %v", out.Status, out.Reason, turnIDs(out))
 		}
 	})
 }
 
-func TestEarlyExecuteKeepsRoomForTheOpenRoundOneVerifyTurns(t *testing.T) {
+func TestExecuteTurnsKeepRoomForTheClosingVerifyRound(t *testing.T) {
 	f := newFixture(t)
-	f.cfg.Budget.AgentTurns = 8
-	libReported := make(chan struct{})
+	f.agents.quiet = true
+	f.cfg.Budget.AgentTurns = 10
+	// Lending and reminders keep messaging each other: every message starts
+	// another Execute turn, until the budget cannot also cover the Verify round.
 	f.agents.script = func(c *call) error {
-		switch {
-		case c.is(1, "library", VerifyTurn):
-			c.assess(false, []fnd{finding("library", "library obligation", true)})
-			close(libReported)
-			return nil
-		case c.is(1, "lending/reminders", VerifyTurn):
-			if err := c.wait(libReported); err != nil {
-				return err
+		switch c.turn.Manager {
+		case "lending/reminders":
+			c.send("parent", "ping")
+		case "lending":
+			if c.turn.Resume != "" {
+				c.send("lending/reminders", "pong")
 			}
 		}
 		return c.defaultScript()
 	}
 	out := f.run()
-	if out.Status != Incomplete || !strings.Contains(out.Reason, "budget") || countKind(out, ExecuteTurn) != 0 || len(out.Turns) != 4 {
+	if out.Status != Incomplete || !strings.Contains(out.Reason, "cannot cover another Execute turn and a closing Verify round") || len(out.Turns) != 6 || countKind(out, VerifyTurn) != 0 || f.ws.harvests != 0 {
 		t.Fatalf("%s %s %v", out.Status, out.Reason, turnIDs(out))
 	}
 }
 
 func TestIncompleteExitsCloseTheCandidateVolume(t *testing.T) {
-	t.Run("no budget for another round", func(t *testing.T) {
+	t.Run("the budget ends in the Verify round", func(t *testing.T) {
 		f := newFixture(t)
+		f.agents.quiet = true
 		f.cfg.Budget.AgentTurns = 9
-		libReported := make(chan struct{})
 		f.agents.script = func(c *call) error {
-			switch {
-			case c.is(1, "library", VerifyTurn):
-				c.assess(false, []fnd{finding("library", "library obligation", true)})
-				close(libReported)
-				return nil
-			case c.is(1, "lending/reminders", VerifyTurn) && strings.HasSuffix(c.turn.ID, "-v1"):
-				// No assessment: the retry takes one more turn of the budget.
-				return c.wait(libReported)
-			case c.turn.Kind == ExecuteTurn:
-				c.write("library/n.go", "x")
+			if (c.is(1, "lending/reminders", VerifyTurn) || c.is(1, "library", VerifyTurn)) && strings.HasSuffix(c.turn.ID, "-v1") {
+				return nil // no assessment: the retries take the turns the round has not got
 			}
 			return c.defaultScript()
 		}
 		out := f.run()
-		if out.Status != Incomplete || !strings.Contains(out.Reason, "cannot cover another Verify round") || !slices.Contains(f.ws.order, "run1-c1") {
+		if out.Status != Incomplete || !strings.Contains(out.Reason, "the agent turn budget ended") || !slices.Contains(f.ws.order, "run1-c1") {
 			t.Fatalf("%s %s %v %v", out.Status, out.Reason, f.ws.order, turnIDs(out))
 		}
 		if !f.ws.isClosed("run1-c1") {
@@ -315,10 +317,6 @@ func TestIncompleteExitsCloseTheCandidateVolume(t *testing.T) {
 				cancel()
 			}
 		}
-		f.agents.script = libraryFinding(func(c *call) error {
-			c.write("library/n.go", "x")
-			return c.defaultScript()
-		})
 		out, err := Reconcile(ctx, f.cfg)
 		if err != nil || out.Status != Incomplete {
 			t.Fatalf("%v %s %s", err, out.Status, out.Reason)
@@ -363,9 +361,7 @@ func TestUnsupportedHarvestEntriesAreAggregatedPerOwner(t *testing.T) {
 	names = append(names, "../bad")
 	f.ws.setExtra(names...)
 	f.agents.script = libraryFinding(func(c *call) error {
-		if c.round() == 2 {
-			f.ws.setExtra()
-		}
+		f.ws.setExtra()
 		c.write("library/new"+c.turn.ID+".go", "x")
 		return c.defaultScript()
 	})
@@ -394,22 +390,38 @@ func TestUnsupportedHarvestEntriesAreAggregatedPerOwner(t *testing.T) {
 	}
 }
 
+// libraryExecute runs the Execute turns of library with run and every other
+// turn by default.
+func libraryExecute(run func(*call) error) func(*call) error {
+	return func(c *call) error {
+		if c.turn.Kind == ExecuteTurn && c.turn.Manager == "library" {
+			return run(c)
+		}
+		return c.defaultScript()
+	}
+}
+
 func TestExecuteFailuresAreRetriedOnceThenTheManagerIsStopped(t *testing.T) {
 	t.Run("repeated", func(t *testing.T) {
 		f := newFixture(t)
-		f.agents.script = libraryFinding(func(c *call) error { return errTest })
+		f.agents.script = func(c *call) error {
+			if c.turn.Kind == ExecuteTurn && c.turn.Manager == "library" {
+				return errTest
+			}
+			return libraryFinding(nil)(c)
+		}
 		out := f.run()
 		if out.Status != Incomplete || !strings.Contains(out.Reason, "stopped after repeated failed turns") {
 			t.Fatalf("%s %s", out.Status, out.Reason)
 		}
-		if countKind(out, ExecuteTurn) != 2 || f.ws.harvests != 0 || f.ev.count("manager.disabled") != 1 {
-			t.Fatalf("turns %v harvests %d", turnIDs(out), f.ws.harvests)
+		if executeTurnsOf(out, "library", 1) != 2 || len(out.Rounds) != 1 || f.ev.count("manager.disabled") != 1 {
+			t.Fatalf("turns %v rounds %d", turnIDs(out), len(out.Rounds))
 		}
 		contains(t, "second prompt", f.agents.prompt("run1-r1-library-x2"), "Note: your previous turn ended with an error", "test failure")
 	})
 	t.Run("recovers", func(t *testing.T) {
 		f := newFixture(t)
-		f.agents.script = libraryFinding(func(c *call) error {
+		f.agents.script = libraryExecute(func(c *call) error {
 			if strings.HasSuffix(c.turn.ID, "-x1") {
 				return errTest
 			}
@@ -417,15 +429,15 @@ func TestExecuteFailuresAreRetriedOnceThenTheManagerIsStopped(t *testing.T) {
 			return c.defaultScript()
 		})
 		out := f.run()
-		if out.Status != Verified || countKind(out, ExecuteTurn) != 2 {
-			t.Fatalf("%s %s", out.Status, out.Reason)
+		if out.Status != Verified || executeTurnsOf(out, "library", 1) != 2 {
+			t.Fatalf("%s %s %v", out.Status, out.Reason, turnIDs(out))
 		}
 	})
 	for name, noConversation := range map[string]bool{"without a conversation": true, "with a conversation": false} {
 		t.Run("failed first turn "+name+" gets mandate and items again", func(t *testing.T) {
 			f := newFixture(t)
 			f.agents.noConversation = noConversation
-			f.agents.script = libraryFinding(func(c *call) error {
+			f.agents.script = libraryExecute(func(c *call) error {
 				if strings.HasSuffix(c.turn.ID, "-x1") {
 					return errTest
 				}
@@ -436,8 +448,14 @@ func TestExecuteFailuresAreRetriedOnceThenTheManagerIsStopped(t *testing.T) {
 			if out.Status != Verified {
 				t.Fatalf("%s %s", out.Status, out.Reason)
 			}
-			contains(t, "second prompt", f.agents.prompt("run1-r1-library-x2"), mandate, "Library brief.", "Finding F1", "Note: your previous turn ended with an error")
-			if resume := f.agents.turnsOf(ExecuteTurn)[1].Resume; noConversation != (resume == "") {
+			contains(t, "second prompt", f.agents.prompt("run1-r1-library-x2"), mandate, "Library brief.", "Carry out your responsibility now", "Note: your previous turn ended with an error")
+			var resume []string
+			for _, tr := range f.agents.turnsOf(ExecuteTurn) {
+				if tr.Manager == "library" {
+					resume = append(resume, tr.Resume)
+				}
+			}
+			if len(resume) != 2 || noConversation != (resume[1] == "") {
 				t.Fatalf("resume %q", resume)
 			}
 		})
@@ -457,8 +475,16 @@ func TestPortErrors(t *testing.T) {
 		f := newFixture(t)
 		f.ws.matErrFor = map[WorkspaceID]error{"run1-work": errTest}
 		out, err := Reconcile(context.Background(), f.cfg)
-		if !errors.Is(err, errTest) || out.Status != Failed || !f.ws.isClosed("run1-c0") || !f.ws.isClosed("run1-work") {
-			t.Fatalf("%v %s c0 closed %v work closed %v", err, out.Status, f.ws.isClosed("run1-c0"), f.ws.isClosed("run1-work"))
+		if !errors.Is(err, errTest) || out.Status != Failed || len(out.Turns) != 0 || !f.ws.isClosed("run1-work") {
+			t.Fatalf("%v %s work closed %v", err, out.Status, f.ws.isClosed("run1-work"))
+		}
+	})
+	t.Run("a failed candidate materialization closes its volume", func(t *testing.T) {
+		f := newFixture(t)
+		f.ws.matErrFor = map[WorkspaceID]error{"run1-c1": errTest}
+		out, err := Reconcile(context.Background(), f.cfg)
+		if !errors.Is(err, errTest) || out.Status != Failed || countKind(out, VerifyTurn) != 0 || !f.ws.isClosed("run1-c1") || f.ws.isClosed("run1-work") {
+			t.Fatalf("%v %s c1 closed %v work closed %v", err, out.Status, f.ws.isClosed("run1-c1"), f.ws.isClosed("run1-work"))
 		}
 	})
 	t.Run("a check that cannot run is a failed check", func(t *testing.T) {
@@ -501,7 +527,7 @@ func TestPortErrors(t *testing.T) {
 			return []Finding{{Owner: "nobody", Obligation: "o", Observed: "x"}}
 		}
 		f.agents.script = func(c *call) error {
-			if c.turn.Kind == ExecuteTurn {
+			if c.turn.Kind == ExecuteTurn && c.round() >= 2 {
 				if c.turn.Manager != "." {
 					t.Errorf("executed by %s", c.turn.Manager)
 				}

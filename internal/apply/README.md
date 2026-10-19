@@ -24,7 +24,7 @@ budget:
   executionTime: 25m   # whole Apply wall clock
   turnTimeout: 10m     # one Agent turn
   agentTurns: 120      # Execute plus Verify turns
-  rounds: 4            # Verify rounds including the initial Verify
+  rounds: 4            # Verify rounds, each after an Execute phase
 profiles: {execute: library-agent, verify: library-agent}
 instructions: {execute: [], verify: []}   # optional project instruction files
 packages: {}           # exact per-Package overrides of profiles and instructions
@@ -79,8 +79,7 @@ the engine and the prompts the ownership facts. `WritePlan(manager)` returns the
 `run.WritePlan` of a Manager's Execute turns (zero without a layout; with one,
 the writable areas and registry shard mounted over a read-only or writable base,
 parents before descendants; a file exception cannot be mounted and stays trusted).
-`Building(manager)` is true when no registered artifact of the start is owned by the
-Manager; under a layout Root's artifacts count only below an artifact root. An accounted candidate returns no
+An accounted candidate returns no
 findings. Trust, not enforcement: nothing here attributes a write to an Agent.
 
 `ReconcileRequest.RequireVolumeSubpaths` asks the container engine, before any effect,

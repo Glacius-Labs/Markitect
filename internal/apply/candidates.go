@@ -125,33 +125,6 @@ func (c Candidates) Areas(manager string) []string {
 	return []string{"the files it registers in " + c.Shard(manager)}
 }
 
-// Building reports whether no registered artifact of the captured start is owned
-// by the Manager: its area holds nothing yet (starting situation 1, build from
-// the model), so a building parent supplies the foundations first. Under a
-// declared layout Root's artifacts count only below an artifact root, where it
-// owns the files directly in the root; an artifact outside the roots (a
-// repository README, a CI file) does not make Root's build area non-empty.
-func (c Candidates) Building(manager string) bool {
-	for _, registration := range c.registry.Entries() {
-		path := registration.Artifact().Path()
-		if c.OwnerOf(path) != manager {
-			continue
-		}
-		if c.layout.Declared() && manager == organization.Root && !c.inArtifactRoot(path) {
-			continue
-		}
-		return false
-	}
-	return true
-}
-
-// inArtifactRoot reports whether path lies below an artifact root of the layout.
-func (c Candidates) inArtifactRoot(path snapshot.Path) bool {
-	return slices.ContainsFunc(c.layout.Roots(), func(root snapshot.DirectoryBoundary) bool {
-		return strings.HasPrefix(path.String(), root.String()+"/")
-	})
-}
-
 // WritePlan returns where a Manager's Execute turns may write in the shared
 // working tree. Without a declared layout nothing is enforced and ownership is
 // trusted. With one, Root writes the whole tree except the protected inputs

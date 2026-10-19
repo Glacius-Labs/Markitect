@@ -5,7 +5,7 @@ import (
 	"strings"
 )
 
-const mandate = "Compare your artifacts with the bound model. Preserve correct realization and report concrete deviations. In Execute, correct your files and registry and coordinate dependencies through your parent and children. In fresh Verify, assess the immutable stand and the interaction of your children. Report scope, findings, checks and unresolved questions. Do not change intent, write another owner's files or contact another branch directly."
+const mandate = "In Execute, compare your artifacts with the bound model, preserve correct realization, create missing artifacts and correct deviations within your files and registry. Coordinate dependencies and integration through your parent and children. In the subsequent fresh Verify, assess the immutable stand and the interaction of your children. Report scope, findings, checks and unresolved questions. Do not change intent, write another owner's files or contact another branch directly."
 
 func label(m *mgr) string {
 	if m.Parent == "" {
@@ -49,23 +49,20 @@ func (e *engine) contextLocked(b *strings.Builder, m *mgr) {
 	list(b, "Owner decisions (fixed for this run):", e.cfg.OwnerDecisions)
 }
 
-// buildNote tells a Manager of a build-from-the-model run that its area is
-// empty.
-func buildNote(m *mgr) string {
-	if m.Parent == "" {
-		return "Your area holds no artifacts yet: you build it from the model, starting with the project skeleton and the shared prerequisites your children build on."
+// initialItem is the first Execute item of every Manager: it starts the
+// Manager's own reconciliation work without a finding. A parent first supplies
+// the foundation its children need, because they start when its turn ends; a
+// child builds on the foundation its parent supplied.
+func initialItem(m *mgr) string {
+	var b strings.Builder
+	b.WriteString("Carry out your responsibility now: reconcile your artifacts with the bound model. No change is a legitimate result when your area already conforms.")
+	if m.Parent != "" {
+		b.WriteString(" Your parent's foundation is in place; its messages to you tell you what is available. Build on it.")
 	}
-	return "Your area holds no artifacts yet: you build it from the model, on the foundations your parent supplies."
-}
-
-// buildSeed is the initial Execute item of a building Manager with building
-// children, which wait for its first turn.
-func buildSeed(m *mgr) string {
-	foundations := "the foundations your children need"
-	if m.Parent == "" {
-		foundations = "the project skeleton and the shared prerequisites your children need"
+	if len(m.Children) > 0 {
+		b.WriteString(" Your children start when this turn ends: first supply, within your own area, the foundation they need and tell them with send what is available. Their areas are theirs to realize, not yours.")
 	}
-	return "Build start: your children wait until this turn ends. Within your own area prepare " + foundations + ", then coordinate your children with send. Their areas are theirs to build, not yours."
+	return b.String()
 }
 
 // writeNote states what an enforced write plan makes read-only in /work. An
@@ -121,9 +118,6 @@ func (e *engine) executePromptLocked(m *mgr, items []string, first bool) string 
 		contacts = append(contacts, "owner (the human; ask only what the owner decisions do not settle)")
 	}
 	list(&b, "Your contacts for the tool send:", contacts)
-	if m.Building {
-		b.WriteString("\n" + buildNote(m) + "\n")
-	}
 	b.WriteString("\nThe shared working tree is /work. Other Managers work in it at the same time: change only your own area and your registry shard. " + writeNote(m.Write) + "Run the project's build and tests yourself. Write binaries, coverage files and other scratch output outside /work, for example under /tmp: everything left under /work is captured and must be an accounted artifact.\n")
 	list(&b, "Items:", items)
 	b.WriteString("\nWork on them. Use send to coordinate through your parent and children. Call finish when you are done or waiting.\n")

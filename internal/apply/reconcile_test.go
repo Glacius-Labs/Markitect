@@ -374,8 +374,8 @@ func TestReconcileConfigBriefsStateResponsibilitiesAndWritePlans(t *testing.T) {
 	team := map[string]run.Manager{}
 	for _, m := range cfg.Team {
 		team[m.Path] = m
-		if wantBuilding := m.Path == "catalog" || m.Path == "members"; !m.Write.Enforced || m.Building != wantBuilding {
-			t.Errorf("%s: write plan %+v building %v (only catalog and members hold no artifact)", m.Path, m.Write, m.Building)
+		if !m.Write.Enforced {
+			t.Errorf("%s: write plan %+v is not enforced", m.Path, m.Write)
 		}
 		if !strings.Contains(m.Brief, "Only these areas and your registry shard are writable in /work; everything else is read-only.") {
 			t.Errorf("%s brief lacks the write statement:\n%s", m.Path, m.Brief)

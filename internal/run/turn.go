@@ -16,6 +16,7 @@ type turnState struct {
 	id       string
 	round    int
 	status   string
+	summary  string
 	finished bool
 }
 
