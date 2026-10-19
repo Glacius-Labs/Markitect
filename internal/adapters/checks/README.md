@@ -2,7 +2,7 @@
 
 `MetadataPreparer` observes closed static Check profiles. Its zero value retains
 the existing `process/v1` Host executable metadata format. Compose
-`NewMetadataPreparer(NewEngineImageReader)` for `container/v1`; the selected
+`NewMetadataPreparer(NewEngineImageReaders().Reader)` for `container/v1`; the selected
 `ProfileInput.Section()` dispatches the adapter. Preparation does not run the
 executable or establish runtime capability.
 
