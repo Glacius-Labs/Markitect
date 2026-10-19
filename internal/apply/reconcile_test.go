@@ -404,6 +404,13 @@ func TestReconcileConfigBriefsStateResponsibilitiesAndWritePlans(t *testing.T) {
 		if has := strings.Contains(brief, own); has != (manager != ".") {
 			t.Errorf("%s: own-Definitions statement present = %v", manager, has)
 		}
+		// DEC-060: every Manager, Root included, uses other areas' realizations.
+		if !strings.Contains(brief, "Never realize another area's Definitions or touch anything outside your area") {
+			t.Errorf("%s brief lacks the owner-realizes rule:\n%s", manager, brief)
+		}
+		if has := strings.Contains(brief, "Cross-area matters between them are yours to settle"); has != (wantChildren != nil) {
+			t.Errorf("%s: cross-area statement present = %v", manager, has)
+		}
 	}
 	root := team["."].Brief
 	if !strings.Contains(root, "files directly in realization/ such as realization/go.mod") ||

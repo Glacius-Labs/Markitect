@@ -102,7 +102,7 @@ func renderBrief(in briefInput) string {
 		b.WriteString("Only these areas and your registry shard are writable in /work; everything else is read-only.\n")
 	}
 	if len(in.Children) > 0 {
-		b.WriteString("\nYour children\nYour children realize their own Definitions in their areas. You supply the foundations they need within your own area, coordinate them and integrate their results; you do not implement their areas, and you cannot release them from their obligations.\n")
+		b.WriteString("\nYour children\nYour children realize their own Definitions in their areas. You supply the foundations they need within your own area, coordinate them and integrate their results; you do not implement their areas, and you cannot release them from their obligations. Cross-area matters between them are yours to settle: decide which child's realization provides a shared rule or interface, and have the others use it instead of rebuilding it.\n")
 		for _, child := range in.Children {
 			areas := "none"
 			if len(child.Areas) > 0 {
@@ -152,6 +152,7 @@ func renderBrief(in briefInput) string {
 	if in.Manager.Package != organization.Root {
 		b.WriteString("\nYour own Definitions are yours to realize in your area. Your parent coordinates; it cannot take them over or waive them.\n")
 	}
+	b.WriteString("Never realize another area's Definitions or touch anything outside your area: use the owner's realization, and ask through the tree when you need something from another area.\n")
 	wroteIncluded := false
 	for _, definition := range definitions {
 		if isOwn(definition) {

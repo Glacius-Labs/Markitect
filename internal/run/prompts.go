@@ -131,7 +131,7 @@ func (e *engine) verifyPromptLocked(m *mgr, rs *roundState, retry bool) string {
 		b.WriteString("Your previous Verify attempt ended without a valid assess call. Assess again.\n")
 	}
 	e.contextLocked(&b, m)
-	b.WriteString("\nThe candidate is mounted read-only at /work; write build or test output only under /tmp. Blocking means a concrete model violation, absent evidence the model explicitly requires, or a failed required check, citing the obligation and the observed behavior or source evidence. Preferred extra test depth is advisory: set blocking to false.\n")
+	b.WriteString("\nThe candidate is mounted read-only at /work; write build or test output only under /tmp. Blocking means a concrete model violation, absent evidence the model explicitly requires, or a failed required check, citing the obligation and the observed behavior or source evidence. A Definition realized outside its owner's artifacts (rebuilt in another area, including a parent's own area, instead of using the owner's realization) and a change outside a Manager's own area are model violations; as a parent, check how your children actually use each other's realizations. Preferred extra test depth is advisory: set blocking to false.\n")
 
 	var checks []string
 	for _, c := range rs.checks {

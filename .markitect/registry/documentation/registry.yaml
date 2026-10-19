@@ -16,6 +16,10 @@ artifacts:
     form: doc
     realizes: [documentation/current-guidance]
     why: Preserves owner wording and documentation acceptance for the three fundamental project workflows without assigning implementation work.
+  - path: "docs/concepts/sources/owner-realizes-others-use-20261019.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: "Preserves the owner decision that owners realize, others use, and parents settle cross-area matters."
   - path: "docs/concepts/sources/ownership-build-order-oracle-20261019.md"
     form: doc
     realizes: [documentation/current-guidance]
