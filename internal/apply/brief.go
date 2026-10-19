@@ -79,7 +79,7 @@ func renderBrief(in briefInput) string {
 	fmt.Fprintf(&b, "\nRegistry\nEvery file you create is registered by you in your registry shard %s, in the same change; a file that is not registered there is unexplained and blocks the candidate. Entries use this shape:\n\napiVersion: markitect.registry/v1\nartifacts:\n  - path: path/of/the/file/from/the/repository/root\n    form: code   # one of code, test, doc, build, config\n    realizes: [%s]   # existing Definition identities\n    why: One sentence on what the file contributes.\n\n", in.Shard, example)
 	b.WriteString("Protected intent\nThe canonical model under /work/.markitect is the binding intent. Read it; never change it.\n\n")
 
-	b.WriteString("Model obligations\n")
+	b.WriteString("Model obligations\nYour own Definitions are your obligations. Included Definitions describe contracts of other areas: rely on their owners' realization, coordinated through your parent or children, instead of realizing them again in your area.\n")
 	definitions := in.Selection.Definitions()
 	if len(definitions) == 0 {
 		b.WriteString("This Manager has no Definitions of its own and none are included.\n")

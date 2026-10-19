@@ -8,7 +8,7 @@ Status: implemented on the branch, pending independent review, hosted CI and own
 
 The team is permanent and derived, not planned: Root (`.`) and one Manager per local Package, with parents from the model hierarchy. Every Manager takes part in every Verify round. `run.Config` lists Root first and every parent before its children.
 
-Apply renders each Manager's Brief from the captured model: the applicable obligations with provenance, its owned artifact areas, its registry shard and the required checks. The engine adds the mandate, contacts, owner request and decisions, findings, messages and check results. A Manager runs with its Execute and Verify profile from the project's settings; Execute and Verify use separate provider homes and Verify never resumes.
+Apply renders each Manager's Brief from the captured model: the applicable obligations with provenance, its owned artifact areas, its registry shard and the required checks. Own Definitions are the Manager's obligations; included Definitions describe other areas' contracts, which it uses through their owners instead of realizing them again. The engine adds the mandate, contacts, owner request and decisions, findings, messages and check results. A Manager runs with its Execute and Verify profile from the project's settings; Execute and Verify use separate provider homes and Verify never resumes.
 
 ## Ownership and registry shards
 
