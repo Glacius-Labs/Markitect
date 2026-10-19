@@ -22,3 +22,13 @@ Recorder's note: the option descriptions shown to the owner were the following.
 - Nach Thema teilen: the parallel session takes Apply behavior and the scenario runs; the Coordinator takes the product path, plan and documentation, cleanup and the self-model.
 
 Recorder's note: right afterwards the Apply core session, which had received "nur Apply" from the owner, proposed a variant that the sessions agreed: the runtime image and the Roombook and Readinglog runs go to the Coordinator, the library scenarios stay with the Apply core. A third session took the Extract follow-up work. These write scopes are the sessions' agreement within the owner's assignment, not a further owner decision.
+
+## Checkpoint: evidence first
+
+Recorder's note: the owner gave the following instruction in the Codex roadmap conversation on 19 October 2026, after a source-bound interim assessment of Apply and Extract. It was relayed to the existing Apply, Extract and Coordinator sessions. It supersedes the earlier next-target sequence, while preserving their ongoing attempts, evidence and candidates.
+
+> Gib das den laufenden Claude-Sessions weiter und passe Lieferplan und Issues entsprechend an. Erst die genannten Apply- und Extract-Nachweise abschließen, bevor wir den Umfang erweitern.
+
+Recorder's interpretation of the referenced assessment: it called for Apply evidence covering model change, unchanged-intent drift repair, a justified owner question, and budget/deadline/interruption with retained evidence and the supported restart. For Extract, it called for completing the running fixed-build comparison on missing project obligations, incidental implementation choices made binding, and incorrect or unnecessary escalation. A no-change round trip alone does not establish extracted-model quality.
+
+Recorder's note: the current [delivery scope](../../implementation-plan.md#target-and-baseline) applies this instruction through existing issues #492 and #495. The outcome reports may be negative or inconclusive; they do not automatically authorize a larger process, more experiments or the deferred expansion queue. This records the current scope decision, not another permanent approval institution.
