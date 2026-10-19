@@ -5,8 +5,10 @@
 #   docker build -f packaging/runtime/examples/go/Dockerfile -t markitect-runtime-go .
 #
 # Sessions and checks then use the same tools. The root filesystem stays
-# read-only, so Go's caches and temporary build files live in the provider
-# home.
+# read-only, so Go's caches live in the provider home and /tmp. GOTMPDIR
+# stays unset: an independent assessment runs this image without a writable
+# home, and a check profile that needs more room than /tmp sets GOTMPDIR in
+# its env.
 
 ARG BASE=markitect-runtime
 FROM golang:1.27.1-bookworm@sha256:69a7b9788769bec032d238959b61854e9ae87f57be9029ec04e9885fabf99195 AS go
@@ -26,5 +28,4 @@ ENV PATH=/usr/local/go/bin:${PATH} \
     GOTOOLCHAIN=local \
     GOPATH=/home/agent/go \
     GOCACHE=/home/agent/.cache/go-build \
-    GOTMPDIR=/home/agent \
     GOFLAGS=-buildvcs=false
