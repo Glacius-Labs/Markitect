@@ -52,3 +52,21 @@ Recorder's summary of the assistant proposal: use Apply for both initial constru
 > Dann halten wir Apply und Extract so fest. Aktualisiere die Docs entsprechend: drei Ausgangssituationen, aber nur zwei Prozesse.
 
 Recorder's interpretation: this accepts the names and mapping. Cases 1 and 2 are starting states of Apply; case 3 uses Extract. The earlier Build, Reconcile and Adopt descriptions identify situations and purposes rather than three separate process names. This documentation-only clarification preserves the existing direction, ownership, review, Verify and write-authority boundaries and adds no implementation assignment.
+
+## Owner confirms the Extract walkthrough
+
+Recorder's note: subsequent case-3 discussion in the same thread **Workflow** on 19 October 2026. The owner requested a walkthrough of starting without a model, forming the Manager structure, and refining the model with the user and Verify, with no implementation.
+
+Recorder's summary of the assistant walkthrough, not verbatim owner text:
+
+- Fix the existing repository stand and selected scope, with existing authoritative requirements and decisions. Root is the entry responsibility for that source scope and proposes the first Package/responsibility outline from the artifacts; folder names are evidence, not automatically the right model structure.
+- Form the initial Manager tree from the provisional candidate structure. Parents supply assigned sources, provisional model context, known shared meanings and open questions before children investigate their areas. Develop source-supported model proposals recursively and integrate them upward. Review and correct wrong boundaries or newly discovered responsibilities visibly; exact provisional-tree lifecycle contracts remain future work.
+- Parents reconcile duplicate terms, inconsistent statements and cross-area contracts. Consequential unsettled meaning goes through Root to the owner in understandable terms, without requiring YAML review. Keep observations, interpretations, proposals, accepted decisions and unresolved questions distinct; do not ask for already clear authoritative intent again.
+- Independently review the model proposal, then assess the unchanged artifacts against the exact model candidate with read-only Verify. Use findings and owner clarification to revise, review, integrate and Verify again against the same source basis. Model quality and artifact conformity remain distinct judgments.
+- The owner adopts the chosen model and proposed accounting through the normal project decision boundary. Known supported realization deviations can remain for later authorized Apply; do not weaken intent or alter the source artifacts to manufacture a passing Verify result. Unresolved material questions or evidence gaps remain incomplete.
+
+The owner accepted the walkthrough and requested documentation:
+
+> Ja, halte den Ablauf für Fall 3 mit Extract so in den Docs fest: erste Struktur aus den Artefakten ableiten, Manager daraus bilden und das Modell interaktiv mit dem Nutzer und Verify verfeinern. Weiterhin keine Implementierung.
+
+Recorder's interpretation: this clarifies DEC-057's case 3 and the existing DEC-044 Extract design. It authorizes documentation only, not an Extract command/runtime, a provisional Manager-rebuild protocol, new model language, fixture or application changes, provider runs, demonstrations or releases. Earlier owner quotations and evidence retain their original scope.
