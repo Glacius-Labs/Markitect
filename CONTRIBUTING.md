@@ -1,6 +1,6 @@
 # Development
 
-Markitect is being rebuilt around canonical language v1 and delegated realization. Current source provides actual read-only preparation, a guarded generated model view and the recursive Apply of [DEC-056](docs/concepts/register.md#dec-056-recursive-reconciliation-with-a-shared-workspace) on branch `dev/recursive-apply-simplified`, pending review and owner acceptance ([runtime contract](docs/design/canonical-model/manager-apply-runtime.md)). [AGENTS.md](AGENTS.md), the [delivery plan](docs/implementation-plan.md) and the bounded dispatch own authority and shared-file reservations.
+Markitect is built around canonical language v1 and delegated realization. Current source provides actual read-only preparation, a guarded generated model view, the recursive Apply of [DEC-056](docs/concepts/register.md#dec-056-recursive-reconciliation-with-a-shared-workspace) with DEC-058 to DEC-060 and a first Extract, pending owner acceptance ([runtime contract](docs/design/canonical-model/manager-apply-runtime.md)). [AGENTS.md](AGENTS.md), the [delivery plan](docs/implementation-plan.md) and the bounded dispatch own authority and shared-file reservations.
 
 ## Ownership and layout
 

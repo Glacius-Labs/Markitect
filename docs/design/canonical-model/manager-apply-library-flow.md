@@ -2,7 +2,7 @@
 
 ## Current library walkthrough
 
-**Status, 19 October 2026:** agreed conceptual workflow under [DEC-056](../../concepts/register.md#dec-056-recursive-reconciliation-with-a-shared-workspace), amended by [DEC-058](../../concepts/register.md#dec-058-apply-always-executes-before-independent-verify) to start every Apply with Execute and integration, followed by independent Verify. The [current Apply concept](manager-apply-concept.md#current-agreed-concept--19-october-2026) owns the target behavior. This update changes documentation only; the [implemented runtime contract](manager-apply-runtime.md) still records the earlier initial-Verify order. No runtime change or new Apply is demonstrated here. The earlier walkthrough below is a superseded reference.
+**Status, 19 October 2026:** agreed conceptual workflow under [DEC-056](../../concepts/register.md#dec-056-recursive-reconciliation-with-a-shared-workspace), amended by [DEC-058](../../concepts/register.md#dec-058-apply-always-executes-before-independent-verify) to start every Apply with Execute and integration, followed by independent Verify. The [current Apply concept](manager-apply-concept.md#current-agreed-concept--19-october-2026) owns the target behavior. The [implemented runtime contract](manager-apply-runtime.md) describes the implementation, and the [repeated demonstrations](../../validation/recursive-apply-repetitions-20261019.md) record real runs of this walkthrough. The earlier walkthrough below is a superseded reference.
 
 ### Fixed team and mandate
 
@@ -196,7 +196,7 @@ The concise result distinguishes changed and retained areas, the model obligatio
 
 ## First business-rule change: from five to seven
 
-Status: owner-accepted working-day walkthrough, 17 October 2026 ([source](../project-capability-skills-20261009.md#owner-source)). Assume the first reconciliation above has succeeded and the existing application conforms to the adopted five-loan model. This is a hypothetical continuation, not evidence of an executed Apply. It changes no model fixture, implementation or delivery scope; the [delivery demonstration](../../implementation-plan.md#target-and-baseline) retains its separate five-to-three change.
+Status: owner-accepted working-day walkthrough, 17 October 2026 ([source](../project-capability-skills-20261009.md#owner-source)). Assume the first reconciliation above has succeeded and the existing application conforms to the adopted five-loan model. This is a hypothetical continuation, not evidence of an executed Apply. It changes no model fixture, implementation or delivery scope; the [library demonstrations](../../validation/recursive-apply-repetitions-20261019.md) cover the separate five-to-three change.
 
 The owner's ordinary request can be: "Increase the limit from five to seven simultaneously open loans per member. Preserve its existing scope and all other conditions. Update the model first, then have Markitect reconcile the application. Ask only about material conflicts or missing authority." This is a change of intended behavior, rather than a defect repair against unchanged intent. A discussion-only request authorizes neither the model edit nor execution; this document records the workflow only.
 

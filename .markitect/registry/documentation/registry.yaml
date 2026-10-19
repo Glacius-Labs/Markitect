@@ -8,6 +8,10 @@ artifacts:
     form: doc
     realizes: [documentation/current-guidance]
     why: Records accepted modeling-skill guidance, authority boundaries and teaching examples while preserving the documentation-only scope and existing skill split.
+  - path: "docs/concepts/sources/coordinator-assignment-20261019.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Preserves the owner's assignment of the work around the core to the Coordinator and the selected next milestone, examples and work split of the delivery plan.
   - path: "docs/concepts/sources/apply-execute-first-20261019.md"
     form: doc
     realizes: [documentation/current-guidance]

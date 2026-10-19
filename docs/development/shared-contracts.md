@@ -32,7 +32,7 @@ Cross-command external-target exclusivity is **not enforced by a shared registry
 
 ## Coordinator-owned changes
 
-For the Apply rebuild, the [architect section](../implementation-plan.md#architect-and-coordinator) of the delivery plan assigns the ports and core contracts; the rest of this section describes the earlier Module/Host line.
+For Apply, the [work streams](../implementation-plan.md#work-streams) of the delivery plan assign the ports and core contracts to the Apply core; the rest of this section describes the earlier Module/Host line.
 
 The coordinator owns shared Core contracts, Host composition/runtime seams, source identity, adapter DTOs/lifecycle/trust boundaries, package activation and controlled writes. Module implementers propose concrete changes with consumers, alternatives, compatibility/determinism/evidence tests and a focused design before editing shared contracts. One generic limitation needs repeated independent engineering evidence; a provider convenience does not justify Core expansion. See [Modules and static composition](modules.md) for the dependency law and Core request format.
 
