@@ -1,6 +1,8 @@
 # Configuration assignments and Manager mandates
 
-> **Historical, 19 October 2026:** [manager-apply-runtime.md](manager-apply-runtime.md) owns the implemented contract of Apply ([DEC-056](../../concepts/register.md#dec-056-recursive-reconciliation-with-a-shared-workspace)). The text below describes the earlier design and is kept as history; do not implement it or read it as current behavior.
+> **Moved to history:** this is the Apply design before [DEC-056](../../concepts/register.md#dec-056-recursive-reconciliation-with-a-shared-workspace), kept for its decisions and failed attempts. The current owners are [manager-apply-concept.md](../../design/canonical-model/manager-apply-concept.md) (intent) and [manager-apply-runtime.md](../../design/canonical-model/manager-apply-runtime.md) (implemented contract); see the [folder README](README.md).
+
+> **Historical, 19 October 2026:** [manager-apply-runtime.md](../../design/canonical-model/manager-apply-runtime.md) owns the implemented contract of Apply ([DEC-056](../../concepts/register.md#dec-056-recursive-reconciliation-with-a-shared-workspace)). The text below describes the earlier design and is kept as history; do not implement it or read it as current behavior.
 
 This contract owns the execution input fields and their deterministic resolution. The [execution contract](manager-apply-execution.md) owns budget admission, run transitions and status meaning; the [journal](manager-apply-journal.md) owns their durable records.
 
@@ -78,7 +80,7 @@ checks:
 
 `defaults` applies to every local Package Manager, including root. `packages` keys are exact local Package paths; `.` is root. Unknown or imported Package keys fail. There is no inheritance from ancestor overrides: `lending/reminders` uses project defaults unless it has its own entry.
 
-The accepted later [model-migration workflow](commands.md#model-restructuring-as-an-explicit-migration) explicitly migrates affected Package bindings and reviews their effective settings before activating the future Manager tree. Conflicting teams, instructions, limits or rights require resolution, not an implicit winner or added budgets. This preserves the resolution rules below; it implements no model/configuration migration API and grants no new execution authority.
+The accepted later [model-migration workflow](../../design/canonical-model/commands.md#model-restructuring-as-an-explicit-migration) explicitly migrates affected Package bindings and reviews their effective settings before activating the future Manager tree. Conflicting teams, instructions, limits or rights require resolution, not an implicit winner or added budgets. This preserves the resolution rules below; it implements no model/configuration migration API and grants no new execution authority.
 
 | Setting | Resolution |
 | --- | --- |
@@ -264,4 +266,4 @@ A Manager first retrieves existing knowledge, then decides within its freedom or
 
 The [journal contract](manager-apply-journal.md#questions-answers-and-model-changes) owns the content of questions, how owner answers are bound and what they trigger. A blocked assignment or a serious execution uncertainty shows in the status at once; routine findings and local decisions stay inspectable without an answer. CLI status and question inspection suffice for the first version.
 
-Configuration needs negative cases for exact overrides versus attempted parent-message restrictions, ceilings, unknown Packages and profiles, invalid reserves, protected inputs, conflicting instructions, oversized contexts and unknown approval Packages. Experience hints and an operational doctor are later extensions ([north star](manager-realization-north-star.md#later-operations-and-extensions)).
+Configuration needs negative cases for exact overrides versus attempted parent-message restrictions, ceilings, unknown Packages and profiles, invalid reserves, protected inputs, conflicting instructions, oversized contexts and unknown approval Packages. Experience hints and an operational doctor are later extensions ([north star](../../design/canonical-model/manager-realization-north-star.md#later-operations-and-extensions)).

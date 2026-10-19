@@ -10,7 +10,7 @@ Build `cmd/markitect` and use its CLI from the coding environment. `check` and `
 
 The explicit Orchestrator document contains closed, typed Agent and Check profile sections consumed by the actual adapters. Project execution declarations select profile names. The Codex section uses `profileVersion: 2` for metadata only and `3` with explicit execution settings; the `claudeCode` section uses `profileVersion: 1` with its explicit session settings (model, effort, system prompt, tools and resource limits). Each names an explicit engine executable and immutable image ID. Agent preparation binds the actual whole `/opt/markitect/runtime.env` bytes, recorded Codex and agentd versions, and build-recorded Codex schema digest. That digest is an assertion, not an observed complete schema inventory. Instructions select only captured inputs. Check preparation retains its exact host-executable bytes, literal argument/environment policy and finite limits. Effective settings retain real source provenance and product defaults.
 
-See the implemented [Codex metadata adapter](../internal/adapters/codexappserver/README.md) and [Check metadata adapter](../internal/adapters/checks/) for supported versioned fields and their contract tests, and [configuration assignments](design/canonical-model/manager-apply-configuration.md) for the separation of inputs.
+See the implemented [Codex metadata adapter](../internal/adapters/codexappserver/README.md) and [Check metadata adapter](../internal/adapters/checks/) for supported versioned fields and their contract tests, and [configuration assignments](history/apply-design-before-dec-056/manager-apply-configuration.md) for the separation of inputs.
 
 ## Inner role execution and workspace boundary
 
