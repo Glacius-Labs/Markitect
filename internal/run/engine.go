@@ -1,7 +1,6 @@
 package run
 
 import (
-	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
@@ -10,6 +9,7 @@ import (
 	"slices"
 	"strings"
 	"time"
+	"unicode"
 	"unicode/utf8"
 
 	"github.com/Glacius-Labs/Markitect/internal/model"
@@ -1086,15 +1086,37 @@ func (e *Engine) requiredChecksFail(ctx context.Context, s *stepRun, call ToolCa
 		if err != nil {
 			return "", err
 		}
-		if !receipt.Passed(req) {
-			output := receipt.Output
-			if len(output) > gateCheckOutput {
-				output = output[len(output)-gateCheckOutput:]
-			}
-			return fmt.Sprintf("the required check %s fails on these files; submit once it passes: %s", name, bytes.TrimSpace(output)), nil
+		if observedFailure(receipt, req) {
+			return fmt.Sprintf("the required check %s fails on these files; fix it, or wait for what it needs: %s", name, outputTail(receipt.Output, gateCheckOutput)), nil
 		}
 	}
 	return "", nil
+}
+
+// observedFailure reports whether the receipt shows the request's check ran to
+// a nonzero exit; a check that did not run, timed out or is uncertain shows
+// nothing about the files.
+func observedFailure(r CheckReceipt, req CheckRequest) bool {
+	return r.ID == req.ID && r.ImageID == req.ImageID && r.Tree == req.Tree.Digest() && r.Started && r.Exited && !r.TimedOut && !r.Uncertain && r.ExitCode != 0
+}
+
+// outputTail is the end of a check's output, at most limit bytes, as text a
+// tool refusal can carry: whole characters, without control characters other
+// than line breaks and tabs.
+func outputTail(output []byte, limit int) string {
+	if len(output) > limit {
+		output = output[len(output)-limit:]
+		for len(output) > 0 && !utf8.RuneStart(output[0]) {
+			output = output[1:]
+		}
+	}
+	clean := strings.Map(func(r rune) rune {
+		if unicode.IsControl(r) && r != '\n' && r != '\t' {
+			return -1
+		}
+		return r
+	}, strings.ToValidUTF8(string(output), ""))
+	return strings.TrimSpace(clean)
 }
 
 const gateCheckOutput = 8 << 10

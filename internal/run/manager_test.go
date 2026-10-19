@@ -384,3 +384,19 @@ func TestSendNoteFitsThePhase(t *testing.T) {
 		}
 	}
 }
+
+// Only a basis 3 task check is writing work inside its step; the generic
+// reservation of an older basis refuses it.
+func TestOlderBasisReservesNoWritingProjectCheck(t *testing.T) {
+	t.Parallel()
+	s := unitState(t)
+	c := unitCommand(ReserveInvocation)
+	c.Reservation = Reservation{ID: "check", Kind: ProjectCheck, Purpose: Writing, Maximum: time.Minute}
+	if err := s.apply(c); !errors.Is(err, ErrInvalid) {
+		t.Fatal("a writing project check was reserved", err)
+	}
+	c.Reservation.Purpose = Assessment
+	if err := s.apply(c); err != nil {
+		t.Fatal(err)
+	}
+}

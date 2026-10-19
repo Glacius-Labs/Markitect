@@ -27,8 +27,8 @@ const (
 
 // CheckRecord is one admitted project check. Name is the configured check it
 // runs; Request is its recorded request and Tree the tree it runs on. Task
-// names the Manager whose candidate review requested it; it is empty for the
-// aggregate's required checks. Receipt is the recorded observation once the
+// names the Manager whose review or writing step requested it; it is empty for
+// the aggregate's required checks. Receipt is the recorded observation once the
 // check ended.
 type CheckRecord struct {
 	ID      CheckID
@@ -142,8 +142,9 @@ func (c *Coordinator) PrepareCheckCommand(meta RecordMeta, name string, req Chec
 	return cmd, nil
 }
 
-// PrepareReviewCheckCommand admits a check that the running candidate review
-// of a manager's task requests, on the frozen candidate it reviews.
+// PrepareReviewCheckCommand admits a check that a manager's task requests: its
+// candidate review on the frozen candidate, or its writing step on the
+// workspace it observed.
 func (c *Coordinator) PrepareReviewCheckCommand(meta RecordMeta, manager, name string, req CheckRequest, reservation Reservation) (Command, error) {
 	cmd, err := c.PrepareCheckCommand(meta, name, req, reservation)
 	if err != nil {
@@ -424,7 +425,8 @@ func (s stateValue) checkPurpose(k CheckRecord) Purpose {
 // checkAdmissible admits the aggregate's required checks while the run is
 // Verifying and nothing else is open, a review's check while that review's
 // candidate step runs, on its frozen candidate, and a writing step's check on
-// any tree while the step runs, one check at a time.
+// any tree while the task holds an admitted work or integrate step, one check
+// at a time.
 func (s stateValue) checkAdmissible(k CheckRecord) bool {
 	if k.Task == "" {
 		return s.current.State == Verifying && !s.hasOpen()

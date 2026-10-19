@@ -373,6 +373,7 @@ checks on the peeked workspace first (`Engine.preflight`) and is refused with
 the end of the output when one fails. That check is admitted while the task
 runs a work or integrate step, on any tree, and charged as writing work; one
 that does not fit the step or the budget is skipped.
+
 `Engine.Verify` runs the required checks on the tree that publishing the
 aggregate writes, reuses a check that already passed on it, and finishes the
 run Incomplete when one fails or the budget no longer fits it.

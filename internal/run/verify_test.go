@@ -8,6 +8,7 @@ import (
 	"strings"
 	"testing"
 	"time"
+	"unicode/utf8"
 
 	"github.com/Glacius-Labs/Markitect/internal/run"
 	"github.com/Glacius-Labs/Markitect/internal/snapshot"
@@ -18,8 +19,10 @@ type fakeChecks struct {
 	runs  []run.CheckRequest
 	clock *time.Time // advanced by took on each run
 	took  time.Duration
-	// result, when set, decides each run's exit code and output.
-	result func(run.CheckRequest) (int, string)
+	// result, when set, decides each run's exit code and output; notStarted
+	// reports runs whose process never started.
+	result     func(run.CheckRequest) (int, string)
+	notStarted bool
 }
 
 func (f *fakeChecks) Run(_ context.Context, r run.CheckRequest) (run.CheckReceipt, error) {
@@ -31,7 +34,7 @@ func (f *fakeChecks) Run(_ context.Context, r run.CheckRequest) (run.CheckReceip
 	if f.result != nil {
 		exit, output = f.result(r)
 	}
-	return run.CheckReceipt{ID: r.ID, ImageID: r.ImageID, Tree: r.Tree.Digest(), Started: true, Exited: true, ExitCode: exit, Output: []byte(output)}, nil
+	return run.CheckReceipt{ID: r.ID, ImageID: r.ImageID, Tree: r.Tree.Digest(), Started: !f.notStarted, Exited: !f.notStarted, ExitCode: exit, Output: []byte(output)}, nil
 }
 
 func requiredCheck(t *testing.T) run.RequiredCheck {
@@ -338,7 +341,7 @@ func TestSubmitIsRefusedWhileARequiredCheckFails(t *testing.T) {
 	if n := strings.Count(strings.Join(admitted(h), ","), "lending work"); n != 1 {
 		t.Fatal("the step did not conclude as one submission", admitted(h), h.sessions.answers)
 	}
-	if !slices.Contains(h.sessions.answers, "lending work submit refused the required check go-tests fails on these files; submit once it passes: FAIL: library is broken") {
+	if !slices.Contains(h.sessions.answers, "lending work submit refused the required check go-tests fails on these files; fix it, or wait for what it needs: FAIL: library is broken") {
 		t.Fatal("the submit was not refused with the check output", h.sessions.answers)
 	}
 	if task := h.task("lending"); len(task.Deliveries) == 0 || len(task.Rejections) != 0 {
@@ -434,5 +437,116 @@ func TestTheGateIsSkippedWhenTheCheckDoesNotFitTheStep(t *testing.T) {
 	runToEnd(t, h)
 	if h.c.Current().State != run.Verifying || len(checks.runs) != 0 {
 		t.Fatal("a gate check ran without time", h.c.Current(), len(checks.runs), h.sessions.answers)
+	}
+}
+
+// The refusal carries check output, which may hold anything: a tail cut inside
+// a character, an invalid byte and a NUL must still leave the Host a refusal
+// it can record, so the Agent corrects the files in the same step.
+func TestGateRefusalIsRecordableTextWhateverTheOutput(t *testing.T) {
+	t.Parallel()
+	// 9000 bytes of three-byte characters: the 8 KiB cut falls inside one.
+	output := strings.Repeat("€", 3000) + "\x00 tail\xff\x01 end\n"
+	checks := &fakeChecks{}
+	h := gatedHarness(t, fixesItsFile, checks)
+	checks.result = func(r run.CheckRequest) (int, string) {
+		if code, _ := brokenLibrary(t)(r); code != 0 {
+			return 1, output
+		}
+		return 0, "ok\n"
+	}
+	runToEnd(t, h)
+	if h.c.Current().State != run.Verifying {
+		t.Fatal("run did not complete", h.c.Current(), h.sessions.answers)
+	}
+	const prefix = "lending work submit refused the required check go-tests fails on these files; fix it, or wait for what it needs: "
+	var reason string
+	for _, a := range h.sessions.answers {
+		if strings.HasPrefix(a, prefix) {
+			reason = strings.TrimPrefix(a, prefix)
+		}
+	}
+	if reason == "" || !utf8.ValidString(reason) || strings.ContainsAny(reason, "\x00\x01") || len(reason) > 8<<10 || !strings.HasSuffix(reason, "tail end") {
+		t.Fatalf("the refusal is not clean text of at most 8 KiB: %d bytes %q", len(reason), reason[max(0, len(reason)-20):])
+	}
+}
+
+// A check that did not run to an observed result says nothing about the files,
+// so the submit goes through.
+func TestGateStaysSilentWhenTheCheckDidNotRun(t *testing.T) {
+	t.Parallel()
+	checks := &fakeChecks{exit: 1, notStarted: true}
+	h := gatedHarness(t, happyAgent, checks)
+	runToEnd(t, h)
+	if h.c.Current().State != run.Verifying || len(checks.runs) == 0 {
+		t.Fatal("the gate did not try the check or refused a submit", h.c.Current(), len(checks.runs), h.sessions.answers)
+	}
+}
+
+// Writing work protects the completion reserve: a gate check that would use it
+// is skipped like one that does not fit the step.
+func TestTheGateIsSkippedWhenTheCheckWouldNeedTheReserve(t *testing.T) {
+	t.Parallel()
+	inputs := stepInputs(t, true)
+	inputs.Binding.RequiredChecks = []string{"go-tests"}
+	// A work step fits above the reserve; the 22s check on top of it does not.
+	inputs.Binding.Policy.Reserve.ExecutionTime = 8*time.Minute + 50*time.Second
+	h := newHarnessWith(t, inputs, happyAgent)
+	checks := &fakeChecks{exit: 1}
+	h.engine = h.newEngineWith(h.c, checks)
+	runToEnd(t, h)
+	if h.c.Current().State != run.Verifying || len(checks.runs) != 0 {
+		t.Fatal("a gate check used the completion reserve", h.c.Current(), len(checks.runs), h.sessions.answers)
+	}
+}
+
+// The reducer admits a task check only while the task holds an admitted work,
+// integrate or candidate-review step, charged for that step's purpose.
+func TestReducerAdmitsTaskChecksOnlyInWritingAndCandidateSteps(t *testing.T) {
+	t.Parallel()
+	var h *harness
+	var asked string
+	got := map[string]error{}
+	probe := func(name, manager string, purpose run.Purpose) {
+		check := requiredCheck(t)
+		check.Request.Tree = h.inputs.Binding.Census
+		check.Request.ID = run.CheckID("check-probe-" + name)
+		cmd, err := h.c.PrepareReviewCheckCommand(meta("probe-"+name), manager, check.Name, check.Request, run.Reservation{ID: "probe-" + name, Kind: run.ProjectCheck, Purpose: purpose, Maximum: time.Minute})
+		if err != nil {
+			t.Fatal(err)
+		}
+		_, got[name] = h.c.Propose(cmd)
+	}
+	agent := func(s agentStep) []action {
+		switch {
+		case s.Manager == "." && s.Phase == run.PhaseIntegrate && s.Attempt == 0:
+			asked = questionID(s, 1)
+			return []action{
+				{Tool: run.ToolSend, Args: sendArgs("question", "lending", "Should Item carry a title?"), Want: run.ToolOK},
+				{Tool: run.ToolWait, Args: waitReplyArgs(asked), Want: run.ToolOK},
+			}
+		case s.Manager == "lending" && s.Phase == run.PhaseReply:
+			probe("reply", "lending", run.Writing)
+			return []action{{Tool: run.ToolSend, Args: sendArgs("reply", asked, "Yes, a title."), Want: run.ToolOK}}
+		case s.Manager == "lending" && s.Phase == run.PhaseReviewerExpectations && s.Attempt == 0:
+			probe("expectations", "lending", run.Assessment)
+		case s.Manager == "lending" && s.Phase == run.PhaseWork && s.Attempt == 0:
+			probe("writing", "lending", run.Writing)
+			probe("assessment-in-writing", "lending", run.Assessment)
+			probe("no-step", ".", run.Writing)
+		}
+		return happyAgent(s)
+	}
+	h = newHarness(t, true, agent)
+	h.engine = h.newEngineWith(h.c, &fakeChecks{})
+	runToEnd(t, h)
+	want := map[string]error{"writing": nil, "reply": run.ErrState, "expectations": run.ErrState, "no-step": run.ErrState, "assessment-in-writing": run.ErrInvalid}
+	for name, err := range want {
+		if !errors.Is(got[name], err) || err == nil && got[name] != nil {
+			t.Errorf("%s check: %v, want %v", name, got[name], err)
+		}
+	}
+	if len(got) != len(want) {
+		t.Errorf("probes ran: %v", got)
 	}
 }
