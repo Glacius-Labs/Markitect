@@ -516,6 +516,8 @@ func TestPortErrors(t *testing.T) {
 	})
 }
 
+func plan(mounts ...PathMount) WritePlan { return WritePlan{Enforced: true, Mounts: mounts} }
+
 func TestInvalidConfigurationIsRefusedBeforeAnyEffect(t *testing.T) {
 	for name, edit := range map[string]func(*Config){
 		"run id":         func(c *Config) { c.RunID = "a b" },
@@ -548,8 +550,21 @@ func TestInvalidConfigurationIsRefusedBeforeAnyEffect(t *testing.T) {
 		"no agents":       func(c *Config) { c.Agents = nil },
 		"no workspaces":   func(c *Config) { c.Workspaces = nil },
 		"no evidence":     func(c *Config) { c.Evidence = nil },
-		"check owner":     func(c *Config) { c.Checks = []Check{{Name: "u", Owner: "ghost", Request: checkRequestFor(t)}} },
-		"check request":   func(c *Config) { c.Checks = []Check{{Name: "u", Owner: ".", Request: CheckRequest{}}} },
+		"mount absolute":  func(c *Config) { c.Team[3].Write = plan(PathMount{Path: "/library"}) },
+		"mount parent":    func(c *Config) { c.Team[3].Write = plan(PathMount{Path: "../library"}) },
+		"mount inner dot": func(c *Config) { c.Team[3].Write = plan(PathMount{Path: "a/../library"}) },
+		"mount root":      func(c *Config) { c.Team[3].Write = plan(PathMount{Path: "."}) },
+		"mount empty":     func(c *Config) { c.Team[3].Write = plan(PathMount{}) },
+		"mount backslash": func(c *Config) { c.Team[3].Write = plan(PathMount{Path: `library\x`}) },
+		"mount drive":     func(c *Config) { c.Team[3].Write = plan(PathMount{Path: "C:/library"}) },
+		"mount duplicate": func(c *Config) {
+			c.Team[3].Write = plan(PathMount{Path: "library", Writable: true}, PathMount{Path: "library"})
+		},
+		"mount is a file":      func(c *Config) { c.Team[3].Write = plan(PathMount{Path: "go.mod"}) },
+		"mount below a file":   func(c *Config) { c.Team[3].Write = plan(PathMount{Path: "library/a.go/x"}) },
+		"descendant mount 1st": func(c *Config) { c.Team[3].Write = plan(PathMount{Path: "library/x"}, PathMount{Path: "library"}) },
+		"check owner":          func(c *Config) { c.Checks = []Check{{Name: "u", Owner: "ghost", Request: checkRequestFor(t)}} },
+		"check request":        func(c *Config) { c.Checks = []Check{{Name: "u", Owner: ".", Request: CheckRequest{}}} },
 		"no runner": func(c *Config) {
 			c.Checks = []Check{{Name: "u", Owner: ".", Request: checkRequestFor(t)}}
 			c.Runner = nil

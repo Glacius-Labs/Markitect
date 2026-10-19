@@ -14,7 +14,8 @@ and publishes a verified candidate; this package never publishes and never commi
 ## Cycle
 
 1. Candidate 0 is the start stand, materialized read-only as `<RunID>-c0`; the shared
-   working tree is `<RunID>-work`. Later candidates are `<RunID>-c<N>`. Candidate volumes
+   working tree is `<RunID>-work`, created with the union of the mount paths of all enforced
+   write plans as empty directories (candidate volumes need none). Later candidates are `<RunID>-c<N>`. Candidate volumes
    close after their round. Once the shared volume holds the start stand, the engine never
    closes it: after `Reconcile` returns, in every outcome, the caller owns it and closes it
    after a successful publication or keeps it as retained work. A shared volume whose
@@ -28,6 +29,18 @@ and publishes a verified candidate; this package never publishes and never commi
    Manager that is not running and has undelivered items gets an Execute turn. In round 1
    only, owners may start as soon as their findings are known while other initial Verify
    turns continue on candidate 0. In later rounds Execute is paused for the whole round.
+   A Manager with `Write.Enforced` runs its Execute turns read-only unless `Write.Base`, with
+   `Write.Mounts` overlaid; without it the whole tree is writable and ownership is trusted.
+   Verify turns are always read-only without mounts. Mount paths are validated before any
+   effect: clean relative paths below `/work`, no `.`, no duplicates, none naming a file of the
+   start stand, each before the mounts of its descendants.
+   A Manager with `Building` (build from the model) does not start its first Execute turn
+   while its parent is `Building`, has not ended its first Execute turn of the run (in any way)
+   and is running, has undelivered items or has not yet reported its round 1 Verify. A parent
+   without work never blocks its children. Siblings and other areas stay parallel. The wait is
+   recorded once per Manager as `build.wait` with the parent, and the first Execute prompt of a
+   building Manager says that its area holds no artifacts yet. Reconcile runs (`Building` false)
+   are not ordered.
 5. The phase is quiescent when no Execute turn runs, no Manager has undelivered items and
    no owner question waits. The shared volume is then harvested (`Workspaces.Harvest`
    itself refuses to call a volume complete while a container mounts it) and the tree
@@ -54,7 +67,8 @@ tool refuses a report whose `satisfied` contradicts the raiser's open blocking f
   a turn that ends without it counts as done. Without an `Owner`, a question is refused.
 
 A Manager's Execute turns get the mandate, its brief, contacts, owner decisions, the
-shared-tree note and its items until one of them finished without error; later turns
+shared-tree note (with an enforced plan: outside its writable areas `/work` is read-only, a
+write there fails, scratch output goes under `/tmp`) and its items until one of them finished without error; later turns
 resume the conversation and get only new items. A turn that fails after its container
 stopped gets one retry with a note and the items it consumed again, even when the adapter
 reported a conversation; the second consecutive failure stops scheduling that Manager. An item that restates a finding lapses once

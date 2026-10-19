@@ -58,6 +58,7 @@ type fakeWS struct {
 	harvests  int
 	uncertain bool
 	extra     []string
+	dirs      map[WorkspaceID][]string
 	matErr    error
 	// matErrFor fails only the materialization of these workspaces.
 	matErrFor map[WorkspaceID]error
@@ -94,6 +95,10 @@ func (w *fakeWS) Materialize(_ context.Context, s WorkspaceSpec) (WorkspaceObser
 		v.files[e.Path().String()] = string(e.Bytes())
 	}
 	w.vols[s.ID], w.byName[v.name] = v, v
+	if w.dirs == nil {
+		w.dirs = map[WorkspaceID][]string{}
+	}
+	w.dirs[s.ID] = s.Directories
 	w.order = append(w.order, string(s.ID))
 	return WorkspaceObservation{ID: s.ID, Volume: v.name, Tree: s.Tree.Digest()}, nil
 }
@@ -190,7 +195,7 @@ func (a *fakeAgents) Run(ctx context.Context, turn Turn, h ToolHandler) (TurnRes
 	a.active++
 	a.maxActive = max(a.maxActive, a.active)
 	a.mu.Unlock()
-	writes := turn.Kind == ExecuteTurn && !turn.ReadOnly
+	writes := turn.Kind == ExecuteTurn && (!turn.ReadOnly || slices.ContainsFunc(turn.Mounts, func(m PathMount) bool { return m.Writable }))
 	if writes {
 		a.ws.mount(turn.Workspace, 1)
 	}
@@ -255,9 +260,21 @@ func (c *call) tool(name string, args any) ToolAnswer {
 	return c.h(c.ctx, name, raw)
 }
 
+// writable reports whether the turn's mounts allow a write to path: the base
+// mount first, then each mount in order overrides it for its directory.
+func writable(turn Turn, path string) bool {
+	ok := !turn.ReadOnly
+	for _, m := range turn.Mounts {
+		if path == m.Path || strings.HasPrefix(path, m.Path+"/") {
+			ok = m.Writable
+		}
+	}
+	return ok
+}
+
 func (c *call) write(path, content string) {
-	if c.turn.ReadOnly {
-		c.t.Errorf("turn %s writes to a read-only workspace", c.turn.ID)
+	if !writable(c.turn, path) {
+		c.t.Errorf("turn %s writes %s, which is read-only for it", c.turn.ID, path)
 	}
 	c.ag.ws.write(c.turn.Workspace, path, content)
 }

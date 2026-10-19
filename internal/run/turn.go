@@ -26,7 +26,7 @@ func (e *engine) runTurn(ts *turnState, turn Turn, handler ToolHandler) (TurnRes
 	turn.ID, turn.Manager, turn.Kind, turn.Timeout = ts.id, ts.m.Path, ts.kind, e.cfg.Budget.TurnTimeout
 	turn.Transcript = e.cfg.Evidence.Transcript(ts.id)
 	started := e.now()
-	_ = e.record(Event{Kind: "turn.start", Manager: ts.m.Path, Turn: ts.id, Round: ts.round, Data: map[string]any{"kind": ts.kind, "profile": turn.Profile, "workspace": turn.Workspace, "readOnly": turn.ReadOnly, "home": turn.Home, "resume": turn.Resume}})
+	_ = e.record(Event{Kind: "turn.start", Manager: ts.m.Path, Turn: ts.id, Round: ts.round, Data: map[string]any{"kind": ts.kind, "profile": turn.Profile, "workspace": turn.Workspace, "readOnly": turn.ReadOnly, "mounts": turn.Mounts, "home": turn.Home, "resume": turn.Resume}})
 	if e.ctx.Err() != nil {
 		e.mu.Lock()
 		e.turns = append(e.turns, TurnRecord{ID: ts.id, Manager: ts.m.Path, Kind: ts.kind, Round: ts.round, Started: started, Ended: e.now(), Stopped: true, Reason: "the run stopped before the turn started"})

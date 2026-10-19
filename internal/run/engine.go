@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"regexp"
+	"slices"
 	"strings"
 	"sync"
 	"time"
@@ -56,12 +57,16 @@ type mgr struct {
 	consumed     []item
 	running      bool
 	disabled     bool
-	failures     int
-	execCount    int
-	execUsed     bool
-	verifyUsed   bool
-	ran          bool
-	changed      []string
+	// execEnded is set when an Execute turn of the Manager ended, in any way;
+	// buildWaited when its wait for a building parent was recorded.
+	execEnded   bool
+	buildWaited bool
+	failures    int
+	execCount   int
+	execUsed    bool
+	verifyUsed  bool
+	ran         bool
+	changed     []string
 
 	// executed is set by an Execute turn that finished without error; until
 	// then the Manager's turn carries the full mandate, even when a failed turn
@@ -147,6 +152,10 @@ func validate(cfg Config) error {
 	}
 	index := map[string]int{}
 	slugs := map[string]string{}
+	files := map[string]bool{}
+	for _, entry := range cfg.Start.Entries() {
+		files[entry.Path().String()] = true
+	}
 	for i, m := range cfg.Team {
 		if !identifier(m.Path) || m.Path != strings.TrimSpace(m.Path) || strings.ContainsAny(m.Path, "\\") {
 			return bad("manager path %q is invalid", m.Path)
@@ -167,6 +176,9 @@ func validate(cfg Config) error {
 		}
 		if m.ExecuteProfile == "" || m.VerifyProfile == "" {
 			return bad("manager %q needs an Execute and a Verify profile", m.Path)
+		}
+		if err := validatePlan(m, files); err != nil {
+			return bad("%v", err)
 		}
 		if i == 0 {
 			continue
@@ -231,6 +243,61 @@ func validate(cfg Config) error {
 		return bad("checks need a Runner")
 	}
 	return nil
+}
+
+// validatePlan checks the mounts of an enforced write plan: clean relative
+// paths of the shared tree without duplicates, none of them "." or an existing
+// file of the start stand, and every mount before the mounts of its
+// descendants, so that a later mount never shadows an earlier one. The Base and
+// Mounts of an unenforced plan are not used.
+func validatePlan(m Manager, files map[string]bool) error {
+	if !m.Write.Enforced {
+		return nil
+	}
+	seen := map[string]bool{}
+	for _, mount := range m.Write.Mounts {
+		if _, err := snapshot.NewPath(mount.Path); err != nil {
+			return fmt.Errorf("manager %q has a mount %q that is not a clean relative path below /work", m.Path, mount.Path)
+		}
+		if seen[mount.Path] {
+			return fmt.Errorf("manager %q mounts %q twice", m.Path, mount.Path)
+		}
+		seen[mount.Path] = true
+		for end := 0; end <= len(mount.Path); end++ {
+			if (end == len(mount.Path) || mount.Path[end] == '/') && files[mount.Path[:end]] {
+				return fmt.Errorf("manager %q mounts %q, but %q is a file of the start stand", m.Path, mount.Path, mount.Path[:end])
+			}
+		}
+	}
+	for i, mount := range m.Write.Mounts {
+		for _, later := range m.Write.Mounts[i+1:] {
+			if strings.HasPrefix(mount.Path, later.Path+"/") {
+				return fmt.Errorf("manager %q lists mount %q after its descendant %q; parents come first", m.Path, later.Path, mount.Path)
+			}
+		}
+	}
+	return nil
+}
+
+// mountDirectories returns the sorted union of the mount paths of all enforced
+// write plans: the directories the shared work volume needs before the first
+// Execute turn.
+func (e *engine) mountDirectories() []string {
+	set := map[string]bool{}
+	for _, m := range e.team {
+		if !m.Write.Enforced {
+			continue
+		}
+		for _, mount := range m.Write.Mounts {
+			set[mount.Path] = true
+		}
+	}
+	dirs := make([]string, 0, len(set))
+	for dir := range set {
+		dirs = append(dirs, dir)
+	}
+	slices.Sort(dirs)
+	return dirs
 }
 
 func newEngine(parent context.Context, cfg Config) *engine {
@@ -330,8 +397,8 @@ func (e *engine) closeVolume(id WorkspaceID) {
 	_ = e.record(Event{Kind: "workspace.close", Data: data})
 }
 
-func (e *engine) materialize(id WorkspaceID, tree snapshot.Tree) (candidate, bool) {
-	obs, err := e.cfg.Workspaces.Materialize(e.ctx, WorkspaceSpec{ID: id, Tree: tree})
+func (e *engine) materialize(id WorkspaceID, tree snapshot.Tree, directories []string) (candidate, bool) {
+	obs, err := e.cfg.Workspaces.Materialize(e.ctx, WorkspaceSpec{ID: id, Tree: tree, Directories: directories})
 	if err == nil && (obs.Uncertain || obs.Volume == "" || obs.Tree != tree.Digest()) {
 		err = fmt.Errorf("materialization was not confirmed: %s", obs.Reason)
 	}
@@ -437,13 +504,13 @@ func (e *engine) run() (Status, string, snapshot.Tree) {
 	if !e.affordRound() {
 		return e.incomplete(fmt.Sprintf("the agent turn budget of %d does not cover one Verify round of %d managers", cfg.Budget.AgentTurns, len(e.team)))
 	}
-	cand, ok := e.materialize(e.volumeID("c0"), cfg.Start)
+	cand, ok := e.materialize(e.volumeID("c0"), cfg.Start, nil)
 	if !ok {
 		e.closeVolume(e.volumeID("c0"))
 		return e.incomplete("")
 	}
 	work := e.volumeID("work")
-	shared, ok := e.materialize(work, cfg.Start)
+	shared, ok := e.materialize(work, cfg.Start, e.mountDirectories())
 	if !ok {
 		e.closeVolume(cand.id)
 		e.closeVolume(work)
@@ -496,7 +563,7 @@ func (e *engine) capture(round int, work WorkspaceID, previous snapshot.Tree) (c
 		e.halt("capture of the shared tree is uncertain: " + err.Error())
 		return candidate{}, false
 	}
-	next, ok := e.materialize(e.volumeID(fmt.Sprintf("c%d", round)), h.Tree)
+	next, ok := e.materialize(e.volumeID(fmt.Sprintf("c%d", round)), h.Tree, nil)
 	if !ok {
 		e.closeVolume(e.volumeID(fmt.Sprintf("c%d", round)))
 		return candidate{}, false
