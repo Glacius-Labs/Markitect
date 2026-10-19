@@ -1,0 +1,15 @@
+apiVersion: markitect.execution/v1
+strategy: shared-workspace-v1
+budget:
+  executionTime: 20m
+  turnTimeout: 8m
+  agentTurns: 120
+  rounds: 4
+profiles:
+  execute: library-agent
+  verify: library-agent
+packages: {}
+layout:
+  roots: [realization]
+  exceptions: []
+checks: []

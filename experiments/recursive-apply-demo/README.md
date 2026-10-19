@@ -20,6 +20,10 @@ Linux (the record used WSL Ubuntu) with Docker, Go and Python 3 on `PATH`, and a
 
 `ra_demo.sh` calls `ra_inner.sh`, which projects the target (`ra_project.sh`: M1 model, dependencies and `library-execution.yaml` only), writes each run configuration (`ra_runconfig.py`, with the bound `owner-decisions.json` and an absolute deadline), runs both Applies and makes the scripted owner commits between them. `ra_cleanup.sh` stops every remaining container. `smoke_apply.sh` (one Apply with a short deadline) and `nochange_apply.sh` (Apply again on the published A2, committed by the script) are separate checks, not part of the timed run.
 
+## Extract on the library
+
+`ra_extract.sh ATTEMPT_DIR SRC_DIR SOURCE_REPO` runs the [Extract](../../docs/design/canonical-model/manager-apply-runtime.md#extract-first-bounded-implementation) of case 3 on a published library realization, for example the A2 of an earlier demonstration attempt. `ra_extract_project.sh` copies only `realization/` from `SOURCE_REPO`, plus the imported vocabulary, a manifest without local Definitions and `extract-execution.yaml` (layout root `realization`, no exceptions, no required checks); nothing of the original model is copied. `markitect extract` then runs under `timeout` (27.5 min). Outside that limit the script adopts the published model and registry with a scripted commit, standing in for the owner's adoption, and runs `markitect apply` with the extracted model on the unchanged artifacts as a round trip. The round trip passes no Extract findings to Apply; that handoff is not implemented.
+
 ## Project controls and the oracle
 
 `library-execution.yaml` declares the persistent layout (root `realization`, exception `realization/cmd/library` → `library`), the budget (20 minutes per Apply) and two required checks: `go build ./cmd/library` and `go test ./...`. With the layout, ownership is enforced: each Execute turn can write only its own areas and registry shard.

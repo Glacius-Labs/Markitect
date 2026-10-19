@@ -8,6 +8,10 @@ artifacts:
     form: code
     realizes: [product/run/confirmed-run-history]
     why: "Summarizes one Apply's evidence: rounds, turns, parallelism, findings and usage."
+  - path: "experiments/recursive-apply-demo/extract-execution.yaml"
+    form: config
+    realizes: [product/run/confirmed-run-history]
+    why: "Declares the Extract run controls of the library case-3 target: layout root, budget and no required checks."
   - path: "experiments/recursive-apply-demo/library-execution.yaml"
     form: config
     realizes: [product/run/confirmed-run-history]
@@ -40,6 +44,14 @@ artifacts:
     form: code
     realizes: [product/run/confirmed-run-history]
     why: "Enforces the hard wall-clock limit of the timed demonstration outside every prompt."
+  - path: "experiments/recursive-apply-demo/ra_extract.sh"
+    form: code
+    realizes: [product/run/confirmed-run-history]
+    why: "Runs the timed library Extract, the scripted adoption and the round-trip Apply."
+  - path: "experiments/recursive-apply-demo/ra_extract_project.sh"
+    form: code
+    realizes: [product/run/confirmed-run-history]
+    why: "Projects the case-3 target: a published library realization with vocabulary but without any model."
   - path: "experiments/recursive-apply-demo/ra_inner.sh"
     form: code
     realizes: [product/run/confirmed-run-history]

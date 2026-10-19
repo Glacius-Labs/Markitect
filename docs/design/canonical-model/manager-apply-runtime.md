@@ -110,7 +110,9 @@ Extract (Artifacts -> Model, [DEC-057](../../concepts/register.md#dec-057-three-
 
 **Report.** `markitect extract` prints one JSON report: `modelComplete`, both phases (`structure`, `model`: rounds, findings, questions, turns, usage), `verify` (the last round of phase two with each Manager's assessment), `deviations` (open non-blocking realization deviations), `openQuestions`, `publication`, `retainedWork` and `evidenceDirectory`. Status is `passed` only for a verified, published model. The evidence adds the event `extract.phase` per phase.
 
-**Not in this slice.** Restructuring the Manager tree between phase-two rounds (a proposal stays a finding for Root and for a later Extract), resolving model questions by later Extract rounds, restore of an interrupted run, running the project's required checks, and any artifact change. The initial item the engine gives each Manager still reads "reconcile your artifacts with the bound model"; the Extract mandates tell the Managers how to read it.
+**Handoff to Apply.** Adoption follows the [accepted transition](commands.md#adopt-the-model-and-hand-findings-to-apply): the owner adopts the published model and registry together and commits them; the first regular Apply then starts from that commit. The open realization deviations are in the report and the evidence only; storing them and passing them to that Apply is not implemented.
+
+**Not in this slice.** Restructuring the Manager tree between phase-two rounds (a proposal stays a finding for Root and for a later Extract), resolving model questions by later Extract rounds, restore of an interrupted run, running the project's required checks, a readable adoption subject beyond the JSON report, the handoff of findings to Apply, and any artifact change. The initial Execute item is direction-neutral ("carry out your responsibility as the mandate describes"), so the Extract mandates direct the work without reinterpretation.
 
 ## Trusted and enforced
 

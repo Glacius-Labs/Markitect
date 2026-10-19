@@ -4,7 +4,7 @@ Generated from acquired canonical v1 source bytes. This view is not execution or
 
 ## markitect
 
-Canonical model digest: `sha256:02dc6e042b26f991c049622daa26c67aa6dd2808ef2a6646cdc79df4c70ca07b`.
+Canonical model digest: `sha256:405e7c714a92dae0ba08afb04a63afcd1e1f46c0caab4953ef5959bd3911fed0`.
 
 Manifest: `.markitect/model.yaml` (original bytes `sha256:d40feb9e02db275aed89d53b0a88849e463acaca076c8fa70fad38b367a68559`).
 
@@ -166,9 +166,9 @@ Acquire explicitly selected model and control inputs through consumer-owned port
 
 ### product/cli/honest-read-only-interface
 
-Kind: `vocabulary/Rule`. Source: `.markitect/model/product/cli/honest-read-only-interface.yaml` (original bytes `sha256:4b1ccd0938e8a3e795e179965da9d31377a87d95c16b05cb2178457279748981`).
+Kind: `vocabulary/Rule`. Source: `.markitect/model/product/cli/honest-read-only-interface.yaml` (original bytes `sha256:257a22257cff4b9030400827c1943fc485eb1624c295110e08049372058bdc1a`).
 
-Expose check and context over actual PreparationService reports, with structural preparation as the default requested stage and explicitly selected Orchestrator metadata as an additional stage. Preserve actual statuses, sources and inclusion reasons. The apply command returns unavailable before acquisition or effects until execution exists. Usage, known failure and incomplete work have distinct exit statuses.
+Expose check and context over actual PreparationService reports, with structural preparation as the default requested stage and explicitly selected Orchestrator metadata as an additional stage. Preserve actual statuses, sources and inclusion reasons. Apply, answer and extract act only with an explicit Host profile and run configuration and report the actual run status, findings, publication and retained work. Usage, known failure and incomplete work have distinct exit statuses.
 
 ### product/documents/guarded-model-view
 
