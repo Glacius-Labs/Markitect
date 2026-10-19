@@ -6,7 +6,7 @@ kind: Vocab.Rule
 body: >-
   Bind reconciliation to the exact model, repository, controls, owner request and finite execution budget.
   Prepare and account for the complete source before dispatch and ensure every required Manager participates.
-  Use an immutable starting stand for fresh Verify; independent Execute work can begin without a global initial planning barrier.
+  Every Apply starts with Execute and integration at Root, without an initial Verify or a special route for absent artifacts; a parent first supplies the foundation its children need, then they begin, and results are integrated upward.
   Execute in parallel on one shared mutable working tree within persistent ownership, without private writer branches or per-turn accepted-delta replay.
   Before closing Verify, observe quiescence of writers and their subprocesses and capture one complete immutable candidate; uncertainty prevents publication.
   Pause Execute throughout closing Verify, run fresh recursive assessments and required checks on the same stand, and keep check outputs outside that stand.
