@@ -20,8 +20,8 @@ Two chats cannot own the same contract, generated output or helper. Tests/fixtur
 
 1. Run focused checks and inspect actual changed files. Preserve failures/unknowns with exact source identity.
 2. Open a focused PR with package ID, scope, contracts, base/head and validation. Distinguish implemented behavior from scaffolding/proposed APIs.
-3. Obtain independent complete-diff review and exact-head required Linux CI. Freeze the head during those checks.
-4. Follow the [delivery plan's integration rules](../implementation-plan.md#integration): the delivery merges its approved exact head after required CI; recompose for conflicts or substantive overlap. The coordinator owns dependencies and shared reservations.
+3. Obtain independent complete-diff review and run relevant local checks. Freeze the reviewed head. During development, full hosted CI is manual and is required only when the assignment explicitly requests it.
+4. Follow the [delivery plan's integration rules](../implementation-plan.md#integration): the delivery merges its approved exact head after the relevant checks pass; recompose for conflicts or substantive overlap and renew relevant review/validation. The coordinator owns dependencies and shared reservations.
 5. Regenerate views from sources. Retire obsolete tests/gates with their feature; never exempt a required invariant for green CI.
 
 A source package is not a real Agent run, successful library Apply, release or human acceptance. Provider studies and delivery need separate scope and finite authority.

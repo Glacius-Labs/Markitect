@@ -1,12 +1,7 @@
 name: CI
 
 on:
-  pull_request:
-  push:
-    branches:
-      - main
-  schedule:
-    - cron: '23 2 * * *'
+  # Development policy: full validation is explicitly requested, not a merge wait.
   workflow_dispatch:
     inputs:
       windows:
@@ -23,11 +18,10 @@ on:
 permissions:
   contents: read
 
-# A new push cancels a pull request's running CI. Every other run, including
-# each main commit, has its own group and always reaches a verdict.
+# Preserve the verdict and evidence of each explicit or release-owned run.
 concurrency:
-  group: ci-${{ github.workflow }}-${{ github.event_name == 'pull_request' && github.ref || github.run_id }}
-  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+  group: ci-${{ github.workflow }}-${{ github.run_id }}
+  cancel-in-progress: false
 
 jobs:
   quality:
@@ -37,9 +31,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        # Linux is the pull-request and main gate (register DEC-013). Windows runs
-        # nightly, on manual dispatch and in releases, and does not block merges.
-        os: ${{ fromJSON((github.event_name == 'schedule' || inputs.windows) && '["ubuntu-24.04","windows-latest"]' || '["ubuntu-24.04"]') }}
+        # Manual and release calls include Windows by default; callers may opt out.
+        os: ${{ fromJSON(inputs.windows && '["ubuntu-24.04","windows-latest"]' || '["ubuntu-24.04"]') }}
     steps:
       - name: Check out source
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -189,7 +182,7 @@ jobs:
     needs:
       - quality
       - race
-    if: ${{ success() && github.ref == 'refs/heads/main' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch') }}
+    if: ${{ success() && github.ref == 'refs/heads/main' && github.event_name == 'workflow_dispatch' }}
     runs-on: ubuntu-24.04
     timeout-minutes: 90
     steps:
