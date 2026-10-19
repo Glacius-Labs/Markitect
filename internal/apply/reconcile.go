@@ -168,6 +168,18 @@ func reconcileConfig(req ReconcileRequest, now time.Time) (run.Config, error) {
 		}
 		return selection
 	}
+	ownDefinitions := func(path string) (own []string) {
+		for _, definition := range selectionOf(path).Definitions() {
+			if definition.Definition.Identity.Package == path {
+				own = append(own, identityText(definition.Definition.Identity)+": "+definitionTitle(definition.Definition))
+			}
+		}
+		return own
+	}
+	childrenOf := map[string][]string{}
+	for _, manager := range topology.Managers() {
+		childrenOf[manager.Package] = manager.Children
+	}
 	var team []run.Manager
 	for _, manager := range topology.Managers() {
 		managerSettings, ok := settings.Manager(manager.Package)
@@ -177,12 +189,15 @@ func reconcileConfig(req ReconcileRequest, now time.Time) (run.Config, error) {
 		selection := selectionOf(manager.Package)
 		var children []briefChild
 		for _, path := range manager.Children {
-			child := briefChild{Path: path, Areas: candidates.Areas(path)}
-			for _, definition := range selectionOf(path).Definitions() {
-				if definition.Definition.Identity.Package == path {
-					child.Definitions = append(child.Definitions, identityText(definition.Definition.Identity)+": "+definitionTitle(definition.Definition))
+			child := briefChild{Path: path, Areas: candidates.Areas(path), Definitions: ownDefinitions(path)}
+			var below func(string)
+			below = func(parent string) {
+				for _, d := range childrenOf[parent] {
+					child.Below = append(child.Below, briefDescendant{Path: d, Parent: parent, Areas: candidates.Areas(d), Definitions: ownDefinitions(d)})
+					below(d)
 				}
 			}
+			below(path)
 			children = append(children, child)
 		}
 		write := candidates.WritePlan(manager.Package)
@@ -214,6 +229,9 @@ func reconcileConfig(req ReconcileRequest, now time.Time) (run.Config, error) {
 		Budget:     run.Budget{Deadline: deadline, TurnTimeout: budget.TurnTimeout.Value, AgentTurns: budget.AgentTurns.Value, Rounds: budget.Rounds.Value},
 		MaxEntries: req.MaxEntries, MaxBytes: req.MaxBytes,
 		Agents: req.Agents, Workspaces: req.Workspaces, Runner: req.Runner, Owner: req.Owner, Evidence: req.Evidence, Clock: req.Clock,
+		// Execute turns can see the accounting of the shared tree, such as a shard
+		// that does not parse or an unregistered file, before Verify does.
+		CheckTool: true,
 	}
 	return cfg, nil
 }

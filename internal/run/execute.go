@@ -57,45 +57,87 @@ func (e *engine) quiescentLocked() bool {
 }
 
 // scheduleLocked starts an Execute turn for every released, idle Manager with
-// undelivered items, while Execute is open.
+// undelivered items, while Execute is open. A parent whose items are only its
+// children's done reports waits while a Manager below it still runs or has
+// work, so that it integrates its subtree's results in one turn rather than
+// one turn per report; any other item starts its turn at once. Such parents
+// are decided after everything else and after all their descendants, so a
+// waiting parent always has a descendant that runs.
 func (e *engine) scheduleLocked() {
 	if !e.executeOpen || e.closing || e.ctx.Err() != nil {
 		return
 	}
+	var reportsOnly []*mgr
 	for _, m := range e.team {
 		if m.running || m.disabled || !m.released {
 			continue
 		}
 		e.pruneLocked(m)
-		if len(m.items) == 0 {
-			continue
+		switch {
+		case len(m.items) == 0:
+		case onlyReports(m.items):
+			reportsOnly = append(reportsOnly, m)
+		default:
+			e.startLocked(m)
 		}
-		// Keep room for the Verify round that follows the phase and for the
-		// first Execute turn of every Manager that has not run yet.
-		reserve := e.executeReserveLocked(m)
-		if !e.reserveTurnLocked(reserve) {
-			m.refused = true
-			if !e.budgetLimited {
-				e.budgetLimited = true
-				_ = e.record(Event{Kind: "execute.budget_limit", Manager: m.Path, Round: e.execRound, Data: map[string]any{"turns": e.turnCount, "agentTurns": e.cfg.Budget.AgentTurns, "reserve": reserve}})
-			}
-			continue
-		}
-		m.refused = false
-		e.phaseTurns++
-		items, first := m.items, !m.executed || m.conversation == ""
-		m.items, m.consumed = nil, items
-		m.execCount++
-		m.running, m.ran, m.execUsed = true, true, true
-		ts := &turnState{m: m, kind: ExecuteTurn, id: fmt.Sprintf("%s-r%d-%s-x%d", e.cfg.RunID, e.execRound, m.slug, m.execCount), round: e.execRound}
-		turn := Turn{Profile: m.ExecuteProfile, Workspace: e.work, Home: m.execHome, Resume: m.conversation, Prompt: e.executePromptLocked(m, texts(items), first), Tools: executeTools(m.Parent == "", e.cfg.CheckTool)}
-		if m.Write.Enforced {
-			turn.ReadOnly, turn.Mounts = !m.Write.Base, slices.Clone(m.Write.Mounts)
-		}
-		e.running++
-		e.wg.Add(1)
-		go e.executeTurn(m, ts, turn)
 	}
+	for _, m := range slices.Backward(reportsOnly) {
+		if !e.subtreeBusyLocked(m) {
+			e.startLocked(m)
+		}
+	}
+}
+
+func onlyReports(items []item) bool {
+	for _, it := range items {
+		if !it.report {
+			return false
+		}
+	}
+	return true
+}
+
+// subtreeBusyLocked reports whether a Manager below m runs or has undelivered
+// items it can still receive.
+func (e *engine) subtreeBusyLocked(m *mgr) bool {
+	for _, path := range m.Children {
+		c := e.byPath[path]
+		e.pruneLocked(c)
+		if c.running || c.released && !c.disabled && !c.refused && len(c.items) > 0 || e.subtreeBusyLocked(c) {
+			return true
+		}
+	}
+	return false
+}
+
+// startLocked starts an Execute turn that delivers all of m's items, when the
+// budget admits it.
+func (e *engine) startLocked(m *mgr) {
+	// Keep room for the Verify round that follows the phase and for the
+	// first Execute turn of every Manager that has not run yet.
+	reserve := e.executeReserveLocked(m)
+	if !e.reserveTurnLocked(reserve) {
+		m.refused = true
+		if !e.budgetLimited {
+			e.budgetLimited = true
+			_ = e.record(Event{Kind: "execute.budget_limit", Manager: m.Path, Round: e.execRound, Data: map[string]any{"turns": e.turnCount, "agentTurns": e.cfg.Budget.AgentTurns, "reserve": reserve}})
+		}
+		return
+	}
+	m.refused = false
+	e.phaseTurns++
+	items, first := m.items, !m.executed || m.conversation == ""
+	m.items, m.consumed = nil, items
+	m.execCount++
+	m.running, m.ran, m.execUsed = true, true, true
+	ts := &turnState{m: m, kind: ExecuteTurn, id: fmt.Sprintf("%s-r%d-%s-x%d", e.cfg.RunID, e.execRound, m.slug, m.execCount), round: e.execRound}
+	turn := Turn{Profile: m.ExecuteProfile, Workspace: e.work, Home: m.execHome, Resume: m.conversation, Prompt: e.executePromptLocked(m, texts(items), first), Tools: executeTools(m.Parent == "", e.cfg.CheckTool)}
+	if m.Write.Enforced {
+		turn.ReadOnly, turn.Mounts = !m.Write.Base, slices.Clone(m.Write.Mounts)
+	}
+	e.running++
+	e.wg.Add(1)
+	go e.executeTurn(m, ts, turn)
 }
 
 // executeReserveLocked is the number of turns the budget must keep after an
@@ -178,7 +220,7 @@ func (e *engine) reportLocked(m *mgr, ts *turnState, err error) {
 	if !ts.finished {
 		summary = "no summary was given, the turn ended without finish"
 	}
-	p.items = append(p.items, item{text: fmt.Sprintf("Your child %s reports done: %s", contact(m), summary)})
+	p.items = append(p.items, item{text: fmt.Sprintf("Your child %s reports done: %s", contact(m), summary), report: true})
 	_ = e.record(Event{Kind: "child.report", Manager: m.Path, Turn: ts.id, Round: ts.round, Data: map[string]any{"from": m.Path, "to": p.Path, "summary": summary}})
 }
 
@@ -234,12 +276,9 @@ func (e *engine) finish(m *mgr, ts *turnState, args json.RawMessage) ToolAnswer 
 	}
 	e.mu.Lock()
 	defer e.mu.Unlock()
-	if ts.finished {
-		return refuse("This turn is already finished.")
-	}
 	ts.finished, ts.status, ts.summary = true, in.Status, summary
 	_ = e.record(Event{Kind: "turn.finish", Manager: m.Path, Turn: ts.id, Round: ts.round, Data: map[string]any{"status": in.Status, "summary": summary}})
-	return ToolAnswer{Text: "Recorded. Your turn ends."}
+	return ToolAnswer{Text: "Recorded. Your turn ends when you stop; a later finish in this turn replaces this one."}
 }
 
 func (e *engine) contactsLocked(m *mgr) string {
@@ -272,10 +311,6 @@ func (e *engine) send(ctx context.Context, m *mgr, ts *turnState, args json.RawM
 		return refuse("%v", err)
 	}
 	e.mu.Lock()
-	if ts.finished {
-		e.mu.Unlock()
-		return refuse("This turn is already finished; no further calls are accepted.")
-	}
 	if in.To == "owner" && m.Parent == "" {
 		e.mu.Unlock()
 		return e.askOwner(ctx, m, ts, text)

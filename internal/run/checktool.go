@@ -26,12 +26,6 @@ func (e *engine) check(ctx context.Context, m *mgr, ts *turnState, args json.Raw
 	if in.Scope != "" && in.Scope != "own" && in.Scope != "all" {
 		return refuse("scope must be \"own\" or \"all\".")
 	}
-	e.mu.Lock()
-	finished := ts.finished
-	e.mu.Unlock()
-	if finished {
-		return refuse("This turn is already finished; no further calls are accepted.")
-	}
 	h, err := e.cfg.Workspaces.Peek(ctx, HarvestRequest{ID: e.volumeID("work"), MaxEntries: e.cfg.MaxEntries, MaxBytes: e.cfg.MaxBytes})
 	switch {
 	case err != nil:

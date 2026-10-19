@@ -77,12 +77,14 @@ const assessSchema = `{
 
 func executeTools(root, check bool) []ToolSpec {
 	to := "Send a message to your parent (to \"parent\") or to a direct child (to its path). Other recipients are refused. The answer returns what has arrived for you."
+	finish := "Report how your turn ends: done or waiting, with a summary. Call it when you have done what the items ask; if you call it again, the last call counts. The summary of done reaches your parent, so it needs no separate message."
 	if root {
 		to = "Send a message to a direct child (to its path) or ask the human owner (to \"owner\"). Other recipients are refused. The answer returns what has arrived for you."
+		finish = "Report how your turn ends: done or waiting, with a summary. Call it when you have done what the items ask; if you call it again, the last call counts."
 	}
 	tools := []ToolSpec{
 		{Name: toolSend, Description: to, InputSchema: json.RawMessage(sendSchema)},
-		{Name: toolFinish, Description: "End your turn. Call it once when you have done what the items ask.", InputSchema: json.RawMessage(finishSchema)},
+		{Name: toolFinish, Description: finish, InputSchema: json.RawMessage(finishSchema)},
 	}
 	if check {
 		tools = append(tools, ToolSpec{Name: toolCheck, Description: "Check the current shared working tree: returns the findings of the project's accounting, yours first. Other Managers may still be writing, so the answer is advice; an uncertain observation is refused with the reason.", InputSchema: json.RawMessage(checkSchema)})
@@ -91,5 +93,5 @@ func executeTools(root, check bool) []ToolSpec {
 }
 
 func verifyTools() []ToolSpec {
-	return []ToolSpec{{Name: toolAssess, Description: "Report your assessment of the candidate. Call it exactly once; an invalid call is refused with the reason and you may call it again.", InputSchema: json.RawMessage(assessSchema)}}
+	return []ToolSpec{{Name: toolAssess, Description: "Report your assessment of the candidate when your assessment is complete. An invalid call is refused with the reason; if you call it again, the last valid call counts.", InputSchema: json.RawMessage(assessSchema)}}
 }

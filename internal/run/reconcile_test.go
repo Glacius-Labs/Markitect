@@ -302,6 +302,56 @@ func TestChildrenAreReleasedWhenTheirParentsFirstTurnFailsOrTheParentIsDisabled(
 	}
 }
 
+func TestParentIntegratesItsQuietSubtreeInOneTurn(t *testing.T) {
+	f := newFixture(t)
+	libraryReported, remindersStarted := make(chan struct{}), make(chan struct{})
+	f.ev.onRecord = func(e Event) {
+		if e.Kind == "child.report" && e.Manager == "library" {
+			close(libraryReported)
+		}
+	}
+	f.agents.script = func(c *call) error {
+		switch {
+		case c.is(1, "lending", ExecuteTurn) && c.turn.Resume == "":
+			// Lending's first turn outlasts the library's report to Root.
+			if err := c.wait(libraryReported); err != nil {
+				return err
+			}
+		case c.is(1, "lending/reminders", ExecuteTurn):
+			close(remindersStarted)
+		}
+		return c.defaultScript()
+	}
+	out := f.run()
+	if out.Status != Verified {
+		t.Fatalf("%s %s", out.Status, out.Reason)
+	}
+	// Root's first turn, then one turn with every report, after lending had
+	// integrated reminders; no turn per report.
+	if n := executeTurnsOf(out, ".", 1); n != 2 {
+		t.Fatalf("Root ran %d Execute turns: %v", n, turnIDs(out))
+	}
+	contains(t, "Root's integration prompt", f.agents.prompt("run1-r1-root-x2"),
+		"Your child library (program) reports done", "Your child lending (loans) reports done")
+	select {
+	case <-remindersStarted:
+	default:
+		t.Fatal("reminders never ran")
+	}
+	var rootStart, lendingEnd int
+	for i, ev := range f.ev.events {
+		switch {
+		case ev.Kind == "turn.start" && ev.Turn == "run1-r1-root-x2":
+			rootStart = i
+		case ev.Kind == "turn.end" && ev.Turn == "run1-r1-lending-x2":
+			lendingEnd = i
+		}
+	}
+	if rootStart == 0 || lendingEnd == 0 || rootStart < lendingEnd {
+		t.Fatalf("Root's integration turn started at event %d, before lending's integration ended at %d", rootStart, lendingEnd)
+	}
+}
+
 func TestDoneSummariesOfChildrenReachTheirParent(t *testing.T) {
 	f := newFixture(t)
 	f.agents.script = func(c *call) error {
@@ -383,7 +433,13 @@ func TestFindingsDriveParallelRepairCaptureAndGreen(t *testing.T) {
 	if executeTurnsOf(out, "library", 2) != 1 || executeTurnsOf(out, "lending/reminders", 2) != 1 || executeTurnsOf(out, "lending", 2) != 0 || executeTurnsOf(out, ".", 2) != 1 {
 		t.Fatalf("turns %v", turnIDs(out))
 	}
-	if prompt := f.agents.prompt("run1-r2-root-x5"); !strings.Contains(prompt, "library (program) reports done: no summary was given") {
+	rootRepair := ""
+	for _, tr := range out.Turns {
+		if tr.Manager == "." && tr.Kind == ExecuteTurn && tr.Round == 2 {
+			rootRepair = tr.ID
+		}
+	}
+	if prompt := f.agents.prompt(rootRepair); !strings.Contains(prompt, "library (program) reports done: no summary was given") {
 		t.Errorf("Root's repair prompt %q", prompt)
 	}
 	if len(out.Rounds) != 2 || out.Rounds[0].Green || !out.Rounds[1].Green {
@@ -506,14 +562,12 @@ func TestMessagesFollowTheTreeAndAnswersCarryNewItems(t *testing.T) {
 			if a.Refused {
 				t.Errorf("refused: %s", a.Text)
 			}
-			if a := c.finish("done"); a.Refused {
+			// The last finish of a turn counts.
+			if a := c.finish("waiting"); a.Refused {
 				t.Errorf("finish refused")
 			}
-			if a := c.finish("done"); !a.Refused {
-				t.Error("second finish accepted")
-			}
-			if a := c.send("lending/reminders", "late"); !a.Refused || !strings.Contains(a.Text, "finished") {
-				t.Errorf("send after finish: %+v", a)
+			if a := c.finish("done"); a.Refused {
+				t.Errorf("second finish refused: %+v", a)
 			}
 		case c.turn.Manager == "lending/reminders" && c.turn.Kind == ExecuteTurn:
 			if c.turn.Resume == "" {
@@ -558,6 +612,11 @@ func TestMessagesFollowTheTreeAndAnswersCarryNewItems(t *testing.T) {
 	}
 	if n, m := executeTurnsOf(out, "lending", 1), executeTurnsOf(out, "lending/reminders", 1); n != 2 || m != 2 {
 		t.Fatalf("execute turns %v", turnIDs(out))
+	}
+	for _, tr := range out.Turns {
+		if tr.ID == "run1-r1-lending-x2" && tr.Status != "done" {
+			t.Errorf("lending's second turn ended %q, not with its last finish", tr.Status)
+		}
 	}
 }
 
@@ -747,8 +806,10 @@ func TestFindingsStayOpenUntilTheRaiserClosesThem(t *testing.T) {
 					t.Errorf("%s: %+v", b.name, a)
 				}
 			}
-			c.assess(true, []fnd{finding("library", "advisory depth", false)})
-			if a := c.assess(true, nil); !a.Refused || !strings.Contains(a.Text, "already reported") {
+			// A later valid report replaces an earlier one of the same turn; only the
+			// last one is applied when the turn ends.
+			c.assess(true, []fnd{finding("library", "placeholder", false)})
+			if a := c.assess(true, []fnd{finding("library", "advisory depth", false)}); a.Refused || !strings.Contains(a.Text, "replaces") {
 				t.Errorf("second assess %+v", a)
 			}
 		case c.is(2, "library", VerifyTurn):
@@ -794,14 +855,14 @@ func TestFindingsStayOpenUntilTheRaiserClosesThem(t *testing.T) {
 	if n := executeTurnsOf(out, "lending/reminders", 2); n != 2 {
 		t.Fatalf("the open finding is delivered again each round: %v", turnIDs(out))
 	}
-	var advisory Finding
+	var advisory []Finding
 	for _, fd := range out.Findings {
 		if !fd.Blocking {
-			advisory = fd
+			advisory = append(advisory, fd)
 		}
 	}
-	if advisory.RaisedBy != "library" || advisory.Owner != "library" {
-		t.Fatalf("advisory finding %+v", advisory)
+	if len(advisory) != 1 || advisory[0].RaisedBy != "library" || advisory[0].Owner != "library" || advisory[0].Obligation != "advisory depth" {
+		t.Fatalf("advisory findings %+v", advisory)
 	}
 }
 
@@ -1047,5 +1108,81 @@ func TestChildTurnWithoutFinishReportsDoneToItsParent(t *testing.T) {
 	reports := f.ev.kinds("child.report")
 	if len(reports) != 1 || reports[0].Manager != "lending/reminders" {
 		t.Fatalf("child.report events %+v", reports)
+	}
+}
+
+func TestToolsStayUsableAfterFinishAndTheLastFinishCounts(t *testing.T) {
+	f := newFixture(t)
+	f.agents.quiet = true
+	f.agents.script = func(c *call) error {
+		if c.is(1, "lending/reminders", ExecuteTurn) && c.turn.Resume == "" {
+			if a := c.finish("done"); a.Refused {
+				t.Errorf("finish refused: %s", a.Text)
+			}
+			if a := c.send("parent", "a note after finish"); a.Refused {
+				t.Errorf("send after finish refused: %s", a.Text)
+			}
+			// The last call counts: waiting reports nothing to the parent.
+			if a := c.finish("waiting"); a.Refused {
+				t.Errorf("second finish refused: %s", a.Text)
+			}
+			return nil
+		}
+		return c.defaultScript()
+	}
+	out := f.run()
+	if out.Status != Verified {
+		t.Fatalf("%s %s", out.Status, out.Reason)
+	}
+	for _, r := range f.ev.kinds("child.report") {
+		if r.Manager == "lending/reminders" {
+			t.Errorf("a turn that last finished waiting reported done: %+v", r)
+		}
+	}
+	contains(t, "lending's prompt", f.agents.prompt("run1-r1-lending-x2"), "Message from your child lending/reminders (overdue notices): a note after finish")
+}
+
+func TestAssessKeepsTheLastValidReportOfTheTurn(t *testing.T) {
+	f := newFixture(t)
+	f.agents.script = func(c *call) error {
+		switch {
+		case c.is(1, "library", VerifyTurn):
+			if a := c.assess(false, []fnd{finding("library", "first", true)}); a.Refused {
+				t.Errorf("assess refused: %s", a.Text)
+			}
+			// An invalid call later in the turn leaves the valid report in place.
+			if a := c.tool(toolAssess, map[string]any{"summary": "s", "satisfied": true, "extra": 1}); !a.Refused {
+				t.Errorf("invalid assess accepted: %+v", a)
+			}
+			return nil
+		case c.is(2, "library", VerifyTurn):
+			open := c.myOpen()
+			if len(open) != 1 {
+				t.Fatalf("open findings of library %v", open)
+			}
+			c.assess(true, nil, open...)
+			// The replacing report keeps the finding open: the closure above is not applied.
+			if a := c.assess(false, nil); a.Refused || !strings.Contains(a.Text, "replaces") {
+				t.Errorf("replacing assess %+v", a)
+			}
+			return nil
+		}
+		return c.defaultScript()
+	}
+	out := f.run()
+	if out.Status != Verified || len(out.Rounds) != 3 || out.Rounds[1].Green {
+		t.Fatalf("%s %s rounds %+v", out.Status, out.Reason, out.Rounds)
+	}
+	var first Finding
+	for _, fd := range out.Findings {
+		if fd.Obligation == "first" {
+			first = fd
+		}
+	}
+	if first.RaisedBy != "library" || first.Round != 1 || !first.Closed || first.ClosedRound != 3 {
+		t.Fatalf("finding %+v", first)
+	}
+	if n := f.ev.count("assessment"); n != 4*3 {
+		t.Errorf("%d assessment events, want one per Manager and round", n)
 	}
 }

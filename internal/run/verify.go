@@ -176,15 +176,16 @@ func (e *engine) verifyManager(m *mgr, rs *roundState) {
 		prompt := e.verifyPromptLocked(m, rs, attempt > 1)
 		e.mu.Unlock()
 		res, err := e.runTurn(ts, Turn{Profile: m.VerifyProfile, Workspace: rs.volume, ReadOnly: true, Home: m.verifyHome, Prompt: prompt, Tools: verifyTools()}, e.assessHandler(m, rs, ts))
+		e.mu.Lock()
+		e.applyReportLocked(m, rs, ts)
+		reported := rs.assessed[m.Path]
+		e.mu.Unlock()
 		if !res.Stopped {
 			return
 		}
 		if err != nil {
 			last = err
 		}
-		e.mu.Lock()
-		reported := rs.assessed[m.Path]
-		e.mu.Unlock()
 		if reported {
 			return
 		}
@@ -213,8 +214,18 @@ type assessment struct {
 	} `json:"closed"`
 }
 
-// assessHandler serves the Verify tool. It applies a valid report at once and
-// refuses an invalid one with the reason so the Agent can retry.
+// report is a valid assessment of one Verify turn, kept until the turn ends.
+type report struct {
+	summary   string
+	satisfied bool
+	raised    []Finding
+	closing   map[string]string
+}
+
+// assessHandler serves the Verify tool. It keeps a valid report for the end of
+// the turn, where a later valid report replaces an earlier one, and refuses an
+// invalid one with the reason so the Agent can retry. Only the Manager's own
+// findings decide validity, and no other turn changes them while this one runs.
 func (e *engine) assessHandler(m *mgr, rs *roundState, ts *turnState) ToolHandler {
 	return func(_ context.Context, name string, args json.RawMessage) ToolAnswer {
 		if name != toolAssess {
@@ -222,9 +233,6 @@ func (e *engine) assessHandler(m *mgr, rs *roundState, ts *turnState) ToolHandle
 		}
 		e.mu.Lock()
 		defer e.mu.Unlock()
-		if rs.assessed[m.Path] {
-			return refuse("You already reported your assessment of this candidate.")
-		}
 		var in assessment
 		if err := decodeStrict(args, &in); err != nil {
 			return refuse("%v", err)
@@ -239,11 +247,7 @@ func (e *engine) assessHandler(m *mgr, rs *roundState, ts *turnState) ToolHandle
 		if len(in.Findings) > maxToolFindings || len(in.Closed) > maxToolFindings {
 			return refuse("At most %d findings and %d closures per report.", maxToolFindings, maxToolFindings)
 		}
-		type raised struct {
-			owner, obligation, observed string
-			blocking                    bool
-		}
-		var adds []raised
+		var adds []Finding
 		blocking := 0
 		for i, f := range in.Findings {
 			if f.Blocking == nil {
@@ -260,7 +264,7 @@ func (e *engine) assessHandler(m *mgr, rs *roundState, ts *turnState) ToolHandle
 			if err != nil {
 				return refuse("%v", err)
 			}
-			adds = append(adds, raised{f.Owner, obligation, observed, *f.Blocking})
+			adds = append(adds, Finding{Owner: f.Owner, RaisedBy: m.Path, Obligation: obligation, Observed: observed, Blocking: *f.Blocking})
 			if *f.Blocking {
 				blocking++
 			}
@@ -292,22 +296,37 @@ func (e *engine) assessHandler(m *mgr, rs *roundState, ts *turnState) ToolHandle
 			return refuse("satisfied is false but none of your findings is blocking; raise the blocking finding or set satisfied to true.")
 		}
 
-		for _, id := range sortedKeys(closing) {
-			f := e.findingLocked(id)
-			f.Closed, f.ClosedRound, f.ClosedReason = true, rs.n, closing[id]
+		replaced := ts.report != nil
+		ts.report = &report{summary: summary, satisfied: *in.Satisfied, raised: adds, closing: closing}
+		ts.status = "assessed"
+		if replaced {
+			return ToolAnswer{Text: "Assessment recorded; it replaces your earlier one in this turn."}
+		}
+		return ToolAnswer{Text: "Assessment recorded. A later assess call in this turn replaces it."}
+	}
+}
+
+// applyReportLocked applies the last valid report of a Verify turn when the
+// turn has ended: closures, new findings and the Manager's assessment.
+func (e *engine) applyReportLocked(m *mgr, rs *roundState, ts *turnState) {
+	r := ts.report
+	if r == nil || rs.assessed[m.Path] {
+		return
+	}
+	for _, id := range sortedKeys(r.closing) {
+		if f := e.findingLocked(id); f != nil && !f.Closed {
+			f.Closed, f.ClosedRound, f.ClosedReason = true, rs.n, r.closing[id]
 			_ = e.record(Event{Kind: "finding.closed", Manager: m.Path, Turn: ts.id, Round: rs.n, Data: *f})
 		}
-		for _, a := range adds {
-			e.addFindingLocked(Finding{Owner: a.owner, RaisedBy: m.Path, Obligation: a.obligation, Observed: a.observed, Blocking: a.blocking}, rs.n)
-		}
-		rs.assessed[m.Path] = true
-		rs.assessments[m.Path] = Assessment{Manager: m.Path, Turn: ts.id, Satisfied: *in.Satisfied, Summary: summary}
-		ts.status = "assessed"
-		_ = e.record(Event{Kind: "assessment", Manager: m.Path, Turn: ts.id, Round: rs.n, Data: rs.assessments[m.Path]})
-		e.deliverLocked(rs.n)
-		e.cond.Broadcast()
-		return ToolAnswer{Text: "Assessment recorded."}
 	}
+	for _, f := range r.raised {
+		e.addFindingLocked(f, rs.n)
+	}
+	rs.assessed[m.Path] = true
+	rs.assessments[m.Path] = Assessment{Manager: m.Path, Turn: ts.id, Satisfied: r.satisfied, Summary: r.summary}
+	_ = e.record(Event{Kind: "assessment", Manager: m.Path, Turn: ts.id, Round: rs.n, Data: rs.assessments[m.Path]})
+	e.deliverLocked(rs.n)
+	e.cond.Broadcast()
 }
 
 // within reports whether owner is the manager or one of its descendants.
