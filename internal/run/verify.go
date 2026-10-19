@@ -34,15 +34,7 @@ func (e *engine) verifyRound(n int, c candidate) bool {
 	e.mu.Lock()
 	rs.checks = results
 	for _, f := range structural {
-		f.Blocking, f.RaisedBy = true, MarkitectFinding
-		if _, ok := e.byPath[f.Owner]; !ok {
-			f.Observed = fmt.Sprintf("%s (reported for unknown owner %q)", f.Observed, f.Owner)
-			f.Owner = "."
-		}
-		if strings.TrimSpace(f.Obligation) == "" {
-			f.Obligation = "Every file is accounted for in the candidate"
-		}
-		rs.structural = append(rs.structural, e.addFindingLocked(f, n))
+		rs.structural = append(rs.structural, e.structuralLocked(f, n))
 	}
 	for _, f := range e.unsupportedFindings(c.unsupported) {
 		rs.structural = append(rs.structural, e.addFindingLocked(f, n))
@@ -346,6 +338,20 @@ func (e *engine) findingLocked(id string) *Finding {
 		}
 	}
 	return nil
+}
+
+// structuralLocked raises one structural finding of Account in the round as a
+// blocking markitect finding; an unknown owner is replaced by Root.
+func (e *engine) structuralLocked(f Finding, round int) *Finding {
+	f.Blocking, f.RaisedBy = true, MarkitectFinding
+	if _, ok := e.byPath[f.Owner]; !ok {
+		f.Observed = fmt.Sprintf("%s (reported for unknown owner %q)", f.Observed, f.Owner)
+		f.Owner = "."
+	}
+	if strings.TrimSpace(f.Obligation) == "" {
+		f.Obligation = "Every file is accounted for in the candidate"
+	}
+	return e.addFindingLocked(f, round)
 }
 
 func (e *engine) addFindingLocked(f Finding, round int) *Finding {

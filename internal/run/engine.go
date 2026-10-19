@@ -541,6 +541,12 @@ func (e *engine) run() (Status, string, snapshot.Tree) {
 	e.work = shared.volume
 	e.mu.Lock()
 	e.execRound = 1
+	// The start stand's drift goes to its owners behind their initial item.
+	for _, f := range groupedStart(cfg.StartFindings) {
+		raised := e.structuralLocked(f, 0)
+		o := e.byPath[raised.Owner]
+		o.items = append(o.items, item{text: renderFinding(raised), finding: raised.ID})
+	}
 	e.releaseLocked(e.team[0], "the run started")
 	e.mu.Unlock()
 	previous := cfg.Start
@@ -578,6 +584,38 @@ func (e *engine) run() (Status, string, snapshot.Tree) {
 			return e.incomplete(fmt.Sprintf("the round budget of %d ended without a green round", cfg.Budget.Rounds))
 		}
 	}
+}
+
+// groupedStart keeps the start findings, except that more than maxListedNames
+// findings of one owner and obligation become one finding that counts them and
+// shows the first maxListedNames, so a large drift cannot flood a prompt.
+func groupedStart(findings []Finding) []Finding {
+	type key struct{ owner, obligation string }
+	var order []key
+	groups := map[key][]Finding{}
+	for _, f := range findings {
+		k := key{f.Owner, f.Obligation}
+		if groups[k] == nil {
+			order = append(order, k)
+		}
+		groups[k] = append(groups[k], f)
+	}
+	var out []Finding
+	for _, k := range order {
+		group := groups[k]
+		if len(group) <= maxListedNames {
+			out = append(out, group...)
+			continue
+		}
+		shown := make([]string, maxListedNames)
+		for i, f := range group[:maxListedNames] {
+			shown[i] = f.Observed
+		}
+		merged := group[0]
+		merged.Observed = fmt.Sprintf("%d findings of this kind; the first %d:\n- %s", len(group), maxListedNames, strings.Join(shown, "\n- "))
+		out = append(out, merged)
+	}
+	return out
 }
 
 // capture harvests the quiescent shared tree into the candidate of the round.

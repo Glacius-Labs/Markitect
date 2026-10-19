@@ -1,6 +1,7 @@
 package run
 
 import (
+	"fmt"
 	"slices"
 	"strings"
 	"sync"
@@ -1108,6 +1109,56 @@ func TestChildTurnWithoutFinishReportsDoneToItsParent(t *testing.T) {
 	reports := f.ev.kinds("child.report")
 	if len(reports) != 1 || reports[0].Manager != "lending/reminders" {
 		t.Fatalf("child.report events %+v", reports)
+	}
+}
+
+func TestStartFindingsAreTheOwnersFirstWork(t *testing.T) {
+	f := newFixture(t)
+	f.cfg.StartFindings = []Finding{
+		{Owner: "lending/reminders", Obligation: "file.unexplained", Observed: "lending/reminders/notes.txt is not registered"},
+		{Owner: "gone", Obligation: "registry.unknown_owner", Observed: "a shard of a removed Package"},
+	}
+	f.agents.script = func(c *call) error {
+		switch {
+		case c.is(1, "lending/reminders", ExecuteTurn):
+			contains(t, "reminders' first prompt", c.turn.Prompt, "Carry out your responsibility now", "Finding F1 [blocking], owner lending/reminders, raised by markitect in round 0.", "lending/reminders/notes.txt is not registered")
+			if strings.Index(c.turn.Prompt, "Finding F1") < strings.Index(c.turn.Prompt, "Carry out your responsibility now") {
+				t.Error("the start finding comes before the initial item")
+			}
+		case c.is(1, ".", ExecuteTurn) && c.turn.Resume == "":
+			contains(t, "Root's first prompt", c.turn.Prompt, "Finding F2 [blocking], owner .", "reported for unknown owner \"gone\"")
+		}
+		return c.defaultScript()
+	}
+	out := f.run()
+	if out.Status != Verified || len(out.Rounds) != 1 {
+		t.Fatalf("%s %s rounds %d", out.Status, out.Reason, len(out.Rounds))
+	}
+	// Like every structural finding they hold for the stand they were observed on:
+	// round 1 observes the candidate afresh.
+	for _, fd := range out.Findings {
+		if fd.Round != 0 || fd.RaisedBy != MarkitectFinding || !fd.Blocking || !fd.Closed || fd.ClosedRound != 1 {
+			t.Errorf("start finding %+v", fd)
+		}
+	}
+	if len(out.Findings) != 2 {
+		t.Fatalf("findings %+v", out.Findings)
+	}
+}
+
+func TestManyStartFindingsOfOneKindBecomeOne(t *testing.T) {
+	var many []Finding
+	for i := range maxListedNames + 5 {
+		many = append(many, Finding{Owner: "library", Obligation: "file.unexplained", Observed: fmt.Sprintf("library/vendor/f%02d.go is not registered", i)})
+	}
+	few := Finding{Owner: "library", Obligation: "registry.missing_file", Observed: "library/gone.go is registered but absent"}
+	got := groupedStart(append(many, few))
+	if len(got) != 2 || got[1] != few {
+		t.Fatalf("grouped %+v", got)
+	}
+	contains(t, "merged finding", got[0].Observed, fmt.Sprintf("%d findings of this kind; the first %d:", maxListedNames+5, maxListedNames), "library/vendor/f00.go", fmt.Sprintf("library/vendor/f%02d.go", maxListedNames-1))
+	if strings.Contains(got[0].Observed, fmt.Sprintf("f%02d.go", maxListedNames)) || got[0].Owner != "library" || got[0].Obligation != "file.unexplained" {
+		t.Fatalf("merged finding %+v", got[0])
 	}
 }
 

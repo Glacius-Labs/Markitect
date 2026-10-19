@@ -374,6 +374,9 @@ func TestReconcileConfigBriefsStateResponsibilitiesAndWritePlans(t *testing.T) {
 	if !cfg.CheckTool {
 		t.Error("Apply's Execute turns are not offered the check tool")
 	}
+	if len(cfg.StartFindings) != 0 {
+		t.Errorf("an accounted start stand has start findings %+v", cfg.StartFindings)
+	}
 	team := map[string]run.Manager{}
 	for _, m := range cfg.Team {
 		team[m.Path] = m

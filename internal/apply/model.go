@@ -34,6 +34,10 @@ type CapturedModel struct {
 	// extract marks the start of an Extract: the artifacts are not registered yet,
 	// which file checking tolerates.
 	extract bool
+	// startDrift marks the start of an Apply: accounting drift that the owning
+	// Manager can repair in its own area and shard does not fail file checking;
+	// the run hands it to that Manager as its first work (DEC-062).
+	startDrift bool
 }
 
 func (m CapturedModel) Request() CaptureRequest {

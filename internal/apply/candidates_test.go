@@ -409,20 +409,66 @@ func TestCandidatesRequireAPassedPreparation(t *testing.T) {
 	if _, err := apply.NewCandidates(apply.CapturedSettingsAttempt{}); !errors.Is(err, apply.ErrCandidatesUnavailable) {
 		t.Fatalf("zero preparation accepted: %v", err)
 	}
-	selection, raw := executionInputs(t, withLayout(t, libraryLayoutYAML))
-	libraryLayoutFiles(t, &selection, &raw)
-	censusFile(t, &raw, "realization/stray.go", snapshot.Regular, []byte("package stray\n"))
-	addHostDocument(t, &selection, &raw, testHostDocument)
-	source := controlledSource{capture: func(_ context.Context, request apply.CaptureRequest) (apply.CapturedInputs, error) {
-		return captured(preparationObservation(t, request.Selection, raw)), nil
-	}}
-	agent, check := hostPorts(t)
-	result, _ := apply.NewPreparationService(apply.NewModelService(source, nil)).CaptureSettings(context.Background(), apply.CaptureRequest{Selection: selection}, model.Limits{}, agent, check)
+	service := func(t *testing.T, execution, stray string, untracked ...string) (*apply.PreparationService, apply.InputSelection) {
+		selection, raw := executionInputs(t, execution)
+		libraryLayoutFiles(t, &selection, &raw)
+		censusFile(t, &raw, stray, snapshot.Regular, []byte("package stray\n"))
+		for _, p := range untracked {
+			raw.Untracked = append(raw.Untracked, path(t, p))
+		}
+		addHostDocument(t, &selection, &raw, testHostDocument)
+		source := controlledSource{capture: func(_ context.Context, request apply.CaptureRequest) (apply.CapturedInputs, error) {
+			return captured(preparationObservation(t, request.Selection, raw)), nil
+		}}
+		return apply.NewPreparationService(apply.NewModelService(source, nil)), selection
+	}
+	prepareWith := func(t *testing.T, execution, stray string, untracked ...string) apply.CapturedSettingsResult {
+		s, selection := service(t, execution, stray, untracked...)
+		agent, check := hostPorts(t)
+		result, _ := s.CaptureSettings(context.Background(), apply.CaptureRequest{Selection: selection}, model.Limits{}, agent, check)
+		return result
+	}
+	prepare := func(t *testing.T, stray string, untracked ...string) apply.CapturedSettingsResult {
+		return prepareWith(t, withLayout(t, libraryLayoutYAML), stray, untracked...)
+	}
+	// DEC-062: an unregistered file that a Manager owns is drift its owner repairs;
+	// the start is prepared and its accounting names the owner.
+	result := prepare(t, "realization/stray.go")
+	attempt, ok := result.Prepared()
+	if !ok {
+		t.Fatalf("repairable start drift failed preparation: %s", result.Status())
+	}
+	candidates, err := apply.NewCandidates(attempt)
+	if err != nil {
+		t.Fatal(err)
+	}
+	start := attempt.Structural().Model().Inputs().Raw.Census
+	if got, want := summary(candidates.Account(start)), []string{". file.unexplained realization/stray.go"}; !reflect.DeepEqual(got, want) {
+		t.Fatalf("start findings %q, want %q", got, want)
+	}
+	// A file that no Manager owns under the layout is no drift a Manager can repair.
+	result = prepare(t, "realization/unmapped/stray.go")
 	if len(result.Attempts()) == 0 || result.Status() == model.Passed {
-		t.Fatal("an unaccounted start must not pass preparation")
+		t.Fatal("an ownerless start file passed preparation")
 	}
 	if _, err := apply.NewCandidates(result.Attempts()[len(result.Attempts())-1]); !errors.Is(err, apply.ErrCandidatesUnavailable) {
-		t.Fatalf("unaccounted start accepted: %v", err)
+		t.Fatalf("ownerless start accepted: %v", err)
+	}
+	// A Git-ignored untracked file is local to its developer, not drift of the project.
+	result = prepare(t, "realization/stray.go", "realization/stray.go")
+	if len(result.Attempts()) == 0 || result.Status() == model.Passed {
+		t.Fatal("an untracked unexplained start file passed preparation")
+	}
+	// Without a declared layout no Manager owns the file, so nobody could repair it.
+	result = prepareWith(t, documentedExecution(t), "realization/stray.go")
+	if len(result.Attempts()) == 0 || result.Status() == model.Passed {
+		t.Fatal("unexplained start drift passed preparation without a layout")
+	}
+	// Strict structural preparation (markitect check) keeps refusing the same drift.
+	s, selection := service(t, withLayout(t, libraryLayoutYAML), "realization/stray.go")
+	strict, _ := s.Capture(context.Background(), apply.CaptureRequest{Selection: selection}, model.Limits{})
+	if strict.Status() == model.Passed {
+		t.Fatal("strict preparation accepted an unregistered file")
 	}
 }
 

@@ -221,13 +221,17 @@ func reconcileConfig(req ReconcileRequest, now time.Time) (run.Config, error) {
 	if !req.Deadline.IsZero() && req.Deadline.Before(deadline) {
 		deadline = req.Deadline
 	}
+	start := prepared.Structural().Model().Inputs().Raw.Census
 	cfg := run.Config{
-		RunID: req.RunID, Team: team, Start: prepared.Structural().Model().Inputs().Raw.Census,
+		RunID: req.RunID, Team: team, Start: start,
 		OwnerRequest: req.OwnerRequest, OwnerDecisions: req.OwnerDecisions, Checks: checks,
-		Account:    func(tree snapshot.Tree) []run.Finding { return accountFindings(candidates.Account(tree)) },
-		OwnerOf:    candidates.OwnerOf,
-		Budget:     run.Budget{Deadline: deadline, TurnTimeout: budget.TurnTimeout.Value, AgentTurns: budget.AgentTurns.Value, Rounds: budget.Rounds.Value},
-		MaxEntries: req.MaxEntries, MaxBytes: req.MaxBytes,
+		Account: func(tree snapshot.Tree) []run.Finding { return accountFindings(candidates.Account(tree)) },
+		// Drift of the start stand that preparation tolerated is the owners' first
+		// work (DEC-062).
+		StartFindings: accountFindings(candidates.Account(start)),
+		OwnerOf:       candidates.OwnerOf,
+		Budget:        run.Budget{Deadline: deadline, TurnTimeout: budget.TurnTimeout.Value, AgentTurns: budget.AgentTurns.Value, Rounds: budget.Rounds.Value},
+		MaxEntries:    req.MaxEntries, MaxBytes: req.MaxBytes,
 		Agents: req.Agents, Workspaces: req.Workspaces, Runner: req.Runner, Owner: req.Owner, Evidence: req.Evidence, Clock: req.Clock,
 		// Execute turns can see the accounting of the shared tree, such as a shard
 		// that does not parse or an unregistered file, before Verify does.
