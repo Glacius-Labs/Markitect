@@ -17,9 +17,12 @@ import (
 // fileOwner is the human's channel of one Apply. Ask publishes Root's question
 // as <state>/questions/<id>.json and prints one line to stderr; the human
 // answers with `markitect answer`, which writes <state>/answers/<id>.txt, and
-// Answer polls that file. Questions and answers of earlier Applies are removed
-// when the channel opens, so a question file exists only while its Apply asked
-// it and an answer can only reach the Apply that is waiting for it.
+// Answer polls that file. The channel opens right after the Apply took the
+// state lock: it removes the question and answer files of earlier Applies and
+// records its run in <state>/current-run, so a question file exists only while
+// its Apply asked it and an answer can only reach the Apply that is waiting for
+// it. Only files the channel owns are removed: .json files in questions and .txt
+// files in answers.
 type fileOwner struct {
 	state, runID, config string
 	stderr               io.Writer
@@ -28,16 +31,35 @@ type fileOwner struct {
 var _ runport.Owner = (*fileOwner)(nil)
 
 func newFileOwner(stateDirectory, runID, configPath string, stderr io.Writer) (*fileOwner, error) {
-	for _, name := range []string{questionsDir, answersDir} {
-		dir := filepath.Join(stateDirectory, name)
-		if err := os.RemoveAll(dir); err != nil {
-			return nil, err
-		}
-		if err := os.MkdirAll(dir, 0o700); err != nil {
+	for _, channel := range []struct{ dir, ext string }{{questionsDir, ".json"}, {answersDir, ".txt"}} {
+		if err := clearChannel(filepath.Join(stateDirectory, channel.dir), channel.ext); err != nil {
 			return nil, err
 		}
 	}
+	if err := writeStateFile(filepath.Join(stateDirectory, currentRunFile), []byte(runID+"\n"), true); err != nil {
+		return nil, err
+	}
 	return &fileOwner{state: stateDirectory, runID: runID, config: configPath, stderr: stderr}, nil
+}
+
+// clearChannel creates dir if needed and removes the regular files with the
+// channel's extension directly inside it. Nothing else is touched.
+func clearChannel(dir, ext string) error {
+	if err := os.MkdirAll(dir, 0o700); err != nil {
+		return err
+	}
+	entries, err := os.ReadDir(dir)
+	if err != nil {
+		return err
+	}
+	for _, entry := range entries {
+		if entry.Type().IsRegular() && filepath.Ext(entry.Name()) == ext {
+			if err := os.Remove(filepath.Join(dir, entry.Name())); err != nil && !errors.Is(err, os.ErrNotExist) {
+				return err
+			}
+		}
+	}
+	return nil
 }
 
 func (o *fileOwner) Ask(_ context.Context, q runport.Question) error {
@@ -73,7 +95,9 @@ func (o *fileOwner) Answer(_ context.Context, id string) (string, bool, error) {
 }
 
 // writeAnswer records the owner's answer to a question of the Apply that holds
-// the state directory. An answer is final: it is written once, atomically.
+// the state directory. The Apply is observed without creating anything and
+// without taking the lock; the question must carry the run the Apply recorded
+// in <state>/current-run. An answer is final: it is written once, atomically.
 func writeAnswer(stateDirectory, id, text string) (string, error) {
 	if !stateName.MatchString(id) {
 		return "", fmt.Errorf("question identity %q is not a safe path element", id)
@@ -81,19 +105,30 @@ func writeAnswer(stateDirectory, id, text string) (string, error) {
 	if strings.TrimSpace(text) == "" || len(text) > maxAnswerBytes || !utf8.ValidString(text) || strings.ContainsRune(text, 0) {
 		return "", fmt.Errorf("an answer is non-blank UTF-8 text of at most %d bytes", maxAnswerBytes)
 	}
-	lock, err := lockState(stateDirectory)
-	if err == nil {
-		lock.Release()
+	held, err := stateHeld(stateDirectory)
+	if err != nil {
+		return "", err
+	}
+	if !held {
 		return "", errors.New("no Apply is running on this state directory")
 	}
-	if !errors.Is(err, errStateLocked) {
+	question, err := os.ReadFile(filepath.Join(stateDirectory, questionsDir, id+".json"))
+	if errors.Is(err, os.ErrNotExist) {
+		return "", fmt.Errorf("the running Apply has not asked question %s", id)
+	}
+	if err != nil {
 		return "", err
 	}
-	if _, err := os.Stat(filepath.Join(stateDirectory, questionsDir, id+".json")); err != nil {
-		if errors.Is(err, os.ErrNotExist) {
-			return "", fmt.Errorf("the running Apply has not asked question %s", id)
-		}
+	current, err := os.ReadFile(filepath.Join(stateDirectory, currentRunFile))
+	if err != nil && !errors.Is(err, os.ErrNotExist) {
 		return "", err
+	}
+	var asked struct {
+		Run string `json:"run"`
+	}
+	runID := strings.TrimSpace(string(current))
+	if json.Unmarshal(question, &asked) != nil || runID == "" || asked.Run != runID {
+		return "", fmt.Errorf("question %s does not belong to the running Apply", id)
 	}
 	path := filepath.Join(stateDirectory, answersDir, id+".txt")
 	if err := writeStateFile(path, []byte(text), false); err != nil {

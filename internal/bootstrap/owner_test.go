@@ -68,13 +68,18 @@ func TestOwnerAnswerPollsTheAnswerFileOfTheRunningApply(t *testing.T) {
 	}
 }
 
-func TestOwnerChannelOpensEmptyAndRefusesUnsafeIdentities(t *testing.T) {
+func TestOwnerChannelRemovesOnlyItsOwnFilesAndRefusesUnsafeIdentities(t *testing.T) {
 	state := testkit.TempDir(t)
-	for _, name := range []string{"questions", "answers"} {
-		if err := os.MkdirAll(filepath.Join(state, name), 0o700); err != nil {
+	files := map[string]bool{ // true: the channel owns it and removes it
+		"questions/old.json": true, "questions/notes.txt": false, "questions/sub/inner.json": false,
+		"answers/old.txt": true, "answers/old.json": false, "answers/sub/inner.txt": false,
+	}
+	for name := range files {
+		path := filepath.Join(state, filepath.FromSlash(name))
+		if err := os.MkdirAll(filepath.Dir(path), 0o700); err != nil {
 			t.Fatal(err)
 		}
-		if err := os.WriteFile(filepath.Join(state, name, "stale.txt"), []byte("earlier Apply"), 0o600); err != nil {
+		if err := os.WriteFile(path, []byte("earlier"), 0o600); err != nil {
 			t.Fatal(err)
 		}
 	}
@@ -82,10 +87,13 @@ func TestOwnerChannelOpensEmptyAndRefusesUnsafeIdentities(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	for _, name := range []string{"questions", "answers"} {
-		if entries, err := os.ReadDir(filepath.Join(state, name)); err != nil || len(entries) != 0 {
-			t.Fatalf("%s kept earlier Apply files: %v %v", name, entries, err)
+	for name, removed := range files {
+		if _, err := os.Stat(filepath.Join(state, filepath.FromSlash(name))); removed != os.IsNotExist(err) {
+			t.Errorf("%s: removed=%v, want %v (%v)", name, os.IsNotExist(err), removed, err)
 		}
+	}
+	if data, err := os.ReadFile(filepath.Join(state, "current-run")); err != nil || strings.TrimSpace(string(data)) != "run-2" {
+		t.Fatalf("current run not recorded: %q %v", data, err)
 	}
 	for _, unsafe := range []string{"", "../q", "a/b", `a\b`, ".q"} {
 		if err := owner.Ask(context.Background(), runport.Question{ID: unsafe, Text: "x"}); err == nil {
@@ -117,27 +125,37 @@ func TestOwnerAnswerRefusesOversizedOrNonTextFiles(t *testing.T) {
 }
 
 func TestWriteAnswerRequiresARunningApplyAnAskedQuestionAndIsFinal(t *testing.T) {
-	state := testkit.TempDir(t)
+	state := filepath.Join(testkit.TempDir(t), "state")
 	if _, err := writeAnswer(state, "q1", "x"); err == nil || !strings.Contains(err.Error(), "no Apply is running") {
 		t.Fatalf("answer without a running Apply: %v", err)
 	}
-	if _, err := os.Stat(filepath.Join(state, "answers", "q1.txt")); !os.IsNotExist(err) {
-		t.Fatal("answer written without a running Apply")
+	if _, err := os.Stat(state); !os.IsNotExist(err) {
+		t.Fatal("probing for a running Apply created the state directory")
+	}
+	if err := os.MkdirAll(state, 0o700); err != nil {
+		t.Fatal(err)
 	}
 	owner, err := newFileOwner(state, "run-1", "/abs/run.json", &bytes.Buffer{})
 	if err != nil {
 		t.Fatal(err)
+	}
+	if err := owner.Ask(context.Background(), runport.Question{ID: "q1", Text: "Which?"}); err != nil {
+		t.Fatal(err)
+	}
+	// The question file of a finished Apply is not answered: nobody holds the state.
+	if _, err := writeAnswer(state, "q1", "x"); err == nil || !strings.Contains(err.Error(), "no Apply is running") {
+		t.Fatalf("answer after the Apply ended: %v", err)
+	}
+	if _, err := os.Stat(filepath.Join(state, "answers", "q1.txt")); !os.IsNotExist(err) {
+		t.Fatal("answer written without a running Apply")
 	}
 	lock, err := lockState(state)
 	if err != nil {
 		t.Fatal(err)
 	}
 	defer lock.Release()
-	if _, err := writeAnswer(state, "q1", "x"); err == nil || !strings.Contains(err.Error(), "has not asked") {
+	if _, err := writeAnswer(state, "q2", "x"); err == nil || !strings.Contains(err.Error(), "has not asked") {
 		t.Fatalf("answer to a question that was not asked: %v", err)
-	}
-	if err := owner.Ask(context.Background(), runport.Question{ID: "q1", Text: "Which?"}); err != nil {
-		t.Fatal(err)
 	}
 	for _, bad := range []string{"", " \n\t", strings.Repeat("a", maxAnswerBytes+1), "a\x00b", string([]byte{0xff})} {
 		if _, err := writeAnswer(state, "q1", bad); err == nil {
@@ -155,5 +173,40 @@ func TestWriteAnswerRequiresARunningApplyAnAskedQuestionAndIsFinal(t *testing.T)
 	}
 	if entries, _ := os.ReadDir(filepath.Join(state, "answers")); len(entries) != 1 {
 		t.Fatalf("stray answer files: %v", entries)
+	}
+}
+
+func TestWriteAnswerRefusesAQuestionOfAnotherApply(t *testing.T) {
+	state := testkit.TempDir(t)
+	earlier, err := newFileOwner(state, "run-1", "/abs/run.json", &bytes.Buffer{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := earlier.Ask(context.Background(), runport.Question{ID: "q1", Text: "Old?"}); err != nil {
+		t.Fatal(err)
+	}
+	// The next Apply restarts at q1 but has not asked yet: its channel opens
+	// empty.
+	if _, err := newFileOwner(state, "run-2", "/abs/run.json", &bytes.Buffer{}); err != nil {
+		t.Fatal(err)
+	}
+	lock, err := lockState(state)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer lock.Release()
+	if _, err := writeAnswer(state, "q1", "x"); err == nil || !strings.Contains(err.Error(), "has not asked") {
+		t.Fatalf("answer to a question of an earlier Apply: %v", err)
+	}
+	// A question file that recorded another run is not the running Apply's.
+	stale, _ := json.Marshal(map[string]any{"id": "q1", "run": "run-1", "text": "Old?"})
+	if err := os.WriteFile(filepath.Join(state, "questions", "q1.json"), stale, 0o600); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := writeAnswer(state, "q1", "x"); err == nil || !strings.Contains(err.Error(), "does not belong") {
+		t.Fatalf("answer to a question of another run: %v", err)
+	}
+	if _, err := os.Stat(filepath.Join(state, "answers", "q1.txt")); !os.IsNotExist(err) {
+		t.Fatal("a stale answer was written")
 	}
 }

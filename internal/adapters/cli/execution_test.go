@@ -141,6 +141,8 @@ func TestApplyStatusNeverConvertsErrorOrUnpublishedRunsIntoSuccess(t *testing.T)
 		{"publication failed", run.Outcome{Status: run.Verified}, receipt(apply.PublicationFailed), nil, model.Failed},
 		{"incomplete", run.Outcome{Status: run.Incomplete}, nil, nil, model.NotCompleted},
 		{"failed", run.Outcome{Status: run.Failed}, nil, nil, model.Failed},
+		{"failed with the error that always comes with it", run.Outcome{Status: run.Failed}, nil, errors.New("rejection limit reached"), model.Failed},
+		{"incomplete with error", run.Outcome{Status: run.Incomplete}, nil, errors.New("budget"), model.NotCompleted},
 		{"zero", run.Outcome{}, nil, nil, model.NotCompleted},
 	} {
 		if got := ApplyStatus(tc.outcome, tc.receipt, tc.err); got != tc.want {
@@ -156,7 +158,7 @@ func TestExecutionExitCodesFollowTheReportedStatus(t *testing.T) {
 		err    error
 		code   int
 	}{
-		{model.Passed, nil, 0}, {model.Failed, nil, 1}, {model.NotCompleted, nil, 3},
+		{model.Passed, nil, 0}, {model.Failed, nil, 1}, {model.Failed, errors.New("run failed"), 1}, {model.NotCompleted, nil, 3},
 		{model.Passed, errors.New("actual execution refusal"), 3}, {"", nil, 3},
 	} {
 		c := New(nil, nil, nil, nil, nil, func(context.Context, ApplyRequest) (ApplyReport, error) {

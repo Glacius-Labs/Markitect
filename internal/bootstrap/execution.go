@@ -7,6 +7,8 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/Glacius-Labs/Markitect/internal/adapters/checks"
@@ -55,7 +57,7 @@ type applyPorts struct {
 // reconciliation. Nothing starts before preparation passed, and only one Apply
 // holds a state directory at a time.
 func (s *executionService) Execute(ctx context.Context, request cli.ApplyRequest) (report cli.ApplyReport, err error) {
-	report.Status = model.NotCompleted
+	report.FormatVersion, report.Operation, report.Status = 1, "apply", model.NotCompleted
 	cfg, err := loadRunConfig(ctx, request.RunConfig)
 	if err != nil {
 		if errors.Is(err, errRunConfig) {
@@ -66,18 +68,32 @@ func (s *executionService) Execute(ctx context.Context, request cli.ApplyRequest
 	if s == nil || s.preparation == nil || s.repository == nil {
 		return report, errors.New("concrete execution composition is unavailable")
 	}
-	lock, err := lockState(cfg.StateDirectory)
+	if err := checkStateOutsideRepository(cfg.StateDirectory, request.Selection.Repository); err != nil {
+		report.Status = model.Failed
+		return report, err
+	}
+	lock, err := lockStateWithin(ctx, cfg.StateDirectory, startLockWait)
 	if err != nil {
 		return report, err
 	}
 	defer func() { err = errors.Join(err, lock.Release()) }()
+	// The owner channel opens before anything else so that no question or answer
+	// of an earlier Apply can reach this one.
+	runID, err := newRunID(time.Now())
+	if err != nil {
+		return report, err
+	}
+	owner, err := newFileOwner(cfg.StateDirectory, runID, request.RunConfig, s.stderr)
+	if err != nil {
+		return report, err
+	}
 	prepared, err := s.preparation.CaptureSettings(ctx, apply.CaptureRequest{Selection: request.Selection}, model.Limits{}, s.agents, s.checks)
 	report.Preparation = capturedExecutionReport(prepared, cfg.ProductBuild)
 	if prepared.Status() != model.Passed || err != nil {
 		report.Status = prepared.Status()
 		return report, err
 	}
-	ports, err := s.ports(cfg, request.RunConfig, prepared, lock)
+	ports, err := s.ports(cfg, prepared, lock, runID, owner)
 	if err != nil {
 		return report, err
 	}
@@ -121,6 +137,39 @@ func (s *executionService) reconcileAndPublish(ctx context.Context, selection ap
 		Agents: ports.Agents, Workspaces: ports.Workspaces, Runner: ports.Checks, Owner: ports.Owner, Evidence: ports.Evidence,
 		Publisher: ports.Publisher, Control: ports.Control, Clock: ports.Clock,
 	})
+}
+
+// checkStateOutsideRepository refuses a state directory inside the repository
+// or containing it: evidence and channel files must not become repository
+// content, and the state directory is not the repository's to own.
+func checkStateOutsideRepository(stateDirectory, repository string) error {
+	if repository == "" {
+		return errors.New("the repository root is required")
+	}
+	state, repo := resolvedPath(stateDirectory), resolvedPath(repository)
+	for _, pair := range [][2]string{{repo, state}, {state, repo}} {
+		if rel, err := filepath.Rel(pair[0], pair[1]); err == nil && rel != ".." && !strings.HasPrefix(rel, ".."+string(filepath.Separator)) {
+			return errors.New("the state directory must not overlap the repository: it is inside it or contains it")
+		}
+	}
+	return nil
+}
+
+// resolvedPath resolves symbolic links of the longest existing prefix, so a
+// link cannot hide an overlap; the missing rest is appended unchanged.
+func resolvedPath(path string) string {
+	path = filepath.Clean(path)
+	rest := ""
+	for {
+		if resolved, err := filepath.EvalSymlinks(path); err == nil {
+			return filepath.Join(resolved, rest)
+		}
+		parent := filepath.Dir(path)
+		if parent == path {
+			return filepath.Join(path, rest)
+		}
+		rest, path = filepath.Join(filepath.Base(path), rest), parent
+	}
 }
 
 // answer records the owner's answer for the Apply running on the configured
@@ -170,7 +219,7 @@ func capturedExecutionReport(prepared apply.CapturedSettingsResult, productBuild
 // ports composes the concrete adapters from one complete capture. Every
 // selected profile is validated against the explicit run engine before any
 // adapter is constructed.
-func (s *executionService) ports(cfg runConfig, configPath string, prepared apply.CapturedSettingsResult, lock *stateLock) (applyPorts, error) {
+func (s *executionService) ports(cfg runConfig, prepared apply.CapturedSettingsResult, lock *stateLock, runID string, owner runport.Owner) (applyPorts, error) {
 	a, ok := prepared.Prepared()
 	if !ok {
 		return applyPorts{}, errors.New("complete captured settings are required")
@@ -199,14 +248,6 @@ func (s *executionService) ports(cfg runConfig, configPath string, prepared appl
 		return applyPorts{}, err
 	}
 	checker, err := checks.NewRunner(engine, workspaces)
-	if err != nil {
-		return applyPorts{}, err
-	}
-	runID, err := newRunID(time.Now())
-	if err != nil {
-		return applyPorts{}, err
-	}
-	owner, err := newFileOwner(cfg.StateDirectory, runID, configPath, s.stderr)
 	if err != nil {
 		return applyPorts{}, err
 	}

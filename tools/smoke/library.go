@@ -23,8 +23,6 @@ func (s *smoke) version() error {
 	return nil
 }
 
-// libraryPreparation consumes the unchanged normative Library sources through
-// the packaged product. It creates no implementation, provider or Apply record.
 // libraryExecution is the smoke's own execution settings of the Library project.
 const libraryExecution = `apiVersion: markitect.execution/v1
 strategy: shared-workspace-v1
@@ -48,6 +46,8 @@ checks:
     timeout: 2m
 `
 
+// libraryPreparation consumes the unchanged normative Library sources through
+// the packaged product. It creates no implementation, provider or Apply record.
 // The only M2 change is the specified five-to-three model edit in a temp repo.
 func (s *smoke) libraryPreparation() error {
 	repo, err := s.gitRepo("library-preparation", "codex/source-smoke")
