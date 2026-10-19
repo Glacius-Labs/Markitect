@@ -4,6 +4,22 @@ artifacts:
     form: doc
     realizes: [product/ports-and-adapters, product/apply/read-only-preparation]
     why: Documents captured preparation, the controlled state consumer and outstanding physical adapter obligations.
+  - path: "internal/apply/brief.go"
+    form: code
+    realizes: [product/organization/delegated-context]
+    why: Renders each Manager's standing Brief from its context selection, areas, registry shard, required checks and configured instructions.
+  - path: "internal/apply/reconcile.go"
+    form: code
+    realizes: [product/run/confirmed-run-history]
+    why: Builds the run configuration from one passed capture, runs the Manager team and publishes a verified candidate through the guarded Publisher.
+  - path: "internal/apply/reconcile_test.go"
+    form: test
+    realizes: [product/run/confirmed-run-history]
+    why: Tests the team, briefs, checks, budget deadline and accounting of the run configuration, publication refusals and an unverified run with fake ports.
+  - path: "internal/apply/export_test.go"
+    form: test
+    realizes: [product/run/confirmed-run-history]
+    why: Exposes the use case's configuration and publication steps to the external tests.
   - path: "internal/apply/candidates.go"
     form: code
     realizes: [product/realization/artifact-accounting]

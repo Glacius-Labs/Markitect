@@ -97,22 +97,7 @@ func m1SectionParents(t *testing.T, section, process string) (apply.CapturedFile
 	for _, file := range raw.Local.Files.Entries() {
 		census = append(census, fixtureEntry(t, ".markitect/"+file.Path().String(), file.Bytes()))
 	}
-	doc, err := os.ReadFile(base + "/manager-apply-configuration.md")
-	if err != nil {
-		t.Fatal(err)
-	}
-	text := string(doc)
-	start := strings.Index(text, "```yaml")
-	if start < 0 {
-		t.Fatal("execution example missing")
-	}
-	text = text[start+len("```yaml"):]
-	text = text[strings.IndexByte(text, '\n')+1:]
-	end := strings.Index(text, "```")
-	if end < 0 {
-		t.Fatal("unclosed execution example")
-	}
-	execution := text[:end]
+	execution := fixtureExecution
 	selection := apply.InputSelection{Repository: "controlled-m1-repository", Local: raw.Local.Selection}
 	for _, dependency := range raw.Dependencies {
 		selection.Dependencies = append(selection.Dependencies, dependency.Selection)
@@ -178,3 +163,26 @@ func processInput(t *testing.T, inner string) apply.ProfileInput {
 	}
 	return recorder.input
 }
+
+// fixtureExecution is the execution document of the controlled Library fixture.
+const fixtureExecution = `apiVersion: markitect.execution/v1
+strategy: shared-workspace-v1
+budget:
+  executionTime: 25m
+  turnTimeout: 10m
+  agentTurns: 120
+  rounds: 4
+profiles:
+  execute: library-agent
+  verify: library-agent
+packages:
+  lending:
+    profiles: {verify: library-agent}
+checks:
+  - id: project-tests
+    profile: library-tests
+    directory: realization
+    args: [test, ./...]
+    requiredBy: library/callable-interface
+    timeout: 2m
+`

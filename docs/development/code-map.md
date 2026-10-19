@@ -67,7 +67,7 @@ Tests in `internal/tooling/architecture` require every actual Go package to have
 
 | Package | Purpose | Owning document |
 |---|---|---|
-| `internal/apply` | Read-only preparation through consumer-owned ports. | [docs/development/modules.md](modules.md) |
+| `internal/apply` | Preparation through consumer-owned ports and the Apply use case with team, Manager briefs, candidate accounting and guarded publication. | [docs/development/modules.md](modules.md) |
 
 ## Model view
 

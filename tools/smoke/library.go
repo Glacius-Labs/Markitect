@@ -25,6 +25,29 @@ func (s *smoke) version() error {
 
 // libraryPreparation consumes the unchanged normative Library sources through
 // the packaged product. It creates no implementation, provider or Apply record.
+// libraryExecution is the smoke's own execution settings of the Library project.
+const libraryExecution = `apiVersion: markitect.execution/v1
+strategy: shared-workspace-v1
+budget:
+  executionTime: 25m
+  turnTimeout: 10m
+  agentTurns: 120
+  rounds: 4
+profiles:
+  execute: library-agent
+  verify: library-agent
+packages:
+  lending:
+    profiles: {verify: library-agent}
+checks:
+  - id: project-tests
+    profile: library-tests
+    directory: realization
+    args: [test, ./...]
+    requiredBy: library/callable-interface
+    timeout: 2m
+`
+
 // The only M2 change is the specified five-to-three model edit in a temp repo.
 func (s *smoke) libraryPreparation() error {
 	repo, err := s.gitRepo("library-preparation", "codex/source-smoke")
@@ -41,22 +64,7 @@ func (s *smoke) libraryPreparation() error {
 			return err
 		}
 	}
-	document, err := os.ReadFile(filepath.Join(base, "manager-apply-configuration.md"))
-	if err != nil {
-		return err
-	}
-	_, text, found := strings.Cut(string(document), "```yaml\n")
-	if !found { // A Windows checkout may retain CRLF; preserve YAML bytes.
-		_, text, found = strings.Cut(string(document), "```yaml\r\n")
-	}
-	if !found {
-		return fmt.Errorf("documented execution fixture missing")
-	}
-	execution, _, found := strings.Cut(text, "```")
-	if !found {
-		return fmt.Errorf("execution fixture is unclosed")
-	}
-	if err := os.WriteFile(filepath.Join(repo, ".markitect", "execution.yaml"), []byte(execution), 0644); err != nil {
+	if err := os.WriteFile(filepath.Join(repo, ".markitect", "execution.yaml"), []byte(libraryExecution), 0644); err != nil {
 		return err
 	}
 	if _, err := s.run(repo, nil, "git", "add", "."); err != nil {
