@@ -1,391 +1,79 @@
-# Run admission
+# Run
 
-This package owns pure decisions over a fixed Apply basis and each assignment's
-shared ledger on one repository stream. It consumes model, snapshot, organization and
-realization values. The caller supplies acquired original bytes, static profile
-facts, clock labels and elapsed durations. None establishes runtime capability or
-owner authority by itself.
+This package is the reconciliation engine of Apply ([DEC-056](../../docs/concepts/register.md#dec-056-recursive-reconciliation-with-a-shared-workspace),
+[concept](../../docs/design/canonical-model/manager-apply-concept.md#current-agreed-concept--19-october-2026)).
+`Reconcile(ctx, Config)` runs one bound reconciliation: fresh Verify of the starting
+stand, parallel Execute in one shared working tree, observed quiescence, one immutable
+candidate per closing Verify round, and repair through the owners until a round is green
+or the budget ends. It does no file or process I/O itself. Everything goes through the
+ports in `Config`: `Agents` (one Agent turn), `Workspaces` (volumes), `Checks` (required
+checks), `Owner` (the human, optional) and `Evidence` (the append-only record). Apply
+prepares the team, briefs, checks and accounting from one complete capture, passes them in
+and publishes a verified candidate; this package never publishes and never commits.
 
-`Bind` retains the complete supplied model closure and lock, compiled content and
-Package inventory, actual census with modes, initial registry, classifications,
-protections, source guard, configuration with selected ceilings and provenance,
-ordered instructions and static profiles. It requires the existing realization
-accounting to accept the complete initial census. Source-bound configuration
-resolution and source acquisition remain their producers' duties. The caller
-must supply every input document, including strategy, registry and ignore inputs;
-run does not discover files or decode YAML.
+## Cycle
 
-`Propose` is pure. `Commit` writes original payloads, then appends an atomic batch
-using its expected stream revision. Only the exact successful acknowledgement
-adopts the proposed projection, including Prepared and its run charge. An error
-or mismatched acknowledgement leaves the last confirmed projection visible and
-blocks dependent transitions. `ReconcilePending` checks the exact known batch
-and original payloads. It never retries an external effect.
+1. Candidate 0 is the start stand, materialized read-only as `<RunID>-c0`; the shared
+   working tree is `<RunID>-work`. Later candidates are `<RunID>-c<N>`. Candidate volumes
+   close after their round. The shared volume closes only when the outcome is Verified;
+   otherwise it keeps the incomplete work.
+2. A round runs `Account` and all required checks on the candidate (checks in parallel),
+   then one fresh Verify turn per Manager, children before parents, independent branches
+   in parallel. A parent starts when all its children's Verify turns of the round ended.
+3. A round is green when every Manager assessed it, no blocking finding is open and every
+   check passed. Round 1 green is Verified with the start stand as candidate and no Execute.
+4. Otherwise the open blocking findings go to their owners and the Execute phase runs: a
+   Manager that is not running and has undelivered items gets an Execute turn. In round 1
+   only, owners may start as soon as their findings are known while other initial Verify
+   turns continue on candidate 0. In later rounds Execute is paused for the whole round.
+5. The phase is quiescent when no Execute turn runs, no Manager has undelivered items and
+   no owner question waits. The shared volume is then harvested (`Workspaces.Harvest`
+   itself refuses to call a volume complete while a container mounts it) and the tree
+   becomes the next candidate.
 
-The four-method `Journal` is consumer-owned. Batches have a closed versioned JSON
-codec and immutable identities. Identity checks precede CAS for exact retries.
-The test journal demonstrates only process-local contract behavior. A physical
-adapter must establish durable atomic visibility, blob retention and controller
-fencing separately.
+## Findings
 
-`AppendBatch.BindingRefs` lists its direct basis references;
-`BindingOwnerRef` validates each original basis and derives the required owner
-input reference through the same recorded codec as restoration. A store verifies
-and retains both sets of bytes before Append acknowledgement, using these pure
-APIs and `Payload` identity checks. No adapter-owned binding decoder or reducer
-is needed. The v1 stream range is zero through `MaxRevision` (2^63-1), and both
-interval endpoints must be exact batch boundaries. Exact batch lookup reports
-the current observed head, which may be later than the matched batch's receipt.
+A finding has one owner (the Manager that must act) and one raiser. A Verify finding stays
+open until a later fresh Verify of its raiser closes it with a reason; a fresh reviewer that
+does not mention it does not close it. Failed required checks and `Account` findings are
+raised by `markitect` and hold for exactly the candidate they were observed on. Only
+blocking findings go to Execute; advisory ones stay visible in Verify prompts. The Verify
+tool refuses a report whose `satisfied` contradicts the raiser's open blocking findings.
 
-`Restore` opens existing or genuinely empty history through bounded `Read` and
-`ReadBlob` calls. Its explicit limits bound pages, batches, events and bytes,
-including required blobs. Exhaustion returns `ErrRestoreLimit`, separately from
-invalid history. Every page keeps the first committed head. The same
-transition rules regenerate each complete batch; gaps, partial batches, changed
-heads, invalid records and missing or changed blobs return no Coordinator.
-The historical versioned binding, compiled digests, inventory and original owner
-payload are verified without reinterpreting old input with today's compiler or
-resolving settings again. Store/controller identity remains the Host's duty.
+## Host tools
 
-New preparations record basis v3. V3 adds the immutable static operation,
-source-bound scope selectors and context limit, and the Manager task machine.
-V1/v2 retain their original recorded meaning and canonical bytes. Each passed compiled model contributes its
-complete own Package inventory and every Definition's identity and owning model
-ID, including imported models and explicitly empty inventories. `BindingInventory`
-returns a basis-bound recorded view with copied model IDs, digests, manifest
-references, Packages and Definition identities. It supplies no `model.Result`,
-Definition bodies or semantic compilation claim. Validation checks recorded
-shape, owning-model and Package membership, unique ordered inventories, raw
-source relationships and agreement with the local Manager inventory. Original
-compiler completeness and semantics remain producer assertions.
+- Verify: `assess {summary, satisfied, findings[{owner, obligation, observed, blocking}], closed[{id, reason}]}`,
+  once. A finding's owner is the reporting Manager or a descendant; closed IDs are open
+  findings it raised. An invalid call is refused with the reason and may be repeated. A turn
+  that ends without a valid report is retried once with a fresh turn; then the run is Incomplete.
+- Execute: `send {to, text}` where `to` is `parent`, a direct child path or, for Root only,
+  `owner`; anything else is refused with the allowed contacts. An answer also returns the
+  caller's new undelivered items. `finish {status: done|waiting, summary}` ends the turn;
+  a turn that ends without it counts as done. Without an `Owner`, a question is refused.
 
-Literal v1 basis and batch bytes still restore and retain their original
-references and retry receipts. Their imported Definition inventories are absent;
-`RecordedInventory.Models` returns `ErrInventoryUnavailable` rather than an
-invented complete empty inventory. These versions add no blob references or
-Journal methods. The existing 64 MiB payload ceiling and explicit Restore byte
-budget include the inventory.
+The first Execute turn of a Manager gets the mandate, its brief, contacts, owner decisions,
+the shared-tree note and its items; later turns resume the conversation and get only new
+items. A turn that fails after its container stopped gets one retry with a note; the second
+consecutive failure stops scheduling that Manager.
 
-Restoration never calls Put or Append and never replays an external effect. Open
-reservations keep their complete holds. `RecoveryRequired` is a separate Host
-barrier, while `Current` still reports the actual committed run state. Only
-explicit reconciliation observations or a stop request can proceed through that
-barrier; every hold needs a confirmed settlement or proven non-dispatch release.
-An identical recorded command or batch returns its original receipt without
-another append or charge. An absent old proposal at an advanced revision cannot
-be treated as an automatic retry; new decisions and commits remain explicit.
+## Stopping and trust
 
-The current first slice handles Prepared, Running, quiescent Waiting,
-Reconciling, and immutable non-successful Finished outcomes. Reservations are
-recorded invocation intent; this package dispatches nothing. Unknown effects keep
-their full holds. Explicit Host observations establish settlement or proven
-non-dispatch. Writing and the expectations step that prepares it preserve the
-completion reserve; assessment may use it.
-An actual overrun is retained and blocks further admission.
+The deadline cancels all running turns and checks and waits for them. The agent turn budget
+and the round budget end the run Incomplete. Any turn whose container end was not observed
+(`TurnResult.Stopped` false), an incomplete harvest or a failed evidence record also ends it
+Incomplete, because quiescence, capture or the record is uncertain; nothing may then be
+published. A definite error of the configuration or a port is Failed.
 
-`ExtendAssignment` records absolute cap targets and exact raw UTF-8 owner input
-(at most 64 KiB). At least one cap must increase, none may decrease, and every
-target stays within the assignment's original project ceilings. Completion
-reserve and timeouts stay fixed. Consumption, invocation holds and observed
-overruns remain unchanged. Each invocation retains the cap revision admitting
-it; extension records retain every prior cap revision and original owner input.
-These Host observations do not authenticate authority.
+Managers are trusted to write only their own area. After each capture the engine compares
+the new candidate with the previous one and records `write.observed` for files of a Manager
+that changed although it ran no Execute turn, and shows them to that Manager's next Verify.
+This is an observation, not enforcement or complete write attribution. Registrations
+outside a Manager's area are rejected by `Account`, which Apply supplies.
 
-`CloseAssignment` requires a Finished current run, no open invocation, exact raw
-owner input and a separate bounded Host quiescence observation. An empty hold
-ledger, cancellation acknowledgement or stop request is insufficient. RUN
-records the supplied observation; no physical termination is established here.
-Closure keeps the last run's outcome and cannot reopen the assignment.
+## Files
 
-`Assignments` returns copied closed ledgers followed by the current assignment,
-with original owner references, initial/current policy, cap revisions, runs,
-invocations, extension inputs and closure observations. A distinct ordinary
-assignment can be Prepared only after prior closure, with no predecessor. It has
-its own budget and owner input; previous consumption, grants, holds and remaining
-capacity never carry over. Run and invocation identities cannot be reused.
-Exact historical command retries return the original receipt, even after a new
-assignment starts. Restore rebuilds all of this history through the same reducer.
-
-An open assignment supports continuation after a changed basis or a recorded
-extension since the last run was Prepared. Its original owner input and bound
-policy stay fixed; recorded cap targets change the shared ledger only. Each Prepared run
-needs an available run unit and the new basis's structural review floor in the
-remaining shared ledger; this need not replenish the configured reserve that
-assessment work may spend.
-The consumer-owned `Sessions` port maps one Host session to Open, one compiled
-turn to Step, exact known provider handles to read-only Inspect, and bounded
-termination to Stop. It names no engine or provider protocol. In the first
-strategy one Session is one container serving exactly one Step; the Host
-prepares a new Session for every Step. The plan names the step's workspace
-volume, a separate provider-home volume that keeps the conversation across
-containers, and optionally the provider conversation to resume. A resumed
-Session binds only under that identity. Reviewers are read-only and never
-resume. Session and step preparation commit their finite admission reservations
-atomically with the preallocated identities, fixed profile/image/workspace and
-input/contract references. `SessionAdmission` and `StepAdmission` read and
-verify the recorded profile, tool, input and contract bytes from the journal and
-hand them to the adapter, which uses exactly those bytes. Credential fields are
-references only; the adapter resolves them at Open.
-Each Step explicitly asserts the still-current Session plan binding, including
-profile, image, workspace and candidate. A changed or unprovable binding needs a
-new session. Physical workspace currentness remains the Host's responsibility.
-
-`Open` may return acknowledged control readiness before the provider supplies
-its actual session ID. `SessionIO.Ready` records that incoming acknowledgment
-with a separate receipt; the Session is live, ready and unbound. Empty IDs and
-requested UUIDs never imply readiness or binding. Open observations distinguish
-ready, actually bound and uncertain outcomes; `Bind` cannot consume readiness.
-The adapter records each actual send outcome before forwarding an immediate
-incoming readiness/init event, buffering that observation within its limits.
-
-Acknowledged readiness permits startup's observed elapsed time to settle, but
-never makes it undispatched or terminated. Both Manager and reviewer require
-that settlement before admitting one first Step on the still-unbound Session.
-Its identity and finite reservation commit together. Only that Step's first
-non-control send can receive a fresh permit before actual binding; even a
-`NotSent` observation does not restore this initial slot. Known preparations
-return their receipts without another send. Control before binding is bounded
-termination during reconciliation, not a way to relabel user input. Adapters
-still own truthful protocol interpretation and encoding of the compiled input.
-
-The actual provider init then binds the observed ID before definite Step/tool
-observations and later Steps. Missing init, uncertain send or append failure
-retains effects and holds; another Open cannot replace a recorded startup send.
-An adapter may send several handshake messages, one at a time, before the
-session is ready or bound; the Codex App Server sends three.
-Restoration preserves readiness and the first Step/send identities behind the
-existing recovery barrier, without dispatching anything. Readiness cannot erase
-earlier uncertainty or supply inspection handles.
-
-`SessionChannel` implements the serialized Host `SessionIO` callbacks against
-the same Coordinator and journal. Before every provider write, including tool
-responses and notifications, `PrepareSend` must return a fresh acknowledged
-`SendPermit` whose identity matches the actual bytes. Failed or uncertain
-acknowledgement never grants dispatch. Re-observing a preparation never grants
-another send, even after restart. Actual sent/not-sent/uncertain observations
-remain separate. A write that answers a tool call names that call; it may follow
-only the recorded Host answer to that call in the same step, and only once.
-Shutdown control sends stay available during reconciliation without clearing
-earlier unknown activity or charging new Agent work.
-
-Wire records separate the actual byte digest/length from the permitted journal
-representation. The Host redacts known secrets **before** supplying any payload
-for append; RUN receives no secret value and cannot perform that redaction.
-Redacted records retain their explicit observation limit and cannot reproduce or
-authorize replay of the original wire. `AppendBatch.SessionRefs` lists exactly
-the direct stored payloads, alongside `BindingRefs` and `BindingOwnerRef`; the
-store verifies and retains all three closures before acknowledging Append.
-
-`Call` records a tool call, lets the channel's `ToolHandler` answer it and
-records the answer as a closed `ToolOutcome` (`ok` with a result or `refused`
-with a reason) whose encoding fits the session's wire limit. The adapter
-returns those exact bytes to the provider; a refusal is an answer, not a
-transport failure. While the run admits no new work (recovery, a stop request
-or any state but Running), the call is answered with a fixed refusal and the
-handler is not called. That refusal only settles the call in the journal: no
-ordinary write is admitted in that state, so the adapter never sends it, and
-the Host stops the session. Calls are deduplicated by session channel and provider
-call identity, including the exact step, tool identity and
-content/representation: an exact repeat returns the recorded answer without
-executing again, and a changed call conflicts. A handler error or an invalid or
-oversize outcome leaves the call pending; it cannot execute again implicitly.
-If recording the answer fails, `Call` returns the error together with the
-outcome, which the adapter must not send; once reconciliation shows the answer
-absent, the Host records it through `ToolReconciliation`. Recorded answers are
-never redacted and always carry the tool-outcome media type. A call's input is
-the observed call, a JSON object that names the tool and carries its arguments
-as the `arguments` member; `CallArguments` extracts them.
-
-Before the Claude Code adapter relies on resume binding, a bounded probe must
-show that a resumed Claude Code session reports the resumed session ID in its
-init event. The runtime capability record shows that the conversation content
-continues, not the reported identity.
-
-Provider session/step IDs remain distinct from Host IDs. Inspect can select only
-the exact journal-bound handles and never creates or resumes a provider Session
-or turn. A future separately authorized bounded read-only history helper may
-use a container; it is not implemented here and changes no Inspect contract.
-An unavailable history reader remains an explicit observation limit. Stop
-records actual termination or uncertainty, preserving partial observations on
-error. Settled startup time does not mean a provider stopped: live sessions,
-active steps and unresolved Host tool activity prevent run completion and
-assignment closure. A stop request or callback cancellation does not clear them.
-Restoration retains the recovery barrier until explicit reconciliation and
-elapsed settlement; no port is executed during Restore. Under basis v3 a step
-observation carries no proposed output: outcomes arrive only through answered
-Host tool calls.
-
-The consumer-owned `Workspaces` and `Checks` ports define what the repository
-and check adapters implement: materialize an exact tree on a runtime volume,
-harvest the complete observed tree, close it, and run one fixed check on a
-disposable copy. They carry no ownership or review semantics; a check passes
-only on an observed zero exit that neither timed out nor is uncertain.
-
-The concrete Session, Workspace, Check, journal and publication adapters live
-outside this package. The full contracts remain in
-the design documents.
-
-## Manager tasks
-
-This section implements the [core protocol](../../docs/design/canonical-model/manager-apply-core.md)
-for basis v3. Rule IDs refer to that document.
-
-When a run is prepared, every Manager of the recorded topology gets one task,
-and every task starts ready (DEC-052). `Next` returns the one admissible step
-of the run (T4): reviews of submissions, work and integration steps, and the
-expectations steps that precede them (DEC-049), in the order in which they
-became admissible. Ties break with reply steps first, then by
-Manager path, then by kind. The admission names the phase, the provider home
-and the conversation to resume: a Manager's steps continue its conversation
-(S3), while expectations and candidate steps start fresh conversations, and
-the candidate step receives the expectations that were recorded before it
-(T7). An incomplete
-task stops all admission (T14).
-
-`PrepareTaskSessionCommand` and `PrepareTaskStepCommand` are the only way to
-start a step. The reducer checks the phase's role, tool catalogue, workspace
-mode, provider home, conversation and reservation purpose, and keeps one step
-at a time (S5). Step preparation compiles the original model again, matches the
-whole binding and renders the phase's view: the Manager sees its own artifacts
-in the step's version, its open findings and its children's states and proposals;
-the expectations review sees the model and the open findings; the candidate
-review also sees the frozen candidate, its proposal and the recorded
-expectations. The caller supplies that version and the quoted payloads that
-`StepQuotes` names as `StepFacts`.
-
-A step ends with exactly one answered outcome tool call. `CheckOutcome` checks
-its arguments against the phase and the run before the Host answers it, and
-`ConcludeStepCommand` records the conclusion after the container stopped,
-applying the same check again. A step without a valid outcome, or one whose
-S4 check failed, is failed and returns its task to the state before the step
-(T6). Writing steps record their S4 candidate record as the task's own
-unaccepted work.
-
-Reviews follow T7 and T8. The expectations step names each case once, and the
-candidate review assesses every recorded case by that name as evidenced,
-not applicable or missing; the Host refuses a review that leaves a case out
-and a pass with a case missing, and records each missing case as a blocking
-finding. A failed assessment needs no cases. A pass
-must resolve every open blocking finding of its purpose; it is withheld while another open blocking issue covers the task,
-for an integration also one of a descendant (I3), while a producer the candidate used delivered again after the
-candidate's step (D4), or, for an integration, while a child is not done (T9). The
-task's next step sees why its pass was withheld. A reviewer records the
-expectations before a task's writing step for a purpose, including its first,
-unless cases for that purpose still stand, so that the Manager knows
-them and the review of its submission has only the candidate step; that step is
-charged as preparation and does not use the completion reserve (DEC-049).
-Unless its assessment failed, a review leaves its recorded expectations standing for the task's later submissions
-with the same purpose, whatever their scope. Their review skips the
-expectations step while the task's open findings, other than those the reviews
-against these expectations raised or resolved, and the owner's decisions are
-unchanged. That step sees neither the candidate, its scope nor the aggregate,
-and the Manager's steps show the standing cases for each purpose (DEC-046,
-DEC-047, DEC-048). Changes requested count one rejection per purpose, and an
-accepted delivery for the purpose restarts the count (DEC-050); at the bound
-rejection limit the task becomes incomplete. A needs-decision verdict
-blocks the task on an owner question, and a failed assessment starts a fresh
-review. An integration review may address a finding to a descendant that owns
-the affected artifacts (D5), with changes requested; such a blocking finding
-returns the done descendant to work, blocks its ancestors below the reviewed Manager on
-their children, and the reviewed Manager integrates again once they are done
-(T11). Accepted deliveries advance the aggregate version when they carry
-changes. Blocked tasks wake when what they named arrives (T10); a wait that only the waiting Manager itself could end, such as the delivery of a Manager that waits for it, is refused, and the root's
-completion moves the run to Verifying (T13).
-
-`Engine` drives admitted steps through the `Sessions` and `Workspaces` ports,
-one at a time. It holds what the reducer does not: the compiled model and every
-aggregate version. It
-materializes each step's version (D3), answers the Host tools, captures the
-candidate after the step (S4) and composes an accepted delivery onto the
-aggregate before it concludes the review (D2). A refused composition finishes
-the run Failed. A step the Host cannot finish is stopped. A confirmed stop ends
-all activity in the container (S2), so its start and step are settled as
-observed, an unstarted one is released, and a run that an uncertain
-observation moved to Reconciling resumes; the step then concludes as failed,
-its reservations and registry proposals are dropped with it, and the Manager's
-next step sees a note (T6). Without a confirmed stop the effects stay for reconciliation.
-A failure before the container starts costs nothing, so `Run` returns it
-instead of retrying. Path reservations and registry proposals are checked when
-they are made and recorded with the concluded writing step (S4), so a candidate
-record carries the claims its new files used and a new engine forms the same
-claims; it rebuilds the aggregate from the recorded deliveries. `Run` advances until nothing is admissible, then
-leaves the run Verifying, moves it to Waiting for an owner question (W1), or
-finishes it Incomplete.
-
-Messages follow M1 to M5. A Manager sends a question, reply or hint with
-`send`; `CheckSend` checks it against the tree and returns the message's
-identity, and the message takes effect when the step concludes, before the
-step's outcome, which may wait on it. A question to `parent` goes to the
-direct parent, a question to another Manager travels along the tree, and the
-Managers on its path see it in their next step without being dispatched (M2).
-A question becomes an issue addressed to its addressee; a reply from that
-addressee resolves it and wakes an asker waiting for it (I2, T10). A question
-that none of a blocked task's work or integrate steps has seen makes
-it ready, so that its next step answers it and can act on it (T10); hints and
-replies it did not wait for do not wake it. A Manager that cannot otherwise
-act answers in a reply step and keeps its state: a done one (T11),
-one awaiting the owner's decision on its frozen submission (T8), and a blocked
-one whose last step saw the question but left it unanswered. The reply
-step of a done or blocked task may correct the Manager's own files,
-except while the owner decides on its frozen submission (T8); a change, even
-one the Host refuses, returns the task to work with any refusal as its failure,
-and a done task's done ancestors wait for it again. An integration composes
-done children only: its submission and its pass wait for every child (T9). Each open question
-admits one reply step: a reply step takes the question it answers, or the
-oldest one when it sends no reply; a reply step the Host could not finish
-drops its reply and is admitted again. A question to the owner
-travels up to the root; when nothing else is admissible the run waits for the
-owner (M4, W1). `AnswerCommand` records the owner's answer: it wakes the asker,
-or starts a fresh review when a review asked (T8), and `ResumeRun` continues
-the run. Every owner decision binds the whole run: decisions bound with the
-run reach every step, and every answer reaches all later Manager steps and
-candidate reviews, while only the asking task's expectations steps see it and
-have their recorded cases renewed (DEC-053).
-A parent's hints reach its direct children. A failed step's messages are
-dropped with it (T6).
-
-Not yet implemented: a parent forwarding or broadcasting a question it cannot
-answer (M3, it asks anew instead), `assign_owner` (D6), the
-dispatch of a common parent for waits nothing satisfies (T12, the run finishes
-Incomplete instead), review batching, open issues carried
-into a continuation run (I5), a fresh conversation
-with a handoff when resume fails (S3), session rotation at `maxSessionSteps`,
-an answer that requires a model change (W3), and the parent's assessment after
-two rejections.
-
-## Verification and publication
-
-The basis binds the names of the required checks. While the run is Verifying,
-`PrepareCheckCommand` admits one check as assessment work, with room for its
-container's start and stop, and `ObserveCheckCommand` records its receipt and
-settles its reservation; an uncertain receipt moves the run to Reconciling. A
-check passes on an observed zero exit of the same image and tree.
-
-A candidate reviewer may run a configured check on the frozen candidate with
-`request_check` (`PrepareReviewCheckCommand`). The check must fit the step's
-remaining time and the budget, or the call is refused and the review goes on;
-its time is charged once, as the check's own invocation, and the step's
-charge leaves it out. The candidate tree it runs on does not yet contain the
-regenerated registry shards that publication writes.
-
-A writing step's submit runs the required checks that are also configured
-checks on the peeked workspace first (`Engine.preflight`) and is refused with
-the end of the output when one fails. That check is admitted while the task
-runs a work or integrate step, on any tree, and charged as writing work; one
-that does not fit the step or the budget is skipped.
-
-`Engine.Verify` runs the required checks on the tree that publishing the
-aggregate writes, reuses a check that already passed on it, and finishes the
-run Incomplete when one fails or the budget no longer fits it.
-`VerifyRunCommand` is the final evidence check:
-every task is done, no blocking issue is open, nothing is running and every
-required check passed on that tree; it moves the run to Publishing.
-
-`PreparePublicationCommand` records the change set before the first write,
-bound to the captured source and the verified tree, and `PublishRunCommand`
-records the publisher's receipt; until then the run cannot finish. Applied requires a
-non-empty change set and NoChange an empty one; stale and failed finish the run
-as such, and a partial or unknown publication moves it to Reconciling. These
-are the only commands that finish a run Applied or NoChange. A step's deadline
-leaves its container's stop inside the step's reservation, and the adapter's
-records of a step are written even after its deadline.
+`reconcile.go` and `agents.go` hold the contract, `workspace.go` and `checks.go` the
+consumer-owned ports. `engine.go` validates, drives rounds and captures; `verify.go` runs
+Verify rounds and the findings; `execute.go` schedules Execute and routes messages;
+`turn.go`, `tools.go` and `prompts.go` hold turn handling, tool schemas and prompts. Tests
+use scripted fakes for every port and run with `-race`.

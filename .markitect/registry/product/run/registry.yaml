@@ -1,33 +1,45 @@
 apiVersion: markitect.registry/v1
 artifacts:
-  - path: "internal/run/session_readiness_test.go"
-    form: test
-    realizes: [product/run/confirmed-run-history]
-    why: Checks truthful ready-but-unbound startup, one first send and retained holds.
-  - path: "internal/run/binding_inventory.go"
+  - path: "internal/run/agents.go"
     form: code
     realizes: [product/run/confirmed-run-history]
-    why: Exposes copied historical basis inventories and checks versioned record agreement without recompilation.
-  - path: "internal/run/binding_inventory_test.go"
-    form: test
+    why: Defines the Agents port, the Turn and tool contract and the usage a provider reports.
+  - path: "internal/run/reconcile.go"
+    form: code
     realizes: [product/run/confirmed-run-history]
-    why: Checks literal v1 compatibility and complete v2 inventories, refusals, copies and read budgets.
-  - path: "internal/run/testdata/basis-v1.json"
-    form: config
+    why: Defines the reconciliation contract with Config, Manager, Check, Finding, Outcome and Reconcile.
+  - path: "internal/run/engine.go"
+    form: code
     realizes: [product/run/confirmed-run-history]
-    why: Retains literal pre-v2 basis bytes captured before the inventory codec change.
-  - path: "internal/run/testdata/prepared-v1.json"
-    form: config
+    why: Validates the configuration, drives the rounds, captures candidates and owns the run's stop, evidence and volume handling.
+  - path: "internal/run/verify.go"
+    form: code
     realizes: [product/run/confirmed-run-history]
-    why: Retains the original v1 preparation batch and its immutable basis reference for retry proof.
-  - path: "internal/run/testdata/owner-v1.txt"
-    form: config
+    why: Runs a Verify round with accounting, parallel required checks, fresh Verify turns children first, the assess tool and the open findings.
+  - path: "internal/run/execute.go"
+    form: code
     realizes: [product/run/confirmed-run-history]
-    why: Retains the original owner input required by the pre-v2 preparation history.
+    why: Schedules parallel Execute turns in the shared tree, routes messages along parent and child contacts and polls the owner's answers.
+  - path: "internal/run/turn.go"
+    form: code
+    realizes: [product/run/confirmed-run-history]
+    why: Runs and records one Agent turn and checks tool arguments.
+  - path: "internal/run/tools.go"
+    form: code
+    realizes: [product/run/confirmed-run-history]
+    why: Defines the Host tool schemas of Execute and Verify turns.
+  - path: "internal/run/prompts.go"
+    form: code
+    realizes: [product/run/confirmed-run-history]
+    why: Renders the mandate, the Execute and Verify prompts and the finding items.
+  - path: "internal/run/values.go"
+    form: code
+    realizes: [product/run/confirmed-run-history]
+    why: Holds the shared validation helpers for identifiers, text and image identities.
   - path: "internal/run/workspace.go"
     form: code
     realizes: [product/run/confirmed-run-history]
-    why: Defines the consumer-owned Workspaces port that materializes and observes step workspaces.
+    why: Defines the consumer-owned Workspaces port that materializes, harvests and closes volumes.
   - path: "internal/run/checks.go"
     form: code
     realizes: [product/run/confirmed-run-history]
@@ -40,155 +52,19 @@ artifacts:
     form: test
     realizes: [product/run/confirmed-run-history]
     why: Checks that check requests are complete and bounded and when a receipt passes.
-  - path: "internal/run/step_contract.go"
-    form: code
-    realizes: [product/run/confirmed-run-history]
-    why: Defines the step output contract, the Host tool names and the tool catalogue per phase.
-  - path: "internal/run/step_contract_test.go"
+  - path: "internal/run/fakes_test.go"
     form: test
     realizes: [product/run/confirmed-run-history]
-    why: Checks the step contract round trip and the tool catalogue schemas per phase.
-  - path: "internal/run/session.go"
-    form: code
-    realizes: [product/run/confirmed-run-history]
-    why: Defines the provider-neutral Session port and permitted journal wire representations.
-  - path: "internal/run/session_io.go"
-    form: code
-    realizes: [product/run/confirmed-run-history]
-    why: Confirms channel-bound callbacks and deduplicates persisted tool exchanges without executing tools.
-  - path: "internal/run/session_state.go"
-    form: code
-    realizes: [product/run/confirmed-run-history]
-    why: Reduces admitted session and step facts, send uncertainty and observed termination.
-  - path: "internal/run/session_test.go"
+    why: Supplies scripted Agents, in-memory Workspaces, Checks, Owner and recording Evidence for reconciliation tests.
+  - path: "internal/run/reconcile_test.go"
     form: test
     realizes: [product/run/confirmed-run-history]
-    why: Checks durable send ordering, tool deduplication, reference integrity and recovery holds.
-  - path: "internal/run/assignment.go"
-    form: code
-    realizes: [product/run/confirmed-run-history]
-    why: Records bounded cap extensions, quiescent closure and isolated historic assignment ledgers.
-  - path: "internal/run/assignment_test.go"
+    why: Checks Verify order, parallel Execute, routing, owner questions, open findings, checks and observed writes.
+  - path: "internal/run/failure_test.go"
     form: test
     realizes: [product/run/confirmed-run-history]
-    why: Checks cap conservation, immutable closure and ordinary assignments through stored history.
+    why: Checks unobserved stops, incomplete capture, deadline, turn and round budgets, evidence failure and invalid configuration.
   - path: "internal/run/README.md"
     form: doc
     realizes: [product/run/confirmed-run-history]
-    why: Documents the implemented admission boundary and its explicit remaining gaps.
-  - path: "internal/run/binding.go"
-    form: code
-    realizes: [product/run/confirmed-run-history]
-    why: Binds complete supplied inputs and their provenance before run admission.
-  - path: "internal/run/binding_test.go"
-    form: test
-    realizes: [product/run/confirmed-run-history]
-    why: Checks fixed input identity, completeness and rejected preparation.
-  - path: "internal/run/budget.go"
-    form: code
-    realizes: [product/run/confirmed-run-history]
-    why: Accounts finite assignment capacity, completion reserve and uncertain holds.
-  - path: "internal/run/command.go"
-    form: code
-    realizes: [product/run/confirmed-run-history]
-    why: Defines closed commands and validates their intrinsic values.
-  - path: "internal/run/commit.go"
-    form: code
-    realizes: [product/run/confirmed-run-history]
-    why: Confirms exact journal commits and reconciles uncertain append outcomes.
-  - path: "internal/run/core_fixture_test.go"
-    form: test
-    realizes: [product/run/confirmed-run-history]
-    why: Supplies deterministic journal observations for admission and failure checks.
-  - path: "internal/run/fixture_test.go"
-    form: test
-    realizes: [product/run/confirmed-run-history]
-    why: Supplies actual model and organization producer values for run tests.
-  - path: "internal/run/journal.go"
-    form: code
-    realizes: [product/run/confirmed-run-history]
-    why: Defines the consumer-owned journal port and closed versioned byte records.
-  - path: "internal/run/journal_test.go"
-    form: test
-    realizes: [product/run/confirmed-run-history]
-    why: Checks closed records, exact retries and journal acknowledgement failures.
-  - path: "internal/run/restore.go"
-    form: code
-    realizes: [product/run/confirmed-run-history]
-    why: Reconstructs confirmed state from complete bounded journal reads without replaying effects.
-  - path: "internal/run/restore_binding.go"
-    form: code
-    realizes: [product/run/confirmed-run-history]
-    why: Validates historical basis records and their required owner payload references.
-  - path: "internal/run/restore_test.go"
-    form: test
-    realizes: [product/run/confirmed-run-history]
-    why: Checks pinned reconstruction, corrupt history refusal and retained recovery holds.
-  - path: "internal/run/state.go"
-    form: code
-    realizes: [product/run/confirmed-run-history]
-    why: Reduces confirmed lifecycle and budget transitions without ambient effects.
-  - path: "internal/run/state_test.go"
-    form: test
-    realizes: [product/run/confirmed-run-history]
-    why: Checks lifecycle admission, budget conservation and retained uncertainty.
-  - path: "internal/run/manager.go"
-    form: code
-    realizes: [product/run/confirmed-run-history]
-    why: Binds each task step's input to actual compiler and organization preparation and records its conclusion.
-  - path: "internal/run/task.go"
-    form: code
-    realizes: [product/run/confirmed-run-history]
-    why: Reduces the Manager task machine, its admission queue and the outcomes of work and integration steps.
-  - path: "internal/run/review.go"
-    form: code
-    realizes: [product/run/confirmed-run-history]
-    why: Reduces review verdicts, findings, rejection counting and accepted deliveries.
-  - path: "internal/run/engine.go"
-    form: code
-    realizes: [product/run/confirmed-run-history]
-    why: Drives admitted steps through the ports, captures candidates and composes accepted deliveries into the aggregate.
-  - path: "internal/run/harness_test.go"
-    form: test
-    realizes: [product/run/confirmed-run-history]
-    why: Supplies scripted session and workspace ports that drive real Coordinator and engine code.
-  - path: "internal/run/engine_test.go"
-    form: test
-    realizes: [product/run/confirmed-run-history]
-    why: Checks whole runs through review, rework, composition, integration, waiting and incomplete outcomes.
-  - path: "internal/run/engine_failure_test.go"
-    form: test
-    realizes: [product/run/confirmed-run-history]
-    why: Checks that steps the Host cannot finish are stopped, settled or released and concluded as failed.
-  - path: "internal/run/verify.go"
-    form: code
-    realizes: [product/run/confirmed-run-history]
-    why: Reduces required checks, the final evidence check and the recorded publication of a run.
-  - path: "internal/run/verify_test.go"
-    form: test
-    realizes: [product/run/confirmed-run-history]
-    why: Checks verification on the exact aggregate and every publication outcome.
-  - path: "internal/run/message.go"
-    form: code
-    realizes: [product/run/confirmed-run-history]
-    why: Reduces messages along the Manager tree, reply steps and the owner's answers.
-  - path: "internal/run/message_test.go"
-    form: test
-    realizes: [product/run/confirmed-run-history]
-    why: Checks questions, replies, hints, owner answers and routing along the tree.
-  - path: "internal/run/claims.go"
-    form: code
-    realizes: [product/run/confirmed-run-history]
-    why: Records the path reservations and registry proposals of concluded writing steps, so a restarted Host forms the same claims.
-  - path: "internal/run/reopen_test.go"
-    form: test
-    realizes: [product/run/confirmed-run-history]
-    why: Checks that claims survive an engine restart and that an integration finding reopens the child that owns the artifacts.
-  - path: "internal/run/task_test.go"
-    form: test
-    realizes: [product/run/confirmed-run-history]
-    why: Checks task admission, step preparation, conclusions and review renewal.
-  - path: "internal/run/manager_test.go"
-    form: test
-    realizes: [product/run/confirmed-run-history]
-    why: Distinguishes initial participation, exact input provenance, protected review demand and historical replay from fresh execution.
+    why: Documents the reconciliation engine, its ports, tools and stopping rules.

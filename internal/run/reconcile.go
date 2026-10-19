@@ -209,5 +209,5 @@ type TurnRecord struct {
 // recursive Verify with the required checks on that candidate, and repair
 // through the owners until a round is green or the budget ends.
 func Reconcile(ctx context.Context, cfg Config) (Outcome, error) {
-	return Outcome{Status: Failed, Reason: "not implemented"}, errors.New("reconcile: not implemented")
+	return reconcile(ctx, cfg)
 }
