@@ -71,7 +71,7 @@ func (e *engine) scheduleLocked() {
 			}
 			return
 		}
-		items, first := m.items, m.conversation == ""
+		items, first := m.items, !m.executed
 		m.items, m.consumed = nil, items
 		m.execCount++
 		m.running, m.ran, m.execUsed = true, true, true
@@ -93,6 +93,9 @@ func (e *engine) executeTurn(m *mgr, ts *turnState, turn Turn) {
 	if res.Conversation != "" {
 		m.conversation = res.Conversation
 	}
+	if err == nil {
+		m.executed = true
+	}
 	if e.ctx.Err() == nil {
 		switch {
 		case err == nil:
@@ -107,6 +110,9 @@ func (e *engine) executeTurn(m *mgr, ts *turnState, turn Turn) {
 
 // failedLocked handles a turn that ended with an error after its container
 // stopped: the Manager is told once more and stopped after repeated failures.
+// The items the failed turn consumed are delivered again, whether or not the
+// provider kept a conversation: it may not have processed them. A Manager
+// without a finished Execute turn also gets its mandate again.
 func (e *engine) failedLocked(m *mgr, err error) {
 	m.failures++
 	if m.failures >= maxExecuteFailures {
@@ -114,9 +120,7 @@ func (e *engine) failedLocked(m *mgr, err error) {
 		_ = e.record(Event{Kind: "manager.disabled", Manager: m.Path, Data: map[string]any{"failures": m.failures, "error": err.Error()}})
 		return
 	}
-	if m.conversation == "" {
-		m.items = append(m.items, m.consumed...)
-	}
+	m.items = append(m.items, m.consumed...)
 	m.items = append(m.items, item{text: fmt.Sprintf("Note: your previous turn ended with an error (%v). Continue where you left off.", err)})
 }
 

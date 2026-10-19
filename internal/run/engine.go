@@ -24,6 +24,7 @@ const (
 	maxToolFindings    = 64
 	outputTail         = 8 << 10
 	maxListedPaths     = 40
+	maxListedNames     = 20
 )
 
 // candidate is one immutable stand with its read-only volume.
@@ -61,6 +62,11 @@ type mgr struct {
 	verifyUsed   bool
 	ran          bool
 	changed      []string
+
+	// executed is set by an Execute turn that finished without error; until
+	// then the Manager's turn carries the full mandate, even when a failed turn
+	// left a conversation behind.
+	executed bool
 }
 
 type roundState struct {
@@ -165,6 +171,9 @@ func validate(cfg Config) error {
 		if i == 0 {
 			continue
 		}
+		if m.Parent == m.Path {
+			return bad("manager %q is its own parent", m.Path)
+		}
 		parent, ok := index[m.Parent]
 		if !ok {
 			return bad("manager %q has parent %q that is not listed before it", m.Path, m.Parent)
@@ -179,6 +188,9 @@ func validate(cfg Config) error {
 	}
 	for _, m := range cfg.Team {
 		for _, c := range m.Children {
+			if c == m.Path {
+				return bad("manager %q is its own child", m.Path)
+			}
 			i, ok := index[c]
 			if !ok || cfg.Team[i].Parent != m.Path {
 				return bad("child %q of %q is not a listed manager with that parent", c, m.Path)
@@ -434,7 +446,6 @@ func (e *engine) run() (Status, string, snapshot.Tree) {
 	shared, ok := e.materialize(work, cfg.Start)
 	if !ok {
 		e.closeVolume(cand.id)
-		e.closeVolume(work)
 		return e.incomplete("")
 	}
 	e.work = shared.volume
@@ -449,7 +460,6 @@ func (e *engine) run() (Status, string, snapshot.Tree) {
 			return e.incomplete("")
 		}
 		if green {
-			e.closeVolume(work)
 			return Verified, "", cand.tree
 		}
 		if reason := e.disabledOwnerOpen(); reason != "" {

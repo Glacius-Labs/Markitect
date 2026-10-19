@@ -61,7 +61,9 @@ func NewAgentsWithRuntime(start RuntimeStarter, profiles map[string]Profile, cre
 // Run implements run.Agents. A turn that fails before a container starts is
 // reported as stopped, with the error. Every failure after the container
 // started stops it before returning; Stopped reports whether the provider exit
-// was observed. The known token is removed from tool-call arguments before the
+// and the end of the container were observed. Usage is accumulated from the
+// stream and replaced by the result message's totals; a turn without them
+// reports a lower bound and says so in Reason. The known token is removed from tool-call arguments before the
 // handler sees them.
 func (a *Agents) Run(ctx context.Context, turn run.Turn, handler run.ToolHandler) (res run.TurnResult, err error) {
 	// Before a container starts there is nothing to stop: the turn is over and
@@ -133,12 +135,20 @@ func (a *Agents) Run(ctx context.Context, turn run.Turn, handler run.ToolHandler
 	defer cancel()
 	exit, stopErr := peer.Stop(stopCtx, stopGrace.Milliseconds())
 	closeErr := peer.Close()
-	res.Stopped = stopErr == nil
+	// The container really ends in Close: Stopped needs the provider's exit and
+	// a Close that did not have to give up on the container.
+	res.Stopped = stopErr == nil && closeErr == nil
 	res.Ended = time.Now().UTC()
-	if res.Stopped {
+	switch {
+	case res.Stopped:
 		res.Reason = outcome + "; provider exit observed code=" + strconv.Itoa(exit.Code) + " signal=" + redact.text(exit.Signal)
-	} else {
+	case stopErr == nil:
+		res.Reason = outcome + "; provider exit observed but the container end was not: " + redact.text(closeErr.Error())
+	default:
 		res.Reason = outcome + "; provider exit not observed"
+	}
+	if c.usage != usageFinal {
+		res.Reason += "; " + c.usage.partial()
 	}
 	log.value("end", map[string]any{"reason": res.Reason, "stopped": res.Stopped})
 	return res, redact.err(errors.Join(runErr, stopErr, closeErr))
@@ -231,6 +241,32 @@ type conversation struct {
 	promptRaw []byte
 	res       *run.TurnResult
 	done      chan struct{}
+
+	// usage says what res.Usage holds; streamed holds the usage of each
+	// assistant message by its ID, which the provider repeats per content block.
+	usage    usageState
+	streamed map[string]run.Usage
+}
+
+// usageState tells how complete the usage of a turn is.
+type usageState int
+
+const (
+	// usageNone: no usage was observed.
+	usageNone usageState = iota
+	// usageStreamed: only the assistant messages' usage was observed.
+	usageStreamed
+	// usageNoTotals: a result message arrived without usage totals.
+	usageNoTotals
+	// usageFinal: the result message's totals.
+	usageFinal
+)
+
+func (u usageState) partial() string {
+	if u == usageNoTotals {
+		return "usage partial: the result message carries no usage"
+	}
+	return "usage partial: no result message"
 }
 
 type streamEvent struct {
@@ -299,6 +335,8 @@ func (c *conversation) run(ctx context.Context, start frame.Start) error {
 				}
 				initialized = true
 				c.res.Conversation, c.res.Usage.Model = string(init.Session), initModel(m.Raw())
+			case AssistantMessage:
+				c.addStreamed(m.Raw())
 			case ResultMessage:
 				return c.finish(m)
 			case UnsupportedRequest, RejectedMessage:
@@ -400,25 +438,63 @@ func (c *conversation) finish(m Message) error {
 	}
 	c.res.Final = result.Text
 	var body struct {
-		Cost  float64 `json:"total_cost_usd"`
-		Turns int     `json:"num_turns"`
-		Usage struct {
-			Input         int64 `json:"input_tokens"`
-			Output        int64 `json:"output_tokens"`
-			CacheRead     int64 `json:"cache_read_input_tokens"`
-			CacheCreation int64 `json:"cache_creation_input_tokens"`
-		} `json:"usage"`
+		Cost  float64     `json:"total_cost_usd"`
+		Turns int         `json:"num_turns"`
+		Usage *tokenUsage `json:"usage"`
 	}
 	if json.Unmarshal(m.Raw(), &body) != nil {
 		return ErrProtocol
 	}
-	u := &c.res.Usage
-	u.InputTokens, u.OutputTokens, u.CacheReadTokens, u.CacheCreationTokens = body.Usage.Input, body.Usage.Output, body.Usage.CacheRead, body.Usage.CacheCreation
-	u.CostUSD, u.ProviderTurns = body.Cost, body.Turns
+	c.usage = usageNoTotals
+	if body.Usage != nil {
+		// The result's totals replace what the stream added up.
+		u := &c.res.Usage
+		u.InputTokens, u.OutputTokens, u.CacheReadTokens, u.CacheCreationTokens = body.Usage.Input, body.Usage.Output, body.Usage.CacheRead, body.Usage.CacheCreation
+		u.CostUSD, u.ProviderTurns = body.Cost, body.Turns
+		c.usage = usageFinal
+	}
 	if result.IsError {
 		return fmt.Errorf("%w: provider reported %s (%s) %s", ErrSession, result.Subtype, result.TerminalReason, strings.Join(result.Errors, "; "))
 	}
 	return nil
+}
+
+// tokenUsage is the provider's token report of a result or assistant message.
+type tokenUsage struct {
+	Input         int64 `json:"input_tokens"`
+	Output        int64 `json:"output_tokens"`
+	CacheRead     int64 `json:"cache_read_input_tokens"`
+	CacheCreation int64 `json:"cache_creation_input_tokens"`
+}
+
+// addStreamed adds one assistant message's usage to the turn's running total,
+// so a turn that ends without a result still reports what it consumed. A
+// message repeated per content block counts once, with its latest usage. A
+// message without readable usage counts as none.
+func (c *conversation) addStreamed(raw []byte) {
+	var body struct {
+		Message struct {
+			ID    string      `json:"id"`
+			Usage *tokenUsage `json:"usage"`
+		} `json:"message"`
+	}
+	if json.Unmarshal(raw, &body) != nil || body.Message.Usage == nil || c.usage >= usageNoTotals {
+		return
+	}
+	if c.streamed == nil {
+		c.streamed = map[string]run.Usage{}
+	}
+	id := body.Message.ID
+	if id == "" {
+		id = "#" + strconv.Itoa(len(c.streamed))
+	}
+	u := body.Message.Usage
+	c.streamed[id] = run.Usage{InputTokens: u.Input, OutputTokens: u.Output, CacheReadTokens: u.CacheRead, CacheCreationTokens: u.CacheCreation, ProviderTurns: 1}
+	total := run.Usage{Model: c.res.Usage.Model}
+	for _, one := range c.streamed {
+		total = total.Add(one)
+	}
+	c.res.Usage, c.usage = total, usageStreamed
 }
 
 func initModel(raw []byte) string {
