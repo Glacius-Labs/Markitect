@@ -14,7 +14,7 @@ derivations:
   - target: project/.markitect/model/lending/borrow.yaml
     change: Resolve the previously unspecified unrepresentable due-date boundary with an unchanged-state refusal; preserve the exact interval, wire range and existing error taxonomy.
   - target: project/.markitect/execution.yaml
-    change: Extract the first YAML example from the source configuration document as illustrative preparation settings.
+    change: Express the original illustrative preparation settings in the shared-workspace execution shape (budget, profiles, checks).
 sources:
   - source: docs/design/canonical-model/library-example/m1/model/catalog/availability.yaml
     target: project/.markitect/model/catalog/availability.yaml
@@ -130,6 +130,3 @@ sources:
   - source: docs/design/canonical-model/minimal-language/exchange-example/dependencies/core/model.yaml
     target: project/.markitect/dependencies/core/model.yaml
     sourceDigest: sha256:998be5061baadb3de9bec2a988a5fae7b449236f296e70a2be153b521fc8049a
-  - source: docs/design/canonical-model/manager-apply-configuration.md
-    target: project/.markitect/execution.yaml
-    sourceDigest: sha256:2ed58f0764e8beba29c8fea0529c4469ae54a9399d09f31df3f7933283d3c6e6

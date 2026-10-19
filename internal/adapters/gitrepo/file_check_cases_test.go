@@ -40,10 +40,10 @@ func TestM1GitFileCheckRetainsAllAuthoredInstructionOccurrences(t *testing.T) {
 		field  string
 		want   []string
 	}{
-		{document.Defaults.Manager.Instructions, "/defaults/instructions/manager", []string{"ops/manager.md", "ops/reviewer.md", "ops/manager.md"}},
-		{document.Defaults.Reviewer.Instructions, "/defaults/instructions/reviewer", []string{"ops/reviewer.md"}},
-		{document.Packages.Value[0].Manager.Instructions, "/packages/lending/instructions/manager", []string{"ops/lending.md"}},
-		{document.Packages.Value[0].Reviewer.Instructions, "/packages/lending/instructions/reviewer", []string{"ops/manager.md", "ops/reviewer.md"}},
+		{document.Defaults.Execute.Instructions, "/instructions/execute", []string{"ops/manager.md", "ops/reviewer.md", "ops/manager.md"}},
+		{document.Defaults.Verify.Instructions, "/instructions/verify", []string{"ops/reviewer.md"}},
+		{document.Packages.Value[0].Execute.Instructions, "/packages/lending/instructions/execute", []string{"ops/lending.md"}},
+		{document.Packages.Value[0].Verify.Instructions, "/packages/lending/instructions/verify", []string{"ops/manager.md", "ops/reviewer.md"}},
 	} {
 		if list.actual == nil || !reflect.DeepEqual(list.actual.Value, list.want) || list.actual.Source.Field != list.field || list.actual.Source.File != ".markitect/execution.yaml" || list.actual.Source.ContentID != inputs.Raw.Execution[0].File.ContentID() {
 			t.Fatalf("authored instruction order, repetition or source changed at %s: %+v", list.field, list.actual)
@@ -97,7 +97,7 @@ func TestM1GitFileCheckObservedButUncapturedInputsRemainIncomplete(t *testing.T)
 				if !found || !bytes.Equal(instruction.Bytes(), []byte(fileSeamInstruction("ops/manager.md"))) || len(inputs.Raw.Instructions) != 2 || accounting.Status() != realization.Accounted || len(diagnostics) != 3 {
 					t.Fatalf("actual uncaptured instruction or repeated references lost: %+v", diagnostics)
 				}
-				for i, field := range []string{"/defaults/instructions/manager/0", "/defaults/instructions/manager/2", "/packages/lending/instructions/reviewer/0"} {
+				for i, field := range []string{"/instructions/execute/0", "/instructions/execute/2", "/packages/lending/instructions/verify/0"} {
 					if diagnostics[i].Code != "files.instruction_uncaptured" || diagnostics[i].Source.File != ".markitect/execution.yaml" || diagnostics[i].Source.Field != field || diagnostics[i].Source.ContentID != inputs.Raw.Execution[0].File.ContentID() {
 						t.Fatalf("uncaptured instruction occurrence lost its authored source: %+v", diagnostics[i])
 					}

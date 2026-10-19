@@ -9,24 +9,7 @@ import (
 	"testing"
 
 	"github.com/Glacius-Labs/Markitect/internal/apply"
-	"github.com/Glacius-Labs/Markitect/internal/organization"
 )
-
-func TestRejectionLimitUsesCurrentFieldNameInReport(t *testing.T) {
-	projected, ok := reportValue(organization.ManagerSettings{
-		RejectionLimit: organization.Setting[int]{Value: 3},
-	}).(map[string]any)
-	if !ok {
-		t.Fatalf("reportValue returned %T", reportValue(organization.ManagerSettings{}))
-	}
-	if _, exists := projected["ReviewRounds"]; exists {
-		t.Fatalf("report retained historical field name: %#v", projected)
-	}
-	selected, ok := projected["RejectionLimit"].(map[string]any)
-	if !ok || selected["Value"] != 3 {
-		t.Fatalf("report did not expose the renamed selection: %#v", projected)
-	}
-}
 
 type resolver struct{ calls int }
 

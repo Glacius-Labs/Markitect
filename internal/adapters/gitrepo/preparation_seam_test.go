@@ -127,7 +127,7 @@ func TestM1GitPreparationAcquiresCompleteClosureWithoutExtendingEarlierInputs(t 
 					t.Fatal("explicit model/dependency boundaries changed")
 				}
 				assertPreparationFileClosure(t, raw)
-				if !reflect.DeepEqual(execution.Defaults.Manager.Instructions.Value, []string{"ops/manager.md", "ops/reviewer.md", "ops/manager.md"}) || !reflect.DeepEqual(execution.Defaults.Reviewer.Instructions.Value, []string{"ops/reviewer.md"}) || !reflect.DeepEqual(execution.Packages.Value[0].Manager.Instructions.Value, []string{"ops/lending.md"}) || !reflect.DeepEqual(execution.Packages.Value[0].Reviewer.Instructions.Value, []string{"ops/manager.md", "ops/reviewer.md"}) {
+				if !reflect.DeepEqual(execution.Defaults.Execute.Instructions.Value, []string{"ops/manager.md", "ops/reviewer.md", "ops/manager.md"}) || !reflect.DeepEqual(execution.Defaults.Verify.Instructions.Value, []string{"ops/reviewer.md"}) || !reflect.DeepEqual(execution.Packages.Value[0].Execute.Instructions.Value, []string{"ops/lending.md"}) || !reflect.DeepEqual(execution.Packages.Value[0].Verify.Instructions.Value, []string{"ops/manager.md", "ops/reviewer.md"}) {
 					t.Fatal("authored instruction lists lost their order or repeats")
 				}
 				var packages []string
