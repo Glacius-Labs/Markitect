@@ -1,6 +1,6 @@
 # Markitect agent entrypoint
 
-Markitect is model-first development with delegated realization. People maintain a canonical model of the project's intended world. Markitect compiles it, derives affected responsibilities and files, and is being rebuilt toward recursive Managers with independent review, integration, verification and guarded Apply. Before assessing product direction, read [Markitect in brief](docs/vision.md#markitect-in-brief), [Common misreadings](docs/vision.md#common-misreadings) and the [concept register](docs/concepts/register.md). Do not reopen an accepted entry without new evidence.
+Markitect is model-first development with delegated realization. People maintain a canonical model of the project's intended world. Markitect compiles it, derives affected responsibilities and files, and realizes it through a permanent team of recursive Managers: parallel Execute in one shared working tree, fresh recursive Verify of one immutable candidate and guarded Apply. Before assessing product direction, read [Markitect in brief](docs/vision.md#markitect-in-brief), [Common misreadings](docs/vision.md#common-misreadings) and the [concept register](docs/concepts/register.md). Do not reopen an accepted entry without new evidence.
 
 ## Every task
 
@@ -12,7 +12,9 @@ Markitect is model-first development with delegated realization. People maintain
    go run ./cmd/markitect context product --repo .
    ```
 
-   The canonical v1 model holds intent; exact artifact paths and Definition links live in `.markitect/registry/`. Context reports selected Definitions, provenance and inclusion reasons. Structural preparation does not start sessions, execute checks or establish runtime readiness. Apply is unavailable until its execution and publication implementation exists. Read the [workflow](docs/project-workflow.md) for explicit manifests and dependencies.
+   The canonical v1 model holds intent; exact artifact paths and Definition links live in `.markitect/registry/`. Context reports selected Definitions, provenance and inclusion reasons. Structural preparation does not start sessions, execute checks or establish runtime readiness. Apply is implemented on branch `dev/recursive-apply-simplified` ([DEC-056](docs/concepts/register.md#dec-056-recursive-reconciliation-with-a-shared-workspace), [runtime contract](docs/design/canonical-model/manager-apply-runtime.md)), pending review, CI and owner acceptance. Read the [workflow](docs/project-workflow.md) for explicit manifests and dependencies.
+
+   Run Apply only with explicit authority: `go run ./cmd/markitect apply --repo . --host-profile ABSOLUTE_HOST_YAML --run-config ABSOLUTE_RUN_JSON` over a committed repository; it starts real Agents and needs a container engine and credentials. Its JSON report names the evidence directory, `<state>/runs/<runID>/` (`events.jsonl`, `transcripts/`, `report.json`), and Root's owner questions are answered with `markitect answer`. Apply publishes only a verified candidate and never commits. The [workflow](docs/project-workflow.md#execute-verify-and-apply) has the sequence.
 3. Implementation-only work needs no intent change. A new artifact needs one exact registration in its owner's registry shard, with existing Definition links and a reason. An exceptional ignored file needs an exact observed path and reason in `.markitect/ignore.yaml`; Gitignore does not supply accounting. Canonical and control inputs cannot be ignored or registered as artifacts.
 4. After changing `.markitect/model/`, preview the official readable view and write it using the returned `view.previewDigest`:
 

@@ -32,7 +32,7 @@ Each Manager receives its applicable model, owned area and direct contacts, plus
 
 > Compare your artifacts with the bound model. Preserve correct realization and report concrete deviations. In Execute, correct your files and registry and coordinate dependencies through your parent and children. In fresh Verify, assess the immutable stand and the interaction of your children. Report scope, findings, checks and unresolved questions. Do not change intent, write another owner's files or contact another branch directly.
 
-All six Managers assess their responsibility; unchanged areas give a concise assessment without a separate no-change acceptance transaction. Use Luna for runtime Agent roles, including Verify, in the next library demonstration unless the owner changes that choice. The later implementation author's use of Claude does not change that runtime model choice.
+All six Managers assess their responsibility; unchanged areas give a concise assessment without a separate no-change acceptance transaction. The runtime model of the demonstration is Sonnet (`claude-sonnet-5-5`, high effort) for all Execute and Verify turns, with no Codex or OpenAI inference and no silent model fallback; the owner's [dispatch](../../concepts/sources/recursive-apply-implementation-20261019.md#runtime-model-choice) replaced the earlier Luna preference. The required checks of the demonstration include the independent library oracle, supplied as a check image outside the Agents' write areas.
 
 ### First Apply: M1 to A1
 

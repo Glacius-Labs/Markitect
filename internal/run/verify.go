@@ -138,12 +138,12 @@ func (e *engine) runCheck(n int, tree snapshot.Tree, c Check) CheckResult {
 	req := c.Request
 	req.ID, req.Tree = CheckID(fmt.Sprintf("%s-r%d-%s", e.cfg.RunID, n, c.Name)), tree
 	rec, err := e.cfg.Runner.Run(e.ctx, req)
-	if err != nil {
-		e.portError("check "+c.Name, err)
-		return CheckResult{Name: c.Name, Reason: err.Error()}
-	}
-	res := CheckResult{Name: c.Name, Passed: rec.Passed(req), ExitCode: rec.ExitCode, Output: tail(rec.Output, outputTail)}
+	res := CheckResult{Name: c.Name, Passed: err == nil && rec.Passed(req), ExitCode: rec.ExitCode, Output: tail(rec.Output, outputTail)}
 	switch {
+	case err != nil:
+		// A check that cannot run on a candidate, such as a missing check
+		// directory before the first Execute, is a failed check, not a failed run.
+		res.Reason = "the check could not run: " + err.Error()
 	case res.Passed:
 	case rec.TimedOut:
 		res.Reason = "timed out"

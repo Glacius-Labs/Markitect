@@ -286,13 +286,19 @@ func TestPortErrors(t *testing.T) {
 			t.Fatalf("%v %s %s", err, out.Status, out.Reason)
 		}
 	})
-	t.Run("check runner", func(t *testing.T) {
+	t.Run("a check that cannot run is a failed check", func(t *testing.T) {
 		f := newFixture(t)
 		f.addCheck("unit", "library")
-		f.checks.fail = func(CheckRequest) (CheckReceipt, error, bool) { return CheckReceipt{}, errTest, true }
-		out, err := Reconcile(context.Background(), f.cfg)
-		if !errors.Is(err, errTest) || out.Status != Failed {
-			t.Fatalf("%v %s %s", err, out.Status, out.Reason)
+		f.checks.fail = func(r CheckRequest) (CheckReceipt, error, bool) {
+			if r.ID != "run1-r1-unit" {
+				return CheckReceipt{}, nil, false
+			}
+			return CheckReceipt{ID: r.ID}, errTest, true
+		}
+		f.agents.script = libraryFinding(nil)
+		out := f.run()
+		if out.Status != Verified || out.Rounds[0].Checks[0].Passed || !strings.Contains(out.Rounds[0].Checks[0].Reason, "could not run") {
+			t.Fatalf("%s %s %+v", out.Status, out.Reason, out.Rounds[0].Checks)
 		}
 		f.assertEnded(out)
 	})

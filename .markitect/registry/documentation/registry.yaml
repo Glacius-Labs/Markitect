@@ -512,6 +512,10 @@ artifacts:
     form: doc
     realizes: [documentation/current-guidance]
     why: Preserves the owner-authored language, Apply or concept contract as a reference.
+  - path: "docs/design/canonical-model/manager-apply-runtime.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Owns the implemented technical contract of the recursive Apply.
   - path: "docs/design/canonical-model/manager-apply-configuration.md"
     form: doc
     realizes: [documentation/current-guidance]
