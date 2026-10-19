@@ -27,9 +27,11 @@ type ImageReader interface {
 
 type ImageReaderFactory func(EngineConfig) (ImageReader, error)
 
-// NewEngineImageReader binds only the explicitly supplied engine executable.
+// NewEngineImageReader binds only the explicitly supplied engine executable. It
+// returns one Engine per executable path, so a repeated preparation of the same
+// image reuses the observation that Engine already completed.
 func NewEngineImageReader(config EngineConfig) (ImageReader, error) {
-	return container.NewEngine(config.Executable)
+	return container.SharedEngine(config.Executable)
 }
 
 // NewMetadataPreparer composes container image observation. The zero value still
