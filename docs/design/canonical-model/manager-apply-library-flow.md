@@ -26,7 +26,7 @@ Root
 | lending | Loans, borrowing eligibility/limit, return and due dates; integration of Reminders. |
 | reminders | Read-only overdue assessment using the lending interface, with tests and docs. |
 
-These are durable areas, not file lists invented on each Apply. Library's cross-area realization obligation still applies; Root coordinates the sibling implementations. Preserve the actual callable contract: module at `realization/go.mod`, executable at `realization/cmd/library`, standard-library Go, JSON Lines, process-local state and required commands from `realization/`. The mirrored layout supports explicit exceptions for that entry point and colocated Go tests. Moving shared-module ownership from Library to Root is deliberate; registry links still cite `library/callable-interface`. No UI, network service, database or live migration is added.
+These are durable areas, not file lists invented on each Apply. Library's cross-area realization obligation still applies; Root coordinates the sibling implementations. Preserve the actual callable contract: module at `realization/go.mod`, executable at `realization/cmd/library`, standard-library Go, JSON Lines, process-local state and required commands from `realization/`. Mirroring the model hierarchy is the default beneath each declared artifact root, with explicit persistent exceptions for framework layout, that entry point and colocated Go tests. Resolve the mapping even when its directories do not yet exist. Moving shared-module ownership from Library to Root is deliberate; registry links still cite `library/callable-interface`. No UI, network service, database or live migration is added.
 
 Each Manager receives its applicable model, owned area and direct contacts, plus the same mandate:
 
@@ -36,9 +36,11 @@ All six Managers assess their responsibility; unchanged areas give a concise ass
 
 ### First Apply: M1 to A1
 
+Start with the accepted M1 model and necessary execution controls, with no application artifacts or prepared internal APIs. The model's public callable contract and fixed owner decisions are inputs; internal signatures, shared domain types and stubs must be created by their owners during Execute. The external harness must not provide them. This is the owner's [explicit start-from-model clarification](../../concepts/sources/recursive-apply-simplification-20261019.md#default-layout-and-model-only-start).
+
 1. Preflight binds M1, controls, owner decisions and budget and checks complete accounting/ownership. Existing artifacts must be registered; recognized model/control inputs remain protected separately.
 2. Fresh Verify sessions inspect the immutable starting stand. A missing implementation produces concrete work, not an expectations matrix. Preserve valid artifacts. Independent Execute work need not wait for every initial assessment.
-3. All owners Execute in one shared working tree. Root supplies module/shared prerequisites; Library composes the program; domain Managers implement their own behavior, tests, docs and registry entries. Lending coordinates Reminders. No merge, parent workspace update or reviewed `limited` delivery is required before development can proceed.
+3. All owners Execute in one shared working tree and create their own directories/files as needed. Root supplies the shared Go module and other root-owned prerequisites; Library creates the entry point and composes the program; domain Managers create their own interfaces, behavior, tests, docs and registry entries. Root does not supply child-owned stubs or signatures. Lending coordinates Reminders. No merge, parent workspace update or reviewed `limited` delivery is required before development can proceed.
 4. Lending needs membership status: it asks Root, which discusses the contract with Members and relays the answer. Reminders asks Lending for loan-query needs. The parent names the supplied interface/files and readiness. An unresolved policy travels upward; only Root asks the human. Do not duplicate shared types to bypass a dependency.
 5. Before closing Verify, writers and their subprocesses quiesce. Capture A1-C1 once. Fresh Verify sessions and required checks use that immutable stand; Execute stays paused and check outputs go to scratch.
 6. Independent branches verify in parallel. Reminders assesses its area; Lending assesses lending and their interaction. Library assesses its boundary/composition. Root inspects its own obligations and interaction of all four children using actual artifacts and their assessments. Parent acceptance waits for relevant child results. Fresh Verify also gives Root's own changes an independent perspective.
@@ -57,7 +59,7 @@ Quiesce, capture A2-C1, run fresh recursive closing Verify and mandatory checks/
 
 ### Evidence and implementation handoff
 
-The earlier external Luna experiment achieved both Applies using separate writer copies, prearranged interfaces and external orchestration. It did not test this shared-tree strategy. The later Claude implementation should start with the concept's [handoff and supersession map](manager-apply-concept.md#implementation-handoff-and-supersession), demonstrate actual quiescence/snapshot capture and parent-only communication, and preserve findings across fresh reviews. It must not inherit the old delivery/state protocol for compatibility.
+The earlier external Luna experiment achieved both Applies using separate writer copies, prearranged interfaces and external orchestration. It did not test this shared-tree strategy or a start without prepared internal APIs. The later Claude implementation should start with the concept's [handoff and supersession map](manager-apply-concept.md#implementation-handoff-and-supersession), demonstrate actual quiescence/snapshot capture and parent-only communication, and preserve findings across fresh reviews. Record the source of the first module, interfaces and domain types, dependency waits and interventions as part of the ordinary run evidence. It must not inherit the old delivery/state protocol for compatibility.
 
 ## Earlier walkthrough reference
 

@@ -5,7 +5,7 @@ id: delegated-context
 kind: Vocab.Rule
 body: >-
   Derive one ordinary Root and one Manager per local canonical Package from authoritative compiled facts.
-  Keep responsibilities and artifact-area mappings persistent across Applies, with a mirrored model hierarchy as the recommended layout and explicit project exceptions.
+  Keep responsibilities and artifact-area mappings persistent across Applies, with a mirrored model hierarchy as the default layout and explicit persistent project exceptions.
   Supply the same reconciliation mandate with separately compiled applicable model obligations, provenance, fixed owner decisions and direct-parent/child roles and contacts.
   Every local Manager, including empty and intermediate Packages, assesses its responsibility; do not select participants by AI relevance.
   Managers communicate only with their direct parent and children; only Root escalates to the human.
