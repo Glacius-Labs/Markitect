@@ -305,24 +305,27 @@ func TestBudgetLimitLeadsToCaptureAndVerifyNotToAHalt(t *testing.T) {
 func TestReserveKeepsTheFirstTurnOfAnUnreleasedChild(t *testing.T) {
 	f := newFixture(t)
 	f.cfg.Budget.AgentTurns = 8
-	libraryReported := make(chan struct{})
+	libraryAsked := make(chan struct{})
 	f.ev.onRecord = func(e Event) {
-		if e.Kind == "child.report" && e.Manager == "library" {
-			close(libraryReported)
+		if e.Kind == "message" && e.Manager == "library" {
+			close(libraryAsked)
 		}
 	}
 	f.agents.script = func(c *call) error {
-		if c.is(1, "lending", ExecuteTurn) {
-			// Lending's first turn runs until the library's report reached Root, so
+		switch {
+		case c.is(1, "library", ExecuteTurn):
+			c.send("parent", "which basis do I use?")
+		case c.is(1, "lending", ExecuteTurn):
+			// Lending's first turn runs until the library's message reached Root, so
 			// that lending/reminders is not released yet.
-			if err := c.wait(libraryReported); err != nil {
+			if err := c.wait(libraryAsked); err != nil {
 				return err
 			}
 		}
 		return c.defaultScript()
 	}
 	out := f.run()
-	// The library's report would give Root a second turn, which would take the
+	// The library's message would give Root a second turn, which would take the
 	// budget of lending/reminders' first turn: it is refused, and the run stays
 	// within eight turns and is Verified.
 	if out.Status != Verified || executeTurnsOf(out, ".", 1) != 1 || executeTurnsOf(out, "lending/reminders", 1) != 1 || countKind(out, VerifyTurn) != 4 {

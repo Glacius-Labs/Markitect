@@ -42,7 +42,11 @@ turn and no separate route for absent or unchanged artifacts.
    (which counts as done), its summary goes to its direct parent as the item "Your child X
    reports done: ..." (`child.report`; without a call the text says that no summary was given),
    so the parent integrates its children's results. `waiting` reports nothing. Items that
-   arrive while the parent runs are batched into its next turn.
+   arrive while the parent runs are batched into its next turn. A parent whose items are only
+   such reports waits while a Manager below it runs or has items it can still receive, and then
+   integrates its quiet subtree in one turn; any other item starts it at once. Parents with only
+   reports are scheduled after every other Manager and after all their descendants, so a waiting
+   parent always has a descendant that runs.
 4. A Manager with `Write.Enforced` runs its Execute turns read-only unless `Write.Base`, with
    `Write.Mounts` overlaid; without it the whole tree is writable and ownership is trusted.
    Verify turns are always read-only without mounts. Mount paths are validated before any
@@ -82,18 +86,20 @@ tool refuses a report whose `satisfied` contradicts the raiser's open blocking f
 
 ## Host tools
 
-- Verify: `assess {summary, satisfied, findings[{owner, obligation, observed, blocking}], closed[{id, reason}]}`,
-  once. A finding's owner is the reporting Manager or a descendant; closed IDs are open
-  findings it raised. An invalid call is refused with the reason and may be repeated. A turn
+- Verify: `assess {summary, satisfied, findings[{owner, obligation, observed, blocking}], closed[{id, reason}]}`.
+  A finding's owner is the reporting Manager or a descendant; closed IDs are open
+  findings it raised. An invalid call is refused with the reason and may be repeated. A valid
+  report is kept in the turn and applied when the turn ends; a later valid call replaces it. A turn
   that ends without a valid report is retried once with a fresh turn; then the run is Incomplete.
 - Execute: `send {to, text}` where `to` is `parent`, a direct child path or, for Root only,
   `owner`; anything else is refused with the allowed contacts. An answer also returns the
-  caller's new undelivered items. `finish {status: done|waiting, summary}` ends the turn;
-  a turn that ends without it counts as done. Without an `Owner`, a question is refused.
+  caller's new undelivered items. `finish {status: done|waiting, summary}` records how the turn
+  ends (a later call replaces it; the turn ends when the provider stops and the tools stay usable
+  until then); a turn that ends without it counts as done. Without an `Owner`, a question is refused.
   Questions are numbered `Q1`, `Q2`, ... (within a run, a refused question keeps its number); `Config.Questions` hands a run the answered
   questions of an earlier run on the same owner channel, which the prompts show and whose
   numbering new questions continue.
-- Execute, only with `Config.CheckTool`: `check {scope?}` peeks the shared volume through
+- Execute, with `Config.CheckTool` (Apply and Extract set it): `check {scope?}` peeks the shared volume through
   `Workspaces.Peek` (writers keep running), runs `Account` on the peeked tree and answers with
   the findings as compact text, the calling Manager's first and then the number of others
   (`scope: "all"` lists them). It is advice; candidates still come only from Harvest. An

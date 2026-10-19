@@ -224,6 +224,6 @@ func (e *engine) verifyPromptLocked(m *mgr, rs *roundState, retry bool) string {
 		}
 		fmt.Fprintf(&b, "\nFiles of your area that changed since the previous candidate although you ran no Execute turn:\n- %s%s\n", strings.Join(shown, "\n- "), more)
 	}
-	b.WriteString("\nReport with the tool assess exactly once: summary, satisfied, findings (owner is you or one of your descendants) and closed. satisfied is true only when none of your own findings stays open and blocking.\n")
+	b.WriteString("\nWhen your assessment is complete, report it with the tool assess: summary, satisfied, findings (owner is you or one of your descendants) and closed. satisfied is true only when none of your own findings stays open and blocking. The last valid assess call of your turn counts.\n")
 	return b.String()
 }
