@@ -1,6 +1,6 @@
 # Commands over the Manager organization
 
-Status: accepted direction, 17 October 2026 ([DEC-044](../../concepts/register.md#dec-044-commands-reuse-the-manager-organization), [owner discussion](../../concepts/sources/commands-extract-optimize-20261017.md)). This document owns the later command semantics and the Extract and Optimize workflows. It records no executable command registration, model-writing runtime or completed Verify capability. The [current operations guide](../../project-operations.md) owns availability. Apply remains the first delivery target; this documentation adds no implementation queue and does not change the frozen Apply core.
+Status: accepted direction, 17 October 2026 ([DEC-044](../../concepts/register.md#dec-044-commands-reuse-the-manager-organization), [owner discussion](../../concepts/sources/commands-extract-optimize-20261017.md)). This document owns the later command semantics and the Extract and Optimize workflows. A first bounded `extract` command is implemented as the [runtime contract](manager-apply-runtime.md#extract-first-bounded-implementation) states; every other operation here is design only, and no completed Verify capability is recorded. The [current operations guide](../../project-operations.md) owns availability. Apply remains the first delivery target; this documentation adds no implementation queue and does not change the frozen Apply core.
 
 ## Apply and Extract are the two directional processes
 

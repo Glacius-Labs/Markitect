@@ -21,6 +21,7 @@ func (s *PreparationService) capturePreparation(ctx context.Context, request Cap
 			models = s.models
 		}
 		stage, err := models.CaptureModel(ctx, CaptureRequest{selection}, limits)
+		stage.extract = ports != nil && ports.extract
 		registry, execution := stage.PrepareRegistry(), stage.DecodeExecution()
 		structural := CapturedPreparationAttempt{stage: stage, registry: registry, files: registry.CheckFiles(), execution: execution, contexts: execution.SelectContexts(), err: err}
 		attempt := CapturedSettingsAttempt{structural: structural, err: err}

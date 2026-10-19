@@ -86,6 +86,47 @@ func TestExecuteRefusesAStateDirectoryThatOverlapsTheRepository(t *testing.T) {
 	}
 }
 
+func TestExtractRefusesBeforeAnyEffectLikeApply(t *testing.T) {
+	// An invalid run configuration is a definite refusal and creates nothing.
+	document := runConfigFixture(t)
+	document["allocation"] = map[string]any{"runs": 1}
+	service := newExecution(apply.NewPreparationService(apply.NewModelService(nil, nil)), &gitrepo.Repository{}, nil, nil, &bytes.Buffer{})
+	report, err := service.Extract(context.Background(), cli.ExtractRequest{RunConfig: writeRunConfig(t, document)})
+	if !errors.Is(err, errRunConfig) || report.Status != model.Failed || report.Operation != "extract" || report.EvidenceDirectory != "" || report.Deviations == nil || report.OpenQuestions == nil {
+		t.Fatalf("%v %+v", err, report)
+	}
+	if _, err := os.Stat(document["stateDirectory"].(string)); !os.IsNotExist(err) {
+		t.Fatal("an invalid configuration created the state directory")
+	}
+	// A state directory that overlaps the repository is refused as well.
+	root := testkit.TempDir(t)
+	repository := filepath.Join(root, "repo")
+	document = runConfigFixture(t)
+	document["stateDirectory"] = filepath.Join(repository, ".state")
+	report, err = service.Extract(context.Background(), cli.ExtractRequest{Selection: apply.InputSelection{Repository: repository}, RunConfig: writeRunConfig(t, document)})
+	if err == nil || !strings.Contains(err.Error(), "overlap") || report.Status != model.Failed {
+		t.Fatalf("%v %+v", err, report)
+	}
+	// A held state directory comes before preparation and leaves no evidence.
+	document = runConfigFixture(t)
+	state := document["stateDirectory"].(string)
+	held, err := lockState(state)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer held.Release()
+	previous := startLockWait
+	startLockWait = 20 * time.Millisecond
+	t.Cleanup(func() { startLockWait = previous })
+	report, err = service.Extract(context.Background(), cli.ExtractRequest{Selection: apply.InputSelection{Repository: testkit.TempDir(t)}, RunConfig: writeRunConfig(t, document)})
+	if !errors.Is(err, errStateLocked) || report.Status != model.NotCompleted || report.Preparation != nil || report.FormatVersion != 1 {
+		t.Fatalf("%v %+v", err, report)
+	}
+	if entries, _ := os.ReadDir(filepath.Join(state, "runs")); len(entries) != 0 {
+		t.Fatalf("a refused Extract left evidence: %v", entries)
+	}
+}
+
 func TestAnswerWritesForTheRunningApplyOfTheConfiguredStateDirectory(t *testing.T) {
 	document := runConfigFixture(t)
 	state := document["stateDirectory"].(string)

@@ -62,42 +62,21 @@ type applyPorts struct {
 // holds a state directory at a time.
 func (s *executionService) Execute(ctx context.Context, request cli.ApplyRequest) (report cli.ApplyReport, err error) {
 	report.FormatVersion, report.Operation, report.Status = 1, "apply", model.NotCompleted
-	cfg, err := loadRunConfig(ctx, request.RunConfig)
+	session, failed, err := s.open(ctx, request.Selection.Repository, request.RunConfig)
 	if err != nil {
-		if errors.Is(err, errRunConfig) {
+		if failed {
 			report.Status = model.Failed
 		}
 		return report, err
 	}
-	if s == nil || s.preparation == nil || s.repository == nil {
-		return report, errors.New("concrete execution composition is unavailable")
-	}
-	if err := checkStateOutsideRepository(cfg.StateDirectory, request.Selection.Repository); err != nil {
-		report.Status = model.Failed
-		return report, err
-	}
-	lock, err := lockStateWithin(ctx, cfg.StateDirectory, startLockWait)
-	if err != nil {
-		return report, err
-	}
-	defer func() { err = errors.Join(err, lock.Release()) }()
-	// The owner channel opens before anything else so that no question or answer
-	// of an earlier Apply can reach this one.
-	runID, err := newRunID(time.Now())
-	if err != nil {
-		return report, err
-	}
-	owner, err := newFileOwner(cfg.StateDirectory, runID, request.RunConfig, s.stderr)
-	if err != nil {
-		return report, err
-	}
+	defer func() { err = errors.Join(err, session.lock.Release()) }()
 	prepared, err := s.preparation.CaptureSettings(ctx, apply.CaptureRequest{Selection: request.Selection}, model.Limits{}, s.agents, s.checks)
-	report.Preparation = capturedExecutionReport(prepared, cfg.ProductBuild)
+	report.Preparation = capturedExecutionReport(prepared, session.cfg.ProductBuild)
 	if prepared.Status() != model.Passed || err != nil {
 		report.Status = prepared.Status()
 		return report, err
 	}
-	ports, err := s.ports(cfg, prepared, lock, runID, owner)
+	ports, err := s.ports(session.cfg, prepared, session.lock, session.runID, session.owner)
 	if err != nil {
 		return report, err
 	}
@@ -114,7 +93,7 @@ func (s *executionService) Execute(ctx context.Context, request cli.ApplyRequest
 		}
 		err = errors.Join(err, ports.Evidence.Close())
 	}()
-	result, err := s.reconcileAndPublish(ctx, request.Selection, prepared, cfg, ports)
+	result, err := s.reconcileAndPublish(ctx, request.Selection, prepared, session.cfg, ports)
 	if result.Outcome.Status != "" {
 		report.Run = cli.NewRunReport(ports.RunID, result.Outcome)
 	}
@@ -122,6 +101,103 @@ func (s *executionService) Execute(ctx context.Context, request cli.ApplyRequest
 	report.RetainedWork = result.RetainedWork
 	report.Status = cli.ApplyStatus(result.Outcome, result.Receipt, err)
 	return report, err
+}
+
+// Extract prepares the committed repository as the start of an Extract, composes
+// the ports and runs both phases. Like Apply it starts nothing before the
+// preparation passed, and only one run holds a state directory at a time.
+func (s *executionService) Extract(ctx context.Context, request cli.ExtractRequest) (report cli.ExtractReport, err error) {
+	report.FormatVersion, report.Operation, report.Status = 1, "extract", model.NotCompleted
+	report.Deviations, report.OpenQuestions = []runport.Finding{}, []runport.Question{}
+	session, failed, err := s.open(ctx, request.Selection.Repository, request.RunConfig)
+	if err != nil {
+		if failed {
+			report.Status = model.Failed
+		}
+		return report, err
+	}
+	defer func() { err = errors.Join(err, session.lock.Release()) }()
+	prepared, err := s.preparation.CaptureExtract(ctx, apply.CaptureRequest{Selection: request.Selection}, model.Limits{}, s.agents, s.checks)
+	report.Preparation = capturedExecutionReport(prepared, session.cfg.ProductBuild)
+	if prepared.Status() != model.Passed || err != nil {
+		report.Status = prepared.Status()
+		return report, err
+	}
+	ports, err := s.ports(session.cfg, prepared, session.lock, session.runID, session.owner)
+	if err != nil {
+		return report, err
+	}
+	attempt, ok := prepared.Prepared()
+	if !ok {
+		return report, errors.New("complete captured settings are required")
+	}
+	preparation := report.Preparation
+	report.EvidenceDirectory = ports.Evidence.Dir()
+	defer func() {
+		if err != nil {
+			report.Error = err.Error()
+		}
+		if writeErr := ports.Evidence.WriteReport(cli.ReportValue(report)); writeErr != nil {
+			err = errors.Join(err, writeErr)
+			report.Status = model.NotCompleted
+		}
+		err = errors.Join(err, ports.Evidence.Close())
+	}()
+	result, err := apply.Extract(ctx, apply.ExtractRequest{
+		RunID: ports.RunID, Prepared: attempt, Selection: request.Selection,
+		OwnerRequest: session.cfg.OwnerRequest, OwnerDecisions: session.cfg.OwnerDecisions, Deadline: ports.Deadline,
+		MaxEntries: ports.Harvest.MaxEntries, MaxBytes: ports.Harvest.MaxBytes,
+		Agents: ports.Agents, Workspaces: ports.Workspaces, Owner: ports.Owner, Evidence: ports.Evidence,
+		Publisher: ports.Publisher, Control: ports.Control, Clock: ports.Clock, RemoveHome: ports.RemoveHome, RequireVolumeSubpaths: ports.RequireVolumeSubpaths,
+	})
+	report = cli.NewExtractReport(ports.RunID, result)
+	report.FormatVersion, report.Operation, report.Preparation, report.EvidenceDirectory = 1, "extract", preparation, ports.Evidence.Dir()
+	report.Status = cli.ExtractStatus(result, err)
+	return report, err
+}
+
+// runSession is what every run command holds before it prepares: the run
+// configuration, the exclusive state directory, the owner channel and the run
+// identity.
+type runSession struct {
+	cfg   runConfig
+	lock  *stateLock
+	owner runport.Owner
+	runID string
+}
+
+// open loads the run configuration, takes the state directory of the run and
+// opens its owner channel. failed says that the error is a definite refusal of
+// the invocation rather than an incomplete observation. The owner channel opens
+// before anything else so that no question or answer of an earlier run can
+// reach this one. The caller releases the lock.
+func (s *executionService) open(ctx context.Context, repository, runConfigPath string) (session runSession, failed bool, err error) {
+	cfg, err := loadRunConfig(ctx, runConfigPath)
+	if err != nil {
+		return session, errors.Is(err, errRunConfig), err
+	}
+	if s == nil || s.preparation == nil || s.repository == nil {
+		return session, false, errors.New("concrete execution composition is unavailable")
+	}
+	if err := checkStateOutsideRepository(cfg.StateDirectory, repository); err != nil {
+		return session, true, err
+	}
+	lock, err := lockStateWithin(ctx, cfg.StateDirectory, startLockWait)
+	if err != nil {
+		return session, false, err
+	}
+	fail := func(err error) (runSession, bool, error) {
+		return session, false, errors.Join(err, lock.Release())
+	}
+	runID, err := newRunID(time.Now())
+	if err != nil {
+		return fail(err)
+	}
+	owner, err := newFileOwner(cfg.StateDirectory, runID, runConfigPath, s.stderr)
+	if err != nil {
+		return fail(err)
+	}
+	return runSession{cfg: cfg, lock: lock, owner: owner, runID: runID}, false, nil
 }
 
 // reconcileAndPublish runs the Apply use case over the captured preparation with
