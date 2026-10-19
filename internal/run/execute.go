@@ -31,6 +31,7 @@ func (e *engine) quiescentLocked() bool {
 		return false
 	}
 	for _, m := range e.team {
+		e.pruneLocked(m)
 		if !m.disabled && len(m.items) > 0 {
 			return false
 		}
@@ -50,11 +51,20 @@ func (e *engine) scheduleLocked() {
 		return
 	}
 	for _, m := range e.team {
-		if m.running || m.disabled || len(m.items) == 0 {
+		if m.running || m.disabled {
 			continue
 		}
-		// Keep room for the Verify round that follows this turn.
-		if !e.reserveTurnLocked(len(e.team)) {
+		e.pruneLocked(m)
+		if len(m.items) == 0 {
+			continue
+		}
+		// Keep room for the Verify round that follows this turn. An early turn
+		// also keeps room for the Verify turns of the open round 1.
+		reserve := len(e.team)
+		if !e.inPhase && e.rs != nil {
+			reserve += len(e.team) - len(e.rs.started)
+		}
+		if !e.reserveTurnLocked(reserve) {
 			// An early start only waits; the Execute phase has no other way on.
 			if e.inPhase {
 				e.halt("the agent turn budget cannot cover another Execute turn and a closing Verify round")
@@ -66,7 +76,7 @@ func (e *engine) scheduleLocked() {
 		m.execCount++
 		m.running, m.ran, m.execUsed = true, true, true
 		ts := &turnState{m: m, kind: ExecuteTurn, id: fmt.Sprintf("%s-r%d-%s-x%d", e.cfg.RunID, e.execRound, m.slug, m.execCount), round: e.execRound}
-		turn := Turn{Profile: m.ExecuteProfile, Workspace: e.work, Home: m.execHome, Resume: m.conversation, Prompt: e.executePromptLocked(m, items, first), Tools: executeTools(m.Parent == "")}
+		turn := Turn{Profile: m.ExecuteProfile, Workspace: e.work, Home: m.execHome, Resume: m.conversation, Prompt: e.executePromptLocked(m, texts(items), first), Tools: executeTools(m.Parent == "")}
 		e.running++
 		e.wg.Add(1)
 		go e.executeTurn(m, ts, turn)
@@ -107,7 +117,7 @@ func (e *engine) failedLocked(m *mgr, err error) {
 	if m.conversation == "" {
 		m.items = append(m.items, m.consumed...)
 	}
-	m.items = append(m.items, fmt.Sprintf("Note: your previous turn ended with an error (%v). Continue where you left off.", err))
+	m.items = append(m.items, item{text: fmt.Sprintf("Note: your previous turn ended with an error (%v). Continue where you left off.", err)})
 }
 
 func (e *engine) executeHandler(m *mgr, ts *turnState) ToolHandler {
@@ -207,7 +217,7 @@ func (e *engine) send(ctx context.Context, m *mgr, ts *turnState, args json.RawM
 	if to.Parent == m.Path {
 		from = "your parent " + contact(m)
 	}
-	to.items = append(to.items, fmt.Sprintf("Message from %s: %s", from, text))
+	to.items = append(to.items, item{text: fmt.Sprintf("Message from %s: %s", from, text)})
 	_ = e.record(Event{Kind: "message", Manager: m.Path, Turn: ts.id, Round: ts.round, Data: map[string]any{"from": m.Path, "to": to.Path, "text": text}})
 	e.scheduleLocked()
 	e.cond.Broadcast()
@@ -217,11 +227,12 @@ func (e *engine) send(ctx context.Context, m *mgr, ts *turnState, args json.RawM
 // takeItemsLocked returns the Manager's undelivered items as tool answer text
 // and counts them as delivered.
 func (e *engine) takeItemsLocked(m *mgr) string {
+	e.pruneLocked(m)
 	if len(m.items) == 0 {
 		return " No new items for you."
 	}
 	var b strings.Builder
-	list(&b, "New items for you:", m.items)
+	list(&b, "New items for you:", texts(m.items))
 	m.consumed = append(m.consumed, m.items...)
 	m.items = nil
 	return " " + b.String()
@@ -288,7 +299,7 @@ func (e *engine) pollOwner() {
 				q.Answer, q.Answered = answer, true
 				_ = e.record(Event{Kind: "answer", Manager: e.team[0].Path, Data: *q})
 				root := e.team[0]
-				root.items = append(root.items, fmt.Sprintf("Owner answer to your question %s (%q): %s", q.ID, q.Text, answer))
+				root.items = append(root.items, item{text: fmt.Sprintf("Owner answer to your question %s (%q): %s", q.ID, q.Text, answer)})
 			}
 			e.scheduleLocked()
 			e.cond.Broadcast()

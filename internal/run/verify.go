@@ -15,7 +15,7 @@ import (
 // accounting and the required checks first, then fresh Verify turns of all
 // Managers with children before parents. It reports whether the round is green.
 func (e *engine) verifyRound(n int, c candidate) bool {
-	rs := &roundState{n: n, tree: c.tree, volume: c.volume, assessments: map[string]Assessment{}, assessed: map[string]bool{}}
+	rs := &roundState{n: n, tree: c.tree, volume: c.volume, assessments: map[string]Assessment{}, assessed: map[string]bool{}, started: map[string]bool{}}
 	e.mu.Lock()
 	e.rs, e.execRound = rs, n
 	e.executeOpen = n == 1 && e.cfg.Budget.Rounds >= 2
@@ -45,6 +45,9 @@ func (e *engine) verifyRound(n int, c candidate) bool {
 			f.Obligation = "Every file is accounted for in the candidate"
 		}
 		rs.structural = append(rs.structural, e.addFindingLocked(f, n))
+	}
+	for _, name := range c.unsupported {
+		rs.structural = append(rs.structural, e.addFindingLocked(e.unsupportedFinding(name), n))
 	}
 	for i, r := range results {
 		_ = e.record(Event{Kind: "check", Round: n, Data: r})
@@ -160,6 +163,7 @@ func (e *engine) runCheck(n int, tree snapshot.Tree, c Check) CheckResult {
 // verifyManager runs the Manager's fresh Verify turn, once more when the first
 // ended without a valid assessment.
 func (e *engine) verifyManager(m *mgr, rs *roundState) {
+	var last error
 	for attempt := 1; attempt <= maxVerifyAttempts; attempt++ {
 		if e.ctx.Err() != nil {
 			return
@@ -170,13 +174,16 @@ func (e *engine) verifyManager(m *mgr, rs *roundState) {
 			e.halt("the agent turn budget ended")
 			return
 		}
-		m.verifyUsed = true
+		m.verifyUsed, rs.started[m.Path] = true, true
 		ts := &turnState{m: m, kind: VerifyTurn, id: fmt.Sprintf("%s-r%d-%s-v%d", e.cfg.RunID, rs.n, m.slug, attempt), round: rs.n}
 		prompt := e.verifyPromptLocked(m, rs, attempt > 1)
 		e.mu.Unlock()
-		res, _ := e.runTurn(ts, Turn{Profile: m.VerifyProfile, Workspace: rs.volume, ReadOnly: true, Home: m.verifyHome, Prompt: prompt, Tools: verifyTools()}, e.assessHandler(m, rs, ts))
+		res, err := e.runTurn(ts, Turn{Profile: m.VerifyProfile, Workspace: rs.volume, ReadOnly: true, Home: m.verifyHome, Prompt: prompt, Tools: verifyTools()}, e.assessHandler(m, rs, ts))
 		if !res.Stopped {
 			return
+		}
+		if err != nil {
+			last = err
 		}
 		e.mu.Lock()
 		reported := rs.assessed[m.Path]
@@ -186,7 +193,11 @@ func (e *engine) verifyManager(m *mgr, rs *roundState) {
 		}
 	}
 	if e.ctx.Err() == nil {
-		e.halt(fmt.Sprintf("manager %q did not report an assessment in round %d", m.Path, rs.n))
+		reason := fmt.Sprintf("manager %q did not report an assessment in round %d", m.Path, rs.n)
+		if last != nil {
+			reason += ": " + last.Error()
+		}
+		e.halt(reason)
 	}
 }
 
@@ -339,8 +350,46 @@ func (e *engine) deliverLocked(round int) {
 		}
 		e.delivered[f.ID] = round
 		o := e.byPath[f.Owner]
-		o.items = append(o.items, renderFinding(f))
+		o.items = append(o.items, item{text: renderFinding(f), finding: f.ID})
 	}
+}
+
+// unsupportedFinding is the blocking finding for one entry of the shared tree
+// that a candidate cannot hold. Its owner removes the entry in the next
+// Execute phase.
+func (e *engine) unsupportedFinding(name string) Finding {
+	owner := "."
+	if p, err := snapshot.NewPath(name); err == nil {
+		if o := e.cfg.OwnerOf(p); e.byPath[o] != nil {
+			owner = o
+		}
+	}
+	return Finding{Owner: owner, RaisedBy: MarkitectFinding, Blocking: true,
+		Obligation: "Every entry under /work is a regular file or a directory the candidate can hold",
+		Observed:   fmt.Sprintf("%q is not supported (a symbolic link, device or other special entry, or a name that is not a valid path); remove it", name)}
+}
+
+// openLocked reports whether the item still asks for work: an item of a
+// finding lapses once the finding is closed.
+func (e *engine) openLocked(it item) bool {
+	if it.finding == "" {
+		return true
+	}
+	f := e.findingLocked(it.finding)
+	return f == nil || !f.Closed
+}
+
+// pruneLocked drops the Manager's undelivered items of closed findings.
+func (e *engine) pruneLocked(m *mgr) {
+	m.items = slices.DeleteFunc(m.items, func(it item) bool { return !e.openLocked(it) })
+}
+
+func texts(items []item) []string {
+	out := make([]string, len(items))
+	for i, it := range items {
+		out[i] = it.text
+	}
+	return out
 }
 
 func sortedKeys(m map[string]string) []string {

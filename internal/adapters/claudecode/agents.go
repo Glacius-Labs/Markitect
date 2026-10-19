@@ -58,34 +58,44 @@ func NewAgentsWithRuntime(start RuntimeStarter, profiles map[string]Profile, cre
 	return &Agents{start: start, profiles: checked, credentials: credentials}, nil
 }
 
-// Run implements run.Agents. Every failure after the container started stops it
-// before returning; Stopped reports whether the provider exit was observed.
+// Run implements run.Agents. A turn that fails before a container starts is
+// reported as stopped, with the error. Every failure after the container
+// started stops it before returning; Stopped reports whether the provider exit
+// was observed. The known token is removed from tool-call arguments before the
+// handler sees them.
 func (a *Agents) Run(ctx context.Context, turn run.Turn, handler run.ToolHandler) (res run.TurnResult, err error) {
+	// Before a container starts there is nothing to stop: the turn is over and
+	// the error is the whole story.
+	redact := redactor{}
+	notStarted := func(err error) (run.TurnResult, error) {
+		now := time.Now().UTC()
+		return run.TurnResult{Started: now, Ended: now, Stopped: true, Reason: "no container started: " + redact.text(err.Error())}, redact.err(err)
+	}
 	profile, tools, err := a.admit(turn, handler)
 	if err != nil {
-		return res, err
+		return notStarted(err)
 	}
 	credential, err := a.credentials(ctx, profile.CredentialRef)
 	if err != nil || credential.Token == "" {
-		return res, fmt.Errorf("%w: credential %q unavailable", ErrSession, profile.CredentialRef)
+		return notStarted(fmt.Errorf("%w: credential %q unavailable", ErrSession, profile.CredentialRef))
 	}
-	redact := redactor{token: credential.Token}
+	redact = redactor{token: credential.Token}
 	codec, err := NewCodec(int(profile.MaxWireBytes))
 	if err != nil {
-		return res, err
+		return notStarted(err)
 	}
 	initID := ControlRequestID("markitect-initialize")
 	initRaw, err := codec.EncodeInitialize(initID)
 	if err != nil {
-		return res, err
+		return notStarted(err)
 	}
 	promptRaw, err := codec.EncodeUser(UserInput{Text: turn.Prompt})
 	if err != nil {
-		return res, redact.err(err)
+		return notStarted(err)
 	}
 	log, err := openTranscript(turn.Transcript, redact)
 	if err != nil {
-		return res, err
+		return notStarted(err)
 	}
 	defer func() { err = errors.Join(err, log.close()) }()
 
@@ -350,7 +360,7 @@ func (c *conversation) answer(ctx context.Context, call frame.ToolCall) error {
 	if !slices.ContainsFunc(c.tools, func(t frame.ToolSpec) bool { return t.Name == call.Name }) {
 		reply = frame.ToolReply{ID: call.ID, Error: &frame.ToolError{Code: -32601, Message: "unknown Host tool"}}
 	} else {
-		a := c.handler(ctx, call.Name, call.Arguments)
+		a := c.handler(ctx, call.Name, c.redact.bytes(call.Arguments))
 		if err := ctx.Err(); err != nil {
 			return err
 		}
