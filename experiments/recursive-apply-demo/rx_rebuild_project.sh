@@ -3,7 +3,7 @@
 # imported vocabulary and the lock, without any artifact or registry. The
 # execution document keeps the Extract's layout exceptions and gets the library
 # budget and the two documented checks (go build, go test). Their requiredBy is
-# the first Definition Root registered realization/go.mod against, so the
+# the first Definition realization/go.mod is registered against, so the
 # harness picks no Definition by its name. Apply then rebuilds the realization
 # from the model alone; the oracle judges the result.
 # Usage: rx_rebuild_project.sh ADOPTED_REPO TARGET
@@ -23,15 +23,16 @@ from pathlib import Path
 
 adopted, target, template = Path(sys.argv[1]), Path(sys.argv[2]), Path(sys.argv[3])
 extracted = (adopted / ".markitect/execution.yaml").read_text()
-registry = (adopted / ".markitect/registry/registry.yaml").read_text()
+# Every shard: the build file belongs to Root or, under a root exception, to the project Package.
+registry = "\n".join(p.read_text() for p in sorted((adopted / ".markitect/registry").rglob("registry.yaml")))
 # The layout exceptions block of the extracted execution document, verbatim.
 m = re.search(r"^  exceptions:.*?(?=^\S|\Z)", extracted, re.S | re.M)
 exceptions = m.group(0) if m else "  exceptions: []\n"
-# The first Definition Root registered realization/go.mod against.
-m = re.search(r"- path: realization/go\.mod\n(?:\s+\w+:.*\n)*?\s+realizes: \[([^\],]+)", registry) or \
-    re.search(r"- path: realization/go\.mod\n(?:\s+\w+:.*\n)*?\s+realizes:\s*\n\s+- (\S+)", registry)
+# The first Definition the build file realization/go.mod is registered against.
+m = re.search(r"- path: \"?realization/go\.mod\"?\n(?:\s+\w+:.*\n)*?\s+realizes: \[([^\],]+)", registry) or \
+    re.search(r"- path: \"?realization/go\.mod\"?\n(?:\s+\w+:.*\n)*?\s+realizes:\s*\n\s+- (\S+)", registry)
 if not m:
-    sys.exit("no go.mod registration in the root shard")
+    sys.exit("no go.mod registration in any shard")
 required = m.group(1).strip()
 text = template.read_text()
 text = re.sub(r"^  exceptions:.*?(?=^checks:)", lambda m: exceptions, text, flags=re.S | re.M)
