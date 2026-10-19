@@ -28,7 +28,8 @@ const (
 // Engine runs the container engine's command line, such as Docker or a
 // compatible engine, from one absolute executable path.
 type Engine struct {
-	path string
+	path         string
+	observations imageObservationMemo
 }
 
 // NewEngine binds the engine executable. The path must be absolute and name
