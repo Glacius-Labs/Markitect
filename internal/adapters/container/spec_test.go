@@ -67,6 +67,14 @@ func TestRunArgsRefuseUnsafeSpecs(t *testing.T) {
 		"mount option inject": func(s *ContainerSpec) { s.Mounts[0].Target = "/work,bind-propagation=shared" },
 		"mount over tmp":      func(s *ContainerSpec) { s.Mounts[0].Target = "/tmp" },
 		"duplicate target":    func(s *ContainerSpec) { s.Mounts[1].Target = "/work" },
+		"subpath escapes":     func(s *ContainerSpec) { s.Mounts[0].Subpath = "../other" },
+		"subpath parent":      func(s *ContainerSpec) { s.Mounts[0].Subpath = ".." },
+		"subpath absolute":    func(s *ContainerSpec) { s.Mounts[0].Subpath = "/etc" },
+		"subpath unclean":     func(s *ContainerSpec) { s.Mounts[0].Subpath = "a/../b" },
+		"subpath trailing":    func(s *ContainerSpec) { s.Mounts[0].Subpath = "a/" },
+		"subpath dot":         func(s *ContainerSpec) { s.Mounts[0].Subpath = "." },
+		"subpath inject":      func(s *ContainerSpec) { s.Mounts[0].Subpath = "a,readonly=false" },
+		"subpath backslash":   func(s *ContainerSpec) { s.Mounts[0].Subpath = `a\b` },
 		"no limits":           func(s *ContainerSpec) { s.Pids = 0 },
 		"no store label":      func(s *ContainerSpec) { s.Labels = nil },
 		"label newline":       func(s *ContainerSpec) { s.Labels["io.markitect.store"] = "a\nb" },
@@ -111,5 +119,41 @@ func TestRunArgsPreventImageCopyUpForExactVolumes(t *testing.T) {
 		if !containsArg(args, want) {
 			t.Fatalf("missing exact volume mount %q in %q", want, args)
 		}
+	}
+}
+
+func TestRunArgsMountVolumeSubpathsOverTheBase(t *testing.T) {
+	for name, tc := range map[string]struct {
+		baseReadOnly bool
+		overlays     []Mount
+		want         []string
+	}{
+		"root style: writable base, read-only overlays": {false,
+			[]Mount{{Volume: "ws", Target: "/work/lending", Subpath: "lending", ReadOnly: true, NoCopy: true}, {Volume: "ws", Target: "/work/library", Subpath: "library", ReadOnly: true, NoCopy: true}},
+			[]string{"type=volume,src=ws,dst=/work,volume-nocopy",
+				"type=volume,src=ws,dst=/work/lending,volume-subpath=lending,volume-nocopy,readonly",
+				"type=volume,src=ws,dst=/work/library,volume-subpath=library,volume-nocopy,readonly"}},
+		"child style: read-only base, writable overlays": {true,
+			[]Mount{{Volume: "ws", Target: "/work/lending/reminders", Subpath: "lending/reminders", NoCopy: true}},
+			[]string{"type=volume,src=ws,dst=/work,volume-nocopy,readonly",
+				"type=volume,src=ws,dst=/work/lending/reminders,volume-subpath=lending/reminders,volume-nocopy"}},
+	} {
+		t.Run(name, func(t *testing.T) {
+			spec := validSpec()
+			spec.Mounts = append([]Mount{{Volume: "ws", Target: "/work", NoCopy: true, ReadOnly: tc.baseReadOnly}}, tc.overlays...)
+			args, err := spec.runArgs([]string{"/usr/bin/check"})
+			if err != nil {
+				t.Fatal(err)
+			}
+			var got []string
+			for i, a := range args {
+				if a == "--mount" {
+					got = append(got, args[i+1])
+				}
+			}
+			if !reflect.DeepEqual(got, tc.want) {
+				t.Fatalf("mounts %q, want %q", got, tc.want)
+			}
+		})
 	}
 }

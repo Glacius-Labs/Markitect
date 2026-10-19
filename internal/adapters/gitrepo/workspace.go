@@ -9,7 +9,9 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"slices"
 	"strconv"
+	"strings"
 	"sync"
 
 	"github.com/Glacius-Labs/Markitect/internal/adapters/container"
@@ -98,6 +100,10 @@ func (w *Workspaces) Materialize(ctx context.Context, request run.WorkspaceSpec)
 			return result, fmt.Errorf("workspace input contains excluded path %q", entry.Path())
 		}
 	}
+	directories, err := workspaceDirectories(request)
+	if err != nil {
+		return result, err
+	}
 	var secret [32]byte
 	if _, err = rand.Read(secret[:]); err != nil {
 		return result, err
@@ -136,7 +142,16 @@ func (w *Workspaces) Materialize(ctx context.Context, request run.WorkspaceSpec)
 	go func() {
 		archive := tar.NewWriter(writer)
 		var writeErr error
+		// Directories come first, each owned like the files and mode 0755.
+		for _, directory := range directories {
+			if writeErr = archive.WriteHeader(&tar.Header{Name: directory + "/", Mode: 0755, Typeflag: tar.TypeDir, Format: tar.FormatPAX}); writeErr != nil {
+				break
+			}
+		}
 		for _, entry := range request.Tree.Entries() {
+			if writeErr != nil {
+				break
+			}
 			mode := int64(0644)
 			if entry.Mode() == snapshot.Executable {
 				mode = 0755
@@ -169,6 +184,36 @@ func (w *Workspaces) Materialize(ctx context.Context, request run.WorkspaceSpec)
 		return result, err
 	}
 	return result, nil
+}
+
+// workspaceDirectories returns the requested empty directories and all their
+// ancestors, parents first. A path must be a valid snapshot path outside the
+// excluded Git and state paths and must not be, or lie below, a file of the tree.
+func workspaceDirectories(request run.WorkspaceSpec) ([]string, error) {
+	seen := map[string]bool{}
+	for _, directory := range request.Directories {
+		if _, err := snapshot.NewPath(directory); err != nil || workspaceExcluded(directory, true) {
+			return nil, fmt.Errorf("workspace directory %q is not a valid included path", directory)
+		}
+		parts := strings.Split(directory, "/")
+		for i := range parts {
+			ancestor := strings.Join(parts[:i+1], "/")
+			path, err := snapshot.NewPath(ancestor)
+			if err != nil {
+				return nil, err
+			}
+			if _, isFile := request.Tree.Lookup(path); isFile {
+				return nil, fmt.Errorf("workspace directory %q collides with file %q of the tree", directory, ancestor)
+			}
+			seen[ancestor] = true
+		}
+	}
+	directories := make([]string, 0, len(seen))
+	for directory := range seen {
+		directories = append(directories, directory)
+	}
+	slices.SortFunc(directories, func(a, b string) int { return strings.Compare(a, b) })
+	return directories, nil
 }
 
 func (w *Workspaces) unmounted(ctx context.Context, volume string) error {
