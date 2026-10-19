@@ -151,6 +151,9 @@ func (w bootstrapExecutionWorkspaces) Materialize(_ context.Context, request run
 func (w bootstrapExecutionWorkspaces) Harvest(_ context.Context, request runport.HarvestRequest) (runport.WorkspaceHarvest, error) {
 	return runport.WorkspaceHarvest{ID: request.ID, Tree: w[request.ID]}, nil
 }
+func (w bootstrapExecutionWorkspaces) Peek(_ context.Context, request runport.HarvestRequest) (runport.WorkspaceHarvest, error) {
+	return runport.WorkspaceHarvest{ID: request.ID, Tree: w[request.ID]}, nil
+}
 func (w bootstrapExecutionWorkspaces) Close(_ context.Context, id runport.WorkspaceID) (runport.WorkspaceObservation, error) {
 	delete(w, id)
 	return runport.WorkspaceObservation{ID: id, Closed: true}, nil

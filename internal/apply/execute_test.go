@@ -26,6 +26,9 @@ func (w *executionWorkspaces) Materialize(_ context.Context, s run.WorkspaceSpec
 func (w *executionWorkspaces) Harvest(_ context.Context, r run.HarvestRequest) (run.WorkspaceHarvest, error) {
 	return run.WorkspaceHarvest{ID: r.ID, Tree: w.trees[r.ID]}, nil
 }
+func (w *executionWorkspaces) Peek(_ context.Context, r run.HarvestRequest) (run.WorkspaceHarvest, error) {
+	return run.WorkspaceHarvest{ID: r.ID, Tree: w.trees[r.ID]}, nil
+}
 func (w *executionWorkspaces) Close(_ context.Context, id run.WorkspaceID) (run.WorkspaceObservation, error) {
 	delete(w.trees, id)
 	return run.WorkspaceObservation{ID: id, Closed: true}, nil

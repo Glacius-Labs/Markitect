@@ -428,10 +428,17 @@ func TestAnotherScopeKeepsTheRecordedExpectations(t *testing.T) {
 		switch {
 		case s.Manager == "." && s.Phase == run.PhaseWork:
 			scope := "complete"
+			var setup []action
 			if s.Attempt == 1 {
+				// A limited delivery needs something to deliver.
 				scope = "limited"
+				setup = []action{
+					{Tool: run.ToolReservePath, Args: `{"path":"out/root.go","form":"code"}`, Want: run.ToolOK},
+					{Tool: run.ToolRegister, Args: `{"path":"out/root.go","form":"code","realizes":["lending/Item"],"why":"Uses Item."}`, Want: run.ToolOK},
+					{Write: map[string]string{"out/root.go": "package library\n"}, Tool: run.ToolRead, Args: `{"ref":"out/root.go"}`},
+				}
 			}
-			return []action{{Tool: run.ToolSubmit, Args: `{"purpose":"local","scope":"` + scope + `","summary":"Uses lending.","assessments":[],"dependencies":["lending"]}`, Want: run.ToolOK}}
+			return append(setup, action{Tool: run.ToolSubmit, Args: `{"purpose":"local","scope":"` + scope + `","summary":"Uses lending.","assessments":[],"dependencies":["lending"]}`, Want: run.ToolOK})
 		case s.Manager == "." && s.Phase == run.PhaseReviewerExpectations:
 			args := fmt.Sprintf(`{"cases":[{"name":"item","expectation":"The library realizes Item (recording %d).","discriminates":"A missing Item type fails."}]}`, s.Attempt)
 			return []action{{Tool: run.ToolRecordExpectations, Args: args, Want: run.ToolOK}}
@@ -448,7 +455,7 @@ func TestAnotherScopeKeepsTheRecordedExpectations(t *testing.T) {
 		}
 		return happyAgent(s)
 	}
-	h = newHarness(t, true, agent)
+	h = newHarnessWith(t, stepInputsWith(t, true, withCreationArea(t)), agent)
 	runToEnd(t, h)
 	// Three local submissions mean that two passes were withheld.
 	if h.c.Current().State != run.Verifying || strings.Count(strings.Join(admitted(h), ","), ". work") < 3 {
@@ -518,7 +525,7 @@ func TestAPassKeepsTheRecordedCasesForTheNextDelivery(t *testing.T) {
 			notes = append(notes, strings.Contains(string(s.Packet.Context.Bytes), "Your local work is assessed against these recorded review cases"))
 		}
 		if s.Manager == "lending" && s.Phase == run.PhaseWork && s.Attempt == 0 {
-			return []action{{Write: map[string]string{"out/library.go": "package library\n"}, Tool: run.ToolSubmit, Args: submitArgs("local", "limited"), Want: run.ToolOK}}
+			return []action{{Write: map[string]string{"out/library.go": "package library\n\n// first\n"}, Tool: run.ToolSubmit, Args: submitArgs("local", "limited"), Want: run.ToolOK}}
 		}
 		return happyAgent(s)
 	}

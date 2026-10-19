@@ -19,8 +19,11 @@ type WorkspaceID string
 // back; it refuses an ID that already exists, so it never overwrites content
 // that was not harvested. Harvest observes the complete tree after the step's
 // container stopped; while any container still mounts the volume, it reports
-// Uncertain. Close is idempotent and reports Closed for an absent volume.
-// Every result reports actual observations, also when an error is returned.
+// Uncertain. Peek observes the workspace while its step may still write; its
+// tree is advisory, the Host only uses it to tell the Agent before the outcome
+// why its changes would not be captured, and a candidate still comes only from
+// Harvest after the step's container stopped. Close is idempotent and reports
+// Closed for an absent volume. Every result reports actual observations, also when an error is returned.
 //
 // Observation follows Git's view of files: a regular file is Executable
 // exactly when its owner execute bit is set, other permission bits are
@@ -31,6 +34,7 @@ type WorkspaceID string
 type Workspaces interface {
 	Materialize(context.Context, WorkspaceSpec) (WorkspaceObservation, error)
 	Harvest(context.Context, HarvestRequest) (WorkspaceHarvest, error)
+	Peek(context.Context, HarvestRequest) (WorkspaceHarvest, error)
 	Close(context.Context, WorkspaceID) (WorkspaceObservation, error)
 }
 

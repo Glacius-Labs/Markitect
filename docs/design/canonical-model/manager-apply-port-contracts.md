@@ -161,6 +161,7 @@ The workspace adapter only materializes and observes. `run` decides what a works
 type Workspaces interface {
 	Materialize(context.Context, WorkspaceSpec) (WorkspaceObservation, error)
 	Harvest(context.Context, HarvestRequest) (WorkspaceHarvest, error)
+	Peek(context.Context, HarvestRequest) (WorkspaceHarvest, error)
 	Close(context.Context, WorkspaceID) (WorkspaceObservation, error)
 }
 ```
@@ -177,6 +178,7 @@ The Orchestrator owns claims and decisions, and the adapter only observes files.
 Recovery rests on three rules:
 - `Materialize` refuses an existing ID, so it never overwrites content that was not harvested.
 - `Harvest` is uncertain while any container still mounts the volume.
+- `Peek` observes the workspace like `Harvest` but while its step may still write. Its tree is advisory: the Orchestrator only uses it to tell the Manager before an outcome why its changes would not be captured, and a candidate still comes only from `Harvest` after the step's container stopped.
 - `Close` is idempotent and reports an absent volume as closed.
 
 Observation follows Git's view of files. A regular file is executable exactly when its owner execute bit is set, other permission bits are ignored, and empty directories are ignored. Only non-regular entries and names that a snapshot path rejects are unsupported. A harvest excludes exactly what the repository census excludes: Git administration and `.markitect/state`.

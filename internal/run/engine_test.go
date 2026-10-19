@@ -271,7 +271,7 @@ func TestAnAcceptedDeliveryRestartsTheRejectionCount(t *testing.T) {
 	agent := func(s agentStep) []action {
 		switch {
 		case s.Manager == "lending" && s.Phase == run.PhaseWork && s.Attempt < 2:
-			content := []string{"package library\n", "package library\n\ntype Item struct{}\n"}[s.Attempt]
+			content := []string{"package library\n\n// first\n", "package library\n\ntype Item struct{}\n"}[s.Attempt]
 			return []action{{Write: map[string]string{"out/library.go": content}, Tool: run.ToolSubmit, Args: submitArgs("local", "limited"), Want: run.ToolOK}}
 		case s.Manager == "lending" && s.Phase == run.PhaseReviewerCandidate && s.Attempt%2 == 0 && s.Attempt < 4:
 			return []action{{Tool: run.ToolSubmitReview, Args: rejectArgs, Want: run.ToolOK}}
@@ -324,7 +324,12 @@ func TestFailedStepsReturnTasksToTheirStateBeforeTheStep(t *testing.T) {
 		case s.Manager == "lending" && s.Phase == run.PhaseWork && s.Attempt == 0:
 			return []action{{Tool: run.ToolWait, Args: `{"on":[{"kind":"children"}],"reason":"no"}`, Want: run.ToolRefused}}
 		case s.Manager == "." && s.Phase == run.PhaseWork && s.Attempt == 0:
-			return []action{{Write: map[string]string{"out/library.go": "package root\n"}, Tool: run.ToolSubmit, Args: submitArgs("local", "complete"), Want: run.ToolOK}}
+			// The write follows the accepted submit, so the Host's early check
+			// cannot see it and only the conclusion rejects it.
+			return []action{
+				{Tool: run.ToolSubmit, Args: submitArgs("local", "complete"), Want: run.ToolOK},
+				{Write: map[string]string{"out/library.go": "package root\n"}, Tool: run.ToolRead, Args: `{"ref":"out/library.go"}`},
+			}
 		}
 		return happyAgent(s)
 	}
