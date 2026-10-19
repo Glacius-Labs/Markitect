@@ -6,6 +6,7 @@ import (
 	"os"
 	"path/filepath"
 	"sync"
+	"time"
 )
 
 var errStateLocked = errors.New("another Apply holds this state directory")
@@ -32,6 +33,48 @@ func lockState(stateDirectory string) (*stateLock, error) {
 		return nil, err
 	}
 	return &stateLock{file: file}, nil
+}
+
+// startLockWait is how long a starting Apply retries a held state lock. A
+// concurrent `markitect answer` probes the lock for an instant; that must not
+// make a starting Apply fail.
+var startLockWait = 500 * time.Millisecond
+
+// lockStateWithin is lockState that retries a held lock for at most wait.
+func lockStateWithin(ctx context.Context, stateDirectory string, wait time.Duration) (*stateLock, error) {
+	deadline := time.Now().Add(wait)
+	for {
+		lock, err := lockState(stateDirectory)
+		if !errors.Is(err, errStateLocked) || !time.Now().Before(deadline) {
+			return lock, err
+		}
+		select {
+		case <-ctx.Done():
+			return nil, ctx.Err()
+		case <-time.After(20 * time.Millisecond):
+		}
+	}
+}
+
+// stateHeld reports whether an Apply holds the state directory. It creates
+// nothing: a missing directory or lock file means no Apply runs. The probe takes
+// the lock for an instant, which lockStateWithin absorbs.
+func stateHeld(stateDirectory string) (bool, error) {
+	file, err := os.OpenFile(filepath.Join(stateDirectory, lockFileName), os.O_RDWR, 0)
+	if errors.Is(err, os.ErrNotExist) {
+		return false, nil
+	}
+	if err != nil {
+		return false, err
+	}
+	defer file.Close()
+	switch err := lockFile(file); {
+	case errors.Is(err, errStateLocked):
+		return true, nil
+	case err != nil:
+		return false, err
+	}
+	return false, nil // closing the file releases the probe's lock
 }
 
 // Release gives the lock up. Closing the file releases the system lock.

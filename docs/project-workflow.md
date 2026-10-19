@@ -1,6 +1,6 @@
 # Project workflow
 
-Markitect's purpose is canonical model-first development with delegated realization. Current source exposes structural preparation, a guarded generated-model view and explicit controlled Apply/Answer commands. Apply composes recursive Managers, independent review, container sessions, candidate workspaces, container checks and guarded publication. Source availability does not establish provider readiness or successful complete realization; the [delivery plan](implementation-plan.md) and recorded validation evidence retain those separate scopes.
+Markitect's purpose is canonical model-first development with delegated realization. Current source exposes structural preparation, a guarded generated-model view and explicit controlled Apply/Answer commands. Apply composes recursive Managers (parallel Execute in one shared working tree, fresh recursive Verify of one immutable candidate), container sessions, candidate workspaces, container checks and guarded publication. Source availability does not establish provider readiness or successful complete realization; the [delivery plan](implementation-plan.md) and recorded validation evidence retain those separate scopes.
 
 ## Connect and inspect
 
@@ -98,7 +98,7 @@ API keys and Claude tokens retain literal file bytes. A dedicated Codex runtime 
 
 The JSON result includes the preparation status and diagnostics, the run (`status`, `reason`, every Verify round with its check results and Manager assessments, findings, questions, turns with usage and duration, and the total usage), the publication receipt with its read-back, `retainedWork` (the shared work volume kept when the run did not verify, for inspection) and `evidenceDirectory`. `status` is `passed` only when a verified candidate was published as applied or no change without an error. A run that ended incomplete (budget, open question, uncertain observation), a failed run and a failed publication stay distinct; `answer` reports the file it wrote.
 
-Evidence stays on the Host under `STATE/runs/RUN/`: `events.jsonl` (one event per line, synced when recorded), `transcripts/TURN.jsonl` (each turn's provider stream with known secrets redacted) and `report.json` (the printed result, written at the end). Question files are in `STATE/questions/` and answers in `STATE/answers/`; both are cleared when the next Apply opens its channel. Publication uses the same Git repository adapter that captured the source, checks the captured guard and protects model/control/instruction inputs. It does not create a Git commit or push. No MCP server is provided by these commands.
+Evidence stays on the Host under `STATE/runs/RUN/`: `events.jsonl` (one event per line, synced when recorded), `transcripts/TURN.jsonl` (each turn's provider stream with known secrets redacted) and `report.json` (the printed result, written at the end). Question files are in `STATE/questions/` and answers in `STATE/answers/`; question IDs restart for every Apply, so right after taking the state lock an Apply removes the question files (`.json`) and answer files (`.txt`) of earlier Applies, nothing else, and records its run in `STATE/current-run`. `markitect answer` writes only for a question file that carries that run, and only while an Apply holds the lock. Publication uses the same Git repository adapter that captured the source, checks the captured guard and protects model/control/instruction inputs. It does not create a Git commit or push. No MCP server is provided by these commands.
 
 ## Existing repositories
 
@@ -108,7 +108,7 @@ There is no automatic conversion, scaffold or Brownfield runtime. Earlier workfl
 
 ## Record setup and interrupted work
 
-Preparation and generated-document operations create no run, task, budget, candidate or execution journal. Preserve their acquisition diagnostics and generated-document completed-path reports. Apply/Answer instead use the explicit state directory, process lock and actual journal. Reopening the same invocation restores recorded state under the configured restore bounds; it does not silently replay uncertain provider effects. Preserve incomplete observations and resolve the reported condition before continuing. No standalone recovery command is exposed here.
+Preparation and generated-document operations create no run, task, budget, candidate or execution journal. Preserve their acquisition diagnostics and generated-document completed-path reports. Apply and answer instead use the explicit state directory and its process lock. There is no journal and no restore: an interrupted Apply (deadline, signal or crash) ends incomplete, and a new Apply starts again from the committed repository, never from the earlier shared working tree. Evidence of every run stays under `STATE/runs/`. Preserve it and resolve the reported condition before starting again. No standalone recovery command is exposed here. The state directory must not be inside the repository or contain it.
 
 ## Acceptance and status
 

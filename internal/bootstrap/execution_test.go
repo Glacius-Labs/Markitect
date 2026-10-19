@@ -50,14 +50,39 @@ func TestExecuteRefusesAHeldStateDirectoryBeforePreparation(t *testing.T) {
 		t.Fatal(err)
 	}
 	defer held.Release()
+	previous := startLockWait
+	startLockWait = 20 * time.Millisecond
+	t.Cleanup(func() { startLockWait = previous })
 	// Preparation would panic on this empty composition; the lock comes first.
 	service := newExecution(apply.NewPreparationService(apply.NewModelService(nil, nil)), &gitrepo.Repository{}, nil, nil, &bytes.Buffer{})
-	report, err := service.Execute(context.Background(), cli.ApplyRequest{RunConfig: writeRunConfig(t, document)})
-	if !errors.Is(err, errStateLocked) || report.Status != model.NotCompleted || report.Preparation != nil {
+	report, err := service.Execute(context.Background(), cli.ApplyRequest{Selection: apply.InputSelection{Repository: testkit.TempDir(t)}, RunConfig: writeRunConfig(t, document)})
+	if !errors.Is(err, errStateLocked) || report.Status != model.NotCompleted || report.Preparation != nil || report.FormatVersion != 1 || report.Operation != "apply" {
 		t.Fatalf("%v %+v", err, report)
 	}
 	if entries, _ := os.ReadDir(filepath.Join(state, "runs")); len(entries) != 0 {
 		t.Fatalf("a refused Apply left evidence: %v", entries)
+	}
+}
+
+func TestExecuteRefusesAStateDirectoryThatOverlapsTheRepository(t *testing.T) {
+	root := testkit.TempDir(t)
+	repository := filepath.Join(root, "repo")
+	for name, state := range map[string]string{"inside": filepath.Join(repository, ".state"), "equal": repository, "containing": root} {
+		document := runConfigFixture(t)
+		document["stateDirectory"] = state
+		service := newExecution(apply.NewPreparationService(apply.NewModelService(nil, nil)), &gitrepo.Repository{}, nil, nil, &bytes.Buffer{})
+		report, err := service.Execute(context.Background(), cli.ApplyRequest{Selection: apply.InputSelection{Repository: repository}, RunConfig: writeRunConfig(t, document)})
+		if err == nil || !strings.Contains(err.Error(), "overlap") || report.Status != model.Failed {
+			t.Errorf("%s: %v %+v", name, err, report)
+		}
+		if _, err := os.Stat(filepath.Join(state, lockFileName)); !os.IsNotExist(err) {
+			t.Errorf("%s: an overlapping state directory was written to", name)
+		}
+	}
+	for _, state := range []string{filepath.Join(root, "state"), filepath.Join(root, "repo-state")} {
+		if err := checkStateOutsideRepository(state, repository); err != nil {
+			t.Fatalf("%s was refused: %v", state, err)
+		}
 	}
 }
 

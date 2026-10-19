@@ -14,11 +14,13 @@ import (
 //	<state>/runs/<runID>/events.jsonl, transcripts/<turnID>.jsonl, report.json
 //	<state>/questions/<questionID>.json
 //	<state>/answers/<questionID>.txt
+//	<state>/current-run
 const (
 	lockFileName   = "apply.lock"
 	runsDirName    = "runs"
 	questionsDir   = "questions"
 	answersDir     = "answers"
+	currentRunFile = "current-run"
 	maxAnswerBytes = 16 << 10
 )
 

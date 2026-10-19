@@ -74,15 +74,17 @@ func NewRunReport(id string, outcome run.Outcome) *RunReport {
 }
 
 // ApplyStatus is Passed only for a verified run whose candidate was published
-// as applied or no change, without an error. A failed run or a definitely
-// failed publication is Failed; everything else is not completed.
+// as applied or no change, without an error. A failed run is Failed even though
+// it comes with an error, and so is a definitely failed publication; everything
+// else is not completed.
 func ApplyStatus(outcome run.Outcome, receipt *apply.PublicationReceipt, err error) model.Status {
+	if outcome.Status == run.Failed {
+		return model.Failed
+	}
 	if err != nil {
 		return model.NotCompleted
 	}
 	switch outcome.Status {
-	case run.Failed:
-		return model.Failed
 	case run.Verified:
 		if receipt == nil {
 			return model.NotCompleted
