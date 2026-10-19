@@ -1,8 +1,6 @@
 package run
 
-import (
-	"encoding/json"
-)
+import "encoding/json"
 
 // Host tool names. Execute turns send and finish, and check when Config offers
 // it; Verify turns assess.
