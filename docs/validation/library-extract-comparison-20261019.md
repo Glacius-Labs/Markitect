@@ -4,11 +4,11 @@
 
 ## Result
 
-The new Extract is clearly better on the two model-content error classes and on asking the necessary question. One new defect cost a run.
+The new Extract is better on the two model-content error classes. The question result (3 of 5 against 4 of 4) is too small to count as an improvement, and unnecessary questions rose from 1 to 2. One new defect cost a run. The samples are small (old 3 plain, 3 seeded and 2 conflict runs; new 3 plain with one Incomplete, 2 seeded and 2 conflict), and no significance is claimed.
 
 | Error class | Old (8 runs) | New (6 completed runs) |
 | --- | --- | --- |
-| Missing project and delivery obligations | Tests (P07) and documentation (P08) scored 0 in 7 of 8, "Go standard library only" (P12) in 7 of 8, "internals are free" (P14) in 8 of 8 | P07, P08 and P12 scored 0 in no run; P14 scored 0 in 5 of 6 |
+| Missing project and delivery obligations | Tests (P07) and documentation (P08) scored 0 in 7 of 8, "Go standard library only" (P12) in 7 of 8, "internals are free" (P14) in 8 of 8, agreement of code, tests and documentation with the model (P09) in 2 of 8 | P07, P08 and P12 scored 0 in no run; P14 in 5 of 6; P09 in 3 of 6 |
 | Incidental detail made binding | 35–47 over-specifications per model (mean 42); evidence inside Definitions 5–14 | 17–27 (mean 22); evidence inside Definitions 0–2 |
 | Escalation | The necessary owner question was asked in 3 of 5 seeded and conflict runs; 1 unnecessary question | Asked in 4 of 4; 2 unnecessary questions (one partly) |
 
@@ -27,12 +27,13 @@ Cause: the model-phase Verify guidance asked reviewers to check that every artif
 
 ## Residual weaknesses
 
-- **"Internals are free" (P14)** is stated in only 1 of 6 new models. The other 5 bind some internal choice.
+- **"Internals are free" (P14)** is fully stated in no new model; RXF-1 states it partly. All bind some internal choice.
+- **Agreement of code, tests and documentation with the model (P09)** scored 0 in 3 of 6 new runs, against 2 of 8 old ones.
 - **Unnecessary questions:**
   - RXF-2 asked whether the documented limit of 3 is intended.
   - RXF-3 asked whether a whitespace-only identifier should be refused, which the code settles. The model left that point open after the neutral answer.
 - **Questions only in prose:** In RXF-7 Root wrote owner questions into its summaries, which reach nobody. The new answer formats no longer ask for open questions, but this still happened.
-- **Policy values** live once, at their owner, in every new model, but as prose. None models them as a structured policy Kind as the reference does.
+- **Policy values** live once, at their owner, in 5 of 6 new models (RXF-4 repeats the 14-day period in `lending/calendar-dates`), always as prose. None models them as a structured policy Kind as the reference does.
 - **"Agreed with the library board":** The seeded LENDING.md says this. Old runs read it as a recorded decision and did not ask 2 of 3 times. That is defensible. The conflict scenario without that phrase is the clean test.
 
 ## Runs
@@ -69,7 +70,7 @@ Cause: the model-phase Verify guidance asked reviewers to check that every artif
   - over-specifications in six categories
   - the seeded and conflict expectations
 
-  Scoring RX-3 twice gave 67 both times with the same zero-scored set; the count of over-specifications differed (40 against 49). The score is a stable measure; the over-specification count is only a rough one. The assessor belongs to the same model family as the authors.
+  Scoring RX-3 twice gave 67 both times with the same zero-scored set; the count of over-specifications differed (40 against 49). The score was identical in the one re-scored run; the over-specification count is only a rough measure. The assessor belongs to the same model family as the authors.
 - **Execution:** sequential, in WSL Ubuntu, with each attempt's own container store label. Sessions for Apply ran in parallel on the same machine, so durations are indicative only. Claude Code reaped the first driver for low Windows memory during RXB-3. Its rebuild ran to its end unattended, and the oracle was run afterwards. Its rebuild time is therefore not reported.
 - **Builds:**
   - The old build is Main `f15ea723`.
