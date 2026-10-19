@@ -68,10 +68,11 @@ The run configuration is a separate closed JSON file (`formatVersion` 2) with th
 
 ## Evidence and state
 
-The state directory of the run configuration is held by one Apply at a time (`apply.lock`). It lives outside the repository.
+The state directory of the run configuration is held by one Apply at a time (`apply.lock`). It must lie outside the repository; a state directory inside, equal to or containing the repository is refused before anything is created.
 
 ```text
 <state>/apply.lock
+<state>/current-run                          run identity of the Apply holding the lock
 <state>/runs/<runID>/events.jsonl            append-only, synced per event
 <state>/runs/<runID>/transcripts/<turn>.jsonl  provider stream, secrets redacted
 <state>/runs/<runID>/report.json             written once at the end
@@ -79,7 +80,7 @@ The state directory of the run configuration is held by one Apply at a time (`ap
 <state>/answers/<id>.txt                     the owner's answer
 ```
 
-Event kinds: `run.start`, `round.start`, `check`, `assessment`, `finding.raised`, `finding.closed`, `round.end`, `turn.start`, `turn.finish`, `turn.end`, `message`, `question`, `answer`, `owner.error`, `candidate`, `write.observed`, `manager.disabled`, `workspace.materialize`, `workspace.close`, `outcome`. A run identity with an existing directory is refused; evidence is never overwritten. A failed record or report write ends the run Incomplete. The owner answers with `markitect answer ID --text ANSWER --run-config PATH`; questions and answers of earlier Applies are removed when a new Apply opens the channel.
+Event kinds: `run.start`, `round.start`, `check`, `assessment`, `finding.raised`, `finding.closed`, `round.end`, `turn.start`, `turn.finish`, `turn.end`, `message`, `question`, `answer`, `owner.error`, `candidate`, `write.observed`, `manager.disabled`, `workspace.materialize`, `workspace.close`, `outcome`. A run identity with an existing directory is refused; evidence is never overwritten. A failed record or report write ends the run Incomplete. The owner answers with `markitect answer ID --text ANSWER --run-config PATH`; the answer is accepted only for a question of the running Apply (`current-run`). When a new Apply opens the channel right after taking the lock, it removes only the channel's own question `.json` and answer `.txt` files of earlier Applies.
 
 ## Publication and read-back
 
