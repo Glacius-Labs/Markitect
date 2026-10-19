@@ -495,7 +495,7 @@ func (s *stateValue) concludeReview(r ConclusionRecord, t *taskValue, revision u
 		corrected := len(targets) > 0
 		switch {
 		case s.rejectionLimit(t.Slot.Package) <= t.Rejections[purpose]:
-			t.State, t.Reason = TaskIncomplete, fmt.Sprintf("the %s review rejected %d candidates, which reaches the rejection limit", purpose, t.Rejections[purpose])
+			t.State, t.Reason = TaskIncomplete, fmt.Sprintf("the %s review reached the rejection limit with %d counted rejections", purpose, t.Rejections[purpose])
 		case corrected:
 			t.State, t.Since, t.Waits = TaskBlocked, revision, []Wait{{Kind: waitChildren}}
 		default:
